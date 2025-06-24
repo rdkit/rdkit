@@ -299,37 +299,37 @@ void testIntConversions() {
   try {
     p.getProp<std::int8_t>("foo");  // should fail
     TEST_ASSERT(0);
-  } catch (boost::numeric::positive_overflow&) {
+  } catch (boost::numeric::positive_overflow &) {
   }
   try {
     p.getProp<std::uint8_t>("foo");  // should fail
     TEST_ASSERT(0);
-  } catch (boost::numeric::positive_overflow&) {
+  } catch (boost::numeric::positive_overflow &) {
   }
   try {
     p.getProp<std::int16_t>("foo");  // should fail
     TEST_ASSERT(0);
-  } catch (boost::numeric::positive_overflow&) {
+  } catch (boost::numeric::positive_overflow &) {
   }
   p.setProp<int>("foo", 65535 + 1);
   try {
     p.getProp<std::uint16_t>("foo");  // should fail
     TEST_ASSERT(0);
-  } catch (boost::numeric::positive_overflow&) {
+  } catch (boost::numeric::positive_overflow &) {
   }
 
   p.setProp<int>("foo", -1);
   try {
     p.getProp<std::uint8_t>("foo");  // should fail
     TEST_ASSERT(0);
-  } catch (boost::numeric::negative_overflow&) {
+  } catch (boost::numeric::negative_overflow &) {
   }
 
   p.getProp<std::int16_t>("foo");  // should pass
   try {
     p.getProp<std::uint16_t>("foo");  // should fail
     TEST_ASSERT(0);
-  } catch (boost::numeric::negative_overflow&) {
+  } catch (boost::numeric::negative_overflow &) {
   }
 }
 int main() {

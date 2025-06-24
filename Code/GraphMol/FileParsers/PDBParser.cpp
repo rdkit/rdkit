@@ -539,15 +539,16 @@ void BasicPDBCleanup(RWMol &mol) {
     // correct four-valent neutral N -> N+
     // This was github #1029
     if (atom->getAtomicNum() == 7 && atom->getFormalCharge() == 0 &&
-        atom->getExplicitValence() == 4) {
+        atom->getValence(Atom::ValenceType::EXPLICIT) == 4) {
       atom->setFormalCharge(1);
     }
     ++atBegin;
   }
 }
 
-void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
-                   unsigned int flavor, bool proximityBonding) {
+std::unique_ptr<RWMol> parsePdbBlock(const char *str, bool sanitize,
+                                     bool removeHs, unsigned int flavor,
+                                     bool proximityBonding) {
   PRECONDITION(str, "bad char ptr");
   std::map<int, Atom *> amap;
   std::map<Bond *, int> bmap;
@@ -555,6 +556,8 @@ void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
   bool multi_conformer = false;
   int conformer_atmidx = 0;
   Conformer *conf = nullptr;
+
+  std::unique_ptr<RWMol> mol;
 
   while (*str) {
     unsigned int len;
@@ -584,46 +587,46 @@ void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
         str[4] == ' ' && str[5] == ' ') {
       if (!multi_conformer) {
         if (!mol) {
-          mol = new RWMol();
+          mol.reset(new RWMol());
         }
-        PDBAtomLine(mol, str, len, flavor, amap);
+        PDBAtomLine(mol.get(), str, len, flavor, amap);
       } else {
-        PDBConformerLine(mol, str, len, conf, conformer_atmidx);
+        PDBConformerLine(mol.get(), str, len, conf, conformer_atmidx);
       }
       // HETATM records
     } else if (str[0] == 'H' && str[1] == 'E' && str[2] == 'T' &&
                str[3] == 'A' && str[4] == 'T' && str[5] == 'M') {
       if (!multi_conformer) {
         if (!mol) {
-          mol = new RWMol();
+          mol.reset(new RWMol());
         }
-        PDBAtomLine(mol, str, len, flavor, amap);
+        PDBAtomLine(mol.get(), str, len, flavor, amap);
       } else {
-        PDBConformerLine(mol, str, len, conf, conformer_atmidx);
+        PDBConformerLine(mol.get(), str, len, conf, conformer_atmidx);
       }
       // CONECT records
     } else if (str[0] == 'C' && str[1] == 'O' && str[2] == 'N' &&
                str[3] == 'E' && str[4] == 'C' && str[5] == 'T') {
       if (mol && !multi_conformer) {
-        PDBBondLine(mol, str, len, amap, bmap);
+        PDBBondLine(mol.get(), str, len, amap, bmap);
       }
       // COMPND records
     } else if (str[0] == 'C' && str[1] == 'O' && str[2] == 'M' &&
                str[3] == 'P' && str[4] == 'N' && str[5] == 'D') {
       if (!mol) {
-        mol = new RWMol();
+        mol.reset(new RWMol());
       }
       if (len > 10 &&
           (str[9] == ' ' || !strncmp(str + 9, "2 MOLECULE: ", 12))) {
-        PDBTitleLine(mol, str, len);
+        PDBTitleLine(mol.get(), str, len);
       }
       // HEADER records
     } else if (str[0] == 'H' && str[1] == 'E' && str[2] == 'A' &&
                str[3] == 'D' && str[4] == 'E' && str[5] == 'R') {
       if (!mol) {
-        mol = new RWMol();
+        mol.reset(new RWMol());
       }
-      PDBTitleLine(mol, str, len < 50 ? len : 50);
+      PDBTitleLine(mol.get(), str, len < 50 ? len : 50);
       // ENDMDL records
     } else if (str[0] == 'E' && str[1] == 'N' && str[2] == 'D' &&
                str[3] == 'M' && str[4] == 'D' && str[5] == 'L') {
@@ -638,22 +641,22 @@ void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
   }
 
   if (!mol) {
-    return;
+    return mol;
   }
 
   if (proximityBonding) {
-    ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
+    ConnectTheDots(mol.get(), ctdIGNORE_H_H_CONTACTS);
   }
   // flavor & 8 doesn't encode double bonds
   if (proximityBonding || flavor & 8) {
-    StandardPDBResidueBondOrders(mol);
+    StandardPDBResidueBondOrders(mol.get());
   }
 
   BasicPDBCleanup(*mol);
 
   if (sanitize) {
     if (removeHs) {
-      MolOps::removeHs(*mol, false, false);
+      MolOps::removeHs(*mol);
     } else {
       MolOps::sanitizeMol(*mol);
     }
@@ -664,7 +667,9 @@ void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
 
   /* Set tetrahedral chirality from 3D co-ordinates */
   MolOps::assignChiralTypesFrom3D(*mol);
-  StandardPDBResidueChirality(mol);
+  StandardPDBResidueChirality(mol.get());
+
+  return mol;
 }
 }  // namespace
 
@@ -673,10 +678,8 @@ namespace FileParsers {
 
 std::unique_ptr<RWMol> MolFromPDBBlock(const std::string &str,
                                        const PDBParserParams &params) {
-  RWMol *res = nullptr;
-  parsePdbBlock(res, str.c_str(), params.sanitize, params.removeHs,
-                params.flavor, params.proximityBonding);
-  return std::unique_ptr<RWMol>(res);
+  return parsePdbBlock(str.c_str(), params.sanitize, params.removeHs,
+                       params.flavor, params.proximityBonding);
 }
 
 std::unique_ptr<RWMol> MolFromPDBDataStream(std::istream &inStream,

@@ -589,8 +589,8 @@ M  END
 }
 
 void testCrashOnBondAtomIdxOutOfBounds() {
-  BOOST_LOG(rdInfoLog) << "testing crash on CTAB bond table atom idx out of bounds"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing crash on CTAB bond table atom idx out of bounds" << std::endl;
   std::string pathName = getenv("RDBASE");
   pathName += "/Data/struchk/";
   std::stringstream struchk_init;

@@ -798,7 +798,8 @@ TEST_CASE(
 TEST_CASE("github #7533: IndexError while computing fingerprint") {
   auto mol = "CC1C(B(C)C)S1(C)(C)=O"_smiles;
   REQUIRE(mol);
-  auto fp = MorganFingerprints::getFingerprint(*mol, 2);
+  std::unique_ptr<SparseIntVect<std::uint32_t>> fp(
+      MorganFingerprints::getFingerprint(*mol, 2));
   REQUIRE(fp);
   CHECK(fp->getLength() == std::numeric_limits<unsigned>::max());
 }

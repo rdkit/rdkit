@@ -19,11 +19,11 @@ namespace RDKitFP {
 
 class RDKIT_FINGERPRINTS_EXPORT RDKitFPArguments : public FingerprintArguments {
  public:
-  unsigned int d_minPath;
-  unsigned int d_maxPath;
-  bool df_useHs;
-  bool df_branchedPaths;
-  bool df_useBondOrder;
+  unsigned int d_minPath = 1;
+  unsigned int d_maxPath = 7;
+  bool df_useHs = true;
+  bool df_branchedPaths = true;
+  bool df_useBondOrder = true;
 
   std::string infoString() const override;
 
@@ -47,10 +47,12 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPArguments : public FingerprintArguments {
    path/subgraph found
 
    */
-  RDKitFPArguments(unsigned int minPath, unsigned int maxPath, bool useHs,
-                   bool branchedPaths, bool useBondOrder, bool countSimulation,
-                   const std::vector<std::uint32_t> countBounds,
-                   std::uint32_t fpSize, std::uint32_t numBitsPerFeature);
+  RDKitFPArguments(unsigned int minPath = 1, unsigned int maxPath = 7,
+                   bool useHs = true, bool branchedPaths = true,
+                   bool useBondOrder = true, bool countSimulation = false,
+                   const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+                   std::uint32_t fpSize = 2048,
+                   std::uint32_t numBitsPerFeature = 2);
 };
 
 class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomInvGenerator
@@ -156,6 +158,12 @@ RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     bool countSimulation = false,
     const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
     std::uint32_t fpSize = 2048, std::uint32_t numBitsPerFeature = 2,
+    bool ownsAtomInvGen = false);
+// \overload
+template <typename OutputType>
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getRDKitFPGenerator(
+    const RDKitFPArguments &args,
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
     bool ownsAtomInvGen = false);
 
 }  // namespace RDKitFP

@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/test.h>
+#include <GraphMol/test_fixtures.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
 #include <iostream>
@@ -22,6 +23,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
 
 using namespace RDKit;
 
@@ -503,14 +505,9 @@ void testSDMemoryCorruption() {
   auto *writer = new SDWriter(os, false);
 
   STR_VECT names;
-#if 1
   ROMol *m1 = sdsup.next();
   MolOps::sanitizeMol(*(RWMol *)m1);
   delete m1;
-#else
-  ROMol *m1 = SmilesToMol("C1CC1");
-  TEST_ASSERT(m1);
-#endif
   sdsup.reset();
   int nDone = 0;
   while (!sdsup.atEnd()) {
@@ -536,7 +533,6 @@ void testSDMemoryCorruption() {
 
   delete writer;
   delete os;
-#if 1
   // now read in the file we just finished writing
   SDMolSupplier reader(ofile);
   int i = 0;
@@ -549,120 +545,143 @@ void testSDMemoryCorruption() {
     delete mol;
     i++;
   }
-#endif
 }
 
 void testIssue3525000() {
-  {
-    std::string rdbase = getenv("RDBASE");
-    std::string fname =
-        rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525000.sdf";
-    RWMol *mol = MolFileToMol(fname);
-    TEST_ASSERT(mol);
+  for (const bool useLegacy : {true, false}) {
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+    {
+      std::string rdbase = getenv("RDBASE");
+      std::string fname =
+          rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525000.sdf";
+      auto mol = v2::FileParsers::MolFromMolFile(fname);
+      TEST_ASSERT(mol);
+      if (!useLegacy) {
+        CIPLabeler::assignCIPLabels(*mol);
+      }
+      std::string cip;
+      TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(6)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(8)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(9)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(9)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(
+          mol->getAtomWithIdx(10)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "S");
+      TEST_ASSERT(
+          mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
+      // legacy stereo had this one wrong:
+      if (useLegacy) {
+        TEST_ASSERT(cip == "R");
+      } else {
+        TEST_ASSERT(cip == "S");
+      }
+      TEST_ASSERT(
+          mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
 
-    std::string cip;
-    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(6)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(8)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(9)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(9)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(10)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "S");
-    TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
-    // FIX: Marvin disagrees about this one:
-    mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
+      std::string mb = MolToMolBlock(*mol);
+      mol.reset(MolBlockToMol(mb));
+      TEST_ASSERT(mol);
+      if (!useLegacy) {
+        CIPLabeler::assignCIPLabels(*mol);
+      }
+      TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(6)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(8)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(9)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(9)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(
+          mol->getAtomWithIdx(10)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "S");
+      TEST_ASSERT(
+          mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
+      // legacy stereo had this one wrong:
+      if (useLegacy) {
+        TEST_ASSERT(cip == "R");
+      } else {
+        TEST_ASSERT(cip == "S");
+      }
+      TEST_ASSERT(
+          mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+    }
+    {
+      std::string rdbase = getenv("RDBASE");
+      std::string fname =
+          rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525000b.sdf";
+      auto mol = v2::FileParsers::MolFromMolFile(fname);
+      TEST_ASSERT(mol);
+      MolOps::assignChiralTypesFrom3D(*mol);
+      MolOps::assignStereochemistry(*mol);
+      if (!useLegacy) {
+        CIPLabeler::assignCIPLabels(*mol);
+      }
+      std::string cip;
+      TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "S");
+      TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "S");
+      TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(4)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "S");
 
-    std::string mb = MolToMolBlock(*mol);
-    delete mol;
-    mol = MolBlockToMol(mb);
-    TEST_ASSERT(mol);
-    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(6)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(8)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(9)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(9)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(10)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(10)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "S");
-    TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp(common_properties::_CIPCode));
-    // FIX: Marvin disagrees about this one:
-    mol->getAtomWithIdx(14)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    delete mol;
-  }
-  {
-    std::string rdbase = getenv("RDBASE");
-    std::string fname =
-        rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525000b.sdf";
-    RWMol *mol = MolFileToMol(fname);
-    TEST_ASSERT(mol);
-    MolOps::assignChiralTypesFrom3D(*mol);
-    MolOps::assignStereochemistry(*mol);
-    std::string cip;
-    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "S");
-    TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "S");
-    TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(4)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "S");
-
-    std::string mb = MolToMolBlock(*mol);
-    delete mol;
-    mol = MolBlockToMol(mb);
-    TEST_ASSERT(mol);
-    TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "S");
-    TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "S");
-    TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "R");
-    TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
-    mol->getAtomWithIdx(4)->getProp(common_properties::_CIPCode, cip);
-    TEST_ASSERT(cip == "S");
-    delete mol;
+      std::string mb = MolToMolBlock(*mol);
+      mol.reset(MolBlockToMol(mb));
+      TEST_ASSERT(mol);
+      if (!useLegacy) {
+        CIPLabeler::assignCIPLabels(*mol);
+      }
+      TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "S");
+      TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "S");
+      TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(3)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "R");
+      TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
+      mol->getAtomWithIdx(4)->getProp(common_properties::_CIPCode, cip);
+      TEST_ASSERT(cip == "S");
+    }
   }
 }
 
@@ -1089,29 +1108,39 @@ void testV3000WriterDetails() {
 }
 
 void testV3000DoublePrecision() {
-  BOOST_LOG(rdInfoLog) << "testing V3000 outputs coordinates at maximum robust double precision"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing V3000 outputs coordinates at maximum robust double precision"
+      << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   {
     std::string fName = rdbase + "precision.v3k.mol";
-    RWMol *mol = MolFileToMol(fName);
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
     TEST_ASSERT(mol);
     size_t numAtoms = mol->getNumAtoms();
     TEST_ASSERT(numAtoms == 7);
     MolWriterParams params{true, true, true, 15};
     std::string molBlock = MolToMolBlock(*mol, params, -1);
-    RWMol *readMol = MolBlockToMol(molBlock);
+    std::unique_ptr<RWMol> readMol(MolBlockToMol(molBlock));
     TEST_ASSERT(numAtoms == readMol->getNumAtoms());
     const Conformer &conformer = mol->getConformer();
     const Conformer &readConformer = readMol->getConformer();
     for (size_t i = 0; i < numAtoms; i++) {
-      std::cout << std::setprecision(15) << conformer.getAtomPos(i).x << ' ' << readConformer.getAtomPos(i).x << std::setprecision(6) << std::endl;
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).x - readConformer.getAtomPos(i).x) < 1e-15);
-      std::cout << std::setprecision(15) << conformer.getAtomPos(i).y << ' ' << readConformer.getAtomPos(i).y << std::setprecision(6) << std::endl;
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).y - readConformer.getAtomPos(i).y) < 1e-15);
-      std::cout << std::setprecision(15) << conformer.getAtomPos(i).z << ' ' << readConformer.getAtomPos(i).z << std::setprecision(6) << std::endl;
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).z - readConformer.getAtomPos(i).z) < 1e-15);
+      std::cout << std::setprecision(15) << conformer.getAtomPos(i).x << ' '
+                << readConformer.getAtomPos(i).x << std::setprecision(6)
+                << std::endl;
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).x -
+                           readConformer.getAtomPos(i).x) < 1e-15);
+      std::cout << std::setprecision(15) << conformer.getAtomPos(i).y << ' '
+                << readConformer.getAtomPos(i).y << std::setprecision(6)
+                << std::endl;
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).y -
+                           readConformer.getAtomPos(i).y) < 1e-15);
+      std::cout << std::setprecision(15) << conformer.getAtomPos(i).z << ' '
+                << readConformer.getAtomPos(i).z << std::setprecision(6)
+                << std::endl;
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).z -
+                           readConformer.getAtomPos(i).z) < 1e-15);
     }
   }
 }
@@ -1584,7 +1613,7 @@ M  END)CTAB"_ctab;
   }
   {
     auto m = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   3  2  0  0  0  0  0  0  0  0999 V2000
    -1.5623    1.6625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1601,10 +1630,75 @@ M  END)CTAB"_ctab;
   }
 }
 
+void testMolFileGithub8265() {
+  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testMolFileGithub8265()\n";
+  auto m = "C"_smiles;
+  auto conf = new Conformer(1);
+  m->addConformer(conf);
+
+  for (int i = 0; i < 2; ++i) {
+    RDGeom::Point3D pos{0., 0., 0.};
+
+    // Make sure se switch to V3000 then coords are out of bounds
+    //  and that we stay with V2K otherwise.
+    {
+      pos[i] = 100000.;
+      conf->setAtomPos(0, pos);
+      auto mbV2K = MolToMolBlock(*m);
+      TEST_ASSERT(mbV2K.find("M  V30") != std::string::npos);
+      TEST_ASSERT(v2::FileParsers::MolFromMolBlock(mbV2K));
+      try {
+        MolToV2KMolBlock(*m);
+        TEST_ASSERT(0);
+      } catch (ValueErrorException &e) {
+        TEST_ASSERT(
+            std::string(
+                "V2000 format does not support atom positions <= -10000 or >= 100000") ==
+            e.what());
+      }
+    }
+
+    {
+      pos[i] = 99999.;
+      conf->setAtomPos(0, pos);
+      auto mbV2k = MolToMolBlock(*m);
+      TEST_ASSERT(mbV2k.find("M  V30") == std::string::npos);
+      TEST_ASSERT(v2::FileParsers::MolFromMolBlock(mbV2k));
+    }
+
+    {
+      pos[i] = -10000.;
+      conf->setAtomPos(0, pos);
+      auto mbV2k = MolToMolBlock(*m);
+      TEST_ASSERT(mbV2k.find("M  V30") != std::string::npos);
+      TEST_ASSERT(v2::FileParsers::MolFromMolBlock(mbV2k));
+      try {
+        MolToV2KMolBlock(*m);
+        TEST_ASSERT(0);
+      } catch (ValueErrorException &e) {
+        TEST_ASSERT(
+            std::string(
+                "V2000 format does not support atom positions <= -10000 or >= 100000") ==
+            e.what());
+      }
+    }
+
+    {
+      pos[i] = -9999.;
+      conf->setAtomPos(0, pos);
+      auto mbV2k = MolToMolBlock(*m);
+      TEST_ASSERT(mbV2k.find("M  V30") == std::string::npos);
+      TEST_ASSERT(v2::FileParsers::MolFromMolBlock(mbV2k));
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+}
+
 int main() {
   RDLog::InitLogs();
 
-#if 1
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testSmilesWriter()\n";
   testSmilesWriter();
@@ -1731,8 +1825,6 @@ int main() {
   testNeedsUpdatePropertyCacheSDWriter();
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
 
-#endif
-
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testIssue3525000()\n";
   testIssue3525000();
@@ -1758,4 +1850,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
   testRGPMolFileWriterV2KV3K();
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+
+  testMolFileGithub8265();
 }

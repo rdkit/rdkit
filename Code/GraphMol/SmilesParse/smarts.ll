@@ -360,10 +360,12 @@ A			{
 
 [\\]{1,2}    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
+	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());
 	return BOND_TOKEN;  }
 
 [\/]    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
+	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());	
 	return BOND_TOKEN;  }
 
 \-\> {
@@ -452,7 +454,7 @@ A			{
 \n		return EOS_TOKEN;
 
 <<EOF>>		{ return EOS_TOKEN; }
-.		return yytext[0];
+.		return BAD_CHARACTER;
 
 %%
 

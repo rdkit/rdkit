@@ -50,7 +50,6 @@ Submodules
    rdkit.Chem.Graphs
    rdkit.Chem.Lipinski
    rdkit.Chem.MACCSkeys
-   rdkit.Chem.MCS
    rdkit.Chem.MolCatalog
    rdkit.Chem.MolStandardize
    rdkit.Chem.MolSurf
@@ -66,6 +65,7 @@ Submodules
    rdkit.Chem.SATIS
    rdkit.Chem.SaltRemover
    rdkit.Chem.ShowMols
+   rdkit.Chem.SpacialScore
    rdkit.Chem.TemplateAlign
    rdkit.Chem.TorsionFingerprints
    rdkit.Chem.inchi
@@ -108,6 +108,8 @@ Submodules
    rdkit.Chem.rdTautomerQuery
    rdkit.Chem.rdEHTTools
    rdkit.Chem.rdDetermineBonds
+   rdkit.Chem.rdShapeAlign
+   rdkit.Chem.rdSynthonSpaceSearch
 
 Module contents
 ---------------

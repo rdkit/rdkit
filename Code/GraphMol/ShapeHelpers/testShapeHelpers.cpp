@@ -78,7 +78,7 @@ void test2Compare() {
   rmsd = MolAlign::alignMol(*m2, *m, 0, 0, &atomMap);
   dist = MolShapes::tanimotoDistance(*m, *m2);
 
-  CHECK_INVARIANT(RDKit::feq(dist, 0.3593), "");
+  CHECK_INVARIANT(RDKit::feq(dist, 0.3561), "");
   delete m;
   delete m2;
 }

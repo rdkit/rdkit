@@ -225,7 +225,7 @@ RETURNS NULL ON NULL INPUT;
 CREATE CAST (text as mol) WITH FUNCTION mol_from_smiles(text) AS IMPLICIT;
 CREATE CAST (varchar as mol) WITH FUNCTION mol_from_smiles(text) AS IMPLICIT;
 
-CREATE OR REPLACE FUNCTION mol_from_ctab(cstring,bool default false)
+CREATE OR REPLACE FUNCTION mol_from_ctab(ctab cstring,keep_conformer bool default false, sanitize bool default true, remove_hs bool default true)
 RETURNS mol
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
@@ -300,7 +300,7 @@ PARALLEL SAFE
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION mol_to_ctab(mol,bool default true, bool default false)
+CREATE OR REPLACE FUNCTION mol_to_ctab(mol mol,bool default true, bool default false)
 RETURNS cstring
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
@@ -340,7 +340,7 @@ PARALLEL SAFE
 AS 'MODULE_PATHNAME', 'mol_from_smarts'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION qmol_from_ctab(cstring,bool default false)
+CREATE OR REPLACE FUNCTION qmol_from_ctab(ctab cstring,keep_conformer bool default false, merge_hs bool default true)
 RETURNS qmol
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
@@ -1370,8 +1370,8 @@ CREATE OPERATOR @= (
     LEFTARG = mol,
     RIGHTARG = mol,
     PROCEDURE = mol_eq,
-    COMMUTATOR = @RDKIT_PG_ATEQ_COMMUTATOR@,
-    NEGATOR = @RDKIT_PG_ATEQ_NEGATOR@,
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>',
     RESTRICT = eqsel,
     JOIN = eqjoinsel
 );
@@ -1691,8 +1691,8 @@ CREATE OPERATOR @= (
     LEFTARG = reaction,
     RIGHTARG = reaction,
     PROCEDURE = reaction_eq,
-    COMMUTATOR = @RDKIT_PG_ATEQ_COMMUTATOR@,
-    NEGATOR = @RDKIT_PG_ATEQ_NEGATOR@,
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>',
     RESTRICT = eqsel,
     JOIN = eqjoinsel
 );

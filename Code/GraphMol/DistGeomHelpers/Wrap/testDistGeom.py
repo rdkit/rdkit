@@ -1,7 +1,6 @@
 import copy
 import math
 import os
-import pickle
 import unittest
 
 import numpy
@@ -137,9 +136,9 @@ class TestCase(unittest.TestCase):
     conf = mol.GetConformer()
 
     # writer.write(mol)
-    self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.2180, -0.06088, 0.0]))
-    self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.00408, 0.12116, 0.0]))
-    self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.22207, -0.060276, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.237578, -0.000110, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.003500, 0.000027, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.241078, 0.000137, 0.0]))
 
     mol = Chem.MolFromSmiles('C=C=C=C')
     rdDistGeom.EmbedMolecule(mol, 10, 1, useExpTorsionAnglePrefs=False, useBasicKnowledge=False)
@@ -228,7 +227,7 @@ class TestCase(unittest.TestCase):
     params.pruneRmsThresh = 1.5
     params.useSymmetryForPruning = False
     nconfs = []
-    expected = [4, 5, 5, 7, 5, 3]
+    expected = [4, 5, 5, 6, 7, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
@@ -681,12 +680,12 @@ class TestCase(unittest.TestCase):
     params.trackFailures = True
     params.maxIterations = 50
     params.randomSeed = 42
-    mol = Chem.MolFromSmiles('O=c2cc3CCc1ccc(cc1Br)CCc2c(O)c3=O')
+    mol = Chem.MolFromSmiles('C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC')
     mol = Chem.AddHs(mol)
     AllChem.EmbedMolecule(mol, params)
     cnts = params.GetFailureCounts()
-    self.assertEqual(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 2)
-    self.assertEqual(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION], 5)
+    self.assertGreater(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 5)
+    self.assertGreater(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION], 10)
 
   def testCoordMap(self):
     mol = Chem.AddHs(Chem.MolFromSmiles("OCCC"))
@@ -730,6 +729,17 @@ class TestCase(unittest.TestCase):
     ps.symmetrizeConjugatedTerminalGroupsForPruning = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
     self.assertGreater(len(cids), 1)
+
+  def testSetattr(self):
+    mol = Chem.MolFromSmiles("CCC")
+    bm = rdDistGeom.GetMoleculeBoundsMatrix(mol)
+    ps = rdDistGeom.EmbedParameters()
+    ps.randomSeed = 0xc0ffee
+    ps.SetBoundsMat(bm)
+    with self.assertRaises(AttributeError):
+      ps.wrongName = 1234
+    with self.assertRaises(AttributeError):
+      ps.wrongName(1234)
 
 
 if __name__ == '__main__':

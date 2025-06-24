@@ -34,7 +34,6 @@
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ROMol.h>
-#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <cmath>
 
 namespace RDKit {

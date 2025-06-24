@@ -38,9 +38,9 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
     \param order (optional) the order of the angle term, this is for
        special cases and should adopt values:
          - 0: not a special case, use the \c theta0 value from \c at2Params
-         - 2: linear coordination
+         - 1: linear coordination
          - 3: trigonal planar coordination
-         - 4: square planar or tetrahedral coordination
+         - 4: square planar or octahedral coordination
 
   */
   AngleBendContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
@@ -59,8 +59,8 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
   int d_at2Idx{-1};
   int d_at3Idx{-1};
   unsigned int d_order{0};
-  double d_forceConstant, d_C0, d_C1, d_C2;
-
+  double d_forceConstant, d_C0, d_C1, d_C2, d_theta0;
+  
   double getEnergyTerm(double cosTheta, double sinThetaSq) const;
   double getThetaDeriv(double cosTheta, double sinTheta) const;
 };

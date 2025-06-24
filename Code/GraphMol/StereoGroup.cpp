@@ -2,7 +2,9 @@
 #include <utility>
 #include <vector>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include "StereoGroup.h"
 #include "Atom.h"
@@ -51,7 +53,7 @@ StereoGroup::StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms,
 
 StereoGroup::StereoGroup(StereoGroupType grouptype,
                          const std::vector<Atom *> &atoms,
-                         std::vector<Bond *> &bonds, unsigned readId)
+                         const std::vector<Bond *> &bonds, unsigned readId)
     : d_grouptype(grouptype),
       d_atoms(std::move(atoms)),
       d_bonds(std::move(bonds)),
@@ -82,10 +84,31 @@ void removeAtomFromGroups(const Atom *atom, std::vector<StereoGroup> &groups) {
     }
   }
   // now remove any empty groups:
-  groups.erase(
-      std::remove_if(groups.begin(), groups.end(),
-                     [](const auto &gp) { return gp.getAtoms().empty(); }),
-      groups.end());
+  groups.erase(std::remove_if(groups.begin(), groups.end(),
+                              [](const auto &gp) {
+                                return gp.getAtoms().empty() &&
+                                       gp.getBonds().empty();
+                              }),
+               groups.end());
+}
+
+void removeBondFromGroups(const Bond *bond, std::vector<StereoGroup> &groups) {
+  auto findBond = [bond](StereoGroup &group) {
+    return std::find(group.getBonds().begin(), group.getBonds().end(), bond);
+  };
+  for (auto &group : groups) {
+    auto bondPos = findBond(group);
+    if (bondPos != group.d_bonds.end()) {
+      group.d_bonds.erase(bondPos);
+    }
+  }
+  // now remove any empty groups:
+  groups.erase(std::remove_if(groups.begin(), groups.end(),
+                              [](const auto &gp) {
+                                return gp.getAtoms().empty() &&
+                                       gp.getBonds().empty();
+                              }),
+               groups.end());
 }
 
 void removeGroupsWithBond(const Bond *bond, std::vector<StereoGroup> &groups) {
@@ -149,7 +172,7 @@ void assignStereoGroupIds(std::vector<StereoGroup> &groups) {
     if (sg.getGroupType() == StereoGroupType::STEREO_AND) {
       assignMissingIds(andIds, andId, sg);
     } else if (sg.getGroupType() == StereoGroupType::STEREO_OR) {
-      assignMissingIds(andIds, orId, sg);
+      assignMissingIds(orIds, orId, sg);
     }
   }
 }
@@ -178,18 +201,20 @@ std::ostream &operator<<(std::ostream &target, const RDKit::StereoGroup &stg) {
   }
   target << " rId: " << stg.getReadId();
   target << " wId: " << stg.getWriteId();
-  target << " atoms: { ";
-  for (auto atom : stg.getAtoms()) {
-    target << atom->getIdx() << ' ';
+  if (!stg.getAtoms().empty()) {
+    target << " atoms: { ";
+    for (auto atom : stg.getAtoms()) {
+      target << atom->getIdx() << ' ';
+    }
+    target << '}';
   }
-  if (stg.getBonds().size() > 0) {
-    target << " Bonds: { ";
+  if (!stg.getBonds().empty()) {
+    target << " bonds: { ";
     for (auto bond : stg.getBonds()) {
       target << bond->getIdx() << ' ';
     }
     target << '}';
   }
-  target << '}';
 
   return target;
 }

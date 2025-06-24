@@ -17,6 +17,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
 #include "SmartsWrite.h"
@@ -674,7 +675,7 @@ class SmilesTest {
       : fileName(fileNameInit),
         expectedResult(expectedResultInit),
         atomCount(atomCountInit),
-        bondCount(bondCountInit){};
+        bondCount(bondCountInit) {};
 
   bool isRxnTest() const { return false; }
 };
@@ -715,7 +716,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
     smilesParserParams.sanitize = true;
     smilesParserParams.removeHs = false;
 
-    std::unique_ptr<RWMol> smilesMol(
+    std::unique_ptr<ROMol> smilesMol(
         SmilesToMol(inputSmiles, smilesParserParams));
 
     REQUIRE(smilesMol);
@@ -747,7 +748,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
     // second pass without using original wedges
 
     smilesMol =
-        std::unique_ptr<RWMol>(SmilesToMol(inputSmiles, smilesParserParams));
+        std::unique_ptr<ROMol>(SmilesToMol(inputSmiles, smilesParserParams));
 
     // test round trip back to smiles
     {
@@ -773,7 +774,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
     // third pass without using original wedges and with canonicalization
 
     smilesMol =
-        std::unique_ptr<RWMol>(SmilesToMol(inputSmiles, smilesParserParams));
+        std::unique_ptr<ROMol>(SmilesToMol(inputSmiles, smilesParserParams));
 
     // test round trip back to smiles
     {
@@ -823,7 +824,6 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
       std::string expectedFileName = fName + ".expected.mrv";
       std::string outMolStr = "";
       try {
-        MolOps::Kekulize(*smilesMol);
         RDKit::Chirality::reapplyMolBlockWedging(*smilesMol);
         outMolStr = MolToMrvBlock(*smilesMol, true, -1, true, false);
       } catch (const RDKit::KekulizeException &e) {
@@ -868,7 +868,7 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
     smilesParserParams.sanitize = true;
     smilesParserParams.removeHs = false;
 
-    std::unique_ptr<RWMol> smilesMol(
+    std::unique_ptr<ROMol> smilesMol(
         SmilesToMol(inputSmiles, smilesParserParams));
 
     REQUIRE(smilesMol);
@@ -877,6 +877,8 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
 
     // test kekule and canonicalization
     {
+      RDKit::canonicalizeStereoGroups(smilesMol);
+
       std::string expectedMrvName = fName + ".kekule_expected.cxsmi";
       SmilesWriteParams ps;
       ps.canonical = true;
@@ -903,6 +905,8 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
 
     smilesMol =
         std::unique_ptr<RWMol>(SmilesToMol(inputSmiles, smilesParserParams));
+
+    RDKit::canonicalizeStereoGroups(smilesMol);
 
     // test round trip back to smiles
     {
@@ -1109,7 +1113,6 @@ TEST_CASE("testAtropisomersInCXSmilesCanon") {
 
     for (auto smiTest : smiTests) {
       printf("Test\n\n %s\n\n", smiTest.fileName.c_str());
-      // RDDepict::preferCoordGen = true;
       testOneAtropisomersCanon(&smiTest);
     }
   }
@@ -1117,9 +1120,9 @@ TEST_CASE("testAtropisomersInCXSmilesCanon") {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-TEST_CASE("test3DChrial") {
+TEST_CASE("test3DChiral") {
   std::list<SmilesTest> smiTests{
-      SmilesTest("Cubane.cxsmi", true, 16, 20),
+      // SmilesTest("Cubane.cxsmi", true, 16, 20),
       SmilesTest("BMS-986142_3d_chiral.cxsmi", true, 72, 77),
       SmilesTest("BMS-986142_3d.cxsmi", true, 72, 77),
   };
@@ -1337,7 +1340,6 @@ TEST_CASE("SMILES CANONICALIZATION") {
         rdbase + "/Code/GraphMol/SmilesParse/test_data/TestSmilesUniq.sdf";
 
     std::ifstream in;
-    int molCount = 0;
     in.open(fName);
     while (!in.eof()) {
       std::string molBlock = "";
@@ -1346,7 +1348,6 @@ TEST_CASE("SMILES CANONICALIZATION") {
         std::getline(in, line);
         molBlock += line + "\n";
       }
-      molCount++;
 
       if (molBlock.length() > 25) {
         std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock));
@@ -1424,7 +1425,8 @@ TEST_CASE(
 }
 
 TEST_CASE("StereoGroup id forwarding", "[StereoGroup][cxsmiles]") {
-  auto m = "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&7:3,o1:7,&8:1,&9:5|"_smiles;
+  std::unique_ptr<ROMol> m =
+      "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&7:3,o1:7,&8:1,&9:5|"_smiles;
   REQUIRE(m);
   CHECK(m->getStereoGroups().size() == 4);
 
@@ -1442,6 +1444,16 @@ TEST_CASE("StereoGroup id forwarding", "[StereoGroup][cxsmiles]") {
     CHECK(smi_out.find("&7") != std::string::npos);
     CHECK(smi_out.find("&8") != std::string::npos);
     CHECK(smi_out.find("&9") != std::string::npos);
+    CHECK(smi_out.find("o1") != std::string::npos);
+  }
+
+  SECTION("forward input ids - rigorous") {
+    forwardStereoGroupIds(*m);
+    RDKit::canonicalizeStereoGroups(m);
+    const auto smi_out = MolToCXSmiles(*m);
+    CHECK(smi_out.find("&1") != std::string::npos);
+    CHECK(smi_out.find("&2") != std::string::npos);
+    CHECK(smi_out.find("&3") != std::string::npos);
     CHECK(smi_out.find("o1") != std::string::npos);
   }
 }
@@ -1484,14 +1496,14 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;
     REQUIRE(m);
     auto smi = MolToCXSmiles(*m);
-    CHECK(smi == "N[Fe][NH3] |C:2.1|");
+    CHECK(smi == "[NH2][Fe][NH3] |C:2.1|");
 
     // disable the dative bond output
     SmilesWriteParams ps;
     smi = MolToCXSmiles(*m, ps,
                         SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS ^
                             SmilesWrite::CXSmilesFields::CX_COORDINATE_BONDS);
-    CHECK(smi == "N[Fe][NH3]");
+    CHECK(smi == "[NH2][Fe][NH3]");
   }
   SECTION("basics, SMARTS output") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;
@@ -1510,6 +1522,118 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     REQUIRE(m);
     auto smi = MolToCXSmarts(*m);
     CHECK(smi == "[#7H3]-[Fe]-[#7H3] |C:0.0,2.1|");
+  }
+}
+
+TEST_CASE(
+    "Github #7725: double bond geometry not perceived even though c: or t: are in CXSMILES") {
+  SECTION("as reported") {
+    auto m = "C/C=C/C1=CC=CC=C1 |c:5,7,t:3|"_smiles;
+    REQUIRE(m);
+    CHECK((m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS ||
+           m->getBondWithIdx(1)->getStereo() == Bond::STEREOE));
+    CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+  }
+  SECTION("include actual double bond stereo in a ring") {
+    auto m = "C/C=C/C1CCCC=CCCCCC1 |t:7|"_smiles;
+    CHECK((m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS ||
+           m->getBondWithIdx(1)->getStereo() == Bond::STEREOE));
+    CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    CHECK((m->getBondWithIdx(7)->getStereo() == Bond::STEREOTRANS ||
+           m->getBondWithIdx(7)->getStereo() == Bond::STEREOE));
+    CHECK(m->getBondWithIdx(7)->getStereoAtoms() == std::vector<int>{6, 9});
+  }
+}
+
+TEST_CASE("cis/trans/unknown in CXSMILES incorrectly interpreted") {
+  // This is #8365 and #8364
+  UseLegacyStereoPerceptionFixture f(false);
+  SECTION("in a ring") {
+    {
+      {
+        auto m = "FC1(=C(F)CCCCCCCCCC1) |c:1|"_smiles;
+        REQUIRE(m);
+        CHECK(m->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+        CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+      }
+      {
+        auto m = "C1C(F)=C(F)CCCCCCCCC1 |c:2|"_smiles;
+        REQUIRE(m);
+        CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
+        CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+      }
+    }
+    {
+      auto m = "FC1(=C(F)CCCCCCCCCC1) |t:1|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
+    {
+      auto m = "FC1(=C(F)CCCCCCCCCC1) |ctu:1|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::STEREOANY);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
+  }
+  SECTION("as reported") {
+    // technically these are only valid in rings, but we allow them elsewhere
+    {
+      auto m = "CC(F)=C(C)F |c:2|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
+      CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+    }
+    {
+      auto m = "CC(F)=C(C)F |t:2|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOTRANS);
+      CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+    }
+    {
+      auto m = "CC(F)=C(C)F |ctu:2|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOANY);
+      CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+    }
+  }
+}
+
+TEST_CASE("Github #8348: Unable to write wiggly bond information by default") {
+  auto test_input = GENERATE(
+      "CC(O)Cl |w:1.0|",
+      "CC(Cl)(Br)C=C[C@@](C)(N)Cl |(4.9105,-2.4464,;4.1235,-2.6938,;4.7314,-3.2517,;3.9443,-3.4991,;3.2367,-1.8799,;2.4117,-1.8799,;1.6973,-1.4674,;0.9435,-1.803,;1.6973,-0.6424,;1.654,-2.2913,),w:4.3,wU:6.5|",
+      "CC(Cl)(Br)C=C[C@@](C)(N)Cl |(4.9105,-2.4464,;4.1235,-2.6938,;4.7314,-3.2517,;3.9443,-3.4991,;3.2367,-1.8799,;2.4117,-1.8799,;1.6973,-1.4674,;0.9435,-1.803,;1.6973,-0.6424,;1.654,-2.2913,),w:4.3,wD:6.5|"
+
+  );
+  CAPTURE(test_input);
+
+  auto mol = v2::SmilesParse::MolFromSmiles(test_input);
+  // make sure mol is valid
+  REQUIRE(mol);
+  CHECK(mol->getNumAtoms() > 0);
+  CHECK(mol->getNumBonds() > 0);
+
+  // the default conversion
+  {
+    const auto output_cxsmiles = MolToCXSmiles(*mol);
+    // we should always be able to write wiggly bond information
+    CHECK(output_cxsmiles.find("w:") != std::string::npos);
+  }
+
+  // testing the RestoreBondDirOption parameter
+  {
+    auto bond_dir_option =
+        GENERATE(RestoreBondDirOptionClear, RestoreBondDirOptionTrue);
+    CAPTURE(bond_dir_option);
+
+    const SmilesWriteParams ps;
+    const auto flags = SmilesWrite::CXSmilesFields::CX_ALL;
+
+    const auto output_cxsmiles =
+        MolToCXSmiles(*mol, ps, flags, bond_dir_option);
+    // we should always be able to write wiggly bond information
+    CHECK(output_cxsmiles.find("w:") != std::string::npos);
   }
 }
 

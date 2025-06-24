@@ -5,4 +5,4 @@ rdkit_python_extension(rdRascalMCES
         DEST Chem
         LINK_LIBRARIES RascalMCES)
 
-add_pytest(pyMolDraw2D ${CMAKE_CURRENT_SOURCE_DIR}/testRascalMCES.py)
+add_pytest(pyRascalMCES ${CMAKE_CURRENT_SOURCE_DIR}/testRascalMCES.py)

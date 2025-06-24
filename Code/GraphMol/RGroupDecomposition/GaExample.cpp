@@ -28,7 +28,7 @@ using namespace boost::program_options;
 namespace options = boost::program_options;
 
 // Example systems based on Brian's MultipleCores notebook for profiling
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
 
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
   cerr << "Read " << molecules.size() << endl;
 
   std::vector<ROMOL_SPTR> cores;
-  for (const auto& s : coreSmiles) {
+  for (const auto &s : coreSmiles) {
     cores.emplace_back(SmartsToMol(s));
   }
 
@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
   RGroupDecomposition decomposition(cores, parameters);
 
   int numberAdded(0);
-  for (auto& molecule : molecules) {
+  for (auto &molecule : molecules) {
     auto added = decomposition.add(*molecule);
     if (added > -1) {
       auto smiles = MolToSmiles(*molecule);

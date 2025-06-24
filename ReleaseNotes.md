@@ -1,3 +1,495 @@
+# Release_2025.09.1
+(Changes relative to Release_2025.03.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+## Highlights
+
+## Backwards incompatible changes:
+- atom maps on dummy atoms are now always used in the calculation of canonical
+  atom ranks.
+- 2D coordinate generation may produce different results for some molecules due
+  to a change in the way the atom ordering is computed in the depiction code.
+
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+
+## Cleanup work:
+
+## Code removed in this release:
+
+## Deprecated code (to be removed in a future release):
+
+
+# Release_2025.03.1
+(Changes relative to Release_2024.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Andrey Alekseenko, Marco Ballarotto, Chris Von Bargen, Kevin Boyd, Jessica
+Braun, Christopher Brown, Martin Buttenschoen, Rubén Chaves, Michael Cho David
+Cosgrove, Oleksii Dukhno, Hussein Faara, Jozef Fulop, Richard Gowers, Tad Hurst,
+Gareth Jones, Eisuke Kawashima, Brian Kelley, Radics Laszlo, Zhen(Jack) Liu,
+Niels Maeder, John Mayfield, Jeremy Monat, Dan Nealschneider, Jan Oboril, Yakov
+Pechersky, Patrick Penner, Julianus Pfeuffer, Rachael Pirie, Yechen Qiao, Lauren
+Reid, Ricardo Rodriguez, Nikitas Rontsis, Fio Ruggiu, Vincent F. Scalfani,
+Ulrich Schatzschneider, Wonseok Shin, Anton Siomchen, Paolo Tosco, Kollin
+Trujillo, Ivan Tubert-Brohman, Franz Waibl, Rachel Walker, Riccardo Vianello,
+Marco Visani, QJ-Chen, UENO, M., heng-yin, EvaSnow, JP, Jess, knalice,
+YOUNG-JAME, thomp-j, esiaero, bbu-imdea, bzoracler
+
+## Highlights
+- The RDKit now supports synthon-based substructure and similarity
+  (fingerprint-based and RASCAL-based) searches in very large combinatorial
+  spaces. This code should still be viewed as experimental: the API and results
+  may change in future releases.
+
+## Backwards incompatible changes
+- The order of combinations returned by Chem.Pharm2D.Utils.GetUniqueCombinations
+  has changed to be in numerical order. The combinations themselves are
+  unchanged.
+- The MaeWriter class will now throw when attempting to write an empty Mol or
+  when there are errors during the writing (e.g. kekulization errors). Previous
+  behavior was to log an error and return an empty string.
+- AdjustQueryProperties now no longer ignores additional atom adjustments when
+  makeAtomsGeneric is enabled.
+- The functions getImplicitValence(), getNumImplicitHs(), getDegree(), and
+  getTotalDegree(), now return 0 for atoms that are not associated with
+  molecules (previously they threw exceptions)
+- SMILES and RGroupDecomp JSON parsers were moved to their own translation
+  units. This will require C++ code using those JSON parsers to be added
+  #include directives for GraphMol/SmilesParse/SmilesJSONParsers.h and
+  GraphMol/RGroupDecomposition/RGroupDecompJSONParsers.h, respectively.
+- Replaced enums in the signatures of MolToCXSmiles and
+  updateCXSmilesFieldsFromJSON with the underlying types. This may require
+  existing C++ code using those functions to be updated accordingly.
+- HasPropWithValueQueryBase used RDKit::Dict::Pair to return data used for
+  serializing object in a molecule  pickle.  This has been changed to
+  RDKit::PairHolder which automatically manages memory.
+- The colors of annotations on atoms and bonds are now controlled by the drawing
+  options `atomNoteColour` and `bondNoteColour` instead of the general
+  `annotationColour`.
+- When writing SMILES, organic subset atoms which are bonded to "metals" will 
+  always be written in square brackets, i.e. with their H count explicit. Here 
+  the definition of "metal" is any atom matching an "M" query (the corresponding 
+  SMARTS is `[!#0!#1!#2!#5!#6!#7!#8!#9!#10!#14!#15!#16!#17!#18!#33!#34!#35!#36!#52!#53!#54!#85!#86]`)
+
+
+## New Features and Enhancements:
+  - NumAmideBonds descriptor missing
+ (github issue #1670 from malteseunderdog)
+  - Improved handling of SP/TB/OH reording in SMILES/SMARTS.
+ (github pull #6777 from johnmay)
+  - Fix canonicalization of stereogroups
+ (github pull #7041 from tadhurst-cdd)
+  - Update reaction fingerprints to use generators
+ (github issue #7521 from vfscalfani)
+  - Carry over enhanced stereochemistry groups from reaction product templates to products
+ (github issue #7669 from jpfeuffer)
+  - Simple speed up for CIPLabeler
+ (github pull #7826 from d-b-w)
+  - Additional compatibility updates for commutator/negator settings for …
+ (github pull #7834 from esiaero)
+  - Support Writing CX Extensions for Reactions
+ (github pull #7838 from KollinRT)
+  - Expose preset color palettes to MinimalLib through JSON
+ (github pull #7853 from ptosco)
+  - Another 2x performance improvement in CIP labelling
+ (github pull #7854 from d-b-w)
+  - Improve Morgan Fingerprint Performance
+ (github pull #7862 from scal444)
+  - [IterateCIPRanks] Precompute neighbor indices and counts, sort them together for each atom
+ (github pull #7889 from scal444)
+  - Optimize Butina Clustering for Performance and Expand API
+ (github pull #7892 from evasnow1992)
+  - Expose three ROMol methods which were not previously exposed to SWIG wrappers
+ (github pull #7895 from ptosco)
+  - Sort CIP entries in place using a lightweight wrapper, only sort tied entries
+ (github pull #7911 from scal444)
+  - export the targets with a python dependency to a different config file
+ (github pull #7914 from rvianello)
+  - Only save the most recent CIP rank for sorting
+ (github pull #7932 from scal444)
+  - Add to Cookbook "Include a Bond Index" recipe and image
+ (github pull #7939 from bertiewooster)
+  - Updates to the Docs/Book directory
+ (github pull #7942 from greglandrum)
+  - Allow inclusion of molecule names in ScaffoldNetwork
+ (github pull #7956 from PatrickPenner)
+  - Expose molzip functionality to MinimalLib
+ (github pull #7959 from ptosco)
+  - Expose propertyFlags to CFFI and MinimalLib
+ (github pull #7960 from ptosco)
+  - Make sure that loggers can be enabled, disabled, captured and tee'd from MinimalLib
+ (github pull #7962 from ptosco)
+  - SynthonSpace Search
+ (github pull #7978 from DavidACosgrove)
+  - Update SMILES parsing syntax error to include bad token position 
+ (github pull #7979 from whosayn)
+  - Update SMILES parsing syntax error to include bad token position
+ (github issue #7980 from whosayn)
+  - Add Molecular Interaction Fields
+ (github pull #7993 from greglandrum)
+  - Expose tautomer scoring functions to python
+ (github pull #7994 from bp-kelley)
+  - Implemented two more JSON parsers for CFFI and MinimalLib
+ (github pull #8000 from ptosco)
+  - Explicit valence for charged organic atoms when creating a MolBlock
+ (github issue #8023 from greglandrum)
+  - improve defaults for the shape-based alignment
+ (github pull #8029 from greglandrum)
+  - SynthonSpace search timeout
+ (github pull #8070 from DavidACosgrove)
+  - Resolve clashing atom labels in 2D drawing
+ (github pull #8074 from DavidACosgrove)
+  - Add drawMols3D() and improve documentation for IPythonConsole
+ (github pull #8083 from greglandrum)
+  - Allow fragments of aromatic rings to match in RascalMCES
+ (github pull #8088 from DavidACosgrove)
+  - SynthonSearch synth check
+ (github pull #8109 from DavidACosgrove)
+  - Conformer embedding timeout
+ (github pull #8110 from nrontsis)
+  - Avoid expensive matching in conformer generation if it's not needed.
+ (github pull #8111 from nrontsis)
+  - allow specified chiral features to SSS match unspecified features
+ (github pull #8115 from greglandrum)
+  - efgs code
+ (github pull #8145 from bbu-imdea)
+  - Optimisations to fingerprint search of Synthon Space
+ (github pull #8152 from DavidACosgrove)
+  - Making SynthonSearch respond to Ctrl-C
+ (github pull #8153 from DavidACosgrove)
+  - Condense MMFF Contribs into single contrib per type.
+ (github pull #8175 from scal444)
+  - bump the inchi version to 1.07.2
+ (github pull #8176 from greglandrum)
+  - some optimizations of triangle smoothing and the bounds matrix code
+ (github pull #8190 from greglandrum)
+  - support Ctrl-C in conformer generation
+ (github pull #8197 from greglandrum)
+  - DistViolationContribs optimization
+ (github pull #8208 from evasnow1992)
+  - Add option to omit brackets when drawing query atoms.
+ (github pull #8212 from DavidACosgrove)
+  - Option to put padding round elements of reaction.
+ (github pull #8216 from DavidACosgrove)
+  - Add property to track reactant index in reaction products
+ (github issue #8222 from bp-kelley)
+  - Optimisation of fingerprint Synthon Search
+ (github pull #8223 from DavidACosgrove)
+  - Rascal: Add option to specify minimum clique size directly.
+ (github pull #8248 from DavidACosgrove)
+  - MolDraw2D: add separate colors for atom and bond annotations
+ (github pull #8249 from greglandrum)
+  - Restore functionality of the MinimalLib Dockerfile and improve exception handling performance
+ (github pull #8267 from ptosco)
+  - Option to preserve default text colors when highlighting atoms.
+ (github issue #8271 from JessJKitty)
+  - Tweak mol fragmenter
+ (github pull #8277 from DavidACosgrove)
+  - Expose basinThresh to the python layer
+ (github pull #8283 from nmaeder)
+  - Make MaeWriter to throw on errors.
+ (github pull #8297 from ricrogz)
+  - bump InChI version to 1.07.3
+ (github pull #8300 from greglandrum)
+  - addHs should ignore queries
+ (github issue #8304 from cdvonbargen)
+  - Add RascalMCES option to require complete RingInfo rings
+ (github pull #8305 from rachelnwalker)
+  - Atoms bonded to metal atoms should always have their H counts explicit in SMILES
+ (github pull #8318 from greglandrum)
+ - cartridge: expose sanitize options to mol_from_ctab
+ (github pull #8326 from greglandrum)
+  - Feat/use draw color in drawString()
+ (github pull #8334 from greglandrum)
+  - Synthon Search Phase 2
+ (github pull #8338 from DavidACosgrove)
+  - bump yaehmop version
+ (github issue #8395 from greglandrum)
+
+## Bug Fixes:
+  - Segmentation fault using None as property name in SetProp
+ (github issue #4570 from bp-kelley)
+  - Python SIGSEGV when calling `rdkit.Chem.rdmolops.SplitMolByPDBResidues` on some molecules
+ (github issue #5599 from bzoracler)
+  - Suspicious value for atom pair code calculation
+ (github issue #6679 from QJ-Chen)
+  - Tautomer canonicalizer invariant violation
+ (github issue #7044 from fioruggiu)
+  - Online Documentation: `Mol.GetAtoms` and `Mol.GetBonds` miss signatures
+ (github issue #7527 from e-kwsm)
+  - Chem.MolToSmiles(mol, rootedAtAtom=pos), when the parameter rootedAtAtom is greater than or equal to 20, the range error is reported.
+ (github issue #7572 from YOUNG-JAME)
+  - rdMolAlign.GetBestRMS gets stuck 
+ (github issue #7685 from LiuCMU)
+  - MergeQueryHs fails to detect explicit H involved in OR queries where there's more than 2 options in the query
+ (github issue #7687 from ricrogz)
+  - Fix 4.3.0--4.4.0 sql upgrade script
+ (github pull #7774 from esiaero)
+  - RWMol::insertMol should not add an empty ABSOLUTE_STEREO group unnecessarily
+ (github issue #7782 from ptosco)
+  - Catch exceptions in MultithreadedMolSupplier callbacks
+ (github pull #7810 from i-tub)
+  - HasPropWithValueQueryBase::getPair() may leak the value of RDValue.
+ (github issue #7865 from ricrogz)
+  - Use .dylib on macOS for PostgreSQL 16+
+ (github pull #7869 from cho-m)
+  - Setting an atom's pdb residue number with None segfaults
+ (github issue #7873 from bp-kelley)
+  - Restore "oops, exponential is a pain" code snippet in the RGD algorithm
+ (github pull #7898 from ptosco)
+  - Fix some more mem errors in 2024.09.1
+ (github pull #7899 from ricrogz)
+  - UFF optimization leads to overlapping atoms
+ (github issue #7901 from oboril)
+  - AssignStereochemistry(cleanIt=True) does not clean _CIPCode property on bonds
+ (github issue #7929 from ricrogz)
+  - rxn.RunReactants mismatch directional bonds in a heterocycle ring
+ (github issue #7944 from m-hyin)
+  - Fix for trimethylcyclohexane error
+ (github pull #7949 from tadhurst-cdd)
+  - Fix incorrect CIP values for some aromatic atropisomers
+ (github pull #7957 from tadhurst-cdd)
+  - Need to reserve space before assignment
+ (github pull #7964 from bp-kelley)
+  - Fixes a regression introduced in #7582 which made all SWIG enums become type-unsafe
+ (github pull #7972 from ptosco)
+  - Fix for removing bad stereo indications from Atropisomer parsing
+ (github pull #7984 from tadhurst-cdd)
+  - Morgan fingerprints with chirality distinguish chiral atoms too early
+ (github issue #7986 from greglandrum)
+  - Wrong SMARTS pattern in O-benzyl deprotection reaction
+ (github issue #7989 from marcobICR)
+  - Fix for kekuleAtrop wedge error
+ (github pull #7992 from tadhurst-cdd)
+  - RMS pruning in conformer generation misses conformers above the threshold
+ (github issue #8001 from fwaibl)
+  - Fix potential division by zero in UFF TorsionAngle
+ (github pull #8007 from ricrogz)
+  - Fix probe molecule transformation for ShapeAlign
+ (github pull #8016 from greglandrum)
+  - DistanceConstraintContrib is not exposed to SWIG wrappers anymore
+ (github issue #8019 from ptosco)
+  - MinimalLib and CFFI get_mol() will not remove Hs even when removeHs is set to true
+ (github issue #8027 from ptosco)
+  - segfault when parsing molecule with high coordination number
+ (github issue #8060 from garaboncias)
+  - Adding Hs to a linear molecule throws "Cannot normalize a zero length vector"
+ (github issue #8065 from ricrogz)
+  - Handle DOS files in SynthonSpaceSearch
+ (github pull #8075 from DavidACosgrove)
+  - reloading IPythonConsole breaks it
+ (github issue #8082 from greglandrum)
+  - Avoid that map::at() throws an exception in case atomColourPalette includes neither 6 nor -1
+ (github pull #8085 from ptosco)
+  - Synthon search fp bug
+ (github pull #8086 from DavidACosgrove)
+  - HetAtomTautomerv2 detects tautomerism at carboxylate
+ (github issue #8090 from d-b-w)
+  - rdDetermineBonds segfaults when called from readonly directory
+ (github issue #8092 from bp-kelley)
+  - Tanimoto score exceeds 1 for deuterium-containing molecules in rdShapeAlign.AlignMol()
+ (github issue #8096 from fulopjoz)
+  - Rascal returns empty results even when told not to
+ (github issue #8098 from DavidACosgrove)
+  - Use endian-aware read/write for length of string.
+ (github pull #8105 from DavidACosgrove)
+  - normalizeDepiction() should always center coordinates on the coordinate centroid, irrespective of the canonicalize parameter
+ (github pull #8107 from ptosco)
+  - Vulnerability fixes
+ (github pull #8116 from thomp-j)
+  - symmetric ring finding not returning correct results for molecules with fragments
+ (github issue #8121 from greglandrum)
+  - Fixes two out-of-bounds bugs in the InChI wrapper
+ (github pull #8126 from greglandrum)
+  - Two out-of-bounds bugs in inchi interface
+ (github issue #8129 from chbrown)
+  - Bad radical values are now ignored for MRV generation
+ (github pull #8130 from tadhurst-cdd)
+  - INCHI-API: `add_custom_command` signature problem
+ (github issue #8138 from e-kwsm)
+  - JavaWrappers: CMake `add_custom_command` has multiple comments
+ (github issue #8139 from e-kwsm)
+  - Fix leaks in MIF wrappers
+ (github pull #8143 from ricrogz)
+  - Fix division by zero in MIF descriptors
+ (github pull #8144 from ricrogz)
+  - fix SetPositions when using strided numpy array
+ (github pull #8150 from richardjgowers)
+  - Cyanamide incorrectly matches methyl-imidazole when aromaticMatchesConjugated is set
+ (github issue #8162 from jones-gareth)
+  - Unify Mol rendering in IPython
+ (github pull #8166 from asiomchen)
+  - improve handling of esters, amides, etc. in the v2 tautomer hash
+ (github pull #8173 from greglandrum)
+  - bad conformer ID errors when drawing with unspecifiedStereoIsUnknown and prepareMolsBeforeDrawing drawoptions both set to false
+ (github issue #8177 from oleksii-dukhno-bayer)
+  - Reaction Rendering Looks odd at small scales
+ (github issue #8195 from bp-kelley)
+  - Rascal MCES missing an atom when ignoreAtomAromaticity is True
+ (github issue #8198 from DavidACosgrove)
+  - RASCAL MCES gives duplicate results with singleLargestFrag = True
+ (github issue #8200 from DavidACosgrove)
+  - Reaction products not being drawn with smooth corners
+ (github issue #8209 from DavidACosgrove)
+  - Reaction drawing ignores panels, always draws across full canvas
+ (github issue #8213 from DavidACosgrove)
+  - Generating inchi for chiral phosphates raises a warning
+ (github issue #8238 from pechersky)
+  - Chiral phosphates no longer generate distinct inchi
+ (github issue #8239 from pechersky)
+  - RascalMCES.FindMCES Produces Incorrect SMARTS Output
+ (github issue #8246 from gratus907)
+  - Segmentation fault in EmbedMultipleConfs
+ (github issue #8250 from maabuu)
+  - Rascal - Missing atoms in MCESs
+ (github issue #8255 from laurenreid1)
+  - PR #8192 breaks AdjustQueryProperties / aromatizeIfPossible for some molecules.
+ (github issue #8256 from ricrogz)
+  - MolBlocks should fail to write when given coordinates that are too large
+ (github issue #8265 from bp-kelley)
+  - trimethylcyclohexane chirality error
+ (github pull #8272 from tadhurst-cdd)
+  - Some mem fixes.
+ (github pull #8276 from ricrogz)
+  - Fix buffer size in pickersCLI.cpp
+ (github pull #8282 from al42and)
+  - molzip doesn't handle linker style zipping
+ (github issue #8288 from bp-kelley)
+  - Another mem leak fix to the InChI conversion
+ (github pull #8291 from ricrogz)
+  - Fix memory leaks in MolStandardize SWIG Wrapper
+ (github pull #8298 from jones-gareth)
+  - Fix the way carbon is handed in cleanupOrganometallics()
+ (github pull #8301 from greglandrum)
+  - Fix potential build error under MSVC
+ (github pull #8302 from ricrogz)
+  - Explicit valence of carbon > 4 not permitted
+ (github issue #8312 from schatzsc)
+  - apply query adjustments when makeAtomsGeneric is enabled
+ (github pull #8315 from greglandrum)
+  - Ignore invalid chirality labels when reading MAE inputs
+ (github issue #8346 from whosayn)
+  - Unable to write wiggly bond information by default
+ (github issue #8348 from whosayn)
+  - Calling expandQuery on an empty QueryAtom crashes the program
+ (github issue #8353 from DavidACosgrove)
+  - stereo atoms not set for STEREOANY bonds when using the new stereo code
+ (github issue #8364 from greglandrum)
+  - cis/trans markers in CXSMILES being interpreted incorrectly
+ (github issue #8365 from greglandrum)
+
+## Cleanup work:
+  - Fix some mem errors in 2024.09.1
+ (github pull #7867 from ricrogz)
+  - FindPython Development.Module instead of Development
+ (github pull #7881 from pechersky)
+  - Use smart pointer for buffer.
+ (github pull #7883 from DavidACosgrove)
+  - Modernise ExplicitBitVect.
+ (github pull #7884 from DavidACosgrove)
+  - Update `PUBCHEMSHAPE_URL` and remove patch code
+ (github pull #7900 from eunos-1128)
+  - Replace awful enum reflection macros with Better Enums
+ (github pull #7913 from ptosco)
+  - ... and more mem errors fixed
+ (github pull #7924 from ricrogz)
+  - Replace GetImplicitValence() and GetExplicitValence() with GetValence()
+ (github pull #7926 from greglandrum)
+  - SA Score updates
+ (github pull #7928 from DavidACosgrove)
+  - Remove deprecation warnings by switching MinimalLib to fingerprint generators
+ (github pull #7938 from ptosco)
+  - One final round of mem errors
+ (github pull #7943 from ricrogz)
+  - Fix misnamed test
+ (github pull #7952 from ricrogz)
+  - Make sure that FreeSASA can be built as DLL on Windows
+ (github pull #7985 from ptosco)
+  - Remove unused code from GraphMol/SmilesParse
+ (github pull #7996 from whosayn)
+  - Throw when attempting to normalize a Zero RDGeom::Point
+ (github pull #8008 from ricrogz)
+  - Avoid division by zero in DrawMol
+ (github pull #8011 from ricrogz)
+  - remove no-op macros and dead code (pt 1)
+ (github pull #8012 from whosayn)
+  - Avoid division by zero in AlignPoints
+ (github pull #8013 from ricrogz)
+  - Fix shifting of a potentially negative number
+ (github pull #8014 from ricrogz)
+  - Fix some minor issues reported by ubsan and the compiler
+ (github pull #8015 from ricrogz)
+  - remove no-op macros and dead code (pt 2)
+ (github pull #8035 from whosayn)
+  - remove no-op macros and dead code (pt 4)
+ (github pull #8037 from whosayn)
+  - Remove explicit default constructor from Compute2DCoordParameters
+ (github pull #8046 from d-b-w)
+  - Remove warnings from `npscorer.py`
+ (github issue #8052 from mvisani)
+  - Minor MinimalLib cleanup
+ (github pull #8112 from ptosco)
+  - fix: apply modernize-use-nullptr
+ (github pull #8134 from e-kwsm)
+  - relax two tolerances for ARM64 builds
+ (github pull #8148 from tadhurst-cdd)
+  - Fix build under gcc-14
+ (github pull #8378 from ricrogz)
+
+## Documentation:
+  - The Python type hint for GetMolLayers in RegistrationHash.py appears incorrect
+ (github issue #7650 from yechenqiao)
+  - Getting Started with Contributing to RDKit
+ (github pull #7813 from RPirie96)
+  - Documentation updates
+ (github pull #7933 from greglandrum)
+  - expanded documentation in Chem and AllChem
+ (github pull #8004 from greglandrum)
+  - Mol to smiles docs
+ (github pull #8005 from DavidACosgrove)
+  - fixing the doc string in the shape alignment code
+ (github pull #8040 from brje01)
+  - Improve doc string for ParseAbbreviations in python wrapper.
+ (github pull #8049 from DavidACosgrove)
+  - Some documentation updates
+ (github pull #8080 from greglandrum)
+  - document H atoms in SMARTS
+ (github pull #8081 from greglandrum)
+  - Add section `How to Build RDKit Documentation Locally`
+ (github pull #8120 from bertiewooster)
+  - Expand on Explicit Valence Error - Partial Sanitization recipe
+ (github pull #8131 from bertiewooster)
+  - GetAtomsMatchingQuery: Tell where to find query options for
+ (github pull #8132 from bertiewooster)
+  - Explain how to run doctests locally
+ (github pull #8135 from bertiewooster)
+  - Update KNIME section in GettingStartedWithContributing 
+ (github pull #8174 from knalice)
+  - Update  InChi links
+ (github pull #8187 from RubenChM)
+  - Fix typo in documentation
+ (github pull #8220 from nmaeder)
+
+
+## Code removed in this release:
+- AtomPairs.Utils.NumPiElectrons was removed, please use Chem.GetNumPiElectrons instead.
+- The classes DistViolationContrib, ChiralViolationContrib, and FourthDimContrib were removed, please use DistViolationContribs, ChiralViolationContribs, and FourthDimContribs instead.
+- The function `MMFF::setMMFFAromaticity()` was removed, please use `MolOps::setMMFFAromaticity()` instead.
+
+## Deprecated code (to be removed in a future release):
+- The functions Atom::getImplicitValence() and Atom::getExplicitValence() are deprecated, please use Atom::getValence(Atom::ValenceType::IMPLICIT) or Atom::getValence(Atom::ValenceType::EXPLICIT) instead
+
 # Release_2024.09.1
 (Changes relative to Release_2024.03.1)
 
@@ -6,29 +498,392 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
+Jakub Adamczyk, François Bérenger, Christoph Berg, Jonathan Bisson, Anna
+Brünisholz, David Cosgrove, Michael Cho, Peter Eastman, Hussein Faara, Eloy
+Félix, Jacob Hucker, Tadd Hurst, Gareth Jones, Andrew Kane, Eisuke Kawashima,
+Brian Kelley, Joos Kiener, Chris Kuenneth, Phong Lam, Juuso Lehtivarjo, Yuanyue
+Li, Niels Maeder, Mark Mackey, Niels Kristian Kjærgård Madsen, Syed Zayyan
+Masud, Josh A. Mitchell, Dan Nealschneider, Yakov Pechersky, Julianus Pfeuffer,
+Rachael Pirie, Ricardo Rodriguez, Philippe Schwaller, Junior Sen, Ernst-Georg
+Schmid, Matt Swain, Paolo Tosco, Chad Townsend, Philip Ullmann, Riccardo
+Vianello, Jeff Wagner, Franz Waibl, Maciej Wójcikowski, Qiancheng Xia, Nic
+Zonta, kekulai-fredchang, AaronsonJames, Xavier M, xiaohongniua2, jakirkham,
+spparel, Amanda P, esiaero, hxu105
 
 ## Highlights
+- A full molecular validation and standardization pipeline has been added to the rdMolStandardize library. This is extensible and suitable for incorporation in a broader compound registration pipeline.
+- It's now possible to do shape-based alignment in the RDKit via integration with the newly open-sourced pubchem-align3d library 
+- The new rdMolProcessing module introduces easy-to-use convenience functions for reading molecules from input files and carrying out standard calculations. Multiple threads can be used for both file parsing and the calculations, so this can be quite efficient. In this release we've included support for generating fingerprints, but additional functionality will be added in the future.
 
 ## Backwards incompatible changes
 - The SMARTS for the unbranched alkanes in the fragment descriptors has been corrected. This descriptor will now frequently return different results.
 - The SimilarityMap functions GetSimilarityMapFromWeights(), GetSimilarityMapForFingerprint(), and GetSimilarityMapForModel() all now require an rdMolDraw2D drawing object to be passed in.
 - A bug fix in v2 of the tautomer and protomer hashes can lead to different results for these hashes. One less bond is now included in the tautomeric zone for systems like enamines/imines, so the v2 tautomer hash of the molecules CN=CC and CNC=C is now [C]:[C]:[N]-[CH3]_4_0 instead of [C]:[C]:[N]:[C]_7_0
 - The way valences are checked and implicit valences are calculated has been changed. The results should generally be the same as before, but some previously allowed valence states have been removed. These include: five-valent [C+], valence state 6 for the elements Al and Si, and valence state 7 for the elements P, As, Sb, and Bi.
+- The GeneralMolSupplier has been moved to use the v2 API. The only change that should be necessary to end-user code is that the resulting supplier now returns std::unique_ptr<ROMol> instead of ROMol *.
 
 ## New Features and Enhancements:
+  - Added JSON parameters to MinimalLib get_(cx)?sm(ile|art)s() functions
+ (github pull #7194 from ptosco)
+  - Update MinimalLib for Function Exposure: runReactants
+ (github pull #7210 from syedzayyan)
+  - Include macrocycles in atropisomer calculation by not sanitizing them away
+ (github pull #7291 from pechersky)
+  - Enable RGD highlights as in blog post
+ (github pull #7322 from ptosco)
+  - C# Build Net6 library and tests using cmake
+ (github pull #7326 from jones-gareth)
+  - Add option for RASCAL to restrict atom matching to atoms of same degree
+ (github pull #7344 from DavidACosgrove)
+  - Add MolStandardize to C# wrappers
+ (github pull #7351 from jones-gareth)
+  - CDXML parser doesn't recognize any bonds
+ (github issue #7357 from bp-kelley)
+  - Expose replaceAtomWithQueryAtom to Python
+ (github pull #7380 from DavidACosgrove)
+  - Allow reapplyMolBlockWedging() to restore the original wedging regardless the bond type
+ (github pull #7386 from rvianello)
+  - C sharp rascal mcs wrapper
+ (github pull #7390 from jones-gareth)
+  - Add option for non-isomeric SMILES creation in the PostgreSQL cartridge
+ (github pull #7395 from rvianello)
+  - No coords atropisomers - fix smiles output of atrop wedges after reordering
+ (github pull #7418 from tadhurst-cdd)
+  - Handle query atoms and bonds in SWIG wrappers
+ (github pull #7431 from jones-gareth)
+  - Please consider exposing code for simplified enhanced stereo labels
+ (github issue #7438 from ZontaNicola)
+  - Expose a couple of additional functions to Python
+ (github pull #7444 from greglandrum)
+  - Expose the property pickle options to SWIG
+ (github pull #7448 from greglandrum)
+  - Add python Conformer.SetPositions wrapper
+ (github pull #7449 from bp-kelley)
+  - Favor nonwedged bonds in kekulization
+ (github pull #7456 from greglandrum)
+  - Optionally limit the MolStandardize::Uncharger to only alter the protonation state
+ (github pull #7458 from rvianello)
+  - Allow subsets of ring systems to match templates
+ (github pull #7468 from ZontaNicola)
+  - Support NumPy 2.0
+ (github issue #7477 from jakirkham)
+  - Switch to isoelectronic valence model
+ (github pull #7491 from greglandrum)
+  - Allow creation of an empty forcefield
+ (github pull #7494 from nmaeder)
+  - Allow wedged double and aromatic bonds
+ (github pull #7495 from greglandrum)
+  - Add getUIntVectProp to SubstanceGroups in SWIG wrappers
+ (github pull #7507 from jones-gareth)
+  - add MolToV2KMolBlock()
+ (github pull #7511 from greglandrum)
+  - GIST index improvements for @=
+ (github pull #7547 from ergo70)
+  - A collection of small improvements from Roger S
+ (github pull #7566 from greglandrum)
+  - Add atom map number to complex query atom symbol.
+ (github pull #7571 from DavidACosgrove)
+  - add findMesoCenters
+ (github pull #7574 from greglandrum)
+  - Add missing GetRow method and fix Python parameter names
+ (github pull #7575 from ptosco)
+  - Extend RDKit::MolStandardize with a validation and standardization Pipeline
+ (github pull #7582 from rvianello)
+  - Speed up GetPropsAsDict(), especially on Mac
+ (github pull #7584 from d-b-w)
+  - Update FindFLEX.cmake and FindBISON.cmake modules.
+ (github issue #7590 from whosayn)
+  - Optimizations of the DistanceGeometry forcefield
+ (github pull #7600 from greglandrum)
+  - Rascal atom and bond equivalences
+ (github pull #7612 from DavidACosgrove)
+  - Rascal match exact atom type
+ (github pull #7673 from DavidACosgrove)
+  - Adds HasPropWithValue Pickler
+ (github pull #7692 from bp-kelley)
+  - Add support for building the CFFI lib without InChI
+ (github pull #7698 from ankane)
+  - Move calculation of molecular weight, exact molecular weight, and moleuclar formula to MolOps
+ (github issue #7701 from greglandrum)
+  - Add more "contribs" classes for use in conformer generation
+ (github pull #7711 from nmaeder)
+  - Speed up boost vector iterators
+ (github pull #7719 from bp-kelley)
+  - Allow atom map numbers to be ignored when generating canonical SMILES
+ (github pull #7732 from DavidACosgrove)
+  - Expose two additional boolean flags for mol creation to MinimalLib
+ (github pull #7743 from ptosco)
+  - Complement JSMol with JSMolShared
+ (github pull #7744 from ptosco)
+  - Fix vectToString such that it outputs valid JSON
+ (github pull #7749 from ptosco)
+  - SaltRemover loses E/Z configuration
+ (github issue #7750 from JuniorSen)
+  - Expose MMFF aromaticity model for SetAromaticity
+ (github pull #7765 from JLVarjo)
+  - add mol processing API
+ (github pull #7773 from greglandrum)
+  - Expose multicolor highlights to MinimalLib
+ (github pull #7787 from ptosco)
+  - Provide an RDKit wrapper around pubchem-align3d
+ (github pull #7798 from greglandrum)
+  - Fix typo (Fingeprint -> Fingerprint)
+ (github pull #7801 from ptosco)
+  - [bot] Update molecular templates header file
+ (github pull #7808 from github-actions[bot])
+  - Add overloads of MolOps::getMolFrags and MolOps::getMolFragsWithQuery
+ (github pull #7823 from DavidACosgrove)
 
 ## Bug Fixes:
-  
+  - Lower case symbols in SMILES for bracket atoms in aromatic rings
+ (github issue #3697 from pschwllr)
+  - Mistake in converting Phosphinic acid to InChI
+ (github issue #5311 from YuanyueLi)
+  - rdMolDescriptors.CalcNumAtomStereoCenters fails on Sanitized Molecule
+ (github issue #6757 from C-Townsend)
+  - Parasubstituted chiral cyclobutyl causes "zero final chiral volume" warnings depending on 2D coords
+ (github issue #7070 from pechersky)
+  - Rountripping through MaeWriter and MaeMolSupplier leaks stereo status property
+ (github issue #7153 from ricrogz)
+  - Correct unbranched alkane SMARTS to match the description given
+ (github  #7255 from ghost)
+  - Improve PDB formatting with incomplete Monomer info
+ (github pull #7286 from fwaibl)
+  - restrict the application of 1,3- 1,5- conjugated cation normalization
+ (github pull #7287 from rvianello)
+  - DetermineBondOrders() does not assign single bonds correctly
+ (github issue #7299 from peastman)
+  - incorrect chiral carbon perception in `Chem.FindMolChiralCenters` new implementation
+ (github issue #7300 from eloyfelix)
+  - The serialization of porphyrin to mol format introduces some double bonds with bond stereo 3/either
+ (github issue #7306 from rvianello)
+  - re-enable yaehmop support in DetermineBonds
+ (github pull #7316 from greglandrum)
+  - AtomPairs.Utils.NumPiElectrons fails on atoms with dative bonds
+ (github issue #7318 from ricrogz)
+  - Wedge bond from atrop error
+ (github pull #7321 from tadhurst-cdd)
+  - Remove misleading walrus operators
+ (github pull #7323 from mcs07)
+  - SaltRemover may clear computed properties even if no atoms are removed
+ (github issue #7327 from ricrogz)
+  - DetermineBondOrders() makes incorrect assumptions about valence
+ (github issue #7331 from peastman)
+  - remove some warnings with -Wextra
+ (github pull #7339 from greglandrum)
+  - Fixes problem from discussion 7317
+ (github pull #7345 from DavidACosgrove)
+  - Trigonal Pyramid Carbon may or not have a parity depending on atom ordering
+ (github issue #7346 from ricrogz)
+  - Wedge bond from atrop error
+ (github pull #7355 from tadhurst-cdd)
+  - Rascal exactConnectionsMatch bug
+ (github pull #7359 from DavidACosgrove)
+  - Pre-condition violations for BCUT descriptor calculations
+ (github issue #7364 from paulsonak)
+  - RegistrationHash.GetMolLayers does not distinguish atropisomers
+ (github issue #7367 from ricrogz)
+  - fixes bug with overly large count_bounds
+ (github pull #7368 from greglandrum)
+  - Atropisomeric bond wedging should favor ring bonds
+ (github issue #7371 from greglandrum)
+  - DetectChemistryProblems fails with traceback when run on mols coming from aromatic SMARTS
+ (github issue #7375 from ricrogz)
+  - Fix the Uncharger 'force' option w/ non-neutralizable negatively charged sites
+ (github pull #7382 from rvianello)
+  - Allow disabling output of dative bonds to SMILES
+ (github pull #7384 from greglandrum)
+  - 2023.9.6 duplicate "self" argument in `rdfiltercatalog/__init__.pyi`
+ (github issue #7401 from JHucker)
+  - Do not apply the normalization of conjugated cations to the oxime oxygen
+ (github pull #7403 from rvianello)
+  - fix a lifetime bug in the fingerprint generator
+ (github pull #7408 from greglandrum)
+  - drawing mol with a non zero confID results in bad confID error
+ (github issue #7409 from kekulai-fredchang)
+  - CXSmiles writer does not use default conformer ID
+ (github issue #7414 from greglandrum)
+  - allow static builds to work with clang and no coordgen
+ (github pull #7416 from greglandrum)
+  - fixStructureCheckerBuildError - fix location of MolFileSterechem.h
+ (github pull #7420 from tadhurst-cdd)
+  - Planar amide nitrogen incorrectly flagged as _ChiralityPossible
+ (github issue #7434 from mark-mackey-cresset)
+  - MaeWriter: handle the R group label property and update the Maestro property prefixing
+ (github pull #7454 from ricrogz)
+  - Memory leakage in CachedSmilesMolHolder
+ (github issue #7457 from philipullmann)
+  - PostgreSQL 17: ERROR:  commutator operator = is already the commutator of operator =
+ (github issue #7459 from df7cb)
+  - Remove unnecessary wrapped pointers
+ (github pull #7465 from bp-kelley)
+  - fix DCLV calculation for ligands
+ (github pull #7480 from RPirie96)
+  - Problem with ring stereo and atropisomers and new stereo perception
+ (github pull #7486 from tadhurst-cdd)
+  - Install the atropisomer header
+ (github pull #7487 from ricrogz)
+  - Index anomaly with mol @= mol operator on PostgreSQL. Exact match is extremely slow!
+ (github issue #7493 from ergo70)
+  - CDXML Parser doesn't recognize dative bonds
+ (github issue #7501 from kienerj)
+  - Shrink the tautomeric zone for the v2 hash of things like imines
+ (github pull #7502 from greglandrum)
+  - Avoid inconsistency between V2K and V3K MDL output wrt isotopic labelling of R groups
+ (github pull #7504 from ptosco)
+  - atomChiralTypeFromBondDirPseudo3D fails for poorly scaled molecular coordinates
+ (github issue #7509 from d-b-w)
+  - EnumerateStereoisomers cannot give enumeration on certain rings and nitrogens
+ (github issue #7516 from qcxia20)
+  - `rdkit-stubs/Chem/rdchem.pyi`: `Mol.GetAtoms` and `Mol.GetBonds` are wrong
+ (github issue #7526 from e-kwsm)
+  - CDXML Parsing Issue
+ (github issue #7528 from bp-kelley)
+  - IndexError with computing fingerprint
+ (github issue #7533 from AaronsonJames)
+  - Conformer generation fixes and enhancements
+ (github pull #7535 from nmaeder)
+  - Fix issues arising from useMolBlockWedging and the new atropisomer kekulization code
+ (github pull #7540 from ptosco)
+  - Restore mol writing functions in the RDKFuncs module
+ (github pull #7544 from ptosco)
+  - Avoid duplicate enhanced stereo labels in drawing
+ (github pull #7546 from ptosco)
+  - AllChem.EmbedMolecule returns -1
+ (github issue #7552 from hxu105)
+  - Handling of chiral sulfur in aromatic rings
+ (github issue #7556 from spparel)
+  - ConfGen: fix a logic error in one of the chiral volume tests
+ (github pull #7560 from greglandrum)
+  - fix one case of undesired 1-3 charge recombination
+ (github pull #7561 from rvianello)
+  - reject template if it doesn't match bond stereo
+ (github pull #7567 from ZontaNicola)
+  - Switch imp to importlib in nbtests
+ (github pull #7573 from bjonnh-work)
+  - PDBWriter offset bug
+ (github issue #7579 from nezix)
+  - Stub files contain duplicate argument names
+ (github issue #7583 from nielskm)
+  - Don't register FilterMatcherBase twice
+ (github pull #7589 from bp-kelley)
+  - Update commutator/negator settings for operator @=
+ (github pull #7596 from rvianello)
+  - FindPotentialStereo() missing some results if `cleanIt` is False
+ (github issue #7598 from greglandrum)
+  - `GetBPFingerprint` and `GetBTFingerprint` deprecation warning
+ (github issue #7602 from j-adamczyk)
+  - Fix an out of bounds access in ForwardMolSupplier
+ (github pull #7607 from bp-kelley)
+  - EnumerateStereoisomers Runtime error when enumerate guanidine derivatives on rdkit 2024.03.4
+ (github issue #7608 from phonglam3103)
+  - Loading SDF file works in RDKit 2024.03.3 but not 2024.03.4
+ (github issue #7619 from j-wags)
+  - Bad solid wedge to alkyne group
+ (github issue #7620 from DavidACosgrove)
+  - Deprecation warning from Descriptors.CalcMolDescriptors
+ (github issue #7625 from kienerj)
+  - Fix parsing RBCNT from mol files, and add exporting it
+ (github pull #7638 from ricrogz)
+  - EnumerateLibrary.GetPosition() surprisingly slow
+ (github issue #7639 from jpfeuffer)
+  - Multithreaded InPlace standardization functions seg fault if there's a duplicate molecule
+ (github issue #7642 from greglandrum)
+  - MinimalLib: fix misformatted molblock and make sure unit test is actually executed
+ (github pull #7647 from ptosco)
+  - Highlighted hetero atoms disappear
+ (github issue #7654 from DavidACosgrove)
+  - constrained minimization
+ (github issue #7671 from xiaohongniua2)
+  - Reaction pickling does not honor PicklePropertiesOptions
+ (github issue #7674 from jpfeuffer)
+  - RDKit cannot pickle QueryAtoms with HasPropQuery
+ (github issue #7675 from jpfeuffer)
+  - Make sure angleconstraints only take angles between 0 and 180 degrees.
+ (github pull #7688 from nmaeder)
+  - Determine bonds calls debugMol in certain cases
+ (github issue #7691 from bp-kelley)
+  - Double-bond geometry lost from CXSMILES?
+ (github issue #7725 from greglandrum)
+  - Ensure 13 bounds constraints are added to angles that are part of an improper torsion
+ (github pull #7729 from nmaeder)
+  - Python 3.13 support: _Py_IsFinalizing() has been removed from Python 3.13. 
+ (github issue #7731 from kuelumbus)
+  - Bad 2-colour wedge
+ (github issue #7739 from DavidACosgrove)
+  - Fix aliasing bug in MultithreadedSDMolSupplier and move GeneralFileReader to v2 API
+ (github pull #7761 from greglandrum)
+  - Add callbacks to the multithreaded mol suppliers
+ (github pull #7763 from greglandrum)
+  - Fix typo in 4.5.0--4.6.0 sql upgrade script
+ (github pull #7775 from esiaero)
+  - RDKit 2024.03.6 fails to build on Mac with certain options
+ (github issue #7776 from ankane)
+  - Fix issue in #7720
+ (github pull #7778 from ricrogz)
+  - Drop mol_hash for legacy databases to enable upgrade to recent versions
+ (github pull #7804 from mwojcikowski)
+  - A couple of fixes to the InteractiveRenderer Jupyter integration
+ (github pull #7805 from ptosco)
+
 ## Cleanup work:
- 
+   - Code/PgSQL: Fix Pointer vs Datum (Compatibility with PG16)
+ (github pull #6733 from df7cb)
+  - `README.md`'s documentation badge is out of date.
+ (github issue #7052 from Yoshanuikabundi)
+  - switch to range-based for loops
+ (github pull #7278 from AnnaBruenisholz)
+  - Cleaner forloops, deleting of empty header file
+ (github pull #7320 from AnnaBruenisholz)
+  - Make ctest run installed tests if RDK_INSTALL_PYTHON_TESTS
+ (github pull #7325 from mcs07)
+  - cleanup RDKit::MolOps::detectBondStereochemistry
+ (github pull #7329 from rvianello)
+  - Cleanup of Code/DataStructs
+ (github pull #7365 from AnnaBruenisholz)
+  - Fixes #7378, raw docstring to escape null chars
+ (github pull #7379 from pechersky)
+  - Include header for boost::numeric_cast
+ (github pull #7389 from cho-m)
+  - deprecations for the 2024.09 release
+ (github pull #7398 from greglandrum)
+  - Cleanup: Force field
+ (github pull #7406 from AnnaBruenisholz)
+  - Geometry cleanups
+ (github pull #7433 from AnnaBruenisholz)
+  - Numpy 2 Support
+ (github pull #7531 from AnnaBruenisholz)
+  - Fix #7485 and #7530
+ (github pull #7550 from ptosco)
+  - fix(rdmolfiles): fix parameters and docstrings
+ (github pull #7648 from e-kwsm)
+  - Refactor distgeom minimizations
+ (github pull #7652 from nmaeder)
+  - Fix some missing headers when doing "make install"
+ (github pull #7667 from greglandrum)
+  - Remove Descriptors as a dependency of many other RDKit libraries
+ (github pull #7700 from greglandrum)
+  - Reduce code duplication in ff
+ (github pull #7715 from nmaeder)
+  - Some cmake cleanup work
+ (github pull #7720 from greglandrum)
+  - doc: fix -Wdocumentation-html
+ (github pull #7721 from e-kwsm)
+  - Code cleanup, minor refactoring and typos
+ (github pull #7742 from ptosco)
+  - Update SA score to use FingerprintGenerators
+ (github pull #7795 from UnixJunkie)
+  - massive simplification of README.md
+ (github pull #7831 from greglandrum)
+
 ## Code removed in this release:
 - The legacy Python code for drawing molecules was removed in this release. This includes the following modules in rdkit.Chem.Draw: aggCanvas, cairoCanvas, canvasbase, MolDrawing, mplCanvas, qtCanvas, spingCanvas; the functions Draw.MolToImageFile(), Draw.MolToMPL(), and Draw.MolToQPixmap(); the "canvas" argument to the function Draw.MolToImage(); and calling Draw.MolToFile() with imageTypes other than PNG or SVG, 
 
 ## Deprecated code (to be removed in a future release):
-
 - AtomPairs.Utils.NumPiElectrons is deprecated in favor of Chem.GetNumPiElectrons.
 AtomPairs.Utils.NumPiElectrons failed if the atom had outgoing dative bonds (see Issue #7318).
 - The classes DistViolationContrib, ChiralViolationContrib, and FourthDimContrib have been deprecated. Please use DistViolationContribs, ChiralViolationContribs, and FourthDimContribs instead.
+- The function `MMFF::setMMFFAromaticity()` has been moved to the namespace MolOps. Please use `MolOps::setMMFFAromaticity()` instead.
 
 # Release_2024.03.1
 (Changes relative to Release_2023.09.1)

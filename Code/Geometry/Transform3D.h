@@ -98,4 +98,3 @@ RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Point3D operator*(
     const RDGeom::Transform3D &t, const RDGeom::Point3D &pt);
 
 #endif
-

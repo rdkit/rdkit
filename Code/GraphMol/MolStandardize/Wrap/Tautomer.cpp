@@ -268,7 +268,23 @@ PyTautomerEnumeratorResult *enumerateHelper(
   return new PyTautomerEnumeratorResult(self.enumerate(mol));
 }
 
+std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm>
+GetDefaultTautomerSubstructsHelper() {
+  std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm> terms;
+  for (auto term : MolStandardize::TautomerScoringFunctions::
+           getDefaultTautomerScoreSubstructs()) {
+    terms.emplace_back(term);
+  }
+  return terms;
+}
+  
+
 }  // namespace
+
+// This indicates that the scoreSubstructs takes a minimum of 1 argument and a maximum of 2
+// so we can call it ScoreSubstructs(mol) or ScoreSubstructs(mol, terms)
+BOOST_PYTHON_FUNCTION_OVERLOADS(scoreSubstructs_overloads,
+				RDKit::MolStandardize::TautomerScoringFunctions::scoreSubstructs, 1, 2)
 
 struct tautomer_wrapper {
   static void wrap() {
@@ -493,6 +509,53 @@ struct tautomer_wrapper {
                 MolStandardize::getV1TautomerEnumerator,
                 "return a TautomerEnumerator using v1 of the enumeration rules",
                 python::return_value_policy<python::manage_new_object>());
+
+    std::string docString =
+        "scores the ring system of the tautomer for canonicalization\n"
+        "Aromatic rings score 100, all carbon aromatic rings score 250";
+    python::def("ScoreRings",
+                MolStandardize::TautomerScoringFunctions::scoreRings,
+                python::arg("mol"), docString.c_str());
+
+    docString =
+        "scores the number of heteroHs of the tautomer for canonicalization\n"
+        "This gives a negative penalty to hydrogens attached to S,P, Se and Te";
+    python::def("ScoreHeteroHs",
+                MolStandardize::TautomerScoringFunctions::scoreHeteroHs,
+                python::arg("mol"), docString.c_str());
+
+    python::class_<MolStandardize::TautomerScoringFunctions::SubstructTerm>(
+        "SubstructTerm",
+        "Sets the score of this particular tautomer substructure, higher scores are more preferable\n"
+        "Aromatic rings score 100, all carbon aromatic rings score 250",
+        python::init<std::string, std::string, int>(
+            python::args("self", "name", "smarts", "score")))
+        .def_readonly(
+            "name",
+            &MolStandardize::TautomerScoringFunctions::SubstructTerm::name)
+        .def_readonly(
+            "smarts",
+            &MolStandardize::TautomerScoringFunctions::SubstructTerm::smarts)
+        .def_readonly(
+            "score",
+            &MolStandardize::TautomerScoringFunctions::SubstructTerm::score);
+
+    python::class_<
+        std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm>>(
+        "SubstructTermVector")
+        .def(python::vector_indexing_suite<std::vector<
+                 MolStandardize::TautomerScoringFunctions::SubstructTerm>>());
+    
+    docString = "scores the tautomer substructures";
+    python::def("ScoreSubstructs", &MolStandardize::TautomerScoringFunctions::scoreSubstructs,
+		scoreSubstructs_overloads((python::arg("mol"), python::arg("terms")),
+					  docString.c_str())
+		);
+
+
+    python::def("GetDefaultTautomerScoreSubstructs",
+                GetDefaultTautomerSubstructsHelper,
+                "Return the default tautomer substructure scoring terms");
   }
 };
 

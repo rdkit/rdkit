@@ -134,7 +134,7 @@ class RDKIT_CHEMREACTIONS_EXPORT CartesianProductStrategy
   template <class Archive>
   void serialize(Archive &ar, const unsigned int /*version*/) {
     ar &boost::serialization::base_object<EnumerationStrategyBase>(*this);
-    ar &m_numPermutationsProcessed;
+    ar & m_numPermutationsProcessed;
   }
 #endif
 };

@@ -140,7 +140,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
 
     auto numAtomRings = mol.getRingInfo()->numAtomRings(at->getIdx());
     const auto &riVect = mol.getRingInfo()->atomMembers(at->getIdx());
-    auto numNonCandRings = std::count_if(
+    size_t numNonCandRings = std::count_if(
         riVect.begin(), riVect.end(),
         [&isRingNotCand](int ri) { return isRingNotCand.test(ri); });
     if (!at->getAtomicNum() && nonArNonDummyNbr < numAtomRings &&
@@ -167,7 +167,8 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
       dv += chrg;
       int tbo = at->getTotalValence();
       int nRadicals = at->getNumRadicalElectrons();
-      int totalDegree = at->getDegree() + at->getImplicitValence() - nToIgnore;
+      int totalDegree = at->getDegree() +
+                        at->getValence(Atom::ValenceType::IMPLICIT) - nToIgnore;
 
       const auto &valList =
           PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
@@ -319,7 +320,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
             opts.push_back(nbrIdx);
           }
         }  // end of curr atoms can have a double bond
-      }    // end of looping over neighbors
+      }  // end of looping over neighbors
       // now append to opts the neighbors connected via wedged bonds,
       // if any were found
       opts.insert(opts.end(), wedgedOpts.begin(), wedgedOpts.end());
@@ -391,15 +392,15 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
           return false;
         }
       }  // end of else try to backtrack
-    }    // end of curr atom atom being a cand for double bond
-  }      // end of while we are not done with all atoms
+    }  // end of curr atom atom being a cand for double bond
+  }  // end of while we are not done with all atoms
   return true;
 }
 
 class QuestionEnumerator {
  public:
   QuestionEnumerator(INT_VECT questions)
-      : d_questions(std::move(questions)), d_pos(1){};
+      : d_questions(std::move(questions)), d_pos(1) {};
   INT_VECT next() {
     INT_VECT res;
     if (d_pos >= (0x1u << d_questions.size())) {
@@ -432,7 +433,6 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
   while (!kekulized && questions.size()) {
     boost::dynamic_bitset<> dBndAdds(mol.getNumBonds());
     INT_VECT done;
-#if 1
     // reset the state: all aromatic bonds are remarked to single:
     for (const auto bond : mol.bonds()) {
       if (bond->getIsAromatic() && bond->getBondType() != Bond::SINGLE &&
@@ -441,7 +441,6 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
         bond->setBondType(Bond::SINGLE);
       }
     }
-#endif
     // pick a new permutation of the questionable atoms:
     const auto &switchOff = qEnum.next();
     if (!switchOff.size()) {
@@ -451,13 +450,6 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
     for (int it : switchOff) {
       tCands[it] = 0;
     }
-#if 0
-        std::cerr<<"permute: ";
-        for (boost::dynamic_bitset<>::size_type i = 0; i < tCands.size(); ++i){
-          std::cerr << tCands[i];
-        }
-        std::cerr<<std::endl;
-#endif
     // try kekulizing again:
     kekulized =
         kekulizeWorker(mol, allAtms, tCands, dBndAdds, done, maxBackTracks);
@@ -481,11 +473,6 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
   boost::dynamic_bitset<> dBndCands(nats);
   boost::dynamic_bitset<> dBndAdds(nbnds);
   markDbondCands(mol, allAtms, dBndCands, questions, done);
-#if 0
-      std::cerr << "candidates: ";
-      for(int i=0;i<nats;++i) std::cerr << dBndCands[i];
-      std::cerr << std::endl;
-#endif
 
   auto kekulized =
       kekulizeWorker(mol, allAtms, dBndCands, dBndAdds, done, maxBackTracks);

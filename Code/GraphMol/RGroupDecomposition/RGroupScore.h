@@ -70,7 +70,7 @@ struct CartesianProduct {
 
 class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupScorer {
  public:
-  RGroupScorer(){};
+  RGroupScorer() {};
   RGroupScorer(const std::vector<std::vector<size_t>> &permutations,
                double score);
   //! score the passed permutation of matches

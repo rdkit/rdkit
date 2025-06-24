@@ -58,7 +58,7 @@ namespace MolInterchange {
 
 namespace {
 struct DefaultValueCache {
-  DefaultValueCache(const rj::Value &defs) : rjDefaults(defs){};
+  DefaultValueCache(const rj::Value &defs) : rjDefaults(defs) {};
   const rj::Value &rjDefaults;
   mutable std::map<const char *, int> intMap;
   mutable std::map<const char *, bool> boolMap;
@@ -228,8 +228,9 @@ void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
     if (!sgVal.HasMember("type")) {
       throw FileParseException("Bad Format: stereogroup does not have a type");
     }
-    if (!sgVal.HasMember("atoms")) {
-      throw FileParseException("Bad Format: stereogroup does not have atoms");
+    if (!sgVal.HasMember("atoms") && !sgVal.HasMember("bonds")) {
+      throw FileParseException(
+          "Bad Format: stereogroup does not have either atoms or bonds");
     }
     if (MolInterchange::stereoGrouplookup.find(sgVal["type"].GetString()) ==
         MolInterchange::stereoGrouplookup.end()) {
@@ -243,14 +244,22 @@ void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
       gId = sgVal["id"].GetUint();
     }
 
-    const auto &aids = sgVal["atoms"].GetArray();
     std::vector<Atom *> atoms;
     std::vector<Bond *> bonds;
-    for (const auto &aid : aids) {
-      atoms.push_back(mol->getAtomWithIdx(aid.GetUint()));
+    if (sgVal.HasMember("atoms")) {
+      const auto &aids = sgVal["atoms"].GetArray();
+      for (const auto &aid : aids) {
+        atoms.push_back(mol->getAtomWithIdx(aid.GetUint()));
+      }
+    }
+    if (sgVal.HasMember("bonds")) {
+      const auto &bids = sgVal["bonds"].GetArray();
+      for (const auto &bid : bids) {
+        bonds.push_back(mol->getBondWithIdx(bid.GetUint()));
+      }
     }
 
-    if (!atoms.empty()) {
+    if (!atoms.empty() || !bonds.empty()) {
       molSGs.emplace_back(typ, std::move(atoms), std::move(bonds), gId);
     }
   }
@@ -394,7 +403,7 @@ void readBondStereo(Bond *bnd, const rj::Value &bondVal,
   if (miter != bondVal.MemberEnd()) {
     const auto aids = miter->value.GetArray();
     bnd->setStereoAtoms(aids[0].GetInt(), aids[1].GetInt());
-  } else if (stereo != "either") {
+  } else if (stereo == "cis" || stereo == "trans") {
     throw FileParseException(
         "Bad Format: bond stereo provided without stereoAtoms");
   }
@@ -969,11 +978,11 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
       throw FileParseException("Bad Format: molecules is not an array");
     }
     for (const auto &molval : doc["molecules"].GetArray()) {
-      auto *mol = new RWMol();
-      processMol(mol, molval, atomDefaults, bondDefaults, params);
+      std::unique_ptr<RWMol> mol(new RWMol());
+      processMol(mol.get(), molval, atomDefaults, bondDefaults, params);
       mol->updatePropertyCache(params.strictValenceCheck);
       mol->setProp(common_properties::_StereochemDone, 1);
-      res.emplace_back(static_cast<ROMol *>(mol));
+      res.emplace_back(static_cast<ROMol *>(mol.release()));
     }
   }
 

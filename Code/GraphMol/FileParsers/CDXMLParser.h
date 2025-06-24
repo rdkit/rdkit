@@ -129,4 +129,4 @@ inline std::vector<std::unique_ptr<RWMol>> CDXMLToMols(const std::string &cdxml,
 }
 }  // namespace v1
 }  // namespace RDKit
-#endif  // _RD_CDXML_FILEPARSERS_H
+#endif  //  _RD_CDXML_FILEPARSERS_H

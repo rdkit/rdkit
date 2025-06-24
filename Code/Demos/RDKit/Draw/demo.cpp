@@ -40,7 +40,6 @@ void MolToCairo(const ROMol &mol, cairo_t *cr, int width, int height) {
 #endif
 
 void DrawDemo() {
-#if 1
   {
     RWMol *mol = SmilesToMol("c1c(C#N)cccc1C~C2CC2");
     std::string svg = MolToSVG(*mol);
@@ -87,7 +86,6 @@ void DrawDemo() {
     delete mol;
   }
 
-#endif
 #ifdef USE_CAIRO
   {
     RWMol *mol =

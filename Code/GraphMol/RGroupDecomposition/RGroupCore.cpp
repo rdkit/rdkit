@@ -72,9 +72,9 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
   std::vector<Bond *> newBonds;
   std::map<Atom *, int> dummyAtomMap;
   std::map<const Atom *, Atom *> molAtomMap;
-  for (auto &pair : match) {
+  for (const auto &pair : match) {
     const auto queryAtom = core->getAtomWithIdx(pair.first);
-    auto const targetAtom = extractedCore->getAtomWithIdx(pair.second);
+    const auto targetAtom = extractedCore->getAtomWithIdx(pair.second);
     if (int rLabel; queryAtom->getPropIfPresent(RLABEL, rLabel)) {
       targetAtom->setProp(RLABEL, rLabel);
     }
@@ -166,16 +166,16 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
           }
           newBonds.push_back(connectingBond);
 
-          // Check to see if we are breaking a stereo bond definition, by removing one of the stereo atoms
-          // If so, set to the new atom
-          for (auto bond: extractedCore->atomBonds(targetAtom)) {
+          // Check to see if we are breaking a stereo bond definition, by
+          // removing one of the stereo atoms. If so, set to the new atom
+          for (auto bond : extractedCore->atomBonds(targetAtom)) {
             if (bond->getIdx() == connectingBond->getIdx()) {
               continue;
             }
 
             if (bond->getStereo() > Bond::STEREOANY) {
               auto &stereoAtoms = bond->getStereoAtoms();
-              for (int& stereoAtom : stereoAtoms) {
+              for (int &stereoAtom : stereoAtoms) {
                 if (stereoAtom == static_cast<int>(targetNeighborIndex)) {
                   stereoAtom = static_cast<int>(newDummyIdx);
                 }
@@ -496,8 +496,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     // Find what target atoms will bond to these dummies
     std::vector<std::vector<int>> neighborDummyLists;
     for (auto dummyIndex : dummyIndexes) {
-      const int neighborIdx =
-          terminalRGroupAtomToNeighbor.at(dummyIndex);
+      const int neighborIdx = terminalRGroupAtomToNeighbor.at(dummyIndex);
       const auto coreBond = core->getBondBetweenAtoms(dummyIndex, neighborIdx);
       // find the atom in the target mapped to the neighbor in the core
       const int targetIdx = matchMap[neighborIdx];
@@ -506,10 +505,9 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       // now look for neighbors of that target atom that are not mapped to a
       // core atom- the dummy atom can potentially be mapped to each of those
       for (const auto &nbrIdx :
-          boost::make_iterator_range(target.getAtomNeighbors(targetAtom))) {
+           boost::make_iterator_range(target.getAtomNeighbors(targetAtom))) {
         if (!mappedTargetIdx.test(nbrIdx)) {
-          const auto targetBond =
-              target.getBondBetweenAtoms(targetIdx, nbrIdx);
+          const auto targetBond = target.getBondBetweenAtoms(targetIdx, nbrIdx);
           // check for bond compatibility
           if (bondCompat(coreBond, targetBond, sssParams)) {
             available.push_back(nbrIdx);
@@ -757,8 +755,9 @@ bool RCore::checkAllBondsToRGroupPresent(
       if (coreAtomIndices.empty()) {
         continue;
       }
-      CHECK_INVARIANT(coreAtomIndices.size() == 1,
-        "Target atom neighboring R group should have exactly one match in core");
+      CHECK_INVARIANT(
+          coreAtomIndices.size() == 1,
+          "Target atom neighboring R group should have exactly one match in core");
       auto coreAtomIdx = coreAtomIndices.front();
       const auto coreAtom = core->getAtomWithIdx(coreAtomIdx);
       // don't need to match a non terminal user R group
@@ -790,7 +789,8 @@ bool RCore::checkAllBondsToRGroupPresent(
   std::set<int> bondIndices;
   for (const auto coreNeighborIdx : coreNeighborIndices) {
     for (const auto coreRGroupIdx : coreRGroupIndices) {
-      const auto bond = core->getBondBetweenAtoms(coreNeighborIdx, coreRGroupIdx);
+      const auto bond =
+          core->getBondBetweenAtoms(coreNeighborIdx, coreRGroupIdx);
       if (bond) {
         bondIndices.insert(bond->getIdx());
       }
@@ -807,17 +807,18 @@ int RCore::matchingIndexToCoreIndex(int matchingIndex) const {
   return atom->getProp<int>(RLABEL_CORE_INDEX);
 }
 
-// Create tautomer query for the matching mol on demand and cache for performance
-// If the tautomer query cannot be created (because we can't kekulize the query)
-// then nullptr will be returned and we revert to non-tautomer match
+// Create tautomer query for the matching mol on demand and cache for
+// performance. If the tautomer query cannot be created (because we can't
+// kekulize the query) then nullptr will be returned and we revert to
+// non-tautomer match
 std::shared_ptr<TautomerQuery> RCore::getMatchingTautomerQuery() {
   if (!checkedForTautomerQuery) {
     try {
       // Enumerate tautomers from a sanitized copy of the matching molecule
       RWMol copy(*matchingMol);
-      // If the core has had rgroup labels removed when creating the matching mol
-      // then we need to update properties.  Should a full sanitization be done?
-      // MolOps::sanitizeMol(*copy);
+      // If the core has had rgroup labels removed when creating the matching
+      // mol then we need to update properties. Should a full sanitization be
+      // done? MolOps::sanitizeMol(*copy);
       copy.updatePropertyCache(false);
       std::shared_ptr<TautomerQuery> tautomerQuery(
           TautomerQuery::fromMol(copy));

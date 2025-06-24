@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2011-2022 Novartis Institutes for BioMedical Research Inc. and
+//  Copyright (c) 2011-2025 Novartis Institutes for BioMedical Research Inc. and
 //  other RDkit contributors
 //  All rights reserved.
 //
@@ -62,6 +62,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <inchi_api.h>
+#include <bcf_s.h>
 #include <cstring>
 #include <vector>
 #include <stack>
@@ -74,7 +75,7 @@
 #include <tuple>
 #include <RDGeneral/BoostEndInclude.h>
 
-//#define DEBUG 1
+// #define DEBUG 1
 namespace RDKit {
 namespace {
 /* assignBondDirs
@@ -87,15 +88,15 @@ namespace {
  */
 typedef std::pair<int, int> INT_PAIR;
 typedef std::vector<INT_PAIR> INT_PAIR_VECT;
-bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
-                    INT_PAIR_VECT& eBondPairs) {
+bool assignBondDirs(RWMol &mol, INT_PAIR_VECT &zBondPairs,
+                    INT_PAIR_VECT &eBondPairs) {
   // bonds to assign
   std::set<int> pending;
-  for (const auto& pair : zBondPairs) {
+  for (const auto &pair : zBondPairs) {
     pending.insert(pair.first);
     pending.insert(pair.second);
   }
-  for (const auto& pair : eBondPairs) {
+  for (const auto &pair : eBondPairs) {
     pending.insert(pair.first);
     pending.insert(pair.second);
   }
@@ -113,7 +114,7 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
       Bond::BondDir dir;
       boost::tie(curBondIdx, dir) = queue.front();
       queue.pop();
-      Bond* bond = mol.getBondWithIdx(curBondIdx);
+      Bond *bond = mol.getBondWithIdx(curBondIdx);
       // is it assigned already?
       if (bond->getBondDir() != Bond::NONE) {
         // assigned. then check conflict
@@ -134,9 +135,9 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
         // same routine for zBondPairs and eBondPairs
         // use a switch _ to go through both by setting _ to 0 and then 1
         for (int _ = 0; _ < 2; _++) {
-          INT_PAIR_VECT* _rules = _ == 0 ? &zBondPairs : &eBondPairs;
+          INT_PAIR_VECT *_rules = _ == 0 ? &zBondPairs : &eBondPairs;
           Bond::BondDir _dir = _ == 0 ? dir : otherDir;
-          for (const auto& pair : *_rules) {
+          for (const auto &pair : *_rules) {
             int other = -1;
             if (pair.first == curBondIdx) {
               other = pair.second;
@@ -145,7 +146,7 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
             }
             // a match?
             if (other != curBondIdx && other != -1) {
-              Bond* otherBond = mol.getBondWithIdx(other);
+              Bond *otherBond = mol.getBondWithIdx(other);
               // check if it is assigned
               if (otherBond->getBondDir() != Bond::NONE) {
                 // assigned. check conflict
@@ -157,12 +158,12 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
                 // not assigned, then add to queue
                 queue.push(std::make_pair(otherBond->getIdx(), _dir));
               }  // end if otherBond's bond direction check
-            }    // end if there is a match
-          }      // end loop over pairs in _rules
-        }        // end for _ to go thru rule sets
-      }          // end if this bond is assigned
-    }            // end if queue is empty
-  }              // end while on pending set and queue
+            }  // end if there is a match
+          }  // end loop over pairs in _rules
+        }  // end for _ to go thru rule sets
+      }  // end if this bond is assigned
+    }  // end if queue is empty
+  }  // end while on pending set and queue
   return true;
 }
 
@@ -203,11 +204,11 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
  * immediate neighbor and desiredNextBondType and desiredEndingBondType must
  * be the same.
  */
-Atom* findAlternatingBonds(
-    ROMol& mol, Atom* current, int desiredAtomicNumber, int desiredAtomCharge,
+Atom *findAlternatingBonds(
+    ROMol &mol, Atom *current, int desiredAtomicNumber, int desiredAtomCharge,
     Bond::BondType desiredNextBondType, Bond::BondType desiredEndingBondType,
-    unsigned int currentPathLength, unsigned int maxPathLength, Bond* lastBond,
-    /*OUT*/ std::stack<Bond*>& path, std::set<int>& _visited) {
+    unsigned int currentPathLength, unsigned int maxPathLength, Bond *lastBond,
+    /*OUT*/ std::stack<Bond *> &path, std::set<int> &_visited) {
   // memory for what has been visited
   if (lastBond == nullptr) {
     _visited.clear();
@@ -257,7 +258,7 @@ Atom* findAlternatingBonds(
       continue;
     }
     // check whether bond is valid for search to go down through it
-    Bond* bond = mol.getBondBetweenAtoms(current->getIdx(), *nid);
+    Bond *bond = mol.getBondBetweenAtoms(current->getIdx(), *nid);
     if (bond->getBondType() == desiredNextBondType) {
       // recursive call: for all ways to extend the path, ask each to try
       // enhancing the current best path (stored in <path>)
@@ -302,14 +303,14 @@ Atom* findAlternatingBonds(
   return nullptr;
 }
 
-int getNumDoubleBondedNegativelyChargedNeighboringSi(ROMol& mol, Atom* a) {
+int getNumDoubleBondedNegativelyChargedNeighboringSi(ROMol &mol, Atom *a) {
   RWMol::ADJ_ITER nid1, end1;
   boost::tie(nid1, end1) = mol.getAtomNeighbors(a);
   int nSi = 0;
   int thisId = a->getIdx();
   while (nid1 != end1) {
-    Atom* nbr = mol.getAtomWithIdx(*nid1);
-    Bond* bond = mol.getBondBetweenAtoms(*nid1, thisId);
+    Atom *nbr = mol.getAtomWithIdx(*nid1);
+    Bond *bond = mol.getBondBetweenAtoms(*nid1, thisId);
     if (nbr->getAtomicNum() == 14 && nbr->getFormalCharge() == -1 &&
         bond->getBondType() == Bond::DOUBLE) {
       nSi++;
@@ -320,7 +321,7 @@ int getNumDoubleBondedNegativelyChargedNeighboringSi(ROMol& mol, Atom* a) {
 }
 
 // clean C1=NN=[N-]=N1
-bool _Valence4NCleanUp1(RWMol& mol, Atom* atom) {
+bool _Valence4NCleanUp1(RWMol &mol, Atom *atom) {
   // replace the N- with Sn
   if (atom->getAtomicNum() != 7 || atom->getFormalCharge() != -1 ||
       atom->calcExplicitValence(false) != 4) {
@@ -330,7 +331,7 @@ bool _Valence4NCleanUp1(RWMol& mol, Atom* atom) {
   atom->setFormalCharge(0);
 
   // substructure matching
-  auto* query = new RWMol();
+  auto *query = new RWMol();
   query->addAtom(new Atom(6), false, true);   // 0
   query->addAtom(new Atom(7), false, true);   // 1
   query->addAtom(new Atom(50), false, true);  // 2
@@ -372,10 +373,10 @@ bool _Valence4NCleanUp1(RWMol& mol, Atom* atom) {
 }
 
 // directly to a N via double bond
-bool _Valence4NCleanUp2(RWMol& mol, Atom* atom) {
-  std::stack<Bond*> stack;
+bool _Valence4NCleanUp2(RWMol &mol, Atom *atom) {
+  std::stack<Bond *> stack;
   std::set<int> _visited;
-  Atom* target =
+  Atom *target =
       findAlternatingBonds(mol, atom, 7, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 1,
                            nullptr, stack, _visited);
   if (target == nullptr) {
@@ -389,10 +390,10 @@ bool _Valence4NCleanUp2(RWMol& mol, Atom* atom) {
 }
 
 // try search for valence-5 N connected to a N+
-bool _Valence5NCleanUp1(RWMol& mol, Atom* atom) {
-  std::stack<Bond*> stack;
+bool _Valence5NCleanUp1(RWMol &mol, Atom *atom) {
+  std::stack<Bond *> stack;
   std::set<int> _visited;
-  Atom* target =
+  Atom *target =
       findAlternatingBonds(mol, atom, 7, 1, Bond::DOUBLE, Bond::DOUBLE, 0, 5,
                            nullptr, stack, _visited);
   if (target == nullptr) {
@@ -413,17 +414,17 @@ bool _Valence5NCleanUp1(RWMol& mol, Atom* atom) {
 }
 
 // N connected to N- through a tiple then single bond
-bool _Valence5NCleanUp2(RWMol& mol, Atom* atom) {
-  std::stack<Bond*> stack;
+bool _Valence5NCleanUp2(RWMol &mol, Atom *atom) {
+  std::stack<Bond *> stack;
   std::set<int> _visited;
-  Atom* target =
+  Atom *target =
       findAlternatingBonds(mol, atom, 7, -1, Bond::TRIPLE, Bond::SINGLE, 0, 2,
                            nullptr, stack, _visited);
   if (target == nullptr) {
     return false;
   }
 
-  Bond* bond = stack.top();
+  Bond *bond = stack.top();
   bond->setBondType(Bond::SINGLE);
   if (bond->getBeginAtomIdx() == atom->getIdx()) {
     mol.getAtomWithIdx(bond->getEndAtomIdx())->setFormalCharge(-1);
@@ -439,10 +440,10 @@ bool _Valence5NCleanUp2(RWMol& mol, Atom* atom) {
 }
 
 // directly to a N via double bond
-bool _Valence5NCleanUp3(RWMol& mol, Atom* atom) {
-  std::stack<Bond*> stack;
+bool _Valence5NCleanUp3(RWMol &mol, Atom *atom) {
+  std::stack<Bond *> stack;
   std::set<int> _visited;
-  Atom* target =
+  Atom *target =
       findAlternatingBonds(mol, atom, 7, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 1,
                            nullptr, stack, _visited);
   if (target == nullptr) {
@@ -456,9 +457,9 @@ bool _Valence5NCleanUp3(RWMol& mol, Atom* atom) {
   // and we don't want to mess with that.
   // this was github #1572
 
-  std::stack<Bond*> stack2;
+  std::stack<Bond *> stack2;
   std::set<int> _visited2;
-  Atom* target2 =
+  Atom *target2 =
       findAlternatingBonds(mol, atom, 8, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 1,
                            nullptr, stack2, _visited2);
   if (target2 == nullptr) {
@@ -473,17 +474,17 @@ bool _Valence5NCleanUp3(RWMol& mol, Atom* atom) {
 
 // N connected to two Si- via double bonds; also a positive charged S
 // connected to a non-charged C. shift the charge to the C
-bool _Valence5NCleanUp4(RWMol& mol, Atom* atom) {
-  std::stack<Bond*> stack;
+bool _Valence5NCleanUp4(RWMol &mol, Atom *atom) {
+  std::stack<Bond *> stack;
   RWMol::ADJ_ITER nid1, end1;
   int nSi = 0;
   int thisId = atom->getIdx();
-  Atom* nbrs[2];
-  Bond* bonds[2];
+  Atom *nbrs[2];
+  Bond *bonds[2];
   boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
   while (nid1 != end1) {
-    Atom* nbr = mol.getAtomWithIdx(*nid1);
-    Bond* bond = mol.getBondBetweenAtoms(*nid1, thisId);
+    Atom *nbr = mol.getAtomWithIdx(*nid1);
+    Bond *bond = mol.getBondBetweenAtoms(*nid1, thisId);
     if (nbr->getAtomicNum() == 14 && nbr->getFormalCharge() == -1 &&
         bond->getBondType() == Bond::DOUBLE) {
       if (nSi >= 2) {
@@ -540,11 +541,11 @@ bool _Valence5NCleanUp4(RWMol& mol, Atom* atom) {
   return true;
 }
 
-bool _Valence5NCleanUp5(RWMol& mol, Atom* atom, int atomicNum) {
+bool _Valence5NCleanUp5(RWMol &mol, Atom *atom, int atomicNum) {
   PRECONDITION(
       atomicNum == 8 || atomicNum == 16 || atomicNum == 9 || atomicNum == 17,
       "this cleanup looks for O or S or Cl or F");
-  std::stack<Bond*> stackCharged, stackUncharged, *stack;
+  std::stack<Bond *> stackCharged, stackUncharged, *stack;
   // try search for valence-5 N connected to O or S, determined by the
   // <atomicNum> parameter with alternating
   // bonds if there is a charged Oxygen and an uncharged one both
@@ -585,7 +586,7 @@ bool _Valence5NCleanUp5(RWMol& mol, Atom* atom, int atomicNum) {
     // set charge on N
     atom->setFormalCharge(1);
     // switch all bonds
-    Bond* b;
+    Bond *b;
     while (!stack->empty()) {
       b = stack->top();
       if (b->getBondType() == Bond::DOUBLE) {
@@ -621,7 +622,7 @@ bool _Valence5NCleanUp5(RWMol& mol, Atom* atom, int atomicNum) {
 
 // clean CN1=CCN=CC=1
 // example: PubChem 10781979
-bool _Valence5NCleanUp6(RWMol& mol, Atom* atom) {
+bool _Valence5NCleanUp6(RWMol &mol, Atom *atom) {
   // replace the N with Sn
   if (atom->getAtomicNum() != 7 || atom->getFormalCharge() != 0 ||
       atom->calcExplicitValence(false) != 5) {
@@ -630,7 +631,7 @@ bool _Valence5NCleanUp6(RWMol& mol, Atom* atom) {
   atom->setAtomicNum(50);
 
   // substructure matching
-  auto* query = new RWMol();
+  auto *query = new RWMol();
   query->addAtom(new Atom(6), false, true);   // 0
   query->addAtom(new Atom(6), false, true);   // 1
   query->addAtom(new Atom(50), false, true);  // 2
@@ -675,11 +676,11 @@ bool _Valence5NCleanUp6(RWMol& mol, Atom* atom) {
 
 // clean CN1=NCOCC=1 that is connected via alternating bonds to O
 // example: PubChem 10781979
-bool _Valence5NCleanUp7(RWMol& mol, Atom* atom) {
+bool _Valence5NCleanUp7(RWMol &mol, Atom *atom) {
   // is it connected to O via alternating bonds?
-  std::stack<Bond*> stack;
+  std::stack<Bond *> stack;
   std::set<int> _visited;
-  Atom* target =
+  Atom *target =
       findAlternatingBonds(mol, atom, 8, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 5,
                            nullptr, stack, _visited);
   if (target == nullptr) {
@@ -693,7 +694,7 @@ bool _Valence5NCleanUp7(RWMol& mol, Atom* atom) {
   atom->setAtomicNum(50);
 
   // substructure matching
-  auto* query = new RWMol();
+  auto *query = new RWMol();
   query->addAtom(new Atom(6), false, true);   // 0
   query->addAtom(new Atom(6), false, true);   // 1
   query->addAtom(new Atom(50), false, true);  // 2
@@ -727,7 +728,7 @@ bool _Valence5NCleanUp7(RWMol& mol, Atom* atom) {
   }
   // flip bonds
   mol.getBondBetweenAtoms(map[1], map[2])->setBondType(Bond::SINGLE);
-  Bond* b;
+  Bond *b;
   while (!stack.empty()) {
     b = stack.top();
     if (b->getBondType() == Bond::DOUBLE) {
@@ -746,7 +747,7 @@ bool _Valence5NCleanUp7(RWMol& mol, Atom* atom) {
 
 // clean [N]=C1N=CN=N1
 // example: PubChem 10782655
-bool _Valence5NCleanUp8(RWMol& mol, Atom* atom) {
+bool _Valence5NCleanUp8(RWMol &mol, Atom *atom) {
   // replace the N with Sn
   if (atom->getAtomicNum() != 7 || atom->getFormalCharge() != 0 ||
       atom->calcExplicitValence(false) != 5) {
@@ -755,7 +756,7 @@ bool _Valence5NCleanUp8(RWMol& mol, Atom* atom) {
   atom->setAtomicNum(50);
 
   // substructure matching
-  auto* query = new RWMol();
+  auto *query = new RWMol();
   query->addAtom(new Atom(6), false, true);   // 0
   query->addAtom(new Atom(7), false, true);   // 1
   query->addAtom(new Atom(6), false, true);   // 2
@@ -800,7 +801,7 @@ bool _Valence5NCleanUp8(RWMol& mol, Atom* atom) {
 
 // clean [N]=C1C=CN=N1
 // example: PubChem 10785993
-bool _Valence5NCleanUp9(RWMol& mol, Atom* atom) {
+bool _Valence5NCleanUp9(RWMol &mol, Atom *atom) {
   // replace the N with Sn
   if (atom->getAtomicNum() != 7 || atom->getFormalCharge() != 0 ||
       atom->calcExplicitValence(false) != 5) {
@@ -809,7 +810,7 @@ bool _Valence5NCleanUp9(RWMol& mol, Atom* atom) {
   atom->setAtomicNum(50);
 
   // substructure matching
-  auto* query = new RWMol();
+  auto *query = new RWMol();
   query->addAtom(new Atom(6), false, true);   // 0
   query->addAtom(new Atom(7), false, true);   // 1
   query->addAtom(new Atom(7), false, true);   // 2
@@ -851,14 +852,14 @@ bool _Valence5NCleanUp9(RWMol& mol, Atom* atom) {
 }
 
 // N connected via alternating bonds to N=N
-bool _Valence5NCleanUpA(RWMol& mol, Atom* atom) {
+bool _Valence5NCleanUpA(RWMol &mol, Atom *atom) {
   // replace the N with Sn
   if (atom->getAtomicNum() != 7 || atom->getFormalCharge() != 0 ||
       atom->calcExplicitValence(false) != 5) {
     return false;
   }
   // first find the N=N
-  auto* query = new RWMol();
+  auto *query = new RWMol();
   query->addAtom(new Atom(7), false, true);  // 0
   query->addAtom(new Atom(7), false, true);  // 1
   query->addBond(0, 1, Bond::DOUBLE);
@@ -871,8 +872,8 @@ bool _Valence5NCleanUpA(RWMol& mol, Atom* atom) {
     return false;
   }
 
-  std::stack<Bond*> bestPath;
-  for (const auto& match : fgpMatches) {
+  std::stack<Bond *> bestPath;
+  for (const auto &match : fgpMatches) {
     // does the match contains the current atom?
     if (match[0].second == static_cast<int>(atom->getIdx()) ||
         match[1].second == static_cast<int>(atom->getIdx())) {
@@ -882,9 +883,9 @@ bool _Valence5NCleanUpA(RWMol& mol, Atom* atom) {
     mol.getAtomWithIdx(match[0].second)->setAtomicNum(50);
     mol.getAtomWithIdx(match[1].second)->setAtomicNum(50);
     // now search the path from current atom to these atoms
-    std::stack<Bond*> stack;
+    std::stack<Bond *> stack;
     std::set<int> _visited;
-    Atom* target =
+    Atom *target =
         findAlternatingBonds(mol, atom, 50, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 9,
                              nullptr, stack, _visited);
     if (target && (bestPath.empty() || stack.size() < bestPath.size())) {
@@ -896,7 +897,7 @@ bool _Valence5NCleanUpA(RWMol& mol, Atom* atom) {
 
   if (!bestPath.empty()) {
     while (!bestPath.empty()) {
-      Bond* bond = bestPath.top();
+      Bond *bond = bestPath.top();
       if (bond->getBondType() == Bond::SINGLE) {
         bond->setBondType(Bond::DOUBLE);
       } else {
@@ -912,10 +913,10 @@ bool _Valence5NCleanUpA(RWMol& mol, Atom* atom) {
 }
 //
 // directly to a C via double bond; this is last resort
-bool _Valence5NCleanUpB(RWMol& mol, Atom* atom) {
-  std::stack<Bond*> stack;
+bool _Valence5NCleanUpB(RWMol &mol, Atom *atom) {
+  std::stack<Bond *> stack;
   std::set<int> _visited;
-  Atom* target =
+  Atom *target =
       findAlternatingBonds(mol, atom, 6, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 1,
                            nullptr, stack, _visited);
   if (target == nullptr) {
@@ -937,7 +938,7 @@ bool _Valence5NCleanUpB(RWMol& mol, Atom* atom) {
 //   CC(C)(C1=CC([S-](=O)(=O)=O)=[N+](F)C=C1)C
 // is converted to:
 //   CC(C)(C1=CC(S[O-](=O)=O)=[N+](F)C=C1)C
-bool _Valence7SCleanUp1(RWMol& mol, Atom* atom) {
+bool _Valence7SCleanUp1(RWMol &mol, Atom *atom) {
   if (atom->getAtomicNum() != 16 || atom->getFormalCharge() != -1 ||
       atom->calcExplicitValence(false) != 7) {
     return false;
@@ -949,7 +950,7 @@ bool _Valence7SCleanUp1(RWMol& mol, Atom* atom) {
   boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
   nid = end1;
   while (nid1 != end1) {
-    Atom* otherAtom = mol.getAtomWithIdx(*nid1);
+    Atom *otherAtom = mol.getAtomWithIdx(*nid1);
     if (otherAtom->getAtomicNum() == 8) {
       if (mol.getBondBetweenAtoms(*nid1, aid)->getBondType() != Bond::DOUBLE) {
         neighborsO = 100;
@@ -973,7 +974,7 @@ bool _Valence7SCleanUp1(RWMol& mol, Atom* atom) {
   }
   if (nid != end1 && (neighborsC == 1 || neighborsO == 3)) {
     mol.getBondBetweenAtoms(*nid, aid)->setBondType(Bond::SINGLE);
-    Atom* otherAtom = mol.getAtomWithIdx(*nid);
+    Atom *otherAtom = mol.getAtomWithIdx(*nid);
     otherAtom->setFormalCharge(-1);
     atom->setFormalCharge(0);
     otherAtom->calcExplicitValence(false);
@@ -985,20 +986,20 @@ bool _Valence7SCleanUp1(RWMol& mol, Atom* atom) {
 }
 
 // [S-]=CC#N
-bool _Valence7SCleanUp2(RWMol& mol, Atom* atom) {
+bool _Valence7SCleanUp2(RWMol &mol, Atom *atom) {
   if (atom->getAtomicNum() != 16 || atom->getFormalCharge() != -1 ||
       atom->calcExplicitValence(false) != 7) {
     return false;
   }
 
-  std::stack<Bond*> stack;
+  std::stack<Bond *> stack;
   std::set<int> _visited;
-  Atom* target =
+  Atom *target =
       findAlternatingBonds(mol, atom, 7, 0, Bond::DOUBLE, Bond::TRIPLE, 0, 3,
                            nullptr, stack, _visited);
   if (target) {
     while (!stack.empty()) {
-      Bond* bond = stack.top();
+      Bond *bond = stack.top();
       if (bond->getBondType() == Bond::SINGLE) {
         bond->setBondType(Bond::DOUBLE);
       } else if (bond->getBondType() == Bond::DOUBLE) {
@@ -1017,15 +1018,15 @@ bool _Valence7SCleanUp2(RWMol& mol, Atom* atom) {
 }
 
 // S- connected to a N via double bond
-bool _Valence7SCleanUp3(RWMol& mol, Atom* atom) {
+bool _Valence7SCleanUp3(RWMol &mol, Atom *atom) {
   if (atom->getAtomicNum() != 16 || atom->getFormalCharge() != -1 ||
       atom->calcExplicitValence(false) != 7) {
     return false;
   }
 
-  std::stack<Bond*> stack;
+  std::stack<Bond *> stack;
   std::set<int> _visited;
-  Atom* target =
+  Atom *target =
       findAlternatingBonds(mol, atom, 7, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 1,
                            nullptr, stack, _visited);
   if (target) {
@@ -1040,15 +1041,15 @@ bool _Valence7SCleanUp3(RWMol& mol, Atom* atom) {
 }
 
 // S- connected to a N via alternating bond
-bool _Valence8SCleanUp1(RWMol& mol, Atom* atom) {
+bool _Valence8SCleanUp1(RWMol &mol, Atom *atom) {
   if (atom->getAtomicNum() != 16 || atom->getFormalCharge() != -1 ||
       atom->calcExplicitValence(false) != 7) {
     return false;
   }
 
-  std::stack<Bond*> stack;
+  std::stack<Bond *> stack;
   std::set<int> _visited;
-  Atom* target =
+  Atom *target =
       findAlternatingBonds(mol, atom, 7, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 9,
                            nullptr, stack, _visited);
 
@@ -1075,7 +1076,7 @@ bool _Valence8SCleanUp1(RWMol& mol, Atom* atom) {
 //    [Cl-](=O)(=O)(=O)(=O)
 // to:
 //    [Cl+3]([O-])([O-])([O-])[O-]
-bool _Valence8ClCleanUp1(RWMol& mol, Atom* atom) {
+bool _Valence8ClCleanUp1(RWMol &mol, Atom *atom) {
   if (atom->calcExplicitValence(false) != 8 || atom->getFormalCharge() != -1) {
     return false;
   }
@@ -1094,10 +1095,10 @@ bool _Valence8ClCleanUp1(RWMol& mol, Atom* atom) {
     atom->setFormalCharge(3);
     boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
     while (nid1 != end1) {
-      Bond* b = mol.getBondBetweenAtoms(aid, *nid1);
+      Bond *b = mol.getBondBetweenAtoms(aid, *nid1);
       if (b->getBondType() == Bond::DOUBLE) {
         b->setBondType(Bond::SINGLE);
-        Atom* otherAtom = mol.getAtomWithIdx(*nid1);
+        Atom *otherAtom = mol.getAtomWithIdx(*nid1);
         otherAtom->setFormalCharge(-1);
         otherAtom->calcExplicitValence(false);
       }
@@ -1110,13 +1111,13 @@ bool _Valence8ClCleanUp1(RWMol& mol, Atom* atom) {
 }
 
 // [Cl+][O-] to Cl=O
-bool _Valence5ClCleanUp1(RWMol& mol, Atom* atom) {
+bool _Valence5ClCleanUp1(RWMol &mol, Atom *atom) {
   if (atom->calcExplicitValence(false) != 6 || atom->getFormalCharge() != 1) {
     return false;
   }
-  std::stack<Bond*> stack;
+  std::stack<Bond *> stack;
   std::set<int> _visited;
-  Atom* target =
+  Atom *target =
       findAlternatingBonds(mol, atom, 8, -1, Bond::SINGLE, Bond::SINGLE, 0, 1,
                            nullptr, stack, _visited);
   if (!target) {
@@ -1130,13 +1131,13 @@ bool _Valence5ClCleanUp1(RWMol& mol, Atom* atom) {
 }
 //
 // Cl#S to ClS
-bool _Valence3ClCleanUp1(RWMol& mol, Atom* atom) {
+bool _Valence3ClCleanUp1(RWMol &mol, Atom *atom) {
   if (atom->calcExplicitValence(false) != 3 || atom->getFormalCharge() != 0) {
     return false;
   }
-  std::stack<Bond*> stack;
+  std::stack<Bond *> stack;
   std::set<int> _visited;
-  Atom* target =
+  Atom *target =
       findAlternatingBonds(mol, atom, 16, 0, Bond::TRIPLE, Bond::TRIPLE, 0, 1,
                            nullptr, stack, _visited);
   if (!target) {
@@ -1147,7 +1148,7 @@ bool _Valence3ClCleanUp1(RWMol& mol, Atom* atom) {
   return true;
 }
 
-void cleanUp(RWMol& mol) {
+void cleanUp(RWMol &mol) {
   ROMol::AtomIterator ai;
   bool aromHolder;
   for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
@@ -1246,22 +1247,25 @@ void cleanUp(RWMol& mol) {
         break;
 
     }  // end the switch block
-  }    // end the for loop that iterates over atoms
+  }  // end the for loop that iterates over atoms
 }  // end cleanUp
 }  // namespace
 
-RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
+RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
                   bool sanitize, bool removeHs) {
   // input
-  char* _inchi = new char[inchi.size() + 1];
+  std::vector<char> _inchi;
+  _inchi.reserve(inchi.size() + 1);
+  std::copy(inchi.begin(), inchi.end(), std::back_inserter(_inchi));
+  _inchi.push_back('\0');
+
   char options[1] = "";
-  strcpy(_inchi, inchi.c_str());
   inchi_InputINCHI inchiInput;
-  inchiInput.szInChI = _inchi;
+  inchiInput.szInChI = _inchi.data();
   inchiInput.szOptions = options;
 
   // creating RWMol for return
-  RWMol* m = nullptr;
+  RWMol *m = nullptr;
   {
     // output structure
     inchi_OutputStruct inchiOutput;
@@ -1284,13 +1288,13 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
     if (retcode == inchi_Ret_OKAY || retcode == inchi_Ret_WARNING) {
       m = new RWMol;
       std::vector<unsigned int> indexToAtomIndexMapping;
-      PeriodicTable* periodicTable = PeriodicTable::getTable();
+      PeriodicTable *periodicTable = PeriodicTable::getTable();
       unsigned int nAtoms = inchiOutput.num_atoms;
       for (unsigned int i = 0; i < nAtoms; i++) {
-        inchi_Atom* inchiAtom = &(inchiOutput.atom[i]);
+        inchi_Atom *inchiAtom = &(inchiOutput.atom[i]);
         // use element name to set atomic number
         int atomicNumber = periodicTable->getAtomicNumber(inchiAtom->elname);
-        Atom* atom = new Atom(atomicNumber);
+        Atom *atom = new Atom(atomicNumber);
         double averageWeight = atom->getMass();
         int refWeight = static_cast<int>(averageWeight + 0.5);
         int isotope = 0;
@@ -1339,7 +1343,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
       // adding bonds
       std::set<std::pair<unsigned int, unsigned int>> bondRegister;
       for (unsigned int i = 0; i < nAtoms; i++) {
-        inchi_Atom* inchiAtom = &(inchiOutput.atom[i]);
+        inchi_Atom *inchiAtom = &(inchiOutput.atom[i]);
         unsigned int nBonds = inchiAtom->num_bonds;
         for (unsigned int b = 0; b < nBonds; b++) {
           unsigned int nbr = inchiAtom->neighbor[b];
@@ -1349,7 +1353,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
             continue;
           }
           bondRegister.insert(std::make_pair(i, nbr));
-          Bond* bond = nullptr;
+          Bond *bond = nullptr;
           // bond type
           if ((unsigned int)inchiAtom->bond_type[b] <= INCHI_BOND_TYPE_TRIPLE) {
             bond = new Bond((Bond::BondType)inchiAtom->bond_type[b]);
@@ -1364,6 +1368,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
             BOOST_LOG(rdErrorLog) << "illegal bond type ("
                                   << (unsigned int)inchiAtom->bond_type[b]
                                   << ") in InChI" << std::endl;
+            FreeStructFromINCHI(&inchiOutput);
             delete m;
             return nullptr;
           }
@@ -1404,18 +1409,18 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
       }
 
       // adding isotopes at the end
-      for (auto& ii : isotopes) {
+      for (auto &ii : isotopes) {
         auto [isotope, aid, repeat] = ii;
         aid = indexToAtomIndexMapping[aid];
         for (unsigned int i = 0; i < repeat; i++) {
           // create atom
-          Atom* atom = new Atom;
+          Atom *atom = new Atom;
           atom->setAtomicNum(1);
           // set mass
           atom->setIsotope(isotope);
           int j = m->addAtom(atom, false, true);
           // add bond
-          Bond* bond = new Bond(Bond::SINGLE);
+          Bond *bond = new Bond(Bond::SINGLE);
           bond->setEndAtomIdx(aid);
           bond->setBeginAtomIdx(j);
           m->addBond(bond, true);
@@ -1434,7 +1439,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
         UINT_VECT ranks;
         Chirality::assignAtomCIPRanks(*m, ranks);
         for (unsigned int i = 0; i < numStereo0D; i++) {
-          inchi_Stereo0D* stereo0DPtr = inchiOutput.stereo0D + i;
+          inchi_Stereo0D *stereo0DPtr = inchiOutput.stereo0D + i;
           if (stereo0DPtr->parity == INCHI_PARITY_NONE ||
               stereo0DPtr->parity == INCHI_PARITY_UNDEFINED) {
             continue;
@@ -1452,7 +1457,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
               int originalRightNbr =
                   indexToAtomIndexMapping[stereo0DPtr->neighbor[3]];
 
-              Bond* bond = m->getBondBetweenAtoms(left, right);
+              Bond *bond = m->getBondBetweenAtoms(left, right);
               if (!bond) {
                 // Likely to be allene stereochemistry, which we don't handle.
                 BOOST_LOG(rdWarningLog)
@@ -1583,7 +1588,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
             case INCHI_StereoType_Tetrahedral: {
               unsigned int c =
                   indexToAtomIndexMapping[stereo0DPtr->central_atom];
-              Atom* atom = m->getAtomWithIdx(c);
+              Atom *atom = m->getAtomWithIdx(c);
               // find number of swaps for the members
               int nSwaps = 0;
               unsigned int nid = 0;
@@ -1602,7 +1607,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
               for (; nid < 4; nid++) {
                 unsigned end =
                     indexToAtomIndexMapping[stereo0DPtr->neighbor[nid]];
-                Bond* bond = m->getBondBetweenAtoms(c, end);
+                Bond *bond = m->getBondBetweenAtoms(c, end);
                 neighbors.push_back(bond->getIdx());
                 // std::cerr<<" "<<end<<"("<<bond->getIdx()<<")";
               }
@@ -1629,7 +1634,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
                   << "Unrecognized stereo0D type (" << (int)stereo0DPtr->type
                   << ") is ignored!" << std::endl;
           }  // end switch stereotype
-        }    // end for loop over all stereo0D entries
+        }  // end for loop over all stereo0D entries
         // set the bond directions
         if (!assignBondDirs(*m, zBondPairs, eBondPairs)) {
           BOOST_LOG(rdWarningLog)
@@ -1637,10 +1642,9 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
           ;
         }
       }  // end if (if stereo0D presents)
-    }    // end if (if return code is success)
+    }  // end if (if return code is success)
 
     // clean up
-    delete[] _inchi;
     FreeStructFromINCHI(&inchiOutput);
   }
 
@@ -1650,12 +1654,12 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
     try {
       if (sanitize) {
         if (removeHs) {
-          MolOps::removeHs(*m, false, false);
+          MolOps::removeHs(*m);
         } else {
           MolOps::sanitizeMol(*m);
         }
       }
-    } catch (const MolSanitizeException&) {
+    } catch (const MolSanitizeException &) {
       delete m;
       throw;
     }
@@ -1667,7 +1671,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
   return m;
 }
 
-void fixOptionSymbol(const char* in, char* out) {
+void fixOptionSymbol(const char *in, char *out) {
   unsigned int i;
   for (i = 0; i < strlen(in); i++) {
 #ifdef _WIN32
@@ -1687,8 +1691,8 @@ void fixOptionSymbol(const char* in, char* out) {
 }
 
 /*! "reverse" clean up: prepare a molecule to be used with InChI sdk */
-void rCleanUp(RWMol& mol) {
-  RWMol* q = SmilesToMol("[O-][Cl+3]([O-])([O-])O");
+void rCleanUp(RWMol &mol) {
+  RWMol *q = SmilesToMol("[O-][Cl+3]([O-])([O-])O");
   std::vector<MatchVectType> fgpMatches;
   SubstructMatch(mol, *q, fgpMatches);
   delete q;
@@ -1709,7 +1713,7 @@ void rCleanUp(RWMol& mol) {
       if (i == 1) {
         continue;
       }
-      Atom* o = mol.getAtomWithIdx(map[i]);
+      Atom *o = mol.getAtomWithIdx(map[i]);
       if (o->getFormalCharge() == 0) {
         if (unchargedFound != -1) {
           return;  // too many uncharged oxygen
@@ -1740,8 +1744,8 @@ void rCleanUp(RWMol& mol) {
   return;
 }
 
-std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
-                       const char* options) {
+std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
+                       const char *options) {
   std::unique_ptr<RWMol> m{new RWMol(mol)};
 
   // assign stereochem:
@@ -1758,14 +1762,14 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
   unsigned int nBonds = m->getNumBonds();
 
   // Make array of inchi_atom (storage space)
-  auto* inchiAtoms = new inchi_Atom[nAtoms];
+  std::unique_ptr<inchi_Atom[]> inchiAtoms(new inchi_Atom[nAtoms]);
   // and a vector for stereo0D
   std::vector<inchi_Stereo0D> stereo0DEntries;
 
-  PeriodicTable* periodicTable = PeriodicTable::getTable();
+  PeriodicTable *periodicTable = PeriodicTable::getTable();
   // Fill inchi_Atom's by atoms in RWMol
   for (unsigned int i = 0; i < nAtoms; i++) {
-    Atom* atom = m->getAtomWithIdx(i);
+    Atom *atom = m->getAtomWithIdx(i);
     inchiAtoms[i].num_bonds = 0;
 
     // coordinates
@@ -1838,11 +1842,14 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
     }
 
     // convert tetrahedral chirality info to Stereo0D
-    if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED ||
-        atom->hasProp("molParity")) {
-      // we ignore the molParity if the number of neighbors are below 3
+    if (atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
+        atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
       atom->calcImplicitValence();
-      if (atom->getNumImplicitHs() + atom->getDegree() < 3) {
+      if (auto tval = atom->getTotalDegree(); tval < 3 || tval > 4) {
+        BOOST_LOG(rdWarningLog)
+            << "tetrahedral chirality on atom with <3 or >4 neighbors will be ignored."
+            << std::endl;
+
         continue;
       }
       inchi_Stereo0D stereo0D;
@@ -1861,9 +1868,8 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
       // std::sort(neighbors.begin(), neighbors.end());
       unsigned char nid = 0;
       // std::cerr<<" at: "<<atom->getIdx();
-      for (const auto& p : neighbors) {
+      for (const auto &p : neighbors) {
         stereo0D.neighbor[nid++] = p.second;
-        // std::cerr<<" "<<p.second;
       }
       if (nid == 3) {
         // std::cerr<<" nid==3, reorder";
@@ -1915,7 +1921,8 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
           // For want of a better idea, detect this pattern
           // and flip the stereochem:
           // if(atom->getAtomicNum()==16 &&
-          //    atom->getDegree()==3 && atom->getExplicitValence()==4){
+          //    atom->getDegree()==3 &&
+          //    atom->getValence(Atom::ValenceType::EXPLICIT)==4){
           //   if(stereo0D.parity==INCHI_PARITY_EVEN){
           //     stereo0D.parity=INCHI_PARITY_ODD;
           //   } else if(stereo0D.parity==INCHI_PARITY_ODD){
@@ -1950,7 +1957,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
 
   // read bond info
   for (unsigned int i = 0; i < nBonds; i++) {
-    Bond* bond = m->getBondWithIdx(i);
+    Bond *bond = m->getBondWithIdx(i);
     unsigned int atomIndex1 = bond->getBeginAtomIdx();
     unsigned int atomIndex2 = bond->getEndAtomIdx();
     int bondDirectionModifier = 1;
@@ -1962,6 +1969,13 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
 
     // neighbor
     unsigned int idx = inchiAtoms[atomIndex1].num_bonds;
+    // The InChI code has a max number of neighbors allowed:
+    if (idx >= MAXVAL) {
+      BOOST_LOG(rdErrorLog)
+          << " atom " << atomIndex1 << " has too many bonds: " << idx
+          << ". The InChI library supports at most " << MAXVAL << std::endl;
+      return "";
+    }
     inchiAtoms[atomIndex1].neighbor[idx] = atomIndex2;
 
     // bond type
@@ -2036,24 +2050,23 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
   }
 
   // create stereo0D
-  inchi_Stereo0D* stereo0Ds;
+  std::unique_ptr<inchi_Stereo0D[]> stereo0Ds;
   if (stereo0DEntries.size()) {
-    stereo0Ds = new inchi_Stereo0D[stereo0DEntries.size()];
+    stereo0Ds.reset(new inchi_Stereo0D[stereo0DEntries.size()]);
     for (unsigned int i = 0; i < stereo0DEntries.size(); i++) {
       stereo0Ds[i] = stereo0DEntries[i];
     }
-  } else {
-    stereo0Ds = nullptr;
   }
 
   // create input
   inchi_Input input;
-  input.atom = inchiAtoms;
-  input.stereo0D = stereo0Ds;
+  input.atom = inchiAtoms.get();
+  input.stereo0D = stereo0Ds.get();
+  std::unique_ptr<char[]> _options;
   if (options) {
-    char* _options = new char[strlen(options) + 1];
-    fixOptionSymbol(options, _options);
-    input.szOptions = _options;
+    _options.reset(new char[strlen(options) + 1]);
+    fixOptionSymbol(options, _options.get());
+    input.szOptions = _options.get();
   } else {
     input.szOptions = nullptr;
   }
@@ -2086,34 +2099,26 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
     // clean up
     FreeINCHI(&output);
   }
-  if (input.szOptions) {
-    delete[] input.szOptions;
-  }
-
-  delete[] inchiAtoms;
-  if (stereo0Ds) {
-    delete[] stereo0Ds;
-  }
 
   return inchi;
 }
 
-std::string MolBlockToInchi(const std::string& molBlock,
-                            ExtraInchiReturnValues& rv, const char* options) {
+std::string MolBlockToInchi(const std::string &molBlock,
+                            ExtraInchiReturnValues &rv, const char *options) {
   // create output
   inchi_Output output;
-  memset((void*)&output, 0, sizeof(output));
+  memset((void *)&output, 0, sizeof(output));
   // call DLL
   std::string inchi;
   {
-    char* _options = nullptr;
+    char *_options = nullptr;
     if (options) {
       _options = new char[strlen(options) + 1];
       fixOptionSymbol(options, _options);
       options = _options;
     }
     int retcode =
-        MakeINCHIFromMolfileText(molBlock.c_str(), (char*)options, &output);
+        MakeINCHIFromMolfileText(molBlock.c_str(), (char *)options, &output);
 
     // generate output
     rv.returnCode = retcode;
@@ -2137,11 +2142,11 @@ std::string MolBlockToInchi(const std::string& molBlock,
   return inchi;
 }
 
-std::string InchiToInchiKey(const std::string& inchi) {
+std::string InchiToInchiKey(const std::string &inchi) {
   char inchiKey[29];
   char xtra1[65], xtra2[65];
   int ret = 0;
-  { ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2); }
+  ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);
   std::string error;
   switch (ret) {
     case INCHIKEY_OK:
@@ -2168,4 +2173,6 @@ std::string InchiToInchiKey(const std::string& inchi) {
   BOOST_LOG(rdErrorLog) << error << " in generating InChI Key" << std::endl;
   return std::string();
 }
+
+std::string getInchiVersion() { return CURRENT_VER; }
 }  // namespace RDKit

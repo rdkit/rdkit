@@ -14,7 +14,7 @@ namespace python = boost::python;
 
 class DemoKlass {
  public:
-  explicit DemoKlass(int v) : val_(v){};
+  explicit DemoKlass(int v) : val_(v) {};
   int getVal() const { return val_; };
 
  private:

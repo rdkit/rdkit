@@ -17,9 +17,9 @@
 namespace python = boost::python;
 
 namespace {
-python::tuple fragmentMolHelper(const RDKit::ROMol& mol, unsigned int maxCuts,
+python::tuple fragmentMolHelper(const RDKit::ROMol &mol, unsigned int maxCuts,
                                 unsigned int maxCutBonds,
-                                const std::string& pattern,
+                                const std::string &pattern,
                                 bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, maxCuts, maxCutBonds, pattern);
@@ -46,9 +46,9 @@ python::tuple fragmentMolHelper(const RDKit::ROMol& mol, unsigned int maxCuts,
   return python::tuple(pyres);
 }
 
-python::tuple fragmentMolHelper2(const RDKit::ROMol& mol, unsigned int minCuts,
+python::tuple fragmentMolHelper2(const RDKit::ROMol &mol, unsigned int minCuts,
                                  unsigned int maxCuts, unsigned int maxCutBonds,
-                                 const std::string& pattern,
+                                 const std::string &pattern,
                                  bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, minCuts, maxCuts, maxCutBonds,
@@ -76,7 +76,7 @@ python::tuple fragmentMolHelper2(const RDKit::ROMol& mol, unsigned int minCuts,
   return python::tuple(pyres);
 }
 
-python::tuple fragmentMolHelper3(const RDKit::ROMol& mol, python::object ob,
+python::tuple fragmentMolHelper3(const RDKit::ROMol &mol, python::object ob,
                                  unsigned int minCuts, unsigned int maxCuts,
                                  bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;

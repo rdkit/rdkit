@@ -201,14 +201,6 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
           BOOST_LOG(rdWarningLog) << "Chiral modifier m ignored, chiral spec "
                                   << attribVal[0] << " will be used\n";
         }
-#if 0
-          } else if(attribVal=="r"){
-          } else if(attribVal=="r*"){
-          } else if(attribVal=="rm"){
-          } else if(attribVal=="s"){
-          } else if(attribVal=="s*"){
-          } else if(attribVal=="sm"){
-#endif
       } else {
         BOOST_LOG(rdWarningLog) << "Unsupported stereochemistry specifier '"
                                 << attribVal << "' ignored.\n";
@@ -340,7 +332,7 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
         }
       }
     }  // end of query processing
-  }    // end of loop over attribs
+  }  // end of loop over attribs
   if (atomQuery) {
     atom->expandQuery(atomQuery, Queries::COMPOSITE_AND);
   }

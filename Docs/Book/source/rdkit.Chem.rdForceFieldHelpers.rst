@@ -1,5 +1,5 @@
 rdkit.Chem.rdForceFieldHelpers module
-=================================
+=====================================
 
 .. automodule:: rdkit.Chem.rdForceFieldHelpers
     :members:

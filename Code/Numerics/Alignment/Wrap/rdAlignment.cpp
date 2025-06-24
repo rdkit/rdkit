@@ -23,6 +23,24 @@ namespace python = boost::python;
 
 namespace RDNumeric {
 namespace Alignments {
+
+class PointVectManager {
+ public:
+  PointVectManager() = default;
+  PointVectManager(const PointVectManager &rhs) = delete;
+  PointVectManager &operator=(const PointVectManager &rhs) = delete;
+  ~PointVectManager() {
+    for (auto &i : m_ptr) {
+      delete i;
+    }
+  }
+
+  RDGeom::Point3DConstPtrVect &getVect() { return m_ptr; }
+
+ private:
+  RDGeom::Point3DConstPtrVect m_ptr;
+};
+
 void GetPointsFromPythonSequence(python::object &points,
                                  RDGeom::Point3DConstPtrVect &pts) {
   PyObject *pyObj = points.ptr();
@@ -89,19 +107,18 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
   // 2. A list of doubles of size N
 
   // first deal with situation where we have Numerics arrays
-  RDGeom::Point3DConstPtrVect refPts, probePts;
+  PointVectManager refPts, probePts;
 
-  GetPointsFromPythonSequence(refPoints, refPts);
-  GetPointsFromPythonSequence(probePoints, probePts);
+  GetPointsFromPythonSequence(refPoints, refPts.getVect());
+  GetPointsFromPythonSequence(probePoints, probePts.getVect());
 
-  unsigned int npt = refPts.size();
-  if (npt != probePts.size()) {
+  unsigned int npt = refPts.getVect().size();
+  if (npt != probePts.getVect().size()) {
     throw_value_error("Mis-match in number of points");
   }
 
   PyObject *weightsObj = weights.ptr();
-  RDNumeric::DoubleVector *wtsVec;
-  wtsVec = nullptr;
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec;
   double *data;
   if (PyArray_Check(weightsObj)) {
     auto *wtsMat = reinterpret_cast<PyArrayObject *>(weightsObj);
@@ -110,7 +127,7 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
       throw_value_error(
           "Number of weights supplied do not match the number of points");
     }
-    wtsVec = new RDNumeric::DoubleVector(nwts);
+    wtsVec.reset(new RDNumeric::DoubleVector(nwts));
     data = reinterpret_cast<double *>(PyArray_DATA(wtsMat));
     for (unsigned int i = 0; i < nwts; i++) {
       wtsVec->setVal(i, data[i]);
@@ -124,7 +141,7 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
         throw_value_error(
             "Number of weights supplied do not match the number of points");
       }
-      wtsVec = new RDNumeric::DoubleVector(nwts);
+      wtsVec.reset(new RDNumeric::DoubleVector(nwts));
       for (unsigned int i = 0; i < npt; i++) {
         wtsVec->setVal(i, wts[i]);
       }
@@ -132,8 +149,8 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
   }
 
   RDGeom::Transform3D trans;
-  double ssd =
-      AlignPoints(refPts, probePts, trans, wtsVec, reflect, maxIterations);
+  double ssd = AlignPoints(refPts.getVect(), probePts.getVect(), trans,
+                           wtsVec.get(), reflect, maxIterations);
 
   npy_intp dims[2];
   dims[0] = 4;
@@ -148,12 +165,6 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
     }
   }
 
-  delete wtsVec;
-
-  for (unsigned int i = 0; i < npt; ++i) {
-    delete probePts[i];
-    delete refPts[i];
-  }
   PyObject *resTup = PyTuple_New(2);
   PyObject *ssdItem = PyFloat_FromDouble(ssd);
   PyTuple_SetItem(resTup, 0, ssdItem);

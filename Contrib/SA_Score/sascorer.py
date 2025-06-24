@@ -16,24 +16,25 @@
 # peter ertl & greg landrum, september 2013
 #
 
-import math
-import os.path as op
-import pickle
-from collections import defaultdict
-
 from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import rdFingerprintGenerator, rdMolDescriptors
+
+import math
+import pickle
+
+import os.path as op
 
 _fscores = None
+mfpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2)
 
 
-def readFragmentScores(name='fpscores'):
+def readFragmentScores(name="fpscores.pkl.gz"):
   import gzip
   global _fscores
   # generate the full path filename:
-  if name == "fpscores":
+  if name == "fpscores.pkl.gz":
     name = op.join(op.dirname(__file__), name)
-  data = pickle.load(gzip.open('%s.pkl.gz' % name))
+  data = pickle.load(gzip.open(name))
   outDict = {}
   for i in data:
     for j in range(1, len(i)):
@@ -48,19 +49,23 @@ def numBridgeheadsAndSpiro(mol, ri=None):
 
 
 def calculateScore(m):
+
+  if not m.GetNumAtoms():
+    return None
+
   if _fscores is None:
     readFragmentScores()
 
   # fragment score
-  fp = rdMolDescriptors.GetMorganFingerprint(m,
-                                             2)  # <- 2 is the *radius* of the circular fingerprint
-  fps = fp.GetNonzeroElements()
+  sfp = mfpgen.GetSparseCountFingerprint(m)
+
   score1 = 0.
   nf = 0
-  for bitId, v in fps.items():
-    nf += v
-    sfp = bitId
-    score1 += _fscores.get(sfp, -4) * v
+  nze = sfp.GetNonzeroElements()
+  for id, count in nze.items():
+    nf += count
+    score1 += _fscores.get(id, -4) * count
+
   score1 /= nf
 
   # features score
@@ -91,8 +96,9 @@ def calculateScore(m):
   # not in the original publication, added in version 1.1
   # to make highly symmetrical molecules easier to synthetise
   score3 = 0.
-  if nAtoms > len(fps):
-    score3 = math.log(float(nAtoms) / len(fps)) * .5
+  numBits = len(nze)
+  if nAtoms > numBits:
+    score3 = math.log(float(nAtoms) / numBits) * .5
 
   sascore = score1 + score2 + score3
 
@@ -100,6 +106,7 @@ def calculateScore(m):
   min = -4.0
   max = 2.5
   sascore = 11. - (sascore - min + 1) / (max - min) * 9.
+
   # smooth the 10-end
   if sascore > 8.:
     sascore = 8. + math.log(sascore + 1. - 9.)
@@ -120,7 +127,10 @@ def processMols(mols):
     s = calculateScore(m)
 
     smiles = Chem.MolToSmiles(m)
-    print(smiles + "\t" + m.GetProp('_Name') + "\t%3f" % s)
+    if s is None:
+      print(f"{smiles}\t{m.GetProp('_Name')}\t{s}")
+    else:
+      print(f"{smiles}\t{m.GetProp('_Name')}\t{s:3f}")
 
 
 if __name__ == '__main__':
@@ -128,10 +138,21 @@ if __name__ == '__main__':
   import time
 
   t1 = time.time()
-  readFragmentScores("fpscores")
+  if len(sys.argv) == 2:
+    readFragmentScores()
+  else:
+    readFragmentScores(sys.argv[2])
   t2 = time.time()
 
-  suppl = Chem.SmilesMolSupplier(sys.argv[1])
+  molFile = sys.argv[1]
+  if molFile.endswith("smi"):
+    suppl = Chem.SmilesMolSupplier(molFile)
+  elif molFile.endswith("sdf"):
+    suppl = Chem.SDMolSupplier(molFile)
+  else:
+    print(f"Unrecognized file extension for {molFile}")
+    sys.exit()
+
   t3 = time.time()
   processMols(suppl)
   t4 = time.time()

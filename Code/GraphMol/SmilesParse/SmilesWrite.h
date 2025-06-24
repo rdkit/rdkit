@@ -16,11 +16,16 @@
 #include <memory>
 #include <cstdint>
 #include <limits>
+#include <RDGeneral/BetterEnums.h>
+
+#include <boost/shared_ptr.hpp>
 
 namespace RDKit {
 class Atom;
 class Bond;
 class ROMol;
+
+typedef std::vector<boost::shared_ptr<ROMol>> MOL_SPTR_VECT;
 
 struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
   bool doIsomericSmiles =
@@ -30,50 +35,53 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
                             is not canonical and that this will thrown an
                             exception if the molecule cannot be kekulized. */
   bool canonical = true; /**< generate canonical SMILES */
+  bool cleanStereo = true;       /**< clean up stereo */
   bool allBondsExplicit = false; /**< include symbols for all bonds */
   bool allHsExplicit = false;    /**< provide hydrogen counts for every atom */
   bool doRandom = false; /**< randomize the output order. The resulting SMILES
-                            is not canonical */
+                              is not canonical and the value of the canonical
+                              parameter will be ignored. */
   int rootedAtAtom = -1; /**< make sure the SMILES starts at the specified
-                             atom. The resulting SMILES is not canonical */
+                             atom. The resulting SMILES is not canonical and
+                             the value of the canonical parameter will be
+                             ignored. */
   bool includeDativeBonds =
       true; /**< include the RDKit extension for dative bonds. Otherwise dative
                bonds will be written as single bonds*/
+  bool ignoreAtomMapNumbers = false; /**< If true, ignores any atom map numbers
+                                        when canonicalizing the molecule */
 };
 
 namespace SmilesWrite {
 
-#define CXSMILESFIELDS_ENUM_ITEMS                        \
-  CXSMILESFIELDS_ENUM_ITEM(CX_NONE, 0)                   \
-  CXSMILESFIELDS_ENUM_ITEM(CX_ATOM_LABELS, 1 << 0)       \
-  CXSMILESFIELDS_ENUM_ITEM(CX_MOLFILE_VALUES, 1 << 1)    \
-  CXSMILESFIELDS_ENUM_ITEM(CX_COORDS, 1 << 2)            \
-  CXSMILESFIELDS_ENUM_ITEM(CX_RADICALS, 1 << 3)          \
-  CXSMILESFIELDS_ENUM_ITEM(CX_ATOM_PROPS, 1 << 4)        \
-  CXSMILESFIELDS_ENUM_ITEM(CX_LINKNODES, 1 << 5)         \
-  CXSMILESFIELDS_ENUM_ITEM(CX_ENHANCEDSTEREO, 1 << 6)    \
-  CXSMILESFIELDS_ENUM_ITEM(CX_SGROUPS, 1 << 7)           \
-  CXSMILESFIELDS_ENUM_ITEM(CX_POLYMER, 1 << 8)           \
-  CXSMILESFIELDS_ENUM_ITEM(CX_BOND_CFG, 1 << 9)          \
-  CXSMILESFIELDS_ENUM_ITEM(CX_BOND_ATROPISOMER, 1 << 10) \
-  CXSMILESFIELDS_ENUM_ITEM(CX_COORDINATE_BONDS, 1 << 11) \
-  CXSMILESFIELDS_ENUM_ITEM(CX_ALL, 0x7fffffff)           \
-  CXSMILESFIELDS_ENUM_ITEM(CX_ALL_BUT_COORDS, CX_ALL ^ CX_COORDS)
-
-#define CXSMILESFIELDS_ENUM_ITEM(k, v) k = (v),
-enum CXSmilesFields : uint32_t { CXSMILESFIELDS_ENUM_ITEMS };
-#undef CXSMILESFIELDS_ENUM_ITEM
-#define CXSMILESFIELDS_STD_MAP_ITEM(k) {#k, SmilesWrite::CXSmilesFields::k},
-#define CXSMILESFIELDS_ENUM_ITEM(k, v) CXSMILESFIELDS_STD_MAP_ITEM(k)
-#define CXSMILESFIELDS_ITEMS_MAP                       \
-  std::map<std::string, SmilesWrite::CXSmilesFields> { \
-    CXSMILESFIELDS_ENUM_ITEMS                          \
-  }
+BETTER_ENUM(CXSmilesFields, uint32_t,  // clang-format off
+  CX_NONE = 0,
+  CX_ATOM_LABELS = 1 << 0,
+  CX_MOLFILE_VALUES = 1 << 1,
+  CX_COORDS = 1 << 2,
+  CX_RADICALS = 1 << 3,
+  CX_ATOM_PROPS = 1 << 4,
+  CX_LINKNODES = 1 << 5,
+  CX_ENHANCEDSTEREO = 1 << 6,
+  CX_SGROUPS = 1 << 7,
+  CX_POLYMER = 1 << 8,
+  CX_BOND_CFG = 1 << 9,
+  CX_BOND_ATROPISOMER = 1 << 10,
+  CX_COORDINATE_BONDS = 1 << 11,
+  CX_HYDROGEN_BONDS = 1 << 12,
+  CX_ZERO_BONDS = 1 << 13,
+  CX_ALL = 0x7fffffff,
+  CX_ALL_BUT_COORDS = CX_ALL ^ CX_COORDS
+);
 
 //! \brief returns the cxsmiles data for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(
     const ROMol &mol, std::uint32_t flags = CXSmilesFields::CX_ALL);
 
+//! \brief returns the cxsmiles data for a vector of molecules
+RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(
+  const std::vector<ROMol *> &mols, std::uint32_t flags);
+  
 //! \brief returns true if the atom number is in the SMILES organic subset
 RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);
 
@@ -165,13 +173,16 @@ RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
   atom.
   \param doRandom : if true, the first atom in the SMILES string will be
   selected at random and the SMILES string will not be canonical
+  \param ignoreAtomMapNumbers : if true, ignores any atom map numbers when
+  canonicalizing the molecule
  */
 inline std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles = true,
                                bool doKekule = false, int rootedAtAtom = -1,
                                bool canonical = true,
                                bool allBondsExplicit = false,
                                bool allHsExplicit = false,
-                               bool doRandom = false) {
+                               bool doRandom = false,
+                               bool ignoreAtomMapNumbers = false) {
   SmilesWriteParams ps;
   ps.doIsomericSmiles = doIsomericSmiles;
   ps.doKekule = doKekule;
@@ -180,6 +191,7 @@ inline std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles = true,
   ps.allBondsExplicit = allBondsExplicit;
   ps.allHsExplicit = allHsExplicit;
   ps.doRandom = doRandom;
+  ps.ignoreAtomMapNumbers = ignoreAtomMapNumbers;
   return MolToSmiles(mol, ps);
 };
 
@@ -253,28 +265,17 @@ inline std::string MolFragmentToSmiles(
                              bondSymbols);
 }
 
-#define RESTOREBONDDIROPTION_ENUM_ITEMS                          \
-  RESTOREBONDDIROPTION_ENUM_ITEM(RestoreBondDirOptionTrue,       \
-                                 0) /*!< DO restore bond dirs */ \
-  RESTOREBONDDIROPTION_ENUM_ITEM(RestoreBondDirOptionClear,      \
-                                 1) /*!< clear all bond dir information */
-
-#define RESTOREBONDDIROPTION_ENUM_ITEM(k, v) k = v,
-enum RestoreBondDirOption { RESTOREBONDDIROPTION_ENUM_ITEMS };
-#undef RESTOREBONDDIROPTION_ENUM_ITEM
-#define RESTOREBONDDIROPTION_STD_MAP_ITEM(k) {#k, k},
-#define RESTOREBONDDIROPTION_ENUM_ITEM(k, v) \
-  RESTOREBONDDIROPTION_STD_MAP_ITEM(k)
-#define RESTOREBONDDIROPTION_ITEMS_MAP          \
-  std::map<std::string, RestoreBondDirOption> { \
-    RESTOREBONDDIROPTION_ENUM_ITEMS             \
-  }
+BETTER_ENUM(RestoreBondDirOption, unsigned int,
+  RestoreBondDirOptionTrue = 0,  //<!DO restore bond dirs
+  RestoreBondDirOptionClear = 1  //<!clear all bond dir information
+);
 
 //! \brief returns canonical CXSMILES for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(
     const ROMol &mol, const SmilesWriteParams &ps,
     std::uint32_t flags = SmilesWrite::CXSmilesFields::CX_ALL,
-    RestoreBondDirOption restoreBondDirs = RestoreBondDirOptionClear);
+    RestoreBondDirOption restoreBondDirs =
+        RestoreBondDirOption::RestoreBondDirOptionClear);
 
 //! \brief returns canonical CXSMILES for a molecule
 /*!
@@ -358,17 +359,6 @@ inline std::string MolFragmentToCXSmiles(
   return MolFragmentToCXSmiles(mol, ps, atomsToUse, bondsToUse, atomSymbols,
                                bondSymbols);
 }
-
-void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
-                                     const std::string &details_json);
-void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
-                                     const char *details_json);
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RestoreBondDirOption &restoreBondDirs,
-                                  const std::string &details_json);
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RestoreBondDirOption &restoreBondDirs,
-                                  const char *details_json);
 
 }  // namespace RDKit
 #endif

@@ -86,8 +86,8 @@ void testOptionsJSON()  // PASSED
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void doLoadOptionsFromFiles(StructCheckerOptions& options,
-                            const std::string& dirBase = "",
+void doLoadOptionsFromFiles(StructCheckerOptions &options,
+                            const std::string &dirBase = "",
                             bool strict = true) {
   bool ok;
   const std::string rdbase = getenv("RDBASE") ? getenv("RDBASE") : ".";
@@ -149,7 +149,7 @@ void testLoadOptionsFromFiles() {
 void test1() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "test1\n";
-  const char* smols[] = {
+  const char *smols[] = {
       "CCC",  // tmp
       "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
       "O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
@@ -167,8 +167,8 @@ void test1() {
       TEST_ASSERT(ok);
   */
   StructChecker chk(options);
-  for (auto& smol : smols) {
-    RWMol* mol = SmilesToMol(smol);
+  for (auto &smol : smols) {
+    RWMol *mol = SmilesToMol(smol);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
@@ -183,7 +183,7 @@ void test1() {
 void test2() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "test2\n";
-  const char* smols[] = {
+  const char *smols[] = {
       "CCC",  // tmp
       "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
       "O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
@@ -194,8 +194,8 @@ void test2() {
   // options.Verbose = true;
 
   StructChecker chk(options);
-  for (auto& smol : smols) {
-    RWMol* mol = SmilesToMol(smol);
+  for (auto &smol : smols) {
+    RWMol *mol = SmilesToMol(smol);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
@@ -209,7 +209,7 @@ void test2() {
 
 //--------------------------------------------------------------------------
 
-const char* substance_310975001 =
+const char *substance_310975001 =
     "310975001\n"
     "  -OEChem-06071611182D\n"
     "\n"
@@ -245,7 +245,7 @@ const char* substance_310975001 =
 //----------------------------------
 // CIS_TRANS_EITHER is BondDir::EITHERDOUBLE (i.e.crossed double bond)
 // squiggle bond from chiral center
-const char* Mrv1561_08171605252D =
+const char *Mrv1561_08171605252D =
     "Mrv1561_08171605252D\n"
     "\n\n"
     "  5  4  0     0  0  0  0  0  0999 V2000\n"
@@ -265,7 +265,7 @@ const char* Mrv1561_08171605252D =
 //--------------------
 
 //    crossed double bond (2D)
-const char* Mrv1561_08171605322D =
+const char *Mrv1561_08171605322D =
     "Mrv1561 08171605322D 0   0.00000     0.00000     0\n"
     "\n\n"
     " 4  3   0     0  0  0  0  0  0999 V2000\n"
@@ -283,7 +283,7 @@ const char* Mrv1561_08171605322D =
 //--------------------
 
 // squiggle bond from double bond (2D)
-const char* Mrv1561_08171605332D =
+const char *Mrv1561_08171605332D =
     "Mrv1561 08171605332D 0   0.00000     0.00000     0\n"
     "\n\n"
     " 4  3   0     0  0  0  0  0  0999 V2000\n"
@@ -303,7 +303,7 @@ void testStereo()  // stereochemistry
 {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "testStereo\n";
-  const char* smols[] = {
+  const char *smols[] = {
       "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC="
       "CC=C",  // Pyrethrin II (C22H28O5)
       "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(="
@@ -325,7 +325,7 @@ void testStereo()  // stereochemistry
   StructChecker chk(options);
   for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
-    RWMol* mol = SmilesToMol(smols[i]);
+    RWMol *mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     delete mol;
@@ -342,7 +342,7 @@ void testStereo()  // stereochemistry
     TEST_ASSERT(mol.get());
     BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
     TEST_ASSERT(CheckStereo(*mol.get()) == false);
-    unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol*>(mol.get()));
+    unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol *>(mol.get()));
     BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
     BOOST_LOG(rdInfoLog) << "FLAGS: "
                          << StructChecker::StructureFlagsToString(flags)
@@ -350,7 +350,7 @@ void testStereo()  // stereochemistry
     //      TEST_ASSERT(0!=(flags & StructChecker::STEREO_ERROR));
   }
   {
-    const char* substance_set[] = {substance_310975001, Mrv1561_08171605252D,
+    const char *substance_set[] = {substance_310975001, Mrv1561_08171605252D,
                                    Mrv1561_08171605322D, Mrv1561_08171605332D};
     const unsigned res[] = {
         StructChecker::STEREO_ERROR,
@@ -372,7 +372,7 @@ void testStereo()  // stereochemistry
       //                TEST_ASSERT(CheckStereo(*mol) == true);
                   }
       */
-      unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol*>(mol.get()));
+      unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol *>(mol.get()));
       BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
       BOOST_LOG(rdInfoLog) << "ref: "
                            << StructChecker::StructureFlagsToString(res[i])
@@ -390,7 +390,7 @@ void testStereo()  // stereochemistry
 void testOptionsDefault() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "testOptionsDefault\n";
-  const char* smols[] = {
+  const char *smols[] = {
       "COC(=O)C",
       "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC="
       "CC=C",  // Pyrethrin II (C22H28O5)
@@ -401,7 +401,7 @@ void testOptionsDefault() {
   StructChecker chk(options);
   for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
-    RWMol* mol = SmilesToMol(smols[i]);
+    RWMol *mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     delete mol;
@@ -416,7 +416,7 @@ void testOptionsDefault() {
 void testCheckAtomWithDefaultGoodAtoms() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "testCheckAtom\n";
-  const char* smols[] = {
+  const char *smols[] = {
       "COC(=O)C",
   };
 
@@ -425,7 +425,7 @@ void testCheckAtomWithDefaultGoodAtoms() {
   StructChecker chk(options);
   for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
-    RWMol* mol = SmilesToMol(smols[i]);
+    RWMol *mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     delete mol;
@@ -439,7 +439,7 @@ void testCheckAtomWithDefaultGoodAtoms() {
 void testCheckAtom() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "testCheckAtom\n";
-  const char* smols[] = {
+  const char *smols[] = {
       "COC(=O)C",
   };
 
@@ -449,7 +449,7 @@ void testCheckAtom() {
   StructChecker chk(options);
   for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
-    RWMol* mol = SmilesToMol(smols[i]);
+    RWMol *mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     delete mol;
@@ -463,7 +463,7 @@ void testCheckAtom() {
 void testCheckAtomFiles() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "testCheckAtom2\n";
-  const char* substance_set[] = {
+  const char *substance_set[] = {
       "Substance_310925001_310950000-003900.sdf",
       "Substance_310925001_310950000-012197.sdf",
       "Substance_310925001_310950000-021440.sdf",
@@ -521,7 +521,7 @@ void testCheckMatch() {
   std::vector<unsigned> atom_ring_status;
   std::vector<Neighbourhood> nbp;
 
-  ROMol* mol = SmilesToMol("CO");
+  ROMol *mol = SmilesToMol("CO");
   SetupNeighbourhood(*mol, nbp);
 
   aa.push_back(AugmentedAtom("", "C(-N,O,P,S,I+1)", 0, RT_NONE, TP_NONE));
@@ -543,7 +543,7 @@ void testCheckMatch() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-const char* nitro =
+const char *nitro =
     "nitro.mol\n"
     "  ChemDraw08311606582D\n"
     "\n"
@@ -571,7 +571,7 @@ void testNitro() {
   StructChecker chk(options);
 
   ROMOL_SPTR mol(MolBlockToMol(nitro));
-  RWMol* rwmol = dynamic_cast<RWMol*>(mol.get());
+  RWMol *rwmol = dynamic_cast<RWMol *>(mol.get());
   TEST_ASSERT(rwmol != nullptr);
   unsigned flags = chk.checkMolStructure(*rwmol);
   // N+1 should match N+1(=N,O)(-N,O-1)(-C,N,S) but doesn't
@@ -595,14 +595,14 @@ void testSpecificExamples() {
   // options.Verbose = true;
   StructChecker chk(options);
   {
-    const char* smols[] = {
+    const char *smols[] = {
         "C[N+](C)(C)C",
         "CC(=C)C(OCC[N+](C)(C)C)=[N+](S(=O)(=O)C(F)(F)F)S(=O)(=O)C(F)(F)F",
         "OC(=O)[C@@H]1CC=CN1"};
 
     for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
       BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
-      RWMol* mol = SmilesToMol(smols[i]);
+      RWMol *mol = SmilesToMol(smols[i]);
       TEST_ASSERT(mol);
       unsigned flags = chk.checkMolStructure(*mol);
       delete mol;
@@ -646,7 +646,7 @@ void testSpecificExamples() {
         "  6  8  1  6  0  0  0\n"
         "M  END\n";
 
-    RWMol* mol = MolBlockToMol(molb);
+    RWMol *mol = MolBlockToMol(molb);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     delete mol;
@@ -671,11 +671,11 @@ void testSpecificOrder() {
   // options.Verbose = true;
   //  doLoadOptionsFromFiles(options);
   StructChecker chk(options);
-  const char* smols[] = {"FC(F)O", "OC(F)F"};
+  const char *smols[] = {"FC(F)O", "OC(F)F"};
 
   for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
-    RWMol* mol = SmilesToMol(smols[i]);
+    RWMol *mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     delete mol;
@@ -700,11 +700,11 @@ void testTransformTau() {
 
   //  doLoadOptionsFromFiles(options);
   StructChecker chk(options);
-  const char* smols[] = {"FC=C(F)O"};
+  const char *smols[] = {"FC=C(F)O"};
 
   for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
-    RWMol* mol = SmilesToMol(smols[i]);
+    RWMol *mol = SmilesToMol(smols[i]);
     //      TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     BOOST_LOG(rdInfoLog) << MolToSmiles(*mol) << "\n";
@@ -744,11 +744,11 @@ void testTransformAtoms() {
 
   //  doLoadOptionsFromFiles(options);
   StructChecker chk(options);
-  const char* smols[] = {"C(=O)C", "FC=CO"};
+  const char *smols[] = {"C(=O)C", "FC=CO"};
 
   for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
-    RWMol* mol = SmilesToMol(smols[i]);
+    RWMol *mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
     BOOST_LOG(rdInfoLog) << "before: " << MolToSmiles(*mol) << "\n";
     unsigned flags = chk.checkMolStructure(*mol);
@@ -780,12 +780,12 @@ void testAugmentedAtomTranslationsToAtomListQuery() {
   options.AugmentedAtomPairs.push_back(tr1);
 
   options.Verbose = true;
-  const char* smols[] = {
+  const char *smols[] = {
       "C(=O)C",
   };
   StructChecker chk(options);
-  for (auto& smol : smols) {
-    RWMol* mol = SmilesToMol(smol);
+  for (auto &smol : smols) {
+    RWMol *mol = SmilesToMol(smol);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     BOOST_LOG(rdInfoLog) << "FLAGs: "
@@ -832,7 +832,7 @@ void testCarboxylicAcids() {
                          << "\n";
     TEST_ASSERT(0 == (flags & StructChecker::ATOM_CHECK_FAILED));
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-  } catch (RDKit::BadFileException& e) {
+  } catch (RDKit::BadFileException &e) {
     BOOST_LOG(rdInfoLog) << "caught RDKit::BadFileException" << e.what() << "\n"
                          << sdf << "\n";
   }

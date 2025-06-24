@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2020-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -69,6 +69,10 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
     }
   }
   SECTION("stereo") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+
     {
       auto mol = "C/C=C(/C#C)C"_smiles;
       REQUIRE(mol);
@@ -89,13 +93,13 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Trans);
     }
     {  // check an example where one of the stereo atoms isn't the first
-       // neighbor
+       // neighbor (only true with legacy chirality)
       auto mol = "C/C=C(/C)C#C"_smiles;
       REQUIRE(mol);
 
       CHECK(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
       CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1] == 4);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1] == (useLegacy ? 4 : 3));
 
       auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
       CHECK(sinfo.type == Chirality::StereoType::Bond_Double);
@@ -2339,7 +2343,8 @@ TEST_CASE("getIdealAngle", "[nontetrahedral]") {
         Catch::Matchers::WithinAbs(90, 0.001));
   }
   SECTION("TB1 missing 1") {
-    auto m = "S[As@TB1](F)(Cl)Br"_smiles;
+    // S[As@TB1](F)(Cl)(Br)* => S[As@TB7](*)(F)(Cl)Br
+    auto m = "S[As@TB7](F)(Cl)Br"_smiles;
     REQUIRE(m);
 
     CHECK(Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
@@ -2582,7 +2587,8 @@ TEST_CASE("nontetrahedral StereoInfo", "[nontetrahedral]") {
           std::vector<unsigned int>{0, 2, 3, 4, 5, 6});
   }
   SECTION("OH missing ligand") {
-    auto m = "C[Fe@OH9](F)(Cl)(O)N"_smiles;
+    // C[Fe@OH9](F)(Cl)(O)(N)* => C[Fe@OH4](*)(F)(Cl)(O)N
+    auto m = "C[Fe@OH4](F)(Cl)(O)N"_smiles;
     REQUIRE(m);
     auto sinfo = Chirality::findPotentialStereo(*m);
     REQUIRE(sinfo.size() == 1);
@@ -4895,6 +4901,18 @@ TEST_CASE("github #6931: atom maps influencing chirality perception") {
     CHECK(
         !m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
   }
+  SECTION(
+      "github #8391: atom maps on dummy atoms do influence chirality perception") {
+    auto m = "[*:1]C([*:2])(O)F"_smiles;
+    REQUIRE(m);
+    bool cleanIt = true;
+    bool force = true;
+    bool flagPossibleStereoCenters = true;
+    UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+    MolOps::assignStereochemistry(*m, cleanIt, force,
+                                  flagPossibleStereoCenters);
+    CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
+  }
 }
 
 TEST_CASE(
@@ -6055,6 +6073,196 @@ TEST_CASE("meso centers and stereo groups") {
       CHECK(m->getStereoGroups().size() == sz.second);
       // m->debugMol(std::cerr);
     }
+  }
+}
+
+TEST_CASE(
+    "GitHub Issue #7929: AssignStereochemistry(cleanIt=True) does not clean _CIPCode property on bonds") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(true);
+
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+
+  m->getAtomWithIdx(0)->setProp(common_properties::_CIPCode, "X");
+  m->getBondWithIdx(0)->setProp(common_properties::_CIPCode, "X");
+
+  bool clean = true;
+  bool flag = true;
+  bool force = true;
+
+  SECTION("legacy stereo perception") {
+    Chirality::setUseLegacyStereoPerception(true);
+
+    RDKit::MolOps::assignStereochemistry(*m, clean, force, flag);
+
+    CHECK(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode) == false);
+    CHECK(m->getBondWithIdx(0)->hasProp(common_properties::_CIPCode) == false);
+  }
+  SECTION("new stereo perception") {
+    Chirality::setUseLegacyStereoPerception(false);
+
+    RDKit::MolOps::assignStereochemistry(*m, clean, force, flag);
+
+    CHECK(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode) == false);
+    CHECK(m->getBondWithIdx(0)->hasProp(common_properties::_CIPCode) == false);
+  }
+}
+
+TEST_CASE("Github issue #7983: stereogroup lost on chiral sulfoxide") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2317 02032512242D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 21 22 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.001 -2.31 0 0
+M  V30 2 C -2.6674 -3.08 0 0
+M  V30 3 C -1.3337 -2.31 0 0
+M  V30 4 C 0 -3.08 0 0
+M  V30 5 C 0 -4.6198 0 0
+M  V30 6 N 1.3337 -5.3898 0 0
+M  V30 7 C 2.6674 -4.6198 0 0
+M  V30 8 O 2.6674 -3.08 0 0
+M  V30 9 O 4.001 -5.3898 0 0
+M  V30 10 C 5.3345 -4.6198 0 0
+M  V30 11 C 6.6682 -5.3898 0 0
+M  V30 12 C 8.0019 -4.6198 0 0
+M  V30 13 C 9.3356 -5.3898 0 0
+M  V30 14 C 9.3356 -6.9298 0 0
+M  V30 15 C 8.0019 -7.6998 0 0
+M  V30 16 C 6.6682 -6.9298 0 0
+M  V30 17 S 5.3345 -7.6998 0 0 CFG=2
+M  V30 18 C 4.001 -6.9298 0 0
+M  V30 19 O 5.3345 -9.2398 0 0
+M  V30 20 C -1.3337 -5.3898 0 0
+M  V30 21 C -2.6674 -4.6198 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 2 7 8
+M  V30 8 1 7 9
+M  V30 9 1 9 10
+M  V30 10 1 10 11
+M  V30 11 4 11 12
+M  V30 12 4 12 13
+M  V30 13 4 13 14
+M  V30 14 4 14 15
+M  V30 15 4 15 16
+M  V30 16 4 11 16
+M  V30 17 1 17 16
+M  V30 18 2 17 19
+M  V30 19 4 5 20
+M  V30 20 4 20 21
+M  V30 21 4 2 21
+M  V30 22 1 17 18 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 17)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    auto &sgs = m->getStereoGroups();
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+    CHECK(sgs[0].getAtoms().size() == 1);
+    CHECK(sgs[0].getAtoms().at(0)->getIdx() == 16);
+  }
+  SECTION("making sure sulfoxides do not trigger atropisomerism") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.892852 4.651432 0.000000 0
+M  V30 2 C 3.199931 3.915535 0.000000 0
+M  V30 3 C 3.216171 2.415622 0.000000 0
+M  V30 4 C 1.925330 1.651602 0.000000 0
+M  V30 5 C 0.618251 2.387492 0.000000 0
+M  V30 6 C 0.602011 3.887408 0.000000 0
+M  V30 7 S -0.705072 4.623298 0.000000 0
+M  V30 8 C -0.672591 1.623472 0.000000 0
+M  V30 9 O -0.721314 6.123210 0.000000 0
+M  V30 10 C -1.995913 3.859276 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1 CFG=1
+M  V30 7 1 6 7
+M  V30 8 1 5 8
+M  V30 9 2 7 9
+M  V30 10 1 7 10 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 7)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(6)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getBondBetweenAtoms(5, 6)->getStereo() ==
+          Bond::BondStereo::STEREONONE);
+  }
+  SECTION("examples from #8323") {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/Github8323.sdf";
+    SDMolSupplier suppl(pathName);
+    while (!suppl.atEnd()) {
+      std::unique_ptr<ROMol> mol(suppl.next());
+      REQUIRE(mol);
+      auto &sgs = mol->getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      REQUIRE(mol->hasProp("StereoGroupOnAtom"));
+      auto aid = std::stoul(mol->getProp<std::string>("StereoGroupOnAtom"));
+      CHECK(sgs[0].getAtoms().size() == 1);
+      CHECK(sgs[0].getAtoms().at(0)->getIdx() == aid);
+    }
+  }
+}
+
+TEST_CASE("Github #8420: imines and crossed bonds") {
+  bool useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(useLegacy);
+  SECTION("as reported") {
+    std::string ctab = R"CTAB(
+  MJ250100                      
+
+  7  7  0  0  1  0  0  0  0  0999 V2000
+    0.6961    0.4995    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0196    1.7395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7332    0.4968    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4118    0.9090    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4118    1.7395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6961    2.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0196    0.9101    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  3  7  2  3  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  2  6  1  0  0  0  0
+  2  7  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  7  1  0  0  0  0
+M  END)CTAB";
+    auto m = v2::FileParsers::MolFromMolBlock(ctab);
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getStereo() == Bond::BondStereo::STEREONONE);
   }
 }
 

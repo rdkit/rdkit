@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2021-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,7 +9,7 @@
 //
 
 #include <catch2/catch_all.hpp>
-
+#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
 #include "RDDepictor.h"
@@ -19,6 +19,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
 
@@ -120,7 +121,8 @@ TEST_CASE("trigonal bipyramidal", "[nontetrahedral]") {
     CHECK(v2.length() > v4.length());
   }
   SECTION("TB1 missing ax") {
-    auto m = "S[As@TB1](F)(Cl)Br"_smiles;
+    // // S[As@TB1](F)(Cl)(Br)* => S[As@TB7](*)(F)(Cl)Br
+    auto m = "S[As@TB7](F)(Cl)Br"_smiles;
     REQUIRE(m);
 
     CHECK_THAT(
@@ -193,7 +195,8 @@ TEST_CASE("octahedral", "[nontetrahedral]") {
     CHECK(v5.length() > v6.length());
   }
   SECTION("OH1 missing one ligand") {
-    auto m = "O[Co@OH1](Cl)(C)(N)F"_smiles;
+    // O[Co@OH1](Cl)(C)(N)(F)* => O[Co@OH25](*)(Cl)(C)(N)F
+    auto m = "O[Co@OH25](Cl)(C)(N)F"_smiles;
     REQUIRE(m);
     CHECK(RDDepict::compute2DCoords(*m) == 0);
     // std::cerr << MolToV3KMolBlock(*m) << std::endl;
@@ -225,6 +228,58 @@ TEST_CASE("use ring system templates") {
   diff =
       mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
   TEST_ASSERT(RDKit::feq(diff.length(), 1.0, .1))
+}
+
+TEST_CASE("find core rings") {
+  // perhydroanthracene and perhydrophenalene, and their
+  // expected number of core rings
+  std::map<std::string, unsigned int> examples = {
+      {"C1CCC2CC3CCCCC3CC2C1", 1u}, {"C1CC2CCCC3C2C(C1)CCC3", 3u}};
+  for (auto example : examples) {
+    auto mol = v2::SmilesParse::MolFromSmiles(example.first);
+    RDKit::VECT_INT_VECT arings;
+    bool includeDativeBonds = true;
+    RDKit::MolOps::symmetrizeSSSR(*mol, arings, includeDativeBonds);
+    CHECK(arings.size() == 3);
+    RDKit::INT_VECT coreRingsIds;
+    auto coreRings = RDDepict::findCoreRings(arings, coreRingsIds, *mol);
+    CHECK(coreRings.size() == example.second);
+  }
+}
+
+TEST_CASE("match template with added rings") {
+  // this is a molecule we have a template for
+  auto mol1 = "C1C2CC3CC1CC3C2"_smiles;
+  // and this is the same molecule with an extra ring added
+  auto mol2 = "C1C2CC3C1CC1(C2)NC31"_smiles;
+  // generate coordinates
+  RDDepict::Compute2DCoordParameters params;
+  params.useRingTemplates = true;
+  RDDepict::compute2DCoords(*mol1, params);
+  RDDepict::compute2DCoords(*mol2, params);
+
+  // align the two molecules
+  auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
+  CHECK(rmsd < 0.2);
+}
+
+TEST_CASE("templates are aware of E/Z stereochemistry") {
+  // this is a molecule we have a template for
+  auto mol1 =
+      "CCC1C2=N[C@@](C)(C3N/C(=C(/C)C4=N/C(=C\\C5=N/C(=C\\2C)[C@@](C)(CC(N)=O)C5CCC(N)=O)C(C)(C)C4CCC(N)=O)[C@](C)(CCC(=O)NC)C3C)C1(C)C"_smiles;
+  // and this is the same molecule with different stereochemistry on double
+  // bonds
+  auto mol2 =
+      "CCC1C2=N[C@@](C)(C3N/C(=C(\\C)C4=N/C(=C/C5=N/C(=C/2C)[C@@](C)(CC(N)=O)C5CCC(N)=O)C(C)(C)C4CCC(N)=O)[C@](C)(CCC(=O)NC)C3C)C1(C)C"_smiles;
+
+  // generate coordinates for the two molecules, they should be different
+  // because only the first one matches the template
+  RDDepict::Compute2DCoordParameters params;
+  params.useRingTemplates = true;
+  RDDepict::compute2DCoords(*mol1, params);
+  RDDepict::compute2DCoords(*mol2, params);
+  auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
+  CHECK(rmsd > 1.);
 }
 
 TEST_CASE("dative bonds and rings") {
@@ -1097,7 +1152,7 @@ M  END
 
 TEST_CASE("generate aligned coords R group match") {
   auto templateRef = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -0.5804    1.2045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1295,9 +1350,9 @@ M  END
     0.0000    0.6187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.7144    0.2062    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
    -0.7144   -0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  3      
-  2  3  1  4      
-  1  4  1  4      
+  1  2  2  3
+  2  3  1  4
+  1  4  1  4
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
@@ -1506,9 +1561,9 @@ M  END
     0.3572    0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     1.0716    0.6187    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
    -1.0716   -0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  3      
-  2  3  1  4      
-  1  4  1  4      
+  1  2  2  3
+  2  3  1  4
+  1  4  1  4
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
@@ -1757,13 +1812,13 @@ M  END
    -0.9971    1.0600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.7282    0.2855    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
     0.9971    1.0270    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0      
-  2  3  1  0      
-  3  4  1  0      
-  2  5  2  3      
-  5  6  1  4      
-  3  7  2  0      
-  7  8  1  4      
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  2  5  2  3
+  5  6  1  4
+  3  7  2  0
+  7  8  1  4
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
@@ -2217,4 +2272,105 @@ M  END
   auto match = RDDepict::generateDepictionMatching2DStructure(
       *methotrexateAnalog, *methotrexate, -1, refPatt.get(), p);
   CHECK(match == expected);
+}
+
+TEST_CASE(
+    "Normalize should always center in centroid, irrespective of canonicalize parameter") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+ 25 27  0  0  0  0  0  0  0  0999 V2000
+   18.2425    6.6594    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   16.8948    6.0009    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   16.3808    7.4101    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   14.8817    7.3567    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   14.4692    5.9146    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   15.7134    5.0766    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+   13.0271    6.3270    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.4395    7.7692    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.7114    9.0806    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   11.7156    5.5989    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   10.4294    6.3705    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.4545    7.8703    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    9.1179    5.6424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.8316    6.4141    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.8568    7.9139    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5705    8.6855    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2591    7.9574    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2339    6.4576    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5202    5.6860    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9728    8.7291    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    9.0928    4.1426    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   17.2187    8.6543    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   16.5602   10.0020    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   18.7151    8.5507    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   17.6905    4.7294    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  6
+  5  7  1  0
+  7  8  1  0
+  8  9  2  0
+  7 10  1  6
+ 10 11  1  0
+ 11 12  2  0
+ 11 13  1  0
+ 13 14  1  0
+ 14 15  2  0
+ 15 16  1  0
+ 16 17  2  0
+ 17 18  1  0
+ 18 19  2  0
+ 17 20  1  0
+ 13 21  1  6
+  3 22  1  1
+ 22 23  2  0
+ 22 24  1  0
+  2 25  1  0
+  6  2  1  0
+  8  4  1  0
+ 19 14  1  0
+M  END)CTAB"_ctab;
+  REQUIRE(m);
+  RDDepict::normalizeDepiction(*m, -1, 0);
+  auto ctd = MolTransforms::computeCentroid(m->getConformer());
+  CHECK_THAT(ctd.x, Catch::Matchers::WithinAbs(0.0, 1.0e-4));
+  CHECK_THAT(ctd.y, Catch::Matchers::WithinAbs(0.0, 1.0e-4));
+}
+
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+TEST_CASE(
+    "CoordGen should not segfault when bond has stereo spec but no stereo atoms") {
+  auto m = "C=C1C=CC(=O)CC1"_smiles;
+  REQUIRE(m);
+  CHECK(m->getNumBonds() == 8);
+  auto b = m->getBondWithIdx(0);
+  CHECK(b->getBondType() == Bond::DOUBLE);
+  b->setStereo(Bond::STEREOZ);
+  CHECK(b->getStereoAtoms().empty());
+  RDDepict::preferCoordGen = true;
+  RDDepict::compute2DCoords(*m);
+  RDDepict::preferCoordGen = false;
+  CHECK(m->getNumConformers() == 1);
+}
+#endif
+
+TEST_CASE("canonical ordering") {
+  auto useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
+  UseLegacyStereoPerceptionFixture useLegacyFixture(useLegacy);
+  auto m = "CN2C3CC(OC(=O)C(CO)c1ccccc1)CC2CC3"_smiles;
+  REQUIRE(m);
+  RDDepict::compute2DCoords(*m);
+  auto conf = m->getConformer();
+  for (auto i = 0u; i < m->getNumAtoms(); ++i) {
+    for (auto j = i + 1; j < m->getNumAtoms(); ++j) {
+      auto pos = conf.getAtomPos(i) - conf.getAtomPos(j);
+      auto dist = pos.length();
+      CHECK(dist > 0.35);
+      INFO("i " << i << " " << j);
+    }
+  }
 }

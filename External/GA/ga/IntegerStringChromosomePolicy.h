@@ -19,7 +19,7 @@ namespace GapeGa {
 
 class GA_EXPORT IntegerStringChromosomePolicy {
  public:
-  IntegerStringChromosomePolicy(GarethUtil::RandomUtil& rng_, int s);
+  IntegerStringChromosomePolicy(GarethUtil::RandomUtil &rng_, int s);
   virtual ~IntegerStringChromosomePolicy();
 
   int mutate(int pos, int currentValue) const;
@@ -34,15 +34,15 @@ class GA_EXPORT IntegerStringChromosomePolicy {
   int getSize() const { return size; }
 
  private:
-  GarethUtil::RandomUtil& rng;
+  GarethUtil::RandomUtil &rng;
   const int size;
-  IntegerStringChromosomePolicy(const IntegerStringChromosomePolicy& orig) =
+  IntegerStringChromosomePolicy(const IntegerStringChromosomePolicy &orig) =
       delete;
-  IntegerStringChromosomePolicy& operator=(
-      const IntegerStringChromosomePolicy& other) = delete;
+  IntegerStringChromosomePolicy &operator=(
+      const IntegerStringChromosomePolicy &other) = delete;
 
-  int* const maxs;
-  bool* const allowNulls;
+  int *const maxs;
+  bool *const allowNulls;
 };
 
 }  // namespace GapeGa

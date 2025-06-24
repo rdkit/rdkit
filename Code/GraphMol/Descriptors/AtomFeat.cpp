@@ -47,8 +47,8 @@ std::vector<std::string> Symbols{"B", "C",  "N",  "O", "S", "F", "Si",
 std::vector<Atom::HybridizationType> HS{Atom::SP, Atom::SP2, Atom::SP3,
                                         Atom::SP3D, Atom::SP3D2};
 
-void AtomFeatVector(const RDKit::Atom* atom, const ROMol* mol,
-                    std::vector<double>& feats, bool addchiral) {
+void AtomFeatVector(const RDKit::Atom *atom, const ROMol *mol,
+                    std::vector<double> &feats, bool addchiral) {
   PRECONDITION(atom, "bad atom");
   PRECONDITION(mol, "bad mol");
 
@@ -96,7 +96,7 @@ void AtomFeatVector(const RDKit::Atom* atom, const ROMol* mol,
   }
 
   // one hot  Implicit Valence
-  int IV = atom->getImplicitValence();
+  int IV = atom->getValence(Atom::ValenceType::IMPLICIT);
   for (int i = 0; i < 7; ++i) {
     feats[indx] = IV == i;
     ++indx;
@@ -144,7 +144,7 @@ void AtomFeatVector(const RDKit::Atom* atom, const ROMol* mol,
 }  // end of anonymous namespace
 
 // entry point
-void AtomFeatVect(const ROMol& mol, std::vector<double>& res, int atomid,
+void AtomFeatVect(const ROMol &mol, std::vector<double> &res, int atomid,
                   bool addchiral) {
   res.clear();
   if (addchiral) {

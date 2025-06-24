@@ -51,7 +51,7 @@ with open(args.outfile, 'w') as f:
         fns = fn.replace('.svg', '')
         f.write(f'''      <tr>
         <td>{fns}</td>
-        <td><img src="{d1}/{fn}" alt="{fns}"/></td>
+        <td><span style="float:right"><img src="{d1}/{fn}" alt="{fns}"/></span></td>
         <td><img src="{d2}/{fn}" alt="{fns}"/></td>
         </tr>\n''')
 

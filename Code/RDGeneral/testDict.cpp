@@ -185,7 +185,10 @@ void testRDAny() {
       TEST_ASSERT(rdany_cast<std::vector<double>>(b)[i] == i);
     }
   }
-  const int loops = 10000000;
+
+  // growth in the loops below is loop * loops / 2, so going higher
+  // than this will cause an overflow of std::any_cast<int>(*v)
+  const int loops = sqrt(std::numeric_limits<int>::max());
   {
     std::clock_t clock1 = std::clock();
     std::any v;
@@ -424,7 +427,7 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[1,0,]");
+    TEST_ASSERT(sv == "[1,0]");
   }
   {
     Dict d;
@@ -434,9 +437,9 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[1,0,]");
+    TEST_ASSERT(sv == "[1,0]");
     sv = d.getVal<std::string>("foo");
-    TEST_ASSERT(sv == "[1,0,]");
+    TEST_ASSERT(sv == "[1,0]");
   }
   {
     Dict d;
@@ -446,9 +449,9 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[1.2,0,]");
+    TEST_ASSERT(sv == "[1.2,0]");
     sv = d.getVal<std::string>("foo");
-    TEST_ASSERT(sv == "[1.2,0,]");
+    TEST_ASSERT(sv == "[1.2,0]");
   }
   {
     Dict d;
@@ -458,9 +461,9 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[10001,0,]");
+    TEST_ASSERT(sv == "[10001,0]");
     sv = d.getVal<std::string>("foo");
-    TEST_ASSERT(sv == "[10001,0,]");
+    TEST_ASSERT(sv == "[10001,0]");
   }
 
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
@@ -488,29 +491,6 @@ void testConstReturns() {
     TEST_ASSERT(nv == "foo");
   }
 
-#if 0
-  {
-    Dict d;
-    std::string v="foo";
-    d.setVal("foo",v);
-
-    double ls=0;
-    BOOST_LOG(rdErrorLog) << "copy" << std::endl;
-    for(int i=0;i<100000000;++i){
-      std::string nv=d.getVal<std::string>("foo");
-      ls+= nv.size();
-    }
-    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;
-    ls=0;
-    BOOST_LOG(rdErrorLog) << "ref" << std::endl;
-    for(int i=0;i<100000000;++i){
-      const std::string &nv=d.getVal<std::string>("foo");
-      ls+= nv.size();
-    }
-    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;
-    //std::string nv=d.getVal<std::string>("foo");
-  }
-#else
   {
     // int nreps=100000000;
     int nreps = 100000;
@@ -586,8 +566,6 @@ void testConstReturns() {
 
     // std::string nv=d.getVal<std::string>("foo");
   }
-
-#endif
 
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
@@ -723,7 +701,6 @@ int main() {
   RDLog::InitLogs();
   testGithub940();
 
-#if 1
   testRDAny();
   Dict d;
   INT_VECT fooV;
@@ -809,7 +786,6 @@ int main() {
 
   testStringVals();
   testVectToString();
-#endif
   testConstReturns();
   testUpdate();
   testCustomProps();

@@ -191,6 +191,8 @@ double Bond::getValenceContrib(const Atom *atom) const {
   if ((getBondType() == DATIVE || getBondType() == DATIVEONE) &&
       atom->getIdx() != getEndAtomIdx()) {
     res = 0.0;
+  } else if (getBondType() == HYDROGEN) {
+    res = 0.0;
   } else {
     res = getBondTypeAsDouble();
   }

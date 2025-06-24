@@ -307,12 +307,14 @@ def generateHTMLBody(mol, size, **kwargs):
   unique_id = str(uuid.uuid1())
   div = doc.createElement("div")
   for key, value in [
-    ("style", f"width: {size[0]}px; height: {size[1]}px; margin: auto;"),
+    ("style", f"margin: auto;"),
     ("class", "rdk-str-rnr-mol-container"),
     ("id", f"rdk-str-rnr-mol-{unique_id}"),
     ("data-mol", toDataMol(mol)),
     ("data-content", "rdkit/molecule"),
     ("data-parent-node", parentNodeQuery),
+    ("data-width", str(size[0])),
+    ("data-height", str(size[1])),
   ]:
     div.setAttribute(key, value)
   userDrawOpts = filterDefaultDrawOpts(drawOptions)
@@ -342,9 +344,9 @@ def generateHTMLBody(mol, size, **kwargs):
   for key, value in molOptsDashed.items():
     if isinstance(value, Chem.Mol):
       value = toDataMol(value)
-    elif not isinstance(value, str):
+    elif not any(isinstance(value, t) for t in (str, int, float)):
       value = toJson(value)
-    div.setAttribute(key, value)
+    div.setAttribute(key, str(value))
   if userDrawOpts:
     div.setAttribute("data-draw-opts", toJson(userDrawOpts))
   if useSVG:

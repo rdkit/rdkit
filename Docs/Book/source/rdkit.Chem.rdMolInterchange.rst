@@ -1,5 +1,5 @@
 rdkit.Chem.rdMolInterchange module
-=================================
+==================================
 
 .. automodule:: rdkit.Chem.rdMolInterchange
     :members:

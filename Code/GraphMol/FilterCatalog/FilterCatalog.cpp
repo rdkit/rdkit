@@ -128,7 +128,7 @@ FilterCatalog::FilterCatalog(const std::string &binStr)
 #else
   std::stringstream ss(binStr);
   boost::archive::text_iarchive ar(ss);
-  ar &d_entries;
+  ar & d_entries;
 #endif
 }
 
@@ -139,7 +139,7 @@ std::string FilterCatalog::Serialize() const {
 
   std::stringstream ss;
   boost::archive::text_oarchive ar(ss);
-  ar &d_entries;
+  ar & d_entries;
   return ss.str();
 #endif
 }

@@ -101,7 +101,7 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
         break;
       }
     }  // end of loop over the first neigh
-  }    // if this atom is 5 coordinate nitrogen
+  }  // if this atom is 5 coordinate nitrogen
   // force a recalculation of the explicit valence here
   atom->setIsAromatic(aromHolder);
   atom->calcExplicitValence(false);
@@ -185,16 +185,12 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
   }
 }
 
-bool isMetal(const Atom *atom) {
-  static const std::unique_ptr<ATOM_OR_QUERY> q(makeMAtomQuery());
-  return q->Match(atom);
-}
-
 bool isHypervalentNonMetal(Atom *atom) {
-  if (isMetal(atom)) {
+  if (QueryOps::isMetal(*atom)) {
     return false;
   }
-  auto ev = atom->calcExplicitValence(false);
+  atom->updatePropertyCache(false);
+  int ev = atom->getValence(Atom::ValenceType::EXPLICIT);
   // Check the explicit valence of the non-metal against the allowed
   // valences of the atom, adjusted by its formal charge.  This means that
   // N+ is treated the same as C, O+ the same as N.  This allows for,
@@ -207,14 +203,17 @@ bool isHypervalentNonMetal(Atom *atom) {
   if (effAtomicNum <= 0) {
     return false;
   }
-  // atom is a non-metal, so if its atomic number is > 2, it should
-  // obey the octet rule (2*ev <= 8).  If it doesn't, don't set the bond to
-  // dative, so the molecule is later flagged as having bad valence.
-  // [CH4]-[Na] being a case in point, line 1800 of
-  // FileParsers/file_parsers_catch.cpp.
+  // atom is a non-metal. If its explicit valence is greater than the
+  // maximum allowed valence then it is hypervalent.
+  //  We have a special case in here for aromatic atoms where the explicit
+  //  valence matches the max allowed and the degree is 4. This is there for
+  //  cases like cyclopentadienyl - metal systems. We need this special case
+  //  because the explicit valence on the C atoms there ends up being 4
   const auto &otherValens =
       PeriodicTable::getTable()->getValenceList(effAtomicNum);
-  if (otherValens.back() > 0 && ev > otherValens.back() && ev <= 4) {
+  auto maxV = otherValens.back();
+  if (maxV > 0 && (ev > maxV || (ev == maxV && atom->getIsAromatic() &&
+                                 atom->getTotalDegree() == 4))) {
     return true;
   }
 
@@ -257,7 +256,7 @@ void metalBondCleanup(RWMol &mol, Atom *atom,
     // see if there are any metals bonded to it by a single bond
     for (auto bond : mol.atomBonds(atom)) {
       if (bond->getBondType() == Bond::BondType::SINGLE &&
-          isMetal(bond->getOtherAtom(atom))) {
+          QueryOps::isMetal(*bond->getOtherAtom(atom))) {
         metals.push_back(bond->getOtherAtom(atom));
       }
     }
@@ -313,7 +312,7 @@ void cleanUpOrganometallics(RWMol &mol) {
       // see if there are any metals bonded to it by a single bond
       for (auto bond : mol.atomBonds(atom)) {
         if (bond->getBondType() == Bond::BondType::SINGLE &&
-            isMetal(bond->getOtherAtom(atom))) {
+            QueryOps::isMetal(*bond->getOtherAtom(atom))) {
           needsFixing = true;
           break;
         }
@@ -357,7 +356,7 @@ void adjustHs(RWMol &mol) {
   //  valence of everything has been calculated.
   //
   for (auto atom : mol.atoms()) {
-    int origImplicitV = atom->getImplicitValence();
+    int origImplicitV = atom->getValence(Atom::ValenceType::IMPLICIT);
     atom->calcExplicitValence(false);
     int origExplicitV = atom->getNumExplicitHs();
 
@@ -493,33 +492,37 @@ void cleanupAtropisomers(RWMol &mol) {
   MolOps::cleanupAtropisomers(mol, hybs);
 }
 
-void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
-  // make sure that ring info is available
-  // (defensive, current calls have it available)
+namespace {
+void checkBond(RWMol &mol, Bond *bond, MolOps::Hybridizations &hybs) {
   if (!mol.getRingInfo()->isSssrOrBetter()) {
     RDKit::MolOps::findSSSR(mol);
   }
   const RingInfo *ri = mol.getRingInfo();
+  if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
+      hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
+      // do not clear bonds that part of a macrocycle
+      // because they can be linking actual atropisomeric portions
+      (ri->numBondRings(bond->getIdx()) > 0 &&
+       ri->minBondRingSize(bond->getIdx()) < 8)) {
+    bond->setStereo(Bond::BondStereo::STEREONONE);
+  }
+}
+}  // namespace
+
+void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
+  // make sure that ring info is available
+  // (defensive, current calls have it available)
   for (auto bond : mol.bonds()) {
     switch (bond->getStereo()) {
       case Bond::BondStereo::STEREOATROPCW:
       case Bond::BondStereo::STEREOATROPCCW:
-        if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
-            hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
-            // do not clear bonds that part of a macrocycle
-            // because they can be linking actual atropisomeric portions
-            (ri->numBondRings(bond->getIdx()) > 0 &&
-             ri->minBondRingSize(bond->getIdx()) < 8)) {
-          bond->setStereo(Bond::BondStereo::STEREONONE);
-        }
+        checkBond(mol, bond, hybs);
         break;
-
       default:
         break;
     }
   }
 }
-
 void sanitizeMol(RWMol &mol) {
   unsigned int failedOp = 0;
   sanitizeMol(mol, failedOp, SANITIZE_ALL);
@@ -660,21 +663,19 @@ std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
   return res;
 }
 
-std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
-                                    INT_VECT *frags,
-                                    VECT_INT_VECT *fragsMolAtomMapping,
-                                    bool copyConformers) {
+namespace {
+std::vector<std::unique_ptr<ROMol>> getTheFrags(
+    const ROMol &mol, bool sanitizeFrags, INT_VECT *frags,
+    VECT_INT_VECT *fragsMolAtomMapping, bool copyConformers) {
   std::unique_ptr<INT_VECT> mappingStorage;
   if (!frags) {
     mappingStorage.reset(new INT_VECT);
     frags = mappingStorage.get();
   }
   int nFrags = getMolFrags(mol, *frags);
-  std::vector<RWMOL_SPTR> res;
+  std::vector<std::unique_ptr<RWMol>> res;
   if (nFrags == 1) {
-    auto *tmp = new RWMol(mol);
-    RWMOL_SPTR sptr(tmp);
-    res.push_back(sptr);
+    res.emplace_back(new RWMol(mol));
     if (fragsMolAtomMapping) {
       INT_VECT comp;
       for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
@@ -724,12 +725,19 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
             }
           }
         }
-        // doesn't seem like this should be necessary, but in case
-        // we ever need stereogroups where the atoms aren't marked
-        // with stereo...
         for (auto stereoGroup : mol.getStereoGroups()) {
+          // doesn't seem like this should be necessary, but in case
+          // we ever need stereogroups where the atoms aren't marked
+          // with stereo...
           for (auto atom : stereoGroup.getAtoms()) {
             if (atomsInFrag[atom->getIdx()]) {
+              return true;
+            }
+          }
+          // same check for stereo groups involving bonds:
+          for (auto bond : stereoGroup.getBonds()) {
+            if (atomsInFrag[bond->getBeginAtomIdx()] &&
+                atomsInFrag[bond->getEndAtomIdx()]) {
               return true;
             }
           }
@@ -743,8 +751,8 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         // empirical. This is mainly intended to catch situations like proteins
         // where you have a bunch of single-atom fragments (waters); the
         // standard approach below ends up being horribly inefficient there
-        RWMOL_SPTR frag(new RWMol());
-        res.push_back(frag);
+        res.emplace_back(new RWMol());
+        auto &frag = res.back();
         std::map<unsigned int, unsigned int> atomIdxMap;
         for (auto aid : comp) {
           atomIdxMap[aid] =
@@ -773,8 +781,9 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
           }
         }
       } else {
-        RWMOL_SPTR frag(new RWMol(mol));
-        res.push_back(frag);
+        res.emplace_back(new RWMol(mol));
+        auto &frag = res.back();
+
         frag->beginBatchEdit();
         for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
           if (!atomsInFrag[idx]) {
@@ -800,7 +809,26 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     }
   }
 
-  return std::vector<ROMOL_SPTR>(res.begin(), res.end());
+  std::vector<std::unique_ptr<ROMol>> finalRes;
+  for (auto &r : res) {
+    finalRes.emplace_back(r.get());
+    r.release();
+  }
+  return finalRes;
+}
+}  // namespace
+std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
+                                    INT_VECT *frags,
+                                    VECT_INT_VECT *fragsMolAtomMapping,
+                                    bool copyConformers) {
+  auto upFrags = getTheFrags(mol, sanitizeFrags, frags, fragsMolAtomMapping,
+                             copyConformers);
+  std::vector<boost::shared_ptr<ROMol>> finalRes;
+  for (auto &r : upFrags) {
+    finalRes.emplace_back(r.get());
+    r.release();
+  }
+  return finalRes;
 }
 
 unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
@@ -831,15 +859,24 @@ unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {
   return rdcast<unsigned int>(frags.size());
 }
 
+unsigned int getMolFrags(const ROMol &mol,
+                         std::vector<std::unique_ptr<ROMol>> &molFrags,
+                         bool sanitizeFrags, std::vector<int> *frags,
+                         std::vector<std::vector<int>> *fragsMolAtomMapping,
+                         bool copyConformers) {
+  molFrags = getTheFrags(mol, sanitizeFrags, frags, fragsMolAtomMapping,
+                         copyConformers);
+  return rdcast<unsigned int>(molFrags.size());
+}
+
+namespace {
 template <typename T>
-std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
+std::map<T, std::unique_ptr<ROMol>> getTheFragsWithQuery(
     const ROMol &mol, T (*query)(const ROMol &, const Atom *),
     bool sanitizeFrags, const std::vector<T> *whiteList, bool negateList) {
-  PRECONDITION(query, "no query");
-
   std::vector<T> assignments(mol.getNumAtoms());
   std::vector<int> ids(mol.getNumAtoms(), -1);
-  std::map<T, boost::shared_ptr<ROMol>> res;
+  std::map<T, std::unique_ptr<ROMol>> res;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     T where = query(mol, mol.getAtomWithIdx(i));
     if (whiteList) {
@@ -853,7 +890,7 @@ std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
     }
     assignments[i] = where;
     if (res.find(where) == res.end()) {
-      res[where] = boost::shared_ptr<ROMol>(new ROMol());
+      res[where] = std::unique_ptr<ROMol>(new ROMol());
     }
     auto *frag = static_cast<RWMol *>(res[where].get());
     ids[i] = frag->addAtom(mol.getAtomWithIdx(i)->copy(), false, true);
@@ -875,7 +912,7 @@ std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
   // update conformers
   for (auto cit = mol.beginConformers(); cit != mol.endConformers(); ++cit) {
     for (auto iter = res.begin(); iter != res.end(); ++iter) {
-      ROMol *newM = iter->second.get();
+      auto &newM = iter->second;
       auto *conf = new Conformer(newM->getNumAtoms());
       conf->setId((*cit)->getId());
       conf->set3D((*cit)->is3D());
@@ -897,6 +934,23 @@ std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
   }
   return res;
 }
+}  // namespace
+
+template <typename T>
+std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
+    const ROMol &mol, T (*query)(const ROMol &, const Atom *),
+    bool sanitizeFrags, const std::vector<T> *whiteList, bool negateList) {
+  PRECONDITION(query, "no query");
+
+  auto rawRes =
+      getTheFragsWithQuery(mol, query, sanitizeFrags, whiteList, negateList);
+  std::map<T, boost::shared_ptr<ROMol>> res;
+  for (auto &it : rawRes) {
+    res.insert(std::make_pair(it.first, it.second.get()));
+    it.second.release();
+  }
+  return res;
+}
 template RDKIT_GRAPHMOL_EXPORT std::map<std::string, boost::shared_ptr<ROMol>>
 getMolFragsWithQuery(const ROMol &mol,
                      std::string (*query)(const ROMol &, const Atom *),
@@ -912,66 +966,32 @@ getMolFragsWithQuery(const ROMol &mol,
                      bool sanitizeFrags, const std::vector<unsigned int> *,
                      bool);
 
-#if 0
-    void findSpanningTree(const ROMol &mol,INT_VECT &mst){
-      //
-      //  The BGL provides Prim's and Kruskal's algorithms for finding
-      //  the MST of a graph.  Prim's is O(n2) (n=# of atoms) while
-      //  Kruskal's is O(e log e) (e=# of bonds).  For molecules, where
-      //  e << n2, Kruskal's should be a win.
-      //
-      const MolGraph *mgraph = &mol.getTopology();
-      MolGraph *molGraph = const_cast<MolGraph *> (mgraph);
+template <typename T>
+unsigned int getMolFragsWithQuery(const ROMol &mol,
+                                  T (*query)(const ROMol &, const Atom *),
+                                  std::map<T, std::unique_ptr<ROMol>> &molFrags,
+                                  bool sanitizeFrags,
+                                  const std::vector<T> *whiteList,
+                                  bool negateList) {
+  PRECONDITION(query, "no query");
 
-      std::vector<MolGraph::edge_descriptor> treeEdges;
-      treeEdges.reserve(boost::num_vertices(*molGraph));
+  molFrags =
+      getTheFragsWithQuery(mol, query, sanitizeFrags, whiteList, negateList);
+  return rdcast<unsigned int>(molFrags.size());
+}
+template RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
+    const ROMol &mol, std::string (*query)(const ROMol &, const Atom *),
+    std::map<std::string, std::unique_ptr<ROMol>> &molFrags, bool sanitizeFrags,
+    const std::vector<std::string> *, bool);
+template RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
+    const ROMol &mol, int (*query)(const ROMol &, const Atom *),
+    std::map<int, std::unique_ptr<ROMol>> &molFrags, bool sanitizeFrags,
+    const std::vector<int> *, bool);
+template RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
+    const ROMol &mol, unsigned int (*query)(const ROMol &, const Atom *),
+    std::map<unsigned int, std::unique_ptr<ROMol>> &molFrags,
+    bool sanitizeFrags, const std::vector<unsigned int> *, bool);
 
-      boost::property_map < MolGraph, edge_wght_t >::type w = boost::get(edge_wght_t(), *molGraph);
-      boost::property_map < MolGraph, edge_bond_t>::type bps = boost::get(edge_bond_t(), *molGraph);
-      boost::graph_traits < MolGraph >::edge_iterator e, e_end;
-      Bond* bnd;
-      for (boost::tie(e, e_end) = boost::edges(*molGraph); e != e_end; ++e) {
-        bnd = bps[*e];
-
-        if(!bnd->getIsAromatic()){
-          w[*e] = (bnd->getBondTypeAsDouble());
-        } else {
-          w[*e] = 3.0/2.0;
-        }
-      }
-
-      // FIX: this is a hack due to problems with MSVC++
-#if 1
-      typedef boost::graph_traits<MolGraph>::vertices_size_type size_type;
-      typedef boost::graph_traits<MolGraph>::vertex_descriptor vertex_t;
-      typedef boost::property_map<MolGraph,boost::vertex_index_t>::type index_map_t;
-      boost::graph_traits<MolGraph>::vertices_size_type
-        n = boost::num_vertices(*molGraph);
-      std::vector<size_type> rank_map(n);
-      std::vector<vertex_t> pred_map(n);
-
-      boost::detail::kruskal_mst_impl
-        (*molGraph, std::back_inserter(treeEdges),
-         boost::make_iterator_property_map(rank_map.begin(),
-                                           boost::get(boost::vertex_index, *molGraph),
-                                           rank_map[0]),
-         boost::make_iterator_property_map(pred_map.begin(),
-                                           boost::get(boost::vertex_index, *molGraph),
-                                           pred_map[0]),
-         w);
-
-#else
-      boost::kruskal_minimum_spanning_tree(*molGraph,std::back_inserter(treeEdges),
-                                           w, *molGraph);
-      //boost::weight_map(static_cast<boost::property_map<MolGraph,edge_wght_t>::const_type>(boost::get(edge_wght_t(),*molGraph))));
-#endif
-      mst.resize(0);
-      for(std::vector<MolGraph::edge_descriptor>::iterator edgeIt=treeEdges.begin();
-          edgeIt!=treeEdges.end();edgeIt++){
-        mst.push_back(mol[*edgeIt]->getIdx());
-      }
-    }
-#endif
 int getFormalCharge(const ROMol &mol) {
   int accum = 0;
   for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();

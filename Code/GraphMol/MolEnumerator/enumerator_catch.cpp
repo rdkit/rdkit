@@ -137,7 +137,8 @@ M  END
     CHECK(bundle.size() == 3);
 
     CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getDegree() == 3);
-    CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getImplicitValence() == 0);
+    CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getValence(
+              Atom::ValenceType::IMPLICIT) == 0);
 
     std::vector<std::string> tsmis = {"COc1ccncc1", "COc1ccccn1", "COc1cccnc1"};
     std::vector<std::string> smis;
@@ -1708,10 +1709,12 @@ M  END)CTAB"};
   };
 
   for (auto &[sru_label, expected_repetitions] : test_info) {
-    std::vector test_mols{
-        SmilesToMol(boost::str(boost::format(smiles_template) % sru_label)),
-        MolBlockToMol(
-            boost::str(boost::format(molblock_template) % sru_label))};
+    std::shared_ptr<RWMol> molFromSmi(
+        SmilesToMol(boost::str(boost::format(smiles_template) % sru_label)));
+    std::shared_ptr<RWMol> molFromMolBlock(MolBlockToMol(
+        boost::str(boost::format(molblock_template) % sru_label)));
+
+    std::vector test_mols{molFromSmi, molFromMolBlock};
 
     REQUIRE(test_mols[0]);
     REQUIRE(test_mols[1]);

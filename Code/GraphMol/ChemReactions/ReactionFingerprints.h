@@ -40,9 +40,9 @@ namespace RDKit {
 
 class ChemicalReaction;
 
-enum FingerprintType {
+enum class FingerprintType {
   AtomPairFP = 1,
-  TopologicalTorsion,
+  TopologicalTorsionFP,
   MorganFP,
   RDKitFP,
   PatternFP
@@ -90,7 +90,7 @@ struct RDKIT_CHEMREACTIONS_EXPORT ReactionFingerprintParams {
   unsigned int nonAgentWeight{10};
   int agentWeight{1};
   unsigned int fpSize{2048};
-  FingerprintType fpType{AtomPairFP};
+  FingerprintType fpType{FingerprintType::AtomPairFP};
 };
 
 RDKIT_CHEMREACTIONS_EXPORT extern const ReactionFingerprintParams
@@ -138,10 +138,10 @@ RDKIT_CHEMREACTIONS_EXPORT ExplicitBitVect *StructuralFingerprintChemReaction(
   <b>Notes:</b>
     - the caller is responsible for <tt>delete</tt>ing the result
 */
-RDKIT_CHEMREACTIONS_EXPORT SparseIntVect<std::uint32_t>
-    *DifferenceFingerprintChemReaction(
-        const ChemicalReaction &rxn,
-        const ReactionFingerprintParams &params = DefaultDifferenceFPParams);
+RDKIT_CHEMREACTIONS_EXPORT SparseIntVect<std::uint32_t> *
+DifferenceFingerprintChemReaction(
+    const ChemicalReaction &rxn,
+    const ReactionFingerprintParams &params = DefaultDifferenceFPParams);
 }  // namespace RDKit
 
 #endif

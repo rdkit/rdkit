@@ -36,16 +36,16 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
     KeyNumericMetrics NumericMetrics;
 
    public:
-    void computeKey(const Seed& seed,
-                    const std::vector<unsigned int>& queryAtomLabels,
-                    const std::vector<unsigned int>& queryBondLabels) {
+    void computeKey(const Seed &seed,
+                    const std::vector<unsigned int> &queryAtomLabels,
+                    const std::vector<unsigned int> &queryBondLabels) {
       computeMorganCodeHash(seed, queryAtomLabels, queryBondLabels);
     }
 
    private:
     void computeMorganCodeHash(
-        const Seed& seed, const std::vector<unsigned int>& queryAtomLabels,
-        const std::vector<unsigned int>& queryBondLabels) {
+        const Seed &seed, const std::vector<unsigned int> &queryAtomLabels,
+        const std::vector<unsigned int> &queryBondLabels) {
       size_t nv = seed.getNumAtoms();
       size_t ne = seed.getNumBonds();
       std::vector<unsigned long> currCodes(nv);
@@ -67,7 +67,7 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
         }
 
         for (size_t seedBondIdx = 0; seedBondIdx < ne; ++seedBondIdx) {
-          const Bond* bond = seed.MoleculeFragment.Bonds[seedBondIdx];
+          const Bond *bond = seed.MoleculeFragment.Bonds[seedBondIdx];
           unsigned int order = queryBondLabels.at(
               seed.MoleculeFragment.Bonds.at(seedBondIdx)->getIdx());
           unsigned int atom1 = seed.MoleculeFragment.SeedAtomIdxMap
@@ -121,10 +121,10 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
   // then caller must find exactly matched subgraph in the result set with own
   // search algorithm,
   // including a resolving of collisions of hash key
-  TIndexEntry* find(const Seed& seed,
-                    const std::vector<unsigned int>& queryAtomLabels,
-                    const std::vector<unsigned int>& queryBondLabels,
-                    TKey& key) {  // compute key and find entry
+  TIndexEntry *find(const Seed &seed,
+                    const std::vector<unsigned int> &queryAtomLabels,
+                    const std::vector<unsigned int> &queryBondLabels,
+                    TKey &key) {  // compute key and find entry
     key.computeKey(seed, queryAtomLabels, queryBondLabels);
     const auto entryit = NumericIndex.find(key.NumericMetrics.Value);
     if (NumericIndex.end() != entryit) {
@@ -135,8 +135,8 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
 
   // if find() did not found any entry for this key of seed a new entry will be
   // created
-  void add(const Seed& seed, TKey& key,
-           TIndexEntry* entry) {  // "compute" value and store it in NEW entry
+  void add(const Seed &seed, TKey &key,
+           TIndexEntry *entry) {  // "compute" value and store it in NEW entry
                                   // if not found
     if (!entry) {
       try {
@@ -164,7 +164,7 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
   size_t fullsize() const {  // for statistics only
     return std::accumulate(
         ValueStorage.begin(), ValueStorage.end(), 0,
-        [](const auto& acc, const auto& v) { return acc + v.size(); });
+        [](const auto &acc, const auto &v) { return acc + v.size(); });
   }
 };
 }  // namespace FMCS

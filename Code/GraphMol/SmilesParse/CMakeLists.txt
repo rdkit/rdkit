@@ -1,6 +1,8 @@
-if(RDK_USE_FLEXBISON)
-  FIND_PACKAGE(BISON)
-  FIND_PACKAGE(FLEX)
+set(FLEX_VERSION 2.6.4)
+
+if (RDK_USE_FLEXBISON)
+  FIND_PACKAGE(BISON 3.8.2 REQUIRED)
+  FIND_PACKAGE(FLEX ${FLEX_VERSION} REQUIRED)
 else(RDK_USE_FLEXBISON)
   set(FLEX_EXECUTABLE "")
   set(BISON_EXECUTABLE "")
@@ -18,7 +20,7 @@ endif()
 if(FLEX_EXECUTABLE)
   FLEX_TARGET(SmilesL smiles.ll
               ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp
-             COMPILE_FLAGS "-Pyysmiles_" )
+             COMPILE_FLAGS "-Pyysmiles_ --noline" )
   FLEX_TARGET(SmartsL smarts.ll
               ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp
               COMPILE_FLAGS "-Pyysmarts_" )
@@ -34,7 +36,7 @@ endif(FLEX_EXECUTABLE)
 if(BISON_EXECUTABLE)
   BISON_TARGET(SmilesY smiles.yy
                ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp
-               COMPILE_FLAGS "-pyysmiles_" )
+               COMPILE_FLAGS "-pyysmiles_ --no-lines" )
   BISON_TARGET(SmartsY smarts.yy
                ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp
                COMPILE_FLAGS "-pyysmarts_" )
@@ -59,18 +61,20 @@ endif(BISON_EXECUTABLE)
 rdkit_library(SmilesParse
               SmilesParse.cpp SmilesParseOps.cpp
               SmilesWrite.cpp SmartsWrite.cpp CXSmilesOps.cpp
+              CanonicalizeStereoGroups.cpp SmilesJSONParsers.cpp
               ${BISON_OUTPUT_FILES}
               ${FLEX_OUTPUT_FILES}
               LINK_LIBRARIES GraphMol RDGeneral)
 target_compile_definitions(SmilesParse PRIVATE RDKIT_SMILESPARSE_BUILD)
 
-rdkit_headers(primes.h
-              SmartsWrite.h
+rdkit_headers(SmartsWrite.h
               SmilesParse.h
               SmilesParseOps.h
-              SmilesWrite.h DEST GraphMol/SmilesParse)
-
-rdkit_test(smiTest1 test.cpp LINK_LIBRARIES FileParsers SmilesParse )
+              SmilesWrite.h 
+              CanonicalizeStereoGroups.h
+              SmilesJSONParsers.h DEST GraphMol/SmilesParse)
+            
+rdkit_test(smiTest1 test.cpp LINK_LIBRARIES CIPLabeler FileParsers SmilesParse )
 rdkit_test(smiTest2 test2.cpp LINK_LIBRARIES SmilesParse )
 rdkit_catch_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse MarvinParser )
 
@@ -78,3 +82,4 @@ rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch  )
 rdkit_catch_test(smiTestCatch catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse )
 rdkit_catch_test(nontetrahedralCatch nontetrahedral_tests.cpp LINK_LIBRARIES FileParsers SmilesParse )
 rdkit_catch_test(v2smiTestCatch v2catch_tests.cpp LINK_LIBRARIES SmilesParse )
+rdkit_catch_test(smartsTestCatch smarts_catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse )

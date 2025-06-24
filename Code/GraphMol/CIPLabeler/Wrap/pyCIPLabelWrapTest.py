@@ -2,7 +2,6 @@ import unittest
 
 from rdkit import Chem
 
-
 class TestCase(unittest.TestCase):
 
   def testLabelAtomsList(self):
@@ -12,8 +11,8 @@ class TestCase(unittest.TestCase):
     atom1 = mol.GetAtomWithIdx(1)
     atom5 = mol.GetAtomWithIdx(5)
 
-    self.assertTrue(atom1.HasProp("_CIPCode"))
-    self.assertTrue(atom5.HasProp("_CIPCode"))
+    self.assertTrue(atom1.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED)
+    self.assertTrue(atom5.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED)
 
     atom1.ClearProp("_CIPCode")
     atom5.ClearProp("_CIPCode")
@@ -30,8 +29,8 @@ class TestCase(unittest.TestCase):
     atom1 = mol.GetAtomWithIdx(1)
     atom5 = mol.GetAtomWithIdx(5)
 
-    self.assertTrue(atom1.HasProp("_CIPCode"))
-    self.assertTrue(atom5.HasProp("_CIPCode"))
+    self.assertTrue(atom1.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED)
+    self.assertTrue(atom5.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED)
 
     atom1.ClearProp("_CIPCode")
     atom5.ClearProp("_CIPCode")
@@ -66,7 +65,6 @@ class TestCase(unittest.TestCase):
     ps.parseName = False
     ps.sanitize = True
     ps.removeHs = False
-    ps.explicit3dChirality = False
 
     mol = Chem.MolFromSmiles(inputSmiles, ps)
 

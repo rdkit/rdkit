@@ -159,7 +159,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   typedef std::pair<DOWN_ENT_ITER, DOWN_ENT_ITER> DOWN_ENT_ITER_PAIR;
 
   //------------------------------------
-  HierarchCatalog(){};
+  HierarchCatalog() {};
 
   //------------------------------------
   //! Construct by making a copy of the input \c params object

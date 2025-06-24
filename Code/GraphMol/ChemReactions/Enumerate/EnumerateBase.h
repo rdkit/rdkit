@@ -166,13 +166,13 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
   void save(Archive &ar, const unsigned int) const {
     std::string pickle;
     ReactionPickler::pickleReaction(m_rxn, pickle);
-    ar &pickle;
-    ar &m_enumerator;
+    ar & pickle;
+    ar & m_enumerator;
     // we handle the m_initialEnumerator from a string
     //  for backwards compatibility with a unreleased
     //  version
     EnumerationStrategyPickler::pickle(m_initialEnumerator, pickle);
-    ar &pickle;
+    ar & pickle;
   }
   template <class Archive>
   void load(Archive &ar, const unsigned int /*version*/) {
@@ -182,10 +182,10 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
       throw ValueErrorException("EnumerateBase already created from archive.");
     }
     std::string pickle;
-    ar &pickle;
+    ar & pickle;
     ReactionPickler::reactionFromPickle(pickle, m_rxn);
-    ar &m_enumerator;
-    ar &pickle;
+    ar & m_enumerator;
+    ar & pickle;
     m_initialEnumerator = EnumerationStrategyPickler::fromPickle(pickle);
   }
 

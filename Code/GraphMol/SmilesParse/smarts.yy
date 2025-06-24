@@ -107,6 +107,7 @@ yysmarts_error( const char *input,
 %type <atom> atom_expr point_query atom_query recursive_query possible_range_query
 %type <ival> ring_number nonzero_number number charge_spec digit
 %type <bond> bondd bond_expr bond_query
+%token BAD_CHARACTER
 %token EOS_TOKEN
 
 %left SEMI_TOKEN
@@ -145,6 +146,11 @@ START_MOL mol {
   YYABORT;
 }
 | START_BOND {
+  YYABORT;
+}
+| meta_start BAD_CHARACTER {
+  yyerrok;
+  yyErrorCleanup(molList);
   YYABORT;
 }
 | meta_start error EOS_TOKEN{

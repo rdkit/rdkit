@@ -64,7 +64,7 @@ void pickle(const boost::shared_ptr<EnumerationStrategyBase> &enumerator,
             std::ostream &ss) {
 #ifdef RDK_USE_BOOST_SERIALIZATION
   boost::archive::text_oarchive ar(ss);
-  ar &enumerator;
+  ar & enumerator;
 #else
   RDUNUSED_PARAM(enumerator);
   RDUNUSED_PARAM(ss);
@@ -89,7 +89,7 @@ boost::shared_ptr<EnumerationStrategyBase> fromPickle(std::istream &pickle) {
   boost::shared_ptr<EnumerationStrategyBase> enumerator;
 #ifdef RDK_USE_BOOST_SERIALIZATION
   boost::archive::text_iarchive ar(pickle);
-  ar &enumerator;
+  ar & enumerator;
   return enumerator;
 #else
   RDUNUSED_PARAM(pickle);

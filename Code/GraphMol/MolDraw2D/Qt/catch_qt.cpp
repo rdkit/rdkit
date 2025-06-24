@@ -171,7 +171,7 @@ M  END
     }
   }
 }
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   QGuiApplication app(argc, argv);
 
   int result = Catch::Session().run(argc, argv);

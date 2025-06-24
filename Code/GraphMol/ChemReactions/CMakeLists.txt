@@ -17,7 +17,7 @@ rdkit_library(ChemReactions
                     Enumerate/EnumerationPickler.cpp
                     Enumerate/EvenSamplePairs.cpp
               LINK_LIBRARIES
-              FilterCatalog Descriptors Fingerprints DataStructs Depictor
+              FilterCatalog Fingerprints DataStructs Depictor
               FileParsers SubstructMatch ChemTransforms GraphMol)
 target_compile_definitions(ChemReactions PRIVATE RDKIT_CHEMREACTIONS_BUILD)
 

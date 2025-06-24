@@ -76,67 +76,6 @@ void test1(bool doLong = 0) {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
-void _createPickleFile() {
-  std::string smiName = getenv("RDBASE");
-  smiName += "/Code/GraphMol/test_data/canonSmiles.smi";
-  std::string pklName = getenv("RDBASE");
-#ifdef OLD_PICKLE
-  pklName += "/Code/GraphMol/test_data/canonSmiles.v1.pkl";
-#else
-  pklName += "/Code/GraphMol/test_data/canonSmiles.v2.pkl";
-#endif
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "creating pickle file." << std::endl;
-
-  SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
-  std::ofstream outStream(pklName.c_str(), std::ios_base::binary);
-  while (!suppl.atEnd()) {
-    ROMol *m = suppl.next();
-    TEST_ASSERT(m);
-
-    std::string pickle;
-    MolPickler::pickleMol(*m, outStream);
-    delete m;
-  }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
-}
-
-void test2(bool doLong = 0) {
-  std::string smiName = getenv("RDBASE");
-  smiName += "/Code/GraphMol/test_data/canonSmiles.smi";
-  std::string pklName = getenv("RDBASE");
-  pklName += "/Code/GraphMol/test_data/canonSmiles.v1.pkl";
-
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing reading existing pickle file (v1)."
-                        << std::endl;
-
-  SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
-  std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
-  int count = 0;
-  while (!suppl.atEnd()) {
-    ROMol *m1 = suppl.next();
-    TEST_ASSERT(m1);
-    ROMol m2;
-    MolPickler::molFromPickle(inStream, m2);
-
-    std::string smi1 = MolToSmiles(*m1);
-    std::string smi2 = MolToSmiles(m2);
-
-    if (smi1 != smi2) {
-      BOOST_LOG(rdInfoLog) << "Line: " << count << "\n  " << smi1
-                           << "\n != \n  " << smi2 << std::endl;
-    }
-    TEST_ASSERT(smi1 == smi2);
-    delete m1;
-    count++;
-    if (!doLong && count >= 100) {
-      break;
-    }
-  }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
-}
-
 void test3(bool doLong = 0) {
   std::string smiName = getenv("RDBASE");
   smiName += "/Code/GraphMol/test_data/canonSmiles.smi";
@@ -170,52 +109,6 @@ void test3(bool doLong = 0) {
       break;
     }
   }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
-}
-
-void timeTest(bool doLong = 0) {
-  time_t t1, t2;
-  std::string smiName = getenv("RDBASE");
-  smiName += "/Code/GraphMol/test_data/canonSmiles.smi";
-
-  std::string pklName = getenv("RDBASE");
-  pklName += "/Code/GraphMol/test_data/canonSmiles.v2.pkl";
-
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Timing reads." << std::endl;
-
-  t1 = std::time(nullptr);
-  SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
-  int count = 0;
-  while (!suppl.atEnd()) {
-    ROMol *m1 = suppl.next();
-    TEST_ASSERT(m1);
-    count++;
-    if (!doLong && count >= 100) {
-      break;
-    }
-    delete m1;
-  }
-  t2 = std::time(nullptr);
-  BOOST_LOG(rdInfoLog) << " Smiles time: " << std::difftime(t2, t1)
-                       << std::endl;
-  ;
-
-  std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
-  t1 = std::time(nullptr);
-  while (count > 0) {
-    ROMol m2;
-    MolPickler::molFromPickle(inStream, m2);
-    count--;
-    if (!doLong && count >= 100) {
-      break;
-    }
-  }
-  t2 = std::time(nullptr);
-  BOOST_LOG(rdInfoLog) << " Pickle time: " << std::difftime(t2, t1)
-                       << std::endl;
-  ;
-
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
@@ -826,10 +719,12 @@ void testIssue3316407() {
     MolPickler::molFromPickle(pickle, *m2);
     TEST_ASSERT(m2->getNumAtoms() == 5);
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
-      TEST_ASSERT(m->getAtomWithIdx(i)->getExplicitValence() ==
-                  m2->getAtomWithIdx(i)->getExplicitValence());
-      TEST_ASSERT(m->getAtomWithIdx(i)->getImplicitValence() ==
-                  m2->getAtomWithIdx(i)->getImplicitValence());
+      TEST_ASSERT(
+          m->getAtomWithIdx(i)->getValence(Atom::ValenceType::EXPLICIT) ==
+          m2->getAtomWithIdx(i)->getValence(Atom::ValenceType::EXPLICIT));
+      TEST_ASSERT(
+          m->getAtomWithIdx(i)->getValence(Atom::ValenceType::IMPLICIT) ==
+          m2->getAtomWithIdx(i)->getValence(Atom::ValenceType::IMPLICIT));
     }
     // part of sf.net issue 285:
     TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp(common_properties::dummyLabel));
@@ -1851,16 +1746,12 @@ int main(int argc, char *argv[]) {
     }
   }
 
-//_createPickleFile();
-#if 1
   test1(doLong);
-  // test2(doLong);
   test3(doLong);
   test4();
   testIssue164();
   testIssue219();
   testIssue220();
-  // timeTest(doLong);
   testQueries();
   testRadicals();
   testPickleProps();
@@ -1880,7 +1771,6 @@ int main(int argc, char *argv[]) {
   testCustomPickler();
   testGithub2441();
   testGithubIssue2510();
-#endif
   testNegativeMaps();
   testHistoricalConfs();
   testConformerOptions();

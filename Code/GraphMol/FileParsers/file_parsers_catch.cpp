@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2020-2025 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -11,10 +11,10 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-// #include <string_view>
 #include <streambuf>
 
 #include "RDGeneral/test.h"
+#include <GraphMol/test_fixtures.h>
 #include <catch2/catch_all.hpp>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
@@ -32,6 +32,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/test_fixtures.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 
@@ -1647,7 +1648,7 @@ M  END)CTAB";
     REQUIRE(mol);
     mol->updatePropertyCache();
     CHECK(mol->getAtomWithIdx(0)->getNoImplicit());
-    CHECK(mol->getAtomWithIdx(0)->getExplicitValence() == 0);
+    CHECK(mol->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 0);
     CHECK(mol->getAtomWithIdx(0)->getTotalValence() == 0);
     auto outBlock = MolToMolBlock(*mol);
     REQUIRE(outBlock.find("0  0 15") != std::string::npos);
@@ -1669,7 +1670,7 @@ M  END)CTAB";
     REQUIRE(mol);
     mol->updatePropertyCache();
     CHECK(mol->getAtomWithIdx(0)->getNoImplicit());
-    CHECK(mol->getAtomWithIdx(0)->getExplicitValence() == 5);
+    CHECK(mol->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 5);
     CHECK(mol->getAtomWithIdx(0)->getTotalValence() == 5);
     auto outBlock = MolToMolBlock(*mol);
     REQUIRE(outBlock.find("0  0  5") != std::string::npos);
@@ -1838,6 +1839,8 @@ GASTEIGER
     CHECK(mol->getNumAtoms() == 2);
   }
   SECTION("_mol2 failure") {
+    // this one checks that the C-Na bond is not automatically converted
+    // to dative when parsing Mol2 files
     auto mol = R"DATA(@<TRIPOS>MOLECULE
 UNK
 6 5 0 0 0
@@ -3428,7 +3431,7 @@ M  END
     auto mb = MolToV3KMolBlock(*m);
     CHECK(mb.find("V30 8 10 5 8") != std::string::npos);
     CHECK(MolToSmiles(*m) ==
-          "CC1=O~[H]OC(C)C1");  // the SMILES writer still doesn't know what to
+          "CC1CC(C)O[H]~O=1");  // the SMILES writer still doesn't know what to
                                 // do with it
   }
 }
@@ -3890,7 +3893,9 @@ M  V30 1 1 1 2
 M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB";
-    { REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException); }
+    {
+      REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException);
+    }
     {
       bool sanitize = true;
       bool removeHs = true;
@@ -5863,16 +5868,7 @@ TEST_CASE("MaeMolSupplier setData and reset methods",
   unsigned i = 0;
   while (!supplier.atEnd()) {
     INFO("Second input, mol " + std::to_string(i));
-
-    std::unique_ptr<ROMol> molptr;
-    try {
-      molptr.reset(supplier.next());
-    } catch (const FileParseException &) {
-      // the 4th structure is intentionally bad.
-    }
-
-    REQUIRE((i == 3) ^ (molptr != nullptr));
-
+    std::unique_ptr<ROMol> molptr(supplier.next());
     ++i;
   }
   INFO("Second input, mol count");
@@ -6270,7 +6266,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     auto bondBlockStart = mae.find("m_bond[7]");
     REQUIRE(bondBlockStart != std::string::npos);
 
-    std::string ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
+    std::string_view ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
     std::string atomBlock(&mae[atomBlockStart],
                           bondBlockStart - atomBlockStart);
     std::string bondBlock(&mae[bondBlockStart]);
@@ -6445,23 +6441,18 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     auto ctBlockStart = mae.find("f_m_ct");
     REQUIRE(ctBlockStart != std::string::npos);
 
-    std::string ctBlock(&mae[ctBlockStart]);
+    std::string_view ctBlock(&mae[ctBlockStart]);
 
-    CHECK(ctBlock == MaeWriter::getText(*mol));
+    CHECK((ctBlock == MaeWriter::getText(*mol)));
   }
 }
 
 TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer][bug]") {
   SECTION("No atoms") {
     ROMol m;
-
-    auto oss = new std::ostringstream;
-    MaeWriter w(oss);
-    w.write(m);
-    w.flush();
-
-    CHECK(oss->str().empty());
+    CHECK_THROWS_AS(RDKit::MaeWriter::getText(m), ValueErrorException);
   }
+
   SECTION("No bonds") {
     auto m = "C"_smiles;
     REQUIRE(m);
@@ -6477,34 +6468,23 @@ TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer][bug]") {
     CHECK(mae.find("m_atom[1]") != std::string::npos);
     CHECK(mae.find("m_bond[") == std::string::npos);
   }
-  SECTION("Not kekulizable bonds") {
-    bool debug = false;
-    bool sanitize = false;
-    std::unique_ptr<ROMol> m(SmilesToMol(
-        "c1cncc1", debug, sanitize));  // This SMILES is intentionally bad!
-    REQUIRE(m);
 
-    m->getBondWithIdx(0)->setBondType(Bond::AROMATIC);
+  SECTION("Not kekulizable mols") {
+    v2::SmilesParse::SmilesParserParams p;
+    p.sanitize = false;
+    auto mol = v2::SmilesParse::MolFromSmiles("c1ccnc1", p);
+    REQUIRE(mol);
 
-    auto oss = new std::ostringstream;
-    MaeWriter w(oss);
-    w.write(*m);
-    w.flush();
-
-    CHECK(oss->str().empty());
+    CHECK_THROWS_AS(RDKit::MaeWriter::getText(*mol), KekulizeException);
   }
+
   SECTION("Unsupported bonds") {
     auto m = "CC"_smiles;
     REQUIRE(m);
 
     m->getBondWithIdx(0)->setBondType(Bond::DATIVEONE);
 
-    auto oss = new std::ostringstream;
-    MaeWriter w(oss);
-    w.write(*m);
-    w.flush();
-
-    CHECK(oss->str().empty());
+    CHECK_THROWS_AS(RDKit::MaeWriter::getText(*m), ValueErrorException);
   }
 }
 
@@ -6822,6 +6802,8 @@ TEST_CASE("StereoGroup id forwarding", "[StereoGroup][ctab]") {
 TEST_CASE(
     "GitHub issue #6664: Mol file parser strips stereogenic H from imine bonds",
     "[reader]") {
+  auto useLegacy = GENERATE(true, false);
+  UseLegacyStereoPerceptionFixture fx(useLegacy);
   SECTION("mol file") {
     auto mol = R"CTAB(
                     2D
@@ -6848,7 +6830,13 @@ M  END
 
     auto dblBond = mol->getBondWithIdx(3);
     REQUIRE(dblBond->getBondType() == Bond::DOUBLE);
-    CHECK(dblBond->getStereo() == Bond::STEREOE);
+    if (useLegacy) {
+      CHECK(dblBond->getStereo() == Bond::STEREOE);
+    } else {
+      CHECK(dblBond->getStereo() == Bond::STEREOCIS);
+      CHECK(dblBond->getStereoAtoms()[0] == 0);
+      CHECK(dblBond->getStereoAtoms()[1] == 6);
+    }
   }
   SECTION("mol2 file") {
     auto mol = R"MOL2(
@@ -6881,7 +6869,13 @@ USER_CHARGES
 
     auto dblBond = mol->getBondWithIdx(5);
     REQUIRE(dblBond->getBondType() == Bond::DOUBLE);
-    CHECK(dblBond->getStereo() == Bond::STEREOE);
+    if (useLegacy) {
+      CHECK(dblBond->getStereo() == Bond::STEREOE);
+    } else {
+      CHECK(dblBond->getStereo() == Bond::STEREOCIS);
+      CHECK(dblBond->getStereoAtoms()[0] == 0);
+      CHECK(dblBond->getStereoAtoms()[1] == 6);
+    }
   }
 }
 
@@ -7156,7 +7150,7 @@ class FragTest {
         expectedResult(expectedResultInit),
         reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
         origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit){};
+        newSgroupCount(newSgroupCountInit) {};
 };
 
 void testFragmentation(const FragTest &fragTest) {
@@ -7394,7 +7388,7 @@ TEST_CASE("MolToV2KMolBlock") {
     };
     for (const auto &smi : smileses) {
       INFO(smi);
-      auto m = SmilesToMol(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
       REQUIRE(m);
       CHECK_THROWS_AS(MolToV2KMolBlock(*m), ValueErrorException);
     }
@@ -7411,5 +7405,154 @@ TEST_CASE("Github #7306: bad crossed bonds in large aromatic rings") {
     CHECK(ctab.find("CFG=2") == std::string::npos);
     ctab = MolToMolBlock(*m);
     CHECK(ctab.find("2  3\n") == std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "Github #8023: explicit valence for charged organic atoms in mol block") {
+  SECTION("as reported 1") {
+    auto m = "C[NH3+]"_smiles;
+    REQUIRE(m);
+    auto ctab = MolToMolBlock(*m);
+    CHECK(ctab.find("N   0  0  0  0  0  0  0") != std::string::npos);
+    ctab = MolToV3KMolBlock(*m);
+    CHECK(ctab.find("CHG=1") != std::string::npos);
+    CHECK(ctab.find("VAL=4") == std::string::npos);
+  }
+  SECTION("nitro-type") {
+    auto m = "C[N+](=S)[O-]"_smiles;
+    REQUIRE(m);
+    auto ctab = MolToMolBlock(*m);
+    CHECK(ctab.find("N   0  0  0  0  0  0  0") != std::string::npos);
+    CHECK(ctab.find("O   0  0  0  0  0  0  0") != std::string::npos);
+    ctab = MolToV3KMolBlock(*m);
+    CHECK(ctab.find("CHG=1") != std::string::npos);
+    CHECK(ctab.find("VAL=4") == std::string::npos);
+    CHECK(ctab.find("CHG=-1") != std::string::npos);
+    CHECK(ctab.find("VAL=1") == std::string::npos);
+  }
+}
+
+TEST_CASE("Github #8060: crash with a bad mol block") {
+  SECTION("as reported") {
+    std::string molblock = R"CTAB(
+
+
+ 11 20  0  0  0  0  0  0  0  0999 V2000
+    0.7752    1.4699    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0024    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2976    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2528    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5479    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2952    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2504    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5455    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7728    3.3471    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7752    2.4009    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  1  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10  6  1  0  0  0  0
+ 11  1  1  0  0  0  0
+ 11  2  1  0  0  0  0
+ 11  3  1  0  0  0  0
+ 11  4  1  0  0  0  0
+ 11  5  1  0  0  0  0
+ 11  6  1  0  0  0  0
+ 11  7  1  0  0  0  0
+ 11  8  1  0  0  0  0
+ 11  9  1  0  0  0  0
+ 11 10  1  0  0  0  0
+M  END)CTAB";
+    auto m = v2::FileParsers::MolFromMolBlock(molblock);
+    REQUIRE(m);
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+      auto m = v2::FileParsers::MolFromMolBlock(molblock);
+      REQUIRE(m);
+    }
+  }
+  SECTION("catch expected exception") {
+    // the molecule is really stupid
+    std::string molblock = R"CTAB(
+
+
+ 21 40  0  0  0  0  0  0  0  0999 V2000
+    0.7752    1.4699    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0024    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2976    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2528    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5479    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2952    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2504    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5455    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7728    3.3471    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7752    1.4699    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0024    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2976    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2528    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5479    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2952    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2504    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5455    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7728    3.3471    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7752    2.4009    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  1  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10  6  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  1  0  0  0  0
+ 13 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 11  1  0  0  0  0
+ 16 17  1  0  0  0  0
+ 17 18  1  0  0  0  0
+ 18 19  1  0  0  0  0
+ 19 20  1  0  0  0  0
+ 20 16  1  0  0  0  0
+ 21  1  1  0  0  0  0
+ 21  2  1  0  0  0  0
+ 21  3  1  0  0  0  0
+ 21  4  1  0  0  0  0
+ 21  5  1  0  0  0  0
+ 21  6  1  0  0  0  0
+ 21  7  1  0  0  0  0
+ 21  8  1  0  0  0  0
+ 21  9  1  0  0  0  0
+ 21 10  1  0  0  0  0
+ 21 11  1  0  0  0  0
+ 21 12  1  0  0  0  0
+ 21 13  1  0  0  0  0
+ 21 14  1  0  0  0  0
+ 21 15  1  0  0  0  0
+ 21 16  1  0  0  0  0
+ 21 17  1  0  0  0  0
+ 21 18  1  0  0  0  0
+ 21 19  1  0  0  0  0
+ 21 20  1  0  0  0  0
+M  END)CTAB";
+    REQUIRE_THROWS_AS(v2::FileParsers::MolFromMolBlock(molblock),
+                      std::out_of_range);
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+      auto m = v2::FileParsers::MolFromMolBlock(molblock);
+      REQUIRE(m);
+    }
   }
 }

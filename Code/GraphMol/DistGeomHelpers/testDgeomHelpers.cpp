@@ -76,13 +76,6 @@ void test1() {
 
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
-#if 0
-      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
-      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
-      BOOST_LOG(rdInfoLog) << "---" << std::endl;
-      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m) << std::endl;
-      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
-#endif
       for (unsigned int i = 0; i < nat; i++) {
         RDGeom::Point3D pt1i = conf1.getAtomPos(i);
         RDGeom::Point3D pt2i = conf2.getAtomPos(i);
@@ -147,7 +140,6 @@ void test2() {
   int cid;
   unsigned int nat = mol->getNumAtoms();
 
-#if 1
   bm.reset(new DistGeom::BoundsMatrix(nat));
   DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
   DGeomHelpers::setTopolBounds(*mol, bm);
@@ -221,7 +213,6 @@ void test2() {
 
   delete mol;
   delete dmat;
-#endif
   std::cerr << "-------------------------------------\n\n";
   smi = "C/C=C/C";
   mol = SmilesToMol(smi, 0, 1);
@@ -296,46 +287,6 @@ void test2() {
   delete mol;
   delete dmat;
 
-#if 0
-  // this next block of tests all handle the special case that led to Issue284
-  smi = "COC=O";
-  mol = SmilesToMol(smi, 0, 1);
-  nat = mol->getNumAtoms();
-  bm.reset(new DistGeom::BoundsMatrix(nat));
-  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-  DGeomHelpers::setTopolBounds(*mol, bm);
-  cid = DGeomHelpers::EmbedMolecule(*mol, 10, 1);
-  TEST_ASSERT(cid>-1);
-  dmat = new RDNumeric::DoubleSymmMatrix(nat, 0.0);
-  computeMolDmat(*mol, *dmat);
-  //TEST_ASSERT( (bm->getUpperBound(0,3) - bm->getLowerBound(0,3)) < .13);
-  double x,y,z;
-  x = bm->getUpperBound(0,3);
-  y = bm->getLowerBound(0,3);
-  z = dmat->getVal(0,3);
-  //TEST_ASSERT( (bm->getUpperBound(0,3) - dmat->getVal(0,3) > -0.1)
-  //             && (bm->getLowerBound(0,3) - dmat->getVal(0,3) < 0.10 ));
-
-  delete mol;
-  delete dmat;
-
-  smi = "C[NH]C=O";
-  mol = SmilesToMol(smi, 0, 1);
-  nat = mol->getNumAtoms();
-  bm.reset(new DistGeom::BoundsMatrix(nat));
-  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-  DGeomHelpers::setTopolBounds(*mol, bm);
-  cid = DGeomHelpers::EmbedMolecule(*mol, 10, 1);
-  TEST_ASSERT(cid>-1);
-  dmat = new RDNumeric::DoubleSymmMatrix(nat, 0.0);
-  computeMolDmat(*mol, *dmat);
-  TEST_ASSERT( (bm->getUpperBound(0,3) - bm->getLowerBound(0,3)) < .13);
-  //TEST_ASSERT( (bm->getUpperBound(0,3) - dmat->getVal(0,3) > -0.1)
-  //             && (bm->getLowerBound(0,3) - dmat->getVal(0,3) < 0.10));
-
-  delete mol;
-  delete dmat;
-#endif
   boost::logging::enable_logs("rdApp.warning");
 }
 
@@ -627,7 +578,6 @@ void testOrdering() {
   delete m2;
 }
 
-#if 1
 void testIssue227() {
   std::string smi =
       "CCOP1(OCC)=CC(c2ccccc2)=C(c2ccc([N+]([O-])=O)cc2)N=C1c1ccccc1";
@@ -652,7 +602,6 @@ void testIssue227() {
   TEST_ASSERT(ok);
   delete m;
 }
-#endif
 
 void testIssue236() {
   std::string smi =
@@ -731,18 +680,6 @@ void testIssue276() {
   DistGeom::BoundsMatPtr bm(mat);
   DGeomHelpers::initBoundsMat(bm);
   DGeomHelpers::setTopolBounds(*m, bm);
-#if 0
-  for(unsigned int i=0;i<nat;i++){
-    for(unsigned int j=0;j<nat;j++){
-      if(i<j) std::cout << bm->getUpperBound(i,j) << " ";
-      else if(i>j) std::cout << bm->getLowerBound(i,j) << " ";
-      else std::cout << "0.00000" << " ";
-    }
-    std::cout << std::endl;
-  }
-  std::cout << std::endl;
-#endif
-
   ok = DistGeom::triangleSmoothBounds(bm);
   TEST_ASSERT(ok);
 
@@ -916,7 +853,6 @@ void testRandomCoords() {
     CHECK_INVARIANT(cid >= 0, "");
     // writer.write(*m);
     // writer.flush();
-#if 1
     m2 = static_cast<RWMol *>(sdsup.next());
     // ROMol *m2 = NULL;
     if (m2) {
@@ -925,13 +861,6 @@ void testRandomCoords() {
 
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
-#if 0
-      BOOST_LOG(rdWarningLog) << "-----------------------" << std::endl;
-      BOOST_LOG(rdWarningLog) << MolToMolBlock(*m2) << std::endl;
-      BOOST_LOG(rdWarningLog) << "---" << std::endl;
-      BOOST_LOG(rdWarningLog) << MolToMolBlock(*m) << std::endl;
-      BOOST_LOG(rdWarningLog) << "-----------------------" << std::endl;
-#endif
       for (unsigned int i = 0; i < nat; i++) {
         RDGeom::Point3D pt1i = conf1.getAtomPos(i);
         RDGeom::Point3D pt2i = conf2.getAtomPos(i);
@@ -949,7 +878,6 @@ void testRandomCoords() {
       }
     }
     delete m2;
-#endif
     delete m;
   }
 }
@@ -998,7 +926,6 @@ void testConstrainedEmbedding() {
     coords[3] = ref->getConformer().getAtomPos(3);
     coords[4] = ref->getConformer().getAtomPos(4);
 
-#if 1
     int cid = DGeomHelpers::EmbedMolecule(*test, 30, 22, true, false, 2., true,
                                           1, &coords);
     TEST_ASSERT(cid > -1);
@@ -1012,7 +939,6 @@ void testConstrainedEmbedding() {
     double ssd = MolAlign::alignMol(*test, *ref, -1, -1, &alignMap);
     BOOST_LOG(rdInfoLog) << "ssd: " << ssd << std::endl;
     TEST_ASSERT(ssd < 0.1);
-#endif
     delete test;
   }
 
@@ -1100,7 +1026,6 @@ void testIssue2091974() {
 void testIssue2835784() {
   boost::logging::disable_logs("rdApp.warning");
 
-#if 1
   {
     std::string smi = "C1C=C1";
     RWMol *m = SmilesToMol(smi);
@@ -1133,7 +1058,6 @@ void testIssue2835784() {
     TEST_ASSERT(std::find(cids.begin(), cids.end(), -1) == cids.end());
     delete m;
   }
-#endif
   {
     std::string smi = "C12=CCC1C2";
     ROMol *m = SmilesToMol(smi);
@@ -2352,41 +2276,6 @@ void testForceTransAmides() {
   mol->addBond(3, 5, Bond::BondType::SINGLE);
   MolOps::sanitizeMol(*mol);
   MolOps::addHs(*mol);
-#if 0
-  // worth leaving this here just to allow looking at the conformers if anything goes wrong later
-  {
-    DGeomHelpers::EmbedParameters params;
-    params.forceTransAmides = true;
-    params.randomSeed = 0xf00d;
-    params.useExpTorsionAnglePrefs = false;
-    params.useBasicKnowledge = true;
-    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, params);
-    SDWriter w("amide.sdf");
-    for (auto cid : cids) {
-      TEST_ASSERT(cid >= 0);
-      auto conf = mol->getConformer(cid);
-      auto tors = MolTransforms::getDihedralDeg(conf, 0, 1, 3, 4);
-      if (fabs(fabs(tors) - 180) > 5) {
-        w.write(*mol, cid);
-        std::cerr << cid << " TORS: " << tors << std::endl;
-        if (fabs(fabs(tors) - 180) > 40) {
-          std::cerr << "---------- DM " << std::endl;
-          double *dm = MolOps::get3DDistanceMat(*mol, cid);
-          auto nAtoms = mol->getNumAtoms();
-          for (unsigned int i = 0; i < nAtoms; ++i) {
-            for (unsigned int j = 0; j < nAtoms; ++j) {
-              std::cerr << " " << std::setprecision(3) << std::setw(5)
-                        << dm[i * nAtoms + j];
-            }
-            std::cerr << std::endl;
-          }
-        }
-      }
-      // TEST_ASSERT(fabs(fabs(tors) - 180) < 5);
-    }
-    w.flush();
-  }
-#endif
   {
     DGeomHelpers::EmbedParameters params;
     params.forceTransAmides = true;
@@ -2398,9 +2287,9 @@ void testForceTransAmides() {
       TEST_ASSERT(cid >= 0);
       auto conf = mol->getConformer(cid);
       auto tors = MolTransforms::getDihedralDeg(conf, 0, 1, 3, 4);
-      TEST_ASSERT(fabs(fabs(tors) - 180) < 37);
+      TEST_ASSERT(fabs(fabs(tors) - 180) < 35);
       tors = MolTransforms::getDihedralDeg(conf, 2, 1, 3, 5);
-      TEST_ASSERT(fabs(fabs(tors) - 180) < 37);
+      TEST_ASSERT(fabs(fabs(tors) - 180) < 35);
     }
   }
   {  // make sure we can find at least one non-trans
@@ -2434,11 +2323,11 @@ void testSymmetryPruning() {
   params.pruneRmsThresh = 0.5;
   params.randomSeed = 0xf00d;
   auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
-  TEST_ASSERT(cids.size() == 1);
+  TEST_ASSERT(cids.size() == 2);
 
   params.useSymmetryForPruning = false;
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
-  TEST_ASSERT(cids.size() == 3);
+  TEST_ASSERT(cids.size() == 8);
 }
 
 void testMissingHsWarning() {
@@ -2482,7 +2371,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
 
-#if 1
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
   test2();
@@ -2679,7 +2567,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t Using symmetry in conformation pruning.\n";
   testSymmetryPruning();
 
-#endif
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Force trans amides.\n";
   testForceTransAmides();

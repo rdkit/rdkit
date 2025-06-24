@@ -11,6 +11,7 @@
 */
 %{
 #include <GraphMol/RGroupDecomposition/RGroupDecompParams.h>
+#include <GraphMol/RGroupDecomposition/RGroupDecompJSONParsers.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 typedef std::vector<std::string> STR_VECT;
 %}
@@ -48,5 +49,7 @@ typedef std::vector<std::string> STR_VECT;
   }
 }
 
+%include <RDGeneral/BetterEnums.h>
 %include <GraphMol/RGroupDecomposition/RGroupDecompParams.h>
+%include <GraphMol/RGroupDecomposition/RGroupDecompJSONParsers.h>
 %include <GraphMol/RGroupDecomposition/RGroupDecomp.h>

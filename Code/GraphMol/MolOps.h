@@ -19,6 +19,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/types.h>
+#include <RDGeneral/BetterEnums.h>
 #include "SanitException.h"
 #include <RDGeneral/FileParseException.h>
 
@@ -88,6 +89,32 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
 /*!
 
   \param mol     the molecule of interest
+  \param molFrags used to return the disconnected fragments as molecules.
+                  Any contents on input will be cleared.
+  \param sanitizeFrags  toggles sanitization of the fragments after
+                        they are built
+  \param frags used to return the mapping of Atoms->fragments.
+     if provided, \c frags will be <tt>mol->getNumAtoms()</tt> long
+         on return and will contain the fragment assignment for each Atom.
+  \param fragsMolAtomMapping  used to return the Atoms in each fragment
+     On return \c mapping will be \c numFrags long, and each entry
+     will contain the indices of the Atoms in that fragment.
+   \param copyConformers  toggles copying conformers of the fragments after
+                        they are built
+  \return the number of fragments found.
+
+*/
+RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
+    const ROMol &mol, std::vector<std::unique_ptr<ROMol>> &molFrags,
+    bool sanitizeFrags = true, std::vector<int> *frags = nullptr,
+    std::vector<std::vector<int>> *fragsMolAtomMapping = nullptr,
+    bool copyConformers = true);
+
+//! splits a molecule into its component fragments
+/// (disconnected components of the molecular graph)
+/*!
+
+  \param mol     the molecule of interest
   \param sanitizeFrags  toggles sanitization of the fragments after
                         they are built
   \param frags used to return the mapping of Atoms->fragments.
@@ -121,12 +148,35 @@ RDKIT_GRAPHMOL_EXPORT std::vector<boost::shared_ptr<ROMol>> getMolFrags(
   \return a map of the fragments and their labels
 
 */
+
 template <typename T>
 RDKIT_GRAPHMOL_EXPORT std::map<T, boost::shared_ptr<ROMol>>
 getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
                      bool sanitizeFrags = true,
                      const std::vector<T> *whiteList = nullptr,
                      bool negateList = false);
+//! splits a molecule into pieces based on labels assigned using a query,
+//! putting them into a map of std::unique_ptr<ROMol>.
+/*!
+
+  \param mol     the molecule of interest
+  \param query   the query used to "label" the molecule for fragmentation
+  \param molFrags used to return the disconnected fragments as molecules.
+                 Any contents on input will be cleared.
+  \param sanitizeFrags  toggles sanitization of the fragments after
+                        they are built
+  \param whiteList  if provided, only labels in the list will be kept
+  \param negateList if true, the white list logic will be inverted: only labels
+                    not in the list will be kept
+
+  \return the number of fragments
+
+*/
+template <typename T>
+RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
+    const ROMol &mol, T (*query)(const ROMol &, const Atom *),
+    std::map<T, std::unique_ptr<ROMol>> &molFrags, bool sanitizeFrags = true,
+    const std::vector<T> *whiteList = nullptr, bool negateList = false);
 
 #if 0
     //! finds a molecule's minimum spanning tree (MST)
@@ -139,6 +189,28 @@ getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
 
 //! \name Dealing with hydrogens
 //{@
+
+struct RDKIT_GRAPHMOL_EXPORT AddHsParameters {
+  bool explicitOnly = false;   /**< only add explicit Hs */
+  bool addCoords = false;      /**< add coordinates for the Hs */
+  bool addResidueInfo = false; /**< add residue info to the Hs */
+  bool skipQueries =
+      false; /**< do not add Hs to query atoms or atoms with query bonds */
+};
+//! adds Hs to a molecule as explicit Atoms
+/*!
+    \param mol          the molecule to add Hs to
+    \param params       parameters controlling which Hs are added.
+    \param onlyOnAtoms   (optional) if provided, this should be a vector of
+                IDs of the atoms that will be considered for H addition.
+
+    <b>Notes:</b>
+       - it makes no sense to use the \c addCoords option if the molecule's
+   heavy atoms don't already have coordinates.
+       - the molecule is modified
+ */
+RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, const AddHsParameters &params,
+                                 const UINT_VECT *onlyOnAtoms = nullptr);
 
 //! returns a copy of a molecule with hydrogens added in as explicit Atoms
 /*!
@@ -162,25 +234,34 @@ getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
  */
-RDKIT_GRAPHMOL_EXPORT ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
-                                   bool addCoords = false,
-                                   const UINT_VECT *onlyOnAtoms = nullptr,
-                                   bool addResidueInfo = false);
+inline ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
+                    bool addCoords = false,
+                    const UINT_VECT *onlyOnAtoms = nullptr,
+                    bool addResidueInfo = false) {
+  AddHsParameters ps{explicitOnly, addCoords, addResidueInfo};
+  std::unique_ptr<RWMol> res{new RWMol(mol)};
+  addHs(*res, ps, onlyOnAtoms);
+  return static_cast<ROMol *>(res.release());
+}
 //! \overload
 /// modifies the molecule in place
-RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
-                                 bool addCoords = false,
-                                 const UINT_VECT *onlyOnAtoms = nullptr,
-                                 bool addResidueInfo = false);
+inline void addHs(RWMol &mol, bool explicitOnly = false, bool addCoords = false,
+                  const UINT_VECT *onlyOnAtoms = nullptr,
+                  bool addResidueInfo = false) {
+  AddHsParameters ps{explicitOnly, addCoords, addResidueInfo};
+  addHs(mol, ps, onlyOnAtoms);
+}
 
 //! Sets Cartesian coordinates for a terminal atom.
 //! Useful for growing an atom off a molecule with sensible
 //! coordinates based on the geometry of the neighbor.
 /*!
-    NOTE: this sets appropriate coordinates in all of the molecule's conformers.
-    \param mol       the molecule the atoms belong to
-    \param idx       index of the terminal atom whose coordinates are set
-    \param otherIdx  index of the bonded neighbor atom
+    NOTE: this sets appropriate coordinates in all of the molecule's
+   conformers.
+
+   \param mol       the molecule the atoms belong to
+   \param idx index of the terminal atom whose coordinates are set
+   \param otherIdx  index of the bonded neighbor atom
 */
 
 RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
@@ -189,13 +270,11 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
 //! returns a copy of a molecule with hydrogens removed
 /*!
     \param mol          the molecule to remove Hs from
-    \param implicitOnly (optional) if this \c true, only implicit Hs will be
+    \param implicitOnly if this \c true, only implicit Hs will be
    removed
-    \param updateExplicitCount  (optional) If this is \c true, when explicit Hs
-   are removed
-         from the graph, the heavy atom to which they are bound will have its
-   counter of
-         explicit Hs increased.
+    \param updateExplicitCount  (optional) If this is \c true, when explicit
+   Hs are removed from the graph, the heavy atom to which they are bound will
+   have its counter of explicit Hs increased.
     \param sanitize:  (optional) If this is \c true, the final molecule will be
    sanitized
 
@@ -218,14 +297,14 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
 */
-
-RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
-                                      bool implicitOnly = false,
+[[deprecated("Please use the version with RemoveHsParameters")]]
+RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol, bool implicitOnly,
                                       bool updateExplicitCount = false,
                                       bool sanitize = true);
 //! \overload
 /// modifies the molecule in place
-RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
+[[deprecated("Please use the version with RemoveHsParameters")]]
+RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly,
                                     bool updateExplicitCount = false,
                                     bool sanitize = true);
 struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
@@ -236,8 +315,8 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeIsotopes = false; /**< hydrogens with non-default isotopes */
   bool removeAndTrackIsotopes = false; /**< removes hydrogens with non-default
    isotopes and keeps track of the heavy atom the isotopes were attached to in
-   the private _isotopicHs atom property, so they are re-added by AddHs() as the
-   original isotopes if possible*/
+   the private _isotopicHs atom property, so they are re-added by AddHs() as
+   the original isotopes if possible*/
   bool removeDummyNeighbors =
       false; /**< hydrogens with at least one dummy-atom neighbor */
   bool removeDefiningBondStereo =
@@ -258,15 +337,17 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
       false; /**<  remove Hs which are bonded to atoms with specified
                 non-tetrahedral stereochemistry */
 };
+
 //! \overload
 /// modifies the molecule in place
-RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, const RemoveHsParameters &ps,
-                                    bool sanitize = true);
+RDKIT_GRAPHMOL_EXPORT void removeHs(
+    RWMol &mol, const RemoveHsParameters &ps = RemoveHsParameters(),
+    bool sanitize = true);
 //! \overload
 /// The caller owns the pointer this returns
-RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
-                                      const RemoveHsParameters &ps,
-                                      bool sanitize = true);
+RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(
+    const ROMol &mol, const RemoveHsParameters &ps = RemoveHsParameters(),
+    bool sanitize = true);
 
 //! removes all Hs from a molecule
 RDKIT_GRAPHMOL_EXPORT void removeAllHs(RWMol &mol, bool sanitize = true);
@@ -316,8 +397,9 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
 
 
   \param mol the molecule to check for query Hs from
-  \return std::pair  if pair.first is true if the molecule has query hydrogens,
-  if pair.second is true, the queryHs cannot be removed my mergeQueryHs
+  \return std::pair  if pair.first is true if the molecule has query
+  hydrogens, if pair.second is true, the queryHs cannot be removed my
+  mergeQueryHs
 */
 RDKIT_GRAPHMOL_EXPORT std::pair<bool, bool> hasQueryHs(const ROMol &mol);
 
@@ -336,8 +418,8 @@ typedef enum {
 
   Note that some of the options here are either directly contradictory or make
   no sense when combined with each other. We generally assume that client code
-  is doing something sensible and don't attempt to detect possible conflicts or
-  problems.
+  is doing something sensible and don't attempt to detect possible conflicts
+  or problems.
 
 */
 struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
@@ -370,8 +452,8 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   std::uint32_t adjustRingChainFlags = ADJUST_IGNORENONE;
 
   bool useStereoCareForBonds =
-      false; /**< remove stereochemistry info from double bonds that do not have
-                the stereoCare property set */
+      false; /**< remove stereochemistry info from double bonds that do not
+                have the stereoCare property set */
 
   bool adjustConjugatedFiveRings =
       false; /**< sets bond queries in conjugated five-rings to
@@ -386,8 +468,8 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
                 degree one neighbors to SINGLE|AROMATIC */
 
   bool adjustSingleBondsBetweenAromaticAtoms =
-      false; /**<  sets non-ring single bonds between two aromatic or conjugated
-                atoms to SINGLE|AROMATIC */
+      false; /**<  sets non-ring single bonds between two aromatic or
+                conjugated atoms to SINGLE|AROMATIC */
 
   //! \brief returns an AdjustQueryParameters object with all adjustments
   //! disabled
@@ -442,7 +524,8 @@ RDKIT_GRAPHMOL_EXPORT ROMol *renumberAtoms(
 //! \name Sanitization
 /// {
 
-typedef enum {
+// clang-format off
+BETTER_ENUM(SanitizeFlags, unsigned int,
   SANITIZE_NONE = 0x0,
   SANITIZE_CLEANUP = 0x1,
   SANITIZE_PROPERTIES = 0x2,
@@ -457,7 +540,8 @@ typedef enum {
   SANITIZE_CLEANUP_ORGANOMETALLICS = 0x400,
   SANITIZE_CLEANUPATROPISOMERS = 0x800,
   SANITIZE_ALL = 0xFFFFFFF
-} SanitizeFlags;
+);
+// clang-format on
 
 //! \brief carries out a collection of tasks for cleaning up a molecule and
 //! ensuring that it makes "chemical sense"
@@ -494,9 +578,9 @@ typedef enum {
       this function to a ROMol, so that new atoms and bonds cannot be added to
       the molecule and screw up the sanitizing that has been done here
 */
-RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol,
-                                       unsigned int &operationThatFailed,
-                                       unsigned int sanitizeOps = SANITIZE_ALL);
+RDKIT_GRAPHMOL_EXPORT void sanitizeMol(
+    RWMol &mol, unsigned int &operationThatFailed,
+    unsigned int sanitizeOps = SanitizeFlags::SANITIZE_ALL);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol);
 
@@ -524,7 +608,7 @@ RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT
 std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
-    const ROMol &mol, unsigned int sanitizeOps = SANITIZE_ALL);
+    const ROMol &mol, unsigned int sanitizeOps = SanitizeFlags::SANITIZE_ALL);
 
 //! Possible aromaticity models
 /*!
@@ -534,6 +618,7 @@ Book)
 - \c AROMATICITY_SIMPLE only considers 5- and 6-membered simple rings (it
 does not consider the outer envelope of fused rings)
 - \c AROMATICITY_MDL
+- \c AROMATICIT_MMFF94 the aromaticity model used by the MMFF94 force field
 - \c AROMATICITY_CUSTOM uses a caller-provided function
 */
 typedef enum {
@@ -541,8 +626,12 @@ typedef enum {
   AROMATICITY_RDKIT = 0x1,
   AROMATICITY_SIMPLE = 0x2,
   AROMATICITY_MDL = 0x4,
+  AROMATICITY_MMFF94 = 0x8,
   AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
 } AromaticityModel;
+
+//! sets the aromaticity model for a molecule to MMFF94
+RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);
 
 //! Sets up the aromaticity for a molecule
 /*!
@@ -602,12 +691,12 @@ RDKIT_GRAPHMOL_EXPORT void cleanUp(RWMol &mol);
 //! organometallic species before valence is perceived
 /*!
 
-    \b Note that this function is experimental and may either change in behavior
-   or be replaced with something else in future releases.
+    \b Note that this function is experimental and may either change in
+   behavior or be replaced with something else in future releases.
 
     Currently this:
-     - replaces single bonds between "hypervalent" organic atoms and metals with
-       dative bonds (this is following an IUPAC recommendation:
+     - replaces single bonds between "hypervalent" organic atoms and metals
+   with dative bonds (this is following an IUPAC recommendation:
        https://iupac.qmul.ac.uk/tetrapyrrole/TP8.html)
 
    \param mol    the molecule of interest
@@ -650,7 +739,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 
    <b>Notes:</b>
      - this does not modify query bonds which have bond type queries (like
-   those which come from SMARTS) or rings containing them.
+       those which come from SMARTS) or rings containing them.
      - even if \c markAtomsBonds is \c false the \c BondType for all modified
        aromatic bonds will be changed from \c RDKit::Bond::AROMATIC to \c
        RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
@@ -704,8 +793,8 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
   \param res used to return the vector of rings. Each entry is a vector with
       atom indices.  This information is also stored in the molecule's
       RingInfo structure, so this argument is optional (see overload)
-  \param includeDativeBonds - determines whether or not dative bonds are used in
-      the ring finding.
+  \param includeDativeBonds - determines whether or not dative bonds are used
+  in the ring finding.
 
   \return number of smallest rings found
 
@@ -742,11 +831,13 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
                                    std::vector<std::vector<int>> &res,
-                                   bool includeDativeBonds = false);
+                                   bool includeDativeBonds = false,
+                                   bool includeHydrogenBonds = false);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
                                    std::vector<std::vector<int>> *res = nullptr,
-                                   bool includeDativeBonds = false);
+                                   bool includeDativeBonds = false,
+                                   bool includeHydrogenBonds = false);
 
 //! use a DFS algorithm to identify ring bonds and atoms in a molecule
 /*!
@@ -776,8 +867,8 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
   \param res used to return the vector of rings. Each entry is a vector with
       atom indices.  This information is also stored in the molecule's
       RingInfo structure, so this argument is optional (see overload)
-  \param includeDativeBonds - determines whether or not dative bonds are used in
-      the ring finding.
+  \param includeDativeBonds - determines whether or not dative bonds are used
+  in the ring finding.
 
   \return the total number of rings = (new rings + old SSSRs)
 
@@ -787,10 +878,12 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
                                          std::vector<std::vector<int>> &res,
-                                         bool includeDativeBonds = false);
+                                         bool includeDativeBonds = false,
+                                         bool includeHydrogenBonds = false);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
-                                         bool includeDativeBonds = false);
+                                         bool includeDativeBonds = false,
+                                         bool includeHydrogenBonds = false);
 
 //! @}
 
@@ -805,6 +898,7 @@ RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
   \param force           forces calculation of the matrix, even if already
   computed
   \param propNamePrefix  used to set the cached property name
+  \param bondsToUse      used to limit which bonds are considered
 
   \return the adjacency matrix.
 
@@ -897,6 +991,7 @@ RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(
 RDKIT_GRAPHMOL_EXPORT double *get3DDistanceMat(
     const ROMol &mol, int confId = -1, bool useAtomWts = false,
     bool force = false, const char *propNamePrefix = nullptr);
+
 //! Find the shortest path between two atoms
 /*!
   Uses the Bellman-Ford algorithm
@@ -951,15 +1046,16 @@ class Hybridizations {
   std::vector<int> d_hybridizations;
 };
 
-//! removes bogus chirality markers (e.g. tetrahedral flags on non-sp3 centers):
+//! removes bogus chirality markers (e.g. tetrahedral flags on non-sp3
+//! centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 
-//! \overload
-RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
 //! removes bogus atropisomeric markers (e.g. those without sp2 begin and end
 //! atoms):
 RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &mol,
                                                Hybridizations &hybridizations);
+//! \overload
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
 
 //! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms
 /*!
@@ -993,8 +1089,7 @@ RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFrom3D(
 RDKIT_GRAPHMOL_EXPORT void assignStereochemistryFrom3D(
     ROMol &mol, int confId = -1, bool replaceExistingTags = true);
 
-//! \brief Use bond directions to assign ChiralTypes to a molecule's atoms and
-//! stereo flags to its bonds
+//! \brief Use bond directions to assign ChiralTypes to a molecule's atoms
 /*!
 
   \param mol                  the molecule of interest
@@ -1012,14 +1107,16 @@ RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
 //! Sets bond directions based on double bond stereochemistry
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
-//! removes directions from single bonds. Wiggly bonds will have the property
-//! _UnknownStereo set on them
+//! removes directions from single bonds. The property _UnknownStereo will be
+//! set on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol,
                                                    bool onlyWedgeFlags = false);
 
-//! removes directions from all bonds. Wiggly bonds and cross bonds will have
-//! the property _UnknownStereo set on them
+//! removes directions from all bonds. The property _UnknownStereo will be set
+//! on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearAllBondDirFlags(ROMol &mol);
+//! removes directions from all bonds. The property _UnknownStereo will be set
+//! on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearDirFlags(ROMol &mol,
                                          bool onlyWedgeFlags = false);
 
@@ -1120,8 +1217,8 @@ RDKIT_GRAPHMOL_EXPORT bool needsHs(const ROMol &mol);
  * ferrocene) is to use a dummy atom with a dative bond to the iron atom with
  * the bond labelled with the atoms involved in the organic end of the bond.
  * Another way is to have explicit dative bonds from the atoms of the haptic
- * group to the metal atom.  This function converts the former representation to
- * the latter.
+ * group to the metal atom.  This function converts the former representation
+ * to the latter.
  */
 RDKIT_GRAPHMOL_EXPORT ROMol *hapticBondsToDative(const ROMol &mol);
 
@@ -1134,15 +1231,54 @@ RDKIT_GRAPHMOL_EXPORT void hapticBondsToDative(RWMol &mol);
  * @param mol the molecule of interest
  *
  * Does the reverse of hapticBondsToDative.  If there are multiple contiguous
- * atoms attached by dative bonds to an atom (probably a metal atom), the dative
- * bonds will be replaced by a dummy atom in their centre attached to the
- * (metal) atom by a dative bond, which is labelled with ENDPTS of the atoms
- * that had the original dative bonds.
+ * atoms attached by dative bonds to an atom (probably a metal atom), the
+ * dative bonds will be replaced by a dummy atom in their centre attached to
+ * the (metal) atom by a dative bond, which is labelled with ENDPTS of the
+ * atoms that had the original dative bonds.
  */
 RDKIT_GRAPHMOL_EXPORT ROMol *dativeBondsToHaptic(const ROMol &mol);
 
 //! \overload modifies molecule in place.
 RDKIT_GRAPHMOL_EXPORT void dativeBondsToHaptic(RWMol &mol);
+
+/*!
+  Calculates a molecule's average molecular weight
+
+  \param mol        the molecule of interest
+  \param onlyHeavy  (optional) if this is true (the default is false),
+      only heavy atoms will be included in the MW calculation
+
+  \return the AMW
+*/
+RDKIT_GRAPHMOL_EXPORT double getAvgMolWt(const ROMol &mol,
+                                         bool onlyHeavy = false);
+/*!
+  Calculates a molecule's exact molecular weight
+
+  \param mol        the molecule of interest
+  \param onlyHeavy  (optional) if this is true (the default is false),
+      only heavy atoms will be included in the MW calculation
+
+  \return the exact MW
+*/
+RDKIT_GRAPHMOL_EXPORT double getExactMolWt(const ROMol &mol,
+                                           bool onlyHeavy = false);
+
+/*!
+  Calculates a molecule's formula
+
+  \param mol        the molecule of interest
+  \param separateIsotopes  if true, isotopes will show up separately in the
+     formula. So C[13CH2]O will give the formula: C[13C]H6O
+  \param abbreviateHIsotopes  if true, 2H and 3H will be represented as
+     D and T instead of [2H] and [3H]. This only applies if \c
+  separateIsotopes is true
+
+  \return the formula as a string
+*/
+RDKIT_GRAPHMOL_EXPORT std::string getMolFormula(
+    const ROMol &mol, bool separateIsotopes = false,
+    bool abbreviateHIsotopes = true);
 
 namespace details {
 //! not recommended for use in other code
@@ -1194,8 +1330,8 @@ namespace details {
 /*!
  *
  * @param mol the molecule of interest
- * @param atomIdx the index of the atom to which the attachment point should be
- *       added
+ * @param atomIdx the index of the atom to which the attachment point should
+ * be added
  * @param val the attachment point value. Should be 1 or 2
  * @param addAsQueries if true, the dummy atoms will be added as null queries
  *       (i.e. they will match any atom in a substructure search)

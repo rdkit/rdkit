@@ -12,7 +12,7 @@ using namespace RDKit;
 
 //! method for testing basic ConcurrentQueue operations
 void testPushAndPop() {
-  ConcurrentQueue<int>* q = new ConcurrentQueue<int>(4);
+  ConcurrentQueue<int> *q = new ConcurrentQueue<int>(4);
   int e1, e2, e3;
   TEST_ASSERT(q->isEmpty());
 
@@ -35,13 +35,13 @@ void testPushAndPop() {
   delete (q);
 }
 
-void produce(ConcurrentQueue<int>& q, const int numToProduce) {
+void produce(ConcurrentQueue<int> &q, const int numToProduce) {
   for (int i = 0; i < numToProduce; ++i) {
     q.push(i);
   }
 }
 
-void consume(ConcurrentQueue<int>& q, std::vector<int>& result) {
+void consume(ConcurrentQueue<int> &q, std::vector<int> &result) {
   int element;
   while (q.pop(element)) {
     result.push_back(element);
@@ -80,12 +80,12 @@ bool testProducerConsumer(const int numProducerThreads,
   TEST_ASSERT(q.isEmpty());
 
   std::vector<int> frequency(numToProduce, 0);
-  for (auto& result : results) {
-    for (auto& element : result) {
+  for (auto &result : results) {
+    for (auto &element : result) {
       frequency[element] += 1;
     }
   }
-  for (auto& freq : frequency) {
+  for (auto &freq : frequency) {
     if (freq != numProducerThreads) {
       return false;
     }

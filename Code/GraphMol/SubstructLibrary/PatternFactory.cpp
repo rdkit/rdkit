@@ -48,11 +48,11 @@ void internalAddPatterns(SubstructLibrary &sslib, int numThreads,
   }
 
   std::vector<ExplicitBitVect *> &fps = ptr->getFingerprints();
-  unsigned int startIdx = 0;
   unsigned int endIdx = sslib.getMolecules().size();
   fps.resize(endIdx);
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
+  unsigned int startIdx = 0;
   std::vector<std::future<void>> thread_group;
   for (int thread_group_idx = 0; thread_group_idx < numThreads;
        ++thread_group_idx) {

@@ -1,8 +1,4 @@
-// $Id$
-//
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2025 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -49,47 +45,75 @@ double calcOopBendEnergy(const double chi, const double koop) {
 }
 }  // end of namespace Utils
 
-OopBendContrib::OopBendContrib(ForceField *owner, unsigned int idx1,
-                               unsigned int idx2, unsigned int idx3,
-                               unsigned int idx4,
-                               const MMFFOop *mmffOopParams) {
+OopBendContrib::OopBendContrib(ForceField *owner) {
   PRECONDITION(owner, "bad owner");
+  dp_forceField = owner;
+}
+
+void OopBendContrib::addTerm(unsigned int idx1,
+                             unsigned int idx2,
+                             unsigned int idx3,
+                             unsigned int idx4,
+                             const ForceFields::MMFF::MMFFOop *mmffOopParams) {
   PRECONDITION(mmffOopParams, "no OOP parameters");
   PRECONDITION((idx1 != idx2) && (idx1 != idx3) && (idx1 != idx4) &&
                    (idx2 != idx3) && (idx2 != idx4) && (idx3 != idx4),
                "degenerate points");
-  URANGE_CHECK(idx1, owner->positions().size());
-  URANGE_CHECK(idx2, owner->positions().size());
-  URANGE_CHECK(idx3, owner->positions().size());
-  URANGE_CHECK(idx4, owner->positions().size());
+  URANGE_CHECK(idx1, dp_forceField->positions().size());
+  URANGE_CHECK(idx2, dp_forceField->positions().size());
+  URANGE_CHECK(idx3, dp_forceField->positions().size());
+  URANGE_CHECK(idx4, dp_forceField->positions().size());
 
-  dp_forceField = owner;
-  d_at1Idx = idx1;
-  d_at2Idx = idx2;
-  d_at3Idx = idx3;
-  d_at4Idx = idx4;
-  d_koop = mmffOopParams->koop;
+  d_at1Idxs.push_back(idx1);
+  d_at2Idxs.push_back(idx2);
+  d_at3Idxs.push_back(idx3);
+  d_at4Idxs.push_back(idx4);
+  d_koop.push_back(mmffOopParams->koop);
 }
 
 double OopBendContrib::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
-  RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
-                     pos[3 * d_at1Idx + 2]);
-  RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
-                     pos[3 * d_at2Idx + 2]);
-  RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
-                     pos[3 * d_at3Idx + 2]);
-  RDGeom::Point3D p4(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
-                     pos[3 * d_at4Idx + 2]);
 
-  return Utils::calcOopBendEnergy(Utils::calcOopChi(p1, p2, p3, p4), d_koop);
+  const int numTerms = d_at1Idxs.size();
+  double totalEnergy = 0.0;
+  for (int i = 0; i < numTerms; ++i) {
+    const int d_at1Idx = d_at1Idxs[i];
+    const int d_at2Idx = d_at2Idxs[i];
+    const int d_at3Idx = d_at3Idxs[i];
+    const int d_at4Idx = d_at4Idxs[i];
+
+    RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
+                       pos[3 * d_at1Idx + 2]);
+    RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
+                       pos[3 * d_at2Idx + 2]);
+    RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
+                       pos[3 * d_at3Idx + 2]);
+    RDGeom::Point3D p4(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
+                       pos[3 * d_at4Idx + 2]);
+
+    totalEnergy += Utils::calcOopBendEnergy(Utils::calcOopChi(p1, p2, p3, p4), d_koop[i]);
+  }
+  return totalEnergy;
 }
 
-void OopBendContrib::getGrad(double *pos, double *grad) const {
-  PRECONDITION(dp_forceField, "no owner");
+void OopBendContrib::getGrad(double* pos, double* grad) const {
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
+  PRECONDITION(dp_forceField, "no owner");
+
+  const int numTerms = d_at1Idxs.size();
+  for (int i =0; i < numTerms; i++) {
+    getSingleGrad(pos, grad, i);
+  }
+}
+
+void OopBendContrib::getSingleGrad(double *pos, double *grad, unsigned int termIdx) const {
+
+  const int d_at1Idx = d_at1Idxs[termIdx];
+  const int d_at2Idx = d_at2Idxs[termIdx];
+  const int d_at3Idx = d_at3Idxs[termIdx];
+  const int d_at4Idx = d_at4Idxs[termIdx];
 
   RDGeom::Point3D iPoint(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
                          pos[3 * d_at1Idx + 2]);
@@ -131,7 +155,7 @@ void OopBendContrib::getGrad(double *pos, double *grad) const {
   double sinTheta =
       std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
 
-  double dE_dChi = RAD2DEG * c2 * d_koop * chi;
+  double dE_dChi = RAD2DEG * c2 * d_koop[termIdx] * chi;
   RDGeom::Point3D t1 = rJL.crossProduct(rJK);
   RDGeom::Point3D t2 = rJI.crossProduct(rJL);
   RDGeom::Point3D t3 = rJK.crossProduct(rJI);

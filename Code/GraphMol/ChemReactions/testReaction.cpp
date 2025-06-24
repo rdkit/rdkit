@@ -1,6 +1,7 @@
 //
-//  Copyright (c) 2007-2018, Novartis Institutes for BioMedical Research Inc.
-//  All rights reserved.
+//  Copyright (c) 2007-2025, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+// All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -30,6 +31,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include <RDGeneral/test.h>
+#include <GraphMol/test_fixtures.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
@@ -1282,71 +1284,81 @@ void test12DoubleBondStereochem() {
   BOOST_LOG(rdInfoLog) << "Testing handling of double bond stereochemistry"
                        << std::endl;
 
-  smi = "[C:1](=[O:2])-[O;H0]>>[C:1](=[O:2])[X]";
-  rxn = RxnSmartsToChemicalReaction(smi);
-  TEST_ASSERT(rxn);
-  TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
-  TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+  for (const bool useLegacy : {true, false}) {
+    smi = "[C:1](=[O:2])-[O;H0]>>[C:1](=[O:2])[X]";
+    rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+    reacts.clear();
+    smi = "COC(=O)/C=C/Cl";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+    MolOps::assignStereochemistry(*mol);
 
-  reacts.clear();
-  smi = "COC(=O)/C=C/Cl";
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  reacts.push_back(ROMOL_SPTR(mol));
-  MolOps::assignStereochemistry(*mol);
+    rxn->initReactantMatchers();
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size() == 1);
+    TEST_ASSERT(prods[0].size() == 1);
+    TEST_ASSERT(prods[0][0]->getNumAtoms() == 6);
+    TEST_ASSERT(prods[0][0]->getNumBonds() == 5);
+    prods[0][0]->updatePropertyCache();
+    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    if (useLegacy) {
+      TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
+    } else {
+      TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOTRANS);
+    }
 
-  rxn->initReactantMatchers();
-  prods = rxn->runReactants(reacts);
-  TEST_ASSERT(prods.size() == 1);
-  TEST_ASSERT(prods[0].size() == 1);
-  TEST_ASSERT(prods[0][0]->getNumAtoms() == 6);
-  TEST_ASSERT(prods[0][0]->getNumBonds() == 5);
-  prods[0][0]->updatePropertyCache();
-  BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
-  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
+    Bond *stereoBond = prods[0][0]->getBondWithIdx(3);
+    INT_VECT stereoAtomsRef{{0, 5}};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
 
-  Bond *stereoBond = prods[0][0]->getBondWithIdx(3);
-  INT_VECT stereoAtomsRef{{0, 5}};
-  TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
-  TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
+    reacts.clear();
 
-  reacts.clear();
+    // FIX: note that the handling of this situation, where we match double
+    // bonds that have stereochem indicated, is currently not completely correct
+    // since the stereochem querying stuff doesn't match C/C=C\Cl when C\C=C/Cl
+    // is provided as a query.
+    delete rxn;
+    smi = "[Cl:3]\\[C:1]=[C:2]/[C:4]>>[Cl:3]\\[C:1]=[C:2]\\[C:4]";
+    rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
 
-  // FIX: note that the handling of this situation, where we match double bonds
-  // that have stereochem indicated, is currently not completely correct since
-  // the stereochem querying stuff doesn't match C/C=C\Cl when C\C=C/Cl is
-  // provided as a query.
-  delete rxn;
-  smi = "[Cl:3]\\[C:1]=[C:2]/[C:4]>>[Cl:3]\\[C:1]=[C:2]\\[C:4]";
-  rxn = RxnSmartsToChemicalReaction(smi);
-  TEST_ASSERT(rxn);
-  TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
-  TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    reacts.clear();
+    smi = "Cl\\C=C/C";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+    MolOps::assignStereochemistry(*mol);
 
-  reacts.clear();
-  smi = "Cl\\C=C/C";
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  reacts.push_back(ROMOL_SPTR(mol));
-  MolOps::assignStereochemistry(*mol);
+    rxn->initReactantMatchers();
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size() == 1);
+    TEST_ASSERT(prods[0].size() == 1);
+    TEST_ASSERT(prods[0][0]->getNumAtoms() == 4);
+    TEST_ASSERT(prods[0][0]->getNumBonds() == 3);
+    prods[0][0]->updatePropertyCache();
+    BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
+    if (useLegacy) {
+      TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    } else {
+      TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+    }
 
-  rxn->initReactantMatchers();
-  prods = rxn->runReactants(reacts);
-  TEST_ASSERT(prods.size() == 1);
-  TEST_ASSERT(prods[0].size() == 1);
-  TEST_ASSERT(prods[0][0]->getNumAtoms() == 4);
-  TEST_ASSERT(prods[0][0]->getNumBonds() == 3);
-  prods[0][0]->updatePropertyCache();
-  BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    stereoBond = prods[0][0]->getBondWithIdx(1);
+    stereoAtomsRef = {0, 3};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
 
-  stereoBond = prods[0][0]->getBondWithIdx(1);
-  stereoAtomsRef = {0, 3};
-  TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
-  TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
-
-  reacts.clear();
-  delete rxn;
+    reacts.clear();
+    delete rxn;
+  }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1716,7 +1728,6 @@ void test17Issue1920627() {
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
   TEST_ASSERT(rxn->getNumProductTemplates() == 1);
 
-#if 1
   reacts.clear();
   smi = "C[C@](Cl)(CO)CC(=O)NC";
   mol = SmilesToMol(smi);
@@ -1844,7 +1855,6 @@ void test17Issue1920627() {
   TEST_ASSERT(prod->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
   prod->getAtomWithIdx(4)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
-#endif
 
   reacts.clear();
   smi = "C(=O)N[C@@H](CC)C";
@@ -2262,8 +2272,10 @@ void test21Issue2540021() {
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
     TEST_ASSERT(prod->getNumAtoms() == 6);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum() == 7);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getImplicitValence() == 0);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getExplicitValence() == 3);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 3);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getNoImplicit() == false);
 
     delete rxn;
@@ -2978,8 +2990,10 @@ void test28RxnDepictor() {
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
     TEST_ASSERT(prod->getNumAtoms() == 6);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum() == 7);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getImplicitValence() == 0);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getExplicitValence() == 3);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 3);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getNoImplicit() == false);
 
     delete rxn;
@@ -7857,9 +7871,7 @@ void testGithub5890() {
     std::string rdbase = getenv("RDBASE");
     std::string fName;
 
-    fName =
-        rdbase +
-        "/Code/GraphMol/ChemReactions/testData/v3k.radicals.rxn";
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/v3k.radicals.rxn";
     ChemicalReaction *rxn =
         RxnFileToChemicalReaction(fName, false, false, false);
     TEST_ASSERT(rxn);

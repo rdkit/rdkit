@@ -11,11 +11,6 @@ Submodules
    rdkit.Chem.Draw.SimilarityMaps
    rdkit.Chem.Draw.rdMolDraw2D
    rdkit.Chem.Draw.rdMolDraw2DQt
-   rdkit.Chem.Draw.aggCanvas
-   rdkit.Chem.Draw.cairoCanvas
-   rdkit.Chem.Draw.canvasbase
-   rdkit.Chem.Draw.mplCanvas
-   rdkit.Chem.Draw.qtCanvas
 
 Module contents
 ---------------

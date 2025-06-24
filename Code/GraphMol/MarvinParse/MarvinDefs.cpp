@@ -10,6 +10,9 @@
 
 #include <RDGeneral/RDLog.h>
 #include "MarvinDefs.h"
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 
@@ -75,534 +78,529 @@ bool getCleanNumber(std::string strToParse, T &outVal) {
 }
 
 void MarvinMolBase::parseAtomsAndBonds(ptree &molTree) {
-    boost::property_tree::ptree atomArray = molTree.get_child("atomArray");
+  boost::property_tree::ptree atomArray = molTree.get_child("atomArray");
 
-    // there are two types of atom arrays:
-    // <atomArray atomID="a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11" elementType="C
-    // C C C C C Cl C N O O" formalCharge="0 0 0 0 0 0 0 0 1 0 -1"
-    // lonePair="0 0 0 0 0 0 3 0 0 2 3" x2="-4.3334 -5.6670 -5.6670 -4.3334
-    // -2.9997 -2.9997 -4.3335 -1.6660 -7.0007 -1.6660 -0.3323" y2="1.7693
-    // 0.9993 -0.5409 -1.3109 -0.5409 0.9993 3.3093 -1.3109 -1.3109 -2.8509
-    // -0.5410"></atomArray>
-    //  AND
-    // <atomArray>
-    //       <atom id="a1" elementType="C" x2="-9.4583" y2="1.9358"
-    //       mrvStereoGroup="and1"/> <atom id="a2" elementType="C"
-    //       x2="-10.7921" y2="1.1658"/> <atom id="a3" elementType="C"
-    //       x2="-10.7921" y2="-0.3744"/> <atom id="a8" elementType="O"
-    //       x2="-12.1257" y2="-1.1444" lonePair="2"/>
-    //   </atomArray>
+  // there are two types of atom arrays:
+  // <atomArray atomID="a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11" elementType="C
+  // C C C C C Cl C N O O" formalCharge="0 0 0 0 0 0 0 0 1 0 -1"
+  // lonePair="0 0 0 0 0 0 3 0 0 2 3" x2="-4.3334 -5.6670 -5.6670 -4.3334
+  // -2.9997 -2.9997 -4.3335 -1.6660 -7.0007 -1.6660 -0.3323" y2="1.7693
+  // 0.9993 -0.5409 -1.3109 -0.5409 0.9993 3.3093 -1.3109 -1.3109 -2.8509
+  // -0.5410"></atomArray>
+  //  AND
+  // <atomArray>
+  //       <atom id="a1" elementType="C" x2="-9.4583" y2="1.9358"
+  //       mrvStereoGroup="and1"/> <atom id="a2" elementType="C"
+  //       x2="-10.7921" y2="1.1658"/> <atom id="a3" elementType="C"
+  //       x2="-10.7921" y2="-0.3744"/> <atom id="a8" elementType="O"
+  //       x2="-12.1257" y2="-1.1444" lonePair="2"/>
+  //   </atomArray>
 
-    // See which one we have
+  // See which one we have
 
-    std::string atomID =
-        atomArray.get<std::string>("<xmlattr>.atomID", "UseLongForm");
-    if (atomID == "UseLongForm") {
-      // long form - each atom on a line
+  std::string atomID =
+      atomArray.get<std::string>("<xmlattr>.atomID", "UseLongForm");
+  if (atomID == "UseLongForm") {
+    // long form - each atom on a line
 
-      for (auto &v : molTree.get_child("atomArray")) {
-        if (v.first != "atom") {
-          continue;
-        }
-
-        auto *mrvAtom = new MarvinAtom();
-        this->pushOwnedAtom(mrvAtom);
-        this->atoms.push_back(mrvAtom);
-
-        mrvAtom->id = v.second.get<std::string>("<xmlattr>.id", "");
-        mrvAtom->elementType =
-            v.second.get<std::string>("<xmlattr>.elementType", "");
-
-        if (mrvAtom->id == "" || mrvAtom->elementType == "") {
-          throw FileParseException(
-              "Expected id, elementType for an atom definition in MRV file");
-        }
-
-        std::string x2 = v.second.get<std::string>("<xmlattr>.x2", "");
-        std::string y2 = v.second.get<std::string>("<xmlattr>.y2", "");
-
-        // x2 and y2 are doubles
-
-        if (x2 != "" && y2 != "" &&
-            (!getCleanNumber(x2, mrvAtom->x2) ||
-             !getCleanNumber(y2, mrvAtom->y2))) {
-          throw FileParseException(
-              "The values x2 and y2 must be large floats in MRV file");
-        }
-
-        std::string x3 = v.second.get<std::string>("<xmlattr>.x3", "");
-        std::string y3 = v.second.get<std::string>("<xmlattr>.y3", "");
-        std::string z3 = v.second.get<std::string>("<xmlattr>.z3", "");
-
-        // x3, y3, and z3 are doubles
-
-        if (x3 != "" && y3 != "" && z3 != "" &&
-            (!getCleanNumber(x3, mrvAtom->x3) ||
-             !getCleanNumber(y3, mrvAtom->y3) ||
-             !getCleanNumber(z3, mrvAtom->z3))) {
-          throw FileParseException(
-              "The values x3, y3,  and z2 must be large floats in MRV file");
-        }
-
-        std::string formalCharge =
-            v.second.get<std::string>("<xmlattr>.formalCharge", "");
-        if (formalCharge != "") {
-          if (!getCleanNumber(formalCharge, mrvAtom->formalCharge)) {
-            throw FileParseException(
-                "The value for formalCharge must be an integer in MRV file");
-          }
-        } else {
-          mrvAtom->formalCharge = 0;
-        }
-
-        mrvAtom->radical = v.second.get<std::string>("<xmlattr>.radical", "");
-        if (mrvAtom->radical != "") {
-          if (!boost::algorithm::contains(
-                  marvinRadicalVals,
-                  std::vector<std::string>{mrvAtom->radical})) {
-            std::ostringstream err;
-            err << "The value for radical must be one of "
-                << boost::algorithm::join(marvinRadicalVals, ", ")
-                << " in MRV file";
-            throw FileParseException(err.str());
-          }
-        } else {
-          mrvAtom->radical = "";
-        }
-
-        std::string isotopeStr =
-            v.second.get<std::string>("<xmlattr>.isotope", "");
-        if (isotopeStr != "") {
-          if (!getCleanNumber(isotopeStr, mrvAtom->isotope) ||
-              mrvAtom->isotope <= 0) {
-            throw FileParseException(
-                "The value for isotope must be a positive number in MRV file");
-          }
-        } else {
-          mrvAtom->isotope = 0;
-        }
-
-        std::string valenceStr =
-            v.second.get<std::string>("<xmlattr>.mrvValence", "");
-        if (valenceStr != "") {
-          if (!getCleanNumber(valenceStr, mrvAtom->mrvValence) ||
-              mrvAtom->mrvValence < 0) {
-            throw FileParseException(
-                "The value for mrvValence must be a positive number in MRV file");
-          }
-        } else {
-          mrvAtom->mrvValence = -1;
-        }
-
-        std::string hCountStr =
-            v.second.get<std::string>("<xmlattr>.hydrogenCount", "");
-        if (hCountStr != "") {
-          if (!getCleanNumber(hCountStr, mrvAtom->hydrogenCount) ||
-              mrvAtom->hydrogenCount < 0) {
-            throw FileParseException(
-                "The value for hydrogenCount must be a non-negative number in MRV file");
-          }
-        } else {
-          mrvAtom->hydrogenCount = -1;
-        }
-
-        mrvAtom->mrvAlias = v.second.get<std::string>("<xmlattr>.mrvAlias", "");
-
-        mrvAtom->rgroupRef = v.second.get<int>("<xmlattr>.rgroupRef", -1);
-
-        mrvAtom->mrvStereoGroup =
-            v.second.get<std::string>("<xmlattr>.mrvStereoGroup", "");
-        if (mrvAtom->mrvStereoGroup == "0") {
-          mrvAtom->mrvStereoGroup = "";
-        }
-
-        std::string mrvMap = v.second.get<std::string>("<xmlattr>.mrvMap", "");
-        if (mrvMap != "") {
-          if (!getCleanNumber(mrvMap, mrvAtom->mrvMap) ||
-              mrvAtom->mrvMap <= 0) {
-            throw FileParseException(
-                "The value for mrvMap must be an non-=negative integer in MRV file");
-          }
-        } else {
-          mrvAtom->mrvMap = 0;
-        }
-
-        mrvAtom->sgroupRef =
-            v.second.get<std::string>("<xmlattr>.sgroupRef", "");
-
-        mrvAtom->sgroupAttachmentPoint =
-            v.second.get<std::string>("<xmlattr>.sgroupAttachmentPoint", "");
-      }
-    } else  // single line form of atoms
-    {
-      // <atomArray atomID="a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11"
-      // elementType="C C C C C C Cl C N O O" formalCharge="0 0 0 0 0 0 0 0
-      // 1 0 -1" lonePair="0 0 0 0 0 0 3 0 0 2 3" x2="-4.3334 -5.6670
-      // -5.6670 -4.3334 -2.9997 -2.9997 -4.3335 -1.6660 -7.0007 -1.6660
-      // -0.3323" y2="1.7693 0.9993 -0.5409 -1.3109 -0.5409 0.9993 3.3093
-      // -1.3109 -1.3109 -2.8509 -0.5410"></atomArray>
-
-      std::vector<std::string> atomIds;
-      size_t atomCount;
-      if (atomID == "") {
-        atomCount = 0;
-      } else {
-        boost::algorithm::split(atomIds, atomID, boost::algorithm::is_space());
-        atomCount = atomIds.size();
+    for (auto &v : molTree.get_child("atomArray")) {
+      if (v.first != "atom") {
+        continue;
       }
 
-      std::vector<std::string> elementTypes;
-      std::string elementType =
-          atomArray.get<std::string>("<xmlattr>.elementType", "");
-      boost::algorithm::split(elementTypes, elementType,
-                              boost::algorithm::is_space());
+      auto *mrvAtom = new MarvinAtom();
+      this->pushOwnedAtom(mrvAtom);
+      this->atoms.push_back(mrvAtom);
 
-      std::vector<std::string> x2s;
-      std::string x2 = atomArray.get<std::string>("<xmlattr>.x2", "");
-      boost::algorithm::split(x2s, x2, boost::algorithm::is_space());
+      mrvAtom->id = v.second.get<std::string>("<xmlattr>.id", "");
+      mrvAtom->elementType =
+          v.second.get<std::string>("<xmlattr>.elementType", "");
 
-      std::vector<std::string> y2s;
-      std::string y2 = atomArray.get<std::string>("<xmlattr>.y2", "");
-      boost::algorithm::split(y2s, y2, boost::algorithm::is_space());
+      if (mrvAtom->id == "" || mrvAtom->elementType == "") {
+        throw FileParseException(
+            "Expected id, elementType for an atom definition in MRV file");
+      }
 
-      std::vector<std::string> formalCharges;
+      std::string x2 = v.second.get<std::string>("<xmlattr>.x2", "");
+      std::string y2 = v.second.get<std::string>("<xmlattr>.y2", "");
+
+      // x2 and y2 are doubles
+
+      if (x2 != "" && y2 != "" &&
+          (!getCleanNumber(x2, mrvAtom->x2) ||
+           !getCleanNumber(y2, mrvAtom->y2))) {
+        throw FileParseException(
+            "The values x2 and y2 must be large floats in MRV file");
+      }
+
+      std::string x3 = v.second.get<std::string>("<xmlattr>.x3", "");
+      std::string y3 = v.second.get<std::string>("<xmlattr>.y3", "");
+      std::string z3 = v.second.get<std::string>("<xmlattr>.z3", "");
+
+      // x3, y3, and z3 are doubles
+
+      if (x3 != "" && y3 != "" && z3 != "" &&
+          (!getCleanNumber(x3, mrvAtom->x3) ||
+           !getCleanNumber(y3, mrvAtom->y3) ||
+           !getCleanNumber(z3, mrvAtom->z3))) {
+        throw FileParseException(
+            "The values x3, y3,  and z2 must be large floats in MRV file");
+      }
+
       std::string formalCharge =
-          atomArray.get<std::string>("<xmlattr>.formalCharge", "");
-      boost::algorithm::split(formalCharges, formalCharge,
-                              boost::algorithm::is_space());
-
-      std::vector<std::string> isotopes;
-      std::string isotope = atomArray.get<std::string>("<xmlattr>.isotope", "");
-      boost::algorithm::split(isotopes, isotope, boost::algorithm::is_space());
-
-      std::vector<std::string> radicals;
-      std::string radical = atomArray.get<std::string>("<xmlattr>.radical", "");
-      boost::algorithm::split(radicals, radical, boost::algorithm::is_space());
-
-      std::vector<std::string> hydrogenCounts;
-      std::string hydrogenCount =
-          atomArray.get<std::string>("<xmlattr>.hydrogenCount", "");
-      boost::algorithm::split(hydrogenCounts, hydrogenCount,
-                              boost::algorithm::is_space());
-
-      std::vector<std::string> mrvValences;
-      std::string mrvValence =
-          atomArray.get<std::string>("<xmlattr>.mrvValence", "");
-      boost::algorithm::split(mrvValences, mrvValence,
-                              boost::algorithm::is_space());
-
-      std::vector<std::string> mrvAliases;
-      std::string mrvAlias =
-          atomArray.get<std::string>("<xmlattr>.mrvAlias", "");
-      boost::algorithm::split(mrvAliases, mrvAlias,
-                              boost::algorithm::is_space());
-
-      std::vector<std::string> rgroupRefs;
-      std::string rgroupRef =
-          atomArray.get<std::string>("<xmlattr>.rgroupRef", "");
-      boost::algorithm::split(rgroupRefs, rgroupRef,
-                              boost::algorithm::is_space());
-
-      std::vector<std::string> mrvStereoGroups;
-      std::string mrvStereoGroup =
-          atomArray.get<std::string>("<xmlattr>.mrvStereoGroup", "");
-      boost::algorithm::split(mrvStereoGroups, mrvStereoGroup,
-                              boost::algorithm::is_space());
-
-      std::vector<std::string> mrvMaps;
-      std::string mrvMap = atomArray.get<std::string>("<xmlattr>.mrvMap", "");
-      boost::algorithm::split(mrvMaps, mrvMap, boost::algorithm::is_space());
-
-      std::vector<std::string> sgroupRefs;
-      std::string sgroupRef =
-          atomArray.get<std::string>("<xmlattr>.sgroupRef", "");
-      boost::algorithm::split(sgroupRefs, sgroupRef,
-                              boost::algorithm::is_space());
-
-      std::vector<std::string> sgroupAttachmentPoints;
-      std::string sgroupAttachmentPoint =
-          atomArray.get<std::string>("<xmlattr>.sgroupAttachmentPoint", "");
-      boost::algorithm::split(sgroupAttachmentPoints, sgroupAttachmentPoint,
-                              boost::algorithm::is_space());
-
-      if (atomID != "") {
-        if (elementType == "") {
+          v.second.get<std::string>("<xmlattr>.formalCharge", "");
+      if (formalCharge != "") {
+        if (!getCleanNumber(formalCharge, mrvAtom->formalCharge)) {
           throw FileParseException(
-              "Expected an elementType array for an atomArray definition in MRV file");
+              "The value for formalCharge must be an integer in MRV file");
         }
-        if (elementTypes.size() < atomCount) {
-          throw FileParseException(
-              "There must be an element type for each atom id");
-        }
+      } else {
+        mrvAtom->formalCharge = 0;
       }
 
-      for (size_t i = 0; i < atomCount; ++i) {
-        auto *mrvAtom = new MarvinAtom();
-        this->pushOwnedAtom(mrvAtom);
-
-        this->atoms.push_back(mrvAtom);
-
-        mrvAtom->id = atomIds[i];
-
-        mrvAtom->elementType = elementTypes[i];
-
-        if (x2 != "" && y2 != "" && x2s.size() > i && y2s.size() > i) {
-          if (!getCleanNumber(x2s[i], mrvAtom->x2) ||
-              !getCleanNumber(y2s[i], mrvAtom->y2)) {
-            throw FileParseException(
-                "The values x2 and y2 must be large floats in MRV file");
-          }
+      mrvAtom->radical = v.second.get<std::string>("<xmlattr>.radical", "");
+      if (mrvAtom->radical != "") {
+        if (std::find(marvinRadicalVals.begin(), marvinRadicalVals.end(),
+                      mrvAtom->radical) == marvinRadicalVals.end()) {
+          std::ostringstream err;
+          err << "The value for radical must be one of "
+              << boost::algorithm::join(marvinRadicalVals, ", ")
+              << " in MRV file";
+          throw FileParseException(err.str());
         }
+      } else {
+        mrvAtom->radical = "";
+      }
 
-        if (formalCharge != "" && formalCharges.size() > i) {
-          if (!getCleanNumber(formalCharges[i], mrvAtom->formalCharge)) {
-            throw FileParseException(
-                "The value for formalCharge must be an integer in MRV file");
-          }
-        } else {
-          mrvAtom->formalCharge = 0;
+      std::string isotopeStr =
+          v.second.get<std::string>("<xmlattr>.isotope", "");
+      if (isotopeStr != "") {
+        if (!getCleanNumber(isotopeStr, mrvAtom->isotope) ||
+            mrvAtom->isotope <= 0) {
+          throw FileParseException(
+              "The value for isotope must be a positive number in MRV file");
         }
+      } else {
+        mrvAtom->isotope = 0;
+      }
 
-        if (isotope != "" && isotopes.size() > i) {
-          if (!getCleanNumber(isotopes[i], mrvAtom->isotope)) {
-            throw FileParseException(
-                "The value for formalCharge must be an integer in MRV file");
-          }
-        } else {
-          mrvAtom->isotope = 0;
+      std::string valenceStr =
+          v.second.get<std::string>("<xmlattr>.mrvValence", "");
+      if (valenceStr != "") {
+        if (!getCleanNumber(valenceStr, mrvAtom->mrvValence) ||
+            mrvAtom->mrvValence < 0) {
+          throw FileParseException(
+              "The value for mrvValence must be a positive number in MRV file");
         }
+      } else {
+        mrvAtom->mrvValence = -1;
+      }
 
-        if (mrvValence != "" && mrvValences.size() > i) {
-          if (mrvValences[i] == "-") {
-            mrvAtom->mrvValence = -1;
-          } else if (!getCleanNumber(mrvValences[i], mrvAtom->mrvValence)) {
-            throw FileParseException(
-                "The value for mrvValences must be an integer in MRV file");
-          }
-        } else {
-          mrvAtom->mrvValence = -1;
+      std::string hCountStr =
+          v.second.get<std::string>("<xmlattr>.hydrogenCount", "");
+      if (hCountStr != "") {
+        if (!getCleanNumber(hCountStr, mrvAtom->hydrogenCount) ||
+            mrvAtom->hydrogenCount < 0) {
+          throw FileParseException(
+              "The value for hydrogenCount must be a non-negative number in MRV file");
         }
+      } else {
+        mrvAtom->hydrogenCount = -1;
+      }
 
-        if (hydrogenCount != "" && hydrogenCounts.size() > i) {
-          if (hydrogenCounts[i] != "-" &&
-              !getCleanNumber(hydrogenCounts[i], mrvAtom->hydrogenCount)) {
-            throw FileParseException(
-                "The value for hydrogenCount must be an integer in MRV file");
-          }
-        } else {
-          mrvAtom->hydrogenCount = -1;
-        }
+      mrvAtom->mrvAlias = v.second.get<std::string>("<xmlattr>.mrvAlias", "");
 
-        if (radical != "" && radicals.size() > i && radicals[i] != "0") {
-          mrvAtom->radical = radicals[i];
-          if (!boost::algorithm::contains(
-                  marvinRadicalVals,
-                  std::vector<std::string>{mrvAtom->radical})) {
-            std::ostringstream err;
-            err << "The value for radical must be one of "
-                << boost::algorithm::join(marvinRadicalVals, ", ")
-                << " in MRV file";
-            throw FileParseException(err.str());
-          }
-        } else {
-          mrvAtom->radical = "";
-        }
+      mrvAtom->rgroupRef = v.second.get<int>("<xmlattr>.rgroupRef", -1);
 
-        if (mrvAlias != "" && mrvAliases.size() > i) {
-          mrvAtom->mrvAlias = mrvAliases[i];
-        } else {
-          mrvAtom->mrvAlias = "";
-        }
+      mrvAtom->mrvStereoGroup =
+          v.second.get<std::string>("<xmlattr>.mrvStereoGroup", "");
+      if (mrvAtom->mrvStereoGroup == "0") {
+        mrvAtom->mrvStereoGroup = "";
+      }
 
-        if (rgroupRef != "" && rgroupRefs.size() > i) {
-          if (!getCleanNumber(rgroupRefs[i], mrvAtom->rgroupRef)) {
-            throw FileParseException(
-                "rgroupRef value must be an integer in MRV file");
-          }
-        } else {
-          mrvAtom->rgroupRef = -1;
+      std::string mrvMap = v.second.get<std::string>("<xmlattr>.mrvMap", "");
+      if (mrvMap != "") {
+        if (!getCleanNumber(mrvMap, mrvAtom->mrvMap) || mrvAtom->mrvMap <= 0) {
+          throw FileParseException(
+              "The value for mrvMap must be an non-=negative integer in MRV file");
         }
+      } else {
+        mrvAtom->mrvMap = 0;
+      }
 
-        if (mrvStereoGroup != "" && mrvStereoGroups.size() > i &&
-            mrvStereoGroups[i] != "0")  // "0" is NOT a stereo group
-        {
-          mrvAtom->mrvStereoGroup = mrvStereoGroups[i];
-        } else {
-          mrvAtom->mrvStereoGroup = "";
-        }
+      mrvAtom->sgroupRef = v.second.get<std::string>("<xmlattr>.sgroupRef", "");
 
-        if (mrvMap != "" && mrvMaps.size() > i) {
-          if (!getCleanNumber(mrvMaps[i], mrvAtom->mrvMap) ||
-              mrvAtom->mrvMap < 0) {
-            throw FileParseException(
-                "The value for mrvMap must be an non-negative integer in MRV file");
-          }
-        } else {
-          mrvAtom->mrvMap = 0;
-        }
+      mrvAtom->sgroupAttachmentPoint =
+          v.second.get<std::string>("<xmlattr>.sgroupAttachmentPoint", "");
+    }
+  } else  // single line form of atoms
+  {
+    // <atomArray atomID="a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11"
+    // elementType="C C C C C C Cl C N O O" formalCharge="0 0 0 0 0 0 0 0
+    // 1 0 -1" lonePair="0 0 0 0 0 0 3 0 0 2 3" x2="-4.3334 -5.6670
+    // -5.6670 -4.3334 -2.9997 -2.9997 -4.3335 -1.6660 -7.0007 -1.6660
+    // -0.3323" y2="1.7693 0.9993 -0.5409 -1.3109 -0.5409 0.9993 3.3093
+    // -1.3109 -1.3109 -2.8509 -0.5410"></atomArray>
 
-        if (sgroupRef != "" && sgroupRefs.size() > i && sgroupRefs[i] != "0") {
-          mrvAtom->sgroupRef = sgroupRefs[i];
-        } else {
-          mrvAtom->sgroupRef = "";
-        }
+    std::vector<std::string> atomIds;
+    size_t atomCount;
+    if (atomID == "") {
+      atomCount = 0;
+    } else {
+      boost::algorithm::split(atomIds, atomID, boost::algorithm::is_space());
+      atomCount = atomIds.size();
+    }
 
-        if (sgroupAttachmentPoint != "" && sgroupAttachmentPoints.size() > i &&
-            sgroupAttachmentPoints[i] != "0") {
-          mrvAtom->sgroupAttachmentPoint = sgroupAttachmentPoints[i];
-        } else {
-          mrvAtom->sgroupAttachmentPoint = "";
-        }
+    std::vector<std::string> elementTypes;
+    std::string elementType =
+        atomArray.get<std::string>("<xmlattr>.elementType", "");
+    boost::algorithm::split(elementTypes, elementType,
+                            boost::algorithm::is_space());
+
+    std::vector<std::string> x2s;
+    std::string x2 = atomArray.get<std::string>("<xmlattr>.x2", "");
+    boost::algorithm::split(x2s, x2, boost::algorithm::is_space());
+
+    std::vector<std::string> y2s;
+    std::string y2 = atomArray.get<std::string>("<xmlattr>.y2", "");
+    boost::algorithm::split(y2s, y2, boost::algorithm::is_space());
+
+    std::vector<std::string> formalCharges;
+    std::string formalCharge =
+        atomArray.get<std::string>("<xmlattr>.formalCharge", "");
+    boost::algorithm::split(formalCharges, formalCharge,
+                            boost::algorithm::is_space());
+
+    std::vector<std::string> isotopes;
+    std::string isotope = atomArray.get<std::string>("<xmlattr>.isotope", "");
+    boost::algorithm::split(isotopes, isotope, boost::algorithm::is_space());
+
+    std::vector<std::string> radicals;
+    std::string radical = atomArray.get<std::string>("<xmlattr>.radical", "");
+    boost::algorithm::split(radicals, radical, boost::algorithm::is_space());
+
+    std::vector<std::string> hydrogenCounts;
+    std::string hydrogenCount =
+        atomArray.get<std::string>("<xmlattr>.hydrogenCount", "");
+    boost::algorithm::split(hydrogenCounts, hydrogenCount,
+                            boost::algorithm::is_space());
+
+    std::vector<std::string> mrvValences;
+    std::string mrvValence =
+        atomArray.get<std::string>("<xmlattr>.mrvValence", "");
+    boost::algorithm::split(mrvValences, mrvValence,
+                            boost::algorithm::is_space());
+
+    std::vector<std::string> mrvAliases;
+    std::string mrvAlias = atomArray.get<std::string>("<xmlattr>.mrvAlias", "");
+    boost::algorithm::split(mrvAliases, mrvAlias, boost::algorithm::is_space());
+
+    std::vector<std::string> rgroupRefs;
+    std::string rgroupRef =
+        atomArray.get<std::string>("<xmlattr>.rgroupRef", "");
+    boost::algorithm::split(rgroupRefs, rgroupRef,
+                            boost::algorithm::is_space());
+
+    std::vector<std::string> mrvStereoGroups;
+    std::string mrvStereoGroup =
+        atomArray.get<std::string>("<xmlattr>.mrvStereoGroup", "");
+    boost::algorithm::split(mrvStereoGroups, mrvStereoGroup,
+                            boost::algorithm::is_space());
+
+    std::vector<std::string> mrvMaps;
+    std::string mrvMap = atomArray.get<std::string>("<xmlattr>.mrvMap", "");
+    boost::algorithm::split(mrvMaps, mrvMap, boost::algorithm::is_space());
+
+    std::vector<std::string> sgroupRefs;
+    std::string sgroupRef =
+        atomArray.get<std::string>("<xmlattr>.sgroupRef", "");
+    boost::algorithm::split(sgroupRefs, sgroupRef,
+                            boost::algorithm::is_space());
+
+    std::vector<std::string> sgroupAttachmentPoints;
+    std::string sgroupAttachmentPoint =
+        atomArray.get<std::string>("<xmlattr>.sgroupAttachmentPoint", "");
+    boost::algorithm::split(sgroupAttachmentPoints, sgroupAttachmentPoint,
+                            boost::algorithm::is_space());
+
+    if (atomID != "") {
+      if (elementType == "") {
+        throw FileParseException(
+            "Expected an elementType array for an atomArray definition in MRV file");
+      }
+      if (elementTypes.size() < atomCount) {
+        throw FileParseException(
+            "There must be an element type for each atom id");
       }
     }
 
-    auto bondArray = molTree.get_child_optional("bondArray");
-    if (bondArray) {
-      for (auto &v : molTree.get_child("bondArray")) {
-        if (v.first != "bond") {
-          continue;
-        }
+    for (size_t i = 0; i < atomCount; ++i) {
+      auto *mrvAtom = new MarvinAtom();
+      this->pushOwnedAtom(mrvAtom);
 
-        auto *mrvBond = new MarvinBond();
-        this->pushOwnedBond(mrvBond);
-        this->bonds.push_back(mrvBond);
+      this->atoms.push_back(mrvAtom);
 
-        mrvBond->id = v.second.get<std::string>("<xmlattr>.id", "");
-        if (mrvBond->id == "") {
+      mrvAtom->id = atomIds[i];
+
+      mrvAtom->elementType = elementTypes[i];
+
+      if (x2 != "" && y2 != "" && x2s.size() > i && y2s.size() > i) {
+        if (!getCleanNumber(x2s[i], mrvAtom->x2) ||
+            !getCleanNumber(y2s[i], mrvAtom->y2)) {
           throw FileParseException(
-              "Expected id for an bond definition in MRV file");
+              "The values x2 and y2 must be large floats in MRV file");
         }
+      }
 
-        std::string atomRefs2 =
-            v.second.get<std::string>("<xmlattr>.atomRefs2", "");
-
-        std::vector<std::string> atomRefs2s;
-        boost::algorithm::split(atomRefs2s, atomRefs2,
-                                boost::algorithm::is_space());
-        mrvBond->atomRefs2[0] = atomRefs2s[0];
-        mrvBond->atomRefs2[1] = atomRefs2s[1];
-        if (atomRefs2s.size() != 2 ||
-            !boost::algorithm::contains(
-                this->atoms, std::vector<std::string>{mrvBond->atomRefs2[0]},
-              atomRefInAtoms) ||
-            !boost::algorithm::contains(
-                this->atoms, std::vector<std::string>{mrvBond->atomRefs2[1]},
-              atomRefInAtoms)) {
+      if (formalCharge != "" && formalCharges.size() > i) {
+        if (!getCleanNumber(formalCharges[i], mrvAtom->formalCharge)) {
           throw FileParseException(
-              "atomRefs2 must contain two atom refs that must appear in the atoms array in MRV file");
+              "The value for formalCharge must be an integer in MRV file");
         }
+      } else {
+        mrvAtom->formalCharge = 0;
+      }
 
-        mrvBond->order = v.second.get<std::string>("<xmlattr>.order", "");
-        if (mrvBond->order != "") {
-          if (!boost::algorithm::contains(
-                  marvinBondOrders, std::vector<std::string>{mrvBond->order})) {
-            std::ostringstream err;
-            err << "Expected one of  "
-                << boost::algorithm::join(marvinBondOrders, ", ")
-                << " for order for an bond definition in MRV file";
-            throw FileParseException(err.str());
-          }
+      if (isotope != "" && isotopes.size() > i) {
+        if (!getCleanNumber(isotopes[i], mrvAtom->isotope)) {
+          throw FileParseException(
+              "The value for formalCharge must be an integer in MRV file");
         }
+      } else {
+        mrvAtom->isotope = 0;
+      }
 
-        mrvBond->queryType =
-            v.second.get<std::string>("<xmlattr>.queryType", "");
-        if (mrvBond->queryType != "") {
-          if (!boost::algorithm::contains(
-                  marvinQueryBondsTypes,
-                  std::vector<std::string>{mrvBond->queryType})) {
-            std::ostringstream err;
-            err << "Expected one of  "
-                << boost::algorithm::join(marvinQueryBondsTypes, ", ")
-                << " for queryType for an bond definition in MRV file";
-            throw FileParseException(err.str());
-          }
+      if (mrvValence != "" && mrvValences.size() > i) {
+        if (mrvValences[i] == "-") {
+          mrvAtom->mrvValence = -1;
+        } else if (!getCleanNumber(mrvValences[i], mrvAtom->mrvValence)) {
+          throw FileParseException(
+              "The value for mrvValences must be an integer in MRV file");
         }
+      } else {
+        mrvAtom->mrvValence = -1;
+      }
 
-        mrvBond->convention =
-            v.second.get<std::string>("<xmlattr>.convention", "");
-        if (mrvBond->convention != "") {
-          if (!boost::algorithm::contains(
-                  marvinConventionTypes,
-                  std::vector<std::string>{mrvBond->convention})) {
-            std::ostringstream err;
-            err << "Expected one of  "
-                << boost::algorithm::join(marvinConventionTypes, ", ")
-                << " for convention for an bond definition in MRV file";
-            throw FileParseException(err.str());
-          }
+      if (hydrogenCount != "" && hydrogenCounts.size() > i) {
+        if (hydrogenCounts[i] != "-" &&
+            !getCleanNumber(hydrogenCounts[i], mrvAtom->hydrogenCount)) {
+          throw FileParseException(
+              "The value for hydrogenCount must be an integer in MRV file");
         }
+      } else {
+        mrvAtom->hydrogenCount = -1;
+      }
 
-        int bondStereoDeclCount = 0;
-        mrvBond->bondStereo.value = v.second.get<std::string>("bondStereo", "");
-        if (mrvBond->bondStereo.value != "") {
-          bondStereoDeclCount++;
+      if (radical != "" && radicals.size() > i && radicals[i] != "0") {
+        mrvAtom->radical = radicals[i];
+        if (std::find(marvinRadicalVals.begin(), marvinRadicalVals.end(),
+                      mrvAtom->radical) == marvinRadicalVals.end()) {
+          std::ostringstream err;
+          err << "The value for radical must be one of "
+              << boost::algorithm::join(marvinRadicalVals, ", ")
+              << " in MRV file";
+          throw FileParseException(err.str());
+        }
+      } else {
+        mrvAtom->radical = "";
+      }
+
+      if (mrvAlias != "" && mrvAliases.size() > i) {
+        mrvAtom->mrvAlias = mrvAliases[i];
+      } else {
+        mrvAtom->mrvAlias = "";
+      }
+
+      if (rgroupRef != "" && rgroupRefs.size() > i) {
+        if (!getCleanNumber(rgroupRefs[i], mrvAtom->rgroupRef)) {
+          throw FileParseException(
+              "rgroupRef value must be an integer in MRV file");
+        }
+      } else {
+        mrvAtom->rgroupRef = -1;
+      }
+
+      if (mrvStereoGroup != "" && mrvStereoGroups.size() > i &&
+          mrvStereoGroups[i] != "0")  // "0" is NOT a stereo group
+      {
+        mrvAtom->mrvStereoGroup = mrvStereoGroups[i];
+      } else {
+        mrvAtom->mrvStereoGroup = "";
+      }
+
+      if (mrvMap != "" && mrvMaps.size() > i) {
+        if (!getCleanNumber(mrvMaps[i], mrvAtom->mrvMap) ||
+            mrvAtom->mrvMap < 0) {
+          throw FileParseException(
+              "The value for mrvMap must be an non-negative integer in MRV file");
+        }
+      } else {
+        mrvAtom->mrvMap = 0;
+      }
+
+      if (sgroupRef != "" && sgroupRefs.size() > i && sgroupRefs[i] != "0") {
+        mrvAtom->sgroupRef = sgroupRefs[i];
+      } else {
+        mrvAtom->sgroupRef = "";
+      }
+
+      if (sgroupAttachmentPoint != "" && sgroupAttachmentPoints.size() > i &&
+          sgroupAttachmentPoints[i] != "0") {
+        mrvAtom->sgroupAttachmentPoint = sgroupAttachmentPoints[i];
+      } else {
+        mrvAtom->sgroupAttachmentPoint = "";
+      }
+    }
+  }
+
+  auto bondArray = molTree.get_child_optional("bondArray");
+  if (bondArray) {
+    for (auto &v : molTree.get_child("bondArray")) {
+      if (v.first != "bond") {
+        continue;
+      }
+
+      auto *mrvBond = new MarvinBond();
+      this->pushOwnedBond(mrvBond);
+      this->bonds.push_back(mrvBond);
+
+      mrvBond->id = v.second.get<std::string>("<xmlattr>.id", "");
+      if (mrvBond->id == "") {
+        throw FileParseException(
+            "Expected id for an bond definition in MRV file");
+      }
+
+      std::string atomRefs2 =
+          v.second.get<std::string>("<xmlattr>.atomRefs2", "");
+
+      std::vector<std::string> atomRefs2s;
+      boost::algorithm::split(atomRefs2s, atomRefs2,
+                              boost::algorithm::is_space());
+      mrvBond->atomRefs2[0] = atomRefs2s[0];
+      mrvBond->atomRefs2[1] = atomRefs2s[1];
+      if (atomRefs2s.size() != 2 ||
+          std::find_if(atoms.begin(), atoms.end(),
+                       [mrvBond](auto a) {
+                         return a->id == mrvBond->atomRefs2[0];
+                       }) == atoms.end() ||
+          std::find_if(atoms.begin(), atoms.end(), [mrvBond](auto a) {
+            return a->id == mrvBond->atomRefs2[1];
+          }) == atoms.end()) {
+        throw FileParseException(
+            "atomRefs2 must contain two atom refs that must appear in the atoms array in MRV file");
+      }
+
+      mrvBond->order = v.second.get<std::string>("<xmlattr>.order", "");
+      if (mrvBond->order != "") {
+        if (std::find(marvinBondOrders.begin(), marvinBondOrders.end(),
+                      mrvBond->order) == marvinBondOrders.end()) {
+          std::ostringstream err;
+          err << "Expected one of  "
+              << boost::algorithm::join(marvinBondOrders, ", ")
+              << " for order for an bond definition in MRV file";
+          throw FileParseException(err.str());
+        }
+      }
+
+      mrvBond->queryType = v.second.get<std::string>("<xmlattr>.queryType", "");
+      if (mrvBond->queryType != "") {
+        if (std::find(marvinQueryBondsTypes.begin(),
+                      marvinQueryBondsTypes.end(),
+                      mrvBond->queryType) == marvinQueryBondsTypes.end()) {
+          std::ostringstream err;
+          err << "Expected one of  "
+              << boost::algorithm::join(marvinQueryBondsTypes, ", ")
+              << " for queryType for an bond definition in MRV file";
+          throw FileParseException(err.str());
+        }
+      }
+
+      mrvBond->convention =
+          v.second.get<std::string>("<xmlattr>.convention", "");
+      if (mrvBond->convention != "") {
+        if (std::find(marvinConventionTypes.begin(),
+                      marvinConventionTypes.end(),
+                      mrvBond->convention) == marvinConventionTypes.end()) {
+          std::ostringstream err;
+          err << "Expected one of  "
+              << boost::algorithm::join(marvinConventionTypes, ", ")
+              << " for convention for an bond definition in MRV file";
+          throw FileParseException(err.str());
+        }
+      }
+
+      int bondStereoDeclCount = 0;
+      mrvBond->bondStereo.value = v.second.get<std::string>("bondStereo", "");
+      if (mrvBond->bondStereo.value != "") {
+        bondStereoDeclCount++;
         if (boost::algorithm::to_lower_copy(mrvBond->bondStereo.value) == "w" ||
             boost::algorithm::to_lower_copy(mrvBond->bondStereo.value) == "h") {
           // do nothing  - this is OK
         } else if (boost::algorithm::to_lower_copy(mrvBond->bondStereo.value) ==
                        "c" ||
-              boost::algorithm::to_lower_copy(mrvBond->bondStereo.value) ==
+                   boost::algorithm::to_lower_copy(mrvBond->bondStereo.value) ==
                        "t") {
-            mrvBond->bondStereo.value = "";  // cis and trans are ignored
-          } else {
-            throw FileParseException(
-                "The value for bondStereo must be \"H\", \"W\", \"C\" or \"T\" in MRV file (\"C\" and \"T\" are ignored)");
-          }
-        }
-
-        // see if bondstereo has a dictRef or convention
-
-        auto bondStereoItem = v.second.get_child_optional("bondStereo");
-        if (bondStereoItem) {
-          for (auto &ww : v.second) {
-            mrvBond->bondStereo.convention =
-                ww.second.get<std::string>("<xmlattr>.convention", "");
-            if (mrvBond->bondStereo.convention != "") {
-              bondStereoDeclCount++;
-              if (mrvBond->bondStereo.convention != "MDL") {
-                throw FileParseException(
-                    "Expected MDL as value for the bond convention attribute");
-              }
-              mrvBond->bondStereo.conventionValue =
-                  ww.second.get<std::string>("<xmlattr>.conventionValue", "");
-              if (!boost::algorithm::contains(
-                      marvinStereoConventionTypes,
-                      std::vector<std::string>{
-                          mrvBond->bondStereo.conventionValue})) {
-                std::ostringstream err;
-                err << "Expected one of  "
-                    << boost::algorithm::join(marvinStereoConventionTypes, ", ")
-                    << " for a bond convention for an bond stereo def";
-                throw FileParseException(err.str());
-              }
-            }
-
-            mrvBond->bondStereo.dictRef =
-                ww.second.get<std::string>("<xmlattr>.dictRef", "");
-            if (mrvBond->bondStereo.dictRef != "") {
-              bondStereoDeclCount++;
-              if (!boost::algorithm::contains(
-                      marvinStereoDictRefTypes,
-                      std::vector<std::string>{mrvBond->bondStereo.dictRef})) {
-                std::ostringstream err;
-                err << "Expected one of  "
-                    << boost::algorithm::join(marvinStereoDictRefTypes, ", ")
-                    << " for a discRef value for an bond stereo def";
-                throw FileParseException(err.str());
-              }
-            }
-          }
-        }
-
-        // check that there were not too many different declarations
-
-        if (bondStereoDeclCount > 1) {
+          mrvBond->bondStereo.value = "";  // cis and trans are ignored
+        } else {
           throw FileParseException(
-              "bondStereo can either have only one of: a value, dictRef, or convention value");
+              "The value for bondStereo must be \"H\", \"W\", \"C\" or \"T\" in MRV file (\"C\" and \"T\" are ignored)");
         }
+      }
+
+      // see if bondstereo has a dictRef or convention
+
+      auto bondStereoItem = v.second.get_child_optional("bondStereo");
+      if (bondStereoItem) {
+        for (auto &ww : v.second) {
+          mrvBond->bondStereo.convention =
+              ww.second.get<std::string>("<xmlattr>.convention", "");
+          if (mrvBond->bondStereo.convention != "") {
+            bondStereoDeclCount++;
+            if (mrvBond->bondStereo.convention != "MDL") {
+              throw FileParseException(
+                  "Expected MDL as value for the bond convention attribute");
+            }
+            mrvBond->bondStereo.conventionValue =
+                ww.second.get<std::string>("<xmlattr>.conventionValue", "");
+            if (std::find(marvinStereoConventionTypes.begin(),
+                          marvinStereoConventionTypes.end(),
+                          mrvBond->bondStereo.conventionValue) ==
+                marvinStereoConventionTypes.end()) {
+              std::ostringstream err;
+              err << "Expected one of  "
+                  << boost::algorithm::join(marvinStereoConventionTypes, ", ")
+                  << " for a bond convention for an bond stereo def";
+              throw FileParseException(err.str());
+            }
+          }
+
+          mrvBond->bondStereo.dictRef =
+              ww.second.get<std::string>("<xmlattr>.dictRef", "");
+          if (mrvBond->bondStereo.dictRef != "") {
+            bondStereoDeclCount++;
+            if (std::find(marvinStereoDictRefTypes.begin(),
+                          marvinStereoDictRefTypes.end(),
+                          mrvBond->bondStereo.dictRef) ==
+                marvinStereoDictRefTypes.end()) {
+              std::ostringstream err;
+              err << "Expected one of  "
+                  << boost::algorithm::join(marvinStereoDictRefTypes, ", ")
+                  << " for a discRef value for an bond stereo def";
+              throw FileParseException(err.str());
+            }
+          }
+        }
+      }
+
+      // check that there were not too many different declarations
+
+      if (bondStereoDeclCount > 1) {
+        throw FileParseException(
+            "bondStereo can either have only one of: a value, dictRef, or convention value");
       }
     }
   }
+}
 
 ptree MarvinArrow::toPtree() const {
   ptree out;
@@ -1238,8 +1236,8 @@ int MarvinMolBase::getExplicitValence(const MarvinAtom &marvinAtom) const {
           10;  // no good answer for Any bonds - treat as a single bond
     } else if (marvinBondType == "DATIVE") {
       //
-      //  the following code has been removed because we really need both ends
-      //  of the dative bond to be counted as zero
+      //  the following code has been removed because we really need both
+      //  ends of the dative bond to be counted as zero
       //
       // if (bondPtr->atomRefs2[1] == marvinAtom.id) //second atom of dative
       // bond count as 1 (first atom is zero)
@@ -1328,8 +1326,8 @@ MarvinSruCoModSgroup::MarvinSruCoModSgroup(MarvinMolBase *parentInit,
   if (this->connect == "") {
     this->connect = "ht";
   }
-  if (!boost::algorithm::contains(sruSgroupConnectChoices,
-                                  std::vector<std::string>{this->connect})) {
+  if (std::find(sruSgroupConnectChoices.begin(), sruSgroupConnectChoices.end(),
+                this->connect) == sruSgroupConnectChoices.end()) {
     std::ostringstream err;
     err << "Expected a connect  string of \""
         << boost::algorithm::join(sruSgroupConnectChoices, ", ")
@@ -1829,8 +1827,8 @@ MarvinMolBase *MarvinMulticenterSgroup::copyMol(
 }
 
 std::string MarvinMulticenterSgroup::toString() const {
-  // <molecule molID="m2" id="sg1" role="MulticenterSgroup" atomRefs="a2 a6 a5
-  // a4 a3" center="a18"/>
+  // <molecule molID="m2" id="sg1" role="MulticenterSgroup" atomRefs="a2 a6
+  // a5 a4 a3" center="a18"/>
   std::ostringstream out;
 
   out << "<molecule molID=\"" << molID << "\" id=\"" << id
@@ -1924,8 +1922,8 @@ MarvinMolBase *MarvinGenericSgroup::copyMol(
 }
 
 std::string MarvinGenericSgroup::toString() const {
-  // <molecule molID="m2" id="sg1" role="MulticenterSgroup" atomRefs="a2 a6 a5
-  // a4 a3" center="a18"/>
+  // <molecule molID="m2" id="sg1" role="MulticenterSgroup" atomRefs="a2 a6
+  // a5 a4 a3" center="a18"/>
   std::ostringstream out;
 
   out << "<molecule molID=\"" << molID << "\" id=\"" << id
@@ -2223,11 +2221,10 @@ MarvinSuperatomSgroup::MarvinSuperatomSgroup(MarvinMolBase *parentInit,
         throw FileParseException(
             "Expected atom, order and bond, for an AttachmentPoint definition in MRV file");
       }
-
-      if (!boost::algorithm::contains(
-              this->atoms,
-              std::vector<std::string>{marvinAttachmentPoint->atom},
-              MarvinMol::atomRefInAtoms)) {
+      if (std::find_if(atoms.begin(), atoms.end(),
+                       [&marvinAttachmentPoint](auto a) {
+                         return a->id == marvinAttachmentPoint->atom;
+                       }) == atoms.end()) {
         throw FileParseException(
             "Atom specification for an AttachmentPoint definition must be in the parent's atom array in MRV file");
       }
@@ -2350,20 +2347,6 @@ void MarvinMol::removeOwnedBond(MarvinBond *bond) {
   eraseUniquePtr<MarvinBond>(ownedBonds, bond);
 }
 
-bool MarvinMolBase::atomRefInAtoms(MarvinAtom *a, std::string b) {
-  PRECONDITION(a != nullptr, "a cannot be null");
-  return a->id == b;
-}
-
-bool MarvinMolBase::molIDInSgroups(std::string a, std::string b) {
-  return a == b;
-}
-
-bool MarvinMolBase::bondRefInBonds(MarvinBond *a, std::string b) {
-  PRECONDITION(a != nullptr, "a cannot be null");
-  return a->id == b;
-}
-
 void MarvinMolBase::cleanUpSgNumbering(
     int &sgCount, std::map<std::string, std::string> &sgMap) {
   for (auto &sgroup : this->sgroups) {
@@ -2376,8 +2359,8 @@ void MarvinMolBase::cleanUpSgNumbering(
 }
 
 void MarvinSuperatomSgroup::cleanUpNumberingMolsAtomsBonds(
-    int &molCount,   // this is the starting mol count, and receives the ending
-                     // mol count - THis is used when
+    int &molCount,   // this is the starting mol count, and receives the
+                     // ending mol count - THis is used when
                      // MarvinMol->convertToSuperAtoms is called multiple
                      // times from a RXN
     int &atomCount,  // starting and ending atom count
@@ -2399,8 +2382,8 @@ void MarvinSuperatomSgroup::cleanUpNumberingMolsAtomsBonds(
 }
 
 void MarvinMolBase::cleanUpNumberingMolsAtomsBonds(
-    int &molCount,   // this is the starting mol count, and receives the ending
-                     // mol count - THis is used when
+    int &molCount,   // this is the starting mol count, and receives the
+                     // ending mol count - THis is used when
                      // MarvinMol->convertToSuperAtoms is called multiple
                      // times from a RXN
     int &atomCount,  // starting and ending atom count
@@ -2446,10 +2429,10 @@ void MarvinMolBase::cleanUpNumberingMolsAtomsBonds(
 }
 
 void MarvinMolBase::cleanUpNumbering(
-    int &molCount  // this is the starting mol count, and receives the ending
-                   // mol count - THis is used when
-                   // MarvinMol->convertToSuperAtoms is called multiple times
-                   // from a RXN
+    int &molCount  // this is the starting mol count, and receives the
+                   // ending mol count - THis is used when
+                   // MarvinMol->convertToSuperAtoms is called multiple
+                   // times from a RXN
     ,
     int &atomCount  // starting and ending atom count
     ,
@@ -2486,9 +2469,9 @@ bool MarvinMolBase::AnyOverLappingAtoms(const MarvinMolBase *otherMol) const {
   return intersection.size() > 0;
 }
 
-// the following routine determines if a sgroup role is passive when expanding
-// in preparation for creating an RDKit mol.  sgroups are NOT passive if they
-// create atoms or bonds in the parent when expanding
+// the following routine determines if a sgroup role is passive when
+// expanding in preparation for creating an RDKit mol.  sgroups are NOT
+// passive if they create atoms or bonds in the parent when expanding
 
 bool MarvinMolBase::isPassiveRoleForExpansion() const {
   // some derived classes override this and return false
@@ -2733,21 +2716,21 @@ void MarvinMultipleSgroup::expandOneMultipleSgroup() {
   // Mulitplesgroups are handled differently in Marvin and RDKit/mol file
   // format
   //
-  // In Marvin, the atoms of the group are indicated, and the "title" contains
-  // the number of replicates In mol files, the atoms of the group are
-  // actually replicated in the atomBlock, and the MUL constructs indicates the
-  // list of ALL such atoms and the list of the original parent atoms from
-  // which the others were replicated.  It also indicate the two bonds from
-  // the group atoms to atoms NOT in the group (although these could be
-  // derived
+  // In Marvin, the atoms of the group are indicated, and the "title"
+  // contains the number of replicates In mol files, the atoms of the group
+  // are actually replicated in the atomBlock, and the MUL constructs
+  // indicates the list of ALL such atoms and the list of the original
+  // parent atoms from which the others were replicated.  It also indicate
+  // the two bonds from the group atoms to atoms NOT in the group (although
+  // these could be derived
   //
   //  This routine takes a MarvinMol and  prepares it for generation of an
   //  RDKit mol.  Each MultipleSgroup is expanded by:
   //    1) expanding the atom block - the new replicate sets of atoms are
   //    places just after the last atom in the original (parent) set 2)
-  //    records the two bonds to atoms NOT in the expanded group - one is from
-  //    a "parent" atom and one from a replicated atom. 3) bonds the parent
-  //    and replicated sets to each other in a head to tail fashion.
+  //    records the two bonds to atoms NOT in the expanded group - one is
+  //    from a "parent" atom and one from a replicated atom. 3) bonds the
+  //    parent and replicated sets to each other in a head to tail fashion.
 
   // make sure it is not already expanded - this should not happen
 
@@ -2758,41 +2741,45 @@ void MarvinMultipleSgroup::expandOneMultipleSgroup() {
   // find the two bonds (or zero bonds) to atoms NOT in the group
 
   std::vector<std::string>
-      originalConnectorAtoms;  // the bonds in the parent that were to outside
-                               // atoms BEFORE replication
+      originalConnectorAtoms;     // the bonds in the parent that were to
+                                  // outside atoms BEFORE replication
   std::string connectorAtoms[2];  // working atoms to connect the replicates
   std::string outsideConnectorAtom;
   std::vector<MarvinBond *> bondsInGroup;
   this->bondsToAtomsNotInExpandedGroup.clear();
 
-  // find the actual parent - multiple groups can be nested, so the atoms and
-  // bonds of the lower one are really in the grandparent or higher)
+  // find the actual parent - multiple groups can be nested, so the atoms
+  // and bonds of the lower one are really in the grandparent or higher)
 
   auto actualParent = getActualParent(this);
 
   for (MarvinBond *bondPtr : actualParent->bonds) {
-    bool atom1InSet = boost::algorithm::contains(
-        this->atoms, std::vector<std::string>{bondPtr->atomRefs2[0]},
-        atomRefInAtoms);
-    bool atom2InSet = boost::algorithm::contains(
-        this->atoms, std::vector<std::string>{bondPtr->atomRefs2[1]},
-        atomRefInAtoms);
+    bool atom1InSet =
+        (std::find_if(atoms.begin(), atoms.end(), [&bondPtr](auto a) {
+           return a->id == bondPtr->atomRefs2[0];
+         }) != atoms.end());
+
+    bool atom2InSet =
+        (std::find_if(atoms.begin(), atoms.end(), [&bondPtr](auto a) {
+           return a->id == bondPtr->atomRefs2[1];
+         }) != atoms.end());
+
     if (atom1InSet && atom2InSet) {
       bondsInGroup.push_back(bondPtr);
     } else if (atom1InSet) {
       originalConnectorAtoms.push_back(bondPtr->atomRefs2[0]);
       this->bondsToAtomsNotInExpandedGroup.push_back(bondPtr);
       outsideConnectorAtom =
-          bondPtr
-              ->atomRefs2[1];  // last one set wins - when done should be the
-                               // outside atom for the 2nd bond to the outside
+          bondPtr->atomRefs2[1];  // last one set wins - when done should be
+                                  // the outside atom for the 2nd bond to
+                                  // the outside
     } else if (atom2InSet) {
       originalConnectorAtoms.push_back(bondPtr->atomRefs2[1]);
       this->bondsToAtomsNotInExpandedGroup.push_back(bondPtr);
       outsideConnectorAtom =
-          bondPtr
-              ->atomRefs2[0];  // last one set wins - when done should be the
-                               // outside atom for the 2nd bond to the outside
+          bondPtr->atomRefs2[0];  // last one set wins - when done should be
+                                  // the outside atom for the 2nd bond to
+                                  // the outside
     }
   }
 
@@ -2803,8 +2790,8 @@ void MarvinMultipleSgroup::expandOneMultipleSgroup() {
         "Error - there must be zero or two bonds from the group to atoms not in the group");
   }
 
-  // find the hightest id of an atom in the Group - we will insert replicated
-  // atoms after that one
+  // find the hightest id of an atom in the Group - we will insert
+  // replicated atoms after that one
 
   int highestIndex = 0;
   for (MarvinAtom *atomPtr : this->atoms) {
@@ -2836,8 +2823,8 @@ void MarvinMultipleSgroup::expandOneMultipleSgroup() {
         copyAtom->sgroupRef = parentAtomPtr->sgroupRef + idAppendage;
       }
 
-      // copy atoms to all parents up to the actual parent (multipleSgroups in
-      // multipleSgroups)
+      // copy atoms to all parents up to the actual parent (multipleSgroups
+      // in multipleSgroups)
 
       for (auto thisParent = this->parent;; thisParent = thisParent->parent) {
         TEST_ASSERT(thisParent != nullptr);
@@ -2904,8 +2891,8 @@ void MarvinMultipleSgroup::expandOneMultipleSgroup() {
     }
   }
 
-  // fix the bond to the second outside atom to reflect that it comes from the
-  // last replicate
+  // fix the bond to the second outside atom to reflect that it comes from
+  // the last replicate
 
   if (this->bondsToAtomsNotInExpandedGroup.size() == 2) {
     this->bondsToAtomsNotInExpandedGroup[1]->atomRefs2[0] =
@@ -2925,9 +2912,9 @@ void MarvinMultipleSgroup::expandOneMultipleSgroup() {
 
 void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
   // the mol-style super atoms are significanTly different than the Marvin
-  // super atoms.  The mol style has all atoms and bonds in the main mol, and
-  // parameter lines that indicate the name of the super atom and the atom
-  // indices affected.
+  // super atoms.  The mol style has all atoms and bonds in the main mol,
+  // and parameter lines that indicate the name of the super atom and the
+  // atom indices affected.
   //
   //  The SuperatomSgroup form can appear in contracted or expanded form in
   //  MRV blocks:
@@ -2942,14 +2929,15 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
   // In the expanded form, all of the atoms are in the parent molecule, and
   // the sub-mol only refers to them.  The attachment points refer to the
   // atoms in the parent mol. The MultipleSgroup and SruGroup seem very much
-  // alike.   In both, all atoms are in the parent mol, and the sub-mol refers
-  // to a group of atoms in that parent. The SruGroup specifies the name and
-  // also the connection information (head-to-tail, head-head, and unspecified).
-  // The Multiple S-group specifies the report count for the group
+  // alike.   In both, all atoms are in the parent mol, and the sub-mol
+  // refers to a group of atoms in that parent. The SruGroup specifies the
+  // name and also the connection information (head-to-tail, head-head, and
+  // unspecified). The Multiple S-group specifies the report count for the
+  // group
   //
-  // This routine deals with only the contracted form of the SuperatomSgroups,
-  // and copies the atoms and bonds from the sub=mol to the parent mol, and
-  // deletes the dummy atom form the parent mol.
+  // This routine deals with only the contracted form of the
+  // SuperatomSgroups, and copies the atoms and bonds from the sub=mol to
+  // the parent mol, and deletes the dummy atom form the parent mol.
   //  It also saves the info creates a replacement
   //  MarvinSuperatomSgroupExpanded item.
   try {
@@ -2983,10 +2971,10 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
     }
     auto dummyAtomPtr = *dummyAtomIter;
 
-    // before we move or delete any atoms from the superatomSgroup,  Make sure
-    // that the  sibling sgroups are handled if a sibling contains the dummy R
-    // atom, then the atoms to be promoted from this sgroup should be member
-    // of the sibling too
+    // before we move or delete any atoms from the superatomSgroup,  Make
+    // sure that the  sibling sgroups are handled if a sibling contains the
+    // dummy R atom, then the atoms to be promoted from this sgroup should
+    // be member of the sibling too
 
     for (auto &sibling : parent->sgroups) {
       if (sibling.get() == this) {
@@ -3086,8 +3074,8 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
       thisParent->atoms.erase(dummyInParent);  // get rid of the atoms pointer
                                                // to the old dummy atom
 
-      // for multiple groups, also delete it from the parentAtoms array - that
-      // multiple sgroup has NOT been done yet
+      // for multiple groups, also delete it from the parentAtoms array -
+      // that multiple sgroup has NOT been done yet
 
       if (thisParent->role() == "MultipleSgroup") {
         auto thisMultipleParent = (MarvinMultipleSgroup *)thisParent;
@@ -3156,10 +3144,10 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
 
       int atomIndex;
       for (atomIndex = 0; atomIndex < 2; ++atomIndex) {
-        if (!boost::algorithm::contains(
-                actualParent->atoms,
-                std::vector<std::string>{(*bondIter)->atomRefs2[atomIndex]},
-                atomRefInAtoms)) {
+        if (std::find_if(actualParent->atoms.begin(), actualParent->atoms.end(),
+                         [&, bondIter, atomIndex](auto a) {
+                           return a->id == (*bondIter)->atomRefs2[atomIndex];
+                         }) == actualParent->atoms.end()) {
           (*bondIter)->atomRefs2[atomIndex] =
               attachmentPoint->atom;  // the attach atom
           break;
@@ -3192,7 +3180,6 @@ void MarvinSuperatomSgroup::convertFromOneSuperAtom() {
     TEST_ASSERT(sgroupItr != parent->sgroups.end());
 
     parent->sgroups.erase(sgroupItr);
-
   } catch (const std::exception &e) {
     throw;
   }
@@ -3277,14 +3264,13 @@ void MarvinMolBase::prepSgroupsForRDKit() {
 
   std::vector<std::string> sgroupsMolIdsDone;
   for (bool allDone = false;
-       !allDone;)  // until all at this level are done - but fixing one child
-                   // can add sgroups to this level
+       !allDone;)  // until all at this level are done - but fixing one
+                   // child can add sgroups to this level
   {
     allDone = true;  // until it is not true in the loop below
     for (auto &childSgroup : this->sgroups) {
-      if (!boost::algorithm::contains(
-              sgroupsMolIdsDone, std::vector<std::string>{childSgroup->molID},
-              molIDInSgroups)) {
+      if (std::find(sgroupsMolIdsDone.begin(), sgroupsMolIdsDone.end(),
+                    childSgroup->molID) == sgroupsMolIdsDone.end()) {
         sgroupsMolIdsDone.push_back(childSgroup->molID);
         childSgroup->prepSgroupsForRDKit();
         allDone = false;
@@ -3299,10 +3285,10 @@ void MarvinMolBase::prepSgroupsForRDKit() {
     return;
   }
 
-  // check to see if we can move this sgroup up a level. We can if the parent
-  // is not the root of the tree, and its parent is passive (it does not
-  // change the atoms of the parent when it is processed or expanded, or if
-  // all of its atoms do not belong to the the non-passive parent
+  // check to see if we can move this sgroup up a level. We can if the
+  // parent is not the root of the tree, and its parent is passive (it does
+  // not change the atoms of the parent when it is processed or expanded, or
+  // if all of its atoms do not belong to the the non-passive parent
 
   // if this is already a child of the root, it cannot be moved up
   if (this->parent->parent != nullptr) {
@@ -3318,8 +3304,8 @@ void MarvinMolBase::prepSgroupsForRDKit() {
     // check to see if all of its atomRefs of the child are in the parent.
     //  there are 3 possibilities:
     //  1) all atoms are in the parent - do NOT move the child - it belongs
-    //  under the parent 2) NO atoms are in the parent - move the child up 3)
-    //  SOME atoms are in the parent - throw an error
+    //  under the parent 2) NO atoms are in the parent - move the child up
+    //  3) SOME atoms are in the parent - throw an error
 
     auto result = this->isSgroupInSetOfAtoms(this->parent->atoms);
     switch (result) {
@@ -3364,18 +3350,18 @@ void MarvinMultipleSgroup::processSpecialSgroups() {
 
 MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
   // the mol-style super atoms are significantly different than the Marvin
-  // super atoms.  The mol style has all atoms and bonds in the main mol, and
-  // parameter lines that indicate the name of the super atom and the atom
-  // indices affected.
+  // super atoms.  The mol style has all atoms and bonds in the main mol,
+  // and parameter lines that indicate the name of the super atom and the
+  // atom indices affected.
   //
   // The Marvin has a dummy atom with the super atom name in the main
   // molecule, and a separate sub-mol with the atoms and bonds of the
   // superatom.  It also has a separate record called attachmentPoint that
-  // atom in the super atom sub=mol that is replaces the dummy atom, and also
-  // a bond pointer and bond order in case the bond order changes.
+  // atom in the super atom sub=mol that is replaces the dummy atom, and
+  // also a bond pointer and bond order in case the bond order changes.
   //
-  //  Takes information from a MarvinSuperatomSgroupExpanded and converts the
-  //  MarvinSuperatomSgroup structure
+  //  Takes information from a MarvinSuperatomSgroupExpanded and converts
+  //  the MarvinSuperatomSgroup structure
 
   PRECONDITION(this->parent, "invalid parent");
   auto actualParent = getActualParent(this);
@@ -3462,12 +3448,17 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
   RDGeom::Point3D centerOfAttachmentPoints;
 
   for (auto bond : actualParent->bonds) {
-    bool atom1InGroup = boost::algorithm::contains(
-        marvinSuperatomSgroup->atoms,
-        std::vector<std::string>{(bond)->atomRefs2[0]}, atomRefInAtoms);
-    bool atom2InGroup = boost::algorithm::contains(
-        marvinSuperatomSgroup->atoms,
-        std::vector<std::string>{(bond)->atomRefs2[1]}, atomRefInAtoms);
+    bool atom1InGroup =
+        (std::find_if(marvinSuperatomSgroup->atoms.begin(),
+                      marvinSuperatomSgroup->atoms.end(), [&bond](auto a) {
+                        return a->id == (bond)->atomRefs2[0];
+                      }) != marvinSuperatomSgroup->atoms.end());
+    bool atom2InGroup =
+        (std::find_if(marvinSuperatomSgroup->atoms.begin(),
+                      marvinSuperatomSgroup->atoms.end(), [&bond](auto a) {
+                        return a->id == (bond)->atomRefs2[1];
+                      }) != marvinSuperatomSgroup->atoms.end());
+
     if (atom1InGroup && atom2InGroup) {  // both are in, so copy the bond
       marvinSuperatomSgroup->bonds.push_back(bond);
 
@@ -3519,8 +3510,8 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
 
   if (coordsExist) {
     if (marvinSuperatomSgroup->attachmentPoints.size() >
-        0)  // Any attachment points?  if so we use the center of the attached
-            // atoms in the supergroup
+        0)  // Any attachment points?  if so we use the center of the
+            // attached atoms in the supergroup
     {
       // put the new dummy atom at the center of the removed group
 
@@ -3529,8 +3520,8 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
       dummyParentAtom->y2 = centerOfAttachmentPoints.y /
                             marvinSuperatomSgroup->attachmentPoints.size();
     } else {
-      // No attachments to the supergroup - (probably all atoms in the mol are
-      // in the supergroup) -use the center of all atoms in the group
+      // No attachments to the supergroup - (probably all atoms in the mol
+      // are in the supergroup) -use the center of all atoms in the group
       dummyParentAtom->x2 =
           centerOfGroup.x / marvinSuperatomSgroup->atoms.size();
       dummyParentAtom->y2 =
@@ -3538,7 +3529,8 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
     }
   }
 
-  // move any children from the old expanded group to the new superatomSgroup
+  // move any children from the old expanded group to the new
+  // superatomSgroup
 
   for (auto &sgroupPtr : this->sgroups) {
     moveSgroup(sgroupPtr.get(), marvinSuperatomSgroup, false);
@@ -3560,10 +3552,10 @@ MarvinMolBase *MarvinSuperatomSgroupExpanded::convertToOneSuperAtom() {
       continue;  // not a sibling
     }
 
-    // see if the new superatom group has all of its atoms in the sibling.  If
-    // to add the dummy atom to the sibling and remove the atoms (there must
-    // be at least one atom in the sibling that is not in the new superatom,
-    // or it would be a child of the superatom already
+    // see if the new superatom group has all of its atoms in the sibling.
+    // If to add the dummy atom to the sibling and remove the atoms (there
+    // must be at least one atom in the sibling that is not in the new
+    // superatom, or it would be a child of the superatom already
 
     auto isSgroupInSetOfAtomsResult =
         marvinSuperatomSgroup->isSgroupInSetOfAtoms(sibling->atoms);
@@ -3637,8 +3629,8 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
   // RDKit version, or is ready to produce the RDKit version), and contracts
   // it
   //  to the Marvin format version.
-  //  the replicates are deleted (atoms and bonds), and the two orphaned bonds
-  //  are  repaired
+  //  the replicates are deleted (atoms and bonds), and the two orphaned
+  //  bonds are  repaired
 
   // make sure it is not already contracted - this should not happen
 
@@ -3646,8 +3638,8 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
     return;
   }
 
-  // find the actual parent - multiple groups can be nested, so the atoms and
-  // bonds of the lower one are really in the grandparent or higher)
+  // find the actual parent - multiple groups can be nested, so the atoms
+  // and bonds of the lower one are really in the grandparent or higher)
 
   auto actualParent = getActualParent(this);
 
@@ -3660,20 +3652,26 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
 
   for (MarvinAtom *atomPtr : this->atoms) {
     // Atoms in the group but NOT in the parent part are to be deleted
-    if (!boost::algorithm::contains(this->parentAtoms,
-                                    std::vector<std::string>{atomPtr->id},
-                                    atomRefInAtoms)) {
+    if (std::find_if(parentAtoms.begin(), parentAtoms.end(),
+                     [&, atomPtr](auto a) { return a->id == atomPtr->id; }) ==
+        parentAtoms.end()) {
       atomsToDelete.push_back(atomPtr);
     }
   }
 
   for (MarvinBond *bondPtr : actualParent->bonds) {
-    bool atom1ToBeDeleted = boost::algorithm::contains(
-        atomsToDelete, std::vector<std::string>{bondPtr->atomRefs2[0]},
-        atomRefInAtoms);
-    bool atom2ToBeDeleted = boost::algorithm::contains(
-        atomsToDelete, std::vector<std::string>{bondPtr->atomRefs2[1]},
-        atomRefInAtoms);
+    bool atom1ToBeDeleted =
+        (std::find_if(atomsToDelete.begin(), atomsToDelete.end(),
+                      [&bondPtr](auto a) {
+                        return a->id == (bondPtr)->atomRefs2[0];
+                      }) != atomsToDelete.end());
+
+    bool atom2ToBeDeleted =
+        (std::find_if(atomsToDelete.begin(), atomsToDelete.end(),
+                      [&bondPtr](auto a) {
+                        return a->id == (bondPtr)->atomRefs2[1];
+                      }) != atomsToDelete.end());
+
     if (atom1ToBeDeleted && atom2ToBeDeleted) {
       bondsToDelete.push_back(bondPtr);
     } else if (atom1ToBeDeleted) {
@@ -3694,8 +3692,8 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
   // there must be zero two or four orphaned bonds
   // zero happens when the whole group is replicated and not chained
   // two is most common - the replicates being deleted are connected to each
-  // other 4 happens when the parent replicate (not deleted) is in between two
-  // replicates that are deleted.
+  // other 4 happens when the parent replicate (not deleted) is in between
+  // two replicates that are deleted.
   //  there are two orphaned bonds on the parent replicate, and two on the
   //  rest of the molecule
 
@@ -3716,8 +3714,8 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
   }
 
   // now fix the orphaned bonds - The first gets the atoms from the matched
-  // second orphan bond  and was NOT removed. the matched second orphaned bond
-  // is deleted
+  // second orphan bond  and was NOT removed. the matched second orphaned
+  // bond is deleted
 
   while (orphanedBonds.size() > 0) {
     int matchedOrphanBondIndex = -1;
@@ -3751,16 +3749,16 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
         orphanedBonds[matchedOrphanBondIndex]
             ->atomRefs2[0];  // [0] is the orphaned atom (still in the mol)
 
-    // undelete the bond which has been fixed (really remove it from the list
-    // of bonds to be delete)
+    // undelete the bond which has been fixed (really remove it from the
+    // list of bonds to be delete)
 
     auto undeleteIter =
         find(bondsToDelete.begin(), bondsToDelete.end(), orphanedBondToFix);
     TEST_ASSERT(undeleteIter != bondsToDelete.end());
     bondsToDelete.erase(undeleteIter);
 
-    // any siblings or children that reference the matched Orphaned bond must
-    // be fixed to reference the retained (fixed) orphan bond
+    // any siblings or children that reference the matched Orphaned bond
+    // must be fixed to reference the retained (fixed) orphan bond
 
     for (auto &siblingSgroup :
          this->parent->sgroups)  // note: includes this sgroups, which is
@@ -3818,7 +3816,8 @@ void MarvinMultipleSgroup::contractOneMultipleSgroup() {
       }
     }
 
-    // also delete the atoms from this multiple group AND any sibling sgroups
+    // also delete the atoms from this multiple group AND any sibling
+    // sgroups
 
     for (auto &siblingSgroup : this->parent->sgroups) {
       auto siblingAtomPtr = std::find(siblingSgroup->atoms.begin(),
@@ -3855,9 +3854,9 @@ IsSgroupInAtomSetResult MarvinMolBase::isSgroupInSetOfAtoms(
   bool isInGroup = false;
   bool isNotInGroup = false;
   for (auto oneAtom : this->atoms) {
-    if (boost::algorithm::contains(setOfAtoms,
-                                   std::vector<std::string>{oneAtom->id},
-                                   atomRefInAtoms)) {
+    if (std::find_if(setOfAtoms.begin(), setOfAtoms.end(),
+                     [&, oneAtom](auto a) { return a->id == oneAtom->id; }) !=
+        setOfAtoms.end()) {
       isInGroup = true;
     } else {
       isNotInGroup = true;
@@ -3887,17 +3886,18 @@ IsSgroupInAtomSetResult MarvinSuperatomSgroup::isSgroupInSetOfAtoms(
     throw FileParseException("No contracted atom found for a superatomSgroup");
   }
 
-  if (boost::algorithm::contains(setOfAtoms,
-                                 std::vector<std::string>{(*dummyAtomIter)->id},
-                                 atomRefInAtoms)) {
+  if (std::find_if(setOfAtoms.begin(), setOfAtoms.end(),
+                   [&, dummyAtomIter](auto a) {
+                     return a->id == (*dummyAtomIter)->id;
+                   }) != setOfAtoms.end()) {
     return SgroupInAtomSet;
   }
   return SgroupNotInAtomSet;
 }
 
 void MarvinMolBase::processSgroupsFromRDKit() {
-  // this routine recursively fixes sgroups to be in the heirarchy expected by
-  // Marvin format
+  // this routine recursively fixes sgroups to be in the heirarchy expected
+  // by Marvin format
 
   if (this->isPassiveRoleForContraction()) {
     return;  // passive mols are only leaves of the tree - nothing to do
@@ -3907,7 +3907,8 @@ void MarvinMolBase::processSgroupsFromRDKit() {
 
   MarvinMolBase *molToProcess =
       this;  // the processing MIGHT change the mol from one kind to another
-             // (e.g. MarvinSuperatomSgroupExpanded -> MarvinSuperatomSgroup)
+             // (e.g. MarvinSuperatomSgroupExpanded ->
+             // MarvinSuperatomSgroup)
 
   if (this->parent != nullptr)  // NOT the top level mol
   {
@@ -3917,9 +3918,8 @@ void MarvinMolBase::processSgroupsFromRDKit() {
       // child can add sgroups to this level
       allDone = true;  // until it is not true in the loop below
       for (auto &sibling : this->parent->sgroups) {
-        if (boost::algorithm::contains(sgroupsMolIdsDone,
-                                       std::vector<std::string>{sibling->molID},
-                                       molIDInSgroups)) {
+        if (std::find(sgroupsMolIdsDone.begin(), sgroupsMolIdsDone.end(),
+                      sibling->molID) != sgroupsMolIdsDone.end()) {
           continue;  // look at the next one to see if it is done
         }
 
@@ -3973,14 +3973,14 @@ void MarvinMolBase::processSgroupsFromRDKit() {
 
   std::vector<std::string> childrenSgroupsMolIdsDone;
   for (bool allDone = false;
-       !allDone;)  // until all at this level are done - but fixing one child
-                   // can add sgroups to this level
+       !allDone;)  // until all at this level are done - but fixing one
+                   // child can add sgroups to this level
   {
     allDone = true;  // until it is not true in the loop below
     for (auto &childSgroup : molToProcess->sgroups) {
-      if (boost::algorithm::contains(
-              childrenSgroupsMolIdsDone,
-              std::vector<std::string>{childSgroup->molID}, molIDInSgroups)) {
+      if (std::find(childrenSgroupsMolIdsDone.begin(),
+                    childrenSgroupsMolIdsDone.end(),
+                    childSgroup->molID) != childrenSgroupsMolIdsDone.end()) {
         continue;  // this one is done, look at the next one
       }
 
@@ -4063,8 +4063,8 @@ ptree MarvinMol::toMolPtree() const {
 MarvinReaction::~MarvinReaction() {}
 
 void MarvinReaction::prepSgroupsForRDKit() {
-  // This routine converts all the mols in the rxn to be ready for conversion
-  // to RDKIT mols
+  // This routine converts all the mols in the rxn to be ready for
+  // conversion to RDKIT mols
   int molCount = 0, atomCount = 0, bondCount = 0, sgCount = 0;
 
   std::map<std::string, std::string> sgMap;

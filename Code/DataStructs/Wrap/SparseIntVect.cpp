@@ -74,8 +74,8 @@ python::list BulkDice(const T &siv1, python::list sivs, bool returnDistance) {
   unsigned int nsivs = python::extract<unsigned int>(sivs.attr("__len__")());
   for (unsigned int i = 0; i < nsivs; ++i) {
     double simVal;
-    const T &siv2 = python::extract<T>(sivs[i])();
-    simVal = DiceSimilarity(siv1, siv2, returnDistance);
+    const T *siv2 = python::extract<T *>(sivs[i])();
+    simVal = DiceSimilarity(siv1, *siv2, returnDistance);
     res.append(simVal);
   }
   return res;
@@ -87,8 +87,8 @@ python::list BulkTanimoto(const T &siv1, python::list sivs,
   unsigned int nsivs = python::extract<unsigned int>(sivs.attr("__len__")());
   for (unsigned int i = 0; i < nsivs; ++i) {
     double simVal;
-    const T &siv2 = python::extract<T>(sivs[i])();
-    simVal = TanimotoSimilarity(siv1, siv2, returnDistance);
+    const T *siv2 = python::extract<T *>(sivs[i])();
+    simVal = TanimotoSimilarity(siv1, *siv2, returnDistance);
     res.append(simVal);
   }
   return res;
@@ -101,8 +101,8 @@ python::list BulkTversky(const T &siv1, python::list sivs, double a, double b,
   unsigned int nsivs = python::extract<unsigned int>(sivs.attr("__len__")());
   for (unsigned int i = 0; i < nsivs; ++i) {
     double simVal;
-    const T &siv2 = python::extract<T>(sivs[i])();
-    simVal = TverskySimilarity(siv1, siv2, a, b, returnDistance);
+    const T *siv2 = python::extract<T *>(sivs[i])();
+    simVal = TverskySimilarity(siv1, *siv2, a, b, returnDistance);
     res.append(simVal);
   }
   return res;

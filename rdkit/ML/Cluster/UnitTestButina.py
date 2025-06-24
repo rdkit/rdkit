@@ -1,6 +1,4 @@
-# $Id$
-#
-# Copyright (C) 2007-2008 Greg Landrum
+# Copyright (C) 2007-2024 Greg Landrum and other RDKit contributors
 #  All Rights Reserved
 #
 import unittest
@@ -181,7 +179,22 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(cs) == 2)
     self.assertTrue(cs[0] == (4, 3, 5, 6))
     self.assertTrue(cs[1] == (1, 0, 2))
+  
+  def test9_empty_input(self):
+    # " edge case: empty input "
+    cs = Butina.ClusterData([], 0, 2, isDistData=1, reordering=True)
+    self.assertTrue(len(cs) == 0)
 
+  def test10_error_messages(self):
+    # " error case: mismatched data dimension and nPts "
+    with self.assertRaises(ValueError) as cm:
+      _ = Butina.ClusterData([1, 2, 3], 1, 2, isDistData=1, reordering=True)
+    self.assertEqual(str(cm.exception), "Mismatched input data dimension and nPts")
+    
+    # " error case: invalid input data type "
+    with self.assertRaises(TypeError) as cm:
+      _ = Butina.ClusterData(0, 1, 2, isDistData=1, reordering=True)
+    self.assertEqual(str(cm.exception), f"Unsupported type for data, {type(0)}")
 
 profileTest = 0
 

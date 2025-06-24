@@ -125,6 +125,7 @@ class DrawMol {
   // at the end of changeToDrawCoords() and any necessary DrawShapePolyLines
   // added to postShapes_ in drawCoords.
   void extractCloseContacts();
+  void resolveAtomSymbolClashes();
   void calculateScale();
   void findExtremes();
   void changeToDrawCoords();
@@ -199,7 +200,7 @@ class DrawMol {
   double getScale() const { return scale_; }
   double getFontScale() const { return fontScale_; }
   // More often than not, newScale and newFontScale will be the same,
-  // but not if minFontScale of maxFontScale have become involved.
+  // but not if minFontScale or maxFontScale have become involved.
   // The newFontScale will be used without checking the min and max.
   void setScale(double newScale, double newFontScale,
                 bool ignoreFontLimits = true);

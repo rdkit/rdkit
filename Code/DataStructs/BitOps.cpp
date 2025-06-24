@@ -28,19 +28,19 @@
 
 using namespace RDKit;
 
-int getBitId(const char*& text, int format, int size, int curr) {
+int getBitId(const char *&text, int format, int size, int curr) {
   PRECONDITION(text, "no text");
   int res = -1;
   if ((format == 0) ||
       ((format == 1) && (size >= std::numeric_limits<unsigned short>::max()))) {
     int tmp =
-        EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)text);
+        EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int *)text);
     text += sizeof(tmp);
     res = tmp;
   } else if (format == 1) {  // version 16 and on bits sorted as short ints
     unsigned short tmp =
         EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(
-            *(unsigned short*)text);
+            *(unsigned short *)text);
     text += sizeof(tmp);
     res = tmp;
   } else if (format == 2) {  // run length encoded format
@@ -49,11 +49,11 @@ int getBitId(const char*& text, int format, int size, int curr) {
   return res;
 }
 
-bool AllProbeBitsMatch(const std::string& probe, const std::string& ref) {
+bool AllProbeBitsMatch(const std::string &probe, const std::string &ref) {
   return AllProbeBitsMatch(probe.c_str(), ref.c_str());
 }
 
-bool AllProbeBitsMatch(const char* probe, const char* ref) {
+bool AllProbeBitsMatch(const char *probe, const char *ref) {
   PRECONDITION(probe, "no probe text");
   PRECONDITION(ref, "no probe text");
   int probeFormat = 0;
@@ -61,7 +61,7 @@ bool AllProbeBitsMatch(const char* probe, const char* ref) {
   int version = 0;
 
   int probeSize =
-      EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)probe);
+      EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int *)probe);
   probe += sizeof(probeSize);
   if (probeSize < 0) {
     version = -1 * probeSize;
@@ -73,16 +73,17 @@ bool AllProbeBitsMatch(const char* probe, const char* ref) {
         probeFormat = 2;
         break;
       default:
-        throw ValueErrorException("Unknown version type for the encode bit vect");
+        throw ValueErrorException(
+            "Unknown version type for the encode bit vect");
         break;
     }
     probeSize =
-        EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)probe);
+        EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int *)probe);
     probe += sizeof(probeSize);
   }
 
   int refSize =
-      EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)ref);
+      EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int *)ref);
   ref += sizeof(refSize);
   if (refSize < 0) {
     version = -1 * refSize;
@@ -94,19 +95,20 @@ bool AllProbeBitsMatch(const char* probe, const char* ref) {
         refFormat = 2;
         break;
       default:
-        throw ValueErrorException("Unknown version type for the encode bit vect");
+        throw ValueErrorException(
+            "Unknown version type for the encode bit vect");
         break;
     }
     refSize =
-        EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)ref);
+        EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int *)ref);
     ref += sizeof(refSize);
   }
 
   int nProbeOn =
-      EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)probe);
+      EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int *)probe);
   probe += sizeof(nProbeOn);
   int nRefOn =
-      EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)ref);
+      EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int *)ref);
   ref += sizeof(nRefOn);
 
   int currProbeBit = 0;
@@ -138,11 +140,11 @@ bool AllProbeBitsMatch(const char* probe, const char* ref) {
 }
 
 template <typename T1>
-bool AllProbeBitsMatch(const T1& probe, const std::string& pkl) {
-  const char* text = pkl.c_str();
+bool AllProbeBitsMatch(const T1 &probe, const std::string &pkl) {
+  const char *text = pkl.c_str();
   int format = 0;
   int nOn = 0, size, version = 0;
-  size = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)text);
+  size = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int *)text);
   text += sizeof(size);
   if (size < 0) {
     version = -1 * size;
@@ -154,13 +156,15 @@ bool AllProbeBitsMatch(const T1& probe, const std::string& pkl) {
         format = 2;
         break;
       default:
-        throw ValueErrorException("Unknown version type for the encode bit vect");
+        throw ValueErrorException(
+            "Unknown version type for the encode bit vect");
         break;
     }
-    size = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)text);
+    size =
+        EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int *)text);
     text += sizeof(size);
   }
-  nOn = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)text);
+  nOn = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int *)text);
   text += sizeof(nOn);
 
   int currBit = 0;
@@ -187,11 +191,11 @@ bool AllProbeBitsMatch(const T1& probe, const std::string& pkl) {
   return true;
 }
 template RDKIT_DATASTRUCTS_EXPORT bool AllProbeBitsMatch(
-    const SparseBitVect& bv1, const std::string& pkl);
+    const SparseBitVect &bv1, const std::string &pkl);
 template RDKIT_DATASTRUCTS_EXPORT bool AllProbeBitsMatch(
-    const ExplicitBitVect& bv1, const std::string& pkl);
+    const ExplicitBitVect &bv1, const std::string &pkl);
 template <typename T1>
-bool AllProbeBitsMatch(const T1& probe, const T1& ref) {
+bool AllProbeBitsMatch(const T1 &probe, const T1 &ref) {
   for (unsigned int i = 0; i < probe.getNumBits(); ++i) {
     if (probe.getBit(i) && !ref.getBit(i)) {
       return false;
@@ -200,12 +204,12 @@ bool AllProbeBitsMatch(const T1& probe, const T1& ref) {
   return true;
 }
 template RDKIT_DATASTRUCTS_EXPORT bool AllProbeBitsMatch(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 // template bool AllProbeBitsMatch(const ExplicitBitVect& bv1,const
 // ExplicitBitVect &bv2);
 
-bool AllProbeBitsMatch(const ExplicitBitVect& probe,
-                       const ExplicitBitVect& ref) {
+bool AllProbeBitsMatch(const ExplicitBitVect &probe,
+                       const ExplicitBitVect &ref) {
   return probe.dp_bits->is_subset_of(*(ref.dp_bits));
 }
 
@@ -216,7 +220,7 @@ bool AllProbeBitsMatch(const ExplicitBitVect& probe,
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-int NumOnBitsInCommon(const T1& bv1, const T2& bv2) {
+int NumOnBitsInCommon(const T1 &bv1, const T2 &bv2) {
   return static_cast<int>(OnBitsInCommon(bv1, bv2).size());
 }
 
@@ -229,17 +233,17 @@ struct bitset_impl {
 const bool canUseBitmapHack =
     sizeof(boost::dynamic_bitset<>) == sizeof(bitset_impl);
 
-bool EBVToBitmap(const ExplicitBitVect& bv, const unsigned char*& fp,
-                 unsigned int& nBytes) {
+bool EBVToBitmap(const ExplicitBitVect &bv, const unsigned char *&fp,
+                 unsigned int &nBytes) {
   if (!canUseBitmapHack) {
     return false;
   }
-  const auto* p1 = (const bitset_impl*)(const void*)bv.dp_bits;
+  const auto *p1 = (const bitset_impl *)(const void *)bv.dp_bits.get();
   // Run-time sanity check (just in case)
   if (p1->m_num_bits != bv.dp_bits->size()) {
     return false;
   }
-  fp = (const unsigned char*)p1->m_bits.data();
+  fp = (const unsigned char *)p1->m_bits.data();
   nBytes = (unsigned int)p1->m_num_bits / 8;
   if (p1->m_num_bits % 8) {
     ++nBytes;
@@ -248,11 +252,11 @@ bool EBVToBitmap(const ExplicitBitVect& bv, const unsigned char*& fp,
 }
 }  // namespace
 
-unsigned int CalcBitmapNumBitsInCommon(const unsigned char* afp,
-                                       const unsigned char* bfp,
+unsigned int CalcBitmapNumBitsInCommon(const unsigned char *afp,
+                                       const unsigned char *bfp,
                                        unsigned int nBytes);
 
-int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
+int NumOnBitsInCommon(const ExplicitBitVect &bv1, const ExplicitBitVect &bv2) {
   // Don't try this at home, we (hope we) know what we're doing
   const unsigned char *afp, *bfp;
   unsigned int nBytes;
@@ -280,7 +284,7 @@ int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-double TanimotoSimilarity(const T1& bv1, const T2& bv2) {
+double TanimotoSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -293,7 +297,7 @@ double TanimotoSimilarity(const T1& bv1, const T2& bv2) {
 }
 
 template <typename T1, typename T2>
-double TverskySimilarity(const T1& bv1, const T2& bv2, double a, double b) {
+double TverskySimilarity(const T1 &bv1, const T2 &bv2, double a, double b) {
   RANGE_CHECK(0, a, 1);
   RANGE_CHECK(0, b, 1);
   if (bv1.getNumBits() != bv2.getNumBits()) {
@@ -311,7 +315,7 @@ double TverskySimilarity(const T1& bv1, const T2& bv2, double a, double b) {
 }
 
 template <typename T1, typename T2>
-double CosineSimilarity(const T1& bv1, const T2& bv2) {
+double CosineSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -327,7 +331,7 @@ double CosineSimilarity(const T1& bv1, const T2& bv2) {
 }
 
 template <typename T1, typename T2>
-double KulczynskiSimilarity(const T1& bv1, const T2& bv2) {
+double KulczynskiSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -343,7 +347,7 @@ double KulczynskiSimilarity(const T1& bv1, const T2& bv2) {
 }
 
 template <typename T1, typename T2>
-double DiceSimilarity(const T1& bv1, const T2& bv2) {
+double DiceSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -359,7 +363,7 @@ double DiceSimilarity(const T1& bv1, const T2& bv2) {
 }
 
 template <typename T1, typename T2>
-double SokalSimilarity(const T1& bv1, const T2& bv2) {
+double SokalSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -371,7 +375,7 @@ double SokalSimilarity(const T1& bv1, const T2& bv2) {
 }
 
 template <typename T1, typename T2>
-double McConnaugheySimilarity(const T1& bv1, const T2& bv2) {
+double McConnaugheySimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -397,7 +401,7 @@ inline T tmax(T v1, T v2) {
 }
 
 template <typename T1, typename T2>
-double AsymmetricSimilarity(const T1& bv1, const T2& bv2) {
+double AsymmetricSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -414,7 +418,7 @@ double AsymmetricSimilarity(const T1& bv1, const T2& bv2) {
 }
 
 template <typename T1, typename T2>
-double BraunBlanquetSimilarity(const T1& bv1, const T2& bv2) {
+double BraunBlanquetSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -431,7 +435,7 @@ double BraunBlanquetSimilarity(const T1& bv1, const T2& bv2) {
 }
 
 template <typename T1, typename T2>
-double RusselSimilarity(const T1& bv1, const T2& bv2) {
+double RusselSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -440,7 +444,7 @@ double RusselSimilarity(const T1& bv1, const T2& bv2) {
 }
 
 template <typename T1, typename T2>
-double RogotGoldbergSimilarity(const T1& bv1, const T2& bv2) {
+double RogotGoldbergSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -474,7 +478,7 @@ double RogotGoldbergSimilarity(const T1& bv1, const T2& bv2) {
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-double OnBitSimilarity(const T1& bv1, const T2& bv2) {
+double OnBitSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -503,7 +507,7 @@ double OnBitSimilarity(const T1& bv1, const T2& bv2) {
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-int NumBitsInCommon(const T1& bv1, const T2& bv2) {
+int NumBitsInCommon(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -511,7 +515,7 @@ int NumBitsInCommon(const T1& bv1, const T2& bv2) {
   return bv1.getNumBits() - (bv1 ^ bv2).getNumOnBits();
 }
 
-int NumBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
+int NumBitsInCommon(const ExplicitBitVect &bv1, const ExplicitBitVect &bv2) {
   return bv1.getNumBits() -
          static_cast<int>(((*bv1.dp_bits) ^ (*bv2.dp_bits)).count());
 }
@@ -531,7 +535,7 @@ int NumBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-double AllBitSimilarity(const T1& bv1, const T2& bv2) {
+double AllBitSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -554,7 +558,7 @@ double AllBitSimilarity(const T1& bv1, const T2& bv2) {
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-IntVect OnBitsInCommon(const T1& bv1, const T2& bv2) {
+IntVect OnBitsInCommon(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -578,7 +582,7 @@ IntVect OnBitsInCommon(const T1& bv1, const T2& bv2) {
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-IntVect OffBitsInCommon(const T1& bv1, const T2& bv2) {
+IntVect OffBitsInCommon(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -613,7 +617,7 @@ IntVect OffBitsInCommon(const T1& bv1, const T2& bv2) {
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-DoubleVect OnBitProjSimilarity(const T1& bv1, const T2& bv2) {
+DoubleVect OnBitProjSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -652,7 +656,7 @@ DoubleVect OnBitProjSimilarity(const T1& bv1, const T2& bv2) {
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-DoubleVect OffBitProjSimilarity(const T1& bv1, const T2& bv2) {
+DoubleVect OffBitProjSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
@@ -666,18 +670,18 @@ DoubleVect OffBitProjSimilarity(const T1& bv1, const T2& bv2) {
 }
 
 template <typename T1>
-T1* FoldFingerprint(const T1& bv1, unsigned int factor) {
+T1 *FoldFingerprint(const T1 &bv1, unsigned int factor) {
   if (factor <= 0 || factor >= bv1.getNumBits()) {
     throw ValueErrorException("invalid fold factor");
   }
 
   int initSize = bv1.getNumBits();
   int resSize = initSize / factor;
-  auto* res = new T1(resSize);
+  auto *res = new T1(resSize);
 
   IntVect onBits;
   bv1.getOnBits(onBits);
-  for (int& onBit : onBits) {
+  for (int &onBit : onBits) {
     int pos = onBit % resSize;
     res->setBit(pos);
   }
@@ -685,7 +689,7 @@ T1* FoldFingerprint(const T1& bv1, unsigned int factor) {
 }
 
 template <typename T1>
-std::string BitVectToText(const T1& bv1) {
+std::string BitVectToText(const T1 &bv1) {
   std::string res(bv1.getNumBits(), '0');
   for (unsigned int i = 0; i < bv1.getNumBits(); i++) {
     if (bv1.getBit(i)) {
@@ -698,7 +702,7 @@ std::string BitVectToText(const T1& bv1) {
 const char bin2Hex[] = {'0', '1', '2', '3', '4', '5', '6', '7',
                         '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 template <typename T1>
-std::string BitVectToFPSText(const T1& bv1) {
+std::string BitVectToFPSText(const T1 &bv1) {
   unsigned int size =
       2 * (bv1.getNumBits() / 8 + (bv1.getNumBits() % 8 ? 1 : 0));
   std::string res(size, 0);
@@ -722,7 +726,7 @@ std::string BitVectToFPSText(const T1& bv1) {
 }
 
 template <typename T1>
-std::string BitVectToBinaryText(const T1& bv1) {
+std::string BitVectToBinaryText(const T1 &bv1) {
   std::string res(bv1.getNumBits() / 8 + (bv1.getNumBits() % 8 ? 1 : 0), 0);
   unsigned char c = 0;
   unsigned int byte = 0;
@@ -742,7 +746,7 @@ std::string BitVectToBinaryText(const T1& bv1) {
 }
 
 template <typename T1>
-void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps) {
+void UpdateBitVectFromFPSText(T1 &bv1, const std::string &fps) {
   PRECONDITION(fps.length() * 4 >= bv1.getNumBits(), "bad FPS length");
   PRECONDITION(fps.length() % 2 == 0, "bad FPS length");
   unsigned int bitIdx = 0;
@@ -771,7 +775,7 @@ void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps) {
 }
 
 template <typename T1>
-void UpdateBitVectFromBinaryText(T1& bv1, const std::string& fps) {
+void UpdateBitVectFromBinaryText(T1 &bv1, const std::string &fps) {
   PRECONDITION(fps.length() * 8 >= bv1.getNumBits(), "bad FPS length");
   unsigned int bitIdx = 0;
   for (unsigned int i = 0; i < fps.size() && bitIdx < bv1.getNumBits(); i++) {
@@ -786,108 +790,108 @@ void UpdateBitVectFromBinaryText(T1& bv1, const std::string& fps) {
 }
 
 template RDKIT_DATASTRUCTS_EXPORT double TanimotoSimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double TverskySimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2, double a, double b);
+    const SparseBitVect &bv1, const SparseBitVect &bv2, double a, double b);
 template RDKIT_DATASTRUCTS_EXPORT double CosineSimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double KulczynskiSimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double DiceSimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double SokalSimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double McConnaugheySimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double AsymmetricSimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double BraunBlanquetSimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double RusselSimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double RogotGoldbergSimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double OnBitSimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
-template RDKIT_DATASTRUCTS_EXPORT int NumBitsInCommon(const SparseBitVect& bv1,
-                                                      const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
+template RDKIT_DATASTRUCTS_EXPORT int NumBitsInCommon(const SparseBitVect &bv1,
+                                                      const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double AllBitSimilarity(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT int NumOnBitsInCommon(
-    const SparseBitVect& bv1, const SparseBitVect& bv2);
+    const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT IntVect
-OnBitsInCommon(const SparseBitVect& bv1, const SparseBitVect& bv2);
+OnBitsInCommon(const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT IntVect
-OffBitsInCommon(const SparseBitVect& bv1, const SparseBitVect& bv2);
+OffBitsInCommon(const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT DoubleVect
-OnBitProjSimilarity(const SparseBitVect& bv1, const SparseBitVect& bv2);
+OnBitProjSimilarity(const SparseBitVect &bv1, const SparseBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT DoubleVect
-OffBitProjSimilarity(const SparseBitVect& bv1, const SparseBitVect& bv2);
+OffBitProjSimilarity(const SparseBitVect &bv1, const SparseBitVect &bv2);
 
 template RDKIT_DATASTRUCTS_EXPORT double TanimotoSimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double TverskySimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2, double a, double b);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2, double a, double b);
 template RDKIT_DATASTRUCTS_EXPORT double CosineSimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double KulczynskiSimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double DiceSimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double SokalSimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double McConnaugheySimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double AsymmetricSimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double BraunBlanquetSimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double RusselSimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double RogotGoldbergSimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double OnBitSimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT int NumBitsInCommon(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT double AllBitSimilarity(
-    const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+    const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT IntVect
-OnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+OnBitsInCommon(const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT IntVect
-OffBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+OffBitsInCommon(const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT DoubleVect
-OnBitProjSimilarity(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+OnBitProjSimilarity(const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 template RDKIT_DATASTRUCTS_EXPORT DoubleVect
-OffBitProjSimilarity(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+OffBitProjSimilarity(const ExplicitBitVect &bv1, const ExplicitBitVect &bv2);
 
-template RDKIT_DATASTRUCTS_EXPORT SparseBitVect* FoldFingerprint(
-    const SparseBitVect&, unsigned int);
-template RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect* FoldFingerprint(
-    const ExplicitBitVect&, unsigned int);
+template RDKIT_DATASTRUCTS_EXPORT SparseBitVect *FoldFingerprint(
+    const SparseBitVect &, unsigned int);
+template RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect *FoldFingerprint(
+    const ExplicitBitVect &, unsigned int);
 
 template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToText(
-    const SparseBitVect&);
+    const SparseBitVect &);
 template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToText(
-    const ExplicitBitVect&);
+    const ExplicitBitVect &);
 
 template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToFPSText(
-    const SparseBitVect&);
+    const SparseBitVect &);
 template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToFPSText(
-    const ExplicitBitVect&);
+    const ExplicitBitVect &);
 template RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromFPSText(
-    SparseBitVect&, const std::string&);
+    SparseBitVect &, const std::string &);
 template RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromFPSText(
-    ExplicitBitVect&, const std::string&);
+    ExplicitBitVect &, const std::string &);
 
 template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToBinaryText(
-    const SparseBitVect&);
+    const SparseBitVect &);
 template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToBinaryText(
-    const ExplicitBitVect&);
+    const ExplicitBitVect &);
 template RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromBinaryText(
-    SparseBitVect&, const std::string&);
+    SparseBitVect &, const std::string &);
 template RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromBinaryText(
-    ExplicitBitVect&, const std::string&);
+    ExplicitBitVect &, const std::string &);
 
 // from here:
 // http://stackoverflow.com/questions/3849337/msvc-equivalent-to-builtin-popcount
@@ -923,7 +927,7 @@ static int byte_popcounts[] = {
     4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
 }
-unsigned int CalcBitmapPopcount(const unsigned char* afp, unsigned int nBytes) {
+unsigned int CalcBitmapPopcount(const unsigned char *afp, unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
   unsigned int popcount = 0;
 #ifndef RDK_OPTIMIZE_POPCNT
@@ -934,7 +938,7 @@ unsigned int CalcBitmapPopcount(const unsigned char* afp, unsigned int nBytes) {
   unsigned int eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (unsigned int i = 0; i < eidx; ++i) {
     popcount += static_cast<unsigned int>(
-        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]));
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE *)afp)[i]));
   }
   for (unsigned int i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
     popcount += byte_popcounts[afp[i]];
@@ -943,8 +947,8 @@ unsigned int CalcBitmapPopcount(const unsigned char* afp, unsigned int nBytes) {
   return popcount;
 }
 
-unsigned int CalcBitmapNumBitsInCommon(const unsigned char* afp,
-                                       const unsigned char* bfp,
+unsigned int CalcBitmapNumBitsInCommon(const unsigned char *afp,
+                                       const unsigned char *bfp,
                                        unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
@@ -957,7 +961,7 @@ unsigned int CalcBitmapNumBitsInCommon(const unsigned char* afp,
   BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
     intersect_popcount += static_cast<unsigned int>(BUILTIN_POPCOUNT_INSTR(
-        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] & ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+        ((BUILTIN_POPCOUNT_TYPE *)afp)[i] & ((BUILTIN_POPCOUNT_TYPE *)bfp)[i]));
   }
   for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE);
        i < nBytes; ++i) {
@@ -967,7 +971,7 @@ unsigned int CalcBitmapNumBitsInCommon(const unsigned char* afp,
   return intersect_popcount;
 }
 
-double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
+double CalcBitmapTanimoto(const unsigned char *afp, const unsigned char *bfp,
                           unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
@@ -981,9 +985,9 @@ double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
   BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
     union_popcount += static_cast<unsigned int>(BUILTIN_POPCOUNT_INSTR(
-        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] | ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+        ((BUILTIN_POPCOUNT_TYPE *)afp)[i] | ((BUILTIN_POPCOUNT_TYPE *)bfp)[i]));
     intersect_popcount += static_cast<unsigned int>(BUILTIN_POPCOUNT_INSTR(
-        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] & ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+        ((BUILTIN_POPCOUNT_TYPE *)afp)[i] & ((BUILTIN_POPCOUNT_TYPE *)bfp)[i]));
   }
   for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE);
        i < nBytes; ++i) {
@@ -998,7 +1002,7 @@ double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
          union_popcount; /* +0.0 to coerce to double */
 }
 
-double CalcBitmapDice(const unsigned char* afp, const unsigned char* bfp,
+double CalcBitmapDice(const unsigned char *afp, const unsigned char *bfp,
                       unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
@@ -1014,11 +1018,11 @@ double CalcBitmapDice(const unsigned char* afp, const unsigned char* bfp,
   BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
     a_popcount += static_cast<unsigned int>(
-        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]));
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE *)afp)[i]));
     b_popcount += static_cast<unsigned int>(
-        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE *)bfp)[i]));
     intersect_popcount += static_cast<unsigned int>(BUILTIN_POPCOUNT_INSTR(
-        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] & ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+        ((BUILTIN_POPCOUNT_TYPE *)afp)[i] & ((BUILTIN_POPCOUNT_TYPE *)bfp)[i]));
   }
   for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE);
        i < nBytes; ++i) {
@@ -1034,7 +1038,7 @@ double CalcBitmapDice(const unsigned char* afp, const unsigned char* bfp,
   return (2.0 * intersect_popcount) / (a_popcount + b_popcount);
 }
 
-double CalcBitmapTversky(const unsigned char* afp, const unsigned char* bfp,
+double CalcBitmapTversky(const unsigned char *afp, const unsigned char *bfp,
                          unsigned int nBytes, double ca, double cb) {
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
@@ -1050,11 +1054,11 @@ double CalcBitmapTversky(const unsigned char* afp, const unsigned char* bfp,
   BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
     intersect_popcount += static_cast<unsigned int>(BUILTIN_POPCOUNT_INSTR(
-        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] & ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+        ((BUILTIN_POPCOUNT_TYPE *)afp)[i] & ((BUILTIN_POPCOUNT_TYPE *)bfp)[i]));
     acount += static_cast<unsigned int>(
-        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]));
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE *)afp)[i]));
     bcount += static_cast<unsigned int>(
-        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE *)bfp)[i]));
   }
   for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE);
        i < nBytes; ++i) {
@@ -1070,8 +1074,8 @@ double CalcBitmapTversky(const unsigned char* afp, const unsigned char* bfp,
   return intersect_popcount / denom;
 }
 
-bool CalcBitmapAllProbeBitsMatch(const unsigned char* probe,
-                                 const unsigned char* ref,
+bool CalcBitmapAllProbeBitsMatch(const unsigned char *probe,
+                                 const unsigned char *ref,
                                  unsigned int nBytes) {
   PRECONDITION(probe, "no probe");
   PRECONDITION(ref, "no ref");
@@ -1085,9 +1089,9 @@ bool CalcBitmapAllProbeBitsMatch(const unsigned char* probe,
 #else
   unsigned int eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (unsigned int i = 0; i < eidx; ++i) {
-    if (BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)probe)[i] &
-                               ((BUILTIN_POPCOUNT_TYPE*)ref)[i]) !=
-        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)probe)[i])) {
+    if (BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE *)probe)[i] &
+                               ((BUILTIN_POPCOUNT_TYPE *)ref)[i]) !=
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE *)probe)[i])) {
       return false;
     }
   }

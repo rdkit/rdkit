@@ -1070,13 +1070,13 @@ void testMurckoDecomp() {
       {"OC2C(C)C21C(N)C1C", "C2CC12CC1"},  // Spiro
       {"C1CC1C(=O)OC", "C1CC1"},           // Carbonyl outside scaffold
       {"C1CC1C=C", "C1CC1"},               // Double bond outside scaffold
-      {"C1CC1C=CC1CC1C=CNNCO", "C1CC1C=CC1CC1"},      // Double bond in scaffold
+      {"C1CC1C=CC1CC1C=CNNCO", "C1CC1C=CC1CC1"},  // Double bond in scaffold
       {"CC1CC1C(N)C1C(N)C1", "C1CC1CC1CC1"},
       {"C1CC1S(=O)C1CC1C=CNNCO", "C1CC1S(=O)C1CC1"},  // S=O group in scaffold
       {"O=SCNC1CC1S(=O)C1CC1C=CNNCO",
-       "C1CC1S(=O)C1CC1"},                        // S=O group outside scaffold
+       "C1CC1S(=O)C1CC1"},  // S=O group outside scaffold
       {"C1CC1S(=O)(=O)C1CC1C=CNNCO",
-       "C1CC1S(=O)(=O)C1CC1"},                    // SO2 group in scaffold
+       "C1CC1S(=O)(=O)C1CC1"},  // SO2 group in scaffold
       {"O=S(CNCNC)(=O)CNC1CC1S(=O)(=O)C1CC1C=CNNCO",
        "C1CC1S(=O)(=O)C1CC1"},                    // SO2 group outside scaffold
       {"C1CC1C=NO", "C1CC1"},                     // Hydroxamide
@@ -1812,23 +1812,6 @@ void testFragmentOnBRICSBonds() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void benchFragmentOnBRICSBonds() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing fragmentOnBRICSBonds" << std::endl;
-  {
-    std::string pathName = getenv("RDBASE");
-    pathName += "/Regress/Data/mols.1000.sdf";
-    SDMolSupplier suppl(pathName);
-    while (!suppl.atEnd()) {
-      ROMol *m = suppl.next();
-      ROMol *nmol = MolFragmenter::fragmentOnBRICSBonds(*m);
-      delete m;
-      delete nmol;
-    }
-  }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-}
-
 void testFragmentOnSomeBonds() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing fragmentOnSomeBonds" << std::endl;
@@ -2169,7 +2152,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing Chemical Transforms \n";
 
-#if 1
   testDeleteSubstruct();
   testReplaceSubstructs();
   testReplaceSubstructs2();
@@ -2195,12 +2177,10 @@ int main() {
   testFragmentOnBonds();
   testFragmentOnBRICSBonds();
   testFragmentOnSomeBonds();
-  // benchFragmentOnBRICSBonds();
   testGithubIssue429();
   testGithubIssue430();
   testGithubIssue511();
   testReplaceCore2();
-#endif
   testGithub1734();
   testGithub3206();
   testGithub4019();

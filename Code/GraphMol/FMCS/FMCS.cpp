@@ -26,7 +26,7 @@ namespace RDKit {
 
 namespace {
 struct cmpCStr {
-  bool operator()(const char* a, const char* b) const {
+  bool operator()(const char *a, const char *b) const {
     return std::strcmp(a, b) < 0;
   }
 };
@@ -51,9 +51,9 @@ void MCSParameters::setMCSAtomTyperFromEnum(AtomComparator atomComp) {
   }
 }
 
-void MCSParameters::setMCSAtomTyperFromConstChar(const char* atomComp) {
+void MCSParameters::setMCSAtomTyperFromConstChar(const char *atomComp) {
   PRECONDITION(atomComp, "atomComp must not be NULL");
-  static const std::map<const char*, AtomComparator, cmpCStr>
+  static const std::map<const char *, AtomComparator, cmpCStr>
       atomCompStringToEnum = {{"Any", AtomCompareAny},
                               {"Elements", AtomCompareElements},
                               {"Isotopes", AtomCompareIsotopes},
@@ -81,9 +81,9 @@ void MCSParameters::setMCSBondTyperFromEnum(BondComparator bondComp) {
   }
 }
 
-void MCSParameters::setMCSBondTyperFromConstChar(const char* bondComp) {
+void MCSParameters::setMCSBondTyperFromConstChar(const char *bondComp) {
   PRECONDITION(bondComp, "bondComp must not be NULL");
-  static const std::map<const char*, BondComparator, cmpCStr>
+  static const std::map<const char *, BondComparator, cmpCStr>
       bondCompStringToEnum = {{"Any", BondCompareAny},
                               {"Order", BondCompareOrder},
                               {"OrderExact", BondCompareOrderExact}};
@@ -94,7 +94,7 @@ void MCSParameters::setMCSBondTyperFromConstChar(const char* bondComp) {
   }
 }
 
-void parseMCSParametersJSON(const char* json, MCSParameters* params) {
+void parseMCSParametersJSON(const char *json, MCSParameters *params) {
   if (!params || !json || !strlen(json)) {
     return;
   }
@@ -103,7 +103,7 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_json(ss, pt);
 
-  auto& p = *params;
+  auto &p = *params;
   p.MaximizeBonds = pt.get<bool>("MaximizeBonds", p.MaximizeBonds);
   p.Threshold = pt.get<double>("Threshold", p.Threshold);
   p.Timeout = pt.get<unsigned int>("Timeout", p.Timeout);
@@ -145,8 +145,8 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
   p.InitialSeed = pt.get<std::string>("InitialSeed", "");
 }
 
-MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols,
-                  const MCSParameters* params) {
+MCSResult findMCS(const std::vector<ROMOL_SPTR> &mols,
+                  const MCSParameters *params) {
   MCSParameters p;
   if (nullptr == params) {
     params = &p;
@@ -155,14 +155,14 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols,
   return fmcs.find(mols);
 }
 
-MCSResult findMCS_P(const std::vector<ROMOL_SPTR>& mols,
-                    const char* params_json) {
+MCSResult findMCS_P(const std::vector<ROMOL_SPTR> &mols,
+                    const char *params_json) {
   MCSParameters p;
   parseMCSParametersJSON(params_json, &p);
   return findMCS(mols, &p);
 }
 
-MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
+MCSResult findMCS(const std::vector<ROMOL_SPTR> &mols, bool maximizeBonds,
                   double threshold, unsigned int timeout, bool verbose,
                   bool matchValences, bool ringMatchesRingOnly,
                   bool completeRingsOnly, bool matchChiralTag,
@@ -172,7 +172,7 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
                  matchChiralTag, atomComp, bondComp, IgnoreRingFusion);
 }
 
-MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
+MCSResult findMCS(const std::vector<ROMOL_SPTR> &mols, bool maximizeBonds,
                   double threshold, unsigned int timeout, bool verbose,
                   bool matchValences, bool ringMatchesRingOnly,
                   bool completeRingsOnly, bool matchChiralTag,
@@ -196,10 +196,10 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
   return findMCS(mols, &ps);
 }
 
-bool MCSProgressCallbackTimeout(const MCSProgressData&,
-                                const MCSParameters& params, void* userData) {
+bool MCSProgressCallbackTimeout(const MCSProgressData &,
+                                const MCSParameters &params, void *userData) {
   PRECONDITION(userData, "userData must not be NULL");
-  auto t0 = static_cast<unsigned long long*>(userData);
+  auto t0 = static_cast<unsigned long long *>(userData);
   unsigned long long t = nanoClock();
   return !params.Timeout || (t - *t0 <= params.Timeout * 1000000ULL);
 }
@@ -207,8 +207,8 @@ bool MCSProgressCallbackTimeout(const MCSProgressData&,
 // PREDEFINED FUNCTORS:
 
 //=== ATOM COMPARE ========================================================
-bool checkAtomRingMatch(const MCSAtomCompareParameters& p, const ROMol& mol1,
-                        unsigned int atom1, const ROMol& mol2,
+bool checkAtomRingMatch(const MCSAtomCompareParameters &p, const ROMol &mol1,
+                        unsigned int atom1, const ROMol &mol2,
                         unsigned int atom2) {
   if (p.RingMatchesRingOnly) {
     const auto ri1 = mol1.getRingInfo();
@@ -221,16 +221,16 @@ bool checkAtomRingMatch(const MCSAtomCompareParameters& p, const ROMol& mol1,
   }
 }
 
-bool checkAtomCharge(const MCSAtomCompareParameters&, const ROMol& mol1,
-                     unsigned int atom1, const ROMol& mol2,
+bool checkAtomCharge(const MCSAtomCompareParameters &, const ROMol &mol1,
+                     unsigned int atom1, const ROMol &mol2,
                      unsigned int atom2) {
   const auto a1 = mol1.getAtomWithIdx(atom1);
   const auto a2 = mol2.getAtomWithIdx(atom2);
   return a1->getFormalCharge() == a2->getFormalCharge();
 }
 
-bool checkAtomChirality(const MCSAtomCompareParameters&, const ROMol& mol1,
-                        unsigned int atom1, const ROMol& mol2,
+bool checkAtomChirality(const MCSAtomCompareParameters &, const ROMol &mol1,
+                        unsigned int atom1, const ROMol &mol2,
                         unsigned int atom2) {
   const auto a1 = mol1.getAtomWithIdx(atom1);
   const auto a2 = mol2.getAtomWithIdx(atom2);
@@ -243,20 +243,20 @@ bool checkAtomChirality(const MCSAtomCompareParameters&, const ROMol& mol1,
   return true;
 }
 
-bool checkAtomDistance(const MCSAtomCompareParameters& p, const ROMol& mol1,
-                       unsigned int atom1, const ROMol& mol2,
+bool checkAtomDistance(const MCSAtomCompareParameters &p, const ROMol &mol1,
+                       unsigned int atom1, const ROMol &mol2,
                        unsigned int atom2) {
-  const auto& ci1 = mol1.getConformer();
-  const auto& ci2 = mol2.getConformer();
-  const auto& pos1 = ci1.getAtomPos(atom1);
-  const auto& pos2 = ci2.getAtomPos(atom2);
+  const auto &ci1 = mol1.getConformer();
+  const auto &ci2 = mol2.getConformer();
+  const auto &pos1 = ci1.getAtomPos(atom1);
+  const auto &pos2 = ci2.getAtomPos(atom2);
   bool withinRange = (pos1 - pos2).length() <= p.MaxDistance;
   return withinRange;
 }
 
-bool MCSAtomCompareAny(const MCSAtomCompareParameters& p, const ROMol& mol1,
-                       unsigned int atom1, const ROMol& mol2,
-                       unsigned int atom2, void*) {
+bool MCSAtomCompareAny(const MCSAtomCompareParameters &p, const ROMol &mol1,
+                       unsigned int atom1, const ROMol &mol2,
+                       unsigned int atom2, void *) {
   if (p.MatchChiralTag && !checkAtomChirality(p, mol1, atom1, mol2, atom2)) {
     return false;
   }
@@ -273,9 +273,9 @@ bool MCSAtomCompareAny(const MCSAtomCompareParameters& p, const ROMol& mol1,
   return true;
 }
 
-bool MCSAtomCompareElements(const MCSAtomCompareParameters& p,
-                            const ROMol& mol1, unsigned int atom1,
-                            const ROMol& mol2, unsigned int atom2, void*) {
+bool MCSAtomCompareElements(const MCSAtomCompareParameters &p,
+                            const ROMol &mol1, unsigned int atom1,
+                            const ROMol &mol2, unsigned int atom2, void *) {
   const auto a1 = mol1.getAtomWithIdx(atom1);
   const auto a2 = mol2.getAtomWithIdx(atom2);
   if (a1->getAtomicNum() != a2->getAtomicNum()) {
@@ -299,9 +299,9 @@ bool MCSAtomCompareElements(const MCSAtomCompareParameters& p,
   return true;
 }
 
-bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters& p,
-                            const ROMol& mol1, unsigned int atom1,
-                            const ROMol& mol2, unsigned int atom2, void*) {
+bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters &p,
+                            const ROMol &mol1, unsigned int atom1,
+                            const ROMol &mol2, unsigned int atom2, void *) {
   // ignore everything except isotope information:
   const auto a1 = mol1.getAtomWithIdx(atom1);
   const auto a2 = mol2.getAtomWithIdx(atom2);
@@ -323,9 +323,9 @@ bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters& p,
   return true;
 }
 
-bool MCSAtomCompareAnyHeavyAtom(const MCSAtomCompareParameters& p,
-                                const ROMol& mol1, unsigned int atom1,
-                                const ROMol& mol2, unsigned int atom2, void*) {
+bool MCSAtomCompareAnyHeavyAtom(const MCSAtomCompareParameters &p,
+                                const ROMol &mol1, unsigned int atom1,
+                                const ROMol &mol2, unsigned int atom2, void *) {
   const auto a1 = mol1.getAtomWithIdx(atom1);
   const auto a2 = mol2.getAtomWithIdx(atom2);
   // Any atom, including H, matches another atom of the same type,  according to
@@ -372,8 +372,8 @@ class BondMatchOrderMatrix {
   }
 };
 
-bool checkBondStereo(const MCSBondCompareParameters&, const ROMol& mol1,
-                     unsigned int bond1, const ROMol& mol2,
+bool checkBondStereo(const MCSBondCompareParameters &, const ROMol &mol1,
+                     unsigned int bond1, const ROMol &mol2,
                      unsigned int bond2) {
   const auto b1 = mol1.getBondWithIdx(bond1);
   const auto b2 = mol2.getBondWithIdx(bond2);
@@ -389,18 +389,18 @@ bool checkBondStereo(const MCSBondCompareParameters&, const ROMol& mol1,
   return true;
 }
 
-bool havePairOfCompatibleRings(const MCSBondCompareParameters&,
-                               const ROMol& mol1, unsigned int bond1,
-                               const ROMol& mol2, unsigned int bond2) {
+bool havePairOfCompatibleRings(const MCSBondCompareParameters &,
+                               const ROMol &mol1, unsigned int bond1,
+                               const ROMol &mol2, unsigned int bond2) {
   const auto ri1 = mol1.getRingInfo();
   const auto ri2 = mol2.getRingInfo();
-  const auto& bondRings1 = ri1->bondRings();
-  const auto& bondRings2 = ri2->bondRings();
+  const auto &bondRings1 = ri1->bondRings();
+  const auto &bondRings2 = ri2->bondRings();
   for (unsigned int ringIdx1 : ri1->bondMembers(bond1)) {
-    const auto& ring1 = bondRings1.at(ringIdx1);
+    const auto &ring1 = bondRings1.at(ringIdx1);
     bool isRing1Fused = ri1->isRingFused(ringIdx1);
     for (unsigned int ringIdx2 : ri2->bondMembers(bond2)) {
-      const auto& ring2 = bondRings2.at(ringIdx2);
+      const auto &ring2 = bondRings2.at(ringIdx2);
       if (ring1.size() == ring2.size()) {
         return true;
       }
@@ -416,15 +416,15 @@ bool havePairOfCompatibleRings(const MCSBondCompareParameters&,
   return false;
 }
 
-bool checkBondRingMatch(const MCSBondCompareParameters& p, const ROMol& mol1,
-                        unsigned int bond1, const ROMol& mol2,
+bool checkBondRingMatch(const MCSBondCompareParameters &p, const ROMol &mol1,
+                        unsigned int bond1, const ROMol &mol2,
                         unsigned int bond2) {
   const auto ri1 = mol1.getRingInfo();
   const auto ri2 = mol2.getRingInfo();
   // indices of rings in the query molecule
-  const auto& ringIndices1 = ri1->bondMembers(bond1);
+  const auto &ringIndices1 = ri1->bondMembers(bond1);
   // indices of rings in the target molecule
-  const auto& ringIndices2 = ri2->bondMembers(bond2);
+  const auto &ringIndices2 = ri2->bondMembers(bond2);
   bool bond1inRing = !ringIndices1.empty();
   bool bond2inRing = !ringIndices2.empty();
   bool res = (bond1inRing == bond2inRing);
@@ -439,9 +439,9 @@ bool checkBondRingMatch(const MCSBondCompareParameters& p, const ROMol& mol1,
   return res;
 }
 
-bool MCSBondCompareAny(const MCSBondCompareParameters& p, const ROMol& mol1,
-                       unsigned int bond1, const ROMol& mol2,
-                       unsigned int bond2, void*) {
+bool MCSBondCompareAny(const MCSBondCompareParameters &p, const ROMol &mol1,
+                       unsigned int bond1, const ROMol &mol2,
+                       unsigned int bond2, void *) {
   if (p.MatchStereo && !checkBondStereo(p, mol1, bond1, mol2, bond2)) {
     return false;
   }
@@ -451,9 +451,9 @@ bool MCSBondCompareAny(const MCSBondCompareParameters& p, const ROMol& mol1,
   return true;
 }
 
-bool MCSBondCompareOrder(const MCSBondCompareParameters& p, const ROMol& mol1,
-                         unsigned int bond1, const ROMol& mol2,
-                         unsigned int bond2, void*) {
+bool MCSBondCompareOrder(const MCSBondCompareParameters &p, const ROMol &mol1,
+                         unsigned int bond1, const ROMol &mol2,
+                         unsigned int bond2, void *) {
   static const BondMatchOrderMatrix match(true);  // ignore Aromatization
   const auto b1 = mol1.getBondWithIdx(bond1);
   const auto b2 = mol2.getBondWithIdx(bond2);
@@ -471,9 +471,9 @@ bool MCSBondCompareOrder(const MCSBondCompareParameters& p, const ROMol& mol1,
   return false;
 }
 
-bool MCSBondCompareOrderExact(const MCSBondCompareParameters& p,
-                              const ROMol& mol1, unsigned int bond1,
-                              const ROMol& mol2, unsigned int bond2, void*) {
+bool MCSBondCompareOrderExact(const MCSBondCompareParameters &p,
+                              const ROMol &mol1, unsigned int bond1,
+                              const ROMol &mol2, unsigned int bond2, void *) {
   static const BondMatchOrderMatrix match(false);  // AROMATIC != SINGLE
   const auto b1 = mol1.getBondWithIdx(bond1);
   const auto b2 = mol2.getBondWithIdx(bond2);
@@ -502,12 +502,11 @@ namespace {
 // which are part of MCS and are not fused.
 class RingBondCountVect {
  public:
-  RingBondCountVect(const ROMol& mol) :
-    d_mol(mol),
-    d_ringInfo(mol.getRingInfo()) {
+  RingBondCountVect(const ROMol &mol)
+      : d_mol(mol), d_ringInfo(mol.getRingInfo()) {
     d_ringBondCountVect.resize(d_ringInfo->numRings());
     d_isMCSBond.resize(mol.getNumBonds());
-    for (auto& ringBondCount : d_ringBondCountVect) {
+    for (auto &ringBondCount : d_ringBondCountVect) {
       ringBondCount.isMCSRingBond.resize(mol.getNumBonds());
       ringBondCount.isMCSRingBondNonFused.resize(mol.getNumBonds());
       ringBondCount.isMCSRingBondFused.resize(mol.getNumBonds());
@@ -516,8 +515,7 @@ class RingBondCountVect {
   // In the 1st pass, we set fused/non-fused bits simply based on
   // numBondRings.
   void setMCSBondBitsPass1(unsigned int beginAtomIdx, unsigned int endAtomIdx,
-                          const std::uint32_t c[],
-                          const FMCS::Graph& graph) {
+                           const std::uint32_t c[], const FMCS::Graph &graph) {
     const auto bond =
         d_mol.getBondBetweenAtoms(graph[c[beginAtomIdx]], graph[c[endAtomIdx]]);
     CHECK_INVARIANT(bond, "");
@@ -531,7 +529,7 @@ class RingBondCountVect {
       d_ringBondCountVect[ringIdx].isMCSRingBond.set(bi);
       d_ringBondCountVect[ringIdx].isMCSRingBondNonFused.set(bi);
     } else {
-      for (const auto& ringIdx : d_ringInfo->bondMembers(bi)) {
+      for (const auto &ringIdx : d_ringInfo->bondMembers(bi)) {
         d_ringBondCountVect[ringIdx].isMCSRingBond.set(bi);
         d_ringBondCountVect[ringIdx].isMCSRingBondFused.set(bi);
       }
@@ -540,8 +538,9 @@ class RingBondCountVect {
   // In the 2nd pass, we refine the above as certain bonds originally
   // marked as fused can be relabelled as non-fused
   void setMCSBondBitsPass2() {
-    for (auto& ringBondCount : d_ringBondCountVect) {
-      ringBondCount.nonFusedCountPass1 = ringBondCount.isMCSRingBondNonFused.count();
+    for (auto &ringBondCount : d_ringBondCountVect) {
+      ringBondCount.nonFusedCountPass1 =
+          ringBondCount.isMCSRingBondNonFused.count();
       ringBondCount.fusedCountPass1 = ringBondCount.isMCSRingBondFused.count();
     }
     for (unsigned int bi = 0; bi < d_mol.getNumBonds(); ++bi) {
@@ -550,7 +549,7 @@ class RingBondCountVect {
       }
       int fusedBondRingIdx = -1;
       unsigned int fusedBondCount = 0;
-      for (auto& ringBondCount : d_ringBondCountVect) {
+      for (auto &ringBondCount : d_ringBondCountVect) {
         if (!ringBondCount.isMCSRingBondFused.test(bi)) {
           continue;
         }
@@ -571,9 +570,9 @@ class RingBondCountVect {
     }
   }
   bool isRingFusionHonored() {
-    for (const auto& ringBondCount : d_ringBondCountVect) {
+    for (const auto &ringBondCount : d_ringBondCountVect) {
       unsigned int ringIdx = &ringBondCount - &d_ringBondCountVect.front();
-      const auto& bondRings = d_ringInfo->bondRings().at(ringIdx);
+      const auto &bondRings = d_ringInfo->bondRings().at(ringIdx);
       // if all or no bonds of this ring are part of MCS, no need to do further
       // checks
       const auto numRingBondsInMCS = ringBondCount.isMCSRingBond.count();
@@ -584,19 +583,19 @@ class RingBondCountVect {
       // if they are non-fused, it's OK
       // if they are fused but classified as non-fused, it's OK
       // otherwise count a missing fused bond
-      // if the sum of missing fused bonds + fused bonds in MCS + non-fused bonds
-      // in MCS equals to the ring size, then we have failed the check
+      // if the sum of missing fused bonds + fused bonds in MCS + non-fused
+      // bonds in MCS equals to the ring size, then we have failed the check
       const auto numNonFusedRingBondsInMCS =
           ringBondCount.isMCSRingBondNonFused.count();
       const auto numFusedRingBondsInMCS =
           ringBondCount.isMCSRingBondFused.count();
-      const auto numMissingFusedBonds =
-          std::count_if(bondRings.begin(), bondRings.end(),
-                        [this, &ringBondCount](const auto bi) {
-                          return (d_ringInfo->numBondRings(bi) > 1 &&
-                                  !ringBondCount.isMCSRingBondNonFused.test(bi) &&
-                                  !ringBondCount.isMCSRingBondFused.test(bi));
-                        });
+      const auto numMissingFusedBonds = std::count_if(
+          bondRings.begin(), bondRings.end(),
+          [this, &ringBondCount](const auto bi) {
+            return (d_ringInfo->numBondRings(bi) > 1 &&
+                    !ringBondCount.isMCSRingBondNonFused.test(bi) &&
+                    !ringBondCount.isMCSRingBondFused.test(bi));
+          });
       if (numMissingFusedBonds + numFusedRingBondsInMCS +
               numNonFusedRingBondsInMCS ==
           bondRings.size()) {
@@ -605,6 +604,7 @@ class RingBondCountVect {
     }
     return true;
   }
+
  private:
   struct BondCount {
     boost::dynamic_bitset<> isMCSRingBond;
@@ -613,7 +613,7 @@ class RingBondCountVect {
     boost::dynamic_bitset<> isMCSRingBondFused;
     unsigned int fusedCountPass1 = 0;
   };
-  const ROMol& d_mol;
+  const ROMol &d_mol;
   const RingInfo *d_ringInfo;
   std::vector<BondCount> d_ringBondCountVect;
   boost::dynamic_bitset<> d_isMCSBond;
@@ -621,9 +621,9 @@ class RingBondCountVect {
 }  // end of anonymous namespace
 
 inline bool ringFusionCheck(const std::uint32_t c1[], const std::uint32_t c2[],
-                            const ROMol& mol1, const FMCS::Graph& query,
-                            const ROMol& mol2, const FMCS::Graph& target,
-                            const MCSParameters& p) {
+                            const ROMol &mol1, const FMCS::Graph &query,
+                            const ROMol &mol2, const FMCS::Graph &target,
+                            const MCSParameters &p) {
   /*
   Consider this case: MCS between
   2-methylbicyclo[4.3.0]nonane and 1-methylbicyclo[3.1.0]hexane
@@ -656,15 +656,16 @@ inline bool ringFusionCheck(const std::uint32_t c1[], const std::uint32_t c2[],
   RingBondCountVect mol1RingBondCountVect(mol1);
   RingBondCountVect mol2RingBondCountVect(mol2);
   auto queryEdges = boost::edges(query);
-  std::for_each(
-      queryEdges.first, queryEdges.second,
-      [&c1, &c2, &query, &target, &mol1RingBondCountVect,
-       &mol2RingBondCountVect](const auto& edge) {
-        const auto beginAtomIdx = boost::source(edge, query);
-        const auto endAtomIdx = boost::target(edge, query);
-        mol1RingBondCountVect.setMCSBondBitsPass1(beginAtomIdx, endAtomIdx, c1, query);
-        mol2RingBondCountVect.setMCSBondBitsPass1(beginAtomIdx, endAtomIdx, c2, target);
-      });
+  std::for_each(queryEdges.first, queryEdges.second,
+                [&c1, &c2, &query, &target, &mol1RingBondCountVect,
+                 &mol2RingBondCountVect](const auto &edge) {
+                  const auto beginAtomIdx = boost::source(edge, query);
+                  const auto endAtomIdx = boost::target(edge, query);
+                  mol1RingBondCountVect.setMCSBondBitsPass1(
+                      beginAtomIdx, endAtomIdx, c1, query);
+                  mol2RingBondCountVect.setMCSBondBitsPass1(
+                      beginAtomIdx, endAtomIdx, c2, target);
+                });
   mol1RingBondCountVect.setMCSBondBitsPass2();
   mol2RingBondCountVect.setMCSBondBitsPass2();
   bool mol1Honored = mol1RingBondCountVect.isRingFusionHonored();
@@ -678,9 +679,9 @@ inline bool ringFusionCheck(const std::uint32_t c1[], const std::uint32_t c2[],
 }
 
 bool FinalMatchCheckFunction(const std::uint32_t c1[], const std::uint32_t c2[],
-                             const ROMol& mol1, const FMCS::Graph& query,
-                             const ROMol& mol2, const FMCS::Graph& target,
-                             const MCSParameters* p) {
+                             const ROMol &mol1, const FMCS::Graph &query,
+                             const ROMol &mol2, const FMCS::Graph &target,
+                             const MCSParameters *p) {
   PRECONDITION(p, "p must not be NULL");
   if ((p->BondCompareParameters.MatchFusedRings ||
        p->BondCompareParameters.MatchFusedRingsStrict) &&
@@ -691,7 +692,7 @@ bool FinalMatchCheckFunction(const std::uint32_t c1[], const std::uint32_t c2[],
       !FinalChiralityCheckFunction(c1, c2, mol1, query, mol2, target, p)) {
     return false;
   }
-  const auto ip = dynamic_cast<const detail::MCSParametersInternal*>(p);
+  const auto ip = dynamic_cast<const detail::MCSParametersInternal *>(p);
   if (ip && ip->UserFinalMatchChecker) {
     return ip->UserFinalMatchChecker(c1, c2, mol1, query, mol2, target, p);
   }
@@ -699,10 +700,10 @@ bool FinalMatchCheckFunction(const std::uint32_t c1[], const std::uint32_t c2[],
 }
 
 bool FinalChiralityCheckFunction(const std::uint32_t c1[],
-                                 const std::uint32_t c2[], const ROMol& mol1,
-                                 const FMCS::Graph& query, const ROMol& mol2,
-                                 const FMCS::Graph& target,
-                                 const MCSParameters* /*unused*/) {
+                                 const std::uint32_t c2[], const ROMol &mol1,
+                                 const FMCS::Graph &query, const ROMol &mol2,
+                                 const FMCS::Graph &target,
+                                 const MCSParameters * /*unused*/) {
   const unsigned int qna = boost::num_vertices(query);  // getNumAtoms()
   // check chiral atoms only:
   for (unsigned int i = 0; i < qna; ++i) {
@@ -765,7 +766,7 @@ bool FinalChiralityCheckFunction(const std::uint32_t c1[],
     // #688
     INT_LIST qmoOrder;
     {
-      for (const auto& nbri :
+      for (const auto &nbri :
            boost::make_iterator_range(mol1.getAtomBonds(a1))) {
         int dbidx = mol1[nbri]->getIdx();
         if (std::find(qOrder.begin(), qOrder.end(), dbidx) != qOrder.end()) {
@@ -791,7 +792,7 @@ bool FinalChiralityCheckFunction(const std::uint32_t c1[],
       mOrder.push_back(-1);
     }
     INT_LIST moOrder;
-    for (const auto& nbri : boost::make_iterator_range(mol2.getAtomBonds(a2))) {
+    for (const auto &nbri : boost::make_iterator_range(mol2.getAtomBonds(a2))) {
       int dbidx = mol2[nbri]->getIdx();
       if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end()) {
         moOrder.push_back(dbidx);
@@ -817,7 +818,7 @@ bool FinalChiralityCheckFunction(const std::uint32_t c1[],
   for (unsigned int j = 0; j < qna; ++j) {
     qMap[query[c1[j]]] = j;
   }
-  for (const auto& bondIdx : boost::make_iterator_range(boost::edges(query))) {
+  for (const auto &bondIdx : boost::make_iterator_range(boost::edges(query))) {
     const auto qBnd = mol1.getBondWithIdx(query[bondIdx]);
     if (qBnd->getBondType() != Bond::DOUBLE ||
         qBnd->getStereo() <= Bond::STEREOANY) {
@@ -884,9 +885,9 @@ bool FinalChiralityCheckFunction(const std::uint32_t c1[],
 
 bool FinalChiralityCheckFunction_1(const short unsigned int c1[],
                                    const short unsigned int c2[],
-                                   const ROMol& mol1, const FMCS::Graph& query,
-                                   const ROMol& mol2, const FMCS::Graph& target,
-                                   const MCSParameters*) {
+                                   const ROMol &mol1, const FMCS::Graph &query,
+                                   const ROMol &mol2, const FMCS::Graph &target,
+                                   const MCSParameters *) {
   const unsigned int qna = boost::num_vertices(query);  // getNumAtoms()
   // check chiral atoms:
   for (unsigned int i = 0; i < qna; ++i) {
@@ -941,7 +942,7 @@ bool FinalChiralityCheckFunction_1(const short unsigned int c1[],
   for (unsigned int j = 0; j < qna; ++j) {
     qMap[query[c1[j]]] = j;
   }
-  for (const auto& bondIdx : boost::make_iterator_range(boost::edges(query))) {
+  for (const auto &bondIdx : boost::make_iterator_range(boost::edges(query))) {
     const auto qBnd = mol1.getBondWithIdx(query[bondIdx]);
     if (qBnd->getBondType() != Bond::DOUBLE ||
         qBnd->getStereo() <= Bond::STEREOANY) {
@@ -954,7 +955,7 @@ bool FinalChiralityCheckFunction_1(const short unsigned int c1[],
       continue;
     }
 
-    const Bond* mBnd =
+    const Bond *mBnd =
         mol2.getBondBetweenAtoms(target[c2[qMap[qBnd->getBeginAtomIdx()]]],
                                  target[c2[qMap[qBnd->getEndAtomIdx()]]]);
     CHECK_INVARIANT(mBnd, "Matching bond not found");
@@ -1006,7 +1007,7 @@ bool FinalChiralityCheckFunction_1(const short unsigned int c1[],
 }
 
 namespace detail {
-MCSParametersInternal::MCSParametersInternal(const MCSParameters* params)
+MCSParametersInternal::MCSParametersInternal(const MCSParameters *params)
     : MCSParameters(params) {
   UserFinalMatchChecker = FinalMatchChecker;
   FinalMatchChecker = FinalMatchCheckFunction;

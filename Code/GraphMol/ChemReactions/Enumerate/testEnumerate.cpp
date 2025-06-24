@@ -68,12 +68,12 @@ void pickleTest(EnumerationStrategyBase &en, size_t len) {
     std::stringstream ss;
     {
       boost::archive::text_oarchive ar(ss);
-      ar &base;
+      ar & base;
     }
     boost::shared_ptr<EnumerationStrategyBase> copy;
     {
       boost::archive::text_iarchive ar(ss);
-      ar &copy;
+      ar & copy;
     }
     TEST_ASSERT(std::string(base->type()) == std::string(copy->type()));
     TEST_ASSERT(base->next() == copy->next());
@@ -221,12 +221,12 @@ void testEnumerations() {
       std::stringstream ss;
       {
         boost::archive::text_oarchive ar(ss);
-        ar &en;
+        ar & en;
       }
       boost::shared_ptr<EnumerateLibrary> copy;
       {
         boost::archive::text_iarchive ar(ss);
-        ar &copy;
+        ar & copy;
       }
 
       for (size_t j = 0; j < 10; ++j) {

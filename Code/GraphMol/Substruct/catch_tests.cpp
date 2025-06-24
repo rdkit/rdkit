@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019-2023 Greg Landrum
+//  Copyright (C) 2019-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,6 +19,9 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/QueryOps.h>
+#include <GraphMol/MolPickler.h>
 
 using namespace RDKit;
 typedef std::tuple<std::string, std::string, size_t> matchCase;
@@ -199,17 +202,17 @@ TEST_CASE("substructure parameters", "[substruct]") {
 }
 
 namespace {
-bool no_match(const ROMol &mol, const std::vector<unsigned int> &ids) {
+bool no_match(const ROMol &mol, const std::span<const unsigned int> &ids) {
   RDUNUSED_PARAM(mol);
   RDUNUSED_PARAM(ids);
   return false;
 }
-bool always_match(const ROMol &mol, const std::vector<unsigned int> &ids) {
+bool always_match(const ROMol &mol, const std::span<const unsigned int> &ids) {
   RDUNUSED_PARAM(mol);
   RDUNUSED_PARAM(ids);
   return true;
 }
-bool bigger(const ROMol &mol, const std::vector<unsigned int> &ids) {
+bool bigger(const ROMol &mol, const std::span<const unsigned int> &ids) {
   RDUNUSED_PARAM(mol);
   return std::accumulate(ids.begin(), ids.end(), 0) > 5;
 }
@@ -539,5 +542,370 @@ TEST_CASE(
   {
     auto matches = SubstructMatch(*m, *q, ps);
     CHECK(matches.size() == num_atoms);
+  }
+}
+
+TEST_CASE("pickling HasPropWithValue queries") {
+  SubstructMatchParameters ps;
+  SECTION("basics int") {
+    auto mol = "CC"_smarts;
+    auto target = "CC"_smiles;
+    REQUIRE(mol);
+    REQUIRE(target);
+
+    RWMol mol2(*mol);
+    RWMol mol3(*mol);
+
+    mol->getAtomWithIdx(0)->expandQuery(makePropQuery<Atom, int>("foo", 1, 1));
+    mol->getBondWithIdx(0)->expandQuery(makePropQuery<Bond, int>("bar", 1, 0));
+
+    mol2.getAtomWithIdx(0)->expandQuery(makePropQuery<Atom, int>("foo", 1, 0));
+    mol2.getBondWithIdx(0)->expandQuery(makePropQuery<Bond, int>("bar", 1, 0));
+    mol3.getAtomWithIdx(0)->expandQuery(makePropQuery<Atom, int>("foo", 2, 0));
+    mol3.getBondWithIdx(0)->expandQuery(makePropQuery<Bond, int>("bar", 2, 0));
+
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+    target->getAtomWithIdx(0)->setProp<int>("foo", 2);
+    target->getBondWithIdx(0)->setProp<int>("bar", 1);
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+
+    {
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 1);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol2, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol3, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+    }
+  }
+  SECTION("basics string") {
+    auto mol = "CC"_smarts;
+    auto target = "CC"_smiles;
+    REQUIRE(mol);
+    REQUIRE(target);
+
+    RWMol mol2(*mol);
+    RWMol mol3(*mol);
+
+    mol->getAtomWithIdx(0)->expandQuery(
+        makePropQuery<Atom, std::string>("foo", "asdfs"));
+    mol->getBondWithIdx(0)->expandQuery(
+        makePropQuery<Bond, std::string>("bar", "dsafasdf"));
+
+    mol2.getAtomWithIdx(0)->expandQuery(
+        makePropQuery<Atom, std::string>("foo", "asdfs"));
+    mol2.getBondWithIdx(0)->expandQuery(
+        makePropQuery<Bond, std::string>("bar", "dsa"));
+    mol3.getAtomWithIdx(0)->expandQuery(
+        makePropQuery<Atom, std::string>("foo", "asd"));
+    mol3.getBondWithIdx(0)->expandQuery(
+        makePropQuery<Bond, std::string>("bar", "dsafasdf"));
+
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+    target->getAtomWithIdx(0)->setProp<std::string>("foo", "asdfs");
+    target->getBondWithIdx(0)->setProp<std::string>("bar", "dsafasdf");
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+
+    {
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 1);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol2, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol3, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+    }
+  }
+  SECTION("basics EBV") {
+    auto mol = "CC"_smarts;
+    auto target = "CC"_smiles;
+    REQUIRE(mol);
+    REQUIRE(target);
+
+    ExplicitBitVect bv(10);
+    bv.setBit(0);
+    bv.setBit(2);
+    bv.setBit(3);
+    bv.setBit(5);
+    bv.setBit(7);
+    bv.setBit(9);
+
+    RWMol mol2(*mol);
+    RWMol mol3(*mol);
+
+    mol->getAtomWithIdx(0)->expandQuery(
+        makePropQuery<Atom, ExplicitBitVect>("foo", bv, 0.0));
+    mol->getBondWithIdx(0)->expandQuery(
+        makePropQuery<Bond, ExplicitBitVect>("bar", bv, 0.0));
+    ExplicitBitVect bv2(bv);
+    bv2.unsetBit(9);
+    mol2.getAtomWithIdx(0)->expandQuery(
+        makePropQuery<Atom, ExplicitBitVect>("foo", bv2, 0.0));
+    mol3.getBondWithIdx(0)->expandQuery(
+        makePropQuery<Bond, ExplicitBitVect>("bar", bv2, 0.0));
+
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+
+    target->getAtomWithIdx(0)->setProp<ExplicitBitVect>("foo", bv);
+    target->getBondWithIdx(0)->setProp<ExplicitBitVect>("bar", bv);
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+    {
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 1);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol2, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol3, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+    }
+  }
+}
+
+TEST_CASE("specified query matches unspecified atom") {
+  SECTION("atom basics") {
+    auto q = "F[C@](Cl)(Br)C"_smarts;
+    REQUIRE(q);
+
+    auto m1 = "F[C@](Cl)(Br)C"_smiles;
+    REQUIRE(m1);
+    auto m2 = "FC(Cl)(Br)C"_smiles;
+    REQUIRE(m2);
+    auto m3 = "F[C@@](Cl)(Br)C"_smiles;
+    REQUIRE(m3);
+
+    SubstructMatchParameters ps;
+    ps.useChirality = true;
+    CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
+    CHECK(SubstructMatch(*m2, *q, ps).empty());
+    CHECK(SubstructMatch(*m3, *q, ps).empty());
+
+    ps.specifiedStereoQueryMatchesUnspecified = true;
+    CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
+    CHECK(SubstructMatch(*m2, *q, ps).size() == 1);
+    CHECK(SubstructMatch(*m3, *q, ps).empty());
+  }
+  SECTION("bond basics") {
+    auto q = "F/C=C/Br"_smarts;
+    REQUIRE(q);
+
+    auto m1 = "F/C=C/Br"_smiles;
+    REQUIRE(m1);
+    auto m2 = "FC=CBr"_smiles;
+    REQUIRE(m2);
+    auto m3 = "F/C=C\\Br"_smiles;
+    REQUIRE(m3);
+
+    SubstructMatchParameters ps;
+    ps.useChirality = true;
+    CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
+    CHECK(SubstructMatch(*m2, *q, ps).empty());
+    CHECK(SubstructMatch(*m3, *q, ps).empty());
+
+    ps.specifiedStereoQueryMatchesUnspecified = true;
+    CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
+    CHECK(SubstructMatch(*m2, *q, ps).size() == 1);
+    CHECK(SubstructMatch(*m3, *q, ps).empty());
+  }
+}
+
+TEST_CASE(
+    "Github 8162: conjugated triple bonds match aromatic bonds with aromaticMatchesConjugated") {
+  SECTION("as reported") {
+    auto qry = R"CTAB(ACS Document 1996
+  ChemDraw01092510212D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 0.357236 0.412500 0.000000 0
+M  V30 2 C 1.071707 0.000000 0.000000 0
+M  V30 3 C -0.357236 0.000000 0.000000 0
+M  V30 4 N -1.071707 -0.412500 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 3 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(qry);
+    auto mol = "CN1C=NC=C1"_smiles;
+    REQUIRE(mol);
+    SubstructMatchParameters ps;
+    ps.aromaticMatchesConjugated = true;
+    CHECK(SubstructMatch(*mol, *qry, ps).empty());
+  }
+
+  SECTION("details") {
+    auto m_triple = "C#N"_smiles;
+    REQUIRE(m_triple);
+    m_triple->getBondWithIdx(0)->setIsConjugated(true);
+    auto m_double = "C=N"_smiles;
+    REQUIRE(m_double);
+    m_double->getBondWithIdx(0)->setIsConjugated(true);
+    auto m_single = "CN"_smiles;
+    REQUIRE(m_single);
+    m_single->getBondWithIdx(0)->setIsConjugated(true);
+    auto m_aromatic = "CN"_smiles;
+    REQUIRE(m_aromatic);
+    m_aromatic->getBondWithIdx(0)->setBondType(Bond::AROMATIC);
+    m_aromatic->getBondWithIdx(0)->setIsAromatic(true);
+    m_aromatic->getBondWithIdx(0)->setIsConjugated(true);
+
+    SubstructMatchParameters ps;
+    ps.aromaticMatchesConjugated = true;
+    CHECK(SubstructMatch(*m_triple, *m_aromatic, ps).empty());
+    CHECK(SubstructMatch(*m_aromatic, *m_triple, ps).empty());
+
+    CHECK(SubstructMatch(*m_double, *m_aromatic, ps).size() == 1);
+    CHECK(SubstructMatch(*m_aromatic, *m_double, ps).size() == 1);
+    CHECK(SubstructMatch(*m_single, *m_aromatic, ps).size() == 1);
+    CHECK(SubstructMatch(*m_aromatic, *m_single, ps).size() == 1);
+  }
+}
+
+TEST_CASE("Github #7295", "CIS/TRANS in aromatic ring") {
+  SECTION("Smart CIS/TRANS bonds should match single or aromatic") {
+    SubstructMatchParameters ps;
+
+    auto query =
+        "[O:1]=[c:2]1/[c:3](=[C:4]/[c:5]2:[c:10]:[c:9]:[c:8]:[c:7]:[c:6]:2):[s:11]:[c:12]2:[n:13]:1-[N:14]-[C:15]-[N:20]-[N:21]=2"_smarts;
+    auto mol =
+        "[O:1]=[c:2]1/[c:3](=[CH:4]/[c:5]2[cH:6][cH:7][cH:8][cH:9][cH:10]2)[s:11][c:12]2[n:13]1[NH:14][C:15]1([CH2:16][CH2:17][CH2:18][CH2:19]1)[NH:20][N:21]=2"_smiles;
+    CHECK(SubstructMatch(*mol, *query, ps).size() == 1);
+    ps.useChirality = true;
+    CHECK(SubstructMatch(*mol, *query, ps).size() == 1);
+    auto mol2 =
+        "[O:1]=[c:2]1\\[c:3](=[CH:4]/[c:5]2[cH:6][cH:7][cH:8][cH:9][cH:10]2)[s:11][c:12]2[n:13]1[NH:14][C:15]1([CH2:16][CH2:17][CH2:18][CH2:19]1)[NH:20][N:21]=2"_smiles;
+    CHECK(SubstructMatch(*mol2, *query, ps).size() == 0);
+  }
+}
+
+TEST_CASE(
+    "Github #8485: Allow single/double bonds to match aromatic in substructure search") {
+  SECTION("basics") {
+    auto m = "C1=CC=CC=C1"_smiles;
+    REQUIRE(m);
+    SubstructMatchParameters ps;
+    ps.aromaticMatchesSingleOrDouble = true;
+
+    {
+      auto q = "[#6]:[#6]"_smarts;
+      REQUIRE(q);
+      CHECK(!SubstructMatch(*m, *q).empty());
+      CHECK(!SubstructMatch(*m, *q, ps).empty());
+    }
+    {
+      auto q = "C-C"_smiles;
+      REQUIRE(q);
+      CHECK(SubstructMatch(*m, *q).empty());
+      CHECK(!SubstructMatch(*m, *q, ps).empty());
+    }
+    {
+      auto q = "C=C"_smiles;
+      REQUIRE(q);
+      CHECK(SubstructMatch(*m, *q).empty());
+      CHECK(!SubstructMatch(*m, *q, ps).empty());
+    }
+  }
+  SECTION("as reported") {
+    auto m = "C1=CC2=C(OC1=O)C(=CC=C2)C(=O)O"_smiles;
+    REQUIRE(m);
+    auto q = "CC(=O)OC1=CC=CC=C1C(=O)O"_smiles;
+    REQUIRE(q);
+    SubstructMatchParameters ps;
+    ps.aromaticMatchesSingleOrDouble = true;
+    CHECK(SubstructMatch(*m, *q).empty());
+    CHECK(!SubstructMatch(*m, *q, ps).empty());
+  }
+  SECTION("symmetry") {
+    auto m1 = "C1=CC=CC=C1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "C1CCCCC1"_smiles;
+    REQUIRE(m2);
+    CHECK(SubstructMatch(*m1, *m2).empty());
+    CHECK(SubstructMatch(*m2, *m1).empty());
+    SubstructMatchParameters ps;
+    ps.aromaticMatchesSingleOrDouble = true;
+    CHECK(!SubstructMatch(*m1, *m2, ps).empty());
+    CHECK(!SubstructMatch(*m2, *m1, ps).empty());
   }
 }

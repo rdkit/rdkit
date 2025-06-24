@@ -32,7 +32,7 @@ void test1() {
   std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7;
 
   Normalizer normalizer;
-  auto normalize = [&normalizer](const std::string & smiles) -> std::string {
+  auto normalize = [&normalizer](const std::string &smiles) -> std::string {
     std::unique_ptr<ROMol> molecule(SmilesToMol(smiles));
     std::unique_ptr<ROMol> normalized(normalizer.normalize(*molecule));
     return MolToSmiles(*normalized);
@@ -51,26 +51,22 @@ void test1() {
   TEST_ASSERT(normalize("C[n+]1ccccc1[O-]") == "Cn1ccccc1=O");
 
   // Test a case where 1,3-separated charges should not be recombined.
-  TEST_ASSERT(
-    normalize("CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]")
-    == "CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]");
+  TEST_ASSERT(normalize("CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]") ==
+              "CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]");
 
   // Test a case where 1,3-separated charges should not be recombined.
-  TEST_ASSERT(
-    normalize("[O-][n+]1cccc[n+]1[O-]") == "[O-][n+]1cccc[n+]1[O-]");
+  TEST_ASSERT(normalize("[O-][n+]1cccc[n+]1[O-]") == "[O-][n+]1cccc[n+]1[O-]");
 
   // Test 1,5-separated charges are recombined.
   TEST_ASSERT(normalize(R"(C[N+](C)=C\C=C\[O-])") == "CN(C)C=CC=O");
 
   // Test a case where 1,5-separated charges should not be recombined.
-  TEST_ASSERT(
-    normalize("C[N+]1=C2C=[N+]([O-])C=CN2CCC1")
-    == "C[N+]1=C2C=[N+]([O-])C=CN2CCC1");
+  TEST_ASSERT(normalize("C[N+]1=C2C=[N+]([O-])C=CN2CCC1") ==
+              "C[N+]1=C2C=[N+]([O-])C=CN2CCC1");
 
   // Failed on 1k normalize test sanitizeMol step
-  TEST_ASSERT(
-    normalize("O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12")
-    == "O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12");
+  TEST_ASSERT(normalize("O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12") ==
+              "O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12");
 
   // Test normalization of 1,3-conjugated cations
   TEST_ASSERT(normalize("C[N+](C)=CN") == "CN(C)C=[NH2+]");
@@ -549,10 +545,8 @@ void testGithub4281() {
 
 int main() {
   RDLog::InitLogs();
-#if 1
   test1();
   test2();
-#endif
   testGithub2414();
   testNormalizeMultipleAltSmarts();
   testGithub3460();

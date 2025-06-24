@@ -82,4 +82,3 @@ RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Transform2D operator*(
     const RDGeom::Transform2D &t1, const RDGeom::Transform2D &t2);
 
 #endif
-

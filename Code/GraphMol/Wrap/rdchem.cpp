@@ -102,7 +102,7 @@ T *next_ptr(O &self) {
 BOOST_PYTHON_MODULE(rdchem) {
   python::scope().attr("__doc__") =
       "Module containing the core chemistry functionality of the RDKit";
-  const bool register_scalar_converters=false;
+  const bool register_scalar_converters = false;
   boost::python::numpy::initialize(register_scalar_converters);
   RegisterListConverter<RDKit::Atom *>();
   RegisterListConverter<RDKit::Bond *>();

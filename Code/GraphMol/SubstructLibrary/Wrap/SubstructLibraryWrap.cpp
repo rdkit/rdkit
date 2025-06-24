@@ -743,7 +743,8 @@ struct substructlibrary_wrapper {
         python::init<>(python::args("self")))
         .def(python::init<unsigned int>(python::args("self", "numBits")));
 
-    python::class_<SubstructLibraryWrap, boost::shared_ptr<SubstructLibraryWrap>>(
+    python::class_<SubstructLibraryWrap,
+                   boost::shared_ptr<SubstructLibraryWrap>>(
         "SubstructLibrary", SubstructLibraryDoc,
         python::init<>(python::args("self")))
         .def(python::init<boost::shared_ptr<MolHolderBase>>(

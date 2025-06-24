@@ -78,7 +78,8 @@ const ROMol &catalogEntryGetMol(MolCatalogEntry &self) {
 }
 
 MolCatalog *createMolCatalog() {
-  return new MolCatalog(new MolCatalogParams());
+  MolCatalogParams params;
+  return new MolCatalog(&params);
 }
 struct MolCatalog_wrapper {
   static void wrap() {

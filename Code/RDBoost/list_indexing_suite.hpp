@@ -156,41 +156,6 @@ class list_indexing_suite
   }
 
  private:
-#if 0    
-        static void
-        base_append(Container& container, object v)
-        {
-            extract<data_type&> elem(v);
-            // try if elem is an exact Data
-            if (elem.check())
-            {
-                DerivedPolicies::append(container, elem());
-            }
-            else
-            {
-                //  try to convert elem to data_type
-                extract<data_type> elem(v);
-                if (elem.check())
-                {
-                    DerivedPolicies::append(container, elem());
-                }
-                else
-                {
-                    PyErr_SetString(PyExc_TypeError, 
-                        "Attempting to append an invalid type");
-                    throw_error_already_set();
-                }
-            }
-        }
-        
-        static void
-        base_extend(Container& container, object v)
-        {
-            std::vector<data_type> temp;
-            container_utils::extend_container(temp, v);
-            DerivedPolicies::extend(container, temp.begin(), temp.end());
-        }
-#endif
   static iterator_type moveToPos(Container& container, index_type i) {
     iterator_type pos;
     index_type idx = 0;

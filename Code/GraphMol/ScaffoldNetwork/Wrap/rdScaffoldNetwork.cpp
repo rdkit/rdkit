@@ -22,13 +22,14 @@ ScaffoldNetwork::ScaffoldNetwork *createNetworkHelper(
     python::object pmols,
     const ScaffoldNetwork::ScaffoldNetworkParams &params) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
-  ScaffoldNetwork::ScaffoldNetwork *res = new ScaffoldNetwork::ScaffoldNetwork;
+  std::unique_ptr<ScaffoldNetwork::ScaffoldNetwork> res(
+      new ScaffoldNetwork::ScaffoldNetwork);
   if (mols) {
     NOGIL gil;
 
     updateScaffoldNetwork(*mols, *res, params);
   }
-  return res;
+  return res.release();
 }
 void updateNetworkHelper(python::object pmols,
                          ScaffoldNetwork::ScaffoldNetwork &net,
@@ -101,6 +102,11 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
           &ScaffoldNetwork::ScaffoldNetworkParams::
               includeScaffoldsWithAttachments,
           "Include the version of the scaffold with attachment points")
+      .def_readwrite(
+          "includeNames",
+          &ScaffoldNetwork::ScaffoldNetworkParams::
+              includeNames,
+          "Include molecules names of the input molecules")
       .def_readwrite(
           "keepOnlyFirstFragment",
           &ScaffoldNetwork::ScaffoldNetworkParams::keepOnlyFirstFragment,

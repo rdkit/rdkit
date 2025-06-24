@@ -35,20 +35,19 @@ class RDKIT_RDGEOMETRYLIB_EXPORT GridException : public std::exception {
 };
 
 //! Virtual base class for a grid object
+template <typename VectorType, typename ValueType1, typename ValueType2>
 class RDKIT_RDGEOMETRYLIB_EXPORT Grid3D {
  public:
-  virtual ~Grid3D() {}
+  virtual ~Grid3D(){};
   virtual int getGridPointIndex(const Point3D &point) const = 0;
-  virtual int getVal(const Point3D &point) const = 0;
-  virtual void setVal(const Point3D &point, unsigned int val) = 0;
+  virtual ValueType1 getVal(const Point3D &point) const = 0;
+  virtual void setVal(const Point3D &point, ValueType2 val) = 0;
 
   virtual Point3D getGridPointLoc(unsigned int pointId) const = 0;
-  virtual unsigned int getVal(unsigned int pointId) const = 0;
-  virtual void setVal(unsigned int pointId, unsigned int val) = 0;
-
+  virtual ValueType2 getVal(unsigned int pointId) const = 0;
+  virtual void setVal(unsigned int pointId, ValueType2 val) = 0;
   virtual unsigned int getSize() const = 0;
-
-  virtual const RDKit::DiscreteValueVect *getOccupancyVect() const = 0;
+  virtual const VectorType *getOccupancyVect() const = 0;
 };
 }  // namespace RDGeom
 

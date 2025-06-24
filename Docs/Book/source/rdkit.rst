@@ -31,7 +31,6 @@ Submodules
    rdkit.RDPaths
    rdkit.RDRandom
    rdkit.TestRunner
-   rdkit.six
 
 Module contents
 ---------------

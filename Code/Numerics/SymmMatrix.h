@@ -16,9 +16,9 @@
 #include <cstring>
 #include <boost/smart_ptr.hpp>
 
-//#ifndef INVARIANT_SILENT_METHOD
-//#define INVARIANT_SILENT_METHOD
-//#endif
+// #ifndef INVARIANT_SILENT_METHOD
+// #define INVARIANT_SILENT_METHOD
+// #endif
 namespace RDNumeric {
 //! A symmetric matrix class
 /*!

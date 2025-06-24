@@ -8,9 +8,9 @@
 #
 import sys
 
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem.rdfiltercatalog import *
-
+MatchTypeVect = rdBase.MatchTypeVect
 
 class FilterMatcher(PythonFilterMatcher):
   """FilterMatcher - This class allows creation of Python based

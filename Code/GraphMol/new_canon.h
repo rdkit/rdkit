@@ -42,7 +42,7 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
       nullptr};  // if provided, this is used to order bonds
   unsigned int bondIdx{0};
 
-  bondholder(){};
+  bondholder() {};
   bondholder(Bond::BondType bt, Bond::BondStereo bs, unsigned int ni,
              unsigned int nsc, unsigned int bidx)
       : bondType(bt),
@@ -307,14 +307,36 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
     } else if (ivi > ivj) {
       return 1;
     }
-    if (df_useAtomMaps) {
+
+    if (df_useNonStereoRanks) {
+      // use the non-stereo ranks if they were assigned
+      int rankingNumber_i = 0;
+      int rankingNumber_j = 0;
+      dp_atoms[i].atom->getPropIfPresent(
+          common_properties::_CanonicalRankingNumber, rankingNumber_i);
+      dp_atoms[j].atom->getPropIfPresent(
+          common_properties::_CanonicalRankingNumber, rankingNumber_j);
+      if (rankingNumber_i < rankingNumber_j) {
+        return -1;
+      } else if (rankingNumber_i > rankingNumber_j) {
+        return 1;
+      }
+    }
+
+    if (df_useAtomMaps || df_useAtomMapsOnDummies) {
       // use the atom-mapping numbers if they were assigned
       int molAtomMapNumber_i = 0;
       int molAtomMapNumber_j = 0;
-      dp_atoms[i].atom->getPropIfPresent(common_properties::molAtomMapNumber,
-                                         molAtomMapNumber_i);
-      dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
-                                         molAtomMapNumber_j);
+      if (df_useAtomMaps ||
+          (df_useAtomMapsOnDummies && dp_atoms[i].atom->getAtomicNum() == 0)) {
+        dp_atoms[i].atom->getPropIfPresent(common_properties::molAtomMapNumber,
+                                           molAtomMapNumber_i);
+      }
+      if (df_useAtomMaps ||
+          (df_useAtomMapsOnDummies && dp_atoms[j].atom->getAtomicNum() == 0)) {
+        dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
+                                           molAtomMapNumber_j);
+      }
       if (molAtomMapNumber_i < molAtomMapNumber_j) {
         return -1;
       } else if (molAtomMapNumber_i > molAtomMapNumber_j) {
@@ -388,7 +410,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
     }
     // chirality if we're using it
     if (df_useChirality) {
-      // look at enhanced stereo
+      // look at enhanced stereo -  whichStereoGroup == 0 means no stereo
       ivi = dp_atoms[i].whichStereoGroup;  // can't use the index itself, but if
                                            // it's set then we're in an SG
       ivj = dp_atoms[j].whichStereoGroup;
@@ -398,28 +420,40 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
         } else if (ivj && !ivi) {
           return -1;
         } else if (ivi && ivj) {
-          ivi = static_cast<unsigned int>(dp_atoms[i].typeOfStereoGroup);
-          ivj = static_cast<unsigned int>(dp_atoms[j].typeOfStereoGroup);
-          if (ivi < ivj) {
+          auto iType = dp_atoms[i].typeOfStereoGroup;
+          auto jType = dp_atoms[j].typeOfStereoGroup;
+          if (iType < jType) {
             return -1;
-          } else if (ivi > ivj) {
+          } else if (iType > jType) {
             return 1;
           }
-          ivi = dp_atoms[i].whichStereoGroup - 1;
-          ivj = dp_atoms[j].whichStereoGroup - 1;
-          // now check the current classes of the other members of the SG
-          std::set<unsigned int> sgi;
-          for (auto sgat : dp_mol->getStereoGroups()[ivi].getAtoms()) {
-            sgi.insert(dp_atoms[sgat->getIdx()].index);
-          }
-          std::set<unsigned int> sgj;
-          for (auto sgat : dp_mol->getStereoGroups()[ivj].getAtoms()) {
-            sgj.insert(dp_atoms[sgat->getIdx()].index);
-          }
-          if (sgi < sgj) {
-            return -1;
-          } else if (sgi > sgj) {
-            return 1;
+          if (ivi != ivj) {
+            // now check the current classes of the other members of the SG
+            std::set<unsigned int> sgi;
+            for (const auto sgat :
+                 dp_mol->getStereoGroups()[ivi - 1].getAtoms()) {
+              sgi.insert(dp_atoms[sgat->getIdx()].index);
+            }
+            std::set<unsigned int> sgj;
+            for (const auto sgat :
+                 dp_mol->getStereoGroups()[ivj - 1].getAtoms()) {
+              sgj.insert(dp_atoms[sgat->getIdx()].index);
+            }
+            if (sgi < sgj) {
+              return -1;
+            } else if (sgi > sgj) {
+              return 1;
+            }
+          } else {  // same stereo group
+            if (iType == StereoGroupType::STEREO_ABSOLUTE) {
+              ivi = getChiralRank(dp_mol, dp_atoms, i);
+              ivj = getChiralRank(dp_mol, dp_atoms, j);
+              if (ivi < ivj) {
+                return -1;
+              } else if (ivi > ivj) {
+                return 1;
+              }
+            }
           }
         }
       } else {
@@ -475,7 +509,9 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   bool df_useChirality{true};
   bool df_useChiralityRings{true};
   bool df_useAtomMaps{true};
+  bool df_useNonStereoRanks{false};
   bool df_useChiralPresence{true};
+  bool df_useAtomMapsOnDummies{true};
 
   AtomCompareFunctor() {}
   AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
@@ -485,6 +521,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
         dp_mol(&m),
         dp_atomsInPlay(atomsInPlay),
         dp_bondsInPlay(bondsInPlay) {}
+
   int operator()(int i, int j) const {
     if (dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])) {
       return 0;
@@ -810,12 +847,14 @@ RDKIT_GRAPHMOL_EXPORT void ActivatePartitions(unsigned int nAtoms, int *order,
                                               int *count, int &activeset,
                                               int *next, int *changed);
 
+//! Note that atom maps on dummy atoms will always be used
 RDKIT_GRAPHMOL_EXPORT void rankMolAtoms(
     const ROMol &mol, std::vector<unsigned int> &res, bool breakTies = true,
     bool includeChirality = true, bool includeIsotopes = true,
     bool includeAtomMaps = true, bool includeChiralPresence = false,
-    bool includeStereoGroups = true);
+    bool includeStereoGroups = true, bool useNonStereoRanks = false);
 
+//! Note that atom maps on dummy atoms will always be used
 RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
     const ROMol &mol, std::vector<unsigned int> &res,
     const boost::dynamic_bitset<> &atomsInPlay,
@@ -825,6 +864,7 @@ RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
     bool includeChirality, bool includeIsotope, bool includeAtomMaps,
     bool includeChiralPresence);
 
+//! Note that atom maps on dummy atoms will always be used
 inline void rankFragmentAtoms(
     const ROMol &mol, std::vector<unsigned int> &res,
     const boost::dynamic_bitset<> &atomsInPlay,

@@ -40,7 +40,7 @@ constexpr unsigned int HetAtmFlag = 0x01;
 constexpr unsigned int WaterFlag = 0x10;
 
 struct CheckType {
-  const char* name;
+  const char *name;
   const unsigned int count;
 };
 
@@ -93,7 +93,7 @@ class AtomRecord {
   int hetAtmFlag;
   bool solventFlag;
   char flag;
-  ElemStruct* elem;
+  ElemStruct *elem;
 
   bool isSolvent() {
     switch (resName[0]) {
@@ -127,25 +127,25 @@ class AtomRecord {
   };
 
   // constructor to populate record
-  AtomRecord(const Atom& atm, const Conformer cnf) {
-    const AtomMonomerInfo* info = atm.getMonomerInfo();
+  AtomRecord(const Atom &atm, const Conformer cnf) {
+    const AtomMonomerInfo *info = atm.getMonomerInfo();
     unsigned int i;
     solventFlag = false;
 
     if (info) {
       atmName = info->getName();
-      resName = ((AtomPDBResidueInfo*)info)->getResidueName();
+      resName = ((AtomPDBResidueInfo *)info)->getResidueName();
 
       if (isSolvent()) {
         solventFlag = true;
         return;
       }
 
-      atmSerNo = ((AtomPDBResidueInfo*)info)->getSerialNumber();
-      resSerNo = ((AtomPDBResidueInfo*)info)->getResidueNumber();
+      atmSerNo = ((AtomPDBResidueInfo *)info)->getSerialNumber();
+      resSerNo = ((AtomPDBResidueInfo *)info)->getResidueNumber();
       pos = cnf.getAtomPos(atm.getIdx());
-      insert = ((AtomPDBResidueInfo*)info)->getInsertionCode();
-      chain = ((AtomPDBResidueInfo*)info)->getChainId();
+      insert = ((AtomPDBResidueInfo *)info)->getInsertionCode();
+      chain = ((AtomPDBResidueInfo *)info)->getChainId();
 
       hetAtmFlag = 1;
       for (i = 0; i < CHECKMAX; i++) {
@@ -171,33 +171,33 @@ class AtomRecord {
 };
 
 struct AtomList {
-  const AtomRecord* ptr[ATOMPOOL];
-  AtomList* next;
+  const AtomRecord *ptr[ATOMPOOL];
+  AtomList *next;
   unsigned int count;
 
   AtomList() : next(nullptr) {}
 };
 
-static void normalise(double* v) {
+static void normalise(double *v) {
   double len = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
   v[0] /= len;
   v[1] /= len;
   v[2] /= len;
 }
 
-static double triangleArea(const Point3D& p, const Point3D& q,
-                           const Point3D& r) {
+static double triangleArea(const Point3D &p, const Point3D &q,
+                           const Point3D &r) {
   auto a = q - p;
   auto b = r - p;
   auto c = a.crossProduct(b);
   return (0.5 * c.length());
 }
 
-static int within(const AtomRecord& src, const AtomRecord* dst, double dist) {
+static int within(const AtomRecord &src, const AtomRecord *dst, double dist) {
   return (src.pos - dst->pos).lengthSq() < dist * dist;
 }
 
-static void checkResidue(const AtomRecord* ptr, unsigned int count) {
+static void checkResidue(const AtomRecord *ptr, unsigned int count) {
   for (unsigned int i = 0; i < CHECKMAX; i++) {
     if (ptr->resName.compare(0, 3, residueCheck[i].name, 0, 3) == 0) {
       if (residueCheck[i].count != count) {
@@ -211,7 +211,7 @@ static void checkResidue(const AtomRecord* ptr, unsigned int count) {
   }
 }
 
-static bool sameResidue(const AtomRecord* ptr1, const AtomRecord* ptr2) {
+static bool sameResidue(const AtomRecord *ptr1, const AtomRecord *ptr2) {
   if ((ptr1->flag | ptr2->flag) & HetAtmFlag) return (false);
 
   return ((ptr1->resSerNo == ptr2->resSerNo) &&
@@ -231,11 +231,11 @@ struct State {
   ElemStruct elemS;  //                   Sulphur  //
   ElemStruct elemX;  // Sidechain Atom    Unknown  //
 
-  AtomList* grid[VOXORDER][VOXORDER][VOXORDER];
-  AtomList* freeList;
+  AtomList *grid[VOXORDER][VOXORDER][VOXORDER];
+  AtomList *freeList;
 
-  AtomList* neighbours;
-  const AtomRecord* recordCache;
+  AtomList *neighbours;
+  const AtomRecord *recordCache;
 
   unsigned long totalDots;
   ElemStruct standardDots;
@@ -251,7 +251,7 @@ struct State {
   double cenY;
   double cenZ;
 
-  void tesselate(const Point3D& p, const Point3D& q, const Point3D& r,
+  void tesselate(const Point3D &p, const Point3D &q, const Point3D &r,
                  unsigned int d) {
     Point3D u, v, w;
 
@@ -271,14 +271,14 @@ struct State {
       double area = triangleArea(p, q, r);
       standardDots.dots[standardDots.count].area = area;
       standardArea += area;
-      auto& n = standardDots.dots[standardDots.count++].v;
+      auto &n = standardDots.dots[standardDots.count++].v;
 
       n = p + q + r;
       n.normalize();
     }
   }
 
-  void generateElemPoints(ElemStruct* elem, double rad, double probeRadius,
+  void generateElemPoints(ElemStruct *elem, double rad, double probeRadius,
                           int dotDensity) {
     double x, y, z, p, q, xy;
     unsigned int vert;
@@ -288,7 +288,7 @@ struct State {
     elem->radius2 = rad * rad;
 
     if (dotDensity) {
-      long count = ((4.0 * M_PI) * rad * rad * dotDensity);
+      unsigned long count = ((4.0 * M_PI) * rad * rad * dotDensity);
       std::vector<DotStruct> dots(count);
 
       unsigned int equat = sqrt(M_PI * count);
@@ -318,7 +318,7 @@ struct State {
 
       count = i;
       double area = ((4.0 * M_PI) * elem->radius2) / count;
-      for (DotStruct& dot : dots) {
+      for (DotStruct &dot : dots) {
         dot.area = area;
       }
 
@@ -329,7 +329,7 @@ struct State {
     }
   }
 
-  void insertAtomList(AtomList** list, const AtomRecord* ptr) {
+  void insertAtomList(AtomList **list, const AtomRecord *ptr) {
     while (*list && ((*list)->count == ATOMPOOL)) {
       list = &(*list)->next;
     }
@@ -341,7 +341,7 @@ struct State {
         (*list)->next = nullptr;
         (*list)->count = 0;
       } else {
-        (*list) = (AtomList*)malloc(sizeof(AtomList));
+        (*list) = (AtomList *)malloc(sizeof(AtomList));
         (*list)->next = nullptr;
         (*list)->count = 0;
       }
@@ -349,15 +349,10 @@ struct State {
     (*list)->ptr[(*list)->count++] = ptr;
   }
 
-  void freeAtomList(AtomList* ptr) {
+  void freeAtomList(AtomList *ptr) {
     while (ptr) {
-      AtomList* next = ptr->next;
-#if 0
-      ptr->next = freeList;
-      freeList = ptr;
-#else
+      AtomList *next = ptr->next;
       free(ptr);
-#endif
       ptr = next;
     }
   }
@@ -373,8 +368,8 @@ struct State {
     }
   }
 
-  ElemStruct* getAtomElem(std::string atmName, bool typeFlag) {
-    const char* name = atmName.c_str();
+  ElemStruct *getAtomElem(std::string atmName, bool typeFlag) {
+    const char *name = atmName.c_str();
 
     if (typeFlag) { /* Only Recognise Backbone Atoms! */
       if ((name[1] == 'C') && (name[2] == 'A')) {
@@ -403,7 +398,7 @@ struct State {
     return (&elemX);
   }
 
-  AtomList* findNeighbours(const AtomRecord& atom, double range) {
+  AtomList *findNeighbours(const AtomRecord &atom, double range) {
     double maxRadius = 1.87;
     double maxDist = range + maxRadius;
 
@@ -433,13 +428,13 @@ struct State {
       uz = VOXORDER - 1;
     }
 
-    AtomList* neighbourList = nullptr;
+    AtomList *neighbourList = nullptr;
     for (int x = lx; x <= ux; x++) {
       for (int y = ly; y <= uy; y++) {
         for (int z = lz; z <= uz; z++) {
-          for (AtomList* list = grid[x][y][z]; list; list = list->next) {
+          for (AtomList *list = grid[x][y][z]; list; list = list->next) {
             for (unsigned int i = 0; i < list->count; i++) {
-              const AtomRecord* temp = list->ptr[i];
+              const AtomRecord *temp = list->ptr[i];
               if (temp != &atom) {
                 maxDist = range + temp->radius;
                 if (within(atom, temp, maxDist)) {
@@ -455,7 +450,7 @@ struct State {
     return neighbourList;
   }
 
-  bool testPoint(double* vect, double solvrad) {
+  bool testPoint(double *vect, double solvrad) {
     if (recordCache) {
       double dist = recordCache->radius + solvrad;
       double dx = recordCache->pos.x - vect[0];
@@ -467,9 +462,9 @@ struct State {
       recordCache = nullptr;
     }
 
-    for (const AtomList* list = neighbours; list; list = list->next) {
+    for (const AtomList *list = neighbours; list; list = list->next) {
       for (unsigned int i = 0; i < list->count; i++) {
-        const AtomRecord* ptr = list->ptr[i];
+        const AtomRecord *ptr = list->ptr[i];
         double dist = ptr->radius + solvrad;
         double dx = ptr->pos.x - vect[0];
         double dy = ptr->pos.y - vect[1];
@@ -485,11 +480,11 @@ struct State {
     return true;
   }
 
-  void determineCentreOfGravity(std::vector<AtomRecord>& memberAtoms) {
+  void determineCentreOfGravity(std::vector<AtomRecord> &memberAtoms) {
     double cx, cy, cz;
 
     cx = cy = cz = 0.0;
-    for (const AtomRecord& atom : memberAtoms) {
+    for (const AtomRecord &atom : memberAtoms) {
       cx += atom.pos.x;
       cy += atom.pos.y;
       cz += atom.pos.z;
@@ -558,7 +553,7 @@ struct State {
     }
   }
 
-  void createVoxelGrid(int mask, std::vector<AtomRecord>& memberAtoms) {
+  void createVoxelGrid(int mask, std::vector<AtomRecord> &memberAtoms) {
     double minx, miny, minz;
     double maxx, maxy, maxz;
 
@@ -575,7 +570,7 @@ struct State {
     }
     // loop over atoms to find min + max x, y + z
     bool init = false;
-    for (const AtomRecord& atom : memberAtoms) {
+    for (const AtomRecord &atom : memberAtoms) {
       if (!(atom.flag & mask)) {
         if (init) {
           if (atom.pos.x > maxx) {
@@ -613,7 +608,7 @@ struct State {
     voxZ = VOXORDER / ((maxz - minz) + 0.1);
     voxW = minz;
 
-    for (AtomRecord& atom : memberAtoms) {
+    for (AtomRecord &atom : memberAtoms) {
       if (atom.flag & mask) {
         continue;
       }
@@ -626,7 +621,7 @@ struct State {
     }
   }
 
-  double surfaceArea(const AtomRecord& atom, const double solvrad,
+  double surfaceArea(const AtomRecord &atom, const double solvrad,
                      const int dotDensity) {
     neighbours = findNeighbours(atom, atom.elem->radius + solvrad + solvrad);
     recordCache = nullptr;
@@ -635,7 +630,7 @@ struct State {
     double vect[3];
 
     if (dotDensity) {
-      for (const DotStruct& dot : atom.elem->dots) {
+      for (const DotStruct &dot : atom.elem->dots) {
         vect[0] = atom.pos.x + dot.v.x;
         vect[1] = atom.pos.y + dot.v.y;
         vect[2] = atom.pos.z + dot.v.z;
@@ -645,12 +640,12 @@ struct State {
       }
     } else {
       double factor = atom.elem->radius + solvrad;
-      
-      for (const DotStruct& dot : atom.elem->dots) {
+
+      for (const DotStruct &dot : atom.elem->dots) {
         vect[0] = atom.pos.x + factor * dot.v.x;
         vect[1] = atom.pos.y + factor * dot.v.y;
         vect[2] = atom.pos.z + factor * dot.v.z;
-        
+
         if (testPoint(vect, solvrad)) {
           surfacearea += dot.area;
         }
@@ -665,9 +660,9 @@ struct State {
 
   double calculateAccessibility(bool isProtein, double probeRadius,
                                 int dotDensity,
-                                std::vector<AtomRecord>& memberAtoms) {
-    AtomRecord* ptr = nullptr;
-    AtomRecord* prev = nullptr;
+                                std::vector<AtomRecord> &memberAtoms) {
+    AtomRecord *ptr = nullptr;
+    AtomRecord *prev = nullptr;
     unsigned int count = 0;
     double area = 0;
 
@@ -743,7 +738,7 @@ struct State {
         }
       }
     } else {
-      for (const AtomRecord& atom : memberAtoms) {
+      for (const AtomRecord &atom : memberAtoms) {
         area = surfaceArea(atom, probeRadius, dotDensity);
         totalArea += area;
       }
@@ -751,7 +746,7 @@ struct State {
     return totalArea;
   };
 
-  double partialVolume(const AtomRecord& atom, const double solvrad) {
+  double partialVolume(const AtomRecord &atom, const double solvrad) {
     double rad = atom.elem->radius + solvrad;
     neighbours = findNeighbours(atom, rad + solvrad);
     recordCache = nullptr;
@@ -762,7 +757,7 @@ struct State {
     px = py = pz = 0.0;
 
     double vect[3];
-    for (const DotStruct& dot : atom.elem->dots) {
+    for (const DotStruct &dot : atom.elem->dots) {
       vect[0] = atom.pos.x + rad * dot.v.x;
       vect[1] = atom.pos.y + rad * dot.v.y;
       vect[2] = atom.pos.z + rad * dot.v.z;
@@ -784,9 +779,9 @@ struct State {
   }
 
   double calculateVolume(const double probeRadius,
-                         const std::vector<AtomRecord>& memberAtoms) {
+                         const std::vector<AtomRecord> &memberAtoms) {
     double totalvol = 0.0;
-    for (const AtomRecord& atom : memberAtoms) {
+    for (const AtomRecord &atom : memberAtoms) {
       totalvol += partialVolume(atom, probeRadius);
     }
     totalvol *= ((4.0 / 3) * M_PI) / standardDots.count;
@@ -796,7 +791,7 @@ struct State {
 };
 
 // constructor definition
-DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol& mol,
+DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol &mol,
                                                    bool isProtein,
                                                    bool includeLigand,
                                                    double probeRadius,
@@ -813,7 +808,7 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol& mol,
   /*!
 
     \param mol: input molecule or protein
-    \param isProtein: flag to calculate burried surface area of a protein ligand 
+    \param isProtein: flag to calculate burried surface area of a protein ligand
     complex [default=false, free ligand]
     \param includeLigand: flag to trigger
     inclusion of bound ligand in surface area and volume calculations where
@@ -844,7 +839,7 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol& mol,
   }
 
   // if not protein, includeLigand should always be true
-  if (!isProtein){
+  if (!isProtein) {
     includeLigand = true;
   }
 
@@ -859,7 +854,7 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol& mol,
   State s;
   s.generateSurfacePoints(depth, isProtein, probeRadius, dotDensity);
 
-  const Conformer& conf = nmol->getConformer();
+  const Conformer &conf = nmol->getConformer();
 
   std::vector<AtomRecord> memberAtoms;
 

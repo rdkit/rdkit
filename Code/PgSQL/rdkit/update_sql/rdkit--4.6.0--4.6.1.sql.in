@@ -1,0 +1,23 @@
+DROP OPERATOR IF EXISTS @= (mol, mol);
+
+CREATE OPERATOR @= (
+    LEFTARG = mol,
+    RIGHTARG = mol,
+    PROCEDURE = mol_eq,
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>',
+    RESTRICT = eqsel,
+    JOIN = eqjoinsel
+);
+
+DROP OPERATOR IF EXISTS @= (reaction, reaction);
+
+CREATE OPERATOR @= (
+    LEFTARG = reaction,
+    RIGHTARG = reaction,
+    PROCEDURE = reaction_eq,
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>',
+    RESTRICT = eqsel,
+    JOIN = eqjoinsel
+);

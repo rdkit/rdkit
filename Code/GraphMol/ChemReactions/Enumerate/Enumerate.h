@@ -143,15 +143,15 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
   void save(Archive &ar, const unsigned int /*version*/) const {
     ar &boost::serialization::base_object<EnumerateLibraryBase>(*this);
     size_t sz = m_bbs.size();
-    ar &sz;
+    ar & sz;
 
     std::string pickle;
     for (size_t i = 0; i < m_bbs.size(); ++i) {
       sz = m_bbs[i].size();
-      ar &sz;
+      ar & sz;
       for (size_t j = 0; j < m_bbs[i].size(); ++j) {
         MolPickler::pickleMol(*m_bbs[i][j], pickle);
-        ar &pickle;
+        ar & pickle;
       }
     }
   }
@@ -160,16 +160,16 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
     ar &boost::serialization::base_object<EnumerateLibraryBase>(*this);
 
     size_t sz;
-    ar &sz;
+    ar & sz;
 
     m_bbs.resize(sz);
 
     for (size_t i = 0; i < m_bbs.size(); ++i) {
-      ar &sz;
+      ar & sz;
       m_bbs[i].resize(sz);
       std::string pickle;
       for (size_t j = 0; j < m_bbs[i].size(); ++j) {
-        ar &pickle;
+        ar & pickle;
         RWMol *mol = new RWMol();
         MolPickler::molFromPickle(pickle, *mol);
         m_bbs[i][j].reset(mol);

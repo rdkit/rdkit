@@ -31,7 +31,7 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   /*!
 
     \param mol: input molecule or protein
-    \param isProtein: flag to calculate burried surface area of a protein ligand 
+    \param isProtein: flag to calculate burried surface area of a protein ligand
     complex [default=false, free ligand]
     \param includeLigand: flag to trigger
     inclusion of bound ligand in surface area and volume calculations where
@@ -43,7 +43,7 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
     \param dotDensity: controls density of dots per atom
 
   */
-  DoubleCubicLatticeVolume(const ROMol& mol, bool isProtein = false,
+  DoubleCubicLatticeVolume(const ROMol &mol, bool isProtein = false,
                            bool includeLigand = true, double probeRadius = 1.2,
                            int depth = 4, int dotDensity = 0);
   //! Class for calculation of the Shrake and Rupley surface area and volume

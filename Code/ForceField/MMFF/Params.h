@@ -1,7 +1,5 @@
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2024 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,9 +7,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+//
 #include <RDGeneral/export.h>
-#ifndef __RD_MMFFPARAMS_H__
-#define __RD_MMFFPARAMS_H__
+#ifndef RD_MMFFPARAMS_H
+#define RD_MMFFPARAMS_H
 
 #include <memory>
 #include <RDGeneral/Invariant.h>
@@ -37,9 +36,9 @@
 namespace ForceFields {
 namespace MMFF {
 
-const double DEG2RAD = M_PI / 180.0;
-const double RAD2DEG = 180.0 / M_PI;
-const double MDYNE_A_TO_KCAL_MOL = 143.9325;
+constexpr double DEG2RAD = M_PI / 180.0;
+constexpr double RAD2DEG = 180.0 / M_PI;
+constexpr double MDYNE_A_TO_KCAL_MOL = 143.9325;
 inline bool isDoubleZero(const double x) {
   return ((x < 1.0e-10) && (x > -1.0e-10));
 }

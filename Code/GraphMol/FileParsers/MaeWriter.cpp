@@ -42,12 +42,12 @@ static const std::regex MMCT_PROP_REGEX("[birs]_[^_ ]+_.+");
 
 template <typename T>
 std::shared_ptr<mae::IndexedProperty<T>> getIndexedProperty(
-    mae::IndexedBlock& indexedBlock, const std::string& propName,
+    mae::IndexedBlock &indexedBlock, const std::string &propName,
     size_t numAtoms,
     std::shared_ptr<mae::IndexedProperty<T>> (mae::IndexedBlock::*getterFunc)(
-        const std::string&) const,
+        const std::string &) const,
     void (mae::IndexedBlock::*setterFunc)(
-        const std::string&, std::shared_ptr<mae::IndexedProperty<T>>)) {
+        const std::string &, std::shared_ptr<mae::IndexedProperty<T>>)) {
   auto prop = (indexedBlock.*getterFunc)(propName);
   if (prop != nullptr) {
     return prop;
@@ -64,13 +64,13 @@ std::shared_ptr<mae::IndexedProperty<T>> getIndexedProperty(
 
 template <typename T>
 std::shared_ptr<mae::IndexedProperty<T>> getIndexedProperty(
-    mae::IndexedBlock& indexedBlock, const std::string& propName,
+    mae::IndexedBlock &indexedBlock, const std::string &propName,
     size_t numAtoms);
 
 template <>
 std::shared_ptr<mae::IndexedProperty<mae::BoolProperty>>
-getIndexedProperty<mae::BoolProperty>(mae::IndexedBlock& indexedBlock,
-                                      const std::string& propName,
+getIndexedProperty<mae::BoolProperty>(mae::IndexedBlock &indexedBlock,
+                                      const std::string &propName,
                                       size_t numAtoms) {
   if (propName[0] != 'b') {
     auto msg =
@@ -85,7 +85,7 @@ getIndexedProperty<mae::BoolProperty>(mae::IndexedBlock& indexedBlock,
 
 template <>
 std::shared_ptr<mae::IndexedProperty<int>> getIndexedProperty<int>(
-    mae::IndexedBlock& indexedBlock, const std::string& propName,
+    mae::IndexedBlock &indexedBlock, const std::string &propName,
     size_t numAtoms) {
   if (propName[0] != 'i') {
     auto msg =
@@ -100,7 +100,7 @@ std::shared_ptr<mae::IndexedProperty<int>> getIndexedProperty<int>(
 
 template <>
 std::shared_ptr<mae::IndexedProperty<double>> getIndexedProperty<double>(
-    mae::IndexedBlock& indexedBlock, const std::string& propName,
+    mae::IndexedBlock &indexedBlock, const std::string &propName,
     size_t numAtoms) {
   if (propName[0] != 'r') {
     auto msg = std::string("Property '") + propName + "' is not a real value";
@@ -114,8 +114,8 @@ std::shared_ptr<mae::IndexedProperty<double>> getIndexedProperty<double>(
 
 template <>
 std::shared_ptr<mae::IndexedProperty<std::string>>
-getIndexedProperty<std::string>(mae::IndexedBlock& indexedBlock,
-                                const std::string& propName, size_t numAtoms) {
+getIndexedProperty<std::string>(mae::IndexedBlock &indexedBlock,
+                                const std::string &propName, size_t numAtoms) {
   if (propName[0] != 's') {
     auto msg = std::string("Property '") + propName + "' is not a string value";
     throw std::runtime_error(msg);
@@ -127,17 +127,17 @@ getIndexedProperty<std::string>(mae::IndexedBlock& indexedBlock,
 }
 
 void copyProperties(
-    const RDProps& origin, const STR_VECT& propNames, unsigned idx,
-    std::function<void(const std::string&, unsigned, bool)> boolSetter,
-    std::function<void(const std::string&, unsigned, int)> intSetter,
-    std::function<void(const std::string&, unsigned, double)> realSetter,
-    std::function<void(const std::string&, unsigned, const std::string&)>
+    const RDProps &origin, const STR_VECT &propNames, unsigned idx,
+    std::function<void(const std::string &, unsigned, bool)> boolSetter,
+    std::function<void(const std::string &, unsigned, int)> intSetter,
+    std::function<void(const std::string &, unsigned, double)> realSetter,
+    std::function<void(const std::string &, unsigned, const std::string &)>
         stringSetter) {
   // Map other properties, but first clear out the computed ones,
   // since we don't want to export these.
   origin.clearComputedProps();
 
-  for (const auto& prop : origin.getDict().getData()) {
+  for (const auto &prop : origin.getDict().getData()) {
     // Skip the property holding the names of the computed properties
     if (prop.key == detail::computedPropName) {
       continue;
@@ -206,19 +206,13 @@ void copyProperties(
 }
 
 template <typename T>
-void setPropertyValue(mae::IndexedBlock& block, const std::string& propName,
-                      size_t numValues, unsigned idx, const T& value) {
+void setPropertyValue(mae::IndexedBlock &block, const std::string &propName,
+                      size_t numValues, unsigned idx, const T &value) {
   auto property = getIndexedProperty<T>(block, propName, numValues);
   property->set(idx, value);
 }
 
-class UnsupportedBondException : public std::runtime_error {
- public:
-  UnsupportedBondException(const char* msg) : std::runtime_error(msg) {}
-  UnsupportedBondException(const std::string& msg) : std::runtime_error(msg) {}
-};
-
-int bondTypeToOrder(const Bond& bond) {
+int bondTypeToOrder(const Bond &bond) {
   switch (bond.getBondType()) {
     case Bond::BondType::SINGLE:
       return 1;
@@ -230,13 +224,13 @@ int bondTypeToOrder(const Bond& bond) {
     case Bond::BondType::DATIVE:
       return 0;
     default:
-      throw UnsupportedBondException(
+      throw ValueErrorException(
           "Bond " + std::to_string(bond.getIdx()) +
           " has a type that is not supported by maeparser.");
   }
 }
 
-static bool isDoubleAnyBond(const RDKit::Bond& b) {
+static bool isDoubleAnyBond(const RDKit::Bond &b) {
   if (b.getBondType() == RDKit::Bond::DOUBLE) {
     if (b.getStereo() == RDKit::Bond::BondStereo::STEREOANY ||
         b.getBondDir() == RDKit::Bond::EITHERDOUBLE) {
@@ -244,7 +238,7 @@ static bool isDoubleAnyBond(const RDKit::Bond& b) {
     }
 
     // Check v3000/v2000 stereo either props
-    auto hasPropValue = [&b](const auto& prop, const int& either_value) {
+    auto hasPropValue = [&b](const auto &prop, const int &either_value) {
       return b.hasProp(prop) && b.getProp<int>(prop) == either_value;
     };
 
@@ -254,7 +248,7 @@ static bool isDoubleAnyBond(const RDKit::Bond& b) {
   return false;
 }
 
-static void copyAtomNumChirality(const ROMol& mol, mae::Block& stBlock) {
+static void copyAtomNumChirality(const ROMol &mol, mae::Block &stBlock) {
   // This property tells Schrodinger software that the stereo and chirality in
   // the mae file are valid
   stBlock.setIntProperty(MAE_STEREO_STATUS, 1);
@@ -291,8 +285,8 @@ static void copyAtomNumChirality(const ROMol& mol, mae::Block& stBlock) {
   }
 }
 
-void mapMolProperties(const ROMol& mol, const STR_VECT& propNames,
-                      mae::Block& stBlock) {
+void mapMolProperties(const ROMol &mol, const STR_VECT &propNames,
+                      mae::Block &stBlock) {
   // We always write a title, even if the mol doesn't have one
   // (in such case, we add an empty string).
   std::string molName;
@@ -302,18 +296,18 @@ void mapMolProperties(const ROMol& mol, const STR_VECT& propNames,
 
   copyAtomNumChirality(mol, stBlock);
 
-  auto boolSetter = [&stBlock](const std::string& prop, unsigned, bool value) {
+  auto boolSetter = [&stBlock](const std::string &prop, unsigned, bool value) {
     stBlock.setBoolProperty(prop, value);
   };
-  auto intSetter = [&stBlock](const std::string& prop, unsigned, int value) {
+  auto intSetter = [&stBlock](const std::string &prop, unsigned, int value) {
     stBlock.setIntProperty(prop, value);
   };
-  auto realSetter = [&stBlock](const std::string& prop, unsigned,
+  auto realSetter = [&stBlock](const std::string &prop, unsigned,
                                double value) {
     stBlock.setRealProperty(prop, value);
   };
-  auto stringSetter = [&stBlock](const std::string& prop, unsigned,
-                                 const std::string& value) {
+  auto stringSetter = [&stBlock](const std::string &prop, unsigned,
+                                 const std::string &value) {
     stBlock.setStringProperty(prop, value);
   };
 
@@ -322,12 +316,12 @@ void mapMolProperties(const ROMol& mol, const STR_VECT& propNames,
                  stringSetter);
 }
 void mapAtom(
-    const Conformer& conformer, const Atom& atom, const STR_VECT& propNames,
-    mae::IndexedBlock& atomBlock, size_t numAtoms,
-    std::function<void(const std::string&, unsigned, bool)> boolSetter,
-    std::function<void(const std::string&, unsigned, int)> intSetter,
-    std::function<void(const std::string&, unsigned, double)> realSetter,
-    std::function<void(const std::string&, unsigned, const std::string&)>
+    const Conformer &conformer, const Atom &atom, const STR_VECT &propNames,
+    mae::IndexedBlock &atomBlock, size_t numAtoms,
+    std::function<void(const std::string &, unsigned, bool)> boolSetter,
+    std::function<void(const std::string &, unsigned, int)> intSetter,
+    std::function<void(const std::string &, unsigned, double)> realSetter,
+    std::function<void(const std::string &, unsigned, const std::string &)>
         stringSetter) {
   auto idx = atom.getIdx();
   auto coordinates = conformer.getAtomPos(idx);
@@ -349,7 +343,7 @@ void mapAtom(
 
   // Residue information
   auto monomerInfo =
-      static_cast<const AtomPDBResidueInfo*>(atom.getMonomerInfo());
+      static_cast<const AtomPDBResidueInfo *>(atom.getMonomerInfo());
   if (monomerInfo != nullptr) {
     setPropertyValue(atomBlock, PDB_ATOM_NAME, numAtoms, idx,
                      monomerInfo->getName());
@@ -378,28 +372,28 @@ void mapAtom(
                  stringSetter);
 }
 
-void mapAtoms(const ROMol& mol, const STR_VECT& propNames, int confId,
-              mae::IndexedBlockMap& indexedBlockMap) {
+void mapAtoms(const ROMol &mol, const STR_VECT &propNames, int confId,
+              mae::IndexedBlockMap &indexedBlockMap) {
   auto atomBlock = std::make_shared<mae::IndexedBlock>(mae::ATOM_BLOCK);
   auto conformer = mol.getConformer(confId);
   auto numAtoms = mol.getNumAtoms();
 
-  auto boolSetter = [&atomBlock, &numAtoms](const std::string& prop,
+  auto boolSetter = [&atomBlock, &numAtoms](const std::string &prop,
                                             unsigned idx,
                                             mae::BoolProperty value) {
     setPropertyValue(*atomBlock, prop, numAtoms, idx, value);
   };
-  auto intSetter = [&atomBlock, &numAtoms](const std::string& prop,
+  auto intSetter = [&atomBlock, &numAtoms](const std::string &prop,
                                            unsigned idx, int value) {
     setPropertyValue(*atomBlock, prop, numAtoms, idx, value);
   };
-  auto realSetter = [&atomBlock, &numAtoms](const std::string& prop,
+  auto realSetter = [&atomBlock, &numAtoms](const std::string &prop,
                                             unsigned idx, double value) {
     setPropertyValue(*atomBlock, prop, numAtoms, idx, value);
   };
-  auto stringSetter = [&atomBlock, &numAtoms](const std::string& prop,
+  auto stringSetter = [&atomBlock, &numAtoms](const std::string &prop,
                                               unsigned idx,
-                                              const std::string& value) {
+                                              const std::string &value) {
     setPropertyValue(*atomBlock, prop, numAtoms, idx, value);
   };
 
@@ -412,13 +406,13 @@ void mapAtoms(const ROMol& mol, const STR_VECT& propNames, int confId,
 }
 
 void mapBond(
-    const Bond& bond,
-    std::shared_ptr<mae::IndexedProperty<mae::BoolProperty>>& dativeBondMark,
-    const STR_VECT& propNames, mae::IndexedBlock& bondBlock, size_t numBonds,
-    std::function<void(const std::string&, unsigned, bool)> boolSetter,
-    std::function<void(const std::string&, unsigned, int)> intSetter,
-    std::function<void(const std::string&, unsigned, double)> realSetter,
-    std::function<void(const std::string&, unsigned, const std::string&)>
+    const Bond &bond,
+    std::shared_ptr<mae::IndexedProperty<mae::BoolProperty>> &dativeBondMark,
+    const STR_VECT &propNames, mae::IndexedBlock &bondBlock, size_t numBonds,
+    std::function<void(const std::string &, unsigned, bool)> boolSetter,
+    std::function<void(const std::string &, unsigned, int)> intSetter,
+    std::function<void(const std::string &, unsigned, double)> realSetter,
+    std::function<void(const std::string &, unsigned, const std::string &)>
         stringSetter) {
   auto idx = bond.getIdx();
 
@@ -452,15 +446,15 @@ void mapBond(
                  stringSetter);
 }
 
-void mapBonds(const ROMol& mol, const STR_VECT& propNames,
-              mae::IndexedBlockMap& indexedBlockMap) {
+void mapBonds(const ROMol &mol, const STR_VECT &propNames,
+              mae::IndexedBlockMap &indexedBlockMap) {
   auto bondBlock = std::make_shared<mae::IndexedBlock>(mae::BOND_BLOCK);
 
   auto numBonds = mol.getNumBonds();
 
   std::shared_ptr<mae::IndexedProperty<mae::BoolProperty>> dativeBondMark =
       nullptr;
-  for (auto& bond : mol.bonds()) {
+  for (auto &bond : mol.bonds()) {
     if (bond->getBondType() == Bond::BondType::DATIVE) {
       dativeBondMark = getIndexedProperty<mae::BoolProperty>(
           *bondBlock, MAE_BOND_DATIVE_MARK, numBonds);
@@ -468,22 +462,22 @@ void mapBonds(const ROMol& mol, const STR_VECT& propNames,
     }
   }
 
-  auto boolSetter = [&bondBlock, &numBonds](const std::string& prop,
+  auto boolSetter = [&bondBlock, &numBonds](const std::string &prop,
                                             unsigned idx,
                                             mae::BoolProperty value) {
     setPropertyValue(*bondBlock, prop, numBonds, idx, value);
   };
-  auto intSetter = [&bondBlock, &numBonds](const std::string& prop,
+  auto intSetter = [&bondBlock, &numBonds](const std::string &prop,
                                            unsigned idx, int value) {
     setPropertyValue(*bondBlock, prop, numBonds, idx, value);
   };
-  auto realSetter = [&bondBlock, &numBonds](const std::string& prop,
+  auto realSetter = [&bondBlock, &numBonds](const std::string &prop,
                                             unsigned idx, double value) {
     setPropertyValue(*bondBlock, prop, numBonds, idx, value);
   };
-  auto stringSetter = [&bondBlock, &numBonds](const std::string& prop,
+  auto stringSetter = [&bondBlock, &numBonds](const std::string &prop,
                                               unsigned idx,
-                                              const std::string& value) {
+                                              const std::string &value) {
     setPropertyValue(*bondBlock, prop, numBonds, idx, value);
   };
 
@@ -495,20 +489,16 @@ void mapBonds(const ROMol& mol, const STR_VECT& propNames,
   indexedBlockMap.addIndexedBlock(mae::BOND_BLOCK, bondBlock);
 }
 
-std::shared_ptr<mae::Block> _MolToMaeCtBlock(const ROMol& mol, int confId,
-                                             const STR_VECT& propNames) {
+std::shared_ptr<mae::Block> _MolToMaeCtBlock(const ROMol &mol, int confId,
+                                             const STR_VECT &propNames) {
   if (mol.getNumAtoms() == 0) {
-    BOOST_LOG(rdErrorLog)
-        << "ERROR: molecules without atoms cannot be exported to Maestro files.\n";
-    return nullptr;
+    throw ValueErrorException(
+        "molecules without atoms cannot be exported to Maestro files.\n");
   }
 
   RWMol tmpMol(mol);
-  if (!MolOps::KekulizeIfPossible(tmpMol)) {
-    BOOST_LOG(rdErrorLog)
-        << "ERROR: the mol cannot be kekulized, and will not be written to the output file.\n";
-    return nullptr;
-  }
+  MolOps::Kekulize(tmpMol);
+
   if (mol.getNumConformers() == 0) {
     // make sure there's at least one conformer we can write
     RDDepict::compute2DCoords(tmpMol);
@@ -523,15 +513,7 @@ std::shared_ptr<mae::Block> _MolToMaeCtBlock(const ROMol& mol, int confId,
   mapAtoms(tmpMol, propNames, confId, *indexedBlockMap);
 
   if (mol.getNumBonds() > 0) {
-    try {
-      mapBonds(tmpMol, propNames, *indexedBlockMap);
-
-    } catch (const UnsupportedBondException& exc) {
-      BOOST_LOG(rdErrorLog)
-          << "ERROR: " << exc.what()
-          << " The mol will not be written to the output file.\n";
-      return nullptr;
-    }
+    mapBonds(tmpMol, propNames, *indexedBlockMap);
   }
 
   stBlock->setIndexedBlockMap(indexedBlockMap);
@@ -541,18 +523,18 @@ std::shared_ptr<mae::Block> _MolToMaeCtBlock(const ROMol& mol, int confId,
 
 }  // namespace
 
-MaeWriter::MaeWriter(const std::string& fileName) {
-  auto* tmpStream = new std::ofstream(fileName.c_str());
+MaeWriter::MaeWriter(const std::string &fileName) {
+  auto *tmpStream = new std::ofstream(fileName.c_str());
   if (!(*tmpStream) || (tmpStream->bad())) {
     delete tmpStream;
     std::ostringstream errout;
     errout << "Bad output file " << fileName;
     throw BadFileException(errout.str());
   }
-  dp_ostream.reset(static_cast<std::ostream*>(tmpStream));
+  dp_ostream.reset(static_cast<std::ostream *>(tmpStream));
 }
 
-MaeWriter::MaeWriter(std::ostream* outStream) : dp_ostream{outStream} {
+MaeWriter::MaeWriter(std::ostream *outStream) : dp_ostream{outStream} {
   PRECONDITION(outStream, "null stream");
   if (outStream->bad()) {
     throw FileParseException("Bad output stream");
@@ -571,7 +553,7 @@ MaeWriter::~MaeWriter() { close(); };
 
 void MaeWriter::open() { dp_writer.reset(new mae::Writer(dp_ostream)); }
 
-void MaeWriter::setProps(const STR_VECT& propNames) {
+void MaeWriter::setProps(const STR_VECT &propNames) {
   if (d_molid > 0) {
     BOOST_LOG(rdWarningLog) << "WARNING: Setting property list after a few "
                                "molecules have been written\n";
@@ -588,7 +570,7 @@ void MaeWriter::flush() {
       if (dp_ostream->good()) {
         dp_ostream->setstate(std::ios::badbit);
       }
-    } catch (const std::runtime_error&) {
+    } catch (const std::runtime_error &) {
     }
   }
 }
@@ -603,28 +585,24 @@ void MaeWriter::close() {
   dp_ostream.reset();
 }
 
-void MaeWriter::write(const ROMol& mol, int confId) {
+void MaeWriter::write(const ROMol &mol, int confId) {
   PRECONDITION(dp_ostream, "no output stream");
 
   auto block = _MolToMaeCtBlock(mol, confId, d_props);
 
-  if (block != nullptr) {
-    if (!dp_writer) {
-      open();
-    }
-
-    block->write(*dp_ostream);
-    ++d_molid;
+  if (!dp_writer) {
+    open();
   }
+
+  block->write(*dp_ostream);
+  ++d_molid;
 }
 
-std::string MaeWriter::getText(const ROMol& mol, int confId,
-                               const STR_VECT& propNames) {
+std::string MaeWriter::getText(const ROMol &mol, int confId,
+                               const STR_VECT &propNames) {
   std::stringstream sstr;
   auto block = _MolToMaeCtBlock(mol, confId, propNames);
-  if (block != nullptr) {
-    block->write(sstr);
-  }
+  block->write(sstr);
 
   return sstr.str();
 }

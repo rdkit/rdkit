@@ -185,7 +185,7 @@ void test_largest_fragment() {
   smi9 = "CC[Hg]SC1=C(C=CC=C1)C(=O)[O][Na]";
   std::shared_ptr<RWMol> m9(SmilesToMol(smi9));
   std::shared_ptr<RWMol> res9(MolStandardize::fragmentParent(*m9, params));
-  TEST_ASSERT(MolToSmiles(*res9) == "CC[Hg]Sc1ccccc1C(=O)[O-]");
+  TEST_ASSERT(MolToSmiles(*res9) == "C[CH2][Hg][S]c1ccccc1C(=O)[O-]");
 
   // Covalent bond with metal.
   smi10 = "[Ag]OC(=O)O[Ag]";
@@ -247,9 +247,9 @@ void test_largest_fragment() {
     LargestFragmentChooser lfrag_params(lfParams);
     std::shared_ptr<RWMol> m12(SmilesToMol(smi12));
     std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
-    TEST_ASSERT(MolToSmiles(*lfrag7) == "O=[Pb]=O");
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "[O]=[Pb]=[O]");
     lfrag_params.chooseInPlace(*m12);
-    TEST_ASSERT(MolToSmiles(*m12) == "O=[Pb]=O");
+    TEST_ASSERT(MolToSmiles(*m12) == "[O]=[Pb]=[O]");
   }
   {
     CleanupParameters lfParams;
@@ -257,9 +257,9 @@ void test_largest_fragment() {
     LargestFragmentChooser lfrag_params(lfParams);
     std::shared_ptr<RWMol> m12(SmilesToMol(smi12));
     std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
-    TEST_ASSERT(MolToSmiles(*lfrag7) == "O=[Pb]=O");
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "[O]=[Pb]=[O]");
     lfrag_params.chooseInPlace(*m12);
-    TEST_ASSERT(MolToSmiles(*m12) == "O=[Pb]=O");
+    TEST_ASSERT(MolToSmiles(*m12) == "[O]=[Pb]=[O]");
   }
   {
     CleanupParameters lfParams;
@@ -299,7 +299,7 @@ void testWhiteSpaceInSmarts() {
   std::vector<size_t> reference_sizes({0, 0, 1});
 
   auto reference = reference_sizes.cbegin();
-  for (const auto& smarts : data) {
+  for (const auto &smarts : data) {
     std::istringstream input(smarts);
     auto groups = readFuncGroups(input);
     TEST_ASSERT(groups.size() == *reference);
@@ -317,13 +317,13 @@ void testFragmentWithoutSmarts() {
        "//   Name	SMARTS\nnonsense no new line",
        "//   Name	SMARTS\nnonsense with tab\t\n"});
 
-  for (const auto& smarts : data) {
+  for (const auto &smarts : data) {
     bool ok = false;
     std::istringstream input(smarts);
     std::vector<std::shared_ptr<RDKit::ROMol>> groups;
     try {
       groups = readFuncGroups(input);
-    } catch (const ValueErrorException&) {
+    } catch (const ValueErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -348,7 +348,7 @@ void testParameters() {
     bool ok = false;
     try {
       auto groups = readFuncGroups(data);
-    } catch (const ValueErrorException&) {
+    } catch (const ValueErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);

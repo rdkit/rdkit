@@ -1,11 +1,22 @@
 if(RDK_BUILD_MAEPARSER_SUPPORT)
-    include_directories(${maeparser_INCLUDE_DIRS})
+    set(MAEPARSER_LIB maeparser)
     set(maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
+    if ("${RDK_MAEPARSER_LIBS}" STREQUAL "")
+        # if we're not building maeparser as part of the RDKit build), then find
+        # the imported package
+        find_package(ZLIB QUIET)
+        find_package(${MAEPARSER_LIB})
+    else()
+        # if we built maeparser as part of the RDKit build, then we need to use
+        # the headers from the source directory
+        include_directories(${maeparser_INCLUDE_DIRS})
+    endif()
 endif()
 
 rdkit_library(FileParsers
     CDXMLParser.cpp
-    Mol2FileParser.cpp MolFileParser.cpp
+    Mol2FileParser.cpp MolFileParser.cpp 
+    SCSRMolFileParser.cpp
     MolSGroupParsing.cpp MolSGroupWriting.cpp
     MolFileStereochem.cpp MolFileWriter.cpp
     ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
@@ -23,7 +34,7 @@ rdkit_library(FileParsers
     MultithreadedMolSupplier.cpp
     MultithreadedSmilesMolSupplier.cpp
     MultithreadedSDMolSupplier.cpp
-    LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol ${RDK_MAEPARSER_LIBS})
+    LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol SubstructMatch ${MAEPARSER_LIB})
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
 rdkit_headers(CDXMLParser.h
@@ -42,7 +53,7 @@ rdkit_headers(CDXMLParser.h
     DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp
-    LINK_LIBRARIES FileParsers SubstructMatch)
+    LINK_LIBRARIES CIPLabeler FileParsers SubstructMatch)
 
 rdkit_test(testAtropisomers testAtropisomers.cpp
     LINK_LIBRARIES FileParsers SubstructMatch)
@@ -61,7 +72,7 @@ if(RDK_TEST_MULTITHREADED)
         LINK_LIBRARIES FileParsers Fingerprints RDStreams)
 endif(RDK_TEST_MULTITHREADED)
 
-rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers)
+rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES CIPLabeler FileParsers)
 
 rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers GraphMol)
 
@@ -73,6 +84,9 @@ rdkit_test(testExtendedStereoParsing testExtendedStereoParsing.cpp
     LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(fileParsersCatchTest file_parsers_catch.cpp
+    LINK_LIBRARIES FileParsers)
+
+rdkit_catch_test(macromolsCatchTest macromols_catch.cpp
     LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(testPropertyLists testPropertyLists.cpp
@@ -95,4 +109,14 @@ rdkit_catch_test(v2MolSuppliers v2_suppliers_catch.cpp
 
 rdkit_catch_test(v2FileParsersCatchTest v2_file_parsers_catch.cpp
     LINK_LIBRARIES FileParsers)
+
+rdkit_catch_test(atropisomersCatch atropisomers_catch.cpp
+    LINK_LIBRARIES FileParsers)
+
+
+
+if(RDK_TEST_MULTITHREADED AND RDK_BUILD_THREADSAFE_SSS)
+rdkit_catch_test(multithreadedSupplierCatchTest multithreaded_supplier_catch.cpp
+    LINK_LIBRARIES FileParsers)
+endif()
 

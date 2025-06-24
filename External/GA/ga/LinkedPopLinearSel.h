@@ -43,8 +43,8 @@ using namespace GarethUtil;
 template <typename Chromosome, typename PopulationPolicy>
 class LinkedPopLinearSel {
  private:
-  PopulationPolicy& populationPolicy;
-  RandomUtil& rng;
+  PopulationPolicy &populationPolicy;
+  RandomUtil &rng;
   const size_t popsize;
   const std::vector<std::shared_ptr<GaOperation<Chromosome>>> operations;
   const double selectionPressure;
@@ -61,28 +61,28 @@ class LinkedPopLinearSel {
 
   static constexpr double SELECT_START = 5000.0;
 
-  LinkedPopLinearSel(const LinkedPopLinearSel& other);
-  LinkedPopLinearSel& operator=(const LinkedPopLinearSel& other);
+  LinkedPopLinearSel(const LinkedPopLinearSel &other);
+  LinkedPopLinearSel &operator=(const LinkedPopLinearSel &other);
 
-  bool addToPopulation(std::shared_ptr<Chromosome>& chromosome);
-  bool addToPopulation(std::multimap<double, std::shared_ptr<Chromosome>>& pop,
-                       std::shared_ptr<Chromosome>& chromosome);
+  bool addToPopulation(std::shared_ptr<Chromosome> &chromosome);
+  bool addToPopulation(std::multimap<double, std::shared_ptr<Chromosome>> &pop,
+                       std::shared_ptr<Chromosome> &chromosome);
 
-  std::shared_ptr<Chromosome>& selectParent();
+  std::shared_ptr<Chromosome> &selectParent();
   const typename std::multimap<double,
                                std::shared_ptr<Chromosome>>::const_iterator
-  findExactMatch(Chromosome& c) const;
+  findExactMatch(Chromosome &c) const;
   double bestScore = -std::numeric_limits<double>::max();
 
  public:
-  LinkedPopLinearSel(PopulationPolicy& populationPolicy_);
+  LinkedPopLinearSel(PopulationPolicy &populationPolicy_);
 
-  virtual ~LinkedPopLinearSel(){};
+  virtual ~LinkedPopLinearSel() {};
   void create();
   void iterate();
   void rebuild();
   std::string info() const;
-  const std::shared_ptr<Chromosome>& getBest() const;
+  const std::shared_ptr<Chromosome> &getBest() const;
   const std::vector<std::shared_ptr<Chromosome>> getTiedBest(
       double tolerance = 1e-6) const;
   std::string populationInfo() const;
@@ -98,7 +98,7 @@ class LinkedPopLinearSel {
  */
 template <typename Chromosome, typename PopulationPolicy>
 LinkedPopLinearSel<Chromosome, PopulationPolicy>::LinkedPopLinearSel(
-    PopulationPolicy& populationPolicy_)
+    PopulationPolicy &populationPolicy_)
     : populationPolicy(populationPolicy_),
       rng(populationPolicy.getRng()),
       popsize(populationPolicy.getPopsize()),
@@ -107,7 +107,7 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::LinkedPopLinearSel(
       population(),
       freeChromosomes() {
   totalOperatorWeights = 0;
-  for (auto& operation : operations) {
+  for (auto &operation : operations) {
     totalOperatorWeights += operation->getWeight();
   }
 
@@ -183,7 +183,7 @@ void LinkedPopLinearSel<Chromosome, PopulationPolicy>::create() {
 template <typename Chromosome, typename PopulationPolicy>
 void LinkedPopLinearSel<Chromosome, PopulationPolicy>::rebuild() {
   std::multimap<double, std::shared_ptr<Chromosome>> newPopulation;
-  for (auto& entry : population) {
+  for (auto &entry : population) {
     auto chromosome = entry.second;
     chromosome->score();
     addToPopulation(newPopulation, chromosome);
@@ -201,7 +201,7 @@ void LinkedPopLinearSel<Chromosome, PopulationPolicy>::rebuild() {
  * @return
  */
 template <typename Chromosome, typename PopulationPolicy>
-std::shared_ptr<Chromosome>&
+std::shared_ptr<Chromosome> &
 LinkedPopLinearSel<Chromosome, PopulationPolicy>::selectParent() {
   double val = rng.normalRand() * totalScaledFitness;
   double sum = SELECT_START, currentFitness = SELECT_START;
@@ -233,7 +233,7 @@ void LinkedPopLinearSel<Chromosome, PopulationPolicy>::iterate() {
   // select an operator.
   double total = 0, val = rng.normalRand() * totalOperatorWeights;
   std::shared_ptr<GaOperation<Chromosome>> selectedOperation = nullptr;
-  for (auto& operation : operations) {
+  for (auto &operation : operations) {
     total += operation->getWeight();
     if (val <= total) {
       selectedOperation = operation;
@@ -270,7 +270,7 @@ void LinkedPopLinearSel<Chromosome, PopulationPolicy>::iterate() {
 #ifdef INCLUDE_REPORTER
   int i = 0;
 #endif
-  for (auto& child : children) {
+  for (auto &child : children) {
 #ifdef INCLUDE_REPORTER
     REPORT(Reporter::TRACE) << "Child  " << i++ << ": " << child->info();
 #endif
@@ -292,7 +292,7 @@ void LinkedPopLinearSel<Chromosome, PopulationPolicy>::iterate() {
  */
 template <typename Chromosome, typename PopulationPolicy>
 bool LinkedPopLinearSel<Chromosome, PopulationPolicy>::addToPopulation(
-    std::shared_ptr<Chromosome>& chromosome) {
+    std::shared_ptr<Chromosome> &chromosome) {
   return addToPopulation(population, chromosome);
 }
 
@@ -306,8 +306,8 @@ bool LinkedPopLinearSel<Chromosome, PopulationPolicy>::addToPopulation(
  */
 template <typename Chromosome, typename PopulationPolicy>
 bool LinkedPopLinearSel<Chromosome, PopulationPolicy>::addToPopulation(
-    std::multimap<double, std::shared_ptr<Chromosome>>& pop,
-    std::shared_ptr<Chromosome>& chromosome) {
+    std::multimap<double, std::shared_ptr<Chromosome>> &pop,
+    std::shared_ptr<Chromosome> &chromosome) {
   if (!chromosome->isOk()) {
 #ifdef INCLUDE_REPORTER
     REPORT(Reporter::TRACE) << "Bad chromosome not adding to population";
@@ -380,7 +380,7 @@ std::string LinkedPopLinearSel<Chromosome, PopulationPolicy>::info() const {
  * @return
  */
 template <typename Chromosome, typename PopulationPolicy>
-const std::shared_ptr<Chromosome>&
+const std::shared_ptr<Chromosome> &
 LinkedPopLinearSel<Chromosome, PopulationPolicy>::getBest() const {
   auto iter = population.end();
   --iter;
@@ -436,7 +436,7 @@ template <typename Chromosome, typename PopulationPolicy>
 const typename std::multimap<double,
                              std::shared_ptr<Chromosome>>::const_iterator
 LinkedPopLinearSel<Chromosome, PopulationPolicy>::findExactMatch(
-    Chromosome& c) const {
+    Chromosome &c) const {
   std::pair<std::multimap<char, int>::iterator,
             std::multimap<char, int>::iterator>
       ret;
@@ -445,7 +445,7 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::findExactMatch(
   auto iterators = population.equal_range(c.getFitness());
   for (auto iterator = iterators.first; iterator != iterators.second;
        ++iterator) {
-    const std::shared_ptr<Chromosome>& other = iterator->second;
+    const std::shared_ptr<Chromosome> &other = iterator->second;
     if (c.equals(*other)) {
       return iterator;
     }

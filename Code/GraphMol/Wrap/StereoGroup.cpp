@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Dan Nealschneider
+//  Copyright (C) 2018-2025 Dan Nealschneider and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -28,7 +28,7 @@ std::string stereoGroupClassDoc =
     "is a mix\nof diastereomers.\n";
 
 StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
-                               python::object atomIds, unsigned readId) {
+                               python::object atomIds, python::object bondIds, unsigned readId) {
   std::vector<Atom *> cppAtoms;
   std::vector<Bond *> cppBonds;
   python::stl_input_iterator<unsigned int> beg(atomIds), end;
@@ -40,6 +40,18 @@ StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
     cppAtoms.push_back(mol.getAtomWithIdx(v));
     ++beg;
   }
+  python::stl_input_iterator<unsigned int> bbeg(bondIds), bend;
+  while (bbeg != bend) {
+    unsigned int v = *bbeg;
+    if (v >= mol.getNumBonds()) {
+      throw_value_error("bond index exceeds mol.GetNumBonds()");
+    }
+    cppBonds.push_back(mol.getBondWithIdx(v));
+    ++bbeg;
+  }
+  if (cppAtoms.empty() && cppBonds.empty()) {
+    throw_value_error("New StereoGroup must contain at least one atom or bond.");
+  }
   auto *sg = new StereoGroup(typ, cppAtoms, cppBonds, readId);
   return sg;
 }
@@ -48,6 +60,13 @@ python::object getAtomsHelper(StereoGroup &sg) {
   python::list res;
   for (auto at : sg.getAtoms()) {
     res.append(boost::ref(*at));
+  }
+  return python::tuple(res);
+}
+python::object getBondsHelper(StereoGroup &sg) {
+  python::list res;
+  for (auto bnd : sg.getBonds()) {
+    res.append(boost::ref(*bnd));
   }
   return python::tuple(res);
 }
@@ -67,6 +86,8 @@ struct stereogroup_wrap {
              "Returns the StereoGroupType.\n")
         .def("GetAtoms", getAtomsHelper, python::args("self"),
              "access the atoms in the StereoGroup.\n")
+        .def("GetBonds", getBondsHelper, python::args("self"),
+             "access the bonds in the StereoGroup.\n")
         .def("GetReadId", &StereoGroup::getReadId, python::args("self"),
              "return the StereoGroup's original ID.\n"
              "Note that the ID only makes sense for AND/OR groups.\n")
@@ -81,7 +102,8 @@ struct stereogroup_wrap {
                 "creates a StereoGroup associated with a molecule from a list "
                 "of atom Ids",
                 (python::arg("stereoGroupType"), python::arg("mol"),
-                 python::arg("atomIds"), python::arg("readId") = 0),
+                 python::arg("atomIds") = boost::python::list(), python::arg("bondIds") = boost::python::list(),
+                 python::arg("readId") = 0),
                 python::return_value_policy<
                     python::manage_new_object,
                     python::with_custodian_and_ward_postcall<0, 2>>());

@@ -27,7 +27,7 @@
 using namespace RDKit;
 using namespace RDKit::GeneralizedSubstruct;
 
-bool fingerprintsMatch(const ROMol& target, const ExtendedQueryMol& xqm) {
+bool fingerprintsMatch(const ROMol &target, const ExtendedQueryMol &xqm) {
   const auto queryFingerprint = xqm.patternFingerprintQuery();
   const auto targetFingerprint = patternFingerprintTargetMol(target);
   CHECK(queryFingerprint->getNumOnBits() > 0);

@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2003-2020 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2003-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -280,7 +280,6 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                                        normalizeCovar, nullptr)) {
       std::vector<std::pair<unsigned int, double>> eigValsSorted;
       CHECK_INVARIANT(eigVals.size() == DIM, "less eigenvalues than expected");
-      auto eigVecCoeffSums = eigVecs.colwise().sum();
       eigValsSorted.reserve(DIM);
       for (unsigned int i = 0; i < DIM; ++i) {
         eigValsSorted.emplace_back(i, eigVals(i));
@@ -292,14 +291,24 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                 });
       for (unsigned int col = 0; col < DIM; ++col) {
         unsigned int colSorted = eigValsSorted.at(col).first;
-        double sign = (eigVecCoeffSums(colSorted) > 0.0) ? 1.0 : -1.0;
         for (unsigned int row = 0; row < DIM; ++row) {
-          trans->setVal(col, row, sign * eigVecs(row, colSorted));
+          trans->setVal(col, row, eigVecs(row, colSorted));
         }
       }
     }
   }
   origin *= -1.0;
+
+  // In some situations we can end up with one or more negative values on the
+  //  diagonal. An odd number of these will result in an inversion of the
+  //  structure, so we need to check for that and, if necessary, correct by
+  //  negating one row
+  if (trans->getVal(0, 0) * trans->getVal(1, 1) * trans->getVal(2, 2) < 0) {
+    for (auto i = 0; i < 3; ++i) {
+      trans->setVal(2, i, trans->getVal(2, i) * -1);
+    }
+  }
+
   trans->TransformPoint(origin);
   trans->SetTranslation(origin);
 
@@ -338,7 +347,6 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
     // deal with zero eigen value systems
     unsigned int i, j, dim = 3;
     for (i = 0; i < 3; ++i) {
-      // std::cerr<<"  ev: "<<i<<": "<<eigVals.getVal(i)<<std::endl;
       if (fabs(eigVals.getVal(i)) < EIGEN_TOLERANCE) {
         dim--;
       }
@@ -379,7 +387,18 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
       }
     }
   }  // end of multiple atom system
+
+  // In some situations we can end up with one or more negative values on the
+  //  diagonal. An odd number of these will result in an inversion of the
+  //  structure, so we need to check for that and, if necessary, correct by
+  //  negating one row
+  if (trans->getVal(0, 0) * trans->getVal(1, 1) * trans->getVal(2, 2) < 0) {
+    for (auto i = 0; i < 3; ++i) {
+      trans->setVal(2, i, trans->getVal(2, i) * -1);
+    }
+  }
   trans->TransformPoint(origin);
+
   trans->SetTranslation(origin);
   delete covMat;
 

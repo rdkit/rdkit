@@ -24,6 +24,7 @@ else()
 endif()
 set(RDKit_BUILDNAME "${CMAKE_SYSTEM_NAME}|${CMAKE_SYSTEM_VERSION}|${systemAttribute}|${compilerID}|${bit3264}")
 set(RDKit_EXPORTED_TARGETS rdkit-targets)
+set(RDKitPython_EXPORTED_TARGETS rdkitpython-targets)
 
 
 macro(rdkit_library)
@@ -33,13 +34,25 @@ macro(rdkit_library)
     ${ARGN})
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
-  if((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS))
+  # select the export and component name for the installed library
+  set(exportName ${RDKit_EXPORTED_TARGETS})
+  set(sharedLibComponent runtime)
+  set(staticLibComponent dev)
+  foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
+    if("${linkLib}" STREQUAL "rdkit_py_base")
+      set(exportName ${RDKitPython_EXPORTED_TARGETS})
+      set(sharedLibComponent python)
+      set(staticLibComponent python)
+      break()
+    endif()
+  endforeach()
+  if(RDK_BUILD_STATIC_LIBS_ONLY)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
     if(RDK_INSTALL_DEV_COMPONENT)
-      INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
+      INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${exportName}
               DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-              COMPONENT dev )
+              COMPONENT ${staticLibComponent})
     endif(RDK_INSTALL_DEV_COMPONENT)
   else()
     # we're going to always build in shared mode since we
@@ -48,9 +61,9 @@ macro(rdkit_library)
     # with g++ unless libraries are shared.
     add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
-    INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
+    INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${exportName}
             DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-            COMPONENT runtime )
+            COMPONENT ${sharedLibComponent})
     if(RDK_INSTALL_STATIC_LIBS)
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
 
@@ -60,7 +73,11 @@ macro(rdkit_library)
           set(skipNext FALSE)
           continue()
         endif()
-        if(TARGET "${linkLib}")
+        if("${linkLib}" STREQUAL "rdkit_py_base")
+          # rdkit_py_base is an interface target, keep it as-is
+          target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}")
+          continue()
+        elseif(TARGET "${linkLib}")
           get_target_property(linkLib_IMPORTED "${linkLib}" IMPORTED)
           if (linkLib_IMPORTED)
             # linkLib is an imported target: use it as-is
@@ -97,9 +114,9 @@ macro(rdkit_library)
       endforeach()
       target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
       if(RDK_INSTALL_DEV_COMPONENT)
-        INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
+        INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${exportName}
                 DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-                COMPONENT dev )
+                COMPONENT ${staticLibComponent})
       endif(RDK_INSTALL_DEV_COMPONENT)
       set_target_properties(${RDKLIB_NAME}_static PROPERTIES
                             OUTPUT_NAME "RDKit${RDKLIB_NAME}_static")
@@ -145,7 +162,7 @@ macro(rdkit_python_extension)
   CAR(RDKPY_NAME ${RDKPY_DEFAULT_ARGS})
   CDR(RDKPY_SOURCES ${RDKPY_DEFAULT_ARGS})
   if(RDK_BUILD_PYTHON_WRAPPERS)
-    PYTHON_ADD_MODULE(${RDKPY_NAME} ${RDKPY_SOURCES})
+    Python3_add_library(${RDKPY_NAME} MODULE ${RDKPY_SOURCES})
     set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
 
     if(WIN32)
@@ -158,7 +175,7 @@ macro(rdkit_python_extension)
                               ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
     endif(WIN32)
 
-    target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
+    target_link_libraries(${RDKPY_NAME} PUBLIC ${RDKPY_LINK_LIBRARIES}
                           RDBoost rdkit_py_base rdkit_base )
     if("${PYTHON_LDSHARED}" STREQUAL "")
     else()
@@ -206,7 +223,7 @@ macro(add_pytest)
   CAR(PYTEST_NAME ${PYTEST_DEFAULT_ARGS})
   CDR(PYTEST_SOURCES ${PYTEST_DEFAULT_ARGS})
   if(RDK_BUILD_PYTHON_WRAPPERS)
-    add_test(${PYTEST_NAME}  ${PYTHON_EXECUTABLE}
+    add_test(${PYTEST_NAME}  ${Python3_EXECUTABLE}
              ${PYTEST_SOURCES})
     SET(RDKIT_PYTEST_CACHE "${PYTEST_NAME};${RDKIT_PYTEST_CACHE}" CACHE INTERNAL "Global list of python tests")
   endif(RDK_BUILD_PYTHON_WRAPPERS)
@@ -214,7 +231,7 @@ endmacro(add_pytest)
 
 function(add_jupytertest testname workingdir notebook)
   if(RDK_BUILD_PYTHON_WRAPPERS AND RDK_NBVAL_AVAILABLE)
-    add_test(NAME ${testname}  COMMAND ${PYTHON_EXECUTABLE} -m pytest --nbval ${notebook}
+    add_test(NAME ${testname}  COMMAND ${Python3_EXECUTABLE} -m pytest --nbval ${notebook}
        WORKING_DIRECTORY ${workingdir} )
     SET(RDKIT_JUPYTERTEST_CACHE "${testname};${RDKIT_JUPYTERTEST_CACHE}" CACHE INTERNAL "Global list of jupyter tests")
   endif()
@@ -222,7 +239,7 @@ endfunction(add_jupytertest)
 
 function(add_pythonpytest testname workingdir)
   if(RDK_BUILD_PYTHON_WRAPPERS)
-    add_test(NAME ${testname}  COMMAND ${PYTHON_EXECUTABLE} -m pytest 
+    add_test(NAME ${testname}  COMMAND ${Python3_EXECUTABLE} -m pytest 
        WORKING_DIRECTORY ${workingdir} )
     SET(RDKIT_PYTHONTEST_CACHE "${testname};${RDKIT_PYTHONTEST_CACHE}" CACHE INTERNAL "Global list of pytest tests")
   endif()

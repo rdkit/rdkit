@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2025 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +9,10 @@
 //
 #include "Tautomer.h"
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/test_fixtures.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <chrono>
 #include <ctime>
 
@@ -316,6 +318,14 @@ void testEnumerator() {
   checkAns("C/C=C/C(C)=O", {"C=C(O)C=CC", "C=CC=C(C)O", "C=CCC(=C)O",
                             "C=CCC(C)=O", "CC=CC(C)=O"});
 
+  // No stereochemistry in conjugated double bonds to nitro
+  checkAns("c1ccnc(c1)C=C[N+](=O)[O-]",
+           {"O=[N+]([O-])C=Cc1ccccn1", "[O-][N+](O)=C=Cc1ccccn1"});
+
+  // Retain stereochemistry in conjugated double bonds to nitro
+  checkAns("c1ccnc(c1)/C=C/[N+](=O)[O-]",
+           {"O=[N+]([O-])/C=C/c1ccccn1", "[O-][N+](O)=C=Cc1ccccn1"});
+
   // Remove stereochemistry from mobile double bonds
   std::string smi66 = "C/C=C\\C(C)=O";
   ROMOL_SPTR m66(SmilesToMol(smi66));
@@ -334,7 +344,7 @@ void testEnumerator() {
   std::sort(ans66.begin(), ans66.end());
   TEST_ASSERT(sm66 == ans66);
 
-  // Gaunine tautomers
+  // Guanine tautomers
   std::string smi67 = "N1C(N)=NC=2N=CNC2C1=O";
   ROMOL_SPTR m67(SmilesToMol(smi67));
   TautomerEnumeratorResult res67 = te.enumerate(*m67);
@@ -401,6 +411,7 @@ void testEnumeratorParams() {
   }
   std::string sAlaSmi = "C[C@H](N)C(=O)O";
   ROMOL_SPTR sAla(SmilesToMol(sAlaSmi));
+  CIPLabeler::assignCIPLabels(*sAla);
   {
     // test remove (S)-Ala stereochemistry
     TEST_ASSERT(sAla->getAtomWithIdx(1)->getChiralTag() ==
@@ -429,6 +440,7 @@ void testEnumeratorParams() {
     TautomerEnumerator te(params);
     TautomerEnumeratorResult res = te.enumerate(*sAla);
     for (const auto &taut : res) {
+      CIPLabeler::assignCIPLabels(*taut);
       const auto tautAtom = taut->getAtomWithIdx(1);
       if (tautAtom->getHybridization() == Atom::SP3) {
         TEST_ASSERT(tautAtom->hasProp(common_properties::_CIPCode));
@@ -441,52 +453,142 @@ void testEnumeratorParams() {
       }
     }
   }
-  std::string eEnolSmi = "C/C=C/O";
-  ROMOL_SPTR eEnol(SmilesToMol(eEnolSmi));
-  TEST_ASSERT(eEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-  {
-    // test remove enol E stereochemistry
-    CleanupParameters params;
-    params.tautomerRemoveBondStereo = true;
-    TautomerEnumerator te(params);
-    TautomerEnumeratorResult res = te.enumerate(*eEnol);
-    for (const auto &taut : res) {
-      TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+  for (const bool useLegacy : {true, false}) {
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+
+    std::string eEnolSmi = "C/C=C/O";
+    ROMOL_SPTR eEnol(SmilesToMol(eEnolSmi));
+    if (useLegacy) {
+      TEST_ASSERT(eEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+    } else {
+      TEST_ASSERT(eEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
     }
-  }
-  {
-    // test retain enol E stereochemistry
-    CleanupParameters params;
-    params.tautomerRemoveBondStereo = false;
-    TautomerEnumerator te(params);
-    TautomerEnumeratorResult res = te.enumerate(*eEnol);
-    for (const auto &taut : res) {
-      if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
-        TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+    {
+      // test remove enol E stereochemistry
+      CleanupParameters params;
+      params.tautomerRemoveBondStereo = true;
+      TautomerEnumerator te(params);
+      TautomerEnumeratorResult res = te.enumerate(*eEnol);
+      for (const auto &taut : res) {
+        TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
       }
     }
-  }
-  ROMOL_SPTR zEnol = "C/C=C\\O"_smiles;
-  TEST_ASSERT(zEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
-  {
-    // test remove enol Z stereochemistry
-    CleanupParameters params;
-    params.tautomerRemoveBondStereo = true;
-    TautomerEnumerator te(params);
-    TautomerEnumeratorResult res = te.enumerate(*zEnol);
-    for (const auto &taut : res) {
-      TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    {
+      // test retain enol E stereochemistry
+      CleanupParameters params;
+      params.tautomerRemoveBondStereo = false;
+      TautomerEnumerator te(params);
+      TautomerEnumeratorResult res = te.enumerate(*eEnol);
+      for (const auto &taut : res) {
+        if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
+          if (useLegacy) {
+            TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+          } else {
+            TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() ==
+                        Bond::STEREOTRANS);
+          }
+        }
+      }
     }
-  }
-  {
-    // test retain enol Z stereochemistry
-    CleanupParameters params;
-    params.tautomerRemoveBondStereo = false;
-    TautomerEnumerator te(params);
-    TautomerEnumeratorResult res = te.enumerate(*zEnol);
-    for (const auto &taut : res) {
-      if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
-        TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    ROMOL_SPTR zEnol = "C/C=C\\O"_smiles;
+    if (useLegacy) {
+      TEST_ASSERT(zEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    } else {
+      TEST_ASSERT(zEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+    }
+    {
+      // test remove enol Z stereochemistry
+      CleanupParameters params;
+      params.tautomerRemoveBondStereo = true;
+      TautomerEnumerator te(params);
+      TautomerEnumeratorResult res = te.enumerate(*zEnol);
+      for (const auto &taut : res) {
+        TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+      }
+    }
+    {
+      // test retain enol Z stereochemistry
+      CleanupParameters params;
+      params.tautomerRemoveBondStereo = false;
+      TautomerEnumerator te(params);
+      TautomerEnumeratorResult res = te.enumerate(*zEnol);
+      for (const auto &taut : res) {
+        if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
+          if (useLegacy) {
+            TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+          } else {
+            TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() ==
+                        Bond::STEREOCIS);
+          }
+        }
+      }
+    }
+    std::string eOximeSmi = "c1ccnc(c1)/C=N/O";
+    ROMOL_SPTR eOxime(SmilesToMol(eOximeSmi));
+    if (useLegacy) {
+      TEST_ASSERT(eOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOE);
+    } else {
+      TEST_ASSERT(eOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOTRANS);
+    }
+    {
+      // test remove oxime E stereochemistry
+      CleanupParameters params;
+      params.tautomerRemoveBondStereo = true;
+      TautomerEnumerator te(params);
+      TautomerEnumeratorResult res = te.enumerate(*eOxime);
+      for (const auto &taut : res) {
+        TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+      }
+    }
+    {
+      // test retain enol E stereochemistry
+      CleanupParameters params;
+      params.tautomerRemoveBondStereo = false;
+      TautomerEnumerator te(params);
+      TautomerEnumeratorResult res = te.enumerate(*eOxime);
+      for (const auto &taut : res) {
+        if (taut->getBondWithIdx(6)->getBondType() == Bond::DOUBLE) {
+          if (useLegacy) {
+            TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREOE);
+          } else {
+            TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() ==
+                        Bond::STEREOTRANS);
+          }
+        }
+      }
+    }
+    ROMOL_SPTR zOxime = "c1ccnc(c1)/C=N\\O"_smiles;
+    // zOxime->debugMol(std::cerr);
+    if (useLegacy) {
+      TEST_ASSERT(zOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+    } else {
+      TEST_ASSERT(zOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOCIS);
+    }
+    {
+      // test remove enol Z stereochemistry
+      CleanupParameters params;
+      params.tautomerRemoveBondStereo = true;
+      TautomerEnumerator te(params);
+      TautomerEnumeratorResult res = te.enumerate(*zOxime);
+      for (const auto &taut : res) {
+        TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+      }
+    }
+    {
+      // test retain enol Z stereochemistry
+      CleanupParameters params;
+      params.tautomerRemoveBondStereo = false;
+      TautomerEnumerator te(params);
+      TautomerEnumeratorResult res = te.enumerate(*zOxime);
+      for (const auto &taut : res) {
+        if (taut->getBondWithIdx(6)->getBondType() == Bond::DOUBLE) {
+          if (useLegacy) {
+            TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+          } else {
+            TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() ==
+                        Bond::STEREOCIS);
+          }
+        }
       }
     }
   }

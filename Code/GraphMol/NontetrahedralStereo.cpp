@@ -283,6 +283,28 @@ int isTrigonalBipyramidalAxialAtom(const Atom *cen, const Atom *qry) {
   return isTrigonalBipyramidalAxialBond(cen, bnd);
 }
 
+unsigned int getMaxNbors(const Atom::ChiralType tag) {
+  switch (tag) {
+    case Atom::CHI_TETRAHEDRAL_CW:
+    case Atom::CHI_TETRAHEDRAL_CCW:
+    case Atom::CHI_TETRAHEDRAL:  // fall through
+      return 4;
+    case Atom::CHI_ALLENE:
+      return 2;  // not used other than SMI/SMA parsers?
+    case Atom::CHI_SQUAREPLANAR:
+      return 4;
+    case Atom::CHI_TRIGONALBIPYRAMIDAL:
+      return 5;
+    case Atom::CHI_OCTAHEDRAL:
+      return 6;
+    default:
+      BOOST_LOG(rdWarningLog)
+          << "Warning: unexpected chiral tag getMaxNbors(): " << tag
+          << std::endl;
+      return 0;
+  }
+}
+
 Bond *getChiralAcrossBond(const Atom *cen, const Bond *qry) {
   PRECONDITION(cen, "bad center pointer");
   PRECONDITION(qry, "bad query pointer");
@@ -291,22 +313,6 @@ Bond *getChiralAcrossBond(const Atom *cen, const Bond *qry) {
                "center and query must come from the same molecule");
 
   Atom::ChiralType tag = cen->getChiralTag();
-  unsigned int ref_max = 0;
-
-  switch (tag) {
-    case Atom::ChiralType::CHI_SQUAREPLANAR:
-      ref_max = 4;
-      break;
-    case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
-      ref_max = 5;
-      break;
-    case Atom::ChiralType::CHI_OCTAHEDRAL:
-      ref_max = 6;
-      break;
-    default:
-      return nullptr;
-  }
-
   unsigned int perm = 0;
   cen->getPropIfPresent(common_properties::_chiralPermutation, perm);
   if (!perm) {
@@ -318,6 +324,7 @@ Bond *getChiralAcrossBond(const Atom *cen, const Bond *qry) {
   Bond *ref[6];
   int found = -1;
 
+  unsigned int ref_max = getMaxNbors(tag);
   for (auto bnd : mol.atomBonds(cen)) {
     if (count == ref_max) {
       return nullptr;
@@ -436,7 +443,7 @@ Bond *getTrigonalBipyramidalAxialBond(const Atom *cen, int axial) {
 
   unsigned int perm = 0;
   cen->getPropIfPresent(RDKit::common_properties::_chiralPermutation, perm);
-  if (perm == 0 || perm > 20) return 0;
+  if (perm == 0 || perm > 20) return nullptr;
 
   unsigned int idx = (axial != -1) ? trigonalbipyramidal_axial[perm][0]
                                    : trigonalbipyramidal_axial[perm][1];
@@ -466,7 +473,8 @@ bool hasNonTetrahedralStereo(const Atom *cen) {
          tag == Atom::ChiralType::CHI_OCTAHEDRAL;
 }
 
-unsigned int getChiralPermutation(const Atom *cen, const INT_LIST &probe) {
+unsigned int getChiralPermutation(const Atom *cen, const INT_LIST &probe,
+                                  bool inverse) {
   PRECONDITION(cen, "bad center pointer");
   PRECONDITION(cen->hasOwningMol(), "no owning mol");
 
@@ -479,12 +487,21 @@ unsigned int getChiralPermutation(const Atom *cen, const INT_LIST &probe) {
   decltype(&swap_octahedral) swap_func = nullptr;
   switch (cen->getChiralTag()) {
     case Atom::ChiralType::CHI_OCTAHEDRAL:
+      if (probe.size() > 6) {
+        return 0;
+      }
       swap_func = swap_octahedral;
       break;
     case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
+      if (probe.size() > 5) {
+        return 0;
+      }
       swap_func = swap_trigonalbipyramidal;
       break;
     case Atom::ChiralType::CHI_SQUAREPLANAR:
+      if (probe.size() > 4) {
+        return 0;
+      }
       swap_func = swap_squareplanar;
       break;
     default:
@@ -498,15 +515,25 @@ unsigned int getChiralPermutation(const Atom *cen, const INT_LIST &probe) {
   for (const auto bnd : cen->getOwningMol().atomBonds(cen)) {
     order[bnd->getIdx()] = nbrIdx++;
   }
-  CHECK_INVARIANT(nbrIdx == probe.size(), "probe vector size does not match");
 
   // nbrPerm maps original index to array position
   std::vector<unsigned int> nbrPerm(nbrIdx);
   std::iota(nbrPerm.begin(), nbrPerm.end(), 0);
-  std::vector<unsigned int> probePerm(nbrIdx);
+  std::vector<unsigned int> probePerm(probe.size());
   nbrIdx = 0;
   for (auto v : probe) {
-    probePerm[nbrIdx++] = order[v];
+    probePerm[nbrIdx++] = v < 0 ? -1 : order[v];
+  }
+
+  // Missing (implicit) neighbors are at the end when in storage order
+  if (nbrPerm.size() < nbrIdx)
+    nbrPerm.insert(nbrPerm.end(), nbrIdx - nbrPerm.size(), -1);
+
+  CHECK_INVARIANT(nbrPerm.size() == probePerm.size(),
+                  "probe vector size does not match");
+
+  if (inverse) {
+    std::swap(nbrPerm, probePerm);
   }
 
   boost::dynamic_bitset<> swapped(probe.size());

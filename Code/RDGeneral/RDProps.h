@@ -148,7 +148,8 @@ class RDProps {
   //! clears all of our \c computed \c properties
   void clearComputedProps() const {
     STR_VECT compLst;
-    if (getPropIfPresent(RDKit::detail::computedPropName, compLst) && !compLst.empty()) {
+    if (getPropIfPresent(RDKit::detail::computedPropName, compLst) &&
+        !compLst.empty()) {
       for (const auto &sv : compLst) {
         d_props.clearVal(sv);
       }

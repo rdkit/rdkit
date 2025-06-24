@@ -95,8 +95,7 @@ class CIPMol {
 
  private:
   ROMol &d_mol;
-  std::unique_ptr<RWMol> dp_kekulized_mol = nullptr;
-
+  std::vector<RDKit::Bond::BondType> d_kekulized_bonds;
   std::vector<boost::rational<int>> d_atomnums;
 };
 

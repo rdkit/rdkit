@@ -248,10 +248,10 @@ void Reionizer::reionizeInPlace(RWMol &mol) {
   }  // while loop
 }
 
-std::pair<unsigned int, std::vector<unsigned int>>
-    *Reionizer::strongestProtonated(
-        const ROMol &mol,
-        const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs) {
+std::pair<unsigned int, std::vector<unsigned int>> *
+Reionizer::strongestProtonated(
+    const ROMol &mol,
+    const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs) {
   // position is the position in the acid list.
   unsigned int position = 0;
   for (const auto &abpair : abpairs) {
@@ -306,15 +306,15 @@ Uncharger::Uncharger()
           // hali(a)te, perhalate
           "$([O-][Cl,Br,I;+,+2,+3][O-]),"
           // tetrazole
-          "$([n-]1nnnc1),$([n-]1ncnn1)]")){};
+          "$([n-]1nnnc1),$([n-]1ncnn1)]")) {};
 
 namespace {
 void removeCharge(Atom *atom, int charge, int hDelta) {
   atom->setNumExplicitHs(atom->getTotalNumHs() + hDelta);
   atom->setNoImplicit(true);
   atom->setFormalCharge(atom->getFormalCharge() - charge);
-  BOOST_LOG(rdInfoLog)
-    << "Removed " << ((charge > 0) ? "positive" : "negative") << " charge.\n";
+  BOOST_LOG(rdInfoLog) << "Removed " << ((charge > 0) ? "positive" : "negative")
+                       << " charge.\n";
   // since we changed the number of explicit Hs, we need to update the
   // other valence parameters
   atom->updatePropertyCache(false);
@@ -344,8 +344,8 @@ bool removeNegIfPossible(Atom *atom, bool protonationOnly) {
 
 int hDeltaRemovingPos(const Atom *atom, bool protonationOnly) {
   bool carbonOrEarlyAtom = (
-    // the special case for C here was github #2792
-    atom->getAtomicNum() == 6 || isEarlyAtom(atom->getAtomicNum()));
+      // the special case for C here was github #2792
+      atom->getAtomicNum() == 6 || isEarlyAtom(atom->getAtomicNum()));
   if (carbonOrEarlyAtom && protonationOnly) {
     return 0;
   }
@@ -369,7 +369,7 @@ bool removePosIfPossible(Atom *atom, bool protonationOnly) {
   return false;
 }
 
-}
+}  // namespace
 
 ROMol *Uncharger::uncharge(const ROMol &mol) {
   auto omol = new RWMol(mol);
@@ -430,7 +430,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     std::sort(a_atoms.begin(), a_atoms.end());
   }
 
-  // merge n_atoms and a_atoms into one single list of 
+  // merge n_atoms and a_atoms into one single list of
   // negatively charged sites that will be neutralized in
   // sequence
   std::vector<std::pair<int, int>> neg_atoms;
@@ -459,7 +459,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     unsigned int idx = pair.second;
     Atom *atom = mol.getAtomWithIdx(idx);
     for (const auto &nbri :
-          boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+         boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
       const auto &nbr = (mol)[nbri];
       auto nbrIdx = nbr->getIdx();
       // if the neighbor has a positive charge,
@@ -489,8 +489,8 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
   int neg_surplus = neg_atoms.size();
   if (!df_force) {
     // unless we want to fully uncharge the compound, the estimated surplus must
-    // be deduced the amount of positive charge that is not possible to neutralize
-    // and must be balanced.
+    // be deduced the amount of positive charge that is not possible to
+    // neutralize and must be balanced.
     neg_surplus -= q_matched;
   }
 
@@ -528,8 +528,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
       while (atom->getFormalCharge() > 0 && (netCharge > 0 || df_force)) {
         if (removePosIfPossible(atom, df_protonationOnly)) {
           --netCharge;
-        }
-        else {
+        } else {
           break;
         }
       }

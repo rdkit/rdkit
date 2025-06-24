@@ -267,7 +267,7 @@ void ParseSGroupV2000SDILine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 }
 
 void ParseSGroupV2000SSTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line,
+                             const std::string &text, unsigned int &line,
                              bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SST", "bad SST line");
@@ -315,7 +315,7 @@ void ParseSGroupV2000SSTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 }
 
 void ParseSGroupV2000SMTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line,
+                             const std::string &text, unsigned int &line,
                              bool strictParsing) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == "M  SMT", "bad SMT line");
@@ -1132,7 +1132,17 @@ void ParseV3000ParseLabel(const std::string &label,
     } else if (label == "PARENT") {
       // Store relationship until all SGroups have been read
       unsigned int parentIdx;
+      if (lineStream.eof()) {
+        std::ostringstream errout;
+        errout << "PARENT label not found on line " << line;
+        throw FileParseException(errout.str());
+      }
       lineStream >> parentIdx;
+      if (lineStream.fail()) {
+        std::ostringstream errout;
+        errout << "Invalid PARENT label found on line " << line;
+        throw FileParseException(errout.str());
+      }
       sgroup.setProp<unsigned int>("PARENT", parentIdx);
     } else if (label == "COMPNO") {
       unsigned int compno;
@@ -1167,7 +1177,14 @@ void ParseV3000ParseLabel(const std::string &label,
         errout << "Unsupported SGroup connection type '" << strValue
                << "' on line " << line;
         throw FileParseException(errout.str());
+      } else if (label == "CLASS" &&
+                 !SubstanceGroupChecks::isValidClass(strValue)) {
+        std::ostringstream errout;
+        errout << "Unsupported SGroup template class '" << strValue
+               << "' on line " << line;
+        throw FileParseException(errout.str());
       }
+      // NATREPLACE is not validated nor used
 
       sgroup.setProp(label, strValue);
     }
@@ -1178,7 +1195,7 @@ void ParseV3000ParseLabel(const std::string &label,
   }
 }
 
-std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
+std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
                                    unsigned int nSgroups, RWMol *mol,
                                    bool strictParsing) {
   PRECONDITION(inStream, "no stream");

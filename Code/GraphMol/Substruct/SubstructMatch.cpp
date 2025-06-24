@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,10 +21,7 @@
 #include <GraphMol/GenericGroups/GenericGroups.h>
 #include <boost/smart_ptr.hpp>
 #include <map>
-
-#if BOOST_VERSION == 106400
-#include <boost/serialization/array_wrapper.hpp>
-#endif
+#include <span>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
@@ -33,8 +30,6 @@
 #endif
 
 #include "vf2.hpp"
-
-using boost::make_iterator_range;
 
 namespace RDKit {
 namespace detail {
@@ -57,14 +52,14 @@ bool enhancedStereoIsOK(
   // If the query has stereo groups:
   // * OR only matches AND or OR (not absolute)
   // * AND only matches OR
-  for (auto &&sg : query.getStereoGroups()) {
+  for (const auto &sg : query.getStereoGroups()) {
     if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
       continue;
     }
     // StereoGroup const* matched_mol_group = nullptr;
     const bool is_and = sg.getGroupType() == StereoGroupType::STEREO_AND;
-    for (auto &&a : sg.getAtoms()) {
-      auto mol_group = molStereoGroups.find(q_to_mol[a->getIdx()]);
+    for (const auto a : sg.getAtoms()) {
+      const auto mol_group = molStereoGroups.find(q_to_mol[a->getIdx()]);
       if (mol_group == molStereoGroups.end()) {
         // group matching absolute. not ok.
         return false;
@@ -81,15 +76,15 @@ bool enhancedStereoIsOK(
   // If the mol has stereo groups:
   // * All atoms must either be the same or opposite, you can't mix
   // * Only one stereogroup must cover all matched atoms in the mol stereo group
-  for (auto &&sg : mol.getStereoGroups()) {
+  for (const auto &sg : mol.getStereoGroups()) {
     if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
       continue;
     }
-    bool doesMatch;
+    bool doesMatch = false;
     bool seen = false;
     StereoGroup const *QGroup = nullptr;
 
-    for (auto &&a : sg.getAtoms()) {
+    for (const auto &a : sg.getAtoms()) {
       auto thisDoesMatch = matches.find(a->getIdx());
       if (thisDoesMatch == matches.end()) {
         // not matched
@@ -175,7 +170,7 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
                               std::set<MatchVectType> *matches, unsigned int bi,
                               unsigned int ei);
 
-typedef std::list<
+typedef std::vector<
     std::pair<MolGraph::vertex_descriptor, MolGraph::vertex_descriptor>>
     ssPairType;
 
@@ -199,11 +194,7 @@ MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
 bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
                                            const std::uint32_t m_c[]) {
   if (d_params.extraFinalCheck || d_params.useGenericMatchers) {
-    // EFF: we can no-doubt do better than this
-    std::vector<unsigned int> aids(m_c, m_c + d_query.getNumAtoms());
-    for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
-      aids[i] = m_c[i];
-    }
+    const std::span<const std::uint32_t> aids(m_c, d_query.getNumAtoms());
     if (d_params.useGenericMatchers &&
         !GenericGroups::genericAtomMatcher(d_mol, d_query, aids)) {
       return false;
@@ -249,6 +240,9 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
     }
     const Atom *mAt = d_mol.getAtomWithIdx(m_c[i]);
     if (!detail::hasChiralLabel(mAt)) {
+      if (d_params.specifiedStereoQueryMatchesUnspecified) {
+        continue;
+      }
       return false;
     }
     if (qAt->getDegree() > mAt->getDegree()) {
@@ -276,8 +270,8 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
     mOrder.insert(mOrder.end(), unmatchedNeighbors, -1);
 
     INT_LIST moOrder;
-    for (const auto &bond : make_iterator_range(d_mol.getAtomBonds(mAt))) {
-      int dbidx = d_mol[bond]->getIdx();
+    for (const auto &bond : d_mol.atomBonds(mAt)) {
+      const int dbidx = bond->getIdx();
       if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end()) {
         moOrder.push_back(dbidx);
       } else {
@@ -285,7 +279,7 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
       }
     }
 
-    int mPermCount =
+    const int mPermCount =
         static_cast<int>(countSwapsToInterconvert(moOrder, mOrder));
 
     const bool requireMatch = qPermCount % 2 == mPermCount % 2;
@@ -293,7 +287,7 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
     const bool matchOK = requireMatch == labelsMatch;
 
     // if this is not part of a stereogroup and doesn't match, return false
-    auto msg = d_molStereoGroups.find(m_c[i]);
+    const auto msg = d_molStereoGroups.find(m_c[i]);
     if (msg == d_molStereoGroups.end()) {
       if (!matchOK) {
         return false;
@@ -330,10 +324,15 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
     const Bond *mBnd = d_mol.getBondBetweenAtoms(
         q_to_mol[qBnd->getBeginAtomIdx()], q_to_mol[qBnd->getEndAtomIdx()]);
     CHECK_INVARIANT(mBnd, "Matching bond not found");
-    if (mBnd->getBondType() != Bond::DOUBLE ||
-        qBnd->getStereo() <= Bond::STEREOANY) {
+    if (mBnd->getBondType() != Bond::DOUBLE) {
       continue;
     }
+
+    if (!d_params.specifiedStereoQueryMatchesUnspecified &&
+        mBnd->getStereo() <= Bond::STEREOANY) {
+      return false;
+    }
+
     // don't think this can actually happen, but check to be sure:
     if (mBnd->getStereoAtoms().size() != 2) {
       continue;
@@ -388,7 +387,8 @@ class AtomLabelFunctor {
  public:
   AtomLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps){};
+      : d_query(query), d_mol(mol), d_params(ps) {};
+
   bool operator()(unsigned int i, unsigned int j) const {
     bool res = false;
     if (d_params.useChirality) {
@@ -396,7 +396,8 @@ class AtomLabelFunctor {
       if (qAt->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
           qAt->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
         const Atom *mAt = d_mol.getAtomWithIdx(j);
-        if (mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+        if (!d_params.specifiedStereoQueryMatchesUnspecified &&
+            mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
             mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
           return false;
         }
@@ -415,7 +416,7 @@ class BondLabelFunctor {
  public:
   BondLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps){};
+      : d_query(query), d_mol(mol), d_params(ps) {};
   bool operator()(MolGraph::edge_descriptor i,
                   MolGraph::edge_descriptor j) const {
     if (d_params.useChirality) {
@@ -424,6 +425,7 @@ class BondLabelFunctor {
           qBnd->getStereo() > Bond::STEREOANY) {
         const Bond *mBnd = d_mol[j];
         if (mBnd->getBondType() == Bond::DOUBLE &&
+            !d_params.specifiedStereoQueryMatchesUnspecified &&
             mBnd->getStereo() <= Bond::STEREOANY) {
           return false;
         }
@@ -443,7 +445,7 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
                               unsigned int ei) {
   for (unsigned int i = bi;
        (matches->size() < args.params.maxMatches) && (i < ei); ++i) {
-    ROMol *mol = args.resMolSupplier[i];
+    std::unique_ptr<ROMol> mol{args.resMolSupplier[i]};
     std::vector<MatchVectType> matchesTmp =
         SubstructMatch(*mol, args.query, args.params);
     for (const auto &match : matchesTmp) {
@@ -451,7 +453,6 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
         break;
       }
     }
-    delete mol;
   }
 };
 
@@ -503,17 +504,12 @@ std::vector<MatchVectType> SubstructMatch(
   detail::BondLabelFunctor bondLabeler(query, mol, params);
   MolMatchFinalCheckFunctor matchChecker(query, mol, params);
 
-  std::list<detail::ssPairType> pms;
-#if 0
-  bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
-				atomLabeler,bondLabeler,pms);
-#else
+  std::vector<detail::ssPairType> pms;
   bool found =
       boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
                      bondLabeler, matchChecker, pms, params.maxMatches);
-#endif
   if (found) {
-    unsigned int nQueryAtoms = query.getNumAtoms();
+    const unsigned int nQueryAtoms = query.getNumAtoms();
     matches.reserve(pms.size());
     MatchVectType matchVect(nQueryAtoms);
     for (const auto &pairs : pms) {
@@ -530,7 +526,7 @@ std::vector<MatchVectType> SubstructMatch(
     const MolBundle &bundle, const ROMol &query,
     const SubstructMatchParameters &params) {
   std::vector<MatchVectType> res;
-  for (unsigned int i = 0; i < bundle.size() && !res.size(); ++i) {
+  for (unsigned int i = 0; i < bundle.size() && res.empty(); ++i) {
     res = SubstructMatch(*bundle[i], query, params);
   }
   return res;
@@ -540,7 +536,7 @@ std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const MolBundle &query,
     const SubstructMatchParameters &params) {
   std::vector<MatchVectType> res;
-  for (unsigned int i = 0; i < query.size() && !res.size(); ++i) {
+  for (unsigned int i = 0; i < query.size() && res.empty(); ++i) {
     res = SubstructMatch(mol, *query[i], params);
   }
   return res;
@@ -550,8 +546,8 @@ std::vector<MatchVectType> SubstructMatch(
     const MolBundle &mol, const MolBundle &query,
     const SubstructMatchParameters &params) {
   std::vector<MatchVectType> res;
-  for (unsigned int i = 0; i < mol.size() && !res.size(); ++i) {
-    for (unsigned int j = 0; j < query.size() && !res.size(); ++j) {
+  for (unsigned int i = 0; i < mol.size() && res.empty(); ++i) {
+    for (unsigned int j = 0; j < query.size() && res.empty(); ++j) {
       res = SubstructMatch(*mol[i], *query[j], params);
     }
   }
@@ -577,19 +573,19 @@ std::vector<MatchVectType> SubstructMatch(
 #ifdef RDK_BUILD_THREADSAFE_SSS
   else {
     std::vector<std::future<void>> tg;
-    std::vector<std::set<MatchVectType> *> matchesThread(nt);
+    std::vector<std::unique_ptr<std::set<MatchVectType>>> matchesThread(nt);
     unsigned int ei = 0;
     double dpt =
         static_cast<double>(resMolSupplier.length()) / static_cast<double>(nt);
     double dc = 0.0;
     for (unsigned int ti = 0; ti < nt; ++ti) {
-      matchesThread[ti] = new std::set<MatchVectType>();
+      matchesThread[ti] = std::make_unique<std::set<MatchVectType>>();
       unsigned int bi = ei;
       dc += dpt;
       ei = static_cast<unsigned int>(floor(dc));
       tg.emplace_back(std::async(std::launch::async,
                                  detail::ResSubstructMatchHelper_, args,
-                                 matchesThread[ti], bi, ei));
+                                 matchesThread[ti].get(), bi, ei));
     }
     for (auto &fut : tg) {
       fut.get();
@@ -601,7 +597,6 @@ std::vector<MatchVectType> SubstructMatch(
           break;
         }
       }
-      delete matchesThread[ti];
     }
   }
 #endif
@@ -629,15 +624,10 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
 
   matches.clear();
   matches.resize(0);
-  std::list<detail::ssPairType> pms;
-#if 0
-      bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
-				    atomLabeler,bondLabeler,pms);
-#else
+  std::vector<detail::ssPairType> pms;
   bool found =
       boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
                      bondLabeler, matchChecker, pms, lparams.maxMatches);
-#endif
   unsigned int res = 0;
   if (found) {
     matches.reserve(pms.size());
@@ -675,8 +665,6 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
                      SUBQUERY_MAP &subqueryMap,
                      std::vector<RecursiveStructureQuery *> &locked) {
   PRECONDITION(query, "bad query");
-  // std::cout << "*-*-* MS: " << query << std::endl;
-  // std::cout << "\t\t" << typeid(*query).name() << std::endl;
   if (query->getDescription() == "RecursiveStructure") {
     auto *rsq = (RecursiveStructureQuery *)query;
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -696,8 +684,6 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
            ++setIter) {
         rsq->insert(*setIter);
       }
-      // std::cerr<<" copying results for query serial number:
-      // "<<rsq->getSerialNumber()<<std::endl;
     }
 
     if (!matchDone) {
@@ -715,13 +701,8 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
       }
       if (rsq->getSerialNumber()) {
         subqueryMap[rsq->getSerialNumber()] = query;
-        // std::cerr << " storing results for query serial number: "
-        //           << rsq->getSerialNumber() << " " << rsq->size() <<
-        //           std::endl;
       }
     }
-  } else {
-    // std::cout << "\tmsq1: ";
   }
 
   // now recurse over our children (these things can be nested)

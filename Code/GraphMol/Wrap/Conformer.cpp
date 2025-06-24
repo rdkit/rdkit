@@ -58,43 +58,54 @@ PyObject *GetPos(const Conformer *conf) {
   return PyArray_Return(res);
 }
 
-void SetPos(Conformer *conf, np::ndarray const & array) {
+void SetPos(Conformer *conf, np::ndarray const &array) {
   if (array.get_dtype() != np::dtype::get_builtin<double>()) {
     PyErr_SetString(PyExc_TypeError, "Incorrect array data type");
     python::throw_error_already_set();
   }
 
-  if(array.get_nd() != 2) {
+  if (array.get_nd() != 2) {
     PyErr_SetString(PyExc_TypeError, "Input array shape must be of rank 2");
     python::throw_error_already_set();
   }
 
-  if(array.shape(0) != conf->getNumAtoms()) {
-    PyErr_SetString(PyExc_ValueError, "Position array shape doesn't equal the number of atoms in the conformer");
+  if (array.shape(0) != conf->getNumAtoms()) {
+    PyErr_SetString(
+        PyExc_ValueError,
+        "Position array shape doesn't equal the number of atoms in the conformer");
     python::throw_error_already_set();
   }
 
-  if(array.shape(1) < 2 || array.shape(1) > 3) {
-    PyErr_SetString(PyExc_ValueError, "Position array point dimension must be 2 or 3 (2d or 3d)");
+  if (array.shape(1) < 2 || array.shape(1) > 3) {
+    PyErr_SetString(PyExc_ValueError,
+                    "Position array point dimension must be 2 or 3 (2d or 3d)");
     python::throw_error_already_set();
   }
 
-  const auto *data = reinterpret_cast<double*>(array.get_data());
+  // pointer to start of contiguous data block that numpy holds
+  // this isn't necessarily in pure C order
+  const auto *dataptr = array.get_data();
+  // the number of *bytes* to skip to jump to next row in data array
+  int stride_atom = array.strides(0);
+  // the number of *bytes* to skip to move between x, y, z in a row
+  int stride_dim = array.strides(1);
+  // i.e. stride_atom/dim would be 24 & 8 in a contiguous 3D input,
+  // but numpy will play with this when doing slicing/transposing etc
+
   RDGeom::POINT3D_VECT &pos = conf->getPositions();
-  if(array.shape(1) == 2) {
-    for(size_t i=0; i<conf->getNumAtoms(); ++i) {
-      pos[i].x = data[i*2];
-      pos[i].y = data[i*2+1];
+  if (array.shape(1) == 2) {
+    for (size_t i = 0; i < conf->getNumAtoms(); ++i) {
+      pos[i].x = * reinterpret_cast<const double *>(dataptr + i * stride_atom);
+      pos[i].y = * reinterpret_cast<const double *>(dataptr + i * stride_atom + stride_dim);
       pos[i].z = 0.0;
     }
   } else {
-    for(size_t i=0; i<conf->getNumAtoms(); ++i) {
-      pos[i].x = data[i*3];
-      pos[i].y = data[i*3+1];
-      pos[i].z = data[i*3+2];
+    for (size_t i = 0; i < conf->getNumAtoms(); ++i) {
+      pos[i].x = * reinterpret_cast<const double *>(dataptr + i * stride_atom);
+      pos[i].y = * reinterpret_cast<const double *>(dataptr + i * stride_atom + stride_dim);
+      pos[i].z = * reinterpret_cast<const double *>(dataptr + i * stride_atom + 2 * stride_dim);
     }
   }
-  
 }
 void SetAtomPos(Conformer *conf, unsigned int aid, python::object loc) {
   // const std::vector<double> &loc) {
@@ -136,9 +147,10 @@ struct conformer_wrapper {
              "Get the posistion of an atom\n")
         .def("GetPositions", GetPos, python::args("self"),
              "Get positions of all the atoms\n")
-        .def("SetPositions", SetPos,
-	     (python::args("self"), python::args("positions")),
-             "Set positions of all the atoms given a 2D or 3D numpy array of type double\n")
+        .def(
+            "SetPositions", SetPos,
+            (python::args("self"), python::args("positions")),
+            "Set positions of all the atoms given a 2D or 3D numpy array of type double\n")
         .def("SetAtomPosition", SetAtomPos, python::args("self", "aid", "loc"),
              "Set the position of the specified atom\n")
         .def("SetAtomPosition",
@@ -220,7 +232,8 @@ struct conformer_wrapper {
             "  RETURNS: a string\n\n"
             "  NOTE:\n"
             "    - If the property has not been set, a KeyError exception "
-            "will be raised.\n")
+            "will be raised.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetDoubleProp", GetProp<Conformer, double>,
              python::args("self", "key"),
              "Returns the double value of the property if possible.\n\n"

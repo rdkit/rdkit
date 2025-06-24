@@ -327,32 +327,6 @@ static void ucvTanimotoSim(sqlite3_context *context, int argc,
   sqlite3_result_double(context, res);
 }
 
-#if 0
-// Naive approach: actually construct two sparse int vects:
-static void sivDiceSim(
-  sqlite3_context *context,
-  int argc,
-  sqlite3_value **argv
-){
-  RDKit::SparseIntVect<int> *v1=sivFromBlobArg<int>(argv[0]);
-  if(!v1){
-    std::string errorMsg="BLOB (argument 1) could not be converted into an int vector";
-    sqlite3_result_error(context,errorMsg.c_str(),errorMsg.length());
-    return;
-  }
-  RDKit::SparseIntVect<int> *v2=sivFromBlobArg<int>(argv[1]);
-  if(!v2){
-    delete v1;
-    std::string errorMsg="BLOB (argument 2) could not be converted into a bit vector";
-    sqlite3_result_error(context,errorMsg.c_str(),errorMsg.length());
-    return;
-  }
-  double res= RDKit::DiceSimilarity(*v1,*v2);
-  delete v1;
-  delete v2;
-  sqlite3_result_double(context, res);
-}
-#else
 // faster, just parse the format directly
 static void sivDiceSim(sqlite3_context *context, int argc,
                        sqlite3_value **argv) {
@@ -483,7 +457,6 @@ static void sivDiceSim(sqlite3_context *context, int argc,
   // std::cerr<<" "<<v1Sum<<" "<<v2Sum<<" "<<numer<<" "<<res<<std::endl;
   sqlite3_result_double(context, res);
 }
-#endif
 
 /* SQLite invokes this routine once when it loads the extension.
 ** Create new functions, collating sequences, and virtual table

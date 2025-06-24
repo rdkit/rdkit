@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum
+//  Copyright (C) 2021-2025 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -420,6 +420,93 @@ TEST_CASE("github #5923: add more error checking to substance groups") {
                       R"JSON("bonds":[2,7])JSON");
       CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
                       ValueErrorException);
+    }
+  }
+}
+
+TEST_CASE(
+    "github #8031: make sure floating point coords are not incorrectly truncated") {
+  auto mb = R"CTAB(
+  MJ240300                      
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.4955    1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2099    0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2099   -0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4955   -0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7810   -0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7810    0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0666    1.1152    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9244   -0.5348    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  7  1  0  0  0  0
+  3  8  1  0  0  0  0
+M  ISO  1   7   2
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> mol(MolBlockToMol(mb, true, false));
+  REQUIRE(mol);
+  std::string pickle;
+  MolPickler::pickleMol(*mol, pickle);
+  ROMol molFromPickle(pickle);
+  auto json = MolInterchange::MolToJSONData(molFromPickle);
+  CHECK(json.find("-0.5347") == std::string::npos);
+  CHECK(json.find("-0.5348") != std::string::npos);
+}
+
+TEST_CASE("github #8460: MolToJSON does not handle atropisomers") {
+  SECTION("as reported") {
+    auto m = "C1CC(C)C=1c1c(CC)cccc1C |wU:4.3|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(4)->getStereo() == Bond::BondStereo::STEREOATROPCW);
+    auto refSmiles = MolToCXSmiles(*m);
+    auto json = MolInterchange::MolToJSONData(*m);
+    CHECK(json.find("\"stereo\":\"atrop_cw\"") != std::string::npos);
+
+    auto nmols = MolInterchange::JSONDataToMols(json);
+    CHECK(nmols.size() == 1);
+    CHECK(nmols[0]->getBondWithIdx(4)->getStereo() ==
+          Bond::BondStereo::STEREOATROPCW);
+    CHECK(MolToCXSmiles(*nmols[0]) == refSmiles);
+  }
+  SECTION("enhanced stereo") {
+    auto m = "C1CC(C)C=1c1c(CC)cccc1C |wU:4.3,&1:4|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(4)->getStereo() == Bond::BondStereo::STEREOATROPCW);
+    CHECK(m->getStereoGroups().size() == 1);
+
+    auto refSmiles = MolToCXSmiles(*m);
+    auto json = MolInterchange::MolToJSONData(*m);
+    CHECK(json.find("\"stereo\":\"atrop_cw\"") != std::string::npos);
+
+    auto nmols = MolInterchange::JSONDataToMols(json);
+    CHECK(nmols.size() == 1);
+    CHECK(nmols[0]->getBondWithIdx(4)->getStereo() ==
+          Bond::BondStereo::STEREOATROPCW);
+    CHECK(nmols[0]->getStereoGroups().size() == 1);
+
+    CHECK(MolToCXSmiles(*nmols[0]) == refSmiles);
+  }
+  SECTION("round trips") {
+    std::vector<std::string> smileses = {
+        "C1CC(C)C=1c1c(CC)cccc1C |wD:4.3|",
+        "C1CC(C)C=1c1c(CC)cccc1C |wD:4.3,&1:4|"
+        "C1CC(C)C=1c1c(CC)cccc1C |wU:4.3,o1:4|",
+        "C1CC(C)C=1c1c(CC)cccc1[C@H](F)Cl |wU:4.3,&1:4,13|"};
+    for (const auto &smi : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+
+      auto refSmiles = MolToCXSmiles(*m);
+      auto json = MolInterchange::MolToJSONData(*m);
+      auto nmols = MolInterchange::JSONDataToMols(json);
+      CHECK(nmols.size() == 1);
+      CHECK(MolToCXSmiles(*nmols[0]) == refSmiles);
     }
   }
 }

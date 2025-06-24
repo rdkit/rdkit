@@ -270,6 +270,21 @@ TEST_CASE("addMolToNetwork", "[unittest][scaffolds]") {
     CHECK(std::find(net.nodes.begin(), net.nodes.end(),
                     "*1**1**1:*:*:*:*:*:1") != net.nodes.end());
   }
+  SECTION("includes names") {
+    auto m = "CC(=O)Oc1ccccc1C(=O)O aspirin"_smiles;
+    REQUIRE(m);
+    // check that the name was parsed into "_Name"
+    CHECK(m->getProp<std::string>("_Name") == "aspirin");
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.at(0) == "CC(=O)Oc1ccccc1C(=O)O");
+
+    ps.includeNames = true;
+    ScaffoldNetwork::ScaffoldNetwork otherNet;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, otherNet, ps);
+    CHECK(otherNet.nodes.at(0) == "CC(=O)Oc1ccccc1C(=O)O aspirin");
+  }
 }
 TEST_CASE("Network defaults", "[scaffolds]") {
   auto smis = {"c1ccccc1CC1NC(=O)CCC1", "c1cccnc1CC1NC(=O)CCC1"};

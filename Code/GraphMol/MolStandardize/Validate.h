@@ -57,7 +57,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT CompositeValidation
  public:
   CompositeValidation(
       const std::vector<std::shared_ptr<ValidationMethod>> &validations)
-      : validations(validations){};
+      : validations(validations) {};
 
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
@@ -80,12 +80,17 @@ class RDKIT_MOLSTANDARDIZE_EXPORT CompositeValidation
 */
 class RDKIT_MOLSTANDARDIZE_EXPORT RDKitValidation : public ValidationMethod {
  public:
+  RDKitValidation(bool allowEmptyMolecules = false)
+      : allowEmptyMolecules(allowEmptyMolecules) {};
+
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
 
   std::shared_ptr<ValidationMethod> copy() const override {
     return std::make_shared<RDKitValidation>(*this);
   }
+
+  bool allowEmptyMolecules;
 };
 
 //////////////////////////////
@@ -136,7 +141,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NeutralValidation : public ValidationMethod {
 */
 class RDKIT_MOLSTANDARDIZE_EXPORT IsotopeValidation : public ValidationMethod {
  public:
-  IsotopeValidation(bool strict = false) : strict(strict){};
+  IsotopeValidation(bool strict = false) : strict(strict) {};
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
 
@@ -229,7 +234,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FeaturesValidation : public ValidationMethod {
         allowDativeBondType(allowDativeBondType),
         allowQueries(allowQueries),
         allowDummies(allowDummies),
-        allowAtomAliases(allowAtomAliases){};
+        allowAtomAliases(allowAtomAliases) {};
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
   std::shared_ptr<ValidationMethod> copy() const override {
@@ -249,7 +254,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FeaturesValidation : public ValidationMethod {
 /// same coordinates.
 class RDKIT_MOLSTANDARDIZE_EXPORT Is2DValidation : public ValidationMethod {
  public:
-  Is2DValidation(double threshold = 1.e-3) : threshold(threshold){};
+  Is2DValidation(double threshold = 1.e-3) : threshold(threshold) {};
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
   std::shared_ptr<ValidationMethod> copy() const override {
@@ -272,7 +277,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Layout2DValidation : public ValidationMethod {
         bondLengthLimit(bondLengthLimit),
         allowLongBondsInRings(allowLongBondsInRings),
         allowAtomBondClashExemption(allowAtomBondClashExemption),
-        minMedianBondLength(minMedianBondLength){};
+        minMedianBondLength(minMedianBondLength) {};
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
   std::shared_ptr<ValidationMethod> copy() const override {

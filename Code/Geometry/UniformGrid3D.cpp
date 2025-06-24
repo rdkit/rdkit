@@ -73,11 +73,11 @@ void UniformGrid3D::initGrid(
 
 UniformGrid3D::UniformGrid3D(const std::string &pkl) {
   dp_storage = nullptr;
-  this->initFromText(pkl.c_str(), pkl.size());
+  initFromText(pkl.c_str(), pkl.size());
 }
 UniformGrid3D::UniformGrid3D(const char *pkl, const unsigned int len) {
   dp_storage = nullptr;
-  this->initFromText(pkl, len);
+  initFromText(pkl, len);
 }
 
 UniformGrid3D::~UniformGrid3D() {
@@ -181,7 +181,7 @@ bool UniformGrid3D::compareParams(const UniformGrid3D &other) const {
 void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
                                        double stepSize, int maxNumLayers,
                                        bool ignoreOutOfBound) {
-  int ptIndex = this->getGridPointIndex(center);
+  int ptIndex = getGridPointIndex(center);
   if (ptIndex == -1) {
     if (ignoreOutOfBound) {
       return;
@@ -224,13 +224,15 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
   int ptId1, ptId2;
   for (int k = zmin; k <= zmax; ++k) {
     if ((k >= 0) &&
-        (k < static_cast<int>(d_numZ))) {  // we are inside the grid in the z-direction
+        (k < static_cast<int>(
+                 d_numZ))) {  // we are inside the grid in the z-direction
       dz = static_cast<double>(k) - gPt.z;
       dz2 = dz * dz;
       ptId1 = k * d_numX * d_numY;
       for (int j = ymin; j <= ymax; ++j) {
         if ((j >= 0) &&
-            (j < static_cast<int>(d_numY))) {  // inside the grid in the y-direction
+            (j <
+             static_cast<int>(d_numY))) {  // inside the grid in the y-direction
           dy = static_cast<double>(j) - gPt.y;
           dy2z2 = dy * dy + dz2;
           if (dy2z2 < gRad2) {  // we are within the radius at least from the
@@ -261,14 +263,14 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
                       dp_storage->setVal(ptId2 + i, val);
                     }
                   }  // we are inside the sphere
-                }    // grid point does not already have maxVal
-              }      // inside the grid in x-direction
-            }        // loop over points in x-direction
-          }          // inside the sphere based on only z and y coords
-        }            // we are inside the grid in the y-direction
-      }              // loop over points in y-direction
-    }                // inside grid in z-direction
-  }                  // loop over points in z-direction
+                }  // grid point does not already have maxVal
+              }  // inside the grid in x-direction
+            }  // loop over points in x-direction
+          }  // inside the sphere based on only z and y coords
+        }  // we are inside the grid in the y-direction
+      }  // loop over points in y-direction
+    }  // inside grid in z-direction
+  }  // loop over points in z-direction
 }
 
 UniformGrid3D &UniformGrid3D::operator|=(const UniformGrid3D &other) {
@@ -392,7 +394,8 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
   outStrm << dimX - 1 << " " << dimY - 1 << " " << dimZ - 1 << std::endl;
 
   int outX1 = static_cast<int>(floor(offSet.x + 0.5));
-  int outX2 = static_cast<int>(floor(offSet.x + 0.5)) + static_cast<int>(dimX - 1);
+  int outX2 =
+      static_cast<int>(floor(offSet.x + 0.5)) + static_cast<int>(dimX - 1);
   // REVIEW: ok - here is a fix to try and make the grid closer to the molecule
   // when displayed
   // (at least in PyMol). The difference between the pair of values (outX1,

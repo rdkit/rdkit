@@ -15,9 +15,9 @@
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
 #include <Geometry/UniformGrid3D.h>
-//#include <GraphMol/ROMol.h>
+// #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
-//#include <GraphMol/PeriodicTable.h>
+// #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/RDKitBase.h>
 namespace RDKit {
 namespace MolShapes {

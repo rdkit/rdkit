@@ -109,7 +109,10 @@ struct validate_wrapper {
 
     python::class_<MolStandardize::RDKitValidation,
                    python::bases<MolStandardize::ValidationMethod>,
-                   boost::noncopyable>("RDKitValidation");
+                   boost::noncopyable>("RDKitValidation")
+        .def(python::init<bool>(python::arg("allowEmptyMolecules") = false))
+        .def_readwrite("allowEmptyMolecules",
+                       &MolStandardize::RDKitValidation::allowEmptyMolecules);
 
     python::class_<MolStandardize::NoAtomValidation,
                    python::bases<MolStandardize::ValidationMethod>,

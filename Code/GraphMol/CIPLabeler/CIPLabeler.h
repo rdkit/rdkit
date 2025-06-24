@@ -10,7 +10,9 @@
 //
 #pragma once
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/export.h>
 
@@ -36,8 +38,8 @@ class RDKIT_CIPLABELER_EXPORT MaxIterationsExceeded
     : public std::runtime_error {
  public:
   explicit MaxIterationsExceeded()
-      : std::runtime_error(
-            "Max Iterations Exceeded in CIP label calculation"){};
+      : std::runtime_error("Max Iterations Exceeded in CIP label calculation") {
+        };
 };
 
 /**

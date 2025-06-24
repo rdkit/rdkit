@@ -31,6 +31,9 @@ namespace CIPLabeler {
  */
 class PairList {
  public:
+  using pairing_t = std::uint64_t;
+  static constexpr int numPairingBits = sizeof(pairing_t) * 8;
+
   static Descriptor ref(Descriptor descriptor) {
     switch (descriptor) {
       case Descriptor::R:
@@ -111,7 +114,7 @@ class PairList {
    *
    * @return an integer representing the descriptor pairings
    */
-  std::uint32_t getPairing() const { return d_pairing; }
+  pairing_t getPairing() const { return d_pairing; }
 
   int compareTo(const PairList &that) const {
     if (d_descriptors.size() != that.d_descriptors.size()) {
@@ -155,11 +158,11 @@ class PairList {
  private:
   std::vector<Descriptor> d_descriptors;
 
-  std::uint32_t d_pairing = 0;
+  pairing_t d_pairing = 0;
 
   /**
    * Adds the descriptor to the descriptor list and stores the pair in an set
-   * bit (32-bit integer).
+   * bit (64-bit integer).
    *
    * @param descriptor the descriptor to add an pair
    * @return whether the descriptor was added
@@ -168,7 +171,8 @@ class PairList {
     // if this isn't the first descriptor - check the pairing
     if (!d_descriptors.empty() && d_descriptors[0] == descriptor) {
       // set the bit to indicate a pair
-      d_pairing |= 0x1 << (31 - d_descriptors.size());
+      d_pairing |= static_cast<pairing_t>(1)
+                   << (numPairingBits - 1 - d_descriptors.size());
     }
     d_descriptors.push_back(ref(descriptor));
   }

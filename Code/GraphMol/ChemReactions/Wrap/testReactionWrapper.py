@@ -792,6 +792,7 @@ def _getProductCXSMILES(product):
   for a in product.GetAtoms():
     for k in a.GetPropsAsDict():
       a.ClearProp(k)
+
   return Chem.MolToCXSmiles(product)
 
 
@@ -867,6 +868,7 @@ class StereoGroupTests(unittest.TestCase):
 
     reaction = '[C@:1]F>>[C:1]F'
     # Reaction destroys stereo (but preserves unaffected group
+
     products = _reactAndSummarize(reaction, 'F[C@H](Cl)[C@@H](Cl)Br |o1:1,&2:3|')
     self.assertEqual(products, 'FC(Cl)[C@H](Cl)Br |&1:3|')
     # Reaction destroys stereo (but preserves the rest of the group
@@ -1212,6 +1214,44 @@ M  END
       AllChem.ReactionToSmarts(rxn, params),
       "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]")
 
+class CXExtensionsTests(unittest.TestCase):
+  def test_cxsmarts_reaction(self):
+    CXSmarts_string = (
+      "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>"
+      "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"
+    )
+    rxnCXSmarts = rdChemReactions.ReactionFromSmarts(CXSmarts_string)
+    self.assertIsNotNone(rxnCXSmarts)
+
+    params = Chem.SmilesWriteParams()
+    flags = Chem.CXSmilesFields.CX_ALL ^ Chem.CXSmilesFields.CX_ATOM_PROPS
+
+    rxnCXSmarts_string = rdChemReactions.ReactionToCXSmarts(rxnCXSmarts, params, flags)
+    expected_rxnCXSmarts_string = (
+      "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>O=C=O>"
+      "[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"
+    )
+    self.assertEqual(rxnCXSmarts_string, expected_rxnCXSmarts_string)
+    
+  def test_cxsmiles_reaction(self):
+    reactant1 = '[CH3:1][CH:2]([CH3:3])[*:4]'
+    reactant2 = '[OH:5][CH2:6][*:7]'
+    product = '[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5]'
+    cxExtension = "|$;;;_R1;;;_R2;;;;;;;;$|"
+
+    reaction_smarts = f'{reactant1}.{reactant2}>O=C=O>{product} {cxExtension}'
+    reaction = rdChemReactions.ReactionFromSmarts(reaction_smarts)
+    params = Chem.SmilesWriteParams()
+    flags = Chem.CXSmilesFields.CX_ALL ^ Chem.CXSmilesFields.CX_ATOM_PROPS
+    cxsmiles_reaction_string = Chem.rdChemReactions.ReactionToCXSmiles(reaction, params, flags)
+    self.assertIsNotNone(cxsmiles_reaction_string)
+
+    expected_cxsmiles_reaction_string = (
+      "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>"
+      "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_R1;;;_R2;;;;;;;;$|"
+    )
+
+    self.assertEqual(cxsmiles_reaction_string, expected_cxsmiles_reaction_string)
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)

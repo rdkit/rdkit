@@ -99,13 +99,17 @@ DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
       frac_(frac),
       angle_(angle) {
   PRECONDITION(points_.size() == 2, "arrow bad points size");
-
-  // the two ends of the arrowhead are used for collision detection so we
-  // may as well store them.
+  // The two ends of the arrowhead are used for collision detection so we
+  // may as well store them.  They won't be used for drawing.  lineWidth_ is
+  // in pixels rather than drawing coords, so keep another set of coords that
+  // are the original ends and arrowhead ends, with a lineWidth_ of 0, used
+  // for findExtremes and doesRectClash.
+  origPts_[0] = points_[0];
+  origPts_[1] = points_[1];
   Point2D ab(points_[1]), p1, p2;
-  MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[0], fill_, frac_, angle_);
-  points_.push_back(p1);
-  points_.push_back(p2);
+  MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[1], frac_, 0.0, angle_);
+  origPts_[2] = p1;
+  origPts_[3] = p2;
 }
 
 // ****************************************************************************
@@ -121,19 +125,55 @@ void DrawShapeArrow::myDraw(MolDraw2D &drawer) const {
 }
 
 // ****************************************************************************
+void DrawShapeArrow::findExtremes(double &xmin, double &xmax, double &ymin,
+                                  double &ymax) const {
+  // do it for origPts_ rather than points_.  The difference is that the
+  // arrow ends haven't been adjusted for the lineWidth_.  It's pretty
+  // inconceivable that this will matter for these purposes as the chances
+  // of a dative bond going to an atom without a symbol on the edge of the
+  // drawing seem slim.  findExtremes is only used for finding the extremes
+  // of the whole drawing so as to set the scale.
+  for (int i = 0; i < 4; i++) {
+    const Point2D &p = origPts_[i];
+    xmin = std::min(xmin, p.x);
+    xmax = std::max(xmax, p.x);
+    ymin = std::min(ymin, p.y);
+    ymax = std::max(ymax, p.y);
+  }
+}
+
+// ****************************************************************************
+void DrawShapeArrow::scale(const Point2D &scale_factor) {
+  DrawShape::scale(scale_factor);
+  for (int i = 0; i < 4; i++) {
+    Point2D &p = origPts_[i];
+    p.x *= scale_factor.x;
+    p.y *= scale_factor.y;
+  }
+}
+
+// ****************************************************************************
+void DrawShapeArrow::move(const Point2D &trans) {
+  DrawShape::move(trans);
+  for (int i = 0; i < 4; i++) {
+    origPts_[i] += trans;
+  }
+}
+
+// ****************************************************************************
 bool DrawShapeArrow::doesRectClash(const StringRect &rect,
                                    double padding) const {
   padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
-  if (doesLineIntersect(rect, points_[0], points_[1], padding)) {
+  if (doesLineIntersect(rect, origPts_[0], origPts_[1], padding)) {
     return true;
   }
-  if (doesLineIntersect(rect, points_[1], points_[2], padding)) {
+  if (doesLineIntersect(rect, origPts_[1], origPts_[2], padding)) {
     return true;
   }
-  if (doesLineIntersect(rect, points_[1], points_[3], padding)) {
+  if (doesLineIntersect(rect, origPts_[1], origPts_[3], padding)) {
     return true;
   }
-  if (doesLineIntersect(rect, points_[2], points_[3], padding)) {
+  if (doesLineIntersect(rect, origPts_[2], origPts_[3], padding)) {
     return true;
   }
   return false;
@@ -412,7 +452,7 @@ void DrawShapeSolidWedge::buildTwoColorTriangles() {
     points_.push_back(mid1);
     points_.push_back(midEnd);
     points_.push_back(adjend2);
-    points_.push_back(adjend1);
+    points_.push_back(mid2);
   }
 }
 
@@ -488,9 +528,14 @@ void DrawShapeSolidWedge::orderOtherBondVecs() {
     return;
   }
   // otherBondVecs_[0] needs to be on the same side as points_[1], which
-  // implies the larger angle between the 2 vectors.
+  // implies the larger dot product between it and the vector along the
+  // triangle edge.
   auto side1 = (points_[0] - points_[1]);
-  if (side1.angleTo(otherBondVecs_[0]) < side1.angleTo(otherBondVecs_[1])) {
+  auto mid = (points_[1] + points_[2]) / 2.0;
+  auto midp1 = mid.directionVector(points_[1]);
+  auto dot1 = midp1.dotProduct(otherBondVecs_[0]);
+  auto dot2 = midp1.dotProduct(otherBondVecs_[1]);
+  if (dot1 < dot2) {
     std::swap(otherBondVecs_[0], otherBondVecs_[1]);
   }
 }

@@ -157,14 +157,6 @@ M  END"""
     conf = m.GetConformer()
     angle = rdMolTransforms.GetAngleDeg(conf, 1, 3, 6)
     self.assertAlmostEqual(angle, 100, delta=0.1)
-    ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
-    self.assertTrue(ff)
-    ff.UFFAddAngleConstraint(1, 3, 6, False, -10.0, 10.0, 100.0)
-    r = ff.Minimize()
-    self.assertTrue(r == 0)
-    conf = m.GetConformer()
-    angle = rdMolTransforms.GetAngleDeg(conf, 1, 3, 6)
-    self.assertAlmostEqual(angle, 10, delta=0.1)
 
   def testUFFTorsionConstraints(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)
@@ -271,14 +263,6 @@ M  END"""
     conf = m.GetConformer()
     angle = rdMolTransforms.GetAngleDeg(conf, 1, 3, 6)
     self.assertAlmostEqual(angle, 100, delta=0.1)
-    ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
-    self.assertTrue(ff)
-    ff.MMFFAddAngleConstraint(1, 3, 6, False, -10.0, 10.0, 100.0)
-    r = ff.Minimize()
-    self.assertTrue(r == 0)
-    conf = m.GetConformer()
-    angle = rdMolTransforms.GetAngleDeg(conf, 1, 3, 6)
-    self.assertAlmostEqual(angle, 10, delta=0.1)
 
   def testMMFFTorsionConstraints(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)

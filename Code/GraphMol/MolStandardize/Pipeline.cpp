@@ -46,40 +46,36 @@ PipelineResult Pipeline::run(const std::string &molblock) const {
 
   RWMOL_SPTR_PAIR output;
 
-  if (mol->getNumAtoms() == 0 && options.allowEmptyMolecules) {
-    output = {mol, mol};
-  } else {
-    // we try sanitization and validation on a copy, because we want to preserve
-    // the original input molecule for later
-    RWMOL_SPTR molCopy{new RWMol(*mol)};
-    for (const auto &[stage, operation] : validationSteps) {
-      result.stage = stage;
-      molCopy = operation(molCopy, result, options);
-      if (!molCopy || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
-                       !options.reportAllFailures)) {
-        return result;
-      }
+  // we try sanitization and validation on a copy, because we want to preserve
+  // the original input molecule for later
+  RWMOL_SPTR molCopy{new RWMol(*mol)};
+  for (const auto &[stage, operation] : validationSteps) {
+    result.stage = stage;
+    molCopy = operation(molCopy, result, options);
+    if (!molCopy || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+                     !options.reportAllFailures)) {
+      return result;
     }
+  }
 
-    for (const auto &[stage, operation] : standardizationSteps) {
-      result.stage = stage;
-      mol = operation(mol, result, options);
-      if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
-                   !options.reportAllFailures)) {
-        return result;
-      }
+  for (const auto &[stage, operation] : standardizationSteps) {
+    result.stage = stage;
+    mol = operation(mol, result, options);
+    if (!mol || ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+                 !options.reportAllFailures)) {
+      return result;
     }
-    if (makeParent) {
-      result.stage = static_cast<uint32_t>(PipelineStage::MAKE_PARENT);
-      output = makeParent(mol, result, options);
-      if (!output.first || !output.second ||
-          ((result.status & PIPELINE_ERROR) != NO_EVENT &&
-           !options.reportAllFailures)) {
-        return result;
-      }
-    } else {
-      output = {mol, mol};
+  }
+  if (makeParent) {
+    result.stage = static_cast<uint32_t>(PipelineStage::MAKE_PARENT);
+    output = makeParent(mol, result, options);
+    if (!output.first || !output.second ||
+        ((result.status & PIPELINE_ERROR) != NO_EVENT &&
+         !options.reportAllFailures)) {
+      return result;
     }
+  } else {
+    output = {mol, mol};
   }
 
   // serialize as MolBlocks
@@ -222,7 +218,7 @@ RWMOL_SPTR validate(RWMOL_SPTR mol, PipelineResult &result,
   }
 
   // check the number of atoms and valence status
-  RDKitValidation rdkitValidation;
+  RDKitValidation rdkitValidation(options.allowEmptyMolecules);
   if (!applyValidation(rdkitValidation, BASIC_VALIDATION_ERROR) &&
       !options.reportAllFailures) {
     return mol;

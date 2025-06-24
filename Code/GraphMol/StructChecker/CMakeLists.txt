@@ -2,7 +2,7 @@
 rdkit_library(StructChecker
               StructChecker.cpp StructCheckerOptions.cpp StructureFlags.cpp Utilites.cpp
               Pattern.cpp Stereo.cpp AtomSymbolMatch.cpp StripSmallFragments.cpp ReCharge.cpp Tautomer.cpp
-              LINK_LIBRARIES Depictor SubstructMatch FileParsers ChemTransforms Descriptors
+              LINK_LIBRARIES Depictor SubstructMatch FileParsers ChemTransforms
                              GraphMol RDGeneral )
 target_compile_definitions(StructChecker PRIVATE RDKIT_STRUCTCHECKER_BUILD)
 

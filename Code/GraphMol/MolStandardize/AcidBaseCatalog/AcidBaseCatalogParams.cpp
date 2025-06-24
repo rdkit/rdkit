@@ -52,8 +52,8 @@ AcidBaseCatalogParams::AcidBaseCatalogParams(
 
 AcidBaseCatalogParams::~AcidBaseCatalogParams() {}
 
-const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>
-    &AcidBaseCatalogParams::getPairs() const {
+const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &
+AcidBaseCatalogParams::getPairs() const {
   return d_pairs;
 }
 

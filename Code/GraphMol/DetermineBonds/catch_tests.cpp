@@ -10,7 +10,14 @@
 #include <GraphMol/AddHs.cpp>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 #include <GraphMol/Resonance.h>
+
+#ifdef RDK_TEST_MULTITHREADED
+#include <csignal>
+#include <thread>
+#include <chrono>
+#endif
 
 using namespace RDKit;
 
@@ -136,7 +143,15 @@ TEST_CASE("Determine Connectivity") {
       std::string smiles = mol->getProp<std::string>("_FileComments");
       std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
       REQUIRE(orig);
-      SmilesWriteParams params = {false, false, true, false, false, false, -1};
+      SmilesWriteParams params;
+      params.doIsomericSmiles = false;
+      params.doKekule = false;
+      params.canonical = true;
+      params.allBondsExplicit = false;
+      params.allHsExplicit = false;
+      params.doRandom = false;
+      params.rootedAtAtom = -1;
+
       std::string canonSmiles = MolToSmiles(*orig, params);
       int charge = MolOps::getFormalCharge(*orig);
 
@@ -180,7 +195,14 @@ TEST_CASE("Determine Connectivity") {
       std::string smiles = mol->getProp<std::string>("_FileComments");
       std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
       REQUIRE(orig);
-      SmilesWriteParams params = {false, false, true, false, false, false, -1};
+      SmilesWriteParams params;
+      params.doIsomericSmiles = false;
+      params.doKekule = false;
+      params.canonical = true;
+      params.allBondsExplicit = false;
+      params.allHsExplicit = false;
+      params.doRandom = false;
+      params.rootedAtAtom = -1;
       std::string canonSmiles = MolToSmiles(*orig, params);
       int charge = MolOps::getFormalCharge(*orig);
 
@@ -398,9 +420,9 @@ TEST_CASE("github 6961: P-H bonds not found in phosphine") {
   SECTION("as reported") {
     std::string xyz = R"XYZ(4
 xyz file
-P 9.9999767321286015 9.9999428968490651 9.9298216136095618 
-H 8.8082284983002523 9.9999330478847508 10.7216030817151875 
-H 10.5974890657086007 11.0338788274478361 10.7168666854072114 
+P 9.9999767321286015 9.9999428968490651 9.9298216136095618
+H 8.8082284983002523 9.9999330478847508 10.7216030817151875
+H 10.5974890657086007 11.0338788274478361 10.7168666854072114
 H 10.5976057038625981 8.9661452278177478 10.7170086192680003)XYZ";
     std::unique_ptr<RWMol> m(XYZBlockToMol(xyz));
     REQUIRE(m);
@@ -416,12 +438,14 @@ TEST_CASE(
     "github #7299: DetermineBondOrders() does not assign single bonds correctly") {
   SECTION("as reported") {
     RWMol m;
-    m.addAtom(new Atom(6));
-    m.addAtom(new Atom(8));
-    m.addAtom(new Atom(8));
-    m.addAtom(new Atom(8));
-    m.addAtom(new Atom(1));
-    m.addAtom(new Atom(1));
+    bool updateLabel = true;
+    bool takeOwnership = true;
+    m.addAtom(new Atom(6), updateLabel, takeOwnership);
+    m.addAtom(new Atom(8), updateLabel, takeOwnership);
+    m.addAtom(new Atom(8), updateLabel, takeOwnership);
+    m.addAtom(new Atom(8), updateLabel, takeOwnership);
+    m.addAtom(new Atom(1), updateLabel, takeOwnership);
+    m.addAtom(new Atom(1), updateLabel, takeOwnership);
     m.addBond(0, 1, Bond::UNSPECIFIED);
     m.addBond(0, 2, Bond::UNSPECIFIED);
     m.addBond(0, 3, Bond::UNSPECIFIED);
@@ -477,3 +501,82 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE("problems with H2") {
+  SECTION("as reported") {
+    std::string xyz = R"XYZ(2
+
+H       0.0     0.0     -0.37
+H       0.0     0.0     0.37)XYZ";
+    std::unique_ptr<RWMol> m(XYZBlockToMol(xyz));
+    REQUIRE(m);
+    determineConnectivity(*m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(m->getNumBonds() == 1);
+    CHECK(m->getBondBetweenAtoms(0, 1));
+  }
+}
+
+TEST_CASE("Time out in DetermineBondOrders()") {
+  auto mol = "O=[Cl+]"_smiles;
+  REQUIRE(mol);
+  REQUIRE(mol->getNumBonds() == 1);
+
+  auto bond = mol->getBondWithIdx(0);
+  bond->setBondType(Bond::SINGLE);
+
+  constexpr int globalCharge = 1;
+  constexpr bool allowChargedFragments = true;
+  constexpr bool embedChiral = false;
+  constexpr bool useAtomMap = false;
+  size_t maxIterations = 1;  // fail immediately
+  CHECK_THROWS_AS(determineBondOrders(*mol, globalCharge, allowChargedFragments,
+                                      embedChiral, useAtomMap, maxIterations),
+                  MaxFindBondOrdersItersExceeded);
+
+  // No double bond after the failed assignment
+  REQUIRE(bond->getBondType() == Bond::SINGLE);
+
+  // Should succeed with a larger threshold
+  maxIterations = 100;
+  determineBondOrders(*mol, globalCharge, allowChargedFragments, embedChiral,
+                      useAtomMap, maxIterations);
+
+  CHECK(bond->getBondType() == Bond::DOUBLE);
+}
+
+#ifdef RDK_TEST_MULTITHREADED
+
+using namespace std::chrono_literals;
+TEST_CASE("test interrupt") {
+  // I think this is entity 3 in https://www.rcsb.org/structure/1OL1
+  // it goes into a VERY long loop in determineBondOrders
+  auto mol =
+      "CC[C@H](C)[C@H](NC(=O)[C@H](CC(C)C)NC(O)[C@H](CCCNC(N)O)N[C@@H](O)[C@@H](N)CCCNC(N)O)C(=O)N[C@@H](CC1CCC(F)CC1)C(N)O"_smiles;
+  REQUIRE(mol);
+
+  // one thread for determineBondOrders
+  std::thread cgThread([&mol]() {
+    constexpr int charge = 0;
+    constexpr bool allowChargedFragments = true;
+    constexpr bool embedChiral = false;
+    constexpr bool useAtomMap = false;
+
+    // give the calculation a while to run (~12 s on my laptop)
+    // but still make sure it won't run forever
+    constexpr size_t maxIterations = 500000;
+    determineBondOrders(*mol, charge, allowChargedFragments, embedChiral,
+                        useAtomMap, maxIterations);
+  });
+  // another thread to raise SIGINT
+  std::thread interruptThread([]() {
+    // sleep for a bit to allow for a few iterations, but not enough to
+    // hit maxIterations and trigger the exception
+    std::this_thread::sleep_for(100ms);
+    std::raise(SIGINT);
+  });
+  cgThread.join();
+  interruptThread.join();
+}
+
+#endif

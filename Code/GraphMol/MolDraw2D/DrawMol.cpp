@@ -176,19 +176,18 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
       centerMolForDrawing(*drawMol_, confId_);
     }
   }
+  if (!isReactionMol_ && !drawMol_->getNumConformers()) {
+    const bool canonOrient = true;
+    RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
+  }
   if (drawOptions_.unspecifiedStereoIsUnknown) {
     markUnspecifiedStereoAsUnknown(*drawMol_);
   }
   if (drawOptions_.useMolBlockWedging) {
     Chirality::reapplyMolBlockWedging(*drawMol_);
   }
-  if (!isReactionMol_) {
-    if (drawOptions_.prepareMolsBeforeDrawing) {
-      MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
-    } else if (!mol.getNumConformers()) {
-      const bool canonOrient = true;
-      RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
-    }
+  if (!isReactionMol_ && drawOptions_.prepareMolsBeforeDrawing) {
+    MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
   }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
@@ -216,6 +215,7 @@ void DrawMol::extractAll(double scale) {
   // the * which won't be in the final picture.
   extractVariableBonds();
   extractBonds();
+  resolveAtomSymbolClashes();
   extractRegions();
   extractHighlights(scale);
   extractAttachments();
@@ -259,6 +259,21 @@ void DrawMol::extractAtomCoords() {
     atCds_.push_back(pt);
   }
 }
+
+namespace {
+bool doLabelsClash(AtomSymbol &atsym1, const AtomSymbol &atsym2) {
+  for (auto &rect1 : atsym1.rects_) {
+    auto oldTrans = rect1->trans_;
+    rect1->trans_ += atsym1.cds_;
+    bool res = atsym2.doesRectClash(*rect1, 0.0);
+    rect1->trans_ = oldTrans;
+    if (res) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
 
 // ****************************************************************************
 void DrawMol::extractAtomSymbols() {
@@ -442,7 +457,7 @@ void DrawMol::extractAtomNotes() {
         DrawAnnotation *annot = new DrawAnnotation(
             note, TextAlignType::MIDDLE, "note",
             drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
+            drawOptions_.atomNoteColour, textDrawer_);
         calcAnnotationPosition(atom, *annot);
         annotations_.emplace_back(annot);
       }
@@ -497,7 +512,7 @@ void DrawMol::extractBondNotes() {
         DrawAnnotation *annot = new DrawAnnotation(
             note, TextAlignType::MIDDLE, "note",
             drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
+            drawOptions_.bondNoteColour, textDrawer_);
         calcAnnotationPosition(bond, *annot);
         annotations_.emplace_back(annot);
       }
@@ -953,6 +968,126 @@ void DrawMol::extractCloseContacts() {
   }
 }
 
+namespace {
+bool doesLabelClashWithBonds(
+    AtomSymbol &atsym1, const std::vector<std::unique_ptr<DrawShape>> &bonds) {
+  for (auto &rect1 : atsym1.rects_) {
+    auto oldTrans = rect1->trans_;
+    rect1->trans_ += atsym1.cds_;
+    for (const auto &bond : bonds) {
+      bool res = bond->doesRectClash(*rect1, 0.0);
+      if (res) {
+        rect1->trans_ = oldTrans;
+        return true;
+      }
+    }
+    rect1->trans_ = oldTrans;
+  }
+  return false;
+}
+
+bool doesLabelClashWithLabels(
+    unsigned idx, const std::vector<std::unique_ptr<AtomSymbol>> &atomLabels) {
+  for (size_t i = 0; i < atomLabels.size(); ++i) {
+    if (i == idx || atomLabels[i] == nullptr) {
+      continue;
+    }
+    if (doLabelsClash(*atomLabels[idx], *atomLabels[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool orientAtomLabel(int atIdx,
+                     const std::vector<std::unique_ptr<AtomSymbol>> &atomLabels,
+                     const std::vector<std::unique_ptr<DrawShape>> &bonds) {
+  // Prefer the opposite to what it was already, as a starter.
+  const static std::vector<std::vector<OrientType>> newOrients{
+      {OrientType::S, OrientType::E, OrientType::W},
+      {OrientType::N, OrientType::W, OrientType::E},
+      {OrientType::E, OrientType::S, OrientType::N},
+      {OrientType::W, OrientType::N, OrientType::S},
+  };
+  // If it's a 2 character label and the second character is lower case,
+  // don't do anything.  This function is only called if there's more
+  // than 1 character.
+  if (atomLabels[atIdx]->rects_.size() == 2 &&
+      islower(atomLabels[atIdx]->drawChars_[1])) {
+    return false;
+  }
+  auto orig = atomLabels[atIdx]->orient_;
+  unsigned int pref = 0;
+  switch (orig) {
+    case OrientType::S:
+      pref = 1;
+      break;
+    case OrientType::W:
+      pref = 2;
+      break;
+    case OrientType::E:
+      pref = 3;
+      break;
+    default:
+      break;
+  }
+  bool ok = false;
+  for (auto &orient1 : newOrients[pref]) {
+    atomLabels[atIdx]->orient_ = orient1;
+    atomLabels[atIdx]->recalculateRects();
+    if (!doesLabelClashWithLabels(atIdx, atomLabels) &&
+        !doesLabelClashWithBonds(*atomLabels[atIdx], bonds)) {
+      ok = true;
+      break;
+    }
+  }
+  if (!ok) {
+    // Leave it as it is and hope when the other one is moved
+    // a better solution is found.
+    atomLabels[atIdx]->orient_ = orig;
+  }
+
+  return ok;
+}
+}  // namespace
+
+// ****************************************************************************
+void DrawMol::resolveAtomSymbolClashes() {
+  for (auto at1 : drawMol_->atoms()) {
+    const auto atIdx1 = at1->getIdx();
+    for (auto at2 : drawMol_->atoms()) {
+      const auto atIdx2 = at2->getIdx();
+      if (atIdx1 >= atIdx2) {
+        continue;
+      }
+      if (atomLabels_[atIdx1] != nullptr && atomLabels_[atIdx2] != nullptr &&
+          (atomLabels_[atIdx1]->rects_.size() > 1 ||
+           atomLabels_[atIdx2]->rects_.size() > 1)) {
+        if (doLabelsClash(*atomLabels_[atIdx1], *atomLabels_[atIdx2])) {
+          // Prefer moving the smaller label that isn't a single character.
+          int idxs[2]{-1, -1};
+          if (atomLabels_[atIdx1]->rects_.size() > 1) {
+            idxs[0] = atIdx1;
+          }
+          if (atomLabels_[atIdx2]->rects_.size() > 1) {
+            idxs[1] = atIdx2;
+          }
+          if (atomLabels_[atIdx1]->rects_.size() >
+              atomLabels_[atIdx2]->rects_.size()) {
+            std::swap(idxs[0], idxs[1]);
+          }
+          if (!(idxs[0] != -1 &&
+                orientAtomLabel(idxs[0], atomLabels_, bonds_))) {
+            if (idxs[1] != -1) {
+              orientAtomLabel(idxs[1], atomLabels_, bonds_);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 // ****************************************************************************
 void DrawMol::calculateScale() {
   findExtremes();
@@ -1373,6 +1508,11 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     if (drawOptions_.useComplexQueryAtomSymbols) {
       symbol = getComplexQueryAtomEquivalent(symbol);
     }
+    if (!drawOptions_.bracketsAroundAtomLists) {
+      if (symbol[0] == '[') {
+        symbol = symbol.substr(1, symbol.size() - 2);
+      }
+    }
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
     std::string mapNum;
@@ -1516,6 +1656,15 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
         for (const auto bond : mol.atomBonds(&atom)) {
           const Point2D &at2_cds = atCds_[bond->getOtherAtomIdx(atom.getIdx())];
           Point2D bond_vec = at2_cds - at1_cds;
+          if (std::fabs(bond_vec.x) < 1.e-16) {
+            if (bond_vec.y > 0.0) {
+              orient = OrientType::S;
+              break;
+            } else {
+              orient = OrientType::N;
+              break;
+            }
+          }
           double ang = atan(bond_vec.y / bond_vec.x) * 180.0 / M_PI;
           if (ang > 80.0 && ang < 100.0 && orient == OrientType::S) {
             orient = OrientType::S;
@@ -3231,9 +3380,23 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
   }
   for (unsigned int i = 1; i < atom->getDegree(); ++i) {
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
-    Point2D const &at1_cds = atCds_[atom->getIdx()];
-    Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
-    otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
+    auto bond =
+        drawMol_->getBondBetweenAtoms(atom->getIdx(), thirdAtom->getIdx());
+    // Don't do anything if the wedge is to a triple bond.  It gets
+    // really messed up especially if the two bonds aren't exactly
+    // co-linear which happens sometimes in a cluttered layout (Github 7620).
+    if (bond->getBondType() != Bond::BondType::TRIPLE) {
+      // If it's a double bond that straddles the atom-atom vector it also looks
+      // odd or completely wrong, depending on the rest of the molecule
+      // (Github 7739).
+      if (bond->getBondType() == Bond::BondType::DOUBLE &&
+          atom->getDegree() > 2 && thirdAtom->getDegree() == 1) {
+        continue;
+      }
+      Point2D const &at1_cds = atCds_[atom->getIdx()];
+      Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
+      otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
+    }
   }
 }
 
@@ -3248,7 +3411,12 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
           otherNeighbor(bond->getEndAtom(), bond->getBeginAtom(), 0, *drawMol_);
       auto bond1 = drawMol_->getBondBetweenAtoms(bond->getEndAtomIdx(),
                                                  thirdAtom->getIdx());
-      // If the bonds a co-linear, don't do anything (Github7036)
+      // Don't do anything if it's a triple bond.  Moving the central
+      // line to the wedge corner is clearly wrong.
+      if (bond1->getBondType() == Bond::BondType::TRIPLE) {
+        continue;
+      }
+      // If the bonds are co-linear, don't do anything (Github7036)
       auto b1 = atCds_[bond->getEndAtomIdx()].directionVector(
           atCds_[bond->getBeginAtomIdx()]);
       auto b2 = atCds_[bond1->getEndAtomIdx()].directionVector(
@@ -3322,6 +3490,10 @@ void DrawMol::smoothBondJoins() {
   // classes for the atoms and bond it involves, and people use this to
   // identify the lines for other purposes.
   for (auto atom : drawMol_->atoms()) {
+    // If there's an atom label, there is no join.
+    if (atomLabels_[atom->getIdx()]) {
+      continue;
+    }
     bool doIt = false;
     if (atom->getDegree() == 2) {
       doIt = true;
@@ -3336,15 +3508,16 @@ void DrawMol::smoothBondJoins() {
         }
       }
     }
+    int adjAtomIdx = atom->getIdx() + activeAtmIdxOffset_;
     if (doIt) {
       bool done = false;
       for (unsigned int i = 0; i < singleBondLines_.size(); ++i) {
         auto &sbl1 = bonds_[singleBondLines_[i]];
         int p1 = -1;
         int p2 = -1;
-        if (static_cast<int>(atom->getIdx()) == sbl1->atom1_) {
+        if (adjAtomIdx == sbl1->atom1_) {
           p1 = 0;
-        } else if (static_cast<int>(atom->getIdx()) == sbl1->atom2_) {
+        } else if (adjAtomIdx == sbl1->atom2_) {
           p1 = 1;
         }
         if (p1 != -1) {
@@ -3353,9 +3526,9 @@ void DrawMol::smoothBondJoins() {
               continue;
             }
             auto &sbl2 = bonds_[singleBondLines_[j]];
-            if (static_cast<int>(atom->getIdx()) == sbl2->atom1_) {
+            if (adjAtomIdx == sbl2->atom1_) {
               p2 = 0;
-            } else if (static_cast<int>(atom->getIdx()) == sbl2->atom2_) {
+            } else if (adjAtomIdx == sbl2->atom2_) {
               p2 = 1;
             }
             if (p2 != -1) {
@@ -3497,11 +3670,11 @@ DrawColour DrawMol::getColour(int atom_idx) const {
   PRECONDITION(rdcast<int>(atomicNums_.size()) > atom_idx, "bad atom_idx");
 
   DrawColour retval = getColourByAtomicNum(atomicNums_[atom_idx], drawOptions_);
-  bool highlightedAtom = false;
+  bool highlightedAtom =
+      highlightAtoms_.end() !=
+      find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx);
   if (!drawOptions_.circleAtoms && !drawOptions_.continuousHighlight) {
-    if (highlightAtoms_.end() !=
-        find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx)) {
-      highlightedAtom = true;
+    if (highlightedAtom) {
       retval = drawOptions_.highlightColour;
     }
     // over-ride with explicit colour from highlightMap if there is one
@@ -3515,7 +3688,7 @@ DrawColour DrawMol::getColour(int atom_idx) const {
     // the same highlight colour as the bonds.  It doesn't look right
     // if only some of the bonds are highlighted, IMO.
     if (!highlightedAtom) {
-      Atom *atomPtr = drawMol_->getAtomWithIdx(atom_idx);
+      const auto *atomPtr = drawMol_->getAtomWithIdx(atom_idx);
       int numBonds = 0, numHighBonds = 0;
       std::unique_ptr<DrawColour> highCol;
       for (const auto &nbri :
@@ -3525,9 +3698,9 @@ DrawColour DrawMol::getColour(int atom_idx) const {
         if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
                       nbr->getIdx()) != highlightBonds_.end() ||
             highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
-          DrawColour hc = getHighlightBondColour(
-              nbr, drawOptions_, highlightBonds_, highlightBondMap_,
-              highlightAtoms_, highlightAtomMap_);
+          auto hc = getHighlightBondColour(nbr, drawOptions_, highlightBonds_,
+                                           highlightBondMap_, highlightAtoms_,
+                                           highlightAtomMap_);
           if (!highCol) {
             highCol.reset(new DrawColour(hc));
           } else {
@@ -3542,6 +3715,23 @@ DrawColour DrawMol::getColour(int atom_idx) const {
       if (numBonds == numHighBonds && highCol) {
         retval = *highCol;
       }
+    }
+  } else if (highlightedAtom &&
+             !drawOptions_.standardColoursForHighlightedAtoms) {
+    // There's going to be a colour behind the atom, so if the
+    // atom has a symbol, it should be the same colour as carbon.  This
+    // function should only be called if there is an atom symbol.
+
+    if (auto it = drawOptions_.atomColourPalette.find(6);
+        it != drawOptions_.atomColourPalette.end()) {
+      retval = it->second;
+    } else if (auto it = drawOptions_.atomColourPalette.find(-1);
+               it != drawOptions_.atomColourPalette.end()) {
+      // Use the default if no carbon.
+      retval = it->second;
+    } else {
+      // if all else fails, default to black:
+      retval = DrawColour(0, 0, 0);
     }
   }
   return retval;
@@ -3581,20 +3771,20 @@ bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
 // ****************************************************************************
 DrawColour getColourByAtomicNum(int atomic_num,
                                 const MolDrawOptions &drawOptions) {
-  DrawColour res;
+  // if all else fails, default to black:
+  DrawColour res(0, 0, 0);
   if (atomic_num == 1 && drawOptions.noAtomLabels) {
     atomic_num = 201;
   }
-  if (drawOptions.atomColourPalette.find(atomic_num) !=
-      drawOptions.atomColourPalette.end()) {
-    res = drawOptions.atomColourPalette.find(atomic_num)->second;
-  } else if (atomic_num != -1 && drawOptions.atomColourPalette.find(-1) !=
-                                     drawOptions.atomColourPalette.end()) {
+  if (auto it = drawOptions.atomColourPalette.find(atomic_num);
+      it != drawOptions.atomColourPalette.end()) {
+    res = it->second;
+  } else if (atomic_num != -1) {
     // if -1 is in the palette, we use that for undefined colors
-    res = drawOptions.atomColourPalette.find(-1)->second;
-  } else {
-    // if all else fails, default to black:
-    res = DrawColour(0, 0, 0);
+    if (auto it = drawOptions.atomColourPalette.find(-1);
+        it != drawOptions.atomColourPalette.end()) {
+      res = it->second;
+    }
   }
   return res;
 }

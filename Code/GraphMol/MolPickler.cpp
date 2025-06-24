@@ -35,7 +35,7 @@ using std::uint32_t;
 namespace RDKit {
 
 const int32_t MolPickler::versionMajor = 16;
-const int32_t MolPickler::versionMinor = 1;
+const int32_t MolPickler::versionMinor = 2;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -359,6 +359,10 @@ QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
             ->getVal(),
         static_cast<const EqualityQuery<int, T const *, true> *>(query)
             ->getTol()));
+  } else if (typeid(*query) == typeid(HasPropQuery<T const *>)) {
+    return QueryDetails(std::make_tuple(
+        MolPickler::QUERY_PROPERTY,
+        static_cast<const HasPropQuery<T const *> *>(query)->getPropName()));
   } else if (typeid(*query) == typeid(Query<int, T const *, true>)) {
     return QueryDetails(MolPickler::QUERY_NULL);
   } else if (typeid(*query) == typeid(RangeQuery<int, T const *, true>)) {
@@ -382,6 +386,9 @@ QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
         static_cast<const SetQuery<int, T const *, true> *>(query)->endSet());
     return QueryDetails(
         std::make_tuple(MolPickler::QUERY_SET, std::move(tset)));
+  } else if (auto q = dynamic_cast<const HasPropWithValueQueryBase *>(query)) {
+    return QueryDetails(std::make_tuple(MolPickler::QUERY_PROPERTY_WITH_VALUE,
+                                        q->getPair(), q->getTolerance()));
   } else {
     throw MolPicklerException("do not know how to pickle part of the query.");
   }
@@ -449,6 +456,23 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
           streamWrite(ss, val);
         }
 
+      } break;
+      case 5: {
+        auto v =
+            boost::get<std::tuple<MolPickler::Tags, std::string>>(qdetails);
+        streamWrite(ss, std::get<0>(v));
+        const auto &pval = std::get<1>(v);
+        streamWrite(ss, MolPickler::QUERY_VALUE, pval);
+      } break;
+      case 6: {
+        auto &v = boost::get<std::tuple<MolPickler::Tags, PairHolder, double>>(
+            qdetails);
+        streamWrite(ss, std::get<0>(v));
+        // The tolerance is pickled first as we can't pickle a PairHolder with
+        // the QUERY_VALUE tag
+        streamWrite(ss, MolPickler::QUERY_VALUE, std::get<2>(v));
+        streamWriteProp(ss, std::get<1>(v),
+                        MolPickler::getCustomPropHandlers());
       } break;
       default:
         throw MolPicklerException(
@@ -588,6 +612,62 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
     case MolPickler::QUERY_NULL:
       res = new Query<int, T const *, true>();
       break;
+    case MolPickler::QUERY_PROPERTY: {
+      streamRead(ss, tag, version);
+      if (tag != MolPickler::QUERY_VALUE) {
+        throw MolPicklerException(
+            "Bad pickle format: QUERY_VALUE tag not found.");
+      }
+      std::string propName = "";
+      streamRead(ss, propName, version);
+      res = makeHasPropQuery<T>(propName);
+    } break;
+    case MolPickler::QUERY_PROPERTY_WITH_VALUE: {
+      streamRead(ss, tag, version);
+      if (tag != MolPickler::QUERY_VALUE) {
+        throw MolPicklerException(
+            "Bad pickle format: QUERY_VALUE tag not found.");
+      }
+      double tolerance{0.0};
+      streamRead(ss, tolerance, version);
+      PairHolder pair;
+      bool hasNonPod = false;
+      streamReadProp(ss, pair, hasNonPod, MolPickler::getCustomPropHandlers());
+      switch (pair.val.getTag()) {
+        case RDTypeTag::IntTag:
+          res = makePropQuery<T, int>(pair.key, rdvalue_cast<int>(pair.val),
+                                      tolerance);
+          break;
+        case RDTypeTag::UnsignedIntTag:
+          res = makePropQuery<T, unsigned int>(
+              pair.key, rdvalue_cast<unsigned int>(pair.val), tolerance);
+          break;
+        case RDTypeTag::BoolTag:
+          res = makePropQuery<T, bool>(pair.key, rdvalue_cast<bool>(pair.val),
+                                       tolerance);
+          break;
+        case RDTypeTag::FloatTag:
+          res = makePropQuery<T, float>(pair.key, rdvalue_cast<float>(pair.val),
+                                        tolerance);
+          break;
+        case RDTypeTag::DoubleTag:
+          res = makePropQuery<T, double>(
+              pair.key, rdvalue_cast<double>(pair.val), tolerance);
+          break;
+        case RDTypeTag::StringTag:
+          res = makePropQuery<T, std::string>(
+              pair.key, rdvalue_cast<std::string>(pair.val), tolerance);
+          break;
+        case RDTypeTag::AnyTag: {
+          if (rdvalue_is<ExplicitBitVect>(pair.val)) {
+            res = makePropQuery<T, ExplicitBitVect>(
+                pair.key, rdvalue_cast<ExplicitBitVect>(pair.val), tolerance);
+          } else {
+            throw MolPicklerException("unknown query-type tag encountered");
+          }
+        } break;
+      }
+    } break;
     default:
       throw MolPicklerException("unknown query-type tag encountered");
   }

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2021-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,13 +11,14 @@
 #include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
-
+#include <GraphMol/test_fixtures.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 #include <GraphMol/RGroupDecomposition/RGroupUtils.h>
+#include <GraphMol/RGroupDecomposition/RGroupData.h>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
@@ -652,6 +653,8 @@ TEST_CASE("rgroupLabelling") {
     }
   }
   SECTION("RGroup") {
+    auto useLegacy = GENERATE(true, false);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
@@ -662,11 +665,13 @@ TEST_CASE("rgroupLabelling") {
       CHECK(n == mols.size());
       CHECK(rows.size() == n);
       CHECK(unmatched.empty());
-      // in this case the labels don't show up in the output SMILES
-      // Presumably the dummy atoms are no longer distinguishable without
-      // the isotope labels as the smiles no longer contains chiralty.
-      // Chirality is present in the core SMARTS
-      CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+
+      if (useLegacy) {
+        // in this case the labels don't show up in the output SMILES
+        // Presumably the dummy atoms are no longer distinguishable without
+        // the isotope labels as the smiles no longer contains chiralty.
+        // Chirality is present in the core SMARTS
+        CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
     "Core":"*C1(*)CCN1",
@@ -689,7 +694,37 @@ TEST_CASE("rgroupLabelling") {
     "R2":"*[H]"
   }
 ]
-    )JSON"));
+        )JSON"));
+      } else {
+        // in this case the labels don't show up in the output SMILES
+        // Presumably the dummy atoms are no longer distinguishable without
+        // the isotope labels as the smiles no longer contains chiralty.
+        // Chirality is present in the core SMARTS
+        CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+[
+  {
+    "Core":"*[C@@]1(*)CCN1",
+    "R1":"*F",
+    "R2":"*[H]"
+  },
+  {
+    "Core":"*[C@@]1(*)CCN1",
+    "R1":"*F",
+    "R2":"*O"
+  },
+  {
+    "Core":"*[C@]1(*)CCN1",
+    "R1":"*F",
+    "R2":"*[H]"
+  },
+  {
+    "Core":"*C1(*)CCN1",
+    "R1":"*F",
+    "R2":"*[H]"
+  }
+]
+        )JSON"));
+      }
     }
   }
   SECTION("Isotope|Map") {
@@ -969,5 +1004,140 @@ M  END
     ROMol core(*allDifferentCore);
     relabelMappedDummies(core, MDLRGroup, Isotope);
     CHECK(MolToCXSmiles(core, p) == "c1cc([2*])c([1*])cn1");
+  }
+}
+
+TEST_CASE("includeTargetMolInResults") {
+  auto core =
+      "c1cc(-c2c([*:1])nn3nc([*:2])ccc23)nc(N(c2ccc([*:4])c([*:3])c2))n1"_smiles;
+  REQUIRE(core);
+  std::vector<ROMOL_SPTR> mols{
+      "Cc1ccc2c(c3ccnc(Nc4cccc(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccc(F)cc6"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
+      "C1CC1c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4"_smiles,
+      "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CC5)cc1F"_smiles,
+      "C1CCC(CC1)c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4"_smiles,
+      "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CCCCC5)cc1F"_smiles,
+      "COCCOc1cnn2ncc(c3ccnc(Nc4cccc(OC)c4)n3)c2c1"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccccc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccccc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccccc6"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccccc4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6cccc(c6)C(F)(F)F"_smiles,
+  };
+  bool areMolsNonNull = std::all_of(mols.begin(), mols.end(),
+                                    [](const auto &mol) { return mol; });
+  REQUIRE(areMolsNonNull);
+  RGroupDecompositionParameters ps;
+  ps.includeTargetMolInResults = true;
+  RGroupDecomposition rgd(*core, ps);
+  for (const auto &mol : mols) {
+    CHECK(rgd.add(*mol) != -1);
+  }
+  REQUIRE(rgd.process());
+  auto checkRow = [](const RGroupRow &row) {
+    ROMOL_SPTR targetMol;
+    // These are sets of int vectors rather just plain int vectors
+    // because there can be cyclic R groups with 2 attachment points
+    // in that case it is OK for 2 R groups to have exactly the same
+    // target atom and bond indices
+    std::set<std::vector<int>> allAtomIndices;
+    std::set<std::vector<int>> allBondIndices;
+    for (const auto &pair : row) {
+      if (pair.first == RGroupData::getMolLabel()) {
+        targetMol = pair.second;
+      } else {
+        auto atoms = pair.second->atoms();
+        unsigned int numNonRAtoms =
+            std::count_if(atoms.begin(), atoms.end(), [](const auto &atom) {
+              return atom->getAtomicNum() > 0 || !atom->getAtomMapNum();
+            });
+        CHECK(pair.second->getNumAtoms() > numNonRAtoms);
+        unsigned int numBonds = 0;
+        if (pair.first == RGroupData::getCoreLabel()) {
+          auto bonds = pair.second->bonds();
+          numBonds =
+              std::count_if(bonds.begin(), bonds.end(), [](const auto &bond) {
+                return (bond->getBeginAtom()->getAtomicNum() > 0 ||
+                        !bond->getBeginAtom()->getAtomMapNum()) &&
+                       (bond->getEndAtom()->getAtomicNum() > 0 ||
+                        !bond->getEndAtom()->getAtomMapNum());
+              });
+        } else {
+          numBonds = pair.second->getNumBonds();
+        }
+        std::vector<int> atomIndices;
+        std::vector<int> bondIndices;
+        CHECK(pair.second->getPropIfPresent(
+            common_properties::_rgroupTargetAtoms, atomIndices));
+        CHECK(pair.second->getPropIfPresent(
+            common_properties::_rgroupTargetBonds, bondIndices));
+        CHECK(atomIndices.size() == numNonRAtoms);
+        allAtomIndices.insert(atomIndices);
+        CHECK(bondIndices.size() == numBonds);
+        allBondIndices.insert(bondIndices);
+      }
+    }
+    REQUIRE(targetMol);
+    auto flattenedAtomIndices = std::accumulate(
+        allAtomIndices.begin(), allAtomIndices.end(), std::vector<int>{},
+        [](std::vector<int> acc, const std::vector<int> &v) {
+          acc.insert(acc.end(), std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
+    auto uniqueAtomIndices = std::accumulate(
+        allAtomIndices.begin(), allAtomIndices.end(), std::set<int>{},
+        [](std::set<int> acc, const std::vector<int> &v) {
+          acc.insert(std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
+    CHECK(flattenedAtomIndices.size() == uniqueAtomIndices.size());
+    CHECK(flattenedAtomIndices.size() == targetMol->getNumAtoms());
+    auto flattenedBondIndices = std::accumulate(
+        allBondIndices.begin(), allBondIndices.end(), std::vector<int>{},
+        [](std::vector<int> acc, const std::vector<int> &v) {
+          acc.insert(acc.end(), std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
+    auto uniqueBondIndices = std::accumulate(
+        allBondIndices.begin(), allBondIndices.end(), std::set<int>{},
+        [](std::set<int> acc, const std::vector<int> &v) {
+          acc.insert(std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
+    CHECK(flattenedBondIndices.size() == uniqueBondIndices.size());
+    CHECK(flattenedBondIndices.size() == targetMol->getNumBonds());
+  };
+  SECTION("rows") {
+    auto rows = rgd.getRGroupsAsRows();
+    CHECK(rows.size() == mols.size());
+    for (const auto &row : rows) {
+      checkRow(row);
+    }
+  }
+  SECTION("columns") {
+    auto cols = rgd.getRGroupsAsColumns();
+    RGroupRows rows;
+    rows.reserve(mols.size());
+    for (size_t i = 0; i < mols.size(); ++i) {
+      RGroupRow row;
+      for (const auto &pair : cols) {
+        CHECK(pair.second.size() == mols.size());
+        row.emplace(pair.first, pair.second.at(i));
+      }
+      rows.push_back(std::move(row));
+    }
+    CHECK(rows.size() == mols.size());
+    for (const auto &row : rows) {
+      checkRow(row);
+    }
   }
 }

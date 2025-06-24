@@ -52,6 +52,20 @@ void Configuration::removeInternalEdges(std::vector<Edge *> &edges, Atom *f1,
   std::swap(edges, new_edges);
 }
 
+bool Configuration::isDuplicateOrHydrogenEdge(const Edge *edge) {
+  return edge->getBeg()->isDuplicateOrH() || edge->getEnd()->isDuplicateOrH();
+}
+
+void Configuration::removeDuplicatesAndHs(std::vector<Edge *> &edges) {
+  std::vector<Edge *> new_edges;
+  for (auto &&e : edges) {
+    if (!isDuplicateOrHydrogenEdge(e)) {
+      new_edges.push_back(std::move(e));
+    }
+  }
+  edges = std::move(new_edges);
+}
+
 void Configuration::setCarriers(std::vector<Atom *> &&carriers) {
   d_carriers = std::move(carriers);
 }

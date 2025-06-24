@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -25,6 +25,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/test_fixtures.h>
 
 #include "vf2.hpp"
 
@@ -1789,7 +1790,7 @@ void testEZVsCisTransMatch() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog)
       << "    Testing matching E/Z against Cis/Trans stereo bonds" << std::endl;
-
+  UseLegacyStereoPerceptionFixture fx(true);
   const auto mol = R"(F/C(C)=C(C)/Cl)"_smiles;
   {
     const Bond *stereoBnd = mol->getBondWithIdx(2);
@@ -1897,10 +1898,10 @@ void testMostSubstitutedCoreMatch() {
   };
 
   const auto &coreRef = *core;
-  for (auto &molResPair :
-       {std::make_pair(orthoMeta.get(), 0u), std::make_pair(ortho.get(), 1u),
-        std::make_pair(meta.get(), 1u), std::make_pair(biphenyl.get(), 2u),
-        std::make_pair(phenyl.get(), 3u)}) {
+  for (auto &molResPair : std::vector<std::pair<RDKit::RWMol *, unsigned>>{
+           std::make_pair(orthoMeta.get(), 0u), std::make_pair(ortho.get(), 1u),
+           std::make_pair(meta.get(), 1u), std::make_pair(biphenyl.get(), 2u),
+           std::make_pair(phenyl.get(), 3u)}) {
     auto &mol = *molResPair.first;
     const auto res = molResPair.second;
     MolOps::addHs(mol);

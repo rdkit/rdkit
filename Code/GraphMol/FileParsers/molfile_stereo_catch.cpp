@@ -42,7 +42,7 @@ TEST_CASE("Github #5863: failure in WedgeMolBonds") {
 TEST_CASE("translating the chiral flag to stereo groups") {
   SECTION("basics") {
     auto withFlag = R"CTAB(
-  Mrv2211 03302308372D          
+  Mrv2211 03302308372D
 
   5  4  0  0  1  0            999 V2000
    -6.5625    3.9286    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -103,7 +103,7 @@ M  END
 
   SECTION("explicit zero chiral flag") {
     auto zeroFlag = R"CTAB(
-  Mrv2211 03302308372D          
+  Mrv2211 03302308372D
 
   5  4  0  0  o  0            999 V2000
    -6.5625    3.9286    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -240,11 +240,10 @@ void testStereoExample(const std::string &mb, unsigned int aidx,
 }
 
 TEST_CASE("IUPAC recommendations") {
-#if 1
   SECTION("simple examples") {
     std::vector<std::string> mbs = {
         R"CTAB(
-  Mrv2211 06082308462D          
+  Mrv2211 06082308462D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -266,7 +265,7 @@ M  V30 END CTAB
 M  END
 )CTAB",
         R"CTAB(
-  Mrv2211 06082309052D          
+  Mrv2211 06082309052D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -288,7 +287,7 @@ M  V30 END CTAB
 M  END
 )CTAB",
         R"CTAB(
-  Mrv2211 06082309052D          
+  Mrv2211 06082309052D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -310,7 +309,7 @@ M  V30 END CTAB
 M  END
 )CTAB",
         R"CTAB(IUPAC does not like this one
-  Mrv2211 06082309142D          
+  Mrv2211 06082309142D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -332,7 +331,7 @@ M  V30 END CTAB
 M  END
 )CTAB",
         R"CTAB(IUPAC does not like this one2
-  Mrv2211 06082309142D          
+  Mrv2211 06082309142D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -347,7 +346,7 @@ M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
 M  V30 2 1 2 3
-M  V30 3 1 2 4 
+M  V30 3 1 2 4
 M  V30 4 1 2 5 CFG=1
 M  V30 END BOND
 M  V30 END CTAB
@@ -369,7 +368,7 @@ M  END
   }
   SECTION("three coordinate") {
     auto m = R"CTAB(
-  Mrv2108 01192209042D          
+  Mrv2108 01192209042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -403,7 +402,6 @@ M  END)CTAB"_ctab;
     CHECK(m->getAtomWithIdx(5)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
   }
-#endif
   SECTION("this came up") {
     std::string rdbase = getenv("RDBASE");
     std::string fName = rdbase + "/Code/GraphMol/test_data/github87.mol";
@@ -415,7 +413,7 @@ M  END)CTAB"_ctab;
 
   SECTION("narrow angle") {
     auto m = R"CTAB(
-  Mrv2211 06092305312D          
+  Mrv2211 06092305312D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -469,7 +467,7 @@ M  END)CTAB"_ctab;
   SECTION("linear arrangements") {
     {
       auto m = R"CTAB(
-  Mrv2211 06102314502D          
+  Mrv2211 06102314502D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -498,7 +496,7 @@ M  END
     }
     {
       auto m = R"CTAB(opposing stereo
-  Mrv2211 06102314502D          
+  Mrv2211 06102314502D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -528,7 +526,7 @@ M  END
     {
       // std::cerr<<"11111111111111"<<std::endl;
       auto m = R"CTAB(opposing stereo, order change
-  Mrv2211 06102314502D          
+  Mrv2211 06102314502D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -558,7 +556,7 @@ M  END)CTAB"_ctab;
       // IUPAC (ST-1.2.12) says this one is wrong. It definitely requires making
       // an assumption about where the H is.
       auto m = R"CTAB(three-coordinate, T shaped, wedge in the middle
-  Mrv2211 06102314502D          
+  Mrv2211 06102314502D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -601,7 +599,7 @@ TEST_CASE(
 TEST_CASE("stereo in ring", "[molblock][stereo]") {
   SECTION("test 1") {
     auto molblock = R"CTAB(
-  Mrv2311 10242314442D          
+  Mrv2311 10242314442D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -635,7 +633,7 @@ M  V30 END CTAB
 M  END
 )CTAB";
 
-    auto m = MolBlockToMol(molblock, true, false, false);
+    std::unique_ptr<RWMol> m(MolBlockToMol(molblock, true, false, false));
 
     REQUIRE(m);
     CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);

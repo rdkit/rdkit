@@ -17,12 +17,6 @@
 #include <cstdlib>
 
 #include <RDGeneral/RDLog.h>
-#if 0
-#include <boost/log/functions.hpp>
-#if defined(BOOST_HAS_THREADS)
-#include <boost/log/extra/functions_ts.hpp>
-#endif
-#endif
 
 namespace python = boost::python;
 namespace logging = boost::logging;
@@ -77,8 +71,12 @@ struct PyLogStream : std::ostream, std::streambuf {
     }
   }
 
-  ~PyLogStream() {
+  ~PyLogStream() override {
+#if PY_VERSION_HEX < 0x30d0000
     if (!_Py_IsFinalizing()) {
+#else
+    if (!Py_IsFinalizing()) {
+#endif
       Py_XDECREF(logfn);
     }
   }
@@ -158,17 +156,6 @@ void AttachFileToLog(std::string spec, std::string filename, int delay = 100) {
   (void)spec;
   (void)filename;
   (void)delay;
-#if 0
-#if defined(BOOST_HAS_THREADS)
-  logging::manipulate_logs(spec)
-    .add_appender(logging::ts_appender(logging::write_to_file(filename),
-				       delay));
-#else
-  logging::manipulate_logs(spec)
-    .add_appender(logging::write_to_file(filename));
-
-#endif
-#endif
 }
 
 void LogDebugMsg(const std::string &msg) {
@@ -257,11 +244,18 @@ BOOST_PYTHON_MODULE(rdBase) {
   RDLog::InitLogs();
   RegisterVectorConverter<int>();
   RegisterVectorConverter<unsigned>();
+  RegisterVectorConverter<size_t>("UnsignedLong_Vect");
+  RegisterVectorConverter<boost::uint64_t>("VectSizeT");
+
   RegisterVectorConverter<double>();
   RegisterVectorConverter<std::string>(1);
   RegisterVectorConverter<std::vector<int>>();
   RegisterVectorConverter<std::vector<unsigned>>();
   RegisterVectorConverter<std::vector<double>>();
+  RegisterVectorConverter<std::vector<std::string>>("VectorOfStringVectors");
+
+  RegisterVectorConverter<std::pair<int, int>>("MatchTypeVect");
+
   path_converter();
 
   RegisterListConverter<int>();

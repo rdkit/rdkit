@@ -7,12 +7,13 @@ The RDKit Documentation
 =======================
 
 .. toctree::
-  :maxdepth: 4
+  :maxdepth: 1
 
   Overview
   Install
   GettingStartedInPython
   RDKit_Book
+  GettingStartedWithContributing
   Cookbook
   Cartridge
   BackwardsIncompatibleChanges

@@ -1,8 +1,9 @@
 steps:
-- bash: |
-    wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX$(target_platform).sdk.tar.xz
-    tar Jxvf MacOSX$(target_platform).sdk.tar.xz
-  displayName: Install MacOSX $(target_platform) SDK
+- bash: | 
+    export CONDA=/tmp/miniforge
+    wget https://github.com/conda-forge/miniforge/releases/download/24.9.0-0/Miniforge3-24.9.0-0-MacOSX-x86_64.sh
+    bash Miniforge3-24.9.0-0-MacOSX-x86_64.sh -b -p ${CONDA}
+  displayName: install conda
 - script: |
     echo "Removing homebrew from Azure to avoid conflicts."
     curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
@@ -11,6 +12,7 @@ steps:
     rm ~/uninstall_homebrew
   displayName: Remove homebrew
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
     mkdir -p $HOME/.matplotlib
@@ -25,12 +27,17 @@ steps:
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         qt \
         numpy matplotlib=3.8 cairo pillow eigen pandas=2.1  \
-        jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval
+        jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval make
   displayName: Setup build environment
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+    ls -l /Library
+    ls -l /Library/Developer
+    ls -l /Library/Developer/CommandLineTools
+    ls -l /Library/Developer/CommandLineTools/SDKs    
+    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     export CXXFLAGS="${CXXFLAGS} -Wall -Wextra -Werror"
     mkdir build && cd build && \
@@ -60,20 +67,22 @@ steps:
     -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform)
   displayName: Configure build (Run CMake)
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     cd build
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export DYLD_FALLBACK_LIBRARY_PATH=${RDBASE}/lib:${RDBASE}/rdkit:${CONDA_PREFIX}/lib:${DYLD_FALLBACK_LIBRARY_PATH}
-    export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     export QT_QPA_PLATFORM='offscreen'
     cd build

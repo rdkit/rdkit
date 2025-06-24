@@ -1,0 +1,12 @@
+O=C(NCc1ccsc1NC(=O)c1ccc(OC(F)F)cn1)NC1COC1 urea-3_0_0_0
+O=C(NCc1ccsc1NC(=O)c1nccnc1F)NC1COC1 urea-3_0_0_1
+N#CCc1cnccc1C(=O)Nc1sccc1CNC(=O)NC1COC1 urea-3_0_0_2
+C[C@@H]1CC(NC(=O)NC2COC2)CN(C(=O)c2ccc(OC(F)F)cn2)C1 urea-3_0_1_0
+C[C@@H]1CC(NC(=O)NC2COC2)CN(C(=O)c2nccnc2F)C1 urea-3_0_1_1
+C[C@@H]1CC(NC(=O)NC2COC2)CN(C(=O)c2ccncc2CC#N)C1 urea-3_0_1_2
+O=C(NCc1ccsc1NC(=O)c1ccc(OC(F)F)cn1)Nc1ccc(Cl)c(O)c1 urea-3_1_0_0
+O=C(NCc1ccsc1NC(=O)c1nccnc1F)Nc1ccc(Cl)c(O)c1 urea-3_1_0_1
+N#CCc1cnccc1C(=O)Nc1sccc1CNC(=O)Nc1ccc(Cl)c(O)c1 urea-3_1_0_2
+C[C@@H]1CC(NC(=O)Nc2ccc(Cl)c(O)c2)CN(C(=O)c2ccc(OC(F)F)cn2)C1 urea-3_1_1_0
+C[C@@H]1CC(NC(=O)Nc2ccc(Cl)c(O)c2)CN(C(=O)c2nccnc2F)C1 urea-3_1_1_1
+C[C@@H]1CC(NC(=O)Nc2ccc(Cl)c(O)c2)CN(C(=O)c2ccncc2CC#N)C1 urea-3_1_1_2

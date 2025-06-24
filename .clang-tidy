@@ -1,7 +1,6 @@
 ---
 Checks:          '-*,boost-use-to-string,modernize-use-auto,modernize-use-nullptr,modernize-loop-convert,modernize-use-override,modernize-pass-by-value,modernize-shrink-to-fit,readability-braces-around-statements,readability-simplify-boolean-expr'
 HeaderFilterRegex: 'Code/'
-AnalyzeTemporaryDtors: false
 User:            glandrum
 CheckOptions:
   - key:             modernize-loop-convert.MaxCopySize

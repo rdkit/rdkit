@@ -44,6 +44,8 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams {
       true;  ///< remove attachment points from scaffolds and include the result
   bool includeScaffoldsWithAttachments =
       true;  ///< Include the version of the scaffold with attachment points
+  bool includeNames =
+      false;  ///< Include molecules names of the input molecules
   bool keepOnlyFirstFragment =
       true;  ///<  keep only the first fragment from the bond breaking rule
   bool pruneBeforeFragmenting =
@@ -91,9 +93,9 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT NetworkEdge {
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     RDUNUSED_PARAM(version);
-    ar &beginIdx;
-    ar &endIdx;
-    ar &type;
+    ar & beginIdx;
+    ar & endIdx;
+    ar & type;
   }
 #endif
 };
@@ -118,12 +120,12 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork {
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     RDUNUSED_PARAM(version);
-    ar &nodes;
-    ar &counts;
+    ar & nodes;
+    ar & counts;
     if (version > 0) {
-      ar &molCounts;
+      ar & molCounts;
     }
-    ar &edges;
+    ar & edges;
   }
 #endif
 };

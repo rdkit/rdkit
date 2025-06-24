@@ -13,7 +13,7 @@
 namespace GapeGa {
 
 BinaryStringChromosomePolicy::BinaryStringChromosomePolicy(
-    GarethUtil::RandomUtil& rng_)
+    GarethUtil::RandomUtil &rng_)
     : rng(rng_) {}
 
 BinaryStringChromosomePolicy::~BinaryStringChromosomePolicy() {}

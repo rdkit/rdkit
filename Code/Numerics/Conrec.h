@@ -204,9 +204,9 @@ inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
           res.emplace_back(RDGeom::Point2D(x1, y1), RDGeom::Point2D(x2, y2),
                            z[k]);
         } /* m */
-      }   /* k - contour */
-    }     /* i */
-  }       /* j */
+      } /* k - contour */
+    } /* i */
+  } /* j */
 }
 
 struct tplHash {

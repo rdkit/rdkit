@@ -6,7 +6,7 @@
 #include <numpy/arrayobject.h>
 
 #if PY_MAJOR_VERSION >= 3
-void* rdkit_import_array()
+void *rdkit_import_array()
 #else
 void rdkit_import_array()
 #endif

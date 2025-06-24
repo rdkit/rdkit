@@ -19,7 +19,7 @@ rdkit_library(MolStandardize
     TautomerCatalog/TautomerCatalogEntry.cpp
     TautomerCatalog/TautomerCatalogParams.cpp
     TautomerCatalog/TautomerCatalogUtils.cpp
-        LINK_LIBRARIES ChemReactions ChemTransforms SmilesParse SubstructMatch Descriptors GraphMol )
+        LINK_LIBRARIES ChemReactions ChemTransforms SmilesParse SubstructMatch GraphMol )
 target_compile_definitions(MolStandardize PRIVATE RDKIT_MOLSTANDARDIZE_BUILD)
 
 rdkit_headers(
@@ -65,7 +65,7 @@ rdkit_test(molStandardizeTest test1.cpp LINK_LIBRARIES MolStandardize )
 rdkit_test(molNormalizeTest testNormalize.cpp LINK_LIBRARIES MolStandardize )
 rdkit_test(molValidateTest testValidate.cpp LINK_LIBRARIES MolStandardize )
 rdkit_test(molChargeTest testCharge.cpp LINK_LIBRARIES MolStandardize )
-rdkit_test(molTautomerTest testTautomer.cpp LINK_LIBRARIES MolStandardize )
+rdkit_test(molTautomerTest testTautomer.cpp LINK_LIBRARIES CIPLabeler MolStandardize )
 rdkit_test(molStandardizeSmallTest test2.cpp LINK_LIBRARIES MolStandardize )
 rdkit_test(molFragmentTest testFragment.cpp LINK_LIBRARIES MolStandardize )
 rdkit_catch_test(molStandardizeCatchTest catch_tests.cpp LINK_LIBRARIES MolStandardize )

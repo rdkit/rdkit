@@ -336,35 +336,37 @@ TEST_CASE("github #3821 check TAUTOMERQUERY_OPERATOR= does a deep copy") {
         &tautomerQueryAssigned.getTemplateMolecule());
 }
 
-TEST_CASE("Serialization"){
+TEST_CASE("Serialization") {
+  SECTION("basics") {
 #ifdef RDK_USE_BOOST_SERIALIZATION
-    SECTION("basics"){auto mol = "Nc1nc(=O)c2nc[nH]c2[nH]1"_smiles;
-REQUIRE(mol);
-auto tautomerQuery =
-    std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
-CHECK(15 == tautomerQuery->getTautomers().size());
+    auto mol = "Nc1nc(=O)c2nc[nH]c2[nH]1"_smiles;
+    REQUIRE(mol);
+    auto tautomerQuery =
+        std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+    CHECK(15 == tautomerQuery->getTautomers().size());
 
-std::string pickle = tautomerQuery->serialize();
-TautomerQuery serialized(pickle);
-CHECK(serialized.getTautomers().size() == tautomerQuery->getTautomers().size());
+    std::string pickle = tautomerQuery->serialize();
+    TautomerQuery serialized(pickle);
+    CHECK(serialized.getTautomers().size() ==
+          tautomerQuery->getTautomers().size());
 
-auto queryFingerprint = serialized.patternFingerprintTemplate();
-REQUIRE(queryFingerprint);
-std::vector<std::string> targetSmis{"CCc1nc2[nH]c(=N)nc(O)c2[nH]1",
-                                    "CN1C2=NC=NC2=C(O)N=C1N"};
-for (auto targetSmiles : targetSmis) {
-  auto target = SmilesToMol(targetSmiles);
-  REQUIRE(target);
-  CHECK(serialized.isSubstructOf(*target));
-  auto targetFingerprint = TautomerQuery::patternFingerprintTarget(*target);
-  REQUIRE(targetFingerprint);
-  CHECK(AllProbeBitsMatch(*queryFingerprint, *targetFingerprint));
-  delete targetFingerprint;
-  delete target;
-}
-delete queryFingerprint;
-}
+    auto queryFingerprint = serialized.patternFingerprintTemplate();
+    REQUIRE(queryFingerprint);
+    std::vector<std::string> targetSmis{"CCc1nc2[nH]c(=N)nc(O)c2[nH]1",
+                                        "CN1C2=NC=NC2=C(O)N=C1N"};
+    for (auto targetSmiles : targetSmis) {
+      auto target = SmilesToMol(targetSmiles);
+      REQUIRE(target);
+      CHECK(serialized.isSubstructOf(*target));
+      auto targetFingerprint = TautomerQuery::patternFingerprintTarget(*target);
+      REQUIRE(targetFingerprint);
+      CHECK(AllProbeBitsMatch(*queryFingerprint, *targetFingerprint));
+      delete targetFingerprint;
+      delete target;
+    }
+    delete queryFingerprint;
 #endif
+  }
 }
 
 TEST_CASE("Tautomer queries should propagate atom properties") {
@@ -383,4 +385,27 @@ TEST_CASE("Tautomer queries should propagate atom properties") {
     CHECK(tq2.getTemplateMolecule().getAtomWithIdx(6)->hasProp("_foo"));
   }
 #endif
+}
+
+TEST_CASE("GitHub Issue #8492: TautomerQuery drops queries for some atoms") {
+  // These queries don't make sense, but they are easy to check
+  auto mol = "[#6X0](=[#8&X1])(-[#6X2])-[#6X3]"_smarts;
+  REQUIRE(mol);
+
+  auto check_queries = [](const auto &m) {
+    REQUIRE(m.getNumAtoms() == 4);
+    for (auto atom : m.atoms()) {
+      auto query = atom->getQuery();
+      REQUIRE(query != nullptr);
+      auto desc = describeQuery(atom);
+      CHECK(desc.find("AtomTotalDegree " + std::to_string(atom->getIdx())) !=
+            std::string::npos);
+    }
+  };
+
+  check_queries(*mol);
+  auto tq = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto &mol2 = tq->getTemplateMolecule();
+
+  check_queries(mol2);
 }

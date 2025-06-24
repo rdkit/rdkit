@@ -23,25 +23,25 @@ typedef std::vector<std::vector<uint32_t>> VectMinHashVect;
 typedef std::vector<ExplicitBitVect> VectExplicitBitVect;
 
 template <typename T>
-std::vector<T> ListToVector(const python::object& obj) {
+std::vector<T> ListToVector(const python::object &obj) {
   return std::vector<T>(python::stl_input_iterator<T>(obj),
                         python::stl_input_iterator<T>());
 }
 
 UINT_VECT
-FromStringArray(MHFPEncoder* mhfpEnc, python::list& vec) {
+FromStringArray(MHFPEncoder *mhfpEnc, python::list &vec) {
   std::vector<std::string> vec_tmp = ListToVector<std::string>(vec);
   return mhfpEnc->FromStringArray(vec_tmp);
 }
 
 UINT_VECT
-FromArray(MHFPEncoder* mhfpEnc, python::list& vec) {
+FromArray(MHFPEncoder *mhfpEnc, python::list &vec) {
   std::vector<uint32_t> vec_tmp = ListToVector<uint32_t>(vec);
   return mhfpEnc->FromArray(vec_tmp);
 }
 
 STR_VECT
-CreateShinglingFromSmiles(MHFPEncoder* mhfpEnc, std::string smiles,
+CreateShinglingFromSmiles(MHFPEncoder *mhfpEnc, std::string smiles,
                           unsigned char radius = 3, bool rings = true,
                           bool isomeric = false, bool kekulize = true,
                           unsigned char min_radius = 1) {
@@ -50,7 +50,7 @@ CreateShinglingFromSmiles(MHFPEncoder* mhfpEnc, std::string smiles,
 }
 
 STR_VECT
-CreateShinglingFromMol(MHFPEncoder* mhfpEnc, ROMol mol,
+CreateShinglingFromMol(MHFPEncoder *mhfpEnc, ROMol mol,
                        unsigned char radius = 3, bool rings = true,
                        bool isomeric = false, bool kekulize = true,
                        unsigned char min_radius = 1) {
@@ -59,40 +59,53 @@ CreateShinglingFromMol(MHFPEncoder* mhfpEnc, ROMol mol,
 }
 
 UINT_VECT
-EncodeSmiles(MHFPEncoder* mhfpEnc, std::string smiles, unsigned char radius = 3,
+EncodeSmiles(MHFPEncoder *mhfpEnc, std::string smiles, unsigned char radius = 3,
              bool rings = true, bool isomeric = false, bool kekulize = true,
              unsigned char min_radius = 1) {
   return mhfpEnc->Encode(smiles, radius, rings, isomeric, kekulize, min_radius);
 }
 
 UINT_VECT
-EncodeMol(MHFPEncoder* mhfpEnc, ROMol mol, unsigned char radius = 3,
+EncodeMol(MHFPEncoder *mhfpEnc, ROMol mol, unsigned char radius = 3,
           bool rings = true, bool isomeric = false, bool kekulize = true,
           unsigned char min_radius = 1) {
   return mhfpEnc->Encode(mol, radius, rings, isomeric, kekulize, min_radius);
 }
 
-VectMinHashVect EncodeSmilesBulk(MHFPEncoder* mhfpEnc, python::list& smiles,
-                                 unsigned char radius = 3, bool rings = true,
-                                 bool isomeric = false, bool kekulize = true,
-                                 unsigned char min_radius = 1) {
+python::object EncodeSmilesBulk(MHFPEncoder *mhfpEnc, python::list &smiles,
+                                unsigned char radius = 3, bool rings = true,
+                                bool isomeric = false, bool kekulize = true,
+                                unsigned char min_radius = 1) {
   std::vector<std::string> vec = ListToVector<std::string>(smiles);
-  return mhfpEnc->Encode(vec, radius, rings, isomeric, kekulize, min_radius);
+  auto resVect =
+      mhfpEnc->Encode(vec, radius, rings, isomeric, kekulize, min_radius);
+  // Convert the result to a Python list
+  python::list resList;
+  for (const auto &item : resVect) {
+    resList.append(item);
+  }
+  return python::tuple(resList);
 }
 
 // There are access problems for vector_indexing_suite and std::vector<ROMol>.
 // So let's fallback to a unefficient Python list.
-VectMinHashVect EncodeMolsBulk(MHFPEncoder* mhfpEnc, python::list& mols,
-                               unsigned char radius = 3, bool rings = true,
-                               bool isomeric = false, bool kekulize = true,
-                               unsigned char min_radius = 1) {
+python::object EncodeMolsBulk(MHFPEncoder *mhfpEnc, python::list &mols,
+                              unsigned char radius = 3, bool rings = true,
+                              bool isomeric = false, bool kekulize = true,
+                              unsigned char min_radius = 1) {
   std::vector<ROMol> vec = ListToVector<ROMol>(mols);
-  return mhfpEnc->Encode(vec, radius, rings, isomeric, kekulize, min_radius);
+  auto resVect =
+      mhfpEnc->Encode(vec, radius, rings, isomeric, kekulize, min_radius);
+  python::list resList;
+  for (const auto &item : resVect) {
+    resList.append(item);
+  }
+  return python::tuple(resList);
 }
 
 // SECFP
 
-ExplicitBitVect EncodeSECFPSmiles(MHFPEncoder* mhfpEnc, std::string smiles,
+ExplicitBitVect EncodeSECFPSmiles(MHFPEncoder *mhfpEnc, std::string smiles,
                                   unsigned char radius = 3, bool rings = true,
                                   bool isomeric = false, bool kekulize = true,
                                   unsigned char min_radius = 1,
@@ -101,7 +114,7 @@ ExplicitBitVect EncodeSECFPSmiles(MHFPEncoder* mhfpEnc, std::string smiles,
                               min_radius, length);
 }
 
-ExplicitBitVect EncodeSECFPMol(MHFPEncoder* mhfpEnc, ROMol mol,
+ExplicitBitVect EncodeSECFPMol(MHFPEncoder *mhfpEnc, ROMol mol,
                                unsigned char radius = 3, bool rings = true,
                                bool isomeric = false, bool kekulize = true,
                                unsigned char min_radius = 1,
@@ -110,22 +123,37 @@ ExplicitBitVect EncodeSECFPMol(MHFPEncoder* mhfpEnc, ROMol mol,
                               min_radius, length);
 }
 
-VectExplicitBitVect EncodeSECFPSmilesBulk(
-    MHFPEncoder* mhfpEnc, python::list& smiles, unsigned char radius = 3,
-    bool rings = true, bool isomeric = false, bool kekulize = true,
-    unsigned char min_radius = 1, size_t length = 2048) {
+python::object EncodeSECFPSmilesBulk(MHFPEncoder *mhfpEnc, python::list &smiles,
+                                     unsigned char radius = 3,
+                                     bool rings = true, bool isomeric = false,
+                                     bool kekulize = true,
+                                     unsigned char min_radius = 1,
+                                     size_t length = 2048) {
   std::vector<std::string> vec = ListToVector<std::string>(smiles);
-  return mhfpEnc->EncodeSECFP(vec, radius, rings, isomeric, kekulize,
-                              min_radius, length);
+  auto resVect = mhfpEnc->EncodeSECFP(vec, radius, rings, isomeric, kekulize,
+                                      min_radius, length);
+  // Convert the result to a Python list
+  python::list resList;
+  for (const auto &item : resVect) {
+    resList.append(item);
+  }
+  return python::tuple(resList);
 }
 
-VectExplicitBitVect EncodeSECFPMolsBulk(
-    MHFPEncoder* mhfpEnc, python::list& mols, unsigned char radius = 3,
-    bool rings = true, bool isomeric = false, bool kekulize = true,
-    unsigned char min_radius = 1, size_t length = 2048) {
+python::object EncodeSECFPMolsBulk(MHFPEncoder *mhfpEnc, python::list &mols,
+                                   unsigned char radius = 3, bool rings = true,
+                                   bool isomeric = false, bool kekulize = true,
+                                   unsigned char min_radius = 1,
+                                   size_t length = 2048) {
   std::vector<ROMol> vec = ListToVector<ROMol>(mols);
-  return mhfpEnc->EncodeSECFP(vec, radius, rings, isomeric, kekulize,
-                              min_radius, length);
+  auto resVect = mhfpEnc->EncodeSECFP(vec, radius, rings, isomeric, kekulize,
+                                      min_radius, length);
+  // Convert the result to a Python list
+  python::list resList;
+  for (const auto &item : resVect) {
+    resList.append(item);
+  }
+  return python::tuple(resList);
 }
 
 BOOST_PYTHON_FUNCTION_OVERLOADS(CreateShinglingFromSmilesOverloads,

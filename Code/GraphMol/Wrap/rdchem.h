@@ -16,6 +16,6 @@
 namespace RDKit {
 class ConformerException;
 }
-void rdExceptionTranslator(RDKit::ConformerException const& x);
+void rdExceptionTranslator(RDKit::ConformerException const &x);
 
 #endif

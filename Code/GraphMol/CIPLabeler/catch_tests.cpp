@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Schrödinger, LLC
+//  Copyright (C) 2020-2025 Schrödinger, LLC and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -25,6 +25,7 @@
 #include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/test_fixtures.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/test_fixtures.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
@@ -41,8 +42,8 @@
 using namespace RDKit;
 using namespace RDKit::CIPLabeler;
 
-std::string toBinaryString(int value) {
-  return std::bitset<32>(value).to_string();
+std::string toBinaryString(PairList::pairing_t value) {
+  return std::bitset<PairList::numPairingBits>(value).to_string();
 }
 
 TEST_CASE("Descriptor lists", "[accurateCIP]") {
@@ -63,51 +64,51 @@ TEST_CASE("Descriptor lists", "[accurateCIP]") {
   SECTION("Pairing") {
     REQUIRE(descriptors.getPairing() == 0);
 
-    CHECK("00000000000000000000000000000000" ==
+    CHECK("0000000000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     descriptors.add(Descriptor::R);
-    CHECK("00000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("01000000000000000000000000000000" ==
+    CHECK("0000000000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // like
     descriptors.add(Descriptor::R);
-    CHECK("01100000000000000000000000000000" ==
+    CHECK("0100000000000000000000000000000000000000000000000000000000000000" ==
+          toBinaryString(descriptors.getPairing()));
+
+    // like
+    descriptors.add(Descriptor::R);
+    CHECK("0110000000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // unlike
     descriptors.add(Descriptor::S);
-    CHECK("01100000000000000000000000000000" ==
+    CHECK("0110000000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // like
     descriptors.add(Descriptor::R);
-    CHECK("01101000000000000000000000000000" ==
+    CHECK("0110100000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // like
     descriptors.add(Descriptor::R);
-    CHECK("01101100000000000000000000000000" ==
+    CHECK("0110110000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // like
     descriptors.add(Descriptor::R);
-    CHECK("01101110000000000000000000000000" ==
+    CHECK("0110111000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // unlike
     descriptors.add(Descriptor::S);
-    CHECK("01101110000000000000000000000000" ==
+    CHECK("0110111000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // like
     descriptors.add(Descriptor::R);
-    CHECK("01101110100000000000000000000000" ==
+    CHECK("0110111010000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
   }
 
@@ -340,7 +341,9 @@ TEST_CASE("Tetrahedral assignment", "[accurateCIP]") {
   chiral_atom->clearProp(common_properties::_CIPCode);
   REQUIRE(chiral_atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
 
+  CHECK(!mol->hasProp(common_properties::_CIPComputed));
   CIPLabeler::assignCIPLabels(*mol);
+  CHECK(mol->hasProp(common_properties::_CIPComputed));
 
   std::string chirality;
   CHECK(chiral_atom->getPropIfPresent(common_properties::_CIPCode, chirality));
@@ -348,6 +351,10 @@ TEST_CASE("Tetrahedral assignment", "[accurateCIP]") {
 }
 
 TEST_CASE("Double bond stereo assignment", "[accurateCIP]") {
+  auto useLegacy = GENERATE(true, false);
+  UseLegacyStereoPerceptionFixture fx(useLegacy);
+  CAPTURE(useLegacy);
+
   auto mol = R"(CC\C(\C(\C)=N\O)=N\O)"_smiles;  // VS013
   REQUIRE(mol->getNumAtoms() == 9);
 
@@ -355,8 +362,15 @@ TEST_CASE("Double bond stereo assignment", "[accurateCIP]") {
   auto bond_2 = mol->getBondWithIdx(6);
   REQUIRE(bond_1->getBondType() == Bond::DOUBLE);
   REQUIRE(bond_2->getBondType() == Bond::DOUBLE);
-  REQUIRE(bond_1->getStereo() == Bond::STEREOE);
-  REQUIRE(bond_2->getStereo() == Bond::STEREOZ);
+  if (useLegacy) {
+    CHECK(bond_1->getStereo() == Bond::STEREOE);
+    CHECK(bond_2->getStereo() == Bond::STEREOZ);
+  } else {
+    CHECK(bond_1->getStereo() == Bond::STEREOTRANS);
+    CHECK(bond_1->getStereoAtoms() == std::vector<int>({2, 6}));
+    CHECK(bond_2->getStereo() == Bond::STEREOTRANS);
+    CHECK(bond_2->getStereoAtoms() == std::vector<int>({1, 8}));
+  }
 
   CIPLabeler::assignCIPLabels(*mol);
 
@@ -376,6 +390,7 @@ TEST_CASE("phosphine and arsine chirality", "[accurateCIP]") {
       {"C[P@@H]C1CCCCC1", "S"}};
 
   for (const auto &ref : mols) {
+    INFO(ref.first);
     std::unique_ptr<RWMol> mol{SmilesToMol(ref.first)};
     REQUIRE(mol);
     CIPLabeler::assignCIPLabels(*mol);
@@ -721,8 +736,8 @@ M  END
   }
 }
 
-void testOneAtropIomerMandP(std::string inputText, const std::string &expected,
-                            bool isSmiles = true) {
+void testOneAtropIsomerMandP(std::string inputText, const std::string &expected,
+                             bool isSmiles = true) {
   std::unique_ptr<RWMol> mol;
 
   if (isSmiles) {
@@ -757,67 +772,67 @@ void testOneAtropIomerMandP(std::string inputText, const std::string &expected,
 
 TEST_CASE("AssignMandP", "[accurateCIP]") {
   SECTION("Suzzana") {
-    testOneAtropIomerMandP(
+    testOneAtropIsomerMandP(
         "<cml xmlns=\"http://www.chemaxon.com\" version=\"ChemAxon file format v20.20.0, generated by vunknown\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.chemaxon.com http://www.chemaxon.com/marvin/schema/mrvSchema_20_20_0.xsd\"><MDocument><MChemicalStruct><molecule molID=\"m1\" absStereo=\"true\"><atomArray><atom id=\"a1\" elementType=\"C\" x2=\"4.070453300769707\" y2=\"-1.47671998818624\"/><atom id=\"a2\" elementType=\"C\" x2=\"4.372853298350507\" y2=\"0.03322666640085333\"/><atom id=\"a3\" elementType=\"C\" x2=\"5.8316532866801065\" y2=\"0.5265866624539733\"/><atom id=\"a4\" elementType=\"C\" x2=\"6.134053284260906\" y2=\"2.0365333170410667\"/><atom id=\"a5\" elementType=\"C\" x2=\"4.977466626846933\" y2=\"3.053306642240213\"/><atom id=\"a6\" elementType=\"O\" x2=\"5.27967995776256\" y2=\"4.56343996349248\" lonePair=\"2\"/><atom id=\"a7\" elementType=\"C\" x2=\"3.51847997185216\" y2=\"2.5601333128522668\"/><atom id=\"a8\" elementType=\"C\" x2=\"2.361893314438187\" y2=\"3.576906638051413\"/><atom id=\"a9\" elementType=\"C\" x2=\"3.2162666409365337\" y2=\"1.0501866582651733\"/><atom id=\"a10\" elementType=\"N\" x2=\"-1.0962933245629867\" y2=\"-0.40786666340373334\" lonePair=\"1\"/><atom id=\"a11\" elementType=\"C\" x2=\"-2.3527466478446932\" y2=\"0.48253332947306665\"/><atom id=\"a12\" elementType=\"N\" x2=\"-2.37103998103168\" y2=\"2.022346650487893\" lonePair=\"1\"/><atom id=\"a13\" elementType=\"C\" x2=\"-3.58791997129664\" y2=\"-0.43735999650112\"/><atom id=\"a14\" elementType=\"C\" x2=\"-3.09455997524352\" y2=\"-1.89615998483072\"/><atom id=\"a15\" elementType=\"C\" x2=\"-1.5547466542286932\" y2=\"-1.8780533183089065\"/></atomArray><bondArray><bond id=\"b1\" atomRefs2=\"a1 a2\" order=\"1\"/><bond id=\"b2\" atomRefs2=\"a2 a3\" order=\"2\"/><bond id=\"b3\" atomRefs2=\"a3 a4\" order=\"1\"/><bond id=\"b4\" atomRefs2=\"a4 a5\" order=\"2\"/><bond id=\"b5\" atomRefs2=\"a5 a6\" order=\"1\"/><bond id=\"b6\" atomRefs2=\"a5 a7\" order=\"1\"/><bond id=\"b7\" atomRefs2=\"a7 a8\" order=\"1\"/><bond id=\"b8\" atomRefs2=\"a7 a9\" order=\"2\"/><bond id=\"b9\" atomRefs2=\"a9 a2\" order=\"1\"><bondStereo>W</bondStereo></bond><bond id=\"b10\" atomRefs2=\"a9 a10\" order=\"1\"/><bond id=\"b11\" atomRefs2=\"a10 a11\" order=\"1\"/><bond id=\"b12\" atomRefs2=\"a11 a12\" order=\"1\"/><bond id=\"b13\" atomRefs2=\"a11 a13\" order=\"2\"/><bond id=\"b14\" atomRefs2=\"a13 a14\" order=\"1\"/><bond id=\"b15\" atomRefs2=\"a14 a15\" order=\"2\"/><bond id=\"b16\" atomRefs2=\"a10 a15\" order=\"1\"/></bondArray></molecule></MChemicalStruct></MDocument></cml>",
         "8-9=M:", false);
   }
 
   SECTION("Suzzana2") {
-    testOneAtropIomerMandP(
+    testOneAtropIsomerMandP(
         "<cml xmlns=\"http://www.chemaxon.com\" version=\"ChemAxon file format v20.20.0, generated by vunknown\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.chemaxon.com http://www.chemaxon.com/marvin/schema/mrvSchema_20_20_0.xsd\"><MDocument><MChemicalStruct><molecule molID=\"m1\" absStereo=\"true\"><atomArray><atom id=\"a1\" elementType=\"C\" x2=\"4.070453300769707\" y2=\"-1.47671998818624\"/><atom id=\"a2\" elementType=\"C\" x2=\"4.372853298350507\" y2=\"0.03322666640085333\"/><atom id=\"a3\" elementType=\"C\" x2=\"5.8316532866801065\" y2=\"0.5265866624539733\"/><atom id=\"a4\" elementType=\"C\" x2=\"6.134053284260906\" y2=\"2.0365333170410667\"/><atom id=\"a5\" elementType=\"C\" x2=\"4.977466626846933\" y2=\"3.053306642240213\"/><atom id=\"a6\" elementType=\"O\" x2=\"5.27967995776256\" y2=\"4.56343996349248\" lonePair=\"2\"/><atom id=\"a7\" elementType=\"C\" x2=\"3.51847997185216\" y2=\"2.5601333128522668\"/><atom id=\"a8\" elementType=\"C\" x2=\"2.361893314438187\" y2=\"3.576906638051413\"/><atom id=\"a9\" elementType=\"C\" x2=\"3.2162666409365337\" y2=\"1.0501866582651733\"/><atom id=\"a10\" elementType=\"N\" x2=\"-1.0962933245629867\" y2=\"-0.40786666340373334\" lonePair=\"1\"/><atom id=\"a11\" elementType=\"C\" x2=\"-2.3527466478446932\" y2=\"0.48253332947306665\"/><atom id=\"a12\" elementType=\"N\" x2=\"-2.37103998103168\" y2=\"2.022346650487893\" lonePair=\"1\"/><atom id=\"a13\" elementType=\"C\" x2=\"-3.58791997129664\" y2=\"-0.43735999650112\"/><atom id=\"a14\" elementType=\"C\" x2=\"-3.09455997524352\" y2=\"-1.89615998483072\"/><atom id=\"a15\" elementType=\"C\" x2=\"-1.5547466542286932\" y2=\"-1.8780533183089065\"/></atomArray><bondArray><bond id=\"b1\" atomRefs2=\"a1 a2\" order=\"1\"/><bond id=\"b2\" atomRefs2=\"a2 a3\" order=\"2\"/><bond id=\"b3\" atomRefs2=\"a3 a4\" order=\"1\"/><bond id=\"b4\" atomRefs2=\"a4 a5\" order=\"2\"/><bond id=\"b5\" atomRefs2=\"a5 a6\" order=\"1\"/><bond id=\"b6\" atomRefs2=\"a5 a7\" order=\"1\"/><bond id=\"b7\" atomRefs2=\"a7 a8\" order=\"1\"/><bond id=\"b8\" atomRefs2=\"a7 a9\" order=\"2\"/><bond id=\"b9\" atomRefs2=\"a9 a2\" order=\"1\"><bondStereo>H</bondStereo></bond><bond id=\"b10\" atomRefs2=\"a9 a10\" order=\"1\"/><bond id=\"b11\" atomRefs2=\"a10 a11\" order=\"1\"/><bond id=\"b12\" atomRefs2=\"a11 a12\" order=\"1\"/><bond id=\"b13\" atomRefs2=\"a11 a13\" order=\"2\"/><bond id=\"b14\" atomRefs2=\"a13 a14\" order=\"1\"/><bond id=\"b15\" atomRefs2=\"a14 a15\" order=\"2\"/><bond id=\"b16\" atomRefs2=\"a10 a15\" order=\"1\"/></bondArray></molecule></MChemicalStruct></MDocument></cml>",
         "8-9=P:", false);
   }
 
   SECTION("BMS-986142") {
-    testOneAtropIomerMandP(
+    testOneAtropIsomerMandP(
         "FC1=C(C2=C(C)C(N3C(=O)C4=C(N(C)C3=O)C(F)=CC=C4)=CC=C2)C2=C(NC3=C2CC[C@H](C(O)(C)C)C3)C(C(=O)N)=C1 |(2.1158,0.5489,;1.4029,0.9642,;0.6554,0.5402,;0.6459,-0.2846,;1.3556,-0.7053,;2.0747,-0.3011,;1.346,-1.5302,;2.3682,-1.8618,;2.9748,-1.3027,;2.794,-0.4978,;3.7623,-1.5486,;3.9431,-2.3535,;3.3364,-2.9126,;3.5173,-3.7175,;2.549,-2.6667,;1.9423,-3.2258,;4.7594,-2.6222,;4.9309,-3.4292,;5.3958,-2.0448,;5.2074,-1.2063,;4.3851,-0.9565,;0.6268,-1.9345,;-0.0827,-1.5137,;-0.0732,-0.6889,;-0.0819,0.9813,;-0.0819,1.8063,;-0.8665,2.0612,;-1.3515,1.3938,;-0.8665,0.7264,;-1.2039,-0.0639,;-2.0578,-0.1602,;-2.5629,0.5349,;-3.3837,0.4518,;-4.2045,0.3687,;-3.4668,1.2725,;-3.3006,-0.369,;-2.2074,1.3172,;0.6555,2.2474,;0.6459,3.0723,;-0.0731,3.4765,;1.3556,3.4931,;1.403,1.8235,),wU:7.14wD:31.35|",
         "6-7=P:");
   }
   SECTION("AtropManyChirals") {
-    testOneAtropIomerMandP(
+    testOneAtropIsomerMandP(
         "O=C1C=CNC(=O)N1C(=C)[C@]([C@H](C)Br)([C@@H](F)C)[C@H](Cl)C |(1.6038,0.5917,;1.2842,-0.2899,;1.9435,-0.5613,;2.0181,-1.3829,;1.344,-1.8584,;0.5951,-1.5123,;0.0595,-2.2018,;0.5204,-0.6907,;-0.3117,-0.3431,;-0.861,-1.0085,;-0.5013,0.5405,;-0.4918,1.4387,;-0.0783,2.2018,;-1.0961,2.0398,;0.3347,0.736,;0.6313,-0.0436,;1.118,1.0786,;-1.3746,0.4021,;-2.0181,0.9732,;-1.9327,-0.2608,),wU:7.7,11.13,10.14,17.18wD:14.15|",
         "7-8=M:");
   }
   SECTION("BMS-986142_3d") {
-    testOneAtropIomerMandP(
+    testOneAtropIsomerMandP(
         "FC1=C(C2=C(C([H])([H])[H])C(N3C(=O)C4=C(N(C([H])([H])[H])C3=O)C(F)=C([H])C([H])=C4[H])=C([H])C([H])=C2[H])C2=C(N([H])C3=C2C([H])([H])C([H])([H])C(C(O[H])(C([H])([H])[H])C([H])([H])[H])([H])C3([H])[H])C(C(=O)N([H])[H])=C1[H] |(-1.4248,-1.9619,-2.2208;-1.8741,-1.6494,-1.6034;-1.6332,-0.9186,-1.2186;-0.9031,-0.4893,-1.4844;-0.138,-0.6553,-1.1342;-0.0582,-1.2887,-0.4699;-0.2862,-1.8851,-0.6843;0.5723,-1.396,-0.2643;-0.4068,-1.1014,0.0747;0.5573,-0.2316,-1.4028;1.3588,-0.3932,-1.0482;1.5905,0.0773,-0.3585;1.2002,0.6554,-0.0665;2.3933,-0.1194,0.0095;2.9068,-0.6967,-0.3594;2.6425,-1.1179,-1.0794;3.1982,-1.7169,-1.457;3.3106,-2.2227,-1.0278;3.7704,-1.4129,-1.6385;2.9318,-1.9829,-2.0144;1.8575,-1.0047,-1.4246;1.6168,-1.4364,-2.0026;3.6768,-0.8489,0.0041;4.2097,-1.3952,-0.3066;3.9217,-0.4363,0.7167;4.5184,-0.5645,0.9877;3.4017,0.1354,1.0788;3.5896,0.457,1.6328;2.6386,0.2956,0.7262;2.2428,0.7475,1.0192;0.4878,0.3584,-2.0214;1.0254,0.6927,-2.2354;-0.2773,0.5242,-2.3716;-0.3315,0.9837,-2.8531;-0.9727,0.1003,-2.1031;-1.5642,0.2383,-2.3831;-2.1142,-0.6018,-0.5711;-2.8218,-1.0304,-0.3345;-3.1799,-0.5981,0.3004;-3.7005,-0.7644,0.5964;-2.7239,0.0857,0.4696;-2.0583,0.1027,-0.0552;-1.4396,0.7778,-0.0395;-0.8137,0.538,-0.0869;-1.5466,1.1855,-0.5657;-1.4992,1.2797,0.7621;-1.2099,0.9291,1.2614;-1.1302,1.8345,0.67;-2.4007,1.4836,0.9934;-2.4335,2.0277,1.7578;-2.112,1.5747,2.4382;-2.128,1.9287,2.9199;-1.9128,2.8014,1.6418;-2.0588,3.1185,1.0662;-1.2527,2.6718,1.666;-2.0211,3.2354,2.1466;-3.3209,2.2556,1.9643;-3.6328,2.5429,1.4415;-3.3403,2.6896,2.48;-3.6795,1.7235,2.1686;-2.6689,1.821,0.4719;-2.9136,0.6925,1.1267;-2.7776,0.4065,1.7216;-3.5722,0.834,1.1115;-3.069,-1.7619,-0.7143;-3.8054,-2.1982,-0.4602;-4.2532,-1.9338,0.1012;-4.0043,-2.9212,-0.8738;-3.6777,-3.1773,-1.3373;-4.5184,-3.2354,-0.7104;-2.581,-2.0639,-1.3539;-2.7202,-2.6244,-1.6865),wD:10.20|", "9-10=P:");
   }
   SECTION("JDQ443_atrop2") {
-    testOneAtropIomerMandP(
+    testOneAtropIsomerMandP(
         "ClC1=C(C2=C(C)N(C3CC4(C3)CN(C(=O)C=C)C4)N=C2C2=CC3=C(N(C)N=C3)C=C2)C2=C(NN=C2)C=C1C |(-2.3128,3.1804,;-2.4843,2.3736,;-1.8712,1.8214,;-1.0865,2.0764,;-0.8316,2.861,;-1.3166,3.5284,;-0.0066,2.861,;0.478,3.5284,;0.3491,4.3433,;1.164,4.4723,;1.2929,3.6576,;1.0348,5.2872,;1.8497,5.4162,;2.3346,6.0837,;1.9992,6.8374,;3.1551,5.9974,;3.6401,6.6649,;1.9788,4.6014,;0.2482,2.0765,;-0.4191,1.5915,;-0.0067,0.8771,;0.8182,0.877,;1.2308,0.1626,;0.8182,-0.5518,;1.3686,-1.1598,;1.1985,-1.9672,;2.1174,-0.8258,;2.0325,-0.01,;-0.0067,-0.5518,;-0.4193,0.1625,;-2.0427,1.0145,;-2.8273,0.7596,;-2.8254,-0.0605,;-2.0451,-0.3132,;-1.5624,0.3498,;-3.4405,1.3115,;-3.2689,2.1186,;-3.882,2.6705,),wD:3.21|",
         "2-3=M:");
   }
   SECTION("Mrtx1719") {
-    testOneAtropIomerMandP(
+    testOneAtropIsomerMandP(
         "ClC1=C(F)C(C2=C(C3=CC4=C(C=C3)C(=O)NN=C4CN)C=NN2C)=C(C#N)C(OC2CC2)=C1 |(0.9486,-2.0481,;0.2357,-1.6329,;0.2388,-0.808,;0.955,-0.3981,;-0.474,-0.3926,;-0.4707,0.4321,;0.1985,0.9146,;0.9821,0.6566,;1.254,1.4719,;2.0972,1.6376,;2.6493,1.0245,;2.3964,0.2031,;1.5571,0.0181,;3.4562,1.196,;4.0082,0.5829,;3.7112,1.9806,;3.1591,2.5937,;2.3522,2.4222,;1.8001,3.0353,;2.0551,3.8199,;-0.0533,1.7003,;-0.8784,1.7034,;-1.1363,0.9197,;-1.9219,0.6678,;-1.1899,-0.8024,;-1.9029,-0.3871,;-2.6157,0.0279,;-1.1932,-1.6273,;-1.9093,-2.0371,;-1.9124,-2.8622,;-2.3276,-3.5751,;-1.5026,-3.5781,;-0.4803,-2.0427,),wU:4.3|",
         "4-5=M:");
   }
 
   SECTION("RP-6306") {
-    testOneAtropIomerMandP(
+    testOneAtropIsomerMandP(
         "OC1=C(C)C(N2C3=C(C(C(=O)N)=C2N)C=C(C)C(C)=N3)=C(C)C=C1 |(2.0992,3.5589,;2.2694,2.7517,;1.6554,2.2008,;0.8712,2.4571,;1.8255,1.3935,;1.0637,0.4452,;0.8122,-0.3353,;-0.0126,-0.3353,;-0.264,0.4452,;-1.0482,0.7015,;-1.6621,0.1505,;-1.2182,1.5087,;0.3998,0.9266,;0.3998,1.7516,;-0.425,-1.0498,;-0.0126,-1.7642,;-0.425,-2.4786,;0.8122,-1.7642,;1.2247,-2.4786,;1.2247,-1.0498,;2.6096,1.1372,;2.7797,0.33,;3.2236,1.6882,;3.0535,2.4954,),wD:4.3|",
         "4-5=P:");
   }
   SECTION("Sotorasib") {
-    testOneAtropIomerMandP(
+    testOneAtropIsomerMandP(
         "FC1=C(C2=C(O)C=CC=C2F)N=C2N(C3=C(C)C=CN=C3C(C)C)C(=O)N=C(N3[C@H](C)CN(C(=O)C=C)CC3)C2=C1 |(1.4145,2.306,;1.4178,1.4809,;2.1619,1.0513,;2.8781,1.461,;2.8811,2.2859,;2.1683,2.7012,;3.5973,2.6956,;4.3101,2.2805,;4.3069,1.4555,;3.5908,1.0457,;3.5877,0.2207,;2.1553,0.1919,;1.4045,-0.226,;1.4045,-1.0512,;2.1191,-1.4637,;2.1191,-2.2887,;1.4045,-2.7012,;2.8335,-2.7012,;3.5479,-2.2887,;3.5479,-1.4637,;2.8336,-1.0512,;3.3638,-0.4191,;4.1763,-0.5623,;3.0816,0.3561,;0.6902,-1.4637,;0.6902,-2.2887,;-0.0243,-1.0512,;-0.0243,-0.2262,;-0.7388,0.1862,;-1.4531,-0.2262,;-1.4531,-1.0512,;-2.1677,0.1862,;-2.1677,1.0112,;-2.8821,1.4236,;-2.8821,2.2487,;-3.5966,1.0112,;-4.3112,1.4236,;-1.4531,1.4237,;-0.7386,1.0114,;0.6902,0.1864,;0.6768,1.0455,),wU:14.21wD:29.31|",
         "13-14=M:");
   }
   SECTION("ZM374979") {
-    testOneAtropIomerMandP(
+    testOneAtropIsomerMandP(
         "C(N(C[C@H](CCN1CCC(C2=C(S(C)=O)C=CC=C2)CC1)C1=CC(Cl)=C(Cl)C=C1)C)(=O)C1=C(CC)C(C#N)=CC2=C1C=CC=C2 |(2.5006,0.2061,;1.7861,-0.2061,;1.0716,0.2061,;0.3572,-0.2061,;-0.3572,0.2061,;-1.0716,-0.2061,;-1.7861,0.2061,;-1.7861,1.0313,;-2.5006,1.4438,;-3.215,1.0313,;-3.9296,1.4438,;-3.9296,2.2686,;-3.215,2.6811,;-2.5006,2.2686,;-3.215,3.5063,;-4.6441,2.6811,;-5.3584,2.2686,;-5.3584,1.4438,;-4.6441,1.0313,;-3.215,0.2061,;-2.5006,-0.2061,;0.3572,-1.0313,;-0.3572,-1.4438,;-0.3572,-2.2686,;-1.0716,-2.6811,;0.3572,-2.6811,;0.3572,-3.5063,;1.0716,-2.2686,;1.0716,-1.4438,;1.7861,-1.0313,;2.5006,1.0313,;3.215,-0.2061,;3.215,-1.0313,;2.5006,-1.4438,;2.5006,-2.2686,;3.9296,-1.4438,;3.9296,-2.2686,;3.9296,-3.0938,;4.6441,-1.0313,;4.6441,-0.2061,;3.9296,0.2061,;3.9296,1.0313,;4.6441,1.4438,;5.3584,1.0313,;5.3584,0.2061,),wU:3.22wD:0.0|",
-        "0-31=P:");
+        "0-31=M:");
   }
   SECTION("two atropisomers") {
     UseLegacyStereoPerceptionFixture(false);
 
     // auto m = MolFileToMol(
-    testOneAtropIomerMandP(
+    testOneAtropIsomerMandP(
         "C1(N2C(C)=CC=C2Br)=C(C)C(C)=C(N2C(C)=CC=C2Br)C(C)=C1C |(-0.0002,1.5403,;-0.0002,3.0805,;-1.334,3.8508,;-2.6678,3.0807,;-1.334,5.391,;1.3338,5.391,;1.3338,3.8508,;2.6676,3.0807,;-1.3338,0.7702,;-2.6678,1.5403,;-1.3338,-0.7702,;-2.6678,-1.5401,;-0.0002,-1.5403,;-0.0002,-3.0805,;1.3338,-3.8508,;2.6676,-3.0805,;1.3338,-5.391,;-1.334,-5.391,;-1.334,-3.8508,;-2.6678,-3.0805,;1.3338,-0.7702,;2.6678,-1.5403,;1.3338,0.7702,;2.6678,1.5404,),wU:1.6,13.14|",
         "0-1=m:12-13=m:");
   }
-  SECTION("psuedo") {
-    testOneAtropIomerMandP(
+  SECTION("pseudo") {
+    testOneAtropIsomerMandP(
         "N1(n2c(C)ccc2Br)C(=O)[C@H](C)[C@H](C)C1=O |(-11.1517,1.8306,;-11.1517,3.3708,;-12.4855,4.1411,;-13.8193,3.371,;-12.4855,5.6813,;-9.8177,5.6813,;-9.8177,4.1411,;-8.4839,3.371,;-12.3975,0.9252,;-13.8622,1.4011,;-11.9217,-0.5394,;-12.8269,-1.7852,;-10.3817,-0.5394,;-9.4765,-1.7852,;-9.9059,0.9252,;-8.4413,1.4011,),wU:0.8,10.11,12.13|",
         "0-1=p:");
   }
@@ -825,12 +840,12 @@ TEST_CASE("AssignMandP", "[accurateCIP]") {
 
 TEST_CASE("upsertTest", "[basic]") {
   SECTION("upsertTest1") {
-    auto ps = SmilesParserParams();
+    auto ps = v2::SmilesParse::SmilesParserParams();
     ps.allowCXSMILES = true;
     ps.sanitize = true;
     ps.removeHs = false;
 
-    auto m = SmilesToMol(
+    auto m = v2::SmilesParse::MolFromSmiles(
         "CC1=C(C2=C(F)C=C(C(N)=O)C3=C2C2=C(C[C@@H](C(C)(C)O)CC2)N3)C=CC=C1N1C(=O)C2=C(C(F)=CC=C2)N(C)C1=O |(-0.0582,-1.2887,-0.4699;-0.138,-0.6553,-1.1342;-0.9031,-0.4893,-1.4844;-1.6332,-0.9186,-1.2186;-1.8741,-1.6494,-1.6034;-1.4248,-1.9619,-2.2208;-2.581,-2.0639,-1.3539;-3.069,-1.7619,-0.7143;-3.8054,-2.1982,-0.4602;-4.0043,-2.9212,-0.8738;-4.2532,-1.9338,0.1012;-2.8218,-1.0304,-0.3345;-2.1142,-0.6018,-0.5711;-2.0583,0.1027,-0.0552;-2.7239,0.0857,0.4696;-2.9136,0.6925,1.1267;-2.4007,1.4836,0.9934;-2.4335,2.0277,1.7578;-1.9128,2.8014,1.6418;-3.3209,2.2556,1.9643;-2.112,1.5747,2.4382;-1.4992,1.2797,0.7621;-1.4396,0.7778,-0.0395;-3.1799,-0.5981,0.3004;-0.9727,0.1003,-2.1031;-0.2773,0.5242,-2.3716;0.4878,0.3584,-2.0214;0.5573,-0.2316,-1.4028;1.3588,-0.3932,-1.0482;1.5905,0.0773,-0.3585;1.2002,0.6554,-0.0665;2.3933,-0.1194,0.0095;2.9068,-0.6967,-0.3594;3.6768,-0.8489,0.0041;4.2097,-1.3952,-0.3066;3.9217,-0.4363,0.7167;3.4017,0.1354,1.0788;2.6386,0.2956,0.7262;2.6425,-1.1179,-1.0794;3.1982,-1.7169,-1.457;1.8575,-1.0047,-1.4246;1.6168,-1.4364,-2.0026),wU:27.30|",
         ps);
 
@@ -867,7 +882,7 @@ TEST_CASE("atropisomers", "[basic]") {
       auto fName =
           rdbase + "/Code/GraphMol/FileParsers/test_data/atropisomers/" + file;
 
-      auto molsdf = MolFileToMol(fName, true, true, true);
+      std::unique_ptr<RWMol> molsdf(MolFileToMol(fName, true, true, true));
       REQUIRE(molsdf);
       CIPLabeler::assignCIPLabels(*molsdf, 100000);
 
@@ -897,12 +912,12 @@ TEST_CASE("atropisomers", "[basic]") {
           RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS |
           RDKit::SmilesWrite::CXSmilesFields::CX_BOND_CFG |
           RDKit::SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER;
-      SmilesParserParams pp;
+      v2::SmilesParse::SmilesParserParams pp;
       pp.allowCXSMILES = true;
       pp.sanitize = true;
 
       auto smi = MolToCXSmiles(*molsdf, wp, flags);
-      auto newMol = SmilesToMol(smi, pp);
+      auto newMol = v2::SmilesParse::MolFromSmiles(smi, pp);
       CIPLabeler::assignCIPLabels(*newMol, 100000);
 
       std::map<std::pair<unsigned int, unsigned int>, std::string> newCIPVals;
@@ -942,4 +957,423 @@ TEST_CASE("atropisomers", "[basic]") {
       }
     }
   }
+}
+
+TEST_CASE("CipLabelAtropsOnRing", "[basic]") {
+  SECTION("atropisomers1") {
+    std::string molBlock = R"(
+  Mrv2304 04172300142D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 24 26 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -0.0002 1.5403 0 0
+M  V30 2 N -0.0002 3.0805 0 0 CFG=1
+M  V30 3 C -1.334 3.8508 0 0
+M  V30 4 C -2.6678 3.0807 0 0
+M  V30 5 C -1.334 5.391 0 0
+M  V30 6 C 1.3338 5.391 0 0
+M  V30 7 C 1.3338 3.8508 0 0
+M  V30 8 Br 2.6676 3.0807 0 0
+M  V30 9 C -1.3338 0.7702 0 0
+M  V30 10 C -2.6678 1.5403 0 0
+M  V30 11 C -1.3338 -0.7702 0 0
+M  V30 12 C -2.6678 -1.5401 0 0
+M  V30 13 C -0.0002 -1.5403 0 0
+M  V30 14 N -0.0002 -3.0805 0 0 CFG=1
+M  V30 15 C 1.3338 -3.8508 0 0
+M  V30 16 C 2.6676 -3.0805 0 0
+M  V30 17 C 1.3338 -5.391 0 0
+M  V30 18 C -1.334 -5.391 0 0
+M  V30 19 C -1.334 -3.8508 0 0
+M  V30 20 Br -2.6678 -3.0805 0 0
+M  V30 21 C 1.3338 -0.7702 0 0
+M  V30 22 C 2.6678 -1.5403 0 0
+M  V30 23 C 1.3338 0.7702 0 0
+M  V30 24 C 2.6678 1.5404 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 3 5
+M  V30 5 1 5 6
+M  V30 6 2 6 7
+M  V30 7 1 2 7 CFG=1
+M  V30 8 1 7 8
+M  V30 9 2 1 9
+M  V30 10 1 9 10
+M  V30 11 1 9 11
+M  V30 12 1 11 12
+M  V30 13 2 11 13
+M  V30 14 1 13 14
+M  V30 15 1 14 15 CFG=1
+M  V30 16 1 15 16
+M  V30 17 2 15 17
+M  V30 18 1 17 18
+M  V30 19 2 18 19
+M  V30 20 1 14 19
+M  V30 21 1 19 20
+M  V30 22 1 13 21
+M  V30 23 1 21 22
+M  V30 24 2 21 23
+M  V30 25 1 1 23
+M  V30 26 1 23 24
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+ )";
+
+    UseLegacyStereoPerceptionFixture useLegacy(false);
+
+    auto mol = std::unique_ptr<RWMol>(MolBlockToMol(molBlock, true, false));
+    RDKit::CIPLabeler::assignCIPLabels(*mol);
+
+    auto atom = mol->getBondWithIdx(0);
+    std::string thisVal;
+    if (atom->hasProp(common_properties::_CIPCode)) {
+      thisVal = atom->getProp<std::string>(common_properties::_CIPCode);
+    }
+    CHECK(thisVal == "m");
+    atom = mol->getBondWithIdx(13);
+    if (atom->hasProp(common_properties::_CIPCode)) {
+      thisVal = atom->getProp<std::string>(common_properties::_CIPCode);
+    }
+    CHECK(thisVal == "m");
+  }
+}
+
+TEST_CASE("CipLabelAromAtrop", "[basic]") {
+  SECTION("basic") {
+    std::string molBlock = R"(
+Generated by WebMolKit
+
+ 16 17  0  0  1  0  0  0  0  0999 V2000
+   14.7682  -11.2032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   14.7682  -12.7032    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   16.0673  -13.4532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   17.3663  -12.7032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   17.3663  -11.2032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   16.0673  -10.4532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.4693  -10.4532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.4693   -8.9532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.1702   -8.2032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.8712   -8.9532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.8712  -10.4532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.1702  -11.2030    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   14.7682   -8.2030    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.1702  -12.7030    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.8711  -13.4530    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.4692  -13.4530    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  1  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  2  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+  7 12  1  1  0  0  0
+  8 13  1  0  0  0  0
+ 12 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 14 16  1  0  0  0  0
+M  END
+)";
+
+    std::string molBlockInvertWedge = R"(
+Generated by WebMolKit
+
+ 16 17  0  0  1  0  0  0  0  0999 V2000
+   14.7682  -11.2032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   14.7682  -12.7032    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   16.0673  -13.4532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   17.3663  -12.7032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   17.3663  -11.2032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   16.0673  -10.4532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.4693  -10.4532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.4693   -8.9532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.1702   -8.2032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.8712   -8.9532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.8712  -10.4532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.1702  -11.2030    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   14.7682   -8.2030    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.1702  -12.7030    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.8711  -13.4530    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.4692  -13.4530    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  1  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  2  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+  7 12  1  6  0  0  0
+  8 13  1  0  0  0  0
+ 12 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 14 16  1  0  0  0  0
+M  END
+)";
+
+    std::string molBlock2 = R"(
+Generated by WebMolKit
+
+ 16 17  0  0  1  0  0  0  0  0999 V2000
+   11.5862  -13.1456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   14.1816  -13.1449    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.8863  -12.3955    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   14.1816  -14.6463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.5862  -14.6530    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   12.8896  -15.3956    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.2872  -12.3954    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6918  -12.3979    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.9876  -13.1465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6908  -10.8965    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.2862  -10.8880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.9823  -10.1464    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.9876  -14.6465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6886  -15.3965    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.2867  -15.3964    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.5826  -10.1334    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  3  1  2  0  0  0  0
+  1  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  4  1  0  0  0  0
+  4  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  1  7  1  0  0  0  0
+  7 11  2  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 10  2  0  0  0  0
+ 10  8  1  0  0  0  0
+  8  9  2  0  0  0  0
+  9 13  1  0  0  0  0
+ 13 14  1  0  0  0  0
+ 13 15  1  0  0  0  0
+ 11 16  1  0  0  0  0
+  7  9  1  1  0  0  0
+M  END
+)";
+
+    std::string molBlock2InvertWedge = R"(
+Generated by WebMolKit
+
+ 16 17  0  0  1  0  0  0  0  0999 V2000
+   11.5862  -13.1456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   14.1816  -13.1449    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.8863  -12.3955    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   14.1816  -14.6463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.5862  -14.6530    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   12.8896  -15.3956    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.2872  -12.3954    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6918  -12.3979    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.9876  -13.1465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6908  -10.8965    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.2862  -10.8880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.9823  -10.1464    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.9876  -14.6465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6886  -15.3965    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.2867  -15.3964    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.5826  -10.1334    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  3  1  2  0  0  0  0
+  1  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  4  1  0  0  0  0
+  4  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  1  7  1  0  0  0  0
+  7 11  2  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 10  2  0  0  0  0
+ 10  8  1  0  0  0  0
+  8  9  2  0  0  0  0
+  9 13  1  0  0  0  0
+ 13 14  1  0  0  0  0
+ 13 15  1  0  0  0  0
+ 11 16  1  0  0  0  0
+  7  9  1  6  0  0  0
+M  END
+)";
+
+    UseLegacyStereoPerceptionFixture useLegacy(false);
+
+    auto mol = std::unique_ptr<RWMol>(MolBlockToMol(molBlock, true, false));
+    RDKit::CIPLabeler::assignCIPLabels(*mol);
+
+    auto atom = mol->getBondWithIdx(6);
+    std::string thisVal;
+    if (atom->hasProp(common_properties::_CIPCode)) {
+      thisVal = atom->getProp<std::string>(common_properties::_CIPCode);
+    }
+    CHECK(thisVal == "P");
+
+    mol.reset(MolBlockToMol(molBlockInvertWedge, true, false));
+    RDKit::CIPLabeler::assignCIPLabels(*mol);
+
+    atom = mol->getBondWithIdx(6);
+    if (atom->hasProp(common_properties::_CIPCode)) {
+      thisVal = atom->getProp<std::string>(common_properties::_CIPCode);
+    }
+    CHECK(thisVal == "M");
+
+    auto mol2 = std::unique_ptr<RWMol>(MolBlockToMol(molBlock2, true, false));
+    RDKit::CIPLabeler::assignCIPLabels(*mol2);
+
+    auto atom2 = mol2->getBondWithIdx(6);
+    if (atom2->hasProp(common_properties::_CIPCode)) {
+      thisVal = atom2->getProp<std::string>(common_properties::_CIPCode);
+    }
+    CHECK(thisVal == "P");
+
+    mol.reset(MolBlockToMol(molBlock2InvertWedge, true, false));
+    RDKit::CIPLabeler::assignCIPLabels(*mol);
+
+    atom = mol->getBondWithIdx(6);
+    if (atom->hasProp(common_properties::_CIPCode)) {
+      thisVal = atom->getProp<std::string>(common_properties::_CIPCode);
+    }
+    CHECK(thisVal == "M");
+  }
+}
+
+TEST_CASE("Resolve easy CIP labels first", "[accurateCIP]") {
+  constexpr const char *molBlock = R"(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 44 54 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 H 7.548300 -7.745100 -3.341900 0
+M  V30 2 H 9.398400 -5.879200 -3.431800 0
+M  V30 3 C 9.339900 -6.542500 -1.989800 0 CFG=2
+M  V30 4 H 8.682000 -3.942500 -1.647400 0
+M  V30 5 H 5.816300 -7.103400 -1.663500 0
+M  V30 6 H 6.572200 -4.734300 -0.630400 0
+M  V30 7 C 7.170100 -7.238000 -0.889000 0 CFG=1
+M  V30 8 H 11.830000 -6.976500 -2.554400 0
+M  V30 9 C 10.663100 -7.169000 -1.537500 0 CFG=1
+M  V30 10 H 11.407700 -9.523900 -2.147200 0
+M  V30 11 H 11.900600 -10.013900 0.472200 0
+M  V30 12 C 10.660000 -8.874900 0.291400 0 CFG=2
+M  V30 13 H 12.513600 -5.911500 -0.419000 0
+M  V30 14 H 12.533800 -7.840600 1.437900 0
+M  V30 15 H 8.698100 -8.865400 3.417700 0
+M  V30 16 H 9.404600 -10.690700 1.714300 0
+M  V30 17 C 9.318500 -9.310600 0.970000 0 CFG=1
+M  V30 18 H 7.495800 -10.807500 -0.178300 0
+M  V30 19 H 6.555200 -7.878000 2.698300 0
+M  V30 20 H 5.852200 -9.114700 0.451400 0
+M  V30 21 C 7.160100 -8.299700 0.235300 0 CFG=2
+M  V30 22 C 7.577400 -7.598900 1.570000 0 CFG=1
+M  V30 23 C 10.647193 -4.032680 0.167792 0 CFG=1
+M  V30 24 C 11.080800 -6.489400 -0.198200 0 CFG=2
+M  V30 25 C 8.912300 -5.469900 -0.942400 0 CFG=1
+M  V30 26 C 8.915500 -8.232900 2.018400 0 CFG=2
+M  V30 27 C 11.076600 -7.551300 0.914700 0 CFG=1
+M  V30 28 H 10.678000 -6.985700 3.302100 0
+M  V30 29 C 7.586100 -5.893900 -0.266700 0 CFG=2
+M  V30 30 H 6.997300 -5.059700 1.987500 0
+M  V30 31 C 9.319300 -5.842900 1.504800 0 CFG=2
+M  V30 32 H 9.474000 -4.717300 2.574300 0
+M  V30 33 C 9.980900 -7.145700 1.981100 0 CFG=1
+M  V30 34 C 7.827000 -6.124500 1.248300 0 CFG=2
+M  V30 35 C 10.002300 -5.430800 0.136600 0
+M  V30 36 C 8.912500 -8.938500 -1.473700 0 CFG=2
+M  V30 37 C 8.237400 -9.352200 -0.117300 0
+M  V30 38 C 10.411600 -8.646100 -1.214800 0 CFG=1
+M  V30 39 H 8.772600 -9.975800 -2.504700 0
+M  V30 40 C 8.257700 -7.625000 -1.947800 0 CFG=2
+M  V30 41 O 9.665066 -3.068040 0.472747 0
+M  V30 42 Cl 11.932408 -3.993449 1.420272 0
+M  V30 43 H 11.083087 -3.811232 -0.806404 0
+M  V30 44 H 10.067077 -2.196484 0.492191 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 3 2 CFG=3
+M  V30 2 1 7 5 CFG=3
+M  V30 3 1 9 3
+M  V30 4 1 9 8 CFG=3
+M  V30 5 1 12 11 CFG=3
+M  V30 6 1 17 12
+M  V30 7 1 17 16 CFG=1
+M  V30 8 1 21 7
+M  V30 9 1 21 20 CFG=1
+M  V30 10 1 22 19 CFG=1
+M  V30 11 1 22 21
+M  V30 12 1 24 9
+M  V30 13 1 24 13 CFG=3
+M  V30 14 1 25 3
+M  V30 15 1 25 4 CFG=3
+M  V30 16 1 26 15 CFG=1
+M  V30 17 1 26 17
+M  V30 18 1 26 22
+M  V30 19 1 27 12
+M  V30 20 1 27 14 CFG=1
+M  V30 21 1 27 24
+M  V30 22 1 29 6 CFG=1
+M  V30 23 1 29 7
+M  V30 24 1 29 25
+M  V30 25 1 31 32 CFG=1
+M  V30 26 1 33 26
+M  V30 27 1 33 27
+M  V30 28 1 33 28 CFG=1
+M  V30 29 1 33 31
+M  V30 30 1 34 22
+M  V30 31 1 34 29
+M  V30 32 1 34 30 CFG=1
+M  V30 33 1 34 31
+M  V30 34 1 35 23
+M  V30 35 1 35 24
+M  V30 36 1 35 25
+M  V30 37 1 35 31
+M  V30 38 1 37 17
+M  V30 39 1 37 18
+M  V30 40 1 37 21
+M  V30 41 1 37 36
+M  V30 42 1 38 9
+M  V30 43 1 38 10 CFG=3
+M  V30 44 1 38 12
+M  V30 45 1 38 36
+M  V30 46 1 36 39 CFG=3
+M  V30 47 1 40 1 CFG=3
+M  V30 48 1 40 3
+M  V30 49 1 40 7
+M  V30 50 1 40 36
+M  V30 51 1 41 23
+M  V30 52 1 42 23
+M  V30 53 1 23 43 CFG=3
+M  V30 54 1 44 41
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)";
+
+  // The mol is a modification of the one in the above test
+  // "CIP max iterations test"
+  v2::FileParsers::MolFileParserParams params{.sanitize = false};
+  auto mol = v2::FileParsers::MolFromMolBlock(molBlock, params);
+
+  REQUIRE(mol);
+  REQUIRE_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 1000),
+                    CIPLabeler::MaxIterationsExceeded);
+
+  auto at = mol->getAtomWithIdx(22);
+  REQUIRE(at->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+
+  // This will fail if this chiral center is not resolved first (which
+  // depends on the order of the atoms in the molBlock).
+  CHECK(at->getProp<std::string>(common_properties::_CIPCode) == "S");
 }

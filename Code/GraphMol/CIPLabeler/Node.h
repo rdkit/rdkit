@@ -46,13 +46,21 @@ class Node {
   /**
    * Mask to check if a node is duplicated.
    */
-  static const int DUPLICATE = 0x6;
+
+  static const int DUPLICATE = RING_DUPLICATE | BOND_DUPLICATE;
 
   /**
    * Node was created for an implicit hydrogen,
    * the 'atom' value will be null.
    */
   static const int IMPL_HYDROGEN = 0x8;
+
+  /**
+   * Mask to check if a node is duplicated or created for an implicit H (not a
+   * primary node).
+   */
+  static const int DUPLICATE_OR_H =
+      RING_DUPLICATE | BOND_DUPLICATE | IMPL_HYDROGEN;
 
   Node() = delete;
   Node(const Node &) = delete;
@@ -80,6 +88,8 @@ class Node {
   bool isSet(int mask) const;
 
   bool isDuplicate() const;
+
+  bool isDuplicateOrH() const;
 
   bool isTerminal() const;
 

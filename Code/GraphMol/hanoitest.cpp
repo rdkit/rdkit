@@ -46,8 +46,8 @@ class int_compare_ftor {
   const int *dp_ints{nullptr};
 
  public:
-  int_compare_ftor(){};
-  int_compare_ftor(const int *ints) : dp_ints(ints){};
+  int_compare_ftor() {};
+  int_compare_ftor(const int *ints) : dp_ints(ints) {};
   int operator()(int i, int j) const {
     PRECONDITION(dp_ints, "no ints");
     unsigned int ivi = dp_ints[i];
@@ -133,8 +133,8 @@ class atomcomparefunctor {
   Canon::canon_atom *d_atoms{nullptr};
 
  public:
-  atomcomparefunctor(){};
-  atomcomparefunctor(Canon::canon_atom *atoms) : d_atoms(atoms){};
+  atomcomparefunctor() {};
+  atomcomparefunctor(Canon::canon_atom *atoms) : d_atoms(atoms) {};
   int operator()(int i, int j) const {
     PRECONDITION(d_atoms, "no atoms");
     unsigned int ivi, ivj;
@@ -163,8 +163,8 @@ class atomcomparefunctor2 {
   Canon::canon_atom *d_atoms{nullptr};
 
  public:
-  atomcomparefunctor2(){};
-  atomcomparefunctor2(Canon::canon_atom *atoms) : d_atoms(atoms){};
+  atomcomparefunctor2() {};
+  atomcomparefunctor2(Canon::canon_atom *atoms) : d_atoms(atoms) {};
   int operator()(int i, int j) const {
     PRECONDITION(d_atoms, "no atoms");
     unsigned int ivi, ivj;
@@ -420,9 +420,9 @@ class atomcomparefunctor3 {
 
  public:
   bool df_useNbrs{false};
-  atomcomparefunctor3(){};
+  atomcomparefunctor3() {};
   atomcomparefunctor3(Canon::canon_atom *atoms, const ROMol &m)
-      : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false){};
+      : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false) {};
   int operator()(int i, int j) const {
     PRECONDITION(dp_atoms, "no atoms");
     PRECONDITION(dp_mol, "no molecule");

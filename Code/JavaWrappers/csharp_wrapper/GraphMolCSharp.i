@@ -181,7 +181,7 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(ForceFields::ForceFieldContrib);
 %shared_ptr(ForceFields::UFF::AngleBendContrib);
 %shared_ptr(ForceFields::UFF::BondStretchContrib);
-%shared_ptr(ForceFields::UFF::DistanceConstraintContrib);
+%shared_ptr(ForceFields::DistanceConstraintContrib);
 %shared_ptr(ForceFields::UFF::vdWContrib);
 %shared_ptr(ForceFields::UFF::TorsionAngleContrib);
 %shared_ptr(ForceFields::UFF::InversionContrib);

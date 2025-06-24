@@ -41,7 +41,7 @@ class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
     d_valsPerInt = BITS_PER_INT / d_bitsPerVal;
     d_numInts = (length + d_valsPerInt - 1) / d_valsPerInt;
     d_mask = ((1 << d_bitsPerVal) - 1);
-    std::uint32_t *data = new std::uint32_t[d_numInts];
+    auto *data = new std::uint32_t[d_numInts];
     memset(static_cast<void *>(data), 0, d_numInts * sizeof(std::uint32_t));
     d_data.reset(data);
   }

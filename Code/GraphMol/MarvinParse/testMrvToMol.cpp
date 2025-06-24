@@ -56,7 +56,7 @@ class MrvTests {
           fileName(fileNameInit),
           expectedResult(expectedResultInit),
           sanitizeFlag(sanitizeFlagInit),
-          reapplyMolBlockWedging(reapplyMolBlockWedgingInit){};
+          reapplyMolBlockWedging(reapplyMolBlockWedgingInit) {};
   };
 
   class RxnTest {
@@ -78,7 +78,7 @@ class MrvTests {
           agentCount(agentCountInit),
           productCount(productCountInit),
           warnings(warnInit),
-          errors(errorInit){};
+          errors(errorInit) {};
   };
 
   class SmilesTest {
@@ -98,7 +98,7 @@ class MrvTests {
           expectedResult(expectedResultInit),
           sanitizeFlag(sanitizeFlagInit),
           atomCount(atomCountInit),
-          bondCount(bondCountInit){};
+          bondCount(bondCountInit) {};
 
     SmilesTest(std::string nameInit, std::string smilesInit,
                bool expectedResultInit, int atomCountInit, int bondCountInit)
@@ -107,7 +107,7 @@ class MrvTests {
           expectedResult(expectedResultInit),
           sanitizeFlag(true),
           atomCount(atomCountInit),
-          bondCount(bondCountInit){};
+          bondCount(bondCountInit) {};
   };
 
   RWMol *GetMolv1(const MolTest *molTest) {
@@ -719,6 +719,7 @@ class MrvTests {
             ".expected.cxsmi";
 
         SmilesWriteParams ps;
+        ps.cleanStereo = molFileTest->sanitizeFlag;
         ps.canonical = true;
         unsigned int flags = SmilesWrite::CXSmilesFields::CX_COORDS |
                              SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
@@ -837,7 +838,9 @@ class MrvTests {
   void testPrecision() {
     BOOST_LOG(rdInfoLog) << "testing marvin writing" << std::endl;
     std::string rdbase = getenv("RDBASE");
-    std::string fName = rdbase + "/Code/GraphMol/MarvinParse/test_data/precision.mrv.expected.mrv";
+    std::string fName =
+        rdbase +
+        "/Code/GraphMol/MarvinParse/test_data/precision.mrv.expected.mrv";
 
     std::unique_ptr<ROMol> mol{v2::MarvinParser::MolFromMrvFile(fName)};
 
@@ -847,14 +850,18 @@ class MrvTests {
 
     MrvWriterParams params{true, true, true, 15};
     std::string outMolStr = MolToMrvBlock(*mol, params, -1);
-    std::unique_ptr<ROMol> readMol{RDKit::v2::MarvinParser::MolFromMrvBlock(outMolStr)};
+    std::unique_ptr<ROMol> readMol{
+        RDKit::v2::MarvinParser::MolFromMrvBlock(outMolStr)};
     TEST_ASSERT(numAtoms == readMol->getNumAtoms());
     const Conformer &conformer = mol->getConformer();
     const Conformer &readConformer = readMol->getConformer();
     for (size_t i = 0; i < numAtoms; i++) {
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).x - readConformer.getAtomPos(i).x) < 1e-15);
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).y - readConformer.getAtomPos(i).y) < 1e-15);
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).z - readConformer.getAtomPos(i).z) < 1e-15);
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).x -
+                           readConformer.getAtomPos(i).x) < 1e-15);
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).y -
+                           readConformer.getAtomPos(i).y) < 1e-15);
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).z -
+                           readConformer.getAtomPos(i).z) < 1e-15);
     }
     BOOST_LOG(rdInfoLog) << "done" << std::endl;
   }
@@ -887,6 +894,7 @@ class MrvTests {
     // the molecule tests - starting with molfiles/sdf
     if (testToRun == "" || testToRun == "sdfTests") {
       std::list<MolTest> sdfTests{
+          MolTest("145323811.mol", true, 172, 176, true, false),
           MolTest("NewChiralTest.sdf", true, 13, 14, true,
                   false),  // wedges NOT reapplied
           MolTest("NewChiralTest.sdf", true, 13, 14, false,

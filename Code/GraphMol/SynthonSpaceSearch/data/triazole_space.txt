@@ -1,0 +1,7 @@
+SMILES	synton_id	synton#	reaction_id
+OCC([1*])=NN=[2*]		1-1	0	triazole-1
+CC(C)OCC([1*])=NN=[2*]		1-2	0	triazole-1
+C1CCCC1N([3*])[1*]		2-1	1	triazole-1
+c1ccccc1N([3*])[1*]		2-2	1	triazole-1
+CC1CCN(C1)C(=[2*])[3*]		3-1	2	triazole-1
+C(F)(F)(F)C1CCN(C1)C(=[2*])[3*]	3-2	2	triazole-1

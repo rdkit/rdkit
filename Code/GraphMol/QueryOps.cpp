@@ -1121,7 +1121,8 @@ void finalizeQueryFromDescription(
   } else if (descr == "AtomInNRings" || descr == "RecursiveStructure") {
     // don't need to do anything here because the classes
     // automatically have everything set
-  } else if (descr == "AtomAnd" || descr == "AtomOr" || descr == "AtomXor") {
+  } else if (descr == "AtomAnd" || descr == "AtomOr" || descr == "AtomXor" ||
+             descr == "HasProp" || descr == "HasPropWithValue") {
     // don't need to do anything here because the classes
     // automatically have everything set
   } else {
@@ -1160,13 +1161,19 @@ void finalizeQueryFromDescription(
   } else if (descr == "BondNull") {
     query->setDataFunc(nullDataFun);
     query->setMatchFunc(nullQueryFun);
-  } else if (descr == "BondAnd" || descr == "BondOr" || descr == "BondXor") {
+  } else if (descr == "BondAnd" || descr == "BondOr" || descr == "BondXor" ||
+             descr == "HasProp" || descr == "HasPropWithValue") {
     // don't need to do anything here because the classes
     // automatically have everything set
   } else {
     throw ValueErrorException("Do not know how to finalize query: '" + descr +
                               "'");
   }
+}
+
+bool isMetal(const Atom &atom) {
+  static const std::unique_ptr<ATOM_OR_QUERY> q(makeMAtomQuery());
+  return q->Match(&atom);
 }
 
 }  // namespace QueryOps

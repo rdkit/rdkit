@@ -34,9 +34,9 @@
 #include "../inchi.h"
 
 namespace {
-boost::python::tuple MolToInchi(const RDKit::ROMol& mol, std::string options) {
+boost::python::tuple MolToInchi(const RDKit::ROMol &mol, std::string options) {
   RDKit::ExtraInchiReturnValues rv;
-  const char* _options = nullptr;
+  const char *_options = nullptr;
   if (options.size()) {
     _options = options.c_str();
   }
@@ -45,10 +45,10 @@ boost::python::tuple MolToInchi(const RDKit::ROMol& mol, std::string options) {
                                    rv.logPtr, rv.auxInfoPtr);
 }
 
-boost::python::tuple MolBlockToInchi(const std::string& molblock,
+boost::python::tuple MolBlockToInchi(const std::string &molblock,
                                      std::string options) {
   RDKit::ExtraInchiReturnValues rv;
-  const char* _options = nullptr;
+  const char *_options = nullptr;
   if (options.size()) {
     _options = options.c_str();
   }
@@ -56,10 +56,10 @@ boost::python::tuple MolBlockToInchi(const std::string& molblock,
   return boost::python::make_tuple(inchi, rv.returnCode, rv.messagePtr,
                                    rv.logPtr, rv.auxInfoPtr);
 }
-boost::python::tuple InchiToMol(const std::string& inchi, bool sanitize,
+boost::python::tuple InchiToMol(const std::string &inchi, bool sanitize,
                                 bool removeHs) {
   RDKit::ExtraInchiReturnValues rv;
-  RDKit::ROMol* mol = RDKit::InchiToMol(inchi, rv, sanitize, removeHs);
+  RDKit::ROMol *mol = RDKit::InchiToMol(inchi, rv, sanitize, removeHs);
   if (mol == nullptr) {
     return boost::python::make_tuple(boost::python::object(), rv.returnCode,
                                      rv.messagePtr, rv.logPtr);
@@ -92,9 +92,9 @@ BOOST_PYTHON_MODULE(rdinchi) {
     - options: the InChI generation options.\n\
       Options should be prefixed with either a - or a /\n\
       Available options are explained in the InChI technical FAQ:\n\
-      http://www.inchi-trust.org/fileadmin/user_upload/html/inchifaq/inchi-faq.html#15.14\n\
+      https://www.inchi-trust.org/technical-faq/#15.14\n\
       and the User Guide:\n\
-      http://www.inchi-trust.org/fileadmin/user_upload/software/inchi-v1.04/InChI_UserGuide.pdf\n\
+      https://github.com/IUPAC-InChI/InChI/blob/main/INCHI-1-DOC/UserGuide/InChI_UserGuide.pdf\n\
   Returns:\n\
     a tuple with:\n\
       - the InChI\n\
@@ -114,9 +114,9 @@ BOOST_PYTHON_MODULE(rdinchi) {
     - options: the InChI generation options.\n\
       Options should be prefixed with either a - or a /\n\
       Available options are explained in the InChI technical FAQ:\n\
-      http://www.inchi-trust.org/fileadmin/user_upload/html/inchifaq/inchi-faq.html#15.14\n\
+      https://www.inchi-trust.org/technical-faq/#15.14\n\
       and the User Guide:\n\
-      http://www.inchi-trust.org/fileadmin/user_upload/software/inchi-v1.04/InChI_UserGuide.pdf\n\
+      https://github.com/IUPAC-InChI/InChI/blob/main/INCHI-1-DOC/UserGuide/InChI_UserGuide.pdf\n\
   Returns:\n\
     a tuple with:\n\
       - the InChI\n\
@@ -139,12 +139,15 @@ BOOST_PYTHON_MODULE(rdinchi) {
     - options: the InChI generation options.\n\
       Options should be prefixed with either a - or a /\n\
       Available options are explained in the InChI technical FAQ:\n\
-      https://www.inchi-trust.org/technical-faq-2/#15.14\n\
+      https://www.inchi-trust.org/technical-faq/#15.14\n\
       and the User Guide available from:\n\
-      https://www.inchi-trust.org/downloads/\n\
+      https://github.com/IUPAC-InChI/InChI/blob/main/INCHI-1-DOC/UserGuide/InChI_UserGuide.pdf\n\
   Returns: the InChI key\n";
   boost::python::def(
       "MolToInchiKey", RDKit::MolToInchiKey,
       (boost::python::arg("mol"), boost::python::arg("options") = ""),
       docString.c_str());
+
+  boost::python::def("GetInchiVersion", RDKit::getInchiVersion,
+                     "returns the version of the InChI software being used");
 }

@@ -18,7 +18,7 @@
 #endif
 #include <cstdint>
 
-BitVect::~BitVect(){};  // must always implement virtual destructors
+BitVect::~BitVect() {};  // must always implement virtual destructors
 
 void BitVect::initFromText(const char *data, const unsigned int dataLen,
                            bool isBase64, bool allowOldFormat) {

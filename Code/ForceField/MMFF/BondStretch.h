@@ -1,7 +1,4 @@
-//
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2025 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +11,8 @@
 #define __RD_MMFFBONDSTRETCH_H__
 #include <ForceField/Contrib.h>
 
+#include <vector>
+
 namespace ForceFields {
 namespace MMFF {
 class MMFFBond;
@@ -24,8 +23,8 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
  public:
   BondStretchContrib() {}
   //! Constructor
-  /*!
-    \param owner       pointer to the owning ForceField
+  BondStretchContrib(ForceField *owner);
+  /*! Adds a bond stretch to the contrib
     \param idx1        index of end1 in the ForceField's positions
     \param idx2        index of end2 in the ForceField's positions
     \param bondType    MMFF94 type of the bond (as an unsigned int)
@@ -33,8 +32,9 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
     \param end2Params  pointer to the parameters for end2
 
   */
-  BondStretchContrib(ForceField *owner, const unsigned int idx1,
-                     const unsigned int idx2, const MMFFBond *mmffBondParams);
+  void addTerm(const unsigned int idx1,
+               const unsigned int idx2,
+               const MMFFBond *mmffBondParams);
 
   double getEnergy(double *pos) const override;
 
@@ -45,9 +45,9 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
   }
 
  private:
-  int d_at1Idx{-1}, d_at2Idx{-1};  //!< indices of end points
-  double d_r0;                     //!< rest length of the bond
-  double d_kb;                     //!< force constant of the bond
+  std::vector<int> d_at1Idxs, d_at2Idxs;  //!< indices of end points
+  std::vector<double> d_r0;               //!< rest length of the bond
+  std::vector<double> d_kb;               //!< force constant of the bond
 };
 
 namespace Utils {

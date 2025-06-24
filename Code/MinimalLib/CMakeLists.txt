@@ -2,27 +2,35 @@ include_directories(${RDKit_ExternalDir})
 include_directories(${RDKit_ExternalDir}/rapidjson-1.1.0/include)
 
 if(RDK_BUILD_MINIMAL_LIB)
-    set(MINIMAL_LIB_LIBRARIES "MolInterchange_static;Abbreviations_static;"
-        "CIPLabeler_static;MolDraw2D_static;Depictor_static;RDInchiLib_static;"
-        "SubstructMatch_static;FileParsers_static;"
-        "SmilesParse_static;GraphMol_static;RDGeometryLib_static;"
-        "RDGeneral_static;RGroupDecomposition_static")
+    set(MINIMAL_LIB_LIBRARIES "MolInterchange;Abbreviations;"
+        "CIPLabeler;MolDraw2D;Depictor;"
+        "Descriptors;SubstructMatch;FileParsers;"
+        "SmilesParse;GraphMol;RDGeometryLib;"
+        "RDGeneral;RGroupDecomposition;Fingerprints")
+    if(RDK_BUILD_INCHI_SUPPORT)
+        add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};RDInchiLib")
+    endif()
     if(RDK_BUILD_MINIMAL_LIB_RXN)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_RXN)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ChemReactions_static")
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ChemReactions")
     endif()
     if(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};SubstructLibrary_static")
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};SubstructLibrary")
     endif()
     if(RDK_BUILD_MINIMAL_LIB_MCS)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_MCS)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};FMCS_static")
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};FMCS")
     endif()
     if(RDK_BUILD_MINIMAL_LIB_MMPA)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_MMPA)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};MMPA_static")
-     endif()
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};MMPA")
+    endif()
+    if(RDK_BUILD_MINIMAL_LIB_MOLZIP)
+        add_definitions(-DRDK_BUILD_MINIMAL_LIB_MOLZIP)
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ChemTransforms")
+    endif()
     if(RDK_BUILD_FREETYPE_SUPPORT)
         if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
             set(USE_FLAGS "-s USE_FREETYPE=1")
@@ -30,7 +38,7 @@ if(RDK_BUILD_MINIMAL_LIB)
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS}")
         endif()
     endif()
-    add_executable(RDKit_minimal jswrapper.cpp minilib.cpp)
+    add_executable(RDKit_minimal jswrapper.cpp minilib.cpp JSONParsers.cpp)
     target_link_libraries(RDKit_minimal ${MINIMAL_LIB_LIBRARIES})
 
     set_target_properties(RDKit_minimal PROPERTIES LINK_FLAGS "--bind")
@@ -43,9 +51,13 @@ if(RDK_BUILD_CFFI_LIB)
         MolStandardize DistGeomHelpers ForceFieldHelpers DistGeometry
         ForceField Alignment
         MolInterchange Abbreviations CIPLabeler 
-        MolDraw2D Depictor 
-        RDInchiLib SubstructMatch FileParsers 
-        SmilesParse GraphMol RDGeometryLib RDGeneral RGroupDecomposition)
+        MolDraw2D Depictor Descriptors
+        SubstructMatch FileParsers SmilesParse GraphMol
+        RDGeometryLib RDGeneral RGroupDecomposition Fingerprints)
+    if(RDK_BUILD_INCHI_SUPPORT)
+        add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
+        list(APPEND LIBS_TO_USE RDInchiLib)
+    endif()
     if(RDK_URF_LIBS)
         list(APPEND LIBS_TO_USE RingDecomposerLib)
     endif()
@@ -59,7 +71,7 @@ if(RDK_BUILD_CFFI_LIB)
         set(LIBS_TO_USE ${tmpLibs})
     endif()
     
-    add_library(rdkitcffi SHARED cffiwrapper.cpp)
+    add_library(rdkitcffi SHARED cffiwrapper.cpp JSONParsers.cpp)
     target_link_libraries(rdkitcffi PUBLIC rdkit_base)
     target_link_libraries(rdkitcffi PUBLIC ${LIBS_TO_USE})
     INSTALL(TARGETS rdkitcffi EXPORT rdkit-targets

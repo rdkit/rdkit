@@ -1,0 +1,16 @@
+SMILES	synton_id	synton#	reaction_id	release
+CN(c1ccc(C(=O)[2*])cc1)[1*]	67468	1	a7	3
+
+Fc1cc([1*:1])ccn1	15535	2	a7	3
+c1cnc2ccc([1*:1])nc2c1	24773	2	a7	3
+Cc1nc(N)c(C)c([1*:1])n1	29593	2	a7	3
+c1cc2nc([1*])ncc2[nH]1	30577	2	a7	3
+Fc1ccc2c([1*:1])nccc2c1	44908	2	a7	3
+O=[N+]([O-])c1c(O)ccnc1[1*:1]	45686	2	a7	3
+Cc1cc([N+](=O)[O-])c(N)nc1[1*:1]	56491	2	a7	3
+CNc1cc([1*:1])ncn1	59597	2	a7	3
+O=c1[nH]c2ccc([1*])nc2[nH]1	249279	2	a7	3
+Nc1c(NC2CC2)ncnc1[1*:1]	265474	2	a7	3
+Cc1nc(N)c(C#N)c([1*:1])n1	308698	2	a7	3
+
+N#C[C@@H]1CCN([2*])C1	29389	3	a7	3

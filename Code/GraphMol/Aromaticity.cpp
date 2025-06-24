@@ -48,12 +48,6 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
   res.push_back(curr);
 
   const auto &neighs = pos->second;
-#if 0
-    std::cerr<<"depth: "<<depth<<" ring: "<<curr<<" size: "<<res.size()<<" neighs: "<<neighs.size()<<std::endl;
-    std::cerr<<"   ";
-    std::copy(neighs.begin(),neighs.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr<<"\n";
-#endif
   for (int neigh : neighs) {
     if (!done[neigh]) {
       pickFusedRings(neigh, neighMap, res, done, depth + 1);
@@ -112,13 +106,6 @@ void makeRingNeighborMap(const VECT_INT_VECT &brings,
       }
     }
   }
-#if 0
-    for (i = 0; i < nrings; i++) {
-      std::cerr<<"**************\n    "<<i<<"\n*************\n";
-      std::copy(neighMap[i].begin(),neighMap[i].end(),std::ostream_iterator<int>(std::cerr," "));
-      std::cerr<<"\n";
-    }
-#endif
 }
 
 }  // end of namespace RingUtils
@@ -277,13 +264,13 @@ bool incidentCyclicMultipleBond(const Atom *at) {
 bool incidentMultipleBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
   const auto &mol = at->getOwningMol();
-  int deg = at->getDegree() + at->getNumExplicitHs();
+  auto deg = at->getDegree() + at->getNumExplicitHs();
   for (const auto bond : mol.atomBonds(at)) {
     if (!std::lround(bond->getValenceContrib(at))) {
       --deg;
     }
   }
-  return at->getExplicitValence() != deg;
+  return at->getValence(Atom::ValenceType::EXPLICIT) != deg;
 }
 
 bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
@@ -319,11 +306,6 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
   } else if (rup == 2) {
     aromatic = true;
   }
-#if 0
-    std::cerr <<" ring: ";
-    std::copy(ring.begin(),ring.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr <<" rlw: "<<rlw<<" rup: "<<rup<<" aromatic? "<<aromatic<<std::endl;
-#endif
   return aromatic;
 }
 
@@ -433,7 +415,7 @@ void applyHuckelToFused(
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
     }  // end check huckel rule
-  }    // end while(1)
+  }  // end while(1)
   narom += rdcast<int>(aromRings.size());
 }
 
@@ -489,7 +471,8 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
   // than one double or triple bond. This is to handle
   // the situation:
   //   C1=C=NC=N1 (sf.net bug 1934360)
-  int nUnsaturations = at->getExplicitValence() - at->getDegree();
+  int nUnsaturations =
+      at->getValence(Atom::ValenceType::EXPLICIT) - at->getDegree();
   if (nUnsaturations > 1) {
     unsigned int nMult = 0;
     const auto &mol = at->getOwningMol();
@@ -615,10 +598,11 @@ ElectronDonorType getAtomDonorTypeArom(
 namespace RDKit {
 namespace MolOps {
 bool isBondOrderQuery(const Bond *bond) {
-  if (bond->getBondType() == Bond::BondType::UNSPECIFIED && bond->hasQuery()) {
-    auto label =
-        dynamic_cast<const QueryBond *>(bond)->getQuery()->getTypeLabel();
-    if (label == "BondOrder") {
+  if (bond->hasQuery()) {
+    auto q = dynamic_cast<const QueryBond *>(bond)->getQuery();
+    // complex bond type queries are also bond order queries!
+    if (q->getTypeLabel() == "BondOrder" ||
+        QueryOps::hasComplexBondTypeQuery(*q)) {
       return true;
     }
   }
@@ -640,7 +624,11 @@ int countAtomElec(const Atom *at) {
   const auto &mol = at->getOwningMol();
   for (const auto bond : mol.atomBonds(at)) {
     // don't count bonds that aren't actually contributing to the valence here:
-    if (!isBondOrderQuery(bond) && !std::lround(bond->getValenceContrib(at))) {
+    // if the bond is "real" (not undefined or zero), it always contributes to
+    // valence/degree, and in case the bond is a query bond with no order, we
+    // still need to check if the query is a bond query
+    if (!static_cast<Bond *>(bond)->getValenceContrib(at) &&
+        !isBondOrderQuery(bond)) {
       --degree;
     }
   }
@@ -667,7 +655,8 @@ int countAtomElec(const Atom *at) {
     // we detect this using the total unsaturation, because we
     // know that there aren't multiple unsaturations (detected
     // above in isAtomCandForArom())
-    int nUnsaturations = at->getExplicitValence() - at->getDegree();
+    int nUnsaturations =
+        at->getValence(Atom::ValenceType::EXPLICIT) - at->getDegree();
     if (nUnsaturations > 1) {
       res = 1;
     }
@@ -693,6 +682,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   for (auto &sring : srings) {
     bool allAromatic = true;
     bool allDummy = true;
+
     for (auto firstIdx : sring) {
       const auto at = mol.getAtomWithIdx(firstIdx);
 
@@ -785,6 +775,40 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   return narom;
 }
 
+int mmff94AromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
+  // set aromaticity as done in MMFF94 init
+  if (!mol.hasProp(common_properties::_MMFFSanitized)) {
+    bool isAromaticSet = false;
+    for (const auto atom : mol.atoms()) {
+      if (atom->getIsAromatic()) {
+        isAromaticSet = true;
+        break;
+      }
+    }
+    if (isAromaticSet) {
+      MolOps::Kekulize(mol, true);
+    }
+    mol.setProp(common_properties::_MMFFSanitized, 1, true);
+  }
+  setMMFFAromaticity(mol);
+
+  // count aromatic rings for return value
+  int narom = 1;
+  for (auto &sring : srings) {
+    bool isAromRing = true;
+    for (auto &aid : sring) {
+      Atom *atom = mol.getAtomWithIdx(aid);
+      if (!atom->getIsAromatic()) {
+        isAromRing = false;
+        break;
+      }
+    }
+    if (isAromRing) narom++;
+  }
+
+  return narom;
+}
+
 // use minRingSize=0 or maxRingSize=0 to ignore these constraints
 int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
                       unsigned int minRingSize, unsigned int maxRingSize,
@@ -808,7 +832,6 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
         (maxRingSize && ringSz > maxRingSize)) {
       continue;
     }
-
     bool allAromatic = true;
     bool allDummy = true;
     for (auto firstIdx : sring) {
@@ -905,6 +928,180 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
 
 }  // end of anonymous namespace
 
+// sets the aromaticity flags according to MMFF
+void setMMFFAromaticity(RWMol &mol) {
+  bool moveToNextRing = false;
+  bool isNOSinRing = false;
+  bool aromRingsAllSet = false;
+  bool exoDoubleBond = false;
+  bool canBeAromatic = false;
+  unsigned int i;
+  unsigned int j;
+  unsigned int nextInRing;
+  unsigned int pi_e = 0;
+  int nAromSet = 0;
+  int old_nAromSet = -1;
+  RingInfo *ringInfo = mol.getRingInfo();
+  Atom *atom;
+  Bond *bond;
+  const VECT_INT_VECT &atomRings = ringInfo->atomRings();
+  ROMol::ADJ_ITER nbrIdx;
+  ROMol::ADJ_ITER endNbrs;
+  boost::dynamic_bitset<> aromBitVect(mol.getNumAtoms());
+  boost::dynamic_bitset<> aromRingBitVect(atomRings.size());
+
+  while ((!aromRingsAllSet) && atomRings.size() && (nAromSet > old_nAromSet)) {
+    // loop over all rings
+    for (i = 0; i < atomRings.size(); ++i) {
+      // add 2 pi electrons for each double bond in the ring
+      for (j = 0, pi_e = 0, moveToNextRing = false, isNOSinRing = false,
+          exoDoubleBond = false;
+           (!moveToNextRing) && (j < atomRings[i].size()); ++j) {
+        atom = mol.getAtomWithIdx(atomRings[i][j]);
+        // remember if this atom is nitrogen, oxygen or divalent sulfur
+        if ((atom->getAtomicNum() == 7) || (atom->getAtomicNum() == 8) ||
+            ((atom->getAtomicNum() == 16) && (atom->getDegree() == 2))) {
+          isNOSinRing = true;
+        }
+        // check whether this atom is double-bonded to next one in the ring
+        nextInRing = (j == (atomRings[i].size() - 1)) ? atomRings[i][0]
+                                                      : atomRings[i][j + 1];
+        if (mol.getBondBetweenAtoms(atomRings[i][j], nextInRing)
+                ->getBondType() == Bond::DOUBLE) {
+          pi_e += 2;
+        }
+        // if this is not a double bond, check whether this is carbon
+        // or nitrogen with total bond order = 4
+        else {
+          atom = mol.getAtomWithIdx(atomRings[i][j]);
+          // if not, move on
+          if ((atom->getAtomicNum() != 6) &&
+              (!((atom->getAtomicNum() == 7) &&
+                 ((atom->getValence(Atom::ValenceType::EXPLICIT) +
+                   atom->getNumImplicitHs()) == 4)))) {
+            continue;
+          }
+          // loop over neighbors
+          boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
+          for (; nbrIdx != endNbrs; ++nbrIdx) {
+            const Atom *nbrAtom = mol[*nbrIdx];
+            // if the neighbor is one of the ring atoms, skip it
+            // since we are looking for exocyclic neighbors
+            if (std::find(atomRings[i].begin(), atomRings[i].end(),
+                          nbrAtom->getIdx()) != atomRings[i].end()) {
+              continue;
+            }
+            // it the neighbor is single-bonded, skip it
+            if (mol.getBondBetweenAtoms(atomRings[i][j], nbrAtom->getIdx())
+                    ->getBondType() == Bond::SINGLE) {
+              continue;
+            }
+            // if the neighbor is in a ring and its aromaticity
+            // bit has not yet been set, then move to the next ring
+            // we'll take care of this later
+            if (queryIsAtomInRing(nbrAtom) &&
+                (!(aromBitVect[nbrAtom->getIdx()]))) {
+              moveToNextRing = true;
+              break;
+            }
+            // if the neighbor is in an aromatic ring and is
+            // double-bonded to the current atom, add 1 pi electron
+            if (mol.getBondBetweenAtoms(atomRings[i][j], nbrAtom->getIdx())
+                    ->getBondType() == Bond::DOUBLE) {
+              if (nbrAtom->getIsAromatic()) {
+                ++pi_e;
+              } else {
+                exoDoubleBond = true;
+              }
+            }
+          }
+        }
+      }
+      // if we quit the loop at an early stage because aromaticity
+      // had not yet been set, then move to the next ring
+      if (moveToNextRing) {
+        continue;
+      }
+      // loop again over all ring atoms
+      for (j = 0, canBeAromatic = true; j < atomRings[i].size(); ++j) {
+        // set aromaticity as perceived
+        aromBitVect[atomRings[i][j]] = 1;
+        atom = mol.getAtomWithIdx(atomRings[i][j]);
+        // if this is is a non-sp2 carbon or nitrogen
+        // then this ring can't be aromatic
+        if (((atom->getAtomicNum() == 6) || (atom->getAtomicNum() == 7)) &&
+            (atom->getHybridization() != Atom::SP2)) {
+          canBeAromatic = false;
+        }
+      }
+      // if this ring can't be aromatic, move to the next one
+      if (!canBeAromatic) {
+        continue;
+      }
+      // if there is N, O, S; no exocyclic double bonds;
+      // the ring has an odd number of terms: add 2 pi electrons
+      if (isNOSinRing && (!exoDoubleBond) && (atomRings[i].size() % 2)) {
+        pi_e += 2;
+      }
+      // if this ring satisfies the 4n+2 rule,
+      // then mark its atoms as aromatic
+      if ((pi_e > 2) && (!((pi_e - 2) % 4))) {
+        aromRingBitVect[i] = 1;
+        for (j = 0; j < atomRings[i].size(); ++j) {
+          atom = mol.getAtomWithIdx(atomRings[i][j]);
+          atom->setIsAromatic(true);
+        }
+      }
+    }
+    // termination criterion: if we did not manage to set any more
+    // aromatic atoms compared to the previous iteration, then
+    // stop looping
+    old_nAromSet = nAromSet;
+    nAromSet = 0;
+    aromRingsAllSet = true;
+    for (i = 0; i < atomRings.size(); ++i) {
+      for (j = 0; j < atomRings[i].size(); ++j) {
+        if (aromBitVect[atomRings[i][j]]) {
+          ++nAromSet;
+        } else {
+          aromRingsAllSet = false;
+        }
+      }
+    }
+  }
+  for (i = 0; i < atomRings.size(); ++i) {
+    // if the ring is not aromatic, move to the next one
+    if (!aromRingBitVect[i]) {
+      continue;
+    }
+    for (j = 0; j < atomRings[i].size(); ++j) {
+      // mark all ring bonds as aromatic
+      nextInRing = (j == (atomRings[i].size() - 1)) ? atomRings[i][0]
+                                                    : atomRings[i][j + 1];
+      bond = mol.getBondBetweenAtoms(atomRings[i][j], nextInRing);
+      bond->setBondType(Bond::AROMATIC);
+      bond->setIsAromatic(true);
+    }
+  }
+  for (i = 0; i < atomRings.size(); ++i) {
+    // if the ring is not aromatic, move to the next one
+    if (!aromRingBitVect[i]) {
+      continue;
+    }
+    for (j = 0; j < atomRings[i].size(); ++j) {
+      atom = mol.getAtomWithIdx(atomRings[i][j]);
+      if (atom->getAtomicNum() != 6) {
+        int iv = atom->calcImplicitValence(false);
+        atom->calcExplicitValence(false);
+        if (iv) {
+          atom->setNumExplicitHs(iv);
+          atom->calcImplicitValence(false);
+        }
+      }
+    }
+  }
+}
+
 int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
   // This function used to check if the input molecule came
   // with aromaticity information, assumed it is correct and
@@ -929,6 +1126,9 @@ int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
       break;
     case AROMATICITY_MDL:
       res = mdlAromaticityHelper(mol, srings);
+      break;
+    case AROMATICITY_MMFF94:
+      res = mmff94AromaticityHelper(mol, srings);
       break;
     case AROMATICITY_CUSTOM:
       PRECONDITION(

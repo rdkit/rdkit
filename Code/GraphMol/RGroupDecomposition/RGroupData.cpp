@@ -17,12 +17,62 @@
 
 namespace RDKit {
 
+void RGroupData::mergeIntoCombinedMol(const ROMOL_SPTR &mol) {
+  CHECK_INVARIANT(mol, "mol must not be null");
+  if (!combinedMol) {
+    combinedMol = RWMOL_SPTR(new RWMol(*mol));
+  } else {
+    combinedMol.reset(static_cast<RWMol *>(combineMols(*combinedMol, *mol)));
+    single_fragment = false;
+  }
+  smiles = getSmiles();
+  combinedMol->setProp(common_properties::internalRgroupSmiles, smiles);
+  std::vector<int> incomingAtomIndices;
+  std::vector<int> incomingBondIndices;
+  mol->getPropIfPresent(common_properties::_rgroupTargetAtoms,
+                        incomingAtomIndices);
+  mol->getPropIfPresent(common_properties::_rgroupTargetBonds,
+                        incomingBondIndices);
+  std::vector<int> existingAtomIndices;
+  std::vector<int> existingBondIndices;
+  combinedMol->getPropIfPresent(common_properties::_rgroupTargetAtoms,
+                                existingAtomIndices);
+  combinedMol->getPropIfPresent(common_properties::_rgroupTargetBonds,
+                                existingBondIndices);
+  if (!incomingAtomIndices.empty()) {
+    existingAtomIndices.insert(
+        existingAtomIndices.end(),
+        std::make_move_iterator(incomingAtomIndices.begin()),
+        std::make_move_iterator(incomingAtomIndices.end()));
+  }
+  if (!incomingBondIndices.empty()) {
+    existingBondIndices.insert(
+        existingBondIndices.end(),
+        std::make_move_iterator(existingBondIndices.begin()),
+        std::make_move_iterator(existingBondIndices.end()));
+  }
+}
+
+std::string RGroupData::getRGroupLabel(int rlabel) {
+  static const std::string RPREFIX = "R";
+  return RPREFIX + std::to_string(rlabel);
+}
+
+const std::string &RGroupData::getCoreLabel() {
+  static const std::string CORE = "Core";
+  return CORE;
+}
+
+const std::string &RGroupData::getMolLabel() {
+  static const std::string MOL = "Mol";
+  return MOL;
+}
+
 void RGroupData::add(const ROMOL_SPTR &newMol,
                      const std::vector<int> &rlabel_attachments) {
   // some fragments can be added multiple times if they are cyclic
-  if (std::any_of(mols.begin(), mols.end(), [&newMol](const auto &mol) {
-    return newMol == mol;
-  })) {
+  if (std::any_of(mols.begin(), mols.end(),
+                  [&newMol](const auto &mol) { return newMol == mol; })) {
     return;
   }
 
@@ -52,17 +102,7 @@ void RGroupData::add(const ROMOL_SPTR &newMol,
   // MCS alignment is not used (NoAlign flag)
   smilesVect.push_back(std::regex_replace(MolToSmiles(*newMol, true),
                                           remove_isotopes_regex, "*"));
-  if (!combinedMol.get()) {
-    combinedMol = boost::shared_ptr<RWMol>(new RWMol(*mols[0].get()));
-  } else {
-    ROMol *m = combineMols(*combinedMol.get(), *newMol.get());
-    single_fragment = false;
-    m->updateProps(*combinedMol.get());
-    combinedMol.reset(new RWMol(*m));
-    delete m;
-  }
-  smiles = getSmiles();
-  combinedMol->setProp(common_properties::internalRgroupSmiles, smiles);
+  mergeIntoCombinedMol(newMol);
   computeIsHydrogen();
   is_linker = single_fragment && attachments.size() > 1;
 }
@@ -70,12 +110,10 @@ void RGroupData::add(const ROMOL_SPTR &newMol,
 std::map<int, int> RGroupData::getNumBondsToRlabels() const {
   std::map<int, int> rlabelsUsedCount;
 
-  for (ROMol::AtomIterator atIt = combinedMol->beginAtoms();
-       atIt != combinedMol->endAtoms(); ++atIt) {
-    Atom *atom = *atIt;
+  for (const auto atom : combinedMol->atoms()) {
     int rlabel;
     if (atom->getPropIfPresent<int>(RLABEL, rlabel)) {
-      rlabelsUsedCount[rlabel] += 1;
+      ++rlabelsUsedCount[rlabel];
     }
   }
   return rlabelsUsedCount;
@@ -94,15 +132,16 @@ std::string RGroupData::toString() const {
 }
 
 void RGroupData::computeIsHydrogen() {  // is the rgroup all Hs
-  is_hydrogen = std::all_of(mols.begin(), mols.end(), [this](const auto &mol) {
-    return isMolHydrogen(*mol);
+  is_hydrogen = std::all_of(mols.begin(), mols.end(), [](const auto &mol) {
+    return RGroupData::isMolHydrogen(*mol);
   });
 }
 
-bool RGroupData::isMolHydrogen(const ROMol &mol) const {
+bool RGroupData::isMolHydrogen(const ROMol &mol) {
   auto atoms = mol.atoms();
   return std::all_of(atoms.begin(), atoms.end(), [](const auto &atom) {
-    return (atom->getAtomicNum() == 1 || (atom->getAtomicNum() == 0 && atom->hasProp(SIDECHAIN_RLABELS)));
+    return (atom->getAtomicNum() == 1 ||
+            (atom->getAtomicNum() == 0 && atom->hasProp(SIDECHAIN_RLABELS)));
   });
 }
 

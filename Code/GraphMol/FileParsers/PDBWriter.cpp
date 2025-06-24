@@ -40,8 +40,8 @@
 namespace RDKit {
 
 // Get the next atom number of an element, formatted as a 2-letter string.
-std::string GetDefaultAtomNumber(const Atom* atom,
-        std::map<unsigned int, unsigned int> &elem);
+std::string GetDefaultAtomNumber(const Atom *atom,
+                                 std::map<unsigned int, unsigned int> &elem);
 
 std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
                            std::map<unsigned int, unsigned int> &elem) {
@@ -73,7 +73,7 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
     ss << (info->getIsHeteroAtom() ? "HETATM" : "ATOM  ");
     ss << std::setw(5) << atom->getIdx() + 1;
     ss << ' ';
-    const std::string& name = info->getName();
+    const std::string &name = info->getName();
     if (name.empty()) {
       std::string atnum = GetDefaultAtomNumber(atom, elem);
       ss << at1 << at2 << atnum;
@@ -139,7 +139,8 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
   return ss.str();
 }
 
-std::string GetDefaultAtomNumber(const Atom* atom, std::map<unsigned int, unsigned int> &elem) {
+std::string GetDefaultAtomNumber(const Atom *atom,
+                                 std::map<unsigned int, unsigned int> &elem) {
   std::string ret = "  ";
   unsigned int atno = atom->getAtomicNum();
   if (elem.find(atno) == elem.end()) {
@@ -265,14 +266,13 @@ std::string MolToPDBBody(const ROMol &mol, const Conformer *conf,
 }
 
 std::string MolToPDBBlock(const ROMol &imol, int confId, unsigned int flavor) {
-  ROMol mol(imol);
-  auto &trwmol = static_cast<RWMol &>(mol);
-  MolOps::Kekulize(trwmol);
+  RWMol rwmol(imol);
+  MolOps::Kekulize(rwmol);
   Utils::LocaleSwitcher ls;
 
   std::string res;
   std::string name;
-  if (mol.getPropIfPresent(common_properties::_Name, name)) {
+  if (rwmol.getPropIfPresent(common_properties::_Name, name)) {
     if (!name.empty()) {
       res += "COMPND    ";
       res += name;
@@ -285,26 +285,27 @@ std::string MolToPDBBlock(const ROMol &imol, int confId, unsigned int flavor) {
   unsigned int conect_count = 0;
 
   const Conformer *conf;
-  if (confId < 0 && mol.getNumConformers() > 1) {
-    int count = mol.getNumConformers();
+  if (confId < 0 && rwmol.getNumConformers() > 1) {
+    int count = rwmol.getNumConformers();
     for (confId = 0; confId < count; confId++) {
-      conf = &(mol.getConformer(confId));
+      conf = &(rwmol.getConformer(confId));
       std::stringstream ss;
       ss << "MODEL     ";
       ss << std::setw(4) << (confId + 1);
       ss << "\n";
       res += ss.str();
       res +=
-          MolToPDBBody(mol, conf, flavor, atm_count, ter_count, conect_count);
+          MolToPDBBody(rwmol, conf, flavor, atm_count, ter_count, conect_count);
       res += "ENDMDL\n";
     }
   } else {
-    if (confId < 0 && mol.getNumConformers() == 0) {
+    if (confId < 0 && rwmol.getNumConformers() == 0) {
       conf = nullptr;
     } else {
-      conf = &(mol.getConformer(confId));
+      conf = &(rwmol.getConformer(confId));
     }
-    res += MolToPDBBody(mol, conf, flavor, atm_count, ter_count, conect_count);
+    res +=
+        MolToPDBBody(rwmol, conf, flavor, atm_count, ter_count, conect_count);
   }
 
   if (flavor & 16) {

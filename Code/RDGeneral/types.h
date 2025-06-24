@@ -123,6 +123,10 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _CIPCode;  // std::string COMPUTED
 RDKIT_RDGENERAL_EXPORT extern const std::string _CIPRank;  // int COMPUTED
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _CIPComputed;  // int (bool) COMPUTED
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _CanonicalRankingNumber;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _ChiralityPossible;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _UnknownStereo;  // int (bool) AddHs/Chirality
@@ -160,20 +164,26 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string OxidationNumber;  // int
 
 // MDL Style Properties (MolFileParser)
-RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;   // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molFileAlias;       // string
-RDKIT_RDGENERAL_EXPORT extern const std::string molFileValue;       // string
-RDKIT_RDGENERAL_EXPORT extern const std::string molInversionFlag;   // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molParity;          // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molStereoCare;      // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;    // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;         // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;      // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRingBondCount;   // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molSubstCount;      // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molAttachPoint;     // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molAttachOrder;     // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molAtomClass;       // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molFileAlias;      // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molFileValue;      // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molInversionFlag;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molParity;         // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molStereoCare;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;   // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;        // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRingBondCount;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molSubstCount;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAttachPoint;    // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAttachOrder;    // int
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    molAttachOrderTemplate;  // std::vector<AtomAttchOrd>
+
+RDKIT_RDGENERAL_EXPORT extern const std::string molAtomClass;  // string
+RDKIT_RDGENERAL_EXPORT extern const std::string natReplace;    // string
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    templateNames;  // vector of strings
 RDKIT_RDGENERAL_EXPORT extern const std::string molAtomSeqId;       // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnExactChange;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molReactStatus;     // int
@@ -214,8 +224,11 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string NullBond;  // int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupAtomMaps;
 RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupBonds;
+RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupTargetAtoms;
+RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupTargetBonds;
 RDKIT_RDGENERAL_EXPORT extern const std::string reactantAtomIdx;
 RDKIT_RDGENERAL_EXPORT extern const std::string reactionMapNum;
+RDKIT_RDGENERAL_EXPORT extern const std::string reactantIdx;
 
 // SLN
 RDKIT_RDGENERAL_EXPORT extern const std::string
@@ -365,8 +378,6 @@ struct RDKIT_RDGENERAL_EXPORT larger_of {
 //! functor for comparing two strings
 struct RDKIT_RDGENERAL_EXPORT charptr_functor {
   bool operator()(const char *s1, const char *s2) const {
-    // std::cout << s1 << " " << s2 << " " << strcmp(s1, s2) << "\n";
-
     return strcmp(s1, s2) < 0;
   }
 };
@@ -405,7 +416,6 @@ RDKIT_RDGENERAL_EXPORT void Union(const VECT_INT_VECT &rings, INT_VECT &res,
 
 */
 RDKIT_RDGENERAL_EXPORT int nextCombination(INT_VECT &comb, int tot);
-
 };  // namespace RDKit
 
 #endif

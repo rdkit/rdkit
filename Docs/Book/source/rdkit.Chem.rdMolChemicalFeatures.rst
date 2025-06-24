@@ -1,5 +1,5 @@
 rdkit.Chem.rdMolChemicalFeatures module
-=================================
+=======================================
 
 .. automodule:: rdkit.Chem.rdMolChemicalFeatures
     :members:

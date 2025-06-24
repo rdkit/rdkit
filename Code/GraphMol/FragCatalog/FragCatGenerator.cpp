@@ -209,7 +209,7 @@ unsigned int addHigherOrderPaths(const INT_PATH_LIST_MAP &allPaths,
           fcat->addEdge(entId, vid);
         }
       }  // end of never seen this order k subgraph
-    }    // end of loop over order k paths in mol
+    }  // end of loop over order k paths in mol
     // overwrite mapkm1 with mapk before we move on to order k+1
     mapkm1 = mapk;
   }  // end of loop over path order

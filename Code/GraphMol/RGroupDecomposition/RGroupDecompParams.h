@@ -14,51 +14,52 @@
 
 #include "../RDKitBase.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <RDGeneral/BetterEnums.h>
 
 namespace RDKit {
 
-typedef enum {
+BETTER_ENUM(RGroupLabels, unsigned int,
   IsotopeLabels = 0x01,
   AtomMapLabels = 0x02,
   AtomIndexLabels = 0x04,
   RelabelDuplicateLabels = 0x08,
   MDLRGroupLabels = 0x10,
   DummyAtomLabels = 0x20,  // These are rgroups but will get relabelled
-  AutoDetect = 0xFF,
-} RGroupLabels;
+  AutoDetect = 0xFF
+);
 
-typedef enum {
+BETTER_ENUM(RGroupMatching, unsigned int,
   Greedy = 0x01,
   GreedyChunks = 0x02,
   Exhaustive = 0x04,  // not really useful for large sets
   NoSymmetrization = 0x08,
-  GA = 0x10,
-} RGroupMatching;
+  GA = 0x10
+);
 
-typedef enum {
+BETTER_ENUM(
+  RGroupLabelling, unsigned int,
   AtomMap = 0x01,
   Isotope = 0x02,
-  MDLRGroup = 0x04,
-} RGroupLabelling;
+  MDLRGroup = 0x04
+);
 
-typedef enum {
-  // DEPRECATED, remove the following line in release 2021.03
-  None = 0x0,
+BETTER_ENUM(RGroupCoreAlignment, unsigned int,
   NoAlignment = 0x0,
-  MCS = 0x01,
-} RGroupCoreAlignment;
+  MCS = 0x01
+);
 
-typedef enum {
+BETTER_ENUM(RGroupScore, unsigned int,
   Match = 0x1,
-  FingerprintVariance = 0x4,
-} RGroupScore;
+  FingerprintVariance = 0x4
+);
 
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
-  unsigned int labels = AutoDetect;
-  unsigned int matchingStrategy = GreedyChunks;
-  unsigned int scoreMethod = Match;
-  unsigned int rgroupLabelling = AtomMap | MDLRGroup;
-  unsigned int alignment = MCS;
+  unsigned int labels = RGroupLabels::AutoDetect;
+  unsigned int matchingStrategy = RGroupMatching::GreedyChunks;
+  unsigned int scoreMethod = RGroupScore::Match;
+  unsigned int rgroupLabelling =
+      RGroupLabelling::AtomMap | RGroupLabelling::MDLRGroup;
+  unsigned int alignment = RGroupCoreAlignment::MCS;
 
   unsigned int chunkSize = 5;
   //! only allow rgroup decomposition at the specified rgroups
@@ -72,11 +73,18 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   bool removeHydrogensPostMatch = true;
   //! allow labelled Rgroups of degree 2 or more
   bool allowNonTerminalRGroups = false;
-  // unlabelled core atoms can have multiple rgroups
+  //! unlabelled core atoms can have multiple rgroups
   bool allowMultipleRGroupsOnUnlabelled = false;
   // extended query settings for core matching
   bool doTautomers = false;
   bool doEnumeration = false;
+  //! include target molecule (featuring explicit hydrogens where they
+  //! coincide with R groups in the core) into RGD results,
+  //! and set _rgroupTargetAtoms and _rgroupTargetBonds properties
+  //! on R groups and core as vectors of target atom and bond indices
+  //! to enable highlighting for SAR analysis (see
+  //! https://greglandrum.github.io/rdkit-blog/posts/2021-08-07-rgd-and-highlighting.html)
+  bool includeTargetMolInResults = false;
 
   double timeout = -1.0;  ///< timeout in seconds. <=0 indicates no timeout
 

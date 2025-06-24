@@ -91,6 +91,8 @@ bool Node::isSet(int mask) const { return mask & d_flags; }
 
 bool Node::isDuplicate() const { return d_flags & DUPLICATE; }
 
+bool Node::isDuplicateOrH() const { return d_flags & DUPLICATE_OR_H; }
+
 bool Node::isTerminal() const {
   return d_visit.empty() || (isExpanded() && d_edges.size() == 1);
 }

@@ -23,6 +23,7 @@
 #include "MultithreadedSmilesMolSupplier.h"
 
 namespace RDKit {
+namespace FileParsers = v2::FileParsers;
 namespace GeneralMolSupplier {
 struct SupplierOptions {
   bool takeOwnership = true;
@@ -39,7 +40,7 @@ struct SupplierOptions {
   int confId2D = -1;
   int confId3D = 0;
 
-  unsigned int numWriterThreads = 0;
+  int numWriterThreads = 0;
 };
 //! current supported file formats
 const std::vector<std::string> supportedFileFormats{
@@ -51,8 +52,8 @@ const std::vector<std::string> supportedCompressionFormats{"gz"};
 //! returns true on success, otherwise false
 //! Note: Error handeling is done in the getSupplier method
 
-void determineFormat(const std::string path, std::string& fileFormat,
-                     std::string& compressionFormat) {
+inline void determineFormat(const std::string path, std::string &fileFormat,
+                            std::string &compressionFormat) {
   //! filename without compression format
   std::string basename;
   //! Special case maegz.
@@ -78,7 +79,7 @@ void determineFormat(const std::string path, std::string& fileFormat,
     basename = path;
     compressionFormat = "";
   }
-  for (auto const& suffix : supportedFileFormats) {
+  for (auto const &suffix : supportedFileFormats) {
     if (boost::algorithm::iends_with(basename, "." + suffix)) {
       fileFormat = suffix;
       return;
@@ -95,14 +96,14 @@ void determineFormat(const std::string path, std::string& fileFormat,
       - the caller owns the memory and therefore the pointer must be deleted
 */
 
-std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
-                                         const struct SupplierOptions& opt) {
+inline std::unique_ptr<FileParsers::MolSupplier> getSupplier(
+    const std::string &path, const struct SupplierOptions &opt) {
   std::string fileFormat = "";
   std::string compressionFormat = "";
   //! get the file and compression format form the path
   determineFormat(path, fileFormat, compressionFormat);
 
-  std::istream* strm;
+  std::istream *strm;
   if (compressionFormat.empty()) {
     strm = new std::ifstream(path.c_str(), std::ios::in | std::ios::binary);
   } else {
@@ -114,54 +115,74 @@ std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
 #endif
   }
 
+  if ((!(*strm)) || strm->bad()) {
+    std::ostringstream errout;
+    errout << "Bad input file " << path;
+    delete strm;
+    throw BadFileException(errout.str());
+  }
+  strm->peek();
+  if (strm->bad() || strm->eof()) {
+    std::ostringstream errout;
+    errout << "Invalid input file " << path;
+    delete strm;
+    throw BadFileException(errout.str());
+  }
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  FileParsers::MultithreadedMolSupplier::Parameters params;
+  params.numWriterThreads = getNumThreadsToUse(opt.numWriterThreads);
+#endif
   //! Dispatch to the appropriate supplier
   if (fileFormat == "sdf") {
+    FileParsers::MolFileParserParams parseParams;
+    parseParams.sanitize = opt.sanitize;
+    parseParams.removeHs = opt.removeHs;
+    parseParams.strictParsing = opt.strictParsing;
 #ifdef RDK_BUILD_THREADSAFE_SSS
-    if (opt.numWriterThreads > 0) {
-      MultithreadedSDMolSupplier* sdsup = new MultithreadedSDMolSupplier(
-          strm, true, opt.sanitize, opt.removeHs, opt.strictParsing,
-          opt.numWriterThreads);
-      std::unique_ptr<MolSupplier> p(sdsup);
-      return p;
+    if (params.numWriterThreads > 1) {
+      return std::make_unique<FileParsers::MultithreadedSDMolSupplier>(
+          strm, true, params, parseParams);
     }
 #endif
-    ForwardSDMolSupplier* sdsup = new ForwardSDMolSupplier(
-        strm, true, opt.sanitize, opt.removeHs, opt.strictParsing);
-    std::unique_ptr<MolSupplier> p(sdsup);
-    return p;
+    return std::make_unique<FileParsers::ForwardSDMolSupplier>(strm, true,
+                                                               parseParams);
   }
 
   else if (fileFormat == "smi" || fileFormat == "csv" || fileFormat == "txt" ||
            fileFormat == "tsv") {
+    FileParsers::SmilesMolSupplierParams parseParams;
+    parseParams.delimiter = opt.delimiter;
+    parseParams.smilesColumn = opt.smilesColumn;
+    parseParams.nameColumn = opt.nameColumn;
+    parseParams.titleLine = opt.titleLine;
+    parseParams.parseParameters.sanitize = opt.sanitize;
 #ifdef RDK_BUILD_THREADSAFE_SSS
-    if (opt.numWriterThreads > 0) {
-      MultithreadedSmilesMolSupplier* smsup =
-          new MultithreadedSmilesMolSupplier(
-              strm, true, opt.delimiter, opt.smilesColumn, opt.nameColumn,
-              opt.titleLine, opt.sanitize, opt.numWriterThreads);
-      std::unique_ptr<MolSupplier> p(smsup);
-      return p;
+    if (params.numWriterThreads > 1) {
+      return std::make_unique<FileParsers::MultithreadedSmilesMolSupplier>(
+          strm, true, params, parseParams);
     }
 #endif
-    SmilesMolSupplier* smsup =
-        new SmilesMolSupplier(strm, true, opt.delimiter, opt.smilesColumn,
-                              opt.nameColumn, opt.titleLine, opt.sanitize);
-    std::unique_ptr<MolSupplier> p(smsup);
-    return p;
+    return std::make_unique<FileParsers::SmilesMolSupplier>(strm, true,
+                                                            parseParams);
   }
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
   else if (fileFormat == "mae") {
-    MaeMolSupplier* maesup =
-        new MaeMolSupplier(strm, true, opt.sanitize, opt.removeHs);
-    std::unique_ptr<MolSupplier> p(maesup);
-    return p;
+    FileParsers::MaeMolSupplierParams parseParams;
+    parseParams.sanitize = opt.sanitize;
+    parseParams.removeHs = opt.removeHs;
+    return std::make_unique<FileParsers::MaeMolSupplier>(strm, true,
+                                                         parseParams);
   }
 #endif
   else if (fileFormat == "tdt") {
-    TDTMolSupplier* tdtsup = new TDTMolSupplier(
-        strm, true, opt.nameRecord, opt.confId2D, opt.confId3D, opt.sanitize);
-    std::unique_ptr<MolSupplier> p(tdtsup);
-    return p;
+    FileParsers::TDTMolSupplierParams parseParams;
+    parseParams.nameRecord = opt.nameRecord;
+    parseParams.confId2D = opt.confId2D;
+    parseParams.confId3D = opt.confId3D;
+    parseParams.parseParameters.sanitize = opt.sanitize;
+    return std::make_unique<FileParsers::TDTMolSupplier>(strm, true,
+                                                         parseParams);
   }
   throw BadFileException("Unsupported file format: " + fileFormat);
 }

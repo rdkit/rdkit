@@ -75,6 +75,13 @@ void testRDKitValidation() {
     msgs2.push_back(msg);
   }
   TEST_ASSERT(msgs2 == ans2);
+
+  // testing configurable behavior for molecule with no atoms
+  bool allowEmptyMolecules = true;
+  RDKitValidation vm2(allowEmptyMolecules);
+  vector<ValidationErrorInfo> errout5 = vm2.validate(*m2, true);
+  TEST_ASSERT(errout5.empty());
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 

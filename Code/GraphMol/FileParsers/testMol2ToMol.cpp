@@ -33,6 +33,7 @@
 //
 
 #include <RDGeneral/test.h>
+#include <GraphMol/test_fixtures.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include "FileParsers.h"
@@ -239,16 +240,6 @@ void testGeneral(std::string rdbase) {
     delete m;
   }
 
-#if 0
-  {
-    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Sulfonate.mol2";
-    RWMol *m = Mol2FileToMol(fName);
-    TEST_ASSERT(m);
-    BOOST_LOG(rdInfoLog) <<MolToSmiles(*m)<<std::endl;
-    delete m;
-  }
-#endif
-
   BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "-- DONE general mol2 file parsing --" << std::endl;
   BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
@@ -323,12 +314,20 @@ void testIssue114(std::string rdbase) {
   BOOST_LOG(rdInfoLog) << "-- testing GitHub issue #114     --" << std::endl;
   BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
 
-  std::string fName =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/EZ_mol2_issue114.mol2";
-  RWMol *mol = Mol2FileToMol(fName);
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
-  delete mol;
+  for (const bool useLegacy : {true, false}) {
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/EZ_mol2_issue114.mol2";
+    auto mol = v2::FileParsers::MolFromMol2File(fName);
+    TEST_ASSERT(mol);
+    if (useLegacy) {
+      TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    } else {
+      TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+      TEST_ASSERT(mol->getBondWithIdx(1)->getStereoAtoms()[0] == 1);
+      TEST_ASSERT(mol->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    }
+  }
 
   BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "-- DONE                           --" << std::endl;

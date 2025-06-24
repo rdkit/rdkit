@@ -70,9 +70,9 @@ void printTime() {
 }
 
 std::string getSmilesOnly(
-    const char* smiles,
-    std::string* id = nullptr) {  // remove label, because RDKit parse FAILED
-  const char* sp = strchr(smiles, ' ');
+    const char *smiles,
+    std::string *id = nullptr) {  // remove label, because RDKit parse FAILED
+  const char *sp = strchr(smiles, ' ');
   unsigned int n = (sp ? sp - smiles + 1 : strlen(smiles));
   if (id) {
     *id = std::string(smiles + n);
@@ -81,10 +81,10 @@ std::string getSmilesOnly(
 }
 
 std::string getSmilesOnlyTxt(
-    const char* smiles,
-    std::string* id = nullptr) {  // remove label from string like "CHEMBL90218
+    const char *smiles,
+    std::string *id = nullptr) {  // remove label from string like "CHEMBL90218
   // NS(=O)(=O)c1ccc(NC(=O)c2cccc(C(=O)O)n2)c(Cl)c1"
-  const char* sp = strchr(smiles, ' ');
+  const char *sp = strchr(smiles, ' ');
   if (sp && '\0' != *sp) {
     if (id) {
       *id = std::string(smiles, sp - smiles);
@@ -101,9 +101,9 @@ std::string getSmilesOnlyTxt(
 }
 
 std::string getSmilesOnlyChEMBL(
-    const char* smiles,
-    std::string* id = nullptr) {  // remove label, because RDKit parse FAILED
-  const char* sp = strchr(smiles, '\t');
+    const char *smiles,
+    std::string *id = nullptr) {  // remove label, because RDKit parse FAILED
+  const char *sp = strchr(smiles, '\t');
   if (sp) {
     unsigned int n = (sp ? sp - smiles + 1 : strlen(smiles));
     if (id) {
@@ -121,7 +121,7 @@ std::string getSmilesOnlyChEMBL(
 
 MCSParameters p;
 
-void testFileMCSB(const char* test, unsigned int timeout = 30,
+void testFileMCSB(const char *test, unsigned int timeout = 30,
                   std::vector<unsigned int> test_N =
                       std::vector<unsigned int>()) {  // optional list of some
                                                       // tests for investigation
@@ -156,7 +156,7 @@ void testFileMCSB(const char* test, unsigned int timeout = 30,
   std::vector<MCSResult> referenceResults;
   std::vector<float> referenceResultsTime;
 
-  FILE* f = fopen(referenceOutFile.c_str(), "rt");
+  FILE *f = fopen(referenceOutFile.c_str(), "rt");
   if (!f) {
     perror("Could not open reference test result file");
   } else {
@@ -188,7 +188,7 @@ void testFileMCSB(const char* test, unsigned int timeout = 30,
     std::cout << "Loading MCSB test list ... \n";
     if (fgets(str, sizeof(str), f)) {
       if (fgets(str, sizeof(str), f)) {
-        char* c = strrchr(str, '\n');  // remove LineFeed
+        char *c = strrchr(str, '\n');  // remove LineFeed
         if (c) {
           *c = '\0';
         }
@@ -230,7 +230,7 @@ void testFileMCSB(const char* test, unsigned int timeout = 30,
   while (fgets(str, sizeof(str), f)) {
     std::cout << "\rLine: " << ++n << " ";
     if ('#' != str[0] && ' ' != str[0] && '/' != str[0]) {  // commented to skip
-      char* c = strrchr(str, '\n');                         // remove LineFeed
+      char *c = strrchr(str, '\n');                         // remove LineFeed
       if (c) {
         *c = '\0';
       }
@@ -254,12 +254,12 @@ void testFileMCSB(const char* test, unsigned int timeout = 30,
     exit(1);
   }
   setvbuf(f, nullptr, _IOFBF, 4 * 1024);
-  FILE* fs = nullptr;  // fopen(outSmilesFile.c_str(), "wt");
+  FILE *fs = nullptr;  // fopen(outSmilesFile.c_str(), "wt");
   if (fs) {
     setvbuf(fs, nullptr, _IOFBF, 4 * 1024);
   }
 #ifdef xxVERBOSE_STATISTICS_ON
-  FILE* ft = fopen((outFile + ".stat.csv").c_str(), "wt");
+  FILE *ft = fopen((outFile + ".stat.csv").c_str(), "wt");
   setvbuf(ft, 0, _IOFBF, 4 * 1024);  // small file
   if (ft) {
     fprintf(ft,
@@ -292,7 +292,7 @@ void testFileMCSB(const char* test, unsigned int timeout = 30,
     if (fs) {
       fprintf(fs, "\n//TEST %u\n", n + 1);
     }
-    for (const auto& mid : *tc) {
+    for (const auto &mid : *tc) {
       std::map<std::string, size_t>::const_iterator id = molIdMap.find(mid);
       if (molIdMap.end() == id) {
         continue;
@@ -464,7 +464,7 @@ void testFileMCSB(const char* test, unsigned int timeout = 30,
 void test504() {
   std::cout << "\ntest504()\n";
   std::vector<ROMOL_SPTR> mols;
-  const char* smi[] = {
+  const char *smi[] = {
       // TEST 504
       "C(CCNC(C1CC1[c:1]1[c:2]c(Cl)c(Cl)c[c:3]1)=O)CCN1CCC(NC(Nc2ccc(Cl)cc2)=O)"
       "C1 CHEMBL545864",  // - QUERY
@@ -491,10 +491,10 @@ void test504() {
       "N#Cc1cccc(NC(NC2CCN(CCCCCNC(C3CC3c3ccc(Cl)c(Cl)c3)=O)CC2)=O)c1 "
       "CHEMBL529994",
   };
-  RWMol* qm = SmilesToMol(getSmilesOnly(smi[0]));
+  RWMol *qm = SmilesToMol(getSmilesOnly(smi[0]));
   unsigned int nq = qm->getNumAtoms();
   for (size_t ai = 0; ai < nq; ai++) {
-    Atom* atom = qm->getAtomWithIdx(ai);
+    Atom *atom = qm->getAtomWithIdx(ai);
     atom->setProp(common_properties::molAtomMapNumber, (int)ai);
   }
   std::cout << "Query +MAP " << MolToSmiles(*qm) << "\n";
@@ -509,13 +509,13 @@ void test504() {
   printTime();
 }
 
-std::string testChEMBL_Txt(const char* test, double th = 1.0,
-                           const char* csv = "chembl_II_sets.C++.res.csv") {
+std::string testChEMBL_Txt(const char *test, double th = 1.0,
+                           const char *csv = "chembl_II_sets.C++.res.csv") {
   std::cout << "\ntestChEMBL_Txt() " << test << "\n";
   std::vector<ROMOL_SPTR> mols;
   char smiles[4096];
   // unsigned int n=0;
-  FILE* f = fopen(test, "rt");
+  FILE *f = fopen(test, "rt");
   if (!f) {
     perror("fopen testChEMBL_Txt()");
     return "";
@@ -523,8 +523,8 @@ std::string testChEMBL_Txt(const char* test, double th = 1.0,
   char testsmi[512];
   strcpy(testsmi, test);
   strcpy(testsmi + strlen(test) - 3, "smi");
-  FILE* fsmi = fopen(testsmi, "wt");
-  FILE* fres = fopen(csv, "at");
+  FILE *fsmi = fopen(testsmi, "wt");
+  FILE *fres = fopen(csv, "at");
   while (fgets(smiles, sizeof(smiles), f)) {
     if ('#' != smiles[0] && ' ' != smiles[0] &&
         '/' != smiles[0]) {  // commented to skip
@@ -568,12 +568,12 @@ std::string testChEMBL_Txt(const char* test, double th = 1.0,
 }
 
 void testChEMBL_TxtALL_chembl_II_sets(double th = 1.0) {
-  FILE* fres = fopen("chembl_II_sets.C.res.csv", "wt");
+  FILE *fres = fopen("chembl_II_sets.C.res.csv", "wt");
   fprintf(fres,
           "test;Nmols;threshold;t,sec;atoms;bonds;mcs;E t,sec;E atoms;E "
           "bonds;E mcs\n");
   fclose(fres);
-  const char* test[] = {
+  const char *test[] = {
       "Target_no_100_15113.txt",   "Target_no_100_16613.txt",
       "Target_no_100_30745.txt",   "Target_no_100_30861.txt",
       "Target_no_100_31495.txt",   "Target_no_100_34869.txt",
@@ -899,7 +899,7 @@ void testChEMBL_TxtALL_chembl_II_sets(double th = 1.0) {
       "Target_no_93_42214.txt",    "Target_no_93_45877.txt",
       "Target_no_93_47082.txt",    "Target_no_93_57082.txt",
   };
-  FILE* fcmd = fopen("chembl_II_sets.bat", "wt");
+  FILE *fcmd = fopen("chembl_II_sets.bat", "wt");
   // commands for prepare Python test:
   fprintf(fcmd, "DEL %s\n",
           "chembl_II_sets.P.res.csv");  // clear before append results
@@ -913,7 +913,7 @@ void testChEMBL_TxtALL_chembl_II_sets(double th = 1.0) {
   p.Timeout = 60;
   p.Verbose = false;
 
-  for (auto& i : test) {
+  for (auto &i : test) {
     std::string smiName = std::string("chembl_II_sets/") + i;
     std::string testsmi =
         testChEMBL_Txt(smiName.c_str(), th, "chembl_II_sets.C.res.csv");
@@ -925,10 +925,10 @@ void testChEMBL_TxtALL_chembl_II_sets(double th = 1.0) {
 }
 
 void testChEMBL_TxtSLOW_chembl_II_sets(double th = 1.0) {
-  FILE* fres = fopen("chembl_II_sets.SLOW.C++.res.csv", "wt");
+  FILE *fres = fopen("chembl_II_sets.SLOW.C++.res.csv", "wt");
   fprintf(fres, "test;threshold;t,sec;atoms;bonds;mcs\n");
   fclose(fres);
-  const char* test[] = {
+  const char *test[] = {
       "Target_no_10980_51302.txt", "Target_no_114_31443.txt",
       "Target_no_10260_54285.txt", "Target_no_11489_37339.txt",
       "Target_no_10980_52937.txt", "Target_no_114_48395.txt",
@@ -961,23 +961,23 @@ void testChEMBL_TxtSLOW_chembl_II_sets(double th = 1.0) {
       "Target_no_10193_46700.txt", "Target_no_10980_30994.txt",
       "Target_no_11140_37038.txt",
   };
-  for (auto& i : test) {
+  for (auto &i : test) {
     testChEMBL_Txt((std::string("chembl_II_sets/") + i).c_str(), th,
                    "chembl_II_sets.SLOW.C++.res.csv");
   }
 }
 
-void testChEMBLdat(const char* test, double th = 1.0) {
+void testChEMBLdat(const char *test, double th = 1.0) {
   std::cout << "\ntestChEMBLdat() " << test << "\n";
   std::vector<ROMOL_SPTR> mols;
   char smiles[4096];
   unsigned int n = 0;
-  FILE* f = fopen(test, "rt");
+  FILE *f = fopen(test, "rt");
   if (!f) {
     perror("fopen testChEMBLdat()");
     return;
   }
-  FILE* fs = fopen((std::string(test) + ".smi").c_str(), "wt");
+  FILE *fs = fopen((std::string(test) + ".smi").c_str(), "wt");
   std::cout << "Loading SMILES ... \n";
   t0 = nanoClock();
   while (fgets(smiles, sizeof(smiles), f)) {
@@ -1001,7 +1001,7 @@ void testChEMBLdat(const char* test, double th = 1.0) {
 }
 
 void testChEMBLdatALL(double th = 1.0) {
-  const char* test[] = {
+  const char *test[] = {
       "cmp_list_ChEMBL_100126_actives.dat",
       "cmp_list_ChEMBL_100579_actives.dat",
       "cmp_list_ChEMBL_100_actives.dat",
@@ -1082,7 +1082,7 @@ void testChEMBLdatALL(double th = 1.0) {
       "cmp_list_ChEMBL_93_actives.dat",
       "cmp_list_ChEMBL_zinc_decoys.dat",
   };
-  for (auto& i : test) {
+  for (auto &i : test) {
     testChEMBLdat(
         (std::string("benchmarking_platform-master/compounds/ChEMBL/") + i)
             .c_str(),
@@ -1093,7 +1093,7 @@ void testChEMBLdatALL(double th = 1.0) {
 void testTarget_no_10188_30149() {
   std::cout << "\ntestTarget_no_10188_30149()\n";
   std::vector<ROMOL_SPTR> mols;
-  const char* smi[] = {
+  const char *smi[] = {
       // Target_no_10188_30149.txt // VERY SLOWER than Python
       "CN(C)CCNC(=O)c1ccc(-c2n[nH]c3cc(Nc4ccccc4Cl)ccc32)cc1 CHEMBL399167",
       "O=C(O)c1cccc(-c2[nH]nc3cc(Nc4ccccc4Cl)ccc32)c1 CHEMBL197613",
@@ -1106,7 +1106,7 @@ void testTarget_no_10188_30149() {
       "COc1ccccc1Nc1ccc2c(c1)[nH]nc2-c1ccccc1 CHEMBL254443",
       "CN(C)CCNC(=O)c1cccc(-c2[nH]nc3cc(Nc4ccccc4Cl)ccc32)c1 CHEMBL198821",
   };
-  for (auto& i : smi) {
+  for (auto &i : smi) {
     mols.emplace_back(SmilesToMol(getSmilesOnly(i)));
   }
   t0 = nanoClock();
@@ -1151,7 +1151,7 @@ void testTarget_no_10188_49064() {
       "CN1CCN(C(=O)c2ccc(Nc3ncc4cc(-c5c(Cl)cccc5Cl)c(=O)n(C)c4n3)cc2)CC1",
   };
   // clang-format on
-  for (auto& i : smi) {
+  for (auto &i : smi) {
     mols.emplace_back(SmilesToMol(getSmilesOnly(i)));
   }
   t0 = nanoClock();
@@ -1161,7 +1161,7 @@ void testTarget_no_10188_49064() {
   printTime();
 }
 
-void testCmndLineSMILES(int argc, const char* argv[]) {
+void testCmndLineSMILES(int argc, const char *argv[]) {
   std::vector<ROMOL_SPTR> mols;
   for (int i = 1; i < argc; i++) {
     mols.emplace_back(SmilesToMol(argv[i]));
@@ -1172,13 +1172,13 @@ void testCmndLineSMILES(int argc, const char* argv[]) {
   printTime();
 }
 
-double testFileSDF(const char* test) {
+double testFileSDF(const char *test) {
   std::cout << "\ntestFileSDF(): " << test << "\n";
   std::vector<ROMOL_SPTR> mols;
   std::string fn(test);
   RDKit::SDMolSupplier suppl(fn);
   while (!suppl.atEnd()) {
-    ROMol* m = suppl.next();
+    ROMol *m = suppl.next();
     if (m) {
       mols.emplace_back(m);
     }
@@ -1193,15 +1193,15 @@ double testFileSDF(const char* test) {
 }
 
 void testFileSDF_RandomSet_SMI(
-    const char* path = "benchmark",
-    const char* test = "chembl13-10000-random-pairs.sdf") {
+    const char *path = "benchmark",
+    const char *test = "chembl13-10000-random-pairs.sdf") {
   p.Timeout = 60;
   p.Verbose = false;
   // unsigned long long To = nanoClock();
 
   std::cout << "\ntestFileSDF_RandomSet(): " << path << "/" << test << "\n";
   std::vector<ROMOL_SPTR> mols;
-  FILE* fcsv =
+  FILE *fcsv =
       fopen((std::string(path) + "_" + test + ".SMI.C.csv").c_str(), "wt");
   fprintf(fcsv,
           "test;Nmols;status;t,sec;nAtoms;nBonds;C++ MCS; E status;E t,sec;E "
@@ -1212,7 +1212,7 @@ void testFileSDF_RandomSet_SMI(
   for (; fileExist; n++) {
     char smiName[256];
     sprintf(smiName, "%s/smiles/%s.%u.smi", path, test, n);
-    FILE* fsmi = fopen(smiName, "rt");
+    FILE *fsmi = fopen(smiName, "rt");
     if (!fsmi) {
       fileExist = false;
       break;
@@ -1251,8 +1251,8 @@ void testFileSDF_RandomSet_SMI(
   fclose(fcsv);
 }
 
-void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
-                           const char* path = "benchmark") {
+void testFileSDF_RandomSet(const char *test = "chembl13-10000-random-pairs.sdf",
+                           const char *path = "benchmark") {
   p.Timeout = 60;
   p.Verbose = false;
 
@@ -1261,17 +1261,17 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
   std::cout << "\ntestFileSDF_RandomSet(): " << path << "/" << test << "\n";
   std::vector<ROMOL_SPTR> mols;
   std::vector<ROMOL_SPTR> all_mols;
-  FILE* fall = fopen((std::string(path) + "_ALL.P.bat").c_str(), "at");
+  FILE *fall = fopen((std::string(path) + "_ALL.P.bat").c_str(), "at");
   fprintf(fall, "CALL %s\n",
           (std::string(path) + "_" + test + ".P.bat").c_str());
   fclose(fall);
-  FILE* fcmd = fopen((std::string(path) + "_" + test + ".P.bat").c_str(), "wt");
-  FILE* fcsv = fopen((std::string(path) + "_" + test + ".C.csv").c_str(), "wt");
+  FILE *fcmd = fopen((std::string(path) + "_" + test + ".P.bat").c_str(), "wt");
+  FILE *fcsv = fopen((std::string(path) + "_" + test + ".C.csv").c_str(), "wt");
   fprintf(fcsv,
           "test;Nmols;status;t,sec;nAtoms;nBonds;C++ MCS; E status;E t,sec;E "
           "nAtoms;E nBonds;E C++ MCS\n");
   std::string fn(std::string(path) + "/" + test);
-  RDKit::MolSupplier* suppl = nullptr;
+  RDKit::MolSupplier *suppl = nullptr;
   try {
     if ('f' == test[strlen(test) - 1]) {  // sdf file
       suppl = new RDKit::SDMolSupplier(fn);
@@ -1309,7 +1309,7 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
   for (; !suppl->atEnd(); n++) {
     char smiName[256];
     sprintf(smiName, "%s/smiles/%s.%u.smi", path, test, n);
-    FILE* fsmi = fopen(smiName, "wt");
+    FILE *fsmi = fopen(smiName, "wt");
     if (!fsmi) {
       std::cout << "ERROR: could not create SMI file " << smiName << "\n";
       delete suppl;
@@ -1317,7 +1317,7 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
       fclose(fcmd);
       return;
     }
-    ROMol* m = nullptr;
+    ROMol *m = nullptr;
     for (int i = 0; i < 2 && !suppl->atEnd(); i++) {  // load sequential pair
       m = suppl->next();
       if (m) {
@@ -1377,7 +1377,7 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
   for (; n <= N_RandomTests; n++) {
     char smiName[256];
     sprintf(smiName, "%s/smilesRAND/%s.%u.smi", path, test, n);
-    FILE* fsmi = fopen(smiName, "wt");
+    FILE *fsmi = fopen(smiName, "wt");
     fprintf(fcmd,
             "fmcs_bench.py --id %u --timeout %u --threshold %.2f %s >>%s\n", n,
             p.Timeout, p.Threshold, smiName,
@@ -1427,7 +1427,7 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
   std::cout << "\n****** BIG MCS RANDOM SET test *********\n\n";
 
   unsigned int maxMol = 0;
-  for (auto& all_mol : all_mols) {
+  for (auto &all_mol : all_mols) {
     if (maxMol < all_mol->getNumBonds()) {
       maxMol = all_mol->getNumBonds();
     }
@@ -1501,7 +1501,7 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
       }
     }
     if (res.NumBonds >= SizeOfBigMCS_ForBigRandomTests && res.isCompleted()) {
-      FILE* fsmi = fopen(smiName, "wt");
+      FILE *fsmi = fopen(smiName, "wt");
       for (size_t i = 0; i < mols.size(); i++) {  // load random set
         fprintf(fsmi, "%s Mol%u\n", MolToSmiles(*mols[i]).c_str(),
                 rdcast<unsigned int>(n + i));
@@ -1533,11 +1533,11 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
   printTime();
 }
 
-void testFileSMILES(const char* test) {
+void testFileSMILES(const char *test) {
   std::vector<ROMOL_SPTR> mols;
   char smiles[4096];
   unsigned int n = 0;
-  FILE* f = fopen(test, "rt");
+  FILE *f = fopen(test, "rt");
   std::cout << "Loading SMILES ... \n";
   while (fgets(smiles, sizeof(smiles), f)) {
     std::cout << "\rLine: " << ++n << " ";
@@ -1562,7 +1562,7 @@ void testFileSMILES(const char* test) {
 
 void testGregSDFFileSetFiltered() {
   const std::string sdf_dir("Greg'sComparision/data/filtered/");
-  const char* sdf[] = {
+  const char *sdf[] = {
       // fmcs: 	0.11		27	29
       // beta2_adrenergic_aid465635.filtered.sdf
       // O=C(O)C1:C:C:C(C2:C:C:C(CCNCC(O)C3:C:C:C:C:C:3):C:C:2):C:C:1
@@ -1619,7 +1619,7 @@ void testGregSDFFileSetFiltered() {
   };
 
   double totalT = 0.;
-  for (auto& i : sdf) {
+  for (auto &i : sdf) {
     totalT += testFileSDF((sdf_dir + i).c_str());
   }
   printf(
@@ -1630,7 +1630,7 @@ void testGregSDFFileSetFiltered() {
 //====================================================================================================
 //====================================================================================================
 
-int main(int argc, const char* argv[]) {
+int main(int argc, const char *argv[]) {
   p.Verbose = true;
 
 // use maximum CPU resources to increase time measuring accuracy and stability
@@ -1697,7 +1697,7 @@ int main(int argc, const char* argv[]) {
   return 0;
 
   {
-    RWMol* m = SmilesToMol(
+    RWMol *m = SmilesToMol(
         "[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#7]-[#6]2:[#6]:[#6]:[#6]3:[#6](:[#"
         "6]:2):[#7]:[#7]:[#6]:3-[#6]4:[#6]:[#6]:[#6]:[#6]:[#6]:4");
 #ifdef _DEBUG  // check memory leaks
@@ -1762,7 +1762,7 @@ int main(int argc, const char* argv[]) {
     switch (argv[1][1]) {  // ./test -s|m|b <filename with test files list>
       case 's': {          // smiles files list
         char test[256];
-        FILE* f = fopen(argv[2], "rt");
+        FILE *f = fopen(argv[2], "rt");
         while (fgets(test, sizeof(test), f)) {
           testFileSMILES(test);
         }
@@ -1770,7 +1770,7 @@ int main(int argc, const char* argv[]) {
       } break;
       case 'm': {  // SDF mol files list
         char test[256];
-        FILE* f = fopen(argv[2], "rt");
+        FILE *f = fopen(argv[2], "rt");
         while (fgets(test, sizeof(test), f)) {
           testFileSDF(test);
         }

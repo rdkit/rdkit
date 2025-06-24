@@ -28,6 +28,12 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+#ifdef RDK_TEST_MULTITHREADED
+#include <csignal>
+#include <thread>
+#include <chrono>
+#endif
+
 using namespace RDKit;
 
 TEST_CASE("Torsions not found in fused macrocycles", "[macrocycles]") {
@@ -187,31 +193,54 @@ TEST_CASE("update parameters from JSON") {
 TEST_CASE(
     "github #4346: Specified cis/trans stereo being ignored during "
     "conformation generation in macrocycles") {
+  auto useLegacy = GENERATE(true, false);
+  UseLegacyStereoPerceptionFixture fx(useLegacy);
+  CAPTURE(useLegacy);
   SECTION("basics 1") {
     auto m1 = "C1C/C=C/CCCCCCCC1"_smiles;
     REQUIRE(m1);
-    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
-          Bond::BondStereo::STEREOE);
+    if (useLegacy) {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+    } else {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+    }
     MolOps::addHs(*m1);
     DGeomHelpers::EmbedParameters params = DGeomHelpers::KDG;
     params.randomSeed = 0xf00d;
     CHECK(DGeomHelpers::EmbedMolecule(*m1, params) != -1);
     MolOps::assignStereochemistryFrom3D(*m1);
-    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
-          Bond::BondStereo::STEREOE);
+    if (useLegacy) {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+    } else {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+    }
   }
   SECTION("basics 2") {
     auto m1 = "C1C/C=C\\CCCCCCCC1"_smiles;
     REQUIRE(m1);
-    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
-          Bond::BondStereo::STEREOZ);
+    if (useLegacy) {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOZ);
+    } else {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOCIS);
+    }
     MolOps::addHs(*m1);
     DGeomHelpers::EmbedParameters params = DGeomHelpers::KDG;
     params.randomSeed = 0xf00d;
     CHECK(DGeomHelpers::EmbedMolecule(*m1, params) != -1);
     MolOps::assignStereochemistryFrom3D(*m1);
-    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
-          Bond::BondStereo::STEREOZ);
+    if (useLegacy) {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOZ);
+    } else {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOCIS);
+    }
   }
 }
 TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
@@ -244,7 +273,8 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
     }
 
     {
-      auto m = "Cl[Pt@SP1]([35Cl])[36Cl]"_smiles;
+      // Cl[Pt@SP1]([35Cl])([36Cl])* => Cl[Pt@SP3](*)([35Cl])[36Cl]
+      auto m = "Cl[Pt@SP3]([35Cl])[36Cl]"_smiles;
       REQUIRE(m);
       CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
                                            m->getAtomWithIdx(0))
@@ -595,7 +625,8 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
 
 TEST_CASE("tracking failure causes") {
   SECTION("basics") {
-    auto mol = "O=c2cc3CCc1ccc(cc1Br)CCc2c(O)c3=O"_smiles;
+    auto mol =
+        "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
     REQUIRE(mol);
     MolOps::addHs(*mol);
     DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
@@ -603,10 +634,9 @@ TEST_CASE("tracking failure causes") {
     ps.maxIterations = 50;
     ps.randomSeed = 42;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-    CHECK(cid == 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 2);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] == 5);
-
+    CHECK(cid < 0);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
     auto fail_cp = ps.failures;
     // make sure we reset the counts each time
     cid = DGeomHelpers::EmbedMolecule(*mol, ps);
@@ -750,8 +780,8 @@ TEST_CASE("Macrocycle bounds matrix") {
     const auto conf = mol->getConformer(cid);
     RDGeom::Point3D pos_1 = conf.getAtomPos(1);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
-    CHECK((pos_1 - pos_4).length() < 3.9);
-    CHECK((pos_1 - pos_4).length() > 3.8);
+    CHECK((pos_1 - pos_4).length() < 3.61);
+    CHECK((pos_1 - pos_4).length() > 3.5);
   }
 }
 
@@ -992,5 +1022,227 @@ TEST_CASE("github #7552") {
       MolOps::addHs(*mol);
       CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == 0);
     }
+  }
+}
+
+TEST_CASE("No overlapping atoms") {
+  auto ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 1;
+  ps.enableSequentialRandomSeeds = true;
+  auto mol = "COc1cc2cc(OC)c1OCCOC[C@H](C)OC(=O)[C@@H]CNC(=O)[C@H]2"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+  DGeomHelpers::setTopolBounds(*mol, bm, true, false, true);
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
+  CHECK(cids.size() == 10);
+  for (const auto &cid : cids) {
+    CHECK(cid >= 0);
+    const auto conf = mol->getConformer(cid);
+    for (unsigned int i = 1; i < mol->getNumAtoms(); ++i) {
+      for (unsigned int j = 0; j < i; ++j) {
+        const auto minDist = bm->getLowerBound(i, j);
+        const auto length = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
+        CHECK((minDist - length) < .375);
+      }
+    }
+  }
+}
+
+TEST_CASE("github #8001: RMS pruning misses conformers") {
+  auto mol = "OCCCCCCC"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::KDG;
+  ps.randomSeed = 1;
+  ps.pruneRmsThresh = 0.5;
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
+  CHECK(cids.size() == 88);
+  ps.pruneRmsThresh = 1.0;
+  cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
+  CHECK(cids.size() == 4);
+}
+
+#ifdef RDK_TEST_MULTITHREADED
+
+using namespace std::chrono_literals;
+TEST_CASE("test interrupt") {
+  auto mol = "OCCCCCCCCCCCCCCCCCCCCCC"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 1;
+  ps.numThreads = 8;
+  std::vector<int> cids;
+  // one thread for conformer generation
+  std::thread cgThread(
+      [&]() { cids = DGeomHelpers::EmbedMultipleConfs(*mol, 1000, ps); });
+  // another thread to raise SIGINT
+  std::thread interruptThread([]() {
+    // sleep for a bit to make sure the conformer generation has made some
+    // progress
+    std::this_thread::sleep_for(500ms);
+    std::raise(SIGINT);
+  });
+  cgThread.join();
+  interruptThread.join();
+  CHECK(cids.empty());
+}
+
+#endif
+
+TEST_CASE("github #8250: Seg fault in EmbedMultipleConfs") {
+  auto mol = R"CTAB(segmentation_fault
+     RDKit          3D
+
+ 14 16  0  0  1  0  0  0  0  0999 V2000
+   -2.6383   -1.3457   -2.3147 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -2.6416    0.2493   -2.4783 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -1.4682    0.5200    0.1489 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1790   -1.5540   -0.8344 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7790    3.4105   -1.7076 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0867    2.1687   -1.5159 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -2.2251   -0.8303   -3.3823 N   0  0  0  0  0  2  0  0  0  0  0  0
+   -1.3466    1.1554   -2.5476 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6987   -0.4961   -0.2729 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2293   -2.6650   -2.6584 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3198   -2.6432   -0.3452 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3334    1.7234   -0.1738 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1653   -0.2280    0.9964 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7484    0.9579   -2.1397 O   0  0  0  0  0  1  0  0  0  0  0  0
+  1 10  1  6
+  1  4  1  0
+  2  1  1  0
+  2 14  1  6
+  3  9  1  0
+  3 13  1  1
+  4 11  2  0
+  4  9  1  0
+  6  5  1  6
+ 12  6  1  0
+  7  2  1  0
+  7  1  1  0
+  8  2  1  0
+  8  6  1  0
+  9 13  1  0
+ 12  3  1  0
+M  RAD  2   7   2  14   2
+M  END)CTAB"_ctab;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 0xf00d;
+  // with the bug, this would segfault
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
+  CHECK(cids.size() == 10);
+}
+
+TEST_CASE("allenes and cumulenes") {
+  SECTION("allene") {
+    auto m = "C=C=C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+    CHECK(cid >= 0);
+    auto conf = m->getConformer(cid);
+    {
+      auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
+      auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+  }
+  SECTION("cumulene") {
+    auto m = "C=C=C=C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+    CHECK(cid >= 0);
+    auto conf = m->getConformer(cid);
+    {
+      auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
+      auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+    {
+      auto v1 = conf.getAtomPos(1) - conf.getAtomPos(2);
+      auto v2 = conf.getAtomPos(3) - conf.getAtomPos(2);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+  }
+  SECTION("azide") {
+    auto m = "CN=[N+]=[N-]"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+    CHECK(cid >= 0);
+    auto conf = m->getConformer(cid);
+    {
+      auto v1 = conf.getAtomPos(1) - conf.getAtomPos(2);
+      auto v2 = conf.getAtomPos(3) - conf.getAtomPos(2);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+  }
+}
+
+namespace RDKit {
+namespace DGeomHelpers {
+namespace EmbeddingOps {
+RDKIT_DISTGEOMHELPERS_EXPORT void findDoubleBonds(
+    const ROMol &mol,
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        &doubleBondEnds,
+    std::vector<std::pair<std::vector<unsigned int>, int>> &stereoDoubleBonds,
+    const std::map<int, RDGeom::Point3D> *coordMap);
+}
+}  // namespace DGeomHelpers
+}  // namespace RDKit
+
+TEST_CASE("FindDoubleBonds") {
+  SECTION("Allene") {
+    auto m = "C=C=C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        doubleBondEnds;
+    std::vector<std::pair<std::vector<unsigned int>, int>> stereoDoubleBonds;
+    DGeomHelpers::EmbeddingOps::findDoubleBonds(*m, doubleBondEnds,
+                                                stereoDoubleBonds, nullptr);
+    // This is 4, we still have two double bonds to Hydrogens on each
+    // side that should not be linear but the C=C=C should be, so not 5.
+    CHECK(doubleBondEnds.size() == 4);
+    CHECK(stereoDoubleBonds.empty());
+  }
+  SECTION("Sulfone") {
+    auto m = "CS(=O)(=O)C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        doubleBondEnds;
+    std::vector<std::pair<std::vector<unsigned int>, int>> stereoDoubleBonds;
+    DGeomHelpers::EmbeddingOps::findDoubleBonds(*m, doubleBondEnds,
+                                                stereoDoubleBonds, nullptr);
+    // We want 6 and not 4, the angle between O=S=O should not be linear
+    // (the current implementation counts it twice, hence not 5).
+    CHECK(doubleBondEnds.size() == 6);
+    CHECK(stereoDoubleBonds.empty());
+  }
+}
+
+TEST_CASE("Github #8559: seg fault in setTopolBounds") {
+  SECTION("as reported") {
+    auto mol =
+        "CC1CN([C@H]2C[C@H](O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CCC(N)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(O)NC(N)NC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(O)NC(N)NC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CCC(N)NC4O)C[C@@H]3O)[C@@H](CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO)O2)C(O)NC1O"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
   }
 }

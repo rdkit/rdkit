@@ -14,7 +14,6 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
-#include <iostream>
 
 namespace RDKit {
 
@@ -25,7 +24,8 @@ struct RDKIT_FILEPARSERS_EXPORT MolWriterParams {
                                    it is written*/
   bool forceV3000 = false;    /**< force generation a V3000 mol block (happens
                                    automatically with more than 999 atoms or
-                                   bonds)*/
+                                   bond or if the magnitude of the coordinates
+                                   are too large)*/
   unsigned int precision = 6; /**< precision of coordinates (only available in
                                    V3000)*/
 };

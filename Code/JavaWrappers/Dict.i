@@ -36,6 +36,7 @@
 %}
 
 %ignore RDKit::Dict::Pair;
+%ignore RDKit::PairHolder;
 %include <RDGeneral/Dict.h>
 
 

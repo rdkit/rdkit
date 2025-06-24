@@ -30,7 +30,7 @@ void test1() {
   BOOST_LOG(rdInfoLog) << "test1: basics" << std::endl;
 #if 1
   {
-    ROMol* m = SmilesToMol("c1cc(CC)cnc1CC(=O)O");
+    ROMol *m = SmilesToMol("c1cc(CC)cnc1CC(=O)O");
     TEST_ASSERT(m);
     m->setProp("_Name", "test1");
 
@@ -43,7 +43,7 @@ void test1() {
   {
     // ROMol* m = SmilesToMol("c1ccncc1");
 
-    ROMol* m = SmilesToMol("ClC(O)(F)C");
+    ROMol *m = SmilesToMol("ClC(O)(F)C");
     TEST_ASSERT(m);
     m->setProp("_Name", "test2");
 
@@ -55,7 +55,7 @@ void test1() {
   }
 
   {
-    ROMol* m = SmilesToMol(
+    ROMol *m = SmilesToMol(
         "CC[C@H]1C(=O)N(CC(=O)N([C@H](C(=O)N[C@H](C(=O)N([C@H](C(=O)N[C@H](C(="
         "O)N[C@@H](C(=O)N([C@H](C(=O)N([C@H](C(=O)N([C@H](C(=O)N([C@H](C(=O)N1)"
         "[C@@H]([C@H](C)C/C=C/"
@@ -73,7 +73,7 @@ void test1() {
   {
     // ROMol* m = SmilesToMol("c1ccncc1");
 
-    ROMol* m = SmilesToMol("CCCNC=CNCOC=CC=CC=COC");
+    ROMol *m = SmilesToMol("CCCNC=CNCOC=CC=CC=COC");
     TEST_ASSERT(m);
     m->setProp("_Name", "single-double");
 
@@ -86,7 +86,7 @@ void test1() {
 #endif
 
   {
-    ROMol* m = SmilesToMol("O/C=C/C=C/C=C\\C=C/N");
+    ROMol *m = SmilesToMol("O/C=C/C=C/C=C\\C=C/N");
     TEST_ASSERT(m);
     m->setProp("_Name", "cis-trans");
 
@@ -98,7 +98,7 @@ void test1() {
   }
 
   {
-    ROMol* m = SmilesToMol("C1C3CC2CC(CC1C2)C3");
+    ROMol *m = SmilesToMol("C1C3CC2CC(CC1C2)C3");
     TEST_ASSERT(m);
     m->setProp("_Name", "admntn");
 
@@ -112,7 +112,7 @@ void test1() {
   {
     SmilesParserParams params;
     params.removeHs = false;
-    ROMol* m = SmilesToMol(
+    ROMol *m = SmilesToMol(
         "[H]C([H])=C1C#C/C2=C(/C#C/C3=C(\\C#CC2=C([H])[H])C(=C([H])[H])C#CCC(=C=O)C#C3)C(=C([H])[H])C#CC(=O)C1=C([H])[H]",
         params);
     TEST_ASSERT(m);
@@ -129,7 +129,7 @@ void test1() {
 }
 
 namespace {
-bool compareConfs(const ROMol* m, ROMol* templ, const MatchVectType& mv,
+bool compareConfs(const ROMol *m, ROMol *templ, const MatchVectType &mv,
                   bool alignFirst = false, int molConfId = -1,
                   int templateConfId = -1, double postol = 1e-2,
                   double rmstol = 0.1) {
@@ -145,8 +145,8 @@ bool compareConfs(const ROMol* m, ROMol* templ, const MatchVectType& mv,
     }
   }
 
-  const Conformer& conf1 = m->getConformer(molConfId);
-  const Conformer& conf2 = templ->getConformer(templateConfId);
+  const Conformer &conf1 = m->getConformer(molConfId);
+  const Conformer &conf2 = templ->getConformer(templateConfId);
   for (unsigned int i = 0; i < templ->getNumAtoms(); i++) {
     TEST_ASSERT(m->getAtomWithIdx(mv[i].second)->getAtomicNum() ==
                 templ->getAtomWithIdx(mv[i].first)->getAtomicNum());
@@ -166,7 +166,7 @@ void test2() {
   BOOST_LOG(rdInfoLog) << "test2: using templates" << std::endl;
 
   {
-    ROMol* core = SmilesToMol("C1CON1");
+    ROMol *core = SmilesToMol("C1CON1");
     TEST_ASSERT(core);
     core->setProp("_Name", "core");
 
@@ -175,7 +175,7 @@ void test2() {
     auto mb = MolToMolBlock(*core);
     std::cerr << mb << std::endl;
 
-    ROMol* m = SmilesToMol("C1C(CCC)ON1");
+    ROMol *m = SmilesToMol("C1C(CCC)ON1");
     TEST_ASSERT(m);
     m->setProp("_Name", "core+sidechain");
 
@@ -191,7 +191,7 @@ void test2() {
     {
       auto coreConf = core->getConformer();
       RDGeom::INT_POINT2D_MAP coordMap;
-      for (auto& i : mv) {
+      for (auto &i : mv) {
         coordMap[i.second] = RDGeom::Point2D(coreConf.getAtomPos(i.first).x,
                                              coreConf.getAtomPos(i.first).y);
       }
@@ -221,7 +221,7 @@ void test2() {
   }
 
   {
-    ROMol* core = SmilesToMol("C1CCCCCONCN1");
+    ROMol *core = SmilesToMol("C1CCCCCONCN1");
     TEST_ASSERT(core);
     core->setProp("_Name", "core");
 
@@ -230,7 +230,7 @@ void test2() {
     auto mb = MolToMolBlock(*core);
     std::cerr << mb << std::endl;
 
-    ROMol* m = SmilesToMol("C1CCCCONC(CC)NC1");
+    ROMol *m = SmilesToMol("C1CCCCONC(CC)NC1");
     TEST_ASSERT(m);
     m->setProp("_Name", "core+sidechain");
 
@@ -246,7 +246,7 @@ void test2() {
     {
       auto coreConf = core->getConformer();
       RDGeom::INT_POINT2D_MAP coordMap;
-      for (auto& i : mv) {
+      for (auto &i : mv) {
         coordMap[i.second] = RDGeom::Point2D(coreConf.getAtomPos(i.first).x,
                                              coreConf.getAtomPos(i.first).y);
       }
@@ -277,7 +277,7 @@ void test2() {
   }
 
   {
-    ROMol* core = SmilesToMol("C1CCCCCONCN1");
+    ROMol *core = SmilesToMol("C1CCCCCONCN1");
     TEST_ASSERT(core);
     core->setProp("_Name", "core");
 
@@ -286,7 +286,7 @@ void test2() {
     auto mb = MolToMolBlock(*core);
     std::cerr << mb << std::endl;
 
-    ROMol* m = SmilesToMol("C1CCCCONC(CCCCCC)NC1");
+    ROMol *m = SmilesToMol("C1CCCCONC(CCCCCC)NC1");
     TEST_ASSERT(m);
     m->setProp("_Name", "core+sidechain");
 
@@ -302,7 +302,7 @@ void test2() {
     {
       auto coreConf = core->getConformer();
       RDGeom::INT_POINT2D_MAP coordMap;
-      for (auto& i : mv) {
+      for (auto &i : mv) {
         coordMap[i.second] = RDGeom::Point2D(coreConf.getAtomPos(i.first).x,
                                              coreConf.getAtomPos(i.first).y);
       }
@@ -333,7 +333,7 @@ void test2() {
   }
 
   {
-    ROMol* core = SmilesToMol("C1CCCC2C1NCC2");
+    ROMol *core = SmilesToMol("C1CCCC2C1NCC2");
     TEST_ASSERT(core);
     core->setProp("_Name", "core");
 
@@ -342,7 +342,7 @@ void test2() {
     auto mb = MolToMolBlock(*core);
     std::cerr << mb << std::endl;
 
-    ROMol* m = SmilesToMol("C1C(CCC)CC(CC3CC3)C2C1N(C(C)C)CC2");
+    ROMol *m = SmilesToMol("C1C(CCC)CC(CC3CC3)C2C1N(C(C)C)CC2");
     TEST_ASSERT(m);
     m->setProp("_Name", "core+sidechain");
 
@@ -372,7 +372,7 @@ void test2() {
   }
 
   {
-    ROMol* core = SmilesToMol("CC(N)CC");
+    ROMol *core = SmilesToMol("CC(N)CC");
     TEST_ASSERT(core);
     core->setProp("_Name", "core");
 
@@ -381,7 +381,7 @@ void test2() {
     auto mb = MolToMolBlock(*core);
     std::cerr << mb << std::endl;
 
-    ROMol* m = SmilesToMol("CC(N)CC(O)C");
+    ROMol *m = SmilesToMol("CC(N)CC(O)C");
     TEST_ASSERT(m);
     m->setProp("_Name", "core+sidechain");
 
@@ -420,7 +420,7 @@ void testGithub1929() {
       << "testing github1929: make sure coordgen works with bogus file names"
       << std::endl;
   {
-    ROMol* m = SmilesToMol("c1cc(CC)cnc1CC(=O)O");
+    ROMol *m = SmilesToMol("c1cc(CC)cnc1CC(=O)O");
     TEST_ASSERT(m);
     m->setProp("_Name", "test1");
     CoordGen::CoordGenParams params;
@@ -567,7 +567,7 @@ M  END
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();

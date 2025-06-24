@@ -23,7 +23,11 @@ double calculateCosTorsion(const RDGeom::Point3D &p1, const RDGeom::Point3D &p2,
   RDGeom::Point3D r1 = p1 - p2, r2 = p3 - p2, r3 = p2 - p3, r4 = p4 - p3;
   RDGeom::Point3D t1 = r1.crossProduct(r2);
   RDGeom::Point3D t2 = r3.crossProduct(r4);
-  double d1 = t1.length(), d2 = t2.length();
+  double d1 = t1.length();
+  double d2 = t2.length();
+  if (isDoubleZero(d1) || isDoubleZero(d2)) {
+    return 0.0;
+  }
   double cosPhi = t1.dotProduct(t2) / (d1 * d2);
   clipToOne(cosPhi);
   return cosPhi;
@@ -234,15 +238,6 @@ void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
 
   // dE/dPhi is independent of cartesians:
   double dE_dPhi = getThetaDeriv(cosPhi, sinPhi);
-#if 0
-      if(dE_dPhi!=dE_dPhi){
-        std::cout << "\tNaN in Torsion("<<d_at1Idx<<","<<d_at2Idx<<","<<d_at3Idx<<","<<d_at4Idx<<")"<< std::endl;
-        std::cout << "sin: " << sinPhi << std::endl;
-        std::cout << "cos: " << cosPhi << std::endl;
-      }
-
-#endif
-
   double sinTerm =
       dE_dPhi * (isDoubleZero(sinPhi) ? (1.0 / cosPhi) : (1.0 / sinPhi));
 

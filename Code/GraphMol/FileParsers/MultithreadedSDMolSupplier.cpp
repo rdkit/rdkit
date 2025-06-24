@@ -21,7 +21,6 @@ MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
   dp_inStream = openAndCheckStream(fileName);
   initFromSettings(true, params, parseParams);
   POSTCONDITION(dp_inStream, "bad instream");
-  startThreads();
 }
 
 MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
@@ -31,13 +30,11 @@ MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
   dp_inStream = inStream;
   initFromSettings(takeOwnership, params, parseParams);
   POSTCONDITION(dp_inStream, "bad instream");
-  startThreads();
 }
 
 MultithreadedSDMolSupplier::MultithreadedSDMolSupplier() {
   dp_inStream = nullptr;
   initFromSettings(false, d_params, d_parseParams);
-  startThreads();
 }
 
 void MultithreadedSDMolSupplier::initFromSettings(
@@ -47,24 +44,25 @@ void MultithreadedSDMolSupplier::initFromSettings(
   d_params = params;
   d_parseParams = parseParams;
   d_params.numWriterThreads = getNumThreadsToUse(params.numWriterThreads);
-  d_inputQueue =
+  d_inputQueue.reset(
       new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
-          d_params.sizeInputQueue);
-  d_outputQueue =
+          d_params.sizeInputQueue));
+  d_outputQueue.reset(
       new ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>(
-          d_params.sizeOutputQueue);
+          d_params.sizeOutputQueue));
 
   df_end = false;
   d_line = 0;
   df_processPropertyLists = true;
 }
 
-MultithreadedSDMolSupplier::~MultithreadedSDMolSupplier() {
+void MultithreadedSDMolSupplier::closeStreams() {
   if (df_owner && dp_inStream) {
     delete dp_inStream;
     df_owner = false;
     dp_inStream = nullptr;
   }
+  df_started = false; // this is in the base constructor
 }
 
 // ensures that there is a line available to be read
@@ -134,6 +132,11 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
       this->checkForEnd();
     }
   }
+
+  // ignore trailing new lines
+  if(record.find_first_not_of("\n\r") == std::string::npos)
+    return false;
+  
   index = d_currentRecordId;
   ++d_currentRecordId;
   return true;

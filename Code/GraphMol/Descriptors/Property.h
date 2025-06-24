@@ -59,7 +59,9 @@ struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
   virtual ~PropertyFunctor() {}
 
   //! Compute the value of the property
-  virtual double operator()(const RDKit::ROMol &) const = 0;
+  virtual double operator()(const RDKit::ROMol &mol) const {
+    return (*d_dataFunc)(mol);
+  }
 
   //! Return the name of the property
   const std::string getName() const { return propName; }
@@ -83,6 +85,7 @@ class RDKIT_DESCRIPTORS_EXPORT Properties {
 
   //! Register a property function - takes ownership
   static int registerProperty(PropertyFunctor *ptr);
+  static int registerProperty(boost::shared_ptr<PropertyFunctor> prop);
   static boost::shared_ptr<PropertyFunctor> getProperty(
       const std::string &name);
   static std::vector<std::string> getAvailableProperties();

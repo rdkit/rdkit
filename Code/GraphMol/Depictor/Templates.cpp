@@ -13,8 +13,8 @@
 #include "RDDepictor.h"
 
 namespace RDDepict {
-void CoordinateTemplates::assertValidTemplate(RDKit::ROMol& mol,
-                                              const std::string& smiles) {
+void CoordinateTemplates::assertValidTemplate(RDKit::ROMol &mol,
+                                              const std::string &smiles) {
   // template must have 2D coordinates
   if (mol.getNumConformers() == 0) {
     std::string msg = "Template missing coordinates: " + smiles;
@@ -50,9 +50,9 @@ void CoordinateTemplates::assertValidTemplate(RDKit::ROMol& mol,
 }
 
 void CoordinateTemplates::loadTemplatesFromPath(
-    const std::string& templatePath,
-    std::unordered_map<unsigned int,
-                       std::vector<std::shared_ptr<RDKit::ROMol>>>& templates) {
+    const std::string &templatePath,
+    std::unordered_map<unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>>
+        &templates) {
   std::ifstream cxsmiles(templatePath);
   if (!cxsmiles) {
     std::string msg = "Could not open file " + templatePath;
@@ -63,7 +63,7 @@ void CoordinateTemplates::loadTemplatesFromPath(
   // templates
   std::string line;
   while (std::getline(cxsmiles, line)) {
-    RDKit::ROMol* mol_ptr = RDKit::SmilesToMol(line);
+    RDKit::ROMol *mol_ptr = RDKit::SmilesToMol(line);
     if (!mol_ptr) {
       std::string msg =
           "Could not load templates from " + templatePath + ": Invalid smiles";
@@ -73,7 +73,7 @@ void CoordinateTemplates::loadTemplatesFromPath(
     std::shared_ptr<RDKit::ROMol> mol(mol_ptr);
     try {
       assertValidTemplate(*mol, line);
-    } catch (RDDepict::DepictException& e) {
+    } catch (RDDepict::DepictException &e) {
       cxsmiles.close();
       throw e;
     }
@@ -83,7 +83,7 @@ void CoordinateTemplates::loadTemplatesFromPath(
 }
 
 void CoordinateTemplates::setRingSystemTemplates(
-    const std::string& templatePath) {
+    const std::string &templatePath) {
   // Try loading templates in from this directory, if unsuccessful, keep current
   // templates
   std::unordered_map<unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>>
@@ -94,13 +94,13 @@ void CoordinateTemplates::setRingSystemTemplates(
 }
 
 void CoordinateTemplates::addRingSystemTemplates(
-    const std::string& templatePath) {
+    const std::string &templatePath) {
   // Try loading templates in from this directory, if unsuccessful, keep current
   // templates
   std::unordered_map<unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>>
       templates;
   loadTemplatesFromPath(templatePath, templates);
-  for (auto& kv : templates) {
+  for (auto &kv : templates) {
     m_templates[kv.first].insert(m_templates[kv.first].begin(),
                                  kv.second.begin(), kv.second.end());
   }

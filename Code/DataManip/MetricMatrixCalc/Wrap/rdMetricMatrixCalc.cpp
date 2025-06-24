@@ -30,6 +30,27 @@ void wrap_MMcalc();
 namespace python = boost::python;
 namespace RDDataManip {
 
+template <typename T>
+class PyObjectManager : public boost::noncopyable {
+ public:
+  PyObjectManager() = default;
+
+  PyObjectManager(T *obj) : d_obj(obj) {}
+
+  ~PyObjectManager() { Py_XDECREF((PyObject *)d_obj); }
+
+  PyObjectManager &operator=(T *obj) {
+    Py_XDECREF((PyObject *)d_obj);
+    d_obj = obj;
+    return *this;
+  }
+  T *get() { return d_obj; }
+  T *release() { return std::exchange(d_obj, nullptr); }
+
+ private:
+  T *d_obj = nullptr;
+};
+
 PyObject *getEuclideanDistMat(python::object descripMat) {
   // Bit of a pain involved here, we accept three types of PyObjects here
   // 1. A Numeric Array
@@ -61,7 +82,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
 
   // first deal with situation where we have an Numeric Array
   PyObject *descMatObj = descripMat.ptr();
-  PyArrayObject *distRes;
+  PyObjectManager<PyArrayObject> distRes;
   if (PyArray_Check(descMatObj)) {
     // get the dimensions of the array
     int nrows = PyArray_DIM((PyArrayObject *)descMatObj, 0);
@@ -79,11 +100,12 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
     // grab a pointer to the data in the array so that we can directly put
     // values in there
     // and avoid copying :
-    auto *dMat = (double *)PyArray_DATA(distRes);
+    auto *dMat = (double *)PyArray_DATA(distRes.get());
 
-    PyArrayObject *copy;
-    copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-        descMatObj, PyArray_DESCR((PyArrayObject *)descMatObj)->type_num, 2, 2);
+    PyObjectManager<PyArrayObject> copy(
+        (PyArrayObject *)PyArray_ContiguousFromObject(
+            descMatObj, PyArray_DESCR((PyArrayObject *)descMatObj)->type_num, 2,
+            2));
     // if we have double array
     if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num == NPY_DOUBLE) {
       auto *desc = (double *)PyArray_DATA((PyArrayObject *)descMatObj);
@@ -93,49 +115,46 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
 
       // here is the 2D array trick this so that when the distance calaculator
       // asks for desc2D[i] we basically get the ith row as double*
-      auto **desc2D = new double *[nrows];
+      std::unique_ptr<double *[]> desc2D(new double *[nrows]);
       for (i = 0; i < nrows; i++) {
         desc2D[i] = desc;
         desc += ncols;
       }
       MetricMatrixCalc<double **, double *> mmCalc;
       mmCalc.setMetricFunc(&EuclideanDistanceMetric<double *, double *>);
-      mmCalc.calcMetricMatrix(desc2D, nrows, ncols, dMat);
+      mmCalc.calcMetricMatrix(desc2D.get(), nrows, ncols, dMat);
 
-      delete[] desc2D;
       // we got the distance matrix we are happy so return
-      return PyArray_Return(distRes);
+      return PyArray_Return(distRes.release());
     }
 
     // if we have a float array
     else if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num ==
              NPY_FLOAT) {
-      auto *desc = (float *)PyArray_DATA(copy);
-      auto **desc2D = new float *[nrows];
+      auto *desc = (float *)PyArray_DATA(copy.get());
+      std::unique_ptr<float *[]> desc2D(new float *[nrows]);
       for (i = 0; i < nrows; i++) {
         desc2D[i] = desc;
         desc += ncols;
       }
       MetricMatrixCalc<float **, float *> mmCalc;
       mmCalc.setMetricFunc(&EuclideanDistanceMetric<float *, float *>);
-      mmCalc.calcMetricMatrix(desc2D, nrows, ncols, dMat);
-      delete[] desc2D;
-      return PyArray_Return(distRes);
+      mmCalc.calcMetricMatrix(desc2D.get(), nrows, ncols, dMat);
+      return PyArray_Return(distRes.release());
     }
 
     // if we have an integer array
     else if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num == NPY_INT) {
-      int *desc = (int *)PyArray_DATA(copy);
-      auto **desc2D = new int *[nrows];
+      int *desc = (int *)PyArray_DATA(copy.get());
+      std::unique_ptr<int *[]> desc2D(new int *[nrows]);
       for (i = 0; i < nrows; i++) {
         desc2D[i] = desc;
         desc += ncols;
       }
       MetricMatrixCalc<int **, int *> mmCalc;
       mmCalc.setMetricFunc(&EuclideanDistanceMetric<int *, int *>);
-      mmCalc.calcMetricMatrix(desc2D, nrows, ncols, dMat);
-      delete[] desc2D;
-      return PyArray_Return(distRes);
+      mmCalc.calcMetricMatrix(desc2D.get(), nrows, ncols, dMat);
+      return PyArray_Return(distRes.release());
     } else {
       // unrecognized type for the matrix, throw up
       throw_value_error(
@@ -155,7 +174,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
 
     npy_intp dMatLen = nrows * (nrows - 1) / 2;
     distRes = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
-    auto *dMat = (double *)PyArray_DATA(distRes);
+    auto *dMat = (double *)PyArray_DATA(distRes.get());
 
     // assume that we a have a list of list of values (that can be extracted to
     // double)
@@ -179,7 +198,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
                                                   PySequenceHolder<double>>);
     mmCalc.calcMetricMatrix(dData, nrows, ncols, dMat);
   }
-  return PyArray_Return(distRes);
+  return PyArray_Return(distRes.release());
 }
 
 PyObject *getTanimotoDistMat(python::object bitVectList) {

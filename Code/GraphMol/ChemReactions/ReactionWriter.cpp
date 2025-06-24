@@ -93,7 +93,7 @@ std::string chemicalReactionTemplatesToString(
 
 std::string chemicalReactionToRxnToString(
     const RDKit::ChemicalReaction &rxn, bool toSmiles,
-    const RDKit::SmilesWriteParams &params) {
+    const RDKit::SmilesWriteParams &params, bool includeCX, std::uint32_t flags = RDKit::SmilesWrite::CXSmilesFields::CX_ALL) {
   std::string res = "";
   res +=
       chemicalReactionTemplatesToString(rxn, RDKit::Reactant, toSmiles, params);
@@ -102,6 +102,26 @@ std::string chemicalReactionToRxnToString(
   res += ">";
   res +=
       chemicalReactionTemplatesToString(rxn, RDKit::Product, toSmiles, params);
+
+
+  if (includeCX) {
+    std::vector<RDKit::ROMol *> mols;
+
+    // Collect reactants, agents, and products into mols vector
+    for (auto type : {RDKit::Reactant, RDKit::Agent, RDKit::Product}) {
+      for (auto begin = getStartIterator(rxn, type);
+           begin != getEndIterator(rxn, type); ++begin) {
+        mols.push_back((*begin).get());
+      }
+    }
+
+    auto ext = RDKit::SmilesWrite::getCXExtensions(mols, flags); 
+    if (!ext.empty()) {
+      res += " ";
+      res += ext;
+    }
+  }
+
   return res;
 }
 
@@ -123,13 +143,28 @@ namespace RDKit {
 //! returns the reaction SMARTS for a reaction
 std::string ChemicalReactionToRxnSmarts(const ChemicalReaction &rxn,
                                         const SmilesWriteParams &params) {
-  return chemicalReactionToRxnToString(rxn, false, params);
+  return chemicalReactionToRxnToString(rxn, false, params, false);
 };
 
 //! returns the reaction SMILES for a reaction
 std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
                                         const SmilesWriteParams &params) {
-  return chemicalReactionToRxnToString(rxn, true, params);
+  return chemicalReactionToRxnToString(rxn, true, params, false);
+};
+
+
+//! returns the reaction SMARTS for a reaction with CX extension
+std::string ChemicalReactionToCXRxnSmarts(const ChemicalReaction &rxn,
+                                        const SmilesWriteParams &params,
+                                        std::uint32_t flags) {
+  return chemicalReactionToRxnToString(rxn, false, params, true, flags);
+};
+
+//! returns the reaction SMILES for a reaction with CX extension
+std::string ChemicalReactionToCXRxnSmiles(const ChemicalReaction &rxn,
+                                        const SmilesWriteParams &params,
+                                        std::uint32_t flags) {
+  return chemicalReactionToRxnToString(rxn, true, params, true, flags);
 };
 
 //! returns an RXN block for a reaction

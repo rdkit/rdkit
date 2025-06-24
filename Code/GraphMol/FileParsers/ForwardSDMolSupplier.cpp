@@ -72,8 +72,9 @@ void ForwardSDMolSupplier::readMolProps(ROMol &mol) {
   std::string_view tempStr = inl;
 
   // FIX: report files missing the $$$$ marker
-  while (!dp_inStream->eof() && !dp_inStream->fail() && 
-         (tempStr.empty() || tempStr.at(0) != '$' || tempStr.substr(0, 4) != "$$$$")) {
+  while (!dp_inStream->eof() && !dp_inStream->fail() &&
+         (tempStr.empty() || tempStr.at(0) != '$' ||
+          tempStr.substr(0, 4) != "$$$$")) {
     tempStr = FileParserUtils::strip(tempStr);
     if (!tempStr.empty()) {
       if (tempStr.at(0) == '>') {  // data header line: start of a data item
@@ -116,19 +117,20 @@ void ForwardSDMolSupplier::readMolProps(ROMol &mol) {
           std::string prop = "";
           auto stmp = FileParserUtils::strip(tempStr);
           int nplines = 0;  // number of lines for this property
-          while (!stmp.empty() || (!tempStr.empty() && (tempStr.at(0) == ' ' ||
-							tempStr.at(0) == '\t'))) {
+          while (!stmp.empty() ||
+                 (!tempStr.empty() &&
+                  (tempStr.at(0) == ' ' || tempStr.at(0) == '\t'))) {
             nplines++;
             if (nplines > 1) {
               prop += "\n";
             }
             // take off \r if it's still in the property:
-	    if (!tempStr.empty()) {
-	      if (tempStr.back() == '\r') {
-		tempStr = tempStr.substr(0, tempStr.size() - 1);
-	      }
-	      prop += tempStr;
-	    }
+            if (!tempStr.empty()) {
+              if (tempStr.back() == '\r') {
+                tempStr = tempStr.substr(0, tempStr.size() - 1);
+              }
+              prop += tempStr;
+            }
             d_line++;
             // erase inl in case the file does not end with a carriage
             // return (we will end up in an infinite loop if we don't do
@@ -136,11 +138,11 @@ void ForwardSDMolSupplier::readMolProps(ROMol &mol) {
             inl.erase();
             std::getline(*dp_inStream, inl);
             tempStr = inl;
-	    if (tempStr.empty()) {
-	      stmp = tempStr;
-	    } else {
-	      stmp = FileParserUtils::strip(tempStr);
-	    }
+            if (tempStr.empty()) {
+              stmp = tempStr;
+            } else {
+              stmp = FileParserUtils::strip(tempStr);
+            }
           }
           mol.setProp(dlabel, prop);
           if (df_processPropertyLists) {
@@ -242,7 +244,8 @@ std::unique_ptr<RWMol> ForwardSDMolSupplier::_next() {
     d_line++;
     std::getline(*dp_inStream, tempStr);
     while (!dp_inStream->eof() && !dp_inStream->fail() &&
-           (tempStr.empty() || tempStr.at(0) != '$' || tempStr.substr(0, 4) != "$$$$")) {
+           (tempStr.empty() || tempStr.at(0) != '$' ||
+            tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
@@ -264,7 +267,8 @@ std::unique_ptr<RWMol> ForwardSDMolSupplier::_next() {
       df_eofHitOnRead = true;
     }
     while (!dp_inStream->eof() && !dp_inStream->fail() &&
-           (tempStr.empty() || tempStr.at(0) != '$' || tempStr.substr(0, 4) != "$$$$")) {
+           (tempStr.empty() || tempStr.at(0) != '$' ||
+            tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
@@ -286,7 +290,8 @@ std::unique_ptr<RWMol> ForwardSDMolSupplier::_next() {
       df_eofHitOnRead = true;
     }
     while (!dp_inStream->eof() && !dp_inStream->fail() &&
-           (tempStr.empty() || tempStr.at(0) != '$' || tempStr.substr(0, 4) != "$$$$")) {
+           (tempStr.empty() || tempStr.at(0) != '$' ||
+            tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }

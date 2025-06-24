@@ -169,8 +169,6 @@ python::object TQToBinary(const TautomerQuery &tq) {
 
 struct TautomerQuery_wrapper {
   static void wrap() {
-    RegisterVectorConverter<size_t>("UnsignedLong_Vect");
-
     auto docString =
         "The Tautomer Query Class.\n\
   Creates a query that enables structure search accounting for matching of\n\

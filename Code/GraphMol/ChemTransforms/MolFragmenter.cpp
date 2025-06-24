@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013-2018 Greg Landrum
+//  Copyright (C) 2013-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -304,10 +304,10 @@ void constructBRICSBondTypes(std::vector<FragmenterBondType> &defs) {
 }
 
 namespace {
-boost::uint64_t nextBitCombo(boost::uint64_t v) {
+std::uint64_t nextBitCombo(std::uint64_t v) {
   // code from:
   // http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation
-  boost::uint64_t t = (v | (v - 1)) + 1;
+  std::uint64_t t = (v | (v - 1)) + 1;
   return t | ((((t & -t) / (v & -v)) >> 1) - 1);
 }
 }  // namespace
@@ -318,7 +318,7 @@ void fragmentOnSomeBonds(
     const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels,
     const std::vector<Bond::BondType> *bondTypes,
     std::vector<std::vector<unsigned int>> *nCutsPerAtom) {
-  PRECONDITION((!dummyLabels || dummyLabels->size() == bondIndices.size()),
+  PRECONDITION((!dummyLabels || dummyLabels->size() >= bondIndices.size()),
                "bad dummyLabel vector");
   PRECONDITION((!bondTypes || bondTypes->size() == bondIndices.size()),
                "bad bondType vector");
@@ -329,8 +329,8 @@ void fragmentOnSomeBonds(
     return;
   }
 
-  boost::uint64_t state = (0x1L << maxToCut) - 1;
-  boost::uint64_t stop = 0x1L << bondIndices.size();
+  std::uint64_t state = (0x1L << maxToCut) - 1;
+  std::uint64_t stop = 0x1L << bondIndices.size();
   std::vector<unsigned int> fragmentHere(maxToCut);
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabelsHere = nullptr;
   if (dummyLabels) {
@@ -389,15 +389,10 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
       }
     }
   } else {
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(oAt);
-    while (beg != end) {
-      const Bond *obond = mol[*beg];
-      ++beg;
-      if (obond == bond) {
-        continue;
+    for (auto obond : mol.atomBonds(oAt)) {
+      if (obond != bond) {
+        newOrder.push_back(obond->getIdx());
       }
-      newOrder.push_back(obond->getIdx());
     }
   }
   newOrder.push_back(bond->getIdx());
@@ -413,19 +408,19 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
     nAt->invertChirality();
   }
 }
+constexpr const char *molfragSaveStereo = "_molfragSaveStereo";
 
 std::vector<std::pair<Bond *, std::vector<int>>> getNbrBondStereo(
     RWMol &mol, const Bond *bnd) {
   PRECONDITION(bnd, "null bond");
   // loop over neighboring double bonds and remove their stereo atom
-  std::vector<std::pair<Bond *, std::vector<int>>>  res;
+  std::vector<std::pair<Bond *, std::vector<int>>> res;
   const auto bgn = bnd->getBeginAtom();
   const auto end = bnd->getEndAtom();
   for (const auto *atom : {bgn, end}) {
-    ROMol::OEDGE_ITER a1, a2;
-    for (boost::tie(a1, a2) = mol.getAtomBonds(atom); a1 != a2; ++a1) {
-      Bond *obnd = mol[*a1];
+    for (auto obnd : mol.atomBonds(atom)) {
       if (obnd->getIdx() != bnd->getIdx() && !obnd->getStereoAtoms().empty()) {
+        obnd->setProp(molfragSaveStereo, obnd->getStereo());
         res.emplace_back(obnd, obnd->getStereoAtoms());
       }
     }
@@ -440,7 +435,7 @@ ROMol *fragmentOnBonds(
     const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels,
     const std::vector<Bond::BondType> *bondTypes,
     std::vector<unsigned int> *nCutsPerAtom) {
-  PRECONDITION((!dummyLabels || dummyLabels->size() == bondIndices.size()),
+  PRECONDITION((!dummyLabels || dummyLabels->size() >= bondIndices.size()),
                "bad dummyLabel vector");
   PRECONDITION((!bondTypes || bondTypes->size() == bondIndices.size()),
                "bad bondType vector");
@@ -510,6 +505,9 @@ ROMol *fragmentOnBonds(
         std::replace(stereo_atoms.second.begin(), stereo_atoms.second.end(),
                      eidx, idx2);
         stereo_atoms.first->getStereoAtoms().swap(stereo_atoms.second);
+        stereo_atoms.first->setStereo(
+            stereo_atoms.first->getProp<Bond::BondStereo>(molfragSaveStereo));
+        stereo_atoms.first->clearProp(molfragSaveStereo);
       }
 
       // figure out if we need to change the stereo tags on the atoms:
@@ -710,10 +708,18 @@ int num_swaps_to_interconvert(std::vector<unsigned int> &orders) {
 
 // Simple bookkeeping class to bond attachments and handle stereo
 struct ZipBond {
-  Atom *a;        // atom being bonded
-  Atom *a_dummy;  // Labelled atom, i.e. [*:1]-C  will bond the C to something
-  Atom *b;        // atom being bonded
-  Atom *b_dummy;  // Labelled atom, i.e. [*:1]-O will bond the O to something
+  Atom *a = nullptr;  // atom being bonded
+  Atom *a_dummy =
+      nullptr;  // Labelled atom, i.e. [*:1]-C  will bond the C to something
+  Atom *b = nullptr;  // atom being bonded
+  Atom *b_dummy =
+      nullptr;  // Labelled atom, i.e. [*:1]-O will bond the O to something
+  Atom *a_link =
+      nullptr;  // Link bonds have six atoms, [*:a][*b].[*:a]C.[*:b]D, four
+                // dummies and two atoms
+  Atom *b_link = nullptr;
+  bool isLinker = false;          // is this a straight linker bond
+  Bond::BondType linkerBondType;  // The linker bond type
 
   // Backup the original chirality mark_chirality must be called first
   //  as it checks the datastructure for validity;
@@ -739,6 +745,7 @@ struct ZipBond {
     // Fragment on bonds allows multiple links to the same atom
     // i.e. C.[1C].[1C]
     //  otherwise throw an invariant error
+
     CHECK_INVARIANT(
         params.label == MolzipLabel::FragmentOnBonds ||
             !a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx()),
@@ -747,79 +754,92 @@ struct ZipBond {
     if (!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {
       CHECK_INVARIANT(&a->getOwningMol() == &newmol,
                       "Owning mol is not the combined molecule!!");
-      auto bnd = newmol.getBondBetweenAtoms(a->getIdx(), a_dummy->getIdx());
-      CHECK_INVARIANT(bnd != nullptr,
-                      "molzip: begin atom and specified dummy atom connection "
-                      "are not bonded.")
-      auto bond_type_a = bnd->getBondType();
-      auto bond_dir_a = bnd->getBondDir();
-      auto a_is_start = bnd->getBeginAtom() == a;
+      if (isLinker) {
+        // This is the easy bit, just link a and b, and schedule a_dummy and
+        // b_dummy
+        //  for deletion
+        CHECK_INVARIANT(
+            a && b && a_dummy && b_dummy && a_link && b_link,
+            "molzip: Link Bond is missing one or more labelled atoms");
+        newmol.addBond(a, b, linkerBondType);
+        a_link->setProp("__molzip_used", true);
+        b_link->setProp("__molzip_used", true);
+      } else {
+        auto bnd = newmol.getBondBetweenAtoms(a->getIdx(), a_dummy->getIdx());
+        CHECK_INVARIANT(
+            bnd != nullptr,
+            "molzip: begin atom and specified dummy atom connection "
+            "are not bonded.")
+        auto bond_type_a = bnd->getBondType();
+        auto bond_dir_a = bnd->getBondDir();
+        auto a_is_start = bnd->getBeginAtom() == a;
 
-      bnd = newmol.getBondBetweenAtoms(b->getIdx(), b_dummy->getIdx());
-      CHECK_INVARIANT(bnd != nullptr,
-                      "molzip: end atom and specified dummy connection atom "
-                      "are not bonded.")
-      auto bond_type_b = bnd->getBondType();
+        bnd = newmol.getBondBetweenAtoms(b->getIdx(), b_dummy->getIdx());
+        CHECK_INVARIANT(bnd != nullptr,
+                        "molzip: end atom and specified dummy connection atom "
+                        "are not bonded.")
+        auto bond_type_b = bnd->getBondType();
 
-      auto bond_dir_b = bnd->getBondDir();
-      auto b_is_start = bnd->getBeginAtom() == b;
+        auto bond_dir_b = bnd->getBondDir();
+        auto b_is_start = bnd->getBeginAtom() == b;
 
-      unsigned int bnd_idx = 0;
-      // Fusion bond-dir logic table
-      // a-* b-* => a-b
-      //  < = wedge
+        unsigned int bnd_idx = 0;
+        // Fusion bond-dir logic table
+        // a-* b-* => a-b
+        //  < = wedge
 
-      //  a<* b-* => a<b
-      //  a>* b-* => a>b
-      //  a-* b>* => a<b
-      //  a-* b<* => a>b
-      Bond::BondDir bond_dir{Bond::BondDir::NONE};
-      auto start = a;
-      auto end = b;
-      if (bond_dir_a != Bond::BondDir::NONE &&
-          bond_dir_b != Bond::BondDir::NONE) {
-        // are we consistent between the two bond orders check for the case of
-        // fragment on bonds where a<* and b>* or a>* and b<* when < is either a
-        // hash or wedge bond but not both.
-        bool consistent_directions = false;
-        if (bond_dir_a == bond_dir_b) {
-          if ((a_is_start != b_is_start)) {
-            consistent_directions = true;
+        //  a<* b-* => a<b
+        //  a>* b-* => a>b
+        //  a-* b>* => a<b
+        //  a-* b<* => a>b
+        Bond::BondDir bond_dir{Bond::BondDir::NONE};
+        auto start = a;
+        auto end = b;
+        if (bond_dir_a != Bond::BondDir::NONE &&
+            bond_dir_b != Bond::BondDir::NONE) {
+          // are we consistent between the two bond orders check for the case of
+          // fragment on bonds where a<* and b>* or a>* and b<* when < is either
+          // a hash or wedge bond but not both.
+          bool consistent_directions = false;
+          if (bond_dir_a == bond_dir_b) {
+            if ((a_is_start != b_is_start)) {
+              consistent_directions = true;
+            }
+          }
+          if (!consistent_directions) {
+            BOOST_LOG(rdWarningLog)
+                << "inconsistent bond directions when merging fragments, ignoring..."
+                << std::endl;
+            bond_dir_a = bond_dir_b = Bond::BondDir::NONE;
+          } else {
+            bond_dir_b = Bond::BondDir::NONE;
           }
         }
-        if (!consistent_directions) {
-          BOOST_LOG(rdWarningLog)
-              << "inconsistent bond directions when merging fragments, ignoring..."
-              << std::endl;
-          bond_dir_a = bond_dir_b = Bond::BondDir::NONE;
+
+        if (bond_dir_a != Bond::BondDir::NONE) {
+          if (!a_is_start) {
+            start = b;
+            end = a;
+          }
+          bond_dir = bond_dir_a;
+        } else if (bond_dir_b != Bond::BondDir::NONE) {
+          if (b_is_start) {
+            start = b;
+            end = a;
+          }
+          bond_dir = bond_dir_b;
+        }
+
+        if (bond_type_a != Bond::BondType::SINGLE) {
+          bnd_idx = newmol.addBond(start, end, bond_type_a);
+        } else if (bond_type_b != Bond::BondType::SINGLE) {
+          bnd_idx = newmol.addBond(start, end, bond_type_b);
         } else {
-          bond_dir_b = Bond::BondDir::NONE;
+          bnd_idx = newmol.addBond(start, end, Bond::BondType::SINGLE);
         }
-      }
 
-      if (bond_dir_a != Bond::BondDir::NONE) {
-        if (!a_is_start) {
-          start = b;
-          end = a;
-        }
-        bond_dir = bond_dir_a;
-      } else if (bond_dir_b != Bond::BondDir::NONE) {
-        if (b_is_start) {
-          start = b;
-          end = a;
-        }
-        bond_dir = bond_dir_b;
+        newmol.getBondWithIdx(bnd_idx - 1)->setBondDir(bond_dir);
       }
-
-      if (bond_type_a != Bond::BondType::SINGLE) {
-        bnd_idx = newmol.addBond(start, end, bond_type_a);
-      } else if (bond_type_b != Bond::BondType::SINGLE) {
-        bnd_idx = newmol.addBond(start, end, bond_type_b);
-      } else {
-        bnd_idx = newmol.addBond(start, end, Bond::BondType::SINGLE);
-      }
-
-      newmol.getBondWithIdx(bnd_idx - 1)->setBondDir(bond_dir);
     }
     a_dummy->setProp("__molzip_used", true);
     b_dummy->setProp("__molzip_used", true);
@@ -878,10 +898,8 @@ struct ZipBond {
 
     // check bond stereo
     auto &m = chiral_atom->getOwningMol();
-    for (auto nbrIdx :
-         boost::make_iterator_range(m.getAtomNeighbors(chiral_atom))) {
-      auto bond = m.getBondBetweenAtoms(chiral_atom->getIdx(), nbrIdx);
-      if (bond->getStereo()) {
+    for (auto bond : m.atomBonds(chiral_atom)) {
+      if (bond->getStereo() != Bond::BondStereo::STEREONONE) {
         std::string mark = "__molzip_bond_stereo_mark";
         std::vector<Atom *> atoms;
         bool has_dummy = false;
@@ -941,6 +959,13 @@ std::unique_ptr<ROMol> molzip(
 
   std::map<unsigned int, ZipBond> mappings;
   std::map<Atom *, std::vector<const ZipBond *>> mappings_by_atom;
+
+  // Linker bonds resolve to the same zip bond by using the
+  //  lowest label.  I.e.
+  //   [*:1][*:2] sets the link bond to label 1
+  //    so this sets linkerBonds[1] == linkerBonds[2] = the same ZipBond
+  std::map<unsigned int, ZipBond *> linkerBonds;
+
   std::vector<Atom *> deletions;
   if (params.label == MolzipLabel::FragmentOnBonds) {
     for (auto *atom : newmol->atoms()) {
@@ -977,12 +1002,68 @@ std::unique_ptr<ROMol> molzip(
         }
       }
     }
-  } else {
+  } else {  // Non Fragment By Bonds attaching
     for (auto *atom : newmol->atoms()) {
       auto molno = get_label(atom, params);
       if (molno != NOLABEL) {
         auto attached_atom = get_other_atom(atom);
-        if (mappings.find(molno) == mappings.end()) {
+        auto attached_molno =
+            attached_atom ? get_label(attached_atom, params) : NOLABEL;
+        if (attached_molno != NOLABEL) {
+          // we have a linker bond
+          //  [*:1][*:2].[*:1]C.[*:2]S links C and S and drops all dummies
+          //   Note:  the linker bond MUST come first here
+          // Get the min molno and use this to assign the bonds to link
+          if (molno > attached_molno) {
+            std::swap(molno, attached_molno);
+            std::swap(atom, attached_atom);
+          }
+
+          auto link_bond = atom->getOwningMol().getBondBetweenAtoms(
+              atom->getIdx(), attached_atom->getIdx());
+          CHECK_INVARIANT(
+              link_bond,
+              ("molzip: link bond with labels: " + std::to_string(molno) + "," +
+               std::to_string(attached_molno) + " is missing"));
+          auto bondType = link_bond->getBondType();
+          if (mappings.find(molno) == mappings.end()) {
+            auto &bond = mappings[molno];
+            CHECK_INVARIANT(
+                linkerBonds.find(attached_molno) == linkerBonds.end(),
+                ("molzip: Linker attachment point with label: " +
+                 std::to_string(attached_molno) + " found before linker bond"));
+            linkerBonds[attached_molno] = &bond;
+            bond.isLinker = true;
+            bond.linkerBondType = bondType;
+            bond.a_link = atom;
+            bond.b_link = attached_atom;
+            deletions.push_back(atom);
+            deletions.push_back(attached_atom);
+          } else {
+            // we'll find this bond twice, so let's make sure it is setup
+            // correctly
+            auto &bond = mappings[molno];
+            CHECK_INVARIANT(
+                bondType = bond.linkerBondType,
+                ("molzip: LINKER bond with labels: " + std::to_string(molno) +
+                 "," + std::to_string(attached_molno) +
+                 " has inconsistent bond types"));
+            CHECK_INVARIANT(
+                bond.isLinker,
+                ("molzip: LINKER bond with labels: " + std::to_string(molno) +
+                 "," + std::to_string(attached_molno) +
+                 " found but not encountered first in the molecules to be zipped."));
+            CHECK_INVARIANT(
+                (bond.a_link == atom && bond.b_link == attached_atom) ||
+                    (bond.b_link == atom && bond.a_link == attached_atom),
+                ("molzip: Linker Bond with labels " + std::to_string(molno) +
+                 "," + std::to_string(attached_molno) +
+                 " not setup correctly"));
+          }
+        } else if (mappings.find(molno) == mappings.end() &&
+                   linkerBonds.find(molno) == linkerBonds.end()) {
+          // Normal linkage C[*:1].S[*:1] links C and S
+          // LinkBond [*:1][*:2].C[*:1].S[*:2] links C and S
           auto &bond = mappings[molno];
           CHECK_INVARIANT(
               !bond.a,
@@ -991,17 +1072,37 @@ std::unique_ptr<ROMol> molzip(
           bond.a = attached_atom;
           bond.a_dummy = atom;
         } else {
-          auto &bond = mappings[molno];
-          CHECK_INVARIANT(
-              bond.a,
-              "molzip: bond info not properly setup for bgn atom with label:" +
-                  std::to_string(molno));
-          CHECK_INVARIANT(
-              !bond.b,
-              "molzip: bond info already exists for end atom with label:" +
-                  std::to_string(molno));
-          bond.b = attached_atom;
-          bond.b_dummy = atom;
+          auto &bond = linkerBonds.find(molno) == linkerBonds.end()
+                           ? mappings[molno]
+                           : *linkerBonds[molno];
+          if (bond.isLinker) {
+            CHECK_INVARIANT(
+                !bond.a || !bond.b,
+                "molzip: Linker bond has multiple attachments for label: " +
+                    std::to_string(molno));
+            if (bond.a) {
+              bond.b = attached_atom;
+              bond.b_dummy = atom;
+              deletions.push_back(bond.b_dummy);
+            } else {
+              bond.a = attached_atom;
+              bond.a_dummy = atom;
+              deletions.push_back(bond.a_dummy);
+            }
+          } else {
+            CHECK_INVARIANT(
+                bond.a,
+                "molzip: bond info not properly setup for bgn atom with label:" +
+                    std::to_string(molno));
+            CHECK_INVARIANT(
+                !bond.b,
+                "molzip: bond info already exists for end atom with label:" +
+                    std::to_string(molno));
+
+            bond.b = attached_atom;
+            bond.b_dummy = atom;
+          }
+
           mappings_by_atom[bond.a].push_back(&bond);
           if (attachmentMapping) {
             if (int otherIndex, dummyIndex;
@@ -1020,15 +1121,21 @@ std::unique_ptr<ROMol> molzip(
       }
     }
   }
+
+  // Mark the existing chirality so we can try and restore it later
   for (auto &kv : mappings_by_atom) {
     for (auto &bond : kv.second) {
       bond->mark_chirality();
     }
   }
+
+  // Make all the bonds
   for (auto &kv : mappings) {
     kv.second.bond(*newmol, params);
   }
   newmol->beginBatchEdit();
+
+  // Remove the used atoms
   for (auto &atom : deletions) {
     if (atom->hasProp("__molzip_used")) {
       newmol->removeAtom(atom);
@@ -1036,6 +1143,7 @@ std::unique_ptr<ROMol> molzip(
   }
   newmol->commitBatchEdit();
 
+  // Try and restore the chirality now that we have new bonds
   std::set<Atom *> already_checked;
   for (auto &kv : mappings_by_atom) {
     for (auto &bond : kv.second) {
@@ -1110,11 +1218,11 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
 
   auto combinedMol = decomposition[0];
   if (!mols.empty()) {
-    combinedMol.reset(
-        std::accumulate(mols.begin(), mols.end(), decomposition[0].get(),
-                        [](const auto *combined, const auto &mol) {
-                          return combineMols(*combined, *mol);
-                        }));
+    combinedMol = std::accumulate(
+        mols.begin(), mols.end(), decomposition[0],
+        [](const auto &combined, const auto &mol) {
+          return boost::shared_ptr<ROMol>(combineMols(*combined, *mol));
+        });
   }
   const static ROMol b;
   std::optional attachmentMappingOption = std::map<int, int>();
@@ -1150,8 +1258,6 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
     for (const auto atom : zippedMol->atoms()) {
       atom->clearProp(indexPropName);
     }
-
-    return zippedMol;
   }
 
   return zippedMol;
@@ -1173,4 +1279,3 @@ std::unique_ptr<ROMol> molzip(const std::map<std::string, ROMOL_SPTR> &row,
 }
 
 }  // end of namespace RDKit
-

@@ -503,7 +503,7 @@ unsigned int GetNumEntries(FilterCatalogParams::FilterCatalogs catalog) {
   }
 }
 
-const FilterData_t* GetFilterData(FilterCatalogParams::FilterCatalogs catalog) {
+const FilterData_t *GetFilterData(FilterCatalogParams::FilterCatalogs catalog) {
   switch (catalog) {
     case FilterCatalogParams::BRENK:
       return BRENK;
@@ -532,7 +532,7 @@ const FilterData_t* GetFilterData(FilterCatalogParams::FilterCatalogs catalog) {
     case FilterCatalogParams::CHEMBL_LINT:
       return CHEMBL_LINT;
     default:
-      return 0;
+      return nullptr;
   }
 }
 
@@ -569,7 +569,7 @@ unsigned GetNumPropertyEntries(FilterCatalogParams::FilterCatalogs catalog) {
   }
 }
 
-const FilterProperty_t* GetFilterProperties(
+const FilterProperty_t *GetFilterProperties(
     FilterCatalogParams::FilterCatalogs catalog) {
   switch (catalog) {
     case FilterCatalogParams::BRENK:
@@ -599,7 +599,7 @@ const FilterProperty_t* GetFilterProperties(
     case FilterCatalogParams::CHEMBL_LINT:
       return CHEMBL_LINT_PROPS;
     default:
-      return 0;
+      return nullptr;
   }
 }
 }  // namespace RDKit

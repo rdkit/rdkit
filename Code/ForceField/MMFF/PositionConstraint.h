@@ -1,7 +1,5 @@
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2024 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,46 +8,13 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_MMFFPOSITIONCONSTRAINT_H__
-#define __RD_MMFFPOSITIONCONSTRAINT_H__
-#include <iostream>
-#include <ForceField/Contrib.h>
-#include <Geometry/point.h>
+#ifndef RD_MMFFPOSITIONCONSTRAINT_H
+#define RD_MMFFPOSITIONCONSTRAINT_H
+#include <ForceField/PositionConstraint.h>
 
 namespace ForceFields {
 namespace MMFF {
-
-//! A position constraint of the type 0.5k * deltaX^2
-class RDKIT_FORCEFIELD_EXPORT PositionConstraintContrib
-    : public ForceFieldContrib {
- public:
-  PositionConstraintContrib() {}
-  //! Constructor
-  /*!
-    \param owner       pointer to the owning ForceField
-    \param idx         index of the atom in the ForceField's positions
-    \param minDispl    minimum displacement
-    \param maxDispl    maximum displacement
-    \param forceConst  force constant
-
-  */
-  PositionConstraintContrib(ForceField *owner, unsigned int idx,
-                            double maxDispl, double forceConst);
-
-  ~PositionConstraintContrib() override = default;
-  double getEnergy(double *pos) const override;
-
-  void getGrad(double *pos, double *grad) const override;
-  PositionConstraintContrib *copy() const override {
-    return new PositionConstraintContrib(*this);
-  }
-
- private:
-  int d_atIdx{-1};         //!< index of the restrained atom
-  double d_maxDispl;       //!< maximum allowed displacement
-  RDGeom::Point3D d_pos0;  //!< reference position
-  double d_forceConstant;  //!< force constant of the bond
-};
+using PositionConstraintContrib = ForceFields::PositionConstraintContrib;
 }  // namespace MMFF
 }  // namespace ForceFields
 #endif
