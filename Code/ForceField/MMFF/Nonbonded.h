@@ -34,6 +34,10 @@ class RDKIT_FORCEFIELD_EXPORT NonbondedContrib : public ForceFieldContrib {
   }
 
  private:
+  enum ContribType {
+    VDW = 1 << 0,           //!< van der Waals contribution
+    ELECTROSTATIC = 1 << 1  //!< electrostatic contribution
+  };
   std::vector<int16_t> d_at1Idxs;
   std::vector<int16_t> d_at2Idxs;
   std::vector<std::uint8_t>
