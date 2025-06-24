@@ -435,8 +435,8 @@ unsigned int getDefaultPickleProperties();
     RDKit::Chirality::pickBondsToWedge(*($self));
   };
   
-  void ClearSingleBondDirFlags() {
-    RDKit::ClearSingleBondDirFlags(*($self));
+  void ClearSingleBondDirFlags(bool onlyWedgeFlags=false) {
+  RDKit::MolOps::clearSingleBondDirFlags(*($self), onlyWedgeFlags);
   };
 
   void reapplyMolBlockWedging() {
