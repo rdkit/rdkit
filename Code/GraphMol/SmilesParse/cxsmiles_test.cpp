@@ -1636,3 +1636,13 @@ TEST_CASE("Github #8348: Unable to write wiggly bond information by default") {
     CHECK(output_cxsmiles.find("w:") != std::string::npos);
   }
 }
+
+TEST_CASE("Github #8586: MolFromSmiles loses atom maps if cxsmiles is used") {
+  SECTION("as reported") {
+    auto m = "[CH3:3]N([*:1])C[C@](C([*:2])=O)([H])CS |o1:4|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getAtomMapNum() == 3);
+    CHECK(m->getAtomWithIdx(2)->getAtomMapNum() == 1);
+    CHECK(m->getAtomWithIdx(6)->getAtomMapNum() == 2);
+  }
+}
