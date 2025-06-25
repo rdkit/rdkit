@@ -259,7 +259,7 @@ std::vector<double> GetGeodesicMatrix(const double *dist, int lag,
 
   int sizeArray = numAtoms * numAtoms;
   std::vector<double> Geodesic;
-  Geodesic.reserve(sizeArray);
+  Geodesic.resize(sizeArray);
   std::transform(dist, dist + sizeArray, Geodesic.begin(),
                  [lag](double dist) { return int(dist == lag); });
 
