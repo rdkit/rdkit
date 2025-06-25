@@ -1645,4 +1645,18 @@ TEST_CASE("Github #8586: MolFromSmiles loses atom maps if cxsmiles is used") {
     CHECK(m->getAtomWithIdx(2)->getAtomMapNum() == 1);
     CHECK(m->getAtomWithIdx(6)->getAtomMapNum() == 2);
   }
+  SECTION("additional properties") {
+    auto m =
+        "[CH3:3]N([*:1])C[C@](C([*:2])=O)([H])CS |atomProp:7.dummyLabel.d:2.dummyLabel.d,o1:4|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->getAtomMapNum() == 1);
+    CHECK(m->getAtomWithIdx(6)->getAtomMapNum() == 2);
+    std::string dlabel;
+    CHECK(m->getAtomWithIdx(7)->getPropIfPresent(common_properties::dummyLabel,
+                                                 dlabel));
+    CHECK(dlabel == "d");
+    CHECK(m->getAtomWithIdx(2)->getPropIfPresent(common_properties::dummyLabel,
+                                                 dlabel));
+    CHECK(dlabel == "d");
+  }
 }
