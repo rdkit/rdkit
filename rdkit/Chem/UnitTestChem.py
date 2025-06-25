@@ -181,6 +181,20 @@ class TestCase(unittest.TestCase):
       sssr2 = [list(x) for x in Chem.GetSymmSSSR(sm)]
       self.assertEqual(sssr, sssr2)
 
+  def testWigglyBondsAndEnumerateStereoisomers(self):
+    from rdkit.Chem import EnumerateStereoisomers
+    m = Chem.MolFromSmiles('CC=CC |w:1.0|')
+    sms = [Chem.MolToSmiles(x) for x in EnumerateStereoisomers.EnumerateStereoisomers(m)]
+    self.assertEqual(len(sms), 2)
+    self.assertIn('C/C=C/C', sms)
+    self.assertIn('C/C=C\\C', sms)
+    from rdkit.Chem import EnumerateStereoisomers
+    m = Chem.MolFromSmiles('CC(F)(Cl)(Br) |w:1.0|')
+    sms = [Chem.MolToSmiles(x) for x in EnumerateStereoisomers.EnumerateStereoisomers(m)]
+    self.assertEqual(len(sms), 2)
+    self.assertIn('C[C@](F)(Cl)Br', sms)
+    self.assertIn('C[C@@](F)(Cl)Br', sms)
+
 
 if __name__ == '__main__':
   unittest.main()

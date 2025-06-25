@@ -1,5 +1,5 @@
 //
-// Copyright (C) David Cosgrove 2025.
+// Copyright (C) 2025 David Cosgrove and other RDKit contributors.
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -34,7 +34,8 @@ StereoisomerEnumerator::StereoisomerEnumerator(
     atom->clearProp("_CIPCode");
   }
   for (auto bond : d_mol.bonds()) {
-    if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
+    if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE ||
+        bond->getBondDir() == Bond::BondDir::UNKNOWN) {
       bond->setBondDir(Bond::BondDir::NONE);
     }
   }
