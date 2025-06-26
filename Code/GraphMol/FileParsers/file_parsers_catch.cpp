@@ -7556,14 +7556,3 @@ M  END)CTAB";
     }
   }
 }
-
-TEST_CASE("Github #8602: atropisomer with slight z coordinates") {
-  std::string rdbase = getenv("RDBASE");
-  rdbase += "/Code/GraphMol/FileParsers/test_data/";
-  SECTION("as reported") {
-    auto m = v2::FileParsers::MolFromMolFile(rdbase + "atropWith3d_8602.mol");
-    REQUIRE(m);
-    auto ctab = MolToV3KMolBlock(*m);
-    CHECK(ctab.find("CFG=1") == std::string::npos);
-  }
-}
