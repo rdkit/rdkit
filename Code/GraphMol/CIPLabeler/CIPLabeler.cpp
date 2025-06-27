@@ -15,6 +15,7 @@
 
 #include "GraphMol/Chirality.h"
 #include "GraphMol/RDKitBase.h"
+#include <RDGeneral/ControlCHandler.h>
 
 #include "CIPLabeler.h"
 #include "CIPMol.h"
@@ -224,11 +225,23 @@ void label(std::vector<std::unique_ptr<Configuration>> &configs,
 void assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
                      const boost::dynamic_bitset<> &bonds,
                      unsigned int maxRecursiveIterations) {
+  ControlCHandler::reset();
+
   // reset the mark, for the case that this fails
   mol.clearProp(common_properties::_CIPComputed);
   CIPMol cipmol{mol};
   auto configs = findConfigs(cipmol, atoms, bonds);
-  label(configs, maxRecursiveIterations);
+
+  try {
+    label(configs, maxRecursiveIterations);
+  } catch (const ControlCCaught &) {
+  }
+  if (ControlCHandler::getGotSignal()) {
+    BOOST_LOG(rdWarningLog)
+        << "Interrupted, cancelling CIP label calculation" << std::endl;
+    return;
+  }
+
   const bool computed = true;
   mol.setProp(common_properties::_CIPComputed, true, computed);
 }
