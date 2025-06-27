@@ -15,6 +15,12 @@
 
 #include <strstream>
 
+#ifdef RDK_TEST_MULTITHREADED
+#include <csignal>
+#include <thread>
+#include <chrono>
+#endif
+
 #include <catch2/catch_all.hpp>
 
 #include <GraphMol/MolOps.h>
@@ -623,9 +629,8 @@ TEST_CASE("GitHub Issue #5142", "[bug][accurateCIP]") {
   CIPLabeler::assignCIPLabels(*mol);
 }
 
-TEST_CASE("CIP max iterations test", "[accurateCIP]") {
-  SECTION("Exceeds max iterations") {
-    std::string molBlock = R"(
+TEST_CASE("Test early termination of CIP calculation", "[accurateCIP]") {
+  constexpr const char *molBlock = R"(
   Mrv2117 11112217353D          
 
  40 50  0  0  0  0            999 V2000
@@ -723,9 +728,11 @@ M  END
 
   )";
 
-    auto mol =
-        std::unique_ptr<RDKit::RWMol>(MolBlockToMol(molBlock, true, false));
-    REQUIRE(mol);
+  v2::FileParsers::MolFileParserParams params{.sanitize = false};
+  auto mol = v2::FileParsers::MolFromMolBlock(molBlock, params);
+  REQUIRE(mol);
+
+  SECTION("Exceeds max iterations") {
     CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
                     CIPLabeler::MaxIterationsExceeded);
 
@@ -734,6 +741,28 @@ M  END
     CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
                     CIPLabeler::MaxIterationsExceeded);
   }
+#ifdef RDK_TEST_MULTITHREADED
+  SECTION("Ctrl+c interruption") {
+    using namespace std::chrono_literals;
+
+    // create one thread for assignCIPLabels...
+    std::thread cgThread([&mol]() {
+      // give the calculation a while to run (~15 seconds on my laptop)
+      // but still make sure it won't run forever
+      constexpr size_t maxIterations = 8000000;
+      CIPLabeler::assignCIPLabels(*mol, maxIterations);
+    });
+    // ... then another one to raise SIGINT
+    std::thread interruptThread([]() {
+      // sleep for a bit to allow for a few iterations, but not enough to
+      // hit maxIterations and trigger the exception
+      std::this_thread::sleep_for(100ms);
+      std::raise(SIGINT);
+    });
+    cgThread.join();
+    interruptThread.join();
+  }
+#endif
 }
 
 void testOneAtropIsomerMandP(std::string inputText, const std::string &expected,

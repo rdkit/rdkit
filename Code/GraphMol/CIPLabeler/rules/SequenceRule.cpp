@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "RDGeneral/ControlCHandler.h"
 
 #include "SequenceRule.h"
 
@@ -51,6 +52,9 @@ const Sort *SequenceRule::getSorter() const {
 int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
   if (!CIPLabeler_detail::decrementRemainingCallCountAndCheck()) {
     throw MaxIterationsExceeded();
+  }
+  if (ControlCHandler::getGotSignal()) {
+    throw ControlCCaught();
   }
 
   int cmp = compare(a, b);
