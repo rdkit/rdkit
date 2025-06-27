@@ -174,9 +174,10 @@ class BitSetWrapper {
     }
   }
 
-  bool operator[](size_t i) const {
+  bool get(size_t i) const {
     return (buffer[i / 64] & (uint64_t(1) << (i % 64))) != 0;
   }
+  bool operator[](size_t i) const { return get(i); }
   void set(size_t i) {
     PRECONDITION(i < n, "BitSetWrapper::set index out of bounds");
     buffer[i / 64] |= (uint64_t(1) << (i % 64));
@@ -204,6 +205,10 @@ class BitSetWrapper {
     }
   }
   size_t size() const { return n; }
+
+  const uint64_t *data() const { return buffer; }
+  uint64_t *data() { return buffer; }
+  size_t dataSize() const { return (n + 63) / 64; }
 
   bool empty() const {
     assert(n != 0);

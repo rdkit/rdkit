@@ -341,6 +341,21 @@ class RingInfoCache {
     isInit = false;
   }
 
+  bool isFindFastOrBetter() const {
+    return isInit && (findRingType == FIND_RING_TYPE_FAST ||
+                      findRingType == FIND_RING_TYPE_SSSR ||
+                      findRingType == FIND_RING_TYPE_SYMM_SSSR);
+  }
+
+  bool isSssrOrBetter() const {
+    return isInit && (findRingType == FIND_RING_TYPE_SSSR ||
+                      findRingType == FIND_RING_TYPE_SYMM_SSSR);
+  }
+
+  bool isSymmSssr() const {
+    return isInit && findRingType == FIND_RING_TYPE_SYMM_SSSR;
+  }
+
   uint32_t numRings() const {
     return (ringBegins.size() == 0) ? 0 : (ringBegins.size() - 1);
   }
@@ -414,6 +429,8 @@ class RingInfoCache {
     }
     return minSize;
   }
+
+  void initFusedInfoFromBondMemberships();
 };
 
 struct RDKIT_GRAPHMOL_EXPORT StereoGroups {

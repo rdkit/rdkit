@@ -348,30 +348,7 @@ void copyRingInfoFromCompatibilityData(const RingInfo &input,
     std::swap(prev, output.bondMembershipBegins[i]);
   }
 
-  // Call clear first to ensure all elements reinitialized to false or 0
-  output.areRingsFused.clear();
-  output.areRingsFused.resize(numRings * numRings, false);
-  output.numFusedBonds.clear();
-  output.numFusedBonds.resize(numRings, 0);
-  if (numRings <= 1) {
-    return;
-  }
-
-  // Create 2D bit vector of whether two rings share a bond
-  for (size_t bondIndex = 0; bondIndex < numBonds; ++bondIndex) {
-    uint32_t begin = output.bondMembershipBegins[bondIndex];
-    uint32_t end = output.bondMembershipBegins[bondIndex + 1];
-    for (; begin + 1 < end; ++begin) {
-      auto ring1 = output.bondMemberships[begin];
-      for (uint32_t other = begin + 1; other < end; ++other) {
-        auto ring2 = output.bondMemberships[other];
-        output.areRingsFused[ring1 * numRings + ring2] = true;
-        output.areRingsFused[ring2 * numRings + ring1] = true;
-        ++output.numFusedBonds[ring1];
-        ++output.numFusedBonds[ring2];
-      }
-    }
-  }
+  output.initFusedInfoFromBondMemberships();
 }
 }  // namespace
 
@@ -1469,6 +1446,35 @@ void PropArray::convertToRDValue() {
   destroy();
   data = newData;
   family = PropertyType::ANY;
+}
+
+void RingInfoCache::initFusedInfoFromBondMemberships() {
+  // Call clear first to ensure all elements reinitialized to false or 0
+  const size_t numRings = RingInfoCache::numRings();
+  areRingsFused.clear();
+  areRingsFused.resize(numRings * numRings, false);
+  numFusedBonds.clear();
+  numFusedBonds.resize(numRings, 0);
+  if (numRings <= 1) {
+    return;
+  }
+
+  // Create 2D bit vector of whether two rings share a bond
+  const size_t numBonds = bondMembershipBegins.size() - 1;
+  for (size_t bondIndex = 0; bondIndex < numBonds; ++bondIndex) {
+    uint32_t begin = bondMembershipBegins[bondIndex];
+    uint32_t end = bondMembershipBegins[bondIndex + 1];
+    for (; begin + 1 < end; ++begin) {
+      auto ring1 = bondMemberships[begin];
+      for (uint32_t other = begin + 1; other < end; ++other) {
+        auto ring2 = bondMemberships[other];
+        areRingsFused[ring1 * numRings + ring2] = true;
+        areRingsFused[ring2 * numRings + ring1] = true;
+        ++numFusedBonds[ring1];
+        ++numFusedBonds[ring2];
+      }
+    }
+  }
 }
 
 void StereoGroups::addGroup(StereoGroupType type, const std::vector<uint32_t>& atomIndices,
