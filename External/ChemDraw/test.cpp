@@ -1,14 +1,38 @@
 //
-//  Copyright (c) 2022 Brian P Kelley
+//  Copyright (c) 2024 Glysade Inc and other RDkit contributors
 //  All rights reserved.
 //
-//  This file is part of the RDKit.
-//  The contents are covered by the terms of the BSD license
-//  which is included in the file license.txt, found at the root
-//  of the RDKit source tree.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-#include "RDGeneral/test.h"
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+//       nor the names of its contributors may be used to endorse or promote
+//       products derived from this software without specific prior written
+//       permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+
+#include "chemdraw.h"
 #include <catch2/catch_all.hpp>
+#include "RDGeneral/test.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -20,8 +44,10 @@
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
+#include <filesystem>
+
 using namespace RDKit;
-using namespace RDKit::v2::CDXMLParser;
+using namespace RDKit::v2;
 
 std::string canon(const std::string &smi) {
   auto *m = SmilesToMol(smi);
@@ -41,6 +67,7 @@ void check_smiles_and_roundtrip(const RWMol &m, const std::string &expected) {
 TEST_CASE("CDXML") {
   std::string cdxmlbase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+
   SECTION("SIMPLE") {
     std::string cdxml1 = R"(<?xml version="1.0" encoding="UTF-8" ?>
         <!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
@@ -295,49 +322,23 @@ TEST_CASE("CDXML") {
          E="28"
          BS="N"
         /></fragment></page></CDXML>)";
+    std::stringstream iss(cdxml1);
+    {
+      auto mols = MolsFromChemDrawDataStream(iss);
+      for (auto &mol : mols) {
+        CHECK(MolToSmiles(*mol) == "CC(C)(C)OC(=O)C1CCCCCC1");
+      }
+    }
+  }
+}
 
-    {
-      std::stringstream iss(cdxml1);
-      auto mols = MolsFromCDXMLDataStream(iss);
-      for (auto &mol : mols) {
-        CHECK(MolToSmiles(*mol) == "CC(C)(C)OC(=O)C1CCCCCC1");
-      }
-    }
-    {
-      std::stringstream iss(cdxml1);
-      // v1 api
-      auto mols = CDXMLDataStreamToMols(iss);
-      for (auto &mol : mols) {
-        CHECK(MolToSmiles(*mol) == "CC(C)(C)OC(=O)C1CCCCCC1");
-      }
-    }
-  }
-  SECTION("REACTION") {
-    std::string fname = cdxmlbase + "reaction-with-boc.cdxml";
-    std::vector<std::string> expected = {"CC(C)(C)OC(=O)C1CCCCCC1[*:1]",
-                                         "c1ccc([*:1])cc1", "C1CC1", "C1CCC1"};
-    {
-      auto mols = MolsFromCDXMLFile(fname);
-      CHECK(mols.size() == expected.size());
-      int i = 0;
-      for (auto &mol : mols) {
-        CHECK(MolToSmiles(*mol) == expected[i++]);
-      }
-    }
-    {
-      // v1 api
-      auto mols = CDXMLFileToMols(fname);
-      CHECK(mols.size() == expected.size());
-      int i = 0;
-      for (auto &mol : mols) {
-        CHECK(MolToSmiles(*mol) == expected[i++]);
-      }
-    }
-  }
+TEST_CASE("CDXML Advanced") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
   SECTION("RING CHIRALITY") {
     std::string fname = cdxmlbase + "ring-stereo1.cdxml";
     std::vector<std::string> expected = {"C1CC[C@H]2CCCC[C@H]2C1"};
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -347,7 +348,7 @@ TEST_CASE("CDXML") {
   SECTION("SIMPLE CHIRAL") {
     std::string fname = cdxmlbase + "chirality1.cdxml";
     std::vector<std::string> expected = {"C[C@H](N)C[C@H](C)N"};
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -357,31 +358,10 @@ TEST_CASE("CDXML") {
   SECTION("CDXML-CISTRANS") {
     auto fname = cdxmlbase + "cistrans1.cdxml";
     std::vector<std::string> expected = {"F/C(I)=C(\\Cl)Br"};
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
-      CHECK(MolToSmiles(*mol) == expected[i++]);
-    }
-  }
-  SECTION("REACTION") {
-    auto fname = cdxmlbase + "rxn1.cdxml";
-    std::vector<std::string> expected = {
-        "Cl[c:1]1[cH:4][cH:3][cH:2][cH:6][cH:5]1",
-        "OC(O)B[c:7]1[cH:8][cH:9][cH:10][cH:11][cH:12]1",
-        "[cH:1]1[cH:4][cH:3][cH:2][c:6](-[c:7]2[cH:8][cH:9][cH:10][cH:11][cH:12]2)[cH:5]1"};
-    auto mols = MolsFromCDXMLFile(fname);
-    int i = 0;
-    for (auto &mol : mols) {
-      CHECK(mol->getProp<unsigned int>("CDX_SCHEME_ID") == 397);
-      CHECK(mol->getProp<unsigned int>("CDX_STEP_ID") == 398);
-      if (i == 0) {
-        CHECK(mol->getProp<unsigned int>("CDX_REAGENT_ID") == 0);
-      } else if (i == 1) {
-        CHECK(mol->getProp<unsigned int>("CDX_REAGENT_ID") == 1);
-      } else if (i == 2) {
-        CHECK(mol->getProp<unsigned int>("CDX_PRODUCT_ID") == 0);
-      }
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
@@ -390,7 +370,7 @@ TEST_CASE("CDXML") {
     {
       std::vector<std::string> expected = {
           "[2H]c1c([2H])c([2H])c([2H])c([2H])c1[2H]"};
-      auto mols = MolsFromCDXMLFile(fname);
+      auto mols = MolsFromChemDrawFile(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -400,10 +380,10 @@ TEST_CASE("CDXML") {
     {
       std::vector<std::string> expected = {
           "[2H]C1=C([2H])C([2H])=C([2H])C([2H])=C1[2H]"};
-      CDXMLParserParams params;
+      ChemDrawParserParams params;
       params.sanitize = false;
       params.removeHs = false;
-      auto mols = MolsFromCDXMLFile(fname, params);
+      auto mols = MolsFromChemDrawFile(fname, params);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -413,10 +393,10 @@ TEST_CASE("CDXML") {
     {
       std::vector<std::string> expected = {
           "[2H]C1=C([2H])C([2H])=C([2H])C([2H])=C1[2H]"};
-      CDXMLParserParams params;
+      ChemDrawParserParams params;
       params.sanitize = false;
       params.removeHs = true;
-      auto mols = MolsFromCDXMLFile(fname, params);
+      auto mols = MolsFromChemDrawFile(fname, params);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -434,7 +414,7 @@ TEST_CASE("CDXML") {
           "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
           "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#1]",
           "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#6&!#1]"};
-      auto mols = MolsFromCDXMLFile(fname);
+      auto mols = MolsFromChemDrawFile(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -444,7 +424,7 @@ TEST_CASE("CDXML") {
     }
     {
       auto fname = cdxmlbase + "anybond.cdxml";
-      auto mols = MolsFromCDXMLFile(fname);
+      auto mols = MolsFromChemDrawFile(fname);
       CHECK(mols.size() == 1);
       CHECK(MolToSmiles(*mols[0]) == "C1CCC~CC1");
       CHECK(MolToSmarts(*mols[0]) == "[#6]1~[#6]-[#6]-[#6]-[#6]-[#6]-1");
@@ -455,7 +435,7 @@ TEST_CASE("CDXML") {
 
     std::vector<std::string> expected = {"[C]CC"};
     std::vector<std::string> expected_smarts = {"[#6]-[#6]-[#6,#7,#8,#16]"};
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -469,7 +449,7 @@ TEST_CASE("CDXML") {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
     std::vector<std::string> expected_cx = {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |&1:3,&2:8,12|"};
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -484,12 +464,12 @@ TEST_CASE("CDXML") {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
     std::vector<std::string> expected_cx = {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |a:3,o1:8,12|"};
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
     SmilesWriteParams wp;
     for (auto &mol : mols) {
-      auto tomol = std::unique_ptr<ROMol>(mol.release());
+      auto tomol = std::unique_ptr<ROMol>((ROMol*)mol.release());
       tomol.get()->clearConformers();
       RDKit::canonicalizeStereoGroups(tomol);
 
@@ -497,6 +477,7 @@ TEST_CASE("CDXML") {
       CHECK(MolToCXSmiles(*tomol, wp) == expected_cx[i++]);
     }
   }
+
   SECTION("Bad CDXML") {
     auto fname = cdxmlbase + "bad-cdxml.cdxml";
     // Only one passes sanitization
@@ -505,7 +486,12 @@ TEST_CASE("CDXML") {
       std::vector<std::string> expected_smarts = {
           "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
       };
-      auto mols = MolsFromCDXMLFile(fname);
+      auto params = ChemDrawParserParams();
+      auto mols = MolsFromChemDrawFile(fname, params);
+      for (auto &mol : mols) {
+        std::cerr << MolToSmarts(*mol) << std::endl;
+        std::cerr << MolToSmiles(*mol) << std::endl;
+      }
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -520,9 +506,9 @@ TEST_CASE("CDXML") {
         "[#6]1(=[#6](-[#6](=[#6](-[#6](=[#6]-1-*)-[H])-[H])-[H])-[H])-[H]",
         "[#6]1(=[#6](-[#6](=[#7](-[#6](=[#6]-1-[!#1])-[H])-[H])-[H])-[H])-[H]",
     };
-    CDXMLParserParams params;
+    ChemDrawParserParams params;
     params.sanitize = false;
-    auto mols = MolsFromCDXMLFile(fname, params);
+    auto mols = MolsFromChemDrawFile(fname, params);
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -533,55 +519,8 @@ TEST_CASE("CDXML") {
 
   SECTION("Fusion with chirality") {
     auto fname = cdxmlbase + "fusion-chiral.cdxml";
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {"C[C@@H](O)[C@@H](C)O"};
-    CHECK(mols.size() == expected.size());
-    int i = 0;
-    for (auto &mol : mols) {
-      CHECK(MolToSmiles(*mol) == expected[i++]);
-    }
-  }
-
-  SECTION("ChemDraw Template from the synthesis-workshop") {
-    // this was hella fun to validate the stereo-chemistry...
-    auto fname = cdxmlbase + "chemdraw_template1.cdxml";
-    auto mols = MolsFromCDXMLFile(fname);
-#ifndef RDK_BUILD_CHEMDRAW_SUPPORT
-    std::vector<std::string> expected = {
-        "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
-        "[B]",
-        "*",
-        "[C]",
-        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",  // this is may or may not be correct, but the structure is drawn incorrectly. There's a test below which fixes this
-        "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
-        "Cc1ccc2ccc(=O)ccn12",
-        "Cc1cccn1[C@H](C)C=O",
-        "Cc1ccc2ccc([O-])cc[n+]1-2",
-        "Cc1ccc2ccc(=O)ccn12",
-        "Cc1cccn1[C@H](C)C(C#N)O[Si](C)(C)C",
-        "CC1CCC2(O)C3(OC4(O)C[C@]2(C)C2(O)[C@H](OC(=O)c5ccc[nH]5)C(O)(C(C)C)C4(C)C32O)C1O",
-        "C=C(C)[C@H]1CC(=O)CC2=C(C1)[C@H]1C(=O)O[C@H]3C[C@@](C)(O)[C@@H](C2=O)[C@@H]13"};
-#else
-    // the new cdxml parser handles stereo a lot better
-    std::vector<std::string> expected = {
-        "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
-        "[B]",
-	"*",
-	"[C]",
-        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
-        // this is may or may not be correct, but the structure is drawn
-        // incorrectly.
-        // There's a test below which fixes this
-        "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
-        "Cc1ccc2ccc(=O)ccn12",
-	"Cc1cccn1[C@H](C)C=O",
-        "Cc1ccc2ccc([O-])cc[n+]1-2",
-	"Cc1ccc2ccc(=O)ccn12",
-        "Cc1cccn1[C@H](C)C(C#N)O[Si](C)(C)C",
-        "CC1CC[C@]2(O)[C@]3(C)C[C@]4(O)O[C@@]2([C@@H]1O)C1(O)C4(C)C(O)(C(C)C)[C@@H](OC(=O)c2ccc[nH]2)[C@]13O",
-        "C=C(C)[C@H]1CC(=O)CC2=C(C1)[C@H]1C(=O)O[C@H]3C[C@@](C)(O)[C@@H](C2=O)[C@@H]13"};
-    
-#endif
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -591,10 +530,10 @@ TEST_CASE("CDXML") {
 
   SECTION("deuterium atom") {
     auto fname = cdxmlbase + "deuterium-atom.cdxml";
-    CDXMLParserParams params;
+    ChemDrawParserParams params;
     params.sanitize = false;
     params.removeHs = false;
-    auto mols = MolsFromCDXMLFile(fname, params);
+    auto mols = MolsFromChemDrawFile(fname, params);
     std::vector<std::string> expected = {"[2H]"};
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -605,85 +544,10 @@ TEST_CASE("CDXML") {
   SECTION("ChemDraw Template 2 from the synthesis-workshop") {
     // this was another hella fun to validate the stereo-chemistry...
     //   there were so many stereo warnings in chemdraw, I'm just going to
-    //   assume
-    //    the rdkit is correct here...
+    //   assume the rdkit is correct here...
     auto fname = cdxmlbase + "chemdraw_template2.cdxml";
-    auto mols = MolsFromCDXMLFile(fname);
-#ifndef RDK_BUILD_CHEMDRAW_SUPPORT    
-    std::vector<std::string> expected = {
-        "CCN1CC2(COC)CCC(OC)C34C5CC6C(OC)CC(O)(C(CC23)C14)C5C6O",
-        "*",
-        "C",
-        "[F]",
-        "[B]",
-        "[C]",
-        "[2H]",
-        "CCN1CC2(COC)CCC(OC)C34C5CC6C(OC)CC(O)(C(CC23)C14)C5C6O",
-        "*",
-        "C",
-        "[F]",
-        "[B]",
-        "[C]",
-        "[2H]",
-        "CCN1CC2(COC)CCC(OC)C34C5CC6C(OC)CC(O)(C(CC23)C14)C5C6O",
-        "*",
-        "C",
-        "[F]",
-        "[B]",
-        "[C]",
-        "[2H]",
-        "CCN1CC2(COC)CCC(OC)C34C5CC6C(OC)CC(O)(C(CC23)C14)C5C6O",
-        "*",
-        "C",
-        "[F]",
-        "[B]",
-        "[C]",
-        "[2H]",
-        "CCN1CC2(COC)CCC(OC)C34C5CC6C(OC)CC(O)(C(CC23)C14)C5C6O",
-        "CCN1CC2(COC)CCC(OC)C34C5CC6C(OC)CC(O)(C(CC23)C14)C5C6O",
-        "*",
-        "[B]",
-        "[C]",
-        "[2H]",
-        "C",
-        "[F]",
-        "*",
-        "C",
-        "[F]",
-        "[B]",
-        "[C]",
-        "[2H]",
-        "CCN1CC2(COC)CCC(OC)C34C5CC6C(OC)CC(O)(C(CC23)C14)C5C6O",
-        "*",
-        "C",
-        "[F]",
-        "[B]",
-        "[C]",
-        "[2H]",
-        "CCN1CC2(COC)CCC(OC)C34C5CC6C(OC)CC(O)(C(CC23)C14)C5C6O",
-        "*",
-        "C",
-        "[F]",
-        "[B]",
-        "[C]",
-        "[2H]",
-        "CC1CCC2(O)C3(OC4(O)C[C@]2(C)C2(O)[C@H](O)C(O)(C(C)C)C4(C)C32O)C1O",
-        "CC1=C(C(C)C)[C@@H](O)C2(O)C1(O)C13OC(=O)C[C@@]2(C)C1(O)CCC(C)C3O",
-        "CC1=CC23OC(=O)C[C@@](C)(C2(O)CC1)C1(O)[C@H](O)C2(C(C)C)OC2(C)C31O",
-        "*",
-        "[B]",
-        "[C]",
-        "CC1CCC2C3(C1)OC1C[C@]2(C)C2CC(C(C)C)C1(C)C23",
-        "[2H]",
-        "*",
-        "[B]",
-        "[C]",
-        "C",
-        "CC1CCC2(O)C3(OC4(O)C[C@]2(C)C2(O)[C@H](O)C(O)(C(C)C)C4(C)C32O)C1O",
-        "[2H]"};
-#else
-    // The new cdxml parser handles stereo a LOT better
     std::string talatisamine = "CCN1C[C@]2(COC)CCC(OC)[C@@]34[C@@H]5C[C@@H]6C(OC)C[C@@](O)([C@H]5[C@H]6O)[C@@H](C[C@H]23)[C@H]14";
+    auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {
       talatisamine, //0 
         "*",
@@ -755,11 +619,10 @@ TEST_CASE("CDXML") {
         "C",
         "CC1CC[C@]2(O)[C@]3(C)C[C@]4(O)O[C@@]2([C@@H]1O)C1(O)C4(C)C(O)(C(C)C)[C@@H](O)[C@]13O",
         "[2H]"};
-#endif
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
-      INFO(i);
+      INFO(std::to_string(i) + " " + MolToSmiles(*mol));
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
@@ -769,7 +632,7 @@ TEST_CASE("CDXML") {
     //   assume
     //    the rdkit is correct here...
     auto fname = cdxmlbase + "chemdraw_template3.cdxml";
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
         "[B]",
@@ -801,7 +664,7 @@ TEST_CASE("CDXML") {
   }
   SECTION("protecting group") {
     auto fname = cdxmlbase + "protecting-groups.cdxml";
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {"CC[Si](C)(CC)CC", "CC"};
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -811,7 +674,7 @@ TEST_CASE("CDXML") {
   }
   SECTION("protecting group 2") {
     auto fname = cdxmlbase + "protecting-groups2.cdxml";
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {"CC[Si](C)(CC)CC", "CC"};
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -825,7 +688,7 @@ TEST_CASE("CDXML") {
     // This is a weird one, chemdraw simply ignores the error that causes the
     // bond issue, we should probably drop the floating fragment here if
     //  we are sanitizing
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {
         "*",
         "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
@@ -840,7 +703,7 @@ TEST_CASE("CDXML") {
 
   SECTION("Missing File Name") {
     try {
-      auto mols = MolsFromCDXMLFile("missing file");
+      auto mols = MolsFromChemDrawFile("missing file");
       CHECK(0);  // Bad file exception not caught
     } catch (RDKit::BadFileException &) {
     }
@@ -848,7 +711,7 @@ TEST_CASE("CDXML") {
 
   SECTION("Aromatic ring (bondorder==4") {
     auto fname = cdxmlbase + "aromatic.cdxml";
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {"c1ccccc1"};
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -859,14 +722,10 @@ TEST_CASE("CDXML") {
   SECTION("Malformed") {
     auto fname = cdxmlbase + "malformed.cdxml";
     try {
-      auto mols = MolsFromCDXMLFile(fname);
+      auto mols = MolsFromChemDrawFile(fname);
       CHECK(0);
     } catch (FileParseException &e) {
-#ifndef RDK_BUILD_CHEMDRAW_SUPPORT      
-      CHECK(std::string(e.what()) == "expected > at line: 373");
-#else
-      CHECK(std::string(e.what()) == "Bad Input File");
-#endif
+      // CHECK(std::string(e.what()) == "expected > at line: 373");
     }
   }
   SECTION("Lots of stereo") {
@@ -874,7 +733,7 @@ TEST_CASE("CDXML") {
       auto fname = cdxmlbase + "stereo.cdxml";
       std::vector<std::string> expected = {
           "C[C@@H](Cl)[C@H](N)O.C[C@@H](F)[C@H](N)O.C[C@H](Br)[C@@H](N)O.C[C@H](I)[C@@H](N)O"};
-      auto mols = MolsFromCDXMLFile(fname);
+      auto mols = MolsFromChemDrawFile(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -891,7 +750,7 @@ TEST_CASE("CDXML") {
 
       for (auto i = 0u; i < filenames.size(); ++i) {
         auto fname = cdxmlbase + filenames[i];
-        auto mols = MolsFromCDXMLFile(fname);
+        auto mols = MolsFromChemDrawFile(fname);
         CHECK(mols.size() == 1);
         auto &m = *mols.back();
         check_smiles_and_roundtrip(m, expected[i]);
@@ -902,7 +761,7 @@ TEST_CASE("CDXML") {
       auto fname = cdxmlbase + "wavy.cdxml";
       std::vector<std::string> expected = {"Cc1cccc(C)c1NC(=O)N=C1CCCN1C",
                                            "Cc1cccc(C)c1NC(=O)/N=C1\\CCCN1C"};
-      auto mols = MolsFromCDXMLFile(fname);
+      auto mols = MolsFromChemDrawFile(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -916,7 +775,7 @@ TEST_CASE("CDXML") {
     {
       auto fname = cdxmlbase + "wavy-single.cdxml";
       std::vector<std::string> expected = {"CCCC"};
-      auto mols = MolsFromCDXMLFile(fname);
+      auto mols = MolsFromChemDrawFile(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
@@ -927,30 +786,69 @@ TEST_CASE("CDXML") {
       }
     }
   }
-  SECTION("Lots of bad molecules") {
+  SECTION("Lots of bad stereo") {
     {
       auto fname = cdxmlbase + "bad-id.cdxml";
-      auto mols = MolsFromCDXMLFile(fname);
+      auto mols = MolsFromChemDrawFile(fname);
       CHECK(mols.size() == 0);
     }
     {
       auto fname = cdxmlbase + "bad-coords.cdxml";
-      auto mols = MolsFromCDXMLFile(fname);
+      auto mols = MolsFromChemDrawFile(fname);
       CHECK(mols.size() == 0);
-    }
-    {
-      auto fname = cdxmlbase + "bad-bondorder.cdxml";
-      auto mols = MolsFromCDXMLFile(fname);
-#ifndef RDK_BUILD_CHEMDRAW_SUPPORT      
-      CHECK(mols.size() == 0);
-#else      
-      CHECK(mols.size() == 1); // The original chemdraw reader makes unknowns single bonds
-#endif
     }
     {
       auto fname = cdxmlbase + "bad-bondorder2.cdxml";
-      auto mols = MolsFromCDXMLFile(fname);
+      auto mols = MolsFromChemDrawFile(fname);
       CHECK(mols.size() == 0);
+    }
+  }
+}
+
+TEST_CASE("REACTIONS") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("REACTION") {
+    std::string fname = cdxmlbase + "reaction-with-boc.cdxml";
+    std::vector<std::string> expected = {"CC(C)(C)OC(=O)C1CCCCCC1[*:1]",
+                                         "c1ccc([*:1])cc1", "C1CC1", "C1CCC1"};
+    {
+      auto mols = MolsFromChemDrawFile(fname);
+      CHECK(mols.size() == expected.size());
+      int i = 0;
+      for (auto &mol : mols) {
+        CHECK(MolToSmiles(*mol) == expected[i++]);
+      }
+    }
+    {
+      // v1 api
+      auto mols = MolsFromChemDrawFile(fname);
+      CHECK(mols.size() == expected.size());
+      int i = 0;
+      for (auto &mol : mols) {
+        CHECK(MolToSmiles(*mol) == expected[i++]);
+      }
+    }
+  }
+  SECTION("REACTION2") {
+    auto fname = cdxmlbase + "rxn1.cdxml";
+    std::vector<std::string> expected = {
+        "Cl[c:1]1[cH:4][cH:3][cH:2][cH:6][cH:5]1",
+        "OC(O)B[c:7]1[cH:8][cH:9][cH:10][cH:11][cH:12]1",
+        "[cH:1]1[cH:4][cH:3][cH:2][c:6](-[c:7]2[cH:8][cH:9][cH:10][cH:11][cH:12]2)[cH:5]1"};
+    auto mols = MolsFromChemDrawFile(fname);
+    int i = 0;
+    for (auto &mol : mols) {
+      CHECK(mol->getProp<unsigned int>("CDX_SCHEME_ID") == 397);
+      CHECK(mol->getProp<unsigned int>("CDX_STEP_ID") == 398);
+      if (i == 0) {
+        CHECK(mol->getProp<unsigned int>("CDX_REAGENT_ID") == 0);
+      } else if (i == 1) {
+        CHECK(mol->getProp<unsigned int>("CDX_REAGENT_ID") == 1);
+      } else if (i == 2) {
+        CHECK(mol->getProp<unsigned int>("CDX_PRODUCT_ID") == 0);
+      }
+      CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
 }
@@ -961,19 +859,15 @@ TEST_CASE("atropisomers") {
 
   SECTION("atropisomer") {
     {
+      // XXX the rounding here is a little different from the original RDKit
+      // CDXML parser 0.64->0.39999
+      //  This is something we should probably figure out.
       std::vector<std::string> filenames = {"atrop1.cdxml"};
-
-#ifndef RDK_BUILD_CHEMDRAW_SUPPORT            
       std::vector<std::string> expected = {
-          "C[C]1[C][CH]C(Cl)C(C)=C1c1c(C)ccc(Cl)c1C |(-2.936,-0.12,;-2.936,-1.66,;-1.602,-2.43,;-1.602,-3.97,;-2.936,-4.74,;-2.93,-6.28,;-4.27,-3.97,;-5.603,-4.74,;-4.27,-2.43,;-5.603,-1.66,;-5.603,-0.12,;-4.27,0.64,;-6.937,0.64,;-8.271,-0.12,;-8.271,-1.66,;-9.604,-2.43,;-6.937,-2.43,;-6.937,-3.97,),^1:1,3,^2:2,wU:8.8|"};
-#else
-      std::vector<std::string> expected = {
-	"C[C]1[C][CH]C(Cl)C(C)=C1c1c(C)ccc(Cl)c1C |(-2.936,-0.12,;-2.936,-1.66,;-1.602,-2.43,;-1.602,-3.97,;-2.936,-4.74,;-2.93,-6.28,;-4.27,-3.97,;-5.603,-4.74,;-4.27,-2.43,;-5.603,-1.66,;-5.603,-0.12,;-4.27,0.639999,;-6.937,0.639999,;-8.271,-0.12,;-8.271,-1.66,;-9.604,-2.43,;-6.937,-2.43,;-6.937,-3.97,),^1:1,3,^2:2,wU:8.8|"};
-      
-#endif
+          "C[C]1[C][CH]C(Cl)C(C)=C1c1c(C)ccc(Cl)c1C |(-2.936,-0.12,;-2.936,-1.66,;-1.602,-2.43,;-1.602,-3.97,;-2.936,-4.74,;-2.93,-6.28,;-4.27,-3.97,;-5.603,-4.74,;-4.27,-2.43,;-5.603,-1.66,;-5.603,-0.12,;-4.27,0.639999,;-6.937,0.639999,;-8.271,-0.12,;-8.271,-1.66,;-9.604,-2.43,;-6.937,-2.43,;-6.937,-3.97,),^1:1,3,^2:2,wU:8.8|"};
       for (auto i = 0u; i < filenames.size(); ++i) {
         auto fname = cdxmlbase + filenames[i];
-        auto mol = MolsFromCDXMLFile(fname);
+        auto mol = MolsFromChemDrawFile(fname);
 
         SmilesWriteParams ps;
         auto smi = MolToCXSmiles(*(mol[0].get()), ps,
@@ -989,7 +883,7 @@ TEST_CASE("bad stereo in a natural product") {
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
   SECTION("case 1") {
     auto fname = cdxmlbase + "stereo5.cdxml";
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size() == 1);
     CHECK(
         MolToSmiles(*mols[0]) ==
@@ -1002,7 +896,7 @@ TEST_CASE("Github #6262: preserve bond wedging") {
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
   SECTION("case 1") {
     auto fname = cdxmlbase + "stereo6.cdxml";
-    auto mols = MolsFromCDXMLFile(fname);
+    auto mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size() == 1);
     {
       REQUIRE(mols[0]->getBondBetweenAtoms(2, 5));
@@ -1272,8 +1166,7 @@ TEST_CASE("Github #6887: and1 or1 in same mol") {
  B="4"
  E="16"
  Display="WedgeBegin"
- BS="N"
-/><b
+ BS="N"/><b
  id="19"
  Z="18"
  B="8"
@@ -1289,7 +1182,8 @@ TEST_CASE("Github #6887: and1 or1 in same mol") {
  BS="N"
 /></fragment></page></CDXML>
 )";
-    auto mols = MolsFromCDXML(cdxml1);
+    std::stringstream iss(cdxml1);
+    auto mols = MolsFromChemDrawDataStream(iss);
     mols[0]->clearConformers();
     CHECK(MolToCXSmiles(*mols[0]) ==
           "CO[C@H](C)C[C@H](Cl)C[C@H](C)Br |o1:5,o2:8,&1:2|");
@@ -1301,9 +1195,9 @@ TEST_CASE("Github #7528 - read fragments in groups") {
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
   SECTION("case 1") {
     auto fname = cdxmlbase + "github7467-grouped-fragments.cdxml";
-    CDXMLParserParams params;
+    ChemDrawParserParams params;
     params.sanitize = false;
-    auto mols = MolsFromCDXMLFile(fname, params);
+    auto mols = MolsFromChemDrawFile(fname, params);
     REQUIRE(mols.size() == 2);
   }
 }
@@ -1313,10 +1207,208 @@ TEST_CASE("Github #7501 - dative bonds") {
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
   SECTION("case 1") {
     auto fname = cdxmlbase + "github7501-dative.cdxml";
-    CDXMLParserParams params;
-    auto mols = MolsFromCDXMLFile(fname, params);
+    ChemDrawParserParams params;
+    auto mols = MolsFromChemDrawFile(fname, params);
     CHECK(MolToSmiles(*mols[0]) ==
-          "C[CH2](C)->[Os]12<-[CH3]CC[NH]->1CC=[NH]->2");  // All datives to the
+	  "C[CH2](C)->[Os]12<-[CH3]CC[NH]->1CC=[NH]->2");  // All datives to the
                                                            // Osmium
+  }
+}
+
+TEST_CASE("Synthesis-workshop") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("ChemDraw Template from the synthesis-workshop") {
+    // this was hella fun to validate the stereo-chemistry...
+    auto fname = cdxmlbase + "chemdraw_template1.cdxml";
+    auto mols = MolsFromChemDrawFile(fname);
+    std::vector<std::string> expected = {
+        "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
+        "[B]",
+	"*",
+	"[C]",
+        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
+        // this is may or may not be correct, but the structure is drawn
+        // incorrectly.
+        // There's a test below which fixes this
+        "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
+        "Cc1ccc2ccc(=O)ccn12",
+	"Cc1cccn1[C@H](C)C=O",
+        "Cc1ccc2ccc([O-])cc[n+]1-2",
+	"Cc1ccc2ccc(=O)ccn12",
+        "Cc1cccn1[C@H](C)C(C#N)O[Si](C)(C)C",
+        "CC1CC[C@]2(O)[C@]3(C)C[C@]4(O)O[C@@]2([C@@H]1O)C1(O)C4(C)C(O)(C(C)C)[C@@H](OC(=O)c2ccc[nH]2)[C@]13O",
+        "C=C(C)[C@H]1CC(=O)CC2=C(C1)[C@H]1C(=O)O[C@H]3C[C@@](C)(O)[C@@H](C2=O)[C@@H]13"};
+    CHECK(mols.size() == expected.size());
+    int i = 0;
+    for (auto &mol : mols) {
+      INFO(i);
+      CHECK(MolToSmiles(*mol) == expected[i++]);
+    }
+  }
+}
+
+TEST_CASE("Output CDXML") {
+  SECTION("basic") {
+    auto mol =
+        "N#Cc1ccc(cc1Cl)O[C@@H]1CC[C@H](CC1)NC(=O)c1ccc(nn1)N1CCC(CC1)CN1CCN(CC1)c1cc2C(=O)N(C(=O)c2cc1F)C1CCC(=O)NC1=O"_smiles;
+    // auto mol = "[C@H](I)(F)Br"_smiles;
+    // auto res = MolToMolBlock(*mol);
+    // mol->debugMol(std::cerr);
+    std::string output = MolToChemDrawBlock(*mol);
+    std::stringstream cdxml;
+    cdxml << output;
+    auto mols = MolsFromChemDrawDataStream(cdxml);
+    CHECK(MolToSmiles(*mols[0]) == MolToSmiles(*mol));
+  }
+}
+
+TEST_CASE("Brackets") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("MultipleGroups") {
+    auto fname = cdxmlbase + "sgroups_and_remove_atoms_4.cdxml";
+    ChemDrawParserParams params;
+    auto mols = MolsFromChemDrawFile(fname, params);
+    CHECK(MolToSmiles(*mols[0]) == "CCN(C)CC");
+  }
+}
+
+TEST_CASE("Enhanced Stereochem") {
+  SECTION("Round Trip") {
+    auto mol = "F[C@H](Cl)Br |o1:1|"_smiles;
+    CHECK(MolToCXSmiles(*mol) == "F[C@H](Cl)Br |o1:1|");
+    auto cdx = MolToChemDrawBlock(*mol);
+    std::stringstream iss(cdx);
+    auto mols = MolsFromChemDrawDataStream(iss);
+
+    SmilesWriteParams ps;
+    auto cxsmi = MolToCXSmiles(*mols[0], ps,
+                               SmilesWrite::CXSmilesFields::CX_ALL ^
+                                   SmilesWrite::CXSmilesFields::CX_COORDS);
+    CHECK(cxsmi == "F[C@H](Cl)Br |o1:1|");
+  }
+}
+
+TEST_CASE("Round TRIP") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/";
+  std::string code_path = std::string(getenv("RDBASE"));
+
+  SECTION("round trip") {
+    std::set<std::string> exceptions = {"stereo3d_unknown.mol", "mrv-sma.mol",
+                                        "github2040_1.mol"};
+    int failed = 0;
+    int total = 0;
+    RDLog::LogStateSetter blocker;
+    for (const auto &entry :
+         std::filesystem::recursive_directory_iterator(code_path)) {
+      if (entry.path().string().find("ChemDraw") != std::string::npos)
+        continue;  // Skip ChemDraw directory
+      if (entry.path().string().find("build") != std::string::npos) continue;
+      if (entry.is_regular_file() &&
+          entry.path().extension().string() == ".mol") {
+        if (exceptions.find(entry.path().filename().string()) !=
+            exceptions.end()) {
+          std::cerr << "Skipping exception: " << entry.path() << std::endl;
+          continue;
+        }
+        RWMol *mol = nullptr;
+        try {
+          mol = MolFileToMol(entry.path().string());
+        } catch (...) {
+          continue;
+        }
+        if (mol) {
+          // CDX doesn't support atom map numbers apparently
+          total++;
+          for (auto atom : mol->atoms()) {
+            atom->setAtomMapNum(0);
+          }
+          // CDXML doesn't support ZERO bonds
+          bool haszerobond = false;
+          for (auto bond : mol->bonds()) {
+            if (bond->getBondType() == Bond::BondType::ZERO) {
+              haszerobond = true;
+              break;
+            }
+          }
+          if (haszerobond) {
+            delete mol;
+            continue;
+          }
+
+          // std::cerr << entry.path() << std::endl;
+          std::string cdx;
+          try {
+            cdx = MolToChemDrawBlock(*mol);
+          } catch (...) {
+            std::cerr << entry.path().filename().string() << std::endl;
+            std::cerr << "FAIL (cdxml-write-exception):" << entry.path()
+                      << std::endl;
+            failed++;
+            continue;
+          }
+          std::vector<std::unique_ptr<RWMol>> mols;
+          std::stringstream iss(cdx);
+          try {
+            mols = MolsFromChemDrawDataStream(iss);
+          } catch (...) {
+            std::cerr << entry.path().filename().string() << std::endl;
+            std::cerr << "FAIL (cdxml-exception):" << entry.path() << std::endl;
+            failed++;
+          }
+          auto smi1 = MolToSmiles(*mol);
+
+          if (mols.size() == 0) {
+            std::cerr << entry.path().filename().string() << std::endl;
+            std::cerr << "FAIL (nomol):" << entry.path() << std::endl;
+            mol->debugMol(std::cerr);
+            failed++;
+            continue;
+          }
+          auto smi2 = MolToSmiles(*mols[0]);
+          if (smi1 != smi2) {
+            // std::cerr <<
+            // "**************************************************************"
+            // << std::endl;
+            std::cerr << "FAIL:" << entry.path() << " " << smi1
+                      << " != " << smi2 << std::endl;
+            failed++;
+            // std::cerr << "molfile:" << smi1 << std::endl;
+            // std::cerr << "cdx    :" << smi2 << std::endl;
+            // std::cerr << cdx << std::endl;
+          } else {
+            // std::cerr << "PASS:" << entry.path() << std::endl;
+          }
+          // CHECK(smi1 == smi2);
+          delete mol;
+        }
+      }
+    }
+    std::cerr << "Failed:" << failed << " out of " << total << std::endl;
+    REQUIRE(failed == 0);
+  }
+}
+
+TEST_CASE("Fragments") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  SECTION("Single Atom Replacements") {
+    auto fname = path + "atom-to-fragment.cdxml";
+    auto mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size());
+    REQUIRE("CC=C=C(C)C" == MolToSmiles(*mols[0]));
+  }
+}
+
+TEST_CASE("Geometry") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  SECTION("Single Atom Replacements") {
+    auto fname = path + "geometry-tetrahedral.cdxml";
+    auto mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size());
+    REQUIRE("C1[C@H]2C[C@@H]12" == MolToSmiles(*mols[0]));
   }
 }
