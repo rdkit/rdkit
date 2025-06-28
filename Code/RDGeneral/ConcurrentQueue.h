@@ -65,8 +65,10 @@ void ConcurrentQueue<E>::push(const E &element) {
   std::unique_lock<std::mutex> lk(d_lock);
   //! concurrent queue is full so we wait until
   //! it is not full
-  if(d_done) return;
-  
+  if (d_done) {
+    return;
+  }
+
   while (d_head + d_capacity == d_tail) {
     d_notFull.wait(lk);
   }
