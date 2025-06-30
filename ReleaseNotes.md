@@ -1,3 +1,71 @@
+# Release_2025.03.4
+(Changes relative to Release_2025.03.3)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Michael Blakey,
+David Cosgrove,
+Andrew Dalke,
+Tad Hurst,
+Brian Kelley,
+Mark Mackey,
+Ricardo Rodriguez,
+Caleb Thomas,
+Paolo Tosco,
+ndickson-nvidia,
+jasondbiggs,
+paconius
+
+
+## New Features and Enhancements:
+  - Bump maeparser to 1.3.3 (fixes #8525)
+ (github pull #8580 from ricrogz)
+  - Cpp enumerate stereoisomers 
+ (github pull #8563 from DavidACosgrove)
+  - CIP labeler: attempt to resolve "easy" stereo centers first
+ (github pull #8582 from ricrogz)
+  - Allow creation of bond-only stereogroups from Python
+ (github issue #8584 from paconius)
+  - Make assignCIPLabels Ctrl+c interruptable
+ (github pull #8589 from ricrogz)
+  - Expose the onlyWedgeFlags parameter to SWIG ClearSingleBondDirFlags
+ (github pull #8600 from ptosco)
+
+## Documentation:
+  - MolFromHELM() supports RNA/DNA too
+  (github issue #3087 from adalke)
+
+## Bug Fixes:
+  - Multithreaded mol reader can hang when not iterating through the whole file
+ (github issue #8284 from bp-kelley)
+  - MolFromSmiles and MolFromSmarts accept strings containing invalid characters if they start with a valid character
+ (github issue #8471 from jasondbiggs)
+  - Issue reading .mae files
+ (github issue #8525 from mark-mackey-cresset)
+  - allow nested parentheses in tokens #8553
+  (github pull #8553 from tadhurst-cdd)
+  - Segmentation fault in AllChem.EmbedMolecule()
+ (github issue #8559 from calebthomas259)
+  - Fixes the problems with wiggly bonds and EnumerateStereoisomers from #8506
+ (github pull #8598 from greglandrum)
+  - Fixed out of bounds vector access in GetGeodesicMatrix
+ (github pull #8601 from ndickson-nvidia)
+
+
+## Cleanup work:
+  - Small cleanups of the xyz2mol code
+ (github pull #8567 from greglandrum)
+  - Small cleanups of the MMFF94 code
+ (github pull #8593 from greglandrum)
+
+
+
+
+
+
 # Release_2025.03.3
 (Changes relative to Release_2025.03.2)
 
