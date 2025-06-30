@@ -3311,6 +3311,17 @@ moleculeNote property will be set on the molecule with the value "AND
 enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
 )DOC");
 
+    python::def(
+        "CleanupStereoGroups", Chirality::cleanupStereoGroups,
+        (python::arg("mol")),
+        R"DOC(Carries out a number of cleanup steps on a molecule's stereogroups.
+
+  Operations include:
+   - combine all ABS stereo groups into one and make it the first group
+   - remove atoms without specified chirality from stereo groups
+   - remove stereo groups made up entirely of meso centers
+)DOC");
+
     python::def("_TestSetProps", testSetProps, python::arg("mol"));
     python::def("NeedsHs", MolOps::needsHs, (python::arg("mol")),
                 "returns whether or not the molecule needs to have Hs added");
