@@ -1254,6 +1254,51 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_CalcNumRotatableBonds_version") =
       RDKit::Descriptors::NumRotatableBondsVersion;
 
+#ifdef RDK_USE_STRICT_ROTOR_DEFINITION
+  docString =
+      "Returns the maximum number of consecutive rotatable bonds for a molecule.\\n\\n"
+      "Arguments:\\n"
+      "  mol (Mol): The molecule of interest.\\n"
+      "  strict (NumRotatableBondsOptions or bool): Controls the definition of rotatable bonds.\\n"
+      "    - If bool: `True` corresponds to `NumRotatableBondsOptions.Strict`, `False` to `NumRotatableBondsOptions.NonStrict`.\\n"
+      "    - If NumRotatableBondsOptions:\\n"
+      "      - `NonStrict`: Standard loose definition of rotatable bonds.\\n"
+      "      - `Strict`: (default) Stricter definition (e.g., excludes C-CF3, C-C(Cl)3, amide, ester bonds from being rotatable).\\n"
+      "      - `Default`: Uses `Strict` definition (reflects RDK_USE_STRICT_ROTOR_DEFINITION being defined).\\n"
+      "    - `StrictLinkages` is NOT supported and will raise an error.\\n\\n"
+      "The function identifies chains of directly connected rotatable bonds (based on the chosen 'strict' definition)\\n"
+      "and returns the length of the longest such chain. If no rotatable bonds are found, it returns 0.";
+#else
+  docString =
+      "Returns the maximum number of consecutive rotatable bonds for a molecule.\\n\\n"
+      "Arguments:\\n"
+      "  mol (Mol): The molecule of interest.\\n"
+      "  strict (NumRotatableBondsOptions or bool): Controls the definition of rotatable bonds.\\n"
+      "    - If bool: `True` corresponds to `NumRotatableBondsOptions.Strict`, `False` to `NumRotatableBondsOptions.NonStrict`.\\n"
+      "    - If NumRotatableBondsOptions:\\n"
+      "      - `NonStrict`: (default) Standard loose definition of rotatable bonds.\\n"
+      "      - `Strict`: Stricter definition (e.g., excludes C-CF3, C-C(Cl)3, amide, ester bonds from being rotatable).\\n"
+      "      - `Default`: Uses `NonStrict` definition (reflects RDK_USE_STRICT_ROTOR_DEFINITION not being defined).\\n"
+      "    - `StrictLinkages` is NOT supported and will raise an error.\\n\\n"
+      "The function identifies chains of directly connected rotatable bonds (based on the chosen 'strict' definition)\\n"
+      "and returns the length of the longest such chain. If no rotatable bonds are found, it returns 0.";
+#endif
+
+  python::def("CalcMaxConsecutiveRotatableBonds",
+              (unsigned int (*)(const RDKit::ROMol &,
+                                bool))RDKit::Descriptors::calcMaxConsecutiveRotatableBonds,
+              (python::arg("mol"), python::arg("strict")), docString.c_str());
+
+  python::def(
+      "CalcMaxConsecutiveRotatableBonds",
+      (unsigned int (*)(const RDKit::ROMol &,
+                        RDKit::Descriptors::NumRotatableBondsOptions))
+          RDKit::Descriptors::calcMaxConsecutiveRotatableBonds,
+      (python::arg("mol"), python::arg("strict") = RDKit::Descriptors::Default),
+      docString.c_str());
+  python::scope().attr("_CalcMaxConsecutiveRotatableBonds_version") =
+      RDKit::Descriptors::MaxConsecutiveRotatableBondsVersion;
+
   docString = "returns the number of rings for a molecule";
   python::def("CalcNumRings", RDKit::Descriptors::calcNumRings,
               (python::arg("mol")), docString.c_str());
