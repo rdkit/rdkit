@@ -854,7 +854,7 @@ M  END''')
         d2d.DrawMolecule(m)
         d2d.FinishDrawing()
         text = d2d.GetDrawingText()
-        #confirm that CIP codes are present
+        #confirm that at least one CIP code is present
         self.assertTrue("class='CIP_Code'" in text)
 
 if __name__ == "__main__":
