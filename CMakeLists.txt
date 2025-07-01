@@ -711,4 +711,27 @@ SET(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSIO
 
 SET(CPACK_SET_DESTDIR ON)
 
+# Find ccache
+find_program(CCACHE_PROGRAM ccache)
+
+# If ccache is found, set it as the compiler launcher
+if(CCACHE_PROGRAM)
+    # this will allow ccache to be used for compiling
+    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+
+    # we sure we always preprocess source code to percolate diagnostic warnings
+    set(ENV{CCACHE_CPP2}, "yes")
+    # set relative path so different machines can still use the cache
+    set(ENV{CCACHE_BASEDIR}, "${CMAKE_CURRENT_SOURCE_DIR}")
+    # don't use the CWD information in the hash key
+    set(ENV{CCACHE_NOHASHDIR}, "yes")
+    # using the platform name as namespace to prevent "pollution"
+    set(ENV{CCACHE_NAMESPACE}, "${CMAKE_SYSTEM_NAME}")
+    # this will allow us to handle __TIME_ macros in inputs
+    set(ENV{CCACHE_SLOPPINESS}, "time_macros")
+    # this will make the remote cache reusable for the CI
+    set(ENV{CCACHE_COMPILER_CHECK}, "string:${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}")
+endif()
+
 INCLUDE(CPack)
