@@ -205,27 +205,57 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
        - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
 
      RETURNS:
-       an iterator of parsed ChemicalReaction objects.)DOC";
+       a tuple of parsed ChemicalReaction objects.)DOC";
 
   // Reaction Interface
   python::def("ReactionsFromChemDrawFile", ReactionsFromChemDrawFileHelper,
               (python::arg("filename"), python::arg("sanitize") = false,
                python::arg("removeHs") = false),
-              "construct a tuple of ChemicalReactions from a ChemDraw rxn file");
+              docString.c_str());
 
+  docString =
+      R"DOC(Extract all reactions from a ChemDraw text block.
+
+     Note that the ChemDraw format is large and complex, the RDKit doesn't support
+     full functionality, just the base ones required for molecule and
+     reaction parsing.
+
+     ARGUMENTS:
+
+       - filename: the chemdraw filename (.cdx/.cdxml)
+
+       - sanitize: if True, sanitize the molecules [default True]
+
+       - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
+
+     RETURNS:
+       a tuple of parsed ChemicalReaction objects.)DOC";
+  
   python::def(
       "ReactionsFromChemDrawBlock", ReactionsFromChemDrawBlockHelper,
       (python::arg("rxnblock"), python::arg("sanitize") = false,
        python::arg("removeHs") = false),
-      "construct a tuple of ChemicalReactions from a string in ChemDraw format");
+      docString.c_str());
 
 
   python::enum_<v2::CDXFormat>("CDXFormat")
     .value("CDX", v2::CDXFormat::CDX)
     .value("CDXML", v2::CDXFormat::CDXML);
 
+  docString =
+      R"DOC(Convert a molecule into a chemdraw string using the specified format
+
+     ARGUMENTS:
+
+       - mol: the molecule to convert
+
+       - format: The ChemDraw format to use, CDXML/CDX [default CDXML]
+
+     RETURNS:
+       an iterator of parsed ChemicalReaction objects.)DOC";
+  
     python::def(
 		"MolToChemDrawBlock", v2::MolToChemDrawBlock,
 		(python::arg("mol"), python::arg("format")=v2::CDXFormat::CDXML),
-		"Convert a molecule into a chemdraw string using the specified format");
+		docString.c_str());
 }
