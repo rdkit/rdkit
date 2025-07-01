@@ -159,7 +159,7 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
        - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
 
      RETURNS:
-       an iterator of parsed Mol objects.)DOC";
+       a tuple of parsed Mol objects.)DOC";
 
   python::def("MolsFromChemDrawFile", MolsFromChemDrawFileHelper,
               (python::arg("filename"), python::arg("sanitize") = true,
