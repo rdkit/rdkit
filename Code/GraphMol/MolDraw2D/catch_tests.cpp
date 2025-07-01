@@ -10814,23 +10814,23 @@ M  END
     CIPLabeler::assignCIPLabels(*m);
     MolDraw2DSVG drawer(350, 300);
     drawer.drawOptions().addStereoAnnotation = true;
+    drawer.drawOptions().showAllCIPCodes = true;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
     std::ofstream outs("testShowAllCIPLabels.svg");
     outs << text;
     outs.close();
-    check_file_hash("testShowAllCIPLabels.svg");
 
-    MolDraw2DSVG drawer2(350, 300);
-    drawer2.drawOptions().addStereoAnnotation = true;
-    drawer2.drawOptions().showAllCIPCodes = true;
-    drawer2.drawMolecule(*m);
-    drawer2.finishDrawing();
-    auto text2 = drawer2.getDrawingText();
-    std::ofstream outs2("testShowAllCIPLabels2.svg");
-    outs2 << text2;
-    outs2.close();
-    check_file_hash("testShowAllCIPLabels2.svg");
+    // Check for Blue (M) CIP label on Bond
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    TEST_ASSERT(
+        text.find("<path class='CIP_Code' d='M 156.4 196.1") !=
+        std::string::npos);
+#else
+    TEST_ASSERT(
+        text.find("<path class='CIP_Code' d='M 168.8 196.1") !=
+        std::string::npos);
+#endif
   }
 

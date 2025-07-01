@@ -4036,7 +4036,7 @@ void test20Annotate() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // last note
-    TEST_ASSERT(text.find("<path class='note' d='M 273.9 236.3") !=
+    TEST_ASSERT(text.find("<path class='CIP_Code' d='M 273.9 236.3") !=
                 std::string::npos);
 #endif
 #else

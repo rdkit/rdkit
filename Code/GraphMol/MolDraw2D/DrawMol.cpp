@@ -494,7 +494,7 @@ void DrawMol::extractCIPCodes(bool showAllCIPCodes) {
         DrawAnnotation *annot = new DrawAnnotation(
           cip, TextAlignType::MIDDLE, "CIP_Code",
           drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-          drawOptions_.annotationColour, textDrawer_);
+          drawOptions_.atomNoteColour, textDrawer_);
       calcAnnotationPosition(atom, *annot);
       annotations_.emplace_back(annot);
     }
@@ -502,15 +502,27 @@ void DrawMol::extractCIPCodes(bool showAllCIPCodes) {
 
   for (auto bond : drawMol_->bonds()) {
     std::string cip;
-    if (!maskedBonds[bond->getIdx()] &&
-        bond->getPropIfPresent(common_properties::_CIPCode, cip)) {
+    // Add E or Z CIP codes if missing to be compatible with previous
+    // implemtnation. In future, user should be responsible for calling
+    // AssignCIPLabels() before drawing to harmonize behavior with
+    // how R,S,M,P CIP codes are handled
+    if (!maskedBonds[bond->getIdx()]) {
+      if (!bond->getPropIfPresent(common_properties::_CIPCode, cip)) {
+        if (bond->getStereo() == Bond::STEREOE) {
+          cip = "E";
+        } else if (bond->getStereo() == Bond::STEREOZ) {
+          cip = "Z";
+        }
+      }
+      if (!cip.empty()) {
         cip = "(" + cip + ")";
         DrawAnnotation *annot = new DrawAnnotation(
           cip, TextAlignType::MIDDLE, "CIP_Code",
           drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-          drawOptions_.annotationColour, textDrawer_);
+          drawOptions_.bondNoteColour, textDrawer_);
       calcAnnotationPosition(bond, *annot);
       annotations_.emplace_back(annot);
+      }
     }
   }
 }
