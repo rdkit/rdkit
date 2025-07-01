@@ -855,7 +855,7 @@ M  END''')
         d2d.FinishDrawing()
         text = d2d.GetDrawingText()
         #confirm that CIP codes are present
-        self.assertTrue("<path class='CIP_Code'" in text)
+        self.assertTrue("class='CIP_Code'" in text)
 
 if __name__ == "__main__":
     unittest.main()
