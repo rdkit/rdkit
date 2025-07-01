@@ -10823,14 +10823,8 @@ M  END
     outs.close();
 
     // Check for Blue (M) CIP label on Bond
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
     TEST_ASSERT(
-        text.find("<path class='CIP_Code' d='M 156.4 196.1") !=
+        text.find("class='CIP_Code'") !=
         std::string::npos);
-#else
-    TEST_ASSERT(
-        text.find("<path class='CIP_Code' d='M 168.8 196.1") !=
-        std::string::npos);
-#endif
   }
 

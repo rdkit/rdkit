@@ -4041,7 +4041,7 @@ void test20Annotate() {
 #endif
 #else
     // this is the (E)
-    TEST_ASSERT(text.find("<text x='260.3' y='232.0' class='note' "
+    TEST_ASSERT(text.find("<text x='260.3' y='232.0' class='CIP_Code' "
                           "style='font-size:20px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#7F7FFF' >E</text>") !=
