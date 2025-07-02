@@ -866,6 +866,39 @@ class MrvTests {
     BOOST_LOG(rdInfoLog) << "done" << std::endl;
   }
 
+  void testMarvinRgroupError() {
+    BOOST_LOG(rdInfoLog) << "testing marvin Rgroup error" << std::endl;
+    std::string rdbase = getenv("RDBASE");
+    const auto molb = R"CTAB( 
+  -INDIGO-06252516172D
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+    9.9900   -7.1250    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    8.9900   -7.1250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  RGP  1   1   1
+M  END
+    )CTAB";
+    std::unique_ptr<ROMol> mol = v2::FileParsers::MolFromMolBlock(molb);
+
+    SmilesWriteParams ps;
+    ps.canonical = false;
+
+    std::string smilesOut = MolToSmiles(*mol, ps);
+    std::string cxSmilesOut = MolToCXSmiles(*mol, ps);
+
+    auto outMolStr = MolToMrvBlock(*mol, true, -1, true, false);
+
+    std::unique_ptr<ROMol> mol2 =
+        RDKit::v2::MarvinParser::MolFromMrvBlock(outMolStr);
+
+    std::string smilesOut2 = MolToSmiles(*mol2, ps);
+    std::string cxSmilesOut2 = MolToCXSmiles(*mol2, ps);
+
+    TEST_ASSERT(smilesOut == smilesOut2);
+    TEST_ASSERT(cxSmilesOut == cxSmilesOut2);
+  }
+
  public:
   void RunTests() {
     UseLegacyStereoPerceptionFixture useLegacy(false);
@@ -889,6 +922,10 @@ class MrvTests {
         printf("Test\n\n %s\n\n", rxnMolTest.fileName.c_str());
         testMarvinRxnMols(&rxnMolTest);
       }
+    }
+
+    if (testToRun == "" || testToRun == "testMarvinRgroupError") {
+      testMarvinRgroupError();
     }
 
     // the molecule tests - starting with molfiles/sdf
