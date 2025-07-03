@@ -8,7 +8,3 @@ add_subdirectory(GA)
 if(RDK_BUILD_PUBCHEMSHAPE_SUPPORT)
 add_subdirectory(pubchem_shape)
 endif()
-
-if(RDK_BUILD_CHEMDRAW_SUPPORT)
- add_subdirectory(ChemDraw)
-endif()
