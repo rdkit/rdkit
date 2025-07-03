@@ -380,11 +380,9 @@ void testGithub1657() {}
 
 int main() {
   RDLog::InitLogs();
-#if 1
   testSamplers();
   testEvenSamplers();
   testEnumerations();
   testInsaneEnumerations();
-#endif
   testGithub1657();
 }

@@ -935,13 +935,11 @@ void testEnumerationProblems() {
   TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
-#if 1
   {  // from the discussion of #2908
     auto mol = "O=C(C1=C[NH+]=CC=C1)[O-]"_smiles;
     auto tautRes = te.enumerate(*mol);
     TEST_ASSERT(tautRes.size() == 1);
   }
-#endif
   {  // one of the examples from the tautobase paper
     auto m =
         "[S:1]=[c:2]1[nH+:3][c:5]([NH2:9])[nH:8][c:7]2[c:4]1[n:6][nH:10][n:11]2"_smiles;
@@ -1489,7 +1487,6 @@ void testGithub3755() {
 
 int main() {
   RDLog::InitLogs();
-#if 1
   testEnumerator();
   testEnumeratorParams();
   testEnumeratorCallback();
@@ -1497,7 +1494,6 @@ int main() {
   testPickCanonical();
   testCustomScoreFunc();
   testEnumerationProblems();
-#endif
   testPickCanonical2();
   testEnumerateDetails();
   testGithub2990();

@@ -2478,11 +2478,6 @@ void tokenizeV3000Line(std::string_view line,
   if (start != pos) {
     tokens.push_back(line.substr(start, line.size() - start));
   }
-#if 0
-      std::cerr<<"tokens: ";
-      std::copy(tokens.begin(),tokens.end(),std::ostream_iterator<std::string>(std::cerr,"|"));
-      std::cerr<<std::endl;
-#endif
 }
 
 bool calculate3dFlag(const RWMol &mol, const Conformer &conf,
