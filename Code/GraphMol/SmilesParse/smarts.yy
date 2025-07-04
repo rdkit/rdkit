@@ -7,6 +7,9 @@
   //
 #include <cstring>
 #include <iostream>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include <GraphMol/RDKitBase.h>
@@ -18,7 +21,7 @@
 #define YYDEBUG 1
 #include "smarts.tab.hpp"
 
-extern int yysmarts_lex(YYSTYPE *,void *, int &);
+extern int yysmarts_lex(YYSTYPE *,void *, int &, unsigned int&);
 
 using namespace RDKit;
 namespace {
@@ -37,22 +40,35 @@ yysmarts_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
                 RDKit::Atom* &,
                 RDKit::Bond* &,
-                unsigned int &,unsigned int &,
-                std::list<unsigned int> *,
-		void *,int , const char *msg  )
+                unsigned int &,
+                unsigned int &,
+                std::vector<std::pair<unsigned int, unsigned int>>&,
+                void *,
+                int,
+                unsigned int bad_token_position,
+                const char *msg  )
 {
   yyErrorCleanup(ms);
-  BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << msg << " while parsing: " << input << std::endl;
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMARTS");
 }
 
 void
 yysmarts_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
-                std::list<unsigned int> *,
-		void *,int, const char * msg )
+                std::vector<std::pair<unsigned int, unsigned int>>&,
+                void *,
+                int,
+                unsigned int bad_token_position,
+                const char * msg )
 {
   yyErrorCleanup(ms);
-  BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << msg << " while parsing: " << input << std::endl;
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMARTS");
 }
 
 
@@ -61,20 +77,22 @@ yysmarts_error( const char *input,
 %define api.pure full
 %lex-param   {yyscan_t *scanner}
 %lex-param   {int& start_token}
+%lex-param   {unsigned int& current_token_position}
 %parse-param {const char *input}
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {RDKit::Atom* &lastAtom}
 %parse-param {RDKit::Bond* &lastBond}
 %parse-param {unsigned &numAtomsParsed}
 %parse-param {unsigned &numBondsParsed}
-%parse-param {std::list<unsigned int> *branchPoints}
+%parse-param {std::vector<std::pair<unsigned int, unsigned int>>& branchPoints}
 %parse-param {void *scanner}
 %parse-param {int& start_token}
+%parse-param {unsigned int& current_token_position}
 
 %code provides {
 #ifndef YY_DECL
 #define YY_DECL int yylex \
-               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token, unsigned int& current_token_position)
 #endif
 }
 
@@ -101,11 +119,11 @@ yysmarts_error( const char *input,
 %token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN BEGIN_RECURSE END_RECURSE
 %token COLON_TOKEN UNDERSCORE_TOKEN
 %token <bond> BOND_TOKEN
-%token <chiraltype> CHI_CLASS_TOKEN 
+%token <chiraltype> CHI_CLASS_TOKEN
 %type <moli>  mol
 %type <atom> atomd simple_atom hydrogen_atom
 %type <atom> atom_expr point_query atom_query recursive_query possible_range_query
-%type <ival> ring_number nonzero_number number charge_spec digit
+%type <ival> ring_number nonzero_number number charge_spec digit branch_open_token
 %type <bond> bondd bond_expr bond_query
 %token BAD_CHARACTER
 %token EOS_TOKEN
@@ -275,7 +293,7 @@ mol: atomd {
 
 }
 
-| mol GROUP_OPEN_TOKEN atomd {
+| mol branch_open_token atomd {
   RWMol *mp = (*molList)[$$];
   Atom *a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
@@ -289,10 +307,10 @@ mol: atomd {
   mp->addBond(newB);
   delete newB;
 
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back({atomIdx1, $2});
 }
 
-| mol GROUP_OPEN_TOKEN bond_expr atomd  {
+| mol branch_open_token bond_expr atomd  {
   RWMol *mp = (*molList)[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($4,true,true);
@@ -310,20 +328,20 @@ mol: atomd {
   }
   $3->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->addBond($3,true);
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back({atomIdx1, $2});
 
 }
 
 
 | mol GROUP_CLOSE_TOKEN {
-  if(branchPoints->empty()){
-     yyerror(input,molList,branchPoints,scanner,start_token,"extra close parentheses");
+  if(branchPoints.empty()){
+     yyerror(input,molList,branchPoints,scanner,start_token, current_token_position, "extra close parentheses");
      yyErrorCleanup(molList);
      YYABORT;
   }
   RWMol *mp = (*molList)[$$];
-  mp->setActiveAtom(branchPoints->back());
-  branchPoints->pop_back();
+  mp->setActiveAtom(branchPoints.back().first);
+  branchPoints.pop_back();
 }
 
 ;
@@ -774,10 +792,10 @@ number:  ZERO_TOKEN
 
 /* --------------------------------------------------------------- */
 nonzero_number:  NONZERO_DIGIT_TOKEN
-| nonzero_number digit { 
-    if($1 >= std::numeric_limits<std::int32_t>::max()/10 || 
+| nonzero_number digit {
+    if($1 >= std::numeric_limits<std::int32_t>::max()/10 ||
      $1*10 >= std::numeric_limits<std::int32_t>::max()-$2 ){
-     yysmarts_error(input,molList,lastAtom,lastBond,numAtomsParsed,numBondsParsed,branchPoints,scanner,start_token,"number too large");
+     yysmarts_error(input,molList,lastAtom,lastBond,numAtomsParsed,numBondsParsed,branchPoints,scanner,start_token, current_token_position, "number too large");
      YYABORT;
   }
   $$ = $1*10 + $2; }
@@ -786,5 +804,8 @@ nonzero_number:  NONZERO_DIGIT_TOKEN
 digit: NONZERO_DIGIT_TOKEN
 | ZERO_TOKEN
 ;
+
+// We'll use the token position for unclosed branch syntax error messages
+branch_open_token: GROUP_OPEN_TOKEN { $$ = current_token_position; };
 
 %%

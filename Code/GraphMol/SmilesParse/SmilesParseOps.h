@@ -70,7 +70,8 @@ constexpr auto _needsDetectAtomStereo = "_needsDetectAtomStereo";
 
 void printSyntaxErrorMessage(std::string_view input,
                              std::string_view err_message,
-                             unsigned int bad_token_position);
+                             unsigned int bad_token_position,
+                             std::string_view input_type);
 }  // namespace detail
 }  // namespace SmilesParseOps
 

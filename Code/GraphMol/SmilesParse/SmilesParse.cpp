@@ -63,37 +63,68 @@ namespace v2 {
 namespace SmilesParse {
 namespace {
 
-int smarts_parse_helper(const std::string &inp,
-                        std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
-                        Bond *&bond, int start_tok) {
-  std::list<unsigned int> branchPoints;
+template<int(*lex_init)(void**),
+         size_t(*string_setup)(const std::string &, void *),
+         int(*lex_destroy)(void*),
+         typename T>
+int generic_parse_helper(T parser,
+                         const std::string &inp,
+                         std::vector<RDKit::RWMol *> &molVect,
+                         Atom *&atom,
+                         Bond *&bond,
+                         int start_tok,
+                         const std::string& input_type) {
+  std::vector<std::pair<unsigned int, unsigned int>> branchPoints;
   void *scanner;
   int res = 1;  // initialize with fail code
 
-  TEST_ASSERT(!yysmarts_lex_init(&scanner));
+  TEST_ASSERT(!lex_init(&scanner));
+  size_t ltrim = 0;
   try {
-    size_t ltrim = setup_smarts_string(inp, scanner);
+    ltrim = string_setup(inp, scanner);
     unsigned numAtomsParsed = 0;
     unsigned numBondsParsed = 0;
-    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, atom, bond,
-                         numAtomsParsed, numBondsParsed, &branchPoints, scanner,
-                         start_tok);
+    // NOTE: This variable will be used to point to the location of the
+    // offending token if we encounter a syntax error
+    unsigned int current_token_position = 0;
+    res = parser(inp.c_str() + ltrim, &molVect, atom, bond,
+                         numAtomsParsed, numBondsParsed, branchPoints, scanner,
+                         start_tok, current_token_position);
   } catch (...) {
-    yysmarts_lex_destroy(scanner);
+    lex_destroy(scanner);
     throw;
   }
-  yysmarts_lex_destroy(scanner);
+  lex_destroy(scanner);
 
-  if (res == 1) {
-    std::stringstream errout;
-    errout << "Failed parsing SMARTS '" << inp << "'";
-    throw SmilesParseException(errout.str());
-  }
   if (!branchPoints.empty()) {
-    throw SmilesParseException("extra open parentheses");
+    auto input = inp.c_str() + ltrim;
+    // If there are multiple unclosed brackets, we want to report them all at
+    // once.
+    for (auto [_, open_bracket_position] : branchPoints) {
+      SmilesParseOps::detail::printSyntaxErrorMessage(
+          input, "extra open parentheses", open_bracket_position, input_type);
+    }
+  }
+
+  if (res == 1 || !branchPoints.empty()) {
+    throw SmilesParseException("Failed parsing " + input_type + " '" + inp + "'");
   }
 
   return res;
+}
+
+int smarts_parse_helper(const std::string &inp,
+                        std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
+                        Bond *&bond, int start_tok) {
+    return generic_parse_helper<yysmarts_lex_init,
+                                setup_smarts_string,
+                                yysmarts_lex_destroy>(yysmarts_parse,
+                                                      inp,
+                                                      molVect,
+                                                      atom,
+                                                      bond,
+                                                      start_tok,
+                                                      "SMARTS");
 }
 int smarts_bond_parse(const std::string &inp, Bond *&bond) {
   auto start_tok = static_cast<int>(START_BOND);
@@ -119,47 +150,15 @@ int smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
 int smiles_parse_helper(const std::string &inp,
                         std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
                         Bond *&bond, int start_tok) {
-  std::vector<std::pair<unsigned int, unsigned int>> branchPoints;
-  void *scanner;
-  int res = 1;  // initialize with fail code
-  unsigned numAtomsParsed = 0;
-  unsigned numBondsParsed = 0;
-  TEST_ASSERT(!yysmiles_lex_init(&scanner));
-  size_t ltrim = 0;
-  try {
-    ltrim = setup_smiles_string(inp, scanner);
-    // NOTE: This variable will be used to point to the location of the
-    // offending token if we encounter a syntax error
-    unsigned int current_token_position = 0;
-    res = yysmiles_parse(inp.c_str() + ltrim, &molVect, atom, bond,
-                         numAtomsParsed, numBondsParsed, branchPoints, scanner,
-                         start_tok, current_token_position);
-  } catch (...) {
-    yysmiles_lex_destroy(scanner);
-    throw;
-  }
-  yysmiles_lex_destroy(scanner);
-
-  if (res == 1) {
-    std::stringstream errout;
-    errout << "Failed parsing SMILES '" << inp << "'";
-    throw SmilesParseException(errout.str());
-  }
-
-  if (!branchPoints.empty()) {
-    auto input_smiles = inp.c_str() + ltrim;
-    // If there are multiple unclosed brackets, we want to report them all at
-    // once. e.g. CC(CC(CC
-    for (auto [_, open_bracket_position] : branchPoints) {
-      SmilesParseOps::detail::printSyntaxErrorMessage(
-          input_smiles, "extra open parentheses", open_bracket_position);
-    }
-
-    std::stringstream errout;
-    errout << "Failed parsing SMILES '" << inp << "'";
-    throw SmilesParseException(errout.str());
-  }
-  return res;
+    return generic_parse_helper<yysmiles_lex_init,
+                                setup_smiles_string,
+                                yysmiles_lex_destroy>(yysmiles_parse,
+                                                      inp,
+                                                      molVect,
+                                                      atom,
+                                                      bond,
+                                                      start_tok,
+                                                      "SMILES");
 }
 
 int smiles_bond_parse(const std::string &inp, Bond *&bond) {
