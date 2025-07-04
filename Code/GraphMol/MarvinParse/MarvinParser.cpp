@@ -173,6 +173,8 @@ class MarvinCMLReader {
         }
         query->setQuery(makeAtomNullQuery());
         query->setIsotope(marvinAtom->rgroupRef);
+        query->setProp(common_properties::_MolFileRLabel,
+                       static_cast<unsigned int>(marvinAtom->rgroupRef));
       }
 
       else if (symb.size() <= 2) {
