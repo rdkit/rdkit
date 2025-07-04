@@ -10826,5 +10826,24 @@ M  END
     TEST_ASSERT(
         text.find("class='CIP_Code'") !=
         std::string::npos);
+
+    //try again, this tiem using JSON to set options
+    const char *json =
+      "{\"addStereoAnnotation\":true, \"showAllCIPCodes\":true}";
+    MolDraw2DSVG drawer2(350, 300);
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
+    drawer2.drawOptions() = opts;
+    drawer2.drawMolecule(*m);
+    drawer2.finishDrawing();
+    auto text2 = drawer2.getDrawingText();
+    std::ofstream outs2("testShowAllCIPLabels2.svg");
+    outs2 << text2;
+    outs2.close();
+
+    // Check for Blue (M) CIP label on Bond
+    TEST_ASSERT(
+        text2.find("class='CIP_Code'") !=
+        std::string::npos);
   }
 
