@@ -153,7 +153,13 @@ RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
 RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
     const ROMol &mol);
 
-//! removes atoms without specified chirality from stereo groups
+//! Carries out a number of cleanup operations on a molecule's stereogroups
+/*!
+Steps include:
+  - combine all ABS stereo groups into one and make it the first group
+  - remove atoms without specified chirality from stereo groups
+  - remove stereo groups made up entirely of meso centers
+*/
 RDKIT_GRAPHMOL_EXPORT void cleanupStereoGroups(ROMol &mol);
 
 //! calls the approximate legacy code for assigning CIP labels
