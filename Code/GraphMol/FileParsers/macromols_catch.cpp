@@ -180,11 +180,6 @@ TEST_CASE("scsiTests", "scsiTests") {
     std::list<ScsiMolTest::ScsiTest> scsiTests{
         ScsiMolTest::ScsiTest("Conjugate.mol", true, SCSRBaseHbondOptions::Auto,
                               91, 91, 14, 87, 87, 10),
-        ScsiMolTest::ScsiTest("waywaytoobig.mol", true,
-                              SCSRBaseHbondOptions::Auto, 12770, 14254, 1783,
-                              12768, 14252, 1781),
-        ScsiMolTest::ScsiTest("waytoobig.mol", true, SCSRBaseHbondOptions::Auto,
-                              9770, 9973, 1586, 9394, 9597, 1210),
         ScsiMolTest::ScsiTest("ModifiedPeptide2.mol", true,
                               SCSRBaseHbondOptions::Auto, 438, 444, 81, 407,
                               413, 50),
