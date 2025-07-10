@@ -28,7 +28,7 @@ rdkit_headers(base64.h
               MultiFPBReader.h
               DEST DataStructs)
 
-rdkit_test(testDataStructs testDatastructs.cpp
+rdkit_catch_test(testDataStructs testDatastructs.cpp
            LINK_LIBRARIES DataStructs )
 
 rdkit_test(testFPB testFPB.cpp
