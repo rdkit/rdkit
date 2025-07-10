@@ -843,7 +843,19 @@ M  END''')
         do = rdMolDraw2D.MolDrawOptions()
         with self.assertRaises(AttributeError):
             do.rhubarb = True
-            
+
+    def testShowAllCIPCodes(self):
+        m = Chem.MolFromSmiles("Cc1cccc(F)c1-c1c(C)cc([C@H](C)O)cc1Cl |wU:7.7,o1:7,&1:13|")
+        self.assertIsNotNone(m)
+        d2d = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+        opts = d2d.drawOptions()
+        opts.addStereoAnnotation = True
+        opts.showAllCIPCodes = True
+        d2d.DrawMolecule(m)
+        d2d.FinishDrawing()
+        text = d2d.GetDrawingText()
+        #confirm that at least one CIP code is present
+        self.assertTrue("class='CIP_Code'" in text)
 
 if __name__ == "__main__":
     unittest.main()

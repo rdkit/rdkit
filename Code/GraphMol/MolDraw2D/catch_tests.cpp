@@ -10752,3 +10752,98 @@ TEST_CASE("Solid arrowhead in wrong place (Github 8500)") {
   }
   check_file_hash("testArrowheads.svg");
 }
+
+TEST_CASE("Show all CIP codes (Github 8561)") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 19 20 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 3.000000 0.000000 0.000000 0
+M  V30 2 C 1.500000 0.000000 0.000000 0
+M  V30 3 C 0.750000 -1.299038 0.000000 0
+M  V30 4 C -0.750000 -1.299038 0.000000 0
+M  V30 5 C -1.500000 0.000000 0.000000 0
+M  V30 6 C -0.750000 1.299038 0.000000 0
+M  V30 7 F -1.500000 2.598076 0.000000 0
+M  V30 8 C 0.750000 1.299038 0.000000 0
+M  V30 9 C 1.500000 2.598076 0.000000 0
+M  V30 10 C 3.000000 2.598076 0.000000 0
+M  V30 11 C 3.750000 1.299038 0.000000 0
+M  V30 12 C 3.750000 3.897114 0.000000 0
+M  V30 13 C 3.000000 5.196152 0.000000 0
+M  V30 14 C 3.750000 6.495191 0.000000 0
+M  V30 15 C 5.250000 6.495191 0.000000 0
+M  V30 16 O 3.000000 7.794229 0.000000 0
+M  V30 17 C 1.500000 5.196152 0.000000 0
+M  V30 18 C 0.750000 3.897114 0.000000 0
+M  V30 19 Cl -0.750000 3.897114 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 2 6 8
+M  V30 8 1 8 9
+M  V30 9 2 9 10
+M  V30 10 1 10 11
+M  V30 11 1 10 12
+M  V30 12 2 12 13
+M  V30 13 1 13 14
+M  V30 14 1 14 15 CFG=1
+M  V30 15 1 14 16
+M  V30 16 1 13 17
+M  V30 17 2 17 18
+M  V30 18 1 18 19
+M  V30 19 1 8 2 CFG=3
+M  V30 20 1 18 9
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEREL1 ATOMS=(1 8)
+M  V30 MDLV30/STERAC1 ATOMS=(1 14)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CIPLabeler::assignCIPLabels(*m);
+    MolDraw2DSVG drawer(350, 300);
+    drawer.drawOptions().addStereoAnnotation = true;
+    drawer.drawOptions().showAllCIPCodes = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testShowAllCIPLabels.svg");
+    outs << text;
+    outs.close();
+
+    // Check for Blue (M) CIP label on Bond
+    TEST_ASSERT(
+        text.find("class='CIP_Code'") !=
+        std::string::npos);
+
+    //try again, this tiem using JSON to set options
+    const char *json =
+      "{\"addStereoAnnotation\":true, \"showAllCIPCodes\":true}";
+    MolDraw2DSVG drawer2(350, 300);
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
+    drawer2.drawOptions() = opts;
+    drawer2.drawMolecule(*m);
+    drawer2.finishDrawing();
+    auto text2 = drawer2.getDrawingText();
+    std::ofstream outs2("testShowAllCIPLabels2.svg");
+    outs2 << text2;
+    outs2.close();
+
+    // Check for Blue (M) CIP label on Bond
+    TEST_ASSERT(
+        text2.find("class='CIP_Code'") !=
+        std::string::npos);
+  }
+
