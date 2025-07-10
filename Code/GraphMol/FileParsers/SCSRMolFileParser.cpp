@@ -480,7 +480,7 @@ class MolFromSCSRMolConverter {
     // yet, because the bonds have not be added to the mol nor to the sgroup.
     // They are saved in an array to be added later
 
-    std::string typ = "SUP";
+    const std::string typ = "SUP";
     newSgroups.emplace_back(new SubstanceGroup((ROMol *)resMol.get(), typ));
     auto newSgroup = newSgroups.back().get();
     newSgroup->setProp("LABEL", sgroupName);
@@ -1185,7 +1185,7 @@ class MolFromSCSRMolConverter {
           }
         }
         if (newAtoms.size() > 0) {
-          constexpr std::string type = "SUP";
+          const std::string type = "SUP";
           newSgroups.emplace_back(new SubstanceGroup(resMol.get(), type));
           auto newSg = newSgroups.back().get();
           // RDKit::SubstanceGroup newSg(sg);
