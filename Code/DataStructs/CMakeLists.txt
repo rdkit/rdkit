@@ -34,7 +34,7 @@ rdkit_catch_test(testDataStructs testDatastructs.cpp
 rdkit_catch_test(testFPB testFPB.cpp
            LINK_LIBRARIES DataStructs )
 
-rdkit_test(testMultiFPB testMultiFPB.cpp
+rdkit_catch_test(testMultiFPB testMultiFPB.cpp
            LINK_LIBRARIES DataStructs )
 
 rdkit_catch_test(catchDataStructs catch_tests.cpp
