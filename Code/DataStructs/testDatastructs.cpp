@@ -31,13 +31,10 @@
 
 using namespace std;
 using namespace RDKit;
+
 template <typename T>
 inline void TXTMSG(const char *__a__, T __b__) {
   BOOST_LOG(rdInfoLog) << (__a__) << " " << (__b__) << std::endl;
-}
-
-bool feq(double v1, double v2, double tol = 1e-4) {
-  return fabs(v1 - v2) < tol;
 }
 
 template <typename T>
@@ -126,7 +123,8 @@ void Test(T arg) {
 
   T t4(t1.toString());
   REQUIRE(t4 == t1);
-  REQUIRE(feq(TanimotoSimilarity(t1, t4), 1.0));
+  REQUIRE_THAT(TanimotoSimilarity(t1, t4),
+               Catch::Matchers::WithinAbs(1.0, 1e-4));
 
   T *t5 = FoldFingerprint(t1);
   REQUIRE(t5->getNumBits() == t1.getNumBits() / 2);
@@ -164,17 +162,17 @@ void TaniTest(T &arg) {
       T v2(256);
       FromDaylightString(v2, fps[j]);
       double tani = TanimotoSimilarity(v1, v2);
-      REQUIRE(feq(tani, dists[idx]));
+      REQUIRE_THAT(tani, Catch::Matchers::WithinAbs(dists[idx], 1e-4));
       tani = TverskySimilarity(v1, v2, 1., 1.);
-      REQUIRE(feq(tani, dists[idx]));
+      REQUIRE_THAT(tani, Catch::Matchers::WithinAbs(dists[idx], 1e-4));
       tani = SimilarityWrapper(v1, v2, TanimotoSimilarity<T, T>);
-      REQUIRE(feq(tani, dists[idx]));
+      REQUIRE_THAT(tani, Catch::Matchers::WithinAbs(dists[idx], 1e-4));
       tani = SimilarityWrapper(v1, v2, 1., 1., TverskySimilarity<T, T>);
-      REQUIRE(feq(tani, dists[idx]));
+      REQUIRE_THAT(tani, Catch::Matchers::WithinAbs(dists[idx], 1e-4));
       tani = SimilarityWrapper(v1, v2, TanimotoSimilarity<T, T>, true);
-      REQUIRE(feq(tani, 1. - dists[idx]));
+      REQUIRE_THAT(tani, Catch::Matchers::WithinAbs(1. - dists[idx], 1e-4));
       tani = SimilarityWrapper(v1, v2, 1., 1., TverskySimilarity<T, T>, true);
-      REQUIRE(feq(tani, 1. - dists[idx]));
+      REQUIRE_THAT(tani, Catch::Matchers::WithinAbs(1. - dists[idx], 1e-4));
       idx++;
     }
   }
@@ -549,7 +547,8 @@ TEST_CASE("test6SparseIntVect") {
     REQUIRE(iter->second == 4);
     ++iter;
     REQUIRE(iter == iV1.getNonzeroElements().end());
-    REQUIRE(feq(DiceSimilarity(iV1, iV1), 1.));
+    REQUIRE_THAT(DiceSimilarity(iV1, iV1),
+                 Catch::Matchers::WithinAbs(1., 1e-4));
   }
 
   {  // iV1 &= iV2
@@ -564,7 +563,8 @@ TEST_CASE("test6SparseIntVect") {
     iV2.setVal(3, 4);
     iV2.setVal(4, 6);
 
-    REQUIRE(feq(DiceSimilarity(iV1, iV2), 18. / 26.));
+    REQUIRE_THAT(DiceSimilarity(iV1, iV2),
+                 Catch::Matchers::WithinAbs(18. / 26., 1e-4));
 
     iV1 &= iV2;
     REQUIRE(iV1[0] == 0);
@@ -579,13 +579,18 @@ TEST_CASE("test6SparseIntVect") {
     REQUIRE(iV2[3] == 4);
     REQUIRE(iV2[4] == 6);
 
-    REQUIRE(feq(DiceSimilarity(iV1, iV2), 18. / 24.));
-    REQUIRE(feq(TverskySimilarity(iV1, iV2, 0.5, 0.5, false), 9. / 12.));
-    REQUIRE(feq(TverskySimilarity(iV1, iV2, 1.0, 1.0, false), 9. / 15.));
-    REQUIRE(feq(TanimotoSimilarity(iV1, iV2), 9. / 15.));
-    REQUIRE(feq(TverskySimilarity(iV1, iV2, 0.333333333, 0.66666666667, false),
-                9. / 13.));
-    REQUIRE(feq(TverskySimilarity(iV1, iV2, 1.0, 0.0, false), 9. / 9.));
+    REQUIRE_THAT(DiceSimilarity(iV1, iV2),
+                 Catch::Matchers::WithinAbs(18. / 24., 1e-4));
+    REQUIRE_THAT(TverskySimilarity(iV1, iV2, 0.5, 0.5, false),
+                 Catch::Matchers::WithinAbs(9. / 12., 1e-4));
+    REQUIRE_THAT(TverskySimilarity(iV1, iV2, 1.0, 1.0, false),
+                 Catch::Matchers::WithinAbs(9. / 15., 1e-4));
+    REQUIRE_THAT(TanimotoSimilarity(iV1, iV2),
+                 Catch::Matchers::WithinAbs(9. / 15., 1e-4));
+    REQUIRE_THAT(TverskySimilarity(iV1, iV2, 0.333333333, 0.66666666667, false),
+                 Catch::Matchers::WithinAbs(9. / 13., 1e-4));
+    REQUIRE_THAT(TverskySimilarity(iV1, iV2, 1.0, 0.0, false),
+                 Catch::Matchers::WithinAbs(9. / 9., 1e-4));
 
     try {
       iV1 &= iVect;
@@ -904,7 +909,8 @@ TEST_CASE("test6SparseIntVect") {
     iV2.setVal(3, -4);
     iV2.setVal(4, 6);
 
-    REQUIRE(feq(DiceSimilarity(iV1, iV2), 18. / 26.));
+    REQUIRE_THAT(DiceSimilarity(iV1, iV2),
+                 Catch::Matchers::WithinAbs(18. / 26., 1e-4));
   }
 }
 
@@ -1173,16 +1179,22 @@ TEST_CASE("test11SimilaritiesBV") {
   bv.setBit(9);
   ExplicitBitVect bv2 = bv;
 
-  REQUIRE(feq(TanimotoSimilarity(bv, bv2), 1.));
-  REQUIRE(feq(DiceSimilarity(bv, bv2), 1.));
-  REQUIRE(feq(CosineSimilarity(bv, bv2), 1.));
-  REQUIRE(feq(KulczynskiSimilarity(bv, bv2), 1.));
-  REQUIRE(feq(SokalSimilarity(bv, bv2), 1.));
-  REQUIRE(feq(McConnaugheySimilarity(bv, bv2), 1.));
-  REQUIRE(feq(BraunBlanquetSimilarity(bv, bv2), 1.));
-  REQUIRE(feq(RusselSimilarity(bv, bv2), 0.5));
-  REQUIRE(feq(RogotGoldbergSimilarity(bv, bv2), 1.));
-  REQUIRE(feq(AllBitSimilarity(bv, bv2), 1.));
+  REQUIRE_THAT(TanimotoSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(DiceSimilarity(bv, bv2), Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(CosineSimilarity(bv, bv2), Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(KulczynskiSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(SokalSimilarity(bv, bv2), Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(McConnaugheySimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(BraunBlanquetSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(RusselSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0.5, 1e-4));
+  REQUIRE_THAT(RogotGoldbergSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(AllBitSimilarity(bv, bv2), Catch::Matchers::WithinAbs(1., 1e-4));
 
   // similarity = 0.0
   bv2 = ExplicitBitVect(10);
@@ -1192,16 +1204,21 @@ TEST_CASE("test11SimilaritiesBV") {
   bv2.setBit(7);
   bv2.setBit(8);
 
-  REQUIRE(feq(TanimotoSimilarity(bv, bv2), 0.));
-  REQUIRE(feq(DiceSimilarity(bv, bv2), 0.));
-  REQUIRE(feq(CosineSimilarity(bv, bv2), 0.));
-  REQUIRE(feq(KulczynskiSimilarity(bv, bv2), 0.));
-  REQUIRE(feq(SokalSimilarity(bv, bv2), 0.));
-  REQUIRE(feq(McConnaugheySimilarity(bv, bv2), -1.));
-  REQUIRE(feq(BraunBlanquetSimilarity(bv, bv2), 0.));
-  REQUIRE(feq(RusselSimilarity(bv, bv2), 0.));
-  REQUIRE(feq(RogotGoldbergSimilarity(bv, bv2), 0.));
-  REQUIRE(feq(AllBitSimilarity(bv, bv2), 0.));
+  REQUIRE_THAT(TanimotoSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(DiceSimilarity(bv, bv2), Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(CosineSimilarity(bv, bv2), Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(KulczynskiSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(SokalSimilarity(bv, bv2), Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(McConnaugheySimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(-1., 1e-4));
+  REQUIRE_THAT(BraunBlanquetSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(RusselSimilarity(bv, bv2), Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(RogotGoldbergSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(AllBitSimilarity(bv, bv2), Catch::Matchers::WithinAbs(0., 1e-4));
 
   // similarity ~= 0.5
   bv.setBit(5);
@@ -1213,16 +1230,26 @@ TEST_CASE("test11SimilaritiesBV") {
   bv2.setBit(8);
   bv2.setBit(9);
 
-  REQUIRE(feq(TanimotoSimilarity(bv, bv2), 0.5));
-  REQUIRE(feq(DiceSimilarity(bv, bv2), 0.6666));
-  REQUIRE(feq(CosineSimilarity(bv, bv2), 0.6666));
-  REQUIRE(feq(KulczynskiSimilarity(bv, bv2), 0.6666));
-  REQUIRE(feq(SokalSimilarity(bv, bv2), 0.3333));
-  REQUIRE(feq(McConnaugheySimilarity(bv, bv2), 0.3333));
-  REQUIRE(feq(BraunBlanquetSimilarity(bv, bv2), 0.6666));
-  REQUIRE(feq(RusselSimilarity(bv, bv2), 0.4));
-  REQUIRE(feq(RogotGoldbergSimilarity(bv, bv2), 0.5833));
-  REQUIRE(feq(AllBitSimilarity(bv, bv2), 0.6));
+  REQUIRE_THAT(TanimotoSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0.5, 1e-4));
+  REQUIRE_THAT(DiceSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0.6666, 1e-4));
+  REQUIRE_THAT(CosineSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0.6666, 1e-4));
+  REQUIRE_THAT(KulczynskiSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0.6666, 1e-4));
+  REQUIRE_THAT(SokalSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0.3333, 1e-4));
+  REQUIRE_THAT(McConnaugheySimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0.3333, 1e-4));
+  REQUIRE_THAT(BraunBlanquetSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0.6666, 1e-4));
+  REQUIRE_THAT(RusselSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0.4, 1e-4));
+  REQUIRE_THAT(RogotGoldbergSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0.5833, 1e-4));
+  REQUIRE_THAT(AllBitSimilarity(bv, bv2),
+               Catch::Matchers::WithinAbs(0.6, 1e-4));
 }
 
 TEST_CASE("test12SimilaritiesSparseBV") {
@@ -1235,16 +1262,25 @@ TEST_CASE("test12SimilaritiesSparseBV") {
   sbv.setBit(9);
   SparseBitVect sbv2 = sbv;
 
-  REQUIRE(feq(TanimotoSimilarity(sbv, sbv2), 1.));
-  REQUIRE(feq(DiceSimilarity(sbv, sbv2), 1.));
-  REQUIRE(feq(CosineSimilarity(sbv, sbv2), 1.));
-  REQUIRE(feq(KulczynskiSimilarity(sbv, sbv2), 1.));
-  REQUIRE(feq(SokalSimilarity(sbv, sbv2), 1.));
-  REQUIRE(feq(McConnaugheySimilarity(sbv, sbv2), 1.));
-  REQUIRE(feq(BraunBlanquetSimilarity(sbv, sbv2), 1.));
-  REQUIRE(feq(RusselSimilarity(sbv, sbv2), 0.5));
-  REQUIRE(feq(RogotGoldbergSimilarity(sbv, sbv2), 1.));
-  REQUIRE(feq(AllBitSimilarity(sbv, sbv2), 1.));
+  REQUIRE_THAT(TanimotoSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(DiceSimilarity(sbv, sbv2), Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(CosineSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(KulczynskiSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(SokalSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(McConnaugheySimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(BraunBlanquetSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(RusselSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0.5, 1e-4));
+  REQUIRE_THAT(RogotGoldbergSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
+  REQUIRE_THAT(AllBitSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(1., 1e-4));
 
   // similarity = 0.0
   sbv2 = SparseBitVect(10);
@@ -1254,16 +1290,25 @@ TEST_CASE("test12SimilaritiesSparseBV") {
   sbv2.setBit(7);
   sbv2.setBit(8);
 
-  REQUIRE(feq(TanimotoSimilarity(sbv, sbv2), 0.));
-  REQUIRE(feq(DiceSimilarity(sbv, sbv2), 0.));
-  REQUIRE(feq(CosineSimilarity(sbv, sbv2), 0.));
-  REQUIRE(feq(KulczynskiSimilarity(sbv, sbv2), 0.));
-  REQUIRE(feq(SokalSimilarity(sbv, sbv2), 0.));
-  REQUIRE(feq(McConnaugheySimilarity(sbv, sbv2), -1.));
-  REQUIRE(feq(BraunBlanquetSimilarity(sbv, sbv2), 0.));
-  REQUIRE(feq(RusselSimilarity(sbv, sbv2), 0.));
-  REQUIRE(feq(RogotGoldbergSimilarity(sbv, sbv2), 0.));
-  REQUIRE(feq(AllBitSimilarity(sbv, sbv2), 0.));
+  REQUIRE_THAT(TanimotoSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(DiceSimilarity(sbv, sbv2), Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(CosineSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(KulczynskiSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(SokalSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(McConnaugheySimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(-1., 1e-4));
+  REQUIRE_THAT(BraunBlanquetSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(RusselSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(RogotGoldbergSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
+  REQUIRE_THAT(AllBitSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0., 1e-4));
 
   // similarity ~= 0.5
   sbv.setBit(5);
@@ -1275,16 +1320,26 @@ TEST_CASE("test12SimilaritiesSparseBV") {
   sbv2.setBit(8);
   sbv2.setBit(9);
 
-  REQUIRE(feq(TanimotoSimilarity(sbv, sbv2), 0.5));
-  REQUIRE(feq(DiceSimilarity(sbv, sbv2), 0.6666));
-  REQUIRE(feq(CosineSimilarity(sbv, sbv2), 0.6666));
-  REQUIRE(feq(KulczynskiSimilarity(sbv, sbv2), 0.6666));
-  REQUIRE(feq(SokalSimilarity(sbv, sbv2), 0.3333));
-  REQUIRE(feq(McConnaugheySimilarity(sbv, sbv2), 0.3333));
-  REQUIRE(feq(BraunBlanquetSimilarity(sbv, sbv2), 0.6666));
-  REQUIRE(feq(RusselSimilarity(sbv, sbv2), 0.4));
-  REQUIRE(feq(RogotGoldbergSimilarity(sbv, sbv2), 0.5833));
-  REQUIRE(feq(AllBitSimilarity(sbv, sbv2), 0.6));
+  REQUIRE_THAT(TanimotoSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0.5, 1e-4));
+  REQUIRE_THAT(DiceSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0.6666, 1e-4));
+  REQUIRE_THAT(CosineSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0.6666, 1e-4));
+  REQUIRE_THAT(KulczynskiSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0.6666, 1e-4));
+  REQUIRE_THAT(SokalSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0.3333, 1e-4));
+  REQUIRE_THAT(McConnaugheySimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0.3333, 1e-4));
+  REQUIRE_THAT(BraunBlanquetSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0.6666, 1e-4));
+  REQUIRE_THAT(RusselSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0.4, 1e-4));
+  REQUIRE_THAT(RogotGoldbergSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0.5833, 1e-4));
+  REQUIRE_THAT(AllBitSimilarity(sbv, sbv2),
+               Catch::Matchers::WithinAbs(0.6, 1e-4));
 }
 
 TEST_CASE("test13BitVectAllOnes") {
@@ -1326,42 +1381,50 @@ TEST_CASE("test15BitmapOps") {
   {
     const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
     const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
-    REQUIRE(feq(CalcBitmapTanimoto(bv1, bv2, 5), 1.0));
+    REQUIRE_THAT(CalcBitmapTanimoto(bv1, bv2, 5),
+                 Catch::Matchers::WithinAbs(1.0, 1e-4));
   }
   {
     const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
     const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x0, 0x1};
-    REQUIRE(feq(CalcBitmapTanimoto(bv1, bv2, 5), 0.8));
+    REQUIRE_THAT(CalcBitmapTanimoto(bv1, bv2, 5),
+                 Catch::Matchers::WithinAbs(0.8, 1e-4));
   }
   {
     const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
     const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
-    REQUIRE(feq(CalcBitmapTversky(bv1, bv2, 5, 1., 1.), 1.0));
+    REQUIRE_THAT(CalcBitmapTversky(bv1, bv2, 5, 1., 1.),
+                 Catch::Matchers::WithinAbs(1.0, 1e-4));
   }
   {
     const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
     const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x0, 0x1};
-    REQUIRE(feq(CalcBitmapTversky(bv1, bv2, 5, 1., 1.), 0.8));
+    REQUIRE_THAT(CalcBitmapTversky(bv1, bv2, 5, 1., 1.),
+                 Catch::Matchers::WithinAbs(0.8, 1e-4));
   }
   {
     const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
     const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
-    REQUIRE(feq(CalcBitmapDice(bv1, bv2, 5), 1.0));
+    REQUIRE_THAT(CalcBitmapDice(bv1, bv2, 5),
+                 Catch::Matchers::WithinAbs(1.0, 1e-4));
   }
   {
     const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
     const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x0, 0x1};
-    REQUIRE(feq(CalcBitmapDice(bv1, bv2, 5), 8. / 9));
+    REQUIRE_THAT(CalcBitmapDice(bv1, bv2, 5),
+                 Catch::Matchers::WithinAbs(8. / 9, 1e-4));
   }
   {
     const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
     const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
-    REQUIRE(feq(CalcBitmapTversky(bv1, bv2, 5, 0.5, 0.5), 1.0));
+    REQUIRE_THAT(CalcBitmapTversky(bv1, bv2, 5, 0.5, 0.5),
+                 Catch::Matchers::WithinAbs(1.0, 1e-4));
   }
   {
     const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
     const unsigned char bv2[5] = {0x1, 0x1, 0x1, 0x0, 0x1};
-    REQUIRE(feq(CalcBitmapTversky(bv1, bv2, 5, 0.5, 0.5), 8. / 9));
+    REQUIRE_THAT(CalcBitmapTversky(bv1, bv2, 5, 0.5, 0.5),
+                 Catch::Matchers::WithinAbs(8. / 9, 1e-4));
   }
 
   {
@@ -1378,7 +1441,8 @@ TEST_CASE("test15BitmapOps") {
   {
     const unsigned char bv1[5] = {0x1, 0x0, 0x1, 0x0, 0x1};
     const unsigned char bv2[5] = {0x1, 0x1, 0x5, 0x1, 0x1};
-    REQUIRE(feq(CalcBitmapTversky(bv1, bv2, 5, 1.0, 0.), 1.0));
+    REQUIRE_THAT(CalcBitmapTversky(bv1, bv2, 5, 1.0, 0.0),
+                 Catch::Matchers::WithinAbs(1.0, 1e-4));
   }
 }
 
@@ -1440,11 +1504,11 @@ TEST_CASE("test14RealVect") {
   }
 
   REQUIRE(vect1.getLength() == 30);
-  REQUIRE(feq(vect1.getTotalVal(), 15.0));
+  REQUIRE_THAT(vect1.getTotalVal(), Catch::Matchers::WithinAbs(15.0, 1e-6));
   for (i = 0; i < vect1.getLength(); ++i) {
-    REQUIRE(feq(vect1.getVal(i), (i + 1) % 2));
+    REQUIRE_THAT(vect1.getVal(i),
+                 Catch::Matchers::WithinAbs((i + 1) % 2, 1e-6));
   }
-
   RealValueVect vect2(30);
   for (i = 0; i < vect2.getLength(); ++i) {
     vect2.setVal(i, double(1.0 / (i + 1.0)));
@@ -1452,19 +1516,21 @@ TEST_CASE("test14RealVect") {
 
   REQUIRE(vect2.getLength() == 30);
   for (i = 0; i < vect2.getLength(); ++i) {
-    REQUIRE(feq(vect2.getVal(i), double(1.0 / (i + 1.0))));
+    REQUIRE_THAT(vect2.getVal(i),
+                 Catch::Matchers::WithinAbs(double(1.0 / (i + 1.0)), 1e-6));
   }
 
   // test copy constructor and operator[]
   RealValueVect vect3(vect2);
   REQUIRE(vect3.getLength() == 30);
   for (i = 0; i < vect3.getLength(); ++i) {
-    REQUIRE(feq(vect3[i], double(1.0 / (i + 1.0))));
+    REQUIRE_THAT(vect3[i],
+                 Catch::Matchers::WithinAbs(double(1.0 / (i + 1.0)), 1e-6));
   }
 
   double Pi = 3.141592;
   RealValueVect vect4(60, Pi);
-  REQUIRE(feq(vect4.getTotalVal(), 60 * Pi));
+  REQUIRE_THAT(vect4.getTotalVal(), Catch::Matchers::WithinAbs(60 * Pi, 1e-6));
 }
 
 TEST_CASE("test15RealVectDists") {
@@ -1475,12 +1541,12 @@ TEST_CASE("test15RealVectDists") {
     v1.setVal(2 * i, 1.0);
     v2.setVal(2 * i, 1.0);
   }
-  REQUIRE(feq(computeL1Norm(v1, v2), 0));
+  REQUIRE_THAT(computeL1Norm(v1, v2), Catch::Matchers::WithinAbs(0, 1e-6));
   for (i = 0; i < 30; ++i) {
     v2.setVal(i, i % 2);
   }
 
-  REQUIRE(feq(computeL1Norm(v1, v2), 30.0));
+  REQUIRE_THAT(computeL1Norm(v1, v2), Catch::Matchers::WithinAbs(30.0, 1e-6));
 
   for (i = 0; i < 30; ++i) {
     if (i % 3 == 0) {
@@ -1490,14 +1556,14 @@ TEST_CASE("test15RealVectDists") {
     }
   }
 
-  REQUIRE(feq(computeL1Norm(v1, v2), 15.0));
+  REQUIRE_THAT(computeL1Norm(v1, v2), Catch::Matchers::WithinAbs(15.0, 1e-6));
 
   for (i = 0; i < 30; ++i) {
     v1.setVal(i, 0.0);
     v2.setVal(i, i / 10.0);
   }
 
-  REQUIRE(feq(computeL1Norm(v1, v2), 43.5));
+  REQUIRE_THAT(computeL1Norm(v1, v2), Catch::Matchers::WithinAbs(43.5, 1e-6));
 }
 
 TEST_CASE("test16RealVectPickles") {
