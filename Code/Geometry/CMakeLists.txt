@@ -18,7 +18,7 @@ rdkit_headers(Grid3D.h
 
 rdkit_catch_test(testTransforms testTransforms.cpp LINK_LIBRARIES RDGeometryLib )
 rdkit_catch_test(testGrid testGrid.cpp LINK_LIBRARIES RDGeometryLib)
-rdkit_test(testRealValueGrid testRealValueGrid.cpp LINK_LIBRARIES RDGeometryLib DataStructs RDGeneral)
+rdkit_catch_test(testRealValueGrid testRealValueGrid.cpp LINK_LIBRARIES RDGeometryLib DataStructs RDGeneral)
 rdkit_catch_test(geometryTestsCatch catch_tests.cpp
            LINK_LIBRARIES RDGeometryLib)
 
