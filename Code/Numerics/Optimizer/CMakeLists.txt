@@ -6,6 +6,6 @@ target_compile_definitions(Optimizer PRIVATE RDKIT_OPTIMIZER_BUILD)
 
 rdkit_headers(BFGSOpt.h DEST Numerics/Optimizer)
 
-rdkit_test(testOptimizer testOptimizer.cpp LINK_LIBRARIES Optimizer )
+rdkit_catch_test(testOptimizer testOptimizer.cpp LINK_LIBRARIES Optimizer )
 
 
