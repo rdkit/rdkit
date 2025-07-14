@@ -148,20 +148,16 @@ TEST_CASE("test12D") {
   Transform2D trans;
   trans.TransformPoint(pt);
 
-  REQUIRE(fabs(pt.x - 1.0) < 1.e-8);
-  REQUIRE(fabs(pt.y - 2.0) < 1.e-8);
+  REQUIRE_THAT(pt.x, Catch::Matchers::WithinAbs(1.0, 1.e-8));
+  REQUIRE_THAT(pt.y, Catch::Matchers::WithinAbs(2.0, 1.e-8));
 
   Point2D ref1(randNum(), randNum());
   Point2D ref2(randNum(), randNum());
-
-  std::cout << "ref1: " << ref1 << " ref2: " << ref2 << "\n";
 
   Point2D pt1(randNum(), randNum());
   Point2D pt2(randNum(), randNum());
   Point2D pt1o = pt1;
   Point2D pt2o = pt2;
-  std::cout << "pt1: " << pt1 << " pt2: " << pt2 << "\n";
-
   Transform2D t2d;
   t2d.SetTransform(ref1, ref2, pt1, pt2);
   t2d.TransformPoint(pt1);
@@ -169,8 +165,8 @@ TEST_CASE("test12D") {
 
   // make sure pt1 overlaps ref1
   Point2D dif1 = pt1 - ref1;
-  REQUIRE(fabs(dif1.x) < 1.e-8);
-  REQUIRE(fabs(dif1.y) < 1.e-8);
+  REQUIRE_THAT(dif1.x, Catch::Matchers::WithinAbs(0.0, 1.e-8));
+  REQUIRE_THAT(dif1.y, Catch::Matchers::WithinAbs(0.0, 1.e-8));
 
   // now check that the angle between the two vectors (ref2 - ref1) and
   // (pt2 - pt1) is zero
@@ -179,7 +175,7 @@ TEST_CASE("test12D") {
   rvec.normalize();
   pvec.normalize();
   double pdot = rvec.dotProduct(pvec);
-  REQUIRE(fabs(pdot - 1.0) < 1.e-8);
+  REQUIRE_THAT(pdot, Catch::Matchers::WithinAbs(1.0, 1.e-8));
 
   // compute the reverse transform and make sure we are basically getting the
   // identity

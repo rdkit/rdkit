@@ -547,5 +547,3 @@ TEST_CASE("Github Issue 1118") {
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
-
-int main(int argc, char *argv[]) { return Catch::Session().run(argc, argv); }

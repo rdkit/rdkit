@@ -116,23 +116,17 @@ TEST_CASE("testRDValue") {
   }
 
   {
-    Dict d;
-    // int v=1;
-    // d.setVal("foo", v);
-    // REQUIRE(d.getVal<int>("foo") == 1, "bad getval");
-
     std::vector<int> fooV;
     fooV.resize(3);
     fooV[0] = 1;
     fooV[1] = 2;
     fooV[2] = 3;
-    if (1) {
-      std::vector<int> fooV2;
-      RDAny a(fooV);
-      fooV2 = rdany_cast<std::vector<int>>(a);
-      REQUIRE(fooV == fooV2);
-    }
+    std::vector<int> fooV2;
+    RDAny a(fooV);
+    fooV2 = rdany_cast<std::vector<int>>(a);
+    REQUIRE(fooV == fooV2);
 
+    Dict d;
     {
       std::vector<int> fooV2;
       d.setVal("bar", fooV);
@@ -288,8 +282,11 @@ TEST_CASE("testRDValue") {
     RDAny vv(pvect);
     auto &any = rdany_cast<std::any &>(vv);
     auto a4 = std::any_cast<std::vector<std::pair<int, int>>>(any);
+    CHECK(a4.size() == pvect.size());
     auto a5 = std::any_cast<std::vector<std::pair<int, int>> &>(any);
+    REQUIRE(a5.size() == pvect.size());
     auto a6 = std::any_cast<const std::vector<std::pair<int, int>> &>(any);
+    REQUIRE(a6.size() == pvect.size());
 
     const std::vector<std::pair<int, int>> &pv =
         rdany_cast<std::vector<std::pair<int, int>>>(vv);

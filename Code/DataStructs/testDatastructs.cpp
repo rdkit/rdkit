@@ -419,14 +419,6 @@ TEST_CASE("test4DiscreteVectOps1") {
   DiscreteValueVect vect4 = vect1 | vect2;
   REQUIRE(vect4.getLength() == 8);
   REQUIRE(vect4.getTotalVal() == 8);
-#if 0
-  DiscreteValueVect vect5=~vect1;
-  REQUIRE(vect5.getLength() == 8);
-  REQUIRE(vect5.getTotalVal() == 4);
-
-  REQUIRE((vect5&vect1).getTotalVal()==0);
-  REQUIRE((vect5&vect2).getTotalVal()==4);
-#endif
 }
 
 TEST_CASE("test5DiscreteVectOps2") {
@@ -460,15 +452,6 @@ TEST_CASE("test5DiscreteVectOps2") {
   REQUIRE(vect5.getTotalVal() == 4);
   vect5 = vect2 - vect1;
   REQUIRE(vect5.getTotalVal() == 8);
-
-#if 0
-  DiscreteValueVect vect5=~vect1;
-  REQUIRE(vect5.getLength() == 8);
-  REQUIRE(vect5.getTotalVal() == 16);
-
-  REQUIRE((vect5&vect1).getTotalVal()==4);
-  REQUIRE((vect5&vect2).getTotalVal()==12);
-#endif
 }
 
 TEST_CASE("test6SparseIntVect") {
@@ -500,36 +483,11 @@ TEST_CASE("test6SparseIntVect") {
   iVect.setVal(3, -4);
   REQUIRE(iVect.getTotalVal() == 13);
 
-  try {
-    iVect.setVal(-1, 13);
-    REQUIRE(0);
-  } catch (IndexErrorException &) {
-    ;
-  }
-  try {
-    iVect.setVal(255, 42);
-    REQUIRE(0);
-  } catch (IndexErrorException &) {
-    ;
-  }
-  try {
-    iVect.getVal(-1);
-    REQUIRE(0);
-  } catch (IndexErrorException &) {
-    ;
-  }
-  try {
-    iVect.getVal(255);
-    REQUIRE(0);
-  } catch (IndexErrorException &) {
-    ;
-  }
-  try {
-    iVect[-1];
-    REQUIRE(0);
-  } catch (IndexErrorException &) {
-    ;
-  }
+  REQUIRE_THROWS_AS(iVect.setVal(-1, 13), IndexErrorException);
+  REQUIRE_THROWS_AS(iVect.setVal(255, 42), IndexErrorException);
+  REQUIRE_THROWS_AS(iVect.getVal(-1), IndexErrorException);
+  REQUIRE_THROWS_AS(iVect.getVal(255), IndexErrorException);
+  REQUIRE_THROWS_AS(iVect[-1], IndexErrorException);
 
   {
     SparseIntVect<int> iV1(5);
@@ -592,12 +550,7 @@ TEST_CASE("test6SparseIntVect") {
     REQUIRE_THAT(TverskySimilarity(iV1, iV2, 1.0, 0.0, false),
                  Catch::Matchers::WithinAbs(9. / 9., 1e-4));
 
-    try {
-      iV1 &= iVect;
-      REQUIRE(0);
-    } catch (ValueErrorException &) {
-      ;
-    }
+    REQUIRE_THROWS_AS(iV1 &= iVect, ValueErrorException);
   }
 
   {  // iV3 = iv1&iV2
@@ -656,13 +609,7 @@ TEST_CASE("test6SparseIntVect") {
     REQUIRE(iV1[2] == 1);
     REQUIRE(iV1[3] == 4);
     REQUIRE(iV1[4] == 4);
-
-    try {
-      iV2 &= iVect;
-      REQUIRE(0);
-    } catch (ValueErrorException &) {
-      ;
-    }
+    REQUIRE_THROWS_AS(iV2 &= iVect, ValueErrorException);
   }
 
   {  // iV1 |= iV2
@@ -690,12 +637,7 @@ TEST_CASE("test6SparseIntVect") {
     REQUIRE(iV2[3] == 4);
     REQUIRE(iV2[4] == 6);
 
-    try {
-      iV1 |= iVect;
-      REQUIRE(0);
-    } catch (ValueErrorException &) {
-      ;
-    }
+    REQUIRE_THROWS_AS(iV1 |= iVect, ValueErrorException);
   }
 
   {  // iV3 = iv1 |iV2
@@ -957,36 +899,11 @@ TEST_CASE("test7SparseIntVectPickles") {
 
     std::string pkl;
     pkl = iV1.toString();
-    try {
-      iV2.fromString(pkl);
-      REQUIRE(0);
-    } catch (ValueErrorException &) {
-      ;
-    }
+    REQUIRE_THROWS_AS(iV2.fromString(pkl), ValueErrorException);
   }
 }
 
 TEST_CASE("test8BitVectPickles") {
-#if 0
-  {
-    std::string dirName = getenv("RDBASE");
-    dirName+="/Code/DataStructs/testData/";
-    std::string pklName = dirName+"test1.bin";
-    std::ofstream outS;
-    outS.open(pklName.c_str(),std::ios_base::binary);
-
-    ExplicitBitVect bv(32);
-    for(int i=0;i<32;i+=2){
-      bv.setBit(i);
-    }
-    std::string pkl=bv.toString();
-    unsigned int sz=pkl.size();
-    outS<<sz;
-    outS<<pkl;
-    outS.close();
-  }
-#endif
-
   {
     std::string dirName = getenv("RDBASE");
     dirName += "/Code/DataStructs/testData/";
