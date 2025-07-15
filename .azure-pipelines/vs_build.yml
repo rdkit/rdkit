@@ -22,8 +22,6 @@ steps:
     set Boost_ROOT=
     mkdir build && cd build
     call activate rdkit_build
-    conda config --env --add channels conda-forge
-    conda config --env --set channel_priority strict
     cmake .. ^
     -G "Visual Studio 17 2022" ^
     -DCMAKE_BUILD_TYPE=Release ^
@@ -51,8 +49,6 @@ steps:
   displayName: Configure build (Run CMake)
 - script: |
     call activate rdkit_build
-    conda config --env --add channels conda-forge
-    conda config --env --set channel_priority strict
     cd build
     cmake --build . --config Release --target install -j $(number_of_cores)
   displayName: Build

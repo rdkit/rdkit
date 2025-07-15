@@ -53,15 +53,11 @@ steps:
   displayName: Configure build (Run CMake)
 - script: |
     call activate rdkit_build
-    conda config --env --add channels conda-forge
-    conda config --env --set channel_priority strict
     cd build
     cmake --build . --config Release --target install -j $(number_of_cores)
   displayName: Build
 - script: |
     call activate rdkit_build
-    conda config --env --add channels conda-forge
-    conda config --env --set channel_priority strict
     set RDBASE=%cd%
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
