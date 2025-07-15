@@ -2137,7 +2137,7 @@ correspond to specific molecules:
   >>> [x.GetIdx() for x in m.GetStereoGroups()[1].GetAtoms()]
   [1]
   >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
-  >>> [Chem.MolToCXSmiles(x) for x in EnumerateStereoisomers(m)]
+  >>> sorted([Chem.MolToCXSmiles(x) for x in EnumerateStereoisomers(m)])
   ['C[C@@H](F)C[C@H](O)Cl', 'C[C@H](F)C[C@H](O)Cl']
 
 Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``StereoGroup`` as long as the reaction doesn't create or destroy chirality at the atom.
