@@ -2,11 +2,11 @@ steps:
 - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
   displayName: Setup build environment
 - script: |
+    conda config --remove channels defaults
+    conda config --add channels conda-forge
+    conda config --show channels
     conda config --set always_yes yes --set changeps1 no
     conda info -a
-    conda config --add channels conda-forge
-    conda config --remove channels anaconda
-    conda config --show channels
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba
     conda create --name rdkit_build -c conda-forge $(python) ^

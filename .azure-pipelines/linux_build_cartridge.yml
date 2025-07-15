@@ -7,11 +7,13 @@ steps:
     echo "add postgres user"
     sudo -u postgres createuser -s `whoami`
     source ${CONDA}/etc/profile.d/conda.sh
+    conda config --remove channels defaults || /usr/bin/true
+    conda config --remove channels anaconda || /usr/bin/true    
+    conda config --add channels conda-forge
+    conda config --show channels    
     conda config --set always_yes yes --set changeps1 no
-    conda config --remove channels anaconda
-    conda config --show channels
     conda update -q conda
-    conda info -a
+    conda info -ayes
     conda create --name rdkit_build -c conda-forge cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \

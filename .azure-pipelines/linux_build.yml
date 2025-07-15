@@ -3,12 +3,13 @@ steps:
     sudo apt-get install g++ wget make libgl1-mesa-dev mesa-common-dev
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
+    conda config --remove channels defaults || /usr/bin/true
+    conda config --remove channels anaconda || /usr/bin/true    
+    conda config --add channels conda-forge
+    conda config --show channels
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda config --set channel_priority strict
-    conda config --add channels conda-forge
-    conda config --remove channels anaconda
-    conda config --show channels
     conda config --set solver libmamba
     conda info -a
     conda create --name rdkit_build -c conda-forge $(python) cmake \

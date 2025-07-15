@@ -17,9 +17,11 @@ steps:
     sudo chown -R ${USER} ${CONDA}
     mkdir -p $HOME/.matplotlib
     echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
+    conda config --remove channels defaults || /usr/bin/true
+    conda config --remove channels anaconda || /usr/bin/true    
+    conda config --add channels conda-forge
+    conda config --show channels    
     conda config --set always_yes yes --set changeps1 no
-    conda config --remove channels anaconda
-    conda config --show channels
     conda update -q conda
     conda create --name rdkit_build  -c conda-forge $(compiler) \
         libcxx=$(compiler_version) cmake=3.26 \

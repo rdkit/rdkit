@@ -17,13 +17,14 @@ steps:
     sudo chown -R ${USER} ${CONDA}
     mkdir -p $HOME/.matplotlib
     echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
+    conda config --remove channels defaults || /usr/bin/true
+    conda config --remove channels anaconda || /usr/bin/true    
+    conda config --add channels conda-forge
+    conda config --show channels
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda config --set solver libmamba
     conda config --set channel_priority strict
-    conda config --add channels conda-forge
-    conda config --remove channels anaconda
-    conda config --show channels
     conda create --name rdkit_build $(python) $(compiler) libcxx cmake \
         libboost=$(boost_version) libboost-devel=$(boost_version) \
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \

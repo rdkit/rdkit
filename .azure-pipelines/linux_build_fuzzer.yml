@@ -3,11 +3,11 @@ steps:
     source ${CONDA}/etc/profile.d/conda.sh
     sudo apt-get install -y clang-9
     sudo chown -R ${USER} ${CONDA}
-    conda config --set always_yes yes --set changeps1 no
-    conda update -q conda
     conda config --add channels conda-forge
     conda config --remove channels anaconda
-    conda config --show channels
+    conda config --show channels    
+    conda config --set always_yes yes --set changeps1 no
+    conda update -q conda
     conda info -a
     conda create --name rdkit_build cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
