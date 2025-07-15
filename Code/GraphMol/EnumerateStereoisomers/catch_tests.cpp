@@ -252,7 +252,7 @@ TEST_CASE("EnhancedStereo") {
     CHECK(prop == "1");
     got.insert(MolToSmiles(*isomer));
     got.insert(MolToSmiles(*isomer));
-    isomerSets.insert(isomer->getProp<int>("isomer_set"));
+    isomerSets.insert(isomer->getProp<int>("isomerSet"));
   }
   CHECK(got == expected);
   CHECK(isomerSets == std::unordered_set<int>{1,0});
