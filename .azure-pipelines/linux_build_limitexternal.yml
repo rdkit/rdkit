@@ -8,6 +8,9 @@ steps:
     conda config --set channel_priority strict
     conda config --add channels conda-forge
     conda config --set solver libmamba
+    conda config --add channels conda-forge
+    conda config --remove channels https://repo.anaconda.com/pkgs/main
+    conda config --remove channels https://repo.anaconda.com/pkgs/r
     conda info -a
     conda create --name rdkit_build $(python) cmake \
         libboost=$(boost_version) libboost-devel=$(boost_version) \

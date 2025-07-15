@@ -8,6 +8,8 @@ steps:
     sudo -u postgres createuser -s `whoami`
     source ${CONDA}/etc/profile.d/conda.sh
     conda config --set always_yes yes --set changeps1 no
+    conda config --remove channels https://repo.anaconda.com/pkgs/main
+    conda config --remove channels https://repo.anaconda.com/pkgs/r
     conda update -q conda
     conda info -a
     conda create --name rdkit_build -c conda-forge cmake \

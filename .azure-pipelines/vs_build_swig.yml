@@ -8,6 +8,8 @@ steps:
   displayName: Setup build environment
 - script: |
     conda config --set always_yes yes --set changeps1 no
+    conda config --remove channels https://repo.anaconda.com/pkgs/main
+    conda config --remove channels https://repo.anaconda.com/pkgs/r    
     conda info -a
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba

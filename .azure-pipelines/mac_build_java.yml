@@ -18,6 +18,8 @@ steps:
     mkdir -p $HOME/.matplotlib
     echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
     conda config --set always_yes yes --set changeps1 no
+    conda config --remove channels https://repo.anaconda.com/pkgs/main
+    conda config --remove channels https://repo.anaconda.com/pkgs/r
     conda update -q conda
     conda create --name rdkit_build  -c conda-forge $(compiler) \
         libcxx=$(compiler_version) cmake=3.26 \
