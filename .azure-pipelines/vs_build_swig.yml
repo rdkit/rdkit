@@ -7,24 +7,25 @@ steps:
 - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
   displayName: Setup build environment
 - script: |
-    conda config --remove channels defaults
-    conda config --add channels conda-forge
-    conda config --show channels
     conda config --set always_yes yes --set changeps1 no
     conda info -a
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba
-    conda create --name rdkit_build -c conda-forge ^
+    conda create --name rdkit_build -c conda-forge --override-channels  ^
         cmake=3.26 ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
         cairo eigen swig=4.2
     call activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=
     mkdir build && cd build
     call activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     cmake .. ^
     -G "Visual Studio 17 2022" ^
     -DCMAKE_BUILD_TYPE=Release ^
@@ -52,11 +53,15 @@ steps:
   displayName: Configure build (Run CMake)
 - script: |
     call activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     cd build
     cmake --build . --config Release --target install -j $(number_of_cores)
   displayName: Build
 - script: |
     call activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     set RDBASE=%cd%
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%

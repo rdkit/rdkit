@@ -3,13 +3,10 @@ steps:
     sudo apt-get install g++ wget make libgl1-mesa-dev mesa-common-dev
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
-    conda config --add channels conda-forge
-    conda config --remove channels https://repo.anaconda.com/pkgs/main
-    conda config --remove channels https://repo.anaconda.com/pkgs/r                
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build -c conda-forge cmake \
+    conda create --name rdkit_build -c conda-forge --override-channels  cmake \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
         swig=4.2
@@ -17,6 +14,8 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     mkdir build && cd build && \
     cmake .. \
     -DSWIG_EXECUTABLE=${CONDA_PREFIX}/bin/swig \
@@ -42,12 +41,16 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     cd build
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}

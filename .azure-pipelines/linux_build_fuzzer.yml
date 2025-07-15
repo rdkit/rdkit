@@ -3,9 +3,6 @@ steps:
     source ${CONDA}/etc/profile.d/conda.sh
     sudo apt-get install -y clang-9
     sudo chown -R ${USER} ${CONDA}
-    conda config --add channels conda-forge
-    conda config --remove channels anaconda
-    conda config --show channels    
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
@@ -17,6 +14,8 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
 
     export CC="clang-9"
     export CXX="clang++-9"
@@ -44,12 +43,16 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     cd build
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     corpora=$(find . -type d -name "*_fuzzer")
     for corpus in $corpora; do
       corpus_basename=$(basename $corpus)

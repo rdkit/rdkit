@@ -3,26 +3,27 @@ steps:
     sudo apt-get install g++ wget make libgl1-mesa-dev mesa-common-dev
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
-    conda config --remove channels defaults || /usr/bin/true
-    conda config --remove channels anaconda || /usr/bin/true    
-    conda config --add channels conda-forge
-    conda config --show channels
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda config --set channel_priority strict
+    conda config --add channels conda-forge
     conda config --set solver libmamba
     conda info -a
-    conda create --name rdkit_build -c conda-forge $(python) cmake \
+    conda create --name rdkit_build -c conda-forge --override-channels  $(python) cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
         numpy pillow eigen pandas=2.0 matplotlib-base=3.8 \
         qt=5 cairo
     conda activate rdkit_build
-    conda install -c conda-forge pytest nbval ipykernel>=6.0
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
+    conda install -c conda-forge --override-channels  pytest nbval ipykernel>=6.0
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     export CXXFLAGS="${CXXFLAGS} -Wall -Werror"
     mkdir build && cd build && \
     cmake .. \
@@ -57,12 +58,16 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     cd build
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
@@ -74,7 +79,9 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda install -c conda-forge ipython=8.12 sphinx myst-parser
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
+    conda install -c conda-forge --override-channels  ipython=8.12 sphinx myst-parser
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}

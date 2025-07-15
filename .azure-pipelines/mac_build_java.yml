@@ -17,23 +17,23 @@ steps:
     sudo chown -R ${USER} ${CONDA}
     mkdir -p $HOME/.matplotlib
     echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
-    conda config --remove channels defaults || /usr/bin/true
-    conda config --remove channels anaconda || /usr/bin/true    
-    conda config --add channels conda-forge
-    conda config --show channels    
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
-    conda create --name rdkit_build  -c conda-forge $(compiler) \
+    conda create --name rdkit_build  -c conda-forge --override-channels  $(compiler) \
         libcxx=$(compiler_version) cmake=3.26 \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
         cairo eigen swig=4.2 make
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
   displayName: Setup build environment
 - bash: |
     export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     ls -l /Library
     ls -l /Library/Developer
     ls -l /Library/Developer/CommandLineTools
@@ -65,6 +65,8 @@ steps:
     export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     cd build
@@ -74,6 +76,8 @@ steps:
     export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export DYLD_FALLBACK_LIBRARY_PATH=${RDBASE}/lib:${RDBASE}/rdkit:${CONDA_PREFIX}/lib:${DYLD_FALLBACK_LIBRARY_PATH}
