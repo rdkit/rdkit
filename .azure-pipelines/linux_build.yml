@@ -7,8 +7,8 @@ steps:
     conda update -q conda
     conda config --set channel_priority strict
     conda config --add channels conda-forge
-    conda config --remove channels https://repo.anaconda.com/pkgs/main
-    conda config --remove channels https://repo.anaconda.com/pkgs/r    
+    conda config --remove channels anaconda
+    conda config --show channels
     conda config --set solver libmamba
     conda info -a
     conda create --name rdkit_build -c conda-forge $(python) cmake \

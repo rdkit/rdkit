@@ -5,8 +5,8 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda info -a
     conda config --add channels conda-forge
-    conda config --remove channels https://repo.anaconda.com/pkgs/main
-    conda config --remove channels https://repo.anaconda.com/pkgs/r                    
+    conda config --remove channels anaconda
+    conda config --show channels
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba
     conda create --name rdkit_build -c conda-forge $(python) ^

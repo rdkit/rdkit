@@ -1,5 +1,5 @@
 steps:
-- bash: | 
+- bash: |
     export CONDA=/tmp/miniforge
     wget https://github.com/conda-forge/miniforge/releases/download/24.9.0-0/Miniforge3-24.9.0-0-MacOSX-x86_64.sh
     bash Miniforge3-24.9.0-0-MacOSX-x86_64.sh -b -p ${CONDA}
@@ -18,8 +18,8 @@ steps:
     mkdir -p $HOME/.matplotlib
     echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
     conda config --set always_yes yes --set changeps1 no
-    conda config --remove channels https://repo.anaconda.com/pkgs/main
-    conda config --remove channels https://repo.anaconda.com/pkgs/r
+    conda config --remove channels anaconda
+    conda config --show channels
     conda update -q conda
     conda create --name rdkit_build  -c conda-forge $(compiler) \
         libcxx=$(compiler_version) cmake=3.26 \
@@ -35,7 +35,7 @@ steps:
     ls -l /Library
     ls -l /Library/Developer
     ls -l /Library/Developer/CommandLineTools
-    ls -l /Library/Developer/CommandLineTools/SDKs    
+    ls -l /Library/Developer/CommandLineTools/SDKs
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     mkdir build && cd build && \
