@@ -51,13 +51,15 @@ void BondFlipper::flip(bool flag) {
   }
 }
 
-StereoGroupFlipper::StereoGroupFlipper(const StereoGroup &sg) : Flipper() {
+StereoGroupFlipper::StereoGroupFlipper(const StereoGroup &sg) :
+ Flipper(), stereoGroupType(sg.getGroupType()) {
   for (auto a : sg.getAtoms()) {
     d_original_parities.emplace_back(std::make_pair(a, a->getChiralTag()));
   }
 }
 
 void StereoGroupFlipper::flip(bool flag) {
+  currentFlag = flag;
   if (flag) {
     for (auto &a : d_original_parities) {
       a.first->setChiralTag(a.second);

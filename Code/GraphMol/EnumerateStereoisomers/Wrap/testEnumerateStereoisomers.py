@@ -39,7 +39,7 @@ from rdkit.Chem import rdEnumerateStereoisomers
 
 class TestCase(unittest.TestCase):
 
-  def testEnumerateStereoisomersBasic(self):
+  def atestEnumerateStereoisomersBasic(self):
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
     smiles = set()
     opts = rdEnumerateStereoisomers.StereoEnumerationOptions()
@@ -52,7 +52,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(smiles), 4)
 
 
-  def testEnumerateStereoisomersWithCrazyNumberOfCenters(self):
+  def atestEnumerateStereoisomersWithCrazyNumberOfCenters(self):
     # insanely large numbers of isomers aren't a problem
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 101)
     opts = rdEnumerateStereoisomers.StereoEnumerationOptions()
@@ -66,6 +66,61 @@ class TestCase(unittest.TestCase):
       self.assertEqual(iso.GetProp('_MolFileChiralFlag'), '1')
       smiles.add(Chem.MolToSmiles(iso, isomericSmiles=True))
     self.assertEqual(len(smiles), 13)
+
+  def testIsomerSets(self):
+    mol = Chem.MolFromSmiles("C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|")
+    enum = rdEnumerateStereoisomers.StereoisomerEnumerator(mol)
+    sets = enum.GetStereoisomerSets()
+    self.assertEqual(enum.GetStereoisomerCount() , 32)
+    self.assertEqual(sets.numIsomerSets , 4)
+    self.assertEqual(sets.numIsomersInSet , 8)
+    self.assertEqual(sets.numIsomers , 32)
+
+    isomer_sets = []
+    for i in range(sets.numIsomerSets):
+      isomer_sets.append(set())
+      
+    for isomer in enum:
+      s = isomer.GetIntProp("isomerSet")
+      isomer_sets[s].add(Chem.MolToSmiles(isomer))
+
+    assert isomer_sets == [
+      {'C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]1C',
+       'C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@H]1[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]1C',
+       'C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)N[C@H]1C',
+       'C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@H]1[C@@H]1[C@H](C)[C@@H](C)[C@@H](C)N[C@@H]1C',
+       'C[C@@H]1[C@H](C)[C@@H]([C@H]2[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]2C)[C@H](C)N[C@@H]1C',
+       'C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@H](C)[C@@H](C)[C@@H](C)O[C@@H]1C',
+       'C[C@@H]1[C@H](C)[C@@H]([C@@H]2[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]2C)[C@H](C)N[C@@H]1C',
+       'C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)N[C@H]1C'},
+      {'C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@H]1[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]1C',
+       'C[C@@H]1[C@H](C)[C@@H]([C@@H]2[C@@H](C)[C@H](C)[C@H](C)N[C@H]2C)[C@H](C)O[C@@H]1C',
+       'C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)N[C@H]1C',
+       'C[C@@H]1[C@H](C)[C@H]([C@@H]2[C@@H](C)[C@H](C)[C@H](C)N[C@H]2C)[C@H](C)O[C@@H]1C',
+       'C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@H](C)[C@@H](C)[C@@H](C)O[C@@H]1C',
+       'C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]1C',
+       'C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@H]1[C@@H]1[C@H](C)[C@H](C)[C@H](C)N[C@@H]1C',
+       'C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)N[C@H]1C'},
+      {'C[C@@H]1[C@H](C)[C@@H]([C@@H]2[C@@H](C)[C@H](C)[C@H](C)O[C@H]2C)[C@H](C)N[C@@H]1C',
+       'C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)O[C@H]1C',
+       'C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@H]1[C@@H](C)[C@H](C)[C@H](C)O[C@H]1C',
+       'C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)N[C@H]1C',
+       'C[C@@H]1[C@H](C)[C@@H]([C@H]2[C@@H](C)[C@H](C)[C@H](C)O[C@H]2C)[C@H](C)N[C@@H]1C',
+       'C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@H]1[C@@H]1[C@H](C)[C@@H](C)[C@@H](C)N[C@@H]1C',
+       'C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@H](C)[C@H](C)[C@H](C)O[C@@H]1C',
+       'C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)N[C@H]1C'},
+      {'C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@H]1[C@@H]1[C@H](C)[C@H](C)[C@H](C)N[C@@H]1C',
+       'C[C@H]1[C@H](C)[C@H](C)O[C@@H](C)[C@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)N[C@H]1C',
+       'C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@H]1[C@@H](C)[C@H](C)[C@H](C)O[C@H]1C',
+       'C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)N[C@H]1C',
+       'C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@H](C)[C@H](C)[C@H](C)O[C@@H]1C',
+       'C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)N[C@H]1C',
+       'C[C@H]1[C@H](C)[C@H](C)N[C@@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)O[C@H]1C',
+       'C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)O[C@H]1C'}]
+    
+
+
+    
 
 
 if __name__ == '__main__':

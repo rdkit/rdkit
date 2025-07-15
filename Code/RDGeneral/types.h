@@ -254,6 +254,10 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string _displayLabel;   // string
 RDKIT_RDGENERAL_EXPORT extern const std::string _displayLabelW;  // string
 
+// stereo enumeration
+//  Which batch (STEREO_OR) is the isomer set in?
+RDKIT_RDGENERAL_EXPORT extern const std::string isomerSet; // int
+
 ///////////////////////////////////////////////////////////////
 // misc props
 RDKIT_RDGENERAL_EXPORT extern const std::string

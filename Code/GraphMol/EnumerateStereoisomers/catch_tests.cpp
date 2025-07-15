@@ -30,6 +30,10 @@ TEST_CASE("Simple test") {
   {
     StereoisomerEnumerator enu(*m1);
     CHECK(enu.getStereoisomerCount() == 16);
+    IsomerSets sets = enu.getStereoisomerSets();
+    CHECK(sets.numIsomerSets == 1);
+    CHECK(sets.numIsomersInSet == 16);
+    CHECK(sets.numIsomers == 16);
     const static std::unordered_set<std::string> expected{
         R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
         R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
@@ -63,6 +67,12 @@ TEST_CASE("Embedding") {
   StereoEnumerationOptions opts;
   opts.tryEmbedding = true;
   StereoisomerEnumerator enu1(*m1, opts);
+  IsomerSets sets = enu1.getStereoisomerSets();
+  CHECK(enu1.getStereoisomerCount() == 16);
+  CHECK(sets.numIsomerSets == 1);
+  CHECK(sets.numIsomersInSet == 16);
+  CHECK(sets.numIsomers == 16);
+
   const static std::unordered_set<std::string> expected{
       R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
       R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
@@ -227,16 +237,25 @@ TEST_CASE("EnhancedStereo") {
   auto m1 = v2::FileParsers::MolFromMolFile(fname);
   REQUIRE(m1);
   StereoisomerEnumerator enu1(*m1);
+  IsomerSets sets = enu1.getStereoisomerSets();
+  CHECK(sets.numIsomerSets == 2);
+  CHECK(sets.numIsomersInSet == 1);
+  CHECK(sets.numIsomers == 2);
+  
   const static std::unordered_set<std::string> expected{
       R"(C[C@H]([C@@H](C)F)[C@@H](C)Br)", R"(C[C@@H]([C@H](C)F)[C@@H](C)Br)"};
   std::unordered_set<std::string> got;
+  std::unordered_set<int> isomerSets;
   while (auto isomer = enu1.next()) {
     std::string prop;
     CHECK(isomer->getPropIfPresent<std::string>("_MolFileChiralFlag", prop));
     CHECK(prop == "1");
     got.insert(MolToSmiles(*isomer));
+    got.insert(MolToSmiles(*isomer));
+    isomerSets.insert(isomer->getProp<int>("isomer_set"));
   }
   CHECK(got == expected);
+  CHECK(isomerSets == std::unordered_set<int>{1,0});
 #if 0
   // Check the original was in there
   auto m2 = RWMol(*m1);
@@ -552,4 +571,62 @@ TEST_CASE("wiggly bonds and EnumerateStereoisomers") {
     CHECK(std::find(got.begin(), got.end(), "C[C@](F)(Cl)Br") != got.end());
     CHECK(std::find(got.begin(), got.end(), "C[C@@](F)(Cl)Br") != got.end());
   }
+  SECTION("STEREO_OR") {
+    auto m1 = "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"_smiles;
+    StereoisomerEnumerator enu1(*m1);
+    IsomerSets sets = enu1.getStereoisomerSets();
+    CHECK(enu1.getStereoisomerCount() == 32);
+    CHECK(sets.numIsomerSets == 4);
+    CHECK(sets.numIsomersInSet == 8);
+    CHECK(sets.numIsomers == 32);
+
+    std::vector<std::unordered_set<std::string>> got;
+    got.resize(sets.numIsomerSets);
+    
+    while (auto isomer = enu1.next()) {
+      unsigned int is = isomer->getProp<int>(common_properties::isomerSet);
+      CHECK(is < sets.numIsomerSets);
+      got[is].insert(MolToSmiles(*isomer));
+    }
+
+    std::vector<std::unordered_set<std::string>> expected = {
+      {
+	"C[C@@H]1[C@H](C)[C@@H]([C@H]2[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]2C)[C@H](C)N[C@@H]1C",
+	"C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]1C",
+	"C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)N[C@H]1C",
+	"C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)N[C@H]1C",
+	"C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@H](C)[C@@H](C)[C@@H](C)O[C@@H]1C",
+	"C[C@@H]1[C@H](C)[C@@H]([C@@H]2[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]2C)[C@H](C)N[C@@H]1C",
+	"C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@H]1[C@@H]1[C@H](C)[C@@H](C)[C@@H](C)N[C@@H]1C",
+	"C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@H]1[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]1C" },      
+      { "C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@H]1[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]1C",
+	"C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)N[C@H]1C",
+	"C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)N[C@H]1C",
+	"C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@H](C)[C@@H](C)[C@@H](C)O[C@@H]1C",
+	"C[C@@H]1[C@H](C)[C@H]([C@@H]2[C@@H](C)[C@H](C)[C@H](C)N[C@H]2C)[C@H](C)O[C@@H]1C",
+	"C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)O[C@H]1C",
+	"C[C@@H]1[C@@H](C)[C@@H](C)O[C@H](C)[C@H]1[C@@H]1[C@H](C)[C@H](C)[C@H](C)N[C@@H]1C",
+	"C[C@@H]1[C@H](C)[C@@H]([C@@H]2[C@@H](C)[C@H](C)[C@H](C)N[C@H]2C)[C@H](C)O[C@@H]1C" },
+      { "C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@H](C)[C@H](C)[C@H](C)O[C@@H]1C",
+	"C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@H]1[C@@H](C)[C@H](C)[C@H](C)O[C@H]1C",
+	"C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)N[C@H]1C",
+	"C[C@@H]1[C@H](C)[C@@H]([C@@H]2[C@@H](C)[C@H](C)[C@H](C)O[C@H]2C)[C@H](C)N[C@@H]1C",
+	"C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@H]1[C@@H]1[C@H](C)[C@@H](C)[C@@H](C)N[C@@H]1C",
+	"C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@@H](C)[C@@H](C)N[C@H]1C",
+	"C[C@@H]1[C@@H](C)[C@@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)O[C@H]1C",
+	"C[C@@H]1[C@H](C)[C@@H]([C@H]2[C@@H](C)[C@H](C)[C@H](C)O[C@H]2C)[C@H](C)N[C@@H]1C" },
+      { "C[C@H]1[C@H](C)[C@H](C)O[C@@H](C)[C@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)N[C@H]1C",
+	"C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)O[C@H]1C",
+	"C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@H]1[C@@H](C)[C@H](C)[C@H](C)O[C@H]1C",
+	"C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)N[C@H]1C",
+	"C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@H]1[C@@H]1[C@H](C)[C@H](C)[C@H](C)N[C@@H]1C",
+	"C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1[C@@H]1[C@H](C)[C@H](C)[C@H](C)O[C@@H]1C",
+	"C[C@H]1[C@H](C)[C@H](C)N[C@@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)O[C@H]1C",
+	"C[C@@H]1[C@H](C)[C@H](C)O[C@H](C)[C@@H]1[C@@H]1[C@@H](C)[C@H](C)[C@H](C)N[C@H]1C" }
+    };
+    
+    CHECK(got == expected);
+
+  }
 }
+

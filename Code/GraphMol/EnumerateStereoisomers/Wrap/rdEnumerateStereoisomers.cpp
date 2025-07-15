@@ -48,7 +48,30 @@ class LocalStereoEnumerator {
   unsigned int GetStereoisomerCount() {
     return dp_enumerator->getStereoisomerCount();
   }
+  RDKit::EnumerateStereoisomers::IsomerSets *GetStereoisomerSets() {
+    return new RDKit::EnumerateStereoisomers::IsomerSets(dp_enumerator->getStereoisomerSets());
+  }
 
+  struct StereoEnumeratorIterator {
+    LocalStereoEnumerator *enumerator;
+    StereoEnumeratorIterator(LocalStereoEnumerator *enumerator) : enumerator(enumerator) {
+    }
+    StereoEnumeratorIterator *__iter__() {return this;}
+    
+    boost::shared_ptr<RDKit::ROMol> __next__() {
+      auto mol = enumerator->next();
+      if(!mol.get()) {
+	PyErr_SetString(PyExc_StopIteration, "No more isomers.");
+	boost::python::throw_error_already_set();
+      }
+      return mol;
+    }
+  };
+
+  StereoEnumeratorIterator * __iter__() {
+    return new StereoEnumeratorIterator(this);
+  }
+  
  private:
   std::unique_ptr<RDKit::EnumerateStereoisomers::StereoisomerEnumerator>
       dp_enumerator;
@@ -103,6 +126,34 @@ BOOST_PYTHON_MODULE(rdEnumerateStereoisomers) {
           "Seed for random number generator.  Default=-1 means no seed.")
       .def("__setattr__", &safeSetattr);
 
+  docString = "IsomerSets structure describing how many isomers and isomer sets (batches) "
+    "will be created.  Each enhanced STEREO_OR creates two independent batches of isomers.";
+  python::class_<EnumerateStereoisomers::IsomerSets>("IsomerSets",
+		       docString.c_str())
+    .def_readwrite(
+		   "numIsomersInSet", 
+		   &EnumerateStereoisomers::IsomerSets::numIsomersInSet,
+		   "The number of isomer sets that will be generated, each isomer set"
+		   " would be a distinct batch of structures")
+    .def_readwrite(
+		   "numIsomerSets", 
+		   &EnumerateStereoisomers::IsomerSets::numIsomerSets,
+		   "The number of isomers in each individual set (or batch)")
+    .def_readwrite(
+		   "numIsomers", 
+		   &EnumerateStereoisomers::IsomerSets::numIsomers,
+		   "The total number of individual isomers");
+    ;
+
+
+  docString = "Stereoisomer iterator.";
+  python::class_<LocalStereoEnumerator::StereoEnumeratorIterator, boost::noncopyable>(
+      "StereoisomerEnumerator", docString.c_str(), python::no_init)
+    .def("__iter__", &LocalStereoEnumerator::StereoEnumeratorIterator::__iter__,
+	              python::return_internal_reference<
+	 1, python::with_custodian_and_ward_postcall<0, 1>>())
+    .def("__next__", &LocalStereoEnumerator::StereoEnumeratorIterator::__next__);
+    
   docString = "Stereoisomer enumerator.";
   python::class_<LocalStereoEnumerator, boost::noncopyable>(
       "StereoisomerEnumerator", docString.c_str(), python::no_init)
@@ -111,8 +162,17 @@ BOOST_PYTHON_MODULE(rdEnumerateStereoisomers) {
            python::arg("verbose") = true)))
       .def("next", &LocalStereoEnumerator::next,
            "Get next isomer in the sequence, or None if at the end.")
+      .def("__iter__", &LocalStereoEnumerator::__iter__,
+	              python::return_value_policy<
+                 python::manage_new_object,
+	   python::with_custodian_and_ward_postcall<0, 1>>())
       .def("GetStereoisomerCount", &LocalStereoEnumerator::GetStereoisomerCount,
-           "Get the number of stereoisomers.");
+           "Get the number of stereoisomers.")
+      .def("GetStereoisomerSets", &LocalStereoEnumerator::GetStereoisomerSets,
+           "Get the stereo isomer set data, each set is an independent batch of structures as "
+	   "seperated by STEREO_ORs.",
+	   python::return_value_policy<python::manage_new_object,
+	     python::with_custodian_and_ward_postcall<0, 1>>());
 }
 
 }  // namespace RDKit

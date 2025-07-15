@@ -149,6 +149,9 @@ const std::string _QueryAtomGenericLabel = "_QueryAtomGenericLabel";
 const std::string _displayLabel = "_displayLabel";
 const std::string _displayLabelW = "_displayLabelW";
 
+// stereo enumerate
+//  Which batch (STEREO_OR) is the isomer set in?
+const std::string isomerSet = "isomerSet";
 }  // namespace common_properties
 
 const double MAX_DOUBLE = std::numeric_limits<double>::max();
