@@ -9,7 +9,7 @@ steps:
     conda config --add channels conda-forge
     conda config --set solver libmamba
     conda info -a
-    conda create --name rdkit_build $(python) cmake \
+    conda create --name rdkit_build -c conda-forge --override-channels $(python) cmake \
         libboost=$(boost_version) libboost-devel=$(boost_version) \
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         numpy pillow eigen pandas=2.1 \
