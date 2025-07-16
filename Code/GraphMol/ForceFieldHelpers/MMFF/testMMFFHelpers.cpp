@@ -1092,7 +1092,6 @@ int main() {
   RDLog::InitLogs();
   // we get a ton of warnings here about missing Hs... disable them
   boost::logging::disable_logs("rdApp.warning");
-#if 1
   testMMFFTyper1();
   testMMFFBuilder1();
   testMMFFBuilder2();
@@ -1111,7 +1110,6 @@ int main() {
   testMMFFMultiThread3();
 #endif
   testGithub162();
-#endif
   testGithub224();
   testGithub6728();
 }

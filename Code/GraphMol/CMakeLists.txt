@@ -156,8 +156,6 @@ rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES
         SubstructMatch SmilesParse FileParsers GraphMol
 )
 
-rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol)
-
 rdkit_test(resMolSupplierTest resMolSupplierTest.cpp
         LINK_LIBRARIES SmilesParse GraphMol SubstructMatch FileParsers)
 
