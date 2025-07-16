@@ -6,17 +6,21 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build -c conda-forge $(python) cmake \
+    conda create --name rdkit_build -c conda-forge --override-channels  $(python) cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
         numpy=1.24.3 pillow eigen pandas=2.1 matplotlib-base=3.8 \
         cairo
     conda activate rdkit_build
-    conda install -c conda-forge ipython=8.20 jupyter nbval ipykernel>=6.0
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
+    conda install -c conda-forge --override-channels  ipython=8.20 jupyter nbval ipykernel>=6.0
   displayName: Setup build environment (no Qt due to versioning problems)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     export CXXFLAGS="${CXXFLAGS} -Wall -Werror -Wextra"
     mkdir build && cd build && \
     cmake .. \
@@ -50,12 +54,16 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     cd build
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
@@ -67,7 +75,9 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda install -c conda-forge sphinx myst-parser
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
+    conda install -c conda-forge --override-channels  sphinx myst-parser
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
