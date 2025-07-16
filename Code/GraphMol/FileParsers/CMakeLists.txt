@@ -34,7 +34,8 @@ rdkit_library(FileParsers
     MultithreadedMolSupplier.cpp
     MultithreadedSmilesMolSupplier.cpp
     MultithreadedSDMolSupplier.cpp
-    LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol SubstructMatch ${MAEPARSER_LIB})
+    LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol SubstructMatch ${MAEPARSER_LIB} ${RDK_CHEMDRAW_LIBS})
+
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
 rdkit_headers(CDXMLParser.h
