@@ -76,7 +76,7 @@ option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrar
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
 option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
-option(RDK_USE_CCACHE "Enable ccache for compiling C/C++ source files" OFF )
+option(RDK_BUILD_USE_CCACHE "Enable ccache for compiling C/C++ source files" OFF )
 
 set(RDK_BOOST_VERSION "1.81.0")
 
@@ -712,12 +712,12 @@ SET(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSIO
 SET(CPACK_SET_DESTDIR ON)
 
 # Find ccache
-if (RDK_USE_CCACHE)
+if (RDK_BUILD_USE_CCACHE)
     find_program(CCACHE_PROGRAM ccache REQUIRED)
-else (RDK_USE_CCACHE)
+else (RDK_BUILD_USE_CCACHE)
     # still use ccache if it's available
     find_program(CCACHE_PROGRAM ccache)
-endif (RDK_USE_CCACHE)
+endif (RDK_BUILD_USE_CCACHE)
 
 
 # If ccache is found, set it as the compiler launcher
