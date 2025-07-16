@@ -30,7 +30,11 @@ extern "C" int fileno(FILE*);
 
 using namespace RDKit;
 
-//static PeriodicTable * gl_ptab = PeriodicTable::getTable();
+// This will be called every time we construct a token an will allow us to track
+// the position of the current token.
+#undef YY_USER_ACTION
+#define YY_USER_ACTION current_token_position += yyleng;
+
 
 #define YY_FATAL_ERROR(msg) smarts_lexer_error(msg)
 
@@ -365,7 +369,7 @@ A			{
 
 [\/]    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
-	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());	
+	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());
 	return BOND_TOKEN;  }
 
 \-\> {
