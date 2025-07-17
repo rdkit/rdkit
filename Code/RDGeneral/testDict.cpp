@@ -276,8 +276,11 @@ TEST_CASE("testRDValue") {
     pvect.push_back(std::make_pair<int, int>(2, 2));
     std::any any1(pvect);
     auto a1 = std::any_cast<std::vector<std::pair<int, int>>>(any1);
+    CHECK(a1.size() == pvect.size());
     auto a2 = std::any_cast<std::vector<std::pair<int, int>> &>(any1);
+    CHECK(a2.size() == pvect.size());
     auto a3 = std::any_cast<const std::vector<std::pair<int, int>> &>(any1);
+    CHECK(a3.size() == pvect.size());
 
     RDAny vv(pvect);
     auto &any = rdany_cast<std::any &>(vv);
