@@ -33,8 +33,6 @@ steps:
     export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda config --env --add channels conda-forge
-    conda config --env --set channel_priority strict
     ls -l /Library
     ls -l /Library/Developer
     ls -l /Library/Developer/CommandLineTools
@@ -72,8 +70,6 @@ steps:
     export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda config --env --add channels conda-forge
-    conda config --env --set channel_priority strict
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     cd build
@@ -83,8 +79,6 @@ steps:
     export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda config --env --add channels conda-forge
-    conda config --env --set channel_priority strict
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export DYLD_FALLBACK_LIBRARY_PATH=${RDBASE}/lib:${RDBASE}/rdkit:${CONDA_PREFIX}/lib:${DYLD_FALLBACK_LIBRARY_PATH}

@@ -6,17 +6,17 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build cmake \
+    conda create --name rdkit_build cmake -c conda-forge --override-channels \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
         cairo eigen
+    conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict	
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda config --env --add channels conda-forge
-    conda config --env --set channel_priority strict
-
     export CC="clang-9"
     export CXX="clang++-9"
     export SANITIZER_FLAGS_address="-fsanitize=address -fsanitize-address-use-after-scope"
@@ -24,7 +24,6 @@ steps:
     export CFLAGS="-O1 -fno-omit-frame-pointer -gline-tables-only -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION $COVERAGE_FLAGS $SANITIZER_FLAGS_address"
     export CXXFLAGS="$CFLAGS"
     export LIB_FUZZING_ENGINE="-fsanitize=fuzzer"
-
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -43,16 +42,12 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda config --env --add channels conda-forge
-    conda config --env --set channel_priority strict
     cd build
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda config --env --add channels conda-forge
-    conda config --env --set channel_priority strict
     corpora=$(find . -type d -name "*_fuzzer")
     for corpus in $corpora; do
       corpus_basename=$(basename $corpus)
