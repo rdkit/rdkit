@@ -19,6 +19,7 @@
 #include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
 #include <GraphMol/EnumerateStereoisomers/Flippers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include "Flippers.h"
 
 namespace RDKit {
 namespace EnumerateStereoisomers {
@@ -46,6 +47,21 @@ StereoisomerEnumerator::StereoisomerEnumerator(
     try {
       d_totalPoss = boost::numeric_cast<unsigned long>(std::pow(
           std::uint64_t(2), static_cast<std::uint64_t>(d_flippers.size())));
+      std::uint64_t num_ors = 0;
+      std::uint64_t num_not_ors = 0;
+      for(auto &flipper : d_flippers) {
+	details::StereoGroupFlipper *sgf = dynamic_cast<details::StereoGroupFlipper*>(flipper.get());
+	if(sgf != nullptr) {
+	  if(sgf->stereoGroupType == StereoGroupType::STEREO_OR) {
+	    d_orFlippers.push_back(sgf);
+	    num_ors += 1;
+	    continue;
+	  }
+	}
+	num_not_ors += 1;
+      }
+      d_numIsomerSets = boost::numeric_cast<unsigned long>(std::pow(std::uint64_t(2), num_ors));
+      d_numIsomersInSet = boost::numeric_cast<unsigned long>(std::pow(std::uint64_t(2), num_not_ors));
     } catch (boost::numeric::positive_overflow &e) {
       d_totalPoss = std::numeric_limits<std::uint64_t>::max();
     }
@@ -65,6 +81,10 @@ StereoisomerEnumerator::StereoisomerEnumerator(
 
 std::uint64_t StereoisomerEnumerator::getStereoisomerCount() const {
   return d_totalPoss;
+}
+
+IsomerSets StereoisomerEnumerator::getStereoisomerSets() const {
+  return IsomerSets { d_numIsomerSets, d_numIsomersInSet, d_totalPoss };
 }
 
 std::unique_ptr<ROMol> StereoisomerEnumerator::next() {
@@ -123,6 +143,16 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
       for (size_t i = 0; i < d_flippers.size(); i++) {
         d_flippers[i]->flip(nextConfig[i]);
       }
+
+      int isomerSet = -1;
+      // Compute the isomerset index if there is a reasonable number of
+      //  or flippers
+      if(d_orFlippers.size() < 32) {
+	isomerSet = 0;
+	for(size_t i=0; i<d_orFlippers.size(); ++i) {
+	  isomerSet |= (d_orFlippers[i]->currentFlag == true) << i;
+	}
+      }
       // We don't need StereoGroups any more so remove them.
       std::unique_ptr<ROMol> isomer;
       if (!d_mol.getStereoGroups().empty()) {
@@ -133,6 +163,8 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
       }
       MolOps::setDoubleBondNeighborDirections(*isomer);
       isomer->clearComputedProps(false);
+      isomer->setProp<int>(common_properties::isomerSet, isomerSet);
+      
       MolOps::assignStereochemistry(*isomer, true, true, true);
       if (d_options.unique) {
         auto smi =

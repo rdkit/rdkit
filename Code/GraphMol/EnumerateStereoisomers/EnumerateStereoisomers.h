@@ -28,6 +28,12 @@
 
 namespace RDKit {
 namespace EnumerateStereoisomers {
+struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT IsomerSets {
+  std::uint64_t  numIsomerSets;    // Number of isomer sets.  These would be isomers in different
+                                   //  batches.  Each StereoGroup OR creates two sets.
+  std::uint64_t  numIsomersInSet;  // Number of isomers in each set.
+  std::uint64_t  numIsomers;       // Total number of unique isomers.
+};
 
 struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
   bool tryEmbedding{false};   // If true, the process attempts to generate
@@ -62,6 +68,17 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
 // Class that enumerates the stereoisomers of a molecule.  Acts like a
 // Python generator so in principle has no limit on the number of stereoisomers
 // it can produce.
+//
+// Each isomer produced is tagged with an integer property isomer_set
+//  This indicates which batch it would end up in.  Each extended stereo
+//  group OR splits creates two batches, the isomer_set can be used
+//  to seperate these into different batches.  This property is only
+//  computed if there are a reasonable number of OR stereogroups (<32)
+//  
+//  Example:
+//    auto isomer = stereo_enumerator.next();
+//    int isomerSet = isomer->getProp<int>(common_properties::isomerSet);
+  
 class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
  public:
   StereoisomerEnumerator() = delete;
@@ -77,6 +94,7 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
   StereoisomerEnumerator &operator=(StereoisomerEnumerator &&other) = delete;
 
   std::uint64_t getStereoisomerCount() const;
+  IsomerSets    getStereoisomerSets() const;
 
   // Return another stereoisomer, or an empty unique_ptr if we're done.
   std::unique_ptr<ROMol> next();
@@ -94,6 +112,11 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
   std::uint64_t d_numToReturn{1024};
   // 2**N.
   std::uint64_t d_totalPoss{0};
+  // How many sets of isomers are we describing here?  I.e. each OR makes two disctinct sets  
+  std::uint64_t d_numIsomerSets{0};
+  // Hoe many isomers in each set?
+  std::uint64_t d_numIsomersInSet{0};
+  
   std::unordered_set<std::string> d_generatedIsomers;
 
   // For the random bools
@@ -102,7 +125,8 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
 
   // Classes for setting the orientation at a particular stereocenter.
   std::vector<std::unique_ptr<details::Flipper>> d_flippers;
-
+  std::vector<const details::StereoGroupFlipper*> d_orFlippers;
+  
   // The stereo orientations we've already made
   std::unordered_set<boost::dynamic_bitset<>> d_seen;
 

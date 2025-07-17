@@ -58,7 +58,24 @@ struct chirality_wrapper {
         .def_readonly("controllingAtoms",
                       &Chirality::StereoInfo::controllingAtoms,
                       "indices of the atoms controlling the stereo");
+
+    python::class_<Chirality::StereoLabelCheck>("StereoLabelCheck",
+						"Results of checking enhanced stereo labels")
+        .def_readonly("isRacemic",
+                      &Chirality::StereoLabelCheck::isRacemic,
+                      "is the molecule racemic")
+        .def_readonly("allStereoAtomsLabeled",
+                      &Chirality::StereoLabelCheck::allStereoAtomsLabeled,
+                      "true if all the potential stereo atoms are labeled with enhanced stereo")
+        .def_readonly("unlabeledAtomIndices",
+                      &Chirality::StereoLabelCheck::unlabeledAtomIndices,
+                      "vector of all the unassigned atom indices");
+
+    python::def("EnhancedStereoLabelChecker", &RDKit::Chirality::enhancedStereoLabelChecker,
+		python::args("mol"),
+		"Check all the stereo centers to see if they have been labeled with enhanced stereo.");
   };
+
 };
 }  // namespace RDKit
 

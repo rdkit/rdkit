@@ -11,12 +11,14 @@ steps:
     conda info -a
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba
-    conda create --name rdkit_build -c conda-forge ^
+    conda create --name rdkit_build -c conda-forge --override-channels  ^
         cmake=3.26 ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
         cairo eigen swig=4.2
     call activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=
@@ -45,7 +47,7 @@ steps:
     -DRDK_BUILD_SWIG_CSHARP_WRAPPER=ON ^
     -DRDK_BUILD_CFFI_LIB=OFF ^
     -DRDK_SWIG_STATIC=ON ^
-    -DRDK_TEST_MULTITHREADED=ON 
+    -DRDK_TEST_MULTITHREADED=ON
   displayName: Configure build (Run CMake)
 - script: |
     call activate rdkit_build
@@ -58,7 +60,7 @@ steps:
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
     cd build
-    ctest -R CSharpTests -C Release -T test --output-on-failure --verbose 
+    ctest -R CSharpTests -C Release -T test --output-on-failure --verbose
   displayName: Run tests
 - task: PublishTestResults@2
   inputs:

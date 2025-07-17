@@ -424,6 +424,30 @@ RDKIT_GRAPHMOL_EXPORT std::vector<std::pair<unsigned int, unsigned int>>
 findMesoCenters(const ROMol &mol, bool includeIsotopes = true,
                 bool includeAtomMaps = false);
 
+
+struct RDKIT_GRAPHMOL_EXPORT StereoLabelCheck {
+  bool isRacemic;
+  bool allStereoAtomsLabeled;
+  std::vector<unsigned int> unlabeledAtomIndices;
+};
+
+//! Function that checks whether all stereo labels are assigned with
+//!  enhanced stereo groups.  Returns a StereoLabels instance.
+/*!
+ \param mol: molecule to check
+
+\returns a StereoLabels Instance
+
+  StereoLabels labels = enhancedStereoLabelChecker(mol)
+
+  labels.isRacemic  - Is the molecule racemic
+  labels. - true if all stereo atoms are labeled, false otherwise
+  labels.unassignedAtomIndices - list of all the atom inidices that are unassigned
+*/
+
+RDKIT_GRAPHMOL_EXPORT StereoLabelCheck enhancedStereoLabelChecker(const RDKit::ROMol &mol);
+  
+
 }  // namespace Chirality
 }  // namespace RDKit
 #endif

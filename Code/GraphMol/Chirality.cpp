@@ -3934,5 +3934,36 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
   return res;
 }
 
+StereoLabelCheck enhancedStereoLabelChecker(const RDKit::ROMol &mol) {
+  StereoLabelCheck checker;
+  RWMol m2(mol);
+  MolOps::assignStereochemistry(m2, true, true, true);
+
+  checker.isRacemic = false;
+  checker.allStereoAtomsLabeled = true;
+
+  std::set<unsigned int> chiralAtoms;
+  for(auto atom: m2.atoms()) {
+    if(atom->hasProp(common_properties::_ChiralityPossible)) {
+      if(atom->getChiralTag() == Atom::ChiralType::CHI_UNSPECIFIED) {
+	checker.isRacemic = true;
+      } else {
+	chiralAtoms.insert(atom->getIdx());
+      }
+    }
+  }
+  
+  for(auto sg : m2.getStereoGroups()) {
+    for(auto atom  : sg.getAtoms()) {
+      chiralAtoms.erase(atom->getIdx());
+    }
+  }
+
+  checker.unlabeledAtomIndices = std::vector<unsigned int>(chiralAtoms.begin(), chiralAtoms.end());
+  checker.allStereoAtomsLabeled = chiralAtoms.size() == 0;
+
+  return checker;
+}
+  
 }  // namespace Chirality
 }  // namespace RDKit

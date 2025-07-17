@@ -81,8 +81,10 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoGroupFlipper : public Flipper {
   ~StereoGroupFlipper() override = default;
 
   void flip(bool flag) override;
-
   std::vector<std::pair<Atom *, Atom::ChiralType>> d_original_parities;
+  
+  bool currentFlag = true;
+  StereoGroupType stereoGroupType;
 };
 
 struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT AtropisomerFlipper : public Flipper {

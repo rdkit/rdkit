@@ -8498,7 +8498,23 @@ M  END
     for atom in m.GetAtoms():
       self.assertTrue(atom.NeedsUpdatePropertyCache())
 
+  def testStereoLabelChecker(self):
+    smiles = [
+      'C[C@@H](Br)[C@@H](C)[C@H](C)F |wD:3.3,5.5,wU:1.0,a:1,o1:3,5|',
+      'C[C@@H]([C@H](C)F)[C@@H](C)Br |wD:1.0,2.2,wU:5.5|',
+      'C[C@H](F)[C@H](C)[C@@H](C)Br |wD:1.0,3.3,wU:5.5,a:5,o1:3|',
+      'C[C@@H](Br)[C@H](C)[C@H](C)F |wD:3.3,5.5,wU:1.0,a:1,o1:3,o2:5|'
+    ]
+    expected = [True, False, False, True]
+    unlabeled = [[], [1,2,5], [1], []]
+    for smi, labeled, indices in  zip(smiles, expected, unlabeled):
+      m = Chem.MolFromSmiles(smi)
+      check = Chem.EnhancedStereoLabelChecker(m)
+      assert check.allStereoAtomsLabeled == labeled
+      assert list(check.unlabeledAtomIndices) == indices
 
+    assert Chem.EnhancedStereoLabelChecker(Chem.MolFromSmiles("CC(Br)C(C)C(C)F")).isRacemic == True
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
