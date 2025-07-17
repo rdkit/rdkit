@@ -11,12 +11,11 @@ steps:
         libboost-python-devel=(boost_version) ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        numpy matplotlib cairo pillow eigen pandas=2.1
+        numpy matplotlib cairo pillow eigen pandas=2.1 ^
+	sphinx myst-parser ipython jupyter pytest nbval cmake
     call activate rdkit_build
-    conda config --env --add channels conda-forge
+    conda config --env --add channels conda-forge 
     conda config --env --set channel_priority strict
-    conda install -c conda-forge --override-channels  sphinx myst-parser ipython jupyter pytest nbval
-    conda install -c conda-forge --override-channels  cmake
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=
