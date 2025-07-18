@@ -1442,14 +1442,14 @@ void ResonanceMolSupplier::mainLoop(unsigned int ti, unsigned int nt) {
 // atoms and bonds which do not belong to a conjugated group are given
 // index -1
 void ResonanceMolSupplier::assignConjGrpIdx() {
+  unsigned int na = d_mol->getNumAtoms();
+  d_atomConjGrpIdx.resize(na, -1);
   unsigned int nb = d_mol->getNumBonds();
   if (!nb) {
     return;
   }
   std::stack<unsigned int> bondIndexStack;
   d_bondConjGrpIdx.resize(nb, -1);
-  unsigned int na = d_mol->getNumAtoms();
-  d_atomConjGrpIdx.resize(na, -1);
   for (d_nConjGrp = 0; true; ++d_nConjGrp) {
     for (const auto b : d_mol->bonds()) {
       unsigned int i = b->getIdx();
