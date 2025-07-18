@@ -6,7 +6,7 @@ target_compile_definitions(ChemicalFeatures PRIVATE RDKIT_CHEMICALFEATURES_BUILD
 rdkit_headers(ChemicalFeature.h
               FreeChemicalFeature.h DEST ChemicalFeatures)
 
-rdkit_test(testChemicalFeatures testChemicalFeatures.cpp 
+rdkit_catch_test(testChemicalFeatures testChemicalFeatures.cpp 
            LINK_LIBRARIES ChemicalFeatures)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

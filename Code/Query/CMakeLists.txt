@@ -12,5 +12,5 @@ rdkit_headers(AndQuery.h
               SetQuery.h
               XOrQuery.h DEST Query)
 
-rdkit_test(testQuery test.cpp LINK_LIBRARIES RDGeneral)
+rdkit_catch_test(testQuery test.cpp LINK_LIBRARIES RDGeneral)
 
