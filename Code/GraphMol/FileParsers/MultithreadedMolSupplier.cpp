@@ -20,12 +20,13 @@ namespace FileParsers {
 void MultithreadedMolSupplier::close() {
   df_forceStop = true;
   d_outputQueue->setDone();
-  
-  if(df_started) {
+
+  if (df_started) {
     // Clear the queues until they are empty
     //  d_inputQueue->clear is not thread-safe
     std::tuple<std::string, unsigned int, unsigned int> r;
-    while (d_inputQueue->pop(r)) {}
+    while (d_inputQueue->pop(r)) {
+    }
     // clear the output queues, they might be full
     //  and blocking the writer threads, note
     //  that while ending threads the writers may
@@ -38,7 +39,7 @@ void MultithreadedMolSupplier::close() {
   }
 
   endThreads();
-  
+
   // notify the queue again that it is done in case
   //  anyone is waiting on it
   d_outputQueue->setDone();
@@ -55,9 +56,9 @@ void MultithreadedMolSupplier::close() {
     }
   } else {
     // destroy all objects in the output queue
-    if(d_outputQueue) d_outputQueue->clear();
+    if (d_outputQueue) d_outputQueue->clear();
   }
-  
+
   // close external streams if any
   //  destructors are called child to parent, however the threads
   //  need to be ended before shutting down streams, so override this
@@ -65,7 +66,7 @@ void MultithreadedMolSupplier::close() {
   closeStreams();
   df_started = false;
 }
-    
+
 void MultithreadedMolSupplier::reader() {
   std::string record;
   unsigned int lineNum, index;
@@ -97,7 +98,7 @@ void MultithreadedMolSupplier::writer() {
       }
       auto temp = std::tuple<RWMol *, std::string, unsigned int>{
           mol.release(), std::get<0>(r), std::get<2>(r)};
-      
+
       d_outputQueue->push(temp);
     } catch (...) {
       // fill the queue wih a null value
@@ -131,15 +132,15 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
     startThreads();
   }
   std::tuple<RWMol *, std::string, unsigned int> r;
-  if (!df_forceStop  && d_outputQueue->pop(r)) {
+  if (!df_forceStop && d_outputQueue->pop(r)) {
     d_lastItemText = std::get<1>(r);
     d_lastRecordId = std::get<2>(r);
     std::unique_ptr<RWMol> res{std::get<0>(r)};
     if (res && nextCallback) {
       try {
-	nextCallback(*res, *this);
+        nextCallback(*res, *this);
       } catch (...) {
-	// Ignore exception and proceed with mol as is.
+        // Ignore exception and proceed with mol as is.
       }
     }
     return res;
@@ -154,14 +155,13 @@ void MultithreadedMolSupplier::endThreads() {
   if (!df_started) {
     return;
   }
-  
+
   // stop the writers before stopping the readers
   //  otherwise there might be a deadlock
   for (auto &thread : d_writerThreads) {
     thread.join();
   }
   d_readerThread.join();
-    
 }
 
 void MultithreadedMolSupplier::startThreads() {
