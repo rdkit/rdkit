@@ -42,7 +42,7 @@ class LocalStereoEnumerator {
     if (!iso) {
       return boost::shared_ptr<RDKit::ROMol>();
     }
-    return boost::shared_ptr<RDKit::ROMol>(new RDKit::ROMol(*iso.release()));
+    return boost::shared_ptr<RDKit::ROMol>(iso.release());
   }
 
   unsigned int GetStereoisomerCount() {
