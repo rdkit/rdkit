@@ -33,8 +33,7 @@ void MultithreadedMolSupplier::close() {
     //  put a few more items back in the queue
     std::tuple<RWMol *, std::string, unsigned int> mol_r;
     while (d_outputQueue->pop(mol_r)) {
-      RWMol *m = std::get<0>(mol_r);
-      delete m;
+      delete std::get<0>(mol_r);
     }
   }
 
@@ -49,14 +48,14 @@ void MultithreadedMolSupplier::close() {
   //  the threads were endings
   if (df_started) {
     d_inputQueue->clear();
+  }
+
+  if (d_outputQueue) {
+    // destroy all objects in the output queue
     std::tuple<RWMol *, std::string, unsigned int> r;
     while (d_outputQueue->pop(r)) {
-      RWMol *m = std::get<0>(r);
-      delete m;
+      delete std::get<0>(r);
     }
-  } else {
-    // destroy all objects in the output queue
-    if (d_outputQueue) d_outputQueue->clear();
   }
 
   // close external streams if any
