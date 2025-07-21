@@ -8,6 +8,10 @@
 //  of the RDKit source tree.
 //
 #include "CDXMLParser.h"
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/RWMol.h>
+
+#ifndef RDK_BUILD_CHEMDRAW_SUPPORT
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <GraphMol/MolOps.h>
@@ -832,3 +836,40 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 }  // namespace CDXMLParser
 }  // namespace v2
 }  // namespace RDKit
+#else
+#include <ChemDraw/chemdraw.h>
+#include <RDGeneral/BadFileException.h>
+
+namespace RDKit{
+namespace v2 {
+namespace CDXMLParser {
+
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
+    std::istream &inStream, const CDXMLParserParams &params) {
+  // populate tree structure pt
+  ChemDrawParserParams chemdraw_params;
+  chemdraw_params.sanitize = params.sanitize;
+  chemdraw_params.removeHs = params.removeHs;
+  return MolsFromChemDrawDataStream(inStream, chemdraw_params);
+}
+
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
+    const std::string &fileName, const CDXMLParserParams &params) {
+  std::ifstream ifs(fileName);
+  if (!ifs || ifs.bad()) {
+    std::ostringstream errout;
+    errout << "Bad input file " << fileName;
+    throw BadFileException(errout.str());
+  }
+  return MolsFromCDXMLDataStream(ifs, params);
+}
+
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
+    const std::string &cdxml, const CDXMLParserParams &params) {
+  std::stringstream iss(cdxml);
+  return MolsFromCDXMLDataStream(iss, params);
+}
+}
+}
+}
+#endif

@@ -458,6 +458,10 @@ struct atom_wrapper {
              "Returns true or false depending on whether implicit and explicit "
              "valence of the molecule have already been calculated.\n\n")
 
+        .def("ClearPropertyCache", &Atom::clearPropertyCache,
+             (python::arg("self")),
+             "Clears implicit and explicit valence information.\n\n")
+
         .def("GetMonomerInfo", AtomGetMonomerInfo,
              python::return_internal_reference<
                  1, python::with_custodian_and_ward_postcall<0, 1>>(),

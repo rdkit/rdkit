@@ -341,7 +341,7 @@ emscripten::val get_frags_helper(const JSMolBase &self,
                                  const std::string &details) {
   auto res = self.get_frags(details);
   auto obj = emscripten::val::object();
-  obj.set("molList", res.first);
+  obj.set("molList", emscripten::val(res.first, emscripten::allow_raw_pointers()));
   obj.set("mappings", res.second);
   return obj;
 }

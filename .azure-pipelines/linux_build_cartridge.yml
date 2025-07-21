@@ -10,12 +10,14 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build -c conda-forge cmake \
+    conda create --name rdkit_build -c conda-forge --override-channels  cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
         eigen \
         cairo
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

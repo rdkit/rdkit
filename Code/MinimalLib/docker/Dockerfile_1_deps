@@ -88,7 +88,9 @@ RUN wget -q https://download.savannah.gnu.org/releases/freetype/freetype-${FREET
 WORKDIR /src/freetype-${FREETYPE_VERSION}
 RUN mkdir build
 WORKDIR /src/freetype-${FREETYPE_VERSION}/build
-RUN emcmake cmake -DCMAKE_BUILD_TYPE=Release -DWITH_ZLIB=OFF -DWITH_BZip2=OFF -DWITH_PNG=OFF \
+RUN emcmake cmake -DCMAKE_BUILD_TYPE=Release \
+  -DFT_DISABLE_ZLIB=TRUE -DFT_DISABLE_BZIP2=TRUE -DFT_DISABLE_PNG=TRUE \
+  -DFT_DISABLE_HARFBUZZ=TRUE -DFT_DISABLE_BROTLI=TRUE \
   -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING}" -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING}" \
   -DCMAKE_INSTALL_PREFIX=/opt/freetype ..
 RUN make -j2 && make -j2 install

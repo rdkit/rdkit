@@ -2247,7 +2247,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               docString.c_str());
 
   docString =
-      "Construct a molecule from a sequence string (currently only supports peptides).\n\n\
+      "Construct a molecule from a sequence string (currently supports standard amino acids, DNA and RNA bases).\n\n\
   ARGUMENTS:\n\
 \n\
     - text: string containing the sequence\n\
@@ -2293,7 +2293,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               docString.c_str());
 
   docString =
-      "Construct a molecule from a FASTA string (currently only supports peptides).\n\n\
+      "Construct a molecule from a FASTA string (currently supports standard amino acids, DNA and RNA bases).\n\n\
   ARGUMENTS:\n\
 \n\
     - text: string containing the FASTA\n\
@@ -2338,7 +2338,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               docString.c_str());
 
   docString =
-      "Construct a molecule from a HELM string (currently only supports peptides).\n\n\
+      "Construct a molecule from a HELM string (currently supports standard amino acids, DNA and RNA bases).\n\n\
   ARGUMENTS:\n\
 \n\
     - text: string containing the HELM\n\

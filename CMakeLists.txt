@@ -54,6 +54,7 @@ option(RDK_BUILD_TEST_GZIP "Build the gzip'd stream test" OFF)
 option(RDK_OPTIMIZE_POPCNT "Use SSE4.2 popcount instruction while compiling." ON)
 option(RDK_USE_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
 option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires Eigen3 to be installed" ON)
+option(RDK_BUILD_CHEMDRAW_SUPPORT "build support for the Revvity ChemDraw document format" ON )
 option(RDK_BUILD_FREESASA_SUPPORT "build the rdkit freesasa wrapper" OFF )
 option(RDK_BUILD_COORDGEN_SUPPORT "build the rdkit coordgen wrapper" ON )
 option(RDK_BUILD_MAEPARSER_SUPPORT "build the rdkit MAE parser wrapper" ON )
@@ -90,9 +91,15 @@ if(NOT MSVC)
   endif()
 endif()
 
-if(NOT UNIX OR APPLE OR CYGWIN)
+# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
+# detect it.
+string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
+# Detect emcc
+string(REGEX MATCH "Emscripten" CMAKE_COMPILER_IS_EMCC "${CMAKE_SYSTEM_NAME}")
+
+if(NOT UNIX OR APPLE OR CYGWIN OR CMAKE_COMPILER_IS_EMCC)
   if(RDK_USE_BOOST_STACKTRACE)
-    MESSAGE("Disabling boost::stacktrace on non-linux platform")
+    MESSAGE("Disabling boost::stacktrace on non-linux and emscripten platforms")
     set(RDK_USE_BOOST_STACKTRACE OFF)
   endif(RDK_USE_BOOST_STACKTRACE)
 endif()
@@ -108,8 +115,12 @@ if(RDK_SWIG_STATIC AND RDK_BUILD_SWIG_WRAPPERS)
     set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
-
-if((NOT (MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))) AND NOT (WIN32 AND RDK_INSTALL_STATIC_LIBS))
+if ((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS) OR RDK_BUILD_MINIMAL_LIB)
+  set(RDK_BUILD_STATIC_LIBS_ONLY ON)
+else()
+  set(RDK_BUILD_STATIC_LIBS_ONLY OFF)
+endif()
+if(NOT RDK_BUILD_STATIC_LIBS_ONLY)
   add_definitions(-DRDKIT_DYN_LINK)
 endif()
 
@@ -246,12 +257,6 @@ endif()
 if(RDK_BUILD_YAEHMOP_SUPPORT)
     add_definitions(-DRDK_BUILD_YAEHMOP_SUPPORT)
 endif()
-
-# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
-# detect it.
-string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
-# Detect emcc
-string(REGEX MATCH "Emscripten" CMAKE_COMPILER_IS_EMCC "${CMAKE_SYSTEM_NAME}")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_32BIT_BUILD")
@@ -471,9 +476,10 @@ endif()
 target_include_directories(rdkit_base INTERFACE
                            $<BUILD_INTERFACE:${RDKit_CodeDir}>
                            $<INSTALL_INTERFACE:${RDKit_HdrDir}>
-                           ${Boost_INCLUDE_DIRS}
                            )
-target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES})
+# linking against Boost::boost will add Boost to the include directories without
+# hard-coding Boost's path into the rdkit-targets.cmake that gets generated
+target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES} Boost::boost)
 
 
 if(RDK_BUILD_PGSQL)
@@ -587,8 +593,6 @@ if (MSVC)
   #  - 4267: conversion from 'size_t' to 'unsigned int', possible loss of data
   add_definitions( "/wd4267" )
 endif(MSVC)
-
-
 
 add_subdirectory(External)
 add_subdirectory(Code)

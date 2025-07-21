@@ -416,7 +416,12 @@ class TestCase(unittest.TestCase):
     bitId = 1236726849
     # this should run without generating an exception:
     Draw.DrawMorganBit(mol, bitId, info)
-
+  
+  def testMolToSVG(self):
+    smiles = "c1ccccc1"
+    mol = Chem.MolFromSmiles(smiles)
+    svg = Draw.MolToSVG(mol)
+    self.assertTrue(svg)
 
 if __name__ == '__main__':
   unittest.main()
