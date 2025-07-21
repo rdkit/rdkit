@@ -49,7 +49,9 @@ void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
   auto *qa = new QueryAtom(0);
   qa->setQuery(qry);
   qa->setNoImplicit(true);
-  mol.replaceAtom(idx, qa);
+  bool updateLabel = false;
+  bool preserveProps = true;
+  mol.replaceAtom(idx, qa, updateLabel, preserveProps);
   if (symbol != "") {
     mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
                                      symbol);

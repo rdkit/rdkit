@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (C)  2004-2006 Rational Discovery LLC
+// Copyright (C)  2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/test.h>
+#include <catch2/catch_all.hpp>
 #include "BoundsMatrix.h"
 #include "TriangleSmooth.h"
 #include <iostream>
@@ -22,8 +21,7 @@
 using namespace DistGeom;
 using namespace RDNumeric;
 
-void test1() {
-  // test triangle smoothing
+TEST_CASE("test1") {
   unsigned int npt = 5;
   double x = sqrt(3.0);
   auto *mmat = new BoundsMatrix(npt);
@@ -52,26 +50,46 @@ void test1() {
   BoundsMatPtr mptr(mmat);
 
   triangleSmoothBounds(mptr);
-  CHECK_INVARIANT(RDKit::feq(mmat->getUpperBound(0, 1), 1.0, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(0, 1), 1.0, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getUpperBound(0, 2), 1.732, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(0, 2), 1.732, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getUpperBound(0, 3), 2.732, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(0, 3), 0.732, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getUpperBound(0, 4), 3.464, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(0, 4), 0.0, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getUpperBound(1, 2), 1.0, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(1, 2), 1.0, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getUpperBound(1, 3), 1.732, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(1, 3), 1.732, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getUpperBound(1, 4), 2.732, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(1, 4), 0.732, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getUpperBound(2, 3), 1.0, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(2, 3), 1.0, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getUpperBound(2, 4), 1.732, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(2, 4), 1.732, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getUpperBound(3, 4), 1.0, 0.001), "");
-  CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(3, 4), 1.0, 0.001), "");
+  REQUIRE_THAT(mmat->getUpperBound(0, 1),
+               Catch::Matchers::WithinAbs(1.0, 0.001));
+  REQUIRE_THAT(mmat->getLowerBound(0, 1),
+               Catch::Matchers::WithinAbs(1.0, 0.001));
+  REQUIRE_THAT(mmat->getUpperBound(0, 2),
+               Catch::Matchers::WithinAbs(1.732, 0.001));
+  REQUIRE_THAT(mmat->getLowerBound(0, 2),
+               Catch::Matchers::WithinAbs(1.732, 0.001));
+  REQUIRE_THAT(mmat->getUpperBound(0, 3),
+               Catch::Matchers::WithinAbs(2.732, 0.001));
+  REQUIRE_THAT(mmat->getLowerBound(0, 3),
+               Catch::Matchers::WithinAbs(0.732, 0.001));
+  REQUIRE_THAT(mmat->getUpperBound(0, 4),
+               Catch::Matchers::WithinAbs(3.464, 0.001));
+  REQUIRE_THAT(mmat->getLowerBound(0, 4),
+               Catch::Matchers::WithinAbs(0.0, 0.001));
+  REQUIRE_THAT(mmat->getUpperBound(1, 2),
+               Catch::Matchers::WithinAbs(1.0, 0.001));
+  REQUIRE_THAT(mmat->getLowerBound(1, 2),
+               Catch::Matchers::WithinAbs(1.0, 0.001));
+  REQUIRE_THAT(mmat->getUpperBound(1, 3),
+               Catch::Matchers::WithinAbs(1.732, 0.001));
+  REQUIRE_THAT(mmat->getLowerBound(1, 3),
+               Catch::Matchers::WithinAbs(1.732, 0.001));
+  REQUIRE_THAT(mmat->getUpperBound(1, 4),
+               Catch::Matchers::WithinAbs(2.732, 0.001));
+  REQUIRE_THAT(mmat->getLowerBound(1, 4),
+               Catch::Matchers::WithinAbs(0.732, 0.001));
+  REQUIRE_THAT(mmat->getUpperBound(2, 3),
+               Catch::Matchers::WithinAbs(1.0, 0.001));
+  REQUIRE_THAT(mmat->getLowerBound(2, 3),
+               Catch::Matchers::WithinAbs(1.0, 0.001));
+  REQUIRE_THAT(mmat->getUpperBound(2, 4),
+               Catch::Matchers::WithinAbs(1.732, 0.001));
+  REQUIRE_THAT(mmat->getLowerBound(2, 4),
+               Catch::Matchers::WithinAbs(1.732, 0.001));
+  REQUIRE_THAT(mmat->getUpperBound(3, 4),
+               Catch::Matchers::WithinAbs(1.0, 0.001));
+  REQUIRE_THAT(mmat->getLowerBound(3, 4),
+               Catch::Matchers::WithinAbs(1.0, 0.001));
 
   DoubleSymmMatrix dmat(npt, 0.0);
   RDKit::rng_type generator(42u);
@@ -84,10 +102,10 @@ void test1() {
   for (unsigned int i = 0; i < dmat.getDataSize(); i++) {
     sumElem += dmat.getData()[i];
   }
-  CHECK_INVARIANT(RDKit::feq(sumElem, 14.3079, 0.001), "");
+  REQUIRE_THAT(sumElem, Catch::Matchers::WithinAbs(14.3079, 0.001));
 }
 
-void testIssue216() {
+TEST_CASE("testIssue216") {
   RDNumeric::DoubleSymmMatrix dmat(4);
   dmat.setVal(0, 0, 0.0);
   dmat.setVal(0, 1, 1.0);
@@ -108,29 +126,17 @@ void testIssue216() {
   }
 
   bool gotCoords = DistGeom::computeInitialCoords(dmat, pos);
-  CHECK_INVARIANT(gotCoords, "");
+  REQUIRE(gotCoords);
 
   for (int i = 1; i < 4; i++) {
     RDGeom::Point3D pti = *(RDGeom::Point3D *)pos[i];
     for (int j = 0; j < i; j++) {
       RDGeom::Point3D ptj = *(RDGeom::Point3D *)pos[j];
       ptj -= pti;
-      CHECK_INVARIANT(RDKit::feq(ptj.length(), 1.0, 0.02), "");
+      REQUIRE_THAT(ptj.length(), Catch::Matchers::WithinAbs(1.0, 0.02));
     }
   }
   for (int i = 0; i < 4; i++) {
     delete pos[i];
   }
-}
-int main() {
-  std::cout << "***********************************************************\n";
-  std::cout << "   test1 \n";
-  test1();
-
-  std::cout << "***********************************************************\n";
-  std::cout << "   testIssue216 \n";
-  testIssue216();
-  std::cout
-      << "***********************************************************\n\n";
-  return 0;
 }

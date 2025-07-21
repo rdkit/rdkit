@@ -1,6 +1,5 @@
-//  $Id$
 //
-//   Copyright (C) 2005-2006 Rational Discovery LLC
+//   Copyright (C) 2005-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/test.h>
+#include <catch2/catch_all.hpp>
 #include <RDGeneral/types.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
@@ -23,12 +22,16 @@ using namespace RDGeom;
 using namespace std;
 
 bool ptEq(const Point3D pt1, const Point3D pt2, double val = 1.e-8) {
-  return ((fabs(pt1.x - pt2.x) < val) && (fabs(pt1.y - pt2.y) < val) &&
-          (fabs(pt1.z - pt2.z) < val));
+  REQUIRE_THAT(pt1.x, Catch::Matchers::WithinAbs(pt2.x, val));
+  REQUIRE_THAT(pt1.y, Catch::Matchers::WithinAbs(pt2.y, val));
+  REQUIRE_THAT(pt1.z, Catch::Matchers::WithinAbs(pt2.z, val));
+  return true;
 }
 
 bool ptEq(const Point2D pt1, const Point2D pt2, double val = 1.e-8) {
-  return ((fabs(pt1.x - pt2.x) < val) && (fabs(pt1.y - pt2.y) < val));
+  REQUIRE_THAT(pt1.x, Catch::Matchers::WithinAbs(pt2.x, val));
+  REQUIRE_THAT(pt1.y, Catch::Matchers::WithinAbs(pt2.y, val));
+  return true;
 }
 
 double randNum(double x = 5) {
@@ -38,127 +41,123 @@ double randNum(double x = 5) {
   return res;
 }
 
-void testPointND() {
+TEST_CASE("testPointND") {
   PointND pt(5);
-  TEST_ASSERT(pt.dimension() == 5);
+  REQUIRE(pt.dimension() == 5);
   unsigned int i;
   for (i = 0; i < 5; ++i) {
     pt[i] = i + 1.0;
   }
   pt.normalize();
-  double ep[5];
-  ep[0] = 0.13484;
-  ep[1] = 0.26968;
-  ep[2] = 0.40452;
-  ep[3] = 0.53936;
-  ep[4] = 0.6742;
+  double ep[5] = {0.13484, 0.26968, 0.40452, 0.53936, 0.6742};
 
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(fabs(pt[i] - ep[i]) < 1.e-4);
+    REQUIRE_THAT(pt[i], Catch::Matchers::WithinAbs(ep[i], 1.e-4));
   }
 
   PointND pt2(pt);
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(fabs(pt2[i] - ep[i]) < 1.e-4);
+    REQUIRE_THAT(pt2[i], Catch::Matchers::WithinAbs(ep[i], 1.e-4));
   }
 
   pt2 += pt;
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(fabs(pt2[i] - 2 * ep[i]) < 1.e-4);
+    REQUIRE_THAT(pt2[i], Catch::Matchers::WithinAbs(2 * ep[i], 1.e-4));
   }
 
   pt2 /= 2.0;
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(fabs(pt2[i] - ep[i]) < 1.e-4);
+    REQUIRE_THAT(pt2[i], Catch::Matchers::WithinAbs(ep[i], 1.e-4));
   }
 
   pt2 -= pt;
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(fabs(pt2[i] - 0.0) < 1.e-4);
+    REQUIRE_THAT(pt2[i], Catch::Matchers::WithinAbs(0.0, 1.e-4));
   }
   pt2 = pt;
   pt2 *= 2.;
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(fabs(pt2[i] - 2 * ep[i]) < 1.e-4);
+    REQUIRE_THAT(pt2[i], Catch::Matchers::WithinAbs(2 * ep[i], 1.e-4));
   }
 
   double dp = pt.dotProduct(pt2);
-  TEST_ASSERT(fabs(dp - 2.0) < 1.e-4);
+  REQUIRE_THAT(dp, Catch::Matchers::WithinAbs(2.0, 1.e-4));
 
   double angle = pt.angleTo(pt2);
-  TEST_ASSERT(fabs(angle - 0.0) < 1.e-4);
+  REQUIRE_THAT(angle, Catch::Matchers::WithinAbs(0.0, 1.e-4));
 }
 
-void testPointOps3D() {
+TEST_CASE("testPointOps3D") {
   Point3D pt0(1, 0, 0);
   Point3D pt1(0, 1, 0);
   Point3D pt2(-1, 0, 0);
   Point3D pt3(0, -1, 0);
 
-  TEST_ASSERT(fabs(pt0.angleTo(pt0)) < 1e-4);
-  TEST_ASSERT(fabs(pt0.angleTo(pt1) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(fabs(pt0.angleTo(pt2) - M_PI) < 1e-4);
-  TEST_ASSERT(fabs(pt0.angleTo(pt3) - M_PI / 2.) < 1e-4);
+  REQUIRE_THAT(pt0.angleTo(pt0), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(pt0.angleTo(pt1), Catch::Matchers::WithinAbs(M_PI / 2., 1e-4));
+  REQUIRE_THAT(pt0.angleTo(pt2), Catch::Matchers::WithinAbs(M_PI, 1e-4));
+  REQUIRE_THAT(pt0.angleTo(pt3), Catch::Matchers::WithinAbs(M_PI / 2., 1e-4));
 
-  TEST_ASSERT(fabs(pt1.angleTo(pt0) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(fabs(pt1.angleTo(pt1)) < 1e-4);
-  TEST_ASSERT(fabs(pt1.angleTo(pt2) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(fabs(pt1.angleTo(pt3) - M_PI) < 1e-4);
+  REQUIRE_THAT(pt1.angleTo(pt0), Catch::Matchers::WithinAbs(M_PI / 2., 1e-4));
+  REQUIRE_THAT(pt1.angleTo(pt1), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(pt1.angleTo(pt2), Catch::Matchers::WithinAbs(M_PI / 2., 1e-4));
+  REQUIRE_THAT(pt1.angleTo(pt3), Catch::Matchers::WithinAbs(M_PI, 1e-4));
 
-  TEST_ASSERT(fabs(pt0.signedAngleTo(pt0)) < 1e-4);
-  TEST_ASSERT(fabs(pt0.signedAngleTo(pt1) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(fabs(pt0.signedAngleTo(pt2) - M_PI) < 1e-4);
-  TEST_ASSERT(fabs(pt0.signedAngleTo(pt3) - 3. * M_PI / 2.) < 1e-4);
+  REQUIRE_THAT(pt0.signedAngleTo(pt0), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(pt0.signedAngleTo(pt1),
+               Catch::Matchers::WithinAbs(M_PI / 2., 1e-4));
+  REQUIRE_THAT(pt0.signedAngleTo(pt2), Catch::Matchers::WithinAbs(M_PI, 1e-4));
+  REQUIRE_THAT(pt0.signedAngleTo(pt3),
+               Catch::Matchers::WithinAbs(3. * M_PI / 2., 1e-4));
 
   Point3D diffPt = pt0.directionVector(pt1);
   Point3D ref(-sqrt(2.) / 2., sqrt(2.) / 2., 0);
-  TEST_ASSERT(ptEq(diffPt, ref));
+  REQUIRE(ptEq(diffPt, ref));
 }
-void testPointOps2D() {
+
+TEST_CASE("testPointOps2D") {
   Point2D pt0(1, 0);
   Point2D pt1(0, 1);
   Point2D pt2(-1, 0);
   Point2D pt3(0, -1);
 
-  TEST_ASSERT(fabs(pt0.angleTo(pt0)) < 1e-4);
-  TEST_ASSERT(fabs(pt0.angleTo(pt1) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(fabs(pt0.angleTo(pt2) - M_PI) < 1e-4);
-  TEST_ASSERT(fabs(pt0.angleTo(pt3) - M_PI / 2.) < 1e-4);
+  REQUIRE_THAT(pt0.angleTo(pt0), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(pt0.angleTo(pt1), Catch::Matchers::WithinAbs(M_PI / 2., 1e-4));
+  REQUIRE_THAT(pt0.angleTo(pt2), Catch::Matchers::WithinAbs(M_PI, 1e-4));
+  REQUIRE_THAT(pt0.angleTo(pt3), Catch::Matchers::WithinAbs(M_PI / 2., 1e-4));
 
-  TEST_ASSERT(fabs(pt1.angleTo(pt0) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(fabs(pt1.angleTo(pt1)) < 1e-4);
-  TEST_ASSERT(fabs(pt1.angleTo(pt2) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(fabs(pt1.angleTo(pt3) - M_PI) < 1e-4);
+  REQUIRE_THAT(pt1.angleTo(pt0), Catch::Matchers::WithinAbs(M_PI / 2., 1e-4));
+  REQUIRE_THAT(pt1.angleTo(pt1), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(pt1.angleTo(pt2), Catch::Matchers::WithinAbs(M_PI / 2., 1e-4));
+  REQUIRE_THAT(pt1.angleTo(pt3), Catch::Matchers::WithinAbs(M_PI, 1e-4));
 
-  TEST_ASSERT(fabs(pt0.signedAngleTo(pt0)) < 1e-4);
-  TEST_ASSERT(fabs(pt0.signedAngleTo(pt1) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(fabs(pt0.signedAngleTo(pt2) - M_PI) < 1e-4);
-  TEST_ASSERT(fabs(pt0.signedAngleTo(pt3) - 3. * M_PI / 2.) < 1e-4);
+  REQUIRE_THAT(pt0.signedAngleTo(pt0), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(pt0.signedAngleTo(pt1),
+               Catch::Matchers::WithinAbs(M_PI / 2., 1e-4));
+  REQUIRE_THAT(pt0.signedAngleTo(pt2), Catch::Matchers::WithinAbs(M_PI, 1e-4));
+  REQUIRE_THAT(pt0.signedAngleTo(pt3),
+               Catch::Matchers::WithinAbs(3. * M_PI / 2., 1e-4));
 
   Point2D diffPt = pt0.directionVector(pt1);
   Point2D ref(-sqrt(2.) / 2., sqrt(2.) / 2.);
-  TEST_ASSERT(ptEq(diffPt, ref));
+  REQUIRE(ptEq(diffPt, ref));
 }
 
-void test12D() {
+TEST_CASE("test12D") {
   Point2D pt(1.0, 2.0);
   Transform2D trans;
   trans.TransformPoint(pt);
 
-  CHECK_INVARIANT(fabs(pt.x - 1.0) < 1.e-8, "");
-  CHECK_INVARIANT(fabs(pt.y - 2.0) < 1.e-8, "");
+  REQUIRE_THAT(pt.x, Catch::Matchers::WithinAbs(1.0, 1.e-8));
+  REQUIRE_THAT(pt.y, Catch::Matchers::WithinAbs(2.0, 1.e-8));
 
   Point2D ref1(randNum(), randNum());
   Point2D ref2(randNum(), randNum());
-
-  std::cout << "ref1: " << ref1 << " ref2: " << ref2 << "\n";
 
   Point2D pt1(randNum(), randNum());
   Point2D pt2(randNum(), randNum());
   Point2D pt1o = pt1;
   Point2D pt2o = pt2;
-  std::cout << "pt1: " << pt1 << " pt2: " << pt2 << "\n";
-
   Transform2D t2d;
   t2d.SetTransform(ref1, ref2, pt1, pt2);
   t2d.TransformPoint(pt1);
@@ -166,8 +165,8 @@ void test12D() {
 
   // make sure pt1 overlaps ref1
   Point2D dif1 = pt1 - ref1;
-  CHECK_INVARIANT(fabs(dif1.x) < 1.e-8, "");
-  CHECK_INVARIANT(fabs(dif1.y) < 1.e-8, "");
+  REQUIRE_THAT(dif1.x, Catch::Matchers::WithinAbs(0.0, 1.e-8));
+  REQUIRE_THAT(dif1.y, Catch::Matchers::WithinAbs(0.0, 1.e-8));
 
   // now check that the angle between the two vectors (ref2 - ref1) and
   // (pt2 - pt1) is zero
@@ -176,7 +175,7 @@ void test12D() {
   rvec.normalize();
   pvec.normalize();
   double pdot = rvec.dotProduct(pvec);
-  CHECK_INVARIANT(fabs(pdot - 1.0) < 1.e-8, "");
+  REQUIRE_THAT(pdot, Catch::Matchers::WithinAbs(1.0, 1.e-8));
 
   // compute the reverse transform and make sure we are basically getting the
   // identity
@@ -185,8 +184,8 @@ void test12D() {
   tdi.TransformPoint(pt1);
   tdi.TransformPoint(pt2);
 
-  CHECK_INVARIANT(ptEq(pt1, pt1o), "");
-  CHECK_INVARIANT(ptEq(pt2, pt2o), "");
+  REQUIRE(ptEq(pt1, pt1o));
+  REQUIRE(ptEq(pt2, pt2o));
 
   // the following product should result in an identity matrix
   tdi *= t2d;
@@ -194,8 +193,8 @@ void test12D() {
   tdi.TransformPoint(pt1);
   tdi.TransformPoint(pt2);
 
-  CHECK_INVARIANT(ptEq(pt1, pt1o), "");
-  CHECK_INVARIANT(ptEq(pt2, pt2o), "");
+  REQUIRE(ptEq(pt1, pt1o));
+  REQUIRE(ptEq(pt2, pt2o));
 
   Point2D npt1(1.0, 0.0);
   Point2D npt2(5.0, 0.0);
@@ -206,44 +205,44 @@ void test12D() {
   ntd.TransformPoint(npt1);
   ntd.TransformPoint(npt2);
 
-  CHECK_INVARIANT(ptEq(npt1, opt1), "");
-  CHECK_INVARIANT(ptEq(npt2, opt2), "");
+  REQUIRE(ptEq(npt1, opt1));
+  REQUIRE(ptEq(npt2, opt2));
 }
 
-void test23D() {
+TEST_CASE("test23D") {
   Point3D pt(1.0, 0.0, 0.0);
   Point3D tpt = pt;
   Transform3D trans;
   trans.SetRotation(M_PI / 2., X_Axis);
   trans.TransformPoint(pt);
-  CHECK_INVARIANT(ptEq(tpt, pt), "");
+  REQUIRE(ptEq(tpt, pt));
 
   Point3D pt2(0.0, 1.0, 0.0);
   Point3D tpt2(0.0, 0.0, 1.0);
   trans.TransformPoint(pt2);
-  CHECK_INVARIANT(ptEq(tpt2, pt2), "");
+  REQUIRE(ptEq(tpt2, pt2));
 
   Point3D pt3(0.0, 0.0, 1.0);
   Point3D tpt3(0.0, -1.0, 0.0);
   trans.TransformPoint(pt3);
-  CHECK_INVARIANT(ptEq(tpt3, pt3), "");
+  REQUIRE(ptEq(tpt3, pt3));
 
   // rotate around y-axis
   Transform3D transy;
   transy.SetRotation(M_PI / 2., Y_Axis);
   transy.TransformPoint(pt);
   Point3D tpt4(0.0, 0.0, -1.0);
-  CHECK_INVARIANT(ptEq(tpt4, pt), "");
+  REQUIRE(ptEq(tpt4, pt));
 
   Point3D pt5(0.0, 1.0, 0.0);
   Point3D tpt5(0.0, 1.0, 0.0);
   transy.TransformPoint(pt5);
-  CHECK_INVARIANT(ptEq(tpt5, pt5), "");
+  REQUIRE(ptEq(tpt5, pt5));
 
   Point3D pt6(0.0, 0.0, 1.0);
   Point3D tpt6(1.0, 0.0, 0.0);
   transy.TransformPoint(pt6);
-  CHECK_INVARIANT(ptEq(tpt6, pt6), "");
+  REQUIRE(ptEq(tpt6, pt6));
 
   // z-axis
   Transform3D transz;
@@ -251,20 +250,20 @@ void test23D() {
   Point3D pt7(1.0, 0.0, 0.0);
   Point3D tpt7(0.0, 1.0, 0.0);
   transz.TransformPoint(pt7);
-  CHECK_INVARIANT(ptEq(tpt7, pt7), "");
+  REQUIRE(ptEq(tpt7, pt7));
 
   Point3D pt8(0.0, 1.0, 0.0);
   Point3D tpt8(-1.0, 0.0, 0.0);
   transz.TransformPoint(pt8);
-  CHECK_INVARIANT(ptEq(tpt8, pt8), "");
+  REQUIRE(ptEq(tpt8, pt8));
 
   Point3D pt9(0.0, 0.0, 1.0);
   Point3D tpt9(0.0, 0.0, 1.0);
   transz.TransformPoint(pt9);
-  CHECK_INVARIANT(ptEq(tpt9, pt9), "");
+  REQUIRE(ptEq(tpt9, pt9));
 }
 
-void test3MatMultiply() {
+TEST_CASE("test3MatMultiply") {
   // start with line on the axis starting at 1.0,
   // transform it into a line on z-axis starting at 3.0
   Point3D pt1(1.0, 0.0, 0.0);
@@ -314,17 +313,16 @@ void test3MatMultiply() {
   t3.TransformPoint(pt1);
   t3.TransformPoint(pt2);
   std::cout << "Pt1: " << pt1 << " Pt2: " << pt2 << "\n";
-  // check the transformed points align with the new points on z-axis
-  CHECK_INVARIANT(ptEq(pt1, npt1), "");
-  CHECK_INVARIANT(ptEq(pt2, npt2), "");
+  REQUIRE(ptEq(pt1, npt1));
+  REQUIRE(ptEq(pt2, npt2));
 
   t4.TransformPoint(opt1);
   t4.TransformPoint(opt2);
-  CHECK_INVARIANT(ptEq(opt1, npt1), "");
-  CHECK_INVARIANT(ptEq(opt2, npt2), "");
+  REQUIRE(ptEq(opt1, npt1));
+  REQUIRE(ptEq(opt2, npt2));
 }
 
-void testFromQuaternion() {
+TEST_CASE("testFromQuaternion") {
   double qt[4];
   qt[0] = cos(M_PI / 6);
   qt[1] = -sin(M_PI / 6);
@@ -338,41 +336,7 @@ void testFromQuaternion() {
 
   for (unsigned int i = 0; i < 4; i++) {
     for (unsigned int j = 0; j < 4; j++) {
-      CHECK_INVARIANT(RDKit::feq(trans.getVal(i, j), ntrans.getVal(i, j)), "");
+      REQUIRE(RDKit::feq(trans.getVal(i, j), ntrans.getVal(i, j)));
     }
   }
-}
-
-int main() {
-  srand(time(nullptr));
-
-  std::cout << "****************************************\n";
-  std::cout << "testPointND\n";
-  testPointND();
-
-  std::cout << "****************************************\n";
-  std::cout << "testPointOps3D\n";
-  testPointOps3D();
-
-  std::cout << "****************************************\n";
-  std::cout << "testPointOps2D\n";
-  testPointOps2D();
-
-  std::cout << "****************************************\n";
-  std::cout << "test12D\n";
-  test12D();
-
-  std::cout << "****************************************\n";
-  std::cout << "test23D\n";
-  test23D();
-
-  std::cout << "****************************************\n";
-  std::cout << "test3MatMultiply\n";
-  test3MatMultiply();
-
-  std::cout << "****************************************\n";
-  std::cout << "testFromQuaternion\n";
-  testFromQuaternion();
-  std::cout << "****************************************\n";
-  return 0;
 }

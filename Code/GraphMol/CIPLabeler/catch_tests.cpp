@@ -15,6 +15,12 @@
 
 #include <strstream>
 
+#ifdef RDK_TEST_MULTITHREADED
+#include <csignal>
+#include <thread>
+#include <chrono>
+#endif
+
 #include <catch2/catch_all.hpp>
 
 #include <GraphMol/MolOps.h>
@@ -623,9 +629,8 @@ TEST_CASE("GitHub Issue #5142", "[bug][accurateCIP]") {
   CIPLabeler::assignCIPLabels(*mol);
 }
 
-TEST_CASE("CIP max iterations test", "[accurateCIP]") {
-  SECTION("Exceeds max iterations") {
-    std::string molBlock = R"(
+TEST_CASE("Test early termination of CIP calculation", "[accurateCIP]") {
+  constexpr const char *molBlock = R"(
   Mrv2117 11112217353D          
 
  40 50  0  0  0  0            999 V2000
@@ -723,9 +728,11 @@ M  END
 
   )";
 
-    auto mol =
-        std::unique_ptr<RDKit::RWMol>(MolBlockToMol(molBlock, true, false));
-    REQUIRE(mol);
+  v2::FileParsers::MolFileParserParams params{.sanitize = false};
+  auto mol = v2::FileParsers::MolFromMolBlock(molBlock, params);
+  REQUIRE(mol);
+
+  SECTION("Exceeds max iterations") {
     CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
                     CIPLabeler::MaxIterationsExceeded);
 
@@ -734,6 +741,28 @@ M  END
     CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
                     CIPLabeler::MaxIterationsExceeded);
   }
+#ifdef RDK_TEST_MULTITHREADED
+  SECTION("Ctrl+c interruption") {
+    using namespace std::chrono_literals;
+
+    // create one thread for assignCIPLabels...
+    std::thread cgThread([&mol]() {
+      // give the calculation a while to run (~15 seconds on my laptop)
+      // but still make sure it won't run forever
+      constexpr size_t maxIterations = 8000000;
+      CIPLabeler::assignCIPLabels(*mol, maxIterations);
+    });
+    // ... then another one to raise SIGINT
+    std::thread interruptThread([]() {
+      // sleep for a bit to allow for a few iterations, but not enough to
+      // hit maxIterations and trigger the exception
+      std::this_thread::sleep_for(100ms);
+      std::raise(SIGINT);
+    });
+    cgThread.join();
+    interruptThread.join();
+  }
+#endif
 }
 
 void testOneAtropIsomerMandP(std::string inputText, const std::string &expected,
@@ -1245,4 +1274,135 @@ M  END
     }
     CHECK(thisVal == "M");
   }
+}
+
+TEST_CASE("Resolve easy CIP labels first", "[accurateCIP]") {
+  constexpr const char *molBlock = R"(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 44 54 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 H 7.548300 -7.745100 -3.341900 0
+M  V30 2 H 9.398400 -5.879200 -3.431800 0
+M  V30 3 C 9.339900 -6.542500 -1.989800 0 CFG=2
+M  V30 4 H 8.682000 -3.942500 -1.647400 0
+M  V30 5 H 5.816300 -7.103400 -1.663500 0
+M  V30 6 H 6.572200 -4.734300 -0.630400 0
+M  V30 7 C 7.170100 -7.238000 -0.889000 0 CFG=1
+M  V30 8 H 11.830000 -6.976500 -2.554400 0
+M  V30 9 C 10.663100 -7.169000 -1.537500 0 CFG=1
+M  V30 10 H 11.407700 -9.523900 -2.147200 0
+M  V30 11 H 11.900600 -10.013900 0.472200 0
+M  V30 12 C 10.660000 -8.874900 0.291400 0 CFG=2
+M  V30 13 H 12.513600 -5.911500 -0.419000 0
+M  V30 14 H 12.533800 -7.840600 1.437900 0
+M  V30 15 H 8.698100 -8.865400 3.417700 0
+M  V30 16 H 9.404600 -10.690700 1.714300 0
+M  V30 17 C 9.318500 -9.310600 0.970000 0 CFG=1
+M  V30 18 H 7.495800 -10.807500 -0.178300 0
+M  V30 19 H 6.555200 -7.878000 2.698300 0
+M  V30 20 H 5.852200 -9.114700 0.451400 0
+M  V30 21 C 7.160100 -8.299700 0.235300 0 CFG=2
+M  V30 22 C 7.577400 -7.598900 1.570000 0 CFG=1
+M  V30 23 C 10.647193 -4.032680 0.167792 0 CFG=1
+M  V30 24 C 11.080800 -6.489400 -0.198200 0 CFG=2
+M  V30 25 C 8.912300 -5.469900 -0.942400 0 CFG=1
+M  V30 26 C 8.915500 -8.232900 2.018400 0 CFG=2
+M  V30 27 C 11.076600 -7.551300 0.914700 0 CFG=1
+M  V30 28 H 10.678000 -6.985700 3.302100 0
+M  V30 29 C 7.586100 -5.893900 -0.266700 0 CFG=2
+M  V30 30 H 6.997300 -5.059700 1.987500 0
+M  V30 31 C 9.319300 -5.842900 1.504800 0 CFG=2
+M  V30 32 H 9.474000 -4.717300 2.574300 0
+M  V30 33 C 9.980900 -7.145700 1.981100 0 CFG=1
+M  V30 34 C 7.827000 -6.124500 1.248300 0 CFG=2
+M  V30 35 C 10.002300 -5.430800 0.136600 0
+M  V30 36 C 8.912500 -8.938500 -1.473700 0 CFG=2
+M  V30 37 C 8.237400 -9.352200 -0.117300 0
+M  V30 38 C 10.411600 -8.646100 -1.214800 0 CFG=1
+M  V30 39 H 8.772600 -9.975800 -2.504700 0
+M  V30 40 C 8.257700 -7.625000 -1.947800 0 CFG=2
+M  V30 41 O 9.665066 -3.068040 0.472747 0
+M  V30 42 Cl 11.932408 -3.993449 1.420272 0
+M  V30 43 H 11.083087 -3.811232 -0.806404 0
+M  V30 44 H 10.067077 -2.196484 0.492191 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 3 2 CFG=3
+M  V30 2 1 7 5 CFG=3
+M  V30 3 1 9 3
+M  V30 4 1 9 8 CFG=3
+M  V30 5 1 12 11 CFG=3
+M  V30 6 1 17 12
+M  V30 7 1 17 16 CFG=1
+M  V30 8 1 21 7
+M  V30 9 1 21 20 CFG=1
+M  V30 10 1 22 19 CFG=1
+M  V30 11 1 22 21
+M  V30 12 1 24 9
+M  V30 13 1 24 13 CFG=3
+M  V30 14 1 25 3
+M  V30 15 1 25 4 CFG=3
+M  V30 16 1 26 15 CFG=1
+M  V30 17 1 26 17
+M  V30 18 1 26 22
+M  V30 19 1 27 12
+M  V30 20 1 27 14 CFG=1
+M  V30 21 1 27 24
+M  V30 22 1 29 6 CFG=1
+M  V30 23 1 29 7
+M  V30 24 1 29 25
+M  V30 25 1 31 32 CFG=1
+M  V30 26 1 33 26
+M  V30 27 1 33 27
+M  V30 28 1 33 28 CFG=1
+M  V30 29 1 33 31
+M  V30 30 1 34 22
+M  V30 31 1 34 29
+M  V30 32 1 34 30 CFG=1
+M  V30 33 1 34 31
+M  V30 34 1 35 23
+M  V30 35 1 35 24
+M  V30 36 1 35 25
+M  V30 37 1 35 31
+M  V30 38 1 37 17
+M  V30 39 1 37 18
+M  V30 40 1 37 21
+M  V30 41 1 37 36
+M  V30 42 1 38 9
+M  V30 43 1 38 10 CFG=3
+M  V30 44 1 38 12
+M  V30 45 1 38 36
+M  V30 46 1 36 39 CFG=3
+M  V30 47 1 40 1 CFG=3
+M  V30 48 1 40 3
+M  V30 49 1 40 7
+M  V30 50 1 40 36
+M  V30 51 1 41 23
+M  V30 52 1 42 23
+M  V30 53 1 23 43 CFG=3
+M  V30 54 1 44 41
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)";
+
+  // The mol is a modification of the one in the above test
+  // "CIP max iterations test"
+  v2::FileParsers::MolFileParserParams params{.sanitize = false};
+  auto mol = v2::FileParsers::MolFromMolBlock(molBlock, params);
+
+  REQUIRE(mol);
+  REQUIRE_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 1000),
+                    CIPLabeler::MaxIterationsExceeded);
+
+  auto at = mol->getAtomWithIdx(22);
+  REQUIRE(at->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+
+  // This will fail if this chiral center is not resolved first (which
+  // depends on the order of the atoms in the molBlock).
+  CHECK(at->getProp<std::string>(common_properties::_CIPCode) == "S");
 }
