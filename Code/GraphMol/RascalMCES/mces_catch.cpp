@@ -1545,3 +1545,15 @@ TEST_CASE("Github8360 - another incorrect MCES with singleLargestFrag=true") {
     }
   }
 }
+
+TEST_CASE("Github8645 - memory blows up") {
+  RascalOptions opts;
+  opts.singleLargestFrag = true;
+  opts.similarityThreshold = 0.3;
+  opts.timeout = 10;
+  auto m1 = "Fc1c(F)c(F)c(F)c(F)c1c1c(F)c(F)c(F)c(F)c1"_smiles;
+  REQUIRE(m1);
+  auto m2 = "FC1(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C1(F)(F)"_smiles;
+  REQUIRE(m2);
+  auto res = rascalMCES(*m1, *m2, opts);
+}
