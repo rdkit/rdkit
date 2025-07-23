@@ -493,7 +493,8 @@ void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
   for (size_t k = 0u; k < adjMatrix.size(); ++k) {
     for (size_t i = 0u; i < adjMatrix.size(); ++i) {
       for (size_t j = 0u; j < adjMatrix.size(); ++j) {
-        distMatrix[i][j] = std::min(distMatrix[i][j], distMatrix[i][k] + distMatrix[k][j]);
+        distMatrix[i][j] =
+            std::min(distMatrix[i][j], distMatrix[i][k] + distMatrix[k][j]);
       }
     }
   }
@@ -788,7 +789,7 @@ void updateMaxClique(const std::vector<unsigned int> &clique, bool deltaYPoss,
       if (!didCliqueOk) {
         goodClique = cliqueOk(clique, opts, mol1, mol2, vtxPairs);
       }
-      if (goodClique &&
+      if (goodClique && maxCliques.size() > opts.maxBestMCESs &&
           (maxCliques.empty() || clique.size() == maxCliques.front().size())) {
         maxCliques.push_back(clique);
       }

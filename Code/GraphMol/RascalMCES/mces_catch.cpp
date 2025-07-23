@@ -485,13 +485,13 @@ TEST_CASE("single fragment") {
   RascalOptions opts;
   std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>>
       tests = {
-    {"C1CC1CCC1NC1", "C1CC1CCCCC1NC1", 8, 5},
-    {"c1cnccc1CCc1ncccc1", "c1cnccc1CCCCCCc1ncccc1", 14, 8},
-    {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCc1ccccc1",
-     21, 15},
-    {"Cc1cc2nc(-c3cccc(NC(=O)CSc4ccc(Cl)cc4)c3)oc2cc1C  CHEMBL1398008",
-     "COc1ccc2oc(-c3ccc(C)c(NC(=O)COc4cc(C)cc(C)c4)c3)nc2c1  CHEMBL1436972",
-     27, 21}};
+          {"C1CC1CCC1NC1", "C1CC1CCCCC1NC1", 8, 5},
+          {"c1cnccc1CCc1ncccc1", "c1cnccc1CCCCCCc1ncccc1", 14, 8},
+          {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCc1ccccc1",
+           21, 15},
+          {"Cc1cc2nc(-c3cccc(NC(=O)CSc4ccc(Cl)cc4)c3)oc2cc1C  CHEMBL1398008",
+           "COc1ccc2oc(-c3ccc(C)c(NC(=O)COc4cc(C)cc(C)c4)c3)nc2c1  CHEMBL1436972",
+           27, 21}};
   opts.similarityThreshold = 0.7;
   for (auto &test : tests) {
     opts.ringMatchesRingOnly = true;
@@ -1548,12 +1548,14 @@ TEST_CASE("Github8360 - another incorrect MCES with singleLargestFrag=true") {
 
 TEST_CASE("Github8645 - memory blows up") {
   RascalOptions opts;
-  opts.singleLargestFrag = true;
   opts.similarityThreshold = 0.3;
   opts.timeout = 10;
+  opts.singleLargestFrag = true;
   auto m1 = "Fc1c(F)c(F)c(F)c(F)c1c1c(F)c(F)c(F)c(F)c1"_smiles;
   REQUIRE(m1);
   auto m2 = "FC1(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C1(F)(F)"_smiles;
   REQUIRE(m2);
   auto res = rascalMCES(*m1, *m2, opts);
+  REQUIRE(res.size() == 1);
+  CHECK(res.front().getBondMatches().size() == 1);
 }
