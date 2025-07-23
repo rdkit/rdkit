@@ -6721,19 +6721,100 @@ M  END
 
     with open(fileN, 'rb') as inf:
       d = inf.read()
-    mol = Chem.MolFromSmiles("COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2")
+    mol = Chem.MolFromSmiles('COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2')
+    mol.SetProp('property', 'value')
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
 
-    nd = Chem.MolMetadataToPNGString(mol, d)
-    mol = Chem.MolFromPNGString(nd)
-    self.assertIsNotNone(mol)
-    self.assertEqual(mol.GetNumAtoms(), 29)
+    params = Chem.PNGMetadataParams()
+    params.propertyFlags = Chem.PropertyPickleOptions.AllProps
+    nd = Chem.MolMetadataToPNGString(mol, d, params)
+    molFromPNG = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(molFromPNG)
+    self.assertEqual(molFromPNG.GetNumAtoms(), 29)
+    self.assertTrue(molFromPNG.HasProp('property'))
+    rdkit.Chem.rdDepictor.Compute2DCoords(mol)
+    self.assertEqual(mol.GetNumConformers(), 1)
 
-    nd = Chem.MolMetadataToPNGFile(mol, fileN)
-    mol = Chem.MolFromPNGString(nd)
-    self.assertIsNotNone(mol)
-    self.assertEqual(mol.GetNumAtoms(), 29)
+    nd = Chem.MolMetadataToPNGString(mol, d, includePkl=False)
+    molFromPNG = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(molFromPNG)
+    self.assertEqual(molFromPNG.GetNumAtoms(), 29)
+    self.assertEqual(molFromPNG.GetNumConformers(), 1)
+    self.assertFalse(molFromPNG.HasProp('property'))
+    params = Chem.PNGMetadataParams()
+    params.includePkl = True
+    params.propertyFlags = Chem.PropertyPickleOptions.AllProps
+    nd = Chem.MolMetadataToPNGString(mol, d, params)
+    molFromPNG = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(molFromPNG)
+    self.assertEqual(molFromPNG.GetNumAtoms(), 29)
+    self.assertEqual(molFromPNG.GetNumConformers(), 1)
+    self.assertTrue(molFromPNG.HasProp('property'))
+    params = Chem.PNGMetadataParams()
+    params.includePkl = False
+    params.cxSmilesFlags = Chem.CXSmilesFields.CX_ALL_BUT_COORDS
+    nd = Chem.MolMetadataToPNGString(mol, d, params)
+    molFromPNG = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(molFromPNG)
+    self.assertEqual(molFromPNG.GetNumAtoms(), 29)
+    self.assertEqual(molFromPNG.GetNumConformers(), 0)
+    self.assertFalse(molFromPNG.HasProp('property'))
+    params.includePkl = True
+    params.propertyFlags = Chem.PropertyPickleOptions.NoProps
+    nd = Chem.MolMetadataToPNGString(mol, d, params)
+    molFromPNG = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(molFromPNG)
+    self.assertEqual(molFromPNG.GetNumAtoms(), 29)
+    self.assertEqual(molFromPNG.GetNumConformers(), 1)
+    self.assertFalse(molFromPNG.HasProp('property'))
+    params.propertyFlags = Chem.PropertyPickleOptions.AllProps
+    nd = Chem.MolMetadataToPNGString(mol, d, params)
+    molFromPNG = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(molFromPNG)
+    self.assertEqual(molFromPNG.GetNumAtoms(), 29)
+    self.assertEqual(molFromPNG.GetNumConformers(), 1)
+    self.assertTrue(molFromPNG.HasProp('property'))
+
+    nd = Chem.MolMetadataToPNGFile(mol, fileN, includePkl=False)
+    molFromPNG = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(molFromPNG)
+    self.assertEqual(molFromPNG.GetNumAtoms(), 29)
+    self.assertEqual(molFromPNG.GetNumConformers(), 1)
+    self.assertFalse(molFromPNG.HasProp('property'))
+    params = Chem.PNGMetadataParams()
+    params.includePkl = True
+    params.propertyFlags = Chem.PropertyPickleOptions.AllProps
+    nd = Chem.MolMetadataToPNGFile(mol, fileN, params)
+    molFromPNG = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(molFromPNG)
+    self.assertEqual(molFromPNG.GetNumAtoms(), 29)
+    self.assertEqual(molFromPNG.GetNumConformers(), 1)
+    self.assertTrue(molFromPNG.HasProp('property'))
+    params = Chem.PNGMetadataParams()
+    params.includePkl = False
+    params.cxSmilesFlags = Chem.CXSmilesFields.CX_ALL_BUT_COORDS
+    nd = Chem.MolMetadataToPNGFile(mol, fileN, params)
+    molFromPNG = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(molFromPNG)
+    self.assertEqual(molFromPNG.GetNumAtoms(), 29)
+    self.assertEqual(molFromPNG.GetNumConformers(), 0)
+    self.assertFalse(molFromPNG.HasProp('property'))
+    params.includePkl = True
+    params.propertyFlags = Chem.PropertyPickleOptions.NoProps
+    nd = Chem.MolMetadataToPNGFile(mol, fileN, params)
+    molFromPNG = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(molFromPNG)
+    self.assertEqual(molFromPNG.GetNumAtoms(), 29)
+    self.assertEqual(molFromPNG.GetNumConformers(), 1)
+    self.assertFalse(molFromPNG.HasProp('property'))
+    params.propertyFlags = Chem.PropertyPickleOptions.AllProps
+    nd = Chem.MolMetadataToPNGFile(mol, fileN, params)
+    molFromPNG = Chem.MolFromPNGString(nd)
+    self.assertIsNotNone(molFromPNG)
+    self.assertEqual(molFromPNG.GetNumAtoms(), 29)
+    self.assertEqual(molFromPNG.GetNumConformers(), 1)
+    self.assertTrue(molFromPNG.HasProp('property'))
 
   @unittest.skipUnless(hasattr(Chem, 'MolFromPNGFile'), "RDKit not built with iostreams support")
   def testMolsFromPNG(self):
@@ -6753,6 +6834,7 @@ M  END
     with open(fileN, 'rb') as inf:
       d = inf.read()
     mol = Chem.MolFromPNGString(d)
+    self.assertIsNotNone(mol)
     nd = Chem.MolMetadataToPNGString(mol, d)
     vals = {'foo': '1', 'bar': '2'}
     nd = Chem.AddMetadataToPNGString(vals, nd)
@@ -6761,6 +6843,20 @@ M  END
     self.assertEqual(nvals['foo'], b'1')
     self.assertTrue('bar' in nvals)
     self.assertEqual(nvals['bar'], b'2')
+
+    with open(fileN, 'rb') as inf:
+      d = inf.read()
+    mol = Chem.MolFromPNGString(d)
+    self.assertIsNotNone(mol)
+    nd = Chem.MolMetadataToPNGString(mol, d)
+    nd = Chem.AddMetadataToPNGString(vals, nd)
+    vals2 = {'foo': '3', 'bar': '4'}
+    nd = Chem.AddMetadataToPNGString(vals2, nd)
+    nvals = Chem.MetadataFromPNGString(nd, asList=True)
+    self.assertEqual(len(nvals), 7)
+    self.assertEqual([k.split()[0] for k, _ in nvals], ['SMILES', 'rdkitPKL', 'SMILES', 'foo', 'bar', 'foo', 'bar'])
+    self.assertEqual([v.decode() for k, v in nvals if k == 'foo'], ['1', '3'])
+    self.assertEqual([v.decode() for k, v in nvals if k == 'bar'], ['2', '4'])
 
     nd = Chem.AddMetadataToPNGFile(vals, fileN)
     nvals = Chem.MetadataFromPNGString(nd)

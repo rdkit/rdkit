@@ -400,6 +400,51 @@ emscripten::val get_avalon_fp_as_uint8array(const JSMolBase &self) {
 }
 #endif
 
+emscripten::val add_to_png_blob_helper(const JSMolBase &self,
+                                       const std::string &pngString,
+                                       const std::string &details) {
+  auto updatedPngString = self.add_to_png_blob(pngString, details);
+  return binary_string_to_uint8array(updatedPngString);
+}
+
+emscripten::val add_to_png_blob_helper(const JSMolBase &self,
+                                       const std::string &pngString) {
+  return add_to_png_blob_helper(self, pngString, "");
+}
+
+JSMolBase *get_mol_from_png_blob_helper(const emscripten::val &pngAsUInt8Array,
+                                        const std::string &details) {
+  auto pngString = pngAsUInt8Array.as<std::string>();
+  return get_mol_from_png_blob(pngString, details);
+}
+
+JSMolBase *get_mol_from_png_blob_no_details_helper(
+    const emscripten::val &pngAsUInt8Array) {
+  return get_mol_from_png_blob_helper(pngAsUInt8Array, "");
+}
+
+JSMolList *get_mols_from_png_blob_helper(const emscripten::val &pngAsUInt8Array,
+                                         const std::string &details) {
+  return get_mols_from_png_blob(pngAsUInt8Array.as<std::string>(), details);
+}
+
+JSMolList *get_mols_from_png_blob_no_details_helper(
+    const emscripten::val &pngAsUInt8Array) {
+  return get_mols_from_png_blob_helper(pngAsUInt8Array, "");
+}
+
+emscripten::val get_coords_helper(const JSMolBase &self) {
+  static const char *PUSH = "push";
+  auto res = emscripten::val::array();
+  for (const auto &pt : self.get_coords()) {
+    auto xyz = emscripten::val::array();
+    xyz.call<void>(PUSH, pt.x);
+    xyz.call<void>(PUSH, pt.y);
+    xyz.call<void>(PUSH, pt.z);
+    res.call<void>(PUSH, xyz);
+  }
+  return res;
+}
 #ifdef RDK_BUILD_MINIMAL_LIB_MMPA
 emscripten::val get_mmpa_frags_helper(const JSMolBase &self,
                                       unsigned int minCuts,
@@ -530,6 +575,12 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                                &JSMolBase::get_svg))
 
       .function("get_svg_with_highlights", &JSMolBase::get_svg_with_highlights)
+      .function("combine_with", select_overload<std::string(const JSMolBase &)>(
+                                    &JSMolBase::combine_with))
+      .function(
+          "combine_with",
+          select_overload<std::string(const JSMolBase &, const std::string &)>(
+              &JSMolBase::combine_with))
 #ifdef __EMSCRIPTEN__
       .function("draw_to_canvas_with_offset", &draw_to_canvas_with_offset)
       .function("draw_to_canvas", &draw_to_canvas)
@@ -580,6 +631,15 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_frags",
                 select_overload<val(const JSMolBase &)>(get_frags_helper),
                 allow_raw_pointers())
+      .function(
+          "add_to_png_blob",
+          select_overload<emscripten::val(
+              const JSMolBase &, const std::string &, const std::string &)>(
+              add_to_png_blob_helper))
+      .function("add_to_png_blob", select_overload<emscripten::val(
+                                       const JSMolBase &, const std::string &)>(
+                                       add_to_png_blob_helper))
+      .function("get_coords", get_coords_helper)
 #ifdef RDK_BUILD_AVALON_SUPPORT
       .function(
           "get_avalon_fp_as_uint8array",
@@ -847,5 +907,15 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
 #else
   function("molzip", &molzip_no_details_helper, allow_raw_pointers());
 #endif
+#endif
+#ifdef __EMSCRIPTEN__
+  function("get_mol_from_png_blob", &get_mol_from_png_blob_helper,
+           allow_raw_pointers());
+  function("get_mol_from_png_blob", &get_mol_from_png_blob_no_details_helper,
+           allow_raw_pointers());
+  function("get_mols_from_png_blob", &get_mols_from_png_blob_helper,
+           allow_raw_pointers());
+  function("get_mols_from_png_blob", &get_mols_from_png_blob_no_details_helper,
+           allow_raw_pointers());
 #endif
 }
