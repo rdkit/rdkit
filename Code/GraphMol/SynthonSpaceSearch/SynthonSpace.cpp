@@ -252,7 +252,7 @@ std::vector<std::string> readSynthonLine(std::istream &is, int &lineNum,
   }
   if (format < 3) {
     nextSynthon = splitLine(nextLine, regexws);
-  } else if (format > 3 & format < 6) {
+  } else if (format > 3 && format < 6) {
     nextSynthon = splitLine(nextLine, regexc);
   } else if (format > 5) {
     nextSynthon = splitLine(nextLine, regext);
