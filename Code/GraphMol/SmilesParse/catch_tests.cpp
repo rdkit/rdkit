@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2018-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -3287,5 +3287,19 @@ TEST_CASE("github #8471: fail on bad characters in SMILES") {
       m = v2::SmilesParse::MolFromSmarts(smi);
       REQUIRE(!m);
     }
+  }
+}
+
+TEST_CASE(
+    "github #8654: stereogroups used in canonicalization even if not in output") {
+  SECTION("as reported") {
+    auto m =
+        "O=C(N[C@H]1C[C@@H](C(=O)O)[C@@H]2C[C@H]12)C1CC(=O)N(Cc2ccccn2)C1 |&1:3,5,9,11|"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    unsigned int cxFlags = 0;
+    auto smi = MolToCXSmiles(*m, ps, cxFlags);
+    CHECK(smi ==
+          "O=C(N[C@H]1C[C@@H](C(=O)O)[C@@H]2C[C@@H]21)C1CC(=O)N(Cc2ccccn2)C1");
   }
 }

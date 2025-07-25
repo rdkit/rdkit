@@ -299,9 +299,12 @@ void NormalizeHCount(Atom *aptr) {
 
 namespace {
 std::string convertToSmilesWithCXFlags(
-    const RWMol &mol, bool doingCXSmiles,
+    const RWMol &mol, bool doingCXSmiles, unsigned cxFlagsToSkip,
     SmilesWriteParams ps = SmilesWriteParams()) {
-  return SmilesWrite::detail::MolToSmiles(mol, ps, doingCXSmiles);
+  bool skipStereoGroups =
+      cxFlagsToSkip & SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
+  return SmilesWrite::detail::MolToSmiles(mol, ps, doingCXSmiles,
+                                          !skipStereoGroups);
 }
 }  // namespace
 
@@ -335,7 +338,7 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
-  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles, cxFlagsToSkip);
 
   if (useCXSmiles) {
     addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
@@ -369,7 +372,7 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles,
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
-  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles, cxFlagsToSkip);
   if (netq) {
     sprintf(buffer, "_%d", charge);
     result += buffer;
@@ -867,7 +870,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   SmilesWriteParams ps;
   ps.allBondsExplicit = true;
   ps.allHsExplicit = true;
-  result = convertToSmilesWithCXFlags(*mol, useCXSmiles, ps);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles, cxFlagsToSkip, ps);
   char buffer[32];
   if (!proto) {
     sprintf(buffer, "_%d_%d", hcount, charge);
@@ -917,7 +920,7 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles,
   bool cleanIt = true;
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
-  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles, cxFlagsToSkip);
   if (!proto) {
     sprintf(buffer, "_%d_%d", hcount, charge);
   } else {
@@ -1036,7 +1039,7 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
   std::string result;
-  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles, cxFlagsToSkip);
   if (useCXSmiles) {
     addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
@@ -1080,7 +1083,7 @@ std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles,
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
   std::string result;
-  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles, cxFlagsToSkip);
   if (useCXSmiles) {
     addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
@@ -1260,7 +1263,7 @@ std::string RegioisomerHash(RWMol *mol, bool useCXSmiles,
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
-  auto result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
+  auto result = convertToSmilesWithCXFlags(*mol, useCXSmiles, cxFlagsToSkip);
   if (useCXSmiles) {
     addCXExtensions(mol, result, cxFlagsToSkip);
   }
@@ -1403,7 +1406,7 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles,
       result = AnonymousGraph(mol, true, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::CanonicalSmiles:
-      result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
+      result = convertToSmilesWithCXFlags(*mol, useCXSmiles, cxFlagsToSkip);
       if (useCXSmiles) {
         addCXExtensions(mol, result, cxFlagsToSkip);
       }

@@ -37,5 +37,6 @@
 %}
 
 %include <RDGeneral/BetterEnums.h>
+%ignore RDKit::SmilesWrite::detail::MolToSmiles;
 %include <GraphMol/SmilesParse/SmilesWrite.h>
 %include <GraphMol/SmilesParse/SmilesJSONParsers.h>

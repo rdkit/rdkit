@@ -491,7 +491,7 @@ static bool SortBasedOnFirstElement(
 namespace SmilesWrite {
 namespace detail {
 std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
-                        bool doingCXSmiles) {
+                        bool doingCXSmiles, bool includeStereoGroups) {
   if (!mol.getNumAtoms()) {
     return "";
   }
@@ -519,7 +519,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
 
     rootedAtAtom = -1;
     if (params.rootedAtAtom >= 0 && atsPresent[params.rootedAtAtom]) {
-        rootedAtAtom = params.rootedAtAtom - atsPresent.find_first();
+      rootedAtAtom = params.rootedAtAtom - atsPresent.find_first();
     }
     fragsRootedAtAtom.push_back(rootedAtAtom);
 
@@ -566,11 +566,13 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
         MolOps::assignStereochemistry(*tmol, params.cleanStereo);
       }
     }
-    if (!doingCXSmiles) {
+    if (!doingCXSmiles || !includeStereoGroups) {
       // remove any stereo groups that may be present. Otherwise they will be
       // used in the canonicalization
       std::vector<StereoGroup> noStereoGroups;
       tmol->setStereoGroups(noStereoGroups);
+    }
+    if (!doingCXSmiles) {
       // remove any wiggle bonds, unspecified double bond stereochemistry, or
       // dative bonds (if we aren't doing dative bonds in the standard SMILES)
       for (auto bond : tmol->bonds()) {
@@ -601,7 +603,6 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       }
     }
 
-
     // if we are doing CXSMILES, Hydrogen bonds are shown as single bonds
     // in the smiles part, and are indicated with the H: block of the CX
     // extensions
@@ -613,7 +614,6 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
         }
       }
     }
-
 
     rootedAtAtom = fragsRootedAtAtom[fragIdx];
 
@@ -765,6 +765,8 @@ std::string MolToCXSmiles(const ROMol &romol,
   RWMol trwmol(romol);
 
   bool doingCXSmiles = true;
+  bool includeStereoGroups =
+      flags & SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
   SmilesWriteParams params = paramsInput;
 
   // if kekule is to be done, and the bond attrs (wedging) is to be done, we
@@ -777,7 +779,8 @@ std::string MolToCXSmiles(const ROMol &romol,
     params.doKekule = false;
   }
 
-  auto res = SmilesWrite::detail::MolToSmiles(trwmol, params, doingCXSmiles);
+  auto res = SmilesWrite::detail::MolToSmiles(trwmol, params, doingCXSmiles,
+                                              includeStereoGroups);
   if (res.empty()) {
     return res;
   }
