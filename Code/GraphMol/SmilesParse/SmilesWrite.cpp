@@ -571,6 +571,8 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       // used in the canonicalization
       std::vector<StereoGroup> noStereoGroups;
       tmol->setStereoGroups(noStereoGroups);
+    }
+    if (!doingCXSmiles) {
       // remove any wiggle bonds, unspecified double bond stereochemistry, or
       // dative bonds (if we aren't doing dative bonds in the standard SMILES)
       for (auto bond : tmol->bonds()) {
