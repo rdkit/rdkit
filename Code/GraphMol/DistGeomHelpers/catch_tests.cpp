@@ -607,7 +607,7 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
     RWMol cp(*m);
     MolOps::addHs(cp);
     DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-    ps.enforceChirality = false;
+    ps.enforceChirality = true;
     for (unsigned int iter = 0; iter < 10; ++iter) {
       INFO(iter);
       RWMol lcp(cp);
