@@ -1,3 +1,54 @@
+# Release_2025.03.5
+(Changes relative to Release_2025.03.4)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Brian Cole, David Cosgrove, Maria Dolotova, Hussein Faara, Tad Hurst, Brian
+Kelley, Patrick Kunzmann, Paolo Tosco, Ricardo Rodriguez, Saul, dehaenw
+paconius,
+
+## New Features and Enhancements:
+  - support clearPropertyCache() on ROMol and Atom (NOTE: This was in the release notes for Release_2025.03.3, but was not included in the release)
+ (github issue #8241 from greglandrum)
+  - Expose reading/writing PNG metadata to CFFI and MinimalLib
+ (github pull #8381 from ptosco)
+  - Add option to draw all CIP codes in DrawMol.cpp
+ (github pull #8609 from paconius)
+  - Update SMARTS parsing syntax error to include bad token position
+ (github issue #8612 from whosayn)
+  - ChemDraw Document and read/write support for the RDKit
+ (github pull #8620 from bp-kelley)
+
+## Documentation:
+  - `rdRascalMCES` module missing from Python API reference
+ (github issue #8524 from padix-key)
+
+## Bug Fixes:
+  - RDKit minilib loses stereochemistry when breaking molecules to fragments
+ (github issue #8569 from MariaDolotova)
+  - MolFromSmiles loses the information of "atom map number" property if cxsmiles is used
+ (github issue #8586 from saultorre1995)
+  - fix mrv parsing for Rgroups to make smiles work
+ (github pull #8617 from tadhurst-cdd)
+  - Scsr sgroup error
+ (github pull #8623 from tadhurst-cdd)
+  - `ResonanceMolSupplier` raises an error if `Mol` has no bonds
+ (github issue #8638 from padix-key)
+  - Mem fixes
+ (github pull #8640 from ricrogz)
+  - RascalMCES rapidly fills up memory on rdkit 2025.03 but not rdkit 2024.09
+ (github issue #8645 from dehaenw)
+  - Enhanced stereo synthons break SynthonSpace.ReadTextFile
+ (github issue #8650 from coleb)
+
+## Cleanup work:
+  - Switch a bunch of C++ tests to use catch2
+ (github pull #8625 from greglandrum)
+
+
 # Release_2025.03.4
 (Changes relative to Release_2025.03.3)
 
@@ -6,18 +57,9 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
-Michael Blakey,
-David Cosgrove,
-Andrew Dalke,
-Tad Hurst,
-Brian Kelley,
-Mark Mackey,
-Ricardo Rodriguez,
-Caleb Thomas,
-Paolo Tosco,
-ndickson-nvidia,
-jasondbiggs,
-paconius
+Michael Blakey, David Cosgrove, Andrew Dalke, Tad Hurst, Brian Kelley, Mark
+Mackey, Ricardo Rodriguez, Caleb Thomas, Paolo Tosco, ndickson-nvidia,
+jasondbiggs, paconius
 
 
 ## New Features and Enhancements:
