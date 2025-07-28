@@ -67,14 +67,17 @@ class MrvTests {
    public:
     unsigned int atomCount;
     unsigned int bondCount;
+    std::vector<int> hbondIds;
     unsigned int sGroupCount;
     std::string fileName;
     bool expectedResult;
 
     ScsrMolTest(std::string fileNameInit, bool expectedResultInit,
-                int atomCountInit, int bondCountInit, int sGroupCountInit)
+                int atomCountInit, int bondCountInit,
+                std::vector<int> hbondIdsInit, int sGroupCountInit)
         : atomCount(atomCountInit),
           bondCount(bondCountInit),
+          hbondIds(hbondIdsInit),
           sGroupCount(sGroupCountInit),
           fileName(fileNameInit),
           expectedResult(expectedResultInit) {};
@@ -423,6 +426,13 @@ class MrvTests {
       TEST_ASSERT(mol->getNumAtoms() == scsrMolTest->atomCount);
       TEST_ASSERT(mol->getNumBonds() == scsrMolTest->bondCount);
       TEST_ASSERT(getSubstanceGroups(*mol).size() == scsrMolTest->sGroupCount);
+
+      // test for some H-bonds
+
+      for (auto hbondIndex : scsrMolTest->hbondIds) {
+        TEST_ASSERT(mol->getBondWithIdx(hbondIndex)->getBondType() ==
+                    RDKit::Bond::BondType::HYDROGEN);
+      }
 
       BOOST_LOG(rdInfoLog) << "done" << std::endl;
     } catch (const std::exception &) {
@@ -1210,8 +1220,11 @@ M  END
 
     if (testToRun == "" || testToRun == "scsrFileTests") {
       std::list<ScsrMolTest> scsrFileTests{
-          ScsrMolTest("153944501_original_structure.mol", true, 859, 1025, 128),
-          ScsrMolTest("rnaTest.mol", true, 22, 24, 4)};
+          ScsrMolTest(
+              "153944501_original_structure.mol", true, 859, 1025,
+              {66, 67, 68, 72, 73, 74} /* Some but not all hbonds in the mol */,
+              128),
+          ScsrMolTest("rnaTest.mol", true, 22, 24, {}, 4)};
 
       for (auto &scsrFileTest : scsrFileTests) {
         BOOST_LOG(rdInfoLog) << "Test: " << scsrFileTest.fileName << std::endl;
