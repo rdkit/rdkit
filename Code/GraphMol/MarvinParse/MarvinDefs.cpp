@@ -961,6 +961,8 @@ const std::string MarvinBond::getBondType() const {
   {
     if (tempConvention == "CXN:COORD") {
       return "DATIVE";
+    } else if (tempConvention == "CXN:HYDROGEN") {
+      return "HYDROGEN";
     } else {
       std::ostringstream err;
       err << "unrecognized convention " << convention << " in MRV File ";
@@ -1242,6 +1244,8 @@ int MarvinMolBase::getExplicitValence(const MarvinAtom &marvinAtom) const {
       // if (bondPtr->atomRefs2[1] == marvinAtom.id) //second atom of dative
       // bond count as 1 (first atom is zero)
       //   resTimes10 += 10;  // really 1 order bond
+    } else if (marvinBondType == "HYDROGEN") {
+      // hydrogen bonds do not add to valence}
     } else if (marvinBondType == "1") {
       resTimes10 += 10;  // really 1 order bond
     } else if (marvinBondType == "2") {
