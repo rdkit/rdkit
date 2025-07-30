@@ -130,7 +130,9 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   mol = _RemoveUnnecessaryHs(original_molecule, preserve_stereogenic_hs=True)
   _StripAtomMapLabels(mol)
 
-  Chem.CanonicalizeEnhancedStereo(mol)
+  # we only canonicalize the stereo groups if we are actually outputting enhanced stereo:
+  if cxflag & Chem.CXSmilesFields.CX_ENHANCEDSTEREO:
+    Chem.CanonicalizeEnhancedStereo(mol)
 
   formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
 
