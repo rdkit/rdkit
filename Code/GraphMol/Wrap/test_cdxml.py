@@ -281,6 +281,25 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
 
+  def test_cdxml(self):
+    try: from rdkit.Chem import rdChemDraw
+    except:
+      return
+    
+    rdbase = os.environ['RDBASE']
+    filename = os.path.join(rdbase,
+                            'Code/GraphMol/FileParsers/test_data/CDXML/ring-stereo1.cdx')
+    mols = Chem.MolsFromCDXMLFile(filename)
+    filename = os.path.join(rdbase,
+                            'Code/GraphMol/FileParsers/test_data/CDXML/ring-stereo1.cdxml')
+    mols2 = Chem.MolsFromCDXMLFile(filename)
+    smi1 = [Chem.MolToSmiles(m) for m in mols]
+    smi2 = [Chem.MolToSmiles(m) for m in mols]2
+    self.assertEqual(smi1, smi2)
+
+    self.assertEqual(smi1, None)
+    
+ 
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

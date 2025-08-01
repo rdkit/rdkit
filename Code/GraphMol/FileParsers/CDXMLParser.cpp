@@ -711,6 +711,10 @@ namespace CDXMLParser {
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
     std::istream &inStream, const CDXMLParserParams &params) {
   // populate tree structure pt
+  if (params.format == CDXMLFormat::CDX) {
+    throw FileParseException("Full ChemDraw support is not enabled, cannot parse CDX files");
+  }
+  
   using boost::property_tree::ptree;
   ptree pt;
   try {
@@ -829,7 +833,9 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
-    const std::string &cdxml, const CDXMLParserParams &params) {
+
+						  const std::string &cdxml, const CDXMLParserParams &params) {
+ 
   std::stringstream iss(cdxml);
   return MolsFromCDXMLDataStream(iss, params);
 }
@@ -850,6 +856,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   ChemDrawParserParams chemdraw_params;
   chemdraw_params.sanitize = params.sanitize;
   chemdraw_params.removeHs = params.removeHs;
+  chemdraw_params.format = params.CDXMLFormat == CDXMLFormat::CDX ? CDXFormat::CDX : CDXFormat::CDXML;
   return MolsFromChemDrawDataStream(inStream, chemdraw_params);
 }
 
