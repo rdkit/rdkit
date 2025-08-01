@@ -129,6 +129,7 @@ void testFail() {
       "[Fe@AL3]",    "C",  //
       "[Fe@TB21]",   "C",  //
       "[Fe@OH31]",   "C",  //
+      "baz",   "C",  //
       "EOS"};
 
   // turn off the error log temporarily:
@@ -4347,6 +4348,49 @@ void testGithub6349() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testParserErrorMessage() {
+  const std::string smis[] = {
+      "CC=(CO)C",
+      "baz",
+      "fff",
+      "C+0",
+      "[555555555555555555C]",
+      "[Fe@TD]",
+      "c%()ccccc%()",
+      "c%(100000)ccccc%(100000)",
+      "COc(c1)cccc1C#",
+      "C)",
+    };
+  for (const auto& smi : smis) {
+      // Test SMILES parsing
+      {
+        std::stringstream ss;
+        rdErrorLog->SetTee(ss);
+
+        auto mol = v2::SmilesParse::MolFromSmiles(smi);
+        CHECK_INVARIANT(!mol, smi);
+
+        rdErrorLog->ClearTee();
+        auto error_msg = ss.str();
+        CHECK_INVARIANT(error_msg.find("check for mistakes around position") != std::string::npos, smi)
+      }
+
+      // Test SMARTS parsing
+      {
+        std::stringstream ss;
+        rdErrorLog->SetTee(ss);
+
+        auto mol = v2::SmilesParse::MolFromSmarts(smi);
+        CHECK_INVARIANT(!mol, smi);
+
+        rdErrorLog->ClearTee();
+        auto error_msg = ss.str();
+        CHECK_INVARIANT(error_msg.find("check for mistakes around position") != std::string::npos, smi)
+      }
+
+  }
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4424,4 +4468,5 @@ int main(int argc, char *argv[]) {
   testGithub3967();
   testGithub6349();
   testOSSFuzzFailures();
+  testParserErrorMessage();
 }

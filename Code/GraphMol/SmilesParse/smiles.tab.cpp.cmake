@@ -142,6 +142,17 @@ yysmiles_error( const char *input,
                                                   "SMILES");
 }
 
+void
+yysmiles_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
+                unsigned int bad_token_position, const char * msg )
+{
+  yyErrorCleanup(ms);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMILES");
+}
 
 
 
@@ -603,14 +614,14 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   127,   127,   130,   134,   137,   141,   145,   148,   153,
-     158,   161,   169,   170,   171,   172,   180,   191,   202,   223,
-     232,   238,   259,   283,   302,   312,   333,   341,   355,   358,
-     359,   365,   366,   372,   380,   381,   382,   383,   384,   385,
-     386,   390,   391,   392,   393,   394,   395,   396,   397,   398,
-     402,   403,   404,   405,   406,   410,   411,   412,   413,   414,
-     415,   419,   420,   424,   425,   426,   427,   428,   429,   430,
-     434,   435,   439,   440,   451,   452
+       0,   138,   138,   141,   145,   148,   152,   156,   159,   165,
+     170,   173,   181,   182,   183,   184,   192,   203,   214,   235,
+     244,   250,   271,   295,   314,   324,   345,   353,   367,   370,
+     371,   377,   378,   384,   392,   393,   394,   395,   396,   397,
+     398,   402,   403,   404,   405,   406,   407,   408,   409,   410,
+     414,   415,   416,   417,   418,   422,   423,   424,   425,   426,
+     427,   431,   432,   436,   437,   438,   439,   440,   441,   442,
+     446,   447,   451,   452,   463,   464
 };
 #endif
 
@@ -1368,6 +1379,7 @@ yyreduce:
                            {
   yyerrok;
   yyErrorCleanup(molList);
+  yyerror(input, molList, current_token_position, "syntax error");
   YYABORT;
 }
     break;
