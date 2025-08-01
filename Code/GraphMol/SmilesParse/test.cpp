@@ -129,6 +129,7 @@ void testFail() {
       "[Fe@AL3]",    "C",  //
       "[Fe@TB21]",   "C",  //
       "[Fe@OH31]",   "C",  //
+      "baz",   "C",  //
       "EOS"};
 
   // turn off the error log temporarily:
