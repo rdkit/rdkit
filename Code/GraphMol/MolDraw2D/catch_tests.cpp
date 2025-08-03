@@ -10848,7 +10848,7 @@ TEST_CASE("Github 8679 - DrawMoleculesWithHighlights doesn't offset") {
   REQUIRE(mol1);
   auto mol2 = "c1ccccc1Br"_smiles;
   REQUIRE(mol2);
-  MolDraw2DSVG drawer(600, 300, 300, 300);
+  MolDraw2DSVG drawer(600, 300, 300, 300, true);
   drawer.drawOptions().addAtomIndices = true;
   std::map<int, std::vector<DrawColour>> atomCols;
   std::map<int, double> atomRads;
@@ -10866,7 +10866,7 @@ TEST_CASE("Github 8679 - DrawMoleculesWithHighlights doesn't offset") {
   outs << text;
   outs.close();
   const static std::regex atom6(
-      "<path class='atom-6' d='M (\\d+\\.\\d+) (\\d+\\.\\d+)");
+      "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-6'.*</text>");
   std::ptrdiff_t const match_count(
       std::distance(std::sregex_iterator(text.begin(), text.end(), atom6),
                     std::sregex_iterator()));
