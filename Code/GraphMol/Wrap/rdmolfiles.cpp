@@ -745,7 +745,7 @@ python::tuple MolsFromCDXMLHelper(python::object cdxml, python::object pyParams)
   if (pyParams) {
     params = python::extract<RDKit::v2::CDXMLParser::CDXMLParserParams>(pyParams);
   }
-  auto mols = CDXMLToMols(pyObjectToString(cdxml), pyParams);
+  auto mols = RDKit::v2::CDXMLParser::MolsFromCDXML(pyObjectToString(cdxml), params);
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
@@ -764,7 +764,7 @@ python::tuple MolsFromCDXMLHelper(python::object cdxml, python::object pyParams)
   }
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
-    mols = CDXMLFileToMols(filename, pyParams);
+    mols = RDKit::v2::CDXMLParser::MolsFromCDXMLFile(filename, params);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
@@ -2647,8 +2647,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .value("Auto", RDKit::v2::CDXMLParser::CDXMLFormat::Auto);
 
   python::class_<RDKit::v2::CDXMLParser::CDXMLParserParams, boost::noncopyable>(
-      "CDXMLFormat",
-      "Parameters controlling conversion of an CDXMLFormat to molecules")
+      "CDXMLParserParams",
+      "Parameters controlling conversion of a CDXML document to molecules",
+      python::init<>(python::args("self"), "Construct a default CDXMLFormat"))
+    .def(python::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat>(
+        python::args("self", "sanitize", "removeHs", "format")))
       .def_readwrite(
           "sanitize",
           &RDKit::v2::CDXMLParser::CDXMLParserParams::sanitize,
@@ -2682,9 +2685,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
      RETURNS:
        an iterator of parsed Mol objects.)DOC";
 
-  python::def("MolsFromCDXMLFileV2", MolsFromCDXMLFileHelper,
+  python::def("MolsFromCDXMLFile", MolsFromCDXMLFileHelper,
               (python::arg("filename"),
-	       python::arg("params") = python::object()),
+	       python::arg("params")),
               docString.c_str());
 
   docString =
@@ -2705,9 +2708,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
      RETURNS:
        an iterator of parsed Mol objects.)DOC";
 
-  python::def("MolsFromCDXMLV2", MolsFromCDXMLHelper,
+  python::def("MolsFromCDXML", MolsFromCDXMLHelper,
               (python::arg("cdxml"),
-	       python::arg("params") = python::object()),
+	       python::arg("params")),
               docString.c_str());
 #ifdef RDK_USE_BOOST_IOSTREAMS
   docString =
