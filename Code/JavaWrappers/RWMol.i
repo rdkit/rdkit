@@ -59,10 +59,18 @@
 %javaconst(1);
 #endif
 %include <GraphMol/FileParsers/FileParsers.h>
+%include <GraphMol/FileParsers/CDXMLParser.h>
 %ignore RDKit::v2;
 %ignore RDKit::v2::SmilesParse;
 %include <GraphMol/SmilesParse/SmilesParse.h>
 %include <GraphMol/RWMol.h>
+
+%rename("%s") RDKit::v2;
+%rename("%s") RDKit::v2::CDXMLParser;
+%rename("%s") RDKit::v2::CDXMLParser::CDXMLFormat;
+%rename("%s") RDKit::v2::CDXMLParser::CDXMLFormat::CDXMLFormat;
+%rename("%s") RDKit::v2::CDXMLParser::CDXMLPraserParams;
+%rename("%s") RDKit::v2::CDXMLParser::CDXMLPraserParams::CDXMLParserParams;
 
 %extend RDKit::RWMol {
   static RDKit::RWMOL_SPTR MolFromSmiles(const std::string &smi,int debugParse=0,bool sanitize=1,
@@ -140,8 +148,8 @@ static RDKit::RWMOL_SPTR MolFromHELM(const std::string &text,
 }
 
 static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXML(const std::string &text,
-						     bool sanitize=true){
-  auto res = RDKit::CDXMLToMols(text, sanitize);
+						    bool sanitize=true, bool removeHs=true){
+  auto res = RDKit::CDXMLToMols(text, sanitize, removeHs);
   std::vector<RDKit::RWMOL_SPTR> mols;
   for(auto &mol: res) {
     mols.emplace_back(mol.release());
@@ -150,9 +158,22 @@ static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXML(const std::string &text,
 
 }
 
-static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXMLFile(const std::string &text,
-							 bool sanitize=true){
-  auto res = RDKit::CDXMLFileToMols(text, sanitize);
+static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXML(
+ const std::string &text,
+ const RDKit::v2::CDXMLParser::CDXMLParserParams &params=RDKit::v2::CDXMLParser::CDXMLParserParams()) {
+  auto res = RDKit::v2::CDXMLParser::MolsFromCDXML(text, params);
+  std::vector<RDKit::RWMOL_SPTR> mols;
+  for(auto &mol: res) {
+    mols.emplace_back(mol.release());
+  }
+  return mols;
+
+}
+
+static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXMLFile(
+ const std::string &filename,
+ const RDKit::v2::CDXMLParser::CDXMLParserParams &params=RDKit::v2::CDXMLParser::CDXMLParserParams()) {
+  auto res = RDKit::v2::CDXMLParser::MolsFromCDXMLFile(filename, params);
   std::vector<RDKit::RWMOL_SPTR> mols;
   for(auto &mol: res) {
     mols.emplace_back(mol.release());
