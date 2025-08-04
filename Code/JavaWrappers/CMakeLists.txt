@@ -1,6 +1,12 @@
 find_package(SWIG 4.2 REQUIRED)
 include(${SWIG_USE_FILE})
 
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  message("== building swig with chemdraw support")
+  add_definitions("-DRDK_BUILD_CHEMDRAW_SUPPORT")
+endif()
+
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${RDKit_CodeDir})
 include_directories(${Boost_INCLUDE_DIRS})
@@ -19,6 +25,7 @@ endif(RDK_BUILD_AVALON_SUPPORT)
 if(RDK_BUILD_INCHI_SUPPORT)
   set(swigRDKitLibList "${swigRDKitLibList}RDInchiLib;${INCHI_LIBRARIES};")
 endif(RDK_BUILD_INCHI_SUPPORT)
+
 set(swigRDKitLibList "${swigRDKitLibList}"
   "RascalMCES;GeneralizedSubstruct;Abbreviations;ScaffoldNetwork;MolHash;RGroupDecomposition;SubstructLibrary;TautomerQuery;"
   "MolEnumerator;"
@@ -27,7 +34,7 @@ set(swigRDKitLibList "${swigRDKitLibList}"
   "Subgraphs;GraphMol;DataStructs;Trajectory;Descriptors;"
   "PartialCharges;MolTransforms;DistGeomHelpers;DistGeometry;"
   "ForceFieldHelpers;ForceField;EigenSolvers;Optimizer;MolAlign;O3AAlign;"
-  "Alignment;SimDivPickers;RDGeometryLib;RDStreams;RDGeneral;"
+  "Alignment;SimDivPickers;RDGeometryLib;RDStreams;RDGeneral;ChemDraw;"
 )
 if(RDK_USE_URF)
   set(swigRDKitLibList "${swigRDKitLibList};${RDK_URF_LIBS};")

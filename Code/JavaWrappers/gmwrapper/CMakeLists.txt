@@ -92,6 +92,9 @@ endif()
 if (RDK_BUILD_CAIRO_SUPPORT)
 	SET(CMAKE_SWIG_FLAGS "-DRDK_BUILD_CAIRO_SUPPORT" ${CMAKE_SWIG_FLAGS} )
 endif()
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  SET(CMAKE_SWIG_FLAGS "-DRDK_BUILD_CHEMDRAW_SUPPORT" ${CMAKE_SWIG_FLAGS} )
+endif()
 
 
 # enable this line to build the ErrorGenerator class for testing handling of C++ errors in the JNI layer
@@ -167,6 +170,10 @@ endif()
 
 if(NOT RDK_BUILD_INCHI_SUPPORT)
 LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/InchiTests.java")
+endif()
+
+if(NOT RDK_BUILD_CHEMDRAW_SUPPORT)
+LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/ChemDrawTests.java")
 endif()
 
 if(NOT RDK_USE_BOOST_IOSTREAMS)
@@ -321,6 +328,13 @@ if (RDK_BUILD_INCHI_SUPPORT)
        java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
        	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 		org.RDKit.InchiTests)
+endif (RDK_BUILD_INCHI_SUPPORT)
+
+if (RDK_BUILD_CHEMDRAW_SUPPORT)
+   ADD_TEST(JavaChemDrawTests
+       java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+       	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+		org.RDKit.ChemDrawTest)
 endif (RDK_BUILD_INCHI_SUPPORT)
 
 #ADD_TEST(JavaMemoryTests
