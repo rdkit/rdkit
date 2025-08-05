@@ -275,8 +275,8 @@ the supplied transformation matrix, applies that transformation to the
 
 Parameters
 ----------
-refShape : ShapeInput
-    Reference shape
+finalTrans : list[float * 3]
+    The final translation to apply to conformer.
 matrix: list[float * 12]
     The transformation matrix
 probeShape : ShapeInput
@@ -296,8 +296,8 @@ mol : RDKit.ROMol
     Reference molecule
 confId : int, optional
     Conformer ID to use (default is -1)
-useColors : bool, optional
-    Whether or not to assign chemical features (colors) (default is True)
+opts : ShapeInputOptions, optional
+    Options for Shapeinput
 
 Returns
 -------
