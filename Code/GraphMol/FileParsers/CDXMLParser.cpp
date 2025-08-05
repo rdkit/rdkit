@@ -711,6 +711,10 @@ namespace CDXMLParser {
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
     std::istream &inStream, const CDXMLParserParams &params) {
   // populate tree structure pt
+  if (params.format == CDXMLFormat::CDX) {
+    throw FileParseException("Full ChemDraw support is not enabled, cannot parse CDX files");
+  }
+  
   using boost::property_tree::ptree;
   ptree pt;
   try {
@@ -829,7 +833,9 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
-    const std::string &cdxml, const CDXMLParserParams &params) {
+
+						  const std::string &cdxml, const CDXMLParserParams &params) {
+ 
   std::stringstream iss(cdxml);
   return MolsFromCDXMLDataStream(iss, params);
 }
@@ -839,6 +845,9 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 #else
 #include <ChemDraw/chemdraw.h>
 #include <RDGeneral/BadFileException.h>
+#include <filesystem> // For std::filesystem::path
+#include <algorithm>  // For std::transform
+#include <cctype>     // For std::tolower
 
 namespace RDKit{
 namespace v2 {
@@ -850,16 +859,29 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   ChemDrawParserParams chemdraw_params;
   chemdraw_params.sanitize = params.sanitize;
   chemdraw_params.removeHs = params.removeHs;
+  chemdraw_params.format = params.format == CDXMLFormat::CDX ? CDXFormat::CDX : CDXFormat::CDXML;
+
   return MolsFromChemDrawDataStream(inStream, chemdraw_params);
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
     const std::string &fileName, const CDXMLParserParams &params) {
+  
   std::ifstream ifs(fileName);
   if (!ifs || ifs.bad()) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
     throw BadFileException(errout.str());
+  }
+
+  if(params.format == CDXMLFormat::Auto) {
+    std::filesystem::path p(fileName);
+    std::string extension = p.extension().string();
+    std::transform(extension.begin(), extension.end(), extension.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+    CDXMLFormat format = extension == ".cdx" ? CDXMLFormat::CDX : CDXMLFormat::CDXML;
+
+    return MolsFromCDXMLDataStream(ifs, CDXMLParserParams(params.sanitize, params.removeHs, format));
   }
   return MolsFromCDXMLDataStream(ifs, params);
 }

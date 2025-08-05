@@ -22,6 +22,10 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
     endif()
 endif()
 
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  add_definitions("-DRDK_BUILD_CHEMDRAW_SUPPORT")
+endif()
+
 rdkit_library(FileParsers
     CDXMLParser.cpp
     Mol2FileParser.cpp MolFileParser.cpp 

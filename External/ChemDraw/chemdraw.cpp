@@ -249,14 +249,18 @@ std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream,
                                           static_cast<int>(data.size()),
                                           HaveAllXml)) {
       auto error = XML_GetErrorCode(parser);
-      BOOST_LOG(rdErrorLog) << "Failed parsing XML with error code " << error;
-      throw FileParseException("Bad Input File");
+      std::stringstream msg;
+      msg << "Failed parsing XML with error code " << error;
+      BOOST_LOG(rdErrorLog) << msg.str() << std::endl;
+      throw FileParseException(msg.str());
     }
 
     return parser.ReleaseDocument();
   } else {
-    throw FileParseException("Can't handle cdx yet");
-    return std::unique_ptr<CDXDocument>();
+    CDXistream input(inStream);
+    const bool doThrow = true;
+    std::unique_ptr<CDXDocument> doc(CDXReadDocFromStorage(input, doThrow));
+    return doc;
   }
 }
 

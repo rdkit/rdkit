@@ -45,9 +45,13 @@ enum class CDXFormat {
 };
 
 struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {
-  bool sanitize = true;
-  bool removeHs = true;
-  CDXFormat format = CDXFormat::CDXML;
+  bool sanitize;
+  bool removeHs;
+  CDXFormat format;
+  ChemDrawParserParams() : sanitize(true), removeHs(true), format(CDXFormat::CDXML) {}
+  ChemDrawParserParams(bool sanitize, bool removeHs, CDXFormat format) :
+     sanitize(sanitize), removeHs(removeHs), format(format) {}
+  
 };
 
 std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
