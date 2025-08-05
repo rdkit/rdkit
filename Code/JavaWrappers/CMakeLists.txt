@@ -27,9 +27,9 @@ if(RDK_BUILD_INCHI_SUPPORT)
   set(swigRDKitLibList "${swigRDKitLibList}RDInchiLib;${INCHI_LIBRARIES};")
 endif(RDK_BUILD_INCHI_SUPPORT)
 
-if(RDK_BUILD_INCHI_SUPPORT)
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
   set(swigRDKitLibList "${swigRDKitLibList}RDChemDrawLib;ChemDraw;")
-endif(RDK_BUILD_INCHI_SUPPORT)
+endif(RDK_BUILD_CHEMDRAW_SUPPORT)
 
 
 set(swigRDKitLibList "${swigRDKitLibList}"

@@ -37,7 +37,7 @@ import java.io.File;
 import org.junit.Test;
 
 public class ChemDrawTest extends GraphMolTest {
-    public void ChemDrawReader() {
+    @Test public void testChemDrawReader() {
 	String rdpath = System.getenv("RDBASE");
 	if (rdpath == null)
 	    org.junit.Assert.fail("No definition for RDBASE");
@@ -68,7 +68,7 @@ public class ChemDrawTest extends GraphMolTest {
 
 	testFile = new File(base, "Code" + File.separator + "GraphMol"
 				 + File.separator + "test_data" + File.separator +
-				 "ChemDraw" + File.separator + "ring-stereo1.cdx");
+				 "CDXML" + File.separator + "ring-stereo1.cdx");
 	fn = testFile.getAbsolutePath();
 	params = new ChemDrawParserParams(true, true, CDXFormat.CDX);
 	prods = RDKFuncs.MolsFromChemDrawFile(fn, params);
@@ -87,7 +87,7 @@ public class ChemDrawTest extends GraphMolTest {
 
 
     public static void main(String args[]) {
-        org.junit.runner.JUnitCore.main("org.RDKit.InchiTests");
+        org.junit.runner.JUnitCore.main("org.RDKit.ChemDrawTest");
     }
 
 }

@@ -111,6 +111,11 @@ if(NOT RDK_BUILD_INCHI_SUPPORT)
 LIST(REMOVE_ITEM SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../Inchi.i")
 endif()
 
+if(NOT RDK_BUILD_CHEMDRAW_SUPPORT)
+LIST(REMOVE_ITEM SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../ChemDraw.i")
+endif()
+
+
 SET(SWIG_MODULE_GraphMolWrap_EXTRA_DEPS ${SWIG_SRC_FILES} )
 
 SWIG_ADD_LIBRARY(GraphMolWrap TYPE MODULE LANGUAGE java SOURCES GraphMolJava.i )
@@ -118,8 +123,14 @@ SWIG_ADD_LIBRARY(GraphMolWrap TYPE MODULE LANGUAGE java SOURCES GraphMolJava.i )
 # it doesnt seem like the threading libs should need to be here, but
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
 # link error if they aren't there.
-SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
+
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
+      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expat)
+else ()
+  SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
       rdkit_base ${RDKit_THREAD_LIBS})
+endif()
 
 # code adapted from the wrapper code for
 # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup
