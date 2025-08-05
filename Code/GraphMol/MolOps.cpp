@@ -1337,23 +1337,6 @@ void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
     mol.commitBatchEdit();
   }
 }
-/*
-class MolSubset {
-public:
-  std::vector<unsigned int> atoms;
-  std::vector<unsigned int> bonds;
-  bool hasAtoms;
-  bool hasBonds;
-
-  MolSubset(std::vector<unsigned int> atoms, std::vector<unsigned int> bonds, bool hasAtoms=true, bool hasBonds=true);
-
-};
-std::unique_ptr<ROMol> copyMolSubset(const ROMol &mol,
-				     std::vector<unsigned int> atoms,
-				     std::vector<unsigned int> bonds) {
-  
-}
-  */
 }  // end of namespace MolOps
 }  // end of namespace RDKit
 
