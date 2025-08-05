@@ -1339,4 +1339,3 @@ void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
 }
 }  // end of namespace MolOps
 }  // end of namespace RDKit
-
