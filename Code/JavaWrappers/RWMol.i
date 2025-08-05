@@ -58,19 +58,22 @@
 #if swifjava
 %javaconst(1);
 #endif
+
+%ignore RDKit::v2::SmilesParse;
+
+%ignore RDKit::v1::CDXMLDataStreamToMols;
+%ignore RDKit::v1::CDXMLFileToMols;
+%ignore RDKit::v1::CDXMLToMols;
+
+%ignore RDKit::v2::CDXMLParser::MolsFromCDXMLDataStream;
+%ignore RDKit::v2::CDXMLParser::MolsFromCDXML;
+%ignore RDKit::v2::CDXMLParser::MolsFromCDXMLFile;
+%ignore *::MolsFromCDXMLDataStream;
+
 %include <GraphMol/FileParsers/FileParsers.h>
 %include <GraphMol/FileParsers/CDXMLParser.h>
-%ignore RDKit::v2;
-%ignore RDKit::v2::SmilesParse;
 %include <GraphMol/SmilesParse/SmilesParse.h>
 %include <GraphMol/RWMol.h>
-
-%rename("%s") RDKit::v2;
-%rename("%s") RDKit::v2::CDXMLParser;
-%rename("%s") RDKit::v2::CDXMLParser::CDXMLFormat;
-%rename("%s") RDKit::v2::CDXMLParser::CDXMLFormat::CDXMLFormat;
-%rename("%s") RDKit::v2::CDXMLParser::CDXMLPraserParams;
-%rename("%s") RDKit::v2::CDXMLParser::CDXMLPraserParams::CDXMLParserParams;
 
 %extend RDKit::RWMol {
   static RDKit::RWMOL_SPTR MolFromSmiles(const std::string &smi,int debugParse=0,bool sanitize=1,
