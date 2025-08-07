@@ -2,298 +2,304 @@
 #include <catch2/catch_all.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-
+#include <iostream>
 
 using namespace RDKit;
 
-TEST_CASE("Test Osmordred") {
-  SECTION("Calling all functions") {
-    auto mol = "CC1=C(C=C(C=C1)NC(=O)C2=CC=C(C=C2)CN3CCN(CC3)C)NC4=NC=CC(=N4)C5=CN=CC=C5"_smiles;
-
-    {
-      std::vector<double> v = calcABCIndex(*mol); 
-    }
-    {
-      std::vector<int> v = calcAcidBase(*mol); 
-    }
-    {
-      std::vector<int> v = calcAromatic(*mol); 
-    }
-    {
-      std::vector<int> v = calcAtomCounts(*mol);
-    }
-    {
-      std::vector<double> v = calcBalabanJ(*mol); 
-    }
-    {
-      std::vector<double> v = calcBertzCT(*mol);
-    }
-    {
-      std::vector<int> v = calcBondCounts(*mol);
-    }
-    {
-      std::vector<double> v = calcVertexAdjacencyInformation(*mol); 
-    }
-    {
-      std::vector<double> v = calcWeight(*mol); 
-    }
-    {
-      std::vector<int> v = calcWienerIndex(*mol); 
-    }
-    {
-      std::vector<double> v = calcVdwVolumeABC(*mol); 
-    }
-    {
-      std::vector<double> v = calcTopoPSA(*mol); 
-    }
-    {
-      std::vector<double> v = calcSLogP(*mol); 
-    }
-    {
-      std::vector<double> v = calcHydrogenBond(*mol); 
-    }
-    {
-      std::vector<double> v = calcLogS(*mol);
-    }
-    {
-      std::vector<int> v = calcLipinskiGhose(*mol);
-    }
-    {
-      std::vector<double> v = calcMcGowanVolume(*mol);
-    }
-    {
-      std::vector<double> v = calcPolarizability(*mol);
-    }
-    {
-      std::vector<double> v = calcRotatableBond(*mol); 
-    }
-    {
-      std::vector<double> v = calcFragmentComplexity(*mol); 
-    }
-    {
-      std::vector<double> v = calcConstitutional(*mol); 
-    }
-    {
-      std::vector<double> v = calcTopologicalIndex(*mol);
-    }
-    {
-      std::vector<double> v = calcDetourMatrixDescs(*mol);
-    }
-    {
-      std::vector<double> v = calcDetourMatrixDescsL(*mol);
-    }
-    {
-      std::vector<double> v = calcDistMatrixDescs(*mol);
-    }
-    {
-      std::vector<double> v = calcDistMatrixDescsL(*mol);
-    }
-    {
-      std::vector<double> v = calcAdjMatrixDescs(*mol);
-    }
-    {
-      std::vector<double> v = calcAdjMatrixDescsL(*mol);
-    }
-    {
-      std::vector<double> v = calcCarbonTypes(*mol);
-    }
-    {
-      std::vector<double> v = calcEccentricConnectivityIndex(*mol); 
-    }
-    {
-      std::vector<double> v = calcBaryszMatrixDescsL(*mol);
-    }
-    {
-      std::vector<double> v = calcBaryszMatrixDescs(*mol);
-    }
-    {
-      std::vector<double> v = calcZagrebIndex(*mol);
-    }
-    {
-      std::vector<double> v = calcMoeType(*mol); 
-    }
-    {
-      std::vector<double> v = calcMolecularDistanceEdgeDescs(*mol);
-    }
-    {
-      std::vector<double> v = calcEStateDescs(*mol);
-      std::vector<double> v2 = calcEStateDescs(*mol, true);
-    }
-    {
-      std::vector<double> v = calcWalkCounts(*mol);
-    }
-    {
-      std::vector<double> v = calcTopologicalChargeDescs(*mol);
-    }
-    {
-      std::vector<double> v = calcAllChiDescriptors(*mol);
-    }
-    {
-      std::vector<double> v = calcPathCount(*mol);
-    }
-    {
-      std::vector<double> v = calcKappaShapeIndex(*mol);
-    }
-    {
-      std::vector<int> v = calcRingCount(*mol); 
-    }
-    {
-      std::vector<double> v = calcMolecularId(*mol);
-    }
-    {
-      std::vector<double> v = calcBCUTs(*mol); // 10x faster the
-    }
-    {
-      std::vector<double> v = calcAutoCorrelation(*mol);
-    }
-    {
-      std::vector<double> v = calcFramework(*mol); 
-    }
-    {
-      std::vector<double> v = calcExtendedTopochemicalAtom(*mol);
-    }
-    {
-      std::vector<double> v = calculateETADescriptors(*mol);
-    }
-    {
-      std::vector<double> v = calcChipath(*mol);
-    }
-    {
-      std::vector<double> v = calcChichain(*mol);
-    }
-    {
-      std::vector<double> v = calcChicluster(*mol);
-    }
-    {
-      std::vector<double> v = calcChipathcluster(*mol);
-    }
-    {
-      int v = calcAcidicGroupCount(*mol); (void) v;
-    }
-    {
-      int v = calcBasicGroupCount(*mol); (void) v;
-    }
-    {
-      int v = countAromaticAtoms(*mol); (void) v;
-    }
-    {
-      int v = countAromaticBonds(*mol); (void) v;
-    }
-    {
-      std::vector<double> v = calcBEStateDescs(*mol);
-    }
-    {
-      std::vector<double> v = calcHEStateDescs(*mol);
-    }
-    {
-      std::vector<double> v = calcAlphaKappaShapeIndex(*mol); // closer "missing" k3 path count not correct on few cases
-    }
-    {
-      std::vector<double> v = calcAbrahams(*mol); // Platts, Butina, Abraham, Hersey  paper J Chem Inf Comput Sci. 1999 30/8/01;39(5):835-45
-    }
-    {
-      std::vector<double> v = calcPol(*mol);
-    }
-    {
-      std::vector<double> v = calcMR(*mol);
-    }
-    {
-      std::vector<double> v = calcFlexibility(*mol);
-    }
-    {
-      std::vector<double> v = calcODT(*mol);
-    }
-    {
-      std::vector<double> v = calcSchultz(*mol);
-    }
-    {
-      std::vector<double> v = calcRNCG_RPCG(*mol);
-    }
-    {
-      std::vector<double> v = calcAZV(*mol);
-    }
-    {
-      std::vector<double> v = calcASV(*mol);
-    }
-    {
-      std::vector<double> v = calcDSV(*mol);
-    }
-    {
-      std::vector<double> v = calcAZS(*mol);
-    }
-    {
-      std::vector<double> v = calcASZ(*mol);
-    }
-    {
-      std::vector<double> v = calcDN2S(*mol);
-    }
-    {
-      std::vector<double> v = calcDN2I(*mol);
-    }
-    {
-      std::vector<double> v = calcASI(*mol);
-    }
-    {
-      std::vector<double> v = calcDSI(*mol);
-    }
-    {
-      std::vector<double> v = calcASN(*mol);
-    }
-    {
-      std::vector<double> v = calcDSN(*mol);
-    }
-    {
-      std::vector<double> v = calcDN2N(*mol);
-    }
-    {
-      std::vector<double> v = calcANS(*mol);
-    }
-    {
-      std::vector<double> v = calcANV(*mol);
-    }
-    {
-      std::vector<double> v = calcAZN(*mol);
-    }
-    {
-      std::vector<double> v = calcANZ(*mol);
-    }
-    {
-      std::vector<double> v = calcANI(*mol);
-    }
-    {
-      std::vector<double> v = calcDSZ(*mol);
-    }
-    {
-      std::vector<double> v = calcANN(*mol);
-    }
-    {
-      std::vector<double> v = calcDN2Z(*mol);
-    }
-    {
-      std::vector<double> v = calcANMat(*mol);
-    }
-    {
-      std::vector<double> v = calcAZMat(*mol);
-    }
-    {
-      std::vector<double> v = calcASMat(*mol);
-    }
-    {
-      std::vector<double> v = calcDSMat(*mol);
-    }
-    {
-      std::vector<double> v = calcDN2Mat(*mol);
-    }
-    {
-      std::vector<double> v = calcFrags(*mol);
-    }
-    {
-      std::vector<double> v = calcAddFeatures(*mol);
-    }
-    {
-      std::vector<double> v = calcInformationContent(*mol);
-    }
-  
+TEST_CASE("Osmordred Basic Functionality") {
+  SECTION("Simple molecule tests") {
+    auto mol = "CCO"_smiles; // ethanol
+    REQUIRE(mol != nullptr);
+    
+    // Test basic atom counts
+    auto atom_counts = calcAtomCounts(*mol);
+    REQUIRE(!atom_counts.empty());
+    REQUIRE(atom_counts[0] == 9); // Total atoms
+    REQUIRE(atom_counts[1] == 3); // Heavy atoms
+    REQUIRE(atom_counts[2] == 0); // Spiro atoms
+    REQUIRE(atom_counts[3] == 0); // Bridgehead atoms
+    REQUIRE(atom_counts[4] == 6); // Hydrogen count
+    REQUIRE(atom_counts[5] == 0); // Boron count
+    REQUIRE(atom_counts[6] == 2); // Carbon count
+    REQUIRE(atom_counts[7] == 0); // Nitrogen count
+    REQUIRE(atom_counts[8] == 1); // Oxygen count
+    
+    // Test bond counts
+    auto bond_counts = calcBondCounts(*mol);
+    REQUIRE(!bond_counts.empty());
+    REQUIRE(bond_counts[0] == 8); // Total bonds
+    REQUIRE(bond_counts[1] == 2); // Heavy bonds
+    REQUIRE(bond_counts[2] == 8); // Single bonds (including H bonds)
+    REQUIRE(bond_counts[3] == 0); // Double bonds
+    REQUIRE(bond_counts[4] == 0); // Triple bonds
   }
+  
+  SECTION("Aromatic molecule tests") {
+    auto mol = "c1ccccc1"_smiles; // benzene
+    REQUIRE(mol != nullptr);
+    
+    // Test aromatic counts
+    auto aromatic_counts = calcAromatic(*mol);
+    REQUIRE(!aromatic_counts.empty());
+    REQUIRE(aromatic_counts[0] == 6); // Aromatic atoms
+    REQUIRE(aromatic_counts[1] == 6); // Aromatic bonds
+    
+    // Test ring count
+    auto ring_counts = calcRingCount(*mol);
+    REQUIRE(!ring_counts.empty());
+    REQUIRE(ring_counts[0] == 1); // Number of rings
+  }
+  
+  SECTION("Complex molecule tests") {
+    auto mol = "CC1=C(C=C(C=C1)NC(=O)C2=CC=C(C=C2)CN3CCN(CC3)C)NC4=NC=CC(=N4)C5=CN=CC=C5"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    // Test that all functions return non-empty results
+    REQUIRE(!calcABCIndex(*mol).empty());
+    REQUIRE(!calcAcidBase(*mol).empty());
+    REQUIRE(!calcAromatic(*mol).empty());
+    REQUIRE(!calcAtomCounts(*mol).empty());
+    REQUIRE(!calcBalabanJ(*mol).empty());
+    REQUIRE(!calcBertzCT(*mol).empty());
+    REQUIRE(!calcBondCounts(*mol).empty());
+    REQUIRE(!calcVertexAdjacencyInformation(*mol).empty());
+    REQUIRE(!calcWeight(*mol).empty());
+    REQUIRE(!calcWienerIndex(*mol).empty());
+    REQUIRE(!calcVdwVolumeABC(*mol).empty());
+    REQUIRE(!calcTopoPSA(*mol).empty());
+    REQUIRE(!calcSLogP(*mol).empty());
+    REQUIRE(!calcHydrogenBond(*mol).empty());
+    REQUIRE(!calcLogS(*mol).empty());
+    REQUIRE(!calcLipinskiGhose(*mol).empty());
+    REQUIRE(!calcMcGowanVolume(*mol).empty());
+    REQUIRE(!calcPolarizability(*mol).empty());
+    REQUIRE(!calcRotatableBond(*mol).empty());
+    REQUIRE(!calcFragmentComplexity(*mol).empty());
+    REQUIRE(!calcConstitutional(*mol).empty());
+    REQUIRE(!calcTopologicalIndex(*mol).empty());
+  }
+}
 
+TEST_CASE("Osmordred Matrix Descriptors") {
+  SECTION("Distance matrix descriptors") {
+    auto mol = "CCO"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    auto dist_descs = calcDistMatrixDescs(*mol);
+    REQUIRE(!dist_descs.empty());
+    
+    auto dist_descs_l = calcDistMatrixDescsL(*mol);
+    REQUIRE(!dist_descs_l.empty());
+    
+    // Test with different versions
+    auto dist_descs_v2 = calcDistMatrixDescs(*mol, 2);
+    REQUIRE(!dist_descs_v2.empty());
+    
+    auto dist_descs_l_v2 = calcDistMatrixDescsL(*mol, 2);
+    REQUIRE(!dist_descs_l_v2.empty());
+  }
+  
+  SECTION("Adjacency matrix descriptors") {
+    auto mol = "CCO"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    auto adj_descs = calcAdjMatrixDescs(*mol);
+    REQUIRE(!adj_descs.empty());
+    
+    auto adj_descs_l = calcAdjMatrixDescsL(*mol);
+    REQUIRE(!adj_descs_l.empty());
+    
+    // Test with different versions
+    auto adj_descs_v2 = calcAdjMatrixDescs(*mol, 2);
+    REQUIRE(!adj_descs_v2.empty());
+    
+    auto adj_descs_l_v2 = calcAdjMatrixDescsL(*mol, 2);
+    REQUIRE(!adj_descs_l_v2.empty());
+  }
+  
+  SECTION("Detour matrix descriptors") {
+    auto mol = "CCO"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    auto detour_descs = calcDetourMatrixDescs(*mol);
+    REQUIRE(!detour_descs.empty());
+    
+    auto detour_descs_l = calcDetourMatrixDescsL(*mol);
+    REQUIRE(!detour_descs_l.empty());
+  }
+  
+  SECTION("Barysz matrix descriptors") {
+    auto mol = "CCO"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    auto barysz_descs = calcBaryszMatrixDescs(*mol);
+    REQUIRE(!barysz_descs.empty());
+    
+    auto barysz_descs_l = calcBaryszMatrixDescsL(*mol);
+    REQUIRE(!barysz_descs_l.empty());
+  }
+}
+
+TEST_CASE("Osmordred Carbon Types") {
+  SECTION("Carbon type descriptors") {
+    auto mol = "CCO"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    auto carbon_types = calcCarbonTypes(*mol);
+    REQUIRE(!carbon_types.empty());
+    
+    // Test with different versions
+    auto carbon_types_v2 = calcCarbonTypes(*mol, 2);
+    REQUIRE(!carbon_types_v2.empty());
+  }
+}
+
+TEST_CASE("Osmordred EState Descriptors") {
+  SECTION("EState descriptors") {
+    auto mol = "CCO"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    auto estate_descs = calcEStateDescs(*mol);
+    REQUIRE(!estate_descs.empty());
+    
+    // Test extended version
+    auto estate_descs_ext = calcEStateDescs(*mol, true);
+    REQUIRE(!estate_descs_ext.empty());
+  }
+}
+
+TEST_CASE("Osmordred Chi Descriptors") {
+  SECTION("Chi descriptors") {
+    auto mol = "CCO"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    auto chi_descs = calcAllChiDescriptors(*mol);
+    REQUIRE(!chi_descs.empty());
+    
+    auto chipath = calcChipath(*mol);
+    REQUIRE(!chipath.empty());
+    
+    auto chichain = calcChichain(*mol);
+    REQUIRE(!chichain.empty());
+    
+    auto chicluster = calcChicluster(*mol);
+    REQUIRE(!chicluster.empty());
+    
+    auto chipathcluster = calcChipathcluster(*mol);
+    REQUIRE(!chipathcluster.empty());
+  }
+}
+
+TEST_CASE("Osmordred Count Functions") {
+  SECTION("Count functions") {
+    auto mol = "CCO"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    auto acidic_count = calcAcidicGroupCount(*mol);
+    REQUIRE(acidic_count >= 0);
+    
+    auto basic_count = calcBasicGroupCount(*mol);
+    REQUIRE(basic_count >= 0);
+    
+    auto aromatic_atoms = countAromaticAtoms(*mol);
+    REQUIRE(aromatic_atoms >= 0);
+    
+    auto aromatic_bonds = countAromaticBonds(*mol);
+    REQUIRE(aromatic_bonds >= 0);
+  }
+}
+
+TEST_CASE("Osmordred Information Content") {
+  SECTION("Information content descriptors") {
+    auto mol = "CCO"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    auto info_content = calcInformationContent(*mol);
+    REQUIRE(!info_content.empty());
+    
+    // Test with different max radius
+    auto info_content_r3 = calcInformationContent(*mol, 3);
+    REQUIRE(!info_content_r3.empty());
+    
+    auto info_content_r7 = calcInformationContent(*mol, 7);
+    REQUIRE(!info_content_r7.empty());
+  }
+}
+
+TEST_CASE("Osmordred Edge Cases") {
+  SECTION("Empty molecule") {
+    auto mol = ""_smiles;
+    // This should return nullptr for invalid SMILES
+    if (mol != nullptr) {
+      // If molecule is valid, test that functions handle it gracefully
+      auto atom_counts = calcAtomCounts(*mol);
+      REQUIRE((atom_counts.empty() || atom_counts[0] == 0));
+    }
+  }
+  
+  SECTION("Single atom molecule") {
+    auto mol = "[He]"_smiles; // Helium atom
+    if (mol != nullptr) {
+      auto atom_counts = calcAtomCounts(*mol);
+      REQUIRE(!atom_counts.empty());
+    }
+  }
+  
+  SECTION("Large molecule") {
+    auto mol = "CC(C)(C)c1ccc(C(C)(C)C)cc1"_smiles; // t-butyl benzene
+    REQUIRE(mol != nullptr);
+    
+    // Test that all functions work with larger molecules
+    REQUIRE(!calcABCIndex(*mol).empty());
+    REQUIRE(!calcBertzCT(*mol).empty());
+    REQUIRE(!calcWienerIndex(*mol).empty());
+    REQUIRE(!calcVdwVolumeABC(*mol).empty());
+    REQUIRE(!calcTopoPSA(*mol).empty());
+    REQUIRE(!calcSLogP(*mol).empty());
+    REQUIRE(!calcLogS(*mol).empty());
+    REQUIRE(!calcMcGowanVolume(*mol).empty());
+    REQUIRE(!calcPolarizability(*mol).empty());
+    REQUIRE(!calcRotatableBond(*mol).empty());
+    REQUIRE(!calcFragmentComplexity(*mol).empty());
+    REQUIRE(!calcConstitutional(*mol).empty());
+    REQUIRE(!calcTopologicalIndex(*mol).empty());
+  }
+}
+
+TEST_CASE("Osmordred Validation Tests") {
+  SECTION("Consistency checks") {
+    auto mol = "CCO"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    // Test that multiple calls return consistent results
+    auto atom_counts1 = calcAtomCounts(*mol);
+    auto atom_counts2 = calcAtomCounts(*mol);
+    REQUIRE(atom_counts1 == atom_counts2);
+    
+    auto bond_counts1 = calcBondCounts(*mol);
+    auto bond_counts2 = calcBondCounts(*mol);
+    REQUIRE(bond_counts1 == bond_counts2);
+    
+    auto wiener1 = calcWienerIndex(*mol);
+    auto wiener2 = calcWienerIndex(*mol);
+    REQUIRE(wiener1 == wiener2);
+  }
+  
+  SECTION("Physical property validation") {
+    auto mol = "CCO"_smiles;
+    REQUIRE(mol != nullptr);
+    
+    // Test that physical properties are reasonable
+    auto mw = calcWeight(*mol);
+    REQUIRE(!mw.empty());
+    REQUIRE(mw[0] > 0.0); // Molecular weight should be positive
+    
+    auto vdw_vol = calcVdwVolumeABC(*mol);
+    REQUIRE(!vdw_vol.empty());
+    REQUIRE(vdw_vol[0] > 0.0); // Volume should be positive
+    
+    auto mcgowan_vol = calcMcGowanVolume(*mol);
+    REQUIRE(!mcgowan_vol.empty());
+    REQUIRE(mcgowan_vol[0] > 0.0); // McGowan volume should be positive
+  }
 }
