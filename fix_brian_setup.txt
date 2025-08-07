@@ -1,9 +1,0 @@
-
-import sys
-sys.path.insert(0, "/Users/guillaume-osmo/Github/rdkit")
-from rdkit import Chem
-print(Chem.MolFromSmiles("CCO"))
-
-export RDKITROOT=/Users/guillaume-osmo/Github/rdkit
-export PYTHONPATH=$RDKITROOT/lib/python3.11/site-packages:$PYTHONPATH
-export DYLD_LIBRARY_PATH=$RDKITROOT/lib:$DYLD_LIBRARY_PATH
