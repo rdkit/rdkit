@@ -255,8 +255,10 @@ void enumerate_c_cliques(
     return;
   }
   if (p.empty() && s.empty() && c.size() > 1) {
-    // None of the nodes in this clique can appear in a different one, so
-    // flag them as not to be used in future.
+    // Doing this speeds up the search enormously, because it means that
+    // we won't start a new clique with a node that has already been in a
+    // clique.  It does mean that symmetrically equivalent cliques won't
+    // be returned.
     t.insert(c.begin(), c.end());
     // std::cout << "CLIQUE : " << c.size() << " :: ";
     // for (auto cm : c) {
