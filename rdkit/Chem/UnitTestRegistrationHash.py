@@ -844,6 +844,15 @@ $$$$
     self.assertEqual(smiExt2, '|wD:10.20|')  # same atom, but "down" wedge on a different bond
     self.assertEqual(smiExt2, tautExt2)
 
+  def testGithub8654(self):
+    m1 = Chem.MolFromSmiles(
+      'O=C(N[C@H]1C[C@@H](C(=O)O)[C@@H]2C[C@H]12)C1CC(=O)N(Cc2ccccn2)C1 |&1:3,5,9,11|')
+    m2 = Chem.MolFromSmiles(
+      'N(C(=O)C1CN(CC2=CC=CC=N2)C(=O)C1)[C@@H]3[C@@]4([C@@](C4)([C@H](C(O)=O)C3)[H])[H]')
+    layers1 = RegistrationHash.GetMolLayers(m1, cxflag=False)
+    layers2 = RegistrationHash.GetMolLayers(m2, cxflag=False)
+    self.assertEqual(layers1, layers2)
+
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

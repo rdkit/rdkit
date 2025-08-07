@@ -606,6 +606,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   dp_ringInfo->reset();
 
   removeSubstanceGroupsReferencingBond(*this, idx);
+  removeBondFromGroups(bnd, d_stereo_groups);
 
   // loop over all bonds with higher indices and update their indices
   for (auto bond : bonds()) {
@@ -613,7 +614,6 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
       bond->setIdx(bond->getIdx() - 1);
     }
   }
-  bnd->setOwningMol(nullptr);
 
   auto vd1 = boost::vertex(bnd->getBeginAtomIdx(), d_graph);
   auto vd2 = boost::vertex(bnd->getEndAtomIdx(), d_graph);
@@ -733,6 +733,8 @@ void RWMol::batchRemoveBonds() {
     }
 
     removeSubstanceGroupsReferencingBond(*this, idx);
+    // Remove this bond from any stereo group
+    removeBondFromGroups(bnd, d_stereo_groups);
 
     bnd->setOwningMol(nullptr);
 

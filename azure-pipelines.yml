@@ -73,7 +73,7 @@ jobs:
 - job: Windows_VS2022_x64
   timeoutInMinutes: 120
   pool:
-    vmImage: windows-2019
+    vmImage: windows-2022
   variables:
     boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
@@ -83,7 +83,7 @@ jobs:
 - job: Windows_VS2022_x64_dll
   timeoutInMinutes: 120
   pool:
-    vmImage: windows-2019
+    vmImage: windows-2022
   variables:
     boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
@@ -131,7 +131,7 @@ jobs:
 - job: Windows_VS2022_x64_swig
   timeoutInMinutes: 90
   pool:
-    vmImage: windows-2019
+    vmImage: windows-2022
   variables:
     boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'

@@ -922,6 +922,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("addStereoAnnotation",
                      &RDKit::MolDrawOptions::addStereoAnnotation,
                      "adds R/S and E/Z to drawings. Default False.")
+      .def_readwrite("showAllCIPCodes",
+                     &RDKit::MolDrawOptions::showAllCIPCodes,
+                     "show all defined CIP codes (no hiding!). Default False.")
       .def_readwrite("addAtomIndices", &RDKit::MolDrawOptions::addAtomIndices,
                      "adds atom indices to drawings. Default False.")
       .def_readwrite("addBondIndices", &RDKit::MolDrawOptions::addBondIndices,
@@ -1452,7 +1455,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("height") = 300,
        python::arg("highlightAtoms") = python::object(),
        python::arg("kekulize") = true, python::arg("lineWidthMult") = 1,
-       python::arg("fontSize") = 12, python::arg("includeAtomCircles") = true),
+       python::arg("includeAtomCircles") = true,
+       python::arg("confId") = -1),
       docString.c_str());
   docString = "Returns ACS 1996 mode svg for a molecule";
   python::def("MolToACS1996SVG", &RDKit::molToACS1996SVG,

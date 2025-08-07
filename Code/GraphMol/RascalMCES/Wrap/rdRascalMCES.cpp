@@ -203,6 +203,11 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
           "allBestMCESs", &RDKit::RascalMCES::RascalOptions::allBestMCESs,
           "If True, reports all MCESs found of the same maximum size.  Default False means just report the first found.")
       .def_readwrite(
+          "maxBestMCESs", &RDKit::RascalMCES::RascalOptions::maxBestMCESs,
+          "Some pathological cases produce huge numbers of equivalent solutions that can crash"
+          " the program due to memory depletion.  This caps the number of such solutions to prevent"
+          " this happening.  Default=10000.")
+      .def_readwrite(
           "returnEmptyMCES", &RDKit::RascalMCES::RascalOptions::returnEmptyMCES,
           "If the estimated similarity between the 2 molecules doesn't meet the similarityThreshold, no results are returned.  If you want to know what the"
           " estimates were, set this to True, and examine the tier1Sim and tier2Sim properties of the result then returned.")

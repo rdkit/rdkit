@@ -99,5 +99,24 @@ void updateRemoveHsParametersFromJSON(MolOps::RemoveHsParameters &ps,
   }
 }
 
+void updatePNGMetadataParamsFromJSON(PNGMetadataParams &params,
+                                     const char *details_json) {
+  if (details_json && strlen(details_json)) {
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    params.includePkl = pt.get("includePkl", params.includePkl);
+    params.includeSmiles = pt.get("includeSmiles", params.includeSmiles);
+    params.includeMol = pt.get("includeMol", params.includeMol);
+    updatePropertyPickleOptionsFromJSON(params.propertyFlags, details_json);
+    updateSmilesWriteParamsFromJSON(params.smilesWriteParams, details_json);
+    unsigned int restoreBondDirs = params.restoreBondDirs;
+    updateCXSmilesFieldsFromJSON(params.cxSmilesFlags, restoreBondDirs,
+                                 details_json);
+    params.restoreBondDirs =
+        RestoreBondDirOption::_from_integral(restoreBondDirs);
+  }
+}
 }  // end namespace MinimalLib
 }  // end namespace RDKit

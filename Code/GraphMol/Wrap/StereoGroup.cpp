@@ -28,7 +28,7 @@ std::string stereoGroupClassDoc =
     "is a mix\nof diastereomers.\n";
 
 StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
-                               python::object atomIds, unsigned readId) {
+                               python::object atomIds, python::object bondIds, unsigned readId) {
   std::vector<Atom *> cppAtoms;
   std::vector<Bond *> cppBonds;
   python::stl_input_iterator<unsigned int> beg(atomIds), end;
@@ -39,6 +39,18 @@ StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
     }
     cppAtoms.push_back(mol.getAtomWithIdx(v));
     ++beg;
+  }
+  python::stl_input_iterator<unsigned int> bbeg(bondIds), bend;
+  while (bbeg != bend) {
+    unsigned int v = *bbeg;
+    if (v >= mol.getNumBonds()) {
+      throw_value_error("bond index exceeds mol.GetNumBonds()");
+    }
+    cppBonds.push_back(mol.getBondWithIdx(v));
+    ++bbeg;
+  }
+  if (cppAtoms.empty() && cppBonds.empty()) {
+    throw_value_error("New StereoGroup must contain at least one atom or bond.");
   }
   auto *sg = new StereoGroup(typ, cppAtoms, cppBonds, readId);
   return sg;
@@ -90,7 +102,8 @@ struct stereogroup_wrap {
                 "creates a StereoGroup associated with a molecule from a list "
                 "of atom Ids",
                 (python::arg("stereoGroupType"), python::arg("mol"),
-                 python::arg("atomIds"), python::arg("readId") = 0),
+                 python::arg("atomIds") = boost::python::list(), python::arg("bondIds") = boost::python::list(),
+                 python::arg("readId") = 0),
                 python::return_value_policy<
                     python::manage_new_object,
                     python::with_custodian_and_ward_postcall<0, 2>>());

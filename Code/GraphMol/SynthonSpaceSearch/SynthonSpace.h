@@ -261,7 +261,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * SMILES,synton_id,synton_role,reaction_id
    * but with the 3rd column named differently but with the same meaning.
    * The formatting of the first 2 formats has been relaxed such that any
-   * whitespace may be used as the field separator.
+   * whitespace may be used as the field separator, but a tab is tried first
+   * so that a tab-separated file may have spaces in the columns.
    *
    * Attachment points are U, Np, Pu and Am for up to 4 synthons per reaction.
    * A product is created by taking a synthon from each synton# value and

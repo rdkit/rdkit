@@ -48,6 +48,12 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
   bool allBestMCESs =
       false; /* If true, all MCESs are returned, in order of diminishing score.
                 This is likely to result in higher run times. */
+  unsigned int maxBestMCESs = 10000; /* Some pathological cases produce huge
+                                        numbers of equivalent solutions that
+                                        can crash the program due to memory
+                                        depletion.  This caps the number of
+                                        such solutions to prevent this
+                                        happening. */
   int timeout = 60;  // max run time, in seconds. -1 means no max.
   bool doEquivBondPruning =
       false; /* This might make the code run a bit faster in some
