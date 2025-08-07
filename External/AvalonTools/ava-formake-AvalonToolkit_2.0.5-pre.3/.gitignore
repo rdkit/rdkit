@@ -1,0 +1,15 @@
+/.cproject
+/.project
+build
+lib/*
+
+bin/*
+
+/Default/
+/bin/
+/target/
+/lib/
+*.*~
+*.swp
+*~
+canonizer.out

@@ -1,0 +1,13 @@
+ta test_data/checkfgs.trn
+tm
+tl 18
+tq 0
+tc test_data/checkfgs.aci
+or
+ov
+ca "test_data/checkfgs.chk" This is a comment
+cc
+cl 3
+cs
+cn 999
+l struchk.log
