@@ -28,20 +28,10 @@ bool atomsMatch(const Atom *atom1, const Atom *atom2) {
   return false;
 }
 
-// Return true if the 2 pairs of atoms are both not bonded, or both
-// bonded by a bond of the same type.
-// Returns 0 if atom11,atom12 are bonded and atom21, atom22 aren't,
-// or if atom11 == atom12 or atom21 == atom22.
-// Returns 1 if atom11, atom12 are bonded by the same type as atom21, 22
-// (for the cEdges) or 2 if they aren't (for the dEdges).
-unsigned int bondsMatch(const ROMol &mol1, unsigned int atom11,
-                        unsigned int atom12, const ROMol &mol2,
-                        unsigned int atom21, unsigned int atom22) {
-  if (atom11 == atom12 || atom21 == atom22) {
-    return 0;
-  }
-  auto bond1 = mol1.getBondBetweenAtoms(atom11, atom12);
-  auto bond2 = mol2.getBondBetweenAtoms(atom21, atom22);
+// Returns 0 if one bond is nullptr.
+// Returns 1 if they are the same type (for the cEdges) or
+// 2 if they aren't or are both nullptr (for the dEdges).
+unsigned int bondsMatch(const Bond *bond1, const Bond *bond2) {
   if (!bond1 && !bond2) {
     return 2;
   }
@@ -73,14 +63,29 @@ void buildCorrespondenceGraph(
     std::vector<std::unordered_set<unsigned int>> &corrGraph,
     std::vector<std::unordered_set<unsigned int>> &cEdges,
     std::vector<std::unordered_set<unsigned int>> &dEdges) {
-#if 0
-  const auto distMat1 = MolOps::getDistanceMat(mol1);
-  const auto distMat2 = MolOps::getDistanceMat(mol2);
-#endif
+  std::vector<std::vector<const Bond *>> bond1s(
+      mol1.getNumAtoms(),
+      std::vector<const Bond *>(mol1.getNumAtoms(), nullptr));
+  for (const auto b : mol1.bonds()) {
+    bond1s[b->getBeginAtomIdx()][b->getEndAtomIdx()] = b;
+    bond1s[b->getEndAtomIdx()][b->getBeginAtomIdx()] = b;
+  }
+  std::vector<std::vector<const Bond *>> bond2s(
+      mol2.getNumAtoms(),
+      std::vector<const Bond *>(mol2.getNumAtoms(), nullptr));
+  for (const auto b : mol2.bonds()) {
+    bond2s[b->getBeginAtomIdx()][b->getEndAtomIdx()] = b;
+    bond2s[b->getEndAtomIdx()][b->getBeginAtomIdx()] = b;
+  }
   for (size_t i = 0U; i < atomPairs.size() - 1; ++i) {
     for (size_t j = i + 1; j < atomPairs.size(); ++j) {
-      auto bm = bondsMatch(mol1, atomPairs[i].first, atomPairs[j].first, mol2,
-                           atomPairs[i].second, atomPairs[j].second);
+      if (atomPairs[i].first == atomPairs[j].first ||
+          atomPairs[i].second == atomPairs[j].second) {
+        continue;
+      }
+      auto bond1 = bond1s[atomPairs[i].first][atomPairs[j].first];
+      auto bond2 = bond2s[atomPairs[i].second][atomPairs[j].second];
+      auto bm = bondsMatch(bond1, bond2);
       if (!bm) {
         continue;
       }
@@ -245,6 +250,10 @@ void enumerate_c_cliques(
   }
   std::cout << std::endl;
 #endif
+  if (!maxCliques.empty() && c.size() + corrGraph.size() - p.size() - s.size() <
+                                 maxCliques.front().size()) {
+    return;
+  }
   if (p.empty() && s.empty() && c.size() > 1) {
     // None of the nodes in this clique can appear in a different one, so
     // flag them as not to be used in future.
