@@ -338,6 +338,139 @@ void enumerate_c_cliques(
   }
 }
 
+void enumerate_z_cliques(
+    std::vector<unsigned int> &c, const std::unordered_set<unsigned int> &p,
+    const std::unordered_set<unsigned int> &d,
+    std::unordered_set<unsigned int> &s, std::unordered_set<unsigned int> &t,
+    const std::vector<std::unordered_set<unsigned int>> &corrGraph,
+    const std::vector<std::unordered_set<unsigned int>> &cEdges,
+    const std::vector<std::unordered_set<unsigned int>> &dEdges,
+    std::vector<std::vector<unsigned int>> &maxCliques) {
+#if 0
+  std::cout << "c ";
+  for (auto cm : c) {
+    std::cout << cm << " ";
+  }
+  std::cout << ":: p ";
+  for (auto pm : p) {
+    std::cout << pm << " ";
+  }
+  std::cout << ":: d ";
+  for (auto pm : d) {
+    std::cout << pm << " ";
+  }
+  std::cout << ":: s ";
+  for (auto pm : s) {
+    std::cout << pm << " ";
+  }
+  std::cout << ":: t ";
+  for (auto pm : t) {
+    std::cout << pm << " ";
+  }
+  std::cout << std::endl;
+#endif
+  if (p.empty()) {
+    if (s.empty() && c.size() > 1) {
+      // Doing this speeds up the search enormously, because it means that
+      // we won't start a new clique with a node that has already been in a
+      // clique.  It does mean that symmetrically equivalent cliques won't
+      // be returned.
+      t.insert(c.begin(), c.end());
+      // std::cout << "CLIQUE : " << c.size() << " :: ";
+      // for (auto cm : c) {
+      //   std::cout << cm << " ";
+      // }
+      // std::cout << std::endl;
+      if (maxCliques.empty()) {
+        // std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
+        maxCliques.push_back({c.begin(), c.end()});
+      } else {
+        if (c.size() > maxCliques.front().size()) {
+          maxCliques.clear();
+        } else if (c.size() < maxCliques.front().size()) {
+          return;
+        }
+        // std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
+        // std::cout << std::endl;
+        maxCliques.push_back(c);
+      }
+    }
+    return;
+  }
+  auto ut = *max_element(p.begin(), p.end(),
+                         [&](const auto &a, const auto &b) -> bool {
+                           return corrGraph[a].size() < corrGraph[b].size();
+                         });
+  for (auto ui : p) {
+    // if ui is adjacent to ut
+    // OR if ui is connected via a c-path to a vertex in D that is
+    // not adjacent to ut
+    bool ok1 = false;
+    bool ok2 = !corrGraph[ui].contains(ut);
+    if (!ok2) {
+      for (auto de : d) {
+        if (cEdges[ui].contains(de) && !corrGraph[de].contains(ut)) {
+          ok1 = true;
+          break;
+        }
+      }
+    }
+    if (ok2 || ok1) {
+      // Form a new P which is the current p minus this ui.
+      std::unordered_set<unsigned int> newP(p);
+      newP.erase(ui);
+      // newD and newS start out as copies of the incoming.
+      std::unordered_set<unsigned int> newD(d);
+      std::unordered_set<unsigned int> newS(s);
+      // n is the set of all neighbours of u.
+      const auto &n = corrGraph[ui];
+      for (auto v : d) {
+        if (p.contains(v)) {
+          newP.insert(v);
+        } else if (d.contains(v)) {
+          // can v be added to P?
+          if (cEdges[ui].contains(v)) {
+            if (t.contains(v)) {
+              newS.insert(v);
+            } else {
+              newP.insert(v);
+            }
+            newD.erase(v);
+          } else if (s.contains(v)) {
+            newS.erase(v);
+          }
+        }
+      }
+      // the new clique is the current clique plus u.
+      std::vector<unsigned int> newC(c);
+      newC.push_back(ui);
+
+      // We now recurse by using only the members of newP, newD and newS
+      // that are neighbours of u
+      std::unordered_set<unsigned int> onwardP;
+      for (auto pe : newP) {
+        if (n.contains(pe)) {
+          onwardP.insert(pe);
+        }
+      }
+      std::unordered_set<unsigned int> onwardD;
+      for (auto de : newD) {
+        if (n.contains(de)) {
+          onwardD.insert(de);
+        }
+      }
+      std::unordered_set<unsigned int> onwardS;
+      for (auto se : newS) {
+        if (n.contains(se)) {
+          onwardS.insert(se);
+        }
+      }
+      enumerate_z_cliques(newC, onwardP, onwardD, onwardS, t, corrGraph, cEdges,
+                          dEdges, maxCliques);
+      s.insert(ui);
+    }
+  }
+}
 }  // namespace
 
 void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
@@ -416,7 +549,7 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
     }
     clique.clear();
     clique.push_back(u);
-    enumerate_c_cliques(clique, p, d, s, t, corrGraph, cEdges, dEdges,
+    enumerate_z_cliques(clique, p, d, s, t, corrGraph, cEdges, dEdges,
                         rawMaxCliques);
     t.insert(u);
   }
