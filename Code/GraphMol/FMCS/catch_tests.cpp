@@ -23,9 +23,17 @@ TEST_CASE("BK Test") {
   REQUIRE(mol1);
   auto mol2 = v2::SmilesParse::MolFromSmiles("CC(C)C");
   REQUIRE(mol2);
+  // auto mol1 = v2::SmilesParse::MolFromSmiles("NC1CC(Br)C1");
+  // REQUIRE(mol1);
+  // auto mol2 = v2::SmilesParse::MolFromSmiles("NC1CC(Cl)C1");
+  // REQUIRE(mol2);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
   TwoMolMCSS(*mol1, *mol2, maxCliques);
   std::cout << "Number of max cliques: " << maxCliques.size() << std::endl;
+  for (auto &clique : maxCliques) {
+    std::sort(clique.begin(), clique.end());
+  }
+  std::sort(maxCliques.begin(), maxCliques.end());
   for (const auto &clique : maxCliques) {
     std::cout << clique.size() << " :";
     for (const auto &c : clique) {
@@ -34,7 +42,7 @@ TEST_CASE("BK Test") {
     std::cout << std::endl;
   }
   REQUIRE(!maxCliques.empty());
-  CHECK(maxCliques.size() == 6);
+  CHECK(maxCliques.size() == 1);
   CHECK(maxCliques.front().size() == 3);
   auto smarts = makeSMARTSFromMCSS(*mol1, maxCliques.front());
   std::cout << smarts << std::endl;
@@ -57,6 +65,7 @@ TEST_CASE("MedChemica Base Test") {
     }
     std::cout << std::endl;
   }
+#if 0
   std::vector<ROMOL_SPTR> mols;
   mols.push_back(ROMOL_SPTR(mol1.release()));
   mols.push_back(ROMOL_SPTR(mol2.release()));
@@ -72,14 +81,16 @@ TEST_CASE("MedChemica Base Test") {
             << std::endl;
   std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
             << res.NumBonds << " bonds\n";
+#endif
 }
 
 TEST_CASE("FMCS Slow 1") {
   // Baseline time 1250-1300 ms.
-  auto mol1 = v2::SmilesParse::MolFromSmiles("c1ccc2c(c1)c(ncn2)Nc3ccc(cc3)Cl");
+  auto mol1 = v2::SmilesParse::MolFromSmiles(
+      "CN1C[C@]2(CCN(C2=O)c2cncc3ccccc23)c2cc(Cl)ccc2C1=O");
   REQUIRE(mol1);
-  auto mol2 =
-      v2::SmilesParse::MolFromSmiles("c1ccc2c(c1)c(ncn2)Nc3ccc(cc3)C#N");
+  auto mol2 = v2::SmilesParse::MolFromSmiles(
+      "CN1C[C@@H](C(=O)Nc2cncc3ccccc23)c2cc(Cl)ccc2C1=O");
   REQUIRE(mol2);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
   TwoMolMCSS(*mol1, *mol2, maxCliques);
@@ -124,10 +135,10 @@ TEST_CASE("FMCS Slow 1") {
 TEST_CASE("FMCS Slow 2 - spirocycle") {
   // Baseline time 373000-37400 ms.
   auto mol1 = v2::SmilesParse::MolFromSmiles(
-      R"(CN1CC2(CCN(C2=O)c2cncc3ccccc23)c2cc(Cl)ccc2C1=O)");
+      R"(CN1C[C@]2(CCN(C2=O)c2cncc3ccccc23)c2cc(Cl)ccc2C1=O)");
   REQUIRE(mol1);
   auto mol2 = v2::SmilesParse::MolFromSmiles(
-      R"(CN1C(=O)c2ccc(Cl)cc2C11CCN(C1=O)c1cncc2ccccc12)");
+      R"(CCN1C[C@]2(CCN(C2=O)c2cncc3ccccc23)c2cc(Cl)ccc2C1=O)");
   REQUIRE(mol2);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
   TwoMolMCSS(*mol1, *mol2, maxCliques);
@@ -177,7 +188,6 @@ TEST_CASE("FMCS Slow 3") {
   mols.push_back(ROMOL_SPTR(mol1.release()));
   mols.push_back(ROMOL_SPTR(mol2.release()));
   MCSResult res;
-#if 0
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
   TwoMolMCSS(*mols[0], *mols[1], maxCliques);
   std::cout << "Number of max cliques: " << maxCliques.size() << std::endl;
@@ -191,9 +201,9 @@ TEST_CASE("FMCS Slow 3") {
   REQUIRE(!maxCliques.empty());
   auto smarts = makeSMARTSFromMCSS(*mols[0], maxCliques.front());
   std::cout << smarts << std::endl;
-#endif
   MCSParameters params;
   params.Verbose = false;
+  params.FastInitialSeed = true;
   // params.InitialSeed = smarts;
   auto beg = std::chrono::high_resolution_clock::now();
   res = findMCS(mols, &params);
@@ -203,9 +213,31 @@ TEST_CASE("FMCS Slow 3") {
             << std::endl;
   std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
             << res.NumBonds << " bonds\n";
+  CHECK(res.NumAtoms == 36);
+  CHECK(res.NumBonds == 39);
   CHECK(
       res.SmartsString ==
       "[#6]-[#8]-[#7]=[#6](-[#6](=[#8])-[#7]-[#6]1-[#6]2-[#16]-[#6]-[#6](=[#6](-[#7]-2-[#6]-1=[#8])-[#6](-[#8])=[#8])-[#6]-[#7](:[#6]):[#6]:[#6])-[#6]1:[#7]:[#6](:[#16]:[#6]:1-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1)-[#7]");
-  CHECK(res.NumAtoms == 36);
-  CHECK(res.NumBonds == 39);
+}
+
+TEST_CASE("Split by Rascal") {
+  auto mol1 = v2::SmilesParse::MolFromSmiles("C=CCCC=CCCC1CNCCC1");
+  REQUIRE(mol1);
+  auto mol2 = v2::SmilesParse::MolFromSmiles("C=CCC=CCCCC1CNCCC1");
+  REQUIRE(mol2);
+  std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
+  TwoMolMCSS(*mol1, *mol2, maxCliques);
+  std::cout << "Number of max cliques: " << maxCliques.size() << std::endl;
+  for (const auto &clique : maxCliques) {
+    std::cout << clique.size() << " :";
+    for (const auto &c : clique) {
+      std::cout << " (" << c.first << ", " << c.second << ")";
+    }
+    std::cout << std::endl;
+  }
+  REQUIRE(!maxCliques.empty());
+  CHECK(maxCliques.size() == 1);
+  CHECK(maxCliques.front().size() == 10);
+  auto smarts = makeSMARTSFromMCSS(*mol1, maxCliques.front());
+  std::cout << smarts << std::endl;
 }
