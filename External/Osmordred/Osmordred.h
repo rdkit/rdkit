@@ -11,7 +11,7 @@ namespace RDKit {
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcABCIndex(const ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<int> calcAcidBase(const ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<int> calcAromatic(const ROMol& mol);
-RDKIT_OSMORDRED_EXPORT std::vector<int> calcAtomCounts(const ROMol& mol, int version = 1);
+RDKIT_OSMORDRED_EXPORT std::vector<int> calcAtomCounts(const ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcBalabanJ(const ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcBertzCT(const RDKit::ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<int> calcBondCounts(const RDKit::ROMol& mol);
@@ -32,11 +32,11 @@ RDKIT_OSMORDRED_EXPORT std::vector<double> calcConstitutional(const ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcTopologicalIndex(const RDKit::ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcDetourMatrixDescs(const RDKit::ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcDetourMatrixDescsL(const RDKit::ROMol& mol);
-RDKIT_OSMORDRED_EXPORT std::vector<double> calcDistMatrixDescs(const RDKit::ROMol& mol, int version=1);
-RDKIT_OSMORDRED_EXPORT std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol, int version=1);
-RDKIT_OSMORDRED_EXPORT std::vector<double> calcAdjMatrixDescs(const RDKit::ROMol& mol, int version =1);
-RDKIT_OSMORDRED_EXPORT std::vector<double> calcAdjMatrixDescsL(const RDKit::ROMol& mol, int version=1);
-RDKIT_OSMORDRED_EXPORT std::vector<double> calcCarbonTypes(const RDKit::ROMol& mol, int version =1);
+RDKIT_OSMORDRED_EXPORT std::vector<double> calcDistMatrixDescs(const RDKit::ROMol& mol);
+RDKIT_OSMORDRED_EXPORT std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol);
+RDKIT_OSMORDRED_EXPORT std::vector<double> calcAdjMatrixDescs(const RDKit::ROMol& mol);
+RDKIT_OSMORDRED_EXPORT std::vector<double> calcAdjMatrixDescsL(const RDKit::ROMol& mol);
+RDKIT_OSMORDRED_EXPORT std::vector<double> calcCarbonTypes(const RDKit::ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcEccentricConnectivityIndex(const ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcBaryszMatrixDescsL(const RDKit::ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcBaryszMatrixDescs(const RDKit::ROMol& mol);
@@ -104,7 +104,7 @@ RDKIT_OSMORDRED_EXPORT std::vector<double> calcAddFeatures(const RDKit::ROMol& m
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcInformationContent(const RDKit::ROMol& mol, int maxradius=5); // Inspired by 1984 Basak paper
 
 // Aggregated fast path that calls all Osmordred descriptors in C++
-RDKIT_OSMORDRED_EXPORT std::vector<double> calcAllDescriptorsFast(const RDKit::ROMol& mol, int version=2);
+RDKIT_OSMORDRED_EXPORT std::vector<double> calcAllDescriptorsFast(const RDKit::ROMol& mol);
 
 } // namespace RDKit
 

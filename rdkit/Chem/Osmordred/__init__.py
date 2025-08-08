@@ -31,14 +31,13 @@ from tqdm import tqdm
 from typing import List, Optional, Tuple, Union
 import warnings
 
-def CalcOsmordred(smiles: str, version: int = 2, names: bool = False, 
+def CalcOsmordred(smiles: str,  names: bool = False,
                   mynames: Optional[List[str]] = None) -> Union[np.ndarray, Tuple[np.ndarray, List[str]]]:
     """
     Calculate Osmordred descriptors for a single SMILES string.
     
     Args:
         smiles (str): SMILES string of the molecule
-        version (int): Version of descriptors to use (1 or 2, default: 2)
         names (bool): Whether to return descriptor names along with values
         mynames (List[str], optional): Custom descriptor names list
         
@@ -47,14 +46,8 @@ def CalcOsmordred(smiles: str, version: int = 2, names: bool = False,
             - If names=False: numpy array of descriptor values
             - If names=True: tuple of (descriptor_values, descriptor_names)
     """
-    if version == 1:
-        # Original version from Mordred
-        v = 1
-        doExEstate = False
-    else:
-        # Extended descriptors with more features and fixed InformationContent in cpp
-        v = 2
-        doExEstate = True
+
+    doExEstate = True
 
     from rdkit import Chem
     mol = Chem.MolFromSmiles(smiles)
@@ -68,9 +61,9 @@ def CalcOsmordred(smiles: str, version: int = 2, names: bool = False,
     descriptors = [
         ("ABCIndex", rdOsmordred.CalcABCIndex),
         ("AcidBase", rdOsmordred.CalcAcidBase),
-        ("AdjacencyMatrix", lambda mol: rdOsmordred.CalcAdjacencyMatrix(mol, v)),
+        ("AdjacencyMatrix", lambda mol: rdOsmordred.CalcAdjacencyMatrix(mol)),
         ("Aromatic", rdOsmordred.CalcAromatic),
-        ("AtomCount", lambda mol: rdOsmordred.CalcAtomCount(mol, v)),
+        ("AtomCount", lambda mol: rdOsmordred.CalcAtomCount(mol)),
         ("Autocorrelation", rdOsmordred.CalcAutocorrelation),
         ("BCUT", rdOsmordred.CalcBCUT),
         ("BalabanJ", rdOsmordred.CalcBalabanJ),
@@ -78,11 +71,11 @@ def CalcOsmordred(smiles: str, version: int = 2, names: bool = False,
         ("BertzCT", rdOsmordred.CalcBertzCT),
         ("BondCount", rdOsmordred.CalcBondCount),
         ("RNCGRPCG", rdOsmordred.CalcRNCGRPCG),
-        ("CarbonTypes", lambda mol: rdOsmordred.CalcCarbonTypes(mol, v)),
+        ("CarbonTypes", lambda mol: rdOsmordred.CalcCarbonTypes(mol)),
         ("Chi", rdOsmordred.CalcChi),
         ("Constitutional", rdOsmordred.CalcConstitutional),
         ("DetourMatrix", rdOsmordred.CalcDetourMatrix),
-        ("DistanceMatrix", lambda mol: rdOsmordred.CalcDistanceMatrix(mol, v)),
+        ("DistanceMatrix", lambda mol: rdOsmordred.CalcDistanceMatrix(mol)),
         ("EState", lambda mol: rdOsmordred.CalcEState(mol, doExEstate)),
         ("EccentricConnectivityIndex", rdOsmordred.CalcEccentricConnectivityIndex),
         ("ExtendedTopochemicalAtom", rdOsmordred.CalcExtendedTopochemicalAtom),
@@ -91,17 +84,9 @@ def CalcOsmordred(smiles: str, version: int = 2, names: bool = False,
         ("HydrogenBond", rdOsmordred.CalcHydrogenBond),
     ]
 
-    if version == 1:
-        # For version 1, use a simple information content calculation
-        def CalcIC(mol):
-            try:
-                return rdOsmordred.CalcInformationContent(mol, 3)
-            except:
-                return np.array([np.nan])
-        descriptors.append(("InformationContentv1", CalcIC))
-    else:
-        descriptors.append(("LogS", rdOsmordred.CalcLogS))
-        descriptors.append(("InformationContentv2", lambda mol: rdOsmordred.CalcInformationContent(mol, 5)))
+    # Always include LogS and InformationContent with maxradius=5
+    descriptors.append(("LogS", rdOsmordred.CalcLogS))
+    descriptors.append(("InformationContentv2", lambda mol: rdOsmordred.CalcInformationContent(mol, 5)))
 
     additional_descriptors = [
         ("KappaShapeIndex", rdOsmordred.CalcKappaShapeIndex),
@@ -128,26 +113,25 @@ def CalcOsmordred(smiles: str, version: int = 2, names: bool = False,
 
     descriptors.extend(additional_descriptors)
     
-    # Extended descriptors for version > 1
-    if version > 1:
-        extended_descriptors = [
-            ("Pol", rdOsmordred.CalcPol),
-            ("MR", rdOsmordred.CalcMR),
-            ("Flexibility", rdOsmordred.CalcFlexibility),
-            ("Schultz", rdOsmordred.CalcSchultz),
-            ("AlphaKappaShapeIndex", rdOsmordred.CalcAlphaKappaShapeIndex),
-            ("HEState", rdOsmordred.CalcHEState),
-            ("BEState", rdOsmordred.CalcBEState),
-            ("Abrahams", rdOsmordred.CalcAbrahams),
-            ("ANMat", rdOsmordred.CalcANMat),
-            ("ASMat", rdOsmordred.CalcASMat),
-            ("AZMat", rdOsmordred.CalcAZMat),
-            ("DSMat", rdOsmordred.CalcDSMat),
-            ("DN2Mat", rdOsmordred.CalcDN2Mat),
-            ("Frags", rdOsmordred.CalcFrags),
-            ("AddFeatures", rdOsmordred.CalcAddFeatures),
-        ]
-        descriptors.extend(extended_descriptors)
+    # Always include extended descriptors
+    extended_descriptors = [
+        ("Pol", rdOsmordred.CalcPol),
+        ("MR", rdOsmordred.CalcMR),
+        ("Flexibility", rdOsmordred.CalcFlexibility),
+        ("Schultz", rdOsmordred.CalcSchultz),
+        ("AlphaKappaShapeIndex", rdOsmordred.CalcAlphaKappaShapeIndex),
+        ("HEState", rdOsmordred.CalcHEState),
+        ("BEState", rdOsmordred.CalcBEState),
+        ("Abrahams", rdOsmordred.CalcAbrahams),
+        ("ANMat", rdOsmordred.CalcANMat),
+        ("ASMat", rdOsmordred.CalcASMat),
+        ("AZMat", rdOsmordred.CalcAZMat),
+        ("DSMat", rdOsmordred.CalcDSMat),
+        ("DN2Mat", rdOsmordred.CalcDN2Mat),
+        ("Frags", rdOsmordred.CalcFrags),
+        ("AddFeatures", rdOsmordred.CalcAddFeatures),
+    ]
+    descriptors.extend(extended_descriptors)
 
     for name, func in descriptors:
         try:
@@ -172,8 +156,8 @@ def CalcOsmordred(smiles: str, version: int = 2, names: bool = False,
     return np.concatenate(results)
 
 
-def Calculate(smiles_list: List[str], ids: Optional[List] = None, n_jobs: int = 4, 
-              version: int = 2, names: bool = False, mynames: Optional[List[str]] = None) -> pd.DataFrame:
+def Calculate(smiles_list: List[str], ids: Optional[List] = None, n_jobs: int = 4,
+     names: bool = False, mynames: Optional[List[str]] = None) -> pd.DataFrame:
     """
     Compute molecular descriptors for a list of SMILES while keeping track of IDs.
 
@@ -181,7 +165,6 @@ def Calculate(smiles_list: List[str], ids: Optional[List] = None, n_jobs: int = 
         smiles_list (List[str]): List of SMILES strings.
         ids (List, optional): List of unique identifiers (same length as smiles_list).
         n_jobs (int, optional): Number of parallel processes (default: 4).
-        version (int, optional): Version parameter for CalcOsmordred (default: 2).
         names (bool, optional): Whether to include names.
         mynames (List[str], optional): Custom names list.
 
@@ -199,7 +182,7 @@ def Calculate(smiles_list: List[str], ids: Optional[List] = None, n_jobs: int = 
     with ProcessPoolExecutor(max_workers=n_jobs) as executor:
         # Submit tasks with their indices
         futures = {
-            executor.submit(CalcOsmordred, smi, version, names=False, mynames=mynames): (smi, mol_id) 
+            executor.submit(CalcOsmordred, smi, names=False, mynames=mynames): (smi, mol_id)
             for smi, mol_id in zip(smiles_list, ids)
         }
         
@@ -229,7 +212,7 @@ def Calculate(smiles_list: List[str], ids: Optional[List] = None, n_jobs: int = 
     return df_results
 
 
-def GetDescriptorNames(version: int = 2) -> List[str]:
+def GetDescriptorNames() -> List[str]:
     """
     Get the list of descriptor names for a given version.
     
@@ -239,12 +222,13 @@ def GetDescriptorNames(version: int = 2) -> List[str]:
     Returns:
         List[str]: List of descriptor names
     """
-    _, names = CalcOsmordred('CCO', version=version, names=True)
+    # version is ignored; always return v2 set
+    _, names = CalcOsmordred('CCO', names=True)
     return names
 
 
 # Convenience function for single molecule processing
-def CalcOsmordredFromMol(mol, version: int = 2, names: bool = False, 
+def CalcOsmordredFromMol(mol,  names: bool = False,
                          mynames: Optional[List[str]] = None) -> Union[np.ndarray, Tuple[np.ndarray, List[str]]]:
     """
     Calculate Osmordred descriptors from an RDKit molecule object.
@@ -262,4 +246,4 @@ def CalcOsmordredFromMol(mol, version: int = 2, names: bool = False,
     """
     from rdkit import Chem
     smiles = Chem.MolToSmiles(mol)
-    return CalcOsmordred(smiles, version, names, mynames)
+    return CalcOsmordred(smiles, names, mynames)

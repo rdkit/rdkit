@@ -370,7 +370,7 @@ std::vector<double> calcAddFeatures(const RDKit::ROMol& mol) {
     };
 
     // Function to calculate the atom count descriptor
-    std::vector<int> calcAtomCounts(const ROMol& mol, int version) {
+    std::vector<int> calcAtomCounts(const ROMol& mol) {
         std::unique_ptr<RDKit::ROMol> hmol(RDKit::MolOps::addHs(mol));
 
         // Initialize the counts for each atom type
@@ -414,13 +414,8 @@ std::vector<double> calcAddFeatures(const RDKit::ROMol& mol) {
         }
 
         int nX = nF+nCl+nBr+nI;
-        if (version >1) {
-            int nHetero = RDKit::Descriptors::calcNumHeteroatoms(mol);
-            return  {nAtoms,nHeavy,nSpiro,nBrigde,nHetero, nH,nB,nC,nN,nO,nS,nP,nF,nCl,nBr,nI,nX };
-        }
-        else   {
-            return {nAtoms,nHeavy,nSpiro,nBrigde, nH,nB,nC,nN,nO,nS,nP,nF,nCl,nBr,nI,nX };
-        }
+        int nHetero = RDKit::Descriptors::calcNumHeteroatoms(mol);
+        return  {nAtoms,nHeavy,nSpiro,nBrigde,nHetero, nH,nB,nC,nN,nO,nS,nP,nF,nCl,nBr,nI,nX };
     }
 
     // return vector sum over rows
@@ -833,11 +828,9 @@ std::vector<double> calcAddFeatures(const RDKit::ROMol& mol) {
 
     // CarbonTypes there is an issue in the code not sure why this is not the same as in python code!
     // TODO: need debug
-    std::vector<double> calcCarbonTypes(const RDKit::ROMol &mol, int version) {
-        int slots = 10;
-        if (version>1) {
-            slots = 11;
-        };
+    std::vector<double> calcCarbonTypes(const RDKit::ROMol &mol) {
+        int slots = 11;
+        
         std::vector<double> carbonTypeCounts(slots, 0.);  // Store counts for C1SP1, C2SP1, C1SP2, ..., C4SP3
         unsigned int nSP3 = 0;  // Count of SP3 hybridized carbons
         unsigned int nSP2 = 0;  // Count of SP2 hybridized carbons
@@ -902,13 +895,9 @@ std::vector<double> calcAddFeatures(const RDKit::ROMol& mol) {
              carbonTypeCounts[9] = static_cast<double>(nSP3) / (nSP2 + nSP3);
         }
 
-        if (version>1) {
-            double fcps3 = RDKit::Descriptors::calcFractionCSP3(*kekulizedMol);
-            carbonTypeCounts[10] = fcps3;
-            return carbonTypeCounts;
-        } else {
-            return carbonTypeCounts;  // Return the array of carbon type counts
-        }
+        double fcps3 = RDKit::Descriptors::calcFractionCSP3(*kekulizedMol);
+        carbonTypeCounts[10] = fcps3;
+        return carbonTypeCounts;
     }
 
 
@@ -4582,7 +4571,7 @@ std::vector<double> calcDetourMatrixDescsL(const RDKit::ROMol& mol) {
  //// AdjacencyMatrix
 
 
-    std::vector<double> calcAdjMatrixDescs(const RDKit::ROMol& mol, int version) {
+    std::vector<double> calcAdjMatrixDescs(const RDKit::ROMol& mol) {
         Eigen::MatrixXd AdjMat = calculateAdjacencyMatrix( mol);
 
         int numAtoms = mol.getNumAtoms();
@@ -4622,17 +4611,11 @@ std::vector<double> calcDetourMatrixDescsL(const RDKit::ROMol& mol) {
         double vr1 = VR1(AdjMat, bonds, eigenvalues, eigenvectors);
         double vr2 = VR2(AdjMat, bonds, numAtoms, eigenvalues, eigenvectors) ;
         double vr3 = VR3(AdjMat, bonds, numAtoms, eigenvalues, eigenvectors);
-        if (version>1) {
-                return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE,  ve1, ve2, ve3, vr1, vr2, vr3};
-        } else {
-            double sm1  = SM1(AdjMat);
-                return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE, sm1,  ve1, ve2, ve3, vr1, vr2, vr3};
-
-        }
+        return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE,  ve1, ve2, ve3, vr1, vr2, vr3};
 
     }
 
-    std::vector<double> calcAdjMatrixDescsL(const RDKit::ROMol& mol, int version) {
+    std::vector<double> calcAdjMatrixDescsL(const RDKit::ROMol& mol) {
         auto AdjMat = calculateAdjacencyMatrixL(mol);  // Use LAPACK-compatible adjacency matrix
 
         int numAtoms = mol.getNumAtoms();
@@ -4669,18 +4652,13 @@ std::vector<double> calcDetourMatrixDescsL(const RDKit::ROMol& mol) {
         double vr1 = VR1L(eigenvectors, bonds);
         double vr2 = VR2L(vr1, numAtoms);
         double vr3 = VR3L(vr1, numAtoms);
-        if (version>1) {
-            return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE,  ve1, ve2, ve3, vr1, vr2, vr3};
-        } else {
-            double sm1 = SM1L(AdjMat);
-            return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE, sm1, ve1, ve2, ve3, vr1, vr2, vr3}; // present in version 1
-        }
+        return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE,  ve1, ve2, ve3, vr1, vr2, vr3};
     }
 
 
 
 
-    std::vector<double> calcDistMatrixDescs(const RDKit::ROMol& mol, int version) {
+    std::vector<double> calcDistMatrixDescs(const RDKit::ROMol& mol) {
         Eigen::MatrixXd DMat = calculateDistanceMatrix( mol);
 
         int numAtoms = mol.getNumAtoms();
@@ -4715,13 +4693,8 @@ std::vector<double> calcDetourMatrixDescsL(const RDKit::ROMol& mol) {
         double vr2 = VR2(DMat, bonds, numAtoms, eigenvalues, eigenvectors) ;
         double vr3 = VR3(DMat, bonds, numAtoms, eigenvalues, eigenvectors);
 
-        if (version==1) {
-            return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE,  ve1, ve2, ve3, vr1, vr2, vr3};
-        }   else {
-            double sm1 = SM1(DMat);
-            return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE, sm1, ve1, ve2, ve3, vr1, vr2, vr3};
-
-        }
+        double sm1 = SM1(DMat);
+        return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE, sm1, ve1, ve2, ve3, vr1, vr2, vr3};
 
     }
 
@@ -4742,7 +4715,7 @@ std::vector<std::vector<double>> calculateDistanceMatrixL(const RDKit::ROMol& mo
     return distMatrix;
 }
 
-std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol, int version) {
+std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol) {
     auto DMat = calculateDistanceMatrixL(mol);  // Use LAPACK-compatible distance matrix
 
     int numAtoms = mol.getNumAtoms();
@@ -4771,13 +4744,7 @@ std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol, int version) {
     double vr1 = VR1L(eigenvectors, bonds);
     double vr2 = VR2L(vr1, numAtoms);
     double vr3 = VR3L(vr1, numAtoms);
-    if (version>1) {
-        return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE, ve1, ve2, ve3, vr1, vr2, vr3};
-    } else {
-        double sm1 = SM1L(DMat);
-        return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE, sm1, ve1, ve2, ve3, vr1, vr2, vr3};
-
-    }
+    return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE, ve1, ve2, ve3, vr1, vr2, vr3};
 }
 
 
@@ -5683,16 +5650,16 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
     }
 
     // Fast aggregate: compute all descriptors in C++ in one pass
-    std::vector<double> calcAllDescriptorsFast(const RDKit::ROMol& mol, int version) {
+    std::vector<double> calcAllDescriptorsFast(const RDKit::ROMol& mol) {
         // Silence RDKit warnings locally
         RDLog::LogStateSetter guard;
 
         std::vector<double> out;
         out.reserve(4200); // approximate capacity to avoid many reallocations
 
-        // Use same version behavior as python CalcOsmordred
-        const int v = (version == 1 ? 1 : 2);
-        const bool doExEstate = (v == 2);
+        // Always compute the full v2 set; keep signature for ABI stability
+        const int v = 2;
+        const bool doExEstate = true;
 
         // Precompute/cached intermediates where safe
         // Note: We do not change algorithms; just reuse intermediates across calls
@@ -5715,9 +5682,9 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
 
         append(calcABCIndex(mol));
         appendInt(calcAcidBase(mol));
-        append(calcAdjMatrixDescsL(mol, v));
+        append(calcAdjMatrixDescsL(mol));
         appendInt(calcAromatic(mol));
-        appendInt(calcAtomCounts(mol, v));
+        appendInt(calcAtomCounts(mol));
         append(calcAutoCorrelation(mol));
         append(calcBCUTs(mol));
         append(calcBalabanJ(mol));
@@ -5726,23 +5693,19 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
         append(calcBertzCT(mol));
         appendInt(calcBondCounts(mol));
         append(calcRNCG_RPCG(mol));
-        append(calcCarbonTypes(mol, v));
+        append(calcCarbonTypes(mol));
         append(calcAllChiDescriptors(mol));
         append(calcConstitutional(mol));
         append(calcDetourMatrixDescsL(mol));
-        append(calcDistMatrixDescsL(mol, v));
+        append(calcDistMatrixDescsL(mol));
         append(calcEStateDescs(mol, doExEstate));
         append(calcEccentricConnectivityIndex(mol));
         append(calcExtendedTopochemicalAtom(mol));
         append(calcFragmentComplexity(mol));
         append(calcFramework(mol));
         append(calcHydrogenBond(mol));
-        if (v == 1) {
-            append(calcInformationContent(mol, 3));
-        } else {
-            append(calcLogS(mol));
-            append(calcInformationContent(mol, 5));
-        }
+        append(calcLogS(mol));
+        append(calcInformationContent(mol, 5));
         append(calcKappaShapeIndex(mol));
         appendInt(calcLipinskiGhose(mol));
         append(calcMcGowanVolume(mol));
@@ -5763,23 +5726,21 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
         append(calcWeight(mol));
         appendInt(calcWienerIndex(mol));
         append(calcZagrebIndex(mol));
-        if (v > 1) {
-            append(calcPol(mol));
-            append(calcMR(mol));
-            append(calcFlexibility(mol));
-            append(calcSchultz(mol));
-            append(calcAlphaKappaShapeIndex(mol));
-            append(calcHEStateDescs(mol));
-            append(calcBEStateDescs(mol));
-            append(calcAbrahams(mol));
-            append(calcANMat(mol));
-            append(calcASMat(mol));
-            append(calcAZMat(mol));
-            append(calcDSMat(mol));
-            append(calcDN2Mat(mol));
-            append(calcFrags(mol));
-            append(calcAddFeatures(mol));
-        }
+        append(calcPol(mol));
+        append(calcMR(mol));
+        append(calcFlexibility(mol));
+        append(calcSchultz(mol));
+        append(calcAlphaKappaShapeIndex(mol));
+        append(calcHEStateDescs(mol));
+        append(calcBEStateDescs(mol));
+        append(calcAbrahams(mol));
+        append(calcANMat(mol));
+        append(calcASMat(mol));
+        append(calcAZMat(mol));
+        append(calcDSMat(mol));
+        append(calcDN2Mat(mol));
+        append(calcFrags(mol));
+        append(calcAddFeatures(mol));
 
         return out;
     }
