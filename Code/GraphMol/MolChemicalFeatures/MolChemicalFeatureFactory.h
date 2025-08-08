@@ -13,11 +13,11 @@
 
 #include "MolChemicalFeatureDef.h"
 #include <iostream>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace RDKit {
 class MolChemicalFeature;
-typedef boost::shared_ptr<MolChemicalFeature> FeatSPtr;
+typedef std::shared_ptr<MolChemicalFeature> FeatSPtr;
 typedef std::list<FeatSPtr> FeatSPtrList;
 typedef FeatSPtrList::iterator FeatSPtrList_I;
 
