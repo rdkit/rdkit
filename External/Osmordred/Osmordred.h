@@ -103,6 +103,9 @@ RDKIT_OSMORDRED_EXPORT std::vector<double> calcFrags(const RDKit::ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcAddFeatures(const RDKit::ROMol& mol);
 RDKIT_OSMORDRED_EXPORT std::vector<double> calcInformationContent(const RDKit::ROMol& mol, int maxradius=5); // Inspired by 1984 Basak paper
 
+// Aggregated fast path that calls all Osmordred descriptors in C++
+RDKIT_OSMORDRED_EXPORT std::vector<double> calcAllDescriptorsFast(const RDKit::ROMol& mol, int version=2);
+
 } // namespace RDKit
 
 #endif //_OSMORDRED_H

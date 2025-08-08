@@ -5126,7 +5126,7 @@ std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol, int version) {
 
         // Handle potential failure in cloning
         if (!targetMol) {
-            std::cout << "Warning: Failed to clone and modify molecule in EtaCoreCountRef. Returning NaN.\n";
+            // Suppress noisy warnings: return NaN silently
             delete targetMol;
             return std::numeric_limits<double>::quiet_NaN();  // Return NaN instead of crashing
         }
@@ -5272,7 +5272,7 @@ std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol, int version) {
 
             // Handle potential failure in cloning
             if (!targetMol) {
-                std::cout << "Warning: Failed to clone and modify molecule EtaCompositeIndex.\n";
+                // Suppress noisy warnings: return NaN silently
                 delete targetMol;
                 return std::numeric_limits<double>::quiet_NaN();  // Return NaN instead of crashing
             }
@@ -5340,7 +5340,7 @@ std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol, int version) {
 
                 // Handle potential failure in cloning
                 if (!targetMol) {
-                    std::cout << "Warning: Clone and Modify failed in EtaCompositeIndices.\n";
+                    // Suppress noisy warnings: return NaN silently
                     delete targetMol;
                     return std::vector<double>(8, std::numeric_limits<double>::quiet_NaN());  // Return vector with NaN
                 }
@@ -5682,6 +5682,107 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
         return results;
     }
 
+    // Fast aggregate: compute all descriptors in C++ in one pass
+    std::vector<double> calcAllDescriptorsFast(const RDKit::ROMol& mol, int version) {
+        // Silence RDKit warnings locally
+        RDLog::LogStateSetter guard;
+
+        std::vector<double> out;
+        out.reserve(4200); // approximate capacity to avoid many reallocations
+
+        // Use same version behavior as python CalcOsmordred
+        const int v = (version == 1 ? 1 : 2);
+        const bool doExEstate = (v == 2);
+
+        // Precompute/cached intermediates where safe
+        // Note: We do not change algorithms; just reuse intermediates across calls
+        std::unique_ptr<RDKit::RWMol> kekulizedMol(new RDKit::RWMol(mol));
+        try {
+            RDKit::MolOps::Kekulize(*kekulizedMol, false);
+        } catch (...) {
+            // leave kekulizedMol as-is when kekulization fails
+        }
+
+        // No shared matrix caching in baseline fast path
+
+        // Some families already build needed matrices internally; where public
+        // helpers exist (e.g., Adj/Dist matrices), we call the descriptor that
+        // accepts version flags so we do not duplicate logic.
+
+        // Collect results with minimal inserts
+        auto append = [&out](const std::vector<double>& v){ out.insert(out.end(), v.begin(), v.end()); };
+        auto appendInt = [&out](const std::vector<int>& v){ out.reserve(out.size()+v.size()); for(int x: v) out.push_back(static_cast<double>(x)); };
+
+        append(calcABCIndex(mol));
+        appendInt(calcAcidBase(mol));
+        append(calcAdjMatrixDescsL(mol, v));
+        appendInt(calcAromatic(mol));
+        appendInt(calcAtomCounts(mol, v));
+        append(calcAutoCorrelation(mol));
+        append(calcBCUTs(mol));
+        append(calcBalabanJ(mol));
+        // Use L variant (faster), to match Python CalcBaryszMatrix
+        append(calcBaryszMatrixDescsL(mol));
+        append(calcBertzCT(mol));
+        appendInt(calcBondCounts(mol));
+        append(calcRNCG_RPCG(mol));
+        append(calcCarbonTypes(mol, v));
+        append(calcAllChiDescriptors(mol));
+        append(calcConstitutional(mol));
+        append(calcDetourMatrixDescsL(mol));
+        append(calcDistMatrixDescsL(mol, v));
+        append(calcEStateDescs(mol, doExEstate));
+        append(calcEccentricConnectivityIndex(mol));
+        append(calcExtendedTopochemicalAtom(mol));
+        append(calcFragmentComplexity(mol));
+        append(calcFramework(mol));
+        append(calcHydrogenBond(mol));
+        if (v == 1) {
+            append(calcInformationContent(mol, 3));
+        } else {
+            append(calcLogS(mol));
+            append(calcInformationContent(mol, 5));
+        }
+        append(calcKappaShapeIndex(mol));
+        appendInt(calcLipinskiGhose(mol));
+        append(calcMcGowanVolume(mol));
+        append(calcMoeType(mol));
+        append(calcMolecularDistanceEdgeDescs(mol));
+        append(calcMolecularId(mol));
+        append(calcPathCount(mol));
+        append(calcPolarizability(mol));
+        appendInt(calcRingCount(mol));
+        append(calcRotatableBond(mol));
+        append(calcSLogP(mol));
+        append(calcTopoPSA(mol));
+        append(calcTopologicalChargeDescs(mol));
+        append(calcTopologicalIndex(mol));
+        append(calcVdwVolumeABC(mol));
+        append(calcVertexAdjacencyInformation(mol));
+        append(calcWalkCounts(mol));
+        append(calcWeight(mol));
+        appendInt(calcWienerIndex(mol));
+        append(calcZagrebIndex(mol));
+        if (v > 1) {
+            append(calcPol(mol));
+            append(calcMR(mol));
+            append(calcFlexibility(mol));
+            append(calcSchultz(mol));
+            append(calcAlphaKappaShapeIndex(mol));
+            append(calcHEStateDescs(mol));
+            append(calcBEStateDescs(mol));
+            append(calcAbrahams(mol));
+            append(calcANMat(mol));
+            append(calcASMat(mol));
+            append(calcAZMat(mol));
+            append(calcDSMat(mol));
+            append(calcDN2Mat(mol));
+            append(calcFrags(mol));
+            append(calcAddFeatures(mol));
+        }
+
+        return out;
+    }
 
 //// new version faster but not correct!!!
 
