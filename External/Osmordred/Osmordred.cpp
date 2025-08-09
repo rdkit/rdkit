@@ -2475,6 +2475,20 @@ std::vector<double> calcSchultz(const RDKit::ROMol &mol) {
         Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(matrix); // hermitian (because we have symetrical matrix! critial)
         eigenvalues = solver.eigenvalues().real();  // Take real parts if complex
         eigenvectors = solver.eigenvectors().real();
+
+        // Canonicalize eigenvector signs: force first non-zero entry positive per column
+        const double canonical_eps = 1e-12;
+        for (int j = 0; j < eigenvectors.cols(); ++j) {
+            for (int i = 0; i < eigenvectors.rows(); ++i) {
+                double v = eigenvectors(i, j);
+                if (std::abs(v) > canonical_eps) {
+                    if (v < 0.0) {
+                        eigenvectors.col(j) *= -1.0;
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     // Spectral Absolute Sum: sum of absolute eigenvalues
@@ -3007,6 +3021,22 @@ void compute_eigenvalues_and_eigenvectorsL(
     for (int i = 0; i < n; ++i)
         for (int j = 0; j < n; ++j)
             eigenvectors[i][j] = flatMatrix[j * n + i];
+
+    // Canonicalize eigenvector signs: force first non-zero entry positive per column
+    const double canonical_eps = 1e-12;
+    for (int j = 0; j < n; ++j) {
+        for (int i = 0; i < n; ++i) {
+            double v = eigenvectors[i][j];
+            if (std::abs(v) > canonical_eps) {
+                if (v < 0.0) {
+                    for (int k = 0; k < n; ++k) {
+                        eigenvectors[k][j] = -eigenvectors[k][j];
+                    }
+                }
+                break;
+            }
+        }
+    }
 }
 
 
@@ -4693,8 +4723,8 @@ std::vector<double> calcDetourMatrixDescsL(const RDKit::ROMol& mol) {
         double vr2 = VR2(DMat, bonds, numAtoms, eigenvalues, eigenvectors) ;
         double vr3 = VR3(DMat, bonds, numAtoms, eigenvalues, eigenvectors);
 
-        double sm1 = SM1(DMat);
-        return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE, sm1, ve1, ve2, ve3, vr1, vr2, vr3};
+        // SM1(DMat) intentionally omitted for parity with L variant
+        return {Sp_Abs, Sp_Max, Sp_Diam, Sp_AD, Sp_MAD, Log_EE, ve1, ve2, ve3, vr1, vr2, vr3};
 
     }
 
@@ -5504,6 +5534,9 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
     // Step 3: Calculate ETA epsilon for type 1 and type 5 (hydrogen inclusion)
     double epsilon_sum_type1 = 0.0, epsilon_sum_type5 = 0.0;
     int count_type1 = 0, count_type5 = 0;
+    // Debug counters
+    int debug_num_h_in_hmol = 0;
+    int debug_excluded_ch = 0;
 
     for (const auto& atom : hmol->atoms()) {
         // type 1
@@ -5518,13 +5551,31 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
                 break;
             }
         }
+        if (atom->getAtomicNum() == 1) {
+            // count hydrogens in hmol
+            debug_num_h_in_hmol++;
+        }
         if (atom->getAtomicNum() != 1 || !hasCarbonNeighbor) {
             epsilon_sum_type5 += EtaEps;
             count_type5++;
+        } else {
+            // Hydrogen attached to carbon is excluded from epsilon_5
+            if (atom->getAtomicNum() == 1 && hasCarbonNeighbor) {
+                debug_excluded_ch++;
+            }
         }
     }
     etaEps[0] = epsilon_sum_type1 / count_type1;  // ETA_epsilon_1
     etaEps[4] = count_type5 > 0 ? epsilon_sum_type5 / count_type5 : 0.0;  // ETA_epsilon_5
+
+    // Optional debug logging (enabled when OSMO_ETA_DEBUG is set)
+    const char* eta_dbg = std::getenv("OSMO_ETA_DEBUG");
+    if (eta_dbg) {
+        std::cerr << "[ETA_DEBUG] hmol_atoms=" << hmol->getNumAtoms()
+                  << " hydrogens_in_hmol=" << debug_num_h_in_hmol
+                  << " excluded_CH_for_eps5=" << debug_excluded_ch
+                  << std::endl;
+    }
 
     // Step 4: Calculate ETA epsilon for types 3 and 4 (modified molecules)
     const RDKit::ROMol* targetMol3 = modifyMolecule(mol, true, false);
