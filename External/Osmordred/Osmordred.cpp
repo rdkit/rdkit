@@ -1441,7 +1441,7 @@ std::vector<double> calcAddFeatures(const RDKit::ROMol& mol) {
                                         [](const Atom* neighbor) { return neighbor->getAtomicNum() == 1; });
         unsigned int h = hi + he;
 
-        return (Zv - h) / (Z - Zv - 1);
+        return (Zv - h) / (Z - Zv - 1.);
     }
 
 
@@ -5016,7 +5016,7 @@ std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol) {
         double Zv = tbl->getNouterElecs(Z);
         int PN = GetPrincipalQuantumNumber(Z);
 
-        return (Z - Zv) / (Zv * (PN - 1));
+        return (Z - Zv) / (Zv * (PN - 1.));
     }
 
     // Helper function to calculate eta_epsilon
@@ -5521,15 +5521,16 @@ std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol) {
 std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
     std::vector<double> etaEps(5, 0.0);
 
-    // Step 1: Add hydrogens for types 1 and 5 calculations
-    std::unique_ptr<RDKit::ROMol> hmol(RDKit::MolOps::addHs(mol));
-
-    // Step 2: Calculate ETA epsilon for type 2 (non-hydrogen atoms)
+    // Step 1: Calculate ETA epsilon for type 2 (non-hydrogen atoms)
     double epsilon_sum_type2 = 0.0;
     for (const auto& atom : mol.atoms()) {
         epsilon_sum_type2 += getEtaEpsilon(*atom);
     }
     etaEps[1] = epsilon_sum_type2 / mol.getNumAtoms();  // ETA_epsilon_2
+
+    // Step 2: Add hydrogens for types 1 and 5 calculations
+    std::unique_ptr<RDKit::ROMol> hmol(RDKit::MolOps::addHs(mol));
+
 
     // Step 3: Calculate ETA epsilon for type 1 and type 5 (hydrogen inclusion)
     double epsilon_sum_type1 = 0.0, epsilon_sum_type5 = 0.0;
@@ -5574,6 +5575,11 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
         std::cerr << "[ETA_DEBUG] hmol_atoms=" << hmol->getNumAtoms()
                   << " hydrogens_in_hmol=" << debug_num_h_in_hmol
                   << " excluded_CH_for_eps5=" << debug_excluded_ch
+                  << " epsilon_sum_type1=" << epsilon_sum_type1
+                  << " epsilon_sum_type2=" << epsilon_sum_type2
+                  << " epsilon_sum_type5=" << epsilon_sum_type5
+                  << " count_type1=" << count_type1
+                  << " count_type5=" << count_type5
                   << std::endl;
     }
 
