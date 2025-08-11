@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build -c conda-forge --override-channels  cmake \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
-        swig=4.2
+        swig=4.2 
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -36,7 +36,8 @@ steps:
     -DRDK_BUILD_SWIG_WRAPPERS=ON \
     -DRDK_SWIG_STATIC=ON \
     -DRDK_BUILD_THREADSAFE_SSS=ON \
-    -DRDK_TEST_MULTITHREADED=ON
+    -DRDK_TEST_MULTITHREADED=ON \
+    -DRDK_BUILD_OSMORDRED_SUPPORT=OFF
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
