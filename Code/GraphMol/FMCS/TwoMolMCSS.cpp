@@ -145,16 +145,6 @@ void buildCorrespondenceGraph(
         corrGraphNumConns[i]++;
         corrGraphNumConns[j]++;
       }
-#if 0
-      auto d1 = distMat1[atomPairs[i].first * mol1.getNumAtoms() +
-                         atomPairs[j].first];
-      auto d2 = distMat2[atomPairs[i].second * mol2.getNumAtoms() +
-                         atomPairs[j].second];
-      if (fabs(d1 - d2) < 1.0e-6) {
-        corrGraph[i].insert(j);
-        corrGraph[j].insert(i);
-      }
-#endif
     }
   }
 }
@@ -393,7 +383,7 @@ void enumerate_z_cliques(
     const std::vector<std::unordered_set<unsigned int>> &cEdges,
     const std::vector<std::unordered_set<unsigned int>> &dEdges,
     std::vector<std::vector<unsigned int>> &maxCliques) {
-#if 1
+#if 0
   if (c.size() > 0) {
     std::cout << "c ";
     for (auto cm : c) {
@@ -428,8 +418,8 @@ void enumerate_z_cliques(
   } else {
     std::cout << maxCliques.front().size() << std::endl;
   }
-
 #endif
+
   if (p.empty()) {
     if (s.empty() && c.size() > 1) {
       // Doing this speeds up the search enormously, because it means that
@@ -437,13 +427,13 @@ void enumerate_z_cliques(
       // clique.  It does mean that symmetrically equivalent cliques won't
       // be returned.
       // t.insert(c.begin(), c.end());
-      std::cout << "CLIQUE : " << c.size() << " :: ";
+      // std::cout << "CLIQUE : " << c.size() << " :: ";
       // for (auto cm : c) {
       //   std::cout << cm << " ";
       // }
       // std::cout << std::endl;
       if (maxCliques.empty()) {
-        std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
+        // std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
         maxCliques.push_back({c.begin(), c.end()});
       } else {
         if (c.size() > maxCliques.front().size()) {
@@ -451,8 +441,8 @@ void enumerate_z_cliques(
         } else if (c.size() < maxCliques.front().size()) {
           return;
         }
-        std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
-        std::cout << std::endl;
+        // std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
+        // std::cout << std::endl;
         maxCliques.push_back(c);
       }
     }
@@ -462,7 +452,7 @@ void enumerate_z_cliques(
                          [&](const auto &a, const auto &b) -> bool {
                            return corrGraph[a].size() < corrGraph[b].size();
                          });
-  std::cout << "pivot node " << ut << std::endl;
+  // std::cout << "pivot node " << ut << std::endl;
   for (auto ui : p) {
     if (s.contains(ui)) {
       continue;
@@ -484,17 +474,17 @@ void enumerate_z_cliques(
       // Form a new P which is the current p minus this ui.
       std::unordered_set<unsigned int> newP(p);
       newP.erase(ui);
-      std::cout << "init newP : " << newP.size() << " : ";
-      for (auto pe : newP) {
-        std::cout << pe << " ";
-      }
-      std::cout << std::endl;
+      // std::cout << "init newP : " << newP.size() << " : ";
+      // for (auto pe : newP) {
+      // std::cout << pe << " ";
+      // }
+      // std::cout << std::endl;
       // newD and newS start out as copies of the incoming.
       std::unordered_set<unsigned int> newD(d);
       std::unordered_set<unsigned int> newS(s);
       for (auto v : d) {
         if (p.contains(v)) {
-          std::cout << "add " << v << " to newP 1" << std::endl;
+          // std::cout << "add " << v << " to newP 1" << std::endl;
           newP.insert(v);
         } else if (d.contains(v)) {
           // can v be added to P?
@@ -502,7 +492,7 @@ void enumerate_z_cliques(
             if (t.contains(v)) {
               newS.insert(v);
             } else {
-              std::cout << "add " << v << " to newP 2" << std::endl;
+              // std::cout << "add " << v << " to newP 2" << std::endl;
               newP.insert(v);
             }
             newD.erase(v);
@@ -511,11 +501,11 @@ void enumerate_z_cliques(
           }
         }
       }
-      std::cout << "inter newP : " << newP.size() << " : ";
-      for (auto pe : newP) {
-        std::cout << pe << " ";
-      }
-      std::cout << std::endl;
+      // std::cout << "inter newP : " << newP.size() << " : ";
+      // for (auto pe : newP) {
+      // std::cout << pe << " ";
+      // }
+      // std::cout << std::endl;
       // the new clique is the current clique plus u.
       std::vector<unsigned int> newC(c);
       newC.push_back(ui);
@@ -553,11 +543,11 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
                          const std::unordered_set<unsigned int> &p,
                          const std::unordered_set<unsigned int> &d,
                          std::unordered_set<unsigned int> &s,
-                         std::unordered_set<unsigned int> &t,
+                         const std::vector<char> &t,
                          const std::vector<std::vector<char>> &corrGraph,
                          const std::vector<unsigned int> &corrGraphNumConns,
                          std::vector<std::vector<unsigned int>> &maxCliques) {
-#if 1
+#if 0
   if (c.size() > 0) {
     std::cout << "c ";
     for (auto cm : c) {
@@ -581,7 +571,6 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
     }
     std::cout << std::endl;
   }
-#endif
   if (c.size() == 1) {
     std::cout << "NEW : " << c[0] << std::endl;
   }
@@ -593,6 +582,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
   } else {
     std::cout << maxCliques.front().size() << std::endl;
   }
+#endif
   if (p.empty()) {
     if (s.empty() && c.size() > 1) {
       // std::cout << "CLIQUE : " << c.size() << " :: ";
@@ -601,7 +591,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
       // }
       // std::cout << std::endl;
       if (maxCliques.empty()) {
-        std::cout << "New MAX CLIQUE : " << c.size() << std::endl;
+        // std::cout << "New MAX CLIQUE : " << c.size() << std::endl;
         maxCliques.push_back({c.begin(), c.end()});
       } else {
         if (c.size() > maxCliques.front().size()) {
@@ -609,8 +599,8 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
         } else if (c.size() < maxCliques.front().size()) {
           return;
         }
-        std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
-        std::cout << std::endl;
+        // std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
+        // std::cout << std::endl;
         maxCliques.push_back(c);
       }
     }
@@ -620,7 +610,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
                          [&](const auto &a, const auto &b) -> bool {
                            return corrGraphNumConns[a] < corrGraphNumConns[b];
                          });
-  std::cout << "pivot node " << ut << std::endl;
+  // std::cout << "pivot node " << ut << std::endl;
   for (auto ui : p) {
     if (s.contains(ui)) {
       continue;
@@ -639,41 +629,58 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
       }
     }
     if (ok2 || ok1) {
-      // Form a new P which is the current p minus this ui.
-      std::unordered_set<unsigned int> newP(p);
-      newP.erase(ui);
-      std::cout << "init newP : " << newP.size() << " : ";
-      for (auto pe : newP) {
-        std::cout << pe << " ";
+      const auto &n = corrGraph[ui];
+      // Form a new P which is the members of the current p that are
+      // neighbours of ui
+      std::unordered_set<unsigned int> newP;
+      for (auto pe : p) {
+        if (n[pe]) {
+          newP.insert(pe);
+        }
       }
-      std::cout << std::endl;
-      // newD and newS start out as copies of the incoming.
-      std::unordered_set<unsigned int> newD(d);
-      std::unordered_set<unsigned int> newS(s);
+      // std::cout << "init newP : " << newP.size() << " : ";
+      // for (auto pe : newP) {
+      //   std::cout << pe << " ";
+      // }
+      // std::cout << std::endl;
+      // and the same for newD and newS
+      std::unordered_set<unsigned int> newD;
+      for (auto de : d) {
+        if (n[de] == 'd') {
+          newD.insert(de);
+        }
+      }
+      std::unordered_set<unsigned int> newS;
+      for (auto se : s) {
+        if (n[se]) {
+          newS.insert(se);
+        }
+      }
+      // The newP, newS and newD should only contain neighbours of ui.
       for (auto v : d) {
-        if (p.contains(v)) {
-          std::cout << "add " << v << " to newP 1" << std::endl;
+        if (p.contains(v) and n[v]) {
+          // std::cout << "add " << v << " to newP 1" << std::endl;
           newP.insert(v);
         } else if (d.contains(v)) {
           // can v be added to P?
-          if (corrGraph[ui][v] == 'c') {
-            if (t.contains(v)) {
+          if (n[v] == 'c') {
+            if (t[v] and n[v]) {
               newS.insert(v);
-            } else {
-              std::cout << "add " << v << " to newP 2" << std::endl;
+            } else if (n[v]) {
+              // std::cout << "add " << v << " to newP 2" << std::endl;
               newP.insert(v);
             }
             newD.erase(v);
-          } else if (s.contains(v)) {
-            newS.erase(v);
+          } else if (s.contains(v) && n[v]) {
+            newS.insert(v);
           }
         }
       }
-      std::cout << "inter newP : " << newP.size() << " : ";
-      for (auto pe : newP) {
-        std::cout << pe << " ";
-      }
-      std::cout << std::endl;
+      // std::cout << "inter newP : " << newP.size() << " : ";
+      // for (auto pe : newP) {
+      //   std::cout << pe << " ";
+      // }
+      // std::cout << std::endl;
       // the new clique is the current clique plus u.
       std::vector<unsigned int> newC(c);
       newC.push_back(ui);
@@ -681,26 +688,25 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
       // We now recurse by using only the members of newP, newD and newS
       // that are neighbours of u
       // n is the set of all neighbours of u.
-      const auto &n = corrGraph[ui];
-      std::unordered_set<unsigned int> onwardP;
-      for (auto pe : newP) {
-        if (n[pe]) {
-          onwardP.insert(pe);
-        }
-      }
-      std::unordered_set<unsigned int> onwardD;
-      for (auto de : newD) {
-        if (n[de]) {
-          onwardD.insert(de);
-        }
-      }
-      std::unordered_set<unsigned int> onwardS;
-      for (auto se : newS) {
-        if (n[se]) {
-          onwardS.insert(se);
-        }
-      }
-      enumerate_z_cliques(newC, onwardP, onwardD, onwardS, t, corrGraph,
+      // std::unordered_set<unsigned int> onwardP;
+      // for (auto pe : newP) {
+      //   if (n[pe]) {
+      //     onwardP.insert(pe);
+      //   }
+      // }
+      // std::unordered_set<unsigned int> onwardD;
+      // for (auto de : newD) {
+      //   if (n[de]) {
+      //     onwardD.insert(de);
+      //   }
+      // }
+      // std::unordered_set<unsigned int> onwardS;
+      // for (auto se : newS) {
+      //   if (n[se]) {
+      //     onwardS.insert(se);
+      //   }
+      // }
+      enumerate_z_cliques(newC, newP, newD, newS, t, corrGraph,
                           corrGraphNumConns, maxCliques);
       s.insert(ui);
     }
@@ -758,7 +764,7 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
 #else
   // Running enumerate_z_cliques over each node in the corrGraph in turn.
 #if 1
-  std::unordered_set<unsigned int> t;
+  std::vector<char> t(corrGraph.size(), 0);
   std::unordered_set<unsigned int> p;
   std::unordered_set<unsigned int> d;
   std::unordered_set<unsigned int> s;
@@ -769,7 +775,7 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
     s.clear();
     for (size_t v = 0; v < corrGraph[u].size(); ++v) {
       if (corrGraph[v][u] == 'c') {
-        if (t.contains(v)) {
+        if (t[v]) {
           s.insert(v);
         } else {
           p.insert(v);
@@ -782,20 +788,20 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
     clique.push_back(u);
     enumerate_z_cliques(clique, p, d, s, t, corrGraph, corrGraphNumConns,
                         rawMaxCliques);
-    t.insert(u);
+    t[u] = 1;
   }
-  std::cout << "Number of cliques: " << rawMaxCliques.size() << std::endl;
-  for (auto &c : rawMaxCliques) {
-    std::ranges::sort(c);
-  }
-  std::ranges::sort(rawMaxCliques);
-  for (const auto &clique : rawMaxCliques) {
-    std::cout << clique.size() << " :";
-    for (const auto &c : clique) {
-      std::cout << " " << c;
-    }
-    std::cout << std::endl;
-  }
+  // std::cout << "Number of cliques: " << rawMaxCliques.size() << std::endl;
+  // for (auto &c : rawMaxCliques) {
+  //   std::ranges::sort(c);
+  // }
+  // std::ranges::sort(rawMaxCliques);
+  // for (const auto &clique : rawMaxCliques) {
+  //   std::cout << clique.size() << " :";
+  //   for (const auto &c : clique) {
+  //     std::cout << " " << c;
+  //   }
+  //   std::cout << std::endl;
+  // }
 #endif
 #if 0
   {
