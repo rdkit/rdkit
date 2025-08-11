@@ -19,6 +19,7 @@
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
+#include <filesystem>
 
 using namespace RDKit;
 using namespace RDKit::v2::CDXMLParser;
