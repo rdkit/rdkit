@@ -859,7 +859,11 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   ChemDrawParserParams chemdraw_params;
   chemdraw_params.sanitize = params.sanitize;
   chemdraw_params.removeHs = params.removeHs;
-  chemdraw_params.format = params.format == CDXMLFormat::CDX ? CDXFormat::CDX : CDXFormat::CDXML;
+  switch(params.format) {
+    case CDXMLFormat::CDX: chemdraw_params.format = CDXFormat::CDX; break;
+    case CDXMLFormat::CDXML: chemdraw_params.format = CDXFormat::CDXML; break;
+    case CDXMLFormat::Auto: chemdraw_params.format = CDXFormat::AUTO; break;
+  }
 
   return MolsFromChemDrawDataStream(inStream, chemdraw_params);
 }

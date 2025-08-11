@@ -1329,6 +1329,7 @@ struct format_check {
 TEST_CASE("CDX and Formats") {
   std::string cdxmlbase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  
   SECTION("READ CDX") {
     auto cdxfname = cdxmlbase + "ring-stereo1.cdx";
     auto cdxmlfname = cdxmlbase + "ring-stereo1.cdxml";
@@ -1337,6 +1338,27 @@ TEST_CASE("CDX and Formats") {
     auto mols2 = MolsFromCDXMLFile(cdxmlfname);
     CHECK(MolToSmiles(*mols1[0]) == MolToSmiles(*mols2[0]));
   }
+
+  SECTION("READ CDX/CDXML STREAM") {
+    auto cdxfname = cdxmlbase + "ring-stereo1.cdx";
+    auto cdxmlfname = cdxmlbase + "ring-stereo1.cdxml";
+    
+    auto size = std::filesystem::file_size(cdxfname);
+    std::string content(size, '\0');
+    std::ifstream in(cdxfname);
+    in.read(&content[0], size);
+    std::cerr << "CDXMLToMols1" << std::endl;
+    auto mols1 = CDXMLToMols(content);
+
+    size = std::filesystem::file_size(cdxmlfname);
+    std::string content2(size, '\0');
+    std::ifstream in2(cdxmlfname);
+    in2.read(&content2[0], size);
+    std::cerr << "CDXMLToMols2" << std::endl;
+    auto mols2 = CDXMLToMols(content2);
+    CHECK(MolToSmiles(*mols1[0]) == MolToSmiles(*mols2[0]));
+  }
+  
   SECTION("Check Formats") {
     auto cdxfilename = cdxmlbase + "ring-stereo1.cdx";
     auto cdxmlfilename = cdxmlbase + "ring-stereo1.cdxml";

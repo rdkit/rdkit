@@ -237,8 +237,41 @@ void visit_children(
   }
 }
 
+CDXFormat sniff_format(std::istream &is) {
+    // Remember the current read position
+    std::streampos start_pos = is.tellg();
+    if (start_pos == -1) {
+        // Some streams (like std::cin) may not support tellg
+      return CDXFormat::AUTO; // here it simply means we failed
+    }
+
+    // CDX header consists of:
+    // 8 bytes with the value "VjCD0100" (hex: 56 6A 43 44 30 31 30 30).
+    CDXFormat format = CDXFormat::CDXML;
+    const std::vector<char> header{86, 106, 67, 68, 48, 49, 48, 48};
+    std::vector<char> buf(8);
+    is.read(buf.data(), 8);
+    if (buf == header) {
+      format = CDXFormat::CDX;
+    }
+    
+    // Reset the stream position
+    is.clear(); // clear EOF flag if we hit it
+    is.seekg(start_pos);
+    return format;
+}
+  
 std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream,
                                                  CDXFormat format) {
+  if(format == CDXFormat::AUTO) {
+    format = sniff_format(inStream);
+    if(format == CDXFormat::AUTO) {
+      const std::string msg = " Failed deducing whether the input stream is CDXML or CDX";
+      BOOST_LOG(rdErrorLog) << msg << std::endl;
+      throw FileParseException(msg);
+    }
+  }
+  
   if (format == CDXFormat::CDXML) {
     CDXMLParser parser;
     // populate tree structure pt
@@ -263,7 +296,7 @@ std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream,
     return doc;
   }
 }
-
+ 
 // may raise FileParseException
 std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
     std::istream &inStream, const ChemDrawParserParams &params) {

@@ -33,17 +33,19 @@ struct RDKIT_FILEPARSERS_EXPORT CDXMLParserParams {
   bool removeHs;
   CDXMLFormat format; 
   
-  CDXMLParserParams() : sanitize(true), removeHs(true), format(CDXMLFormat::CDXML) {}
+  CDXMLParserParams() : sanitize(true), removeHs(true), format(CDXMLFormat::Auto) {}
   CDXMLParserParams(bool sanitize, bool removeHs, CDXMLFormat format) :
     sanitize(sanitize), removeHs(removeHs), format(format) {}
 };
+
 //! \brief construct molecules from a CDXML file
 //! The RDKit is optionally built with the Revvity ChemDraw parser
 //! If this is available, CDX and CDXML can be read, see CDXMLParserParams
 //!   Note that the CDXML format is large and complex, the RDKit doesn't
 //!   support full functionality, just the base ones required for molecule and
 //!   reaction parsing.
-//! Note: in this function CDXMLFormat::Auto currently defaults to CDXML
+//! Note: If the ChemDraw extensions are available, this auto detects between
+//!  CDXML and CDX
 /*!
  *   \param inStream - string containing the mol block
  *   \param params - parameters controlling the parsing and post-processing
@@ -57,7 +59,6 @@ MolsFromCDXMLDataStream(std::istream &inStream,
 //!   Note that the CDXML format is large and complex, the RDKit doesn't
 //!   support full functionality, just the base ones required for molecule and
 //!   reaction parsing.
-//! This defaults to using CDXMLFormat::Auto which reads .cdxml files and .cdx files
 /*!
  *   \param fileName - cdxml fileName
  *   \param params - parameters controlling the parsing and post-processing
@@ -73,15 +74,14 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
 //!   support full functionality, just the base ones required for molecule and
 //!   reaction parsing.
 //! Note: If the ChemDraw extensions are available,
-//!   CDXMLFormat::Auto attempts to see if the input string is CDXML or CDX,
-//!  If not, it defaults to CDXML
+//!   CDXMLFormat::Auto attempts to see if the input string is CDXML or CDX
 /*!
  *   \param cdxml - string containing the mol block
  *   \param params - parameters controlling the parsing and post-processing
  */
 RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
     const std::string &cdxml,
-    const CDXMLParserParams &params = CDXMLParserParams());
+    const CDXMLParserParams &params = CDXMLParserParams(true, true, v2::CDXMLParser::CDXMLFormat::Auto));
 }  // namespace CDXMLParser
 }  // namespace v2
 
@@ -91,7 +91,8 @@ inline namespace v1 {
 //! Note that the CDXML format is large and complex, the RDKit doesn't support
 //!  full functionality, just the base ones required for molecule and
 //!  reaction parsing.
-//! Note: to parse CDX files see the CDXParserParams variant of this function
+//! Note: If the ChemDraw extensions are available, this auto detects between
+//!  CDXML and CDX
 /*!
  *   \param inStream - string containing the mol block
  *   \param sanitize - toggles sanitization and stereochemistry
@@ -102,9 +103,8 @@ inline namespace v1 {
  */
 inline std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
     std::istream &inStream, bool sanitize = true, bool removeHs = true) {
-  v2::CDXMLParser::CDXMLParserParams params;
-  params.sanitize = sanitize;
-  params.removeHs = removeHs;
+  v2::CDXMLParser::CDXMLParserParams params(
+      sanitize, removeHs, v2::CDXMLParser::CDXMLFormat::Auto);
   return v2::CDXMLParser::MolsFromCDXMLDataStream(inStream, params);
 }
 
@@ -114,7 +114,7 @@ inline std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
 //!  reaction parsing.
 //! Note: If the ChemDraw extensions are available,
 //!   This function uses the file extension to determine the file type, .cdx or .cdxml
-//!  If not, it defaults to CDXML
+//!   If not, it defaults to CDXML
 /*!
  *   \param fileName - cdxml fileName
  *   \param sanitize - toggles sanitization and stereochemistry
@@ -132,7 +132,7 @@ inline std::vector<std::unique_ptr<RWMol>> CDXMLFileToMols(
   return v2::CDXMLParser::MolsFromCDXMLFile(filename, params);
 }
 
-//! \brief construct molecules from a CDXML file
+//! \brief construct molecules from a CDXML block
 //! Note that the CDXML format is large and complex, the RDKit doesn't support
 //!  full functionality, just the base ones required for molecule and
 //!  reaction parsing.
@@ -151,6 +151,7 @@ inline std::vector<std::unique_ptr<RWMol>> CDXMLToMols(const std::string &cdxml,
   v2::CDXMLParser::CDXMLParserParams params;
   params.sanitize = sanitize;
   params.removeHs = removeHs;
+  params.format = v2::CDXMLParser::CDXMLFormat::Auto;  
   return v2::CDXMLParser::MolsFromCDXML(cdxml, params);
 }
 }  // namespace v1
