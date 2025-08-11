@@ -17,6 +17,7 @@ jobs:
       dockerComposeFile: './Code/MinimalLib/docker/docker_compose_build_minimallib.yml'
       dockerComposeFileArgs: |
         GET_SRC=copy_from_local
+        COMPOSE_BAKE=false
 - job: Ubuntu_x64
   timeoutInMinutes: 120
   pool:
