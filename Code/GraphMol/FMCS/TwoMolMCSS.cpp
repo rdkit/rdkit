@@ -29,17 +29,17 @@ bool atomsMatch(const Atom *atom1, const Atom *atom2) {
 }
 
 // Returns 0 if one bond is nullptr.
-// Returns 1 if they are the same type (for the cEdges) or
-// 2 if they aren't or are both nullptr (for the dEdges).
-unsigned int bondsMatch(const Bond *bond1, const Bond *bond2) {
+// Returns 'c' if they are the same type (for the cEdges) or
+// 'd' if they aren't or are both nullptr (for the dEdges).
+char bondsMatch(const Bond *bond1, const Bond *bond2) {
   if (!bond1 && !bond2) {
-    return 2;
+    return 'd';
   }
   if (bond1 && bond2) {
     if (bond1->getBondType() == bond2->getBondType()) {
-      return 1;
+      return 'c';
     }
-    return 2;
+    return 'd';
   }
   return 0;
 }
@@ -91,13 +91,55 @@ void buildCorrespondenceGraph(
       }
       corrGraph[i].insert(j);
       corrGraph[j].insert(i);
-      if (bm == 1) {
+      if (bm == 'c') {
         cEdges[i].insert(j);
         cEdges[j].insert(i);
-      } else if (bm == 2) {
+      } else if (bm == 'd') {
         dEdges[i].insert(j);
         dEdges[j].insert(i);
       }
+#if 0
+      auto d1 = distMat1[atomPairs[i].first * mol1.getNumAtoms() +
+                         atomPairs[j].first];
+      auto d2 = distMat2[atomPairs[i].second * mol2.getNumAtoms() +
+                         atomPairs[j].second];
+      if (fabs(d1 - d2) < 1.0e-6) {
+        corrGraph[i].insert(j);
+        corrGraph[j].insert(i);
+      }
+#endif
+    }
+  }
+}
+void buildCorrespondenceGraph(
+    const std::vector<std::pair<unsigned int, unsigned int>> &atomPairs,
+    const ROMol &mol1, const ROMol &mol2,
+    std::vector<std::vector<char>> &corrGraph) {
+  std::vector<std::vector<const Bond *>> bond1s(
+      mol1.getNumAtoms(),
+      std::vector<const Bond *>(mol1.getNumAtoms(), nullptr));
+  for (const auto b : mol1.bonds()) {
+    bond1s[b->getBeginAtomIdx()][b->getEndAtomIdx()] = b;
+    bond1s[b->getEndAtomIdx()][b->getBeginAtomIdx()] = b;
+  }
+  std::vector<std::vector<const Bond *>> bond2s(
+      mol2.getNumAtoms(),
+      std::vector<const Bond *>(mol2.getNumAtoms(), nullptr));
+  for (const auto b : mol2.bonds()) {
+    bond2s[b->getBeginAtomIdx()][b->getEndAtomIdx()] = b;
+    bond2s[b->getEndAtomIdx()][b->getBeginAtomIdx()] = b;
+  }
+  for (size_t i = 0U; i < atomPairs.size() - 1; ++i) {
+    for (size_t j = i + 1; j < atomPairs.size(); ++j) {
+      if (atomPairs[i].first == atomPairs[j].first ||
+          atomPairs[i].second == atomPairs[j].second) {
+        continue;
+      }
+      auto bond1 = bond1s[atomPairs[i].first][atomPairs[j].first];
+      auto bond2 = bond2s[atomPairs[i].second][atomPairs[j].second];
+      auto bm = bondsMatch(bond1, bond2);
+      corrGraph[i][j] = bm;
+      corrGraph[j][i] = bm;
 #if 0
       auto d1 = distMat1[atomPairs[i].first * mol1.getNumAtoms() +
                          atomPairs[j].first];
@@ -471,6 +513,139 @@ void enumerate_z_cliques(
     }
   }
 }
+
+void enumerate_z_cliques(std::vector<unsigned int> &c,
+                         const std::unordered_set<unsigned int> &p,
+                         const std::unordered_set<unsigned int> &d,
+                         std::unordered_set<unsigned int> &s,
+                         std::unordered_set<unsigned int> &t,
+                         const std::vector<std::vector<char>> &corrGraph,
+                         std::vector<std::vector<unsigned int>> &maxCliques) {
+#if 0
+  std::cout << "c ";
+  for (auto cm : c) {
+    std::cout << cm << " ";
+  }
+  std::cout << ":: p ";
+  for (auto pm : p) {
+    std::cout << pm << " ";
+  }
+  std::cout << ":: d ";
+  for (auto pm : d) {
+    std::cout << pm << " ";
+  }
+  std::cout << ":: s ";
+  for (auto pm : s) {
+    std::cout << pm << " ";
+  }
+  std::cout << ":: t ";
+  for (auto pm : t) {
+    std::cout << pm << " ";
+  }
+  std::cout << std::endl;
+#endif
+  if (p.empty()) {
+    if (s.empty() && c.size() > 1) {
+      // Doing this speeds up the search enormously, because it means that
+      // we won't start a new clique with a node that has already been in a
+      // clique.  It does mean that symmetrically equivalent cliques won't
+      // be returned.
+      t.insert(c.begin(), c.end());
+      // std::cout << "CLIQUE : " << c.size() << " :: ";
+      // for (auto cm : c) {
+      //   std::cout << cm << " ";
+      // }
+      // std::cout << std::endl;
+      if (maxCliques.empty()) {
+        // std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
+        maxCliques.push_back({c.begin(), c.end()});
+      } else {
+        if (c.size() > maxCliques.front().size()) {
+          maxCliques.clear();
+        } else if (c.size() < maxCliques.front().size()) {
+          return;
+        }
+        // std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
+        // std::cout << std::endl;
+        maxCliques.push_back(c);
+      }
+    }
+    return;
+  }
+  auto ut = *max_element(p.begin(), p.end(),
+                         [&](const auto &a, const auto &b) -> bool {
+                           return corrGraph[a].size() < corrGraph[b].size();
+                         });
+  for (auto ui : p) {
+    // if ui is adjacent to ut
+    // OR if ui is connected via a c-path to a vertex in D that is
+    // not adjacent to ut
+    bool ok1 = false;
+    bool ok2 = !corrGraph[ui][ut];
+    if (!ok2) {
+      for (auto de : d) {
+        if (!corrGraph[de][ut] && corrGraph[ui][de] == 'c') {
+          ok1 = true;
+          break;
+        }
+      }
+    }
+    if (ok2 || ok1) {
+      // Form a new P which is the current p minus this ui.
+      std::unordered_set<unsigned int> newP(p);
+      newP.erase(ui);
+      // newD and newS start out as copies of the incoming.
+      std::unordered_set<unsigned int> newD(d);
+      std::unordered_set<unsigned int> newS(s);
+      // n is the set of all neighbours of u.
+      const auto &n = corrGraph[ui];
+      for (auto v : d) {
+        if (p.contains(v)) {
+          newP.insert(v);
+        } else if (d.contains(v)) {
+          // can v be added to P?
+          if (corrGraph[ui][v] == 'c') {
+            if (t.contains(v)) {
+              newS.insert(v);
+            } else {
+              newP.insert(v);
+            }
+            newD.erase(v);
+          } else if (s.contains(v)) {
+            newS.erase(v);
+          }
+        }
+      }
+      // the new clique is the current clique plus u.
+      std::vector<unsigned int> newC(c);
+      newC.push_back(ui);
+
+      // We now recurse by using only the members of newP, newD and newS
+      // that are neighbours of u
+      std::unordered_set<unsigned int> onwardP;
+      for (auto pe : newP) {
+        if (n[pe]) {
+          onwardP.insert(pe);
+        }
+      }
+      std::unordered_set<unsigned int> onwardD;
+      for (auto de : newD) {
+        if (n[de]) {
+          onwardD.insert(de);
+        }
+      }
+      std::unordered_set<unsigned int> onwardS;
+      for (auto se : newS) {
+        if (n[se]) {
+          onwardS.insert(se);
+        }
+      }
+      enumerate_z_cliques(newC, onwardP, onwardD, onwardS, t, corrGraph,
+                          maxCliques);
+      s.insert(ui);
+    }
+  }
+}
 }  // namespace
 
 void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
@@ -487,7 +662,12 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
     std::cout << i++ << " : " << ap.first << " -> " << ap.second << std::endl;
   }
 #endif
-  std::vector<std::unordered_set<unsigned int>> corrGraph(
+  std::vector<std::vector<char>> corrGraph(
+      atomPairs.size(), std::vector<char>(atomPairs.size(), 0));
+  buildCorrespondenceGraph(atomPairs, mol1, mol2, corrGraph);
+
+#if 0
+  std::vector<std::unordered_set<unsigned int>> oldCorrGraph(
       atomPairs.size(), std::unordered_set<unsigned int>());
   // cEdges are edges in the correspondence graph where the 2 atoms
   // in each pair are bonded
@@ -496,8 +676,7 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
   // cEdges are the opposite - atoms in both pairs are not bonded.
   std::vector<std::unordered_set<unsigned int>> dEdges(
       atomPairs.size(), std::unordered_set<unsigned int>());
-  buildCorrespondenceGraph(atomPairs, mol1, mol2, corrGraph, cEdges, dEdges);
-#if 0
+  buildCorrespondenceGraph(atomPairs, mol1, mol2, oldCorrGraph, cEdges, dEdges);
   auto printGraph =
       [](const std::vector<std::unordered_set<unsigned int>> &g) -> void {
     unsigned int i = 0;
@@ -526,7 +705,7 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
   std::unordered_set<unsigned int> done;
   bron_kerbosch(clique, remaining, done, corrGraph, rawMaxCliques);
 #else
-  // Running enumerate_c_cliques over each node in the corrGraph in turn.
+  // Running enumerate_z_cliques over each node in the corrGraph in turn.
   std::unordered_set<unsigned int> t;
   std::unordered_set<unsigned int> p;
   std::unordered_set<unsigned int> d;
@@ -536,21 +715,20 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
     p.clear();
     d.clear();
     s.clear();
-    for (auto v : corrGraph[u]) {
-      if (cEdges[v].contains(u)) {
+    for (size_t v = 0; v < corrGraph[u].size(); ++v) {
+      if (corrGraph[v][u] == 'c') {
         if (t.contains(v)) {
           s.insert(v);
         } else {
           p.insert(v);
         }
-      } else if (dEdges[v].contains(u)) {
+      } else if (corrGraph[v][u] == 'd') {
         d.insert(v);
       }
     }
     clique.clear();
     clique.push_back(u);
-    enumerate_z_cliques(clique, p, d, s, t, corrGraph, cEdges, dEdges,
-                        rawMaxCliques);
+    enumerate_z_cliques(clique, p, d, s, t, corrGraph, rawMaxCliques);
     t.insert(u);
   }
 #endif
