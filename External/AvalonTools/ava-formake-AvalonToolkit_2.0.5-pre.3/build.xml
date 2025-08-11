@@ -1,0 +1,72 @@
+<?xml version="1.0" ?>
+<project name="OpenSourceTools">
+
+
+    <target name="depictJar">
+        <mkdir dir="target/archives" />
+        <jar basedir="build/classes" destfile="target/archives/depict.jar" update="true">
+            <include name="**/*.properties" />
+            <include name="novartis/**/*.class" />
+            <include name="avalon/tools/Base64*.class" />
+            <include name="avalon/jsp/**/*.class" />
+			<manifest>
+				<attribute name="Created-By" value="Novartis Pharma Ltd" />
+			</manifest>
+		</jar>
+
+		</target>
+		    <target name="depictjniJar">
+		        <mkdir dir="target/archives" />
+		        <jar basedir="build/classes" destfile="target/archives/depictjni.jar" update="true">
+		            <include name="avalon/*/JNISmi2Mol.class" />
+		            <include name="avalon/custom/Constants.class" />
+		            <include name="avalon/tools/StringTools.class" />
+		            <include name="avalon/tools/LibraryToolbox.class" />
+		            <include name="jni/JNIDepict.class" />
+		            <include name="jni/JNIMatch.class" />
+					<manifest>
+						<attribute name="Created-By" value="Novartis Pharma Ltd" />
+					</manifest>
+				</jar>
+			</target>
+
+    <target name="depictWar" depends="depictJar,depictjniJar">
+        <war destfile="target/archives/depicter.war" webxml="src/main/resources/WEB-INF/web.xml">
+            <lib dir="target/archives">
+				<include name="depict.jar" />
+			</lib>
+            <lib dir="lib">
+                <include name="log4j-1.2.8.jar" />
+                <include name="jstl-1.2.jar" />
+			</lib>
+            <fileset dir="src/main/resources/WebContent">
+			    <include name="test_pictures/*.png" />
+				<include name="*.css*" />
+				<include name="*.jsp*" />
+				<include name="*.xml" />
+				<include name="*.html" />
+			</fileset>
+		</war>
+	</target>
+
+    <target name="depictWarWithCORS" depends="depictJar,depictjniJar">
+        <war destfile="target/archives/services#depicter.war" webxml="src/main/resources/CORSFiles/web.xml">
+            <lib dir="target/archives">
+				<include name="depict.jar" />
+			</lib>
+            <lib dir="lib">
+                <include name="cors-filter-1.3.2.jar" />
+                <include name="java-property-utils-1.6.jar" />
+                <include name="log4j-1.2.8.jar" />
+                <include name="jstl-1.2.jar" />
+                <include name="commons-logging-1.0.3.jar" />
+			</lib>
+            <fileset dir="src/main/resources/WebContent">
+				<include name="*.css*" />
+				<include name="*.jsp*" />
+				<include name="*.xml" />
+				<include name="*.html" />
+			</fileset>
+		</war>
+	</target>
+</project>

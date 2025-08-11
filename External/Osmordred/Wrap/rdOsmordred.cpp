@@ -197,4 +197,8 @@ BOOST_PYTHON_MODULE(rdOsmordred) {
     python::def("CalcInformationContent", calcInformationContent,
         "CalcInformationContent function\n");
 
+    // Fast aggregate binding
+    python::def("CalcAllFast", calcAllDescriptorsFast,
+        "Compute all Osmordred descriptors at once (fast path)\n");
+
 };

@@ -1,0 +1,741 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="Stylesheet" type="text/css" href="indexStyleSheet.css">
+  <title>Depiction Service Overview</title>
+<style>
+.word-break {
+  -ms-word-break: break-all;
+  word-break: break-all;
+  word-break: break-word;
+}
+</style>
+</head>
+<body class="bodyStyle">
+  <h2>Annotated List of Services Provided by this Site</h2>
+
+  All Avalon services provided can be used as GET or POST requests with identical parameter naming.
+  However, since SMILES are much (&gt;95%) shorter than MOL files, POST is preferred for MOL file handling.
+  Short MOL files (e.g. from query structures for color-coding) can reasonably be put on the URL but real structure MOL
+  files need to be send via POST in order to avoid ULR size limits.
+  <p/>
+  Most examples on this page use SMILES for structure definition, which requires a de-novo placement of atoms unless
+  the SMILES string has a list of atom coordinates appended. MOL files (sent through POST) can be used to define the source structure
+  keeping the coordinates. MOL files can also be used to define a query structure and use it to place the corresponding match atoms.
+  <p/>
+  There is also a page to show the speed of rendering about 500 <a href="drugs_test.jsp?size=150">drugs</a> (as GIF images) as well as a demo
+  of rendered <a href="peptides_test.jsp?size=220">peptides and other large public molecules</a> (as PNG).
+  Drugs are identified by their INN and were listed in the <a href="https://chempedia.info/info/derwent_world_drug_index/">WDI</a> as well as the
+  <a href="https://www.ebi.ac.uk/chembldb/">CHEMBL</a> database. The peptides also have an INN and a CAS Registry number.
+
+  <h3>Interactive Use</h3>
+
+  <table class="tableStyle" border="both" width="*">
+    <tbody class="tableBodyStyle">
+
+      <tr>
+        <td class="nameColumnStyle">
+          <a href="SmilesVisualizer.jsp">Interactive SMILES Visualizer</a>
+        </td>
+        <td colspan="3" class="descColumnStyle">
+            This is a demo application used for exercising the service as a SMILES renderer.
+            <p/>
+           It displays a web page with an input box for a SMILES string which is being rendered into a large image as-you-type.
+           The first dropdown selects which kinds of aminoacid shortcuts are to be used for rendering.
+           With second one, the depicter can be tuned to abbreviate long aliphatic chains to their molecular formula.
+           <p/>
+           Clicking on the large picture opens an link to a MOL file with content type 'chemical/x-mdl-molfile'.
+           The smaller picture allow copying its URL with right-click/Properties.
+           <p/>
+           The link 'Converted SMILES' returns the text version of the abbreviated structure which is generated
+           in the process of depicting with short-cuts.
+           <p/>
+           SMILES that contain '&gt;' characters are rendered as reaction SMILES.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <p/>
+
+  <h3>Use of URL File Name Component</h3>
+
+  Although the Avalon services are most often used for rendering pictures of SMILES or MOL file formatted structures,
+  there are also some fringe services (chemical sructure fingerprint calculation, SMILES to MOL file conversion,
+  and short-cut perception) based on features of the Avalon toolkit.
+  <p/>
+  The type (and MIME type) of the returned result is determined by the extension of the file name component of the URL.
+  Appart from convenience, this convention also helps certain browsers guessing the display method if the MIME type isn't used.
+  The following table lists the available file name extensions and their use. (The service returns an XML coded health report if the path
+  equals <a HREF="mol-renderer/health.xml">health.xml</a>.)
+  <p/>
+  <table class="tableStyle" border="both">
+    <tbody class="tableBodyStyle">
+        <tr>
+            <th class="tableHeaderCellStyle" width="100px">File Name Example</th>
+            <th class="tableHeaderCellStyle" width="*">Description</th>
+        </tr>
+
+        <tr><th colspan="2">Extensions returning image representations</th></tr>
+
+        <tr>
+            <th>test.png</th>
+            <td class="descColumnStyle">
+                PNG formatted image (MIME type 'image/png') of the structure defined by the URL or parameters.
+                The PNG is rendered using the Java ImageIO library which produces compressed
+                8-bit color table PNG images by default. This is a reasonable choice since 2D
+                chemical structure images usually have very few distinct colors.
+            </td>
+        </tr>
+
+        <tr>
+            <th>test.gif</th>
+            <td class="descColumnStyle">
+                GIF formatted image (MIME type 'image/png') of the structure defined by the URL or parameters.
+                The GIF is rendered using the Java ImageIO library which produces compressed
+                8-bit color table GIF images. GIFs do not support transparency.
+            </td>
+        </tr>
+
+        <tr>
+            <th>test.plt</th>
+            <td class="descColumnStyle">
+                Returns a list of plotting meta commands (MIME type 'text/plain') of the structure to be rendered.
+            </td>
+        </tr>
+
+        <tr>
+            <th>test.b64</th>
+            <td class="descColumnStyle">
+                Returns a base64 coded version (MIME type 'text/plain') of the PNG showing the structure to be rendered.
+            </td>
+        </tr>
+
+        <tr>
+            <th>test.md5</th>
+            <td class="descColumnStyle">
+                Returns an MD5 hashcode (MIME type 'text/plain') of the structure picture, the last 500 of which the server
+                caches under that name.<p/>
+                This method is typically used to implement a two step JavaScript protocol to first post a MOL file receiving the MD5
+                hash code and then constructing an &lt;img&gt; tag's src attribute for rendering the image.
+            </td>
+        </tr>
+
+        <tr><th colspan="2">Extensions returning results of general Cheminformatics services</th></tr>
+
+        <tr>
+            <th>test.smi</th>
+            <td class="descColumnStyle">
+                Returns the SMILES representation (MIME type 'text/plain') of the structure entered as a MOL file.
+            </td>
+        </tr>
+
+        <tr>
+            <th>test.mol</th>
+            <td class="descColumnStyle">
+               Returns the MDL/Accelrys MOL file representation (MIME type 'chemical/x-mdl-molfile')
+               of the structure entered as a SMILES string. The browser should use the registered helper application,
+               e.g. ISISDraw or ChemDraw, to display the resulting data.
+            </td>
+        </tr>
+
+        <tr>
+            <th>test.hex</th>
+            <td class="descColumnStyle">
+                Returns the hex coded fingerprint (MIME type 'text/plain') of the given structure.
+            </td>
+        </tr>
+
+        <tr>
+            <th>test.bin</th>
+            <td class="descColumnStyle">
+                Returns the 0/1 coded fingerprint (MIME type 'text/plain') of the given structure.
+            </td>
+        </tr>
+
+        <tr>
+            <th>test.lst</th>
+            <td class="descColumnStyle">
+                Returns the list of fingerprint bit numbers (MIME type 'text/plain') of the given structure.
+            </td>
+        </tr>
+
+    </tbody>
+  </table>
+  <p/>
+
+  <h3>Available URL-GET or POST Parameters</h3>
+
+  All service parameters can be used both as GET and as POST parameters. However, molfile parameters might usually be to large
+  for the limited URL size current browsers/servers can handle, although the HTTP standard does not limit URL lengths.
+  URLs longer that 2000 characters will not work in most popular browsers. Note also that the MTU (Maximum Transmission Unit)
+  of Ethernet is 1500 bytes.  <p/>
+
+  <table class="tableStyle" border="both">
+    <tbody class="tableBodyStyle">
+      <tr>
+        <th class="tableHeaderCellStyle" width="10%"> Parameter </th>
+        <th class="tableHeaderCellStyle" width="50%"> Description </th>
+        <th class="tableHeaderCellStyle" width="*"> Example(s) </th>
+      </tr>
+
+      <tr> <th class="tableHeaderCellStyle" colspan="3"> Input structure parameters </th> </tr>
+
+      <tr>
+        <td class="codeCell"> smiles </td>
+        <td class="descColumnStyle">
+            <a href="http://de.wikipedia.org/wiki/SMILES">SMILES</a> of the molecule to be rendered.
+        </td>
+        <td class="contentColumnStyle"> <code>smiles=c1ccccc1CCN</code> </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> molfile </td>
+        <td class="descColumnStyle">
+	    Provides an MDL/Accelrys/Symyx <a href='http://en.wikipedia.org/wiki/Chemical_table_file'>MOL file</a>
+	    format definition of the molecule to be processed/rendered. This parameter is usually
+	    provided via POST, because it is 20-50 times longer than the equivalent SMILES (w/o coordinates), but it does contain information
+	    on the position of the atoms.<p/>
+	    MOL files are usually the primary source of structural information and can contain decorations not (yet) rendered
+	    by the Avalon depicter.
+        </td>
+        <td class="contentColumnStyle">
+<pre size="-1" style="border: solid 1px; background-color: white;">
+Pyridine
+  -ISIS-  06211114472D
+This is a line to be used for comments
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.8764   -2.0375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8776   -2.8648    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1628   -3.2777    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5537   -2.8644    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5508   -2.0338    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1646   -1.6247    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  2  3  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+M  END
+</pre>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> md5 </td>
+        <td class="descColumnStyle">
+	    An MD5 hash code computed from the PNG bytes of the molecules rendering with the given parameters.
+	   It is used for the two-step JavaScript rendering of MOL files that do not fit into the URL to be used for an IMG tag.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>4fac549da897a6ba99179f55dd8ebc5</code> is the MD5 hash computed by the following URL snippet:<p/>
+            <a href="mol-renderer/t.md5?smiles=c1ccccc1O&amp;width=100&amp;height=80&amp;t=true">
+            <code>mol-renderer/t.md5?smiles=c1ccccc1O&amp;width=100&amp;height=80&amp;t=true</code></a>
+        <br/>
+        This <a href="mol-renderer/t.html?smiles=c1ccccc1O&amp;width=100&amp;height=80&amp;t=true">link</a> opens an HTML page using this feature.
+        </td>
+      </tr>
+
+      <tr> <th class="tableHeaderCellStyle" colspan="3"> Parameters controlling atom placement and rendering </th> </tr>
+
+      <tr>
+        <td class="codeCell"> tplMOL </td>
+        <td class="descColumnStyle">
+	    Query MOL file used to rotate the matching molecule such that the matching atoms are best aligned with the corresponding
+	    template atoms. The template may contain all query features also available for Avalon substructure queries, e.g. generic
+	    bond types, atom type lists, substitution counts, ring/chain bond constraints, etc.
+        </td>
+        <td class="contentColumnStyle">
+<pre size="-1" style="border: solid 1px; background-color: white;">
+Query mol file illustrating generic any atoms and an atom list
+  -ISIS-  03050313422D
+
+ 10  9  1  0  0  0  0  0  0  0999 V2000
+   -0.1806   -1.9750    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1818   -2.8023    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5331   -3.2152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2495   -2.8019    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2466   -1.9713    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5313   -1.5622    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5288   -0.7372    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9646   -3.2132    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5329   -4.0402    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0875   -1.1958    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  2  3  1  0  0  0  0
+  6  7  1  0  0  0  0
+  4  8  1  0  0  0  0
+  3  4  2  0  0  0  0
+  3  9  1  0  0  0  0
+  1  2  2  0  0  0  0
+ 10 F    2  35  53
+M  ALS  10  2 F Br  I   
+M  END
+</pre>
+            
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> scaffold </td>
+        <td class="descColumnStyle">
+	    (Extended) SMILES coded version of <code>tplMOL</code>, which takes precedence if both parameters are present.
+	    The SMILES may contain aromatic bonds to be more useful for substructure matching.<p/>
+	    Note: This is just a SMILES (with possibly aromatic bond orders). Use the tplMOL parameter to represent more sophisticated query features.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>scaffold=c1ccccc1</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> chains </td>
+        <td class="descColumnStyle">
+            Abbreviate longer n-alkyl chains with their formula to reduce rendering size.<p/>
+            This feature can also be activated by setting <code>chains</code> in the <code>flags</code> parameter.
+        </td>
+        <td class="contentColumnStyle">
+            <code>chains=true</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> flags </td>
+        <td class="descColumnStyle">
+	    List of shortcut perception flags.<p/>
+	    <dl>
+		<dt><code>chains</code></dt>
+		 <dd>Abbreviate long aliphatic carbon chains and PEG substructures.</dd>
+		<dt><code>aminoacids</code></dt>
+		<dd>Abbreviate the 22 (incl. <a href="http://www.ncbi.nlm.nih.gov/pmc/articles/PMC1976440/">Pyl, Sec,</a>
+		    and both His tautomers) standard aminoacids (in D- and L-forms).</dd>
+		<dt><code>protecting-groups</code></dt>
+		 <dd>Abbreviate certain protecting groups.</dd>
+		<dt><code>extended</code></dt>
+		 <dd>Abbreviate an extended set of amino acids, e.g. homocysteine.</dd>
+		<dt><code>non-standard</code></dt>
+		 <dd>Abbreviate certain non-standard aminoacids, e.g. N-methylated ones.</dd>
+		<dt><code>catch-all</code></dt>
+		 <dd>Use a catch-all shortcut to cover non-natural alpha aminoacids.</dd>
+	     </dl> 
+        </td>
+        <td class="contentColumnStyle">
+	    <code>flags=chains,aminoacids</code>
+        </td>
+      </tr>
+
+      <tr> <th class="tableHeaderCellStyle" colspan="3"> Drawing parameters </th> </tr>
+
+      <tr>
+        <td class="codeCell"> width, w </td>
+        <td class="descColumnStyle">
+            Width of the picture in pixels.
+        </td>
+        <td class="contentColumnStyle">
+            default: <code>width=300</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> height, h </td>
+        <td class="descColumnStyle">
+            Height of the picture in pixels.
+        </td>
+        <td class="contentColumnStyle">
+            default: <code>height=250</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> b </td>
+        <td class="descColumnStyle">
+	    Setting this to 'true' adds a single pixel border to the resulting picture.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>b=true</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> bg </td>
+        <td class="descColumnStyle">
+            Defines the background of the picture using a 6-digit hex color code.
+        </td>
+        <td class="contentColumnStyle">
+	    Set the background to yellow: <code>bg=FFFF77</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> t </td>
+        <td class="descColumnStyle">
+            Generates a drawing with a transparent background.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>t=true</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> title </td>
+        <td class="descColumnStyle">
+            Puts a title string at the top center of the rendering.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>title=This+is+a+title</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> footer </td>
+        <td class="descColumnStyle">
+            Puts a footer string at the bottom of the rendering.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>footer=This+is+a+footer</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> colored </td>
+        <td class="descColumnStyle">
+            Use the tplMOL/scaffold to color code the matching part of the molecule.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>colored=true</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> cb </td>
+        <td class="descColumnStyle">
+            Provide emphesis to support reading by color-blind users. Colored lines are drawn with 1.5 times the usual width and colored text is rendered as italic.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>cb=true</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> tpl_coords </td>
+        <td class="descColumnStyle">
+	    Defines how the coordinates of the scaffold/tplMOL are to be used.<p/>
+	    <code>rotate</code> means that the rendered structure is to be rotated to assume the best fit to the matching scaffold atoms.
+	    <code>force</code> places the atoms that match the template at those atoms and renders the remaining atoms de-novo around them.
+	    This can, however, yield distorted results e.g. if scaffold chain bonds match into rings.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>tpl_coords=force</code>
+        </td>
+      </tr>
+
+      <tr> <th class="tableHeaderCellStyle" colspan="3"> Fingerprint related parameters </th> </tr>
+
+      <tr>
+        <td class="codeCell"> nbits </td>
+        <td class="descColumnStyle">
+            Number of bits into which the fingerprint features are to be hashed.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>nbits=512</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="codeCell"> asquery </td>
+        <td class="descColumnStyle">
+	    If <code>asquery=true</code>, then fingerprinting is not preceeded by implicit hydrogen and substitution count perception, i.e. the
+	    structure is treated as a query.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>asquery=true</code>
+        </td>
+      </tr>
+
+<!--	Not yet implemented
+      <tr>
+        <td class="codeCell"> usefplabels </td>
+        <td class="descColumnStyle">
+            Description
+        </td>
+        <td class="contentColumnStyle">
+            Example
+        </td>
+      </tr>
+-->
+
+      <tr>
+        <td class="codeCell"> bits </td>
+        <td class="descColumnStyle">
+	    List of fingerprint bit numbers to be used for coloring the structure by atoms required to show those fingerprint bits.<p/>
+	    Atoms/bonds needed to have the first bit number set are colored in red. The remaining important parts are colored in blue.
+        </td>
+        <td class="contentColumnStyle">
+	    <code>nbits=65536&amp;bits=12610,5940</code>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <h3>Annotated Examples</h3>
+
+  <table class="tableStyle" border="both">
+    <tbody class="tableBodyStyle">
+      <tr>
+        <th class="tableHeaderCellStyle" width="40%"> Description </th>
+        <th class="tableHeaderCellStyle" width="*"> Example </th>
+      </tr>
+
+      <tr>
+        <td class="descColumnStyle">
+            Everybodies favourite drug rendered 100 by 80 pixels from a SMILES using a transparent background.<p/>
+            URL: <code>mol-renderer/t.png?smiles=CCO&amp;width=100&amp;height=80&amp;t=true</code>
+        </td>
+        <td class="contentColumnStyle">
+            <img src='mol-renderer/t.png?smiles=CCO&amp;width=100&amp;height=80&amp;t=true'/>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="descColumnStyle">
+            Simple esterification reaction with reacting bonds and atoms rendered for color-blind users.<p/>
+            URL: <code class="word-break">mol-renderer/t.png?smiles=%5BCH3%3A1%5D%5BCH2%3A2%5D%5BOH%3A7%5D.%5BCH3%3A4%5D%5BC%3A5%5D%3A(%3D%5BO%3A6%5D)O%3E%3E%5BCH3%3A1%5D%5BCH2%3A2%5D%5BO%3A7%5D%5BC%3A5%5D(%3D%5BO%3A6%5D)%5BCH3%3A4%5D&amp;cb=true&amp;width=200&amp;height=80&amp;t=true</code>
+        </td>
+        <td class="contentColumnStyle">
+            <img src='mol-renderer/t.png?smiles=%5BCH3%3A1%5D%5BCH2%3A2%5D%5BOH%3A7%5D.%5BCH3%3A4%5D%5BC%3A5%5D%3A(%3D%5BO%3A6%5D)O%3E%3E%5BCH3%3A1%5D%5BCH2%3A2%5D%5BO%3A7%5D%5BC%3A5%5D(%3D%5BO%3A6%5D)%5BCH3%3A4%5D&amp;cb=true&amp;width=200&amp;height=80&amp;t=true'/>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="descColumnStyle" valign="middle">
+            Fingerprint eaxmples based on phenol:
+            <img src='mol-renderer/t.png?smiles=c1ccccc1O&amp;width=125&amp;height=100&amp;b=true'/>
+        </td>
+        <td class="contentColumnStyle">
+            Compute 512 bit wide structure fingerprint using 0/1 format: <br/>
+            <code><a href="mol-renderer/t.bin?smiles=c1ccccc1O&amp;nbits=512&amp;asquery=false">
+                   mol-renderer/t.bin?smiles=c1ccccc1O&amp;nbits=512&amp;asquery=false</a></code> <p/>
+            Compute 65536 bit wide query fingerprint using list format: <br/>
+            <code><a href="mol-renderer/t.lst?smiles=c1ccccc1O&amp;nbits=65536&amp;asquery=true">
+                    mol-renderer/t.lst?smiles=c1ccccc1O&amp;nbits=65536&amp;asquery=true</a></code> <p/>
+            Rendering of phenol coloring atoms required to set fingerprint bit 53,5598,11706, and 23391 in a 65536 bit wide FP. The 'cb' parameter is set to 'true' to make the match more visible for color-blind users: <br/>
+            <img src='mol-renderer/t.png?smiles=c1ccccc1O&amp;footer=Bit+53&amp;width=125&amp;height=100&amp;nbits=65536&amp;bits=53&amp;b=true&amp;cb=true'/>
+            <img src='mol-renderer/t.png?smiles=c1ccccc1O&amp;footer=Bit+5598&amp;width=125&amp;height=100&amp;nbits=65536&amp;bits=5598&amp;b=true&amp;cb=true'/>
+            <img src='mol-renderer/t.png?smiles=c1ccccc1O&amp;footer=Bit+11706&amp;width=125&amp;height=100&amp;nbits=65536&amp;bits=11706&amp;b=true&amp;cb=true'/>
+            <img src='mol-renderer/t.png?smiles=c1ccccc1O&amp;footer=Bit+23391&amp;width=125&amp;height=100&amp;nbits=65536&amp;bits=23391&amp;b=true&amp;cb=true'/>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="descColumnStyle">
+            SMILEY-Man as a 210 by 140 pixel image using a yellow background and a (black) border.<p/>
+            URL: <code class="word-break">mol-renderer/test.png?smiles=C12(C)CCC1(C)OCC(%3dC3C(CCO)CCC(CCC%3dC)C(CCC%3dC)CCC3(CCO))CO2&amp;w=210&amp;h=140&amp;bg=FFFF77&amp;b=true</code>
+        </td>
+        <td class="contentColumnStyle">
+            <img src='mol-renderer/test.png?smiles=C12(C)CCC1(C)OCC(%3dC3C(CCO)CCC(CCC%3dC)C(CCC%3dC)CCC3(CCO))CO2&amp;w=210&amp;h=140&amp;bg=FFFF77&amp;b=true'/>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="descColumnStyle">
+            Molecule (PIRTENIDINE) with chain short-cuts<p/>
+            URL: <code>mol-renderer/t.png?smiles=CCCCCCCCN=C1C=CN(CCCCCCCC)C=C1&amp;width=200&amp;height=180&amp;chains=true</code>
+        </td>
+        <td class="contentColumnStyle">
+            <img src='mol-renderer/t.png?smiles=CCCCCCCCN=C1C=CN(CCCCCCCC)C=C1&amp;width=200&amp;height=180&amp;chains=true&amp;b=true'/>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="descColumnStyle">
+            Molecule rendered with a template used for coloring and/or atom placement.<p/>
+	    The form provides the molecule to be rendered as a SMILES and the template for coloring as
+	    a MOL file in a &lt;textarea&gt; tag.
+        </td>
+        <td class="contentColumnStyle">
+
+	    <h3>Plain Rendering</h3>
+<div style="padding:5px;border:2px solid black;">
+<form method="POST" action="mol-renderer/test.png?w=220&amp;h=180">
+<b>CIAPILOME:></b><input name="smiles" size="60" value="CC(=O)NN1C=NC(=O)C(C#N)=C1"/><br/>
+<input type="submit" value="Show Molecule">
+</form>
+</div>
+<p/>
+
+	    <h3>Rendering With Template</h3>
+<div style="padding:5px;border:2px solid black;">
+<form method="POST" action="mol-renderer/test.png?w=220&amp;h=180">
+    <b>AMEDALIN: </b> <input name="smiles" size="60" value="CNCCCC3(C)C(=O)N(c1ccccc1)c2ccccc23"/><br/>
+Color Template: <input name="colored" type="checkbox" value="true"/> <br/>
+Use Color-Blind Option: <input name="cb" type="checkbox" value="true"/> <p/>
+Template Coordinates:
+<select name="tpl_coords">
+    <option value="">Ignore Coordinates</option>
+    <option value="rotate">Rotate/Flip Molecule</option>
+    <option value="force">Force Template Coordinates</option>
+</select>
+    <p/>
+
+<textarea name="tplMOL" rows="20" cols="60">Substructure of Voltaren
+  -ISIS-  07211409062D
+
+ 16 17  0  0  0  0  0  0  0  0999 V2000
+   -3.6098    2.0488    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9570    2.4219    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2951    2.0488    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6424    2.4219    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6424    3.1764    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2951    3.5577    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9570    3.1764    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2928    1.2890    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6337    0.9110    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6314    0.1512    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2604    2.4303    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2553    3.1830    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5560    3.1918    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5611    2.4391    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.9011    3.5617    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.9112    2.0562    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  2  0  0  0  0
+  3  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  2  0  0  0  0
+ 11 12  2  0  0  0  0
+  1  2  1  0  0  0  0
+ 13 14  1  0  0  0  0
+  2  7  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+ 11 16  1  0  0  0  0
+ 12 15  1  0  0  0  0
+ 15 13  2  0  0  0  0
+ 14 16  2  0  0  0  0
+  1 11  1  0  0  0  0
+M  END
+</textarea><p/>
+
+<input type="submit" value="Show Molecule">
+</form>
+Other Examples (Copy/Paste into SMILES text box above):
+<table>
+    <tr><td><b>OXCARBAZEPINE:</b></td><td>NC(=O)N3c1ccccc1CC(=O)c2ccccc23</td></tr>
+    <tr><td><b>LUMIRACOXIB:</b></td><td>Cc2ccc(Nc1c(F)cccc1Cl)c(CC(O)=O)c2</td></tr>
+</table>
+</div>
+
+        </td>
+      </tr>
+
+      <tr>
+        <td class="descColumnStyle">
+            Using a POST form to render a query MOL file.
+        </td>
+        <td class="contentColumnStyle">
+<div style="padding:5px;border:2px solid black;">
+<form method="POST" action="mol-renderer/test.png?b=true">
+<h3>Query MOL File</h3>
+Width: <input name="w" size="5" value="600"/> <br/>
+Height: <input name="h" size="5" value="400"/> <br/>
+<textarea name="molfile" rows="20" cols="60">Common fuses aromatic with atom type lists
+  ChemDraw04071310002D
+
+ 13 13  6  0  0  0  0  0  0  0999 V2000
+   -1.0811    0.4125    0.0000 N
+   -1.0811   -0.4125    0.0000 C
+   -0.3666   -0.8250    0.0000 N
+    0.3479   -0.4125    0.0000 C
+    0.3479    0.4125    0.0000 C
+   -0.3666    0.8250    0.0000 C
+   -1.7953   -0.8250    0.0000 N
+    1.0623    0.8250    0.0000 L
+    1.0623   -0.8250    0.0000 L
+    1.2122    1.6500    0.0000 L
+    1.2122   -1.6500    0.0000 L
+    1.7953    0.2416    0.0000 L
+    1.7953   -0.2416    0.0000 L
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  2  7  1  0
+  5  8  1  0
+  4  9  1  0
+  8 10  8  0  1
+  9 11  8  0  1
+  8 12  8  0  1
+  9 13  8  0  1
+  8 F    4   6   7   8  16
+  9 F    4   6   7   8  16
+ 10 F    4   6   7   8  16
+ 11 F    4   6   7   8  16
+ 12 F    4   6   7   8  16
+ 13 F    4   6   7   8  16
+M  ALS   8  4 F C   N   O   S
+M  ALS   9  4 F C   N   O   S
+M  ALS  10  4 F C   N   O   S
+M  ALS  11  4 F C   N   O   S
+M  ALS  12  4 F C   N   O   S
+M  ALS  13  4 F C   N   O   S
+M  END
+</textarea><p/>
+
+<input type="submit" value="Show Query Molecule">
+</form>
+</div>
+
+        </td>
+      </tr>
+
+      <tr>
+        <td class="descColumnStyle">
+            Using a POST form to convert a MOL file to a SMILES. (R-group atoms and certain query features are also supported.)
+        </td>
+        <td class="contentColumnStyle">
+<div style="padding:5px;border:2px solid black;">
+<form method="POST" action="mol-renderer/test.smi">
+<h3>MOL File To Be Converted</h3>
+Width: <input name="w" size="5" value="600"/> <br/>
+Height: <input name="h" size="5" value="400"/> <br/>
+<textarea name="molfile" rows="20" cols="60">Common fuses aromatic with atom type lists
+  -ISIS-  06291514322D
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+    0.8111   -4.5041    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8099   -5.3315    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5247   -5.7444    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2412   -5.3310    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2383   -4.5005    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5229   -4.0914    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9512   -4.0853    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    1.5245   -6.5694    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  4  5  1  0  0  0  0
+  2  3  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  1  2  2  0  0  0  0
+  5  7  1  0  0  0  0
+  3  4  2  0  0  0  0
+  3  8  1  0  0  0  0
+M  RGP  2   7   1   8   2
+M  END</textarea><p/>
+
+<input type="submit" value="Convert to SMILES">
+</form>
+</div>
+
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+</body>
+</html>

@@ -49,7 +49,9 @@ void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
   auto *qa = new QueryAtom(0);
   qa->setQuery(qry);
   qa->setNoImplicit(true);
-  mol.replaceAtom(idx, qa);
+  bool updateLabel = false;
+  bool preserveProps = true;
+  mol.replaceAtom(idx, qa, updateLabel, preserveProps);
   if (symbol != "") {
     mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
                                      symbol);
@@ -501,6 +503,42 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
       }
     } else {
       return false;
+    }
+    if (first < last && *first == ',') {
+      ++first;
+    }
+  }
+  return true;
+}
+
+template <typename Iterator>
+bool parse_zero_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                      unsigned int, unsigned int startBondIdx) {
+  // these look like: C1CCCCC~CCCC1 |Z:5|
+  if (first >= last || *first != 'Z') {
+    return false;
+  }
+  ++first;
+  if (first >= last || *first != ':') {
+    return false;
+  }
+  ++first;
+
+  while (first < last && *first >= '0' && *first <= '9') {
+    unsigned int bondIdx;
+    if (!read_int(first, last, bondIdx)) {
+      return false;
+    }
+    if (VALID_BNDIDX(bondIdx)) {
+      auto bond = get_bond_with_smiles_idx(mol, bondIdx - startBondIdx);
+
+      if (!bond) {
+        BOOST_LOG(rdWarningLog)
+            << "bond " << bondIdx
+            << " not found, cannot mark as zero order bond." << std::endl;
+        return false;
+      }
+      bond->setBondType(Bond::ZERO);
     }
     if (first < last && *first == ',') {
       ++first;
@@ -1407,6 +1445,10 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
                                   startAtomIdx, startBondIdx)) {
         return false;
       }
+    } else if (*first == 'Z') {
+      if (!parse_zero_bonds(first, last, mol, startAtomIdx, startBondIdx)) {
+        return false;
+      }
     } else if (*first == '^') {
       if (!parse_radicals(first, last, mol, startAtomIdx)) {
         return false;
@@ -2215,14 +2257,15 @@ std::string get_bond_config_block(
   return res;
 }
 
-std::string get_coordbonds_block(const ROMol &mol,
-                                 const std::vector<unsigned int> &atomOrder,
-                                 const std::vector<unsigned int> &bondOrder) {
+std::string get_coord_or_hydrogen_bonds_block(
+    const ROMol &mol, Bond::BondType bondType, std::string symbol,
+    const std::vector<unsigned int> &atomOrder,
+    const std::vector<unsigned int> &bondOrder) {
   std::string res = "";
   for (unsigned int i = 0; i < bondOrder.size(); ++i) {
     auto idx = bondOrder[i];
     const auto bond = mol.getBondWithIdx(idx);
-    if (bond->getBondType() != Bond::BondType::DATIVE) {
+    if (bond->getBondType() != bondType) {
       continue;
     }
     auto begAtomOrder =
@@ -2231,9 +2274,29 @@ std::string get_coordbonds_block(const ROMol &mol,
     if (!res.empty()) {
       res += ",";
     } else {
-      res = "C:";
+      res = symbol + ":";
     }
     res += boost::str(boost::format("%d.%d") % begAtomOrder % i);
+  }
+  return res;
+}
+
+std::string get_zerobonds_block(const ROMol &mol,
+                                const std::vector<unsigned int> &,
+                                const std::vector<unsigned int> &bondOrder) {
+  std::string res = "";
+  for (unsigned int i = 0; i < bondOrder.size(); ++i) {
+    auto idx = bondOrder[i];
+    const auto bond = mol.getBondWithIdx(idx);
+    if (bond->getBondType() != Bond::BondType::ZERO) {
+      continue;
+    }
+    if (!res.empty()) {
+      res += ",";
+    } else {
+      res = "Z:";
+    }
+    res += boost::str(boost::format("%d") % i);
   }
   return res;
 }
@@ -2529,7 +2592,19 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   }
 
   if (flags & SmilesWrite::CXSmilesFields::CX_COORDINATE_BONDS) {
-    const auto block = get_coordbonds_block(mol, atomOrder, bondOrder);
+    const auto block = get_coord_or_hydrogen_bonds_block(
+        mol, Bond::BondType::DATIVE, "C", atomOrder, bondOrder);
+    appendToCXExtension(block, res);
+  }
+
+  if (flags & SmilesWrite::CXSmilesFields::CX_HYDROGEN_BONDS) {
+    const auto block = get_coord_or_hydrogen_bonds_block(
+        mol, Bond::BondType::HYDROGEN, "H", atomOrder, bondOrder);
+    appendToCXExtension(block, res);
+  }
+
+  if (flags & SmilesWrite::CXSmilesFields::CX_ZERO_BONDS) {
+    const auto block = get_zerobonds_block(mol, atomOrder, bondOrder);
     appendToCXExtension(block, res);
   }
 

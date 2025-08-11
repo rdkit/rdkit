@@ -1,3 +1,3 @@
-SMILES	synton_id	synton#	reaction_id	release
+SMILES synton_id synton# reaction_id release
 OC(=O)C(N([1*:1]))C f1 1 test 3
 [1*:1]CC f2 2 test 3

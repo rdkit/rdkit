@@ -95,8 +95,10 @@ bool getBondFrameOfReference(const Bond *bond, const Conformer *conf,
   if (xAxis.x > REALLY_SMALL_BOND_LEN || xAxis.y > REALLY_SMALL_BOND_LEN) {
     zAxis = RDGeom::Point3D(-xAxis.y, xAxis.x,
                             0);  // temp z axis - used to find yAxis
+  } else if (xAxis.y < REALLY_SMALL_BOND_LEN) {
+    zAxis = RDGeom::Point3D(0.0, 0.0, 1.0);
   } else {
-    zAxis = RDGeom::Point3D(xAxis.z, xAxis.z,
+    zAxis = RDGeom::Point3D(-xAxis.z, xAxis.z,
                             0);  // temp z axis - used to find yAxis
   }
 

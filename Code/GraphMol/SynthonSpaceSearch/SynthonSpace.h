@@ -27,6 +27,7 @@
 */
 
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -109,6 +110,16 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
              // appropriate for Morgan fingerprints.  With RDKit fingerprints,
              // 0.05 is adequate, and higher than that has been seen to
              // produce long run times.
+  unsigned int minHitHeavyAtoms{0};  // Minimum number of heavy atoms in a hit.
+  int maxHitHeavyAtoms{-1};          // Maximum number of heavy atoms in a hit.
+                                     // -1 means no maximum.
+  double minHitMolWt{0};             // Minimum molecular weight for a hit.
+  double maxHitMolWt{0};  // Maximum molecular weight for a hit.  0.0 means
+                          // no maximum.
+  unsigned int minHitChiralAtoms{
+      0};                      // Minimum number of chiral atoms in a hit.
+  int maxHitChiralAtoms{-1};   // Maximum number of chiral atoms in a hit.
+                               // -1 means no maximum.
   std::uint64_t timeOut{600};  // Maximum number of seconds to spend on a single
                                // search.  0 means no maximum.
   int numThreads = 1;  // The number of threads to use.  If > 0, will use that
@@ -250,7 +261,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * SMILES,synton_id,synton_role,reaction_id
    * but with the 3rd column named differently but with the same meaning.
    * The formatting of the first 2 formats has been relaxed such that any
-   * whitespace may be used as the field separator.
+   * whitespace may be used as the field separator, but a tab is tried first
+   * so that a tab-separated file may have spaces in the columns.
    *
    * Attachment points are U, Np, Pu and Am for up to 4 synthons per reaction.
    * A product is created by taking a synthon from each synton# value and
@@ -264,6 +276,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * If it receives a SIGINT, returns cancelled=true.
    */
   void readTextFile(const std::string &inFilename, bool &cancelled);
+  void readStream(std::istream &is, bool &cancelled);
 
   /*!
    * Writes to a binary DB File in our format.
@@ -296,6 +309,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param outFilename: name of the file to write
    */
   void writeEnumeratedFile(const std::string &outFilename) const;
+  void enumerateToStream(std::ostream &os) const;
 
   /*!
    * Create the fingerprints for the synthons ready for fingerprint searches.
@@ -383,7 +397,8 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void convertTextToDBFile(
  *
  * @return std::string
  */
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::string formattedIntegerString(std::int64_t value);
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::string formattedIntegerString(
+    std::int64_t value);
 
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit

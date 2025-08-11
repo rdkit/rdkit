@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YYSMILES_USERS_FAARA_DOCUMENTS_CODE_RDKIT_BUILDER_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
-# define YY_YYSMILES_USERS_FAARA_DOCUMENTS_CODE_RDKIT_BUILDER_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
+#ifndef YY_YYSMILES_USR_APP_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
+# define YY_YYSMILES_USR_APP_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -77,7 +77,8 @@ extern int yysmiles_debug;
     CHI_CLASS_TOKEN = 278,         /* CHI_CLASS_TOKEN  */
     ATOM_OPEN_TOKEN = 279,         /* ATOM_OPEN_TOKEN  */
     ATOM_CLOSE_TOKEN = 280,        /* ATOM_CLOSE_TOKEN  */
-    EOS_TOKEN = 281                /* EOS_TOKEN  */
+    BAD_CHARACTER = 281,           /* BAD_CHARACTER  */
+    EOS_TOKEN = 282                /* EOS_TOKEN  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -111,4 +112,4 @@ int yysmiles_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDK
                (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token, unsigned int& current_token_position)
 
 
-#endif /* !YY_YYSMILES_USERS_FAARA_DOCUMENTS_CODE_RDKIT_BUILDER_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED  */
+#endif /* !YY_YYSMILES_USR_APP_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED  */

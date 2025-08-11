@@ -492,33 +492,37 @@ void cleanupAtropisomers(RWMol &mol) {
   MolOps::cleanupAtropisomers(mol, hybs);
 }
 
-void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
-  // make sure that ring info is available
-  // (defensive, current calls have it available)
+namespace {
+void checkBond(RWMol &mol, Bond *bond, MolOps::Hybridizations &hybs) {
   if (!mol.getRingInfo()->isSssrOrBetter()) {
     RDKit::MolOps::findSSSR(mol);
   }
   const RingInfo *ri = mol.getRingInfo();
+  if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
+      hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
+      // do not clear bonds that part of a macrocycle
+      // because they can be linking actual atropisomeric portions
+      (ri->numBondRings(bond->getIdx()) > 0 &&
+       ri->minBondRingSize(bond->getIdx()) < 8)) {
+    bond->setStereo(Bond::BondStereo::STEREONONE);
+  }
+}
+}  // namespace
+
+void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
+  // make sure that ring info is available
+  // (defensive, current calls have it available)
   for (auto bond : mol.bonds()) {
     switch (bond->getStereo()) {
       case Bond::BondStereo::STEREOATROPCW:
       case Bond::BondStereo::STEREOATROPCCW:
-        if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
-            hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
-            // do not clear bonds that part of a macrocycle
-            // because they can be linking actual atropisomeric portions
-            (ri->numBondRings(bond->getIdx()) > 0 &&
-             ri->minBondRingSize(bond->getIdx()) < 8)) {
-          bond->setStereo(Bond::BondStereo::STEREONONE);
-        }
+        checkBond(mol, bond, hybs);
         break;
-
       default:
         break;
     }
   }
 }
-
 void sanitizeMol(RWMol &mol) {
   unsigned int failedOp = 0;
   sanitizeMol(mol, failedOp, SANITIZE_ALL);
@@ -721,12 +725,19 @@ std::vector<std::unique_ptr<ROMol>> getTheFrags(
             }
           }
         }
-        // doesn't seem like this should be necessary, but in case
-        // we ever need stereogroups where the atoms aren't marked
-        // with stereo...
         for (auto stereoGroup : mol.getStereoGroups()) {
+          // doesn't seem like this should be necessary, but in case
+          // we ever need stereogroups where the atoms aren't marked
+          // with stereo...
           for (auto atom : stereoGroup.getAtoms()) {
             if (atomsInFrag[atom->getIdx()]) {
+              return true;
+            }
+          }
+          // same check for stereo groups involving bonds:
+          for (auto bond : stereoGroup.getBonds()) {
+            if (atomsInFrag[bond->getBeginAtomIdx()] &&
+                atomsInFrag[bond->getEndAtomIdx()]) {
               return true;
             }
           }
@@ -772,6 +783,7 @@ std::vector<std::unique_ptr<ROMol>> getTheFrags(
       } else {
         res.emplace_back(new RWMol(mol));
         auto &frag = res.back();
+
         frag->beginBatchEdit();
         for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
           if (!atomsInFrag[idx]) {

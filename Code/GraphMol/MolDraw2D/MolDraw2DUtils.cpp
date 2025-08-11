@@ -241,6 +241,7 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(isotopeLabels);
   PT_OPT_GET(dummyIsotopeLabels);
   PT_OPT_GET(addStereoAnnotation);
+  PT_OPT_GET(showAllCIPCodes);
   PT_OPT_GET(atomHighlightsAreCircles);
   PT_OPT_GET(centreMoleculesBeforeDrawing);
   PT_OPT_GET(explicitMethyl);

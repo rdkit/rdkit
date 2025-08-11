@@ -8,13 +8,14 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     else(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
       add_definitions(-DIN_COORDGEN)
     endif(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
-
-    include_directories(${coordgen_INCLUDE_DIRS})
+    
+    set(COORDGEN_LIB coordgen)
+    find_package(${COORDGEN_LIB} QUIET)
 endif()
 
 rdkit_library(Depictor
               RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp Templates.cpp
-              LINK_LIBRARIES ${RDK_COORDGEN_LIBS} SmilesParse SubstructMatch MolTransforms GraphMol RDGeneral MolAlign)
+              LINK_LIBRARIES ${COORDGEN_LIB} SmilesParse SubstructMatch MolTransforms GraphMol RDGeneral MolAlign)
 target_compile_definitions(Depictor PRIVATE RDKIT_DEPICTOR_BUILD)
 
 rdkit_headers(DepictUtils.h

@@ -1,0 +1,66 @@
+<html>
+<head>
+    <title>Depicter Test Pictures</title>
+</head>
+<body>
+    <h1>Depicter Test Pictures</h1>
+    <p>This page renders a table of annotated live pictures and their expected contents for quick review testing.</p>
+
+    <h2>R-Group Formats</h2>
+    <table border="1">
+	<tr><th>Test Case</th><th>Live Imgage</th><th>Reference Image</th></tr>
+	<tr>
+            <td align='center'>Simple 'star' atom rendering as 'R' attachment point:<br /> *c1ccccc</td>
+            <td><img src='http://localhost:8080/depicter/mol-renderer/test.png?h=140&w=210&smiles=*c1ccccc1' /></td>
+            <td><img src='test_pictures/simple_star_rgroup.png' /></td>
+	</tr>
+    </table>
+
+    <h2>Color Coding</h2>
+    <table border="1">
+	<tr><th>Test Case</th><th>Live Imgage</th><th>Reference Image</th></tr>
+
+	<tr>
+            <td align='center'><strong>VALACYCLOVIR</strong>
+                <br />'C12=C(N=CN1COCCOC([C@H](C(C)C)N)=O)C(NC(=N2)N)=O'
+                <p />colored by Avalon fingerprint bits
+                <br />(HCOUNT_PATH(47412)/<font color='red'>red</font>,
+                <br/> AUGMENTED_ATOM(23394)/<font color='blue'>blue</font>,
+                <br/> fpsize=65536 bits) </td>
+            <td><img src='http://localhost:8080/depicter/mol-renderer/test.png?h=140&w=210&flags=aminoacids&smiles=C12%3DC(N%3DCN1COCCOC(%5BC%40H%5D(C(C)C)N)%3DO)C(NC(%3DN2)N)%3DO&nbits=65536&bits=47412,23394' /></td>
+            <td><img src='test_pictures/valacyclovir.png' /></td>
+	</tr>
+
+	<tr>
+            <td align='center'><strong>BROMPERIDOL</strong>
+                <br />'OC2(CCN(CCCC(=O)C1C=CC(F)=CC=1)CC2)C3C=CC(Br)=CC=3'
+                <p />colored by Avalon fingerprint bits
+                <br />(ATOM_COUNT(21301)/<font color='red'>red</font>,
+                <br/> HCOUNT_CLASS_PATH(6403)/<font color='blue'>blue</font>,
+                <br/> fpsize=65536 bits) </td>
+            <td><img src='http://localhost:8080/depicter/mol-renderer/test.png?h=140&w=210&flags=aminoacids&smiles=OC2(CCN(CCCC(=O)C1C=CC(F)=CC=1)CC2)C3C=CC(Br)=CC=3&nbits=65536&bits=21301,6403' /></td>
+            <td><img src='test_pictures/bromperidol.png' /></td>
+	</tr>
+
+    </table>
+
+    <h2>Shortcut Rendering</h2>
+    <table border="1">
+	<tr><th width='30%'>Test Case</th><th>Live Imgage</th><th>Reference Image</th></tr>
+
+	<tr>
+            <td align='center'><strong>NISIN-Z</strong> (direct rendering):<br /> S2C([C@@H](C(N1[C@@H](CCC1)C(=O)NCC(N[C@@H](C2)C(N[C@H](C(N[C@H]6C(C)SC[C@@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H]3C(C)SC[C@@H]4NC(=O)[C@@H](NC([C@@H](NC3=O)C)=O)C(C)SC[C@H](NC([C@@H](NC4=O)CC(N)=O)=O)C(N[C@H](C(N[C@H](C(N[C@@H](CC5=CN=CN5)C(N[C@H](C(NC(C(N[C@@H](CCCCN)C(=O)O)=O)=C)=O)C(C)C)=O)=O)[C@H](CC)C)=O)CO)=O)CCCCN)CCSC)CC(N)=O)NC(CNC([C@@H](NC([C@@H](NC([C@@H](NC(CNC6=O)=O)C)=O)CC(C)C)=O)CCSC)=O)=O)=O)CCCCN)=O)=O)=O)NC([C@H]7NC([C@@H](NC(C(=C)NC(=O)[C@@H](NC([C@H](CSC7)NC(\C(\NC([C@H]([C@H](CC)C)N)=O)=C\C)=O)=O)[C@H](CC)C)=O)CC(C)C)=O)=O)C</td>
+            <td><img src='http://localhost:8080/depicter/mol-renderer/test.png?h=320&w=510&smiles=S2C([C@@H](C(N1[C@@H](CCC1)C(=O)NCC(N[C@@H](C2)C(N[C@H](C(N[C@H]6C(C)SC[C@@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H]3C(C)SC[C@@H]4NC(=O)[C@@H](NC([C@@H](NC3=O)C)=O)C(C)SC[C@H](NC([C@@H](NC4=O)CC(N)=O)=O)C(N[C@H](C(N[C@H](C(N[C@@H](CC5=CN=CN5)C(N[C@H](C(NC(C(N[C@@H](CCCCN)C(=O)O)=O)=C)=O)C(C)C)=O)=O)[C@H](CC)C)=O)CO)=O)CCCCN)CCSC)CC(N)=O)NC(CNC([C@@H](NC([C@@H](NC([C@@H](NC(CNC6=O)=O)C)=O)CC(C)C)=O)CCSC)=O)=O)=O)CCCCN)=O)=O)=O)NC([C@H]7NC([C@@H](NC(C(=C)NC(=O)[C@@H](NC([C@H](CSC7)NC(\C(\NC([C@H]([C@H](CC)C)N)=O)=C\C)=O)=O)[C@H](CC)C)=O)CC(C)C)=O)=O)C' /></td>
+            <td><img src='test_pictures/nisin-z_direct.png' /></td>
+	</tr>
+
+	<tr>
+            <td align='center'><strong>NISIN-Z</strong> (with shortcuts):<br /> S2C([C@@H](C(N1[C@@H](CCC1)C(=O)NCC(N[C@@H](C2)C(N[C@H](C(N[C@H]6C(C)SC[C@@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H]3C(C)SC[C@@H]4NC(=O)[C@@H](NC([C@@H](NC3=O)C)=O)C(C)SC[C@H](NC([C@@H](NC4=O)CC(N)=O)=O)C(N[C@H](C(N[C@H](C(N[C@@H](CC5=CN=CN5)C(N[C@H](C(NC(C(N[C@@H](CCCCN)C(=O)O)=O)=C)=O)C(C)C)=O)=O)[C@H](CC)C)=O)CO)=O)CCCCN)CCSC)CC(N)=O)NC(CNC([C@@H](NC([C@@H](NC([C@@H](NC(CNC6=O)=O)C)=O)CC(C)C)=O)CCSC)=O)=O)=O)CCCCN)=O)=O)=O)NC([C@H]7NC([C@@H](NC(C(=C)NC(=O)[C@@H](NC([C@H](CSC7)NC(\C(\NC([C@H]([C@H](CC)C)N)=O)=C\C)=O)=O)[C@H](CC)C)=O)CC(C)C)=O)=O)C</td>
+            <td><img src='http://localhost:8080/depicter/mol-renderer/test.png?h=320&w=510&flags=aminoacids,extended,non-standard&smiles=S2C([C@@H](C(N1[C@@H](CCC1)C(=O)NCC(N[C@@H](C2)C(N[C@H](C(N[C@H]6C(C)SC[C@@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H]3C(C)SC[C@@H]4NC(=O)[C@@H](NC([C@@H](NC3=O)C)=O)C(C)SC[C@H](NC([C@@H](NC4=O)CC(N)=O)=O)C(N[C@H](C(N[C@H](C(N[C@@H](CC5=CN=CN5)C(N[C@H](C(NC(C(N[C@@H](CCCCN)C(=O)O)=O)=C)=O)C(C)C)=O)=O)[C@H](CC)C)=O)CO)=O)CCCCN)CCSC)CC(N)=O)NC(CNC([C@@H](NC([C@@H](NC([C@@H](NC(CNC6=O)=O)C)=O)CC(C)C)=O)CCSC)=O)=O)=O)CCCCN)=O)=O)=O)NC([C@H]7NC([C@@H](NC(C(=C)NC(=O)[C@@H](NC([C@H](CSC7)NC(\C(\NC([C@H]([C@H](CC)C)N)=O)=C\C)=O)=O)[C@H](CC)C)=O)CC(C)C)=O)=O)C' /></td>
+            <td><img src='test_pictures/nisin-z_shortcut.png' /></td>
+	</tr>
+
+    </table>
+
+</body>
+</html>

@@ -1,0 +1,149 @@
+145     ! T92 , 29.6.99:  transform O-1(-I) --> O(-I) included.
+/*A000*/ "Li,Na,K,Rb,Cs,Fr"      -->  "Li,Na,K,Rb,Cs,Fr+1"      SAF metal
+/*A010*/ "Be,Mg,Ca,Sr,Ba,Ra"     -->  "Be,Mg,Ca,Sr,Ba,Ra+2"     SAF metal
+/*A020*/ "Al,Ga,In,Tl"           -->  "Al,Ga,In,Tl+3"           SAF metal
+/*A030*/ "Sb,Bi"                 -->  "Sb,Bi+3"                 SAF metal
+/*A040*/ "Sn,Pb"                 -->  "Sn,Pb+2"                 SAF metal
+/*A080*/ "Sc,Y,La,Ce,Pr,Nd,Pm,Sm" --> "Sc,Y,La,Ce,Pr,Nd,Pm,Sm+3" SAF metal
+/*A090*/ "Eu,Gd,Tb,Dy,Ho,Er,Tm,Yb,Lu" --> "Eu,Gd,Tb,Dy,Ho,Er,Tm,Yb,Lu+3" SAF metal
+/*A100*/ "N,O,S,F,Cl,Br,I-1"     -->  "N,O,S,F,Cl,Br,I"         SAF anion
+/*A110*/ "N+1"                   -->  "N"                       SAF ammonium
+/*A201*/ "Li,Na,K(-N,O,S,Se,F,Cl,Br,I)" --> "Li,Na,K+1(?N,O,S,Se,F,Cl,Br,I)" SAF
+/*A211*/ "Cs,Rb(-N,O,S,Se,F,Cl,Br,I)"   --> "Cs,Rb+1(?N,O,S,Se,F,Cl,Br,I)"   SAF
+/*A302*/ "Be,Mg,Ca(-F,Cl,Br,I)(-F,Cl,Br,I)" --> "Be,Mg,Ca+2(?F,Cl,Br,I)(?F,Cl,Br,I)"
+/*A312*/ "Sr,Ba(-F,Cl,Br,I)(-F,Cl,Br,I)" --> "Sr,Ba+2(?F,Cl,Br,I)(?F,Cl,Br,I)"
+/*A322*/ "Pb(-F,Cl,Br,I)(-F,Cl,Br,I)" --> "Pb+2(?F,Cl,Br,I)(?F,Cl,Br,I)"    SAF
+/*A403*/ "Al,Ga(-F,Cl,Br,I)(-F,Cl,Br,I)(-F,Cl,Br,I)"  -->  "Al,Ga+3(?F,Cl,Br,I)(?F,Cl,Br,I)(?F,Cl,Br,I)"
+/*A413*/ "In,Tl(-F,Cl,Br,I)(-F,Cl,Br,I)(-F,Cl,Br,I)"  -->  "In,Tl+3(?F,Cl,Br,I)(?F,Cl,Br,I)(?F,Cl,Br,I)"
+/*A701*/ "Cu,Ag,Au,Hg(-N,O,S,Cl,Br,I)"  -->  "Cu,Ag,Au,Hg+1(?N,O,S,Cl,Br,I)" SAF
+/*A702*/ "Zn(-N+1)(-N+1)"        -->  "Zn+2(?N)(?N)"            SAF
+/*A703*/ "Au(-F,Cl,Br,I)(-F,Cl,Br,I)(-F,Cl,Br,I)"  -->  "Au+3(?F,Cl,Br,I)(?F,Cl,Br,I)(?F,Cl,Br,I)"  
+/*A803*/ "Sc,Y,La,Ce,Pr,Nd,Pm,Sm(-O)(-O)(-O)" --> "Sc,Y,La,Ce,Pr,Nd,Pm,Sm+3(?O)(?O)(?O)"
+/*A813*/ "Eu,Gd,Tb,Dy,Ho,Er,Tm,Yb,Lu(-O)(-O)(-O)" --> "Eu,Gd,Tb,Dy,Ho,Er,Tm,Yb,Lu+3(?O)(?O)(?O)"
+/*AA04*/ "N(=C)(-C)(-C)(-F,Cl,Br,I)"      -->  "N+1(=C)(-C)(-C)(?F,Cl,Br,I)"
+/*AA05*/ "N(-C)(-C)(-C)(-C)(-F,Cl,Br,I)"  -->  "N+1(-C)(-C)(-C)(-C)(?F,Cl,Br,I)"
+/*AX02*/ "O+1(=C)(-B-1)"         -->  "O(=C)(?B)"               bor addukt
+/*B101*/ "N+1(-C,N,O)"           -->  "N(-C,N,O)"               onium
+/*B112*/ "N(-C+1)(-C,N)"         -->  "N(=C)(-C,N)"             onium
+/*B121*/ "N(-C+1)"               -->  "N(=C)"                   onium
+/*B131*/ "N+1(=C,N)"             -->  "N(=C,N)"                 onium
+/*B302*/ "N+1(-C)(-C,N)"         -->  "N(-C)(-C,N)"             onium
+/*B312*/ "N+1(=C)(-C,N)"         -->  "N(=C)(-C,N)"             onium
+/*b322*/ "N+1(=C)(-B-1)"         -->  "N(=C)(-B-1)"             MAAG N4B
+/*B503*/ "N+1(-C)(-C,N)(-C,N)"   -->  "N(-C)(-C,N)(-C,N)"       onium
+/*C002*/ "I+1(-C,O-1)(-C)"       -->  "I(=C,O)(-C)"             ylid pos.
+/*C012*/ "N+1(-O-1)(-N)"         -->  "N(=O)(-N)"               ylid pos.
+/*C103*/ "S+1(-C,O-1)(-C)(-C)"   -->  "S(=C,O)(-C)(-C)"         ylid pos.
+/*C204*/ "P+1(-C-1)(-C)(-C)(-C)" -->  "P(=C)(-C)(-C)(-C)"       ylid pos.
+/*C214*/ "P+1(-O-1)(-N)(-N)(-N)" -->  "P(=O)(-N)(-N)(-N)"       ylid pos.
+/*C224*/ "S+1(=O)(-C-1)(-C)(-C)" -->  "S(=O)(=C)(-C)(-C)"       ylid pos.
+/*C301*/ "O-1(-P,S,I+1)"         -->  "O(=P,S,I)"               ylid neg.
+/*C402*/ "C-1(-P,S+1)(-C)"       -->  "C(=P,S)(-C)"             ylid neg.
+/*C503*/ "C-1(-S+1)(-C)(-C)"     -->  "C(=S)(-C)(-C)"           ylid neg.
+/*C513*/ "S-1(-C+1)(-C)(-C)"     -->  "S(=C)(-C)(-C)"           ylid neg.
+/*C601*/ "O(-I+1)"               -->  "O(=I)"                   ylid spez.
+/*C702*/ "S(-C+1)(-C)"           -->  "S+1(=C)(-C)"             ylid spez.
+/*C803*/ "S(=O)(=O)(-C,N,O,F,Cl,Br,I)"  -->  "S(=O)(-O)(-C,N,O,F,Cl,Br,I)" R-SO-OH,O-SO-OH
+/*C804*/ "P,As,Sb(~O)(~O)(~O)(~O)"  -->  "P,As,Sb(=O)(-O)(-O)(-O)"  phosphate
+/*C901*/ "N+1(=N-1)"             -->  "N-1(=N+1)"               diazo
+/*D004*/ "B(-O)(-O)(-O)(-O)"            -->  "B-1(-O)(-O)(-O)(-O)"  complex ion
+/*D104*/ "B+3(-O-1)(-O-1)(-O-1)(-O-1)"  -->  "B-1(-O)(-O)(-O)(-O)"  complex ion
+/*D306*/ "Si.(-F-1)(-F-1)(-F-1)(-F-1)(-F-1)(-F-1)"   -->  "Si(-F)(-F)(-F)(-F)(-F)(-F)"
+/*D402*/ "Au(=P)(-O,S,F,Cl,Br,I)"  -->  "Au(-P+1)(-O,S,F,Cl,Br,I)"  coord.comp.
+/*D414*/ "Fe,Co,Ni(=P)(=P)(-F,Cl,Br,I)(-F,Cl,Br,I)"    -->  "Fe,Co,Ni(-P+1)(-P+1)(-F,Cl,Br,I)(-F,Cl,Br,I)"     coord.comp.
+/*D424*/ "Hg+2(-N)(-N)(-S-1)(-S-1)" -> "Hg(-N)(-N)(-S)(-S)"     coord.comp.
+/*D504*/ "P(=Cu,Ag,Au,Zn,Cd,Hg)(-C)(-C)(-C)"           -->  "P+1(-Cu,Ag,Au,Zn,Cd,Hg)(-C)(-C)(-C)"              coord.comp.
+/*D514*/ "P(=Fe,Co,Ni,Ru,Rh,Pd,Os,Ir,Pt)(-C)(-C)(-C)"  -->  "P+1(-Fe,Co,Ni,Ru,Rh,Pd,Os,Ir,Pt)(-C)(-C)(-C)"     coord.comp.
+/*D522*/ "O(=C)(-Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn)"   -->  "O+1(=C)(-Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn)"                coord.comp.
+/*D523*/ "N(=C,N)(-Al,Ge,V,Cr,Mn,Fe,Co,Ni,Cu,Zn)(-C,N,O)"  -->  "N+1(=C,N)(-Al,Ge,V,Cr,Mn,Fe,Co,Ni,Cu,Zn)(-C,N,O)" coord.comp.
+/*D533*/ "O(-C)(-C)(-Cr,Mn,Fe,Co,Ni,Cu,Zn)"  -->  "O+1(-C)(-C)(-Cr,Mn,Fe,Co,Ni,Cu,Zn)"                         coord.comp.
+/*E003*/ "N(=C)(=C)(-C)"         -->  "N+1(=C)(-C-1)(-C)"       quart. N
+/*E013*/ "N(=C)(=N,O)(-C,N,O)"   -->  "N+1(=C)(-N,O-1)(-C,N,O)" quart. N
+/*E023*/ "N(=N)(=N,O)(-C)"       -->  "N+1(=N)(-N,O-1)(-C)"     quart. N
+/*E033*/ "N(=O)(=O)(-C,N,O)"     -->  "N+1(=O)(-O-1)(-C,N,O)"   quart. N
+/*E104*/ "N(=C,O,S)(-C)(-C,N)(-C,N,O)" --> "N+1(-C,O,S-1)(-C)(-C,N)(-C,N,O)"  quart. N
+/*E203*/ "N(=C,O)(=O)(-O-1)"     -->  "N+1(=C,O)(-O-1)(-O)"     quart. N spez.
+/*E302*/ "N(#C)(=O,S)"           -->  "N+1(#C)(-O,S-1)"         quart. N
+/*E402*/ "N(#N)(=C)"             -->  "N+1(=N-1)(=C)"           quart. N
+/*E502*/ "N+1(#N)(-C,N-1)"       -->  "N+1(=N-1)(=C,N)"         quart. N
+/*E601*/ "N(#N)"                 -->  "N-1(=N+1)"               quart. N allg.
+/*F001*/ "C-1(#N)"               -->  "C(#N)"                   prot.
+/*F002*/ "C(#N)(-C,O,S-1)"       -->  "C(#N)(-C,O,S)"           prot.
+/*F011*/ "C(-N,P,O,S-1)"         -->  "C(-N,P,O,S)"             prot.
+/*F012*/ "C(-C,N,O)(-N,P,O,S-1)" -->  "C(-C,N,O)(-N,P,O,S)"     prot.
+/*F022*/ "C(=C)(-N,O-1)"         -->  "C(-C)(=N,O)"             prot. enol
+/*F032*/ "C(=C)(=N-1)"           -->  "C(-C)(#N)"               prot. spez.
+/*F042*/ "C(=O,S)(-O,S-1)"       -->  "C(=O,S)(-O,S)"           prot.
+/*F052*/ "N+1(=N-1)(=N-1)"       -->  "N+1(=N-1)(=N)"           MAAG N3
+/*F113*/ "C(-C)(-N,O,S-1)(-C,N,O)"  --> "C(-C)(-N,O,S)(-C,N,O)" prot.
+/*F123*/ "C(-C)(-O-1)(-N+1)"     -->  "C(-C)(-O)(-N+1)"         prot.
+/*F203*/ "C(=C)(-N-1)(-C,N)"     -->  "C(=C)(-N)(-C,N)"         prot.
+/*F213*/ "C(=C)(-O,S-1)(-C)"     -->  "C(=C)(-O,S)(-C)"         prot. enol C
+/*F223*/ "!@C(=C)(-O-1)(-N,O,S)"   -->  "C(-C)(=O)(-N,O,S)"       prot. enol Het.
+/*F233*/ "C(=C)(-S-1)(-N,S)"     -->  "C(-C)(=S)(-N,S)"         prot. enol
+/*F243*/ "C(=C)(-O-1)(-N+1)"     -->  "C(-C)(=O)(-N+1)"         prot. enol
+/*F303*/ "C(=N)(-C,N,O,S-1)(-C,N,O,S)" --> "C(=N)(-C,N,O,S)(-C,N,O,S)"  prot.
+/*F313*/ "C(=N)(-N-1)(-C,N)"     -->  "C(=N)(-N)(-C,N)"         prot.
+/*F323*/ "C(=N)(-N,O,S-1)(-N,P+1)" --> "C(=N)(-N,O,S)(-N,P+1)"  prot.
+/*F333*/ "C(=N+1)(-O,S-1)(-C,N)" -->  "C(=N+1)(-O,S)(-C,N)"     prot.
+/*F343*/ "C(=N+1)(-N-1)(-S)"     -->  "C(=N+1)(-N)(-S)"         prot.
+/*F403*/ "C(=O)(-C,N,P,O,S-1)(-C,N,P,O,S)" --> "C(=O)(-C,N,P,O,S)(-C,N,P,O,S)" prot.
+/*F413*/ "C(=S)(-C,N,O,S-1)(-N,P,O,S)" --> "C(=S)(-C,N,O,S)(-N,P,O,S)"  prot.
+/*F423*/ "C(=O)(-O,S-1)(-N+1)"   -->  "C(=O)(-O,S)(-N+1)"	prot.
+/*F503*/ "N(-N,O-1)(-C)(-C)"     -->  "N(-N,O)(-C)(-C)"         prot.
+/*F513*/ "N+1(-O-1)(-C)(-C)"     -->  "N(-O)(-C)(-C)"           prot.
+/*F523*/ "N+1(=C,O)(-O-1)(-O-1)" -->  "N+1(=C,O)(-O-1)(-O)"     prot.
+/*F603*/ "P(=O)(-O-1)(-C,O)"     -->  "P(=O)(-O)(-C,O)"         prot.
+/*F703*/ "S,Se(=O)(-O-1)(-C,O)"  -->  "S,Se(=O)(-O)(-C,O)"      prot.
+/*F804*/ "C(-C)(-O-1)(-N)(-O)"   -->  "C(-C)(-O)(-N)(-O)"       prot.
+/*F904*/ "P,As(=O)(-O,S-1)(-C,N,O,S)(-C,N,O,S)" --> "P,As(=O)(-O,S)(-C,N,O,S)(-C,N,O,S)"
+/*F914*/ "P(=S)(-O,S-1)(-C,N,O,S)(-C,N,O,S)" --> "P(=S)(-O,S)(-C,N,O,S)(-C,N,O,S)"
+/*FA04*/ "S(=N)(=O)(-N,O-1)(-C,N,O,S)"  -->  "S(=N)(=O)(-N,O)(-C,N,O,S)"  prot.
+/*FA14*/ "S(=O)(=O)(-N,O-1)(-C,N,O,S)"  -->  "S(=O)(=O)(-N,O)(-C,N,O,S)"  prot.
+/*FA24*/ "S(=O)(=O)(-N,O-1)(-N+1)"    -->  "S(=O)(=O)(-N,O)(-N+1)"      prot.
+/*G003*/ "C(=N,O)(-N,P,O,S-1)(-N,P,O,S-1)" --> "C(=N,O)(-N,P,O,S)(-N,P,O,S)" prot.2x
+/*G104*/ "P,As(=O)(-C,N,O)(-O-1)(-O-1)"    --> "P,As(=O)(-C,N,O)(-O)(-O)" prot.2x
+/*G204*/ "S(=O)(=O)(-O-1)(-O-1)" -->  "S(=O)(=O)(-O)(-O)"       prot. 2x
+/*H003*/ "V(=O)(=O)(-O-1)"       -->  "V(=O)(=O)(-O)"           prot. trans.met.
+/*I001*/ "O-1(-B,N,P,As,O,Se,Cl,I)"  -->  "O(-B,N,P,As,O,Se,Cl,I)"  prot. allg.
+/*I011*/ "S-1(-S)"               -->  "S(-S)"                   prot. allg.
+/*I021*/ "O-1(-V)"               -->  "O(-V)"                   prot. allg.
+/*I101*/ "N-1(=C,N)"             -->  "N(=C,N)"                 prot. allg.
+/*I202*/ "C-1(-C)(-C,N)"         -->  "C(-C)(-C,N)"             prot. allg.
+/*I212*/ "N-1(-C,N)(-C,N,S)"     -->  "N(-C,N)(-C,N,S)"         prot. allg.
+/*I303*/ "C-1(-C)(-C)(-C,N)"     -->  "C(-C)(-C)(-C,N)"         prot. allg.
+/*K002*/ "S(-C+1)(-S)"           -->  "S(-C)(=S+1)"             MAAG special
+/*K006*/ "Si-2(-F)(-F)(-F)(-F)(-F)(-F)"  -->  "Si(-F)(-F)(-F)(-F)(-F)(-F)" MAAG special
+/*L000*/ "P,Sb-3"                        --> "P,Sb"
+/*L000*/ "S-2"                           --> "S"
+/*L100*/ "Ca+1(-O)"                      --> "Ca+2(?O)"
+/*L100*/ "O-1(-O-1)"                     --> "O(=O)"
+/*L200*/ "C(#N)(-Na)"                    --> "C(#N)(?Na+1)"
+/*L200*/ "Ca(-O)(-S,Cl)"                 --> "Ca+2(?O)(?S,Cl)"
+/*L200*/ "O(=C)(-Cr)"                    --> "O+1(=C)(-Cr)"
+/*L300*/ "N(=O)(=O)(-N+1)"               --> "N+1(=O)(-O-1)(-N+1)"
+/*L300*/ "N(=C)(-C)(-Co,Ni,Cu)"          --> "N+1(=C)(-C)(-Co,Ni,Cu)"
+/*L400*/ "Al(-O)(-O)(-O)(-O)"            --> "Al-1(-O)(-O)(-O)(-O)"
+/*L200*/ "Ca,Ba,Mg(-O)(-O)"              --> "Ca,Ba,Mg+2(?O)(?O)"
+/*L100*/ "C+2(=O)"                       --> "C-1(#O+1)"
+/*L400*/ "N+1(-H)(-H)(-H)(-O)"           --> "N(-H)(-H)(-H)(?O)"
+/*L400*/ "N(-O,Cl,Br)(-H)(-H)(-H)"       --> "N(?O,Cl,Br)(-H)(-H)(-H)"
+/*L500*/ "N+1(-Br-1)(-C)(-C)(-C)(-C)"    --> "N+1(?Br)(-C)(-C)(-C)(-C)"
+/*L100*/ "Ca(-O)"                        --> "Ca+2(?O)"
+/*L200*/ "N(=N+3)(-C)"                   --> "N+1(#N)(-C)"
+/*L200*/ "N+1(-C)(-H)"                   --> "N(-C)(-H)"
+/*L200*/ "N+1(=N-1)(=O)"                 --> "N+1(#N)(-O-1)"
+/*L200*/ "N+1(=O-1)(=O)"                 --> "N.(=O)(=O)"
+/*L200*/ "O(=C)(-C)"                     --> "O+1(=C)(-C)"
+/*L200*/ "O-1(-N+1)(-Na)"                --> "O-1(-N+1)(?Na+1)"
+/*L300*/ "Bi(-O)(-O)(-O)"                --> "Bi+3(?O)(?O)(?O)"
+/*L300*/ "Zn(-Cl)(-Cl)(-Cl)"             --> "Zn-1(-Cl)(-Cl)(-Cl)"
+/*L300*/ "N+1(=O)(=O)(-O)"               --> "N+1(=O)(-O-1)(-O)"
+/*L400*/ "S(=O)(=O)(=O)(-C,O)"           --> "S(=O)(=O)(-O)(-C,O)"
+/*L400*/ "Cr+1(-O)(-O)(-O)(-O)"          --> "Cr-1(-O)(-O)(-O)(-O)"
+/*L400*/ "Cr+2(-O)(-O)(-O)(-O)"          --> "Cr-1(-O)(-O)(-O)(-O)"
+/*L400*/ "Cr-3(-O)(-O)(-O)(-O)"          --> "Cr-1(-O)(-O)(-O)(-O)"
+/*L100*/ "H(-H)"                         --> "Hyd(-Hyd)"
+/*====================================================================*/
+/*B202*/ "I+1(-C)(-C)"           -->  "I(-C)(-C)"               onium
+/*F253*/ "C(=C)(-N+1)(-S-1)"     -->  "C(=C)(-N+1)(-S)"         MAAG SH+Noxid

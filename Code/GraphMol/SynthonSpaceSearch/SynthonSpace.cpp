@@ -43,7 +43,7 @@ namespace RDKit::SynthonSpaceSearch {
 
 // used for serialization
 constexpr int32_t versionMajor = 3;
-constexpr int32_t versionMinor = 0;
+constexpr int32_t versionMinor = 1;
 constexpr int32_t endianId = 0xa100f;
 
 size_t SynthonSpace::getNumReactions() const { return d_reactions.size(); }
@@ -66,7 +66,7 @@ const std::shared_ptr<SynthonSet> SynthonSpace::getReaction(
           [](const std::pair<std::string, std::shared_ptr<SynthonSet>> &p1,
              const std::pair<std::string, std::shared_ptr<SynthonSet>> &p2)
               -> bool { return p1.first < p2.first; });
-      it != d_reactions.end()) {
+      it != d_reactions.end() && it->first == reactionName) {
     return it->second;
   }
   throw std::runtime_error("Could not find synthon set for reaction " +
@@ -194,20 +194,32 @@ void fixConnectors(std::string &smiles) {
 int deduceFormat(const std::string &line) {
   // formats are based on the headers which should be one of the forms here.
   // If the columns are white-space separated the return value is 0-2, if
-  // comma separated 3-5.
+  // comma separated 3-5, if tab-separated, 6-8.  Tab-separated takes
+  // precedence over space-separated to allow for CXSMILES for the synthons
+  // which might have a tab in them.
   static const std::vector<std::vector<std::string>> firstLineOpts{
       std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id"},
       std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id",
                                "release"},
       std::vector<std::string>{"SMILES", "synton_id", "synton_role",
                                "reaction_id"}};
+  static const std::regex regext("\\t");
+  auto lineParts = splitLine(line, regext);
+  for (size_t i = 0; i < firstLineOpts.size(); ++i) {
+    if (lineParts == firstLineOpts[i]) {
+      return static_cast<int>(i + 6);
+    }
+  }
+
+  // This includes tabs, obvs, but they should already have been detected.
   static const std::regex regexws("\\s+");
-  auto lineParts = splitLine(line, regexws);
+  lineParts = splitLine(line, regexws);
   for (size_t i = 0; i < firstLineOpts.size(); ++i) {
     if (lineParts == firstLineOpts[i]) {
       return static_cast<int>(i);
     }
   }
+
   static const std::regex regexc(",+");
   lineParts = splitLine(line, regexc);
   for (size_t i = 0; i < firstLineOpts.size(); ++i) {
@@ -221,6 +233,7 @@ int deduceFormat(const std::string &line) {
 std::vector<std::string> readSynthonLine(std::istream &is, int &lineNum,
                                          int &format,
                                          const std::string &fileName) {
+  static const std::regex regext("\\t+");
   static const std::regex regexws("\\s+");
   static const std::regex regexc(",+");
 
@@ -239,8 +252,10 @@ std::vector<std::string> readSynthonLine(std::istream &is, int &lineNum,
   }
   if (format < 3) {
     nextSynthon = splitLine(nextLine, regexws);
-  } else {
+  } else if (format > 3 && format < 6) {
     nextSynthon = splitLine(nextLine, regexc);
+  } else if (format > 5) {
+    nextSynthon = splitLine(nextLine, regext);
   }
   if (nextSynthon.size() < 4) {
     throw std::runtime_error("Bad format for SynthonSpace file " + fileName +
@@ -251,9 +266,10 @@ std::vector<std::string> readSynthonLine(std::istream &is, int &lineNum,
 
 int getSynthonNum(int format, const std::string &synthon) {
   int synthonNum{std::numeric_limits<int>::max()};
-  if (format == 0 || format == 1 || format == 3 || format == 4) {
+  if (format == 0 || format == 1 || format == 3 || format == 4 || format == 6 ||
+      format == 7) {
     synthonNum = std::stoi(synthon);
-  } else if (format == 2 || format == 5) {
+  } else if (format == 2 || format == 5 || format == 8) {
     // in this case it's a string "synton_2" etc.
     synthonNum = std::stoi(synthon.substr(7));
   }
@@ -268,18 +284,21 @@ void SynthonSpace::readTextFile(const std::string &inFilename,
   if (!ifs.is_open() || ifs.bad()) {
     throw std::runtime_error("Couldn't open file " + d_fileName);
   }
+  readStream(ifs, cancelled);
+}
 
+void SynthonSpace::readStream(std::istream &is, bool &cancelled) {
   int format = -1;
   std::string nextLine;
   int lineNum = 1;
   ControlCHandler::reset();
 
-  while (!ifs.eof()) {
+  while (!is.eof()) {
     if (ControlCHandler::getGotSignal()) {
       cancelled = true;
       return;
     }
-    auto nextSynthon = readSynthonLine(ifs, lineNum, format, d_fileName);
+    auto nextSynthon = readSynthonLine(is, lineNum, format, d_fileName);
     if (nextSynthon.empty()) {
       continue;
     }
@@ -355,7 +374,7 @@ namespace {
 // large enough to accept everything.
 void readSynthons(
     const size_t startNum, size_t endNum, const char *fileMap,
-    const std::vector<std::uint64_t> &synthonPos,
+    const std::vector<std::uint64_t> &synthonPos, std::uint32_t version,
     std::vector<std::pair<std::string, std::unique_ptr<Synthon>>> &synthons) {
   if (endNum > synthons.size()) {
     endNum = synthons.size();
@@ -366,7 +385,7 @@ void readSynthons(
     std::istringstream is(view, std::ios::binary);
     auto tmp =
         std::make_pair(std::string(), std::unique_ptr<Synthon>(new Synthon));
-    tmp.second->readFromDBStream(is);
+    tmp.second->readFromDBStream(is, version);
     tmp.first = tmp.second->getSmiles();
     synthons[i] = std::move(tmp);
   }
@@ -374,14 +393,14 @@ void readSynthons(
 
 void threadedReadSynthons(
     const char *fileMap, const std::vector<std::uint64_t> &synthonPos,
-    unsigned int numThreads,
+    unsigned int numThreads, std::uint32_t version,
     std::vector<std::pair<std::string, std::unique_ptr<Synthon>>> &synthons) {
   size_t eachThread = 1 + (synthonPos.size() / numThreads);
   size_t start = 0;
   std::vector<std::thread> threads;
   for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
     threads.push_back(std::thread(readSynthons, start, start + eachThread,
-                                  fileMap, std::ref(synthonPos),
+                                  fileMap, std::ref(synthonPos), version,
                                   std::ref(synthons)));
   }
   for (auto &t : threads) {
@@ -494,14 +513,14 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
   unsigned int numThreadsToUse = getNumThreadsToUse(numThreads);
   if (numThreadsToUse > 1) {
     threadedReadSynthons(fileMap.d_mappedMemory, synthonPos, numThreadsToUse,
-                         d_synthonPool);
+                         d_fileMajorVersion, d_synthonPool);
   } else {
     readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos,
-                 d_synthonPool);
+                 d_fileMajorVersion, d_synthonPool);
   }
 #else
-    readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos,
-                 d_synthonPool);
+  readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos,
+               d_fileMajorVersion, d_synthonPool);
 #endif
   if (!std::is_sorted(
           d_synthonPool.begin(), d_synthonPool.end(),
@@ -525,8 +544,8 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
                   d_fileMajorVersion, d_reactions);
   }
 #else
-    readReactions(0, numReactions, fileMap.d_mappedMemory, reactionPos, *this,
-                  d_fileMajorVersion, d_reactions);
+  readReactions(0, numReactions, fileMap.d_mappedMemory, reactionPos, *this,
+                d_fileMajorVersion, d_reactions);
 #endif
   if (!std::is_sorted(
           d_reactions.begin(), d_reactions.end(),
@@ -575,10 +594,14 @@ void SynthonSpace::writeEnumeratedFile(const std::string &outFilename) const {
                           << " some time and result in a large file."
                           << std::endl;
   std::ofstream os(outFilename);
+  enumerateToStream(os);
+  os.close();
+}
+
+void SynthonSpace::enumerateToStream(std::ostream &os) const {
   for (const auto &[fst, snd] : d_reactions) {
     snd->enumerateToStream(os);
   }
-  os.close();
 }
 
 bool SynthonSpace::hasFingerprints() const { return !d_fpType.empty(); }
@@ -737,8 +760,8 @@ namespace {
 template <class Char>
 class MyFacet : public std::numpunct<Char> {
  public:
-  std::string do_grouping() const { return "\3"; }
-  Char do_thousands_sep() const { return ' '; }
+  std::string do_grouping() const override { return "\3"; }
+  Char do_thousands_sep() const override { return ' '; }
 };
 }  // namespace
 

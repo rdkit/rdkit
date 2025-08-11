@@ -69,47 +69,52 @@ Submodules
    rdkit.Chem.TemplateAlign
    rdkit.Chem.TorsionFingerprints
    rdkit.Chem.inchi
-   rdkit.Chem.rdchem
-   rdkit.Chem.rdDistGeom
-   rdkit.Chem.rdqueries
-   rdkit.Chem.rdFMCS
-   rdkit.Chem.rdMolAlign
-   rdkit.Chem.rdMolHash
-   rdkit.Chem.rdReducedGraphs
-   rdkit.Chem.rdtrajectory
-   rdkit.Chem.rdMolTransforms
-   rdkit.Chem.rdmolfiles
-   rdkit.Chem.rdPartialCharges
-   rdkit.Chem.rdMolCatalog
-   rdkit.Chem.rdCoordGen
-   rdkit.Chem.rdMolChemicalFeatures
-   rdkit.Chem.rdMMPA
-   rdkit.Chem.rdRGroupDecomposition
-   rdkit.Chem.rdForceFieldHelpers
-   rdkit.Chem.rdDepictor
-   rdkit.Chem.rdChemicalFeatures
-   rdkit.Chem.rdmolops
-   rdkit.Chem.rdFreeSASA
-   rdkit.Chem.rdMolInterchange
-   rdkit.Chem.rdShapeHelpers
-   rdkit.Chem.rdinchi
-   rdkit.Chem.rdChemReactions
-   rdkit.Chem.rdSubstructLibrary
-   rdkit.Chem.rdfiltercatalog
-   rdkit.Chem.rdfragcatalog
-   rdkit.Chem.rdMolDescriptors
-   rdkit.Chem.rdFingerprintGenerator
-   rdkit.Chem.rdMHFPFingerprint
-   rdkit.Chem.rdSLNParse
    rdkit.Chem.rdAbbreviations
-   rdkit.Chem.rdDeprotect
-   rdkit.Chem.rdMolEnumerator
+   rdkit.Chem.rdChemicalFeatures
+   rdkit.Chem.rdChemReactions
+   rdkit.Chem.rdchem
    rdkit.Chem.rdCIPLabeler
-   rdkit.Chem.rdTautomerQuery
-   rdkit.Chem.rdEHTTools
+   rdkit.Chem.rdCoordGen
+   rdkit.Chem.rdDepictor
+   rdkit.Chem.rdDeprotect
    rdkit.Chem.rdDetermineBonds
+   rdkit.Chem.rdDistGeom
+   rdkit.Chem.rdEHTTools
+   rdkit.Chem.rdEnumerateStereoisomers
+   rdkit.Chem.rdfiltercatalog
+   rdkit.Chem.rdFingerprintGenerator
+   rdkit.Chem.rdFMCS
+   rdkit.Chem.rdForceFieldHelpers
+   rdkit.Chem.rdfragcatalog
+   rdkit.Chem.rdFreeSASA
+   rdkit.Chem.rdGeneralizedSubstruct
+   rdkit.Chem.rdinchi
+   rdkit.Chem.rdMHFPFingerprint
+   rdkit.Chem.rdMIF
+   rdkit.Chem.rdMMPA
+   rdkit.Chem.rdMolAlign
+   rdkit.Chem.rdMolCatalog
+   rdkit.Chem.rdMolChemicalFeatures
+   rdkit.Chem.rdMolDescriptors
+   rdkit.Chem.rdMolEnumerator
+   rdkit.Chem.rdmolfiles
+   rdkit.Chem.rdMolHash
+   rdkit.Chem.rdMolInterchange
+   rdkit.Chem.rdmolops
+   rdkit.Chem.rdMolProcessing
+   rdkit.Chem.rdMolTransforms
+   rdkit.Chem.rdPartialCharges
+   rdkit.Chem.rdqueries
+   rdkit.Chem.rdRascalMCES
+   rdkit.Chem.rdReducedGraphs
+   rdkit.Chem.rdRGroupDecomposition
    rdkit.Chem.rdShapeAlign
+   rdkit.Chem.rdShapeHelpers
+   rdkit.Chem.rdSLNParse
+   rdkit.Chem.rdSubstructLibrary
    rdkit.Chem.rdSynthonSpaceSearch
+   rdkit.Chem.rdTautomerQuery
+   rdkit.Chem.rdtrajectory
 
 Module contents
 ---------------

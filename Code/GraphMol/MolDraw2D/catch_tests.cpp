@@ -66,13 +66,13 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"contourMol_5.svg", 3792684719U},
     {"contourMol_6.svg", 1743220181U},
     {"contourMol_7.svg", 2221193310U},
-    {"testDativeBonds_1.svg", 3550231997U},
-    {"testDativeBonds_2.svg", 2510476717U},
-    {"testDativeBonds_3.svg", 1742381275U},
-    {"testDativeBonds_2a.svg", 3936523099U},
-    {"testDativeBonds_2b.svg", 1652957675U},
-    {"testDativeBonds_2c.svg", 630355005U},
-    {"testDativeBonds_2d.svg", 2346072497U},
+    {"testDativeBonds_1.svg", 1984402893U},
+    {"testDativeBonds_2.svg", 1091476418U},
+    {"testDativeBonds_3.svg", 1602774141U},
+    {"testDativeBonds_2a.svg", 2463158006U},
+    {"testDativeBonds_2b.svg", 3095643972U},
+    {"testDativeBonds_2c.svg", 1745138239U},
+    {"testDativeBonds_2d.svg", 3279423301U},
     {"testZeroOrderBonds_1.svg", 3733430366U},
     {"testFoundations_1.svg", 2350247048U},
     {"testFoundations_2.svg", 15997352U},
@@ -355,7 +355,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testAtomAbbreviationsClash.svg", 1847939197U},
     {"testBlackAtomsUnderHighlight.svg", 3916069581U},
     {"testSmallReactionCanvas.svg", 2238356155U},
-    {"testReactionProductSmoothCorners.svg", 774582418U},
+    {"testReactionProductSmoothCorners.svg", 882352670U},
     {"testOptionalAtomListBrackets_1.svg", 4239908626U},
     {"testOptionalAtomListBrackets_2.svg", 3881772214U},
     {"testOptionalAtomListBrackets_3.svg", 2945415850U},
@@ -368,6 +368,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testAtomAndBondLabels_4.svg", 229616498U},
     {"testStandardColoursHighlightedAtoms_1.svg", 4265528904U},
     {"testStandardColoursHighlightedAtoms_2.svg", 2285000572U},
+    {"testArrowheads.svg", 3318006834U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -6577,13 +6578,14 @@ M  END
 
     auto h1s1 = (ends1[0] - ends1[1]).length();
     auto h2s1 = (ends2[0] - ends2[1]).length();
-    // there's still a small difference in size of arrow head because the
-    // allowance for mitring is done as a fraction of the overall arrow
-    // length.
-    CHECK_THAT(h1s1, Catch::Matchers::WithinAbs(h2s1, 0.1));
+    // There's still a small difference in size of arrowhead because
+    // it is done as a fraction of the overall arrow length and the dative
+    // bonds in this ferrocene are of markedly different lengths.  The
+    // lengths are in pixels, so the differences aren't huge.
+    CHECK_THAT(h1s1, Catch::Matchers::WithinAbs(h2s1, 0.75));
     auto h1s2 = (ends1[0] - ends1[2]).length();
     auto h2s2 = (ends2[0] - ends2[2]).length();
-    CHECK_THAT(h1s2, Catch::Matchers::WithinAbs(h2s2, 0.1));
+    CHECK_THAT(h1s2, Catch::Matchers::WithinAbs(h2s2, 0.75));
 
     check_file_hash(nameBase + ".svg");
   }
@@ -10375,7 +10377,8 @@ TEST_CASE("Github8209 - Reaction products not having bond corners smoothed") {
   size_t nOccurrences =
       std::distance(std::sregex_token_iterator(text.begin(), text.end(), path),
                     std::sregex_token_iterator());
-  CHECK(nOccurrences == 10);
+  // There's one for 5 corners on each benzene, and now one on the arrowhead.
+  CHECK(nOccurrences == 11);
   check_file_hash("testReactionProductSmoothCorners.svg");
 }
 
@@ -10699,3 +10702,148 @@ TEST_CASE("drawString() uses drawColour") {
   // The blue color:
   CHECK(text.find("#4C4CFF' >X</text>") != std::string::npos);
 }
+
+TEST_CASE("Solid arrowhead in wrong place (Github 8500)") {
+  MolDraw2DSVG drawer(300, 300);
+  drawer.setColour(DrawColour(1.0, 0.0, 0.0));
+  drawer.drawLine(Point2D{50.0, 50.0}, Point2D{250.0, 50.0}, true);
+  drawer.drawLine(Point2D{250.0, 50.0}, Point2D{250.0, 250.0}, true);
+  drawer.drawLine(Point2D{250.0, 250.0}, Point2D{50.0, 250.0}, true);
+  drawer.drawLine(Point2D{50.0, 50.0}, Point2D{50.0, 250.0}, true);
+  drawer.setColour(DrawColour(0.0, 1.0, 0.0));
+  drawer.setLineWidth(8);
+  drawer.drawArrow(Point2D{150.0, 150.0}, Point2D{250.0, 250.0}, true, 0.05,
+                   M_PI / 4, DrawColour(0.0, 1.0, 0.0), true);
+  drawer.drawArrow(Point2D{150.0, 150.0}, Point2D{50.0, 50.0}, false, 0.05,
+                   M_PI / 4, DrawColour(0.0, 1.0, 0.0), true);
+  drawer.setLineWidth(2);
+  drawer.drawArrow(Point2D{150.0, 150.0}, Point2D{250.0, 50.0}, true, 0.05,
+                   M_PI / 4, DrawColour(0.0, 1.0, 0.0), true);
+  drawer.drawArrow(Point2D{150.0, 150.0}, Point2D{50.0, 250.0}, false, 0.05,
+                   M_PI / 4, DrawColour(0.0, 1.0, 0.0), true);
+  drawer.finishDrawing();
+
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testArrowheads.svg");
+  outs << text;
+  outs.close();
+  // Checking that the line ends are where they were in an SVG that looked
+  // right on visual inspection.
+  const static std::regex heads(
+      "<path d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+).*00FF00");
+  std::ptrdiff_t const match_count_heads(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), heads),
+                    std::sregex_iterator()));
+  CHECK(match_count_heads == 4);
+  auto match_begin = std::sregex_iterator(text.begin(), text.end(), heads);
+  std::smatch match = *match_begin;
+  std::vector<std::pair<double, double>> expVals{
+      {246.0, 246.0},
+      {54.0, 54.0},
+      {249.0, 51.0},
+      {51.0, 249.0},
+  };
+  for (int i = 0; i < 4; ++i, ++match_begin) {
+    std::smatch match = *match_begin;
+    CHECK_THAT(std::stod(match[3]),
+               Catch::Matchers::WithinAbs(expVals[i].first, 1.0e-4));
+    CHECK_THAT(std::stod(match[4]),
+               Catch::Matchers::WithinAbs(expVals[i].second, 1.0e-4));
+  }
+  check_file_hash("testArrowheads.svg");
+}
+
+TEST_CASE("Show all CIP codes (Github 8561)") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 19 20 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 3.000000 0.000000 0.000000 0
+M  V30 2 C 1.500000 0.000000 0.000000 0
+M  V30 3 C 0.750000 -1.299038 0.000000 0
+M  V30 4 C -0.750000 -1.299038 0.000000 0
+M  V30 5 C -1.500000 0.000000 0.000000 0
+M  V30 6 C -0.750000 1.299038 0.000000 0
+M  V30 7 F -1.500000 2.598076 0.000000 0
+M  V30 8 C 0.750000 1.299038 0.000000 0
+M  V30 9 C 1.500000 2.598076 0.000000 0
+M  V30 10 C 3.000000 2.598076 0.000000 0
+M  V30 11 C 3.750000 1.299038 0.000000 0
+M  V30 12 C 3.750000 3.897114 0.000000 0
+M  V30 13 C 3.000000 5.196152 0.000000 0
+M  V30 14 C 3.750000 6.495191 0.000000 0
+M  V30 15 C 5.250000 6.495191 0.000000 0
+M  V30 16 O 3.000000 7.794229 0.000000 0
+M  V30 17 C 1.500000 5.196152 0.000000 0
+M  V30 18 C 0.750000 3.897114 0.000000 0
+M  V30 19 Cl -0.750000 3.897114 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 2 6 8
+M  V30 8 1 8 9
+M  V30 9 2 9 10
+M  V30 10 1 10 11
+M  V30 11 1 10 12
+M  V30 12 2 12 13
+M  V30 13 1 13 14
+M  V30 14 1 14 15 CFG=1
+M  V30 15 1 14 16
+M  V30 16 1 13 17
+M  V30 17 2 17 18
+M  V30 18 1 18 19
+M  V30 19 1 8 2 CFG=3
+M  V30 20 1 18 9
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEREL1 ATOMS=(1 8)
+M  V30 MDLV30/STERAC1 ATOMS=(1 14)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CIPLabeler::assignCIPLabels(*m);
+    MolDraw2DSVG drawer(350, 300);
+    drawer.drawOptions().addStereoAnnotation = true;
+    drawer.drawOptions().showAllCIPCodes = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testShowAllCIPLabels.svg");
+    outs << text;
+    outs.close();
+
+    // Check for Blue (M) CIP label on Bond
+    TEST_ASSERT(
+        text.find("class='CIP_Code'") !=
+        std::string::npos);
+
+    //try again, this tiem using JSON to set options
+    const char *json =
+      "{\"addStereoAnnotation\":true, \"showAllCIPCodes\":true}";
+    MolDraw2DSVG drawer2(350, 300);
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
+    drawer2.drawOptions() = opts;
+    drawer2.drawMolecule(*m);
+    drawer2.finishDrawing();
+    auto text2 = drawer2.getDrawingText();
+    std::ofstream outs2("testShowAllCIPLabels2.svg");
+    outs2 << text2;
+    outs2.close();
+
+    // Check for Blue (M) CIP label on Bond
+    TEST_ASSERT(
+        text2.find("class='CIP_Code'") !=
+        std::string::npos);
+  }
+

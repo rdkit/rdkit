@@ -29,6 +29,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/Resonance.h>
 #include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
@@ -4730,7 +4731,7 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
      public:
       bool *deleted;
       FakeAtomMonomerInfo(bool *was_deleted) : deleted(was_deleted) {}
-      virtual ~FakeAtomMonomerInfo() { *deleted = true; }
+      ~FakeAtomMonomerInfo() override { *deleted = true; }
     };
 
     bool sanitize = true;
@@ -4803,4 +4804,46 @@ TEST_CASE("Github #8304: addHs should ignore queries") {
       CHECK(m2.getNumAtoms() == 2);
     }
   }
+}
+
+TEST_CASE("stereogroups operator<<") {
+  SECTION("atoms and bonds in one") {
+    auto m = "Oc1cccc(C)c1-c1c(C)nccc1[C@H](F)Cl |wU:8.9,&1:8,15|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getStereoGroups().size() == 1);
+    std::ostringstream oss;
+    oss << m->getStereoGroups()[0];
+    CHECK(oss.str() == "AND rId: 0 wId: 0 atoms: { 15 } bonds: { 7 }");
+  }
+  SECTION("just bonds in one") {
+    auto m = "Oc1cccc(C)c1-c1c(C)nccc1[C@H](F)Cl |wU:8.9,&1:8|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getStereoGroups().size() == 1);
+    std::ostringstream oss;
+    oss << m->getStereoGroups()[0];
+    CHECK(oss.str() == "AND rId: 0 wId: 0 bonds: { 7 }");
+  }
+}
+
+TEST_CASE("clearPropertyCache") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  CHECK(!m->needsUpdatePropertyCache());
+  for (const auto atom : m->atoms()) {
+    CHECK(!atom->needsUpdatePropertyCache());
+  }
+  m->clearPropertyCache();
+  CHECK(m->needsUpdatePropertyCache());
+  for (const auto atom : m->atoms()) {
+    CHECK(atom->needsUpdatePropertyCache());
+  }
+}
+
+TEST_CASE(
+    "github #8638: ResonanceMolSupplier raises an error if Mol has no bonds") {
+  auto mol = "C"_smiles;
+  REQUIRE(mol);
+  ResonanceMolSupplier rsuppl(*mol);
+  CHECK(rsuppl.getNumConjGrps() == 0);
+  CHECK(rsuppl.getAtomConjGrpIdx(0) == -1);
 }

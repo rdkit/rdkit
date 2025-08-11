@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -27,6 +27,7 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool propertyCompat(
     const std::vector<std::string> &properties);
 RDKIT_SUBSTRUCTMATCH_EXPORT bool atomCompat(const Atom *a1, const Atom *a2,
                                             const SubstructMatchParameters &ps);
+[[deprecated("chiralAtomCompat is deprecated and should not be used")]]
 RDKIT_SUBSTRUCTMATCH_EXPORT bool chiralAtomCompat(const Atom *a1,
                                                   const Atom *a2);
 RDKIT_SUBSTRUCTMATCH_EXPORT bool bondCompat(const Bond *b1, const Bond *b2,
