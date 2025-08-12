@@ -27,10 +27,15 @@ except ImportError:
 import numpy as np
 import pandas as pd
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from tqdm import tqdm
 from typing import List, Optional, Tuple, Union
 import warnings
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    def tqdm(seq, *a, **kw):
+        return seq
+    
 def CalcOsmordred(smiles: str,  names: bool = False,
                   mynames: Optional[List[str]] = None) -> Union[np.ndarray, Tuple[np.ndarray, List[str]]]:
     """
