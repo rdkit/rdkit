@@ -18,6 +18,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <random>
@@ -83,14 +84,13 @@ void hs1(const std::vector<std::vector<int>> &vects) {
     for (unsigned int j = 0; j < vect.size(); ++j) {
       indices[j] = j;
     }
-    int *count = (int *)malloc(vect.size() * sizeof(int));
+    std::vector<int> count(vect.size());
     int *changed = (int *)malloc(vect.size() * sizeof(int));
     memset(changed, 1, vect.size() * sizeof(int));
-    RDKit::hanoisort(indices, vect.size(), count, changed, icmp);
+    RDKit::hanoisort(indices, vect.size(), count.data(), changed, icmp);
     for (unsigned int j = 1; j < vect.size(); ++j) {
       TEST_ASSERT(data[indices[j]] >= data[indices[j - 1]]);
     }
-    free(count);
     free(indices);
     free(changed);
   }
@@ -217,10 +217,10 @@ void test2() {
     atomcomparefunctor ftor(&atoms.front());
 
     int *data = &indices.front();
-    int *count = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> count(atoms.size());
     int *changed = (int *)malloc(atoms.size() * sizeof(int));
     memset(changed, 1, atoms.size() * sizeof(int));
-    RDKit::hanoisort(data, atoms.size(), count, changed, ftor);
+    RDKit::hanoisort(data, atoms.size(), count.data(), changed, ftor);
 
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
       // std::cerr<<indices[i]<<" "<<" index: "<<atoms[indices[i]].index<<"
@@ -239,7 +239,6 @@ void test2() {
       }
     }
     delete m;
-    free(count);
     free(changed);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
@@ -257,14 +256,12 @@ void test3() {
     atomcomparefunctor ftor(&atoms.front());
 
     RDKit::Canon::canon_atom *data = &atoms.front();
-    int *count = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -300,11 +297,7 @@ void test3() {
     TEST_ASSERT(count[order[7]] == 1);
 
     delete m;
-    free(count);
     free(order);
-    free(next);
-    free(changed);
-    free(touched);
   }
   {
     // this time with smarter invariants
@@ -316,14 +309,12 @@ void test3() {
     atomcomparefunctor2 ftor(&atoms.front());
 
     RDKit::Canon::canon_atom *data = &atoms.front();
-    int *count = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -351,11 +342,7 @@ void test3() {
     TEST_ASSERT(count[order[5]] == 3);
     TEST_ASSERT(count[order[6]] == 0);
     delete m;
-    free(count);
     free(order);
-    free(next);
-    free(changed);
-    free(touched);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
@@ -458,14 +445,12 @@ void test4() {
     initCanonAtoms(*m, atoms, true);
     atomcomparefunctor3 ftor(&atoms.front(), *m);
     RDKit::Canon::canon_atom *data = &atoms.front();
-    int *count = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -509,11 +494,7 @@ void test4() {
       }
     }
     delete m;
-    free(count);
     free(order);
-    free(next);
-    free(changed);
-    free(touched);
   }
 
   {
@@ -525,14 +506,12 @@ void test4() {
     atomcomparefunctor3 ftor(&atoms.front(), *m);
 
     RDKit::Canon::canon_atom *data = &atoms.front();
-    int *count = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -563,11 +542,7 @@ void test4() {
       }
     }
     delete m;
-    free(count);
     free(order);
-    free(next);
-    free(changed);
-    free(touched);
   }
 
   {
@@ -579,14 +554,12 @@ void test4() {
     atomcomparefunctor3 ftor(&atoms.front(), *m);
 
     RDKit::Canon::canon_atom *data = &atoms.front();
-    int *count = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -632,11 +605,7 @@ void test4() {
     TEST_ASSERT(order[9] == 1 && count[1] == 1);
 
     delete m;
-    free(count);
     free(order);
-    free(next);
-    free(changed);
-    free(touched);
   }
 
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
@@ -655,14 +624,12 @@ void test5() {
     atomcomparefunctor3 ftor(&atoms.front(), *m);
 
     RDKit::Canon::canon_atom *data = &atoms.front();
-    int *count = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -710,11 +677,7 @@ void test5() {
       TEST_ASSERT(count[order[i]] == 1);
     }
     delete m;
-    free(count);
     free(order);
-    free(next);
-    free(changed);
-    free(touched);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
