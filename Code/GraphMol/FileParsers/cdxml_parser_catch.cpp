@@ -1331,6 +1331,9 @@ TEST_CASE("CDX and Formats") {
   std::string cdxmlbase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
   
+  std::string cdxbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDX/";
+
   SECTION("READ CDX") {
     auto cdxfname = cdxmlbase + "ring-stereo1.cdx";
     auto cdxmlfname = cdxmlbase + "ring-stereo1.cdxml";
@@ -1338,6 +1341,32 @@ TEST_CASE("CDX and Formats") {
     auto mols1 = MolsFromCDXMLFile(cdxfname);
     auto mols2 = MolsFromCDXMLFile(cdxmlfname);
     CHECK(MolToSmiles(*mols1[0]) == MolToSmiles(*mols2[0]));
+
+    const std::vector<std::string> cdxfiles {
+      "structure_1.cdx", "structure_2.cdx", "structure_3.cdx", "structure_4.cdx", "structure_5.cdx", "structure_6.cdx"};
+    const std::vector<std::string> expected {
+      "C1CCOC1",
+      "C1=CCN=C1",
+      "CS(C)=O",
+      "CCO",
+      "c1cc[nH]c1",
+      "c1ccoc1"};
+    
+    for(size_t i=0;i<cdxfiles.size();++i) {
+      auto fname = cdxbase + cdxfiles[i];
+
+      // Read the file
+      auto m = MolsFromCDXMLFile(fname);
+      CHECK(MolToSmiles(*m[0]) == expected[i]);
+
+      // Read the CDX stream
+      auto size = std::filesystem::file_size(fname);
+      std::string content(size, '\0');
+      std::ifstream in(fname);
+      in.read(&content[0], size);
+      auto m2 = MolsFromCDXML(content);
+      CHECK(MolToSmiles(*m2[0]) == expected[i]);
+    }
   }
 
   SECTION("READ CDX/CDXML STREAM") {
