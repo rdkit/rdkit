@@ -1348,15 +1348,17 @@ TEST_CASE("CDX and Formats") {
     std::string content(size, '\0');
     std::ifstream in(cdxfname);
     in.read(&content[0], size);
-    std::cerr << "CDXMLToMols1" << std::endl;
-    auto mols1 = CDXMLToMols(content);
+    std::cerr << "CDXMLToMols1: " << content.substr(0,8) << std::endl;
+    auto mols1 = MolsFromCDXML(content);
 
-    size = std::filesystem::file_size(cdxmlfname);
-    std::string content2(size, '\0');
+    auto size2 = std::filesystem::file_size(cdxmlfname);
+    std::string content2(size2, ' ');
     std::ifstream in2(cdxmlfname);
-    in2.read(&content2[0], size);
-    std::cerr << "CDXMLToMols2" << std::endl;
-    auto mols2 = CDXMLToMols(content2);
+    in2.read(&content2[0], size2);
+    std::cerr << "CDXMLToMols2: " << content2.substr(0,8) << std::endl;
+    std::cerr << content2 << std::endl;
+    std::cerr << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
+    auto mols2 = MolsFromCDXML(content2);
     CHECK(MolToSmiles(*mols1[0]) == MolToSmiles(*mols2[0]));
   }
   
