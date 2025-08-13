@@ -424,6 +424,8 @@ void enumerate_z_cliques(
     }
     std::cout << std::endl;
   }
+#endif
+#if 1
   if (c.size() == 1) {
     std::cout << "NEW : " << c[0] << std::endl;
   }
@@ -557,9 +559,9 @@ void enumerate_z_cliques(
 }
 
 void enumerate_z_cliques(std::vector<unsigned int> &c,
-                         const std::unordered_set<unsigned int> &p,
-                         const std::unordered_set<unsigned int> &d,
-                         std::unordered_set<unsigned int> &s,
+                         const std::vector<unsigned int> &p,
+                         const std::vector<unsigned int> &d,
+                         std::vector<unsigned int> &s,
                          const std::vector<char> &t,
                          const std::vector<std::vector<char>> &corrGraph,
                          const std::vector<unsigned int> &corrGraphNumConns,
@@ -588,11 +590,11 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
     }
     std::cout << std::endl;
   }
+#endif
+#if 0
   if (c.size() == 1) {
     std::cout << "NEW : " << c[0] << std::endl;
   }
-#endif
-#if 0
   std::cout << "c : " << c.size() << " p : " << p.size() << " d : " << d.size()
             << " s : " << s.size() << " t : " << t.size() << " : "
             << "cg : " << corrGraph.size() << " : ";
@@ -631,7 +633,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
       });
   // std::cout << "pivot node " << ut << std::endl;
   for (auto ui : p) {
-    if (s.contains(ui)) {
+    if (std::find(s.begin(), s.end(), ui) != s.end()) {
       continue;
     }
     // if ui is adjacent to ut
@@ -651,10 +653,10 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
       const auto &n = corrGraph[ui];
       // Form a new P which is the members of the current p that are
       // neighbours of ui
-      std::unordered_set<unsigned int> newP;
+      std::vector<unsigned int> newP;
       for (auto pe : p) {
         if (n[pe]) {
-          newP.insert(pe);
+          newP.push_back(pe);
         }
       }
       // std::cout << "init newP : " << newP.size() << " : ";
@@ -662,37 +664,37 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
       //   std::cout << pe << " ";
       // }
       // std::cout << std::endl;
-      // and the same for newD and newS
-      std::unordered_set<unsigned int> newD;
-      for (auto de : d) {
-        if (n[de] == 'd') {
-          newD.insert(de);
-        }
-      }
-      std::unordered_set<unsigned int> newS;
+      // and the same for newS
+      std::vector<unsigned int> newS;
       for (auto se : s) {
         if (n[se]) {
-          newS.insert(se);
+          newS.push_back(se);
         }
       }
       // The newP, newS and newD should only contain neighbours of ui.
+      std::vector<unsigned int> newD;
+      newD.reserve(newD.size());
       for (auto v : d) {
-        if (p.contains(v) and n[v]) {
+        bool addD = true;
+        if (std::find(p.begin(), p.end(), v) != p.end() && n[v]) {
           // std::cout << "add " << v << " to newP 1" << std::endl;
-          newP.insert(v);
-        } else if (d.contains(v)) {
+          newP.push_back(v);
+        } else {
           // can v be added to P?
           if (n[v] == 'c') {
             if (t[v] and n[v]) {
-              newS.insert(v);
+              newS.push_back(v);
             } else if (n[v]) {
               // std::cout << "add " << v << " to newP 2" << std::endl;
-              newP.insert(v);
+              newP.push_back(v);
             }
-            newD.erase(v);
-          } else if (s.contains(v) && n[v]) {
-            newS.insert(v);
+            addD = false;
+          } else if (n[v] && std::find(s.begin(), s.end(), v) != s.end()) {
+            newS.push_back(v);
           }
+        }
+        if (n[v] && addD) {
+          newD.push_back(v);
         }
       }
       // std::cout << "inter newP : " << newP.size() << " : ";
@@ -707,7 +709,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
       enumerate_z_cliques(c, newP, newD, newS, t, corrGraph, corrGraphNumConns,
                           maxCliques);
       c.pop_back();
-      s.insert(ui);
+      s.push_back(ui);
     }
   }
 }
@@ -770,9 +772,9 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
   // Running enumerate_z_cliques over each node in the corrGraph in turn.
 #if 1
   std::vector<char> t(corrGraph.size(), 0);
-  std::unordered_set<unsigned int> p;
-  std::unordered_set<unsigned int> d;
-  std::unordered_set<unsigned int> s;
+  std::vector<unsigned int> p;
+  std::vector<unsigned int> d;
+  std::vector<unsigned int> s;
   // Start each round of enumerate_z_cliques at an atom pair given by
   // the atomPairStarts.
   for (size_t aps = 0U; aps < atomPairStarts.size(); ++aps) {
@@ -786,12 +788,12 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
       for (size_t v = 0; v < corrGraph[u].size(); ++v) {
         if (corrGraph[v][u] == 'c') {
           if (t[v]) {
-            s.insert(v);
+            s.push_back(v);
           } else {
-            p.insert(v);
+            p.push_back(v);
           }
         } else if (corrGraph[v][u] == 'd') {
-          d.insert(v);
+          d.push_back(v);
         }
       }
       clique.clear();
