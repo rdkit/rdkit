@@ -28,7 +28,7 @@ class ROMol;
 // apart.  This may be smaller than a full MCSS and will only be a
 // single fragment.
 RDKIT_FMCS_EXPORT void TwoMolMCSS(
-    const ROMol &mol1, const ROMol &mol2,
+    const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
         &maxCliques);
 

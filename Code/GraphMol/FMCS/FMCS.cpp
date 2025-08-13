@@ -21,6 +21,7 @@
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
 #include <GraphMol/QueryOps.h>
+#include <GraphMol/FMCS/TwoMolMCSS.h>
 
 namespace RDKit {
 
@@ -148,10 +149,17 @@ void parseMCSParametersJSON(const char *json, MCSParameters *params) {
 MCSResult findMCS(const std::vector<ROMOL_SPTR> &mols,
                   const MCSParameters *params) {
   MCSParameters p;
-  if (nullptr == params) {
-    params = &p;
+  if (nullptr != params) {
+    p = *params;
   }
-  RDKit::FMCS::MaximumCommonSubgraph fmcs(params);
+  if (mols.size() == 2 && p.InitialSeed.empty() && p.FastInitialSeed) {
+    // std::cout << "Doing fast seed" << std::endl;
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
+    TwoMolMCSS(*mols[0], *mols[1], p.MinMCSSSize, maxCliques);
+    p.InitialSeed = makeSMARTSFromMCSS(*mols[0], maxCliques.front());
+    // std::cout << "InitialSeed: " << p.InitialSeed << std::endl;
+  }
+  RDKit::FMCS::MaximumCommonSubgraph fmcs(&p);
   return fmcs.find(mols);
 }
 

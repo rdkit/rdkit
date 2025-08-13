@@ -28,7 +28,9 @@ TEST_CASE("BK Test") {
   // auto mol2 = v2::SmilesParse::MolFromSmiles("NC1CC(Cl)C1");
   // REQUIRE(mol2);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
-  TwoMolMCSS(*mol1, *mol2, maxCliques);
+  unsigned int minMCSSSize(0.85 *
+                           std::max(mol1->getNumAtoms(), mol2->getNumAtoms()));
+  TwoMolMCSS(*mol1, *mol2, minMCSSSize, maxCliques);
   std::cout << "Number of max cliques: " << maxCliques.size() << std::endl;
   for (auto &clique : maxCliques) {
     std::sort(clique.begin(), clique.end());
@@ -42,7 +44,7 @@ TEST_CASE("BK Test") {
     std::cout << std::endl;
   }
   REQUIRE(!maxCliques.empty());
-  CHECK(maxCliques.size() == 1);
+  CHECK(maxCliques.size() == 6);
   CHECK(maxCliques.front().size() == 3);
   auto smarts = makeSMARTSFromMCSS(*mol1, maxCliques.front());
   std::cout << smarts << std::endl;
@@ -56,8 +58,11 @@ TEST_CASE("MedChemica Base Test") {
       v2::SmilesParse::MolFromSmiles("c1ccc2c(c1)c(ncn2)Nc3ccc(cc3)C#N");
   REQUIRE(mol2);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
-  TwoMolMCSS(*mol1, *mol2, maxCliques);
+  unsigned int minMCSSSize(0.85 *
+                           std::max(mol1->getNumAtoms(), mol2->getNumAtoms()));
+  TwoMolMCSS(*mol1, *mol2, minMCSSSize, maxCliques);
   std::cout << "Number of max cliques: " << maxCliques.size() << std::endl;
+  std::sort(maxCliques.begin(), maxCliques.end());
   for (const auto &clique : maxCliques) {
     std::cout << clique.size() << " :";
     for (const auto &c : clique) {
@@ -65,6 +70,8 @@ TEST_CASE("MedChemica Base Test") {
     }
     std::cout << std::endl;
   }
+  CHECK(!maxCliques.empty());
+  CHECK(maxCliques.front().size() == 17);
 #if 0
   std::vector<ROMOL_SPTR> mols;
   mols.push_back(ROMOL_SPTR(mol1.release()));
@@ -72,19 +79,40 @@ TEST_CASE("MedChemica Base Test") {
   MCSResult res;
   MCSParameters params;
   params.Verbose = false;
-  // params.InitialSeed = smarts;
-  auto beg = std::chrono::high_resolution_clock::now();
-  res = findMCS(mols, &params);
-  auto end = std::chrono::high_resolution_clock::now();
-  auto duration = duration_cast<std::chrono::microseconds>(end - beg);
-  std::cout << "Elapsed Time: " << duration.count() / 2 << " microseconds"
-            << std::endl;
-  std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
-            << res.NumBonds << " bonds\n";
+  params.MinMCSSSize = static_cast<unsigned int>(
+      0.85 * std::max(mols[0]->getNumAtoms(), mols[1]->getNumAtoms()));
+  {
+    params.FastInitialSeed = true;
+    auto beg = std::chrono::high_resolution_clock::now();
+    res = findMCS(mols, &params);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(end - beg);
+    std::cout << "\nNew Elapsed Time: " << duration.count() << " microseconds"
+              << std::endl;
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n";
+    CHECK(res.NumAtoms == 17);
+    CHECK(res.NumBonds == 19);
+  }
+  {
+    params.FastInitialSeed = false;
+    params.Verbose = true;
+    auto beg = std::chrono::high_resolution_clock::now();
+    res = findMCS(mols, &params);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(end - beg);
+    std::cout << "\nOld Elapsed Time: " << duration.count() << " microseconds"
+              << std::endl;
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n";
+    CHECK(res.NumAtoms == 17);
+    CHECK(res.NumBonds == 19);
+  }
 #endif
 }
 
 TEST_CASE("FMCS Slow 1") {
+  // Spirocycle/open chain
   // Baseline time 1250-1300 ms.
   auto mol1 = v2::SmilesParse::MolFromSmiles(
       "CN1C[C@]2(CCN(C2=O)c2cncc3ccccc23)c2cc(Cl)ccc2C1=O");
@@ -93,7 +121,9 @@ TEST_CASE("FMCS Slow 1") {
       "CN1C[C@@H](C(=O)Nc2cncc3ccccc23)c2cc(Cl)ccc2C1=O");
   REQUIRE(mol2);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
-  TwoMolMCSS(*mol1, *mol2, maxCliques);
+  unsigned int minMCSSSize(0.85 *
+                           std::max(mol1->getNumAtoms(), mol2->getNumAtoms()));
+  TwoMolMCSS(*mol1, *mol2, minMCSSSize, maxCliques);
   std::cout << "Number of max cliques: " << maxCliques.size() << std::endl;
   for (const auto &clique : maxCliques) {
     std::cout << clique.size() << " :";
@@ -103,36 +133,48 @@ TEST_CASE("FMCS Slow 1") {
     std::cout << std::endl;
   }
   REQUIRE(!maxCliques.empty());
+  CHECK(maxCliques.front().size() == 26);
   auto smarts = makeSMARTSFromMCSS(*mol1, maxCliques.front());
   std::cout << smarts << std::endl;
-#if 0
   std::vector<ROMOL_SPTR> mols;
   mols.push_back(ROMOL_SPTR(mol1.release()));
   mols.push_back(ROMOL_SPTR(mol2.release()));
-  auto beg = std::chrono::high_resolution_clock::now();
   MCSResult res;
   MCSParameters params;
-  params.Verbose = false;
-  params.InitialSeed =
-      "[#6]1:[#6]:[#6]:[#6]2:[#6](:[#6]:1):[#6](:[#7]:[#6]:[#7]:2)-[#7]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1";
-  for (int i = 0; i < 1000; ++i) {
+  {
+    params.Verbose = false;
+    params.FastInitialSeed = true;
+    params.MinMCSSSize = static_cast<unsigned int>(
+        0.85 * std::max(mols[0]->getNumAtoms(), mols[1]->getNumAtoms()));
+    auto beg = std::chrono::high_resolution_clock::now();
     res = findMCS(mols, &params);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(end - beg);
+    std::cout << "\nNew Elapsed Time: " << duration.count() << " microseconds"
+              << std::endl;
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n";
+    CHECK(res.NumAtoms == 26);
+    CHECK(res.NumBonds == 29);
   }
-  auto end = std::chrono::high_resolution_clock::now();
-  auto duration = duration_cast<std::chrono::microseconds>(end - beg);
-  std::cout << "Elapsed Time: " << duration.count() / 1000 << " microseconds"
-            << std::endl;
-  std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
-            << res.NumBonds << " bonds\n";
-  CHECK(
-      res.SmartsString ==
-      "[#6]1:[#6]:[#6]:[#6]2:[#6](:[#6]:1):[#6](:[#7]:[#6]:[#7]:2)-[#7]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1");
-  CHECK(res.NumAtoms == 17);
-  CHECK(res.NumBonds == 19);
-#endif
+  {
+    params.Verbose = true;
+    params.FastInitialSeed = false;
+    auto beg = std::chrono::high_resolution_clock::now();
+    res = findMCS(mols, &params);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(end - beg);
+    std::cout << "\nOld Elapsed Time: " << duration.count() << " microseconds"
+              << std::endl;
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n";
+    CHECK(res.NumAtoms == 26);
+    CHECK(res.NumBonds == 29);
+  }
 }
 
-TEST_CASE("FMCS Slow 2 - spirocycle") {
+TEST_CASE("FMCS Slow 2") {
+  // spirocycle/spirocycle
   // Baseline time 373000-37400 ms.
   auto mol1 = v2::SmilesParse::MolFromSmiles(
       R"(CN1C[C@]2(CCN(C2=O)c2cncc3ccccc23)c2cc(Cl)ccc2C1=O)");
@@ -140,8 +182,11 @@ TEST_CASE("FMCS Slow 2 - spirocycle") {
   auto mol2 = v2::SmilesParse::MolFromSmiles(
       R"(CCN1C[C@]2(CCN(C2=O)c2cncc3ccccc23)c2cc(Cl)ccc2C1=O)");
   REQUIRE(mol2);
+#if 1
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
-  TwoMolMCSS(*mol1, *mol2, maxCliques);
+  unsigned int minMCSSSize(0.85 *
+                           std::max(mol1->getNumAtoms(), mol2->getNumAtoms()));
+  TwoMolMCSS(*mol1, *mol2, minMCSSSize, maxCliques);
   std::cout << "Number of max cliques: " << maxCliques.size() << std::endl;
   for (const auto &clique : maxCliques) {
     std::cout << clique.size() << " :";
@@ -151,28 +196,48 @@ TEST_CASE("FMCS Slow 2 - spirocycle") {
     std::cout << std::endl;
   }
   REQUIRE(!maxCliques.empty());
+  CHECK(maxCliques.front().size() == 28);
   auto smarts = makeSMARTSFromMCSS(*mol1, maxCliques.front());
   std::cout << smarts << std::endl;
+#endif
 #if 0
   std::vector<ROMOL_SPTR> mols;
   mols.push_back(ROMOL_SPTR(mol1.release()));
   mols.push_back(ROMOL_SPTR(mol2.release()));
-  auto beg = std::chrono::high_resolution_clock::now();
   MCSResult res;
-  for (int i = 0; i < 10; ++i) {
-    res = findMCS(mols);
+  MCSParameters params;
+  {
+    params.Verbose = false;
+    params.FastInitialSeed = true;
+    params.MinMCSSSize = static_cast<unsigned int>(
+        0.85 * std::max(mols[0]->getNumAtoms(), mols[1]->getNumAtoms()));
+    auto beg = std::chrono::high_resolution_clock::now();
+    res = findMCS(mols, &params);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(end - beg);
+    std::cout << "\nNew Elapsed Time: " << duration.count() << " microseconds"
+              << std::endl;
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n";
+    CHECK(res.NumAtoms == 28);
+    CHECK(res.NumBonds == 32);
   }
-  auto end = std::chrono::high_resolution_clock::now();
-  auto duration = duration_cast<std::chrono::microseconds>(end - beg);
-  std::cout << "Elapsed Time: " << duration.count() / 10 << " microseconds"
-            << std::endl;
-  std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
-            << res.NumBonds << " bonds\n";
-  CHECK(
-      res.SmartsString ==
-      "[#6]-[#7]-[#6](=[#8])-[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1-[#6]1-[#6]-[#6]-[#7](-[#6]-1=[#8])-[#6]1:[#6]:[#7]:[#6]:[#6]2:[#6]:1:[#6]:[#6]:[#6]:[#6]:2)-[#17]");
-  CHECK(res.NumAtoms == 27);
-  CHECK(res.NumBonds == 30);
+#endif
+#if 0
+  {
+    params.Verbose = true;
+    params.FastInitialSeed = false;
+    auto beg = std::chrono::high_resolution_clock::now();
+    res = findMCS(mols, &params);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(end - beg);
+    std::cout << "\nOld Elapsed Time: " << duration.count() << " microseconds"
+              << std::endl;
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n";
+    CHECK(res.NumAtoms == 28);
+    CHECK(res.NumBonds == 32);
+  }
 #endif
 }
 
@@ -189,7 +254,9 @@ TEST_CASE("FMCS Slow 3") {
   mols.push_back(ROMOL_SPTR(mol2.release()));
   MCSResult res;
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
-  TwoMolMCSS(*mols[0], *mols[1], maxCliques);
+  unsigned int minMCSSSize(0.85 *
+                           std::max(mol1->getNumAtoms(), mol2->getNumAtoms()));
+  TwoMolMCSS(*mol1, *mol2, minMCSSSize, maxCliques);
   std::cout << "Number of max cliques: " << maxCliques.size() << std::endl;
   for (const auto &clique : maxCliques) {
     std::cout << clique.size() << " :";
@@ -199,25 +266,40 @@ TEST_CASE("FMCS Slow 3") {
     std::cout << std::endl;
   }
   REQUIRE(!maxCliques.empty());
+  CHECK(maxCliques.front().size() == 36);
   auto smarts = makeSMARTSFromMCSS(*mols[0], maxCliques.front());
   std::cout << smarts << std::endl;
   MCSParameters params;
-  params.Verbose = false;
-  params.FastInitialSeed = true;
-  // params.InitialSeed = smarts;
-  auto beg = std::chrono::high_resolution_clock::now();
-  res = findMCS(mols, &params);
-  auto end = std::chrono::high_resolution_clock::now();
-  auto duration = duration_cast<std::chrono::microseconds>(end - beg);
-  std::cout << "Elapsed Time: " << duration.count() / 2 << " microseconds"
-            << std::endl;
-  std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
-            << res.NumBonds << " bonds\n";
-  CHECK(res.NumAtoms == 36);
-  CHECK(res.NumBonds == 39);
-  CHECK(
-      res.SmartsString ==
-      "[#6]-[#8]-[#7]=[#6](-[#6](=[#8])-[#7]-[#6]1-[#6]2-[#16]-[#6]-[#6](=[#6](-[#7]-2-[#6]-1=[#8])-[#6](-[#8])=[#8])-[#6]-[#7](:[#6]):[#6]:[#6])-[#6]1:[#7]:[#6](:[#16]:[#6]:1-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1)-[#7]");
+  {
+    params.Verbose = false;
+    params.FastInitialSeed = true;
+    params.MinMCSSSize = static_cast<unsigned int>(
+        0.85 * std::max(mols[0]->getNumAtoms(), mols[1]->getNumAtoms()));
+    auto beg = std::chrono::high_resolution_clock::now();
+    res = findMCS(mols, &params);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(end - beg);
+    std::cout << "\nNew Elapsed Time: " << duration.count() << " microseconds"
+              << std::endl;
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n";
+    CHECK(res.NumAtoms == 36);
+    CHECK(res.NumBonds == 39);
+  }
+  {
+    params.Verbose = true;
+    params.FastInitialSeed = false;
+    auto beg = std::chrono::high_resolution_clock::now();
+    res = findMCS(mols, &params);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(end - beg);
+    std::cout << "\nOld Elapsed Time: " << duration.count() << " microseconds"
+              << std::endl;
+    std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n";
+    CHECK(res.NumAtoms == 36);
+    CHECK(res.NumBonds == 39);
+  }
 }
 
 TEST_CASE("Split by Rascal") {
@@ -226,7 +308,9 @@ TEST_CASE("Split by Rascal") {
   auto mol2 = v2::SmilesParse::MolFromSmiles("C=CCC=CCCCC1CNCCC1");
   REQUIRE(mol2);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
-  TwoMolMCSS(*mol1, *mol2, maxCliques);
+  unsigned int minMCSSSize(0.85 *
+                           std::max(mol1->getNumAtoms(), mol2->getNumAtoms()));
+  TwoMolMCSS(*mol1, *mol2, minMCSSSize, maxCliques);
   std::cout << "Number of max cliques: " << maxCliques.size() << std::endl;
   for (const auto &clique : maxCliques) {
     std::cout << clique.size() << " :";

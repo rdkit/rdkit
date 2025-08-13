@@ -269,7 +269,7 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
   if (!Parameters.InitialSeed.empty()) {  // make user defined seed
     std::unique_ptr<const ROMol> initialSeedMolecule(
         static_cast<const ROMol *>(SmartsToMol(Parameters.InitialSeed)));
-    // make a set of of seed as indices and pointers to current query
+    // make a set of seeds as indices and pointers to current query
     // molecule items based on matching results
     std::vector<MatchVectType> matching_substructs;
     SubstructMatch(*QueryMolecule, *initialSeedMolecule, matching_substructs);
@@ -417,18 +417,21 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
         if (!QueryMoleculeSingleMatchedAtom) {
           QueryMoleculeSingleMatchedAtom = candQueryMoleculeSingleMatchedAtom;
         } else {
-          QueryMoleculeSingleMatchedAtom = (std::max)(
-              candQueryMoleculeSingleMatchedAtom,
-              QueryMoleculeSingleMatchedAtom, [](const Atom *a, const Atom *b) {
-                if (a->getDegree() != b->getDegree()) {
-                  return (a->getDegree() < b->getDegree());
-                } else if (a->getFormalCharge() != b->getFormalCharge()) {
-                  return (a->getFormalCharge() < b->getFormalCharge());
-                } else if (a->getAtomicNum() != b->getAtomicNum()) {
-                  return (a->getAtomicNum() < b->getAtomicNum());
-                }
-                return (a->getIdx() < b->getIdx());
-              });
+          QueryMoleculeSingleMatchedAtom =
+              (std::max)(candQueryMoleculeSingleMatchedAtom,
+                         QueryMoleculeSingleMatchedAtom,
+                         [](const Atom *a, const Atom *b) {
+                           if (a->getDegree() != b->getDegree()) {
+                             return (a->getDegree() < b->getDegree());
+                           } else if (a->getFormalCharge() !=
+                                      b->getFormalCharge()) {
+                             return (a->getFormalCharge() <
+                                     b->getFormalCharge());
+                           } else if (a->getAtomicNum() != b->getAtomicNum()) {
+                             return (a->getAtomicNum() < b->getAtomicNum());
+                           }
+                           return (a->getIdx() < b->getIdx());
+                         });
         }
       }
     }
@@ -909,7 +912,6 @@ bool MaximumCommonSubgraph::createSeedFromMCS(size_t newQueryTarget,
 MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR> &src_mols) {
   clear();
   MCSResult res;
-
   if (src_mols.size() < 2) {
     throw std::runtime_error(
         "FMCS. Invalid argument. mols.size() must be at least 2");
@@ -954,7 +956,6 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR> &src_mols) {
     }
     ++i;
   }
-
   // sort source set of molecules by their 'size' and assume the smallest
   // molecule as a query
   std::stable_sort(Molecules.begin(), Molecules.end(), molPtr_NumBondLess);
@@ -1246,7 +1247,9 @@ bool MaximumCommonSubgraph::match(Seed &seed) {
   for (const auto &tag : Targets) {
     unsigned int itarget = &tag - &Targets.front();
 #ifdef VERBOSE_STATISTICS_ON
-    { ++VerboseStatistics.MatchCall; }
+    {
+      ++VerboseStatistics.MatchCall;
+    }
 #endif
     bool target_matched = false;
     if (!seed.MatchResult.empty() && !seed.MatchResult.at(itarget).empty()) {
@@ -1297,7 +1300,9 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed &seed,
                                                  unsigned int itarget) {
 // use and update results of previous match stored in the seed
 #ifdef VERBOSE_STATISTICS_ON
-  { ++VerboseStatistics.FastMatchCall; }
+  {
+    ++VerboseStatistics.FastMatchCall;
+  }
 #endif
   const auto &target = Targets.at(itarget);
   auto &match = seed.MatchResult.at(itarget);

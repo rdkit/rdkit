@@ -1,6 +1,7 @@
 
 rdkit_library(FMCS
               FMCS.cpp Seed.cpp TargetMatch.cpp MaximumCommonSubgraph.cpp SubstructMatchCustom.cpp
+              TwoMolMCSS.cpp
               LINK_LIBRARIES Depictor SmilesParse FileParsers ChemTransforms SubstructMatch GraphMol )
 target_compile_definitions(FMCS PRIVATE RDKIT_FMCS_BUILD)
 
@@ -10,6 +11,7 @@ rdkit_headers(FMCS.h
 
 rdkit_test(testFMCS testFMCS_Unit.cpp LINK_LIBRARIES
 FMCS )
+rdkit_catch_test(testFMCSCatch catch_tests.cpp LINK_LIBRARIES FMCS)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

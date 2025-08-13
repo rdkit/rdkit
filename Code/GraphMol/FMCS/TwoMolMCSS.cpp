@@ -115,7 +115,8 @@ void buildCorrespondenceGraph(
     const std::vector<std::pair<unsigned int, unsigned int>> &atomPairs,
     const ROMol &mol1, const ROMol &mol2,
     std::vector<std::vector<char>> &corrGraph,
-    std::vector<unsigned int> &corrGraphNumConns) {
+    std::vector<unsigned int> &corrGraphNumConns,
+    std::vector<std::pair<unsigned int, unsigned int>> &atomPairStarts) {
   std::vector<std::vector<const Bond *>> bond1s(
       mol1.getNumAtoms(),
       std::vector<const Bond *>(mol1.getNumAtoms(), nullptr));
@@ -147,6 +148,36 @@ void buildCorrespondenceGraph(
       }
     }
   }
+  atomPairStarts.resize(mol1.getNumAtoms());
+  for (size_t i = 0U; i < atomPairs.size(); ++i) {
+    atomPairStarts[atomPairs[i].first].first++;
+  }
+  for (size_t i = 1U; i < atomPairs.size(); ++i) {
+    atomPairStarts[i].second =
+        atomPairStarts[i - 1].first + atomPairStarts[i - 1].second;
+  }
+  atomPairStarts.erase(
+      std::remove_if(atomPairStarts.begin(), atomPairStarts.end(),
+                     [](const auto &a) -> bool { return a.first == 0; }),
+      atomPairStarts.end());
+  std::ranges::sort(atomPairStarts, [](const auto &a, const auto &b) -> bool {
+    return a.first < b.first;
+  });
+  std::cout << "num atom pairs : " << atomPairs.size() << std::endl;
+  std::cout << "num atom pair starts : " << atomPairStarts.size() << std::endl;
+  for (const auto &p : atomPairStarts) {
+    std::cout << p.first << " " << p.second << std::endl;
+  }
+  std::cout << atomPairs[atomPairStarts.front().second].first << " :: "
+            << mol1.getAtomWithIdx(
+                       atomPairs[atomPairStarts.front().second].first)
+                   ->getAtomicNum()
+            << std::endl;
+  std::cout << atomPairs[atomPairStarts.back().second].first << " :: "
+            << mol1.getAtomWithIdx(
+                       atomPairs[atomPairStarts.back().second].first)
+                   ->getAtomicNum()
+            << std::endl;
 }
 
 void bron_kerbosch(
@@ -548,7 +579,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
                          const std::vector<unsigned int> &corrGraphNumConns,
                          std::vector<std::vector<unsigned int>> &maxCliques) {
 #if 0
-  if (c.size() > 0) {
+  if (c.size() == 1) {
     std::cout << "c ";
     for (auto cm : c) {
       std::cout << cm << " ";
@@ -567,20 +598,22 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
     }
     std::cout << ":: t ";
     for (auto pm : t) {
-      std::cout << pm << " ";
+      std::cout << int(pm) << " ";
     }
     std::cout << std::endl;
   }
   if (c.size() == 1) {
     std::cout << "NEW : " << c[0] << std::endl;
   }
+#endif
+#if 0
   std::cout << "c : " << c.size() << " p : " << p.size() << " d : " << d.size()
             << " s : " << s.size() << " t : " << t.size() << " : "
-            << corrGraph.size() << " : ";
+            << "cg : " << corrGraph.size() << " : ";
   if (maxCliques.empty()) {
     std::cout << " NONE" << std::endl;
   } else {
-    std::cout << maxCliques.front().size() << std::endl;
+    std::cout << "max clique : " << maxCliques.front().size() << std::endl;
   }
 #endif
   if (p.empty()) {
@@ -682,42 +715,26 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
       // }
       // std::cout << std::endl;
       // the new clique is the current clique plus u.
-      std::vector<unsigned int> newC(c);
-      newC.push_back(ui);
-
-      // We now recurse by using only the members of newP, newD and newS
-      // that are neighbours of u
-      // n is the set of all neighbours of u.
-      // std::unordered_set<unsigned int> onwardP;
-      // for (auto pe : newP) {
-      //   if (n[pe]) {
-      //     onwardP.insert(pe);
-      //   }
-      // }
-      // std::unordered_set<unsigned int> onwardD;
-      // for (auto de : newD) {
-      //   if (n[de]) {
-      //     onwardD.insert(de);
-      //   }
-      // }
-      // std::unordered_set<unsigned int> onwardS;
-      // for (auto se : newS) {
-      //   if (n[se]) {
-      //     onwardS.insert(se);
-      //   }
-      // }
-      enumerate_z_cliques(newC, newP, newD, newS, t, corrGraph,
-                          corrGraphNumConns, maxCliques);
+      // std::vector<unsigned int> newC(c);
+      // newC.push_back(ui);
+      c.push_back(ui);
+      enumerate_z_cliques(c, newP, newD, newS, t, corrGraph, corrGraphNumConns,
+                          maxCliques);
+      c.pop_back();
       s.insert(ui);
     }
   }
 }
 }  // namespace
 
-void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
+void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
                 std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
                     &maxCliques) {
   std::vector<std::pair<unsigned int, unsigned int>> atomPairs;
+  std::cout << "minMCSSSize = " << minMCSSSize << std::endl;
+  if (minMCSSSize > std::min(mol1.getNumAtoms(), mol2.getNumAtoms())) {
+    return;
+  }
   buildAtomPairs(mol1, mol2, atomPairs);
   if (atomPairs.empty()) {
     return;
@@ -731,7 +748,9 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
   std::vector<std::vector<char>> corrGraph(
       atomPairs.size(), std::vector<char>(atomPairs.size(), 0));
   std::vector<unsigned int> corrGraphNumConns(atomPairs.size(), 0);
-  buildCorrespondenceGraph(atomPairs, mol1, mol2, corrGraph, corrGraphNumConns);
+  std::vector<std::pair<unsigned int, unsigned int>> atomPairStarts;
+  buildCorrespondenceGraph(atomPairs, mol1, mol2, corrGraph, corrGraphNumConns,
+                           atomPairStarts);
 
 #if 0
   auto printGraph =
@@ -768,27 +787,47 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
   std::unordered_set<unsigned int> p;
   std::unordered_set<unsigned int> d;
   std::unordered_set<unsigned int> s;
-  for (size_t u = 0U; u < corrGraph.size(); ++u) {
-    // std::cout << "starting with " << u << std::endl;
-    p.clear();
-    d.clear();
-    s.clear();
-    for (size_t v = 0; v < corrGraph[u].size(); ++v) {
-      if (corrGraph[v][u] == 'c') {
-        if (t[v]) {
-          s.insert(v);
-        } else {
-          p.insert(v);
+  // Start each round of enumerate_z_cliques at an atom pair given by
+  // the atomPairStarts.
+  for (size_t aps = 0U; aps < atomPairStarts.size(); ++aps) {
+    for (unsigned int i = 0u; i < atomPairStarts[aps].first; ++i) {
+      size_t u = atomPairStarts[aps].second + i;
+      std::cout << "starting with " << u << " : " << minMCSSSize << std::endl;
+      p.clear();
+      d.clear();
+      s.clear();
+      for (size_t v = 0; v < corrGraph[u].size(); ++v) {
+        if (corrGraph[v][u] == 'c') {
+          if (t[v]) {
+            s.insert(v);
+          } else {
+            p.insert(v);
+          }
+        } else if (corrGraph[v][u] == 'd') {
+          d.insert(v);
         }
-      } else if (corrGraph[v][u] == 'd') {
-        d.insert(v);
+      }
+      clique.clear();
+      clique.push_back(u);
+      enumerate_z_cliques(clique, p, d, s, t, corrGraph, corrGraphNumConns,
+                          rawMaxCliques);
+      t[u] = 1;
+      if (!rawMaxCliques.empty() &&
+          rawMaxCliques.front().size() > minMCSSSize) {
+        std::cout << "updating minMCSSSize to " << rawMaxCliques.front().size()
+                  << std::endl;
+        minMCSSSize = rawMaxCliques.front().size();
+      }
+      // If we have tried minMCSSSize atoms from mol1 as start points
+      // and haven't found a clique of the requisite size, we won't be
+      // able to from now on in.
+      if (aps + minMCSSSize > atomPairStarts.size()) {
+        break;
       }
     }
-    clique.clear();
-    clique.push_back(u);
-    enumerate_z_cliques(clique, p, d, s, t, corrGraph, corrGraphNumConns,
-                        rawMaxCliques);
-    t[u] = 1;
+    if (aps + minMCSSSize > atomPairStarts.size()) {
+      break;
+    }
   }
   // std::cout << "Number of cliques: " << rawMaxCliques.size() << std::endl;
   // for (auto &c : rawMaxCliques) {
@@ -861,6 +900,9 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2,
 #endif
 
 #endif
+  if (rawMaxCliques.empty()) {
+    return;
+  }
   maxCliques.reserve(rawMaxCliques.size());
   for (const auto &rmc : rawMaxCliques) {
     std::vector<std::pair<unsigned int, unsigned int>> newClique;
