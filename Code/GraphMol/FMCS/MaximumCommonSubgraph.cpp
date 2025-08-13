@@ -16,6 +16,7 @@
 #include "../SmilesParse/SmartsWrite.h"
 #include "../SmilesParse/SmilesParse.h"
 #include "../Substruct/SubstructMatch.h"
+#include <GraphMol/FMCS/TwoMolMCSS.h>
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
 #include <RDGeneral/BoostStartInclude.h>
@@ -266,13 +267,59 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
   QueryMoleculeMatchedBonds = 0;
   QueryMoleculeMatchedAtoms = 0;
   QueryMoleculeSingleMatchedAtom = nullptr;
-  if (!Parameters.InitialSeed.empty()) {  // make user defined seed
-    std::unique_ptr<const ROMol> initialSeedMolecule(
+  std::vector<MatchVectType> matching_substructs;
+  std::unique_ptr<const ROMol> initialSeedMolecule;
+
+  if (Parameters.InitialSeed.empty() && Parameters.FastInitialSeed &&
+      Targets.size() == 1) {
+    // We can do the clique detection MCS to create seeds which should
+    // be the final answer.  This just plumbs it in as a check and so that
+    // all the downstream results preparation is the same.
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
+    TwoMolMCSS(*QueryMolecule, *Targets[0].Molecule, Parameters.MinMCSSSize,
+               maxCliques);
+    if (maxCliques.empty()) {
+      return;
+    }
+    // Use a trimmed down copy of QueryMolecule as the initialSeedMolecule, and
+    // the clique as the match of it onto the QueryMolecule.  Only use the first
+    // clique, as they should all be the same barring symmetry.
+    std::unique_ptr<RWMol> qmol(new RWMol(*QueryMolecule));
+
+    const auto &clique = maxCliques.front();
+    std::unordered_set<unsigned int> atomsToKeep;
+    std::transform(clique.begin(), clique.end(),
+                   std::inserter(atomsToKeep, atomsToKeep.begin()),
+                   [](const auto &a) -> unsigned int { return a.first; });
+    for (auto atom : qmol->atoms()) {
+      atom->setProp<int>("OrigIdx", atom->getIdx());
+    }
+    qmol->beginBatchEdit();
+    for (auto atom : qmol->atoms()) {
+      if (atomsToKeep.find(atom->getIdx()) == atomsToKeep.end()) {
+        qmol->removeAtom(atom);
+      }
+    }
+    qmol->commitBatchEdit();
+    MatchVectType nextMatch;
+    nextMatch.reserve(qmol->getNumAtoms());
+    for (auto atom : qmol->atoms()) {
+      nextMatch.emplace_back(
+          std::pair<int, int>(atom->getIdx(), atom->getProp<int>("OrigIdx")));
+    }
+    matching_substructs.emplace_back(std::move(nextMatch));
+    initialSeedMolecule.reset(static_cast<const ROMol *>(qmol.release()));
+  } else if (!Parameters.InitialSeed.empty()) {
+    // make user defined seed
+    initialSeedMolecule.reset(
         static_cast<const ROMol *>(SmartsToMol(Parameters.InitialSeed)));
     // make a set of seeds as indices and pointers to current query
     // molecule items based on matching results
     std::vector<MatchVectType> matching_substructs;
     SubstructMatch(*QueryMolecule, *initialSeedMolecule, matching_substructs);
+  }
+
+  if (initialSeedMolecule) {
     // loop throw all fragments of Query matched to initial seed
     for (const auto &ms : matching_substructs) {
       Seed seed;
@@ -321,8 +368,10 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
     }
     if (Seeds.empty()) {
       BOOST_LOG(rdWarningLog)
-          << "The provided InitialSeed is not an MCS and will be ignored"
-          << std::endl;
+          << "The provided InitialSeed is not an MCS and will be ignored : "
+          << Parameters.InitialSeed << " : " << MolToSmiles(*QueryMolecule)
+          << " vs " << MolToSmiles(*Targets[0].Molecule) << " with "
+          << MolToSmarts(*initialSeedMolecule) << std::endl;
     }
   }
   if (Seeds.empty()) {  // create a set of seeds from each query bond

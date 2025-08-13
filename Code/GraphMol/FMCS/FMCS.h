@@ -162,7 +162,7 @@ struct RDKIT_FMCS_EXPORT MCSParameters {
   bool FastInitialSeed =
       false; /* Whether to do an approximate MCSS determination first.  2
                 molecule cases only. */
-  unsigned int MinMCSSSize = 2; /* minimum number of atoms in MCSS that will be
+  unsigned int MinMCSSSize = 1; /* minimum number of atoms in MCSS that will be
                                    returned.  Only for FastInitialSeed=True. */
   MCSAtomCompareParameters AtomCompareParameters;
   MCSBondCompareParameters BondCompareParameters;

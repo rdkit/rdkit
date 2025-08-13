@@ -152,13 +152,6 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR> &mols,
   if (nullptr != params) {
     p = *params;
   }
-  if (mols.size() == 2 && p.InitialSeed.empty() && p.FastInitialSeed) {
-    // std::cout << "Doing fast seed" << std::endl;
-    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
-    TwoMolMCSS(*mols[0], *mols[1], p.MinMCSSSize, maxCliques);
-    p.InitialSeed = makeSMARTSFromMCSS(*mols[0], maxCliques.front());
-    // std::cout << "InitialSeed: " << p.InitialSeed << std::endl;
-  }
   RDKit::FMCS::MaximumCommonSubgraph fmcs(&p);
   return fmcs.find(mols);
 }

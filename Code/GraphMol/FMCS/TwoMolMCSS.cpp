@@ -896,6 +896,10 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
 #endif
   if (rawMaxCliques.empty()) {
     return;
+  } else {
+    if (rawMaxCliques.front().size() < minMCSSSize) {
+      return;
+    }
   }
   maxCliques.reserve(rawMaxCliques.size());
   for (const auto &rmc : rawMaxCliques) {
