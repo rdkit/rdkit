@@ -152,7 +152,7 @@ void buildCorrespondenceGraph(
   for (size_t i = 0U; i < atomPairs.size(); ++i) {
     atomPairStarts[atomPairs[i].first].first++;
   }
-  for (size_t i = 1U; i < atomPairs.size(); ++i) {
+  for (size_t i = 1U; i < atomPairStarts.size(); ++i) {
     atomPairStarts[i].second =
         atomPairStarts[i - 1].first + atomPairStarts[i - 1].second;
   }
@@ -163,21 +163,6 @@ void buildCorrespondenceGraph(
   std::ranges::sort(atomPairStarts, [](const auto &a, const auto &b) -> bool {
     return a.first < b.first;
   });
-  std::cout << "num atom pairs : " << atomPairs.size() << std::endl;
-  std::cout << "num atom pair starts : " << atomPairStarts.size() << std::endl;
-  for (const auto &p : atomPairStarts) {
-    std::cout << p.first << " " << p.second << std::endl;
-  }
-  std::cout << atomPairs[atomPairStarts.front().second].first << " :: "
-            << mol1.getAtomWithIdx(
-                       atomPairs[atomPairStarts.front().second].first)
-                   ->getAtomicNum()
-            << std::endl;
-  std::cout << atomPairs[atomPairStarts.back().second].first << " :: "
-            << mol1.getAtomWithIdx(
-                       atomPairs[atomPairStarts.back().second].first)
-                   ->getAtomicNum()
-            << std::endl;
 }
 
 void bron_kerbosch(
@@ -225,10 +210,11 @@ void bron_kerbosch(
   std::unordered_set<unsigned int> rem_union_done(remaining.begin(),
                                                   remaining.end());
   rem_union_done.insert(done.begin(), done.end());
-  auto pivot = *max_element(rem_union_done.begin(), rem_union_done.end(),
-                            [&](const auto &a, const auto &b) -> bool {
-                              return corrGraph[a].size() < corrGraph[b].size();
-                            });
+  auto pivot =
+      *std::max_element(rem_union_done.begin(), rem_union_done.end(),
+                        [&](const auto &a, const auto &b) -> bool {
+                          return corrGraph[a].size() < corrGraph[b].size();
+                        });
   // std::cout << "pivot : " << pivot << std::endl;
   // Make a set of possible vertices to add to the clique.  These are
   // vertices in 'remaining' that are not neighbours of 'pivot'.
@@ -479,10 +465,10 @@ void enumerate_z_cliques(
     }
     return;
   }
-  auto ut = *max_element(p.begin(), p.end(),
-                         [&](const auto &a, const auto &b) -> bool {
-                           return corrGraph[a].size() < corrGraph[b].size();
-                         });
+  auto ut = *std::max_element(
+      p.begin(), p.end(), [&](const auto &a, const auto &b) -> bool {
+        return corrGraph[a].size() < corrGraph[b].size();
+      });
   // std::cout << "pivot node " << ut << std::endl;
   for (auto ui : p) {
     if (s.contains(ui)) {
@@ -639,10 +625,10 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
     }
     return;
   }
-  auto ut = *max_element(p.begin(), p.end(),
-                         [&](const auto &a, const auto &b) -> bool {
-                           return corrGraphNumConns[a] < corrGraphNumConns[b];
-                         });
+  auto ut = *std::max_element(
+      p.begin(), p.end(), [&](const auto &a, const auto &b) -> bool {
+        return corrGraphNumConns[a] < corrGraphNumConns[b];
+      });
   // std::cout << "pivot node " << ut << std::endl;
   for (auto ui : p) {
     if (s.contains(ui)) {
@@ -731,7 +717,7 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
                 std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
                     &maxCliques) {
   std::vector<std::pair<unsigned int, unsigned int>> atomPairs;
-  std::cout << "minMCSSSize = " << minMCSSSize << std::endl;
+  // std::cout << "minMCSSSize = " << minMCSSSize << std::endl;
   if (minMCSSSize > std::min(mol1.getNumAtoms(), mol2.getNumAtoms())) {
     return;
   }
@@ -792,7 +778,8 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
   for (size_t aps = 0U; aps < atomPairStarts.size(); ++aps) {
     for (unsigned int i = 0u; i < atomPairStarts[aps].first; ++i) {
       size_t u = atomPairStarts[aps].second + i;
-      std::cout << "starting with " << u << " : " << minMCSSSize << std::endl;
+      // std::cout << "starting with " << u << " : " << minMCSSSize <<
+      // std::endl;
       p.clear();
       d.clear();
       s.clear();
@@ -814,18 +801,23 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
       t[u] = 1;
       if (!rawMaxCliques.empty() &&
           rawMaxCliques.front().size() > minMCSSSize) {
-        std::cout << "updating minMCSSSize to " << rawMaxCliques.front().size()
-                  << std::endl;
+        // std::cout << "updating minMCSSSize to " <<
+        // rawMaxCliques.front().size()
+        //           << std::endl;
         minMCSSSize = rawMaxCliques.front().size();
       }
       // If we have tried minMCSSSize atoms from mol1 as start points
       // and haven't found a clique of the requisite size, we won't be
       // able to from now on in.
       if (aps + minMCSSSize > atomPairStarts.size()) {
+        // std::cout << "Break 1 : " << aps << " + " << minMCSSSize << " vs "
+        //           << atomPairStarts.size() << std::endl;
         break;
       }
     }
     if (aps + minMCSSSize > atomPairStarts.size()) {
+      // std::cout << "Break 2 : " << aps << " + " << minMCSSSize << " vs "
+      //           << atomPairStarts.size() << std::endl;
       break;
     }
   }
