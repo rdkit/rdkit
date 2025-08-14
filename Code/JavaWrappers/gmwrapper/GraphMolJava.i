@@ -310,7 +310,9 @@ typedef unsigned long long int	uintmax_t;
 #ifdef RDK_BUILD_INCHI_SUPPORT
 %include "../Inchi.i"
 #endif
-
+#ifdef RDK_BUILD_CHEMDRAW_SUPPORT
+%include "../ChemDraw.i"
+#endif
 %include "../DiversityPick.i"
 
 %{

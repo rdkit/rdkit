@@ -54,7 +54,9 @@ endif()
 if (RDK_BUILD_CAIRO_SUPPORT)
   SET(CMAKE_SWIG_FLAGS "-DRDK_BUILD_CAIRO_SUPPORT" ${CMAKE_SWIG_FLAGS} )
 endif()
-  
+if (RDK_BUILD_CHEMDRAW_SUPPORT)
+  SET(CMAKE_SWIG_FLAGS "-DRDK_BUILD_CHEMDRAW_SUPPORT" ${CMAKE_SWIG_FLAGS} )
+endif()  
 
 FILE(GLOB SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../*.i")
 
@@ -67,6 +69,10 @@ if(NOT RDK_BUILD_INCHI_SUPPORT)
 LIST(REMOVE_ITEM SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../Inchi.i")
 endif()
 
+if(NOT RDK_BUILD_CHEMDRAW_SUPPORT)
+LIST(REMOVE_ITEM SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../ChemDraw.i")
+endif()
+
 SET(SWIG_MODULE_RDKFuncs_EXTRA_DEPS ${SWIG_SRC_FILES} )
 
 SWIG_ADD_LIBRARY(RDKFuncs TYPE MODULE LANGUAGE CSharp SOURCES GraphMolCSharp.i )
@@ -75,8 +81,13 @@ SWIG_ADD_LIBRARY(RDKFuncs TYPE MODULE LANGUAGE CSharp SOURCES GraphMolCSharp.i )
 # it doesnt seem like the threading libs should need to be here, but
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
 # link error if they aren't there.
-SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
-      rdkit_base ${RDKit_THREAD_LIBS} )
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
+      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expat)
+else ()
+  SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
+      rdkit_base ${RDKit_THREAD_LIBS})
+endif()
 
 INSTALL(TARGETS RDKFuncs
         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )

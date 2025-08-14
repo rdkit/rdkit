@@ -92,6 +92,9 @@ endif()
 if (RDK_BUILD_CAIRO_SUPPORT)
 	SET(CMAKE_SWIG_FLAGS "-DRDK_BUILD_CAIRO_SUPPORT" ${CMAKE_SWIG_FLAGS} )
 endif()
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  SET(CMAKE_SWIG_FLAGS "-DRDK_BUILD_CHEMDRAW_SUPPORT" ${CMAKE_SWIG_FLAGS} )
+endif()
 
 
 # enable this line to build the ErrorGenerator class for testing handling of C++ errors in the JNI layer
@@ -108,6 +111,11 @@ if(NOT RDK_BUILD_INCHI_SUPPORT)
 LIST(REMOVE_ITEM SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../Inchi.i")
 endif()
 
+if(NOT RDK_BUILD_CHEMDRAW_SUPPORT)
+LIST(REMOVE_ITEM SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../ChemDraw.i")
+endif()
+
+
 SET(SWIG_MODULE_GraphMolWrap_EXTRA_DEPS ${SWIG_SRC_FILES} )
 
 SWIG_ADD_LIBRARY(GraphMolWrap TYPE MODULE LANGUAGE java SOURCES GraphMolJava.i )
@@ -115,8 +123,14 @@ SWIG_ADD_LIBRARY(GraphMolWrap TYPE MODULE LANGUAGE java SOURCES GraphMolJava.i )
 # it doesnt seem like the threading libs should need to be here, but
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
 # link error if they aren't there.
-SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
+
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
+      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expat)
+else ()
+  SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
       rdkit_base ${RDKit_THREAD_LIBS})
+endif()
 
 # code adapted from the wrapper code for
 # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup
@@ -167,6 +181,10 @@ endif()
 
 if(NOT RDK_BUILD_INCHI_SUPPORT)
 LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/InchiTests.java")
+endif()
+
+if(NOT RDK_BUILD_CHEMDRAW_SUPPORT)
+LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/ChemDrawTests.java")
 endif()
 
 if(NOT RDK_USE_BOOST_IOSTREAMS)
@@ -321,6 +339,13 @@ if (RDK_BUILD_INCHI_SUPPORT)
        java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
        	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 		org.RDKit.InchiTests)
+endif (RDK_BUILD_INCHI_SUPPORT)
+
+if (RDK_BUILD_CHEMDRAW_SUPPORT)
+   ADD_TEST(JavaChemDrawTests
+       java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+       	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+		org.RDKit.ChemDrawTest)
 endif (RDK_BUILD_INCHI_SUPPORT)
 
 #ADD_TEST(JavaMemoryTests
