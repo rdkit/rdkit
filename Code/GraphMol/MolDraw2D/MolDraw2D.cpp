@@ -163,6 +163,7 @@ void MolDraw2D::drawMoleculeWithHighlights(
       break;
   }
   drawMols_.emplace_back(dm);
+  drawMols_.back()->setOffsets(x_offset_, y_offset_);
   drawMols_.back()->createDrawObjects();
   fixVariableDimensions(*drawMols_.back());
   ++activeMolIdx_;
