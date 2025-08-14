@@ -437,7 +437,7 @@ else()
 endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams REQUIRED CONFIG)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS serialization iostreams REQUIRED CONFIG)
     target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_SERIALIZATION)
     if(NOT Boost_USE_STATIC_LIBS)
@@ -447,7 +447,7 @@ endif()
 
 if(RDK_USE_BOOST_IOSTREAMS)
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_IOSTREAMS)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED CONFIG)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS iostreams REQUIRED CONFIG)
     target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
 
     if (NOT Boost_USE_STATIC_LIBS)
