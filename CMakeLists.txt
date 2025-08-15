@@ -54,6 +54,7 @@ option(RDK_BUILD_TEST_GZIP "Build the gzip'd stream test" OFF)
 option(RDK_OPTIMIZE_POPCNT "Use SSE4.2 popcount instruction while compiling." ON)
 option(RDK_USE_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
 option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires Eigen3 to be installed" ON)
+option(RDK_BUILD_CHEMDRAW_SUPPORT "build support for the Revvity ChemDraw document format" OFF )
 option(RDK_BUILD_FREESASA_SUPPORT "build the rdkit freesasa wrapper" OFF )
 option(RDK_BUILD_COORDGEN_SUPPORT "build the rdkit coordgen wrapper" ON )
 option(RDK_BUILD_MAEPARSER_SUPPORT "build the rdkit MAE parser wrapper" ON )
@@ -436,7 +437,7 @@ else()
 endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams REQUIRED CONFIG)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS serialization iostreams REQUIRED CONFIG)
     target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_SERIALIZATION)
     if(NOT Boost_USE_STATIC_LIBS)
@@ -446,7 +447,7 @@ endif()
 
 if(RDK_USE_BOOST_IOSTREAMS)
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_IOSTREAMS)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED CONFIG)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS iostreams REQUIRED CONFIG)
     target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
 
     if (NOT Boost_USE_STATIC_LIBS)
@@ -592,8 +593,6 @@ if (MSVC)
   #  - 4267: conversion from 'size_t' to 'unsigned int', possible loss of data
   add_definitions( "/wd4267" )
 endif(MSVC)
-
-
 
 add_subdirectory(External)
 add_subdirectory(Code)

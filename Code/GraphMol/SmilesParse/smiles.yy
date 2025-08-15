@@ -49,7 +49,10 @@ yysmiles_error( const char *input,
 		void *,int, unsigned int bad_token_position, const char * msg )
 {
   yyErrorCleanup(ms);
-  SmilesParseOps::detail::printSyntaxErrorMessage(input, msg, bad_token_position);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMILES");
 }
 
 void
@@ -59,9 +62,23 @@ yysmiles_error( const char *input,
 		void *,int, unsigned int bad_token_position, const char * msg )
 {
   yyErrorCleanup(ms);
-  SmilesParseOps::detail::printSyntaxErrorMessage(input, msg, bad_token_position);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMILES");
 }
 
+void
+yysmiles_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
+                unsigned int bad_token_position, const char * msg )
+{
+  yyErrorCleanup(ms);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMILES");
+}
 
 %}
 
@@ -106,6 +123,7 @@ yysmiles_error( const char *input,
 %type <bond> bondd
 %type <ival> nonzero_number number ring_number digit branch_open_token
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
+%token BAD_CHARACTER
 %token EOS_TOKEN
 
 %destructor { delete $$; } <atom>
@@ -136,6 +154,12 @@ START_MOL mol {
   YYABORT;
 }
 | START_BOND {
+  YYABORT;
+}
+| meta_start BAD_CHARACTER {
+  yyerrok;
+  yyErrorCleanup(molList);
+  yyerror(input, molList, current_token_position, "syntax error");
   YYABORT;
 }
 | meta_start error EOS_TOKEN{

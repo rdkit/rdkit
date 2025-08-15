@@ -13,7 +13,7 @@ add_compile_options(-Wall)
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED OFF)
 set(Boost_USE_STATIC_RUNTIME ON)
-find_package( Boost COMPONENTS iostreams filesystem system)
+find_package( Boost COMPONENTS iostreams filesystem)
 find_package( Cairo REQUIRED )
 
 # specify where CMake can find the RDKit libraries

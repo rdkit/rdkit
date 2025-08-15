@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2005-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2005-2025 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,56 +9,44 @@
 //
 //
 
-#include <RDGeneral/test.h>
-#include "FreeChemicalFeature.h"
+#include <catch2/catch_all.hpp>
 #include <Geometry/point.h>
-#include <iostream>
-#include <RDGeneral/Invariant.h>
+#include "FreeChemicalFeature.h"
 #include <RDGeneral/utils.h>
 
 using namespace ChemicalFeatures;
 
-void test1() {
-  std::cout << "-----------------------------------------" << std::endl;
-  std::cout << "Test1" << std::endl;
-
+TEST_CASE("FreeChemicalFeature Tests") {
   FreeChemicalFeature f1("foo", "bar", RDGeom::Point3D(1, 1, 1));
-  TEST_ASSERT(f1.getId() == -1);
-  TEST_ASSERT(f1.getFamily() == "foo");
-  TEST_ASSERT(f1.getType() == "bar");
-  TEST_ASSERT(RDKit::feq(f1.getPos().x, 1.0));
-  TEST_ASSERT(RDKit::feq(f1.getPos().y, 1.0));
-  TEST_ASSERT(RDKit::feq(f1.getPos().z, 1.0));
+  REQUIRE(f1.getId() == -1);
+  REQUIRE(f1.getFamily() == "foo");
+  REQUIRE(f1.getType() == "bar");
+  REQUIRE_THAT(f1.getPos().x, Catch::Matchers::WithinAbs(1.0, 1e-6));
+  REQUIRE_THAT(f1.getPos().y, Catch::Matchers::WithinAbs(1.0, 1e-6));
+  REQUIRE_THAT(f1.getPos().z, Catch::Matchers::WithinAbs(1.0, 1e-6));
 
   FreeChemicalFeature f2("foo", "bar", RDGeom::Point3D(1, 1, 1), 123);
-  TEST_ASSERT(f2.getId() == 123);
-  TEST_ASSERT(f2.getFamily() == "foo");
-  TEST_ASSERT(f2.getType() == "bar");
-  TEST_ASSERT(RDKit::feq(f2.getPos().x, 1.0));
-  TEST_ASSERT(RDKit::feq(f2.getPos().y, 1.0));
-  TEST_ASSERT(RDKit::feq(f2.getPos().z, 1.0));
+  REQUIRE(f2.getId() == 123);
+  REQUIRE(f2.getFamily() == "foo");
+  REQUIRE(f2.getType() == "bar");
+  REQUIRE_THAT(f2.getPos().x, Catch::Matchers::WithinAbs(1.0, 1e-6));
+  REQUIRE_THAT(f2.getPos().y, Catch::Matchers::WithinAbs(1.0, 1e-6));
+  REQUIRE_THAT(f2.getPos().z, Catch::Matchers::WithinAbs(1.0, 1e-6));
 
   FreeChemicalFeature f3;
   f3.initFromString(f2.toString());
-  TEST_ASSERT(f3.getId() == 123);
-  TEST_ASSERT(f3.getFamily() == "foo");
-  TEST_ASSERT(f3.getType() == "bar");
-  TEST_ASSERT(RDKit::feq(f3.getPos().x, 1.0));
-  TEST_ASSERT(RDKit::feq(f3.getPos().y, 1.0));
-  TEST_ASSERT(RDKit::feq(f3.getPos().z, 1.0));
+  REQUIRE(f3.getId() == 123);
+  REQUIRE(f3.getFamily() == "foo");
+  REQUIRE(f3.getType() == "bar");
+  REQUIRE_THAT(f3.getPos().x, Catch::Matchers::WithinAbs(1.0, 1e-6));
+  REQUIRE_THAT(f3.getPos().y, Catch::Matchers::WithinAbs(1.0, 1e-6));
+  REQUIRE_THAT(f3.getPos().z, Catch::Matchers::WithinAbs(1.0, 1e-6));
 
   FreeChemicalFeature f4(f2);
-  TEST_ASSERT(f4.getId() == 123);
-  TEST_ASSERT(f4.getFamily() == "foo");
-  TEST_ASSERT(f4.getType() == "bar");
-  TEST_ASSERT(RDKit::feq(f4.getPos().x, 1.0));
-  TEST_ASSERT(RDKit::feq(f4.getPos().y, 1.0));
-  TEST_ASSERT(RDKit::feq(f4.getPos().z, 1.0));
-
-  std::cout << "Done" << std::endl;
-}
-
-int main() {
-  test1();
-  return 0;
+  REQUIRE(f4.getId() == 123);
+  REQUIRE(f4.getFamily() == "foo");
+  REQUIRE(f4.getType() == "bar");
+  REQUIRE_THAT(f4.getPos().x, Catch::Matchers::WithinAbs(1.0, 1e-6));
+  REQUIRE_THAT(f4.getPos().y, Catch::Matchers::WithinAbs(1.0, 1e-6));
+  REQUIRE_THAT(f4.getPos().z, Catch::Matchers::WithinAbs(1.0, 1e-6));
 }

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016 Greg Landrum
+//  Copyright (C) 2016-2025 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,12 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/test.h>
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/RDLog.h>
-#include <RDGeneral/Exceptions.h>
+#include <catch2/catch_all.hpp>
 #include <RDGeneral/utils.h>
-
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/FPBReader.h>
 #include <DataStructs/MultiFPBReader.h>
@@ -20,10 +16,7 @@
 
 using namespace RDKit;
 
-void test1MultiFPBReaderBasics() {
-  BOOST_LOG(rdInfoLog)
-      << "-----------------------\n Testing MultiFPBReader basics "
-      << std::endl;
+TEST_CASE("MultiFPBReader Basics") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/DataStructs/testData/";
   {
@@ -34,29 +27,26 @@ void test1MultiFPBReaderBasics() {
     rdrs.push_back(&fps2);
     MultiFPBReader mfps(rdrs);
     mfps.init();
-    TEST_ASSERT(mfps.length() == 2);
-    TEST_ASSERT(mfps.getReader(0));
-    TEST_ASSERT(mfps.getReader(0)->nBits() == mfps.nBits());
+    REQUIRE(mfps.length() == 2);
+    REQUIRE(mfps.getReader(0));
+    REQUIRE(mfps.getReader(0)->nBits() == mfps.nBits());
   }
   {
     std::string filename = pathName + "zim.head100.fpb";
     FPBReader fps1(filename), fps2(filename);
     MultiFPBReader mfps;
-    TEST_ASSERT(mfps.addReader(&fps1) == 1);
-    TEST_ASSERT(mfps.addReader(&fps2) == 2);
+    REQUIRE(mfps.addReader(&fps1) == 1);
+    REQUIRE(mfps.addReader(&fps2) == 2);
     mfps.init();
-    TEST_ASSERT(mfps.length() == 2);
-    TEST_ASSERT(mfps.getReader(0));
-    TEST_ASSERT(mfps.getReader(0)->nBits() == mfps.nBits());
-    TEST_ASSERT(mfps.getReader(0));
-    TEST_ASSERT(mfps.getReader(0)->nBits() == mfps.nBits());
+    REQUIRE(mfps.length() == 2);
+    REQUIRE(mfps.getReader(0));
+    REQUIRE(mfps.getReader(0)->nBits() == mfps.nBits());
+    REQUIRE(mfps.getReader(0));
+    REQUIRE(mfps.getReader(0)->nBits() == mfps.nBits());
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
-void test2MultiFPBReaderTanimoto() {
-  BOOST_LOG(rdInfoLog)
-      << "-----------------------\n Testing MultiFPBReader Tanimoto "
-      << std::endl;
+
+TEST_CASE("MultiFPBReader Tanimoto") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/DataStructs/testData/";
   {
@@ -67,61 +57,57 @@ void test2MultiFPBReaderTanimoto() {
     rdrs.push_back(&fps2);
     MultiFPBReader mfps(rdrs);
     mfps.init();
-    TEST_ASSERT(mfps.length() == 2);
+    REQUIRE(mfps.length() == 2);
 
     {
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
-      TEST_ASSERT(bytes);
+      REQUIRE(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(bytes);
-      TEST_ASSERT(nbrs.size() == 2);
-      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[1]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
+      REQUIRE(nbrs.size() == 2);
+      REQUIRE(feq(std::get<0>(nbrs[0]), 1.));
+      REQUIRE(std::get<1>(nbrs[0]) == 0);
+      REQUIRE(std::get<2>(nbrs[0]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[1]), 1.));
+      REQUIRE(std::get<1>(nbrs[1]) == 0);
+      REQUIRE(std::get<2>(nbrs[1]) == 1);
     }
     {  // with a threshold
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
-      TEST_ASSERT(bytes);
+      REQUIRE(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(bytes, 0.30);
-      TEST_ASSERT(nbrs.size() == 10);
-      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[1]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
-      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.3703));
-      TEST_ASSERT(std::get<1>(nbrs[2]) == 1);
-      TEST_ASSERT(std::get<2>(nbrs[2]) == 0);
+      REQUIRE(nbrs.size() == 10);
+      REQUIRE(feq(std::get<0>(nbrs[0]), 1.));
+      REQUIRE(std::get<1>(nbrs[0]) == 0);
+      REQUIRE(std::get<2>(nbrs[0]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[1]), 1.));
+      REQUIRE(std::get<1>(nbrs[1]) == 0);
+      REQUIRE(std::get<2>(nbrs[1]) == 1);
+      REQUIRE(feq(std::get<0>(nbrs[2]), 0.3703));
+      REQUIRE(std::get<1>(nbrs[2]) == 1);
+      REQUIRE(std::get<2>(nbrs[2]) == 0);
     }
     {  // with a threshold
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(95);
-      TEST_ASSERT(bytes);
+      REQUIRE(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(bytes, 0.30);
-      TEST_ASSERT(nbrs.size() == 4);
-      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[0]) == 95);
-      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[1]) == 95);
-      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
-      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.4125));
-      TEST_ASSERT(std::get<1>(nbrs[2]) == 89);
-      TEST_ASSERT(std::get<2>(nbrs[2]) == 0);
+      REQUIRE(nbrs.size() == 4);
+      REQUIRE(feq(std::get<0>(nbrs[0]), 1.));
+      REQUIRE(std::get<1>(nbrs[0]) == 95);
+      REQUIRE(std::get<2>(nbrs[0]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[1]), 1.));
+      REQUIRE(std::get<1>(nbrs[1]) == 95);
+      REQUIRE(std::get<2>(nbrs[1]) == 1);
+      REQUIRE(feq(std::get<0>(nbrs[2]), 0.4125));
+      REQUIRE(std::get<1>(nbrs[2]) == 89);
+      REQUIRE(std::get<2>(nbrs[2]) == 0);
     }
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-void test3MultiFPBReaderTversky() {
-  BOOST_LOG(rdInfoLog)
-      << "-----------------------\n Testing MultiFPBReader Tversky "
-      << std::endl;
+TEST_CASE("MultiFPBReader Tversky") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/DataStructs/testData/";
   {
@@ -132,61 +118,57 @@ void test3MultiFPBReaderTversky() {
     rdrs.push_back(&fps2);
     MultiFPBReader mfps(rdrs);
     mfps.init();
-    TEST_ASSERT(mfps.length() == 2);
+    REQUIRE(mfps.length() == 2);
 
     {
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
-      TEST_ASSERT(bytes);
+      REQUIRE(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTverskyNeighbors(bytes, 1., 1.);
-      TEST_ASSERT(nbrs.size() == 2);
-      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[1]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
+      REQUIRE(nbrs.size() == 2);
+      REQUIRE(feq(std::get<0>(nbrs[0]), 1.));
+      REQUIRE(std::get<1>(nbrs[0]) == 0);
+      REQUIRE(std::get<2>(nbrs[0]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[1]), 1.));
+      REQUIRE(std::get<1>(nbrs[1]) == 0);
+      REQUIRE(std::get<2>(nbrs[1]) == 1);
     }
     {  // with a threshold
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
-      TEST_ASSERT(bytes);
+      REQUIRE(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTverskyNeighbors(bytes, 1., 1., 0.30);
-      TEST_ASSERT(nbrs.size() == 10);
-      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[1]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
-      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.3703));
-      TEST_ASSERT(std::get<1>(nbrs[2]) == 1);
-      TEST_ASSERT(std::get<2>(nbrs[2]) == 0);
+      REQUIRE(nbrs.size() == 10);
+      REQUIRE(feq(std::get<0>(nbrs[0]), 1.));
+      REQUIRE(std::get<1>(nbrs[0]) == 0);
+      REQUIRE(std::get<2>(nbrs[0]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[1]), 1.));
+      REQUIRE(std::get<1>(nbrs[1]) == 0);
+      REQUIRE(std::get<2>(nbrs[1]) == 1);
+      REQUIRE(feq(std::get<0>(nbrs[2]), 0.3703));
+      REQUIRE(std::get<1>(nbrs[2]) == 1);
+      REQUIRE(std::get<2>(nbrs[2]) == 0);
     }
     {  // with a threshold, asymmetric
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
-      TEST_ASSERT(bytes);
+      REQUIRE(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTverskyNeighbors(bytes, 1., 0.5, 0.30);
-      TEST_ASSERT(nbrs.size() == 10);
-      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
-      TEST_ASSERT(std::get<1>(nbrs[1]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
-      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.4255));
-      TEST_ASSERT(std::get<1>(nbrs[2]) == 1);
-      TEST_ASSERT(std::get<2>(nbrs[2]) == 0);
+      REQUIRE(nbrs.size() == 10);
+      REQUIRE(feq(std::get<0>(nbrs[0]), 1.));
+      REQUIRE(std::get<1>(nbrs[0]) == 0);
+      REQUIRE(std::get<2>(nbrs[0]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[1]), 1.));
+      REQUIRE(std::get<1>(nbrs[1]) == 0);
+      REQUIRE(std::get<2>(nbrs[1]) == 1);
+      REQUIRE(feq(std::get<0>(nbrs[2]), 0.4255));
+      REQUIRE(std::get<1>(nbrs[2]) == 1);
+      REQUIRE(std::get<2>(nbrs[2]) == 0);
     }
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-void test4MultiFPBReaderContains() {
-  BOOST_LOG(rdInfoLog)
-      << "-----------------------\n Testing MultiFPBReader contains search"
-      << std::endl;
+TEST_CASE("MultiFPBReader Contains") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/DataStructs/testData/";
   {
@@ -197,43 +179,39 @@ void test4MultiFPBReaderContains() {
     rdrs.push_back(&fps2);
     MultiFPBReader mfps(rdrs);
     mfps.init();
-    TEST_ASSERT(mfps.length() == 2);
+    REQUIRE(mfps.length() == 2);
     {
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
-      TEST_ASSERT(bytes);
+      REQUIRE(bytes);
       std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(bytes);
-      TEST_ASSERT(nbrs.size() == 2);
-      TEST_ASSERT(nbrs[0].first == 0);
-      TEST_ASSERT(nbrs[0].second == 0);
-      TEST_ASSERT(nbrs[1].first == 0);
-      TEST_ASSERT(nbrs[1].second == 1);
+      REQUIRE(nbrs.size() == 2);
+      REQUIRE(nbrs[0].first == 0);
+      REQUIRE(nbrs[0].second == 0);
+      REQUIRE(nbrs[1].first == 0);
+      REQUIRE(nbrs[1].second == 1);
     }
     {
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(1);
-      TEST_ASSERT(bytes);
+      REQUIRE(bytes);
       std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(bytes);
-      TEST_ASSERT(nbrs.size() == 8);
-      TEST_ASSERT(nbrs[0].first == 1);
-      TEST_ASSERT(nbrs[0].second == 0);
-      TEST_ASSERT(nbrs[2].first == 2);
-      TEST_ASSERT(nbrs[4].first == 3);
-      TEST_ASSERT(nbrs[6].first == 4);
-      TEST_ASSERT(nbrs[1].first == 1);
-      TEST_ASSERT(nbrs[1].second == 1);
-      TEST_ASSERT(nbrs[3].first == 2);
-      TEST_ASSERT(nbrs[5].first == 3);
-      TEST_ASSERT(nbrs[7].first == 4);
+      REQUIRE(nbrs.size() == 8);
+      REQUIRE(nbrs[0].first == 1);
+      REQUIRE(nbrs[0].second == 0);
+      REQUIRE(nbrs[2].first == 2);
+      REQUIRE(nbrs[4].first == 3);
+      REQUIRE(nbrs[6].first == 4);
+      REQUIRE(nbrs[1].first == 1);
+      REQUIRE(nbrs[1].second == 1);
+      REQUIRE(nbrs[3].first == 2);
+      REQUIRE(nbrs[5].first == 3);
+      REQUIRE(nbrs[7].first == 4);
     }
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-void test5MultiFPBReaderThreaded() {
-  BOOST_LOG(rdInfoLog)
-      << "-----------------------\n Testing MultiFPBReader Similarity Threaded"
-      << std::endl;
+TEST_CASE("MultiFPBReader Similarity Threaded") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/DataStructs/testData/";
   {
@@ -249,7 +227,7 @@ void test5MultiFPBReaderThreaded() {
     rdrs.push_back(&fps4);
     MultiFPBReader mfps(rdrs);
     mfps.init();
-    TEST_ASSERT(mfps.length() == 4);
+    REQUIRE(mfps.length() == 4);
     std::string fps =
         "0000000000404000100000001000040000300040222000002004000240000020000000"
         "8200010200000090000024040860070044003214820000220401054008018000226000"
@@ -261,89 +239,85 @@ void test5MultiFPBReaderThreaded() {
     {
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(qbv, 0.6);
-      TEST_ASSERT(nbrs.size() == 6);
+      REQUIRE(nbrs.size() == 6);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
       //   std::cerr << i << ": " << std::get<0>(nbrs[i]) << " " <<
       //   std::get<1>(nbrs[i])
       //             << " " << std::get<2>(nbrs[i]) << " " << std::endl;
       // }
-      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 0.66412));
-      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[0]) == 3);
-      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 0.65289));
-      TEST_ASSERT(std::get<1>(nbrs[1]) == 1);
-      TEST_ASSERT(std::get<2>(nbrs[1]) == 2);
-      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.64341));
-      TEST_ASSERT(std::get<1>(nbrs[2]) == 2);
-      TEST_ASSERT(std::get<2>(nbrs[2]) == 1);
-      TEST_ASSERT(feq(std::get<0>(nbrs[3]), 0.61940));
-      TEST_ASSERT(std::get<1>(nbrs[3]) == 1);
-      TEST_ASSERT(std::get<2>(nbrs[3]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[4]), 0.61905));
-      TEST_ASSERT(std::get<1>(nbrs[4]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[4]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[5]), 0.61344));
-      TEST_ASSERT(std::get<1>(nbrs[5]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[5]) == 1);
+      REQUIRE(feq(std::get<0>(nbrs[0]), 0.66412));
+      REQUIRE(std::get<1>(nbrs[0]) == 0);
+      REQUIRE(std::get<2>(nbrs[0]) == 3);
+      REQUIRE(feq(std::get<0>(nbrs[1]), 0.65289));
+      REQUIRE(std::get<1>(nbrs[1]) == 1);
+      REQUIRE(std::get<2>(nbrs[1]) == 2);
+      REQUIRE(feq(std::get<0>(nbrs[2]), 0.64341));
+      REQUIRE(std::get<1>(nbrs[2]) == 2);
+      REQUIRE(std::get<2>(nbrs[2]) == 1);
+      REQUIRE(feq(std::get<0>(nbrs[3]), 0.61940));
+      REQUIRE(std::get<1>(nbrs[3]) == 1);
+      REQUIRE(std::get<2>(nbrs[3]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[4]), 0.61905));
+      REQUIRE(std::get<1>(nbrs[4]) == 0);
+      REQUIRE(std::get<2>(nbrs[4]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[5]), 0.61344));
+      REQUIRE(std::get<1>(nbrs[5]) == 0);
+      REQUIRE(std::get<2>(nbrs[5]) == 1);
     }
 
 #ifdef RDK_TEST_MULTITHREADED
     {
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(qbv, 0.6, 4);
-      TEST_ASSERT(nbrs.size() == 6);
-      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 0.66412));
-      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[0]) == 3);
-      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 0.65289));
-      TEST_ASSERT(std::get<1>(nbrs[1]) == 1);
-      TEST_ASSERT(std::get<2>(nbrs[1]) == 2);
-      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.64341));
-      TEST_ASSERT(std::get<1>(nbrs[2]) == 2);
-      TEST_ASSERT(std::get<2>(nbrs[2]) == 1);
-      TEST_ASSERT(feq(std::get<0>(nbrs[3]), 0.61940));
-      TEST_ASSERT(std::get<1>(nbrs[3]) == 1);
-      TEST_ASSERT(std::get<2>(nbrs[3]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[4]), 0.61905));
-      TEST_ASSERT(std::get<1>(nbrs[4]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[4]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[5]), 0.61344));
-      TEST_ASSERT(std::get<1>(nbrs[5]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[5]) == 1);
+      REQUIRE(nbrs.size() == 6);
+      REQUIRE(feq(std::get<0>(nbrs[0]), 0.66412));
+      REQUIRE(std::get<1>(nbrs[0]) == 0);
+      REQUIRE(std::get<2>(nbrs[0]) == 3);
+      REQUIRE(feq(std::get<0>(nbrs[1]), 0.65289));
+      REQUIRE(std::get<1>(nbrs[1]) == 1);
+      REQUIRE(std::get<2>(nbrs[1]) == 2);
+      REQUIRE(feq(std::get<0>(nbrs[2]), 0.64341));
+      REQUIRE(std::get<1>(nbrs[2]) == 2);
+      REQUIRE(std::get<2>(nbrs[2]) == 1);
+      REQUIRE(feq(std::get<0>(nbrs[3]), 0.61940));
+      REQUIRE(std::get<1>(nbrs[3]) == 1);
+      REQUIRE(std::get<2>(nbrs[3]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[4]), 0.61905));
+      REQUIRE(std::get<1>(nbrs[4]) == 0);
+      REQUIRE(std::get<2>(nbrs[4]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[5]), 0.61344));
+      REQUIRE(std::get<1>(nbrs[5]) == 0);
+      REQUIRE(std::get<2>(nbrs[5]) == 1);
     }
     {  // request more threads than we have readers, this shouldn't be a problem
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(qbv, 0.6, 8);
-      TEST_ASSERT(nbrs.size() == 6);
-      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 0.66412));
-      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[0]) == 3);
-      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 0.65289));
-      TEST_ASSERT(std::get<1>(nbrs[1]) == 1);
-      TEST_ASSERT(std::get<2>(nbrs[1]) == 2);
-      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.64341));
-      TEST_ASSERT(std::get<1>(nbrs[2]) == 2);
-      TEST_ASSERT(std::get<2>(nbrs[2]) == 1);
-      TEST_ASSERT(feq(std::get<0>(nbrs[3]), 0.61940));
-      TEST_ASSERT(std::get<1>(nbrs[3]) == 1);
-      TEST_ASSERT(std::get<2>(nbrs[3]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[4]), 0.61905));
-      TEST_ASSERT(std::get<1>(nbrs[4]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[4]) == 0);
-      TEST_ASSERT(feq(std::get<0>(nbrs[5]), 0.61344));
-      TEST_ASSERT(std::get<1>(nbrs[5]) == 0);
-      TEST_ASSERT(std::get<2>(nbrs[5]) == 1);
+      REQUIRE(nbrs.size() == 6);
+      REQUIRE(feq(std::get<0>(nbrs[0]), 0.66412));
+      REQUIRE(std::get<1>(nbrs[0]) == 0);
+      REQUIRE(std::get<2>(nbrs[0]) == 3);
+      REQUIRE(feq(std::get<0>(nbrs[1]), 0.65289));
+      REQUIRE(std::get<1>(nbrs[1]) == 1);
+      REQUIRE(std::get<2>(nbrs[1]) == 2);
+      REQUIRE(feq(std::get<0>(nbrs[2]), 0.64341));
+      REQUIRE(std::get<1>(nbrs[2]) == 2);
+      REQUIRE(std::get<2>(nbrs[2]) == 1);
+      REQUIRE(feq(std::get<0>(nbrs[3]), 0.61940));
+      REQUIRE(std::get<1>(nbrs[3]) == 1);
+      REQUIRE(std::get<2>(nbrs[3]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[4]), 0.61905));
+      REQUIRE(std::get<1>(nbrs[4]) == 0);
+      REQUIRE(std::get<2>(nbrs[4]) == 0);
+      REQUIRE(feq(std::get<0>(nbrs[5]), 0.61344));
+      REQUIRE(std::get<1>(nbrs[5]) == 0);
+      REQUIRE(std::get<2>(nbrs[5]) == 1);
     }
 
 #endif
   }
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-void test6MultiFPBReaderContainsThreaded() {
-  BOOST_LOG(rdInfoLog)
-      << "-----------------------\n Testing MultiFPBReader Contains Threaded"
-      << std::endl;
+TEST_CASE("MultiFPBReader Contains Threaded") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/DataStructs/testData/";
   {
@@ -359,7 +333,7 @@ void test6MultiFPBReaderContainsThreaded() {
     rdrs.push_back(&fps4);
     MultiFPBReader mfps(rdrs);
     mfps.init();
-    TEST_ASSERT(mfps.length() == 4);
+    REQUIRE(mfps.length() == 4);
     std::string fps =
         "40081010824820021000500010110410003000402b20285000a4040240010030050000"
         "080001420040009000003d04086007080c03b31d920004220400074008098010206080"
@@ -371,84 +345,84 @@ void test6MultiFPBReaderContainsThreaded() {
     {
       std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv);
-      TEST_ASSERT(nbrs.size() == 9);
+      REQUIRE(nbrs.size() == 9);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
       //   std::cerr << i << ": " << nbrs[i].first << " " << nbrs[i].second
       //             << std::endl;
       // }
-      TEST_ASSERT(nbrs[0].first == 160);
-      TEST_ASSERT(nbrs[0].second == 0);
-      TEST_ASSERT(nbrs[1].first == 163);
-      TEST_ASSERT(nbrs[1].second == 0);
-      TEST_ASSERT(nbrs[2].first == 170);
-      TEST_ASSERT(nbrs[2].second == 0);
-      TEST_ASSERT(nbrs[3].first == 180);
-      TEST_ASSERT(nbrs[3].second == 2);
-      TEST_ASSERT(nbrs[4].first == 182);
-      TEST_ASSERT(nbrs[4].second == 3);
-      TEST_ASSERT(nbrs[5].first == 185);
-      TEST_ASSERT(nbrs[5].second == 0);
-      TEST_ASSERT(nbrs[6].first == 189);
-      TEST_ASSERT(nbrs[6].second == 0);
-      TEST_ASSERT(nbrs[7].first == 192);
-      TEST_ASSERT(nbrs[7].second == 3);
-      TEST_ASSERT(nbrs[8].first == 193);
-      TEST_ASSERT(nbrs[8].second == 0);
+      REQUIRE(nbrs[0].first == 160);
+      REQUIRE(nbrs[0].second == 0);
+      REQUIRE(nbrs[1].first == 163);
+      REQUIRE(nbrs[1].second == 0);
+      REQUIRE(nbrs[2].first == 170);
+      REQUIRE(nbrs[2].second == 0);
+      REQUIRE(nbrs[3].first == 180);
+      REQUIRE(nbrs[3].second == 2);
+      REQUIRE(nbrs[4].first == 182);
+      REQUIRE(nbrs[4].second == 3);
+      REQUIRE(nbrs[5].first == 185);
+      REQUIRE(nbrs[5].second == 0);
+      REQUIRE(nbrs[6].first == 189);
+      REQUIRE(nbrs[6].second == 0);
+      REQUIRE(nbrs[7].first == 192);
+      REQUIRE(nbrs[7].second == 3);
+      REQUIRE(nbrs[8].first == 193);
+      REQUIRE(nbrs[8].second == 0);
     }
 #ifdef RDK_TEST_MULTITHREADED
     {
       std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv, 4);
-      TEST_ASSERT(nbrs.size() == 9);
+      REQUIRE(nbrs.size() == 9);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
       //   std::cerr << i << ": " << nbrs[i].first << " " << nbrs[i].second
       //             << std::endl;
       // }
-      TEST_ASSERT(nbrs[0].first == 160);
-      TEST_ASSERT(nbrs[0].second == 0);
-      TEST_ASSERT(nbrs[1].first == 163);
-      TEST_ASSERT(nbrs[1].second == 0);
-      TEST_ASSERT(nbrs[2].first == 170);
-      TEST_ASSERT(nbrs[2].second == 0);
-      TEST_ASSERT(nbrs[3].first == 180);
-      TEST_ASSERT(nbrs[3].second == 2);
-      TEST_ASSERT(nbrs[4].first == 182);
-      TEST_ASSERT(nbrs[4].second == 3);
-      TEST_ASSERT(nbrs[5].first == 185);
-      TEST_ASSERT(nbrs[5].second == 0);
-      TEST_ASSERT(nbrs[6].first == 189);
-      TEST_ASSERT(nbrs[6].second == 0);
-      TEST_ASSERT(nbrs[7].first == 192);
-      TEST_ASSERT(nbrs[7].second == 3);
-      TEST_ASSERT(nbrs[8].first == 193);
-      TEST_ASSERT(nbrs[8].second == 0);
+      REQUIRE(nbrs[0].first == 160);
+      REQUIRE(nbrs[0].second == 0);
+      REQUIRE(nbrs[1].first == 163);
+      REQUIRE(nbrs[1].second == 0);
+      REQUIRE(nbrs[2].first == 170);
+      REQUIRE(nbrs[2].second == 0);
+      REQUIRE(nbrs[3].first == 180);
+      REQUIRE(nbrs[3].second == 2);
+      REQUIRE(nbrs[4].first == 182);
+      REQUIRE(nbrs[4].second == 3);
+      REQUIRE(nbrs[5].first == 185);
+      REQUIRE(nbrs[5].second == 0);
+      REQUIRE(nbrs[6].first == 189);
+      REQUIRE(nbrs[6].second == 0);
+      REQUIRE(nbrs[7].first == 192);
+      REQUIRE(nbrs[7].second == 3);
+      REQUIRE(nbrs[8].first == 193);
+      REQUIRE(nbrs[8].second == 0);
     }
     {  // request more threads than we have readers, this shouldn't be a problem
       std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv, 8);
-      TEST_ASSERT(nbrs.size() == 9);
+      REQUIRE(nbrs.size() == 9);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
       //   std::cerr << i << ": " << nbrs[i].first << " " << nbrs[i].second
       //             << std::endl;
       // }
-      TEST_ASSERT(nbrs[0].first == 160);
-      TEST_ASSERT(nbrs[0].second == 0);
-      TEST_ASSERT(nbrs[1].first == 163);
-      TEST_ASSERT(nbrs[1].second == 0);
-      TEST_ASSERT(nbrs[2].first == 170);
-      TEST_ASSERT(nbrs[2].second == 0);
-      TEST_ASSERT(nbrs[3].first == 180);
-      TEST_ASSERT(nbrs[3].second == 2);
-      TEST_ASSERT(nbrs[4].first == 182);
-      TEST_ASSERT(nbrs[4].second == 3);
-      TEST_ASSERT(nbrs[5].first == 185);
-      TEST_ASSERT(nbrs[5].second == 0);
-      TEST_ASSERT(nbrs[6].first == 189);
-      TEST_ASSERT(nbrs[6].second == 0);
-      TEST_ASSERT(nbrs[7].first == 192);
-      TEST_ASSERT(nbrs[7].second == 3);
-      TEST_ASSERT(nbrs[8].first == 193);
-      TEST_ASSERT(nbrs[8].second == 0);
+      REQUIRE(nbrs[0].first == 160);
+      REQUIRE(nbrs[0].second == 0);
+      REQUIRE(nbrs[1].first == 163);
+      REQUIRE(nbrs[1].second == 0);
+      REQUIRE(nbrs[2].first == 170);
+      REQUIRE(nbrs[2].second == 0);
+      REQUIRE(nbrs[3].first == 180);
+      REQUIRE(nbrs[3].second == 2);
+      REQUIRE(nbrs[4].first == 182);
+      REQUIRE(nbrs[4].second == 3);
+      REQUIRE(nbrs[5].first == 185);
+      REQUIRE(nbrs[5].second == 0);
+      REQUIRE(nbrs[6].first == 189);
+      REQUIRE(nbrs[6].second == 0);
+      REQUIRE(nbrs[7].first == 192);
+      REQUIRE(nbrs[7].second == 3);
+      REQUIRE(nbrs[8].first == 193);
+      REQUIRE(nbrs[8].second == 0);
     }
 #endif
   }
@@ -476,57 +450,57 @@ void test6MultiFPBReaderContainsThreaded() {
     {
       std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv);
-      TEST_ASSERT(nbrs.size() == 9);
+      REQUIRE(nbrs.size() == 9);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
       //   std::cerr << i << ": " << nbrs[i].first << " " << nbrs[i].second
       //             << std::endl;
       // }
-      TEST_ASSERT(nbrs[0].first == 160);
-      TEST_ASSERT(nbrs[0].second == 0);
-      TEST_ASSERT(nbrs[1].first == 163);
-      TEST_ASSERT(nbrs[1].second == 0);
-      TEST_ASSERT(nbrs[2].first == 170);
-      TEST_ASSERT(nbrs[2].second == 0);
-      TEST_ASSERT(nbrs[3].first == 180);
-      TEST_ASSERT(nbrs[3].second == 2);
-      TEST_ASSERT(nbrs[4].first == 182);
-      TEST_ASSERT(nbrs[4].second == 3);
-      TEST_ASSERT(nbrs[5].first == 185);
-      TEST_ASSERT(nbrs[5].second == 0);
-      TEST_ASSERT(nbrs[6].first == 189);
-      TEST_ASSERT(nbrs[6].second == 0);
-      TEST_ASSERT(nbrs[7].first == 192);
-      TEST_ASSERT(nbrs[7].second == 3);
-      TEST_ASSERT(nbrs[8].first == 193);
-      TEST_ASSERT(nbrs[8].second == 0);
+      REQUIRE(nbrs[0].first == 160);
+      REQUIRE(nbrs[0].second == 0);
+      REQUIRE(nbrs[1].first == 163);
+      REQUIRE(nbrs[1].second == 0);
+      REQUIRE(nbrs[2].first == 170);
+      REQUIRE(nbrs[2].second == 0);
+      REQUIRE(nbrs[3].first == 180);
+      REQUIRE(nbrs[3].second == 2);
+      REQUIRE(nbrs[4].first == 182);
+      REQUIRE(nbrs[4].second == 3);
+      REQUIRE(nbrs[5].first == 185);
+      REQUIRE(nbrs[5].second == 0);
+      REQUIRE(nbrs[6].first == 189);
+      REQUIRE(nbrs[6].second == 0);
+      REQUIRE(nbrs[7].first == 192);
+      REQUIRE(nbrs[7].second == 3);
+      REQUIRE(nbrs[8].first == 193);
+      REQUIRE(nbrs[8].second == 0);
     }
 #else
     {
       std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv, 4);
-      TEST_ASSERT(nbrs.size() == 9);
+      REQUIRE(nbrs.size() == 9);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
       //   std::cerr << i << ": " << nbrs[i].first << " " << nbrs[i].second
       //             << std::endl;
       // }
-      TEST_ASSERT(nbrs[0].first == 160);
-      TEST_ASSERT(nbrs[0].second == 0);
-      TEST_ASSERT(nbrs[1].first == 163);
-      TEST_ASSERT(nbrs[1].second == 0);
-      TEST_ASSERT(nbrs[2].first == 170);
-      TEST_ASSERT(nbrs[2].second == 0);
-      TEST_ASSERT(nbrs[3].first == 180);
-      TEST_ASSERT(nbrs[3].second == 2);
-      TEST_ASSERT(nbrs[4].first == 182);
-      TEST_ASSERT(nbrs[4].second == 3);
-      TEST_ASSERT(nbrs[5].first == 185);
-      TEST_ASSERT(nbrs[5].second == 0);
-      TEST_ASSERT(nbrs[6].first == 189);
-      TEST_ASSERT(nbrs[6].second == 0);
-      TEST_ASSERT(nbrs[7].first == 192);
-      TEST_ASSERT(nbrs[7].second == 3);
-      TEST_ASSERT(nbrs[8].first == 193);
-      TEST_ASSERT(nbrs[8].second == 0);
+      REQUIRE(nbrs[0].first == 160);
+      REQUIRE(nbrs[0].second == 0);
+      REQUIRE(nbrs[1].first == 163);
+      REQUIRE(nbrs[1].second == 0);
+      REQUIRE(nbrs[2].first == 170);
+      REQUIRE(nbrs[2].second == 0);
+      REQUIRE(nbrs[3].first == 180);
+      REQUIRE(nbrs[3].second == 2);
+      REQUIRE(nbrs[4].first == 182);
+      REQUIRE(nbrs[4].second == 3);
+      REQUIRE(nbrs[5].first == 185);
+      REQUIRE(nbrs[5].second == 0);
+      REQUIRE(nbrs[6].first == 189);
+      REQUIRE(nbrs[6].second == 0);
+      REQUIRE(nbrs[7].first == 192);
+      REQUIRE(nbrs[7].second == 3);
+      REQUIRE(nbrs[8].first == 193);
+      REQUIRE(nbrs[8].second == 0);
     }
 #endif
   }
@@ -534,7 +508,7 @@ void test6MultiFPBReaderContainsThreaded() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-void test7MultiFPBReaderEdges() {
+TEST_CASE("MultiFPBReader edge cases") {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing MultiFPBReader edge cases "
       << std::endl;
@@ -553,27 +527,15 @@ void test7MultiFPBReaderEdges() {
     {
       std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv);
-      TEST_ASSERT(nbrs.size() == 0);
+      REQUIRE(nbrs.size() == 0);
     }
     {
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(qbv, 0.01);
-      TEST_ASSERT(nbrs.size() == 0);
+      REQUIRE(nbrs.size() == 0);
     }
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-int main() {
-  RDLog::InitLogs();
-
-  test1MultiFPBReaderBasics();
-  test2MultiFPBReaderTanimoto();
-  test3MultiFPBReaderTversky();
-  test4MultiFPBReaderContains();
-  test5MultiFPBReaderThreaded();
-  test6MultiFPBReaderContainsThreaded();
-  test7MultiFPBReaderEdges();
-
-  return 0;
-}
+int main(int argc, char *argv[]) { return Catch::Session().run(argc, argv); }

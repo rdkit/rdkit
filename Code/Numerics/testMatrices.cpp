@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2019 Rational Discovery LLC
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/test.h>
+#include <catch2/catch_all.hpp>
 #include "Matrix.h"
 #include "SquareMatrix.h"
 #include "SymmMatrix.h"
@@ -19,17 +19,17 @@
 
 using namespace RDNumeric;
 
-void test1Vector() {
+TEST_CASE("test1Vector") {
   Vector<double> v1(3, 1.0);
   v1.setVal(0, 2.0);
   v1.setVal(2, -4.0);
-  CHECK_INVARIANT(RDKit::feq(v1.normL1(), 7.0), "");
-  CHECK_INVARIANT(RDKit::feq(v1.normLinfinity(), 4.0), "");
-  CHECK_INVARIANT(RDKit::feq(v1.normL2(), sqrt(21.0)), "");
+  REQUIRE_THAT(v1.normL1(), Catch::Matchers::WithinAbs(7.0, 1e-4));
+  REQUIRE_THAT(v1.normLinfinity(), Catch::Matchers::WithinAbs(4.0, 1e-4));
+  REQUIRE_THAT(v1.normL2(), Catch::Matchers::WithinAbs(sqrt(21.0), 1e-4));
 
   v1.setVal(1, 2.0);
-  CHECK_INVARIANT(RDKit::feq(v1.getVal(1), 2.0), "");
-  CHECK_INVARIANT(RDKit::feq(v1.normL1(), 8.0), "");
+  REQUIRE_THAT(v1.getVal(1), Catch::Matchers::WithinAbs(2.0, 1e-4));
+  REQUIRE_THAT(v1.normL1(), Catch::Matchers::WithinAbs(8.0, 1e-4));
 
   auto *data = new double[3];
   data[0] = 1.0;
@@ -37,25 +37,24 @@ void test1Vector() {
   data[2] = 3.0;
   Vector<double>::DATA_SPTR sdata(data);
   Vector<double> *v2 = new Vector<double>(3, sdata);
-  CHECK_INVARIANT(RDKit::feq(v2->normL1(), 6.0), "");
+  REQUIRE_THAT(v2->normL1(), Catch::Matchers::WithinAbs(6.0, 1e-4));
   Vector<double> v3(v1);
   unsigned int i;
   for (i = 0; i < v1.size(); i++) {
-    CHECK_INVARIANT(RDKit::feq(v1.getVal(i), v3.getVal(i)), "");
+    REQUIRE_THAT(v1.getVal(i), Catch::Matchers::WithinAbs(v3.getVal(i), 1e-4));
   }
 
   delete v2;
-  // delete [] data;
 
   Vector<double> vr1(5);
   Vector<double> vr2(5);
   vr1.setToRandom();
-  CHECK_INVARIANT(RDKit::feq(vr1.normL2(), 1.0), "");
+  REQUIRE_THAT(vr1.normL2(), Catch::Matchers::WithinAbs(1.0, 1e-4));
   vr2.setToRandom(120);
-  CHECK_INVARIANT(RDKit::feq(vr2.normL2(), 1.0), "");
+  REQUIRE_THAT(vr2.normL2(), Catch::Matchers::WithinAbs(1.0, 1e-4));
 }
 
-void test2Matrix() {
+TEST_CASE("test2Matrix") {
   Matrix<double> A(2, 3);
   A.setVal(0, 0, 1.0);
   A.setVal(0, 1, 0.5);
@@ -70,73 +69,74 @@ void test2Matrix() {
 
   Vector<double> v2(2);
   multiply(A, v1, v2);
-  CHECK_INVARIANT(RDKit::feq(v2.getVal(0), 8.0), "");
-  CHECK_INVARIANT(RDKit::feq(v2.getVal(1), 11.5), "");
+  REQUIRE_THAT(v2.getVal(0), Catch::Matchers::WithinAbs(8.0, 1e-4));
+  REQUIRE_THAT(v2.getVal(1), Catch::Matchers::WithinAbs(11.5, 1e-4));
 
   double *data = A.getData();
   data[2] = 3.0;
-  CHECK_INVARIANT(RDKit::feq(A.getVal(0, 2), 3.0), "");
+  REQUIRE_THAT(A.getVal(0, 2), Catch::Matchers::WithinAbs(3.0, 1e-4));
   multiply(A, v1, v2);
-  CHECK_INVARIANT(RDKit::feq(v2.getVal(0), 11.0), "");
-  CHECK_INVARIANT(RDKit::feq(v2.getVal(1), 11.5), "");
+  REQUIRE_THAT(v2.getVal(0), Catch::Matchers::WithinAbs(11.0, 1e-4));
+  REQUIRE_THAT(v2.getVal(1), Catch::Matchers::WithinAbs(11.5, 1e-4));
 
   data = new double[6];
   Matrix<double> *B = new Matrix<double>(2, 3, Matrix<double>::DATA_SPTR(data));
-  Matrix<double> E(A);  //(*B) = A;
+  Matrix<double> E(A);
   multiply(E, v1, v2);
-  CHECK_INVARIANT(RDKit::feq(v2.getVal(0), 11.0), "");
-  CHECK_INVARIANT(RDKit::feq(v2.getVal(1), 11.5), "");
+  REQUIRE_THAT(v2.getVal(0), Catch::Matchers::WithinAbs(11.0, 1e-4));
+  REQUIRE_THAT(v2.getVal(1), Catch::Matchers::WithinAbs(11.5, 1e-4));
   delete B;
-  // delete [] data;
 
   Matrix<double> D(3, 2);
   A.transpose(D);
   Matrix<double> C(2, 2);
   multiply(A, D, C);
 
-  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 0), 10.25), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 1), 10), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 0), 10), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 1), 10.25), "");
+  REQUIRE_THAT(C.getVal(0, 0), Catch::Matchers::WithinAbs(10.25, 1e-4));
+  REQUIRE_THAT(C.getVal(0, 1), Catch::Matchers::WithinAbs(10.0, 1e-4));
+  REQUIRE_THAT(C.getVal(1, 0), Catch::Matchers::WithinAbs(10.0, 1e-4));
+  REQUIRE_THAT(C.getVal(1, 1), Catch::Matchers::WithinAbs(10.25, 1e-4));
 
   auto Ccp(C);
   Ccp += C;
-  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 0), 20.5), "");
-  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 1), 20), "");
-  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 0), 20), "");
-  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 1), 20.5), "");
+  REQUIRE_THAT(Ccp.getVal(0, 0), Catch::Matchers::WithinAbs(20.5, 1e-4));
+  REQUIRE_THAT(Ccp.getVal(0, 1), Catch::Matchers::WithinAbs(20.0, 1e-4));
+  REQUIRE_THAT(Ccp.getVal(1, 0), Catch::Matchers::WithinAbs(20.0, 1e-4));
+  REQUIRE_THAT(Ccp.getVal(1, 1), Catch::Matchers::WithinAbs(20.5, 1e-4));
 
   Ccp -= C;
-  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 0), 10.25), "");
-  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 1), 10), "");
-  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 0), 10), "");
-  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 1), 10.25), "");
+  REQUIRE_THAT(Ccp.getVal(0, 0), Catch::Matchers::WithinAbs(10.25, 1e-4));
+  REQUIRE_THAT(Ccp.getVal(0, 1), Catch::Matchers::WithinAbs(10.0, 1e-4));
+  REQUIRE_THAT(Ccp.getVal(1, 0), Catch::Matchers::WithinAbs(10.0, 1e-4));
+  REQUIRE_THAT(Ccp.getVal(1, 1), Catch::Matchers::WithinAbs(10.25, 1e-4));
 
   C *= 2.;
-  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 0), 20.5), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 1), 20), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 0), 20), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 1), 20.5), "");
+  REQUIRE_THAT(C.getVal(0, 0), Catch::Matchers::WithinAbs(20.5, 1e-4));
+  REQUIRE_THAT(C.getVal(0, 1), Catch::Matchers::WithinAbs(20.0, 1e-4));
+  REQUIRE_THAT(C.getVal(1, 0), Catch::Matchers::WithinAbs(20.0, 1e-4));
+  REQUIRE_THAT(C.getVal(1, 1), Catch::Matchers::WithinAbs(20.5, 1e-4));
 
   C /= 2.;
-  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 0), 10.25), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 1), 10), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 0), 10), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 1), 10.25), "");
+  REQUIRE_THAT(C.getVal(0, 0), Catch::Matchers::WithinAbs(10.25, 1e-4));
+  REQUIRE_THAT(C.getVal(0, 1), Catch::Matchers::WithinAbs(10.0, 1e-4));
+  REQUIRE_THAT(C.getVal(1, 0), Catch::Matchers::WithinAbs(10.0, 1e-4));
+  REQUIRE_THAT(C.getVal(1, 1), Catch::Matchers::WithinAbs(10.25, 1e-4));
 
   Vector<double> tRow(A.numCols());
   A.getRow(1, tRow);
   for (unsigned int i = 0; i < A.numCols(); ++i) {
-    TEST_ASSERT(RDKit::feq(A.getVal(1, i), tRow.getVal(i)));
+    REQUIRE_THAT(A.getVal(1, i),
+                 Catch::Matchers::WithinAbs(tRow.getVal(i), 1e-4));
   }
   Vector<double> tCol(A.numRows());
   A.getCol(1, tCol);
   for (unsigned int i = 0; i < A.numRows(); ++i) {
-    TEST_ASSERT(RDKit::feq(A.getVal(i, 1), tCol.getVal(i)));
+    REQUIRE_THAT(A.getVal(i, 1),
+                 Catch::Matchers::WithinAbs(tCol.getVal(i), 1e-4));
   }
 }
 
-void test3SquareMatrix() {
+TEST_CASE("test3SquareMatrix") {
   SquareMatrix<double> A(2);
   A.setVal(0, 0, 1.0);
   A.setVal(0, 1, 2.0);
@@ -145,15 +145,15 @@ void test3SquareMatrix() {
   SquareMatrix<double> B(A), C(2);
 
   multiply(A, B, C);
-  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 0), 7.0), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 1), 10.0), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 0), 15.0), "");
-  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 1), 22.0), "");
+  REQUIRE_THAT(C.getVal(0, 0), Catch::Matchers::WithinAbs(7.0, 1e-4));
+  REQUIRE_THAT(C.getVal(0, 1), Catch::Matchers::WithinAbs(10.0, 1e-4));
+  REQUIRE_THAT(C.getVal(1, 0), Catch::Matchers::WithinAbs(15.0, 1e-4));
+  REQUIRE_THAT(C.getVal(1, 1), Catch::Matchers::WithinAbs(22.0, 1e-4));
   B *= A;
-  CHECK_INVARIANT(RDKit::feq(B.getVal(0, 0), 7.0), "");
-  CHECK_INVARIANT(RDKit::feq(B.getVal(0, 1), 10.0), "");
-  CHECK_INVARIANT(RDKit::feq(B.getVal(1, 0), 15.0), "");
-  CHECK_INVARIANT(RDKit::feq(B.getVal(1, 1), 22.0), "");
+  REQUIRE_THAT(B.getVal(0, 0), Catch::Matchers::WithinAbs(7.0, 1e-4));
+  REQUIRE_THAT(B.getVal(0, 1), Catch::Matchers::WithinAbs(10.0, 1e-4));
+  REQUIRE_THAT(B.getVal(1, 0), Catch::Matchers::WithinAbs(15.0, 1e-4));
+  REQUIRE_THAT(B.getVal(1, 1), Catch::Matchers::WithinAbs(22.0, 1e-4));
 
   auto *data = new double[4];
   data[0] = 1.0;
@@ -168,19 +168,19 @@ void test3SquareMatrix() {
   unsigned int i, j;
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 2; j++) {
-      CHECK_INVARIANT(RDKit::feq(B.getVal(i, j), A.getVal(i, j)), "");
+      REQUIRE_THAT(B.getVal(i, j),
+                   Catch::Matchers::WithinAbs(A.getVal(i, j), 1e-4));
     }
   }
   D->transposeInplace();
-  CHECK_INVARIANT(RDKit::feq(D->getVal(0, 0), 1.0), "");
-  CHECK_INVARIANT(RDKit::feq(D->getVal(0, 1), 3.0), "");
-  CHECK_INVARIANT(RDKit::feq(D->getVal(1, 0), 2.0), "");
-  CHECK_INVARIANT(RDKit::feq(D->getVal(1, 1), 4.0), "");
+  REQUIRE_THAT(D->getVal(0, 0), Catch::Matchers::WithinAbs(1.0, 1e-4));
+  REQUIRE_THAT(D->getVal(0, 1), Catch::Matchers::WithinAbs(3.0, 1e-4));
+  REQUIRE_THAT(D->getVal(1, 0), Catch::Matchers::WithinAbs(2.0, 1e-4));
+  REQUIRE_THAT(D->getVal(1, 1), Catch::Matchers::WithinAbs(4.0, 1e-4));
   delete D;
-  // delete [] data;
 }
 
-void test4SymmMatrix() {
+TEST_CASE("test4SymmMatrix") {
   SymmMatrix<double> A(3);
   A.setVal(0, 0, 1.0);
   A.setVal(0, 1, 2.0);
@@ -201,7 +201,8 @@ void test4SymmMatrix() {
   unsigned int i, j;
   for (i = 0; i < 3; i++) {
     for (j = 0; j < 3; j++) {
-      CHECK_INVARIANT(RDKit::feq(B.getVal(i, j), C.getVal(i, j)), "");
+      REQUIRE_THAT(B.getVal(i, j),
+                   Catch::Matchers::WithinAbs(C.getVal(i, j), 1e-4));
     }
   }
 
@@ -212,43 +213,19 @@ void test4SymmMatrix() {
 
   multiply(A, x, y);
 
-  CHECK_INVARIANT(RDKit::feq(y.getVal(0), 9.5), "");
-  CHECK_INVARIANT(RDKit::feq(y.getVal(1), 13.0), "");
-  CHECK_INVARIANT(RDKit::feq(y.getVal(2), 10.5), "");
+  REQUIRE_THAT(y.getVal(0), Catch::Matchers::WithinAbs(9.5, 1e-4));
+  REQUIRE_THAT(y.getVal(1), Catch::Matchers::WithinAbs(13.0, 1e-4));
+  REQUIRE_THAT(y.getVal(2), Catch::Matchers::WithinAbs(10.5, 1e-4));
 
-  CHECK_INVARIANT(A.getDataSize() == 6, "");
+  REQUIRE(A.getDataSize() == 6);
   A.setToIdentity();
   for (i = 0; i < 3; i++) {
     for (j = 0; j < 3; j++) {
       if (i != j) {
-        CHECK_INVARIANT(RDKit::feq(A.getVal(i, j), 0.0, 0.000001), "");
+        REQUIRE_THAT(A.getVal(i, j), Catch::Matchers::WithinAbs(0.0, 1e-6));
       } else {
-        CHECK_INVARIANT(RDKit::feq(A.getVal(i, j), 1.0, 0.000001), "");
+        REQUIRE_THAT(A.getVal(i, j), Catch::Matchers::WithinAbs(1.0, 1e-6));
       }
     }
   }
-}
-
-int main() {
-  RDLog::InitLogs();
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdErrorLog) << "Testing RDNumerics: vectors and matrices Code\n";
-
-  BOOST_LOG(rdErrorLog) << "---------------------------------------\n";
-  BOOST_LOG(rdErrorLog) << "\t test1Vector\n";
-  test1Vector();
-
-  BOOST_LOG(rdErrorLog) << "---------------------------------------\n";
-  BOOST_LOG(rdErrorLog) << "\t test2Matrix\n";
-  test2Matrix();
-
-  BOOST_LOG(rdErrorLog) << "---------------------------------------\n";
-  BOOST_LOG(rdErrorLog) << "\t test3SquareMatrix\n";
-  test3SquareMatrix();
-
-  BOOST_LOG(rdErrorLog) << "---------------------------------------\n";
-  BOOST_LOG(rdErrorLog) << "\t test4SymmMatrix\n";
-  test4SymmMatrix();
-  return 0;
 }

@@ -178,6 +178,8 @@ class ScsiMolTest {
 TEST_CASE("scsiTests", "scsiTests") {
   SECTION("basics") {
     std::list<ScsiMolTest::ScsiTest> scsiTests{
+        ScsiMolTest::ScsiTest("Conjugate.mol", true, SCSRBaseHbondOptions::Auto,
+                              91, 91, 14, 87, 87, 10),
         ScsiMolTest::ScsiTest("ModifiedPeptide2.mol", true,
                               SCSRBaseHbondOptions::Auto, 438, 444, 81, 407,
                               413, 50),

@@ -1,5 +1,4 @@
-// $Id$
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,7 +6,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/test.h>
+#include <catch2/catch_all.hpp>
 #include "AlignPoints.h"
 #include <Numerics/Vector.h>
 #include <RDGeneral/utils.h>
@@ -20,7 +19,7 @@
 using namespace RDNumeric;
 using namespace RDNumeric::Alignments;
 
-void testBasic() {
+TEST_CASE("testBasic") {
   RDGeom::Point3DConstPtrVect rpts;
   RDGeom::Point3D rpt1(0.0, 0.0, 0.0);
   rpts.push_back(&rpt1);
@@ -35,18 +34,18 @@ void testBasic() {
 
   RDGeom::Transform3D trans;
   double ssr = AlignPoints(rpts, qpts, trans);
-  CHECK_INVARIANT(RDKit::feq(ssr, 0.0), "");
+  REQUIRE_THAT(ssr, Catch::Matchers::WithinAbs(0.0, 1e-4));
 
   // transform qpts and see if we match the rpts
   trans.TransformPoint(qpt1);
   trans.TransformPoint(qpt2);
   qpt1 -= rpt1;
   qpt2 -= rpt2;
-  CHECK_INVARIANT(RDKit::feq(qpt1.length(), 0.0), "");
-  CHECK_INVARIANT(RDKit::feq(qpt2.length(), 0.0), "");
+  REQUIRE_THAT(qpt1.length(), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(qpt2.length(), Catch::Matchers::WithinAbs(0.0, 1e-4));
 }
 
-void testTraingle() {
+TEST_CASE("testTriangle") {
   // try 3 point two equilateral triangles of different edge lengths
   RDGeom::Point3DConstPtrVect rpts;
   RDGeom::Point3D rpt1(-cos(M_PI / 6), -sin(M_PI / 6), 0.0);
@@ -66,7 +65,7 @@ void testTraingle() {
 
   RDGeom::Transform3D trans;
   double ssr = AlignPoints(rpts, qpts, trans);
-  CHECK_INVARIANT(RDKit::feq(ssr, 3.0), "");
+  REQUIRE_THAT(ssr, Catch::Matchers::WithinAbs(3.0, 1e-4));
   RDGeom::Point3D nqpt1, nqpt2, nqpt3;
   nqpt1 = qpt1;
   nqpt2 = qpt2;
@@ -78,16 +77,16 @@ void testTraingle() {
   nqpt2 -= rpt2;
   nqpt3 -= rpt3;
 
-  CHECK_INVARIANT(RDKit::feq(nqpt1.length(), 1.0), "");
-  CHECK_INVARIANT(RDKit::feq(nqpt2.length(), 1.0), "");
-  CHECK_INVARIANT(RDKit::feq(nqpt3.length(), 1.0), "");
+  REQUIRE_THAT(nqpt1.length(), Catch::Matchers::WithinAbs(1.0, 1e-4));
+  REQUIRE_THAT(nqpt2.length(), Catch::Matchers::WithinAbs(1.0, 1e-4));
+  REQUIRE_THAT(nqpt3.length(), Catch::Matchers::WithinAbs(1.0, 1e-4));
 
   DoubleVector wts(3);
   wts.setVal(0, 1.0);
   wts.setVal(1, 1.0);
   wts.setVal(2, 2.0);
   ssr = AlignPoints(rpts, qpts, trans, &wts);
-  CHECK_INVARIANT(RDKit::feq(ssr, 3.75), "");
+  REQUIRE_THAT(ssr, Catch::Matchers::WithinAbs(3.75, 1e-4));
   nqpt1 = qpt1;
   nqpt2 = qpt2;
   nqpt3 = qpt3;
@@ -99,16 +98,16 @@ void testTraingle() {
   nqpt2 -= rpt2;
   nqpt3 -= rpt3;
 
-  CHECK_INVARIANT(RDKit::feq(nqpt1.length(), 1.14564), "");
-  CHECK_INVARIANT(RDKit::feq(nqpt2.length(), 1.14564), "");
-  CHECK_INVARIANT(RDKit::feq(nqpt3.length(), 0.75), "");
+  REQUIRE_THAT(nqpt1.length(), Catch::Matchers::WithinAbs(1.14564, 1e-4));
+  REQUIRE_THAT(nqpt2.length(), Catch::Matchers::WithinAbs(1.14564, 1e-4));
+  REQUIRE_THAT(nqpt3.length(), Catch::Matchers::WithinAbs(0.75, 1e-4));
 
   wts.setVal(0, 1.0);
   wts.setVal(1, 2.0);
   wts.setVal(2, 2.0);
 
   ssr = AlignPoints(rpts, qpts, trans, &wts);
-  CHECK_INVARIANT(RDKit::feq(ssr, 4.8), "");
+  REQUIRE_THAT(ssr, Catch::Matchers::WithinAbs(4.8, 1e-4));
   nqpt1 = qpt1;
   nqpt2 = qpt2;
   nqpt3 = qpt3;
@@ -121,12 +120,12 @@ void testTraingle() {
   nqpt1 -= rpt1;
   nqpt2 -= rpt2;
   nqpt3 -= rpt3;
-  CHECK_INVARIANT(RDKit::feq(nqpt1.length(), 1.2), "");
-  CHECK_INVARIANT(RDKit::feq(nqpt2.length(), 0.9165), "");
-  CHECK_INVARIANT(RDKit::feq(nqpt3.length(), 0.9165), "");
+  REQUIRE_THAT(nqpt1.length(), Catch::Matchers::WithinAbs(1.2, 1e-4));
+  REQUIRE_THAT(nqpt2.length(), Catch::Matchers::WithinAbs(0.9165, 1e-4));
+  REQUIRE_THAT(nqpt3.length(), Catch::Matchers::WithinAbs(0.9165, 1e-4));
 }
 
-void testFourPts() {
+TEST_CASE("testFourPts") {
   // lets test most point 4 points
   RDGeom::Point3DConstPtrVect rpts;
   RDGeom::Point3D rpt1(0.0, 0.0, 0.0);
@@ -150,7 +149,7 @@ void testFourPts() {
 
   RDGeom::Transform3D trans;
   double ssr = AlignPoints(rpts, qpts, trans);
-  CHECK_INVARIANT(RDKit::feq(ssr, 0.0), "");
+  REQUIRE_THAT(ssr, Catch::Matchers::WithinAbs(0.0, 1e-4));
   trans.TransformPoint(qpt1);
   trans.TransformPoint(qpt2);
   trans.TransformPoint(qpt3);
@@ -159,13 +158,13 @@ void testFourPts() {
   qpt2 -= rpt2;
   qpt3 -= rpt3;
   qpt4 -= rpt4;
-  CHECK_INVARIANT(RDKit::feq(qpt1.length(), 0.0), "");
-  CHECK_INVARIANT(RDKit::feq(qpt2.length(), 0.0), "");
-  CHECK_INVARIANT(RDKit::feq(qpt3.length(), 0.0), "");
-  CHECK_INVARIANT(RDKit::feq(qpt4.length(), 0.0), "");
+  REQUIRE_THAT(qpt1.length(), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(qpt2.length(), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(qpt3.length(), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(qpt4.length(), Catch::Matchers::WithinAbs(0.0, 1e-4));
 }
 
-void testReflection() {
+TEST_CASE("testReflection") {
   // lets test most point 4 points
   RDGeom::Point3DConstPtrVect rpts;
   RDGeom::Point3D rpt1(0.0, 0.0, 0.0);
@@ -189,10 +188,10 @@ void testReflection() {
 
   RDGeom::Transform3D trans;
   double ssr = AlignPoints(rpts, qpts, trans);
-  CHECK_INVARIANT(RDKit::feq(ssr, 1.0), "");
+  REQUIRE_THAT(ssr, Catch::Matchers::WithinAbs(1.0, 1e-4));
 
   ssr = AlignPoints(rpts, qpts, trans, nullptr, true);
-  CHECK_INVARIANT(RDKit::feq(ssr, 0.0), "");
+  REQUIRE_THAT(ssr, Catch::Matchers::WithinAbs(0.0, 1e-4));
 
   trans.TransformPoint(qpt1);
   trans.TransformPoint(qpt2);
@@ -203,31 +202,8 @@ void testReflection() {
   qpt3 -= rpt3;
   qpt4 -= rpt4;
 
-  CHECK_INVARIANT(RDKit::feq(qpt1.length(), 0.0), "");
-  CHECK_INVARIANT(RDKit::feq(qpt2.length(), 0.0), "");
-  CHECK_INVARIANT(RDKit::feq(qpt3.length(), 0.0), "");
-  CHECK_INVARIANT(RDKit::feq(qpt4.length(), 0.0), "");
-}
-
-int main() {
-  std::cout << "-----------------------------------------\n";
-  std::cout << "Testing Alignment Code\n";
-
-  std::cout << "---------------------------------------\n";
-  std::cout << "\t testBasic\n";
-  testBasic();
-
-  std::cout << "---------------------------------------\n";
-  std::cout << "\t testTriangle\n";
-  testTraingle();
-
-  std::cout << "---------------------------------------\n";
-  std::cout << "\t testFourPts\n";
-  testFourPts();
-
-  std::cout << "---------------------------------------\n";
-  std::cout << "\t testReflection\n";
-  testReflection();
-  std::cout << "---------------------------------------\n";
-  return (0);
+  REQUIRE_THAT(qpt1.length(), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(qpt2.length(), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(qpt3.length(), Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(qpt4.length(), Catch::Matchers::WithinAbs(0.0, 1e-4));
 }

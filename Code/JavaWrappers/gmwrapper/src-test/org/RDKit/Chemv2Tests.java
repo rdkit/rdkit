@@ -710,6 +710,38 @@ public class Chemv2Tests extends GraphMolTest {
         }
     }
     
+    @Test
+    public void testClearSingleBondDirFlagsOnlyWedgeFlags() {
+        RWMol m = null;
+        RWMol m2 = null;
+        RWMol m3 = null;
+        try {
+            m = RWMol.MolFromSmiles("Cl[C@H](C)/C=C/CC");
+            m2 = new RWMol(m);
+            m2.compute2DCoords();
+            m2.ClearSingleBondDirFlags();
+            m2.WedgeMolBonds(m2.getConformer());
+            RDKFuncs.assignStereochemistry(m2, true, true);
+            assertEquals(m2.MolToSmiles(), "CCC=C[C@@H](C)Cl");
+            m3 = new RWMol(m);
+            m3.compute2DCoords();
+            m3.ClearSingleBondDirFlags(true);
+            m3.WedgeMolBonds(m3.getConformer());
+            RDKFuncs.assignStereochemistry(m3, true, true);
+            assertEquals(m3.MolToSmiles(), "CC/C=C/[C@@H](C)Cl");
+        } finally {
+            if (m != null) {
+                m.delete();
+            }
+            if (m2 != null) {
+                m2.delete();
+            }
+            if (m3 != null) {
+                m3.delete();
+            }
+        }
+    }
+
     public static void main(String args[]) {
         org.junit.runner.JUnitCore.main("org.RDKit.Chemv2Tests");
     }

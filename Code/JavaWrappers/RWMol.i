@@ -168,8 +168,8 @@ void DetectAtomStereoChemistry(const RDKit::Conformer *conf) {
 void DetectBondStereoChemistry(const RDKit::Conformer *conf) {
   RDKit::DetectBondStereoChemistry(*($self), conf);
 }
-void ClearSingleBondDirFlags() {
- RDKit::ClearSingleBondDirFlags(*($self));
+void ClearSingleBondDirFlags(bool onlyWedgeFlags=false) {
+ RDKit::MolOps::clearSingleBondDirFlags(*($self), onlyWedgeFlags);
 };
 void reapplyMolBlockWedging() {
   RDKit::Chirality::reapplyMolBlockWedging(*($self));

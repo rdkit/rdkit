@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
-# define YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
+#ifndef YY_YYSMARTS_USR_APP_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
+# define YY_YYSMARTS_USR_APP_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -94,7 +94,8 @@ extern int yysmarts_debug;
     UNDERSCORE_TOKEN = 295,        /* UNDERSCORE_TOKEN  */
     BOND_TOKEN = 296,              /* BOND_TOKEN  */
     CHI_CLASS_TOKEN = 297,         /* CHI_CLASS_TOKEN  */
-    EOS_TOKEN = 298                /* EOS_TOKEN  */
+    BAD_CHARACTER = 298,           /* BAD_CHARACTER  */
+    EOS_TOKEN = 299                /* EOS_TOKEN  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -103,7 +104,6 @@ extern int yysmarts_debug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 81 "smarts.yy"
 
   int                      moli;
   RDKit::QueryAtom * atom;
@@ -111,7 +111,6 @@ union YYSTYPE
   RDKit::Atom::ChiralType chiraltype;
   int                      ival;
 
-#line 115 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -122,16 +121,14 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-int yysmarts_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::list<unsigned int> *branchPoints, void *scanner, int& start_token);
+int yysmarts_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::vector<std::pair<unsigned int, unsigned int>>& branchPoints, void *scanner, int& start_token, unsigned int& current_token_position);
 
 /* "%code provides" blocks.  */
-#line 74 "smarts.yy"
 
 #ifndef YY_DECL
 #define YY_DECL int yylex \
-               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token, unsigned int& current_token_position)
 #endif
 
-#line 136 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp"
 
-#endif /* !YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED  */
+#endif /* !YY_YYSMARTS_USR_APP_RDKIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED  */

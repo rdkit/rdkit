@@ -1,5 +1,5 @@
 #ifdef RDK_BUILD_THREADSAFE_SSS
-#include <RDGeneral/Invariant.h>
+#include <catch2/catch_all.hpp>
 #include <RDGeneral/RDLog.h>
 
 #include <functional>
@@ -10,27 +10,26 @@
 
 using namespace RDKit;
 
-//! method for testing basic ConcurrentQueue operations
-void testPushAndPop() {
+TEST_CASE("testPushAndPop") {
   ConcurrentQueue<int> *q = new ConcurrentQueue<int>(4);
   int e1, e2, e3;
-  TEST_ASSERT(q->isEmpty());
+  REQUIRE(q->isEmpty());
 
   q->push(1);
   q->push(2);
   q->push(3);
 
-  TEST_ASSERT(!q->isEmpty());
+  REQUIRE(!q->isEmpty());
 
-  TEST_ASSERT(q->pop(e1));
-  TEST_ASSERT(q->pop(e2));
-  TEST_ASSERT(q->pop(e3));
+  REQUIRE(q->pop(e1));
+  REQUIRE(q->pop(e2));
+  REQUIRE(q->pop(e3));
 
-  TEST_ASSERT(e1 == 1);
-  TEST_ASSERT(e2 == 2);
-  TEST_ASSERT(e3 == 3);
+  REQUIRE(e1 == 1);
+  REQUIRE(e2 == 2);
+  REQUIRE(e3 == 3);
 
-  TEST_ASSERT(q->isEmpty());
+  REQUIRE(q->isEmpty());
 
   delete (q);
 }
@@ -52,7 +51,7 @@ void consume(ConcurrentQueue<int> &q, std::vector<int> &result) {
 bool testProducerConsumer(const int numProducerThreads,
                           const int numConsumerThreads) {
   ConcurrentQueue<int> q(5);
-  TEST_ASSERT(q.isEmpty());
+  REQUIRE(q.isEmpty());
 
   const int numToProduce = 10;
 
@@ -77,7 +76,7 @@ bool testProducerConsumer(const int numProducerThreads,
 
   std::for_each(consumers.begin(), consumers.end(),
                 std::mem_fn(&std::thread::join));
-  TEST_ASSERT(q.isEmpty());
+  REQUIRE(q.isEmpty());
 
   std::vector<int> frequency(numToProduce, 0);
   for (auto &result : results) {
@@ -93,47 +92,26 @@ bool testProducerConsumer(const int numProducerThreads,
   return true;
 }
 
-void testMultipleTimes() {
+TEST_CASE("testMultipleTimes") {
   const int trials = 10000;
   //! Single Producer, Single Consumer
   for (int i = 0; i < trials; i++) {
-    bool result = testProducerConsumer(1, 1);
-    TEST_ASSERT(result);
+    REQUIRE(testProducerConsumer(1, 1));
   }
 
   //! Single Producer, Multiple Consumer
   for (int i = 0; i < trials; i++) {
-    bool result = testProducerConsumer(1, 5);
-    TEST_ASSERT(result);
+    REQUIRE(testProducerConsumer(1, 5));
   }
 
   //! Multiple Producer, Single Consumer
   for (int i = 0; i < trials; i++) {
-    bool result = testProducerConsumer(5, 1);
-    TEST_ASSERT(result);
+    REQUIRE(testProducerConsumer(5, 1));
   }
 
   //! Multiple Producer, Multiple Consumer
   for (int i = 0; i < trials; i++) {
-    bool result = testProducerConsumer(2, 4);
-    TEST_ASSERT(result);
+    REQUIRE(testProducerConsumer(2, 4));
   }
 }
-
-int main() {
-  RDLog::InitLogs();
-
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testPushAndPop();
-  BOOST_LOG(rdErrorLog) << "Finished: testPushAndPop() \n";
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-#ifdef RDK_TEST_MULTITHREADED
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testMultipleTimes();
-  BOOST_LOG(rdErrorLog) << "Finished: testMultipleTimes() \n";
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-#endif
-  return 0;
-}
-
 #endif
