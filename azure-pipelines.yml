@@ -72,7 +72,7 @@ jobs:
   steps:
   - template: .azure-pipelines/mac_build_java.yml
 - job: Windows_VS2022_x64
-  timeoutInMinutes: 120
+  timeoutInMinutes: 150
   pool:
     vmImage: windows-2022
   variables:
