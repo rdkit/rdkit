@@ -51,7 +51,7 @@ class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
 void RDKIT_DEPICTOR_EXPORT
 setRingSystemTemplates(const std::string templatePath);
 
-//! \brief Add ring system templates to be used in 2D coordinater generation.
+//! \brief Add ring system templates to be used in 2D coordinate generation.
 /// If there are duplicates, the most recently added template will be used.
 /*!
 
@@ -90,7 +90,6 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
                                   //!< preferCoordGen is set to true
   bool useRingTemplates = false;  //!< whether to use ring system templates for
                                   //!< generating initial coordinates
-
 };
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule
@@ -181,7 +180,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
   mol before adding a conformation
 
   \param weightDistMat - A value between 0.0 and 1.0, this
-  determines the importance of mimicing the inter atoms
+  determines the importance of mimicking the inter atoms
   distances in dmat. (1.0 - weightDistMat) is the weight associated
   to spreading out the structure (density) in the cost function
 
@@ -238,6 +237,8 @@ struct RDKIT_DEPICTOR_EXPORT ConstrainedDepictionParams {
   ///   can be preserved following the constrained depiction (if
   ///   adjustMolBlockWedging is true)
   int existingConfId = -1;
+  bool useRingTemplates = false;  //!< whether to use ring system templates for
+                                  //!< generating initial coordinates
 };
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
@@ -313,7 +314,7 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
   Existing coordinates in the conformation identified by
   ConstrainedDepictionParams::existingConfId are preserved if present,
   otherwise unconstrained new coordinates are generated.
-  Subsequently, coodinates undergo a rigid-body alignment to the reference.
+  Subsequently, coordinates undergo a rigid-body alignment to the reference.
   If ConstrainedDepictionParams::adjustMolBlockWedging is false
   (default), existing molblock wedging information is always preserved.
   If ConstrainedDepictionParams::adjustMolBlockWedging is true,
@@ -337,7 +338,7 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
   \param params -       (optional) a ConstrainedDepictionParams instance
   RETURNS:
 
-  \return MatchVectType with (queryAtomidx, molAtomIdx) pairs used for
+  \return MatchVectType with (queryAtomIdx, molAtomIdx) pairs used for
           the constrained depiction
 */
 RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
@@ -378,7 +379,7 @@ RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
                          depiction is still attempted
   RETURNS:
 
-  \return MatchVectType with (queryAtomidx, molAtomIdx) pairs used for
+  \return MatchVectType with (queryAtomIdx, molAtomIdx) pairs used for
           the constrained depiction
 */
 RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(

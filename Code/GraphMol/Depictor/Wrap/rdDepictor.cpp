@@ -325,7 +325,10 @@ BOOST_PYTHON_MODULE(rdDepictor) {
           "rigid-body aligned to the reference (if alignOnly is True), "
           "or used to determine whether existing molblock wedging information "
           "can be preserved following the constrained depiction (if "
-          "adjustMolBlockWedging is True");
+          "adjustMolBlockWedging is True")
+      .def_readwrite(
+          "useRingTemplates", &ConstrainedDepictionParams::useRingTemplates,
+          "use templates to generate coordinates of complex ring systems");
 
   std::string docString;
   docString =
