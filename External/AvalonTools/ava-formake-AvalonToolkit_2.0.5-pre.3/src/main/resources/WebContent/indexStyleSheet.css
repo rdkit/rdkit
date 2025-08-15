@@ -1,0 +1,91 @@
+﻿
+table {
+position:relative;
+margin:0;
+padding:0;
+border-collapse:collapse;
+border-top:1px solid #000;
+border-left:1px solid #000;
+}
+
+table td {
+border-bottom:1px solid #000;
+border-right:1px solid #000;
+}
+
+code
+{
+    font-family: "Courier New", Courier, monospace;
+    font-weight: bold;
+    font-size: 100%;
+}
+
+.bodyStyle
+{
+    font-family:"Times New Roman", Times, serif;
+}
+.tableStyle
+{
+    background-color: #EEEEEE;
+}
+.tableHeaderStyle
+{
+    background-color: #DDDDDD;
+}
+.tableHeaderCellStyle
+{
+    padding: 10px;
+}
+.tableBodyStyle
+{
+    font-size: normal;
+    text-align: center;
+}
+.nameColumnStyle
+{
+    font-weight: bold;
+    padding: 10px;
+}
+.secColumnStyle
+{
+    padding: 10px;
+}
+.linkColumnStyle
+{
+    padding: 10px;
+}
+.codeCell
+{
+    text-align: left;
+    font-family: "Courier New", Courier, monospace;
+    font-weight: bold;
+    font-size: 110%;
+    padding: 10px;
+}                                  
+.contentColumnStyle
+{
+    text-align: left;
+    padding: 10px;
+}                                  
+.descColumnStyle
+{
+    text-align: left;
+    padding: 10px;
+}
+.relurlColumnStyle
+{
+    padding: 10px;
+}
+.absurlColumnStyle
+{
+    padding: 10px;
+}
+.paramsColumnStyle
+{
+    text-align: left;
+    padding: 10px;
+}
+.exampleColumnStyle
+{
+    padding: 10px;
+}
