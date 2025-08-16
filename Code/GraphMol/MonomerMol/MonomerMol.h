@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------
- * Declares tools for Monomeristic ROMols
+ * Declares tools for Monomeric ROMols
  *
  * A "MonomerMol" is an ROMol that uses RDKit atoms to represent monomers. Chains
  * are represented via the PDBAtomResidueInfo structs on atoms, and linkages are
@@ -16,6 +16,7 @@
 #include <string_view>
 #include <vector>
 
+#include <RDGeneral/BetterEnums.h>
 #include <RDGeneral/export.h>
 
 namespace RDKit
@@ -34,6 +35,7 @@ const std::string ATOM_LABEL{"atomLabel"};
 const std::string SUPPLEMENTARY_INFORMATION{"SUPPLEMENTARY_INFORMATION"};
 const std::string BRANCH_LINKAGE{"R3-R1"};
 const std::string BACKBONE_LINKAGE{"R2-R1"};
+const std::string CROSS_LINKAGE{"R3-R3"};
 const std::string HELM_MODEL{"HELM_MODEL"};
 const std::string MONOMER_LIST{"MONOMER_LIST"};
 const std::string UNKNOWN_MONOMER{"UNKNOWN_MONOMER"};
@@ -49,12 +51,11 @@ struct Chain {
     std::vector<unsigned int> atoms;
     std::vector<unsigned int> bonds;
     std::string annotation;
-    // std::string polymer_id;
 };
 
 enum class ChainType { PEPTIDE, RNA, DNA, CHEM };
-enum class ConnectionType { FORWARD, SIDECHAIN };
-enum class MonomerType { REGULAR, /* LIST, WILDCARD, */ SMILES };
+enum class ConnectionType { FORWARD, SIDECHAIN, CROSSLINK };
+enum class MonomerType { REGULAR, SMILES };
 
 RDKIT_MONOMERMOL_EXPORT ChainType toChainType(std::string_view chain_type);
 
@@ -63,7 +64,7 @@ RDKIT_MONOMERMOL_EXPORT std::string toString(ChainType chain_type);
 /*
  * Add a monomer to the molecule
  *
- * @param monomer_mol The monomeristic molecule to add the monomer to
+ * @param monomer_mol The Monomeric molecule to add the monomer to
  * @param name The name of the monomer
  * @param residue_number The residue number of the monomer
  * @param chain_id The chain ID of the monomer
@@ -79,7 +80,7 @@ RDKIT_MONOMERMOL_EXPORT size_t addMonomer(
  * Add a monomer to the molecule. Overload that uses the last monomer
  * added to the molecule to determine the chain ID and residue number.
  *
- * @param monomer_mol The monomeristic molecule to add the monomer to
+ * @param monomer_mol The Monomeric molecule to add the monomer to
  * @param name The name of the monomer
  * @param monomer_type The type of monomer to add
  *

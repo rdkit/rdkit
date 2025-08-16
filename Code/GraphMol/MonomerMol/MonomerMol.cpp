@@ -1,3 +1,12 @@
+//
+//  Copyright (C) 2025 Schrödinger, LLC
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 
 #include "MonomerMol.h"
 
@@ -6,6 +15,7 @@
 #include <GraphMol/RWMol.h>
 #include <GraphMol/SubstanceGroup.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/MolOps.h>
 
 #include <boost/functional/hash.hpp>
 
@@ -111,6 +121,9 @@ void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
             break;
         case ConnectionType::SIDECHAIN:
             addConnection(monomer_mol, monomer1, monomer2, BRANCH_LINKAGE);
+            break;
+        case ConnectionType::CROSSLINK:
+            addConnection(monomer_mol, monomer1, monomer2, CROSS_LINKAGE);
             break;
     }
 }

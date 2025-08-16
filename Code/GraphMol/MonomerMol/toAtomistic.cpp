@@ -1,3 +1,13 @@
+//
+//  Copyright (C) 2025 Schrödinger, LLC
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #include "Conversions.h"
 
 #include <queue>
@@ -27,35 +37,6 @@ using AttachmentMap = std::map<std::pair<unsigned int, unsigned int>,
                                std::pair<unsigned int, unsigned int>>;
 
 static const std::string ATOM_PDB_NAME_PROP{"pdbName"};
-
-const std::unordered_map<std::string, std::string> three_character_codes({
-    {"A", "ALA"}, // Alanine
-    {"R", "ARG"}, // Arginine
-    {"N", "ASN"}, // Asparagine
-    {"D", "ASP"}, // Aspartic
-    {"C", "CYS"}, // Cysteine
-    {"Q", "GLN"}, // Glutamine
-    {"E", "GLU"}, // Glutamic
-    {"G", "GLY"}, // Glycine
-    {"H", "HIS"}, // Histidine
-    {"I", "ILE"}, // Isoleucine
-    {"L", "LEU"}, // Leucine
-    {"K", "LYS"}, // Lysine
-    {"M", "MET"}, // Methionine
-    {"F", "PHE"}, // Phenylalanine
-    {"P", "PRO"}, // Proline
-    {"S", "SER"}, // Serine
-    {"T", "THR"}, // Threonine
-    {"W", "TRP"}, // Tryptophan
-    {"Y", "TYR"}, // Tyrosine
-    {"V", "VAL"}, // Valine
-});
-
-static const std::map<unsigned int, std::string> BIOVIA_ATTCHPT_MAP = {
-    {1, "Al"}, // Backbone attachment point
-    {2, "Br"}, // Backbone attachment point
-    {3, "Cx"}, // Sidechain attachment point
-};
 
 std::pair<unsigned int, unsigned int> getAttchpts(const std::string& linkage)
 {
@@ -98,7 +79,7 @@ void fillAttachmentPointMap(const RDKit::ROMol& new_monomer,
 
 void setResidueInfo(RDKit::RWMol& new_monomer, const std::string& monomer_label,
                     unsigned int residue_number, char chain_id,
-                    ChainType chain_type, unsigned int current_residue,
+                    ChainType chain_type,
                     MonomerDatabase& db)
 {
     std::string residue_name =
@@ -107,9 +88,6 @@ void setResidueInfo(RDKit::RWMol& new_monomer, const std::string& monomer_label,
     auto pdb_code = db.getPdbCode(monomer_label, chain_type);
     if (pdb_code) {
         residue_name = *pdb_code;
-    } else if (three_character_codes.find(monomer_label) !=
-               three_character_codes.end()) {
-        residue_name = three_character_codes.at(monomer_label);
     }
 
     // Set PDB residue info on the atoms
@@ -120,7 +98,7 @@ void setResidueInfo(RDKit::RWMol& new_monomer, const std::string& monomer_label,
         res_info->setChainId(chain_id_str);
         res_info->setResidueNumber(residue_number);
         res_info->setResidueName(residue_name);
-        // to be consistent with the rdkit adapter and RDKit's own PDB writer
+        // to be consistent with RDKit's PDB writer
         res_info->setInsertionCode(" ");
 
         std::string pdb_name;
@@ -153,8 +131,7 @@ ChainType getChainType(std::string_view polymer_id)
 AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
                          const RDKit::RWMol& monomer_mol,
                          const std::string& polymer_id,
-                         std::vector<unsigned int>& remove_atoms, char chain_id,
-                         unsigned int& total_residue_count)
+                         std::vector<unsigned int>& remove_atoms, char chain_id)
 {
     // Maps residue number and attachment point number to the atom index in
     // atomistic_mol that should be attached to and the atom index of the rgroup
@@ -218,8 +195,7 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
         fillAttachmentPointMap(*new_monomer, attachment_point_map,
                                residue_number, atomistic_mol.getNumAtoms());
         setResidueInfo(*new_monomer, monomer_label, residue_number, chain_id,
-                       chain_type, total_residue_count, db);
-        ++total_residue_count;
+                       chain_type, db);
         atomistic_mol.insertMol(*new_monomer);
     }
 
@@ -259,19 +235,18 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
 }
 } // namespace
 
-boost::shared_ptr<RDKit::RWMol> monomerMolToAtomsitic(const RDKit::ROMol& monomer_mol)
+std::unique_ptr<RDKit::RWMol> toAtomistic(const RDKit::ROMol& monomer_mol)
 {
-    auto atomistic_mol = boost::make_shared<RDKit::RWMol>();
+    auto atomistic_mol = std::make_unique<RDKit::RWMol>();
 
     // Map to track Polymer ID -> attachment point map
     std::unordered_map<std::string, AttachmentMap> polymer_attachment_points;
     std::vector<unsigned int> remove_atoms;
-    unsigned int total_residue_count = 1; // 1-based index to label SUP groups
     char chain_id = 'A';
     for (const auto& polymer_id : getPolymerIds(monomer_mol)) {
         polymer_attachment_points[polymer_id] =
             addPolymer(*atomistic_mol, monomer_mol, polymer_id, remove_atoms,
-                       chain_id, total_residue_count);
+                       chain_id);
         ++chain_id;
     }
 

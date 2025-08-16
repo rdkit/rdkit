@@ -1,3 +1,13 @@
+//
+//  Copyright (C) 2025 Schrödinger, LLC
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #pragma once
 
 #include <optional>
@@ -6,10 +16,11 @@
 
 #include "boost/noncopyable.hpp"
 
+#include "MonomerMol.h"
+
 namespace RDKit
 {
 
-enum class ChainType;
 class [[nodiscard]] MonomerDatabase : public boost::noncopyable
 {
   public:

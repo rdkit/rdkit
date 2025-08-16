@@ -1,11 +1,11 @@
 //
-//  Copyright (C) 2002-2024 Rachel Walker and other RDKit contributors
+//  Copyright (C) 2025 Schrödinger, LLC
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
-//
 //
 
 #include <sstream>
@@ -37,7 +37,7 @@ using namespace RDKit;
 /*
  * Temporary, simple FASTA parser to show how to use the MonomerMol
 */
-std::string to_fasta(const ROMol& mol)
+static std::string to_fasta(const ROMol& mol)
 {
     // make a set of all the chains in the molecule
     std::set<std::string> chains;
@@ -63,7 +63,7 @@ std::string to_fasta(const ROMol& mol)
     return fasta.str();
 }
 
-void neutralize_atoms(RDKit::ROMol& mol)
+static void neutralize_atoms(RDKit::ROMol& mol)
 {
     // Algorithm for neutralizing molecules from
     // https://www.rdkit.org/docs/Cookbook.html#neutralizing-molecules by Noel
@@ -83,6 +83,68 @@ void neutralize_atoms(RDKit::ROMol& mol)
     }
 }
 
+static std::unique_ptr<RDKit::ROMol> resolve_his(const RDKit::ROMol& mol)
+{
+    // Some structures may contain different protonation states for histidine,
+    // but we currently map all of them to the same single letter code 'H' in
+    // the monomeric representation. Since we want to test the roundtrip
+    // conversion against the original, we need to resolve the histidine
+    // protonation state to what is in the monomer database.
+    std::string smiles = RDKit::MolToSmiles(mol);
+
+    std::vector<std::string> targets = {"Cc1c[nH]cn1"};
+    std::string replace_with = "Cc1cnc[nH]1";
+    for (const auto& target : targets) {
+        size_t pos = 0;
+        while ((pos = smiles.find(target, pos)) != std::string::npos) {
+            smiles.replace(pos, target.length(), replace_with);
+            pos += replace_with.length();
+        }
+    }
+    return std::unique_ptr<RDKit::ROMol>(RDKit::SmilesToMol(smiles));
+}
+
+static void remove_solvents(RDKit::RWMol& rwmol)
+{
+    std::vector<unsigned int> atoms_to_remove;
+    for (const auto& atom : rwmol.atoms()) {
+        const auto res_info = static_cast<const RDKit::AtomPDBResidueInfo*>(
+            atom->getMonomerInfo());
+
+        if (res_info != nullptr) {
+            std::string residue_name = res_info->getResidueName();
+            if (residue_name == "HOH" || residue_name == "S04") {
+                atoms_to_remove.push_back(atom->getIdx());
+            }
+        }
+    }
+    rwmol.beginBatchEdit();
+    for (unsigned int atom_idx : atoms_to_remove) {
+        rwmol.removeAtom(atom_idx);
+    }
+    rwmol.commitBatchEdit();
+}
+
+static bool same_roundtrip_mol(const RDKit::ROMol& original,
+                               const RDKit::ROMol& roundtrip,
+                               unsigned int num_chains) {
+    // Verify the roundtrip produces a molecule with expected number of atoms,
+    // roundtripped structure has additional oxygen atoms at the end of the
+    // chains so there may be some extra atoms in the roundtrip (up to 2 *
+    // number of chains)
+    RDKit::SubstructMatchParameters params;
+    params.maxMatches = 1;
+    auto match = RDKit::SubstructMatch(roundtrip,
+                                       original, params);
+    if (match.empty()) {
+      return false;
+    }
+    if (match[0].size() != original.getNumAtoms()) {
+      return false;
+    }
+    return (roundtrip.getNumAtoms() - original.getNumAtoms()) <= (2 * num_chains);
+}
+
 TEST_CASE("FASTAConversions") {
   SECTION("SIMPLE") {
     // Build MonomerMol with a single chain
@@ -98,6 +160,8 @@ TEST_CASE("FASTAConversions") {
     addConnection(monomer_mol, 2, 3, ConnectionType::FORWARD);
     addConnection(monomer_mol, 3, 4, ConnectionType::FORWARD);
 
+    CHECK(monomer_mol.getNumAtoms() == 5);
+    CHECK(monomer_mol.getNumBonds() == 4);
     CHECK(std::string(">Chain PEPTIDE1\nRDKIT") == to_fasta(monomer_mol));
   }
 
@@ -115,6 +179,9 @@ TEST_CASE("FASTAConversions") {
     addConnection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
     addConnection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
 
+    CHECK(monomer_mol.getNumAtoms() == 5);
+    CHECK(monomer_mol.getNumBonds() == 3);
+
     CHECK(std::string(">Chain A\nRD\n>Chain B\nKIT") == to_fasta(monomer_mol));
   }
 
@@ -125,13 +192,14 @@ TEST_CASE("FASTAConversions") {
     CHECK(atomistic_mol);
 
     // PDB info is used to convert the atomistic sturcture into a MonomerMol
-    auto monomer_mol = atomisticToMonomerMol(*atomistic_mol);
+    auto monomer_mol = toMonomeric(*atomistic_mol);
     CHECK(std::string(">Chain PEPTIDE1\nCGCGAATTACCGCG") == to_fasta(*monomer_mol));
+    delete atomistic_mol;
   }
 }
 
 TEST_CASE("Conversions") {
-  SECTION("MonomerMolToAtomistic") {
+  SECTION("toAtomistic") {
     std::string seq = "CGCGA";
     auto atomistic_mol = SequenceToMol(seq);
 
@@ -146,26 +214,200 @@ TEST_CASE("Conversions") {
     addConnection(monomer_mol, midx2, midx3, ConnectionType::FORWARD);
     addConnection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
     addConnection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
-    auto atomistic_mol2 = monomerMolToAtomsitic(monomer_mol);
+    auto atomistic_mol2 = toAtomistic(monomer_mol);
 
     // atomistic structure is same as using sequence parser
     std::string smi1 = MolToSmiles(*atomistic_mol);
     std::string smi2 = MolToSmiles(*atomistic_mol2);
     CHECK(smi1 == smi2);
+
+    delete atomistic_mol;
   }
 
-  SECTION("AtomisticToMonomerMol") {
+  SECTION("toAtomisticWithBranch") {
+    // This is equivalent to HELM string "PEPTIDE1{A.D(C)P}$$$$"
+    RWMol monomer_mol;
+    auto midx1 = addMonomer(monomer_mol, "A", 1, "PEPTIDE1");
+    auto midx2 = addMonomer(monomer_mol, "D");
+    auto midx3 = addMonomer(monomer_mol, "C");
+    auto midx4 = addMonomer(monomer_mol, "P");
+
+    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx2, midx3, ConnectionType::SIDECHAIN);
+    addConnection(monomer_mol, midx2, midx4, ConnectionType::FORWARD);
+
+    std::string smi = MolToSmiles(*toAtomistic(monomer_mol));
+    CHECK(smi == "C[C@H](N)C(=O)N[C@@H](CC(=O)N[C@@H](CS)C(=O)O)C(=O)N1CCC[C@H]1C(=O)O");
+  }
+
+
+  SECTION("toAtomisticWithDisulfide") {
+    std::string helm = "PEPTIDE1{C.A.A.A.C}$PEPTIDE1,PEPTIDE1,1:R3-5:R3$$$V2.0";
+    auto atomistic_mol = HELMToMol(helm);
+
+    RWMol monomer_mol;
+    auto midx1 = addMonomer(monomer_mol, "C", 1, "PEPTIDE1");
+    auto midx2 = addMonomer(monomer_mol, "A");
+    auto midx3 = addMonomer(monomer_mol, "A");
+    auto midx4 = addMonomer(monomer_mol, "A");
+    auto midx5 = addMonomer(monomer_mol, "C");
+
+    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx2, midx3, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx1, midx5, ConnectionType::CROSSLINK);
+
+    std::string smi1 = MolToSmiles(*atomistic_mol);
+    std::string smi2 = MolToSmiles(*toAtomistic(monomer_mol));
+    CHECK(smi1 == smi2);
+    delete atomistic_mol;
+  }
+
+  SECTION("toAtomisticCyclicPeptide") {
+    std::string helm = "PEPTIDE1{F.Y.K.A.R.L}$PEPTIDE1,PEPTIDE1,6:R2-1:R1$$$V2.0";
+    auto atomistic_mol = HELMToMol(helm);
+
+    RWMol monomer_mol;
+    auto midx1 = addMonomer(monomer_mol, "F", 1, "PEPTIDE1");
+    auto midx2 = addMonomer(monomer_mol, "Y");
+    auto midx3 = addMonomer(monomer_mol, "K");
+    auto midx4 = addMonomer(monomer_mol, "A");
+    auto midx5 = addMonomer(monomer_mol, "R");
+    auto midx6 = addMonomer(monomer_mol, "L");
+    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx2, midx3, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx5, midx6, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx6, midx1, ConnectionType::FORWARD);
+
+    CHECK(monomer_mol.getNumAtoms() == 6);
+    CHECK(monomer_mol.getNumBonds() == 6);
+
+    std::string smi1 = MolToSmiles(*atomistic_mol);
+    std::string smi2 = MolToSmiles(*toAtomistic(monomer_mol));
+    CHECK(smi1 == smi2);
+    delete atomistic_mol;
+  }
+
+  SECTION("toAtomisticCyclicPeptideOutOfOrder") {
+    std::string helm = "PEPTIDE1{F.Y.K.A.R.L}$PEPTIDE1,PEPTIDE1,6:R2-1:R1$$$V2.0";
+    auto atomistic_mol = HELMToMol(helm);
+
+
+    // toAtomistic should still work even when monomers are added out of order
+    RWMol monomer_mol;
+    auto midx1 = addMonomer(monomer_mol, "A", 1, "PEPTIDE1");
+    auto midx2 = addMonomer(monomer_mol, "K");
+    auto midx3 = addMonomer(monomer_mol, "Y");
+    auto midx4 = addMonomer(monomer_mol, "F");
+    auto midx5 = addMonomer(monomer_mol, "L");
+    auto midx6 = addMonomer(monomer_mol, "R");
+    addConnection(monomer_mol, midx4, midx3, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx3, midx2, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx2, midx1, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx1, midx6, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx6, midx5, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx5, midx4, ConnectionType::FORWARD);
+    assignChains(monomer_mol);
+
+    CHECK(monomer_mol.getNumAtoms() == 6);
+    CHECK(monomer_mol.getNumBonds() == 6);
+
+    std::string smi1 = MolToSmiles(*atomistic_mol);
+    std::string smi2 = MolToSmiles(*toAtomistic(monomer_mol));
+    CHECK(smi1 == smi2);
+    delete atomistic_mol;
+  }
+
+  SECTION("toAtomisticSmilesMonomer") {
+    // This is equivelent to HELM string "PEPTIDE1{A.[O=C([C@H]1CCCN1[*:1])[*:2]].P}$$$$"
+    RWMol monomer_mol;
+    auto midx1 = addMonomer(monomer_mol, "A", 1, "PEPTIDE1");
+    auto midx2 = addMonomer(monomer_mol, "O=C([C@H]1CCCN1[*:1])[*:2]", MonomerType::SMILES);
+    auto midx3 = addMonomer(monomer_mol, "P");
+    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx2, midx3, ConnectionType::FORWARD);
+    assignChains(monomer_mol);
+    CHECK(monomer_mol.getNumAtoms() == 3);
+    CHECK(monomer_mol.getNumBonds() == 2);
+    auto atomistic_mol = toAtomistic(monomer_mol);
+    std::string smi1 = MolToSmiles(*atomistic_mol);
+    CHECK(smi1 == "C[C@H](N)C(=O)N1CCC[C@@H]1C(=O)N1CCC[C@H]1C(=O)O");
+  }
+
+  SECTION("toMonomeric1DNG") {
     std::string pdbfile = getenv("RDBASE");
     pdbfile += "/Code/GraphMol/MonomerMol/test_data/1dng.pdb";
     auto mol = PDBFileToMol(pdbfile);
-    auto monomer_mol = atomisticToMonomerMol(*mol);
+    auto monomer_mol = toMonomeric(*mol);
     CHECK(std::string(">Chain PEPTIDE1\nQAPAYEEAAEELAKS") == to_fasta(*monomer_mol));
+    CHECK(monomer_mol->getNumAtoms() == 15);
+    CHECK(monomer_mol->getNumBonds() == 14);
 
-    auto atomistic_mol2 = monomerMolToAtomsitic(*monomer_mol);
+    auto roundtrip = toAtomistic(*monomer_mol);
     neutralize_atoms(*mol);
-    neutralize_atoms(*atomistic_mol2);
-    std::string smi1 = MolToSmiles(*mol);
-    std::string smi2 = MolToSmiles(*atomistic_mol2);
-    CHECK(smi1 == smi2);
+    neutralize_atoms(*roundtrip);
+    CHECK(same_roundtrip_mol(*mol, *roundtrip, getPolymerIds(*monomer_mol).size()));
+  }
+
+  SECTION("toMonomeric2N65") {
+    // Example with multiple chains and a disulfide bond between chains
+    std::string pdbfile = getenv("RDBASE");
+    pdbfile += "/Code/GraphMol/MonomerMol/test_data/2n65.pdb";
+    auto mol = PDBFileToMol(pdbfile);
+    auto monomer_mol = toMonomeric(*mol);
+    CHECK(std::string(">Chain PEPTIDE1\nVARGWKRKCPLFGKGG\n>Chain PEPTIDE2\nVARGWKRKCPLFGKGG") == to_fasta(*monomer_mol));
+    CHECK(monomer_mol->getNumAtoms() == 32);
+    CHECK(monomer_mol->getNumBonds() == 31);
+
+    auto roundtrip = toAtomistic(*monomer_mol);
+    neutralize_atoms(*mol);
+    auto resolved_his = resolve_his(*mol);
+    neutralize_atoms(*roundtrip);
+    CHECK(same_roundtrip_mol(*resolved_his, *roundtrip, getPolymerIds(*monomer_mol).size()));
+  }
+
+  SECTION("toMonomeric4QAF") {
+    // Example with disulfide bond between chains and within chains
+    std::string pdbfile = getenv("RDBASE");
+    pdbfile += "/Code/GraphMol/MonomerMol/test_data/4qaf.pdb";
+    auto mol = PDBFileToMol(pdbfile);
+    remove_solvents(*mol); // we don't care about water or S04
+
+    auto monomer_mol = toMonomeric(*mol);
+
+    // There should be 4 chains
+    auto polymer_ids = getPolymerIds(*monomer_mol);
+    CHECK(polymer_ids.size() == 4);
+
+    CHECK(monomer_mol->getNumAtoms() == 395);
+    CHECK(monomer_mol->getNumBonds() == 392);
+
+    auto roundtrip = toAtomistic(*monomer_mol);
+    neutralize_atoms(*mol);
+    neutralize_atoms(*roundtrip);
+    CHECK(same_roundtrip_mol(*mol, *roundtrip, polymer_ids.size()));
+  }
+
+  SECTION("toMonomeric5VAV") {
+    // Example with disulfide bond and R2-R1 cycle closure
+    std::string pdbfile = getenv("RDBASE");
+    pdbfile += "/Code/GraphMol/MonomerMol/test_data/5vav.pdb";
+    auto mol = PDBFileToMol(pdbfile);
+    auto monomer_mol = toMonomeric(*mol);
+    remove_solvents(*mol); // we don't care about water or S04
+
+    // Checking sequence doesn't make sense due to SMILES monomer
+    // Two extra bonds than atoms because this structure has two cycle closures, one
+    // by a disulfide bond and another from an R2-R1 closure
+    CHECK(monomer_mol->getNumAtoms() == 14);
+    CHECK(monomer_mol->getNumBonds() == 15);
+
+    auto roundtrip = toAtomistic(*monomer_mol);
+    neutralize_atoms(*mol);
+    neutralize_atoms(*roundtrip);
+    CHECK(same_roundtrip_mol(*mol, *roundtrip, getPolymerIds(*monomer_mol).size()));
   }
 }
