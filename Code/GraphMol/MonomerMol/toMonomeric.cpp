@@ -35,13 +35,8 @@ namespace
 static constexpr const char* MONOMER_IDX{"monomerIndex"};
 static constexpr const char* MONOMER_MAP_NUM{"monomerMapNumber"};
 static constexpr const char* REFERENCE_IDX{"referenceIndex"};
-static constexpr const char* ATTACH_NUM{
-    "attachNumber"}; // Whether an atom corresponds to R1, R2, or R3
 
 static constexpr int MIN_ATTCHPTS = 2;
-static constexpr int SIDECHAIN_ATTCHPT = 8;
-static constexpr int TERMINAL_ATTCHPT = 9;
-static constexpr auto NO_ATTACHMENT = std::numeric_limits<unsigned int>::max();
 
 // std::map to allow sequential/ordered iteration
 using ChainsAndResidues =
