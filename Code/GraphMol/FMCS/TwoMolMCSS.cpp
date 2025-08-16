@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 
+#include "TwoMolMCSS.h"
+
 #include "GraphMol/CIPLabeler/Descriptor.h"
 
 #include <algorithm>
@@ -16,6 +18,7 @@
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/FMCS/MatchTable.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 
 namespace RDKit {
@@ -28,29 +31,36 @@ bool atomsMatch(const Atom *atom1, const Atom *atom2) {
   return false;
 }
 
-// Returns 0 if one bond is nullptr.
-// Returns 'c' if they are the same type (for the cEdges) or
-// 'd' if they aren't or are both nullptr (for the dEdges).
-char bondsMatch(const Bond *bond1, const Bond *bond2) {
+// Returns 0 if one bond is nullptr and the other isn't
+// Returns 'c' if they are the same type (for the c-Edges) or
+// 'd' if they aren't or are both nullptr (for the d-Edges).
+char bondsMatch(const Bond *bond1, const Bond *bond2,
+                const FMCS::MatchTable &bondMatchTable) {
+  // They're both not bonded, so they're d-Edges.
   if (!bond1 && !bond2) {
     return 'd';
   }
+  // If they're both bonded and the same type, they're c-Edges.
+  // If they're both bonded and not the same type, they're not a match
+  // so return 0.
   if (bond1 && bond2) {
-    if (bond1->getBondType() == bond2->getBondType()) {
+    if (bondMatchTable.at(bond1->getIdx(), bond2->getIdx())) {
       return 'c';
     }
-    return 'd';
+    return 0;
   }
+  // Default is not a match.
   return 0;
 }
 
 void buildAtomPairs(
     const ROMol &mol1, const ROMol &mol2,
+    const FMCS::MatchTable &atomMatchTable,
     std::vector<std::pair<unsigned int, unsigned int>> &atomPairs) {
   atomPairs.reserve(mol1.getNumAtoms() * mol2.getNumAtoms());
   for (const auto at1 : mol1.atoms()) {
     for (const auto at2 : mol2.atoms()) {
-      if (atomsMatch(at1, at2)) {
+      if (atomMatchTable.at(at1->getIdx(), at2->getIdx())) {
         atomPairs.push_back(std::make_pair(at1->getIdx(), at2->getIdx()));
       }
     }
@@ -60,6 +70,7 @@ void buildAtomPairs(
 void buildCorrespondenceGraph(
     const std::vector<std::pair<unsigned int, unsigned int>> &atomPairs,
     const ROMol &mol1, const ROMol &mol2,
+    const FMCS::MatchTable &bondMatchTable,
     std::vector<std::unordered_set<unsigned int>> &corrGraph,
     std::vector<std::unordered_set<unsigned int>> &cEdges,
     std::vector<std::unordered_set<unsigned int>> &dEdges) {
@@ -85,7 +96,7 @@ void buildCorrespondenceGraph(
       }
       auto bond1 = bond1s[atomPairs[i].first][atomPairs[j].first];
       auto bond2 = bond2s[atomPairs[i].second][atomPairs[j].second];
-      auto bm = bondsMatch(bond1, bond2);
+      auto bm = bondsMatch(bond1, bond2, bondMatchTable);
       if (!bm) {
         continue;
       }
@@ -114,6 +125,7 @@ void buildCorrespondenceGraph(
 void buildCorrespondenceGraph(
     const std::vector<std::pair<unsigned int, unsigned int>> &atomPairs,
     const ROMol &mol1, const ROMol &mol2,
+    const FMCS::MatchTable &bondMatchTable,
     std::vector<std::vector<char>> &corrGraph,
     std::vector<unsigned int> &corrGraphNumConns,
     std::vector<std::pair<unsigned int, unsigned int>> &atomPairStarts) {
@@ -139,7 +151,7 @@ void buildCorrespondenceGraph(
       }
       auto bond1 = bond1s[atomPairs[i].first][atomPairs[j].first];
       auto bond2 = bond2s[atomPairs[i].second][atomPairs[j].second];
-      auto bm = bondsMatch(bond1, bond2);
+      auto bm = bondsMatch(bond1, bond2, bondMatchTable);
       corrGraph[i][j] = bm;
       corrGraph[j][i] = bm;
       if (bm) {
@@ -716,6 +728,8 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
 }  // namespace
 
 void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
+                const FMCS::MatchTable &atomMatchTable,
+                const FMCS::MatchTable &bondMatchTable,
                 std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
                     &maxCliques) {
   std::vector<std::pair<unsigned int, unsigned int>> atomPairs;
@@ -723,7 +737,7 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
   if (minMCSSSize > std::min(mol1.getNumAtoms(), mol2.getNumAtoms())) {
     return;
   }
-  buildAtomPairs(mol1, mol2, atomPairs);
+  buildAtomPairs(mol1, mol2, atomMatchTable, atomPairs);
   if (atomPairs.empty()) {
     return;
   }
@@ -737,8 +751,8 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
       atomPairs.size(), std::vector<char>(atomPairs.size(), 0));
   std::vector<unsigned int> corrGraphNumConns(atomPairs.size(), 0);
   std::vector<std::pair<unsigned int, unsigned int>> atomPairStarts;
-  buildCorrespondenceGraph(atomPairs, mol1, mol2, corrGraph, corrGraphNumConns,
-                           atomPairStarts);
+  buildCorrespondenceGraph(atomPairs, mol1, mol2, bondMatchTable, corrGraph,
+                           corrGraphNumConns, atomPairStarts);
 
 #if 0
   auto printGraph =
@@ -909,12 +923,13 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
       newClique.push_back(atomPairs[cm]);
     }
     std::ranges::sort(newClique);
+    std::cout << makeSMARTSFromMCSS(mol1, mol2, newClique) << std::endl;
     maxCliques.push_back(std::move(newClique));
   }
 }
 
 std::string makeSMARTSFromMCSS(
-    const ROMol &mol1,
+    const ROMol &mol1, const ROMol &mol2,
     const std::vector<std::pair<unsigned int, unsigned int>> &clique) {
   RWMol qmol(mol1);
   std::unordered_set<unsigned int> atomsToKeep;

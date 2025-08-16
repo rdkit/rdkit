@@ -277,6 +277,7 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
     // all the downstream results preparation is the same.
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
     TwoMolMCSS(*QueryMolecule, *Targets[0].Molecule, Parameters.MinMCSSSize,
+               Targets[0].AtomMatchTable, Targets[0].BondMatchTable,
                maxCliques);
     if (maxCliques.empty()) {
       return;
@@ -320,6 +321,9 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
   }
 
   if (initialSeedMolecule) {
+    std::cout << "Initial seed : " << MolToSmarts(*initialSeedMolecule) << " : "
+              << initialSeedMolecule->getNumAtoms() << " and "
+              << initialSeedMolecule->getNumBonds() << std::endl;
     // loop throw all fragments of Query matched to initial seed
     for (const auto &ms : matching_substructs) {
       Seed seed;

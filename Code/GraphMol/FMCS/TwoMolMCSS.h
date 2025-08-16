@@ -20,15 +20,19 @@
 #include <vector>
 
 #include <RDGeneral/export.h>
+#include <GraphMol/FMCS/MatchTable.h>
 
 namespace RDKit {
 class ROMol;
+
 // Make an approximate MCSS from the 2 molecules where 2 atoms in mol1
 // match 2 atoms in mol2 only if they are the same topological distance
 // apart.  This may be smaller than a full MCSS and will only be a
 // single fragment.
 RDKIT_FMCS_EXPORT void TwoMolMCSS(
     const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
+    const FMCS::MatchTable &atomMatchTable,
+    const FMCS::MatchTable &bondMatchTable,
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
         &maxCliques);
 
@@ -36,7 +40,7 @@ RDKIT_FMCS_EXPORT void TwoMolMCSS(
 // atoms in the given molecule and make a SMARTS string from it
 // by deleting all atoms from mol that aren't in the clique.
 RDKIT_FMCS_EXPORT std::string makeSMARTSFromMCSS(
-    const ROMol &mol,
+    const ROMol &mol1, const ROMol &mol2,
     const std::vector<std::pair<unsigned int, unsigned int>> &clique);
 }  // namespace RDKit
 #endif  // TWOMOLMCSS_H
