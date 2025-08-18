@@ -40,18 +40,21 @@ bool getMolAtomPoints(const ROMol &mol, std::vector<RDGeom::Point3D> &atomPoint,
   bool non_zero_z = false;
   atomPoint.resize(mol.getNumAtoms());
   // take X,Y,Z coordinates of each atom
-  if (0 != mol.getNumConformers())
+  if (0 != mol.getNumConformers()) {
     for (auto cnfi = mol.beginConformers(); cnfi != mol.endConformers();
          cnfi++) {
       const Conformer &conf = **cnfi;  // mol.getConformer(confId);
       if (twod || conf.is3D()) {
         for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
           atomPoint[i] = conf.getAtomPos(i);
-          if (fabs(atomPoint[i].z) >= 1.e-7) non_zero_z = true;
+          if (fabs(atomPoint[i].z) >= 1.e-7) {
+            non_zero_z = true;
+          }
         }
         break;
       }
     }
+  }
   if (atomPoint.empty()) {  // compute XYZ
     // TODO:
     // ???? ..........
@@ -62,16 +65,30 @@ bool getMolAtomPoints(const ROMol &mol, std::vector<RDGeom::Point3D> &atomPoint,
 typedef std::tuple<std::string, int, int, int> NbrData;
 
 bool lessTuple(const NbrData &left, const NbrData &right) {
-  if (std::get<0>(left) < std::get<0>(right)) return true;
-  if (std::get<0>(left) > std::get<0>(right)) return false;
+  if (std::get<0>(left) < std::get<0>(right)) {
+    return true;
+  }
+  if (std::get<0>(left) > std::get<0>(right)) {
+    return false;
+  }
 
-  if (std::get<1>(left) < std::get<1>(right)) return true;
-  if (std::get<1>(left) > std::get<1>(right)) return false;
+  if (std::get<1>(left) < std::get<1>(right)) {
+    return true;
+  }
+  if (std::get<1>(left) > std::get<1>(right)) {
+    return false;
+  }
 
-  if (std::get<2>(left) < std::get<2>(right)) return true;
-  if (std::get<2>(left) > std::get<2>(right)) return false;
+  if (std::get<2>(left) < std::get<2>(right)) {
+    return true;
+  }
+  if (std::get<2>(left) > std::get<2>(right)) {
+    return false;
+  }
 
-  if (std::get<3>(left) < std::get<3>(right)) return true;
+  if (std::get<3>(left) < std::get<3>(right)) {
+    return true;
+  }
 
   return false;
 }
@@ -87,10 +104,13 @@ std::string LogNeighbourhood(
   const Atom &atm = *mol.getAtomWithIdx(idx);
   oss << atm.getSymbol();
 
-  if (atm.getFormalCharge())
+  if (atm.getFormalCharge()) {
     oss << (atm.getFormalCharge() > 0 ? "+" : "") << atm.getFormalCharge();
+  }
 
-  if (atm.getNumRadicalElectrons()) oss << atm.getNumRadicalElectrons();
+  if (atm.getNumRadicalElectrons()) {
+    oss << atm.getNumRadicalElectrons();
+  }
 
   // these neighbors should be sorted properly?
   size_t numNbrs = neighbour_array[idx].Atoms.size();
@@ -123,15 +143,19 @@ std::string LogNeighbourhood(
         bs = "~";
         break;
     }
-    if (bs.size())
+    if (bs.size()) {
       oss << "(" << bs << std::get<0>(nbr);
-    else
+    } else {
       oss << "("
           << "?" << (int)std::get<1>(nbr) << "?" << std::get<0>(nbr);
-    if (std::get<2>(nbr))
+    }
+    if (std::get<2>(nbr)) {
       oss << (std::get<2>(nbr) > 0 ? "+" : "") << std::get<2>(nbr);
+    }
 
-    if (std::get<3>(nbr)) oss << std::get<3>(nbr);
+    if (std::get<3>(nbr)) {
+      oss << std::get<3>(nbr);
+    }
     oss << ")";
   }
   return oss.str();
