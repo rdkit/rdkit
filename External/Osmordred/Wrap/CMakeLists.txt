@@ -9,7 +9,5 @@ rdkit_python_extension(rdOsmordred
 
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/Osmordred" DESTINATION "${RDKit_PythonDir}/Chem")
 
-
-endif()
 # add_pytest(pyOsmordred ${CMAKE_CURRENT_SOURCE_DIR}/testOsmordred.py)
 
