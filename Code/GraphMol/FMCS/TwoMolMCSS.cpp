@@ -115,22 +115,6 @@ void buildCorrespondenceGraph(
       }
     }
   }
-  unsigned int num0 = 0;
-  unsigned int numc = 0;
-  unsigned int numd = 0;
-  for (const auto &crl : corrGraph) {
-    for (const auto c : crl) {
-      if (c == 0) {
-        num0++;
-      } else if (c == 'c') {
-        numc++;
-      } else if (c == 'd') {
-        numd++;
-      }
-    }
-  }
-  std::cout << "num0 = " << num0 << "  numc = " << numc << "  numd = " << numd
-            << std::endl;
   atomPairStarts.resize(mol1.getNumAtoms());
   for (size_t i = 0U; i < atomPairs.size(); ++i) {
     atomPairStarts[atomPairs[i].first].first++;
@@ -375,173 +359,6 @@ void enumerate_c_cliques(
   }
 }
 
-void enumerate_z_cliques(
-    std::vector<unsigned int> &c, const std::unordered_set<unsigned int> &p,
-    const std::unordered_set<unsigned int> &d,
-    std::unordered_set<unsigned int> &s, std::unordered_set<unsigned int> &t,
-    const std::vector<std::unordered_set<unsigned int>> &corrGraph,
-    const std::vector<std::unordered_set<unsigned int>> &cEdges,
-    const std::vector<std::unordered_set<unsigned int>> &dEdges,
-    std::vector<std::vector<unsigned int>> &maxCliques) {
-  // Not this one
-#if 0
-  if (c.size() > 0) {
-    std::cout << "c ";
-    for (auto cm : c) {
-      std::cout << cm << " ";
-    }
-    std::cout << ":: p ";
-    for (auto pm : p) {
-      std::cout << pm << " ";
-    }
-    std::cout << ":: d ";
-    for (auto pm : d) {
-      std::cout << pm << " ";
-    }
-    std::cout << ":: s ";
-    for (auto pm : s) {
-      std::cout << pm << " ";
-    }
-    std::cout << ":: t ";
-    for (auto pm : t) {
-      std::cout << pm << " ";
-    }
-    std::cout << std::endl;
-  }
-#endif
-#if 1
-  if (c.size() == 1) {
-    std::cout << "NEW : " << c[0] << std::endl;
-  }
-  std::cout << "c : " << c.size() << " p : " << p.size() << " d : " << d.size()
-            << " s : " << s.size() << " t : " << t.size() << " : "
-            << corrGraph.size() << " : ";
-  if (maxCliques.empty()) {
-    std::cout << " NONE" << std::endl;
-  } else {
-    std::cout << maxCliques.front().size() << std::endl;
-  }
-#endif
-
-  if (p.empty()) {
-    if (s.empty() && c.size() > 1) {
-      // Doing this speeds up the search enormously, because it means that
-      // we won't start a new clique with a node that has already been in a
-      // clique.  It does mean that symmetrically equivalent cliques won't
-      // be returned.
-      // t.insert(c.begin(), c.end());
-      // std::cout << "CLIQUE : " << c.size() << " :: ";
-      // for (auto cm : c) {
-      //   std::cout << cm << " ";
-      // }
-      // std::cout << std::endl;
-      if (maxCliques.empty()) {
-        // std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
-        maxCliques.push_back({c.begin(), c.end()});
-      } else {
-        if (c.size() > maxCliques.front().size()) {
-          maxCliques.clear();
-        } else if (c.size() < maxCliques.front().size()) {
-          return;
-        }
-        // std::cout << "New MAX CLIQUE : " << c.size() << " :: ";
-        // std::cout << std::endl;
-        maxCliques.push_back(c);
-      }
-    }
-    return;
-  }
-  auto ut = *std::max_element(
-      p.begin(), p.end(), [&](const auto &a, const auto &b) -> bool {
-        return corrGraph[a].size() < corrGraph[b].size();
-      });
-  // std::cout << "pivot node " << ut << std::endl;
-  for (auto ui : p) {
-    if (s.contains(ui)) {
-      continue;
-    }
-    // if ui is adjacent to ut
-    // OR if ui is connected via a c-path to a vertex in D that is
-    // not adjacent to ut
-    bool ok1 = false;
-    bool ok2 = !corrGraph[ui].contains(ut);
-    if (!ok2) {
-      for (auto de : d) {
-        if (cEdges[ui].contains(de) && !corrGraph[de].contains(ut)) {
-          ok1 = true;
-          break;
-        }
-      }
-    }
-    if (ok2 || ok1) {
-      // Form a new P which is the current p minus this ui.
-      std::unordered_set<unsigned int> newP(p);
-      newP.erase(ui);
-      // std::cout << "init newP : " << newP.size() << " : ";
-      // for (auto pe : newP) {
-      // std::cout << pe << " ";
-      // }
-      // std::cout << std::endl;
-      // newD and newS start out as copies of the incoming.
-      std::unordered_set<unsigned int> newD(d);
-      std::unordered_set<unsigned int> newS(s);
-      for (auto v : d) {
-        if (p.contains(v)) {
-          // std::cout << "add " << v << " to newP 1" << std::endl;
-          newP.insert(v);
-        } else if (d.contains(v)) {
-          // can v be added to P?
-          if (cEdges[ui].contains(v)) {
-            if (t.contains(v)) {
-              newS.insert(v);
-            } else {
-              // std::cout << "add " << v << " to newP 2" << std::endl;
-              newP.insert(v);
-            }
-            newD.erase(v);
-          } else if (s.contains(v)) {
-            newS.erase(v);
-          }
-        }
-      }
-      // std::cout << "inter newP : " << newP.size() << " : ";
-      // for (auto pe : newP) {
-      // std::cout << pe << " ";
-      // }
-      // std::cout << std::endl;
-      // the new clique is the current clique plus u.
-      std::vector<unsigned int> newC(c);
-      newC.push_back(ui);
-
-      // We now recurse by using only the members of newP, newD and newS
-      // that are neighbours of u
-      // n is the set of all neighbours of u.
-      const auto &n = corrGraph[ui];
-      std::unordered_set<unsigned int> onwardP;
-      for (auto pe : newP) {
-        if (n.contains(pe)) {
-          onwardP.insert(pe);
-        }
-      }
-      std::unordered_set<unsigned int> onwardD;
-      for (auto de : newD) {
-        if (n.contains(de)) {
-          onwardD.insert(de);
-        }
-      }
-      std::unordered_set<unsigned int> onwardS;
-      for (auto se : newS) {
-        if (n.contains(se)) {
-          onwardS.insert(se);
-        }
-      }
-      enumerate_z_cliques(newC, onwardP, onwardD, onwardS, t, corrGraph, cEdges,
-                          dEdges, maxCliques);
-      s.insert(ui);
-    }
-  }
-}
-
 bool inline inVector(const std::vector<unsigned int> &v, unsigned int val) {
   return std::find(v.begin(), v.end(), val) != v.end();
 }
@@ -553,22 +370,6 @@ bool cPathToNonUtNbor(unsigned int ui, unsigned int ut,
                       const std::vector<std::vector<char>> &corrGraph,
                       const std::vector<std::vector<unsigned int>> &cEdges,
                       std::unique_ptr<boost::dynamic_bitset<>> &inD) {
-  // for (const auto &cgl : corrGraph) {
-  //   for (auto c : cgl) {
-  //     if (c) {
-  //       std::cout << c;
-  //     } else {
-  //       std::cout << '0';
-  //     }
-  //     std::cout << ' ';
-  //   }
-  //   std::cout << std::endl;
-  // }
-  // std::cout << "ui = " << ui << "  ut = " << ut << std::endl;
-  // for (auto dm : d) {
-  //   std::cout << dm << " ";
-  // }
-  // std::cout << std::endl;
   const auto &nUt = corrGraph[ut];
   boost::dynamic_bitset<> tried(corrGraph.size());
   if (!inD) {
@@ -587,6 +388,8 @@ bool cPathToNonUtNbor(unsigned int ui, unsigned int ut,
       // std::cout << "return true" << std::endl;
       return true;
     }
+
+    // Otherwise it's a breadth-first search.
     std::queue<unsigned int> q;
     q.push(ui);
 
@@ -691,7 +494,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
   // std::cout << "pivot node " << ut << std::endl;
   std::unique_ptr<boost::dynamic_bitset<>> inD;
   for (auto ui : p) {
-    if (std::find(s.begin(), s.end(), ui) != s.end()) {
+    if (inVector(s, ui)) {
       continue;
     }
     // if ui is adjacent to ut
@@ -729,7 +532,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
       newD.reserve(newD.size());
       for (auto v : d) {
         bool addD = true;
-        if (std::find(p.begin(), p.end(), v) != p.end() && n[v]) {
+        if (inVector(p, v) && n[v]) {
           // std::cout << "add " << v << " to newP 1" << std::endl;
           newP.push_back(v);
         } else {
@@ -742,7 +545,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
               newP.push_back(v);
             }
             addD = false;
-          } else if (n[v] && std::find(s.begin(), s.end(), v) != s.end()) {
+          } else if (n[v] && inVector(s, v)) {
             newS.push_back(v);
           }
         }
@@ -770,7 +573,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
 
 void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
                 const FMCS::MatchTable &atomMatchTable,
-                const FMCS::MatchTable &bondMatchTable,
+                const FMCS::MatchTable &bondMatchTable, bool uniquify,
                 std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
                     &maxCliques) {
   std::vector<std::pair<unsigned int, unsigned int>> atomPairs;
@@ -782,7 +585,6 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
   if (atomPairs.empty()) {
     return;
   }
-  std::cout << "atomPairs size = " << atomPairs.size() << std::endl;
 #if 0
   int i = 0;
   for (const auto &ap : atomPairs) {
@@ -826,14 +628,9 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
   std::vector<unsigned int> s;
   // Start each round of enumerate_z_cliques at an atom pair given by
   // the atomPairStarts.
-  unsigned int numDone = 0;
   for (size_t aps = 0U; aps < atomPairStarts.size(); ++aps) {
     for (unsigned int i = 0u; i < atomPairStarts[aps].first; ++i) {
       size_t u = atomPairStarts[aps].second + i;
-      numDone++;
-      std::cout << "starting with " << u << " : " << atomPairs[u].first
-                << " -> " << atomPairs[u].second << " : " << minMCSSSize
-                << std::endl;
       p.clear();
       d.clear();
       s.clear();
@@ -855,26 +652,19 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
       t[u] = 1;
       if (!rawMaxCliques.empty() &&
           rawMaxCliques.front().size() > minMCSSSize) {
-        std::cout << "updating minMCSSSize to " << rawMaxCliques.front().size()
-                  << std::endl;
         minMCSSSize = rawMaxCliques.front().size();
       }
       // If we have tried minMCSSSize atoms from mol1 as start points
       // and haven't found a clique of the requisite size, we won't be
       // able to from now on in.
       if (aps + minMCSSSize > atomPairStarts.size()) {
-        std::cout << "Break 1 : " << aps << " + " << minMCSSSize << " vs "
-                  << atomPairStarts.size() << std::endl;
         break;
       }
     }
     if (aps + minMCSSSize > atomPairStarts.size()) {
-      std::cout << "Break 2 : " << aps << " + " << minMCSSSize << " vs "
-                << atomPairStarts.size() << std::endl;
       break;
     }
   }
-  std::cout << "numDone = " << numDone << std::endl;
   // std::cout << "Number of cliques: " << rawMaxCliques.size() << std::endl;
   // for (auto &c : rawMaxCliques) {
   //   std::ranges::sort(c);
@@ -895,8 +685,28 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
       return;
     }
   }
+  maxCliques.clear();
   maxCliques.reserve(rawMaxCliques.size());
+  std::vector<std::vector<unsigned int>> cliqueAtoms;
+  cliqueAtoms.reserve(rawMaxCliques.size());
   for (const auto &rmc : rawMaxCliques) {
+    if (uniquify) {
+      std::vector<unsigned int> theseCliqueAtoms;
+      theseCliqueAtoms.resize(2 * rmc.size());
+      for (size_t i = 0; i < rmc.size(); ++i) {
+        theseCliqueAtoms[i] = atomPairs[rmc[i]].first;
+        theseCliqueAtoms[i + rmc.size()] = atomPairs[rmc[i]].second;
+      }
+      std::sort(theseCliqueAtoms.begin(),
+                theseCliqueAtoms.begin() + rmc.size());
+      std::sort(theseCliqueAtoms.begin() + rmc.size(), theseCliqueAtoms.end());
+      if (std::find(cliqueAtoms.begin(), cliqueAtoms.end(), theseCliqueAtoms) ==
+          cliqueAtoms.end()) {
+        cliqueAtoms.emplace_back(std::move(theseCliqueAtoms));
+      } else {
+        continue;
+      }
+    }
     std::vector<std::pair<unsigned int, unsigned int>> newClique;
     newClique.reserve(rmc.size());
     for (const auto cm : rmc) {
@@ -906,7 +716,6 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
     // std::cout << makeSMARTSFromMCSS(mol1, newClique) << std::endl;
     maxCliques.push_back(std::move(newClique));
   }
-
 #if 0
   KochBK<unsigned int> g;
   for (unsigned int i = 0; i < corrGraph.size(); ++i) {

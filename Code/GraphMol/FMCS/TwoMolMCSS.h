@@ -32,7 +32,7 @@ class ROMol;
 RDKIT_FMCS_EXPORT void TwoMolMCSS(
     const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
     const FMCS::MatchTable &atomMatchTable,
-    const FMCS::MatchTable &bondMatchTable,
+    const FMCS::MatchTable &bondMatchTable, bool uniquify,
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
         &maxCliques);
 
@@ -40,7 +40,7 @@ RDKIT_FMCS_EXPORT void TwoMolMCSS(
 // atoms in the given molecule and make a SMARTS string from it
 // by deleting all atoms from mol that aren't in the clique.
 RDKIT_FMCS_EXPORT std::string makeSMARTSFromMCSS(
-    const ROMol &mol1, const ROMol &mol2,
+    const ROMol &mol1,
     const std::vector<std::pair<unsigned int, unsigned int>> &clique);
 }  // namespace RDKit
 #endif  // TWOMOLMCSS_H
