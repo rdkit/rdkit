@@ -77,7 +77,8 @@ void buildCorrespondenceGraph(
     const FMCS::MatchTable &bondMatchTable,
     std::vector<std::vector<char>> &corrGraph,
     std::vector<unsigned int> &corrGraphNumConns,
-    std::vector<std::pair<unsigned int, unsigned int>> &atomPairStarts) {
+    std::vector<std::pair<unsigned int, unsigned int>> &atomPairStarts,
+    std::vector<std::vector<unsigned int>> &cEdges) {
   std::vector<std::vector<const Bond *>> bond1s(
       mol1.getNumAtoms(),
       std::vector<const Bond *>(mol1.getNumAtoms(), nullptr));
@@ -92,6 +93,7 @@ void buildCorrespondenceGraph(
     bond2s[b->getBeginAtomIdx()][b->getEndAtomIdx()] = b;
     bond2s[b->getEndAtomIdx()][b->getBeginAtomIdx()] = b;
   }
+
   for (size_t i = 1; i < atomPairs.size(); ++i) {
     for (size_t j = 0; j < i; ++j) {
       if (atomPairs[i].first == atomPairs[j].first ||
@@ -106,6 +108,10 @@ void buildCorrespondenceGraph(
       if (bm) {
         corrGraphNumConns[i]++;
         corrGraphNumConns[j]++;
+      }
+      if (bm == 'c') {
+        cEdges[i].push_back(j);
+        cEdges[j].push_back(i);
       }
     }
   }
@@ -123,8 +129,8 @@ void buildCorrespondenceGraph(
       }
     }
   }
-  std::cout << num0 << ", " << numc << ", " << numd << std::endl;
-
+  std::cout << "num0 = " << num0 << "  numc = " << numc << "  numd = " << numd
+            << std::endl;
   atomPairStarts.resize(mol1.getNumAtoms());
   for (size_t i = 0U; i < atomPairs.size(); ++i) {
     atomPairStarts[atomPairs[i].first].first++;
@@ -377,6 +383,7 @@ void enumerate_z_cliques(
     const std::vector<std::unordered_set<unsigned int>> &cEdges,
     const std::vector<std::unordered_set<unsigned int>> &dEdges,
     std::vector<std::vector<unsigned int>> &maxCliques) {
+  // Not this one
 #if 0
   if (c.size() > 0) {
     std::cout << "c ";
@@ -543,7 +550,9 @@ bool inline inVector(const std::vector<unsigned int> &v, unsigned int val) {
 // isn't connected to ut.
 bool cPathToNonUtNbor(unsigned int ui, unsigned int ut,
                       const std::vector<unsigned int> &d,
-                      const std::vector<std::vector<char>> &corrGraph) {
+                      const std::vector<std::vector<char>> &corrGraph,
+                      const std::vector<std::vector<unsigned int>> &cEdges,
+                      std::unique_ptr<boost::dynamic_bitset<>> &inD) {
   // for (const auto &cgl : corrGraph) {
   //   for (auto c : cgl) {
   //     if (c) {
@@ -561,10 +570,12 @@ bool cPathToNonUtNbor(unsigned int ui, unsigned int ut,
   // }
   // std::cout << std::endl;
   const auto &nUt = corrGraph[ut];
-  boost::dynamic_bitset<> inD(corrGraph.size());
   boost::dynamic_bitset<> tried(corrGraph.size());
-  for (auto dm : d) {
-    inD[dm] = true;
+  if (!inD) {
+    inD.reset(new boost::dynamic_bitset<>(corrGraph.size()));
+    for (auto dm : d) {
+      (*inD)[dm] = true;
+    }
   }
   for (auto dm : d) {
     if (nUt[dm]) {
@@ -584,8 +595,8 @@ bool cPathToNonUtNbor(unsigned int ui, unsigned int ut,
     while (!q.empty()) {
       auto x = q.front();
       q.pop();
-      for (size_t xn = 0; xn < corrGraph[x].size(); ++xn) {
-        if (corrGraph[x][xn] != 'c' || tried[xn] || !inD[xn]) {
+      for (auto xn : cEdges[x]) {
+        if (corrGraph[x][xn] != 'c' || tried[xn] || !(*inD)[xn]) {
           continue;
         }
         // It's in the path and in d, so if it's not a n'bour of ut
@@ -610,6 +621,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
                          const std::vector<char> &t,
                          const std::vector<std::vector<char>> &corrGraph,
                          const std::vector<unsigned int> &corrGraphNumConns,
+                         const std::vector<std::vector<unsigned int>> &cEdges,
                          std::vector<std::vector<unsigned int>> &maxCliques) {
 #if 0
   if (c.size() == 1) {
@@ -677,6 +689,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
         return corrGraphNumConns[a] < corrGraphNumConns[b];
       });
   // std::cout << "pivot node " << ut << std::endl;
+  std::unique_ptr<boost::dynamic_bitset<>> inD;
   for (auto ui : p) {
     if (std::find(s.begin(), s.end(), ui) != s.end()) {
       continue;
@@ -687,13 +700,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
     bool ok1 = false;
     bool ok2 = !corrGraph[ui][ut];
     if (!ok2) {
-      ok1 = cPathToNonUtNbor(ui, ut, d, corrGraph);
-      // for (auto de : d) {
-      // if (!corrGraph[de][ut] && corrGraph[ui][de] == 'c') {
-      // ok1 = true;
-      // break;
-      // }
-      // }
+      ok1 = cPathToNonUtNbor(ui, ut, d, corrGraph, cEdges, inD);
     }
     if (ok2 || ok1) {
       const auto &n = corrGraph[ui];
@@ -753,7 +760,7 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
       // newC.push_back(ui);
       c.push_back(ui);
       enumerate_z_cliques(c, newP, newD, newS, t, corrGraph, corrGraphNumConns,
-                          maxCliques);
+                          cEdges, maxCliques);
       c.pop_back();
       s.push_back(ui);
     }
@@ -786,8 +793,9 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
       atomPairs.size(), std::vector<char>(atomPairs.size(), 0));
   std::vector<unsigned int> corrGraphNumConns(atomPairs.size(), 0);
   std::vector<std::pair<unsigned int, unsigned int>> atomPairStarts;
+  std::vector<std::vector<unsigned int>> cEdges(atomPairs.size());
   buildCorrespondenceGraph(atomPairs, mol1, mol2, bondMatchTable, corrGraph,
-                           corrGraphNumConns, atomPairStarts);
+                           corrGraphNumConns, atomPairStarts, cEdges);
 
 #if 0
   auto printGraph =
@@ -843,7 +851,7 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
       clique.clear();
       clique.push_back(u);
       enumerate_z_cliques(clique, p, d, s, t, corrGraph, corrGraphNumConns,
-                          rawMaxCliques);
+                          cEdges, rawMaxCliques);
       t[u] = 1;
       if (!rawMaxCliques.empty() &&
           rawMaxCliques.front().size() > minMCSSSize) {
