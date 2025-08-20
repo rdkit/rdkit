@@ -16,9 +16,12 @@
 #include <numeric>
 #include <unordered_set>
 
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>
+
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/FMCS/MatchTable.h>
+#include <GraphMol/FMCS/chatgpt.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 
 namespace RDKit {
@@ -36,8 +39,9 @@ bool atomsMatch(const Atom *atom1, const Atom *atom2) {
 // 'd' if they aren't or are both nullptr (for the d-Edges).
 char bondsMatch(const Bond *bond1, const Bond *bond2,
                 const FMCS::MatchTable &bondMatchTable) {
-  // They're both not bonded, so they're d-Edges.
-  if (!bond1 && !bond2) {
+  // If they're both not bonded or 1 is bonded and the other isn't,
+  // they're d-Edges.
+  if ((!bond1 && !bond2) || (bond1 && !bond2) || (!bond1 && bond2)) {
     return 'd';
   }
   // If they're both bonded and the same type, they're c-Edges.
@@ -71,61 +75,6 @@ void buildCorrespondenceGraph(
     const std::vector<std::pair<unsigned int, unsigned int>> &atomPairs,
     const ROMol &mol1, const ROMol &mol2,
     const FMCS::MatchTable &bondMatchTable,
-    std::vector<std::unordered_set<unsigned int>> &corrGraph,
-    std::vector<std::unordered_set<unsigned int>> &cEdges,
-    std::vector<std::unordered_set<unsigned int>> &dEdges) {
-  std::vector<std::vector<const Bond *>> bond1s(
-      mol1.getNumAtoms(),
-      std::vector<const Bond *>(mol1.getNumAtoms(), nullptr));
-  for (const auto b : mol1.bonds()) {
-    bond1s[b->getBeginAtomIdx()][b->getEndAtomIdx()] = b;
-    bond1s[b->getEndAtomIdx()][b->getBeginAtomIdx()] = b;
-  }
-  std::vector<std::vector<const Bond *>> bond2s(
-      mol2.getNumAtoms(),
-      std::vector<const Bond *>(mol2.getNumAtoms(), nullptr));
-  for (const auto b : mol2.bonds()) {
-    bond2s[b->getBeginAtomIdx()][b->getEndAtomIdx()] = b;
-    bond2s[b->getEndAtomIdx()][b->getBeginAtomIdx()] = b;
-  }
-  for (size_t i = 0U; i < atomPairs.size() - 1; ++i) {
-    for (size_t j = i + 1; j < atomPairs.size(); ++j) {
-      if (atomPairs[i].first == atomPairs[j].first ||
-          atomPairs[i].second == atomPairs[j].second) {
-        continue;
-      }
-      auto bond1 = bond1s[atomPairs[i].first][atomPairs[j].first];
-      auto bond2 = bond2s[atomPairs[i].second][atomPairs[j].second];
-      auto bm = bondsMatch(bond1, bond2, bondMatchTable);
-      if (!bm) {
-        continue;
-      }
-      corrGraph[i].insert(j);
-      corrGraph[j].insert(i);
-      if (bm == 'c') {
-        cEdges[i].insert(j);
-        cEdges[j].insert(i);
-      } else if (bm == 'd') {
-        dEdges[i].insert(j);
-        dEdges[j].insert(i);
-      }
-#if 0
-      auto d1 = distMat1[atomPairs[i].first * mol1.getNumAtoms() +
-                         atomPairs[j].first];
-      auto d2 = distMat2[atomPairs[i].second * mol2.getNumAtoms() +
-                         atomPairs[j].second];
-      if (fabs(d1 - d2) < 1.0e-6) {
-        corrGraph[i].insert(j);
-        corrGraph[j].insert(i);
-      }
-#endif
-    }
-  }
-}
-void buildCorrespondenceGraph(
-    const std::vector<std::pair<unsigned int, unsigned int>> &atomPairs,
-    const ROMol &mol1, const ROMol &mol2,
-    const FMCS::MatchTable &bondMatchTable,
     std::vector<std::vector<char>> &corrGraph,
     std::vector<unsigned int> &corrGraphNumConns,
     std::vector<std::pair<unsigned int, unsigned int>> &atomPairStarts) {
@@ -143,8 +92,8 @@ void buildCorrespondenceGraph(
     bond2s[b->getBeginAtomIdx()][b->getEndAtomIdx()] = b;
     bond2s[b->getEndAtomIdx()][b->getBeginAtomIdx()] = b;
   }
-  for (size_t i = 0U; i < atomPairs.size() - 1; ++i) {
-    for (size_t j = i + 1; j < atomPairs.size(); ++j) {
+  for (size_t i = 1; i < atomPairs.size(); ++i) {
+    for (size_t j = 0; j < i; ++j) {
       if (atomPairs[i].first == atomPairs[j].first ||
           atomPairs[i].second == atomPairs[j].second) {
         continue;
@@ -160,6 +109,22 @@ void buildCorrespondenceGraph(
       }
     }
   }
+  unsigned int num0 = 0;
+  unsigned int numc = 0;
+  unsigned int numd = 0;
+  for (const auto &crl : corrGraph) {
+    for (const auto c : crl) {
+      if (c == 0) {
+        num0++;
+      } else if (c == 'c') {
+        numc++;
+      } else if (c == 'd') {
+        numd++;
+      }
+    }
+  }
+  std::cout << num0 << ", " << numc << ", " << numd << std::endl;
+
   atomPairStarts.resize(mol1.getNumAtoms());
   for (size_t i = 0U; i < atomPairs.size(); ++i) {
     atomPairStarts[atomPairs[i].first].first++;
@@ -570,8 +535,76 @@ void enumerate_z_cliques(
   }
 }
 
+bool inline inVector(const std::vector<unsigned int> &v, unsigned int val) {
+  return std::find(v.begin(), v.end(), val) != v.end();
+}
+
+// Returns true if there's a path along c-Edges from ui to a vertex in d that
+// isn't connected to ut.
+bool cPathToNonUtNbor(unsigned int ui, unsigned int ut,
+                      const std::vector<unsigned int> &d,
+                      const std::vector<std::vector<char>> &corrGraph) {
+  // for (const auto &cgl : corrGraph) {
+  //   for (auto c : cgl) {
+  //     if (c) {
+  //       std::cout << c;
+  //     } else {
+  //       std::cout << '0';
+  //     }
+  //     std::cout << ' ';
+  //   }
+  //   std::cout << std::endl;
+  // }
+  // std::cout << "ui = " << ui << "  ut = " << ut << std::endl;
+  // for (auto dm : d) {
+  //   std::cout << dm << " ";
+  // }
+  // std::cout << std::endl;
+  const auto &nUt = corrGraph[ut];
+  boost::dynamic_bitset<> inD(corrGraph.size());
+  boost::dynamic_bitset<> tried(corrGraph.size());
+  for (auto dm : d) {
+    inD[dm] = true;
+  }
+  for (auto dm : d) {
+    if (nUt[dm]) {
+      continue;
+    }
+    // Is there a c-path in the corrGraph from ui to dm?
+    // If they're directly connected it's easy
+    if (corrGraph[ui][dm] == 'c') {
+      // std::cout << "return true" << std::endl;
+      return true;
+    }
+    std::queue<unsigned int> q;
+    q.push(ui);
+
+    tried.reset();
+    tried[ui] = true;
+    while (!q.empty()) {
+      auto x = q.front();
+      q.pop();
+      for (size_t xn = 0; xn < corrGraph[x].size(); ++xn) {
+        if (corrGraph[x][xn] != 'c' || tried[xn] || !inD[xn]) {
+          continue;
+        }
+        // It's in the path and in d, so if it's not a n'bour of ut
+        // return true.
+        if (!nUt[xn]) {
+          // std::cout << "return true" << std::endl;
+          return true;
+        }
+        q.push(xn);
+        tried[xn] = true;
+      }
+    }
+  }
+  // std::cout << "return false" << std::endl;
+  return false;
+}
+
 void enumerate_z_cliques(std::vector<unsigned int> &c,
-                         const std::vector<unsigned int> &p,
+                         const std::vector<unsigned int> p,
                          const std::vector<unsigned int> &d,
                          std::vector<unsigned int> &s,
                          const std::vector<char> &t,
@@ -654,12 +687,13 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
     bool ok1 = false;
     bool ok2 = !corrGraph[ui][ut];
     if (!ok2) {
-      for (auto de : d) {
-        if (!corrGraph[de][ut] && corrGraph[ui][de] == 'c') {
-          ok1 = true;
-          break;
-        }
-      }
+      ok1 = cPathToNonUtNbor(ui, ut, d, corrGraph);
+      // for (auto de : d) {
+      // if (!corrGraph[de][ut] && corrGraph[ui][de] == 'c') {
+      // ok1 = true;
+      // break;
+      // }
+      // }
     }
     if (ok2 || ok1) {
       const auto &n = corrGraph[ui];
@@ -741,6 +775,7 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
   if (atomPairs.empty()) {
     return;
   }
+  std::cout << "atomPairs size = " << atomPairs.size() << std::endl;
 #if 0
   int i = 0;
   for (const auto &ap : atomPairs) {
@@ -775,14 +810,6 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
 #endif
   std::vector<unsigned int> clique;
   std::vector<std::vector<unsigned int>> rawMaxCliques;
-#if 0
-  std::unordered_set<unsigned int> remaining(corrGraph.size());
-  for (unsigned int i = 0U; i < corrGraph.size(); ++i) {
-    remaining.insert(i);
-  }
-  std::unordered_set<unsigned int> done;
-  bron_kerbosch(clique, remaining, done, corrGraph, rawMaxCliques);
-#else
   // Running enumerate_z_cliques over each node in the corrGraph in turn.
 #if 1
   std::vector<char> t(corrGraph.size(), 0);
@@ -791,11 +818,14 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
   std::vector<unsigned int> s;
   // Start each round of enumerate_z_cliques at an atom pair given by
   // the atomPairStarts.
+  unsigned int numDone = 0;
   for (size_t aps = 0U; aps < atomPairStarts.size(); ++aps) {
     for (unsigned int i = 0u; i < atomPairStarts[aps].first; ++i) {
       size_t u = atomPairStarts[aps].second + i;
-      // std::cout << "starting with " << u << " : " << minMCSSSize <<
-      // std::endl;
+      numDone++;
+      std::cout << "starting with " << u << " : " << atomPairs[u].first
+                << " -> " << atomPairs[u].second << " : " << minMCSSSize
+                << std::endl;
       p.clear();
       d.clear();
       s.clear();
@@ -817,26 +847,26 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
       t[u] = 1;
       if (!rawMaxCliques.empty() &&
           rawMaxCliques.front().size() > minMCSSSize) {
-        // std::cout << "updating minMCSSSize to " <<
-        // rawMaxCliques.front().size()
-        //           << std::endl;
+        std::cout << "updating minMCSSSize to " << rawMaxCliques.front().size()
+                  << std::endl;
         minMCSSSize = rawMaxCliques.front().size();
       }
       // If we have tried minMCSSSize atoms from mol1 as start points
       // and haven't found a clique of the requisite size, we won't be
       // able to from now on in.
       if (aps + minMCSSSize > atomPairStarts.size()) {
-        // std::cout << "Break 1 : " << aps << " + " << minMCSSSize << " vs "
-        //           << atomPairStarts.size() << std::endl;
+        std::cout << "Break 1 : " << aps << " + " << minMCSSSize << " vs "
+                  << atomPairStarts.size() << std::endl;
         break;
       }
     }
     if (aps + minMCSSSize > atomPairStarts.size()) {
-      // std::cout << "Break 2 : " << aps << " + " << minMCSSSize << " vs "
-      //           << atomPairStarts.size() << std::endl;
+      std::cout << "Break 2 : " << aps << " + " << minMCSSSize << " vs "
+                << atomPairStarts.size() << std::endl;
       break;
     }
   }
+  std::cout << "numDone = " << numDone << std::endl;
   // std::cout << "Number of cliques: " << rawMaxCliques.size() << std::endl;
   // for (auto &c : rawMaxCliques) {
   //   std::ranges::sort(c);
@@ -849,64 +879,6 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
   //   }
   //   std::cout << std::endl;
   // }
-#endif
-#if 0
-  {
-    rawMaxCliques.clear();
-    std::vector<std::unordered_set<unsigned int>> oldCorrGraph(
-        atomPairs.size(), std::unordered_set<unsigned int>());
-    // cEdges are edges in the correspondence graph where the 2 atoms
-    // in each pair are bonded
-    std::vector<std::unordered_set<unsigned int>> cEdges(
-        atomPairs.size(), std::unordered_set<unsigned int>());
-    // cEdges are the opposite - atoms in both pairs are not bonded.
-    std::vector<std::unordered_set<unsigned int>> dEdges(
-        atomPairs.size(), std::unordered_set<unsigned int>());
-    buildCorrespondenceGraph(atomPairs, mol1, mol2, oldCorrGraph, cEdges,
-                             dEdges);
-    std::cout << "OLD GEAR" << std::endl;
-    std::unordered_set<unsigned int> t;
-    std::unordered_set<unsigned int> p;
-    std::unordered_set<unsigned int> d;
-    std::unordered_set<unsigned int> s;
-    for (size_t u = 0U; u < oldCorrGraph.size(); ++u) {
-      // std::cout << "starting with " << u << std::endl;
-      p.clear();
-      d.clear();
-      s.clear();
-      for (auto v : oldCorrGraph[u]) {
-        if (cEdges[v].contains(u)) {
-          if (t.contains(v)) {
-            s.insert(v);
-          } else {
-            p.insert(v);
-          }
-        } else if (dEdges[v].contains(u)) {
-          d.insert(v);
-        }
-      }
-      clique.clear();
-      clique.push_back(u);
-      enumerate_z_cliques(clique, p, d, s, t, oldCorrGraph, cEdges, dEdges,
-                          rawMaxCliques);
-      t.insert(u);
-    }
-  }
-  std::cout << "Number of cliques: " << rawMaxCliques.size() << std::endl;
-  for (auto &c : rawMaxCliques) {
-    std::ranges::sort(c);
-  }
-  std::ranges::sort(rawMaxCliques);
-  for (const auto &clique : rawMaxCliques) {
-    std::cout << clique.size() << " :";
-    for (const auto &c : clique) {
-      std::cout << " " << c;
-    }
-    std::cout << std::endl;
-  }
-
-#endif
-
 #endif
   if (rawMaxCliques.empty()) {
     return;
@@ -923,13 +895,34 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
       newClique.push_back(atomPairs[cm]);
     }
     std::ranges::sort(newClique);
-    std::cout << makeSMARTSFromMCSS(mol1, mol2, newClique) << std::endl;
+    // std::cout << makeSMARTSFromMCSS(mol1, newClique) << std::endl;
     maxCliques.push_back(std::move(newClique));
   }
+
+#if 0
+  KochBK<unsigned int> g;
+  for (unsigned int i = 0; i < corrGraph.size(); ++i) {
+    for (unsigned int j = 0; j < corrGraph[i].size(); ++j) {
+      if (corrGraph[i][j]) {
+        g.add_edge(i, j, corrGraph[i][j]);
+      }
+    }
+  }
+  auto cliques = g.enumerate_c_cliques();
+  std::ranges::sort(cliques, [](const auto &a, const auto &b) -> bool {
+    return a.size() < b.size();
+  });
+  std::cout << "c-cliques:\n";
+  for (auto &C : cliques) {
+    std::cout << C.size() << " { ";
+    for (auto &v : C) std::cout << v << " ";
+    std::cout << "}\n";
+  }
+#endif
 }
 
 std::string makeSMARTSFromMCSS(
-    const ROMol &mol1, const ROMol &mol2,
+    const ROMol &mol1,
     const std::vector<std::pair<unsigned int, unsigned int>> &clique) {
   RWMol qmol(mol1);
   std::unordered_set<unsigned int> atomsToKeep;
