@@ -127,3 +127,31 @@ TEST_CASE("atropisomerism and dependent chirality") {
     }
   }
 }
+
+TEST_CASE("Github #8602: atropisomer with slight z coordinates") {
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/atropisomers/";
+  SECTION("as reported") {
+    auto m = v2::FileParsers::MolFromMolFile(rdbase + "atropWith3d_8602.mol");
+    REQUIRE(m);
+    for (auto bond : m->bonds()) {
+      // we read in the molecule, but the bonds should be co-planar
+      // in the current implementation, where 2D mol in 3D does not
+      // fall back to a 2D bond explicit annotation check
+      CHECK(bond->getStereo() != Bond::BondStereo::STEREOATROPCW);
+      CHECK(bond->getStereo() != Bond::BondStereo::STEREOATROPCCW);
+    }
+  }
+  SECTION("x axis is Z axis") {
+    auto m =
+        v2::FileParsers::MolFromMolFile(rdbase + "atropWith3d_8602_allZ.mol");
+    REQUIRE(m);
+    for (auto bond : m->bonds()) {
+      // we read in the molecule, but the bonds should be co-planar
+      // in the current implementation, where 2D mol in 3D does not
+      // fall back to a 2D bond explicit annotation check
+      CHECK(bond->getStereo() != Bond::BondStereo::STEREOATROPCW);
+      CHECK(bond->getStereo() != Bond::BondStereo::STEREOATROPCCW);
+    }
+  }
+}

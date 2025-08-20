@@ -92,12 +92,15 @@ bool getBondFrameOfReference(const Bond *bond, const Conformer *conf,
 
   // here for 3D conf
 
-  if (xAxis.x > REALLY_SMALL_BOND_LEN || xAxis.y > REALLY_SMALL_BOND_LEN) {
-    zAxis = RDGeom::Point3D(-xAxis.y, xAxis.x,
-                            0);  // temp z axis - used to find yAxis
+  if (fabs(xAxis.x) > REALLY_SMALL_BOND_LEN ||
+      fabs(xAxis.y) > REALLY_SMALL_BOND_LEN) {
+    zAxis = RDGeom::Point3D(
+        0, 0, 1);  // since X or Y value of the new x xaxis is NOT 0, this
+                   // new temp z axis cannnot be colinear with it
   } else {
-    zAxis = RDGeom::Point3D(xAxis.z, xAxis.z,
-                            0);  // temp z axis - used to find yAxis
+    zAxis = RDGeom::Point3D(1, 0, 0);  // since the new x axis is exactly along
+                                       // the (old) z axis, this new temp z axis
+                                       // is NOT colinear with it
   }
 
   yAxis = zAxis.crossProduct(xAxis);
