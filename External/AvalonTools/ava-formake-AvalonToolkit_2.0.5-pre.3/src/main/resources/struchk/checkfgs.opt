@@ -1,0 +1,11 @@
+# Parameter file for STRUCHK 2.0
+# for use with CORDAT
+#
+ta      StandardFiles/checkfgs.trn       # augmented atom transformations
+or                                # create data fields with STRUCHK results
+ca      StandardFiles/checkfgs.chk       # table of allowed augmented atoms
+cc                                # check for atom collisions
+cl      3                         # collision limit is 3% of bond length
+cs                                # check stereo conventions
+cn      999                       # max number of atoms or bonds
+l       struchk.log
