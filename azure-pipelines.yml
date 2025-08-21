@@ -17,6 +17,7 @@ jobs:
       dockerComposeFile: './Code/MinimalLib/docker/docker_compose_build_minimallib.yml'
       dockerComposeFileArgs: |
         GET_SRC=copy_from_local
+        COMPOSE_BAKE=false
 - job: Ubuntu_x64
   timeoutInMinutes: 120
   pool:
@@ -71,7 +72,7 @@ jobs:
   steps:
   - template: .azure-pipelines/mac_build_java.yml
 - job: Windows_VS2022_x64
-  timeoutInMinutes: 120
+  timeoutInMinutes: 150
   pool:
     vmImage: windows-2022
   variables:

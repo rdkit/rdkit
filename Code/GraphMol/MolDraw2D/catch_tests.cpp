@@ -369,6 +369,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testStandardColoursHighlightedAtoms_1.svg", 4265528904U},
     {"testStandardColoursHighlightedAtoms_2.svg", 2285000572U},
     {"testArrowheads.svg", 3318006834U},
+    {"testOffsetHighlightedMols.svg", 3147614756U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10754,7 +10755,7 @@ TEST_CASE("Solid arrowhead in wrong place (Github 8500)") {
 }
 
 TEST_CASE("Show all CIP codes (Github 8561)") {
-    auto m = R"CTAB(
+  auto m = R"CTAB(
      RDKit          2D
 
   0  0  0  0  0  0  0  0  0  0999 V3000
@@ -10810,40 +10811,158 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-    REQUIRE(m);
-    CIPLabeler::assignCIPLabels(*m);
-    MolDraw2DSVG drawer(350, 300);
-    drawer.drawOptions().addStereoAnnotation = true;
-    drawer.drawOptions().showAllCIPCodes = true;
-    drawer.drawMolecule(*m);
-    drawer.finishDrawing();
-    auto text = drawer.getDrawingText();
-    std::ofstream outs("testShowAllCIPLabels.svg");
-    outs << text;
-    outs.close();
+  REQUIRE(m);
+  CIPLabeler::assignCIPLabels(*m);
+  MolDraw2DSVG drawer(350, 300);
+  drawer.drawOptions().addStereoAnnotation = true;
+  drawer.drawOptions().showAllCIPCodes = true;
+  drawer.drawMolecule(*m);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testShowAllCIPLabels.svg");
+  outs << text;
+  outs.close();
 
-    // Check for Blue (M) CIP label on Bond
-    TEST_ASSERT(
-        text.find("class='CIP_Code'") !=
-        std::string::npos);
+  // Check for Blue (M) CIP label on Bond
+  TEST_ASSERT(text.find("class='CIP_Code'") != std::string::npos);
 
-    //try again, this tiem using JSON to set options
-    const char *json =
-      "{\"addStereoAnnotation\":true, \"showAllCIPCodes\":true}";
-    MolDraw2DSVG drawer2(350, 300);
-    MolDrawOptions opts;
-    MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
-    drawer2.drawOptions() = opts;
-    drawer2.drawMolecule(*m);
-    drawer2.finishDrawing();
-    auto text2 = drawer2.getDrawingText();
-    std::ofstream outs2("testShowAllCIPLabels2.svg");
-    outs2 << text2;
-    outs2.close();
+  // try again, this tiem using JSON to set options
+  const char *json = "{\"addStereoAnnotation\":true, \"showAllCIPCodes\":true}";
+  MolDraw2DSVG drawer2(350, 300);
+  MolDrawOptions opts;
+  MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
+  drawer2.drawOptions() = opts;
+  drawer2.drawMolecule(*m);
+  drawer2.finishDrawing();
+  auto text2 = drawer2.getDrawingText();
+  std::ofstream outs2("testShowAllCIPLabels2.svg");
+  outs2 << text2;
+  outs2.close();
 
-    // Check for Blue (M) CIP label on Bond
-    TEST_ASSERT(
-        text2.find("class='CIP_Code'") !=
-        std::string::npos);
+  // Check for Blue (M) CIP label on Bond
+  TEST_ASSERT(text2.find("class='CIP_Code'") != std::string::npos);
+}
+
+TEST_CASE("Github 8679 - DrawMoleculesWithHighlights doesn't offset") {
+  auto mol1 = "c1ccccc1Cl"_smiles;
+  REQUIRE(mol1);
+  auto mol2 = "c1ccccc1Br"_smiles;
+  REQUIRE(mol2);
+  MolDraw2DSVG drawer(600, 300, 300, 300, true);
+  drawer.drawOptions().addAtomIndices = true;
+  std::map<int, std::vector<DrawColour>> atomCols;
+  std::map<int, double> atomRads;
+  std::map<int, int> bondMults;
+  std::map<int, std::vector<DrawColour>> bondCols;
+
+  drawer.drawMoleculeWithHighlights(*mol1, "", atomCols, bondCols, atomRads,
+                                    bondMults);
+  drawer.setOffset(300, 0);
+  drawer.drawMoleculeWithHighlights(*mol2, "", atomCols, bondCols, atomRads,
+                                    bondMults);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testOffsetHighlightedMols.svg");
+  outs << text;
+  outs.close();
+  const static std::regex atom6(
+      "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-6'.*</text>");
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), atom6),
+                    std::sregex_iterator()));
+
+  // There are 4 characters for the 2 atom 6s.  Check that the 1st and 3rd
+  // are in different panels, by x coord.
+  CHECK(match_count == 4);
+  auto match_begin = std::sregex_iterator(text.begin(), text.end(), atom6);
+  std::smatch match = *match_begin;
+  double x1 = stod(match[1]);
+  CHECK(x1 < 300.0);
+  ++match_begin;
+  ++match_begin;
+  match = *match_begin;
+  double x2 = stod(match[1]);
+  CHECK((x2 > 300.0 && x2 < 600.0));
+  check_file_hash("testOffsetHighlightedMols.svg");
+}
+
+TEST_CASE("Lasso Highlights Throw Exception") {
+  auto m = R"CTAB(From_EN300-13775
+     RDKit          2D
+
+ 27 30  0  0  0  0  0  0  0  0999 V2000
+    0.7500   -6.4952    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5000   -5.1962    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0000   -5.1962    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5000   -7.7942    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -3.8971    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5000   -2.5981    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -3.8971    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000   -2.5981    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9266   -2.1346    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9266   -0.6346    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1401    0.2471    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7500   -6.4952    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0000   -7.7942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2500   -6.4952    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7500   -9.0933    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.0000   -7.7942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2500   -9.0933    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0000  -10.3923    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.5000   -7.7942    0.0000 R   0  0  0  0  0  1  0  0  0  0  0  0
+    1.5000  -10.3923    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7500  -11.6913    0.0000 R   0  0  0  0  0  1  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  3
+  1  4  1  0
+  2  5  1  0
+  5  6  2  0
+  7  5  1  0
+  6  8  1  0
+  9  7  2  0
+  8 10  2  0
+ 11  8  1  0
+ 10  9  1  0
+  9 12  1  0
+ 13 10  1  0
+ 14 11  1  0
+ 12 15  1  0
+ 15 13  1  0
+ 13 16  1  0
+ 16 14  1  0
+ 15 17  2  0
+ 18  3  1  0
+ 19 18  2  0
+ 18 20  1  0
+ 21 19  1  0
+ 20 22  2  0
+ 23 21  2  0
+ 21 24  1  0
+ 22 25  1  0
+ 22 23  1  0
+ 24 26  2  0
+ 24 27  1  0
+M  ISO  2  25   3  27   2
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  std::map<int, std::vector<DrawColour>> ha_map;
+  for (auto i : std::vector<int>{0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                                 15, 16}) {
+    ha_map.insert(std::make_pair(i, std::vector{DrawColour(1.0, 0.0, 0.25)}));
   }
-
+  std::map<int, std::vector<DrawColour>> hb_map;
+  std::map<int, double> h_rads;
+  std::map<int, int> h_lw_mult;
+  MolDraw2DSVG drawer(300, 300, 0, 0, false);
+  drawer.drawOptions().multiColourHighlightStyle =
+      RDKit::MultiColourHighlightStyle::LASSO;
+  REQUIRE_NOTHROW(drawer.drawMoleculeWithHighlights(*m, "Lasso 1", ha_map,
+                                                    hb_map, h_rads, h_lw_mult));
+}
