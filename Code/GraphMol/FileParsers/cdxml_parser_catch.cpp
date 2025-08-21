@@ -1323,6 +1323,7 @@ TEST_CASE("Github #7501 - dative bonds") {
   }
 }
 
+#ifdef RDK_BUILD_CHEMDRAW_SUPPORT
 struct format_check {
   std::string filename;
   bool stream, iscdx, cdxres, cdxmlres, autores;
@@ -1435,4 +1436,5 @@ TEST_CASE("CDX and Formats") {
     }
   }
 }
+#endif
 	 

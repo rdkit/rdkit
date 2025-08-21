@@ -27,7 +27,9 @@ enum class CDXMLFormat {
   CDX = 1,
   Auto = 2
 };
-  
+
+RDKIT_FILEPARSERS_EXPORT bool hasChemDrawCDXSupport();
+
 struct RDKIT_FILEPARSERS_EXPORT CDXMLParserParams {
   bool sanitize;
   bool removeHs;
@@ -155,5 +157,6 @@ inline std::vector<std::unique_ptr<RWMol>> CDXMLToMols(const std::string &cdxml,
   return v2::CDXMLParser::MolsFromCDXML(cdxml, params);
 }
 }  // namespace v1
+
 }  // namespace RDKit
 #endif  // RD_CDXML_FILEPARSERS_H

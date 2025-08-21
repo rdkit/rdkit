@@ -2712,6 +2712,10 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg("cdxml"),
 	       python::arg("params")),
               docString.c_str());
+
+  docString = "Returns true if the RDKit is built with ChemDraw CDX support";
+  python::def("HasChemDrawCDXSupport", RDKit::v2::CDXMLParser::hasChemDrawCDXSupport, docString.c_str());
+
 #ifdef RDK_USE_BOOST_IOSTREAMS
   docString =
       R"DOC(Adds molecular metadata to PNG data read from a file.

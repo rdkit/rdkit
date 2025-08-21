@@ -707,6 +707,7 @@ void visit_children(
 
 namespace v2 {
 namespace CDXMLParser {
+bool hasChemDrawCDXSupport() { return false; }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
     std::istream &inStream, const CDXMLParserParams &params) {
@@ -850,9 +851,12 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 #include <cctype>     // For std::tolower
 
 namespace RDKit{
+
+
 namespace v2 {
 namespace CDXMLParser {
-
+bool hasChemDrawCDXSupport() { return true; }
+  
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
     std::istream &inStream, const CDXMLParserParams &params) {
   // populate tree structure pt

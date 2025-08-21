@@ -335,8 +335,11 @@ class TestCase(unittest.TestCase):
     
 
   def test_formats(self):
-    try: from rdkit.Chem import rdChemDraw
+    try:
+      from rdkit.Chem import rdChemDraw
+      self.assertEqual(Chem.HasChemDrawCDXSupport(),True)
     except:
+      self.assertEqual(Chem.HasChemDrawCDXSupport(),False)
       return
 
     rdbase = os.environ['RDBASE']
