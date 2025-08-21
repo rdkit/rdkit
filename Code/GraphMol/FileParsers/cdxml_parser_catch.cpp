@@ -866,7 +866,8 @@ TEST_CASE("CDXML") {
 #ifndef RDK_BUILD_CHEMDRAW_SUPPORT      
       CHECK(std::string(e.what()) == "expected > at line: 373");
 #else
-      CHECK(std::string(e.what()) == "Failed parsing XML with error code 5");
+      CHECK(std::string(e.what()).find("Failed parsing XML with error code 5") !=
+	    std::string::npos);
 #endif
     }
   }
@@ -1341,9 +1342,13 @@ TEST_CASE("CDX and Formats") {
     auto mols1 = MolsFromCDXMLFile(cdxfname);
     auto mols2 = MolsFromCDXMLFile(cdxmlfname);
     CHECK(MolToSmiles(*mols1[0]) == MolToSmiles(*mols2[0]));
-
+  }
+  
+  SECTION("Read CDX Files/Streams") {
     const std::vector<std::string> cdxfiles {
-      "structure_1.cdx", "structure_2.cdx", "structure_3.cdx", "structure_4.cdx", "structure_5.cdx", "structure_6.cdx"};
+      "structure_1.cdx", "structure_2.cdx",
+      "structure_3.cdx", "structure_4.cdx",
+      "structure_5.cdx", "structure_6.cdx"};
     const std::vector<std::string> expected {
       "C1CCOC1",
       "C1=CCN=C1",
@@ -1354,7 +1359,6 @@ TEST_CASE("CDX and Formats") {
     
     for(size_t i=0;i<cdxfiles.size();++i) {
       auto fname = cdxbase + cdxfiles[i];
-
       // Read the file
       auto m = MolsFromCDXMLFile(fname);
       CHECK(MolToSmiles(*m[0]) == expected[i]);
@@ -1362,31 +1366,28 @@ TEST_CASE("CDX and Formats") {
       // Read the CDX stream
       auto size = std::filesystem::file_size(fname);
       std::string content(size, '\0');
-      std::ifstream in(fname);
+      std::ifstream in(fname, std::ios::binary);
       in.read(&content[0], size);
+      
       auto m2 = MolsFromCDXML(content);
       CHECK(MolToSmiles(*m2[0]) == expected[i]);
     }
   }
 
-  SECTION("READ CDX/CDXML STREAM") {
+  SECTION("READ CDX/CDXML Blocks") {
     auto cdxfname = cdxmlbase + "ring-stereo1.cdx";
     auto cdxmlfname = cdxmlbase + "ring-stereo1.cdxml";
     
     auto size = std::filesystem::file_size(cdxfname);
     std::string content(size, '\0');
-    std::ifstream in(cdxfname);
+    std::ifstream in(cdxfname, std::ios::binary);
     in.read(&content[0], size);
-    std::cerr << "CDXMLToMols1: " << content.substr(0,8) << std::endl;
     auto mols1 = MolsFromCDXML(content);
 
     auto size2 = std::filesystem::file_size(cdxmlfname);
     std::string content2(size2, ' ');
-    std::ifstream in2(cdxmlfname);
+    std::ifstream in2(cdxmlfname, std::ios::binary);
     in2.read(&content2[0], size2);
-    std::cerr << "CDXMLToMols2: " << content2.substr(0,8) << std::endl;
-    std::cerr << content2 << std::endl;
-    std::cerr << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
     auto mols2 = MolsFromCDXML(content2);
     CHECK(MolToSmiles(*mols1[0]) == MolToSmiles(*mols2[0]));
   }
@@ -1410,11 +1411,11 @@ TEST_CASE("CDX and Formats") {
 	  try {
 	    auto mols = MolsFromCDXMLFile(check.filename, CDXMLParserParams(true, true, format));	    
 	    hasmols = mols.size() > 0;
-	    std::cerr << check.filename << " not stream " << (unsigned)format << " hasmols: " << hasmols << std::endl;
+	    //	    std::cerr << check.filename << " not stream " << (unsigned)format << " hasmols: " << hasmols << std::endl;
 
 	  } catch (...) {
 	    exception = true;
-	    std::cerr << check.filename << " not stream " << (unsigned)format << " exception" << std::endl;
+	    //	    std::cerr << check.filename << " not stream " << (unsigned)format << " exception" << std::endl;
 	  }
 
 	  bool expected = false;

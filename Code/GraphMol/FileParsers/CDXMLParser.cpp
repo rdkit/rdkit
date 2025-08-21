@@ -860,9 +860,17 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   chemdraw_params.sanitize = params.sanitize;
   chemdraw_params.removeHs = params.removeHs;
   switch(params.format) {
-    case CDXMLFormat::CDX: chemdraw_params.format = CDXFormat::CDX; break;
-    case CDXMLFormat::CDXML: chemdraw_params.format = CDXFormat::CDXML; break;
-    case CDXMLFormat::Auto: chemdraw_params.format = CDXFormat::AUTO; break;
+  case CDXMLFormat::CDX: {
+    chemdraw_params.format = CDXFormat::CDX;
+    break;
+  }
+  case CDXMLFormat::CDXML: {
+    chemdraw_params.format = CDXFormat::CDXML; break;
+  }
+  case CDXMLFormat::Auto:
+    {
+      chemdraw_params.format = CDXFormat::AUTO; break;
+    }
   }
 
   return MolsFromChemDrawDataStream(inStream, chemdraw_params);
@@ -870,24 +878,21 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
     const std::string &fileName, const CDXMLParserParams &params) {
-  
-  std::ifstream ifs(fileName);
+  std::ifstream ifs(fileName,  std::ios::binary);
   if (!ifs || ifs.bad()) {
     std::ostringstream errout;
-    errout << "Bad input file " << fileName;
+    errout << "Bad inxput file " << fileName;
     throw BadFileException(errout.str());
   }
 
-  if(params.format == CDXMLFormat::Auto) {
-    std::filesystem::path p(fileName);
-    std::string extension = p.extension().string();
-    std::transform(extension.begin(), extension.end(), extension.begin(),
-                   [](unsigned char c){ return std::tolower(c); });
-    CDXMLFormat format = extension == ".cdx" ? CDXMLFormat::CDX : CDXMLFormat::CDXML;
+  try {
+    return MolsFromCDXMLDataStream(ifs, params);
+  } catch (const std::exception &ex) {
+    std::ostringstream errout;
+    errout << "Bad input file " << fileName << " " << ex.what();
 
-    return MolsFromCDXMLDataStream(ifs, CDXMLParserParams(params.sanitize, params.removeHs, format));
+    throw FileParseException(errout.str());
   }
-  return MolsFromCDXMLDataStream(ifs, params);
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
