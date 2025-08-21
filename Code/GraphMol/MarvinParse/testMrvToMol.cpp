@@ -1229,7 +1229,6 @@ M  END
       for (auto &scsrFileTest : scsrFileTests) {
         BOOST_LOG(rdInfoLog) << "Test: " << scsrFileTest.fileName << std::endl;
 
-        printf("Test\n\n %s\n\n", scsrFileTest.fileName.c_str());
         testMarvinFromScsr(&scsrFileTest);
       }
     }
