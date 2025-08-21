@@ -67,7 +67,7 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
     const std::string &filename,
     const CDXMLParserParams &params = CDXMLParserParams(true, true, CDXMLFormat::Auto));
 
-//! \brief construct molecules from a CDXML file
+//! \brief construct molecules from a CDXML block
 //! The RDKit is optionally built with the Revvity ChemDraw parser
 //! If this is available, CDX and CDXML can be read, see CDXMLParserParams
 //!   Note that the CDXML format is large and complex, the RDKit doesn't
