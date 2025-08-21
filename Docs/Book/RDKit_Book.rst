@@ -558,6 +558,130 @@ Here's a partial list of the features that are supported:
     a work in progress
   - Dative bonds in V2000 (type 9), despite them not being part of the standard, we support them because they frequently show up in real-world data
 
+Interpretation of the 2D/3D Flag and Stereochemistry
+----------------------------------------------------
+
+Mol blocks can describe 2D or 3D molecules and include a flag (called
+"dimensional code" in the spec) to indicate whether the coordinates are 2D or
+3D. Of course real-world files include every possible combination of 2D/3D flag
+and 2D/3D coordinates, so we need to decide how to interpret these combinations.
+Things are made more complicated by the possible presence of wedged bonds in the mol block.
+
+The following table describes how the RDKit interprets all possible combinations
+of these three variables:
+
++------+--------+---------+-------+-----------------------+
+| flag | coords | wedging | result| notes                 |
++======+========+=========+=======+=======================+
+| 2D   | 2D     | no      | 2D    | no chirality          |
++------+--------+---------+-------+-----------------------+
+| 3D   | 2D     | no      | 3D    | no chirality          |
++------+--------+---------+-------+-----------------------+
+| 3D   | 3D     | no      | 3D    | chirality from coords |
++------+--------+---------+-------+-----------------------+
+| 2D   | 3D     | no      | 3D    | chirality from coords |
++------+--------+---------+-------+-----------------------+
+| 2D   | 2D     | yes     | 2D    | chirality from wedging|
++------+--------+---------+-------+-----------------------+
+| 3D   | 2D     | yes     | 2D    | chirality from wedging|
++------+--------+---------+-------+-----------------------+
+| 3D   | 3D     | yes     | 3D    | chirality from coords |
++------+--------+---------+-------+-----------------------+
+| 2D   | 3D     | yes     | 3D    | chirality from coords |
++------+--------+---------+-------+-----------------------+
+
+Here's what the Molfile specification from Biovia says:
+
+  The “dimensional code” is maintained explicitly. Thus “3D” really means 3D,
+  although “2D” will be interpreted as 3D if any non-zero Z-coordinates are
+  found
+
+We are consistent with this except for the case where the 3D flag is set for 2D
+coordinates and a wedge is present, in which case we ignore the 3D flag, mark
+the conformer as 2D, and set the stereochemistry based on the wedging
+
+In cases where no 2D/3D flag is provided, the default value of the flag is 2D. 
+
+In a 2D structure, wedging is interpreted as a signal to indicate that
+stereochemistry is present and to indicate what the stereochemistry is.
+
+When 3D coordinates are provided, stereochemistry is perceived from the
+coordinates themselves. If wedging is also present it will be ignored; the 3D
+signal is "stronger" than the wedging signal. The exception to this rule is
+atropisomeric bonds (see :ref:`atropisomeric-bonds`), where the wedging simply
+indicates that atropisomerism should be perceived, but the direction of the
+wedge is ignored.
+
+Here's some code demonstrating that (and acting as a test):
+
+.. doctest::
+
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem import rdDistGeom
+
+  # start with a molecule without defined chirality
+  >>> m = Chem.MolFromSmiles('FC(Cl)(Br)I')  
+  >>> m3d = Chem.Mol(m)
+  >>> rdDistGeom.EmbedMolecule(m3d,randomSeed=0xa100f)
+  0
+  >>> mb_2d_2d = Chem.MolToMolBlock(m)       # 2D flag, 2D coords
+  >>> t = Chem.MolFromMolBlock(mb_2d_2d)
+  >>> t.GetConformer().Is3D()
+  False
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_UNSPECIFIED
+  >>> mb_3d_2d = mb_2d_2d.replace('2D','3D') # 3D flag, 2D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_2d)
+  >>> t.GetConformer().Is3D()
+  True
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_UNSPECIFIED
+  >>> mb_3d_3d = Chem.MolToMolBlock(m3d)     # 3D flag, 3D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_3d)
+  >>> t.GetConformer().Is3D()
+  True
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+  >>> mb_2d_3d = mb_3d_3d.replace('3D','2D') # 2D flag, 3D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_3d)
+  >>> t.GetConformer().Is3D()
+  True
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+
+  # Now do a molecule with defined chirality, this will have wedged bonds in the mol blocks
+  >>> m = Chem.MolFromSmiles('F[C@@](Cl)(Br)I')  
+  >>> m3d = Chem.Mol(m)
+  >>> rdDistGeom.EmbedMolecule(m3d,randomSeed=0xa100f)
+  0
+  >>> mb_2d_2d = Chem.MolToMolBlock(m)       # 2D flag, 2D coords
+  >>> t = Chem.MolFromMolBlock(mb_2d_2d)
+  >>> t.GetConformer().Is3D()
+  False
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+  >>> mb_3d_2d = mb_2d_2d.replace('2D','3D') # 3D flag, 2D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_2d)
+  >>> t.GetConformer().Is3D()
+  False
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+  >>> mb_3d_3d = Chem.MolToMolBlock(m3d)     # 3D flag, 3D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_3d)
+  >>> t.GetConformer().Is3D()
+  True
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+  >>> mb_2d_3d = mb_3d_3d.replace('3D','2D') # 2D flag, 3D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_3d)
+  >>> t.GetConformer().Is3D()
+  True
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+
+
+
+
 Ring Finding and SSSR
 =====================
 
@@ -2251,6 +2375,8 @@ Some concrete examples of this:
   True
   >>> m_OR.HasSubstructMatch(m_AND,ps)
   False
+
+.. _atropisomeric-bonds:
 
 Atropisomeric Bonds
 *******************
