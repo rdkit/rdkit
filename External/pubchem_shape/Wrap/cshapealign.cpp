@@ -180,7 +180,7 @@ void wrap_pubchemshape() {
       "AlignMol", &helpers::alignMol,
       (python::arg("ref"), python::arg("probe"), python::arg("refConfId") = -1,
        python::arg("probeConfId") = -1, python::arg("useColors") = true,
-       python::arg("opt_param") = 1.0, python::arg("max_preiters") = 10,
+       python::arg("opt_param") = 0.5, python::arg("max_preiters") = 10,
        python::arg("max_postiters") = 30),
       R"DOC(Aligns a probe molecule to a reference molecule. The probe is modified.
 
@@ -197,8 +197,13 @@ probeConfId : int, optional
 useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
 opt_param : float, optional
+    Balance of shape and color for optimization.
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape
 max_preiters : int, optional
+    In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
+    In the two phase optimization, the maximum iterations during the second phase on
+    only the best poses from the first phase
 
 
 Returns
@@ -211,7 +216,7 @@ Returns
       "AlignMol", &helpers::alignMol2,
       (python::arg("refShape"), python::arg("probe"),
        python::arg("probeConfId") = -1, python::arg("useColors") = true,
-       python::arg("opt_param") = 1.0, python::arg("max_preiters") = 10,
+       python::arg("opt_param") = 0.5, python::arg("max_preiters") = 10,
        python::arg("max_postiters") = 30, python::arg("applyRefShift") = false),
       R"DOC(Aligns a probe molecule to a reference shape. The probe is modified.
 Assumes the shapes are both centred on the origin.
@@ -226,9 +231,14 @@ probeConfId : int, optional
     Probe conformer ID (default is -1)
 useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
-optParam : float, optional
+opt_param : float, optional
+    Balance of shape and color for optimization.
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape
 max_preiters : int, optional
+    In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
+    In the two phase optimization, the maximum iterations during the second phase on
+    only the best poses from the first phase
 applyRefShift : bool, optional
     If True, apply the reference shape's shift translation to the final
     coordinates.
@@ -243,7 +253,7 @@ Returns
   python::def(
       "AlignShapes", &helpers::alignShapes,
       (python::arg("refShape"), python::arg("probeShape"),
-       python::arg("opt_param") = 1.0, python::arg("max_preiters") = 10,
+       python::arg("opt_param") = 0.5, python::arg("max_preiters") = 10,
        python::arg("max_postiters") = 30),
       R"DOC(Aligns a probe shape to a reference shape. The probe is modified.
 
@@ -254,8 +264,13 @@ refShape : ShapeInput
 probeShape : ShapeInput
     Probe shape
 opt_param : float, optional
+    Balance of shape and color for optimization.
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape
 max_preiters : int, optional
+    In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
+    In the two phase optimization, the maximum iterations during the second phase on
+    only the best poses from the first phase
 
 
 Returns
