@@ -340,6 +340,10 @@ class MarvinCMLWriter {
         convention = "cxn:coord";
         break;
 
+      case Bond::HYDROGEN:
+        convention = "cxn:hydrogen";
+        break;
+
       default:
         throw MarvinWriterException(
             "Only 1,2,3,Aromatic, and query bonds SA, DA, and SD are supported for MarvinWriter");
