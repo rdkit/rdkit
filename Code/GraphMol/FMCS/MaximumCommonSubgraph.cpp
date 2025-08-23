@@ -267,115 +267,121 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
   QueryMoleculeMatchedBonds = 0;
   QueryMoleculeMatchedAtoms = 0;
   QueryMoleculeSingleMatchedAtom = nullptr;
-  std::vector<MatchVectType> matching_substructs;
-  std::unique_ptr<const ROMol> initialSeedMolecule;
+  std::vector<std::unique_ptr<const ROMol>> initialSeedMolecules;
 
   if (Parameters.InitialSeed.empty() && Parameters.FastInitialSeed &&
       Targets.size() == 1) {
-    // We can do the clique detection MCS to create seeds which should
-    // be the final answer.  This just plumbs it in as a check and so that
-    // all the downstream results preparation is the same.
+    // We Do the clique detection MCS to create seeds which in many
+    // cases will be the final answer and on average will produce an
+    // answer much faster.
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
     TwoMolMCSS(*QueryMolecule, *Targets[0].Molecule, Parameters.MinMCSSSize,
-               Targets[0].AtomMatchTable, Targets[0].BondMatchTable,
+               Targets[0].AtomMatchTable, Targets[0].BondMatchTable, true,
                maxCliques);
     if (maxCliques.empty()) {
       return;
     }
-    // Use a trimmed down copy of QueryMolecule as the initialSeedMolecule, and
-    // the clique as the match of it onto the QueryMolecule.  Only use the first
-    // clique, as they should all be the same barring symmetry.
-    std::unique_ptr<RWMol> qmol(new RWMol(*QueryMolecule));
-
-    const auto &clique = maxCliques.front();
-    std::unordered_set<unsigned int> atomsToKeep;
-    std::transform(clique.begin(), clique.end(),
-                   std::inserter(atomsToKeep, atomsToKeep.begin()),
-                   [](const auto &a) -> unsigned int { return a.first; });
-    for (auto atom : qmol->atoms()) {
-      atom->setProp<int>("OrigIdx", atom->getIdx());
-    }
-    qmol->beginBatchEdit();
-    for (auto atom : qmol->atoms()) {
-      if (atomsToKeep.find(atom->getIdx()) == atomsToKeep.end()) {
-        qmol->removeAtom(atom);
+    // Make a seed molecule for each clique.  These will be passed into the
+    // remainder of the code for final checking, expansion if necessary and
+    // to get the results out in the same format.
+    for (const auto &clique : maxCliques) {
+      MCS tmpMCS;
+      tmpMCS.Atoms.reserve(clique.size());
+      std::vector<const Atom *> targetAtoms;
+      targetAtoms.reserve(clique.size());
+      for (const auto &p : clique) {
+        tmpMCS.Atoms.push_back(QueryMolecule->getAtomWithIdx(p.first));
+        targetAtoms.push_back(Targets[0].Molecule->getAtomWithIdx(p.second));
       }
-    }
-    qmol->commitBatchEdit();
-    MatchVectType nextMatch;
-    nextMatch.reserve(qmol->getNumAtoms());
-    for (auto atom : qmol->atoms()) {
-      nextMatch.emplace_back(
-          std::pair<int, int>(atom->getIdx(), atom->getProp<int>("OrigIdx")));
-    }
-    matching_substructs.emplace_back(std::move(nextMatch));
-    initialSeedMolecule.reset(static_cast<const ROMol *>(qmol.release()));
-  } else if (!Parameters.InitialSeed.empty()) {
-    // make user defined seed
-    initialSeedMolecule.reset(
-        static_cast<const ROMol *>(SmartsToMol(Parameters.InitialSeed)));
-    // make a set of seeds as indices and pointers to current query
-    // molecule items based on matching results
-    std::vector<MatchVectType> matching_substructs;
-    SubstructMatch(*QueryMolecule, *initialSeedMolecule, matching_substructs);
-  }
-
-  if (initialSeedMolecule) {
-    std::cout << "Initial seed : " << MolToSmarts(*initialSeedMolecule) << " : "
-              << initialSeedMolecule->getNumAtoms() << " and "
-              << initialSeedMolecule->getNumBonds() << std::endl;
-    // loop throw all fragments of Query matched to initial seed
-    for (const auto &ms : matching_substructs) {
-      Seed seed;
-      seed.setStoreAllDegenerateMCS(Parameters.StoreAll);
-      seed.ExcludedBonds = excludedBonds;
-      seed.MatchResult.resize(Targets.size());
-#ifdef VERBOSE_STATISTICS_ON
-      {
-        ++VerboseStatistics.Seed;
-        ++VerboseStatistics.InitialSeed;
-      }
-#endif
-      // add all matched atoms of the matched query fragment
-      std::map<unsigned int, unsigned int> initialSeedToQueryAtom;
-      for (const auto &msb : ms) {
-        unsigned int qai = msb.second;
-        unsigned int sai = msb.first;
-        seed.addAtom(QueryMolecule->getAtomWithIdx(qai));
-        initialSeedToQueryAtom[sai] = qai;
-      }
-      // add all bonds (existed in initial seed !!!) between all matched
-      // atoms in query
-      for (const auto &msb : ms) {
-        const auto atom = initialSeedMolecule->getAtomWithIdx(msb.first);
-        for (const auto &nbri : boost::make_iterator_range(
-                 initialSeedMolecule->getAtomBonds(atom))) {
-          const auto initialBond = (*initialSeedMolecule)[nbri];
-          unsigned int qai1 =
-              initialSeedToQueryAtom.at(initialBond->getBeginAtomIdx());
-          unsigned int qai2 =
-              initialSeedToQueryAtom.at(initialBond->getEndAtomIdx());
-
-          const auto b = QueryMolecule->getBondBetweenAtoms(qai1, qai2);
-          CHECK_INVARIANT(b, "bond must not be NULL");
-          if (!seed.ExcludedBonds.test(b->getIdx())) {
-            seed.addBond(b);
-            seed.ExcludedBonds.set(b->getIdx());
+      tmpMCS.Bonds.reserve(clique.size());
+      // It's a bond in the MCS if the matching atom pairs are bonded in both
+      // Molecules
+      for (size_t i = 1; i < tmpMCS.Atoms.size(); ++i) {
+        for (size_t j = 0; j < i; ++j) {
+          auto bond1 = QueryMolecule->getBondBetweenAtoms(
+              tmpMCS.Atoms[i]->getIdx(), tmpMCS.Atoms[j]->getIdx());
+          if (bond1) {
+            auto bond2 = Targets[0].Molecule->getBondBetweenAtoms(
+                targetAtoms[i]->getIdx(), targetAtoms[j]->getIdx());
+            if (bond2) {
+              tmpMCS.Bonds.push_back(bond1);
+            }
           }
         }
       }
-      seed.computeRemainingSize(*QueryMolecule);
-
-      if (checkIfMatchAndAppend(seed)) {
-        QueryMoleculeMatchedBonds = seed.getNumBonds();
-      }
+      tmpMCS.QueryMolecule = QueryMolecule;
+      tmpMCS.Targets.push_back(Targets[0]);
+      auto [smt, tmpQmol] = generateResultSMARTSAndQueryMol(tmpMCS);
+      initialSeedMolecules.emplace_back(new ROMol(*tmpQmol));
     }
-    if (Seeds.empty()) {
-      BOOST_LOG(rdWarningLog)
-          << "The provided InitialSeed is not an MCS and will be ignored : "
-          << Parameters.InitialSeed << " : " << MolToSmiles(*QueryMolecule)
-          << " vs " << MolToSmiles(*Targets[0].Molecule) << " with "
-          << MolToSmarts(*initialSeedMolecule) << std::endl;
+    // Some of the cliques may have more bonds.  Put those first.
+    std::sort(initialSeedMolecules.begin(), initialSeedMolecules.end(),
+              [](const auto &a, const auto &b) -> bool {
+                return a->getNumBonds() > b->getNumBonds();
+              });
+  } else if (!Parameters.InitialSeed.empty()) {
+    // make user defined seed
+    initialSeedMolecules.emplace_back(
+        static_cast<const ROMol *>(SmartsToMol(Parameters.InitialSeed)));
+  }
+
+  if (!initialSeedMolecules.empty()) {
+    for (const auto &ism : initialSeedMolecules) {
+      // make a set of seed as indices and pointers to current query
+      // molecule items based on matching results
+      std::vector<MatchVectType> matching_substructs;
+      SubstructMatch(*QueryMolecule, *ism, matching_substructs);
+      // loop throw all fragments of Query matched to initial seed
+      for (const auto &ms : matching_substructs) {
+        Seed seed;
+        seed.setStoreAllDegenerateMCS(Parameters.StoreAll);
+        seed.ExcludedBonds = excludedBonds;
+        seed.MatchResult.resize(Targets.size());
+#ifdef VERBOSE_STATISTICS_ON
+        {
+          ++VerboseStatistics.Seed;
+          ++VerboseStatistics.InitialSeed;
+        }
+#endif
+        // add all matched atoms of the matched query fragment
+        std::map<unsigned int, unsigned int> initialSeedToQueryAtom;
+        for (const auto &msb : ms) {
+          unsigned int qai = msb.second;
+          unsigned int sai = msb.first;
+          seed.addAtom(QueryMolecule->getAtomWithIdx(qai));
+          initialSeedToQueryAtom[sai] = qai;
+        }
+        // add all bonds (existed in initial seed !!!) between all matched
+        // atoms in query
+        for (const auto &msb : ms) {
+          const auto atom = ism->getAtomWithIdx(msb.first);
+          for (const auto &nbri :
+               boost::make_iterator_range(ism->getAtomBonds(atom))) {
+            const auto initialBond = (*ism)[nbri];
+            unsigned int qai1 =
+                initialSeedToQueryAtom.at(initialBond->getBeginAtomIdx());
+            unsigned int qai2 =
+                initialSeedToQueryAtom.at(initialBond->getEndAtomIdx());
+
+            const auto b = QueryMolecule->getBondBetweenAtoms(qai1, qai2);
+            CHECK_INVARIANT(b, "bond must not be NULL");
+            if (!seed.ExcludedBonds.test(b->getIdx())) {
+              seed.addBond(b);
+              seed.ExcludedBonds.set(b->getIdx());
+            }
+          }
+        }
+        seed.computeRemainingSize(*QueryMolecule);
+
+        if (checkIfMatchAndAppend(seed)) {
+          QueryMoleculeMatchedBonds = seed.getNumBonds();
+        }
+      }
+      if (Seeds.empty()) {
+        BOOST_LOG(rdWarningLog)
+            << "The provided InitialSeed is not an MCS and will be ignored"
+            << std::endl;
+      }
     }
   }
   if (Seeds.empty()) {  // create a set of seeds from each query bond
@@ -965,6 +971,7 @@ bool MaximumCommonSubgraph::createSeedFromMCS(size_t newQueryTarget,
 MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR> &src_mols) {
   clear();
   MCSResult res;
+
   if (src_mols.size() < 2) {
     throw std::runtime_error(
         "FMCS. Invalid argument. mols.size() must be at least 2");
@@ -1009,6 +1016,7 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR> &src_mols) {
     }
     ++i;
   }
+
   // sort source set of molecules by their 'size' and assume the smallest
   // molecule as a query
   std::stable_sort(Molecules.begin(), Molecules.end(), molPtr_NumBondLess);

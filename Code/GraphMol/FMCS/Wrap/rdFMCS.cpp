@@ -701,7 +701,7 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       (python::arg("mols"), python::arg("maximizeBonds") = true,
        python::arg("threshold") = 1.0, python::arg("timeout") = 3600,
        python::arg("verbose") = false, python::arg("fastInitialSeed") = false,
-       python::arg("matchValences") = false,
+       python::arg("minMCSSSize") = 1, python::arg("matchValences") = false,
        python::arg("ringMatchesRingOnly") = false,
        python::arg("completeRingsOnly") = false,
        python::arg("matchChiralTag") = false,
