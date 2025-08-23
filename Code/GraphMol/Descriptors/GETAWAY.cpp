@@ -371,7 +371,7 @@ double getMax(const double *Rk) {
 }
 
 void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
-                          std::vector<int> Heavylist, const ROMol &mol,
+                          const std::vector<int> &Heavylist, const ROMol &mol,
                           std::vector<double> &res, unsigned int precision,
                           const std::string &customAtomPropName) {
   // prepare data for Getaway parameter computation
@@ -595,7 +595,7 @@ void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
 }
 
 void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
-                    std::vector<int> Heavylist, const ROMol &mol,
+                    const std::vector<int> &Heavylist, const ROMol &mol,
                     std::vector<double> &res, unsigned int precision) {
   // prepare data for Getaway parameter computation
   // compute parameters
@@ -692,9 +692,13 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
   double Rkmaxu, Rkmaxm, Rkmaxv, Rkmaxe, Rkmaxp, Rkmaxi, Rkmaxs;
   double tmpu, tmpm, tmpv, tmpe, tmpp, tmpi, tmps;
   double HATSk[7][9];
+  std::memset(HATSk, 0, sizeof(HATSk));
   double Hk[7][9];
+  std::memset(Hk, 0, sizeof(Hk));
   double Rk[7][8];
+  std::memset(Rk, 0, sizeof(Rk));
   double Rp[7][8];
+  std::memset(Rp, 0, sizeof(Rp));
 
   double *dist =
       MolOps::getDistanceMat(mol, false);  // need to be be set to false to have
@@ -816,7 +820,6 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
         }
       }
     }
-
     if (i >= 9) {  // Totals missing part
       for (int j = 0; j < numAtoms - 1; j++) {
         for (int k = j + 1; k < numAtoms; k++) {
@@ -1161,7 +1164,7 @@ GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u",
 
 void GetGETAWAYone(double *dist3D, double *AdjMat, std::vector<double> Vpoints,
                    const ROMol &mol, const Conformer &conf,
-                   std::vector<int> Heavylist, std::vector<double> &res,
+                   const std::vector<int> &Heavylist, std::vector<double> &res,
                    unsigned int precision,
                    const std::string &customAtomPropName) {
   PRECONDITION(dist3D != nullptr, "no distance matrix");
@@ -1184,8 +1187,8 @@ void GetGETAWAYone(double *dist3D, double *AdjMat, std::vector<double> Vpoints,
 
   MatrixXd R = GetRmatrix(H, DM, numAtoms);
 
-  getGETAWAYDescCustom(H, R, ADJ, numAtoms, std::move(Heavylist), mol, res,
-                       precision, customAtomPropName);
+  getGETAWAYDescCustom(H, R, ADJ, numAtoms, Heavylist, mol, res, precision,
+                       customAtomPropName);
 }
 
 void GetGETAWAY(double *dist3D, double *AdjMat, std::vector<double> Vpoints,
@@ -1213,8 +1216,7 @@ void GetGETAWAY(double *dist3D, double *AdjMat, std::vector<double> Vpoints,
 
   MatrixXd R = GetRmatrix(H, DM, numAtoms);
 
-  getGETAWAYDesc(H, R, ADJ, numAtoms, std::move(Heavylist), mol, res,
-                 precision);
+  getGETAWAYDesc(H, R, ADJ, numAtoms, Heavylist, mol, res, precision);
 }
 
 }  // end of anonymous namespace
