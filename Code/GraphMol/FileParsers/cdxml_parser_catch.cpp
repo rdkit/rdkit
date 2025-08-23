@@ -1346,23 +1346,20 @@ TEST_CASE("CDX and Formats") {
   }
   
   SECTION("Read CDX Files/Streams") {
-    const std::vector<std::string> cdxfiles {
-      "structure_1.cdx", "structure_2.cdx",
-      "structure_3.cdx", "structure_4.cdx",
-      "structure_5.cdx", "structure_6.cdx"};
-    const std::vector<std::string> expected {
-      "C1CCOC1",
-      "C1=CCN=C1",
-      "CS(C)=O",
-      "CCO",
-      "c1cc[nH]c1",
-      "c1ccoc1"};
+    const std::vector<std::pair<std::string, std::string>> tests {
+      {"structure_1.cdx", "C1CCOC1"},     
+      {"structure_2.cdx", "C1=CCN=C1"},   
+      {"structure_3.cdx", "CS(C)=O"},     
+      {"structure_4.cdx", "CCO"},         
+      {"structure_5.cdx", "c1cc[nH]c1"},  
+      {"structure_6.cdx", "c1ccoc1"}
+    };
     
-    for(size_t i=0;i<cdxfiles.size();++i) {
-      auto fname = cdxbase + cdxfiles[i];
+    for(const auto &test :  tests) {
+      auto fname = cdxbase + test.first;
       // Read the file
       auto m = MolsFromCDXMLFile(fname);
-      CHECK(MolToSmiles(*m[0]) == expected[i]);
+      CHECK(MolToSmiles(*m[0]) == test.second);
 
       // Read the CDX stream
       auto size = std::filesystem::file_size(fname);
@@ -1371,7 +1368,7 @@ TEST_CASE("CDX and Formats") {
       in.read(&content[0], size);
       
       auto m2 = MolsFromCDXML(content);
-      CHECK(MolToSmiles(*m2[0]) == expected[i]);
+      CHECK(MolToSmiles(*m2[0]) == test.second);
     }
   }
 

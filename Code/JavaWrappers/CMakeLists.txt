@@ -1,11 +1,6 @@
 find_package(SWIG 4.2 REQUIRED)
 include(${SWIG_USE_FILE})
 
-if(RDK_BUILD_CHEMDRAW_SUPPORT)
-  add_definitions("-DRDK_BUILD_CHEMDRAW_SUPPORT")
-endif()
-
-
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${RDKit_CodeDir})
 include_directories(${Boost_INCLUDE_DIRS})

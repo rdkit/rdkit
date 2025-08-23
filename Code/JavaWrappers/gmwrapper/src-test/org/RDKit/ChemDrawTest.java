@@ -1,7 +1,5 @@
 /* 
- * $Id: ChemTests.java 131 2011-01-20 22:01:29Z ebakke $
- *
- *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+ *  Copyright (c) 2025, Glysade Inc
  *  All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without

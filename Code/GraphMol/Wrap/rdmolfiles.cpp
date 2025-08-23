@@ -2655,11 +2655,13 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "sanitize",
           &RDKit::v2::CDXMLParser::CDXMLParserParams::sanitize,
-          "include leaving groups atoms if not substited at that position")
+	  "controls whether or not the molecule is sanitized before "
+	  "being returned")
       .def_readwrite(
           "removeHs",
           &RDKit::v2::CDXMLParser::CDXMLParserParams::removeHs,
-          "If True, the first template name in the Sgroup is used as the Sgroup label")
+	  "controls whether or not Hs are removed before the "
+	  "molecule is returned")
       .def_readwrite(
           "format",
           &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
@@ -2683,7 +2685,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        - pyParams: CDXParserParams, see CDXParserParams for usage
 
      RETURNS:
-       an iterator of parsed Mol objects.)DOC";
+       a tuple  of parsed Mol objects.)DOC";
 
   python::def("MolsFromCDXMLFile", MolsFromCDXMLFileHelper,
               (python::arg("filename"),
@@ -2706,7 +2708,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        - pyParams: CDXParserParams, see CDXParserParams for usage
 
      RETURNS:
-       an iterator of parsed Mol objects.)DOC";
+       a tuple of parsed Mol objects.)DOC";
 
   python::def("MolsFromCDXML", MolsFromCDXMLHelper,
               (python::arg("cdxml"),

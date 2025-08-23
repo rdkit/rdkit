@@ -28,14 +28,15 @@ enum class CDXMLFormat {
   Auto = 2
 };
 
+//! \brief Returns true if the RDKit was build with ChemDraw CDX support
 RDKIT_FILEPARSERS_EXPORT bool hasChemDrawCDXSupport();
 
 struct RDKIT_FILEPARSERS_EXPORT CDXMLParserParams {
-  bool sanitize;
-  bool removeHs;
-  CDXMLFormat format; 
+  bool sanitize = true;
+  bool removeHs = true;
+  CDXMLFormat format = CDXMLFormat::Auto;
   
-  CDXMLParserParams() : sanitize(true), removeHs(true), format(CDXMLFormat::Auto) {}
+  CDXMLParserParams() = default;
   CDXMLParserParams(bool sanitize, bool removeHs, CDXMLFormat format) :
     sanitize(sanitize), removeHs(removeHs), format(format) {}
 };
