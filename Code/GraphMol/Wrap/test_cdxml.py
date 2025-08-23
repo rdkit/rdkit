@@ -281,6 +281,101 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
 
+    mols = Chem.MolsFromCDXML(cdxml, True, False)
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
+
+    mols = Chem.MolsFromCDXML(cdxml, False, False)
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
+
+    params = Chem.CDXMLParserParams()
+    mols = Chem.MolsFromCDXML(cdxml, params)
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
+
+    params.sanitize = True
+    params.removeHs = False
+    mols = Chem.MolsFromCDXML(cdxml, params)
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
+
+    params.sanitize = False
+    params.removeHs = False
+
+    mols = Chem.MolsFromCDXML(cdxml, params)
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
+    
+    
+    
+  def test_cdxml(self):
+    try: from rdkit.Chem import rdChemDraw
+    except:
+      return
+
+    rdbase = os.environ['RDBASE']
+    cdxfilename = os.path.join(rdbase,
+                            'Code/GraphMol/test_data/CDXML/ring-stereo1.cdx')
+    mols = Chem.MolsFromCDXMLFile(cdxfilename)
+    filename = os.path.join(rdbase,
+                            'Code/GraphMol/test_data/CDXML/ring-stereo1.cdxml')
+    mols2 = Chem.MolsFromCDXMLFile(filename)
+    smi1 = [Chem.MolToSmiles(m) for m in mols]
+    smi2 = [Chem.MolToSmiles(m) for m in mols2]
+    self.assertEqual(smi1, smi2)
+
+    self.assertEqual(smi1, ['C1CC[C@H]2CCCC[C@H]2C1'])
+    with open(cdxfilename, 'rb') as f:
+      data = f.read()
+    params = Chem.CDXMLParserParams(True, True, Chem.CDXMLFormat.CDX)
+    mols3 = Chem.MolsFromCDXML(data, params)
+    smi3 = [Chem.MolToSmiles(m) for m in mols3]
+    self.assertEqual(smi1, smi3)
+    
+
+  def test_formats(self):
+    try:
+      from rdkit.Chem import rdChemDraw
+      self.assertEqual(Chem.HasChemDrawCDXSupport(),True)
+    except:
+      self.assertEqual(Chem.HasChemDrawCDXSupport(),False)
+      return
+
+    rdbase = os.environ['RDBASE']
+    cdxfilename = os.path.join(rdbase,
+                            'Code/GraphMol/test_data/CDXML/ring-stereo1.cdx')
+    mols = Chem.MolsFromCDXMLFile(cdxfilename)
+    cdxmlfilename = os.path.join(rdbase,
+                            'Code/GraphMol/test_data/CDXML/ring-stereo1.cdxml')
+
+    tests = [
+      # we can deduce extensions from filenames, but not from streams (yet!)
+      # filename, Stream, IsCDX, CDX res, CDXML res, Auto Res
+      (cdxfilename, True, True, True, False, False),
+      (cdxfilename, False, True, True, False, True),
+      (cdxmlfilename, True, False, False, True, True),
+      (cdxmlfilename, False, False, False, True, True),
+      ]
+
+    for filename, stream, iscdx, cdxres, cdxmlres, autores in tests:
+        for format, res in zip([Chem.CDXMLFormat.CDX, Chem.CDXMLFormat.CDXML, Chem.CDXMLFormat.Auto],
+                               [cdxres, cdxmlres, autores]):
+          if stream:
+            with open(filename, 'rb') as f:
+              data = f.read()
+              try:
+                mols = Chem.MolsFromCDXML(data, Chem.CDXMLParserParams(True, True, format))
+                if res: assert mols
+              except RuntimeError:
+                assert res == False
+          else:
+            mols = Chem.MolsFromCDXMLFile(filename, Chem.CDXMLParserParams(True, True, format))
+            if res: assert mols
+          
+
+        
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

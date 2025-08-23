@@ -13,12 +13,20 @@ if(RDK_SWIG_STATIC AND (NOT WIN32))
   set(swigRDKitLibSuffix "_static")
 endif()
 set(swigRDKitLibList "")
+
 if(RDK_BUILD_AVALON_SUPPORT)
   set(swigRDKitLibList "${swigRDKitLibList}AvalonLib;avalon_clib;")
 endif(RDK_BUILD_AVALON_SUPPORT)
+
 if(RDK_BUILD_INCHI_SUPPORT)
   set(swigRDKitLibList "${swigRDKitLibList}RDInchiLib;${INCHI_LIBRARIES};")
 endif(RDK_BUILD_INCHI_SUPPORT)
+
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  set(swigRDKitLibList "${swigRDKitLibList}RDChemDrawLib;ChemDraw;")
+endif(RDK_BUILD_CHEMDRAW_SUPPORT)
+
+
 set(swigRDKitLibList "${swigRDKitLibList}"
   "RascalMCES;GeneralizedSubstruct;Abbreviations;ScaffoldNetwork;MolHash;RGroupDecomposition;SubstructLibrary;TautomerQuery;"
   "MolEnumerator;"

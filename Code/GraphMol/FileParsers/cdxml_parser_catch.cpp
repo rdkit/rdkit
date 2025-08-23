@@ -19,6 +19,7 @@
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
+#include <filesystem>
 
 using namespace RDKit;
 using namespace RDKit::v2::CDXMLParser;
@@ -865,7 +866,8 @@ TEST_CASE("CDXML") {
 #ifndef RDK_BUILD_CHEMDRAW_SUPPORT      
       CHECK(std::string(e.what()) == "expected > at line: 373");
 #else
-      CHECK(std::string(e.what()) == "Bad Input File");
+      CHECK(std::string(e.what()).find("Failed parsing XML with error code 5") !=
+	    std::string::npos);
 #endif
     }
   }
@@ -1320,3 +1322,116 @@ TEST_CASE("Github #7501 - dative bonds") {
                                                            // Osmium
   }
 }
+
+#ifdef RDK_BUILD_CHEMDRAW_SUPPORT
+struct format_check {
+  std::string filename;
+  bool stream, iscdx, cdxres, cdxmlres, autores;
+};
+
+TEST_CASE("CDX and Formats") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  
+  std::string cdxbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDX/";
+
+  SECTION("READ CDX") {
+    auto cdxfname = cdxmlbase + "ring-stereo1.cdx";
+    auto cdxmlfname = cdxmlbase + "ring-stereo1.cdxml";
+    // should default to CDXFormat Auto
+    auto mols1 = MolsFromCDXMLFile(cdxfname);
+    auto mols2 = MolsFromCDXMLFile(cdxmlfname);
+    CHECK(MolToSmiles(*mols1[0]) == MolToSmiles(*mols2[0]));
+  }
+  
+  SECTION("Read CDX Files/Streams") {
+    const std::vector<std::pair<std::string, std::string>> tests {
+      {"structure_1.cdx", "C1CCOC1"},     
+      {"structure_2.cdx", "C1=CCN=C1"},   
+      {"structure_3.cdx", "CS(C)=O"},     
+      {"structure_4.cdx", "CCO"},         
+      {"structure_5.cdx", "c1cc[nH]c1"},  
+      {"structure_6.cdx", "c1ccoc1"}
+    };
+    
+    for(const auto &test :  tests) {
+      auto fname = cdxbase + test.first;
+      // Read the file
+      auto m = MolsFromCDXMLFile(fname);
+      CHECK(MolToSmiles(*m[0]) == test.second);
+
+      // Read the CDX stream
+      auto size = std::filesystem::file_size(fname);
+      std::string content(size, '\0');
+      std::ifstream in(fname, std::ios::binary);
+      in.read(&content[0], size);
+      
+      auto m2 = MolsFromCDXML(content);
+      CHECK(MolToSmiles(*m2[0]) == test.second);
+    }
+  }
+
+  SECTION("READ CDX/CDXML Blocks") {
+    auto cdxfname = cdxmlbase + "ring-stereo1.cdx";
+    auto cdxmlfname = cdxmlbase + "ring-stereo1.cdxml";
+    
+    auto size = std::filesystem::file_size(cdxfname);
+    std::string content(size, '\0');
+    std::ifstream in(cdxfname, std::ios::binary);
+    in.read(&content[0], size);
+    auto mols1 = MolsFromCDXML(content);
+
+    auto size2 = std::filesystem::file_size(cdxmlfname);
+    std::string content2(size2, ' ');
+    std::ifstream in2(cdxmlfname, std::ios::binary);
+    in2.read(&content2[0], size2);
+    auto mols2 = MolsFromCDXML(content2);
+    CHECK(MolToSmiles(*mols1[0]) == MolToSmiles(*mols2[0]));
+  }
+  
+  SECTION("Check Formats") {
+    auto cdxfilename = cdxmlbase + "ring-stereo1.cdx";
+    auto cdxmlfilename = cdxmlbase + "ring-stereo1.cdxml";
+    std::vector<format_check> checks { {cdxfilename, true, true, true, false, false},
+				       {cdxfilename, false, true, true, false, true},
+				       {cdxmlfilename, true, false, false, true, true},
+				       {cdxmlfilename, false, false, false, true, true},
+    };
+    std::vector<CDXMLFormat> formats = { CDXMLFormat::CDX, CDXMLFormat::CDXML, CDXMLFormat::Auto };
+
+    for(auto &check : checks) {
+      if(check.stream) {
+      } else {
+	for(auto format : formats) {
+	  bool hasmols = false;
+	  bool exception = false;
+	  try {
+	    auto mols = MolsFromCDXMLFile(check.filename, CDXMLParserParams(true, true, format));	    
+	    hasmols = mols.size() > 0;
+	    //	    std::cerr << check.filename << " not stream " << (unsigned)format << " hasmols: " << hasmols << std::endl;
+
+	  } catch (...) {
+	    exception = true;
+	    //	    std::cerr << check.filename << " not stream " << (unsigned)format << " exception" << std::endl;
+	  }
+
+	  bool expected = false;
+	  if(format == CDXMLFormat::CDX)
+	    expected = check.cdxres;
+	  else if(format == CDXMLFormat::CDXML)
+	    expected = check.cdxmlres;
+	  else
+	    expected = check.autores;
+
+	  if (exception)
+	    CHECK(expected == false);
+	  else
+	    CHECK(expected == hasmols);
+	}
+      }
+    }
+  }
+}
+#endif
+	 

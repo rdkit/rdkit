@@ -740,6 +740,47 @@ python::object MolsFromCDXMLFile(const std::string &filename, bool sanitize,
   return python::tuple(res);
 }
 
+python::tuple MolsFromCDXMLHelper(python::object cdxml, python::object pyParams) {
+  RDKit::v2::CDXMLParser::CDXMLParserParams params;
+  if (pyParams) {
+    params = python::extract<RDKit::v2::CDXMLParser::CDXMLParserParams>(pyParams);
+  }
+  auto mols = RDKit::v2::CDXMLParser::MolsFromCDXML(pyObjectToString(cdxml), params);
+  python::list res;
+  for (auto &mol : mols) {
+    // take ownership of the data from the unique_ptr
+    ROMOL_SPTR sptr(static_cast<ROMol *>(mol.release()));
+    res.append(sptr);
+  }
+  return python::tuple(res);
+}
+
+ python::object MolsFromCDXMLFileHelper(const std::string &filename,
+					python::object pyParams) {
+   RDKit::v2::CDXMLParser::CDXMLParserParams params(
+		       true, true, RDKit::v2::CDXMLParser::CDXMLFormat::Auto);
+  if (pyParams) {
+    params = python::extract<RDKit::v2::CDXMLParser::CDXMLParserParams>(pyParams);
+  }
+  std::vector<std::unique_ptr<RWMol>> mols;
+  try {
+    mols = RDKit::v2::CDXMLParser::MolsFromCDXMLFile(filename, params);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  python::list res;
+  for (auto &mol : mols) {
+    // take ownership of the data from the unique_ptr
+    ROMOL_SPTR sptr(static_cast<ROMol *>(mol.release()));
+    res.append(sptr);
+  }
+  return python::tuple(res);
+}
+
 python::tuple MolsFromCDXML(python::object cdxml, bool sanitize,
                             bool removeHs) {
   auto mols = CDXMLToMols(pyObjectToString(cdxml), sanitize, removeHs);
@@ -751,7 +792,6 @@ python::tuple MolsFromCDXML(python::object cdxml, bool sanitize,
   }
   return python::tuple(res);
 }
-
 namespace {
 PyObject *translateMetadata(
     const std::vector<std::pair<std::string, std::string>> &metadata,
@@ -2598,6 +2638,85 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg("cdxml"), python::arg("sanitize") = true,
                python::arg("removeHs") = true),
               docString.c_str());
+
+    python::enum_<RDKit::v2::CDXMLParser::CDXMLFormat>("CDXMLFormat")
+      .value("CDXML",
+             RDKit::v2::CDXMLParser::CDXMLFormat::CDXML)
+      .value("CDX",
+             RDKit::v2::CDXMLParser::CDXMLFormat::CDX)
+      .value("Auto", RDKit::v2::CDXMLParser::CDXMLFormat::Auto);
+
+  python::class_<RDKit::v2::CDXMLParser::CDXMLParserParams, boost::noncopyable>(
+      "CDXMLParserParams",
+      "Parameters controlling conversion of a CDXML document to molecules",
+      python::init<>(python::args("self"), "Construct a default CDXMLFormat"))
+    .def(python::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat>(
+        python::args("self", "sanitize", "removeHs", "format")))
+      .def_readwrite(
+          "sanitize",
+          &RDKit::v2::CDXMLParser::CDXMLParserParams::sanitize,
+	  "controls whether or not the molecule is sanitized before "
+	  "being returned")
+      .def_readwrite(
+          "removeHs",
+          &RDKit::v2::CDXMLParser::CDXMLParserParams::removeHs,
+	  "controls whether or not Hs are removed before the "
+	  "molecule is returned")
+      .def_readwrite(
+          "format",
+          &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
+          "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML");
+  
+  docString =
+      R"DOC(Construct a molecule from a cdxml file.
+
+     Note: that the CDXML format is large and complex, the RDKit doesn't support
+     full functionality, just the base ones required for molecule and
+     reaction parsing.
+
+     Note: If the ChemDraw extensions are available,
+        CDXMLFormat::Auto attempts to see if the input string is CDXML or CDX,
+     If not, it defaults to CDXML
+
+     ARGUMENTS:
+
+       - filename: the cdxml filename
+
+       - pyParams: CDXParserParams, see CDXParserParams for usage
+
+     RETURNS:
+       a tuple  of parsed Mol objects.)DOC";
+
+  python::def("MolsFromCDXMLFile", MolsFromCDXMLFileHelper,
+              (python::arg("filename"),
+	       python::arg("params")),
+              docString.c_str());
+
+  docString =
+      R"DOC(Construct a molecule from a cdxml string.
+
+     Note that the CDXML format is large and complex, the RDKit doesn't support
+     full functionality, just the base ones required for molecule and
+     reaction parsing.
+
+     Note: in this function CDXMLFormat::Auto currently defaults to CDXML
+
+     ARGUMENTS:
+
+       - cdxml: the cdxml string
+
+       - pyParams: CDXParserParams, see CDXParserParams for usage
+
+     RETURNS:
+       a tuple of parsed Mol objects.)DOC";
+
+  python::def("MolsFromCDXML", MolsFromCDXMLHelper,
+              (python::arg("cdxml"),
+	       python::arg("params")),
+              docString.c_str());
+
+  docString = "Returns true if the RDKit is built with ChemDraw CDX support";
+  python::def("HasChemDrawCDXSupport", RDKit::v2::CDXMLParser::hasChemDrawCDXSupport, docString.c_str());
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
   docString =

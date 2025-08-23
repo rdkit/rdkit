@@ -59,5 +59,16 @@ namespace RdkitTests
             }
 
         }
+	[Fact]
+	public void MolFromCDX() {
+	    var fileName =
+		Path.Combine(Environment.GetEnvironmentVariable("RDBASE"),
+			     "Code", "GraphMol", "test_data", "CDX", "structure_1.cdx");
+	    
+	    byte[] pkl = File.ReadAllBytes(fileName);
+	    var mols = RWMol.MolsFromCDXMLByteArray(pkl);
+	    Assert.True(mols.Count >= 1);
+
+	}
     }
 }

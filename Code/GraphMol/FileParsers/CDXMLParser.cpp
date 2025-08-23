@@ -707,10 +707,15 @@ void visit_children(
 
 namespace v2 {
 namespace CDXMLParser {
+bool hasChemDrawCDXSupport() { return false; }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
     std::istream &inStream, const CDXMLParserParams &params) {
   // populate tree structure pt
+  if (params.format == CDXMLFormat::CDX) {
+    throw FileParseException("Full ChemDraw support is not enabled, cannot parse CDX files");
+  }
+  
   using boost::property_tree::ptree;
   ptree pt;
   try {
@@ -829,7 +834,9 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
-    const std::string &cdxml, const CDXMLParserParams &params) {
+
+						  const std::string &cdxml, const CDXMLParserParams &params) {
+ 
   std::stringstream iss(cdxml);
   return MolsFromCDXMLDataStream(iss, params);
 }
@@ -839,29 +846,57 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 #else
 #include <ChemDraw/chemdraw.h>
 #include <RDGeneral/BadFileException.h>
+#include <filesystem> // For std::filesystem::path
+#include <algorithm>  // For std::transform
+#include <cctype>     // For std::tolower
 
 namespace RDKit{
+
+
 namespace v2 {
 namespace CDXMLParser {
-
+bool hasChemDrawCDXSupport() { return true; }
+  
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
     std::istream &inStream, const CDXMLParserParams &params) {
   // populate tree structure pt
   ChemDrawParserParams chemdraw_params;
   chemdraw_params.sanitize = params.sanitize;
   chemdraw_params.removeHs = params.removeHs;
+  switch(params.format) {
+  case CDXMLFormat::CDX: {
+    chemdraw_params.format = CDXFormat::CDX;
+    break;
+  }
+  case CDXMLFormat::CDXML: {
+    chemdraw_params.format = CDXFormat::CDXML; break;
+  }
+  case CDXMLFormat::Auto:
+    {
+      chemdraw_params.format = CDXFormat::AUTO; break;
+    }
+  }
+
   return MolsFromChemDrawDataStream(inStream, chemdraw_params);
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
     const std::string &fileName, const CDXMLParserParams &params) {
-  std::ifstream ifs(fileName);
+  std::ifstream ifs(fileName,  std::ios::binary);
   if (!ifs || ifs.bad()) {
     std::ostringstream errout;
-    errout << "Bad input file " << fileName;
+    errout << "Bad inxput file " << fileName;
     throw BadFileException(errout.str());
   }
-  return MolsFromCDXMLDataStream(ifs, params);
+
+  try {
+    return MolsFromCDXMLDataStream(ifs, params);
+  } catch (const std::exception &ex) {
+    std::ostringstream errout;
+    errout << "Bad input file " << fileName << " " << ex.what();
+
+    throw FileParseException(errout.str());
+  }
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(

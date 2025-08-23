@@ -41,13 +41,18 @@ namespace RDKit {
 namespace v2 {
 enum class CDXFormat {
   CDX = 1,
-  CDXML = 2
+  CDXML = 2,
+  AUTO = 3
 };
 
 struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {
-  bool sanitize = true;
-  bool removeHs = true;
-  CDXFormat format = CDXFormat::CDXML;
+  bool sanitize;
+  bool removeHs;
+  CDXFormat format;
+  ChemDrawParserParams() : sanitize(true), removeHs(true), format(CDXFormat::AUTO) {}
+  ChemDrawParserParams(bool sanitize, bool removeHs, CDXFormat format) :
+     sanitize(sanitize), removeHs(removeHs), format(format) {}
+  
 };
 
 std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
