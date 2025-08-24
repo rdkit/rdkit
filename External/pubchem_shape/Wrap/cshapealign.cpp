@@ -180,7 +180,7 @@ void wrap_pubchemshape() {
       "AlignMol", &helpers::alignMol,
       (python::arg("ref"), python::arg("probe"), python::arg("refConfId") = -1,
        python::arg("probeConfId") = -1, python::arg("useColors") = true,
-       python::arg("opt_param") = 0.5, python::arg("max_preiters") = 10,
+       python::arg("opt_param") = 1.0, python::arg("max_preiters") = 10,
        python::arg("max_postiters") = 30),
       R"DOC(Aligns a probe molecule to a reference molecule. The probe is modified.
 
@@ -216,7 +216,7 @@ Returns
       "AlignMol", &helpers::alignMol2,
       (python::arg("refShape"), python::arg("probe"),
        python::arg("probeConfId") = -1, python::arg("useColors") = true,
-       python::arg("opt_param") = 0.5, python::arg("max_preiters") = 10,
+       python::arg("opt_param") = 1.0, python::arg("max_preiters") = 10,
        python::arg("max_postiters") = 30, python::arg("applyRefShift") = false),
       R"DOC(Aligns a probe molecule to a reference shape. The probe is modified.
 Assumes the shapes are both centred on the origin.
