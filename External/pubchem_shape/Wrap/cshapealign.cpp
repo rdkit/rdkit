@@ -253,7 +253,7 @@ Returns
   python::def(
       "AlignShapes", &helpers::alignShapes,
       (python::arg("refShape"), python::arg("probeShape"),
-       python::arg("opt_param") = 0.5, python::arg("max_preiters") = 10,
+       python::arg("opt_param") = 1.0, python::arg("max_preiters") = 10,
        python::arg("max_postiters") = 30),
       R"DOC(Aligns a probe shape to a reference shape. The probe is modified.
 
