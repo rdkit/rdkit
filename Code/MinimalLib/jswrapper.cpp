@@ -492,7 +492,8 @@ emscripten::val get_rgroups_as_cols_helper(const JSRGroupDecomposition &self) {
 
   for (auto &rlabelJSMolListPair : cols) {
     obj.set(std::move(rlabelJSMolListPair.first),
-            rlabelJSMolListPair.second.release());
+            emscripten::val(rlabelJSMolListPair.second.release(),
+                            emscripten::allow_raw_pointers()));
   }
 
   return obj;
@@ -506,7 +507,8 @@ emscripten::val get_rgroups_as_rows_helper(const JSRGroupDecomposition &self) {
     auto obj = emscripten::val::object();
     for (auto &rlabelJSMolPair : row) {
       obj.set(std::move(rlabelJSMolPair.first),
-              rlabelJSMolPair.second.release());
+              emscripten::val(rlabelJSMolPair.second.release(),
+                              emscripten::allow_raw_pointers()));
     }
     arr.call<void>("push", std::move(obj));
   }
