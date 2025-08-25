@@ -277,7 +277,7 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
     TwoMolMCSS(*QueryMolecule, *Targets[0].Molecule, Parameters.MinMCSSSize,
                Targets[0].AtomMatchTable, Targets[0].BondMatchTable, true,
-               maxCliques);
+               Parameters.Timeout, maxCliques);
     if (maxCliques.empty()) {
       return;
     }

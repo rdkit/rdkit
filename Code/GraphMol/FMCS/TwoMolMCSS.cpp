@@ -13,27 +13,26 @@
 #include "GraphMol/CIPLabeler/Descriptor.h"
 
 #include <algorithm>
+#include <chrono>
 #include <numeric>
-#include <unordered_set>
 
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/FMCS/MatchTable.h>
+#if 0
+// This is ChatGPT's reference implementation.  It's useful to include
+// for debugging purposes.
 #include <GraphMol/FMCS/chatgpt.h>
+#endif
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+
+using Clock = std::chrono::steady_clock;
+using TimePoint = std::chrono::time_point<Clock>;
 
 namespace RDKit {
 namespace {
-bool atomsMatch(const Atom *atom1, const Atom *atom2) {
-  if (atom1->getAtomicNum() == atom2->getAtomicNum() &&
-      atom1->getIsAromatic() == atom2->getIsAromatic()) {
-    return true;
-  }
-  return false;
-}
-
 // Returns 0 if one bond is nullptr and the other isn't
 // Returns 'c' if they are the same type (for the c-Edges) or
 // 'd' if they aren't or are both nullptr (for the d-Edges).
@@ -45,8 +44,8 @@ char bondsMatch(const Bond *bond1, const Bond *bond2,
     return 'd';
   }
   // If they're both bonded and the same type, they're c-Edges.
-  // If they're both bonded and not the same type, they're not a match
-  // so return 0.
+  // If they're both bonded and not the same type
+  // they count as not connected.
   if (bond1 && bond2) {
     if (bondMatchTable.at(bond1->getIdx(), bond2->getIdx())) {
       return 'c';
@@ -115,6 +114,11 @@ void buildCorrespondenceGraph(
       }
     }
   }
+  // Make a list of where each atom pair starts for each atom in molecule 1,
+  // along with the number of pairs that atom has with atoms in molecule 2.
+  // Sort this into ascending number of pairs.  The start nodes in the
+  // correspondence graph will be taken in this order which can reduce the
+  // search time on average.
   atomPairStarts.resize(mol1.getNumAtoms());
   for (size_t i = 0U; i < atomPairs.size(); ++i) {
     atomPairStarts[atomPairs[i].first].first++;
@@ -293,10 +297,17 @@ void enumerate_z_cliques(std::vector<unsigned int> &c,
 void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
                 const FMCS::MatchTable &atomMatchTable,
                 const FMCS::MatchTable &bondMatchTable, bool uniquify,
+                unsigned int timeOut,
                 std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
                     &maxCliques) {
+  const TimePoint *endTime = nullptr;
+  TimePoint endTimePt;
+  if (timeOut > 0) {
+    endTimePt = Clock::now() + std::chrono::seconds(timeOut);
+    endTime = &endTimePt;
+  }
+
   std::vector<std::pair<unsigned int, unsigned int>> atomPairs;
-  // std::cout << "minMCSSSize = " << minMCSSSize << std::endl;
   if (minMCSSSize > std::min(mol1.getNumAtoms(), mol2.getNumAtoms())) {
     return;
   }
@@ -314,6 +325,7 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
 
   std::vector<unsigned int> clique;
   std::vector<std::vector<unsigned int>> rawMaxCliques;
+  bool timedOut = false;
   // Running enumerate_z_cliques over each node in the corrGraph in turn.
   std::vector<char> t(corrGraph.size(), 0);
   std::vector<unsigned int> p;
@@ -323,6 +335,12 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
   // the atomPairStarts.
   for (size_t aps = 0U; aps < atomPairStarts.size(); ++aps) {
     for (unsigned int i = 0u; i < atomPairStarts[aps].first; ++i) {
+      if (endTime != nullptr && Clock::now() > *endTime) {
+        BOOST_LOG(rdWarningLog) << "Timed out.\n";
+        timedOut = true;
+        break;
+      }
+
       size_t u = atomPairStarts[aps].second + i;
       p.clear();
       d.clear();
@@ -351,10 +369,11 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
     // If the number of start atoms used so far + current minMCSSSize
     // exceeds the number of atomPairStarts then the clique can't
     // be improved on, so it's ok to stop.
-    if (aps + minMCSSSize > atomPairStarts.size()) {
+    if (timedOut || aps + minMCSSSize > atomPairStarts.size()) {
       break;
     }
   }
+
   if (rawMaxCliques.empty() || rawMaxCliques.front().size() < minMCSSSize) {
     return;
   }
@@ -388,23 +407,27 @@ void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
     std::ranges::sort(newClique);
     maxCliques.push_back(std::move(newClique));
   }
-}
-
-std::string makeSMARTSFromMCSS(
-    const ROMol &mol1,
-    const std::vector<std::pair<unsigned int, unsigned int>> &clique) {
-  RWMol qmol(mol1);
-  std::unordered_set<unsigned int> atomsToKeep;
-  std::transform(clique.begin(), clique.end(),
-                 std::inserter(atomsToKeep, atomsToKeep.begin()),
-                 [](const auto &a) -> unsigned int { return a.first; });
-  qmol.beginBatchEdit();
-  for (auto atom : qmol.atoms()) {
-    if (atomsToKeep.find(atom->getIdx()) == atomsToKeep.end()) {
-      qmol.removeAtom(atom);
+#if 0
+  // This is using ChatGPT's reference implementation.  It's useful to
+  // have it for debugging purposes.
+  KochBK<unsigned int> g;
+  for (unsigned int i = 0; i < corrGraph.size(); ++i) {
+    for (unsigned int j = 0; j < corrGraph[i].size(); ++j) {
+      if (corrGraph[i][j]) {
+        g.add_edge(i, j, corrGraph[i][j]);
+      }
     }
   }
-  qmol.commitBatchEdit();
-  return MolToSmarts(qmol);
+  auto cliques = g.enumerate_c_cliques();
+  std::ranges::sort(cliques, [](const auto &a, const auto &b) -> bool {
+    return a.size() < b.size();
+  });
+  std::cout << "c-cliques:\n";
+  for (auto &C : cliques) {
+    std::cout << C.size() << " { ";
+    for (auto &v : C) std::cout << v << " ";
+    std::cout << "}\n";
+  }
+#endif
 }
 }  // namespace RDKit
