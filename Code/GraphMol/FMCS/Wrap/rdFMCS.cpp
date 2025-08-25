@@ -327,8 +327,8 @@ class PyMCSParameters : public boost::noncopyable {
   void setTimeout(unsigned int value) { p->Timeout = value; }
   bool getVerbose() const { return p->Verbose; }
   void setVerbose(bool value) { p->Verbose = value; }
-  bool getFastInitialSeed() const { return p->FastInitialSeed; }
-  void setFastInitialSeed(bool value) { p->FastInitialSeed = value; }
+  bool getUseCliqueDection() const { return p->useCliqueDetection; }
+  void setUseCliqueDetection(bool value) { p->useCliqueDetection = value; }
   void setMinMCSSSize(unsigned int value) { p->MinMCSSSize = value; }
   unsigned int getMinMCSSSize() { return p->MinMCSSSize; }
   const MCSAtomCompareParameters &getAtomCompareParameters() const {
@@ -585,7 +585,7 @@ class PyMCSParameters : public boost::noncopyable {
 
 MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
                           double threshold, unsigned int timeout, bool verbose,
-                          bool fastInitialSeed, unsigned int minMCSSSize,
+                          bool useCliqueDetection, unsigned int minMCSSSize,
                           bool matchValences, bool ringMatchesRingOnly,
                           bool completeRingsOnly, bool matchChiralTag,
                           AtomComparator atomComp, BondComparator bondComp,
@@ -604,7 +604,7 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
   p.MaximizeBonds = maximizeBonds;
   p.Timeout = timeout;
   p.Verbose = verbose;
-  p.FastInitialSeed = fastInitialSeed;
+  p.useCliqueDetection = useCliqueDetection;
   p.MinMCSSSize = minMCSSSize;
   p.InitialSeed = seedSmarts;
   p.AtomCompareParameters.MatchValences = matchValences;
@@ -700,7 +700,7 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       "FindMCS", RDKit::FindMCSWrapper,
       (python::arg("mols"), python::arg("maximizeBonds") = true,
        python::arg("threshold") = 1.0, python::arg("timeout") = 3600,
-       python::arg("verbose") = false, python::arg("fastInitialSeed") = false,
+       python::arg("verbose") = false, python::arg("useCliqueDetection") = false,
        python::arg("minMCSSSize") = 1, python::arg("matchValences") = false,
        python::arg("ringMatchesRingOnly") = false,
        python::arg("completeRingsOnly") = false,
@@ -726,10 +726,10 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                     "timeout (in seconds) for the calculation")
       .add_property("Verbose", &RDKit::PyMCSParameters::getVerbose,
                     &RDKit::PyMCSParameters::setVerbose, "toggles verbose mode")
-      .add_property("FastInitialSeed",
-                    &RDKit::PyMCSParameters::getFastInitialSeed,
-                    &RDKit::PyMCSParameters::setFastInitialSeed,
-                    "toggles FastInitialSeed mode")
+      .add_property("useCliqueDetection",
+                    &RDKit::PyMCSParameters::getUseCliqueDection,
+                    &RDKit::PyMCSParameters::setUseCliqueDetection,
+                    "toggles useCliqueDetection mode")
       .add_property("AtomCompareParameters",
                     python::make_function(
                         &RDKit::PyMCSParameters::getAtomCompareParameters,

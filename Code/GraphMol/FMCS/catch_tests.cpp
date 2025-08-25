@@ -156,13 +156,13 @@ TEST_CASE("MedChemica Base Test") {
   params.MinMCSSSize = static_cast<unsigned int>(
       0.85 * std::max(mols[0]->getNumAtoms(), mols[1]->getNumAtoms()));
   {
-    params.FastInitialSeed = true;
+    params.useCliqueDetection = true;
     res = findMCS(mols, &params);
     CHECK(res.NumAtoms == 17);
     CHECK(res.NumBonds == 19);
   }
   {
-    params.FastInitialSeed = false;
+    params.useCliqueDetection = false;
     res = findMCS(mols, &params);
     CHECK(res.NumAtoms == 17);
     CHECK(res.NumBonds == 19);
@@ -204,7 +204,7 @@ TEST_CASE("FMCS Slow 1") {
   mols.push_back(ROMOL_SPTR(mol2.release()));
   MCSResult res;
   {
-    params.FastInitialSeed = true;
+    params.useCliqueDetection = true;
     params.MinMCSSSize = static_cast<unsigned int>(
         0.85 * std::max(mols[0]->getNumAtoms(), mols[1]->getNumAtoms()));
     res = findMCS(mols, &params);
@@ -212,7 +212,7 @@ TEST_CASE("FMCS Slow 1") {
     CHECK(res.NumBonds == 29);
   }
   {
-    params.FastInitialSeed = false;
+    params.useCliqueDetection = false;
     res = findMCS(mols, &params);
     CHECK(res.NumAtoms == 26);
     CHECK(res.NumBonds == 29);
@@ -246,7 +246,7 @@ TEST_CASE("FMCS Slow 2") {
   mols.push_back(ROMOL_SPTR(mol2.release()));
   MCSResult res;
   {
-    params.FastInitialSeed = true;
+    params.useCliqueDetection = true;
     params.MinMCSSSize = static_cast<unsigned int>(
         0.85 * std::max(mols[0]->getNumAtoms(), mols[1]->getNumAtoms()));
     res = findMCS(mols, &params);
@@ -254,7 +254,7 @@ TEST_CASE("FMCS Slow 2") {
     CHECK(res.NumBonds == 32);
   }
   {
-    params.FastInitialSeed = false;
+    params.useCliqueDetection = false;
     res = findMCS(mols, &params);
     CHECK(res.NumAtoms == 28);
     CHECK(res.NumBonds == 32);
@@ -380,5 +380,4 @@ TEST_CASE("Smaller than FMCS") {
   auto bmt =
       makeBondMatchTable(*mols[0], *mols[1], params.BondCompareParameters);
   TwoMolMCSS(*mols[0], *mols[1], 28, amt, bmt, true, 0, maxCliques);
-  printCliques(maxCliques);
 }

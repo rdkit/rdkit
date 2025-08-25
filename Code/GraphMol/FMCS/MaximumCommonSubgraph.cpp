@@ -269,7 +269,7 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
   QueryMoleculeSingleMatchedAtom = nullptr;
   std::vector<std::unique_ptr<const ROMol>> initialSeedMolecules;
 
-  if (Parameters.InitialSeed.empty() && Parameters.FastInitialSeed &&
+  if (Parameters.InitialSeed.empty() && Parameters.useCliqueDetection &&
       Targets.size() == 1) {
     // We Do the clique detection MCS to create seeds which in many
     // cases will be the final answer and on average will produce an
