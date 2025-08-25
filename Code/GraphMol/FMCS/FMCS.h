@@ -162,8 +162,9 @@ struct RDKIT_FMCS_EXPORT MCSParameters {
   bool useCliqueDetection =
       false; /* Whether to do an approximate MCSS determination first.  2
                 molecule cases only. */
-  unsigned int MinMCSSSize = 1; /* minimum number of atoms in MCSS that will be
-                                   returned.  Only for useCliqueDetection=True. */
+  unsigned int MinMCSSSize =
+      1; /* minimum number of atoms in MCSS that will be
+            returned.  Only for useCliqueDetection=True. */
   MCSAtomCompareParameters AtomCompareParameters;
   MCSBondCompareParameters BondCompareParameters;
   MCSAtomCompareFunction AtomTyper = MCSAtomCompareElements;

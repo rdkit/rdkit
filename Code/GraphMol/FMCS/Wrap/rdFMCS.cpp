@@ -700,7 +700,8 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       "FindMCS", RDKit::FindMCSWrapper,
       (python::arg("mols"), python::arg("maximizeBonds") = true,
        python::arg("threshold") = 1.0, python::arg("timeout") = 3600,
-       python::arg("verbose") = false, python::arg("useCliqueDetection") = false,
+       python::arg("verbose") = false,
+       python::arg("useCliqueDetection") = false,
        python::arg("minMCSSSize") = 1, python::arg("matchValences") = false,
        python::arg("ringMatchesRingOnly") = false,
        python::arg("completeRingsOnly") = false,
@@ -726,7 +727,7 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                     "timeout (in seconds) for the calculation")
       .add_property("Verbose", &RDKit::PyMCSParameters::getVerbose,
                     &RDKit::PyMCSParameters::setVerbose, "toggles verbose mode")
-      .add_property("useCliqueDetection",
+      .add_property("UseCliqueDetection",
                     &RDKit::PyMCSParameters::getUseCliqueDection,
                     &RDKit::PyMCSParameters::setUseCliqueDetection,
                     "toggles useCliqueDetection mode")

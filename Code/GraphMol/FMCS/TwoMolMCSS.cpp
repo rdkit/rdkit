@@ -44,8 +44,9 @@ char bondsMatch(const Bond *bond1, const Bond *bond2,
     return 'd';
   }
   // If they're both bonded and the same type, they're c-Edges.
-  // If they're both bonded and not the same type
-  // they count as not connected.
+  // If they're both bonded and not the same type they count as not
+  // connected in the correspondence graph but not d-Edges as they
+  // are clearly connected in the molecules.
   if (bond1 && bond2) {
     if (bondMatchTable.at(bond1->getIdx(), bond2->getIdx())) {
       return 'c';
