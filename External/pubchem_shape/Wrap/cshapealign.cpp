@@ -197,8 +197,13 @@ probeConfId : int, optional
 useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
 opt_param : float, optional
+    Balance of shape and color for optimization.
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape
 max_preiters : int, optional
+    In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
+    In the two phase optimization, the maximum iterations during the second phase on
+    only the best poses from the first phase
 
 
 Returns
@@ -226,9 +231,14 @@ probeConfId : int, optional
     Probe conformer ID (default is -1)
 useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
-optParam : float, optional
+opt_param : float, optional
+    Balance of shape and color for optimization.
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape
 max_preiters : int, optional
+    In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
+    In the two phase optimization, the maximum iterations during the second phase on
+    only the best poses from the first phase
 applyRefShift : bool, optional
     If True, apply the reference shape's shift translation to the final
     coordinates.
@@ -254,8 +264,13 @@ refShape : ShapeInput
 probeShape : ShapeInput
     Probe shape
 opt_param : float, optional
+    Balance of shape and color for optimization.
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape
 max_preiters : int, optional
+    In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
+    In the two phase optimization, the maximum iterations during the second phase on
+    only the best poses from the first phase
 
 
 Returns
