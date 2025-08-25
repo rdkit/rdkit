@@ -592,8 +592,8 @@ of these three variables:
 
 Here's what the Molfile specification from Biovia says:
 
-  The “dimensional code” is maintained explicitly. Thus “3D” really means 3D,
-  although “2D” will be interpreted as 3D if any non-zero Z-coordinates are
+  The "dimensional code" is maintained explicitly. Thus "3D" really means 3D,
+  although "2D" will be interpreted as 3D if any non-zero Z-coordinates are
   found
 
 We are consistent with this except for the case where the 3D flag is set for 2D
