@@ -18,7 +18,7 @@ using namespace RDKit;
 constexpr double test_opt_param = 0.5;
 constexpr unsigned int test_max_preiters = 3;
 constexpr unsigned int test_max_postiters = 16;
-constexpr double test_use_colors = true;
+constexpr bool test_use_colors = true;
 
 TEST_CASE("basic alignment") {
   std::string dirName = getenv("RDBASE");
