@@ -480,7 +480,7 @@ void TransformConformer(const std::vector<double> &finalTrans,
                         const std::vector<float> &matrix, ShapeInput &fitShape,
                         Conformer &fitConf) {
   const unsigned int nAtoms = fitConf.getOwningMol().getNumAtoms();
-  if (3 * nAtoms != fitShape.coord.size()) {
+  if (nAtoms != fitShape.volumeAtomIndexVector.size()) {
     // Hs were removed
     fitShape.coord.resize(3 * nAtoms);
     for (unsigned int i = 0; i < nAtoms; ++i) {
