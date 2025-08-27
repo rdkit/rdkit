@@ -299,16 +299,25 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
   }
   origin *= -1.0;
 
-  // In some situations we can end up with one or more negative values on the
-  //  diagonal. An odd number of these will result in an inversion of the
-  //  structure, so we need to check for that and, if necessary, correct by
-  //  negating one row
-  if (trans->getVal(0, 0) * trans->getVal(1, 1) * trans->getVal(2, 2) < 0) {
+  // Check that we have received a right-handed coordinate axis -
+  // this is not guaranteed from the jacobi routine. The test
+  // is to see whether the determinant of the eigenvector matrix (which
+  // is the equivalent of ( {vec1 cross vec2} dot vec3 ) is +1 or
+  // -1. In the latter case, it is left-handed, so reverse the sign
+  // of one of the vectors (in this case the z).  This fix came from
+  // Andy Grant, RIP.
+  double test =
+      trans->getVal(0, 2) * (trans->getVal(1, 0) * trans->getVal(2, 1) -
+                             trans->getVal(2, 0) * trans->getVal(1, 1)) +
+      trans->getVal(1, 2) * (trans->getVal(2, 0) * trans->getVal(0, 1) -
+                             trans->getVal(2, 1) * trans->getVal(0, 0)) +
+      trans->getVal(2, 2) * (trans->getVal(0, 0) * trans->getVal(1, 1) -
+                             trans->getVal(1, 0) * trans->getVal(0, 1));
+  if (test < 0.0) {
     for (auto i = 0; i < 3; ++i) {
       trans->setVal(2, i, trans->getVal(2, i) * -1);
     }
   }
-
   trans->TransformPoint(origin);
   trans->SetTranslation(origin);
 
