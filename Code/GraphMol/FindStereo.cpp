@@ -820,7 +820,7 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
           sinfos.push_back(std::move(sinfo));
         } else {
           // Only do another round if we change anything here
-          needAnotherRound = possibleAtoms[aidx];
+          needAnotherRound |= possibleAtoms[aidx];
           possibleAtoms[aidx] = 0;
           atomSymbols[aidx] = getAtomCompareSymbol(*atom);
 

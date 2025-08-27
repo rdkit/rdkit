@@ -6178,7 +6178,8 @@ M  END)CTAB";
 TEST_CASE(
     "Github #8712: Modern stereo + 3D SD file leads to bad stereo detection for some molecules") {
   UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
-  std::string ctab = R"CTAB(
+  SECTION("as reported") {
+    std::string ctab = R"CTAB(
      RDKit          3D
 
   0  0  0  0  0  0  0  0  0  0999 V3000
@@ -6237,9 +6238,21 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END
 )CTAB";
-  auto m = v2::FileParsers::MolFromMolBlock(ctab);
-  REQUIRE(m);
+    auto m = v2::FileParsers::MolFromMolBlock(ctab);
+    REQUIRE(m);
 
-  auto smiles = MolToSmiles(*m);
-  CHECK(smiles.find('@') == std::string::npos);
+    auto smiles = MolToSmiles(*m);
+    CHECK(smiles.find('@') == std::string::npos);
+  }
+  SECTION("counterexample from the doc tests") {
+    // Do not break this one!
+    // I'm adding it here because it seems we don't have this case
+    // in any other C++ test.
+    auto m = R"SMI(C1C[C@H](C)[C@H](C)[C@H](C)C1)SMI"_smiles;
+    REQUIRE(m);
+    for (auto i : {2, 4, 6}) {
+      CHECK(m->getAtomWithIdx(i)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
 }
