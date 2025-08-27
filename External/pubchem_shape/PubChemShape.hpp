@@ -122,7 +122,8 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignShape(
 /*!
   \param finalTrans    the final translation to apply to the fitConf coords.
   \param matrix        the transformation matrix produced from alignment
-  \param fitShape      the shape that was aligned
+  \param fitShape      the shape that was aligned. The coord vector of this is
+                       modified
   \param fitConf       the conformation to be transformed
 */
 RDKIT_PUBCHEMSHAPE_EXPORT void TransformConformer(
