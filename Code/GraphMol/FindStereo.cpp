@@ -818,15 +818,17 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
             needAnotherRound = true;
           }
           sinfos.push_back(std::move(sinfo));
-        } else if (possibleAtoms[aidx]) {
+        } else {
+          // Only do another round if we change anything here
+          needAnotherRound = possibleAtoms[aidx];
           possibleAtoms[aidx] = 0;
           atomSymbols[aidx] = getAtomCompareSymbol(*atom);
-          needAnotherRound = true;
 
           // if this was creating possible ring stereo, update that info now
           if (possibleRingStereoAtoms[aidx]) {
             --possibleRingStereoAtoms[aidx];
             if (!possibleRingStereoAtoms[aidx]) {
+              needAnotherRound = true;
               // we're no longer in any ring with possible ring stereo. Go
               // update all the other atoms/bonds in rings that we're in:
               for (unsigned int ridx = 0;
@@ -838,6 +840,12 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
                     --possibleRingStereoAtoms[raidx];
                     if (possibleRingStereoAtoms[raidx]) {
                       ++nHere;
+                    } else {
+                      // In case there's no possible ring stereo anymore,
+                      // un-fix these atoms so we can recheck them in the next
+                      // iteration, for the case that they are no longer chiral
+                      // after removing the current chirality
+                      fixedAtoms[raidx] = false;
                     }
                   }
                 }
