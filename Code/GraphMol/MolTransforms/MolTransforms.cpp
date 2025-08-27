@@ -302,7 +302,7 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
   // Check that we have received a right-handed coordinate axis -
   // this is not guaranteed from the jacobi routine. The test
   // is to see whether the determinant of the eigenvector matrix (which
-  // is the equivalent of ( {vec1 cross vec2} dot vec3 ) ) is +1 or
+  // is the equivalent of ( {vec1 cross vec2} dot vec3 ) is +1 or
   // -1. In the latter case, it is left-handed, so reverse the sign
   // of one of the vectors (in this case the z).  This fix came from
   // Andy Grant, RIP.
