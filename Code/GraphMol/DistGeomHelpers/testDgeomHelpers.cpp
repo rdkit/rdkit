@@ -835,8 +835,8 @@ void testRandomCoords() {
   std::string fname =
       rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/initCoords.random.sdf";
   SDMolSupplier sdsup(fname, true, false);
-  // SDWriter writer("foo.sdf");
-  // SDWriter writer(fname);
+  SDWriter writer("foo.sdf");
+  SDWriter writer(fname);
 
   boost::char_separator<char> spaceSep(" ");
   tokenizer tokens(smiString, spaceSep);
@@ -851,8 +851,8 @@ void testRandomCoords() {
     int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true, 2, true, 1,
                                           nullptr, 1e-2);
     CHECK_INVARIANT(cid >= 0, "");
-    // writer.write(*m);
-    // writer.flush();
+    writer.write(*m);
+    writer.flush();
     m2 = static_cast<RWMol *>(sdsup.next());
     // ROMol *m2 = NULL;
     if (m2) {

@@ -123,7 +123,7 @@ void TorsionAngleContribM6::getGrad(double *pos, double *grad) const {
            (8.0 * cosPhi3 * sinPhi - 4.0 * cosPhi * sinPhi) -
        5.0 * d_V[4] * d_sign[4] *
            (16.0 * cosPhi4 * sinPhi - 12.0 * cosPhi2 * sinPhi + sinPhi) -
-       6.0 * d_V[4] * d_sign[4] *
+       6.0 * d_V[5] * d_sign[5] *
            (32.0 * cosPhi5 * sinPhi - 32.0 * cosPhi3 * sinPhi + 6.0 * sinPhi));
 
   // FIX: use a tolerance here
