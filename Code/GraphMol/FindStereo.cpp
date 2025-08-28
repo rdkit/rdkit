@@ -836,21 +836,16 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
                 const auto &aring = mol.getRingInfo()->atomRings()[ridx];
                 unsigned int nHere = 0;
                 for (auto raidx : aring) {
-                  if (possibleRingStereoAtoms[raidx]) {
-                    --possibleRingStereoAtoms[raidx];
-                    if (possibleRingStereoAtoms[raidx]) {
-                      ++nHere;
-                    } else {
-                      // In case there's no possible ring stereo anymore,
-                      // un-fix these atoms so we can recheck them in the next
-                      // iteration, for the case that they are no longer chiral
-                      // after removing the current chirality
-                      fixedAtoms[raidx] = false;
-                    }
-                  }
+                  // Ring stereo changed, so un-fix atoms in this ring so we can
+                  // recheck them in the next iteration, for the case that they
+                  // are no longer after the current atom was declared
+                  // non-chiral
+                  fixedAtoms[raidx] = false;
+                  nHere += (possibleRingStereoAtoms[raidx] > 0);
                 }
                 if (nHere <= 1) {
-                  // update the bondstereo counts too
+                  // if the ring can't transmit stereo anymore, update the
+                  // counts
                   for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
                     if (possibleRingStereoBonds[rbidx]) {
                       --possibleRingStereoBonds[rbidx];
