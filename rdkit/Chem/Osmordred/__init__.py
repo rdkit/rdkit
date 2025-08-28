@@ -9,23 +9,20 @@
 Osmordred descriptors for RDKit
 """
 
-from rdkit import RDConfig
 import os
 import sys
-
-# Add the rdOsmordred module to the path
-sys.path.insert(0, os.path.join(RDConfig.RDContribDir, 'Osmordred'))
 
 try:
     from rdkit.Chem import rdOsmordred
 except ImportError:
-    import rdOsmordred
+    rdOsmordred = None
 
 import numpy as np
 import pandas as pd
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import List, Optional, Tuple, Union
 import warnings
+from rdkit import Chem
 
 try:
     from tqdm import tqdm
@@ -48,13 +45,33 @@ def CalcOsmordred(smiles: str,  names: bool = False,
             - If names=False: numpy array of descriptor values
             - If names=True: tuple of (descriptor_values, descriptor_names)
     """
-
-    doExEstate = True
-
-    from rdkit import Chem
+    if rdOsmordred == None:
+        raise RuntimeException("Osmordred not installed in this rdkit distribution")
+    
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return None
+    return CalcOsmordredFromMol(mol, names, mynames)
+
+# Convenience function for single molecule processing
+def CalcOsmordredFromMol(mol,  names: bool = False,
+                         mynames: Optional[List[str]] = None) -> Union[np.ndarray, Tuple[np.ndarray, List[str]]]:
+    """
+    Calculate Osmordred descriptors from an RDKit molecule object.
+    
+    Args:
+        mol: RDKit molecule object
+        version (int): Version of descriptors to use (1 or 2, default: 2)
+        names (bool): Whether to return descriptor names along with values
+        mynames (List[str], optional): Custom descriptor names list
+        
+    Returns:
+        Union[np.ndarray, Tuple[np.ndarray, List[str]]]: 
+            - If names=False: numpy array of descriptor values
+            - If names=True: tuple of (descriptor_values, descriptor_names)
+    """
+    doExEstate = True
+
 
     results = []
     descriptor_names = []
@@ -173,6 +190,9 @@ def Calculate(smiles_list: List[str], ids: Optional[List] = None, n_jobs: int = 
     Returns:
         pd.DataFrame: DataFrame with results, indexed by ID with SMILES as first column.
     """
+    if rdOsmordred == None:
+        raise RuntimeException("Osmordred not installed in this rdkit distribution")
+
     if ids is None:
         ids = list(range(len(smiles_list)))
 
@@ -229,23 +249,3 @@ def GetDescriptorNames() -> List[str]:
     return names
 
 
-# Convenience function for single molecule processing
-def CalcOsmordredFromMol(mol,  names: bool = False,
-                         mynames: Optional[List[str]] = None) -> Union[np.ndarray, Tuple[np.ndarray, List[str]]]:
-    """
-    Calculate Osmordred descriptors from an RDKit molecule object.
-    
-    Args:
-        mol: RDKit molecule object
-        version (int): Version of descriptors to use (1 or 2, default: 2)
-        names (bool): Whether to return descriptor names along with values
-        mynames (List[str], optional): Custom descriptor names list
-        
-    Returns:
-        Union[np.ndarray, Tuple[np.ndarray, List[str]]]: 
-            - If names=False: numpy array of descriptor values
-            - If names=True: tuple of (descriptor_values, descriptor_names)
-    """
-    from rdkit import Chem
-    smiles = Chem.MolToSmiles(mol)
-    return CalcOsmordred(smiles, names, mynames)
