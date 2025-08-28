@@ -846,6 +846,16 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
                 if (nHere <= 1) {
                   // if the ring can't transmit stereo anymore, update the
                   // counts
+                  if (nHere == 1) {
+                    // update the last potential ring stereo atom in the ring,
+                    // since it can't have ring stereo alone.
+                    for (auto raidx : aring) {
+                      if (possibleRingStereoAtoms[raidx]) {
+                        --possibleRingStereoAtoms[raidx];
+                        break;
+                      }
+                    }
+                  }
                   for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
                     if (possibleRingStereoBonds[rbidx]) {
                       --possibleRingStereoBonds[rbidx];
