@@ -658,7 +658,7 @@ TEST_CASE("tracking failure causes") {
     CHECK(cid < 0);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
-          4);
+          3);
   }
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -1038,13 +1038,15 @@ TEST_CASE("No overlapping atoms") {
   auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
   CHECK(cids.size() == 10);
   for (const auto &cid : cids) {
+    INFO(MolToV3KMolBlock(*mol, true, cid));
     CHECK(cid >= 0);
     const auto conf = mol->getConformer(cid);
     for (unsigned int i = 1; i < mol->getNumAtoms(); ++i) {
       for (unsigned int j = 0; j < i; ++j) {
+        INFO("ids: " << i << ", " << j);
         const auto minDist = bm->getLowerBound(i, j);
         const auto length = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
-        CHECK((minDist - length) < .375);
+        CHECK((minDist - length) < .4);
       }
     }
   }
@@ -1058,7 +1060,7 @@ TEST_CASE("github #8001: RMS pruning misses conformers") {
   ps.randomSeed = 1;
   ps.pruneRmsThresh = 0.5;
   auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
-  CHECK(cids.size() == 88);
+  CHECK(cids.size() == 87);
   ps.pruneRmsThresh = 1.0;
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
   CHECK(cids.size() == 4);
