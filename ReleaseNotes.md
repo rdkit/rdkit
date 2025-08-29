@@ -1,3 +1,60 @@
+# Release_2025.03.6
+(Changes relative to Release_2025.03.5)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Jakub Adamczyk, Michael Cho, David Cosgrove, Hussein Faara, Tad Hurst, Eisuke
+Kawashima, Brian Kelley, Yakov Pechersky, Pat Riley, Ricardo Rodriguez, Paolo
+Tosco, jdavies-nurix, badisa 
+
+## New Features and Enhancements:
+  - Expose CDX support to FileParsers and ChemDraw to SWIG
+ (github pull #8681 from bp-kelley)
+  - Add the useRingTemplates option to generateDepictionMatching2DStructure
+ (github pull #8688 from ricrogz)
+
+## Documentation:
+  - rdkit.Chem.BRICS.BRICSBuild misses docstring
+ (github issue #7215 from e-kwsm)
+  - Fix documentation errors for rdShapeAlign
+ (github pull #8685 from badisa)
+  - document the way the 2D/3D flag in ctabs is handled
+ (github pull #8722 from greglandrum)
+  - Update documentation for rdShapeAlign.AlignMol opt_param
+ (github pull #8724 from priley-vv)
+
+## Bug Fixes:
+  - GETAWAY descriptors seem nondeterministic
+ (github issue #7264 from j-adamczyk)
+  - Reading molecule from block gives None with no warning -- likely due to Cannot normalize a zero length vector in atropisomer code
+ (github issue #8602 from pechersky)
+  - RegistrationHash produces 2 separate hashes for 2636640-50-9 depending on input
+ (github issue #8654 from jdavies-nurix)
+  - Incorrect canonicalization when generating CXSMILES without enhanced stereo
+ (github issue #8655 from greglandrum)
+  - Incorrect MolHash when generating CXSMILES without enhanced stereo
+ (github issue #8656 from greglandrum)
+  - Fix parse error messages for bad characters
+ (github pull #8675 from whosayn)
+  - DrawMoleculeWithHighlights doesn't use SetOffset
+ (github issue #8679 from DavidACosgrove)
+  - Fix build with Boost 1.89.0
+ (github pull #8694 from cho-m)
+  - Fix drawing of very short arcs in lasso.
+ (github pull #8706 from DavidACosgrove)
+  - rdMolTransforms.CanonicalizeConformer inverts structure
+ (github issue #8720 from DavidACosgrove)
+  - Two small MinimalLib RGD bug fixes
+ (github pull #8729 from ptosco)
+  - Fixes a bug with bad H positions in output conformer
+ (github pull #8731 from greglandrum)
+  - patch a memory allocation problem in the pubchem shape code
+ (github pull #8733 from greglandrum)
+
+
 # Release_2025.03.5
 (Changes relative to Release_2025.03.4)
 
