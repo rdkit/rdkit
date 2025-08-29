@@ -297,16 +297,17 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
 */
-[[deprecated("Please use the version with RemoveHsParameters")]]
-RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol, bool implicitOnly,
-                                      bool updateExplicitCount = false,
-                                      bool sanitize = true);
+[[deprecated(
+    "Please use the version with RemoveHsParameters")]] RDKIT_GRAPHMOL_EXPORT
+    ROMol *
+    removeHs(const ROMol &mol, bool implicitOnly,
+             bool updateExplicitCount = false, bool sanitize = true);
 //! \overload
 /// modifies the molecule in place
-[[deprecated("Please use the version with RemoveHsParameters")]]
-RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly,
-                                    bool updateExplicitCount = false,
-                                    bool sanitize = true);
+[[deprecated(
+    "Please use the version with RemoveHsParameters")]] RDKIT_GRAPHMOL_EXPORT void
+removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount = false,
+         bool sanitize = true);
 struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeDegreeZero = false;    /**< hydrogens that have no bonds */
   bool removeHigherDegrees = false; /**< hydrogens with two (or more) bonds */
@@ -1375,10 +1376,9 @@ RDKIT_GRAPHMOL_EXPORT bool isAttachmentPoint(const Atom *atom,
  * NOTE: Bookmarks are currently not copied
  *
  */
-RDKIT_GRAPHMOL_EXPORT boost::shared_ptr<RDKit::RWMol>
-ExtractMolFragment(const RDKit::ROMol& mol,
-                   const std::vector<unsigned int>& atom_ids,
-                   bool sanitize = true);
+RDKIT_GRAPHMOL_EXPORT boost::shared_ptr<RDKit::RWMol> ExtractMolFragment(
+    const RDKit::ROMol &mol, const std::vector<unsigned int> &atom_ids,
+    bool sanitize = true);
 
 }  // namespace MolOps
 }  // namespace RDKit
