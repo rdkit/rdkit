@@ -297,16 +297,17 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
 */
-[[deprecated("Please use the version with RemoveHsParameters")]]
-RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol, bool implicitOnly,
-                                      bool updateExplicitCount = false,
-                                      bool sanitize = true);
+[[deprecated(
+    "Please use the version with RemoveHsParameters")]] RDKIT_GRAPHMOL_EXPORT
+    ROMol *
+    removeHs(const ROMol &mol, bool implicitOnly,
+             bool updateExplicitCount = false, bool sanitize = true);
 //! \overload
 /// modifies the molecule in place
-[[deprecated("Please use the version with RemoveHsParameters")]]
-RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly,
-                                    bool updateExplicitCount = false,
-                                    bool sanitize = true);
+[[deprecated(
+    "Please use the version with RemoveHsParameters")]] RDKIT_GRAPHMOL_EXPORT void
+removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount = false,
+         bool sanitize = true);
 struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeDegreeZero = false;    /**< hydrogens that have no bonds */
   bool removeHigherDegrees = false; /**< hydrogens with two (or more) bonds */
@@ -1360,6 +1361,24 @@ RDKIT_GRAPHMOL_EXPORT bool isAttachmentPoint(const Atom *atom,
                                              bool markedOnly = true);
 
 }  // namespace details
+
+//!
+/*
+ * Helper api to extract a subgraph from an ROMol. Bonds, substance groups and
+ * stereo groups are only extracted to the subgraph if all participant atoms
+ * are selected by the `atom_ids` parameter.
+ *
+ * @param mol starting mol
+ * @param atom_ids the indices of atoms to extract. If an atom index falls
+ *                 outside of the acceptable atom indices, it is ignored.
+ * @param sanitize whether to sanitize the extracted mol.
+ *
+ * NOTE: Bookmarks are currently not copied
+ *
+ */
+RDKIT_GRAPHMOL_EXPORT boost::shared_ptr<RDKit::RWMol> ExtractMolFragment(
+    const RDKit::ROMol &mol, const std::vector<unsigned int> &atom_ids,
+    bool sanitize = true);
 
 }  // namespace MolOps
 }  // namespace RDKit
