@@ -1119,3 +1119,41 @@ TEST_CASE("meso impact on atom ranking") {
     }
   }
 }
+
+TEST_CASE("allow disabling ring stereo in ranking") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+
+  std::string smi = "C[C@@H]1CC[C@@H](C)CC1";
+  auto m = v2::SmilesParse::MolFromSmiles(smi);
+  REQUIRE(m);
+
+  bool breakTies = false;
+  bool includeChirality = true;
+  bool includeIsotopes = true;
+  bool includeAtomMaps = true;
+  bool includeChiralPresence = false;
+  bool includeStereoGroups = true;
+  bool useNonStereoRanks = false;
+  bool includeRingStereo = true;
+  std::vector<unsigned int> res1;
+  Canon::rankMolAtoms(*m, res1, breakTies, includeChirality, includeIsotopes,
+                      includeAtomMaps, includeChiralPresence,
+                      includeStereoGroups, useNonStereoRanks,
+                      includeRingStereo);
+  CHECK(res1.size() == m->getNumAtoms());
+  CHECK(res1[2] != res1[7]);
+  CHECK(res1[2] == res1[3]);
+  CHECK(res1[3] != res1[6]);
+  CHECK(res1[6] == res1[7]);
+
+  includeRingStereo = false;
+  Canon::rankMolAtoms(*m, res1, breakTies, includeChirality, includeIsotopes,
+                      includeAtomMaps, includeChiralPresence,
+                      includeStereoGroups, useNonStereoRanks,
+                      includeRingStereo);
+  CHECK(res1.size() == m->getNumAtoms());
+  CHECK(res1[2] == res1[7]);
+  CHECK(res1[2] == res1[3]);
+  CHECK(res1[3] == res1[6]);
+  CHECK(res1[6] == res1[7]);
+}
