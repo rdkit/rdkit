@@ -44,7 +44,8 @@ steps:
     -DRDK_BUILD_SWIG_WRAPPERS=OFF \
     -DRDK_SWIG_STATIC=OFF \
     -DRDK_BUILD_THREADSAFE_SSS=OFF \
-    -DRDK_TEST_MULTITHREADED=OFF
+    -DRDK_TEST_MULTITHREADED=OFF \
+    -DRDK_BUILD_OSMORDRED_SUPPORT=OFF
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

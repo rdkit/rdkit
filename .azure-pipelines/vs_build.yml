@@ -12,7 +12,7 @@ steps:
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas=2.1 ^
-        sphinx myst-parser ipython jupyter pytest nbval cmake 
+        sphinx myst-parser ipython jupyter pytest nbval cmake lapack liblapacke blas
     call activate rdkit_build
     conda config --env --add channels conda-forge 
     conda config --env --set channel_priority strict
