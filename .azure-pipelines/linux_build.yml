@@ -13,7 +13,7 @@ steps:
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
         numpy pillow eigen pandas=2.0 matplotlib-base=3.8 \
-        qt=5 cairo lapack liblapacke
+        qt=5 cairo lapack liblapacke blas
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
