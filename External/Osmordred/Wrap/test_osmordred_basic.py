@@ -8,7 +8,7 @@ available through the Python wrapper.
 import unittest
 import numpy as np
 from rdkit import Chem
-from rdkit.Chem import Osmordred
+from rdkit.Chem import rdOsmordred
 
 
 def to_list(result):
@@ -35,17 +35,17 @@ class TestOsmordred(unittest.TestCase):
         self.assertIsNotNone(self.ethanol)
         
         # Test atom counts (using version 2 as default)
-        atom_counts = Osmordred.CalcAtomCount(self.ethanol, 2)
+        atom_counts = rdOsmordred.CalcAtomCount(self.ethanol)
         atom_counts_list = to_list(atom_counts)
         self.assertGreater(len(atom_counts_list), 0)
         
         # Test bond counts
-        bond_counts = Osmordred.CalcBondCount(self.ethanol)
+        bond_counts = rdOsmordred.CalcBondCount(self.ethanol)
         bond_counts_list = to_list(bond_counts)
         self.assertGreater(len(bond_counts_list), 0)
         
         # Test molecular weight
-        weight = Osmordred.CalcWeight(self.ethanol)
+        weight = rdOsmordred.CalcWeight(self.ethanol)
         weight_list = to_list(weight)
         self.assertGreater(len(weight_list), 0)
         self.assertGreater(weight_list[0], 0.0)
@@ -55,22 +55,22 @@ class TestOsmordred(unittest.TestCase):
         self.assertIsNotNone(self.benzene)
         
         # Test aromatic counts
-        aromatic_counts = Osmordred.CalcAromatic(self.benzene)
+        aromatic_counts = rdOsmordred.CalcAromatic(self.benzene)
         aromatic_counts_list = to_list(aromatic_counts)
         self.assertGreater(len(aromatic_counts_list), 0)
         
         # Test ring count
-        ring_counts = Osmordred.CalcRingCount(self.benzene)
+        ring_counts = rdOsmordred.CalcRingCount(self.benzene)
         ring_counts_list = to_list(ring_counts)
         self.assertGreater(len(ring_counts_list), 0)
         
         # Test aromatic atom count
-        aromatic_atoms = Osmordred.CalcCountAromaticAtoms(self.benzene)
+        aromatic_atoms = rdOsmordred.CalcCountAromaticAtoms(self.benzene)
         self.assertIsInstance(aromatic_atoms, int)
         self.assertGreaterEqual(aromatic_atoms, 0)
         
         # Test aromatic bond count
-        aromatic_bonds = Osmordred.CalcCountAromaticBonds(self.benzene)
+        aromatic_bonds = rdOsmordred.CalcCountAromaticBonds(self.benzene)
         self.assertIsInstance(aromatic_bonds, int)
         self.assertGreaterEqual(aromatic_bonds, 0)
 
@@ -79,38 +79,38 @@ class TestOsmordred(unittest.TestCase):
         self.assertIsNotNone(self.ethanol)
         
         # Test distance matrix descriptors
-        dist_descs = Osmordred.CalcDistanceMatrix(self.ethanol, 2)
+        dist_descs = rdOsmordred.CalcDistanceMatrix(self.ethanol)
         dist_descs_list = to_list(dist_descs)
         self.assertGreater(len(dist_descs_list), 0)
         
-        dist_descs_eigen = Osmordred.CalcDistanceMatrixEigen(self.ethanol, 2)
+        dist_descs_eigen = rdOsmordred.CalcDistanceMatrixEigen(self.ethanol)
         dist_descs_eigen_list = to_list(dist_descs_eigen)
         self.assertGreater(len(dist_descs_eigen_list), 0)
         
         # Test adjacency matrix descriptors
-        adj_descs = Osmordred.CalcAdjacencyMatrix(self.ethanol, 2)
+        adj_descs = rdOsmordred.CalcAdjacencyMatrix(self.ethanol)
         adj_descs_list = to_list(adj_descs)
         self.assertGreater(len(adj_descs_list), 0)
         
-        adj_descs_eigen = Osmordred.CalcAdjacencyMatrixEigen(self.ethanol, 2)
+        adj_descs_eigen = rdOsmordred.CalcAdjacencyMatrixEigen(self.ethanol)
         adj_descs_eigen_list = to_list(adj_descs_eigen)
         self.assertGreater(len(adj_descs_eigen_list), 0)
         
         # Test detour matrix descriptors
-        detour_descs = Osmordred.CalcDetourMatrix(self.ethanol)
+        detour_descs = rdOsmordred.CalcDetourMatrix(self.ethanol)
         detour_descs_list = to_list(detour_descs)
         self.assertGreater(len(detour_descs_list), 0)
         
-        detour_descs_eigen = Osmordred.CalcDetourMatrixEigen(self.ethanol)
+        detour_descs_eigen = rdOsmordred.CalcDetourMatrixEigen(self.ethanol)
         detour_descs_eigen_list = to_list(detour_descs_eigen)
         self.assertGreater(len(detour_descs_eigen_list), 0)
         
         # Test Barysz matrix descriptors
-        barysz_descs = Osmordred.CalcBaryszMatrix(self.ethanol)
+        barysz_descs = rdOsmordred.CalcBaryszMatrix(self.ethanol)
         barysz_descs_list = to_list(barysz_descs)
         self.assertGreater(len(barysz_descs_list), 0)
         
-        barysz_descs_eigen = Osmordred.CalcBaryszMatrixEigen(self.ethanol)
+        barysz_descs_eigen = rdOsmordred.CalcBaryszMatrixEigen(self.ethanol)
         barysz_descs_eigen_list = to_list(barysz_descs_eigen)
         self.assertGreater(len(barysz_descs_eigen_list), 0)
 
@@ -119,33 +119,33 @@ class TestOsmordred(unittest.TestCase):
         self.assertIsNotNone(self.ethanol)
         
         # Test molecular weight
-        weight = Osmordred.CalcWeight(self.ethanol)
+        weight = rdOsmordred.CalcWeight(self.ethanol)
         weight_list = to_list(weight)
         self.assertGreater(len(weight_list), 0)
         self.assertGreater(weight_list[0], 0.0)
         
         # Test van der Waals volume
-        vdw_vol = Osmordred.CalcVdwVolumeABC(self.ethanol)
+        vdw_vol = rdOsmordred.CalcVdwVolumeABC(self.ethanol)
         vdw_vol_list = to_list(vdw_vol)
         self.assertGreater(vdw_vol_list[0], 0.0)
         
         # Test McGowan volume
-        mcgowan_vol = Osmordred.CalcMcGowanVolume(self.ethanol)
+        mcgowan_vol = rdOsmordred.CalcMcGowanVolume(self.ethanol)
         mcgowan_vol_list = to_list(mcgowan_vol)
         self.assertGreater(mcgowan_vol_list[0], 0.0)
         
         # Test polarizability
-        polarizability = Osmordred.CalcPolarizability(self.ethanol)
+        polarizability = rdOsmordred.CalcPolarizability(self.ethanol)
         polarizability_list = to_list(polarizability)
         self.assertGreater(polarizability_list[0], 0.0)
         
         # Test SLogP
-        slogp = Osmordred.CalcSLogP(self.ethanol)
+        slogp = rdOsmordred.CalcSLogP(self.ethanol)
         slogp_list = to_list(slogp)
         self.assertIsInstance(slogp_list, list)
         
         # Test LogS
-        logs = Osmordred.CalcLogS(self.ethanol)
+        logs = rdOsmordred.CalcLogS(self.ethanol)
         logs_list = to_list(logs)
         self.assertIsInstance(logs_list, list)
 
@@ -154,27 +154,27 @@ class TestOsmordred(unittest.TestCase):
         self.assertIsNotNone(self.ethanol)
         
         # Test Wiener index
-        wiener = Osmordred.CalcWienerIndex(self.ethanol)
+        wiener = rdOsmordred.CalcWienerIndex(self.ethanol)
         wiener_list = to_list(wiener)
         self.assertGreater(len(wiener_list), 0)
         
         # Test Balaban J index
-        balaban_j = Osmordred.CalcBalabanJ(self.ethanol)
+        balaban_j = rdOsmordred.CalcBalabanJ(self.ethanol)
         balaban_j_list = to_list(balaban_j)
         self.assertGreater(len(balaban_j_list), 0)
         
         # Test Bertz CT index
-        bertz_ct = Osmordred.CalcBertzCT(self.ethanol)
+        bertz_ct = rdOsmordred.CalcBertzCT(self.ethanol)
         bertz_ct_list = to_list(bertz_ct)
         self.assertGreater(len(bertz_ct_list), 0)
         
         # Test Zagreb index
-        zagreb = Osmordred.CalcZagrebIndex(self.ethanol)
+        zagreb = rdOsmordred.CalcZagrebIndex(self.ethanol)
         zagreb_list = to_list(zagreb)
         self.assertGreater(len(zagreb_list), 0)
         
         # Test eccentric connectivity index
-        eccentric = Osmordred.CalcEccentricConnectivityIndex(self.ethanol)
+        eccentric = rdOsmordred.CalcEccentricConnectivityIndex(self.ethanol)
         eccentric_list = to_list(eccentric)
         self.assertGreater(len(eccentric_list), 0)
 
@@ -183,24 +183,24 @@ class TestOsmordred(unittest.TestCase):
         self.assertIsNotNone(self.ethanol)
         
         # Test all Chi descriptors
-        chi_descs = Osmordred.CalcChi(self.ethanol)
+        chi_descs = rdOsmordred.CalcChi(self.ethanol)
         chi_descs_list = to_list(chi_descs)
         self.assertGreater(len(chi_descs_list), 0)
         
         # Test individual Chi descriptors
-        chipath = Osmordred.CalcChipath(self.ethanol)
+        chipath = rdOsmordred.CalcChipath(self.ethanol)
         chipath_list = to_list(chipath)
         self.assertGreater(len(chipath_list), 0)
         
-        chichain = Osmordred.CalcChichain(self.ethanol)
+        chichain = rdOsmordred.CalcChichain(self.ethanol)
         chichain_list = to_list(chichain)
         self.assertGreater(len(chichain_list), 0)
         
-        chicluster = Osmordred.CalcChicluster(self.ethanol)
+        chicluster = rdOsmordred.CalcChicluster(self.ethanol)
         chicluster_list = to_list(chicluster)
         self.assertGreater(len(chicluster_list), 0)
         
-        chipathcluster = Osmordred.CalcChipathcluster(self.ethanol)
+        chipathcluster = rdOsmordred.CalcChipathcluster(self.ethanol)
         chipathcluster_list = to_list(chipathcluster)
         self.assertGreater(len(chipathcluster_list), 0)
 
@@ -209,22 +209,22 @@ class TestOsmordred(unittest.TestCase):
         self.assertIsNotNone(self.ethanol)
         
         # Test EState descriptors
-        estate_descs = Osmordred.CalcEState(self.ethanol, False)
+        estate_descs = rdOsmordred.CalcEState(self.ethanol, False)
         estate_descs_list = to_list(estate_descs)
         self.assertGreater(len(estate_descs_list), 0)
         
         # Test extended EState descriptors
-        estate_descs_ext = Osmordred.CalcEState(self.ethanol, True)
+        estate_descs_ext = rdOsmordred.CalcEState(self.ethanol, True)
         estate_descs_ext_list = to_list(estate_descs_ext)
         self.assertGreater(len(estate_descs_ext_list), 0)
         
         # Test BEState descriptors
-        bestate_descs = Osmordred.CalcBEState(self.ethanol)
+        bestate_descs = rdOsmordred.CalcBEState(self.ethanol)
         bestate_descs_list = to_list(bestate_descs)
         self.assertGreater(len(bestate_descs_list), 0)
         
         # Test HEState descriptors
-        hestate_descs = Osmordred.CalcHEState(self.ethanol)
+        hestate_descs = rdOsmordred.CalcHEState(self.ethanol)
         hestate_descs_list = to_list(hestate_descs)
         self.assertGreater(len(hestate_descs_list), 0)
 
@@ -233,22 +233,22 @@ class TestOsmordred(unittest.TestCase):
         self.assertIsNotNone(self.ethanol)
         
         # Test acidic group count
-        acidic_count = Osmordred.CalcAcidicGroupCount(self.ethanol)
+        acidic_count = rdOsmordred.CalcAcidicGroupCount(self.ethanol)
         self.assertIsInstance(acidic_count, int)
         self.assertGreaterEqual(acidic_count, 0)
         
         # Test basic group count
-        basic_count = Osmordred.CalcBasicGroupCount(self.ethanol)
+        basic_count = rdOsmordred.CalcBasicGroupCount(self.ethanol)
         self.assertIsInstance(basic_count, int)
         self.assertGreaterEqual(basic_count, 0)
         
         # Test aromatic atom count
-        aromatic_atoms = Osmordred.CalcCountAromaticAtoms(self.ethanol)
+        aromatic_atoms = rdOsmordred.CalcCountAromaticAtoms(self.ethanol)
         self.assertIsInstance(aromatic_atoms, int)
         self.assertGreaterEqual(aromatic_atoms, 0)
         
         # Test aromatic bond count
-        aromatic_bonds = Osmordred.CalcCountAromaticBonds(self.ethanol)
+        aromatic_bonds = rdOsmordred.CalcCountAromaticBonds(self.ethanol)
         self.assertIsInstance(aromatic_bonds, int)
         self.assertGreaterEqual(aromatic_bonds, 0)
 
@@ -259,32 +259,31 @@ class TestOsmordred(unittest.TestCase):
         # Test that all functions work with complex molecules
         # Functions that need version parameter
         functions_with_version = [
-            (Osmordred.CalcAtomCount, 2),
         ]
         
         # Functions that need no additional parameters
         functions_simple = [
-            Osmordred.CalcABCIndex,
-            Osmordred.CalcAcidBase,
-            Osmordred.CalcAromatic,
-            Osmordred.CalcBalabanJ,
-            Osmordred.CalcBertzCT,
-            Osmordred.CalcBondCount,
-            Osmordred.CalcVertexAdjacencyInformation,
-            Osmordred.CalcWeight,
-            Osmordred.CalcWienerIndex,
-            Osmordred.CalcVdwVolumeABC,
-            Osmordred.CalcTopoPSA,
-            Osmordred.CalcSLogP,
-            Osmordred.CalcHydrogenBond,
-            Osmordred.CalcLogS,
-            Osmordred.CalcLipinski,
-            Osmordred.CalcMcGowanVolume,
-            Osmordred.CalcPolarizability,
-            Osmordred.CalcRotatableBond,
-            Osmordred.CalcFragmentComplexity,
-            Osmordred.CalcConstitutional,
-            Osmordred.CalcTopologicalIndex,
+            rdOsmordred.CalcABCIndex,
+            rdOsmordred.CalcAcidBase,
+            rdOsmordred.CalcAromatic,
+            rdOsmordred.CalcBalabanJ,
+            rdOsmordred.CalcBertzCT,
+            rdOsmordred.CalcBondCount,
+            rdOsmordred.CalcVertexAdjacencyInformation,
+            rdOsmordred.CalcWeight,
+            rdOsmordred.CalcWienerIndex,
+            rdOsmordred.CalcVdwVolumeABC,
+            rdOsmordred.CalcTopoPSA,
+            rdOsmordred.CalcSLogP,
+            rdOsmordred.CalcHydrogenBond,
+            rdOsmordred.CalcLogS,
+            rdOsmordred.CalcLipinski,
+            rdOsmordred.CalcMcGowanVolume,
+            rdOsmordred.CalcPolarizability,
+            rdOsmordred.CalcRotatableBond,
+            rdOsmordred.CalcFragmentComplexity,
+            rdOsmordred.CalcConstitutional,
+            rdOsmordred.CalcTopologicalIndex,
         ]
         
         # Test functions with version parameter
@@ -309,19 +308,19 @@ class TestOsmordred(unittest.TestCase):
         """Test edge cases and error handling."""
         # Test with None molecule
         with self.assertRaises((TypeError, AttributeError)):
-            Osmordred.CalcAtomCount(None, 2)
+            rdOsmordred.CalcAtomCount(None)
         
         # Test with empty SMILES
         empty_mol = Chem.MolFromSmiles("")
         if empty_mol is not None:
-            atom_counts = Osmordred.CalcAtomCount(empty_mol, 2)
+            atom_counts = rdOsmordred.CalcAtomCount(empty_mol)
             atom_counts_list = to_list(atom_counts)
             self.assertIsInstance(atom_counts_list, list)
         
         # Test with single atom
         single_atom = Chem.MolFromSmiles("[He]")
         if single_atom is not None:
-            atom_counts = Osmordred.CalcAtomCount(single_atom, 2)
+            atom_counts = rdOsmordred.CalcAtomCount(single_atom)
             atom_counts_list = to_list(atom_counts)
             self.assertIsInstance(atom_counts_list, list)
             self.assertGreater(len(atom_counts_list), 0)
@@ -331,22 +330,22 @@ class TestOsmordred(unittest.TestCase):
         self.assertIsNotNone(self.ethanol)
         
         # Test atom counts consistency
-        atom_counts1 = Osmordred.CalcAtomCount(self.ethanol, 2)
-        atom_counts2 = Osmordred.CalcAtomCount(self.ethanol, 2)
+        atom_counts1 = rdOsmordred.CalcAtomCount(self.ethanol)
+        atom_counts2 = rdOsmordred.CalcAtomCount(self.ethanol)
         atom_counts1_list = to_list(atom_counts1)
         atom_counts2_list = to_list(atom_counts2)
         self.assertEqual(atom_counts1_list, atom_counts2_list)
         
         # Test bond counts consistency
-        bond_counts1 = Osmordred.CalcBondCount(self.ethanol)
-        bond_counts2 = Osmordred.CalcBondCount(self.ethanol)
+        bond_counts1 = rdOsmordred.CalcBondCount(self.ethanol)
+        bond_counts2 = rdOsmordred.CalcBondCount(self.ethanol)
         bond_counts1_list = to_list(bond_counts1)
         bond_counts2_list = to_list(bond_counts2)
         self.assertEqual(bond_counts1_list, bond_counts2_list)
         
         # Test molecular weight consistency
-        weight1 = Osmordred.CalcWeight(self.ethanol)
-        weight2 = Osmordred.CalcWeight(self.ethanol)
+        weight1 = rdOsmordred.CalcWeight(self.ethanol)
+        weight2 = rdOsmordred.CalcWeight(self.ethanol)
         weight1_list = to_list(weight1)
         weight2_list = to_list(weight2)
         self.assertEqual(weight1_list, weight2_list)
@@ -356,16 +355,16 @@ class TestOsmordred(unittest.TestCase):
         self.assertIsNotNone(self.ethanol)
         
         # Test information content
-        info_content = Osmordred.CalcInformationContent(self.ethanol, 5)
+        info_content = rdOsmordred.CalcInformationContent(self.ethanol, 5)
         info_content_list = to_list(info_content)
         self.assertGreater(len(info_content_list), 0)
         
         # Test with different max radius
-        info_content_r3 = Osmordred.CalcInformationContent(self.ethanol, 3)
+        info_content_r3 = rdOsmordred.CalcInformationContent(self.ethanol, 3)
         info_content_r3_list = to_list(info_content_r3)
         self.assertGreater(len(info_content_r3_list), 0)
         
-        info_content_r7 = Osmordred.CalcInformationContent(self.ethanol, 7)
+        info_content_r7 = rdOsmordred.CalcInformationContent(self.ethanol, 7)
         info_content_r7_list = to_list(info_content_r7)
         self.assertGreater(len(info_content_r7_list), 0)
 
@@ -400,7 +399,7 @@ class TestOsmordred(unittest.TestCase):
         ]
         
         for func_name in expected_functions:
-            self.assertTrue(hasattr(Osmordred, func_name),
+            self.assertTrue(hasattr(rdOsmordred, func_name),
                           f"Function {func_name} not found in Osmordred module")
 
 
