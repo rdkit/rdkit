@@ -38,7 +38,7 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_PGSQL=ON \
-    -RDK_BUILD_OSMORDRED_SUPPORT=OFF \
+    -DRDK_BUILD_OSMORDRED_SUPPORT=OFF \
     -DPostgreSQL_CONFIG=/usr/bin/pg_config
   displayName: Configure build (Run CMake)
 - bash: |

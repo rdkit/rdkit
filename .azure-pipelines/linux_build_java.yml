@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build -c conda-forge --override-channels  cmake \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
-        swig=4.2 lapack liblapacke blas
+        swig=4.2 lapack liblapacke blas eigen
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
