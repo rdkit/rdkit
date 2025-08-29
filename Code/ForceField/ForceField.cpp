@@ -123,8 +123,8 @@ class calcGradient {
     for (unsigned int i = 0;
          i < mp_ffHolder->numPoints() * mp_ffHolder->dimension(); i++) {
       grad[i] *= gradScale;
-      if (grad[i] > maxGrad) {
-        maxGrad = grad[i];
+      if (fabs(grad[i]) > maxGrad) {
+        maxGrad = fabs(grad[i]);
       }
     }
     // this is a continuation of the same hack to avoid
@@ -273,9 +273,9 @@ int ForceField::minimize(unsigned int snapshotFreq,
   ForceFieldsHelper::calcEnergy eCalc(this);
   ForceFieldsHelper::calcGradient gCalc(this);
 
-  int res =
-      BFGSOpt::minimize(dim, points.data(), forceTol, numIters, finalForce, eCalc,
-                        gCalc, snapshotFreq, snapshotVect, energyTol, maxIts);
+  int res = BFGSOpt::minimize(dim, points.data(), forceTol, numIters,
+                              finalForce, eCalc, gCalc, snapshotFreq,
+                              snapshotVect, energyTol, maxIts);
   this->gather(points.data());
 
   return res;
