@@ -18,6 +18,7 @@
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/test_fixtures.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -6255,4 +6256,95 @@ M  END
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
   }
+}
+
+#if 1
+TEST_CASE(
+    "Github #8689: stereo canonicalization depends on bond iteration order") {
+  bool useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(useLegacy);
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+
+  SECTION("simplified") {
+    pathName += "github8689_2.sdf";
+    v2::FileParsers::SDMolSupplier suppl(pathName);
+    auto m1 = suppl[0];
+    REQUIRE(m1);
+    auto m2 = suppl[1];
+    REQUIRE(m2);
+    // m1->debugMol(std::cerr);
+    // m2->debugMol(std::cerr);
+
+    CIPLabeler::assignCIPLabels(*m1);
+    CIPLabeler::assignCIPLabels(*m2);
+    REQUIRE(m1->getAtomWithIdx(7)->hasProp(common_properties::_CIPCode));
+    REQUIRE(m1->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
+    REQUIRE(m2->getAtomWithIdx(7)->hasProp(common_properties::_CIPCode));
+    REQUIRE(m2->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
+
+    CHECK(m1->getAtomWithIdx(7)->getProp<std::string>(
+              common_properties::_CIPCode) ==
+          m2->getAtomWithIdx(7)->getProp<std::string>(
+              common_properties::_CIPCode));
+    CHECK(m1->getAtomWithIdx(8)->getProp<std::string>(
+              common_properties::_CIPCode) ==
+          m2->getAtomWithIdx(8)->getProp<std::string>(
+              common_properties::_CIPCode));
+
+    auto smi1 = MolToSmiles(*m1);
+    auto smi2 = MolToSmiles(*m2);
+    CHECK(smi1 == smi2);
+  }
+}
+#endif
+TEST_CASE("extra ring stereo with new stereo perception") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+  SECTION("basics") {
+    std::string smi = "C2O[C@H]3[C@@]4([C@](CCC(C24))(O)CC=C3)C";
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m);
+    m->debugMol(std::cerr);
+    // for (const auto atm : m->atoms()) {
+    //   std::cerr << atm->getIdx() << ": "
+    //             << atm->getProp<unsigned int>(
+    //                    common_properties::_ChiralAtomRank)
+    //             << std::endl;
+    // }
+    for (auto idx : {2, 3, 4}) {
+      INFO(idx);
+      const auto atm = m->getAtomWithIdx(idx);
+      REQUIRE(atm);
+      CHECK(atm->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(!atm->hasProp(common_properties::_ringStereoAtoms));
+    }
+  }
+  SECTION("don't destroy actual ring stereo") {
+    std::string smi = "C[C@@H]1CC[C@@H](C)CC1";
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m);
+    // m->debugMol(std::cerr);
+    // for (const auto atm : m->atoms()) {
+    //   std::cerr << atm->getIdx() << ": "
+    //             << atm->getProp<unsigned int>(
+    //                    common_properties::_ChiralAtomRank)
+    //             << std::endl;
+    // }
+    for (auto idx : {1, 4}) {
+      INFO(idx);
+      const auto atm = m->getAtomWithIdx(idx);
+      REQUIRE(atm);
+      CHECK(atm->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(atm->hasProp(common_properties::_ringStereoAtoms));
+    }
+  }
+}
+TEST_CASE("ring stereo basics with new stereo") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+  auto m = "CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,11,&1:14|"_smiles;
+  REQUIRE(m);
+  auto smi = MolToCXSmiles(*m);
+  CHECK(smi == "CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,11,&1:14|");
 }

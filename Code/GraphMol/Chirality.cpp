@@ -1479,6 +1479,8 @@ bool atomIsCandidateForRingStereochem(
           nbrRanks.insert(atomRanks[nbr->getIdx()]);
         }
       }
+      // std::cerr << "!!!! " << atom->getIdx() << " " << nbrRanks.size() << " "
+      //           << ringNbrs.size() << " " << nonRingNbrs.size() << std::endl;
       switch (nonRingNbrs.size()) {
         case 2:
           // they have to be different
@@ -1487,7 +1489,7 @@ bool atomIsCandidateForRingStereochem(
 
           break;
         case 1:
-          if (ringNbrs.size() >= 2) {
+          if (ringNbrs.size() > nbrRanks.size()) {
             res = true;
           }
           break;
@@ -1504,6 +1506,7 @@ bool atomIsCandidateForRingStereochem(
           res = false;
       }
     }
+    // std::cerr<<"    candidate? "<<res<<std::endl;
     atom->setProp(common_properties::_ringStereochemCand, res, 1);
   }
   return res;
