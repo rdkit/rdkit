@@ -762,7 +762,8 @@ void RWMol::batchRemoveAtoms() {
   if (!dp_delAtoms || dp_delAtoms->none()) {
     return;
   }
-  std::vector<Atom *> oldIndices(getNumAtoms());
+  const auto numAtoms = getNumAtoms();
+  std::vector<Atom *> oldIndices(numAtoms);
   for (auto *atom : atoms()) {
     oldIndices[atom->getIdx()] = atom;
   }
@@ -875,7 +876,8 @@ void RWMol::batchRemoveAtoms() {
     INT_VECT &oldStereoAtoms = bond->getStereoAtoms();
     if (oldStereoAtoms.size()) {
       for (auto &idx : oldStereoAtoms) {
-        if (oldIndices[idx]) {
+	// We can't trust stereoatom indices so make sure they really exist
+        if (rdcast<unsigned int>(idx) < numAtoms && oldIndices[idx]) {
           stereoAtoms.push_back(oldIndices[idx]->getIdx());
         }
       }
