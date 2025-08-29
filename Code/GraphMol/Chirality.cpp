@@ -1450,7 +1450,9 @@ void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
 //   4) three ring neighbors with two different ranks
 //     example for this last one: C[C@H]1CC2CCCC3CCCC(C1)[C@@H]23
 // Note that N atoms are only candidates if they are in a 3-ring
-bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
+bool atomIsCandidateForRingStereochem(
+    const ROMol &mol, const Atom *atom,
+    const std::vector<unsigned int> &atomRanks) {
   PRECONDITION(atom, "bad atom");
   bool res = false;
   std::set<unsigned int> nbrRanks;
@@ -1474,20 +1476,15 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
         } else {
           const Atom *nbr = bond->getOtherAtom(atom);
           ringNbrs.push_back(nbr);
-          unsigned int rnk = 0;
-          nbr->getPropIfPresent(common_properties::_CIPRank, rnk);
-          nbrRanks.insert(rnk);
+          nbrRanks.insert(atomRanks[nbr->getIdx()]);
         }
       }
-      unsigned int rank1 = 0, rank2 = 0;
       switch (nonRingNbrs.size()) {
         case 2:
-          if (nonRingNbrs[0]->getPropIfPresent(common_properties::_CIPRank,
-                                               rank1) &&
-              nonRingNbrs[1]->getPropIfPresent(common_properties::_CIPRank,
-                                               rank2)) {
-            res = rank1 != rank2;
-          }
+          // they have to be different
+          res = atomRanks[nonRingNbrs[0]->getIdx()] !=
+                atomRanks[nonRingNbrs[1]->getIdx()];
+
           break;
         case 1:
           if (ringNbrs.size() >= 2) {
@@ -1515,7 +1512,8 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
 // finds all possible chiral special cases.
 // at the moment this is just candidates for ring stereochemistry
 void findChiralAtomSpecialCases(ROMol &mol,
-                                boost::dynamic_bitset<> &possibleSpecialCases) {
+                                boost::dynamic_bitset<> &possibleSpecialCases,
+                                const std::vector<unsigned int> &atomRanks) {
   PRECONDITION(possibleSpecialCases.size() >= mol.getNumAtoms(),
                "bit vector too small");
   possibleSpecialCases.reset();
@@ -1534,7 +1532,7 @@ void findChiralAtomSpecialCases(ROMol &mol,
     if (atom->getChiralTag() == Atom::CHI_UNSPECIFIED ||
         atom->hasProp(common_properties::_CIPCode) ||
         !mol.getRingInfo()->numAtomRings(atom->getIdx()) ||
-        !atomIsCandidateForRingStereochem(mol, atom)) {
+        !atomIsCandidateForRingStereochem(mol, atom, atomRanks)) {
       continue;
     }
     // do a BFS from this ring atom along ring bonds and find other
@@ -1566,7 +1564,7 @@ void findChiralAtomSpecialCases(ROMol &mol,
       atomsSeen.set(ratom->getIdx());
       if (ratom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
           !ratom->hasProp(common_properties::_CIPCode) &&
-          atomIsCandidateForRingStereochem(mol, ratom)) {
+          atomIsCandidateForRingStereochem(mol, ratom, atomRanks)) {
         int same = (ratom->getChiralTag() == atom->getChiralTag()) ? 1 : -1;
         ringStereoAtoms.push_back(same * (ratom->getIdx() + 1));
         INT_VECT oringatoms(0);
@@ -2369,10 +2367,6 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
   }
 
   if (cleanIt) {
-    // if the ranks are needed again, this will force them to be
-    // re-calculated based on the stereo calculated above.
-    // atomRanks.clear();
-
     for (auto atom : mol.atoms()) {
       if (atom->hasProp(common_properties::_ringStereochemCand)) {
         atom->clearProp(common_properties::_ringStereochemCand);
@@ -2382,7 +2376,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
       }
     }
     boost::dynamic_bitset<> possibleSpecialCases(mol.getNumAtoms());
-    Chirality::findChiralAtomSpecialCases(mol, possibleSpecialCases);
+    Chirality::findChiralAtomSpecialCases(mol, possibleSpecialCases, atomRanks);
 
     for (auto atom : mol.atoms()) {
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
