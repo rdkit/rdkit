@@ -1361,25 +1361,6 @@ RDKIT_GRAPHMOL_EXPORT bool isAttachmentPoint(const Atom *atom,
                                              bool markedOnly = true);
 
 }  // namespace details
-
-//!
-/*
- * Helper api to extract a subgraph from an ROMol. Bonds, substance groups and
- * stereo groups are only extracted to the subgraph if all participant atoms
- * are selected by the `atom_ids` parameter.
- *
- * @param mol starting mol
- * @param atom_ids the indices of atoms to extract. If an atom index falls
- *                 outside of the acceptable atom indices, it is ignored.
- * @param sanitize whether to sanitize the extracted mol.
- *
- * NOTE: Bookmarks are currently not copied
- *
- */
-RDKIT_GRAPHMOL_EXPORT boost::shared_ptr<RDKit::RWMol> ExtractMolFragment(
-    const RDKit::ROMol &mol, const std::vector<unsigned int> &atom_ids,
-    bool sanitize = true);
-
 }  // namespace MolOps
 }  // namespace RDKit
 
