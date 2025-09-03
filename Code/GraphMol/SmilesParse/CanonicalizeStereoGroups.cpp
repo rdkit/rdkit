@@ -970,10 +970,12 @@ void canonicalizeStereoGroups(std::unique_ptr<ROMol> &mol,
   const bool useNonStereoRanks = false;
   const bool includeChiralPresence = true;
   const bool includeStereoGroups = false;
+  const bool includeRingStereo = false;
 
   Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality, includeIsotopes,
                       includeAtomMaps, includeChiralPresence,
-                      includeStereoGroups, useNonStereoRanks);
+                      includeStereoGroups, useNonStereoRanks,
+                      includeRingStereo);
 
   for (auto atom : mol->atoms()) {
     atom->setProp(common_properties::_CanonicalRankingNumber,
