@@ -47,7 +47,6 @@ const int ci_LOCAL_INF = static_cast<int>(1e8);
 namespace RDKit {
 namespace MolOps {
 namespace {
-
 void nitrogenCleanup(RWMol &mol, Atom *atom) {
   // conversions here:
   // - neutral 5 coordinate Ns with double bonds to Os to the
@@ -102,7 +101,7 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
         break;
       }
     }  // end of loop over the first neigh
-  }    // if this atom is 5 coordinate nitrogen
+  }  // if this atom is 5 coordinate nitrogen
   // force a recalculation of the explicit valence here
   atom->setIsAromatic(aromHolder);
   atom->calcExplicitValence(false);
