@@ -1662,18 +1662,17 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "   - isProtein: flag to indicate if the input is a protein (default=False, free ligand).
       "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=True)
       "   - probeRadius: radius of the solvent probe (default=1.2)
-      "   - depth: control of number of dots per atom (default=4)
-      "   - dotDensity: control of accuracy (default=0)
+      "   - confId: conformer ID to consider (default=-1)
       ")DOC";
   python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume>(
       "DoubleCubicLatticeVolume",
       "Class for the Double Cubic Lattice Volume method",
       python::init<const RDKit::ROMol &,
-                   python::optional<bool, bool, double, int, int>>(
+                   python::optional<bool, bool, double, int>>(
           (python::args("self", "mol"), python::args("isProtein") = false,
            python::args("includeLigand") = true,
-           python::args("probeRadius") = 1.2, python::args("depth") = 4,
-           python::args("dotDensity") = 0),
+           python::args("probeRadius") = 1.2, 
+           python::args("confId") = -1),
           docString.c_str()))
       .def("GetSurfaceArea",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
@@ -1689,7 +1688,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
            "Get the Compactness of the Protein")
       .def("GetPackingDensity",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getPackingDensity,
-           "Get the PackingDensity of the Protein");
+           "Get the PackingDensity of the Protein")
+      .def("GetAtomSurfaceArea",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomSurfaceArea,
+           (python::arg("atom_idx")), "Get the surface area of atom with atom_idx")
+      .def("GetAtomVolume",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomVolume,
+           (python::arg("atom_idx"), python::arg("solventRadius")),
+           "Get the volume atom of atom_idx with volume for specified Probe Radius");
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
   python::scope().attr("_CalcCoulombMat_version") =

@@ -38,14 +38,20 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
     molecule is a protein [default=true]
     \param probeRadius: radius of the
     sphere representing the probe solvent atom
-    \param depth: controls the number
-    of dots per atom
-    \param dotDensity: controls density of dots per atom
+    \param confId: conformer ID to consider [default=-1]
 
   */
+
+  // default params assume a small molecule and default conformer
+  const ROMol &mol;
+  bool isProtein = false;
+  bool includeLigand = true;
+  double probeRadius = 1.2;
+  int confId = -1;
+
   DoubleCubicLatticeVolume(const ROMol &mol, bool isProtein = false,
                            bool includeLigand = true, double probeRadius = 1.2,
-                           int depth = 4, int dotDensity = 0);
+                           int confId = -1);
   //! Class for calculation of the Shrake and Rupley surface area and volume
   //! using the Double Cubic Lattice Method.
   //!
@@ -56,37 +62,46 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   //! Vol. 16, No. 3, pp. 273-284, 1995.
 
   // value returns
-  double getSurfaceArea() {
+  double getSurfaceArea();
     /*! \return Solvent Accessible Surface Area */
-    return surfaceArea;
-  }
+  
+  double getAtomSurfaceArea(const unsigned int atom_idx);
+    /*! \return Solvent Accessible Surface Area for specified atom */
 
-  double getVolume() {
+  double getAtomVolume (const int atom_idx, double solventRadius);
+    /*! \return Volume for specified atom */
+
+  double getVolume();
     /*! \return Volume bound by probe sphere */
-    return totalVolume;
-  }
 
-  double getVDWVolume() { /*! \return van der Waals Volume */
-    return vdwVolume;
-  }
+  double getVDWVolume(); 
+    /*! \return van der Waals Volume */
 
-  double getCompactness() {
+  double getCompactness();
     /*! \return Compactness of the protein */
-    return compactness;
-  }
 
-  double getPackingDensity() {
+  double getPackingDensity();
     /*! \return Packing Density of the protein */
-    return packingDensity;
-  }
 
- private:
+  private:
+  // used by methods
+  unsigned int numAtoms = 0;
+  std::vector<RDGeom::Point3D> positions;
+  std::vector<double> radii;
+  std::vector<std::vector<unsigned int>> neighbours;
+  RDGeom::Point3D centreOfGravity;
+
   // outputs
-  double surfaceArea;
-  double totalVolume;
-  double vdwVolume;
-  double compactness;
-  double packingDensity;
+  double surfaceArea = 0.0;
+  double totalVolume = 0.0;
+  double vdwVolume = 0.0;
+  double compactness = 0.0;
+  double packingDensity = 0.0;
+
+  // helpers
+  void determineCentreOfGravity(RDGeom::Point3D &cXYZ);
+  bool testPoint(double *vect, const double &solvrad, const std::vector<unsigned int> &nbrs);
+
 };
 }  // namespace Descriptors
 }  // namespace RDKit
