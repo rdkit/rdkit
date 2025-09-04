@@ -31,6 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.RDKit;
+
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -44,19 +45,20 @@ public class AromaticTests extends GraphMolTest {
 	@Test
 	public void testAromaticRegression() throws Exception {
 		String filePath = getFilePath("aromat_regress.txt");
-		performAromaticTest(filePath,0);
+		performAromaticTest(filePath, 0);
 	}
 
 	@Test
 	public void testNCIAromaticRegression() throws Exception {
 		String filePath = getFilePath("NCI_aromat_regress.txt");
 		// assertEquals(filePath,"foo");
-		performAromaticTest(filePath,0);
+		performAromaticTest(filePath, 0);
 	}
 
 	public void performAromaticTest(String filePath, int expectedFailures) throws Exception {
 		List<AromaticTestEntry> testData = readData(filePath);
 		int nFailed = 0;
+		String badSmiles = "";
 		for (AromaticTestEntry test : testData) {
 			ROMol mol = RWMol.MolFromSmiles(test.smi1);
 			assertNotNull(mol);
@@ -70,11 +72,14 @@ public class AromaticTests extends GraphMolTest {
 						aroms.add(atoms.get(i));
 					}
 				if (test.numAromatics != count) {
+					badSmiles = badSmiles + test.smi1 + ":::";
 					nFailed++;
 				}
 			}
 		}
-		assertEquals("More than " + expectedFailures + " on file " + filePath, expectedFailures, nFailed);
+		// assertEquals("More than " + expectedFailures + " on file " + filePath,
+		// expectedFailures, nFailed);
+		assertEquals("Bad smiles:  " + badSmiles + " on file " + filePath, "", badSmiles);
 
 	}
 
@@ -88,7 +93,7 @@ public class AromaticTests extends GraphMolTest {
 		String smi1;
 		String smi2;
 		int numAromatics;
-		int[] aromaticIdx; 
+		int[] aromaticIdx;
 		int lineNo;
 
 		public AromaticTestEntry(int lineNo, String[] line) {
