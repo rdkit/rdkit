@@ -72,7 +72,8 @@ public class AromaticTests extends GraphMolTest {
 						aroms.add(atoms.get(i));
 					}
 				if (test.numAromatics != count) {
-					badSmiles = badSmiles + test.smi1 + ":::";
+					String resultSmi = mol.MolToSmiles();
+					badSmiles = badSmiles + test.smi1 + "->" + resultSmi + ":::";
 					nFailed++;
 				}
 			}
