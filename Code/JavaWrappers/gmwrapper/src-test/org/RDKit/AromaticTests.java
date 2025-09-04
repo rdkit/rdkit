@@ -58,7 +58,6 @@ public class AromaticTests extends GraphMolTest {
 	public void performAromaticTest(String filePath, int expectedFailures) throws Exception {
 		List<AromaticTestEntry> testData = readData(filePath);
 		int nFailed = 0;
-		String badSmiles = "";
 		for (AromaticTestEntry test : testData) {
 			ROMol mol = RWMol.MolFromSmiles(test.smi1);
 			assertNotNull(mol);
@@ -72,21 +71,18 @@ public class AromaticTests extends GraphMolTest {
 						aroms.add(atoms.get(i));
 					}
 				if (test.numAromatics != count) {
-					String resultSmi = mol.MolToSmiles();
-					badSmiles = badSmiles + test.smi1 + "->" + resultSmi + ":::";
 					nFailed++;
 				}
 			}
 		}
-		// assertEquals("More than " + expectedFailures + " on file " + filePath,
-		// expectedFailures, nFailed);
-		assertEquals("Bad smiles:  " + badSmiles + " on file " + filePath, "", badSmiles);
-
+		assertEquals("More than " + expectedFailures + " on file " + filePath,
+				expectedFailures, nFailed);
 	}
 
 	public String getFilePath(String fileName) {
 		File base = getRdBase();
-		File testFileDir = new File(base, "rdkit" + File.separator + "Chem" + File.separator + "test_data");
+		File testFileDir = new File(base, "rdkit" + File.separator + "Chem" +
+				File.separator + "test_data");
 		return testFileDir.getAbsolutePath() + File.separator + fileName;
 	}
 
@@ -106,7 +102,8 @@ public class AromaticTests extends GraphMolTest {
 			// Catch a null string
 			String[] aromatics = aromaticList.length() > 0 ? aromaticList.split(",")
 					: new String[0];
-			assertTrue("bad test line at " + lineNo, aromatics.length == numAromatics || smi2.equals("FAIL"));
+			assertTrue("bad test line at " + lineNo, aromatics.length == numAromatics ||
+					smi2.equals("FAIL"));
 			aromaticIdx = new int[aromatics.length];
 			for (int i = 0; i < aromatics.length; i++)
 				aromaticIdx[i] = Integer.parseInt(aromatics[i].trim());
