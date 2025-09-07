@@ -287,7 +287,7 @@ struct rgroupdecomp_wrapper {
         "    - doTautomers: match all tautomers of a core against each "
         "input structure\n"
         "    - doEnumeration: expand input cores into enumerated mol bundles\n"
-        "    -allowMultipleRGroupsOnUnlabelled: permit more that one rgroup to "
+        "    - allowMultipleRGroupsOnUnlabelled: permit more than one rgroup to "
         "be attached to an unlabelled core atom";
     python::class_<RDKit::RGroupDecompositionParameters>(
         "RGroupDecompositionParameters", docString.c_str(),
