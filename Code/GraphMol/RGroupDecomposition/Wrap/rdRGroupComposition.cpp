@@ -398,7 +398,7 @@ struct rgroupdecomp_wrapper {
              "       columns[rgroup_label] = [ mols_or_smiles ]\n");
 
     docString =
-        "Decompose a collecion of molecules into their Rgroups\n"
+        "Decompose a collection of molecules into their Rgroups\n"
         "  ARGUMENTS:\n"
         "    - cores: a set of cores from most to least specific.\n"
         "             See RGroupDecompositionParameters for more details\n"
@@ -408,6 +408,9 @@ struct rgroupdecomp_wrapper {
         "molecules [default: False]\n"
         "    - asRows: return the results as rows (default) otherwise return "
         "columns\n"
+        "    - options: RGroupDecompositionParameters object that defines "
+        "the decomposition.\n"
+        "             See RGroupDecompositionParameters for defaults\n"
         "\n"
         "  RETURNS: row_or_column_results, unmatched\n"
         "\n"
