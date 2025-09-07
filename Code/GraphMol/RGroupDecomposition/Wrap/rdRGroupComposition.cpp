@@ -237,7 +237,7 @@ struct rgroupdecomp_wrapper {
 
     docString =
         "RGroupDecompositionParameters controls how the RGroupDecomposition "
-        "sets labeling and matches structures\n"
+        "sets labelling and matches structures\n"
         "  OPTIONS:\n"
         "    - RGroupCoreAlignment: can be one of RGroupCoreAlignment.None_ or "
         "RGroupCoreAlignment.MCS\n"
