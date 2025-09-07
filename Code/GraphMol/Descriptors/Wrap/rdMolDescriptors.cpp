@@ -1677,6 +1677,9 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .def("GetSurfaceArea",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
            "Get the Surface Area of the Molecule or Protein")
+      .def("GetPolarSurfaceArea",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getPolarSurfaceArea,
+           (python::arg("includeSandP")=false), "Get the Polar Surface Area of the Molecule or Protein")
       .def("GetVolume",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getVolume,
            "Get the Total Volume of the Molecule or Protein")

@@ -46,7 +46,7 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   const ROMol &mol;
   bool isProtein = false;
   bool includeLigand = true;
-  double probeRadius = 1.2;
+  double probeRadius = 1.4;
   int confId = -1;
 
   DoubleCubicLatticeVolume(const ROMol &mol, bool isProtein = false,
@@ -62,28 +62,35 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   //! Vol. 16, No. 3, pp. 273-284, 1995.
 
   // value returns
+
+  /*! \return Solvent Accessible Surface Area */
   double getSurfaceArea();
-    /*! \return Solvent Accessible Surface Area */
+
+  /*! \return Polar Surface Area */
+  double getPolarSurfaceArea(const bool &includeSandP);
+
+  /*! \return Solvent Accessible Surface Area for specified atom */
+  double getAtomSurfaceArea(const unsigned int &atom_idx);
   
-  double getAtomSurfaceArea(const unsigned int atom_idx);
-    /*! \return Solvent Accessible Surface Area for specified atom */
-
-  double getAtomVolume (const int atom_idx, double solventRadius);
-    /*! \return Volume for specified atom */
-
+  /*! \return Volume for specified atom */
+  double getAtomVolume(const unsigned int &atom_idx, const double &solventRadius);
+  
+  /*! \return Volume bound by probe sphere */
   double getVolume();
-    /*! \return Volume bound by probe sphere */
-
+  
+  /*! \return van der Waals Volume */
   double getVDWVolume(); 
-    /*! \return van der Waals Volume */
-
+  
+  /*! \return Compactness of the protein */
   double getCompactness();
-    /*! \return Compactness of the protein */
 
+  /*! \return Packing Density of the protein */
   double getPackingDensity();
-    /*! \return Packing Density of the protein */
 
+  /*! \return Set of Points representing the surface */
+  
   private:
+  
   // used by methods
   unsigned int numAtoms = 0;
   std::vector<RDGeom::Point3D> positions;
@@ -93,13 +100,11 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
 
   // outputs
   double surfaceArea = 0.0;
+  double polarSurfaceArea = 0.0;
   double totalVolume = 0.0;
   double vdwVolume = 0.0;
-  double compactness = 0.0;
-  double packingDensity = 0.0;
 
   // helpers
-  void determineCentreOfGravity(RDGeom::Point3D &cXYZ);
   bool testPoint(double *vect, const double &solvrad, const std::vector<unsigned int> &nbrs);
 
 };
