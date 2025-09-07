@@ -224,7 +224,7 @@ struct rgroupdecomp_wrapper {
         .export_values();
 
     python::enum_<RDKit::RGroupCoreAlignment>("RGroupCoreAlignment")
-        // DEPRECATED, remove the folowing line in release 2021.03
+        // DEPRECATED, remove the following line in release 2021.03
         .value("None", RDKit::NoAlignment)
         .value("NoAlignment", RDKit::NoAlignment)
         .value("MCS", RDKit::MCS)
@@ -237,7 +237,7 @@ struct rgroupdecomp_wrapper {
 
     docString =
         "RGroupDecompositionParameters controls how the RGroupDecomposition "
-        "sets labelling and matches structures\n"
+        "sets labeling and matches structures\n"
         "  OPTIONS:\n"
         "    - RGroupCoreAlignment: can be one of RGroupCoreAlignment.None_ or "
         "RGroupCoreAlignment.MCS\n"
