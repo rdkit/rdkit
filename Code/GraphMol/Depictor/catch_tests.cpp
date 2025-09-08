@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <ranges>
 #include <catch2/catch_all.hpp>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/RDKitBase.h>
@@ -215,19 +216,112 @@ TEST_CASE("octahedral", "[nontetrahedral]") {
 }
 
 TEST_CASE("use ring system templates") {
-  auto mol = "C1CCC2C(C1)C1CCN2NN1"_smiles;
-  RDDepict::Compute2DCoordParameters params;
-  RDDepict::compute2DCoords(*mol, params);
-  auto diff =
-      mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
-  // when templates are not used, bond from 10-11 is very short
-  TEST_ASSERT(RDKit::feq(diff.length(), 0.116, .1));
+  SECTION("in compute2DCoords") {
+    auto mol = "C1CCC2C(C1)C1CCN2NN1"_smiles;
+    RDDepict::Compute2DCoordParameters params;
+    RDDepict::compute2DCoords(*mol, params);
+    auto diff =
+        mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
+    // when templates are not used, bond from 10-11 is very short
+    TEST_ASSERT(RDKit::feq(diff.length(), 0.116, .1));
 
-  params.useRingTemplates = true;
-  RDDepict::compute2DCoords(*mol, params);
-  diff =
-      mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
-  TEST_ASSERT(RDKit::feq(diff.length(), 1.0, .1))
+    params.useRingTemplates = true;
+    RDDepict::compute2DCoords(*mol, params);
+    diff =
+        mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
+    TEST_ASSERT(RDKit::feq(diff.length(), 1.0, .1))
+  }
+  SECTION("in generateDepictionMatching2DStructure") {
+    auto align_ref_mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N -5.242424 0.787879 0.000000 0
+M  V30 2 C -4.492420 2.086915 0.000000 0
+M  V30 3 C -2.992419 2.086916 0.000000 0
+M  V30 4 C -2.242418 0.787879 0.000000 0
+M  V30 5 C -2.992416 -0.511157 0.000000 0
+M  V30 6 C -4.492420 -0.511158 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 2 3 4
+M  V30 3 1 4 5
+M  V30 4 2 5 6
+M  V30 5 2 2 1
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+
+    auto mol = "CC1=CC(C23C4C5C6C4C2C6C53)=CN=C1"_smiles;
+
+    REQUIRE(align_ref_mol);
+    REQUIRE(mol);
+
+    const auto &ref_coords = align_ref_mol->getConformer().getPositions();
+
+    // coordinates of the matched atoms must match the reference
+    auto check_match_coords = [](const auto &mol, const auto &ref_coords,
+                                 const MatchVectType &match) {
+      const auto &coords = mol.getConformer().getPositions();
+      return std::ranges::all_of(
+          match,
+          [&coords, &ref_coords](const auto &match_pair) {
+            auto diff =
+                ref_coords[match_pair.first] - coords[match_pair.second];
+            return RDKit::feq(diff.length(), 0.);
+          }
+
+      );
+    };
+
+    // whether the molecule has too long or too short bonds (thresholds are
+    // arbitrary)
+    auto has_weird_bonds = [](const auto &mol) {
+      const auto &coords = mol.getConformer().getPositions();
+      for (auto bond : mol.bonds()) {
+        auto diff =
+            coords[bond->getBeginAtomIdx()] - coords[bond->getEndAtomIdx()];
+        if (auto length = diff.length(); length < 1.0 || length > 2.0) {
+          return true;
+        }
+      };
+      return false;
+    };
+
+    RDDepict::ConstrainedDepictionParams params;
+
+    // without ring templates
+    params.useRingTemplates = false;
+
+    auto match = RDDepict::generateDepictionMatching2DStructure(
+        *mol, *align_ref_mol, -1, nullptr, params);
+    REQUIRE(match.size() == 6);
+
+    CHECK(check_match_coords(*mol, ref_coords, match) == true);
+
+    // by default, RDkit's coordinate generation creates some
+    // weird bonds for cubane
+    CHECK(has_weird_bonds(*mol) == true);
+
+    // with ring templates
+    params.useRingTemplates = true;
+
+    match = RDDepict::generateDepictionMatching2DStructure(*mol, *align_ref_mol,
+                                                           -1, nullptr, params);
+    REQUIRE(match.size() == 6);
+    CHECK(check_match_coords(*mol, ref_coords, match) == true);
+
+    // when using ring templates, cubane bonds are all approximately
+    // the same length, which is reasonable
+    CHECK(has_weird_bonds(*mol) == false);
+  }
 }
 
 TEST_CASE("find core rings") {

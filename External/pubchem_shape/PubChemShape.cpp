@@ -479,23 +479,28 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
 void TransformConformer(const std::vector<double> &finalTrans,
                         const std::vector<float> &matrix, ShapeInput &fitShape,
                         Conformer &fitConf) {
+  // we reuse/modify the coord member of fitShape in order to avoid memory
+  // allocations
   const unsigned int nAtoms = fitConf.getOwningMol().getNumAtoms();
-  if (3 * nAtoms != fitShape.coord.size()) {
-    // Hs were removed
+  if (nAtoms > fitShape.volumeAtomIndexVector.size()) {
+    // Hs are missing... make sure we have space for them
     fitShape.coord.resize(3 * nAtoms);
-    for (unsigned int i = 0; i < nAtoms; ++i) {
-      const auto &pos = fitConf.getAtomPos(i);
-      fitShape.coord[i * 3] = pos.x + fitShape.shift[0];
-      fitShape.coord[i * 3 + 1] = pos.y + fitShape.shift[1];
-      fitShape.coord[i * 3 + 2] = pos.z + fitShape.shift[2];
-    }
+  }
+  // initialize the fitShape coords with the starting atomic positions from
+  // the conformer shifted to the center of "mass" coordinates.
+  for (unsigned int i = 0; i < nAtoms; ++i) {
+    const auto &pos = fitConf.getAtomPos(i);
+    fitShape.coord[i * 3] = pos.x + fitShape.shift[0];
+    fitShape.coord[i * 3 + 1] = pos.y + fitShape.shift[1];
+    fitShape.coord[i * 3 + 2] = pos.z + fitShape.shift[2];
   }
 
   std::vector<float> transformed(nAtoms * 3);
   Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
-                                fitConf.getOwningMol().getNumAtoms(),
-                                matrix.data());
+                                nAtoms, matrix.data());
 
+  // now set the coordinates in the conformer; undo the shift of the reference
+  // shape to center of "mass" coordinates
   for (unsigned i = 0; i < nAtoms; ++i) {
     RDGeom::Point3D &pos = fitConf.getAtomPos(i);
     pos.x = transformed[i * 3] - finalTrans[0];

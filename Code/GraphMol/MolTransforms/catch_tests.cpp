@@ -11,7 +11,9 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 #include <algorithm>
 #include <regex>
@@ -101,5 +103,23 @@ M  END)CTAB"_ctab;
           m1->getAtomWithIdx(1)->getChiralTag());
     CHECK(m2_cp.getAtomWithIdx(1)->getChiralTag() ==
           m2->getAtomWithIdx(1)->getChiralTag());
+  }
+}
+
+TEST_CASE("Other flips") {
+  // These came from PubChem's 3D conformer collection:
+  // https://ftp.ncbi.nlm.nih.gov/pubchem/Compound_3D/10_conf_per_cmpd
+  // They are 64478, esomeprazole
+  std::vector<ROMOL_SPTR> mols{
+      R"(FC1(F)[C@]2(F)C(F)(F)[C@]3(F)C(F)(F)[C@@]1(F)C(F)(F)[C@](F)(C2(F)F)C3(F)F |(0.9902,1.5037,-2.1461;1.0672,0.4066,-1.3547;2.1203,-0.3186,-1.8028;1.2929,0.8217,0.1055;2.4333,1.5466,0.1986;0.1063,1.6692,0.5847;0.0063,2.7967,-0.1599;0.3037,2.0687,1.8642;-1.1864,0.8486,0.4796;-2.233,1.5972,0.9026;-1.4104,0.4334,-0.9809;-1.5471,1.5312,-1.7633;-2.5642,-0.2677,-1.096;-0.225,-0.4149,-1.4612;-0.4234,-0.7809,-2.7501;-0.1063,-1.6693,-0.5847;0.9185,-2.4444,-1.0141;-1.2285,-2.4211,-0.6902;0.1185,-1.2554,0.8761;0.2231,-2.3629,1.6489;1.4104,-0.4335,0.9809;2.472,-1.1788,0.5893;1.6392,-0.0847,2.27;-1.0672,-0.4066,1.3548;-2.2125,-1.1279,1.2961;-0.8981,-0.0571,2.6528),wD:3.3,13.14,wU:8.8,18.19|)"_smiles,
+      R"(COc1ccc2nc([S@@](=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1 |(0.641362,7.44566,-1.90542;1.74659,6.85341,-1.22739;1.60806,5.55453,-0.835526;2.65944,4.92299,-0.166852;2.55231,3.59036,0.250442;1.35968,2.89747,-0.0183527;1.00287,1.60246,0.279491;-0.215269,1.46666,-0.194606;-1.16791,-0.0427214,-0.0819799;-1.95615,-0.218445,-1.36497;0.169454,-1.27136,-0.106371;-0.362868,-2.6725,-0.0211404;-0.63428,-3.26081,-1.20402;-1.11383,-4.52338,-1.14388;-1.3311,-5.21502,0.0368067;-1.86296,-6.60553,0.0061196;-1.0376,-4.56935,1.23282;-1.23419,-5.20992,2.42029;-0.141111,-5.9658,2.93629;-0.542453,-3.2702,1.21184;-0.218994,-2.55639,2.4807;-0.66478,2.61454,-0.785806;0.329678,3.55345,-0.686829;0.414062,4.87992,-1.11164),wD:8.9|)"_smiles,
+  };
+  for (auto &mol : mols) {
+    REQUIRE(mol);
+    auto mol_cp = ROMol(*mol);
+    auto rms1 = MolAlign::alignMol(mol_cp, *mol);
+    MolTransforms::canonicalizeMol(mol_cp);
+    auto rms2 = MolAlign::alignMol(mol_cp, *mol);
+    CHECK_THAT(rms1 - rms2, Catch::Matchers::WithinAbs(0.0, 0.001));
   }
 }

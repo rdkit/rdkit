@@ -112,6 +112,7 @@ class DrawMol {
   void extractRegions();
   void extractAttachments();
   void extractMolNotes();
+  void extractCIPCodes(bool showAllCIPCodes);
   void extractStereoGroups();
   void extractAtomNotes();
   void extractBondNotes();

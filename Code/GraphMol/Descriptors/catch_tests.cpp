@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum
+//  Copyright (C) 2021-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,6 +21,7 @@
 #include <GraphMol/Descriptors/PMI.h>
 #include <GraphMol/Descriptors/DCLV.h>
 #include <GraphMol/Descriptors/BCUT.h>
+#include <GraphMol/Descriptors/GETAWAY.h>
 
 using namespace RDKit;
 
@@ -28,8 +29,10 @@ TEST_CASE("Kier kappa2", "[2D]") {
   SECTION("values from https://doi.org/10.1002/qsar.19860050103") {
     std::vector<std::pair<std::string, double>> data = {
         // Table 5 from the paper
-        {"c1ccccc15.Cl5", 1.987},        {"c1ccccc15.F5", 1.735},
-        {"c1ccccc15.[N+]5(=O)O", 2.259}, {"c1ccccc15.C5(=O)C", 2.444},
+        {"c1ccccc15.Cl5", 1.987},
+        {"c1ccccc15.F5", 1.735},
+        {"c1ccccc15.[N+]5(=O)O", 2.259},
+        {"c1ccccc15.C5(=O)C", 2.444},
         /* expected values from paper (differences are due to hybridization
            mismatches)
           {"c1ccccc15.N5(C)C", 2.646},
@@ -38,8 +41,10 @@ TEST_CASE("Kier kappa2", "[2D]") {
           {"c1ccccc15.S5(=O)(=O)C", 2.617},
           {"c1ccccc15.O5", 1.756},
         */
-        {"c1ccccc15.N5(C)C", 2.53},      {"c1ccccc15.C5(=O)N", 2.31},
-        {"c1ccccc15.C5(=O)O", 2.31},     {"c1ccccc15.S5(=O)(=O)C", 2.42},
+        {"c1ccccc15.N5(C)C", 2.53},
+        {"c1ccccc15.C5(=O)N", 2.31},
+        {"c1ccccc15.C5(=O)O", 2.31},
+        {"c1ccccc15.S5(=O)(=O)C", 2.42},
         {"c1ccccc15.O5", 1.65},
     };
     for (const auto &pr : data) {
@@ -628,5 +633,28 @@ TEST_CASE(
     REQUIRE(m);
     CHECK(Descriptors::numAtomStereoCenters(*m) == 2);
     CHECK(Descriptors::numUnspecifiedAtomStereoCenters(*m) == 1);
+  }
+}
+
+TEST_CASE("Github #7264: GETAWAY descriptors are non-deterministic") {
+  SECTION("as reported") {
+    v2::SmilesParse::SmilesParserParams ps;
+    ps.removeHs = false;
+    auto m = v2::SmilesParse::MolFromSmiles(
+        "[H]c1snnc1Br |(0.753469,1.80182,0.0404378;0.108659,0.921186,-0.0974666;-1.6304,0.84393,-0.147597;-1.60936,-1.01967,-0.408092;-0.507386,-1.21741,-0.410872;0.515991,-0.400518,-0.273344;2.36902,-0.929334,-0.305519)|",
+        ps);
+    REQUIRE(m);
+    /*
+    void GETAWAY(
+    const ROMol &, std::vector<double> &res, int confId = -1,
+    unsigned int precision = 2, const std::string &customAtomPropName = "");
+    */
+    std::vector<double> res1, res2;
+    Descriptors::GETAWAY(*m, res1);
+    Descriptors::GETAWAY(*m, res2);
+    for (size_t i = 0; i < res1.size(); ++i) {
+      INFO(i);
+      CHECK(res1[i] == res2[i]);
+    }
   }
 }

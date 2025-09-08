@@ -1,3 +1,12 @@
+
+
+if(NOT RDK_USE_BOOST_IOSTREAMS)
+    find_package(ZLIB)
+    set(STANDALONE_ZLIB_LIBRARY ${ZLIB_LIBRARIES})
+    include_directories(${ZLIB_INCLUDE_DIRS})
+    add_definitions("-DRDK_USE_STANDALONE_ZLIB")
+endif(NOT RDK_USE_BOOST_IOSTREAMS)
+
 if(RDK_BUILD_MAEPARSER_SUPPORT)
     set(MAEPARSER_LIB maeparser)
     set(maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
@@ -11,6 +20,10 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
         # the headers from the source directory
         include_directories(${maeparser_INCLUDE_DIRS})
     endif()
+endif()
+
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  add_definitions("-DRDK_BUILD_CHEMDRAW_SUPPORT")
 endif()
 
 rdkit_library(FileParsers
@@ -34,8 +47,11 @@ rdkit_library(FileParsers
     MultithreadedMolSupplier.cpp
     MultithreadedSmilesMolSupplier.cpp
     MultithreadedSDMolSupplier.cpp
-    LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol SubstructMatch ${MAEPARSER_LIB} ${RDK_CHEMDRAW_LIBS})
-
+    LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol SubstructMatch ${MAEPARSER_LIB} ${RDK_CHEMDRAW_LIBS} ${STANDALONE_ZLIB_LIBRARY}
+)
+if(STANDALONE_ZLIB_LIBRARY)
+    target_include_directories(FileParsers PRIVATE ${ZLIB_INCLUDE_DIRS})
+endif(STANDALONE_ZLIB_LIBRARY)
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
 rdkit_headers(CDXMLParser.h

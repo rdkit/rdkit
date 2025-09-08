@@ -2809,6 +2809,21 @@ function captureStdoutStderr(stdoutCallback, optStderrCallback) {
     };
 }
 
+function captureStdoutStderr(stdoutCallback, optStderrCallback) {
+    if (!stdoutCallback) {
+        return null;
+    }
+    const stderrCallback = optStderrCallback || stdoutCallback;
+    const origStdoutWrite = process.stdout.write;
+    const origStderrWrite = process.stderr.write;
+    process.stdout.write = (chunk) => stdoutCallback(chunk);
+    process.stderr.write = (chunk) => stderrCallback(chunk);
+    return () => {
+        process.stdout.write = origStdoutWrite;
+        process.stderr.write = origStderrWrite;
+    };
+}
+
 function test_capture_logs() {
     const PENTAVALENT_CARBON = 'CC(C)(C)(C)C';
     const PENTAVALENT_CARBON_VALENCE_ERROR = 'Explicit valence for atom # 1 C, 5, is greater than permitted';
@@ -3756,6 +3771,398 @@ M  END
     mol.delete();
 }
 
+function test_png_metadata() {
+    const PNG_COLCHICINE_NO_METADATA = "/../../GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    const PNG_COLCHICINE_WITH_METADATA = "/../../GraphMol/FileParsers/test_data/colchicine.png";
+    const PNG_PENICILLIN_METADATA = "penicillin_metadata.png";
+    const PNG_PENICILLIN_AMOXICILLIN_METADATA = "penicillin_amoxicillin_metadata.png";
+    const PNG_COLCHICINE_AMOXICILLIN_METADATA = "colchicine_amoxicillin_metadata.png";
+    const BENZYLPENICILLIN_SMI = "CC1([C@@H](N2[C@H](S1)[C@@H](C2=O)NC(=O)Cc3ccccc3)C(=O)O)C";
+    const BENZYLPENICILLIN_CAN_SMI = "CC1(C)S[C@@H]2[C@H](NC(=O)Cc3ccccc3)C(=O)N2[C@H]1C(=O)O";
+    const AMOXICILLIN_SMI = "O=C(O)[C@@H]2N3C(=O)[C@@H](NC(=O)[C@@H](c1ccc(O)cc1)N)[C@H]3SC2(C)C";
+    const AMOXICILLIN_CAN_SMI = "CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccc(O)cc3)C(=O)N2[C@H]1C(=O)O";
+    let mol;
+    let mols;
+    let molSan;
+    const png_no_metadata_buf = fs.readFileSync(__dirname + PNG_COLCHICINE_NO_METADATA);
+    const png_no_metadata_blob = new Uint8Array(png_no_metadata_buf.length);
+    const png_no_metadata_blob2 = new Uint8Array(png_no_metadata_buf.length);
+    png_no_metadata_buf.copy(png_no_metadata_blob);
+    png_no_metadata_buf.copy(png_no_metadata_blob2);
+    const png_with_metadata_buf = fs.readFileSync(__dirname + PNG_COLCHICINE_WITH_METADATA);
+    const png_with_metadata_blob = new Uint8Array(png_with_metadata_buf.length);
+    png_with_metadata_buf.copy(png_with_metadata_blob);
+    assert(!RDKitModule.get_mol_from_png_blob(png_no_metadata_blob));
+    assert(!RDKitModule.get_mols_from_png_blob(png_no_metadata_blob));
+    let penicillin = RDKitModule.get_mol(BENZYLPENICILLIN_SMI);
+    assert(penicillin);
+    assert(penicillin.set_new_coords());
+    let png_penicillin_metadata_blob = penicillin.add_to_png_blob(png_no_metadata_blob,
+        "{\"includePkl\":false,\"includeSmiles\":true,\"includeMol\":true}");
+    penicillin.delete();
+    assert(png_penicillin_metadata_blob);
+    fs.writeFileSync(PNG_PENICILLIN_METADATA, png_penicillin_metadata_blob);
+    penicillin = RDKitModule.get_mol_from_png_blob(png_penicillin_metadata_blob);
+    assert(penicillin);
+    assert.equal(penicillin.has_coords(), 2);
+    penicillin.delete();
+    RDKitModule.enable_logging()
+    mol = RDKitModule.get_mol_from_png_blob(png_with_metadata_blob);
+    assert(mol);
+    assert.equal(mol.has_coords(), 2);
+    mol.delete();
+    mols = RDKitModule.get_mols_from_png_blob(png_with_metadata_blob);
+    assert(!mols);
+    mols = RDKitModule.get_mols_from_png_blob(png_with_metadata_blob,
+        JSON.stringify({ includePkl: true, includeSmiles: true }));
+    assert(!mols);
+    mols = RDKitModule.get_mols_from_png_blob(
+        png_with_metadata_blob, JSON.stringify({ includeSmiles: true }));
+    assert(mols);
+    assert.equal(mols.size(), 1);
+    mol = mols.next();
+    assert.equal(mol.has_coords(), 2);
+    mol.delete();
+    mols.delete();
+    assert(!RDKitModule.get_mol_from_png_blob(png_penicillin_metadata_blob,
+        "{\"includePkl\":true,\"includeSmiles\":false,\"includeMol\":false}"));
+    penicillin = RDKitModule.get_mol_from_png_blob(png_penicillin_metadata_blob,
+        "{\"includePkl\":false,\"includeSmiles\":false,\"includeMol\":true,\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false,\"fastFindRings\":false}");
+    assert(penicillin);
+    assert.equal(penicillin.has_coords(), 2);
+    smi = penicillin.get_smiles();
+    assert.notEqual(smi, BENZYLPENICILLIN_CAN_SMI);
+    molSan = RDKitModule.get_mol(smi)
+    assert.equal(molSan.get_smiles(), BENZYLPENICILLIN_CAN_SMI);
+    molSan.delete();
+    penicillin.delete();
+    assert(!RDKitModule.get_mol_from_png_blob(png_no_metadata_blob2));
+    penicillin = RDKitModule.get_mol(BENZYLPENICILLIN_SMI);
+    assert(penicillin);
+    let amoxicillin = RDKitModule.get_mol(AMOXICILLIN_SMI);
+    assert(amoxicillin);
+    assert(amoxicillin.set_new_coords());
+    png_penicillin_metadata_blob = penicillin.add_to_png_blob(png_no_metadata_blob2,
+        "{\"includePkl\":false,\"includeMol\":true,\"CX_ALL_BUT_COORDS\":true}");
+    assert(png_penicillin_metadata_blob);
+    let png_penicillin_amoxicillin_metadata_blob = amoxicillin.add_to_png_blob(png_penicillin_metadata_blob,
+        "{\"includePkl\":false,\"includeMol\":true,\"CX_ALL_BUT_COORDS\":true}");
+    assert(png_penicillin_amoxicillin_metadata_blob);
+    fs.writeFileSync(PNG_PENICILLIN_AMOXICILLIN_METADATA, png_penicillin_amoxicillin_metadata_blob);
+    mol = RDKitModule.get_mol_from_png_blob(png_penicillin_amoxicillin_metadata_blob,
+        "{\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false,\"fastFindRings\":false}");
+    assert(mol);
+    assert(!mol.has_coords());
+    smi = mol.get_smiles();
+    assert.equal(smi, BENZYLPENICILLIN_CAN_SMI);
+    mol.delete();
+    assert(!RDKitModule.get_mol_from_png_blob(png_penicillin_amoxicillin_metadata_blob,
+        "{\"includePkl\":false,\"includeSmiles\":false,\"includeMol\":false}"));
+    mol = RDKitModule.get_mol_from_png_blob(png_penicillin_amoxicillin_metadata_blob,
+        "{\"includePkl\":true,\"includeSmiles\":false,\"includeMol\":true}");
+    assert(mol);
+    assert.equal(mol.has_coords(), 2);
+    smi = mol.get_smiles();
+    assert.equal(smi, BENZYLPENICILLIN_CAN_SMI);
+    mol.delete();
+    mols = RDKitModule.get_mols_from_png_blob(png_penicillin_amoxicillin_metadata_blob);
+    assert(!mols);
+    mols = RDKitModule.get_mols_from_png_blob(
+        png_penicillin_amoxicillin_metadata_blob, JSON.stringify({ includeSmiles: true }));
+    assert(mols);
+    assert.equal(mols.size(), 2);
+    mol = mols.at(0);
+    assert(!mol.has_coords());
+    smi = mol.get_smiles();
+    assert.equal(smi, BENZYLPENICILLIN_CAN_SMI);
+    assert(mol.get_morgan_fp());
+    mol.delete();
+    mol = mols.at(1);
+    assert(!mol.has_coords());
+    smi = mol.get_smiles();
+    assert.equal(smi, AMOXICILLIN_CAN_SMI);
+    assert(mol.get_morgan_fp());
+    mol.delete();
+    mols.delete();
+    mols = RDKitModule.get_mols_from_png_blob(png_penicillin_amoxicillin_metadata_blob, JSON.stringify({
+        includePkl: false, includeMol: true, sanitize: false, removeHs: false, assignStereo: false, fastFindRings: false
+    }));
+    assert(mols);
+    assert.equal(mols.size(), 2);
+    mol = mols.at(0);
+    assert(mol.has_coords());
+    smi = mol.get_smiles();
+    assert.notEqual(smi, BENZYLPENICILLIN_CAN_SMI);
+    molSan = RDKitModule.get_mol(smi)
+    assert.equal(molSan.get_smiles(), BENZYLPENICILLIN_CAN_SMI);
+    molSan.delete();
+    mol.delete();
+    mol = mols.at(1);
+    assert(mol.has_coords());
+    smi = mol.get_smiles();
+    assert.notEqual(smi, AMOXICILLIN_CAN_SMI);
+    molSan = RDKitModule.get_mol(smi)
+    assert.equal(molSan.get_smiles(), AMOXICILLIN_CAN_SMI);
+    molSan.delete();
+    mol.delete();
+    mols.delete();
+    let png_colchicine_amoxicillin_metadata_blob = amoxicillin.add_to_png_blob(
+        png_with_metadata_blob, JSON.stringify({ includeMol: true, CX_ALL_BUT_COORDS:true }));
+    assert(png_colchicine_amoxicillin_metadata_blob);
+    fs.writeFileSync(PNG_COLCHICINE_AMOXICILLIN_METADATA, png_colchicine_amoxicillin_metadata_blob);
+    mols = RDKitModule.get_mols_from_png_blob(png_colchicine_amoxicillin_metadata_blob,
+        "{\"includePkl\":false,\"includeMol\":true}");
+    assert.equal(mols.size(), 1);
+    mol = mols.at(0);
+    assert.equal(mol.has_coords(), 2);
+    mol.delete();
+    mols.delete();
+    mols = RDKitModule.get_mols_from_png_blob(png_colchicine_amoxicillin_metadata_blob,
+        "{\"includeSmiles\":true}");
+    assert.equal(mols.size(), 2);
+    assert.equal(mols.at(0).has_coords(), 2);
+    assert(!mols.at(1).has_coords());
+    mols.delete();
+    penicillin.delete();
+    amoxicillin.delete();
+
+    const colchicine = RDKitModule.get_mol('COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2');
+    assert(colchicine);
+    png_no_metadata_buf.copy(png_no_metadata_blob);
+    let png_colchicine_metadata_blob;
+    png_colchicine_metadata_blob = colchicine.add_to_png_blob(png_no_metadata_blob);
+    mol = RDKitModule.get_mol_from_png_blob(png_colchicine_metadata_blob);
+    assert(mol);
+    assert.equal(mol.get_num_atoms(), 29);
+    assert(!mol.has_coords());
+    mol.delete();
+    // use SMILES
+    png_colchicine_metadata_blob = colchicine.add_to_png_blob(png_no_metadata_blob,
+        JSON.stringify({ includePkl: false }));
+    mol = RDKitModule.get_mol_from_png_blob(png_colchicine_metadata_blob);
+    assert(mol);
+    assert.equal(mol.get_num_atoms(), 29);
+    assert(!mol.has_coords());
+    mol.delete();
+    // use MOL
+    png_colchicine_metadata_blob = colchicine.add_to_png_blob(png_no_metadata_blob,
+        JSON.stringify({ includePkl: false, includeSmiles: false, includeMol: true }));
+    mol = RDKitModule.get_mol_from_png_blob(png_colchicine_metadata_blob);
+    assert(mol);
+    assert.equal(mol.get_num_atoms(), 29);
+    assert.equal(mol.has_coords(), 2);
+    mol.delete();
+    // use PKL
+    colchicine.set_new_coords();
+    assert.equal(colchicine.has_coords(), 2);
+    const PROPERTY_NAME = 'property';
+    const PROPERTY_VALUE = 'value';
+    colchicine.set_prop(PROPERTY_NAME, PROPERTY_VALUE);
+    png_colchicine_metadata_blob = colchicine.add_to_png_blob(png_no_metadata_blob, JSON.stringify({
+        includePkl: true, includeSmiles: false, includeMol: false, propertyFlags: { NoProps: true }
+    }));
+    mol = RDKitModule.get_mol_from_png_blob(png_colchicine_metadata_blob);
+    assert(mol);
+    assert.equal(mol.get_num_atoms(), 29);
+    assert.equal(mol.has_coords(), 2);
+    assert(!mol.has_prop(PROPERTY_NAME));
+    mol.delete();
+    png_colchicine_metadata_blob = colchicine.add_to_png_blob(png_no_metadata_blob, JSON.stringify({
+        includePkl: true, includeSmiles: false, includeMol: false, propertyFlags: { AllProps: true }
+    }));
+    mol = RDKitModule.get_mol_from_png_blob(png_colchicine_metadata_blob);
+    assert(mol);
+    assert.equal(mol.get_num_atoms(), 29);
+    assert.equal(mol.has_coords(), 2);
+    assert(mol.has_prop(PROPERTY_NAME));
+    assert(mol.get_prop(PROPERTY_NAME) == PROPERTY_VALUE);
+    mol.delete();
+    png_colchicine_metadata_blob = colchicine.add_to_png_blob(png_no_metadata_blob, JSON.stringify({
+        includePkl: false, includeSmiles: true, includeMol: false,
+        propertyFlags: { NoProps: true }, CX_ALL_BUT_COORDS: true
+    }));
+    mol = RDKitModule.get_mol_from_png_blob(png_colchicine_metadata_blob);
+    assert(mol);
+    assert.equal(mol.get_num_atoms(), 29);
+    assert(!mol.has_coords());
+    assert(!mol.has_prop(PROPERTY_NAME));
+    mol.delete();
+    // use original wedging
+    const colchicineUnusualWedging = RDKitModule.get_mol(`
+     RDKit          2D
+
+ 29 31  0  0  0  0  0  0  0  0999 V2000
+    6.4602    1.0300    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3062    1.9883    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8993    1.4680    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7453    2.4262    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3384    1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0856    0.4273    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2396   -0.5309    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9868   -2.0094    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1408   -2.9677    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6465   -0.0106    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.8005   -0.9688    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5477   -2.4474    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2280   -0.2968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1857   -1.7387    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6836   -2.9611    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1813   -3.0436    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7569   -4.4288    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2442   -4.6230    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1797   -1.9240    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.6215   -2.3378    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9268   -0.4455    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6132    0.2787    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0269    1.7205    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5055    1.9733    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0258    3.3802    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5043    3.6330    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0675    4.5342    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1576    2.9429    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3401    3.0254    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  7  1  0
+  7  8  1  0
+  8  9  1  0
+  7 10  2  0
+ 10 11  1  0
+ 11 12  1  0
+  6 13  1  0
+ 13 14  2  0
+ 14 15  1  0
+ 15 16  2  0
+ 16 17  1  0
+ 17 18  1  0
+ 16 19  1  0
+ 19 20  2  0
+ 19 21  1  0
+ 21 22  2  0
+ 23 22  1  1
+ 23 24  1  0
+ 24 25  1  0
+ 25 26  1  0
+ 25 27  2  0
+ 23 28  1  0
+ 28 29  1  0
+ 10  3  1  0
+ 22 13  1  0
+ 29  5  1  0
+M  END
+`);
+    assert(colchicineUnusualWedging);
+    assert.equal(colchicineUnusualWedging.has_coords(), 2);
+    assert(colchicineUnusualWedging.get_cxsmiles().includes('wU:22.24|'));
+    assert(colchicineUnusualWedging.get_cxsmiles(JSON.stringify({ CX_ALL: true, restoreBondDirOption: 'RestoreBondDirOptionTrue' })).includes('wU:22.23|'));
+    png_colchicine_metadata_blob = colchicineUnusualWedging.add_to_png_blob(png_no_metadata_blob, JSON.stringify({
+        includePkl: true, includeSmiles: true, includeMol: true,
+        propertyFlags: { AtomProps: true, BondProps: true }
+    }));
+    mol = RDKitModule.get_mol_from_png_blob(png_colchicine_metadata_blob);
+    // the mol is restored from pickle, so it will retain
+    // original molblock wedging
+    assert(mol);
+    assert.equal(mol.get_num_atoms(), 29);
+    assert.equal(mol.has_coords(), 2);
+    assert(mol.get_cxsmiles(JSON.stringify({ CX_ALL: true, restoreBondDirOption: 'RestoreBondDirOptionTrue' })).includes('wU:22.23|'));
+    assert(mol.get_cxsmiles(JSON.stringify({ CX_ALL: true, restoreBondDirOption: 'RestoreBondDirOptionClear' })).includes('wU:22.24|'));
+    assert(mol.get_molblock().includes(' 23 24  1  1'));
+    assert(mol.get_molblock(JSON.stringify({ useMolBlockWedging: true })).includes(' 23 22  1  1'));
+    mol.delete();
+    // the mol is restored from CXSMILES, so it will not retain
+    // original molblock wedging, as it was not stored in the CXSMILES string
+    png_colchicine_metadata_blob = colchicineUnusualWedging.add_to_png_blob(png_no_metadata_blob, JSON.stringify({
+        includePkl: false, includeSmiles: true, includeMol: true,
+        propertyFlags: { AtomProps: true, BondProps: true }
+    }));
+    mol = RDKitModule.get_mol_from_png_blob(png_colchicine_metadata_blob);
+    assert(mol);
+    assert.equal(mol.get_num_atoms(), 29);
+    assert.equal(mol.has_coords(), 2);
+    assert(mol.get_cxsmiles(JSON.stringify({ CX_ALL: true, restoreBondDirOption: 'RestoreBondDirOptionTrue' })).includes('wU:22.24|'));
+    assert(mol.get_cxsmiles(JSON.stringify({ CX_ALL: true, restoreBondDirOption: 'RestoreBondDirOptionClear' })).includes('wU:22.24|'));
+    assert(mol.get_molblock().includes(' 23 24  1  1'));
+    assert(mol.get_molblock(JSON.stringify({ useMolBlockWedging: true })).includes(' 23 24  1  1'));
+    mol.delete();
+    // the mol is restored from CXSMILES, but restoreBondDirOption was set
+    // to 'RestoreBondDirOptionTrue', so it will not retain
+    // original molblock wedging, as it was stored in the CXSMILES string
+    png_colchicine_metadata_blob = colchicineUnusualWedging.add_to_png_blob(png_no_metadata_blob, JSON.stringify({
+        includePkl: false, includeSmiles: true, includeMol: true,
+        propertyFlags: { AtomProps: true, BondProps: true },
+        restoreBondDirOption: 'RestoreBondDirOptionTrue'
+    }));
+    mol = RDKitModule.get_mol_from_png_blob(png_colchicine_metadata_blob);
+    assert(mol);
+    assert.equal(mol.get_num_atoms(), 29);
+    assert.equal(mol.has_coords(), 2);
+    assert(mol.get_cxsmiles(JSON.stringify({ CX_ALL: true, restoreBondDirOption: 'RestoreBondDirOptionTrue' })).includes('wU:22.23|'));
+    assert(mol.get_cxsmiles(JSON.stringify({ CX_ALL: true, restoreBondDirOption: 'RestoreBondDirOptionClear' })).includes('wU:22.24|'));
+    assert(mol.get_molblock().includes(' 23 22  1  1'));
+    assert(mol.get_molblock(JSON.stringify({ useMolBlockWedging: true })).includes(' 23 22  1  1'));
+    mol.delete();
+    colchicineUnusualWedging.delete();
+}
+
+function test_combine_with() {
+    {
+        var mol = RDKitModule.get_mol("CC");
+        assert(mol);
+        var other = RDKitModule.get_mol("NCC");
+        assert(other);
+        assert(!mol.combine_with(other));
+        assert.equal(mol.get_num_atoms(), 5);
+        assert(mol.get_smiles() === "CC.CCN");
+        mol.delete();
+        other.delete();
+    }
+    {
+        var mol = RDKitModule.get_mol("C1CC1 |(0.866025,0,;-0.433013,0.75,;-0.433013,-0.75,)|");
+        var mol_copy = RDKitModule.get_mol_copy(mol);
+        assert(mol);
+        var other = RDKitModule.get_mol("C1CNC1 |(-1.06066,0,;0,-1.06066,;1.06066,0,;0,1.06066,)|");
+        assert(other);
+        assert(!mol.combine_with(other, JSON.stringify({offset: [4.0, 0.0, 0.0]})));
+        assert.equal(mol.get_num_atoms(), 7);
+        assert(mol.get_smiles() === "C1CC1.C1CNC1");
+        assert(mol.get_molblock().includes("    4.0000"));
+        mol.delete();
+        assert(!mol_copy.combine_with(other, JSON.stringify({offset: [9.0, 0.0, 0.0]})));
+        assert.equal(mol_copy.get_num_atoms(), 7);
+        assert(mol_copy.get_smiles() === "C1CC1.C1CNC1");
+        assert(mol_copy.get_molblock().includes("    9.0000"));
+        mol_copy.delete();
+        other.delete();
+    }
+}
+
+function test_get_coords() {
+    {
+        var mol = RDKitModule.get_mol("C1CC1 |(0.866025,0,;-0.433013,0.75,;-0.433013,-0.75,)|");
+        assert(mol);
+        assert.equal(mol.has_coords(), 2);
+        var pos = mol.get_coords();
+        assert(Array.isArray(pos));
+        assert(pos.length === mol.get_num_atoms());
+        assert(pos.every((xyz) => Array.isArray(xyz) && xyz.length === 3 && xyz.every((c) => typeof c === "number")));
+        assert(JSON.stringify(pos) === "[[0.866025,0,0],[-0.433013,0.75,0],[-0.433013,-0.75,0]]");
+        mol.delete();
+    }
+    {
+        var mol = RDKitModule.get_mol("C1CC1");
+        assert(mol);
+        assert(!mol.has_coords());
+        var pos = mol.get_coords();
+        assert(Array.isArray(pos));
+        assert(!pos.length);
+        mol.delete();
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -3850,6 +4257,9 @@ initRDKitModule().then(function(instance) {
     test_pickle();
     test_remove_hs_details();
     test_get_mol_remove_hs();
+    test_png_metadata();
+    test_combine_with();
+    test_get_coords();
 
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")

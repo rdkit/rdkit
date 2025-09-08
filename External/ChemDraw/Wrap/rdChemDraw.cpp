@@ -70,7 +70,8 @@ python::object MolsFromChemDrawBlockHelper(const std::string &filename, bool san
                                  bool removeHs) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
-    mols = RDKit::v2::MolsFromChemDrawBlock(filename, {sanitize, removeHs});
+    mols = RDKit::v2::MolsFromChemDrawBlock(filename,
+					    {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML});
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
@@ -89,7 +90,8 @@ python::object MolsFromChemDrawBlockHelper(const std::string &filename, bool san
 
 python::tuple MolsFromChemDrawFileHelper(python::object cdxml, bool sanitize,
                             bool removeHs) {
-  auto mols = RDKit::v2::MolsFromChemDrawFile(pyObjectToString(cdxml), {sanitize, removeHs});
+  auto mols = RDKit::v2::MolsFromChemDrawFile(pyObjectToString(cdxml),
+					      {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML});
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr

@@ -163,12 +163,12 @@ void MolDraw2D::drawMoleculeWithHighlights(
       break;
   }
   drawMols_.emplace_back(dm);
+  drawMols_.back()->setOffsets(x_offset_, y_offset_);
   drawMols_.back()->createDrawObjects();
   fixVariableDimensions(*drawMols_.back());
   ++activeMolIdx_;
   startDrawing();
   drawTheMolecule((*drawMols_.back()));
-  return;
 }
 
 // ****************************************************************************
@@ -418,13 +418,17 @@ void MolDraw2D::drawArc(const Point2D &centre, double xradius, double yradius,
     double y = centre.y + yradius * sin(ang);
     pts.emplace_back(x, y);
   }
-
   if (fillPolys()) {
     // otherwise it draws an arc back to the pts.front() rather than filling
     // in the sector.
     pts.push_back(centre);
   }
-  drawPolygon(pts, rawCoords);
+  // Very short arcs can be drawn as lines.
+  if (pts.size() == 2) {
+    drawLine(pts[0], pts[1], rawCoords);
+  } else {
+    drawPolygon(pts, rawCoords);
+  }
 }
 
 // ****************************************************************************

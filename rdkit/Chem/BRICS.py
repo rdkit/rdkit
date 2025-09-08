@@ -531,6 +531,33 @@ dummyPattern = Chem.MolFromSmiles('[*]')
 
 def BRICSBuild(fragments, onlyCompleteMols=True, seeds=None, uniquify=True, scrambleReagents=True,
                maxDepth=3):
+  """ Build new molecules from BRICS fragments.
+  
+  
+  Arguments:
+    - fragments: a sequence of BRICS fragments to use for building new molecules.
+    - onlyCompleteMols: if True, only molecules without attachment points will be yielded.
+    - seeds: an optional list of seed molecules to use as starting points.
+    - uniquify: if True, only unique molecules (determined by canonical SMILES) will be yielded.
+    - scrambleReagents: if True, the order of reagents will be randomized before enumeration.
+    - maxDepth: the maximum depth of the building process.
+
+  Returns:
+    a generator that yields the produced molecules.
+
+    >>> from rdkit import Chem
+    >>> frags = ['[14*]c1ccccn1', '[16*]c1cccc([16*])c1', '[3*]O[3*]', '[4*]CCC', '[4*]C[8*]']
+    >>> frags = [Chem.MolFromSmiles(x) for x in frags]
+    >>> res = BRICSBuild(frags, scrambleReagents=False)
+    >>> type(res)
+    <class 'generator'>
+    >>> res = sorted(Chem.MolToSmiles(x) for x in res)
+    >>> len(res)  
+    21  
+    >>> res[:3]
+    ['CCCOCCC', 'CCCOCc1cccc(-c2ccccn2)c1', 'CCCOCc1ccccn1']
+
+  """
   seen = set()
   if not seeds:
     seeds = list(fragments)

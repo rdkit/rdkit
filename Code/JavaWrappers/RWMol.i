@@ -36,6 +36,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/CDXMLParser.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/Bond.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
@@ -58,10 +59,41 @@
 #if swifjava
 %javaconst(1);
 #endif
-%include <GraphMol/FileParsers/FileParsers.h>
-%ignore RDKit::v2;
+
 %ignore RDKit::v2::SmilesParse;
+
+%ignore RDKit::v1::CDXMLDataStreamToMols;
+%ignore RDKit::v1::CDXMLFileToMols;
+%ignore RDKit::v1::CDXMLToMols;
+
+%ignore RDKit::v2::CDXMLParser::MolsFromCDXMLDataStream;
+%ignore RDKit::v2::CDXMLParser::MolsFromCDXML;
+%ignore RDKit::v2::CDXMLParser::MolsFromCDXMLFile;
+%ignore *::MolsFromCDXMLDataStream;
+
+%include <GraphMol/FileParsers/FileParsers.h>
+%include <GraphMol/FileParsers/CDXMLParser.h>
 %include <GraphMol/SmilesParse/SmilesParse.h>
+
+
+%typemap(cscode) RDKit::RWMol %{
+  public static RWMol_Vect MolsFromCDXMLByteArray(
+	  byte[] text, bool sanitize=true, bool removeHs=true) {
+    UChar_Vect vec = null;
+    try {
+      vec = new UChar_Vect();
+      vec.Capacity = text.Length;
+      for (int i = 0; i < text.Length; ++i) {
+        vec.Add((byte)text[i]);
+      }
+      return RWMol.MolsFromCDXML(vec, sanitize, removeHs);
+    } finally {
+      if (vec != null) {
+        vec.Dispose();
+      }
+    }
+  }
+%}
 %include <GraphMol/RWMol.h>
 
 %extend RDKit::RWMol {
@@ -140,8 +172,8 @@ static RDKit::RWMOL_SPTR MolFromHELM(const std::string &text,
 }
 
 static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXML(const std::string &text,
-						     bool sanitize=true){
-  auto res = RDKit::CDXMLToMols(text, sanitize);
+						    bool sanitize=true, bool removeHs=true){
+  auto res = RDKit::CDXMLToMols(text, sanitize, removeHs);
   std::vector<RDKit::RWMOL_SPTR> mols;
   for(auto &mol: res) {
     mols.emplace_back(mol.release());
@@ -150,9 +182,36 @@ static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXML(const std::string &text,
 
 }
 
-static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXMLFile(const std::string &text,
-							 bool sanitize=true){
-  auto res = RDKit::CDXMLFileToMols(text, sanitize);
+static std::vector<RDKit::RWMOL_SPTR>  MolsFromCDXML(
+     const std::vector<unsigned char> &text, bool sanitize=true, bool removeHs=true) {
+    std::string str(text.begin(), text.end());
+    RDKit::v2::CDXMLParser::CDXMLParserParams params;
+    params.sanitize=sanitize;
+    params.removeHs=removeHs;
+    auto res = RDKit::v2::CDXMLParser::MolsFromCDXML(str, params);
+    std::vector<RDKit::RWMOL_SPTR> mols;
+    for(auto &mol: res) {
+      mols.emplace_back(mol.release());
+    }
+    return mols;
+}
+
+static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXML(
+ const std::string &text,
+ const RDKit::v2::CDXMLParser::CDXMLParserParams &params=RDKit::v2::CDXMLParser::CDXMLParserParams()) {
+  auto res = RDKit::v2::CDXMLParser::MolsFromCDXML(text, params);
+  std::vector<RDKit::RWMOL_SPTR> mols;
+  for(auto &mol: res) {
+    mols.emplace_back(mol.release());
+  }
+  return mols;
+
+}
+
+static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXMLFile(
+ const std::string &filename,
+ const RDKit::v2::CDXMLParser::CDXMLParserParams &params=RDKit::v2::CDXMLParser::CDXMLParserParams()) {
+  auto res = RDKit::v2::CDXMLParser::MolsFromCDXMLFile(filename, params);
   std::vector<RDKit::RWMOL_SPTR> mols;
   for(auto &mol: res) {
     mols.emplace_back(mol.release());
