@@ -110,16 +110,17 @@ inline void finishMolProcessing(RWMol *res, bool chiralityPossible,
 RDKIT_FILEPARSERS_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
 
 //! applies a particular property to the atoms as an atom property list
-template <typename T>
-void applyMolListPropToAtoms(ROMol &mol, const std::string &pn,
-                             const std::string &prefix,
-                             const std::string &missingValueMarker = "n/a") {
-  std::string atompn = pn.substr(prefix.size());
+template <typename T, typename U>
+void applyMolListProp(ROMol &mol, const std::string &pn,
+                      const std::string &prefix,
+                      const std::string &missingValueMarker, size_t nItems,
+                      U getter) {
+  std::string itempn = pn.substr(prefix.size());
   std::string strVect = mol.getProp<std::string>(pn);
   std::vector<std::string> tokens;
   boost::split(tokens, strVect, boost::is_any_of(" \t\n"),
                boost::token_compress_on);
-  if (tokens.size() < mol.getNumAtoms()) {
+  if (tokens.size() < nItems) {
     BOOST_LOG(rdWarningLog)
         << "Property list " << pn << " too short, only " << tokens.size()
         << " elements found. Ignoring it." << std::endl;
@@ -127,7 +128,7 @@ void applyMolListPropToAtoms(ROMol &mol, const std::string &pn,
   }
   std::string mv = missingValueMarker;
   size_t first_token = 0;
-  if (tokens.size() == mol.getNumAtoms() + 1 && tokens[0].front() == '[' &&
+  if (tokens.size() == nItems + 1 && tokens[0].front() == '[' &&
       tokens[0].back() == ']') {
     mv = std::string(tokens[0].begin() + 1, tokens[0].end() - 1);
     first_token = 1;
@@ -138,15 +139,35 @@ void applyMolListPropToAtoms(ROMol &mol, const std::string &pn,
   }
   for (size_t i = first_token; i < tokens.size(); ++i) {
     if (tokens[i] != mv) {
-      unsigned int atomid = i - first_token;
+      unsigned int itemid = i - first_token;
       try {
         T apv = boost::lexical_cast<T>(tokens[i]);
-        mol.getAtomWithIdx(atomid)->setProp(atompn, apv);
+        getter(itemid)->setProp(itempn, apv);
       } catch (const boost::bad_lexical_cast &) {
         BOOST_LOG(rdWarningLog)
-            << "Value " << tokens[i] << " for property " << pn << " of atom "
-            << atomid << " can not be parsed. Ignoring it." << std::endl;
+            << "Value " << tokens[i] << " for property " << pn << " of item "
+            << itemid << " can not be parsed. Ignoring it." << std::endl;
       }
+    }
+  }
+}
+
+//! applies a particular property to the atoms as an atom property list
+template <typename T>
+void applyMolListPropToAtoms(ROMol &mol, const std::string &pn,
+                             const std::string &prefix,
+                             const std::string &missingValueMarker = "n/a") {
+  auto getter = [&mol](size_t which) { return mol.getAtomWithIdx(which); };
+  applyMolListProp<T>(mol, pn, prefix, missingValueMarker, mol.getNumAtoms(),
+                      getter);
+}
+
+template <typename T, typename U>
+void applyMolListProps(ROMol &mol, const std::string &prefix, size_t nItems,
+                       U getter, const std::string missingValueMarker = "n/a") {
+  for (auto pn : mol.getPropList()) {
+    if (pn.find(prefix) == 0 && pn.length() > prefix.length()) {
+      applyMolListProp<T>(mol, pn, prefix, missingValueMarker, nItems, getter);
     }
   }
 }
@@ -156,43 +177,65 @@ void applyMolListPropToAtoms(ROMol &mol, const std::string &pn,
 template <typename T>
 void applyMolListPropsToAtoms(ROMol &mol, const std::string &prefix,
                               const std::string missingValueMarker = "n/a") {
+  auto getter = [&mol](size_t which) { return mol.getAtomWithIdx(which); };
+  auto nItems = mol.getNumAtoms();
   for (auto pn : mol.getPropList()) {
     if (pn.find(prefix) == 0 && pn.length() > prefix.length()) {
-      applyMolListPropToAtoms<T>(mol, pn, prefix, missingValueMarker);
+      applyMolListProp<T>(mol, pn, prefix, missingValueMarker, nItems, getter);
     }
   }
 }
+
 static const std::string atomPropPrefix = "atom.";
+static const std::string bondPropPrefix = "bond.";
+
 //! if the property name matches our rules for atom property lists, we'll
 //! apply it to the atoms
 inline void processMolPropertyList(
     ROMol &mol, const std::string pn,
     const std::string &missingValueMarker = "n/a") {
-  if (pn.find(atomPropPrefix) == 0 && pn.length() > atomPropPrefix.length()) {
-    std::string prefix = atomPropPrefix + "prop.";
+  auto propSetter = [&](const std::string &propPrefix, auto getter,
+                        size_t nItems) {
+    std::string prefix = propPrefix + "prop.";
     if (pn.find(prefix) == 0 && pn.length() > prefix.length()) {
-      applyMolListPropToAtoms<std::string>(mol, pn, prefix, missingValueMarker);
+      applyMolListProp<std::string>(mol, pn, prefix, missingValueMarker, nItems,
+                                    getter);
     } else {
-      prefix = atomPropPrefix + "iprop.";
+      prefix = propPrefix + "iprop.";
       if (pn.find(prefix) == 0 && pn.length() > prefix.length()) {
-        applyMolListPropToAtoms<std::int64_t>(mol, pn, prefix,
-                                              missingValueMarker);
+        applyMolListProp<std::int64_t>(mol, pn, prefix, missingValueMarker,
+                                       nItems, getter);
       } else {
-        prefix = atomPropPrefix + "dprop.";
+        prefix = propPrefix + "dprop.";
         if (pn.find(prefix) == 0 && pn.length() > prefix.length()) {
-          applyMolListPropToAtoms<double>(mol, pn, prefix, missingValueMarker);
+          applyMolListProp<double>(mol, pn, prefix, missingValueMarker, nItems,
+                                   getter);
         } else {
-          prefix = atomPropPrefix + "bprop.";
+          prefix = propPrefix + "bprop.";
           if (pn.find(prefix) == 0 && pn.length() > prefix.length()) {
-            applyMolListPropToAtoms<bool>(mol, pn, prefix, missingValueMarker);
+            applyMolListProp<bool>(mol, pn, prefix, missingValueMarker, nItems,
+                                   getter);
           }
         }
       }
     }
+  };
+
+  if (pn.find(atomPropPrefix) == 0 && pn.length() > atomPropPrefix.length()) {
+    propSetter(
+        atomPropPrefix,
+        [&mol](size_t which) { return mol.getAtomWithIdx(which); },
+        mol.getNumAtoms());
+  } else if (pn.find(bondPropPrefix) == 0 &&
+             pn.length() > bondPropPrefix.length()) {
+    propSetter(
+        bondPropPrefix,
+        [&mol](size_t which) { return mol.getBondWithIdx(which); },
+        mol.getNumBonds());
   }
 }
 //! loops over all properties and applies the ones that match the rules for
-//! atom property lists to the atoms
+//! atom property lists to the atoms and bonds
 inline void processMolPropertyLists(
     ROMol &mol, const std::string &missingValueMarker = "n/a") {
   for (auto pn : mol.getPropList()) {
