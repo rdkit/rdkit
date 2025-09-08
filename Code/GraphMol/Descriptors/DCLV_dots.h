@@ -8,14 +8,17 @@
 /* BSD license, which is included in the file                      */
 /* license.txt.                                                    */
 /*=================================================================*/
+#pragma once
 
 // set of standard dots for computing the DCLV values
 // based on a 320 faced polyhedron
+#include <Geometry/point.h>
 
 double standardArea = 12.3298;
 double dotArea = 0.03853087;
 
-static double standardDots[320][3] = {
+// clang-format off
+static const RDGeom::Point3D standardDots[320] = {
 {-0.577350f, -0.577350f, -0.577350f},
 {-0.448278f, -0.547076f, -0.706934f},
 {-0.706934f, -0.448278f, -0.547076f},
@@ -337,3 +340,4 @@ static double standardDots[320][3] = {
 {0.798035f, 0.449997f, 0.400803f},
 {0.816797f, 0.559125f, 0.142204f}
 };
+// clang-format on

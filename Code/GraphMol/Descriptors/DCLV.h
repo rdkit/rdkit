@@ -22,6 +22,7 @@
 #include <Geometry/point.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/export.h>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
 namespace Descriptors {
@@ -48,6 +49,7 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   bool includeLigand = true;
   double probeRadius = 1.4;
   int confId = -1;
+  double maxRadius = 1.87;
 
   DoubleCubicLatticeVolume(const ROMol &mol, bool isProtein = false,
                            bool includeLigand = true, double probeRadius = 1.2,
@@ -67,20 +69,23 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   double getSurfaceArea();
 
   /*! \return Polar Surface Area */
-  double getPolarSurfaceArea(const bool &includeSandP);
+  double getPolarSurfaceArea(bool includeSandP);
+
+  /*! \return Surface Area from specified atoms */
+  double getPartialSurfaceArea(const boost::dynamic_bitset<> &polarAtoms);
 
   /*! \return Solvent Accessible Surface Area for specified atom */
-  double getAtomSurfaceArea(const unsigned int &atom_idx);
-  
+  double getAtomSurfaceArea(unsigned int atomIdx);
+
   /*! \return Volume for specified atom */
-  double getAtomVolume(const unsigned int &atom_idx, const double &solventRadius);
-  
+  double getAtomVolume(unsigned int atomIdx, double solventRadius);
+
   /*! \return Volume bound by probe sphere */
   double getVolume();
-  
+
   /*! \return van der Waals Volume */
-  double getVDWVolume(); 
-  
+  double getVDWVolume();
+
   /*! \return Compactness of the protein */
   double getCompactness();
 
@@ -88,9 +93,8 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   double getPackingDensity();
 
   /*! \return Set of Points representing the surface */
-  
-  private:
-  
+
+ private:
   // used by methods
   unsigned int numAtoms = 0;
   std::vector<RDGeom::Point3D> positions;
@@ -105,8 +109,8 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   double vdwVolume = 0.0;
 
   // helpers
-  bool testPoint(double *vect, const double &solvrad, const std::vector<unsigned int> &nbrs);
-
+  bool testPoint(const RDGeom::Point3D &vect, double solvrad,
+                 const std::vector<unsigned int> &nbrs);
 };
 }  // namespace Descriptors
 }  // namespace RDKit
