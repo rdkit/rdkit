@@ -36,6 +36,7 @@
 #include <RDBoost/Wrap.h>
 #include <RDGeneral/Dict.h>
 #include <algorithm>
+#include <boost/algorithm/string.hpp>
 
 namespace RDKit {
 
@@ -98,6 +99,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
           break;
         case RDTypeTag::StringTag: {
           auto value = from_rdvalue<std::string>(rdvalue.val);
+	  boost::trim(value);
           if (autoConvertStrings) {
             // Auto convert strings to ints and double if possible
             int ivalue;
