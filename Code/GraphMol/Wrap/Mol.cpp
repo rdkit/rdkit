@@ -797,17 +797,7 @@ struct mol_wrapper {
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false,
               python::arg("autoConvertStrings") = true),
-             "Returns a dictionary populated with the molecules properties.\n"
-             " n.b. Some properties are not able to be converted to python "
-             "types.\n\n"
-             "  ARGUMENTS:\n"
-             "    - includePrivate: (optional) toggles inclusion of private "
-             "properties in the result set.\n"
-             "                      Defaults to False.\n"
-             "    - includeComputed: (optional) toggles inclusion of computed "
-             "properties in the result set.\n"
-             "                      Defaults to False.\n\n"
-             "  RETURNS: a dictionary\n")
+	     getPropsAsDictDocString.c_str())
 
         .def("GetAromaticAtoms", MolGetAromaticAtoms,
              python::return_value_policy<

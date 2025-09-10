@@ -76,6 +76,20 @@ bool AddToDict(const U &ob, boost::python::dict &dict, const std::string &key) {
   return true;
 }
 
+const std::string getPropsAsDictDocString = "Returns a dictionary populated with the conformer's properties.\n"
+  "When possible, string values will be trimmed and converted to integers and doubles\n"
+  
+  " n.b. Some properties are not able to be converted to python "
+  "types.\n\n"
+  "  ARGUMENTS:\n"
+  "    - includePrivate: (optional) toggles inclusion of private "
+  "properties in the result set.\n"
+  "                      Defaults to False.\n"
+  "    - includeComputed: (optional) toggles inclusion of computed "
+  "properties in the result set.\n"
+  "                      Defaults to False.\n\n"
+  "  RETURNS: a dictionary\n";
+  
 template <class T>
 boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
                                    bool includeComputed,
