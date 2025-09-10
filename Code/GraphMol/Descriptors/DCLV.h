@@ -49,9 +49,14 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   double probeRadius = 1.4;
   int confId = -1;
 
-  DoubleCubicLatticeVolume(const ROMol &mol, bool isProtein = false,
-                           bool includeLigand = true, double probeRadius = 1.2,
-                           int confId = -1);
+  struct atomSurfacePoints {
+    const unsigned int atom_idx;
+    std::vector<RDGeom::Point3D> dots;
+  };
+
+  DoubleCubicLatticeVolume(const ROMol &mol, 
+                           bool isProtein = false, bool includeLigand = true, 
+                           double probeRadius = 1.2, int confId = -1);
   //! Class for calculation of the Shrake and Rupley surface area and volume
   //! using the Double Cubic Lattice Method.
   //!
@@ -94,15 +99,16 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   // used by methods
   unsigned int numAtoms = 0;
   std::vector<RDGeom::Point3D> positions;
-  std::vector<double> radii;
   std::vector<std::vector<unsigned int>> neighbours;
   RDGeom::Point3D centreOfGravity;
+  std::vector<double> radii;
 
   // outputs
   double surfaceArea = 0.0;
   double polarSurfaceArea = 0.0;
   double totalVolume = 0.0;
   double vdwVolume = 0.0;
+  std::vector<atomSurfacePoints> surfacePoints;
 
   // helpers
   bool testPoint(double *vect, const double &solvrad, const std::vector<unsigned int> &nbrs);

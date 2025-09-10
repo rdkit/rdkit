@@ -12,10 +12,16 @@
 // set of standard dots for computing the DCLV values
 // based on a 320 faced polyhedron
 
+#pragma once
+#include <Geometry/point.h>
+
 double standardArea = 12.3298;
 double dotArea = 0.03853087;
 
-static double standardDots[320][3] = {
+#define NUMDOTS 320
+
+//static const RDGeom::Point3D standardDots[NUMDOTS] 
+static double standardDots[NUMDOTS][3] = {
 {-0.577350f, -0.577350f, -0.577350f},
 {-0.448278f, -0.547076f, -0.706934f},
 {-0.706934f, -0.448278f, -0.547076f},
