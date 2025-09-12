@@ -1412,3 +1412,17 @@ TEST_CASE("Geometry") {
     REQUIRE("C1[C@H]2C[C@@H]12" == MolToSmiles(*mols[0]));
   }
 }
+
+TEST_CASE("github8761") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  SECTION("US12404367-20250902-C00017") {
+    auto fname = path + "US12404367-20250902-C00017.CDX";
+    auto mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size());
+    
+    fname = path + "US12404367-20250902-C00025.CDX";
+    mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size());
+  }    
+}
