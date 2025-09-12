@@ -14,7 +14,8 @@ steps:
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
         eigen \
-        cairo
+        cairo \
+        ninja
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
@@ -38,13 +39,14 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_PGSQL=ON \
-    -DPostgreSQL_CONFIG=/usr/bin/pg_config
+    -DPostgreSQL_CONFIG=/usr/bin/pg_config \
+    -DCMAKE_GENERATOR=Ninja
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     cd build
-    make -j $( $(number_of_cores) ) install
+    ninja -j $( $(number_of_cores) )
     sudo sh ./Code/PgSQL/rdkit/pgsql_install.sh
   displayName: Build
 - bash: |

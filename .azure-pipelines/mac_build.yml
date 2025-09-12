@@ -27,7 +27,7 @@ steps:
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         qt \
         numpy matplotlib=3.8 cairo pillow eigen pandas=2.1  \
-        jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval make
+        jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval ninja make
   displayName: Setup build environment
 - bash: |
     export CONDA=/tmp/miniforge
@@ -64,7 +64,8 @@ steps:
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_CFFI_LIB=ON \
     -DCMAKE_OSX_SYSROOT=${SDKROOT} \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform)
+    -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform) \
+    -DCMAKE_GENERATOR=Ninja
   displayName: Configure build (Run CMake)
 - bash: |
     export CONDA=/tmp/miniforge
@@ -73,7 +74,7 @@ steps:
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     cd build
-    make -j $( $(number_of_cores) ) install
+    ninja -j $( $(number_of_cores) )
   displayName: Build
 - bash: |
     export CONDA=/tmp/miniforge

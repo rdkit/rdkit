@@ -13,7 +13,7 @@ steps:
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
         numpy pillow eigen pandas=2.0 matplotlib-base=3.8 \
-        qt=5 cairo
+        qt=5 cairo ninja
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
@@ -51,13 +51,14 @@ steps:
     -DRDK_BOOST_PYTHON3_NAME=$(python_name) \
     -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
-    -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
+    -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib" \
+    -DCMAKE_GENERATOR=Ninja
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     cd build
-    make -j $( $(number_of_cores) ) install
+    ninja -j $( $(number_of_cores) )
   displayName: Build
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

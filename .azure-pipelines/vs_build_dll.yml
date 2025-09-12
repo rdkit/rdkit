@@ -11,7 +11,7 @@ steps:
         libboost-python-devel=(boost_version) ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        numpy matplotlib cairo pillow eigen pandas=2.1
+        numpy matplotlib cairo pillow eigen pandas=2.1 ninja
     call activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
@@ -44,12 +44,13 @@ steps:
     -DRDK_SWIG_STATIC=OFF ^
     -DRDK_TEST_MULTITHREADED=ON ^
     -DCMAKE_INCLUDE_PATH=%CONDA_PREFIX%/Library/include ^
-    -DCMAKE_LIBRARY_PATH="%CONDA_PREFIX%/Library/lib
+    -DCMAKE_LIBRARY_PATH="%CONDA_PREFIX%/Library/lib ^
+    -DCMAKE_GENERATOR=Ninja
   displayName: Configure build (Run CMake)
 - script: |
     call activate rdkit_build
     cd build
-    cmake --build . --config Release --target install -j $(number_of_cores)
+    ninja  -j $(number_of_cores)
   displayName: Build
 - script: |
     call activate rdkit_build
