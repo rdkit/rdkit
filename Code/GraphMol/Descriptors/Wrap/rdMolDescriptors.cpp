@@ -1656,7 +1656,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
-  docString =
+    docString =
       R"DOC(ARGUMENTS:
       "   - mol: molecule or protein under consideration
       "   - isProtein: flag to indicate if the input is a protein (default=False, free ligand).
@@ -1667,9 +1667,10 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume>(
       "DoubleCubicLatticeVolume",
       "Class for the Double Cubic Lattice Volume method",
-      python::init<const RDKit::ROMol &,
+      python::init<const RDKit::ROMol &, 
                    python::optional<bool, bool, double, int>>(
-          (python::args("self", "mol"), python::args("isProtein") = false,
+          (python::args("self", "mol"),
+           python::args("isProtein") = false,
            python::args("includeLigand") = true,
            python::args("probeRadius") = 1.2, 
            python::args("confId") = -1),
