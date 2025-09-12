@@ -1664,44 +1664,59 @@ TEST_CASE("Github #8586: MolFromSmiles loses atom maps if cxsmiles is used") {
 
 TEST_CASE("Test CXSmilesFields option parsing from JSON") {
   SECTION("Empty JSON string preserves current values") {
-    std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS;
+    std::uint32_t cxSmilesFields =
+        SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS;
     unsigned int restoreBondDirs = RestoreBondDirOptionClear;
     updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, "{}");
     CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
     CHECK(restoreBondDirs == RestoreBondDirOptionClear);
   }
   SECTION("No CXSmilesFields key preserves current values") {
-    std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS;
+    std::uint32_t cxSmilesFields =
+        SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS;
     unsigned int restoreBondDirs = RestoreBondDirOptionTrue;
-    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, "{\"restoreBondDirOption\":\"RestoreBondDirOptionClear\"}");
+    updateCXSmilesFieldsFromJSON(
+        cxSmilesFields, restoreBondDirs,
+        "{\"restoreBondDirOption\":\"RestoreBondDirOptionClear\"}");
     CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
     CHECK(restoreBondDirs == RestoreBondDirOptionClear);
   }
   SECTION("Multiple CXSmilesFields keys with true value are ORed together") {
     std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
     unsigned int restoreBondDirs = RestoreBondDirOptionClear;
-    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, "{\"CX_MOLFILE_VALUES\":true,\"CX_COORDS\":true}");
-    CHECK(cxSmilesFields == (SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES | SmilesWrite::CXSmilesFields::CX_COORDS));
+    updateCXSmilesFieldsFromJSON(
+        cxSmilesFields, restoreBondDirs,
+        "{\"CX_MOLFILE_VALUES\":true,\"CX_COORDS\":true}");
+    CHECK(cxSmilesFields == (SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
+                             SmilesWrite::CXSmilesFields::CX_COORDS));
     CHECK(restoreBondDirs == RestoreBondDirOptionClear);
   }
-  SECTION("Multiple CXSmilesFields keys with true value are ORed together; adding unrelated false values makes no difference") {
+  SECTION(
+      "Multiple CXSmilesFields keys with true value are ORed together; adding unrelated false values makes no difference") {
     std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
     unsigned int restoreBondDirs = RestoreBondDirOptionClear;
-    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, "{\"CX_MOLFILE_VALUES\":true,\"CX_COORDS\":true,\"CX_ATOM_PROPS\":false,\"CX_BOND_CFG\":false}");
-    CHECK(cxSmilesFields == (SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES | SmilesWrite::CXSmilesFields::CX_COORDS));
+    updateCXSmilesFieldsFromJSON(
+        cxSmilesFields, restoreBondDirs,
+        "{\"CX_MOLFILE_VALUES\":true,\"CX_COORDS\":true,\"CX_ATOM_PROPS\":false,\"CX_BOND_CFG\":false}");
+    CHECK(cxSmilesFields == (SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
+                             SmilesWrite::CXSmilesFields::CX_COORDS));
     CHECK(restoreBondDirs == RestoreBondDirOptionClear);
   }
-  SECTION("Multiple CXSmilesFields keys with true value are ORed together, then AND NOTed with ORed false values") {
+  SECTION(
+      "Multiple CXSmilesFields keys with true value are ORed together, then AND NOTed with ORed false values") {
     std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
     unsigned int restoreBondDirs = RestoreBondDirOptionClear;
-    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, "{\"CX_ALL\":true,\"CX_COORDS\":false}");
+    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
+                                 "{\"CX_ALL\":true,\"CX_COORDS\":false}");
     CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
     CHECK(restoreBondDirs == RestoreBondDirOptionClear);
   }
-  SECTION("Multiple CXSmilesFields keys with true value are ORed together, then AND NOTed with ORed false values; order does not matter") {
+  SECTION(
+      "Multiple CXSmilesFields keys with true value are ORed together, then AND NOTed with ORed false values; order does not matter") {
     std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
     unsigned int restoreBondDirs = RestoreBondDirOptionClear;
-    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, "{\"CX_COORDS\":false,\"CX_ALL\":true}");
+    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
+                                 "{\"CX_COORDS\":false,\"CX_ALL\":true}");
     CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
     CHECK(restoreBondDirs == RestoreBondDirOptionClear);
   }

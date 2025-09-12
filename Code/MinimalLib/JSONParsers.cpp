@@ -31,7 +31,8 @@ void updatePropertyPickleOptionsFromJSON(unsigned int &propFlags,
     boost::property_tree::read_json(ss, pt);
     const auto nodeIt = pt.find("propertyFlags");
     if (nodeIt != pt.not_found()) {
-      propFlags = flagsFromJson<PicklerOps::PropertyPickleOptions>(nodeIt->second);
+      propFlags =
+          flagsFromJson<PicklerOps::PropertyPickleOptions>(nodeIt->second);
     }
   }
 }

@@ -51,7 +51,8 @@ void updateCXSmilesFieldsFromJSON(std::uint32_t &cxSmilesFields,
     ss.str(details_json);
     boost::property_tree::read_json(ss, pt);
     bool haveCXSmilesFields = false;
-    auto cxSmilesFieldsFromJson = flagsFromJson<SmilesWrite::CXSmilesFields>(pt, &haveCXSmilesFields);
+    auto cxSmilesFieldsFromJson =
+        flagsFromJson<SmilesWrite::CXSmilesFields>(pt, &haveCXSmilesFields);
     if (haveCXSmilesFields) {
       cxSmilesFields = cxSmilesFieldsFromJson;
     }
