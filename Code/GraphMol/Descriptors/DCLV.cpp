@@ -65,7 +65,7 @@ namespace Descriptors {
 constexpr int VOXORDER = 16;
 int recordCache = -1;
 
-static bool checkExcludedAtoms(const Atom *atm, const bool &includeLigand) {
+static bool checkExcludedAtoms(const Atom *atm, bool includeLigand) {
   // helper to check whether atom should be included
   // radius = 0 if atom is to be excluded
 
@@ -103,7 +103,7 @@ static bool checkExcludedAtoms(const Atom *atm, const bool &includeLigand) {
 }
 
 static bool includeInPSA(const Atom *atm, const ROMol &mol,
-                         const bool &includeSandP) {
+                         bool includeSandP) {
   // using Peter Ertl definition, polar atoms = O, N, P, S and attached Hs
 
   switch (atm->getAtomicNum()) {
@@ -136,7 +136,7 @@ static bool includeInPSA(const Atom *atm, const ROMol &mol,
 }
 
 static bool within(const Point3D &pos1, const Point3D &pos2,
-                   const double &dist) {
+                   double dist) {
   return (pos1 - pos2).lengthSq() < (dist * dist);
 }
 
@@ -245,6 +245,7 @@ struct State {
       }
       nbrs.push_back(atomNeighbours);
     }
+    return nbrs;
   }
 };
 
@@ -363,6 +364,7 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol &mol,
   }
 }
 
+
 bool DoubleCubicLatticeVolume::testPoint(
     const Point3D &vect, double solvrad,
     const std::vector<unsigned int> &nbrs) {
@@ -432,19 +434,6 @@ double DoubleCubicLatticeVolume::getSurfaceArea() {
     }
   }
   return surfaceArea;
-}
-
-double DoubleCubicLatticeVolume::getPartialSurfaceArea(
-    const boost::dynamic_bitset<> &polarAtoms) {
-  // TODO check this
-  for (const auto atom : mol.atoms()) {
-    const unsigned int atomIdx = atom->getIdx();
-    bool incAtom = polarAtoms[atomIdx];
-    if (incAtom && radii[atomIdx] != 0.0) {
-      polarSurfaceArea += getAtomSurfaceArea(atomIdx);
-    }
-  }
-  return polarSurfaceArea;
 }
 
 double DoubleCubicLatticeVolume::getPolarSurfaceArea(bool includeSandP) {
