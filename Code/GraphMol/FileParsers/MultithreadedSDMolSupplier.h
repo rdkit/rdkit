@@ -30,14 +30,13 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
       const MolFileParserParams &parseParams = MolFileParserParams());
 
   MultithreadedSDMolSupplier();
-  virtual ~MultithreadedSDMolSupplier() {close();}
+  virtual ~MultithreadedSDMolSupplier() { close(); }
   void init() override {}
 
   void checkForEnd();
   bool getEnd() const override;
   void setProcessPropertyLists(bool val) { df_processPropertyLists = val; }
   bool getProcessPropertyLists() const { return df_processPropertyLists; }
-  bool getEOFHitOnRead() const { return df_eofHitOnRead; }
 
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
@@ -46,8 +45,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
   //! parses the record and returns the resulting molecule
   RWMol *processMoleculeRecord(const std::string &record,
                                unsigned int lineNum) override;
+
  protected:
-    void closeStreams() override;
+  void closeStreams() override;
 
  private:
   void initFromSettings(bool takeOwnership, const Parameters &params,
@@ -56,7 +56,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
   bool df_end = false;  //!< have we reached the end of the file?
   int d_line = 0;       //!< line number we are currently on
   bool df_processPropertyLists = true;
-  bool df_eofHitOnRead = false;
   unsigned int d_currentRecordId = 1;  //!< current record id
   MolFileParserParams d_parseParams;
 };

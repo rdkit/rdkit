@@ -43,10 +43,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
 
   MultithreadedMolSupplier() {}
 
-  
   // Derived classes MUST have a destructor that calls close
   //  to properly end threads while the instance is alive
-  virtual ~MultithreadedMolSupplier() {close();}
+  virtual ~MultithreadedMolSupplier() { close(); }
 
   //! shut down the supplier
   virtual void close() override;
@@ -55,9 +54,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
 
   //! returns true when all records have been read from the supplier
   bool atEnd() override;
-
-  //! included for the interface, always returns false
-  bool getEOFHitOnRead() const { return false; }
 
   //! returns the record id of the last extracted item
   //! Note: d_LastRecordId = 0, initially therefore the value 0 is returned
@@ -101,6 +97,8 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
     readCallback = cb;
   }
 
+  bool getEOFHitOnRead() const { return df_eofHitOnRead; }
+
  protected:
   //! Close down any external streams
   virtual void closeStreams() {}
@@ -137,6 +135,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   std::atomic<unsigned int> d_threadCounter{1};  //!< thread counter
   std::vector<std::thread> d_writerThreads;      //!< vector writer threads
   std::thread d_readerThread;                    //!< single reader thread
+  bool df_eofHitOnRead = false;
 
  protected:
   std::atomic<bool> df_started = false;
@@ -160,7 +159,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
       writeCallback = nullptr;
   std::function<std::string(const std::string &, unsigned int)> readCallback =
       nullptr;
-
 };
 }  // namespace FileParsers
 }  // namespace v2

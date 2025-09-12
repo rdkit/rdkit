@@ -62,7 +62,7 @@ void MultithreadedSDMolSupplier::closeStreams() {
     df_owner = false;
     dp_inStream = nullptr;
   }
-  df_started = false; // this is in the base constructor
+  df_started = false;  // this is in the base constructor
 }
 
 // ensures that there is a line available to be read
@@ -134,9 +134,7 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
   }
 
   // ignore trailing new lines
-  if(record.find_first_not_of("\n\r") == std::string::npos)
-    return false;
-  
+  if (record.find_first_not_of("\n\r") == std::string::npos) return false;
   index = d_currentRecordId;
   ++d_currentRecordId;
   return true;

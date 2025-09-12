@@ -131,20 +131,26 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
     startThreads();
   }
   std::tuple<RWMol *, std::string, unsigned int> r;
-  if (!df_forceStop && d_outputQueue->pop(r)) {
-    d_lastItemText = std::get<1>(r);
-    d_lastRecordId = std::get<2>(r);
-    std::unique_ptr<RWMol> res{std::get<0>(r)};
-    if (res && nextCallback) {
-      try {
-        nextCallback(*res, *this);
-      } catch (...) {
-        // Ignore exception and proceed with mol as is.
-      }
+  while (!d_outputQueue->pop(r)) {
+    if (df_forceStop) {
+      throw std::runtime_error(
+          "Multhreded supplier closed while waiting for a mol");
+    } else if (d_outputQueue->getDone()) {
+      df_eofHitOnRead = true;
+      return nullptr;
     }
-    return res;
   }
-  return nullptr;
+  d_lastItemText = std::get<1>(r);
+  d_lastRecordId = std::get<2>(r);
+  std::unique_ptr<RWMol> res{std::get<0>(r)};
+  if (res && nextCallback) {
+    try {
+      nextCallback(*res, *this);
+    } catch (...) {
+      // Ignore exception and proceed with mol as is.
+    }
+  }
+  return res;
 }
 
 // this calls joins on the reader and writer threads
@@ -174,7 +180,9 @@ void MultithreadedMolSupplier::startThreads() {
 }
 
 bool MultithreadedMolSupplier::atEnd() {
-  return (d_outputQueue->isEmpty() && d_outputQueue->getDone());
+  return getEOFHitOnRead() ||
+         (d_inputQueue->isEmpty() && d_inputQueue->getDone() &&
+          d_outputQueue->isEmpty() && d_outputQueue->getDone());
 }
 
 unsigned int MultithreadedMolSupplier::getLastRecordId() const {
