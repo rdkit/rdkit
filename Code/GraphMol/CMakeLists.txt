@@ -19,37 +19,81 @@ if (RDK_USE_URF)
     endif ()
 endif ()
 
-rdkit_headers(Atom.h
-        atomic_data.h
-        AtomIterators.h
-        Atropisomers.h
-        Bond.h
-        BondIterators.h
-        Canon.h
-        Chirality.h
-        Conformer.h
-        details.h
-        GraphMol.h
-        MolOps.h
-        MolPickler.h
-        PeriodicTable.h
-        QueryAtom.h
-        QueryBond.h
-        QueryOps.h
-        RDKitBase.h
-        RDKitQueries.h
-        Resonance.h
-        RingInfo.h
-        Rings.h
-        ROMol.h
-        RWMol.h
-        SanitException.h
-        SubstanceGroup.h
-        StereoGroup.h
-        MonomerInfo.h
-        new_canon.h
-        MolBundle.h
-        DEST GraphMol)
+rdkit_headers(
+  Atom.h
+  atomic_data.h
+  AtomIterators.h
+  Atropisomers.h
+  Bond.h
+  BondIterators.h
+  Canon.h
+  Chirality.h
+  Conformer.h
+  details.h
+  GraphMol.h
+  MolOps.h
+  MolPickler.h
+  PeriodicTable.h
+  QueryAtom.h
+  QueryBond.h
+  QueryOps.h
+  RDKitBase.h
+  RDKitQueries.h
+  Resonance.h
+  RingInfo.h
+  Rings.h
+  ROMol.h
+  RWMol.h
+  SanitException.h
+  SubstanceGroup.h
+  StereoGroup.h
+  MonomerInfo.h
+  new_canon.h
+  MolBundle.h
+  DEST GraphMol
+)
+
+set(RDKIT_PCH_HEADERS
+  Atom.h
+  atomic_data.h
+  AtomIterators.h
+  Atropisomers.h
+  Bond.h
+  BondIterators.h
+  Canon.h
+  Chirality.h
+  Conformer.h
+  details.h
+  GraphMol.h
+  MolOps.h
+  MolPickler.h
+  PeriodicTable.h
+  QueryAtom.h
+  QueryBond.h
+  QueryOps.h
+  RDKitBase.h
+  RDKitQueries.h
+  Resonance.h
+  RingInfo.h
+  Rings.h
+  ROMol.h
+  RWMol.h
+  SanitException.h
+  SubstanceGroup.h
+  StereoGroup.h
+  MonomerInfo.h
+  new_canon.h
+  MolBundle.h
+)
+
+add_library(rdkit_pch)
+file(GENERATE OUTPUT ${CMAKE_SOURCE_DIR}/rdkit_hook_pch.cpp CONTENT "/*dummy pch file*/")
+target_sources(rdkit_pch PUBLIC ${CMAKE_SOURCE_DIR}/rdkit_hook_pch.cpp)
+target_include_directories(rdkit_pch PUBLIC ${CMAKE_SOURCE_DIR})
+set_target_properties(rdkit_pch PROPERTIES
+  PRECOMPILE_HEADERS "${RDKIT_PCH_HEADERS}"
+  #POSITION_INDEPENDENT_CODE ON 
+)
 
 add_subdirectory(SmilesParse)
 add_subdirectory(Depictor)
