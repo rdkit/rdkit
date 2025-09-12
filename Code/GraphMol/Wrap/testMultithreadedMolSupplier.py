@@ -16,10 +16,7 @@ class TestCase(unittest.TestCase):
     smiSup = Chem.MultithreadedSmilesMolSupplier(fileN, ",", 0, -1)
     i = 0
     while not smiSup.atEnd():
-      try:
-        mol = next(smiSup)
-      except StopIteration:
-        pass
+      mol = next(smiSup)
       if (mol):
         i += 1
     self.assertTrue(i == 200)

@@ -81,6 +81,7 @@ void MultithreadedMolSupplier::reader() {
     auto r = std::make_tuple(record, lineNum, index);
     if (!df_forceStop) {
       d_inputQueue->push(r);
+      ++d_mols_read;
     }
   }
   d_inputQueue->setDone();
@@ -106,23 +107,6 @@ void MultithreadedMolSupplier::writer() {
       d_outputQueue->push(nullValue);
     }
   }
-
-  // we need a lock here otherwise two threads
-  //  can increment d_threadCounter even though it's
-  //  atomic.
-  d_threadCounterMutex.lock();
-  if (d_threadCounter < d_params.numWriterThreads) {
-    ++d_threadCounter;
-    d_threadCounterMutex.unlock();
-  } else {
-    // Here we need to unlock the threadCounterMutex before we setDone on the
-    //  outputQueue.  This causes a notification to the queue which may actually
-    //  have elements in it.  This notification may unblock the queue which
-    //  allows waiting threads to get their last attempt at adding to it
-    //  which will end up here and deadlock.
-    d_threadCounterMutex.unlock();
-    d_outputQueue->setDone();
-  }
 }
 
 std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
@@ -131,7 +115,11 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
     startThreads();
   }
   std::tuple<RWMol *, std::string, unsigned int> r;
-  if (!df_forceStop && d_outputQueue->pop(r)) {
+  if (!df_forceStop) {
+    if (!d_outputQueue->pop(r)) {
+      throw FileParseException("something went wrong");
+    }
+
     d_lastItemText = std::get<1>(r);
     d_lastRecordId = std::get<2>(r);
     std::unique_ptr<RWMol> res{std::get<0>(r)};
@@ -142,9 +130,10 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
         // Ignore exception and proceed with mol as is.
       }
     }
+    ++d_mols_returned;
     return res;
   }
-  return nullptr;
+  throw FileParseException("stop forced");
 }
 
 // this calls joins on the reader and writer threads
@@ -164,9 +153,9 @@ void MultithreadedMolSupplier::endThreads() {
 }
 
 void MultithreadedMolSupplier::startThreads() {
-  // run the reader function in a seperate thread
+  // run the reader function in a separate thread
   d_readerThread = std::thread(&MultithreadedMolSupplier::reader, this);
-  // run the writer function in seperate threads
+  // run the writer function in separate threads
   for (unsigned int i = 0; i < d_params.numWriterThreads; i++) {
     d_writerThreads.emplace_back(
         std::thread(&MultithreadedMolSupplier::writer, this));
@@ -174,7 +163,7 @@ void MultithreadedMolSupplier::startThreads() {
 }
 
 bool MultithreadedMolSupplier::atEnd() {
-  return (d_outputQueue->isEmpty() && d_outputQueue->getDone());
+  return (d_inputQueue->getDone() && d_mols_read == d_mols_returned);
 }
 
 unsigned int MultithreadedMolSupplier::getLastRecordId() const {
