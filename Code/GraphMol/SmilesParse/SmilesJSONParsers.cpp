@@ -9,6 +9,7 @@
 //
 
 #define USE_BETTER_ENUMS
+#include <RDGeneral/JSONHelpers.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -49,19 +50,8 @@ void updateCXSmilesFieldsFromJSON(std::uint32_t &cxSmilesFields,
     std::istringstream ss;
     ss.str(details_json);
     boost::property_tree::read_json(ss, pt);
-    auto cxSmilesFieldsFromJson =
-        (+SmilesWrite::CXSmilesFields::CX_NONE)._to_integral();
     bool haveCXSmilesFields = false;
-    for (const auto *key : SmilesWrite::CXSmilesFields::_names()) {
-      const auto it = pt.find(key);
-      if (it != pt.not_found()) {
-        haveCXSmilesFields = true;
-        if (it->second.get_value<bool>()) {
-          cxSmilesFieldsFromJson |=
-              SmilesWrite::CXSmilesFields::_from_string(key)._to_integral();
-        }
-      }
-    }
+    auto cxSmilesFieldsFromJson = flagsFromJson<SmilesWrite::CXSmilesFields>(pt, &haveCXSmilesFields);
     if (haveCXSmilesFields) {
       cxSmilesFields = cxSmilesFieldsFromJson;
     }
