@@ -134,7 +134,7 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
   while (!d_outputQueue->pop(r)) {
     if (df_forceStop) {
       throw std::runtime_error(
-          "Multhreded supplier closed while waiting for a mol");
+          "Multithreaded supplier closed while waiting for a mol");
     } else if (d_outputQueue->getDone()) {
       df_eofHitOnRead = true;
       return nullptr;
