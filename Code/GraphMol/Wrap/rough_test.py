@@ -613,7 +613,9 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('C1=CN=CC=C1')
     m.SetProp("int", "1000")
     m.SetProp("double", "10000.123")
-    self.assertEqual(m.GetPropsAsDict(), {"int": 1000, "double": 10000.123})
+    m.SetProp("double spaces", " 10000.123 ")
+    self.assertEqual(m.GetPropsAsDict(), {
+      "int": 1000, "double": 10000.123, "double spaces": 10000.123 })
 
     self.assertEqual(type(m.GetPropsAsDict()['int']), int)
     self.assertEqual(type(m.GetPropsAsDict()['double']), float)
