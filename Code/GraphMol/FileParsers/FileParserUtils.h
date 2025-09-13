@@ -154,6 +154,7 @@ void applyMolListProp(ROMol &mol, const std::string &pn,
 
 //! applies a particular property to the atoms as an atom property list
 template <typename T>
+[[deprecated("use applyMolListProp instead")]]
 void applyMolListPropToAtoms(ROMol &mol, const std::string &pn,
                              const std::string &prefix,
                              const std::string &missingValueMarker = "n/a") {
@@ -175,6 +176,7 @@ void applyMolListProps(ROMol &mol, const std::string &prefix, size_t nItems,
 //! applies all properties matching a particular prefix as an atom property
 //! list
 template <typename T>
+[[deprecated("use applyMolListProps instead")]]
 void applyMolListPropsToAtoms(ROMol &mol, const std::string &prefix,
                               const std::string missingValueMarker = "n/a") {
   auto getter = [&mol](size_t which) { return mol.getAtomWithIdx(which); };
