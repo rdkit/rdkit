@@ -27,8 +27,8 @@ TEST_CASE("Property list conversion") {
     m->setProp("atom.iprop.foo2", "3 n/a   9");
     m->setProp("atom.iprop.foo3", "[?]  5 1 ?");
     m->setProp("atom.iprop.foo4", "[foo] 3 foo   9");
-    FileParserUtils::applyMolListProps<std::int64_t>(*m, "atom.iprop.",
-                                                     m->getNumAtoms(), getter);
+    FileParserUtils::applyMolListProps<int>(*m, "atom.iprop.", m->getNumAtoms(),
+                                            getter);
     CHECK(m->getAtomWithIdx(0)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(1)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(2)->hasProp("foo1"));
@@ -41,9 +41,9 @@ TEST_CASE("Property list conversion") {
     CHECK(m->getAtomWithIdx(0)->hasProp("foo4"));
     CHECK(!m->getAtomWithIdx(1)->hasProp("foo4"));
     CHECK(m->getAtomWithIdx(2)->hasProp("foo4"));
-    CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo1") == 6);
-    CHECK(m->getAtomWithIdx(2)->getProp<std::int64_t>("foo2") == 9);
-    CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo3") == 1);
+    CHECK(m->getAtomWithIdx(1)->getProp<int>("foo1") == 6);
+    CHECK(m->getAtomWithIdx(2)->getProp<int>("foo2") == 9);
+    CHECK(m->getAtomWithIdx(1)->getProp<int>("foo3") == 1);
     CHECK(m->getAtomWithIdx(1)->getProp<std::string>("foo3") == "1");
   }
   SECTION("basics: dprops") {
@@ -129,6 +129,7 @@ TEST_CASE("processMolPropertyLists") {
     m->setProp("atom.dprop.foo2", "3 n/a   9");
     m->setProp("atom.prop.foo3", "[?]  5 1 ?");
     m->setProp("atom.bprop.foo4", "1 0 0");
+    m->setProp("bond.prop.foo2", "3 7");
     FileParserUtils::processMolPropertyLists(*m);
     CHECK(m->getAtomWithIdx(0)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(1)->hasProp("foo1"));
@@ -142,10 +143,15 @@ TEST_CASE("processMolPropertyLists") {
     CHECK(m->getAtomWithIdx(0)->hasProp("foo4"));
     CHECK(m->getAtomWithIdx(1)->hasProp("foo4"));
     CHECK(m->getAtomWithIdx(2)->hasProp("foo4"));
-    CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo1") == 6);
+    CHECK(m->getAtomWithIdx(1)->getProp<int>("foo1") == 6);
     CHECK(m->getAtomWithIdx(2)->getProp<double>("foo2") == 9);
     CHECK(m->getAtomWithIdx(1)->getProp<std::string>("foo3") == "1");
     CHECK(m->getAtomWithIdx(1)->getProp<bool>("foo4") == false);
+
+    CHECK(m->getBondWithIdx(0)->hasProp("foo2"));
+    CHECK(m->getBondWithIdx(1)->hasProp("foo2"));
+    CHECK(m->getBondWithIdx(0)->getProp<int>("foo2"));
+    CHECK(m->getBondWithIdx(1)->getProp<int>("foo2"));
   }
 }
 
@@ -179,6 +185,9 @@ one n/a three
 >  <atom.iprop.PartiallyMissingInt>  (1) 
 [?] 2 2 ?
 
+>  <bond.prop.foo>  (1)
+bar baz blah
+
 $$$$
 )SDF";
   SECTION("no processing") {
@@ -197,6 +206,10 @@ $$$$
     REQUIRE(m);
     CHECK(m->hasProp("atom.prop.AtomLabel"));
     CHECK(m->getAtomWithIdx(0)->hasProp("AtomLabel"));
+    CHECK(m->hasProp("bond.prop.foo"));
+    std::string val;
+    CHECK(m->getBondWithIdx(0)->getPropIfPresent("foo", val));
+    CHECK(val == "bar");
   }
 }
 
@@ -204,8 +217,8 @@ TEST_CASE("createAtomPropertyLists") {
   SECTION("basics") {
     auto m = "COC"_smiles;
     REQUIRE(m);
-    m->getAtomWithIdx(0)->setProp<std::int64_t>("foo1", 1);
-    m->getAtomWithIdx(2)->setProp<std::int64_t>("foo1", 9);
+    m->getAtomWithIdx(0)->setProp<int>("foo1", 1);
+    m->getAtomWithIdx(2)->setProp<int>("foo1", 9);
     FileParserUtils::createAtomIntPropertyList(*m, "foo1");
     REQUIRE(m->hasProp("atom.iprop.foo1"));
     CHECK(m->getProp<std::string>("atom.iprop.foo1") == "1 n/a 9");
@@ -229,6 +242,12 @@ TEST_CASE("createAtomPropertyLists") {
     FileParserUtils::createAtomBoolPropertyList(*m, "foo4");
     REQUIRE(m->hasProp("atom.bprop.foo4"));
     CHECK(m->getProp<std::string>("atom.bprop.foo4") == "1 0 0");
+
+    m->getBondWithIdx(0)->setProp<bool>("foo5", 1);
+    m->getBondWithIdx(1)->setProp<bool>("foo5", 0);
+    FileParserUtils::createBondBoolPropertyList(*m, "foo5");
+    REQUIRE(m->hasProp("bond.bprop.foo5"));
+    CHECK(m->getProp<std::string>("bond.bprop.foo5") == "1 0");
   }
   SECTION("long lines") {
     auto m = "COC"_smiles;
