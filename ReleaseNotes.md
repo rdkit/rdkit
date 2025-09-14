@@ -24,7 +24,7 @@ GitHub)
 ## Code removed in this release:
 
 ## Deprecated code (to be removed in a future release):
-
+- The functions `FileParserUtils::applyMolListPropToAtoms()`, `FileParserUtils::applyMolListPropsToAtoms()`, and `FileParserUtils::getAtomPropertyList()` have been deprecated, please use `FileParserUtils::applyMolListProp()`, `FileParserUtils::applyMolListProps()`, and `FileParserUtils::getPropertyList()` instead.
 
 # Release_2025.03.1
 (Changes relative to Release_2024.09.1)
