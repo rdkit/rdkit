@@ -61,6 +61,15 @@ class TestCase(unittest.TestCase):
                                               params=params)
     self.assertEqual(10, len(results.GetHitMolecules()))
 
+    mols = []
+    synthonspace.SubstructureSearch(
+            Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"),
+            lambda results: mols.extend(results),
+            substructMatchParams=smParams,
+            params=params)
+    self.assertEqual(10, len(mols))
+
+
   def testFingerprintSearch(self):
     fName = self.sssDir / "idorsia_toy_space_a.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()

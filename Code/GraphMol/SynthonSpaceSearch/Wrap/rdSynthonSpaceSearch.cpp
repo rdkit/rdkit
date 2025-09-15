@@ -98,6 +98,33 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper2(
   return results;
 }
 
+static void substructureSearch_helper3(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    python::object py_callable,
+    const python::object &py_smParams, const python::object &py_params) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  SubstructMatchParameters smParams;
+  if (!py_smParams.is_none()) {
+    smParams = python::extract<SubstructMatchParameters>(py_smParams);
+  }
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+
+  auto callback = [&py_callable](std::vector<std::unique_ptr<ROMol>>& results) {
+      python::list pyres;
+      for (auto& mol: results) {
+        pyres.append(boost::make_shared<ROMol>(*mol));
+      }
+      // todo: get result of calling callback
+      py_callable(pyres);
+      return false;
+    };
+
+  self.substructureSearchIterated(query, callback, smParams, params);
+}
+
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &fingerprintGenerator,
@@ -326,6 +353,12 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
             python::arg("params") = python::object()),
            "Does a substructure search in the SynthonSpace using an"
            " extended query.")
+      .def("SubstructureSearch", &substructureSearch_helper3,
+           (python::arg("self"), python::arg("query"),
+            python::arg("callback"),
+            python::arg("substructMatchParams") = python::object(),
+            python::arg("params") = python::object()),
+           "Does a substructure search in the SynthonSpace returning results iteratively.")
       .def("FingerprintSearch", &fingerprintSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("fingerprintGenerator"),
