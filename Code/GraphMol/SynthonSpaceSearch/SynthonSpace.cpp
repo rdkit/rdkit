@@ -115,6 +115,18 @@ SearchResults SynthonSpace::substructureSearch(
   return ssss.search();
 }
 
+void SynthonSpace::substructureSearchIterated(
+    const ROMol &query, 
+    SearchResultCallback cb,
+    const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  ControlCHandler::reset();
+  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
+  ssss.searchIterated(cb);
+}
+
+
 SearchResults SynthonSpace::substructureSearch(
     const GeneralizedSubstruct::ExtendedQueryMol &query,
     const SubstructMatchParameters &matchParams,

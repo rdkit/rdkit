@@ -194,6 +194,12 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const SubstructMatchParameters &matchParams = SubstructMatchParameters(),
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
+  void substructureSearchIterated(
+      const ROMol &query,
+      SearchResultCallback cb,
+      const SubstructMatchParameters &matchParams = SubstructMatchParameters(),
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
   /*!
    * Perform a substructure search with the given generalized query
    * molecule across the synthonspace library.  Duplicate SMILES strings
