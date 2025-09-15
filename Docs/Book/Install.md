@@ -88,7 +88,7 @@ introduced in more recent macOS versions.
 
 The following commands will create a development environment for Linux x86_64 and Python 3.
 
-Start by downloading the latest [miniconda installer](https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh) and install it:
+Start by downloading the latest [miniconda installer](https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh) and installing it:
 
 ```
 bash Miniconda3-latest-Linux-x86_64.sh
