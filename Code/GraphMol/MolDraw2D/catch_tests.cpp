@@ -370,6 +370,10 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testStandardColoursHighlightedAtoms_2.svg", 2285000572U},
     {"testArrowheads.svg", 3318006834U},
     {"testOffsetHighlightedMols.svg", 3147614756U},
+    {"testDrawingExtentsInclude_default.svg", 1604243819U},
+    {"testDrawingExtentsIncludeWithHighlights_default.svg", 1595689626U},
+    {"testDrawingExtentsInclude_allButHighlights.svg", 1604243819U},
+    {"testDrawingExtentsIncludeWithHighlights_allButHighlights.svg", 436783789U}
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10965,4 +10969,111 @@ M  END
       RDKit::MultiColourHighlightStyle::LASSO;
   REQUIRE_NOTHROW(drawer.drawMoleculeWithHighlights(*m, "Lasso 1", ha_map,
                                                     hb_map, h_rads, h_lw_mult));
+}
+
+TEST_CASE("drawingExtentsInclude") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  3  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.8930    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  1  3  1  0
+M  END
+)CTAB"_ctab;
+  INT_VECT highlightAtoms = {0};
+  REQUIRE(m);
+  std::unique_ptr<MolDraw2DSVG> drawer;
+  std::regex coordRegex(
+      "<path class='bond-\\d atom-\\d atom-\\d' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)'");
+  auto resetDrawer = [](std::unique_ptr<MolDraw2DSVG> &drawer) {
+    drawer.reset(new MolDraw2DSVG(300, 200, -1, -1, NO_FREETYPE));
+    drawer->drawOptions().padding = 0.2;
+  };
+  auto extractCoords = [coordRegex](
+                           const std::string &text,
+                           std::vector<std::vector<double>> &coordVec) {
+    coordVec.clear();
+    for (auto it = std::sregex_iterator(text.begin(), text.end(), coordRegex);
+         it != std::sregex_iterator(); ++it) {
+      std::smatch match = *it;
+      std::vector<double> coords(match.size());
+      for (size_t i = 1; i < match.size(); ++i) {
+        coords.push_back(stod(match[i]));
+      }
+      coordVec.push_back(std::move(coords));
+    }
+  };
+  auto checkCoords =
+      [](const std::vector<std::vector<double>> &referenceCoords,
+         const std::vector<std::vector<double>> &highlightCoords) {
+        for (size_t i = 0; i < referenceCoords.size(); ++i) {
+          CHECK(referenceCoords[i].size() == highlightCoords[i].size());
+          for (size_t j = 0; j < referenceCoords[i].size(); ++j) {
+            if (fabs(highlightCoords[i][j]) - referenceCoords[i][j] > 0.1) {
+              return false;
+            }
+          }
+        }
+        return true;
+      };
+  std::vector<std::vector<double>> referenceCoords;
+  std::vector<std::vector<double>> highlightCoords;
+  SECTION("default") {
+    {
+      resetDrawer(drawer);
+      drawer->drawMolecule(*m);
+      drawer->finishDrawing();
+      auto text = drawer->getDrawingText();
+      extractCoords(text, referenceCoords);
+      std::ofstream outs("testDrawingExtentsInclude_default.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testDrawingExtentsInclude_default.svg");
+    }
+    {
+      resetDrawer(drawer);
+      drawer->drawMolecule(*m, &highlightAtoms);
+      drawer->finishDrawing();
+      auto text = drawer->getDrawingText();
+      extractCoords(text, highlightCoords);
+      std::ofstream outs("testDrawingExtentsIncludeWithHighlights_default.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testDrawingExtentsIncludeWithHighlights_default.svg");
+    }
+    CHECK(!checkCoords(referenceCoords, highlightCoords));
+  }
+  SECTION("allButHighlights") {
+    {
+      resetDrawer(drawer);
+      drawer->drawMolecule(*m);
+      drawer->finishDrawing();
+      auto text = drawer->getDrawingText();
+      extractCoords(text, referenceCoords);
+      std::ofstream outs("testDrawingExtentsInclude_allButHighlights.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testDrawingExtentsInclude_allButHighlights.svg");
+    }
+    {
+      resetDrawer(drawer);
+      drawer->drawOptions().drawingExtentsInclude =
+          DrawElement::ALL ^ DrawElement::HIGHLIGHTS;
+      drawer->drawMolecule(*m, &highlightAtoms);
+      drawer->finishDrawing();
+      auto text = drawer->getDrawingText();
+      extractCoords(text, highlightCoords);
+      std::ofstream outs(
+          "testDrawingExtentsIncludeWithHighlights_allButHighlights.svg");
+      outs << text;
+      outs.close();
+      check_file_hash(
+          "testDrawingExtentsIncludeWithHighlights_allButHighlights.svg");
+    }
+    CHECK(checkCoords(referenceCoords, highlightCoords));
+  }
 }
