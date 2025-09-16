@@ -2019,22 +2019,22 @@ STORAGE         bytea;
 
 -- Support functions for bfp gin
 
-CREATE FUNCTION gin_bfp_extract_value(bfp, internal)
+CREATE OR REPLACE FUNCTION gin_bfp_extract_value(bfp, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT COST 100;
 
-CREATE FUNCTION gin_bfp_extract_query(bfp, internal, int2, internal, internal, internal, internal)
+CREATE OR REPLACE  FUNCTION gin_bfp_extract_query(bfp, internal, int2, internal, internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT COST 100;
 
-CREATE FUNCTION gin_bfp_consistent(internal, int2, bfp, int4, internal, internal, internal, internal)
+CREATE OR REPLACE  FUNCTION gin_bfp_consistent(internal, int2, bfp, int4, internal, internal, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STABLE STRICT COST 100;
 
-CREATE FUNCTION gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal)
+CREATE OR REPLACE  FUNCTION gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STABLE STRICT COST 100;
