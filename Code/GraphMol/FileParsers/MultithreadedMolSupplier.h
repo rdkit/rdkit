@@ -43,10 +43,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
 
   MultithreadedMolSupplier() {}
 
-  
   // Derived classes MUST have a destructor that calls close
   //  to properly end threads while the instance is alive
-  virtual ~MultithreadedMolSupplier() {close();}
+  virtual ~MultithreadedMolSupplier() { close(); }
 
   //! shut down the supplier
   virtual void close() override;
@@ -133,10 +132,13 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   virtual RWMol *processMoleculeRecord(const std::string &record,
                                        unsigned int lineNum) = 0;
 
-  std::mutex d_threadCounterMutex;
-  std::atomic<unsigned int> d_threadCounter{1};  //!< thread counter
-  std::vector<std::thread> d_writerThreads;      //!< vector writer threads
-  std::thread d_readerThread;                    //!< single reader thread
+  std::vector<std::thread> d_writerThreads;  //!< vector writer threads
+  std::thread d_readerThread;                //!< single reader thread
+
+  // both of these will only be incremented in unique threads
+  // (the reader and the master thread), so no need for atomics/mutexes
+  unsigned int d_mols_read{0};
+  unsigned int d_mols_returned{0};
 
  protected:
   std::atomic<bool> df_started = false;
@@ -160,7 +162,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
       writeCallback = nullptr;
   std::function<std::string(const std::string &, unsigned int)> readCallback =
       nullptr;
-
 };
 }  // namespace FileParsers
 }  // namespace v2
