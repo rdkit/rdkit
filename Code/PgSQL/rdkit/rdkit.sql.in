@@ -1796,54 +1796,54 @@ CREATE OR REPLACE FUNCTION gmol_same(bytea, bytea, internal)
 CREATE OR REPLACE FUNCTION gmol_sortsupport(internal)
     RETURNS void
     AS 'MODULE_PATHNAME'
-    LANGUAGE C STRICT;
+    LANGUAGE C STRICT COST 100;
 
 -- Support functions for bfp gist
 
 CREATE OR REPLACE FUNCTION gbfp_consistent(internal, bytea, smallint, oid, internal)
     RETURNS bool
     AS 'MODULE_PATHNAME'
-    LANGUAGE C STABLE STRICT;
+    LANGUAGE C STABLE STRICT COST 100;
 
 CREATE OR REPLACE FUNCTION gbfp_union(internal, internal)
     RETURNS _internal
     AS 'MODULE_PATHNAME'
-    LANGUAGE C IMMUTABLE STRICT;
+    LANGUAGE C IMMUTABLE STRICT COST 100;
 
 CREATE OR REPLACE FUNCTION gbfp_compress(internal)
     RETURNS internal
     AS 'MODULE_PATHNAME'
-    LANGUAGE C IMMUTABLE STRICT;
+    LANGUAGE C IMMUTABLE STRICT COST 100;
 
 CREATE OR REPLACE FUNCTION gbfp_decompress(internal)
     RETURNS internal
     AS 'MODULE_PATHNAME'
-    LANGUAGE C IMMUTABLE STRICT;
+    LANGUAGE C IMMUTABLE STRICT COST 100;
 
 CREATE OR REPLACE FUNCTION gbfp_penalty(internal,internal,internal)
     RETURNS internal
     AS 'MODULE_PATHNAME'
-    LANGUAGE C IMMUTABLE STRICT;
+    LANGUAGE C IMMUTABLE STRICT COST 100;
 
 CREATE OR REPLACE FUNCTION gbfp_picksplit(internal, internal)
     RETURNS internal
     AS 'MODULE_PATHNAME'
-    LANGUAGE C IMMUTABLE STRICT;
+    LANGUAGE C IMMUTABLE STRICT COST 100;
 
 CREATE OR REPLACE FUNCTION gbfp_same(internal, internal, internal)
     RETURNS internal
     AS 'MODULE_PATHNAME'
-    LANGUAGE C IMMUTABLE STRICT;
+    LANGUAGE C IMMUTABLE STRICT COST 100;
 
 CREATE OR REPLACE FUNCTION gbfp_distance(internal, bytea, smallint, oid)
     RETURNS float8
     AS 'MODULE_PATHNAME'
-    LANGUAGE C STABLE STRICT;
+    LANGUAGE C STABLE STRICT COST 100;
 
 CREATE OR REPLACE FUNCTION gbfp_fetch(internal)
     RETURNS internal
     AS 'MODULE_PATHNAME'
-    LANGUAGE C IMMUTABLE STRICT;
+    LANGUAGE C IMMUTABLE STRICT COST 100;
 
 CREATE OR REPLACE FUNCTION gbfp_sortsupport(internal)
     RETURNS void
@@ -2022,22 +2022,22 @@ STORAGE         bytea;
 CREATE FUNCTION gin_bfp_extract_value(bfp, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT COST 100;
 
 CREATE FUNCTION gin_bfp_extract_query(bfp, internal, int2, internal, internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT COST 100;
 
 CREATE FUNCTION gin_bfp_consistent(internal, int2, bfp, int4, internal, internal, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C STABLE STRICT;
+LANGUAGE C STABLE STRICT COST 100;
 
 CREATE FUNCTION gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C STABLE STRICT;
+LANGUAGE C STABLE STRICT COST 100;
 
 -- Operator classes for gin
 
