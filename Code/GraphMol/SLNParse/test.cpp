@@ -317,7 +317,7 @@ void test3() {
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 1);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumExplicitHs() == 3);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumSpecifiedHs() == 3);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs() == 0);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNoImplicit());
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
@@ -350,7 +350,7 @@ void test4() {
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 1);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumExplicitHs() == 4);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumSpecifiedHs() == 4);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs() == 0);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNoImplicit());
 
@@ -359,7 +359,7 @@ void test4() {
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 1);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumExplicitHs() == 3);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumSpecifiedHs() == 3);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs() == 0);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNoImplicit());
 
@@ -380,7 +380,7 @@ void test5() {
   patt = RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(patt);
   TEST_ASSERT(patt->getNumAtoms() == 1);
-  TEST_ASSERT(patt->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+  TEST_ASSERT(patt->getAtomWithIdx(0)->getNumSpecifiedHs() == 0);
   TEST_ASSERT(patt->getAtomWithIdx(0)->getNoImplicit());
   TEST_ASSERT(patt->getAtomWithIdx(0)->getNumImplicitHs() == 0);
 
@@ -1264,7 +1264,6 @@ void test10() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-
 void test12() {
   RDKit::RWMol *patt, *mol;
   std::vector<RDKit::MatchVectType> mV;
@@ -1883,9 +1882,9 @@ int main(int argc, char *argv[]) {
   (void)argv;
   RDLog::InitLogs();
 
-// FIX: need a test for handling Hs in the SLN itself. This should be done for
-// both normal and query SLNs and must be done after the SLN parser handles
-// that case (errr, duh)
+  // FIX: need a test for handling Hs in the SLN itself. This should be done for
+  // both normal and query SLNs and must be done after the SLN parser handles
+  // that case (errr, duh)
   test1();
   test2();
   test3();

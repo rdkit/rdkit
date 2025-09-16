@@ -98,11 +98,11 @@ int startMol(std::vector<RWMol *> &molList, AtomType *firstAtom,
     // add any hydrogens that are set on the atom, otherwise getting the
     // numbering right
     // is just too hard:
-    for (unsigned int i = 0; i < firstAtom->getNumExplicitHs(); ++i) {
+    for (unsigned int i = 0; i < firstAtom->getNumSpecifiedHs(); ++i) {
       int hIdx = mp->addAtom(new Atom(1), false, true);
       mp->addBond(0, hIdx, Bond::SINGLE);
     }
-    firstAtom->setNumExplicitHs(0);
+    firstAtom->setNumSpecifiedHs(0);
   }
 
   int sz = molList.size();
@@ -134,11 +134,11 @@ void addAtomToMol(std::vector<RWMol *> &molList, unsigned int idx,
     // add any hydrogens that are set on the atom, otherwise getting the
     // numbering right
     // is just too hard:
-    for (unsigned int i = 0; i < atom->getNumExplicitHs(); ++i) {
+    for (unsigned int i = 0; i < atom->getNumSpecifiedHs(); ++i) {
       int hIdx = mp->addAtom(new Atom(1), false, true);
       mp->addBond(atomIdx2, hIdx, Bond::SINGLE);
     }
-    atom->setNumExplicitHs(0);
+    atom->setNumSpecifiedHs(0);
   }
 }
 //! \overload

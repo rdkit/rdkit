@@ -762,12 +762,12 @@ void testGithub162() {
   {
     ROMol *mol = SmilesToMol("C1=CNC=C1");
     TEST_ASSERT(mol);
-    TEST_ASSERT(mol->getAtomWithIdx(2)->getNumExplicitHs() == 1);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getNumSpecifiedHs() == 1);
     MMFF::MMFFMolProperties *mmffMolProperties =
         new MMFF::MMFFMolProperties(*mol);
     TEST_ASSERT(mmffMolProperties);
     TEST_ASSERT(mmffMolProperties->isValid());
-    TEST_ASSERT(mol->getAtomWithIdx(2)->getNumExplicitHs() == 1);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getNumSpecifiedHs() == 1);
 
     delete mol;
     delete mmffMolProperties;

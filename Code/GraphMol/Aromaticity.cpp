@@ -264,7 +264,7 @@ bool incidentCyclicMultipleBond(const Atom *at) {
 bool incidentMultipleBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
   const auto &mol = at->getOwningMol();
-  auto deg = at->getDegree() + at->getNumExplicitHs();
+  auto deg = at->getDegree() + at->getNumSpecifiedHs();
   for (const auto bond : mol.atomBonds(at)) {
     if (!std::lround(bond->getValenceContrib(at))) {
       --deg;
@@ -1094,7 +1094,7 @@ void setMMFFAromaticity(RWMol &mol) {
         int iv = atom->calcImplicitValence(false);
         atom->calcExplicitValence(false);
         if (iv) {
-          atom->setNumExplicitHs(iv);
+          atom->setNumSpecifiedHs(iv);
           atom->calcImplicitValence(false);
         }
       }

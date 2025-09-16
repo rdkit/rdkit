@@ -175,7 +175,7 @@ void readAtom(RWMol *mol, const rj::Value &atomVal,
   Atom *at = new Atom(getIntDefaultValue("z", atomVal, atomDefaults));
   if (params.useHCounts) {
     at->setNoImplicit(true);
-    at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
+    at->setNumSpecifiedHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
   }
   at->setFormalCharge(getIntDefaultValue("chg", atomVal, atomDefaults));
   at->setNumRadicalElectrons(getIntDefaultValue("nRad", atomVal, atomDefaults));

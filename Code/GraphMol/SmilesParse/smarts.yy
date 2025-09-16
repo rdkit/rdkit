@@ -470,13 +470,13 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
 | atom_expr point_query {
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($2->getChiralTag());
-  if($2->getNumExplicitHs()){
-    if(!$1->getNumExplicitHs()){
-      $1->setNumExplicitHs($2->getNumExplicitHs());
+  if($2->getNumSpecifiedHs()){
+    if(!$1->getNumSpecifiedHs()){
+      $1->setNumSpecifiedHs($2->getNumSpecifiedHs());
       $1->setNoImplicit(true);
-    } else if($1->getNumExplicitHs()!=$2->getNumExplicitHs()){
+    } else if($1->getNumSpecifiedHs()!=$2->getNumSpecifiedHs()){
       // conflicting queries...
-      $1->setNumExplicitHs(0);
+      $1->setNumSpecifiedHs(0);
       $1->setNoImplicit(false);
     }
   }
@@ -611,7 +611,7 @@ atom_query:	simple_atom
   newQ->setQuery(makeAtomIsotopeQuery($1));
   newQ->setIsotope($1);
   newQ->expandQuery(makeAtomHCountQuery(1),Queries::COMPOSITE_AND,true);
-  newQ->setNumExplicitHs(1);
+  newQ->setNumSpecifiedHs(1);
   $$=newQ;
 }
 | number H_TOKEN number {
@@ -619,19 +619,19 @@ atom_query:	simple_atom
   newQ->setQuery(makeAtomIsotopeQuery($1));
   newQ->setIsotope($1);
   newQ->expandQuery(makeAtomHCountQuery($3),Queries::COMPOSITE_AND,true);
-  newQ->setNumExplicitHs($3);
+  newQ->setNumSpecifiedHs($3);
   $$=newQ;
 }
 | H_TOKEN number {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery($2));
-  newQ->setNumExplicitHs($2);
+  newQ->setNumSpecifiedHs($2);
   $$=newQ;
 }
 | H_TOKEN {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery(1));
-  newQ->setNumExplicitHs(1);
+  newQ->setNumSpecifiedHs(1);
   $$=newQ;
 }
 | charge_spec {

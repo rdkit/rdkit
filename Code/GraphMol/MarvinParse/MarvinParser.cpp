@@ -210,7 +210,7 @@ class MarvinCMLReader {
       // if both are present, they must agreee
 
       if (marvinAtom->hydrogenCount >= 0) {
-        res->setNumExplicitHs(marvinAtom->hydrogenCount);
+        res->setNumSpecifiedHs(marvinAtom->hydrogenCount);
       }
 
       if (marvinAtom->mrvValence >= 0) {
@@ -229,7 +229,7 @@ class MarvinCMLReader {
             }
           } else {
             res->setNoImplicit(true);
-            res->setNumExplicitHs(hCount);
+            res->setNumSpecifiedHs(hCount);
           }
         }
       }

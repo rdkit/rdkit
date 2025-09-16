@@ -38,7 +38,6 @@
 #include "chemdraw/CDXStdObjects.h"
 #include "ChemDrawEndInclude.h"
 
-
 namespace RDKit {
 namespace v2 {
 const double DEFAULT_CDX_BOND_LENGTH = 14.4;
@@ -55,7 +54,7 @@ bool needsExplicitHs(const Atom *atom) {
   if (atom->getNumRadicalElectrons()) {
     nonStandard = true;
   } else if ((num == 7 || num == 15) && atom->getIsAromatic() &&
-             atom->getNumExplicitHs()) {
+             atom->getNumSpecifiedHs()) {
     // another type of "nonstandard" valence is an aromatic N or P with
     // explicit Hs indicated:
     nonStandard = true;
@@ -123,8 +122,8 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
     node->m_elementNum = atom->getAtomicNum();
     // Use the same logic from the smiles writer needs brackets
     //
-    // node->m_numHydrogens = atom->getNumExplicitHs() ?
-    // atom->getNumExplicitHs()
+    // node->m_numHydrogens = atom->getNumSpecifiedHs() ?
+    // atom->getNumSpecifiedHs()
     //                                                : kNumHydrogenUnspecified;
     node->m_numHydrogens =
         needsExplicitHs(atom) ? atom->getTotalNumHs() : kNumHydrogenUnspecified;
@@ -280,9 +279,9 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
   document.AddChild(page);
   document.m_colorTable.m_colors
       .clear();  // if this isn't empty something fails.
-  
+
   std::ostringstream os;
-  if(format == CDXFormat::CDXML) {
+  if (format == CDXFormat::CDXML) {
     os << kCDXML_HeaderString;
     XMLDataSink ds(os);
     document.XMLWrite(ds);
@@ -292,5 +291,5 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
   }
   return os.str();
 }
-}
+}  // namespace v2
 }  // namespace RDKit

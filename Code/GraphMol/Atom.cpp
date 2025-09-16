@@ -203,7 +203,7 @@ void Atom::initFromOther(const Atom &other) {
   d_formalCharge = other.d_formalCharge;
   df_noImplicit = other.df_noImplicit;
   df_isAromatic = other.df_isAromatic;
-  d_numExplicitHs = other.d_numExplicitHs;
+  d_numSpecifiedHs = other.d_numSpecifiedHs;
   d_numRadicalElectrons = other.d_numRadicalElectrons;
   d_isotope = other.d_isotope;
   // d_pos = other.d_pos;
@@ -231,7 +231,7 @@ Atom &Atom::operator=(const Atom &other) {
 void Atom::initAtom() {
   df_isAromatic = false;
   df_noImplicit = false;
-  d_numExplicitHs = 0;
+  d_numSpecifiedHs = 0;
   d_numRadicalElectrons = 0;
   d_formalCharge = 0;
   d_index = 0;
@@ -283,7 +283,7 @@ unsigned int Atom::getTotalDegree() const {
 //   and include any of them that are Hs in the count here
 //
 unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
-  int res = getNumExplicitHs() + getNumImplicitHs();
+  int res = getNumSpecifiedHs() + getNumImplicitHs();
   if (includeNeighbors && dp_mol) {
     auto nbrs = dp_mol->atomNeighbors(this);
     res += std::count_if(nbrs.begin(), nbrs.end(), [](const auto nbr) {
@@ -350,7 +350,7 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   for (const auto bnd : atom.getOwningMol().atomBonds(&atom)) {
     accum += bnd->getValenceContrib(&atom);
   }
-  accum += atom.getNumExplicitHs();
+  accum += atom.getNumSpecifiedHs();
 
   const auto &ovalens =
       PeriodicTable::getTable()->getValenceList(atom.getAtomicNum());
@@ -937,7 +937,7 @@ unsigned int numPiElectrons(const Atom &atom) {
   } else if (atom.getHybridization() != Atom::SP3) {
     auto val =
         static_cast<unsigned int>(atom.getValence(Atom::ValenceType::EXPLICIT));
-    unsigned int physical_bonds = atom.getNumExplicitHs();
+    unsigned int physical_bonds = atom.getNumSpecifiedHs();
     const auto &mol = atom.getOwningMol();
     for (const auto bond : mol.atomBonds(&atom)) {
       if (bond->getValenceContrib(&atom) != 0.0) {

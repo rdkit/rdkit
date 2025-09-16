@@ -124,7 +124,7 @@ bool atomNeedsBracket(const Atom *atom, const std::string &atString,
   if (atom->getNumRadicalElectrons()) {
     nonStandard = true;
   } else if ((num == 7 || num == 15) && atom->getIsAromatic() &&
-             atom->getNumExplicitHs()) {
+             atom->getNumSpecifiedHs()) {
     // another type of "nonstandard" valence is an aromatic N or P with
     // explicit Hs indicated:
     nonStandard = true;

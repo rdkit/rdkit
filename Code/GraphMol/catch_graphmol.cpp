@@ -2381,7 +2381,7 @@ TEST_CASE("canon details") {
       CHECK(RDKit::Canon::details::atomHasFourthValence(m->getAtomWithIdx(1)) ==
             pr.second);
       // artificial, but causes atomHasFourthValence to always return true
-      m->getAtomWithIdx(1)->setNumExplicitHs(1);
+      m->getAtomWithIdx(1)->setNumSpecifiedHs(1);
       CHECK(RDKit::Canon::details::atomHasFourthValence(m->getAtomWithIdx(1)));
     }
   }
@@ -3542,11 +3542,11 @@ $$$$
   REQUIRE(bond_dir == 3);  // dashed bond
 
   auto begin_atom = bond->getBeginAtom();
-  REQUIRE(begin_atom->getNumExplicitHs() == 1);
+  REQUIRE(begin_atom->getNumSpecifiedHs() == 1);
   REQUIRE(begin_atom->getTotalValence() == 4);
 
   auto end_atom = bond->getEndAtom();
-  REQUIRE(end_atom->getNumExplicitHs() == 0);
+  REQUIRE(end_atom->getNumSpecifiedHs() == 0);
   REQUIRE(end_atom->getTotalValence() == 4);
 
   bool strict_valences = false;
@@ -3555,27 +3555,27 @@ $$$$
     auto b = Bond(Bond::BondType::DOUBLE);
     m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
-    CHECK(begin_atom->getNumExplicitHs() == 0);
+    CHECK(begin_atom->getNumSpecifiedHs() == 0);
     CHECK(begin_atom->getTotalValence() == 4);
-    CHECK(end_atom->getNumExplicitHs() == 0);
+    CHECK(end_atom->getNumSpecifiedHs() == 0);
     CHECK(end_atom->getTotalValence() == 4);
   }
   SECTION("replace with a triple bond") {
     auto b = Bond(Bond::BondType::TRIPLE);
     m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
-    CHECK(begin_atom->getNumExplicitHs() == 0);
+    CHECK(begin_atom->getNumSpecifiedHs() == 0);
     CHECK(begin_atom->getTotalValence() == 5);  // Yeah, this is expected
-    CHECK(end_atom->getNumExplicitHs() == 0);
+    CHECK(end_atom->getNumSpecifiedHs() == 0);
     CHECK(end_atom->getTotalValence() == 4);
   }
   SECTION("replace with a dative bond") {
     auto b = Bond(Bond::BondType::DATIVE);
     m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
-    CHECK(begin_atom->getNumExplicitHs() == 1);
+    CHECK(begin_atom->getNumSpecifiedHs() == 1);
     CHECK(begin_atom->getTotalValence() == 4);
-    CHECK(end_atom->getNumExplicitHs() == 0);
+    CHECK(end_atom->getNumSpecifiedHs() == 0);
     CHECK(end_atom->getTotalValence() == 4);
   }
 }

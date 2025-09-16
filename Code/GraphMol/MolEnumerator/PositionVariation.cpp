@@ -65,7 +65,7 @@ void PositionVariationOp::initFromMol() {
         // has implicit Hs, we should remove those
         auto attachAtom = dp_mol->getAtomWithIdx(oat);
         if (attachAtom->getIsAromatic() && attachAtom->getAtomicNum() != 6) {
-          attachAtom->setNumExplicitHs(0);
+          attachAtom->setNumSpecifiedHs(0);
         }
       }
       d_variationPoints.push_back(std::make_pair(atom->getIdx(), oats));

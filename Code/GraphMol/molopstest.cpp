@@ -1006,7 +1006,7 @@ void test11() {
   TEST_ASSERT(!(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode)));
   TEST_ASSERT(!(m->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode)));
   // test Issue 194:
-  TEST_ASSERT(m->getAtomWithIdx(1)->getNumExplicitHs() == 0);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getNumSpecifiedHs() == 0);
 
   delete m;
   smi = "F[C@]1CC(Cl)C1";
@@ -5088,7 +5088,7 @@ void testGithubIssue141() {
     m->updatePropertyCache(true);
     TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic())
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs() == 1)
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs() == 0)
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumSpecifiedHs() == 0)
 
     delete m;
   }
@@ -5304,7 +5304,7 @@ void testGithubIssue418() {
     m2->addBond(0, 3, Bond::SINGLE);
     m2->addBond(0, 4, Bond::SINGLE);
     MolOps::removeHs(*m2, false, true, false);
-    TEST_ASSERT(m2->getAtomWithIdx(0)->getNumExplicitHs() == 4);
+    TEST_ASSERT(m2->getAtomWithIdx(0)->getNumSpecifiedHs() == 4);
     delete m2;
   }
   {
@@ -5312,7 +5312,7 @@ void testGithubIssue418() {
     RWMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumSpecifiedHs() == 4);
     delete m;
   }
   {
@@ -8052,7 +8052,7 @@ void testRemoveAndTrackIsotopes() {
       expl = 0;
       impl = 0;
       for (auto a : m.atoms()) {
-        expl += a->getNumExplicitHs();
+        expl += a->getNumSpecifiedHs();
         impl += a->getNumImplicitHs();
       }
     }

@@ -796,7 +796,7 @@ void ParseHYDLine(RWMol *mol, const std::string &text, unsigned int line) {
       } else {
         if (val >= 0) {
           atom->setProp("_ZBO_H", true);
-          atom->setNumExplicitHs(val);
+          atom->setNumSpecifiedHs(val);
         }
       }
     } catch (boost::bad_lexical_cast &) {
@@ -2968,7 +2968,7 @@ void processMrvImplicitH(RWMol &mol, const SubstanceGroup &sg) {
               }
             }
             if (hasAromaticBonds) {
-              atom->setNumExplicitHs(val);
+              atom->setNumSpecifiedHs(val);
             } else {
               BOOST_LOG(rdWarningLog)
                   << "MRV_IMPLICIT_H SGroup on atom without aromatic "
@@ -3055,7 +3055,7 @@ void processHYD(RWMol &mol, const SubstanceGroup &sg) {
           val = FileParserUtils::toInt(splitLine[i]);
         }
         atom->setProp("_ZBO_H", true);
-        atom->setNumExplicitHs(val);
+        atom->setNumSpecifiedHs(val);
       }
     }
   }
@@ -3155,7 +3155,7 @@ void ProcessMolProps(RWMol *mol) {
       if (ival == 15     // V2000
           || ival == -1  // v3000
       ) {
-        atom->setNumExplicitHs(0);
+        atom->setNumSpecifiedHs(0);
       } else {
         if (static_cast<int>(atom->getValence(Atom::ValenceType::EXPLICIT)) >
             ival) {
@@ -3164,10 +3164,10 @@ void ProcessMolProps(RWMol *mol) {
               << ") smaller than the drawn valence "
               << atom->getValence(Atom::ValenceType::EXPLICIT) << "."
               << std::endl;
-          atom->setNumExplicitHs(0);
+          atom->setNumSpecifiedHs(0);
         } else {
-          atom->setNumExplicitHs(ival -
-                                 atom->getValence(Atom::ValenceType::EXPLICIT));
+          atom->setNumSpecifiedHs(
+              ival - atom->getValence(Atom::ValenceType::EXPLICIT));
         }
       }
     }

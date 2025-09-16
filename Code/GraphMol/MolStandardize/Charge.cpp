@@ -159,8 +159,8 @@ void Reionizer::reionizeInPlace(RWMol &mol) {
         Atom *patom = mol.getAtomWithIdx(poccur.back());
         patom->setFormalCharge(patom->getFormalCharge() - 1);
 
-        if (patom->getNumExplicitHs() > 0) {
-          patom->setNumExplicitHs(patom->getNumExplicitHs() - 1);
+        if (patom->getNumSpecifiedHs() > 0) {
+          patom->setNumSpecifiedHs(patom->getNumSpecifiedHs() - 1);
         }
 
         patom->updatePropertyCache();
@@ -216,8 +216,8 @@ void Reionizer::reionizeInPlace(RWMol &mol) {
         // If no implicit Hs to autoremove, and at least 1 explicit H to
         // remove,
         //  reduce explicit count by 1
-        if (patom->getNumImplicitHs() == 0 && patom->getNumExplicitHs() > 0) {
-          patom->setNumExplicitHs(patom->getNumExplicitHs() - 1);
+        if (patom->getNumImplicitHs() == 0 && patom->getNumSpecifiedHs() > 0) {
+          patom->setNumSpecifiedHs(patom->getNumSpecifiedHs() - 1);
           // TODO: Remove any chiral label on patom?
         }
         patom->updatePropertyCache();
@@ -236,7 +236,7 @@ void Reionizer::reionizeInPlace(RWMol &mol) {
             ((patom->getAtomicNum() == 7 || patom->getAtomicNum() == 15) &&
              patom->getIsAromatic()) ||
             !found) {
-          iatom->setNumExplicitHs(iatom->getNumExplicitHs() + 1);
+          iatom->setNumSpecifiedHs(iatom->getNumSpecifiedHs() + 1);
         }
         iatom->updatePropertyCache();
       } else {
@@ -310,7 +310,7 @@ Uncharger::Uncharger()
 
 namespace {
 void removeCharge(Atom *atom, int charge, int hDelta) {
-  atom->setNumExplicitHs(atom->getTotalNumHs() + hDelta);
+  atom->setNumSpecifiedHs(atom->getTotalNumHs() + hDelta);
   atom->setNoImplicit(true);
   atom->setFormalCharge(atom->getFormalCharge() - charge);
   BOOST_LOG(rdInfoLog) << "Removed " << ((charge > 0) ? "positive" : "negative")

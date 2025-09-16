@@ -119,7 +119,7 @@ void NMRDKitSanitizeHydrogens(RDKit::RWMol *mol) {
   for (auto aptr : mol->atoms()) {
     unsigned int hcount = aptr->getTotalNumHs();
     aptr->setNoImplicit(true);
-    aptr->setNumExplicitHs(hcount);
+    aptr->setNumSpecifiedHs(hcount);
 
     bool strict = false;
     aptr->updatePropertyCache(
@@ -294,7 +294,7 @@ void NormalizeHCount(Atom *aptr) {
       hcount = 0;
   }
   aptr->setNoImplicit(true);
-  aptr->setNumExplicitHs(hcount);
+  aptr->setNumSpecifiedHs(hcount);
 }
 
 namespace {
@@ -317,7 +317,7 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
     aptr->setIsAromatic(false);
     aptr->setFormalCharge(0);
     if (!elem) {
-      aptr->setNumExplicitHs(0);
+      aptr->setNumSpecifiedHs(0);
       aptr->setNoImplicit(true);
       aptr->setAtomicNum(0);
       aptr->setIsotope(0);
@@ -854,7 +854,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
       aptr->setIsAromatic(false);
       aptr->setFormalCharge(0);
       aptr->setNoImplicit(true);
-      aptr->setNumExplicitHs(0);
+      aptr->setNumSpecifiedHs(0);
     }
   }
 
@@ -900,7 +900,7 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles,
     if (aptr->getAtomicNum() != 6) {
       hcount += aptr->getTotalNumHs(false);
       aptr->setNoImplicit(true);
-      aptr->setNumExplicitHs(0);
+      aptr->setNumSpecifiedHs(0);
     }
   }
 
@@ -1019,7 +1019,7 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
       aptr->setAtomicNum(0);
       aptr->setFormalCharge(0);
       aptr->setNoImplicit(true);
-      aptr->setNumExplicitHs(0);
+      aptr->setNumSpecifiedHs(0);
       aptr->setIsotope(0);
     } else {
       for_deletion.push_back(aptr);
@@ -1061,7 +1061,7 @@ std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles,
             auto bptr = (aptr->getOwningMol())[nbri];
             Atom *nbr = bptr->getOtherAtom(aptr);
             unsigned int hcount = nbr->getTotalNumHs(false);
-            nbr->setNumExplicitHs(hcount + NMRDKitBondGetOrder(bptr));
+            nbr->setNumSpecifiedHs(hcount + NMRDKitBondGetOrder(bptr));
             nbr->setNoImplicit(true);
           }
         }
@@ -1241,7 +1241,7 @@ std::string RegioisomerHash(RWMol *mol, bool useCXSmiles,
         NMRDKitMolNewBond(mol, beg, star, 1, false);
       } else {
         unsigned int hcount = beg->getTotalNumHs(false);
-        beg->setNumExplicitHs(hcount + 1);
+        beg->setNumSpecifiedHs(hcount + 1);
         beg->setNoImplicit(true);
       }
       if (split & 2) {
@@ -1251,7 +1251,7 @@ std::string RegioisomerHash(RWMol *mol, bool useCXSmiles,
         NMRDKitMolNewBond(mol, end, star, 1, false);
       } else {
         unsigned int hcount = end->getTotalNumHs(false);
-        end->setNumExplicitHs(hcount + 1);
+        end->setNumSpecifiedHs(hcount + 1);
         end->setNoImplicit(true);
       }
     }

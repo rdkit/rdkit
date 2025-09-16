@@ -28,7 +28,7 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//#include "node.h"
+// #include "node.h"
 #include "fragment.h"
 #include "utils.h"
 
@@ -181,7 +181,7 @@ bool parseNode(
   CHECK_INVARIANT(atom_id != -1, "Uninitialized atom id in cdxml.");
   Atom *rd_atom = new Atom(elemno);
   rd_atom->setFormalCharge(charge);
-  rd_atom->setNumExplicitHs(num_hydrogens);
+  rd_atom->setNumSpecifiedHs(num_hydrogens);
   rd_atom->setNoImplicit(explicitHs);
 
   rd_atom->setIsotope(isotope);
@@ -199,7 +199,7 @@ bool parseNode(
       rd_atom->setProp<char>(CDX_IMPLICIT_HYDROGEN_STEREO, 'h');
       break;
   }
-  
+
   if (node.m_bondOrdering) {
     // This node may be completely replaced by the fragment
     // i.e. [*:1]C[*:1].C[*:1]C => CCC
@@ -319,5 +319,5 @@ bool parseNode(
   }
   return true;
 }
-}
+}  // namespace ChemDraw
 }  // namespace RDKit

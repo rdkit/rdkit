@@ -555,7 +555,7 @@ void addHs(RWMol &mol, const AddHsParameters &params,
         onAtoms.set(at->getIdx(), 0);
         continue;
       }
-      numAddHyds += at->getNumExplicitHs();
+      numAddHyds += at->getNumSpecifiedHs();
       if (!params.explicitOnly) {
         numAddHyds += at->getNumImplicitHs();
       }
@@ -586,7 +586,7 @@ void addHs(RWMol &mol, const AddHsParameters &params,
     unsigned int newIdx;
     newAt->clearComputedProps();
     // always convert explicit Hs
-    unsigned int onumexpl = newAt->getNumExplicitHs();
+    unsigned int onumexpl = newAt->getNumSpecifiedHs();
     for (unsigned int i = 0; i < onumexpl; i++) {
       newIdx = mol.addAtom(new Atom(1), false, true);
       mol.addBond(aidx, newIdx, Bond::SINGLE);
@@ -601,7 +601,7 @@ void addHs(RWMol &mol, const AddHsParameters &params,
       }
     }
     // clear the local property
-    newAt->setNumExplicitHs(0);
+    newAt->setNumSpecifiedHs(0);
 
     if (!params.explicitOnly) {
       // take care of implicits
@@ -706,7 +706,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
     // *or* if the neighbor has the noImplicit flag set:
     if (updateExplicitCount || heavyAtom->getNoImplicit() ||
         heavyAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
-      heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs() + 1);
+      heavyAtom->setNumSpecifiedHs(heavyAtom->getNumSpecifiedHs() + 1);
     } else {
       // this is a special case related to Issue 228 and the
       // "disappearing Hydrogen" problem discussed in MolOps::adjustHs
@@ -722,7 +722,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
            heavyAtom->getIsAromatic()) ||
           (std::find(defaultVs.begin() + 1, defaultVs.end(),
                      heavyAtom->getTotalValence()) != defaultVs.end())) {
-        heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs() + 1);
+        heavyAtom->setNumSpecifiedHs(heavyAtom->getNumSpecifiedHs() + 1);
       }
     }
 

@@ -84,9 +84,9 @@ void finalizeQueryMol(ROMol *mol, bool mergeHs) {
     for (ROMol::AtomIterator atomIt = mol->beginAtoms();
          atomIt != mol->endAtoms(); ++atomIt) {
       // set a query for the H count:
-      if ((*atomIt)->getNumExplicitHs()) {
+      if ((*atomIt)->getNumSpecifiedHs()) {
         (*atomIt)->expandQuery(
-            makeAtomHCountQuery((*atomIt)->getNumExplicitHs()));
+            makeAtomHCountQuery((*atomIt)->getNumSpecifiedHs()));
       }
     }
   }

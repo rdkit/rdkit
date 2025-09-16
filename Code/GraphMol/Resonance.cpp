@@ -85,7 +85,10 @@ class ConjElectrons {
     HAVE_CATION = (1 << 1),
     HAVE_ANION = (1 << 2)
   } ConjElectronsFlags;
-  typedef enum { FP_BONDS = (1 << 0), FP_ATOMS = (1 << 1) } FPFlags;
+  typedef enum {
+    FP_BONDS = (1 << 0),
+    FP_ATOMS = (1 << 1)
+  } FPFlags;
   ConjElectrons(ResonanceMolSupplier *parent, unsigned int groupIdx);
   ConjElectrons(const ConjElectrons &ce);
   ~ConjElectrons();
@@ -179,7 +182,9 @@ class AtomElectrons {
     STACKED = (1 << 2),
     HAS_MULTIPLE_BOND = (1 << 3),
   } AtomElectronsFlags;
-  typedef enum { NEED_CHARGE_BIT = 1 } AllowedBondFlag;
+  typedef enum {
+    NEED_CHARGE_BIT = 1
+  } AllowedBondFlag;
   AtomElectrons(ConjElectrons *parent, const Atom *a);
   AtomElectrons(ConjElectrons *parent, const AtomElectrons &ae);
   ~AtomElectrons() = default;
@@ -227,7 +232,9 @@ class AtomElectrons {
 
 class BondElectrons {
  public:
-  typedef enum { DEFINITIVE = (1 << 0) } BondElectronsFlags;
+  typedef enum {
+    DEFINITIVE = (1 << 0)
+  } BondElectronsFlags;
   BondElectrons(ConjElectrons *parent, const Bond *b);
   BondElectrons(ConjElectrons *parent, const BondElectrons &be);
   ~BondElectrons() = default;
@@ -287,8 +294,8 @@ void fixExplicitImplicitHs(ROMol &mol) {
   mol.clearComputedProps(false);
   for (ROMol::AtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
     (*ai)->clearComputedProps();
-    (*ai)->setNumExplicitHs((*ai)->getNumImplicitHs() +
-                            (*ai)->getNumExplicitHs());
+    (*ai)->setNumSpecifiedHs((*ai)->getNumImplicitHs() +
+                             (*ai)->getNumSpecifiedHs());
     (*ai)->updatePropertyCache();
   }
 }

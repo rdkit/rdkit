@@ -121,7 +121,7 @@ static inline int queryAtomImplicitValence(Atom const *at) {
   return at->getValence(Atom::ValenceType::IMPLICIT);
 };
 static inline int queryAtomExplicitValence(Atom const *at) {
-  return at->getValence(Atom::ValenceType::EXPLICIT) - at->getNumExplicitHs();
+  return at->getValence(Atom::ValenceType::EXPLICIT) - at->getNumSpecifiedHs();
 };
 static inline int queryAtomTotalValence(Atom const *at) {
   return at->getTotalValence();

@@ -449,8 +449,8 @@ class MarvinCMLWriter {
             } else {
               // if there are explicit Hs , mark them in the atom
 
-              if (atom->getNoImplicit() && atom->getNumExplicitHs() > 0) {
-                marvinAtom->hydrogenCount = atom->getNumExplicitHs();
+              if (atom->getNoImplicit() && atom->getNumSpecifiedHs() > 0) {
+                marvinAtom->hydrogenCount = atom->getNumSpecifiedHs();
 
               } else {
                 unsigned int totalValence = atom->getTotalValence();

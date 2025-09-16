@@ -358,7 +358,7 @@ void adjustHs(RWMol &mol) {
   for (auto atom : mol.atoms()) {
     int origImplicitV = atom->getValence(Atom::ValenceType::IMPLICIT);
     atom->calcExplicitValence(false);
-    int origExplicitV = atom->getNumExplicitHs();
+    int origExplicitV = atom->getNumSpecifiedHs();
 
     int newImplicitV = atom->calcImplicitValence(false);
     //
@@ -378,7 +378,7 @@ void adjustHs(RWMol &mol) {
     //    <phew> that takes way longer to comment than it does to
     //    write:
     if (newImplicitV < origImplicitV) {
-      atom->setNumExplicitHs(origExplicitV + (origImplicitV - newImplicitV));
+      atom->setNumSpecifiedHs(origExplicitV + (origImplicitV - newImplicitV));
       atom->calcExplicitValence(false);
     }
   }
@@ -404,7 +404,7 @@ void assignRadicals(RWMol &mol) {
         accum += mol[*beg]->getValenceContrib(atom);
         ++beg;
       }
-      accum += atom->getNumExplicitHs();
+      accum += atom->getNumSpecifiedHs();
       int totalValence = static_cast<int>(accum + 0.1);
       int baseCount = 8;
       if (atom->getAtomicNum() == 1 || atom->getAtomicNum() == 2) {

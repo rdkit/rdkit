@@ -246,6 +246,11 @@ struct atom_wrapper {
         .def("SetNumExplicitHs", &Atom::setNumExplicitHs,
              python::args("self", "what"))
         .def("GetNumExplicitHs", &Atom::getNumExplicitHs, python::args("self"))
+
+        .def("SetNumSpecifiedHs", &Atom::setNumSpecifiedHs,
+             python::args("self", "what"))
+        .def("GetNumSpecifiedHs", &Atom::getNumSpecifiedHs,
+             python::args("self"))
         .def("SetIsAromatic", &Atom::setIsAromatic,
              python::args("self", "what"))
         .def("GetIsAromatic", &Atom::getIsAromatic, python::args("self"))

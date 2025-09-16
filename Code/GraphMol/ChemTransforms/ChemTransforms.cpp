@@ -327,7 +327,7 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
             b->setBondType(Bond::SINGLE);
           }
           at->setAtomicNum(0);
-          at->setNumExplicitHs(0);
+          at->setNumSpecifiedHs(0);
           at->setIsAromatic(false);
           at->setIsotope(dummyIndices.size());
         }
@@ -831,15 +831,15 @@ ROMol *MurckoDecompose(const ROMol &mol) {
             break;
           } else if (nbr->getIsAromatic() && nbr->getAtomicNum() != 6) {
             // fix aromatic heteroatoms:
-            nbr->setNumExplicitHs(1);
+            nbr->setNumSpecifiedHs(1);
           } else if (nbr->getIsAromatic() && nbr->getAtomicNum() == 6 &&
                      nbr->getFormalCharge() == 1) {
             // fix aromatic carbocations
-            nbr->setNumExplicitHs(1);
+            nbr->setNumSpecifiedHs(1);
           } else if (nbr->getNoImplicit() ||
                      nbr->getChiralTag() != Atom::CHI_UNSPECIFIED) {
             nbr->setNoImplicit(false);
-            nbr->setNumExplicitHs(0);
+            nbr->setNumSpecifiedHs(0);
             nbr->setChiralTag(Atom::CHI_UNSPECIFIED);
           }
         }

@@ -767,7 +767,7 @@ std::string getNonQueryAtomSmarts(const Atom *atom) {
     }
   }
 
-  auto hs = atom->getNumExplicitHs();
+  auto hs = atom->getNumSpecifiedHs();
   // FIX: probably should be smarter about Hs:
   if (hs) {
     res << "H";

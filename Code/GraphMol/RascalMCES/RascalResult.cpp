@@ -697,14 +697,14 @@ const std::shared_ptr<ROMol> RascalResult::getMcesMol() const {
       if (bond->getBeginAtom()->getNoImplicit() ||
           (bond->getBeginAtom()->getIsAromatic() &&
            bond->getBeginAtom()->getAtomicNum() != 6)) {
-        bond->getBeginAtom()->setNumExplicitHs(
-            bond->getBeginAtom()->getNumExplicitHs() + bo);
+        bond->getBeginAtom()->setNumSpecifiedHs(
+            bond->getBeginAtom()->getNumSpecifiedHs() + bo);
       }
       if (bond->getEndAtom()->getNoImplicit() ||
           (bond->getEndAtom()->getIsAromatic() &&
            bond->getEndAtom()->getAtomicNum() != 6)) {
-        bond->getEndAtom()->setNumExplicitHs(
-            bond->getEndAtom()->getNumExplicitHs() + bo);
+        bond->getEndAtom()->setNumSpecifiedHs(
+            bond->getEndAtom()->getNumSpecifiedHs() + bo);
       }
       tmpMol->removeBond(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
     }

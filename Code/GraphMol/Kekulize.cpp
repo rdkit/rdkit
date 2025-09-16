@@ -699,9 +699,9 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
         // make sure "explicit" Hs on things like pyrroles don't hang around
         // this was Github Issue 141
         if ((atom->getAtomicNum() == 7 || atom->getAtomicNum() == 15) &&
-            atom->getFormalCharge() == 0 && atom->getNumExplicitHs() == 1) {
+            atom->getFormalCharge() == 0 && atom->getNumSpecifiedHs() == 1) {
           atom->setNoImplicit(false);
-          atom->setNumExplicitHs(0);
+          atom->setNumSpecifiedHs(0);
           atom->updatePropertyCache(false);
         }
       }

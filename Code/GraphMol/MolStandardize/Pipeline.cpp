@@ -495,7 +495,7 @@ void removeHsAtProtonatedSites(RWMOL_SPTR mol) {
       auto atom = mol->getAtomWithIdx(idx);
       for (auto bond : mol->atomBonds(atom)) {
         auto neighbor = bond->getOtherAtom(atom);
-        neighbor->setNumExplicitHs(neighbor->getNumExplicitHs() + 1);
+        neighbor->setNumSpecifiedHs(neighbor->getNumSpecifiedHs() + 1);
         break;  // there are no other bonds anyways
       }
       mol->removeAtom(atom);

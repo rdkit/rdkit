@@ -313,11 +313,11 @@ primmol: H_TOKEN {
 atom: hatom
 | primatom
 | primatom H_TOKEN {
-  $1->setNumExplicitHs(1);
+  $1->setNumSpecifiedHs(1);
   $$=$1;
 }
 | primatom H_TOKEN DIGIT_TOKEN {
-  $1->setNumExplicitHs($3);
+  $1->setNumSpecifiedHs($3);
   $$=$1;
 }
 ;

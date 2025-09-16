@@ -1556,7 +1556,7 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const RingMembershipSize &rmSize,
           unsigned int nObondedToCorNorS = 0;
           unsigned int nSbondedToCorNorS = 0;
           bool isOxideOBondedToH =
-              atom->getNumExplicitHs() + atom->getNumImplicitHs() > 0;
+              atom->getNumSpecifiedHs() + atom->getNumImplicitHs() > 0;
           bool isCarboxylateO = false;
           bool isCarbonylO = false;
           bool isOxideOBondedToC = false;

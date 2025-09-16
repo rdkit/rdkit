@@ -359,9 +359,9 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           Atom *last = product->getAtomWithIdx(lastIdx);
           res.d_modifiedAtoms.set(firstIdx);
           res.d_modifiedAtoms.set(lastIdx);
-          first->setNumExplicitHs(
+          first->setNumSpecifiedHs(
               std::max(0, static_cast<int>(first->getTotalNumHs()) - 1));
-          last->setNumExplicitHs(last->getTotalNumHs() + 1);
+          last->setNumSpecifiedHs(last->getTotalNumHs() + 1);
           // Remove any implicit hydrogens from the first and last atoms
           // now we have set the count explicitly
           first->setNoImplicit(true);
@@ -598,7 +598,7 @@ void TautomerEnumerator::canonicalizeInPlace(
     atom->setFormalCharge(tmpAtom->getFormalCharge());
     atom->setNoImplicit(tmpAtom->getNoImplicit());
     atom->setIsAromatic(tmpAtom->getIsAromatic());
-    atom->setNumExplicitHs(tmpAtom->getNumExplicitHs());
+    atom->setNumSpecifiedHs(tmpAtom->getNumSpecifiedHs());
     atom->setNumRadicalElectrons(tmpAtom->getNumRadicalElectrons());
     atom->setChiralTag(tmpAtom->getChiralTag());
   }
