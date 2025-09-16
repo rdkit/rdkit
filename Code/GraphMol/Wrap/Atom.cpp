@@ -148,6 +148,14 @@ int getImplicitValenceHelper(const Atom *atom) {
   RDLog::deprecationWarning("please use GetValence(getExplicit=False)");
   return atom->getValence(Atom::ValenceType::IMPLICIT);
 };
+int getNumExplicitHsHelper(const Atom *atom) {
+  RDLog::deprecationWarning("please use GetNumSpecifiedHs() instead");
+  return atom->getNumSpecifiedHs();
+};
+void setNumExplicitHsHelper(Atom *atom, unsigned int val) {
+  RDLog::deprecationWarning("please use SetNumSpecifiedHs() instead");
+  atom->setNumSpecifiedHs(val);
+};
 }  // namespace
 
 struct MDLDummy {};
@@ -243,9 +251,9 @@ struct atom_wrapper {
              "Returns whether or not the atom is *allowed* to have implicit "
              "Hs.\n")
 
-        .def("SetNumExplicitHs", &Atom::setNumExplicitHs,
+        .def("SetNumExplicitHs", &setNumExplicitHsHelper,
              python::args("self", "what"))
-        .def("GetNumExplicitHs", &Atom::getNumExplicitHs, python::args("self"))
+        .def("GetNumExplicitHs", &getNumExplicitHsHelper, python::args("self"))
 
         .def("SetNumSpecifiedHs", &Atom::setNumSpecifiedHs,
              python::args("self", "what"))
