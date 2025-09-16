@@ -12,6 +12,7 @@
 #define RD_MMFFTORSIONANGLE_H
 
 #include <ForceField/Contrib.h>
+#include <cstdint>
 #include <tuple>
 #include <vector>
 
