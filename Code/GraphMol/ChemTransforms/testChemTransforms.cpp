@@ -1246,7 +1246,7 @@ void testIssue3537675() {
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     ROMol *nMol = MurckoDecompose(*mol);
-    TEST_ASSERT(nMol->getAtomWithIdx(4)->getNumExplicitHs());
+    TEST_ASSERT(nMol->getAtomWithIdx(4)->getNumSpecifiedHs());
     delete mol;
     delete nMol;
   }
@@ -1255,7 +1255,7 @@ void testIssue3537675() {
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     ROMol *nMol = MurckoDecompose(*mol);
-    TEST_ASSERT(nMol->getAtomWithIdx(4)->getNumExplicitHs());
+    TEST_ASSERT(nMol->getAtomWithIdx(4)->getNumSpecifiedHs());
     delete mol;
     delete nMol;
   }
@@ -2115,7 +2115,7 @@ void testGithub4019() {
       if (a->getAtomicNum() == 0) {
         ++nDummies;
         TEST_ASSERT(!a->getIsAromatic());
-        TEST_ASSERT(!a->getNumExplicitHs());
+        TEST_ASSERT(!a->getNumSpecifiedHs());
       }
     }
     TEST_ASSERT(nDummies == 2);
@@ -2136,7 +2136,7 @@ void testGithub4019() {
       if (a->getAtomicNum() == 0) {
         dummies.push_back(a->getIdx());
         TEST_ASSERT(!a->getIsAromatic());
-        TEST_ASSERT(!a->getNumExplicitHs());
+        TEST_ASSERT(!a->getNumSpecifiedHs());
       }
     }
     TEST_ASSERT(dummies.size() == 2);

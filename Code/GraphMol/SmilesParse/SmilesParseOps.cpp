@@ -26,7 +26,7 @@ void ClearAtomChemicalProps(RDKit::Atom *atom) {
   TEST_ASSERT(atom);
   atom->setIsotope(0);
   atom->setFormalCharge(0);
-  atom->setNumExplicitHs(0);
+  atom->setNumSpecifiedHs(0);
 }
 
 void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
@@ -720,9 +720,9 @@ void printSyntaxErrorMessage(std::string_view input,
 
   BOOST_LOG(rdErrorLog) << input_type << " Parse Error: " << err_message
                         << " while parsing: " << input << std::endl;
-  BOOST_LOG(rdErrorLog)
-      << input_type << " Parse Error: check for mistakes around position "
-      << bad_token_position << ":" << std::endl;
+  BOOST_LOG(rdErrorLog) << input_type
+                        << " Parse Error: check for mistakes around position "
+                        << bad_token_position << ":" << std::endl;
   BOOST_LOG(rdErrorLog) << truncate_input(input, bad_token_position - 1)
                         << std::endl;
   BOOST_LOG(rdErrorLog) << std::string(num_dashes, '~') << "^" << std::endl;

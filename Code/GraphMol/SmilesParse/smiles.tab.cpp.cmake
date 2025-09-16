@@ -1671,27 +1671,27 @@ yyreduce:
     break;
 
   case 43: /* h_element: H_TOKEN H_TOKEN  */
-                                  { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs(1); }
+                                  { (yyval.atom) = new Atom(1); (yyval.atom)->setNumSpecifiedHs(1); }
     break;
 
   case 44: /* h_element: number H_TOKEN H_TOKEN  */
-                                         { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-2].ival)); (yyval.atom)->setNumExplicitHs(1);}
+                                         { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-2].ival)); (yyval.atom)->setNumSpecifiedHs(1);}
     break;
 
   case 45: /* h_element: H_TOKEN H_TOKEN number  */
-                                         { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival)); }
+                                         { (yyval.atom) = new Atom(1); (yyval.atom)->setNumSpecifiedHs((yyvsp[0].ival)); }
     break;
 
   case 46: /* h_element: number H_TOKEN H_TOKEN number  */
-                                                { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-3].ival)); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival));}
+                                                { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-3].ival)); (yyval.atom)->setNumSpecifiedHs((yyvsp[0].ival));}
     break;
 
   case 48: /* h_element: chiral_element H_TOKEN  */
-                                                        { (yyval.atom) = (yyvsp[-1].atom); (yyvsp[-1].atom)->setNumExplicitHs(1);}
+                                                        { (yyval.atom) = (yyvsp[-1].atom); (yyvsp[-1].atom)->setNumSpecifiedHs(1);}
     break;
 
   case 49: /* h_element: chiral_element H_TOKEN number  */
-                                                { (yyval.atom) = (yyvsp[-2].atom); (yyvsp[-2].atom)->setNumExplicitHs((yyvsp[0].ival));}
+                                                { (yyval.atom) = (yyvsp[-2].atom); (yyvsp[-2].atom)->setNumSpecifiedHs((yyvsp[0].ival));}
     break;
 
   case 51: /* chiral_element: element AT_TOKEN  */

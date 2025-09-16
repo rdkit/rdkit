@@ -129,7 +129,7 @@ void testFail() {
       "[Fe@AL3]",    "C",  //
       "[Fe@TB21]",   "C",  //
       "[Fe@OH31]",   "C",  //
-      "baz",   "C",  //
+      "baz",         "C",  //
       "EOS"};
 
   // turn off the error log temporarily:
@@ -1755,7 +1755,7 @@ void testBug1670149() {
   smi = MolToSmiles(*mol, false, false, -1);
   TEST_ASSERT(smi == "C1CC[NH2+]C1");
 
-  mol->getAtomWithIdx(1)->setNumExplicitHs(0);
+  mol->getAtomWithIdx(1)->setNumSpecifiedHs(0);
   mol->getAtomWithIdx(1)->setNoImplicit(false);
   mol->getAtomWithIdx(1)->updatePropertyCache();
   TEST_ASSERT(mol->getAtomWithIdx(1)->getNumImplicitHs() == 2);
@@ -4360,34 +4360,37 @@ void testParserErrorMessage() {
       "c%(100000)ccccc%(100000)",
       "COc(c1)cccc1C#",
       "C)",
-    };
-  for (const auto& smi : smis) {
-      // Test SMILES parsing
-      {
-        std::stringstream ss;
-        rdErrorLog->SetTee(ss);
+  };
+  for (const auto &smi : smis) {
+    // Test SMILES parsing
+    {
+      std::stringstream ss;
+      rdErrorLog->SetTee(ss);
 
-        auto mol = v2::SmilesParse::MolFromSmiles(smi);
-        CHECK_INVARIANT(!mol, smi);
+      auto mol = v2::SmilesParse::MolFromSmiles(smi);
+      CHECK_INVARIANT(!mol, smi);
 
-        rdErrorLog->ClearTee();
-        auto error_msg = ss.str();
-        CHECK_INVARIANT(error_msg.find("check for mistakes around position") != std::string::npos, smi)
-      }
+      rdErrorLog->ClearTee();
+      auto error_msg = ss.str();
+      CHECK_INVARIANT(error_msg.find("check for mistakes around position") !=
+                          std::string::npos,
+                      smi)
+    }
 
-      // Test SMARTS parsing
-      {
-        std::stringstream ss;
-        rdErrorLog->SetTee(ss);
+    // Test SMARTS parsing
+    {
+      std::stringstream ss;
+      rdErrorLog->SetTee(ss);
 
-        auto mol = v2::SmilesParse::MolFromSmarts(smi);
-        CHECK_INVARIANT(!mol, smi);
+      auto mol = v2::SmilesParse::MolFromSmarts(smi);
+      CHECK_INVARIANT(!mol, smi);
 
-        rdErrorLog->ClearTee();
-        auto error_msg = ss.str();
-        CHECK_INVARIANT(error_msg.find("check for mistakes around position") != std::string::npos, smi)
-      }
-
+      rdErrorLog->ClearTee();
+      auto error_msg = ss.str();
+      CHECK_INVARIANT(error_msg.find("check for mistakes around position") !=
+                          std::string::npos,
+                      smi)
+    }
   }
 }
 

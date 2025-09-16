@@ -2393,9 +2393,9 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
         // was probably put there solely because of the chirality.
         // So we'll go ahead and remove it.
         // This was Issue 194
-        if (atom->getNumExplicitHs() == 1 && atom->getFormalCharge() == 0 &&
+        if (atom->getNumSpecifiedHs() == 1 && atom->getFormalCharge() == 0 &&
             !atom->getIsAromatic()) {
-          atom->setNumExplicitHs(0);
+          atom->setNumSpecifiedHs(0);
           atom->setNoImplicit(false);
           atom->calcExplicitValence(false);
           atom->calcImplicitValence(false);
@@ -3528,9 +3528,9 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
     }
     // within the RD representation, if a three-coordinate atom
     // is chiral and has an implicit H, that H needs to be made explicit:
-    if (atom->getDegree() == 3 && !atom->getNumExplicitHs() &&
+    if (atom->getDegree() == 3 && !atom->getNumSpecifiedHs() &&
         atom->getNumImplicitHs() == 1) {
-      atom->setNumExplicitHs(1);
+      atom->setNumSpecifiedHs(1);
       // recalculated number of implicit Hs:
       atom->updatePropertyCache();
     }
@@ -3778,9 +3778,9 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
 
         // within the RD representation, if a three-coordinate atom
         // is chiral and has an implicit H, that H needs to be made explicit:
-        if (atom->getDegree() == 3 && !atom->getNumExplicitHs() &&
+        if (atom->getDegree() == 3 && !atom->getNumSpecifiedHs() &&
             atom->getNumImplicitHs() == 1) {
-          atom->setNumExplicitHs(1);
+          atom->setNumSpecifiedHs(1);
           // recalculated number of implicit Hs:
           atom->updatePropertyCache();
         }

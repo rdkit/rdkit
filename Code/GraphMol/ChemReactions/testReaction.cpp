@@ -1540,7 +1540,7 @@ void test15Issue1882749() {
   TEST_ASSERT(prods.size() == 1);
   TEST_ASSERT(prods[0].size() == 1);
   TEST_ASSERT(prods[0][0]->getNumAtoms() == 4);
-  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getNumExplicitHs() == 1);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getNumSpecifiedHs() == 1);
 
   delete rxn;
   smi = "[N;D3:1]-!@*>>[15N:1]";
@@ -2306,9 +2306,9 @@ void test21Issue2540021() {
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
     TEST_ASSERT(prod->getNumAtoms() == 6);
     TEST_ASSERT(prod->getAtomWithIdx(2)->getAtomicNum() == 7);
-    TEST_ASSERT(prod->getAtomWithIdx(2)->getNumExplicitHs() == 1);
+    TEST_ASSERT(prod->getAtomWithIdx(2)->getNumSpecifiedHs() == 1);
     TEST_ASSERT(prod->getAtomWithIdx(5)->getAtomicNum() == 7);
-    TEST_ASSERT(prod->getAtomWithIdx(5)->getNumExplicitHs() == 0);
+    TEST_ASSERT(prod->getAtomWithIdx(5)->getNumSpecifiedHs() == 0);
 
     delete rxn;
   }

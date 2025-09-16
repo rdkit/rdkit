@@ -1580,7 +1580,7 @@ int32_t MolPickler::_pickleAtomData(std::ostream &tss, const Atom *atom) {
     streamWrite(tss, tmpChar);
   }
 
-  tmpChar = static_cast<char>(atom->getNumExplicitHs());
+  tmpChar = static_cast<char>(atom->getNumSpecifiedHs());
   if (tmpChar != 0) {
     propFlags |= 1 << 4;
     streamWrite(tss, tmpChar);
@@ -1648,7 +1648,7 @@ void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
   } else {
     tmpChar = 0;
   }
-  atom->setNumExplicitHs(tmpChar);
+  atom->setNumSpecifiedHs(tmpChar);
 
   if (propFlags & (1 << 5)) {
     streamRead(ss, tmpChar, version);
@@ -1876,7 +1876,7 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
       streamRead(ss, tmpChar, version);
       atom->setHybridization(static_cast<Atom::HybridizationType>(tmpChar));
       streamRead(ss, tmpChar, version);
-      atom->setNumExplicitHs(static_cast<int>(tmpChar));
+      atom->setNumSpecifiedHs(static_cast<int>(tmpChar));
       streamRead(ss, tmpChar, version);
       atom->d_explicitValence = tmpChar;
       streamRead(ss, tmpChar, version);
@@ -1903,7 +1903,7 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
     if (tag != ENDQUERY) {
       throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
     }
-    // atom->setNumExplicitHs(0);
+    // atom->getNumSpecifiedHs(0);
   }
 
   if (version > 5000) {
@@ -2562,8 +2562,8 @@ void MolPickler::_pickleV1(const ROMol *mol, std::ostream &ss) {
     if (atom->getFormalCharge() != 0) {
       streamWrite(ss, ATOM_CHARGE, atom->getFormalCharge());
     }
-    if (atom->getNumExplicitHs() != 0) {
-      streamWrite(ss, ATOM_NEXPLICIT, atom->getNumExplicitHs());
+    if (atom->getNumSpecifiedHs() != 0) {
+      streamWrite(ss, ATOM_NEXPLICIT, atom->getNumSpecifiedHs());
     }
     if (atom->getChiralTag() != 0) {
       streamWrite(ss, ATOM_CHIRALTAG, atom->getChiralTag());
@@ -2647,7 +2647,7 @@ void MolPickler::_addAtomFromPickleV1(std::istream &ss, ROMol *mol) {
         break;
       case ATOM_NEXPLICIT:
         streamRead(ss, intVar, version);
-        atom->setNumExplicitHs(intVar);
+        atom->setNumSpecifiedHs(intVar);
         break;
       case ATOM_CHIRALTAG:
         streamRead(ss, intVar, version);

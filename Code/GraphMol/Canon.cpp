@@ -57,7 +57,7 @@ bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
 }
 
 bool atomHasFourthValence(const Atom *atom) {
-  if (atom->getNumExplicitHs() == 1 ||
+  if (atom->getNumSpecifiedHs() == 1 ||
       (!atom->needsUpdatePropertyCache() &&
        atom->getValence(Atom::ValenceType::IMPLICIT) == 1)) {
     return true;
@@ -77,7 +77,7 @@ bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
                                  size_t numClosures) {
   PRECONDITION(atom, "bad atom");
   return atom->getDegree() == 3 &&
-         ((isAtomFirst && atom->getNumExplicitHs() == 1) ||
+         ((isAtomFirst && atom->getNumSpecifiedHs() == 1) ||
           (!details::atomHasFourthValence(atom) && numClosures == 1 &&
            !details::isUnsaturated(atom, mol)));
 }
@@ -682,7 +682,6 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
                    const std::vector<std::string> *bondSymbols, bool doRandom) {
-
   Atom *atom = mol.getAtomWithIdx(atomIdx);
   INT_LIST directTravList, cycleEndList;
   boost::dynamic_bitset<> seenFromHere(mol.getNumAtoms());

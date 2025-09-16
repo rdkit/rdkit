@@ -2506,7 +2506,7 @@ void test3V3K() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 1);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit());
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumSpecifiedHs() == 1);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     std::string mb = MolToMolBlock(*m, true, -1, true, true);
@@ -2520,7 +2520,7 @@ void test3V3K() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 1);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNoImplicit());
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumSpecifiedHs() == 1);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     delete m;
@@ -3544,7 +3544,7 @@ void testMolFileTotalValence() {
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getNumAtoms() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
-    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumSpecifiedHs() == 0);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
     delete m1;
   }
@@ -3556,7 +3556,7 @@ void testMolFileTotalValence() {
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getNumAtoms() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
-    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs() == 1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumSpecifiedHs() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     delete m1;
@@ -3569,7 +3569,7 @@ void testMolFileTotalValence() {
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getNumAtoms() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
-    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs() == 2);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumSpecifiedHs() == 2);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 2);
     delete m1;
   }
@@ -3581,7 +3581,7 @@ void testMolFileTotalValence() {
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getNumAtoms() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
-    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs() == 3);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumSpecifiedHs() == 3);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
     delete m1;
   }
@@ -3594,7 +3594,7 @@ void testMolFileTotalValence() {
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getNumAtoms() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
-    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs() == 1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumSpecifiedHs() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     delete m1;
@@ -4223,8 +4223,8 @@ void testZBO() {
     TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::ZERO);
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 0);
     TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == 0);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getNumExplicitHs() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getNumExplicitHs() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumSpecifiedHs() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumSpecifiedHs() == 0);
     TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs() == 3);
     TEST_ASSERT(m->getAtomWithIdx(1)->getTotalNumHs() == 3);
     delete m;

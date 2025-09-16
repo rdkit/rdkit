@@ -24,7 +24,7 @@ GitHub)
 ## Code removed in this release:
 
 ## Deprecated code (to be removed in a future release):
-
+- The C++ function Atom::{get,set}NumExplicitHs() and python function Atom.{Get,Set}NumExplicitHs() are deprecated, please use Atom::{get,set}NumSpecifiedHs() and Atom.{Get,Set}NumSpecifiedHs() instead.
 
 # Release_2025.03.1
 (Changes relative to Release_2024.09.1)

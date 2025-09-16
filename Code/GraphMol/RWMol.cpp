@@ -294,9 +294,9 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps,
       bond_p->getBondTypeAsDouble() - obond->getBondTypeAsDouble();
   if (orderDifference > 0) {
     for (auto atom : {bond_p->getBeginAtom(), bond_p->getEndAtom()}) {
-      if (auto explicit_hs = atom->getNumExplicitHs(); explicit_hs > 0) {
+      if (auto explicit_hs = atom->getNumSpecifiedHs(); explicit_hs > 0) {
         auto new_hs = static_cast<int>(explicit_hs - orderDifference);
-        atom->setNumExplicitHs(std::max(new_hs, 0));
+        atom->setNumSpecifiedHs(std::max(new_hs, 0));
       }
     }
   }

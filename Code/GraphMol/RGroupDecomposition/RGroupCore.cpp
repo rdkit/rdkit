@@ -391,7 +391,7 @@ void RCore::replaceCoreAtom(RWMol &mol, Atom &atom, const Atom &other) const {
         ++numHs;
       }
     }
-    targetAtom->setNumExplicitHs(numHs + other.getTotalNumHs());
+    targetAtom->setNumSpecifiedHs(numHs + other.getTotalNumHs());
     targetAtom->updatePropertyCache(false);
   }
 }

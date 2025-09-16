@@ -247,7 +247,7 @@ void MetalDisconnector::adjust_charges(RDKit::RWMol &mol,
     // and are not added to metals by sanitization
     // by setting NoImplicit to false
     a->setNumRadicalElectrons(0);
-    a->setNumExplicitHs(0);
+    a->setNumSpecifiedHs(0);
     a->setNoImplicit(false);
     a->updatePropertyCache();
   }

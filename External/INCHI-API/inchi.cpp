@@ -578,9 +578,9 @@ bool _Valence5NCleanUp5(RWMol &mol, Atom *atom, int atomicNum) {
     CHECK_INVARIANT(chargedOxygen->getFormalCharge() == 1,
                     "expecting +1 charge");
     chargedOxygen->setFormalCharge(0);
-    chargedOxygen->setNumExplicitHs(0);  // this hydrogen will be
-                                         // added to the uncharged
-                                         // oxygen later
+    chargedOxygen->setNumSpecifiedHs(0);  // this hydrogen will be
+                                          // added to the uncharged
+                                          // oxygen later
   }
   if (unchargedOxygen || chargedOxygen) {
     // set charge on N
@@ -600,7 +600,7 @@ bool _Valence5NCleanUp5(RWMol &mol, Atom *atom, int atomicNum) {
       // both charged and uncharged oxygen are found, the uncharged
       // remains uncharged and take the hydrogen from the charged
       // one
-      unchargedOxygen->setNumExplicitHs(1);
+      unchargedOxygen->setNumSpecifiedHs(1);
     } else if (unchargedOxygen) {
       // if only uncharged oxygen is found, not the oxygen has -1
       // charge
@@ -1067,7 +1067,7 @@ bool _Valence8SCleanUp1(RWMol &mol, Atom *atom) {
   }
   target->setFormalCharge(-1);
   target->calcExplicitValence(false);
-  target->setNumExplicitHs(0);
+  target->setNumSpecifiedHs(0);
   atom->setFormalCharge(0);
   atom->calcExplicitValence(false);
   return true;
@@ -1317,7 +1317,7 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
           }
         }
         // number of hydrogens
-        atom->setNumExplicitHs(inchiAtom->num_iso_H[0]);
+        atom->setNumSpecifiedHs(inchiAtom->num_iso_H[0]);
         if (inchiAtom->num_iso_H[1]) {
           isotopes.push_back(std::make_tuple(1, i, inchiAtom->num_iso_H[1]));
         } else if (inchiAtom->num_iso_H[2]) {

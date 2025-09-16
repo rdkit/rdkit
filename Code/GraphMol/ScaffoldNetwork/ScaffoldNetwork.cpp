@@ -57,7 +57,7 @@ ROMol *makeScaffoldGeneric(const ROMol &mol, bool doAtoms, bool doBonds) {
   if (doAtoms) {
     for (auto atom : res->atoms()) {
       atom->setAtomicNum(0);
-      atom->setNumExplicitHs(0);
+      atom->setNumSpecifiedHs(0);
       atom->setNoImplicit(false);
       atom->setIsotope(0);
     }
@@ -83,7 +83,7 @@ ROMol *removeAttachmentPoints(const ROMol &mol, const ScaffoldNetworkParams &) {
       if (nbr->getIsAromatic() && nbr->getAtomicNum() > 0 &&
           nbr->getAtomicNum() != 6) {
         nbr->setNoImplicit(true);
-        nbr->setNumExplicitHs(1);
+        nbr->setNumSpecifiedHs(1);
       }
       res->removeAtom(atom);
     }
@@ -117,7 +117,7 @@ ROMol *flattenMol(const ROMol &mol, const ScaffoldNetworkParams &params) {
             (atom->getAtomicNum() == 6 || atom->getAtomicNum() == 7 ||
              atom->getAtomicNum() == 15 || atom->getAtomicNum() == 16)) {
           atom->setNoImplicit(false);
-          atom->setNumExplicitHs(0);
+          atom->setNumSpecifiedHs(0);
         }
       }
     }
