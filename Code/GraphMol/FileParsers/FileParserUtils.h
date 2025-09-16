@@ -121,9 +121,9 @@ void applyMolListProp(ROMol &mol, const std::string &pn,
   boost::split(tokens, strVect, boost::is_any_of(" \t\n"),
                boost::token_compress_on);
   if (tokens.size() < nItems) {
-    BOOST_LOG(rdWarningLog)
-        << "Property list " << pn << " too short, only " << tokens.size()
-        << " elements found. Ignoring it." << std::endl;
+    BOOST_LOG(rdWarningLog) << "Property list " << pn << " too short, only "
+                            << tokens.size() << " elements found; expecting "
+                            << nItems << ". Ignoring it." << std::endl;
     return;
   }
   std::string mv = missingValueMarker;
@@ -188,13 +188,17 @@ void applyMolListPropsToAtoms(ROMol &mol, const std::string &prefix,
   }
 }
 
-static const std::string atomPropPrefix = "atom.";
-static const std::string bondPropPrefix = "bond.";
+static constexpr std::string_view atomPropPrefixView = "atom.";
+static constexpr size_t atomPropPrefixLength = atomPropPrefixView.length();
+static const std::string atomPropPrefix = std::string(atomPropPrefixView);
+static constexpr std::string_view bondPropPrefixView = "bond.";
+static constexpr size_t bondPropPrefixLength = bondPropPrefixView.length();
+static const std::string bondPropPrefix = std::string(bondPropPrefixView);
 
 //! if the property name matches our rules for atom property lists, we'll
 //! apply it to the atoms
 inline void processMolPropertyList(
-    ROMol &mol, const std::string pn,
+    ROMol &mol, const std::string &pn,
     const std::string &missingValueMarker = "n/a") {
   auto propSetter = [&](const std::string &propPrefix, auto getter,
                         size_t nItems) {
@@ -223,13 +227,13 @@ inline void processMolPropertyList(
     }
   };
 
-  if (pn.find(atomPropPrefix) == 0 && pn.length() > atomPropPrefix.length()) {
+  if (pn.find(atomPropPrefix) == 0 && pn.length() > atomPropPrefixLength) {
     propSetter(
         atomPropPrefix,
         [&mol](size_t which) { return mol.getAtomWithIdx(which); },
         mol.getNumAtoms());
   } else if (pn.find(bondPropPrefix) == 0 &&
-             pn.length() > bondPropPrefix.length()) {
+             pn.length() > bondPropPrefixLength) {
     propSetter(
         bondPropPrefix,
         [&mol](size_t which) { return mol.getBondWithIdx(which); },
@@ -240,15 +244,17 @@ inline void processMolPropertyList(
 //! atom property lists to the atoms and bonds
 inline void processMolPropertyLists(
     ROMol &mol, const std::string &missingValueMarker = "n/a") {
-  for (auto pn : mol.getPropList()) {
+  for (const auto &pn : mol.getPropList()) {
     processMolPropertyList(mol, pn, missingValueMarker);
   }
 }
 
+static constexpr unsigned int DEFAULT_LINESIZE = 190;
+
 template <typename T, typename U>
 std::string getPropertyList(U getter, const std::string &propName,
                             std::string missingValueMarker = "",
-                            unsigned int lineSize = 190) {
+                            unsigned int lineSize = DEFAULT_LINESIZE) {
   std::string res;
   std::string propVal;
   if (!missingValueMarker.empty()) {
@@ -282,7 +288,7 @@ template <typename T>
 [[deprecated("use getPropertyList() instead")]]
 std::string getAtomPropertyList(ROMol &mol, const std::string &atomPropName,
                                 std::string missingValueMarker = "",
-                                unsigned int lineSize = 190) {
+                                unsigned int lineSize = DEFAULT_LINESIZE) {
   return getPropertyList<T>([&mol]() { return mol.atoms(); }, atomPropName,
                             missingValueMarker, lineSize);
 }
@@ -292,7 +298,7 @@ void createPropertyList(ROMol &mol, U getter, const std::string &prefix,
                         const std::string &typeMarker,
                         const std::string &propName,
                         const std::string &missingValueMarker = "",
-                        unsigned int lineSize = 190) {
+                        unsigned int lineSize = DEFAULT_LINESIZE) {
   std::string molPropName = prefix + "." + typeMarker + "." + propName;
   mol.setProp(molPropName, getPropertyList<T>(getter, propName,
                                               missingValueMarker, lineSize));
@@ -300,28 +306,32 @@ void createPropertyList(ROMol &mol, U getter, const std::string &prefix,
 
 inline void createAtomIntPropertyList(
     ROMol &mol, const std::string &atomPropName,
-    const std::string &missingValueMarker = "", unsigned int lineSize = 190) {
+    const std::string &missingValueMarker = "",
+    unsigned int lineSize = DEFAULT_LINESIZE) {
   createPropertyList<int>(
       mol, [&mol]() { return mol.atoms(); }, "atom", "iprop", atomPropName,
       missingValueMarker, lineSize);
 }
 inline void createAtomDoublePropertyList(
     ROMol &mol, const std::string &atomPropName,
-    const std::string &missingValueMarker = "", unsigned int lineSize = 190) {
+    const std::string &missingValueMarker = "",
+    unsigned int lineSize = DEFAULT_LINESIZE) {
   createPropertyList<double>(
       mol, [&mol]() { return mol.atoms(); }, "atom", "dprop", atomPropName,
       missingValueMarker, lineSize);
 }
 inline void createAtomBoolPropertyList(
     ROMol &mol, const std::string &atomPropName,
-    const std::string &missingValueMarker = "", unsigned int lineSize = 190) {
+    const std::string &missingValueMarker = "",
+    unsigned int lineSize = DEFAULT_LINESIZE) {
   createPropertyList<bool>(
       mol, [&mol]() { return mol.atoms(); }, "atom", "bprop", atomPropName,
       missingValueMarker, lineSize);
 }
 inline void createAtomStringPropertyList(
     ROMol &mol, const std::string &atomPropName,
-    const std::string &missingValueMarker = "", unsigned int lineSize = 190) {
+    const std::string &missingValueMarker = "",
+    unsigned int lineSize = DEFAULT_LINESIZE) {
   createPropertyList<std::string>(
       mol, [&mol]() { return mol.atoms(); }, "atom", "prop", atomPropName,
       missingValueMarker, lineSize);
@@ -329,28 +339,32 @@ inline void createAtomStringPropertyList(
 
 inline void createBondIntPropertyList(
     ROMol &mol, const std::string &bondPropName,
-    const std::string &missingValueMarker = "", unsigned int lineSize = 190) {
+    const std::string &missingValueMarker = "",
+    unsigned int lineSize = DEFAULT_LINESIZE) {
   createPropertyList<int>(
       mol, [&mol]() { return mol.bonds(); }, "bond", "iprop", bondPropName,
       missingValueMarker, lineSize);
 }
 inline void createBondDoublePropertyList(
     ROMol &mol, const std::string &bondPropName,
-    const std::string &missingValueMarker = "", unsigned int lineSize = 190) {
+    const std::string &missingValueMarker = "",
+    unsigned int lineSize = DEFAULT_LINESIZE) {
   createPropertyList<double>(
       mol, [&mol]() { return mol.bonds(); }, "bond", "dprop", bondPropName,
       missingValueMarker, lineSize);
 }
 inline void createBondBoolPropertyList(
     ROMol &mol, const std::string &bondPropName,
-    const std::string &missingValueMarker = "", unsigned int lineSize = 190) {
+    const std::string &missingValueMarker = "",
+    unsigned int lineSize = DEFAULT_LINESIZE) {
   createPropertyList<bool>(
       mol, [&mol]() { return mol.bonds(); }, "bond", "bprop", bondPropName,
       missingValueMarker, lineSize);
 }
 inline void createBondStringPropertyList(
     ROMol &mol, const std::string &bondPropName,
-    const std::string &missingValueMarker = "", unsigned int lineSize = 190) {
+    const std::string &missingValueMarker = "",
+    unsigned int lineSize = DEFAULT_LINESIZE) {
   createPropertyList<std::string>(
       mol, [&mol]() { return mol.bonds(); }, "bond", "prop", bondPropName,
       missingValueMarker, lineSize);
