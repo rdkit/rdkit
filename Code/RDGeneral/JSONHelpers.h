@@ -5,6 +5,7 @@
 #include <array>
 
 // Convert a JSON object with boolean keys to a bitwise enum flag set.
+// The T enum must have been declared as a BETTER_ENUM.
 // The JSON object should have keys corresponding to the enum names, and boolean
 // values. Example JSON: { "FlagA": true, "FlagB": false, "FlagC": true,
 // "FlagD": false } This would set FlagA and FlagC in the resulting flag set,
