@@ -88,17 +88,10 @@ introduced in more recent macOS versions.
 
 The following commands will create a development environment for Linux x86_64 and Python 3.
 
-Start by downloading the latest [miniconda installer](https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh) and installing it:
+Start by downloading the latest [miniforge installer](https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh) and installing it:
 
 ```
-bash Miniconda3-latest-Linux-x86_64.sh
-```
-
-Set the channel to `conda-forge` instead of the Anaconda defaults by replacing the `.condarc` in `/path/to/your/miniconda3/` with:
-```
-channels:
-  - conda-forge
-
+bash Miniforge3-Linux-x86_64.sh
 ```
 
 Then create a conda development environment for rdkit:
