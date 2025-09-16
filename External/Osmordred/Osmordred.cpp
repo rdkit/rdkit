@@ -96,74 +96,75 @@ namespace RDKit {
 
 // Function to count the number of endocyclic single bonds
 int calcEndocyclicSingleBonds(const RDKit::ROMol &mol) {
-    const RDKit::RingInfo *ri = mol.getRingInfo();
-    if (!ri || !ri->isInitialized()) {
-        return 0;  // No ring information available
+  const RDKit::RingInfo *ri = mol.getRingInfo();
+  if (!ri || !ri->isInitialized()) {
+    return 0;  // No ring information available
+  }
+
+  std::unordered_set<int> bondIndices;
+
+  // Collect all bond indices involved in rings
+  for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
+    if (ri->numBondRings(i) > 0) {  // Check if the bond is part of a ring
+      bondIndices.insert(i);
     }
+  }
 
-    std::unordered_set<int> bondIndices;
-
-    // Collect all bond indices involved in rings
-    for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
-        if (ri->numBondRings(i) > 0) {  // Check if the bond is part of a ring
-            bondIndices.insert(i);
-        }
+  int nbonds = 0;
+  for (const auto &bondIdx : bondIndices) {
+    const RDKit::Bond *bond = mol.getBondWithIdx(bondIdx);
+    if (bond->getBondType() == RDKit::Bond::SINGLE) {
+      nbonds++;
     }
+  }
 
-    int nbonds = 0;
-    for (const auto &bondIdx : bondIndices) {
-        const RDKit::Bond *bond = mol.getBondWithIdx(bondIdx);
-        if (bond->getBondType() == RDKit::Bond::SINGLE) {
-            nbonds++;
-        }
-    }
-
-    return nbonds;
+  return nbonds;
 }
 
-    static const std::vector<std::string> acidicSMARTS = {
-        "[O;H1]-[C,S,P]=O",
-        "[*;-;!$(*~[*;+])]",
-        "[NH](S(=O)=O)C(F)(F)F",
-        "n1nnnc1"
-    };
+static const std::vector<std::string> acidicSMARTS = {
+    "[O;H1]-[C,S,P]=O", "[*;-;!$(*~[*;+])]", "[NH](S(=O)=O)C(F)(F)F",
+    "n1nnnc1"};
 
-    static const std::vector<std::string> basicSMARTS = {
-        "[NH2]-[CX4]",
-        "[NH](-[CX4])-[CX4]",
-        "N(-[CX4])(-[CX4])-[CX4]",
-        "[*;+;!$(*~[*;-])]",
-        "N=C-N",
-        "N-C=N"
-    };
+static const std::vector<std::shared_ptr<RDKit::RWMol>>& GetAcidicSmarts() {
+  std::vector<std::shared_ptr<RDKit::RWMol>> res;
+  for (const auto &smarts : acidicSMARTS) {
+    auto mol = RDKit::SmartsToMol(smarts);
+    if (mol) {
+      res.emplace_back(std::shared_ptr<RDKit::RWMol>(mol));
+    } else {
+      std::cerr << "Invalid SMARTS: " << smarts << std::endl;
+    }
+  }
+  return res;
+}
 
 
-    // Precompile SMARTS patterns for efficiency
-    static const std::vector<std::shared_ptr<RDKit::RWMol>> compiledAcidicSMARTS = [] {
-        std::vector<std::shared_ptr<RDKit::RWMol>> res;
-        for (const auto& smarts : acidicSMARTS) {
-            auto mol = RDKit::SmartsToMol(smarts);
-            if (mol) {
+static const std::vector<std::string> basicSMARTS = {
+    "[NH2]-[CX4]",
+    "[NH](-[CX4])-[CX4]",
+    "N(-[CX4])(-[CX4])-[CX4]",
+    "[*;+;!$(*~[*;-])]",
+    "N=C-N",
+    "N-C=N"
+};
+
+static const std::vector<std::shared_ptr<RDKit::RWMol>>& GetBasicSmarts() {
+      static const std::vector<std::shared_ptr<RDKit::RWMol>>
+          compiledBasicSMARTS = [] {
+            std::vector<std::shared_ptr<RDKit::RWMol>> res;
+            for (const auto &smarts : basicSMARTS) {
+              auto mol = RDKit::SmartsToMol(smarts);
+              if (mol) {
                 res.emplace_back(std::shared_ptr<RDKit::RWMol>(mol));
-            } else {
+              } else {
                 std::cerr << "Invalid SMARTS: " << smarts << std::endl;
+              }
             }
-        }
-        return res;
-    }();
-
-    static const std::vector<std::shared_ptr<RDKit::RWMol>> compiledBasicSMARTS = [] {
-        std::vector<std::shared_ptr<RDKit::RWMol>> res;
-        for (const auto& smarts : basicSMARTS) {
-            auto mol = RDKit::SmartsToMol(smarts);
-            if (mol) {
-                res.emplace_back(std::shared_ptr<RDKit::RWMol>(mol));
-            } else {
-                std::cerr << "Invalid SMARTS: " << smarts << std::endl;
-            }
-        }
-        return res;
-    }();
+            return res;
+          }();
+  return compiledBasicSMARTS;
+}
+      
 
     // Function to count substructure matches
     int countMatches(const ROMol& mol, const std::vector<std::shared_ptr<RDKit::RWMol>>& patterns) {
@@ -190,27 +191,30 @@ int calcEndocyclicSingleBonds(const RDKit::ROMol &mol) {
 
 
  // Precompile SMARTS patterns for efficiency
-    static const std::vector<std::shared_ptr<RDKit::RWMol>> compiledalcoholsSMARTS = [] {
-        std::vector<std::shared_ptr<RDKit::RWMol>> res;
-        for (const auto& smarts : alcoholsSMARTS) {
-            auto mol = RDKit::SmartsToMol(smarts);
-            if (mol) {
+    static const std::vector<std::shared_ptr<RDKit::RWMol>> &GetAlcoholSmarts() {
+      static const std::vector<std::shared_ptr<RDKit::RWMol>>
+          compiledalcoholsSMARTS = [] {
+            std::vector<std::shared_ptr<RDKit::RWMol>> res;
+            for (const auto &smarts : alcoholsSMARTS) {
+              auto mol = RDKit::SmartsToMol(smarts);
+              if (mol) {
                 res.emplace_back(std::shared_ptr<RDKit::RWMol>(mol));
-            } else {
+              } else {
                 std::cerr << "Invalid SMARTS: " << smarts << std::endl;
+              }
             }
-        }
-        return res;
-    }();
+            return res;
+          }();
+      return compiledalcoholsSMARTS;
+    }
 
-
-// Function to count primary, secondary, and tertiary hydroxyl groups
+    // Function to count primary, secondary, and tertiary hydroxyl groups
 std::vector<int> countHydroxylGroups(const RDKit::ROMol &mol) {
     std::vector<int> results(3, 0);
 
-    for (size_t i = 0; i < compiledalcoholsSMARTS.size(); ++i) {
+    for (size_t i = 0; i < GetAlcoholSmarts().size(); ++i) {
         std::vector<RDKit::MatchVectType> matches;
-        RDKit::SubstructMatch(mol, *compiledalcoholsSMARTS[i], matches);
+      RDKit::SubstructMatch(mol, *GetAlcoholSmarts()[i], matches);
         results[i] = matches.size();
     }
 
@@ -226,18 +230,21 @@ static const std::vector<std::string> smartsPatterns = {
 };
 
 // Precompile SMARTS patterns for efficiency
-static const std::vector<std::shared_ptr<RDKit::RWMol>> compiledSMARTS = [] {
+static const std::vector<std::shared_ptr<RDKit::RWMol>> &GetSmarts() {
+  static const std::vector<std::shared_ptr<RDKit::RWMol>> compiledSMARTS = [] {
     std::vector<std::shared_ptr<RDKit::RWMol>> res;
-    for (const auto& smarts : smartsPatterns) {
-        auto mol = RDKit::SmartsToMol(smarts);
-        if (mol) {
-            res.emplace_back(std::shared_ptr<RDKit::RWMol>(mol));
-        } else {
-            std::cerr << "Invalid SMARTS: " << smarts << std::endl;
-        }
+    for (const auto &smarts : smartsPatterns) {
+      auto mol = RDKit::SmartsToMol(smarts);
+      if (mol) {
+        res.emplace_back(std::shared_ptr<RDKit::RWMol>(mol));
+      } else {
+        std::cerr << "Invalid SMARTS: " << smarts << std::endl;
+      }
     }
     return res;
-}();
+  }();
+  return compiledSMARTS;
+}
 
 // Function to count the number of bridged bonds
 int countBridgedBonds(const RDKit::ROMol &mol) {
@@ -246,7 +253,7 @@ int countBridgedBonds(const RDKit::ROMol &mol) {
         std::vector<RDKit::MatchVectType> matches;
         int nbonds = 0;
 
-        if (RDKit::SubstructMatch(mol, *compiledSMARTS[0], matches)) {  // Use precompiled pattern for bridged bonds
+        if (RDKit::SubstructMatch(mol, *GetSmarts()[0], matches)) {  // Use precompiled pattern for bridged bonds
             for (const auto &match : matches) {
                 for (const auto &atom : match) {
                     nbonds += std::distance(mol.getAtomNeighbors(mol.getAtomWithIdx(atom.second)).first,
@@ -261,12 +268,13 @@ int countBridgedBonds(const RDKit::ROMol &mol) {
 
 // Function to check if a molecule is a polyacid
 bool isPolyAcid(const RDKit::ROMol &mol) {
-    return RDKit::SubstructMatch(mol, *compiledSMARTS[1]).size() > 1;  // Use precompiled pattern for polyacid
+    return RDKit::SubstructMatch(mol, *GetSmarts()[1]).size() > 1;  // Use precompiled pattern for polyacid
 }
 
 // Function to check if a molecule is a polyalcohol
 bool isPolyAlcohol(const RDKit::ROMol &mol) {
-    return RDKit::SubstructMatch(mol, *compiledSMARTS[2]).size() > 1;  // Use precompiled pattern for polyalcohol
+  return RDKit::SubstructMatch(mol, *GetSmarts()[2]).size() >
+         1;  // Use precompiled pattern for polyalcohol
 }
 
 
@@ -289,12 +297,12 @@ std::vector<double> calcAddFeatures(const RDKit::ROMol& mol) {
 
     // Function to calculate the number of acidic groups in a molecule
     int calcAcidicGroupCount(const ROMol& mol) {
-        return countMatches(mol, compiledAcidicSMARTS);
+        return countMatches(mol, GetAlcoholSmarts());
     }
 
     // Function to calculate the number of basic groups in a molecule
     int calcBasicGroupCount(const ROMol& mol) {
-        return countMatches(mol, compiledBasicSMARTS);
+        return countMatches(mol, GetBasicSmarts());
     }
 
     // Function to calculate both acidic and basic group counts
@@ -1785,19 +1793,23 @@ std::vector<double> calcIStateIndices(const RDKit::ROMol& mol){
     };
 
     // Precompile SMARTS patterns to avoid repeated parsing
-    static const std::vector<std::pair<std::shared_ptr<RDKit::RWMol>, double>> compiledSmartsLogs = [] {
-        std::vector<std::pair<std::shared_ptr<RDKit::RWMol>, double>> res;
-        for (const auto& pair : smartsLogs) {
-            auto mol = RDKit::SmartsToMol(pair.first);
-            if (mol) {
-                res.emplace_back(std::shared_ptr<RDKit::RWMol>(mol), pair.second);
-            } else {
+    static const std::vector<std::pair<std::shared_ptr<RDKit::RWMol>, double>> &GetSmartsLogs() {
+      static const std::vector<std::pair<std::shared_ptr<RDKit::RWMol>, double>>
+          compiledSmartsLogs = [] {
+            std::vector<std::pair<std::shared_ptr<RDKit::RWMol>, double>> res;
+            for (const auto &pair : smartsLogs) {
+              auto mol = RDKit::SmartsToMol(pair.first);
+              if (mol) {
+                res.emplace_back(std::shared_ptr<RDKit::RWMol>(mol),
+                                 pair.second);
+              } else {
                 std::cerr << "Invalid SMARTS: " << pair.first << std::endl;
+              }
             }
-        }
-        return res;
-    }();
-
+            return res;
+          }();
+      return compiledSmartsLogs;
+    }
     // Function to calculate LogS descriptor
     double LogS(const RDKit::ROMol& mol) {
         // Base formula contribution
@@ -1805,7 +1817,7 @@ std::vector<double> calcIStateIndices(const RDKit::ROMol& mol){
         double logS = 0.89823 - 0.10369 * std::sqrt(molWeight);
 
         // Add contributions from precompiled SMARTS patterns
-        for (const auto& pair : compiledSmartsLogs) {
+        for (const auto& pair : GetSmartsLogs()) {
             auto& smartsMol = pair.first;
             double logContribution = pair.second;
 
@@ -2041,19 +2053,25 @@ std::vector<double> calcIStateIndices(const RDKit::ROMol& mol){
     };
 
     // Precompile SMARTS patterns for efficiency
-    static const std::vector<std::shared_ptr<RDKit::RWMol>> compiledPolFrags = [] {
-        std::vector<std::shared_ptr<RDKit::RWMol>> res;
-        for (const auto& smarts : PolFrags) {
-            auto mol = RDKit::SmartsToMol(smarts);
-            if (mol) {
+
+    static const std::vector<std::shared_ptr<RDKit::RWMol>>& GetCompiledPolFrags() {
+      static const std::vector<std::shared_ptr<RDKit::RWMol>> compiledPolFrags =
+          [] {
+            std::vector<std::shared_ptr<RDKit::RWMol>> res;
+            for (const auto &smarts : PolFrags) {
+              auto mol = RDKit::SmartsToMol(smarts);
+              if (mol) {
                 res.emplace_back(std::shared_ptr<RDKit::RWMol>(mol));
-            } else {
+              } else {
                 std::cerr << "Invalid SMARTS: " << smarts << std::endl;
-                res.emplace_back(nullptr); // Placeholder for invalid SMARTS
+                res.emplace_back(nullptr);  // Placeholder for invalid SMARTS
+              }
             }
-        }
-        return res;
-    }();
+            return res;
+          }();
+
+      return compiledPolFrags;
+    }
 
     // Function to count hydrogen atoms in the molecule
     int getNumHs(const RDKit::ROMol &mol) {
@@ -2069,8 +2087,8 @@ std::vector<double> calcIStateIndices(const RDKit::ROMol& mol){
         double res = -1.529;  // Intercept value
 
         // Add contributions from precompiled SMARTS patterns
-        for (size_t i = 0; i < compiledPolFrags.size(); ++i) {
-            auto& pattern = compiledPolFrags[i];
+        for (size_t i = 0; i < GetCompiledPolFrags().size(); ++i) {
+            auto &pattern = GetCompiledPolFrags()[i];
             if (!pattern) continue;  // Skip invalid patterns
 
             std::vector<RDKit::MatchVectType> matches;
@@ -2293,7 +2311,7 @@ std::vector<double> calcSchultz(const RDKit::ROMol &mol) {
     std::vector<double> calcFragmentComplexity(const ROMol& mol) {
 	
         std::vector<double> res(1, 0.);
-	res[0]=FragmentComplexity(mol);
+	    res[0]=FragmentComplexity(mol);
         return res;
     }
 
@@ -6498,52 +6516,73 @@ std::vector<double> calculateETADescriptors(const RDKit::ROMol& mol) {
 
 
     // Precompile SMARTS patterns for efficiency
-    static const std::vector<std::pair<std::string,  std::shared_ptr<RDKit::RWMol>>> hsQueries = [] {
-        std::vector<std::pair<std::string, std::shared_ptr<RDKit::RWMol>>> queries;
-        for (const auto& entry : hsPatterns) {
-            auto mol = RDKit::SmartsToMol(entry.second);
-            if (mol) {
-                addToQueries(queries, entry.first, std::shared_ptr<RDKit::RWMol>(mol));
-            } else {
+    static const std::vector<std::pair<std::string, std::shared_ptr<RDKit::RWMol>>>& GetHsQueries() {
+      static const std::vector<
+          std::pair<std::string, std::shared_ptr<RDKit::RWMol>>>
+          hsQueries = [] {
+            std::vector<std::pair<std::string, std::shared_ptr<RDKit::RWMol>>>
+                queries;
+            for (const auto &entry : hsPatterns) {
+              auto mol = RDKit::SmartsToMol(entry.second);
+              if (mol) {
+                addToQueries(queries, entry.first,
+                             std::shared_ptr<RDKit::RWMol>(mol));
+              } else {
                 std::cerr << "Invalid SMARTS: " << entry.second << std::endl;
+              }
             }
-        }
-        return queries;
-    }();
+            return queries;
+          }();
+      return hsQueries;
+    }
 
     // Precompile SMARTS patterns for efficiency
-    static const std::vector<std::pair<std::string,  std::shared_ptr<RDKit::RWMol>>> esQueries = [] {
-
-        std::vector<std::pair<std::string, std::shared_ptr<RDKit::RWMol>>> queries;
-        for (const auto& entry : esPatterns) {
-            auto mol = RDKit::SmartsToMol(entry.second);
-            if (mol) {
-                addToQueries(queries, entry.first, std::shared_ptr<RDKit::RWMol>(mol));
-            } else {
+    static const std::vector<std::pair<std::string, std::shared_ptr<RDKit::RWMol>>>& GetesQueries() {
+      static const std::vector<
+          std::pair<std::string, std::shared_ptr<RDKit::RWMol>>>
+          esQueries = [] {
+            std::vector<std::pair<std::string, std::shared_ptr<RDKit::RWMol>>>
+                queries;
+            for (const auto &entry : esPatterns) {
+              auto mol = RDKit::SmartsToMol(entry.second);
+              if (mol) {
+                addToQueries(queries, entry.first,
+                             std::shared_ptr<RDKit::RWMol>(mol));
+              } else {
                 std::cerr << "Invalid SMARTS: " << entry.second << std::endl;
+              }
             }
-        }
-        return queries;
-    }();
+            return queries;
+          }();
+      return esQueries;
+    }
 
     // Precompile SMARTS patterns for efficiency
-    static const std::vector<std::pair<std::string,  std::shared_ptr<RDKit::RWMol>>> esExtQueries = [] {
-        std::vector<std::pair<std::string, std::shared_ptr<RDKit::RWMol>>> queries;
-        for (const auto& entry : esPatternsFromOEState) {
-            auto mol = RDKit::SmartsToMol(entry.second);
-            if (mol) {
-                addToQueries(queries, entry.first, std::shared_ptr<RDKit::RWMol>(mol));
-            } else {
+    static const std::vector<std::pair<std::string, std::shared_ptr<RDKit::RWMol>>>&
+    GetesExtQueries() {
+      static const std::vector<
+          std::pair<std::string, std::shared_ptr<RDKit::RWMol>>>
+          esExtQueries = [] {
+            std::vector<std::pair<std::string, std::shared_ptr<RDKit::RWMol>>>
+                queries;
+            for (const auto &entry : esPatternsFromOEState) {
+              auto mol = RDKit::SmartsToMol(entry.second);
+              if (mol) {
+                addToQueries(queries, entry.first,
+                             std::shared_ptr<RDKit::RWMol>(mol));
+              } else {
                 std::cerr << "Invalid SMARTS: " << entry.second << std::endl;
+              }
             }
-        }
-        return queries;
-    }();
+            return queries;
+          }();
+      return esExtQueries;
+    }
 
 
     // Function to switch between standard and extended SMARTS queries
     const std::vector<std::pair<std::string, std::shared_ptr<RDKit::RWMol>>> & getEStateQueries(bool extended) {
-        return extended ? esExtQueries : esQueries;
+      return extended ? GetesExtQueries() : GetesQueries();
     }
 
 
@@ -6621,6 +6660,7 @@ std::vector<double> calculateETADescriptors(const RDKit::ROMol& mol) {
 
         // Function to find index of a SMARTS pattern in `esQueries`
         auto findIndex = [&](const std::string& smarts) -> int {
+            auto esQueries = GetesQueries();
             for (size_t i = 0; i < esQueries.size(); ++i) {
                 if (esQueries[i].first == smarts) return i;  // Found index
             }
@@ -6634,10 +6674,10 @@ std::vector<double> calculateETADescriptors(const RDKit::ROMol& mol) {
         auto processMatches = [&](const std::vector<std::string>& patterns, int& count, double& sum) {
             for (const auto& smarts : patterns) {
                 int idx = findIndex(smarts);
-                if (idx == -1 || !esQueries[idx].second) continue;  // Skip if not found or null pointer
+                if (idx == -1 || !GetesQueries()[idx].second) continue;  // Skip if not found or null pointer
 
                 std::vector<RDKit::MatchVectType> matches;
-                RDKit::SubstructMatch(mol, *esQueries[idx].second, matches, true);
+                RDKit::SubstructMatch(mol, *GetesQueries()[idx].second, matches, true);
 
                 for (const auto& match : matches) {
                     int atomIdx = match[0].second;
@@ -6740,7 +6780,7 @@ std::vector<double> calculateETADescriptors(const RDKit::ROMol& mol) {
 
     // Function to calculate HEState fingerprints + need to add the HBD, wHDBm HBA and wHBA patterns
     std::vector<double> calcHEStateDescs(const RDKit::ROMol& mol) {
-
+        auto hsQueries = GetHsQueries();
         size_t nPatts = hsQueries.size();
         std::vector<int> counts(nPatts, 0);
         std::vector<double> sums(nPatts, 0.0);
@@ -7983,7 +8023,7 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
         std::vector<double> Iij(nBonds, 0.0);
         std::vector<std::string> BEScode(nBonds);
 
-        const auto &queries = extended ? esExtQueries : esQueries;
+        const auto &queries = extended ? GetesExtQueries() : GetesQueries();
         const std::vector<int> pos = NamePosES(mol, queries);
 
         // Compute bond contributions
@@ -8212,32 +8252,37 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
 
 
     // Precompile SMARTS patterns for efficiency
-    static const std::vector<std::shared_ptr<RDKit::RWMol>> queriesA = [] {
+    static const std::vector<std::shared_ptr<RDKit::RWMol>> &GetQueriesA() {
+      static const std::vector<std::shared_ptr<RDKit::RWMol>> queriesA = [] {
         std::vector<std::shared_ptr<RDKit::RWMol>> res;
-        for (const auto& smi : AFragments) {
-            auto mol = RDKit::SmartsToMol(smi);
-            if (mol) {
-                res.emplace_back(std::move(mol));
-            } else {
-                std::cerr << "Invalid SMARTS: " << smi << std::endl;
-            }
+        for (const auto &smi : AFragments) {
+          auto mol = RDKit::SmartsToMol(smi);
+          if (mol) {
+            res.emplace_back(std::move(mol));
+          } else {
+            std::cerr << "Invalid SMARTS: " << smi << std::endl;
+          }
         }
         return res;
-    }();
+      }();
+      return queriesA;
+    }
 
-    static const std::vector<std::shared_ptr<RDKit::RWMol>> queriesB = [] {
+    static const std::vector<std::shared_ptr<RDKit::RWMol>> &GetQueriesB() {
+      static const std::vector<std::shared_ptr<RDKit::RWMol>> queriesB = [] {
         std::vector<std::shared_ptr<RDKit::RWMol>> res;
-        for (const auto& smi : BSELFragments) {
-            auto mol = RDKit::SmartsToMol(smi);
-            if (mol) {
-                res.emplace_back(std::move(mol));
-            } else {
-                std::cerr << "Invalid SMARTS: " << smi << std::endl;
-            }
+        for (const auto &smi : BSELFragments) {
+          auto mol = RDKit::SmartsToMol(smi);
+          if (mol) {
+            res.emplace_back(std::move(mol));
+          } else {
+            std::cerr << "Invalid SMARTS: " << smi << std::endl;
+          }
         }
         return res;
-    }();
-
+      }();
+      return queriesB;
+    }
 
     static const std::vector<double> coefAFragments = {
         0.345,0.543,0.177,0.247,0.087,0.321,0.194,0.371,0.243,0.275,0.281,-0.091,0.356,-0.165,-0.119,-0.105,0.170,0.082,0.493,0.019,0.050,-0.362,0.118,0.1,0.051,0.194,0.042,-0.089,-0.161,
@@ -8274,6 +8319,7 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
 
         try {
             // Calculate A descriptor
+            auto queriesA = GetQueriesA();
             for (size_t i = 0; i < queriesA.size(); ++i) {
 
                 std::vector<RDKit::MatchVectType> matches;
@@ -8283,6 +8329,7 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
 
             // Calculate BSEL descriptors
             int sulphurCount = 0;
+            auto queriesB = GetQueriesB();
             for (size_t i = 0; i < queriesB.size(); ++i) {
 
                 std::vector<RDKit::MatchVectType> matches;
@@ -10054,23 +10101,26 @@ std::vector<double> calcDN2Z(const RDKit::ROMol &mol) {
         "[PX5](=[OX1])([OX2H])[OX2H]","[PX6](=[OX1])([OX1-])([OX1-])[OX1-]"};
 
 
-
-    static const std::vector<std::shared_ptr<RDKit::RWMol>> queriesFrags = [] {
-        std::vector<std::shared_ptr<RDKit::RWMol>> res;
-        for (const auto& smi : frags) {
-            auto mol = RDKit::SmartsToMol(smi);
-            if (mol) {
+     static const std::vector<std::shared_ptr<RDKit::RWMol>> GetQueriesFrags() {
+      static const std::vector<std::shared_ptr<RDKit::RWMol>> queriesFrags =
+          [] {
+            std::vector<std::shared_ptr<RDKit::RWMol>> res;
+            for (const auto &smi : frags) {
+              auto mol = RDKit::SmartsToMol(smi);
+              if (mol) {
                 res.emplace_back(std::move(mol));
-            } else {
+              } else {
                 std::cerr << "Invalid SMARTS: " << smi << std::endl;
+              }
             }
-        }
-        return res;
-    }();
-
+            return res;
+          }();
+       return queriesFrags;
+    }
 
 
     std::vector<double> calcFrags(const RDKit::ROMol& mol) {
+        auto queriesFrags = GetQueriesFrags();
         std::vector<double> retval(queriesFrags.size(), 0.0);
 
         try {
