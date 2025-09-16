@@ -1909,13 +1909,13 @@ yyreduce:
                         {
   (yyvsp[-1].atom)->expandQuery((yyvsp[0].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   if((yyvsp[-1].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-1].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
-  if((yyvsp[0].atom)->getNumExplicitHs()){
-    if(!(yyvsp[-1].atom)->getNumExplicitHs()){
-      (yyvsp[-1].atom)->setNumExplicitHs((yyvsp[0].atom)->getNumExplicitHs());
+  if((yyvsp[0].atom)->getNumSpecifiedHs()){
+    if(!(yyvsp[-1].atom)->getNumSpecifiedHs()){
+      (yyvsp[-1].atom)->setNumSpecifiedHs((yyvsp[0].atom)->getNumSpecifiedHs());
       (yyvsp[-1].atom)->setNoImplicit(true);
-    } else if((yyvsp[-1].atom)->getNumExplicitHs()!=(yyvsp[0].atom)->getNumExplicitHs()){
+    } else if((yyvsp[-1].atom)->getNumSpecifiedHs()!=(yyvsp[0].atom)->getNumSpecifiedHs()){
       // conflicting queries...
-      (yyvsp[-1].atom)->setNumExplicitHs(0);
+      (yyvsp[-1].atom)->setNumSpecifiedHs(0);
       (yyvsp[-1].atom)->setNoImplicit(false);
     }
   }
@@ -2082,7 +2082,7 @@ yyreduce:
   newQ->setQuery(makeAtomIsotopeQuery((yyvsp[-1].ival)));
   newQ->setIsotope((yyvsp[-1].ival));
   newQ->expandQuery(makeAtomHCountQuery(1),Queries::COMPOSITE_AND,true);
-  newQ->setNumExplicitHs(1);
+  newQ->setNumSpecifiedHs(1);
   (yyval.atom)=newQ;
 }
     break;
@@ -2093,7 +2093,7 @@ yyreduce:
   newQ->setQuery(makeAtomIsotopeQuery((yyvsp[-2].ival)));
   newQ->setIsotope((yyvsp[-2].ival));
   newQ->expandQuery(makeAtomHCountQuery((yyvsp[0].ival)),Queries::COMPOSITE_AND,true);
-  newQ->setNumExplicitHs((yyvsp[0].ival));
+  newQ->setNumSpecifiedHs((yyvsp[0].ival));
   (yyval.atom)=newQ;
 }
     break;
@@ -2102,7 +2102,7 @@ yyreduce:
                  {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery((yyvsp[0].ival)));
-  newQ->setNumExplicitHs((yyvsp[0].ival));
+  newQ->setNumSpecifiedHs((yyvsp[0].ival));
   (yyval.atom)=newQ;
 }
     break;
@@ -2111,7 +2111,7 @@ yyreduce:
           {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery(1));
-  newQ->setNumExplicitHs(1);
+  newQ->setNumSpecifiedHs(1);
   (yyval.atom)=newQ;
 }
     break;
