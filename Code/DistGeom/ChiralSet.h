@@ -59,7 +59,7 @@ class RDKIT_DISTGEOMETRY_EXPORT ChiralSet {
   inline double getLowerVolumeBound() const { return d_volumeLowerBound; }
 };
 
-typedef boost::shared_ptr<ChiralSet> ChiralSetPtr;
+typedef std::shared_ptr<ChiralSet> ChiralSetPtr;
 typedef std::vector<ChiralSetPtr> VECT_CHIRALSET;
 }  // namespace DistGeom
 
