@@ -61,9 +61,17 @@ void SynthonSpaceSearcher::searchIterated(SearchResultCallback cb) {
   std::uint64_t totHits = 0;
   auto allHits = doTheSearch(fragments, endTime, timedOut, totHits);
 
+ std::sort(allHits.begin(), allHits.end(),
+           [](const auto &hs1, const auto &hs2) -> bool {
+             if (hs1->d_reaction->getId() == hs2->d_reaction->getId()) {
+               return hs1->numHits < hs2->numHits;
+             }
+             return hs1->d_reaction->getId() < hs2->d_reaction->getId();
+           });
+
   // from buildAllhits
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> toTry;
-  bool enoughHits = false;
+  ssize_t hitCount = 0;
 
   // Each hitset contains possible hits from a single SynthonSet.
   for (const auto &hitset : allHits) {
@@ -83,17 +91,18 @@ void SynthonSpaceSearcher::searchIterated(SearchResultCallback cb) {
       if (toTry.size() == static_cast<size_t>(d_params.toTryChunkSize)) {
         std::vector<std::unique_ptr<ROMol>> partResults;
         processToTrySet(toTry, endTime, partResults);
-        enoughHits = cb(partResults);
+        hitCount += partResults.size();
+        cb(partResults);
         toTry.clear();
-        if (enoughHits) break;
+        if (hitCount >= d_params.maxHits) break;
       }
       stepper.step();
     }
-    if (enoughHits) break;
+    if (hitCount >= d_params.maxHits) break;
   }
 
   // Do any remaining.
-  if (!enoughHits && !toTry.empty()) {
+  if (hitCount < d_params.maxHits && !toTry.empty()) {
     std::vector<std::unique_ptr<ROMol>> partResults;
     processToTrySet(toTry, endTime, partResults);
     cb(partResults);
