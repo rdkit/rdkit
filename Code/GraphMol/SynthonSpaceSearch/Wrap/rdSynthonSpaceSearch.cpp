@@ -300,6 +300,9 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           "Time limit for search, in seconds.  Default is 600s, 0 means no"
           " timeout.  Requires an integer")
       .def_readwrite(
+          "toTryChunkSize", &SynthonSpaceSearch::SynthonSpaceSearchParams::toTryChunkSize,
+          "Process possible hits using the given chunk size")
+      .def_readwrite(
           "numThreads",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::numThreads,
           "The number of threads to use for search.  If > 0, will use that"
