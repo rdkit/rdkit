@@ -15,8 +15,6 @@
 #include <string>
 #include <list>
 #include <cmath>
-#include <unordered_map>
-#include <algorithm>
 
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/MolOps.h>
@@ -30,35 +28,6 @@
 
 using RDGeom::Point3D;
 
-struct GridKey {
-    const unsigned char x, y, z;
-
-    GridKey(unsigned char _x, unsigned char _y, unsigned char _z) : x(_x), y(_y), z(_z) {}
-
-    bool operator <(const GridKey &rhs) const {
-      if (x != rhs.x) return x < rhs.x;
-      if (y != rhs.y) return y < rhs.y;
-      return z < rhs.z;
-    }
-
-    bool operator ==(const GridKey &rhs) const {
-      return x == rhs.x && y == rhs.y && z == rhs.z;
-    }
-};
-
-template <>
-struct std::hash<GridKey>
-{
-  std::size_t operator()(const GridKey& k) const
-  {
-    std::size_t h = 5381; 
-    h = ((h<<5) + h) + k.x;
-    h = ((h<<5) + h) + k.y;
-    h = ((h<<5) + h) + k.z;
-    return h;
-  }
-};
-
 namespace RDKit {
 namespace Descriptors {
 
@@ -67,9 +36,7 @@ int recordCache = -1;
 
 static bool checkExcludedAtoms(const Atom *atm, bool includeLigand) {
   // helper to check whether atom should be included
-  // radius = 0 if atom is to be excluded
 
-  // check if solvent atom
   const auto *info = atm->getMonomerInfo();
 
   if (info) {
@@ -135,12 +102,8 @@ static bool includeInPSA(const Atom *atm, const ROMol &mol,
   }
 }
 
-static bool within(const Point3D &pos1, const Point3D &pos2,
-                   double dist) {
-  return (pos1 - pos2).lengthSq() < (dist * dist);
-}
-
 struct State {
+  // upper and lower grid bounds
   double voxX = 0.0;
   double voxY = 0.0;
   double voxZ = 0.0;
@@ -148,12 +111,11 @@ struct State {
   double voxV = 0.0;
   double voxW = 0.0;
   
-  // std::unordered_map<GridKey,std::vector<unsigned int> > grid;
   std::vector<unsigned int> grid[VOXORDER][VOXORDER][VOXORDER];
 
   void createVoxelGrid(const Point3D &minXYZ, const Point3D &maxXYZ,
                        const std::vector<Point3D> &positions,
-                       const std::vector<double> &radii) {
+                       const std::vector<double> &radii_) {
     voxX = VOXORDER / ((maxXYZ.x - minXYZ.x) + 0.1);
     voxU = minXYZ.x;
     voxY = VOXORDER / ((maxXYZ.y - minXYZ.y) + 0.1);
@@ -163,7 +125,7 @@ struct State {
 
     unsigned int pcount = (unsigned int)positions.size();
     for (unsigned int i = 0; i < pcount; i++) {
-      if (radii[i] != 0.0) {
+      if (radii_[i] != 0.0) {
         // get grid positions and add to list
         const Point3D &pos = positions[i];
         const unsigned int x = (unsigned int)(voxX * (pos.x - voxU));
@@ -176,70 +138,58 @@ struct State {
 
   std::vector<std::vector<unsigned int>> findNeighbours(
       const ROMol &mol, const std::vector<Point3D> &positions,
-      const std::vector<double> &radii, double probeRad, double maxRadius) {
+      const std::vector<double> &radii_, double probeRad, double maxRadius) {
     std::vector<std::vector<unsigned int>> nbrs;
+    std::vector<unsigned int> atomNeighbours;
 
     for (const auto atom : mol.atoms()) {
-      std::vector<unsigned int> atomNeighbours;
+      atomNeighbours.clear();
       const auto atm_idx = atom->getIdx();
-      if (radii[atm_idx] != 0.0) {
-        const Point3D &pos = positions[atm_idx];
-        const double range = radii[atm_idx] + probeRad + probeRad;
-        const double maxDist = range + maxRadius;
+      if (radii_[atm_idx] == 0.0) {
+        continue;
+      }
+      const Point3D &pos = positions[atm_idx];
+      const double range = radii_[atm_idx] + probeRad + probeRad;
+      const double maxDist = range + maxRadius;
 
-        int lx = voxX * (pos.x - maxDist - voxU);
-        if (lx < 0) {
-          lx = 0;
-        }
+      int lx = voxX * (pos.x - maxDist - voxU);
+      if (lx < 0) {
+        lx = 0;
+      }
 
-        int ly = voxY * (pos.y - maxDist - voxV);
-        if (ly < 0) {
-          ly = 0;
-        }
-        int lz = voxZ * (pos.z - maxDist - voxW);
-        if (lz < 0) {
-          lz = 0;
-        }
+      int ly = voxY * (pos.y - maxDist - voxV);
+      if (ly < 0) {
+        ly = 0;
+      }
+      int lz = voxZ * (pos.z - maxDist - voxW);
+      if (lz < 0) {
+        lz = 0;
+      }
 
-        int ux = voxX * (pos.x + maxDist - voxU);
-        if (ux >= VOXORDER) {
-          ux = VOXORDER - 1;
-        }
-        int uy = voxY * (pos.y + maxDist - voxV);
-        if (uy >= VOXORDER) {
-          uy = VOXORDER - 1;
-        }
-        int uz = voxZ * (pos.z + maxDist - voxW);
-        if (uz >= VOXORDER) {
-          uz = VOXORDER - 1;
-        }
+      int ux = voxX * (pos.x + maxDist - voxU);
+      if (ux >= VOXORDER) {
+        ux = VOXORDER - 1;
+      }
+      int uy = voxY * (pos.y + maxDist - voxV);
+      if (uy >= VOXORDER) {
+        uy = VOXORDER - 1;
+      }
+      int uz = voxZ * (pos.z + maxDist - voxW);
+      if (uz >= VOXORDER) {
+        uz = VOXORDER - 1;
+      }
 
-        for (auto x = lx; x <= ux; x++) {
-          for (auto y = ly; y <= uy; y++) {
-            for (auto z = lz; z <= uz; z++) {
-#if 0              
-              std::unordered_map<GridKey,std::vector<unsigned int> >::const_iterator it = grid.find(GridKey(x,y,z));
-              if (it != grid.end()) {
-                for (const unsigned int &idx : it->second) {
-                  if (idx != atm_idx) {
-                    double dist = range + radii[idx];
-                    if (within(pos, positions[idx], dist)){
-                      atomNeighbours.push_back(idx);
-                    }
-                  }
+      for (auto x = lx; x <= ux; x++) {
+        for (auto y = ly; y <= uy; y++) {
+          for (auto z = lz; z <= uz; z++) {
+            for (auto idx : grid[x][y][z]) {
+              if (idx != atm_idx) {
+                auto dist = range + radii_[idx];
+                if ((pos - positions[idx]).lengthSq() < (dist * dist)){
+                  atomNeighbours.push_back(idx);
                 }
               }
-#else
-              for (auto idx : grid[x][y][z]) {
-                if (idx != atm_idx) {
-                  auto dist = range + radii[idx];
-                  if (within(pos, positions[idx], dist)) {
-                    atomNeighbours.push_back(idx);
-                  }
-                }
-              }              
-#endif              
-            }
+            }                           
           }
         }
       }
@@ -251,11 +201,13 @@ struct State {
 
 // constructor definition
 DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol &mol,
+                                                   std::vector<double> radii,
                                                    bool isProtein,
                                                    bool includeLigand,
                                                    double probeRadius,
                                                    int confId)
     : mol(mol),
+      radii_(std::move(radii)),
       isProtein(isProtein),
       includeLigand(includeLigand),
       probeRadius(probeRadius),
@@ -272,6 +224,7 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol &mol,
   /*!
 
     \param mol: input molecule or protein
+    \param radii: radii for atoms of input mol
     \param isProtein: flag to calculate burried surface area of a protein ligand
     complex [default=false, free ligand]
     \param includeLigand: flag to trigger
@@ -285,7 +238,6 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol &mol,
   */
 
   positions = mol.getConformer(confId).getPositions();
-  const PeriodicTable *tbl = PeriodicTable::getTable();
 
   // total x,y,z centres
   Point3D cXYZ;
@@ -302,22 +254,19 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol &mol,
 
   bool init = false;
 
-  radii.reserve(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
-    const unsigned int aidx = atom->getIdx();
-    double rad = tbl->getRvdw(atom->getAtomicNum());
-
+    const unsigned int atomIdx = atom->getIdx();
     numAtoms++;
 
     if (isProtein) {
       if (checkExcludedAtoms(atom, includeLigand)) {
-        rad = 0.0;
+        radii_[atomIdx] = 0.0;
         numAtoms--;
       }
     }
 
-    if (rad != 0.0) {
-      const Point3D position = positions[aidx];
+    if (radii_[atomIdx] != 0.0) {
+      const Point3D position = positions[atomIdx];
       // get sum over centres
       cXYZ.x += position.x;
       cXYZ.y += position.y;
@@ -349,7 +298,6 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol &mol,
         init = true;
       }
     }
-    radii.push_back(rad);  // get radii
   }
 
   // determineCentreOfGravity
@@ -358,19 +306,18 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol &mol,
   centreOfGravity.z = cXYZ.z / numAtoms;
 
   if (init) {
-    s.createVoxelGrid(minXYZ, maxXYZ, positions, radii);
+    s.createVoxelGrid(minXYZ, maxXYZ, positions, radii_);
     neighbours =
-        s.findNeighbours(mol, positions, radii, probeRadius, maxRadius);
+        s.findNeighbours(mol, positions, radii_, probeRadius, maxRadius);
   }
 }
-
 
 bool DoubleCubicLatticeVolume::testPoint(
     const Point3D &vect, double solvrad,
     const std::vector<unsigned int> &nbrs) {
   if (recordCache != -1) {
     const Point3D &pos = positions[recordCache];
-    const double dist = radii[recordCache] + solvrad;
+    const double dist = radii_[recordCache] + solvrad;
     if ((pos - vect).lengthSq() < (dist * dist)) {
       return false;
     }
@@ -379,7 +326,7 @@ bool DoubleCubicLatticeVolume::testPoint(
 
   for (unsigned int i : nbrs) {
     const Point3D &pos = positions[i];
-    const double dist = radii[i] + solvrad;
+    const double dist = radii_[i] + solvrad;
     if ((pos - vect).lengthSq() < (dist * dist)) {
       recordCache = i;
       return false;
@@ -392,9 +339,9 @@ double DoubleCubicLatticeVolume::getAtomSurfaceArea(unsigned int atomIdx) {
 
   // surface area for single atom
 
-  const auto rad = radii[atomIdx];
+  const auto rad = radii_[atomIdx];
   if (rad == 0.0) {
-    return -1.0;  // don't include if radius = 0, masked atom
+    return 0.0;  // don't include if radius = 0, masked atom
   }
 
   const Point3D &pos = positions[atomIdx];
@@ -411,6 +358,7 @@ double DoubleCubicLatticeVolume::getAtomSurfaceArea(unsigned int atomIdx) {
     const Point3D &dots =
         Point3D(standardDots[i][0], standardDots[i][1], standardDots[i][2]);
     const auto vect = pos + dots * factor;
+    surfacePoints[atomIdx].push_back(vect);
 
     if (testPoint(vect, probeRadius, nbr)) {
       atomSurfaceArea += dotArea;
@@ -429,11 +377,27 @@ double DoubleCubicLatticeVolume::getSurfaceArea() {
 
   for (const auto atom : mol.atoms()) {
     const auto atomIdx = atom->getIdx();
-    if (radii[atomIdx] != 0.0) {
+    if (radii_[atomIdx] != 0.0) {
       surfaceArea += getAtomSurfaceArea(atomIdx);
     }
   }
   return surfaceArea;
+}
+
+double DoubleCubicLatticeVolume::getPartialSurfaceArea(
+    const boost::dynamic_bitset<> &incAtoms) {
+  // function to get the surface area of a set of atoms
+  // input is a set of indexes to include
+
+  double area = 0.0;
+  for (const auto atom : mol.atoms()) {
+    const auto atomIdx = atom->getIdx();
+    bool incAtom = incAtoms[atomIdx];
+    if (incAtom && radii_[atomIdx] != 0.0) {
+      area += getAtomSurfaceArea(atomIdx);
+    }
+  }
+  return area;
 }
 
 double DoubleCubicLatticeVolume::getPolarSurfaceArea(bool includeSandP) {
@@ -446,13 +410,37 @@ double DoubleCubicLatticeVolume::getPolarSurfaceArea(bool includeSandP) {
   return getPartialSurfaceArea(polarAtoms);
 }
 
+std::map<unsigned int, std::vector<RDGeom::Point3D>> &DoubleCubicLatticeVolume::getSurfacePoints() {
+  if (!surfacePoints.empty()) {
+    return surfacePoints;
+  }
+
+  for (const auto atom : mol.atoms()) {
+    const auto atomIdx = atom->getIdx();
+    if (radii_[atomIdx] != 0.0) {
+      const Point3D &pos = positions[atomIdx];
+      const double factor = radii_[atomIdx] + probeRadius;
+
+      // standard dots has fixed NUMDOTS entries
+      // using precomputed dots in DCLV_dots.h
+      for (int i = 0; i < NUMDOTS; i++) {
+        const Point3D &dots =
+            Point3D(standardDots[i][0], standardDots[i][1], standardDots[i][2]);
+        const auto vect = pos + dots * factor;
+        surfacePoints[atomIdx].push_back(vect);
+      }
+    }
+  }
+  return surfacePoints;
+}
+
 double DoubleCubicLatticeVolume::getAtomVolume(unsigned int atomIdx,
                                                double solventRadius) {
   // get volume for single atom
 
-  const double rad = radii[atomIdx];
+  const double rad = radii_[atomIdx];
   if (rad == 0.0) {
-    return -1.0;  // don't include if radius = 0, masked atom
+    return 0.0;  // don't include if radius = 0, masked atom
   }
 
   const auto &pos = positions[atomIdx];
@@ -478,7 +466,7 @@ double DoubleCubicLatticeVolume::getAtomVolume(unsigned int atomIdx,
   auto atomvolume = (pos - centreOfGravity).dotProduct(p);
   atomvolume = factor * factor * (atomvolume + factor * count);
 
-  atomvolume *= ((4.0 / 3) * M_PI) / 320;  // 320 standard dots
+  atomvolume *= ((4.0 / 3) * M_PI) / NUMDOTS;  // 320 standard dots
   return atomvolume;
 }
 
@@ -492,7 +480,7 @@ double DoubleCubicLatticeVolume::getVolume() {
 
   for (const auto atom : mol.atoms()) {
     const unsigned int atomIdx = atom->getIdx();
-    if (radii[atomIdx] != 0.0) {
+    if (radii_[atomIdx] != 0.0) {
       totalVolume += getAtomVolume(atomIdx, probeRadius);
     }
   }
@@ -509,12 +497,38 @@ double DoubleCubicLatticeVolume::getVDWVolume() {
   // function to return VDW volume (probe radius == 0)
   for (const auto atom : mol.atoms()) {
     const unsigned int atomIdx = atom->getIdx();
-    if (radii[atomIdx] != 0.0) {
+    if (radii_[atomIdx] != 0.0) {
       vdwVolume += getAtomVolume(atomIdx, 0.0);
     }
   }
 
   return vdwVolume;
+}
+
+double DoubleCubicLatticeVolume::getPartialVolume(
+    const boost::dynamic_bitset<> &incAtoms) {
+  // function to get the surface area of a set of atoms
+  // input is a set of indexes to include
+
+  double vol = 0.0;
+  for (const auto atom : mol.atoms()) {
+    const auto atomIdx = atom->getIdx();
+    bool incAtom = incAtoms[atomIdx];
+    if (incAtom && radii_[atomIdx] != 0.0) {
+      vol += getAtomVolume(atomIdx, probeRadius);
+    }
+  }
+  return vol;
+}
+
+double DoubleCubicLatticeVolume::getPolarVolume(bool includeSandP) {
+  boost::dynamic_bitset<> polarAtoms(mol.getNumAtoms());
+  for (const auto atom : mol.atoms()) {
+    if (includeInPSA(atom, mol, includeSandP)) {
+      polarAtoms.set(atom->getIdx());
+    }
+  }
+  return getPartialVolume(polarAtoms);
 }
 
 double DoubleCubicLatticeVolume::getCompactness() {

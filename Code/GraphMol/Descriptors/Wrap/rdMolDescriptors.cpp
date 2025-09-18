@@ -917,6 +917,19 @@ int registerPropertyHelper(python::object o) {
   return RDKit::Descriptors::Properties::registerProperty(ptr());
 }
 
+boost::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>
+getDoubleCubicLatticeVolume(const RDKit::ROMol &mol,
+                            python::list &radii,
+                            bool isProtein = false,
+                            bool includeLigand = true,
+                            double probeRadius = 1.4,
+                            int confId = -1) {
+  std::vector<double> radiiAsVector;
+  pythonObjectToVect(radii, radiiAsVector);
+
+  return boost::make_shared<RDKit::Descriptors::DoubleCubicLatticeVolume>(mol, radiiAsVector, isProtein, includeLigand, probeRadius, confId);
+}
+
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -1659,47 +1672,55 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
     docString =
       R"DOC(ARGUMENTS:
       "   - mol: molecule or protein under consideration
+      "   - radii: radii for atoms of input mol (typically obtained )
       "   - isProtein: flag to indicate if the input is a protein (default=False, free ligand).
       "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=True)
       "   - probeRadius: radius of the solvent probe (default=1.2)
       "   - confId: conformer ID to consider (default=-1)
       ")DOC";
-  python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume>(
-      "DoubleCubicLatticeVolume",
-      "Class for the Double Cubic Lattice Volume method",
-      python::init<const RDKit::ROMol &, 
-                   python::optional<bool, bool, double, int>>(
-          (python::args("self", "mol"),
-           python::args("isProtein") = false,
-           python::args("includeLigand") = true,
-           python::args("probeRadius") = 1.2, 
-           python::args("confId") = -1),
-          docString.c_str()))
-      .def("GetSurfaceArea",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
-           "Get the Surface Area of the Molecule or Protein")
-      .def("GetPolarSurfaceArea",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getPolarSurfaceArea,
-           (python::arg("includeSandP")=false), "Get the Polar Surface Area of the Molecule or Protein")
-      .def("GetVolume",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getVolume,
-           "Get the Total Volume of the Molecule or Protein")
-      .def("GetVDWVolume",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getVDWVolume,
-           "Get the van der Waals Volume of the Molecule or Protein")
-      .def("GetCompactness",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getCompactness,
-           "Get the Compactness of the Protein")
-      .def("GetPackingDensity",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getPackingDensity,
-           "Get the PackingDensity of the Protein")
-      .def("GetAtomSurfaceArea",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomSurfaceArea,
-           (python::arg("atom_idx")), "Get the surface area of atom with atom_idx")
-      .def("GetAtomVolume",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomVolume,
-           (python::arg("atom_idx"), python::arg("solventRadius")),
-           "Get the volume atom of atom_idx with volume for specified Probe Radius");
+
+python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume, 
+               boost::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>>(
+  "DoubleCubicLatticeVolume",
+  "Class for the Double Cubic Lattice Volume method",
+  python::no_init)
+  .def("__init__",
+    python::make_constructor(
+        &getDoubleCubicLatticeVolume,
+        python::default_call_policies(),
+        (python::arg("mol"),
+        python::arg("radii"),
+        python::arg("isProtein") = false,
+        python::arg("includeLigand") = true,
+        python::arg("probeRadius") = 1.4,
+        python::arg("confId") = -1)), 
+        docString.c_str())
+  .def("GetSurfaceArea",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
+        (python::args("self")),
+        "Get the Surface Area of the Molecule or Protein")
+  .def("GetPolarSurfaceArea",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getPolarSurfaceArea,
+        (python::arg("includeSandP")=false), "Get the Polar Surface Area of the Molecule or Protein")
+  .def("GetVolume",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getVolume,
+        "Get the Total Volume of the Molecule or Protein")
+  .def("GetVDWVolume",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getVDWVolume,
+        "Get the van der Waals Volume of the Molecule or Protein")
+  .def("GetCompactness",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getCompactness,
+        "Get the Compactness of the Protein")
+  .def("GetPackingDensity",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getPackingDensity,
+        "Get the PackingDensity of the Protein")
+  .def("GetAtomSurfaceArea",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomSurfaceArea,
+        (python::arg("atom_idx")), "Get the surface area of atom with atom_idx")
+  .def("GetAtomVolume",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomVolume,
+        (python::arg("atom_idx"), python::arg("solventRadius")),
+        "Get the volume atom of atom_idx with volume for specified Probe Radius");
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
   python::scope().attr("_CalcCoulombMat_version") =
