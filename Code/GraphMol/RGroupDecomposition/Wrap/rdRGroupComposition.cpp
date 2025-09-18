@@ -350,7 +350,7 @@ struct rgroupdecomp_wrapper {
             &RDKit::RGroupDecompositionParameters::includeTargetMolInResults);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
-        "RGroupDecomposition",
+        "Class for doing RGroupDecomposition",
         python::init<python::object>(
             python::args("self", "cores"),
             "Construct from a molecule or sequence of molecules"))
@@ -409,7 +409,7 @@ struct rgroupdecomp_wrapper {
         "    - asRows: return the results as rows (default) otherwise return "
         "columns\n"
         "    - options: RGroupDecompositionParameters object that defines "
-        "the decomposition.\n"
+        "the parameters for the decomposition.\n"
         "             See RGroupDecompositionParameters for defaults\n"
         "\n"
         "  RETURNS: row_or_column_results, unmatched\n"
