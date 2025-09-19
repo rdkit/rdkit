@@ -350,7 +350,7 @@ struct rgroupdecomp_wrapper {
             &RDKit::RGroupDecompositionParameters::includeTargetMolInResults);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
-        "Class for doing RGroupDecomposition",
+        "RGroupDecomposition",
         python::init<python::object>(
             python::args("self", "cores"),
             "Construct from a molecule or sequence of molecules"))
