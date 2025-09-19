@@ -39,7 +39,7 @@ rdkit_headers(MolDraw2D.h
 )
 
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
-        MolDraw2DDetails.cpp MolDraw2DUtils.cpp AtomSymbol.cpp
+        MolDraw2DDetails.cpp MolDraw2DUtils.cpp MolDrawOptionsJSONParsers.cpp AtomSymbol.cpp
         DrawAnnotation.cpp DrawMol.cpp DrawMolMCH.cpp DrawMolMCHCircleAndLine.cpp
         DrawMolMCHLasso.cpp
         DrawShape.cpp DrawText.cpp DrawTextNotFT.cpp DrawTextSVG.cpp

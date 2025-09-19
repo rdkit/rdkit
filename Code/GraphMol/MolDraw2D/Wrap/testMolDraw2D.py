@@ -857,5 +857,67 @@ M  END''')
         #confirm that at least one CIP code is present
         self.assertTrue("class='CIP_Code'" in text)
 
+    def testDrawingExtentsInclude(self):
+        coordRegex = re.compile(
+            "<path class='bond-\\d atom-\\d atom-\\d' d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)'"
+        )
+
+        def getDrawer():
+            drawer = rdMolDraw2D.MolDraw2DSVG(300, 200, -1, -1, False)
+            drawer.drawOptions().padding = 0.2
+            return drawer
+
+        def extractCoords(text):
+           return [[float(cg) for cg in captureGroups] for captureGroups in coordRegex.findall(text)]
+
+        def checkCoords(referenceCoords, highlightCoords):
+            self.assertEqual(len(referenceCoords), len(highlightCoords))
+            for i in range(len(referenceCoords)):
+                self.assertEqual(len(referenceCoords[i]), len(highlightCoords[i]))
+                for j in range(len(referenceCoords[i])):
+                    if abs(highlightCoords[i][j] - referenceCoords[i][j]) > 0.1:
+                        return False
+            return True
+
+        m = Chem.MolFromMolBlock("""
+     RDKit          2D
+
+  3  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.8930    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  1  3  1  0
+M  END
+""")
+        highlightAtoms = [0]
+        self.assertIsNotNone(m)
+        # default:
+        drawer = getDrawer()
+        drawer.DrawMolecule(m)
+        drawer.FinishDrawing()
+        text = drawer.GetDrawingText()
+        referenceCoords = extractCoords(text)
+        drawer = getDrawer()
+        drawer.DrawMolecule(m, highlightAtoms=highlightAtoms)
+        drawer.FinishDrawing()
+        text = drawer.GetDrawingText()
+        highlightCoords = extractCoords(text)
+        self.assertFalse(checkCoords(referenceCoords, highlightCoords))
+        # allButHighlights
+        drawer = getDrawer()
+        drawer.DrawMolecule(m)
+        drawer.FinishDrawing()
+        text = drawer.GetDrawingText()
+        referenceCoords = extractCoords(text)
+        drawer = getDrawer()
+        drawer.drawOptions().drawingExtentsInclude = rdMolDraw2D.DrawElement.ALL ^ rdMolDraw2D.DrawElement.HIGHLIGHTS
+        drawer.DrawMolecule(m, highlightAtoms=highlightAtoms)
+        drawer.FinishDrawing()
+        text = drawer.GetDrawingText()
+        highlightCoords = extractCoords(text)
+        self.assertTrue(checkCoords(referenceCoords, highlightCoords))
+
 if __name__ == "__main__":
     unittest.main()
