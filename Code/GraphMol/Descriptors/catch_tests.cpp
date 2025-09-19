@@ -550,15 +550,20 @@ TEST_CASE("Oxidation numbers") {
 }
 
 TEST_CASE("DCLV") {
+  const PeriodicTable *tbl = PeriodicTable::getTable();
   std::string pathName = getenv("RDBASE");
   std::string pdbName =
       pathName + "/Code/GraphMol/Descriptors/test_data/1mup.pdb";
   auto m = v2::FileParsers::MolFromPDBFile(pdbName);
+  std::vector<double> radii;
+  for (const auto atom : m->atoms()) {
+    radii.push_back(tbl->getRvdw(atom->getAtomicNum()));
+  }
   REQUIRE(m);
   SECTION("defaults") {
     bool isProtein = true;
     bool includeLigand = false;
-    Descriptors::DoubleCubicLatticeVolume dclv(*m, isProtein, includeLigand);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m, radii, isProtein, includeLigand);
     CHECK(dclv.getSurfaceArea() == Catch::Approx(8330.59).epsilon(0.05));
     CHECK(dclv.getVolume() == Catch::Approx(31789.6).epsilon(0.05));
     CHECK(dclv.getVDWVolume() == Catch::Approx(15355.3).epsilon(0.05));
@@ -570,7 +575,7 @@ TEST_CASE("DCLV") {
     int depth = 6;
     bool isProtein = true;
     bool includeLigand = false;
-    Descriptors::DoubleCubicLatticeVolume dclv(*m, isProtein, includeLigand,
+    Descriptors::DoubleCubicLatticeVolume dclv(*m, radii, isProtein, includeLigand,
                                                probeRadius, depth);
     CHECK(dclv.getSurfaceArea() == Catch::Approx(8186.06).epsilon(0.05));
     CHECK(dclv.getVolume() == Catch::Approx(33464.5).epsilon(0.05));
@@ -581,7 +586,7 @@ TEST_CASE("DCLV") {
   SECTION("ligand") {
     bool isProtein = true;
     bool includeLigand = true;
-    Descriptors::DoubleCubicLatticeVolume dclv(*m, isProtein, includeLigand);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m, radii, isProtein, includeLigand);
     CHECK(dclv.getSurfaceArea() == Catch::Approx(8010.56).epsilon(0.05));
     CHECK(dclv.getVolume() == Catch::Approx(31228.4).epsilon(0.05));
     CHECK(dclv.getVDWVolume() == Catch::Approx(15155.7).epsilon(0.05));
@@ -592,9 +597,13 @@ TEST_CASE("DCLV") {
     std::string sdfName =
         pathName + "/Code/GraphMol/Descriptors/test_data/TZL_model.sdf";
     auto m = v2::FileParsers::MolFromMolFile(sdfName);
+    std::vector<double> radii;
+    for (const auto atom : m->atoms()) {
+      radii.push_back(tbl->getRvdw(atom->getAtomicNum()));
+    }
     REQUIRE(m);
     bool isProtein = false;
-    Descriptors::DoubleCubicLatticeVolume dclv(*m, isProtein);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m, radii, isProtein);
     // NOTE - expected values generated from Roger's original C code
     // Original did not return surface area for Ligand only
     // so no check for Surface Area or Compactness
