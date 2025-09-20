@@ -288,7 +288,9 @@ struct rgroupdecomp_wrapper {
         "input structure\n"
         "    - doEnumeration: expand input cores into enumerated mol bundles\n"
         "    - allowMultipleRGroupsOnUnlabelled: permit more than one rgroup to "
-        "be attached to an unlabelled core atom";
+        "be attached to an unlabelled core atom\n"
+        "    - allowMultipleCoresInSameMol: permit a core to match more than "
+        "once in the same molecule (default=False)";
     python::class_<RDKit::RGroupDecompositionParameters>(
         "RGroupDecompositionParameters", docString.c_str(),
         python::init<>(python::args("self"), "Constructor, takes no arguments"))
@@ -338,6 +340,9 @@ struct rgroupdecomp_wrapper {
         .def_readwrite("allowMultipleRGroupsOnUnlabelled",
                        &RDKit::RGroupDecompositionParameters::
                            allowMultipleRGroupsOnUnlabelled)
+        .def_readwrite(
+            "allowMultipleCoresInSameMol",
+            &RDKit::RGroupDecompositionParameters::allowMultipleCoresInSameMol)
         .def_readwrite("doTautomers",
                        &RDKit::RGroupDecompositionParameters::doTautomers)
         .def_readwrite("doEnumeration",
@@ -347,7 +352,8 @@ struct rgroupdecomp_wrapper {
             &RDKit::RGroupDecompositionParameters::substructmatchParams)
         .def_readwrite(
             "includeTargetMolInResults",
-            &RDKit::RGroupDecompositionParameters::includeTargetMolInResults);
+            &RDKit::RGroupDecompositionParameters::includeTargetMolInResults)
+        .def("__setattr__", &safeSetattr);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
         "RGroupDecomposition",
