@@ -112,9 +112,17 @@ struct FragmentReplacement {
       auto bond_id = bond->getProp<unsigned int>(CDX_BOND_ID);
       auto it = std::find(bond_ordering.begin(), bond_ordering.end(), bond_id);
       if (it == bond_ordering.end()) return false;
-
+      
       auto pos = std::distance(bond_ordering.begin(), it);
+      
+      if(pos < 0 || (size_t)pos >= fragment_atoms.size()) {
+	BOOST_LOG(rdWarningLog) << "bond ordering and number of atoms in fragment mismatch, can't attach fragment at bond:"
+				<< bond_id
+				<< std::endl;
 
+	return false;
+      }
+      
       auto &xatom = fragment_atoms[pos];
 
       for (auto &xbond : mol.atomBonds(xatom)) {
