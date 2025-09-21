@@ -4908,7 +4908,21 @@ M  END)CTAB"_ctab;
     CHECK(!m->getAtomWithIdx(11)->getIsAromatic());
     auto smi = MolToSmiles(*m);
     CHECK(smi == "Cc1ccc2c(c1)N1C(=O)/C=C\\C(=O)N2c2cc(C)ccc21");
-    auto m2 = SmilesToMol(smi);
+    auto m2 = v2::SmilesParse::MolFromSmiles(smi);
     REQUIRE(m2);
+  }
+  SECTION("other examples") {
+    std::vector<std::string> smileses = {
+        "CC1=C(/C=C2\\C(C)=C3/C(C)=C(/C=C4\\C(C)=C5/C(CCC(=O)O)=C(C(C)=C5N4)C=C6\\C(CCC(=O)O)=C(C)C(=C6N2)C=C1)N3)C=C(\\C=C)C",  // #8670
+        "c1ccc(cc1)c1nc(nc(c1)c1c2-n3c4cc5-c6cccc(-c7cc8n9-c1cc(-n1c%10cc(-c%11cc(-c%12cc9c(c8cc7)cc%12)ccc%11)ccc%10c7c1cc(-c1cc(-c8cc3c(c4cc5)cc8)ccc1)cc7)c2)c6)c1ccccc1",  // #5124
+    };
+    for (const auto &smiles : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto smi = MolToSmiles(*m);
+      INFO(smiles << "\n  ->\n" << smi);
+      auto m2 = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m2);
+    }
   }
 }
