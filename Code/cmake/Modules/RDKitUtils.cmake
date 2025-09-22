@@ -285,7 +285,7 @@ endfunction(downloadAndCheckMD5)
 
 function(createExportTestHeaders)
   file(GLOB_RECURSE cmakeLists LIST_DIRECTORIES false
-       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt)
+       ${CMAKE_SOURCE_DIR}/CMakeLists.txt)
   set(exportLibs "")
   foreach(cmakeList ${cmakeLists})
     file(STRINGS ${cmakeList} rdkitLibraryItems REGEX "rdkit_library[ ]*\\([ ]*[^ ]+.*$")
