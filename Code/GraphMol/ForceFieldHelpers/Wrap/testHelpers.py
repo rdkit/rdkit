@@ -5,7 +5,7 @@ import numpy
 
 from rdkit import Chem, RDConfig
 from rdkit.Chem import ChemicalForceFields, rdDistGeom
-
+from rdkit.Chem.rdForceFieldHelpers import UFFGetMoleculeForceField
 
 def feq(v1, v2, tol2=1e-4):
   return abs(v1 - v2) <= tol2
@@ -406,6 +406,15 @@ M  END"""
     posa = m.GetConformer().GetAtomPosition(0)
     posb = m.GetConformer().GetAtomPosition(1)
     self.assertAlmostEqual((posa - posb).Length(), 100, delta=10e-5)
+
+
+  def test_uff_get_forcefield_runs(self):
+      mol = Chem.MolFromSmiles("CCO")
+      mol = Chem.AddHs(mol)
+      rdDistGeom.EmbedMolecule(mol, randomSeed=42)
+      ff = UFFGetMoleculeForceField(mol, ignoreInterfragInteractions=False)
+      self.assertIsNotNone(ff)
+      self.assertTrue(hasattr(ff, "CalcEnergy"))
 
 
 if __name__ == "__main__":
