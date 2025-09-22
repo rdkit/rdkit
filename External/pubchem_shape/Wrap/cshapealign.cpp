@@ -43,6 +43,17 @@ python::tuple alignMol(const RDKit::ROMol &ref, RDKit::ROMol &probe,
                     opt_param, max_preiters, max_postiters);
   return python::make_tuple(nbr_st, nbr_ct);
 }
+python::tuple alignMol3(const RDKit::ROMol &ref, RDKit::ROMol &probe,
+                        const ShapeInputOptions &refShapeOpts,
+                        const ShapeInputOptions &probeShapeOpts, int refConfId,
+                        int probeConfId, double opt_param,
+                        unsigned int max_preiters, unsigned int max_postiters) {
+  std::vector<float> matrix(12, 0.0);
+  auto [nbr_st, nbr_ct] =
+      AlignMolecule(ref, probe, matrix, refShapeOpts, probeShapeOpts, refConfId,
+                    probeConfId, opt_param, max_preiters, max_postiters);
+  return python::make_tuple(nbr_st, nbr_ct);
+}
 python::tuple alignMol2(const ShapeInput &ref, RDKit::ROMol &probe,
                         int probeConfId, bool useColors, double opt_param,
                         unsigned int max_preiters, unsigned int max_postiters,
@@ -224,6 +235,44 @@ probeConfId : int, optional
     Probe conformer ID (default is -1)
 useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
+opt_param : float, optional
+    Balance of shape and color for optimization.
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape
+max_preiters : int, optional
+    In the two phase optimization, the maximum iterations done on all poses.
+max_postiters : int, optional
+    In the two phase optimization, the maximum iterations during the second phase on
+    only the best poses from the first phase
+
+
+Returns
+-------
+ 2-tuple of doubles
+    The results are (shape_score, color_score)
+    The color_score is zero if useColors is False)DOC");
+
+  python::def(
+      "AlignMol", &helpers::alignMol3,
+      (python::arg("ref"), python::arg("probe"), python::arg("refShapeOpts"),
+       python::arg("probeShapeOpts"), python::arg("refConfId") = -1,
+       python::arg("probeConfId") = -1, python::arg("opt_param") = 1.0,
+       python::arg("max_preiters") = 10, python::arg("max_postiters") = 30),
+      R"DOC(Aligns a probe molecule to a reference molecule. The probe is modified.
+
+Parameters
+----------
+ref : RDKit.ROMol
+    Reference molecule
+probe : RDKit.ROMol
+    Probe molecule
+refShapeOpts : ShapeInputOptions
+    Options for constructing the shape for the reference molecule
+probeShapeOpts : ShapeInputOptions
+    Options for constructing the shape for the probe molecule
+refConfId : int, optional
+    Reference conformer ID (default is -1)
+probeConfId : int, optional
+    Probe conformer ID (default is -1)
 opt_param : float, optional
     Balance of shape and color for optimization.
     0 is only color, 0.5 is equal weight, and 1.0 is only shape

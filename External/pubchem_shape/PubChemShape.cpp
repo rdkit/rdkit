@@ -538,14 +538,12 @@ void TransformConformer(const std::vector<double> &finalTrans,
 
 std::pair<double, double> AlignMolecule(
     const ShapeInput &refShape, ROMol &fit, std::vector<float> &matrix,
-    int fitConfId, bool useColors, double opt_param, unsigned int max_preiters,
-    unsigned int max_postiters, bool applyRefShift) {
+    const ShapeInputOptions &shapeOpts, int fitConfId, double opt_param,
+    unsigned int max_preiters, unsigned int max_postiters, bool applyRefShift) {
   PRECONDITION(matrix.size() == 12, "bad matrix size");
   Align3D::setUseCutOff(true);
 
   DEBUG_MSG("Fit details:");
-  ShapeInputOptions shapeOpts;
-  shapeOpts.useColors = useColors;
   auto fitShape = PrepareConformer(fit, fitConfId, shapeOpts);
   auto tanis = AlignShape(refShape, fitShape, matrix, opt_param, max_preiters,
                           max_postiters);
@@ -563,6 +561,32 @@ std::pair<double, double> AlignMolecule(
   return tanis;
 }
 
+std::pair<double, double> AlignMolecule(
+    const ShapeInput &refShape, ROMol &fit, std::vector<float> &matrix,
+    int fitConfId, bool useColors, double opt_param, unsigned int max_preiters,
+    unsigned int max_postiters, bool applyRefShift) {
+  ShapeInputOptions shapeOpts;
+  shapeOpts.useColors = useColors;
+  return AlignMolecule(refShape, fit, matrix, shapeOpts, fitConfId, opt_param,
+                       max_preiters, max_postiters, applyRefShift);
+}
+
+std::pair<double, double> AlignMolecule(
+    const ROMol &ref, ROMol &fit, std::vector<float> &matrix,
+    const ShapeInputOptions &refShapeOpts,
+    const ShapeInputOptions &probeShapeOpts, int refConfId, int fitConfId,
+    double opt_param, unsigned int max_preiters, unsigned int max_postiters) {
+  Align3D::setUseCutOff(true);
+
+  DEBUG_MSG("Reference details:");
+  auto refShape = PrepareConformer(ref, refConfId, refShapeOpts);
+  bool applyRefShift = true;
+  auto scores =
+      AlignMolecule(refShape, fit, matrix, probeShapeOpts, fitConfId, opt_param,
+                    max_preiters, max_postiters, applyRefShift);
+  return scores;
+}
+
 std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
                                         std::vector<float> &matrix,
                                         int refConfId, int fitConfId,
@@ -574,9 +598,6 @@ std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
   DEBUG_MSG("Reference details:");
   ShapeInputOptions shapeOpts;
   shapeOpts.useColors = useColors;
-  auto refShape = PrepareConformer(ref, refConfId, shapeOpts);
-
-  auto scores = AlignMolecule(refShape, fit, matrix, fitConfId, useColors,
-                              opt_param, max_preiters, max_postiters, true);
-  return scores;
+  return AlignMolecule(ref, fit, matrix, shapeOpts, shapeOpts, refConfId,
+                       fitConfId, opt_param, max_preiters, max_postiters);
 }
