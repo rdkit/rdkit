@@ -144,6 +144,31 @@ python::list get_shapeShift(const ShapeInput &shp) {
   }
   return py_list;
 }
+
+void set_customFeatures(ShapeInputOptions &shp, const python::object &s) {
+  shp.customFeatures.clear();
+  auto len = python::len(s);
+  shp.customFeatures.reserve(len);
+  for (auto i = 0u; i < len; ++i) {
+    const auto elem = s[i];
+    unsigned int featType = python::extract<unsigned int>(elem[0]);
+    RDGeom::Point3D pos = python::extract<RDGeom::Point3D>(elem[1]);
+    double radius = python::extract<double>(elem[2]);
+    shp.customFeatures.emplace_back(featType, pos, radius);
+  }
+}
+python::tuple get_customFeatures(const ShapeInputOptions &shp) {
+  python::list py_list;
+  for (const auto &val : shp.customFeatures) {
+    python::list elem;
+    elem.append(static_cast<int>(std::get<0>(val)));
+    elem.append(std::get<1>(val));
+    elem.append(std::get<2>(val));
+    py_list.append(python::tuple(elem));
+  }
+  return python::tuple(py_list);
+}
+
 }  // namespace helpers
 
 void wrap_pubchemshape() {
@@ -174,6 +199,9 @@ void wrap_pubchemshape() {
           "atomRadii", &helpers::get_atomRadii, &helpers::set_atomRadii,
           "Non-standard radii to use for the atoms specified by their indices"
           " in the molecule.  A list of tuples of [int, float].")
+      .add_property("customFeatures", &helpers::get_customFeatures,
+                    &helpers::set_customFeatures,
+                    "Custom features for the shape.")
       .def("__setattr__", &safeSetattr);
 
   python::def(
