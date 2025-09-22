@@ -49,7 +49,7 @@ RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
     const RDKit::ROMol &mol, CrystalFFDetails &details,
     bool useExpTorsions = false, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = false, bool useBasicKnowledge = false,
-    unsigned int version = 1, bool verbose = false);
+    unsigned int version = 2, bool verbose = false);
 
 //! \overload
 RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
@@ -58,7 +58,7 @@ RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
                            const ExpTorsionAngle *>> &torsionBonds,
     bool useExpTorsions = false, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = false, bool useBasicKnowledge = false,
-    unsigned int version = 1, bool verbose = false);
+    unsigned int version = 2, bool verbose = false);
 
 }  // namespace CrystalFF
 }  // namespace ForceFields
