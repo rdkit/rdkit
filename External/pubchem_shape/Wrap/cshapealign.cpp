@@ -92,31 +92,31 @@ ShapeInput *prepConf(const RDKit::ROMol &mol, int confId,
   }
   return new ShapeInput(PrepareConformer(mol, confId, opts));
 }
-void set_atomSubset(ShapeInputOptions &opts, const python::list &as) {
+void set_atomSubset(ShapeInputOptions &opts, const python::object &as) {
   pythonObjectToVect<unsigned int>(as, opts.atomSubset);
 }
 
-python::list get_atomSubset(const ShapeInputOptions &opts) {
+python::tuple get_atomSubset(const ShapeInputOptions &opts) {
   python::list py_list;
   for (const auto &val : opts.atomSubset) {
     py_list.append(val);
   }
-  return py_list;
+  return python::tuple(py_list);
 }
 
-void set_notColorAtoms(ShapeInputOptions &opts, const python::list &nca) {
+void set_notColorAtoms(ShapeInputOptions &opts, const python::object &nca) {
   pythonObjectToVect<unsigned int>(nca, opts.notColorAtoms);
 }
 
-python::list get_notColorAtoms(const ShapeInputOptions &opts) {
+python::tuple get_notColorAtoms(const ShapeInputOptions &opts) {
   python::list py_list;
   for (const auto &val : opts.notColorAtoms) {
     py_list.append(val);
   }
-  return py_list;
+  return python::tuple(py_list);
 }
 
-void set_atomRadii(ShapeInputOptions &opts, const python::list &ar) {
+void set_atomRadii(ShapeInputOptions &opts, const python::object &ar) {
   int len = python::len(ar);
   opts.atomRadii.resize(len);
   for (int i = 0; i < len; i++) {
@@ -126,15 +126,15 @@ void set_atomRadii(ShapeInputOptions &opts, const python::list &ar) {
   }
 }
 
-python::list get_atomRadii(const ShapeInputOptions &opts) {
+python::tuple get_atomRadii(const ShapeInputOptions &opts) {
   python::list py_list;
   for (const auto &val : opts.atomRadii) {
     py_list.append(python::make_tuple(static_cast<int>(val.first), val.second));
   }
-  return py_list;
+  return python::tuple(py_list);
 }
 
-void set_shapeShift(ShapeInput &shp, const python::list &s) {
+void set_shapeShift(ShapeInput &shp, const python::object &s) {
   pythonObjectToVect<double>(s, shp.shift);
 }
 python::list get_shapeShift(const ShapeInput &shp) {
