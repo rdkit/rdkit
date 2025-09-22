@@ -84,6 +84,10 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInputOptions {
       atomRadii;  // Use these non-standard radii for these atoms.
                   // The int is for the atom index in the molecule, not
                   // the atomic number.
+  std::vector<std::tuple<unsigned int, RDGeom::Point3D, double>>
+      customFeatures;  // use these feature definitions instead of the defaults.
+                       // Each feature is defined by a tuple of:
+                       // (feature type, position, radius)
 };
 
 //! Prepare the input for the shape comparison

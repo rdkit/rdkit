@@ -368,6 +368,28 @@ void extractFeatureCoords(
   }
 }
 
+void extractCustomFeatureCoords(const unsigned int nSelectedAtoms,
+                                const ShapeInputOptions &shapeOpts,
+                                const RDGeom::Point3D &ave,
+                                unsigned int &numFeatures, ShapeInput &res,
+                                std::vector<double> &rad_vector) {
+  for (const auto &feature : shapeOpts.customFeatures) {
+    unsigned int feature_type = std::get<0>(feature);
+    RDGeom::Point3D floc = std::get<1>(feature);
+    double radius = std::get<2>(feature);
+    floc -= ave;
+    DEBUG_MSG("custom feature type " << feature_type << " (" << floc << ")");
+
+    auto array_idx = nSelectedAtoms + numFeatures;
+    res.coord[array_idx * 3] = floc.x;
+    res.coord[(array_idx * 3) + 1] = floc.y;
+    res.coord[(array_idx * 3) + 2] = floc.z;
+    rad_vector[array_idx] = radius;
+    res.atom_type_vector[array_idx] = feature_type;
+    ++numFeatures;
+  }
+}
+
 }  // namespace
 // The conformer is left where it is, the shape is translated to the origin.
 ShapeInput PrepareConformer(const ROMol &mol, int confId,
@@ -402,8 +424,13 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
 
   extractAtomCoords(conformer, nAtoms, shapeOpts, ave, res.coord);
   unsigned int numFeatures = 0;
-  extractFeatureCoords(conformer, nAtoms, nSelectedAtoms, feature_idx_type,
-                       shapeOpts, ave, numFeatures, res, rad_vector);
+  if (shapeOpts.customFeatures.empty()) {
+    extractFeatureCoords(conformer, nAtoms, nSelectedAtoms, feature_idx_type,
+                         shapeOpts, ave, numFeatures, res, rad_vector);
+  } else {
+    extractCustomFeatureCoords(nSelectedAtoms, shapeOpts, ave, numFeatures, res,
+                               rad_vector);
+  }
 
   // Now cut the final vectors down to the actual number of atoms and
   // features used.
