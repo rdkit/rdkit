@@ -740,12 +740,15 @@ python::object MolsFromCDXMLFile(const std::string &filename, bool sanitize,
   return python::tuple(res);
 }
 
-python::tuple MolsFromCDXMLHelper(python::object cdxml, python::object pyParams) {
+python::tuple MolsFromCDXMLHelper(python::object cdxml,
+                                  python::object pyParams) {
   RDKit::v2::CDXMLParser::CDXMLParserParams params;
   if (pyParams) {
-    params = python::extract<RDKit::v2::CDXMLParser::CDXMLParserParams>(pyParams);
+    params =
+        python::extract<RDKit::v2::CDXMLParser::CDXMLParserParams>(pyParams);
   }
-  auto mols = RDKit::v2::CDXMLParser::MolsFromCDXML(pyObjectToString(cdxml), params);
+  auto mols =
+      RDKit::v2::CDXMLParser::MolsFromCDXML(pyObjectToString(cdxml), params);
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
@@ -755,12 +758,13 @@ python::tuple MolsFromCDXMLHelper(python::object cdxml, python::object pyParams)
   return python::tuple(res);
 }
 
- python::object MolsFromCDXMLFileHelper(const std::string &filename,
-					python::object pyParams) {
-   RDKit::v2::CDXMLParser::CDXMLParserParams params(
-		       true, true, RDKit::v2::CDXMLParser::CDXMLFormat::Auto);
+python::object MolsFromCDXMLFileHelper(const std::string &filename,
+                                       python::object pyParams) {
+  RDKit::v2::CDXMLParser::CDXMLParserParams params(
+      true, true, RDKit::v2::CDXMLParser::CDXMLFormat::Auto);
   if (pyParams) {
-    params = python::extract<RDKit::v2::CDXMLParser::CDXMLParserParams>(pyParams);
+    params =
+        python::extract<RDKit::v2::CDXMLParser::CDXMLParserParams>(pyParams);
   }
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
@@ -1221,7 +1225,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "precision", &RDKit::MolWriterParams::precision,
           "precision of coordinates (only available in V3000)(default=false)")
-      .def("__setattr__",&safeSetattr);
+      .def("__setattr__", &safeSetattr);
 
   python::class_<RDKit::v2::FileParsers::MolFromSCSRParams, boost::noncopyable>(
       "MolFromSCSRParams",
@@ -1781,10 +1785,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "includeDativeBonds", &RDKit::SmilesWriteParams::includeDativeBonds,
           "include the RDKit extension for dative bonds. Otherwise dative bonds will be written as single bonds")
-      .def_readwrite(
-          "ignoreAtomMapNumbers",
-          &RDKit::SmilesWriteParams::ignoreAtomMapNumbers,
-          "ignore atom map numbers when canonicalizing the molecule")
+      .def_readwrite("ignoreAtomMapNumbers",
+                     &RDKit::SmilesWriteParams::ignoreAtomMapNumbers,
+                     "ignore atom map numbers when canonicalizing the molecule")
       .def("__setattr__", &safeSetattr);
 
   python::def("MolToSmiles",
@@ -2515,6 +2518,33 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       "values");
 
   python::def(
+      "CreateBondIntPropertyList", FileParserUtils::createBondIntPropertyList,
+      (python::arg("mol"), python::arg("propName"),
+       python::arg("missingValueMarker") = "", python::arg("lineSize") = 190),
+      "creates a list property on the molecule from individual bond property "
+      "values");
+  python::def(
+      "CreateBondDoublePropertyList",
+      FileParserUtils::createBondDoublePropertyList,
+      (python::arg("mol"), python::arg("propName"),
+       python::arg("missingValueMarker") = "", python::arg("lineSize") = 190),
+      "creates a list property on the molecule from individual bond property "
+      "values");
+  python::def(
+      "CreateBondBoolPropertyList", FileParserUtils::createBondBoolPropertyList,
+      (python::arg("mol"), python::arg("propName"),
+       python::arg("missingValueMarker") = "", python::arg("lineSize") = 190),
+      "creates a list property on the molecule from individual bond property "
+      "values");
+  python::def(
+      "CreateBondStringPropertyList",
+      FileParserUtils::createBondStringPropertyList,
+      (python::arg("mol"), python::arg("propName"),
+       python::arg("missingValueMarker") = "", python::arg("lineSize") = 190),
+      "creates a list property on the molecule from individual bond property "
+      "values");
+
+  python::def(
       "MolToRandomSmilesVect", RDKit::MolToRandomSmilesHelper,
       (python::arg("mol"), python::arg("numSmiles"),
        python::arg("randomSeed") = 0, python::arg("isomericSmiles") = true,
@@ -2639,34 +2669,29 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                python::arg("removeHs") = true),
               docString.c_str());
 
-    python::enum_<RDKit::v2::CDXMLParser::CDXMLFormat>("CDXMLFormat")
-      .value("CDXML",
-             RDKit::v2::CDXMLParser::CDXMLFormat::CDXML)
-      .value("CDX",
-             RDKit::v2::CDXMLParser::CDXMLFormat::CDX)
+  python::enum_<RDKit::v2::CDXMLParser::CDXMLFormat>("CDXMLFormat")
+      .value("CDXML", RDKit::v2::CDXMLParser::CDXMLFormat::CDXML)
+      .value("CDX", RDKit::v2::CDXMLParser::CDXMLFormat::CDX)
       .value("Auto", RDKit::v2::CDXMLParser::CDXMLFormat::Auto);
 
   python::class_<RDKit::v2::CDXMLParser::CDXMLParserParams, boost::noncopyable>(
       "CDXMLParserParams",
       "Parameters controlling conversion of a CDXML document to molecules",
       python::init<>(python::args("self"), "Construct a default CDXMLFormat"))
-    .def(python::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat>(
-        python::args("self", "sanitize", "removeHs", "format")))
+      .def(python::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat>(
+          python::args("self", "sanitize", "removeHs", "format")))
+      .def_readwrite("sanitize",
+                     &RDKit::v2::CDXMLParser::CDXMLParserParams::sanitize,
+                     "controls whether or not the molecule is sanitized before "
+                     "being returned")
+      .def_readwrite("removeHs",
+                     &RDKit::v2::CDXMLParser::CDXMLParserParams::removeHs,
+                     "controls whether or not Hs are removed before the "
+                     "molecule is returned")
       .def_readwrite(
-          "sanitize",
-          &RDKit::v2::CDXMLParser::CDXMLParserParams::sanitize,
-	  "controls whether or not the molecule is sanitized before "
-	  "being returned")
-      .def_readwrite(
-          "removeHs",
-          &RDKit::v2::CDXMLParser::CDXMLParserParams::removeHs,
-	  "controls whether or not Hs are removed before the "
-	  "molecule is returned")
-      .def_readwrite(
-          "format",
-          &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
+          "format", &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
           "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML");
-  
+
   docString =
       R"DOC(Construct a molecule from a cdxml file.
 
@@ -2688,8 +2713,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        a tuple  of parsed Mol objects.)DOC";
 
   python::def("MolsFromCDXMLFile", MolsFromCDXMLFileHelper,
-              (python::arg("filename"),
-	       python::arg("params")),
+              (python::arg("filename"), python::arg("params")),
               docString.c_str());
 
   docString =
@@ -2711,12 +2735,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        a tuple of parsed Mol objects.)DOC";
 
   python::def("MolsFromCDXML", MolsFromCDXMLHelper,
-              (python::arg("cdxml"),
-	       python::arg("params")),
-              docString.c_str());
+              (python::arg("cdxml"), python::arg("params")), docString.c_str());
 
   docString = "Returns true if the RDKit is built with ChemDraw CDX support";
-  python::def("HasChemDrawCDXSupport", RDKit::v2::CDXMLParser::hasChemDrawCDXSupport, docString.c_str());
+  python::def("HasChemDrawCDXSupport",
+              RDKit::v2::CDXMLParser::hasChemDrawCDXSupport, docString.c_str());
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
   docString =

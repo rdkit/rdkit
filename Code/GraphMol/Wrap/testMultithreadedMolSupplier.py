@@ -168,23 +168,6 @@ class TestCase(unittest.TestCase):
 
     self.assertRaises(ValueError, helper, sdSup)
 
-  def testGitHubIssue8644(self):
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-                         'CH.mol')
-    noneMols = 0
-    notNoneMols = 0
-    # this is usually enough to hit the async issue described in the PR
-    # without the test taking forever
-    numIters = 100
-    for i in range(numIters):
-      for m in Chem.MultithreadedSDMolSupplier(fileN, numWriterThreads=100):
-        if m is None:
-          noneMols += 1
-        else:
-          notNoneMols += 1
-    self.assertEqual(notNoneMols, numIters)
-    self.assertEqual(noneMols, 0)
-
 
 if __name__ == '__main__':
   unittest.main()

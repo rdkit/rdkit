@@ -4847,3 +4847,82 @@ TEST_CASE(
   CHECK(rsuppl.getNumConjGrps() == 0);
   CHECK(rsuppl.getAtomConjGrpIdx(0) == -1);
 }
+
+TEST_CASE(
+    "github #5078: aromaticity problems roundtripping a molecule through SMILES") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+ 22 25  0  0  0  0  0  0  0  0999 V2000
+    6.1174   -5.5956    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.5355   -6.1734    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.9052   -6.9054    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.7157   -6.7800    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8468   -5.9705    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9896   -4.3666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9885   -5.1861    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6965   -5.5951    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6947   -3.9577    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.4033   -4.3630    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.4067   -5.1882    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1123   -3.9452    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8293   -4.3571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8321   -5.1820    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.5468   -5.5902    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.2590   -5.1746    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.2522   -4.3466    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.5370   -3.9422    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2804   -5.5941    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.9563   -3.9319    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6601   -5.9680    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.7196   -6.1277    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  1  1  0
+  6  7  2  0
+  7  8  1  0
+  8 11  2  0
+ 10  9  2  0
+  9  6  1  0
+ 10 11  1  0
+ 10 12  1  0
+ 11  1  1  0
+  1 14  1  0
+ 13 12  1  0
+ 13 14  2  0
+ 14 15  1  0
+ 15 16  2  0
+ 16 17  1  0
+ 17 18  2  0
+ 18 13  1  0
+  7 19  1  0
+ 17 20  1  0
+  5 21  2  0
+  2 22  2  0
+  2 12  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(!m->getAtomWithIdx(0)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(11)->getIsAromatic());
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "Cc1ccc2c(c1)N1C(=O)/C=C\\C(=O)N2c2cc(C)ccc21");
+    auto m2 = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m2);
+  }
+  SECTION("other examples") {
+    std::vector<std::string> smileses = {
+        "CC1=C(/C=C2\\C(C)=C3/C(C)=C(/C=C4\\C(C)=C5/C(CCC(=O)O)=C(C(C)=C5N4)C=C6\\C(CCC(=O)O)=C(C)C(=C6N2)C=C1)N3)C=C(\\C=C)C",  // #8670
+        "c1ccc(cc1)c1nc(nc(c1)c1c2-n3c4cc5-c6cccc(-c7cc8n9-c1cc(-n1c%10cc(-c%11cc(-c%12cc9c(c8cc7)cc%12)ccc%11)ccc%10c7c1cc(-c1cc(-c8cc3c(c4cc5)cc8)ccc1)cc7)c2)c6)c1ccccc1",  // #5124
+    };
+    for (const auto &smiles : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto smi = MolToSmiles(*m);
+      INFO(smiles << "\n  ->\n" << smi);
+      auto m2 = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m2);
+    }
+  }
+}
