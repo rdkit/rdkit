@@ -241,6 +241,10 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
     include_directories(${RDKit_ExternalDir})
 endif()
 
+if(RDK_BUILD_OSMORDRED_SUPPORT)
+    add_definitions(-DRDK_BUILD_OSMORDRED_SUPPORT)
+endif()
+
 if(RDK_USE_URF)
   add_definitions(-DRDK_USE_URF)
   if((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR ((NOT MSVC) AND WIN32 AND RDK_INSTALL_STATIC_LIBS))
