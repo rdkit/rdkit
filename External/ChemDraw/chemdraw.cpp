@@ -393,7 +393,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawFile(
     return mols;
   }
 
-  if (sniff_format(chemdrawfile) == CDXFormat::CDX)   { // need to reopen in binary mode
+  if (params.format == CDXFormat::AUTO && sniff_format(chemdrawfile) == CDXFormat::CDX)   { // need to reopen in binary mode
     realparams.format = CDXFormat::CDX;
   }
 
