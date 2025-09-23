@@ -110,6 +110,15 @@ TEST_CASE("FP Small tests") {
       resSmis.insert(MolToSmiles(*r));
     }
 
+    // test with callback version
+    std::set<std::string> cbSmis;
+    auto cb = [&cbSmis](std::vector<std::unique_ptr<ROMol>>& results) {
+      for (auto& r : results) cbSmis.insert(MolToSmiles(*r));
+      return false;
+    };
+    synthonspace.fingerprintSearch(*queryMol, *fpGen, cb, params);
+    CHECK(resSmis == cbSmis);
+
     // Do the enumerated library, just to check
     std::map<std::string, std::unique_ptr<RWMol>> mols;
     auto fps = getFingerprints(enumLibNames[i], mols, fpGen);
