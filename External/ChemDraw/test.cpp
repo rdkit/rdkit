@@ -1413,6 +1413,22 @@ TEST_CASE("Geometry") {
   }
 }
 
+TEST_CASE("Test Reading Wrong File Format") {
+    std::string path = std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("CDX as CDXML") { 
+    auto fname = path + "ring-stereo1.cdx";
+    ChemDrawParserParams params;
+    params.format = CDXFormat::CDXML;
+    bool caught = false;
+    try {
+      auto mols = MolsFromChemDrawFile(fname, params);
+    } catch (FileParseException &ex) {
+      caught = true;
+    }
+    REQUIRE(caught);
+  }
+ }
+
 TEST_CASE("github8761") {
   std::string path =
       std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
