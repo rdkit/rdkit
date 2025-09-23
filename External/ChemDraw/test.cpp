@@ -1425,4 +1425,17 @@ TEST_CASE("github8761") {
     mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size());
   }    
+
+  SECTION("Failing Patents") {
+    std::filesystem::path patents(path + "patents");
+    for (auto &entry : std::filesystem::directory_iterator(patents)) {
+      std::cerr << "************************************************"
+                << std::endl;
+      std::cerr << entry.path().generic_string() << std::endl;
+      ChemDrawParserParams params;
+      params.sanitize = false;
+      auto mols = MolsFromChemDrawFile(entry.path().generic_string(), params);
+      REQUIRE(mols.size() >=0);
+    }
+  }
 }

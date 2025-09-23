@@ -292,8 +292,15 @@ std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream,
   } else {
     CDXistream input(inStream);
     const bool doThrow = true;
-    std::unique_ptr<CDXDocument> doc(CDXReadDocFromStorage(input, doThrow));
-    return doc;
+    // if we aren't opened in binary mode on windows, we are going to have a bad time...
+    try {
+      std::unique_ptr<CDXDocument> doc(CDXReadDocFromStorage(input, doThrow));
+      return doc;
+    } catch (const std::exception &ex) {
+      throw FileParseException(
+          std::string(ex.what()) +
+          "\nPlease ensure for CDX data streams, the stream is in binary mode.");
+    }
   }
 }
  
@@ -375,15 +382,22 @@ std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawBlock(
 
 std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawFile(
     const std::string &filename, const ChemDrawParserParams &params) {
-  CDXMLParser parser;
+  ChemDrawParserParams realparams{params};
+  
   std::vector<std::unique_ptr<RWMol>> mols;
 
-  std::fstream chemdrawfile(filename);  // FIX ME CHECK CDX versus CDXML
+  std::fstream chemdrawfile(filename, std::ios::in | std::ios::binary); // Always open in Binary mode
+
   if (!chemdrawfile) {
     throw BadFileException(filename + " does not exist");
     return mols;
   }
-  auto chemdrawmols = molsFromCDXMLDataStream(chemdrawfile, params);
+
+  if (sniff_format(chemdrawfile) == CDXFormat::CDX)   { // need to reopen in binary mode
+    realparams.format = CDXFormat::CDX;
+  }
+
+  auto chemdrawmols = molsFromCDXMLDataStream(chemdrawfile, realparams);
 
   mols.reserve(chemdrawmols.size());
   for (auto &mol : chemdrawmols) {
