@@ -165,17 +165,20 @@ static const std::vector<std::string> acidicSMARTS = {
     "[O;H1]-[C,S,P]=O", "[*;-;!$(*~[*;+])]", "[NH](S(=O)=O)C(F)(F)F",
     "n1nnnc1"};
 
-static const std::vector<std::shared_ptr<RDKit::RWMol>>& GetAcidicSmarts() {
-  std::vector<std::shared_ptr<RDKit::RWMol>> res;
-  for (const auto &smarts : acidicSMARTS) {
-    auto mol = RDKit::SmartsToMol(smarts);
-    if (mol) {
-      res.emplace_back(std::shared_ptr<RDKit::RWMol>(mol));
-    } else {
-      std::cerr << "Invalid SMARTS: " << smarts << std::endl;
+static const std::vector<std::shared_ptr<RDKit::RWMol>> &GetAcidicSmarts() {
+  static const std::vector<std::shared_ptr<RDKit::RWMol>> compiledAcidicSMARTS = [] {
+    std::vector<std::shared_ptr<RDKit::RWMol>> res;
+    for (const auto &smarts : acidicSMARTS) {
+      auto mol = RDKit::SmartsToMol(smarts);
+      if (mol) {
+	res.emplace_back(std::shared_ptr<RDKit::RWMol>(mol));
+      } else {
+	std::cerr << "Invalid SMARTS: " << smarts << std::endl;
+      }
     }
-  }
-  return res;
+    return res;
+  }();
+  return compiledAcidicSMARTS;
 }
 
 
@@ -440,7 +443,6 @@ std::vector<double> calcAddFeatures(const RDKit::ROMol& mol) {
 
         // Iterate over all atoms in the molecule
         for (const auto& atom : hmol->atoms()) {
-            int atomicNum = atom->getAtomicNum();
             std::string symbol = atom->getSymbol();
 
             auto it = elementMapAtomCounts.find(symbol);
@@ -601,7 +603,7 @@ std::vector<double> calcAddFeatures(const RDKit::ROMol& mol) {
 
 
     // Function to assign symmetry classes to each atom based on the distance matrix
-    std::vector<int> assignSymmetryClasses(const RDKit::ROMol& mol, const std::vector<std::vector<double>>& bdMat, int numAtoms, int cutoff) {
+    std::vector<int> assignSymmetryClasses(const RDKit::ROMol& mol, const std::vector<std::vector<double>>&, int numAtoms, int cutoff) {
         std::vector<int> symList(numAtoms, 0);
 
         double* distances = MolOps::getDistanceMat(mol, true, false, true, "Balaban");
@@ -2057,8 +2059,6 @@ std::vector<double> calcIStateIndices(const RDKit::ROMol& mol){
         double res = 0.;
         std::unique_ptr<RDKit::ROMol> hmol(RDKit::MolOps::addHs(mol));
 
-        int numAtoms = hmol->getNumAtoms();
-
         std::map<int, double> mgvmap = McGowanVolumAtomicMap();
 
         for (const auto& atom : hmol->atoms()) {
@@ -2166,7 +2166,7 @@ std::vector<double> calcIStateIndices(const RDKit::ROMol& mol){
     }
 
 
-    double ODT(const RDKit::ROMol &mol) {
+    double ODT(const RDKit::ROMol &) {
         return 1;
     }
 
@@ -2401,13 +2401,13 @@ std::vector<double> calcSchultz(const RDKit::ROMol &mol) {
         std::vector<double> V = calcValence(mol);
 
 
-        if (E.size() != V.size()) {
+        if ((size_t)E.size() != V.size()) {
             throw std::invalid_argument("Eccentricity and Valence vectors must have the same length.");
         }
 
         // Calculate element-wise product of E and V
         double productSum = 0.0;
-        for (size_t i = 0; i < E.size(); ++i) {
+        for (size_t i = 0; i < (size_t)E.size(); ++i) {
             productSum += static_cast<int>(E[i]) * V[i];  // Cast E[i] to int and multiply with V[i]
         }
 	res[0] = productSum;
@@ -2821,7 +2821,7 @@ Eigen::MatrixXd computeBaryszMatrix1(
 
 // Function to calculate the Barysz matrix
 Eigen::MatrixXd computeBaryszMatrix2(const RDKit::ROMol& mol, const std::vector<double>& w) {
-    int natom = mol.getNumAtoms();
+    unsigned int natom = mol.getNumAtoms();
     Eigen::MatrixXd matrix = Eigen::MatrixXd::Zero(natom, natom);
 
     std::vector<double> reciprocalw(natom);
@@ -2830,13 +2830,13 @@ Eigen::MatrixXd computeBaryszMatrix2(const RDKit::ROMol& mol, const std::vector<
     }
 
     // Set diagonal entries
-    for (int i = 0; i < natom; ++i) {
+    for (unsigned int i = 0; i < natom; ++i) {
         matrix(i, i) = 1.0 - reciprocalw[i];
     }
 
     // Set off-diagonal entries
-    for (int i = 0; i < natom; ++i) {
-        for (int j = i + 1; j < natom; ++j) {
+    for (unsigned int i = 0; i < natom; ++i) {
+        for (unsigned int j = i + 1; j < natom; ++j) {
 
             std::list<int> path = RDKit::MolOps::getShortestPath(mol, i, j);
 
@@ -2844,8 +2844,8 @@ Eigen::MatrixXd computeBaryszMatrix2(const RDKit::ROMol& mol, const std::vector<
                 int atomIdx1 = *it;
                 int atomIdx2 = *std::next(it);
 
-                const RDKit::Atom* atom1 = mol.getAtomWithIdx(atomIdx1);
-                const RDKit::Atom* atom2 = mol.getAtomWithIdx(atomIdx2);
+                //const RDKit::Atom* atom1 = mol.getAtomWithIdx(atomIdx1);
+                //const RDKit::Atom* atom2 = mol.getAtomWithIdx(atomIdx2);
                 const RDKit::Bond* bond = mol.getBondBetweenAtoms(atomIdx1, atomIdx2);
 
                 double weights = reciprocalw[atomIdx1] * reciprocalw[atomIdx2];
@@ -3180,7 +3180,7 @@ double VE1L(const std::vector<std::vector<double>>& eigenvectors) {
     //const auto& lastEigenvector = eigenvectors[n - 1];
 
     std::vector<double> lastEigenvector(n);
-    for (int i = 0; i < n; ++i) {
+    for (unsigned int i = 0; i < n; ++i) {
         lastEigenvector[i] = eigenvectors[i][n - 1];
     }
 
@@ -3205,7 +3205,7 @@ double VR1L(const std::vector<std::vector<double>>& eigenvectors,
     size_t n = eigenvectors.size();
 
     std::vector<double> lastEigenvector(n);
-    for (int i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
         lastEigenvector[i] = eigenvectors[i][n - 1];
     }
 
@@ -4411,7 +4411,7 @@ std::vector<double> calcPathCount(const RDKit::ROMol& mol) {
     }
 
     // Function to compute Chi descriptor for a specific ChiType
-    double computeChiDescriptor(const RDKit::ROMol& mol, const PATH_LIST& subgraphs, const std::vector<double>& P, bool averaged = false) {
+    double computeChiDescriptor(const RDKit::ROMol&, const PATH_LIST& subgraphs, const std::vector<double>& P, bool averaged = false) {
         double chi_value = 0.0;
 
         for (const auto& nodes : subgraphs) {
@@ -4481,7 +4481,7 @@ std::vector<double> calcPathCount(const RDKit::ROMol& mol) {
     // Compute Detour Index
     int computeDetourIndex(const Eigen::MatrixXd& detourmatrix) {
         double sum = detourmatrix.sum();
-        int num_atoms = detourmatrix.rows();
+        //int num_atoms = detourmatrix.rows();
         return static_cast<int>(0.5 * sum);
     }
 
@@ -5176,7 +5176,7 @@ std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol) {
     //  Etacorecount of reference can be merge with next function with an additional parameter if needed...
     double calculateEtaCoreCountRef(const RDKit::ROMol& mol, bool averaged) {
         const RDKit::ROMol* targetMol = &mol; // Default to the input molecule
-        RDKit::ROMol* molWithHs = nullptr;
+        //RDKit::ROMol* molWithHs = nullptr;
         targetMol = cloneAndModifyMolecule(mol, false, false); // this is false, false based on the python source code
 
         // Handle potential failure in cloning
@@ -5320,7 +5320,7 @@ std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol) {
         // Fetch molecule (reference or input)
 
         const RDKit::ROMol* targetMol = &mol; // Default to the input molecule
-        RDKit::ROMol* molWithHs = nullptr;
+        //RDKit::ROMol* molWithHs = nullptr;
 
         if (useReference) {
             targetMol = cloneAndModifyMolecule(mol, false, false); // this is false, false based on the python source code
@@ -5544,12 +5544,12 @@ std::vector<double> calcDistMatrixDescsL(const RDKit::ROMol& mol) {
     }
 
 
-    std::vector<double> calculateEtaDeltaPsiAll(const RDKit::ROMol& mol, double psi) {
+    std::vector<double> calculateEtaDeltaPsiAll(const RDKit::ROMol&, double psi) {
         std::vector<double> results(2, 0.0);
 
         // Constants for reference values
-        double L = 0.714;
-        double R = psi;
+        const double L = 0.714;
+        const double R = psi;
 
         // Calculate ETA_dPsi_A (L - R)
         results[0] = std::max(L - R, 0.0);  // ETA_dPsi_A
@@ -5773,7 +5773,6 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
         out.reserve(4200); // approximate capacity to avoid many reallocations
 
         // Always compute the full v2 set; keep signature for ABI stability
-        const int v = 2;
         const bool doExEstate = true;
 
         // Precompute/cached intermediates where safe
@@ -6201,7 +6200,7 @@ std::vector<double> calculateETADescriptors(const RDKit::ROMol& mol) {
     }
 
     // Get all rings in the molecule
-    std::vector<std::set<int>> GetRings(const RDKit::ROMol& mol,std::vector<std::vector<int>> sssr ) {
+    std::vector<std::set<int>> GetRings(const RDKit::ROMol&,std::vector<std::vector<int>> sssr ) {
 
         std::vector<std::set<int>> rings;
         for (const auto& ring : sssr) {
@@ -6944,7 +6943,6 @@ std::vector<double> calculateETADescriptors(const RDKit::ROMol& mol) {
     std::vector<double> calcChipathcluster(const RDKit::ROMol& mol) {
         // Output vector: First 10 elements are MPC 2-10 and Total, next 11 are piPC 1-10 and Total
         std::vector<double> results(6, 0.0);
-        int Chi = 0; // must initialize  wuth numatoms for MPC1 !
 
         for (int order = 4; order <= 6; ++order) {
             auto classifiedPaths = extractAndClassifyPaths(mol, order, false);
@@ -7293,8 +7291,6 @@ std::vector<double> calcAllChiDescriptors(const RDKit::ROMol& mol) {
 std::vector<double> calcRNCG_RPCG(const RDKit::ROMol& mol){
         // subclass of CPSA using only 2D descriptors available in Mordred v1
          std::unique_ptr<RDKit::ROMol> hmol(RDKit::MolOps::addHs(mol));
-
-        size_t numAtoms = hmol->getNumAtoms();
 
         double maxpos = 0;
         double maxneg = 0;
@@ -7695,8 +7691,8 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
     std::vector<double> calcAutoCorrelation(const RDKit::ROMol &mol) {
         std::unique_ptr<RDKit::ROMol> hmol(RDKit::MolOps::addHs(mol));
         double *dist = RDKit::MolOps::getDistanceMat(*hmol, false);  // Topological matrix
-        unsigned int numAtoms = hmol->getNumAtoms();
-        unsigned int numProperties = 12;
+        const unsigned int numAtoms = hmol->getNumAtoms();
+        const unsigned int numProperties = 12;
         // Lookup tables
         std::map<int, double> vdwmap = VdWAtomicMap();
         std::map<int, double> semap = SandersonENAtomicMap();
@@ -7755,20 +7751,20 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
 
         // Centered property values
         std::vector<std::vector<double>> centeredProperties(numProperties, std::vector<double>(numAtoms, 0.0));
-        for (int t = 0; t < numProperties; ++t) {
+        for (unsigned int t = 0; t < numProperties; ++t) {
             double sum = 0.0;
-            for (int i = 0; i < numAtoms; ++i) {
+            for (unsigned int i = 0; i < numAtoms; ++i) {
                 sum += propertyMatrix[t][i];
             }
             double mean = sum / numAtoms;
-            for (int i = 0; i < numAtoms; ++i) {
+            for (unsigned int i = 0; i < numAtoms; ++i) {
                 centeredProperties[t][i] = propertyMatrix[t][i] - mean;
             }
         }
 
         // Lag 0: self-correlations
-        for (int t = 0; t < numProperties; ++t) {
-            for (int i = 0; i < numAtoms; ++i) {
+        for (unsigned int t = 0; t < numProperties; ++t) {
+            for (unsigned int i = 0; i < numAtoms; ++i) {
                 if (t >0) {
                     // we skip Charges
                     ATS_[0][t-1] += propertyMatrix[t][i] * propertyMatrix[t][i];
@@ -7787,11 +7783,11 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
         // Lags 1 to maxLag: pairwise correlations
         for (int k = 1; k <= maxDistance; ++k) {
             int maxkVertexPairs = 0;
-            for (int i = 0; i < numAtoms; ++i) {
-                for (int j = i + 1; j < numAtoms; ++j) {
+            for (unsigned int i = 0; i < numAtoms; ++i) {
+                for (unsigned int j = i + 1; j < numAtoms; ++j) {
                     if (distanceMatrix[i][j] == k) {
                         ++maxkVertexPairs;
-                        for (int t = 0; t < numProperties; ++t) {
+                        for (unsigned int t = 0; t < numProperties; ++t) {
                             double diff = propertyMatrix[t][i] - propertyMatrix[t][j];
                             if (t>0) {
                                 ATS_[k][t-1] += propertyMatrix[t][i] * propertyMatrix[t][j];
@@ -7804,7 +7800,7 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
             }
 
             if (maxkVertexPairs > 0) {
-                for (int t = 0; t < numProperties; ++t) {
+                for (unsigned int t = 0; t < numProperties; ++t) {
                     if (t>0) {
                         AATS_[k][t-1] = ATS_[k][t-1] / maxkVertexPairs;
                     }
@@ -7823,8 +7819,8 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
 
         // Flatten the descriptors into a single vector
         for (const auto& vec : {ATS_, AATS_}) {
-            for (int t = 0; t < numProperties-1; ++t) {
-                for (int k = 0; k <= maxDistance; ++k) {
+            for (unsigned int t = 0; t < numProperties-1; ++t) {
+                for (unsigned int k = 0; k <= maxDistance; ++k) {
                     descriptors.push_back(vec[k][t]);
                 }
             }
@@ -7833,8 +7829,8 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
 
         // Flatten the descriptors into a single vector
         for (const auto& vec : { ATSC, AATSC}) {
-            for (int t = 0; t < numProperties; ++t) {
-                for (int k = 0; k <= maxDistance; ++k) {
+            for (unsigned int t = 0; t < numProperties; ++t) {
+                for (unsigned int k = 0; k <= maxDistance; ++k) {
                     descriptors.push_back(vec[k][t]);
                 }
             }
@@ -7842,8 +7838,8 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
 
         // Flatten the descriptors into a single vector
         for (const auto& vec : { MATS, GATS}) {
-            for (int t = 0; t < numProperties; ++t) {
-                for (int k = 1; k <= maxDistance; ++k) {
+            for (unsigned int t = 0; t < numProperties; ++t) {
+                for (unsigned int k = 1; k <= maxDistance; ++k) {
                     descriptors.push_back(vec[k][t]);
                 }
             }
@@ -8240,7 +8236,7 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
         }
 
 
-        for (int i=0; i<nKeys+1; i++) {
+        for (unsigned int i=0; i<nKeys+1; i++) {
             if (minBES[i]==99999) {
                 minBES[i] = 0.;
             }
@@ -8498,7 +8494,7 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
 
     // Main pipeline
     std::map<int, std::vector<std::vector<int>>>  computePipeline(RDKit::RWMol& mol, int maxRadius, bool addDeadKeys = false) {
-        int nAtoms = mol.getNumAtoms();
+        int nAtoms = rdcast<int>(mol.getNumAtoms());
 
         if (nAtoms == 0) {
             std::cerr << "Error: Molecule has no atoms." << std::endl;
@@ -8784,7 +8780,7 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
             std::vector<double> w(data[1].size(),0.);
 
 
-            for (int j=0; j < data[1].size(); j++) {
+            for (unsigned int j=0; j < data[1].size(); j++) {
                 w[j] = tbl->getAtomicWeight(data[1][j]); // catch Atomic mass
             }
 
@@ -8886,8 +8882,8 @@ std::vector<double> TIn(const RDKit::ROMol &mol, const std::vector<double> b) {
     double ti3 = std::accumulate(b.begin(), b.end(), 0.0, [](double acc, double yi) { return acc + std::sqrt(yi); });
 
     double ti4 = 0;
-    for (int i = 0; i < b.size(); ++i) {
-        for (int j = 0; j < i; ++j) {
+    for (unsigned int i = 0; i < b.size(); ++i) {
+        for (unsigned int j = 0; j < i; ++j) {
             const auto* bond = mol.getBondBetweenAtoms(i, j);
             if (bond != nullptr) {
                 ti4 += std::pow(b[i] * b[j], -0.5);
@@ -8942,7 +8938,7 @@ std::vector<double> TIn(const RDKit::ROMol &mol, const std::vector<double> b, in
 // triplet AN*x = V :  S,V,Z,I,N
 std::vector<double> calcANMat(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
     double* Mat = RDKit::MolOps::getAdjacencyMatrix(mol, false, false, false, "NoBO");
@@ -8961,7 +8957,6 @@ std::vector<double> calcANMat(const RDKit::ROMol &mol) {
     // Modify diagonal to include atomic numbers
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
         adjMatVec[i * nAtoms + i] = static_cast<double>(nAtoms); // Atomic number on diagonal  == Z
     }
     int n = nAtoms, nrhs = 5;
@@ -8999,7 +8994,7 @@ std::vector<double> calcANMat(const RDKit::ROMol &mol) {
 // triplet AZ*x = V : V,S,N
 std::vector<double> calcAZMat(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
     double* Mat = RDKit::MolOps::getAdjacencyMatrix(mol, false, false, false, "NoBO");
@@ -9054,7 +9049,7 @@ std::vector<double> calcAZMat(const RDKit::ROMol &mol) {
 // triplet AS*x = V: N,V,Z,I
 std::vector<double> calcASMat(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
     double* Mat = RDKit::MolOps::getAdjacencyMatrix(mol, false, false, false, "NoBO");
@@ -9109,7 +9104,7 @@ std::vector<double> calcASMat(const RDKit::ROMol &mol) {
 // triplet DS*x = V: V,I,N,Z
 std::vector<double> calcDSMat(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     std::vector<double> DistMatVec(nAtoms * nAtoms, 0.0); // "D"
     double* distances = MolOps::getDistanceMat(mol, false, false, false); // no need for "Bond order"
@@ -9162,7 +9157,7 @@ std::vector<double> calcDSMat(const RDKit::ROMol &mol) {
 // triplet DN2*x = V: S,I,N,Z
 std::vector<double> calcDN2Mat(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     std::vector<double> DistMatVec(nAtoms * nAtoms, 0.0); // "D"
     double* distances = MolOps::getDistanceMat(mol, false, false, false); // no need for "Bond order"
@@ -9218,7 +9213,7 @@ std::vector<double> calcDN2Mat(const RDKit::ROMol &mol) {
 
 std::vector<double> calcAZV(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
     double* Mat = RDKit::MolOps::getAdjacencyMatrix(mol, false, false, false, "NoBO");
@@ -9261,7 +9256,7 @@ std::vector<double> calcAZV(const RDKit::ROMol &mol) {
 
 std::vector<double> calcASV(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
@@ -9292,7 +9287,7 @@ std::vector<double> calcASV(const RDKit::ROMol &mol) {
         V[i] = static_cast<double>(atom->getDegree());   // Degree of the atom  == V
     }
 
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
+    int n = nAtoms;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(adjMatVec);
@@ -9311,7 +9306,7 @@ std::vector<double> calcASV(const RDKit::ROMol &mol) {
 
 std::vector<double> calcDSV(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> DistMatVec(nAtoms * nAtoms, 0.0); // "D"
@@ -9334,15 +9329,13 @@ std::vector<double> calcDSV(const RDKit::ROMol &mol) {
         V[i] = static_cast<double>(atom->getDegree());   // Degree of the atom  == V
     }
 
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
-
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(DistMatVec);
 
     std::vector<double> b(V);
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9352,7 +9345,7 @@ std::vector<double> calcDSV(const RDKit::ROMol &mol) {
 
 std::vector<double> calcAZS(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
@@ -9381,8 +9374,6 @@ std::vector<double> calcAZS(const RDKit::ROMol &mol) {
         //V[i] = static_cast<double>(atom->getDegree());   // Degree of the atom  == V
     }
 
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
-
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(adjMatVec);
 
@@ -9390,7 +9381,7 @@ std::vector<double> calcAZS(const RDKit::ROMol &mol) {
 
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9400,7 +9391,7 @@ std::vector<double> calcAZS(const RDKit::ROMol &mol) {
 
 std::vector<double> calcASZ(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
@@ -9429,15 +9420,13 @@ std::vector<double> calcASZ(const RDKit::ROMol &mol) {
         V[i] = static_cast<double>(atom->getAtomicNum());   // Z
     }
 
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
-
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(adjMatVec);
 
     std::vector<double> b(V); // Z
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9448,7 +9437,7 @@ std::vector<double> calcASZ(const RDKit::ROMol &mol) {
 
 std::vector<double> calcDN2S(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> DistMatVec(nAtoms * nAtoms, 0.0); // D
@@ -9466,12 +9455,9 @@ std::vector<double> calcDN2S(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
         DistMatVec[i * nAtoms + i] = nAtoms*nAtoms; // N2
         //V[i] = static_cast<double>(atom->getDegree());   // Degree of the atom  == V
     }
-
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(DistMatVec);
@@ -9479,7 +9465,7 @@ std::vector<double> calcDN2S(const RDKit::ROMol &mol) {
     std::vector<double> b(DistSum); // S
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9489,7 +9475,7 @@ std::vector<double> calcDN2S(const RDKit::ROMol &mol) {
 
 std::vector<double> calcDN2I(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> DistMatVec(nAtoms * nAtoms, 0.0); // D
@@ -9501,12 +9487,9 @@ std::vector<double> calcDN2I(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
         DistMatVec[i * nAtoms + i] = nAtoms*nAtoms; // N2
         V[i] = static_cast<double>(1);   // I
     }
-
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(DistMatVec);
@@ -9514,7 +9497,7 @@ std::vector<double> calcDN2I(const RDKit::ROMol &mol) {
     std::vector<double> b(V); // I
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9526,7 +9509,7 @@ std::vector<double> calcDN2I(const RDKit::ROMol &mol) {
 
 std::vector<double> calcASI(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
@@ -9550,20 +9533,17 @@ std::vector<double> calcASI(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
         adjMatVec[i * nAtoms + i] = static_cast<double>(DistSum[i] ); // S
         V[i] = static_cast<double>(1);   // I
     }
 
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
-
-    // Copy the adjacency matrix into a working buffer
+     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(adjMatVec);
 
     std::vector<double> b(V); // Z
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9573,7 +9553,7 @@ std::vector<double> calcASI(const RDKit::ROMol &mol) {
 
 std::vector<double> calcDSI(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> DistMatVec(nAtoms * nAtoms, 0.0); // "D"
@@ -9591,12 +9571,9 @@ std::vector<double> calcDSI(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
         DistMatVec[i * nAtoms + i] = static_cast<double>(DistSum[i]); // Distance Sum == S
         V[i] = static_cast<double>(1);   // I
     }
-
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(DistMatVec);
@@ -9604,7 +9581,7 @@ std::vector<double> calcDSI(const RDKit::ROMol &mol) {
     std::vector<double> b(V);
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9616,7 +9593,7 @@ std::vector<double> calcDSI(const RDKit::ROMol &mol) {
 
 std::vector<double> calcASN(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
@@ -9640,12 +9617,9 @@ std::vector<double> calcASN(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
         adjMatVec[i * nAtoms + i] = static_cast<double>(DistSum[i] ); // S
         V[i] = static_cast<double>(nAtoms);   // N
     }
-
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(adjMatVec);
@@ -9654,7 +9628,7 @@ std::vector<double> calcASN(const RDKit::ROMol &mol) {
     bool success = false;
 
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9664,7 +9638,7 @@ std::vector<double> calcASN(const RDKit::ROMol &mol) {
 
 std::vector<double> calcDSN(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> DistMatVec(nAtoms * nAtoms, 0.0); // "D"
@@ -9682,12 +9656,9 @@ std::vector<double> calcDSN(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
         DistMatVec[i * nAtoms + i] = static_cast<double>(DistSum[i]); // Distance Sum == S
         V[i] = static_cast<double>(nAtoms);   // N
     }
-
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(DistMatVec);
@@ -9695,8 +9666,7 @@ std::vector<double> calcDSN(const RDKit::ROMol &mol) {
     std::vector<double> b(V);
     bool success = false;
 
-
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9707,7 +9677,7 @@ std::vector<double> calcDSN(const RDKit::ROMol &mol) {
 
 std::vector<double> calcDN2N(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> DistMatVec(nAtoms * nAtoms, 0.0); // D
@@ -9719,12 +9689,9 @@ std::vector<double> calcDN2N(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
         DistMatVec[i * nAtoms + i] = nAtoms*nAtoms; // N2
         V[i] = static_cast<double>(nAtoms);   // N
     }
-
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(DistMatVec);
@@ -9732,7 +9699,7 @@ std::vector<double> calcDN2N(const RDKit::ROMol &mol) {
     std::vector<double> b(V); // I
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9744,7 +9711,7 @@ std::vector<double> calcDN2N(const RDKit::ROMol &mol) {
 
 std::vector<double> calcANS(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
@@ -9768,12 +9735,9 @@ std::vector<double> calcANS(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
         adjMatVec[i * nAtoms + i] = static_cast<double>( nAtoms ); // N
         V[i] = static_cast<double>(DistSum[i] );   // S
     }
-
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(adjMatVec);
@@ -9781,7 +9745,7 @@ std::vector<double> calcANS(const RDKit::ROMol &mol) {
     std::vector<double> b(V); // Z
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9793,7 +9757,7 @@ std::vector<double> calcANS(const RDKit::ROMol &mol) {
 
 std::vector<double> calcANV(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
@@ -9812,8 +9776,6 @@ std::vector<double> calcANV(const RDKit::ROMol &mol) {
         V[i] = static_cast<double>( atom->getDegree() );   //  V
     }
 
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
-
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(adjMatVec);
 
@@ -9821,7 +9783,7 @@ std::vector<double> calcANV(const RDKit::ROMol &mol) {
 
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9831,7 +9793,7 @@ std::vector<double> calcANV(const RDKit::ROMol &mol) {
 
 std::vector<double> calcAZN(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
@@ -9843,12 +9805,10 @@ std::vector<double> calcAZN(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
+      const auto* atom = mol.getAtomWithIdx(i);
         adjMatVec[i * nAtoms + i] = static_cast<double>(atom->getAtomicNum()); // Z
         V[i] = static_cast<double>(nAtoms);   //  N
     }
-
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(adjMatVec);
@@ -9856,7 +9816,7 @@ std::vector<double> calcAZN(const RDKit::ROMol &mol) {
     std::vector<double> b(V); // N
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9867,7 +9827,7 @@ std::vector<double> calcAZN(const RDKit::ROMol &mol) {
 
 std::vector<double> calcANZ(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
@@ -9886,8 +9846,6 @@ std::vector<double> calcANZ(const RDKit::ROMol &mol) {
         V[i] = static_cast<double>(atom->getAtomicNum());   // Z
     }
 
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
-
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(adjMatVec);
 
@@ -9895,7 +9853,7 @@ std::vector<double> calcANZ(const RDKit::ROMol &mol) {
     bool success = false;
 
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9907,7 +9865,7 @@ std::vector<double> calcANZ(const RDKit::ROMol &mol) {
 
 std::vector<double> calcANI(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
@@ -9921,12 +9879,9 @@ std::vector<double> calcANI(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
         adjMatVec[i * nAtoms + i] = static_cast<double>(nAtoms); // N
         V[i] = static_cast<double>(1);   // I
     }
-
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(adjMatVec);
@@ -9934,7 +9889,7 @@ std::vector<double> calcANI(const RDKit::ROMol &mol) {
     std::vector<double> b(V); // I
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9946,7 +9901,7 @@ std::vector<double> calcANI(const RDKit::ROMol &mol) {
 
 std::vector<double> calcDSZ(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> DistMatVec(nAtoms * nAtoms, 0.0); // "D"
@@ -9969,15 +9924,13 @@ std::vector<double> calcDSZ(const RDKit::ROMol &mol) {
         V[i] = static_cast<double>(atom->getAtomicNum());   // Z
     }
 
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
-
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(DistMatVec);
 
     std::vector<double> b(V);
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -9988,7 +9941,7 @@ std::vector<double> calcDSZ(const RDKit::ROMol &mol) {
 
 std::vector<double> calcANN(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> adjMatVec(nAtoms * nAtoms, 0.0); // A
@@ -10002,12 +9955,9 @@ std::vector<double> calcANN(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
         adjMatVec[i * nAtoms + i] = static_cast<double>(nAtoms); // N
         V[i] = static_cast<double>(nAtoms);   // N
     }
-
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(adjMatVec);
@@ -10015,7 +9965,7 @@ std::vector<double> calcANN(const RDKit::ROMol &mol) {
     std::vector<double> b(V); // I
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
@@ -10026,7 +9976,7 @@ std::vector<double> calcANN(const RDKit::ROMol &mol) {
 
 std::vector<double> calcDN2Z(const RDKit::ROMol &mol) {
 
-    int nAtoms = mol.getNumAtoms();
+    int nAtoms = rdcast<int>(mol.getNumAtoms());
 
     // Use RDKit's built-in function to get the adjacency matrix
     std::vector<double> DistMatVec(nAtoms * nAtoms, 0.0); // "D"
@@ -10044,12 +9994,10 @@ std::vector<double> calcDN2Z(const RDKit::ROMol &mol) {
     std::vector<double> V(nAtoms, 0.0);
 
     for (int i = 0; i < nAtoms; ++i) {
-        const auto* atom = mol.getAtomWithIdx(i);
+      const auto* atom = mol.getAtomWithIdx(i);
         DistMatVec[i * nAtoms + i] = static_cast<double>(nAtoms*nAtoms); // Distance Sum == S
         V[i] = static_cast<double>(atom->getAtomicNum());   // Z
     }
-
-    int n = nAtoms, nrhs = 1, lda = n, ldb = n, info;
 
     // Copy the adjacency matrix into a working buffer
     std::vector<double> A_flat(DistMatVec);
@@ -10057,7 +10005,7 @@ std::vector<double> calcDN2Z(const RDKit::ROMol &mol) {
     std::vector<double> b(V);
     bool success = false;
 
-    solveLinearSystem(mol, A_flat, b, n, 1, success);
+    solveLinearSystem(mol, A_flat, b, nAtoms, 1, success);
 
     if (!success) {return {0.,0.,0.,0.,0.};}
 
