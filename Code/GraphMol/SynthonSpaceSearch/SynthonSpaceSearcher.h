@@ -48,7 +48,7 @@ class SynthonSpaceSearcher {
   virtual ~SynthonSpaceSearcher() = default;
 
   SearchResults search();
-  void searchIterated(SearchResultCallback cb);
+  void search(const SearchResultCallback &cb);
 
   SynthonSpace &getSpace() const { return d_space; }
   const ROMol &getQuery() const { return d_query; }

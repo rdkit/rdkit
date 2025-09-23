@@ -51,7 +51,7 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
 }
 
 
-void SynthonSpaceSearcher::searchIterated(SearchResultCallback cb) {
+void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
   bool timedOut = false;
   const TimePoint *endTime = nullptr;
   auto fragments = details::splitMolecule(

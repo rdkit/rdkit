@@ -122,7 +122,7 @@ static void substructureSearch_helper3(
       return false;
     };
 
-  self.substructureSearchIterated(query, callback, smParams, params);
+  self.substructureSearch(query, callback, smParams, params);
 }
 
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper(

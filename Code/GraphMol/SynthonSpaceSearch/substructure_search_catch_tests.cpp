@@ -158,7 +158,7 @@ TEST_CASE("S Amide 1") {
       }
       return false;
   };
-  synthonspace.substructureSearchIterated(*queryMol, cb, matchParams, params);
+  synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
   CHECK(resSmi == enumSmi);
 }
 
