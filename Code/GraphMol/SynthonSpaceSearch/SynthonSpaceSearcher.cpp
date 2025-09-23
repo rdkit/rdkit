@@ -102,7 +102,7 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
   }
 
   // Do any remaining.
-  if (hitCount < d_params.maxHits && !toTry.empty()) {
+  if ((d_params.maxHits == -1 || hitCount < d_params.maxHits) && !toTry.empty()) {
     std::vector<std::unique_ptr<ROMol>> partResults;
     processToTrySet(toTry, endTime, partResults);
     cb(partResults);
