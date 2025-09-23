@@ -106,7 +106,7 @@ TEST_CASE("RASCAL Small tests") {
       for (auto& r : results) cbSmis.insert(MolToSmiles(*r));
       return false;
     };
-    synthonspace.rascalSearch(*queryMol, cb, rascalOptions, params);
+    synthonspace.rascalSearch(*queryMol, rascalOptions, cb, params);
     CHECK(resSmis == cbSmis);
 
     // Do the enumerated library, just to check

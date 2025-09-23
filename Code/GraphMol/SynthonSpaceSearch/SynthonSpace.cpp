@@ -195,8 +195,8 @@ SearchResults SynthonSpace::rascalSearch(
 
 void SynthonSpace::rascalSearch(
     const ROMol &query,
-    const SearchResultCallback &cb,
     const RascalMCES::RascalOptions &rascalOptions,
+    const SearchResultCallback &cb,
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceRascalSearcher ssss(query, rascalOptions, params, *this);

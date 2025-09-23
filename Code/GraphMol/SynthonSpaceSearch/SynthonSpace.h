@@ -290,8 +290,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    */
   void rascalSearch(
       const ROMol &query, 
-      const SearchResultCallback &callback,
       const RascalMCES::RascalOptions &rascalOptions,
+      const SearchResultCallback &callback,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
   /*!
    *
