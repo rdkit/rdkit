@@ -537,6 +537,17 @@ TEST_CASE("custom feature points") {
     auto shape2 = PrepareConformer(*m1, -1, opts2);
     CHECK(shape2.coord.size() == 18);
 
+    {
+      // confirm that we don't add the features if useColors is false
+      ShapeInputOptions topts;
+      topts.customFeatures = {
+          {1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
+          {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
+      topts.useColors = false;
+      auto tshape = PrepareConformer(*m1, -1, topts);
+      CHECK(tshape.coord.size() == 12);
+    }
+
     // we'll swap the features on the second shape so that the alignment has to
     // be inverted
     ShapeInputOptions opts3;

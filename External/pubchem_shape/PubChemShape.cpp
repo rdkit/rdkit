@@ -408,7 +408,12 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
 
   // Start with the arrays as large as they will possibly have to be.
   // They will be re-sized later.
-  unsigned int nAlignmentAtoms = nAtoms + feature_idx_type.size();
+  unsigned int nAlignmentAtoms = nAtoms;
+  if (shapeOpts.customFeatures.empty()) {
+    nAlignmentAtoms += feature_idx_type.size();
+  } else {
+    nAlignmentAtoms += shapeOpts.customFeatures.size();
+  }
   std::vector<double> rad_vector(nAlignmentAtoms);
   res.atom_type_vector.resize(nAlignmentAtoms, 0);
 
@@ -427,7 +432,7 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
   if (shapeOpts.customFeatures.empty()) {
     extractFeatureCoords(conformer, nAtoms, nSelectedAtoms, feature_idx_type,
                          shapeOpts, ave, numFeatures, res, rad_vector);
-  } else {
+  } else if (shapeOpts.useColors) {
     extractCustomFeatureCoords(nSelectedAtoms, shapeOpts, ave, numFeatures, res,
                                rad_vector);
   }
