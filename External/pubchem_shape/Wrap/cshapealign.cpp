@@ -43,6 +43,17 @@ python::tuple alignMol(const RDKit::ROMol &ref, RDKit::ROMol &probe,
                     opt_param, max_preiters, max_postiters);
   return python::make_tuple(nbr_st, nbr_ct);
 }
+python::tuple alignMol3(const RDKit::ROMol &ref, RDKit::ROMol &probe,
+                        const ShapeInputOptions &refShapeOpts,
+                        const ShapeInputOptions &probeShapeOpts, int refConfId,
+                        int probeConfId, double opt_param,
+                        unsigned int max_preiters, unsigned int max_postiters) {
+  std::vector<float> matrix(12, 0.0);
+  auto [nbr_st, nbr_ct] =
+      AlignMolecule(ref, probe, matrix, refShapeOpts, probeShapeOpts, refConfId,
+                    probeConfId, opt_param, max_preiters, max_postiters);
+  return python::make_tuple(nbr_st, nbr_ct);
+}
 python::tuple alignMol2(const ShapeInput &ref, RDKit::ROMol &probe,
                         int probeConfId, bool useColors, double opt_param,
                         unsigned int max_preiters, unsigned int max_postiters,
@@ -92,31 +103,31 @@ ShapeInput *prepConf(const RDKit::ROMol &mol, int confId,
   }
   return new ShapeInput(PrepareConformer(mol, confId, opts));
 }
-void set_atomSubset(ShapeInputOptions &opts, const python::list &as) {
+void set_atomSubset(ShapeInputOptions &opts, const python::object &as) {
   pythonObjectToVect<unsigned int>(as, opts.atomSubset);
 }
 
-python::list get_atomSubset(const ShapeInputOptions &opts) {
+python::tuple get_atomSubset(const ShapeInputOptions &opts) {
   python::list py_list;
   for (const auto &val : opts.atomSubset) {
     py_list.append(val);
   }
-  return py_list;
+  return python::tuple(py_list);
 }
 
-void set_notColorAtoms(ShapeInputOptions &opts, const python::list &nca) {
+void set_notColorAtoms(ShapeInputOptions &opts, const python::object &nca) {
   pythonObjectToVect<unsigned int>(nca, opts.notColorAtoms);
 }
 
-python::list get_notColorAtoms(const ShapeInputOptions &opts) {
+python::tuple get_notColorAtoms(const ShapeInputOptions &opts) {
   python::list py_list;
   for (const auto &val : opts.notColorAtoms) {
     py_list.append(val);
   }
-  return py_list;
+  return python::tuple(py_list);
 }
 
-void set_atomRadii(ShapeInputOptions &opts, const python::list &ar) {
+void set_atomRadii(ShapeInputOptions &opts, const python::object &ar) {
   int len = python::len(ar);
   opts.atomRadii.resize(len);
   for (int i = 0; i < len; i++) {
@@ -126,15 +137,15 @@ void set_atomRadii(ShapeInputOptions &opts, const python::list &ar) {
   }
 }
 
-python::list get_atomRadii(const ShapeInputOptions &opts) {
+python::tuple get_atomRadii(const ShapeInputOptions &opts) {
   python::list py_list;
   for (const auto &val : opts.atomRadii) {
     py_list.append(python::make_tuple(static_cast<int>(val.first), val.second));
   }
-  return py_list;
+  return python::tuple(py_list);
 }
 
-void set_shapeShift(ShapeInput &shp, const python::list &s) {
+void set_shapeShift(ShapeInput &shp, const python::object &s) {
   pythonObjectToVect<double>(s, shp.shift);
 }
 python::list get_shapeShift(const ShapeInput &shp) {
@@ -144,6 +155,31 @@ python::list get_shapeShift(const ShapeInput &shp) {
   }
   return py_list;
 }
+
+void set_customFeatures(ShapeInputOptions &shp, const python::object &s) {
+  shp.customFeatures.clear();
+  auto len = python::len(s);
+  shp.customFeatures.reserve(len);
+  for (auto i = 0u; i < len; ++i) {
+    const auto elem = s[i];
+    unsigned int featType = python::extract<unsigned int>(elem[0]);
+    RDGeom::Point3D pos = python::extract<RDGeom::Point3D>(elem[1]);
+    double radius = python::extract<double>(elem[2]);
+    shp.customFeatures.emplace_back(featType, pos, radius);
+  }
+}
+python::tuple get_customFeatures(const ShapeInputOptions &shp) {
+  python::list py_list;
+  for (const auto &val : shp.customFeatures) {
+    python::list elem;
+    elem.append(static_cast<int>(std::get<0>(val)));
+    elem.append(std::get<1>(val));
+    elem.append(std::get<2>(val));
+    py_list.append(python::tuple(elem));
+  }
+  return python::tuple(py_list);
+}
+
 }  // namespace helpers
 
 void wrap_pubchemshape() {
@@ -174,6 +210,9 @@ void wrap_pubchemshape() {
           "atomRadii", &helpers::get_atomRadii, &helpers::set_atomRadii,
           "Non-standard radii to use for the atoms specified by their indices"
           " in the molecule.  A list of tuples of [int, float].")
+      .add_property("customFeatures", &helpers::get_customFeatures,
+                    &helpers::set_customFeatures,
+                    "Custom features for the shape.")
       .def("__setattr__", &safeSetattr);
 
   python::def(
@@ -196,6 +235,44 @@ probeConfId : int, optional
     Probe conformer ID (default is -1)
 useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
+opt_param : float, optional
+    Balance of shape and color for optimization.
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape
+max_preiters : int, optional
+    In the two phase optimization, the maximum iterations done on all poses.
+max_postiters : int, optional
+    In the two phase optimization, the maximum iterations during the second phase on
+    only the best poses from the first phase
+
+
+Returns
+-------
+ 2-tuple of doubles
+    The results are (shape_score, color_score)
+    The color_score is zero if useColors is False)DOC");
+
+  python::def(
+      "AlignMol", &helpers::alignMol3,
+      (python::arg("ref"), python::arg("probe"), python::arg("refShapeOpts"),
+       python::arg("probeShapeOpts"), python::arg("refConfId") = -1,
+       python::arg("probeConfId") = -1, python::arg("opt_param") = 1.0,
+       python::arg("max_preiters") = 10, python::arg("max_postiters") = 30),
+      R"DOC(Aligns a probe molecule to a reference molecule. The probe is modified.
+
+Parameters
+----------
+ref : RDKit.ROMol
+    Reference molecule
+probe : RDKit.ROMol
+    Probe molecule
+refShapeOpts : ShapeInputOptions
+    Options for constructing the shape for the reference molecule
+probeShapeOpts : ShapeInputOptions
+    Options for constructing the shape for the probe molecule
+refConfId : int, optional
+    Reference conformer ID (default is -1)
+probeConfId : int, optional
+    Probe conformer ID (default is -1)
 opt_param : float, optional
     Balance of shape and color for optimization.
     0 is only color, 0.5 is equal weight, and 1.0 is only shape
