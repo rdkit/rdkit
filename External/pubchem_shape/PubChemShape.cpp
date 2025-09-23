@@ -583,6 +583,12 @@ std::pair<double, double> AlignMolecule(
     double opt_param, unsigned int max_preiters, unsigned int max_postiters) {
   Align3D::setUseCutOff(true);
 
+  if (refShapeOpts.useColors != probeShapeOpts.useColors) {
+    BOOST_LOG(rdWarningLog)
+        << "useColor values inconsistent between the reference and fit molecules. Colors will not be used in the alignment."
+        << std::endl;
+  }
+
   DEBUG_MSG("Reference details:");
   auto refShape = PrepareConformer(ref, refConfId, refShapeOpts);
   bool applyRefShift = true;
