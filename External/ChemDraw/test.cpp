@@ -1429,13 +1429,18 @@ TEST_CASE("github8761") {
   SECTION("Failing Patents") {
     std::filesystem::path patents(path + "patents");
     for (auto &entry : std::filesystem::directory_iterator(patents)) {
-      std::cerr << "************************************************"
-                << std::endl;
-      std::cerr << entry.path().generic_string() << std::endl;
       ChemDrawParserParams params;
       params.sanitize = false;
       auto mols = MolsFromChemDrawFile(entry.path().generic_string(), params);
-      REQUIRE(mols.size() >=0);
+      // we just don't want a crash
+
+      std::
+          string block;
+      std::fstream chemdrawfile(entry.path(), std::ios::in | std::ios::binary);
+      std::stringstream buffer;
+      buffer << chemdrawfile.rdbuf();
+      mols = MolsFromChemDrawBlock(buffer.str(), params);
+      // we just don't want a crash
     }
   }
 }
