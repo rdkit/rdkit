@@ -109,18 +109,24 @@ struct FragmentReplacement {
     // Find the connecting atoms and and do the replacement
     for (auto bond : mol.atomBonds(replacement_atom)) {
       // find the position of the attachement bonds in the bond ordering
-      auto bond_id = bond->getProp<unsigned int>(CDX_BOND_ID);
+      unsigned bond_id = 0;
+      if (!bond->getPropIfPresent<unsigned int>(CDX_BOND_ID, bond_id)) {
+        BOOST_LOG(rdWarningLog)
+            << "bond missing internal CDX BOND id, can't attach fragment at bond:"
+            << std::endl;
+        return false;
+      }
       auto it = std::find(bond_ordering.begin(), bond_ordering.end(), bond_id);
       if (it == bond_ordering.end()) return false;
       
       auto pos = std::distance(bond_ordering.begin(), it);
       
       if(pos < 0 || (size_t)pos >= fragment_atoms.size()) {
-	BOOST_LOG(rdWarningLog) << "bond ordering and number of atoms in fragment mismatch, can't attach fragment at bond:"
-				<< bond_id
-				<< std::endl;
+	    BOOST_LOG(rdWarningLog) << "bond ordering and number of atoms in fragment mismatch, can't attach fragment at bond:"
+				    << bond_id
+				    << std::endl;
 
-	return false;
+	    return false;
       }
       
       auto &xatom = fragment_atoms[pos];
