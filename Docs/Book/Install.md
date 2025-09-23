@@ -1,8 +1,36 @@
 # Installation
 
-Below a number of installation recipes is presented, with varying degree of complexity.
+Below a number of installation recipes are presented, with varying degree of complexity.
 
-## Cross-platform using Conda
+Here is a summary of the different options:
+1. **Installing rdkit with Conda:**
+This just downloads precompiled RDKit binaries from conda-forge.
+Fast and easy.
+But you can’t modify RDKit’s C++ code and recompile.
+Useful if you just want to use RDKit in Python, not contribute to its internals.
+
+2. **Build rdkit from source with Conda:**
+This is the one you want if you’re contributing C++ code.
+You still use conda to manage dependencies (Boost, Eigen, etc.)
+But you build RDKit yourself with cmake + make.
+It lets you edit C++ source and recompile/test locally.
+Recommended path for contributors.
+
+3. **Install rdkit with pip:**
+This downloads precompiled RDKit binaries from PyPI.
+
+4. **Install rdkit from package managers (Linux, OSX, Fedora, CentOS, RHEL):**
+Use your OS’s package manager to install precompiled RDKit binaries.
+
+5. **Build rdkit from source (without Conda):**
+A “manual” build: you install Boost/Eigen/etc. yourself (via apt/brew/vcpkg).
+More control, but more work.
+Only worth it if you don’t want conda at all.
+
+6. **PostgreSQL cartridge installation using Conda:**
+Install PostgreSQL and the RDKit cartridge in a conda environment.
+
+## 1. Installing rdkit with Conda
 
 ### Introduction to Conda
 
@@ -39,11 +67,11 @@ Windows users will use a slightly different command:
 C:\> activate my-rdkit-env
 ```
 
-### How to build from source with Conda
+## 2. Build from source with Conda
 
 For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit).
 
-#### macOS 10.12 (Sierra): Python 3 environment
+### macOS 10.12 (Sierra): Python 3 environment
 
 The following commands will create a development environment for macOS Sierra and Python 3. Download
 Miniconda3-latest-MacOSX-x86_64.sh from [Conda](http://conda.pydata.org/miniconda.html) and run these
@@ -84,12 +112,15 @@ RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" PYTHONPATH=$
 This is required due to the [System Integrity Protection SIP](https://en.wikipedia.org/wiki/System_Integrity_Protection)
 introduced in more recent macOS versions.
 
-#### Linux x86_64: Python 3 environment
+### Linux x86_64: Python 3 environment
 
 The following commands will create a development environment for Linux x86_64 and Python 3.
+Two modes are possible:
+- **Mode A:** Build with `RDK_INSTALL_INTREE=OFF` and `RDK_BUILD_PYTHON_WRAPPERS=ON`. This mode allows you to interactively modify the C++ code and test the changes via Python wrappers.
+- **Mode B:** Build with `RDK_INSTALL_INTREE=ON` and `RDK_BUILD_CPP_TESTS=ON`. This mode allows you to run the C++ tests and Python tests.
 
+For both modes some pre-requisites need to be installed first:
 Start by downloading the latest [miniforge installer](https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh) and installing it:
-
 ```
 bash Miniforge3-Linux-x86_64.sh
 ```
@@ -100,68 +131,65 @@ conda create -n rdkit_build -c conda-forge gxx_linux-64 cmake cairo pillow eigen
 ```
 
 At this point, you should be able to clone the RDKit repository to the desired build location, and start the build:
+
 ```
 git clone https://github.com/rdkit/rdkit.git
+```
+
+**Mode A:** This mode allows you to interactively modify the C++ code and test the changes via Python wrappers
+
+```
 cd rdkit
-mkdir build && cd build
+mkdir build_rdkit_conda && cd build_rdkit_conda
+cmake .. \
+  -DRDK_INSTALL_INTREE=OFF \
+  -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX \
+  -DPYTHON_EXECUTABLE=$CONDA_PREFIX/bin/python \
+  -DPYTHON_INCLUDE_DIR=$(python -c "from sysconfig import get_paths; print(get_paths()['include'])") \
+  -DPYTHON_LIBRARY=$(python -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")/libpython${PYTHON_VERSION%.*}.so \
+  -DRDK_BUILD_PYTHON_WRAPPERS=ON \
+  -DRDK_BUILD_CPP_TESTS=ON
+make -j$(nproc)
+make install
+conda activate rdkit_build
+```
+
+After these above steps you should be able to have a workflow like this:
+- Edit any .cpp/.h
+- Run `make -j$(nproc) && make install`
+- Immediately test in Python without touching PYTHONPATH
+
+
+**Mode B:** This mode allows you to run the C++ tests and Python tests
+
+```
+cd rdkit
+mkdir build_intree && cd build_intree
 cmake -DPy_ENABLE_SHARED=1 \
   -DRDK_INSTALL_INTREE=ON \
   -DRDK_INSTALL_STATIC_LIBS=OFF \
   -DRDK_BUILD_CPP_TESTS=ON \
   ..
+make -j$(nproc)
+make install
 ```
-
-And finally, `make`, `make install` and `ctest`
 
 The `ctest` build requires that the installation path (the root of the source tree with RDK_INSTALL_INTREE=ON as above) be set in the RDBASE environment variable, and that the location of the installed Python files and shared library files to use for the tests be properly specified. This can be done by setting environment variables for the ctest run as follows:
 
 ```
 RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH ctest
 ```
-
-
-### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
-
-Due to the conda python distribution being a different version to the system python, it is easiest to install PostgreSQL and the PostgreSQL python client via conda.
-
-With your environment activated, this is done simply by:
+You can also run python tests on any specific folder like this:
 
 ```
-conda install -c rdkit rdkit-postgresql
+cd rdkit/build_intree
+export RDBASE=$PWD/..
+export PYTHONPATH=$RDBASE
+export LD_LIBRARY_PATH=$PWD/lib:$LD_LIBRARY_PATH
+python3 -m unittest discover -s $RDBASE/Code/GraphMol/ForceFieldHelpers/Wrap -p "test*.py" -v
 ```
 
-The conda packages PostgreSQL version needs to be initialized by running the initdb command found in `[conda folder]/envs/my-rdkit-env/bin`
-
-```
-[conda folder]/envs/my-rdkit-env/bin/initdb -D /folder/where/data/should/be/stored
-```
-
-PostgreSQL can then be run from the terminal with the command:
-
-```
-[conda folder]/envs/my-rdkit-env/bin/postgres -D /folder/where/data/should/be/stored
-```
-
-For most use cases you will instead need to run PostgreSQL as a daemon, one way to do this is using supervisor. You can find out more and how to install supervisor [here](http://supervisord.org/). The required configuration file will look something like this:
-
-```
-[program:postgresql]
-command=[conda folder]/envs/my-rdkit-env/bin/postgres -D /folder/where/data/should/be/stored
-user=[your username]
-autorestart=true
-```
-
-Once PostgreSQL is up and running, all of the normal PostgreSQL commands can then be run when your conda environment is activated. Therefore to create a database you can run:
-
-```
-createdb my_rdkit_db
-psql my_rdkit_db
-# create extension rdkit;
-```
-
-If you are trying to use multiple installations of PostgreSQL in different environments, you will need to setup different pid files, unix sockets and ports by [editing the PostgreSQL config files](https://opensourcedbms.com/dbms/running-multiple-postgresql-9-2-instances-on-one-server-in-centos-6rhel-6fedora/). With the above configurations these files can be found in /folder/where/data/should/be/stored.
-
-## Cross-platform using PIP
+## 3. Cross-platform using PIP
 
 Linux, Windows, and macOS RDKit platform wheels are available at the [rdkit ](https://pypi.org/project/rdkit/) PyPi repository for all major Python versions. You can install RDKit using pip.
 
@@ -173,11 +201,9 @@ Build information and details can be found at the [https://github.com/kuelumbus/
 
 Note: Older versions of RDKit might be available at the [`rdkit-pypi`](https://pypi.org/project/rdkit-pypi/) PyPi repository. `rdkit-pypi` is the old name of RDKit at PyPi.
 
-## Linux and OS X
+## 4. Install rdkit from package managers (Linux, OSX, Fedora, CentOS, RHEL)
 
-### Installation from repositories
-
-#### Ubuntu 12.04 and later
+### Ubuntu 12.04 and later
 
 Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu repositories. To install:
 
@@ -185,16 +211,16 @@ Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu re
 $ sudo apt-get install python-rdkit librdkit1 rdkit-data
 ```
 
-#### Fedora, CentOS, and RHEL
+### Fedora, CentOS, and RHEL
 
 Thanks to Gianluca Sforna's work, binary RPMs for the RDKit are now part of the official Fedora repositories:
 https://admin.fedoraproject.org/pkgdb/package/rpms/rdkit/
 
-#### OS X
+### OS X
 
 Eddie Cao has produced a homebrew formula that can be used to easily build the RDKit [https://github.com/rdkit/homebrew-rdkit](https://github.com/rdkit/homebrew-rdkit)
 
-### Building from Source
+## 5. Build rdkit from Source (without Conda)
 
 Starting with the `2018_03` release, the RDKit core C++ code is written in modern C++; for this release that means C++11.
 This means that the compilers used to build it cannot be completely ancient. Here are the minimum tested versions:
@@ -203,7 +229,7 @@ This means that the compilers used to build it cannot be completely ancient. Her
 - clang v3.9: it may be that older versions of the compiler also work, but we haven't tested them.
 - Visual Studio 2015: it may be that older versions of the compiler also work, but we haven't tested them.
 
-#### Installing prerequisites from source
+### Installing prerequisites from source
 
 -   Required packages:
     - cmake. You need version 3.1 (or more recent). http://www.cmake.org if your linux distribution doesn't have an appropriate package.
@@ -217,7 +243,7 @@ This means that the compilers used to build it cannot be completely ancient. Her
 > for building with XCode4 on OS X there seems to be a problem with the version of numpy that comes with XCode4. Please see below in the (see faq) section for a workaround.
 
 
-##### Installing Boost
+#### Installing Boost
 
 If your linux distribution has a boost-devel package with a version >= 1.58 including the python and serialization libraries, you can use that and save yourself the steps below.
 
@@ -469,6 +495,50 @@ This section assumes that python is installed in `C:\Python36 that the boost lib
 
 -   cd to `C:\RDKit\build` and run ctest. Please note that if you have built in PostgreSQL support, the current logged in user needs to be a PostgreSQL user with database creation and superuser privileges, or the PostgreSQL test will fail. A convenient option to authenticate will be to set the `PGPASSWORD` environment variable to the PostgreSQL password of the current logged in user in the shell from which you are running ctest.
 -   You're done!
+
+
+
+### 6. Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
+
+Due to the conda python distribution being a different version to the system python, it is easiest to install PostgreSQL and the PostgreSQL python client via conda.
+
+With your environment activated, this is done simply by:
+
+```
+conda install -c rdkit rdkit-postgresql
+```
+
+The conda packages PostgreSQL version needs to be initialized by running the initdb command found in `[conda folder]/envs/my-rdkit-env/bin`
+
+```
+[conda folder]/envs/my-rdkit-env/bin/initdb -D /folder/where/data/should/be/stored
+```
+
+PostgreSQL can then be run from the terminal with the command:
+
+```
+[conda folder]/envs/my-rdkit-env/bin/postgres -D /folder/where/data/should/be/stored
+```
+
+For most use cases you will instead need to run PostgreSQL as a daemon, one way to do this is using supervisor. You can find out more and how to install supervisor [here](http://supervisord.org/). The required configuration file will look something like this:
+
+```
+[program:postgresql]
+command=[conda folder]/envs/my-rdkit-env/bin/postgres -D /folder/where/data/should/be/stored
+user=[your username]
+autorestart=true
+```
+
+Once PostgreSQL is up and running, all of the normal PostgreSQL commands can then be run when your conda environment is activated. Therefore to create a database you can run:
+
+```
+createdb my_rdkit_db
+psql my_rdkit_db
+# create extension rdkit;
+```
+
+If you are trying to use multiple installations of PostgreSQL in different environments, you will need to setup different pid files, unix sockets and ports by [editing the PostgreSQL config files](https://opensourcedbms.com/dbms/running-multiple-postgresql-9-2-instances-on-one-server-in-centos-6rhel-6fedora/). With the above configurations these files can be found in /folder/where/data/should/be/stored.
+
 
 ## License
 
