@@ -158,7 +158,8 @@ RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findAtomEnvironmentOfRadiusN(
     std::unordered_map<unsigned int, unsigned int> *atomMap = nullptr);
 
 BETTER_ENUM_CLASS(SubsetMethod, unsigned int,
-        BONDS_BETWEEN_ATOMS
+        BONDS_BETWEEN_ATOMS,
+        BOND_PATH
 );
 
 //!
