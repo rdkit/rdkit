@@ -45,8 +45,6 @@
 #include <GraphMol/Atom.h>
 #include <RDGeneral/export.h>
 #include <RDGeneral/types.h>
-#include <Eigen/Dense> // we should try to remove those...
-#include <GraphMol/PartialCharges/GasteigerCharges.h>
 
 
 #include <boost/graph/adjacency_list.hpp>
@@ -80,6 +78,8 @@
 #define lapack_complex_double std::complex<double>
 #endif
 
+#include <Eigen/Dense> // we should try to remove those...
+#include <GraphMol/PartialCharges/GasteigerCharges.h>
 #include <lapacke.h>
 #endif
 
