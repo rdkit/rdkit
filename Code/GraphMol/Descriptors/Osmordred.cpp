@@ -7300,7 +7300,7 @@ std::vector<double> calcRNCG_RPCG(const RDKit::ROMol& mol){
         double totalpos =0;
 
         computeGasteigerCharges(*hmol, 12, true);
-
+x
         for (auto &atom : hmol->atoms()) {
                 double ch = atom->getProp<double>(common_properties::_GasteigerCharge);
 
@@ -10098,7 +10098,6 @@ std::vector<double> calcDN2Z(const RDKit::ROMol &mol) {
         return retval;
     }
 #else
-  adsfadsf
 bool hasOsmordredSupport() {
     return false;
 }
