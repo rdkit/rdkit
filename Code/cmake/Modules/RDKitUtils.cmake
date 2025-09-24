@@ -338,9 +338,9 @@ function(createExportTestHeaders)
   "#endif\n"
   "// RDKIT_QUERY_EXPORT end definitions\n")
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_BINARY_DIR}/${exportPath}.tmp" "${CMAKE_CURRENT_SOURCE_DIR}/${exportPath}")
+    "${CMAKE_BINARY_DIR}/${exportPath}.tmp" "${RDKit_CodeDir}/${exportPath}")
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_BINARY_DIR}/${testPath}.tmp" "${CMAKE_CURRENT_SOURCE_DIR}/${testPath}")
+    "${CMAKE_BINARY_DIR}/${testPath}.tmp" "${RDKit_CodeDir}/${testPath}")
 endfunction(createExportTestHeaders)
 
 function(patchCoordGenMaeExportHeaders keyword path)
