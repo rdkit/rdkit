@@ -73,6 +73,7 @@
 #include <numeric>
 #include <stack>
 
+#ifdef RDK_BUILD_OSMORDRED_SUPPORT
 #if defined(_MSC_VER) && !defined(__clang__) && !defined(__INTEL_COMPILER)
 #include <complex>
 #define lapack_complex_float std::complex<float>
@@ -80,6 +81,7 @@
 #endif
 
 #include <lapacke.h>
+#endif
 
 // Define a custom hash function for std::pair<int, int>
 namespace std {
