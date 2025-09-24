@@ -119,6 +119,8 @@ Stephen, yuri@FreeBSD
  (github pull #8688 from ricrogz)
   - Assign COST=100 to PgSQL functions during CREATE FUNCTION rather than leaving unspecified
  (github issue #8711 from dpdoughe)
+  - Create a function to extract some specified atoms from a ROMol as a new ROMol by creating new graph
+ (github issue #8742 from whosayn)
   - Document Options in RGroupDcompose and other minor docs fixes
  (github pull #8757 from badisa)
   - Fix non matchine if(x) end(x) statement
