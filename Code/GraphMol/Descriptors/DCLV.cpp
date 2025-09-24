@@ -38,39 +38,42 @@ static bool checkExcludedAtoms(const Atom *atm, bool includeLigand) {
   // helper to check whether atom should be included
 
   const auto *info = atm->getMonomerInfo();
-
   if (info) {
     const std::string &resName =
         static_cast<const AtomPDBResidueInfo *>(info)->getResidueName();
 
     switch (resName[0]) {
       case 'D':
-        return resName == "DOD" || resName == "D20";
+        if (resName == "DOD" || resName == "D20")
+          return true;
       case 'H':
-        return resName == "HOH" || resName == "H20";
+        if (resName == "HOH" || resName == "H20")
+          return true;
       case 'S':
-        return resName == "SOL" || resName == "SO4" || resName == "SUL";
+        if (resName == "SOL" || resName == "SO4" || resName == "SUL")
+          return true;
       case 'W':
-        return resName == "WAT";
+        if (resName == "WAT")
+          return true;
       case 'T':
-        return resName == "TIP";
+        if (resName == "TIP")
+          return true;
       case 'P':
-        return resName == "P04";
-      default:
-        return false;
+        if (resName == "P04")
+          return true;
     }
 
     if (!includeLigand &&
         static_cast<const AtomPDBResidueInfo *>(info)->getIsHeteroAtom()) {
       return true;
-    }
+    } 
   }
 
   return false;
 }
 
-static bool includeInPSA(const Atom *atm, const ROMol &mol,
-                         bool includeSandP) {
+static bool includeAsPolar(const Atom *atm, const ROMol &mol,
+                         bool includeSandP, bool includeHs) {
   // using Peter Ertl definition, polar atoms = O, N, P, S and attached Hs
 
   switch (atm->getAtomicNum()) {
@@ -88,9 +91,13 @@ static bool includeInPSA(const Atom *atm, const ROMol &mol,
 
     // hydrogen
     case 1: {
-      for (const auto nbr : mol.atomNeighbors(atm)) {
-        if (includeInPSA(nbr, mol, includeSandP)) {
-          return true;
+      if (!includeHs) {
+        return false;
+      } else {
+        for (const auto nbr : mol.atomNeighbors(atm)) {
+          if (includeAsPolar(nbr, mol, includeSandP, includeHs)) {
+            return true;
+          }
         }
       }
       return false;
@@ -238,6 +245,7 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol &mol,
   */
 
   positions = mol.getConformer(confId).getPositions();
+  maxRadius = *std::max_element(radii_.begin(), radii_.end());
 
   // total x,y,z centres
   Point3D cXYZ;
@@ -400,10 +408,10 @@ double DoubleCubicLatticeVolume::getPartialSurfaceArea(
   return area;
 }
 
-double DoubleCubicLatticeVolume::getPolarSurfaceArea(bool includeSandP) {
+double DoubleCubicLatticeVolume::getPolarSurfaceArea(bool includeSandP, bool includeHs) {
   boost::dynamic_bitset<> polarAtoms(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
-    if (includeInPSA(atom, mol, includeSandP)) {
+    if (includeAsPolar(atom, mol, includeSandP, includeHs)) {
       polarAtoms.set(atom->getIdx());
     }
   }
@@ -521,10 +529,10 @@ double DoubleCubicLatticeVolume::getPartialVolume(
   return vol;
 }
 
-double DoubleCubicLatticeVolume::getPolarVolume(bool includeSandP) {
+double DoubleCubicLatticeVolume::getPolarVolume(bool includeSandP, bool includeHs) {
   boost::dynamic_bitset<> polarAtoms(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
-    if (includeInPSA(atom, mol, includeSandP)) {
+    if (includeAsPolar(atom, mol, includeSandP, includeHs)) {
       polarAtoms.set(atom->getIdx());
     }
   }

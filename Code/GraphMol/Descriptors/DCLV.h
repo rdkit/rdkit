@@ -51,7 +51,8 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   bool includeLigand = true;
   double probeRadius = 1.4;
   int confId = -1;
-  double maxRadius = 1.87;
+  double maxRadius = 1.7; // treat default max radius as Carbon
+
 
 DoubleCubicLatticeVolume(const ROMol &mol, std::vector<double> radii,
                          bool isProtein = false, bool includeLigand = true, 
@@ -71,7 +72,7 @@ DoubleCubicLatticeVolume(const ROMol &mol, std::vector<double> radii,
   double getSurfaceArea();
 
   /*! \return Polar Surface Area */
-  double getPolarSurfaceArea(bool includeSandP);
+  double getPolarSurfaceArea(bool includeSandP, bool includeHs);
 
   /*! \return Surface Area from specified atoms */
   double getPartialSurfaceArea(const boost::dynamic_bitset<> &incAtoms);
@@ -89,7 +90,7 @@ DoubleCubicLatticeVolume(const ROMol &mol, std::vector<double> radii,
   double getVDWVolume();
 
    /*! \return Polar Volume */
-  double getPolarVolume(bool includeSandP);
+  double getPolarVolume(bool includeSandP, bool includeHs);
 
   /*! \return Volume from specified atoms */
   double getPartialVolume(const boost::dynamic_bitset<> &incAtoms);
