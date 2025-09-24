@@ -28,9 +28,9 @@ rdkit_library(Descriptors
 	      Osmordred.cpp
               ${DESC3D_SOURCES}
               LINK_LIBRARIES DataStructs Fingerprints PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
-                 EigenSolvers RDGeneral ${LAPACK_LIBRARIES} ${LAPACKE_LIBRARIES} ${BLAS_LIBRARIES})
+                 EigenSolvers RDGeneral)
 target_compile_definitions(Descriptors PRIVATE RDKIT_DESCRIPTORS_BUILD)
-
+target_link_libraries(Descriptors PUBLIC ${LAPACK_LIBRARIES} ${LAPACKE_LIBRARIES} ${BLAS_LIBRARIES})
 rdkit_headers(Crippen.h BCUT.h Lipinski.h
               MolDescriptors.h
               MolSurf.h
