@@ -139,7 +139,7 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
     QueryAtom::QUERYATOM_QUERY *query = nullptr;
     AttribCombineOp how = it->first;
 
-    boost::shared_ptr<AttribType> attribPtr = it->second;
+    std::shared_ptr<AttribType> attribPtr = it->second;
     std::string attribName = attribPtr->first;
     boost::to_lower(attribName);
     std::string attribVal = attribPtr->second;
@@ -389,7 +389,7 @@ void parseBondAttribs(Bond *bond, AttribListType attribs, bool doingQuery) {
         throw SLNParseException("unrecognized query composition operator");
     }
 
-    boost::shared_ptr<AttribType> attribPtr = it->second;
+    std::shared_ptr<AttribType> attribPtr = it->second;
     std::string attribName = attribPtr->first;
     boost::to_lower(attribName);
     std::string attribVal = attribPtr->second;
@@ -452,7 +452,7 @@ void parseMolAttribs(ROMol *mol, AttribListType attribs) {
        ++it) {
     CHECK_INVARIANT(it->first == AttribAnd, "bad attrib type");
 
-    boost::shared_ptr<AttribType> attribPtr = it->second;
+    std::shared_ptr<AttribType> attribPtr = it->second;
     std::string attribName = attribPtr->first;
     boost::to_lower(attribName);
     std::string attribVal = attribPtr->second;

@@ -31,7 +31,7 @@ namespace detail {
 RData dummyHydrogenFingerprint(int label) {
   static RData fp = nullptr;
   if (fp == nullptr) {
-    fp = boost::make_shared<RGroupData>();
+    fp = std::make_shared<RGroupData>();
     auto mol = ROMOL_SPTR(SmilesToMol("*[H]"));
     std::vector<int> attachments{label};
     fp->add(mol, attachments);
