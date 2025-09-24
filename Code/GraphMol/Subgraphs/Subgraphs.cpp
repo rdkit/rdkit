@@ -793,8 +793,8 @@ static void copySelectedStereoGroups(RWMol &extracted_mol,
     SubsetMethod method) {
   const auto num_atoms = mol.getNumAtoms();
   SelectedAtomInfo selection_info{
-      .selected_atoms = std::vector<bool>(num_atoms),
-      .selected_bonds = std::vector<bool>(mol.getNumBonds()),
+      .selected_atoms = boost::dynamic_bitset<>(num_atoms),
+      .selected_bonds = boost::dynamic_bitset<>(mol.getNumBonds()),
       .atom_mapping = {},
       .bond_mapping = {}};
   if (method == SubsetMethod::BONDS_BETWEEN_ATOMS) {
