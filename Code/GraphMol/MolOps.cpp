@@ -41,6 +41,7 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
+#include "Subset.h"
 
 const int ci_LOCAL_INF = static_cast<int>(1e8);
 
@@ -664,7 +665,7 @@ std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
 }
 
 namespace {
-std::vector<std::unique_ptr<ROMol>> getTheFrags(
+  std::vector<std::unique_ptr<ROMol>> getTheFrags(
     const ROMol &mol, bool sanitizeFrags, INT_VECT *frags,
     VECT_INT_VECT *fragsMolAtomMapping, bool copyConformers) {
   std::unique_ptr<INT_VECT> mappingStorage;
@@ -674,6 +675,7 @@ std::vector<std::unique_ptr<ROMol>> getTheFrags(
   }
   int nFrags = getMolFrags(mol, *frags);
   std::vector<std::unique_ptr<RWMol>> res;
+  
   if (nFrags == 1) {
     res.emplace_back(new RWMol(mol));
     if (fragsMolAtomMapping) {
@@ -751,35 +753,15 @@ std::vector<std::unique_ptr<ROMol>> getTheFrags(
         // empirical. This is mainly intended to catch situations like proteins
         // where you have a bunch of single-atom fragments (waters); the
         // standard approach below ends up being horribly inefficient there
-        res.emplace_back(new RWMol());
-        auto &frag = res.back();
-        std::map<unsigned int, unsigned int> atomIdxMap;
-        for (auto aid : comp) {
-          atomIdxMap[aid] =
-              frag->addAtom(mol.getAtomWithIdx(aid)->copy(), false, true);
-        }
-        for (auto bond : mol.bonds()) {
-          if (atomsInFrag[bond->getBeginAtomIdx()] &&
-              atomsInFrag[bond->getEndAtomIdx()]) {
-            auto bondCopy = bond->copy();
-            bondCopy->setBeginAtomIdx(atomIdxMap[bond->getBeginAtomIdx()]);
-            bondCopy->setEndAtomIdx(atomIdxMap[bond->getEndAtomIdx()]);
-            frag->addBond(bondCopy, true);
-          }
-        }
-        if (copyConformers) {
-          for (auto cit = mol.beginConformers(); cit != mol.endConformers();
-               ++cit) {
-            auto *conf = new Conformer(frag->getNumAtoms());
-            conf->setId((*cit)->getId());
-            conf->set3D((*cit)->is3D());
-            unsigned int cidx = 0;
-            for (auto ai : comp) {
-              conf->setAtomPos(cidx++, (*cit)->getAtomPos(ai));
-            }
-            frag->addConformer(conf);
-          }
-        }
+	SubsetOptions opts;
+	opts.copyCoordinates = copyConformers;
+	opts.sanitize = sanitizeFrags;
+	opts.clearComputedProps = true;
+	opts.method = SubsetMethod::BONDS_BETWEEN_ATOMS;
+	std::vector<unsigned int> atoms{comp.begin(), comp.end()};
+	SubsetInfo info;
+	auto submol = copyMolSubset(mol, atoms, opts, &info);
+	res.push_back(std::unique_ptr<RWMol>(submol.release()));
       } else {
         res.emplace_back(new RWMol(mol));
         auto &frag = res.back();
@@ -816,6 +798,50 @@ std::vector<std::unique_ptr<ROMol>> getTheFrags(
   }
   return finalRes;
 }
+
+std::vector<std::unique_ptr<ROMol>> getTheFragsv2(
+    const ROMol &mol, bool sanitizeFrags, INT_VECT *frags,
+    VECT_INT_VECT *fragsMolAtomMapping, bool copyConformers) {
+  std::unique_ptr<INT_VECT> mappingStorage;
+  if (!frags) {
+    mappingStorage.reset(new INT_VECT);
+    frags = mappingStorage.get();
+  }
+  int nFrags = getMolFrags(mol, *frags);
+
+  std::vector<std::vector<int>> components;
+  components.resize(nFrags);
+  for(unsigned int atom_idx = 0; atom_idx < mol.getNumAtoms(); ++atom_idx) {
+    components[(*frags)[atom_idx]].push_back(atom_idx);
+  }
+  
+  std::vector<std::unique_ptr<ROMol>> res;
+  SubsetOptions opts;
+  opts.copyCoordinates = copyConformers;
+  opts.sanitize = sanitizeFrags;
+  opts.clearComputedProps = true;
+  opts.method = SubsetMethod::BONDS_BETWEEN_ATOMS;
+  
+  for(auto &atom_indices : components) {
+    std::vector<unsigned int> atoms{atom_indices.begin(), atom_indices.end()};
+    SubsetInfo info;
+    auto submol = copyMolSubset(mol, atoms, opts, &info);
+
+    if(fragsMolAtomMapping) {
+      INT_VECT comp;
+      comp.resize(info.atom_mapping.size());
+      for(auto v: atom_indices) {
+	auto ref_position = info.atom_mapping[v];
+	comp.at(ref_position) = v;
+      }
+      (*fragsMolAtomMapping).push_back(comp);
+    }
+    res.push_back(std::unique_ptr<ROMol>((ROMol*)submol.release()));
+  }
+
+  return res;
+}
+
 }  // namespace
 std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
                                     INT_VECT *frags,

@@ -8,7 +8,7 @@ rdkit_library(GraphMol
         Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
         new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
         NontetrahedralStereo.cpp Atropisomers.cpp
-        WedgeBonds.cpp MolProps.cpp 
+        WedgeBonds.cpp MolProps.cpp Subset.cpp
         SHARED
         LINK_LIBRARIES RDGeometryLib RDGeneral)
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
@@ -49,6 +49,7 @@ rdkit_headers(Atom.h
         MonomerInfo.h
         new_canon.h
         MolBundle.h
+	Subset.h
         DEST GraphMol)
 
 add_subdirectory(SmilesParse)
@@ -204,3 +205,5 @@ rdkit_catch_test(tableTestsCatch catch_periodictable.cpp
 rdkit_catch_test(molopsTestsCatch catch_molops.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
 
+rdkit_catch_test(subsetTestsCatch subset_catch_tests.cpp
+        LINK_LIBRARIES FileParsers SmilesParse GraphMol)
