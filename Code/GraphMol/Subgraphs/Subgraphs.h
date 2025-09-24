@@ -29,13 +29,19 @@
 #ifndef RD_SUBGRAPHS_H
 #define RD_SUBGRAPHS_H
 
-#include <vector>
+#include <boost/smart_ptr.hpp>
+
 #include <list>
 #include <map>
 #include <unordered_map>
+#include <vector>
+
+#include <RDGeneral/BetterEnums.h>
 
 namespace RDKit {
 class ROMol;
+class RWMol;
+
 // NOTE: before replacing the defn of PATH_TYPE: be aware that
 // we do occasionally use reverse iterators on these things, so
 // replacing with a slist would probably be a bad idea.
@@ -150,6 +156,32 @@ RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
     bool useHs = false, bool enforceSize = true,
     std::unordered_map<unsigned int, unsigned int> *atomMap = nullptr);
+
+BETTER_ENUM_CLASS(SubsetMethod, unsigned int,
+        BONDS_BETWEEN_ATOMS,
+        BOND_PATH
+);
+
+//!
+/*
+ * Helper api to extract a subgraph from an ROMol. Bonds, substance groups and
+ * stereo groups are only extracted to the subgraph if all participant entities
+ * are selected by the `path` parameter.
+ *
+ * @param mol starting mol
+ * @param path the indices of atoms or bonds to extract. If an index falls
+ *             outside of the acceptable indices, it is ignored.
+ * @param method the method by which to extract this subgraph.
+ * @param sanitize whether to sanitize the extracted mol.
+ *
+ * NOTE: Bookmarks and coordinates are currently not copied
+ *
+ */
+RDKIT_SUBGRAPHS_EXPORT boost::shared_ptr<RDKit::RWMol>
+copyMolSubset(const RDKit::ROMol& mol,
+                   const std::vector<unsigned int>& path,
+                   SubsetMethod method = SubsetMethod::BONDS_BETWEEN_ATOMS,
+                   bool sanitize = true);
 
 }  // namespace RDKit
 
