@@ -543,21 +543,22 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300), formats=N
     worksheet.write_string(0, col_idx, col)
 
   for row_idx, (_, row) in enumerate(frame.iterrows()):
+    have_img = False
     row_idx_actual = row_idx + 1
-
-    worksheet.set_row(row_idx_actual, height=size[1])  # looks like height is not in px?
-
     for col_idx, col in enumerate(cols):
       if col_idx in molCol_indices:
         image_data = BytesIO()
         m = row[col]
-        img = Draw.MolToImage(m if isinstance(m, Chem.Mol) else Chem.Mol(), size=size,
-                              options=drawOptions)
-        img.save(image_data, format='PNG')
-        worksheet.insert_image(row_idx_actual, col_idx, "f", {'image_data': image_data})
-        worksheet.set_column(col_idx, col_idx,
-                             width=size[0] / 6.)  # looks like height is not in px?
-      elif str(dataTypes[col]) == "object":
+        if isinstance(m, Chem.Mol):
+          have_img = True
+          img = Draw.MolToImage(m if isinstance(m, Chem.Mol) else Chem.Mol(), size=size,
+                                options=drawOptions)
+          img.save(image_data, format='PNG')
+          worksheet.insert_image(row_idx_actual, col_idx, "f", {'image_data': image_data})
+          worksheet.set_column(col_idx, col_idx,
+                              width=size[0] / 6.)  # looks like height is not in px?
+          continue
+      if str(dataTypes[col]) == "object":
         # string length is limited in xlsx
         worksheet.write_string(row_idx_actual, col_idx,
                                str(row[col])[:32000], cell_formats['write_string'])
@@ -566,6 +567,8 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300), formats=N
           worksheet.write_number(row_idx_actual, col_idx, row[col], cell_formats['write_number'])
       elif 'datetime' in str(dataTypes[col]):
         worksheet.write_datetime(row_idx_actual, col_idx, row[col], cell_formats['write_datetime'])
+    if have_img:
+      worksheet.set_row(row_idx_actual, height=size[1])  # looks like height is not in px?
 
   workbook.close()
   image_data.close()
