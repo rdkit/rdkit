@@ -46,21 +46,27 @@ static bool checkExcludedAtoms(const Atom *atm, bool includeLigand) {
       case 'D':
         if (resName == "DOD" || resName == "D20")
           return true;
+        break;
       case 'H':
         if (resName == "HOH" || resName == "H20")
           return true;
+        break;
       case 'S':
         if (resName == "SOL" || resName == "SO4" || resName == "SUL")
           return true;
+        break;
       case 'W':
         if (resName == "WAT")
           return true;
+        break;
       case 'T':
         if (resName == "TIP")
           return true;
+        break;
       case 'P':
         if (resName == "P04")
           return true;
+        break
     }
 
     if (!includeLigand &&
@@ -473,7 +479,6 @@ double DoubleCubicLatticeVolume::getAtomVolume(unsigned int atomIdx,
   /* Calculate Volume with Gauss-Ostrogradskii Theorem */
   auto atomvolume = (pos - centreOfGravity).dotProduct(p);
   atomvolume = factor * factor * (atomvolume + factor * count);
-
   atomvolume *= ((4.0 / 3) * M_PI) / NUMDOTS;  // 320 standard dots
   return atomvolume;
 }
