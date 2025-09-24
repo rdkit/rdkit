@@ -561,6 +561,11 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_v3Kmolblock",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_v3Kmolblock))
+      .function("get_v2Kmolblock", select_overload<std::string() const>(
+                                       &JSMolBase::get_v2Kmolblock))
+      .function("get_v2Kmolblock",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMolBase::get_v2Kmolblock))
       .function("get_as_uint8array", &get_as_uint8array)
       .function("get_as_uint8array", &get_as_uint8array_no_details)
 #ifdef RDK_BUILD_INCHI_SUPPORT
