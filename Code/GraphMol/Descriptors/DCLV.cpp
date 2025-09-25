@@ -54,8 +54,9 @@ static bool checkExcludedAtoms(const Atom *atm, bool includeLigand) {
         }
         break;
       case 'S':
-        if (resName == "SOL" || resName == "SO4" || resName == "SUL")
+        if (resName == "SOL" || resName == "SO4" || resName == "SUL") {
           return true;
+       }
         break;
       case 'W':
         if (resName == "WAT")
