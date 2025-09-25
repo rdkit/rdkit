@@ -298,12 +298,12 @@ function(createExportTestHeaders)
   endforeach()
   list(REMOVE_DUPLICATES exportLibs)
   list(SORT exportLibs)
-  set(exportPath "Code/RDGeneral/export.h")
+  set(exportPath "RDGeneral/export.h")
   file(WRITE "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
     "// auto-generated export definition header\n"
     "#pragma once\n"
     "#include <RDGeneral/RDExportMacros.h>\n")
-  set(testPath "Code/RDGeneral/test.h")
+  set(testPath "RDGeneral/test.h")
   file(WRITE "${CMAKE_BINARY_DIR}/${testPath}.tmp"
     "// auto-generated header to be imported in all cpp tests\n"
     "#pragma once\n")
@@ -338,9 +338,9 @@ function(createExportTestHeaders)
   "#endif\n"
   "// RDKIT_QUERY_EXPORT end definitions\n")
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_BINARY_DIR}/${exportPath}.tmp" "${CMAKE_SOURCE_DIR}/${exportPath}")
+    "${CMAKE_BINARY_DIR}/${exportPath}.tmp" "${RDKit_CodeDir}/${exportPath}")
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_BINARY_DIR}/${testPath}.tmp" "${CMAKE_SOURCE_DIR}/${testPath}")
+    "${CMAKE_BINARY_DIR}/${testPath}.tmp" "${RDKit_CodeDir}/${testPath}")
 endfunction(createExportTestHeaders)
 
 function(patchCoordGenMaeExportHeaders keyword path)
