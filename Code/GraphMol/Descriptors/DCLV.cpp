@@ -44,8 +44,9 @@ static bool checkExcludedAtoms(const Atom *atm, bool includeLigand) {
 
     switch (resName[0]) {
       case 'D':
-        if (resName == "DOD" || resName == "D20")
+        if (resName == "DOD" || resName == "D20"){
           return true;
+        }
         break;
       case 'H':
         if (resName == "HOH" || resName == "H20")
