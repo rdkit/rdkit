@@ -445,13 +445,13 @@ struct atom_wrapper {
              (python::arg("self"), python::arg("includePrivate") = true,
               python::arg("includeComputed") = true,
               python::arg("autoConvertStrings") = true),
-             "Returns a dictionary of the properties set on the Atom.\n"
-	     "When possible, string values will be trimmed and converted to integers and doubles\n"
-             " n.b. some properties cannot be converted to python types.\n")
+	     getPropsAsDictDocString.c_str())
 
         .def("UpdatePropertyCache", &Atom::updatePropertyCache,
              (python::arg("self"), python::arg("strict") = true),
-	     getPropsAsDictDocString.c_str())
+	     "Regenerates computed properties like implicit valence and ring "
+             "information.\n\n")
+
 
         .def("NeedsUpdatePropertyCache", &Atom::needsUpdatePropertyCache,
              (python::arg("self")),
