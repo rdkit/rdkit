@@ -1751,7 +1751,7 @@ python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume,
         "Get the Polar Surface Area of the Molecule or Protein")
   .def("GetPartialSurfaceArea",
        &getPartialSurfaceAreaHelper,
-       (python::arg("atomIdxs")),
+       (python::arg("atomIndices")),
        "Get the Partial Surface Area of the Molecule or Protein for specified subset of atoms")
   .def("GetSurfacePoints",
        &getSurfacePointsHelper,
