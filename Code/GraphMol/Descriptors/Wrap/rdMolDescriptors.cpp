@@ -1772,7 +1772,7 @@ python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume,
       "Get the Polar Volume of the Molecule or Protein")
   .def("GetPartialVolume",
       &getPartialVolumeHelper,
-      python::arg("atom_idx"),
+      python::arg("atomIdx"),
       "Get the Partial Volume of the Molecule or Protein for specified subset of atoms")
   .def("GetCompactness",
         &RDKit::Descriptors::DoubleCubicLatticeVolume::getCompactness,
