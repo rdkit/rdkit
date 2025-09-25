@@ -590,6 +590,9 @@ TEST_CASE("test_extract_substance_groups", "[copyMolSubset]") {
 }
 
 // This test makes sure we correctly extract stereo groups
+//  Note that this follows commitBatchEdit which removes
+//  atoms from stereo groups, it doesn't remove the stereogroup
+//  completely.
 TEST_CASE("test_extract_stereo_groups", "[copyMolSubset]") {
   auto mol = get_test_mol();
 
