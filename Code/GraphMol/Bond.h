@@ -511,15 +511,11 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
 
   //! Clears all properties of this Bond, but leaves everything else
   void clear();
-  Dict &getDict() {
+  [[noreturn]] Dict &getDict() {
     raiseNonImplementedFunction("GetDict");
-    Dict dict;
-    return dict;
   }
-  const Dict &getDict() const {
+  [[noreturn]] const Dict &getDict() const {
     raiseNonImplementedFunction("GetDict");
-    Dict dict;
-    return dict;
   }
  private:
   void initFromOther(const Bond& other, bool preserveProps = false);

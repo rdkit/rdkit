@@ -13,12 +13,12 @@
 #include <string>
 #include <stdexcept>
 
-inline void raiseNonImplementedFunction(const std::string& func) {
+[[noreturn]] inline void raiseNonImplementedFunction(const std::string& func) {
   std::string errorMessage = "This function is not implemented: " + func;
   throw std::runtime_error(errorMessage);
 }
 
-inline void raiseNonImplementedDetail(const std::string& detail) {
+[[noreturn]] inline void raiseNonImplementedDetail(const std::string& detail) {
   std::string errorMessage = "This detail is not implemented: " + detail;
   throw std::runtime_error(errorMessage);
 }

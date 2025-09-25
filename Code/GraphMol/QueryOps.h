@@ -289,13 +289,13 @@ static inline int queryAtomNumRadicalElectrons(Atom const *at) {
   return at->getNumRadicalElectrons();
 };
 static inline int queryAtomHasChiralTag2(ConstRDMolAtom at) {
-  return at.data().getChiralTag() != Atom::CHI_UNSPECIFIED;
+  return at.data().getChiralTag() != AtomEnums::ChiralType::CHI_UNSPECIFIED;
 };
 static inline int queryAtomHasChiralTag(Atom const *at) {
   return at->getChiralTag() != Atom::CHI_UNSPECIFIED;
 };
 static inline int queryAtomMissingChiralTag2(ConstRDMolAtom at) {
-  if (at.data().getChiralTag() != Atom::CHI_UNSPECIFIED) {
+  if (at.data().getChiralTag() != AtomEnums::ChiralType::CHI_UNSPECIFIED) {
     return false;
   }
   bool value = false;
@@ -428,7 +428,8 @@ static inline int queryBondOrder(Bond const *bond) {
 };
 static inline int queryBondIsSingleOrAromatic2(ConstRDMolBond bond) {
   auto type = bond.data().getBondType();
-  return static_cast<int>(type == Bond::SINGLE || type == Bond::AROMATIC);
+  return static_cast<int>(type == BondEnums::BondType::SINGLE ||
+                          type == BondEnums::BondType::AROMATIC);
 };
 static inline int queryBondIsSingleOrAromatic(Bond const *bond) {
   return static_cast<int>(bond->getBondType() == Bond::SINGLE ||
@@ -436,7 +437,8 @@ static inline int queryBondIsSingleOrAromatic(Bond const *bond) {
 };
 static inline int queryBondIsDoubleOrAromatic2(ConstRDMolBond bond) {
   auto type = bond.data().getBondType();
-  return static_cast<int>(type == Bond::DOUBLE || type == Bond::AROMATIC);
+  return static_cast<int>(type == BondEnums::BondType::DOUBLE ||
+                          type == BondEnums::BondType::AROMATIC);
 };
 static inline int queryBondIsDoubleOrAromatic(Bond const *bond) {
   return static_cast<int>(bond->getBondType() == Bond::DOUBLE ||
@@ -444,7 +446,8 @@ static inline int queryBondIsDoubleOrAromatic(Bond const *bond) {
 };
 static inline int queryBondIsSingleOrDouble2(ConstRDMolBond bond) {
   auto type = bond.data().getBondType();
-  return static_cast<int>(type == Bond::SINGLE || type == Bond::DOUBLE);
+  return static_cast<int>(type == BondEnums::BondType::SINGLE ||
+                          type == BondEnums::BondType::DOUBLE);
 };
 static inline int queryBondIsSingleOrDouble(Bond const *bond) {
   return static_cast<int>(bond->getBondType() == Bond::SINGLE ||
@@ -452,9 +455,9 @@ static inline int queryBondIsSingleOrDouble(Bond const *bond) {
 };
 static inline int queryBondIsSingleOrDoubleOrAromatic2(ConstRDMolBond bond) {
   auto type = bond.data().getBondType();
-  return static_cast<int>(type == Bond::SINGLE ||
-                          type == Bond::DOUBLE ||
-                          type == Bond::AROMATIC);
+  return static_cast<int>(type == BondEnums::BondType::SINGLE ||
+                          type == BondEnums::BondType::DOUBLE ||
+                          type == BondEnums::BondType::AROMATIC);
 };
 static inline int queryBondIsSingleOrDoubleOrAromatic(Bond const *bond) {
   return static_cast<int>(bond->getBondType() == Bond::SINGLE ||
@@ -474,7 +477,7 @@ static inline int queryIsBondInNRings(Bond const *at) {
   return at->getOwningMol().getRingInfo()->numBondRings(at->getIdx());
 };
 static inline int queryBondHasStereo2(ConstRDMolBond bnd) {
-  return bnd.data().getStereo() > Bond::STEREONONE;
+  return bnd.data().getStereo() > BondEnums::BondStereo::STEREONONE;
 };
 static inline int queryBondHasStereo(Bond const *bnd) {
   return bnd->getStereo() > Bond::STEREONONE;

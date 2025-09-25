@@ -578,15 +578,11 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
 
   //! Clears all properties of this Atom, but leaves everything else
   void clear();
-  Dict &getDict() {
+  [[noreturn]] Dict &getDict() {
     raiseNonImplementedFunction("GetDict");
-    Dict dict;
-    return dict;
   }
-  const Dict &getDict() const {
+  [[noreturn]] const Dict &getDict() const {
     raiseNonImplementedFunction("GetDict");
-    Dict dict;
-    return dict;
   }
  protected:
   //! sets our owning molecule

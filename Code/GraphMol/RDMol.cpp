@@ -953,7 +953,7 @@ void RDMol::copyFromCompatibilityData(const CompatibilityData *source,
   }
 
   delete compatibilityData.load(std::memory_order_relaxed);
-  compatibilityData.store(nullptr, std::memory_order::memory_order_relaxed);
+  compatibilityData.store(nullptr, std::memory_order_relaxed);
 }
 
 RDMol::RDMol(ROMol* existingPtr): RDMol() {

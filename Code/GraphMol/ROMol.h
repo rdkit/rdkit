@@ -1068,15 +1068,11 @@ class RDKIT_GRAPHMOL_EXPORT ROMol {
   void updateProps(const ROMol& source, bool preserveExisting = false);
   void updateProps(const RDProps& source, bool preserveExisting = false);
 
-  Dict& getDict() {
+  [[noreturn]] Dict& getDict() {
     raiseNonImplementedFunction("GetDict");
-    Dict dict;
-    return dict;
   }
-  const Dict& getDict() const {
+  [[noreturn]] const Dict& getDict() const {
     raiseNonImplementedFunction("GetDict");
-    Dict dict;
-    return dict;
   }
 
   //! Clear all properties.

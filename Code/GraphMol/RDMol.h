@@ -1991,7 +1991,7 @@ class IndexRange {
   using Iter = IndexIter<ISBOND, ISCONST>;
   MolType *d_mol;
 
-  friend class RDMol;
+  friend class RDKit::RDMol;
   IndexRange(MolType *mol) : d_mol(mol) {}
 
  public:
@@ -2049,7 +2049,7 @@ class IndirectRange {
   const uint32_t *d_begin;
   const uint32_t *d_end;
 
-  friend class RDMol;
+  friend class RDKit::RDMol;
   IndirectRange(MolType *mol, const uint32_t *beginIndices,
                      const uint32_t *endIndices)
       : d_mol(mol), d_begin(beginIndices), d_end(endIndices) {}
