@@ -7,6 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#ifndef USE_BETTER_ENUMS
+#define USE_BETTER_ENUMS
+#endif
 #define PY_ARRAY_UNIQUE_SYMBOL rdmoldraw2d_array_API
 #include <RDBoost/python.h>
 #include <RDBoost/boost_numpy.h>
@@ -771,6 +774,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .value("Lasso", RDKit::MultiColourHighlightStyle::LASSO)
       .export_values();
 
+  {
+    python::enum_<RDKit::DrawElement::_enumerated> drawElementEnum(
+        "DrawElement");
+    for (const auto *key : RDKit::DrawElement::_names()) {
+      drawElementEnum.value(key, RDKit::DrawElement::_from_string(key));
+    }
+    drawElementEnum.export_values();
+  }
+
   std::string docString = "Drawing options";
   python::class_<RDKit::MolDrawOptions, boost::noncopyable>("MolDrawOptions",
                                                             docString.c_str())
@@ -922,8 +934,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("addStereoAnnotation",
                      &RDKit::MolDrawOptions::addStereoAnnotation,
                      "adds R/S and E/Z to drawings. Default False.")
-      .def_readwrite("showAllCIPCodes",
-                     &RDKit::MolDrawOptions::showAllCIPCodes,
+      .def_readwrite("showAllCIPCodes", &RDKit::MolDrawOptions::showAllCIPCodes,
                      "show all defined CIP codes (no hiding!). Default False.")
       .def_readwrite("addAtomIndices", &RDKit::MolDrawOptions::addAtomIndices,
                      "adds atom indices to drawings. Default False.")
@@ -1025,6 +1036,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           &RDKit::MolDrawOptions::standardColoursForHighlightedAtoms,
           "If true, highlighted hetero atoms are drawn in standard colours"
           " rather than black.  Default=False")
+      .def_readwrite(
+          "drawingExtentsInclude",
+          &RDKit::MolDrawOptions::drawingExtentsInclude,
+          "Drawing extents are computed taking into account only selected"
+          " DrawElement items.  Default=DrawElement.ALL")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            python::args("self"),
            "method for getting the colour of variable attachment points")

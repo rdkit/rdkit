@@ -368,6 +368,28 @@ void extractFeatureCoords(
   }
 }
 
+void extractCustomFeatureCoords(const unsigned int nSelectedAtoms,
+                                const ShapeInputOptions &shapeOpts,
+                                const RDGeom::Point3D &ave,
+                                unsigned int &numFeatures, ShapeInput &res,
+                                std::vector<double> &rad_vector) {
+  for (const auto &feature : shapeOpts.customFeatures) {
+    unsigned int feature_type = std::get<0>(feature);
+    RDGeom::Point3D floc = std::get<1>(feature);
+    double radius = std::get<2>(feature);
+    floc -= ave;
+    DEBUG_MSG("custom feature type " << feature_type << " (" << floc << ")");
+
+    auto array_idx = nSelectedAtoms + numFeatures;
+    res.coord[array_idx * 3] = floc.x;
+    res.coord[(array_idx * 3) + 1] = floc.y;
+    res.coord[(array_idx * 3) + 2] = floc.z;
+    rad_vector[array_idx] = radius;
+    res.atom_type_vector[array_idx] = feature_type;
+    ++numFeatures;
+  }
+}
+
 }  // namespace
 // The conformer is left where it is, the shape is translated to the origin.
 ShapeInput PrepareConformer(const ROMol &mol, int confId,
@@ -386,7 +408,12 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
 
   // Start with the arrays as large as they will possibly have to be.
   // They will be re-sized later.
-  unsigned int nAlignmentAtoms = nAtoms + feature_idx_type.size();
+  unsigned int nAlignmentAtoms = nAtoms;
+  if (shapeOpts.customFeatures.empty()) {
+    nAlignmentAtoms += feature_idx_type.size();
+  } else {
+    nAlignmentAtoms += shapeOpts.customFeatures.size();
+  }
   std::vector<double> rad_vector(nAlignmentAtoms);
   res.atom_type_vector.resize(nAlignmentAtoms, 0);
 
@@ -402,8 +429,13 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
 
   extractAtomCoords(conformer, nAtoms, shapeOpts, ave, res.coord);
   unsigned int numFeatures = 0;
-  extractFeatureCoords(conformer, nAtoms, nSelectedAtoms, feature_idx_type,
-                       shapeOpts, ave, numFeatures, res, rad_vector);
+  if (shapeOpts.customFeatures.empty()) {
+    extractFeatureCoords(conformer, nAtoms, nSelectedAtoms, feature_idx_type,
+                         shapeOpts, ave, numFeatures, res, rad_vector);
+  } else if (shapeOpts.useColors) {
+    extractCustomFeatureCoords(nSelectedAtoms, shapeOpts, ave, numFeatures, res,
+                               rad_vector);
+  }
 
   // Now cut the final vectors down to the actual number of atoms and
   // features used.
@@ -511,14 +543,12 @@ void TransformConformer(const std::vector<double> &finalTrans,
 
 std::pair<double, double> AlignMolecule(
     const ShapeInput &refShape, ROMol &fit, std::vector<float> &matrix,
-    int fitConfId, bool useColors, double opt_param, unsigned int max_preiters,
-    unsigned int max_postiters, bool applyRefShift) {
+    const ShapeInputOptions &shapeOpts, int fitConfId, double opt_param,
+    unsigned int max_preiters, unsigned int max_postiters, bool applyRefShift) {
   PRECONDITION(matrix.size() == 12, "bad matrix size");
   Align3D::setUseCutOff(true);
 
   DEBUG_MSG("Fit details:");
-  ShapeInputOptions shapeOpts;
-  shapeOpts.useColors = useColors;
   auto fitShape = PrepareConformer(fit, fitConfId, shapeOpts);
   auto tanis = AlignShape(refShape, fitShape, matrix, opt_param, max_preiters,
                           max_postiters);
@@ -536,6 +566,38 @@ std::pair<double, double> AlignMolecule(
   return tanis;
 }
 
+std::pair<double, double> AlignMolecule(
+    const ShapeInput &refShape, ROMol &fit, std::vector<float> &matrix,
+    int fitConfId, bool useColors, double opt_param, unsigned int max_preiters,
+    unsigned int max_postiters, bool applyRefShift) {
+  ShapeInputOptions shapeOpts;
+  shapeOpts.useColors = useColors;
+  return AlignMolecule(refShape, fit, matrix, shapeOpts, fitConfId, opt_param,
+                       max_preiters, max_postiters, applyRefShift);
+}
+
+std::pair<double, double> AlignMolecule(
+    const ROMol &ref, ROMol &fit, std::vector<float> &matrix,
+    const ShapeInputOptions &refShapeOpts,
+    const ShapeInputOptions &probeShapeOpts, int refConfId, int fitConfId,
+    double opt_param, unsigned int max_preiters, unsigned int max_postiters) {
+  Align3D::setUseCutOff(true);
+
+  if (refShapeOpts.useColors != probeShapeOpts.useColors) {
+    BOOST_LOG(rdWarningLog)
+        << "useColor values inconsistent between the reference and fit molecules. Colors will not be used in the alignment."
+        << std::endl;
+  }
+
+  DEBUG_MSG("Reference details:");
+  auto refShape = PrepareConformer(ref, refConfId, refShapeOpts);
+  bool applyRefShift = true;
+  auto scores =
+      AlignMolecule(refShape, fit, matrix, probeShapeOpts, fitConfId, opt_param,
+                    max_preiters, max_postiters, applyRefShift);
+  return scores;
+}
+
 std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
                                         std::vector<float> &matrix,
                                         int refConfId, int fitConfId,
@@ -547,9 +609,6 @@ std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
   DEBUG_MSG("Reference details:");
   ShapeInputOptions shapeOpts;
   shapeOpts.useColors = useColors;
-  auto refShape = PrepareConformer(ref, refConfId, shapeOpts);
-
-  auto scores = AlignMolecule(refShape, fit, matrix, fitConfId, useColors,
-                              opt_param, max_preiters, max_postiters, true);
-  return scores;
+  return AlignMolecule(ref, fit, matrix, shapeOpts, shapeOpts, refConfId,
+                       fitConfId, opt_param, max_preiters, max_postiters);
 }
