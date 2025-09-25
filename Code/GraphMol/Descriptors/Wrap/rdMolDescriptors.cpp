@@ -1715,7 +1715,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
     docString =
       R"DOC(ARGUMENTS:
       "   - mol: molecule or protein under consideration
-      "   - radii: radii for atoms of input mol (typically obtained )
+      "   - radii: radii for atoms of input mol (get using GetPeriodicTable or provide custom list)
       "   - isProtein: flag to indicate if the input is a protein (default=False, free ligand).
       "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=True)
       "   - probeRadius: radius of the solvent probe (default=1.2)
