@@ -1412,3 +1412,51 @@ TEST_CASE("Geometry") {
     REQUIRE("C1[C@H]2C[C@@H]12" == MolToSmiles(*mols[0]));
   }
 }
+
+TEST_CASE("Test Reading Wrong File Format") {
+    std::string path = std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("CDX as CDXML") { 
+    auto fname = path + "ring-stereo1.cdx";
+    ChemDrawParserParams params;
+    params.format = CDXFormat::CDXML;
+    bool caught = false;
+    try {
+      auto mols = MolsFromChemDrawFile(fname, params);
+    } catch (FileParseException &ex) {
+      caught = true;
+    }
+    REQUIRE(caught);
+  }
+ }
+
+TEST_CASE("github8761") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  SECTION("US12404367-20250902-C00017") {
+    auto fname = path + "US12404367-20250902-C00017.CDX";
+    auto mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size());
+    
+    fname = path + "US12404367-20250902-C00025.CDX";
+    mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size());
+  }    
+
+  SECTION("Failing Patents") {
+    std::filesystem::path patents(path + "patents");
+    for (auto &entry : std::filesystem::directory_iterator(patents)) {
+      ChemDrawParserParams params;
+      params.sanitize = false;
+      auto mols = MolsFromChemDrawFile(entry.path().generic_string(), params);
+      // we just don't want a crash
+
+      std::
+          string block;
+      std::fstream chemdrawfile(entry.path(), std::ios::in | std::ios::binary);
+      std::stringstream buffer;
+      buffer << chemdrawfile.rdbuf();
+      mols = MolsFromChemDrawBlock(buffer.str(), params);
+      // we just don't want a crash
+    }
+  }
+}
