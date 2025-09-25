@@ -1764,7 +1764,7 @@ python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume,
         "Get the van der Waals Volume of the Molecule or Protein")
   .def("GetAtomVolume",
        &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomVolume,
-       (python::arg("atom_idx"), python::arg("solventRadius")),
+       (python::arg("atomIdx"), python::arg("solventRadius")),
        "Get the volume atom of atom_idx with volume for specified Probe Radius")
   .def("GetPolarVolume",
       &RDKit::Descriptors::DoubleCubicLatticeVolume::getPolarVolume,
