@@ -262,7 +262,6 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol &mol,
 
   // total x,y,z centres
   Point3D cXYZ;
-  cXYZ.x = cXYZ.y = cXYZ.z = 0.0;
 
   // total min max coords
   Point3D minXYZ;
