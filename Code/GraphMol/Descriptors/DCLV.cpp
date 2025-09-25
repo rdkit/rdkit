@@ -69,8 +69,9 @@ static bool checkExcludedAtoms(const Atom *atm, bool includeLigand) {
         }
         break;
       case 'P':
-        if (resName == "P04")
+        if (resName == "P04") {
           return true;
+        }
         break;
     }
 
@@ -104,14 +105,15 @@ static bool includeAsPolar(const Atom *atm, const ROMol &mol,
     case 1: {
       if (!includeHs) {
         return false;
-      } else {
+      } 
+      else {
         for (const auto nbr : mol.atomNeighbors(atm)) {
           if (includeAsPolar(nbr, mol, includeSandP, includeHs)) {
             return true;
           }
         }
+        return false;
       }
-      return false;
     }
     // everything else
     default: {
