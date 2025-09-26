@@ -669,17 +669,19 @@ void testIssue2381580() {
     m->addAtom(new Atom(6), true, true);
     m->addAtom(new Atom(6), true, true);
     m->addAtom(new Atom(6), true, true);
+    m->addAtom(new Atom(8), true, true);
     m->addBond(0, 1, Bond::SINGLE);
     m->addBond(0, 2, Bond::SINGLE);
     m->addBond(0, 3, Bond::SINGLE);
     m->addBond(0, 4, Bond::SINGLE);
-    bool ok = false;
+    m->addBond(0, 5, Bond::SINGLE);
+    bool failed = false;
     try {
       MolOps::sanitizeMol(*m);
     } catch (MolSanitizeException &) {
-      ok = true;
+      failed = true;
     }
-    TEST_ASSERT(ok);
+    TEST_ASSERT(failed);
     delete m;
   }
 
