@@ -76,7 +76,7 @@ __pycache__/
 /External/RingFamilies/RingDecomposerLib/
 /External/YAeHMOP/yaehmop/
 /External/catch/catch/
-/External/rapidjson*/
+/External/rapidjson/rapidjson-*/
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
