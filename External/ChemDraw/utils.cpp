@@ -22,7 +22,7 @@ std::string NodeType(CDXNodeType nodetype) {
     case kCDXNodeType_Fragment:
       return "Fragment";
     case kCDXNodeType_Formula:
-      return "Forumla";
+      return "Formula";
     case kCDXNodeType_GenericNickname:
       return "GenericNickname";
     case kCDXNodeType_AnonymousAlternativeGroup:
@@ -48,7 +48,7 @@ void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength,
                 double bondLength) {
   double avg_bond_length = 0.0;
   if (bondLength < 0) {
-    // If we don't have a bond length for any reason, just scale the avgerage
+    // If we don't have a bond length for any reason, just scale the average
     // bond length
     for (auto &bond : mol.bonds()) {
       avg_bond_length += (conf.getAtomPos(bond->getBeginAtomIdx()) -
@@ -87,7 +87,7 @@ void set_fuse_label(Atom *atm, unsigned int idx) {
 struct FragmentReplacement {
   // R = Replacement
   // F = Fragment
-  // C = Conneciton
+  // C = Connection
   //                    C R C F     F
   //                    N=*=C.*=CCC=*
   //  label               1   1     1
@@ -101,14 +101,16 @@ struct FragmentReplacement {
   std::vector<Atom *> fragment_atoms;
 
   bool replace(RWMol &mol) {
-    if (!replacement_atom) return true;
+    if (!replacement_atom) {
+      return true;
+    }
 
     auto bond_ordering =
         replacement_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
 
     // Find the connecting atoms and and do the replacement
     for (auto bond : mol.atomBonds(replacement_atom)) {
-      // find the position of the attachement bonds in the bond ordering
+      // find the position of the attachment bonds in the bond ordering
       unsigned bond_id = 0;
       if (!bond->getPropIfPresent<unsigned int>(CDX_BOND_ID, bond_id)) {
         BOOST_LOG(rdWarningLog)
@@ -117,10 +119,11 @@ struct FragmentReplacement {
         return false;
       }
       auto it = std::find(bond_ordering.begin(), bond_ordering.end(), bond_id);
-      if (it == bond_ordering.end()) return false;
+      if (it == bond_ordering.end()) {
+        return false;
+      }
 
       auto pos = std::distance(bond_ordering.begin(), it);
-
       if (pos < 0 || (size_t)pos >= fragment_atoms.size()) {
         BOOST_LOG(rdWarningLog)
             << "bond ordering and number of atoms in fragment mismatch, can't attach fragment at bond:"
@@ -273,7 +276,7 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
     if (atom->getPropIfPresent<CDXAtomCIPType>(CDX_CIP, cip)) {
       // assign, possibly wrong, initial stereo.
       // note: we can probably deduce this through CDX_BOND_ORDERING, but
-      //  I currenlty don't understand that well enough.
+      //  I currently don't understand that well enough.
       switch (cip) {
         case kCDXCIPAtom_R:
           if (!chiralityChanged)
