@@ -365,14 +365,7 @@ std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename) {
 namespace v2 {
 std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawDataStream(
     std::istream &inStream, const ChemDrawParserParams &params) {
-  auto chemdrawmols = molsFromCDXMLDataStream(inStream, params);
-  std::vector<std::unique_ptr<RWMol>> mols;
-  mols.reserve(chemdrawmols.size());
-  for (auto &mol : chemdrawmols) {
-    RWMol *m = (RWMol *)mol.release();
-    mols.push_back(std::unique_ptr<RWMol>(m));
-  }
-  return mols;
+  return molsFromCDXMLDataStream(inStream, params);
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawBlock(
@@ -386,30 +379,20 @@ std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawFile(
     const std::string &filename, const ChemDrawParserParams &params) {
   ChemDrawParserParams realparams{params};
 
-  std::vector<std::unique_ptr<RWMol>> mols;
-
-  std::fstream chemdrawfile(
-      filename, std::ios::in | std::ios::binary);  // Always open in Binary mode
+  // Always open in Binary mode
+  std::fstream chemdrawfile(filename, std::ios::in | std::ios::binary);
 
   if (!chemdrawfile) {
     throw BadFileException(filename + " does not exist");
-    return mols;
   }
 
+  // need to reopen in binary mode
   if (params.format == CDXFormat::AUTO &&
-      sniff_format(chemdrawfile) ==
-          CDXFormat::CDX) {  // need to reopen in binary mode
+      sniff_format(chemdrawfile) == CDXFormat::CDX) {
     realparams.format = CDXFormat::CDX;
   }
 
-  auto chemdrawmols = molsFromCDXMLDataStream(chemdrawfile, realparams);
-
-  mols.reserve(chemdrawmols.size());
-  for (auto &mol : chemdrawmols) {
-    RWMol *m = (RWMol *)mol.release();
-    mols.push_back(std::unique_ptr<RWMol>(m));
-  }
-  return mols;
+  return molsFromCDXMLDataStream(chemdrawfile, realparams);
 }
 }  // namespace v2
 }  // namespace RDKit
