@@ -4104,9 +4104,7 @@ M  V30 1 1 1 2
 M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB";
-    {
-      REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException);
-    }
+    { REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException); }
     {
       bool sanitize = true;
       bool removeHs = true;
@@ -5769,7 +5767,7 @@ M  END
       CHECK(mb.find("NOT [N]") != std::string::npos);
     }
   }
-  SECTION("don't output the query if it's not negated") {
+  SECTION("output the query even if it's not negated") {
     auto m = R"CTAB(
   Mrv2211 01052305042D
 
@@ -5788,7 +5786,7 @@ M  END
     auto mb = MolToV3KMolBlock(*m);
     {
       INFO(mb);
-      CHECK(mb.find("[N]") == std::string::npos);
+      CHECK(mb.find("V30 1 [N]") != std::string::npos);
     }
   }
   SECTION("v2000") {
@@ -7765,5 +7763,149 @@ M  END)CTAB";
       auto m = v2::FileParsers::MolFromMolBlock(molblock);
       REQUIRE(m);
     }
+  }
+}
+
+TEST_CASE("Github #8820: allowed list atoms should be read as dummy atoms") {
+  SECTION("v3k basics") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -14.969697 7.242424 0.000000 0
+M  V30 2 [C,N] -13.670659 7.992424 0.000000 0
+M  V30 3 C -12.371621 7.242424 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 0);
+    auto ctab = MolToV3KMolBlock(*mol);
+    CHECK(ctab.find("V30 2 [C,N]") != std::string::npos);
+  }
+  SECTION("v3k not") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -14.969697 7.242424 0.000000 0
+M  V30 2 "NOT [C,N]" -13.670659 7.992424 0.000000 0
+M  V30 3 C -12.371621 7.242424 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 0);
+    auto ctab = MolToV3KMolBlock(*mol);
+    CHECK(ctab.find("V30 2 \"NOT [C,N]\"") != std::string::npos);
+  }
+  SECTION("v3k single atom") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -14.969697 7.242424 0.000000 0
+M  V30 2 [C] -13.670659 7.992424 0.000000 0
+M  V30 3 C -12.371621 7.242424 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 0);
+    auto ctab = MolToV3KMolBlock(*mol);
+    CHECK(ctab.find("V30 2 [C]") != std::string::npos);
+  }
+
+  SECTION("v3k not single atom") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -14.969697 7.242424 0.000000 0
+M  V30 2 "NOT [C]" -13.670659 7.992424 0.000000 0
+M  V30 3 C -12.371621 7.242424 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 0);
+    auto ctab = MolToV3KMolBlock(*mol);
+    // this now ends up being a NOT list query on output:
+    CHECK(ctab.find("V30 2 \"NOT [C]\"") != std::string::npos);
+  }
+
+  SECTION("v2k") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+  -14.9697    7.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.6707    7.9924    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.3716    7.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  ALS   2  2 F C   N   
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 0);
+    auto ctab = MolToMolBlock(*mol);
+    CHECK(ctab.find("ALS") != std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "Github #8823: aromaticity perception with list queries depends on ordering of atoms") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/github8823.sdf";
+  auto suppl = v2::FileParsers::SDMolSupplier(fName);
+  REQUIRE(suppl.length() == 3);
+  for (auto i = 0u; i < suppl.length(); ++i) {
+    auto m = suppl[i];
+    REQUIRE(m);
+    REQUIRE(m->getNumAtoms() == 5);
+    CHECK(m->getBondWithIdx(0)->getBondType() == Bond::AROMATIC);
   }
 }
