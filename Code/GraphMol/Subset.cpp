@@ -105,7 +105,7 @@ static void copySelectedAtomsAndBonds(::RDKit::RWMol &extracted_mol,
 
 static void copySelectedSubstanceGroups(
     ::RDKit::RWMol &extracted_mol, const RDKit::ROMol &reference_mol,
-    const SubsetInfo &selection_info, const SubsetOptions &options) {
+    const SubsetInfo &selection_info, const SubsetOptions &) {
   auto update_indices = [](auto &sgroup, auto getter, auto setter,
                            auto &mapping) {
     auto indices = getter(sgroup);
@@ -291,13 +291,12 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(
   const auto nbonds = mol.getNumBonds();
   
   if(
-     (atoms.size() == natoms && (
+     ((atoms.size() == natoms) && (
 				 options.method == SubsetMethod::BONDS_BETWEEN_ATOMS ||
 				 bonds.size() == nbonds) ||
-      (bonds.size() == nbonds && options.method == SubsetMethod::BONDS ))
+      ((bonds.size() == nbonds) && options.method == SubsetMethod::BONDS ))
      ) {
     // optimization to copy the entire thing
-    std::cerr << " ----- subset full copy ---- " << std::endl;
     return std::make_unique<RDKit::RWMol>(mol);
   }
   
