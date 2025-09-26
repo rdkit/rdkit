@@ -47,232 +47,144 @@ namespace RDKit {
 
 namespace detail {
 // used in various places for computed properties
-RDKIT_RDGENERAL_EXPORT extern const std::string computedPropName;
+inline const std::string computedPropName = "__computedProps";
 }  // namespace detail
 
 namespace common_properties {
 ///////////////////////////////////////////////////////////////
 // Molecule Props
-RDKIT_RDGENERAL_EXPORT extern const std::string _Name;            // string
-RDKIT_RDGENERAL_EXPORT extern const std::string MolFileInfo;      // string
-RDKIT_RDGENERAL_EXPORT extern const std::string MolFileComments;  // string
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _2DConf;  // int (combine into dimension?)
-RDKIT_RDGENERAL_EXPORT extern const std::string _3DConf;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _doIsoSmiles;  // int (should probably be removed)
-RDKIT_RDGENERAL_EXPORT extern const std::string extraRings;  // vec<vec<int> >
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _smilesAtomOutputOrder;  // vec<int> computed
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _smilesBondOutputOrder;  // vec<int> computed
-RDKIT_RDGENERAL_EXPORT extern const std::string _StereochemDone;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string _NeedsQueryScan;  // int (bool)
-RDKIT_RDGENERAL_EXPORT extern const std::string _fragSMARTS;      // std::string
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    maxAttachIdx;  // int TemplEnumTools.cpp
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    ringMembership;  //? unused (molopstest.cpp)
+inline const std::string TWOD = "2D";
+inline const std::string BalabanJ = "BalabanJ";
+inline const std::string BalanbanJ = "BalanbanJ";
+inline const std::string Discrims = "Discrims";
+inline const std::string DistanceMatrix_Paths = "DistanceMatrix_Paths";
+inline const std::string MolFileComments = "MolFileComments";
+inline const std::string MolFileInfo = "MolFileInfo";
+inline const std::string NullBond = "NullBond";
+inline const std::string _2DConf = "_2DConf";
+inline const std::string _3DConf = "_3DConf";
+inline const std::string _AtomID = "_AtomID";
+inline const std::string _BondsPotentialStereo = "_BondsPotentialStereo";
+inline const std::string _ChiralAtomRank = "_chiralAtomRank";
+inline const std::string _CIPCode = "_CIPCode";
+inline const std::string _CIPRank = "_CIPRank";
+inline const std::string _CIPComputed = "_CIPComputed";
+inline const std::string _CanonicalRankingNumber = "_CanonicalRankingNumber";
+inline const std::string _ChiralityPossible = "_ChiralityPossible";
+inline const std::string _CrippenLogP = "_CrippenLogP";
+inline const std::string _CrippenMR = "_CrippenMR";
+inline const std::string _MMFFSanitized = "_MMFFSanitized";
+inline const std::string _MolFileChiralFlag = "_MolFileChiralFlag";
+inline const std::string MRV_SMA = "MRV SMA";
+inline const std::string _MolFileRLabel = "_MolFileRLabel";
+inline const std::string _MolFileAtomQuery = "_MolFileAtomQuery";
+inline const std::string _MolFileBondQuery = "_MolFileBondQuery";
+inline const std::string _MolFileBondEndPts = "_MolFileBondEndPts";
+inline const std::string _MolFileBondAttach = "_MolFileBondAttach";
+inline const std::string _MolFileBondType = "_MolFileBondType";
+inline const std::string _MolFileBondStereo = "_MolFileBondStereo";
+inline const std::string _MolFileBondCfg = "_MolFileBondCfg";
 
-// Computed Values
-// ConnectivityDescriptors
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _connectivityHKDeltas;  // std::vector<double> computed
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _connectivityNVals;  // std::vector<double> computed
+inline const std::string _Name = "_Name";
+inline const std::string _NeedsQueryScan = "_NeedsQueryScan";
+inline const std::string _NonExplicit3DChirality = "_NonExplicit3DChirality";
+inline const std::string _QueryFormalCharge = "_QueryFormalCharge";
+inline const std::string _QueryHCount = "_QueryHCount";
+inline const std::string _QueryIsotope = "_QueryIsotope";
+inline const std::string _QueryMass = "_QueryMass";
+inline const std::string _ReactionDegreeChanged = "_ReactionDegreeChanged";
+inline const std::string reactantAtomIdx = "react_atom_idx";
+inline const std::string reactionMapNum = "old_mapno";
+inline const std::string reactantIdx = "react_idx";
 
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _crippenLogP;  // double computed
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _crippenLogPContribs;  // std::vector<double> computed
+inline const std::string _RingClosures = "_RingClosures";
+inline const std::string _SLN_s = "_SLN_s";
+inline const std::string _SmilesStart = "_SmilesStart";
+inline const std::string _StereochemDone = "_StereochemDone";
+inline const std::string _TraversalBondIndexOrder = "_TraversalBondIndexOrder";
+inline const std::string _TraversalRingClosureBond =
+    "_TraversalRingClosureBond";
+inline const std::string _TraversalStartPoint = "_TraversalStartPoint";
+inline const std::string _TriposAtomType = "_TriposAtomType";
+inline const std::string _Unfinished_SLN_ = "_Unfinished_SLN_";
+inline const std::string _UnknownStereo = "_UnknownStereo";
+inline const std::string _connectivityHKDeltas = "_connectivityHKDeltas";
+inline const std::string _connectivityNVals = "_connectivityNVals";
+inline const std::string _crippenLogP = "_crippenLogP";
+inline const std::string _crippenLogPContribs = "_crippenLogPContribs";
+inline const std::string _crippenMR = "_crippenMR";
+inline const std::string _crippenMRContribs = "_crippenMRContribs";
+inline const std::string _GasteigerCharge = "_GasteigerCharge";
+inline const std::string _GasteigerHCharge = "_GasteigerHCharge";
+inline const std::string _doIsoSmiles = "_doIsoSmiles";
+inline const std::string _fragSMARTS = "_fragSMARTS";
+inline const std::string _hasMassQuery = "_hasMassQuery";
+inline const std::string _labuteASA = "_labuteASA";
+inline const std::string _labuteAtomContribs = "_labuteAtomContribs";
+inline const std::string _labuteAtomHContrib = "_labuteAtomHContrib";
+inline const std::string _protected = "_protected";
+inline const std::string _queryRootAtom = "_queryRootAtom";
+inline const std::string _ringStereoAtoms = "_ringStereoAtoms";
+inline const std::string _ringStereoWarning = "_ringStereoWarning";
+inline const std::string _ringStereochemCand = "_ringStereochemCand";
+inline const std::string _ringStereoOtherAtom = "_ringStereoOtherAtom";
+inline const std::string _mesoOtherAtom = "_mesoOtherAtom";
+inline const std::string _chiralPermutation = "_chiralPermutation";
+inline const std::string _smilesAtomOutputOrder = "_smilesAtomOutputOrder";
+inline const std::string _smilesBondOutputOrder = "_smilesBondOutputOrder";
+inline const std::string _starred = "_starred";
+inline const std::string _supplementalSmilesLabel = "_supplementalSmilesLabel";
+inline const std::string _tpsa = "_tpsa";
+inline const std::string _tpsaAtomContribs = "_tpsaAtomContribs";
+inline const std::string _unspecifiedOrder = "_unspecifiedOrder";
+inline const std::string _brokenChirality = "_brokenChirality";
+inline const std::string _rgroupAtomMaps = "_rgroupAtomMaps";
+inline const std::string _rgroupBonds = "_rgroupBonds";
+inline const std::string _rgroupTargetAtoms = "_rgroupTargetAtoms";
+inline const std::string _rgroupTargetBonds = "_rgroupTargetBonds";
+inline const std::string dummyLabel = "dummyLabel";
+inline const std::string extraRings = "extraRings";
+inline const std::string isImplicit = "isImplicit";
+inline const std::string maxAttachIdx = "maxAttachIdx";
+inline const std::string molAtomMapNumber = "molAtomMapNumber";
+inline const std::string molFileAlias = "molFileAlias";
+inline const std::string molFileValue = "molFileValue";
+inline const std::string molInversionFlag = "molInversionFlag";
+inline const std::string molParity = "molParity";
+inline const std::string molStereoCare = "molStereoCare";
+inline const std::string molRxnComponent = "molRxnComponent";
+inline const std::string molRxnRole = "molRxnRole";
+inline const std::string molTotValence = "molTotValence";
+inline const std::string molFileLinkNodes = "_molLinkNodes";
+inline const std::string numArom = "numArom";
+inline const std::string ringMembership = "ringMembership";
+inline const std::string smilesSymbol = "smilesSymbol";
+inline const std::string atomLabel = "atomLabel";
+inline const std::string OxidationNumber = "OxidationNumber";
+inline const std::string internalRgroupSmiles = "internalRgroupSmiles";
+inline const std::string molRingBondCount = "molRingBondCount";
+inline const std::string molSubstCount = "molSubstCount";
+inline const std::string molAttachPoint = "molAttchpt";
+inline const std::string molAttachOrder = "molAttchord";
+inline const std::string molAttachOrderTemplate = "molAttachOrderTemplate";
+inline const std::string molAtomClass = "molClass";
+inline const std::string molAtomSeqId = "molSeqid";
+inline const std::string molRxnExactChange = "molRxnExachg";
+inline const std::string molReactStatus = "molReactStatus";
+inline const std::string _fromAttachPoint = "_fromAttchpt";
+inline const std::string natReplace = "natReplace";
+inline const std::string templateNames = "templateNames";
 
-RDKIT_RDGENERAL_EXPORT extern const std::string _crippenMR;  // double computed
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _crippenMRContribs;  // std::vector<double> computed
+inline const std::string molNote = "molNote";
+inline const std::string atomNote = "atomNote";
+inline const std::string bondNote = "bondNote";
+inline const std::string _isotopicHs = "_isotopicHs";
 
-RDKIT_RDGENERAL_EXPORT extern const std::string _labuteASA;  // double computed
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _labuteAtomContribs;  // vec<double> computed
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _labuteAtomHContrib;  // double computed
-
-RDKIT_RDGENERAL_EXPORT extern const std::string _tpsa;  // double computed
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _tpsaAtomContribs;  // vec<double> computed
-
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    numArom;  // int computed (only uses in tests?)
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _MMFFSanitized;  // int (bool) computed
-
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _CrippenLogP;  // Unused (in the basement)
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _CrippenMR;  // Unused (in the basement)
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _GasteigerCharge;  // used to hold partial charges
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _GasteigerHCharge;  // used to hold partial charges from implicit Hs
-
-///////////////////////////////////////////////////////////////
-// Atom Props
-
-// Chirality stuff
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _BondsPotentialStereo;  // int (or bool) COMPUTED
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _CIPCode;  // std::string COMPUTED
-RDKIT_RDGENERAL_EXPORT extern const std::string _CIPRank;  // int COMPUTED
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _CIPComputed;  // int (bool) COMPUTED
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _CanonicalRankingNumber;  // unsigned int
-RDKIT_RDGENERAL_EXPORT extern const std::string _ChiralityPossible;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _UnknownStereo;  // int (bool) AddHs/Chirality
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _ringStereoAtoms;  // int vect Canon/Chiral/MolHash/MolOps//Renumber//RWmol
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _ringStereochemCand;  // chirality bool COMPUTED
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _ringStereoWarning;  // obsolete ?
-RDKIT_RDGENERAL_EXPORT extern const std::string _chiralPermutation;    // int
-RDKIT_RDGENERAL_EXPORT extern const std::string _ringStereoOtherAtom;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string _mesoOtherAtom;        // int
-
-// Smiles parsing
-RDKIT_RDGENERAL_EXPORT extern const std::string _SmilesStart;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _TraversalBondIndexOrder;  // ? unused
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _TraversalRingClosureBond;  // unsigned int
-RDKIT_RDGENERAL_EXPORT extern const std::string _TraversalStartPoint;  // bool
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _queryRootAtom;  // int SLNParse/SubstructMatch
-RDKIT_RDGENERAL_EXPORT extern const std::string _hasMassQuery;  // atom bool
-RDKIT_RDGENERAL_EXPORT extern const std::string _protected;  // atom int (bool)
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _ChiralAtomRank;  // atom rank (unsigned int)
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _supplementalSmilesLabel;  // atom string (SmilesWrite)
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _unspecifiedOrder;  // atom int (bool) smarts/smiles
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _RingClosures;  // INT_VECT smarts/smiles/canon
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    atomLabel;  // atom string from CXSMILES
-RDKIT_RDGENERAL_EXPORT extern const std::string OxidationNumber;  // int
-
-// MDL Style Properties (MolFileParser)
-RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molFileAlias;      // string
-RDKIT_RDGENERAL_EXPORT extern const std::string molFileValue;      // string
-RDKIT_RDGENERAL_EXPORT extern const std::string molInversionFlag;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molParity;         // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molStereoCare;     // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;   // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;        // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;     // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRingBondCount;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molSubstCount;     // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molAttachPoint;    // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molAttachOrder;    // int
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    molAttachOrderTemplate;  // std::vector<AtomAttchOrd>
-
-RDKIT_RDGENERAL_EXPORT extern const std::string molAtomClass;  // string
-RDKIT_RDGENERAL_EXPORT extern const std::string natReplace;    // string
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    templateNames;  // vector of strings
-RDKIT_RDGENERAL_EXPORT extern const std::string molAtomSeqId;       // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRxnExactChange;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molReactStatus;     // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molFileLinkNodes;   // string
-RDKIT_RDGENERAL_EXPORT extern const std::string _fromAttachPoint;   // int
-
-RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;  // unsigned int
-RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileChiralFlag;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileAtomQuery;   // int
-RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondQuery;   // int
-RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondEndPts;  // string
-RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondAttach;  // string
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _MolFileBondType;  // unsigned int
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _MolFileBondStereo;  // unsigned int
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _MolFileBondCfg;  // unsigned int
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    MRV_SMA;  // smarts string from Marvin
-
-// flag indicating that the chirality wasn't specified in the input,
-// but was calculated from 3D coordinates in the input
-RDKIT_RDGENERAL_EXPORT extern const std::string _NonExplicit3DChirality;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;  // atom string
-
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _QueryAtomGenericLabel;  // string
-
-// Reaction Information (Reactions.cpp)
-RDKIT_RDGENERAL_EXPORT extern const std::string _QueryFormalCharge;  //  int
-RDKIT_RDGENERAL_EXPORT extern const std::string _QueryHCount;        // int
-RDKIT_RDGENERAL_EXPORT extern const std::string _QueryIsotope;       // int
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _QueryMass;  // int = round(float * 1000)
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _ReactionDegreeChanged;                                // int (bool)
-RDKIT_RDGENERAL_EXPORT extern const std::string NullBond;  // int (bool)
-RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupAtomMaps;
-RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupBonds;
-RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupTargetAtoms;
-RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupTargetBonds;
-RDKIT_RDGENERAL_EXPORT extern const std::string reactantAtomIdx;
-RDKIT_RDGENERAL_EXPORT extern const std::string reactionMapNum;
-RDKIT_RDGENERAL_EXPORT extern const std::string reactantIdx;
-
-// SLN
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _AtomID;  // unsigned int SLNParser
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _starred;  // atom int COMPUTED (SLN)
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _SLN_s;  // string SLNAttribs (chiral info)
-RDKIT_RDGENERAL_EXPORT extern const std::string _Unfinished_SLN_;  // int (bool)
-
-// Smarts Smiles
-RDKIT_RDGENERAL_EXPORT extern const std::string _brokenChirality;  // atom bool
-RDKIT_RDGENERAL_EXPORT extern const std::string isImplicit;  // atom int (bool)
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    smilesSymbol;  // atom string (only used in test?)
-
-// Tripos
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    _TriposAtomType;  // string Mol2FileParser
-// missing defs for _TriposAtomName//_TriposPartialCharge...
+inline const std::string _QueryAtomGenericLabel = "_QueryAtomGenericLabel";
 
 // molecule drawing
-RDKIT_RDGENERAL_EXPORT extern const std::string _displayLabel;   // string
-RDKIT_RDGENERAL_EXPORT extern const std::string _displayLabelW;  // string
-
-///////////////////////////////////////////////////////////////
-// misc props
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    TWOD;  // need THREED -> confusing using in TDTMol supplier
-           //  converge with _2DConf?
-RDKIT_RDGENERAL_EXPORT extern const std::string BalabanJ;   // mol double
-RDKIT_RDGENERAL_EXPORT extern const std::string BalanbanJ;  // typo!! fix...
-
-RDKIT_RDGENERAL_EXPORT extern const std::string Discrims;  // FragCatalog Entry
-// Subgraphs::DiscrimTuple (uint32,uint32,uint32)
-RDKIT_RDGENERAL_EXPORT extern const std::string
-    DistanceMatrix_Paths;  // boost::shared_array<double>
-//  - note, confusing creation of names in
-//  - getDistanceMat
-RDKIT_RDGENERAL_EXPORT extern const std::string internalRgroupSmiles;
-RDKIT_RDGENERAL_EXPORT extern const std::string molNote;
-RDKIT_RDGENERAL_EXPORT extern const std::string atomNote;
-RDKIT_RDGENERAL_EXPORT extern const std::string bondNote;
-RDKIT_RDGENERAL_EXPORT extern const std::string _isotopicHs;
+inline const std::string _displayLabel = "_displayLabel";
+inline const std::string _displayLabelW = "_displayLabelW";
 
 }  // namespace common_properties
 #ifndef WIN32
