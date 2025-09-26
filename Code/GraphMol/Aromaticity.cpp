@@ -419,7 +419,7 @@ void applyHuckelToFused(
   narom += rdcast<int>(aromRings.size());
 }
 
-bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
+bool isAtomCandForArom(Atom *at, const ElectronDonorType edon,
                        bool allowThirdRow = true, bool allowTripleBonds = true,
                        bool allowHigherExceptions = true, bool onlyCorN = false,
                        bool allowExocyclicMultipleBonds = true) {
@@ -453,12 +453,27 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
   // atoms that aren't in their default valence state also get shut out
   auto defVal =
       PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
-  if (defVal > 0 && rdcast<int>(at->getTotalValence()) >
-                        (PeriodicTable::getTable()->getDefaultValence(
-                            at->getAtomicNum() - at->getFormalCharge()))) {
-    return false;
-  }
+  if (defVal > 0) {
+    int chargeAdustSign;
+    switch (at->getAtomicNum()) {
+      case 8:   // oxygen
+      case 16:  // sulfur
+      case 52:  // tellurium
+      case 34:  // sellenium
+      case 7:   // nitrogen
+        chargeAdustSign = 1;
+        break;
+      case 6:  // carbon
+      case 5:  // boron
+      default:
+        chargeAdustSign = -1;
+    }
 
+    if (rdcast<int>(at->getTotalValence()) >
+        (defVal + chargeAdustSign * at->getFormalCharge())) {
+      return false;
+    }
+  }
   // heteroatoms or charged carbons with radicals also disqualify us from being
   // considered. This was github issue 432 (heteroatoms) and 1936 (charged
   // carbons)
@@ -684,7 +699,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
     bool allDummy = true;
 
     for (auto firstIdx : sring) {
-      const auto at = mol.getAtomWithIdx(firstIdx);
+      auto at = mol.getAtomWithIdx(firstIdx);
 
       if (allDummy && at->getAtomicNum() != 0) {
         allDummy = false;
@@ -853,6 +868,9 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       // electron or has empty orbitals. Record the donor type
       // information in 'edon' - we will need it when we get to
       // the Huckel rule later
+
+      at->updatePropertyCache(false);
+
       edon[firstIdx] = getAtomDonorTypeArom(at);
       acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx]);
       if (!acands[firstIdx]) {
