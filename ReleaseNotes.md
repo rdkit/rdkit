@@ -23,6 +23,8 @@ Stephen, yuri@FreeBSD
   atom ranks.
 - 2D coordinate generation may produce different results for some molecules due
   to a change in the way the atom ordering is computed in the depiction code.
+- The `includeRingMembership` argument to `GetMorganAtomInvGen()` is now mandatory.
+  Previously, the default value was False.
 - Default ET-version in `ForceFields::CrystalFF::getExperimentalTorsions()` is
   changed from 1 to 2.
 

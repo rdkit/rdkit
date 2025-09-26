@@ -125,7 +125,7 @@ void exportMorgan() {
       python::return_value_policy<python::manage_new_object>());
 
   python::def("GetMorganAtomInvGen", &getMorganAtomInvGen,
-              (python::arg("includeRingMembership") = false),
+              (python::arg("includeRingMembership")),
               "Get a morgan atom invariants generator\n\n"
               "  ARGUMENTS:\n"
               "    - includeRingMembership: if set, whether or not the atom is "
