@@ -91,7 +91,7 @@ void visit_children(
     if (id == kCDXObj_Fragment) {
       std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
       if (!parseFragment(*mol, (CDXFragment &)(*frag.second), pagedata,
-                          missing_frag_id)) {
+                         missing_frag_id)) {
         continue;
       }
       unsigned int frag_id = mol->getProp<int>(CDX_FRAG_ID);
@@ -238,40 +238,41 @@ void visit_children(
 }
 
 CDXFormat sniff_format(std::istream &is) {
-    // Remember the current read position
-    std::streampos start_pos = is.tellg();
-    if (start_pos == -1) {
-        // Some streams (like std::cin) may not support tellg
-      return CDXFormat::AUTO; // here it simply means we failed
-    }
+  // Remember the current read position
+  std::streampos start_pos = is.tellg();
+  if (start_pos == -1) {
+    // Some streams (like std::cin) may not support tellg
+    return CDXFormat::AUTO;  // here it simply means we failed
+  }
 
-    // CDX header consists of:
-    // 8 bytes with the value "VjCD0100" (hex: 56 6A 43 44 30 31 30 30).
-    CDXFormat format = CDXFormat::CDXML;
-    const std::vector<char> header{86, 106, 67, 68, 48, 49, 48, 48};
-    std::vector<char> buf(8);
-    is.read(buf.data(), 8);
-    if (buf == header) {
-      format = CDXFormat::CDX;
-    }
-    
-    // Reset the stream position
-    is.clear(); // clear EOF flag if we hit it
-    is.seekg(start_pos);
-    return format;
+  // CDX header consists of:
+  // 8 bytes with the value "VjCD0100" (hex: 56 6A 43 44 30 31 30 30).
+  CDXFormat format = CDXFormat::CDXML;
+  const std::vector<char> header{86, 106, 67, 68, 48, 49, 48, 48};
+  std::vector<char> buf(8);
+  is.read(buf.data(), 8);
+  if (buf == header) {
+    format = CDXFormat::CDX;
+  }
+
+  // Reset the stream position
+  is.clear();  // clear EOF flag if we hit it
+  is.seekg(start_pos);
+  return format;
 }
-  
+
 std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream,
                                                  CDXFormat format) {
-  if(format == CDXFormat::AUTO) {
+  if (format == CDXFormat::AUTO) {
     format = sniff_format(inStream);
-    if(format == CDXFormat::AUTO) {
-      const std::string msg = " Failed deducing whether the input stream is CDXML or CDX";
+    if (format == CDXFormat::AUTO) {
+      const std::string msg =
+          " Failed deducing whether the input stream is CDXML or CDX";
       BOOST_LOG(rdErrorLog) << msg << std::endl;
       throw FileParseException(msg);
     }
   }
-  
+
   if (format == CDXFormat::CDXML) {
     CDXMLParser parser;
     // populate tree structure pt
@@ -292,7 +293,8 @@ std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream,
   } else {
     CDXistream input(inStream);
     const bool doThrow = true;
-    // if we aren't opened in binary mode on windows, we are going to have a bad time...
+    // if we aren't opened in binary mode on windows, we are going to have a bad
+    // time...
     try {
       std::unique_ptr<CDXDocument> doc(CDXReadDocFromStorage(input, doThrow));
       return doc;
@@ -303,12 +305,12 @@ std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream,
     }
   }
 }
- 
+
 // may raise FileParseException
 std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
     std::istream &inStream, const ChemDrawParserParams &params) {
   std::unique_ptr<CDXDocument> document =
-    streamToCDXDocument(inStream, params.format);
+      streamToCDXDocument(inStream, params.format);
   if (!document) {
     // error
     return std::vector<std::unique_ptr<RWMol>>();
@@ -358,7 +360,7 @@ std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename) {
       (std::string)std::filesystem::path(filename).extension().string();
   throw FileParseException(msg.c_str());
 }
-}
+}  // namespace ChemDraw
 
 namespace v2 {
 std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawDataStream(
@@ -383,17 +385,20 @@ std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawBlock(
 std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawFile(
     const std::string &filename, const ChemDrawParserParams &params) {
   ChemDrawParserParams realparams{params};
-  
+
   std::vector<std::unique_ptr<RWMol>> mols;
 
-  std::fstream chemdrawfile(filename, std::ios::in | std::ios::binary); // Always open in Binary mode
+  std::fstream chemdrawfile(
+      filename, std::ios::in | std::ios::binary);  // Always open in Binary mode
 
   if (!chemdrawfile) {
     throw BadFileException(filename + " does not exist");
     return mols;
   }
 
-  if (params.format == CDXFormat::AUTO && sniff_format(chemdrawfile) == CDXFormat::CDX)   { // need to reopen in binary mode
+  if (params.format == CDXFormat::AUTO &&
+      sniff_format(chemdrawfile) ==
+          CDXFormat::CDX) {  // need to reopen in binary mode
     realparams.format = CDXFormat::CDX;
   }
 
@@ -406,5 +411,5 @@ std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawFile(
   }
   return mols;
 }
-}
+}  // namespace v2
 }  // namespace RDKit
