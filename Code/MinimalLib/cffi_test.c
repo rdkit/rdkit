@@ -197,9 +197,11 @@ double angle_deg_between_vectors(double *v1, double *v2) {
 
 void test_io() {
   char *pkl;
+  char *pkl2;
+  char *pkl3;
   size_t pkl_size;
   size_t pkl2_size;
-  char *pkl2;
+  size_t pkl3_size;
 
   printf("--------------------------\n");
   printf("  test_io\n");
@@ -369,6 +371,68 @@ M  END",
   assert(strstr(molblock, "M  V30 1 4 1 2"));
   free(molblock);
   molblock = NULL;
+
+  molblock = get_molblock(pkl, pkl_size, "{\"forceMDLVersion\":\"V3000\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_molblock(pkl, pkl_size, "{\"forceMDLVersion\":\"v3000\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_molblock(pkl, pkl_size, "{\"forceMDLVersion\":\"v3k\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_molblock(pkl, pkl_size, "{\"forceMDLVersion\":\"3\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_molblock(pkl, pkl_size, "{\"forceMDLVersion\":\"30\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_v3kmolblock(pkl, pkl_size, "{\"forceMDLVersion\":\"V2000\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  pkl3 = get_mol("N->[Pt+2](Cl)(Cl)<-N", &pkl3_size, "");
+  assert(pkl3);
+  assert(pkl3_size > 0);
+
+  molblock = get_molblock(pkl3, pkl3_size, NULL);
+  assert(strstr(molblock, "V3000"));
+  assert(strstr(molblock, "M  V30 4 9 5 2"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_molblock(pkl3, pkl3_size, "{\"forceMDLVersion\":\"V2000\"}");
+  assert(strstr(molblock, "V2000"));
+  assert(strstr(molblock, "  5  2  9  0"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock =
+      get_v3kmolblock(pkl3, pkl3_size, "{\"forceMDLVersion\":\"V2000\"}");
+  assert(strstr(molblock, "V3000"));
+  assert(strstr(molblock, "M  V30 4 9 5 2"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock =
+      get_v2kmolblock(pkl3, pkl3_size, "{\"forceMDLVersion\":\"V3000\"}");
+  assert(strstr(molblock, "V2000"));
+  assert(strstr(molblock, "  5  2  9  0"));
+  free(molblock);
+  molblock = NULL;
+  free(pkl3);
+  pkl3 = NULL;
 
 #ifdef RDK_BUILD_INCHI_SUPPORT
   //---------

@@ -152,10 +152,16 @@ std::string JSMolBase::get_inchi(const std::string &options) const {
 }
 #endif
 std::string JSMolBase::get_molblock(const std::string &details) const {
-  return MinimalLib::molblock_helper(get(), details.c_str(), false);
+  return MinimalLib::molblock_helper(get(), details.c_str(),
+                                     MinimalLib::MDLVersion::AUTO);
 }
 std::string JSMolBase::get_v3Kmolblock(const std::string &details) const {
-  return MinimalLib::molblock_helper(get(), details.c_str(), true);
+  return MinimalLib::molblock_helper(get(), details.c_str(),
+                                     MinimalLib::MDLVersion::V3000);
+}
+std::string JSMolBase::get_v2Kmolblock(const std::string &details) const {
+  return MinimalLib::molblock_helper(get(), details.c_str(),
+                                     MinimalLib::MDLVersion::V2000);
 }
 std::string JSMolBase::get_json() const {
   return MolInterchange::MolToJSONData(get());

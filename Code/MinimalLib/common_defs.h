@@ -172,5 +172,10 @@ class DrawerFromDetails {
   std::string d_details;
 };
 
+enum class MDLVersion {
+  AUTO,
+  V2000,
+  V3000
+};
 }  // namespace MinimalLib
 }  // namespace RDKit

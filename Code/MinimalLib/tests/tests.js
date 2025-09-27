@@ -4163,6 +4163,39 @@ function test_get_coords() {
     }
 }
 
+function test_get_v3K_v2K_molblock() {
+    var mol = RDKitModule.get_mol('c1cc(O)ccc1');
+    assert(mol);
+    var molblock = mol.get_v3Kmolblock();
+    var mol2 = RDKitModule.get_mol(molblock);
+    assert(mol2);
+    var smiles = mol2.get_smiles();
+    assert(smiles === 'Oc1ccccc1');
+    mol2.delete();
+    molblock = mol.get_v3Kmolblock(JSON.stringify({ kekulize: false }));
+    assert(molblock.includes('M  V30 1 4 1 2'));
+    molblock = mol.get_molblock(JSON.stringify({ forceMDLVersion: 'V3000' }));
+    assert(molblock.includes('V3000'));
+    molblock = mol.get_v3Kmolblock(JSON.stringify({ forceMDLVersion: 'V2000' }));
+    assert(molblock.includes('V3000'));
+    mol.delete();
+    var mol3 = RDKitModule.get_mol('N->[Pt+2](Cl)(Cl)<-N');
+    assert(mol3);
+    molblock = mol3.get_molblock();
+    assert(molblock.includes('V3000'));
+    assert(molblock.includes('M  V30 4 9 5 2'));
+    molblock = mol3.get_molblock(JSON.stringify({forceMDLVersion: 'V2000'}));
+    assert(molblock.includes('V2000'));
+    assert(molblock.includes('  5  2  9  0'));
+    molblock = mol3.get_v3Kmolblock(JSON.stringify({forceMDLVersion: 'V2000'}));
+    assert(molblock.includes('V3000'));
+    assert(molblock.includes('M  V30 4 9 5 2'));
+    molblock = mol3.get_v2Kmolblock(JSON.stringify({forceMDLVersion: 'V3000'}));
+    assert(molblock.includes('V2000'));
+    assert(molblock.includes('  5  2  9  0'));
+    mol3.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -4260,6 +4293,7 @@ initRDKitModule().then(function(instance) {
     test_png_metadata();
     test_combine_with();
     test_get_coords();
+    test_get_v3K_v2K_molblock();
 
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
