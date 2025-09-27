@@ -28,7 +28,7 @@
     rxn_callback("[C:1](=[O:2])-O.[N:3]>>[O:2]=[C:1]-[N:3]");
   });
   function form_to_details(details) {
-    var controls = ["addAtomIndices", "addBondIndices", "explicitMethyl", "addStereoAnnotation"];
+    var controls = ["addAtomIndices", "addBondIndices", "explicitMethyl", "addStereoAnnotation", "returnDrawCoords"];
     for (i in controls) {
       var control = controls[i];
       details[control] = document.getElementById(control).checked
@@ -38,17 +38,33 @@
       var control = texts[i];
       details[control] = document.getElementById(control).value
     }
+    if (document.getElementById("ignoreIndicesWhenCentering").checked) {
+      details.drawingExtentsInclude = { ALL: true, ANNOTATIONS: false };
+      details.padding = 0.1;
+    } else {
+      delete details.drawingExtentsInclude;
+      delete details.padding;
+    }
   }
   function draw_with_highlights(mol, details) {
     form_to_details(details);
     var tdetails = JSON.stringify(details)
-    var svg = mol.get_svg_with_highlights(tdetails);
-    if (svg == "") return;
+    var res = mol.get_svg_with_highlights(tdetails);
+    if (res == "") return;
+    if (details.returnDrawCoords) {
+      var {drawCoords, svg} = JSON.parse(res);
+      console.log(`SVG drawCoords: ${JSON.stringify(drawCoords)}`);
+    } else {
+      var svg = res;
+    }
     var ob = document.getElementById("drawing");
     ob.outerHTML = "<div id='drawing'>" + svg + "</div>";
     var canvas = document.getElementById("rdkit-canvas");
-    mol.draw_to_canvas_with_highlights(canvas, tdetails);
-
+    res = mol.draw_to_canvas_with_highlights(canvas, tdetails);
+    if (details.returnDrawCoords) {
+      var {drawCoords} = JSON.parse(res);
+      console.log(`canvas drawCoords: ${JSON.stringify(drawCoords)}`);
+    }
   }
   function draw(mol) {
     var details = {};
@@ -171,6 +187,11 @@
       <br />
       <input type="checkbox" id="explicitMethyl" name="explicitMethyl" onclick="option_changed(this);" />
       <label for="explicitMethyl">explicitMethyl</label>
+      <input type="checkbox" id="ignoreIndicesWhenCentering" name="ignoreIndicesWhenCentering" onclick="option_changed(this);" />
+      <label for="ignoreIndicesWhenCentering">ignoreIndicesWhenCentering</label>
+      <br />
+      <input type="checkbox" id="returnDrawCoords" name="returnDrawCoords" onclick="option_changed(this);" />
+      <label for="returnDrawCoords">returnDrawCoords</label>
       <br />
       <input type="text" id="legend" onkeyup="option_changed(this);"><label for="legend">legend</label>
       <input type="text" id="legendFontSize" onkeyup="option_changed(this);"><label

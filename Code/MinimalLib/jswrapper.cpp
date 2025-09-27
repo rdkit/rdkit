@@ -59,7 +59,7 @@ class JSDrawerFromDetails : public MinimalLib::DrawerFromDetails {
                                    drawingDetails.noFreetype));
     updateDrawerParamsFromJSON();
   }
-  std::string finalizeDrawing() { return ""; }
+  std::string finalizeDrawing() { return createDrawingResult(""); }
   std::unique_ptr<MolDraw2DJS> d_drawer;
   emscripten::val d_ctx;
 };
