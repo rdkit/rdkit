@@ -158,19 +158,21 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>
       mol.getAtomWithIdx(bonds_selected[bi].first)
           ->getPropIfPresent(common_properties::molAtomMapNumber, label);
       char a1[32];
-      if (0 == label)
+      if (0 == label) {
         sprintf(a1, "\'%s\'", symbol.c_str(), label);
-      else
+      } else {
         sprintf(a1, "\'%s:%u\'", symbol.c_str(), label);
+      }
       symbol = mol.getAtomWithIdx(bonds_selected[bi].second)->getSymbol();
       label = 0;
       mol.getAtomWithIdx(bonds_selected[bi].second)
           ->getPropIfPresent(common_properties::molAtomMapNumber, label);
       char a2[32];
-      if (0 == label)
+      if (0 == label) {
         sprintf(a2, "\'%s\'", symbol.c_str(), label);
-      else
+      } else {
         sprintf(a2, "\'%s:%u\'", symbol.c_str(), label);
+      }
 
       std::cout << "(" << bonds_selected[bi].first << a1 << ","
                 << bonds_selected[bi].second << a2 << ") ";
@@ -249,9 +251,10 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>
       } else {  // select the core fragment
 // DEBUG PRINT
 #ifdef MMPA_DEBUG
-        if (iCore != -1)
+        if (iCore != -1) {
           std::cout << "Next CORE found. iCore=" << iCore << " New i=" << i
                     << " nAttachments=" << nAttachments << "\n";
+        }
 #endif
         if (nAttachments >= maxAttachments) {  // Choose a fragment with maximal
                                                // number of connection points as
@@ -379,9 +382,10 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>
     res.emplace_back(core, side_chains);  //
   }
 #ifdef MMPA_DEBUG
-  else
+  else {
     std::cout << res.size() + 1 << " --- DUPLICATE Result FOUND --- ri=" << ri
               << "\n";
+  }
 #endif
 }
 
@@ -441,10 +445,11 @@ bool fragmentMol(const ROMol &mol,
     mol.getAtomWithIdx(i)->getPropIfPresent(common_properties::molAtomMapNumber,
                                             label);
     char a1[32];
-    if (0 == label)
+    if (0 == label) {
       sprintf(a1, "\'%s\'", symbol.c_str(), label);
-    else
+    } else {
       sprintf(a1, "\'%s:%u\'", symbol.c_str(), label);
+    }
     std::cout << "Atom " << i << ": " << a1;  //<<" Bonds:";
     std::cout << "\n";
   }
@@ -471,19 +476,21 @@ bool fragmentMol(const ROMol &mol,
     mol.getAtomWithIdx(matching_atoms[i][0].second)
         ->getPropIfPresent(common_properties::molAtomMapNumber, label);
     char a1[32];
-    if (0 == label)
+    if (0 == label) {
       sprintf(a1, "\'%s\'", symbol.c_str(), label);
-    else
+    } else {
       sprintf(a1, "\'%s:%u\'", symbol.c_str(), label);
+    }
     symbol = mol.getAtomWithIdx(matching_atoms[i][1].second)->getSymbol();
     label = 0;
     mol.getAtomWithIdx(matching_atoms[i][1].second)
         ->getPropIfPresent(common_properties::molAtomMapNumber, label);
     char a2[32];
-    if (0 == label)
+    if (0 == label) {
       sprintf(a2, "\'%s\'", symbol.c_str(), label);
-    else
+    } else {
       sprintf(a2, "\'%s:%u\'", symbol.c_str(), label);
+    }
 
     std::cout << i << ": (" << matching_atoms[i][0].second << a1 << ","
               << matching_atoms[i][1].second << a2 << ") \n";
