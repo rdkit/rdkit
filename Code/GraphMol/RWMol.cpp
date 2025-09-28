@@ -530,8 +530,12 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
   // we're in a batch edit, and at least one of the bond ends is scheduled
   // for deletion, so mark the new bond for deletion too:
   if (dp_delAtoms &&
-      (dp_delAtoms->test(atomIdx1) || dp_delAtoms->test(atomIdx2))) {
-    dp_delBonds->push_back(1);
+      ((atomIdx1 < dp_delAtoms->size() && dp_delAtoms->test(atomIdx1)) ||
+       (atomIdx2 < dp_delAtoms->size() && dp_delAtoms->test(atomIdx2)))) {
+    if (dp_delBonds->size() < numBonds) {
+      dp_delBonds->resize(numBonds);
+    }
+    dp_delBonds->set(numBonds - 1);
   }
 
   // if both atoms have a degree>1, reset our ring info structure,
