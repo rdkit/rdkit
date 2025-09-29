@@ -2118,6 +2118,9 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
       } else {
         res->expandQuery(makeAtomNumQuery(atNum), Queries::COMPOSITE_OR, true);
       }
+      // we want the atomic number of the query itself to always be zero
+      // this was Github #8820 and #8823
+      res->setAtomicNum(0);
     }
     res->getQuery()->setNegation(negate);
   } else {
