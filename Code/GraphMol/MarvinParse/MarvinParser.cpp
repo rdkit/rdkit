@@ -295,6 +295,10 @@ class MarvinCMLReader {
         bond = new Bond();
         type = Bond::DATIVE;
         bType = 1;
+      } else if (marvinBondType == "HYDROGEN") {
+        bond = new Bond();
+        type = Bond::HYDROGEN;
+        bType = 1;
       } else if (marvinBondType == "1") {
         type = Bond::SINGLE;
         bond = new Bond;
