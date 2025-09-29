@@ -489,6 +489,29 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
   }
   delete $2;
 }
+| atom_expr AND_TOKEN point_query {
+  $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
+  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
+  if($3->getNumExplicitHs()){
+    if(!$1->getNumExplicitHs()){
+      $1->setNumExplicitHs($3->getNumExplicitHs());
+      $1->setNoImplicit(true);
+    } else if($1->getNumExplicitHs()!=$3->getNumExplicitHs()){
+      // conflicting queries...
+      $1->setNumExplicitHs(0);
+      $1->setNoImplicit(false);
+    }
+  }
+  if($3->getFormalCharge()){
+    if(!$1->getFormalCharge()){
+      $1->setFormalCharge($3->getFormalCharge());
+    } else if($1->getFormalCharge()!=$3->getFormalCharge()){
+      // conflicting queries...
+      $1->setFormalCharge(0);
+    }
+  }
+  delete $3;
+}
 | point_query
 ;
 
