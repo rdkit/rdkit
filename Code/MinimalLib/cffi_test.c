@@ -3980,6 +3980,75 @@ M  END\n";
   free(pkl);
 }
 
+void test_return_draw_coords() {
+  const char *mb =
+      "\n\
+     RDKit          2D\n\
+\n\
+  3  3  0  0  0  0  0  0  0  0999 V2000\n\
+    0.0000    0.8930    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0\n\
+  2  3  1  0\n\
+  1  3  1  0\n\
+M  END\n";
+  char *pkl;
+  char *res;
+  size_t pkl_size;
+  size_t i;
+  unsigned int above_tol;
+  double reference[6];
+  double highlight[6];
+
+  printf("--------------------------\n");
+  printf("  test_return_draw_coords\n");
+
+  pkl = get_mol(mb, &pkl_size, "");
+  assert(pkl && pkl_size);
+  res = get_svg(
+      pkl, pkl_size,
+      "{\"width\":300,\"height\":200,\"padding\":0.2,\"returnDrawCoords\":true}");
+  assert(res);
+  assert(strstr(res, "\"drawCoords\":"));
+  assert(strstr(res, "\"svg\":"));
+  sscanf(res, "{\"drawCoords\":[[%lf,%lf],[%lf,%lf],[%lf,%lf]]", &reference[0],
+         &reference[1], &reference[2], &reference[3], &reference[4],
+         &reference[5]);
+  free(res);
+  res = get_svg(
+      pkl, pkl_size,
+      "{\"width\":300,\"height\":200,\"padding\":0.2,\"atoms\":[0],\"returnDrawCoords\":true}");
+  assert(res);
+  assert(strstr(res, "\"drawCoords\":"));
+  assert(strstr(res, "\"svg\":"));
+  sscanf(res, "{\"drawCoords\":[[%lf,%lf],[%lf,%lf],[%lf,%lf]]", &highlight[0],
+         &highlight[1], &highlight[2], &highlight[3], &highlight[4],
+         &highlight[5]);
+  above_tol = 0;
+  for (i = 0; !above_tol && i < 6; ++i) {
+    above_tol = (fabs(reference[i] - highlight[i]) > 0.1);
+  }
+  assert(above_tol);
+  free(res);
+  res = get_svg(
+      pkl, pkl_size,
+      "{\"width\":300,\"height\":200,\"padding\":0.2,\"atoms\":[0],\"returnDrawCoords\":true,\"drawingExtentsInclude\":{\"ALL\":true,\"HIGHLIGHTS\":false}}");
+  assert(res);
+  assert(strstr(res, "\"drawCoords\":"));
+  assert(strstr(res, "\"svg\":"));
+  sscanf(res, "{\"drawCoords\":[[%lf,%lf],[%lf,%lf],[%lf,%lf]]", &highlight[0],
+         &highlight[1], &highlight[2], &highlight[3], &highlight[4],
+         &highlight[5]);
+  above_tol = 0;
+  for (i = 0; !above_tol && i < 6; ++i) {
+    above_tol = (fabs(reference[i] - highlight[i]) > 0.1);
+  }
+  assert(!above_tol);
+  free(res);
+  free(pkl);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -4021,5 +4090,6 @@ int main() {
   test_get_mol_remove_hs();
   test_png_metadata();
   test_drawing_extents_include();
+  test_return_draw_coords();
   return 0;
 }
