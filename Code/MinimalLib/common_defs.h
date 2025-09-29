@@ -213,5 +213,10 @@ class DrawerFromDetails {
   std::unique_ptr<std::vector<RDGeom::Point2D>> d_drawCoords;
 };
 
+enum class MDLVersion {
+  AUTO,
+  V2000,
+  V3000
+};
 }  // namespace MinimalLib
 }  // namespace RDKit

@@ -674,7 +674,7 @@ std::string process_rxn_details(const std::string &details,
 }
 
 std::string molblock_helper(const RWMol &mol, const char *details_json,
-                            bool forceV3000) {
+                            MDLVersion forceMDLVersionAsEnum) {
   bool includeStereo = true;
   bool kekulize = true;
   bool useMolBlockWedging = false;
@@ -688,6 +688,22 @@ std::string molblock_helper(const RWMol &mol, const char *details_json,
     LPT_OPT_GET(kekulize);
     LPT_OPT_GET(useMolBlockWedging);
     LPT_OPT_GET(addChiralHs);
+    if (forceMDLVersionAsEnum == MDLVersion::AUTO) {
+      std::string forceMDLVersion;
+      LPT_OPT_GET(forceMDLVersion);
+      auto forceMDLVersionSize = forceMDLVersion.size();
+      size_t pos = 0;
+      if (forceMDLVersionSize > 0 && std::tolower(forceMDLVersion[0]) == 'v') {
+        pos = 1;
+      }
+      if (forceMDLVersionSize > pos) {
+        if (forceMDLVersion[pos] == '2') {
+          forceMDLVersionAsEnum = MDLVersion::V2000;
+        } else if (forceMDLVersion[pos] == '3') {
+          forceMDLVersionAsEnum = MDLVersion::V3000;
+        }
+      }
+    }
   }
   const RWMol *molPtr = &mol;
   std::unique_ptr<RWMol> molCopy;
@@ -702,7 +718,28 @@ std::string molblock_helper(const RWMol &mol, const char *details_json,
                                            false);
     }
   }
-  return MolToMolBlock(*molPtr, includeStereo, -1, kekulize, forceV3000);
+  MolWriterParams params{.includeStereo = includeStereo, .kekulize = kekulize};
+  std::string (*molToMolBlockFunc)(const ROMol &, const MolWriterParams &, int);
+  switch (forceMDLVersionAsEnum) {
+    case MDLVersion::V2000:
+      molToMolBlockFunc = MolToV2KMolBlock;
+      break;
+    case MDLVersion::V3000:
+      molToMolBlockFunc = MolToV3KMolBlock;
+      break;
+    default:
+      molToMolBlockFunc = MolToMolBlock;
+      break;
+  }
+  return molToMolBlockFunc(*molPtr, params, -1);
+}
+
+[[deprecated(
+    "please use the overload taking the force MDLVersion enum parameter")]]
+std::string molblock_helper(const RWMol &mol, const char *details_json,
+                            bool forceV3000) {
+  return molblock_helper(mol, details_json,
+                         forceV3000 ? MDLVersion::V3000 : MDLVersion::AUTO);
 }
 
 void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,

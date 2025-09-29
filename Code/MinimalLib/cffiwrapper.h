@@ -29,6 +29,8 @@ RDKIT_RDKITCFFI_EXPORT char *get_molblock(const char *pkl, size_t pkl_sz,
                                           const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_v3kmolblock(const char *pkl, size_t pkl_sz,
                                              const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_v2kmolblock(const char *pkl, size_t pkl_sz,
+                                             const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_smiles(const char *pkl, size_t pkl_sz,
                                         const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_smarts(const char *pkl, size_t pkl_sz,
