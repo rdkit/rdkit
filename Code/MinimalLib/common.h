@@ -498,6 +498,7 @@ std::string process_details(rj::Document &doc, const std::string &details,
   GET_JSON_VALUE(doc, drawingDetails, forceCoords, Bool)
   GET_JSON_VALUE(doc, drawingDetails, wavyBonds, Bool)
   GET_JSON_VALUE(doc, drawingDetails, useMolBlockWedging, Bool)
+  GET_JSON_VALUE(doc, drawingDetails, returnDrawCoords, Bool)
 
   return "";
 }
@@ -793,7 +794,12 @@ class SVGDrawerFromDetails : public DrawerFromDetails {
   std::string finalizeDrawing() {
     CHECK_INVARIANT(d_drawer, "d_drawer must not be null");
     d_drawer->finishDrawing();
-    return d_drawer->getDrawingText();
+    auto svg = d_drawer->getDrawingText();
+    return createDrawingResult(svg);
+  }
+  const char *getDrawingResultKey() {
+    static const char *SVG_KEY = "svg";
+    return SVG_KEY;
   }
   std::unique_ptr<MolDraw2DSVG> d_drawer;
 };

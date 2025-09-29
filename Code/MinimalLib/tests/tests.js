@@ -4196,6 +4196,69 @@ function test_get_v3K_v2K_molblock() {
     mol3.delete();
 }
 
+function test_return_draw_coords() {
+    var mb = `
+     RDKit          2D
+
+  3  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.8930    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  1  3  1  0
+M  END`;
+    var reference;
+    var highlight;
+    var aboveTol;
+    var mol = RDKitModule.get_mol(mb);
+    assert(mol);
+    res = mol.get_svg_with_highlights(JSON.stringify({
+        width: 300,
+        height: 200,
+        padding: 0.2,
+        returnDrawCoords: true
+    }));
+    assert(res);
+    res = JSON.parse(res);
+    assert(res.drawCoords);
+    assert(res.svg);
+    reference = res.drawCoords.flat();
+    res = mol.get_svg_with_highlights(JSON.stringify({
+        width: 300,
+        height: 200,
+        padding: 0.2,
+        atoms: [0],
+        returnDrawCoords: true
+    }));
+    assert(res);
+    res = JSON.parse(res);
+    assert(res.drawCoords);
+    assert(res.svg);
+    highlight = res.drawCoords.flat();
+    aboveTol = reference.some((ref, i) => (Math.abs(ref - highlight[i]) > 0.1));
+    assert(aboveTol);
+    res = mol.get_svg_with_highlights(JSON.stringify({
+        width: 300,
+        height: 200,
+        padding: 0.2,
+        atoms: [0],
+        returnDrawCoords: true,
+        drawingExtentsInclude: {
+            ALL: true,
+            HIGHLIGHTS: false
+        }
+    }));
+    assert(res);
+    res = JSON.parse(res);
+    assert(res.drawCoords);
+    assert(res.svg);
+    highlight = res.drawCoords.flat();
+    aboveTol = reference.some((ref, i) => (Math.abs(ref - highlight[i]) > 0.1));
+    assert(!aboveTol);
+    mol.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -4294,6 +4357,7 @@ initRDKitModule().then(function(instance) {
     test_combine_with();
     test_get_coords();
     test_get_v3K_v2K_molblock();
+    test_return_draw_coords();
 
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
