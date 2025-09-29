@@ -9,6 +9,8 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes:
+- Simple AND queries are now merged into atoms. E.g. `[C&+]` now produces the
+  the same result as `[C+]` when parsed as SMARTS.
 
 ## New Features and Enhancements:
 
