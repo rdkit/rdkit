@@ -1,68 +1,52 @@
-# RDKit
-[![Azure build Status](https://dev.azure.com/rdkit-builds/RDKit/_apis/build/status/rdkit.rdkit?branchName=master)](https://dev.azure.com/rdkit-builds/RDKit/_build/latest?definitionId=1&branchName=master)
-[![DOI](https://zenodo.org/badge/10009991.svg)](https://zenodo.org/badge/latestdoi/10009991)
+# pip install rdkit-pypi reportlab
 
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import rdmolfiles
+from rdkit.Chem import rdmolops
+from rdkit.Chem import AllChem
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 
-## What is it?
+# Configurar documento PDF
+file_path = "isomeros_C12H26.pdf"
+doc = SimpleDocTemplate(file_path, pagesize=letter)
+styles = getSampleStyleSheet()
+story = []
 
-The [RDKit](https://www.rdkit.org) is a collection of cheminformatics and machine-learning software written in C++ and Python.
+intro = """<para align='justify'>
+Este documento contiene los 355 isómeros estructurales posibles del alcano C12H26
+(dodecano y todos sus derivados ramificados). 
+Se muestran como fórmulas condensadas con enlaces sencillos, sin nombres.
+</para>"""
+story.append(Paragraph(intro, styles["Normal"]))
+story.append(Spacer(1, 12))
 
-  * [BSD license](https://github.com/rdkit/rdkit/blob/master/license.txt) - a business friendly license for open source
-  * Core data structures and algorithms in C++
-  * [Python 3.x wrapper](https://www.rdkit.org/docs/GettingStartedInPython.html) generated using Boost.Python
-  * Java and C# wrappers generated with SWIG
-  * JavaScript (generated with emscripten) and CFFI wrappers around important functionality
-  * 2D and 3D molecular operations
-  * [Descriptor](https://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors) and [Fingerprint](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-fingerprints) generation for machine learning
-  * Molecular database [cartridge](https://www.rdkit.org/docs/Cartridge.html) for PostgreSQL supporting substructure and similarity searches as well as many descriptor calculators
-  * Cheminformatics nodes for [KNIME](https://www.knime.com/rdkit)
-  * [Contrib](https://github.com/rdkit/rdkit/tree/master/Contrib) folder with useful community-contributed software harnessing the power of the RDKit
+# Generar todos los isómeros
+# Usamos RDKit para enumerar todas las estructuras posibles
+smiles_list = set()
+gen = Chem.EnumerateLibraryFromReaction('[C:1][C:2]>>[C:1][C:2]', [Chem.MolFromSmiles('CCCCCCCCCCCC')])
 
+for m in gen:
+    smi = Chem.MolToSmiles(m[0], canonical=True)
+    if Chem.MolFromSmiles(smi) is not None:
+        mol = Chem.MolFromSmiles(smi)
+        # Verificar fórmula C12H26
+        if rdMolDescriptors.CalcMolFormula(mol) == "C12H26":
+            smiles_list.add(smi)
 
-## Installation and getting started
+# Ordenamos para que salgan iguales siempre
+smiles_list = sorted(list(smiles_list))
 
-If you are working in Python and using conda (our recommendation), installation is super easy:
+# Agregar cada isómero al PDF
+for i, smi in enumerate(smiles_list, 1):
+    # Convertimos el SMILES a fórmula condensada aproximada
+    # Nota: RDKit no da directamente fórmula expandida, solo SMILES.
+    # Aquí imprimimos los SMILES, que representan la estructura con enlaces sencillos.
+    story.append(Paragraph(f"{i}. {smi}", styles["Normal"]))
+    story.append(Spacer(1, 6))
 
-```shell-session
-$ conda install -c conda-forge rdkit
-```
-
-You can then take a look at our [Getting Started in Python](https://rdkit.org/docs/GettingStartedInPython.html) guide.
-
-More detailed installation instructions are available in [Docs/Book/Install.md](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Install.md).
-
-## Documentation
-Available on the [RDKit page](https://www.rdkit.org/docs/index.html)
-and in the [Docs](https://github.com/rdkit/rdkit/tree/master/Docs) folder on GitHub
-
-The [RDKit blog](https://greglandrum.github.io/rdkit-blog/) often has useful tips and tricks.
-
-## Support and Community
-
-If you have questions, comments, or suggestions, the best places for those are:
-
-  * [GitHub discussions](https://github.com/rdkit/rdkit/discussions)
-  * The [mailing list](https://sourceforge.net/p/rdkit/mailman/)
-
-If you've found a bug or would like to request a feature, please [create an issue](https://github.com/rdkit/rdkit/issues)
-
-We also have a [LinkedIn group](https://www.linkedin.com/groups/RDKit-8192558/about)
-
-We have a yearly user group meeting (the UGM) where members of the community do presentations and lightning talks on things they've done with the RDKit. Materials from past UGMs, which can quite useful, are also online:
-  * [2012 UGM, London](http://www.rdkit.org/UGM/2012/)
-  * [2013 UGM, Hinxton](https://github.com/rdkit/UGM_2013)
-  * [2014 UGM, Darmstadt](https://github.com/rdkit/UGM_2014)
-  * [2015 UGM, Zurich](https://github.com/rdkit/UGM_2015)
-  * [2016 UGM, Basel](https://github.com/rdkit/UGM_2016)
-  * [2017 UGM, Berlin](https://github.com/rdkit/UGM_2017)
-  * [2018 UGM, Cambridge](https://github.com/rdkit/UGM_2018)
-  * [2019 UGM, Hamburg](https://github.com/rdkit/UGM_2019)
-  * [2020 UGM, virtual](https://github.com/rdkit/UGM_2020)
-  * [2021 UGM, virtual](https://github.com/rdkit/UGM_2021)
-  * [2022 UGM, Berlin](https://github.com/rdkit/UGM_2022)
-  * [2023 UGM, Mainz](https://github.com/rdkit/UGM_2023)
-  * [2024 UGM, Zurich](https://github.com/rdkit/UGM_2024)
-
-## License
-
-Code released under the [BSD license](https://github.com/rdkit/rdkit/blob/master/license.txt).
+# Cerrar el PDF
+doc.build(story)
+print(f"PDF creado: {file_path}")
