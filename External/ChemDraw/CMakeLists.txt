@@ -103,7 +103,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   # so it needs to be installed so that it can be linked later on
   # when the libs are used.
   if(RDK_INSTALL_STATIC_LIBS OR NOT BUILD_SHARED_LIBS)
-    install(TARGETS expat EXPORT ${RDKit_EXPORTED_TARGETS} COMPONENT dev)
+    install(TARGETS expat EXPORT ${RDKit_EXPORTED_TARGETS} DESTINATION ${RDKit_LibDir} COMPONENT dev)
   endif()
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
