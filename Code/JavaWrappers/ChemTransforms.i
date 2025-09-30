@@ -83,7 +83,7 @@ RDKit::ROMol * new_molzip(
 %newobject replaceSidechains;
 %newobject replaceCores;
 %newobject MurckoDecompose;
-%template(StringMolMap) std::map<std::string,boost::shared_ptr<RDKit::ROMol> >;
+%template(StringMolMap) std::map<std::string,std::shared_ptr<RDKit::ROMol> >;
 %include <GraphMol/Bond.h>
 %include <GraphMol/ChemTransforms/ChemTransforms.h>
 
@@ -120,7 +120,7 @@ RDKit::ROMol * new_molzip(
 %ignore constructBRICSBondTypes;
 
 %newobject fragmentOnBRICSBonds;
-%template(UIntMolMap) std::map<unsigned int,boost::shared_ptr<RDKit::ROMol> >;
+%template(UIntMolMap) std::map<unsigned int, std::shared_ptr<RDKit::ROMol> >;
 %include <RDGeneral/BetterEnums.h>
 %include <GraphMol/ChemTransforms/MolFragmenter.h>
 %include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>

@@ -5201,7 +5201,7 @@ void testMolFragsWithQuery() {
     RWMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 8);
-    std::map<int, boost::shared_ptr<ROMol>> res =
+    std::map<int, std::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getAtNum);
     TEST_ASSERT(res.size() == 3);
     TEST_ASSERT(res.find(6) != res.end());
@@ -5238,7 +5238,7 @@ void testMolFragsWithQuery() {
     std::vector<int> keep;
     keep.push_back(6);
     keep.push_back(8);
-    std::map<int, boost::shared_ptr<ROMol>> res =
+    std::map<int, std::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getAtNum, true, &keep);
     TEST_ASSERT(res.size() == 2);
     TEST_ASSERT(res.find(6) != res.end());
@@ -5269,7 +5269,7 @@ void testMolFragsWithQuery() {
     std::vector<int> keep;
     keep.push_back(6);
     keep.push_back(8);
-    std::map<int, boost::shared_ptr<ROMol>> res =
+    std::map<int, std::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getAtNum, true, &keep, true);
     TEST_ASSERT(res.size() == 1);
     TEST_ASSERT(res.find(6) == res.end());
