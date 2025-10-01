@@ -27,12 +27,29 @@
 namespace RDKit {
 namespace Descriptors {
 
+//! Class for calculation of the Shrake and Rupley surface area and volume
+//! using the Double Cubic Lattice Method.
+//!
+//! Frank Eisenhaber, Philip Lijnzaad, Patrick Argos, Chris Sander and
+//! Michael Scharf, "The Double Cubic Lattice Method: Efficient Approaches
+//! to Numerical Integration of Surface Area and Volume and to Dot Surface
+//! Contouring of Molecular Assemblies", Journal of Computational Chemistry,
+//! Vol. 16, No. 3, pp. 273-284, 1995.
 class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
-  public:
+ public:
+  // default params assume a small molecule and default conformer
+  const ROMol &mol;
+  std::vector<double> radii_;
+  bool isProtein = false;
+  bool includeLigand = true;
+  double probeRadius = 1.4;
+  int confId = -1;
+  double maxRadius = 1.7;  // treat default max radius as Carbon
+
   /*!
 
     \param mol: input molecule or protein
-    \param radii: radii for atoms of input mol
+    \param radii: radii for atoms of input mol, empty for default values
     \param isProtein: flag to calculate burried surface area of a protein ligand
     complex [default=false, free ligand]
     \param includeLigand: flag to trigger
@@ -43,28 +60,16 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
     \param confId: conformer ID to consider [default=-1]
 
   */
+  DoubleCubicLatticeVolume(const ROMol &mol, std::vector<double> radii,
+                           bool isProtein = false, bool includeLigand = true,
+                           double probeRadius = 1.4, int confId = -1);
 
-  // default params assume a small molecule and default conformer
-  const ROMol &mol;
-  std::vector<double> radii_;
-  bool isProtein = false;
-  bool includeLigand = true;
-  double probeRadius = 1.4;
-  int confId = -1;
-  double maxRadius = 1.7; // treat default max radius as Carbon
-
-
-DoubleCubicLatticeVolume(const ROMol &mol, std::vector<double> radii,
-                         bool isProtein = false, bool includeLigand = true, 
-                         double probeRadius = 1.4, int confId = -1);
-  //! Class for calculation of the Shrake and Rupley surface area and volume
-  //! using the Double Cubic Lattice Method.
-  //!
-  //! Frank Eisenhaber, Philip Lijnzaad, Patrick Argos, Chris Sander and
-  //! Michael Scharf, "The Double Cubic Lattice Method: Efficient Approaches
-  //! to Numerical Integration of Surface Area and Volume and to Dot Surface
-  //! Contouring of Molecular Assemblies", Journal of Computational Chemistry,
-  //! Vol. 16, No. 3, pp. 273-284, 1995.
+  //! \overload uses default vdw radii
+  DoubleCubicLatticeVolume(const ROMol &mol, bool isProtein = false,
+                           bool includeLigand = true, double probeRadius = 1.4,
+                           int confId = -1)
+      : DoubleCubicLatticeVolume(mol, std::vector<double>(), isProtein,
+                                 includeLigand, probeRadius, confId) {};
 
   // value returns
 
@@ -89,7 +94,7 @@ DoubleCubicLatticeVolume(const ROMol &mol, std::vector<double> radii,
   /*! \return van der Waals Volume */
   double getVDWVolume();
 
-   /*! \return Polar Volume */
+  /*! \return Polar Volume */
   double getPolarVolume(bool includeSandP, bool includeHs);
 
   /*! \return Volume from specified atoms */
