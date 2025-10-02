@@ -216,6 +216,7 @@ void Atom::initFromOther(const Atom &other) {
   } else {
     dp_monomerInfo = nullptr;
   }
+  d_flags = other.d_flags;
 }
 
 Atom::Atom(const Atom &other) : RDProps() { initFromOther(other); }

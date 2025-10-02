@@ -75,7 +75,7 @@
 
 
   //
-  //  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
+  //  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
   //
   //   @@ All Rights Reserved  @@
   //
@@ -108,6 +108,36 @@ namespace {
   molList->clear();
   molList->resize(0);
  }
+  const std::uint64_t SMARTS_H_MASK = 0x1;
+  const std::uint64_t SMARTS_CHARGE_MASK = 0x2;
+
+  void atom_expr_and_point_query(QueryAtom *atom_expr, QueryAtom *point_query) {
+    atom_expr->expandQuery(point_query->getQuery()->copy(), Queries::COMPOSITE_AND, true);
+    if (atom_expr->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+      atom_expr->setChiralTag(point_query->getChiralTag());
+    }
+    if (point_query->getFlags() & SMARTS_H_MASK) {
+      if (!(atom_expr->getFlags() & SMARTS_H_MASK)) {
+        atom_expr->setNumExplicitHs(point_query->getNumExplicitHs());
+        atom_expr->setNoImplicit(true);
+        atom_expr->getFlags() |= SMARTS_H_MASK;
+      } else if (atom_expr->getNumExplicitHs() != point_query->getNumExplicitHs()) {
+        // conflicting queries...
+        atom_expr->setNumExplicitHs(0);
+        atom_expr->setNoImplicit(true);
+      }
+    }
+    if (point_query->getFlags() & SMARTS_CHARGE_MASK) {
+      if (!(atom_expr->getFlags() & SMARTS_CHARGE_MASK)) {
+        atom_expr->setFormalCharge(point_query->getFormalCharge());
+        atom_expr->getFlags() |= SMARTS_CHARGE_MASK;
+      } else if (atom_expr->getFormalCharge() != point_query->getFormalCharge()) {
+        // conflicting queries...
+        atom_expr->setFormalCharge(0);
+      }
+    }
+  }
+
 }
 void
 yysmarts_error( const char *input,
@@ -641,19 +671,19 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   157,   157,   160,   164,   167,   170,   174,   178,   181,
-     187,   192,   195,   203,   204,   205,   206,   214,   223,   237,
-     258,   264,   288,   309,   326,   349,   363,   364,   365,   369,
-     392,   396,   401,   407,   416,   422,   430,   438,   451,   457,
-     464,   470,   493,   516,   519,   525,   526,   530,   547,   571,
-     572,   577,   578,   583,   584,   589,   590,   591,   592,   593,
-     594,   595,   598,   601,   604,   607,   610,   613,   619,   625,
-     632,   640,   648,   654,   660,   666,   672,   678,   685,   692,
-     693,   700,   701,   704,   707,   710,   713,   716,   721,   729,
-     741,   746,   751,   755,   759,   763,   766,   767,   774,   775,
-     781,   787,   793,   798,   805,   806,   807,   808,   809,   810,
-     814,   815,   816,   817,   818,   819,   820,   825,   826,   830,
-     831,   840,   841,   845
+       0,   187,   187,   190,   194,   197,   200,   204,   208,   211,
+     217,   222,   225,   233,   234,   235,   236,   244,   253,   267,
+     288,   294,   318,   339,   356,   379,   393,   394,   395,   399,
+     422,   426,   431,   437,   446,   453,   462,   471,   485,   492,
+     500,   507,   512,   517,   520,   526,   527,   531,   548,   572,
+     573,   578,   579,   584,   585,   590,   591,   592,   593,   594,
+     595,   596,   600,   604,   608,   612,   616,   620,   627,   634,
+     642,   652,   662,   671,   679,   686,   692,   698,   705,   712,
+     713,   720,   721,   725,   729,   733,   737,   741,   746,   754,
+     766,   771,   776,   781,   786,   791,   794,   795,   803,   804,
+     810,   816,   822,   827,   834,   835,   836,   837,   838,   839,
+     843,   844,   845,   846,   847,   848,   849,   854,   855,   859,
+     860,   869,   870,   874
 };
 #endif
 
@@ -1837,6 +1867,7 @@ yyreduce:
                                                        {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setFormalCharge((yyvsp[-1].ival));
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomFormalChargeQuery((yyvsp[-1].ival)),Queries::COMPOSITE_AND,true);
   (yyval.atom)=newQ;
 }
@@ -1846,6 +1877,7 @@ yyreduce:
                                                                           {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setFormalCharge((yyvsp[-3].ival));
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomFormalChargeQuery((yyvsp[-3].ival)),Queries::COMPOSITE_AND,true);
   newQ->setProp(RDKit::common_properties::molAtomMapNumber,(yyvsp[-1].ival));
 
@@ -1858,6 +1890,7 @@ yyreduce:
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope((yyvsp[-3].ival));
   newQ->setFormalCharge((yyvsp[-1].ival));
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomIsotopeQuery((yyvsp[-3].ival)),Queries::COMPOSITE_AND,true);
   newQ->expandQuery(makeAtomFormalChargeQuery((yyvsp[-1].ival)),Queries::COMPOSITE_AND,true);
   (yyval.atom)=newQ;
@@ -1869,6 +1902,7 @@ yyreduce:
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope((yyvsp[-5].ival));
   newQ->setFormalCharge((yyvsp[-3].ival));
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomIsotopeQuery((yyvsp[-5].ival)),Queries::COMPOSITE_AND,true);
   newQ->expandQuery(makeAtomFormalChargeQuery((yyvsp[-3].ival)),Queries::COMPOSITE_AND,true);
   newQ->setProp(RDKit::common_properties::molAtomMapNumber,(yyvsp[-1].ival));
@@ -1883,6 +1917,7 @@ yyreduce:
   if((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
   SmilesParseOps::ClearAtomChemicalProps((yyvsp[-2].atom));
   delete (yyvsp[0].atom);
+  (yyval.atom) = (yyvsp[-2].atom);
 }
     break;
 
@@ -1893,6 +1928,7 @@ yyreduce:
   SmilesParseOps::ClearAtomChemicalProps((yyvsp[-2].atom));
   (yyvsp[-2].atom)->setAtomicNum(0);
   delete (yyvsp[0].atom);
+  (yyval.atom) = (yyvsp[-2].atom);
 }
     break;
 
@@ -1902,58 +1938,23 @@ yyreduce:
   if((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
   SmilesParseOps::ClearAtomChemicalProps((yyvsp[-2].atom));
   delete (yyvsp[0].atom);
+  (yyval.atom) = (yyvsp[-2].atom);
 }
     break;
 
   case 41: /* atom_expr: atom_expr point_query  */
                         {
-  (yyvsp[-1].atom)->expandQuery((yyvsp[0].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if((yyvsp[-1].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-1].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
-  if((yyvsp[0].atom)->getNumExplicitHs()){
-    if(!(yyvsp[-1].atom)->getNumExplicitHs()){
-      (yyvsp[-1].atom)->setNumExplicitHs((yyvsp[0].atom)->getNumExplicitHs());
-      (yyvsp[-1].atom)->setNoImplicit(true);
-    } else if((yyvsp[-1].atom)->getNumExplicitHs()!=(yyvsp[0].atom)->getNumExplicitHs()){
-      // conflicting queries...
-      (yyvsp[-1].atom)->setNumExplicitHs(0);
-      (yyvsp[-1].atom)->setNoImplicit(false);
-    }
-  }
-  if((yyvsp[0].atom)->getFormalCharge()){
-    if(!(yyvsp[-1].atom)->getFormalCharge()){
-      (yyvsp[-1].atom)->setFormalCharge((yyvsp[0].atom)->getFormalCharge());
-    } else if((yyvsp[-1].atom)->getFormalCharge()!=(yyvsp[0].atom)->getFormalCharge()){
-      // conflicting queries...
-      (yyvsp[-1].atom)->setFormalCharge(0);
-    }
-  }
+  atom_expr_and_point_query((yyvsp[-1].atom), (yyvsp[0].atom));
   delete (yyvsp[0].atom);
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
   case 42: /* atom_expr: atom_expr AND_TOKEN point_query  */
                                   {
-  (yyvsp[-2].atom)->expandQuery((yyvsp[0].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
-  if((yyvsp[0].atom)->getNumExplicitHs()){
-    if(!(yyvsp[-2].atom)->getNumExplicitHs()){
-      (yyvsp[-2].atom)->setNumExplicitHs((yyvsp[0].atom)->getNumExplicitHs());
-      (yyvsp[-2].atom)->setNoImplicit(true);
-    } else if((yyvsp[-2].atom)->getNumExplicitHs()!=(yyvsp[0].atom)->getNumExplicitHs()){
-      // conflicting queries...
-      (yyvsp[-2].atom)->setNumExplicitHs(0);
-      (yyvsp[-2].atom)->setNoImplicit(false);
-    }
-  }
-  if((yyvsp[0].atom)->getFormalCharge()){
-    if(!(yyvsp[-2].atom)->getFormalCharge()){
-      (yyvsp[-2].atom)->setFormalCharge((yyvsp[0].atom)->getFormalCharge());
-    } else if((yyvsp[-2].atom)->getFormalCharge()!=(yyvsp[0].atom)->getFormalCharge()){
-      // conflicting queries...
-      (yyvsp[-2].atom)->setFormalCharge(0);
-    }
-  }
+  atom_expr_and_point_query((yyvsp[-2].atom), (yyvsp[0].atom));
   delete (yyvsp[0].atom);
+  (yyval.atom) = (yyvsp[-2].atom);
 }
     break;
 
@@ -2041,36 +2042,42 @@ yyreduce:
   case 61: /* atom_query: COMPLEX_ATOM_QUERY_TOKEN number  */
                                   {
   static_cast<ATOM_EQUALS_QUERY *>((yyvsp[-1].atom)->getQuery())->setVal((yyvsp[0].ival));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
   case 62: /* atom_query: HETERONEIGHBOR_ATOM_QUERY_TOKEN number  */
                                          {
   (yyvsp[-1].atom)->setQuery(makeAtomNumHeteroatomNbrsQuery((yyvsp[0].ival)));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
   case 63: /* atom_query: ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN number  */
                                                   {
   (yyvsp[-1].atom)->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery((yyvsp[0].ival)));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
   case 64: /* atom_query: RINGSIZE_ATOM_QUERY_TOKEN number  */
                                    {
   (yyvsp[-1].atom)->setQuery(makeAtomMinRingSizeQuery((yyvsp[0].ival)));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
   case 65: /* atom_query: RINGBOND_ATOM_QUERY_TOKEN number  */
                                    {
   (yyvsp[-1].atom)->setQuery(makeAtomRingBondCountQuery((yyvsp[0].ival)));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
   case 66: /* atom_query: IMPLICIT_H_ATOM_QUERY_TOKEN number  */
                                      {
   (yyvsp[-1].atom)->setQuery(makeAtomImplicitHCountQuery((yyvsp[0].ival)));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
@@ -2080,6 +2087,7 @@ yyreduce:
   ATOM_GREATEREQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_GREATEREQUAL_QUERY>((yyvsp[-1].ival),oq->getDataFunc(),
     std::string("greater_")+oq->getDescription());
   (yyvsp[-4].atom)->setQuery(nq);
+  (yyval.atom) = (yyvsp[-4].atom);
 }
     break;
 
@@ -2089,6 +2097,7 @@ yyreduce:
   ATOM_LESSEQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>((yyvsp[-2].ival),oq->getDataFunc(),
     std::string("less_")+oq->getDescription());
   (yyvsp[-4].atom)->setQuery(nq);
+  (yyval.atom) = (yyvsp[-4].atom);
 }
     break;
 
@@ -2099,6 +2108,7 @@ yyreduce:
     oq->getDataFunc(),
     std::string("range_")+oq->getDescription());
   (yyvsp[-5].atom)->setQuery(nq);
+  (yyval.atom) = (yyvsp[-5].atom);
 }
     break;
 
@@ -2109,6 +2119,8 @@ yyreduce:
   newQ->setIsotope((yyvsp[-1].ival));
   newQ->expandQuery(makeAtomHCountQuery(1),Queries::COMPOSITE_AND,true);
   newQ->setNumExplicitHs(1);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   (yyval.atom)=newQ;
 }
     break;
@@ -2120,6 +2132,8 @@ yyreduce:
   newQ->setIsotope((yyvsp[-2].ival));
   newQ->expandQuery(makeAtomHCountQuery((yyvsp[0].ival)),Queries::COMPOSITE_AND,true);
   newQ->setNumExplicitHs((yyvsp[0].ival));
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   (yyval.atom)=newQ;
 }
     break;
@@ -2129,7 +2143,10 @@ yyreduce:
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery((yyvsp[0].ival)));
   newQ->setNumExplicitHs((yyvsp[0].ival));
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   (yyval.atom)=newQ;
+  
 }
     break;
 
@@ -2138,6 +2155,8 @@ yyreduce:
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery(1));
   newQ->setNumExplicitHs(1);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   (yyval.atom)=newQ;
 }
     break;
@@ -2147,6 +2166,7 @@ yyreduce:
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomFormalChargeQuery((yyvsp[0].ival)));
   newQ->setFormalCharge((yyvsp[0].ival));
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   (yyval.atom)=newQ;
 }
     break;
@@ -2200,30 +2220,35 @@ yyreduce:
   case 82: /* possible_range_query: HETERONEIGHBOR_ATOM_QUERY_TOKEN  */
                                   {
   (yyvsp[0].atom)->setQuery(makeAtomNumHeteroatomNbrsQuery(0));
+  (yyval.atom) = (yyvsp[0].atom);
 }
     break;
 
   case 83: /* possible_range_query: ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN  */
                                            {
   (yyvsp[0].atom)->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery(0));
+  (yyval.atom) = (yyvsp[0].atom);
 }
     break;
 
   case 84: /* possible_range_query: RINGSIZE_ATOM_QUERY_TOKEN  */
                             {
   (yyvsp[0].atom)->setQuery(makeAtomMinRingSizeQuery(5)); // this is going to be ignored anyway
+  (yyval.atom) = (yyvsp[0].atom);
 }
     break;
 
   case 85: /* possible_range_query: RINGBOND_ATOM_QUERY_TOKEN  */
                             {
   (yyvsp[0].atom)->setQuery(makeAtomRingBondCountQuery(0));
+  (yyval.atom) = (yyvsp[0].atom);
 }
     break;
 
   case 86: /* possible_range_query: IMPLICIT_H_ATOM_QUERY_TOKEN  */
                               {
   (yyvsp[0].atom)->setQuery(makeAtomImplicitHCountQuery(0));
+  (yyval.atom) = (yyvsp[0].atom);
 }
     break;
 
@@ -2270,6 +2295,7 @@ yyreduce:
                                         {
   (yyvsp[-2].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[0].bond);
+  (yyval.bond) = (yyvsp[-2].bond);
 }
     break;
 
@@ -2277,6 +2303,7 @@ yyreduce:
                                {
   (yyvsp[-2].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_OR,true);
   delete (yyvsp[0].bond);
+  (yyval.bond) = (yyvsp[-2].bond);
 }
     break;
 
@@ -2284,6 +2311,7 @@ yyreduce:
                                  {
   (yyvsp[-2].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[0].bond);
+  (yyval.bond) = (yyvsp[-2].bond);
 }
     break;
 
@@ -2291,6 +2319,7 @@ yyreduce:
                    {
   (yyvsp[-1].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[0].bond);
+  (yyval.bond) = (yyvsp[-1].bond);
 }
     break;
 
