@@ -171,7 +171,8 @@ bool parseBond(RWMol &mol, unsigned int fragmentId, CDXBond &bond,
   unsigned int bondIdx = 0;
   auto startIdx = start_atom->getIdx();
   auto endIdx = end_atom->getIdx();
-  if (swap_bond_ends) std::swap(startIdx, endIdx);
+  if (swap_bond_ends) { std::swap(startIdx, endIdx);
+}
 
   if (qb) {
     qb->setBeginAtomIdx(startIdx);

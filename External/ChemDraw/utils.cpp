@@ -186,7 +186,7 @@ bool replaceFragments(RWMol &mol) {
 namespace {
 Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
   if (center_atom->hasProp(CDX_BOND_ORDERING)) {
-    std::vector<int> bond_ordering =
+    auto bond_ordering =
         center_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
     if (bond_ordering.size() < 3) {
       return Atom::ChiralType::CHI_UNSPECIFIED;
@@ -239,8 +239,9 @@ Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
     // This is supports the HDot and HDash available in chemdraw
     //  one is an implicit wedged hydrogen and one is a dashed hydrogen
     if (center_atom->hasProp(CDX_IMPLICIT_HYDROGEN_STEREO) &&
-        center_atom->getProp<char>(CDX_IMPLICIT_HYDROGEN_STEREO) == 'w')
+        center_atom->getProp<char>(CDX_IMPLICIT_HYDROGEN_STEREO) == 'w') {
       nswaps++;
+}
 
     if (nswaps % 2) {
       return Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
@@ -279,23 +280,27 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
       //  I currently don't understand that well enough.
       switch (cip) {
         case kCDXCIPAtom_R:
-          if (!chiralityChanged)
+          if (!chiralityChanged) {
             atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+}
           unsetTetrahedralAtoms.push_back(std::make_pair('R', atom));
           break;
         case kCDXCIPAtom_r:
-          if (!chiralityChanged)
+          if (!chiralityChanged) {
             atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+}
           unsetTetrahedralAtoms.push_back(std::make_pair('r', atom));
           break;
         case kCDXCIPAtom_S:
-          if (!chiralityChanged)
+          if (!chiralityChanged) {
             atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+}
           unsetTetrahedralAtoms.push_back(std::make_pair('S', atom));
           break;
         case kCDXCIPAtom_s:
-          if (!chiralityChanged)
+          if (!chiralityChanged) {
             atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+}
           unsetTetrahedralAtoms.push_back(std::make_pair('s', atom));
           break;
         default:

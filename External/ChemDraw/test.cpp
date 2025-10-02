@@ -1300,9 +1300,11 @@ TEST_CASE("Round TRIP") {
     RDLog::LogStateSetter blocker;
     for (const auto &entry :
          std::filesystem::recursive_directory_iterator(code_path)) {
-      if (entry.path().string().find("ChemDraw") != std::string::npos)
+      if (entry.path().string().find("ChemDraw") != std::string::npos) {
         continue;  // Skip ChemDraw directory
-      if (entry.path().string().find("build") != std::string::npos) continue;
+}
+      if (entry.path().string().find("build") != std::string::npos) { continue;
+}
       if (entry.is_regular_file() &&
           entry.path().extension().string() == ".mol") {
         if (exceptions.find(entry.path().filename().string()) !=

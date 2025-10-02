@@ -76,10 +76,10 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
 
   CDXObjectID object_id = 1;
   CDXDocument document(object_id++);
-  CDXPage *page = new CDXPage(object_id++);
+  auto *page = new CDXPage(object_id++);
   document.m_bondLength = DEFAULT_CDX_BOND_LENGTH;
   document.m_flags |= CDXDocument::CDXDocumentProperty1::has_bondLength;
-  CDXFragment *fragment = new CDXFragment(object_id++);
+  auto *fragment = new CDXFragment(object_id++);
   page->AddChild(fragment);
   std::vector<CDXNode *> nodes;
   nodes.reserve(trmol.getNumAtoms());
@@ -108,7 +108,7 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
   auto wedgeBonds = Chirality::pickBondsToWedge(trmol, nullptr, conf);
 
   for (auto &atom : trmol.atoms()) {
-    CDXNode *node = new CDXNode(object_id + atom->getIdx());
+    auto *node = new CDXNode(object_id + atom->getIdx());
     auto pos = conf->getAtomPos(atom->getIdx());
     if (is3D) {
       node->Position3D(CDXPoint3D(CDXCoordinatefromPoints(pos.x),
@@ -173,7 +173,7 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
   }
 
   for (auto &bond : trmol.bonds()) {
-    CDXBond *cdxbond =
+    auto *cdxbond =
         new CDXBond(object_id + mol.getNumAtoms() + bond->getIdx());
 
     int dirCode = 0;
@@ -271,8 +271,9 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
     }
 
     if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE ||
-        bond->getBondDir() == Bond::BondDir::UNKNOWN)
+        bond->getBondDir() == Bond::BondDir::UNKNOWN) {
       cdxbond->m_display = kCDXBondDisplay_Wavy;
+}
 
     fragment->AddChild(cdxbond);
   }

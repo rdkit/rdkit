@@ -39,12 +39,12 @@ namespace ChemDraw {
 bool parseBracket(CDXBracketedGroup &bracket, PageData &/*pagedata*/) {
   // Get the contained atoms/bonds in the bracket
   for (auto &attachment : bracket.ContainedObjects()) {
-    CDXDatumID childid = (CDXDatumID)attachment.second->GetTag();
+    auto childid = (CDXDatumID)attachment.second->GetTag();
     if (childid == kCDXObj_BracketAttachment) {
-      CDXBracketAttachment &bracketattachment =
+      auto &bracketattachment =
           (CDXBracketAttachment &)(*attachment.second);
       for (auto &bracketdata : bracketattachment.ContainedObjects()) {
-        CDXDatumID bracketid = (CDXDatumID)bracketdata.second->GetTag();
+        auto bracketid = (CDXDatumID)bracketdata.second->GetTag();
         if (bracketid == kCDXObj_CrossingBond) {
           //CDXCrossingBond &crossingbond =
           //    (CDXCrossingBond &)(*attachment.second);

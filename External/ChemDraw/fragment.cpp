@@ -89,13 +89,13 @@ bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
       false;  // is there an irrecoverable error for this fragment
 
   for (auto child : fragment.ContainedObjects()) {
-    CDXDatumID id = (CDXDatumID)child.second->GetTag();
+    auto id = (CDXDatumID)child.second->GetTag();
 #ifdef DEBUG
     std::cerr << "Data Type: " << id << std::endl;
 #endif
     switch (id) {
       case kCDXObj_Node: {
-        CDXNode &node = (CDXNode &)(*child.second);
+        auto &node = (CDXNode &)(*child.second);
         if (!parseNode(mol, frag_id, node, pagedata, sgroups, missingFragId,
                        externalAttachment)) {
           skip_fragment = true;
@@ -103,7 +103,7 @@ bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
         break;
       }
       case kCDXObj_Bond: {
-        CDXBond &bond = (CDXBond &)(*child.second);
+        auto &bond = (CDXBond &)(*child.second);
         if (!parseBond(mol, frag_id, bond, pagedata)) {
           skip_fragment = true;
           break;

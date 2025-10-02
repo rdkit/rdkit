@@ -120,9 +120,9 @@ void ReactionStepInfo::set_reaction_step(
 ReactionInfo::ReactionInfo(CDXReactionScheme &scheme)
     : scheme_id(static_cast<unsigned int>(scheme.GetObjectID())) {
   for (auto &rxnNode : scheme.ContainedObjects()) {
-    CDXDatumID type_id = (CDXDatumID)rxnNode.second->GetTag();
+    auto type_id = (CDXDatumID)rxnNode.second->GetTag();
     if (type_id == kCDXObj_ReactionStep) {
-      CDXReactionStep &step = (CDXReactionStep &)(*rxnNode.second);
+      auto &step = (CDXReactionStep &)(*rxnNode.second);
       auto step_id = step.GetObjectID();
       steps.emplace_back(ReactionStepInfo());
       ReactionStepInfo &scheme = steps.back();
@@ -150,7 +150,7 @@ void ReactionInfo::set_reaction_steps(
       auto idx = mol->getProp<unsigned int>(CDX_FRAG_ID);
       fragments[idx] = mol_idx++;
       for (auto &atom : mol->atoms()) {
-        unsigned int idx = atom->getProp<unsigned int>(CDX_ATOM_ID);
+        auto idx = atom->getProp<unsigned int>(CDX_ATOM_ID);
         atoms[idx] = atom;
       }
     }

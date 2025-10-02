@@ -59,7 +59,8 @@ std::string replace(std::string &istr, const std::string &from,
                     const std::string &to) {
   std::string str(istr);
   size_t start_pos = str.find(from);
-  if (start_pos == std::string::npos) return str;
+  if (start_pos == std::string::npos) { return str;
+}
   str.replace(start_pos, from.length(), to);
   return str;
 }
@@ -76,14 +77,15 @@ bool hasNonSupportedFeatures(CDXDocument &document, const std::string &fname) {
   }
 
   for (auto node : document.ContainedObjects()) {
-    CDXDatumID id = (CDXDatumID)node.second->GetTag();
+    auto id = (CDXDatumID)node.second->GetTag();
     switch (id) {
       case kCDXObj_Page:
         for (auto frag : node.second->ContainedObjects()) {
-          CDXDatumID id = (CDXDatumID)frag.second->GetTag();
+          auto id = (CDXDatumID)frag.second->GetTag();
           if (id == kCDXObj_Fragment) {
-            CDXFragment &fragment = (CDXFragment &)(*frag.second);
-            if (fragment.m_sequenceType == kCDXSeqType_Unknown) return true;
+            auto &fragment = (CDXFragment &)(*frag.second);
+            if (fragment.m_sequenceType == kCDXSeqType_Unknown) { return true;
+}
           } else if (id == kCDXObj_BracketAttachment || id == kCDXObj_BracketedGroup) {
             return true;
           }
@@ -187,8 +189,9 @@ TEST_CASE("Round TRIP") {
       if (entry.is_regular_file()) {
         std::string fname = entry.path().filename().string();
         // issue here - graphite nanotube
-        if (fname == "INDMUMLL1117_2025-01-24-17-28-02_10946.cdxml")
+        if (fname == "INDMUMLL1117_2025-01-24-17-28-02_10946.cdxml") {
           continue;  // nanotube takes forever
+}
         auto molfname = molpath + replace(fname, ".cdxml", ".mol");
         auto smifname = smipath + replace(fname, ".cdxml", ".smi");
         // if chemscript couldn't make an output, ignore it
@@ -217,9 +220,9 @@ TEST_CASE("Round TRIP") {
         {
           try {
             auto smimol = SmilesToMol(smiles_in);
-            if (!smimol)
+            if (!smimol) {
               smiles = smiles_in;
-            else {
+            } else {
               smiles = MolToSmiles(*smimol);
               delete smimol;
             }
@@ -292,8 +295,9 @@ TEST_CASE("Round TRIP") {
                 sanitizationpath + entry.path().filename().string());
             saniFailed++;
           } else {
-            if(known_failures.find(entry.path().filename().string()) != known_failures.end())
+            if(known_failures.find(entry.path().filename().string()) != known_failures.end()) {
               continue; // we know this failure and it's ok for now
+}
             
             std::cerr << "[FAIL]: " << entry.path() << std::endl;
             std::filesystem::copy(entry.path(),

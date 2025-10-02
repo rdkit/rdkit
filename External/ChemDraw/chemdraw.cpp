@@ -87,7 +87,7 @@ void visit_children(
   molzip_params.enforceValenceRules = false;
 
   for (auto frag : node.ContainedObjects()) {
-    CDXDatumID id = (CDXDatumID)frag.second->GetTag();
+    auto id = (CDXDatumID)frag.second->GetTag();
     if (id == kCDXObj_Fragment) {
       std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
       if (!parseFragment(*mol, (CDXFragment &)(*frag.second), pagedata,
@@ -131,7 +131,7 @@ void visit_children(
 
         if (atm->hasProp(CDX_ATOM_POS)) {
           hasConf = true;
-          const std::vector<double> coord =
+          const auto coord =
               atm->getProp<std::vector<double>>(CDX_ATOM_POS);
 
           p.x = coord[0];
@@ -208,7 +208,7 @@ void visit_children(
         MolOps::detectBondStereochemistry(*res);
       }
     } else if (id == kCDXObj_ReactionScheme) {  // get the reaction info
-      CDXReactionScheme &scheme = (CDXReactionScheme &)(*frag.second);
+      auto &scheme = (CDXReactionScheme &)(*frag.second);
       pagedata.schemes.emplace_back(scheme);
       /*
       int scheme_id = scheme.GetObjectID();   //frag.second.template
@@ -226,12 +226,12 @@ void visit_children(
       }
       */
     } else if (id == kCDXObj_Group) {
-      CDXGroup &group = (CDXGroup &)(*frag.second);
+      auto &group = (CDXGroup &)(*frag.second);
       group_id = frag.second->GetObjectID();
       visit_children(group, pagedata, missing_frag_id, bondLength, params,
                      group_id);
     } else if (id == kCDXObj_BracketedGroup) {
-      CDXBracketedGroup &bracketgroup = (CDXBracketedGroup &)(*frag.second);
+      auto &bracketgroup = (CDXBracketedGroup &)(*frag.second);
       parseBracket(bracketgroup, pagedata);
     }
   }
@@ -320,7 +320,7 @@ std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
 
   int missing_frag_id = -1;
   for (auto node : document->ContainedObjects()) {
-    CDXDatumID id = (CDXDatumID)node.second->GetTag();
+    auto id = (CDXDatumID)node.second->GetTag();
     switch (id) {
       case kCDXObj_Page:
         visit_children(*node.second, pagedata, missing_frag_id, bondLength,
@@ -350,9 +350,9 @@ std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename) {
   std::fstream chemdrawfile(filename);
   std::string ext = std::filesystem::path(filename).extension().string();
   boost::algorithm::to_lower(ext);
-  if (ext == ".cdxml")
+  if (ext == ".cdxml") {
     return streamToCDXDocument(chemdrawfile, CDXFormat::CDXML);
-  else if (ext == ".cdx") {
+  } else if (ext == ".cdx") {
     return streamToCDXDocument(chemdrawfile, CDXFormat::CDX);
   }
   std::string msg =
