@@ -291,11 +291,10 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(
   const auto nbonds = mol.getNumBonds();
   
   if(
-     ((atoms.size() == natoms) && (
-				 options.method == SubsetMethod::BONDS_BETWEEN_ATOMS ||
-				 bonds.size() == nbonds) ||
-      ((bonds.size() == nbonds) && options.method == SubsetMethod::BONDS ))
-     ) {
+     (atoms.size() == natoms &&
+      options.method == SubsetMethod::BONDS_BETWEEN_ATOMS) ||
+     (bonds.size() == nbonds && options.method == SubsetMethod::BONDS ) ||
+     (atoms.size() == natoms && bonds.size() == nbonds)) {
     // optimization to copy the entire thing
     return std::make_unique<RDKit::RWMol>(mol);
   }
