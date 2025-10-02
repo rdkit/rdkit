@@ -56,6 +56,66 @@ static bool molPtr_NumBondLess(
   return l->getNumBonds() < r->getNumBonds();
 }
 
+std::tuple<size_t, size_t, boost::dynamic_bitset<>>
+MaximumCommonSubgraph::initialSetup(const std::vector<ROMOL_SPTR> &src_mols) {
+  clear();
+
+  if (src_mols.size() < 2) {
+    throw std::runtime_error(
+        "FMCS. Invalid argument. mols.size() must be at least 2");
+  }
+  if (Parameters.Threshold > 1.0) {
+    throw std::runtime_error(
+        "FMCS. Invalid argument. Parameter Threshold must be 1.0 or "
+        "less.");
+  }
+
+  // minimal required number of matched targets:
+  // at least one target, max all targets
+  ThresholdCount = static_cast<unsigned int>(std::min(
+      static_cast<int>(src_mols.size()) - 1,
+      std::max(1, static_cast<int>(ceil(static_cast<double>(src_mols.size()) *
+                                        Parameters.Threshold)) -
+                      1)));
+
+  // AtomCompareParameters.CompleteRingsOnly implies
+  // BondCompareParameters.CompleteRingsOnly
+  if (Parameters.AtomCompareParameters.CompleteRingsOnly) {
+    Parameters.BondCompareParameters.CompleteRingsOnly = true;
+  }
+
+  // Selecting CompleteRingsOnly option also enables
+  // --ring-matches-ring-only. ring--ring and chain bonds only match chain
+  // bonds.
+  if (Parameters.BondCompareParameters.CompleteRingsOnly) {
+    Parameters.BondCompareParameters.RingMatchesRingOnly = true;
+  }
+  if (Parameters.AtomCompareParameters.CompleteRingsOnly) {
+    Parameters.AtomCompareParameters.RingMatchesRingOnly = true;
+  }
+
+  unsigned int i = 0;
+  boost::dynamic_bitset<> faked_ring_info(src_mols.size());
+  for (const auto &src_mol : src_mols) {
+    Molecules.push_back(src_mol.get());
+    if (!Molecules.back()->getRingInfo()->isInitialized()) {
+      Molecules.back()->getRingInfo()->initialize();  // but do not fill out !!!
+      faked_ring_info.set(i);
+    }
+    ++i;
+  }
+
+  // sort source set of molecules by their 'size' and assume the smallest
+  // molecule as a query
+  std::stable_sort(Molecules.begin(), Molecules.end(), molPtr_NumBondLess);
+  size_t startIdx = 0;
+  size_t endIdx = Molecules.size() - ThresholdCount;
+  while (startIdx < endIdx && !Molecules.at(startIdx)->getNumAtoms()) {
+    ++startIdx;
+  }
+  return std::make_tuple(startIdx, endIdx, faked_ring_info);
+}
+
 void MaximumCommonSubgraph::init(size_t startIdx) {
   QueryMolecule = Molecules.at(startIdx);
 
@@ -969,63 +1029,9 @@ bool MaximumCommonSubgraph::createSeedFromMCS(size_t newQueryTarget,
 }
 
 MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR> &src_mols) {
-  clear();
-  MCSResult res;
-
-  if (src_mols.size() < 2) {
-    throw std::runtime_error(
-        "FMCS. Invalid argument. mols.size() must be at least 2");
-  }
-  if (Parameters.Threshold > 1.0) {
-    throw std::runtime_error(
-        "FMCS. Invalid argument. Parameter Threshold must be 1.0 or "
-        "less.");
-  }
-
-  // minimal required number of matched targets:
-  // at least one target, max all targets
-  ThresholdCount = static_cast<unsigned int>(std::min(
-      static_cast<int>(src_mols.size()) - 1,
-      std::max(1, static_cast<int>(ceil(static_cast<double>(src_mols.size()) *
-                                        Parameters.Threshold)) -
-                      1)));
-
-  // AtomCompareParameters.CompleteRingsOnly implies
-  // BondCompareParameters.CompleteRingsOnly
-  if (Parameters.AtomCompareParameters.CompleteRingsOnly) {
-    Parameters.BondCompareParameters.CompleteRingsOnly = true;
-  }
-
-  // Selecting CompleteRingsOnly option also enables
-  // --ring-matches-ring-only. ring--ring and chain bonds only match chain
-  // bonds.
-  if (Parameters.BondCompareParameters.CompleteRingsOnly) {
-    Parameters.BondCompareParameters.RingMatchesRingOnly = true;
-  }
-  if (Parameters.AtomCompareParameters.CompleteRingsOnly) {
-    Parameters.AtomCompareParameters.RingMatchesRingOnly = true;
-  }
-
-  unsigned int i = 0;
-  boost::dynamic_bitset<> faked_ring_info(src_mols.size());
-  for (const auto &src_mol : src_mols) {
-    Molecules.push_back(src_mol.get());
-    if (!Molecules.back()->getRingInfo()->isInitialized()) {
-      Molecules.back()->getRingInfo()->initialize();  // but do not fill out !!!
-      faked_ring_info.set(i);
-    }
-    ++i;
-  }
-
-  // sort source set of molecules by their 'size' and assume the smallest
-  // molecule as a query
-  std::stable_sort(Molecules.begin(), Molecules.end(), molPtr_NumBondLess);
-  size_t startIdx = 0;
-  size_t endIdx = Molecules.size() - ThresholdCount;
-  while (startIdx < endIdx && !Molecules.at(startIdx)->getNumAtoms()) {
-    ++startIdx;
-  }
+  auto [startIdx, endIdx, faked_ring_info] = initialSetup(src_mols);
   bool areSeedsEmpty = false;
+  MCSResult res;
   for (size_t i = startIdx; i < endIdx && !areSeedsEmpty && !res.Canceled;
        ++i) {
     init(startIdx);
@@ -1354,6 +1360,31 @@ bool MaximumCommonSubgraph::match(Seed &seed) {
     return true;
   }
   return false;
+}
+
+void MaximumCommonSubgraph::twoMolMCSS(
+    const ROMol &mol1, const ROMol &mol2, bool uniquify,
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
+        &maxCliques) {
+  std::vector<ROMOL_SPTR> src_mols;
+  src_mols.emplace_back(new ROMol(mol1));
+  src_mols.emplace_back(new ROMol(mol2));
+  auto [start_idx, end_idx, faked_ring_info] = initialSetup(src_mols);
+  init(start_idx);
+  TwoMolMCSS(*QueryMolecule, *Targets[0].Molecule, Parameters.MinMCSSSize,
+             Targets[0].AtomMatchTable, Targets[0].BondMatchTable, uniquify,
+             Parameters.Timeout, maxCliques);
+  if (molPtr_NumBondLess(src_mols.back().get(), src_mols.front().get())) {
+    // The molecules have been sorted so "smallest" is first, so we need to swap
+    // all the pairs, and then re-sort.  It's a stable sort, so if they're the
+    // same size they won't have been changed.
+    for (auto &clique : maxCliques) {
+      for (auto &p : clique) {
+        std::swap(p.first, p.second);
+      }
+      std::ranges::sort(clique);
+    }
+  }
 }
 
 // call it for each target, if failed perform full match check

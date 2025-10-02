@@ -8,10 +8,11 @@
 //  of the RDKit source tree.
 //
 
+#include "TwoMolMCSS.h"
+
 #include <chrono>
 
 #include <GraphMol/FMCS/FMCS.h>
-#include <GraphMol/FMCS/TwoMolMCSS.h>
 #include <GraphMol/FMCS/MatchTable.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
@@ -58,16 +59,15 @@ void printCliques(
   }
 }
 
-TEST_CASE("BK Test") {
+TEST_CASE("Two Mol Test") {
   auto mol1 = v2::SmilesParse::MolFromSmiles("CCC");
   REQUIRE(mol1);
   auto mol2 = v2::SmilesParse::MolFromSmiles("CC(C)C");
   REQUIRE(mol2);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
   MCSParameters params;
-  auto amt = makeAtomMatchTable(*mol1, *mol2, params.AtomCompareParameters);
-  auto bmt = makeBondMatchTable(*mol1, *mol2, params.BondCompareParameters);
-  TwoMolMCSS(*mol1, *mol2, 3, amt, bmt, false, 0, maxCliques);
+  params.MinMCSSSize = 3;
+  twoMolMCSS(*mol1, *mol2, maxCliques, false, &params);
   REQUIRE(maxCliques.size() == 6);
   CHECK(maxCliques.front().size() == 3);
   CHECK(maxCliques.front() ==
@@ -86,9 +86,8 @@ TEST_CASE("MedChemica Base Test") {
   unsigned int minMCSSSize(0.85 *
                            std::max(mol1->getNumAtoms(), mol2->getNumAtoms()));
   MCSParameters params;
-  auto amt = makeAtomMatchTable(*mol1, *mol2, params.AtomCompareParameters);
-  auto bmt = makeBondMatchTable(*mol1, *mol2, params.BondCompareParameters);
-  TwoMolMCSS(*mol1, *mol2, minMCSSSize, amt, bmt, true, 0, maxCliques);
+  params.MinMCSSSize = minMCSSSize;
+  twoMolMCSS(*mol1, *mol2, maxCliques, true, &params);
   CHECK(maxCliques.size() == 3);
   CHECK(maxCliques.front().size() == 17);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> expCliques{
@@ -144,7 +143,7 @@ TEST_CASE("MedChemica Base Test") {
        {15, 15},
        {16, 16}}};
   CHECK(maxCliques == expCliques);
-  TwoMolMCSS(*mol1, *mol2, minMCSSSize, amt, bmt, false, 0, maxCliques);
+  twoMolMCSS(*mol1, *mol2, maxCliques, false, &params);
   CHECK(maxCliques.size() == 30);
   CHECK(maxCliques.front().size() == 17);
 
@@ -181,9 +180,8 @@ TEST_CASE("FMCS Slow 1") {
   unsigned int minMCSSSize(0.85 *
                            std::max(mol1->getNumAtoms(), mol2->getNumAtoms()));
   MCSParameters params;
-  auto amt = makeAtomMatchTable(*mol1, *mol2, params.AtomCompareParameters);
-  auto bmt = makeBondMatchTable(*mol1, *mol2, params.BondCompareParameters);
-  TwoMolMCSS(*mol1, *mol2, minMCSSSize, amt, bmt, true, 0, maxCliques);
+  params.MinMCSSSize = minMCSSSize;
+  twoMolMCSS(*mol1, *mol2, maxCliques, true, &params);
   REQUIRE(maxCliques.size() == 7);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> expCliques{
       {{0, 0},   {1, 1},   {2, 2},   {3, 3},   {6, 6},   {7, 4},   {8, 5},
@@ -231,9 +229,8 @@ TEST_CASE("FMCS Slow 2") {
   unsigned int minMCSSSize(0.85 *
                            std::max(mol1->getNumAtoms(), mol2->getNumAtoms()));
   MCSParameters params;
-  auto amt = makeAtomMatchTable(*mol1, *mol2, params.AtomCompareParameters);
-  auto bmt = makeBondMatchTable(*mol1, *mol2, params.BondCompareParameters);
-  TwoMolMCSS(*mol1, *mol2, minMCSSSize, amt, bmt, true, 0, maxCliques);
+  params.MinMCSSSize = minMCSSSize;
+  twoMolMCSS(*mol1, *mol2, maxCliques, true, &params);
   REQUIRE(maxCliques.size() == 1);
   std::vector<std::pair<unsigned int, unsigned int>> expClique{
       {0, 1},   {1, 2},   {2, 3},   {3, 4},   {4, 5},   {5, 6},   {6, 7},
@@ -273,9 +270,8 @@ TEST_CASE("FMCS Slow 3") {
   unsigned int minMCSSSize(0.85 *
                            std::max(mol1->getNumAtoms(), mol2->getNumAtoms()));
   MCSParameters params;
-  auto amt = makeAtomMatchTable(*mol1, *mol2, params.AtomCompareParameters);
-  auto bmt = makeBondMatchTable(*mol1, *mol2, params.BondCompareParameters);
-  TwoMolMCSS(*mol1, *mol2, minMCSSSize, amt, bmt, true, 0, maxCliques);
+  params.MinMCSSSize = minMCSSSize;
+  twoMolMCSS(*mol1, *mol2, maxCliques, true, &params);
   REQUIRE(maxCliques.size() == 4);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> expCliques{
       {{0, 0},   {1, 1},   {2, 2},   {3, 3},   {4, 4},   {5, 5},
@@ -306,9 +302,8 @@ TEST_CASE("Split by Rascal") {
   REQUIRE(mol2);
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
   MCSParameters params;
-  auto amt = makeAtomMatchTable(*mol1, *mol2, params.AtomCompareParameters);
-  auto bmt = makeBondMatchTable(*mol1, *mol2, params.BondCompareParameters);
-  TwoMolMCSS(*mol1, *mol2, 10, amt, bmt, true, 0, maxCliques);
+  params.MinMCSSSize = 10;
+  twoMolMCSS(*mol1, *mol2, maxCliques, true, &params);
   REQUIRE(maxCliques.size() == 1);
   CHECK(maxCliques.front() ==
         std::vector<std::pair<unsigned int, unsigned int>>{{2, 1},
@@ -331,12 +326,9 @@ TEST_CASE("Order Dependence") {
   };
   MCSParameters params;
   {
+    params.MinMCSSSize = 11;
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
-    auto amt =
-        makeAtomMatchTable(*mols[0], *mols[1], params.AtomCompareParameters);
-    auto bmt =
-        makeBondMatchTable(*mols[0], *mols[1], params.BondCompareParameters);
-    TwoMolMCSS(*mols[0], *mols[1], 11, amt, bmt, true, 0, maxCliques);
+    twoMolMCSS(*mols[0], *mols[1], maxCliques, true, &params);
     REQUIRE(maxCliques.size() == 1);
     std::vector<std::pair<unsigned int, unsigned int>> expClique{
         {0, 25},  {1, 24},  {2, 26},  {3, 27},  {4, 28},  {5, 29},  {6, 30},
@@ -349,11 +341,7 @@ TEST_CASE("Order Dependence") {
   }
   {
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
-    auto amt =
-        makeAtomMatchTable(*mols[1], *mols[0], params.AtomCompareParameters);
-    auto bmt =
-        makeBondMatchTable(*mols[1], *mols[0], params.BondCompareParameters);
-    TwoMolMCSS(*mols[1], *mols[0], 11, amt, bmt, true, 0, maxCliques);
+    twoMolMCSS(*mols[1], *mols[0], maxCliques, true, &params);
     REQUIRE(maxCliques.size() == 1);
     std::vector<std::pair<unsigned int, unsigned int>> expClique{
         {0, 35},  {1, 34},  {2, 39},  {3, 33},  {4, 32},  {5, 31},  {8, 40},
@@ -374,10 +362,7 @@ TEST_CASE("Smaller than FMCS") {
       R"(CCN1CCC2N=C(COc3cc4ncnc(Nc5ccc(Cl)c(Cl)c5)c4cc3OC)SC2C1)"_smiles,
   };
   MCSParameters params;
+  params.MinMCSSSize = 28;
   std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
-  auto amt =
-      makeAtomMatchTable(*mols[0], *mols[1], params.AtomCompareParameters);
-  auto bmt =
-      makeBondMatchTable(*mols[0], *mols[1], params.BondCompareParameters);
-  TwoMolMCSS(*mols[0], *mols[1], 28, amt, bmt, true, 0, maxCliques);
+  twoMolMCSS(*mols[0], *mols[1], maxCliques, true, &params);
 }

@@ -21,7 +21,6 @@
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
 #include <GraphMol/QueryOps.h>
-#include <GraphMol/FMCS/TwoMolMCSS.h>
 
 namespace RDKit {
 
@@ -195,6 +194,18 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR> &mols, bool maximizeBonds,
   ps.BondCompareParameters.MatchFusedRingsStrict =
       (ringComp == StrictRingFusion);
   return findMCS(mols, &ps);
+}
+
+void twoMolMCSS(
+    const ROMol &mol1, const ROMol &mol2,
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> &maxCliques,
+    bool uniquify, const MCSParameters *params) {
+  MCSParameters p;
+  if (nullptr != params) {
+    p = *params;
+  }
+  FMCS::MaximumCommonSubgraph fmcs(&p);
+  fmcs.twoMolMCSS(mol1, mol2, uniquify, maxCliques);
 }
 
 bool MCSProgressCallbackTimeout(const MCSProgressData &,

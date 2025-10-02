@@ -87,12 +87,27 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   const MCSParameters &parameters() const { return Parameters; }
   MCSParameters &parameters() { return Parameters; }
 
+  // Make an MCSS from the 2 molecules using Koch's modification of
+  // the Bron-Kerbosch algorithm so that it only returns a single
+  // fragment.  There may be more than 1 result.  If uniquify is true,
+  // symmetrically equivalent solutions involving the same atoms will
+  // be reduced to a single example.  Each element of a pair in the
+  // output vectors is the index of an atom in mol1 that matches
+  // an atom in mol2.  The MCSSs must be of at least size minMCCSSize.
+  void twoMolMCSS(
+      const ROMol &mol1, const ROMol &mol2, bool uniquify,
+      std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
+          &maxCliques);
+
  private:
   void clear() {
     Targets.clear();
     Molecules.clear();
     To = nanoClock();
   }
+
+  std::tuple<size_t, size_t, boost::dynamic_bitset<>> initialSetup(
+      const std::vector<ROMOL_SPTR> &src_mols);
   void init(size_t startIdx);
   void makeInitialSeeds();
   bool createSeedFromMCS(size_t newQueryTarget, Seed &seed);

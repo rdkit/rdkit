@@ -644,6 +644,33 @@ MCSResult *FindMCSWrapper2(python::object mols, PyMCSParameters &pyMcsParams) {
   }
   return res;
 }
+
+inline PyObject *convertMaxClique(
+    const std::vector<std::pair<unsigned int, unsigned int>> &maxClique) {
+  PyObject *res = PyTuple_New(maxClique.size());
+  std::for_each(maxClique.begin(), maxClique.end(), [res](const auto &pair) {
+    PyTuple_SetItem(res, pair.first, PyInt_FromLong(pair.second));
+  });
+  return res;
+}
+python::list TwoMolMCSSWrapper(const ROMol &mol1, const ROMol &mol2,
+                               bool uniquify, PyMCSParameters &pyMcsParams) {
+  std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
+  {
+    NOGIL gil;
+    twoMolMCSS(mol1, mol2, maxCliques, uniquify, pyMcsParams.get());
+  }
+  python::list pyCliques;
+  for (const auto &clique : maxCliques) {
+    python::list pyC;
+    for (const auto &pair : clique) {
+      pyC.append(python::make_tuple(pair.first, pair.second));
+    }
+    pyCliques.append(pyC);
+  }
+  return pyCliques;
+}
+
 }  // namespace RDKit
 namespace {
 python::object degenerateSmartsQueryMolDictHelper(
@@ -923,4 +950,11 @@ BOOST_PYTHON_MODULE(rdFMCS) {
               (python::arg("mols"), python::arg("parameters")),
               python::return_value_policy<python::manage_new_object>(),
               docString.c_str());
+
+  python::def("TwoMolMCSS", RDKit::TwoMolMCSSWrapper,
+              (python::arg("mol1"), python::arg("mol2"),
+               python::arg("uniquify"), python::arg("parameters")),
+              "Return one or more sets of atoms in MCSSs for the two molecules."
+              "  If uniquify is True, symmetrically equivalent solutions"
+              " involving the same atoms will be reduced to a single example.");
 }
