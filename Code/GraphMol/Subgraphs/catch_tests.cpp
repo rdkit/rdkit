@@ -59,3 +59,4 @@ TEST_CASE("shortestPathsOnly") {
     CHECK(ps[3].size() == 2);
   }
 }
+
