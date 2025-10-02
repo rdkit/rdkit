@@ -1,0 +1,70 @@
+--- a/rdkit/Chem/inchi.pyi	2025-09-29 14:01:41.137282007 +0200
++++ b/rdkit/Chem/inchi.pyi	2025-09-29 14:26:05.297333355 +0200
+@@ -1,16 +1,19 @@
+ from __future__ import annotations
+ import logging as logging
++from rdkit.Chem import rdchem
++import rdkit.Chem.rdchem
+ from rdkit.Chem import rdinchi
+-import rdkit.RDLogger
+ from rdkit import RDLogger
++import rdkit.RDLogger
++import typing as typing
+ __all__: list = ['MolToInchiAndAuxInfo', 'MolToInchi', 'MolBlockToInchiAndAuxInfo', 'MolBlockToInchi', 'MolFromInchi', 'InchiReadWriteError', 'InchiToInchiKey', 'MolToInchiKey', 'GetInchiVersion', 'INCHI_AVAILABLE']
+ class InchiReadWriteError(Exception):
+     pass
+-def InchiToInchiKey(inchi):
++def InchiToInchiKey(inchi: str) -> typing.Optional[str]:
+     """
+     Return the InChI key for the given InChI string. Return None on error
+     """
+-def MolBlockToInchi(molblock, options = '', logLevel = None, treatWarningAsError = False):
++def MolBlockToInchi(molblock: str, options: str = '', logLevel: typing.Optional[int] = None, treatWarningAsError: bool = False) -> str:
+     """
+     Returns the standard InChI string for a mol block
+     
+@@ -26,7 +29,7 @@
+         the standard InChI string returned by InChI API for the input molecule
+         
+     """
+-def MolBlockToInchiAndAuxInfo(molblock, options = '', logLevel = None, treatWarningAsError = False):
++def MolBlockToInchiAndAuxInfo(molblock: str, options: str = '', logLevel: typing.Optional[int] = None, treatWarningAsError: bool = False) -> typing.Tuple[str, str]:
+     """
+     Returns the standard InChI string and InChI auxInfo for a mol block
+     
+@@ -43,7 +46,7 @@
+         InChI API, in that order, for the input molecule
+         
+     """
+-def MolFromInchi(inchi, sanitize = True, removeHs = True, logLevel = None, treatWarningAsError = False):
++def MolFromInchi(inchi: str, sanitize: bool = True, removeHs: bool = True, logLevel: typing.Optional[int] = None, treatWarningAsError: bool = False) -> typing.Optional[rdkit.Chem.rdchem.Mol]:
+     """
+     Construct a molecule from a InChI string
+     
+@@ -62,7 +65,7 @@
+         a rdkit.Chem.rdchem.Mol instance
+         
+     """
+-def MolToInchi(mol, options = '', logLevel = None, treatWarningAsError = False):
++def MolToInchi(mol: rdkit.Chem.rdchem.Mol, options: str = '', logLevel: typing.Optional[int] = None, treatWarningAsError: bool = False) -> str:
+     """
+     Returns the standard InChI string for a molecule
+     
+@@ -78,7 +81,7 @@
+         the standard InChI string returned by InChI API for the input molecule
+         
+     """
+-def MolToInchiAndAuxInfo(mol, options = '', logLevel = None, treatWarningAsError = False):
++def MolToInchiAndAuxInfo(mol: rdkit.Chem.rdchem.Mol, options: str = '', logLevel: typing.Optional[int] = None, treatWarningAsError: bool = False) -> typing.Tuple[str, str]:
+     """
+     Returns the standard InChI string and InChI auxInfo for a molecule
+     
+@@ -95,7 +98,7 @@
+         InChI API, in that order, for the input molecule
+         
+     """
+-def MolToInchiKey(mol, options = ''):
++def MolToInchiKey(mol: rdkit.Chem.rdchem.Mol, options: str = '') -> typing.Optional[str]:
+     """
+     Returns the standard InChI key for a molecule
+     
