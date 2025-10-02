@@ -11,8 +11,13 @@
 #include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Chirality.h>
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 #include <string>
 #include <vector>
+
+namespace rj = rapidjson;
 
 namespace RDKit {
 namespace MinimalLib {
@@ -31,6 +36,7 @@ struct DrawingDetails {
   bool forceCoords = false;
   bool wavyBonds = false;
   bool useMolBlockWedging = false;
+  bool returnDrawCoords = false;
   std::string legend;
   std::vector<int> atomIds;
   std::vector<int> bondIds;
@@ -125,6 +131,13 @@ class DrawerFromDetails {
           molDrawingDetails.bondMultiMap, molDrawingDetails.radiiMap,
           molDrawingDetails.lineWidthMultiplierMap);
     }
+    if (molDrawingDetails.returnDrawCoords) {
+      d_drawCoords.reset(new std::vector<RDGeom::Point2D>());
+      d_drawCoords->reserve(molPtr->getNumAtoms());
+      for (size_t i = 0; i < molPtr->getNumAtoms(); ++i) {
+        d_drawCoords->push_back(drawer().getDrawCoords(i));
+      }
+    }
     return finalizeDrawing();
   }
   std::string draw_rxn(const ChemicalReaction &rxn) {
@@ -162,15 +175,48 @@ class DrawerFromDetails {
       MolDraw2DUtils::updateDrawerParamsFromJSON(drawer(), d_details);
     }
   }
+  std::string createDrawingResult(const std::string &res) {
+    if (!d_drawCoords) {
+      return res;
+    }
+    rj::Document doc;
+    doc.SetObject();
+    rj::Value rjDrawCoords(rj::kArrayType);
+    for (const auto &drawXY : *d_drawCoords) {
+      rj::Value rjXY(rj::kArrayType);
+      rjXY.PushBack(drawXY.x, doc.GetAllocator());
+      rjXY.PushBack(drawXY.y, doc.GetAllocator());
+      rjDrawCoords.PushBack(rjXY, doc.GetAllocator());
+    }
+    doc.AddMember("drawCoords", rjDrawCoords, doc.GetAllocator());
+    const auto drawingResultKey = getDrawingResultKey();
+    if (drawingResultKey) {
+      doc.AddMember(rj::StringRef(drawingResultKey),
+                    rj::Value(res.c_str(), doc.GetAllocator()),
+                    doc.GetAllocator());
+    }
+    rj::StringBuffer buffer;
+    rj::Writer<rj::StringBuffer> writer(buffer);
+    writer.SetMaxDecimalPlaces(5);
+    doc.Accept(writer);
+    return buffer.GetString();
+  }
 
  private:
   virtual MolDraw2D &drawer() const = 0;
   virtual void initDrawer(const DrawingDetails &drawingDetails) = 0;
   virtual std::string finalizeDrawing() = 0;
+  virtual const char *getDrawingResultKey() { return nullptr; };
   int d_width;
   int d_height;
   std::string d_details;
+  std::unique_ptr<std::vector<RDGeom::Point2D>> d_drawCoords;
 };
 
+enum class MDLVersion {
+  AUTO,
+  V2000,
+  V3000
+};
 }  // namespace MinimalLib
 }  // namespace RDKit

@@ -917,6 +917,62 @@ int registerPropertyHelper(python::object o) {
   return RDKit::Descriptors::Properties::registerProperty(ptr());
 }
 
+boost::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>
+getDoubleCubicLatticeVolume(const RDKit::ROMol &mol,
+                            const python::list &radii,
+                            bool isProtein = false,
+                            bool includeLigand = true,
+                            double probeRadius = 1.4,
+                            int confId = -1) {
+  std::vector<double> radiiAsVector;
+  radiiAsVector.reserve(mol.getNumAtoms());
+  pythonObjectToVect<double>(radii, radiiAsVector);
+
+  return boost::make_shared<RDKit::Descriptors::DoubleCubicLatticeVolume>(mol, std::move(radiiAsVector), isProtein, includeLigand, probeRadius, confId);
+}
+
+double getPartialSurfaceAreaHelper(RDKit::Descriptors::DoubleCubicLatticeVolume &self,
+                                   const python::object &atomIdxs) {
+  
+  unsigned int numAtoms = self.mol.getNumAtoms(); 
+  auto atoms = pythonObjectToDynBitset(atomIdxs, numAtoms);
+
+  if (atoms.empty()) {
+    throw_value_error("No atom indices supplied for Partial Surface Area");
+  }
+
+  return self.getPartialSurfaceArea(atoms);
+  
+}
+
+double getPartialVolumeHelper(RDKit::Descriptors::DoubleCubicLatticeVolume &self,
+                              const python::object &atomIdxs) {
+  
+  
+  unsigned int numAtoms = self.mol.getNumAtoms(); 
+  auto atoms = pythonObjectToDynBitset(atomIdxs, numAtoms);
+  if (atoms.empty()) {
+    throw_value_error("No atom indices supplied for Partial Surface Area");
+  }
+
+  return self.getPartialVolume(atoms);
+  
+}
+
+python::dict getSurfacePointsHelper(RDKit::Descriptors::DoubleCubicLatticeVolume &self) {
+  const std::map<unsigned int, std::vector<RDGeom::Point3D>> &points = self.getSurfacePoints();
+  python::dict surfacePoints;
+  
+  for (const auto &it : points) {
+    python::list points3D;
+    for (const auto &p : it.second){
+      points3D.append(p);
+    }
+    surfacePoints[it.first] = points3D;
+  }
+  return surfacePoints;
+}
+
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -1656,40 +1712,74 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
-  docString =
+    docString =
       R"DOC(ARGUMENTS:
       "   - mol: molecule or protein under consideration
+      "   - radii: radii for atoms of input mol (get using GetPeriodicTable or provide custom list)
       "   - isProtein: flag to indicate if the input is a protein (default=False, free ligand).
       "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=True)
       "   - probeRadius: radius of the solvent probe (default=1.2)
-      "   - depth: control of number of dots per atom (default=4)
-      "   - dotDensity: control of accuracy (default=0)
+      "   - confId: conformer ID to consider (default=-1)
       ")DOC";
-  python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume>(
-      "DoubleCubicLatticeVolume",
-      "Class for the Double Cubic Lattice Volume method",
-      python::init<const RDKit::ROMol &,
-                   python::optional<bool, bool, double, int, int>>(
-          (python::args("self", "mol"), python::args("isProtein") = false,
-           python::args("includeLigand") = true,
-           python::args("probeRadius") = 1.2, python::args("depth") = 4,
-           python::args("dotDensity") = 0),
-          docString.c_str()))
-      .def("GetSurfaceArea",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
-           "Get the Surface Area of the Molecule or Protein")
-      .def("GetVolume",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getVolume,
-           "Get the Total Volume of the Molecule or Protein")
-      .def("GetVDWVolume",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getVDWVolume,
-           "Get the van der Waals Volume of the Molecule or Protein")
-      .def("GetCompactness",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getCompactness,
-           "Get the Compactness of the Protein")
-      .def("GetPackingDensity",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getPackingDensity,
-           "Get the PackingDensity of the Protein");
+
+python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume, 
+               boost::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>>(
+  "DoubleCubicLatticeVolume",
+  "Class for the Double Cubic Lattice Volume method",
+  python::no_init)
+  .def("__init__",
+    python::make_constructor(
+        &getDoubleCubicLatticeVolume,
+        python::default_call_policies(),
+        (python::arg("mol"),
+        python::arg("radii"),
+        python::arg("isProtein") = false,
+        python::arg("includeLigand") = true,
+        python::arg("probeRadius") = 1.4,
+        python::arg("confId") = -1)), 
+        docString.c_str())
+  .def("GetSurfaceArea",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
+        (python::args("self")),
+        "Get the Surface Area of the Molecule or Protein")
+  .def("GetAtomSurfaceArea",
+      &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomSurfaceArea,
+      (python::arg("atom_idx")), "Get the surface area of atom with atom_idx")
+  .def("GetPolarSurfaceArea",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getPolarSurfaceArea,
+        (python::arg("includeSandP")=false, python::arg("includeHs")=false), 
+        "Get the Polar Surface Area of the Molecule or Protein")
+  .def("GetPartialSurfaceArea",
+       &getPartialSurfaceAreaHelper,
+       (python::arg("atomIndices")),
+       "Get the Partial Surface Area of the Molecule or Protein for specified subset of atoms")
+  .def("GetSurfacePoints",
+       &getSurfacePointsHelper,
+       "Get the set of points representing the surface")
+  .def("GetVolume",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getVolume,
+        "Get the Total Volume of the Molecule or Protein")
+  .def("GetVDWVolume",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getVDWVolume,
+        "Get the van der Waals Volume of the Molecule or Protein")
+  .def("GetAtomVolume",
+       &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomVolume,
+       (python::arg("atomIdx"), python::arg("solventRadius")),
+       "Get the volume atom of atom_idx with volume for specified Probe Radius")
+  .def("GetPolarVolume",
+      &RDKit::Descriptors::DoubleCubicLatticeVolume::getPolarVolume,
+      (python::arg("includeSandP")=false, python::arg("includeHs")=false), 
+      "Get the Polar Volume of the Molecule or Protein")
+  .def("GetPartialVolume",
+      &getPartialVolumeHelper,
+      python::arg("atomIdx"),
+      "Get the Partial Volume of the Molecule or Protein for specified subset of atoms")
+  .def("GetCompactness",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getCompactness,
+        "Get the Compactness of the Protein")
+  .def("GetPackingDensity",
+        &RDKit::Descriptors::DoubleCubicLatticeVolume::getPackingDensity,
+        "Get the PackingDensity of the Protein");
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
   python::scope().attr("_CalcCoulombMat_version") =

@@ -818,15 +818,17 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
             needAnotherRound = true;
           }
           sinfos.push_back(std::move(sinfo));
-        } else if (possibleAtoms[aidx]) {
+        } else {
+          // Only do another round if we change anything here
+          needAnotherRound |= possibleAtoms[aidx];
           possibleAtoms[aidx] = 0;
           atomSymbols[aidx] = getAtomCompareSymbol(*atom);
-          needAnotherRound = true;
 
           // if this was creating possible ring stereo, update that info now
           if (possibleRingStereoAtoms[aidx]) {
             --possibleRingStereoAtoms[aidx];
             if (!possibleRingStereoAtoms[aidx]) {
+              needAnotherRound = true;
               // we're no longer in any ring with possible ring stereo. Go
               // update all the other atoms/bonds in rings that we're in:
               for (unsigned int ridx = 0;
@@ -834,15 +836,26 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
                 const auto &aring = mol.getRingInfo()->atomRings()[ridx];
                 unsigned int nHere = 0;
                 for (auto raidx : aring) {
-                  if (possibleRingStereoAtoms[raidx]) {
-                    --possibleRingStereoAtoms[raidx];
-                    if (possibleRingStereoAtoms[raidx]) {
-                      ++nHere;
-                    }
-                  }
+                  // Ring stereo changed, so un-fix atoms in this ring so we can
+                  // recheck them in the next iteration, for the case that they
+                  // are no longer after the current atom was declared
+                  // non-chiral
+                  fixedAtoms[raidx] = false;
+                  nHere += (possibleRingStereoAtoms[raidx] > 0);
                 }
                 if (nHere <= 1) {
-                  // update the bondstereo counts too
+                  // if the ring can't transmit stereo anymore, update the
+                  // counts
+                  if (nHere == 1) {
+                    // update the last potential ring stereo atom in the ring,
+                    // since it can't have ring stereo alone.
+                    for (auto raidx : aring) {
+                      if (possibleRingStereoAtoms[raidx]) {
+                        --possibleRingStereoAtoms[raidx];
+                        break;
+                      }
+                    }
+                  }
                   for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
                     if (possibleRingStereoBonds[rbidx]) {
                       --possibleRingStereoBonds[rbidx];
@@ -1032,6 +1045,10 @@ void cleanMolStereo(ROMol &mol, const boost::dynamic_bitset<> &fixedAtoms,
 }
 }  // namespace
 
+void findChiralAtomSpecialCases(ROMol &mol,
+                                boost::dynamic_bitset<> &possibleSpecialCases,
+                                const std::vector<unsigned int> &atomRanks);
+
 std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                                    bool cleanIt) {
   // This potentially does two passes of "canonicalization" to identify
@@ -1121,13 +1138,14 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
     const bool breakTies = false;
     const bool includeAtomMaps = false;
     const bool includeChiralPresence = false;
+    const bool useRingStereo = false;
     // Now apply the canonical atom ranking code with basic connectivity
     // invariants The necessary condition for chirality is that an atom's
     // neighbors must have unique ranks
     Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
                              &atomSymbols, &bondSymbols, breakTies,
                              includeChirality, includeIsotopes, includeAtomMaps,
-                             includeChiralPresence);
+                             includeChiralPresence, useRingStereo);
 #endif
     // check if any new atoms definitely now have stereo; do another loop if
     // so
@@ -1209,10 +1227,11 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
       const bool includeIsotopes = false;
       const bool includeAtomMaps = false;
       const bool includeChiralPresence = false;
-      Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
-                               &atomSymbols, &bondSymbols, breakTies,
-                               includeChirality, includeIsotopes,
-                               includeAtomMaps, includeChiralPresence);
+      const bool useRingStereo = false;
+      Canon::rankFragmentAtoms(
+          mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
+          breakTies, includeChirality, includeIsotopes, includeAtomMaps,
+          includeChiralPresence, useRingStereo);
 #endif
       needAnotherRound = updateAtoms(
           mol, aranks, atomSymbols, possibleAtoms, knownAtoms, fixedAtoms,
@@ -1222,6 +1241,10 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                       knownAtoms, knownBonds, fixedBonds, res);
     }
   }
+
+  boost::dynamic_bitset<> possibleSpecialCases(mol.getNumAtoms());
+  findChiralAtomSpecialCases(mol, possibleSpecialCases, aranks);
+
   for (const auto atom : mol.atoms()) {
     atom->setProp<unsigned int>(common_properties::_ChiralAtomRank,
                                 aranks[atom->getIdx()], true);

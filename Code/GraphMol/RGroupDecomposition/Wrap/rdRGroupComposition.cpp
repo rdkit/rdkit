@@ -224,7 +224,7 @@ struct rgroupdecomp_wrapper {
         .export_values();
 
     python::enum_<RDKit::RGroupCoreAlignment>("RGroupCoreAlignment")
-        // DEPRECATED, remove the folowing line in release 2021.03
+        // DEPRECATED, remove the following line in release 2021.03
         .value("None", RDKit::NoAlignment)
         .value("NoAlignment", RDKit::NoAlignment)
         .value("MCS", RDKit::MCS)
@@ -287,7 +287,7 @@ struct rgroupdecomp_wrapper {
         "    - doTautomers: match all tautomers of a core against each "
         "input structure\n"
         "    - doEnumeration: expand input cores into enumerated mol bundles\n"
-        "    -allowMultipleRGroupsOnUnlabelled: permit more that one rgroup to "
+        "    - allowMultipleRGroupsOnUnlabelled: permit more than one rgroup to "
         "be attached to an unlabelled core atom";
     python::class_<RDKit::RGroupDecompositionParameters>(
         "RGroupDecompositionParameters", docString.c_str(),
@@ -350,7 +350,7 @@ struct rgroupdecomp_wrapper {
             &RDKit::RGroupDecompositionParameters::includeTargetMolInResults);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
-        "RGroupDecomposition", docString.c_str(),
+        "RGroupDecomposition",
         python::init<python::object>(
             python::args("self", "cores"),
             "Construct from a molecule or sequence of molecules"))
@@ -398,7 +398,7 @@ struct rgroupdecomp_wrapper {
              "       columns[rgroup_label] = [ mols_or_smiles ]\n");
 
     docString =
-        "Decompose a collecion of molecules into their Rgroups\n"
+        "Decompose a collection of molecules into their Rgroups\n"
         "  ARGUMENTS:\n"
         "    - cores: a set of cores from most to least specific.\n"
         "             See RGroupDecompositionParameters for more details\n"
@@ -408,6 +408,9 @@ struct rgroupdecomp_wrapper {
         "molecules [default: False]\n"
         "    - asRows: return the results as rows (default) otherwise return "
         "columns\n"
+        "    - options: RGroupDecompositionParameters object that defines "
+        "the parameters for the decomposition.\n"
+        "             See RGroupDecompositionParameters for defaults\n"
         "\n"
         "  RETURNS: row_or_column_results, unmatched\n"
         "\n"

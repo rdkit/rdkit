@@ -1216,28 +1216,43 @@ void DrawMol::calculateScale() {
 
 // ****************************************************************************
 void DrawMol::findExtremes() {
-  for (const auto &ps : preShapes_) {
-    ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
-  }
-  for (const auto &bond : bonds_) {
-    bond->findExtremes(xMin_, xMax_, yMin_, yMax_);
-  }
-  for (const auto &atLab : atomLabels_) {
-    if (atLab) {
-      atLab->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  if (drawOptions_.drawingExtentsInclude & DrawElement::PRESHAPES) {
+    for (const auto &ps : preShapes_) {
+      ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
     }
   }
-  for (const auto &hl : highlights_) {
-    hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  if (drawOptions_.drawingExtentsInclude & DrawElement::BONDS) {
+    for (const auto &bond : bonds_) {
+      bond->findExtremes(xMin_, xMax_, yMin_, yMax_);
+    }
   }
-  if (includeAnnotations_) {
+  if (drawOptions_.drawingExtentsInclude & DrawElement::ATOMLABELS) {
+    for (const auto &atLab : atomLabels_) {
+      if (atLab) {
+        atLab->findExtremes(xMin_, xMax_, yMin_, yMax_);
+      }
+    }
+  }
+  if (drawOptions_.drawingExtentsInclude & DrawElement::HIGHLIGHTS) {
+    for (const auto &hl : highlights_) {
+      hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
+    }
+  }
+  if (includeAnnotations_ &&
+      (drawOptions_.drawingExtentsInclude & DrawElement::ANNOTATIONS)) {
     for (const auto &a : annotations_) {
       a->findExtremes(xMin_, xMax_, yMin_, yMax_);
     }
   }
-  findRadicalExtremes(radicals_, xMin_, xMax_, yMin_, yMax_);
-  for (const auto &ps : postShapes_) {
-    ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  if (drawOptions_.drawingExtentsInclude & DrawElement::RADICALS) {
+    // radicals are drawn in black, so they can extend the extents
+    // even if the atom is not drawn.
+    findRadicalExtremes(radicals_, xMin_, xMax_, yMin_, yMax_);
+  }
+  if (drawOptions_.drawingExtentsInclude & DrawElement::POSTSHAPES) {
+    for (const auto &ps : postShapes_) {
+      ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
+    }
   }
 
   if (atCds_.empty()) {

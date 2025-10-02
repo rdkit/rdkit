@@ -1,5 +1,5 @@
 include_directories(${RDKit_ExternalDir})
-include_directories(${RDKit_ExternalDir}/rapidjson-1.1.0/include)
+include_directories(${RDKit_ExternalDir}/rapidjson/rapidjson-1.1.0/include)
 
 if(RDK_BUILD_MINIMAL_LIB)
     set(MINIMAL_LIB_LIBRARIES "MolInterchange;Abbreviations;"

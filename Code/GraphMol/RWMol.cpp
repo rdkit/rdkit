@@ -527,6 +527,17 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
   b->setBeginAtomIdx(atomIdx1);
   b->setEndAtomIdx(atomIdx2);
 
+  // we're in a batch edit, and at least one of the bond ends is scheduled
+  // for deletion, so mark the new bond for deletion too:
+  if (dp_delAtoms &&
+      ((atomIdx1 < dp_delAtoms->size() && dp_delAtoms->test(atomIdx1)) ||
+       (atomIdx2 < dp_delAtoms->size() && dp_delAtoms->test(atomIdx2)))) {
+    if (dp_delBonds->size() < numBonds) {
+      dp_delBonds->resize(numBonds);
+    }
+    dp_delBonds->set(numBonds - 1);
+  }
+
   // if both atoms have a degree>1, reset our ring info structure,
   // because there's a non-trivial chance that it's now wrong.
   if (dp_ringInfo && dp_ringInfo->isInitialized() &&
@@ -800,10 +811,11 @@ void RWMol::batchRemoveAtoms() {
       Bond *bond = d_graph[*beg++];
       if (bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
                                  sprop)) {
-        // This would ideally use ParseV3000Array but I'm buggered if I can get
-        // the linker to find it.
+        // This would ideally use ParseV3000Array but I'm buggered if I can
+        // get the linker to find it.
         //      std::vector<unsigned int> oats =
-        //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(sprop);
+        //          RDKit::SGroupParsing::ParseV3000Array<unsigned
+        //          int>(sprop);
         if ('(' == sprop.front() && ')' == sprop.back()) {
           sprop = sprop.substr(1, sprop.length() - 2);
 

@@ -1,10 +1,20 @@
-# Release_2025.09.1
+# Release_2025.09.1b1
 (Changes relative to Release_2025.03.1)
 
 ## Acknowledgements
 (Note: I'm no longer attempting to manually curate names. If you would like to
 see your contribution acknowledged with your name, please set your name in
 GitHub)
+
+Jakub Adamczyk, Chris Von Bargen, Jason Biggs, Anna Brünisholz, Kevin Boyd,
+Filip Chmielewski, Michael Cho, Brian Cole, David Cosgrove, Nia Dickson, Maria
+Dolotova, Genevieve Evans, Hussein Faara, Noah Herrington, Tad Hurst, Eisuke
+Kawashima, Kevin Keating, Brian Kelley, Jakub Klinkovský, Patrick Kunzmann,
+Niels Maeder, Mark Mackey, Jeremy Monat, Dan Nealschneider, Axel Pahl, Yakov
+Pechersky, Shashir Reddy, Vandan Revanur, Ricardo Rodriguez, Paul Thiessen,
+Caleb Thomas, Paolo Tosco, Inwan Yoo, badisa, dehaenw, dpdoughe, getuem,
+InvincibleZZH, jdavies-nurix, Kacper-Kozubowski, paconius, rwalroth, Saul,
+Stephen, yuri@FreeBSD
 
 ## Highlights
 
@@ -13,18 +23,279 @@ GitHub)
   atom ranks.
 - 2D coordinate generation may produce different results for some molecules due
   to a change in the way the atom ordering is computed in the depiction code.
-
+- The `includeRingMembership` argument to `GetMorganAtomInvGen()` is now mandatory.
+  Previously, the default value was False.
+- Default ET-version in `ForceFields::CrystalFF::getExperimentalTorsions()` is
+  changed from 1 to 2.
 
 ## New Features and Enhancements:
+  - switch to C++20
+ (github pull #8039 from greglandrum)
+  - Add SCSR parsing to RDKit
+ (github pull #8147 from tadhurst-cdd)
+  - support clearPropertyCache() on ROMol and Atom
+ (github issue #8241 from greglandrum)
+  - Speed up GetProp Python keyerrors
+ (github pull #8372 from d-b-w)
+  - Expose reading/writing PNG metadata to CFFI and MinimalLib
+ (github pull #8381 from ptosco)
+  - add property to indicate when a CIP calculation has been done
+ (github issue #8396 from greglandrum)
+  - Bump MaeParser version to 1.3.2
+ (github pull #8404 from ptosco)
+  - Moving towards getting all tests to pass when using the new stereo code
+ (github pull #8409 from greglandrum)
+  - Enable the chiral flag on enumerated isomers
+ (github pull #8410 from ricrogz)
+  - Change default ETversion.
+ (github pull #8414 from DavidACosgrove)
+  - Support pickling Shape inputs
+ (github pull #8434 from DavidACosgrove)
+  - add function to overwrite __setattr__ to only accept valid arguments
+ (github pull #8448 from nmaeder)
+  - ShapeInput from subset of atoms in molecule
+ (github pull #8449 from DavidACosgrove)
+  - add StereoGroup.getBonds() to Python wrapper
+ (github pull #8451 from greglandrum)
+  - add quick H-H bond removal to connectTheDots
+ (github pull #8452 from greglandrum)
+  - Protect Python DrawOptions from bad attributes.
+ (github pull #8453 from DavidACosgrove)
+  - Add a custom CXSMILES feature to indicate Zero Order Bonds
+ (github pull #8454 from ricrogz)
+  - Add the safeSetattr to the rdMolFiles param objects
+ (github pull #8457 from nmaeder)
+  - Method to remove enhanced stereo from an atom
+ (github issue #8467 from jdavies-nurix)
+  - Add Synthon space hit filters
+ (github pull #8473 from DavidACosgrove)
+  - Set default Eigen3 version to 3.4.0
+ (github pull #8477 from pechersky)
+  - A couple optimizations to when the ring finding code is called
+ (github pull #8482 from greglandrum)
+  - Allow single/double bonds to match aromatic in substructure search
+ (github issue #8485 from PaulThiessen)
+  - improve operator<< for stereogroups
+ (github pull #8489 from greglandrum)
+  - Print the version of InChI software being supported in RDKIt
+ (github issue #8508 from glevans)
+  - Explain DrawArrow and rawCoords=True
+ (github pull #8517 from bertiewooster)
+  - add support for allene- and cumulene-like structures to KDG
+ (github pull #8518 from greglandrum)
+  - allow limiting the  number of stereo groups to process
+ (github pull #8541 from tadhurst-cdd)
+  - Replace incorrect Freetype cmake flags with correct ones
+ (github pull #8543 from ptosco)
+  - Add missing default values to docker-compose configuration
+ (github pull #8544 from ptosco)
+  - Avoid a large number of warnings when building MinimalLib with emscripten
+ (github pull #8545 from ptosco)
+  - Add a "time out" to determineBondOrders
+ (github pull #8548 from ricrogz)
+  - rdkit-targets.cmake now uses cmake package names for external libraries instead of absolute paths
+ (github pull #8552 from KevKeating)
+  - Support Ctrl+C in determineBondOrders
+ (github pull #8557 from ricrogz)
+  - Cpp enumerate stereoisomers
+ (github pull #8563 from DavidACosgrove)
+  - Bump maeparser to 1.3.3 (fixes #8525)
+ (github pull #8580 from ricrogz)
+  - CIP labeler: attempt to resolve "easy" stereo centers first
+ (github pull #8582 from ricrogz)
+  - Allow creation of bond-only stereogroups from Python
+ (github issue #8584 from paconius)
+  - Make assignCIPLabels Ctrl+c interruptable
+ (github pull #8589 from ricrogz)
+  - Expose the onlyWedgeFlags parameter to SWIG ClearSingleBondDirFlags
+ (github pull #8600 from ptosco)
+  - Add option to draw all CIP codes in DrawMol.cpp
+ (github pull #8609 from paconius)
+  - Update SMARTS parsing syntax error to include bad token position
+ (github issue #8612 from whosayn)
+  - ChemDraw Document and read/write support for the RDKit
+ (github pull #8620 from bp-kelley)
+  - Expose CDX support to FileParsers and ChemDraw to SWIG
+ (github pull #8681 from bp-kelley)
+  - Add the useRingTemplates option to generateDepictionMatching2DStructure
+ (github pull #8688 from ricrogz)
+  - Assign COST=100 to PgSQL functions during CREATE FUNCTION rather than leaving unspecified
+ (github issue #8711 from dpdoughe)
+  - Create a function to extract some specified atoms from a ROMol as a new ROMol by creating new graph
+ (github issue #8742 from whosayn)
+  - Document Options in RGroupDcompose and other minor docs fixes
+ (github pull #8757 from badisa)
+  - Fix non matchine if(x) end(x) statement
+ (github pull #8769 from bp-kelley)
+  - support bond property lists in SDF
+ (github pull #8778 from greglandrum)
+  - Implement new drawingExtentsInclude MolDrawOption
+ (github pull #8783 from ptosco)
+  - Render all ROMol objects as images during export using PandasTools.SaveXlsxFromFrame
+ (github issue #8793 from NoahHerrington)
+  - allow custom shape points
+ (github pull #8799 from greglandrum)
+  - update default ET version to 2 in getExperimentalTorsions
+ (github pull #8798 from nmaeder)
 
 ## Bug Fixes:
+  - MHFP package error: all Bulk functions fail to execute in Python
+ (github issue #3102 from stewu5)
+  - Can't roundtrip CHEMBL4080644 through SMILES
+ (github issue #5078 from greglandrum)
+  - SMILES canonicalization not idempotent
+ (github issue #5124 from getuem)
+  - GetAtomConjGrpIdx documentation indicates it returns a signed int, but actually returns unsigned int
+ (github issue #7112 from rwalroth)
+  - GETAWAY descriptors seem nondeterministic
+ (github issue #7264 from j-adamczyk)
+  - Possible Off-by-One Bug in the ERG Implementation
+ (github issue #8201 from apahl)
+  - order dependence in tautomer hash
+ (github issue #8205 from greglandrum)
+  - Multithreaded mol reader can hang when not iterating through the whole file
+ (github issue #8284 from bp-kelley)
+  - Chem.MolToSmiles: rootedAtAtom option not working properly with multiple fragments
+ (github issue #8327 from iwyoo)
+  - RWMol::insertMol does not update _ringStereoOtherAtom
+ (github issue #8379 from greglandrum)
+  - Fix SynthonSpace build when RDK_USE_BOOST_SERIALIZATION is not defined
+ (github pull #8380 from ptosco)
+  - add correct export to SynthonSpace.h
+ (github pull #8399 from greglandrum)
+  - Do not free sslib until patternFpArray is still needed by the test
+ (github pull #8407 from ptosco)
+  - Avoid a segfault in CoordGen when a double bond has stereo spec but no stereo atoms
+ (github pull #8415 from ptosco)
+  - Overwrite end of array in PubChemShape.cpp
+ (github issue #8416 from DavidACosgrove)
+  - PR #8366 triggers range errors on imines with new stereo perception
+ (github issue #8420 from ricrogz)
+  - Inconsistent SMARTS representation for stereochemical aromatic bonds
+ (github issue #8424 from iwyoo)
+  - update_pains.py script does not check for pains_c.in file existence
+ (github issue #8430 from IridiumOxide)
+  - fix a logic error in needsHs
+ (github pull #8442 from greglandrum)
+  - Pubchem Shape: make sure cutoff is set
+ (github pull #8446 from DavidACosgrove)
+  - MolToJSON doesn't handle atropisomers
+ (github issue #8460 from paconius)
+  - In pubchem-shape, overlaying onto a shape does an incorrect final translation
+ (github issue #8462 from DavidACosgrove)
+  - Postgres Cartridge Equality Shouldn't use coordinates
+ (github issue #8465 from paconius)
+  - MolFromSmiles and MolFromSmarts accept strings containing invalid characters if they start with a valid character
+ (github issue #8471 from jasondbiggs)
+  - Build failure with GCC 15
+ (github issue #8491 from lahwaacz)
+  - TautomerQuery drops queries for some atoms
+ (github issue #8492 from ricrogz)
+  - rdkit/rdkit/Chem/Features /ShowFeats.py TypeError: not all arguments converted during string formatting
+ (github issue #8501 from InvincibleZZH)
+  - Synthon space substructure search failing for simple search
+ (github issue #8502 from greglandrum)
+  - Fix arrowhead8500
+ (github pull #8504 from DavidACosgrove)
+  - Invalid read in moldraw2DTestCatch
+ (github issue #8520 from ricrogz)
+  - Issue reading .mae files
+ (github issue #8525 from mark-mackey-cresset)
+  - Chem.GetMolFrags Destroys Stereogroups containing only bonds
+ (github issue #8527 from paconius)
+  - SynthonSpaceSearch bad chiral atom count
+ (github issue #8549 from DavidACosgrove)
+  - allow nested parentheses in tokens
+ (github pull #8553 from tadhurst-cdd)
+  - Explicitly wrap raw pointer into emscripten::val object with allow_raw_pointers() policy
+ (github pull #8555 from ptosco)
+  - Segmentation fault in AllChem.EmbedMolecule()
+ (github issue #8559 from calebthomas259)
+  - RDKit minilib loses stereochemistry when breaking molecules to fragments
+ (github issue #8569 from MariaDolotova)
+  - MolFromSmiles loses the information of "atom map number" property if cxsmiles is used
+ (github issue #8586 from saultorre1995)
+  - Fixes the problems with wiggly bonds and EnumerateStereoisomers from #8506
+ (github pull #8598 from greglandrum)
+  - Fixed out of bounds vector access in GetGeodesicMatrix
+ (github pull #8601 from ndickson-nvidia)
+  - Reading molecule from block gives None with no warning -- likely due to Cannot normalize a zero length vector in atropisomer code
+ (github issue #8602 from pechersky)
+  - fix mrv parsing for Rgroups to make smiles work
+ (github pull #8617 from tadhurst-cdd)
+  - Scsr sgroup error
+ (github pull #8623 from tadhurst-cdd)
+  - `ResonanceMolSupplier` raises an error if `Mol` has no bonds
+ (github issue #8638 from padix-key)
+  - Mem fixes
+ (github pull #8640 from ricrogz)
+  - `MultithreadedSDMolSupplier` occasionally returns extra `None` entries
+ (github issue #8644 from Kacper-Kozubowski)
+  - RascalMCES rapidly fills up memory on rdkit 2025.03 but not rdkit 2024.09
+ (github issue #8645 from dehaenw)
+  - Enhanced stereo synthons break SynthonSpace.ReadTextFile
+ (github issue #8650 from coleb)
+  - RegistrationHash produces 2 separate hashes for 2636640-50-9 depending on input
+ (github issue #8654 from jdavies-nurix)
+  - Incorrect canonicalization when generating CXSMILES without enhanced stereo
+ (github issue #8655 from greglandrum)
+  - Incorrect MolHash when generating CXSMILES without enhanced stereo
+ (github issue #8656 from greglandrum)
+  - Canonical smiles can't be kekulized by MolFromSmiles
+ (github issue #8670 from shashir)
+  - Fix parse error messages for bad characters
+ (github pull #8675 from whosayn)
+  - DrawMoleculeWithHighlights doesn't use SetOffset
+ (github issue #8679 from DavidACosgrove)
+  - modern stereo: canonicalization depends on bond iteration order
+ (github issue #8689 from d-b-w)
+  - Fix build with Boost 1.89.0
+ (github pull #8694 from cho-m)
+  - Fix drawing of very short arcs in lasso.
+ (github pull #8706 from DavidACosgrove)
+  - Forcefield Gradient Scaling misses large negative gradients
+ (github issue #8716 from scal444)
+  - rdMolTransforms.CanonicalizeConformer inverts structure
+ (github issue #8720 from DavidACosgrove)
+  - Two small MinimalLib RGD bug fixes
+ (github pull #8729 from ptosco)
+  - Fixes a bug with bad H positions in output conformer
+ (github pull #8731 from greglandrum)
+  - patch a memory allocation problem in the pubchem shape code
+ (github pull #8733 from greglandrum)
+  - Avoid code duplication through a templated function and improve JSON parsing of Boolean flags
+ (github pull #8773 from ptosco)
+  - Make InteractiveRenderer error reporting more robust and code cleanup
+ (github pull #8774 from ptosco)
+  - Integer-valued list properties are not available from Python
+ (github issue #8777 from greglandrum)
 
 ## Cleanup work:
+  - style: apply modernize-use-override
+ (github pull #8137 from e-kwsm)
+  - Consolidate MinimalLib Dockerfiles to avoid code duplication
+ (github pull #8412 from ptosco)
+  - find_package(better_enums) can never find better_enums
+ (github issue #8438 from yurivict)
+  - Modernization of some substructure code
+ (github pull #8450 from greglandrum)
+  - A few mem fixes in tests
+ (github pull #8521 from ricrogz)
+  - Fix irritating warning when DrawMolMCHLasso compiled.
+ (github pull #8540 from DavidACosgrove)
+  - Some cleanup of the xyz2mol code
+ (github pull #8567 from greglandrum)
+  - Small cleanups of the MMFF94 code
+ (github pull #8593 from greglandrum)
+  - Switch a bunch of C++ tests to use catch2
+ (github pull #8625 from greglandrum)
+  - Include <cstdint> for a couple of headers for windows compilation
+ (github pull #8763 from cdvonbargen)
 
 ## Code removed in this release:
 
 ## Deprecated code (to be removed in a future release):
-
+- The functions `FileParserUtils::applyMolListPropToAtoms()`, `FileParserUtils::applyMolListPropsToAtoms()`, and `FileParserUtils::getAtomPropertyList()` have been deprecated, please use `FileParserUtils::applyMolListProp()`, `FileParserUtils::applyMolListProps()`, and `FileParserUtils::getPropertyList()` instead.
 
 # Release_2025.03.1
 (Changes relative to Release_2024.09.1)

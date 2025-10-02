@@ -88,22 +88,18 @@ introduced in more recent macOS versions.
 
 The following commands will create a development environment for Linux x86_64 and Python 3.
 
-Start by downloading the latest anaconda installer from [Anaconda](https://www.anaconda.com/download/#linux) and install it. Then, install the required packages:
+Start by downloading the latest [miniforge installer](https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh) and installing it:
 
 ```
-bash Anaconda3-5.2.0-x86_64.sh
-conda install -y cmake cairo pillow eigen pkg-config
-conda install -y boost-cpp boost py-boost
+bash Miniforge3-Linux-x86_64.sh
 ```
 
-Numpy and matplotlib are already part of the base installation of anaconda. Due to the latest boost libraries being currently built with a GLIBC version higher than the default in anaconda, we need to update to a more recent version:
-
+Then create a conda development environment for rdkit:
 ```
-conda install -y gxx_linux-64
+conda create -n rdkit_build -c conda-forge gxx_linux-64 cmake cairo pillow eigen pkg-config boost-cpp boost numpy matplotlib pandas pytest
 ```
 
-At this point, you should be able to clone the RDKit repository to the desired build location, and start the build. Please consider that it is necessary to indicate the path to the numpy headers for RDKit to find them, since anaconda hides them inside the numpy package:
-
+At this point, you should be able to clone the RDKit repository to the desired build location, and start the build:
 ```
 git clone https://github.com/rdkit/rdkit.git
 cd rdkit
@@ -112,8 +108,6 @@ cmake -DPy_ENABLE_SHARED=1 \
   -DRDK_INSTALL_INTREE=ON \
   -DRDK_INSTALL_STATIC_LIBS=OFF \
   -DRDK_BUILD_CPP_TESTS=ON \
-  -DPYTHON_NUMPY_INCLUDE_PATH="$(python -c 'import numpy ; print(numpy.get_include())')" \
-  -DBOOST_ROOT="$CONDA_PREFIX" \
   ..
 ```
 
