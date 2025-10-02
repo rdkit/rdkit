@@ -69,7 +69,7 @@ namespace v2 {
 //! Parse a text stream with ChemDraw data into a ChemicalReaction
 std::vector<std::unique_ptr<ChemicalReaction>>
 ChemDrawDataStreamToChemicalReactions(std::istream &inStream, bool sanitize,
-                                   bool removeHs) {
+                                      bool removeHs) {
   ChemDrawParserParams params;
   params.sanitize = sanitize;
   params.removeHs = removeHs;
@@ -162,6 +162,6 @@ std::vector<std::unique_ptr<ChemicalReaction>> ChemDrawFileToChemicalReactions(
   }
   return res;
 }
-  
-}  
+
+}  // namespace v2
 }  // namespace RDKit

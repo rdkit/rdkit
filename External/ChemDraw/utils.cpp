@@ -241,7 +241,7 @@ Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
     if (center_atom->hasProp(CDX_IMPLICIT_HYDROGEN_STEREO) &&
         center_atom->getProp<char>(CDX_IMPLICIT_HYDROGEN_STEREO) == 'w') {
       nswaps++;
-}
+    }
 
     if (nswaps % 2) {
       return Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
@@ -282,25 +282,25 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
         case kCDXCIPAtom_R:
           if (!chiralityChanged) {
             atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-}
+          }
           unsetTetrahedralAtoms.push_back(std::make_pair('R', atom));
           break;
         case kCDXCIPAtom_r:
           if (!chiralityChanged) {
             atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-}
+          }
           unsetTetrahedralAtoms.push_back(std::make_pair('r', atom));
           break;
         case kCDXCIPAtom_S:
           if (!chiralityChanged) {
             atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-}
+          }
           unsetTetrahedralAtoms.push_back(std::make_pair('S', atom));
           break;
         case kCDXCIPAtom_s:
           if (!chiralityChanged) {
             atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
-}
+          }
           unsetTetrahedralAtoms.push_back(std::make_pair('s', atom));
           break;
         default:

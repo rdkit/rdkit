@@ -38,7 +38,6 @@
 #include "chemdraw/CDXStdObjects.h"
 #include "ChemDrawEndInclude.h"
 
-
 namespace RDKit {
 namespace v2 {
 const double DEFAULT_CDX_BOND_LENGTH = 14.4;
@@ -173,8 +172,7 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
   }
 
   for (auto &bond : trmol.bonds()) {
-    auto *cdxbond =
-        new CDXBond(object_id + mol.getNumAtoms() + bond->getIdx());
+    auto *cdxbond = new CDXBond(object_id + mol.getNumAtoms() + bond->getIdx());
 
     int dirCode = 0;
     bool reverse = false;
@@ -273,7 +271,7 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
     if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE ||
         bond->getBondDir() == Bond::BondDir::UNKNOWN) {
       cdxbond->m_display = kCDXBondDisplay_Wavy;
-}
+    }
 
     fragment->AddChild(cdxbond);
   }
@@ -281,9 +279,9 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
   document.AddChild(page);
   document.m_colorTable.m_colors
       .clear();  // if this isn't empty something fails.
-  
+
   std::ostringstream os;
-  if(format == CDXFormat::CDXML) {
+  if (format == CDXFormat::CDXML) {
     os << kCDXML_HeaderString;
     XMLDataSink ds(os);
     document.XMLWrite(ds);
@@ -293,5 +291,5 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
   }
   return os.str();
 }
-}
+}  // namespace v2
 }  // namespace RDKit

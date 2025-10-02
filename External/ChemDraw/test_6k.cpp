@@ -59,8 +59,9 @@ std::string replace(std::string &istr, const std::string &from,
                     const std::string &to) {
   std::string str(istr);
   size_t start_pos = str.find(from);
-  if (start_pos == std::string::npos) { return str;
-}
+  if (start_pos == std::string::npos) {
+    return str;
+  }
   str.replace(start_pos, from.length(), to);
   return str;
 }
@@ -71,8 +72,8 @@ bool hasNonSupportedFeatures(CDXDocument &document, const std::string &fname) {
   std::stringstream xml;
   xml << ifs.rdbuf();
   // We should be able to figure this out from the node but...
-  if(xml.str().find("monomerAttachmentStructure_") != std::string::npos ||
-     xml.str().find("Name=\"monomerAttachments") != std::string::npos) {
+  if (xml.str().find("monomerAttachmentStructure_") != std::string::npos ||
+      xml.str().find("Name=\"monomerAttachments") != std::string::npos) {
     return true;
   }
 
@@ -84,9 +85,11 @@ bool hasNonSupportedFeatures(CDXDocument &document, const std::string &fname) {
           auto id = (CDXDatumID)frag.second->GetTag();
           if (id == kCDXObj_Fragment) {
             auto &fragment = (CDXFragment &)(*frag.second);
-            if (fragment.m_sequenceType == kCDXSeqType_Unknown) { return true;
-}
-          } else if (id == kCDXObj_BracketAttachment || id == kCDXObj_BracketedGroup) {
+            if (fragment.m_sequenceType == kCDXSeqType_Unknown) {
+              return true;
+            }
+          } else if (id == kCDXObj_BracketAttachment ||
+                     id == kCDXObj_BracketedGroup) {
             return true;
           }
         }
@@ -94,7 +97,7 @@ bool hasNonSupportedFeatures(CDXDocument &document, const std::string &fname) {
       case kCDXObj_ObjectTag: {
         CDXObject &object = *((CDXObject *)node.second);
         id = (CDXDatumID)object.GetTag();
-	// Check for monomers
+        // Check for monomers
         break;
       }
       default:
@@ -115,7 +118,7 @@ TEST_CASE("Round TRIP") {
 
   SECTION("round trip") {
     // if we can't find the CDXML6K path, then don't run the test
-    if(!std::filesystem::exists(path)) {
+    if (!std::filesystem::exists(path)) {
       return;
     }
     int failed = 0;
@@ -138,43 +141,82 @@ TEST_CASE("Round TRIP") {
     std::string nomolpath = path + "NOMOL/";
     std::string badparsepath = path + "BADPARSE/";
     std::string sanitizationpath = path + "SANI/";
-    
+
     std::set<std::string> known_failures{
-      "INDMUMLL1117_2025-01-24-17-23-14_304.cdxml",  // Dative oxygen gets set to a radical
-      "INDMUMLL1117_2025-01-24-17-26-06_1010.cdxml", // The next batch has a type of stereochem I don't know how to parse yet
-      "INDMUMLL1117_2025-01-24-17-26-06_1012.cdxml",
-      "INDMUMLL1117_2025-01-24-17-26-06_1022.cdxml",
-      "INDMUMLL1117_2025-01-24-17-26-06_1024.cdxml",
-      "INDMUMLL1117_2025-01-24-17-26-06_1026.cdxml",
-      "INDMUMLL1117_2025-01-24-17-26-06_1032.cdxml",
-      "INDMUMLL1117_2025-01-24-17-26-06_1034.cdxml",
-      "INDMUMLL1117_2025-01-24-17-26-06_1036.cdxml",
-      "INDMUMLL1117_2025-01-24-17-26-06_1040.cdxml",
-      "INDMUMLL1117_2025-01-24-17-26-06_1042.cdxml",
-      "INDMUMLL1117_2025-01-24-17-26-06_1048.cdxml", // Stereo chem batch ends here
-      "INDMUMLL1117_2025-01-24-17-26-13_1690.cdxml", // RDKit shows a radical for the dative ->[O]
-      "INDMUMLL1117_2025-01-24-17-27-11_6877.cdxml", // The next batch has a type of stereochem I don't know how to parse yet (same as before)
-      "INDMUMLL1117_2025-01-24-17-27-11_6878.cdxml",
-      "INDMUMLL1117_2025-01-24-17-27-11_6883.cdxml",
-      "INDMUMLL1117_2025-01-24-17-27-11_6884.cdxml",
-      "INDMUMLL1117_2025-01-24-17-27-11_6889.cdxml",
-      "INDMUMLL1117_2025-01-24-17-27-11_6896.cdxml",
-      "INDMUMLL1117_2025-01-24-17-27-30_8574.cdxml", // Stereo chem batch ends here
-      "INDMUMLL1117_2025-01-24-17-27-31_8633.cdxml", // RDkit is missing a dummy atom molecule
-      "INDMUMLL1117_2025-01-24-17-27-31_8651.cdxml", // RDkit is missing a dummy atom molecule
-      "INDMUMLL1117_2025-01-24-17-27-53_10330.cdxml",// 2D projection of 3D stereo, we fail this one
-      "INDMUMLL1117_2025-01-24-17-27-53_10332.cdxml",// 2D projection of 3D stereo, we fail this one
-      "INDMUMLL1117_2025-01-24-17-27-54_10336.cdxml",// RDKit Smiles keeps any bonds ~, ChemDraw doesn't
-      "INDMUMLL1117_2025-01-24-17-28-02_10942.cdxml",// Chemdraw smiles doesn't support quadruple bond $
-      "INDMUMLL1117_2025-01-24-17-28-15_11666.cdxml",// RDKit Smiles keeps any bonds ~, ChemDraw doesn't
-      "INDMUMLL1117_2025-01-24-17-28-20_12011.cdxml",// RDKit gets stereo from the 3D data and the wedging
-      "INDMUMLL1117_2025-01-24-17-28-20_12012.cdxml",// RDKit gets stereo from the 3D data and the wedging
-      "INDMUMLL1117_2025-01-24-17-28-21_12031.cdxml",// 2D projection of 3D stereo, we fail this one
-      "INDMUMLL1117_2025-01-24-17-28-30_12568.cdxml",// 2D projection of 3D stereo, we fail this one
-      "INDMUMLL1117_2025-01-24-17-29-06_14654.cdxml",// Dative oxygen gets set to a radical
-      "INDMUMLL1117_2025-01-24-17-29-08_14775.cdxml",// RDKit Smiles keeps any bonds ~, ChemDraw doesn't
-      "INDMUMLL1117_2025-01-24-17-29-09_14896.cdxml",// We apparently do a bit of a better job than chemdraw here in parsing R/S
-      "INDMUMLL1117_2025-01-24-17-29-09_14897.cdxml" // RDKit just gets very different stereo chem, no idea why
+        "INDMUMLL1117_2025-01-24-17-23-14_304.cdxml",  // Dative oxygen gets set
+                                                       // to a radical
+        "INDMUMLL1117_2025-01-24-17-26-06_1010.cdxml",  // The next batch has a
+                                                        // type of stereochem I
+                                                        // don't know how to
+                                                        // parse yet
+        "INDMUMLL1117_2025-01-24-17-26-06_1012.cdxml",
+        "INDMUMLL1117_2025-01-24-17-26-06_1022.cdxml",
+        "INDMUMLL1117_2025-01-24-17-26-06_1024.cdxml",
+        "INDMUMLL1117_2025-01-24-17-26-06_1026.cdxml",
+        "INDMUMLL1117_2025-01-24-17-26-06_1032.cdxml",
+        "INDMUMLL1117_2025-01-24-17-26-06_1034.cdxml",
+        "INDMUMLL1117_2025-01-24-17-26-06_1036.cdxml",
+        "INDMUMLL1117_2025-01-24-17-26-06_1040.cdxml",
+        "INDMUMLL1117_2025-01-24-17-26-06_1042.cdxml",
+        "INDMUMLL1117_2025-01-24-17-26-06_1048.cdxml",  // Stereo chem batch
+                                                        // ends here
+        "INDMUMLL1117_2025-01-24-17-26-13_1690.cdxml",  // RDKit shows a radical
+                                                        // for the dative ->[O]
+        "INDMUMLL1117_2025-01-24-17-27-11_6877.cdxml",  // The next batch has a
+                                                        // type of stereochem I
+                                                        // don't know how to
+                                                        // parse yet (same as
+                                                        // before)
+        "INDMUMLL1117_2025-01-24-17-27-11_6878.cdxml",
+        "INDMUMLL1117_2025-01-24-17-27-11_6883.cdxml",
+        "INDMUMLL1117_2025-01-24-17-27-11_6884.cdxml",
+        "INDMUMLL1117_2025-01-24-17-27-11_6889.cdxml",
+        "INDMUMLL1117_2025-01-24-17-27-11_6896.cdxml",
+        "INDMUMLL1117_2025-01-24-17-27-30_8574.cdxml",   // Stereo chem batch
+                                                         // ends here
+        "INDMUMLL1117_2025-01-24-17-27-31_8633.cdxml",   // RDkit is missing a
+                                                         // dummy atom molecule
+        "INDMUMLL1117_2025-01-24-17-27-31_8651.cdxml",   // RDkit is missing a
+                                                         // dummy atom molecule
+        "INDMUMLL1117_2025-01-24-17-27-53_10330.cdxml",  // 2D projection of 3D
+                                                         // stereo, we fail this
+                                                         // one
+        "INDMUMLL1117_2025-01-24-17-27-53_10332.cdxml",  // 2D projection of 3D
+                                                         // stereo, we fail this
+                                                         // one
+        "INDMUMLL1117_2025-01-24-17-27-54_10336.cdxml",  // RDKit Smiles keeps
+                                                         // any bonds ~,
+                                                         // ChemDraw doesn't
+        "INDMUMLL1117_2025-01-24-17-28-02_10942.cdxml",  // Chemdraw smiles
+                                                         // doesn't support
+                                                         // quadruple bond $
+        "INDMUMLL1117_2025-01-24-17-28-15_11666.cdxml",  // RDKit Smiles keeps
+                                                         // any bonds ~,
+                                                         // ChemDraw doesn't
+        "INDMUMLL1117_2025-01-24-17-28-20_12011.cdxml",  // RDKit gets stereo
+                                                         // from the 3D data and
+                                                         // the wedging
+        "INDMUMLL1117_2025-01-24-17-28-20_12012.cdxml",  // RDKit gets stereo
+                                                         // from the 3D data and
+                                                         // the wedging
+        "INDMUMLL1117_2025-01-24-17-28-21_12031.cdxml",  // 2D projection of 3D
+                                                         // stereo, we fail this
+                                                         // one
+        "INDMUMLL1117_2025-01-24-17-28-30_12568.cdxml",  // 2D projection of 3D
+                                                         // stereo, we fail this
+                                                         // one
+        "INDMUMLL1117_2025-01-24-17-29-06_14654.cdxml",  // Dative oxygen gets
+                                                         // set to a radical
+        "INDMUMLL1117_2025-01-24-17-29-08_14775.cdxml",  // RDKit Smiles keeps
+                                                         // any bonds ~,
+                                                         // ChemDraw doesn't
+        "INDMUMLL1117_2025-01-24-17-29-09_14896.cdxml",  // We apparently do a
+                                                         // bit of a better job
+                                                         // than chemdraw here
+                                                         // in parsing R/S
+        "INDMUMLL1117_2025-01-24-17-29-09_14897.cdxml"   // RDKit just gets very
+                                                         // different stereo
+                                                         // chem, no idea why
     };
 
     for (auto p : {failpath, nomolpath, badparsepath, sanitizationpath}) {
@@ -191,25 +233,25 @@ TEST_CASE("Round TRIP") {
         // issue here - graphite nanotube
         if (fname == "INDMUMLL1117_2025-01-24-17-28-02_10946.cdxml") {
           continue;  // nanotube takes forever
-}
+        }
         auto molfname = molpath + replace(fname, ".cdxml", ".mol");
         auto smifname = smipath + replace(fname, ".cdxml", ".smi");
         // if chemscript couldn't make an output, ignore it
-	total++;
+        total++;
 
         if (!std::filesystem::exists(molfname) ||
             !std::filesystem::exists(smifname)) {
-	  no_mol_in_doc++;
+          no_mol_in_doc++;
           continue;
         }
-	
-	// Get the ChemScript mol and smiles
+
+        // Get the ChemScript mol and smiles
         std::unique_ptr<RWMol> mol;
         //= nullptr;
         try {
           mol.reset(MolFileToMol(molfname));
         } catch (...) {
-	  bad_chemdraw_mol++;
+          bad_chemdraw_mol++;
           continue;
         }
         // REQUIRE(mols.size());
@@ -230,8 +272,8 @@ TEST_CASE("Round TRIP") {
             smiles = smiles_in;
           }
         }
-	
-	parseable++;
+
+        parseable++;
         // Read the cdxml
         std::vector<std::unique_ptr<RWMol>> mols;
         bool santizationFailure = false;
@@ -244,22 +286,20 @@ TEST_CASE("Round TRIP") {
             santizationFailure = true;
           }
           if (!mols.size()) {
-	    if (smiles.size() == 0) {
-	      // At least we match the chemscript non-mol
-	      success++;
-	    }
-            else if (hasNonSupportedFeatures(entry.path().string())) {
-              //std::cerr << "[NOMOL (Unsupported)]: " << entry.path().string()
-              //          << std::endl;
+            if (smiles.size() == 0) {
+              // At least we match the chemscript non-mol
+              success++;
+            } else if (hasNonSupportedFeatures(entry.path().string())) {
+              // std::cerr << "[NOMOL (Unsupported)]: " << entry.path().string()
+              //           << std::endl;
               nonSupported++;
             } else {
-	      std::cerr << "[NOMOL]: " << entry.path().string()
-                        << std::endl;
+              std::cerr << "[NOMOL]: " << entry.path().string() << std::endl;
               std::filesystem::copy(
                   entry.path().string(),
                   nomolpath + entry.path().filename().string());
-	      nomol++;
-	    }
+              nomol++;
+            }
             continue;
           }
         } catch (...) {
@@ -295,10 +335,11 @@ TEST_CASE("Round TRIP") {
                 sanitizationpath + entry.path().filename().string());
             saniFailed++;
           } else {
-            if(known_failures.find(entry.path().filename().string()) != known_failures.end()) {
-              continue; // we know this failure and it's ok for now
-}
-            
+            if (known_failures.find(entry.path().filename().string()) !=
+                known_failures.end()) {
+              continue;  // we know this failure and it's ok for now
+            }
+
             std::cerr << "[FAIL]: " << entry.path() << std::endl;
             std::filesystem::copy(entry.path(),
                                   failpath + entry.path().filename().string());
@@ -319,8 +360,7 @@ TEST_CASE("Round TRIP") {
     std::cerr << "Success:" << success + smimatches << std::endl;
     std::cerr << "skipped (non supported features):" << nonSupported
               << std::endl;
-    std::cerr << "skipped (no mol in doc):" << no_mol_in_doc
-              << std::endl;
+    std::cerr << "skipped (no mol in doc):" << no_mol_in_doc << std::endl;
     std::cerr << "Chemscript smiles matches not chemscript mol: " << smimatches
               << std::endl;
     std::cerr << "Failed:" << failed << std::endl;

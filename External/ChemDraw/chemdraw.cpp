@@ -131,8 +131,7 @@ void visit_children(
 
         if (atm->hasProp(CDX_ATOM_POS)) {
           hasConf = true;
-          const auto coord =
-              atm->getProp<std::vector<double>>(CDX_ATOM_POS);
+          const auto coord = atm->getProp<std::vector<double>>(CDX_ATOM_POS);
 
           p.x = coord[0];
           p.y = -1 * coord[1];  // CDXML uses an inverted coordinate

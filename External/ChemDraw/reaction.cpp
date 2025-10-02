@@ -161,5 +161,5 @@ void ReactionInfo::set_reaction_steps(
     }
   }
 }
-}  
+}  // namespace ChemDraw
 }  // namespace RDKit

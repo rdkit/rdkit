@@ -59,10 +59,9 @@ struct PageData {
   std::map<unsigned int, Atom *> atomIds;
   std::map<unsigned int, Bond *> bondIds;
   std::vector<std::unique_ptr<RWMol>> mols;  // All molecules found in the doc
-  std::map<unsigned int, size_t>
-      fragmentLookup;  // fragment.id->molecule index
+  std::map<unsigned int, size_t> fragmentLookup;  // fragment.id->molecule index
   std::map<unsigned int, std::vector<int>>
-      groupedFragments;              // grouped.id -> [fragment.id]
+      groupedFragments;               // grouped.id -> [fragment.id]
   std::vector<ReactionInfo> schemes;  // reaction schemes found
 
   void clearCDXProps() {
@@ -90,7 +89,7 @@ struct PageData {
 //!                   external node's are normally NickNames or  new Fragments
 bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
                    int &missingFragId, int externalAttachment = -1);
-}
+}  // namespace ChemDraw
 }  // namespace RDKit
 
 #endif
