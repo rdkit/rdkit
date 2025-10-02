@@ -327,8 +327,8 @@ class PyMCSParameters : public boost::noncopyable {
   void setTimeout(unsigned int value) { p->Timeout = value; }
   bool getVerbose() const { return p->Verbose; }
   void setVerbose(bool value) { p->Verbose = value; }
-  bool getUseCliqueDection() const { return p->useCliqueDetection; }
-  void setUseCliqueDetection(bool value) { p->useCliqueDetection = value; }
+  bool getUseCliqueDection() const { return p->UseCliqueDetection; }
+  void setUseCliqueDetection(bool value) { p->UseCliqueDetection = value; }
   void setMinMCSSSize(unsigned int value) { p->MinMCSSSize = value; }
   unsigned int getMinMCSSSize() { return p->MinMCSSSize; }
   const MCSAtomCompareParameters &getAtomCompareParameters() const {
@@ -604,7 +604,7 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
   p.MaximizeBonds = maximizeBonds;
   p.Timeout = timeout;
   p.Verbose = verbose;
-  p.useCliqueDetection = useCliqueDetection;
+  p.UseCliqueDetection = useCliqueDetection;
   p.MinMCSSSize = minMCSSSize;
   p.InitialSeed = seedSmarts;
   p.AtomCompareParameters.MatchValences = matchValences;
@@ -701,7 +701,7 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       (python::arg("mols"), python::arg("maximizeBonds") = true,
        python::arg("threshold") = 1.0, python::arg("timeout") = 3600,
        python::arg("verbose") = false,
-       python::arg("useCliqueDetection") = false,
+       python::arg("UseCliqueDetection") = false,
        python::arg("minMCSSSize") = 1, python::arg("matchValences") = false,
        python::arg("ringMatchesRingOnly") = false,
        python::arg("completeRingsOnly") = false,
@@ -727,10 +727,10 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                     "timeout (in seconds) for the calculation")
       .add_property("Verbose", &RDKit::PyMCSParameters::getVerbose,
                     &RDKit::PyMCSParameters::setVerbose, "toggles verbose mode")
-      .add_property("UseCliqueDetection",
-                    &RDKit::PyMCSParameters::getUseCliqueDection,
-                    &RDKit::PyMCSParameters::setUseCliqueDetection,
-                    "toggles useCliqueDetection mode")
+      .add_property(
+          "UseCliqueDetection", &RDKit::PyMCSParameters::getUseCliqueDection,
+          &RDKit::PyMCSParameters::setUseCliqueDetection,
+          "toggles UseCliqueDetection mode.  Two molecule cases only.")
       .add_property("AtomCompareParameters",
                     python::make_function(
                         &RDKit::PyMCSParameters::getAtomCompareParameters,
@@ -778,7 +778,8 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                     "toggles storage of degenerate MCSs")
       .add_property("MinMCSSSize", &RDKit::PyMCSParameters::getMinMCSSSize,
                     &RDKit::PyMCSParameters::setMinMCSSSize,
-                    "Minimum number of atoms in MCSS.");
+                    "Minimum number of atoms in MCSS.  Only relevant when"
+                    " using UseCliqueDetection.");
 
   python::class_<RDKit::MCSAtomCompareParameters, boost::noncopyable>(
       "MCSAtomCompareParameters",

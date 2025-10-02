@@ -269,11 +269,11 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
   QueryMoleculeSingleMatchedAtom = nullptr;
   std::vector<std::unique_ptr<const ROMol>> initialSeedMolecules;
 
-  if (Parameters.InitialSeed.empty() && Parameters.useCliqueDetection &&
+  if (Parameters.InitialSeed.empty() && Parameters.UseCliqueDetection &&
       Targets.size() == 1) {
-    // We Do the clique detection MCS to create seeds which in many
+    // Do the clique detection MCS to create seeds which in many
     // cases will be the final answer and on average will produce an
-    // answer much faster.
+    // answer more quickly.
     std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
     TwoMolMCSS(*QueryMolecule, *Targets[0].Molecule, Parameters.MinMCSSSize,
                Targets[0].AtomMatchTable, Targets[0].BondMatchTable, true,

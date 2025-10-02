@@ -159,7 +159,7 @@ struct RDKIT_FMCS_EXPORT MCSParameters {
   double Threshold = 1.0;    // match all molecules
   unsigned int Timeout = 0;  // in seconds
   bool Verbose = false;
-  bool useCliqueDetection =
+  bool UseCliqueDetection =
       false; /* Whether to do an approximate MCSS determination first.  2
                 molecule cases only. */
   unsigned int MinMCSSSize =
