@@ -1,7 +1,7 @@
 %{
 
   //
-  //  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
+  //  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
   //
   //   @@ All Rights Reserved  @@
   //
@@ -33,6 +33,36 @@ namespace {
   molList->clear();
   molList->resize(0);
  }
+  const std::uint64_t SMARTS_H_MASK = 0x1;
+  const std::uint64_t SMARTS_CHARGE_MASK = 0x2;
+
+  void atom_expr_and_point_query(QueryAtom *atom_expr, QueryAtom *point_query) {
+    atom_expr->expandQuery(point_query->getQuery()->copy(), Queries::COMPOSITE_AND, true);
+    if (atom_expr->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+      atom_expr->setChiralTag(point_query->getChiralTag());
+    }
+    if (point_query->getFlags() & SMARTS_H_MASK) {
+      if (!(atom_expr->getFlags() & SMARTS_H_MASK)) {
+        atom_expr->setNumExplicitHs(point_query->getNumExplicitHs());
+        atom_expr->setNoImplicit(true);
+        atom_expr->getFlags() |= SMARTS_H_MASK;
+      } else if (atom_expr->getNumExplicitHs() != point_query->getNumExplicitHs()) {
+        // conflicting queries...
+        atom_expr->setNumExplicitHs(0);
+        atom_expr->setNoImplicit(true);
+      }
+    }
+    if (point_query->getFlags() & SMARTS_CHARGE_MASK) {
+      if (!(atom_expr->getFlags() & SMARTS_CHARGE_MASK)) {
+        atom_expr->setFormalCharge(point_query->getFormalCharge());
+        atom_expr->getFlags() |= SMARTS_CHARGE_MASK;
+      } else if (atom_expr->getFormalCharge() != point_query->getFormalCharge()) {
+        // conflicting queries...
+        atom_expr->setFormalCharge(0);
+      }
+    }
+  }
+
 }
 void
 yysmarts_error( const char *input,
@@ -415,12 +445,14 @@ hydrogen_atom:	ATOM_OPEN_TOKEN H_TOKEN ATOM_CLOSE_TOKEN
 | ATOM_OPEN_TOKEN H_TOKEN charge_spec ATOM_CLOSE_TOKEN {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setFormalCharge($3);
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomFormalChargeQuery($3),Queries::COMPOSITE_AND,true);
   $$=newQ;
 }
 | ATOM_OPEN_TOKEN H_TOKEN charge_spec COLON_TOKEN number ATOM_CLOSE_TOKEN {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setFormalCharge($3);
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomFormalChargeQuery($3),Queries::COMPOSITE_AND,true);
   newQ->setProp(RDKit::common_properties::molAtomMapNumber,$5);
 
@@ -430,6 +462,7 @@ hydrogen_atom:	ATOM_OPEN_TOKEN H_TOKEN ATOM_CLOSE_TOKEN
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope($2);
   newQ->setFormalCharge($4);
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomIsotopeQuery($2),Queries::COMPOSITE_AND,true);
   newQ->expandQuery(makeAtomFormalChargeQuery($4),Queries::COMPOSITE_AND,true);
   $$=newQ;
@@ -438,6 +471,7 @@ hydrogen_atom:	ATOM_OPEN_TOKEN H_TOKEN ATOM_CLOSE_TOKEN
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope($2);
   newQ->setFormalCharge($4);
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomIsotopeQuery($2),Queries::COMPOSITE_AND,true);
   newQ->expandQuery(makeAtomFormalChargeQuery($4),Queries::COMPOSITE_AND,true);
   newQ->setProp(RDKit::common_properties::molAtomMapNumber,$6);
@@ -452,6 +486,7 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
   if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
   SmilesParseOps::ClearAtomChemicalProps($1);
   delete $3;
+  $$ = $1;
 }
 | atom_expr OR_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_OR,true);
@@ -459,58 +494,24 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
   SmilesParseOps::ClearAtomChemicalProps($1);
   $1->setAtomicNum(0);
   delete $3;
+  $$ = $1;
 }
 | atom_expr SEMI_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
   SmilesParseOps::ClearAtomChemicalProps($1);
   delete $3;
+  $$ = $1;
 }
 | atom_expr point_query {
-  $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($2->getChiralTag());
-  if($2->getNumExplicitHs()){
-    if(!$1->getNumExplicitHs()){
-      $1->setNumExplicitHs($2->getNumExplicitHs());
-      $1->setNoImplicit(true);
-    } else if($1->getNumExplicitHs()!=$2->getNumExplicitHs()){
-      // conflicting queries...
-      $1->setNumExplicitHs(0);
-      $1->setNoImplicit(false);
-    }
-  }
-  if($2->getFormalCharge()){
-    if(!$1->getFormalCharge()){
-      $1->setFormalCharge($2->getFormalCharge());
-    } else if($1->getFormalCharge()!=$2->getFormalCharge()){
-      // conflicting queries...
-      $1->setFormalCharge(0);
-    }
-  }
+  atom_expr_and_point_query($1, $2);
   delete $2;
+  $$ = $1;
 }
 | atom_expr AND_TOKEN point_query {
-  $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
-  if($3->getNumExplicitHs()){
-    if(!$1->getNumExplicitHs()){
-      $1->setNumExplicitHs($3->getNumExplicitHs());
-      $1->setNoImplicit(true);
-    } else if($1->getNumExplicitHs()!=$3->getNumExplicitHs()){
-      // conflicting queries...
-      $1->setNumExplicitHs(0);
-      $1->setNoImplicit(false);
-    }
-  }
-  if($3->getFormalCharge()){
-    if(!$1->getFormalCharge()){
-      $1->setFormalCharge($3->getFormalCharge());
-    } else if($1->getFormalCharge()!=$3->getFormalCharge()){
-      // conflicting queries...
-      $1->setFormalCharge(0);
-    }
-  }
+  atom_expr_and_point_query($1, $3);
   delete $3;
+  $$ = $1;
 }
 | point_query
 ;
@@ -593,33 +594,41 @@ atom_query:	simple_atom
 | IMPLICIT_H_ATOM_QUERY_TOKEN
 | COMPLEX_ATOM_QUERY_TOKEN number {
   static_cast<ATOM_EQUALS_QUERY *>($1->getQuery())->setVal($2);
+  $$ = $1;
 }
 | HETERONEIGHBOR_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomNumHeteroatomNbrsQuery($2));
+  $$ = $1;
 }
 | ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery($2));
+  $$ = $1;
 }
 | RINGSIZE_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomMinRingSizeQuery($2));
+  $$ = $1;
 }
 | RINGBOND_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomRingBondCountQuery($2));
+  $$ = $1;
 }
 | IMPLICIT_H_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomImplicitHCountQuery($2));
+  $$ = $1;
 }
 | possible_range_query RANGE_OPEN_TOKEN MINUS_TOKEN number RANGE_CLOSE_TOKEN {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());
   ATOM_GREATEREQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_GREATEREQUAL_QUERY>($4,oq->getDataFunc(),
     std::string("greater_")+oq->getDescription());
   $1->setQuery(nq);
+  $$ = $1;
 }
 | possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN RANGE_CLOSE_TOKEN {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());
   ATOM_LESSEQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>($3,oq->getDataFunc(),
     std::string("less_")+oq->getDescription());
   $1->setQuery(nq);
+  $$ = $1;
 }
 | possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN number RANGE_CLOSE_TOKEN {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());
@@ -627,6 +636,7 @@ atom_query:	simple_atom
     oq->getDataFunc(),
     std::string("range_")+oq->getDescription());
   $1->setQuery(nq);
+  $$ = $1;
 }
 | number H_TOKEN {
   QueryAtom *newQ = new QueryAtom();
@@ -634,6 +644,8 @@ atom_query:	simple_atom
   newQ->setIsotope($1);
   newQ->expandQuery(makeAtomHCountQuery(1),Queries::COMPOSITE_AND,true);
   newQ->setNumExplicitHs(1);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   $$=newQ;
 }
 | number H_TOKEN number {
@@ -642,24 +654,32 @@ atom_query:	simple_atom
   newQ->setIsotope($1);
   newQ->expandQuery(makeAtomHCountQuery($3),Queries::COMPOSITE_AND,true);
   newQ->setNumExplicitHs($3);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   $$=newQ;
 }
 | H_TOKEN number {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery($2));
   newQ->setNumExplicitHs($2);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   $$=newQ;
+  
 }
 | H_TOKEN {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery(1));
   newQ->setNumExplicitHs(1);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   $$=newQ;
 }
 | charge_spec {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomFormalChargeQuery($1));
   newQ->setFormalCharge($1);
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   $$=newQ;
 }
 | AT_TOKEN AT_TOKEN {
@@ -699,18 +719,23 @@ atom_query:	simple_atom
 possible_range_query : COMPLEX_ATOM_QUERY_TOKEN
 | HETERONEIGHBOR_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomNumHeteroatomNbrsQuery(0));
+  $$ = $1;
 }
 | ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery(0));
+  $$ = $1;
 }
 | RINGSIZE_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomMinRingSizeQuery(5)); // this is going to be ignored anyway
+  $$ = $1;
 }
 | RINGBOND_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomRingBondCountQuery(0));
+  $$ = $1;
 }
 | IMPLICIT_H_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomImplicitHCountQuery(0));
+  $$ = $1;
 }
 | PLUS_TOKEN {
   QueryAtom *newQ = new QueryAtom();
@@ -750,14 +775,17 @@ simple_atom: 	ORGANIC_ATOM_TOKEN {
 bond_expr:bond_expr AND_TOKEN bond_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $3;
+  $$ = $1;
 }
 | bond_expr OR_TOKEN bond_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_OR,true);
   delete $3;
+  $$ = $1;
 }
 | bond_expr SEMI_TOKEN bond_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $3;
+  $$ = $1;
 }
 | bond_query
 ;
@@ -766,6 +794,7 @@ bond_query: bondd
 | bond_query bondd {
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $2;
+  $$ = $1;
 }
 ;
 
