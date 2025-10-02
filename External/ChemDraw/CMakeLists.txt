@@ -10,8 +10,8 @@ include(CMakePrintHelpers)
 # and will need to be fixed in the future
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
   if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/chemdraw/CDXIO.h")
-    set(RELEASE_NO "1.0.10")
-    set(MD5 "ab7fc589de0c4574354434920f1b027c")
+    set(RELEASE_NO "1.0.11")
+    set(MD5 "8f2a65313eac027258423bd46feda5bf")
     downloadAndCheckMD5("https://codeload.github.com/Glysade/chemdraw/tar.gz/refs/tags/v${RELEASE_NO}"
       "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw-v${RELEASE_NO}.tar.gz" ${MD5})
 
@@ -56,9 +56,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
 
   # On Windows, define MYLIB_EXPORTS when building the DLL
   if(WIN32)
-    target_compile_definitions(ChemDraw
-      PRIVATE CHEMDRAW_BUILD
-    )
+    target_compile_definitions(ChemDraw PRIVATE CHEMDRAW_BUILD)
   endif()
 
   # On Linux/macOS, hide all symbols by default and expose only our API
@@ -70,6 +68,16 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
       CXX_VISIBILITY_PRESET hidden
       VISIBILITY_INLINES_HIDDEN ON
     )
+  endif()
+
+  # When building static libs, we want to set this macro so that
+  # we don't use dll import/export macros in headers.
+  if(WIN32 AND (RDK_INSTALL_STATIC_LIBS OR (NOT BUILD_SHARED_LIBS)))
+    target_compile_definitions(ChemDraw PUBLIC CHEMDRAW_STATIC_LINK)
+
+    if(TARGET ChemDraw_static)
+      target_compile_definitions(ChemDraw_static PUBLIC CHEMDRAW_STATIC_LINK)
+    endif()
   endif()
 
   # export all the symbols for ChemDraw on MSVC
