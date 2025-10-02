@@ -328,7 +328,8 @@ BOOST_PYTHON_MODULE(rdDepictor) {
           "adjustMolBlockWedging is True")
       .def_readwrite(
           "useRingTemplates", &ConstrainedDepictionParams::useRingTemplates,
-          "use templates to generate coordinates of complex ring systems");
+          "use templates to generate coordinates of complex ring systems")
+      .def("__setattr__", &safeSetattr);
 
   std::string docString;
   docString =

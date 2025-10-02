@@ -1247,7 +1247,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "scsrBaseHbondOptions",
           &RDKit::v2::FileParsers::MolFromSCSRParams::scsrBaseHbondOptions,
-          "One of Ignore, UseSapAll(default) , UseSapOne, Auto");
+          "One of Ignore, UseSapAll(default) , UseSapOne, Auto")
+      .def("__setattr__", &safeSetattr);
 
   docString =
       "Construct a molecule from an SCSR Mol block.\n\n\
@@ -2580,8 +2581,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
           "choose CXSMILES fields to be included in the CXSMILES string (default=rdkit.Chem.rdmolfiles.CXSmilesFields.CX_ALL)")
       .def_readwrite(
           "restoreBondDirs", &RDKit::PNGMetadataParams::restoreBondDirs,
-          "choose what to do with bond dirs in the CXSMILES string (default=rdkit.Chem.rdmolfiles.RestoreBondDirOption.RestoreBondDirOptionClear)");
-
+          "choose what to do with bond dirs in the CXSMILES string (default=rdkit.Chem.rdmolfiles.RestoreBondDirOption.RestoreBondDirOptionClear)")
+      .def("__setattr__", &safeSetattr);
+      
   docString =
       R"DOC(Construct a molecule from metadata in a PNG string.
 
@@ -2696,7 +2698,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                      "molecule is returned")
       .def_readwrite(
           "format", &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
-          "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML");
+          "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML")
+      .def("__setattr__", &safeSetattr);
 
   docString =
       R"DOC(Construct a molecule from a cdxml file.
