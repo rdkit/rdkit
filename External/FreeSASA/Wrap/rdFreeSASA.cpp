@@ -111,7 +111,8 @@ struct freesasa_wrapper {
             python::args("self", "alg", "cls", "pr")))
         .def_readwrite("algorithm", &FreeSASA::SASAOpts::algorithm)
         .def_readwrite("classifier", &FreeSASA::SASAOpts::classifier)
-        .def_readwrite("probeRadius", &FreeSASA::SASAOpts::probeRadius);
+        .def_readwrite("probeRadius", &FreeSASA::SASAOpts::probeRadius)
+        .def("__setattr__", &safeSetattr);
 
     docString =
         "Classify the atoms in the molecule returning their radii if "
