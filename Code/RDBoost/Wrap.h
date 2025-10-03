@@ -31,6 +31,7 @@
 #include <vector>
 #include <list>
 #include <iostream>
+#include <string_view>
 #include <RDGeneral/Exceptions.h>
 
 namespace python = boost::python;
@@ -58,7 +59,9 @@ RDKIT_RDBOOST_EXPORT void translate_key_error(KeyErrorException const &e);
   \throws AttributeError if the attribute does not exist
   \throws Python error if assignment fails
 */
-RDKIT_RDBOOST_EXPORT void safeSetattr(python::object self, std::string const &name, python::object const &value);
+RDKIT_RDBOOST_EXPORT void safeSetattr(python::object self,
+                                      std::string const &name,
+                                      python::object const &value);
 
 #ifdef INVARIANT_EXCEPTION_METHOD
 RDKIT_RDBOOST_EXPORT void throw_runtime_error(

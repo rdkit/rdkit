@@ -12,6 +12,7 @@
 #define _RD_EXCEPTIONS_H
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 //! \brief Class to allow us to throw an \c IndexError from C++ and have
@@ -59,6 +60,10 @@ class RDKIT_RDGENERAL_EXPORT KeyErrorException : public std::runtime_error {
       : std::runtime_error("KeyErrorException"),
         _key(key),
         _msg("Key Error: " + key) {}
+  KeyErrorException(std::string_view key)
+      : std::runtime_error("KeyErrorException"),
+        _key(key),
+        _msg("Key Error: " + _key) {}
   std::string key() const { return _key; }
 
   const char *what() const noexcept override { return _msg.c_str(); }
