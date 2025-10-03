@@ -87,7 +87,8 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
       .def_readwrite("useHCounts",
                      &RDKit::MolInterchange::JSONParseParameters::useHCounts,
                      "use atomic H counts from the JSON. You may want to set "
-                     "this to False when parsing queries.");
+                     "this to False when parsing queries.")
+      .def("__setattr__", &safeSetattr);
 
   python::class_<RDKit::MolInterchange::JSONWriteParameters,
                  boost::noncopyable>("JSONWriteParameters",
@@ -95,7 +96,8 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
       .def_readwrite(
           "useRDKitExtensions",
           &RDKit::MolInterchange::JSONWriteParameters::useRDKitExtensions,
-          "use RDKit extensions to the commonchem format");
+          "use RDKit extensions to the commonchem format")
+      .def("__setattr__", &safeSetattr);
 
   std::string docString;
   docString =

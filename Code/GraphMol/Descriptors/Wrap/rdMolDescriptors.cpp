@@ -991,7 +991,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .setattr("atomTypes", atomPairTypes)
       .setattr("numPathBits", RDKit::AtomPairs::numPathBits)
       .setattr("numAtomPairFingerprintBits",
-               RDKit::AtomPairs::numAtomPairFingerprintBits);
+               RDKit::AtomPairs::numAtomPairFingerprintBits)
+      .def("__setattr__", &safeSetattr);
   docString = "Returns the atom code (hash) for an atom";
   python::def("GetAtomPairAtomCode", RDKit::AtomPairs::getAtomCode,
               (python::arg("atom"), python::arg("branchSubtract") = 0,
