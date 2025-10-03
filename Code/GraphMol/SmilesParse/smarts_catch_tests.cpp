@@ -41,3 +41,28 @@ TEST_CASE("Github #8424: direction on aromatic bonds in SMARTS") {
     CHECK(smarts.find("\\") != std::string::npos);
   }
 }
+
+TEST_CASE("repeated explicit H counts and charges") {
+  SECTION("h counts") {
+    std::vector<std::string> smartses = {
+        "[N&H3&H0]",
+        "[N&H0&H3]",
+    };
+    for (const auto &smarts : smartses) {
+      INFO(smarts);
+      auto m = v2::SmilesParse::MolFromSmarts(smarts);
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNoImplicit());
+      CHECK(m->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+    }
+  }
+  SECTION("charges") {
+    std::vector<std::string> smartses = {"[N&+&+0]", "[N&+0&+2]"};
+    for (const auto &smarts : smartses) {
+      INFO(smarts);
+      auto m = v2::SmilesParse::MolFromSmarts(smarts);
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getFormalCharge() == 0);
+    }
+  }
+}
