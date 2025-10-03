@@ -299,7 +299,12 @@ struct string_view_converter {
       PyObject *object,
       boost::python::converter::rvalue_from_python_stage1_data *data) {
     const char *tmp = PyUnicode_AsUTF8(object);
-    data->convertible = new T{tmp};
+
+    void *storage =
+        ((boost::python::converter::rvalue_from_python_storage<T> *)data)
+            ->storage.bytes;
+    new (storage) T{tmp};
+    data->convertible = storage;
   }
 };
 
