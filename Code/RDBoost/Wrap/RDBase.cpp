@@ -235,11 +235,12 @@ struct python_ostream_wrapper {
 
 void seedRNG(unsigned int seed) { std::srand(seed); }
 
-template <typename T = std::string_view>
-struct string_view_converter {
-  string_view_converter() {
-    python::converter::registry::push_back(&string_view_converter::convertible,
-                                           &string_view_converter::construct,
+/// Simple Boost.Python custom converter from pathlib.Path to std::string
+template <typename T = std::string>
+struct path_converter {
+  path_converter() {
+    python::converter::registry::push_back(&path_converter::convertible,
+                                           &path_converter::construct,
                                            boost::python::type_id<T>());
   }
 
@@ -254,21 +255,51 @@ struct string_view_converter {
     std::string object_classname = boost::python::extract<std::string>(
         boost_object.attr("__class__").attr("__name__"));
     // pathlib.Path is always specialized to the below derived classes
-    if (object_classname == "str") {
+    if (object_classname == "WindowsPath" || object_classname == "PosixPath") {
       return object;
     }
 
     return nullptr;
   }
 
-  /// Construct a std::string_view from str using its own __str__ attribute
+  /// Construct a std::string from pathlib.Path using its own __str__ attribute
   static void construct(
       PyObject *object,
       boost::python::converter::rvalue_from_python_stage1_data *data) {
+    void *storage =
+        ((boost::python::converter::rvalue_from_python_storage<T> *)data)
+            ->storage.bytes;
     python::object boost_object{python::handle<>{python::borrowed(object)}};
+    new (storage)
+        T{boost::python::extract<std::string>{boost_object.attr("__str__")()}};
+    data->convertible = storage;
+  }
+};
 
-    const char *tmp = boost::python::extract<const char *>{boost_object};
-    data->convertible = new std::string_view{tmp};
+/// Convert a Python str to a std::string_view
+template <typename T = std::string_view>
+struct string_view_converter {
+  string_view_converter() {
+    python::converter::registry::push_back(&string_view_converter::convertible,
+                                           &string_view_converter::construct,
+                                           boost::python::type_id<T>());
+  }
+
+  /// Check PyObject is a str
+  static void *convertible(PyObject *object) {
+    if (object != nullptr && PyUnicode_Check(object)) {
+      return object;
+    }
+    return nullptr;
+  }
+
+  /// Construct a std::string_view from the internal string of the PyObject.
+  /// This shouldn´t fail, as we
+  static void construct(
+      PyObject *object,
+      boost::python::converter::rvalue_from_python_stage1_data *data) {
+    const char *tmp = PyUnicode_AsUTF8(object);
+    data->convertible = new T{tmp};
   }
 };
 
