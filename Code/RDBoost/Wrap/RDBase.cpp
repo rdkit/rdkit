@@ -234,6 +234,44 @@ struct python_ostream_wrapper {
 };
 
 void seedRNG(unsigned int seed) { std::srand(seed); }
+
+template <typename T = std::string_view>
+struct string_view_converter {
+  string_view_converter() {
+    python::converter::registry::push_back(&string_view_converter::convertible,
+                                           &string_view_converter::construct,
+                                           boost::python::type_id<T>());
+  }
+
+  /// Check PyObject is a pathlib.Path
+  static void *convertible(PyObject *object) {
+    // paranoia
+    if (object == nullptr) {
+      return nullptr;
+    }
+    python::object boost_object(python::handle<>(python::borrowed(object)));
+
+    std::string object_classname = boost::python::extract<std::string>(
+        boost_object.attr("__class__").attr("__name__"));
+    // pathlib.Path is always specialized to the below derived classes
+    if (object_classname == "str") {
+      return object;
+    }
+
+    return nullptr;
+  }
+
+  /// Construct a std::string_view from str using its own __str__ attribute
+  static void construct(
+      PyObject *object,
+      boost::python::converter::rvalue_from_python_stage1_data *data) {
+    python::object boost_object{python::handle<>{python::borrowed(object)}};
+
+    const char *tmp = boost::python::extract<const char *>{boost_object};
+    data->convertible = new std::string_view{tmp};
+  }
+};
+
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdBase) {
@@ -256,6 +294,7 @@ BOOST_PYTHON_MODULE(rdBase) {
   RegisterVectorConverter<std::pair<int, int>>("MatchTypeVect");
 
   path_converter();
+  string_view_converter();
 
   RegisterListConverter<int>();
   RegisterListConverter<std::vector<int>>();

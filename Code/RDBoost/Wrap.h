@@ -28,8 +28,9 @@
 #include "list_indexing_suite.hpp"
 #include <RDGeneral/BoostEndInclude.h>
 
-#include <vector>
 #include <list>
+#include <string_view>
+#include <vector>
 #include <RDGeneral/Exceptions.h>
 
 namespace python = boost::python;
