@@ -118,17 +118,17 @@ struct FragmentReplacement {
       }
       auto it = std::find(bond_ordering.begin(), bond_ordering.end(), bond_id);
       if (it == bond_ordering.end()) return false;
-      
-      auto pos = std::distance(bond_ordering.begin(), it);
-      
-      if(pos < 0 || (size_t)pos >= fragment_atoms.size()) {
-	    BOOST_LOG(rdWarningLog) << "bond ordering and number of atoms in fragment mismatch, can't attach fragment at bond:"
-				    << bond_id
-				    << std::endl;
 
-	    return false;
+      auto pos = std::distance(bond_ordering.begin(), it);
+
+      if (pos < 0 || (size_t)pos >= fragment_atoms.size()) {
+        BOOST_LOG(rdWarningLog)
+            << "bond ordering and number of atoms in fragment mismatch, can't attach fragment at bond:"
+            << bond_id << std::endl;
+
+        return false;
       }
-      
+
       auto &xatom = fragment_atoms[pos];
 
       for (auto &xbond : mol.atomBonds(xatom)) {
@@ -183,7 +183,7 @@ bool replaceFragments(RWMol &mol) {
 namespace {
 Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
   if (center_atom->hasProp(CDX_BOND_ORDERING)) {
-    std::vector<int> bond_ordering =
+    auto bond_ordering =
         center_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
     if (bond_ordering.size() < 3) {
       return Atom::ChiralType::CHI_UNSPECIFIED;
@@ -224,11 +224,11 @@ Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
     for (auto &angle : angles) {
       bonds.push_back(angle.second);
     }
-    
-    if(bonds.size() < 3) {
+
+    if (bonds.size() < 3) {
       return Atom::ChiralType::CHI_UNSPECIFIED;
     }
-    
+
     auto nswaps = center_atom->getPerturbationOrder(bonds);
     if (bonds.size() == 3 && center_atom->getTotalNumHs() == 1) {
       ++nswaps;
@@ -236,15 +236,16 @@ Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
     // This is supports the HDot and HDash available in chemdraw
     //  one is an implicit wedged hydrogen and one is a dashed hydrogen
     if (center_atom->hasProp(CDX_IMPLICIT_HYDROGEN_STEREO) &&
-        center_atom->getProp<char>(CDX_IMPLICIT_HYDROGEN_STEREO) == 'w')
+        center_atom->getProp<char>(CDX_IMPLICIT_HYDROGEN_STEREO) == 'w') {
       nswaps++;
+    }
 
     if (nswaps % 2) {
       return Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
     }
     return Atom::ChiralType::CHI_TETRAHEDRAL_CW;
   }
-  
+
   return Atom::ChiralType::CHI_UNSPECIFIED;
 }
 }  // namespace
@@ -269,33 +270,40 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
       }
     }
     // If we have a cip code, might as well check it too
-      CDXAtomCIPType cip;
-      if (atom->getPropIfPresent<CDXAtomCIPType>(CDX_CIP, cip)) {
-        // assign, possibly wrong, initial stereo.
-        // note: we can probably deduce this through CDX_BOND_ORDERING, but
-        //  I currenlty don't understand that well enough.
-        switch (cip) {
-          case kCDXCIPAtom_R:
-            if(!chiralityChanged) atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-            unsetTetrahedralAtoms.push_back(std::make_pair('R', atom));
-            break;
-          case kCDXCIPAtom_r:
-            if(!chiralityChanged) atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-            unsetTetrahedralAtoms.push_back(std::make_pair('r', atom));
-            break;
-          case kCDXCIPAtom_S:
-            if(!chiralityChanged) atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-            unsetTetrahedralAtoms.push_back(std::make_pair('S', atom));
-            break;
-          case kCDXCIPAtom_s:
-            if(!chiralityChanged) atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
-            unsetTetrahedralAtoms.push_back(std::make_pair('s', atom));
-            break;
-          default:
-            break;
-        }
+    CDXAtomCIPType cip;
+    if (atom->getPropIfPresent<CDXAtomCIPType>(CDX_CIP, cip)) {
+      // assign, possibly wrong, initial stereo.
+      // note: we can probably deduce this through CDX_BOND_ORDERING, but
+      //  I currently don't understand that well enough.
+      switch (cip) {
+        case kCDXCIPAtom_R:
+          if (!chiralityChanged) {
+            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+          }
+          unsetTetrahedralAtoms.push_back(std::make_pair('R', atom));
+          break;
+        case kCDXCIPAtom_r:
+          if (!chiralityChanged) {
+            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+          }
+          unsetTetrahedralAtoms.push_back(std::make_pair('r', atom));
+          break;
+        case kCDXCIPAtom_S:
+          if (!chiralityChanged) {
+            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+          }
+          unsetTetrahedralAtoms.push_back(std::make_pair('S', atom));
+          break;
+        case kCDXCIPAtom_s:
+          if (!chiralityChanged) {
+            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+          }
+          unsetTetrahedralAtoms.push_back(std::make_pair('s', atom));
+          break;
+        default:
+          break;
       }
-    
+    }
   }
 
   // Now that we have missing chiralities, let's check the CIP codes and reset
@@ -305,11 +313,11 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
 
   for (auto cipatom : unsetTetrahedralAtoms) {
     try {
-       CIPLabeler::assignCIPLabels(mol);
-      } catch (...) {
-        // can throw std::runtime error?
-        break;
-      }
+      CIPLabeler::assignCIPLabels(mol);
+    } catch (...) {
+      // can throw std::runtime error?
+      break;
+    }
     std::string cipcode;
     if (cipatom.second->getPropIfPresent<std::string>(
             common_properties::_CIPCode, cipcode)) {
@@ -335,5 +343,5 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
     MolOps::assignStereochemistry(mol, cleanIt, force);
   }
 }
-}
+}  // namespace ChemDraw
 }  // namespace RDKit
