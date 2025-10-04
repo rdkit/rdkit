@@ -48,7 +48,7 @@ class RDProps {
     STR_VECT res, computed;
     if (!includeComputed &&
         getPropIfPresent(RDKit::detail::computedPropName, computed)) {
-      computed.push_back(std::string(RDKit::detail::computedPropName));
+      computed.emplace_back(RDKit::detail::computedPropName);
     }
 
     auto pos = tmp.begin();
@@ -79,7 +79,7 @@ class RDProps {
       STR_VECT compLst;
       getPropIfPresent(RDKit::detail::computedPropName, compLst);
       if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
-        compLst.push_back(std::string(key));
+        compLst.emplace_back(key);
         d_props.setVal(RDKit::detail::computedPropName, compLst);
       }
     }
@@ -136,8 +136,7 @@ class RDProps {
   void clearProp(const std::string_view key) const {
     STR_VECT compLst;
     if (getPropIfPresent(RDKit::detail::computedPropName, compLst)) {
-      std::string keyStr(key);
-      auto svi = std::find(compLst.begin(), compLst.end(), keyStr);
+      auto svi = std::find(compLst.begin(), compLst.end(), key);
       if (svi != compLst.end()) {
         compLst.erase(svi);
         d_props.setVal(RDKit::detail::computedPropName, compLst);

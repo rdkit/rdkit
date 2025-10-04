@@ -198,7 +198,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
         return from_rdvalue<T>(data.val);
       }
     }
-    throw KeyErrorException(std::string(what));
+    throw KeyErrorException(what);
   }
 
   //! \overload
@@ -209,7 +209,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
         return;
       }
     }
-    throw KeyErrorException(std::string(what));
+    throw KeyErrorException(what);
   }
 
   //----------------------------------------------------------
@@ -273,7 +273,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
         return;
       }
     }
-    _data.push_back(Pair(std::string(what), val));
+    _data.push_back(Pair(what, val));
   }
 
   template <typename T>
@@ -288,7 +288,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
         return;
       }
     }
-    _data.push_back(Pair(std::string(what), val));
+    _data.push_back(Pair(what, val));
   }
 
   void setVal(const std::string_view what, bool val) { setPODVal(what, val); }
@@ -349,7 +349,8 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 };
 
 template <>
-inline std::string Dict::getVal<std::string>(std::string_view what) const {
+inline std::string Dict::getVal<std::string>(
+    const std::string_view what) const {
   std::string res;
   getVal(what, res);
   return res;
