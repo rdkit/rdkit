@@ -547,7 +547,7 @@ std::string testChEMBL_Txt(const char *test, double th = 1.0,
   std::cout << "MCS : " << res.SmartsString << " " << res.NumAtoms << " atoms, "
             << res.NumBonds << " bonds\n";
   printTime();
-  fprintf(fres, "%s;%lu;%.1f;%.4f;%u;%u;%s;", test, mols.size(), th, sec,
+  fprintf(fres, "%s;%zu;%.1f;%.4f;%u;%u;%s;", test, mols.size(), th, sec,
           res.NumAtoms, res.NumBonds, res.SmartsString.c_str());
 
   p.BondTyper = MCSBondCompareOrderExact;
@@ -1229,7 +1229,7 @@ void testFileSDF_RandomSet_SMI(
       printTime();
       std::cout << n << " MCS: " << res.SmartsString << " " << res.NumAtoms
                 << " atoms, " << res.NumBonds << " bonds\n";
-      fprintf(fcsv, "%u;%lu;%s;%.3f;%u;%u;%s;", n, mols.size(),
+      fprintf(fcsv, "%u;%zu;%s;%.3f;%u;%u;%s;", n, mols.size(),
               res.isCompleted() ? " " : "TIMEOUT", t, res.NumAtoms,
               res.NumBonds, res.SmartsString.c_str());
     }
@@ -1241,7 +1241,7 @@ void testFileSDF_RandomSet_SMI(
       printTime();
       std::cout << n << " MCS: " << res.SmartsString << " " << res.NumAtoms
                 << " atoms, " << res.NumBonds << " bonds\n";
-      fprintf(fcsv, "%u;%lu;%s;%.3f;%u;%u;%s\n", n, mols.size(),
+      fprintf(fcsv, "%u;%zu;%s;%.3f;%u;%u;%s\n", n, mols.size(),
               res.isCompleted() ? " " : "TIMEOUT", t, res.NumAtoms,
               res.NumBonds, res.SmartsString.c_str());
       p.BondTyper = MCSBondCompareOrder;
@@ -1347,7 +1347,7 @@ void testFileSDF_RandomSet(const char *test = "chembl13-10000-random-pairs.sdf",
         printTime();
         std::cout << n << " MCS: " << res.SmartsString << " " << res.NumAtoms
                   << " atoms, " << res.NumBonds << " bonds\n";
-        fprintf(fcsv, "%u;%lu;%s;%.5f;%u;%u;%s;", n, mols.size(),
+        fprintf(fcsv, "%u;%zu;%s;%.5f;%u;%u;%s;", n, mols.size(),
                 res.isCompleted() ? " " : "TIMEOUT", t, res.NumAtoms,
                 res.NumBonds, res.SmartsString.c_str());
       }
@@ -1400,7 +1400,7 @@ void testFileSDF_RandomSet(const char *test = "chembl13-10000-random-pairs.sdf",
       printTime();
       std::cout << n << " MCS: " << res.SmartsString << " " << res.NumAtoms
                 << " atoms, " << res.NumBonds << " bonds\n";
-      fprintf(fcsv, "%u;%lu;%s;%.5f;%u;%u;%s;", n, mols.size(),
+      fprintf(fcsv, "%u;%zu;%s;%.5f;%u;%u;%s;", n, mols.size(),
               res.isCompleted() ? " " : "TIMEOUT", t, res.NumAtoms,
               res.NumBonds, res.SmartsString.c_str());
     }
@@ -1489,7 +1489,7 @@ void testFileSDF_RandomSet(const char *test = "chembl13-10000-random-pairs.sdf",
       std::cout << n << " MCS: " << res.SmartsString << " " << res.NumAtoms
                 << " atoms, " << res.NumBonds << " bonds\n";
       if (res.NumBonds >= SizeOfBigMCS_ForBigRandomTests && res.isCompleted()) {
-        fprintf(fcsv, "%u;%lu;%s;%.5f;%u;%u;%s;", n, mols.size(),
+        fprintf(fcsv, "%u;%zu;%s;%.5f;%u;%u;%s;", n, mols.size(),
                 res.isCompleted() ? " " : "TIMEOUT", t, res.NumAtoms,
                 res.NumBonds, res.SmartsString.c_str());
         fprintf(fcmd,

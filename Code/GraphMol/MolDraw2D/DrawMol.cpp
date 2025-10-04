@@ -2659,7 +2659,7 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
   }
   const Point2D &at_cds = atCds_[atom->getIdx()];
   std::vector<Point2D> bond_vecs;
-  for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
+  for (auto nbr : boost::make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
     // If the nbr has the same coords as atom, bond_vec comes out as NaN, NaN
     // (issue 6559), so use a short arbitrary vector instead.
     Point2D bond_vec;
@@ -3356,7 +3356,7 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     Point2D l2 = l2s.directionVector(l2f);
     l2f = l2s + l2 * 2.0 * bl;
     Point2D ip;
-    for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(at2))) {
+    for (auto nbr : boost::make_iterator_range(drawMol_->getAtomNeighbors(at2))) {
       auto nbr_cds = atCds_[nbr];
       if (doLinesIntersect(l1s, l1f, at2_cds, nbr_cds, &ip)) {
         l1f = ip;
@@ -3833,7 +3833,7 @@ bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
     Point2D const &at1_cds = atCds[atom.getIdx()];
     ROMol const &mol = atom.getOwningMol();
     int i = 0;
-    for (auto nbr : make_iterator_range(mol.getAtomNeighbors(&atom))) {
+    for (auto nbr : boost::make_iterator_range(mol.getAtomNeighbors(&atom))) {
       Point2D bond_vec = at1_cds.directionVector(atCds[nbr]);
       bond_vec.normalize();
       bond_vecs[i] = bond_vec;
