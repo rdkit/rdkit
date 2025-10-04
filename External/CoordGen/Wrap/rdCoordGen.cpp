@@ -25,8 +25,7 @@ namespace {
 void SetCoordMap(CoordGen::CoordGenParams *self, python::dict &coordMap) {
   self->coordMap.clear();
   python::list ks = coordMap.keys();
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(ks.attr("__len__")()); i++) {
+  for (unsigned int i = 0; i < boost::python::len(ks); ++i) {
     unsigned int id = python::extract<unsigned int>(ks[i]);
     self->coordMap[id] = python::extract<RDGeom::Point2D>(coordMap[id]);
   }

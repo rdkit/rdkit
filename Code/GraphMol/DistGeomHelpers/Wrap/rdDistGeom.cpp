@@ -36,11 +36,11 @@ struct PyEmbedParameters
     // the EmbedParameters object doesn't own the memory for the coordMap, so we
     // have to take ownership here.
     d_coordMap.reset(new std::map<int, RDGeom::Point3D>());
-    for (unsigned int i = 0;
-         i < python::extract<unsigned int>(cmap.keys().attr("__len__")());
-         ++i) {
-      (*d_coordMap)[python::extract<int>(cmap.keys()[i])] =
-          python::extract<RDGeom::Point3D>(cmap.values()[i]);
+    const auto items = cmap.items();
+    for (unsigned int i = 0; i < python::len(items); ++i) {
+      const auto item = items[i];
+      (*d_coordMap)[python::extract<int>(item[0])] =
+          python::extract<RDGeom::Point3D>(item[1]);
     }
     coordMap = d_coordMap.get();
   }
@@ -58,7 +58,7 @@ struct PyEmbedParameters
         new std::map<std::pair<unsigned int, unsigned int>, double>);
 
     python::list ks = CPCIdict.keys();
-    unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
+    unsigned int nKeys = python::len(ks);
 
     for (unsigned int i = 0; i < nKeys; ++i) {
       python::tuple id = python::extract<python::tuple>(ks[i]);
@@ -115,7 +115,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
                   bool useMacrocycle14config) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
-  unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
+  unsigned int nKeys = python::len(ks);
   for (unsigned int i = 0; i < nKeys; ++i) {
     unsigned int id = python::extract<unsigned int>(ks[i]);
     pMap[id] = python::extract<RDGeom::Point3D>(coordMap[id]);
@@ -173,7 +173,7 @@ INT_VECT EmbedMultipleConfs(
     bool useMacrocycle14config) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
-  unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
+  unsigned int nKeys = python::len(ks);
   for (unsigned int i = 0; i < nKeys; ++i) {
     unsigned int id = python::extract<unsigned int>(ks[i]);
     pMap[id] = python::extract<RDGeom::Point3D>(coordMap[id]);

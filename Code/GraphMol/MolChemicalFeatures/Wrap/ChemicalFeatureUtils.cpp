@@ -21,8 +21,7 @@ namespace python = boost::python;
 namespace RDKit {
 python::object GetAtomMatch(python::object featMatch, int maxAts = 1024) {
   python::list res;
-  unsigned int nEntries =
-      python::extract<unsigned int>(featMatch.attr("__len__")());
+  unsigned int nEntries = python::len(featMatch);
 
   boost::dynamic_bitset<> indices(maxAts);
   for (unsigned int i = 0; i < nEntries; ++i) {

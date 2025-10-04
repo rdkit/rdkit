@@ -586,7 +586,7 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
                           AtomComparator atomComp, BondComparator bondComp,
                           RingComparator ringComp, std::string seedSmarts) {
   std::vector<ROMOL_SPTR> ms;
-  unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
+  unsigned int nElems = python::len(mols);
   ms.resize(nElems);
   for (unsigned int i = 0; i < nElems; ++i) {
     if (!mols[i]) {
@@ -621,7 +621,7 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
 
 MCSResult *FindMCSWrapper2(python::object mols, PyMCSParameters &pyMcsParams) {
   std::vector<ROMOL_SPTR> ms;
-  unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
+  unsigned int nElems = python::len(mols);
   ms.resize(nElems);
   for (unsigned int i = 0; i < nElems; ++i) {
     if (!mols[i]) {

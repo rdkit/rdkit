@@ -80,22 +80,18 @@ python::tuple getConfBox(const Conformer &conf,
 }
 
 python::tuple getUnionOfTwoBox(python::tuple box1, python::tuple box2) {
-  unsigned int len1 = python::extract<unsigned int>(box1.attr("__len__")());
-  unsigned int len2 = python::extract<unsigned int>(box2.attr("__len__")());
+  unsigned int len1 = python::len(box1);
+  unsigned int len2 = python::len(box2);
   if ((len1 != 2) || (len2 != 2)) {
     throw_value_error(
         "In correct format for one of the box: expecting a tuple of two "
         "Point3D");
   }
-  RDGeom::Point3D lC1 =
-      python::extract<RDGeom::Point3D>(box1.attr("__getitem__")(0));
-  RDGeom::Point3D uC1 =
-      python::extract<RDGeom::Point3D>(box1.attr("__getitem__")(1));
+  RDGeom::Point3D lC1 = python::extract<RDGeom::Point3D>(box1[0]);
+  RDGeom::Point3D uC1 = python::extract<RDGeom::Point3D>(box1[1]);
 
-  RDGeom::Point3D lC2 =
-      python::extract<RDGeom::Point3D>(box2.attr("__getitem__")(0));
-  RDGeom::Point3D uC2 =
-      python::extract<RDGeom::Point3D>(box2.attr("__getitem__")(1));
+  RDGeom::Point3D lC2 = python::extract<RDGeom::Point3D>(box2[0]);
+  RDGeom::Point3D uC2 = python::extract<RDGeom::Point3D>(box2[1]);
 
   RDGeom::Point3D lowerCorner, upperCorner;
   MolShapes::computeUnionBox(lC1, uC1, lC2, uC2, lowerCorner, upperCorner);

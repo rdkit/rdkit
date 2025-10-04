@@ -44,8 +44,8 @@ template <typename T>
 python::list NeighborWrapper(python::object queries, python::object bvs,
                              double (*metric)(const T &, const T &)) {
   python::list res;
-  unsigned int nbvs = python::extract<unsigned int>(bvs.attr("__len__")());
-  unsigned int nqs = python::extract<unsigned int>(queries.attr("__len__")());
+  unsigned int nbvs = python::len(bvs);
+  unsigned int nqs = python::len(queries);
   for (unsigned int i = 0; i < nqs; ++i) {
     const T *bv1 = python::extract<const T *>(queries[i])();
     double closest = -1;
@@ -68,7 +68,7 @@ python::list BulkWrapper(const T *bv1, python::object bvs,
                          double (*metric)(const T &, const T &),
                          bool returnDistance) {
   python::list res;
-  unsigned int nbvs = python::extract<unsigned int>(bvs.attr("__len__")());
+  unsigned int nbvs = python::len(bvs);
   for (unsigned int i = 0; i < nbvs; ++i) {
     const T *bv2 = python::extract<const T *>(bvs[i])();
     auto sim = metric(*bv1, *bv2);
@@ -85,7 +85,7 @@ python::list BulkWrapper(const T *bv1, python::object bvs, double a, double b,
                          double (*metric)(const T &, const T &, double, double),
                          bool returnDistance) {
   python::list res;
-  unsigned int nbvs = python::extract<unsigned int>(bvs.attr("__len__")());
+  unsigned int nbvs = python::len(bvs);
   for (unsigned int i = 0; i < nbvs; ++i) {
     const T *bv2 = python::extract<T *>(bvs[i])();
     auto sim = metric(*bv1, *bv2, a, b);
@@ -156,12 +156,12 @@ python::list BulkTverskySimilarity(const T *bv1, python::object bvs, double a,
                 (python::args("v1"), python::args("v2")), _help_);             \
     python::def(                                                               \
         #_bulkname_,                                                           \
-        (python::list(*)(const EBV *, python::object, bool))_bulkname_,        \
+        (python::list (*)(const EBV *, python::object, bool))_bulkname_,       \
         (python::args("v1"), python::args("v2"),                               \
          python::args("returnDistance") = 0));                                 \
     python::def(                                                               \
         #_bulkname_,                                                           \
-        (python::list(*)(const EBV *, python::object, bool))_bulkname_,        \
+        (python::list (*)(const EBV *, python::object, bool))_bulkname_,       \
         (python::args("v1"), python::args("v2"),                               \
          python::args("returnDistance") = 0),                                  \
         _help_);                                                               \
@@ -189,21 +189,21 @@ python::list BulkTverskySimilarity(const T *bv1, python::object bvs, double a,
                 _help_);                                                      \
     python::def(                                                              \
         #_bulkname_,                                                          \
-        (python::list(*)(const SBV *, python::object, bool))_bulkname_,       \
+        (python::list (*)(const SBV *, python::object, bool))_bulkname_,      \
         (python::args("bv1"), python::args("bvList"),                         \
          python::args("returnDistance") = 0));                                \
     python::def(                                                              \
         #_bulkname_,                                                          \
-        (python::list(*)(const EBV *, python::object, bool))_bulkname_,       \
+        (python::list (*)(const EBV *, python::object, bool))_bulkname_,      \
         (python::args("bv1"), python::args("bvList"),                         \
          python::args("returnDistance") = 0),                                 \
         _help_);                                                              \
     python::def(#_funcname_ "Neighbors",                                      \
-                (python::list(*)(python::object, python::object))             \
+                (python::list (*)(python::object, python::object))            \
                     _funcname_##Neighbors<ExplicitBitVect>,                   \
                 (python::args("bvqueries"), python::args("bvList")), _help_); \
     python::def(#_funcname_ "Neighbors_sparse",                               \
-                (python::list(*)(python::object, python::object))             \
+                (python::list (*)(python::object, python::object))            \
                     _funcname_##Neighbors<SparseBitVect>,                     \
                 (python::args("bvqueries"), python::args("bvList")), _help_); \
   }
@@ -261,14 +261,14 @@ struct BitOps_wrapper {
                   help.c_str());
       python::def(
           "BulkTverskySimilarity",
-          (python::list(*)(const SBV *, python::object, double, double,
-                           bool))BulkTverskySimilarity,
+          (python::list (*)(const SBV *, python::object, double, double,
+                            bool))BulkTverskySimilarity,
           (python::args("bv1"), python::args("bvList"), python::args("a"),
            python::args("b"), python::args("returnDistance") = 0));
       python::def(
           "BulkTverskySimilarity",
-          (python::list(*)(const EBV *, python::object, double, double,
-                           bool))BulkTverskySimilarity,
+          (python::list (*)(const EBV *, python::object, double, double,
+                            bool))BulkTverskySimilarity,
           (python::args("bv1"), python::args("bvList"), python::args("a"),
            python::args("b"), python::args("returnDistance") = 0),
           help.c_str());
@@ -279,18 +279,18 @@ struct BitOps_wrapper {
             "(B(bv1) - B(bv1^bv2)) / B(bv1)");
 
     python::def("OnBitProjSimilarity",
-                (DoubleVect(*)(const SBV &, const SBV &))OnBitProjSimilarity,
+                (DoubleVect (*)(const SBV &, const SBV &))OnBitProjSimilarity,
                 python::args("bv1", "bv2"));
     python::def(
         "OnBitProjSimilarity",
-        (DoubleVect(*)(const EBV &, const EBV &))OnBitProjSimilarity,
+        (DoubleVect (*)(const EBV &, const EBV &))OnBitProjSimilarity,
         python::args("bv1", "bv2"),
         "Returns a 2-tuple: (B(bv1&bv2) / B(bv1), B(bv1&bv2) / B(bv2))");
     python::def("OffBitProjSimilarity",
-                (DoubleVect(*)(const SBV &, const SBV &))OffBitProjSimilarity,
+                (DoubleVect (*)(const SBV &, const SBV &))OffBitProjSimilarity,
                 python::args("bv1", "bv2"));
     python::def("OffBitProjSimilarity",
-                (DoubleVect(*)(const EBV &, const EBV &))OffBitProjSimilarity,
+                (DoubleVect (*)(const EBV &, const EBV &))OffBitProjSimilarity,
                 python::args("bv1", "bv2"));
 
     python::def("NumBitsInCommon",
@@ -302,18 +302,18 @@ struct BitOps_wrapper {
                 "Returns the total number of bits in common between the two "
                 "bit vectors");
     python::def("OnBitsInCommon",
-                (IntVect(*)(const SBV &, const SBV &))OnBitsInCommon,
+                (IntVect (*)(const SBV &, const SBV &))OnBitsInCommon,
                 python::args("bv1", "bv2"));
     python::def(
-        "OnBitsInCommon", (IntVect(*)(const EBV &, const EBV &))OnBitsInCommon,
+        "OnBitsInCommon", (IntVect (*)(const EBV &, const EBV &))OnBitsInCommon,
         python::args("bv1", "bv2"),
         "Returns the number of on bits in common between the two bit vectors");
     python::def("OffBitsInCommon",
-                (IntVect(*)(const SBV &, const SBV &))OffBitsInCommon,
+                (IntVect (*)(const SBV &, const SBV &))OffBitsInCommon,
                 python::args("bv1", "bv2"));
     python::def(
         "OffBitsInCommon",
-        (IntVect(*)(const EBV &, const EBV &))OffBitsInCommon,
+        (IntVect (*)(const EBV &, const EBV &))OffBitsInCommon,
         python::args("bv1", "bv2"),
         "Returns the number of off bits in common between the two bit vectors");
 
@@ -345,24 +345,24 @@ struct BitOps_wrapper {
         "Returns True if all bits in the first argument match all bits in the \n\
   vector defined by the pickle in the second argument.\n");
 
-    python::def("BitVectToText", (std::string(*)(const SBV &))BitVectToText,
+    python::def("BitVectToText", (std::string (*)(const SBV &))BitVectToText,
                 python::args("bv1"));
     python::def(
-        "BitVectToText", (std::string(*)(const EBV &))BitVectToText,
+        "BitVectToText", (std::string (*)(const EBV &))BitVectToText,
         python::args("bv1"),
         "Returns a string of zeros and ones representing the bit vector.");
     python::def("BitVectToFPSText",
-                (std::string(*)(const SBV &))BitVectToFPSText,
+                (std::string (*)(const SBV &))BitVectToFPSText,
                 python::args("bv1"));
     python::def("BitVectToFPSText",
-                (std::string(*)(const EBV &))BitVectToFPSText,
+                (std::string (*)(const EBV &))BitVectToFPSText,
                 python::args("bv1"),
                 "Returns an FPS string representing the bit vector.");
     python::def("BitVectToBinaryText",
-                (python::object(*)(const SBV &))BVToBinaryText,
+                (python::object (*)(const SBV &))BVToBinaryText,
                 python::args("bv"));
     python::def(
-        "BitVectToBinaryText", (python::object(*)(const EBV &))BVToBinaryText,
+        "BitVectToBinaryText", (python::object (*)(const EBV &))BVToBinaryText,
         python::args("bv"),
         "Returns a binary string (byte array) representing the bit vector.");
   }
