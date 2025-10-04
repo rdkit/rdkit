@@ -12,7 +12,6 @@
 #include "Invariant.h"
 
 #include <string>
-#include <iostream>
 #include <boost/lexical_cast.hpp>
 #include "versions.h"
 

@@ -22,7 +22,6 @@
 #include <DataStructs/BitOps.h>
 #include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/LeaderPicker.h>
-#include <iostream>
 #include <utility>
 
 namespace python = boost::python;

@@ -9,7 +9,6 @@
 //  of the RDKit source tree.
 //
 #include <string>
-#include <iostream>
 #include "minilib.h"
 #include "common.h"
 

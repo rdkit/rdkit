@@ -16,7 +16,6 @@
 #include "pyint_api.h"
 #include <RDBoost/PySequenceHolder.h>
 #include <sstream>
-#include <iostream>
 
 // A helper function for dealing with errors. Throw a Python IndexError
 void throw_index_error(int key) {

@@ -14,7 +14,6 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <iostream>
 
 using namespace RDKit;
 using namespace std;
