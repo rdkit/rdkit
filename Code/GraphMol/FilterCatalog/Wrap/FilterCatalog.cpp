@@ -423,7 +423,7 @@ struct filtercat_wrapper {
     if (!is_python_converter_registered<
             boost::shared_ptr<const FilterHierarchyMatcher>>()) {
       python::register_ptr_to_python<
-          boost::shared_ptr<FilterHierarchyMatcher>>();
+          boost::shared_ptr<const FilterHierarchyMatcher>>();
     }
 
     bool noproxy = true;
