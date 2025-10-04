@@ -12,7 +12,6 @@
 #define RD_FILEPARSERUTILS_H
 
 #include <string>
-#include <iostream>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>

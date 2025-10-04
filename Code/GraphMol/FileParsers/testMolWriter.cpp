@@ -11,7 +11,6 @@
 #include <GraphMol/test_fixtures.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
-#include <iostream>
 #include <fstream>
 #include <sstream>
 

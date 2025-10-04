@@ -9,7 +9,6 @@
 //
 
 #include <RDGeneral/test.h>
-#include <iostream>
 #include <fstream>
 
 #include <RDGeneral/BoostStartInclude.h>

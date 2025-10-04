@@ -15,7 +15,6 @@
 #include <GraphMol/Atropisomers.h>
 #include <cstdint>
 #include <cstring>
-#include <iostream>
 #include <cassert>
 // #define VERBOSE_CANON 1
 

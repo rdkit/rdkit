@@ -14,7 +14,6 @@
 #define HANOISORT_H_
 
 #include <cstring>
-#include <iostream>
 #include <cassert>
 #include <cstdlib>
 

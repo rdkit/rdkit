@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <catch2/catch_all.hpp>
-#include <iostream>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
 #include <Geometry/point.h>

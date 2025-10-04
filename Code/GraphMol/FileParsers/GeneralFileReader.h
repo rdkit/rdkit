@@ -13,7 +13,6 @@
 #include <RDStreams/streams.h>
 
 #include <boost/algorithm/string.hpp>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>

@@ -21,7 +21,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Atom.h>
-#include <iostream>
 #include <exception>
 #include <string>
 #include <utility>

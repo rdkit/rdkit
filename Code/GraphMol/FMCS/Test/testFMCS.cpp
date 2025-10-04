@@ -43,7 +43,6 @@
 #include <cstring>
 #include <ctime>
 #include <string>
-#include <iostream>
 #include "../../RDKitBase.h"
 #include "../../FileParsers/FileParsers.h"  //MOL single molecule !
 #include "../../FileParsers/MolSupplier.h"  //SDF
@@ -1687,7 +1686,6 @@ int main(int argc, const char *argv[]) {
   _CrtMemCheckpoint(&_ms);
 #endif
   // while(1)   // check memory leaks in TaskManager or 'top -p ...'
-  {}
 #ifdef _DEBUG  // check memory leaks
   _CrtMemDumpAllObjectsSince(&_ms);
 #endif

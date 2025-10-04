@@ -13,14 +13,12 @@
 #include <GraphMol/RDKitBase.h>
 #include <string>
 #include <vector>
-#include <iostream>
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
 #include <DistGeom/TriangleSmooth.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
-#include <iostream>
 #include "BoundsMatrixBuilder.h"
 #include "Embedder.h"
 #include <cstdlib>

@@ -49,7 +49,6 @@
 #include <cmath>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
-#include <iostream>
 #include <deque>
 #include <Eigen/Core>
 #include <Eigen/QR>

@@ -10,7 +10,6 @@
 #include <string>
 #include <GraphMol/RDKitBase.h>
 #include <fstream>
-#include <iostream>
 #include <RDGeneral/BadFileException.h>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>

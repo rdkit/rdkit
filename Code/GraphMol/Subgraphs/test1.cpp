@@ -13,7 +13,6 @@
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
-#include <iostream>
 using namespace std;
 using namespace RDKit;
 

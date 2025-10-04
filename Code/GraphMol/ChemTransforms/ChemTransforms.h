@@ -13,7 +13,6 @@
 
 #include <boost/smart_ptr.hpp>
 #include <vector>
-#include <iostream>
 
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include "MolFragmenter.h"

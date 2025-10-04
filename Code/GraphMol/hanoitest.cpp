@@ -18,7 +18,6 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
-#include <iostream>
 #include <vector>
 #include <random>
 #include <cstdlib>

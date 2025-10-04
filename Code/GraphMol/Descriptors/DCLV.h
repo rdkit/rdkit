@@ -12,7 +12,6 @@
 #ifndef RDKIT_DCLV_H
 #define RDKIT_DCLV_H
 
-#include <iostream>
 #include <string>
 #include <list>
 #include <cmath>
@@ -28,7 +27,7 @@ namespace RDKit {
 namespace Descriptors {
 
 class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
-  public:
+ public:
   /*!
 
     \param mol: input molecule or protein
@@ -51,12 +50,11 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   bool includeLigand = true;
   double probeRadius = 1.4;
   int confId = -1;
-  double maxRadius = 1.7; // treat default max radius as Carbon
+  double maxRadius = 1.7;  // treat default max radius as Carbon
 
-
-DoubleCubicLatticeVolume(const ROMol &mol, std::vector<double> radii,
-                         bool isProtein = false, bool includeLigand = true, 
-                         double probeRadius = 1.4, int confId = -1);
+  DoubleCubicLatticeVolume(const ROMol &mol, std::vector<double> radii,
+                           bool isProtein = false, bool includeLigand = true,
+                           double probeRadius = 1.4, int confId = -1);
   //! Class for calculation of the Shrake and Rupley surface area and volume
   //! using the Double Cubic Lattice Method.
   //!
@@ -89,7 +87,7 @@ DoubleCubicLatticeVolume(const ROMol &mol, std::vector<double> radii,
   /*! \return van der Waals Volume */
   double getVDWVolume();
 
-   /*! \return Polar Volume */
+  /*! \return Polar Volume */
   double getPolarVolume(bool includeSandP, bool includeHs);
 
   /*! \return Volume from specified atoms */

@@ -8,7 +8,6 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/python.h>
-#include <iostream>
 #include <utility>
 namespace python = boost::python;
 

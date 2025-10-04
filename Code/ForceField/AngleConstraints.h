@@ -12,7 +12,6 @@
 #ifndef RD_ANGLECONSTRAINTS_H
 #define RD_ANGLECONSTRAINTS_H
 #include <vector>
-#include <iostream>
 #include "ForceField.h"
 #include "Contrib.h"
 

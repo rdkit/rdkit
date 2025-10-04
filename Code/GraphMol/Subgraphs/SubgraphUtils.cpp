@@ -14,7 +14,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
-#include <iostream>
 #include <algorithm>
 #include <map>
 #include <RDGeneral/hash/hash.hpp>

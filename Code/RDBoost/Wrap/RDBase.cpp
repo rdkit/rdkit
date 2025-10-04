@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <RDBoost/python.h>
-#include <iostream>
 #include <fstream>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>

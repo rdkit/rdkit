@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/test.h>
-#include <iostream>
 #include <string>
 #include <GraphMol/RDKitBase.h>
 #include "SmilesParse.h"
@@ -129,7 +128,7 @@ void testFail() {
       "[Fe@AL3]",    "C",  //
       "[Fe@TB21]",   "C",  //
       "[Fe@OH31]",   "C",  //
-      "baz",   "C",  //
+      "baz",         "C",  //
       "EOS"};
 
   // turn off the error log temporarily:
@@ -4360,34 +4359,37 @@ void testParserErrorMessage() {
       "c%(100000)ccccc%(100000)",
       "COc(c1)cccc1C#",
       "C)",
-    };
-  for (const auto& smi : smis) {
-      // Test SMILES parsing
-      {
-        std::stringstream ss;
-        rdErrorLog->SetTee(ss);
+  };
+  for (const auto &smi : smis) {
+    // Test SMILES parsing
+    {
+      std::stringstream ss;
+      rdErrorLog->SetTee(ss);
 
-        auto mol = v2::SmilesParse::MolFromSmiles(smi);
-        CHECK_INVARIANT(!mol, smi);
+      auto mol = v2::SmilesParse::MolFromSmiles(smi);
+      CHECK_INVARIANT(!mol, smi);
 
-        rdErrorLog->ClearTee();
-        auto error_msg = ss.str();
-        CHECK_INVARIANT(error_msg.find("check for mistakes around position") != std::string::npos, smi)
-      }
+      rdErrorLog->ClearTee();
+      auto error_msg = ss.str();
+      CHECK_INVARIANT(error_msg.find("check for mistakes around position") !=
+                          std::string::npos,
+                      smi)
+    }
 
-      // Test SMARTS parsing
-      {
-        std::stringstream ss;
-        rdErrorLog->SetTee(ss);
+    // Test SMARTS parsing
+    {
+      std::stringstream ss;
+      rdErrorLog->SetTee(ss);
 
-        auto mol = v2::SmilesParse::MolFromSmarts(smi);
-        CHECK_INVARIANT(!mol, smi);
+      auto mol = v2::SmilesParse::MolFromSmarts(smi);
+      CHECK_INVARIANT(!mol, smi);
 
-        rdErrorLog->ClearTee();
-        auto error_msg = ss.str();
-        CHECK_INVARIANT(error_msg.find("check for mistakes around position") != std::string::npos, smi)
-      }
-
+      rdErrorLog->ClearTee();
+      auto error_msg = ss.str();
+      CHECK_INVARIANT(error_msg.find("check for mistakes around position") !=
+                          std::string::npos,
+                      smi)
+    }
   }
 }
 

@@ -11,7 +11,6 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_POINT_H__
 #define __RD_POINT_H__
-#include <iostream>
 #include <cmath>
 #include <vector>
 #include <map>

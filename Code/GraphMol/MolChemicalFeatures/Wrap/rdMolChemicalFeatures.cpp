@@ -13,7 +13,6 @@
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeatureFactory.h>
 #include <fstream>
 #include <sstream>
-#include <iostream>
 #include <GraphMol/MolChemicalFeatures/FeatureParser.h>
 namespace python = boost::python;
 using namespace RDKit;

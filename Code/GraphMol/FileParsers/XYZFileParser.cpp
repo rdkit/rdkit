@@ -20,7 +20,6 @@
 #include <RDGeneral/BadFileException.h>
 #include <exception>
 
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>

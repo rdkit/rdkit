@@ -17,7 +17,6 @@
 #include "RDProps.h"
 #include <string>
 #include <sstream>
-#include <iostream>
 #include <unordered_set>
 #include <boost/cstdint.hpp>
 #include <boost/predef.h>

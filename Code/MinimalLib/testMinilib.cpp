@@ -10,7 +10,6 @@
 //
 
 #include <emscripten.h>
-#include <iostream>
 #include <string>
 #include <MinimalLib/minilib.h>
 

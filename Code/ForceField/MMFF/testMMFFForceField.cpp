@@ -24,7 +24,6 @@
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <ForceField/ForceField.h>
-#include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <sstream>

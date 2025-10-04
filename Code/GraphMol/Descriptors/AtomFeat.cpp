@@ -22,7 +22,6 @@
 // Adding ATOM FEATURES descriptors by Guillaume Godin
 
 #include <GraphMol/RDKitBase.h>
-#include <iostream>
 
 #include "AtomFeat.h"
 
