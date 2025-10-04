@@ -40,7 +40,7 @@
 
 namespace RDKit {
 
-bool preprocessReaction(ChemicalReaction &rxn, const std::string &propName) {
+bool preprocessReaction(ChemicalReaction &rxn, std::string_view propName) {
   const bool normalized = true;
   return preprocessReaction(
       rxn, GetFlattenedFunctionalGroupHierarchy(normalized), propName);
@@ -50,7 +50,7 @@ bool preprocessReaction(
     ChemicalReaction &rxn, unsigned int &numWarnings, unsigned int &numErrors,
     std::vector<std::vector<std::pair<unsigned int, std::string>>>
         &reactantLabels,
-    const std::string &propName) {
+    std::string_view propName) {
   const bool normalized = true;
   return preprocessReaction(rxn, numWarnings, numErrors, reactantLabels,
                             GetFlattenedFunctionalGroupHierarchy(normalized),
@@ -59,7 +59,7 @@ bool preprocessReaction(
 
 bool preprocessReaction(ChemicalReaction &rxn,
                         const std::map<std::string, ROMOL_SPTR> &queries,
-                        const std::string &propName) {
+                        std::string_view propName) {
   unsigned int numWarnings, numErrors;
   std::vector<std::vector<std::pair<unsigned int, std::string>>> reactantLabels;
 
@@ -72,7 +72,7 @@ bool preprocessReaction(
     std::vector<std::vector<std::pair<unsigned int, std::string>>>
         &reactantLabels,
     const std::map<std::string, ROMOL_SPTR> &queries,
-    const std::string &propName) {
+    std::string_view propName) {
   rxn.setImplicitPropertiesFlag(true);
   rxn.initReactantMatchers();
 

@@ -72,24 +72,24 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
   }
 
   template <typename T>
-  void setProp(const std::string &key, T &val) const {
-    setProp(key.c_str(), val);
+  void setProp(std::string_view key, T &val) const {
+    setProp(std::string(key).c_str(), val);
   }
 
   void setProp(const char *key, int val) const { dp_props->setVal(key, val); }
 
-  void setProp(const std::string &key, int val) const {
-    setProp(key.c_str(), val);
+  void setProp(std::string_view key, int val) const {
+    setProp(std::string(key).c_str(), val);
   }
 
   void setProp(const char *key, float val) const { dp_props->setVal(key, val); }
 
-  void setProp(const std::string &key, float val) const {
-    setProp(key.c_str(), val);
+  void setProp(std::string_view key, float val) const {
+    setProp(std::string(key).c_str(), val);
   }
 
-  void setProp(const std::string &key, std::string &val) const {
-    setProp(key.c_str(), val);
+  void setProp(std::string_view key, std::string &val) const {
+    setProp(std::string(key).c_str(), val);
   }
 
   template <typename T>
@@ -97,8 +97,8 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
     dp_props->getVal(key, res);
   }
   template <typename T>
-  void getProp(const std::string &key, T &res) const {
-    getProp(key.c_str(), res);
+  void getProp(std::string_view key, T &res) const {
+    getProp(std::string(key).c_str(), res);
   }
 
   bool hasProp(const char *key) const {
@@ -107,11 +107,15 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
     }
     return dp_props->hasVal(key);
   }
-  bool hasProp(const std::string &key) const { return hasProp(key.c_str()); }
+  bool hasProp(std::string_view key) const {
+    return hasProp(std::string(key).c_str());
+  }
 
   void clearProp(const char *key) const { dp_props->clearVal(key); }
 
-  void clearProp(const std::string &key) const { clearProp(key.c_str()); }
+  void clearProp(std::string_view key) const {
+    clearProp(std::string(key).c_str());
+  }
 
   void toStream(std::ostream &ss) const override;
   std::string Serialize() const override;

@@ -146,7 +146,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 
   //! \brief Returns whether or not the dictionary contains a particular
   //!        key.
-  bool hasVal(const std::string &what) const {
+  bool hasVal(std::string_view what) const {
     for (const auto &data : _data) {
       if (data.key == what) {
         return true;
@@ -183,30 +183,30 @@ class RDKIT_RDGENERAL_EXPORT Dict {
         a KeyErrorException will be thrown.
   */
   template <typename T>
-  void getVal(const std::string &what, T &res) const {
+  void getVal(std::string_view what, T &res) const {
     res = getVal<T>(what);
   }
 
   //! \overload
   template <typename T>
-  T getVal(const std::string &what) const {
+  T getVal(std::string_view what) const {
     for (auto &data : _data) {
       if (data.key == what) {
         return from_rdvalue<T>(data.val);
       }
     }
-    throw KeyErrorException(what);
+    throw KeyErrorException(std::string(what));
   }
 
   //! \overload
-  void getVal(const std::string &what, std::string &res) const {
+  void getVal(std::string_view what, std::string &res) const {
     for (const auto &i : _data) {
       if (i.key == what) {
         rdvalue_tostring(i.val, res);
         return;
       }
     }
-    throw KeyErrorException(what);
+    throw KeyErrorException(std::string(what));
   }
 
   //----------------------------------------------------------
@@ -224,7 +224,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
         a KeyErrorException will be thrown.
   */
   template <typename T>
-  bool getValIfPresent(const std::string &what, T &res) const {
+  bool getValIfPresent(std::string_view what, T &res) const {
     for (const auto &data : _data) {
       if (data.key == what) {
         res = from_rdvalue<T>(data.val);
@@ -235,7 +235,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   }
 
   //! \overload
-  bool getValIfPresent(const std::string &what, std::string &res) const {
+  bool getValIfPresent(std::string_view what, std::string &res) const {
     for (const auto &i : _data) {
       if (i.key == what) {
         rdvalue_tostring(i.val, res);
@@ -259,7 +259,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
           the value will be replaced.
   */
   template <typename T>
-  void setVal(const std::string &what, T &val) {
+  void setVal(std::string_view what, T &val) {
     static_assert(!std::is_same_v<T, std::string_view>,
                   "T cannot be string_view");
     _hasNonPodData = true;
@@ -270,11 +270,11 @@ class RDKIT_RDGENERAL_EXPORT Dict {
         return;
       }
     }
-    _data.push_back(Pair(what, val));
+    _data.push_back(Pair(std::string(what), val));
   }
 
   template <typename T>
-  void setPODVal(const std::string &what, T val) {
+  void setPODVal(std::string_view what, T val) {
     static_assert(!std::is_same_v<T, std::string_view>,
                   "T cannot be string_view");
     // don't change the hasNonPodData status
@@ -285,23 +285,23 @@ class RDKIT_RDGENERAL_EXPORT Dict {
         return;
       }
     }
-    _data.push_back(Pair(what, val));
+    _data.push_back(Pair(std::string(what), val));
   }
 
-  void setVal(const std::string &what, bool val) { setPODVal(what, val); }
+  void setVal(std::string_view what, bool val) { setPODVal(what, val); }
 
-  void setVal(const std::string &what, double val) { setPODVal(what, val); }
+  void setVal(std::string_view what, double val) { setPODVal(what, val); }
 
-  void setVal(const std::string &what, float val) { setPODVal(what, val); }
+  void setVal(std::string_view what, float val) { setPODVal(what, val); }
 
-  void setVal(const std::string &what, int val) { setPODVal(what, val); }
+  void setVal(std::string_view what, int val) { setPODVal(what, val); }
 
-  void setVal(const std::string &what, unsigned int val) {
+  void setVal(std::string_view what, unsigned int val) {
     setPODVal(what, val);
   }
 
   //! \overload
-  void setVal(const std::string &what, const char *val) {
+  void setVal(std::string_view what, const char *val) {
     std::string h(val);
     setVal(what, h);
   }
@@ -314,7 +314,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
      \param what the key to clear
 
   */
-  void clearVal(const std::string &what) {
+  void clearVal(std::string_view what) {
     for (DataType::iterator it = _data.begin(); it < _data.end(); ++it) {
       if (it->key == what) {
         if (_hasNonPodData) {
@@ -346,7 +346,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 };
 
 template <>
-inline std::string Dict::getVal<std::string>(const std::string &what) const {
+inline std::string Dict::getVal<std::string>(std::string_view what) const {
   std::string res;
   getVal(what, res);
   return res;
