@@ -775,14 +775,15 @@ class TestCase(unittest.TestCase):
     radii2 = [Chem.GetPeriodicTable().GetRvdw(atom.GetAtomicNum()) for atom in mol2.GetAtoms()]
 
     # test from SDF file with defaults
-    sdf = rdMD.DoubleCubicLatticeVolume(mol2, radii2, isProtein=False)
+    for sdf in (rdMD.DoubleCubicLatticeVolume(mol2, radii2, isProtein=False),
+                rdMD.DoubleCubicLatticeVolume(mol2, isProtein=False)):
 
-    self.assertTrue(abs(sdf.GetSurfaceArea() - 304.239) < 0.05)
-    self.assertTrue(abs(sdf.GetPolarSurfaceArea() - 18.7319) < 0.05)
-    self.assertTrue(abs(sdf.GetPolarSurfaceArea(includeSandP=True) - 64.9764) < 0.05)
-    self.assertTrue(abs(sdf.GetVolume() - 431.35) < 0.05)
-    self.assertTrue(abs(sdf.GetVDWVolume() - 119.296) < 0.05)
-    self.assertTrue(abs(sdf.GetPolarVolume() - 21.35) < 0.05)
+      self.assertTrue(abs(sdf.GetSurfaceArea() - 304.239) < 0.05)
+      self.assertTrue(abs(sdf.GetPolarSurfaceArea() - 18.7319) < 0.05)
+      self.assertTrue(abs(sdf.GetPolarSurfaceArea(includeSandP=True) - 64.9764) < 0.05)
+      self.assertTrue(abs(sdf.GetVolume() - 431.35) < 0.05)
+      self.assertTrue(abs(sdf.GetVDWVolume() - 119.296) < 0.05)
+      self.assertTrue(abs(sdf.GetPolarVolume() - 21.35) < 0.05)
 
 
 if __name__ == '__main__':

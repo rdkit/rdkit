@@ -565,28 +565,40 @@ TEST_CASE("DCLV") {
     const bool includeLigand = false;
     const double probeRadius = 1.4;
     const int confId = -1;
-    Descriptors::DoubleCubicLatticeVolume dclv(*m, radii, isProtein, includeLigand, probeRadius, confId);
-    CHECK(dclv.getSurfaceArea() == Catch::Approx(8306.62).epsilon(0.05));
-    CHECK(dclv.getPolarSurfaceArea(false, false) == Catch::Approx(4652.19).epsilon(0.05)); // N & O, no Hs
-    CHECK(dclv.getPolarSurfaceArea(true, false) == Catch::Approx(4673.9).epsilon(0.05)); // N, O, S & P, no Hs
-    CHECK(dclv.getVolume() == Catch::Approx(29952.3).epsilon(0.05));
-    CHECK(dclv.getVDWVolume() == Catch::Approx(13541.5).epsilon(0.05));
-    CHECK(dclv.getPolarVolume(false, false) == Catch::Approx(17096).epsilon(0.05)); // N & O, no Hs
-    CHECK(dclv.getCompactness() == Catch::Approx(1.78096).epsilon(0.05));
-    CHECK(dclv.getPackingDensity() == Catch::Approx(0.452103).epsilon(0.05));
+    for (auto dclv :
+         {Descriptors::DoubleCubicLatticeVolume(
+              *m, radii, isProtein, includeLigand, probeRadius, confId),
+          Descriptors::DoubleCubicLatticeVolume(*m, isProtein, includeLigand,
+                                                probeRadius, confId)}) {
+      CHECK(dclv.getSurfaceArea() == Catch::Approx(8306.62).epsilon(0.05));
+      CHECK(dclv.getPolarSurfaceArea(false, false) ==
+            Catch::Approx(4652.19).epsilon(0.05));  // N & O, no Hs
+      CHECK(dclv.getPolarSurfaceArea(true, false) ==
+            Catch::Approx(4673.9).epsilon(0.05));  // N, O, S & P, no Hs
+      CHECK(dclv.getVolume() == Catch::Approx(29952.3).epsilon(0.05));
+      CHECK(dclv.getVDWVolume() == Catch::Approx(13541.5).epsilon(0.05));
+      CHECK(dclv.getPolarVolume(false, false) ==
+            Catch::Approx(17096).epsilon(0.05));  // N & O, no Hs
+      CHECK(dclv.getCompactness() == Catch::Approx(1.78096).epsilon(0.05));
+      CHECK(dclv.getPackingDensity() == Catch::Approx(0.452103).epsilon(0.05));
+    }
   }
   SECTION("non-default radius") {
     const bool isProtein = true;
     const bool includeLigand = false;
     const double probeRadius = 1.6;
     const int confId = -1;
-    Descriptors::DoubleCubicLatticeVolume dclv(*m, radii, isProtein, includeLigand, probeRadius, confId);
+    Descriptors::DoubleCubicLatticeVolume dclv(
+        *m, radii, isProtein, includeLigand, probeRadius, confId);
     CHECK(dclv.getSurfaceArea() == Catch::Approx(8112.42).epsilon(0.05));
-    CHECK(dclv.getPolarSurfaceArea(false, false) == Catch::Approx(4656.8).epsilon(0.05)); // N & O, no Hs
-    CHECK(dclv.getPolarSurfaceArea(true, false) == Catch::Approx(4674.96).epsilon(0.05)); // N, O, S & P, no Hs
+    CHECK(dclv.getPolarSurfaceArea(false, false) ==
+          Catch::Approx(4656.8).epsilon(0.05));  // N & O, no Hs
+    CHECK(dclv.getPolarSurfaceArea(true, false) ==
+          Catch::Approx(4674.96).epsilon(0.05));  // N, O, S & P, no Hs
     CHECK(dclv.getVolume() == Catch::Approx(31591).epsilon(0.05));
     CHECK(dclv.getVDWVolume() == Catch::Approx(13541.5).epsilon(0.05));
-    CHECK(dclv.getPolarVolume(false, false) == Catch::Approx(18402.8).epsilon(0.05)); // N & O, no Hs
+    CHECK(dclv.getPolarVolume(false, false) ==
+          Catch::Approx(18402.8).epsilon(0.05));  // N & O, no Hs
     CHECK(dclv.getCompactness() == Catch::Approx(1.67864).epsilon(0.05));
     CHECK(dclv.getPackingDensity() == Catch::Approx(0.428652).epsilon(0.05));
   }
@@ -595,13 +607,17 @@ TEST_CASE("DCLV") {
     const bool includeLigand = true;
     const double probeRadius = 1.4;
     const int confId = -1;
-    Descriptors::DoubleCubicLatticeVolume dclv(*m, radii, isProtein, includeLigand, probeRadius, confId);
+    Descriptors::DoubleCubicLatticeVolume dclv(
+        *m, radii, isProtein, includeLigand, probeRadius, confId);
     CHECK(dclv.getSurfaceArea() == Catch::Approx(8206.1).epsilon(0.05));
-    CHECK(dclv.getPolarSurfaceArea(false, false) == Catch::Approx(4467.92).epsilon(0.05)); // N & O, no Hs
-    CHECK(dclv.getPolarSurfaceArea(true, false) == Catch::Approx(4481.19).epsilon(0.05)); // N, O, S & P, no Hs
+    CHECK(dclv.getPolarSurfaceArea(false, false) ==
+          Catch::Approx(4467.92).epsilon(0.05));  // N & O, no Hs
+    CHECK(dclv.getPolarSurfaceArea(true, false) ==
+          Catch::Approx(4481.19).epsilon(0.05));  // N, O, S & P, no Hs
     CHECK(dclv.getVolume() == Catch::Approx(30340.1).epsilon(0.05));
     CHECK(dclv.getVDWVolume() == Catch::Approx(13789.7).epsilon(0.05));
-    CHECK(dclv.getPolarVolume(false, false) == Catch::Approx(16507).epsilon(0.05)); // N & O, no Hs
+    CHECK(dclv.getPolarVolume(false, false) ==
+          Catch::Approx(16507).epsilon(0.05));  // N & O, no Hs
     CHECK(dclv.getCompactness() == Catch::Approx(1.74438).epsilon(0.05));
     CHECK(dclv.getPackingDensity() == Catch::Approx(0.454504).epsilon(0.05));
   }
@@ -614,19 +630,18 @@ TEST_CASE("DCLV") {
       radii.push_back(tbl->getRvdw(atom->getAtomicNum()));
     }
     REQUIRE(m);
-    const bool isProtein = false;
-    const bool includeLigand = true; // needs to be true for small mol
-    const double probeRadius = 1.4;
-    const int confId = -1;
-    Descriptors::DoubleCubicLatticeVolume dclv(*m, radii, isProtein, includeLigand, probeRadius, confId);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m, radii);
 
     // packing density and compactness not relevant for small mol
     CHECK(dclv.getSurfaceArea() == Catch::Approx(304.239).epsilon(0.05));
-    CHECK(dclv.getPolarSurfaceArea(false, false) == Catch::Approx(18.7319).epsilon(0.05)); // N & O, no Hs
-    CHECK(dclv.getPolarSurfaceArea(true, false) == Catch::Approx(64.9764).epsilon(0.05)); // N, O, S & P, no Hs
+    CHECK(dclv.getPolarSurfaceArea(false, false) ==
+          Catch::Approx(18.7319).epsilon(0.05));  // N & O, no Hs
+    CHECK(dclv.getPolarSurfaceArea(true, false) ==
+          Catch::Approx(64.9764).epsilon(0.05));  // N, O, S & P, no Hs
     CHECK(dclv.getVolume() == Catch::Approx(431.35).epsilon(0.05));
     CHECK(dclv.getVDWVolume() == Catch::Approx(119.296).epsilon(0.05));
-    CHECK(dclv.getPolarVolume(false, false) == Catch::Approx(21.35).epsilon(0.05)); // N & O, no Hs
+    CHECK(dclv.getPolarVolume(false, false) ==
+          Catch::Approx(21.35).epsilon(0.05));  // N & O, no Hs
   }
   SECTION("Partial Test") {
     std::string sdfName =
@@ -637,10 +652,11 @@ TEST_CASE("DCLV") {
     std::vector<double> radii = {1.7, 1.7};
 
     const bool isProtein = false;
-    const bool includeLigand = true; // needs to be true for small mol
+    const bool includeLigand = true;  // needs to be true for small mol
     const double probeRadius = 1.4;
     const int confId = -1;
-    Descriptors::DoubleCubicLatticeVolume dclv(*m, radii, isProtein, includeLigand, probeRadius, confId);
+    Descriptors::DoubleCubicLatticeVolume dclv(
+        *m, radii, isProtein, includeLigand, probeRadius, confId);
 
     boost::dynamic_bitset<> partialAtoms(m->getNumAtoms());
     partialAtoms.set(0);
@@ -653,9 +669,9 @@ TEST_CASE("DCLV") {
     partialAtoms3.set(1);
 
     CHECK(dclv.getAtomSurfaceArea(0) == dclv.getAtomSurfaceArea(1));
-    CHECK(dclv.getPartialSurfaceArea(partialAtoms) == dclv.getPartialSurfaceArea(partialAtoms2));
+    CHECK(dclv.getPartialSurfaceArea(partialAtoms) ==
+          dclv.getPartialSurfaceArea(partialAtoms2));
     CHECK(dclv.getPartialSurfaceArea(partialAtoms3) == dclv.getSurfaceArea());
-
   }
 }
 
