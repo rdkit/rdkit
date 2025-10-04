@@ -115,12 +115,9 @@ introduced in more recent macOS versions.
 ### Linux x86_64: Python 3 environment
 
 The following commands will create a development environment for Linux x86_64 and Python 3.
-Two modes are possible:
-- **Mode A:** Build with `RDK_INSTALL_INTREE=OFF` and `RDK_BUILD_PYTHON_WRAPPERS=ON`. This mode allows you to interactively modify the C++ code and test the changes via Python wrappers.
-- **Mode B:** Build with `RDK_INSTALL_INTREE=ON` and `RDK_BUILD_CPP_TESTS=ON`. This mode allows you to run the C++ tests and Python tests.
 
-For both modes some pre-requisites need to be installed first:
 Start by downloading the latest [miniforge installer](https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh) and installing it:
+
 ```
 bash Miniforge3-Linux-x86_64.sh
 ```
@@ -131,62 +128,23 @@ conda create -n rdkit_build -c conda-forge gxx_linux-64 cmake cairo pillow eigen
 ```
 
 At this point, you should be able to clone the RDKit repository to the desired build location, and start the build:
-
 ```
 git clone https://github.com/rdkit/rdkit.git
-```
-
-**Mode A:** This mode allows you to interactively modify the C++ code and test the changes via Python wrappers
-
-```
 cd rdkit
-mkdir build_rdkit_conda && cd build_rdkit_conda
-cmake .. \
-  -DRDK_INSTALL_INTREE=OFF \
-  -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX \
-  -DPYTHON_EXECUTABLE=$CONDA_PREFIX/bin/python \
-  -DPYTHON_INCLUDE_DIR=$(python -c "from sysconfig import get_paths; print(get_paths()['include'])") \
-  -DPYTHON_LIBRARY=$(python -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")/libpython${PYTHON_VERSION%.*}.so \
-  -DRDK_BUILD_PYTHON_WRAPPERS=ON \
-  -DRDK_BUILD_CPP_TESTS=ON
-make -j$(nproc)
-make install
-conda activate rdkit_build
-```
-
-After these above steps you should be able to have a workflow like this:
-- Edit any .cpp/.h
-- Run `make -j$(nproc) && make install`
-- Immediately test in Python without touching PYTHONPATH
-
-
-**Mode B:** This mode allows you to run the C++ tests and Python tests
-
-```
-cd rdkit
-mkdir build_intree && cd build_intree
+mkdir build && cd build
 cmake -DPy_ENABLE_SHARED=1 \
   -DRDK_INSTALL_INTREE=ON \
   -DRDK_INSTALL_STATIC_LIBS=OFF \
   -DRDK_BUILD_CPP_TESTS=ON \
   ..
-make -j$(nproc)
-make install
 ```
+
+And finally, `make -j$(nproc)`, `make install` and `ctest`
 
 The `ctest` build requires that the installation path (the root of the source tree with RDK_INSTALL_INTREE=ON as above) be set in the RDBASE environment variable, and that the location of the installed Python files and shared library files to use for the tests be properly specified. This can be done by setting environment variables for the ctest run as follows:
 
 ```
 RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH ctest
-```
-You can also run python tests on any specific folder like this:
-
-```
-cd rdkit/build_intree
-export RDBASE=$PWD/..
-export PYTHONPATH=$RDBASE
-export LD_LIBRARY_PATH=$PWD/lib:$LD_LIBRARY_PATH
-python3 -m unittest discover -s $RDBASE/Code/GraphMol/ForceFieldHelpers/Wrap -p "test*.py" -v
 ```
 
 ## 3. Cross-platform using PIP
