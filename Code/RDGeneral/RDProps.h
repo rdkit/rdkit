@@ -74,12 +74,12 @@ class RDProps {
 
   //! \overload
   template <typename T>
-  void setProp(const std::string &key, T val, bool computed = false) const {
+  void setProp(const std::string_view key, T val, bool computed = false) const {
     if (computed) {
       STR_VECT compLst;
       getPropIfPresent(RDKit::detail::computedPropName, compLst);
       if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
-        compLst.push_back(key);
+        compLst.emplace_back(key);
         d_props.setVal(RDKit::detail::computedPropName, compLst);
       }
     }
@@ -104,13 +104,13 @@ class RDProps {
   */
   //! \overload
   template <typename T>
-  void getProp(const std::string &key, T &res) const {
+  void getProp(const std::string_view key, T &res) const {
     d_props.getVal(key, res);
   }
 
   //! \overload
   template <typename T>
-  T getProp(const std::string &key) const {
+  T getProp(const std::string_view key) const {
     return d_props.getVal<T>(key);
   }
 
@@ -118,12 +118,12 @@ class RDProps {
   //!  and assigns the value if we do
   //! \overload
   template <typename T>
-  bool getPropIfPresent(const std::string &key, T &res) const {
+  bool getPropIfPresent(const std::string_view key, T &res) const {
     return d_props.getValIfPresent(key, res);
   }
 
   //! \overload
-  bool hasProp(const std::string &key) const { return d_props.hasVal(key); }
+  bool hasProp(const std::string_view key) const { return d_props.hasVal(key); }
 
   //! clears the value of a \c property
   /*!
@@ -133,7 +133,7 @@ class RDProps {
     from our list of \c computedProperties
   */
   //! \overload
-  void clearProp(const std::string &key) const {
+  void clearProp(const std::string_view key) const {
     STR_VECT compLst;
     if (getPropIfPresent(RDKit::detail::computedPropName, compLst)) {
       auto svi = std::find(compLst.begin(), compLst.end(), key);
