@@ -294,7 +294,8 @@ struct string_view_converter {
   }
 
   /// Construct a std::string_view from the internal string of the PyObject.
-  /// This shouldn´t fail, as we
+  /// This shouldn´t fail, as we block the Python thread until the C++ code
+  /// returns, so the PyObject and the internal string should remain valid.
   static void construct(
       PyObject *object,
       boost::python::converter::rvalue_from_python_stage1_data *data) {
