@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <array>
 #include <map>
+#include <string_view>
 
 namespace SmilesParseOps {
 using namespace RDKit;
@@ -1944,7 +1945,7 @@ std::string get_atomlabel_block(const ROMol &mol,
 
 std::string get_value_block(const ROMol &mol,
                             const std::vector<unsigned int> &atomOrder,
-                            std::string_view prop) {
+                            const std::string_view &prop) {
   std::string res = "";
   bool first = true;
   for (auto idx : atomOrder) {
@@ -2026,9 +2027,11 @@ std::string get_coords_block(const ROMol &mol,
 
 std::string get_atom_props_block(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
-  std::vector<std::string> skip = {std::string(common_properties::atomLabel),
-                                   std::string(common_properties::molFileValue),
-                                   std::string(common_properties::molParity)};
+  constexpr std::array<std::string_view, 3> skip = {
+      common_properties::atomLabel,
+      common_properties::molFileValue,
+      common_properties::molParity,
+  };
   std::string res = "";
   unsigned int which = 0;
   for (auto idx : atomOrder) {
