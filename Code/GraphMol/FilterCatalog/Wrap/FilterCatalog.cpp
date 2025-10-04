@@ -367,14 +367,13 @@ struct filtercat_wrapper {
 
         .def("IsValid", &SmartsMatcher::isValid, python::args("self"),
              "Returns True if the SmartsMatcher is valid")
-        .def(
-            "SetPattern",
-            (void(SmartsMatcher::*)(const ROMol &)) & SmartsMatcher::setPattern,
-            python::args("self", "pat"),
-            "Set the pattern molecule for the SmartsMatcher")
         .def("SetPattern",
-             (void(SmartsMatcher::*)(const std::string &)) &
-                 SmartsMatcher::setPattern,
+             (void (SmartsMatcher::*)(const ROMol &))&SmartsMatcher::setPattern,
+             python::args("self", "pat"),
+             "Set the pattern molecule for the SmartsMatcher")
+        .def("SetPattern",
+             (void (SmartsMatcher::*)(
+                 const std::string &))&SmartsMatcher::setPattern,
              python::args("self", "pat"),
              "Set the smarts pattern for the Smarts Matcher (warning: "
              "MinimumCount is not reset)")
@@ -455,16 +454,17 @@ struct filtercat_wrapper {
         .def("GetPropList", &FilterCatalogEntry::getPropList,
              python::args("self"))
         .def("SetProp",
-             (void(FilterCatalogEntry::*)(const std::string &, std::string)) &
-                 FilterCatalogEntry::setProp<std::string>,
+             (void (FilterCatalogEntry::*)(
+                 const std::string &,
+                 std::string))&FilterCatalogEntry::setProp<std::string>,
              python::args("self", "key", "val"))
         .def("GetProp",
-             (std::string(FilterCatalogEntry::*)(const std::string &) const) &
+             (std::string (FilterCatalogEntry::*)(const std::string &) const) &
                  FilterCatalogEntry::getProp<std::string>,
              python::args("self", "key"))
         .def("ClearProp",
-             (void(FilterCatalogEntry::*)(const std::string &)) &
-                 FilterCatalogEntry::clearProp,
+             (void (FilterCatalogEntry::*)(
+                 const std::string &))&FilterCatalogEntry::clearProp,
              python::args("self", "key"));
 
     python::def(
@@ -583,8 +583,9 @@ struct filtercat_wrapper {
                 "If a smiles string can't be parsed, a 'Bad smiles' entry is "
                 "returned.");
 
+    auto scope = python::scope();
     std::string nested_name = python::extract<std::string>(
-        python::scope().attr("__name__") + ".FilterMatchOps");
+        scope.attr("__name__") + ".FilterMatchOps");
     python::object nested_module(python::handle<>(
         python::borrowed(PyImport_AddModule(nested_name.c_str()))));
     python::scope().attr("FilterMatchOps") = nested_module;

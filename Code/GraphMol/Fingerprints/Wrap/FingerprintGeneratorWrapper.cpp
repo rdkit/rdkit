@@ -44,8 +44,7 @@ void convertPyArguments(
     std::unique_ptr<std::vector<std::uint32_t>> &customAtomInvariants,
     std::unique_ptr<std::vector<std::uint32_t>> &customBondInvariants) {
   if (!py_fromAtoms.is_none()) {
-    unsigned int len =
-        python::extract<unsigned int>(py_fromAtoms.attr("__len__")());
+    unsigned int len = python::len(py_fromAtoms);
     if (len) {
       fromAtoms.reset(new std::vector<std::uint32_t>());
       fromAtoms->reserve(len);
@@ -56,8 +55,7 @@ void convertPyArguments(
   }
 
   if (!py_ignoreAtoms.is_none()) {
-    unsigned int len =
-        python::extract<unsigned int>(py_ignoreAtoms.attr("__len__")());
+    unsigned int len = python::len(py_ignoreAtoms);
     if (len) {
       ignoreAtoms.reset(new std::vector<std::uint32_t>());
       ignoreAtoms->reserve(len);
@@ -69,8 +67,7 @@ void convertPyArguments(
   }
 
   if (!py_atomInvs.is_none()) {
-    unsigned int len =
-        python::extract<unsigned int>(py_atomInvs.attr("__len__")());
+    unsigned int len = python::len(py_atomInvs);
     if (len) {
       customAtomInvariants.reset(new std::vector<std::uint32_t>());
       customAtomInvariants->reserve(len);
@@ -82,8 +79,7 @@ void convertPyArguments(
   }
 
   if (!py_bondInvs.is_none()) {
-    unsigned int len =
-        python::extract<unsigned int>(py_bondInvs.attr("__len__")());
+    unsigned int len = python::len(py_bondInvs);
     if (len) {
       customBondInvariants.reset(new std::vector<std::uint32_t>());
       customBondInvariants->reserve(len);
@@ -206,7 +202,7 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
 template <typename ReturnType, typename FuncType>
 python::tuple mtgetFingerprints(FuncType func, python::object mols,
                                 int numThreads) {
-  unsigned int nmols = python::extract<unsigned int>(mols.attr("__len__")());
+  unsigned int nmols = python::len(mols);
   std::vector<const ROMol *> tmols;
   for (auto i = 0u; i < nmols; ++i) {
     tmols.push_back(python::extract<const ROMol *>(mols[i])());
@@ -333,10 +329,9 @@ const std::vector<const ROMol *> convertPyArgumentsForBulk(
     const python::list &py_molVect) {
   std::vector<const ROMol *> molVect;
   if (!py_molVect.is_none()) {
-    unsigned int len =
-        python::extract<unsigned int>(py_molVect.attr("__len__")());
+    unsigned int len = python::len(py_molVect);
     if (len) {
-      for (unsigned int i = 0; i < len; i++) {
+      for (unsigned int i = 0; i < len; ++i) {
         molVect.push_back(python::extract<const ROMol *>(py_molVect[i]));
       }
     }
@@ -345,8 +340,7 @@ const std::vector<const ROMol *> convertPyArgumentsForBulk(
 }
 
 python::list getSparseCountFPBulkPy(python::list &py_molVect, FPType fPType) {
-  const std::vector<const ROMol *> molVect =
-      convertPyArgumentsForBulk(py_molVect);
+  const auto molVect = convertPyArgumentsForBulk(py_molVect);
   auto tempResult = getSparseCountFPBulk(molVect, fPType);
   python::list result;
 

@@ -99,7 +99,7 @@ python::list findMCESWrapper(const ROMol &mol1, const ROMol &mol2,
 
 std::vector<std::shared_ptr<ROMol>> extractMols(python::object mols) {
   std::vector<std::shared_ptr<ROMol>> cmols;
-  unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
+  unsigned int nElems = python::len(mols);
   cmols.resize(nElems);
   for (unsigned int i = 0; i < nElems; ++i) {
     if (!mols[i]) {

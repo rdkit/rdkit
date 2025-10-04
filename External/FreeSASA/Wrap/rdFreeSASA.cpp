@@ -71,7 +71,7 @@ double calcSASAHelper(const RDKit::ROMol &mol, python::object radii,
 
   std::vector<double> vradii;
 
-  unsigned int sz = python::extract<unsigned int>(radii.attr("__len__")());
+  unsigned int sz = boost::python::len(radii);
   for (unsigned int i = 0; i < sz; ++i) {
     vradii.push_back(python::extract<double>(radii[i])());
   }

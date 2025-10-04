@@ -47,8 +47,7 @@ RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker, python::object distMat,
   auto *dMat = (double *)PyArray_DATA(copy);
 
   RDKit::INT_VECT firstPickVect;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(firstPicks.attr("__len__")()); ++i) {
+  for (unsigned int i = 0; i < boost::python::len(firstPicks); ++i) {
     firstPickVect.push_back(python::extract<int>(firstPicks[i]));
   }
   RDKit::INT_VECT res;
@@ -68,8 +67,7 @@ void LazyMaxMinHelper(MaxMinPicker *picker, T functor, unsigned int poolSize,
                       unsigned int pickSize, python::object firstPicks,
                       int seed, RDKit::INT_VECT &res, double &threshold) {
   RDKit::INT_VECT firstPickVect;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(firstPicks.attr("__len__")()); ++i) {
+  for (unsigned int i = 0; i < boost::python::len(firstPicks); ++i) {
     firstPickVect.push_back(python::extract<int>(firstPicks[i]));
   }
   res = picker->lazyPick(functor, poolSize, pickSize, firstPickVect, seed,
