@@ -2574,8 +2574,8 @@ BondData& RDMol::addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx, BondEnums::
   // we're in a batch edit, and at least one of the bond ends is scheduled
   // for deletion, so mark the new bond for deletion too:
   if (dp_delAtoms &&
-      ((atomIdx1 < dp_delAtoms->size() && dp_delAtoms->test(atomIdx1)) ||
-       (atomIdx2 < dp_delAtoms->size() && dp_delAtoms->test(atomIdx2)))) {
+      ((beginAtomIdx < dp_delAtoms->size() && dp_delAtoms->test(beginAtomIdx)) ||
+       (endAtomIdx < dp_delAtoms->size() && dp_delAtoms->test(endAtomIdx)))) {
     if (dp_delBonds->size() < newBondIndex + 1) {
       dp_delBonds->resize(newBondIndex + 1);
     }
