@@ -286,12 +286,12 @@ struct sgroup_wrap {
                  SubstanceGroup::getProp<std::vector<unsigned int>>,
              python::args("self", "key"),
              "returns the value of a particular property")
-        .def(
-            "GetStringVectProp",
-            (std::vector<std::string> (RDProps::*)(const std::string &) const) &
-                SubstanceGroup::getProp<std::vector<std::string>>,
-            python::args("self", "key"),
-            "returns the value of a particular property")
+        .def("GetStringVectProp",
+             (std::vector<std::string> (RDProps::*)(const std::string_view)
+                  const) &
+                 SubstanceGroup::getProp<std::vector<std::string>>,
+             python::args("self", "key"),
+             "returns the value of a particular property")
         .def("GetPropNames", &SubstanceGroup::getPropList,
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false),
