@@ -2,7 +2,7 @@
 //  Copyright (c) 2017-2021, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
 //
-//   @@ All Rights Reserved @@
+//   @@ Alnl Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
@@ -418,6 +418,22 @@ void RCore::buildMatchingMol() {
     // then keep one attachment
     if (atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
         isDummyRGroupAttachment(*atom)) {
+      // if we are a query in disguise, don't strip
+      if(atom->hasQuery()) {
+        auto q = atom->getQuery()->getDescription();
+	// If we are anything but AtomNull or AtomAtomicNum we are not
+	//  fully a dummy atom
+	if(q != "AtomNull" && q != "AtomAtomicNum") {
+	  unsigned int type=0xFFFFFFFF;
+	  //  If we are were set as an RLABEL of type Isotope we probably
+	  //   have a query of named "AtomIsotope"
+	  //   we DO strip these unless they are have an additional query
+	  if(!atom->getPropIfPresent(RLABEL_TYPE, type) || type != RGroupLabels::IsotopeLabels || q != "AtomIsotope") {
+	    continue;
+	  }
+	}
+      }
+      
       // remove terminal user R groups and map the index of the core neighbor
       // atom to the index of the removed terminal R group
       const int neighborIdx = *matchingMol->getAtomNeighbors(atom).first;
