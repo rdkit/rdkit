@@ -34,8 +34,7 @@ void LazyLeaderHelper(LeaderPicker *picker, T functor, unsigned int poolSize,
                       python::object firstPicks, RDKit::INT_VECT &res,
                       int nThreads) {
   RDKit::INT_VECT firstPickVect;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(firstPicks.attr("__len__")()); ++i) {
+  for (unsigned int i = 0; i < boost::python::len(firstPicks); ++i) {
     firstPickVect.push_back(python::extract<int>(firstPicks[i]));
   }
   res = picker->lazyPick(functor, poolSize, pickSize, firstPickVect, threshold,
