@@ -2,7 +2,7 @@
 //  Copyright (c) 2017-2021, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
 //
-//   @@ Alnl Rights Reserved @@
+//   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
