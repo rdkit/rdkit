@@ -9,6 +9,9 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes:
+- The `Dict` class (and therefore all the properties interfaces) has been updated
+  to `std::string_view` keys. This is transparent to the Python interfaces,
+  but some C++ class might have to be updated.
 
 ## New Features and Enhancements:
 
