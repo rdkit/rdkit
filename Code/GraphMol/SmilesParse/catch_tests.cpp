@@ -3303,3 +3303,15 @@ TEST_CASE(
           "O=C(N[C@H]1C[C@@H](C(=O)O)[C@@H]2C[C@@H]21)C1CC(=O)N(Cc2ccccn2)C1");
   }
 }
+
+TEST_CASE(
+    "github #8664: RDKit CXSMiles includes map number as an atom property") {
+  SECTION("as reported") {
+    auto m =
+        "CC[OH:2]"_smiles;
+    REQUIRE(m);
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi ==
+          "CC[OH:2]");
+  }
+}
