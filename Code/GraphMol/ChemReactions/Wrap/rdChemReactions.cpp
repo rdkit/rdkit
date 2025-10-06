@@ -313,17 +313,7 @@ ChemicalReaction *ReactionFromSmarts(const char *smarts, python::dict replDict,
 }
 
 ChemicalReaction *ReactionFromSmiles(const char *smiles, python::dict replDict) {
-  PRECONDITION(smiles, "null SMILES string");
-  std::map<std::string, std::string> replacements;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(replDict.keys().attr("__len__")());
-       ++i) {
-    replacements[python::extract<std::string>(replDict.keys()[i])] =
-        python::extract<std::string>(replDict.values()[i]);
-  }
-  ChemicalReaction *res;
-  res = RxnSmartsToChemicalReaction(smiles, &replacements, true);
-  return res;
+  return ReactionFromSmarts(smiles. replDict, true);
 }
 
 ChemicalReaction *ReactionFromMrvFile(const char *rxnFilename, bool sanitize,
