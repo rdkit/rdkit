@@ -1316,6 +1316,35 @@ class TestCase(unittest.TestCase):
       self.assertEqual(len(mcs2.degenerateSmartsQueryMolDict), 1)
       self.assertEqual(Chem.MolToSmiles(Chem.MolFromSmarts(tuple(mcs2.degenerateSmartsQueryMolDict.keys())[0])), para)
 
+  def test23TwoMolMCSS(self):
+    mol1 = Chem.MolFromSmiles("c1ccc2c(c1)c(ncn2)Nc3ccc(cc3)Cl")
+    mol2 = Chem.MolFromSmiles("c1ccc2c(c1)c(ncn2)Nc3ccc(cc3)C#N")
+        
+    p = rdFMCS.MCSParameters()
+    p.MinMCSSSize = 15
+    res = rdFMCS.TwoMolMCSS(mol1, mol2, False, p)
+    for i, r in enumerate(res):
+      print(i, r)
+    self.assertEqual(len(res), 30)
+    self.assertEqual(len(res[0]), 17)
+
+    print("----------------------")
+    res = rdFMCS.TwoMolMCSS(mol1, mol2, True, p)
+    for i, r in enumerate(res):
+      print(i, r)
+    self.assertEqual(len(res), 3)
+    self.assertEqual(len(res[0]), 17)
+        
+
+    print("----------------------")
+    p.AtomCompareParameters.RingMatchesRingOnly = True
+    p.BondCompareParameters.RingMatchesRingOnly = True
+    res = rdFMCS.TwoMolMCSS(mol1, mol2, True, p)
+    for i, r in enumerate(res):
+      print(i, r)
+    self.assertEqual(len(res), 1)
+    self.assertEqual(len(res[0]), 17)
+    
 
 if __name__ == "__main__":
   unittest.main()
