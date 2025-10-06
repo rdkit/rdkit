@@ -313,7 +313,7 @@ ChemicalReaction *ReactionFromSmarts(const char *smarts, python::dict replDict,
 }
 
 ChemicalReaction *ReactionFromSmiles(const char *smiles, python::dict replDict) {
-  return ReactionFromSmarts(smiles. replDict, true);
+  return ReactionFromSmarts(smiles, replDict, true);
 }
 
 ChemicalReaction *ReactionFromMrvFile(const char *rxnFilename, bool sanitize,
