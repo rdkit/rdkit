@@ -52,7 +52,7 @@ void printCliques(
         &maxCliques) {
   for (const auto &clique : maxCliques) {
     std::cout << clique.size() << " : ";
-    for (const auto c : clique) {
+    for (const auto &c : clique) {
       std::cout << "(" << c.first << ", " << c.second << "), ";
     }
     std::cout << std::endl;
