@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <chrono>
 #include <numeric>
+#include <queue>
 
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 
