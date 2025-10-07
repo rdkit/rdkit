@@ -234,9 +234,19 @@ def _toHTML(mol):
   return res
 
 
+def listToLists(lst):
+  if not lst or not isinstance(lst, (list, tuple)):
+    return []
+  if isinstance(lst[0], (list, tuple)):
+    return lst
+  return [lst]
+
+
 def _toPNG(mol):
   if hasattr(mol, '__sssAtoms'):
-    highlightAtoms = mol.__sssAtoms
+    highlightAtoms = listToLists(mol.__sssAtoms)
+    return Draw.DrawMolWithMatches(mol, highlightAtoms, molSize=molSize, qry=mol.__sssQry, label='',
+                                   options=drawOptions, doPNG=True, kekulize=kekulizeStructures)
   else:
     highlightAtoms = []
   kekulize = kekulizeStructures
@@ -248,7 +258,9 @@ def _toSVG(mol):
   if not ipython_useSVG:
     return None
   if hasattr(mol, '__sssAtoms'):
-    highlightAtoms = mol.__sssAtoms
+    highlightAtoms = listToLists(mol.__sssAtoms)
+    return Draw.DrawMolWithMatches(mol, highlightAtoms, molSize=molSize, qry=mol.__sssQry, label='',
+                                   options=drawOptions, doPNG=False, kekulize=kekulizeStructures)
   else:
     highlightAtoms = []
   kekulize = kekulizeStructures
@@ -292,8 +304,10 @@ def _GetSubstructMatch(mol, query, *args, **kwargs):
   res = mol.__GetSubstructMatch(query, *args, **kwargs)
   if highlightSubstructs:
     mol.__sssAtoms = list(res)
+    mol.__sssQry = query
   else:
     mol.__sssAtoms = []
+    mol.__sssQry = None
   return res
 
 
@@ -304,8 +318,10 @@ def _GetSubstructMatches(mol, query, *args, **kwargs):
   res = mol.__GetSubstructMatches(query, *args, **kwargs)
   mol.__sssAtoms = []
   if highlightSubstructs:
-    for entry in res:
-      mol.__sssAtoms.extend(list(entry))
+    mol.__sssQry = query
+    mol.__sssAtoms = res
+  else:
+    mol.__sssQry = None
   return res
 
 
