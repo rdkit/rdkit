@@ -27,6 +27,7 @@
 using Clock = std::chrono::steady_clock;
 using TimePoint = std::chrono::time_point<Clock>;
 
+
 namespace RDKit {
 class ROMol;
 
@@ -47,6 +48,7 @@ class SynthonSpaceSearcher {
   virtual ~SynthonSpaceSearcher() = default;
 
   SearchResults search();
+  void search(const SearchResultCallback &cb);
 
   SynthonSpace &getSpace() const { return d_space; }
   const ROMol &getQuery() const { return d_query; }

@@ -50,6 +50,65 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
   }
 }
 
+
+void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
+  bool timedOut = false;
+  const TimePoint *endTime = nullptr;
+  auto fragments = details::splitMolecule(
+      d_query, getSpace().getMaxNumSynthons(), d_params.maxNumFragSets, endTime,
+      d_params.numThreads, timedOut);
+  extraSearchSetup(fragments);
+  std::uint64_t totHits = 0;
+  auto allHits = doTheSearch(fragments, endTime, timedOut, totHits);
+
+ std::sort(allHits.begin(), allHits.end(),
+           [](const auto &hs1, const auto &hs2) -> bool {
+             if (hs1->d_reaction->getId() == hs2->d_reaction->getId()) {
+               return hs1->numHits < hs2->numHits;
+             }
+             return hs1->d_reaction->getId() < hs2->d_reaction->getId();
+           });
+
+  // from buildAllhits
+  std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> toTry;
+  ssize_t hitCount = 0;
+
+  // Each hitset contains possible hits from a single SynthonSet.
+  for (const auto &hitset : allHits) {
+    // Set up the stepper to move through the synthons.
+    std::vector<size_t> numSynthons;
+    numSynthons.reserve(hitset->synthonsToUse.size());
+    for (auto &stu : hitset->synthonsToUse) {
+      numSynthons.push_back(stu.size());
+    }
+    details::Stepper stepper(numSynthons);
+
+    const auto &reaction = getSpace().getReaction(hitset->d_reaction->getId());
+    std::vector<size_t> theseSynthNums(reaction->getSynthons().size(), 0);
+    // process the synthons
+    while (stepper.d_currState[0] != numSynthons[0]) {
+      toTry.emplace_back(hitset.get(), stepper.d_currState);
+      if (toTry.size() == static_cast<size_t>(d_params.toTryChunkSize)) {
+        std::vector<std::unique_ptr<ROMol>> partResults;
+        processToTrySet(toTry, endTime, partResults);
+        hitCount += partResults.size();
+        cb(partResults);
+        toTry.clear();
+        if (d_params.maxHits != -1 && hitCount >= d_params.maxHits) break;
+      }
+      stepper.step();
+    }
+    if (d_params.maxHits != -1 && hitCount >= d_params.maxHits) break;
+  }
+
+  // Do any remaining.
+  if ((d_params.maxHits == -1 || hitCount < d_params.maxHits) && !toTry.empty()) {
+    std::vector<std::unique_ptr<ROMol>> partResults;
+    processToTrySet(toTry, endTime, partResults);
+    cb(partResults);
+  }
+}
+
 SearchResults SynthonSpaceSearcher::search() {
   std::vector<std::unique_ptr<ROMol>> results;
   const TimePoint *endTime = nullptr;
