@@ -36,7 +36,6 @@
 #include <cassert>
 #include <any>
 #include "Invariant.h"
-#include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <vector>

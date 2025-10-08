@@ -37,7 +37,6 @@
 #include "MolData3Ddescriptors.h"
 
 #include <cmath>
-#include <iostream>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>

@@ -12,7 +12,6 @@
 #define RD_BOND_H
 
 // std stuff
-#include <iostream>
 #include <utility>
 
 // Ours

@@ -11,7 +11,6 @@
 //
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
 
 #include <Geometry/Transform2D.h>
@@ -221,7 +220,7 @@ void DrawMol::extractAll(double scale) {
   if (drawOptions_.addStereoAnnotation) {
     extractCIPCodes(drawOptions_.showAllCIPCodes);
   }
-  extractStereoGroups(); // always show StereoGroups
+  extractStereoGroups();  // always show StereoGroups
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
@@ -469,13 +468,14 @@ void DrawMol::extractCIPCodes(bool showAllCIPCodes) {
   boost::dynamic_bitset<> maskedAtoms(drawMol_->getNumAtoms());
   boost::dynamic_bitset<> maskedBonds(drawMol_->getNumBonds());
 
-  if(!showAllCIPCodes) { // record atoms and bonds whose codes should be hidden
+  if (!showAllCIPCodes) {  // record atoms and bonds whose codes should be
+                           // hidden
     for (const StereoGroup &group : drawMol_->getStereoGroups()) {
       StereoGroupType stereoGroupType;
 
       stereoGroupType = group.getGroupType();
-      if(stereoGroupType == RDKit::StereoGroupType::STEREO_OR || \
-         stereoGroupType == RDKit::StereoGroupType::STEREO_AND ) {
+      if (stereoGroupType == RDKit::StereoGroupType::STEREO_OR ||
+          stereoGroupType == RDKit::StereoGroupType::STEREO_AND) {
         for (const auto atom : group.getAtoms()) {
           maskedAtoms.set(atom->getIdx());
         }
@@ -490,8 +490,8 @@ void DrawMol::extractCIPCodes(bool showAllCIPCodes) {
     std::string cip;
     if (!maskedAtoms[atom->getIdx()] &&
         atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
-        cip = "(" + cip + ")";
-        DrawAnnotation *annot = new DrawAnnotation(
+      cip = "(" + cip + ")";
+      DrawAnnotation *annot = new DrawAnnotation(
           cip, TextAlignType::MIDDLE, "CIP_Code",
           drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
           drawOptions_.atomNoteColour, textDrawer_);
@@ -517,11 +517,11 @@ void DrawMol::extractCIPCodes(bool showAllCIPCodes) {
       if (!cip.empty()) {
         cip = "(" + cip + ")";
         DrawAnnotation *annot = new DrawAnnotation(
-          cip, TextAlignType::MIDDLE, "CIP_Code",
-          drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-          drawOptions_.bondNoteColour, textDrawer_);
-      calcAnnotationPosition(bond, *annot);
-      annotations_.emplace_back(annot);
+            cip, TextAlignType::MIDDLE, "CIP_Code",
+            drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+            drawOptions_.bondNoteColour, textDrawer_);
+        calcAnnotationPosition(bond, *annot);
+        annotations_.emplace_back(annot);
       }
     }
   }

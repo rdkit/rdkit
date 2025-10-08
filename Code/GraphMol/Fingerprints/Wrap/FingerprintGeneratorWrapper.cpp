@@ -9,7 +9,6 @@
 //
 
 #include <RDBoost/Wrap.h>
-#include <iostream>
 #include <string>
 #include <boost/python.hpp>
 #include <RDBoost/boost_numpy.h>

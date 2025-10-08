@@ -19,7 +19,6 @@
 #include <vector>
 #include <algorithm>
 #include <map>
-#include <iostream>
 #include <cstdint>
 
 #ifndef M_PI

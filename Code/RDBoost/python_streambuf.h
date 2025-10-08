@@ -28,7 +28,6 @@
 #include <RDGeneral/Exceptions.h>
 
 #include <streambuf>
-#include <iostream>
 
 namespace boost_adaptbx {
 namespace python {
