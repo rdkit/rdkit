@@ -460,7 +460,8 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
                      &RDKit::MolStandardize::CleanupParameters::
                          largestFragmentChooserCountHeavyAtomsOnly,
                      "whether LargestFragmentChooser should only count "
-                     "heavy atoms (defaults to False)");
+                     "heavy atoms (defaults to False)")
+      .def("__setattr__", &safeSetattr);
 
   python::def("UpdateParamsFromJSON",
               &RDKit::MolStandardize::updateCleanupParamsFromJSON,
