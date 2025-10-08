@@ -17,7 +17,6 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 
 #include <string>
-#include <iostream>
 
 namespace RDKit {
 namespace v2 {

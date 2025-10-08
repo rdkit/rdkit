@@ -12,7 +12,6 @@
 #ifndef RDKIT_DCLV_H
 #define RDKIT_DCLV_H
 
-#include <iostream>
 #include <string>
 #include <list>
 #include <cmath>

@@ -469,7 +469,7 @@ TEST_CASE("CDXML Advanced") {
     int i = 0;
     SmilesWriteParams wp;
     for (auto &mol : mols) {
-      auto tomol = std::unique_ptr<ROMol>((ROMol*)mol.release());
+      auto tomol = std::unique_ptr<ROMol>((ROMol *)mol.release());
       tomol.get()->clearConformers();
       RDKit::canonicalizeStereoGroups(tomol);
 
@@ -546,10 +546,11 @@ TEST_CASE("CDXML Advanced") {
     //   there were so many stereo warnings in chemdraw, I'm just going to
     //   assume the rdkit is correct here...
     auto fname = cdxmlbase + "chemdraw_template2.cdxml";
-    std::string talatisamine = "CCN1C[C@]2(COC)CCC(OC)[C@@]34[C@@H]5C[C@@H]6C(OC)C[C@@](O)([C@H]5[C@H]6O)[C@@H](C[C@H]23)[C@H]14";
+    std::string talatisamine =
+        "CCN1C[C@]2(COC)CCC(OC)[C@@]34[C@@H]5C[C@@H]6C(OC)C[C@@](O)([C@H]5[C@H]6O)[C@@H](C[C@H]23)[C@H]14";
     auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {
-      talatisamine, //0 
+        talatisamine,  // 0
         "*",
         "C",
         "[F]",
@@ -559,17 +560,17 @@ TEST_CASE("CDXML Advanced") {
         talatisamine,
         "*",
         "C",
-        "[F]", // 10
+        "[F]",  // 10
         "[B]",
         "[C]",
         "[2H]",
-	talatisamine,
+        talatisamine,
         "*",
         "C",
         "[F]",
         "[B]",
         "[C]",
-        "[2H]", // 20
+        "[2H]",  // 20
         talatisamine,
         "*",
         "C",
@@ -578,8 +579,8 @@ TEST_CASE("CDXML Advanced") {
         "[C]",
         "[2H]",
         talatisamine,
-	"CCN1C[C@]2(COC)CC[C@H](OC)[C@]34C1C(C[C@H]23)[C@@]1(O)CC(OC)[C@H]2C[C@@H]4[C@@H]1[C@H]2O",
-        "*", // 30
+        "CCN1C[C@]2(COC)CC[C@H](OC)[C@]34C1C(C[C@H]23)[C@@]1(O)CC(OC)[C@H]2C[C@@H]4[C@@H]1[C@H]2O",
+        "*",  // 30
         "[B]",
         "[C]",
         "[2H]",
@@ -589,7 +590,7 @@ TEST_CASE("CDXML Advanced") {
         "C",
         "[F]",
         "[B]",
-        "[C]", // 40
+        "[C]",  // 40
         "[2H]",
         talatisamine,
         "*",
@@ -599,7 +600,7 @@ TEST_CASE("CDXML Advanced") {
         "[C]",
         "[2H]",
         talatisamine,
-        "*", // 50
+        "*",  // 50
         "C",
         "[F]",
         "[B]",
@@ -609,7 +610,7 @@ TEST_CASE("CDXML Advanced") {
         "CC1=C(C(C)C)[C@@H](O)[C@@]2(O)[C@@]3(C)CC(=O)O[C@@]4([C@H](O)C(C)CC[C@]34O)[C@@]12O",
         "CC1=C[C@@]23OC(=O)C[C@@](C)([C@@]2(O)CC1)[C@]1(O)[C@H](O)C2(C(C)C)OC2(C)[C@@]31O",
         "*",
-        "[B]", // 60
+        "[B]",  // 60
         "[C]",
         "CC1CC[C@@H]2[C@]3(C)C[C@@H]4O[C@@]2(C1)C1[C@@H]3CC(C(C)C)C14C",
         "[2H]",
@@ -1210,7 +1211,7 @@ TEST_CASE("Github #7501 - dative bonds") {
     ChemDrawParserParams params;
     auto mols = MolsFromChemDrawFile(fname, params);
     CHECK(MolToSmiles(*mols[0]) ==
-	  "C[CH2](C)->[Os]12<-[CH3]CC[NH]->1CC=[NH]->2");  // All datives to the
+          "C[CH2](C)->[Os]12<-[CH3]CC[NH]->1CC=[NH]->2");  // All datives to the
                                                            // Osmium
   }
 }
@@ -1224,18 +1225,14 @@ TEST_CASE("Synthesis-workshop") {
     auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
-        "[B]",
-	"*",
-	"[C]",
+        "[B]", "*", "[C]",
         "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
         // this is may or may not be correct, but the structure is drawn
         // incorrectly.
         // There's a test below which fixes this
         "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
-        "Cc1ccc2ccc(=O)ccn12",
-	"Cc1cccn1[C@H](C)C=O",
-        "Cc1ccc2ccc([O-])cc[n+]1-2",
-	"Cc1ccc2ccc(=O)ccn12",
+        "Cc1ccc2ccc(=O)ccn12", "Cc1cccn1[C@H](C)C=O",
+        "Cc1ccc2ccc([O-])cc[n+]1-2", "Cc1ccc2ccc(=O)ccn12",
         "Cc1cccn1[C@H](C)C(C#N)O[Si](C)(C)C",
         "CC1CC[C@]2(O)[C@]3(C)C[C@]4(O)O[C@@]2([C@@H]1O)C1(O)C4(C)C(O)(C(C)C)[C@@H](OC(=O)c2ccc[nH]2)[C@]13O",
         "C=C(C)[C@H]1CC(=O)CC2=C(C1)[C@H]1C(=O)O[C@H]3C[C@@](C)(O)[C@@H](C2=O)[C@@H]13"};
@@ -1303,9 +1300,12 @@ TEST_CASE("Round TRIP") {
     RDLog::LogStateSetter blocker;
     for (const auto &entry :
          std::filesystem::recursive_directory_iterator(code_path)) {
-      if (entry.path().string().find("ChemDraw") != std::string::npos)
+      if (entry.path().string().find("ChemDraw") != std::string::npos) {
         continue;  // Skip ChemDraw directory
-      if (entry.path().string().find("build") != std::string::npos) continue;
+      }
+      if (entry.path().string().find("build") != std::string::npos) {
+        continue;
+      }
       if (entry.is_regular_file() &&
           entry.path().extension().string() == ".mol") {
         if (exceptions.find(entry.path().filename().string()) !=
@@ -1414,8 +1414,9 @@ TEST_CASE("Geometry") {
 }
 
 TEST_CASE("Test Reading Wrong File Format") {
-    std::string path = std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
-  SECTION("CDX as CDXML") { 
+  std::string path =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("CDX as CDXML") {
     auto fname = path + "ring-stereo1.cdx";
     ChemDrawParserParams params;
     params.format = CDXFormat::CDXML;
@@ -1427,7 +1428,7 @@ TEST_CASE("Test Reading Wrong File Format") {
     }
     REQUIRE(caught);
   }
- }
+}
 
 TEST_CASE("github8761") {
   std::string path =
@@ -1436,11 +1437,11 @@ TEST_CASE("github8761") {
     auto fname = path + "US12404367-20250902-C00017.CDX";
     auto mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size());
-    
+
     fname = path + "US12404367-20250902-C00025.CDX";
     mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size());
-  }    
+  }
 
   SECTION("Failing Patents") {
     std::filesystem::path patents(path + "patents");
@@ -1450,8 +1451,7 @@ TEST_CASE("github8761") {
       auto mols = MolsFromChemDrawFile(entry.path().generic_string(), params);
       // we just don't want a crash
 
-      std::
-          string block;
+      std::string block;
       std::fstream chemdrawfile(entry.path(), std::ios::in | std::ios::binary);
       std::stringstream buffer;
       buffer << chemdrawfile.rdbuf();

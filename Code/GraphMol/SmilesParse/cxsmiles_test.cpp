@@ -24,7 +24,6 @@
 #include "SmartsWrite.h"
 #include <RDGeneral/RDLog.h>
 #include <fstream>
-#include <iostream>
 
 constexpr bool GenerateExpectedFiles = false;
 

@@ -1098,7 +1098,7 @@ std::vector<std::vector<unsigned int>> contiguousAtoms(
 // add to the molecule a dummy atom centred on the
 // atoms passed in, with a dative bond from it to the metal atom.
 void addHapticBond(RWMol &mol, unsigned int metalIdx,
-                   std::vector<unsigned int> hapticAtoms) {
+                   const std::vector<unsigned int> &hapticAtoms) {
   // So there is a * in the V3000 file as the symbol for the atom.
   auto dummyAt = new QueryAtom(0);
   dummyAt->setQuery(makeAtomNullQuery());

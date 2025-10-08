@@ -95,21 +95,24 @@ void SetPos(Conformer *conf, np::ndarray const &array) {
   RDGeom::POINT3D_VECT &pos = conf->getPositions();
   if (array.shape(1) == 2) {
     for (size_t i = 0; i < conf->getNumAtoms(); ++i) {
-      pos[i].x = * reinterpret_cast<const double *>(dataptr + i * stride_atom);
-      pos[i].y = * reinterpret_cast<const double *>(dataptr + i * stride_atom + stride_dim);
+      pos[i].x = *reinterpret_cast<const double *>(dataptr + i * stride_atom);
+      pos[i].y = *reinterpret_cast<const double *>(dataptr + i * stride_atom +
+                                                   stride_dim);
       pos[i].z = 0.0;
     }
   } else {
     for (size_t i = 0; i < conf->getNumAtoms(); ++i) {
-      pos[i].x = * reinterpret_cast<const double *>(dataptr + i * stride_atom);
-      pos[i].y = * reinterpret_cast<const double *>(dataptr + i * stride_atom + stride_dim);
-      pos[i].z = * reinterpret_cast<const double *>(dataptr + i * stride_atom + 2 * stride_dim);
+      pos[i].x = *reinterpret_cast<const double *>(dataptr + i * stride_atom);
+      pos[i].y = *reinterpret_cast<const double *>(dataptr + i * stride_atom +
+                                                   stride_dim);
+      pos[i].z = *reinterpret_cast<const double *>(dataptr + i * stride_atom +
+                                                   2 * stride_dim);
     }
   }
 }
 void SetAtomPos(Conformer *conf, unsigned int aid, python::object loc) {
   // const std::vector<double> &loc) {
-  int dim = python::extract<int>(loc.attr("__len__")());
+  unsigned int dim = python::len(loc);
   CHECK_INVARIANT(dim == 3, "");
   PySequenceHolder<double> pdata(loc);
   RDGeom::Point3D pt(pdata[0], pdata[1], pdata[2]);
@@ -154,8 +157,8 @@ struct conformer_wrapper {
         .def("SetAtomPosition", SetAtomPos, python::args("self", "aid", "loc"),
              "Set the position of the specified atom\n")
         .def("SetAtomPosition",
-             (void(Conformer::*)(unsigned int, const RDGeom::Point3D &)) &
-                 Conformer::setAtomPos,
+             (void (Conformer::*)(
+                 unsigned int, const RDGeom::Point3D &))&Conformer::setAtomPos,
              python::args("self", "atomId", "position"),
              "Set the position of the specified atom\n")
 
@@ -294,7 +297,7 @@ struct conformer_wrapper {
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false,
               python::arg("autoConvertStrings") = true),
-	     getPropsAsDictDocString.c_str());
+             getPropsAsDictDocString.c_str());
   };
 };
 }  // namespace RDKit

@@ -13,7 +13,6 @@
 #include <cmath>
 #include "Params.h"
 
-#include <iostream>
 #include <sstream>
 #include <RDGeneral/StreamOps.h>
 #include <boost/lexical_cast.hpp>

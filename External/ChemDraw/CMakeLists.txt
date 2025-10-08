@@ -95,6 +95,10 @@ endif()
       endif(RDK_INSTALL_STATIC_LIBS)
   endif()
 
+  if(TARGET ChemDraw_static)
+    target_link_libraries(ChemDraw_static PUBLIC expat)
+  endif()
+
   install(TARGETS ChemDraw DESTINATION ${RDKit_LibDir})
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

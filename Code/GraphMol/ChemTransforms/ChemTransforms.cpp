@@ -23,7 +23,6 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <vector>
 #include <algorithm>
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <GraphMol/SmilesParse/SmilesParse.h>
