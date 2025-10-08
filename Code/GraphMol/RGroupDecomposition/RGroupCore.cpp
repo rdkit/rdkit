@@ -419,21 +419,22 @@ void RCore::buildMatchingMol() {
     if (atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
         isDummyRGroupAttachment(*atom)) {
       // if we are a query in disguise, don't strip
-      if(atom->hasQuery()) {
+      if (atom->hasQuery()) {
         auto q = atom->getQuery()->getDescription();
-	// If we are anything but AtomNull or AtomAtomicNum we are not
-	//  fully a dummy atom
-	if(q != "AtomNull" && q != "AtomAtomicNum") {
-	  unsigned int type=0xFFFFFFFF;
-	  //  If we are were set as an RLABEL of type Isotope we probably
-	  //   have a query of named "AtomIsotope"
-	  //   we DO strip these unless they have an additional query
-	  if(!atom->getPropIfPresent(RLABEL_TYPE, type) || type != RGroupLabels::IsotopeLabels || q != "AtomIsotope") {
-	    continue;
-	  }
-	}
+        // If we are anything but AtomNull or AtomAtomicNum we are not
+        //  fully a dummy atom
+        if (q != "AtomNull" && q != "AtomAtomicNum") {
+          unsigned int type = 0xFFFFFFFF;
+          //  If we are were set as an RLABEL of type Isotope we probably
+          //   have a query of named "AtomIsotope"
+          //   we DO strip these unless they have an additional query
+          if (!atom->getPropIfPresent(RLABEL_TYPE, type) ||
+              type != RGroupLabels::IsotopeLabels || q != "AtomIsotope") {
+            continue;
+          }
+        }
       }
-      
+
       // remove terminal user R groups and map the index of the core neighbor
       // atom to the index of the removed terminal R group
       const int neighborIdx = *matchingMol->getAtomNeighbors(atom).first;
