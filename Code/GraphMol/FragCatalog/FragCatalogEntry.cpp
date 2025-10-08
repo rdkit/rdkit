@@ -17,7 +17,6 @@
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <cstdlib>
-#include <iostream>
 #include <fstream>
 #include <cstdint>
 #include <RDGeneral/hash/hash.hpp>

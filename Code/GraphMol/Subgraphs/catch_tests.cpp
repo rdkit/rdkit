@@ -14,7 +14,6 @@
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 
-#include <iostream>
 #include <algorithm>
 
 using namespace RDKit;

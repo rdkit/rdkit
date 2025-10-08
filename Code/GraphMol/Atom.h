@@ -16,9 +16,6 @@
 #ifndef _RD_ATOM_H
 #define _RD_ATOM_H
 
-// Std stuff
-#include <iostream>
-
 // ours
 #include <RDGeneral/Invariant.h>
 #include <Query/QueryObjects.h>

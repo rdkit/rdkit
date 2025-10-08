@@ -23,7 +23,6 @@
 #include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/MaxMinPicker.h>
 #include <SimDivPickers/HierarchicalClusterPicker.h>
-#include <iostream>
 #include <utility>
 
 namespace python = boost::python;

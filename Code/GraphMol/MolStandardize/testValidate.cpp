@@ -16,8 +16,6 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Chirality.h>
 
-#include <iostream>
-
 using namespace RDKit;
 using namespace std;
 using namespace MolStandardize;

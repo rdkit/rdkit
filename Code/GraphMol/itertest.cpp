@@ -14,7 +14,6 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/RDLog.h>
 
-#include <iostream>
 #include <cstdlib>
 #include <vector>
 

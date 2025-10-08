@@ -22,7 +22,6 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <sstream>
-#include <iostream>
 #include <boost/format.hpp>
 #include <boost/range/iterator_range.hpp>
 
