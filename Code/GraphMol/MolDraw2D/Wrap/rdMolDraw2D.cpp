@@ -1384,7 +1384,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("setContourColour", &RDKit::setContourColour,
            (python::arg("self"), python::arg("colour")))
       .def("setColourMap", &RDKit::setColoursHelper,
-           (python::arg("self"), python::arg("colours")));
+           (python::arg("self"), python::arg("colours")))
+      .def("__setattr__", &safeSetattr);
+
   docString = R"DOC(Generates and draws contours for a set of gaussians
 
   - drawer: the MolDraw2D object to use

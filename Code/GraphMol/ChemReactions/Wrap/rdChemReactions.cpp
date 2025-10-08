@@ -563,7 +563,8 @@ BOOST_PYTHON_MODULE(rdChemReactions) {
       .def_readwrite("agentWeight",
                      &RDKit::ReactionFingerprintParams::agentWeight)
       .def_readwrite("includeAgents",
-                     &RDKit::ReactionFingerprintParams::includeAgents);
+                     &RDKit::ReactionFingerprintParams::includeAgents)
+      .def("__setattr__", &safeSetattr);
 
   std::string docString =
       R"DOC(A class for storing and applying chemical reactions.

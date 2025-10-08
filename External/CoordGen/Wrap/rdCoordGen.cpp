@@ -16,6 +16,7 @@
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <CoordGen/CoordGen.h>
+#include <RDBoost/Wrap.h>
 
 namespace python = boost::python;
 
@@ -90,7 +91,9 @@ struct coordgen_wrapper {
                        "controls sketcher precision")
         .def_readwrite(
             "treatNonterminalBondsToMetalAsZOBs",
-            &CoordGen::CoordGenParams::treatNonterminalBondsToMetalAsZeroOrder);
+            &CoordGen::CoordGenParams::treatNonterminalBondsToMetalAsZeroOrder)
+        .def("__setattr__", &safeSetattr);
+
     python::def("SetDefaultTemplateFileDir", SetDefaultTemplateFileDir,
                 python::args("dir"));
     docString =
