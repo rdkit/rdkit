@@ -81,7 +81,7 @@ struct DefaultValueCache {
     }
     if (const auto fobj = bjDefaults.if_object()) {
       if (const auto kit = fobj->find(key); kit != fobj->end()) {
-        const auto &val = kit->value().if_bool();
+        const auto val = kit->value().if_bool();
         if (!val) {
           throw FileParseException(std::string("Bad format: value of ") +
                                    std::string(key) +
@@ -171,6 +171,11 @@ void readAtom(RWMol *mol, const bj::value &atomVal,
               const DefaultValueCache &atomDefaults,
               const JSONParseParameters &params) {
   PRECONDITION(mol, "no mol");
+  std::string stereo = getStringDefaultValue("stereo", atomVal, atomDefaults);
+  auto stereoVal = chilookup.find(stereo);
+  if (stereoVal == chilookup.end()) {
+    throw FileParseException("Bad Format: bad stereo value for atom");
+  }
   Atom *at = new Atom(getIntDefaultValue("z", atomVal, atomDefaults));
   if (params.useHCounts) {
     at->setNoImplicit(true);
@@ -179,12 +184,7 @@ void readAtom(RWMol *mol, const bj::value &atomVal,
   at->setFormalCharge(getIntDefaultValue("chg", atomVal, atomDefaults));
   at->setNumRadicalElectrons(getIntDefaultValue("nRad", atomVal, atomDefaults));
   at->setIsotope(getIntDefaultValue("isotope", atomVal, atomDefaults));
-  std::string stereo = getStringDefaultValue("stereo", atomVal, atomDefaults);
-  if (chilookup.find(stereo) == chilookup.end()) {
-    delete at;
-    throw FileParseException("Bad Format: bad stereo value for atom");
-  }
-  at->setChiralTag(chilookup.find(stereo)->second);
+  at->setChiralTag(stereoVal->second);
   bool updateLabel = false, takeOwnership = true;
   mol->addAtom(at, updateLabel, takeOwnership);
 }
@@ -192,16 +192,17 @@ void readAtom(RWMol *mol, const bj::value &atomVal,
 void readBond(RWMol *mol, const bj::value &bondVal,
               const DefaultValueCache &bondDefaults, bool &needStereoLoop) {
   PRECONDITION(mol, "no mol");
-  const auto &aids = bondVal.at("atoms").as_array();
-  unsigned int bid = mol->addBond(static_cast<int>(aids[0].as_int64()),
-                                  static_cast<int>(aids[1].as_int64())) -
-                     1;
-  Bond *bnd = mol->getBondWithIdx(bid);
   unsigned int bo = getIntDefaultValue("bo", bondVal, bondDefaults);
-  if (bolookup.find(bo) == bolookup.end()) {
+  auto bondOrder = bolookup.find(bo);
+  if (bondOrder == bolookup.end()) {
     throw FileParseException("Bad Format: bad bond order for bond");
   }
-  bnd->setBondType(bolookup.find(bo)->second);
+  const auto &aids = bondVal.at("atoms").as_array();
+  Bond *bnd = new Bond();
+  bnd->setBeginAtomIdx(static_cast<int>(aids.at(0).as_int64()));
+  bnd->setEndAtomIdx(static_cast<int>(aids.at(1).as_int64()));
+  bnd->setBondType(bondOrder->second);
+  mol->addBond(bnd);
   std::string stereo = getStringDefaultValue("stereo", bondVal, bondDefaults);
   if (stereo != "unspecified") {
     needStereoLoop = true;
