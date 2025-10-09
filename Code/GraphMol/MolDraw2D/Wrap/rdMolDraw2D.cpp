@@ -519,6 +519,13 @@ void setAtomPalette(RDKit::MolDrawOptions &self, python::object cmap) {
   self.atomColourPalette.clear();
   updateAtomPalette(self, cmap);
 }
+python::dict getAtomPalette(const RDKit::MolDrawOptions &self) {
+  python::dict res;
+  for (const auto &pair : self.atomColourPalette) {
+    res[pair.first] = colourToPyTuple(pair.second);
+  }
+  return res;
+}
 
 void setMonochromeMode_helper1(RDKit::MolDrawOptions &options, python::tuple fg,
                                python::tuple bg) {
@@ -629,10 +636,21 @@ void setColoursHelper(RDKit::MolDraw2DUtils::ContourParams &params,
   }
   params.colourMap = cs;
 }
-
+python::tuple getColoursHelper(
+    const RDKit::MolDraw2DUtils::ContourParams &params) {
+  python::list res;
+  for (const auto &clr : params.colourMap) {
+    res.append(colourToPyTuple(clr));
+  }
+  return python::tuple(res);
+}
 void setContourColour(RDKit::MolDraw2DUtils::ContourParams &params,
                       python::tuple tpl) {
   params.contourColour = pyTupleToDrawColour(tpl);
+}
+python::object getContourColour(
+    const RDKit::MolDraw2DUtils::ContourParams &params) {
+  return colourToPyTuple(params.contourColour);
 }
 void drawPolygonHelper(RDKit::MolDraw2D &self, python::object py_cds,
                        bool rawCoords) {
@@ -786,6 +804,38 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      &RDKit::MolDrawOptions::dummiesAreAttachments)
       .def_readwrite("circleAtoms", &RDKit::MolDrawOptions::circleAtoms)
       .def_readwrite("splitBonds", &RDKit::MolDrawOptions::splitBonds)
+      .add_property(
+          "backgroundColour", &RDKit::getBgColour, &RDKit::setBgColour,
+          "the background colour as an (R,G,B,A) tuple, values should be between 0 and 1")
+      .add_property(
+          "queryColour", &RDKit::getQyColour, &RDKit::setQyColour,
+          "the query colour as an (R,G,B,A) tuple, values should be between 0 and 1")
+      .add_property(
+          "highlightColour", &RDKit::getHighlightColour,
+          &RDKit::setHighlightColour,
+          "the highlight colour as an (R,G,B,A) tuple, values should be between 0 and 1")
+      .add_property(
+          "symbolColour", &RDKit::getSymbolColour, &RDKit::setSymbolColour,
+          "the symbol colour as an (R,G,B,A) tuple, values should be between 0 and 1")
+      .add_property(
+          "annotationColour", &RDKit::getAnnotationColour,
+          &RDKit::setAnnotationColour,
+          "the annotation colour as an (R,G,B,A) tuple, values should be between 0 and 1")
+      .add_property(
+          "atomNoteColour", &RDKit::getAtomNoteColour,
+          &RDKit::setAtomNoteColour,
+          "the atom note colour as an (R,G,B,A) tuple, values should be between 0 and 1")
+      .add_property(
+          "bondNoteColour", &RDKit::getBondNoteColour,
+          &RDKit::setBondNoteColour,
+          "the bond note colour as an (R,G,B,A) tuple, values should be between 0 and 1")
+      .add_property(
+          "legendColour", &RDKit::getLegendColour, &RDKit::setLegendColour,
+          "the legend colour as an (R,G,B,A) tuple, values should be between 0 and 1")
+      .add_property(
+          "variableAttachmentColour", &RDKit::getVariableAttachmentColour,
+          &RDKit::setVariableAttachmentColour,
+          "the variable attachment colour as an (R,G,B,A) tuple, values should be between 0 and 1")
       .def("getBackgroundColour", &RDKit::getBgColour, python::args("self"),
            "method returning the background colour")
       .def("getQueryColour", &RDKit::getQyColour, python::args("self"),
@@ -843,6 +893,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           python::args("self", "cmap"),
           "sets the palette for atoms and bonds from a dictionary mapping ints "
           "to 3-tuples")
+      .def("getAtomPalette", &RDKit::getAtomPalette, python::args("self"),
+           "returns the current atom palette as a dictionary mapping ints "
+           "to 4-tuples")
       .def_readwrite("atomLabels", &RDKit::MolDrawOptions::atomLabels,
                      "maps indices to atom labels")
       .def_readwrite("atomLabelDeuteriumTritium",
@@ -1135,8 +1188,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("FillPolys", &RDKit::MolDraw2D::fillPolys, python::args("self"),
            "returns whether or not polygons are being filled")
       .def("DrawLine",
-           (void (RDKit::MolDraw2D::*)(const Point2D &, const Point2D &,
-                                       bool))&RDKit::MolDraw2D::drawLine,
+           (void(RDKit::MolDraw2D::*)(const Point2D &, const Point2D &, bool)) &
+               RDKit::MolDraw2D::drawLine,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("rawCoords") = false),
            "draws a line with the current drawing style. The coordinates "
@@ -1185,8 +1238,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame unless rawCoords is true, "
            "in which case the coordinates are in pixels.")
       .def("DrawArc",
-           (void (RDKit::MolDraw2D::*)(const Point2D &, double, double, double,
-                                       bool))&RDKit::MolDraw2D::drawArc,
+           (void(RDKit::MolDraw2D::*)(const Point2D &, double, double, double,
+                                      bool)) &
+               RDKit::MolDraw2D::drawArc,
            (python::arg("self"), python::arg("center"), python::arg("radius"),
             python::arg("angle1"), python::arg("angle2"),
             python::arg("rawCoords") = false),
@@ -1215,9 +1269,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame unless rawCoords is true, "
            "in which case the coordinates are in pixels.")
       .def("DrawString",
-           (void (RDKit::MolDraw2D::*)(const std::string &,
-                                       const RDGeom::Point2D &,
-                                       bool))&RDKit::MolDraw2D::drawString,
+           (void(RDKit::MolDraw2D::*)(const std::string &,
+                                      const RDGeom::Point2D &, bool)) &
+               RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos"),
             python::arg("rawCoords") = false),
            "add text to the canvas. The coordinates "
@@ -1232,14 +1286,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame unless rawCoords is true, "
            "in which case the coordinates are in pixels.")
       .def("GetDrawCoords",
-           (RDGeom::Point2D (RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
+           (RDGeom::Point2D(RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
                 const) &
                RDKit::MolDraw2D::getDrawCoords,
            (python::arg("self"), python::arg("point")),
            "get the coordinates in drawing space for a particular point in "
            "molecule space")
       .def("GetDrawCoords",
-           (RDGeom::Point2D (RDKit::MolDraw2D::*)(int) const) &
+           (RDGeom::Point2D(RDKit::MolDraw2D::*)(int) const) &
                RDKit::MolDraw2D::getDrawCoords,
            (python::arg("self"), python::arg("atomIndex")),
            "get the coordinates in drawing space for a particular atom")
@@ -1269,7 +1323,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            python::args("self"),
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata",
-           (void (RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
+           (void(RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
                RDKit::MolDraw2DSVG::addMoleculeMetadata,
            ((python::arg("self"), python::arg("mol")),
             python::arg("confId") = -1),
@@ -1381,6 +1435,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "fillThresholdIsFraction",
           &RDKit::MolDraw2DUtils::ContourParams::fillThresholdIsFraction,
           "if true, fillThreshold is a fraction of the range of the data")
+      .add_property("colourMap", &RDKit::getColoursHelper,
+                    &RDKit::setColoursHelper,
+                    "the color map to use when filling the grid")
+      .add_property("contourColour", &RDKit::getContourColour,
+                    &RDKit::setContourColour,
+                    "the color to use for drawing the contours")
       .def("setContourColour", &RDKit::setContourColour,
            (python::arg("self"), python::arg("colour")))
       .def("setColourMap", &RDKit::setColoursHelper,
@@ -1516,9 +1576,10 @@ https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_draw
               (python::arg("mol"), python::arg("confId") = -1),
               "Calculate the mean bond length for the molecule.");
   python::def("SetDarkMode",
-              (void (*)(RDKit::MolDrawOptions &))&RDKit::setDarkMode,
+              (void (*)(RDKit::MolDrawOptions &)) & RDKit::setDarkMode,
               python::args("d2d"), "set dark mode for a MolDrawOptions object");
-  python::def("SetDarkMode", (void (*)(RDKit::MolDraw2D &))&RDKit::setDarkMode,
+  python::def("SetDarkMode",
+              (void (*)(RDKit::MolDraw2D &)) & RDKit::setDarkMode,
               python::args("d2d"), "set dark mode for a MolDraw2D object");
   python::def("SetMonochromeMode", RDKit::setMonochromeMode_helper1,
               (python::arg("options"), python::arg("fgColour"),
