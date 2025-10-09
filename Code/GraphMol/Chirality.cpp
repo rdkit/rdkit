@@ -559,10 +559,11 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   //----------------------------------------------------------
   //
   //  Continue if there are all single bonds or if we're considering
-  //  4-coordinate P or S
+  //  4-coordinate P or S or B
   //
   //----------------------------------------------------------
-  if (allSingle || atom->getAtomicNum() == 15 || atom->getAtomicNum() == 16) {
+  if (allSingle || atom->getAtomicNum() == 15 || atom->getAtomicNum() == 16 ||
+      atom->getAtomicNum() == 5) {
     double vol;
     unsigned int order[4] = {0, 1, 2, 3};
     double prefactor = 1;
