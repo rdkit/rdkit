@@ -196,9 +196,9 @@ void addQuery(const Q &query, bj::object &bjQuery,
     for (auto cit = query.beginChildren(); cit != query.endChildren(); ++cit) {
       bj::object child;
       addQuery(**cit, child, params);
-      children.push_back(child);
+      children.push_back(std::move(child));
     }
-    bjQuery["children"] = children;
+    bjQuery["children"] = std::move(children);
   }
 }
 
@@ -222,7 +222,7 @@ void addBond(const Bond &bond, bj::object &bjBond, const bj::object &bjDefaults,
   bj::array bjAtoms;
   bjAtoms.push_back(static_cast<int>(bond.getBeginAtomIdx()));
   bjAtoms.push_back(static_cast<int>(bond.getEndAtomIdx()));
-  bjBond["atoms"] = bjAtoms;
+  bjBond["atoms"] = std::move(bjAtoms);
 
   std::string chi = "";
   if (auto sbIter = inv_stereoBondlookup.find(bond.getStereo());
@@ -237,32 +237,39 @@ void addBond(const Bond &bond, bj::object &bjBond, const bj::object &bjDefaults,
     bj::array bjStereoAtoms;
     bjStereoAtoms.push_back(static_cast<int>(bond.getStereoAtoms()[0]));
     bjStereoAtoms.push_back(static_cast<int>(bond.getStereoAtoms()[1]));
-    bjBond["stereoAtoms"] = bjStereoAtoms;
+    bjBond["stereoAtoms"] = std::move(bjStereoAtoms);
   }
 }
 
 template <typename T>
 void addProperties(const T &obj, const std::vector<std::string> &propNames,
                    bj::object &properties) {
-  for (const auto &pN : propNames) {
-    try {
-      auto val = obj.template getProp<int>(pN);
-      properties[pN] = val;
-    } catch (const std::bad_any_cast &) {
-      try {
-        auto val = obj.template getProp<double>(pN);
-        properties[pN] = val;
-      } catch (const std::bad_any_cast &) {
+  const auto &data = obj.getDict().getData();
+
+  for (auto &rdvalue : data) {
+    if (std::find(propNames.begin(), propNames.end(), rdvalue.key) ==
+        propNames.end()) {
+      continue;
+    }
+    const auto tag = rdvalue.val.getTag();
+    switch (tag) {
+      case RDTypeTag::IntTag:
+      case RDTypeTag::UnsignedIntTag:
+        properties[rdvalue.key] = from_rdvalue<int>(rdvalue.val);
+        break;
+      case RDTypeTag::DoubleTag:
+      case RDTypeTag::FloatTag:
+        properties[rdvalue.key] = from_rdvalue<double>(rdvalue.val);
+        break;
+      default:
         try {
-          auto val = obj.template getProp<std::string>(pN);
-          properties[pN] = val;
+          properties[rdvalue.key] = from_rdvalue<std::string>(rdvalue.val);
         } catch (const std::bad_any_cast &) {
           BOOST_LOG(rdWarningLog)
-              << "Warning: Could not convert property " << pN
+              << "Warning: Could not convert property " << rdvalue.key
               << " to a recognized type. Skipping it." << std::endl;
-          continue;
         }
-      }
+        break;
     }
   }
 }
@@ -273,7 +280,7 @@ void addSubstanceGroup(const SubstanceGroup &sg, bj::object &bjSG) {
   if (propNames.size()) {
     bj::object properties;
     addProperties(sg, propNames, properties);
-    bjSG["properties"] = properties;
+    bjSG["properties"] = std::move(properties);
   }
 
   if (!sg.getAtoms().empty()) {
@@ -281,21 +288,21 @@ void addSubstanceGroup(const SubstanceGroup &sg, bj::object &bjSG) {
     for (const auto idx : sg.getAtoms()) {
       bjArr.push_back(static_cast<int>(idx));
     }
-    bjSG["atoms"] = bjArr;
+    bjSG["atoms"] = std::move(bjArr);
   }
   if (!sg.getBonds().empty()) {
     bj::array bjArr;
     for (const auto idx : sg.getBonds()) {
       bjArr.push_back(static_cast<int>(idx));
     }
-    bjSG["bonds"] = bjArr;
+    bjSG["bonds"] = std::move(bjArr);
   }
   if (!sg.getParentAtoms().empty()) {
     bj::array bjArr;
     for (const auto idx : sg.getParentAtoms()) {
       bjArr.push_back(static_cast<int>(idx));
     }
-    bjSG["parentAtoms"] = bjArr;
+    bjSG["parentAtoms"] = std::move(bjArr);
   }
   if (!sg.getBrackets().empty()) {
     bj::array bjArr;
@@ -308,9 +315,9 @@ void addSubstanceGroup(const SubstanceGroup &sg, bj::object &bjSG) {
         bjPos.push_back(pt.z);
         bjBrk.push_back(bjPos);
       }
-      bjArr.push_back(bjBrk);
+      bjArr.push_back(std::move(bjBrk));
     }
-    bjSG["brackets"] = bjArr;
+    bjSG["brackets"] = std::move(bjArr);
   }
 
   if (!sg.getCStates().empty()) {
@@ -325,9 +332,9 @@ void addSubstanceGroup(const SubstanceGroup &sg, bj::object &bjSG) {
         bjLoc.push_back(cs.vector.z);
         bjCS["vector"] = bjLoc;
       }
-      bjArr.push_back(bjCS);
+      bjArr.push_back(std::move(bjCS));
     }
-    bjSG["cstates"] = bjArr;
+    bjSG["cstates"] = std::move(bjArr);
   }
 
   if (!sg.getAttachPoints().empty()) {
@@ -341,9 +348,9 @@ void addSubstanceGroup(const SubstanceGroup &sg, bj::object &bjSG) {
       if (!ap.id.empty()) {
         bjAP["id"] = ap.id;
       }
-      bjArr.push_back(bjAP);
+      bjArr.push_back(std::move(bjAP));
     }
-    bjSG["attachPoints"] = bjArr;
+    bjSG["attachPoints"] = std::move(bjArr);
   }
 }
 
@@ -363,14 +370,14 @@ void addStereoGroup(const StereoGroup &sg, bj::object &bjSG) {
     for (const auto atm : sg.getAtoms()) {
       bjAtoms.push_back(static_cast<int>(atm->getIdx()));
     }
-    bjSG["atoms"] = bjAtoms;
+    bjSG["atoms"] = std::move(bjAtoms);
   }
   if (!sg.getBonds().empty()) {
     bj::array bjBonds;
     for (const auto bnd : sg.getBonds()) {
       bjBonds.push_back(static_cast<int>(bnd->getIdx()));
     }
-    bjSG["bonds"] = bjBonds;
+    bjSG["bonds"] = std::move(bjBonds);
   }
 }
 
@@ -388,9 +395,9 @@ void addConformer(const Conformer &conf, bj::object &bjConf) {
     if (dim == 3) {
       bjPos.push_back(pos.z);
     }
-    bjCoords.push_back(bjPos);
+    bjCoords.push_back(std::move(bjPos));
   }
-  bjConf["coords"] = bjCoords;
+  bjConf["coords"] = std::move(bjCoords);
 }
 
 template <typename T>
@@ -415,38 +422,40 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
     const std::string &nm = mol.getProp<std::string>(common_properties::_Name);
     rjMol["name"] = nm;
   }
-  bj::array rjAtoms;
   bool hasQueryAtoms = false;
-  for (const auto &at : mol.atoms()) {
-    bj::object rjAtom;
-    addAtom(*at, rjAtom, atomDefaults);
-    rjAtoms.push_back(rjAtom);
-    if (at->hasQuery()) {
-      hasQueryAtoms = true;
+  {
+    bj::array rjAtoms;
+    for (const auto &at : mol.atoms()) {
+      bj::object rjAtom;
+      addAtom(*at, rjAtom, atomDefaults);
+      rjAtoms.push_back(std::move(rjAtom));
+      if (at->hasQuery()) {
+        hasQueryAtoms = true;
+      }
     }
+    rjMol["atoms"] = std::move(rjAtoms);
   }
-  rjMol["atoms"] = rjAtoms;
-
-  bj::array rjBonds;
   bool hasQueryBonds = false;
-  for (const auto &bnd : mol.bonds()) {
-    bj::object rjBond;
-    addBond(*bnd, rjBond, bondDefaults, params);
-    rjBonds.push_back(rjBond);
-    if (bnd->hasQuery()) {
-      hasQueryBonds = true;
+  {
+    bj::array rjBonds;
+    for (const auto &bnd : mol.bonds()) {
+      bj::object rjBond;
+      addBond(*bnd, rjBond, bondDefaults, params);
+      rjBonds.push_back(std::move(rjBond));
+      if (bnd->hasQuery()) {
+        hasQueryBonds = true;
+      }
     }
+    rjMol["bonds"] = std::move(rjBonds);
   }
-  rjMol["bonds"] = rjBonds;
-
   if (params.useRDKitExtensions && !mol.getStereoGroups().empty()) {
     bj::array rjStereoGroups;
     for (const auto &sg : mol.getStereoGroups()) {
       bj::object rjSG;
       addStereoGroup(sg, rjSG);
-      rjStereoGroups.push_back(rjSG);
+      rjStereoGroups.push_back(std::move(rjSG));
     }
-    rjMol["stereoGroups"] = rjStereoGroups;
+    rjMol["stereoGroups"] = std::move(rjStereoGroups);
   }
 
   if (params.useRDKitExtensions && !getSubstanceGroups(mol).empty()) {
@@ -454,9 +463,9 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
     for (const auto &sg : getSubstanceGroups(mol)) {
       bj::object rjSG;
       addSubstanceGroup(sg, rjSG);
-      rjSubstanceGroups.push_back(rjSG);
+      rjSubstanceGroups.push_back(std::move(rjSG));
     }
-    rjMol["substanceGroups"] = rjSubstanceGroups;
+    rjMol["substanceGroups"] = std::move(rjSubstanceGroups);
   }
 
   if (mol.getNumConformers()) {
@@ -465,10 +474,10 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
          ++conf) {
       bj::object rjConf;
       addConformer(*(conf->get()), rjConf);
-      rjConfs.push_back(rjConf);
+      rjConfs.push_back(std::move(rjConf));
     }
 
-    rjMol["conformers"] = rjConfs;
+    rjMol["conformers"] = std::move(rjConfs);
   }
 
   bool includePrivate = false, includeComputed = false;
@@ -476,7 +485,7 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
   if (propNames.size()) {
     bj::object properties;
     addProperties(mol, propNames, properties);
-    rjMol["properties"] = properties;
+    rjMol["properties"] = std::move(properties);
   }
 
   bj::object representation;
@@ -499,7 +508,7 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
           rjArr.push_back(atom->getIdx());
         }
       }
-      representation["aromaticAtoms"] = rjArr;
+      representation["aromaticAtoms"] = std::move(rjArr);
     }
     {
       bj::array rjArr;
@@ -508,7 +517,7 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
           rjArr.push_back(bond->getIdx());
         }
       }
-      representation["aromaticBonds"] = rjArr;
+      representation["aromaticBonds"] = std::move(rjArr);
     }
   }
   {
@@ -520,7 +529,7 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
       }
     }
     if (!rjArr.empty()) {
-      representation["cipRanks"] = rjArr;
+      representation["cipRanks"] = std::move(rjArr);
     }
   }
   {
@@ -535,7 +544,7 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
       }
     }
     if (!rjArr.empty()) {
-      representation["cipCodes"] = rjArr;
+      representation["cipCodes"] = std::move(rjArr);
     }
   }
   if (mol.getRingInfo()->numRings()) {
@@ -548,7 +557,7 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
         }
         rjArr.push_back(rjRing);
       }
-      representation["atomRings"] = rjArr;
+      representation["atomRings"] = std::move(rjArr);
     }
   }
 
@@ -572,8 +581,8 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
       }
       rjArr.push_back(rjval);
     }
-    chargeRep["values"] = rjArr;
-    rjReprs.push_back(chargeRep);
+    chargeRep["values"] = std::move(rjArr);
+    rjReprs.push_back(std::move(chargeRep));
   }
 
   if (hasQueryAtoms || hasQueryBonds) {
@@ -589,9 +598,9 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
         if (atom->hasQuery()) {
           addQuery(*atom->getQuery(), rjQ, params);
         }
-        rjArr.push_back(rjQ);
+        rjArr.push_back(std::move(rjQ));
       }
-      queryRep["atomQueries"] = rjArr;
+      queryRep["atomQueries"] = std::move(rjArr);
     }
     if (hasQueryBonds) {
       bj::array rjArr;
@@ -600,13 +609,13 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
         if (bond->hasQuery()) {
           addQuery(*bond->getQuery(), rjQ, params);
         }
-        rjArr.push_back(rjQ);
+        rjArr.push_back(std::move(rjQ));
       }
-      queryRep["bondQueries"] = rjArr;
+      queryRep["bondQueries"] = std::move(rjArr);
     }
-    rjReprs.push_back(queryRep);
+    rjReprs.push_back(std::move(queryRep));
   }
-  rjMol["extensions"] = rjReprs;
+  rjMol["extensions"] = std::move(rjReprs);
 }
 }  // end of anonymous namespace
 
@@ -643,9 +652,9 @@ std::string MolsToJSONData(const std::vector<T> &mols,
     // write mol;
     addMol(*mol, bjMol, defaults["atom"].as_object(),
            defaults["bond"].as_object(), params);
-    bjMols.push_back(bjMol);
+    bjMols.push_back(std::move(bjMol));
   }
-  doc["molecules"] = bjMols;
+  doc["molecules"] = std::move(bjMols);
 
   return bj::serialize(doc);
 };
