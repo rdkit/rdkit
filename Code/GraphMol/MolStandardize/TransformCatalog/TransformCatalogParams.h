@@ -17,7 +17,6 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <string>
 #include <vector>
-#include <iostream>
 
 namespace RDKit {
 class ROMol;

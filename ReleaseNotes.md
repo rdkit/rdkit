@@ -1,4 +1,29 @@
-# Release_2025.09.1b1
+# Release_2026.03.1
+(Changes relative to Release_2025.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+## Highlights
+
+## Backwards incompatible changes:
+- Simple AND queries are now merged into atoms. E.g. `[C&+]` now produces the
+  the same result as `[C+]` when parsed as SMARTS.
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+
+## Cleanup work:
+
+## Code removed in this release:
+
+## Deprecated code (to be removed in a future release):
+
+
+# Release_2025.09.1
 (Changes relative to Release_2025.03.1)
 
 ## Acknowledgements
@@ -6,17 +31,21 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
-Jakub Adamczyk, Chris Von Bargen, Jason Biggs, Anna Brünisholz, Kevin Boyd,
-Filip Chmielewski, Michael Cho, Brian Cole, David Cosgrove, Nia Dickson, Maria
-Dolotova, Genevieve Evans, Hussein Faara, Noah Herrington, Tad Hurst, Eisuke
-Kawashima, Kevin Keating, Brian Kelley, Jakub Klinkovský, Patrick Kunzmann,
-Niels Maeder, Mark Mackey, Jeremy Monat, Dan Nealschneider, Axel Pahl, Yakov
-Pechersky, Shashir Reddy, Vandan Revanur, Ricardo Rodriguez, Paul Thiessen,
-Caleb Thomas, Paolo Tosco, Inwan Yoo, badisa, dehaenw, dpdoughe, getuem,
-InvincibleZZH, jdavies-nurix, Kacper-Kozubowski, paconius, rwalroth, Saul,
-Stephen, yuri@FreeBSD
+Jakub Adamczyk, Chris Von Bargen, Jason Biggs, Joshua Black, J.B. Brown, Anna
+Brünisholz, Kevin Boyd, Filip Chmielewski, Michael Cho, Brian Cole, David
+Cosgrove, Nia Dickson, Maria Dolotova, Genevieve Evans, Hussein Faara, Eloy
+Félix, Peter Gedeck, Noah Herrington, Tad Hurst, Eisuke Kawashima, Kevin
+Keating, Brian Kelley, Jakub Klinkovský, Patrick Kunzmann, Niels Maeder, Mark
+Mackey, Jeremy Monat, Dan Nealschneider, Axel Pahl, Yakov Pechersky, Rachael
+Pirie, Shashir Reddy, Vandan Revanur, Ricardo Rodriguez, Eric Taw, Paul
+Thiessen, Caleb Thomas, Paolo Tosco, Inwan Yoo, badisa, dehaenw, dpdoughe,
+getuem, InvincibleZZH, jdavies-nurix, Kacper-Kozubowski, paconius, rwalroth,
+Saul, Stephen, yuri@FreeBSD
 
 ## Highlights
+- We have added a parser for the self-contained sequence representation (SCSR) file format.
+- There is an updated parser for the CDXML file format and a new parser for CDX files
+- Multiple improvements to the shape-based alignment code have been made.
 
 ## Backwards incompatible changes:
 - atom maps on dummy atoms are now always used in the calculation of canonical
@@ -121,8 +150,8 @@ Stephen, yuri@FreeBSD
  (github pull #8688 from ricrogz)
   - Assign COST=100 to PgSQL functions during CREATE FUNCTION rather than leaving unspecified
  (github issue #8711 from dpdoughe)
-  - Create a function to extract some specified atoms from a ROMol as a new ROMol by creating new graph
- (github issue #8742 from whosayn)
+  - DCLV updates
+ (github pull #8756 from RPirie96)
   - Document Options in RGroupDcompose and other minor docs fixes
  (github pull #8757 from badisa)
   - Fix non matchine if(x) end(x) statement
@@ -133,10 +162,16 @@ Stephen, yuri@FreeBSD
  (github pull #8783 from ptosco)
   - Render all ROMol objects as images during export using PandasTools.SaveXlsxFromFrame
  (github issue #8793 from NoahHerrington)
-  - allow custom shape points
- (github pull #8799 from greglandrum)
   - update default ET version to 2 in getExperimentalTorsions
  (github pull #8798 from nmaeder)
+  - allow custom shape points
+ (github pull #8799 from greglandrum)
+  - Stop External/rapidjson-1.1.0 and Code/RDGeneral going to ${CMAKE_SOURCE_DIR}
+ (github issue #8809 from jblack-mestre)
+  - Return draw coords
+ (github pull #8815 from ptosco)
+  - Patch RapidJSON to make sure it builds on all platforms
+ (github pull #8818 from ptosco)
 
 ## Bug Fixes:
   - MHFP package error: all Bulk functions fail to execute in Python
@@ -203,6 +238,8 @@ Stephen, yuri@FreeBSD
  (github issue #8525 from mark-mackey-cresset)
   - Chem.GetMolFrags Destroys Stereogroups containing only bonds
  (github issue #8527 from paconius)
+  - Mol.GetDoubleProp() fails if any spaces in tag value
+ (github issue #8546 from jbbrownlsi)
   - SynthonSpaceSearch bad chiral atom count
  (github issue #8549 from DavidACosgrove)
   - allow nested parentheses in tokens
@@ -241,6 +278,9 @@ Stephen, yuri@FreeBSD
  (github issue #8655 from greglandrum)
   - Incorrect MolHash when generating CXSMILES without enhanced stereo
  (github issue #8656 from greglandrum)
+  - Inconsistent default settings for Morgan atom invariant generator
+ (github issue #8633 from gedeck)
+  - No Python class registered for C++ class ForceFields::PyForceField
   - Canonical smiles can't be kekulized by MolFromSmiles
  (github issue #8670 from shashir)
   - Fix parse error messages for bad characters
@@ -263,12 +303,19 @@ Stephen, yuri@FreeBSD
  (github pull #8731 from greglandrum)
   - patch a memory allocation problem in the pubchem shape code
  (github pull #8733 from greglandrum)
+ (github issue #8754 from tawe141)
+  - segmentation fault when parsing USPTO downloaded CDX file
+ (github issue #8761 from eloyfelix)
   - Avoid code duplication through a templated function and improve JSON parsing of Boolean flags
  (github pull #8773 from ptosco)
   - Make InteractiveRenderer error reporting more robust and code cleanup
  (github pull #8774 from ptosco)
   - Integer-valued list properties are not available from Python
  (github issue #8777 from greglandrum)
+  - EXCEEDED_TIMEOUT field in `EmbedFailureCauses` missing in Python
+ (github issue #8806 from j-adamczyk)
+  - Fix leaking a PyObject in MetadataFromPNG file / string
+ (github pull #8829 from ricrogz)
 
 ## Cleanup work:
   - style: apply modernize-use-override

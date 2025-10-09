@@ -81,7 +81,7 @@ class ReactionInfo {
       std::map<unsigned int, std::vector<int>> &grouped_fragments,
       const std::vector<std::unique_ptr<RWMol>> &mols) const;
 };
-}
+}  // namespace ChemDraw
 }  // namespace RDKit
 
 #endif

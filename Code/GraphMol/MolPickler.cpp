@@ -21,7 +21,6 @@
 #include <DataStructs/DatastructsStreamOps.h>
 #include <Query/QueryObjects.h>
 #include <map>
-#include <iostream>
 #include <cstdint>
 #include <boost/algorithm/string.hpp>
 

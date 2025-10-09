@@ -10,7 +10,6 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <string>
 #include <cstring>
-#include <iostream>
 #include <regex>
 
 #include <RDGeneral/versions.h>

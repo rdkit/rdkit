@@ -18,7 +18,6 @@
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
 
-#include <iostream>
 #include <algorithm>
 #include "SmilesWrite.h"
 #include "SmilesParse.h"

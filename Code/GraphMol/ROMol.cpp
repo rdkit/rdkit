@@ -8,8 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include <iostream>
-
 // our stuff
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>

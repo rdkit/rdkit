@@ -12,8 +12,6 @@
 
 #include <RDGeneral/versions.h>
 
-#include <iostream>
-
 #include <QApplication>
 
 using namespace std;

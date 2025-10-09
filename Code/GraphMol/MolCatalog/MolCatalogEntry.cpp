@@ -14,7 +14,6 @@
 #include <RDGeneral/StreamOps.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
-#include <iostream>
 #include <sstream>
 #include <cstdint>
 

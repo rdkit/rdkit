@@ -531,14 +531,14 @@ TEST_CASE("conjugated five-rings") {
     // clang-format off
     std::vector<matchCase> examples = {
     // 1,3 cyclopentadiene
-    matchCase{"C1=CCC=C1","adjustqueryprops_fivering_1.mol",true,true},
+    matchCase{"C1=CCC=C1","adjustqueryprops_fivering_1.mol",false,true},
     matchCase{"C1=CCC=C1","adjustqueryprops_fivering_2.mol",false,true},
     matchCase{"C1=CCC=C1","adjustqueryprops_fivering_3.mol",true,true},
     matchCase{"C1=CCC=C1","adjustqueryprops_fivering_4.mol",false,false},
     matchCase{"C1=CCC=C1","adjustqueryprops_fivering_5.mol",false,false},
     matchCase{"C1=CCC=C1","adjustqueryprops_fivering_6.mol",false,false},
     // pyrrole
-    matchCase{"C1=CNC=C1","adjustqueryprops_fivering_1.mol",false,true},
+    matchCase{"C1=CNC=C1","adjustqueryprops_fivering_1.mol",true,true},
     matchCase{"C1=CNC=C1","adjustqueryprops_fivering_2.mol",true,true},
     matchCase{"C1=CNC=C1","adjustqueryprops_fivering_3.mol",false,false},
     matchCase{"C1=CNC=C1","adjustqueryprops_fivering_4.mol",false,false},
@@ -559,7 +559,7 @@ TEST_CASE("conjugated five-rings") {
     matchCase{"C1=CS(=O)C=C1","adjustqueryprops_fivering_5.mol",false,false},
     matchCase{"C1=CS(=O)C=C1","adjustqueryprops_fivering_6.mol",true,true},
     // furan
-    matchCase{"C1=COC=C1","adjustqueryprops_fivering_1.mol",false,true},
+    matchCase{"C1=COC=C1","adjustqueryprops_fivering_1.mol",true,true},
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_2.mol",true,true},
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_3.mol",false,false},
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_4.mol",false,false},

@@ -39,21 +39,21 @@ void tagAtomHelper(MolDraw2DSVG &self, const ROMol &mol, double radius,
   std::map<std::string, std::string> events;
   if (pyo) {
     python::dict tDict = python::extract<python::dict>(pyo);
-    python::list keys = tDict.keys();
-    python::list vals = tDict.values();
-    for (unsigned int i = 0;
-         i < python::extract<unsigned int>(keys.attr("__len__")()); ++i) {
-      events[python::extract<std::string>(keys[i])] =
-          python::extract<std::string>(vals[i]);
+    const auto items = tDict.items();
+    for (unsigned int i = 0; i < python::len(items); ++i) {
+      const auto item = items[i];
+      events[python::extract<std::string>(item[0])] =
+          python::extract<std::string>(item[1]);
     }
   }
   self.tagAtoms(mol, radius, events);
 }
 void pyDictToColourMap(python::object pyo, ColourPalette &res) {
   python::dict tDict = python::extract<python::dict>(pyo);
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(tDict.keys().attr("__len__")()); ++i) {
-    python::tuple tpl = python::extract<python::tuple>(tDict.values()[i]);
+  const auto items = tDict.items();
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    const auto item = items[i];
+    python::tuple tpl = python::extract<python::tuple>(item[1]);
     float r = python::extract<float>(tpl[0]);
     float g = python::extract<float>(tpl[1]);
     float b = python::extract<float>(tpl[2]);
@@ -62,7 +62,7 @@ void pyDictToColourMap(python::object pyo, ColourPalette &res) {
       a = python::extract<float>(tpl[3]);
     }
     DrawColour clr(r, g, b, a);
-    res[python::extract<int>(tDict.keys()[i])] = clr;
+    res[python::extract<int>(item[0])] = clr;
   }
 }
 ColourPalette *pyDictToColourMap(python::object pyo) {
@@ -75,10 +75,11 @@ ColourPalette *pyDictToColourMap(python::object pyo) {
 }
 void pyDictToDoubleMap(python::object pyo, std::map<int, double> &res) {
   python::dict tDict = python::extract<python::dict>(pyo);
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(tDict.keys().attr("__len__")()); ++i) {
-    double r = python::extract<double>(tDict.values()[i]);
-    res[python::extract<int>(tDict.keys()[i])] = r;
+  const auto items = tDict.items();
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    const auto item = items[i];
+    double r = python::extract<double>(item[1]);
+    res[python::extract<int>(item[0])] = r;
   }
 }
 std::map<int, double> *pyDictToDoubleMap(python::object pyo) {
@@ -91,10 +92,11 @@ std::map<int, double> *pyDictToDoubleMap(python::object pyo) {
 }
 void pyDictToIntMap(python::object pyo, std::map<int, int> &res) {
   python::dict tDict = python::extract<python::dict>(pyo);
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(tDict.keys().attr("__len__")()); ++i) {
-    int r = python::extract<int>(tDict.values()[i]);
-    res[python::extract<int>(tDict.keys()[i])] = r;
+  const auto items = tDict.items();
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    const auto item = items[i];
+    int r = python::extract<int>(item[1]);
+    res[python::extract<int>(item[0])] = r;
   }
 }
 std::map<int, int> *pyDictToIntMap(python::object pyo) {
@@ -133,8 +135,7 @@ DrawColour pyTupleToDrawColour(const python::tuple tpl) {
 void pyListToColourVec(python::object pyo, std::vector<DrawColour> &res) {
   res.clear();
   python::list tList = python::extract<python::list>(pyo);
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(tList.attr("__len__")()); ++i) {
+  for (unsigned int i = 0; i < python::len(tList); ++i) {
     python::tuple tpl = python::extract<python::tuple>(tList[i]);
     res.push_back(pyTupleToDrawColour(tpl));
   }
@@ -144,12 +145,13 @@ void pyListToColourVec(python::object pyo, std::vector<DrawColour> &res) {
 void pyDictToMapColourVec(python::object pyo,
                           std::map<int, std::vector<DrawColour>> &res) {
   python::dict tDict = python::extract<python::dict>(pyo);
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(tDict.keys().attr("__len__")()); ++i) {
-    python::list pl = python::extract<python::list>(tDict.values()[i]);
+  const auto items = tDict.items();
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    const auto item = items[i];
+    python::list pl = python::extract<python::list>(item[1]);
     std::vector<DrawColour> v;
     pyListToColourVec(pl, v);
-    res[python::extract<int>(tDict.keys()[i])] = v;
+    res[python::extract<int>(item[0])] = v;
   }
 }
 
@@ -321,8 +323,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
   unsigned int nThere = mols->size();
   std::unique_ptr<std::vector<std::vector<int>>> highlightAtoms;
   if (highlight_atoms) {
-    if (python::extract<unsigned int>(highlight_atoms.attr("__len__")()) !=
-        nThere) {
+    if (python::len(highlight_atoms) != nThere) {
       throw ValueErrorException(
           "If highlightAtoms is provided it must be the same length as the "
           "molecule list.");
@@ -334,8 +335,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
   }
   std::unique_ptr<std::vector<std::vector<int>>> highlightBonds;
   if (highlight_bonds) {
-    if (python::extract<unsigned int>(highlight_bonds.attr("__len__")()) !=
-        nThere) {
+    if (python::len(highlight_bonds) != nThere) {
       throw ValueErrorException(
           "If highlightBonds is provided it must be the same length as the "
           "molecule list.");
@@ -348,8 +348,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
 
   std::unique_ptr<std::vector<ColourPalette>> highlightAtomMap;
   if (highlight_atom_map) {
-    if (python::extract<unsigned int>(highlight_atom_map.attr("__len__")()) !=
-        nThere) {
+    if (python::len(highlight_atom_map) != nThere) {
       throw ValueErrorException(
           "If highlightAtomMap is provided it must be the same length as the "
           "molecule list.");
@@ -361,8 +360,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
   }
   std::unique_ptr<std::vector<ColourPalette>> highlightBondMap;
   if (highlight_bond_map) {
-    if (python::extract<unsigned int>(highlight_bond_map.attr("__len__")()) !=
-        nThere) {
+    if (python::len(highlight_bond_map) != nThere) {
       throw ValueErrorException(
           "If highlightBondMap is provided it must be the same length as the "
           "molecule list.");
@@ -374,8 +372,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
   }
   std::unique_ptr<std::vector<std::map<int, double>>> highlightRadii;
   if (highlight_atom_radii) {
-    if (python::extract<unsigned int>(highlight_atom_radii.attr("__len__")()) !=
-        nThere) {
+    if (python::len(highlight_atom_radii) != nThere) {
       throw ValueErrorException(
           "If highlightAtomRadii is provided it must be the same length as the "
           "molecule list.");
@@ -626,8 +623,7 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
 void setColoursHelper(RDKit::MolDraw2DUtils::ContourParams &params,
                       python::object pycolors) {
   std::vector<RDKit::DrawColour> cs;
-  for (size_t i = 0; i < python::extract<size_t>(pycolors.attr("__len__")());
-       ++i) {
+  for (unsigned int i = 0; i < python::len(pycolors); ++i) {
     cs.push_back(
         pyTupleToDrawColour(python::extract<python::tuple>(pycolors[i])));
   }
@@ -1139,28 +1135,29 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("FillPolys", &RDKit::MolDraw2D::fillPolys, python::args("self"),
            "returns whether or not polygons are being filled")
       .def("DrawLine",
-           (void(RDKit::MolDraw2D::*)(const Point2D &, const Point2D &, bool)) &
-               RDKit::MolDraw2D::drawLine,
+           (void (RDKit::MolDraw2D::*)(const Point2D &, const Point2D &,
+                                       bool))&RDKit::MolDraw2D::drawLine,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("rawCoords") = false),
            "draws a line with the current drawing style. The coordinates "
            "are in the molecule frame unless rawCoords is true, "
            "in which case the coordinates are in pixels.")
-      .def("DrawArrow", RDKit::drawArrowHelper,
-           (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
-            python::arg("asPolygon") = false, python::arg("frac") = 0.05,
-            python::arg("angle") = M_PI / 6,
-            python::arg("color") = python::object(),
-            python::arg("rawCoords") = false),
-           "draws an arrow with the current drawing style. The coordinates "
-           "are in the molecule frame unless rawCoords is true, "
-           "in which case the coordinates are in pixels. "
-           "If asPolygon is true the head of the "
-           "arrow will be drawn as a triangle, otherwise two lines are used. "
-           "The fraction of the arrow length to use for the head is given by "
-           "frac. The angle of the arrowhead "
-           "(the angle between the main line and each arrowhead line) is given by angle. "
-           "The color is a tuple of 3 floats (0-1) in red, green, blue (RGB) order.")
+      .def(
+          "DrawArrow", RDKit::drawArrowHelper,
+          (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
+           python::arg("asPolygon") = false, python::arg("frac") = 0.05,
+           python::arg("angle") = M_PI / 6,
+           python::arg("color") = python::object(),
+           python::arg("rawCoords") = false),
+          "draws an arrow with the current drawing style. The coordinates "
+          "are in the molecule frame unless rawCoords is true, "
+          "in which case the coordinates are in pixels. "
+          "If asPolygon is true the head of the "
+          "arrow will be drawn as a triangle, otherwise two lines are used. "
+          "The fraction of the arrow length to use for the head is given by "
+          "frac. The angle of the arrowhead "
+          "(the angle between the main line and each arrowhead line) is given by angle. "
+          "The color is a tuple of 3 floats (0-1) in red, green, blue (RGB) order.")
       .def("DrawTriangle", &RDKit::MolDraw2D::drawTriangle,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("cds3"), python::arg("rawCoords") = false),
@@ -1188,9 +1185,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame unless rawCoords is true, "
            "in which case the coordinates are in pixels.")
       .def("DrawArc",
-           (void(RDKit::MolDraw2D::*)(const Point2D &, double, double, double,
-                                      bool)) &
-               RDKit::MolDraw2D::drawArc,
+           (void (RDKit::MolDraw2D::*)(const Point2D &, double, double, double,
+                                       bool))&RDKit::MolDraw2D::drawArc,
            (python::arg("self"), python::arg("center"), python::arg("radius"),
             python::arg("angle1"), python::arg("angle2"),
             python::arg("rawCoords") = false),
@@ -1219,9 +1215,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame unless rawCoords is true, "
            "in which case the coordinates are in pixels.")
       .def("DrawString",
-           (void(RDKit::MolDraw2D::*)(const std::string &,
-                                      const RDGeom::Point2D &, bool)) &
-               RDKit::MolDraw2D::drawString,
+           (void (RDKit::MolDraw2D::*)(const std::string &,
+                                       const RDGeom::Point2D &,
+                                       bool))&RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos"),
             python::arg("rawCoords") = false),
            "add text to the canvas. The coordinates "
@@ -1236,14 +1232,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame unless rawCoords is true, "
            "in which case the coordinates are in pixels.")
       .def("GetDrawCoords",
-           (RDGeom::Point2D(RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
+           (RDGeom::Point2D (RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
                 const) &
                RDKit::MolDraw2D::getDrawCoords,
            (python::arg("self"), python::arg("point")),
            "get the coordinates in drawing space for a particular point in "
            "molecule space")
       .def("GetDrawCoords",
-           (RDGeom::Point2D(RDKit::MolDraw2D::*)(int) const) &
+           (RDGeom::Point2D (RDKit::MolDraw2D::*)(int) const) &
                RDKit::MolDraw2D::getDrawCoords,
            (python::arg("self"), python::arg("atomIndex")),
            "get the coordinates in drawing space for a particular atom")
@@ -1273,7 +1269,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            python::args("self"),
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata",
-           (void(RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
+           (void (RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
                RDKit::MolDraw2DSVG::addMoleculeMetadata,
            ((python::arg("self"), python::arg("mol")),
             python::arg("confId") = -1),
@@ -1388,7 +1384,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("setContourColour", &RDKit::setContourColour,
            (python::arg("self"), python::arg("colour")))
       .def("setColourMap", &RDKit::setColoursHelper,
-           (python::arg("self"), python::arg("colours")));
+           (python::arg("self"), python::arg("colours")))
+      .def("__setattr__", &safeSetattr);
+
   docString = R"DOC(Generates and draws contours for a set of gaussians
 
   - drawer: the MolDraw2D object to use
@@ -1471,8 +1469,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("height") = 300,
        python::arg("highlightAtoms") = python::object(),
        python::arg("kekulize") = true, python::arg("lineWidthMult") = 1,
-       python::arg("includeAtomCircles") = true,
-       python::arg("confId") = -1),
+       python::arg("includeAtomCircles") = true, python::arg("confId") = -1),
       docString.c_str());
   docString = "Returns ACS 1996 mode svg for a molecule";
   python::def("MolToACS1996SVG", &RDKit::molToACS1996SVG,

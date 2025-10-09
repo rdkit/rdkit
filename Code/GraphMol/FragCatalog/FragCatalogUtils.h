@@ -15,7 +15,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include "FragCatParams.h"
-#include <iostream>
 
 namespace RDKit {
 
