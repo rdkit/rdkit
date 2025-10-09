@@ -411,6 +411,26 @@ M  END""")
     with open("contour_from_py_2.svg", 'w+') as outf:
       print(txt, file=outf)
 
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.ClearDrawing()
+    ps = Draw.ContourParams()
+    ps.contourColour = (0.1,0.2,0.3,0.4)
+    hexc = ''.join('%02X' % int(x * 255) for x in ps.contourColour)
+    ps.colourMap = [
+      (1,1,1), (0.5,1,0.5), (0,1,0),
+    ]
+    ps.fillGrid = True
+    Draw.ContourAndDrawGaussians(d, gs, hs, ws, params=ps, mol=dm)
+    d.drawOptions().clearBackground = False
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertIn(hexc, txt)
+    self.assertIn('#42FF42', txt)
+    with open("contour_from_py_3.svg", 'w+') as outf:
+      print(txt, file=outf)
+
+
   def testGridContours(self):
     grid = np.zeros((50, 100), np.double)
     ycoords = list(np.arange(0, 5, 0.1))

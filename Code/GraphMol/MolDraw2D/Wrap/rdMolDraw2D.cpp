@@ -629,10 +629,21 @@ void setColoursHelper(RDKit::MolDraw2DUtils::ContourParams &params,
   }
   params.colourMap = cs;
 }
-
+python::tuple getColoursHelper(
+    const RDKit::MolDraw2DUtils::ContourParams &params) {
+  python::list res;
+  for (const auto &clr : params.colourMap) {
+    res.append(colourToPyTuple(clr));
+  }
+  return python::tuple(res);
+}
 void setContourColour(RDKit::MolDraw2DUtils::ContourParams &params,
                       python::tuple tpl) {
   params.contourColour = pyTupleToDrawColour(tpl);
+}
+python::object getContourColour(
+    const RDKit::MolDraw2DUtils::ContourParams &params) {
+  return colourToPyTuple(params.contourColour);
 }
 void drawPolygonHelper(RDKit::MolDraw2D &self, python::object py_cds,
                        bool rawCoords) {
@@ -1414,6 +1425,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "fillThresholdIsFraction",
           &RDKit::MolDraw2DUtils::ContourParams::fillThresholdIsFraction,
           "if true, fillThreshold is a fraction of the range of the data")
+      .add_property("colourMap", &RDKit::getColoursHelper,
+                    &RDKit::setColoursHelper,
+                    "the color map to use when filling the grid")
+      .add_property("contourColour", &RDKit::getContourColour,
+                    &RDKit::setContourColour,
+                    "the color to use for drawing the contours")
       .def("setContourColour", &RDKit::setContourColour,
            (python::arg("self"), python::arg("colour")))
       .def("setColourMap", &RDKit::setColoursHelper,
