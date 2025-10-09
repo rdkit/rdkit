@@ -2338,7 +2338,7 @@ void testChargesAndIsotopes() {
   {
     std::unique_ptr<ROMol> p(
         SmartsToMol("[12C][12#6][12C+][12C+1][C+][C+1][12][+][C][#6][12CH2]["
-                    "12CH3+][CH4+][14N@H+]"));
+                    "12CH3+][CH4+][14N@H+][C&+][12C&+]"));
     TEST_ASSERT(p);
     TEST_ASSERT(p->getAtomWithIdx(0)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(1)->getFormalCharge() == 0);
@@ -2354,6 +2354,8 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(11)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(12)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(13)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(14)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(15)->getFormalCharge() == 1);
 
     TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 12);
@@ -2369,6 +2371,8 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(11)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(12)->getIsotope() == 0);
     TEST_ASSERT(p->getAtomWithIdx(13)->getIsotope() == 14);
+    TEST_ASSERT(p->getAtomWithIdx(14)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(15)->getIsotope() == 12);
 
     TEST_ASSERT(p->getAtomWithIdx(9)->getNumExplicitHs() == 0);
     TEST_ASSERT(p->getAtomWithIdx(10)->getNumExplicitHs() == 2);
@@ -2397,6 +2401,8 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(11)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(12)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(13)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(14)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(15)->getFormalCharge() == 1);
 
     TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 12);
@@ -2412,6 +2418,8 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(11)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(12)->getIsotope() == 0);
     TEST_ASSERT(p->getAtomWithIdx(13)->getIsotope() == 14);
+    TEST_ASSERT(p->getAtomWithIdx(14)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(15)->getIsotope() == 12);
 
     // p->debugMol(std::cerr);
     TEST_ASSERT(p->getAtomWithIdx(9)->getNumExplicitHs() == 0);
@@ -2431,15 +2439,18 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 0);
     TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 0);
     TEST_ASSERT(p->getAtomWithIdx(2)->getIsotope() == 0);
-    TEST_ASSERT(p->getAtomWithIdx(3)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(3)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(8)->getIsotope() == 0);
+
+    TEST_ASSERT(p->getAtomWithIdx(3)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(4)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(5)->getFormalCharge() == 0);
-    TEST_ASSERT(p->getAtomWithIdx(6)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(6)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(7)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(8)->getFormalCharge() == 1);
 
     TEST_ASSERT(p->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(6)->getNumExplicitHs() == 1);
     TEST_ASSERT(p->getAtomWithIdx(8)->getNumExplicitHs() == 1);
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;

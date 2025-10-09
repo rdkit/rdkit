@@ -12,6 +12,8 @@ GitHub)
 - The `Dict` class (and therefore all the properties interfaces) has been updated
   to `std::string_view` keys. This is transparent to the Python interfaces,
   but some C++ class might have to be updated.
+- Simple AND queries are now merged into atoms. E.g. `[C&+]` now produces the
+  the same result as `[C+]` when parsed as SMARTS.
 
 ## New Features and Enhancements:
 
