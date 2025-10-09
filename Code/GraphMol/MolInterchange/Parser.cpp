@@ -58,16 +58,18 @@ struct DefaultValueCache {
     if (lookup != intMap.end()) {
       return lookup->second;
     }
-    if (bjDefaults.is_object() && bjDefaults.as_object().contains(key)) {
-      const auto &val = bjDefaults.at(key);
-      if (!val.is_int64()) {
-        throw FileParseException(std::string("Bad format: value of ") +
-                                 std::string(key) +
-                                 std::string(" is not an int"));
+    if (const auto fobj = bjDefaults.if_object()) {
+      if (const auto kit = fobj->find(key); kit != fobj->end()) {
+        const auto val = kit->value().if_int64();
+        if (!val) {
+          throw FileParseException(std::string("Bad format: value of ") +
+                                   std::string(key) +
+                                   std::string(" is not an int"));
+        }
+        auto res = static_cast<int>(*val);
+        intMap[key] = res;
+        return res;
       }
-      int res = static_cast<int>(val.as_int64());
-      intMap[key] = res;
-      return res;
     }
     return 0;
   }
@@ -77,35 +79,40 @@ struct DefaultValueCache {
     if (lookup != boolMap.end()) {
       return lookup->second;
     }
-    if (bjDefaults.is_object() && bjDefaults.as_object().contains(key)) {
-      const auto &val = bjDefaults.at(key);
-      if (!val.is_bool()) {
-        throw FileParseException(std::string("Bad format: value of ") +
-                                 std::string(key) +
-                                 std::string(" is not a bool"));
+    if (const auto fobj = bjDefaults.if_object()) {
+      if (const auto kit = fobj->find(key); kit != fobj->end()) {
+        const auto &val = kit->value().if_bool();
+        if (!val) {
+          throw FileParseException(std::string("Bad format: value of ") +
+                                   std::string(key) +
+                                   std::string(" is not a bool"));
+        }
+        bool res = *val;
+        boolMap[key] = res;
+        return res;
       }
-      bool res = val.as_bool();
-      boolMap[key] = res;
-      return res;
     }
     return false;
   }
+
   std::string getString(const char *key) const {
     PRECONDITION(key, "no key");
     const auto &lookup = stringMap.find(key);
     if (lookup != stringMap.end()) {
       return lookup->second;
     }
-    if (bjDefaults.is_object() && bjDefaults.as_object().contains(key)) {
-      const auto &val = bjDefaults.at(key);
-      if (!val.is_string()) {
-        throw FileParseException(std::string("Bad format: value of ") +
-                                 std::string(key) +
-                                 std::string(" is not a string"));
+    if (const auto fobj = bjDefaults.if_object()) {
+      if (const auto kit = fobj->find(key); kit != fobj->end()) {
+        const auto val = kit->value().if_string();
+        if (!val) {
+          throw FileParseException(std::string("Bad format: value of ") +
+                                   std::string(key) +
+                                   std::string(" is not a string"));
+        }
+        auto res = val->c_str();
+        stringMap[key] = res;
+        return res;
       }
-      std::string res = val.as_string().c_str();
-      stringMap[key] = res;
-      return res;
     }
     return "";
   }
@@ -114,42 +121,48 @@ struct DefaultValueCache {
 int getIntDefaultValue(const char *key, const bj::value &from,
                        const DefaultValueCache &defaults) {
   PRECONDITION(key, "no key");
-  if (from.is_object() && from.as_object().contains(key)) {
-    const auto &val = from.at(key);
-    if (!val.is_int64()) {
-      throw FileParseException(std::string("Bad format: value of ") +
-                               std::string(key) +
-                               std::string(" is not an int"));
+  if (const auto fobj = from.if_object()) {
+    if (const auto kit = fobj->find(key); kit != fobj->end()) {
+      const auto val = kit->value().if_int64();
+      if (!val) {
+        throw FileParseException(std::string("Bad format: value of ") +
+                                 std::string(key) +
+                                 std::string(" is not an int"));
+      }
+      return static_cast<int>(*val);
     }
-    return static_cast<int>(val.as_int64());
   }
   return defaults.getInt(key);
 }
 bool getBoolDefaultValue(const char *key, const bj::value &from,
                          const DefaultValueCache &defaults) {
   PRECONDITION(key, "no key");
-  if (from.is_object() && from.as_object().contains(key)) {
-    const auto &val = from.at(key);
-    if (!val.is_bool()) {
-      throw FileParseException(std::string("Bad format: value of ") +
-                               std::string(key) +
-                               std::string(" is not a bool"));
+  if (const auto fobj = from.if_object()) {
+    if (const auto kit = fobj->find(key); kit != fobj->end()) {
+      const auto val = kit->value().if_bool();
+      if (!val) {
+        throw FileParseException(std::string("Bad format: value of ") +
+                                 std::string(key) +
+                                 std::string(" is not a bool"));
+      }
+      return *val;
     }
-    return val.as_bool();
   }
   return defaults.getBool(key);
 }
 std::string getStringDefaultValue(const char *key, const bj::value &from,
                                   const DefaultValueCache &defaults) {
   PRECONDITION(key, "no key");
-  if (from.is_object() && from.as_object().contains(key)) {
-    const auto &val = from.at(key);
-    if (!val.is_string()) {
-      throw FileParseException(std::string("Bad format: value of ") +
-                               std::string(key) +
-                               std::string(" is not a string"));
+  if (const auto fobj = from.if_object()) {
+    if (const auto kit = fobj->find(key); kit != fobj->end()) {
+      const auto val = kit->value().if_string();
+      if (!val) {
+        throw FileParseException(std::string("Bad format: value of ") +
+                                 std::string(key) +
+                                 std::string(" is not a string"));
+      }
+      return val->c_str();
     }
-    return val.as_string().c_str();
   }
   return defaults.getString(key);
 }
@@ -922,7 +935,6 @@ void processMol(RWMol *mol, const bj::value &molval,
       }
     }
   }
-  mol->updatePropertyCache(false);
   mol->setProp(common_properties::_StereochemDone, 1);
 }
 
@@ -936,12 +948,11 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
   }
 
   if (doc.as_object().contains("commonchem")) {
-    if (!doc.at("commonchem").is_object() ||
-        !doc.at("commonchem").as_object().contains("version")) {
+    auto jobj = doc.at("commonchem").if_object();
+    if (!jobj || !jobj->contains("version")) {
       throw FileParseException("Bad Format: missing version in JSON");
     }
-    if (doc.at("commonchem").at("version").as_int64() !=
-        currentMolJSONVersion) {
+    if (jobj->at("version").as_int64() != currentMolJSONVersion) {
       throw FileParseException("Bad Format: bad version in JSON");
     }
   } else if (doc.as_object().contains("rdkitjson")) {
@@ -1004,13 +1015,16 @@ std::vector<boost::shared_ptr<ROMol>> JSONDataStreamToMols(
 
   std::string jsonString((std::istreambuf_iterator<char>(*inStream)),
                          std::istreambuf_iterator<char>());
-  bj::value doc = bj::parse(jsonString);
+  bj::monotonic_resource mr;
+  bj::value doc = bj::parse(jsonString, &mr);
 
   return DocToMols(doc, params);
 }
 std::vector<boost::shared_ptr<ROMol>> JSONDataToMols(
     const std::string &jsonBlock, const JSONParseParameters &params) {
-  bj::value doc = bj::parse(jsonBlock);
+  bj::monotonic_resource mr;
+  bj::value doc = bj::parse(jsonBlock, &mr);
+
   return DocToMols(doc, params);
 }
 
