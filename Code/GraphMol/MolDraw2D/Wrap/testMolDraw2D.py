@@ -287,6 +287,17 @@ M  END""")
     self.assertTrue(txt.find("stroke:#00CC00") >= 0)
     self.assertTrue(txt.find("stroke:#FFFF00") >= 0)
 
+    d = Draw.MolDraw2DSVG(300, 300)
+    plt = d.drawOptions().getAtomPalette()
+    plt[6] = (1, 1, 0)
+    d.drawOptions().setAtomPalette(plt)
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000") == -1)
+    self.assertTrue(txt.find("stroke:#00CC00") >= 0)
+    self.assertTrue(txt.find("stroke:#FFFF00") >= 0)
+
   def testSetPalette(self):
     m = Chem.MolFromSmiles('CCOCNCCl')
     dm = Draw.PrepareMolForDrawing(m)
@@ -414,10 +425,12 @@ M  END""")
     d = Draw.MolDraw2DSVG(300, 300)
     d.ClearDrawing()
     ps = Draw.ContourParams()
-    ps.contourColour = (0.1,0.2,0.3,0.4)
+    ps.contourColour = (0.1, 0.2, 0.3, 0.4)
     hexc = ''.join('%02X' % int(x * 255) for x in ps.contourColour)
     ps.colourMap = [
-      (1,1,1), (0.5,1,0.5), (0,1,0),
+      (1, 1, 1),
+      (0.5, 1, 0.5),
+      (0, 1, 0),
     ]
     ps.fillGrid = True
     Draw.ContourAndDrawGaussians(d, gs, hs, ws, params=ps, mol=dm)
@@ -429,7 +442,6 @@ M  END""")
     self.assertIn('#42FF42', txt)
     with open("contour_from_py_3.svg", 'w+') as outf:
       print(txt, file=outf)
-
 
   def testGridContours(self):
     grid = np.zeros((50, 100), np.double)
@@ -878,7 +890,7 @@ M  END''')
       d2d = rdMolDraw2D.MolDraw2DSVG(-1, -1)
       d2d.drawOptions().addAtomIndices = True
       d2d.drawOptions().addBondIndices = True
-      d2d.drawOptions().singleColourWedgeBonds = True # test symbolColour
+      d2d.drawOptions().singleColourWedgeBonds = True  # test symbolColour
       setattr(d2d.drawOptions(), attr, val)
       aval = getattr(d2d.drawOptions(), attr)
       for idx in range(4):

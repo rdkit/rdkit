@@ -519,6 +519,13 @@ void setAtomPalette(RDKit::MolDrawOptions &self, python::object cmap) {
   self.atomColourPalette.clear();
   updateAtomPalette(self, cmap);
 }
+python::dict getAtomPalette(const RDKit::MolDrawOptions &self) {
+  python::dict res;
+  for (const auto &pair : self.atomColourPalette) {
+    res[pair.first] = colourToPyTuple(pair.second);
+  }
+  return res;
+}
 
 void setMonochromeMode_helper1(RDKit::MolDrawOptions &options, python::tuple fg,
                                python::tuple bg) {
@@ -886,6 +893,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           python::args("self", "cmap"),
           "sets the palette for atoms and bonds from a dictionary mapping ints "
           "to 3-tuples")
+      .def("getAtomPalette", &RDKit::getAtomPalette, python::args("self"),
+           "returns the current atom palette as a dictionary mapping ints "
+           "to 4-tuples")
       .def_readwrite("atomLabels", &RDKit::MolDrawOptions::atomLabels,
                      "maps indices to atom labels")
       .def_readwrite("atomLabelDeuteriumTritium",
