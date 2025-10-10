@@ -964,9 +964,12 @@ std::string MolFragmentToSmiles(const ROMol &mol,
   }
   if (params.canonical) {
     bool breakTies = true;
-    Canon::rankFragmentAtoms(tmol, ranks, atomsInPlay, bondsInPlay, atomSymbols,
-                             breakTies, params.doIsomericSmiles,
-                             params.doIsomericSmiles);
+    bool includeChiralPresence = false;
+    bool includeRingStereo = true;
+    Canon::rankFragmentAtoms(
+        tmol, ranks, atomsInPlay, bondsInPlay, atomSymbols, bondSymbols,
+        breakTies, params.doIsomericSmiles, params.doIsomericSmiles,
+        !params.ignoreAtomMapNumbers, includeChiralPresence, includeRingStereo);
     // std::cerr << "RANKS: ";
     // std::copy(ranks.begin(), ranks.end(),
     //           std::ostream_iterator<int>(std::cerr, " "));
