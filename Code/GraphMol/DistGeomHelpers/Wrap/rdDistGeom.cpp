@@ -367,7 +367,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - useMacrocycle14config : use the 1-4 distance bounds from ETKDGv3\n\
 \n\
  RETURNS:\n\n\
-    ID of the new conformation added to the molecule \n\
+    ID of the new conformation added to the molecule or -1 if the embedding fails.\n\
 \n";
   python::def(
       "EmbedMolecule", RDKit::EmbedMolecule,
@@ -611,7 +611,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - params : an EmbedParameters object \n\
 \n\
  RETURNS:\n\n\
-    ID of the new conformation added to the molecule \n\
+    ID of the new conformation added to the molecule or -1 if the embedding fails. \n\
 \n";
   python::def("EmbedMolecule", RDKit::EmbedMolecule2,
               (python::arg("mol"), python::arg("params")), docString.c_str());
