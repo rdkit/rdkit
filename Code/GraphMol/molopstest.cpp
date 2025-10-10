@@ -7014,7 +7014,9 @@ void testMMFFAromaticity() {
     MolOps::setAromaticity(*m, MolOps::AROMATICITY_RDKIT);
     int arombondcount = 0;
     for (auto b : m->bonds()) {
-      if (b->getIsAromatic()) arombondcount++;
+      if (b->getIsAromatic()) {
+        arombondcount++;
+      }
     }
     // all bonds, except the fused one, should be aromatic
     TEST_ASSERT(arombondcount == 10);
@@ -7023,7 +7025,9 @@ void testMMFFAromaticity() {
     MolOps::setAromaticity(*m, MolOps::AROMATICITY_MMFF94);
     arombondcount = 0;
     for (auto b : m->bonds()) {
-      if (b->getIsAromatic()) arombondcount++;
+      if (b->getIsAromatic()) {
+        arombondcount++;
+      }
     }
     // no aromatics here
     TEST_ASSERT(arombondcount == 0);
