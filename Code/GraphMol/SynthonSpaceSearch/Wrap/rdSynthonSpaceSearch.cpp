@@ -167,7 +167,6 @@ static void fingerprintSearch_helper_2(
        fingerprintGenerator);
 
   CallbackAdapter callback{py_callable};
-  printf("made fp callback, now starting search\n");
   self.fingerprintSearch(query, *fpGen, callback, params);
 }
 
