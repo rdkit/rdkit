@@ -3208,7 +3208,7 @@ void testFragmentSmiles() {
     std::string csmiles =
         MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     std::cerr << csmiles << std::endl;
-    TEST_ASSERT(csmiles == "CaC(bC)aC" || csmiles == "CbC(ac)ac");
+    TEST_ASSERT(csmiles == "CaC(aC)bC");
     delete m;
   }
   {
@@ -3223,7 +3223,7 @@ void testFragmentSmiles() {
     std::string csmiles =
         MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     std::cerr << csmiles << std::endl;
-    TEST_ASSERT(csmiles == "CaC(bC)bC" || csmiles == "CbC(bC)aC");
+    TEST_ASSERT(csmiles == "CbC(aC)bC");
     delete m;
   }
   {
