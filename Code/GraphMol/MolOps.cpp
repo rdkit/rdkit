@@ -1001,7 +1001,8 @@ int getFormalCharge(const ROMol &mol) {
   return accum;
 };
 
-unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
+unsigned getNumAtomsWithDistinctProperty(const ROMol &mol,
+                                         const std::string_view &prop) {
   unsigned numPropAtoms = 0;
   for (const auto atom : mol.atoms()) {
     if (atom->hasProp(prop)) {

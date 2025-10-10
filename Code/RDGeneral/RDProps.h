@@ -48,7 +48,7 @@ class RDProps {
     STR_VECT res, computed;
     if (!includeComputed &&
         getPropIfPresent(RDKit::detail::computedPropName, computed)) {
-      computed.push_back(RDKit::detail::computedPropName);
+      computed.emplace_back(RDKit::detail::computedPropName);
     }
 
     auto pos = tmp.begin();
@@ -57,7 +57,7 @@ class RDProps {
           std::find(computed.begin(), computed.end(), *pos) == computed.end()) {
         res.push_back(*pos);
       }
-      pos++;
+      ++pos;
     }
     return res;
   }

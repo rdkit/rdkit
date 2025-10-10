@@ -891,7 +891,7 @@ ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
 
 void addRecursiveQueries(
     ROMol &mol, const std::map<std::string, ROMOL_SPTR> &queries,
-    const std::string &propName,
+    const std::string_view &propName,
     std::vector<std::pair<unsigned int, std::string>> *reactantLabels) {
   std::string delim = ",";
   boost::char_separator<char> sep(delim.c_str());
