@@ -70,7 +70,7 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
 
   // from buildAllhits
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> toTry;
-  ssize_t hitCount = 0;
+  std::int64_t hitCount = 0;
 
   // Each hitset contains possible hits from a single SynthonSet.
   for (const auto &hitset : allHits) {
