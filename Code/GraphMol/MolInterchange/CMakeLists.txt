@@ -1,6 +1,4 @@
 
-find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS json REQUIRED CONFIG)
-
 rdkit_library(MolInterchange
               Parser.cpp Writer.cpp
               LINK_LIBRARIES GraphMol)

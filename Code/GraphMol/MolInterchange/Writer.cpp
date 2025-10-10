@@ -40,7 +40,6 @@ namespace RDKit {
 namespace MolInterchange {
 
 namespace {
-constexpr int MAX_DECIMAL_PLACES = 4;
 
 template <typename T>
 void addMol(const T &imol, bj::object &bjMol, const bj::object &atomDefaults,
