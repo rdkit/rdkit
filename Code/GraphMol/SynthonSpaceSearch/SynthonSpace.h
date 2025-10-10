@@ -204,8 +204,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param params : (optional) settings for the search
    */
   void substructureSearch(
-      const ROMol &query,
-      const SearchResultCallback &callback,
+      const ROMol &query, const SearchResultCallback &callback,
       const SubstructMatchParameters &matchParams = SubstructMatchParameters(),
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
@@ -249,8 +248,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param params : (optional) settings for the search
    */
   void fingerprintSearch(
-      const ROMol &query,
-      const FingerprintGenerator<std::uint64_t> &fpGen,
+      const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
       const SearchResultCallback &callback,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
@@ -289,8 +287,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param params : (optional) settings for the search
    */
   void rascalSearch(
-      const ROMol &query, 
-      const RascalMCES::RascalOptions &rascalOptions,
+      const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
       const SearchResultCallback &callback,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
   /*!

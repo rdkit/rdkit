@@ -152,11 +152,11 @@ TEST_CASE("S Amide 1") {
   CHECK(resSmi == enumSmi);
 
   resSmi.clear();
-  SearchResultCallback cb = [&resSmi](std::vector<std::unique_ptr<ROMol>>& r) {
-      for (auto& elem: r) {
-          resSmi.insert(MolToSmiles(*elem));
-      }
-      return false;
+  SearchResultCallback cb = [&resSmi](std::vector<std::unique_ptr<ROMol>> &r) {
+    for (auto &elem : r) {
+      resSmi.insert(MolToSmiles(*elem));
+    }
+    return false;
   };
   synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
   CHECK(resSmi == enumSmi);

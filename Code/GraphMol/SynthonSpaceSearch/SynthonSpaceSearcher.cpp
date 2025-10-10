@@ -50,7 +50,6 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
   }
 }
 
-
 void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
   bool timedOut = false;
   const TimePoint *endTime = nullptr;
@@ -61,13 +60,13 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
   std::uint64_t totHits = 0;
   auto allHits = doTheSearch(fragments, endTime, timedOut, totHits);
 
- std::sort(allHits.begin(), allHits.end(),
-           [](const auto &hs1, const auto &hs2) -> bool {
-             if (hs1->d_reaction->getId() == hs2->d_reaction->getId()) {
-               return hs1->numHits < hs2->numHits;
-             }
-             return hs1->d_reaction->getId() < hs2->d_reaction->getId();
-           });
+  std::sort(allHits.begin(), allHits.end(),
+            [](const auto &hs1, const auto &hs2) -> bool {
+              if (hs1->d_reaction->getId() == hs2->d_reaction->getId()) {
+                return hs1->numHits < hs2->numHits;
+              }
+              return hs1->d_reaction->getId() < hs2->d_reaction->getId();
+            });
 
   // from buildAllhits
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> toTry;
@@ -102,7 +101,8 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
   }
 
   // Do any remaining.
-  if ((d_params.maxHits == -1 || hitCount < d_params.maxHits) && !toTry.empty()) {
+  if ((d_params.maxHits == -1 || hitCount < d_params.maxHits) &&
+      !toTry.empty()) {
     std::vector<std::unique_ptr<ROMol>> partResults;
     processToTrySet(toTry, endTime, partResults);
     cb(partResults);
@@ -388,8 +388,11 @@ void sortAndUniquifyToTry(
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
       newToTry;
   newToTry.reserve(tmp.size());
-  std::transform(tmp.begin(), tmp.end(), back_inserter(newToTry),
-                 [&](const auto &p) -> auto { return toTry[p.first]; });
+  std::transform(
+      tmp.begin(), tmp.end(),
+      back_inserter(newToTry), [&](const auto &p) -> auto{
+        return toTry[p.first];
+      });
   toTry = newToTry;
 }
 

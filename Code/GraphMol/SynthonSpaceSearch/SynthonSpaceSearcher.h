@@ -27,7 +27,6 @@
 using Clock = std::chrono::steady_clock;
 using TimePoint = std::chrono::time_point<Clock>;
 
-
 namespace RDKit {
 class ROMol;
 
