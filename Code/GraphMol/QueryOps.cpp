@@ -1190,7 +1190,7 @@ bool _atomListQueryHelper(const T query, bool ignoreNegation) {
 }
 
 template <typename QUERY_T>
-bool _isAtomListQuery(const QUERY_T *query) {
+bool _isAtomListQuery(const QUERY_T *query, int atomicNum) {
   if (query == nullptr) {
     return false;
   }
@@ -1206,9 +1206,8 @@ bool _isAtomListQuery(const QUERY_T *query) {
     // this was github #5930: negated list queries containing a single atom were
     // being lost on output
     return true;
-  } else if (a->getQuery()->getDescription() == "AtomAtomicNum" &&
-             static_cast<ATOM_EQUALS_QUERY *>(a->getQuery())->getVal() !=
-                 a->getAtomicNum()) {
+  } else if (query->getDescription() == "AtomAtomicNum" &&
+             static_cast<ATOM_EQUALS_QUERY *>(query)->getVal() != atomicNum) {
     // when reading single-member atom lists from CTABs we end up with simple
     // AtomAtomicNum queries where the atomic number of the atom itself is zero.
     // Recognize this case.
@@ -1220,14 +1219,14 @@ bool _isAtomListQuery(const QUERY_T *query) {
 bool isAtomListQuery(ConstRDMolAtom a) {
   PRECONDITION(a.index() < a.mol().getNumAtoms(), "bad atom");
   const auto *query = a.mol().getAtomQuery(a.index());
-  return _isAtomListQuery(query);
+  return _isAtomListQuery(query, a.data().getAtomicNum());
 }
 bool isAtomListQuery(const Atom *a) {
   PRECONDITION(a, "bad atom");
   if (!a->hasQuery()) {
     return false;
   }
-  return _isAtomListQuery(a->getQuery());
+  return _isAtomListQuery(a->getQuery(), a->getAtomicNum());
 }
 
 namespace {
