@@ -19,7 +19,7 @@
 
 namespace RDKit {
 class ROMol;
-typedef boost::shared_ptr<ROMol> ROMOL_SPTR;
+typedef std::shared_ptr<ROMol> ROMOL_SPTR;
 
 //! \brief Returns a copy of an ROMol with the atoms and bonds that
 //!      match a pattern removed.
