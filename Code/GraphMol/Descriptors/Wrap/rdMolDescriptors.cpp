@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2007-2017 Greg Landrum
+//  Copyright (C) 2007-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1712,7 +1712,11 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       RDKit::Descriptors::DoubleCubicLatticeVolume,
       boost::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>>(
       "DoubleCubicLatticeVolume",
-      "Class for the Double Cubic Lattice Volume method", python::no_init)
+      "Class for the Double Cubic Lattice Volume method",
+      python::init<const RDKit::ROMol &, bool, bool, double, int>(
+          (python::arg("mol"), python::arg("isProtein") = false,
+           python::arg("includeLigand") = true,
+           python::arg("probeRadius") = 1.4, python::arg("confId") = -1)))
       .def("__init__",
            python::make_constructor(
                &getDoubleCubicLatticeVolume, python::default_call_policies(),

@@ -252,6 +252,14 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(
     object
   */
 
+  if (radii_.empty()) {
+    const auto *tbl = PeriodicTable::getTable();
+    radii_.reserve(mol.getNumAtoms());
+    for (const auto atom : mol.atoms()) {
+      radii_.push_back(tbl->getRvdw(atom->getAtomicNum()));
+    }
+  }
+
   positions = mol.getConformer(confId).getPositions();
   maxRadius = *std::max_element(radii_.begin(), radii_.end());
 
