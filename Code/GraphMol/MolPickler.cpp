@@ -908,6 +908,8 @@ void pickleAtomMonomerInfo(std::ostream &ss, const AtomMonomerInfo *info) {
   switch (info->getMonomerType()) {
     case AtomMonomerInfo::UNKNOWN:
     case AtomMonomerInfo::OTHER:
+    case AtomMonomerInfo::AMINO_ACID:
+    case AtomMonomerInfo::NUCLEIC_ACID:
       break;
     case AtomMonomerInfo::PDBRESIDUE:
       pickleAtomPDBResidueInfo(ss,
