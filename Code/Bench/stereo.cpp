@@ -12,7 +12,7 @@ using namespace RDKit;
 
 TEST_CASE("Chirality::findPotentialStereo", "[stereo]") {
   for (auto smiles : bench_common::CASES) {
-    std::unique_ptr<RDKit::ROMol> mol{RDKit::SmilesToMol(smiles)};
+    std::unique_ptr<RDKit::ROMol> mol{RDKit::SmilesToMol(std::string(smiles))};
     REQUIRE(mol);
 
     BENCHMARK("Chirality::findPotentialStereo: " + std::string(smiles)) {
@@ -23,7 +23,7 @@ TEST_CASE("Chirality::findPotentialStereo", "[stereo]") {
 
 TEST_CASE("CIPLabeler::CIPLabeler", "[stereo]") {
   for (auto smiles : bench_common::CASES) {
-    std::unique_ptr<RDKit::ROMol> mol{RDKit::SmilesToMol(smiles)};
+    std::unique_ptr<RDKit::ROMol> mol{RDKit::SmilesToMol(std::string(smiles))};
     REQUIRE(mol);
 
     BENCHMARK("CIPLabeler::assignCIPLabels: " + std::string(smiles)) {
