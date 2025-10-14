@@ -448,7 +448,7 @@ bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol) {
 
 void addRecursiveQueriesToReaction(
     ChemicalReaction &rxn, const std::map<std::string, ROMOL_SPTR> &queries,
-    const std::string &propName,
+    const std::string_view &propName,
     std::vector<std::vector<std::pair<unsigned int, std::string>>>
         *reactantLabels) {
   if (!rxn.isInitialized()) {
