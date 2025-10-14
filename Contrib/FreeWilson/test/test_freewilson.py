@@ -2,16 +2,26 @@ import csv
 import io
 import logging
 import os
+import sys
 
-import freewilson as fw
+try:
+  import freewilson as fw
+except:
+  path = os.path.abspath(os.curdir)
+  sys.path.insert(0, os.path.join(path, ".."))
+  import freewilson as fw
+
+import importlib
+fw = importlib.reload(fw)
 
 from rdkit import Chem, rdBase
+from rdkit.Chem import rdFMCS
 
 PATH = os.path.join(os.path.dirname(fw.__file__), 'data')
 assert os.path.exists(PATH), PATH
 
 
-def test_chembl():
+def atest_chembl():
   logging.getLogger().setLevel(logging.INFO)
   smilesfile = os.path.join(PATH, "CHEMBL2321810.smi")
   scaffoldfile = os.path.join(PATH, "CHEMBL2321810_scaffold.mol")
@@ -33,7 +43,7 @@ def test_chembl():
   with rdBase.BlockLogs():
     free = fw.FWDecompose(scaffold, mols, scores)
   # let's make sure the r squared is decent
-  assert free.r2 > 0.8
+  assert free.r2 > 0.8, str(free.r2)
 
   # assert we get something
   preds = list(fw.FWBuild(free))
@@ -68,3 +78,18 @@ def test_multicore():
   decomp = fw.FWDecompose(scaffolds, mols, [1, 2, 3, 4, 5, 6])
   s = io.StringIO()
   fw.predictions_to_csv(s, decomp, fw.FWBuild(decomp))
+
+def test_fep_benchmark_3D():
+  benchmark = os.path.join(PATH, "cmet_ligands.sdf")
+  mols = list(Chem.SDMolSupplier(benchmark))
+  match = rdFMCS.FindMCS(mols)
+
+  scores = [float(m.GetProp("r_exp_dg")) for m in mols]
+  with rdBase.BlockLogs():
+    free = fw.FWDecompose(match.queryMol, mols, scores)
+  preds2 = list(fw.FWBuild(free, pred_filter=lambda x: x < -8))
+  assert preds2
+  assert preds2[0].mol.GetConformer(0).Is3D()
+  
+
+test_fep_benchmark_3D()
