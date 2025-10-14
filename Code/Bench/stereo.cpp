@@ -1,11 +1,14 @@
 #include <catch2/catch_all.hpp>
+#include <string>
 
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/Chirality.h>
+#include <GraphMol/ROMol.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 using namespace RDKit;
 
-TEST_CASE("SmilesToMol", "[smiles]") {
+TEST_CASE("Chirality::findPotentialStereo", "[stereo]") {
   auto cases = {
       "COC1/C=C/OC2(C)Oc3c(C)c(O)c4c(O)c(c(/C=N/OC(c5ccccc5)c5ccccc5)cc4c3C2=O)NC(=O)/C(C)=C\\C=C\\C(C)C(O)C(C)C(O)C(C)C(OC(C)=O)C1C",
       "O=C1NC(=O)C2=C1c1cn(c3ccccc13)CCO[C@H](CNCc1ccccc1)CCn1cc2c2ccccc21",
@@ -18,16 +21,17 @@ TEST_CASE("SmilesToMol", "[smiles]") {
       "C(C(C(C(C(C(CO)O)O)O)O)O)O",
   };
 
-  for (const auto &smiles : cases) {
-    BENCHMARK("SmilesToMol: " + std::string(smiles)) {
-      std::unique_ptr<ROMol> mol{SmilesToMol(smiles)};
-      REQUIRE(mol);
-      return mol;
+  for (auto smiles : cases) {
+    std::unique_ptr<RDKit::ROMol> mol{RDKit::SmilesToMol(smiles)};
+    REQUIRE(mol);
+
+    BENCHMARK("Chirality::findPotentialStereo: " + std::string(smiles)) {
+      return Chirality::findPotentialStereo(*mol);
     };
   }
 }
 
-TEST_CASE("MolToSmiles", "[smiles]") {
+TEST_CASE("CIPLabeler::CIPLabeler", "[stereo]") {
   auto cases = {
       "COC1/C=C/OC2(C)Oc3c(C)c(O)c4c(O)c(c(/C=N/OC(c5ccccc5)c5ccccc5)cc4c3C2=O)NC(=O)/C(C)=C\\C=C\\C(C)C(O)C(C)C(O)C(C)C(OC(C)=O)C1C",
       "O=C1NC(=O)C2=C1c1cn(c3ccccc13)CCO[C@H](CNCc1ccccc1)CCn1cc2c2ccccc21",
@@ -40,11 +44,12 @@ TEST_CASE("MolToSmiles", "[smiles]") {
       "C(C(C(C(C(C(CO)O)O)O)O)O)O",
   };
 
-  for (const auto &smiles : cases) {
-    std::unique_ptr<ROMol> mol{SmilesToMol(smiles)};
+  for (auto smiles : cases) {
+    std::unique_ptr<RDKit::ROMol> mol{RDKit::SmilesToMol(smiles)};
     REQUIRE(mol);
-    BENCHMARK("MolToSmiles: " + std::string(smiles)) {
-      return MolToSmiles(*mol);
+
+    BENCHMARK("CIPLabeler::assignCIPLabels: " + std::string(smiles)) {
+      return Chirality::findPotentialStereo(*mol);
     };
   }
 }

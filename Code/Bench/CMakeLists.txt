@@ -1,5 +1,5 @@
-add_executable(bench EXCLUDE_FROM_ALL smiles.cpp)
-target_link_libraries(bench rdkitCatch SmilesParse)
+add_executable(bench EXCLUDE_FROM_ALL smiles.cpp stereo.cpp)
+target_link_libraries(bench rdkitCatch SmilesParse CIPLabeler)
 
 if(RDK_BUILD_CPP_TESTS)
   # add a fast version of the benchmarks to the default unit tests
