@@ -1194,6 +1194,10 @@ bool _isAtomListQuery(const QUERY_T *query, int atomicNum) {
   if (query == nullptr) {
     return false;
   }
+  using EQUALS_QUERY_T = std::conditional_t<
+      std::is_same_v<typename QUERY_T::DATA_FUNC_ARG_TYPE, ConstRDMolAtom>,
+      ATOM_EQUALS_QUERY2,
+      ATOM_EQUALS_QUERY>;
   if (query->getDescription() == "AtomOr") {
     for (const auto &child : boost::make_iterator_range(query->beginChildren(),
                                                         query->endChildren())) {
@@ -1207,7 +1211,7 @@ bool _isAtomListQuery(const QUERY_T *query, int atomicNum) {
     // being lost on output
     return true;
   } else if (query->getDescription() == "AtomAtomicNum" &&
-             static_cast<const ATOM_EQUALS_QUERY *>(query)->getVal() != atomicNum) {
+             static_cast<const EQUALS_QUERY_T *>(query)->getVal() != atomicNum) {
     // when reading single-member atom lists from CTABs we end up with simple
     // AtomAtomicNum queries where the atomic number of the atom itself is zero.
     // Recognize this case.
