@@ -11,7 +11,7 @@
 using namespace RDKit;
 
 TEST_CASE("Chirality::findPotentialStereo", "[stereo]") {
-  for (const auto &smiles : bench_common::CASES) {
+  for (auto smiles : bench_common::CASES) {
     std::unique_ptr<RDKit::ROMol> mol{RDKit::SmilesToMol(smiles)};
     REQUIRE(mol);
 
