@@ -330,7 +330,7 @@ STR_VECT ROMol::getPropList(bool includePrivate, bool includeComputed) const {
   return res;
 }
 
-bool ROMol::hasProp(const std::string &key) const {
+bool ROMol::hasProp(const std::string_view &key) const {
   PropToken token(key);
   if (token == detail::computedPropNameToken) {
     return true;
@@ -338,7 +338,7 @@ bool ROMol::hasProp(const std::string &key) const {
   return dp_mol->hasProp(token);
 }
 
-void ROMol::clearProp(const std::string &key) const {
+void ROMol::clearProp(const std::string_view &key) const {
   dp_mol->clearMolPropIfPresent(PropToken(key));
 }
 

@@ -769,7 +769,7 @@ STR_VECT Atom::getPropList(bool includePrivate, bool includeComputed) const {
 }
 
 
-bool Atom::hasProp(const std::string &key) const {
+bool Atom::hasProp(const std::string_view &key) const {
   PropToken token(key);
   if (token == detail::computedPropNameToken) {
     return true;
@@ -777,7 +777,7 @@ bool Atom::hasProp(const std::string &key) const {
   return dp_dataMol->hasAtomProp(token, getIdx());
 }
 
-void Atom::clearProp(const std::string &key) const {
+void Atom::clearProp(const std::string_view &key) const {
   dp_dataMol->clearSingleAtomProp(PropToken(key), getIdx());
 }
 

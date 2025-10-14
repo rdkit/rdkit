@@ -350,7 +350,7 @@ STR_VECT Bond::getPropList(bool includePrivate, bool includeComputed) const {
   return res;
 }
 
-bool Bond::hasProp(const std::string &key) const{
+bool Bond::hasProp(const std::string_view &key) const {
   PropToken token(key);
   if (token == detail::computedPropNameToken) {
     return true;
@@ -358,7 +358,7 @@ bool Bond::hasProp(const std::string &key) const{
   return dp_dataMol->hasBondProp(PropToken(key), getIdx());
 }
 
-void Bond::clearProp(const std::string &key) const {
+void Bond::clearProp(const std::string_view &key) const {
   dp_dataMol->clearSingleBondProp(PropToken(key), getIdx());
 }
 void Bond::clearComputedProps() const {

@@ -978,7 +978,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol {
   */
   //! \overload
   template <typename T>
-  void setProp(const std::string &key, T val, bool computed = false) const {
+  void setProp(const std::string_view &key, T val,
+               bool computed = false) const {
     dp_mol->setMolProp(PropToken(key), val, computed);
   }
   //! allows retrieval of a particular property value
@@ -997,7 +998,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol {
   */
   //! \overload
   template <typename T>
-  void getProp(const std::string &key, T &res) const {
+  void getProp(const std::string_view &key, T &res) const {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
@@ -1013,7 +1014,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol {
 
   //! \overload
   template <typename T>
-  T getProp(const std::string &key) const {
+  T getProp(const std::string_view &key) const {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
@@ -1029,7 +1030,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol {
   //!  and assigns the value if we do
   //! \overload
   template <typename T>
-  bool getPropIfPresent(const std::string &key, T &res) const {
+  bool getPropIfPresent(const std::string_view &key, T &res) const {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
@@ -1040,7 +1041,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol {
     return dp_mol->getMolPropIfPresent(token, res);
   }
 
-  bool hasProp(const std::string &key) const;
+  bool hasProp(const std::string_view &key) const;
 
   //! clears the value of a \c property
   /*!
@@ -1057,7 +1058,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol {
     might be being read or written.
   */
   //! \overload
-  void clearProp(const std::string &key) const;
+  void clearProp(const std::string_view &key) const;
 
   //! update the properties from another
   /*

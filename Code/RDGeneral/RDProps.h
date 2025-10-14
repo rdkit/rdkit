@@ -114,7 +114,7 @@ class RDProps {
     return d_props.getVal<T>(key);
   }
 
-  const RDValue &getPropRDValue(const std::string &key) const {
+  const RDValue &getPropRDValue(const std::string_view &key) const {
     return d_props.getRDValue(key);
   }
 

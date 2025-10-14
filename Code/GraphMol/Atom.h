@@ -469,13 +469,14 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
   */
   //! \overload
   template <typename T>
-  void setProp(const std::string &key, T val, bool computed = false) const {
+  void setProp(const std::string_view &key, T val,
+               bool computed = false) const {
     // Continue support for mixed-type cases like:
     // atom0->setProp("a", 1.7); atom1->setProp("a", 123);
     // If there is a type mismatch, this option will convert to RDValue
     dp_dataMol->setSingleAtomProp(PropToken(key), getIdx(), val, computed, true);
   }
-  void setProp(const std::string &key, const char *val,
+  void setProp(const std::string_view &key, const char *val,
                bool computed = false) const {
     std::string sv(val);
     // Continue support for mixed-type cases like:
@@ -500,7 +501,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
   */
   //! \overload
   template <typename T>
-  void getProp(const std::string &key, T &res) const {
+  void getProp(const std::string_view &key, T &res) const {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
@@ -516,7 +517,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
 
   //! \overload
   template <typename T>
-  T getProp(const std::string &key) const {
+  T getProp(const std::string_view &key) const {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
@@ -532,7 +533,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
   //!  and assigns the value if we do
   //! \overload
   template <typename T>
-  bool getPropIfPresent(const std::string &key, T &res) const {
+  bool getPropIfPresent(const std::string_view &key, T &res) const {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
@@ -544,7 +545,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
   }
 
   //! \overload
-  bool hasProp(const std::string &key) const;
+  bool hasProp(const std::string_view &key) const;
 
   //! clears the value of a \c property
   /*!
@@ -561,7 +562,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
     written.
   */
   //! \overload
-  void clearProp(const std::string &key) const;
+  void clearProp(const std::string_view &key) const;
 
   //! clears all of our \c computed \c properties
   /*!

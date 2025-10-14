@@ -212,7 +212,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     throw KeyErrorException(what);
   }
 
-  const RDValue &getRDValue(const std::string &what) const {
+  const RDValue &getRDValue(const std::string_view &what) const {
     for (auto &data : _data) {
       if (data.key == what) {
         return data.val;

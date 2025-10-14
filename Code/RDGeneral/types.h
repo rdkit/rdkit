@@ -32,6 +32,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <string_view>
 #include <algorithm>
 #include <memory>
 #include <numeric>
@@ -52,6 +53,8 @@ class PropToken {
     std::string text;
     PropTokenImpl(uint64_t initHash, std::string initText)
         : hash(initHash), text(std::move(initText)) {}
+    PropTokenImpl(uint64_t initHash, const std::string_view &initText)
+        : hash(initHash), text(initText) {}
   };
   std::shared_ptr<PropTokenImpl> impl;
 
@@ -81,9 +84,16 @@ class PropToken {
 
   constexpr PropToken() = default;
   explicit PropToken(const char *text)
-      : impl(std::make_shared<PropTokenImpl>(computeHash(text), text)) {}
+      : impl(std::make_shared<PropTokenImpl>(computeHash(text),
+                                             std::string(text))) {}
   explicit PropToken(const std::string &text)
       : impl(std::make_shared<PropTokenImpl>(computeHash(text.c_str()), text)) {}
+  explicit PropToken(const std::string_view &text)
+      : impl(nullptr) {
+    std::string textString(text);
+    auto hash = computeHash(textString.c_str());
+    impl.reset(new PropTokenImpl(hash, std::move(textString)));
+  }
   PropToken(const PropToken &) = default;
   PropToken(PropToken &&) = default;
   PropToken &operator=(const PropToken &) = default;
