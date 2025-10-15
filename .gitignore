@@ -156,3 +156,4 @@ node_modules
 /Code/GraphMol/MolInteractionFields/test_data/test3.cube
 /compile_commands.json
 /External/ChemDraw/chemdraw
+/External/AvalonTools/ava-formake-AvalonToolkit*
