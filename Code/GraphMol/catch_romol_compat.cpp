@@ -73,7 +73,9 @@ TEST_CASE("ROMol move constructor") {
   mol.setProp("test", 1);
   ROMol mol2(std::move(mol));
   CHECK(&mol2.asRDMol() == rdmol);
-  int res;
+  // This value is never used, but GCC can no longer deduce that it's
+  // initialized, and maybe-uninitialized is currently treated as an error.
+  int res = 0;
   CHECK(mol2.getPropIfPresent("test", res));
   CHECK(res == 1);
   CHECK(&conf->getOwningMol() == &mol2);
@@ -89,7 +91,9 @@ TEST_CASE("ROMol move assignment operator") {
   mol.setProp("test", 1);
   ROMol mol2 = std::move(mol);
   CHECK(&mol2.asRDMol() == rdmol);
-  int res;
+  // This value is never used, but GCC can no longer deduce that it's
+  // initialized, and maybe-uninitialized is currently treated as an error.
+  int res = 0;
   CHECK(mol2.getPropIfPresent("test", res));
   CHECK(res == 1);
   CHECK(&conf->getOwningMol() == &mol2);
@@ -111,7 +115,9 @@ TEST_CASE("ROMol move constructor - previous owner") {
   CHECK(mol2.getNumAtoms() == 4);
   CHECK(mol2.getNumBonds() == 3);
   CHECK(mol2.getAtomWithIdx(0) == atom);
-  int res;
+  // This value is never used, but GCC can no longer deduce that it's
+  // initialized, and maybe-uninitialized is currently treated as an error.
+  int res = 0;
   CHECK(mol2.getPropIfPresent("test", res));
   CHECK(res == 1);
   CHECK(&atom->getOwningMol() == &mol2);
@@ -125,7 +131,9 @@ TEST_CASE("ROMol copy constructor") {
   mol->setProp("prop", 3);
   ROMol mol2(*mol);
   mol.reset();
-  int res;
+  // This value is never used, but GCC can no longer deduce that it's
+  // initialized, and maybe-uninitialized is currently treated as an error.
+  int res = 0;
   REQUIRE(mol2.getPropIfPresent<int>("prop", res));
   CHECK(res == 3);
 }
@@ -179,7 +187,9 @@ TEST_CASE("ROMol copy constructor with owning RDMol") {
   mol.getConformer();
   mol2.getConformer();
 
-  int res;
+  // This value is never used, but GCC can no longer deduce that it's
+  // initialized, and maybe-uninitialized is currently treated as an error.
+  int res = 0;
   REQUIRE(mol2.getPropIfPresent<int>("prop", res));
   CHECK(res == 3);
 
@@ -220,7 +230,9 @@ TEST_CASE("ROMol stable when RDMol is moved") {
   at->setProp("atomprop", 5);
 
   RDMol rdmol2(std::move(*rdmol));
-  int res;
+  // This value is never used, but GCC can no longer deduce that it's
+  // initialized, and maybe-uninitialized is currently treated as an error.
+  int res = 0;
   REQUIRE(mol.getAtomWithIdx(1)->getPropIfPresent<int>("atomprop", res));
   CHECK(res == 5);
 }
@@ -429,7 +441,9 @@ TEST_CASE("ROMol Compat Mol properties") {
     mol.setProp(unsignedIntToken, 3u);
     mol.setProp(floatToken, 3.0f);
 
-    int res;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
     REQUIRE(mol.getPropIfPresent<int>(signedIntToken, res));
     CHECK(res == 3);
     REQUIRE(!mol.getPropIfPresent<int>(unusedToken, res));
@@ -438,7 +452,9 @@ TEST_CASE("ROMol Compat Mol properties") {
   SECTION("Prop handle updates in place") {
     mol.setProp(signedIntToken, 3);
 
-    int res;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
     REQUIRE(mol.getPropIfPresent<int>(signedIntToken, res));
     REQUIRE(res == 3);
 
@@ -510,8 +526,10 @@ TEST_CASE("ROMol Compat Mol properties") {
 
     // Update from self should do nothing
     mol.updateProps(mol, /*preserve=*/false);
-    float res;
-    int intres;
+    // These values are never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    float res = 0.0f;
+    int intres = 0;
     std::vector<int> vectorRes;
     REQUIRE(mol.getPropIfPresent(floatToken, res));
     CHECK(res == 4.0f);
@@ -657,7 +675,9 @@ TEST_CASE("ROMol compat Atom/bond properties") {
   SECTION("Atom properties access and override") {
     addPropToAllAtoms(mol, signedIntToken, 3);
     REQUIRE(atom0 != nullptr);
-    int res;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
     REQUIRE(atom0->getPropIfPresent<int>(signedIntToken, res));
     CHECK(res == 3);
     atom0->setProp(signedIntToken, 4);
@@ -676,7 +696,9 @@ TEST_CASE("ROMol compat Atom/bond properties") {
 
   SECTION("Bond properties access and override") {
     addPropToAllBonds(mol, signedIntToken, 3);
-    int res;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
     REQUIRE(bond1->getPropIfPresent<int>(signedIntToken, res));
     CHECK(res == 3);
 
@@ -1124,7 +1146,9 @@ TEST_CASE("Atom constructors/ownership") {
     CHECK(!atom3.hasOwningMol());
     CHECK(atom3.getAtomicNum() == 6);
 
-    int res;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
     REQUIRE(atom3.getPropIfPresent<int>("test", res));
     CHECK(res == 3);
     std::vector<int> resv;
@@ -1154,7 +1178,9 @@ TEST_CASE("Atom constructors/ownership") {
     CHECK(!atom2.hasOwningMol());
     CHECK(atom2.getAtomicNum() == 6);
 
-    int res;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
     REQUIRE(atom2.getPropIfPresent<int>("test", res));
     CHECK(res == 3);
     std::vector<int> resv;
@@ -1167,54 +1193,58 @@ TEST_CASE("Atom constructors/ownership") {
   }
 
   SECTION("move, no previous owner") {
-      Atom atom(6);
-      atom.setProp("test", 3, /*computed=*/ true);
-      atom.setProp("complexTest", std::vector<int>({1, 2, 3}));
-      atom.setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER));
-      Atom atom2 = std::move(atom);
-      CHECK(!atom2.hasOwningMol());
-      CHECK(atom2.getAtomicNum() == 6);
+    Atom atom(6);
+    atom.setProp("test", 3, /*computed=*/ true);
+    atom.setProp("complexTest", std::vector<int>({1, 2, 3}));
+    atom.setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER));
+    Atom atom2 = std::move(atom);
+    CHECK(!atom2.hasOwningMol());
+    CHECK(atom2.getAtomicNum() == 6);
 
-      int res;
-      REQUIRE(atom2.getPropIfPresent<int>("test", res));
-      CHECK(res == 3);
-      std::vector<int> resv;
-      REQUIRE(atom2.getPropIfPresent("complexTest", resv));
-      CHECK(resv == std::vector<int>({1, 2, 3}));
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
+    REQUIRE(atom2.getPropIfPresent<int>("test", res));
+    CHECK(res == 3);
+    std::vector<int> resv;
+    REQUIRE(atom2.getPropIfPresent("complexTest", resv));
+    CHECK(resv == std::vector<int>({1, 2, 3}));
 
-      AtomMonomerInfo *info = atom2.getMonomerInfo();
-      REQUIRE(info != nullptr);
-      CHECK(info->getMonomerType() == AtomMonomerInfo::OTHER);
+    AtomMonomerInfo *info = atom2.getMonomerInfo();
+    REQUIRE(info != nullptr);
+    CHECK(info->getMonomerType() == AtomMonomerInfo::OTHER);
   }
 
   SECTION("Move, previous owner") {
-      auto molPtr = basicMol();
-      RDMol& mol = *molPtr;
-      auto &romol = mol.asROMol();
+    auto molPtr = basicMol();
+    RDMol& mol = *molPtr;
+    auto &romol = mol.asROMol();
 
-      Atom *atom = romol.getAtomWithIdx(0);
-      atom->setProp("test", 3, /*computed=*/ true);
-      atom->setProp("complexTest", std::vector<int>({1, 2, 3}));
-      atom->setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER));
+    Atom *atom = romol.getAtomWithIdx(0);
+    atom->setProp("test", 3, /*computed=*/ true);
+    atom->setProp("complexTest", std::vector<int>({1, 2, 3}));
+    atom->setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER));
 
-      REQUIRE(atom != nullptr);
-      REQUIRE(atom->getAtomicNum() == 6);
-      REQUIRE(&atom->getOwningMol() == &romol);
+    REQUIRE(atom != nullptr);
+    REQUIRE(atom->getAtomicNum() == 6);
+    REQUIRE(&atom->getOwningMol() == &romol);
 
-      Atom atom2(std::move(*atom));
-      CHECK(atom2.hasOwningMol());
-      CHECK(atom2.getAtomicNum() == 6);
+    Atom atom2(std::move(*atom));
+    CHECK(atom2.hasOwningMol());
+    CHECK(atom2.getAtomicNum() == 6);
 
-      int res;
-      REQUIRE(atom2.getPropIfPresent<int>("test", res));
-      CHECK(res == 3);
-      std::vector<int> resv;
-      REQUIRE(atom2.getPropIfPresent("complexTest", resv));
-      CHECK(resv == std::vector<int>({1, 2, 3}));
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
+    REQUIRE(atom2.getPropIfPresent<int>("test", res));
+    CHECK(res == 3);
+    std::vector<int> resv;
+    REQUIRE(atom2.getPropIfPresent("complexTest", resv));
+    CHECK(resv == std::vector<int>({1, 2, 3}));
 
-      AtomMonomerInfo *info = atom2.getMonomerInfo();
-      REQUIRE(info != nullptr);
-      CHECK(info->getMonomerType() == AtomMonomerInfo::OTHER);
+    AtomMonomerInfo *info = atom2.getMonomerInfo();
+    REQUIRE(info != nullptr);
+    CHECK(info->getMonomerType() == AtomMonomerInfo::OTHER);
   }
 }
 
@@ -1238,7 +1268,9 @@ TEST_CASE("Bond constructors/ownership") {
     Bond bond3(std::move(bond));
     CHECK(!bond3.hasOwningMol());
 
-    int res;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
     REQUIRE(bond3.getPropIfPresent<int>("test", res));
     CHECK(res == 3);
     std::vector<int> resv;
@@ -1260,7 +1292,9 @@ TEST_CASE("Bond constructors/ownership") {
 
     Bond bond2 = *bond;
     CHECK(!bond2.hasOwningMol());
-    int res;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
     REQUIRE(bond2.getPropIfPresent<int>("test", res));
     CHECK(res == 3);
     std::vector<int> resv;
@@ -1274,7 +1308,9 @@ TEST_CASE("Bond constructors/ownership") {
     bond.setProp("complexTest", std::vector<int>({1, 2, 3}));
     Bond bond2 = std::move(bond);
     CHECK(!bond2.hasOwningMol());
-    int res;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
     REQUIRE(bond2.getPropIfPresent<int>("test", res));
     CHECK(res == 3);
     std::vector<int> resv;
@@ -1296,7 +1332,9 @@ TEST_CASE("Bond constructors/ownership") {
 
     Bond bond2(std::move(*bond));
     CHECK(bond2.hasOwningMol());
-    int res;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int res = 0;
     REQUIRE(bond2.getPropIfPresent<int>("test", res));
     CHECK(res == 3);
     std::vector<int> resv;
@@ -1735,12 +1773,12 @@ TEST_CASE("Stereo Groups") {
     std::atomic_int successCount(0);
 
     for (size_t i = 0; i < numThreads; ++i) {
-      threads.emplace_back(
-          [&atomicInt, &atomicPtr, numThreads, &mol, &successCount]() {
+      threads.emplace_back([&atomicInt, &atomicPtr, numThreads = numThreads,
+                            &mol, &successCount]() {
             atomicInt.fetch_add(1);
             // Just spin as a barrier, to increase the chances of all threads
             // being in sync
-            while (atomicInt.load() != numThreads) {
+            while (uint32_t(atomicInt.load()) != numThreads) {
             }
             // Have all threads call getStereoGroups at the same time
             const std::vector<StereoGroup> &res = mol.getStereoGroups();
