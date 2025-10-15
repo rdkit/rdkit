@@ -157,10 +157,12 @@ const Bond* ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) con
              : getBondWithIdx(bondIndex);
 }
 ROMol::ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom const* at) const {
+  PRECONDITION(at, "no atom");
   auto [beginNeighbors, endNeighbors] = dp_mol->getAtomNeighbors(at->getIdx());
   return ADJ_ITER_PAIR{ADJ_ITER{beginNeighbors}, ADJ_ITER{endNeighbors}};
 }
 ROMol::OBOND_ITER_PAIR ROMol::getAtomBonds(Atom const* at) const {
+  PRECONDITION(at, "no atom");
   auto [beginBonds, endBonds] = dp_mol->getAtomBonds(at->getIdx());
   return OBOND_ITER_PAIR{OEDGE_ITER{beginBonds}, OEDGE_ITER{endBonds}};
 }
