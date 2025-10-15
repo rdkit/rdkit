@@ -41,7 +41,7 @@ inline std::pair<edge_descriptor, bool> edge(vertex_descriptor v1,
     CHECK_INVARIANT(bond, "This may not be expected");
     return std::make_pair(edge_descriptor(bond->getIdx()), true);
 
-  } catch (Invar::Invariant) {
+  } catch (const Invar::Invariant &) {
     return std::make_pair(edge_descriptor(0), false);
   }
 }

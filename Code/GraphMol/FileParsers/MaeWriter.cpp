@@ -296,19 +296,21 @@ void mapMolProperties(const ROMol &mol, const STR_VECT &propNames,
 
   copyAtomNumChirality(mol, stBlock);
 
-  auto boolSetter = [&stBlock](const std::string &prop, unsigned, bool value) {
+  [[maybe_unused]] auto boolSetter = [&stBlock](const std::string &prop,
+                                                unsigned, bool value) {
     stBlock.setBoolProperty(prop, value);
   };
-  auto intSetter = [&stBlock](const std::string &prop, unsigned, int value) {
+  [[maybe_unused]] auto intSetter = [&stBlock](const std::string &prop,
+                                               unsigned, int value) {
     stBlock.setIntProperty(prop, value);
   };
-  auto realSetter = [&stBlock](const std::string &prop, unsigned,
-                               double value) {
+  [[maybe_unused]] auto realSetter = [&stBlock](const std::string &prop,
+                                                unsigned, double value) {
     stBlock.setRealProperty(prop, value);
   };
-  auto stringSetter = [&stBlock](const std::string &prop, unsigned,
-                                 const std::string &value) {
-    stBlock.setStringProperty(prop, value);
+  [[maybe_unused]] auto stringSetter =
+      [&stBlock](const std::string &prop, unsigned, const std::string &value) {
+        stBlock.setStringProperty(prop, value);
   };
 
   int fake_idx = 0;
