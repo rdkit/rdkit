@@ -14,6 +14,8 @@ GitHub)
   but some C++ class might have to be updated.
 - Simple AND queries are now merged into atoms. E.g. `[C&+]` now produces the
   the same result as `[C+]` when parsed as SMARTS.
+- The behavior of H removal has changed slightly: hydrides will no longer removed
+  by default, as this changes the global charge of the mol.
 
 ## New Features and Enhancements:
 
