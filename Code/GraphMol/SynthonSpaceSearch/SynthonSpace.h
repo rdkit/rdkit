@@ -195,6 +195,20 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
   /*!
+   * Perform a substructure search with the given query molecule across
+   * the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.
+   *
+   * @param query : query molecule
+   * @param callback: user-provided callback receiving chunks of ROMols.
+   * @param params : (optional) settings for the search
+   */
+  void substructureSearch(
+      const ROMol &query, const SearchResultCallback &callback,
+      const SubstructMatchParameters &matchParams = SubstructMatchParameters(),
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
+  /*!
    * Perform a substructure search with the given generalized query
    * molecule across the synthonspace library.  Duplicate SMILES strings
    * produced by different reactions will be returned.
@@ -223,6 +237,22 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
   // Perform a RASCAL similarity search with the given query molecule
+  /*!
+   * Perform a fingerprint similarity search with the given query molecule
+   * across the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.
+   * @param query : query molecule
+   * @param fpGen: a FingerprintGenerator object that will provide the
+   *               fingerprints for the similarity calculation
+   * @param callback: user-provided callback receiving chunks of ROMols.
+   * @param params : (optional) settings for the search
+   */
+  void fingerprintSearch(
+      const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
+      const SearchResultCallback &callback,
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
+  // Perform a RASCAL similarity search with the given query molecule
   // across the synthonspace library.  Duplicate SMILES strings produced by
   // different reactions will be returned.
   /*!
@@ -241,6 +271,25 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
+  // Perform a RASCAL similarity search with the given query molecule
+  // across the synthonspace library.  Duplicate SMILES strings produced by
+  // different reactions will be returned.
+  /*!
+   *
+   * @param query : query molecule
+   * @param callback: user-provided callback receiving chunks of ROMols.
+   * @param rascalOptions: RASCAL options.  The similarityThreshold value
+   *                       in the rascalOptions will be used rather than
+   *                       params.similarityCutoff,
+   *                       but params.fragSimilarityAdjuster will be used
+   *                       to adjust the threshold for the fragment
+   *                       comparisons.
+   * @param params : (optional) settings for the search
+   */
+  void rascalSearch(
+      const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
+      const SearchResultCallback &callback,
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
   /*!
    *
    * @param inFilename: name of the file containing the synthon-based library.
