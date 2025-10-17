@@ -901,9 +901,7 @@ bool shouldRemoveH(const RWMol &mol, const Atom *atom,
       }
     }
   }
-
-  if (!ps.removeHydrides && atom->getFormalCharge() == -1 &&
-      atom->getDegree() < 2) {
+  if (!ps.removeHydrides && atom->getFormalCharge() == -1) {
     return false;
   }
   bool removeIt = true;
