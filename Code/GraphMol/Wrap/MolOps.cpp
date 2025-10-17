@@ -1027,7 +1027,8 @@ python::tuple hasQueryHsHelper(const ROMol &m) {
 // we can really only set some of these types from C++ which means
 //  we need a helper function for testing that we can read them
 //  correctly.
-void _testSetProps(RDProps &props, const std::string &prefix) {
+template<typename PropsT>
+void _testSetProps(PropsT &props, const std::string &prefix) {
   props.setProp<bool>(prefix + "bool", true);
   props.setProp<unsigned int>(prefix + "uint", -1);
   props.setProp<double>(prefix + "double", 3.14159);
@@ -1062,7 +1063,6 @@ void _testSetProps(RDProps &props, const std::string &prefix) {
 }
 
 void testSetProps(ROMol &mol) {
-  raiseNonImplementedFunction("romol props");/*
   _testSetProps(mol, "mol_");
   for (auto &atom : mol.atoms()) {
     _testSetProps(*atom, std::string("atom_") + std::to_string(atom->getIdx()));
@@ -1073,7 +1073,7 @@ void testSetProps(ROMol &mol) {
   for (unsigned conf_idx = 0; conf_idx < mol.getNumConformers(); ++conf_idx) {
     _testSetProps(mol.getConformer(conf_idx),
                   "conf_" + std::to_string(conf_idx));
-  }*/
+  }
 }
 
 void expandAttachmentPointsHelper(ROMol &mol, bool addAsQueries,
