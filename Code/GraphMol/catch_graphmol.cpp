@@ -1107,6 +1107,14 @@ TEST_CASE("RemoveHsParameters", "[molops]") {
       ps.removeHigherDegrees = true;
       RWMol cp(*m);
       MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 3);  // b/c removeHydrides is false by default
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeHigherDegrees = true;
+      ps.removeHydrides = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
       CHECK(cp.getNumAtoms() == 2);
     }
   }
@@ -4925,4 +4933,11 @@ M  END)CTAB"_ctab;
       REQUIRE(m2);
     }
   }
+}
+
+TEST_CASE("large smiles benchmark") {
+  std::string smiles(1000, 'C');
+  auto m = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(m);
+  CHECK(m->getNumAtoms() == 1000);
 }
