@@ -23,7 +23,7 @@ steps:
         libcxx=$(compiler_version) cmake=3.26 \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
-        cairo eigen swig=4.2 make
+        cairo eigen swig=4.2 make ninja
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
@@ -57,7 +57,8 @@ steps:
     -DRDK_BUILD_SWIG_WRAPPERS=ON \
     -DRDK_SWIG_STATIC=ON \
     -DRDK_BUILD_THREADSAFE_SSS=ON \
-    -DRDK_TEST_MULTITHREADED=ON
+    -DRDK_TEST_MULTITHREADED=ON \
+    -DCMAKE_GENERATOR=Ninja
   displayName: Configure build (Run CMake)
 - bash: |
     export CONDA=/tmp/miniforge
@@ -66,7 +67,7 @@ steps:
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     cd build
-    make -j $( $(number_of_cores) ) install
+    ninja -j $( $(number_of_cores) )
   displayName: Build
 - bash: |
     export CONDA=/tmp/miniforge
