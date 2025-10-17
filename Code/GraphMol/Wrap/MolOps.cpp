@@ -43,6 +43,16 @@ using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 
+python::tuple computeAtomCIPRanksHelper(ROMol &mol) {
+  UINT_VECT atomRanks;
+  Chirality::assignAtomCIPRanks(mol, atomRanks);
+  python::list res;
+  for (auto rank : atomRanks) {
+    res.append(rank);
+  }
+  return python::tuple(res);
+}
+
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
                                         unsigned int nToBreak, bool addDummies,
@@ -2212,6 +2222,12 @@ RETURNS:
                  python::arg("force") = false,
                  python::arg("flagPossibleStereoCenters") = false),
                 docString.c_str());
+
+    python::def("ComputeAtomCIPRanks", computeAtomCIPRanksHelper,
+                (python::arg("mol")),
+                R"DOC(Computes the CIP ranks for the atoms in a molecule.
+  The ranks are stored as an atom property '_CIPRank' and returned as a tuple.
+)DOC");
 
     // ------------------------------------------------------------------------
     docString =
