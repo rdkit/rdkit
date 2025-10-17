@@ -156,7 +156,7 @@ void copyProperties(
     // Also skip the property if we have a list of properties we want to export
     // and this one is not one of them.
     if (!propNames.empty() && (std::find(propNames.begin(), propNames.end(),
-                                         prop.name()) == propNames.end())) {
+                   prop.name().getString()) == propNames.end())) {
       continue;
     }
 

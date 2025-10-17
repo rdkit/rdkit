@@ -769,8 +769,8 @@ private:
     RDValue d_inPlaceData;
     PropArray d_arrayData;
 
-    friend class RDKIT_GRAPHMOL_EXPORT RDKit::RDMol::PropIterator;
-    friend class RDKIT_GRAPHMOL_EXPORT RDKit::RDMol;
+    friend class RDKit::RDMol::PropIterator;
+    friend class RDKit::RDMol;
 
     // Don't access the constructors or assignment operators outside of RDMol.
     // They're public so that the standard library functions and classes have
