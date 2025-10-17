@@ -2759,9 +2759,7 @@ void testGithub6730() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   RDLog::InitLogs();
   testPass();
   testFail();
