@@ -615,7 +615,10 @@ class TestCase(unittest.TestCase):
     m.SetProp("double", "10000.123")
     m.SetProp("double spaces", " 10000.123 ")
     self.assertEqual(m.GetPropsAsDict(), {
-      "int": 1000, "double": 10000.123, "double spaces": 10000.123 })
+      "int": 1000,
+      "double": 10000.123,
+      "double spaces": 10000.123
+    })
 
     self.assertEqual(type(m.GetPropsAsDict()['int']), int)
     self.assertEqual(type(m.GetPropsAsDict()['double']), float)
@@ -4425,12 +4428,21 @@ $$$$
   def testAtomBondProps(self):
     origVal = Chem.GetUseLegacyStereoPerception()
     Chem.SetUseLegacyStereoPerception(True)
+    m = Chem.MolFromSmiles('c1ccccc1C(C)C')
+    for atom in m.GetAtoms():
+      d = atom.GetPropsAsDict()
+      self.assertEqual(set(d.keys()), set(['_CIPRank', '__computedProps']))
+      self.assertEqual(type(d['_CIPRank']), int)
+      self.assertEqual(list(d['__computedProps']), ['_CIPRank'])
+
     m = Chem.MolFromSmiles('c1ccccc1')
+    self.assertEqual(Chem.ComputeAtomCIPRanks(m), (0, 0, 0, 0, 0, 0))
     for atom in m.GetAtoms():
       d = atom.GetPropsAsDict()
       self.assertEqual(set(d.keys()), set(['_CIPRank', '__computedProps']))
       self.assertEqual(d['_CIPRank'], 0)
       self.assertEqual(list(d['__computedProps']), ['_CIPRank'])
+
     Chem.SetUseLegacyStereoPerception(origVal)
 
     for bond in m.GetBonds():
@@ -5599,13 +5611,14 @@ M  END
 
     #Creating new StereoGroup with no atoms or bonds should not be allowed
     try:
-      group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [], [])
+      group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [],
+                                             [])
     except ValueError:
       ok = 1
     else:
       ok = 0
     self.assertTrue(ok)
-      
+
     # Can add new bond-only StereoGroups
     group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [], [7])
     m2.SetStereoGroups([group1])
@@ -5619,7 +5632,8 @@ M  END
     self.assertEqual(len(groups), 0)
 
     # Can add new atom&bond StereoGroup
-    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [13], [7])
+    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [13],
+                                           [7])
     m2.SetStereoGroups([group1])
     self.assertEqual(len(m2.GetStereoGroups()), 1)
 
@@ -6857,7 +6871,8 @@ M  END
     nd = Chem.AddMetadataToPNGString(vals2, nd)
     nvals = Chem.MetadataFromPNGString(nd, asList=True)
     self.assertEqual(len(nvals), 7)
-    self.assertEqual([k.split()[0] for k, _ in nvals], ['SMILES', 'rdkitPKL', 'SMILES', 'foo', 'bar', 'foo', 'bar'])
+    self.assertEqual([k.split()[0] for k, _ in nvals],
+                     ['SMILES', 'rdkitPKL', 'SMILES', 'foo', 'bar', 'foo', 'bar'])
     self.assertEqual([v.decode() for k, v in nvals if k == 'foo'], ['1', '3'])
     self.assertEqual([v.decode() for k, v in nvals if k == 'bar'], ['2', '4'])
 
@@ -8079,13 +8094,11 @@ M  END
     ps = Chem.SmilesWriteParams()
     ps.canonical = True
 
-    m = Chem.CanonicalizeStereoGroups(m,Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist,16)
+    m = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist,
+                                      16)
     smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
     smi2 = Chem.MolToCXSmiles(m2, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
-    self.assertTrue(
-      smi == smi2
-    )
-
+    self.assertTrue(smi == smi2)
 
   def testEnhancedStereoDoesNotExceedsLimit(self):
     m = Chem.MolFromSmiles(
@@ -8110,21 +8123,16 @@ M  END
     ps = Chem.SmilesWriteParams()
     ps.canonical = True
 
-    m = Chem.CanonicalizeStereoGroups(m,Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist,16)
+    m = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist,
+                                      16)
     # m2 = Chem.CanonicalizeStereoGroups(m2)
     smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
     smi2 = Chem.MolToCXSmiles(m2, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
-    self.assertTrue(
-      smi != smi2
-    )
+    self.assertTrue(smi != smi2)
 
     m2 = Chem.CanonicalizeStereoGroups(m2)
     smi2 = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
-    self.assertTrue(
-      smi == smi2
-    )
-
-
+    self.assertTrue(smi == smi2)
 
   def test_picklingWithAddedAttribs(self):
     m = Chem.MolFromSmiles("C")
