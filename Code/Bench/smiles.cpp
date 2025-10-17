@@ -12,7 +12,7 @@ using namespace RDKit;
 TEST_CASE("SmilesToMol", "[smiles]") {
   for (auto smiles : bench_common::CASES) {
     BENCHMARK("SmilesToMol: " + std::string(smiles)) {
-      std::unique_ptr<ROMol> mol{SmilesToMol(smiles)};
+      auto mol = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(mol);
       return mol;
     };
@@ -21,7 +21,7 @@ TEST_CASE("SmilesToMol", "[smiles]") {
 
 TEST_CASE("MolToSmiles", "[smiles]") {
   for (auto smiles : bench_common::CASES) {
-    std::unique_ptr<ROMol> mol{SmilesToMol(smiles)};
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
     REQUIRE(mol);
     BENCHMARK("MolToSmiles: " + std::string(smiles)) {
       return MolToSmiles(*mol);
