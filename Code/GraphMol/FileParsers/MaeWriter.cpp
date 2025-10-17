@@ -126,8 +126,9 @@ getIndexedProperty<std::string>(mae::IndexedBlock &indexedBlock,
                                          &mae::IndexedBlock::setStringProperty);
 }
 
+template<typename PropsT>
 void copyProperties(
-    const RDProps &origin, const STR_VECT &propNames, unsigned idx,
+    const PropsT &origin, const RDMol &mol, const STR_VECT &propNames, unsigned idx,
     std::function<void(const std::string &, unsigned, bool)> boolSetter,
     std::function<void(const std::string &, unsigned, int)> intSetter,
     std::function<void(const std::string &, unsigned, double)> realSetter,
@@ -137,68 +138,82 @@ void copyProperties(
   // since we don't want to export these.
   origin.clearComputedProps();
 
-  for (const auto &prop : origin.getDict().getData()) {
+  RDMol::Scope scope = std::is_same_v<PropsT, Atom>
+                           ? RDMol::Scope::ATOM
+                           : (std::is_same_v<PropsT, Bond> ? RDMol::Scope::BOND
+                                                           : RDMol::Scope::MOL);
+  RDMol::PropIterator begin = mol.beginProps(false, scope, idx);
+  RDMol::PropIterator end = mol.endProps();
+
+  for (; begin != end; ++begin) {
     // Skip the property holding the names of the computed properties
-    if (prop.key == detail::computedPropName) {
-      continue;
-    }
+    //if (prop.key == detail::computedPropName) {
+    //  continue;
+    //}
+
+    const auto &prop = *begin;
 
     // Also skip the property if we have a list of properties we want to export
     // and this one is not one of them.
     if (!propNames.empty() && (std::find(propNames.begin(), propNames.end(),
-                                         prop.key) == propNames.end())) {
+                                         prop.name()) == propNames.end())) {
       continue;
     }
 
-    switch (prop.val.getTag()) {
+    switch (prop.getRDValueTag()) {
       case RDTypeTag::BoolTag: {
-        auto propName = prop.key;
-        if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+        auto propName = prop.name().getString();
+        if (!std::regex_match(prop.name().getString(), MMCT_PROP_REGEX)) {
           propName.insert(0, "b_rdkit_");
         }
 
-        boolSetter(propName, idx, rdvalue_cast<bool>(prop.val));
+        bool v = mol.getAtomProp<bool>(prop.name(), idx);
+        boolSetter(propName, idx, v);
         break;
       }
 
       case RDTypeTag::IntTag:
       case RDTypeTag::UnsignedIntTag: {
-        auto propName = prop.key;
-        if (prop.key == common_properties::_MolFileRLabel) {
+        auto propName = prop.name().getString();
+        if (prop.name().getString() == common_properties::_MolFileRLabel) {
           propName = MAE_RGROUP_LABEL;
-        } else if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+        } else if (!std::regex_match(prop.name().getString(),
+                                     MMCT_PROP_REGEX)) {
           propName.insert(0, "i_rdkit_");
         }
 
-        intSetter(propName, idx, rdvalue_cast<int>(prop.val));
+        int v = mol.getAtomProp<int>(prop.name(), idx);
+        intSetter(propName, idx, v);
         break;
       }
 
       case RDTypeTag::DoubleTag:
       case RDTypeTag::FloatTag: {
-        auto propName = prop.key;
-        if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+        auto propName = prop.name().getString();
+        if (!std::regex_match(prop.name().getString(), MMCT_PROP_REGEX)) {
           propName.insert(0, "r_rdkit_");
         }
 
-        realSetter(propName, idx, rdvalue_cast<double>(prop.val));
+        double v = mol.getAtomProp<double>(prop.name(), idx);
+        realSetter(propName, idx, v);
         break;
       }
 
       case RDTypeTag::StringTag: {
-        auto propName = prop.key;
-        if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+        auto propName = prop.name().getString();
+        if (!std::regex_match(prop.name().getString(), MMCT_PROP_REGEX)) {
           propName.insert(0, "s_rdkit_");
         }
 
-        stringSetter(propName, idx, rdvalue_cast<std::string>(prop.val));
+        std::string v = mol.getAtomProp<std::string>(prop.name(), idx);
+        stringSetter(propName, idx, v);
         break;
       }
       default:
         // AnyTag, EmptyTag, any kind of Vector.
         // Should we support vectors?
         BOOST_LOG(rdWarningLog)
-            << "WARNING: the property " << prop.key
+            << "WARNING: the property " << prop.name().getString()
             << " has an unsupported type, and will not be exported.";
         continue;
     }
@@ -296,27 +311,24 @@ void mapMolProperties(const ROMol &mol, const STR_VECT &propNames,
 
   copyAtomNumChirality(mol, stBlock);
 
-  [[maybe_unused]] auto boolSetter = [&stBlock](const std::string &prop,
-                                                unsigned, bool value) {
+  auto boolSetter = [&stBlock](const std::string &prop, unsigned, bool value) {
     stBlock.setBoolProperty(prop, value);
   };
-  [[maybe_unused]] auto intSetter = [&stBlock](const std::string &prop,
-                                               unsigned, int value) {
+  auto intSetter = [&stBlock](const std::string &prop, unsigned, int value) {
     stBlock.setIntProperty(prop, value);
   };
-  [[maybe_unused]] auto realSetter = [&stBlock](const std::string &prop,
-                                                unsigned, double value) {
+  auto realSetter = [&stBlock](const std::string &prop, unsigned,
+                               double value) {
     stBlock.setRealProperty(prop, value);
   };
-  [[maybe_unused]] auto stringSetter =
-      [&stBlock](const std::string &prop, unsigned, const std::string &value) {
-        stBlock.setStringProperty(prop, value);
+  auto stringSetter = [&stBlock](const std::string &prop, unsigned,
+                                 const std::string &value) {
+    stBlock.setStringProperty(prop, value);
   };
 
   int fake_idx = 0;
-  raiseNonImplementedDetail("Properties");
-  //copyProperties(mol, propNames, fake_idx, boolSetter, intSetter, realSetter,
-  //               stringSetter);
+  copyProperties(mol, mol.asRDMol(), propNames, fake_idx, boolSetter, intSetter,
+                 realSetter, stringSetter);
 }
 void mapAtom(
     const Conformer &conformer, const Atom &atom, const STR_VECT &propNames,
@@ -371,10 +383,8 @@ void mapAtom(
   }
 
   // Custom properties
-  raiseNonImplementedDetail("Properties");
-
-  // copyProperties(atom, propNames, idx, boolSetter, intSetter, realSetter,
-   //              stringSetter);
+  copyProperties(atom, atom.getRDMol(), propNames, idx, boolSetter, intSetter,
+                 realSetter, stringSetter);
 }
 
 void mapAtoms(const ROMol &mol, const STR_VECT &propNames, int confId,
@@ -447,9 +457,8 @@ void mapBond(
   }
 
   // Custom properties
-  raiseNonImplementedDetail("Properties");
-  //copyProperties(bond, propNames, idx, boolSetter, intSetter, realSetter,
-   //              stringSetter);
+  copyProperties(bond, bond.getRDMol(), propNames, idx, boolSetter, intSetter,
+                 realSetter, stringSetter);
 }
 
 void mapBonds(const ROMol &mol, const STR_VECT &propNames,

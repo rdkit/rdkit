@@ -2281,7 +2281,7 @@ void RDMol::clearComputedProps(bool includeRings) {
   size_t destPropIndex = 0;
   for (size_t sourcePropIndex = 0, numProps = properties.size();
        sourcePropIndex < numProps; ++sourcePropIndex) {
-    if (!properties[sourcePropIndex].isComputed) {
+    if (!properties[sourcePropIndex].isComputed()) {
       if (destPropIndex != sourcePropIndex) {
         properties[destPropIndex] = std::move(properties[sourcePropIndex]);
       }
@@ -2302,16 +2302,16 @@ std::vector<std::string> RDMol::getPropList(bool includePrivate,
                "RDMol::getPropList index out of range");
   std::vector<std::string> res;
   for (const auto &prop : properties) {
-    if (prop.scope != scope) {
+    if (prop.scope() != scope) {
       continue;
     }
-    if (scope != Scope::MOL && index != PropIterator::anyIndexMarker && !prop.arrayData.isSetMask[index]) {
+    if (scope != Scope::MOL && index != PropIterator::anyIndexMarker && !prop.d_arrayData.isSetMask[index]) {
       continue;
     }
-    if (!includeComputed && prop.isComputed) {
+    if (!includeComputed && prop.isComputed()) {
       continue;
     }
-    const std::string &name = prop.name.getString();
+    const std::string &name = prop.name().getString();
     if (!includePrivate && name[0] == '_') {
       continue;
     }
@@ -2324,16 +2324,16 @@ void RDMol::getComputedPropList(STR_VECT &res, Scope scope,
                                 uint32_t index) const {
   res.clear();
   for (const auto &prop : properties) {
-    if (prop.scope != scope) {
+    if (prop.scope() != scope) {
       continue;
     }
-    if (scope != Scope::MOL && index != PropIterator::anyIndexMarker && !prop.arrayData.isSetMask[index]) {
+    if (scope != Scope::MOL && index != PropIterator::anyIndexMarker && !prop.d_arrayData.isSetMask[index]) {
       continue;
     }
-    if (!prop.isComputed) {
+    if (!prop.isComputed()) {
       continue;
     }
-    res.push_back(prop.name.getString());
+    res.push_back(prop.name().getString());
   }
 }
 
@@ -2363,7 +2363,7 @@ void RDMol::copyProp(const PropToken &destinationName, const RDMol &sourceMol,
     return;
   }
   auto& destProp = properties.emplace_back(*sourceProp);
-  destProp.name = destinationName;
+  destProp.d_name = destinationName;
 }
 
 void RDMol::copySingleProp(const PropToken &destinationName,
@@ -2383,31 +2383,31 @@ void RDMol::copySingleProp(const PropToken &destinationName,
   auto *destProp = findProp(destinationName, scope);
   if (destProp == nullptr) {
     destProp = &properties.emplace_back();
-    destProp->name = destinationName;
-    destProp->isComputed = sourceProp->isComputed;
-    destProp->scope = scope;
+    destProp->d_name = destinationName;
+    destProp->d_isComputed = sourceProp->d_isComputed;
+    destProp->d_scope = scope;
     uint32_t destSize = (scope == Scope::ATOM) ? getNumAtoms() : getNumBonds();
-    destProp->arrayData = PropArray(destSize, sourceProp->arrayData.family, false);
-  } else if (sourceProp->arrayData.family != destProp->arrayData.family) {
+    destProp->d_arrayData = PropArray(destSize, sourceProp->d_arrayData.family, false);
+  } else if (sourceProp->d_arrayData.family != destProp->d_arrayData.family) {
     // Convert to RDValue to support type mismatch
-    if (destProp->arrayData.family != PropertyType::ANY) {
-      destProp->arrayData.convertToRDValue();
+    if (destProp->d_arrayData.family != PropertyType::ANY) {
+      destProp->d_arrayData.convertToRDValue();
     }
-    PRECONDITION(destProp->arrayData.family == PropertyType::ANY,
+    PRECONDITION(destProp->d_arrayData.family == PropertyType::ANY,
                  "convertToRDValue should make family ANY");
-    destProp->isComputed = sourceProp->isComputed;
-    auto *destData = static_cast<RDValue *>(destProp->arrayData.data);
+    destProp->d_isComputed = sourceProp->d_isComputed;
+    auto *destData = static_cast<RDValue *>(destProp->d_arrayData.data);
     RDValue::cleanup_rdvalue(destData[destinationIndex]);
     static_cast<RDValue *>(destData)[destinationIndex] =
-        sourceProp->arrayData.getValueAs<RDValue>(sourceIndex);
+        sourceProp->d_arrayData.getValueAs<RDValue>(sourceIndex);
     return;
   }
 
   // Copy directly
-  destProp->isComputed = sourceProp->isComputed;
-  auto family = sourceProp->arrayData.family;
-  const auto *sourceData = sourceProp->arrayData.data;
-  auto *destData = destProp->arrayData.data;
+  destProp->d_isComputed = sourceProp->d_isComputed;
+  auto family = sourceProp->d_arrayData.family;
+  const auto *sourceData = sourceProp->d_arrayData.data;
+  auto *destData = destProp->d_arrayData.data;
   if (is8BitType(family)) {
     static_cast<char *>(destData)[destinationIndex] =
         static_cast<const char *>(sourceData)[sourceIndex];
@@ -2421,10 +2421,10 @@ void RDMol::copySingleProp(const PropToken &destinationName,
     copy_rdvalue(static_cast<RDValue *>(destData)[destinationIndex],
                  static_cast<const RDValue *>(sourceData)[sourceIndex]);
   }
-  bool &isSet = destProp->arrayData.isSetMask[destinationIndex];
+  bool &isSet = destProp->d_arrayData.isSetMask[destinationIndex];
   if (!isSet) {
     isSet = true;
-    ++destProp->arrayData.numSet;
+    ++destProp->d_arrayData.numSet;
   }
 }
 
@@ -2437,7 +2437,7 @@ bool RDMol::hasAtomProp(const PropToken& name, const std::uint32_t index) const 
     if (prop == nullptr) {
         return false;
     }
-    return prop->arrayData.isSetMask[index];
+    return prop->d_arrayData.isSetMask[index];
 }
 
 bool RDMol::hasBondProp(const PropToken& name, const std::uint32_t index) const {
@@ -2445,7 +2445,7 @@ bool RDMol::hasBondProp(const PropToken& name, const std::uint32_t index) const 
   if (prop == nullptr) {
     return false;
   }
-  return prop->arrayData.isSetMask[index];
+  return prop->d_arrayData.isSetMask[index];
 }
 
 void RDMol::updatePropertyCache(bool strict) {
@@ -2484,10 +2484,10 @@ AtomData& RDMol::addAtom() {
 
   // Handle properties
   for (Property& property : properties) {
-    if (property.scope != Scope::ATOM) {
+    if (property.scope() != Scope::ATOM) {
       continue;
     }
-    property.arrayData.appendElement();
+    property.d_arrayData.appendElement();
   }
 
   // Resize atomQueries, but only if it's already in use
@@ -2560,10 +2560,10 @@ BondData& RDMol::addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx, BondEnums::
 
   // Handle properties
   for (Property& property : properties) {
-    if (property.scope != Scope::BOND) {
+    if (property.scope() != Scope::BOND) {
       continue;
     }
-    property.arrayData.appendElement();
+    property.d_arrayData.appendElement();
   }
 
   // Resize bondQueries, but only if it's already in use
@@ -2772,10 +2772,10 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
 
   // Shift atom property data back
   for (Property &property : properties) {
-    if (property.scope != Scope::ATOM) {
+    if (property.scope() != Scope::ATOM) {
       continue;
     }
-    property.arrayData.removeElement(atomIndex);
+    property.d_arrayData.removeElement(atomIndex);
   }
 
   // Update special cases of properties referring to atom indices.
@@ -2824,10 +2824,10 @@ void RDMol::removeBond(uint32_t bondIndex) {
   const uint32_t  numBondsOrig = getNumBonds();
   // Handle props
   for (Property &property : properties) {
-    if (property.scope != Scope::BOND) {
+    if (property.scope() != Scope::BOND) {
       continue;
     }
-    property.arrayData.removeElement(bondIndex);
+    property.d_arrayData.removeElement(bondIndex);
   }
 
   // Update queries

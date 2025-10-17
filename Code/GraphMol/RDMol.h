@@ -530,6 +530,24 @@ template<> struct TypeToPropertyType<uint64_t> { static constexpr PropertyType f
 template<> struct TypeToPropertyType<float> { static constexpr PropertyType family = PropertyType::FLOAT;};
 template<> struct TypeToPropertyType<double> { static constexpr PropertyType family = PropertyType::DOUBLE;};
 
+inline PropertyType RDValueTagToPropertyType(
+    decltype(std::declval<RDValue>().getTag()) tag) {
+  switch (tag) {
+    case RDTypeTag::BoolTag:
+      return PropertyType::BOOL;
+    case RDTypeTag::IntTag:
+      return PropertyType::INT32;
+    case RDTypeTag::UnsignedIntTag:
+      return PropertyType::UINT32;
+    case RDTypeTag::FloatTag:
+      return PropertyType::FLOAT;
+    case RDTypeTag::DoubleTag:
+      return PropertyType::DOUBLE;
+    default:
+      return PropertyType::ANY;
+  }
+}
+
 //! Variant for holding scalar array properties
 struct RDKIT_GRAPHMOL_EXPORT PropArray {
   //! Number of elements
@@ -627,6 +645,45 @@ struct RDKIT_GRAPHMOL_EXPORT PropArray {
     }
   }
 
+  PropertyType getType(uint32_t index) const {
+    if (family != PropertyType::ANY) {
+      return family;
+    }
+    return RDValueTagToPropertyType(
+        static_cast<RDValue *>(data)[index].getTag());
+  }
+
+  // For code requesting values as if from an RDValue to know
+  // what type to request.
+  decltype(std::declval<RDValue>().getTag()) getRDValueTag(
+      uint32_t index) const {
+    switch (family) {
+      case PropertyType::CHAR:
+        // TODO: Should char be treated as an integer or a string?
+        // String would require changes in PropArray::toRDValue,
+        // for getValueAs to work correctly.
+        return RDTypeTag::AnyTag;
+      case PropertyType::BOOL:
+        return RDTypeTag::BoolTag;
+      case PropertyType::INT32:
+        return RDTypeTag::IntTag;
+      case PropertyType::UINT32:
+        return RDTypeTag::UnsignedIntTag;
+      case PropertyType::INT64:
+        // Be cautious of possible integer overflow
+        return RDTypeTag::IntTag;
+      case PropertyType::UINT64:
+        // Be cautious of possible integer overflow
+        return RDTypeTag::UnsignedIntTag;
+      case PropertyType::FLOAT:
+        return RDTypeTag::FloatTag;
+      case PropertyType::DOUBLE:
+        return RDTypeTag::DoubleTag;
+      case PropertyType::ANY:
+        return static_cast<RDValue *>(data)[index].getTag();
+    }
+  }
+
   //! Adds a single new property to the end of the array.
   void appendElement();
   //! Removes an element from the array.
@@ -696,79 +753,96 @@ private:
   mutable std::mutex compatibilityMutex;
   mutable std::atomic<CompatibilityData*> compatibilityData = nullptr;
 
+ public:
   enum class Scope : uint8_t {
     MOL,   // Just 1 value (can be an array value)
     ATOM,  // 1 value per atom
     BOND   // 1 value per bond
   };
-  struct RDKIT_GRAPHMOL_EXPORT Property {
-    PropToken name;
-    Scope scope;
-    bool isComputed;
-    RDValue inPlaceData;
-    PropArray arrayData;
 
+  class RDKIT_GRAPHMOL_EXPORT PropIterator;
+
+  class RDKIT_GRAPHMOL_EXPORT Property {
+    PropToken d_name;
+    Scope d_scope;
+    bool d_isComputed;
+    RDValue d_inPlaceData;
+    PropArray d_arrayData;
+
+    friend class RDKIT_GRAPHMOL_EXPORT RDKit::RDMol::PropIterator;
+    friend class RDKIT_GRAPHMOL_EXPORT RDKit::RDMol;
+
+    // Don't access the constructors or assignment operators outside of RDMol.
+    // They're public so that the standard library functions and classes have
+    // access, for example std::vector and its use of std::move.
+   public:
     // Default initialization just needs to indicate a type with no allocation.
-    Property()
-        : name(),
-          scope(Scope::MOL),
-          isComputed(false){
-    }
-    Property(Property&& other) noexcept
-        : name(std::move(other.name)),
-          scope(other.scope),
-          isComputed(other.isComputed),
-          inPlaceData(std::move(other.inPlaceData)),
-          arrayData(std::move(other.arrayData)) {
+    Property() : d_name(), d_scope(Scope::MOL), d_isComputed(false) {}
+    Property(Property &&other) noexcept
+        : d_name(std::move(other.d_name)),
+          d_scope(other.d_scope),
+          d_isComputed(other.d_isComputed),
+          d_inPlaceData(std::move(other.d_inPlaceData)),
+          d_arrayData(std::move(other.d_arrayData)) {
       // If a move constructor is ever added to RDValue, setting the type here
       // may not be required and may be invalid, but the static_assert will
       // force someone to check what the correct behaviour should be.
       static_assert(std::is_trivially_move_constructible_v<RDValue>);
       if (std::is_trivially_move_constructible_v<RDValue>) {
-        other.inPlaceData.type = RDTypeTag::EmptyTag;
+        other.d_inPlaceData.type = RDTypeTag::EmptyTag;
       }
     }
-    ~Property() { RDValue::cleanup_rdvalue(inPlaceData); }
+    ~Property() { RDValue::cleanup_rdvalue(d_inPlaceData); }
     Property& operator=(Property&& other) noexcept {
       if (this == &other) {
         return *this;
       }
-      name = std::move(other.name);
-      scope = other.scope;
-      isComputed = other.isComputed;
-      inPlaceData = std::move(other.inPlaceData);
+      d_name = std::move(other.d_name);
+      d_scope = other.d_scope;
+      d_isComputed = other.d_isComputed;
+      d_inPlaceData = std::move(other.d_inPlaceData);
       // If a move constructor is ever added to RDValue, setting the type here
       // may not be required and may be invalid, but the static_assert will
       // force someone to check what the correct behaviour should be.
       static_assert(std::is_trivially_move_constructible_v<RDValue>);
       if (std::is_trivially_move_constructible_v<RDValue>) {
-        other.inPlaceData.type = RDTypeTag::EmptyTag;
+        other.d_inPlaceData.type = RDTypeTag::EmptyTag;
       }
-      arrayData = std::move(other.arrayData);
+      d_arrayData = std::move(other.d_arrayData);
       return *this;
     }
-    Property(const Property &other) : name(other.name), scope(other.scope), isComputed(other.isComputed), arrayData(other.arrayData) {
-        copy_rdvalue(inPlaceData, other.inPlaceData);
+    Property(const Property &other)
+        : d_name(other.d_name),
+          d_scope(other.d_scope),
+          d_isComputed(other.d_isComputed),
+          d_arrayData(other.d_arrayData) {
+      copy_rdvalue(d_inPlaceData, other.d_inPlaceData);
     }
     Property &operator=(const Property &other) {
       if (this == &other) {
         return *this;
       }
-      name = other.name;
-      scope = other.scope;
-      isComputed = other.isComputed;
-      copy_rdvalue(inPlaceData, other.inPlaceData);
-      arrayData = other.arrayData;
+      d_name = other.d_name;
+      d_scope = other.d_scope;
+      d_isComputed = other.d_isComputed;
+      copy_rdvalue(d_inPlaceData, other.d_inPlaceData);
+      d_arrayData = other.d_arrayData;
       return *this;
     }
 
+    const PropToken &name() const { return d_name; }
+    Scope scope() const { return d_scope; }
+    bool isComputed() const { return d_isComputed; }
+
     template<typename T>
     void setVal(const T& val) {
-      RDValue::cleanup_rdvalue(inPlaceData);
-      inPlaceData = val;
+      PRECONDITION(d_scope == Scope::MOL, "In-place data only for MOL scope");
+      RDValue::cleanup_rdvalue(d_inPlaceData);
+      d_inPlaceData = val;
     }
     void setVal(const RDValue &val) {
-      copy_rdvalue(inPlaceData, val);
+      PRECONDITION(d_scope == Scope::MOL, "In-place data only for MOL scope");
+      copy_rdvalue(d_inPlaceData, val);
     }
     void setVal(const char *val) {
       std::string s(val);
@@ -777,11 +851,36 @@ private:
 
     template<typename T>
     T getVal() {
-      return rdvalue_cast<T>(inPlaceData);
+      PRECONDITION(d_scope == Scope::MOL, "In-place data only for MOL scope");
+      return rdvalue_cast<T>(d_inPlaceData);
+    }
+
+    PropertyType getRawType() const {
+      if (d_scope == Scope::MOL) {
+        return PropertyType::ANY;
+      }
+      return d_arrayData.family;
+    }
+
+    PropertyType getType() const {
+      PRECONDITION(d_scope == Scope::MOL, "In-place data only for MOL scope");
+      return RDValueTagToPropertyType(d_inPlaceData.getTag());
+    }
+    PropertyType getType(uint32_t index) const {
+      PRECONDITION(d_scope != Scope::MOL, "Array data only for non-MOL scope");
+      return d_arrayData.getType(index);
+    }
+
+    auto getRDValueTag() const {
+      PRECONDITION(d_scope == Scope::MOL, "In-place data only for MOL scope");
+      return d_inPlaceData.getTag();
+    }
+    auto getRDValueTag(uint32_t index) const {
+      PRECONDITION(d_scope != Scope::MOL, "Array data only for non-MOL scope");
+      return d_arrayData.getRDValueTag(index);
     }
   };
 
-  public:
   class RDKIT_GRAPHMOL_EXPORT PropIterator {
     std::vector<Property>::const_iterator d_current;
     std::vector<Property>::const_iterator d_end;
@@ -790,14 +889,14 @@ private:
     uint32_t d_index;
 
     bool currentScopeIsCorrect() const {
-      if (d_current->scope != d_scope) {
+      if (d_current->scope() != d_scope) {
         return false;
       }
-      if (!d_includeComputed && d_current->isComputed) {
+      if (!d_includeComputed && d_current->isComputed()) {
         return false;
       }
       if (d_scope != Scope::MOL && d_index != anyIndexMarker &&
-          !d_current->arrayData.isSetMask[d_index]) {
+          !d_current->d_arrayData.isSetMask[d_index]) {
         return false;
       }
       return true;
@@ -832,23 +931,24 @@ private:
       }
     }
 
-    const PropToken &operator*() const {
+    const Property &operator*() const {
       PRECONDITION(d_current != d_end, "PropIterator::operator* end");
-      PRECONDITION(d_current->scope == d_scope, "PropIterator::operator* scope");
-      PRECONDITION(d_includeComputed || !d_current->isComputed,
+      PRECONDITION(d_current->scope() == d_scope,
+                   "PropIterator::operator* scope");
+      PRECONDITION(d_includeComputed || !d_current->isComputed(),
                    "PropIterator::operator* isComputed");
       PRECONDITION(d_scope == Scope::MOL || d_index == anyIndexMarker ||
-                       (d_index < d_current->arrayData.size &&
-                        d_current->arrayData.isSetMask[d_index]),
+                       (d_index < d_current->d_arrayData.size &&
+                        d_current->d_arrayData.isSetMask[d_index]),
                    "PropIterator::operator* index")
-      return d_current->name;
+      return *d_current;
     }
-    const PropToken* operator->() const { return &**this; }
+    const Property *operator->() const { return &**this; }
 
     PropIterator &operator++() {
       PRECONDITION(d_current != d_end, "PropIterator::operator++ end");
       PRECONDITION(d_scope == Scope::MOL || d_index == anyIndexMarker ||
-                       d_index < d_current->arrayData.size,
+                       d_index < d_current->d_arrayData.size,
                    "PropIterator::operator++ index");
       while (true) {
         ++d_current;
@@ -1165,25 +1265,25 @@ public:
     if (prop == nullptr) {
       throw KeyErrorException(name.getString());
     }
-    return from_rdvalue<T>(prop->inPlaceData);
+    return from_rdvalue<T>(prop->d_inPlaceData);
   }
 
   template <typename T>
   T getAtomProp(const PropToken &name, uint32_t index) const {
     const Property *prop = findProp(name, Scope::ATOM);
-    if (prop == nullptr || !prop->arrayData.isSetMask[index]) {
+    if (prop == nullptr || !prop->d_arrayData.isSetMask[index]) {
       throw KeyErrorException(name.getString());
     }
-    return prop->arrayData.getValueAs<T>(index);
+    return prop->d_arrayData.getValueAs<T>(index);
   }
 
   template <typename T>
   T getBondProp(const PropToken &name, uint32_t index) const {
     const Property *prop = findProp(name, Scope::BOND);
-    if (prop == nullptr || !prop->arrayData.isSetMask[index]) {
+    if (prop == nullptr || !prop->d_arrayData.isSetMask[index]) {
       throw KeyErrorException(name.getString());
     }
-    return prop->arrayData.getValueAs<T>(index);
+    return prop->d_arrayData.getValueAs<T>(index);
   }
 
   //! Populates res with the property with token name, if present. Returns whether token was found.
@@ -1194,9 +1294,9 @@ public:
       return false;
     }
     if constexpr (std::is_same_v<T, std::string>) {
-      rdvalue_tostring(prop->inPlaceData, res);
+      rdvalue_tostring(prop->d_inPlaceData, res);
     } else {
-      res = from_rdvalue<T>(prop->inPlaceData);
+      res = from_rdvalue<T>(prop->d_inPlaceData);
     }
     return true;
   }
@@ -1223,10 +1323,10 @@ public:
     if (prop == nullptr) {
       return nullptr;
     }
-    if (prop->arrayData.family != TypeToPropertyType<T>::family) {
+    if (prop->d_arrayData.family != TypeToPropertyType<T>::family) {
       return nullptr;
     }
-    return static_cast<T*>(prop->arrayData.data);
+    return static_cast<T *>(prop->d_arrayData.data);
   }
 
   //! \overload
@@ -1238,10 +1338,10 @@ public:
     if (prop == nullptr) {
       return nullptr;
     }
-    if (prop->arrayData.family != TypeToPropertyType<T>::family) {
+    if (prop->d_arrayData.family != TypeToPropertyType<T>::family) {
       return nullptr;
     }
-    return static_cast<T*>(prop->arrayData.data);
+    return static_cast<T *>(prop->d_arrayData.data);
   }
 
   //! Returns pointer to array of bond properties with token name, or nullptr if not present.
@@ -1254,10 +1354,10 @@ public:
     if (prop == nullptr) {
       return nullptr;
     }
-    if (prop->arrayData.family != TypeToPropertyType<T>::family) {
+    if (prop->d_arrayData.family != TypeToPropertyType<T>::family) {
       return nullptr;
     }
-    return static_cast<T*>(prop->arrayData.data);
+    return static_cast<T *>(prop->d_arrayData.data);
   }
 
   //! \overload
@@ -1269,23 +1369,23 @@ public:
     if (prop == nullptr) {
       return nullptr;
     }
-    if (prop->arrayData.family != TypeToPropertyType<T>::family) {
+    if (prop->d_arrayData.family != TypeToPropertyType<T>::family) {
       return nullptr;
     }
-    return static_cast<T*>(prop->arrayData.data);
+    return static_cast<T *>(prop->d_arrayData.data);
   }
 
   //! Adds a property with token name and value to the molecule. If the property already exists, it is overwritten.
   template <typename T> void addMolProp(const PropToken& name, const T& value, bool computed = false) {
     if (Property *prop = findProp(name, Scope::MOL); prop != nullptr) {
       prop->setVal(value);
-      prop->isComputed = computed;
+      prop->d_isComputed = computed;
       return;
     }
     Property& newProp = properties.emplace_back();
-    newProp.name = std::move(name);
-    newProp.scope = Scope::MOL;
-    newProp.isComputed = computed;
+    newProp.d_name = std::move(name);
+    newProp.d_scope = Scope::MOL;
+    newProp.d_isComputed = computed;
     newProp.setVal(value);
   }
 
@@ -1302,7 +1402,7 @@ public:
     if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
       return nullptr;
     }
-    return static_cast<T*>(newProp->arrayData.data);
+    return static_cast<T *>(newProp->d_arrayData.data);
   }
 
   //! Adds a property array with token name and value for all bonds
@@ -1313,7 +1413,7 @@ public:
     if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
       return nullptr;
     }
-    return static_cast<T*>(newProp->arrayData.data);
+    return static_cast<T *>(newProp->d_arrayData.data);
   }
 
   //! Sets an atom property at the given index
@@ -1337,7 +1437,7 @@ public:
   //! Clears a molecule property if present
   void clearMolPropIfPresent(const PropToken& name) {
     for (auto it = properties.begin(), end = properties.end(); it != end; ++it) {
-      if (it->name == name && it->scope == Scope::MOL) {
+      if (it->name() == name && it->scope() == Scope::MOL) {
         properties.erase(it);
         return;
       }
@@ -1347,7 +1447,7 @@ public:
   //! Clears all atom props with the given name
   void clearAtomPropIfPresent(const PropToken& name) {
     for (auto it = properties.begin(), end = properties.end(); it != end; ++it) {
-      if (it->name == name && it->scope == Scope::ATOM) {
+      if (it->name() == name && it->scope() == Scope::ATOM) {
         properties.erase(it);
         return;
       }
@@ -1357,7 +1457,7 @@ public:
   //! Clears all bond props with the given name
   void clearBondPropIfPresent(const PropToken& name) {
     for (auto it = properties.begin(), end = properties.end(); it != end; ++it) {
-      if (it->name == name && it->scope == Scope::BOND) {
+      if (it->name() == name && it->scope() == Scope::BOND) {
         properties.erase(it);
         return;
       }
@@ -1367,14 +1467,14 @@ public:
   //! Clears a single atom prop at the given index
   void clearSingleAtomProp(const PropToken& name, const std::uint32_t atomIndex) {
     for (auto it = properties.begin(), end = properties.end(); it != end; ++it) {
-      if (it->name == name && it->scope == Scope::ATOM &&
-          it->arrayData.isSetMask[atomIndex]) {
-        --it->arrayData.numSet;
-        if (it->arrayData.numSet == 0) {
+      if (it->name() == name && it->scope() == Scope::ATOM &&
+          it->d_arrayData.isSetMask[atomIndex]) {
+        --it->d_arrayData.numSet;
+        if (it->d_arrayData.numSet == 0) {
           properties.erase(it);
           return;
         }
-        it->arrayData.isSetMask[atomIndex] = false;
+        it->d_arrayData.isSetMask[atomIndex] = false;
         return;
       }
     }
@@ -1383,14 +1483,14 @@ public:
   //! Clears a single bond prop at the given index
   void clearSingleBondProp(const PropToken& name, const std::uint32_t bondIndex) {
     for (auto it = properties.begin(), end = properties.end(); it != end; ++it) {
-      if (it->name == name && it->scope == Scope::BOND &&
-          it->arrayData.isSetMask[bondIndex]) {
-        --it->arrayData.numSet;
-        if (it->arrayData.numSet == 0) {
+      if (it->name() == name && it->scope() == Scope::BOND &&
+          it->d_arrayData.isSetMask[bondIndex]) {
+        --it->d_arrayData.numSet;
+        if (it->d_arrayData.numSet == 0) {
           properties.erase(it);
           return;
         }
-        it->arrayData.isSetMask[bondIndex] = false;
+        it->d_arrayData.isSetMask[bondIndex] = false;
         return;
       }
     }
@@ -1400,15 +1500,15 @@ public:
   void clearSingleAtomAllProps(const std::uint32_t atomIndex, const bool onlyComputed = false) {
     for (auto it = properties.begin(), end = properties.end(); it != end; ) {
       bool erased = false;
-      if (it->scope == Scope::ATOM && (!onlyComputed || it->isComputed) &&
-          it->arrayData.isSetMask[atomIndex]) {
-        --it->arrayData.numSet;
-        if (it->arrayData.numSet == 0) {
+      if (it->scope() == Scope::ATOM && (!onlyComputed || it->isComputed()) &&
+          it->d_arrayData.isSetMask[atomIndex]) {
+        --it->d_arrayData.numSet;
+        if (it->d_arrayData.numSet == 0) {
           it = properties.erase(it);
           end = properties.end();
           erased = true;
         } else {
-          it->arrayData.isSetMask[atomIndex] = false;
+          it->d_arrayData.isSetMask[atomIndex] = false;
         }
       }
       if (!erased) {
@@ -1421,15 +1521,15 @@ public:
   void clearSingleBondAllProps(const std::uint32_t bondIndex, const bool onlyComputed = false) {
     for (auto it = properties.begin(), end = properties.end(); it != end; ) {
       bool erased = false;
-      if (it->scope == Scope::BOND && (!onlyComputed || it->isComputed) &&
-          it->arrayData.isSetMask[bondIndex]) {
-        --it->arrayData.numSet;
-        if (it->arrayData.numSet == 0) {
+      if (it->scope() == Scope::BOND && (!onlyComputed || it->isComputed()) &&
+          it->d_arrayData.isSetMask[bondIndex]) {
+        --it->d_arrayData.numSet;
+        if (it->d_arrayData.numSet == 0) {
           it = properties.erase(it);
           end = properties.end();
           erased = true;
         } else {
-          it->arrayData.isSetMask[bondIndex] = false;
+          it->d_arrayData.isSetMask[bondIndex] = false;
         }
       }
       if (!erased) {
@@ -1629,7 +1729,7 @@ public:
   //! Returns handle to property if found, else nullptr
   const Property* findProp(const PropToken& name, Scope scope) const {
     for (const auto &property : properties) {
-      if (property.name == name && property.scope == scope) {
+      if (property.name() == name && property.scope() == scope) {
         return &property;
       }
     }
@@ -1639,7 +1739,7 @@ public:
   //! Non-const overload
   Property* findProp(const PropToken& name, Scope scope) {
     for (auto &property : properties) {
-      if (property.name == name && property.scope == scope) {
+      if (property.name() == name && property.scope() == scope) {
         return &property;
       }
     }
@@ -1655,8 +1755,8 @@ public:
     }
     Property* existing = findProp(name, scope);
     if (existing != nullptr) {
-      if (existing->arrayData.family == TypeToPropertyType<T>::family) {
-        existing->isComputed = computed;
+      if (existing->d_arrayData.family == TypeToPropertyType<T>::family) {
+        existing->d_isComputed = computed;
         return existing;
       }
       // If we have an existing prop with the wrong type, clear it.
@@ -1669,15 +1769,15 @@ public:
 
     const uint32_t numElements = scope == Scope::ATOM ? getNumAtoms() : getNumBonds();
     Property& newProperty = properties.emplace_back();
-    newProperty.name = name;
-    newProperty.scope = scope;
-    newProperty.isComputed = computed;
-    newProperty.arrayData.size = numElements;
-    newProperty.arrayData.family = TypeToPropertyType<T>::family;
-    newProperty.arrayData.construct(setAll);
+    newProperty.d_name = name;
+    newProperty.d_scope = scope;
+    newProperty.d_isComputed = computed;
+    newProperty.d_arrayData.size = numElements;
+    newProperty.d_arrayData.family = TypeToPropertyType<T>::family;
+    newProperty.d_arrayData.construct(setAll);
 
     if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
-      auto* data = static_cast<RDValue*>(newProperty.arrayData.data);
+      auto *data = static_cast<RDValue *>(newProperty.d_arrayData.data);
       for (uint32_t i = 0; i < numElements; ++i) {
         if constexpr (std::is_same_v<T, RDValue>) {
           copy_rdvalue(data[i], defaultValue);
@@ -1688,7 +1788,7 @@ public:
         }
       }
     } else {
-      auto* data = static_cast<T*>(newProperty.arrayData.data);
+      auto *data = static_cast<T *>(newProperty.d_arrayData.data);
       for (uint32_t i = 0; i < numElements; ++i) {
         data[i] = defaultValue;
       }
@@ -1717,19 +1817,19 @@ public:
         existing = addPerElementProp(name, scope, value, computed, false);
       }
     }
-    existing->isComputed = computed;
-    auto existingFamily = existing->arrayData.family;
+    existing->d_isComputed = computed;
+    auto existingFamily = existing->d_arrayData.family;
     if (existingFamily != TypeToPropertyType<T>::family && existingFamily != PropertyType::ANY) {
       if (!supportTypeMismatch) {
         throw ValueErrorException("Property type mismatch");
       }
       // Convert to RDValue
-      existing->arrayData.convertToRDValue();
-      PRECONDITION(existing->arrayData.family == PropertyType::ANY,
+      existing->d_arrayData.convertToRDValue();
+      PRECONDITION(existing->d_arrayData.family == PropertyType::ANY,
                    "convertToRDValue should make family ANY");
       existingFamily = PropertyType::ANY;
     }
-    auto& arr = existing->arrayData;
+    auto &arr = existing->d_arrayData;
     if (TypeToPropertyType<T>::family == PropertyType::ANY || existingFamily == PropertyType::ANY) {
       auto* data = static_cast<RDValue*>(arr.data);
       // Default value may still need cleaning even if not previously set.
@@ -1772,7 +1872,7 @@ public:
       throw ValueErrorException("Bond index out of bounds");
     }
 
-    const PropArray& arr = prop->arrayData;
+    const PropArray &arr = prop->d_arrayData;
     if (arr.isSetMask[index]) {
       res = arr.getValueAs<T>(index);
       return true;

@@ -251,7 +251,7 @@ void Atom::initFromOther(const Atom &other, const bool preserveProps) {
                                                 other.d_index),
               end = other.dp_dataMol->endProps();
          it != end; ++it) {
-      dp_dataMol->copySingleProp(*it, d_index, *other.dp_dataMol, *it,
+      dp_dataMol->copySingleProp(it->name(), d_index, *other.dp_dataMol, it->name(),
                                  other.d_index, RDMol::Scope::ATOM);
     }
   }
@@ -813,7 +813,7 @@ void Atom::updateProps(const Atom &source, bool preserveExisting) {
                                                source.d_index),
             end = source.dp_dataMol->endProps();
        it != end; ++it) {
-    dp_dataMol->copySingleProp(*it, d_index, *source.dp_dataMol, *it,
+    dp_dataMol->copySingleProp(it->name(), d_index, *source.dp_dataMol, it->name(),
                                source.d_index, RDMol::Scope::ATOM);
   }
 }

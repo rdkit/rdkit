@@ -25,8 +25,8 @@ void Bond::initFromOther(const Bond &other, const bool preserveProps) {
                                                 other.d_index),
               end = other.dp_dataMol->endProps();
          it != end; ++it) {
-      dp_dataMol->copySingleProp(*it, d_index, *other.dp_dataMol, *it,
-                                 other.d_index, RDMol::Scope::BOND);
+      dp_dataMol->copySingleProp(it->name(), d_index, *other.dp_dataMol,
+                                 it->name(), other.d_index, RDMol::Scope::BOND);
     }
   }
 
@@ -393,7 +393,7 @@ void Bond::updateProps(const Bond &source, bool preserveExisting) {
                                                source.d_index),
             end = source.dp_dataMol->endProps();
        it != end; ++it) {
-    dp_dataMol->copySingleProp(*it, d_index, *source.dp_dataMol, *it,
+    dp_dataMol->copySingleProp(it->name(), d_index, *source.dp_dataMol, it->name(),
                                source.d_index, RDMol::Scope::BOND);
   }
 }

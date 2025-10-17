@@ -354,8 +354,8 @@ void ROMol::updateProps(const RDKit::ROMol &source, bool preserveExisting) {
   }
 
   for (const RDMol::Property &prop : source.asRDMol().properties) {
-    if (prop.scope == RDMol::Scope::MOL) {
-      dp_mol->setMolProp(prop.name, prop.inPlaceData, prop.isComputed);
+    if (prop.scope() == RDMol::Scope::MOL) {
+      dp_mol->copyProp(prop.name(), source.asRDMol(), prop.name());
     }
   }
 }
