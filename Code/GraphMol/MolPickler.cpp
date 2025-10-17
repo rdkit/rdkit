@@ -165,26 +165,26 @@ class PropTracker {
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
   // the properties themselves are stored as std::int8_t
-  std::array<std::pair<std::string, std::uint16_t>, 5> explicitBondProps{{
-      {RDKit::common_properties::_MolFileBondType, 0x1},
-      {RDKit::common_properties::_MolFileBondStereo, 0x2},
-      {RDKit::common_properties::_MolFileBondCfg, 0x4},
-      {RDKit::common_properties::_MolFileBondQuery, 0x8},
-      {RDKit::common_properties::molStereoCare, 0x10},
-  }};
+  const std::vector<std::pair<std::string, std::uint16_t>> explicitBondProps = {
+      {std::string(RDKit::common_properties::_MolFileBondType), 0x1},
+      {std::string(RDKit::common_properties::_MolFileBondStereo), 0x2},
+      {std::string(RDKit::common_properties::_MolFileBondCfg), 0x4},
+      {std::string(RDKit::common_properties::_MolFileBondQuery), 0x8},
+      {std::string(RDKit::common_properties::molStereoCare), 0x10},
+  };
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
   // the properties themselves are stored as std::int16_t
-  std::array<std::pair<std::string, std::uint16_t>, 4> explicitAtomProps{{
-      {common_properties::molStereoCare, 0x1},
-      {common_properties::molParity, 0x2},
-      {common_properties::molInversionFlag, 0x4},
-      {common_properties::_ChiralityPossible, 0x8},
+  const std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {
+      {std::string(common_properties::molStereoCare), 0x1},
+      {std::string(common_properties::molParity), 0x2},
+      {std::string(common_properties::molInversionFlag), 0x4},
+      {std::string(common_properties::_ChiralityPossible), 0x8},
 
-  }};
-  std::array<std::string, 2> ignoreAtomProps{
-      common_properties::molAtomMapNumber,
-      common_properties::dummyLabel,
+  };
+  const std::vector<std::string> ignoreAtomProps = {
+      std::string(common_properties::molAtomMapNumber),
+      std::string(common_properties::dummyLabel),
   };
   std::unordered_set<std::string> ignoreBondProps;
   PropTracker() {

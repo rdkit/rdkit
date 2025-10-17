@@ -85,18 +85,17 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
   }
 
   template <typename T>
-  void getProp(const std::string_view &key, T &res) const {
-    dp_props->getVal(key, res);
+  void getProp(const std::string_view key, T &res) const {
+    getProp(std::string(key).c_str(), res);
   }
 
-  bool hasProp(const std::string_view &key) const {
-    if (!dp_props) {
-      return false;
-    }
-    return dp_props->hasVal(key);
+  bool hasProp(const std::string_view key) const {
+    return hasProp(std::string(key).c_str());
   }
 
-  void clearProp(const std::string_view &key) const { dp_props->clearVal(key); }
+  void clearProp(const std::string_view key) const {
+    clearProp(std::string(key).c_str());
+  }
 
   void toStream(std::ostream &ss) const override;
   std::string Serialize() const override;
