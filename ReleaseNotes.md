@@ -14,7 +14,14 @@ GitHub)
   but some C++ class might have to be updated.
 - Simple AND queries are now merged into atoms. E.g. `[C&+]` now produces the
   the same result as `[C+]` when parsed as SMARTS.
-- Molecules which do not have potential chiral centers or stereobonds will no longer have the "_CIPRank" atom property set by default. If you want to force the calculation of pseudo-CIP ranks, you can call `Chem.ComputeAtomCIPRanks()`. Note that if you just want a symmetry-aware canonical ranking of the atoms in a molecule, it is more efficient to use `Chem.CanonicalRankAtoms(mol, breakTies=False)`.
+- Molecules which do not have potential chiral centers or stereobonds will no
+  longer have the "_CIPRank" atom property set by default. If you want to
+  force the calculation of pseudo-CIP ranks, you can call
+  `Chem.ComputeAtomCIPRanks()`. Note that if you just want a symmetry-aware
+  canonical ranking of the atoms in a molecule, it is more efficient to use
+  `Chem.CanonicalRankAtoms(mol, breakTies=False)`.
+- The behavior of H removal has changed slightly: hydrides will no longer removed
+  by default, as this changes the global charge of the mol.
 
 ## New Features and Enhancements:
 

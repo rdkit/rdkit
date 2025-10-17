@@ -6397,6 +6397,11 @@ M  END
     m = Chem.MolFromSmiles('F[H-]F', smips)
     ps.removeHigherDegrees = True
     m = Chem.RemoveHs(m, ps)
+    self.assertEqual(m.GetNumAtoms(), 3)
+    m = Chem.MolFromSmiles('F[H-]F', smips)
+    ps.removeHigherDegrees = True
+    ps.removeHydrides = True
+    m = Chem.RemoveHs(m, ps)
     self.assertEqual(m.GetNumAtoms(), 2)
 
     m = Chem.MolFromSmiles('[H][H]', smips)
