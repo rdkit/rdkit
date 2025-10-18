@@ -300,6 +300,8 @@ void copyRingInfoFromCompatibilityData(const RingInfo &input,
     }
   }
 
+  output.atomMembershipBegins.clear();
+  output.bondMembershipBegins.clear();
   output.atomMembershipBegins.resize(numAtoms + 1, 0);
   output.bondMembershipBegins.resize(numBonds + 1, 0);
   // Count the atoms and bonds
@@ -336,12 +338,12 @@ void copyRingInfoFromCompatibilityData(const RingInfo &input,
   }
   // Shift forward 1 to undo the increments
   uint32_t prev = 0;
-  for (size_t i = 0; i < numRings; ++i) {
-    std::swap(prev, output.atomMemberships[i]);
+  for (size_t i = 0; i < numAtoms; ++i) {
+    std::swap(prev, output.atomMembershipBegins[i]);
   }
   prev = 0;
-  for (size_t i = 0; i < numRings; ++i) {
-    std::swap(prev, output.bondMemberships[i]);
+  for (size_t i = 0; i < numBonds; ++i) {
+    std::swap(prev, output.bondMembershipBegins[i]);
   }
 
   // Call clear first to ensure all elements reinitialized to false or 0

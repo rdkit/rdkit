@@ -1300,8 +1300,10 @@ void fastFindRings(const RDMol &mol, RingInfoCache& rings) {
 
   std::vector<uint32_t> &atomRingCounts = rings.atomMembershipBegins;
   std::vector<uint32_t> &bondRingCounts = rings.bondMembershipBegins;
-  atomRingCounts.resize(numAtoms);
-  bondRingCounts.resize(numBonds);
+  atomRingCounts.clear();
+  bondRingCounts.clear();
+  atomRingCounts.resize(numAtoms, 0);
+  bondRingCounts.resize(numBonds, 0);
   //struct RingStackEntry {
   //  uint32_t atomIndex;
   //  uint32_t atomNeighborIndex;
