@@ -1029,9 +1029,9 @@ python::tuple hasQueryHsHelper(const ROMol &m) {
 //  correctly.
 template<typename PropsT>
 void _testSetProps(PropsT &props, const std::string &prefix) {
-  props.setProp<bool>(prefix + "bool", true);
-  props.setProp<unsigned int>(prefix + "uint", -1);
-  props.setProp<double>(prefix + "double", 3.14159);
+  props.template setProp<bool>(prefix + "bool", true);
+  props.template setProp<unsigned int>(prefix + "uint", -1);
+  props.template setProp<double>(prefix + "double", 3.14159);
 
   std::vector<int> svint;
   svint.push_back(0);
@@ -1039,7 +1039,7 @@ void _testSetProps(PropsT &props, const std::string &prefix) {
   svint.push_back(2);
   svint.push_back(-2);
 
-  props.setProp<std::vector<int>>(prefix + "svint", svint);
+  props.template setProp<std::vector<int>>(prefix + "svint", svint);
 
   std::vector<unsigned int> svuint;
   svuint.push_back(0);
@@ -1047,19 +1047,20 @@ void _testSetProps(PropsT &props, const std::string &prefix) {
   svuint.push_back(2);
   svuint.push_back(-2);
 
-  props.setProp<std::vector<unsigned int>>(prefix + "svuint", svuint);
+  props.template setProp<std::vector<unsigned int>>(prefix + "svuint", svuint);
 
   std::vector<double> svdouble;
   svdouble.push_back(0.);
   svdouble.push_back(1.);
   svdouble.push_back(2.);
-  props.setProp<std::vector<double>>(prefix + "svdouble", svdouble);
+  props.template setProp<std::vector<double>>(prefix + "svdouble", svdouble);
 
   std::vector<std::string> svstring;
   svstring.push_back("The");
   svstring.push_back("RDKit");
 
-  props.setProp<std::vector<std::string>>(prefix + "svstring", svstring);
+  props.template setProp<std::vector<std::string>>(prefix + "svstring",
+                                                   svstring);
 }
 
 void testSetProps(ROMol &mol) {
