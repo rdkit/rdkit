@@ -11,6 +11,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/QueryOps.h>
+#include <GraphMol/rdmol_throw.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/SubstanceGroup.h>
@@ -1256,6 +1257,8 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   }
 
   if (propertyFlags & PicklerOps::MolProps) {
+    raiseNonImplementedDetail("Cast atom to property");
+    /*
     std::stringstream tss;
     _pickleProperties(tss, *mol, propertyFlags);
     if (!tss.str().empty()) {
@@ -1263,9 +1266,12 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
       write_sstream_to_stream(ss, tss);
       streamWrite(ss, ENDPROPS);
     }
+     */
   }
 
   if (propertyFlags & PicklerOps::AtomProps) {
+    raiseNonImplementedDetail("Cast atom to property");
+    /*
     std::stringstream tss;
     bool anyWritten = false;
     for (const auto atom : mol->atoms()) {
@@ -1276,9 +1282,12 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
       write_sstream_to_stream(ss, tss);
       streamWrite(ss, ENDPROPS);
     }
+     */
   }
 
   if (propertyFlags & PicklerOps::BondProps) {
+    raiseNonImplementedDetail("Cast atom to property");
+    /*
     std::stringstream tss;
     bool anyWritten = false;
     for (const auto bond : mol->bonds()) {
@@ -1289,6 +1298,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
       write_sstream_to_stream(ss, tss);
       streamWrite(ss, ENDPROPS);
     }
+    */
   }
   streamWrite(ss, ENDMOL);
 }
@@ -1455,6 +1465,8 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   }
 
   while (tag != ENDMOL) {
+    raiseNonImplementedDetail("Cast atom to property");
+    /*
     if (tag == BEGINPROPS) {
       int32_t blkSize = 0;
       if (version >= 13000) {
@@ -1500,6 +1512,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     } else {
       break;  // break to tag != ENDMOL
     }
+     */
     if (tag != ENDPROPS) {
       throw MolPicklerException("Bad pickle format: ENDPROPS tag not found.");
     }
@@ -1583,13 +1596,15 @@ int32_t MolPickler::_pickleAtomData(std::ostream &tss, const Atom *atom) {
     propFlags |= 1 << 4;
     streamWrite(tss, tmpChar);
   }
-  if (atom->d_explicitValence > 0) {
-    tmpChar = static_cast<char>(atom->d_explicitValence);
+
+  const AtomData &atomData = atom->getRDMol().getAtom(atom->getIdx());
+  if (atomData.explicitValence > 0) {
+    tmpChar = static_cast<char>(atomData.explicitValence);
     propFlags |= 1 << 5;
     streamWrite(tss, tmpChar);
   }
-  if (atom->d_implicitValence > 0) {
-    tmpChar = static_cast<char>(atom->d_implicitValence);
+  if (atomData.implicitValence > 0) {
+    tmpChar = static_cast<char>(atomData.implicitValence);
     propFlags |= 1 << 6;
     streamWrite(tss, tmpChar);
   }
@@ -1653,22 +1668,23 @@ void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
   } else {
     tmpChar = 0;
   }
-  atom->d_explicitValence = tmpChar;
+  AtomData &atomData = atom->getDataRDMol().getAtom(atom->getIdx());
+  atomData.explicitValence = tmpChar;
 
   if (propFlags & (1 << 6)) {
     streamRead(ss, tmpChar, version);
   } else {
     tmpChar = 0;
   }
-  atom->d_implicitValence = tmpChar;
+  atomData.implicitValence = tmpChar;
   if (propFlags & (1 << 7)) {
     streamReadPositiveChar(ss, tmpChar, version);
   } else {
     tmpChar = 0;
   }
-  atom->d_numRadicalElectrons = static_cast<unsigned int>(tmpChar);
+  atomData.numRadicalElectrons = static_cast<unsigned int>(tmpChar);
 
-  atom->d_isotope = 0;
+  atomData.isotope = 0;
   if (propFlags & (1 << 8)) {
     unsigned int tmpuint;
     streamRead(ss, tmpuint, version);
@@ -1876,12 +1892,13 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
       streamRead(ss, tmpChar, version);
       atom->setNumExplicitHs(static_cast<int>(tmpChar));
       streamRead(ss, tmpChar, version);
-      atom->d_explicitValence = tmpChar;
+      AtomData& data = atom->dp_dataMol->getAtom(atom->getIdx());
+      data.explicitValence = tmpChar;
       streamRead(ss, tmpChar, version);
-      atom->d_implicitValence = tmpChar;
+      data.implicitValence = tmpChar;
       if (version > 6000) {
         streamRead(ss, tmpChar, version);
-        atom->d_numRadicalElectrons = static_cast<unsigned int>(tmpChar);
+        data.numRadicalElectrons = static_cast<unsigned int>(tmpChar);
       }
     } else {
       _unpickleAtomData(ss, atom, version);

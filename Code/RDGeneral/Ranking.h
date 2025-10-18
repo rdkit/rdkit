@@ -40,7 +40,7 @@ inline auto pairLess = [](const auto &v1, const auto &v2) {
   \param res  is used to return the ranks of each entry
 */
 template <typename T1, typename T2>
-void rankVect(const std::vector<T1> &vect, T2 &res) {
+unsigned int rankVect(const std::vector<T1> &vect, T2 &res) {
   PRECONDITION(res.size() >= vect.size(), "vector size mismatch");
   unsigned int nEntries = rdcast<unsigned int>(vect.size());
 
@@ -51,7 +51,7 @@ void rankVect(const std::vector<T1> &vect, T2 &res) {
   std::sort(indices.begin(), indices.end(),
             [&](auto i1, auto i2) { return vect[i1] < vect[i2]; });
 
-  int currRank = 0;
+  unsigned int currRank = 0;
   unsigned int lastIdx = indices[0];
   for (auto idx : indices) {
     if (vect[idx] == vect[lastIdx]) {
@@ -61,6 +61,8 @@ void rankVect(const std::vector<T1> &vect, T2 &res) {
       lastIdx = idx;
     }
   }
+
+  return currRank + 1;
 }
 }  // namespace Rankers
 #endif

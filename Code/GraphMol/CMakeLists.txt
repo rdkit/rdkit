@@ -1,6 +1,6 @@
 rdkit_library(GraphMol
         Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
-        MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp
+        MolOps.cpp FindRings.cpp RDMol.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp
         atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp
         AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp
         ConjugHybrid.cpp AddHs.cpp
@@ -30,6 +30,8 @@ rdkit_headers(Atom.h
         Conformer.h
         details.h
         GraphMol.h
+        GraphMolEnums.h
+        GraphMolFwd.h
         MolOps.h
         MolPickler.h
         PeriodicTable.h
@@ -41,6 +43,7 @@ rdkit_headers(Atom.h
         Resonance.h
         RingInfo.h
         Rings.h
+        RDMol.h
         ROMol.h
         RWMol.h
         SanitException.h
@@ -204,3 +207,14 @@ rdkit_catch_test(tableTestsCatch catch_periodictable.cpp
 rdkit_catch_test(molopsTestsCatch catch_molops.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
 
+rdkit_catch_test(rdmolTestsCatch catch_rdmol.cpp
+        LINK_LIBRARIES SmilesParse GraphMol)
+
+rdkit_catch_test(romolcompatTestsCatch catch_romol_compat.cpp
+        LINK_LIBRARIES SmilesParse GraphMol)
+
+rdkit_catch_test(rwmolcompatTestsCatch catch_rwmol_compat.cpp
+        LINK_LIBRARIES SmilesParse GraphMol)
+
+rdkit_catch_test(stereoGroupsTestCatch catch_stereo_groups.cpp
+        LINK_LIBRARIES SmilesParse GraphMol)

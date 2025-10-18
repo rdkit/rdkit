@@ -114,6 +114,10 @@ class RDProps {
     return d_props.getVal<T>(key);
   }
 
+  const RDValue &getPropRDValue(const std::string_view &key) const {
+    return d_props.getRDValue(key);
+  }
+
   //! returns whether or not we have a \c property with name \c key
   //!  and assigns the value if we do
   //! \overload

@@ -15,6 +15,7 @@
 #include <ctime>
 #include <iostream>
 #include <sstream>
+#include <cstdint>
 
 RDLogger rdAppLog = nullptr;
 RDLogger rdDebugLog = nullptr;
@@ -33,7 +34,7 @@ const std::vector<RDLogger *> allLogs = {&rdAppLog,     &rdDebugLog,
 LogStateSetter::LogStateSetter() {
   for (auto i = 0u; i < allLogs.size(); ++i) {
     if (*allLogs[i] && (*allLogs[i])->df_enabled) {
-      d_origState |= 1 << i;
+      d_origState |= std::uint64_t(1) << i;
       (*allLogs[i])->df_enabled = false;
     }
   }
@@ -43,7 +44,7 @@ LogStateSetter::LogStateSetter(RDLoggerList toEnable) : LogStateSetter() {
   for (auto i = 0u; i < allLogs.size(); ++i) {
     if (*allLogs[i] && std::find(toEnable.begin(), toEnable.end(),
                                  *allLogs[i]) != toEnable.end()) {
-      d_origState ^= 1 << i;
+      d_origState ^= std::uint64_t(1) << i;
       (*allLogs[i])->df_enabled = true;
     }
   }
