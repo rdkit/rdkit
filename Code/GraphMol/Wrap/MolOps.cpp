@@ -43,6 +43,16 @@ using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 
+python::tuple computeAtomCIPRanksHelper(ROMol &mol) {
+  UINT_VECT atomRanks;
+  Chirality::assignAtomCIPRanks(mol, atomRanks);
+  python::list res;
+  for (auto rank : atomRanks) {
+    res.append(rank);
+  }
+  return python::tuple(res);
+}
+
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
                                         unsigned int nToBreak, bool addDummies,
@@ -56,8 +66,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
 
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
   if (pyDummyLabels) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
+    unsigned int nVs = python::len(pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       unsigned int v1 = python::extract<unsigned int>(pyDummyLabels[i][0]);
@@ -67,8 +76,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
   }
   std::vector<Bond::BondType> *bondTypes = nullptr;
   if (pyBondTypes) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyBondTypes.attr("__len__")());
+    unsigned int nVs = python::len(pyBondTypes);
     if (nVs != bondIndices->size()) {
       throw_value_error("bondTypes shorter than bondIndices");
     }
@@ -129,8 +137,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
   }
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
   if (pyDummyLabels) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
+    unsigned int nVs = python::len(pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       unsigned int v1 = python::extract<unsigned int>(pyDummyLabels[i][0]);
@@ -140,8 +147,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
   }
   std::vector<Bond::BondType> *bondTypes = nullptr;
   if (pyBondTypes) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyBondTypes.attr("__len__")());
+    unsigned int nVs = python::len(pyBondTypes);
     if (nVs != bondIndices->size()) {
       throw_value_error("bondTypes shorter than bondIndices");
     }
@@ -153,8 +159,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
   std::vector<unsigned int> *cutsPerAtom = nullptr;
   if (pyCutsPerAtom) {
     cutsPerAtom = new std::vector<unsigned int>;
-    unsigned int nAts =
-        python::extract<unsigned int>(pyCutsPerAtom.attr("__len__")());
+    unsigned int nAts = python::len(pyCutsPerAtom);
     if (nAts < mol.getNumAtoms()) {
       throw_value_error("cutsPerAtom shorter than the number of atoms");
     }
@@ -176,8 +181,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
 }
 
 ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
-  if (python::extract<unsigned int>(pyNewOrder.attr("__len__")()) <
-      mol.getNumAtoms()) {
+  if (python::len(pyNewOrder) < mol.getNumAtoms()) {
     throw_value_error("atomCounts shorter than the number of atoms");
   }
   auto newOrder = pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
@@ -210,8 +214,7 @@ python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
                                    bool negateList) {
   std::vector<std::string> *whiteList = nullptr;
   if (pyWhiteList) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyWhiteList.attr("__len__")());
+    unsigned int nVs = python::len(pyWhiteList);
     whiteList = new std::vector<std::string>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
@@ -234,8 +237,7 @@ python::dict splitMolByPDBChainId(const ROMol &mol, python::object pyWhiteList,
                                   bool negateList) {
   std::vector<std::string> *whiteList = nullptr;
   if (pyWhiteList) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyWhiteList.attr("__len__")());
+    unsigned int nVs = python::len(pyWhiteList);
     whiteList = new std::vector<std::string>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
@@ -285,12 +287,12 @@ python::dict parseQueryDefFileHelper(python::object &input, bool standardize,
 void addRecursiveQueriesHelper(ROMol &mol, python::dict replDict,
                                std::string propName) {
   std::map<std::string, ROMOL_SPTR> replacements;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(replDict.keys().attr("__len__")());
-       ++i) {
-    ROMol *m = python::extract<ROMol *>(replDict.values()[i]);
+  const auto items = replDict.items();
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    const auto item = items[i];
+    ROMol *m = python::extract<ROMol *>(item[1]);
     ROMOL_SPTR nm(new ROMol(*m));
-    std::string k = python::extract<std::string>(replDict.keys()[i]);
+    std::string k = python::extract<std::string>(item[0]);
     replacements[k] = nm;
   }
   addRecursiveQueries(mol, replacements, propName);
@@ -628,8 +630,7 @@ ExplicitBitVect *wrapLayeredFingerprint(
   std::unique_ptr<std::vector<unsigned int>> atomCountsV;
   if (atomCounts) {
     atomCountsV.reset(new std::vector<unsigned int>);
-    unsigned int nAts =
-        python::extract<unsigned int>(atomCounts.attr("__len__")());
+    unsigned int nAts = python::len(atomCounts);
     if (nAts < mol.getNumAtoms()) {
       throw_value_error("atomCounts shorter than the number of atoms");
     }
@@ -659,8 +660,7 @@ ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
   std::vector<unsigned int> *atomCountsV = nullptr;
   if (atomCounts) {
     atomCountsV = new std::vector<unsigned int>;
-    unsigned int nAts =
-        python::extract<unsigned int>(atomCounts.attr("__len__")());
+    unsigned int nAts = python::len(atomCounts);
     if (nAts < mol.getNumAtoms()) {
       throw_value_error("atomCounts shorter than the number of atoms");
     }
@@ -859,8 +859,7 @@ ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, bool useQuery,
                           python::object atomMap) {
   ROMol *result;
   PATH_TYPE pth;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(path.attr("__len__")()); ++i) {
+  for (unsigned int i = 0; i < python::len(path); ++i) {
     pth.push_back(python::extract<unsigned int>(path[i]));
   }
   std::map<int, int> mapping;
@@ -921,13 +920,14 @@ ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
   // convert input to MatchVect
   MatchVectType matchVect;
 
-  unsigned int length = python::extract<unsigned int>(match.attr("__len__")());
-
+  unsigned int length = python::len(match);
   for (unsigned int i = 0; i < length; ++i) {
-    int sz = 1;
-    if (PyObject_HasAttrString(static_cast<python::object>(match[i]).ptr(),
-                               "__len__")) {
-      sz = python::extract<unsigned int>(match[i].attr("__len__")());
+    // This is what boost::python::len() does internally
+    auto pyObj = static_cast<python::object>(match[i]).ptr();
+    unsigned int sz = PyObject_Length(pyObj);
+    if (PyErr_Occurred()) {
+      PyErr_Clear();
+      sz = 1;
     }
 
     int v1, v2;
@@ -973,7 +973,7 @@ void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
 void setAtomSymbols(MolzipParams &p, python::object symbols) {
   p.atomSymbols.clear();
   if (symbols) {
-    unsigned int nVs = python::extract<unsigned int>(symbols.attr("__len__")());
+    unsigned int nVs = python::len(symbols);
     for (unsigned int i = 0; i < nVs; ++i) {
       p.atomSymbols.push_back(python::extract<std::string>(symbols[i]));
     }
@@ -2222,6 +2222,12 @@ RETURNS:
                  python::arg("force") = false,
                  python::arg("flagPossibleStereoCenters") = false),
                 docString.c_str());
+
+    python::def("ComputeAtomCIPRanks", computeAtomCIPRanksHelper,
+                (python::arg("mol")),
+                R"DOC(Computes the CIP ranks for the atoms in a molecule.
+  The ranks are stored as an atom property '_CIPRank' and returned as a tuple.
+)DOC");
 
     // ------------------------------------------------------------------------
     docString =

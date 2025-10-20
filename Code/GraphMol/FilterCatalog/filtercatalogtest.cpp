@@ -35,7 +35,6 @@
 #include <GraphMol/FilterCatalog/FilterCatalog.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <fstream>
-#include <iostream>
 #include <map>
 #include <algorithm>
 

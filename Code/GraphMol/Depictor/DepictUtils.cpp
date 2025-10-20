@@ -11,7 +11,6 @@
 #include <cmath>
 #include <Geometry/point.h>
 #include "DepictUtils.h"
-#include <iostream>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/Chirality.h>
 #include <algorithm>

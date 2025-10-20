@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/test.h>
-#include <iostream>
 
 #include <fstream>
 #include "SmilesParse.h"
@@ -59,8 +58,7 @@ void testPass() {
       "[D{1-3}]",  // cactvs range queries
       "[D{-3}]", "[D{1-}]", "[z{1-3}]", "[Z{1-3}]",
       "[2H,13C]",  // github #1719
-      "[+{0-3}]",
-      "[-{0-3}]", "[-{0-3},C]",
+      "[+{0-3}]", "[-{0-3}]", "[-{0-3},C]",
       "[-{0-3},D{1-3}]",       // github #2709
       "C%(1000)CCC%(1000)",    // github #2909
       "C%(1000)CC(C%(1000))",  // github #2909
@@ -474,7 +472,7 @@ void testProblems() {
   // nested recursion (yick!)
   _checkNoMatches("[O]-[!$(*=O)]", "CC(=O)O");
 
-// BOOST_LOG(rdInfoLog) << "-*-*-*-*-*-*-*-*-" << std::endl;
+  // BOOST_LOG(rdInfoLog) << "-*-*-*-*-*-*-*-*-" << std::endl;
   _checkNoMatches("[$([O]-[!$(*=O)])]", "CC(=O)O");
 
   // ISSUE 78
@@ -1167,13 +1165,14 @@ void testSmartsStereochem() {
   _checkMatches("C/C=C/C", "C/C=C/C", 1, 4);
   _checkMatches("C/C=C/C", "C\\C=C\\C", 1, 4);
   _checkMatches("C/C=C/C", "C/C=C\\C", 1, 4);
-  
+
   // directional bonds are set to be a direction \ /
   //  and a query - SingleOrAromatic, make sure that this
   //  is their current representation
   auto m1 = "C/C=C\\C"_smarts;
   TEST_ASSERT(m1->getBondWithIdx(0)->hasQuery());
-  TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription() == "SingleOrAromaticBond");
+  TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription() ==
+              "SingleOrAromaticBond");
 
   auto m2 = "O=c1/c(=C/c2ccccc2)sc2n1-N-C-N-N=2"_smarts;
   TEST_ASSERT(MolToSmarts(*m2) == "O=c1/c(=C/c2ccccc2)sc2n1-N-C-N-N=2");
@@ -2339,7 +2338,7 @@ void testChargesAndIsotopes() {
   {
     std::unique_ptr<ROMol> p(
         SmartsToMol("[12C][12#6][12C+][12C+1][C+][C+1][12][+][C][#6][12CH2]["
-                    "12CH3+][CH4+][14N@H+]"));
+                    "12CH3+][CH4+][14N@H+][C&+][12C&+]"));
     TEST_ASSERT(p);
     TEST_ASSERT(p->getAtomWithIdx(0)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(1)->getFormalCharge() == 0);
@@ -2355,6 +2354,8 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(11)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(12)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(13)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(14)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(15)->getFormalCharge() == 1);
 
     TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 12);
@@ -2370,6 +2371,8 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(11)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(12)->getIsotope() == 0);
     TEST_ASSERT(p->getAtomWithIdx(13)->getIsotope() == 14);
+    TEST_ASSERT(p->getAtomWithIdx(14)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(15)->getIsotope() == 12);
 
     TEST_ASSERT(p->getAtomWithIdx(9)->getNumExplicitHs() == 0);
     TEST_ASSERT(p->getAtomWithIdx(10)->getNumExplicitHs() == 2);
@@ -2398,6 +2401,8 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(11)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(12)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(13)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(14)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(15)->getFormalCharge() == 1);
 
     TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 12);
@@ -2413,6 +2418,8 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(11)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(12)->getIsotope() == 0);
     TEST_ASSERT(p->getAtomWithIdx(13)->getIsotope() == 14);
+    TEST_ASSERT(p->getAtomWithIdx(14)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(15)->getIsotope() == 12);
 
     // p->debugMol(std::cerr);
     TEST_ASSERT(p->getAtomWithIdx(9)->getNumExplicitHs() == 0);
@@ -2432,15 +2439,18 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 0);
     TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 0);
     TEST_ASSERT(p->getAtomWithIdx(2)->getIsotope() == 0);
-    TEST_ASSERT(p->getAtomWithIdx(3)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(3)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(8)->getIsotope() == 0);
+
+    TEST_ASSERT(p->getAtomWithIdx(3)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(4)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(5)->getFormalCharge() == 0);
-    TEST_ASSERT(p->getAtomWithIdx(6)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(6)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(7)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(8)->getFormalCharge() == 1);
 
     TEST_ASSERT(p->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(6)->getNumExplicitHs() == 1);
     TEST_ASSERT(p->getAtomWithIdx(8)->getNumExplicitHs() == 1);
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;

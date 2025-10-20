@@ -20,8 +20,6 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ROMol.h>
 
-#include <iostream>
-
 using namespace RDKit;
 using namespace MolStandardize;
 

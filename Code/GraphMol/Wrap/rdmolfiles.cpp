@@ -64,11 +64,11 @@ std::string pyObjectToString(python::object input) {
 ROMol *MolFromSmiles(python::object ismiles, bool sanitize,
                      python::dict replDict) {
   std::map<std::string, std::string> replacements;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(replDict.keys().attr("__len__")());
-       ++i) {
-    replacements[python::extract<std::string>(replDict.keys()[i])] =
-        python::extract<std::string>(replDict.values()[i]);
+  const auto items = replDict.items();
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    const auto item = items[i];
+    replacements[python::extract<std::string>(item[0])] =
+        python::extract<std::string>(item[1]);
   }
   RWMol *newM;
   std::string smiles = pyObjectToString(ismiles);
@@ -83,11 +83,11 @@ ROMol *MolFromSmiles(python::object ismiles, bool sanitize,
 ROMol *MolFromSmarts(python::object ismarts, bool mergeHs,
                      python::dict replDict) {
   std::map<std::string, std::string> replacements;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(replDict.keys().attr("__len__")());
-       ++i) {
-    replacements[python::extract<std::string>(replDict.keys()[i])] =
-        python::extract<std::string>(replDict.values()[i]);
+  const auto items = replDict.items();
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    const auto item = items[i];
+    replacements[python::extract<std::string>(item[0])] =
+        python::extract<std::string>(item[1]);
   }
   std::string smarts = pyObjectToString(ismarts);
 
@@ -642,11 +642,12 @@ python::object addMetadataToPNGFileHelper(python::dict pymetadata,
   std::string cstr = python::extract<std::string>(fname);
 
   std::vector<std::pair<std::string, std::string>> metadata;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(pymetadata.keys().attr("__len__")());
-       ++i) {
-    std::string key = python::extract<std::string>(pymetadata.keys()[i]);
-    std::string val = python::extract<std::string>(pymetadata.values()[i]);
+
+  const auto items = pymetadata.items();
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    const auto item = items[i];
+    std::string key = python::extract<std::string>(item[0]);
+    std::string val = python::extract<std::string>(item[1]);
     metadata.push_back(std::make_pair(key, val));
   }
 
@@ -662,11 +663,11 @@ python::object addMetadataToPNGStringHelper(python::dict pymetadata,
   std::string cstr = python::extract<std::string>(png);
 
   std::vector<std::pair<std::string, std::string>> metadata;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(pymetadata.keys().attr("__len__")());
-       ++i) {
-    std::string key = python::extract<std::string>(pymetadata.keys()[i]);
-    std::string val = python::extract<std::string>(pymetadata.values()[i]);
+  const auto items = pymetadata.items();
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    const auto item = items[i];
+    std::string key = python::extract<std::string>(item[0]);
+    std::string val = python::extract<std::string>(item[1]);
     metadata.push_back(std::make_pair(key, val));
   }
 
@@ -1247,7 +1248,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "scsrBaseHbondOptions",
           &RDKit::v2::FileParsers::MolFromSCSRParams::scsrBaseHbondOptions,
-          "One of Ignore, UseSapAll(default) , UseSapOne, Auto");
+          "One of Ignore, UseSapAll(default) , UseSapOne, Auto")
+      .def("__setattr__", &safeSetattr);
 
   docString =
       "Construct a molecule from an SCSR Mol block.\n\n\
@@ -2580,8 +2582,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
           "choose CXSMILES fields to be included in the CXSMILES string (default=rdkit.Chem.rdmolfiles.CXSmilesFields.CX_ALL)")
       .def_readwrite(
           "restoreBondDirs", &RDKit::PNGMetadataParams::restoreBondDirs,
-          "choose what to do with bond dirs in the CXSMILES string (default=rdkit.Chem.rdmolfiles.RestoreBondDirOption.RestoreBondDirOptionClear)");
-
+          "choose what to do with bond dirs in the CXSMILES string (default=rdkit.Chem.rdmolfiles.RestoreBondDirOption.RestoreBondDirOptionClear)")
+      .def("__setattr__", &safeSetattr);
+      
   docString =
       R"DOC(Construct a molecule from metadata in a PNG string.
 
@@ -2696,7 +2699,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                      "molecule is returned")
       .def_readwrite(
           "format", &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
-          "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML");
+          "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML")
+      .def("__setattr__", &safeSetattr);
 
   docString =
       R"DOC(Construct a molecule from a cdxml file.

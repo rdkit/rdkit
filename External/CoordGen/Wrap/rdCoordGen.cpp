@@ -16,6 +16,7 @@
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <CoordGen/CoordGen.h>
+#include <RDBoost/Wrap.h>
 
 namespace python = boost::python;
 
@@ -25,8 +26,7 @@ namespace {
 void SetCoordMap(CoordGen::CoordGenParams *self, python::dict &coordMap) {
   self->coordMap.clear();
   python::list ks = coordMap.keys();
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(ks.attr("__len__")()); i++) {
+  for (unsigned int i = 0; i < boost::python::len(ks); ++i) {
     unsigned int id = python::extract<unsigned int>(ks[i]);
     self->coordMap[id] = python::extract<RDGeom::Point2D>(coordMap[id]);
   }
@@ -91,7 +91,9 @@ struct coordgen_wrapper {
                        "controls sketcher precision")
         .def_readwrite(
             "treatNonterminalBondsToMetalAsZOBs",
-            &CoordGen::CoordGenParams::treatNonterminalBondsToMetalAsZeroOrder);
+            &CoordGen::CoordGenParams::treatNonterminalBondsToMetalAsZeroOrder)
+        .def("__setattr__", &safeSetattr);
+
     python::def("SetDefaultTemplateFileDir", SetDefaultTemplateFileDir,
                 python::args("dir"));
     docString =

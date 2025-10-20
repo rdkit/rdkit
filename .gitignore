@@ -150,3 +150,10 @@ __pycache__/
 Code/MinimalLib/dist
 MAIN_RDKIT_README*
 node_modules
+
+/.cache
+/Code/GraphMol/MolInteractionFields/Wrap/testData/test4.cube
+/Code/GraphMol/MolInteractionFields/test_data/test3.cube
+/compile_commands.json
+/External/ChemDraw/chemdraw
+/External/AvalonTools/ava-formake-AvalonToolkit*
