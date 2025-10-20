@@ -658,6 +658,11 @@ void ROMol::clearSubstanceGroups() {
 
 unsigned int ROMol::addAtom(Atom* atom, bool updateLabel, bool takeOwnership) {
   PRECONDITION(atom, "NULL atom provided");
+  // A test in catch_graphmol.cpp requires that this precondition, copied from
+  // replaceAtomPointerCompat, must fail before adding the atom.
+  PRECONDITION((!takeOwnership || atom->dp_owningMol == nullptr ||
+                atom->dp_owningMol == dp_mol),
+               "Atom cannot have another owning mol");
 
   const uint32_t newAtomIdx = dp_mol->getNumAtoms();
   dp_mol->addAtom();
@@ -679,6 +684,12 @@ unsigned int ROMol::addAtom(Atom* atom, bool updateLabel, bool takeOwnership) {
 
 unsigned int ROMol::addBond(Bond* bond, bool takeOwnership) {
   PRECONDITION(bond, "NULL bond passed in");
+  // A test in catch_graphmol.cpp requires that this precondition, copied from
+  // replaceBondPointerCompat, must fail before adding the bond.
+  PRECONDITION(!takeOwnership || bond->dp_owningMol == nullptr ||
+                   bond->dp_owningMol == dp_mol,
+               "Bond cannot have another owning mol");
+
   const uint32_t newBondIdx = getNumBonds();
   // Note that the ROMol version does not do aromaticity updates.
   dp_mol->addBond(bond->getBeginAtomIdx(),
