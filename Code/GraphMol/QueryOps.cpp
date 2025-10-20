@@ -60,6 +60,7 @@ bool queryIsAtomBridgeheadInternal(const RDMol &mol, atomindex_t atomIndex,
   const uint32_t beginAtomRings = rings.atomMembershipBegins[atomIndex];
   const uint32_t endAtomRings = rings.atomMembershipBegins[atomIndex+1];
   boost::dynamic_bitset<> bondsInRing(mol.getNumBonds());
+  boost::dynamic_bitset<> ringsOverlap(rings.numRings());
   for (uint32_t atomRingIndexI = beginAtomRings;
        atomRingIndexI != endAtomRings; ++atomRingIndexI) {
     const uint32_t ringIndexI = rings.atomMemberships[atomRingIndexI];
@@ -86,13 +87,18 @@ bool queryIsAtomBridgeheadInternal(const RDMol &mol, atomindex_t atomIndex,
           if (overlap >= 2) {
             // we have two rings containing the atom which share at least two
             // bonds:
-            return true;
+            ringsOverlap.set(ringIndexI);
+            ringsOverlap.set(ringIndexJ);
+            break;
           }
         }
       }
     }
+    if (!ringsOverlap[ringIndexI]) {
+      return false;
+    }
   }
-  return false;
+  return true;
 }
 
 //! returns a Query for matching atoms with a particular number of ring bonds
