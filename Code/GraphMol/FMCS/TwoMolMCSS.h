@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-#include <RDGeneral/export.h>
 #include <GraphMol/FMCS/MatchTable.h>
 
 namespace RDKit {
@@ -32,11 +31,11 @@ class ROMol;
 // be reduced to a single example.  Each element of a pair in the
 // output vectors is the index of an atom in mol1 that matches
 // an atom in mol2.  The MCSSs must be of at least size minMCCSSize.
-RDKIT_FMCS_EXPORT void TwoMolMCSS(
-    const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
-    const FMCS::MatchTable &atomMatchTable,
-    const FMCS::MatchTable &bondMatchTable, bool uniquify, unsigned int timeOut,
-    std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
-        &maxCliques);
+void TwoMolMCSS(const ROMol &mol1, const ROMol &mol2, unsigned int minMCSSSize,
+                const FMCS::MatchTable &atomMatchTable,
+                const FMCS::MatchTable &bondMatchTable, bool uniquify,
+                unsigned int timeOut,
+                std::vector<std::vector<std::pair<unsigned int, unsigned int>>>
+                    &maxCliques);
 }  // namespace RDKit
 #endif  // TWOMOLMCSS_H

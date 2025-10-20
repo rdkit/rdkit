@@ -5,7 +5,7 @@
 #include <queue>
 #include <stdexcept>
 // This is an implementation of the algorithm used in TwoMolMCSS.h
-// the ChatGPT 5.0 produced for me.  It is inefficient but correct
+// that ChatGPT 5.0 produced for me.  It is inefficient but correct
 // and therefore a useful reference.  It was also pretty awesome to
 // watch it being created.  The prompt was:
 // "I would like an implementation of the koch modification of the

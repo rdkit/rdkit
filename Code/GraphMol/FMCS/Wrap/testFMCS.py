@@ -1323,25 +1323,17 @@ class TestCase(unittest.TestCase):
     p = rdFMCS.MCSParameters()
     p.MinMCSSSize = 15
     res = rdFMCS.TwoMolMCSS(mol1, mol2, False, p)
-    for i, r in enumerate(res):
-      print(i, r)
     self.assertEqual(len(res), 30)
     self.assertEqual(len(res[0]), 17)
 
-    print("----------------------")
     res = rdFMCS.TwoMolMCSS(mol1, mol2, True, p)
-    for i, r in enumerate(res):
-      print(i, r)
     self.assertEqual(len(res), 3)
     self.assertEqual(len(res[0]), 17)
         
 
-    print("----------------------")
     p.AtomCompareParameters.RingMatchesRingOnly = True
     p.BondCompareParameters.RingMatchesRingOnly = True
     res = rdFMCS.TwoMolMCSS(mol1, mol2, True, p)
-    for i, r in enumerate(res):
-      print(i, r)
     self.assertEqual(len(res), 1)
     self.assertEqual(len(res[0]), 17)
     

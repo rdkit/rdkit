@@ -136,7 +136,7 @@ void buildCorrespondenceGraph(
     return a.first < b.first;
   });
   // Sort the cEdges into ascending number of connections.  This makes
-  // cPathToNonUtNbor at bit faster.
+  // cPathToNonUtNbor a bit faster.
   for (auto &ce : cEdges) {
     std::ranges::sort(ce, [&](const auto &a, const auto &b) -> bool {
       return cEdges[a].size() < cEdges[b].size();
