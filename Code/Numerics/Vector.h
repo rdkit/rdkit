@@ -75,23 +75,23 @@ class Vector {
   constexpr unsigned int size() const { return d_size; }
 
   //! returns the value at a particular index
-  constexpr TYPE getVal(unsigned int i) const {
+  TYPE getVal(unsigned int i) const {
     PRECONDITION(i < d_size, "bad index");
     return d_data[i];
   }
 
   //! sets the index at a particular value
-  constexpr void setVal(unsigned int i, TYPE val) {
+  void setVal(unsigned int i, TYPE val) {
     PRECONDITION(i < d_size, "bad index");
     d_data[i] = val;
   }
 
-  constexpr TYPE operator[](unsigned int i) const {
+  TYPE operator[](unsigned int i) const {
     PRECONDITION(i < d_size, "bad index");
     return d_data[i];
   }
 
-  constexpr TYPE &operator[](unsigned int i) {
+  TYPE &operator[](unsigned int i) {
     PRECONDITION(i < d_size, "bad index");
     return d_data[i];
   }
@@ -109,7 +109,7 @@ class Vector {
   /*! We make a copy of the other Vector's data.
    */
 
-  constexpr Vector<TYPE> &assign(const Vector<TYPE> &other) {
+  Vector<TYPE> &assign(const Vector<TYPE> &other) {
     PRECONDITION(d_size == other.size(), "Size mismatch in vector copying");
     const TYPE *otherData = other.getData();
     memcpy(static_cast<void *>(d_data.get()),
@@ -118,7 +118,7 @@ class Vector {
   }
 
   //! elementwise addition, vectors must be the same size.
-  constexpr Vector<TYPE> &operator+=(const Vector<TYPE> &other) {
+  Vector<TYPE> &operator+=(const Vector<TYPE> &other) {
     PRECONDITION(d_size == other.size(), "Size mismatch in vector addition");
     const TYPE *otherData = other.getData();
     TYPE *data = d_data.get();
@@ -130,7 +130,7 @@ class Vector {
   }
 
   //! elementwise subtraction, vectors must be the same size.
-  constexpr Vector<TYPE> &operator-=(const Vector<TYPE> &other) {
+  Vector<TYPE> &operator-=(const Vector<TYPE> &other) {
     PRECONDITION(d_size == other.size(), "Size mismatch in vector subtraction");
     const TYPE *otherData = other.getData();
     TYPE *data = d_data.get();
@@ -241,7 +241,7 @@ class Vector {
   }
 
   //! returns the dot product between two Vectors
-  constexpr TYPE dotProduct(const Vector<TYPE> other) const {
+  TYPE dotProduct(const Vector<TYPE> other) const {
     PRECONDITION(d_size == other.size(),
                  "Size mismatch in vector doct product");
     const TYPE *oData = other.getData();
@@ -264,7 +264,7 @@ class Vector {
   }
 
   //! Set to a random unit vector
-  constexpr void setToRandom(unsigned int seed = 0) {
+  void setToRandom(unsigned int seed = 0) {
     // we want to get our own RNG here instead of using the global
     // one.  This is related to Issue285.
     RDKit::rng_type generator(42u);
