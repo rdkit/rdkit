@@ -197,7 +197,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   /*!
    * Perform a substructure search with the given query molecule across
    * the synthonspace library.  Duplicate SMILES strings produced by
-   * different reactions will be returned.
+   * different reactions will be returned.  Search results are returned
+   * incrementally through the provided callback, which will receive
+   * at most `toTryChunkSize` sized lists of ROMols at a time, thereby
+   * reducing the amount of memory required to hold search results.
    *
    * @param query : query molecule
    * @param callback: user-provided callback receiving chunks of ROMols.
@@ -236,11 +239,15 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
-  // Perform a RASCAL similarity search with the given query molecule
+  // Perform a fingerprint similarity search with the given query molecule
   /*!
    * Perform a fingerprint similarity search with the given query molecule
    * across the synthonspace library.  Duplicate SMILES strings produced by
-   * different reactions will be returned.
+   * different reactions will be returned.  Search results are returned
+   * incrementally through the provided callback, which will receive
+   * at most `toTryChunkSize` sized lists of ROMols at a time, thereby
+   * reducing the amount of memory required to hold search results.
+   *
    * @param query : query molecule
    * @param fpGen: a FingerprintGenerator object that will provide the
    *               fingerprints for the similarity calculation
@@ -272,9 +279,11 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
   // Perform a RASCAL similarity search with the given query molecule
-  // across the synthonspace library.  Duplicate SMILES strings produced by
-  // different reactions will be returned.
-  /*!
+  /* across the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.  Search results are returned
+   * incrementally through the provided callback, which will receive
+   * at most `toTryChunkSize` sized lists of ROMols at a time, thereby
+   * reducing the amount of memory required to hold search results.
    *
    * @param query : query molecule
    * @param callback: user-provided callback receiving chunks of ROMols.
