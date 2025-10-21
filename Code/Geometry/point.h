@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+// Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +9,8 @@
 //
 
 #include <RDGeneral/export.h>
-#ifndef __RD_POINT_H__
-#define __RD_POINT_H__
+#ifndef RD_POINT_H
+#define RD_POINT_H
 #include <cmath>
 #include <vector>
 #include <map>
