@@ -162,6 +162,42 @@ TEST_CASE("S Amide 1") {
   CHECK(resSmi == enumSmi);
 }
 
+TEST_CASE("Search Callback returns true") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space.txt";
+  std::string enumLibName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_enum.smi";
+
+  auto queryMol = "c1ccccc1"_smiles;
+  SynthonSpace synthonspace;
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
+  SubstructMatchParameters matchParams;
+  SynthonSpaceSearchParams params;
+
+  // set chunk size small so that we get multiple chunks back
+  params.toTryChunkSize = 2;
+  std::set<std::string> cbSmi;
+  bool retval = false;
+  SearchResultCallback cb = [&cbSmi,&retval](std::vector<std::unique_ptr<ROMol>> &r) {
+    for (auto &elem : r) {
+      CHECK(r.size() == 2);
+      cbSmi.insert(MolToSmiles(*elem));
+    }
+    return retval;
+  };
+  synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
+  CHECK(cbSmi.size() == 6);
+
+  cbSmi.clear();
+  // return true from callback unconditionally, we receive only one chunk
+  retval = true;
+  synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
+  CHECK(cbSmi.size() == 2);
+}
+
 TEST_CASE("S Urea 1") {
   REQUIRE(rdbase);
   std::string fName(rdbase);

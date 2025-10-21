@@ -106,8 +106,7 @@ struct CallbackAdapter {
     for (auto &mol : results) {
       pyres.append(boost::make_shared<ROMol>(*mol));
     }
-    py_callable(pyres);
-    return false;
+    return bool(py_callable(pyres));
   }
 };
 

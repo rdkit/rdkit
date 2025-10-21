@@ -71,6 +71,7 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
   // from buildAllhits
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> toTry;
   std::int64_t hitCount = 0;
+  bool stop = false;  // set by callback
 
   // Each hitset contains possible hits from a single SynthonSet.
   for (const auto &hitset : allHits) {
@@ -91,18 +92,18 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
         std::vector<std::unique_ptr<ROMol>> partResults;
         processToTrySet(toTry, endTime, partResults);
         hitCount += partResults.size();
-        cb(partResults);
+        stop = cb(partResults);
         toTry.clear();
-        if (d_params.maxHits != -1 && hitCount >= d_params.maxHits) break;
+        if (stop || (d_params.maxHits != -1 && hitCount >= d_params.maxHits)) break;
       }
       stepper.step();
     }
-    if (d_params.maxHits != -1 && hitCount >= d_params.maxHits) break;
+    if (stop || (d_params.maxHits != -1 && hitCount >= d_params.maxHits)) break;
   }
 
   // Do any remaining.
   if ((d_params.maxHits == -1 || hitCount < d_params.maxHits) &&
-      !toTry.empty()) {
+      !stop && !toTry.empty()) {
     std::vector<std::unique_ptr<ROMol>> partResults;
     processToTrySet(toTry, endTime, partResults);
     cb(partResults);

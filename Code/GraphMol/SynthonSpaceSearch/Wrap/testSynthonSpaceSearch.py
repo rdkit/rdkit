@@ -53,21 +53,56 @@ class TestCase(unittest.TestCase):
     synthonspace.ReadDBFile(fName)
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.maxHits = 10
-    results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"), params=params)
+    query = Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1")
+    results = synthonspace.SubstructureSearch(query, params=params)
     self.assertEqual(10, len(results.GetHitMolecules()))
     smParams = Chem.SubstructMatchParameters()
-    results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"),
+    results = synthonspace.SubstructureSearch(query,
                                               substructMatchParams=smParams,
                                               params=params)
     self.assertEqual(10, len(results.GetHitMolecules()))
 
+    # callback returns None, stil get all results
     mols = []
     synthonspace.SubstructureSearchIncremental(
-            Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"),
+            query,
             lambda results: mols.extend(results),
             substructMatchParams=smParams,
             params=params)
     self.assertEqual(10, len(mols))
+
+    # callback returns True, get one chunk
+    mols = []
+    params.toTryChunkSize = 2
+    def callback_returns_true(chunk):
+        mols.extend(chunk)
+        return True
+    synthonspace.SubstructureSearchIncremental(
+            query,
+            callback_returns_true,
+            substructMatchParams=smParams,
+            params=params)
+    self.assertEqual(2, len(mols))
+
+    # Exceptions thrown in the callback propagate back here
+    mols = []
+    params.toTryChunkSize = 2
+    def callback_raises(chunk):
+        mols.extend(chunk)
+        raise StopIteration
+
+    try:
+        synthonspace.SubstructureSearchIncremental(
+                query,
+                callback_raises,
+                substructMatchParams=smParams,
+                params=params)
+    except StopIteration:
+        pass
+    else:
+        assert False, "Expected exception"
+    self.assertEqual(2, len(mols))
+
 
 
   def testFingerprintSearch(self):
