@@ -523,16 +523,13 @@ void setAtomRLabel(Atom *atom, int rlabel) {
   // rlabel ==> n2 => 0..99
   PRECONDITION(rlabel >= 0 && rlabel < 100,
                "rlabel out of range for MDL files");
-  uint32_t *prop = atom->getRDMol().getAtomPropArrayIfPresent<uint32_t>(
-        common_properties::_MolFileRLabelToken);
   // Default of zero indicates no RLabel
-  if (rlabel != 0 && prop == nullptr) {
-    prop = atom->getRDMol().addAtomProp<uint32_t>(common_properties::_MolFileRLabelToken, 0);
-  } else if (prop != nullptr) {
-    // TODO: Consider removing prop if will now be all zeros
-  }
-  if (prop != nullptr) {
-    prop[atom->getIdx()] = static_cast<uint32_t>(rlabel);
+  if (rlabel == 0) {
+    atom->getRDMol().clearSingleAtomProp(common_properties::_MolFileRLabelToken,
+                                         atom->getIdx());
+  } else {
+    atom->getRDMol().setSingleAtomProp(common_properties::_MolFileRLabelToken,
+                                       atom->getIdx(), uint32_t(rlabel));
   }
 }
 //! Gets the atom's RLabel
@@ -546,8 +543,12 @@ int getAtomRLabel(const Atom *atom) {
 
 void setAtomStringProp(Atom* atom, const PropToken& token, const std::string& value) {
   PRECONDITION(atom, "bad atom");
-  atom->getDataRDMol().setSingleAtomProp<PropToken>(token, atom->getIdx(),
-                                                    PropToken(value), false, true);
+  if (value.empty()) {
+    atom->getDataRDMol().clearSingleAtomProp(token, atom->getIdx());
+  } else {
+    atom->getDataRDMol().setSingleAtomProp<PropToken>(
+        token, atom->getIdx(), PropToken(value), false, true);
+  }
 }
 
 std::string getAtomStringProp(const Atom* atom, const PropToken& token) {
@@ -763,7 +764,15 @@ STR_VECT Atom::getPropList(bool includePrivate, bool includeComputed) const {
   STR_VECT res = dp_dataMol->getPropList(includePrivate, includeComputed,
                                          RDMol::Scope::ATOM, d_index);
   if (includePrivate && includeComputed) {
-    res.push_back(detail::computedPropName);
+    // Only include __computedProps if there is a computed prop
+    auto begin = dp_dataMol->beginProps(true, RDMol::Scope::ATOM, d_index);
+    auto end = dp_dataMol->endProps();
+    for (; begin != end; ++begin) {
+      if (begin->isComputed()) {
+        res.push_back(detail::computedPropName);
+        break;
+      }
+    }
   }
   return res;
 }

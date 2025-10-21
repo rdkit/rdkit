@@ -327,7 +327,15 @@ void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
 STR_VECT ROMol::getPropList(bool includePrivate, bool includeComputed) const {
   STR_VECT res = dp_mol->getPropList(includePrivate, includeComputed);
   if (includePrivate && includeComputed) {
-    res.push_back(detail::computedPropName);
+    // Only include __computedProps if there is a computed prop
+    auto begin = dp_mol->beginProps(true);
+    auto end = dp_mol->endProps();
+    for (; begin != end; ++begin) {
+      if (begin->isComputed()) {
+        res.push_back(detail::computedPropName);
+        break;
+      }
+    }
   }
   return res;
 }

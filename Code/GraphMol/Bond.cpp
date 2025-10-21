@@ -345,7 +345,15 @@ STR_VECT Bond::getPropList(bool includePrivate, bool includeComputed) const {
   STR_VECT res = dp_dataMol->getPropList(includePrivate, includeComputed,
                                          RDMol::Scope::BOND, d_index);
   if (includePrivate && includeComputed) {
-    res.push_back(detail::computedPropName);
+    // Only include __computedProps if there is a computed prop
+    auto begin = dp_dataMol->beginProps(true, RDMol::Scope::BOND, d_index);
+    auto end = dp_dataMol->endProps();
+    for (; begin != end; ++begin) {
+      if (begin->isComputed()) {
+        res.push_back(detail::computedPropName);
+        break;
+      }
+    }
   }
   return res;
 }
