@@ -958,7 +958,7 @@ bool hasComplexBondTypeQueryHelper(
   }
   for (const auto &child :
        boost::make_iterator_range(qry.beginChildren(), qry.endChildren())) {
-    if (hasComplexBondTypeQueryHelper(*child, seenBondOrder | isBondOrder)) {
+    if (hasComplexBondTypeQueryHelper(*child, seenBondOrder || isBondOrder)) {
       return true;
     }
     if (child->getDescription() == "BondOrder") {
