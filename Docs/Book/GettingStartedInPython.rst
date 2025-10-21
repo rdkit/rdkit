@@ -3430,6 +3430,34 @@ The sizes of the hits can be limited by setting appropriate values to the Syntho
 minimum values can be set for the number of heavy atoms, the number of chiral atoms and the molecular weight.
 
 
+Incremental Search
+==================
+
+If the number of hits is large, the results object returned by `spc.SubstructureSearch` and
+friends may consume a significant amount of memory, because one `ROMol` is constructed for
+each hit.  To avoid this problem, use the incremental versions of the search routines, in which
+results are returned via a user-supplied callback function instead of in a search results object:
+
+.. doctest::
+
+  >>> params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+  >>> params.toTryChunkSize = 10
+  >>> smiles = list()
+  >>> def callback(mols):
+  ...     for mol in mols:
+  ...             smiles.append(Chem.MolToSmiles(mol))
+  ...
+  >>> spc.SubstructureSearchIncremental(qmol, callback, params=params)
+  >>> print(f"Number of hits : {len(smiles)}")
+  Number of hits : 50
+
+In this example, the chunk size was set to 10, so the callback will receive chunks of at most
+10 molecules instead of the full hit size.  The callback function stores just the SMILES of
+the molecules instead of the molecules themselves; when the callback returns, the memory for
+the molecules is reclaimed.  In practice, choose a value for `toTryChunkSize` of at least 100
+in order to amortize the (small) overhead of invoking the callback function for each chunk.
+
+
 Non-Chemical Functionality
 **************************
 
