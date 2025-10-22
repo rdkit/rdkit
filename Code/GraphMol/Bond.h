@@ -529,18 +529,21 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
   void initFromOther(const Bond& other, bool preserveProps = false);
 };
 
-inline bool isDative(RDKit::BondEnums::BondType bt) {
-  return bt == Bond::BondType::DATIVE || bt == Bond::BondType::DATIVEL ||
-         bt == Bond::BondType::DATIVER || bt == Bond::BondType::DATIVEONE;
+inline bool isDative(BondEnums::BondType bt) {
+  return bt == BondEnums::BondType::DATIVE ||
+         bt == BondEnums::BondType::DATIVEL ||
+         bt == BondEnums::BondType::DATIVER ||
+         bt == BondEnums::BondType::DATIVEONE;
 }
 
 inline bool isDative(const Bond &bond) {
   auto bt = bond.getBondType();
-  return isDative(RDKit::BondEnums::BondType(bt));
+  return isDative(BondEnums::BondType(bt));
 }
 
-inline bool canSetDoubleBondStereo(RDKit::BondEnums::BondType bondType) {
-  return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC ||
+inline bool canSetDoubleBondStereo(BondEnums::BondType bondType) {
+  return (bondType == BondEnums::BondType::SINGLE ||
+          bondType == BondEnums::BondType::AROMATIC ||
           isDative(bondType));
 }
 
@@ -550,8 +553,9 @@ inline bool canSetDoubleBondStereo(const Bond &bond) {
           isDative(bond));
 }
 
-inline bool canHaveDirection(RDKit::BondEnums::BondType bondType) {
-  return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC);
+inline bool canHaveDirection(BondEnums::BondType bondType) {
+  return (bondType == BondEnums::BondType::SINGLE ||
+          bondType == BondEnums::BondType::AROMATIC);
 }
 inline bool canHaveDirection(const Bond &bond) {
   auto bondType = bond.getBondType();
