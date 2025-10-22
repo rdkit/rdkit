@@ -454,6 +454,8 @@ RDKIT_RDGENERAL_EXPORT extern const PropToken _chiralPermutationToken;  // uint
 RDKIT_RDGENERAL_EXPORT extern const PropToken _CIPCodeToken;            // char
 RDKIT_RDGENERAL_EXPORT extern const PropToken _CIPRankToken;            // uint
 RDKIT_RDGENERAL_EXPORT extern const PropToken _isotopicHsToken;         // uint64
+RDKIT_RDGENERAL_EXPORT extern const PropToken _MolFileBondEndPtsToken;  // string
+RDKIT_RDGENERAL_EXPORT extern const PropToken _MolFileBondAttachToken;  // string
 RDKIT_RDGENERAL_EXPORT extern const PropToken _MolFileRLabelToken;      // uint
 RDKIT_RDGENERAL_EXPORT extern const PropToken _ringStereoAtomsAllToken; // int
 RDKIT_RDGENERAL_EXPORT extern const PropToken _ringStereoAtomsBeginsToken;// uint

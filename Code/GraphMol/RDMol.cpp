@@ -20,6 +20,8 @@
 #include "QueryBond.h"
 #include "QueryOps.h"
 
+#include <boost/tokenizer.hpp>
+
 #include <mutex>
 #include <type_traits>
 
@@ -528,6 +530,9 @@ void RDMol::setROMolPointerCompat(ROMol* ptr) {
           "Existing ROMol ptr must be an RWMol if not owned by self");
     }
     compat->mol.reset(rwmol);
+  }
+  for (auto &group : substanceGroups) {
+    group.setOwningMol(compat->compatMol);
   }
 }
 
@@ -2784,7 +2789,57 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
   // The _ringStereoAtomsAll, _ringStereoAtomsBegins, and
   // _ringStereoGroup properties are all "computed", so should be removed above.
   // TODO: Do they need to be removed in case !clearProps?
-  // TODO: Handle _MolFileBondEndPts like in the original RWMol::removeAtom
+
+  const Property *molFileBondEndPts =
+      findProp(RDKit::common_properties::_MolFileBondEndPtsToken, Scope::BOND);
+  if (molFileBondEndPts != nullptr) {
+    // Bond end indices may need to be decremented and their
+    // indices will need to be handled and if they have an
+    // ENDPTS prop that includes idx, it will need updating.
+    std::string sprop;
+    for (size_t i = 0, n = getNumBonds(); i < n; ++i) {
+      if (!getBondPropIfPresent(
+              RDKit::common_properties::_MolFileBondEndPtsToken, i, sprop)) {
+        continue;
+      }
+      if (sprop.empty() || sprop.front() != '(' || sprop.back() != ')') {
+        continue;
+      }
+
+      // This code could be optimized to avoid separate strings
+      // or even avoid a vector of ints, if it becomes a bottleneck.
+      sprop = sprop.substr(1, sprop.length() - 2);
+      boost::char_separator<char> sep(" ");
+      boost::tokenizer<boost::char_separator<char>> tokens(sprop, sep);
+      unsigned int num_ats = std::stod(*tokens.begin());
+      std::vector<unsigned int> oats;
+      auto beg = tokens.begin();
+      ++beg;
+      std::transform(beg, tokens.end(), std::back_inserter(oats),
+                     [](const std::string &a) { return std::stod(a); });
+
+      auto idx_pos = std::find(oats.begin(), oats.end(), atomIndex + 1);
+      if (idx_pos != oats.end()) {
+        oats.erase(idx_pos);
+        --num_ats;
+      }
+      if (!num_ats) {
+        clearSingleBondProp(RDKit::common_properties::_MolFileBondEndPtsToken, i);
+        clearSingleBondProp(common_properties::_MolFileBondAttachToken, i);
+      } else {
+        sprop = "(" + std::to_string(num_ats) + " ";
+        for (auto &i : oats) {
+          if (i > atomIndex + 1) {
+            --i;
+          }
+          sprop += std::to_string(i) + " ";
+        }
+        sprop[sprop.length() - 1] = ')';
+        setSingleBondProp(RDKit::common_properties::_MolFileBondEndPtsToken, i, sprop);
+      }
+    }
+  }
+
   // There aren't any other special cases yet.
   // Shift back atomData and atomBondStarts
   atomData.erase(atomData.begin() + atomIndex);
