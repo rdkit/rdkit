@@ -153,7 +153,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
     z /= l;
   }
 
-  constexpr double length() const override {
+  double length() const override {
     double res = x * x + y * y + z * z;
     return sqrt(res);
   }
@@ -175,7 +175,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
    *  The angle is unsigned: the results of this call will always
    *   be between 0 and M_PI
    */
-  constexpr double angleTo(const Point3D &other) const {
+  double angleTo(const Point3D &other) const {
     double lsq = lengthSq() * other.lengthSq();
     double dotProd = dotProduct(other);
     dotProd /= sqrt(lsq);
@@ -196,7 +196,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
    *
    *  The results of this call will be between 0 and M_2_PI
    */
-  constexpr double signedAngleTo(const Point3D &other) const {
+  double signedAngleTo(const Point3D &other) const {
     double res = this->angleTo(other);
     // check the sign of the z component of the cross product:
     if ((this->x * other.y - this->y * other.x) < -zero_tolerance) {
@@ -209,7 +209,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
    *   point to another.
    *
    */
-  constexpr Point3D directionVector(const Point3D &other) const {
+  Point3D directionVector(const Point3D &other) const {
     Point3D res;
     res.x = other.x - x;
     res.y = other.y - y;
@@ -234,7 +234,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
   /*! \brief Get a unit perpendicular from this point (treating it as a vector):
    *
    */
-  constexpr Point3D getPerpendicular() const {
+  Point3D getPerpendicular() const {
     Point3D res(0.0, 0.0, 0.0);
     if (x) {
       if (y) {
@@ -358,7 +358,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     return res;
   }
 
-  constexpr void normalize() override {
+  void normalize() override {
     double ln = this->length();
     if (ln < zero_tolerance) {
       throw std::runtime_error("Cannot normalize a zero length vector");
@@ -374,7 +374,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     y = temp;
   }
 
-  constexpr double length() const override {
+  double length() const override {
     // double res = pow(x,2) + pow(y,2);
     double res = x * x + y * y;
     return sqrt(res);
@@ -390,7 +390,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     return res;
   }
 
-  constexpr double angleTo(const Point2D &other) const {
+  double angleTo(const Point2D &other) const {
     auto t1 = *this;
     auto t2 = other;
     t1.normalize();
@@ -405,7 +405,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     return acos(dotProd);
   }
 
-  constexpr double signedAngleTo(const Point2D &other) const {
+  double signedAngleTo(const Point2D &other) const {
     double res = this->angleTo(other);
     if ((this->x * other.y - this->y * other.x) < -zero_tolerance) {
       res = 2.0 * M_PI - res;
@@ -413,7 +413,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     return res;
   }
 
-  constexpr Point2D directionVector(const Point2D &other) const {
+  Point2D directionVector(const Point2D &other) const {
     Point2D res;
     res.x = other.x - x;
     res.y = other.y - y;
