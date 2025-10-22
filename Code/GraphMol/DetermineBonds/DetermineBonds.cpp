@@ -77,7 +77,6 @@ std::vector<unsigned int> possibleValences(
     const RDKit::Atom *atom,
     const std::unordered_map<int, std::vector<unsigned int>> &atomicValence) {
   auto atomNum = atom->getAtomicNum() - atom->getFormalCharge();
-  auto numBonds = atom->getDegree();
 
   std::vector<unsigned int> avalences;
   auto valences = atomicValence.find(atomNum);
@@ -90,38 +89,74 @@ std::vector<unsigned int> possibleValences(
       }
     }
   }
-  std::vector<unsigned int> possible;
-  for (const auto &valence : avalences) {
-    if (numBonds <= valence) {
-      possible.push_back(valence);
-    }
-  }
-  return possible;
+  return avalences;
 }
 
 LazyCartesianProduct<unsigned int> getValenceCombinations(
-    const RDKit::RWMol &mol) {
+    const RDKit::RWMol &mol,
+    const int charge,
+    size_t iterations = 100) {
   auto numAtoms = mol.getNumAtoms();
   const std::unordered_map<int, std::vector<unsigned int>> atomicValence = {
       {1, {1}},  {5, {3, 4}}, {6, {4}},     {7, {3, 4}},     {8, {2, 1, 3}},
       {9, {1}},  {14, {4}},   {15, {5, 3}}, {16, {6, 3, 2}}, {17, {1}},
       {32, {4}}, {35, {1}},   {53, {1}}};
-  std::vector<std::vector<unsigned int>> possible(numAtoms);
-  for (unsigned int i = 0; i < numAtoms; i++) {
-    possible[i] = possibleValences(mol.getAtomWithIdx(i), atomicValence);
-    if (possible[i].empty()) {
-      const auto atom = mol.getAtomWithIdx(i);
-      std::vector<unsigned int> valences =
-          atomicValence.at(atom->getAtomicNum());
-      std::stringstream ss;
-      ss << "Valence of atom " << i << " is " << atom->getDegree()
-         << ", which is larger than the allowed maximum, "
-         << valences[valences.size() - 1];
-      throw ValueErrorException(ss.str());
-    }
+
+  std::vector<std::vector<unsigned int>> curPossible(numAtoms);
+  std::vector<std::vector<unsigned int>> newPossible(numAtoms);
+
+  for (size_t i = 0; i < numAtoms; i++) {
+    curPossible[i] = possibleValences(mol.getAtomWithIdx(i), atomicValence);
   }
 
-  return LazyCartesianProduct<unsigned int>(possible);
+  while (true) {
+    for (size_t i = 0; i < numAtoms; i++) {
+      if (curPossible[i].size() == 1) {
+        newPossible[i] = curPossible[i];
+        continue;
+      }
+
+      auto atom = mol.getAtomWithIdx(i);
+
+      int availBonds = 0;
+      for (auto bond : mol.atomBonds(atom)) {
+        auto *neighbor = bond->getOtherAtom(atom);
+        auto neighIdx = neighbor->getIdx();
+        auto neighDegree = neighbor->getDegree();
+        auto maxPos = *std::max_element(curPossible[neighIdx].begin(), curPossible[neighIdx].end());
+        availBonds += maxPos - neighDegree + std::max(0, charge);
+      }
+
+      auto numBonds = atom->getDegree();
+      for (auto valence : curPossible[i]) {
+        if (numBonds <= valence && valence <= numBonds + availBonds) {
+          newPossible[i].push_back(valence);
+        }
+      }
+
+      if (newPossible[i].empty()) {
+        std::vector<unsigned int> valences =
+            atomicValence.at(atom->getAtomicNum());
+        std::stringstream ss;
+        ss << "Valence of atom " << i << " is " << atom->getDegree()
+           << ", which is larger than the allowed maximum, "
+           << valences[valences.size() - 1];
+        throw ValueErrorException(ss.str());
+      }
+    }
+
+    if (newPossible == curPossible) {
+      break;
+    } else {
+      curPossible = newPossible;
+      newPossible = std::vector<std::vector<unsigned int>>(numAtoms);
+    }
+
+    if (--iterations == 0) {
+      break;
+    }
+  }
+  return LazyCartesianProduct<unsigned int>(curPossible);
 }
 
 }  // namespace
@@ -399,7 +434,7 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
   std::vector<unsigned int> bestValency(origValency);
   int bestSum = std::accumulate(origValency.begin(), origValency.end(), 0);
 
-  auto valenceCombos = getValenceCombinations(mol);
+  auto valenceCombos = getValenceCombinations(mol, charge);
 
   bool valencyValid = false;
   bool chargeValid = false;
