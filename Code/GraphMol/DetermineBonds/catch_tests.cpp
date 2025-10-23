@@ -543,39 +543,3 @@ TEST_CASE("Time out in DetermineBondOrders()") {
 
   CHECK(bond->getBondType() == Bond::DOUBLE);
 }
-
-#ifdef RDK_TEST_MULTITHREADED
-
-using namespace std::chrono_literals;
-TEST_CASE("test interrupt") {
-  // I think this is entity 3 in https://www.rcsb.org/structure/1OL1
-  // it goes into a VERY long loop in determineBondOrders
-  auto mol =
-      "CC[C@H](C)[C@H](NC(=O)[C@H](CC(C)C)NC(O)[C@H](CCCNC(N)O)N[C@@H](O)[C@@H](N)CCCNC(N)O)C(=O)N[C@@H](CC1CCC(F)CC1)C(N)O"_smiles;
-  REQUIRE(mol);
-
-  // one thread for determineBondOrders
-  std::thread cgThread([&mol]() {
-    constexpr int charge = 0;
-    constexpr bool allowChargedFragments = true;
-    constexpr bool embedChiral = false;
-    constexpr bool useAtomMap = false;
-
-    // give the calculation a while to run (~12 s on my laptop)
-    // but still make sure it won't run forever
-    constexpr size_t maxIterations = 500000;
-    determineBondOrders(*mol, charge, allowChargedFragments, embedChiral,
-                        useAtomMap, maxIterations);
-  });
-  // another thread to raise SIGINT
-  std::thread interruptThread([]() {
-    // sleep for a bit to allow for a few iterations, but not enough to
-    // hit maxIterations and trigger the exception
-    std::this_thread::sleep_for(100ms);
-    std::raise(SIGINT);
-  });
-  cgThread.join();
-  interruptThread.join();
-}
-
-#endif

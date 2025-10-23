@@ -140,7 +140,7 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
         std::stringstream ss;
         ss << "Valence of atom " << i << " is " << atom->getDegree()
            << ", which is larger than the allowed maximum, "
-           << valences[valences.size() - 1];
+           << numBonds + availBonds;
         throw ValueErrorException(ss.str());
       }
     }
