@@ -135,8 +135,6 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
       }
 
       if (newPossible[i].empty()) {
-        std::vector<unsigned int> valences =
-            atomicValence.at(atom->getAtomicNum());
         std::stringstream ss;
         ss << "Valence of atom " << i << " is " << atom->getDegree()
            << ", which is larger than the allowed maximum, "
