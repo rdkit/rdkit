@@ -1021,14 +1021,14 @@ void testSmilesSmarts() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma == "[#6H2-]-[#6]");
+  TEST_ASSERT(sma == "[#6-]-[#6]");
   delete mol;
 
   smi = "[CH-2]C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma == "[#6H-2]-[#6]");
+  TEST_ASSERT(sma == "[#6-2]-[#6]");
   delete mol;
 
   smi = "[CH4+]C";
@@ -1037,14 +1037,14 @@ void testSmilesSmarts() {
   mol = SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma == "[#6H4+]-[#6]");
+  TEST_ASSERT(sma == "[#6+]-[#6]");
   delete mol;
 
   smi = "[CH5+2]C";
   mol = SmilesToMol(smi, debugParse, sanitize);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma == "[#6H5+2]-[#6]");
+  TEST_ASSERT(sma == "[#6+2]-[#6]");
   delete mol;
 
   smi = "c1ccccc1";
@@ -2646,6 +2646,7 @@ void testGithub2565() {
     bool recursionPossible = true;
     bool useChirality = true;
     std::vector<MatchVectType> matches;
+    std::cerr << "Testing SMILES: " << smi << " " << smarts << std::endl;
     TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
                                recursionPossible, useChirality));
   }

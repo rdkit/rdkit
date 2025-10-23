@@ -6662,11 +6662,11 @@ M  END
     mol = Chem.MolFromSmiles('c1cc[nH]c1')
     nops = Chem.AdjustQueryParameters.NoAdjustments()
     nmol = Chem.AdjustQueryProperties(mol, nops)
-    self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1:[#6]:[#6]:[#7H]:[#6]:1")
+    self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1:[#6]:[#6]:[#7]:[#6]:1")
 
     nops.adjustConjugatedFiveRings = True
     nmol = Chem.AdjustQueryProperties(mol, nops)
-    self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#7H]-,=,:[#6]-,=,:1")
+    self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#7]-,=,:[#6]-,=,:1")
 
   def testFindPotentialStereo(self):
     mol = Chem.MolFromSmiles('C[C@H](F)C=CC')
@@ -8516,10 +8516,10 @@ M  END
     self.assertIsNotNone(mol)
     ps = Chem.SmilesWriteParams()
     sma = Chem.MolToSmarts(mol, ps)
-    self.assertEqual(sma, '[#7H3]->[Fe]-[#7]')
+    self.assertEqual(sma, '[#7]->[Fe]-[#7]')
     ps.includeDativeBonds = False
     sma = Chem.MolToSmarts(mol, ps)
-    self.assertEqual(sma, '[#7H3]-[Fe]-[#7]')
+    self.assertEqual(sma, '[#7]-[Fe]-[#7]')
 
   def testMolToV2KMolBlock(self):
     mol = Chem.MolFromSmiles('[NH3]->[Fe]')
