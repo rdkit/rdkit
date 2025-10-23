@@ -614,10 +614,22 @@ class TestCase(unittest.TestCase):
     m.SetProp("int", "1000")
     m.SetProp("double", "10000.123")
     m.SetProp("double spaces", " 10000.123 ")
+    # Github #8890: test that string properties preserve spaces
+    m.SetProp("string spaces", " foo ")
+    m.SetProp("string whitespace", " \t")
     self.assertEqual(m.GetPropsAsDict(), {
       "int": 1000,
       "double": 10000.123,
-      "double spaces": 10000.123
+      "double spaces": 10000.123,
+      "string spaces": " foo ",
+      "string whitespace": " \t"
+    })
+    self.assertEqual(m.GetPropsAsDict(autoConvertStrings=False), {
+      "int": "1000",
+      "double": "10000.123",
+      "double spaces": " 10000.123 ",
+      "string spaces": " foo ",
+      "string whitespace": " \t"
     })
 
     self.assertEqual(type(m.GetPropsAsDict()['int']), int)
