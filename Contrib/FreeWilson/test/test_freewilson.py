@@ -15,13 +15,13 @@ import importlib
 fw = importlib.reload(fw)
 
 from rdkit import Chem, rdBase
-from rdkit.Chem import rdFMCS
+from rdkit.Chem import rdFMCS, rdMolAlign
 
 PATH = os.path.join(os.path.dirname(fw.__file__), 'data')
 assert os.path.exists(PATH), PATH
 
 
-def atest_chembl():
+def test_chembl():
   logging.getLogger().setLevel(logging.INFO)
   smilesfile = os.path.join(PATH, "CHEMBL2321810.smi")
   scaffoldfile = os.path.join(PATH, "CHEMBL2321810_scaffold.mol")
@@ -81,15 +81,29 @@ def test_multicore():
 
 def test_fep_benchmark_3D():
   benchmark = os.path.join(PATH, "cmet_ligands.sdf")
-  mols = list(Chem.SDMolSupplier(benchmark))
+  mols = list(Chem.SDMolSupplier(benchmark, removeHs=False))
+  smis = {Chem.MolToSmiles(m):m for m in mols if m}
+  assert smis
   match = rdFMCS.FindMCS(mols)
 
   scores = [float(m.GetProp("r_exp_dg")) for m in mols]
   with rdBase.BlockLogs():
     free = fw.FWDecompose(match.queryMol, mols, scores)
-  preds2 = list(fw.FWBuild(free, pred_filter=lambda x: x < -8))
+  preds2 = list(fw.FWBuild(free, keep_training_set=True))
   assert preds2
-  assert preds2[0].mol.GetConformer(0).Is3D()
-  
 
-test_fep_benchmark_3D()
+  count = 0
+  found = 0
+  # we use an rms of 0.7 because we are assembling rgroups from different
+  #  ligands together which may not exactly align
+  for p in preds2:
+    if not p.is_training: continue
+    
+    smi = Chem.MolToSmiles(p.mol)
+
+    count += 1
+    if smi not in smis: continue
+    rms = rdMolAlign.GetBestRMS(smis[smi], p.mol)
+    assert rms < 0.7
+
+

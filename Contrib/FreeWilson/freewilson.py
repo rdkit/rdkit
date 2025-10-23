@@ -151,7 +151,7 @@ from rdkit.Chem import rdRGroupDecomposition as rgd
 
 logger = logging.getLogger("freewilson")
 
-FreeWilsonPrediction = namedtuple("FreeWilsonPrediction", ['prediction', 'smiles', 'rgroups', 'mol'])
+FreeWilsonPrediction = namedtuple("FreeWilsonPrediction", ['prediction', 'smiles', 'rgroups', 'mol', 'is_training'])
 
 # match dummy atoms in a smiles string to extract atom maps
 dummypat = re.compile(r"\*:([0-9]+)")
@@ -281,7 +281,6 @@ class RGroup:
     self.idx = idx  # descriptor index
     self.dummies = tuple([int(x) for x in sorted(dummypat.findall(smiles))])
     self.mol = mol
-    assert mol
 
     # Assemble some additive properties
 
@@ -451,7 +450,8 @@ def FWDecompose(scaffolds, mols, scores,
       mol = molzip_smi(reconstructed)
       num_reconstructed += 1
     except:
-      print("failed:", Chem.MolToSmiles(matched[num_mols]), reconstructed)
+      logging.error("failed reconstructing %s, %s", Chem.MolToSmiles(matched[num_mols]),
+                    reconstructed)
 
   logger.info(f"Descriptor size {len(rgroup_idx)}")
   logger.info(f"Reconstructed {num_reconstructed} out of {num_mols}")
@@ -493,7 +493,8 @@ def FWDecompose(scaffolds, mols, scores,
                                  num_reconstructed)
 
 
-def _enumerate(rgroups, fw, mw_filter=None, hvy_filter=None, pred_filter=None, mol_filter=None):
+def _enumerate(rgroups, fw, mw_filter=None, hvy_filter=None, pred_filter=None, mol_filter=None,
+               keep_training_set=False):
   N = fw.N
   fitter = fw.fitter
   num_products = 1
@@ -515,6 +516,7 @@ def _enumerate(rgroups, fw, mw_filter=None, hvy_filter=None, pred_filter=None, m
   max_pred = -1e10
   min_pred = 1e10
   delta = num_products // 10 or 1
+
   for i, groups in tqdm(enumerate(itertools.product(*rgroups)), total=num_products):
     if i and i % delta == 0:
       logging.debug(
@@ -531,7 +533,11 @@ def _enumerate(rgroups, fw, mw_filter=None, hvy_filter=None, pred_filter=None, m
 
     if tuple(descriptors) in fw.descriptors:
       in_training_set += 1
-      continue
+      is_training = True
+      if not keep_training_set:
+        continue
+    else:
+      is_training = False  
 
     min_mw = min(min_mw, mw)
     max_mw = max(max_mw, mw)
@@ -575,7 +581,7 @@ def _enumerate(rgroups, fw, mw_filter=None, hvy_filter=None, pred_filter=None, m
       continue
 
     out_smi = Chem.MolToSmiles(mol)
-    yield FreeWilsonPrediction(pred, out_smi, groups, mol)
+    yield FreeWilsonPrediction(pred, out_smi, groups, mol, is_training)
     wrote += 1
   logging.info(
     f"Wrote {wrote} results out of {num_products}\n\tIn Training set: {in_training_set}\n\tBad MW: {rejected_mw}\n\tBad Pred: {rejected_pred}\n\tBad Filters: {rejected_filters}\n\tBad smi: {rejected_bad}\n\tmin mw: {min_mw}\n\tmax mw: {max_mw}\n\tBad HVY: {rejected_hvy}\n\tBad Pred: {rejected_pred}\n\tBad Filters: {rejected_filters}\n\tBad smi: {rejected_bad}\n\tmin mw: {min_mw}\n\tmax mw: {max_mw}\n\tmin hvy: {min_hvy}\n\tmax hvy: {max_hvy}\n\t\n\tmin pred: {min_pred}\n\tmax pred: {max_pred}"
@@ -583,7 +589,7 @@ def _enumerate(rgroups, fw, mw_filter=None, hvy_filter=None, pred_filter=None, m
 
 
 def FWBuild(fw: FreeWilsonDecomposition, pred_filter=None, mw_filter=None, hvy_filter=None,
-            mol_filter=None) -> Generator[FreeWilsonPrediction, None, None]:
+            mol_filter=None, keep_training_set=False) -> Generator[FreeWilsonPrediction, None, None]:
   """Enumerate the freewilson decomposition and return their predictions
 
        :param fw: FreeWilsonDecomposition generated from FWDecompose
@@ -625,7 +631,8 @@ def FWBuild(fw: FreeWilsonDecomposition, pred_filter=None, mw_filter=None, hvy_f
   rgroups = [rgroup for key, rgroup in sorted(rgroups_no_cycles.items())]
   # core is always first
   for res in _enumerate(rgroups, fw, pred_filter=pred_filter, mw_filter=mw_filter,
-                        hvy_filter=hvy_filter, mol_filter=mol_filter):
+                        hvy_filter=hvy_filter, mol_filter=mol_filter,
+                        keep_training_set=keep_training_set):
     yield res
 
   # iterate on rgroups with cycles
