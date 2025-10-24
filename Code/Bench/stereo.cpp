@@ -7,27 +7,63 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/MolOps.h>
 
 using namespace RDKit;
 
 TEST_CASE("Chirality::findPotentialStereo", "[stereo]") {
-  for (auto smiles : bench_common::CASES) {
-    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
-    REQUIRE(mol);
+  auto samples = bench_common::load_samples();
 
-    BENCHMARK("Chirality::findPotentialStereo: " + std::string(smiles)) {
-      return Chirality::findPotentialStereo(*mol);
-    };
-  }
+  BENCHMARK("Chirality::findPotentialStereo") {
+    auto total = 0;
+
+    for (auto &mol : samples) {
+      auto stereo_infos = Chirality::findPotentialStereo(mol);
+      mol.clearComputedProps();
+      for (auto &info : stereo_infos) {
+        total += info.controllingAtoms.size();
+      }
+    }
+
+    return total;
+  };
 }
 
-TEST_CASE("CIPLabeler::CIPLabeler", "[stereo]") {
-  for (auto smiles : bench_common::CASES) {
-    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
-    REQUIRE(mol);
+TEST_CASE("CIPLabeler::assignCIPLabels", "[stereo]") {
+  auto samples = bench_common::load_samples();
+  BENCHMARK("CIPLabeler::assignCIPLabels") {
+    auto total = 0;
+    for (auto &mol : samples) {
+      CIPLabeler::assignCIPLabels(mol);
+    }
+    return total;
+  };
+}
 
-    BENCHMARK("CIPLabeler::assignCIPLabels: " + std::string(smiles)) {
-      return Chirality::findPotentialStereo(*mol);
+TEST_CASE("MolOps::assignStereochemistry", "[stereo]") {
+  const auto cleanIt = true;
+  const auto force = true;
+  const auto flagPossibleStereoCenters = true;
+
+  for (auto legacy : {true, false}) {
+    auto samples = bench_common::load_samples();
+
+    auto str_legacy = std::string(legacy ? "true" : "false");
+    Chirality::setUseLegacyStereoPerception(legacy);
+
+    BENCHMARK("MolOps::assignStereochemistry legacy=" + str_legacy) {
+      auto total = 0;
+
+      for (auto &mol : samples) {
+        MolOps::assignStereochemistry(mol, cleanIt, force,
+                                      flagPossibleStereoCenters);
+        for (auto &atom : mol.atoms()) {
+          total += atom->getChiralTag();
+        }
+        mol.clearComputedProps();
+      }
+
+      return total;
     };
   }
 }

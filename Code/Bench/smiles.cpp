@@ -10,21 +10,25 @@
 using namespace RDKit;
 
 TEST_CASE("SmilesToMol", "[smiles]") {
-  for (auto smiles : bench_common::CASES) {
-    BENCHMARK("SmilesToMol: " + std::string(smiles)) {
+  BENCHMARK("SmilesToMol") {
+    auto total_atoms = 0;
+    for (auto smiles : bench_common::SAMPLES) {
       auto mol = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(mol);
-      return mol;
-    };
-  }
+	  total_atoms += mol->getNumAtoms();
+    }
+    return total_atoms;
+  };
 }
 
 TEST_CASE("MolToSmiles", "[smiles]") {
-  for (auto smiles : bench_common::CASES) {
-    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
-    REQUIRE(mol);
-    BENCHMARK("MolToSmiles: " + std::string(smiles)) {
-      return MolToSmiles(*mol);
-    };
-  }
+  auto samples = bench_common::load_samples();
+  BENCHMARK("MolToSmiles") {
+    auto total_length = 0;
+    for (auto &mol : samples) {
+      auto smiles = MolToSmiles(mol);
+      total_length += smiles.size();
+    }
+    return total_length;
+  };
 }
