@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+#include <limits>
 #include <vector>
 
 #include <GraphMol/ROMol.h>
@@ -25,6 +27,24 @@ constexpr const char *SAMPLES[] = {
 
 std::vector<RDKit::ROMol> load_samples();
 
-uint64_t nth_random(uint64_t n) noexcept;
+constexpr uint64_t nth_random(uint64_t n) noexcept {
+  // https://xoshiro.di.unimi.it/splitmix64.c
+  // inlined here becuse <boost/random/splitmix64.hpp> is not always available
+  std::uint64_t seed = 1;
+  std::uint64_t z = seed + (n + 1) * 0x9E3779B97F4A7C15;
+  z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9;
+  z = (z ^ (z >> 27)) * 0x94D049BB133111EB;
+  return z ^ (z >> 31);
+}
+
+static_assert(0x910a2dec89025cc1 == nth_random(0));
+static_assert(0xbeeb8da1658eec67 == nth_random(1));
+static_assert(0xf893a2eefb32555e == nth_random(2));
+static_assert(0x71c18690ee42c90b == nth_random(3));
+static_assert(0x71bb54d8d101b5b9 == nth_random(4));
+static_assert(0x7760003b54a685ae == nth_random(1000));
+static_assert(0x28a1928f0674d152 == nth_random(1000000000000));
+static_assert(0x5692161d100b05e5 ==
+              nth_random(std::numeric_limits<uint64_t>::max()));
 
 }  // namespace bench_common
