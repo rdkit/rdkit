@@ -1,7 +1,17 @@
+//
+//  Copyright (C) 2025 and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 #ifndef RD_SUBSET_H
 #define RD_SUBSET_H
 
 #include <RDGeneral/export.h>
+#include <RDGeneral/BetterEnums.h>
 #include <memory>
 #include <vector>
 
@@ -16,12 +26,24 @@ class RWMol;
  *
  *  NOTE: when the atoms and bonds are fully specified, the subset method is ignored.
  */ 
+BETTER_ENUM(SubsetMethod, unsigned int,
+   BONDS_BETWEEN_ATOMS=0x0,
+   BONDS=0x1
+);  
 
-enum class SubsetMethod {
-   BONDS_BETWEEN_ATOMS,
-     BONDS
-};  
-  
+//! Subsetting Options for copyMolSubset
+/*
+ * These control what is copied over from the original molecule
+ *     \param sanitize - perform sanitization automatically on the subset
+ *     \param clearComputedProps - clear all computed props on the subsetted molecule
+ *     \param copyAsQuery - Return the subset as a query
+ *     \param copyCoordinates - Copy the active coordinates from the molecule
+ *     \param conformerIdx - What conformer idx to use for the coordinates default is -1
+ *     \param method - Subsetting method to use.  *Note* if atoms and bonds are fully specified
+ *                      the method is ignored.
+ *
+ *  NOTE: when the atoms and bonds are fully specified, the subset method is ignored.
+ */ 
 struct RDKIT_GRAPHMOL_EXPORT SubsetOptions {
   bool sanitize = false;
   bool clearComputedProps = false;
@@ -42,28 +64,28 @@ struct RDKIT_GRAPHMOL_EXPORT SubsetOptions {
 };
 
 struct RDKIT_GRAPHMOL_EXPORT SubsetInfo {
-  std::vector<bool> selected_atoms;
-  std::vector<bool> selected_bonds;
-  std::map<unsigned int, unsigned int> atom_mapping;
-  std::map<unsigned int, unsigned int> bond_mapping;
+  std::vector<bool> selectedAtoms;
+  std::vector<bool> selectedBonds;
+  std::map<unsigned int, unsigned int> atomMapping;
+  std::map<unsigned int, unsigned int> bondMapping;
 
   void debug(std::ostream &out) {
-    out << "Selected Atoms Size: " << selected_atoms.size() << std::endl;
-    for(size_t i=0; i<selected_atoms.size(); ++i) {
-      if(selected_atoms[i]) out << i << " ";
+    out << "Selected Atoms Size: " << selectedAtoms.size() << std::endl;
+    for(size_t i=0; i<selectedAtoms.size(); ++i) {
+      if(selectedAtoms[i]) out << i << " ";
     }
     out << std::endl;
-    out << "Selected Bonds Size: " << selected_bonds.size() << std::endl;
-    for(size_t i=0; i<selected_bonds.size(); ++i) {
-      if(selected_bonds[i]) out << i << " ";
+    out << "Selected Bonds Size: " << selectedBonds.size() << std::endl;
+    for(size_t i=0; i<selectedBonds.size(); ++i) {
+      if(selectedBonds[i]) out << i << " ";
     }
     out << std::endl;
     out << "Atom Mapping" << std::endl;
-    for(auto &v: atom_mapping) {
+    for(auto &v: atomMapping) {
       std::cerr << " " << v.first << " -> " << v.second << std::endl;
     }
     out << "Bond Mapping" << std::endl;
-    for(auto &v: bond_mapping) {
+    for(auto &v: bondMapping) {
       std::cerr << " " << v.first << " -> " << v.second << std::endl;
     }
   }
@@ -76,11 +98,11 @@ struct RDKIT_GRAPHMOL_EXPORT SubsetInfo {
  * are contained within the given atoms and bonds.
  *
  * \param mol - starting mol
- * \param path - the indices of atoms or bonds to extract. If an index falls
- *             outside of the acceptable indices, it is ignored.yes
-
- * \param method - the method by which to extract this subgraph.
- * \param sanitize - whether to sanitize the extracted mol.
+ * \param atoms - atoms to extract
+ * \param bonds - bonds to extract
+ * \param subsetInfo - optional subsetInfo to record the atoms and bonds used
+ * \param options - subset options, note the method is ignored since all the atoms and bonds are specified
+ * 
  *
  * NOTE: Bookmarks are currently copied, StereoGroups that are not entirely
  *        included in the subset are not copied.
@@ -93,20 +115,31 @@ RDKIT_GRAPHMOL_EXPORT
 std::unique_ptr<RDKit::RWMol> copyMolSubset(const RDKit::ROMol& mol,
 					    const std::vector<unsigned int> &atoms,
 					    const std::vector<unsigned int> &bonds,
-					    const SubsetOptions &options, SubsetInfo *selectionInfo=nullptr);
+					    const SubsetOptions &options=SubsetOptions()
+					    );
+
+RDKIT_GRAPHMOL_EXPORT
+std::unique_ptr<RDKit::RWMol> copyMolSubset(const RDKit::ROMol& mol,
+					    const std::vector<unsigned int> &atoms,
+					    const std::vector<unsigned int> &bonds,
+					    SubsetInfo &subsetInfo,
+					    const SubsetOptions &options=SubsetOptions()
+					    );
 
 //!
 /*
- * Helper api to extract a subgraph from an ROMol. Bonds, substance groups and
+ * Extract a subgraph from an ROMol. Bonds, substance groups and
  * stereo groups are only extracted to the subgraph if all participant entities
  * are selected by the `path` parameter.
  *
  * \param mol - starting mol
  * \param path - the indices of atoms or bonds to extract. If an index falls
- *             outside of the acceptable indices, it is ignored.yes
-
- * \param method - the method by which to extract this subgraph.
- * \param sanitize - whether to sanitize the extracted mol.
+ *             outside of the acceptable indices, it is ignored.
+ *             use SubsetMethod::BONDS to indicate a bond path and 
+ *                 SubsetMethod::BONDS_BETWEEN_ATOMS to indicate an atom path
+ *                 and any bond that includes both atoms in the path
+ * \param subsetInfo - optional subsetInfo to record the atoms and bonds used
+ * \param option - optional SubsetOptions to control how the subset is created
  *
  * NOTE: Bookmarks are currently copied, StereoGroups that are not entirely
  *        included in the subset are not copied.
@@ -115,8 +148,13 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(const RDKit::ROMol& mol,
 RDKIT_GRAPHMOL_EXPORT std::unique_ptr<RDKit::RWMol>
 copyMolSubset(const RDKit::ROMol& mol,
 	      const std::vector<unsigned int>& path,
-	      const SubsetOptions &options = SubsetOptions(),
-	      SubsetInfo *mappings = nullptr);
+	      const SubsetOptions &options = SubsetOptions());
+
+RDKIT_GRAPHMOL_EXPORT std::unique_ptr<RDKit::RWMol>
+copyMolSubset(const RDKit::ROMol& mol,
+	      const std::vector<unsigned int>& path,
+	      SubsetInfo &subsetInfo,
+	      const SubsetOptions &options = SubsetOptions());
 
 
 }  // namespace RDKit

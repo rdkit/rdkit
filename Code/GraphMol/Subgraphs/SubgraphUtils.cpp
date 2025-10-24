@@ -34,9 +34,9 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
   
   std::vector<unsigned int> upath{path.begin(), path.end()};
   SubsetInfo subsetInfo;
-  auto res = copyMolSubset(mol, upath, options, &subsetInfo);
+  auto res = copyMolSubset(mol, upath, subsetInfo, options);
   atomIdxMap.clear();
-  for(auto mapping : subsetInfo.atom_mapping) {
+  for(auto mapping : subsetInfo.atomMapping) {
     atomIdxMap[mapping.first] = mapping.second;
   }
   

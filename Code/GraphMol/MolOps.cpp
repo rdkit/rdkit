@@ -760,7 +760,7 @@ namespace {
 	opts.method = SubsetMethod::BONDS_BETWEEN_ATOMS;
 	std::vector<unsigned int> atoms{comp.begin(), comp.end()};
 	SubsetInfo info;
-	auto submol = copyMolSubset(mol, atoms, opts, &info);
+	auto submol = copyMolSubset(mol, atoms, info, opts);
 	res.push_back(std::unique_ptr<RWMol>(submol.release()));
       } else {
         res.emplace_back(new RWMol(mol));
@@ -797,49 +797,6 @@ namespace {
     r.release();
   }
   return finalRes;
-}
-
-std::vector<std::unique_ptr<ROMol>> getTheFragsv2(
-    const ROMol &mol, bool sanitizeFrags, INT_VECT *frags,
-    VECT_INT_VECT *fragsMolAtomMapping, bool copyConformers) {
-  std::unique_ptr<INT_VECT> mappingStorage;
-  if (!frags) {
-    mappingStorage.reset(new INT_VECT);
-    frags = mappingStorage.get();
-  }
-  int nFrags = getMolFrags(mol, *frags);
-
-  std::vector<std::vector<int>> components;
-  components.resize(nFrags);
-  for(unsigned int atom_idx = 0; atom_idx < mol.getNumAtoms(); ++atom_idx) {
-    components[(*frags)[atom_idx]].push_back(atom_idx);
-  }
-  
-  std::vector<std::unique_ptr<ROMol>> res;
-  SubsetOptions opts;
-  opts.copyCoordinates = copyConformers;
-  opts.sanitize = sanitizeFrags;
-  opts.clearComputedProps = true;
-  opts.method = SubsetMethod::BONDS_BETWEEN_ATOMS;
-  
-  for(auto &atom_indices : components) {
-    std::vector<unsigned int> atoms{atom_indices.begin(), atom_indices.end()};
-    SubsetInfo info;
-    auto submol = copyMolSubset(mol, atoms, opts, &info);
-
-    if(fragsMolAtomMapping) {
-      INT_VECT comp;
-      comp.resize(info.atom_mapping.size());
-      for(auto v: atom_indices) {
-	auto ref_position = info.atom_mapping[v];
-	comp.at(ref_position) = v;
-      }
-      (*fragsMolAtomMapping).push_back(comp);
-    }
-    res.push_back(std::unique_ptr<ROMol>((ROMol*)submol.release()));
-  }
-
-  return res;
 }
 
 }  // namespace
