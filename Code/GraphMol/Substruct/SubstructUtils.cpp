@@ -138,7 +138,8 @@ bool atomCompat(const Atom *a1, const Atom *a2,
     res = a1->Match(a2);
   }
   if (res && !ps.atomProperties.empty()) {
-    res = propertyCompat(a1, a2, ps.atomProperties);
+    raiseNonImplementedDetail("Cast atom to prop");
+    // res = propertyCompat(a1, a2, ps.atomProperties);
   }
 
   return res;
@@ -211,7 +212,8 @@ bool bondCompat(const Bond *b1, const Bond *b2,
     }
   }
   if (res && !ps.bondProperties.empty()) {
-    res = propertyCompat(b1, b2, ps.bondProperties);
+    raiseNonImplementedDetail("cast bond to prop");
+    // res = propertyCompat(b1, b2, ps.bondProperties);
   }
   // std::cerr << "\t\tbondCompat: " << b1->getIdx() << "-" << b2->getIdx() <<
   // ":"

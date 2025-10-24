@@ -15,6 +15,7 @@
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/RDMol.h>
 
 #include <vector>
 #include <algorithm>
@@ -832,10 +833,13 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
 }
 
 unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
-  unsigned int natms = mol.getNumAtoms();
-  mapping.resize(natms);
-  return natms ? boost::connected_components(mol.getTopology(), &mapping[0])
-               : 0;
+  const uint32_t numAtoms = mol.getNumAtoms();
+  // Resize to zero first, so that the entire array is initialized to -1 next.
+  mapping.resize(0);
+  mapping.resize(numAtoms, uint32_t(-1));
+  // The reinterpret_cast is only valid if the size of the integers is the same.
+  static_assert(sizeof(mapping[0]) == sizeof(uint32_t));
+  return getMolFrags(mol.asRDMol(), reinterpret_cast<uint32_t *>(mapping.data()));
 };
 
 unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {
@@ -868,6 +872,48 @@ unsigned int getMolFrags(const ROMol &mol,
                          copyConformers);
   return rdcast<unsigned int>(molFrags.size());
 }
+
+namespace {
+static void getMolFragsHelper(const RDMol &mol, uint32_t componentIndex,
+                              uint32_t *mapping, atomindex_t atomIndex) {
+  auto [beginNeighbors, endNeighbors] = mol.getAtomNeighbors(atomIndex);
+  for (; beginNeighbors != endNeighbors; ++beginNeighbors) {
+    const uint32_t neighbor = *beginNeighbors;
+    if (mapping[neighbor] == uint32_t(-1)) {
+      mapping[neighbor] = componentIndex;
+      getMolFragsHelper(mol, componentIndex, mapping, neighbor);
+    }
+  }
+}
+}  // namespace
+
+uint32_t getMolFrags(const RDMol &mol, uint32_t* mapping) {
+  const uint32_t numAtoms = mol.getNumAtoms();
+  uint32_t numComponents = 0;
+  for (uint32_t atomIndex = 0; atomIndex < numAtoms; ++atomIndex) {
+    if (mapping[atomIndex] != uint32_t(-1)) {
+      continue;
+    }
+    mapping[atomIndex] = numComponents;
+    auto [beginNeighbors, endNeighbors] = mol.getAtomNeighbors(atomIndex);
+    for (; beginNeighbors != endNeighbors; ++beginNeighbors) {
+      const uint32_t neighbor = *beginNeighbors;
+      if (mapping[neighbor] == uint32_t(-1)) {
+        mapping[neighbor] = numComponents;
+        getMolFragsHelper(mol, numComponents, mapping, neighbor);
+      }
+    }
+    ++numComponents;
+  }
+  return uint32_t(numComponents);
+}
+uint32_t getMolFrags(const RDMol &mol, std::vector<uint32_t> &mapping) {
+  const uint32_t numAtoms = mol.getNumAtoms();
+  // Resize to zero first, so that the entire array is initialized to -1 next.
+  mapping.resize(0);
+  mapping.resize(numAtoms, uint32_t(-1));
+  return getMolFrags(mol, mapping.data());
+};
 
 namespace {
 template <typename T>
@@ -1259,7 +1305,9 @@ bool isAttachmentPoint(const Atom *atom, bool markedOnly) {
 
 void expandAttachmentPoints(RWMol &mol, bool addAsQueries, bool addCoords) {
   for (auto atom : mol.atoms()) {
-    int value;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int value = 0;
     if (atom->getPropIfPresent(common_properties::molAttachPoint, value)) {
       std::vector<int> tgtVals;
       if (value == 1 || value == -1) {
