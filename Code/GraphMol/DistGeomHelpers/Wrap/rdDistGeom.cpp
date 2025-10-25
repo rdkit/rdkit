@@ -436,7 +436,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - useBasicKnowledge : impose basic knowledge such as flat rings\n\
   - printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
-    List of new conformation IDs \n\
+    Iterator which yields new conformation IDs \n\
 \n";
   python::def(
       "EmbedMultipleConfs", RDKit::EmbedMultipleConfs,
@@ -595,7 +595,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - numConfs : the number of conformers to generate \n\
   - params : an EmbedParameters object \n\
  RETURNS:\n\n\
-    List of new conformation IDs \n\
+    Iterator which yields new conformation IDs \n\
 \n";
   python::def(
       "EmbedMultipleConfs", RDKit::EmbedMultipleConfs2,
