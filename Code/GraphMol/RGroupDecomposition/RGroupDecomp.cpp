@@ -351,7 +351,7 @@ namespace {
 // different atom sets are separated out.  So that if a core hits
 // more than once in the molecule, both sets of R Groups will be
 // returned.
-std::vector<std::vector<MatchVectType>> splitDifferentAtomMatches(
+std::vector<std::vector<MatchVectType>> splitNonUniqueMatches(
     const std::vector<MatchVectType> &tmatches, unsigned int nAtoms) {
   std::vector<std::vector<MatchVectType>> outMatches;
   std::vector<boost::dynamic_bitset<>> atomSets;
@@ -428,14 +428,14 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   std::vector<RGroupMatch> potentialMatches;
   constexpr size_t MAX_PERMUTATIONS = 100000;
 
-  std::vector<std::vector<MatchVectType>> splitMatches;
+  std::vector<std::vector<MatchVectType>> nonUniqueMatches;
   if (data->params.allowMultipleCoresInSameMol) {
-    splitMatches = splitDifferentAtomMatches(tmatches, mol->getNumAtoms());
+    nonUniqueMatches = splitNonUniqueMatches(tmatches, mol->getNumAtoms());
   } else {
-    splitMatches.push_back(tmatches);
+    nonUniqueMatches.push_back(tmatches);
   }
 
-  for (const auto &splitMatch : splitMatches) {
+  for (const auto &splitMatch : nonUniqueMatches) {
     std::unique_ptr<ROMol> tMol;
     for (const auto &tmatche : splitMatch) {
       const bool replaceDummies = false;

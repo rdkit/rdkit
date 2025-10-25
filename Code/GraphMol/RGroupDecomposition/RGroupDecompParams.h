@@ -58,7 +58,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   bool allowNonTerminalRGroups = false;
   //! unlabelled core atoms can have multiple rgroups
   bool allowMultipleRGroupsOnUnlabelled = false;
-  //! Cores can match more than once in the same molecule if the sets of
+  //! Permit a core to match more than once in the same molecule if the sets of
   // matched atoms are not equal.
   bool allowMultipleCoresInSameMol = false;
   // extended query settings for core matching
