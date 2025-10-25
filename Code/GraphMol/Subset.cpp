@@ -31,7 +31,7 @@ static void copySelectedAtomsAndBonds(::RDKit::RWMol &extracted_mol,
   auto &[selectedAtoms, selectedBonds, atomMapping, bondMapping] =
       selection_info;
   for (const auto &ref_atom : reference_mol.atoms()) {
-    if (!selectedAtoms.at(ref_atom->getIdx())) {
+    if (!selectedAtoms[ref_atom->getIdx()]) {
       continue;
     }
 
@@ -202,9 +202,12 @@ static void getSubsetInfo(SubsetInfo &selection_info,
     const SubsetOptions &options) {
   const auto num_atoms = mol.getNumAtoms();
   const auto num_bonds = mol.getNumBonds();
-  selection_info.selectedAtoms = std::vector<bool>(num_atoms);
-  selection_info.selectedBonds = std::vector<bool>(num_bonds);
-  selection_info.atomMapping .clear();
+  selection_info.selectedAtoms.clear();
+  selection_info.selectedAtoms.resize(num_atoms);
+  selection_info.selectedBonds.clear();
+  selection_info.selectedBonds.resize(num_bonds);
+  
+  selection_info.atomMapping.clear();
   selection_info.bondMapping.clear();
   
   auto &[selectedAtoms, selectedBonds, atomMapping, bondMapping] = selection_info;
@@ -212,22 +215,22 @@ static void getSubsetInfo(SubsetInfo &selection_info,
   if (options.method == SubsetMethod::BONDS_BETWEEN_ATOMS) {
     for (const auto &atom_idx : path) {
       if(atom_idx < num_atoms) {
-	selectedAtoms[atom_idx] = true;
+	selectedAtoms.set(atom_idx);
       }
     }
     for (const auto &bond : mol.bonds()) {
-      if (selectedAtoms.at(bond->getBeginAtomIdx()) &&
-          selectedAtoms.at(bond->getEndAtomIdx()) ){
-	selectedBonds.at(bond->getIdx()) = true;
+      if (selectedAtoms[bond->getBeginAtomIdx()] &&
+          selectedAtoms[bond->getEndAtomIdx()] ){
+	selectedBonds.set(bond->getIdx());
       }
     }
   } else if (options.method == SubsetMethod::BONDS) {
     for(const auto &bond_idx : path) {
       if(bond_idx < num_bonds) {
-	selectedBonds.at(bond_idx) = true;
+	selectedBonds.set(bond_idx);
 	const auto &bnd = mol.getBondWithIdx(bond_idx);
-	selectedAtoms.at(bnd->getBeginAtomIdx()) = true;
-	selectedAtoms.at(bnd->getEndAtomIdx()) = true;
+	selectedAtoms.set(bnd->getBeginAtomIdx());
+	selectedAtoms.set(bnd->getEndAtomIdx());
       }
     }
   }
@@ -295,7 +298,7 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(
 
   const auto natoms = mol.getNumAtoms();
   const auto nbonds = mol.getNumBonds();
-  
+
   if(
      (atoms.size() == natoms &&
       options.method == SubsetMethod::BONDS_BETWEEN_ATOMS) ||
@@ -305,16 +308,18 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(
     return std::make_unique<RDKit::RWMol>(mol);
   }
   
-
-  selection_info.selectedAtoms = std::vector<bool>(natoms);
-  selection_info.selectedBonds = std::vector<bool>(nbonds);
+  selection_info.selectedAtoms.reset();
+  selection_info.selectedAtoms.resize(natoms);
+  selection_info.selectedBonds.reset();
+  selection_info.selectedBonds.resize(nbonds);
   selection_info.atomMapping.clear();
   selection_info.bondMapping.clear();
+
   for(auto v: atoms) {
-    selection_info.selectedAtoms.at(v) = true;
+    selection_info.selectedAtoms.set(v);
   }
   for(auto v: bonds) {
-    selection_info.selectedBonds.at(v) = true;
+    selection_info.selectedBonds.set(v);
   }
 
   

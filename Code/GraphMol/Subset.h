@@ -12,6 +12,8 @@
 
 #include <RDGeneral/export.h>
 #include <RDGeneral/BetterEnums.h>
+#include <boost/dynamic_bitset.hpp>
+
 #include <memory>
 #include <vector>
 
@@ -64,31 +66,10 @@ struct RDKIT_GRAPHMOL_EXPORT SubsetOptions {
 };
 
 struct RDKIT_GRAPHMOL_EXPORT SubsetInfo {
-  std::vector<bool> selectedAtoms;
-  std::vector<bool> selectedBonds;
+  boost::dynamic_bitset<> selectedAtoms;
+  boost::dynamic_bitset<> selectedBonds;
   std::map<unsigned int, unsigned int> atomMapping;
   std::map<unsigned int, unsigned int> bondMapping;
-
-  void debug(std::ostream &out) {
-    out << "Selected Atoms Size: " << selectedAtoms.size() << std::endl;
-    for(size_t i=0; i<selectedAtoms.size(); ++i) {
-      if(selectedAtoms[i]) out << i << " ";
-    }
-    out << std::endl;
-    out << "Selected Bonds Size: " << selectedBonds.size() << std::endl;
-    for(size_t i=0; i<selectedBonds.size(); ++i) {
-      if(selectedBonds[i]) out << i << " ";
-    }
-    out << std::endl;
-    out << "Atom Mapping" << std::endl;
-    for(auto &v: atomMapping) {
-      std::cerr << " " << v.first << " -> " << v.second << std::endl;
-    }
-    out << "Bond Mapping" << std::endl;
-    for(auto &v: bondMapping) {
-      std::cerr << " " << v.first << " -> " << v.second << std::endl;
-    }
-  }
 };
 
 //!

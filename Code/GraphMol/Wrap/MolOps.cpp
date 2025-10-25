@@ -3408,10 +3408,6 @@ enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
     }
 
     python::class_<RDKit::SubsetInfo>("SubsetInfo")
-      .def_readonly("selectedAtoms", &RDKit::SubsetInfo::selectedAtoms,
-		    "Atom indices from the original molecule used in the subset")
-      .def_readwrite("selectedBonds", &RDKit::SubsetInfo::selectedBonds,
-		     "Bond indices from the original moelcule used in the subset")
       .def_readwrite("atomMapping", &RDKit::SubsetInfo::atomMapping,
 		     "mapping from the original atom index to the subset atom index")
       .def_readwrite("bondMapping", &RDKit::SubsetInfo::bondMapping,
