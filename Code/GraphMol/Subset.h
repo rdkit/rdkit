@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2025 and other RDKit contributors
+//  Copyright (C) 2025 Hussein Faara, Brian Kelley and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
