@@ -346,6 +346,36 @@ int RGroupDecomposition::getMatchingCoreInternal(
   return core_idx;
 }
 
+namespace {
+// Take the matches, all from the same molecule and split them so that
+// different atom sets are separated out.  So that if a core hits
+// more than once in the molecule, both sets of R Groups will be
+// returned.
+std::vector<std::vector<MatchVectType>> splitNonUniqueMatches(
+    const std::vector<MatchVectType> &tmatches, unsigned int nAtoms) {
+  std::vector<std::vector<MatchVectType>> outMatches;
+  std::vector<boost::dynamic_bitset<>> atomSets;
+  for (const auto &match : tmatches) {
+    boost::dynamic_bitset<> atomSet(nAtoms);
+    for (const auto &mp : match) {
+      atomSet.set(mp.second);
+    }
+    if (std::find(atomSets.begin(), atomSets.end(), atomSet) ==
+        atomSets.end()) {
+      atomSets.push_back(atomSet);
+      outMatches.push_back(std::vector<MatchVectType>(1, match));
+    } else {
+      for (size_t i = 0; i < atomSets.size(); ++i) {
+        if (atomSet == atomSets[i]) {
+          outMatches[i].push_back(match);
+        }
+      }
+    }
+  }
+  return outMatches;
+}
+}  // namespace
+
 int RGroupDecomposition::add(const ROMol &inmol) {
   RWMOL_SPTR mol(new RWMol(inmol));
   const RCore *rcore;
@@ -371,6 +401,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       }
     }
   }
+
   // mark any wildcards in input molecule:
   for (auto &atom : mol->atoms()) {
     if (atom->getAtomicNum() == 0) {
@@ -397,180 +428,192 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   std::vector<RGroupMatch> potentialMatches;
   constexpr size_t MAX_PERMUTATIONS = 100000;
 
-  std::unique_ptr<ROMol> tMol;
-  for (const auto &tmatche : tmatches) {
-    const bool replaceDummies = false;
-    const bool labelByIndex = true;
-    const bool requireDummyMatch = false;
-    // TODO see if we need replaceCoreAtomsWithMolMatches or can just use
-    // rcore->core
-    auto coreCopy = rcore->replaceCoreAtomsWithMolMatches(*mol, tmatche);
-    tMol.reset(replaceCore(*mol, *coreCopy, tmatche, replaceDummies,
-                           labelByIndex, requireDummyMatch));
+  std::vector<std::vector<MatchVectType>> nonUniqueMatches;
+  if (data->params.allowMultipleCoresInSameMol) {
+    nonUniqueMatches = splitNonUniqueMatches(tmatches, mol->getNumAtoms());
+  } else {
+    nonUniqueMatches.push_back(tmatches);
+  }
+
+  for (const auto &splitMatch : nonUniqueMatches) {
+    std::unique_ptr<ROMol> tMol;
+    for (const auto &tmatche : splitMatch) {
+      const bool replaceDummies = false;
+      const bool labelByIndex = true;
+      const bool requireDummyMatch = false;
+      // TODO see if we need replaceCoreAtomsWithMolMatches or can just use
+      // rcore->core
+      auto coreCopy = rcore->replaceCoreAtomsWithMolMatches(*mol, tmatche);
+      tMol.reset(replaceCore(*mol, *coreCopy, tmatche, replaceDummies,
+                             labelByIndex, requireDummyMatch));
 #ifdef VERBOSE
-    std::cerr << "Core Match core_idx " << core_idx << " idx "
-              << data->matches.size() << ": " << MolToSmarts(*coreCopy)
-              << std::endl;
+      std::cerr << "Core Match core_idx " << core_idx << " idx "
+                << data->matches.size() << ": " << MolToSmarts(*coreCopy)
+                << std::endl;
 #endif
-    if (tMol) {
+      if (tMol) {
 #ifdef VERBOSE
-      std::cerr << "All Fragments " << MolToSmiles(*tMol) << std::endl;
+        std::cerr << "All Fragments " << MolToSmiles(*tMol) << std::endl;
 #endif
-      R_DECOMP match;
-      // rlabel rgroups
-      MOL_SPTR_VECT fragments = MolOps::getMolFrags(*tMol, false);
-      std::set<int> coreAtomAnyMatched;
-      // get the sidechains
-      for (size_t i = 0; i < fragments.size(); ++i) {
-        const auto &newMol = fragments[i];
-        std::vector<int> rlabelsOnSideChain;
-        newMol->setProp<int>("core", core_idx);
-        newMol->setProp<int>("idx", data->matches.size());
-        newMol->setProp<int>("frag_idx", i);
+        R_DECOMP match;
+        // rlabel rgroups
+        MOL_SPTR_VECT fragments = MolOps::getMolFrags(*tMol, false);
+        std::set<int> coreAtomAnyMatched;
+        // get the sidechains
+        for (size_t i = 0; i < fragments.size(); ++i) {
+          const auto &newMol = fragments[i];
+          std::vector<int> rlabelsOnSideChain;
+          newMol->setProp<int>("core", core_idx);
+          newMol->setProp<int>("idx", data->matches.size());
+          newMol->setProp<int>("frag_idx", i);
 #ifdef VERBOSE
-        std::cerr << "Fragment " << MolToSmiles(*newMol) << std::endl;
+          std::cerr << "Fragment " << MolToSmiles(*newMol) << std::endl;
 #endif
-        for (auto sideChainAtom : newMol->atoms()) {
-          if (sideChainAtom->getAtomicNum() != 0) {
-            // we are only interested in sidechain R group atoms
-            continue;
+          for (auto sideChainAtom : newMol->atoms()) {
+            if (sideChainAtom->getAtomicNum() != 0) {
+              // we are only interested in sidechain R group atoms
+              continue;
+            }
+            if (!sideChainAtom->hasProp(_rgroupInputDummy)) {
+              // this is the index of the core atom that the R group
+              // atom is attached to
+              unsigned int coreAtomIndex = sideChainAtom->getIsotope();
+              auto coreAtom = rcore->core->getAtomWithIdx(coreAtomIndex);
+              coreAtomAnyMatched.insert(coreAtomIndex);
+              int rlabel;
+              if (coreAtom->getPropIfPresent(RLABEL, rlabel)) {
+                std::vector<int> rlabelsOnSideChainAtom;
+                sideChainAtom->getPropIfPresent(SIDECHAIN_RLABELS,
+                                                rlabelsOnSideChainAtom);
+                rlabelsOnSideChainAtom.push_back(rlabel);
+                sideChainAtom->setProp(SIDECHAIN_RLABELS,
+                                       rlabelsOnSideChainAtom);
+                data->labels.insert(rlabel);  // keep track of all labels used
+                rlabelsOnSideChain.push_back(rlabel);
+                if (const auto [bondIdx, end] =
+                        newMol->getAtomBonds(sideChainAtom);
+                    bondIdx != end) {
+                  auto connectingBond = (*newMol)[*bondIdx];
+                  if (connectingBond->getStereo() >
+                      Bond::BondStereo::STEREOANY) {
+                    // TODO: how to handle bond stereo on rgroups connected to
+                    // core by stereo double bonds
+                    connectingBond->setStereo(Bond::BondStereo::STEREOANY);
+                  }
+                }
+              }
+            } else {
+              // restore input wildcard
+              sideChainAtom->clearProp(_rgroupInputDummy);
+            }
           }
-          if (!sideChainAtom->hasProp(_rgroupInputDummy)) {
-            // this is the index of the core atom that the R group
-            // atom is attached to
-            unsigned int coreAtomIndex = sideChainAtom->getIsotope();
-            auto coreAtom = rcore->core->getAtomWithIdx(coreAtomIndex);
-            coreAtomAnyMatched.insert(coreAtomIndex);
-            int rlabel;
-            if (coreAtom->getPropIfPresent(RLABEL, rlabel)) {
-              std::vector<int> rlabelsOnSideChainAtom;
-              sideChainAtom->getPropIfPresent(SIDECHAIN_RLABELS,
-                                              rlabelsOnSideChainAtom);
-              rlabelsOnSideChainAtom.push_back(rlabel);
-              sideChainAtom->setProp(SIDECHAIN_RLABELS, rlabelsOnSideChainAtom);
-              data->labels.insert(rlabel);  // keep track of all labels used
-              rlabelsOnSideChain.push_back(rlabel);
-              if (const auto [bondIdx, end] =
-                      newMol->getAtomBonds(sideChainAtom);
-                  bondIdx != end) {
-                auto connectingBond = (*newMol)[*bondIdx];
-                if (connectingBond->getStereo() > Bond::BondStereo::STEREOANY) {
-                  // TODO: how to handle bond stereo on rgroups connected to
-                  // core by stereo double bonds
-                  connectingBond->setStereo(Bond::BondStereo::STEREOANY);
+          if (data->params.includeTargetMolInResults) {
+            setTargetAtomBondIndices(*newMol, true);
+          }
+          if (!rlabelsOnSideChain.empty()) {
+#ifdef VERBOSE
+            std::string newCoreSmi = MolToSmiles(*newMol, true);
+#endif
+
+            for (auto rlabel : rlabelsOnSideChain) {
+              ADD_MATCH(match, rlabel);
+              match[rlabel]->add(newMol, rlabelsOnSideChain);
+#ifdef VERBOSE
+              std::cerr << "Fragment " << i << " R" << rlabel << " "
+                        << MolToSmiles(*newMol) << std::endl;
+#endif
+            }
+          } else {
+            // special case, only one fragment
+            if (fragments.size() == 1) {  // need to make a new core
+              // remove the sidechains
+
+              // GJ I think if we ever get here that it's really an error and I
+              // believe that I've fixed the case where this code was called.
+              // Still, I'm too scared to delete the block.
+              RWMol newCore(*mol);
+
+              for (const auto &mvpair : tmatche) {
+                const Atom *coreAtm = rcore->core->getAtomWithIdx(mvpair.first);
+                Atom *newCoreAtm = newCore.getAtomWithIdx(mvpair.second);
+                int rlabel;
+                if (coreAtm->getPropIfPresent(RLABEL, rlabel)) {
+                  newCoreAtm->setProp<int>(RLABEL, rlabel);
+                }
+                newCoreAtm->setProp<bool>("keep", true);
+              }
+
+              newCore.beginBatchEdit();
+              for (const auto atom : newCore.atoms()) {
+                if (!atom->hasProp("keep")) {
+                  newCore.removeAtom(atom);
+                }
+              }
+              newCore.commitBatchEdit();
+              if (newCore.getNumAtoms()) {
+                std::string newCoreSmi = MolToSmiles(newCore, true);
+                // add a new core if possible
+                auto newcore = data->newCores.find(newCoreSmi);
+                int core_idx = 0;
+                if (newcore == data->newCores.end()) {
+                  core_idx = data->newCores[newCoreSmi] = data->newCoreLabel--;
+                  data->cores[core_idx] = RCore(newCore);
+                  return add(inmol);
                 }
               }
             }
-          } else {
-            // restore input wildcard
-            sideChainAtom->clearProp(_rgroupInputDummy);
           }
         }
-        if (data->params.includeTargetMolInResults) {
-          setTargetAtomBondIndices(*newMol, true);
-        }
-        if (!rlabelsOnSideChain.empty()) {
-#ifdef VERBOSE
-          std::string newCoreSmi = MolToSmiles(*newMol, true);
-#endif
 
-          for (auto rlabel : rlabelsOnSideChain) {
-            ADD_MATCH(match, rlabel);
-            match[rlabel]->add(newMol, rlabelsOnSideChain);
-#ifdef VERBOSE
-            std::cerr << "Fragment " << i << " R" << rlabel << " "
-                      << MolToSmiles(*newMol) << std::endl;
-#endif
+        if (!match.empty()) {
+          // this is the number of user-defined R labels associated with
+          // non-hydrogen substituents
+          auto numberUserGroupsInMatch = std::accumulate(
+              match.begin(), match.end(), 0,
+              [](int sum,
+                 const std::pair<int, boost::shared_ptr<RGroupData>> &p) {
+                return p.first > 0 && !p.second->is_hydrogen ? ++sum : sum;
+              });
+          int numberMissingUserGroups =
+              rcore->numberUserRGroups - numberUserGroupsInMatch;
+          CHECK_INVARIANT(numberMissingUserGroups >= 0,
+                          "Data error in missing user rgroup count");
+          const auto extractedCore =
+              rcore->extractCoreFromMolMatch(*mol, tmatche, params());
+          if (data->params.includeTargetMolInResults) {
+            setTargetAtomBondIndices(*extractedCore, false);
           }
-        } else {
-          // special case, only one fragment
-          if (fragments.size() == 1) {  // need to make a new core
-            // remove the sidechains
-
-            // GJ I think if we ever get here that it's really an error and I
-            // believe that I've fixed the case where this code was called.
-            // Still, I'm too scared to delete the block.
-            RWMol newCore(*mol);
-
-            for (const auto &mvpair : tmatche) {
-              const Atom *coreAtm = rcore->core->getAtomWithIdx(mvpair.first);
-              Atom *newCoreAtm = newCore.getAtomWithIdx(mvpair.second);
-              int rlabel;
-              if (coreAtm->getPropIfPresent(RLABEL, rlabel)) {
-                newCoreAtm->setProp<int>(RLABEL, rlabel);
-              }
-              newCoreAtm->setProp<bool>("keep", true);
-            }
-
-            newCore.beginBatchEdit();
-            for (const auto atom : newCore.atoms()) {
-              if (!atom->hasProp("keep")) {
-                newCore.removeAtom(atom);
-              }
-            }
-            newCore.commitBatchEdit();
-            if (newCore.getNumAtoms()) {
-              std::string newCoreSmi = MolToSmiles(newCore, true);
-              // add a new core if possible
-              auto newcore = data->newCores.find(newCoreSmi);
-              int core_idx = 0;
-              if (newcore == data->newCores.end()) {
-                core_idx = data->newCores[newCoreSmi] = data->newCoreLabel--;
-                data->cores[core_idx] = RCore(newCore);
-                return add(inmol);
-              }
-            }
+          potentialMatches.emplace_back(core_idx, numberMissingUserGroups,
+                                        match, extractedCore);
+          if (data->params.includeTargetMolInResults) {
+            potentialMatches.back().setTargetMoleculeForHighlights(mol);
           }
         }
       }
+    }
 
-      if (!match.empty()) {
-        // this is the number of user-defined R labels associated with
-        // non-hydrogen substituents
-        auto numberUserGroupsInMatch = std::accumulate(
-            match.begin(), match.end(), 0,
-            [](int sum,
-               const std::pair<int, boost::shared_ptr<RGroupData>> &p) {
-              return p.first > 0 && !p.second->is_hydrogen ? ++sum : sum;
-            });
-        int numberMissingUserGroups =
-            rcore->numberUserRGroups - numberUserGroupsInMatch;
-        CHECK_INVARIANT(numberMissingUserGroups >= 0,
-                        "Data error in missing user rgroup count");
-        const auto extractedCore =
-            rcore->extractCoreFromMolMatch(*mol, tmatche, params());
-        if (data->params.includeTargetMolInResults) {
-          setTargetAtomBondIndices(*extractedCore, false);
-        }
-        potentialMatches.emplace_back(core_idx, numberMissingUserGroups, match,
-                                      extractedCore);
-        if (data->params.includeTargetMolInResults) {
-          potentialMatches.back().setTargetMoleculeForHighlights(mol);
-        }
+    if (potentialMatches.empty()) {
+      BOOST_LOG(rdDebugLog)
+          << "No attachment points in side chains" << std::endl;
+      return -2;
+    }
+
+    if (data->params.matchingStrategy != GA) {
+      size_t N = 1;
+      for (auto matche = data->matches.begin() + data->previousMatchSize;
+           matche != data->matches.end(); ++matche) {
+        size_t sz = matche->size();
+        N *= sz;
+      }
+      // Highly symmetric cores can lead to a very large number of
+      // permutations to test. Fall back to Greedy for the current chunk
+      // when the number is too high.
+      if (N * potentialMatches.size() > MAX_PERMUTATIONS) {
+        data->process(data->prunePermutations);
       }
     }
+    data->matches.push_back(std::move(potentialMatches));
   }
-  if (potentialMatches.empty()) {
-    BOOST_LOG(rdDebugLog) << "No attachment points in side chains" << std::endl;
-    return -2;
-  }
-
-  if (data->params.matchingStrategy != GA) {
-    size_t N = 1;
-    for (auto matche = data->matches.begin() + data->previousMatchSize;
-         matche != data->matches.end(); ++matche) {
-      size_t sz = matche->size();
-      N *= sz;
-    }
-    // Highly symmetric cores can lead to a very large number of
-    // permutations to test. Fall back to Greedy for the current chunk
-    // when the number is too high.
-    if (N * potentialMatches.size() > MAX_PERMUTATIONS) {
-      data->process(data->prunePermutations);
-    }
-  }
-  data->matches.push_back(std::move(potentialMatches));
-
   if (!data->matches.empty()) {
     if (data->params.matchingStrategy & Greedy ||
         (data->params.matchingStrategy & GreedyChunks &&

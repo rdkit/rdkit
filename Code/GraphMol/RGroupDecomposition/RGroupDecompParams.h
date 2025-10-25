@@ -18,40 +18,23 @@
 
 namespace RDKit {
 
-BETTER_ENUM(RGroupLabels, unsigned int,
-  IsotopeLabels = 0x01,
-  AtomMapLabels = 0x02,
-  AtomIndexLabels = 0x04,
-  RelabelDuplicateLabels = 0x08,
-  MDLRGroupLabels = 0x10,
-  DummyAtomLabels = 0x20,  // These are rgroups but will get relabelled
-  AutoDetect = 0xFF
-);
-
-BETTER_ENUM(RGroupMatching, unsigned int,
-  Greedy = 0x01,
-  GreedyChunks = 0x02,
-  Exhaustive = 0x04,  // not really useful for large sets
-  NoSymmetrization = 0x08,
-  GA = 0x10
-);
-
 BETTER_ENUM(
-  RGroupLabelling, unsigned int,
-  AtomMap = 0x01,
-  Isotope = 0x02,
-  MDLRGroup = 0x04
-);
+    RGroupLabels, unsigned int, IsotopeLabels = 0x01, AtomMapLabels = 0x02,
+    AtomIndexLabels = 0x04, RelabelDuplicateLabels = 0x08,
+    MDLRGroupLabels = 0x10,
+    DummyAtomLabels = 0x20,  // These are rgroups but will get relabelled
+    AutoDetect = 0xFF);
 
-BETTER_ENUM(RGroupCoreAlignment, unsigned int,
-  NoAlignment = 0x0,
-  MCS = 0x01
-);
+BETTER_ENUM(RGroupMatching, unsigned int, Greedy = 0x01, GreedyChunks = 0x02,
+            Exhaustive = 0x04,  // not really useful for large sets
+            NoSymmetrization = 0x08, GA = 0x10);
 
-BETTER_ENUM(RGroupScore, unsigned int,
-  Match = 0x1,
-  FingerprintVariance = 0x4
-);
+BETTER_ENUM(RGroupLabelling, unsigned int, AtomMap = 0x01, Isotope = 0x02,
+            MDLRGroup = 0x04);
+
+BETTER_ENUM(RGroupCoreAlignment, unsigned int, NoAlignment = 0x0, MCS = 0x01);
+
+BETTER_ENUM(RGroupScore, unsigned int, Match = 0x1, FingerprintVariance = 0x4);
 
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   unsigned int labels = RGroupLabels::AutoDetect;
@@ -75,6 +58,9 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   bool allowNonTerminalRGroups = false;
   //! unlabelled core atoms can have multiple rgroups
   bool allowMultipleRGroupsOnUnlabelled = false;
+  //! Permit a core to match more than once in the same molecule if the sets of
+  // matched atoms are not equal.
+  bool allowMultipleCoresInSameMol = false;
   // extended query settings for core matching
   bool doTautomers = false;
   bool doEnumeration = false;
