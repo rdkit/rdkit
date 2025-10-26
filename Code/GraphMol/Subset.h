@@ -54,15 +54,6 @@ struct RDKIT_GRAPHMOL_EXPORT SubsetOptions {
   unsigned int conformerIdx = -1;
   
   SubsetMethod method = SubsetMethod::BONDS_BETWEEN_ATOMS;
-
-  SubsetOptions() = default;
-  
-  SubsetOptions(bool sanitize, bool copyAsQuery,
-		bool copyCoordinates, unsigned int conformerIdx) :
-    sanitize(sanitize), copyAsQuery(copyAsQuery), copyCoordinates(copyCoordinates),
-    conformerIdx(conformerIdx)
-  {
-  }
 };
 
 struct RDKIT_GRAPHMOL_EXPORT SubsetInfo {

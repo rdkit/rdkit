@@ -753,15 +753,16 @@ namespace {
         // empirical. This is mainly intended to catch situations like proteins
         // where you have a bunch of single-atom fragments (waters); the
         // standard approach below ends up being horribly inefficient there
-	SubsetOptions opts;
-	opts.copyCoordinates = copyConformers;
-	opts.sanitize = sanitizeFrags;
-	opts.clearComputedProps = true;
-	opts.method = SubsetMethod::BONDS_BETWEEN_ATOMS;
+	SubsetOptions opts {
+	  .sanitize = sanitizeFrags,
+	  .clearComputedProps = true,
+	  .copyCoordinates = copyConformers,
+	  .method = SubsetMethod::BONDS_BETWEEN_ATOMS
+	};
 	std::vector<unsigned int> atoms{comp.begin(), comp.end()};
 	SubsetInfo info;
 	auto submol = copyMolSubset(mol, atoms, info, opts);
-	res.push_back(std::unique_ptr<RWMol>(submol.release()));
+	res.push_back(std::move(submol));
       } else {
         res.emplace_back(new RWMol(mol));
         auto &frag = res.back();
