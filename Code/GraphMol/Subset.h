@@ -28,10 +28,10 @@ class RWMol;
  *
  *  NOTE: when the atoms and bonds are fully specified, the subset method is ignored.
  */ 
-BETTER_ENUM(SubsetMethod, unsigned int,
-   BONDS_BETWEEN_ATOMS=0x0,
-   BONDS=0x1
-);  
+enum class SubsetMethod {
+  BONDS_BETWEEN_ATOMS=0x0,
+  BONDS=0x1
+};  
 
 //! Subsetting Options for copyMolSubset
 /*

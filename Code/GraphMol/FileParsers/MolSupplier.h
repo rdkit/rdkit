@@ -18,7 +18,6 @@
 #include <list>
 #include <memory>
 #include <vector>
-#include <iostream>
 #include <fstream>
 #include <GraphMol/ROMol.h>
 #include <RDGeneral/BadFileException.h>

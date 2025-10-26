@@ -652,3 +652,13 @@ TEST_CASE("test_extract_stereo_groups", "[copyMolSubset]") {
       }
   }
 }
+
+TEST_CASE("GitHub #8726: Do not remove hydrides by default") {
+  auto m = "[OH+][H-]"_smiles;
+  REQUIRE(m);
+  CHECK(m->getNumAtoms() == 2);
+  auto h_atom = m->getAtomWithIdx(1);
+  CHECK(h_atom->getAtomicNum() == 1);
+  CHECK(h_atom->getFormalCharge() == -1);
+}
+

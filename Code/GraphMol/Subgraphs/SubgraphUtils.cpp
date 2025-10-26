@@ -13,8 +13,10 @@
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Subset.h>
-#include <iostream>
+#include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryBond.h>
 #include <algorithm>
+#include <iostream>
 #include <map>
 #include <RDGeneral/hash/hash.hpp>
 

@@ -10,7 +10,6 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <string>
 #include <cstring>
-#include <iostream>
 #include <regex>
 
 #include <RDGeneral/versions.h>
@@ -147,6 +146,16 @@ std::string cxsmiles_helper(const char *pkl, size_t pkl_sz,
   return MolToCXSmiles(mol, params, cxSmilesFields,
                        static_cast<RestoreBondDirOption>(restoreBondDirs));
 }
+char *get_molblock_common(const char *pkl, size_t pkl_sz,
+                          const char *details_json,
+                          MinimalLib::MDLVersion forceMDLVersion) {
+  if (!pkl || !pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
+  auto data = MinimalLib::molblock_helper(mol, details_json, forceMDLVersion);
+  return str_to_c(data);
+}
 }  // namespace
 extern "C" char *get_smiles(const char *pkl, size_t pkl_sz,
                             const char *details_json) {
@@ -188,21 +197,18 @@ extern "C" char *get_cxsmarts(const char *pkl, size_t pkl_sz,
 }
 extern "C" char *get_molblock(const char *pkl, size_t pkl_sz,
                               const char *details_json) {
-  if (!pkl || !pkl_sz) {
-    return nullptr;
-  }
-  auto mol = mol_from_pkl(pkl, pkl_sz);
-  auto data = MinimalLib::molblock_helper(mol, details_json, false);
-  return str_to_c(data);
+  return get_molblock_common(pkl, pkl_sz, details_json,
+                             MinimalLib::MDLVersion::AUTO);
 }
 extern "C" char *get_v3kmolblock(const char *pkl, size_t pkl_sz,
                                  const char *details_json) {
-  if (!pkl || !pkl_sz) {
-    return nullptr;
-  }
-  auto mol = mol_from_pkl(pkl, pkl_sz);
-  auto data = MinimalLib::molblock_helper(mol, details_json, true);
-  return str_to_c(data);
+  return get_molblock_common(pkl, pkl_sz, details_json,
+                             MinimalLib::MDLVersion::V3000);
+}
+extern "C" char *get_v2kmolblock(const char *pkl, size_t pkl_sz,
+                                 const char *details_json) {
+  return get_molblock_common(pkl, pkl_sz, details_json,
+                             MinimalLib::MDLVersion::V2000);
 }
 extern "C" char *get_json(const char *pkl, size_t pkl_sz, const char *) {
   if (!pkl || !pkl_sz) {

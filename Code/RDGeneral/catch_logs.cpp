@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <string>
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <catch2/catch_all.hpp>

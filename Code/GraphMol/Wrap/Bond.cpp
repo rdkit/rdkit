@@ -24,6 +24,9 @@ namespace RDKit {
 
 void expandQuery(QueryBond *self, const QueryBond *other,
                  Queries::CompositeQueryType how, bool maintainOrder) {
+  if (!other) {
+    throw_value_error("other Bond is null");
+  }
   if (other->hasQuery()) {
     const QueryBond::QUERYBOND_QUERY *qry = other->getQuery();
     self->expandQuery(qry->copy(), how, maintainOrder);
@@ -31,6 +34,9 @@ void expandQuery(QueryBond *self, const QueryBond *other,
 }
 
 void setQuery(QueryBond *self, const QueryBond *other) {
+  if (!other) {
+    throw_value_error("other Bond is null");
+  }
   if (other->hasQuery()) {
     self->setQuery(other->getQuery()->copy());
   }
@@ -122,7 +128,7 @@ struct bond_wrapper {
              "stereochemistry.\n")
 
         .def("GetValenceContrib",
-             (double(Bond::*)(const Atom *) const) & Bond::getValenceContrib,
+             (double (Bond::*)(const Atom *) const) & Bond::getValenceContrib,
              python::args("self", "at"),
              "Returns the contribution of the bond to the valence of an "
              "Atom.\n\n"
@@ -162,7 +168,7 @@ struct bond_wrapper {
              "Given one of the bond's atoms, returns the other one.\n")
 
         // FIX: query stuff
-        .def("Match", (bool(Bond::*)(const Bond *) const) & Bond::Match,
+        .def("Match", (bool (Bond::*)(const Bond *) const) & Bond::Match,
              python::args("self", "what"),
              "Returns whether or not this bond matches another Bond.\n\n"
              "  Each Bond (or query Bond) has a query function which is\n"
@@ -301,10 +307,7 @@ struct bond_wrapper {
              (python::arg("self"), python::arg("includePrivate") = true,
               python::arg("includeComputed") = true,
               python::arg("autoConvertStrings") = true),
-             "Returns a dictionary of the properties set on the Bond.\n"
-             " n.b. some properties cannot be converted to python types.\n")
-
-        ;
+             getPropsAsDictDocString.c_str());
 
     python::enum_<Bond::BondType>("BondType")
         .value("UNSPECIFIED", Bond::UNSPECIFIED)

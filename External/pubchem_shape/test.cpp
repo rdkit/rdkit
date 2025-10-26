@@ -1,7 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -521,5 +520,75 @@ TEST_CASE("Hs not properly transformed when hcount = feature count") {
       MolToMolFile(*mol1, "m1_out.mol");
       MolToMolFile(cp, "m2_out.mol");
     }
+  }
+}
+
+TEST_CASE("custom feature points") {
+  auto m1 =
+      "O=CC=O |(-1.75978,0.148897,0;-0.621382,-0.394324,0;0.624061,0.3656,.1;1.7571,-0.120174,.1)|"_smiles;
+  SECTION("using shapes") {
+    auto shape1 = PrepareConformer(*m1, -1);
+    // each carbonyl O gets one feature:
+    CHECK(shape1.coord.size() == 18);
+    ShapeInputOptions opts2;
+    opts2.customFeatures = {{1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
+                            {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
+    auto shape2 = PrepareConformer(*m1, -1, opts2);
+    CHECK(shape2.coord.size() == 18);
+
+    {
+      // confirm that we don't add the features if useColors is false
+      ShapeInputOptions topts;
+      topts.customFeatures = {
+          {1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
+          {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
+      topts.useColors = false;
+      auto tshape = PrepareConformer(*m1, -1, topts);
+      CHECK(tshape.coord.size() == 12);
+    }
+
+    // we'll swap the features on the second shape so that the alignment has to
+    // be inverted
+    ShapeInputOptions opts3;
+    opts3.customFeatures = {{2, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
+                            {1, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
+
+    auto m2 = ROMol(*m1);
+    auto shape3 = PrepareConformer(m2, -1, opts3);
+    CHECK(shape3.coord.size() == 18);
+    double opt_param = 0.5;
+    std::vector<float> matrix(12, 0.0);
+    auto [st, ct] = AlignShape(shape2, shape3, matrix, opt_param);
+    CHECK_THAT(st, Catch::Matchers::WithinAbs(0.997, 0.001));
+    CHECK_THAT(ct, Catch::Matchers::WithinAbs(0.978, 0.001));
+    CHECK(shape3.coord[0] > 0);      // x coord of first atom
+    CHECK(shape3.coord[3 * 3] < 0);  // x coord of fourth atom
+
+    auto conf = m2.getConformer(-1);
+    TransformConformer(shape2.shift, matrix, shape3, conf);
+    CHECK(conf.getAtomPos(0).x > 0);
+    CHECK(conf.getAtomPos(3).x < 0);
+  }
+  SECTION("using molecules") {
+    ShapeInputOptions opts2;
+    opts2.customFeatures = {{1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
+                            {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
+
+    auto m2 = ROMol(*m1);
+    // we'll swap the features on the second shape so that the alignment has to
+    // be inverted
+    ShapeInputOptions opts3;
+    opts3.customFeatures = {{2, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
+                            {1, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
+
+    double opt_param = 0.5;
+    std::vector<float> matrix(12, 0.0);
+    auto [st, ct] =
+        AlignMolecule(*m1, m2, matrix, opts2, opts3, -2, -2, opt_param);
+    CHECK_THAT(st, Catch::Matchers::WithinAbs(0.997, 0.001));
+    CHECK_THAT(ct, Catch::Matchers::WithinAbs(0.978, 0.001));
+    auto conf = m2.getConformer(-1);
+    CHECK(conf.getAtomPos(0).x > 0);
+    CHECK(conf.getAtomPos(3).x < 0);
   }
 }

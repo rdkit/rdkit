@@ -40,3 +40,5 @@ add_subdirectory(MinimalLib)
 if(RDK_BUILD_FUZZ_TARGETS)
   add_subdirectory(Fuzz)
 endif(RDK_BUILD_FUZZ_TARGETS)
+
+add_subdirectory(Bench)

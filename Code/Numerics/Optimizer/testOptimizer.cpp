@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/test.h>
-#include <iostream>
 #include <cmath>
 #include <RDGeneral/Invariant.h>
 #include <catch2/catch_all.hpp>

@@ -14,6 +14,7 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <iostream>
 
 using namespace RDDataManip;
 int main() {

@@ -6179,6 +6179,10 @@ M  END)CTAB";
 TEST_CASE(
     "Github #8712: Modern stereo + 3D SD file leads to bad stereo detection for some molecules") {
   UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+
+  constexpr bool cleanUpStereo = false;
+  constexpr bool flagPossibleCenters = true;
+
   SECTION("as reported") {
     std::string ctab = R"CTAB(
      RDKit          3D
@@ -6242,19 +6246,30 @@ M  END
     auto m = v2::FileParsers::MolFromMolBlock(ctab);
     REQUIRE(m);
 
-    auto smiles = MolToSmiles(*m);
-    CHECK(smiles.find('@') == std::string::npos);
+    auto centers =
+        Chirality::findPotentialStereo(*m, cleanUpStereo, flagPossibleCenters);
+    CHECK(centers.empty());
   }
-  SECTION("counterexample from the doc tests") {
+  SECTION("overcorrection #1") {
     // Do not break this one!
-    // I'm adding it here because it seems we don't have this case
-    // in any other C++ test.
+    // This one comes from the doctests. I'm adding it here because it seems we
+    // don't have this case in any other C++ test.
     auto m = R"SMI(C1C[C@H](C)[C@H](C)[C@H](C)C1)SMI"_smiles;
     REQUIRE(m);
-    for (auto i : {2, 4, 6}) {
-      CHECK(m->getAtomWithIdx(i)->getChiralTag() !=
-            Atom::ChiralType::CHI_UNSPECIFIED);
-    }
+    auto centers =
+        Chirality::findPotentialStereo(*m, cleanUpStereo, flagPossibleCenters);
+    CHECK(centers.size() == 3);
+  }
+  SECTION("overcorrection #2") {
+    // Do not break this one either!
+    // This case seems to be related to the order of the atoms, since I haven't
+    // been able to reproduce with the equivalent SMILES with explicit Hs.
+    auto m = R"SMI(C[C@H]1C[C@@H](C)C1)SMI"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);  // This only manifests if Hs are present
+    auto centers =
+        Chirality::findPotentialStereo(*m, cleanUpStereo, flagPossibleCenters);
+    CHECK(centers.size() == 2);
   }
 }
 

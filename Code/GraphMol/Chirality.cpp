@@ -1707,7 +1707,7 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
       }
     }
 
-    if (legalCenter) {
+    if (legalCenter && !ranks.empty()) {
       boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
       for (const auto bond : mol.atomBonds(atom)) {
         unsigned int otherIdx = bond->getOtherAtom(atom)->getIdx();
@@ -2278,7 +2278,8 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
   // are neither stereocenters nor bonds that we need to consider.
   // The exception to this is when flagPossibleStereoCenters is
   // true; then we always need to do the work
-  bool hasStereoAtoms = flagPossibleStereoCenters;
+  bool hasStereoAtoms = false;  // flagPossibleStereoCenters;
+  bool hasPotentialStereoAtoms = false;
   for (auto atom : mol.atoms()) {
     if (cleanIt) {
       if (atom->hasProp(common_properties::_CIPCode)) {
@@ -2291,9 +2292,15 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
     if (!hasStereoAtoms && atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
         atom->getChiralTag() != Atom::CHI_OTHER) {
       hasStereoAtoms = true;
+    } else if (!hasPotentialStereoAtoms) {
+      UINT_VECT ranks;
+      Chirality::INT_PAIR_VECT nbrs;
+      hasPotentialStereoAtoms =
+          isAtomPotentialChiralCenter(atom, mol, ranks, nbrs).first;
     }
   }
   bool hasStereoBonds = false;
+  bool hasPotentialStereoBonds = false;
   for (auto bond : mol.bonds()) {
     if (cleanIt) {
       bond->clearProp(common_properties::_CIPCode);
@@ -2321,10 +2328,12 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
       }
     }
     if (!hasStereoBonds && bond->getBondType() == Bond::DOUBLE) {
+      bool isSpecified = false;
       for (auto nbond : mol.atomBonds(bond->getBeginAtom())) {
         if (nbond->getBondDir() == Bond::ENDDOWNRIGHT ||
             nbond->getBondDir() == Bond::ENDUPRIGHT) {
           hasStereoBonds = true;
+          isSpecified = true;
           break;
         }
       }
@@ -2333,28 +2342,39 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
           if (nbond->getBondDir() == Bond::ENDDOWNRIGHT ||
               nbond->getBondDir() == Bond::ENDUPRIGHT) {
             hasStereoBonds = true;
+            isSpecified = true;
             break;
           }
         }
       }
+      if (!hasPotentialStereoBonds && !isSpecified &&
+          shouldDetectDoubleBondStereo(bond)) {
+        hasPotentialStereoBonds = true;
+      }
     }
-    if (!cleanIt && hasStereoBonds) {
+    if (!cleanIt && hasStereoBonds && hasPotentialStereoBonds) {
       break;  // no reason to keep iterating if we've already
               // determined there are stereo bonds to consider
     }
   }
   UINT_VECT atomRanks;
   bool keepGoing = hasStereoAtoms | hasStereoBonds;
+  if (!keepGoing) {
+    keepGoing = flagPossibleStereoCenters &&
+                (hasPotentialStereoAtoms || hasPotentialStereoBonds);
+  }
   bool changedStereoAtoms, changedStereoBonds;
   while (keepGoing) {
-    if (hasStereoAtoms) {
+    if (hasStereoAtoms || hasPotentialStereoAtoms) {
+      // only do the CIP assignment if there's a chance of a stereo center
       std::tie(hasStereoAtoms, changedStereoAtoms) =
           Chirality::assignAtomChiralCodes(mol, atomRanks,
                                            flagPossibleStereoCenters);
     } else {
       changedStereoAtoms = false;
     }
-    if (hasStereoBonds) {
+    if (hasStereoBonds || hasPotentialStereoBonds) {
+      // only do the CIP assignment if there's a chance of a stereo bond
       std::tie(hasStereoBonds, changedStereoBonds) =
           Chirality::assignBondStereoCodes(mol, atomRanks);
     } else {
@@ -2999,10 +3019,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }  // end of 2 and 3 coordinated atoms only
-        }  // end of we want it or CIP code is not set
-      }  // end of double bond
-    }  // end of for loop over all bonds
+          }    // end of 2 and 3 coordinated atoms only
+        }      // end of we want it or CIP code is not set
+      }        // end of double bond
+    }          // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
@@ -3525,14 +3545,6 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
     atom->setChiralTag(chiralTypeVect[parity]);
     if (atom->needsUpdatePropertyCache()) {
       atom->updatePropertyCache(false);
-    }
-    // within the RD representation, if a three-coordinate atom
-    // is chiral and has an implicit H, that H needs to be made explicit:
-    if (atom->getDegree() == 3 && !atom->getNumExplicitHs() &&
-        atom->getNumImplicitHs() == 1) {
-      atom->setNumExplicitHs(1);
-      // recalculated number of implicit Hs:
-      atom->updatePropertyCache();
     }
   }
 }

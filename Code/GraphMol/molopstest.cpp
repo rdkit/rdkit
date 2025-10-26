@@ -9,7 +9,6 @@
 //
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <algorithm>
-#include <iostream>
 #include <map>
 #include <math.h>
 #include <random>
@@ -3551,7 +3550,11 @@ void testSFNetIssue2196817() {
   {
     ROMOL_SPTR m = "C1=CC2=CC=C3C=CC4=CC=C5C=CN1*1*2*3*4N51"_smiles;
     for (const auto a : m->atoms()) {
-      TEST_ASSERT(a->getIsAromatic());
+      if (a->getIdx() == 16 || a->getIdx() == 17) {
+        TEST_ASSERT(!a->getIsAromatic());
+      } else {
+        TEST_ASSERT(a->getIsAromatic());
+      }
     }
     unsigned int nNonAromaticBonds = 0;
     for (const auto b : m->bonds()) {
