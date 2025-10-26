@@ -29,8 +29,8 @@ class RWMol;
  *  NOTE: when the atoms and bonds are fully specified, the subset method is ignored.
  */ 
 enum class SubsetMethod {
-  BONDS_BETWEEN_ATOMS=0x0,
-  BONDS=0x1
+  BONDS_BETWEEN_ATOMS=0x0u,
+  BONDS=0x1u
 };  
 
 //! Subsetting Options for copyMolSubset
