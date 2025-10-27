@@ -24,6 +24,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/SCSRMol.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/pyint_api.h>
 #include <boost/python/copy_non_const_reference.hpp>
@@ -150,6 +151,17 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
     return mol.getNumAtoms(onlyHeavy);
   }
   return mol.getNumAtoms(onlyExplicit);
+}
+
+unsigned int getSCSRMolNumTemplates(const SCSRMol &scsrMol) {
+  return scsrMol.getTemplateCount();
+}
+
+const ROMol *getSCSRMolMainMol(const SCSRMol &scsrMol) {
+  return scsrMol.getMol();
+}
+const ROMol *getSCSRMolTemplate(const SCSRMol &scsrMol, int templateIndex) {
+  return scsrMol.getTemplate(templateIndex);
 }
 
 namespace {
@@ -846,6 +858,31 @@ struct mol_wrapper {
              python::args("self"),
              "Returns the number of molecule's RingInfo object.\n\n");
     python::register_ptr_to_python<std::shared_ptr<ROMol>>();
+
+    std::string scsrMolClassDoc =
+        "The SCSR Molecule class.\n\n\
+    - this contains a macromol (SCSR) molecule, which has a main mol that may contain Template references,:\n\
+    - and an array of molecules that each define a Template\n\n";
+
+    python::class_<SCSRMol, SCSRMOL_SPTR, boost::noncopyable>(
+        "SCSRMol", scsrMolClassDoc.c_str(),
+        python::init<>(python::args("self"), "Constructor, takes no arguments"))
+        .def("GetNumTemplates", getSCSRMolNumTemplates, python::args("self"),
+             "Returns the number of templates in the molecule.\n\n")
+        .def("GetMol", getSCSRMolMainMol, python::args("self"),
+             "Returns the main molecule of the SCSRMol.\n\n",
+             python::return_internal_reference<
+                 1, python::with_custodian_and_ward_postcall<0, 1>>())
+        .def("GetTemplateWithIdx", getSCSRMolTemplate,
+             python::args("self", "idx"),
+             "Returns a particular Template mol.\n\n"
+             "  ARGUMENTS:\n"
+             "    - idx: which Atom to return\n\n"
+             "  NOTE: atom indices start at 0\n",
+             python::return_internal_reference<
+                 1, python::with_custodian_and_ward_postcall<0, 1>>());
+
+    python::register_ptr_to_python<std::shared_ptr<SCSRMol>>();
 
     // ---------------------------------------------------------------------------------------------
     python::def("_HasSubstructMatchStr", HasSubstructMatchStr,

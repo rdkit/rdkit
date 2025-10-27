@@ -586,7 +586,7 @@ void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
       parityFlag = getAtomParityFlag(atom, conf);
     }
   }
-  
+
   if (hasNonDefaultValence(atom)) {
     if (atom->getTotalDegree() == 0) {
       // Specify zero valence for elements/metals without neighbors
@@ -609,12 +609,13 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
   GetMolFileAtomProperties(atom, conf, totValence, atomMapNumber, parityFlag, x,
                            y, z);
 
-  if( (x >= MAX_V2000_COORD || x <= MIN_V2000_COORD) ||
+  if ((x >= MAX_V2000_COORD || x <= MIN_V2000_COORD) ||
       (y >= MAX_V2000_COORD || y <= MIN_V2000_COORD) ||
-      (z >= MAX_V2000_COORD || z <= MIN_V2000_COORD) ) {
-    throw ValueErrorException("MolFile coordinates must be in (-100000, 1000000)");
+      (z >= MAX_V2000_COORD || z <= MIN_V2000_COORD)) {
+    throw ValueErrorException(
+        "MolFile coordinates must be in (-100000, 1000000)");
   }
-  
+
   int massDiff, chg, stereoCare, hCount, rxnComponentType, rxnComponentNumber,
       inversionFlag, exactChangeFlag;
   massDiff = 0;
@@ -870,6 +871,17 @@ const std::string GetV3000MolFileAtomLine(
     std::string sprop;
     if (atom->getPropIfPresent(common_properties::molAtomClass, sprop)) {
       ss << " CLASS=" << sprop;
+    }
+  }
+  {
+    std::vector<std::pair<unsigned int, std::string>> attchOrds;
+    if (atom->getPropIfPresent(common_properties::molAttachOrderTemplate,
+                               attchOrds)) {
+      ss << " ATTCHORD=(" << attchOrds.size() * 2;
+      for (const auto &[aidx, lbl] : attchOrds) {
+        ss << " " << aidx + 1 << " " << lbl;
+      }
+      ss << ")";
     }
   }
   // HCOUNT - *query* hydrogen count. Not written by this writer.
@@ -1239,7 +1251,8 @@ enum class MolFileFormat {
 std::string outputMolToMolBlock(const RWMol &tmol, int confId,
                                 MolFileFormat whichFormat,
                                 unsigned int precision,
-                                const boost::dynamic_bitset<> &aromaticBonds) {
+                                const boost::dynamic_bitset<> &aromaticBonds,
+                                bool addEndMolLine = true) {
   std::string res;
   unsigned int nAtoms, nBonds, nLists, chiralFlag, nsText, nRxnComponents;
   unsigned int nReactants, nProducts, nIntermediates;
@@ -1273,24 +1286,23 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   }
 
   bool coordMagnitudeTooLargeForV2K = false;
-  if(conf) {
-    for(auto &pos : conf->getPositions()) {
-      if( (pos.x >= MAX_V2000_COORD || pos.x <= MIN_V2000_COORD) ||
-	        (pos.y >= MAX_V2000_COORD || pos.y <= MIN_V2000_COORD) ||
-	        (pos.z >= MAX_V2000_COORD || pos.z <= MIN_V2000_COORD) ) {
-	          coordMagnitudeTooLargeForV2K = true;
+  if (conf) {
+    for (auto &pos : conf->getPositions()) {
+      if ((pos.x >= MAX_V2000_COORD || pos.x <= MIN_V2000_COORD) ||
+          (pos.y >= MAX_V2000_COORD || pos.y <= MIN_V2000_COORD) ||
+          (pos.z >= MAX_V2000_COORD || pos.z <= MIN_V2000_COORD)) {
+        coordMagnitudeTooLargeForV2K = true;
       }
     }
   }
 
   if (whichFormat == MolFileFormat::V2000 && coordMagnitudeTooLargeForV2K) {
     throw ValueErrorException(
-			      "V2000 format does not support atom positions <= " +
-			      std::to_string((int)MIN_V2000_COORD) +
-			      " or >= " + std::to_string((int)MAX_V2000_COORD) );
+        "V2000 format does not support atom positions <= " +
+        std::to_string((int)MIN_V2000_COORD) +
+        " or >= " + std::to_string((int)MAX_V2000_COORD));
   }
 
-  
   std::string text;
   if (tmol.getPropIfPresent(common_properties::_Name, text)) {
     res += text;
@@ -1332,7 +1344,8 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   if (whichFormat == MolFileFormat::V3000) {
     isV3000 = true;
   } else if (whichFormat == MolFileFormat::unspecified &&
-             (coordMagnitudeTooLargeForV2K || hasDative || nAtoms > 999 || nBonds > 999 || nSGroups > 999 ||
+             (coordMagnitudeTooLargeForV2K || hasDative || nAtoms > 999 ||
+              nBonds > 999 || nSGroups > 999 ||
               !tmol.getStereoGroups().empty())) {
     isV3000 = true;
   }
@@ -1399,7 +1412,10 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     res +=
         FileParserUtils::getV3000CTAB(tmol, aromaticBonds, confId, precision);
   }
-  res += "M  END\n";
+
+  if (addEndMolLine) {
+    res += "M  END\n";
+  }
   return res;
 }
 
@@ -1435,7 +1451,7 @@ std::string MolToMolBlock(const ROMol &mol, const MolWriterParams &params,
   MolFileFormat whichFormat =
       params.forceV3000 ? MolFileFormat::V3000 : MolFileFormat::unspecified;
   return outputMolToMolBlock(trwmol, confId, whichFormat, params.precision,
-                             aromaticBonds);
+                             aromaticBonds, params.writeEndMolLine);
 }
 
 std::string MolToV2KMolBlock(const ROMol &mol, const MolWriterParams &params,
@@ -1453,6 +1469,7 @@ std::string MolToV2KMolBlock(const ROMol &mol, const MolWriterParams &params,
 //  Dump a molecule to a file
 //
 //------------------------------------------------
+
 void MolToMolFile(const ROMol &mol, const std::string &fName,
                   const MolWriterParams &params, int confId) {
   auto *outStream = new std::ofstream(fName.c_str());

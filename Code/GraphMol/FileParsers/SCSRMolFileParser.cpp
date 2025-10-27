@@ -16,6 +16,7 @@
 
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
+#include <GraphMol/SCSRMol.h>
 
 using namespace RDKit::SGroupParsing;
 
@@ -24,45 +25,12 @@ namespace RDKit {
 namespace v2 {
 namespace FileParsers {
 
-class SCSRMol {
- private:
-  std::unique_ptr<ROMol> p_mol;
-  std::vector<std::unique_ptr<ROMol>> p_templates;
-
- public:
-  SCSRMol() {};
-  SCSRMol(const SCSRMol &other) = delete;
-  SCSRMol(SCSRMol &&other) noexcept = delete;
-  SCSRMol &operator=(SCSRMol &&other) noexcept = delete;
-
-  SCSRMol &operator=(const SCSRMol &) = delete;  // disable assignment
-  ~SCSRMol() {}
-
-  void addTemplate(std::unique_ptr<ROMol> templateMol) {
-    PRECONDITION(templateMol, "bad template molecule");
-    p_templates.push_back(std::move(templateMol));
-  }
-
-  unsigned int getTemplateCount() const { return p_templates.size(); }
-
-  ROMol *getTemplate(unsigned int index) { return p_templates[index].get(); };
-
-  const ROMol *getMol() const { return p_mol.get(); }
-
-  ROMol *getMol() { return p_mol.get(); }
-
-  void setMol(std::unique_ptr<ROMol> mol) {
-    PRECONDITION(mol, "bad molecule");
-    p_mol = std::move(mol);
-  }
-};
-
 //------------------------------------------------
 //
 //  Read a SCVSR molecule from a stream
 //
 //------------------------------------------------
-static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
+std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
     std::istream &inStream, unsigned int &line,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   bool chiralityPossible = false;
@@ -288,7 +256,7 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
 //  Read a molecule from a string
 //
 //------------------------------------------------
-static std::unique_ptr<SCSRMol> SCSRMolFromSCSRBlock(
+std::unique_ptr<SCSRMol> SCSRMolFromSCSRBlock(
     const std::string &molBlock,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::istringstream inStream(molBlock);
@@ -301,7 +269,7 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRBlock(
 //  Read a molecule from a file
 //
 //------------------------------------------------
-static std::unique_ptr<SCSRMol> SCSRMolFromSCSRFile(
+std::unique_ptr<SCSRMol> SCSRMolFromSCSRFile(
     const std::string &fName, const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
@@ -955,6 +923,14 @@ class MolFromSCSRMolConverter {
               case SCSRTemplateNames::AsEntered:
                 templateNameToUse = dummyLabel;
                 break;
+              case SCSRTemplateNames::All:
+                templateNameToUse = "";
+                for (const auto &nm : templateNames) {
+                  if (templateNameToUse != "") {
+                    templateNameToUse += "+";
+                  }
+                  templateNameToUse += nm;
+                }
             }
             break;
           }
@@ -995,10 +971,15 @@ class MolFromSCSRMolConverter {
         }
 
         // add the atoms from the main template to the new molecule
-        std::string sgroupName = templateNameToUse;
+
+        std::string sgroupName = atomClass + "_";
         if (seqId != 0) {
-          sgroupName += "_" + std::to_string(seqId);
+          sgroupName += std::to_string(seqId) + "_";
+        } else {
+          sgroupName += "na_";
         }
+
+        sgroupName += templateNameToUse;
 
         auto coordOffset = (conf->getAtomPos(atomIdx) * maxSize) -
                            templateCentroids[templateIdx];

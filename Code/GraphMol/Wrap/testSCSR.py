@@ -95,7 +95,7 @@ class TestCase(unittest.TestCase):
     sgs = Chem.GetMolSubstanceGroups(mol)
     self.assertTrue(len(sgs) == 7)
     sgs[0].GetProp('LABEL')
-    self.assertEqual(sgs[0].GetProp('LABEL'), 'Ala_4')
+    self.assertEqual(sgs[0].GetProp('LABEL'), 'AA_4_Ala')
 
     molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.UseFirstName
 
@@ -105,7 +105,7 @@ class TestCase(unittest.TestCase):
     sgs = Chem.GetMolSubstanceGroups(mol)
     self.assertEqual(len(sgs), 7)
 
-    self.assertEqual(sgs[0].GetProp('LABEL'), 'Ala_4')
+    self.assertEqual(sgs[0].GetProp('LABEL'), 'AA_4_Ala')
 
     molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.UseSecondName
     mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromSCSRParams)
@@ -114,7 +114,7 @@ class TestCase(unittest.TestCase):
     sgs = Chem.GetMolSubstanceGroups(mol)
     self.assertEqual(len(sgs), 7)
 
-    self.assertEqual(sgs[0].GetProp('LABEL'), 'A_4')
+    self.assertEqual(sgs[0].GetProp('LABEL'), 'AA_4_A')
 
 
 if __name__ == '__main__':

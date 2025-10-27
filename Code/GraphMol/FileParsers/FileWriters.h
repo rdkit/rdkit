@@ -13,21 +13,39 @@
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/SCSRMol.h>
 #include <string>
 
 namespace RDKit {
 
 struct RDKIT_FILEPARSERS_EXPORT MolWriterParams {
-  bool includeStereo = true;  /**< toggles inclusion of stereochemistry
-                                   information*/
-  bool kekulize = true;       /**< triggers kekulization of the molecule before
-                                   it is written*/
-  bool forceV3000 = false;    /**< force generation a V3000 mol block (happens
-                                   automatically with more than 999 atoms or
-                                   bond or if the magnitude of the coordinates
-                                   are too large)*/
-  unsigned int precision = 6; /**< precision of coordinates (only available in
-                                   V3000)*/
+  bool includeStereo = true;   /**< toggles inclusion of stereochemistry
+                                    information*/
+  bool kekulize = true;        /**< triggers kekulization of the molecule before
+                                    it is written*/
+  bool forceV3000 = false;     /**< force generation a V3000 mol block (happens
+                                    automatically with more than 999 atoms or
+                                    bond or if the magnitude of the coordinates
+                                    are too large)*/
+  unsigned int precision = 6;  /**< precision of coordinates (only available in
+                                    V3000)*/
+  bool writeEndMolLine = true; /**< write the "M END" line at the end of
+                                           the mol block */
+};
+
+enum class SCSRUseTemplateName {
+  UseFirstName,   //<!Use the first name in the template
+                  // def (For AA, the 3 letter code
+  UseSecondName,  //<!use the second name in the tempate def (
+                  // For AA, the 1 letter code)
+};
+
+struct RDKIT_FILEPARSERS_EXPORT MolToSCSRParams {
+  SCSRUseTemplateName scsrUseTemplateName = SCSRUseTemplateName::UseFirstName;
+};
+
+const std::vector<std::string> ScsrClasses{
+    "AA", "DNA", "RNA", "SUGAR", "BASE", "PHOSPHATE", "LGRP",
 };
 
 // \brief generates an MDL mol block for a molecule
@@ -238,6 +256,41 @@ RDKIT_FILEPARSERS_EXPORT void MolToPDBFile(const ROMol &mol,
                                            const std::string &fname,
                                            int confId = -1,
                                            unsigned int flavor = 0);
+
+// \brief Prepares a mol to be written - gets the aromatic bonds
+/*!
+ *   \param mol             - the molecule in question
+ *   \param MolWriterParams - parameter struct with write options
+ *   \param aromaticBonds   - the bond bitset to set from the mol
+ */
+
+RDKIT_FILEPARSERS_EXPORT void prepareMol(
+    RWMol &trwmol, const MolWriterParams &params,
+    boost::dynamic_bitset<> &aromaticBonds);
+
+// \brief Writes an SCSR molecule to an SCSRMol block
+/*!
+ *   \param scsrMol         - the SCSR molecule in question
+ *   \param MolWriterParams - parameter struct with write options
+ *   \param confId          - selects the conformer to be used
+ */
+
+RDKIT_FILEPARSERS_EXPORT std::string SCSRMolToSCSRMolBlock(
+    RDKit::SCSRMol &scsrMol,
+    const RDKit::MolWriterParams &params = RDKit::MolWriterParams(),
+    int confId = -1);
+
+RDKIT_FILEPARSERS_EXPORT void SCSRMolToSCSRMolFile(
+    RDKit::SCSRMol &scsrMol, const std::string &fName,
+    const RDKit::MolWriterParams &params = RDKit::MolWriterParams(),
+    int confId = -1);
+
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> MolToScsrMol(
+    const ROMol &mol, RDKit::SCSRMol &templates,
+    MolToSCSRParams molToSCSRParams = MolToSCSRParams());
+
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol>
+SCSRAtributedMolToTemplates(const ROMol &mol);
 
 }  // namespace RDKit
 
