@@ -88,7 +88,7 @@ void testCoresLabelledProperly() {
 
 std::pair<int, RData> makeRData(int attachment, std::vector<int> attachments,
                                 const std::string &smiles) {
-  auto rData = boost::make_shared<RGroupData>();
+  auto rData = std::make_shared<RGroupData>();
   auto mol = SmilesToMol(smiles);
   auto frags = MolOps::getMolFrags(*mol);
   for (auto &frag : frags) {
