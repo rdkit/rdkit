@@ -51,7 +51,7 @@ struct RDKIT_GRAPHMOL_EXPORT SubsetOptions {
   bool clearComputedProps = false;
   bool copyAsQuery = false;
   bool copyCoordinates = true;
-  unsigned int conformerIdx = -1;
+  unsigned int conformerIdx = -1u;
   
   SubsetMethod method = SubsetMethod::BONDS_BETWEEN_ATOMS;
 };
