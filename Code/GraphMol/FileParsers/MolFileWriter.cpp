@@ -25,7 +25,6 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
-#include <iostream>
 #include <iomanip>
 #include <cstdio>
 
@@ -223,7 +222,9 @@ bool hasComplexQuery(const Atom *atom) {
     //     for "C" or "c":
     //
     std::string descr = atom->getQuery()->getDescription();
-    if (descr == "AtomAtomicNum") {
+    if (descr == "AtomAtomicNum" &&
+        static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())->getVal() ==
+            atom->getAtomicNum()) {
       res = false;
     } else if (descr == "AtomAnd") {
       if ((*atom->getQuery()->beginChildren())->getDescription() ==

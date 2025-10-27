@@ -4163,6 +4163,102 @@ function test_get_coords() {
     }
 }
 
+function test_get_v3K_v2K_molblock() {
+    var mol = RDKitModule.get_mol('c1cc(O)ccc1');
+    assert(mol);
+    var molblock = mol.get_v3Kmolblock();
+    var mol2 = RDKitModule.get_mol(molblock);
+    assert(mol2);
+    var smiles = mol2.get_smiles();
+    assert(smiles === 'Oc1ccccc1');
+    mol2.delete();
+    molblock = mol.get_v3Kmolblock(JSON.stringify({ kekulize: false }));
+    assert(molblock.includes('M  V30 1 4 1 2'));
+    molblock = mol.get_molblock(JSON.stringify({ forceMDLVersion: 'V3000' }));
+    assert(molblock.includes('V3000'));
+    molblock = mol.get_v3Kmolblock(JSON.stringify({ forceMDLVersion: 'V2000' }));
+    assert(molblock.includes('V3000'));
+    mol.delete();
+    var mol3 = RDKitModule.get_mol('N->[Pt+2](Cl)(Cl)<-N');
+    assert(mol3);
+    molblock = mol3.get_molblock();
+    assert(molblock.includes('V3000'));
+    assert(molblock.includes('M  V30 4 9 5 2'));
+    molblock = mol3.get_molblock(JSON.stringify({forceMDLVersion: 'V2000'}));
+    assert(molblock.includes('V2000'));
+    assert(molblock.includes('  5  2  9  0'));
+    molblock = mol3.get_v3Kmolblock(JSON.stringify({forceMDLVersion: 'V2000'}));
+    assert(molblock.includes('V3000'));
+    assert(molblock.includes('M  V30 4 9 5 2'));
+    molblock = mol3.get_v2Kmolblock(JSON.stringify({forceMDLVersion: 'V3000'}));
+    assert(molblock.includes('V2000'));
+    assert(molblock.includes('  5  2  9  0'));
+    mol3.delete();
+}
+
+function test_return_draw_coords() {
+    var mb = `
+     RDKit          2D
+
+  3  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.8930    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  1  3  1  0
+M  END`;
+    var reference;
+    var highlight;
+    var aboveTol;
+    var mol = RDKitModule.get_mol(mb);
+    assert(mol);
+    res = mol.get_svg_with_highlights(JSON.stringify({
+        width: 300,
+        height: 200,
+        padding: 0.2,
+        returnDrawCoords: true
+    }));
+    assert(res);
+    res = JSON.parse(res);
+    assert(res.drawCoords);
+    assert(res.svg);
+    reference = res.drawCoords.flat();
+    res = mol.get_svg_with_highlights(JSON.stringify({
+        width: 300,
+        height: 200,
+        padding: 0.2,
+        atoms: [0],
+        returnDrawCoords: true
+    }));
+    assert(res);
+    res = JSON.parse(res);
+    assert(res.drawCoords);
+    assert(res.svg);
+    highlight = res.drawCoords.flat();
+    aboveTol = reference.some((ref, i) => (Math.abs(ref - highlight[i]) > 0.1));
+    assert(aboveTol);
+    res = mol.get_svg_with_highlights(JSON.stringify({
+        width: 300,
+        height: 200,
+        padding: 0.2,
+        atoms: [0],
+        returnDrawCoords: true,
+        drawingExtentsInclude: {
+            ALL: true,
+            HIGHLIGHTS: false
+        }
+    }));
+    assert(res);
+    res = JSON.parse(res);
+    assert(res.drawCoords);
+    assert(res.svg);
+    highlight = res.drawCoords.flat();
+    aboveTol = reference.some((ref, i) => (Math.abs(ref - highlight[i]) > 0.1));
+    assert(!aboveTol);
+    mol.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -4260,6 +4356,8 @@ initRDKitModule().then(function(instance) {
     test_png_metadata();
     test_combine_with();
     test_get_coords();
+    test_get_v3K_v2K_molblock();
+    test_return_draw_coords();
 
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")

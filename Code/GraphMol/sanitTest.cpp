@@ -16,7 +16,6 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
 #include <cstdlib>
-#include <iostream>
 #include <fstream>
 #include <RDGeneral/types.h>
 #include <RDGeneral/Invariant.h>

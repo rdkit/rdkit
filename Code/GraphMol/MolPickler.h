@@ -22,7 +22,6 @@
 #include <Query/QueryObjects.h>
 
 // Std stuff
-#include <iostream>
 #include <string>
 #include <sstream>
 #include <exception>

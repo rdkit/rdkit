@@ -21,7 +21,6 @@
 #include <DataStructs/DatastructsStreamOps.h>
 #include <Query/QueryObjects.h>
 #include <map>
-#include <iostream>
 #include <cstdint>
 #include <boost/algorithm/string.hpp>
 
@@ -121,10 +120,10 @@ void MolPickler::_pickleProperties(std::ostream &ss, const RDProps &props,
 
 namespace {
 
-template <typename SAVEAS, typename STOREAS>
-void unpickleExplicitProperties(
-    std::istream &ss, RDProps &props, int version,
-    const std::vector<std::pair<std::string, std::uint16_t>> &explicitProps) {
+template <typename SAVEAS, typename STOREAS, typename EXPLICIT>
+inline void unpickleExplicitProperties(std::istream &ss, RDProps &props,
+                                       int version,
+                                       const EXPLICIT &explicitProps) {
   if (version >= 14000) {
     std::uint8_t bprops;
     streamRead(ss, bprops, version);
@@ -138,10 +137,9 @@ void unpickleExplicitProperties(
   }
 }
 
-template <typename SAVEAS>
-bool pickleExplicitProperties(
-    std::ostream &ss, const RDProps &props,
-    const std::vector<std::pair<std::string, std::uint16_t>> &explicitProps) {
+template <typename SAVEAS, typename EXPLICIT>
+inline bool pickleExplicitProperties(std::ostream &ss, const RDProps &props,
+                                     const EXPLICIT &explicitProps) {
   std::uint8_t bprops = 0;
   std::vector<SAVEAS> ps;
   SAVEAS bv;
@@ -167,24 +165,24 @@ class PropTracker {
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
   // the properties themselves are stored as std::int8_t
-  const std::vector<std::pair<std::string, std::uint16_t>> explicitBondProps = {
+  std::array<std::pair<std::string, std::uint16_t>, 5> explicitBondProps{{
       {RDKit::common_properties::_MolFileBondType, 0x1},
       {RDKit::common_properties::_MolFileBondStereo, 0x2},
       {RDKit::common_properties::_MolFileBondCfg, 0x4},
       {RDKit::common_properties::_MolFileBondQuery, 0x8},
       {RDKit::common_properties::molStereoCare, 0x10},
-  };
+  }};
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
   // the properties themselves are stored as std::int16_t
-  const std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {
+  std::array<std::pair<std::string, std::uint16_t>, 4> explicitAtomProps{{
       {common_properties::molStereoCare, 0x1},
       {common_properties::molParity, 0x2},
       {common_properties::molInversionFlag, 0x4},
       {common_properties::_ChiralityPossible, 0x8},
 
-  };
-  const std::vector<std::string> ignoreAtomProps = {
+  }};
+  std::array<std::string, 2> ignoreAtomProps{
       common_properties::molAtomMapNumber,
       common_properties::dummyLabel,
   };

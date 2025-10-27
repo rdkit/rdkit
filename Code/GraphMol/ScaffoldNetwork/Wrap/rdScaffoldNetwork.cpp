@@ -128,7 +128,8 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
       .def_readwrite("collectMolCounts",
                      &ScaffoldNetwork::ScaffoldNetworkParams::collectMolCounts,
                      "keep track of the number of molecules each scaffold was "
-                     "found in");
+                     "found in")
+      .def("__setattr__", &safeSetattr);
 
   python::enum_<ScaffoldNetwork::EdgeType>("EdgeType")
       .value("Fragment", ScaffoldNetwork::EdgeType::Fragment)

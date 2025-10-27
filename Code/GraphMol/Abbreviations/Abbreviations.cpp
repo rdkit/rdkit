@@ -13,7 +13,6 @@
 #include <RDGeneral/Invariant.h>
 
 #include <boost/dynamic_bitset.hpp>
-#include <iostream>
 
 namespace RDKit {
 

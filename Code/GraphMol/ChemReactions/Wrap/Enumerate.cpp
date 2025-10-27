@@ -45,10 +45,10 @@ namespace RDKit {
 template <class T>
 std::vector<RDKit::MOL_SPTR_VECT> ConvertToVect(T bbs) {
   std::vector<RDKit::MOL_SPTR_VECT> vect;
-  size_t num_bbs = python::extract<unsigned int>(bbs.attr("__len__")());
+  unsigned int num_bbs = python::len(bbs);
   vect.resize(num_bbs);
-  for (size_t i = 0; i < num_bbs; ++i) {
-    unsigned int len1 = python::extract<unsigned int>(bbs[i].attr("__len__")());
+  for (unsigned int i = 0; i < num_bbs; ++i) {
+    unsigned int len1 = python::len(bbs[i]);
     RDKit::MOL_SPTR_VECT &reacts = vect[i];
     reacts.reserve(len1);
     for (unsigned int j = 0; j < len1; ++j) {

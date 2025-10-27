@@ -14,7 +14,6 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
 #include "GridUtils.h"
-#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <ios>

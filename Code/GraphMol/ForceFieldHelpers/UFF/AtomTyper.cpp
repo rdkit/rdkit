@@ -7,7 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <iostream>
 #include <GraphMol/RDKitBase.h>
 #include <ForceField/UFF/Params.h>
 #include <ForceField/UFF/Utils.h>

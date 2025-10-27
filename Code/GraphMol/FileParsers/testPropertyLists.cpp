@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2019-2025 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -18,15 +18,17 @@
 
 using namespace RDKit;
 
-TEST_CASE("Property list conversion", "[atom_list_properties]") {
+TEST_CASE("Property list conversion") {
+  auto m = "COC"_smiles;
+  REQUIRE(m);
+  auto getter = [&m](size_t which) { return m->getAtomWithIdx(which); };
   SECTION("basics: iprops") {
-    auto m = "COC"_smiles;
-    REQUIRE(m);
     m->setProp("atom.iprop.foo1", "1   6 9");
     m->setProp("atom.iprop.foo2", "3 n/a   9");
     m->setProp("atom.iprop.foo3", "[?]  5 1 ?");
     m->setProp("atom.iprop.foo4", "[foo] 3 foo   9");
-    FileParserUtils::applyMolListPropsToAtoms<std::int64_t>(*m, "atom.iprop.");
+    FileParserUtils::applyMolListProps<int>(*m, "atom.iprop.", m->getNumAtoms(),
+                                            getter);
     CHECK(m->getAtomWithIdx(0)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(1)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(2)->hasProp("foo1"));
@@ -39,18 +41,17 @@ TEST_CASE("Property list conversion", "[atom_list_properties]") {
     CHECK(m->getAtomWithIdx(0)->hasProp("foo4"));
     CHECK(!m->getAtomWithIdx(1)->hasProp("foo4"));
     CHECK(m->getAtomWithIdx(2)->hasProp("foo4"));
-    CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo1") == 6);
-    CHECK(m->getAtomWithIdx(2)->getProp<std::int64_t>("foo2") == 9);
-    CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo3") == 1);
+    CHECK(m->getAtomWithIdx(1)->getProp<int>("foo1") == 6);
+    CHECK(m->getAtomWithIdx(2)->getProp<int>("foo2") == 9);
+    CHECK(m->getAtomWithIdx(1)->getProp<int>("foo3") == 1);
     CHECK(m->getAtomWithIdx(1)->getProp<std::string>("foo3") == "1");
   }
   SECTION("basics: dprops") {
-    auto m = "COC"_smiles;
-    REQUIRE(m);
     m->setProp("atom.dprop.foo1", "1   6 9");
     m->setProp("atom.dprop.foo2", "3 n/a   9");
     m->setProp("atom.dprop.foo3", "[?]  5 1 ?");
-    FileParserUtils::applyMolListPropsToAtoms<double>(*m, "atom.dprop.");
+    FileParserUtils::applyMolListProps<double>(*m, "atom.dprop.",
+                                               m->getNumAtoms(), getter);
     CHECK(m->getAtomWithIdx(0)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(1)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(2)->hasProp("foo1"));
@@ -65,12 +66,11 @@ TEST_CASE("Property list conversion", "[atom_list_properties]") {
     CHECK(m->getAtomWithIdx(1)->getProp<double>("foo3") == 1);
   }
   SECTION("basics: props") {
-    auto m = "COC"_smiles;
-    REQUIRE(m);
     m->setProp("atom.prop.foo1", "1   6 9");
     m->setProp("atom.prop.foo2", "3 n/a   9");
     m->setProp("atom.prop.foo3", "[?]  5 1 ?");
-    FileParserUtils::applyMolListPropsToAtoms<std::string>(*m, "atom.prop.");
+    FileParserUtils::applyMolListProps<std::string>(*m, "atom.prop.",
+                                                    m->getNumAtoms(), getter);
     CHECK(m->getAtomWithIdx(0)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(1)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(2)->hasProp("foo1"));
@@ -85,12 +85,11 @@ TEST_CASE("Property list conversion", "[atom_list_properties]") {
     CHECK(m->getAtomWithIdx(1)->getProp<std::string>("foo3") == "1");
   }
   SECTION("basics: bprops") {
-    auto m = "COC"_smiles;
-    REQUIRE(m);
     m->setProp("atom.bprop.foo1", "1   0 0");
     m->setProp("atom.bprop.foo2", "0 n/a   1");
     m->setProp("atom.bprop.foo3", "[?]  0 1 ?");
-    FileParserUtils::applyMolListPropsToAtoms<bool>(*m, "atom.bprop.");
+    FileParserUtils::applyMolListProps<bool>(*m, "atom.bprop.",
+                                             m->getNumAtoms(), getter);
     CHECK(m->getAtomWithIdx(0)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(1)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(2)->hasProp("foo1"));
@@ -104,8 +103,25 @@ TEST_CASE("Property list conversion", "[atom_list_properties]") {
     CHECK(m->getAtomWithIdx(2)->getProp<bool>("foo2") == true);
     CHECK(m->getAtomWithIdx(1)->getProp<bool>("foo3") == true);
   }
+  SECTION("basics: bond props") {
+    auto bgetter = [&m](size_t which) { return m->getBondWithIdx(which); };
+
+    m->setProp("bond.prop.foo1", "1   6");
+    m->setProp("bond.prop.foo2", "3 n/a");
+    m->setProp("bond.prop.foo3", "[?]  ? 5");
+    FileParserUtils::applyMolListProps<std::string>(*m, "bond.prop.",
+                                                    m->getNumBonds(), bgetter);
+    CHECK(m->getBondWithIdx(0)->hasProp("foo1"));
+    CHECK(m->getBondWithIdx(1)->hasProp("foo1"));
+    CHECK(m->getBondWithIdx(0)->hasProp("foo2"));
+    CHECK(!m->getBondWithIdx(1)->hasProp("foo2"));
+    CHECK(!m->getBondWithIdx(0)->hasProp("foo3"));
+    CHECK(m->getBondWithIdx(1)->hasProp("foo3"));
+    CHECK(m->getBondWithIdx(1)->getProp<std::string>("foo1") == "6");
+    CHECK(m->getBondWithIdx(1)->getProp<std::string>("foo3") == "5");
+  }
 }
-TEST_CASE("processMolPropertyLists", "[atom_list_properties]") {
+TEST_CASE("processMolPropertyLists") {
   SECTION("basics") {
     auto m = "COC"_smiles;
     REQUIRE(m);
@@ -113,6 +129,7 @@ TEST_CASE("processMolPropertyLists", "[atom_list_properties]") {
     m->setProp("atom.dprop.foo2", "3 n/a   9");
     m->setProp("atom.prop.foo3", "[?]  5 1 ?");
     m->setProp("atom.bprop.foo4", "1 0 0");
+    m->setProp("bond.prop.foo2", "3 7");
     FileParserUtils::processMolPropertyLists(*m);
     CHECK(m->getAtomWithIdx(0)->hasProp("foo1"));
     CHECK(m->getAtomWithIdx(1)->hasProp("foo1"));
@@ -126,14 +143,19 @@ TEST_CASE("processMolPropertyLists", "[atom_list_properties]") {
     CHECK(m->getAtomWithIdx(0)->hasProp("foo4"));
     CHECK(m->getAtomWithIdx(1)->hasProp("foo4"));
     CHECK(m->getAtomWithIdx(2)->hasProp("foo4"));
-    CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo1") == 6);
+    CHECK(m->getAtomWithIdx(1)->getProp<int>("foo1") == 6);
     CHECK(m->getAtomWithIdx(2)->getProp<double>("foo2") == 9);
     CHECK(m->getAtomWithIdx(1)->getProp<std::string>("foo3") == "1");
     CHECK(m->getAtomWithIdx(1)->getProp<bool>("foo4") == false);
+
+    CHECK(m->getBondWithIdx(0)->hasProp("foo2"));
+    CHECK(m->getBondWithIdx(1)->hasProp("foo2"));
+    CHECK(m->getBondWithIdx(0)->getProp<int>("foo2"));
+    CHECK(m->getBondWithIdx(1)->getProp<int>("foo2"));
   }
 }
 
-TEST_CASE("basic SDF handling", "[SDF][atom_list_properties]") {
+TEST_CASE("basic SDF handling") {
   std::string sdf = R"SDF(
      RDKit  2D
 
@@ -163,6 +185,9 @@ one n/a three
 >  <atom.iprop.PartiallyMissingInt>  (1) 
 [?] 2 2 ?
 
+>  <bond.prop.foo>  (1)
+bar baz blah
+
 $$$$
 )SDF";
   SECTION("no processing") {
@@ -181,15 +206,19 @@ $$$$
     REQUIRE(m);
     CHECK(m->hasProp("atom.prop.AtomLabel"));
     CHECK(m->getAtomWithIdx(0)->hasProp("AtomLabel"));
+    CHECK(m->hasProp("bond.prop.foo"));
+    std::string val;
+    CHECK(m->getBondWithIdx(0)->getPropIfPresent("foo", val));
+    CHECK(val == "bar");
   }
 }
 
-TEST_CASE("createAtomPropertyLists", "[atom_list_properties]") {
+TEST_CASE("createAtomPropertyLists") {
   SECTION("basics") {
     auto m = "COC"_smiles;
     REQUIRE(m);
-    m->getAtomWithIdx(0)->setProp<std::int64_t>("foo1", 1);
-    m->getAtomWithIdx(2)->setProp<std::int64_t>("foo1", 9);
+    m->getAtomWithIdx(0)->setProp<int>("foo1", 1);
+    m->getAtomWithIdx(2)->setProp<int>("foo1", 9);
     FileParserUtils::createAtomIntPropertyList(*m, "foo1");
     REQUIRE(m->hasProp("atom.iprop.foo1"));
     CHECK(m->getProp<std::string>("atom.iprop.foo1") == "1 n/a 9");
@@ -213,10 +242,17 @@ TEST_CASE("createAtomPropertyLists", "[atom_list_properties]") {
     FileParserUtils::createAtomBoolPropertyList(*m, "foo4");
     REQUIRE(m->hasProp("atom.bprop.foo4"));
     CHECK(m->getProp<std::string>("atom.bprop.foo4") == "1 0 0");
+
+    m->getBondWithIdx(0)->setProp<bool>("foo5", 1);
+    m->getBondWithIdx(1)->setProp<bool>("foo5", 0);
+    FileParserUtils::createBondBoolPropertyList(*m, "foo5");
+    REQUIRE(m->hasProp("bond.bprop.foo5"));
+    CHECK(m->getProp<std::string>("bond.bprop.foo5") == "1 0");
   }
   SECTION("long lines") {
     auto m = "COC"_smiles;
     REQUIRE(m);
+    auto getter = [&m](size_t which) { return m->getAtomWithIdx(which); };
     m->getAtomWithIdx(0)->setProp<std::string>("foo1", std::string(80, 'a'));
     m->getAtomWithIdx(1)->setProp<std::string>("foo1", std::string(80, 'b'));
     m->getAtomWithIdx(2)->setProp<std::string>("foo1", std::string(80, 'c'));
@@ -228,7 +264,8 @@ TEST_CASE("createAtomPropertyLists", "[atom_list_properties]") {
     for (auto &atom : m->atoms()) {
       atom->clearProp("foo1");
     }
-    FileParserUtils::applyMolListPropsToAtoms<std::string>(*m, "atom.prop.");
+    FileParserUtils::applyMolListProps<std::string>(*m, "atom.prop.",
+                                                    m->getNumAtoms(), getter);
     CHECK(m->getAtomWithIdx(0)->getProp<std::string>("foo1") ==
           std::string(80, 'a'));
     CHECK(m->getAtomWithIdx(1)->getProp<std::string>("foo1") ==

@@ -13,7 +13,6 @@
 #include <boost/log/functions.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <string>
-#include <iostream>
 #include <GraphMol/FeatTrees/FeatTree.h>
 #include <GraphMol/FeatTrees/FeatTreeUtils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>

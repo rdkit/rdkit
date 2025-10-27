@@ -70,7 +70,7 @@ class TestCase(unittest.TestCase):
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 14)
 
-    invgen = rdFingerprintGenerator.GetMorganAtomInvGen()
+    invgen = rdFingerprintGenerator.GetMorganAtomInvGen(True)
     g = rdFingerprintGenerator.GetMorganGenerator(radius=3, atomInvariantsGenerator=invgen)
     fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()

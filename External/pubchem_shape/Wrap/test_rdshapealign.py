@@ -2,6 +2,7 @@ import unittest
 from rdkit import Chem
 from rdkit.Chem import rdShapeAlign
 from rdkit import RDConfig
+from rdkit.Geometry import Point3D
 
 datadir = RDConfig.RDBaseDir + '/External/pubchem_shape/test_data'
 
@@ -75,6 +76,47 @@ class TestCase(unittest.TestCase):
     opts.notColorAtoms = [0]
     shp = rdShapeAlign.PrepareConformer(m1, -1, opts)
     self.assertAlmostEqual(shp.sof, 5.074, places=3)
+
+  def test7_customFeatures(self):
+    m1 = Chem.MolFromSmiles(
+      "O=CC=O |(-1.75978,0.148897,0;-0.621382,-0.394324,0;0.624061,0.3656,.1;1.7571,-0.120174,.1)|")
+    opts = rdShapeAlign.ShapeInputOptions()
+    opts.customFeatures = ((1, Point3D(-1.75978, 0.148897,
+                                       0), 1.0), (2, Point3D(1.7571, -0.120174, 0.1), 1.0))
+    shp = rdShapeAlign.PrepareConformer(m1, -1, opts)
+    self.assertEqual(len(shp.coord), 18)
+    m2 = Chem.Mol(m1)
+    opts2 = rdShapeAlign.ShapeInputOptions()
+    opts2.customFeatures = ((2, Point3D(-1.75978, 0.148897,
+                                        0), 1.0), (1, Point3D(1.7571, -0.120174, 0.1), 1.0))
+    shp2 = rdShapeAlign.PrepareConformer(m2, -1, opts2)
+    tpl = rdShapeAlign.AlignShapes(shp, shp2, opt_param=0.5)
+    self.assertAlmostEqual(tpl[0], 0.997, places=3)
+    self.assertAlmostEqual(tpl[1], 0.978, places=3)
+    tf = tpl[2]
+    self.assertGreater(0.0, tf[0])
+    self.assertLess(0.0, tf[3 * 3])
+
+    # check the getter:
+    cfs = opts2.customFeatures
+    self.assertEqual(len(cfs), 2)
+    self.assertEqual(cfs[0][0], 2)
+    self.assertEqual(cfs[1][0], 1)
+
+  def test8_customFeatures(self):
+    m1 = Chem.MolFromSmiles(
+      "O=CC=O |(-1.75978,0.148897,0;-0.621382,-0.394324,0;0.624061,0.3656,.1;1.7571,-0.120174,.1)|")
+    opts = rdShapeAlign.ShapeInputOptions()
+    opts.customFeatures = ((1, Point3D(-1.75978, 0.148897,
+                                       0), 1.0), (2, Point3D(1.7571, -0.120174, 0.1), 1.0))
+    m2 = Chem.Mol(m1)
+    opts2 = rdShapeAlign.ShapeInputOptions()
+    opts2.customFeatures = ((2, Point3D(-1.75978, 0.148897,
+                                        0), 1.0), (1, Point3D(1.7571, -0.120174, 0.1), 1.0))
+    tpl = rdShapeAlign.AlignMol(m1, m2, opts, opts2, opt_param=0.5)
+    self.assertAlmostEqual(tpl[0], 0.997, places=3)
+    self.assertAlmostEqual(tpl[1], 0.978, places=3)
+
 
 if __name__ == '__main__':
   unittest.main()

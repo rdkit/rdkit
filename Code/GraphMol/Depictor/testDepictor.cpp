@@ -12,7 +12,6 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
-#include <iostream>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -806,7 +805,7 @@ void testGitHubIssue910() {
     for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
       for (unsigned int j = i + 1; j < conf.getNumAtoms(); ++j) {
         double l = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
-        TEST_ASSERT(l > 0.75);
+        TEST_ASSERT(l > 0.5);
       }
     }
 

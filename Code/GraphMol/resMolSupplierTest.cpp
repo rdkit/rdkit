@@ -1,5 +1,4 @@
 #include <RDGeneral/test.h>
-#include <iostream>
 #include <string>
 #include <map>
 #include <GraphMol/RDKitBase.h>
