@@ -923,7 +923,7 @@ void testAtomResidues() {
     TEST_ASSERT(!(m2->getAtomWithIdx(3)->getMonomerInfo()));
     delete m2;
   }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  BOOST_LOG(rdErrorLog) << "\tdone with testAtomResidues" << std::endl;
 }
 
 void testGithub149() {
@@ -1736,6 +1736,89 @@ void testBoostSerialization() {
 
 #endif
 }
+
+void testAtomMonomerInfoFields() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing AtomMonomerInfo base class fields pickling"
+                       << std::endl;
+  {
+    // Test that the new fields in AtomMonomerInfo (residueName, residueNumber,
+    // chainId, monomerClass) are properly pickled and unpickled
+    auto *m = new RWMol();
+
+    bool updateLabel = true;
+    bool takeOwnership = true;
+    m->addAtom(new Atom(6), updateLabel, takeOwnership);
+    m->addAtom(new Atom(6), updateLabel, takeOwnership);
+    m->addBond(0, 1, Bond::SINGLE);
+    m->addAtom(new Atom(6), updateLabel, takeOwnership);
+    m->addBond(1, 2, Bond::SINGLE);
+
+    // Create AtomMonomerInfo with all fields populated
+    m->getAtomWithIdx(0)->setMonomerInfo(new AtomMonomerInfo(
+        AtomMonomerInfo::OTHER, "CA", "ALA", 42, "A", "PEPTIDE"));
+
+    // Create AtomPDBResidueInfo which should also preserve the base class fields
+    m->getAtomWithIdx(1)->setMonomerInfo(
+        new AtomPDBResidueInfo("CB", 123, "A", "GLY", 43, "B", "1", 1.0, 25.5,
+                               false, 0, 0, "LINK"));
+
+    // Create AtomMonomerInfo with partial fields (test defaults)
+    m->getAtomWithIdx(2)->setMonomerInfo(
+        new AtomMonomerInfo(AtomMonomerInfo::AMINO_ACID, "N"));
+
+    MolOps::sanitizeMol(*m);
+
+    std::string pkl;
+    MolPickler::pickleMol(*m, pkl);
+    delete m;
+
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+
+    // Test first atom - AtomMonomerInfo with all fields
+    TEST_ASSERT(m2->getAtomWithIdx(0)->getMonomerInfo());
+    auto *info0 = m2->getAtomWithIdx(0)->getMonomerInfo();
+    TEST_ASSERT(info0->getName() == "CA");
+    TEST_ASSERT(info0->getResidueName() == "ALA");
+    TEST_ASSERT(info0->getResidueNumber() == 42);
+    TEST_ASSERT(info0->getChainId() == "A");
+    TEST_ASSERT(info0->getMonomerClass() == "PEPTIDE");
+    TEST_ASSERT(info0->getMonomerType() == AtomMonomerInfo::OTHER);
+
+    // Test second atom - AtomPDBResidueInfo with base class fields
+    TEST_ASSERT(m2->getAtomWithIdx(1)->getMonomerInfo());
+    auto *info1 = m2->getAtomWithIdx(1)->getMonomerInfo();
+    TEST_ASSERT(info1->getName() == "CB");
+    TEST_ASSERT(info1->getResidueName() == "GLY");
+    TEST_ASSERT(info1->getResidueNumber() == 43);
+    TEST_ASSERT(info1->getChainId() == "B");
+    TEST_ASSERT(info1->getMonomerClass() == "LINK");
+    TEST_ASSERT(info1->getMonomerType() == AtomMonomerInfo::PDBRESIDUE);
+
+    // Also check PDB-specific fields
+    auto *pdbInfo1 = static_cast<const AtomPDBResidueInfo *>(info1);
+    TEST_ASSERT(pdbInfo1->getSerialNumber() == 123);
+    TEST_ASSERT(pdbInfo1->getAltLoc() == "A");
+    TEST_ASSERT(pdbInfo1->getInsertionCode() == "1");
+    TEST_ASSERT(pdbInfo1->getOccupancy() == 1.0);
+    TEST_ASSERT(pdbInfo1->getTempFactor() == 25.5);
+
+    // Test third atom - AtomMonomerInfo with minimal fields (defaults)
+    TEST_ASSERT(m2->getAtomWithIdx(2)->getMonomerInfo());
+    auto *info2 = m2->getAtomWithIdx(2)->getMonomerInfo();
+    TEST_ASSERT(info2->getName() == "N");
+    TEST_ASSERT(info2->getResidueName() == "");
+    TEST_ASSERT(info2->getResidueNumber() == 0);
+    TEST_ASSERT(info2->getChainId() == "");
+    TEST_ASSERT(info2->getMonomerClass() == "");
+    TEST_ASSERT(info2->getMonomerType() == AtomMonomerInfo::AMINO_ACID);
+
+    delete m2;
+  }
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -1761,6 +1844,7 @@ int main(int argc, char *argv[]) {
   testIssue280();
   testIssue285();
   testAtomResidues();
+  testAtomMonomerInfoFields();
   testGithub149();
   testGithub713();
   testGithub1563();
