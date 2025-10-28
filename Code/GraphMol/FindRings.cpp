@@ -212,6 +212,7 @@ void invertRingData(const std::vector<uint32_t> &ringBegins,
                     const std::vector<uint32_t> &ringContents,
                     std::vector<uint32_t> &membershipBegins,
                     std::vector<uint32_t> &memberships, uint32_t contentLimit) {
+  membershipBegins.clear();
   membershipBegins.resize(contentLimit + 1, 0);
 
   // First, count, but write the results one place later
@@ -1267,7 +1268,7 @@ bool _atomSearchBFS(const RDMol &tMol, uint32_t startAtomIdx,
   // Linking to the current index isn't valid, so this represents the end of the lists.
   listQueue.push_back(LinkPair{size_t(0), startAtomIdx});
   while (queueFront < listQueue.size()) {
-    if (listQueue.size() >= RingUtils::MAX_BFSQ_SIZE) {
+    if (listQueue.size() - queueFront >= RingUtils::MAX_BFSQ_SIZE) {
       std::string msg =
           "Maximum BFS search size exceeded.\nThis is likely due to a highly "
           "symmetric fused ring system.";
@@ -1303,7 +1304,9 @@ bool _atomSearchBFS(const RDMol &tMol, uint32_t startAtomIdx,
             newBits[value >> 6] |= (uint64_t(1) << (value & 0x3F));
             ++listSize;
           }
-          if (invars.find(newBits, oldInvarsSize).second) {
+          bool found = invars.find(newBits, oldInvarsSize).second;
+          invars.bits.resize(oldInvarsSize);
+          if (found) {
             // we're done!
             res.resize(listSize);
             // Fill them in the opposite order
@@ -1818,8 +1821,8 @@ int symmetrizeSSSR(RDMol &mol, bool includeDativeBonds,
                               extraRingSize, extraRing.data(),
                               mol);
     for (uint32_t ringIdx = 0; ringIdx < numRings; ++ringIdx) {
-      uint32_t ringBegin = ringBegins[extraRingIdx];
-      const uint32_t ringEnd = ringBegins[extraRingIdx + 1];
+      uint32_t ringBegin = ringBegins[ringIdx];
+      const uint32_t ringEnd = ringBegins[ringIdx + 1];
       const uint32_t ringSize = ringEnd - ringBegin;
       if (ringSize != extraRingSize) {
         continue;
@@ -1848,7 +1851,7 @@ int symmetrizeSSSR(RDMol &mol, bool includeDativeBonds,
 
       if (shareBond && replacesAllUniqueBonds) {
         auto &ringAtoms = mol.getRingInfo().atomsInRings;
-        ringAtoms.insert(ringAtoms.begin(),
+        ringAtoms.insert(ringAtoms.end(),
                          extraRingAtoms.begin() + extraRingBegin,
                          extraRingAtoms.begin() + extraRingEnd);
         mol.getRingInfo().ringBegins.push_back(ringAtoms.size());
