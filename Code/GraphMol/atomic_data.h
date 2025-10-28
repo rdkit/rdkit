@@ -21,6 +21,7 @@
 #define RD_ATOMIC_DATA_H
 
 #include <vector>
+#include <array>
 #include <cstdint>
 #include <string>
 #include <map>
