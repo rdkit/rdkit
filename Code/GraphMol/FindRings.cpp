@@ -1403,8 +1403,10 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
   // The original code wrote to the RingInfo, even though the mol is const.
   std::vector<atomindex_t> extraRingAtoms;
   std::vector<uint32_t> extraRingBegins;
+  // NOTE: The const_cast must be before calling getRingInfo(), else the
+  // compatibility data sync status for the ring info won't be set correctly.
   int retValue = findSSSR(
-      mol.asRDMol(), const_cast<RingInfoCache &>(mol.asRDMol().getRingInfo()),
+      mol.asRDMol(), const_cast<ROMol &>(mol).asRDMol().getRingInfo(),
       includeDativeBonds, includeHydrogenBonds, &extraRingAtoms,
       &extraRingBegins);
 
