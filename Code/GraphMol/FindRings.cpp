@@ -1366,7 +1366,7 @@ bool findRingConnectingAtoms(const RDMol &tMol, const uint32_t bondIndex,
     // TODO: This already gets checked inside _atomSearchBFS, so should always
     // insert, and it might as well be inserted there.
     if (invars.insert(nring, 0, nring.size()).second) {
-      resAtoms.insert(resAtoms.begin(), nring.begin(), nring.end());
+      resAtoms.insert(resAtoms.end(), nring.begin(), nring.end());
       resBegins.push_back(resAtoms.size());
       for (unsigned int i = 0; i < nring.size() - 1; ++i) {
         unsigned int bIdx =
