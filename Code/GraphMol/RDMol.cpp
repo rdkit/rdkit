@@ -89,6 +89,8 @@ class RDKIT_QUERY_EXPORT CompatQuery : public Query<int, CompatType, true> {
   }
   void setNegation(bool what) override { inner->setNegation(what); }
   void addChild(typename BASE::CHILD_TYPE child) override;
+
+  const INNER_TYPE *getInnerQuery() const override { return inner; }
 };
 
 //! This class is for wrapping an existing Query that was created using the
@@ -152,6 +154,8 @@ class RDKIT_QUERY_EXPORT NonCompatQuery : public Query<int, NonCompatType, true>
     inner->addChild(
         std::make_shared<CompatQuery<CompatType>>(child->copy(), true));
   }
+
+  const INNER_TYPE *getInnerQuery() const override { return inner; }
 };
 
 // Defined after NonCompatQuery class due to dependence

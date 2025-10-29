@@ -17,7 +17,15 @@
 
 #include <vector>
 #include <string>
+#include <type_traits>
 #include <RDGeneral/Invariant.h>
+
+namespace RDKit {
+class Atom;
+class Bond;
+class ConstRDMolAtom;
+class ConstRDMolBond;
+}
 
 namespace Queries {
 
@@ -51,6 +59,19 @@ class RDKIT_QUERY_EXPORT Query {
   using CHILD_VECT_CI = typename CHILD_VECT::const_iterator;
   using MATCH_FUNC_ARG_TYPE = MatchFuncArgType;
   using DATA_FUNC_ARG_TYPE = DataFuncArgType;
+
+  constexpr static bool IS_ATOM =
+      std::is_same_v<DataFuncArgType, const RDKit::Atom *> ||
+      std::is_same_v<DataFuncArgType, RDKit::ConstRDMolAtom>;
+  constexpr static bool IS_COMPAT =
+      std::is_same_v<DataFuncArgType, const RDKit::Atom *> ||
+      std::is_same_v<DataFuncArgType, const RDKit::Bond *>;
+
+  using INNER_ARG_TYPE = std::conditional_t<
+      IS_COMPAT,
+      std::conditional_t<IS_ATOM, RDKit::ConstRDMolAtom, RDKit::ConstRDMolBond>,
+      std::conditional_t<IS_ATOM, const RDKit::Atom *, const RDKit::Bond *>>;
+  using INNER_TYPE = typename Query<MatchFuncArgType, INNER_ARG_TYPE, needsConversion>;
 
   Query() : d_matchFunc(nullptr), d_dataFunc(nullptr) {}
   virtual ~Query() { this->d_children.clear(); }
@@ -145,6 +166,8 @@ class RDKIT_QUERY_EXPORT Query {
     res->d_queryType = this->d_queryType;
     return res;
   }
+
+  virtual const INNER_TYPE *getInnerQuery() const { return nullptr; }
 
  protected:
   MatchFuncArgType d_val = 0;

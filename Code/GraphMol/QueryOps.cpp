@@ -971,10 +971,20 @@ bool hasComplexBondTypeQueryHelper(
 
 RDKIT_GRAPHMOL_EXPORT bool hasComplexBondTypeQuery(
     const Queries::Query<int, Bond const *, true> &qry) {
+  // If the query is a wrapper of an inner query, check the inner query
+  const auto *innerQuery = qry.getInnerQuery();
+  if (innerQuery != nullptr) {
+    return hasComplexBondTypeQueryHelper(*innerQuery, false);
+  }
   return hasComplexBondTypeQueryHelper(qry, false);
 }
 RDKIT_GRAPHMOL_EXPORT bool hasComplexBondTypeQuery(
     const Queries::Query<int, ConstRDMolBond, true> &qry) {
+  // If the query is a wrapper of an inner query, check the inner query
+  const auto *innerQuery = qry.getInnerQuery();
+  if (innerQuery != nullptr) {
+    return hasComplexBondTypeQueryHelper(*innerQuery, false);
+  }
   return hasComplexBondTypeQueryHelper(qry, false);
 }
 }  // namespace QueryOps
