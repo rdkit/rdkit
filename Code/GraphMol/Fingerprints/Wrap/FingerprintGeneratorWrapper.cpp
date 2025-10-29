@@ -448,6 +448,24 @@ python::object getBitInfoMapHelper(const AdditionalOutput &ao) {
   }
   return res;
 }
+python::object getAtomsPerBitHelper(const AdditionalOutput &ao) {
+  if (!ao.atomsPerBit) {
+    return python::object();
+  }
+  python::dict res;
+  for (const auto &pr : *ao.atomsPerBit) {
+    python::list local;
+    for (const auto &lst : pr.second) {
+      python::list inner;
+      for (const auto v : lst) {
+        inner.append(v);
+      }
+      local.append(python::tuple(inner));
+    }
+    res[pr.first] = python::tuple(local);
+  }
+  return res;
+}
 
 namespace {
 template <typename T>
@@ -666,6 +684,8 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            python::args("self"), "synonym for CollectBitPaths()")
       .def("AllocateAtomCounts", &AdditionalOutput::allocateAtomCounts,
            python::args("self"), "synonym for CollectAtomCounts()")
+      .def("AllocateAtomsPerBit", &AdditionalOutput::allocateAtomsPerBit,
+           python::args("self"), "synonym for CollectAtomsPerBit()")
       .def(
           "CollectAtomToBits", &AdditionalOutput::allocateAtomToBits,
           python::args("self"),
@@ -682,10 +702,15 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
           "CollectAtomCounts", &AdditionalOutput::allocateAtomCounts,
           python::args("self"),
           "toggles collection of information about the number of bits each atom is involved in")
+      .def(
+          "CollectAtomsPerBit", &AdditionalOutput::allocateAtomsPerBit,
+          python::args("self"),
+          "toggles collection of information about all atoms involved in setting each bit")
       .def("GetAtomToBits", &getAtomToBitsHelper, python::args("self"))
       .def("GetBitInfoMap", &getBitInfoMapHelper, python::args("self"))
       .def("GetBitPaths", &getBitPathsHelper, python::args("self"))
-      .def("GetAtomCounts", &getAtomCountsHelper, python::args("self"));
+      .def("GetAtomCounts", &getAtomCountsHelper, python::args("self"))
+      .def("GetAtomsPerBit", &getAtomsPerBitHelper, python::args("self"));
 
   python::class_<FingerprintArguments, boost::noncopyable>("FingerprintOptions",
                                                            python::no_init)
