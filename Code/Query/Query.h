@@ -71,7 +71,7 @@ class RDKIT_QUERY_EXPORT Query {
       IS_COMPAT,
       std::conditional_t<IS_ATOM, RDKit::ConstRDMolAtom, RDKit::ConstRDMolBond>,
       std::conditional_t<IS_ATOM, const RDKit::Atom *, const RDKit::Bond *>>;
-  using INNER_TYPE = typename Query<MatchFuncArgType, INNER_ARG_TYPE, needsConversion>;
+  using INNER_TYPE = Query<MatchFuncArgType, INNER_ARG_TYPE, needsConversion>;
 
   Query() : d_matchFunc(nullptr), d_dataFunc(nullptr) {}
   virtual ~Query() { this->d_children.clear(); }
