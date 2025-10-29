@@ -47,6 +47,7 @@ import numpy
 
 from rdkit import Chem, DataStructs, Geometry
 from rdkit.Chem import Draw, rdDepictor
+from rdkit.Chem import rdFingerprintGenerator
 from rdkit.Chem import rdMolDescriptors as rdMD
 from rdkit.Chem.Draw import rdMolDraw2D
 
@@ -224,6 +225,70 @@ def GetSimilarityMapForFingerprint(refMol, probeMol, fpFunction, draw2d,
     """
 
   weights = GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric)
+  weights, maxWeight = GetStandardizedWeights(weights)
+  draw2d = GetSimilarityMapFromWeights(probeMol, weights, draw2d, **kwargs)
+  return draw2d, maxWeight
+
+def GetAtomicWeightsForFingerprintGenerator(refMol, probeMol, fpg, useCounts=False, metric=DataStructs.DiceSimilarity):
+  """
+    Calculates the atomic weights for the probe molecule
+    based on a fingerprint function and a metric.
+
+    Parameters:
+      refMol -- the reference molecule
+      probeMol -- the probe molecule
+      fpg -- the fingerprint generator
+      metric -- the similarity metric
+
+    """
+  if not useCounts:  
+    refFP = fpg.GetFingerprint(refMol)
+  else:
+    refFP = fpg.GetCountFingerprint(refMol)
+  probeAo = rdFingerprintGenerator.AdditionalOutput()
+  probeAo.AllocateAtomsPerBit()
+  if not useCounts:
+    probeFP = fpg.GetFingerprint(probeMol, additionalOutput=probeAo)
+  else:
+    probeFP = fpg.GetCountFingerprint(probeMol, additionalOutput=probeAo)
+
+  baseSimilarity = metric(refFP, probeFP)
+
+  dmat = Chem.GetDistanceMatrix(probeMol)
+  
+  atomsPerBit = probeAo.GetAtomsPerBit()
+
+  atomFps = [copy.deepcopy(probeFP) for i in range(probeMol.GetNumAtoms())]
+  for bit,entries in atomsPerBit.items():
+    for entry in entries:
+      for aid in entry:
+        if not useCounts:
+          atomFps[aid].UnSetBit(bit)
+        else:
+          atomFps[aid][bit] -= 1
+  
+  weights = []
+  for atomId in range(probeMol.GetNumAtoms()):
+    weights.append(baseSimilarity - metric(refFP, atomFps[atomId ]))
+  return weights
+
+
+def GetSimilarityMapForFingerprintGenerator(refMol, probeMol, fpg, draw2d,
+                                   metric=DataStructs.DiceSimilarity, useCounts=False,
+                                   **kwargs):
+  """
+    Generates the similarity map for a given reference and probe molecule,
+    fingerprint function and similarity metric.
+
+    Parameters:
+      refMol -- the reference molecule
+      probeMol -- the probe molecule
+      fpg -- the fingerprint generator
+      metric -- the similarity metric.
+      kwargs -- additional arguments for drawing
+    """
+
+  weights = GetAtomicWeightsForFingerprintGenerator(refMol, probeMol, fpg, metric=metric, useCounts=useCounts)
   weights, maxWeight = GetStandardizedWeights(weights)
   draw2d = GetSimilarityMapFromWeights(probeMol, weights, draw2d, **kwargs)
   return draw2d, maxWeight
