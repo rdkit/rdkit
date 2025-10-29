@@ -196,6 +196,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     molTemplateProtection;  // string
 
 RDKIT_RDGENERAL_EXPORT extern const std::string molAtomSeqId;       // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAtomSeqName;     // string
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnExactChange;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molReactStatus;     // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molFileLinkNodes;   // string

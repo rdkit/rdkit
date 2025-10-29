@@ -989,7 +989,9 @@ class MolFromSCSRMolConverter {
       } else {  // it is a macro atom - expand it
 
         unsigned int seqId = 0;
+        std::string seqName = "";
         atom->getPropIfPresent(common_properties::molAtomSeqId, seqId);
+        atom->getPropIfPresent(common_properties::molAtomSeqName, seqName);
 
         //  find the template that matches the class and label
 
@@ -1065,6 +1067,9 @@ class MolFromSCSRMolConverter {
         if (seqId != 0) {
           sgroupName += "_" + std::to_string(seqId);
         }
+        if (seqName != "") {
+          sgroupName += "_" + seqName;
+        }
 
         auto coordOffset = (conf->getAtomPos(atomIdx) * maxSize) -
                            templateCentroids[templateIdx];
@@ -1114,6 +1119,9 @@ class MolFromSCSRMolConverter {
                     std::string sgroupName = dummyLabel;
                     if (seqId != 0) {
                       sgroupName += "_" + std::to_string(seqId);
+                    }
+                    if (seqName != "") {
+                      sgroupName += "_" + seqName;
                     }
                     sgroupName += "_" + attachPoint.id;
                     foundLgSgroup = true;
