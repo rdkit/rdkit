@@ -441,16 +441,11 @@ void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
     return sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE;
   };
 
-  // if there's more than one ABS group, raise a warning and
-  // merge them
+  // if there's more than one ABS group, merge them
   if (auto num_abs = std::ranges::count_if(stereo_groups, is_abs);
       num_abs <= 1) {
     d_stereo_groups = std::move(stereo_groups);
   } else {
-    BOOST_LOG(rdWarningLog)
-        << "Collapsing multiple ABS groups on mol into a single one."
-        << std::endl;
-
     std::vector<Atom *> abs_atoms;
     std::vector<Bond *> abs_bonds;
     std::vector<StereoGroup> new_stereo_groups;
