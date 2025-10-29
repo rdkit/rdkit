@@ -875,6 +875,25 @@ const std::vector<StereoGroup> &RDMol::getStereoGroupsCompat() {
   return *stereoGroupsData;
 }
 
+void RDMol::clearStereoGroupsCompat() {
+  // Nothing should be trying to read the stereo groups while it's being
+  // written, so it's safe to clear the old compatibility data without locking.
+  RDMol::CompatibilityData *compat =
+      compatibilityData.load(std::memory_order_relaxed);
+  if (compat != nullptr) {
+    auto *compatStereoGroups =
+        compat->stereoGroups.load(std::memory_order_relaxed);
+    if (compatStereoGroups != nullptr) {
+      // TODO: This approach of allocating a new std::vector<StereoGroup> after
+      // modification results in a varying address, whereas the previous
+      // interface had a persistent address across writes. Does this need to be
+      // preserved? See also getStereoGroupsCompat
+      delete compatStereoGroups;
+      compat->stereoGroups.store(nullptr, std::memory_order_relaxed);
+    }
+  }
+}
+
 void RDMol::copyFromCompatibilityData(const CompatibilityData *source,
                                       bool quickCopy, int confId) {
   if (source == nullptr) {
@@ -3311,21 +3330,8 @@ bool RDMol::hasBondBookmark(int mark) const {
 }
 
 void RDMol::setStereoGroups(std::unique_ptr<StereoGroups> &&groups) {
-  // Nothing should be trying to read the stereo groups while it's being written,
-  // so it's safe to clear the old compatibility data without locking.
-  RDMol::CompatibilityData *compat = compatibilityData.load(std::memory_order_relaxed);
-  if (compat != nullptr) {
-    auto *compatStereoGroups = compat->stereoGroups.load(std::memory_order_relaxed);
-    if (compatStereoGroups != nullptr) {
-      // TODO: This approach of allocating a new std::vector<StereoGroup> after
-      // modification results in a varying address, whereas the previous interface
-      // had a persistent address across writes. Does this need to be preserved?
-      // See also getStereoGroupsCompat
-      delete compatStereoGroups;
-      compat->stereoGroups.store(nullptr, std::memory_order_relaxed);
-    }
-  }
-  
+  clearStereoGroupsCompat();
+
   stereoGroups = std::move(groups);
 }
 

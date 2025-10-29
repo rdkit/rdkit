@@ -1597,7 +1597,10 @@ public:
   bool hasBondBookmark(int mark) const;
 
   const StereoGroups* getStereoGroups() const { return stereoGroups.get(); }
-  StereoGroups* getStereoGroups() { return stereoGroups.get(); }
+  StereoGroups *getStereoGroups() {
+    clearStereoGroupsCompat();
+    return stereoGroups.get();
+  }
   void setStereoGroups(std::unique_ptr<StereoGroups> &&groups);
 
   std::vector<SubstanceGroup>& getSubstanceGroups() { return substanceGroups; }
@@ -1957,6 +1960,7 @@ public:
   const RingInfo &getRingInfoCompat() const;
 
   const std::vector<StereoGroup> &getStereoGroupsCompat();
+  void clearStereoGroupsCompat();
 
   // Replaces an atom handle in compatibility data. Cleans up previous data mol.
   // Does not copy any data, but replaces pointers in compatibility structures.
