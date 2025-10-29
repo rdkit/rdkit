@@ -184,6 +184,17 @@ RDKIT_RDGENERAL_EXPORT extern const std::string molAtomClass;  // string
 RDKIT_RDGENERAL_EXPORT extern const std::string natReplace;    // string
 RDKIT_RDGENERAL_EXPORT extern const std::string
     templateNames;  // vector of strings
+
+RDKIT_RDGENERAL_EXPORT extern const std::string molTemplateComment;    // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molTemplateFullName;   // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molTemplateCategory;   // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molTemplateUniqueId;   // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molTemplateCasNumber;  // string
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    molTemplateCollaborator;  // string
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    molTemplateProtection;  // string
+
 RDKIT_RDGENERAL_EXPORT extern const std::string molAtomSeqId;       // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnExactChange;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molReactStatus;     // int

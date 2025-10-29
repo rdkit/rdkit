@@ -86,47 +86,113 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
   }
   tempStr = FileParserUtils::getV3000Line(&inStream, line);
 
-  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A
+  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment FULLNAME=fullname
+  // CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx, COLLABORATOR=col,
+  // PROTECTION=prot
   while (tempStr.substr(0, 8) == "TEMPLATE") {
     std::vector<std::string> tokens;
+    std::vector<std::string> subTokens;
     boost::algorithm::split(tokens, tempStr, boost::algorithm::is_space());
 
-    std::string natReplace = "";
-    if (tokens.size() == 4) {
-      if (tokens[3].size() < 12 || tokens[3].substr(0, 11) != "NATREPLACE=") {
-        std::ostringstream errout;
-        errout << "Bad NATREPLACE entry at line  " << line;
-        throw FileParseException(errout.str());
-      }
-      natReplace = tokens[3].substr(12);
-    } else if (tokens.size() != 3) {
+    if (tokens.size() < 3) {
       std::ostringstream errout;
-      errout << "Bad TEMPLATE at line  " << line;
+      errout << "Bad Template entry at line  " << line;
       throw FileParseException(errout.str());
     }
-    boost::algorithm::split(tokens, tokens[2],
+
+    // get the class and template names
+
+    boost::algorithm::split(subTokens, tokens[2],
                             boost::algorithm::is_any_of("/"));
-    if (tokens.size() < 3) {
+    if (subTokens.size() < 3) {
       std::ostringstream errout;
       errout << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line  "
              << line;
       throw FileParseException(errout.str());
     }
 
-    res->addTemplate(std::unique_ptr<ROMol>(new ROMol()));
-    auto templateMol = (RWMol *)res->getTemplate(res->getTemplateCount() - 1);
-
-    templateMol->setProp(common_properties::natReplace, natReplace);
-    templateMol->setProp(common_properties::molAtomClass, tokens[0]);
+    std::string templateClass = subTokens[0];
 
     std::vector<std::string> templateNames;
-    for (unsigned int i = 1; i < tokens.size(); ++i) {
-      if (tokens[i] != "") {
-        templateNames.push_back(tokens[i]);
+
+    for (unsigned int i = 1; i < subTokens.size(); ++i) {
+      if (subTokens[i] != "") {
+        templateNames.push_back(subTokens[i]);
       }
     }
 
+    std::string natReplace = "", comment = "", fullName = "", categoroy = "",
+                uniqueId = "", casNumber = "", collaborator = "",
+                protection = "";
+
+    for (unsigned int i = 3; i < tokens.size(); ++i) {
+      boost::algorithm::split(subTokens, tokens[i],
+                              boost::algorithm::is_any_of("="));
+      if (subTokens.size() != 2) {
+        std::ostringstream errout;
+        errout
+            << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line  "
+            << line;
+        throw FileParseException(errout.str());
+      }
+
+      if (subTokens[0] == "NATREPLACE") {
+        natReplace = subTokens[1];
+      } else if (subTokens[0] == "COMMENT") {
+        comment = subTokens[1];
+      } else if (subTokens[0] == "FULLNAME") {
+        fullName = subTokens[1];
+      } else if (subTokens[0] == "CATEGORY") {
+        categoroy = subTokens[1];
+      } else if (subTokens[0] == "UNIQUEID") {
+        uniqueId = subTokens[1];
+      } else if (subTokens[0] == "CASNUMBER") {
+        casNumber = subTokens[1];
+      } else if (subTokens[0] == "COLLABORATOR") {
+        collaborator = subTokens[1];
+      } else if (subTokens[0] == "PROTECTION") {
+        protection = subTokens[1];
+      } else {
+        std::ostringstream errout;
+        errout
+            << "Attribute name must be one of: NATREPLACECOMMENT, FULLNAME, CATEGORY, UNIQUEID, CASNUMBER, COLLABORATOR, or PROTECTION at line  "
+            << line;
+        throw FileParseException(errout.str());
+      }
+    }
+
+    res->addTemplate(std::unique_ptr<ROMol>(new ROMol()));
+    auto templateMol = (RWMol *)res->getTemplate(res->getTemplateCount() - 1);
+    templateMol->setProp(common_properties::molAtomClass, templateClass);
     templateMol->setProp(common_properties::templateNames, templateNames);
+
+    if (natReplace != "") {
+      templateMol->setProp(common_properties::natReplace, natReplace);
+    }
+    if (comment != "") {
+      templateMol->setProp(common_properties::molTemplateComment, comment);
+    }
+    if (fullName != "") {
+      templateMol->setProp(common_properties::molTemplateFullName, fullName);
+    }
+    if (categoroy != "") {
+      templateMol->setProp(common_properties::molTemplateCategory, categoroy);
+    }
+    if (uniqueId != "") {
+      templateMol->setProp(common_properties::molTemplateUniqueId, uniqueId);
+    }
+    if (casNumber != "") {
+      templateMol->setProp(common_properties::molTemplateCasNumber, casNumber);
+    }
+    if (collaborator != "") {
+      templateMol->setProp(common_properties::molTemplateCollaborator,
+                           collaborator);
+    }
+    if (protection != "") {
+      templateMol->setProp(common_properties::molTemplateProtection,
+                           protection);
+    }
+
     auto molComplete = false;
     Conformer *conf = nullptr;
     try {
