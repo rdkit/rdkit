@@ -90,6 +90,11 @@ void AtomPairAtomEnv<OutputType>::updateAdditionalOutput(
     additionalOutput->atomCounts->at(d_atomIdFirst)++;
     additionalOutput->atomCounts->at(d_atomIdSecond)++;
   }
+  if (additionalOutput->atomsPerBit) {
+    (*additionalOutput->atomsPerBit)[bitId].emplace_back();
+    (*additionalOutput->atomsPerBit)[bitId].back().push_back(d_atomIdFirst);
+    (*additionalOutput->atomsPerBit)[bitId].back().push_back(d_atomIdSecond);
+  }
 }
 
 template <typename OutputType>

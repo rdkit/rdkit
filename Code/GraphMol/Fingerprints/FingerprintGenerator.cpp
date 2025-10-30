@@ -286,6 +286,12 @@ void duplicateAdditionalOutputBit(AdditionalOutput &oldAO,
       (*newAO.bitPaths)[newBitId] = v->second;
     }
   }
+  if (oldAO.atomsPerBit) {
+    const auto v = oldAO.atomsPerBit->find(origBitId);
+    if (v != oldAO.atomsPerBit->end()) {
+      (*newAO.atomsPerBit)[newBitId] = v->second;
+    }
+  }
 }
 
 void setupTempAdditionalOutput(RDKit::FingerprintFuncArguments &args,
@@ -302,6 +308,9 @@ void setupTempAdditionalOutput(RDKit::FingerprintFuncArguments &args,
   }
   if (args.additionalOutput->bitPaths) {
     countSimulationOutput.allocateBitPaths();
+  }
+  if (args.additionalOutput->atomsPerBit) {
+    countSimulationOutput.allocateAtomsPerBit();
   }
   reinitAdditionalOutput(*args.additionalOutput, numAtoms);
 }
