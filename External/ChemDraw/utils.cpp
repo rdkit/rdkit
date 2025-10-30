@@ -111,10 +111,9 @@ struct FragmentReplacement {
     // The "addBond" lower in the loop modifies the atomBonds iterator, which
     // made this loop re-run the 1st iteration. So we copy the bonds first to
     // ensure we don't modify while iterating.
-    std::vector<Bond *> replacement_bonds;
-    for (auto bond : mol.atomBonds(replacement_atom)) {
-      replacement_bonds.push_back(bond);
-    }
+    std::vector<Bond *> replacement_bonds(
+        mol.atomBonds(replacement_atom).begin(),
+        mol.atomBonds(replacement_atom).end());
 
     // Find the connecting atoms and and do the replacement
     for (auto bond : replacement_bonds) {
@@ -143,10 +142,9 @@ struct FragmentReplacement {
       // The "addBond" lower in the loop modifies the atomBonds iterator, which
       // gave trouble with the replacement bonds. To ensure safety, we copy the bonds first.
       auto &xatom = fragment_atoms[pos];
-      std::vector<Bond *> xbonds;
-      for (auto &xbond : mol.atomBonds(xatom)) {
-        xbonds.push_back(xbond);
-      }
+      std::vector<Bond *> xbonds(mol.atomBonds(xatom).begin(),
+                                 mol.atomBonds(xatom).end());
+
       for (auto &xbond : xbonds) {
         // xatom is the fragment dummy atom
         // xbond is the fragment bond
