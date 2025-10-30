@@ -94,7 +94,6 @@ std::vector<unsigned int> possibleValences(
 
 LazyCartesianProduct<unsigned int> getValenceCombinations(
     const RDKit::RWMol &mol,
-    const int charge,
     size_t iterations = 100) {
   auto numAtoms = mol.getNumAtoms();
   const std::unordered_map<int, std::vector<unsigned int>> atomicValence = {
@@ -432,7 +431,7 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
   std::vector<unsigned int> bestValency(origValency);
   int bestSum = std::accumulate(origValency.begin(), origValency.end(), 0);
 
-  auto valenceCombos = getValenceCombinations(mol, charge);
+  auto valenceCombos = getValenceCombinations(mol);
 
   bool valencyValid = false;
   bool chargeValid = false;
