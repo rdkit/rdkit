@@ -1400,6 +1400,8 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT *res, bool includeDativeBonds,
 
 int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
              bool includeHydrogenBonds) {
+  mol.clearProp(common_properties::extraRings);
+
   // The original code wrote to the RingInfo, even though the mol is const.
   std::vector<atomindex_t> extraRingAtoms;
   std::vector<uint32_t> extraRingBegins;
@@ -1426,7 +1428,16 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
   }
 
   if (extraRingAtoms.size() != 0) {
-    // FIXME: Add extraRings property
+    // Add extraRings property for compatibility, in case any calling code
+    // checks for it.
+    VECT_INT_VECT molExtras;
+    for (size_t extraRingIdx = 0, numExtra = extraRingBegins.size() - 1;
+         extraRingIdx < numExtra; ++extraRingIdx) {
+      molExtras.emplace_back(
+          extraRingAtoms.begin() + extraRingBegins[extraRingIdx],
+          extraRingAtoms.begin() + extraRingBegins[extraRingIdx + 1]);
+    }
+    mol.setProp(common_properties::extraRings, molExtras, true);
   }
   return retValue;
 }
@@ -1739,6 +1750,7 @@ int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds,
 int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
                    bool includeHydrogenBonds) {
   res.clear();
+  mol.clearProp(common_properties::extraRings);
 
   int retValue =
       symmetrizeSSSR(mol.asRDMol(), includeDativeBonds, includeHydrogenBonds);
