@@ -71,7 +71,7 @@ function test_basics() {
     var descrs = JSON.parse(mol.get_descriptors());
     assert.equal(descrs.NumAromaticRings,1);
     assert.equal(descrs.NumRings,1);
-    assert.equal(descrs.amw,94.11299);
+    assert.equal(descrs.amw,94.11299999999999);
 
     var checkStringBinaryFpIdentity = (stringFp, binaryFp) => {
         assert.equal(binaryFp.length, Math.ceil(stringFp.length / 8));

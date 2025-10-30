@@ -11,13 +11,11 @@
 #include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Chirality.h>
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
+#include <boost/json.hpp>
 #include <string>
 #include <vector>
 
-namespace rj = rapidjson;
+namespace bj = boost::json;
 
 namespace RDKit {
 namespace MinimalLib {
@@ -179,27 +177,20 @@ class DrawerFromDetails {
     if (!d_drawCoords) {
       return res;
     }
-    rj::Document doc;
-    doc.SetObject();
-    rj::Value rjDrawCoords(rj::kArrayType);
+    bj::object doc;
+    bj::array bjDrawCoords;
     for (const auto &drawXY : *d_drawCoords) {
-      rj::Value rjXY(rj::kArrayType);
-      rjXY.PushBack(drawXY.x, doc.GetAllocator());
-      rjXY.PushBack(drawXY.y, doc.GetAllocator());
-      rjDrawCoords.PushBack(rjXY, doc.GetAllocator());
+      bj::array bjXY;
+      bjXY.push_back(drawXY.x);
+      bjXY.push_back(drawXY.y);
+      bjDrawCoords.push_back(bjXY);
     }
-    doc.AddMember("drawCoords", rjDrawCoords, doc.GetAllocator());
+    doc["drawCoords"] = bjDrawCoords;
     const auto drawingResultKey = getDrawingResultKey();
     if (drawingResultKey) {
-      doc.AddMember(rj::StringRef(drawingResultKey),
-                    rj::Value(res.c_str(), doc.GetAllocator()),
-                    doc.GetAllocator());
+      doc[drawingResultKey] = res;
     }
-    rj::StringBuffer buffer;
-    rj::Writer<rj::StringBuffer> writer(buffer);
-    writer.SetMaxDecimalPlaces(5);
-    doc.Accept(writer);
-    return buffer.GetString();
+    return bj::serialize(doc);
   }
 
  private:

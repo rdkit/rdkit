@@ -53,12 +53,10 @@
 #include <INCHI-API/inchi.h>
 #endif
 
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
+#include <boost/json.hpp>
 #include "cffiwrapper.h"
 
-namespace rj = rapidjson;
+namespace bj = boost::json;
 
 using namespace RDKit;
 
@@ -393,13 +391,9 @@ extern "C" char *get_substruct_match(const char *mol_pkl, size_t mol_pkl_sz,
   auto matches = SubstructMatch(mol, query, params);
   if (!matches.empty()) {
     auto match = matches[0];
-    rj::Document doc;
-    doc.SetObject();
-    MinimalLib::get_sss_json(mol, query, match, doc, doc);
-    rj::StringBuffer buffer;
-    rj::Writer<rj::StringBuffer> writer(buffer);
-    doc.Accept(writer);
-    res = buffer.GetString();
+    bj::object doc;
+    MinimalLib::get_sss_json(mol, query, match, doc);
+    res = bj::serialize(doc);
   }
 
   return str_to_c(res);
@@ -423,19 +417,15 @@ extern "C" char *get_substruct_matches(const char *mol_pkl, size_t mol_pkl_sz,
   std::string res = "{}";
   auto matches = SubstructMatch(mol, query, params);
   if (!matches.empty()) {
-    rj::Document doc;
-    doc.SetArray();
+    bj::array doc;
 
     for (const auto &match : matches) {
-      rj::Value rjMatch(rj::kObjectType);
-      MinimalLib::get_sss_json(mol, query, match, rjMatch, doc);
-      doc.PushBack(rjMatch, doc.GetAllocator());
+      bj::object bjMatch;
+      MinimalLib::get_sss_json(mol, query, match, bjMatch);
+      doc.push_back(bjMatch);
     }
 
-    rj::StringBuffer buffer;
-    rj::Writer<rj::StringBuffer> writer(buffer);
-    doc.Accept(writer);
-    res = buffer.GetString();
+    res = bj::serialize(doc);
   }
 
   return str_to_c(res);
