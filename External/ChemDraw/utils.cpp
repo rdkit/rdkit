@@ -116,6 +116,7 @@ struct FragmentReplacement {
         mol.atomBonds(replacement_atom).end());
 
     // Find the connecting atoms and and do the replacement
+    std::vector<Bond *> xbonds;  // Reuse this vector to avoid repeated allocations
     for (auto bond : replacement_bonds) {
       // find the position of the attachment bonds in the bond ordering
       unsigned bond_id = 0;
@@ -142,8 +143,8 @@ struct FragmentReplacement {
       // The "addBond" lower in the loop modifies the atomBonds iterator, which
       // gave trouble with the replacement bonds. To ensure safety, we copy the bonds first.
       auto &xatom = fragment_atoms[pos];
-      std::vector<Bond *> xbonds(mol.atomBonds(xatom).begin(),
-                                 mol.atomBonds(xatom).end());
+      xbonds.assign(mol.atomBonds(xatom).begin(),
+                    mol.atomBonds(xatom).end());
 
       for (auto &xbond : xbonds) {
         // xatom is the fragment dummy atom
