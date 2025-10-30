@@ -15,7 +15,7 @@ steps:
         cmake=3.26 ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        cairo eigen swig=4.2
+        cairo eigen swig=4.2 lapack liblapacke blas
     call activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
