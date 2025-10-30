@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build cmake -c conda-forge --override-channels \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
-        cairo eigen
+        cairo eigen ninja
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict	
@@ -37,13 +37,14 @@ steps:
     -DBoost_NO_SYSTEM_PATHS=ON \
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
     -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib" \
-    -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+    -DCMAKE_PREFIX_PATH=$CONDA_PREFIX \
+    -DCMAKE_GENERATOR=Ninja
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     cd build
-    make -j $( $(number_of_cores) ) install
+    ninja -j $( $(number_of_cores) )
   displayName: Build
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
