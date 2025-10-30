@@ -124,7 +124,7 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
         auto neighIdx = neighbor->getIdx();
         auto neighDegree = neighbor->getDegree();
         auto maxPos = *std::max_element(curPossible[neighIdx].begin(), curPossible[neighIdx].end());
-        availBonds += maxPos - neighDegree + std::max(0, charge);
+        availBonds += maxPos - neighDegree;
       }
 
       auto numBonds = atom->getDegree();
