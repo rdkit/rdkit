@@ -543,3 +543,36 @@ TEST_CASE("Time out in DetermineBondOrders()") {
 
   CHECK(bond->getBondType() == Bond::DOUBLE);
 }
+
+#ifdef RDK_TEST_MULTITHREADED
+
+using namespace std::chrono_literals;
+TEST_CASE("test interrupt") {
+  // From https://github.com/rdkit/rdkit/issues/8006#issuecomment-2482303010
+  // lots of nitro groups which should make run for quite a bit of time
+  auto mol =
+      "O=[N+]([O-])OC[C@@H](O[N+](=O)[O-])[C@@H](O[N+](=O)[O-])[C@H](O[N+](=O)[O-])[C@@H](CO[N+](=O)[O-])O[N+](=O)[O-]"_smiles;
+  REQUIRE(mol);
+
+  // one thread for determineBondOrders
+  std::thread cgThread([&mol]() {
+    constexpr int charge = 0;
+    constexpr bool allowChargedFragments = true;
+    constexpr bool embedChiral = false;
+    constexpr bool useAtomMap = false;
+
+    determineBondOrders(*mol, charge, allowChargedFragments, embedChiral,
+                        useAtomMap);
+  });
+  // another thread to raise SIGINT
+  std::thread interruptThread([]() {
+    // sleep for a bit to allow for a few iterations, but not enough to
+    // hit maxIterations and trigger the exception
+    std::this_thread::sleep_for(100ms);
+    std::raise(SIGINT);
+  });
+  cgThread.join();
+  interruptThread.join();
+}
+
+#endif
