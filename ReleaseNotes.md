@@ -1,4 +1,4 @@
-# Release_2026.03.1
+# Release_2025.09.2
 (Changes relative to Release_2025.09.1)
 
 ## Acknowledgements
@@ -6,7 +6,10 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
-## Highlights
+Jakub Adamczyk, Chris Von Bargen, David Cosgrove, Andrew Dirksen, Tad Hurst,
+Gareth Jones, Brian Kelley, Niels Maeder, Josh A. Mitchell, Rachael Pirie,
+Ricardo Rodriguez, Paolo Tosco, Ivan Tubert-Brohman, marlon2468morales-hue,
+spparel
 
 ## Backwards incompatible changes:
 - Simple AND queries are now merged into atoms. E.g. `[C&+]` now produces the
@@ -24,14 +27,68 @@ GitHub)
   added if present.
 
 ## New Features and Enhancements:
+  - MolFromSmiles scales quadratically with chain length
+ (github issue #8776 from i-tub)
+  - Allow Multiple Core Hits in the Same Molecule in RGroupDecomposition
+ (github pull #8813 from DavidACosgrove)
+  - Merge simple AND queries onto atoms.
+ (github pull #8830 from ricrogz)
+  - Implement a mechanism to patch .pyi files as proposed in #8749
+ (github pull #8835 from ptosco)
+  - allow default radii in the DCLV calculation
+ (github pull #8836 from greglandrum)
+  - Address #8840 by implementing dpi parameter in PandasTools.SaveXlsxFromFrame()
+ (github pull #8841 from ptosco)
+  - Add safeSetattr to more params / options objects
+ (github pull #8842 from nmaeder)
+  - add Reaction From Smiles python wrapper
+ (github pull #8843 from RPirie96)
+  - Use properties in the MolDrawOptions python wrappers to make setting/getting colours easier
+ (github pull #8857 from greglandrum)
+  - Minor docstring tweak.
+ (github pull #8860 from DavidACosgrove)
+  - set up performance benchmarks
+ (github pull #8865 from bddap)
 
 ## Bug Fixes:
+  - Hydrides in organometallics removed when parsing
+ (github issue #8726 from spparel)
+  - CSharp wrapper fails to build on Linux
+ (github issue #8801 from jones-gareth)
+  - Setting `maxAttempts` vs `maxIterations` in `EmbedMolecule`
+ (github issue #8807 from j-adamczyk)
+  - Allowed list atoms should be read as dummy atoms
+ (github issue #8820 from cdvonbargen)
+  - Aromaticity perception with list queries depends on ordering of atoms
+ (github issue #8823 from greglandrum)
+  - Install expat lib in static builds
+ (github pull #8832 from ricrogz)
+  - Allow labeled atoms to have working queries
+ (github pull #8849 from bp-kelley)
+  - A fix and some refactoring for substructure highlighting in notebooks
+ (github pull #8851 from greglandrum)
+  - use bond labels in the ranking in MolFragmentToSmiles
+ (github pull #8861 from greglandrum)
+  - Calling atom.SetQuery(None) segfaults
+ (github issue #8877 from bp-kelley)
+  - Whitespace mangled in `GetPropsAsDict()`
+ (github issue #8890 from Yoshanuikabundi)
+  - Partial fix to a problem with implicit Hs being written to SMARTS
+ (github pull #8893 from greglandrum)
+  - Change docs in Python EmbedMultipleConfs.
+ (github pull #8900 from DavidACosgrove)
 
 ## Cleanup work:
-
-## Code removed in this release:
-
-## Deprecated code (to be removed in a future release):
+  - run clang-tidy and clang-format on the chemdraw files
+ (github pull #8837 from greglandrum)
+  - Refactor iostreams includes
+ (github pull #8846 from ricrogz)
+  - Minor refactor of the python wrappers
+ (github pull #8847 from ricrogz)
+  - Do not add explicit Hs in assignChiralTypesFromMolParity
+ (github pull #8872 from ricrogz)
+  - make Point2D and Point3D constexpr
+ (github pull #8882 from greglandrum)
 
 
 # Release_2025.09.1
