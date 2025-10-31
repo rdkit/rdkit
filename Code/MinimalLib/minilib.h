@@ -17,6 +17,11 @@
 #ifdef RDK_BUILD_MINIMAL_LIB_MMPA
 #include <GraphMol/MMPA/MMPA.h>
 #endif
+
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
+#include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>
+#endif
+
 #ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 #endif
@@ -305,6 +310,24 @@ class JSReaction {
   std::unique_ptr<RDKit::ChemicalReaction> d_rxn;
   static constexpr int d_defaultWidth = 800;
   static constexpr int d_defaultHeight = 200;
+};
+#endif
+
+
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
+class JSScaffoldNetwork {
+ public:
+  JSScaffoldNetwork() : 
+    d_scaffparams(new RDKit::ScaffoldNetwork::ScaffoldNetworkParams), d_network(new RDKit::ScaffoldNetwork::ScaffoldNetwork) {}
+
+  RDKit::ScaffoldNetwork::ScaffoldNetwork update_scaffold_network(
+      const JSMolList &scaffmols);
+
+  void set_scaffold_params(const std::string &params);
+
+ private:
+  RDKit::ScaffoldNetwork::ScaffoldNetworkParams *d_scaffparams;
+  RDKit::ScaffoldNetwork::ScaffoldNetwork *d_network;
 };
 #endif
 

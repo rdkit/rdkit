@@ -2692,6 +2692,97 @@ function test_mcs() {
     }
 }
 
+
+function assert_edge_counts(net, edgeType, expectedLen) {
+    let count = 0;
+    for (let i = 0; i < net.edges.size(); i++) {
+        const edge = net.edges.get(i);
+        if (edge.type === edgeType) {
+            count++;
+        }
+    }
+    assert(count === expectedLen);
+}
+
+function test_scaffold_networks(){
+    let net_ins = new RDKitModule.ScaffoldNetwork();
+
+    // Basics
+    smis = ["c1ccccc1CC1NC(=O)CCC1", "c1cccnc1CC1NC(=O)CCC1"]
+    ms = molListFromSmiArray(smis);
+    net = net_ins.update_scaffold_network(ms);
+
+    assert(net.nodes.size() === 12);
+    assert(net.edges.size() === 13);
+    assert(net.nodes.size() === net.molCounts.size());
+    assert_edge_counts(net, "Fragment", 4);
+    assert_edge_counts(net, "Generic", 6);
+    assert_edge_counts(net, "RemoveAttachment", 3);
+
+    // Param updates test
+    net_ins = new RDKitModule.ScaffoldNetwork();
+    smis = ["c1ccccc1CC1NC(=O)CCC1", "c1cccnc1CC1NC(=O)CCC1"];
+    ms = molListFromSmiArray(smis);
+    net_ins.set_scaffold_params(JSON.stringify({"includeScaffoldsWithoutAttachments" : false}));
+    net = net_ins.update_scaffold_network(ms);
+
+    assert(net.nodes.size() === 7);
+    assert(net.edges.size() === 7);
+    assert_edge_counts(net, "Fragment", 4);
+    assert_edge_counts(net, "Generic", 3);
+
+    // Scaffold Network Update Tests
+    net_ins = new RDKitModule.ScaffoldNetwork();
+    ms = molListFromSmiArray(["c1ccccc1CC1NC(=O)CCC1"]);
+    net = net_ins.update_scaffold_network(ms);
+
+    assert(net.nodes.size() === 9);
+    assert(net.edges.size() === 8);
+    assert(net.nodes.size() === net.molCounts.size());
+
+    ms = molListFromSmiArray(["c1cccnc1CC1NC(=O)CCC1"]);
+    net = net_ins.update_scaffold_network(ms);
+    
+    assert(net.nodes.size() === 12);
+    assert(net.edges.size() === 13);
+    assert(net.nodes.size() === net.molCounts.size());
+
+    assert_edge_counts(net, "Fragment", 4);
+    assert_edge_counts(net, "Generic", 6);
+    assert_edge_counts(net, "RemoveAttachment", 3);
+
+    // Bond Breaker Reactions Test
+    smis = ["c1c(CC2CC2)cc(NC2CC2)cc1OC1CC1"];
+    ms = molListFromSmiArray(smis);
+    let net_ins2 = new RDKitModule.ScaffoldNetwork();
+    net_ins2.set_scaffold_params(JSON.stringify(
+        {
+            "bondBreakersRxns" : ["[!#0;R:1]-!@[O:2]>>[*:1]-[#0].[#0]-[*:2]", "[!#0;R:1]-!@[N:2]>>[*:1]-[#0].[#0]-[*:2]"],
+            "includeScaffoldsWithoutAttachments" : false,
+            "includeGenericScaffolds":  false,
+        }
+    ));
+    net = net_ins2.update_scaffold_network(ms);
+    assert(net.nodes.size() === 5);
+    assert(net.edges.size() === 7);
+
+    // Test many more scaffold network params
+    smis = ["C1OC1Cc1ccccc1"]
+    ms = molListFromSmiArray(smis);
+    net_ins = new RDKitModule.ScaffoldNetwork();
+    net_ins.set_scaffold_params(JSON.stringify({"keepOnlyFirstFragment" : false}));
+    net = net_ins.update_scaffold_network(ms);
+    assert(net.nodes.size() === 19);
+    assert(net.edges.size() === 23);
+    
+    net_ins = new RDKitModule.ScaffoldNetwork();
+    net_ins.set_scaffold_params(JSON.stringify({"includeGenericScaffolds" : false}));
+    net = net_ins.update_scaffold_network(ms);
+    assert(net.nodes.size() === 5);
+    assert(net.edges.size() === 4);
+}
+
+
 function test_get_num_atoms_bonds() {
     var mol = RDKitModule.get_mol('CCCC');
     var molH = RDKitModule.get_mol_copy(mol);
@@ -4326,6 +4417,9 @@ initRDKitModule().then(function(instance) {
     test_get_num_atoms_bonds();
     if (RDKitModule.get_mcs_as_mol)  {
         test_mcs();
+    }
+    if (RDKitModule.ScaffoldNetwork){
+        test_scaffold_networks();
     }
     test_sanitize_no_kekulize_no_setaromaticity();
     test_partial_sanitization();

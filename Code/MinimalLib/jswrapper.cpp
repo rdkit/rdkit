@@ -21,6 +21,10 @@
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>
 #endif
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
+#include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>
+#endif
+
 using namespace RDKit;
 
 namespace {
@@ -445,6 +449,52 @@ emscripten::val get_coords_helper(const JSMolBase &self) {
   }
   return res;
 }
+
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
+std::string EdgeTypeToString(RDKit::ScaffoldNetwork::EdgeType edgeType) {
+  switch (edgeType) {
+    case RDKit::ScaffoldNetwork::EdgeType::Fragment:
+      return "Fragment";
+    case RDKit::ScaffoldNetwork::EdgeType::Generic:
+      return "Generic";
+    case RDKit::ScaffoldNetwork::EdgeType::GenericBond:
+      return "GenericBond";
+    case RDKit::ScaffoldNetwork::EdgeType::RemoveAttachment:
+      return "RemoveAttachment";
+    case RDKit::ScaffoldNetwork::EdgeType::Initialize:
+      return "Initialize";
+    default:
+      return "Unknown";
+  }
+}
+
+emscripten::val update_scaffold_network_wrapper(JSScaffoldNetwork& js_scaffold_network, const JSMolList &mol_list){
+  RDKit::ScaffoldNetwork::ScaffoldNetwork modified_network; 
+
+  modified_network = js_scaffold_network.update_scaffold_network(mol_list);
+
+  auto network_obj = emscripten::val::object();
+
+  network_obj.set("nodes", modified_network.nodes);
+  network_obj.set("counts", modified_network.counts);
+  network_obj.set("molCounts", modified_network.molCounts);
+
+  std::vector<emscripten::val> edges_array;
+  for (const auto &new_edge : modified_network.edges) {
+    auto edge_obj = emscripten::val::object();
+    edge_obj.set("beginIdx", new_edge.beginIdx);
+    edge_obj.set("endIdx", new_edge.endIdx);
+    edge_obj.set("type", EdgeTypeToString(new_edge.type));
+
+    edges_array.push_back(edge_obj);
+  }
+  network_obj.set("edges", edges_array);
+
+  return network_obj;
+}
+#endif
+
+
 #ifdef RDK_BUILD_MINIMAL_LIB_MMPA
 emscripten::val get_mmpa_frags_helper(const JSMolBase &self,
                                       unsigned int minCuts,
@@ -526,6 +576,8 @@ void disable_logging_all() { disable_logging("rdApp.*"); }
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   register_vector<std::string>("StringList");
+  register_vector<emscripten::val>("JSObjectList");
+  register_vector<unsigned int>("UnsignedIntList");
   register_vector<JSMolList *>("JSMolListList");
 
   class_<JSMolBase>("Mol")
@@ -800,6 +852,13 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
 
       .function("get_svg_with_highlights",
                 &JSReaction::get_svg_with_highlights);
+#endif
+
+#ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
+class_<JSScaffoldNetwork>("ScaffoldNetwork")
+    .constructor<>()
+    .function("update_scaffold_network", select_overload<emscripten::val(JSScaffoldNetwork &self, const JSMolList &)>(update_scaffold_network_wrapper))
+    .function("set_scaffold_params", &JSScaffoldNetwork::set_scaffold_params);
 #endif
 
 #ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
