@@ -1733,6 +1733,9 @@ public:
   Ranges::IndirectRange<true, false> atomBonds(atomindex_t atomIndex);
   Ranges::IndirectRange<true, true> atomBonds(atomindex_t atomIndex) const;
 
+  //! Manually tell rdmol that the compat data ring info may have been modified.
+  void markRingInfoAsCompatModified() const;
+
  private:
   //! Instantiate an RDMol with a stable ROMol pointer.
   RDMol(ROMol* existingPtr);

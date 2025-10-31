@@ -1366,11 +1366,31 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   if (tag != BEGINBOND) {
     throw MolPicklerException("Bad pickle format: BEGINBOND tag not found.");
   }
+
+  // Save existing RingInfo before adding bonds, because addBond() may reset it
+  // when it detects ring closures. We'll restore it after bonds are added.
+  RingInfo savedCompatRingInfo;
+  bool hadRingInfo = false;
+  if (mol->getRingInfo()->isInitialized()) {
+    savedCompatRingInfo = *mol->getRingInfo();
+    hadRingInfo = true;
+    // std::cerr << "DEBUG: Saved RingInfo with " << savedCompatRingInfo.numRings() << " rings before adding bonds" << std::endl;
+  }
+
   for (int i = 0; i < numBonds; i++) {
     Bond *bond = _addBondFromPickle<T>(ss, mol, version, directMap);
     if (!directMap) {
       mol->setBondBookmark(bond, i);
     }
+  }
+
+  // Restore RingInfo after bonds are added
+  if (hadRingInfo) {
+    *mol->getRingInfo() = savedCompatRingInfo;
+    // Also need to sync back to internal
+    mol->asRDMol().markRingInfoAsCompatModified();
+    (void)mol->asRDMol().getRingInfo();  // Trigger sync
+    // std::cerr << "DEBUG: Restored RingInfo with " << mol->getRingInfo()->numRings() << " rings after adding bonds" << std::endl;
   }
 
   // -------------------
