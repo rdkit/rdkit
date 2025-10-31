@@ -1374,7 +1374,6 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   if (mol->getRingInfo()->isInitialized()) {
     savedCompatRingInfo = *mol->getRingInfo();
     hadRingInfo = true;
-    // std::cerr << "DEBUG: Saved RingInfo with " << savedCompatRingInfo.numRings() << " rings before adding bonds" << std::endl;
   }
 
   for (int i = 0; i < numBonds; i++) {
@@ -1390,7 +1389,6 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     // Also need to sync back to internal
     mol->asRDMol().markRingInfoAsCompatModified();
     (void)mol->asRDMol().getRingInfo();  // Trigger sync
-    // std::cerr << "DEBUG: Restored RingInfo with " << mol->getRingInfo()->numRings() << " rings after adding bonds" << std::endl;
   }
 
   // -------------------
