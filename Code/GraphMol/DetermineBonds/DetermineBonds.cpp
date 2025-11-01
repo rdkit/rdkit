@@ -135,9 +135,9 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
 
       if (newPossible[i].empty()) {
         std::stringstream ss;
-        ss << "Valence of atom " << i << " is " << atom->getDegree()
-           << ", which is larger than the allowed maximum, "
-           << numBonds + availBonds;
+        ss << "Unable determine valence of atom " << i << " with atomic number "
+           << atom->getAtomicNum() << " and " << atom->getDegree()
+           << " bonds. Check the input molecules bonding.";
         throw ValueErrorException(ss.str());
       }
     }
