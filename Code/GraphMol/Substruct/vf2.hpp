@@ -21,6 +21,52 @@
 #define RDK_ADJ_ITER typename Graph::adjacency_iterator
 
 namespace boost {
+
+using ::RDKit::ROMol;
+using vertex_descriptor = ::RDKit::ROMol::vertex_descriptor;
+using edge_descriptor = ::RDKit::ROMol::edge_descriptor;
+using vertex_iterator = ::RDKit::ROMol::vertex_iterator;
+using edge_iterator = ::RDKit::ROMol::edge_iterator;
+
+// ROMol dropins for boost graph functions.
+inline size_t out_degree(vertex_descriptor v, const ROMol &g) {
+  return g.getAtomWithIdx(v)->getDegree();
+}
+
+inline std::pair<edge_descriptor, bool> edge(vertex_descriptor v1,
+                                             vertex_descriptor v2,
+                                             const ROMol &g) {
+  try {
+    auto bond = g.getBondBetweenAtoms(v1, v2);
+    CHECK_INVARIANT(bond, "This may not be expected");
+    return std::make_pair(edge_descriptor(bond->getIdx()), true);
+
+  } catch (const Invar::Invariant &) {
+    return std::make_pair(edge_descriptor(0), false);
+  }
+}
+inline vertex_descriptor source(edge_descriptor e, const ROMol &g) {
+  return g.getBondWithIdx(*e)->getBeginAtomIdx();
+}
+
+inline vertex_descriptor target(edge_descriptor e, const ROMol &g) {
+  return g.getBondWithIdx(*e)->getEndAtomIdx();
+}
+
+inline std::pair<vertex_iterator, vertex_iterator> vertices(const ROMol &g) {
+  return g.getVertices();
+}
+
+inline std::pair<ROMol::adjacency_iterator, ROMol::adjacency_iterator>
+adjacent_vertices(vertex_descriptor u, const ROMol &g) {
+  return g.getAtomNeighbors(g.getAtomWithIdx(u));
+}
+
+inline std::pair<ROMol::out_edge_iterator, ROMol::out_edge_iterator> out_edges(
+    vertex_descriptor u, const ROMol &g) {
+  return g.getAtomBonds(g.getAtomWithIdx(u));
+}
+
 namespace detail {
 typedef std::uint32_t node_id;
 const node_id NULL_NODE = 0xFFFFFFFF;
@@ -109,7 +155,7 @@ VertexDescr getOtherIdx(const Graph &g, const EdgeDescr &edge,
 template <class Graph>
 node_id *SortNodesByFrequency(const Graph *g) {
   std::vector<NodeInfo> vect;
-  vect.reserve(boost::num_vertices(*g));
+  vect.reserve(num_vertices(*g));
   typename Graph::vertex_iterator bNode, eNode;
   boost::tie(bNode, eNode) = boost::vertices(*g);
   while (bNode != eNode) {
@@ -616,7 +662,10 @@ bool match(node_id c1[], node_id c2[], SubState &s,
   s.MatchAll(c1, c2, res, max_results);
   return !res.empty();
 }
+
+
 };  // end of namespace detail
+
 
 template <
     class Graph, class VertexLabeling  // binary predicate
@@ -629,9 +678,11 @@ template <
     BackInsertionSequence  // contains
                            // std::pair<vertex_descriptor,vertex_descriptor>
     >
+
 bool vf2(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
          EdgeLabeling &edge_labeling, MatchChecking &match_checking,
          BackInsertionSequence &F) {
+
   detail::VF2SubState<const Graph, VertexLabeling, EdgeLabeling, MatchChecking>
       s0(&g1, &g2, vertex_labeling, edge_labeling, match_checking, false);
   detail::node_id *ni1 = new detail::node_id[num_vertices(g1)];
@@ -648,9 +699,10 @@ bool vf2(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
   }
   delete[] ni1;
   delete[] ni2;
-
   return !F.empty();
 };
+
+
 template <class Graph, class VertexLabeling  // binary predicate
           ,
           class EdgeLabeling  // binary predicate
@@ -672,11 +724,12 @@ bool vf2_all(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
   F.resize(0);
 
   match(ni1.get(), ni2.get(), s0, F, max_results);
-
   return !F.empty();
 };
+
 }  // end of namespace boost
-#endif
 
 #undef RDK_VF2_PRUNING
 #undef RDK_ADJ_ITER
+
+#endif // __BGL_VF2_SUB_STATE_H__

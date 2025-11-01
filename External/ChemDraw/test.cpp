@@ -1399,6 +1399,36 @@ TEST_CASE("Fragments") {
     auto mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size());
     REQUIRE("CC=C=C(C)C" == MolToSmiles(*mols[0]));
+
+    // Verify cleanup: check that dummy atoms and replacement atom were removed
+    // Expected structure: CC=C=C(C)C has 6 carbons and 5 bonds
+    CHECK(mols[0]->getNumAtoms() == 6);
+    CHECK(mols[0]->getNumBonds() == 5);
+
+    // Verify no atoms have FUSE_LABEL property (all labeled atoms should be removed)
+    for (auto atom : mols[0]->atoms()) {
+      CHECK_FALSE(atom->hasProp("CDX_NODE_ID"));  // FUSE_LABEL constant
+    }
+
+    // Verify no atoms have CDX_BOND_ORDERING (replacement atom property)
+    for (auto atom : mols[0]->atoms()) {
+      CHECK_FALSE(atom->hasProp("CDX_BOND_ORDERING"));
+    }
+
+    // Verify all bonds are properly connected (no dangling bonds)
+    for (auto bond : mols[0]->bonds()) {
+      CHECK(bond->getBeginAtom() != nullptr);
+      CHECK(bond->getEndAtom() != nullptr);
+      CHECK(bond->getBeginAtomIdx() < mols[0]->getNumAtoms());
+      CHECK(bond->getEndAtomIdx() < mols[0]->getNumAtoms());
+    }
+
+    // Verify each atom's bonds are consistent
+    for (auto atom : mols[0]->atoms()) {
+      for (auto bond : mols[0]->atomBonds(atom)) {
+        CHECK((bond->getBeginAtom() == atom || bond->getEndAtom() == atom));
+      }
+    }
   }
 }
 

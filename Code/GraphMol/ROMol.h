@@ -41,18 +41,16 @@
 #include "Atom.h"
 #include "Bond.h"
 #include "Conformer.h"
+#include "RDMol.h"
 #include "SubstanceGroup.h"
 #include "StereoGroup.h"
 #include "RingInfo.h"
+#include <GraphMol/rdmol_throw.h>
 
 namespace RDKit {
 class SubstanceGroup;
 class Atom;
 class Bond;
-//! This is the BGL type used to store the topology:
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
-                              Atom *, Bond *>
-    MolGraph;
 class MolPickler;
 class RWMol;
 class QueryAtom;
@@ -125,13 +123,15 @@ struct CXXAtomIterator {
 
     Graph *graph;
     Iterator pos;
-    Atom *current;
+    value_type current;
 
     CXXAtomIter(Graph *graph, Iterator pos)
         : graph(graph), pos(pos), current(nullptr) {}
 
-    reference operator*() {
-      current = (*graph)[*pos];
+    const value_type &operator*() {
+      // The const_cast is to maintain the same behaviour as the previous
+      // interface.
+      current = const_cast<value_type>((*graph)[*pos]);
       return current;
     }
     CXXAtomIter &operator++() {
@@ -143,7 +143,7 @@ struct CXXAtomIterator {
   };
 
   CXXAtomIterator(Graph *graph) : graph(graph) {
-    auto vs = boost::vertices(*graph);
+    auto vs = graph->getVertices();
     vstart = vs.first;
     vend = vs.second;
   }
@@ -168,13 +168,15 @@ struct CXXBondIterator {
 
     Graph *graph;
     Iterator pos;
-    Bond *current;
+    value_type current;
 
     CXXBondIter(Graph *graph, Iterator pos)
         : graph(graph), pos(pos), current(nullptr) {}
 
-    reference operator*() {
-      current = (*graph)[*pos];
+    const value_type &operator*() {
+      // The const_cast is to maintain the same behaviour as the previous
+      // interface.
+      current = const_cast<value_type>((*graph)[*pos]);
       return current;
     }
     CXXBondIter &operator++() {
@@ -186,7 +188,7 @@ struct CXXBondIterator {
   };
 
   CXXBondIterator(Graph *graph) : graph(graph) {
-    auto vs = boost::edges(*graph);
+    auto vs = graph->getEdges();
     vstart = vs.first;
     vend = vs.second;
   }
@@ -196,22 +198,321 @@ struct CXXBondIterator {
   CXXBondIter end() { return {graph, vend}; }
 };
 
-class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
- public:
+class RDKIT_GRAPHMOL_EXPORT ROMol {
+  RDMol *dp_mol;
+  bool d_ownedBySelf;
+
   friend class MolPickler;
+  friend class RDMol;
   friend class RWMol;
+
+ public:
+  // MolGraph compatibility descriptor and iterator definitions
+
+  // For compatibility, since vertex_descriptor is often passed by reference,
+  // this is kept as an exact match of size_t.
+  using vertex_descriptor = size_t;
+  // edge_descriptor needs to be incompatible with vertex_descriptor, without
+  // an implicit conversion chain, to avoid ambiguity compile errors.
+  class edge_descriptor {
+    uint32_t index;
+
+    friend class ROMol;
+
+   public:
+    edge_descriptor() : index(uint32_t(-1)) {}
+    explicit edge_descriptor(uint32_t i) : index(i) {}
+    edge_descriptor(const edge_descriptor &that) = default;
+    edge_descriptor &operator=(const edge_descriptor &that) = default;
+    bool operator==(const edge_descriptor &that) const {
+      return index == that.index;
+    }
+    bool operator!=(const edge_descriptor &that) const {
+      return index != that.index;
+    }
+    uint32_t operator*() const { return index; }
+    edge_descriptor &operator++() {
+      ++index;
+      return *this;
+    }
+    edge_descriptor operator++(int) {
+      edge_descriptor prev = *this;
+      ++index;
+      return prev;
+    }
+    edge_descriptor &operator--() {
+      --index;
+      return *this;
+    }
+    edge_descriptor operator--(int) {
+      edge_descriptor prev = *this;
+      --index;
+      return prev;
+    }
+    uint32_t operator-(const edge_descriptor &that) const {
+      return index - that.index;
+    }
+
+    edge_descriptor operator+(size_t offset) const {
+      return edge_descriptor(index + offset);
+    }
+    edge_descriptor operator-(size_t offset) const {
+      return edge_descriptor(index - offset);
+    }
+    edge_descriptor &operator+=(size_t offset) {
+      index += offset;
+      return *this;
+    }
+    edge_descriptor &operator-=(size_t offset) {
+      index -= offset;
+      return *this;
+    }
+  };
+
+  // This iterator is for iterating over edges of the graph in order.
+  class edge_iterator {
+    edge_descriptor i;
+
+   public:
+    edge_iterator() = default;
+    explicit edge_iterator(edge_descriptor index) : i(index) {}
+    edge_iterator(const edge_iterator &) = default;
+    edge_iterator &operator=(const edge_iterator &) = default;
+    bool operator==(const edge_iterator &that) const { return i == that.i; }
+    bool operator!=(const edge_iterator &that) const { return i != that.i; }
+    edge_descriptor operator*() const { return i; }
+    edge_iterator &operator++() {
+      ++i;
+      return *this;
+    }
+    edge_iterator operator++(int) {
+      edge_iterator prev = *this;
+      ++i;
+      return prev;
+    }
+    edge_iterator &operator--() {
+      --i;
+      return *this;
+    }
+    edge_iterator operator--(int) {
+      edge_iterator prev = *this;
+      --i;
+      return prev;
+    }
+    size_t operator-(const edge_iterator &that) const {
+      return i - that.i;
+    }
+
+    edge_iterator operator+(size_t offset) const {
+      return edge_iterator(i + offset);
+    }
+    edge_iterator operator-(size_t offset) const {
+      return edge_iterator(i - offset);
+    }
+    edge_iterator &operator+=(size_t offset) {
+      i += offset;
+      return *this;
+    }
+    edge_iterator &operator-=(size_t offset) {
+      i -= offset;
+      return *this;
+    }
+
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = size_t;
+    using value_type = edge_descriptor;
+    using pointer = edge_descriptor *;
+    using reference = edge_descriptor &;
+  };
+
+  // This iterator is for iterating over the edges of a vertex.
+  // This is similar to adjacency_iterator, but yielding the bond,
+  // instead of the opposite vertex.
+  class out_edge_iterator {
+    const uint32_t *p;
+
+   public:
+    out_edge_iterator() : p(nullptr) {}
+    explicit out_edge_iterator(const uint32_t *edges) : p(edges) {}
+    out_edge_iterator(const out_edge_iterator &) = default;
+    out_edge_iterator &operator=(const out_edge_iterator &) = default;
+    bool operator==(const out_edge_iterator &that) const { return p == that.p; }
+    bool operator!=(const out_edge_iterator &that) const { return p != that.p; }
+    edge_descriptor operator*() const { return edge_descriptor{*p}; }
+    out_edge_iterator &operator++() {
+      ++p;
+      return *this;
+    }
+    out_edge_iterator operator++(int) {
+      out_edge_iterator prev = *this;
+      ++p;
+      return prev;
+    }
+    out_edge_iterator &operator--() {
+      --p;
+      return *this;
+    }
+    out_edge_iterator operator--(int) {
+      out_edge_iterator prev = *this;
+      --p;
+      return prev;
+    }
+    std::ptrdiff_t operator-(const out_edge_iterator &that) const {
+      return p - that.p;
+    }
+
+    out_edge_iterator operator+(size_t offset) const {
+      return out_edge_iterator(p + offset);
+    }
+    out_edge_iterator operator-(size_t offset) const {
+      return out_edge_iterator(p - offset);
+    }
+    out_edge_iterator &operator+=(size_t offset) {
+      p += offset;
+      return *this;
+    }
+    out_edge_iterator &operator-=(size_t offset) {
+      p -= offset;
+      return *this;
+    }
+
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = edge_descriptor;
+    using pointer = edge_descriptor *;
+    using reference = edge_descriptor &;
+  };
+
+  // This iterator is for iterating over vertices of the graph in order.
+  class vertex_iterator {
+    vertex_descriptor i;
+
+   public:
+    vertex_iterator() : i(size_t(-1)) {}
+    explicit vertex_iterator(vertex_descriptor index) : i(index) {}
+    vertex_iterator(const vertex_iterator &) = default;
+    vertex_iterator &operator=(const vertex_iterator &) = default;
+    bool operator==(const vertex_iterator &that) const { return i == that.i; }
+    bool operator!=(const vertex_iterator &that) const { return i != that.i; }
+    vertex_descriptor operator*() const { return i; }
+    vertex_iterator &operator++() {
+      ++i;
+      return *this;
+    }
+    vertex_iterator operator++(int) {
+      vertex_iterator prev = *this;
+      ++i;
+      return prev;
+    }
+    vertex_iterator &operator--() {
+      --i;
+      return *this;
+    }
+    vertex_iterator operator--(int) {
+      vertex_iterator prev = *this;
+      --i;
+      return prev;
+    }
+    size_t operator-(const vertex_iterator &that) const {
+      return i - that.i;
+    }
+
+    vertex_iterator operator+(size_t offset) const {
+      return vertex_iterator(i + offset);
+    }
+    vertex_iterator operator-(size_t offset) const {
+      return vertex_iterator(i - offset);
+    }
+    vertex_iterator &operator+=(size_t offset) {
+      i += offset;
+      return *this;
+    }
+    vertex_iterator &operator-=(size_t offset) {
+      i -= offset;
+      return *this;
+    }
+
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = size_t;
+    using value_type = vertex_descriptor;
+    using pointer = vertex_descriptor *;
+    using reference = vertex_descriptor &;
+  };
+
+  // This iterator is for iterating over the vertices adjacent to a vertex.
+  // This is similar to out_edge_iterator, but yielding the opposite vertex,
+  // instead of the bond.
+  class adjacency_iterator {
+    const uint32_t *p;
+
+   public:
+    adjacency_iterator() : p(nullptr) {}
+    explicit adjacency_iterator(const uint32_t *neighbors) : p(neighbors) {}
+    adjacency_iterator(const adjacency_iterator &) = default;
+    adjacency_iterator &operator=(const adjacency_iterator &) = default;
+    bool operator==(const adjacency_iterator &that) const {
+      return p == that.p;
+    }
+    bool operator!=(const adjacency_iterator &that) const {
+      return p != that.p;
+    }
+    vertex_descriptor operator*() const { return vertex_descriptor{*p}; }
+    adjacency_iterator &operator++() {
+      ++p;
+      return *this;
+    }
+    adjacency_iterator operator++(int) {
+      adjacency_iterator prev = *this;
+      ++p;
+      return prev;
+    }
+    adjacency_iterator &operator--() {
+      --p;
+      return *this;
+    }
+    adjacency_iterator operator--(int) {
+      adjacency_iterator prev = *this;
+      --p;
+      return prev;
+    }
+    std::ptrdiff_t operator-(const adjacency_iterator& that) const {
+      return p - that.p;
+    }
+
+    adjacency_iterator operator+(size_t offset) const {
+      return adjacency_iterator(p + offset);
+    }
+    adjacency_iterator operator-(size_t offset) const {
+      return adjacency_iterator(p - offset);
+    }
+    adjacency_iterator &operator+=(size_t offset) {
+      p += offset;
+      return *this;
+    }
+    adjacency_iterator &operator-=(size_t offset) {
+      p -= offset;
+      return *this;
+    }
+
+    bool operator<(const adjacency_iterator &that) const {
+      return p < that.p;
+    }
+
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = vertex_descriptor;
+    using pointer = vertex_descriptor *;
+    using reference = vertex_descriptor &;
+  };
 
   //! \cond TYPEDEFS
 
   //! \name typedefs
   //! @{
-  typedef MolGraph::vertex_descriptor vertex_descriptor;
-  typedef MolGraph::edge_descriptor edge_descriptor;
-
-  typedef MolGraph::edge_iterator EDGE_ITER;
-  typedef MolGraph::out_edge_iterator OEDGE_ITER;
-  typedef MolGraph::vertex_iterator VERTEX_ITER;
-  typedef MolGraph::adjacency_iterator ADJ_ITER;
+  typedef edge_iterator EDGE_ITER;
+  typedef out_edge_iterator OEDGE_ITER;
+  typedef vertex_iterator VERTEX_ITER;
+  typedef adjacency_iterator ADJ_ITER;
   typedef std::pair<EDGE_ITER, EDGE_ITER> BOND_ITER_PAIR;
   typedef std::pair<OEDGE_ITER, OEDGE_ITER> OBOND_ITER_PAIR;
   typedef std::pair<VERTEX_ITER, VERTEX_ITER> ATOM_ITER_PAIR;
@@ -274,34 +575,38 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     \endcode
    */
 
-  CXXAtomIterator<MolGraph, Atom *> atoms() { return {&d_graph}; }
+  CXXAtomIterator<ROMol, Atom *> atoms() { return {this}; }
 
-  CXXAtomIterator<const MolGraph, Atom *const> atoms() const {
-    return {&d_graph};
-  }
+  // NOTE: This yields pointers to non-const Atoms, because the previous
+  // interface did.
+  CXXAtomIterator<const ROMol, Atom *> atoms() const { return {this}; }
 
-  CXXAtomIterator<const MolGraph, Atom *const, MolGraph::adjacency_iterator>
+  // NOTE: This yields pointers to non-const Atoms, because the previous
+  // interface did.
+  CXXAtomIterator<const ROMol, Atom *, adjacency_iterator>
   atomNeighbors(Atom const *at) const {
     auto pr = getAtomNeighbors(at);
-    return {&d_graph, pr.first, pr.second};
+    return {this, pr.first, pr.second};
   }
 
-  CXXAtomIterator<MolGraph, Atom *, MolGraph::adjacency_iterator> atomNeighbors(
+  CXXAtomIterator<ROMol, Atom *, adjacency_iterator> atomNeighbors(
       Atom const *at) {
     auto pr = getAtomNeighbors(at);
-    return {&d_graph, pr.first, pr.second};
+    return {this, pr.first, pr.second};
   }
 
-  CXXBondIterator<const MolGraph, Bond *const, MolGraph::out_edge_iterator>
+  // NOTE: This yields pointers to non-const Bonds, because the previous
+  // interface did.
+  CXXBondIterator<const ROMol, Bond *, out_edge_iterator>
   atomBonds(Atom const *at) const {
     auto pr = getAtomBonds(at);
-    return {&d_graph, pr.first, pr.second};
+    return {this, pr.first, pr.second};
   }
 
-  CXXBondIterator<MolGraph, Bond *, MolGraph::out_edge_iterator> atomBonds(
+  CXXBondIterator<ROMol, Bond *, out_edge_iterator> atomBonds(
       Atom const *at) {
     auto pr = getAtomBonds(at);
-    return {&d_graph, pr.first, pr.second};
+    return {this, pr.first, pr.second};
   }
 
   /*!
@@ -313,13 +618,17 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   \endcode
  */
 
-  CXXBondIterator<MolGraph, Bond *> bonds() { return {&d_graph}; }
+  CXXBondIterator<ROMol, Bond *> bonds() { return {this}; }
 
-  CXXBondIterator<const MolGraph, Bond *const> bonds() const {
-    return {&d_graph};
-  }
+  // NOTE: This yields pointers to non-const Bonds, because the previous
+  // interface did.
+  CXXBondIterator<const ROMol, Bond *> bonds() const { return {this}; }
 
-  ROMol() : RDProps() { initMol(); }
+ protected:
+  ROMol(RDMol *mol) : dp_mol(mol), d_ownedBySelf(false) {}
+
+ public:
+  ROMol();
 
   //! copy constructor with a twist
   /*!
@@ -332,95 +641,28 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     only
          the specified conformer from \c other.
   */
-  ROMol(const ROMol &other, bool quickCopy = false, int confId = -1)
-      : RDProps() {
-    dp_ringInfo = nullptr;
-    initFromOther(other, quickCopy, confId);
-    numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
-  }
+  ROMol(const ROMol &other, bool quickCopy = false, int confId = -1);
   //! construct a molecule from a pickle string
   ROMol(const std::string &binStr);
   //! construct a molecule from a pickle string
   ROMol(const std::string &binStr, unsigned int propertyFlags);
 
-  ROMol(ROMol &&o) noexcept
-      : RDProps(std::move(o)),
-        d_graph(std::move(o.d_graph)),
-        d_atomBookmarks(std::move(o.d_atomBookmarks)),
-        d_bondBookmarks(std::move(o.d_bondBookmarks)),
-        d_confs(std::move(o.d_confs)),
-        d_sgroups(std::move(o.d_sgroups)),
-        d_stereo_groups(std::move(o.d_stereo_groups)),
-        numBonds(o.numBonds) {
-    for (auto atom : atoms()) {
-      atom->setOwningMol(this);
-    }
-    for (auto bond : bonds()) {
-      bond->setOwningMol(this);
-    }
-    for (auto conf : d_confs) {
-      conf->setOwningMol(this);
-    }
-    for (auto &sg : d_sgroups) {
-      sg.setOwningMol(this);
-    }
-    o.d_graph.clear();
-    o.numBonds = 0;
-    dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
-    dp_delAtoms = std::exchange(o.dp_delAtoms, nullptr);
-    dp_delBonds = std::exchange(o.dp_delBonds, nullptr);
-  }
-  ROMol &operator=(ROMol &&o) noexcept {
-    if (this == &o) {
-      return *this;
-    }
-    RDProps::operator=(std::move(o));
-    d_graph = std::move(o.d_graph);
-    d_atomBookmarks = std::move(o.d_atomBookmarks);
-    d_bondBookmarks = std::move(o.d_bondBookmarks);
-    if (dp_ringInfo) {
-      delete dp_ringInfo;
-    }
-    dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
-
-    d_confs = std::move(o.d_confs);
-    d_sgroups = std::move(o.d_sgroups);
-    d_stereo_groups = std::move(o.d_stereo_groups);
-    dp_delAtoms = std::exchange(o.dp_delAtoms, nullptr);
-    dp_delBonds = std::exchange(o.dp_delBonds, nullptr);
-    numBonds = o.numBonds;
-    o.numBonds = 0;
-
-    for (auto atom : atoms()) {
-      atom->setOwningMol(this);
-    }
-    for (auto bond : bonds()) {
-      bond->setOwningMol(this);
-    }
-    for (auto conf : d_confs) {
-      conf->setOwningMol(this);
-    }
-    for (auto &sg : d_sgroups) {
-      sg.setOwningMol(this);
-    }
-
-    o.d_graph.clear();
-    return *this;
-  }
-
+  ROMol(ROMol &&o) noexcept;
+  ROMol &operator=(ROMol &&o) noexcept;
   ROMol &operator=(const ROMol &) =
       delete;  // disable assignment, RWMol's support assignment
 
-  virtual ~ROMol() { destroy(); }
+  RDMol &asRDMol() { return *dp_mol; }
+  const RDMol &asRDMol() const { return *dp_mol; }
+
+  virtual ~ROMol();
 
   //! @}
   //! \name Atoms
   //! @{
 
   //! returns our number of atoms
-  inline unsigned int getNumAtoms() const {
-    return rdcast<unsigned int>(boost::num_vertices(d_graph));
-  }
+  unsigned int getNumAtoms() const;
   unsigned int getNumAtoms(bool onlyExplicit) const;
   //! returns our number of heavy atoms (atomic number > 1)
   unsigned int getNumHeavyAtoms() const;
@@ -446,7 +688,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! @{
 
   //! returns our number of Bonds
-  unsigned int getNumBonds(bool onlyHeavy = 1) const;
+  unsigned int getNumBonds(bool onlyHeavy = true) const;
   //! returns a pointer to a particular Bond
   Bond *getBondWithIdx(unsigned int idx);
   //! \overload
@@ -480,101 +722,12 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   //! @}
 
-  //! \name Bookmarks
-  //! @{
-
-  //! associates an Atom pointer with a bookmark
-  void setAtomBookmark(Atom *at, int mark) {
-    d_atomBookmarks[mark].push_back(at);
-  }
-  //! associates an Atom pointer with a bookmark
-  void replaceAtomBookmark(Atom *at, int mark) {
-    d_atomBookmarks[mark].clear();
-    d_atomBookmarks[mark].push_back(at);
-  }
-  //! returns the first Atom associated with the \c bookmark provided
-  Atom *getAtomWithBookmark(int mark);
-  //! returns the Atom associated with the \c bookmark provided
-  //! a check is made to ensure it is the only atom with that bookmark
-  Atom *getUniqueAtomWithBookmark(int mark);
-  //! returns all Atoms associated with the \c bookmark provided
-  ATOM_PTR_LIST &getAllAtomsWithBookmark(int mark);
-  //! removes a \c bookmark from our collection
-  void clearAtomBookmark(int mark);
-  //! removes a particular Atom from the list associated with the \c bookmark
-  void clearAtomBookmark(int mark, const Atom *atom);
-
-  //! blows out all atomic \c bookmarks
-  void clearAllAtomBookmarks() { d_atomBookmarks.clear(); }
-  //! queries whether or not any atoms are associated with a \c bookmark
-  bool hasAtomBookmark(int mark) const { return d_atomBookmarks.count(mark); }
-  //! returns a pointer to all of our atom \c bookmarks
-  ATOM_BOOKMARK_MAP *getAtomBookmarks() { return &d_atomBookmarks; }
-
-  //! associates a Bond pointer with a bookmark
-  void setBondBookmark(Bond *bond, int mark) {
-    d_bondBookmarks[mark].push_back(bond);
-  }
-  //! returns the first Bond associated with the \c bookmark provided
-  Bond *getBondWithBookmark(int mark);
-  //! returns the Bond associated with the \c bookmark provided
-  //! a check is made to ensure it is the only bond with that bookmark
-  Bond *getUniqueBondWithBookmark(int mark);
-  //! returns all bonds associated with the \c bookmark provided
-  BOND_PTR_LIST &getAllBondsWithBookmark(int mark);
-  //! removes a \c bookmark from our collection
-  void clearBondBookmark(int mark);
-  //! removes a particular Bond from the list associated with the \c bookmark
-  void clearBondBookmark(int mark, const Bond *bond);
-
-  //! blows out all bond \c bookmarks
-  void clearAllBondBookmarks() { d_bondBookmarks.clear(); }
-  //! queries whether or not any bonds are associated with a \c bookmark
-  bool hasBondBookmark(int mark) const { return d_bondBookmarks.count(mark); }
-  //! returns a pointer to all of our bond \c bookmarks
-  BOND_BOOKMARK_MAP *getBondBookmarks() { return &d_bondBookmarks; }
-
-  //! @}
-
-  //! \name Conformers
-  //! @{
-
-  //! return the conformer with a specified ID
-  //! if the ID is negative the first conformation will be returned
-  const Conformer &getConformer(int id = -1) const;
-
-  //! return the conformer with a specified ID
-  //! if the ID is negative the first conformation will be returned
-  Conformer &getConformer(int id = -1);
-
-  //! Delete the conformation with the specified ID
-  void removeConformer(unsigned int id);
-
-  //! Clear all the conformations on the molecule
-  void clearConformers() { d_confs.clear(); }
-
-  //! Add a new conformation to the molecule
-  /*!
-    \param conf - conformation to be added to the molecule, this molecule takes
-    ownership
-                  of the conformer
-    \param assignId - a unique ID will be assigned to the conformation if
-    true
-                      otherwise it is assumed that the conformation already has
-    an (unique) ID set
-  */
-  unsigned int addConformer(Conformer *conf, bool assignId = false);
-
-  inline unsigned int getNumConformers() const {
-    return rdcast<unsigned int>(d_confs.size());
-  }
-
   //! \name Topology
   //! @{
 
   //! returns a pointer to our RingInfo structure
   //! <b>Note:</b> the client should not delete this.
-  RingInfo *getRingInfo() const { return dp_ringInfo; }
+  RingInfo *getRingInfo() const;
 
   //! provides access to all neighbors around an Atom
   /*!
@@ -592,7 +745,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
       }
 
     \endcode
-
   */
   ADJ_ITER_PAIR getAtomNeighbors(Atom const *at) const;
 
@@ -622,8 +774,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
         // nbr is a bond pointer
       }
     \endcode
-
-
   */
   OBOND_ITER_PAIR getAtomBonds(Atom const *at) const;
 
@@ -642,7 +792,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
       }
     \endcode
   */
-  ATOM_ITER_PAIR getVertices();
+  ATOM_ITER_PAIR getVertices() const;
   //! returns an iterator pair for looping over all Bonds
   /*!
 
@@ -658,10 +808,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
       }
     \endcode
   */
-  BOND_ITER_PAIR getEdges();
-  //! \overload
-  ATOM_ITER_PAIR getVertices() const;
-  //! \overload
   BOND_ITER_PAIR getEdges() const;
 
   //! brief returns a pointer to our underlying BGL object
@@ -677,7 +823,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
          int res = boost::connected_components(G_p,&mapping[0]);
       \endcode
    */
-  MolGraph const &getTopology() const { return d_graph; }
+  ROMol const &getTopology() const { return *this; }
   //! @}
 
   //! \name Iterators
@@ -718,9 +864,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! \overload
   ConstHeteroatomIterator endHeteros() const;
 
-  //! if the Mol has any Query atoms or bonds
-  bool hasQuery() const;
-
   //! get an AtomIterator pointing at our first Atom that matches \c query
   QueryAtomIterator beginQueryAtoms(QueryAtom const *query);
   //! \overload
@@ -729,6 +872,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   QueryAtomIterator endQueryAtoms();
   //! \overload
   ConstQueryAtomIterator endQueryAtoms() const;
+
+  bool hasQuery() const;
 
   //! get an AtomIterator pointing at our first Atom that matches \c query
   MatchingAtomIterator beginMatchingAtoms(bool (*query)(Atom *));
@@ -740,15 +885,18 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! \overload
   ConstMatchingAtomIterator endMatchingAtoms() const;
 
-  inline ConformerIterator beginConformers() { return d_confs.begin(); }
-
-  inline ConformerIterator endConformers() { return d_confs.end(); }
-
-  inline ConstConformerIterator beginConformers() const {
-    return d_confs.begin();
+  inline ConformerIterator beginConformers() {
+    return dp_mol->getConformersCompat().begin();
   }
-
-  inline ConstConformerIterator endConformers() const { return d_confs.end(); }
+  inline ConformerIterator endConformers() {
+    return dp_mol->getConformersCompat().end();
+  }
+  inline ConstConformerIterator beginConformers() const {
+    return dp_mol->getConformersCompat().begin();
+  }
+  inline ConstConformerIterator endConformers() const {
+    return dp_mol->getConformersCompat().end();
+  }
 
   //! @}
 
@@ -756,6 +904,13 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! @{
 
   //! clears all of our \c computed \c properties
+  /*!
+    <b>Notes:</b>
+    - This must be allowed on a const ROMol for backward compatibility,
+    but DO NOT call this while this molecule might be being modified in another
+    thread, NOR while any properties on the same molecule or its atoms or bonds
+    might be being read or written.
+  */
   void clearComputedProps(bool includeRings = true) const;
   //! calculates any of our lazy \c properties
   /*!
@@ -775,22 +930,22 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   void debugMol(std::ostream &str) const;
   //! @}
 
-  Atom *operator[](const vertex_descriptor &v) { return d_graph[v]; }
+  Atom *operator[](const vertex_descriptor &v) { return getAtomWithIdx(v); }
   const Atom *operator[](const vertex_descriptor &v) const {
-    return d_graph[v];
+    return getAtomWithIdx(v);
   }
 
-  Bond *operator[](const edge_descriptor &e) { return d_graph[e]; }
-  const Bond *operator[](const edge_descriptor &e) const { return d_graph[e]; }
+  Bond *operator[](const edge_descriptor &e) { return getBondWithIdx(*e); }
+  const Bond *operator[](const edge_descriptor &e) const {
+    return getBondWithIdx(*e);
+  }
 
   //! Gets a reference to the groups of atoms with relative stereochemistry
   /*!
     Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
     file format.
   */
-  const std::vector<StereoGroup> &getStereoGroups() const {
-    return d_stereo_groups;
-  }
+  const std::vector<StereoGroup> &getStereoGroups() const;
 
   //! Sets groups of atoms with relative stereochemistry
   /*!
@@ -801,41 +956,231 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   */
   void setStereoGroups(std::vector<StereoGroup> stereo_groups);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION
-  //! \name boost::serialization support
-  //! @{
-  template <class Archive>
-  void save(Archive &ar, const unsigned int version) const;
-  template <class Archive>
-  void load(Archive &ar, const unsigned int version);
-  BOOST_SERIALIZATION_SPLIT_MEMBER()
-  //! @}
-#endif
 
- private:
-  MolGraph d_graph;
-  ATOM_BOOKMARK_MAP d_atomBookmarks;
-  BOND_BOOKMARK_MAP d_bondBookmarks;
-  RingInfo *dp_ringInfo = nullptr;
-  CONF_SPTR_LIST d_confs;
-  std::vector<SubstanceGroup> d_sgroups;
-  std::vector<StereoGroup> d_stereo_groups;
-  std::unique_ptr<boost::dynamic_bitset<>> dp_delAtoms = nullptr;
-  std::unique_ptr<boost::dynamic_bitset<>> dp_delBonds = nullptr;
+  //! returns a list with the names of our \c properties
+  STR_VECT getPropList(bool includePrivate = true,
+                       bool includeComputed = true) const;
+
+  //! sets a \c property value
+  /*!
+    \param key the name under which the \c property should be stored.
+    If a \c property is already stored under this name, it will be
+    replaced.
+    \param val the value to be stored
+    \param computed (optional) allows the \c property to be flagged
+    \c computed.
+
+    <b>Notes:</b>
+    - This must be allowed on a const ROMol for backward compatibility,
+    but DO NOT call this while this molecule might be being modified in another
+    thread, NOR while any properties on the same molecule or its atoms or bonds
+    might be being read or written.
+  */
+  //! \overload
+  template <typename T>
+  void setProp(const std::string_view &key, T val,
+               bool computed = false) const {
+    dp_mol->setMolProp(PropToken(key), val, computed);
+  }
+  //! allows retrieval of a particular property value
+  /*!
+    \param key the name under which the \c property should be stored.
+    If a \c property is already stored under this name, it will be
+    replaced.
+    \param res a reference to the storage location for the value.
+
+    <b>Notes:</b>
+    - if no \c property with name \c key exists, a KeyErrorException will be
+    thrown.
+    - the \c boost::lexical_cast machinery is used to attempt type
+    conversions.
+    If this fails, a \c boost::bad_lexical_cast exception will be thrown.
+  */
+  //! \overload
+  template <typename T>
+  void getProp(const std::string_view &key, T &res) const {
+    PropToken token(key);
+    if constexpr (std::is_same_v<T, STR_VECT>) {
+      if (token == detail::computedPropNameToken) {
+        dp_mol->getComputedPropList(res);
+        return;
+      }
+    }
+    bool found = dp_mol->getMolPropIfPresent(token, res);
+    if (!found) {
+      throw KeyErrorException(key);
+    }
+  }
+
+  //! \overload
+  template <typename T>
+  T getProp(const std::string_view &key) const {
+    PropToken token(key);
+    if constexpr (std::is_same_v<T, STR_VECT>) {
+      if (token == detail::computedPropNameToken) {
+        STR_VECT res;
+        dp_mol->getComputedPropList(res);
+        return res;
+      }
+    }
+    return dp_mol->getMolProp<T>(token);
+  }
+
+  //! returns whether or not we have a \c property with name \c key
+  //!  and assigns the value if we do
+  //! \overload
+  template <typename T>
+  bool getPropIfPresent(const std::string_view &key, T &res) const {
+    PropToken token(key);
+    if constexpr (std::is_same_v<T, STR_VECT>) {
+      if (token == detail::computedPropNameToken) {
+        dp_mol->getComputedPropList(res);
+        return true;
+      }
+    }
+    return dp_mol->getMolPropIfPresent(token, res);
+  }
+
+  bool hasProp(const std::string_view &key) const;
+
+  //! clears the value of a \c property
+  /*!
+    <b>Notes:</b>
+    - if no \c property with name \c key exists, a KeyErrorException
+    will be thrown.
+    - if the \c property is marked as \c computed, it will also be removed
+    from our list of \c computedProperties
+
+    <b>Notes:</b>
+    - This must be allowed on a const ROMol for backward compatibility,
+    but DO NOT call this while this molecule might be being modified in another
+    thread, NOR while any properties on the same molecule or its atoms or bonds
+    might be being read or written.
+  */
+  //! \overload
+  void clearProp(const std::string_view &key) const;
+
+  //! update the properties from another
+  /*
+    \param source    Source to update the properties from
+    \param preserve  Existing If true keep existing data, else override from
+    the source
+  */
+
+  void updateProps(const ROMol& source, bool preserveExisting = false);
+  void updateProps(const RDProps& source, bool preserveExisting = false);
+
+  [[noreturn]] Dict& getDict() {
+    raiseNonImplementedFunction("GetDict");
+  }
+  [[noreturn]] const Dict& getDict() const {
+    raiseNonImplementedFunction("GetDict");
+  }
+
+  //! Clear all properties.
+  void clear();
+
+  //! \name Bookmarks
+  //! @{
+
+  //! associates an Atom pointer with a bookmark
+  void setAtomBookmark(Atom *at, int mark);
+  //! associates an Atom pointer with a bookmark
+  void replaceAtomBookmark(Atom *at, int mark);
+  //! returns the first Atom associated with the \c bookmark provided
+  Atom *getAtomWithBookmark(int mark);
+  //! returns the Atom associated with the \c bookmark provided
+  //! a check is made to ensure it is the only atom with that bookmark
+  Atom *getUniqueAtomWithBookmark(int mark);
+  //! returns all Atoms associated with the \c bookmark provided
+  ATOM_PTR_LIST &getAllAtomsWithBookmark(int mark);
+  //! removes a \c bookmark from our collection
+  void clearAtomBookmark(int mark);
+  //! removes a particular Atom from the list associated with the \c bookmark
+  void clearAtomBookmark(int mark, const Atom *atom);
+  //! blows out all atomic \c bookmarks
+  void clearAllAtomBookmarks();
+  //! queries whether or not any atoms are associated with a \c bookmark
+  bool hasAtomBookmark(int mark) const;
+  //! returns a pointer to all of our atom \c bookmarks
+  ATOM_BOOKMARK_MAP *getAtomBookmarks();
+
+  //! associates a Bond pointer with a bookmark
+  void setBondBookmark(Bond *bond, int mark);
+  //! returns the first Bond associated with the \c bookmark provided
+  Bond *getBondWithBookmark(int mark);
+  //! returns the Bond associated with the \c bookmark provided
+  //! a check is made to ensure it is the only bond with that bookmark
+  Bond *getUniqueBondWithBookmark(int mark);
+  //! returns all bonds associated with the \c bookmark provided
+  BOND_PTR_LIST &getAllBondsWithBookmark(int mark);
+  //! removes a \c bookmark from our collection
+  void clearBondBookmark(int mark);
+  //! removes a particular Bond from the list associated with the \c bookmark
+  void clearBondBookmark(int mark, const Bond *bond);
+  //! blows out all bond \c bookmarks
+  void clearAllBondBookmarks();
+  //! queries whether or not any bonds are associated with a \c bookmark
+  bool hasBondBookmark(int mark) const;
+  //! returns a pointer to all of our bond \c bookmarks
+  BOND_BOOKMARK_MAP *getBondBookmarks();
+
+  //! @}
+
+  //! \name Conformers
+  //! @{
+
+  //! return the conformer with a specified ID
+  //! if the ID is negative the first conformation will be returned
+  const Conformer &getConformer(int id = -1) const;
+
+  //! return the conformer with a specified ID
+  //! if the ID is negative the first conformation will be returned
+  Conformer &getConformer(int id = -1);
+
+  //! Delete the conformation with the specified ID
+  void removeConformer(unsigned int id);
+
+  //! Clear all the conformations on the molecule
+  void clearConformers();
+
+  //! Add a new conformation to the molecule
+  /*!
+    \param conf - conformation to be added to the molecule, this molecule takes
+    ownership
+                  of the conformer
+    \param assignId - a unique ID will be assigned to the conformation if
+    true
+                      otherwise it is assumed that the conformation already has
+    an (unique) ID set
+  */
+  unsigned int addConformer(Conformer *conf, bool assignId = false);
+
+  unsigned int getNumConformers() const;
 
   friend RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
       ROMol &);
   friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup> &
   getSubstanceGroups(const ROMol &);
-  void clearSubstanceGroups() { d_sgroups.clear(); }
+  void clearSubstanceGroups();
+
+
+  #ifdef RDK_USE_BOOST_SERIALIZATION
+    //! \name boost::serialization support
+    //! @{
+    template <class Archive>
+    void save(Archive &ar, const unsigned int version) const;
+    template <class Archive>
+    void load(Archive &ar, const unsigned int version);
+    BOOST_SERIALIZATION_SPLIT_MEMBER()
+    //! @}
+  #endif
 
  protected:
-  unsigned int numBonds{0};
 #ifndef WIN32
  private:
 #endif
-  void initMol();
-  virtual void destroy();
+
   //! adds an Atom to our collection
   /*!
     \param atom          pointer to the Atom to add
@@ -873,6 +1218,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   void initFromOther(const ROMol &other, bool quickCopy, int confId);
 };
 
+using MolGraph = ROMol;
+
 typedef std::vector<ROMol> MOL_VECT;
 typedef boost::shared_ptr<ROMol> ROMOL_SPTR;
 typedef std::vector<ROMol *> MOL_PTR_VECT;
@@ -880,6 +1227,10 @@ typedef std::vector<ROMOL_SPTR> MOL_SPTR_VECT;
 
 typedef MOL_PTR_VECT::const_iterator MOL_PTR_VECT_CI;
 typedef MOL_PTR_VECT::iterator MOL_PTR_VECT_I;
+//! Number of vertices for boost VF2
+RDKIT_GRAPHMOL_EXPORT uint32_t num_vertices(const ROMol &mol);
+//! Number of edges for boost VF2
+RDKIT_GRAPHMOL_EXPORT uint32_t num_edges(const ROMol &mol);
 
 };  // namespace RDKit
 #endif

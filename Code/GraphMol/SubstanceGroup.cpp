@@ -354,10 +354,18 @@ bool SubstanceGroupChecks::isSubstanceGroupIdFree(const ROMol &mol,
 }
 
 std::vector<SubstanceGroup> &getSubstanceGroups(ROMol &mol) {
-  return mol.d_sgroups;
+  return mol.dp_mol->getSubstanceGroups();
 }
 const std::vector<SubstanceGroup> &getSubstanceGroups(const ROMol &mol) {
-  return mol.d_sgroups;
+  return mol.dp_mol->getSubstanceGroups();
+}
+
+std::vector<SubstanceGroup> &getSubstanceGroups(RDMol &mol) {
+  return mol.getSubstanceGroups();
+}
+
+const std::vector<SubstanceGroup> &getSubstanceGroups(const RDMol &mol) {
+  return mol.getSubstanceGroups();
 }
 
 unsigned int addSubstanceGroup(ROMol &mol, SubstanceGroup sgroup) {
@@ -406,8 +414,9 @@ bool removedParentInHierarchy(
 }
 
 template <bool INCLUDES_METHOD(SubstanceGroup &, unsigned int),
-          void ADJUST_METHOD(SubstanceGroup &, unsigned int)>
-void removeSubstanceGroupsReferencing(RWMol &mol, unsigned int idx) {
+          void ADJUST_METHOD(SubstanceGroup &, unsigned int),
+          typename molT>
+void removeSubstanceGroupsReferencing(molT &mol, unsigned int idx) {
   auto &sgs = getSubstanceGroups(mol);
   if (!sgs.empty()) {
     // first collect the ones that should be removed
@@ -484,9 +493,17 @@ void removeSubstanceGroupsReferencingAtom(RWMol &mol, unsigned int idx) {
   removeSubstanceGroupsReferencing<includesAtom, removedAtom>(mol, idx);
 }
 
+void removeSubstanceGroupsReferencingAtom(RDMol &mol, unsigned int idx) {
+  removeSubstanceGroupsReferencing<includesAtom, removedAtom>(mol, idx);
+}
+
 void removeSubstanceGroupsReferencingBond(RWMol &mol, unsigned int idx) {
   // Delete substance groups containing this bond. It could be that it's ok to
   // keep it, but we just don't know
+  removeSubstanceGroupsReferencing<includesBond, removedBond>(mol, idx);
+}
+
+void removeSubstanceGroupsReferencingBond(RDMol &mol, unsigned int idx) {
   removeSubstanceGroupsReferencing<includesBond, removedBond>(mol, idx);
 }
 
