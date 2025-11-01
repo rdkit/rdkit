@@ -41,8 +41,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   SynthonSet(SynthonSet &&rhs) = delete;
 
   const std::string &getId() const { return d_id; }
-  const std::vector<std::vector<std::pair<std::string, Synthon *>>> &
-  getSynthons() const {
+  const std::vector<std::vector<std::pair<std::string, Synthon *>>>
+      &getSynthons() const {
     return d_synthons;
   }
   const boost::dynamic_bitset<> &getConnectors() const { return d_connectors; }
