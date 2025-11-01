@@ -5,7 +5,7 @@ if(RDK_BUILD_MINIMAL_LIB)
     set(MINIMAL_LIB_LIBRARIES "MolInterchange;Abbreviations;"
         "CIPLabeler;MolDraw2D;Depictor;"
         "Descriptors;SubstructMatch;FileParsers;"
-        "SmilesParse;GraphMol;RDGeometryLib;ScaffoldNetwork_static;"
+        "SmilesParse;GraphMol;RDGeometryLib;"
         "RDGeneral;RGroupDecomposition;Fingerprints")
     if(RDK_BUILD_INCHI_SUPPORT)
         add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
@@ -37,7 +37,7 @@ if(RDK_BUILD_MINIMAL_LIB)
     endif()
     if(RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ChemReactions_static")
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ScaffoldNetwork")
     endif()
     if(RDK_BUILD_FREETYPE_SUPPORT)
         if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")

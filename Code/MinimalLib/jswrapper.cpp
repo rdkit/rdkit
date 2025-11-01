@@ -502,8 +502,10 @@ emscripten::val get_mmpa_frags_helper(const JSMolBase &self,
                                       unsigned int maxCutBonds) {
   auto obj = emscripten::val::object();
   auto pairs = self.get_mmpa_frags(minCuts, maxCuts, maxCutBonds);
-  obj.set("cores", pairs.first);
-  obj.set("sidechains", pairs.second);
+  
+  obj.set("cores", emscripten::val(pairs.first, emscripten::allow_raw_pointers()));
+  obj.set("sidechains", emscripten::val(pairs.second, emscripten::allow_raw_pointers()));
+
   return obj;
 }
 #endif

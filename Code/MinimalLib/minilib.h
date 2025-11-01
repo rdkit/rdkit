@@ -317,8 +317,17 @@ class JSReaction {
 #ifdef RDK_BUILD_MINIMAL_LIB_SCAFFOLDNETWORK
 class JSScaffoldNetwork {
  public:
-  JSScaffoldNetwork() : 
-    d_scaffparams(new RDKit::ScaffoldNetwork::ScaffoldNetworkParams), d_network(new RDKit::ScaffoldNetwork::ScaffoldNetwork) {}
+  JSScaffoldNetwork()
+    : d_scaffparams(std::make_unique<RDKit::ScaffoldNetwork::ScaffoldNetworkParams>()),
+      d_network(std::make_unique<RDKit::ScaffoldNetwork::ScaffoldNetwork>()) {}
+
+  // forbid copying (because we own heap resources)
+  JSScaffoldNetwork(const JSScaffoldNetwork&) = delete;
+  JSScaffoldNetwork& operator=(const JSScaffoldNetwork&) = delete;
+
+  // allow moving if you want
+  JSScaffoldNetwork(JSScaffoldNetwork&&) = default;
+  JSScaffoldNetwork& operator=(JSScaffoldNetwork&&) = default;
 
   RDKit::ScaffoldNetwork::ScaffoldNetwork update_scaffold_network(
       const JSMolList &scaffmols);
@@ -326,8 +335,8 @@ class JSScaffoldNetwork {
   void set_scaffold_params(const std::string &params);
 
  private:
-  RDKit::ScaffoldNetwork::ScaffoldNetworkParams *d_scaffparams;
-  RDKit::ScaffoldNetwork::ScaffoldNetwork *d_network;
+  std::unique_ptr<RDKit::ScaffoldNetwork::ScaffoldNetworkParams> d_scaffparams;
+  std::unique_ptr<RDKit::ScaffoldNetwork::ScaffoldNetwork> d_network;
 };
 #endif
 
