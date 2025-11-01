@@ -9,6 +9,7 @@
 //
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <RDGeneral/hash/hash.hpp>
@@ -144,6 +145,7 @@ template <typename OutputType>
 void MorganAtomEnv<OutputType>::updateAdditionalOutput(
     AdditionalOutput *additionalOutput, size_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
+  PRECONDITION(d_mol, "bad mol pointer");
   if (additionalOutput->bitInfoMap) {
     (*additionalOutput->bitInfoMap)[bitId].emplace_back(d_atomId, d_layer);
   }
@@ -152,6 +154,21 @@ void MorganAtomEnv<OutputType>::updateAdditionalOutput(
   }
   if (additionalOutput->atomToBits) {
     (*additionalOutput->atomToBits)[d_atomId].push_back(bitId);
+  }
+  if (additionalOutput->atomsPerBit) {
+    std::vector<int> atomsInvolved;
+    atomsInvolved.push_back(d_atomId);
+    if (d_layer > 0) {
+      const auto dm = MolOps::getDistanceMat(*d_mol);
+      for (unsigned int i = 0; i < d_mol->getNumAtoms(); ++i) {
+        if (static_cast<unsigned int>(dm[d_atomId * d_mol->getNumAtoms() + i] +
+                                      .1) <= d_layer &&
+            i != d_atomId) {
+          atomsInvolved.push_back(i);
+        }
+      }
+    }
+    (*additionalOutput->atomsPerBit)[bitId].push_back(std::move(atomsInvolved));
   }
 }
 
@@ -166,12 +183,6 @@ OutputType MorganAtomEnv<OutputType>::getBitId(
 ) const {
   return d_code;
 }  // namespace MorganFingerprint
-
-template <typename OutputType>
-MorganAtomEnv<OutputType>::MorganAtomEnv(const std::uint32_t code,
-                                         const unsigned int atomId,
-                                         const unsigned int layer)
-    : d_code(code), d_atomId(atomId), d_layer(layer) {}
 
 template <typename OutputType>
 std::vector<AtomEnvironment<OutputType> *>
@@ -273,7 +284,7 @@ MorganEnvGenerator<OutputType>::getEnvironments(
     if (includeAtoms[i]) {
       if (!morganArguments->df_onlyNonzeroInvariants || currentInvariants[i]) {
         result.push_back(
-            new MorganAtomEnv<OutputType>(currentInvariants[i], i, 0));
+            new MorganAtomEnv<OutputType>(currentInvariants[i], i, 0, &mol));
       }
     }
   }
@@ -377,7 +388,7 @@ MorganEnvGenerator<OutputType>::getEnvironments(
             (*atomInvariants)[std::get<2>(*iter)]) {
           if (includeAtoms[std::get<2>(*iter)]) {
             result.push_back(new MorganAtomEnv<OutputType>(
-                std::get<1>(*iter), std::get<2>(*iter), layer + 1));
+                std::get<1>(*iter), std::get<2>(*iter), layer + 1, &mol));
             neighborhoods.insert(std::get<0>(*iter));
           }
         }

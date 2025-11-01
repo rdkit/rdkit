@@ -49,7 +49,6 @@ template <typename OutputType>
 void TopologicalTorsionAtomEnv<OutputType>::updateAdditionalOutput(
     AdditionalOutput *additionalOutput, size_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
-
   if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
     for (auto aid : d_atomPath) {
       if (additionalOutput->atomToBits) {
@@ -62,6 +61,9 @@ void TopologicalTorsionAtomEnv<OutputType>::updateAdditionalOutput(
   }
   if (additionalOutput->bitPaths) {
     (*additionalOutput->bitPaths)[bitId].push_back(d_atomPath);
+  }
+  if (additionalOutput->atomsPerBit) {
+    (*additionalOutput->atomsPerBit)[bitId].push_back(d_atomPath);
   }
 }
 

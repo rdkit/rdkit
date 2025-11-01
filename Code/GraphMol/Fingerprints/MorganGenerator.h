@@ -157,6 +157,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomEnv
   const OutputType d_code;
   const unsigned int d_atomId;
   const unsigned int d_layer;
+  const ROMol *d_mol = nullptr;
 
  public:
   OutputType getBitId(
@@ -178,7 +179,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomEnv
    \param layer radius of this environment
    */
   MorganAtomEnv(const std::uint32_t code, const unsigned int atomId,
-                const unsigned int layer);
+                const unsigned int layer, const ROMol *mol)
+      : d_code(code), d_atomId(atomId), d_layer(layer), d_mol(mol) {}
 };
 
 /**
