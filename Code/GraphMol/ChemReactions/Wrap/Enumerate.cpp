@@ -170,7 +170,10 @@ struct enumeration_wrapper {
              "Inititialize the library from a binary string")
         .def(
             "GetPosition", &RDKit::EnumerateLibraryBase::getPosition,
-            "Returns the current enumeration position into the reagent vectors",
+            "Returns the current enumeration position into the reagent vectors, as"
+            " returned by GetReagents().  They do not necessarily refer to"
+            " the input reagent sets as they only refer to reagents compatible"
+            " with the reaction.",
             python::return_internal_reference<
                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
             python::args("self"))
@@ -308,11 +311,14 @@ for result in itertools.islice(libary2, 1000):\n\
                           python::optional<const RDKit::EnumerationParams &>>(
             python::args("self", "rxn", "reagents", "enumerator", "params")))
 
-        .def("GetReagents", &RDKit::EnumerateLibrary::getReagents,
-             "Return the reagents used in this library.",
-             python::return_internal_reference<
-                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
-             python::args("self"));
+        .def(
+            "GetReagents", &RDKit::EnumerateLibrary::getReagents,
+            "Return the reagents used in this library.  These are the subset"
+            " of the input reagents that are compatible with the reaction so may"
+            " be smaller than the input reagent sets.",
+            python::return_internal_reference<
+                1, python::with_custodian_and_ward_postcall<0, 1>>(),
+            python::args("self"));
 
     // iterator_wrappers<EnumerateLibrary>().wrap("EnumerateLibraryIterator");
 
@@ -342,7 +348,10 @@ for result in itertools.islice(libary2, 1000):\n\
              "strategy.\n"
              "Note that some strategies are effectively infinite.")
         .def("GetPosition", &EnumerationStrategyBase::getPosition,
-             "Return the current indices into the arrays of reagents",
+             "Return the current indices into the arrays of reagents, as"
+             " returned by GetReagents().  They do not necessarily refer to"
+             " the input reagent sets as they only refer to reagents compatible"
+             " with the reaction.",
              python::return_internal_reference<
                  1, python::with_custodian_and_ward_postcall<0, 1>>(),
              python::args("self"))
