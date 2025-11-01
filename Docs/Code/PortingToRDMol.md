@@ -119,6 +119,25 @@ pointers to `AtomData` or `BondData` if atoms or bonds might be added or
 removed, because the vector containing that data may be reallocated,
 invalidating those pointers.
 
+
+Bond stereo atoms used to be a `std::vector<int>` on each `Bond`, but only 0 or
+2 atoms were valid sizes, so this is now represented as a fixed array of 2 atom
+indices, with -1 indicating that the indices are unused. However, in order to
+support the previous format in the compatibility interface, the new
+representation is accessed via `RDMol::setBondStereoAtoms`, instead of accessing
+the indices in `BondData` directly, in order to synchronize between the
+compatibility data and the new data, as needed. For example,
+`bond->setStereoAtoms(beginIdx, endIdx);` can become
+`rdmol.setBondStereoAtoms(bondIdx, beginIdx, endIdx);` Because only sizes 0 or 2
+are valid, code that previously used `bond->getStereoAtoms().clear();` can now
+call `rdmol.clearBondStereoAtoms();` and code that used `getStereoAtoms()` to
+set 2 atom indices can be adapted to call `RDMol::setBondStereoAtoms`.
+Similarly, there are now `RDMol::hasBondStereoAtoms(bondIdx)` and
+`RDMol::getBondStereoAtoms(bondIdx)` for reading the bond stereo atoms.
+`RDMol::getBondStereoAtoms(bondIdx)` currently always returns non-null, but
+the atom indices will be invalid (`atomindex_t(-1)`) if the bond does not have
+stereo atoms.
+
 ## Neighbours and graph structure
 
 Previously, the graph representing the connections between atoms used the Boost
@@ -165,13 +184,66 @@ acquiring mutable access to atom and bond data, so in the `const` case,
 
 ## Constructing a molecule
 
+Just like `ROMol` or `RWMol`, `RDMol` can be default constructed to make an
+empty molecule. However, in the new interface, atom and bond data are managed by
+`RDMol`, instead of being managed by separately allocated `Atom` and `Bond`
+objects, so for example
+
+```
+RWMol rwmol;
+for (uint32_t atomIdx = 0; atomIdx < numAtoms; ++atomIdx) {
+  Atom *atom = new Atom(atomicNums[atomIdx]);
+  atom->setFormalCharge(atomCharges[atomIdx]);
+  rwmol.addAtom(atom, true, /*takeOwnership=*/true);
+}
+for (uint32_t bondIdx = 0; bondIdx < numBonds; ++bondIdx) {
+  Bond *bond = new Bond(bondTypes[bondIdx]);
+  bond->setBeginAtomIdx(bondAtoms[bondIdx].first);
+  bond->setEndAtomIdx(bondAtoms[bondIdx].second);
+  bond->setStereo(bondStereos[bondIdx]);
+  rwmol.addBond(bond, /*takeOwnership=*/true);
+}
+```
+
+could become
+
+```
+RDMol rdmol;
+for (uint32_t atomIdx = 0; atomIdx < numAtoms; ++atomIdx) {
+  AtomData &atom = rdmol.addAtom();
+  atom.setAtomicNum(atomicNums[atomIdx]);
+  atom.setFormalCharge(atomCharges[atomIdx]);
+}
+for (uint32_t bondIdx = 0; bondIdx < numBonds; ++bondIdx) {
+  BondData &bond = rdmol.addBond(
+    bondAtoms[bondIdx].first, bondAtoms[bondIdx].second, bondTypes[bondIdx]);
+  bond.setStereo(bondStereos[bondIdx]);
+}
+```
+
 ## Properties
+
+In most situations, properties, "props", are not needed. It's recommended to
+avoid creating properties unless it's prohibitively difficult to use a separate
+data structure, except for a few cases, such as using a property to keep track
+of atom or bond indices in the case of calling code that may remove atoms or
+bonds. Using a dedicated data structure, separate from the `RWMol` or `RDMol`
+will usually be more efficient and easier to manage. However, properties are
+used in many places, and `RDMol` provides some new features to make the most
+common uses of them more efficient.
+
+
+
+
+
 
 ## Iteration
 
 ## Ring info
 
 ## Conformer data
+
+## Queries
 
 ## Safety of multi-threading
 
