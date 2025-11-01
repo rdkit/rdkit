@@ -98,7 +98,7 @@ void processCXSmilesLabels(RWMol &mol) {
                       symb.substr(0, symb.size() - 2));
         atom->clearProp(common_properties::atomLabel);
       }
-    } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() &&
+    } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() && !atom->getIsotope() &&
                atom->getSymbol() == "*") {
       addquery(makeAAtomQuery(), "", mol, atom->getIdx());
     }
