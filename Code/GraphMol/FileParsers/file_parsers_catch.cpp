@@ -2200,7 +2200,7 @@ M  V30 1 C -22.5833 11.0833 0 0 EXACHG=1
 M  V30 2 C -21.2497 11.8533 0 0 INVRET=2
 M  V30 3 C -23.917 11.8533 0 0 ATTCHORD=3
 M  V30 4 C -25.2507 11.0833 0 0 CLASS=foo
-M  V30 5 C -26.5844 11.8533 0 0 SEQID=4
+M  V30 5 C -26.5844 11.8533 0 0 SEQID=4 SEQNAME=foo1
 M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
@@ -2222,12 +2222,15 @@ M  END
               common_properties::molAtomClass) == "foo");
     CHECK(mol->getAtomWithIdx(4)->getProp<int>(
               common_properties::molAtomSeqId) == 4);
+    CHECK(mol->getAtomWithIdx(4)->getProp<std::string>(
+              common_properties::molAtomSeqName) == "foo1");
     auto molb = MolToV3KMolBlock(*mol);
     CHECK(molb.find("EXACHG=1") != std::string::npos);
     CHECK(molb.find("INVRET=2") != std::string::npos);
     CHECK(molb.find("ATTCHORD=3") != std::string::npos);
     CHECK(molb.find("CLASS=foo") != std::string::npos);
     CHECK(molb.find("SEQID=4") != std::string::npos);
+    CHECK(molb.find("SEQNAME=foo1") != std::string::npos);
   }
   SECTION("SUBST") {
     auto mol = R"CTAB(test
