@@ -278,11 +278,11 @@ struct path_converter {
 
 /// Convert a Python str to a std::string_view
 template <typename T = std::string_view>
-struct string_view_converter {
-  string_view_converter() {
-    python::converter::registry::push_back(&string_view_converter::convertible,
-                                           &string_view_converter::construct,
-                                           boost::python::type_id<T>());
+struct string_view_from_python_converter {
+  string_view_from_python_converter() {
+    python::converter::registry::push_back(
+        &string_view_from_python_converter::convertible,
+        &string_view_from_python_converter::construct, python::type_id<T>());
   }
 
   /// Check PyObject is a str
@@ -298,14 +298,19 @@ struct string_view_converter {
   /// returns, so the PyObject and the internal string should remain valid.
   static void construct(
       PyObject *object,
-      boost::python::converter::rvalue_from_python_stage1_data *data) {
+      python::converter::rvalue_from_python_stage1_data *data) {
     const char *tmp = PyUnicode_AsUTF8(object);
 
-    void *storage =
-        ((boost::python::converter::rvalue_from_python_storage<T> *)data)
-            ->storage.bytes;
+    void *storage = ((python::converter::rvalue_from_python_storage<T> *)data)
+                        ->storage.bytes;
     new (storage) T{tmp};
     data->convertible = storage;
+  }
+};
+
+struct string_view_to_python_converter {
+  static PyObject *convert(const std::string_view &s) {
+    return python::incref(python::str(s.data(), s.size()).ptr());
   }
 };
 
@@ -331,7 +336,7 @@ BOOST_PYTHON_MODULE(rdBase) {
   RegisterVectorConverter<std::pair<int, int>>("MatchTypeVect");
 
   path_converter();
-  string_view_converter();
+  string_view_from_python_converter();
 
   RegisterListConverter<int>();
   RegisterListConverter<std::vector<int>>();
@@ -348,6 +353,9 @@ BOOST_PYTHON_MODULE(rdBase) {
   python::register_exception_translator<Invar::Invariant>(
       &translate_invariant_error);
 #endif
+
+  boost::python::to_python_converter<std::string_view,
+                                     string_view_to_python_converter>();
 
   python::def("_version", _version,
               "Deprecated, use the constant rdkitVersion instead");
