@@ -64,8 +64,7 @@ Then follow the usual build instructions. The `PYTHON_INCLUDE_DIR` must be set i
 cmake command.
 
 ```
-cmake .. \
-  -DCMAKE_BUILD_TYPE=Release \
+cmake -DCMAKE_BUILD_TYPE=Release \
   -DRDK_INSTALL_INTREE=OFF \
   -DBOOST_ROOT="$CONDA_PREFIX" \
   -DCMAKE_INSTALL_PREFIX="$CONDA_PREFIX" \
