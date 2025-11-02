@@ -45,7 +45,7 @@ For more details on building from source with Conda, see the [conda-rdkit reposi
 
 #### macOS 15 (Sequoia): Python 3 environment
 
-The following commands has been tested on a Apple M4 chip with MacOS Sequoia (MacOS 15). It is expected to work on other recent macOS versions running on Apple Silicon. For Intel-based macOS systems, lease download the according Miniconda installer.
+The following commands has been tested on a Apple M4 chip with MacOS Sequoia (MacOS 15). It is expected to work on other recent macOS versions running on Apple Silicon. For Intel-based macOS systems, please download the according Miniconda installer.
 Download Miniconda from [Conda](https://www.anaconda.com/docs/getting-started/miniconda/install#macos-terminal-installer) and run these
 following commands:
 
@@ -64,26 +64,21 @@ Then follow the usual build instructions. The `PYTHON_INCLUDE_DIR` must be set i
 cmake command.
 
 ```
-  cmake .. \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DRDK_INSTALL_INTREE=OFF \
-    -DBOOST_ROOT="$CONDA_PREFIX" \
-    -DCMAKE_INSTALL_PREFIX="$CONDA_PREFIX" \
-    -DRDK_BUILD_CPP_TESTS=ON \
-    ..
-```
-
-Then
-
-```
-  make
-  make install
+cmake .. \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DRDK_INSTALL_INTREE=OFF \
+  -DBOOST_ROOT="$CONDA_PREFIX" \
+  -DCMAKE_INSTALL_PREFIX="$CONDA_PREFIX" \
+  -DRDK_BUILD_CPP_TESTS=ON \
+  ..
+make
+make install
 ```
 
 Once `make` and `make install` completed successfully, use the following command to run the tests:
 
 ```
-  RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH ctest
+RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH ctest
 ```
 
 This is required due to the [System Integrity Protection SIP](https://en.wikipedia.org/wiki/System_Integrity_Protection)
@@ -113,7 +108,7 @@ cmake -DPy_ENABLE_SHARED=1 \
   -DRDK_INSTALL_INTREE=ON \
   -DRDK_INSTALL_STATIC_LIBS=OFF \
   -DRDK_BUILD_CPP_TESTS=ON \
-  ..
+..
 ```
 
 And finally, `make`, `make install` and `ctest`
