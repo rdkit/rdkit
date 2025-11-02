@@ -60,8 +60,7 @@ conda install compilers libcxx cmake \
 ```
 
 
-Then follow the usual build instructions. The `PYTHON_INCLUDE_DIR` must be set in the
-cmake command.
+Then follow the usual build instructions. 
 
 ```
 cmake -DCMAKE_BUILD_TYPE=Release \
