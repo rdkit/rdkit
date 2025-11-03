@@ -3,6 +3,7 @@ rdkit_library(MolInterchange
               Parser.cpp Writer.cpp
               LINK_LIBRARIES GraphMol)
 target_compile_definitions(MolInterchange PRIVATE RDKIT_MOLINTERCHANGE_BUILD)
+target_compile_definitions(MolInterchange PRIVATE BOOST_JSON_STATIC_LINK)
 
 rdkit_headers(MolInterchange.h details.h
               DEST GraphMol/MolInterchange)
