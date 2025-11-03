@@ -845,6 +845,12 @@ const std::string GetV3000MolFileAtomLine(
         iprop) {
       ss << " SEQID=" << iprop;
     }
+    {
+      std::string sprop;
+      if (atom->getPropIfPresent(common_properties::molAtomSeqName, sprop)) {
+        ss << " SEQNAME=" << sprop;
+      }
+    }
     if (atom->getPropIfPresent(common_properties::molRxnExactChange, iprop) &&
         iprop) {
       ss << " EXACHG=" << iprop;
