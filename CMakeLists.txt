@@ -16,12 +16,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# fix for _unary_functions error on macos
-if (APPLE)
-  add_compile_definitions(_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-enum-constexpr-conversion")
-endif()
-
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
@@ -273,7 +267,8 @@ endif()
 if(MINGW)
   target_compile_definitions(rdkit_base INTERFACE "-DBOOST_SYSTEM_NO_DEPRECATED")
 endif(MINGW)
-if (CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_EMCC)
+# fallback on match to "Clang" where CMAKE_C_COMPILER=/usr/bin/cc
+if (CMAKE_COMPILER_IS_CLANG OR CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_COMPILER_IS_EMCC)
   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 15)
     target_compile_definitions(rdkit_base INTERFACE -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_NO_CXX98_FUNCTION_BASE -D_HAS_AUTO_PTR_ETC=0)
     target_compile_options(rdkit_base INTERFACE -Wno-deprecated-builtins -Wno-deprecated-non-prototype -Wno-unused-parameter)
