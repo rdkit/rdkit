@@ -223,23 +223,131 @@ for (uint32_t bondIdx = 0; bondIdx < numBonds; ++bondIdx) {
 
 ## Properties
 
-In most situations, properties, "props", are not needed. It's recommended to
-avoid creating properties unless it's prohibitively difficult to use a separate
+In most situations, properties, "props", are not needed. If you can use a
+separate structure to store the relevant data outside of the molecule, it
 data structure, except for a few cases, such as using a property to keep track
-of atom or bond indices in the case of calling code that may remove atoms or
-bonds. Using a dedicated data structure, separate from the `RWMol` or `RDMol`
-will usually be more efficient and easier to manage. However, properties are
+will likely be more efficient than using properties. However, properties are
 used in many places, and `RDMol` provides some new features to make the most
 common uses of them more efficient.
 
+Because `RDMol` now manages atom and bond data, the common case of a property
+being added to all properties can be handled more efficiently, using an array,
+especially for simple types `bool`, `char`, `int32_t`, `uint32t`, `int64_t`,
+`uint64_t`, `float`, and `double`. If a string property has a limited set of
+valid strings, it's recommended to replace the strings with an enum, so that
+an integer property can be used instead. Properties can still be present or
+absent from each atom or bond, but there's less overhead now for each additional
+atom or bond having a property after the first one within a molecule. That
+means there's no advantage to having a `bool` property on certain atoms and
+not others, over having the property on all atoms.
+
+The other large change with properties is that, because property names are
+frequently known at compile time, a new shared string `PropToken` class is now
+used instead of using `std::string` for property names, to reduce string
+copying. For faster comparison, it also caches a hash of the string.
+
+Looking at an example:
+
+```
+
+```
 
 
-
-
-
-## Iteration
 
 ## Ring info
+
+With the new interface, ring info is now stored in a flattened representation,
+`RingInfoCache`, which is especially efficient for the case of multiple rings.
+`ringBegins` contains the indices into `atomsInRings` and `bondsInRings` where
+each ring begins, so that `atomsInRings` and `bondsInRings` can be single
+vectors for containing data for all rings. This changes how to access the ring
+data. For example:
+
+```
+const RingInfo *info = romol.getRingInfo();
+const uint32_t numRings = info->numRings();
+const std::vector<std::vector<int>> &atomRings = info->atomRings();
+const std::vector<std::vector<int>> &bondRings = info->bondRings();
+for (uint32_t ringIdx = 0; ringIdx < numRings; ++ringIdx) {
+  const std::vector<int> &atomRing = atomRings[ringIdx];
+  const std::vector<int> &bondRing = bondRings[ringIdx];
+  const uint32_t ringSize = atomRing.size();
+  for (int atomIdx : atomRing) {
+    ...
+  }
+  for (int bondIdx : bondRing) {
+    ...
+  }
+}
+```
+
+could be ported as:
+
+```
+const RingInfoCache &info = rdmol.getRingInfo();
+const uint32_t numRings = info.numRings();
+const std::vector<uint32_t> &atomRings = info.atomsInRings;
+const std::vector<uint32_t> &bondRings = info.bondsInRings;
+for (uint32_t ringIdx = 0; ringIdx < numRings; ++ringIdx) {
+  const uint32_t ringBegin = info.ringBegins[ringIdx];
+  const uint32_t ringEnd = info.ringBegins[ringIdx + 1];
+  const uint32_t ringSize = ringEnd - ringBegin;
+  for (uint32_t idx = ringBegin; idx != ringEnd; ++idx) {
+    const uint32_t atomIdx = atomRings[idx];
+    ...
+  }
+  for (uint32_t idx = ringBegin; idx != ringEnd; ++idx) {
+    const uint32_t bondIdx = bondRings[idx];
+    ...
+  }
+}
+```
+
+`ringBegins` has an extra value at the end, to avoid needing a bounds check
+for `ringIdx + 1`. For iterating over the rings of a particular atom or the
+rings of a particular bond, `atomMembershipBegins` indicates where each atom's
+list of rings begins in `atomMemberships`, and `bondMembershipBegins` indicates
+where each bond's list of rings begins in `bondMemberships`. For example:
+
+```
+for (const Atom *atom : romol.atoms()) {
+  const uint32_t atomIdx = atom->getIdx();
+  const std::vector<int> &rings = info->atomMembers(atomIdx);
+  const atomNumRings = rings.size();
+  for (int ringIdx : rings) {
+    // Visit all bonds in rings that contain atom
+    const std::vector<int> &bondRing = info->bondRings()[ringIdx];
+    for (int bondIdx : bondRing) {
+      ...
+    }
+  }
+}
+```
+
+could be ported to:
+
+```
+for (const uint32_t atomIdx = 0, numAtoms = rdmol.getNumAtoms();
+    atomIdx < numAtoms; ++atomIdx) {
+  const uint32_t ringsBegin = info.atomMembershipBegins[atomIdx];
+  const uint32_t ringsEnd = info.atomMembershipBegins[atomIdx + 1];
+  const atomNumRings = ringsEnd - ringsBegin;
+  for (uint32_t idx = ringsBegin; idx != ringsEnd; ++idx) {
+    const uint32_t ringIdx = info.atomMemberships[idx];
+    // Visit all bonds in rings that contain atom
+    const uint32_t ringBegin = info.ringBegins[ringIdx];
+    const uint32_t ringEnd = info.ringBegins[ringIdx + 1];
+    for (uint32_t idx2 = ringBegin; idx2 != ringEnd; ++idx2) {
+      const uint32_t bondIdx = info.bondRings[idx2];
+      ...
+    }
+  }
+}
+```
+
+Like `ringBegins`, `atomMembershipBegins` has an extra value at the end, to
+avoid needing a bounds check for `atomIdx + 1`.
+
 
 ## Conformer data
 
