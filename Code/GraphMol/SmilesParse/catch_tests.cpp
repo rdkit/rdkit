@@ -3324,3 +3324,15 @@ TEST_CASE("bond labels not being used in fragment canonicalization") {
     CHECK(smi1 == smi2);
   }
 }
+
+TEST_CASE("github #8906") {
+  SECTION("as reported") {
+    auto m = "[1*][2C] ||"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getIsotope() == 1);
+    CHECK(m->getAtomWithIdx(1)->getIsotope() == 2);
+    auto csmi1 = MolToSmiles(*m);
+    CHECK(csmi1 == "[1*][2C]");
+
+  }
+}
