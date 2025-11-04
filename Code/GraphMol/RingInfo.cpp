@@ -308,6 +308,7 @@ void RingInfo::reset() {
   d_atomRingFamilies.clear();
   d_bondRingFamilies.clear();
 #endif
+  // TODO: Should this clear d_fusedRings and d_numFusedBonds?
 }
 void RingInfo::preallocate(unsigned int numAtoms, unsigned int numBonds) {
   d_atomMembers.resize(numAtoms);

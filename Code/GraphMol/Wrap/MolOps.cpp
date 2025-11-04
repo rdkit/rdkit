@@ -1027,10 +1027,11 @@ python::tuple hasQueryHsHelper(const ROMol &m) {
 // we can really only set some of these types from C++ which means
 //  we need a helper function for testing that we can read them
 //  correctly.
-void _testSetProps(RDProps &props, const std::string &prefix) {
-  props.setProp<bool>(prefix + "bool", true);
-  props.setProp<unsigned int>(prefix + "uint", -1);
-  props.setProp<double>(prefix + "double", 3.14159);
+template<typename PropsT>
+void _testSetProps(PropsT &props, const std::string &prefix) {
+  props.template setProp<bool>(prefix + "bool", true);
+  props.template setProp<unsigned int>(prefix + "uint", -1);
+  props.template setProp<double>(prefix + "double", 3.14159);
 
   std::vector<int> svint;
   svint.push_back(0);
@@ -1038,7 +1039,7 @@ void _testSetProps(RDProps &props, const std::string &prefix) {
   svint.push_back(2);
   svint.push_back(-2);
 
-  props.setProp<std::vector<int>>(prefix + "svint", svint);
+  props.template setProp<std::vector<int>>(prefix + "svint", svint);
 
   std::vector<unsigned int> svuint;
   svuint.push_back(0);
@@ -1046,19 +1047,20 @@ void _testSetProps(RDProps &props, const std::string &prefix) {
   svuint.push_back(2);
   svuint.push_back(-2);
 
-  props.setProp<std::vector<unsigned int>>(prefix + "svuint", svuint);
+  props.template setProp<std::vector<unsigned int>>(prefix + "svuint", svuint);
 
   std::vector<double> svdouble;
   svdouble.push_back(0.);
   svdouble.push_back(1.);
   svdouble.push_back(2.);
-  props.setProp<std::vector<double>>(prefix + "svdouble", svdouble);
+  props.template setProp<std::vector<double>>(prefix + "svdouble", svdouble);
 
   std::vector<std::string> svstring;
   svstring.push_back("The");
   svstring.push_back("RDKit");
 
-  props.setProp<std::vector<std::string>>(prefix + "svstring", svstring);
+  props.template setProp<std::vector<std::string>>(prefix + "svstring",
+                                                   svstring);
 }
 
 void testSetProps(ROMol &mol) {
@@ -1162,7 +1164,7 @@ struct molops_wrapper {
   \n\
     - mol: the molecule to be modified\n\
 \n";
-    python::def("SetBondStereoFromDirections",
+    python::def<void(ROMol&)>("SetBondStereoFromDirections",
                 MolOps::setBondStereoFromDirections, (python::arg("mol")),
                 docString.c_str());
 
@@ -1255,7 +1257,7 @@ struct molops_wrapper {
 \n\
   RETURNS: Nothing\n\
 \n";
-    python::def("FastFindRings", MolOps::fastFindRings, docString.c_str(),
+    python::def<void(const ROMol&)>("FastFindRings", MolOps::fastFindRings, docString.c_str(),
                 python::args("mol"));
 #ifdef RDK_USE_URF
     python::def("FindRingFamilies", MolOps::findRingFamilies,
@@ -2217,7 +2219,7 @@ RETURNS:
     - flagPossibleStereoCenters (optional)   set the _ChiralityPossible property on
       atoms that are possible stereocenters
 )DOC";
-    python::def("AssignStereochemistry", MolOps::assignStereochemistry,
+    python::def<void(ROMol&, bool, bool, bool)>("AssignStereochemistry", MolOps::assignStereochemistry,
                 (python::arg("mol"), python::arg("cleanIt") = false,
                  python::arg("force") = false,
                  python::arg("flagPossibleStereoCenters") = false),
@@ -3320,10 +3322,10 @@ enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
     python::def("_TestSetProps", testSetProps, python::arg("mol"));
     python::def("NeedsHs", MolOps::needsHs, (python::arg("mol")),
                 "returns whether or not the molecule needs to have Hs added");
-    python::def(
+    python::def<int(const Atom*)>(
         "CountAtomElec", MolOps::countAtomElec, (python::arg("atom")),
         "returns the number of electrons available on an atom to donate for aromaticity");
-    python::def(
+    python::def<bool(const Atom*)>(
         "AtomHasConjugatedBond", MolOps::atomHasConjugatedBond,
         (python::arg("atom")),
         "returns whether or not the atom is involved in a conjugated bond");

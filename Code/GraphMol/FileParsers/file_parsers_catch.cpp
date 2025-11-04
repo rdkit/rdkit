@@ -36,7 +36,7 @@
 #include <GraphMol/test_fixtures.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
-
+#include <GraphMol/rdmol_throw.h>
 using namespace RDKit;
 
 TEST_CASE("Basic SVG Parsing", "[SVG][reader]") {
@@ -6306,7 +6306,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
   auto mol = "C1CCC(*)CC1"_smiles;
   REQUIRE(mol);
 
-  auto add_some_props = [](RDProps &obj, const std::string &prefix) {
+  auto add_some_props = [](auto &obj, const std::string &prefix) {
     obj.setProp(prefix + "_bool_prop", false);
     obj.setProp(prefix + "_int_prop", 42);
     obj.setProp(prefix + "_real_prop", 3.141592);
@@ -6546,6 +6546,8 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
 
     REQUIRE(MolToSmiles(*roundtrip_mol) == "*C1CCCCC1");
 
+    raiseNonImplementedFunction("mol rdprop conversion");
+    /*
     {
       INFO("Checking mol properties");
       check_roundtripped_properties(*mol, *roundtrip_mol);
@@ -6557,6 +6559,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
                                       *roundtrip_mol->getAtomWithIdx(i));
       }
     }
+     */
     // Maeparser does not parse bond properties, so don't check them.
   }
   SECTION("Check reverse roundtrip") {

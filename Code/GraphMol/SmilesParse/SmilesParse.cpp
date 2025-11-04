@@ -24,6 +24,7 @@
 //
 //
 #include "SmilesParse.h"
+#include "SmilesParseInternal.h"
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -59,6 +60,66 @@ int yysmarts_lex_destroy(void *);
 size_t setup_smarts_string(const std::string &text, void *);
 extern int yysmarts_debug;
 namespace RDKit {
+
+inline namespace v1 {
+
+bool SmilesToMol(const char *smiles,
+                 const SmilesParserParams &params,
+                 RDMol &mol, SmilesParseTemp &temp) {
+  bool success = SmilesParseInternal::parseSmiles(smiles, mol, temp);
+  if (success && (params.sanitize || params.removeHs)) {
+    raiseNonImplementedDetail("sanitization or removeHs in new SmilesToMol");
+#if 0
+    if (res->hasProp(SmilesParseOps::detail::_needsDetectAtomStereo)) {
+      // we encountered a wedged bond in the CXSMILES,
+      // these need to be handled the same way they were in mol files
+      res->clearProp(SmilesParseOps::detail::_needsDetectAtomStereo);
+      if (res->getNumConformers()) {
+        const auto &conf = res->getConformer();
+        if (!conf.is3D()) {
+          MolOps::assignChiralTypesFromBondDirs(*res, conf.getId());
+        }
+      }
+    }
+    // if we read a 3D conformer, set the stereo:
+    if (res->getNumConformers() && res->getConformer().is3D()) {
+      res->updatePropertyCache(false);
+      MolOps::assignChiralTypesFrom3D(*res, res->getConformer().getId(), true);
+    }
+#endif
+#if 0
+    try {
+      if (params.removeHs) {
+        bool implicitOnly = false, updateExplicitCount = true;
+        MolOps::removeHs(mol, temp.sanitizeTemp, implicitOnly, updateExplicitCount,
+                         params.sanitize);
+      } else if (params.sanitize) {
+        MolOps::sanitizeMol(mol, temp.sanitizeTemp);
+      }
+    } catch (...) {
+      mol.clear();
+      return false;
+    }
+#endif
+#if 0
+    if (res->hasProp(SmilesParseOps::detail::_needsDetectBondStereo)) {
+      // we encountered either wiggly bond in the CXSMILES,
+      // these need to be handled the same way they were in mol files
+      res->clearProp(SmilesParseOps::detail::_needsDetectBondStereo);
+      MolOps::clearSingleBondDirFlags(*res);
+      MolOps::detectBondStereochemistry(*res);
+    }
+#endif
+    // figure out stereochemistry:
+    //bool cleanIt = true, force = true, flagPossible = true;
+    //MolOps::assignStereochemistry(mol, temp.chiralityTemp, cleanIt, force, flagPossible);
+  }
+
+  return success;
+}
+}
+
+
 namespace v2 {
 namespace SmilesParse {
 namespace {
@@ -423,8 +484,8 @@ std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
   // the value of debugParse is different for different threads. The if
   // statement below avoids a TSAN warning in the case where multiple threads
   // all use the same value for debugParse.
-  if (yysmiles_debug != params.debugParse) {
-    yysmiles_debug = params.debugParse;
+  if ((yysmiles_debug != 0) != params.debugParse) {
+    yysmiles_debug = params.debugParse ? 1 : 0;
   }
 
   std::string lsmiles, name, cxPart;
@@ -551,8 +612,8 @@ std::unique_ptr<RWMol> MolFromSmarts(const std::string &smarts,
   // the value of debugParse is different for different threads. The if
   // statement below avoids a TSAN warning in the case where multiple threads
   // all use the same value for debugParse.
-  if (yysmarts_debug != params.debugParse) {
-    yysmarts_debug = params.debugParse;
+  if ((yysmarts_debug != 0) != params.debugParse) {
+    yysmarts_debug = params.debugParse ? 1 : 0;
   }
 
   std::string lsmarts, name, cxPart;

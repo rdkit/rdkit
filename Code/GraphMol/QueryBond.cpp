@@ -14,28 +14,26 @@ namespace RDKit {
 
 QueryBond::QueryBond(BondType bT) : Bond(bT) {
   if (bT != Bond::UNSPECIFIED) {
-    dp_query = makeBondOrderEqualsQuery(bT);
+    dp_query.reset(makeBondOrderEqualsQuery(bT));
   } else {
-    dp_query = makeBondNullQuery();
+    dp_query.reset(makeBondNullQuery());
   }
-};
-
-QueryBond::~QueryBond() {
-  delete dp_query;
-  dp_query = nullptr;
 };
 
 QueryBond &QueryBond::operator=(const QueryBond &other) {
+  if (this == &other) {
+    return *this;
+  }
+
   // FIX: should we copy molecule ownership?  I don't think so.
   // FIX: how to deal with atom indices?
-  dp_mol = nullptr;
-  d_bondType = other.d_bondType;
-  if (other.dp_query) {
-    dp_query = other.dp_query->copy();
-  } else {
-    dp_query = nullptr;
-  }
-  d_props = other.d_props;
+  // FIXME: The previous implementation only set dp_mol to null,
+  // copied the bond type, copied the query, and copied the props.
+  // Should this implementation also skip copying the other bond members?
+  *(static_cast<Bond *>(this)) = other;
+
+  setQuery(other.dp_query ? other.dp_query->copy() : nullptr);
+
   return *this;
 }
 
@@ -46,11 +44,10 @@ Bond *QueryBond::copy() const {
 
 void QueryBond::setBondType(BondType bT) {
   // NOTE: calling this blows out any existing query
-  d_bondType = bT;
-  delete dp_query;
-  dp_query = nullptr;
 
-  dp_query = makeBondOrderEqualsQuery(bT);
+  Bond::setBondType(bT);
+
+  dp_query.reset(makeBondOrderEqualsQuery(bT));
 }
 
 void QueryBond::setBondDir(BondDir bD) {
@@ -61,52 +58,24 @@ void QueryBond::setBondDir(BondDir bD) {
   //   only bonds assigned directions are single.  It'll fail in other
   //   situations, whatever those may be.
   //
-  d_dirTag = bD;
+  Bond::setBondDir(bD);
 #if 0
-  delete dp_query;
-  dp_query = NULL;
-  dp_query = makeBondDirEqualsQuery(bD);
+  dp_query.reset(makeBondDirEqualsQuery(bD));
 #endif
+}
+
+void QueryBond::setQuery(QUERYBOND_QUERY *what) {
+  dp_query.reset(what);
+  getDataRDMol().setBondQueryCompat(getIdx(), what);
+  PRECONDITION(getDataRDMol().getBondQuery(getIdx()) != nullptr,
+               "Missing new query");
 }
 
 void QueryBond::expandQuery(QUERYBOND_QUERY *what,
                             Queries::CompositeQueryType how,
                             bool maintainOrder) {
-  bool thisIsNullQuery = dp_query->getDescription() == "BondNull";
-  bool otherIsNullQuery = what->getDescription() == "BondNull";
-
-  if (thisIsNullQuery || otherIsNullQuery) {
-    mergeNullQueries(dp_query, thisIsNullQuery, what, otherIsNullQuery, how);
-    delete what;
-    return;
-  }
-
-  QUERYBOND_QUERY *origQ = dp_query;
-  std::string descrip;
-  switch (how) {
-    case Queries::COMPOSITE_AND:
-      dp_query = new BOND_AND_QUERY;
-      descrip = "BondAnd";
-      break;
-    case Queries::COMPOSITE_OR:
-      dp_query = new BOND_OR_QUERY;
-      descrip = "BondOr";
-      break;
-    case Queries::COMPOSITE_XOR:
-      dp_query = new BOND_XOR_QUERY;
-      descrip = "BondXor";
-      break;
-    default:
-      UNDER_CONSTRUCTION("unrecognized combination query");
-  }
-  dp_query->setDescription(descrip);
-  if (maintainOrder) {
-    dp_query->addChild(QUERYBOND_QUERY::CHILD_TYPE(origQ));
-    dp_query->addChild(QUERYBOND_QUERY::CHILD_TYPE(what));
-  } else {
-    dp_query->addChild(QUERYBOND_QUERY::CHILD_TYPE(what));
-    dp_query->addChild(QUERYBOND_QUERY::CHILD_TYPE(origQ));
-  }
+  std::unique_ptr<QUERYBOND_QUERY> whatPtr(what);
+  QueryOps::expandQuery(dp_query, std::move(whatPtr), how, maintainOrder);
 }
 
 namespace {
@@ -214,7 +183,7 @@ bool QueryBond::QueryMatch(QueryBond const *what) const {
   if (!what->hasQuery()) {
     return dp_query->Match(what);
   } else {
-    return queriesMatch(dp_query, what->getQuery());
+    return queriesMatch(dp_query.get(), what->getQuery());
   }
 }
 

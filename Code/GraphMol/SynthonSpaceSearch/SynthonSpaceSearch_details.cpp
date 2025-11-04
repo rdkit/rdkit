@@ -143,8 +143,8 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
   while (!toDo.empty()) {
     const auto nextBond = toDo.front();
     toDo.pop_front();
-    for (const auto nbr :
-         make_iterator_range(mol.getAtomNeighbors(nextBond->getBeginAtom()))) {
+    for (const auto nbr : boost::make_iterator_range(
+         mol.getAtomNeighbors(nextBond->getBeginAtom()))) {
       if (auto bond = mol.getBondBetweenAtoms(nextBond->getBeginAtomIdx(), nbr);
           !done[bond->getIdx()] && bond->getIsAromatic()) {
         aromBonds.push_back(bond);
@@ -152,8 +152,8 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
         toDo.push_back(bond);
       }
     }
-    for (const auto nbr :
-         make_iterator_range(mol.getAtomNeighbors(nextBond->getEndAtom()))) {
+    for (const auto nbr : boost::make_iterator_range(
+         mol.getAtomNeighbors(nextBond->getEndAtom()))) {
       if (auto bond = mol.getBondBetweenAtoms(nextBond->getEndAtomIdx(), nbr);
           !done[bond->getIdx()] && bond->getIsAromatic()) {
         aromBonds.push_back(bond);

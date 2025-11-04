@@ -34,6 +34,8 @@
 //
 #include <RDBoost/python.h>
 #include <GraphMol/SLNParse/SLNParse.h>
+#include <GraphMol/RWMol.h>
+#include <GraphMol/ROMol.h>
 
 #include <RDBoost/Wrap.h>
 #include <RDGeneral/Exceptions.h>

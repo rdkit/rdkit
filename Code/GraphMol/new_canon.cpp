@@ -518,8 +518,7 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
       // neglected."
       // FIX: this applies to more than just P
     } else {
-      nReps =
-          static_cast<unsigned int>(floor(2. * bond->getBondTypeAsDouble()));
+      nReps = getTwiceBondType(*bond);
     }
     unsigned int symclass =
         nbr->getAtomicNum() * ATNUM_CLASS_OFFSET + nbrIdx + 1;

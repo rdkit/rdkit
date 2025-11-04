@@ -399,6 +399,11 @@ inline T rdvalue_cast(RDValue_cast_t v) {
   throw std::bad_any_cast();
 }
 
+template <>
+inline RDValue rdvalue_cast<RDValue>(RDValue_cast_t v) {
+  return v;
+}
+
 // POD casts
 template <>
 inline double rdvalue_cast<double>(RDValue_cast_t v) {
