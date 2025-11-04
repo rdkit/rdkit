@@ -437,7 +437,35 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
 }
 
 void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
-  d_stereo_groups = std::move(stereo_groups);
+  auto is_abs = [](const auto &sg) {
+    return sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE;
+  };
+
+  // if there's more than one ABS group, merge them
+  if (auto num_abs = std::ranges::count_if(stereo_groups, is_abs);
+      num_abs <= 1) {
+    d_stereo_groups = std::move(stereo_groups);
+  } else {
+    std::vector<Atom *> abs_atoms;
+    std::vector<Bond *> abs_bonds;
+    std::vector<StereoGroup> new_stereo_groups;
+    new_stereo_groups.reserve(stereo_groups.size() - num_abs + 1);
+    for (auto &&sg : stereo_groups) {
+      if (is_abs(sg)) {
+        auto &other_atoms = sg.getAtoms();
+        auto &other_bonds = sg.getBonds();
+        abs_atoms.insert(abs_atoms.begin(), other_atoms.begin(),
+                         other_atoms.end());
+        abs_bonds.insert(abs_bonds.begin(), other_bonds.begin(),
+                         other_bonds.end());
+      } else {
+        new_stereo_groups.push_back(std::move(sg));
+      }
+    }
+    new_stereo_groups.emplace_back(StereoGroupType::STEREO_ABSOLUTE,
+                                   std::move(abs_atoms), std::move(abs_bonds));
+    d_stereo_groups = std::move(new_stereo_groups);
+  }
 }
 
 void ROMol::debugMol(std::ostream &str) const {
