@@ -21,7 +21,9 @@
 #include <GraphMol/Descriptors/PMI.h>
 #include <GraphMol/Descriptors/DCLV.h>
 #include <GraphMol/Descriptors/BCUT.h>
+#ifdef RDK_BUILD_DESCRIPTORS3D
 #include <GraphMol/Descriptors/GETAWAY.h>
+#endif
 
 using namespace RDKit;
 
@@ -706,6 +708,7 @@ TEST_CASE(
   }
 }
 
+#ifdef RDK_BUILD_DESCRIPTORS3D
 TEST_CASE("Github #7264: GETAWAY descriptors are non-deterministic") {
   SECTION("as reported") {
     v2::SmilesParse::SmilesParserParams ps;
@@ -728,3 +731,4 @@ TEST_CASE("Github #7264: GETAWAY descriptors are non-deterministic") {
     }
   }
 }
+#endif
