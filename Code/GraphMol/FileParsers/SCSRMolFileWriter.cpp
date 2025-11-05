@@ -61,22 +61,22 @@ std::string SCSRMolToSCSRMolBlock(SCSRMol &scsrMol,
     std::string collaborator = "";
     std::string protection = "";
 
-    scsrTemplate->getPropIfPresent<std::string>(common_properties::natReplace,
-                                                natReplace);
-    scsrTemplate->getPropIfPresent<std::string>(
-        common_properties::molTemplateComment, comment);
-    scsrTemplate->getPropIfPresent<std::string>(
-        common_properties::molTemplateFullName, fullname);
-    scsrTemplate->getPropIfPresent<std::string>(
-        common_properties::molTemplateCategory, category);
-    scsrTemplate->getPropIfPresent<std::string>(
-        common_properties::molTemplateUniqueId, uniqueId);
-    scsrTemplate->getPropIfPresent<std::string>(
-        common_properties::molTemplateCasNumber, casNumber);
-    scsrTemplate->getPropIfPresent<std::string>(
-        common_properties::molTemplateCollaborator, collaborator);
-    scsrTemplate->getPropIfPresent<std::string>(
-        common_properties::molTemplateProtection, protection);
+    // scsrTemplate->getPropIfPresent<std::string>(common_properties::natReplace,
+    //                                             natReplace);
+    // scsrTemplate->getPropIfPresent<std::string>(
+    //     common_properties::molTemplateComment, comment);
+    // scsrTemplate->getPropIfPresent<std::string>(
+    //     common_properties::molTemplateFullName, fullname);
+    // scsrTemplate->getPropIfPresent<std::string>(
+    //     common_properties::molTemplateCategory, category);
+    // scsrTemplate->getPropIfPresent<std::string>(
+    //     common_properties::molTemplateUniqueId, uniqueId);
+    // scsrTemplate->getPropIfPresent<std::string>(
+    //     common_properties::molTemplateCasNumber, casNumber);
+    // scsrTemplate->getPropIfPresent<std::string>(
+    //     common_properties::molTemplateCollaborator, collaborator);
+    // scsrTemplate->getPropIfPresent<std::string>(
+    //     common_properties::molTemplateProtection, protection);
 
     scsrTemplate->getProp(common_properties::molAtomClass, templateClass);
 
@@ -89,29 +89,13 @@ std::string SCSRMolToSCSRMolBlock(SCSRMol &scsrMol,
     }
     res += "/";
 
-    if (natReplace != "") {
-      res += " NATREPLACE=" + natReplace;
-    }
-    if (comment != "") {
-      res += " COMMENT=" + comment;
-    }
-    if (fullname != "") {
-      res += " FULLNAME=" + fullname;
-    }
-    if (category != "") {
-      res += " CATEGORY=" + category;
-    }
-    if (uniqueId != "") {
-      res += " UNIQUEID=" + uniqueId;
-    }
-    if (casNumber != "") {
-      res += " CASNUMBER=" + casNumber;
-    }
-    if (collaborator != "") {
-      res += " COLLABORATOR=" + collaborator;
-    }
-    if (protection != "") {
-      res += " PROTECTION=" + protection;
+    for (auto &propName : scsrTemplate->getPropList()) {
+      if (propName != common_properties::molAtomClass &&
+          propName != common_properties::templateNames && propName[0] != '_') {
+        std::string propVal;
+        scsrTemplate->getProp<std::string>(propName, propVal);
+        res += " " + propName + "=" + propVal;
+      }
     }
 
     res += "\n";
@@ -121,7 +105,6 @@ std::string SCSRMolToSCSRMolBlock(SCSRMol &scsrMol,
     prepareMol(tMol, localParams, aromaticBonds);
     res += FileParserUtils::getV3000CTAB(tMol, aromaticBonds, confId,
                                          localParams.precision);
-    // res += RDKit::MolToMolBlock(*scsrTemplate, localParams, confId);
   }
 
   res += "M  V30 END TEMPLATE\n";
