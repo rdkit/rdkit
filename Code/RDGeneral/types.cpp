@@ -136,15 +136,7 @@ const std::string molAtomSeqName = "molSeqname";
 const std::string molRxnExactChange = "molRxnExachg";
 const std::string molReactStatus = "molReactStatus";
 const std::string _fromAttachPoint = "_fromAttchpt";
-const std::string natReplace = "natReplace";
 const std::string templateNames = "templateNames";
-const std::string molTemplateComment = "molTemplateComment";
-const std::string molTemplateFullName = "molTemplateFullName";
-const std::string molTemplateCategory = "molTemplateCategory";
-const std::string molTemplateUniqueId = "molTemplateUniqueId";
-const std::string molTemplateCasNumber = "molTemplateCasNumber";
-const std::string molTemplateCollaborator = "molTemplateCollaborator";
-const std::string molTemplateProtection = "molTemplateProtection";
 
 const std::string molNote = "molNote";
 const std::string atomNote = "atomNote";
