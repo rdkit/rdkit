@@ -120,12 +120,6 @@ void applyMolListProp(ROMol &mol, const std::string &pn,
   std::vector<std::string> tokens;
   boost::split(tokens, strVect, boost::is_any_of(" \t\n"),
                boost::token_compress_on);
-  if (tokens.size() < nItems) {
-    BOOST_LOG(rdWarningLog) << "Property list " << pn << " too short, only "
-                            << tokens.size() << " elements found; expecting "
-                            << nItems << ". Ignoring it." << std::endl;
-    return;
-  }
   std::string mv = missingValueMarker;
   size_t first_token = 0;
   if (tokens.size() == nItems + 1 && tokens[0].front() == '[' &&
