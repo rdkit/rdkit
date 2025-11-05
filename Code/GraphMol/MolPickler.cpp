@@ -1370,12 +1370,12 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
 
   // Save existing RingInfo before adding bonds, because addBond() may reset it
   // when it detects ring closures. We'll restore it after bonds are added.
-  // RingInfo savedCompatRingInfo;
-  // bool hadRingInfo = false;
-  // if (mol->getRingInfo()->isInitialized()) {
-  //   savedCompatRingInfo = *mol->getRingInfo();
-  //   hadRingInfo = true;
-  // }
+  RingInfo savedCompatRingInfo;
+  bool hadRingInfo = false;
+  if (mol->getRingInfo()->isInitialized()) {
+    savedCompatRingInfo = *mol->getRingInfo();
+    hadRingInfo = true;
+  }
 
   for (int i = 0; i < numBonds; i++) {
     Bond *bond = _addBondFromPickle<T>(ss, mol, version, directMap);
@@ -1385,12 +1385,12 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   }
 
   // Restore RingInfo after bonds are added
-  // if (hadRingInfo) {
-  //   *mol->getRingInfo() = savedCompatRingInfo;
-  //   // Also need to sync back to internal
-  //   mol->asRDMol().markRingInfoAsCompatModified();
-  //   (void)mol->asRDMol().getRingInfo();  // Trigger sync
-  // }
+  if (hadRingInfo) {
+    *mol->getRingInfo() = savedCompatRingInfo;
+    // Also need to sync back to internal
+    mol->asRDMol().markRingInfoAsCompatModified();
+    (void)mol->asRDMol().getRingInfo();  // Trigger sync
+  }
 
   // -------------------
   //
@@ -1418,26 +1418,26 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     _addRingInfoFromPickle<T>(ss, mol, version, directMap, ringType);
     streamRead(ss, tag, version);
 
-    // Recompute ring info from scratch based on the complete molecular structure.
-    // This is necessary because when unpickling into an existing molecule,
-    // the pickle only contains rings for the newly added fragment, not for
-    // the entire combined molecule. By recomputing, we get all rings correctly.
-    mol->getRingInfo()->reset();
-    switch (ringType) {
-      case FIND_RING_TYPE::FIND_RING_TYPE_SSSR:
-        MolOps::findSSSR(*mol);
-        break;
-      case FIND_RING_TYPE::FIND_RING_TYPE_SYMM_SSSR:
-        MolOps::symmetrizeSSSR(*mol);
-        break;
-      case FIND_RING_TYPE::FIND_RING_TYPE_FAST:
-        MolOps::fastFindRings(*mol);
-        break;
-      case FIND_RING_TYPE::FIND_RING_TYPE_OTHER_OR_UNKNOWN:
-        // For unknown types, use the default findSSSR
-        MolOps::findSSSR(*mol);
-        break;
-    }
+    // // Recompute ring info from scratch based on the complete molecular structure.
+    // // This is necessary because when unpickling into an existing molecule,
+    // // the pickle only contains rings for the newly added fragment, not for
+    // // the entire combined molecule. By recomputing, we get all rings correctly.
+    // mol->getRingInfo()->reset();
+    // switch (ringType) {
+    //   case FIND_RING_TYPE::FIND_RING_TYPE_SSSR:
+    //     MolOps::findSSSR(*mol);
+    //     break;
+    //   case FIND_RING_TYPE::FIND_RING_TYPE_SYMM_SSSR:
+    //     MolOps::symmetrizeSSSR(*mol);
+    //     break;
+    //   case FIND_RING_TYPE::FIND_RING_TYPE_FAST:
+    //     MolOps::fastFindRings(*mol);
+    //     break;
+    //   case FIND_RING_TYPE::FIND_RING_TYPE_OTHER_OR_UNKNOWN:
+    //     // For unknown types, use the default findSSSR
+    //     MolOps::findSSSR(*mol);
+    //     break;
+    // }
   }
 
   // -------------------
