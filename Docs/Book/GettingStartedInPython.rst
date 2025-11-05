@@ -3442,7 +3442,7 @@ results are returned via a user-supplied callback function instead of in a searc
 
   >>> params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
   >>> params.toTryChunkSize = 10
-  >>> smiles = list()
+  >>> smiles = []
   >>> def callback(mols):
   ...     for mol in mols:
   ...             smiles.append(Chem.MolToSmiles(mol))
