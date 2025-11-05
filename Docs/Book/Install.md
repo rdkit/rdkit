@@ -46,11 +46,10 @@ For more details on building from source with Conda, see the [conda-rdkit reposi
 #### macOS 15 (Sequoia): Python 3 environment
 
 The following commands has been tested on a Apple M4 chip with MacOS Sequoia (MacOS 15). It is expected to work on other recent macOS versions running on Apple Silicon. For Intel-based macOS systems, please download the according Miniconda installer.
-Download Miniconda from [Conda](https://www.anaconda.com/docs/getting-started/miniconda/install#macos-terminal-installer) and run these
-following commands:
+Download the latest [Miniforge installer](https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh). For Intel-based chipsets, download [here](https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-x86_64.sh) 
 
 ```
-bash Miniconda3-latest-MacOSX-arm64.sh # or bash ~/Miniconda3-latest-MacOSX-x86_64.sh for Intel-based systems
+bash Miniforge3-MacOSX-arm64.sh # or bash ~/Miniforge3-MacOSX-x86_64.sh for Intel-based systems
 conda create -n my-rdkit-env
 conda activate my-rdkit-env
 conda install compilers libcxx cmake \
@@ -67,16 +66,18 @@ git clone https://github.com/rdkit/rdkit.git
 cd rdkit
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release \
-  -DRDK_INSTALL_INTREE=OFF \
-  -DBOOST_ROOT="$CONDA_PREFIX" \
-  -DCMAKE_INSTALL_PREFIX="$CONDA_PREFIX" \
+  -DRDK_INSTALL_INTREE=ON \
   -DRDK_BUILD_CPP_TESTS=ON \
+  -DRDK_BUILD_INCHI_SUPPORT=ON \
   ..
 make
 make install
 ```
 
-Once `make` and `make install` completed successfully, use the following command to run the tests:
+This will install RDKit in the current source tree. In case you want to install it in the conda environment, change to `-DRDK_INSTALL_INTREE=OFF` and add  ` -DCMAKE_INSTALL_PREFIX="$CONDA_PREFIX" \`
+to the cmake command.
+
+Then, use the following command to run the tests:
 
 ```
 RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH ctest
