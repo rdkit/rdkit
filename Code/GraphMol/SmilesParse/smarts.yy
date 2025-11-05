@@ -318,8 +318,8 @@ mol: atomd {
   RWMol * mp = (*molList)[$$];
   Atom *atom=mp->getActiveAtom();
 
-  mp->setBondBookmark($2,$3);
   $2->setOwningMol(mp);
+  mp->setBondBookmark($2,$3);
   $2->setBeginAtomIdx(atom->getIdx());
   $2->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->setAtomBookmark(atom,$3);
