@@ -434,6 +434,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
                "bad bond direction");
   constexpr double coordZeroTol = 1e-4;
   constexpr double zeroTol = 1e-3;
+  constexpr double tShapeTol = 0.01;  // used to recognize T-shaped arrangements
 
   // NOTE that according to the CT file spec, wedging assigns chirality
   // to the atom at the point of the wedge, (atom 1 in the bond).
@@ -756,7 +757,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     auto crossp1 = bv1.crossProduct(bv2);
     // catch linear arrangements
     if (nNbrs == 3) {
-      if (crossp1.lengthSq() < 5 * zeroTol) {
+      if (crossp1.lengthSq() < tShapeTol) {
         // in a linear relationship with three neighbors we assume that the
         // two perpendicular bonds are wedged in the other direction from the
         // one that was provided.
@@ -3019,10 +3020,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }    // end of 2 and 3 coordinated atoms only
-        }      // end of we want it or CIP code is not set
-      }        // end of double bond
-    }          // end of for loop over all bonds
+          }  // end of 2 and 3 coordinated atoms only
+        }  // end of we want it or CIP code is not set
+      }  // end of double bond
+    }  // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }

@@ -6321,13 +6321,6 @@ TEST_CASE("extra ring stereo with new stereo perception") {
     std::string smi = "C2O[C@H]3[C@@]4([C@](CCC(C24))(O)CC=C3)C";
     auto m = v2::SmilesParse::MolFromSmiles(smi);
     REQUIRE(m);
-    m->debugMol(std::cerr);
-    // for (const auto atm : m->atoms()) {
-    //   std::cerr << atm->getIdx() << ": "
-    //             << atm->getProp<unsigned int>(
-    //                    common_properties::_ChiralAtomRank)
-    //             << std::endl;
-    // }
     for (auto idx : {2, 3, 4}) {
       INFO(idx);
       const auto atm = m->getAtomWithIdx(idx);
@@ -6362,4 +6355,30 @@ TEST_CASE("ring stereo basics with new stereo") {
   REQUIRE(m);
   auto smi = MolToCXSmiles(*m);
   CHECK(smi == "CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,11,&1:14|");
+}
+
+TEST_CASE("zero chiral volume and T shape molecule") {
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+  SECTION("as reported") {
+    pathName += "zero_chiral_volume_1.sdf";
+    auto m = v2::FileParsers::MolFromMolFile(pathName);
+    REQUIRE(m);
+    for (const auto idx : {15, 22, 39}) {
+      INFO(idx);
+      CHECK(m->getAtomWithIdx(idx)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("large rings") {
+    for (const std::string fn :
+         {"zero_chiral_volume_2.60.mol", "zero_chiral_volume_2.80.mol"}) {
+      INFO(fn);
+      std::string lpath = pathName + fn;
+      auto m = v2::FileParsers::MolFromMolFile(lpath);
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    }
+  }
 }
