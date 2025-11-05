@@ -89,6 +89,10 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
   // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment FULLNAME=fullname
   // CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx, COLLABORATOR=col,
   // PROTECTION=prot
+
+  // other attributes are allowed.  We capture them and ignore them, except for
+  // writing them back out
+
   while (tempStr.substr(0, 8) == "TEMPLATE") {
     std::vector<std::string> tokens;
     std::vector<std::string> subTokens;
@@ -111,7 +115,10 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
       throw FileParseException(errout.str());
     }
 
-    std::string templateClass = subTokens[0];
+    res->addTemplate(std::unique_ptr<ROMol>(new ROMol()));
+    auto templateMol = (RWMol *)res->getTemplate(res->getTemplateCount() - 1);
+
+    templateMol->setProp(common_properties::molAtomClass, subTokens[0]);
 
     std::vector<std::string> templateNames;
 
@@ -120,10 +127,7 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
         templateNames.push_back(subTokens[i]);
       }
     }
-
-    std::string natReplace = "", comment = "", fullName = "", categoroy = "",
-                uniqueId = "", casNumber = "", collaborator = "",
-                protection = "";
+    templateMol->setProp(common_properties::templateNames, templateNames);
 
     for (unsigned int i = 3; i < tokens.size(); ++i) {
       boost::algorithm::split(subTokens, tokens[i],
@@ -131,66 +135,11 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
       if (subTokens.size() != 2) {
         std::ostringstream errout;
         errout
-            << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line  "
+            << "Attribute  string is not of the form \"AttrName=value\" at line  "
             << line;
         throw FileParseException(errout.str());
       }
-
-      if (subTokens[0] == "NATREPLACE") {
-        natReplace = subTokens[1];
-      } else if (subTokens[0] == "COMMENT") {
-        comment = subTokens[1];
-      } else if (subTokens[0] == "FULLNAME") {
-        fullName = subTokens[1];
-      } else if (subTokens[0] == "CATEGORY") {
-        categoroy = subTokens[1];
-      } else if (subTokens[0] == "UNIQUEID") {
-        uniqueId = subTokens[1];
-      } else if (subTokens[0] == "CASNUMBER") {
-        casNumber = subTokens[1];
-      } else if (subTokens[0] == "COLLABORATOR") {
-        collaborator = subTokens[1];
-      } else if (subTokens[0] == "PROTECTION") {
-        protection = subTokens[1];
-      } else {
-        std::ostringstream errout;
-        errout
-            << "Attribute name must be one of: NATREPLACECOMMENT, FULLNAME, CATEGORY, UNIQUEID, CASNUMBER, COLLABORATOR, or PROTECTION at line  "
-            << line;
-        throw FileParseException(errout.str());
-      }
-    }
-
-    res->addTemplate(std::unique_ptr<ROMol>(new ROMol()));
-    auto templateMol = (RWMol *)res->getTemplate(res->getTemplateCount() - 1);
-    templateMol->setProp(common_properties::molAtomClass, templateClass);
-    templateMol->setProp(common_properties::templateNames, templateNames);
-
-    if (natReplace != "") {
-      templateMol->setProp(common_properties::natReplace, natReplace);
-    }
-    if (comment != "") {
-      templateMol->setProp(common_properties::molTemplateComment, comment);
-    }
-    if (fullName != "") {
-      templateMol->setProp(common_properties::molTemplateFullName, fullName);
-    }
-    if (categoroy != "") {
-      templateMol->setProp(common_properties::molTemplateCategory, categoroy);
-    }
-    if (uniqueId != "") {
-      templateMol->setProp(common_properties::molTemplateUniqueId, uniqueId);
-    }
-    if (casNumber != "") {
-      templateMol->setProp(common_properties::molTemplateCasNumber, casNumber);
-    }
-    if (collaborator != "") {
-      templateMol->setProp(common_properties::molTemplateCollaborator,
-                           collaborator);
-    }
-    if (protection != "") {
-      templateMol->setProp(common_properties::molTemplateProtection,
-                           protection);
+      templateMol->setProp(subTokens[0], subTokens[1]);
     }
 
     auto molComplete = false;
