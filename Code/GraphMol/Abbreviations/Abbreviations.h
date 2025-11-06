@@ -28,6 +28,8 @@ struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationDefinition {
   std::string smarts;
   std::shared_ptr<ROMol> mol;                  //!< optional
   std::vector<unsigned int> extraAttachAtoms;  //!< optional
+  bool includesXBonds = true;  //! whether or not the abbreviation definition
+                               //! includes bonds to non-abbreviation atoms
   bool operator==(const AbbreviationDefinition &other) const {
     return label == other.label && displayLabel == other.displayLabel &&
            displayLabelW == other.displayLabelW && smarts == other.smarts;
