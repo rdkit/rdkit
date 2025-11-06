@@ -2444,6 +2444,10 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         auto ival = FileParserUtils::toInt(val);
         atom->setProp(common_properties::molAtomSeqId, ival);
       }
+    } else if (prop == "SEQNAME") {
+      if (val != "") {
+        atom->setProp(common_properties::molAtomSeqName, std::string(val));
+      }
     }
     ++token;
   }
