@@ -4647,10 +4647,13 @@ void testSFNetIssue3549146() {
     TEST_ASSERT(m->getNumAtoms() == 4);
     TEST_ASSERT((m->getRingInfo()->isInitialized()));
     m->addBond(1, 3, Bond::SINGLE);
+    TEST_ASSERT(m->getAtomWithIdx(1)->needsUpdatePropertyCache());
+    TEST_ASSERT(m->getAtomWithIdx(3)->needsUpdatePropertyCache());
     TEST_ASSERT((m->getRingInfo()->isInitialized()));
     m->addBond(0, 2, Bond::SINGLE);
     TEST_ASSERT((m->getRingInfo()->isInitialized()));
-
+    TEST_ASSERT(m->getAtomWithIdx(0)->needsUpdatePropertyCache());
+    TEST_ASSERT(m->getAtomWithIdx(2)->needsUpdatePropertyCache());
     delete m;
   }
   {
