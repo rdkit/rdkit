@@ -94,9 +94,16 @@ void RDKitFPAtomEnv<OutputType>::updateAdditionalOutput(
   if (additionalOutput->bitPaths) {
     (*additionalOutput->bitPaths)[bitId].push_back(d_bondPath);
   }
-  if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
+  if (additionalOutput->atomToBits || additionalOutput->atomCounts ||
+      additionalOutput->atomsPerBit) {
+    if (additionalOutput->atomsPerBit) {
+      (*additionalOutput->atomsPerBit)[bitId].emplace_back();
+    }
     for (size_t i = 0; i < d_atomsInPath.size(); ++i) {
       if (d_atomsInPath[i]) {
+        if (additionalOutput->atomsPerBit) {
+          (*additionalOutput->atomsPerBit)[bitId].back().push_back(i);
+        }
         if (additionalOutput->atomToBits) {
           auto &alist = additionalOutput->atomToBits->at(i);
           if (std::find(alist.begin(), alist.end(), bitId) == alist.end()) {
