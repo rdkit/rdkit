@@ -538,14 +538,6 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
     dp_delBonds->set(numBonds - 1);
   }
 
-  // if both atoms have a degree>1, reset our ring info structure,
-  // because there's a non-trivial chance that it's now wrong.
-  if (dp_ringInfo && dp_ringInfo->isInitialized() &&
-      boost::out_degree(atomIdx1, d_graph) > 1 &&
-      boost::out_degree(atomIdx2, d_graph) > 1) {
-    dp_ringInfo->reset();
-  }
-
   return numBonds;  // res;
 }
 
