@@ -91,9 +91,8 @@ void AtomPairAtomEnv<OutputType>::updateAdditionalOutput(
     additionalOutput->atomCounts->at(d_atomIdSecond)++;
   }
   if (additionalOutput->atomsPerBit) {
-    (*additionalOutput->atomsPerBit)[bitId].emplace_back();
-    (*additionalOutput->atomsPerBit)[bitId].back().push_back(d_atomIdFirst);
-    (*additionalOutput->atomsPerBit)[bitId].back().push_back(d_atomIdSecond);
+    (*additionalOutput->atomsPerBit)[bitId].push_back(std::vector<int>{
+        static_cast<int>(d_atomIdFirst), static_cast<int>(d_atomIdSecond)});
   }
 }
 
