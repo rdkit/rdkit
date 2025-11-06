@@ -1107,6 +1107,14 @@ TEST_CASE("RemoveHsParameters", "[molops]") {
       ps.removeHigherDegrees = true;
       RWMol cp(*m);
       MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 3);  // b/c removeHydrides is false by default
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeHigherDegrees = true;
+      ps.removeHydrides = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
       CHECK(cp.getNumAtoms() == 2);
     }
   }
@@ -4925,4 +4933,34 @@ M  END)CTAB"_ctab;
       REQUIRE(m2);
     }
   }
+}
+
+TEST_CASE("large smiles benchmark") {
+  std::string smiles(1000, 'C');
+  auto m = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(m);
+  CHECK(m->getNumAtoms() == 1000);
+}
+
+TEST_CASE(
+    "GitHub Issue #8873: Multiple absolute stereo groups shouldn't be allowed on a single mol") {
+  auto m = "C[C@H](N)C[C@@H](C)O"_smiles;
+  REQUIRE(m);
+
+  std::vector<StereoGroup> stereo_groups;
+  for (auto idx : {1, 4}) {
+    auto chiral_atom = m->getAtomWithIdx(idx);
+    REQUIRE(chiral_atom->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    stereo_groups.emplace_back(StereoGroupType::STEREO_ABSOLUTE,
+                               std::vector<Atom *>{chiral_atom},
+                               std::vector<Bond *>{});
+  }
+
+  m->setStereoGroups(stereo_groups);
+
+  const auto &stgs = m->getStereoGroups();
+  REQUIRE(stgs.size() == 1);
+  const auto &stg = stgs.front();
+  CHECK(stg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+  CHECK(stg.getAtoms().size() == 2);
 }

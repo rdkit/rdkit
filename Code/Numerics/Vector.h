@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_VECTOR_H__
-#define __RD_VECTOR_H__
+#ifndef RD_VECTOR_H
+#define RD_VECTOR_H
 
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
@@ -18,8 +18,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <memory>
 #include <boost/random.hpp>
-#include <boost/smart_ptr.hpp>
 
 static constexpr double zero_tolerance = 1.e-16;
 
@@ -29,10 +29,10 @@ namespace RDNumeric {
 template <class TYPE>
 class Vector {
  public:
-  typedef boost::shared_array<TYPE> DATA_SPTR;
+  typedef std::shared_ptr<TYPE[]> DATA_SPTR;
 
   //! Initialize with only a size.
-  explicit Vector(unsigned int N) {
+  constexpr explicit Vector(unsigned int N) {
     d_size = N;
     TYPE *data = new TYPE[N];
     memset(static_cast<void *>(data), 0, d_size * sizeof(TYPE));
@@ -40,22 +40,19 @@ class Vector {
   }
 
   //! Initialize with a size and default value.
-  Vector(unsigned int N, TYPE val) {  //: Vector(N) {
+  constexpr Vector(unsigned int N, TYPE val) {
     d_size = N;
-    TYPE *data = new TYPE[N];
-
-    unsigned int i;
-    for (i = 0; i < N; i++) {
-      data[i] = val;
+    d_data.reset(new TYPE[N]);
+    for (auto i = 0u; i < N; i++) {
+      d_data[i] = val;
     }
-    d_data.reset(data);
   }
 
   //! Initialize from a smart pointer.
   /*!
     <b>NOTE:</b> the data is not copied in this case
   */
-  Vector(unsigned int N, DATA_SPTR data) {  // TYPE *data) {
+  constexpr Vector(unsigned int N, DATA_SPTR data) {
     d_size = N;
     d_data = data;
   }
@@ -63,48 +60,47 @@ class Vector {
   //! copy constructor
   /*! We make a copy of the other vector's data.
    */
-  Vector(const Vector &other) {
+  constexpr Vector(const Vector &other) {
     d_size = other.size();
     const TYPE *otherData = other.getData();
-    TYPE *data = new TYPE[d_size];
+    d_data.reset(new TYPE[d_size]);
 
-    memcpy(static_cast<void *>(data), static_cast<const void *>(otherData),
-           d_size * sizeof(TYPE));
-    d_data.reset(data);
+    memcpy(static_cast<void *>(d_data.get()),
+           static_cast<const void *>(otherData), d_size * sizeof(TYPE));
   }
 
-  ~Vector() = default;
+  constexpr ~Vector() = default;
 
   //! return the size (dimension) of the vector
-  unsigned int size() const { return d_size; }
+  constexpr unsigned int size() const { return d_size; }
 
   //! returns the value at a particular index
-  inline TYPE getVal(unsigned int i) const {
+  TYPE getVal(unsigned int i) const {
     PRECONDITION(i < d_size, "bad index");
     return d_data[i];
   }
 
   //! sets the index at a particular value
-  inline void setVal(unsigned int i, TYPE val) {
+  void setVal(unsigned int i, TYPE val) {
     PRECONDITION(i < d_size, "bad index");
     d_data[i] = val;
   }
 
-  inline TYPE operator[](unsigned int i) const {
+  TYPE operator[](unsigned int i) const {
     PRECONDITION(i < d_size, "bad index");
     return d_data[i];
   }
 
-  inline TYPE &operator[](unsigned int i) {
+  TYPE &operator[](unsigned int i) {
     PRECONDITION(i < d_size, "bad index");
     return d_data[i];
   }
 
   //! returns a pointer to our data array
-  inline TYPE *getData() { return d_data.get(); }
+  constexpr TYPE *getData() { return d_data.get(); }
 
   //! returns a const pointer to our data array
-  inline const TYPE *getData() const {
+  constexpr const TYPE *getData() const {
     // return dp_data;
     return d_data.get();
   }
@@ -146,7 +142,7 @@ class Vector {
   }
 
   //! multiplication by a scalar
-  Vector<TYPE> &operator*=(TYPE scale) {
+  constexpr Vector<TYPE> &operator*=(TYPE scale) {
     unsigned int i;
     for (i = 0; i < d_size; i++) {
       d_data[i] *= scale;
@@ -155,7 +151,7 @@ class Vector {
   }
 
   //! division by a scalar
-  Vector<TYPE> &operator/=(TYPE scale) {
+  constexpr Vector<TYPE> &operator/=(TYPE scale) {
     unsigned int i;
     for (i = 0; i < d_size; i++) {
       d_data[i] /= scale;
@@ -164,7 +160,7 @@ class Vector {
   }
 
   //! L2 norm squared
-  inline TYPE normL2Sq() const {
+  constexpr inline TYPE normL2Sq() const {
     TYPE res = (TYPE)0.0;
     unsigned int i;
     TYPE *data = d_data.get();
@@ -175,10 +171,10 @@ class Vector {
   }
 
   //! L2 norm
-  inline TYPE normL2() const { return sqrt(this->normL2Sq()); }
+  constexpr TYPE normL2() const { return sqrt(this->normL2Sq()); }
 
   //! L1 norm
-  inline TYPE normL1() const {
+  constexpr TYPE normL1() const {
     TYPE res = (TYPE)0.0;
     unsigned int i;
     TYPE *data = d_data.get();
@@ -189,7 +185,7 @@ class Vector {
   }
 
   //! L-infinity norm
-  inline TYPE normLinfinity() const {
+  constexpr TYPE normLinfinity() const {
     TYPE res = (TYPE)(-1.0);
     unsigned int i;
     TYPE *data = d_data.get();
@@ -203,7 +199,7 @@ class Vector {
 
   //! \brief Gets the ID of the entry that has the largest absolute value
   //! i.e. the entry being used for the L-infinity norm
-  inline unsigned int largestAbsValId() const {
+  constexpr unsigned int largestAbsValId() const {
     TYPE res = (TYPE)(-1.0);
     unsigned int i, id = d_size;
     TYPE *data = d_data.get();
@@ -217,7 +213,7 @@ class Vector {
   }
 
   //! \brief Gets the ID of the entry that has the largest value
-  inline unsigned int largestValId() const {
+  constexpr unsigned int largestValId() const {
     TYPE res = (TYPE)(-1.e8);
     unsigned int i, id = d_size;
     TYPE *data = d_data.get();
@@ -231,7 +227,7 @@ class Vector {
   }
 
   //! \brief Gets the ID of the entry that has the smallest value
-  inline unsigned int smallestValId() const {
+  constexpr unsigned int smallestValId() const {
     TYPE res = (TYPE)(1.e8);
     unsigned int i, id = d_size;
     TYPE *data = d_data.get();
@@ -245,7 +241,7 @@ class Vector {
   }
 
   //! returns the dot product between two Vectors
-  inline TYPE dotProduct(const Vector<TYPE> other) const {
+  TYPE dotProduct(const Vector<TYPE> other) const {
     PRECONDITION(d_size == other.size(),
                  "Size mismatch in vector doct product");
     const TYPE *oData = other.getData();
@@ -259,7 +255,7 @@ class Vector {
   }
 
   //! Normalize the vector using the L2 norm
-  inline void normalize() {
+  constexpr void normalize() {
     TYPE val = this->normL2();
     if (val < zero_tolerance) {
       throw std::runtime_error("Cannot normalize a zero length vector");
@@ -268,7 +264,7 @@ class Vector {
   }
 
   //! Set to a random unit vector
-  inline void setToRandom(unsigned int seed = 0) {
+  void setToRandom(unsigned int seed = 0) {
     // we want to get our own RNG here instead of using the global
     // one.  This is related to Issue285.
     RDKit::rng_type generator(42u);
@@ -301,7 +297,7 @@ typedef Vector<double> DoubleVector;
 
 //! returns the algebraic tanimoto similarity [defn' from JCIM 46:587-96 (2006)]
 template <typename T>
-double TanimotoSimilarity(const Vector<T> &v1, const Vector<T> &v2) {
+constexpr double TanimotoSimilarity(const Vector<T> &v1, const Vector<T> &v2) {
   double numer = v1.dotProduct(v2);
   if (numer == 0.0) {
     return 0.0;
@@ -316,8 +312,8 @@ double TanimotoSimilarity(const Vector<T> &v1, const Vector<T> &v2) {
 
 //! ostream operator for Vectors
 template <typename TYPE>
-std::ostream &operator<<(std::ostream &target,
-                         const RDNumeric::Vector<TYPE> &vec) {
+constexpr std::ostream &operator<<(std::ostream &target,
+                                   const RDNumeric::Vector<TYPE> &vec) {
   unsigned int siz = vec.size();
   target << "Size: " << siz << " [";
   unsigned int i;
