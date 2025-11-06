@@ -134,7 +134,9 @@ void applyMolListProp(ROMol &mol, const std::string &pn,
   if(tokens.size() - first_token != nItems) {
     BOOST_LOG(rdWarningLog) << "Property list " << pn << " has incompatible size, "
                             << tokens.size() << " elements found; expecting "
-                            << nItems << ". Ignoring it." << std::endl;
+                            << nItems << ". Ignoring it." << std::endl <<
+                            "If hydrogens were removed during parsing, consider keeping them." <<
+      std::endl;
     return;
   }
   for (size_t i = first_token; i < tokens.size(); ++i) {
