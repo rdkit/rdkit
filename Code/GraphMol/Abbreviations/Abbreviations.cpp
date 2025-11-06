@@ -84,8 +84,10 @@ void applyMatches(RWMol &mol, const std::vector<AbbreviationMatch> &matches) {
     }
     // make connections between any extraAttachAtoms and the connection point
     for (auto oaidx : amatch.abbrev.extraAttachAtoms) {
+      auto oatom = mol.getAtomWithIdx(oaidx);
+      CHECK_INVARIANT(oatom, "bad extra attachment atom index");
       int bondIdx = -1;
-      for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oaidx))) {
+      for (const auto bond : mol.atomBonds(oatom)) {
         if (bondsToRemove.test(bond->getIdx())) {
           CHECK_INVARIANT(bondIdx == -1, "bondIdx must be unique");
           bondIdx = bond->getIdx();
