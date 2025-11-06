@@ -202,8 +202,12 @@ void testClearMol() {
   m2.addAtom(new Atom(6), true, true);
   m2.addBond(0, 1, Bond::TRIPLE);
 
+  // we start with no computed properties since none have been added
+  TEST_ASSERT(!m2.hasProp(RDKit::detail::computedPropName));
+
   TEST_ASSERT(!m2.hasProp("prop1"));
-  m2.setProp("prop1", 2);
+  bool isComputed = true;
+  m2.setProp("prop1", 2, isComputed);
   int tmpI;
   TEST_ASSERT(m2.hasProp("prop1"));
   m2.getProp("prop1", tmpI);
@@ -219,8 +223,8 @@ void testClearMol() {
   TEST_ASSERT(m2.getBondBookmarks()->empty());
 
   TEST_ASSERT(
-      m2.hasProp(RDKit::detail::computedPropName));  // <- github issue 176
-  TEST_ASSERT(m2.getPropList().size() == 1);
+      !m2.hasProp(RDKit::detail::computedPropName));  // <- github issue 176
+  TEST_ASSERT(m2.getPropList().empty());
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
