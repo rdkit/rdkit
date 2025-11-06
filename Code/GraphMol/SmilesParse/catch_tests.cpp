@@ -3347,11 +3347,15 @@ TEST_CASE("chiral class must be nonzero") {
       REQUIRE(!m);
     }
     {
-      // auto m = "C[As@TB1](F)(Cl)(O)Br"_smarts;
-      std::string smarts = "C[As@TB1](F)(Cl)(O)Br";
-      v2::SmilesParse::SmartsParserParams sp;
-      sp.debugParse = true;
-      auto m = v2::SmilesParse::MolFromSmarts(smarts, sp);
+      auto m = "[As@TB1]"_smarts;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+            Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+      CHECK(m->getAtomWithIdx(0)->getProp<int>(
+                common_properties::_chiralPermutation) == 1);
+    }
+    {
+      auto m = "C[As@TB1](F)(Cl)(O)Br"_smarts;
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
             Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);

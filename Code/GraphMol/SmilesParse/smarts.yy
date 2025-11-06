@@ -40,6 +40,10 @@ namespace {
     atom_expr->expandQuery(point_query->getQuery()->copy(), Queries::COMPOSITE_AND, true);
     if (atom_expr->getChiralTag() == Atom::CHI_UNSPECIFIED) {
       atom_expr->setChiralTag(point_query->getChiralTag());
+      int perm;
+      if (point_query->getPropIfPresent(common_properties::_chiralPermutation, perm)) {
+        atom_expr->setProp(common_properties::_chiralPermutation, perm);
+      }
     }
     if (point_query->getFlags() & SMARTS_H_MASK) {
       if (!(atom_expr->getFlags() & SMARTS_H_MASK)) {
