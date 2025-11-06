@@ -1,4 +1,4 @@
-Getting Started with the RDKit in Python
+aaGetting Started with the RDKit in Python
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Important note
@@ -2581,7 +2581,7 @@ reaction to be reconstructed:
 
   >>> newRxn = AllChem.ReactionFromPNGString(png)
   >>> AllChem.ReactionToSmarts(newRxn)
-  '[#6H:5]1:[#6H:6]:[#6:7]2:[#6H:8]:[#7:9]:[#6H:10]:[#6H:11]:[#6:12]:2:[#6:3](:[#6H:4]:1)-[#6:2](=[#8:1])-[#8].[#7-:13]=[#7+:14]=[#7-:15]>[#6](-[#17])-[#17].[#6](=[#8])(-[#6](=[#8])-[#17])-[#17]>[#6H:5]1:[#6H:6]:[#6:7]2:[#6H:8]:[#7:9]:[#6H:10]:[#6H:11]:[#6:12]:2:[#6:3](:[#6H:4]:1)-[#6:2](=[#8:1])-[#7:13]=[#7+:14]=[#7-:15]'
+  '[#6:5]1:[#6:6]:[#6:7]2:[#6:8]:[#7:9]:[#6:10]:[#6:11]:[#6:12]:2:[#6:3](:[#6:4]:1)-[#6:2](=[#8:1])-[#8].[#7-:13]=[#7+:14]=[#7-:15]>[#6](-[#17])-[#17].[#6](=[#8])(-[#6](=[#8])-[#17])-[#17]>[#6:5]1:[#6:6]:[#6:7]2:[#6:8]:[#7:9]:[#6:10]:[#6:11]:[#6:12]:2:[#6:3](:[#6:4]:1)-[#6:2](=[#8:1])-[#7:13]=[#7+:14]=[#7-:15]'
 
 Advanced Reaction Functionality
 ===============================
@@ -2916,7 +2916,7 @@ If the molecule has coordinates, then the features will also have reasonable loc
   >>> feats[0].GetPos()
   <rdkit.Geometry.rdGeometry.Point3D object at 0x...>
   >>> list(feats[0].GetPos())
-  [2.07..., -2.335..., 0.0]
+  [-2.999..., -1.558..., 0.0]
 
 
 2D Pharmacophore Fingerprints

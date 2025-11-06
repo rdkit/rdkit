@@ -170,6 +170,7 @@ inline constexpr std::string_view molAttachOrder = "molAttchord";
 inline constexpr std::string_view molAttachOrderTemplate = "molAttachOrderTemplate";
 inline constexpr std::string_view molAtomClass = "molClass";
 inline constexpr std::string_view molAtomSeqId = "molSeqid";
+inline constexpr std::string_view molAtomSeqName = "molSeqName";
 inline constexpr std::string_view molRxnExactChange = "molRxnExachg";
 inline constexpr std::string_view molReactStatus = "molReactStatus";
 inline constexpr std::string_view _fromAttachPoint = "_fromAttchpt";

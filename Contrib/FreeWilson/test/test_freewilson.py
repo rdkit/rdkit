@@ -2,10 +2,20 @@ import csv
 import io
 import logging
 import os
+import sys
 
-import freewilson as fw
+try:
+  import freewilson as fw
+except:
+  path = os.path.abspath(os.curdir)
+  sys.path.insert(0, os.path.join(path, ".."))
+  import freewilson as fw
+
+import importlib
+fw = importlib.reload(fw)
 
 from rdkit import Chem, rdBase
+from rdkit.Chem import rdFMCS, rdMolAlign
 
 PATH = os.path.join(os.path.dirname(fw.__file__), 'data')
 assert os.path.exists(PATH), PATH
@@ -33,7 +43,7 @@ def test_chembl():
   with rdBase.BlockLogs():
     free = fw.FWDecompose(scaffold, mols, scores)
   # let's make sure the r squared is decent
-  assert free.r2 > 0.8
+  assert free.r2 > 0.8, str(free.r2)
 
   # assert we get something
   preds = list(fw.FWBuild(free))
@@ -68,3 +78,32 @@ def test_multicore():
   decomp = fw.FWDecompose(scaffolds, mols, [1, 2, 3, 4, 5, 6])
   s = io.StringIO()
   fw.predictions_to_csv(s, decomp, fw.FWBuild(decomp))
+
+def test_fep_benchmark_3D():
+  benchmark = os.path.join(PATH, "cmet_ligands.sdf")
+  mols = list(Chem.SDMolSupplier(benchmark, removeHs=False))
+  smis = {Chem.MolToSmiles(m):m for m in mols if m}
+  assert smis
+  match = rdFMCS.FindMCS(mols)
+
+  scores = [float(m.GetProp("r_exp_dg")) for m in mols]
+  with rdBase.BlockLogs():
+    free = fw.FWDecompose(match.queryMol, mols, scores)
+  preds2 = list(fw.FWBuild(free, keep_training_set=True))
+  assert preds2
+
+  count = 0
+  found = 0
+  # we use an rms of 0.7 because we are assembling rgroups from different
+  #  ligands together which may not exactly align
+  for p in preds2:
+    if not p.is_training: continue
+    
+    smi = Chem.MolToSmiles(p.mol)
+
+    count += 1
+    if smi not in smis: continue
+    rms = rdMolAlign.GetBestRMS(smis[smi], p.mol)
+    assert rms < 0.7
+
+
