@@ -702,6 +702,13 @@ atom_query:	simple_atom
   $$=newQ;
 }
 | CHI_CLASS_TOKEN number {
+  if($2==0){
+    yyerror(input,molList,branchPoints,scanner,start_token, current_token_position,
+            "chiral permutation cannot be zero");
+    yyErrorCleanup(molList);
+    YYABORT;
+  }
+
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
   newQ->setChiralTag($1);

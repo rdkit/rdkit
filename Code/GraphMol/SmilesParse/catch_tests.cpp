@@ -3333,6 +3333,30 @@ TEST_CASE("github #8906") {
     CHECK(m->getAtomWithIdx(1)->getIsotope() == 2);
     auto csmi1 = MolToSmiles(*m);
     CHECK(csmi1 == "[1*][2C]");
+  }
+}
 
+TEST_CASE("chiral class must be nonzero") {
+  SECTION("basics") {
+    {
+      auto m = "C[As@TB0](F)(Cl)(O)Br"_smiles;
+      REQUIRE(!m);
+    }
+    {
+      auto m = "C[As@TB0](F)(Cl)(O)Br"_smarts;
+      REQUIRE(!m);
+    }
+    {
+      // auto m = "C[As@TB1](F)(Cl)(O)Br"_smarts;
+      std::string smarts = "C[As@TB1](F)(Cl)(O)Br";
+      v2::SmilesParse::SmartsParserParams sp;
+      sp.debugParse = true;
+      auto m = v2::SmilesParse::MolFromSmarts(smarts, sp);
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+      CHECK(m->getAtomWithIdx(1)->getProp<int>(
+                common_properties::_chiralPermutation) == 1);
+    }
   }
 }
