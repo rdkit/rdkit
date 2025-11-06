@@ -2978,11 +2978,11 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;
     REQUIRE(m);
     auto smi = MolToSmarts(*m);
-    CHECK(smi == "[#7H3]->[Fe]-[#7H2]");
+    CHECK(smi == "[#7]->[Fe]-[#7]");
     SmilesWriteParams ps;
     ps.includeDativeBonds = false;
     auto newSmi = MolToSmarts(*m, ps);
-    CHECK(newSmi == "[#7H3]-[Fe]-[#7H2]");
+    CHECK(newSmi == "[#7]-[Fe]-[#7]");
   }
 }
 
@@ -3322,5 +3322,17 @@ TEST_CASE("bond labels not being used in fragment canonicalization") {
     auto smi2 =
         MolFragmentToSmiles(*m1, ps, atoms, &bonds, atomLabels, &bondLabels2);
     CHECK(smi1 == smi2);
+  }
+}
+
+TEST_CASE("github #8906") {
+  SECTION("as reported") {
+    auto m = "[1*][2C] ||"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getIsotope() == 1);
+    CHECK(m->getAtomWithIdx(1)->getIsotope() == 2);
+    auto csmi1 = MolToSmiles(*m);
+    CHECK(csmi1 == "[1*][2C]");
+
   }
 }

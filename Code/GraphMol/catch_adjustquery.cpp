@@ -439,7 +439,7 @@ TEST_CASE("MDL five-rings") {
     // clang-format off
     std::vector<extuple> examples = {
     // no queries, no change
-    extuple{"adjustqueryprops_MDLfivering_1.mol","[#7H]1:[#6]:[#6]:[#6]:[#6]:1",""},
+    extuple{"adjustqueryprops_MDLfivering_1.mol","[#7]1:[#6]:[#6]:[#6]:[#6]:1",""},
     // Q atom, no change
     extuple{"adjustqueryprops_MDLfivering_2.mol","[!#6&!#1]1:[#6]:[#6]:[#6]:[#6]:1",""},
     // A atom, this one changes
@@ -792,7 +792,7 @@ TEST_CASE("makeAtomsGeneric") {
     auto m = "C[CH3:1]"_smiles;
     REQUIRE(m);
     MolOps::adjustQueryProperties(*m, &ps);
-    CHECK(MolToSmarts(*m) == "*-[#6H3:1]");
+    CHECK(MolToSmarts(*m) == "*-[#6:1]");
   }
 }
 

@@ -614,10 +614,22 @@ class TestCase(unittest.TestCase):
     m.SetProp("int", "1000")
     m.SetProp("double", "10000.123")
     m.SetProp("double spaces", " 10000.123 ")
+    # Github #8890: test that string properties preserve spaces
+    m.SetProp("string spaces", " foo ")
+    m.SetProp("string whitespace", " \t")
     self.assertEqual(m.GetPropsAsDict(), {
       "int": 1000,
       "double": 10000.123,
-      "double spaces": 10000.123
+      "double spaces": 10000.123,
+      "string spaces": " foo ",
+      "string whitespace": " \t"
+    })
+    self.assertEqual(m.GetPropsAsDict(autoConvertStrings=False), {
+      "int": "1000",
+      "double": "10000.123",
+      "double spaces": " 10000.123 ",
+      "string spaces": " foo ",
+      "string whitespace": " \t"
     })
 
     self.assertEqual(type(m.GetPropsAsDict()['int']), int)
@@ -6662,11 +6674,11 @@ M  END
     mol = Chem.MolFromSmiles('c1cc[nH]c1')
     nops = Chem.AdjustQueryParameters.NoAdjustments()
     nmol = Chem.AdjustQueryProperties(mol, nops)
-    self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1:[#6]:[#6]:[#7H]:[#6]:1")
+    self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1:[#6]:[#6]:[#7]:[#6]:1")
 
     nops.adjustConjugatedFiveRings = True
     nmol = Chem.AdjustQueryProperties(mol, nops)
-    self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#7H]-,=,:[#6]-,=,:1")
+    self.assertEqual(Chem.MolToSmarts(nmol), "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#7]-,=,:[#6]-,=,:1")
 
   def testFindPotentialStereo(self):
     mol = Chem.MolFromSmiles('C[C@H](F)C=CC')
@@ -8516,10 +8528,10 @@ M  END
     self.assertIsNotNone(mol)
     ps = Chem.SmilesWriteParams()
     sma = Chem.MolToSmarts(mol, ps)
-    self.assertEqual(sma, '[#7H3]->[Fe]-[#7]')
+    self.assertEqual(sma, '[#7]->[Fe]-[#7]')
     ps.includeDativeBonds = False
     sma = Chem.MolToSmarts(mol, ps)
-    self.assertEqual(sma, '[#7H3]-[Fe]-[#7]')
+    self.assertEqual(sma, '[#7]-[Fe]-[#7]')
 
   def testMolToV2KMolBlock(self):
     mol = Chem.MolFromSmiles('[NH3]->[Fe]')
@@ -8609,6 +8621,12 @@ M  END
     for atom in m.GetAtoms():
       self.assertTrue(atom.NeedsUpdatePropertyCache())
 
+  def testGithub8877(self):
+    m = Chem.MolFromSmarts('CC')
+    self.assertRaises(ValueError, lambda: m.GetAtomWithIdx(0).SetQuery(None))
+    self.assertRaises(ValueError, lambda: m.GetAtomWithIdx(0).ExpandQuery(None))
+    self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).SetQuery(None))
+    self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).ExpandQuery(None))
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
