@@ -25,6 +25,12 @@ GitHub)
 - `MolToSmarts()` no longer adds implicit hydrogens to atoms without queries. The 
   one exception to this is for chiral atoms, which will still have an implicit H 
   added if present.
+- Molecules no longer have a `__computedProps` property by default. The property
+  is added whenever it's needed. The property is considered private (as
+  indicated by the leading underscores) and shouldn't be used in client code,
+  but if your code relies on its presence in molecules, you may need to check
+  for it and add it yourself.
+
 
 ## New Features and Enhancements:
 
