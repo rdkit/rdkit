@@ -94,11 +94,15 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
         hitCount += partResults.size();
         stop = cb(partResults);
         toTry.clear();
-        if (stop || (d_params.maxHits != -1 && hitCount >= d_params.maxHits)) break;
+        if (stop || (d_params.maxHits != -1 && hitCount >= d_params.maxHits)) {
+          break;
+        }
       }
       stepper.step();
     }
-    if (stop || (d_params.maxHits != -1 && hitCount >= d_params.maxHits)) break;
+    if (stop || (d_params.maxHits != -1 && hitCount >= d_params.maxHits)) {
+      break;
+    }
   }
 
   // Do any remaining.
