@@ -102,7 +102,7 @@ TEST_CASE("RASCAL Small tests") {
 
     // test with callback version
     std::set<std::string> cbSmis;
-    auto cb = [&cbSmis](std::vector<std::unique_ptr<ROMol>> &results) {
+    auto cb = [&cbSmis](const std::vector<std::unique_ptr<ROMol>> &results) {
       for (auto &r : results) cbSmis.insert(MolToSmiles(*r));
       return false;
     };

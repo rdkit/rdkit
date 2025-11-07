@@ -152,7 +152,7 @@ TEST_CASE("S Amide 1") {
   CHECK(resSmi == enumSmi);
 
   resSmi.clear();
-  SearchResultCallback cb = [&resSmi](std::vector<std::unique_ptr<ROMol>> &r) {
+  SearchResultCallback cb = [&resSmi](const std::vector<std::unique_ptr<ROMol>> &r) {
     for (auto &elem : r) {
       resSmi.insert(MolToSmiles(*elem));
     }
@@ -181,7 +181,7 @@ TEST_CASE("Search Callback returns true") {
   params.toTryChunkSize = 2;
   std::set<std::string> cbSmi;
   bool retval = false;
-  SearchResultCallback cb = [&cbSmi,&retval](std::vector<std::unique_ptr<ROMol>> &r) {
+  SearchResultCallback cb = [&cbSmi,&retval](const std::vector<std::unique_ptr<ROMol>> &r) {
     for (auto &elem : r) {
       CHECK(r.size() == 2);
       cbSmi.insert(MolToSmiles(*elem));

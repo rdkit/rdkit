@@ -101,7 +101,7 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper2(
 struct CallbackAdapter {
   python::object py_callable;
 
-  bool operator()(std::vector<std::unique_ptr<ROMol>> &results) const {
+  bool operator()(const std::vector<std::unique_ptr<ROMol>> &results) const {
     python::list pyres;
     for (auto &mol : results) {
       pyres.append(boost::make_shared<ROMol>(*mol));
