@@ -103,7 +103,9 @@ TEST_CASE("RASCAL Small tests") {
     // test with callback version
     std::set<std::string> cbSmis;
     auto cb = [&cbSmis](const std::vector<std::unique_ptr<ROMol>> &results) {
-      for (auto &r : results) cbSmis.insert(MolToSmiles(*r));
+      for (const auto &r : results) {
+        cbSmis.insert(MolToSmiles(*r));
+      }
       return false;
     };
     synthonspace.rascalSearch(*queryMol, rascalOptions, cb, params);
