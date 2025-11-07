@@ -25,6 +25,9 @@ GitHub)
 - `MolToSmarts()` no longer adds implicit hydrogens to atoms without queries. The 
   one exception to this is for chiral atoms, which will still have an implicit H 
   added if present.
+- `RWMol::addBond()` no longer removes RingInfo from the molecule, but it does
+  clear the property cache of the begin and end atoms. This does not affect the
+  general rule that molecules should be sanitized after adding/removing bonds.
 
 ## New Features and Enhancements:
 
