@@ -17,6 +17,7 @@
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 
@@ -637,5 +638,18 @@ M  END
 
     REQUIRE(m);
     CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+
+  SECTION("Zero Chiral Volume Simple Round Trip") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fname = rdbase + "/Code/GraphMol/test_data/zero_chiral_volume_simple.mol";
+    std::cerr << std::endl << "Reading molfile" << std::endl;
+    std::unique_ptr<RWMol> mol(MolFileToMol(fname));
+    auto mb = MolToMolBlock(*mol);
+    auto mol2 = v2::FileParsers::MolFromMolBlock(mb);
+    
+    auto smi = MolToSmiles(*mol);
+    auto smimb = MolToSmiles(*mol2);
+    CHECK(smi == smimb);
   }
 }
