@@ -6360,6 +6360,67 @@ TEST_CASE("ring stereo basics with new stereo") {
 TEST_CASE("zero chiral volume and T shape molecule") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/test_data/";
+
+  SECTION("simplified") {
+    auto m1 = R"CTAB(178 degrees (not T shaped)
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C  0.000000 1.000000 0.000000 0
+M  V30 2 C  0.000000 0.000000 0.000000 0
+M  V30 3 O -0.999847 -0.017452 0.000000 0
+M  V30 4 F  0.999847 -0.017452 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m1);
+    // make sure we perceived it correctly:
+    CHECK(m1->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    // make sure we round trip it:
+    auto m1mb = MolToV3KMolBlock(*m1);
+    auto m1r = v2::FileParsers::MolFromMolBlock(m1mb);
+    REQUIRE(m1r);
+    CHECK(MolToSmiles(*m1) == MolToSmiles(*m1r));
+
+    auto m2 = R"CTAB(179 degrees (T shaped)
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C  0.000000 1.000000 0.000000 0
+M  V30 2 C  0.000000 0.000000 0.000000 0
+M  V30 3 O -0.999962 -0.0087265 0.000000 0
+M  V30 4 F  0.999962 -0.0087265 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m2);
+    CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    auto m2mb = MolToV3KMolBlock(*m2);
+    auto m2r = v2::FileParsers::MolFromMolBlock(m2mb);
+    REQUIRE(m2r);
+    CHECK(MolToSmiles(*m2) == MolToSmiles(*m2r));
+  }
+
   SECTION("as reported") {
     pathName += "zero_chiral_volume_1.sdf";
     auto m = v2::FileParsers::MolFromMolFile(pathName);
@@ -6378,7 +6439,27 @@ TEST_CASE("zero chiral volume and T shape molecule") {
       auto m = v2::FileParsers::MolFromMolFile(lpath);
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
-            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+            Atom::ChiralType::CHI_TETRAHEDRAL_CW);
     }
+  }
+  SECTION("mol block round trip") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fname =
+        rdbase + "/Code/GraphMol/test_data/zero_chiral_volume_simple.mol";
+    auto mol = v2::FileParsers::MolFromMolFile(fname);
+    REQUIRE(mol);
+
+    {
+      ROMol mol2(*mol);
+      Chirality::wedgeMolBonds(mol2);
+      CHECK(mol2.getBondBetweenAtoms(0, 1)->getBondDir() ==
+            Bond::BondDir::BEGINDASH);
+    }
+    auto mb = MolToMolBlock(*mol);
+    auto mol2 = v2::FileParsers::MolFromMolBlock(mb);
+
+    auto smi = MolToSmiles(*mol);
+    auto smimb = MolToSmiles(*mol2);
+    CHECK(smi == smimb);
   }
 }

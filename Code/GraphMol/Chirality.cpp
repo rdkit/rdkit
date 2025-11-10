@@ -426,7 +426,7 @@ namespace Chirality {
 
 std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     const ROMol &mol, const Bond *bond, const Conformer *conf,
-    double pseudo3DOffset = 0.1, double volumeTolerance = 0.01) {
+    double pseudo3DOffset = 0.1) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(conf, "no conformer");
   auto bondDir = bond->getBondDir();
@@ -434,7 +434,13 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
                "bad bond direction");
   constexpr double coordZeroTol = 1e-4;
   constexpr double zeroTol = 1e-3;
-  constexpr double tShapeTol = 0.01;  // used to recognize T-shaped arrangements
+  constexpr double tShapeTol =
+      0.00031;  // used to recognize T-shaped arrangements
+  // corresponds to an angle between the two vectors of just under 178 degrees
+  // degree
+  constexpr double volumeTolerance =
+      0.00174;  // used to recognize zero chiral volume
+  // This is what we get for a T-shaped arrangement with just over 178 degrees
 
   // NOTE that according to the CT file spec, wedging assigns chirality
   // to the atom at the point of the wedge, (atom 1 in the bond).
