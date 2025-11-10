@@ -9,8 +9,11 @@
 namespace bench_common {
 
 constexpr const char *SAMPLES[] = {
-    // tricky stereochem
+    // highly fused/bridged ring system
     "O=C1N2[C@H]3N4CN5C(=O)N6C7C5N(C2)C(=O)N7CN2C(=O)N5CN1[C@@H]3N(CN1C5C2N(C1=O)C6)C4=O",
+
+    // multiple stereo groups
+    "OC[C@]12[C@](O)(CC[C@H]3[C@]4(O)[C@@](C)([C@@H](C5COC(=O)C5)CC4)C[C@@H](O)[C@H]13)C[C@@H](O[C@@H]1O[C@@H](C)[C@H](O)[C@@H](O)[C@H]1O)C[C@H]2O",
 
     // randomly selected
     "C[C@H](NS(/C=C/c1ccccc1)(=O)=O)C(OCC(N1CCC(C)CC1)=O)=O",
