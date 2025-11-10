@@ -15,7 +15,7 @@ TEST_CASE("SmilesToMol", "[smiles]") {
     for (auto smiles : bench_common::SAMPLES) {
       auto mol = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(mol);
-	  total_atoms += mol->getNumAtoms();
+      total_atoms += mol->getNumAtoms();
     }
     return total_atoms;
   };
@@ -27,6 +27,18 @@ TEST_CASE("MolToSmiles", "[smiles]") {
     auto total_length = 0;
     for (auto &mol : samples) {
       auto smiles = MolToSmiles(mol);
+      total_length += smiles.size();
+    }
+    return total_length;
+  };
+}
+
+TEST_CASE("MolToCXSmiles", "[smiles]") {
+  auto samples = bench_common::load_samples();
+  BENCHMARK("MolToCXSmiles") {
+    auto total_length = 0;
+    for (auto &mol : samples) {
+      auto smiles = MolToCXSmiles(mol);
       total_length += smiles.size();
     }
     return total_length;
