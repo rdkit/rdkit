@@ -212,7 +212,7 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
     double angle2 = (*angleIt);
     constexpr double angleTol =
         M_PI * 1.9 / 180.;  // just under 2 degrees tolerance, which is what we
-                            // use when perceiving T-shaped geometrie
+                            // use when perceiving T-shaped geometries
     if (angle2 - angle1 >= (M_PI - angleTol)) {
       // we have the above situation
       nSwaps++;
