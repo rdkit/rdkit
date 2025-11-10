@@ -426,7 +426,8 @@ namespace Chirality {
 
 std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     const ROMol &mol, const Bond *bond, const Conformer *conf,
-    double pseudo3DOffset = 0.1, double volumeTolerance = 0.01) {
+    double pseudo3DOffset = 0.1, double volumeTolerance = 0.01,
+    bool allowTwoHs = false) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(conf, "no conformer");
   auto bondDir = bond->getBondDir();
@@ -538,7 +539,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   //  we're horked otherwise).
   //
   //----------------------------------------------------------
-  if (nNbrs < 3 || nNbrs > 4 || (hSeen && nNbrs < 4)) {
+  if (nNbrs < 3 || nNbrs > 4 || (!allowTwoHs && hSeen && nNbrs < 4)) {
     return std::nullopt;
   }
 
@@ -3019,10 +3020,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }    // end of 2 and 3 coordinated atoms only
-        }      // end of we want it or CIP code is not set
-      }        // end of double bond
-    }          // end of for loop over all bonds
+          }  // end of 2 and 3 coordinated atoms only
+        }  // end of we want it or CIP code is not set
+      }  // end of double bond
+    }  // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
@@ -3753,7 +3754,8 @@ void assignStereochemistryFrom3D(ROMol &mol, int confId,
 }
 
 void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
-                                   const bool replaceExistingTags) {
+                                   const bool replaceExistingTags,
+                                   bool allowTwoHs) {
   if (!mol.getNumConformers()) {
     return;
   }
@@ -3779,7 +3781,8 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
           atom->updatePropertyCache(false);
         }
         Atom::ChiralType code =
-            Chirality::atomChiralTypeFromBondDirPseudo3D(mol, bond, &conf)
+            Chirality::atomChiralTypeFromBondDirPseudo3D(mol, bond, &conf, 0.1,
+                                                         0.01, allowTwoHs)
                 .value_or(Atom::ChiralType::CHI_UNSPECIFIED);
         if (code != Atom::ChiralType::CHI_UNSPECIFIED) {
           atomsSet.set(atom->getIdx());
