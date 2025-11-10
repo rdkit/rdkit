@@ -32,11 +32,9 @@ TEST_CASE("Chirality::findPotentialStereo", "[stereo]") {
 TEST_CASE("CIPLabeler::assignCIPLabels", "[stereo]") {
   auto samples = bench_common::load_samples();
   BENCHMARK("CIPLabeler::assignCIPLabels") {
-    auto total = 0;
     for (auto &mol : samples) {
       CIPLabeler::assignCIPLabels(mol);
     }
-    return total;
   };
 }
 
