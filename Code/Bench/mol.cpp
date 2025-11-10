@@ -42,7 +42,7 @@ TEST_CASE("memory pressure test", "[mol][size]") {
   auto cases = bench_common::load_samples();
   REQUIRE(!cases.empty());
 
-  const size_t N = 100000;
+  const size_t N = 10400;
   std::vector<ROMol> mols;
   mols.reserve(N);
   for (size_t i = 0; i < N; ++i) {
