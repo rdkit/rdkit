@@ -109,7 +109,7 @@ struct DefaultValueCache {
                                    std::string(key) +
                                    std::string(" is not a string"));
         }
-        auto res = val->c_str();
+        auto res = *val;
         stringMap[key] = res;
         return res;
       }
@@ -161,7 +161,7 @@ std::string getStringDefaultValue(const char *key, const bj::value &from,
                                  std::string(key) +
                                  std::string(" is not a string"));
       }
-      return val->c_str();
+      return *val;
     }
   }
   return defaults.getString(key);
@@ -176,7 +176,7 @@ void readAtom(RWMol *mol, const bj::value &atomVal,
   if (stereoVal == chilookup.end()) {
     throw FileParseException("Bad Format: bad stereo value for atom");
   }
-  Atom *at = new Atom(getIntDefaultValue("z", atomVal, atomDefaults));
+  std::unique_ptr<Atom> at(new Atom(getIntDefaultValue("z", atomVal, atomDefaults)));
   if (params.useHCounts) {
     at->setNoImplicit(true);
     at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
@@ -186,7 +186,7 @@ void readAtom(RWMol *mol, const bj::value &atomVal,
   at->setIsotope(getIntDefaultValue("isotope", atomVal, atomDefaults));
   at->setChiralTag(stereoVal->second);
   bool updateLabel = false, takeOwnership = true;
-  mol->addAtom(at, updateLabel, takeOwnership);
+  mol->addAtom(at.release(), updateLabel, takeOwnership);
 }
 
 void readBond(RWMol *mol, const bj::value &bondVal,
@@ -198,11 +198,11 @@ void readBond(RWMol *mol, const bj::value &bondVal,
     throw FileParseException("Bad Format: bad bond order for bond");
   }
   const auto &aids = bondVal.at("atoms").as_array();
-  Bond *bnd = new Bond();
+  std:::unique_ptr<Bond> bnd(new Bond());
   bnd->setBeginAtomIdx(static_cast<int>(aids.at(0).as_int64()));
   bnd->setEndAtomIdx(static_cast<int>(aids.at(1).as_int64()));
   bnd->setBondType(bondOrder->second);
-  mol->addBond(bnd);
+  mol->addBond(bnd.release());
   std::string stereo = getStringDefaultValue("stereo", bondVal, bondDefaults);
   if (stereo != "unspecified") {
     needStereoLoop = true;
@@ -236,12 +236,12 @@ void readStereoGroups(RWMol *mol, const bj::value &sgVals) {
           "Bad Format: stereogroup does not have either atoms or bonds");
     }
     if (MolInterchange::stereoGrouplookup.find(
-            sgVal.at("type").as_string().c_str()) ==
+            sgVal.at("type").as_string()) ==
         MolInterchange::stereoGrouplookup.end()) {
       throw FileParseException("Bad Format: bad stereogroup type");
     }
     const auto typ = MolInterchange::stereoGrouplookup.at(
-        sgVal.at("type").as_string().c_str());
+        sgVal.at("type").as_string());
 
     unsigned gId = 0;
     if (typ != StereoGroupType::STEREO_ABSOLUTE &&
@@ -283,7 +283,7 @@ void readSubstanceGroups(RWMol *mol, const bj::value &sgVals) {
           "Bad Format: substance group does not have TYPE property");
     }
 
-    auto sgType = sgVal.at("properties").at("TYPE").as_string().c_str();
+    auto sgType = sgVal.at("properties").at("TYPE").as_string();
     if (!SubstanceGroupChecks::isValidType(sgType)) {
       throw FileParseException(
           (boost::format(
@@ -386,7 +386,7 @@ void readSubstanceGroups(RWMol *mol, const bj::value &sgVals) {
           attach.lvIdx = static_cast<unsigned>(ap.at("lvIdx").as_int64());
         }
         if (ap.as_object().contains("id")) {
-          attach.id = ap.at("id").as_string().c_str();
+          attach.id = ap.at("id").as_string();
         }
         sg.getAttachPoints().push_back(std::move(attach));
       }
@@ -610,11 +610,11 @@ void finishQuery(T const *owner, U *res, const bj::value &repVal,
                  const JSONParseParameters &params) {
   PRECONDITION(owner, "no owner");
   PRECONDITION(res, "no result");
-  std::string descr = repVal.at("descr").as_string().c_str();
+  auto descr = repVal.at("descr").as_string();
   res->setDescription(descr);
   std::string typ;
   if (repVal.as_object().contains("type")) {
-    typ = repVal.at("type").as_string().c_str();
+    typ = repVal.at("type").as_string();
   }
   if (!typ.empty()) {
     res->setTypeLabel(typ);
@@ -693,7 +693,7 @@ void readQueries(RWMol *mol, const bj::value &repVal,
                  const JSONParseParameters &params) {
   PRECONDITION(mol, "no molecule");
   PRECONDITION(
-      repVal.at("name").as_string().c_str() == std::string("rdkitQueries"),
+      repVal.at("name").as_string() == std::string("rdkitQueries"),
       "bad queries");
   if (!repVal.as_object().contains("formatVersion")) {
     throw FileParseException("Bad Format: missing format_version");
@@ -768,7 +768,7 @@ void readQueries(RWMol *mol, const bj::value &repVal,
 void readRDKitRepresentation(RWMol *mol, const bj::value &repVal,
                              const JSONParseParameters &params) {
   PRECONDITION(mol, "no molecule");
-  PRECONDITION(repVal.at("name").as_string().c_str() ==
+  PRECONDITION(repVal.at("name").as_string() ==
                    std::string("rdkitRepresentation"),
                "bad representation");
   if (!repVal.as_object().contains("formatVersion")) {
@@ -829,7 +829,7 @@ void readRDKitRepresentation(RWMol *mol, const bj::value &repVal,
         }
         mol->getAtomWithIdx(val.at(0).as_int64())
             ->setProp(common_properties::_CIPCode,
-                      val.at(1).as_string().c_str());
+                      val.at(1).as_string());
       }
     }
   }
@@ -875,7 +875,7 @@ void processMol(RWMol *mol, const bj::value &molval,
                 const JSONParseParameters &params) {
   if (molval.as_object().contains("name")) {
     mol->setProp(common_properties::_Name,
-                 molval.at("name").as_string().c_str());
+                 molval.at("name").as_string());
   }
   if (!molval.as_object().contains("atoms")) {
     throw FileParseException("Bad Format: missing atoms in JSON");
@@ -924,13 +924,13 @@ void processMol(RWMol *mol, const bj::value &molval,
         throw FileParseException(
             "Bad Format: representation has no name member");
       }
-      if (propVal.at("name").as_string().c_str() ==
+      if (propVal.at("name").as_string() ==
           std::string("rdkitRepresentation")) {
         readRDKitRepresentation(mol, propVal, params);
-      } else if (propVal.at("name").as_string().c_str() ==
+      } else if (propVal.at("name").as_string() ==
                  std::string("partialCharges")) {
         readPartialCharges(mol, propVal, params);
-      } else if (propVal.at("name").as_string().c_str() ==
+      } else if (propVal.at("name").as_string() ==
                  std::string("rdkitQueries")) {
         readQueries(mol, propVal, atomDefaults, bondDefaults, params);
       }

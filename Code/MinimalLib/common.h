@@ -562,8 +562,8 @@ std::string process_mol_details(const std::string &details,
     return problems;
   }
   if (haveAtomMultiColors || haveBondMultiColors) {
-    if (doc.contains("highlightLineWidthMultipliers")) {
-      const auto &val = doc.at("highlightLineWidthMultipliers");
+    if (const auto it = doc.find("highlightLineWidthMultipliers") != doc.end()) {
+      const auto &val = *it;
       if (!val.is_object()) {
         return "JSON contains 'highlightLineWidthMultipliers' field, but it is not an object";
       }
@@ -590,8 +590,8 @@ std::string process_mol_details(const std::string &details,
       return problems;
     }
   }
-  if (doc.contains("highlightAtomRadii")) {
-    const auto &val = doc.at("highlightAtomRadii");
+  if (const auto it = doc.find("highlightAtomRadii") != doc.end()) {
+    const auto &val = *it;
     if (!val.is_object()) {
       return "JSON contains 'highlightAtomRadii' field, but it is not an object";
     }
@@ -647,8 +647,8 @@ std::string process_rxn_details(const std::string &details,
     return problems;
   }
   GET_JSON_VALUE(doc, rxnDrawingDetails, highlightByReactant, bool)
-  if (doc.contains("highlightColorsReactants")) {
-    const auto &val = doc.at("highlightColorsReactants");
+  if (const auto it = doc.find("highlightColorsReactants") != doc.end()) {
+    const auto &val = *it;
     if (!val.is_array()) {
       return "JSON contains 'highlightColorsReactants' field, but it is not an "
              "array";
@@ -1193,7 +1193,7 @@ std::string get_mol_frags_mappings(
     for (int atomIdx : atomIdxVec) {
       bjAtomIndices.push_back(atomIdx);
     }
-    bjFragsMolAtomMapping.push_back(bjAtomIndices);
+    bjFragsMolAtomMapping.push_back(std::move(bjAtomIndices));
   }
   doc["fragsMolAtomMapping"] = bjFragsMolAtomMapping;
   return bj::serialize(doc);

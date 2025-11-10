@@ -183,7 +183,7 @@ class DrawerFromDetails {
       bj::array bjXY;
       bjXY.push_back(drawXY.x);
       bjXY.push_back(drawXY.y);
-      bjDrawCoords.push_back(bjXY);
+      bjDrawCoords.push_back(std::move(bjXY));
     }
     doc["drawCoords"] = bjDrawCoords;
     const auto drawingResultKey = getDrawingResultKey();
