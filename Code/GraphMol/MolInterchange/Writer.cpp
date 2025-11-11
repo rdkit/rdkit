@@ -87,7 +87,7 @@ void addStringVal(bj::object &dest, const bj::object &defaults, const char *tag,
                   const std::string &val) {
   auto it = defaults.find(tag);
   if (it != defaults.end()) {
-    std::string dval = it->value().as_string();
+    std::string dval = it->value().as_string().c_str();
     if (val.size() && dval != val) {
       dest[tag] = val;
     }
@@ -472,7 +472,7 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
     for (auto conf = mol.beginConformers(); conf != mol.endConformers();
          ++conf) {
       bj::object rjConf;
-      addConformer(*conf, rjConf);
+      addConformer(**conf, rjConf);
       rjConfs.push_back(std::move(rjConf));
     }
 
