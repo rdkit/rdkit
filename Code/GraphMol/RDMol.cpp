@@ -477,6 +477,16 @@ struct RDMol::CompatibilityData {
     delete stereoGroups.load(std::memory_order_relaxed);
   }
 
+  // Copy conformers (including properties) from another CompatibilityData
+  void copyConformersFrom(const CompatibilityData *source) {
+    conformers.clear();
+    for (const auto& otherConf : source->conformers) {
+      auto *confCopy = new Conformer(*otherConf);  // Copy constructor preserves properties
+      confCopy->setOwningMol(compatMol);
+      conformers.push_back(CONFORMER_SPTR(confCopy));
+    }
+  }
+
   void setNewOwner(RDMol &rdmol) {
     compatMol->dp_mol = &rdmol;
     for (auto &atom : atoms) {
@@ -1181,6 +1191,14 @@ void RDMol::initFromOther(const RDMol &other, bool quickCopy, int confId, ROMol 
   if (existingPtr) {
     PRECONDITION(!hasCompatibilityData(), "Cannot create RDMol with existing ROMol pointer and compatibility data");
     CompatibilityData *data = new CompatibilityData(*this, existingPtr);
+
+    // If the other molecule had CompatibilityData with conformers containing properties,
+    // copy those Conformer objects (including properties) instead of using the newly created empty ones
+    if (otherHasCompat && !quickCopy && confId < 0 && numConformers > 0 &&
+        otherCompat->conformers.size() == numConformers) {
+      data->copyConformersFrom(otherCompat);
+    }
+
     existingPtr->dp_mol = this;
     // Ensure the compatibility data is written out to main memory before the
     // pointer to it (memory_order_release), in case another thread reads it

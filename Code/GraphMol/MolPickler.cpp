@@ -198,6 +198,7 @@ class PropTracker {
 
 bool pickleAtomProperties(std::ostream &ss, const RDProps &props,
                           unsigned int pickleFlags) {
+  throw MolPicklerException("DEPRECATION ERROR: This function has been deprecated and is only present as a reference for the new backend implementation");
   const static PropTracker aprops;
   static std::unordered_set<std::string> ignoreProps;
   if (ignoreProps.empty()) {
@@ -224,6 +225,7 @@ bool pickleAtomProperties(std::ostream &ss, const RDProps &props,
 }
 
 void unpickleAtomProperties(std::istream &ss, RDProps &props, int version) {
+  throw MolPicklerException("DEPRECATION ERROR: This function has been deprecated and is only present as a reference for the new backend implementation");
   const static PropTracker aprops;
   if (version >= 14000) {
     streamReadProps<std::uint16_t>(ss, props,
@@ -238,6 +240,7 @@ void unpickleAtomProperties(std::istream &ss, RDProps &props, int version) {
 
 bool pickleBondProperties(std::ostream &ss, const RDProps &props,
                           unsigned int pickleFlags) {
+  throw MolPicklerException("DEPRECATION ERROR: This function has been deprecated and is only present as a reference for the new backend implementation");
   const static PropTracker bprops;
   if (!pickleFlags) {
     return false;
@@ -252,6 +255,7 @@ bool pickleBondProperties(std::ostream &ss, const RDProps &props,
 }
 
 void unpickleBondProperties(std::istream &ss, RDProps &props, int version) {
+  throw MolPicklerException("DEPRECATION ERROR: This function has been deprecated and is only present as a reference for the new backend implementation");
   const static PropTracker bprops;
   if (version >= 14000) {
     streamReadProps<std::uint16_t>(ss, props,
@@ -262,6 +266,390 @@ void unpickleBondProperties(std::istream &ss, RDProps &props, int version) {
   }
   unpickleExplicitProperties<std::int8_t, int>(ss, props, version,
                                                bprops.explicitBondProps);
+}
+
+// Generic function to pickle properties using PropIterator
+template <typename COUNT_TYPE>
+bool _picklePropertiesFromIterator(
+    std::ostream &ss, const RDMol &mol, RDMol::Scope scope, uint32_t index,
+    unsigned int pickleFlags,
+    const std::unordered_set<std::string> &ignoreProps,
+    const CustomPropHandlerVec &handlers = {}) {
+  if (!pickleFlags) {
+    return false;
+  }
+
+  bool savePrivate = pickleFlags & PicklerOps::PrivateProps;
+  bool saveComputed = pickleFlags & PicklerOps::ComputedProps;
+
+  // First pass: count serializable properties
+  COUNT_TYPE count = 0;
+  for (auto it = mol.beginProps(saveComputed, scope, index);
+       it != mol.endProps(); ++it) {
+    const RDKit::RDMol::Property &prop = *it;
+    const std::string &propName = prop.name().getString();
+
+    // Skip ignored properties
+    if (!ignoreProps.empty() && ignoreProps.find(propName) != ignoreProps.end()) {
+      continue;
+    }
+
+    // Skip private properties if not requested
+    if (!savePrivate && propName.size() > 0 && propName[0] == '_') {
+      continue;
+    }
+
+    // Get the RDValue to check if it's serializable
+    const PropToken &token = prop.name();
+    RDValue val;
+    try {
+      if (scope == RDMol::Scope::MOL) {
+        val = mol.getMolProp<RDValue>(token);
+      } else if (scope == RDMol::Scope::ATOM) {
+        val = mol.getAtomProp<RDValue>(token, index);
+      } else { // BOND
+        val = mol.getBondProp<RDValue>(token, index);
+      }
+    } catch (...) {
+      // If we can't get the value, skip this property
+      continue;
+    }
+
+    // Check if this value is actually serializable (same check as streamWriteProp)
+    if (!isSerializable(val, handlers)) {
+      continue;
+    }
+
+    count++;
+  }
+
+  streamWrite(ss, count);
+  if (!count) {
+    return false;
+  }
+
+  // Second pass: write the properties
+  COUNT_TYPE writtenCount = 0;
+  for (auto it = mol.beginProps(saveComputed, scope, index);
+       it != mol.endProps(); ++it) {
+    const RDKit::RDMol::Property &prop = *it;
+    const std::string &propName = prop.name().getString();
+
+    // Skip ignored properties
+    if (!ignoreProps.empty() && ignoreProps.find(propName) != ignoreProps.end()) {
+      continue;
+    }
+
+    // Skip private properties if not requested
+    if (!savePrivate && propName.size() > 0 && propName[0] == '_') {
+      continue;
+    }
+
+    // Get the RDValue for this property based on scope and tag
+    // We need to use the mol's public API since Property members are private
+    const PropToken &token = prop.name();
+
+    RDValue val;
+    // Get the value using RDMol's public API based on type
+    try {
+      if (scope == RDMol::Scope::MOL) {
+        val = mol.getMolProp<RDValue>(token);
+      } else if (scope == RDMol::Scope::ATOM) {
+        val = mol.getAtomProp<RDValue>(token, index);
+      } else { // BOND
+        val = mol.getBondProp<RDValue>(token, index);
+      }
+    } catch (...) {
+      // If we can't get the value, skip this property
+      continue;
+    }
+    if (streamWriteProp(ss, propName, val, handlers)) {
+      writtenCount++;
+    }
+  }
+
+  POSTCONDITION(count == writtenCount,
+                "Estimated property count not equal to written");
+  return true;
+}
+
+// ===================================================================
+// New property unpickling functions using RDMol API
+// ===================================================================
+
+// Helper function to read a single property and set it on RDMol
+template <typename COUNT_TYPE>
+bool streamReadPropToRDMol(std::istream &ss, RDMol &mol, RDMol::Scope scope, uint32_t index) {
+  std::string key;
+  int version = 0;
+  streamRead(ss, key, version);
+
+  unsigned char type;
+  streamRead(ss, type);
+
+  PropToken token(key);
+
+  switch (type) {
+    case DTags::IntTag: {
+      int val;
+      streamRead(ss, val);
+      if (scope == RDMol::Scope::MOL) {
+        mol.setMolProp(token, val);
+      } else if (scope == RDMol::Scope::ATOM) {
+        mol.setSingleAtomProp(token, index, val);
+      } else {
+        mol.setSingleBondProp(token, index, val);
+      }
+      break;
+    }
+    case DTags::UnsignedIntTag: {
+      unsigned int val;
+      streamRead(ss, val);
+      if (scope == RDMol::Scope::MOL) {
+        mol.setMolProp(token, val);
+      } else if (scope == RDMol::Scope::ATOM) {
+        mol.setSingleAtomProp(token, index, val);
+      } else {
+        mol.setSingleBondProp(token, index, val);
+      }
+      break;
+    }
+    case DTags::BoolTag: {
+      bool val;
+      streamRead(ss, val);
+      if (scope == RDMol::Scope::MOL) {
+        mol.setMolProp(token, val);
+      } else if (scope == RDMol::Scope::ATOM) {
+        mol.setSingleAtomProp(token, index, val);
+      } else {
+        mol.setSingleBondProp(token, index, val);
+      }
+      break;
+    }
+    case DTags::FloatTag: {
+      float val;
+      streamRead(ss, val);
+      if (scope == RDMol::Scope::MOL) {
+        mol.setMolProp(token, val);
+      } else if (scope == RDMol::Scope::ATOM) {
+        mol.setSingleAtomProp(token, index, val);
+      } else {
+        mol.setSingleBondProp(token, index, val);
+      }
+      break;
+    }
+    case DTags::DoubleTag: {
+      double val;
+      streamRead(ss, val);
+      if (scope == RDMol::Scope::MOL) {
+        mol.setMolProp(token, val);
+      } else if (scope == RDMol::Scope::ATOM) {
+        mol.setSingleAtomProp(token, index, val);
+      } else {
+        mol.setSingleBondProp(token, index, val);
+      }
+      break;
+    }
+    case DTags::StringTag: {
+      std::string val;
+      streamRead(ss, val, version);
+      if (scope == RDMol::Scope::MOL) {
+        mol.setMolProp(token, val);
+      } else if (scope == RDMol::Scope::ATOM) {
+        mol.setSingleAtomProp(token, index, val);
+      } else {
+        mol.setSingleBondProp(token, index, val);
+      }
+      break;
+    }
+    case DTags::VecDoubleTag: {
+      std::vector<double> val;
+      streamReadVec(ss, val);
+      if (scope == RDMol::Scope::MOL) {
+        mol.setMolProp(token, val);
+      } else if (scope == RDMol::Scope::ATOM) {
+        mol.setSingleAtomProp(token, index, val);
+      } else {
+        mol.setSingleBondProp(token, index, val);
+      }
+      break;
+    }
+    case DTags::VecFloatTag: {
+      std::vector<float> val;
+      streamReadVec(ss, val);
+      if (scope == RDMol::Scope::MOL) {
+        mol.setMolProp(token, val);
+      } else if (scope == RDMol::Scope::ATOM) {
+        mol.setSingleAtomProp(token, index, val);
+      } else {
+        mol.setSingleBondProp(token, index, val);
+      }
+      break;
+    }
+    case DTags::VecIntTag: {
+      std::vector<int> val;
+      streamReadVec(ss, val);
+      if (scope == RDMol::Scope::MOL) {
+        mol.setMolProp(token, val);
+      } else if (scope == RDMol::Scope::ATOM) {
+        mol.setSingleAtomProp(token, index, val);
+      } else {
+        mol.setSingleBondProp(token, index, val);
+      }
+      break;
+    }
+    case DTags::VecUIntTag: {
+      std::vector<unsigned int> val;
+      streamReadVec(ss, val);
+      if (scope == RDMol::Scope::MOL) {
+        mol.setMolProp(token, val);
+      } else if (scope == RDMol::Scope::ATOM) {
+        mol.setSingleAtomProp(token, index, val);
+      } else {
+        mol.setSingleBondProp(token, index, val);
+      }
+      break;
+    }
+    case DTags::VecStringTag: {
+      std::vector<std::string> val;
+      streamReadStringVec(ss, val, version);
+      if (scope == RDMol::Scope::MOL) {
+        mol.setMolProp(token, val);
+      } else if (scope == RDMol::Scope::ATOM) {
+        mol.setSingleAtomProp(token, index, val);
+      } else {
+        mol.setSingleBondProp(token, index, val);
+      }
+      break;
+    }
+    case DTags::CustomTag: {
+      // Handle custom types via handlers
+      // The format is: CustomTag, handler name (string), custom data
+      std::string propType;
+      streamRead(ss, propType, version);
+
+      const auto &handlers = MolPickler::getCustomPropHandlers();
+      RDValue val;
+      bool handled = false;
+      for (const auto &handler : handlers) {
+        if (handler->getPropName() == propType && handler->read(ss, val)) {
+          if (scope == RDMol::Scope::MOL) {
+            mol.setMolProp(token, val);
+          } else if (scope == RDMol::Scope::ATOM) {
+            mol.setSingleAtomProp(token, index, val);
+          } else {
+            mol.setSingleBondProp(token, index, val);
+          }
+          handled = true;
+          break;
+        }
+      }
+      if (!handled) {
+        return false;
+      }
+      break;
+    }
+    default:
+      // Unknown type
+      return false;
+  }
+  return true;
+}
+
+
+// Generic function to unpickle properties using RDMol API
+template <typename COUNT_TYPE>
+void unpicklePropertiesFromIterator(std::istream &ss, RDMol &mol,
+                                    RDMol::Scope scope, uint32_t index) {
+  COUNT_TYPE count;
+  streamRead(ss, count);
+
+  for (COUNT_TYPE i = 0; i < count; ++i) {
+    CHECK_INVARIANT(streamReadPropToRDMol<COUNT_TYPE>(ss, mol, scope, index),
+                    "Corrupted property serialization detected");
+  }
+}
+
+
+// New implementation for pickling atom properties using PropIterator
+bool _pickleAtomPropertiesFromMol(std::ostream &ss, const RDMol &mol,
+                                  uint32_t atomIdx, unsigned int pickleFlags) {
+  const static PropTracker aprops;
+  static std::unordered_set<std::string> ignoreProps;
+  if (ignoreProps.empty()) {
+    for (const auto &pr : aprops.explicitAtomProps) {
+      ignoreProps.insert(pr.first);
+    }
+    for (const auto &pn : aprops.ignoreAtomProps) {
+      ignoreProps.insert(pn);
+    }
+  }
+
+  return _picklePropertiesFromIterator<std::uint16_t>(
+      ss, mol, RDMol::Scope::ATOM, atomIdx, pickleFlags,
+      ignoreProps, MolPickler::getCustomPropHandlers());
+
+  // TODO: Handle explicit atom properties if needed
+  // (the old code also called pickleExplicitProperties)
+}
+
+
+// New implementation for unpickling atom properties
+void _unpickleAtomPropertiesFromMol(std::istream &ss, RDMol &mol,
+                                   uint32_t atomIdx, int version) {
+  if (version >= 14000) {
+    unpicklePropertiesFromIterator<std::uint16_t>(ss, mol, RDMol::Scope::ATOM, atomIdx);
+  } else {
+    unpicklePropertiesFromIterator<unsigned int>(ss, mol, RDMol::Scope::ATOM, atomIdx);
+  }
+  // TODO: Handle explicit atom properties if needed
+}
+
+
+// New implementation for pickling bond properties using PropIterator
+bool _pickleBondPropertiesFromMol(std::ostream &ss, const RDMol &mol,
+                                  uint32_t bondIdx, unsigned int pickleFlags) {
+  return _picklePropertiesFromIterator<std::uint16_t>(
+      ss, mol, RDMol::Scope::BOND, bondIdx, pickleFlags,
+      {}, MolPickler::getCustomPropHandlers());
+
+  // TODO: Handle explicit bond properties if needed
+  // (the old code also called pickleExplicitProperties)
+}
+
+
+// New implementation for unpickling bond properties
+void _unpickleBondPropertiesFromMol(std::istream &ss, RDMol &mol,
+                                   uint32_t bondIdx, int version) {
+  if (version >= 14000) {
+    unpicklePropertiesFromIterator<std::uint16_t>(ss, mol, RDMol::Scope::BOND, bondIdx);
+  } else {
+    unpicklePropertiesFromIterator<unsigned int>(ss, mol, RDMol::Scope::BOND, bondIdx);
+  }
+  // TODO: Handle explicit bond properties if needed
+}
+
+
+// New implementation for pickling molecule properties using PropIterator
+bool _pickleMolPropertiesFromMol(std::ostream &ss, const RDMol &mol,
+                                 unsigned int pickleFlags) {
+  return _picklePropertiesFromIterator<std::uint16_t>(
+      ss, mol, RDMol::Scope::MOL, RDMol::PropIterator::anyIndexMarker,
+      pickleFlags,
+      {},
+      MolPickler::getCustomPropHandlers());
+}
+
+
+// New implementation for unpickling molecule properties
+void _unpickleMolPropertiesFromMol(std::istream &ss, RDMol &mol, int version) {
+  if (version >= 14000) {
+    unpicklePropertiesFromIterator<std::uint16_t>(ss, mol, RDMol::Scope::MOL,
+                                                   RDMol::PropIterator::anyIndexMarker);
+  } else {
+    unpicklePropertiesFromIterator<unsigned int>(ss, mol, RDMol::Scope::MOL,
+                                                  RDMol::PropIterator::anyIndexMarker);
+  }
 }
 
 }  // namespace
@@ -471,7 +859,7 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         // The tolerance is pickled first as we can't pickle a PairHolder with
         // the QUERY_VALUE tag
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<2>(v));
-        streamWriteProp(ss, std::get<1>(v),
+        streamWriteProp(ss, std::get<1>(v).key, std::get<1>(v).val,
                         MolPickler::getCustomPropHandlers());
       } break;
       default:
@@ -1258,48 +1646,39 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   }
 
   if (propertyFlags & PicklerOps::MolProps) {
-    raiseNonImplementedDetail("Cast atom to property");
-    /*
     std::stringstream tss;
-    _pickleProperties(tss, *mol, propertyFlags);
+    _pickleMolPropertiesFromMol(tss, mol->asRDMol(), propertyFlags);
     if (!tss.str().empty()) {
       streamWrite(ss, BEGINPROPS);
       write_sstream_to_stream(ss, tss);
       streamWrite(ss, ENDPROPS);
     }
-     */
   }
 
   if (propertyFlags & PicklerOps::AtomProps) {
-    raiseNonImplementedDetail("Cast atom to property");
-    /*
     std::stringstream tss;
     bool anyWritten = false;
     for (const auto atom : mol->atoms()) {
-      anyWritten |= pickleAtomProperties(tss, *atom, propertyFlags);
+      anyWritten |= _pickleAtomPropertiesFromMol(tss, mol->asRDMol(), atom->getIdx(), propertyFlags);
     }
     if (anyWritten) {
       streamWrite(ss, BEGINATOMPROPS);
       write_sstream_to_stream(ss, tss);
       streamWrite(ss, ENDPROPS);
     }
-     */
   }
 
   if (propertyFlags & PicklerOps::BondProps) {
-    raiseNonImplementedDetail("Cast atom to property");
-    /*
     std::stringstream tss;
     bool anyWritten = false;
     for (const auto bond : mol->bonds()) {
-      anyWritten |= pickleBondProperties(tss, *bond, propertyFlags);
+      anyWritten |= _pickleBondPropertiesFromMol(tss, mol->asRDMol(), bond->getIdx(), propertyFlags);
     }
     if (anyWritten) {
       streamWrite(ss, BEGINBONDPROPS);
       write_sstream_to_stream(ss, tss);
       streamWrite(ss, ENDPROPS);
     }
-    */
   }
   streamWrite(ss, ENDMOL);
 }
@@ -1505,8 +1884,6 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   }
 
   while (tag != ENDMOL) {
-    raiseNonImplementedDetail("Cast atom to property");
-    /*
     if (tag == BEGINPROPS) {
       int32_t blkSize = 0;
       if (version >= 13000) {
@@ -1515,7 +1892,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
       if (version >= 13000 && !(propertyFlags & PicklerOps::MolProps)) {
         ss.seekg(blkSize, std::ios_base::cur);
       } else {
-        _unpickleProperties(ss, *mol, version);
+        _unpickleMolPropertiesFromMol(ss, mol->asRDMol(), version);
       }
       streamRead(ss, tag, version);
     } else if (tag == BEGINATOMPROPS) {
@@ -1527,7 +1904,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
         ss.seekg(blkSize, std::ios_base::cur);
       } else {
         for (const auto atom : mol->atoms()) {
-          unpickleAtomProperties(ss, *atom, version);
+          _unpickleAtomPropertiesFromMol(ss, mol->asRDMol(), atom->getIdx(), version);
         }
       }
       streamRead(ss, tag, version);
@@ -1540,7 +1917,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
         ss.seekg(blkSize, std::ios_base::cur);
       } else {
         for (const auto bond : mol->bonds()) {
-          unpickleBondProperties(ss, *bond, version);
+          _unpickleBondPropertiesFromMol(ss, mol->asRDMol(), bond->getIdx(), version);
         }
       }
       streamRead(ss, tag, version);
@@ -1552,7 +1929,6 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     } else {
       break;  // break to tag != ENDMOL
     }
-     */
     if (tag != ENDPROPS) {
       throw MolPicklerException("Bad pickle format: ENDPROPS tag not found.");
     }

@@ -896,6 +896,15 @@ private:
       PRECONDITION(d_scope != Scope::MOL, "Array data only for non-MOL scope");
       return d_arrayData.getRDValueTag(index);
     }
+
+    // Get property value as RDValue for pickling
+    RDValue getValueAsRDValue(uint32_t index = 0) const {
+      if (d_scope == Scope::MOL) {
+        return d_inPlaceData;
+      } else {
+        return d_arrayData.toRDValue(index);
+      }
+    }
   };
 
   class RDKIT_GRAPHMOL_EXPORT PropIterator {

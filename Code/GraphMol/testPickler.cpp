@@ -1680,8 +1680,7 @@ void testAdditionalQueryPickling() {
 
 void testBoostSerialization() {
 #ifdef RDK_USE_BOOST_SERIALIZATION
-  raiseNonImplementedDetail("Serialize");
-#if 0
+
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Testing boost::serialization integration"
                         << std::endl;
@@ -1735,7 +1734,6 @@ void testBoostSerialization() {
     TEST_ASSERT(pval == 3);
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
-#endif
 #endif
 }
 int main(int argc, char *argv[]) {
