@@ -47,7 +47,7 @@ const int ci_LOCAL_INF = static_cast<int>(1e8);
 namespace RDKit {
 namespace MolOps {
 namespace {
-void nitrogenCleanup(RWMol &mol, Atom *atom) {
+void nitrogensCleanup(RWMol &mol) {
   // conversions here:
   // - neutral 5 coordinate Ns with double bonds to Os to the
   //   zwitterionic form.  e.g.:
@@ -58,28 +58,34 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
   //   zwitterionic form.  e.g.:
   //   C-N=N#N -> C-N=[N+]=[N-]
 
-  PRECONDITION(atom, "bad atom");
-  bool aromHolder;
+  boost::dynamic_bitset<> nitrogensToConsider(mol.getNumAtoms());
+  for (auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() != 7) {
+      continue;
+    }
+    // we only want to do neutrals so that things like this don't get
+    // munged:
+    //  O=[n+]1occcc1
+    // this was sf.net issue 1811276
+    if (atom->getFormalCharge()) {
+      continue;
+    }
 
-  // we only want to do neutrals so that things like this don't get
-  // munged:
-  //  O=[n+]1occcc1
-  // this was sf.net issue 1811276
-  if (atom->getFormalCharge()) {
-    return;
-  }
-
-  // we need to play this little aromaticity game because the
-  // explicit valence code modifies its results for aromatic
-  // atoms.
-  aromHolder = atom->getIsAromatic();
-  atom->setIsAromatic(0);
-  // NOTE that we are calling calcExplicitValence() here, we do
-  // this because we cannot be sure that it has already been
-  // called on the atom (cleanUp() gets called pretty early in
-  // the sanitization process):
-  if (atom->calcExplicitValence(false) == 5) {
+    // NOTE that we are calling calcExplicitValence() here, we do
+    // this because we cannot be sure that it has already been
+    // called on the atom (cleanUp() gets called pretty early in
+    // the sanitization process):
+    if (atom->calcExplicitValence(false) != 5) {
+      continue;
+    }
+    nitrogensToConsider.set(atom->getIdx());
+    // we need to play this little aromaticity game because the
+    // explicit valence code modifies its results for aromatic
+    // atoms.
+    auto aromHolder = atom->getIsAromatic();
+    atom->setIsAromatic(0);
     unsigned int aid = atom->getIdx();
+    bool updateNeeded = false;
     for (const auto nbr : mol.atomNeighbors(atom)) {
       if ((nbr->getAtomicNum() == 8) && (nbr->getFormalCharge() == 0) &&
           (mol.getBondBetweenAtoms(aid, nbr->getIdx())->getBondType() ==
@@ -89,22 +95,44 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
         b->setBondType(Bond::SINGLE);
         atom->setFormalCharge(1);
         nbr->setFormalCharge(-1);
+        updateNeeded = true;
         break;
-      } else if ((nbr->getAtomicNum() == 7) && (nbr->getFormalCharge() == 0) &&
-                 (mol.getBondBetweenAtoms(aid, nbr->getIdx())->getBondType() ==
-                  Bond::TRIPLE)) {
+      }
+    }
+    // force a recalculation of the explicit valence if we changed anything
+    atom->setIsAromatic(aromHolder);
+    if (updateNeeded) {
+      atom->calcExplicitValence(false);
+    }
+  }
+
+  // now repeat for the weird N#N case:
+  for (auto aid = nitrogensToConsider.find_first();
+       aid != boost::dynamic_bitset<>::npos;
+       aid = nitrogensToConsider.find_next(aid)) {
+    Atom *atom = mol.getAtomWithIdx(aid);
+    auto aromHolder = atom->getIsAromatic();
+    atom->setIsAromatic(0);
+    bool updateNeeded = false;
+    for (const auto nbr : mol.atomNeighbors(atom)) {
+      if ((nbr->getAtomicNum() == 7) && (nbr->getFormalCharge() == 0) &&
+          (mol.getBondBetweenAtoms(aid, nbr->getIdx())->getBondType() ==
+           Bond::TRIPLE)) {
         // here's the triple bonded nitrogen
         auto b = mol.getBondBetweenAtoms(aid, nbr->getIdx());
         b->setBondType(Bond::DOUBLE);
         atom->setFormalCharge(1);
         nbr->setFormalCharge(-1);
+        updateNeeded = true;
         break;
       }
-    }  // end of loop over the first neigh
-  }  // if this atom is 5 coordinate nitrogen
-  // force a recalculation of the explicit valence here
-  atom->setIsAromatic(aromHolder);
-  atom->calcExplicitValence(false);
+    }
+    // force a recalculation of the explicit valence here
+    atom->setIsAromatic(aromHolder);
+    if (updateNeeded) {
+      atom->calcExplicitValence(false);
+    }
+  }
 }
 
 void phosphorusCleanup(RWMol &mol, Atom *atom) {
@@ -243,10 +271,10 @@ bool noDative(const Atom *a) {
 void metalBondCleanup(RWMol &mol, Atom *atom,
                       const std::vector<unsigned int> &ranks) {
   PRECONDITION(atom, "bad atom in metalBondCleanup");
-  // The IUPAC recommendation for ligand->metal coordination bonds is that they
-  // be single.  This upsets the RDKit valence model, as seen in CHEBI:26355,
-  // heme b.  If the valence of a non-metal atom is above the maximum in the
-  // RDKit model, and there are single bonds from it to metal
+  // The IUPAC recommendation for ligand->metal coordination bonds is that
+  // they be single.  This upsets the RDKit valence model, as seen in
+  // CHEBI:26355, heme b.  If the valence of a non-metal atom is above the
+  // maximum in the RDKit model, and there are single bonds from it to metal
   // change those bonds to atom->metal dative.
   // If the atom is bonded to more than 1 metal atom, choose the one
   // with the fewer dative bonds incident on it, with the canonical
@@ -284,11 +312,9 @@ void metalBondCleanup(RWMol &mol, Atom *atom,
 }  // namespace
 
 void cleanUp(RWMol &mol) {
+  nitrogensCleanup(mol);
   for (auto atom : mol.atoms()) {
     switch (atom->getAtomicNum()) {
-      case 7:
-        nitrogenCleanup(mol, atom);
-        break;
       case 15:
         phosphorusCleanup(mol, atom);
         break;
