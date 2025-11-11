@@ -465,15 +465,24 @@ void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
     drawer.setActiveAtmIdx(atom1_, atom2_);
   }
   drawer.setActiveBndIdx(bond_);
-  drawer.drawTriangle(points_[0], points_[1], points_[2], true);
-  if (points_.size() > 3) {
+  if (points_.size() == 3 || points_.size() == 9) {
+    drawer.drawTriangle(points_[0], points_[1], points_[2], true);
+  }
+  if (points_.size() == 6) {
+    // This is a 2 triangle drawing where the wedge goes onto a Y shape, as in
+    // Github 7739 tests in catch_tests.cpp.
+    std::vector<Point2D> trapPoints{points_[0], points_[1], points_[2],
+                                    points_[5]};
+    drawer.drawPolygon(trapPoints, true);
+  } else if (points_.size() == 9) {
+    // This is a conventional 2-colour wedge originally drawn as 3 triangles.
     if (drawer.drawOptions().splitBonds) {
       drawer.setActiveAtmIdx(atom2_);
     }
     drawer.setColour(col2_);
-  }
-  for (unsigned int i = 3; i < points_.size(); i += 3) {
-    drawer.drawTriangle(points_[i], points_[i + 1], points_[i + 2], true);
+    std::vector<Point2D> trapPoints{points_[4], points_[5], points_[6],
+                                    points_[7]};
+    drawer.drawPolygon(trapPoints, true);
   }
 }
 
