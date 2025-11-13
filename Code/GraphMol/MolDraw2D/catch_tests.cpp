@@ -373,8 +373,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDrawingExtentsInclude_default.svg", 1604243819U},
     {"testDrawingExtentsIncludeWithHighlights_default.svg", 1595689626U},
     {"testDrawingExtentsInclude_allButHighlights.svg", 1604243819U},
-    {"testDrawingExtentsIncludeWithHighlights_allButHighlights.svg", 436783789U}
-};
+    {"testDrawingExtentsIncludeWithHighlights_allButHighlights.svg",
+     436783789U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6631,29 +6631,36 @@ TEST_CASE("Github5963: bond end wrong on wedge") {
     outs << text;
     outs.flush();
     outs.close();
-    std::regex bond7(
+    // There are 2 paths to draw bond 7, a yellow triangle and a black
+    // quadrilateral.
+    std::regex bond71(
         "'bond-7 atom-6 atom-8' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
         " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) Z'");
-    // there should be 3 matches for bond7, of which we are interested in the
-    // 2nd
-    std::ptrdiff_t const match_count(
-        std::distance(std::sregex_iterator(text.begin(), text.end(), bond7),
+    std::ptrdiff_t const match_count1(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), bond71),
                       std::sregex_iterator()));
-    CHECK(match_count == 3);
-    auto bond7_match = std::sregex_iterator(text.begin(), text.end(), bond7);
-    ++bond7_match;
-    std::smatch match7 = *bond7_match;
+    CHECK(match_count1 == 1);
+    std::regex bond72(
+        "'bond-7 atom-6 atom-8' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) Z'");
+    std::ptrdiff_t const match_count2(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), bond72),
+                      std::sregex_iterator()));
+    CHECK(match_count2 == 1);
+    auto bond72_match = std::sregex_iterator(text.begin(), text.end(), bond72);
+    std::smatch match72 = *bond72_match;
     std::regex bond8(
         "'bond-8 atom-8 atom-9' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
         " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)'");
     // only 1 bond8 match
     auto bond8_match = std::sregex_iterator(text.begin(), text.end(), bond8);
     std::smatch match8 = *bond8_match;
-    // the middle point of the triangle should be the same as the start of the
+    // the start of the quadrilateral should be the same as the start of the
     // line
-    Point2D midtri(std::stod(match7[3]), std::stod(match7[4]));
+    Point2D startquad(std::stod(match72[1]), std::stod(match72[2]));
     Point2D startline(std::stod(match8[1]), std::stod(match8[2]));
-    CHECK_THAT((midtri - startline).length(),
+    CHECK_THAT((startquad - startline).length(),
                Catch::Matchers::WithinAbs(0.0, 0.1));
     check_file_hash(nameBase + ".svg");
   }
@@ -10054,13 +10061,19 @@ TEST_CASE("Github 7739 - Bad multi-coloured wedge") {
     std::ofstream outs(fileStem + "2.svg");
     outs << text;
     outs.flush();
+    // bond-3 is now a quadrilateral rather than 2 triangles.
     std::regex bond3(
-        "<path class='bond-3 atom-4 atom-3' .*style='fill:#000000;"
+        "<path class='bond-3 atom-4 atom-3' d='"
+        "M \\d+\\.\\d+,\\d+\\.\\d+ "
+        "L \\d+\\.\\d+,\\d+\\.\\d+ "
+        "L \\d+\\.\\d+,\\d+\\.\\d+ "
+        "L \\d+\\.\\d+,\\d+\\.\\d+ Z'"
+        " style='fill:#000000;"
         "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
     size_t nOccurrences = std::distance(
         std::sregex_token_iterator(text.begin(), text.end(), bond3),
         std::sregex_token_iterator());
-    CHECK(nOccurrences == 2);
+    CHECK(nOccurrences == 1);
     check_file_hash(fileStem + "2.svg");
   }
 
