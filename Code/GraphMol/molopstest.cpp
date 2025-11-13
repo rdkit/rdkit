@@ -4649,7 +4649,7 @@ void testSFNetIssue3549146() {
     m->addBond(1, 3, Bond::SINGLE);
     TEST_ASSERT((m->getRingInfo()->isInitialized()));
     m->addBond(0, 2, Bond::SINGLE);
-    TEST_ASSERT(!(m->getRingInfo()->isInitialized()));
+    TEST_ASSERT((m->getRingInfo()->isInitialized()));
 
     delete m;
   }

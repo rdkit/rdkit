@@ -1747,28 +1747,11 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     throw MolPicklerException("Bad pickle format: BEGINBOND tag not found.");
   }
 
-  // Save existing RingInfo before adding bonds, because addBond() may reset it
-  // when it detects ring closures. We'll restore it after bonds are added.
-  RingInfo savedCompatRingInfo;
-  bool hadRingInfo = false;
-  if (mol->getRingInfo()->isInitialized()) {
-    savedCompatRingInfo = *mol->getRingInfo();
-    hadRingInfo = true;
-  }
-
   for (int i = 0; i < numBonds; i++) {
     Bond *bond = _addBondFromPickle<T>(ss, mol, version, directMap);
     if (!directMap) {
       mol->setBondBookmark(bond, i);
     }
-  }
-
-  // Restore RingInfo after bonds are added
-  if (hadRingInfo) {
-    *mol->getRingInfo() = savedCompatRingInfo;
-    // Also need to sync back to internal
-    mol->asRDMol().markRingInfoAsCompatModified();
-    (void)mol->asRDMol().getRingInfo();  // Trigger sync
   }
 
   // -------------------
@@ -2082,7 +2065,7 @@ void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
   if (propFlags & (1 << 5)) {
     streamRead(ss, tmpChar, version);
   } else {
-    tmpChar = 0;
+    tmpChar = AtomData::unsetValenceVal;
   }
   AtomData &atomData = atom->getDataRDMol().getAtom(atom->getIdx());
   atomData.explicitValence = tmpChar;
@@ -2090,7 +2073,7 @@ void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
   if (propFlags & (1 << 6)) {
     streamRead(ss, tmpChar, version);
   } else {
-    tmpChar = 0;
+    tmpChar = AtomData::unsetValenceVal;
   }
   atomData.implicitValence = tmpChar;
   if (propFlags & (1 << 7)) {

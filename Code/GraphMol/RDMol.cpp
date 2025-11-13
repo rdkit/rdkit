@@ -2638,16 +2638,11 @@ BondData& RDMol::addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx, BondEnums::
 
   auto *compat = getCompatibilityDataIfPresent();
 
-  // if both atoms have a degree>1, reset our ring info structure,
-  // because there's a non-trivial chance that it's now wrong.
-  if (getRingInfo().isInitialized() && getAtomDegree(beginAtomIdx) > 1 &&
-      getAtomDegree(endAtomIdx) > 1) {
-    ringInfo.reset();
-    if (compat != nullptr) {
-      compat->ringInfo->reset();
-      compat->ringInfoSyncStatus.store(CompatSyncStatus::inSync, std::memory_order_relaxed);
-    }
-  }
+  // NOTE: This diverges from reference, but we decided this is the most
+  // straightforward way to avoid other problems when unpickling atoms.
+  // // reset property cache
+  // getAtom(beginAtomIdx).clearPropertyCache();
+  // getAtom(endAtomIdx).clearPropertyCache();
 
   // Handle compat
   if (compat != nullptr) {

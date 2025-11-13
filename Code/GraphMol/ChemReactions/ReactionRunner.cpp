@@ -1546,7 +1546,7 @@ generateOneProductSet(const ChemicalReaction &rxn,
     if (!(*pTemplIt)->getStereoGroups().empty()) {
       copyTemplateStereoGroupsToMol(**pTemplIt, product);
     }
-
+    product->updatePropertyCache(false);
     res[prodId] = product;
     ++prodId;
   }
