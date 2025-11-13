@@ -1,4 +1,4 @@
-aaGetting Started with the RDKit in Python
+Getting Started with the RDKit in Python
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Important note
