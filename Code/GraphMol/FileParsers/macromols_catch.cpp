@@ -179,7 +179,7 @@ TEST_CASE("scsiTests", "scsiTests") {
   SECTION("basics") {
     std::list<ScsiMolTest::ScsiTest> scsiTests{
         ScsiMolTest::ScsiTest("ValenceErrorScsr.mol", true,
-                              SCSRBaseHbondOptions::Auto, 32, 32, 6, 29, 29, 3),
+                              SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
         ScsiMolTest::ScsiTest("ValenceErrorScsr2.mol", true,
                               SCSRBaseHbondOptions::Auto, 28, 28, 6, 25, 25, 3),
 
