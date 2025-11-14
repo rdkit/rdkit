@@ -147,10 +147,10 @@ void parseMCSParametersJSON(const char *json, MCSParameters *params) {
 MCSResult findMCS(const std::vector<ROMOL_SPTR> &mols,
                   const MCSParameters *params) {
   MCSParameters p;
-  if (nullptr == params) {
-    params = &p;
+  if (nullptr != params) {
+    p = *params;
   }
-  RDKit::FMCS::MaximumCommonSubgraph fmcs(params);
+  RDKit::FMCS::MaximumCommonSubgraph fmcs(&p);
   return fmcs.find(mols);
 }
 
@@ -193,6 +193,18 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR> &mols, bool maximizeBonds,
   ps.BondCompareParameters.MatchFusedRingsStrict =
       (ringComp == StrictRingFusion);
   return findMCS(mols, &ps);
+}
+
+void twoMolMCSS(
+    const ROMol &mol1, const ROMol &mol2,
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> &maxCliques,
+    bool uniquify, const MCSParameters *params) {
+  MCSParameters p;
+  if (nullptr != params) {
+    p = *params;
+  }
+  FMCS::MaximumCommonSubgraph fmcs(&p);
+  fmcs.twoMolMCSS(mol1, mol2, uniquify, maxCliques);
 }
 
 bool MCSProgressCallbackTimeout(const MCSProgressData &,

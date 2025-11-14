@@ -327,6 +327,10 @@ class PyMCSParameters : public boost::noncopyable {
   void setTimeout(unsigned int value) { p->Timeout = value; }
   bool getVerbose() const { return p->Verbose; }
   void setVerbose(bool value) { p->Verbose = value; }
+  bool getUseCliqueDection() const { return p->UseCliqueDetection; }
+  void setUseCliqueDetection(bool value) { p->UseCliqueDetection = value; }
+  void setMinMCSSSize(unsigned int value) { p->MinMCSSSize = value; }
+  unsigned int getMinMCSSSize() { return p->MinMCSSSize; }
   const MCSAtomCompareParameters &getAtomCompareParameters() const {
     return p->AtomCompareParameters;
   }
@@ -581,6 +585,7 @@ class PyMCSParameters : public boost::noncopyable {
 
 MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
                           double threshold, unsigned int timeout, bool verbose,
+                          bool useCliqueDetection, unsigned int minMCSSSize,
                           bool matchValences, bool ringMatchesRingOnly,
                           bool completeRingsOnly, bool matchChiralTag,
                           AtomComparator atomComp, BondComparator bondComp,
@@ -599,6 +604,8 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
   p.MaximizeBonds = maximizeBonds;
   p.Timeout = timeout;
   p.Verbose = verbose;
+  p.UseCliqueDetection = useCliqueDetection;
+  p.MinMCSSSize = minMCSSSize;
   p.InitialSeed = seedSmarts;
   p.AtomCompareParameters.MatchValences = matchValences;
   p.AtomCompareParameters.MatchChiralTag = matchChiralTag;
@@ -637,6 +644,33 @@ MCSResult *FindMCSWrapper2(python::object mols, PyMCSParameters &pyMcsParams) {
   }
   return res;
 }
+
+inline PyObject *convertMaxClique(
+    const std::vector<std::pair<unsigned int, unsigned int>> &maxClique) {
+  PyObject *res = PyTuple_New(maxClique.size());
+  std::for_each(maxClique.begin(), maxClique.end(), [res](const auto &pair) {
+    PyTuple_SetItem(res, pair.first, PyInt_FromLong(pair.second));
+  });
+  return res;
+}
+python::list TwoMolMCSSWrapper(const ROMol &mol1, const ROMol &mol2,
+                               bool uniquify, PyMCSParameters &pyMcsParams) {
+  std::vector<std::vector<std::pair<unsigned int, unsigned int>>> maxCliques;
+  {
+    NOGIL gil;
+    twoMolMCSS(mol1, mol2, maxCliques, uniquify, pyMcsParams.get());
+  }
+  python::list pyCliques;
+  for (const auto &clique : maxCliques) {
+    python::list pyC;
+    for (const auto &pair : clique) {
+      pyC.append(python::make_tuple(pair.first, pair.second));
+    }
+    pyCliques.append(pyC);
+  }
+  return pyCliques;
+}
+
 }  // namespace RDKit
 namespace {
 python::object degenerateSmartsQueryMolDictHelper(
@@ -693,7 +727,9 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       "FindMCS", RDKit::FindMCSWrapper,
       (python::arg("mols"), python::arg("maximizeBonds") = true,
        python::arg("threshold") = 1.0, python::arg("timeout") = 3600,
-       python::arg("verbose") = false, python::arg("matchValences") = false,
+       python::arg("verbose") = false,
+       python::arg("UseCliqueDetection") = false,
+       python::arg("minMCSSSize") = 1, python::arg("matchValences") = false,
        python::arg("ringMatchesRingOnly") = false,
        python::arg("completeRingsOnly") = false,
        python::arg("matchChiralTag") = false,
@@ -718,6 +754,10 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                     "timeout (in seconds) for the calculation")
       .add_property("Verbose", &RDKit::PyMCSParameters::getVerbose,
                     &RDKit::PyMCSParameters::setVerbose, "toggles verbose mode")
+      .add_property(
+          "UseCliqueDetection", &RDKit::PyMCSParameters::getUseCliqueDection,
+          &RDKit::PyMCSParameters::setUseCliqueDetection,
+          "toggles UseCliqueDetection mode.  Two molecule cases only.")
       .add_property("AtomCompareParameters",
                     python::make_function(
                         &RDKit::PyMCSParameters::getAtomCompareParameters,
@@ -763,8 +803,12 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       .add_property("StoreAll", &RDKit::PyMCSParameters::getStoreAll,
                     &RDKit::PyMCSParameters::setStoreAll,
                     "toggles storage of degenerate MCSs")
+      .add_property("MinMCSSSize", &RDKit::PyMCSParameters::getMinMCSSSize,
+                    &RDKit::PyMCSParameters::setMinMCSSSize,
+                    "Minimum number of atoms in MCSS.  Only relevant when"
+                    " using UseCliqueDetection.")
       .def("__setattr__", &safeSetattr);
-      
+
 
   python::class_<RDKit::MCSAtomCompareParameters, boost::noncopyable>(
       "MCSAtomCompareParameters",
@@ -910,4 +954,11 @@ BOOST_PYTHON_MODULE(rdFMCS) {
               (python::arg("mols"), python::arg("parameters")),
               python::return_value_policy<python::manage_new_object>(),
               docString.c_str());
+
+  python::def("TwoMolMCSS", RDKit::TwoMolMCSSWrapper,
+              (python::arg("mol1"), python::arg("mol2"),
+               python::arg("uniquify"), python::arg("parameters")),
+              "Return one or more sets of atoms in MCSSs for the two molecules."
+              "  If uniquify is True, symmetrically equivalent solutions"
+              " involving the same atoms will be reduced to a single example.");
 }
