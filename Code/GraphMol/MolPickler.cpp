@@ -609,9 +609,11 @@ void _unpickleAtomPropertiesFromMol(std::istream &ss, RDMol &mol,
 // New implementation for pickling bond properties using PropIterator
 bool _pickleBondPropertiesFromMol(std::ostream &ss, const RDMol &mol,
                                   uint32_t bondIdx, unsigned int pickleFlags) {
+  const static PropTracker bprops;
+
   return _picklePropertiesFromIterator<std::uint16_t>(
       ss, mol, RDMol::Scope::BOND, bondIdx, pickleFlags,
-      {}, MolPickler::getCustomPropHandlers());
+      bprops.ignoreBondProps, MolPickler::getCustomPropHandlers());
 
   // TODO: Handle explicit bond properties if needed
   // (the old code also called pickleExplicitProperties)
