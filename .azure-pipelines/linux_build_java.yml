@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build -c conda-forge --override-channels  cmake \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
-        swig=4.2
+        swig=4.2 \
         ninja
   displayName: Setup build environment
 - bash: |
@@ -19,6 +19,7 @@ steps:
     conda config --env --set channel_priority strict
     mkdir build && cd build && \
     cmake .. \
+    -G Ninja \
     -DSWIG_EXECUTABLE=${CONDA_PREFIX}/bin/swig \
     -DCMAKE_BUILD_TYPE=Release \
     -DRDK_INSTALL_INTREE=ON \
@@ -37,14 +38,13 @@ steps:
     -DRDK_BUILD_SWIG_WRAPPERS=ON \
     -DRDK_SWIG_STATIC=ON \
     -DRDK_BUILD_THREADSAFE_SSS=ON \
-    -DRDK_TEST_MULTITHREADED=ON \
-    -DCMAKE_GENERATOR=Ninja
+    -DRDK_TEST_MULTITHREADED=ON
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     cd build
-    ninja -j $( $(number_of_cores) )
+    ninja install
   displayName: Build
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
