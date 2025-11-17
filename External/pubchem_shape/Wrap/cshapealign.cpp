@@ -76,6 +76,13 @@ python::tuple alignShapes(const ShapeInput &refShape, ShapeInput &fitShape,
   }
   return python::make_tuple(nbr_st, nbr_ct, pyMatrix);
 }
+python::tuple fixedSimilarityScore(const RDKit::ROMol &mol1, RDKit::ROMol &mol2,
+                                   int mol1ConfId, int mol2ConfId,
+                                   bool useColors) {
+  auto [nbr_st, nbr_ct] =
+      FixedSimilarityScore(mol1, mol2, mol1ConfId, mol2ConfId, useColors);
+  return python::make_tuple(nbr_st, nbr_ct);
+}
 void transformConformer(const python::list &pyFinalTrans,
                         const python::list &pyMatrix, ShapeInput probeShape,
                         RDKit::Conformer &probeConf) {
@@ -237,7 +244,8 @@ useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
 opt_param : float, optional
     Balance of shape and color for optimization.
-    0 is only color, 0.5 is equal weight, and 1.0 is only shape
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape.
+    Default is 1.0.
 max_preiters : int, optional
     In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
@@ -249,7 +257,7 @@ Returns
 -------
  2-tuple of doubles
     The results are (shape_score, color_score)
-    The color_score is zero if useColors is False)DOC");
+    The color_score is zero if opt_param is 1.0.)DOC");
 
   python::def(
       "AlignMol", &helpers::alignMol3,
@@ -275,7 +283,8 @@ probeConfId : int, optional
     Probe conformer ID (default is -1)
 opt_param : float, optional
     Balance of shape and color for optimization.
-    0 is only color, 0.5 is equal weight, and 1.0 is only shape
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape.
+    Default is 1.0.
 max_preiters : int, optional
     In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
@@ -287,7 +296,7 @@ Returns
 -------
  2-tuple of doubles
     The results are (shape_score, color_score)
-    The color_score is zero if useColors is False)DOC");
+    The color_score is zero if opt_param is 1.0.)DOC");
 
   python::def(
       "AlignMol", &helpers::alignMol2,
@@ -310,7 +319,8 @@ useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
 opt_param : float, optional
     Balance of shape and color for optimization.
-    0 is only color, 0.5 is equal weight, and 1.0 is only shape
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape.
+    Default is 1.0.
 max_preiters : int, optional
     In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
@@ -325,7 +335,7 @@ Returns
 -------
  2-tuple of doubles
     The results are (shape_score, color_score)
-    The color_score is zero if useColors is False)DOC");
+    The color_score is zero if opt_param is 1.0.)DOC");
 
   python::def(
       "AlignShapes", &helpers::alignShapes,
@@ -405,6 +415,32 @@ Returns
                     "Translation of centre of shape coordinates to origin.")
       .def_readwrite("sov", &ShapeInput::sov)
       .def_readwrite("sof", &ShapeInput::sof);
+
+  python::def(
+      "FixedSimilarityScore", &helpers::fixedSimilarityScore,
+      (python::arg("mol1"), python::arg("mol2"), python::arg("mol1ConfId") = -1,
+       python::arg("mol2ConfId") = -1, python::arg("useColors") = true),
+      R"DOC(Calculate the scores between 2 molecules without moving them.
+
+Parameters
+----------
+mol1 : RDKit.ROMol
+    First molecule
+mol2 : RDKit.ROMol
+    Second molecule
+mol1ConfId : int, optional
+    First molecule conformer ID (default is -1)
+mol2ConfId : int, optional
+    Second conformer ID (default is -1)
+useColors : bool, optional
+    Whether to calculate the color score.
+
+
+Returns
+-------
+ 2-tuple of doubles
+    The results are (shape_score, color_score)
+    The color_score is zero if useColors is False)DOC");
 }
 
 BOOST_PYTHON_MODULE(rdShapeAlign) { wrap_pubchemshape(); }

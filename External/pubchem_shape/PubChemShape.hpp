@@ -88,6 +88,8 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInputOptions {
       customFeatures;  // use these feature definitions instead of the defaults.
                        // Each feature is defined by a tuple of:
                        // (feature type, position, radius)
+  bool normalize{true};  // Whether to normalise the shape by putting into
+                         // its inertial frame.
 };
 
 //! Prepare the input for the shape comparison
@@ -228,5 +230,22 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     int refConfId = -1, int fitConfId = -1, bool useColors = true,
     double opt_param = 1.0, unsigned int max_preiters = 10u,
     unsigned int max_postiters = 30u);
+
+//! Calculate the scores between 2 molecules without moving them.
+/*!
+  \param mol1           the first molecule
+  \param mol2           the second molecule
+  \param mol1ConfId     (optional) the conformer to use for the first
+                        molecule
+  \param mol2ConfId     (optional) the conformer to use for the second
+                        molecule
+  \param useColors     (optional) whether to return a color score
+
+  \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
+  if useColors is false)
+*/
+RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> FixedSimilarityScore(
+    const RDKit::ROMol &mol1, RDKit::ROMol &mol2, int mol1ConfId = -1,
+    int mol2ConfId = -1, bool useColors = true);
 
 #endif

@@ -117,6 +117,12 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(tpl[0], 0.997, places=3)
     self.assertAlmostEqual(tpl[1], 0.978, places=3)
 
+  def test9_FixedScore(self):
+    # Just to make sure it's there and returns a value.
+    tpl = rdShapeAlign.FixedSimilarityScore(self.ref, self.ref, useColors=True)
+    self.assertAlmostEqual(tpl[0], 1.0, places=3)
+    self.assertAlmostEqual(tpl[1], 1.0, places=3)
+
 
 if __name__ == '__main__':
   unittest.main()

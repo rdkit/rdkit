@@ -315,7 +315,9 @@ void extractAtomCoords(const Conformer &conformer, const unsigned int nAtoms,
     unsigned int Z = conformer.getOwningMol().getAtomWithIdx(i)->getAtomicNum();
     if (Z > 1 || (shapeOpts.includeDummies && Z == 0)) {
       RDGeom::Point3D pos = conformer.getAtomPos(i);
-      pos -= ave;
+      if (shapeOpts.normalize) {
+        pos -= ave;
+      }
       coords[j * 3] = pos.x;
       coords[(j * 3) + 1] = pos.y;
       coords[(j * 3) + 2] = pos.z;
@@ -352,7 +354,9 @@ void extractFeatureCoords(
     }
     if (nSel == feature_idx_type[i].first.size()) {
       floc /= nSel;
-      floc -= ave;
+      if (shapeOpts.normalize) {
+        floc -= ave;
+      }
       DEBUG_MSG("feature type " << feature_idx_type[i].second << " (" << floc
                                 << ")");
 
@@ -610,4 +614,41 @@ std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
   shapeOpts.useColors = useColors;
   return AlignMolecule(ref, fit, matrix, shapeOpts, shapeOpts, refConfId,
                        fitConfId, opt_param, max_preiters, max_postiters);
+}
+
+std::pair<double, double> FixedSimilarityScore(const RDKit::ROMol &mol1,
+                                               RDKit::ROMol &mol2,
+                                               int mol1ConfId, int mol2ConfId,
+                                               bool useColors) {
+  ShapeInputOptions shapeOpts;
+  shapeOpts.useColors = useColors;
+  shapeOpts.normalize = false;
+  auto shape1 = PrepareConformer(mol1, mol1ConfId, shapeOpts);
+  auto shape2 = PrepareConformer(mol2, mol2ConfId, shapeOpts);
+
+  double shapeOverlap = Align3D::ComputeShapeOverlap(
+      shape1.coord.data(), shape1.alpha_vector, shape1.volumeAtomIndexVector,
+      shape2.coord.data(), shape2.alpha_vector, shape2.volumeAtomIndexVector);
+
+  double shape = shapeOverlap / (shape1.sov + shape2.sov - shapeOverlap);
+
+  std::set<unsigned int> jointColorAtomTypeSet;
+  Align3D::getJointColorTypeSet(
+      shape1.atom_type_vector.data(), shape1.atom_type_vector.size(),
+      shape2.atom_type_vector.data(), shape2.atom_type_vector.size(),
+      jointColorAtomTypeSet);
+  // Take copy of the color atom mappings so as not to alter the input shape
+  // which might be re-used.
+  auto shape1MapCp = shape1.colorAtomType2IndexVectorMap;
+  Align3D::restrictColorAtomType2IndexVectorMap(shape1MapCp,
+                                                jointColorAtomTypeSet);
+  auto shape2MapCp = shape2.colorAtomType2IndexVectorMap;
+  Align3D::restrictColorAtomType2IndexVectorMap(shape2MapCp,
+                                                jointColorAtomTypeSet);
+  double featureOverlap = Align3D::ComputeFeatureOverlap(
+      shape1.coord.data(), shape1.alpha_vector, shape1MapCp,
+      shape2.coord.data(), shape2.alpha_vector, shape2MapCp, nullptr);
+  double color = featureOverlap / (shape1.sof + shape2.sof - featureOverlap);
+
+  return std::make_pair(shape, color);
 }
