@@ -426,7 +426,6 @@ namespace Chirality {
 
 std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     const ROMol &mol, const Bond *bond, const Conformer *conf,
-    double pseudo3DOffset = 0.1, double volumeTolerance = 0.01,
     bool allowTwoHs = false) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(conf, "no conformer");
@@ -435,6 +434,16 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
                "bad bond direction");
   constexpr double coordZeroTol = 1e-4;
   constexpr double zeroTol = 1e-3;
+  constexpr double tShapeTol =
+      0.00031;  // used to recognize T-shaped arrangements
+  // corresponds to an angle between the two vectors of just under 178 degrees
+  // degree
+
+  constexpr double pseudo3DOffset = 0.1;  // z-displacement for wedged bonds
+
+  constexpr double volumeTolerance =
+      0.00174;  // used to recognize zero chiral volume
+  // This is what we get for a T-shaped arrangement with just over 178 degrees
 
   // NOTE that according to the CT file spec, wedging assigns chirality
   // to the atom at the point of the wedge, (atom 1 in the bond).
@@ -757,7 +766,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     auto crossp1 = bv1.crossProduct(bv2);
     // catch linear arrangements
     if (nNbrs == 3) {
-      if (crossp1.lengthSq() < 5 * zeroTol) {
+      if (crossp1.lengthSq() < tShapeTol) {
         // in a linear relationship with three neighbors we assume that the
         // two perpendicular bonds are wedged in the other direction from the
         // one that was provided.
@@ -3781,8 +3790,8 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
           atom->updatePropertyCache(false);
         }
         Atom::ChiralType code =
-            Chirality::atomChiralTypeFromBondDirPseudo3D(mol, bond, &conf, 0.1,
-                                                         0.01, allowTwoHs)
+            Chirality::atomChiralTypeFromBondDirPseudo3D(mol, bond, &conf,
+                                                         allowTwoHs)
                 .value_or(Atom::ChiralType::CHI_UNSPECIFIED);
         if (code != Atom::ChiralType::CHI_UNSPECIFIED) {
           atomsSet.set(atom->getIdx());
