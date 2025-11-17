@@ -139,6 +139,29 @@ inline void unpickleExplicitProperties(std::istream &ss, RDProps &props,
   }
 }
 
+// Version that works with mol and property index
+template <typename SAVEAS, typename STOREAS, typename EXPLICIT>
+inline void unpickleExplicitPropertiesFromMol(std::istream &ss, RDMol &mol,
+                                              RDMol::Scope scope, uint32_t index,
+                                              int version,
+                                              const EXPLICIT &explicitProps) {
+  if (version >= 14000) {
+    std::uint8_t bprops;
+    streamRead(ss, bprops, version);
+    for (const auto &pr : explicitProps) {
+      if (bprops & pr.second) {
+        SAVEAS bv;
+        streamRead(ss, bv, version);
+        if (scope == RDMol::Scope::ATOM) {
+          mol.setSingleAtomProp(PropToken(pr.first), index, static_cast<STOREAS>(bv));
+        } else if (scope == RDMol::Scope::BOND) {
+          mol.setSingleBondProp(PropToken(pr.first), index, static_cast<STOREAS>(bv));
+        }
+      }
+    }
+  }
+}
+
 template <typename SAVEAS, typename EXPLICIT>
 inline bool pickleExplicitProperties(std::ostream &ss, const RDProps &props,
                                      const EXPLICIT &explicitProps) {
@@ -147,6 +170,41 @@ inline bool pickleExplicitProperties(std::ostream &ss, const RDProps &props,
   SAVEAS bv;
   for (const auto &pr : explicitProps) {
     if (props.getPropIfPresent(pr.first, bv)) {
+      bprops |= pr.second;
+      ps.push_back(bv);
+    }
+  }
+
+  streamWrite(ss, bprops);
+  for (auto v : ps) {
+    streamWrite(ss, v);
+  }
+  return !ps.empty();
+}
+
+// Version that works with mol and property index
+template <typename SAVEAS, typename EXPLICIT>
+inline bool pickleExplicitPropertiesFromMol(std::ostream &ss, const RDMol &mol,
+                                            RDMol::Scope scope, uint32_t index,
+                                            const EXPLICIT &explicitProps) {
+  std::uint8_t bprops = 0;
+  std::vector<SAVEAS> ps;
+  SAVEAS bv;
+  for (const auto &pr : explicitProps) {
+    bool hasProp = false;
+    try {
+      if (scope == RDMol::Scope::ATOM) {
+        hasProp = mol.getAtomPropIfPresent(PropToken(pr.first), index, bv);
+      } else if (scope == RDMol::Scope::BOND) {
+        hasProp = mol.getBondPropIfPresent(PropToken(pr.first), index, bv);
+      } else {
+        // Error if scope isn't atom or bond
+        throw MolPicklerException("Invalid scope for property pickling");
+      }
+    } catch (...) {
+      continue;
+    }
+    if (hasProp) {
       bprops |= pr.second;
       ps.push_back(bv);
     }
@@ -585,24 +643,32 @@ bool _pickleAtomPropertiesFromMol(std::ostream &ss, const RDMol &mol,
     }
   }
 
-  return _picklePropertiesFromIterator<std::uint16_t>(
+  bool res = _picklePropertiesFromIterator<std::uint16_t>(
       ss, mol, RDMol::Scope::ATOM, atomIdx, pickleFlags,
       ignoreProps, MolPickler::getCustomPropHandlers());
 
-  // TODO: Handle explicit atom properties if needed
-  // (the old code also called pickleExplicitProperties)
+  // Handle explicit atom properties (compressed as bitflags)
+  res |= pickleExplicitPropertiesFromMol<std::int16_t>(
+      ss, mol, RDMol::Scope::ATOM, atomIdx, aprops.explicitAtomProps);
+
+  return res;
 }
 
 
 // New implementation for unpickling atom properties
 void _unpickleAtomPropertiesFromMol(std::istream &ss, RDMol &mol,
                                    uint32_t atomIdx, int version) {
+  const static PropTracker aprops;
+
   if (version >= 14000) {
     unpicklePropertiesFromIterator<std::uint16_t>(ss, mol, RDMol::Scope::ATOM, atomIdx);
   } else {
     unpicklePropertiesFromIterator<unsigned int>(ss, mol, RDMol::Scope::ATOM, atomIdx);
   }
-  // TODO: Handle explicit atom properties if needed
+
+  // Handle explicit atom properties (compressed as bitflags)
+  unpickleExplicitPropertiesFromMol<std::int16_t, int>(
+      ss, mol, RDMol::Scope::ATOM, atomIdx, version, aprops.explicitAtomProps);
 }
 
 
@@ -611,24 +677,32 @@ bool _pickleBondPropertiesFromMol(std::ostream &ss, const RDMol &mol,
                                   uint32_t bondIdx, unsigned int pickleFlags) {
   const static PropTracker bprops;
 
-  return _picklePropertiesFromIterator<std::uint16_t>(
+  bool res = _picklePropertiesFromIterator<std::uint16_t>(
       ss, mol, RDMol::Scope::BOND, bondIdx, pickleFlags,
       bprops.ignoreBondProps, MolPickler::getCustomPropHandlers());
 
-  // TODO: Handle explicit bond properties if needed
-  // (the old code also called pickleExplicitProperties)
+  // Handle explicit bond properties (compressed as bitflags)
+  res |= pickleExplicitPropertiesFromMol<std::int8_t>(
+      ss, mol, RDMol::Scope::BOND, bondIdx, bprops.explicitBondProps);
+
+  return res;
 }
 
 
 // New implementation for unpickling bond properties
 void _unpickleBondPropertiesFromMol(std::istream &ss, RDMol &mol,
                                    uint32_t bondIdx, int version) {
+  const static PropTracker bprops;
+
   if (version >= 14000) {
     unpicklePropertiesFromIterator<std::uint16_t>(ss, mol, RDMol::Scope::BOND, bondIdx);
   } else {
     unpicklePropertiesFromIterator<unsigned int>(ss, mol, RDMol::Scope::BOND, bondIdx);
   }
-  // TODO: Handle explicit bond properties if needed
+
+  // Handle explicit bond properties (compressed as bitflags)
+  unpickleExplicitPropertiesFromMol<std::int8_t, unsigned int>(
+      ss, mol, RDMol::Scope::BOND, bondIdx, version, bprops.explicitBondProps);
 }
 
 
