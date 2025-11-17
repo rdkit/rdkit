@@ -114,6 +114,10 @@ namespace {
     atom_expr->expandQuery(point_query->getQuery()->copy(), Queries::COMPOSITE_AND, true);
     if (atom_expr->getChiralTag() == Atom::CHI_UNSPECIFIED) {
       atom_expr->setChiralTag(point_query->getChiralTag());
+      int perm;
+      if (point_query->getPropIfPresent(common_properties::_chiralPermutation, perm)) {
+        atom_expr->setProp(common_properties::_chiralPermutation, perm);
+      }
     }
     if (point_query->getFlags() & SMARTS_H_MASK) {
       if (!(atom_expr->getFlags() & SMARTS_H_MASK)) {
@@ -670,19 +674,19 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   187,   187,   190,   194,   197,   200,   204,   208,   211,
-     217,   222,   225,   233,   234,   235,   236,   244,   253,   267,
-     288,   294,   318,   339,   356,   379,   393,   394,   395,   399,
-     422,   426,   431,   437,   446,   453,   462,   471,   485,   492,
-     500,   507,   512,   517,   520,   526,   527,   531,   548,   572,
-     573,   578,   579,   584,   585,   590,   591,   592,   593,   594,
-     595,   596,   600,   604,   608,   612,   616,   620,   627,   634,
-     642,   652,   662,   671,   679,   686,   692,   698,   705,   712,
-     713,   720,   721,   725,   729,   733,   737,   741,   746,   754,
-     766,   771,   776,   781,   786,   791,   794,   795,   803,   804,
-     810,   816,   822,   827,   834,   835,   836,   837,   838,   839,
-     843,   844,   845,   846,   847,   848,   849,   854,   855,   859,
-     860,   869,   870,   874
+       0,   190,   190,   193,   197,   200,   203,   207,   211,   214,
+     220,   225,   228,   236,   237,   238,   239,   247,   256,   270,
+     291,   297,   321,   342,   359,   382,   396,   397,   398,   402,
+     425,   429,   434,   440,   449,   456,   465,   474,   488,   495,
+     503,   510,   515,   520,   523,   529,   530,   534,   551,   575,
+     576,   581,   582,   587,   588,   593,   594,   595,   596,   597,
+     598,   599,   603,   607,   611,   615,   619,   623,   630,   637,
+     645,   655,   665,   674,   682,   689,   695,   701,   708,   722,
+     723,   730,   731,   735,   739,   743,   747,   751,   756,   764,
+     776,   781,   786,   791,   796,   801,   804,   805,   813,   814,
+     820,   826,   832,   837,   844,   845,   846,   847,   848,   849,
+     853,   854,   855,   856,   857,   858,   859,   864,   865,   869,
+     870,   879,   880,   884
 };
 #endif
 
@@ -2200,6 +2204,13 @@ yyreduce:
 
   case 78: /* atom_query: CHI_CLASS_TOKEN number  */
                          {
+  if((yyvsp[0].ival)==0){
+    yyerror(input,molList,branchPoints,scanner,start_token, current_token_position,
+            "chiral permutation cannot be zero");
+    yyErrorCleanup(molList);
+    YYABORT;
+  }
+
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
   newQ->setChiralTag((yyvsp[-1].chiraltype));
