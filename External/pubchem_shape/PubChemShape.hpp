@@ -150,7 +150,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT void TransformConformer(
                                   translation to the final coordinates
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-  if useColors is false)
+          if opt_param is 1.0.)
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const ShapeInput &refShape, RDKit::ROMol &fit, std::vector<float> &matrix,
@@ -172,7 +172,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
                                   translation to the final coordinates
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-  if useColors is false)
+          if opt_param is 1.0.)
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const ShapeInput &refShape, RDKit::ROMol &fit, std::vector<float> &matrix,
@@ -197,7 +197,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
                        iterations
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-  if useColors is false)
+          if opt_param is 1.0.)
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const RDKit::ROMol &ref, RDKit::ROMol &fit, std::vector<float> &matrix,
@@ -223,7 +223,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
                        iterations
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-  if useColors is false)
+          if opt_param is 1.0.)
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const RDKit::ROMol &ref, RDKit::ROMol &fit, std::vector<float> &matrix,
@@ -242,7 +242,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
   \param useColors     (optional) whether to return a color score
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-  if useColors is false)
+          if useColors is false)
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> FixedSimilarityScore(
     const RDKit::ROMol &mol1, RDKit::ROMol &mol2, int mol1ConfId = -1,
