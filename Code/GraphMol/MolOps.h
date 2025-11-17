@@ -1098,7 +1098,8 @@ RDKIT_GRAPHMOL_EXPORT void assignStereochemistryFrom3D(
                               stereochemistry will be replaced
 */
 RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromBondDirs(
-    ROMol &mol, int confId = -1, bool replaceExistingTags = true);
+    ROMol &mol, int confId = -1, bool replaceExistingTags = true,
+    bool allowTwoHs = false);
 
 //! \deprecated: this function will be removed in a future release. Use
 //! setDoubleBondNeighborDirections() instead

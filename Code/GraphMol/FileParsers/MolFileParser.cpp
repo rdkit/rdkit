@@ -3474,8 +3474,8 @@ void finishMolProcessing(
   if (chiralityPossible || conf.is3D()) {
     if (!conf.is3D()) {
       bool replaceExistingTags = true;
-      MolOps::assignChiralTypesFromBondDirs(*res, conf.getId(),
-                                            replaceExistingTags);
+      MolOps::assignChiralTypesFromBondDirs(
+          *res, conf.getId(), replaceExistingTags, params.allowTwoHs);
     } else {
       res->updatePropertyCache(false);
       MolOps::assignChiralTypesFrom3D(*res, conf.getId(), true);
