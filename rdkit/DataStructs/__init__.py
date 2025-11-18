@@ -53,7 +53,7 @@ def FoldToTargetDensity(fp, density=0.3, minLength=64):
   return fp
 
 def getNForFlatMatrix(matrix):
-  """Get n for a strict upper-triangular matrix matrix"""
+  """Get n for a strict upper- (or lower-) triangular matrix."""
   return (1 + math.isqrt(1 + 8 * len(matrix))) // 2
 
 def getElementFromFlatMatrix(matrix, i, j):
