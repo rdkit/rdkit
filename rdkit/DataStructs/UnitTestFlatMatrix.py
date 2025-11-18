@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2006-2025 Niels Maeder and other RDKit contributors
+#  Copyright (C) 2025 Niels Maeder and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -39,5 +39,3 @@ class TestCase(unittest.TestCase):
     self.assertEqual(getElementFromFlatMatrix(flat, 0, 0), 0.0)
 
 
-if __name__ == "__main__":  # pragma: nocover
-  unittest.main()
