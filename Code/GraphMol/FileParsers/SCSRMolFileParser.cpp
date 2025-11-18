@@ -86,27 +86,29 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
   }
   tempStr = FileParserUtils::getV3000Line(&inStream, line);
 
-  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A
+  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment FULLNAME=fullname
+  // CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx, COLLABORATOR=col,
+  // PROTECTION=prot
+
+  // other attributes are allowed.  We capture them and ignore them, except for
+  // writing them back out
+
   while (tempStr.substr(0, 8) == "TEMPLATE") {
     std::vector<std::string> tokens;
+    std::vector<std::string> subTokens;
     boost::algorithm::split(tokens, tempStr, boost::algorithm::is_space());
 
-    std::string natReplace = "";
-    if (tokens.size() == 4) {
-      if (tokens[3].size() < 12 || tokens[3].substr(0, 11) != "NATREPLACE=") {
-        std::ostringstream errout;
-        errout << "Bad NATREPLACE entry at line  " << line;
-        throw FileParseException(errout.str());
-      }
-      natReplace = tokens[3].substr(12);
-    } else if (tokens.size() != 3) {
+    if (tokens.size() < 3) {
       std::ostringstream errout;
-      errout << "Bad TEMPLATE at line  " << line;
+      errout << "Bad Template entry at line  " << line;
       throw FileParseException(errout.str());
     }
-    boost::algorithm::split(tokens, tokens[2],
+
+    // get the class and template names
+
+    boost::algorithm::split(subTokens, tokens[2],
                             boost::algorithm::is_any_of("/"));
-    if (tokens.size() < 3) {
+    if (subTokens.size() < 3) {
       std::ostringstream errout;
       errout << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line  "
              << line;
@@ -116,17 +118,30 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
     res->addTemplate(std::unique_ptr<ROMol>(new ROMol()));
     auto templateMol = (RWMol *)res->getTemplate(res->getTemplateCount() - 1);
 
-    templateMol->setProp(common_properties::natReplace, natReplace);
-    templateMol->setProp(common_properties::molAtomClass, tokens[0]);
+    templateMol->setProp(common_properties::molAtomClass, subTokens[0]);
 
     std::vector<std::string> templateNames;
-    for (unsigned int i = 1; i < tokens.size(); ++i) {
-      if (tokens[i] != "") {
-        templateNames.push_back(tokens[i]);
+
+    for (unsigned int i = 1; i < subTokens.size(); ++i) {
+      if (subTokens[i] != "") {
+        templateNames.push_back(subTokens[i]);
       }
     }
-
     templateMol->setProp(common_properties::templateNames, templateNames);
+
+    for (unsigned int i = 3; i < tokens.size(); ++i) {
+      boost::algorithm::split(subTokens, tokens[i],
+                              boost::algorithm::is_any_of("="));
+      if (subTokens.size() != 2) {
+        std::ostringstream errout;
+        errout
+            << "Attribute  string is not of the form \"AttrName=value\" at line  "
+            << line;
+        throw FileParseException(errout.str());
+      }
+      templateMol->setProp(subTokens[0], subTokens[1]);
+    }
+
     auto molComplete = false;
     Conformer *conf = nullptr;
     try {
@@ -864,7 +879,7 @@ class MolFromSCSRMolConverter {
       for (unsigned int templateIdx = 0;
            templateIdx < scsrMol->getTemplateCount(); ++templateIdx) {
         auto templateMol = scsrMol->getTemplate(templateIdx);
-        templateMol->updatePropertyCache();
+        templateMol->updatePropertyCache(false);
 
         if (templateMol->getProp<std::string>(
                 common_properties::molAtomClass) != "BASE") {
@@ -923,7 +938,9 @@ class MolFromSCSRMolConverter {
       } else {  // it is a macro atom - expand it
 
         unsigned int seqId = 0;
+        std::string seqName = "";
         atom->getPropIfPresent(common_properties::molAtomSeqId, seqId);
+        atom->getPropIfPresent(common_properties::molAtomSeqName, seqName);
 
         //  find the template that matches the class and label
 
@@ -999,6 +1016,9 @@ class MolFromSCSRMolConverter {
         if (seqId != 0) {
           sgroupName += "_" + std::to_string(seqId);
         }
+        if (seqName != "") {
+          sgroupName += "_" + seqName;
+        }
 
         auto coordOffset = (conf->getAtomPos(atomIdx) * maxSize) -
                            templateCentroids[templateIdx];
@@ -1048,6 +1068,9 @@ class MolFromSCSRMolConverter {
                     std::string sgroupName = dummyLabel;
                     if (seqId != 0) {
                       sgroupName += "_" + std::to_string(seqId);
+                    }
+                    if (seqName != "") {
+                      sgroupName += "_" + seqName;
                     }
                     sgroupName += "_" + attachPoint.id;
                     foundLgSgroup = true;

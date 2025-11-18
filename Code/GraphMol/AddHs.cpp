@@ -549,7 +549,11 @@ void addHs(RWMol &mol, const AddHsParameters &params,
   } else {
     onAtoms.set();
   }
+  std::vector<unsigned int> numExplicitHs(mol.getNumAtoms(), 0);
+  std::vector<unsigned int> numImplicitHs(mol.getNumAtoms(), 0);
   for (auto at : mol.atoms()) {
+    numExplicitHs[at->getIdx()] = at->getNumExplicitHs();
+    numImplicitHs[at->getIdx()] = at->getNumImplicitHs();
     if (onAtoms[at->getIdx()]) {
       if (params.skipQueries && isQueryAtom(mol, *at)) {
         onAtoms.set(at->getIdx(), 0);
@@ -586,7 +590,7 @@ void addHs(RWMol &mol, const AddHsParameters &params,
     unsigned int newIdx;
     newAt->clearComputedProps();
     // always convert explicit Hs
-    unsigned int onumexpl = newAt->getNumExplicitHs();
+    unsigned int onumexpl = numExplicitHs[aidx];
     for (unsigned int i = 0; i < onumexpl; i++) {
       newIdx = mol.addAtom(new Atom(1), false, true);
       mol.addBond(aidx, newIdx, Bond::SINGLE);
@@ -605,8 +609,7 @@ void addHs(RWMol &mol, const AddHsParameters &params,
 
     if (!params.explicitOnly) {
       // take care of implicits
-      for (unsigned int i = 0; i < mol.getAtomWithIdx(aidx)->getNumImplicitHs();
-           i++) {
+      for (unsigned int i = 0; i < numImplicitHs[aidx]; i++) {
         newIdx = mol.addAtom(new Atom(1), false, true);
         mol.addBond(aidx, newIdx, Bond::SINGLE);
         // set the isImplicit label so that we can strip these back

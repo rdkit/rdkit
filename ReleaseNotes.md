@@ -30,7 +30,9 @@ GitHub)
   indicated by the leading underscores) and shouldn't be used in client code,
   but if your code relies on its presence in molecules, you may need to check
   for it and add it yourself.
-
+- `RWMol::addBond()` no longer removes RingInfo from the molecule, but it does
+  clear the property cache of the begin and end atoms. This does not affect the
+  general rule that molecules should be sanitized after adding/removing bonds.
 
 ## New Features and Enhancements:
 
