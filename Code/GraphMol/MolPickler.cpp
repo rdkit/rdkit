@@ -643,6 +643,10 @@ bool _pickleAtomPropertiesFromMol(std::ostream &ss, const RDMol &mol,
     }
   }
 
+  if (!pickleFlags) {
+    return false;
+  }
+
   bool res = _picklePropertiesFromIterator<std::uint16_t>(
       ss, mol, RDMol::Scope::ATOM, atomIdx, pickleFlags,
       ignoreProps, MolPickler::getCustomPropHandlers());
@@ -676,6 +680,10 @@ void _unpickleAtomPropertiesFromMol(std::istream &ss, RDMol &mol,
 bool _pickleBondPropertiesFromMol(std::ostream &ss, const RDMol &mol,
                                   uint32_t bondIdx, unsigned int pickleFlags) {
   const static PropTracker bprops;
+
+  if (!pickleFlags) {
+    return false;
+  }
 
   bool res = _picklePropertiesFromIterator<std::uint16_t>(
       ss, mol, RDMol::Scope::BOND, bondIdx, pickleFlags,

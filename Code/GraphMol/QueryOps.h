@@ -1670,7 +1670,7 @@ class HasPropWithValueQuery<TargetPtr, std::string>
   }
 
   PairHolder getPair() const override {
-    return PairHolder(Dict::Pair(propname.getString(), val));
+    return PairHolder(Dict::Pair(propname.getString(), val.getString()));
   }
 
   double getTolerance() const override { return 0.0; }
