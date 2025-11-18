@@ -8631,7 +8631,7 @@ M  END
   def testBondChiralityInversion(self):
     mol1 = Chem.MolFromSmiles("Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.7,&1:7|")
     mol2 = Chem.MolFromSmiles("Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.6,&1:7|")
-    self.assertNotEquals(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
+    self.assertNotEqual(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
     mol1.GetBonds()[7].InvertChirality()
     self.assertEqual(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
 
