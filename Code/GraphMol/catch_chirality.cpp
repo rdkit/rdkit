@@ -6368,6 +6368,7 @@ TEST_CASE("extra ring stereo with new stereo perception") {
     auto roundtrip_r_s = MolToSmiles(*m_r_s);
     CHECK(roundtrip_r_r == r_r_smi);
     CHECK(roundtrip_r_s == r_s_smi);
+    CHECK(roundtrip_r_s != roundtrip_r_r);
   }
 }
 TEST_CASE("ring stereo basics with new stereo") {
