@@ -1450,7 +1450,8 @@ void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
 }
 
 // conditions for an atom to be a candidate for ring stereochem:
-//   1) two non-ring neighbors that have different ranks
+//   1) two non-ring neighbors that have different ranks (the ring neighbors
+//      will have the same rank)
 //   2) one non-ring neighbor and two ring neighbors (the ring neighbors will
 //      have the same rank)
 //   3) four ring neighbors with three different ranks
@@ -1490,10 +1491,11 @@ bool atomIsCandidateForRingStereochem(
       //           << ringNbrs.size() << " " << nonRingNbrs.size() << std::endl;
       switch (nonRingNbrs.size()) {
         case 2:
-          // they have to be different
+          // the ranks of the non ring neighbors must be different AND
+          // the ranks of the ring neighbors must be the same (see issue #8956)
           res = atomRanks[nonRingNbrs[0]->getIdx()] !=
                 atomRanks[nonRingNbrs[1]->getIdx()];
-
+          res &= (ringNbrs.size() != nbrRanks.size());
           break;
         case 1:
           if (ringNbrs.size() > nbrRanks.size()) {

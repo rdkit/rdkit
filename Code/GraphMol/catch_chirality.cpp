@@ -6348,6 +6348,22 @@ TEST_CASE("extra ring stereo with new stereo perception") {
       CHECK(atm->hasProp(common_properties::_ringStereoAtoms));
     }
   }
+  SECTION("#8956 ensure ring stereochemistry is not inverted on round trip") {
+    std::string r_r_smi = "CC[C@]1(C)CCC[C@](C)(O)C1";
+    std::string r_s_smi = "CC[C@@]1(C)CCC[C@@](C)(O)C1";
+    auto m_r_r = v2::SmilesParse::MolFromSmiles(r_r_smi);
+    REQUIRE(m_r_r);
+    auto m_r_s = v2::SmilesParse::MolFromSmiles(r_s_smi);
+    REQUIRE(m_r_s);
+
+    MolOps::assignStereochemistry(*m_r_r, true, true, true);
+    MolOps::assignStereochemistry(*m_r_s, true, true, true);
+
+    auto roundtrip_r_r = MolToSmiles(*m_r_r);
+    auto roundtrip_r_s = MolToSmiles(*m_r_s);
+    CHECK(roundtrip_r_r == r_r_smi);
+    CHECK(roundtrip_r_s == r_s_smi);
+  }
 }
 TEST_CASE("ring stereo basics with new stereo") {
   UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
