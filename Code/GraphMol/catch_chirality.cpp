@@ -6352,22 +6352,22 @@ TEST_CASE("extra ring stereo with new stereo perception") {
     auto useLegacy = GENERATE(true, false);
     CAPTURE(useLegacy);
     UseLegacyStereoPerceptionFixture fx(useLegacy);
-    auto [r_r_smi, r_s_smi] = GENERATE(
+    auto [smi1, smi2] = GENERATE(
         std::make_pair("CC[C@]1(C)CCC[C@](C)(O)C1",
                        "CC[C@@]1(C)CCC[C@@](C)(O)C1"),
-        std::make_pair("C[C@H]1CCC[C@](C)(O)C1", "C[C@@H]1CCC[C@@](C)(O)C1"));```
-    auto m_r_r = v2::SmilesParse::MolFromSmiles(r_r_smi);
-    REQUIRE(m_r_r);
-    auto m_r_s = v2::SmilesParse::MolFromSmiles(r_s_smi);
-    REQUIRE(m_r_s);
+        std::make_pair("C[C@H]1CCC[C@](C)(O)C1", "C[C@@H]1CCC[C@@](C)(O)C1"));
+    auto m1 = v2::SmilesParse::MolFromSmiles(smi1);
+    REQUIRE(m1);
+    auto m2 = v2::SmilesParse::MolFromSmiles(smi2);
+    REQUIRE(m2);
 
-    MolOps::assignStereochemistry(*m_r_r, true, true, true);
-    MolOps::assignStereochemistry(*m_r_s, true, true, true);
+    MolOps::assignStereochemistry(*m1, true, true, true);
+    MolOps::assignStereochemistry(*m2, true, true, true);
 
-    auto roundtrip_r_r = MolToSmiles(*m_r_r);
-    auto roundtrip_r_s = MolToSmiles(*m_r_s);
-    CHECK(roundtrip_r_r == r_r_smi);
-    CHECK(roundtrip_r_s == r_s_smi);
+    auto roundtrip_r_r = MolToSmiles(*m1);
+    auto roundtrip_r_s = MolToSmiles(*m2);
+    CHECK(roundtrip_r_r == smi1);
+    CHECK(roundtrip_r_s == smi2);
     CHECK(roundtrip_r_s != roundtrip_r_r);
   }
 }
