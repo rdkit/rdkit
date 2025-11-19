@@ -6352,8 +6352,10 @@ TEST_CASE("extra ring stereo with new stereo perception") {
     auto useLegacy = GENERATE(true, false);
     CAPTURE(useLegacy);
     UseLegacyStereoPerceptionFixture fx(useLegacy);
-    std::string r_r_smi = "CC[C@]1(C)CCC[C@](C)(O)C1";
-    std::string r_s_smi = "CC[C@@]1(C)CCC[C@@](C)(O)C1";
+    auto [r_r_smi, r_s_smi] = GENERATE(
+        std::make_pair("CC[C@]1(C)CCC[C@](C)(O)C1",
+                       "CC[C@@]1(C)CCC[C@@](C)(O)C1"),
+        std::make_pair("C[C@H]1CCC[C@](C)(O)C1", "C[C@@H]1CCC[C@@](C)(O)C1"));```
     auto m_r_r = v2::SmilesParse::MolFromSmiles(r_r_smi);
     REQUIRE(m_r_r);
     auto m_r_s = v2::SmilesParse::MolFromSmiles(r_s_smi);
