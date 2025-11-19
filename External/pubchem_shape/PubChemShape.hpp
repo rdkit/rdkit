@@ -242,8 +242,8 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
           if useColors is false)
 */
-std::pair<double, double> ScoreShape(const ShapeInput &shape1,
-                                     ShapeInput &shape2, bool useColors);
+RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> ScoreShape(
+    const ShapeInput &shape1, ShapeInput &shape2, bool useColors);
 
 //! Calculate the scores between a shape and a molecule without moving them.
 /*!
@@ -257,10 +257,9 @@ std::pair<double, double> ScoreShape(const ShapeInput &shape1,
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
           if molShapeOpts.useColors is false)
 */
-std::pair<double, double> ScoreMolecule(const ShapeInput &shape,
-                                        RDKit::ROMol &mol,
-                                        const ShapeInputOptions &molShapeOpts,
-                                        int molConfId = -1);
+RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
+    const ShapeInput &shape, RDKit::ROMol &mol,
+    const ShapeInputOptions &molShapeOpts, int molConfId = -1);
 
 //! Calculate the scores between 2 molecules without moving them.
 /*!
