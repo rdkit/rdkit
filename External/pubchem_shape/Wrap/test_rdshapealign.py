@@ -119,7 +119,23 @@ class TestCase(unittest.TestCase):
 
   def test9_FixedScore(self):
     # Just to make sure it's there and returns a value.
-    tpl = rdShapeAlign.FixedSimilarityScore(self.ref, self.ref, useColors=True)
+    opts = rdShapeAlign.ShapeInputOptions()
+    tpl = rdShapeAlign.ScoreMol(self.ref, self.ref, opts, opts)
+    self.assertAlmostEqual(tpl[0], 1.0, places=3)
+    self.assertAlmostEqual(tpl[1], 1.0, places=3)
+
+    opts = rdShapeAlign.ShapeInputOptions()
+    opts.useColors = False
+    opts.normalize = False
+    shp = rdShapeAlign.PrepareConformer(self.ref, -1, opts)
+    tpl = rdShapeAlign.ScoreMol(shp, self.probe, opts)
+    self.assertAlmostEqual(tpl[0], 0.0, places=3)
+    self.assertAlmostEqual(tpl[1], 0.0, places=3)
+    
+    opts.useColors = True
+    shp1 = rdShapeAlign.PrepareConformer(self.probe, -1, opts)
+    shp2 = rdShapeAlign.PrepareConformer(self.probe, -1, opts)
+    tpl = rdShapeAlign.ScoreShape(shp1, shp2, True)
     self.assertAlmostEqual(tpl[0], 1.0, places=3)
     self.assertAlmostEqual(tpl[1], 1.0, places=3)
 
