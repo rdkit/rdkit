@@ -6364,11 +6364,11 @@ TEST_CASE("extra ring stereo with new stereo perception") {
     MolOps::assignStereochemistry(*m1, true, true, true);
     MolOps::assignStereochemistry(*m2, true, true, true);
 
-    auto roundtrip_r_r = MolToSmiles(*m1);
-    auto roundtrip_r_s = MolToSmiles(*m2);
-    CHECK(roundtrip_r_r == smi1);
-    CHECK(roundtrip_r_s == smi2);
-    CHECK(roundtrip_r_s != roundtrip_r_r);
+    auto roundtrip1 = MolToSmiles(*m1);
+    auto roundtrip2 = MolToSmiles(*m2);
+    CHECK(roundtrip1 == smi1);
+    CHECK(roundtrip2 == smi2);
+    CHECK(roundtrip2 != roundtrip1);
   }
 }
 TEST_CASE("ring stereo basics with new stereo") {
