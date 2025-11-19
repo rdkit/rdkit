@@ -126,6 +126,7 @@ struct bond_wrapper {
              python::args("self", "bgnIdx", "endIdx"),
              "Set the indices of the atoms setting this bond's "
              "stereochemistry.\n")
+        .def("InvertChirality", &Bond::invertChirality, python::args("self"))
 
         .def("GetValenceContrib",
              (double (Bond::*)(const Atom *) const) & Bond::getValenceContrib,
