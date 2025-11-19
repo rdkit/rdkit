@@ -6349,6 +6349,9 @@ TEST_CASE("extra ring stereo with new stereo perception") {
     }
   }
   SECTION("#8956 ensure ring stereochemistry is not inverted on round trip") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
     std::string r_r_smi = "CC[C@]1(C)CCC[C@](C)(O)C1";
     std::string r_s_smi = "CC[C@@]1(C)CCC[C@@](C)(O)C1";
     auto m_r_r = v2::SmilesParse::MolFromSmiles(r_r_smi);
