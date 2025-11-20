@@ -1349,29 +1349,27 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
        true},  // #8862
   };
 
-  auto roundtrip_smiles = [](const std::string &smi,
-                             bool use_legacy_stereo) -> std::string {
-    UseLegacyStereoPerceptionFixture use_legacy(use_legacy_stereo);
+  auto roundtripSmiles = [](const std::string &smi,
+                            bool useLegacyStereo) -> std::string {
+    UseLegacyStereoPerceptionFixture useLegacy(useLegacyStereo);
     auto m = v2::SmilesParse::MolFromSmiles(smi);
     REQUIRE(m);
     return MolToSmiles(*m);
   };
 
-  const auto &[smiles, legacy_state, modern_state] =
+  const auto &[smiles, legacyState, modernState] =
       GENERATE_REF(values(samples));
-  auto using_legacy_stereo = GENERATE(false, true);
-  CAPTURE(smiles, using_legacy_stereo);
+  auto usingLegacyStereo = GENERATE(false, true);
+  CAPTURE(smiles, usingLegacyStereo);
 
   // pre-canonicalize SMILES: the inputs get outdated when
   // we make changes to the canonicalization algorithm
-  const auto first_roundtrip = roundtrip_smiles(smiles, using_legacy_stereo);
+  const auto firstRoundtrip = roundtripSmiles(smiles, usingLegacyStereo);
 
-  auto should_match = using_legacy_stereo ? legacy_state : modern_state;
-  if (should_match) {
-    CHECK(first_roundtrip ==
-          roundtrip_smiles(first_roundtrip, using_legacy_stereo));
+  auto shouldMatch = usingLegacyStereo ? legacyState : modernState;
+  if (shouldMatch) {
+    CHECK(firstRoundtrip == roundtripSmiles(firstRoundtrip, usingLegacyStereo));
   } else {
-    CHECK(first_roundtrip !=
-          roundtrip_smiles(first_roundtrip, using_legacy_stereo));
+    CHECK(firstRoundtrip != roundtripSmiles(firstRoundtrip, usingLegacyStereo));
   }
 }
