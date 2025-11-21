@@ -3426,6 +3426,31 @@ CAS<~>
     self.assertEqual(atom.GetPDBResidueInfo().GetResidueName(), 'HOH')
     self.assertEqual(atom.GetDegree(), 0)
 
+  def testAtomMonomerInfo(self):
+    m = Chem.MolFromSmiles('CCO')
+    info = Chem.AtomMonomerInfo()
+    info.SetChainId('A')
+    info.SetResidueName('FOO')
+    info.SetResidueNumber(12)
+    info.SetMonomerClass('LINK')
+    m.GetAtomWithIdx(1).SetMonomerInfo(info)
+
+    info2 = m.GetAtomWithIdx(1).GetMonomerInfo()
+    self.assertEqual(info2.GetChainId(), 'A')
+    self.assertEqual(info2.GetResidueName(), 'FOO')
+    self.assertEqual(info2.GetResidueNumber(), 12)
+    self.assertEqual(info2.GetMonomerClass(), 'LINK')
+
+    # test that this can be cast into the PDBResidueInfo subclass
+    info.SetMonomerType(Chem.AtomMonomerType.PDBRESIDUE)
+    m.GetAtomWithIdx(1).SetMonomerInfo(info)
+    pdb_res_info = m.GetAtomWithIdx(1).GetPDBResidueInfo()
+    self.assertIsNotNone(pdb_res_info)
+    self.assertEqual(pdb_res_info.GetChainId(), 'A')
+    self.assertEqual(pdb_res_info.GetResidueName(), 'FOO')
+    self.assertEqual(pdb_res_info.GetResidueNumber(), 12)
+    self.assertEqual(pdb_res_info.GetMonomerClass(), 'LINK')
+
   def test85AtomCopying(self):
     """Can a copied atom be added to a molecule?"""
     import copy
