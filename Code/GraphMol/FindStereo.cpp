@@ -826,40 +826,38 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
 
           // if this was creating possible ring stereo, update that info now
           if (possibleRingStereoAtoms[aidx]) {
-            --possibleRingStereoAtoms[aidx];
-            if (!possibleRingStereoAtoms[aidx]) {
-              needAnotherRound = true;
-              // we're no longer in any ring with possible ring stereo. Go
-              // update all the other atoms/bonds in rings that we're in:
-              for (unsigned int ridx = 0;
-                   ridx < mol.getRingInfo()->atomRings().size(); ++ridx) {
-                const auto &aring = mol.getRingInfo()->atomRings()[ridx];
-                unsigned int nHere = 0;
-                for (auto raidx : aring) {
-                  // Ring stereo changed, so un-fix atoms in this ring so we can
-                  // recheck them in the next iteration, for the case that they
-                  // are no longer after the current atom was declared
-                  // non-chiral
-                  fixedAtoms[raidx] = false;
-                  nHere += (possibleRingStereoAtoms[raidx] > 0);
-                }
-                if (nHere <= 1) {
-                  // if the ring can't transmit stereo anymore, update the
-                  // counts
-                  if (nHere == 1) {
-                    // update the last potential ring stereo atom in the ring,
-                    // since it can't have ring stereo alone.
-                    for (auto raidx : aring) {
-                      if (possibleRingStereoAtoms[raidx]) {
-                        --possibleRingStereoAtoms[raidx];
-                        break;
-                      }
+            possibleRingStereoAtoms[aidx] = 0;
+            needAnotherRound = true;
+            // we're no longer in any ring with possible ring stereo. Go
+            // update all the other atoms/bonds in rings that we're in:
+            for (unsigned int ridx = 0;
+                 ridx < mol.getRingInfo()->atomRings().size(); ++ridx) {
+              const auto &aring = mol.getRingInfo()->atomRings()[ridx];
+              unsigned int nHere = 0;
+              for (auto raidx : aring) {
+                // Ring stereo changed, so un-fix atoms in this ring so we can
+                // recheck them in the next iteration, for the case that they
+                // are no longer after the current atom was declared
+                // non-chiral
+                fixedAtoms[raidx] = false;
+                nHere += (possibleRingStereoAtoms[raidx] > 0);
+              }
+              if (nHere <= 1) {
+                // if the ring can't transmit stereo anymore, update the
+                // counts
+                if (nHere == 1) {
+                  // update the last potential ring stereo atom in the ring,
+                  // since it can't have ring stereo alone.
+                  for (auto raidx : aring) {
+                    if (possibleRingStereoAtoms[raidx]) {
+                      --possibleRingStereoAtoms[raidx];
+                      break;
                     }
                   }
-                  for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
-                    if (possibleRingStereoBonds[rbidx]) {
-                      --possibleRingStereoBonds[rbidx];
-                    }
+                }
+                for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
+                  if (possibleRingStereoBonds[rbidx]) {
+                    --possibleRingStereoBonds[rbidx];
                   }
                 }
               }
