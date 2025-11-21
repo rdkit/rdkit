@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2005-2006 Rational Discovery LLC
+//   Copyright (C) 2005-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,9 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#pragma once
+
 #include <RDGeneral/export.h>
-#ifndef _RD_SHAPE_UTILS_H_20050128_
-#define _RD_SHAPE_UTILS_H_20050128_
+#ifndef RD_SHAPE_UTILS_H_20050128
+#define RD_SHAPE_UTILS_H_20050128
 #include <DataStructs/DiscreteValueVect.h>
 #include <vector>
 
@@ -25,8 +27,7 @@ class Conformer;
 namespace MolShapes {
 
 //! Compute the size of the box that can fit the conformation, and offset of the
-/// box
-//! from the origin
+/// box from the origin
 RDKIT_SHAPEHELPERS_EXPORT void computeConfDimsAndOffset(
     const Conformer &conf, RDGeom::Point3D &dims, RDGeom::Point3D &offSet,
     const RDGeom::Transform3D *trans = nullptr, double padding = 2.5);
