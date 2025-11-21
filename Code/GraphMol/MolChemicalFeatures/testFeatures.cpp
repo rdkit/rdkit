@@ -753,8 +753,6 @@ void testIssue348() {
 
   MatchVectType mv;
   std::string inText;
-  int res;
-  (void)res;  // unused in any test
   MolChemicalFeatureDef::CollectionType featureDefs;
   MolChemicalFeatureDef::CollectionType::const_iterator featDefIt;
   MolChemicalFeatureDef::CollectionType::value_type featDef;
@@ -772,7 +770,7 @@ void testIssue348() {
 
   bool ok;
   try {
-    res = parseFeatureData(inText, featureDefs);
+    [[maybe_unused]] int res = parseFeatureData(inText, featureDefs);
     ok = false;
   } catch (FeatureFileParseException &fpe) {
     ok = true;
