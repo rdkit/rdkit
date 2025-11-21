@@ -1234,7 +1234,7 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi([CH]1O[C@H]2CN(C2)[C@]12CC2)smi", false, true},       // #7759
       {R"smi([CH]1[C@H]2C[C@H](C2)[C@]12CCC2)smi", false, true},   // #7759
       {R"smi([CH]1[C@H]2C[C@H](C2)[C@@]12COC2)smi", false, true},  // #7759
-      {R"smi(O=C1[C]2C[C@H](C2)[C@@]12CC2)smi", false, false},     // #7759
+      {R"smi(O=C1[C]2C[C@H](C2)[C@@]12CC2)smi", false, true},      // #7759
       {R"smi(O=C1[C@H]2C[C](C2)[C@@]12CC2)smi", false, true},      // #7759
       {R"smi(C1[C@H]2[C@@H]3C[C@H]4[C@@H]3[C@@H]1[C@@H]24)smi", false,
        true},  // #7759
@@ -1301,7 +1301,7 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi([CH-]1O[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},       // #7759
       {R"smi([CH-]1[C@H]2C[C@H](C2)[C@]12CCC2)smi", false, true},       // #7759
       {R"smi([CH-]1[C@H]2C[C@H](C2)[C@@]12COC2)smi", false, true},      // #7759
-      {R"smi([O-]C1=C2C[C@H](C2)[C@@]12CC2)smi", false, false},         // #7759
+      {R"smi([O-]C1=C2C[C@H](C2)[C@@]12CC2)smi", false, true},          // #7759
       {R"smi(O=C1[C@H]2C[C-](C2)[C@@]12CC2)smi", false, true},          // #7759
       {R"smi([O-][C@]12C[C@H](C1)[C@@]1(CC1)C2)smi", false, true},      // #7759
       {R"smi([CH2-][C@]12C[C@H](C1)[C@]1(CC1)C2)smi", false, true},     // #7759
