@@ -1172,8 +1172,7 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(C1=C\CCCCCC/C=C/C=C/1)smi", true, true},                   // #8759
       {R"smi(O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3)smi", false, false},  // #8721
       {R"smi(O=C(c1ccccc1C(=O)N1C(=O)c2ccccc2C1=O)N1C(=O)c2ccccc2C1=O)smi",
-       false, false},                                                   // #8721
-      {R"smi(O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3)smi", false, false},  // #8721
+       false, false},  // #8721
       {R"smi(O=[N+]([O-])c1cc/c2c(c1)=C(c1ccccc1)/N=c1\\ccc([N+](=O)[O-])cc1=C(c1ccccc1)/N=2)smi",
        false, true},  // #8721
       {R"smi(C=Cc1c(C)/c2[n-]c1=C=c1[n-]/c(c(CC)c1C)=C\\c1[n-]c3c(c1C)C(=O)[C@H](C(=O)OC)/C3=C1/[NH+]=C(/C=2)[C@@H](C)[C@@H]1CCC(=O)OC/C=C(\\C)CCC[C@H](C)CCC[C@H](C)CCCC(C)C.[Mg+2])smi",
@@ -1220,11 +1219,6 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi([H]/N=C(C=C)\C(/N=C\[O-])=N\[H])smi", false, true},  // #7759
       {R"smi([H]N=C(/N=C\[O-])/C(C=C)=N\[H])smi", true, true},    // #7759
       {R"smi([H]/N=C(/C=C)C(=N)/N=C\[O-])smi", true, true},       // #7759
-      {R"smi([H]/N=C(/C=C)C(=N)/N=C\[O-])smi", true, true},       // #7759
-      {R"smi([C@H]12[C@H]3[C@@H]4[C@H]5[C@@H]([C@H]1N24)N53)smi", false,
-       true},  // #7759
-      {R"smi([C@H]12[C@H]3[C@H]4[C@@H]5[C@@H]([C@H]1N25)N34)smi", false,
-       true},  // #7759
       {R"smi([C@H]12[C@H]3[C@@H]4[C@H]5[C@@H]([C@H]1N24)N53)smi", false,
        true},  // #7759
       {R"smi([C@H]12[C@H]3[C@H]4[C@@H]5[C@@H]([C@H]1N25)N34)smi", false,
@@ -1237,8 +1231,6 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(O=C1[C]2C[C@H](C2)[C@@]12CC2)smi", false, true},      // #7759
       {R"smi(O=C1[C@H]2C[C](C2)[C@@]12CC2)smi", false, true},      // #7759
       {R"smi(C1[C@H]2[C@@H]3C[C@H]4[C@@H]3[C@@H]1[C@@H]24)smi", false,
-       true},  // #7759
-      {R"smi([C@H]12[C@H]3[C@@H]4[C@H]5[C@@H]([C@H]1N24)N53)smi", false,
        true},  // #7759
       {R"smi(C[C@]12[C@@H]3[C@@H]1C[C@H]1[C@H]2[C@]31C)smi", false,
        true},                                                      // #7759
