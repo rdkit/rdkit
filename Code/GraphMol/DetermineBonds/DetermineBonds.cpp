@@ -13,6 +13,7 @@
 #ifdef RDK_BUILD_YAEHMOP_SUPPORT
 #include <YAeHMOP/EHTTools.h>
 #endif
+#include <algorithm>
 #include <limits>
 #include <vector>
 #include <numeric>
@@ -105,7 +106,15 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
   std::vector<std::vector<unsigned int>> newPossible(numAtoms);
 
   for (size_t i = 0; i < numAtoms; i++) {
-    curPossible[i] = possibleValences(mol.getAtomWithIdx(i), atomicValence);
+    auto valences = possibleValences(mol.getAtomWithIdx(i), atomicValence);
+    if (valences.size() == 0) {
+      auto atom = mol.getAtomWithIdx(i);
+      std::stringstream ss;
+      ss << "Atom " << i << " with atomic number " << atom->getAtomicNum()
+         << " has no valences defined.";
+      throw ValueErrorException(ss.str());
+    }
+    curPossible[i] = valences;
   }
 
   while (true) {
@@ -135,7 +144,7 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
 
       if (newPossible[i].empty()) {
         std::stringstream ss;
-        ss << "Unable determine valence of atom " << i << " with atomic number "
+        ss << "Unable to determine valence of atom " << i << " with atomic number "
            << atom->getAtomicNum() << " and " << atom->getDegree()
            << " bonds. Check the input molecules bonding.";
         throw ValueErrorException(ss.str());
@@ -146,7 +155,8 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
       break;
     } else {
       curPossible = newPossible;
-      newPossible = std::vector<std::vector<unsigned int>>(numAtoms);
+      std::for_each(newPossible.begin(), newPossible.end(),
+                [](auto& x) { x.clear(); });
     }
 
     if (--iterations == 0) {
