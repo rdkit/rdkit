@@ -1745,6 +1745,11 @@ public:
   //! Manually tell rdmol that the compat data ring info may have been modified.
   void markRingInfoAsCompatModified() const;
 
+  //! Manually tell rdmol that the backend RDMol ring info has been modified.
+  void markRingInfoAsRDMolModified() const;
+
+
+
  private:
   //! Instantiate an RDMol with a stable ROMol pointer.
   RDMol(ROMol* existingPtr);
