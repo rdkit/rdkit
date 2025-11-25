@@ -80,7 +80,7 @@ static void copySelectedAtomsAndBonds(::RDKit::RWMol &extracted_mol,
     bondMapping[ref_bond->getIdx()] = num_bonds - 1;
 
     // we need to update rings now
-    if(reference_mol.getRingInfo()->isInitialized()) {
+    if(selectedBonds.any() && reference_mol.getRingInfo()->isInitialized()) {
       extracted_mol.getRingInfo()->reset();
     }
   }
