@@ -164,15 +164,6 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
 void ROMol::initMol() {
   d_props.reset();
   dp_ringInfo = new RingInfo();
-  // ok every molecule contains a property entry called
-  // RDKit::detail::computedPropName
-  // which provides
-  //  list of property keys that correspond to value that have been computed
-  // this can used to blow out all computed properties while leaving the rest
-  // along
-  // initialize this list to an empty vector of strings
-  STR_VECT computed;
-  d_props.setVal(RDKit::detail::computedPropName, computed);
 }
 
 unsigned int ROMol::getAtomDegree(const Atom *at) const {

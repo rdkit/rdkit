@@ -218,6 +218,10 @@ TEST_CASE("scsiTests", "scsiTests") {
                                {60, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
                                {68, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
                                {76, Atom::ChiralType::CHI_TETRAHEDRAL_CCW}}),
+        ScsiMolTest::ScsiTest("ValenceErrorScsr.mol", true,
+                              SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
+        ScsiMolTest::ScsiTest("ValenceErrorScsr2.mol", true,
+                              SCSRBaseHbondOptions::Auto, 28, 28, 6, 25, 25, 3),
 
         ScsiMolTest::ScsiTest("RiboseFullname.mol", true,
                               SCSRBaseHbondOptions::Auto, 45, 49, 8, 43, 47, 6),

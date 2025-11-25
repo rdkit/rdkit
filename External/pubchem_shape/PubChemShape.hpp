@@ -88,6 +88,8 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInputOptions {
       customFeatures;  // use these feature definitions instead of the defaults.
                        // Each feature is defined by a tuple of:
                        // (feature type, position, radius)
+  bool normalize{true};  // Whether to normalise the shape by putting into
+                         // its inertial frame.
 };
 
 //! Prepare the input for the shape comparison
@@ -148,7 +150,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT void TransformConformer(
                                   translation to the final coordinates
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-  if useColors is false)
+          if opt_param is 1.0.)
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const ShapeInput &refShape, RDKit::ROMol &fit, std::vector<float> &matrix,
@@ -170,7 +172,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
                                   translation to the final coordinates
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-  if useColors is false)
+          if opt_param is 1.0.)
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const ShapeInput &refShape, RDKit::ROMol &fit, std::vector<float> &matrix,
@@ -195,7 +197,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
                        iterations
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-  if useColors is false)
+          if opt_param is 1.0.)
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const RDKit::ROMol &ref, RDKit::ROMol &fit, std::vector<float> &matrix,
@@ -221,12 +223,62 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
                        iterations
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-  if useColors is false)
+          if opt_param is 1.0.)
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const RDKit::ROMol &ref, RDKit::ROMol &fit, std::vector<float> &matrix,
     int refConfId = -1, int fitConfId = -1, bool useColors = true,
     double opt_param = 1.0, unsigned int max_preiters = 10u,
     unsigned int max_postiters = 30u);
+
+//! Calculate the scores between 2 shapes without moving them.
+/*!
+  \param shape1       the first shape. It's essential that the shape was
+                      created with ShapeInputOptions::normalize = false.
+  \param shape2       the second shape. It's essential that the shape was
+                      created with ShapeInputOptions::normalize = false.
+  \param useColors    (optional) whether to return a color score
+
+  \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
+          if useColors is false)
+*/
+RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> ScoreShape(
+    const ShapeInput &shape1, ShapeInput &shape2, bool useColors);
+
+//! Calculate the scores between a shape and a molecule without moving them.
+/*!
+  \param shape          the shape.  It's essential that the shape was created
+                        with ShapeInputOptions::normalize = false.
+  \param mol            the molecule
+  \param molShapeOpts  options for constructing the shape for molecule
+  \param molConfId     (optional) the conformer to use for the
+                        molecule
+
+  \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
+          if molShapeOpts.useColors is false)
+*/
+RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
+    const ShapeInput &shape, RDKit::ROMol &mol,
+    const ShapeInputOptions &molShapeOpts, int molConfId = -1);
+
+//! Calculate the scores between 2 molecules without moving them.
+/*!
+  \param mol1           the first molecule
+  \param mol2           the second molecule
+  \param mol1ShapeOpts  options for constructing the shape for molecule 1
+  \param mol2ShapeOpts  options for constructing the shape for molecule 2
+  \param mol1ConfId     (optional) the conformer to use for the first
+                        molecule
+  \param mol2ConfId     (optional) the conformer to use for the second
+                        molecule
+
+  \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
+          if useColors is false in either ShapeInputOptions parameter.)
+*/
+RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
+    const RDKit::ROMol &mol1, RDKit::ROMol &mol2,
+    const ShapeInputOptions &mol1ShapeOpts,
+    const ShapeInputOptions &mol2ShapeOpts, int mol1ConfId = -1,
+    int mol2ConfId = -1);
 
 #endif
