@@ -74,8 +74,9 @@ public class ChemTransformsTests extends GraphMolTest {
 	public void testSubset() {
 	    ROMol mol = RWMol.MolFromSmiles("c1ccccc1CCN");
 	    UInt_Vect vect = new UInt_Vect(mol.getNumAtoms());
-	    for(int i=0;i<6;++i)
-		vect.add(i);
+	    for(int i=0;i<6;++i) {
+		  vect.add(i);
+        }
 	    // atom copy
 	    ROMol sub = RDKFuncs.copyMolSubset(mol, vect);
 	    assertEquals("c1ccccc1", sub.MolToSmiles());
