@@ -2,12 +2,6 @@
 #  Copyright (C) 2003-2021  Greg Landrum and other RDKit contributors
 #         All Rights Reserved
 #
-""" This is a rough coverage test of the python wrapper
-
-it's intended to be shallow, but broad
-
-"""
-
 import doctest
 import gc
 import gzip
