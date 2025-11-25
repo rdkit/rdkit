@@ -12,7 +12,7 @@ std::vector<RDKit::ROMol> load_samples() {
   for (auto smiles : SAMPLES) {
     auto mol = RDKit::v2::SmilesParse::MolFromSmiles(smiles);
     REQUIRE(mol);
-    ret.emplace_back(std::move(*mol));
+    ret.push_back(std::move(*mol));
   }
   return ret;
 }

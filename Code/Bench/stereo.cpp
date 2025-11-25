@@ -19,7 +19,10 @@ TEST_CASE("Chirality::findPotentialStereo", "[stereo]") {
 
     for (auto &mol : samples) {
       auto stereo_infos = Chirality::findPotentialStereo(mol);
+
+      // workaround for https://github.com/rdkit/rdkit/issues/8880
       mol.clearComputedProps();
+
       for (auto &info : stereo_infos) {
         total += info.controllingAtoms.size();
       }
@@ -58,6 +61,8 @@ TEST_CASE("MolOps::assignStereochemistry", "[stereo]") {
         for (auto &atom : mol.atoms()) {
           total += atom->getChiralTag();
         }
+
+        // workaround for https://github.com/rdkit/rdkit/issues/8880
         mol.clearComputedProps();
       }
 

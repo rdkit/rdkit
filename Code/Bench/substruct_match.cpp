@@ -25,12 +25,8 @@ std::filesystem::path relative_to_rdbase(
   return path;
 }
 
-struct StructSmartsExample {
-  std::string smarts;
-};
-
-std::vector<StructSmartsExample> parse_smarts_examples(std::istream &in) {
-  std::vector<StructSmartsExample> examples;
+std::vector<std::string> parse_smarts_examples(std::istream &in) {
+  std::vector<std::string> examples;
   std::string line;
   while (std::getline(in, line)) {
     if (line.starts_with("#") || line.starts_with(" ") || line.empty()) {
@@ -39,13 +35,12 @@ std::vector<StructSmartsExample> parse_smarts_examples(std::istream &in) {
     std::istringstream ss(line);
     std::string smarts;
     std::getline(ss, smarts, ' ');
-    examples.push_back({smarts});
+    examples.push_back(line);
   }
   return examples;
 }
 
-std::vector<StructSmartsExample> load_smarts_examples(
-    std::filesystem::path &path) {
+std::vector<std::string> load_smarts_examples(std::filesystem::path &path) {
   std::ifstream file(path);
   return parse_smarts_examples(file);
 }
@@ -55,9 +50,9 @@ std::vector<ROMol> load_smarts_queries(const std::filesystem::path &relative) {
   auto examples = load_smarts_examples(path);
   std::vector<ROMol> queries;
   for (const auto &example : examples) {
-    auto query = v2::SmilesParse::MolFromSmarts(example.smarts);
+    auto query = v2::SmilesParse::MolFromSmarts(example);
     REQUIRE(query);
-    queries.push_back(*query);
+    queries.push_back(std::move(*query));
   }
   return queries;
 }
