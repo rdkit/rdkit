@@ -8,6 +8,7 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
 
@@ -46,27 +47,26 @@ TEST_CASE("MolOps::assignStereochemistry", "[stereo]") {
   const auto force = true;
   const auto flagPossibleStereoCenters = true;
 
-  for (auto legacy : {true, false}) {
-    auto samples = bench_common::load_samples();
+  auto samples = bench_common::load_samples();
 
-    auto str_legacy = std::string(legacy ? "true" : "false");
-    Chirality::setUseLegacyStereoPerception(legacy);
+  const auto legacy = GENERATE(true, false);
+  UseLegacyStereoPerceptionFixture fx(legacy);
+  auto str_legacy = std::string(legacy ? "true" : "false");
 
-    BENCHMARK("MolOps::assignStereochemistry legacy=" + str_legacy) {
-      auto total = 0;
+  BENCHMARK("MolOps::assignStereochemistry legacy=" + str_legacy) {
+    auto total = 0;
 
-      for (auto &mol : samples) {
-        MolOps::assignStereochemistry(mol, cleanIt, force,
-                                      flagPossibleStereoCenters);
-        for (auto &atom : mol.atoms()) {
-          total += atom->getChiralTag();
-        }
-
-        // workaround for https://github.com/rdkit/rdkit/issues/8880
-        mol.clearComputedProps();
+    for (auto &mol : samples) {
+      MolOps::assignStereochemistry(mol, cleanIt, force,
+                                    flagPossibleStereoCenters);
+      for (auto &atom : mol.atoms()) {
+        total += atom->getChiralTag();
       }
 
-      return total;
-    };
-  }
+      // workaround for https://github.com/rdkit/rdkit/issues/8880
+      mol.clearComputedProps();
+    }
+
+    return total;
+  };
 }

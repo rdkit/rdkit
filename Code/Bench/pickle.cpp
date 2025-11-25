@@ -32,8 +32,7 @@ TEST_CASE("MolPickler::molFromPickle", "[pickle]") {
   BENCHMARK("MolPickler::molFromPickle") {
     auto total_atoms = 0;
     for (auto &pickled : pickles) {
-      ROMol res;
-      MolPickler::molFromPickle(pickled, res);
+      ROMol res(pickled);
       total_atoms += res.getNumAtoms();
     }
     REQUIRE(total_atoms > 0);

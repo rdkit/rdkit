@@ -21,17 +21,6 @@ TEST_CASE("MolToInchi", "[inchi]") {
   };
 }
 
-TEST_CASE("MolToInchiKey", "[inchi]") {
-  auto samples = bench_common::load_samples();
-  BENCHMARK("MolToInchiKey") {
-    std::vector<std::string> inchikeys;
-    for (auto &mol : samples) {
-      inchikeys.push_back(MolToInchiKey(mol));
-    }
-    return inchikeys;
-  };
-}
-
 TEST_CASE("InchiToInchiKey", "[inchi]") {
   auto samples = bench_common::load_samples();
   std::vector<std::string> inchis;
