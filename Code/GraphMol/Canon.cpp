@@ -17,6 +17,9 @@
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/utils.h>
+
+#include <ranges>
+#include <queue>
 #include <algorithm>
 
 namespace RDKit {
@@ -230,6 +233,14 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
   //   states; for example, allenes can end up here. Instead of checking for
   //   them explicitly, exit early in any such possible state.
   if (!firstFromAtom1 || !firstFromAtom2) {
+    return;
+  }
+
+  if (dir1Set && dir2Set) {
+    // Both directions are already set. Nothing to do.
+
+    // To do: check that the directions are consistent with each other.
+
     return;
   }
 
@@ -509,6 +520,127 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       otherAtom3Bond->setBondDir(dir);
       bondDirCounts[otherAtom3Bond->getIdx()] += 1;
       atomDirCounts[atom3->getIdx()] += 1;
+    }
+  }
+}
+
+void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
+                             const UINT_VECT &atomVisitOrders,
+                             UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts,
+                             const MolStack &molStack) {
+  auto getNeighboringStereoBond = [&mol](const Atom *dblBndAtom,
+                                         const Bond *nbrBnd) -> Bond * {
+    auto otherAtom = nbrBnd->getOtherAtom(dblBndAtom);
+    for (const auto bond : mol.atomBonds(otherAtom)) {
+      if (bond != nbrBnd && bond->getBondType() == Bond::DOUBLE &&
+          bond->getStereo() > Bond::STEREOANY) {
+        return bond;
+      }
+    }
+    return nullptr;
+  };
+
+  // start by removing the current directions on single bonds
+  // around double bonds. At the same time, we build a prioritized
+  // queue to decide the order in which we will canonicalize bonds.
+
+  // We want to start with bonds with the most neighboring stereo
+  // bonds, and in case of ties, start with the bond that has
+  // the lowest position in the molStack
+  std::greater<const unsigned int &> molStackComparer;
+  std::less<const unsigned int &> numStereoNbrsComparer;
+
+  std::unordered_map<const Bond *, std::vector<Bond *>> stereoBondNbrs;
+  auto compareBondPriority = [&stereoBondNbrs, &bondVisitOrders,
+                              &molStackComparer, &numStereoNbrsComparer](
+                                 const Bond *aBnd, const Bond *bBnd) {
+    const auto aNumStereoNbrs = stereoBondNbrs[aBnd].size();
+    const auto bNumStereoNbrs = stereoBondNbrs[bBnd].size();
+
+    if (aNumStereoNbrs == bNumStereoNbrs) {
+      return molStackComparer(bondVisitOrders[aBnd->getIdx()],
+                              bondVisitOrders[bBnd->getIdx()]);
+    }
+    return numStereoNbrsComparer(aNumStereoNbrs, bNumStereoNbrs);
+  };
+
+  std::priority_queue<Bond *, std::vector<Bond *>,
+                      decltype(compareBondPriority)>
+      q{compareBondPriority};
+
+  for (auto &msI : molStack) {
+    if (msI.type != MOL_STACK_BOND) {
+      // not a bond, skip it
+      continue;
+    }
+
+    auto bond = msI.obj.bond;
+    Bond::BondDir dir = bond->getBondDir();
+    if (dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT) {
+      bond->setBondDir(Bond::NONE);
+    }
+
+    if (bond->getBondType() != Bond::DOUBLE ||
+        bond->getStereo() <= Bond::STEREOANY ||
+        bond->getStereoAtoms().size() < 2) {
+      // not a bond that can have stereo nor needs canonicalization
+      bond->setStereo(Bond::STEREONONE);
+      continue;
+    }
+
+    auto &currentNbrs = stereoBondNbrs[bond];
+    for (const auto *dblBondAtom :
+         std::array<Atom *, 2>{bond->getBeginAtom(), bond->getEndAtom()}) {
+      for (const auto *bond : mol.atomBonds(dblBondAtom)) {
+        if (!canHaveDirection(*bond)) {
+          continue;
+        }
+        auto nbrDblBnd = getNeighboringStereoBond(dblBondAtom, bond);
+        if (nbrDblBnd != nullptr) {
+          currentNbrs.push_back(nbrDblBnd);
+        }
+      }
+    }
+    std::ranges::sort(currentNbrs,
+                      [&molStackComparer](const Bond *aBnd, const Bond *bBnd) {
+                        // Reversing the bonds is intentional: molStackComparer
+                        // is a std::greater comparer (priority queue returns
+                        // the highest element), but here we want to sort in
+                        // increasing order, so we want a std::less comparer,
+                        // which can be achieved by reversing the std::greater
+                        // because we can have no ties here
+                        return molStackComparer(bBnd->getIdx(), aBnd->getIdx());
+                      });
+
+    q.emplace(bond);
+  }
+
+  // Now that we have bonds in the order we want to handle them,
+  // do the canonicalization
+  boost::dynamic_bitset<> seen_bonds(mol.getNumBonds());
+  while (!q.empty()) {
+    const auto bond = q.top();
+    q.pop();
+    if (seen_bonds.test(bond->getIdx())) {
+      continue;
+    }
+
+    std::queue<Bond *> connectedBondsQ;
+    connectedBondsQ.push(bond);
+
+    while (!connectedBondsQ.empty()) {
+      const auto currentBond = connectedBondsQ.front();
+      connectedBondsQ.pop();
+
+      Canon::canonicalizeDoubleBond(currentBond, bondVisitOrders,
+                                    atomVisitOrders, bondDirCounts,
+                                    atomDirCounts, molStack);
+      seen_bonds.set(currentBond->getIdx());
+      for (auto nbrStereoBnd : stereoBondNbrs[currentBond]) {
+        if (!seen_bonds.test(nbrStereoBnd->getIdx())) {
+          connectedBondsQ.push(nbrStereoBnd);
+        }
+      }
     }
   }
 }
@@ -1104,22 +1236,12 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     ++pos;
   }
 
-  // traverse the stack and canonicalize double bonds and atoms with (ring)
-  // stereochemistry
-  for (auto &msI : molStack) {
-    if (msI.type == MOL_STACK_BOND &&
-        msI.obj.bond->getBondType() == Bond::DOUBLE &&
-        msI.obj.bond->getStereo() > Bond::STEREOANY) {
-      if (msI.obj.bond->getStereoAtoms().size() >= 2) {
-        Canon::canonicalizeDoubleBond(msI.obj.bond, bondVisitOrders,
-                                      atomVisitOrders, bondDirCounts,
-                                      atomDirCounts, molStack);
-      } else {
-        // bad stereo spec:
-        msI.obj.bond->setStereo(Bond::STEREONONE);
-      }
-    }
-    if (doIsomericSmiles) {
+  canonicalizeDoubleBonds(mol, bondVisitOrders, atomVisitOrders, bondDirCounts,
+                          atomDirCounts, molStack);
+
+  // traverse the stack and canonicalize atoms with (ring) stereochemistry
+  if (doIsomericSmiles) {
+    for (auto &msI : molStack) {
       if (msI.type == MOL_STACK_ATOM &&
           msI.obj.atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
           !msI.obj.atom->hasProp(common_properties::_brokenChirality)) {
