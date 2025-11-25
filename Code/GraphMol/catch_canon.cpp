@@ -1168,7 +1168,7 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   // first reported.
 
   const static std::initializer_list<std::tuple<std::string, bool, bool>> samples = {
-      {R"smi(C/C=C\C=C(/C=C\C)C(/C=C\C)=C/C)smi", false, false},        // #8759
+      {R"smi(C/C=C\C=C(/C=C\C)C(/C=C\C)=C/C)smi", true, true},          // #8759
       {R"smi(C1=C\CCCCCC/C=C/C=C/1)smi", true, true},                   // #8759
       {R"smi(O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3)smi", false, false},  // #8721
       {R"smi(O=C(c1ccccc1C(=O)N1C(=O)c2ccccc2C1=O)N1C(=O)c2ccccc2C1=O)smi",
@@ -1180,7 +1180,7 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(CC1=C(/C=C2\C(C)=C3/C(C)=C(/C=C4\C(C)=C5/C(CCC(=O)O)=C(C(C)=C5N4)C=C6\C(CCC(=O)O)=C(C)C(=C6N2)C=C1)N3)C=C(\C=C)C)smi",
        false, false},  // #8089
       {R"smi(COC1=N\C2=CC(=O)c3c(c(O)c(C)c4c3C(=O)C(C)(O/C=C/C(OC)C(C)C(OC(C)=O)C(C)C(O)C(C)C(O)C(C)/C=C\C=C/1C)O4)C2=O)smi",
-       false, false},  // #8089
+       false, true},  // #8089
       {R"smi(CC1C2c3cc4/c5c6c7c8c9c%10c6c4c4c3C3=C6c%11c%12c%13c%14c%15c(c9c9c%16c8c(c8/c(c%17c%18c%19c(c(c%11c%11c%19c%19c%17c8c%16c(c%149)c%19c%13%11)C62)C1C%181C[N+](C)(C)C1)=C\C\C=5)C7)C%10C4C31C[N+](C)(C)CC%12%151)smi",
        false, true},  // #8089
       {R"smi(CC1=C\[C@H](C)C[C@@]2(C)CC[C@@H](O2)[C@@]23CC[C@@](C)(C[C@@H](O2)[C@H]2O[C@](C)(CC2=O)[C@@H](O)[C@@H]2CC[C@@]4(CCC[C@H](O4)[C@@H](C)C(=O)O[C@@H]4C[C@@H]([C@@]5(O)OCC[C@@H](C)[C@H]5O)O[C@@H]4/C=C/1)O2)O3)smi",
