@@ -250,27 +250,27 @@ double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
   return res;
 }
 
-double getBestAlignmentTransform(
-    const ROMol &prbMol, const ROMol &refMol, RDGeom::Transform3D &bestTrans,
-    MatchVectType &bestMatch, int prbCid, int refCid,
-    const std::vector<MatchVectType> &map, int maxMatches,
-    bool symmetrizeConjugatedTerminalGroups,
-    const RDNumeric::DoubleVector *weights, bool reflect, unsigned int maxIters,
-    int numThreads) {
+double getBestAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
+                                 RDGeom::Transform3D &bestTrans,
+                                 MatchVectType &bestMatch,
+                                 const BestAlignmentParams &params, int prbCid,
+                                 int refCid, bool reflect,
+                                 unsigned int maxIters) {
   std::vector<MatchVectType> allMatches;
-  if (map.empty()) {
-    getAllMatchesPrbRef(prbMol, refMol, allMatches, maxMatches,
-                        symmetrizeConjugatedTerminalGroups);
+  if (params.map.empty()) {
+    getAllMatchesPrbRef(prbMol, refMol, allMatches, params.maxMatches,
+                        params.symmetrizeConjugatedTerminalGroups,
+                        params.ignoreHs);
   }
-  const auto &matches = map.empty() ? allMatches : map;
-  auto bestRMS = getBestRMSInternal(prbMol, refMol, prbCid, refCid, matches,
-                                    &bestTrans, &bestMatch, weights, reflect,
-                                    maxIters, getNumThreadsToUse(numThreads));
+  const auto &matches = params.map.empty() ? allMatches : params.map;
+  auto bestRMS = getBestRMSInternal(
+      prbMol, refMol, prbCid, refCid, matches, &bestTrans, &bestMatch,
+      params.weights, reflect, maxIters, getNumThreadsToUse(params.numThreads));
   return bestRMS;
 }
 
-double getBestRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
-                  const BestAlignmentParams &params) {
+double getBestRMS(ROMol &prbMol, const ROMol &refMol,
+                  const BestAlignmentParams &params, int prbCid, int refCid) {
   std::vector<MatchVectType> allMatches;
   if (params.map.empty()) {
     getAllMatchesPrbRef(prbMol, refMol, allMatches, params.maxMatches,
@@ -294,9 +294,8 @@ double getBestRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
 }
 
 std::vector<double> getAllConformerBestRMS(const ROMol &mol,
-                                           const BestAlignmentParams &params,
-                                           int numThreads) {
-  numThreads = getNumThreadsToUse(numThreads);
+                                           const BestAlignmentParams &params) {
+  auto numThreads = getNumThreadsToUse(params.numThreads);
   std::vector<MatchVectType> allMatches;
   if (params.map.empty()) {
     getAllMatchesPrbRef(mol, mol, allMatches, params.maxMatches,
@@ -342,7 +341,7 @@ std::vector<double> getAllConformerBestRMS(const ROMol &mol,
       }
     };
     std::vector<std::thread> tg;
-    for (auto ti = 0; ti < numThreads; ++ti) {
+    for (auto ti = 0u; ti < numThreads; ++ti) {
       tg.emplace_back(std::thread(func, ti));
     }
     for (auto &thread : tg) {

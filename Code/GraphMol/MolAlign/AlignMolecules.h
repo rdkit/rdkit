@@ -136,6 +136,36 @@ RDKIT_MOLALIGN_EXPORT double alignMol(
   \param bestTrans  storage for the best computed transform
   \param bestMatch  storage for the MatchVectType corresponding to
                     the best match found.
+  \param params     parameters for the alignment
+  \param prbCid     (optional) probe conformation to use
+  \param refCid     (optional) reference conformation to use
+  \param reflect    if true reflect the conformation of the probe molecule
+  \param maxIters   maximum number of iterations used in minimizing the RMSD
+
+  <b>Returns</b>
+  Best RMSD value found
+*/
+RDKIT_MOLALIGN_EXPORT double getBestAlignmentTransform(
+    const ROMol &prbMol, const ROMol &refMol, RDGeom::Transform3D &bestTrans,
+    MatchVectType &bestMatch, const BestAlignmentParams &params,
+    int prbCid = -1, int refCid = -1, bool reflect = false,
+    unsigned int maxIters = 50);
+
+//! Compute the optimal RMS, transformation and atom map for aligning
+//! two molecules, taking symmetry into account. Molecule coordinates
+//! are left unaltered.
+/*!
+  This function will attempt to align all permutations of matching atom
+  orders in both molecules, for some molecules it will lead to 'combinatorial
+  explosion' especially if hydrogens are present.
+  Use 'RDKit::MolAlign::getAlignmentTransform' to align molecules
+  without changing the atom order.
+
+  \param prbMol     the molecule to be aligned to the reference
+  \param refMol     the reference molecule
+  \param bestTrans  storage for the best computed transform
+  \param bestMatch  storage for the MatchVectType corresponding to
+                    the best match found.
   \param prbCid     (optional) probe conformation to use
   \param refCid     (optional) reference conformation to use
   \param map        (optional) a vector of vectors of pairs of atom IDs
@@ -155,13 +185,20 @@ RDKIT_MOLALIGN_EXPORT double alignMol(
   <b>Returns</b>
   Best RMSD value found
 */
-RDKIT_MOLALIGN_EXPORT double getBestAlignmentTransform(
+inline double getBestAlignmentTransform(
     const ROMol &prbMol, const ROMol &refMol, RDGeom::Transform3D &bestTrans,
     MatchVectType &bestMatch, int prbCid = -1, int refCid = -1,
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
     const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
-    unsigned int maxIters = 50, int numThreads = 1);
+    unsigned int maxIters = 50, int numThreads = 1) {
+  bool ignoreHs = false;
+  return getBestAlignmentTransform(
+      prbMol, refMol, bestTrans, bestMatch,
+      BestAlignmentParams{maxMatches, symmetrizeConjugatedTerminalGroups,
+                          ignoreHs, numThreads, map, weights},
+      prbCid, refCid, reflect, maxIters);
+}
 
 //! Returns the optimal RMS for aligning two molecules, taking
 /// symmetry into account. As a side-effect, the probe molecule is
@@ -175,16 +212,16 @@ RDKIT_MOLALIGN_EXPORT double getBestAlignmentTransform(
 
   \param prbMol     the molecule to be aligned to the reference
   \param refMol     the reference molecule
+  \param params     parameters for the alignment
   \param prbCid     (optional) probe conformation to use
   \param refCid     (optional) reference conformation to use
-  \param params     parameters for the alignment
 
   <b>Returns</b>
   Best RMSD value found
 */
 RDKIT_MOLALIGN_EXPORT double getBestRMS(ROMol &prbMol, const ROMol &refMol,
-                                        int prbCid, int refCid,
-                                        const BestAlignmentParams &params);
+                                        const BestAlignmentParams &params,
+                                        int prbCid = -1, int refCid = -1);
 
 //! Returns the optimal RMS for aligning two molecules, taking
 /// symmetry into account. As a side-effect, the probe molecule is
@@ -215,16 +252,17 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(ROMol &prbMol, const ROMol &refMol,
   <b>Returns</b>
   Best RMSD value found
 */
-RDKIT_MOLALIGN_EXPORT double getBestRMS(
+inline double getBestRMS(
     ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
     const RDNumeric::DoubleVector *weights = nullptr, int numThreads = 1) {
   bool ignoreHs = false;
   return getBestRMS(
-      prbMol, refMol, prbCid, refCid,
+      prbMol, refMol,
       BestAlignmentParams{maxMatches, symmetrizeConjugatedTerminalGroups,
-                          ignoreHs, numThreads, map, weights});
+                          ignoreHs, numThreads, map, weights},
+      prbCid, refCid);
 };
 
 //! Returns the symmetric distance matrix between the conformers of a
@@ -244,7 +282,7 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
     [(1,0), (2,0), (2,1), (3,0), (3, 2), (3,1), ...]
 */
 RDKIT_MOLALIGN_EXPORT std::vector<double> getAllConformerBestRMS(
-    const ROMol &mol, const BestAlignmentParams &params, int numThreads = 1);
+    const ROMol &mol, const BestAlignmentParams &params);
 
 //! Returns the symmetric distance matrix between the conformers of a
 //! molecule.
@@ -271,17 +309,15 @@ RDKIT_MOLALIGN_EXPORT std::vector<double> getAllConformerBestRMS(
   a vector with the RMSD values stored in the order:
     [(1,0), (2,0), (2,1), (3,0), (3, 2), (3,1), ...]
 */
-RDKIT_MOLALIGN_EXPORT std::vector<double> getAllConformerBestRMS(
+inline std::vector<double> getAllConformerBestRMS(
     const ROMol &mol, int numThreads = 1,
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
     const RDNumeric::DoubleVector *weights = nullptr) {
   bool ignoreHs = false;
   return getAllConformerBestRMS(
-      mol,
-      BestAlignmentParams{maxMatches, symmetrizeConjugatedTerminalGroups,
-                          ignoreHs, numThreads, map, weights},
-      numThreads);
+      mol, BestAlignmentParams{maxMatches, symmetrizeConjugatedTerminalGroups,
+                               ignoreHs, numThreads, map, weights});
 }
 
 //! Returns the RMS between two molecules, taking symmetry into account.
@@ -351,7 +387,6 @@ RDKIT_MOLALIGN_EXPORT double CalcRMS(ROMol &prbMol, const ROMol &refMol,
 
 //! Align the conformations of a molecule using a common set of atoms. If
 /// the molecules contains queries, then the queries must also match exactly.
-
 /*!
   \param mol       The molecule of interest.
   \param atomIds   vector of atoms to be used to generate the alignment.

@@ -224,7 +224,7 @@ TEST_CASE("ignoring Hs") {
     {
       MolAlign::BestAlignmentParams bap;
       bap.ignoreHs = true;
-      auto rmsd = MolAlign::getBestRMS(*m2, *m1, -1, -1, bap);
+      auto rmsd = MolAlign::getBestRMS(*m2, *m1, bap);
       CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.0, 0.001));
     }
   }
@@ -247,6 +247,21 @@ TEST_CASE("ignoring Hs") {
       CHECK_THAT(rmsds[0], Catch::Matchers::WithinAbs(0.000, 0.001));
       CHECK_THAT(rmsds[1], Catch::Matchers::WithinAbs(0.000, 0.001));
       CHECK_THAT(rmsds[2], Catch::Matchers::WithinAbs(0.000, 0.001));
+    }
+  }
+  SECTION("best transform") {
+    RDGeom::Transform3D trans;
+    MatchVectType match;
+    {
+      auto rmsd = MolAlign::getBestAlignmentTransform(*m2, *m1, trans, match);
+      CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.278, 0.001));
+    }
+    {
+      MolAlign::BestAlignmentParams bap;
+      bap.ignoreHs = true;
+      auto rmsd =
+          MolAlign::getBestAlignmentTransform(*m2, *m1, trans, match, bap);
+      CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.0, 0.001));
     }
   }
 }
