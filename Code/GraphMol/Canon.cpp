@@ -1104,6 +1104,10 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
       atomVisitOrders[msI.obj.atom->getIdx()] = pos;
     } else if (msI.type == MOL_STACK_BOND) {
       bondVisitOrders[msI.obj.bond->getIdx()] = pos;
+      auto dir = msI.obj.bond->getBondDir();
+      if (dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT) {
+        msI.obj.bond->setBondDir(Bond::NONE);
+      }
     }
     ++pos;
   }
