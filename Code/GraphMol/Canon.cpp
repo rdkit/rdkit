@@ -183,7 +183,6 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   Bond *firstFromAtom2 = nullptr, *secondFromAtom2 = nullptr;
 
   ROMol &mol = dblBond->getOwningMol();
-  auto firstVisitOrder = mol.getNumBonds() + 1;
 
   ROMol::OBOND_ITER_PAIR atomBonds;
   // -------------------------------------------------------
@@ -191,10 +190,10 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   // if anything is already constraining our choice of directions:
   bool dir1Set = false, dir2Set = false;
 
-  auto findNeighborBonds = [&mol, &dblBond, &bondDirCounts, &bondVisitOrders,
-                            &firstVisitOrder](
+  auto findNeighborBonds = [&mol, &dblBond, &bondDirCounts, &bondVisitOrders](
                                auto atom, auto &firstNeighborBond,
                                auto &secondNeighborBond, auto &dirSet) {
+    auto firstVisitOrder = mol.getNumBonds() + 1;
     for (const auto bond : mol.atomBonds(atom)) {
       if (bond == dblBond || !canSetDoubleBondStereo(*bond)) {
         continue;
@@ -217,7 +216,6 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   };
 
   findNeighborBonds(atom1, firstFromAtom1, secondFromAtom1, dir1Set);
-  firstVisitOrder = mol.getNumBonds() + 1;
   findNeighborBonds(atom2, firstFromAtom2, secondFromAtom2, dir2Set);
 
   // Make sure we found everything we need to find.
