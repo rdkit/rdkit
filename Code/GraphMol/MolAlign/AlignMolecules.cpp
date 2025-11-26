@@ -19,6 +19,7 @@
 #include <Numerics/Alignment/AlignPoints.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <RDGeneral/RDThreads.h>
+#include <algorithm>
 
 namespace RDKit {
 namespace MolAlign {
@@ -69,7 +70,8 @@ double alignConfsOnAtomMap(const Conformer &prbCnf, const Conformer &refCnf,
 
 void getAllMatchesPrbRef(const ROMol &prbMol, const ROMol &refMol,
                          std::vector<MatchVectType> &matches, int maxMatches,
-                         bool symmetrizeConjugatedTerminalGroups) {
+                         bool symmetrizeConjugatedTerminalGroups,
+                         bool ignoreHs = false) {
   bool uniquify = false;
   bool recursionPossible = true;
   bool useChirality = false;
@@ -94,6 +96,16 @@ void getAllMatchesPrbRef(const ROMol &prbMol, const ROMol &refMol,
     std::cerr << "Warning in " << __FUNCTION__ << ": " << matches.size()
               << " matches detected for molecule " << name << ", this may "
               << "lead to a performance slowdown.\n";
+  }
+  if (ignoreHs) {
+    // filter Hs out of the matches
+    for (auto &match : matches) {
+      std::remove_if(
+          match.begin(), match.end(),
+          [&prbMolForMatch](const std::pair<int, int> &mi) {
+            return prbMolForMatch.getAtomWithIdx(mi.first)->getAtomicNum() == 1;
+          });
+    }
   }
 }
 
@@ -258,21 +270,24 @@ double getBestAlignmentTransform(
 }
 
 double getBestRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
-                  const std::vector<MatchVectType> &map, int maxMatches,
-                  bool symmetrizeConjugatedTerminalGroups,
-                  const RDNumeric::DoubleVector *weights, int numThreads) {
+                  const BestAlignmentParams &params) {
   std::vector<MatchVectType> allMatches;
-  if (map.empty()) {
-    getAllMatchesPrbRef(prbMol, refMol, allMatches, maxMatches,
-                        symmetrizeConjugatedTerminalGroups);
+  if (params.map.empty()) {
+    getAllMatchesPrbRef(prbMol, refMol, allMatches, params.maxMatches,
+                        params.symmetrizeConjugatedTerminalGroups,
+                      params.ignoreHs);
   }
-  const auto &matches = map.empty() ? allMatches : map;
+  const auto &matches = params.map.empty() ? allMatches : params.map;
+
+
+  // TODO: check mismatch between weights size and match size. 
+
   RDGeom::Transform3D trans;
   bool reflect = false;
   unsigned int maxIters = 50;
-  auto bestRMS = getBestRMSInternal(prbMol, refMol, prbCid, refCid, matches,
-                                    &trans, nullptr, weights, reflect, maxIters,
-                                    getNumThreadsToUse(numThreads));
+  auto bestRMS = getBestRMSInternal(
+      prbMol, refMol, prbCid, refCid, matches, &trans, nullptr, params.weights,
+      reflect, maxIters, getNumThreadsToUse(params.numThreads));
 
   // Perform a final alignment to the best alignment...
   MolTransforms::transformConformer(prbMol.getConformer(prbCid), trans);

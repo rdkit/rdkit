@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2022-2023 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2022-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -204,6 +204,30 @@ TEST_CASE("getAllConformerBestRMS") {
     }
     for (auto i = 0u; i < rmsds.size(); ++i) {
       CHECK(rmsds[i] == Catch::Approx(mtrmsds[i]).epsilon(0.00001));
+    }
+  }
+}
+TEST_CASE("ignoring Hs") {
+  v2::SmilesParse::SmilesParserParams ps;
+  ps.removeHs = false;
+  SECTION("basics") {
+    std::string smi1 =
+        "[H]CC[H] |(0,0,0;1,0,0;2,0,0;3,0,0)|";
+    auto m1 = v2::SmilesParse::MolFromSmiles(smi1, ps);
+    REQUIRE(m1);
+    std::string smi2 =
+        "[H]CC[H] |(0,1,0;1,0,0;2,0,0;3,0,0)|";
+    auto m2 = v2::SmilesParse::MolFromSmiles(smi2, ps);
+    REQUIRE(m2);
+    {
+      auto rmsd = MolAlign::getBestRMS(*m2, *m1);
+      CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.278, 0.001));
+    }
+    {
+      MolAlign::BestAlignmentParams bap;
+      bap.ignoreHs = true;
+      auto rmsd = MolAlign::getBestRMS(*m2, *m1, -1, -1, bap);
+      CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.0, 0.001));
     }
   }
 }

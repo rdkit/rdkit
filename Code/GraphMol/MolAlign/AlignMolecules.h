@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_ALIGNMOLECULES_H_
-#define _RD_ALIGNMOLECULES_H_
+#ifndef RD_ALIGNMOLECULES_H
+#define RD_ALIGNMOLECULES_H
 
 #include <Geometry/Transform3D.h>
 #include <Numerics/Vector.h>
@@ -36,6 +36,27 @@ class RDKIT_MOLALIGN_EXPORT MolAlignException : public std::exception {
   std::string _msg;
 };
 
+struct RDKIT_MOLALIGN_EXPORT BestAlignmentParams {
+  int maxMatches = 1e6;  //< if map is empty, this will be the max number of
+                         /// matches found in a SubstructMatch().
+  bool symmetrizeConjugatedTerminalGroups =
+      true;              //< if set, conjugated
+                         /// terminal functional groups
+                         /// (like nitro or carboxylate)
+                         /// will be considered symmetrically
+  bool ignoreHs = true;  //< ignore Hs in the alignment. Note that atoms in map
+                         /// will always be used
+  int numThreads = 1;
+  const std::vector<MatchVectType>
+      map;  //< a vector of vectors of pairs of atom IDs
+             /// (probe AtomId, ref AtomId) used to
+             /// compute the alignments.
+             /// If not provided, these will be
+             /// generated using a substructure search.
+  const RDNumeric::DoubleVector *weights =
+      nullptr;  //< weights for each pair of atoms
+};
+
 //! Alignment functions
 
 //! Compute the transformation required to align a molecule
@@ -54,7 +75,7 @@ class RDKIT_MOLALIGN_EXPORT MolAlignException : public std::exception {
                    the alignment is computed (defaults to first conformation)
   \param atomMap   a vector of pairs of atom IDs (probe AtomId, ref AtomId)
                    used to compute the alignments. If this mapping is
-                   not specified an attempt is made to generate on by
+                   not specified an attempt is made to generate one by
                    substructure matching
   \param weights   Optionally specify weights for each of the atom pairs
   \param reflect   if true reflect the conformation of the probe molecule
@@ -68,6 +89,7 @@ RDKIT_MOLALIGN_EXPORT double getAlignmentTransform(
     int prbCid = -1, int refCid = -1, const MatchVectType *atomMap = nullptr,
     const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
     unsigned int maxIters = 50);
+
 
 //! Optimally (minimum RMSD) align a molecule to another molecule
 /*!
@@ -85,7 +107,7 @@ RDKIT_MOLALIGN_EXPORT double getAlignmentTransform(
                    the alignment is computed (defaults to first conformation)
   \param atomMap   a vector of pairs of atom IDs (probe AtomId, ref AtomId)
                    used to compute the alignments. If this mapping is
-                   not specified an attempt is made to generate on by
+                   not specified an attempt is made to generate one by
                    substructure matching
   \param weights   Optionally specify weights for each of the atom pairs
   \param reflect   if true reflect the conformation of the probe molecule
@@ -154,7 +176,29 @@ RDKIT_MOLALIGN_EXPORT double getBestAlignmentTransform(
 
   \param prbMol     the molecule to be aligned to the reference
   \param refMol     the reference molecule
-  \param trans      storage for the computed transform
+  \param prbCid     (optional) probe conformation to use
+  \param refCid     (optional) reference conformation to use
+  \param params     parameters for the alignment
+
+  <b>Returns</b>
+  Best RMSD value found
+*/
+RDKIT_MOLALIGN_EXPORT double getBestRMS(ROMol &prbMol, const ROMol &refMol,
+                                        int prbCid, int refCid,
+                                        const BestAlignmentParams &params);
+
+//! Returns the optimal RMS for aligning two molecules, taking
+/// symmetry into account. As a side-effect, the probe molecule is
+/// left in the aligned state.
+/*!
+  This function will attempt to align all permutations of matching atom
+  orders in both molecules, for some molecules it will lead to 'combinatorial
+  explosion' especially if hydrogens are present.
+  Use 'RDKit::MolAlign::alignMol' to align molecules without changing the
+  atom order.
+
+  \param prbMol     the molecule to be aligned to the reference
+  \param refMol     the reference molecule
   \param prbCid     (optional) probe conformation to use
   \param refCid     (optional) reference conformation to use
   \param map        (optional) a vector of vectors of pairs of atom IDs
@@ -176,7 +220,13 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
     ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
-    const RDNumeric::DoubleVector *weights = nullptr, int numThreads = 1);
+    const RDNumeric::DoubleVector *weights = nullptr, int numThreads = 1) {
+  bool ignoreHs = false;
+  return getBestRMS(
+      prbMol, refMol, prbCid, refCid,
+      BestAlignmentParams{maxMatches, symmetrizeConjugatedTerminalGroups,
+                          ignoreHs, numThreads, map, weights});
+};
 
 //! Returns the symmetric distance matrix between the conformers of a
 //! molecule.
