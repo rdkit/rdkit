@@ -374,11 +374,11 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
     atomDirCounts[atom2->getIdx()] += 1;
   } else {
     // we come before a ring closure:
-    if (dblBond->getStereo() == Bond::STEREOZ ||
-        dblBond->getStereo() == Bond::STEREOCIS) {
+    if (dblBond->getStereo() == Bond::STEREOE ||
+        dblBond->getStereo() == Bond::STEREOTRANS) {
       atom1Dir = atom2Dir;
-    } else if (dblBond->getStereo() == Bond::STEREOE ||
-               dblBond->getStereo() == Bond::STEREOTRANS) {
+    } else if (dblBond->getStereo() == Bond::STEREOZ ||
+               dblBond->getStereo() == Bond::STEREOCIS) {
       atom1Dir = flipBondDir(atom2Dir);
     }
     CHECK_INVARIANT(atom1Dir != Bond::NONE, "stereo not set");
@@ -401,7 +401,6 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
     }
 
     firstFromAtom1->setBondDir(atom1Dir);
-    switchBondDir(firstFromAtom1);
     bondDirCounts[firstFromAtom1->getIdx()] += 1;
     atomDirCounts[atom1->getIdx()] += 1;
   }
