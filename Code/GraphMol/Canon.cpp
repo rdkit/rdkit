@@ -184,7 +184,6 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
 
   ROMol &mol = dblBond->getOwningMol();
 
-  ROMol::OBOND_ITER_PAIR atomBonds;
   // -------------------------------------------------------
   // find the lowest visit order bonds from each end and determine
   // if anything is already constraining our choice of directions:
@@ -515,17 +514,14 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   if (atom3->getDegree() == 3) {
     Bond *otherAtom3Bond = nullptr;
     bool dblBondPresent = false;
-    atomBonds = mol.getAtomBonds(atom3);
-    while (atomBonds.first != atomBonds.second) {
-      Bond *tbond = mol[*atomBonds.first];
+    for (auto tbond : mol.atomBonds(atom3)) {
       if (tbond->getBondType() == Bond::DOUBLE &&
           tbond->getStereo() > Bond::STEREOANY) {
         dblBondPresent = true;
-      } else if ((tbond->getBondType() == Bond::SINGLE) &&
-                 (tbond != firstFromAtom2)) {
+      } else if (tbond->getBondType() == Bond::SINGLE &&
+                 tbond != firstFromAtom2) {
         otherAtom3Bond = tbond;
       }
-      atomBonds.first++;
     }
     if (dblBondPresent && otherAtom3Bond &&
         otherAtom3Bond->getBondDir() == Bond::NONE) {
@@ -679,7 +675,6 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
                    const std::vector<std::string> *bondSymbols, bool doRandom) {
-
   Atom *atom = mol.getAtomWithIdx(atomIdx);
   INT_LIST directTravList, cycleEndList;
   boost::dynamic_bitset<> seenFromHere(mol.getNumAtoms());
