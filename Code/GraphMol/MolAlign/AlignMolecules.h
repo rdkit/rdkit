@@ -49,10 +49,10 @@ struct RDKIT_MOLALIGN_EXPORT BestAlignmentParams {
   int numThreads = 1;
   const std::vector<MatchVectType>
       map;  //< a vector of vectors of pairs of atom IDs
-             /// (probe AtomId, ref AtomId) used to
-             /// compute the alignments.
-             /// If not provided, these will be
-             /// generated using a substructure search.
+            /// (probe AtomId, ref AtomId) used to
+            /// compute the alignments.
+            /// If not provided, these will be
+            /// generated using a substructure search.
   const RDNumeric::DoubleVector *weights =
       nullptr;  //< weights for each pair of atoms
 };
@@ -89,7 +89,6 @@ RDKIT_MOLALIGN_EXPORT double getAlignmentTransform(
     int prbCid = -1, int refCid = -1, const MatchVectType *atomMap = nullptr,
     const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
     unsigned int maxIters = 50);
-
 
 //! Optimally (minimum RMSD) align a molecule to another molecule
 /*!
@@ -237,6 +236,25 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
   explosion' especially if hydrogens are present.
 
   \param mol        the molecule to be considered
+  \param params     parameters for the matching
+  \param numThreads (optional) number of threads to use during the calculation
+
+  <b>Returns</b>
+  a vector with the RMSD values stored in the order:
+    [(1,0), (2,0), (2,1), (3,0), (3, 2), (3,1), ...]
+*/
+RDKIT_MOLALIGN_EXPORT std::vector<double> getAllConformerBestRMS(
+    const ROMol &mol, const BestAlignmentParams &params, int numThreads = 1);
+
+//! Returns the symmetric distance matrix between the conformers of a
+//! molecule.
+/// getBestRMS() is used to calculate the inter-conformer distances
+/*!
+  This function will attempt to align all permutations of matching atom
+  orders in both molecules, for some molecules it will lead to 'combinatorial
+  explosion' especially if hydrogens are present.
+
+  \param mol        the molecule to be considered
   \param numThreads (optional) number of threads to use during the calculation
   \param map        (optional) a vector of vectors of pairs of atom IDs
                     (probe AtomId, ref AtomId) used to compute the alignments.
@@ -257,7 +275,14 @@ RDKIT_MOLALIGN_EXPORT std::vector<double> getAllConformerBestRMS(
     const ROMol &mol, int numThreads = 1,
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
-    const RDNumeric::DoubleVector *weights = nullptr);
+    const RDNumeric::DoubleVector *weights = nullptr) {
+  bool ignoreHs = false;
+  return getAllConformerBestRMS(
+      mol,
+      BestAlignmentParams{maxMatches, symmetrizeConjugatedTerminalGroups,
+                          ignoreHs, numThreads, map, weights},
+      numThreads);
+}
 
 //! Returns the RMS between two molecules, taking symmetry into account.
 //! In contrast to getBestRMS, the RMS is computed "in place", i.e.

@@ -210,15 +210,13 @@ TEST_CASE("getAllConformerBestRMS") {
 TEST_CASE("ignoring Hs") {
   v2::SmilesParse::SmilesParserParams ps;
   ps.removeHs = false;
+  std::string smi1 = "[H]CC[H] |(0,0,0;1,0,0;2,0,0;3,0,0)|";
+  auto m1 = v2::SmilesParse::MolFromSmiles(smi1, ps);
+  REQUIRE(m1);
+  std::string smi2 = "[H]CC[H] |(0,1,0;1,0,0;2,0,0;3,0,0)|";
+  auto m2 = v2::SmilesParse::MolFromSmiles(smi2, ps);
+  REQUIRE(m2);
   SECTION("basics") {
-    std::string smi1 =
-        "[H]CC[H] |(0,0,0;1,0,0;2,0,0;3,0,0)|";
-    auto m1 = v2::SmilesParse::MolFromSmiles(smi1, ps);
-    REQUIRE(m1);
-    std::string smi2 =
-        "[H]CC[H] |(0,1,0;1,0,0;2,0,0;3,0,0)|";
-    auto m2 = v2::SmilesParse::MolFromSmiles(smi2, ps);
-    REQUIRE(m2);
     {
       auto rmsd = MolAlign::getBestRMS(*m2, *m1);
       CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.278, 0.001));
@@ -228,6 +226,27 @@ TEST_CASE("ignoring Hs") {
       bap.ignoreHs = true;
       auto rmsd = MolAlign::getBestRMS(*m2, *m1, -1, -1, bap);
       CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.0, 0.001));
+    }
+  }
+  SECTION("allConformersBestRMS") {
+    ROMol m3(*m1);
+    m3.addConformer(new Conformer(m1->getConformer()), true);
+    m3.addConformer(new Conformer(m2->getConformer()), true);
+    {
+      auto rmsds = MolAlign::getAllConformerBestRMS(m3);
+      REQUIRE(rmsds.size() == 3);
+      CHECK_THAT(rmsds[0], Catch::Matchers::WithinAbs(0.000, 0.001));
+      CHECK_THAT(rmsds[1], Catch::Matchers::WithinAbs(0.278, 0.001));
+      CHECK_THAT(rmsds[2], Catch::Matchers::WithinAbs(0.278, 0.001));
+    }
+    {
+      MolAlign::BestAlignmentParams bap;
+      bap.ignoreHs = true;
+      auto rmsds = MolAlign::getAllConformerBestRMS(m3, bap);
+      REQUIRE(rmsds.size() == 3);
+      CHECK_THAT(rmsds[0], Catch::Matchers::WithinAbs(0.000, 0.001));
+      CHECK_THAT(rmsds[1], Catch::Matchers::WithinAbs(0.000, 0.001));
+      CHECK_THAT(rmsds[2], Catch::Matchers::WithinAbs(0.000, 0.001));
     }
   }
 }
