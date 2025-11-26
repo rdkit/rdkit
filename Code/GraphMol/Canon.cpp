@@ -86,40 +86,6 @@ auto _possibleCompare = [](const PossibleType &arg1, const PossibleType &arg2) {
   return (std::get<0>(arg1) < std::get<0>(arg2));
 };
 
-bool checkBondsInSameBranch(const MolStack &molStack, Bond *dblBnd,
-                            Bond *dirBnd) {
-  bool seenDblBond = false;
-  int branchCounter = 0;
-  for (const auto &item : molStack) {
-    switch (item.type) {
-      case MOL_STACK_BOND:
-        if (item.obj.bond == dirBnd || item.obj.bond == dblBnd) {
-          if (seenDblBond) {
-            return branchCounter == 0;
-          } else {
-            seenDblBond = true;
-          }
-        }
-        break;
-      case MOL_STACK_BRANCH_OPEN:
-        if (seenDblBond) {
-          ++branchCounter;
-        }
-        break;
-      case MOL_STACK_BRANCH_CLOSE:
-        if (seenDblBond) {
-          --branchCounter;
-        }
-        break;
-      default:
-        break;
-    }
-  }
-  // We should not ever hit this. But if we do, returning false
-  // causes the same behavior as before this patch.
-  return false;
-}
-
 void switchBondDir(Bond *bond) {
   PRECONDITION(bond, "bad bond");
   PRECONDITION(bond->getBondType() == Bond::SINGLE || bond->getIsAromatic() ||
@@ -431,7 +397,25 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       // UNLESS the bond is not in a branch (in the smiles) (e.g. firstFromAtom1
       // branches off a cycle, and secondFromAtom1 shows up at the end of the
       // cycle). This was Github Issue #2023, see it for an example.
-      if (checkBondsInSameBranch(molStack, dblBond, secondFromAtom1)) {
+      auto checkBondsInSameBranch = [&molStack, &bondVisitOrders](
+                                        Bond *dblBond, Bond *dirBond) {
+        auto start = bondVisitOrders[dblBond->getIdx()];
+        auto end = bondVisitOrders[dirBond->getIdx()];
+        if (start > end) {
+          std::swap(start, end);
+        }
+        unsigned int branchLevel = 0;
+        for (auto i = start + 1; i != end; ++i) {
+          const auto &item = molStack[i];
+          if (item.type == MOL_STACK_BRANCH_OPEN) {
+            ++branchLevel;
+          } else if (item.type == MOL_STACK_BRANCH_CLOSE) {
+            --branchLevel;
+          }
+        }
+        return branchLevel == 0;
+      };
+      if (checkBondsInSameBranch(dblBond, secondFromAtom1)) {
         auto otherDir = flipBondDir(firstFromAtom1->getBondDir());
         secondFromAtom1->setBondDir(otherDir);
       } else {
