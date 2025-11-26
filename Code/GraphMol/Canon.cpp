@@ -86,7 +86,8 @@ auto _possibleCompare = [](const PossibleType &arg1, const PossibleType &arg2) {
   return (std::get<0>(arg1) < std::get<0>(arg2));
 };
 
-bool checkBondsInSameBranch(MolStack &molStack, Bond *dblBnd, Bond *dirBnd) {
+bool checkBondsInSameBranch(const MolStack &molStack, Bond *dblBnd,
+                            Bond *dirBnd) {
   bool seenDblBond = false;
   int branchCounter = 0;
   for (const auto &item : molStack) {
@@ -152,10 +153,10 @@ bool isClosingRingBond(Bond *bond) {
 // move it there?
 //
 //
-void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
-                            UINT_VECT &atomVisitOrders,
+void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
+                            const UINT_VECT &atomVisitOrders,
                             UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts,
-                            MolStack &molStack) {
+                            const MolStack &molStack) {
   PRECONDITION(dblBond, "bad bond");
   PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "bad bond order");
   PRECONDITION(dblBond->getStereo() > Bond::STEREOANY, "bad bond stereo");
@@ -547,11 +548,10 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
 // finds cycles
 void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
                    std::vector<AtomColors> &colors, const UINT_VECT &ranks,
-                   UINT_VECT &atomOrders, VECT_INT_VECT &atomRingClosures,
+                   VECT_INT_VECT &atomRingClosures,
                    const boost::dynamic_bitset<> *bondsInPlay,
                    const std::vector<std::string> *bondSymbols, bool doRandom) {
   Atom *atom = mol.getAtomWithIdx(atomIdx);
-  atomOrders.push_back(atomIdx);
 
   colors[atomIdx] = GREY_NODE;
 
@@ -654,8 +654,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
         // we haven't seen this node at all before, traverse
         // -----
         dfsFindCycles(mol, possibleIdx, bond->getIdx(), colors, ranks,
-                      atomOrders, atomRingClosures, bondsInPlay, bondSymbols,
-                      doRandom);
+                      atomRingClosures, bondsInPlay, bondSymbols, doRandom);
         break;
       case GREY_NODE:
         // -----
@@ -677,19 +676,16 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
 void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
                    std::vector<AtomColors> &colors, VECT_INT_VECT &cycles,
                    const UINT_VECT &ranks, UINT_VECT &cyclesAvailable,
-                   MolStack &molStack, UINT_VECT &atomOrders,
-                   UINT_VECT &bondVisitOrders, VECT_INT_VECT &atomRingClosures,
+                   MolStack &molStack, VECT_INT_VECT &atomRingClosures,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
                    const std::vector<std::string> *bondSymbols, bool doRandom) {
-
   Atom *atom = mol.getAtomWithIdx(atomIdx);
   INT_LIST directTravList, cycleEndList;
   boost::dynamic_bitset<> seenFromHere(mol.getNumAtoms());
 
   seenFromHere.set(atomIdx);
   molStack.push_back(MolStackElem(atom));
-  atomOrders[atom->getIdx()] = rdcast<int>(molStack.size());
   colors[atomIdx] = GREY_NODE;
 
   INT_LIST travList;
@@ -714,7 +710,6 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
         // this is end of the ring closure
         // we can just pull the ring index from the bond itself:
         molStack.push_back(MolStackElem(bond, atomIdx));
-        bondVisitOrders[bIdx] = molStack.size();
         molStack.push_back(MolStackElem(ringIdx));
         // don't make the ring digit immediately available again: we don't want
         // to have the same
@@ -833,11 +828,9 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
           MolStackElem("(", rdcast<int>(possiblesIt - possibles.begin())));
     }
     molStack.push_back(MolStackElem(bond, atomIdx));
-    bondVisitOrders[bond->getIdx()] = molStack.size();
     dfsBuildStack(mol, possibleIdx, bond->getIdx(), colors, cycles, ranks,
-                  cyclesAvailable, molStack, atomOrders, bondVisitOrders,
-                  atomRingClosures, atomTraversalBondOrder, bondsInPlay,
-                  bondSymbols, doRandom);
+                  cyclesAvailable, molStack, atomRingClosures,
+                  atomTraversalBondOrder, bondsInPlay, bondSymbols, doRandom);
     if (possiblesIt + 1 != possibles.end()) {
       molStack.push_back(
           MolStackElem(")", rdcast<int>(possiblesIt - possibles.begin())));
@@ -852,7 +845,6 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
                            std::vector<AtomColors> &colors,
                            VECT_INT_VECT &cycles, const UINT_VECT &ranks,
                            UINT_VECT &cyclesAvailable, MolStack &molStack,
-                           UINT_VECT &atomOrders, UINT_VECT &bondVisitOrders,
                            VECT_INT_VECT &atomRingClosures,
                            std::vector<INT_LIST> &atomTraversalBondOrder,
                            const boost::dynamic_bitset<> *bondsInPlay,
@@ -860,8 +852,6 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
                            bool doRandom) {
   PRECONDITION(colors.size() >= mol.getNumAtoms(), "vector too small");
   PRECONDITION(ranks.size() >= mol.getNumAtoms(), "vector too small");
-  PRECONDITION(atomOrders.size() >= mol.getNumAtoms(), "vector too small");
-  PRECONDITION(bondVisitOrders.size() >= mol.getNumBonds(), "vector too small");
   PRECONDITION(atomRingClosures.size() >= mol.getNumAtoms(),
                "vector too small");
   PRECONDITION(atomTraversalBondOrder.size() >= mol.getNumAtoms(),
@@ -874,11 +864,11 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
   std::vector<AtomColors> tcolors;
   tcolors.resize(colors.size());
   std::copy(colors.begin(), colors.end(), tcolors.begin());
-  dfsFindCycles(mol, atomIdx, inBondIdx, tcolors, ranks, atomOrders,
-                atomRingClosures, bondsInPlay, bondSymbols, doRandom);
+  dfsFindCycles(mol, atomIdx, inBondIdx, tcolors, ranks, atomRingClosures,
+                bondsInPlay, bondSymbols, doRandom);
   dfsBuildStack(mol, atomIdx, inBondIdx, colors, cycles, ranks, cyclesAvailable,
-                molStack, atomOrders, bondVisitOrders, atomRingClosures,
-                atomTraversalBondOrder, bondsInPlay, bondSymbols, doRandom);
+                molStack, atomRingClosures, atomTraversalBondOrder, bondsInPlay,
+                bondSymbols, doRandom);
 }
 
 void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
@@ -1012,8 +1002,6 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
                "bondSymbols too small");
   unsigned int nAtoms = mol.getNumAtoms();
 
-  UINT_VECT atomVisitOrders(nAtoms, 0);
-  UINT_VECT bondVisitOrders(mol.getNumBonds(), 0);
   UINT_VECT bondDirCounts(mol.getNumBonds(), 0);
   UINT_VECT atomDirCounts(nAtoms, 0);
   UINT_VECT cyclesAvailable(MAX_CYCLES, 1);
@@ -1038,10 +1026,10 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
   VECT_INT_VECT atomRingClosures(nAtoms);
   std::vector<INT_LIST> atomTraversalBondOrder(nAtoms);
-  Canon::canonicalDFSTraversal(
-      mol, atomIdx, -1, colors, cycles, ranks, cyclesAvailable, molStack,
-      atomVisitOrders, bondVisitOrders, atomRingClosures,
-      atomTraversalBondOrder, bondsInPlay, bondSymbols, doRandom);
+  Canon::canonicalDFSTraversal(mol, atomIdx, -1, colors, cycles, ranks,
+                               cyclesAvailable, molStack, atomRingClosures,
+                               atomTraversalBondOrder, bondsInPlay, bondSymbols,
+                               doRandom);
 
   CHECK_INVARIANT(!molStack.empty(), "Empty stack.");
   CHECK_INVARIANT(molStack.begin()->type == MOL_STACK_ATOM,
@@ -1130,12 +1118,17 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     }
   }
 
-  // remove the current directions on single bonds around double bonds:
-  for (auto bond : mol.bonds()) {
-    Bond::BondDir dir = bond->getBondDir();
-    if (dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT) {
-      bond->setBondDir(Bond::NONE);
+  std::vector<unsigned int> atomVisitOrders(mol.getNumAtoms());
+  std::vector<unsigned int> bondVisitOrders(mol.getNumBonds());
+
+  unsigned int pos = 0;
+  for (const auto &msI : molStack) {
+    if (msI.type == MOL_STACK_ATOM) {
+      atomVisitOrders[msI.obj.atom->getIdx()] = pos;
+    } else if (msI.type == MOL_STACK_BOND) {
+      bondVisitOrders[msI.obj.bond->getIdx()] = pos;
     }
+    ++pos;
   }
 
   // traverse the stack and canonicalize double bonds and atoms with (ring)
