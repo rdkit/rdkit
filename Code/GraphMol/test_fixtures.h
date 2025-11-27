@@ -17,6 +17,29 @@
 
 #include <GraphMol/Chirality.h>
 
+// Extend catch2 (if available) with macros that add messages
+// to the (failed) test output, so we have a replacement for
+// the legacy CHECK_INVARIANT macro.
+#ifdef CATCH_TEST_MACROS_HPP_INCLUDED
+#define WARN_MSG(condition, msg) \
+  {                              \
+    INFO((msg));                 \
+    WARN((condition));           \
+  }
+
+#define CHECK_MSG(condition, msg) \
+  {                               \
+    INFO((msg));                  \
+    CHECK((condition));           \
+  }
+
+#define REQUIRE_MSG(condition, msg) \
+  {                                 \
+    INFO((msg));                    \
+    REQUIRE((condition));           \
+  }
+#endif
+
 class TestFixtureTemplate : public boost::noncopyable {
  public:
   TestFixtureTemplate() = delete;
