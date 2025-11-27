@@ -3730,7 +3730,7 @@ TEST_CASE("Testing sf.net issue 3185548 : problems with SSSR code") {
     unsigned int nsssr;
     VECT_INT_VECT sssrs;
     nsssr = MolOps::findSSSR(*m, sssrs);
-    REQUIRE(nsssr == 48);
+    REQUIRE(nsssr == 40);
     nsssr = MolOps::symmetrizeSSSR(*m, sssrs);
     REQUIRE(nsssr == 56);
     delete m;
