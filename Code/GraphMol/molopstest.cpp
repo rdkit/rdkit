@@ -1918,11 +1918,7 @@ TEST_CASE("Testing Issue 212") {
   m2 = MolOps::addHs(*m, false, true);
   REQUIRE(m2->getNumAtoms() == 5);
 
-  try {
-    mb = MolToMolBlock(*m2);
-  } catch (...) {
-    REQUIRE(0);  //,"MolToMolBlock() failed");
-  }
+  REQUIRE_NOTHROW(MolToMolBlock(*m2));
 
   delete m;
   delete m2;
@@ -2613,30 +2609,19 @@ TEST_CASE("Testing sf.net issue 1811276 (kekulization failing)") {
 }
 
 TEST_CASE("Testing sf.net issue 1836576 (sanitization crash)") {
-  RWMol *m;
-
-  std::string smi;
-  bool ok;
-
   // the original form of the test runs foul of the rules for explicit
   // valence on B:
-  smi =
+  constexpr const char *smi =
       "[BH]123[BH]45[BH]167[BH]289[BH]312[BH]838[BH]966[Co]74479%10%11%12[CH]"
       "633[BH]811[CH]345[BH]21[BH]1234[BH]75[BH]911[BH]226[BH]%1011[BH]227[BH]"
       "633[BH]44[BH]322[CH]%1145[CH]%12271";
-  m = SmilesToMol(smi, false, false);
+  std::unique_ptr<RWMol> m{SmilesToMol(smi, false, false)};
   REQUIRE(m);
 
   unsigned int opThatFailed;
-  ok = false;
-  try {
-    MolOps::sanitizeMol(*m, opThatFailed);
-  } catch (MolSanitizeException &) {
-    ok = true;
-  }
-  REQUIRE(ok);
+  REQUIRE_THROWS_AS(MolOps::sanitizeMol(*m, opThatFailed),
+                    MolSanitizeException);
   REQUIRE(opThatFailed == MolOps::SANITIZE_PROPERTIES);
-  delete m;
 }
 
 TEST_CASE("Testing impact of removeHs on chirality") {
@@ -2961,41 +2946,10 @@ TEST_CASE("Testing some aromaticity edge cases") {
 }
 
 TEST_CASE("Testing sf.net issue 1942657") {
-  RWMol *m;
-
-  std::string smi;
-
-  smi = "C[C](C)(C)(C)C";
-  try {
-    m = SmilesToMol(smi);
-  } catch (MolSanitizeException &) {
-    m = nullptr;
-  }
-  REQUIRE(!m);
-
-  smi = "C[CH](C)(C)C";
-  try {
-    m = SmilesToMol(smi);
-  } catch (MolSanitizeException &) {
-    m = nullptr;
-  }
-  REQUIRE(!m);
-
-  smi = "C[C](=C)(C)C";
-  try {
-    m = SmilesToMol(smi);
-  } catch (MolSanitizeException &) {
-    m = nullptr;
-  }
-  REQUIRE(!m);
-
-  smi = "C[Si](=C)(=C)=C";
-  try {
-    m = SmilesToMol(smi);
-  } catch (MolSanitizeException &) {
-    m = nullptr;
-  }
-  REQUIRE(!m);
+  const auto smiles = GENERATE("C[C](C)(C)(C)C", "C[CH](C)(C)C", "C[C](=C)(C)C",
+                               "C[Si](=C)(=C)=C");
+  CAPTURE(smiles);
+  CHECK_THROWS_AS(SmilesToMol(smiles), MolSanitizeException);
 }
 
 TEST_CASE("Testing sf.net issue 198608") {
@@ -3483,33 +3437,17 @@ TEST_CASE("Testing sf.net issue 2316677 : canonicalization error") {
 
 TEST_CASE(
     "Testing sf.net issue 2830244: make sure that non-ring aromatic atoms generate errors") {
-  {
-    constexpr const char *smi = "c-C";
+  std::unique_ptr<RWMol> m{SmilesToMol("c-C", 0, false)};
 
-    RWMol *m = SmilesToMol(smi, 0, false);
-    bool ok = false;
-    try {
-      MolOps::Kekulize(*m);
-    } catch (MolSanitizeException &) {
-      ok = true;
-    }
-    REQUIRE(ok);
-    delete m;
+  SECTION("Kekulization should throw") {
+    CHECK_THROWS_AS(MolOps::Kekulize(*m), MolSanitizeException);
   }
-  {
-    constexpr const char *smi = "c-C";
 
-    RWMol *m = SmilesToMol(smi, 0, false);
-    bool ok = false;
-    unsigned int opThatFailed;
-    try {
-      MolOps::sanitizeMol(*m, opThatFailed);
-    } catch (MolSanitizeException &) {
-      ok = true;
-    }
-    REQUIRE(ok);
+  SECTION("Sanitization should throw") {
+    unsigned int opThatFailed = MolOps::SANITIZE_NONE;
+    REQUIRE_THROWS_AS(MolOps::sanitizeMol(*m, opThatFailed),
+                      MolSanitizeException);
     REQUIRE(opThatFailed == MolOps::SANITIZE_KEKULIZE);
-    delete m;
   }
 }
 
@@ -5010,14 +4948,7 @@ TEST_CASE("Testing github issue 418: removeHs not updating H count") {
     delete m;
   }
   {
-    constexpr const char *smiles = "[H]N([H])([H])[H]";
-    bool ok = false;
-    try {
-      SmilesToMol(smiles);
-    } catch (MolSanitizeException &) {
-      ok = true;
-    }
-    REQUIRE(ok);
+    REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException);
   }
 }
 
@@ -6712,42 +6643,18 @@ TEST_CASE("Testing error reporting for kekulization") {
   }
   {
     sstrm.str("");
-    constexpr const char *smi = "c1cccc1";
-    ROMol *m;
-    try {
-      m = SmilesToMol(smi);
-    } catch (MolSanitizeException &) {
-      m = nullptr;
-    }
-    REQUIRE(m == nullptr);
+    REQUIRE_THROWS_AS(SmilesToMol("c1cccc1"), MolSanitizeException);
     REQUIRE(sstrm.str().find("0 1 2 3 4") != std::string::npos);
-    delete m;
   }
   {
     sstrm.str("");
-    constexpr const char *smi = "c1ccccc1.c1cccc1";
-    ROMol *m;
-    try {
-      m = SmilesToMol(smi);
-    } catch (MolSanitizeException &) {
-      m = nullptr;
-    }
-    REQUIRE(m == nullptr);
+    REQUIRE_THROWS_AS(SmilesToMol("c1ccccc1.c1cccc1"), MolSanitizeException);
     REQUIRE(sstrm.str().find("6 7 8 9 10") != std::string::npos);
-    delete m;
   }
   {
     sstrm.str("");
-    constexpr const char *smi = "c1cccc1.c1cccc1";
-    ROMol *m;
-    try {
-      m = SmilesToMol(smi);
-    } catch (MolSanitizeException &) {
-      m = nullptr;
-    }
-    REQUIRE(m == nullptr);
+    REQUIRE_THROWS_AS(SmilesToMol("c1cccc1.c1cccc1"), MolSanitizeException);
     REQUIRE(sstrm.str().find("0 1 2 3 4") != std::string::npos);
-    delete m;
   }
   rdErrorLog->ClearTee();
 }
@@ -7036,29 +6943,14 @@ TEST_CASE(
         "C3C=C2)OC2=C(C(C3=C(O1)C=CC1=CC=CC=C13)C1=CC=C(C=C1)OC)C1=CC=CC=C1C="
         "C2)C1=CC=C(C=C1)OC)C1=CC=CC=C1C=C4";
     {
-      RWMol *m = SmilesToMol(smiles, 0, false);
+      std::unique_ptr<RWMol> m{SmilesToMol(smiles, 0, false)};
       REQUIRE(m);
       REQUIRE(m->getNumAtoms() == 204);
       REQUIRE(m->getNumBonds() == 244);
-      bool ok = false;
-      try {
-        MolOps::findSSSR(*m);
-      } catch (const ValueErrorException &) {
-        ok = true;
-      }
-      REQUIRE(ok);
-      delete m;
+      REQUIRE_THROWS_AS(MolOps::findSSSR(*m), ValueErrorException);
     }
     {
-      bool ok = false;
-      try {
-        RWMol *m = SmilesToMol(smiles);
-        // Can never get here:
-        delete m;
-      } catch (const ValueErrorException &) {
-        ok = true;
-      }
-      REQUIRE(ok);
+      REQUIRE_THROWS_AS(SmilesToMol(smiles), ValueErrorException);
     }
   }
 }
@@ -7102,7 +6994,6 @@ TEST_CASE("Testing Github issue 1622: add MDL aromaticity perception") {
         "C1=CC=CC=CC=CC=CC=CC=CC=CC=C1",  // 18 atoms
         "N1=CN=NC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=C1"};
     for (auto smi : aromaticSmis) {
-      // std::cerr << smi << std::endl;
       int debugParse = 0;
       bool sanitize = false;
       RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
