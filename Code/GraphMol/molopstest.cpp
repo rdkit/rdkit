@@ -50,36 +50,36 @@ TEST_CASE("test1") {
 
   smi = "CCCC(=O)O";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "smiles parse failed");
+  REQUIRE_MSG(m, "smiles parse failed");
   count = MolOps::getMolFrags(*m, iv);
-  CHECK_INVARIANT(count == 1, "bad frag count");
+  REQUIRE_MSG(count == 1, "bad frag count");
   frags = MolOps::getMolFrags(*m);
-  CHECK_INVARIANT(frags.size() == 1, "bad frag count");
+  REQUIRE_MSG(frags.size() == 1, "bad frag count");
   REQUIRE(frags[0]->getNumAtoms() == 6);
   count = MolOps::getMolFrags(*m, otherFrags);
-  CHECK_INVARIANT(count == 1, "bad frag count");
-  CHECK_INVARIANT(otherFrags.size() == 1, "bad frag count");
+  REQUIRE_MSG(count == 1, "bad frag count");
+  REQUIRE_MSG(otherFrags.size() == 1, "bad frag count");
   delete m;
 
   smi = "CCCC(=O)[O-].[Na+]";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "smiles parse failed");
+  REQUIRE_MSG(m, "smiles parse failed");
   count = MolOps::getMolFrags(*m, iv);
-  CHECK_INVARIANT(count == 2, "bad frag count");
+  REQUIRE_MSG(count == 2, "bad frag count");
   frags = MolOps::getMolFrags(*m);
-  CHECK_INVARIANT(frags.size() == 2, "bad frag count");
+  REQUIRE_MSG(frags.size() == 2, "bad frag count");
   REQUIRE(frags[0]->getNumAtoms() == 6);
   REQUIRE(frags[1]->getNumAtoms() == 1);
   frags = MolOps::getMolFrags(*m, true, &iv);
-  CHECK_INVARIANT(frags.size() == 2, "bad frag count");
+  REQUIRE_MSG(frags.size() == 2, "bad frag count");
   REQUIRE(frags[0]->getNumAtoms() == 6);
   REQUIRE(frags[1]->getNumAtoms() == 1);
   REQUIRE(iv.size() == 7);
   REQUIRE(iv[0] == 0);
   REQUIRE(iv[6] == 1);
   count = MolOps::getMolFrags(*m, otherFrags, true, &iv);
-  CHECK_INVARIANT(count == 2, "bad frag count");
-  CHECK_INVARIANT(otherFrags.size() == 2, "bad frag count");
+  REQUIRE_MSG(count == 2, "bad frag count");
+  REQUIRE_MSG(otherFrags.size() == 2, "bad frag count");
   REQUIRE(frags[0]->getNumAtoms() == 6);
   REQUIRE(frags[1]->getNumAtoms() == 1);
   REQUIRE(iv.size() == 7);
@@ -89,18 +89,18 @@ TEST_CASE("test1") {
 
   smi = "CCCC(=O)[O-].[Na+].[NH4+].[Cl-]";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "smiles parse failed");
+  REQUIRE_MSG(m, "smiles parse failed");
   count = MolOps::getMolFrags(*m, iv);
-  CHECK_INVARIANT(count == 4, "bad frag count");
+  REQUIRE_MSG(count == 4, "bad frag count");
   frags = MolOps::getMolFrags(*m);
-  CHECK_INVARIANT(frags.size() == 4, "bad frag count");
+  REQUIRE_MSG(frags.size() == 4, "bad frag count");
   REQUIRE(frags[0]->getNumAtoms() == 6);
   REQUIRE(frags[1]->getNumAtoms() == 1);
   REQUIRE(frags[2]->getNumAtoms() == 1);
   REQUIRE(frags[3]->getNumAtoms() == 1);
   count = MolOps::getMolFrags(*m, otherFrags);
-  CHECK_INVARIANT(count == 4, "bad frag count");
-  CHECK_INVARIANT(otherFrags.size() == 4, "bad frag count");
+  REQUIRE_MSG(count == 4, "bad frag count");
+  REQUIRE_MSG(otherFrags.size() == 4, "bad frag count");
   REQUIRE(otherFrags[0]->getNumAtoms() == 6);
   REQUIRE(otherFrags[1]->getNumAtoms() == 1);
   REQUIRE(otherFrags[2]->getNumAtoms() == 1);
@@ -115,25 +115,25 @@ TEST_CASE("test2") {
   int count;
   smi = "CCCC(=O)O";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "smiles parse failed");
+  REQUIRE_MSG(m, "smiles parse failed");
   count = MolOps::getMolFrags(*m, iv);
-  CHECK_INVARIANT(count == 1, "bad frag count");
-  CHECK_INVARIANT(iv[0] == 0, "bad frag membership");
-  CHECK_INVARIANT(iv[1] == 0, "bad frag membership");
-  CHECK_INVARIANT(iv[4] == 0, "bad frag membership");
-  CHECK_INVARIANT(iv[5] == 0, "bad frag membership");
+  REQUIRE_MSG(count == 1, "bad frag count");
+  REQUIRE_MSG(iv[0] == 0, "bad frag membership");
+  REQUIRE_MSG(iv[1] == 0, "bad frag membership");
+  REQUIRE_MSG(iv[4] == 0, "bad frag membership");
+  REQUIRE_MSG(iv[5] == 0, "bad frag membership");
   delete m;
 
   smi = "CCCC(=O)[O-].[Na+]";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "smiles parse failed");
+  REQUIRE_MSG(m, "smiles parse failed");
   count = MolOps::getMolFrags(*m, iv);
-  CHECK_INVARIANT(count == 2, "bad frag count");
-  CHECK_INVARIANT(iv[0] == 0, "bad frag membership");
-  CHECK_INVARIANT(iv[1] == 0, "bad frag membership");
-  CHECK_INVARIANT(iv[4] == 0, "bad frag membership");
-  CHECK_INVARIANT(iv[5] == 0, "bad frag membership");
-  CHECK_INVARIANT(iv[6] == 1, "bad frag membership");
+  REQUIRE_MSG(count == 2, "bad frag count");
+  REQUIRE_MSG(iv[0] == 0, "bad frag membership");
+  REQUIRE_MSG(iv[1] == 0, "bad frag membership");
+  REQUIRE_MSG(iv[4] == 0, "bad frag membership");
+  REQUIRE_MSG(iv[5] == 0, "bad frag membership");
+  REQUIRE_MSG(iv[6] == 1, "bad frag membership");
   delete m;
 };
 
@@ -527,13 +527,13 @@ TEST_CASE("test5") {
   m = SmilesToMol(smi, 0, 0);
   count = MolOps::findSSSR(*m, sssr);
   BOOST_LOG(rdInfoLog) << "Count: " << count << "\n";
-  CHECK_INVARIANT(count == 5, "");
+  REQUIRE(count == 5);
   delete m;
 
   smi = "C1C(C2)CCC2C1";
   m = SmilesToMol(smi);
   count = MolOps::findSSSR(*m, sssr);
-  CHECK_INVARIANT(count == 2, "");
+  REQUIRE(count == 2);
   delete m;
 }
 
@@ -543,11 +543,11 @@ TEST_CASE("Testing Hydrogen Ops") {
 
   std::string smi = "CCC";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 3, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 3);
 
   m2 = MolOps::addHs(*m);
-  CHECK_INVARIANT(m2->getNumAtoms() == 11, "");
+  REQUIRE(m2->getNumAtoms() == 11);
 
   // addHs should not set the noImplicit flag.
   // This was Github Issue #7123
@@ -560,60 +560,60 @@ TEST_CASE("Testing Hydrogen Ops") {
 
   smi = "CC(=O)[OH]";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 4, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 4);
 
   m2 = MolOps::addHs(*m, true);
-  CHECK_INVARIANT(m2->getNumAtoms() == 5, "");
+  REQUIRE(m2->getNumAtoms() == 5);
 
   m3 = MolOps::addHs(*m2, false);
-  CHECK_INVARIANT(m3->getNumAtoms() == 8, "");
+  REQUIRE(m3->getNumAtoms() == 8);
   delete m2;
   delete m3;
 
   m2 = MolOps::addHs(*m, false);
-  CHECK_INVARIANT(m2->getNumAtoms() == 8, "");
+  REQUIRE(m2->getNumAtoms() == 8);
   delete m;
   // remove all
   // rdInfoLog) << "5" << std::endl;
   m3 = MolOps::removeHs(*m2, false);
-  CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
+  REQUIRE(m3->getNumAtoms() == 4);
   delete m3;
 
   // remove only implicit
   m3 = MolOps::removeHs(*m2, true);
-  CHECK_INVARIANT(m3->getNumAtoms() == 5, "");
+  REQUIRE(m3->getNumAtoms() == 5);
 
   MolOps::removeHs(static_cast<RWMol &>(*m3), false);
-  CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
+  REQUIRE(m3->getNumAtoms() == 4);
   delete m2;
   delete m3;
 
   // this test is also done in the same order in the python tests:
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 4, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 4);
   m2 = MolOps::addHs(*m, true);
-  CHECK_INVARIANT(m2->getNumAtoms() == 5, "");
+  REQUIRE(m2->getNumAtoms() == 5);
 
   m3 = MolOps::removeHs(*m2, true);
-  CHECK_INVARIANT(m3->getNumAtoms() == 5, "");
+  REQUIRE(m3->getNumAtoms() == 5);
   delete m3;
 
   m3 = MolOps::removeHs(*m2, false);
-  CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
+  REQUIRE(m3->getNumAtoms() == 4);
   delete m2;
   delete m3;
 
   m2 = MolOps::addHs(*m, false);
-  CHECK_INVARIANT(m2->getNumAtoms() == 8, "");
+  REQUIRE(m2->getNumAtoms() == 8);
 
   m3 = MolOps::removeHs(*m2, true);
-  CHECK_INVARIANT(m3->getNumAtoms() == 5, "");
+  REQUIRE(m3->getNumAtoms() == 5);
   delete m3;
 
   m3 = MolOps::removeHs(*m2, false);
-  CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
+  REQUIRE(m3->getNumAtoms() == 4);
   delete m3;
   delete m2;
   delete m;
@@ -623,37 +623,37 @@ TEST_CASE("Testing Hydrogen Ops") {
       "C1C=C([C@H](N)C(=O)N[C@@]2([H])[C@]3([H])SC(C)(C)[C@@H](C(=O)O)N3C(=O)2)"
       "C=CC=1";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 24, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 24);
   m3 = MolOps::removeHs(*m, false);
-  CHECK_INVARIANT(m3->getNumAtoms() == 24, "");
+  REQUIRE(m3->getNumAtoms() == 24);
   delete m;
   delete m3;
 
   // RDTrack Issue 130:
   smi = "[H][N+]([H])([H])[H]";
   m = SmilesToMol(smi, false, false);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 5, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 5);
 
   m2 = MolOps::removeHs(*m, 0, false);
-  CHECK_INVARIANT(m2->getNumAtoms() == 1, "");
+  REQUIRE(m2->getNumAtoms() == 1);
   delete m;
   delete m2;
 
   smi = "[H][N+]([H])([H])[H]";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 1, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 1);
 
   delete m;
   smi = "[H][H]";
   m = SmilesToMol(smi, false, false);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 2, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 2);
 
   m2 = MolOps::removeHs(*m, 0, false);
-  CHECK_INVARIANT(m2->getNumAtoms() == 2, "");
+  REQUIRE(m2->getNumAtoms() == 2);
   delete m;
   delete m2;
 
@@ -687,39 +687,39 @@ TEST_CASE("Testing Hydrogen Ops") {
   // RDTrack Issue 1228:
   smi = "c1c[nH]cc1";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 5, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 5);
 
   m2 = MolOps::addHs(*m, false, false);
-  CHECK_INVARIANT(m2->getNumAtoms() == 10, "");
+  REQUIRE(m2->getNumAtoms() == 10);
 
   delete m;
   m = MolOps::removeHs(*m2);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 5, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 5);
   delete m;
   delete m2;
 
   // labelling:
   smi = "c1cn([H])cc1";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 5, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 5);
 
   m2 = MolOps::removeHs(*m);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 5, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 5);
   delete m;
   delete m2;
 
   smi = "c1cn([2H])cc1";
   m = SmilesToMol(smi);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 6, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 6);
 
   m2 = MolOps::removeHs(*m);
-  CHECK_INVARIANT(m, "");
-  CHECK_INVARIANT(m->getNumAtoms() == 6, "");
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 6);
   delete m;
   delete m2;
 
@@ -765,17 +765,17 @@ TEST_CASE("Testing Hydrogen Ops") {
     // test the onlyOnAtoms option (github #758)
     constexpr const char *smi = "CCC";
     m = SmilesToMol(smi);
-    CHECK_INVARIANT(m, "");
-    CHECK_INVARIANT(m->getNumAtoms() == 3, "");
+    REQUIRE(m);
+    REQUIRE(m->getNumAtoms() == 3);
 
     UINT_VECT onlyOn;
     onlyOn.push_back(0);
     onlyOn.push_back(2);
     m2 = MolOps::addHs(*m, false, false, &onlyOn);
-    CHECK_INVARIANT(m2->getNumAtoms() == 9, "");
-    CHECK_INVARIANT(m2->getAtomWithIdx(0)->getDegree() == 4, "");
-    CHECK_INVARIANT(m2->getAtomWithIdx(1)->getDegree() == 2, "");
-    CHECK_INVARIANT(m2->getAtomWithIdx(2)->getDegree() == 4, "");
+    REQUIRE(m2->getNumAtoms() == 9);
+    REQUIRE(m2->getAtomWithIdx(0)->getDegree() == 4);
+    REQUIRE(m2->getAtomWithIdx(1)->getDegree() == 2);
+    REQUIRE(m2->getAtomWithIdx(2)->getDegree() == 4);
     delete m;
     delete m2;
   }
@@ -1814,21 +1814,21 @@ TEST_CASE("Testing shortest path code") {
     ROMol *m = SmilesToMol(smi);
 
     INT_LIST path = MolOps::getShortestPath(*m, 1, 20);
-    CHECK_INVARIANT(path.size() == 7, "");
+    REQUIRE(path.size() == 7);
     INT_LIST_CI pi = path.begin();
-    CHECK_INVARIANT((*pi) == 1, "");
+    REQUIRE((*pi) == 1);
     pi++;
-    CHECK_INVARIANT((*pi) == 2, "");
+    REQUIRE((*pi) == 2);
     pi++;
-    CHECK_INVARIANT((*pi) == 3, "");
+    REQUIRE((*pi) == 3);
     pi++;
-    CHECK_INVARIANT((*pi) == 16, "");
+    REQUIRE((*pi) == 16);
     pi++;
-    CHECK_INVARIANT((*pi) == 17, "");
+    REQUIRE((*pi) == 17);
     pi++;
-    CHECK_INVARIANT((*pi) == 18, "");
+    REQUIRE((*pi) == 18);
     pi++;
-    CHECK_INVARIANT((*pi) == 20, "");
+    REQUIRE((*pi) == 20);
     pi++;
     delete m;
   }
@@ -1839,17 +1839,17 @@ TEST_CASE("Testing shortest path code") {
 
     INT_LIST path = MolOps::getShortestPath(*m, 0, 1);
     std::cerr << "path: " << path.size() << std::endl;
-    CHECK_INVARIANT(path.size() == 2, "");
+    REQUIRE(path.size() == 2);
     INT_LIST_CI pi = path.begin();
-    CHECK_INVARIANT((*pi) == 0, "");
+    REQUIRE((*pi) == 0);
     pi++;
-    CHECK_INVARIANT((*pi) == 1, "");
+    REQUIRE((*pi) == 1);
 
     path = MolOps::getShortestPath(*m, 1, 2);
-    CHECK_INVARIANT(path.size() == 0, "");
+    REQUIRE(path.size() == 0);
 
     path = MolOps::getShortestPath(*m, 0, 2);
-    CHECK_INVARIANT(path.size() == 0, "");
+    REQUIRE(path.size() == 0);
     delete m;
   }
   // fused ring test
@@ -1858,19 +1858,19 @@ TEST_CASE("Testing shortest path code") {
     ROMol *m = SmilesToMol(smi);
 
     INT_LIST path = MolOps::getShortestPath(*m, 8, 11);
-    CHECK_INVARIANT(path.size() == 7, "");
+    REQUIRE(path.size() == 7);
     INT_LIST_CI pi = path.begin();
-    CHECK_INVARIANT((*pi) == 8, "");
+    REQUIRE((*pi) == 8);
     pi++;
-    CHECK_INVARIANT((*pi) == 7, "");
+    REQUIRE((*pi) == 7);
     pi++;
-    CHECK_INVARIANT((*pi) == 2, "");
+    REQUIRE((*pi) == 2);
     pi++;
     pi++;  // two equally long routes here
     pi++;  // two equally long routes here
-    CHECK_INVARIANT((*pi) == 10, "");
+    REQUIRE((*pi) == 10);
     pi++;
-    CHECK_INVARIANT((*pi) == 11, "");
+    REQUIRE((*pi) == 11);
     pi++;
     delete m;
   }
@@ -2338,18 +2338,18 @@ TEST_CASE("Testing Add Confomers") {
     conf->setAtomPos(1, RDGeom::Point3D(1.5, 0.0, 0.0));
     m->addConformer(conf, true);
   }
-  CHECK_INVARIANT(m->getNumConformers() == 5, "");
+  REQUIRE(m->getNumConformers() == 5);
 
   ROMol *m2 = MolOps::addHs(*m, false, true);
-  CHECK_INVARIANT(m2->getNumConformers() == 5, "");
+  REQUIRE(m2->getNumConformers() == 5);
   // const ROMol::CONF_SPTR_LIST &confs = m2->getConformers();
   ROMol::ConstConformerIterator ci;
   i = 0;
   for (ci = m2->beginConformers(); ci != m2->endConformers(); ci++) {
-    CHECK_INVARIANT((*ci)->getNumAtoms() == 8, "");
-    CHECK_INVARIANT((*ci)->getId() == i, "");
+    REQUIRE((*ci)->getNumAtoms() == 8);
+    REQUIRE((*ci)->getId() == i);
     const ROMol *mn = &((*ci)->getOwningMol());
-    CHECK_INVARIANT(mn->getNumAtoms() == 8, "");
+    REQUIRE(mn->getNumAtoms() == 8);
     i++;
   }
   // std::cout << m2->getNumAtoms() << " " << m2->getNumConformers() << "\n";
@@ -2383,7 +2383,7 @@ TEST_CASE("testIssue252") {
   delete nmol;
 
   // This is a check for Issue253
-  CHECK_INVARIANT(asmi == nsmi, "");
+  REQUIRE(asmi == nsmi);
 }
 
 TEST_CASE("Issue 276") {
