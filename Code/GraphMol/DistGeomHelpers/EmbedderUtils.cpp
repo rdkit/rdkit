@@ -92,7 +92,6 @@ std::string embedParametersToJSON(const EmbedParameters &params,
 
   EMBED_PARAMS_FIELDS(PT_OPT_PUT)
 
-  // coordMap (inverse of reader)
   if (includeMaps && params.coordMap) {
     boost::property_tree::ptree coordMapPT;
 
