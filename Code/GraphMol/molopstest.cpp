@@ -2623,7 +2623,7 @@ TEST_CASE("Testing sf.net issue 1836576 (sanitization crash)") {
   std::unique_ptr<RWMol> m{SmilesToMol(smi, false, false)};
   REQUIRE(m);
 
-  unsigned int opThatFailed;
+  unsigned int opThatFailed = MolOps::SANITIZE_NONE;
   REQUIRE_THROWS_AS(MolOps::sanitizeMol(*m, opThatFailed),
                     MolSanitizeException);
   REQUIRE(opThatFailed == MolOps::SANITIZE_PROPERTIES);
