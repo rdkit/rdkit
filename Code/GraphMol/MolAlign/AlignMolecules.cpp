@@ -102,11 +102,19 @@ void getAllMatchesPrbRef(const ROMol &prbMol, const ROMol &refMol,
   if (ignoreHs) {
     // filter Hs out of the matches
     for (auto &match : matches) {
-      match.erase(std::remove_if(
-          match.begin(), match.end(),
+      auto tmatch = match;
+      match.clear();
+      std::copy_if(
+          tmatch.begin(), tmatch.end(), std::back_inserter(match),
           [&prbMolForMatch](const std::pair<int, int> &mi) {
-            return prbMolForMatch.getAtomWithIdx(mi.first)->getAtomicNum() == 1;
-          }));
+            return prbMolForMatch.getAtomWithIdx(mi.first)->getAtomicNum() != 1;
+          });
+      // match.erase(std::remove_if(
+      //     match.begin(), match.end(),
+      //     [&prbMolForMatch](const std::pair<int, int> &mi) {
+      //       return prbMolForMatch.getAtomWithIdx(mi.first)->getAtomicNum() ==
+      //       1;
+      //     }));
     }
   }
 }
@@ -209,6 +217,7 @@ double getBestRMSInternal(const ROMol &prbMol, const ROMol &refMol, int prbCid,
   if (bestMatch) {
     *bestMatch = *bestMatchPtr;
   }
+
   return sqrt(msdBest);
 }
 }  // namespace
@@ -315,6 +324,7 @@ std::vector<double> getAllConformerBestRMS(const ROMol &mol,
                         params.ignoreHs);
   }
   const auto &matches = params.map.empty() ? allMatches : params.map;
+
   std::vector<double> res;
   RDGeom::Transform3D trans;
   bool reflect = false;
