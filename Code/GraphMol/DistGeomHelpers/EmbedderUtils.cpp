@@ -87,7 +87,7 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
 }
 
 std::string embedParametersToJSON(const EmbedParameters &params,
-                                  const bool &includeMaps) {
+                                  const bool includeMaps) {
   boost::property_tree::ptree pt;
 
   EMBED_PARAMS_FIELDS(PT_OPT_PUT)

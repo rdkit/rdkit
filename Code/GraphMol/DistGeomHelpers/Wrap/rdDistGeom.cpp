@@ -302,7 +302,7 @@ python::tuple getExpTorsHelperWithParams(
 }
 
 python::str embedParametersToJSONHelper(const DGeomHelpers::EmbedParameters &ps,
-                                        const bool &includeMaps) {
+                                        const bool includeMaps) {
   return python::str(embedParametersToJSON(ps, includeMaps));
 }
 
