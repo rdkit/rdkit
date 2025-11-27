@@ -18,39 +18,50 @@
 namespace RDKit {
 namespace DGeomHelpers {
 
-#define PT_OPT_GET(opt) params.opt = pt.get(#opt, params.opt)
+#define EMBED_PARAMS_FIELDS(X)                    \
+  X(basinThresh)                                  \
+  X(boundsMatForceScaling)                        \
+  X(boxSizeMult)                                  \
+  X(clearConfs)                                   \
+  X(embedFragmentsSeparately)                     \
+  X(enableSequentialRandomSeeds)                  \
+  X(enforceChirality)                             \
+  X(ETversion)                                    \
+  X(forceTransAmides)                             \
+  X(ignoreSmoothingFailures)                      \
+  X(maxIterations)                                \
+  X(numThreads)                                   \
+  X(numZeroFail)                                  \
+  X(onlyHeavyAtomsForRMS)                         \
+  X(optimizerForceTol)                            \
+  X(pruneRmsThresh)                               \
+  X(randNegEig)                                   \
+  X(randomSeed)                                   \
+  X(symmetrizeConjugatedTerminalGroupsForPruning) \
+  X(timeout)                                      \
+  X(trackFailures)                                \
+  X(useBasicKnowledge)                            \
+  X(useExpTorsionAnglePrefs)                      \
+  X(useMacrocycle14config)                        \
+  X(useMacrocycleTorsions)                        \
+  X(useRandomCoords)                              \
+  X(useSmallRingTorsions)                         \
+  X(useSymmetryForPruning)                        \
+  X(verbose)
+
+#define PT_OPT_GET(opt) params.opt = pt.get(#opt, params.opt);
+#define PT_OPT_PUT(opt) pt.put(#opt, params.opt);
 
 void updateEmbedParametersFromJSON(EmbedParameters &params,
                                    const std::string &json) {
   if (json.empty()) {
     return;
   }
-  std::istringstream ss;
-  ss.str(json);
+  std::istringstream ss(json);
   boost::property_tree::ptree pt;
   boost::property_tree::read_json(ss, pt);
-  PT_OPT_GET(maxIterations);
-  PT_OPT_GET(numThreads);
-  PT_OPT_GET(randomSeed);
-  PT_OPT_GET(clearConfs);
-  PT_OPT_GET(useRandomCoords);
-  PT_OPT_GET(ignoreSmoothingFailures);
-  PT_OPT_GET(enforceChirality);
-  PT_OPT_GET(useExpTorsionAnglePrefs);
-  PT_OPT_GET(useBasicKnowledge);
-  PT_OPT_GET(pruneRmsThresh);
-  PT_OPT_GET(onlyHeavyAtomsForRMS);
-  PT_OPT_GET(ETversion);
-  PT_OPT_GET(embedFragmentsSeparately);
-  PT_OPT_GET(useSmallRingTorsions);
-  PT_OPT_GET(useMacrocycleTorsions);
-  PT_OPT_GET(useMacrocycle14config);
-  PT_OPT_GET(boundsMatForceScaling);
-  PT_OPT_GET(forceTransAmides);
-  PT_OPT_GET(useSymmetryForPruning);
-  PT_OPT_GET(enableSequentialRandomSeeds);
-  PT_OPT_GET(timeout);
-  PT_OPT_GET(symmetrizeConjugatedTerminalGroupsForPruning);
+
+  EMBED_PARAMS_FIELDS(PT_OPT_GET)
 
   std::map<int, RDGeom::Point3D> *cmap = nullptr;
   const auto coordMap = pt.get_child_optional("coordMap");
@@ -74,5 +85,36 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
     params.coordMap = cmap;
   }
 }
+
+std::string embedParametersToJSON(const EmbedParameters &params,
+                                  const bool &includeMaps) {
+  boost::property_tree::ptree pt;
+
+  EMBED_PARAMS_FIELDS(PT_OPT_PUT)
+
+  // coordMap (inverse of reader)
+  if (includeMaps && params.coordMap) {
+    boost::property_tree::ptree coordMapPT;
+
+    for (const auto &kv : *params.coordMap) {
+      boost::property_tree::ptree pointPT;
+      pointPT.push_back(
+          {"", boost::property_tree::ptree(std::to_string(kv.second.x))});
+      pointPT.push_back(
+          {"", boost::property_tree::ptree(std::to_string(kv.second.y))});
+      pointPT.push_back(
+          {"", boost::property_tree::ptree(std::to_string(kv.second.z))});
+
+      coordMapPT.add_child(std::to_string(kv.first), pointPT);
+    }
+
+    pt.add_child("coordMap", coordMapPT);
+  }
+
+  std::ostringstream ss;
+  boost::property_tree::write_json(ss, pt, false);
+  return ss.str();
+}
+
 }  // namespace DGeomHelpers
 }  // namespace RDKit

@@ -205,6 +205,10 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
 RDKIT_DISTGEOMHELPERS_EXPORT void updateEmbedParametersFromJSON(
     EmbedParameters &params, const std::string &json);
 
+//! export parameters to JSON string
+RDKIT_DISTGEOMHELPERS_EXPORT std::string embedParametersToJSON(
+    const EmbedParameters &params, const bool &includeMaps=false);
+
 //! Embed multiple conformations for a molecule
 RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(ROMol &mol, INT_VECT &res,
                                                      unsigned int numConfs,
