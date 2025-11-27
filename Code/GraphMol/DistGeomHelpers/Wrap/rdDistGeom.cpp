@@ -301,6 +301,11 @@ python::tuple getExpTorsHelperWithParams(
                           ps.useBasicKnowledge, ps.ETversion, ps.verbose);
 }
 
+python::str embedParametersToJSONHelper(const DGeomHelpers::EmbedParameters &ps,
+                                        const bool &includeMaps) {
+  return python::str(embedParametersToJSON(ps, includeMaps));
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -663,4 +668,18 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("doTriangleSmoothing") = true,
                python::arg("useMacrocycle14config") = false),
               docString.c_str());
+
+  docString =
+      "Returns json string containing embedParameters attributes\n\
+  \n\
+  ARGUMENTS:\n\n\
+    - embedParameters : the Params object you want serialized\n\
+    - includeMaps :  Whether to include maps, defaults to false\n\
+  RETURNS:\n\n\
+    The Params object as json string\n\
+  \n";
+  python::def(
+      "EmbedParametersToJSON", RDKit::embedParametersToJSONHelper,
+      (python::arg("embedParameters"), python::arg("includeMaps") = false),
+      docString.c_str());
 }
