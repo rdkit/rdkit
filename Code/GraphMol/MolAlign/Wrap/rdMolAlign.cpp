@@ -1,8 +1,6 @@
-// $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
-//
-//  Copyright (C) 2013 Paolo Tosco
+//  Copyright (C) 2004-2025 Greg Landrum, Paolo Tosco and other RDKit
+//  contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -28,6 +26,81 @@
 namespace python = boost::python;
 
 namespace RDKit {
+
+namespace MolAlign {
+struct pyBestAlignmentParams : public BestAlignmentParams {
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec;
+  pyBestAlignmentParams() = default;
+  pyBestAlignmentParams(int maxMatches_, bool symmetrizeTerminalGroups_,
+                        bool ignoreHs_, int numThreads_, python::object map_,
+                        python::object weights_)
+      : BestAlignmentParams(maxMatches_, symmetrizeTerminalGroups_, ignoreHs_,
+                            numThreads_, std::vector<MatchVectType>(),
+                            nullptr) {
+    unsigned int nAtms = 0;
+    if (map_ != python::object()) {
+      map = translateAtomMapSeq(map_);
+      if (!map.empty()) {
+        nAtms = map.front().size();
+      }
+    }
+
+    wtsVec.reset(translateDoubleSeq(weights_));
+    if (wtsVec) {
+      if (!map.empty() && wtsVec->size() != nAtms) {
+        throw_value_error("Incorrect number of weights specified");
+      }
+      weights = wtsVec.get();
+    }
+  }
+};
+}  // namespace MolAlign
+
+namespace {
+void setMapFromPyObject(MolAlign::pyBestAlignmentParams &params,
+                        python::object mapObj) {
+  if (mapObj != python::object()) {
+    params.map = translateAtomMapSeq(mapObj);
+  }
+}
+python::tuple getAtomMap(MolAlign::pyBestAlignmentParams &params) {
+  python::list mapList;
+  for (const auto &matchVect : params.map) {
+    python::list pairList;
+    for (const auto &pair : matchVect) {
+      python::tuple p = python::make_tuple(pair.first, pair.second);
+      pairList.append(p);
+    }
+    mapList.append(pairList);
+  }
+  return python::tuple(mapList);
+}
+void setWeightsFromPyObject(MolAlign::pyBestAlignmentParams &params,
+                            python::object weightsObj) {
+  if (weightsObj != python::object()) {
+    params.wtsVec.reset(translateDoubleSeq(weightsObj));
+    if (params.wtsVec) {
+      if (!params.map.empty() &&
+          params.wtsVec->size() != params.map.front().size()) {
+        throw_value_error(
+            "Number of weights specified do not match number of "
+            "atoms in the alignment map");
+      }
+      params.weights = params.wtsVec.get();
+    }
+  }
+}
+python::tuple getWeights(MolAlign::pyBestAlignmentParams &params) {
+  python::list weightsList;
+  if (params.weights) {
+    for (unsigned int i = 0; i < params.weights->size(); ++i) {
+      weightsList.append(params.weights->getVal(i));
+    }
+  }
+  return python::tuple(weightsList);
+}
+}  // namespace
+
 void alignMolConfs(ROMol &mol, python::object atomIds, python::object confIds,
                    python::object weights, bool reflect, unsigned int maxIters,
                    python::object RMSlist) {
@@ -117,37 +190,33 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
 }
 
 PyObject *getBestMolAlignTransform(
-    const ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
-    python::object map = python::list(), int maxMatches = 1000000,
-    bool symmetrizeTerminalGroups = true,
-    python::object weights = python::list(), bool reflect = false,
-    unsigned int maxIters = 50, int numThreads = 1) {
-  std::vector<MatchVectType> aMapVec;
-  unsigned int nAtms = 0;
-  if (map != python::object()) {
-    aMapVec = translateAtomMapSeq(map);
-    if (!aMapVec.empty()) {
-      nAtms = aMapVec.front().size();
-    }
-  }
-  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
-  if (wtsVec) {
-    if (wtsVec->size() != nAtms) {
-      throw_value_error("Incorrect number of weights specified");
-    }
-  }
+    const ROMol &prbMol, const ROMol &refMol,
+    const MolAlign::pyBestAlignmentParams &params, int prbCid = -1,
+    int refCid = -1, bool reflect = false, unsigned int maxIters = 50) {
   RDGeom::Transform3D bestTrans;
   MatchVectType bestMatch;
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::getBestAlignmentTransform(
-        prbMol, refMol, bestTrans, bestMatch, prbCid, refCid, aMapVec,
-        maxMatches, symmetrizeTerminalGroups, wtsVec.get(), reflect, maxIters,
-        numThreads);
+    rmsd = MolAlign::getBestAlignmentTransform(prbMol, refMol, bestTrans,
+                                               bestMatch, params, prbCid,
+                                               refCid, reflect, maxIters);
   }
 
   return generateRmsdTransMatchPyTuple(rmsd, bestTrans, &bestMatch);
+}
+
+PyObject *getBestMolAlignTransform2(
+    const ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    python::object map = python::list(), int maxMatches = 1000000,
+    bool symmetrizeTerminalGroups = true,
+    python::object weights = python::list(), bool reflect = false,
+    unsigned int maxIters = 50, int numThreads = 1) {
+  bool ignoreHs = false;
+  MolAlign::pyBestAlignmentParams params{
+      maxMatches, symmetrizeTerminalGroups, ignoreHs, numThreads, map, weights};
+  return getBestMolAlignTransform(prbMol, refMol, params, prbCid, refCid,
+                                  reflect, maxIters);
 }
 
 double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
@@ -177,46 +246,53 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
   return rmsd;
 }
 
-double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
-                  python::object map, int maxMatches,
-                  bool symmetrizeTerminalGroups,
-                  python::object weights = python::list(), int numThreads = 1) {
-  std::vector<MatchVectType> aMapVec;
-  if (map != python::object()) {
-    aMapVec = translateAtomMapSeq(map);
-  }
-  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
+double GetBestRMS2(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
+                   python::object map, int maxMatches,
+                   bool symmetrizeTerminalGroups,
+                   python::object weights = python::list(),
+                   int numThreads = 1) {
+  bool ignoreHs = false;
+  MolAlign::pyBestAlignmentParams params{
+      maxMatches, symmetrizeTerminalGroups, ignoreHs, numThreads, map, weights};
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec,
-                                maxMatches, symmetrizeTerminalGroups,
-                                wtsVec.get(), numThreads);
+    rmsd = MolAlign::getBestRMS(prbMol, refMol, params, prbId, refId);
+  }
+  return rmsd;
+}
+double GetBestRMS(ROMol &prbMol, ROMol &refMol,
+                  const MolAlign::pyBestAlignmentParams &params, int prbId,
+                  int refId) {
+  double rmsd;
+  {
+    NOGIL gil;
+    rmsd = MolAlign::getBestRMS(prbMol, refMol, params, prbId, refId);
   }
   return rmsd;
 }
 
-python::tuple GetAllConformerBestRMS(ROMol &mol, int numThreads,
-                                     python::object map, int maxMatches,
-                                     bool symmetrizeTerminalGroups,
-                                     python::object weights = python::list()) {
-  std::vector<MatchVectType> aMapVec;
-  if (map != python::object()) {
-    aMapVec = translateAtomMapSeq(map);
-  }
-  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
+python::tuple GetAllConformerBestRMS(
+    ROMol &mol, const MolAlign::pyBestAlignmentParams &params) {
   std::vector<double> rmsds;
   {
     NOGIL gil;
-    rmsds = MolAlign::getAllConformerBestRMS(
-        mol, numThreads, aMapVec, maxMatches, symmetrizeTerminalGroups,
-        wtsVec.get());
+    rmsds = MolAlign::getAllConformerBestRMS(mol, params);
   }
   python::list res;
   for (auto v : rmsds) {
     res.append(v);
   }
   return python::tuple(res);
+}
+python::tuple GetAllConformerBestRMS2(ROMol &mol, int numThreads,
+                                      python::object map, int maxMatches,
+                                      bool symmetrizeTerminalGroups,
+                                      python::object weights = python::list()) {
+  bool ignoreHs = false;
+  MolAlign::pyBestAlignmentParams params{
+      maxMatches, symmetrizeTerminalGroups, ignoreHs, numThreads, map, weights};
+  return GetAllConformerBestRMS(mol, params);
 }
 
 double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
@@ -583,10 +659,30 @@ python::tuple getCrippenO3AForConfs(
 }  // end of namespace MolAlign
 }  // end of namespace RDKit
 
+using namespace RDKit;
+
 BOOST_PYTHON_MODULE(rdMolAlign) {
   rdkit_import_array();
   python::scope().attr("__doc__") =
       "Module containing functions to align a molecule to a second molecule";
+
+  python::class_<MolAlign::pyBestAlignmentParams, boost::noncopyable>(
+      "BestAlignmentParams", "Parameters controlling RMSD alignment")
+      .def("__setattr__", &safeSetattr)
+      .def_readwrite("maxMatches", &MolAlign::BestAlignmentParams::maxMatches,
+                     "maximum number of substructure matches to consider")
+      .def_readwrite(
+          "symmetrizeConjugatedTerminalGroups",
+          &MolAlign::BestAlignmentParams::symmetrizeConjugatedTerminalGroups,
+          "if true, conjugated terminal functional groups (like nitro or carboxylate) will be considered symmetrically.")
+      .def_readwrite("ignoreHs", &MolAlign::BestAlignmentParams::ignoreHs,
+                     "if true, hydrogens will be ignored in the alignment")
+      .def_readwrite("numThreads", &MolAlign::BestAlignmentParams::numThreads,
+                     "number of threads to use")
+      .add_property("map", &getAtomMap, &setMapFromPyObject,
+                    "the atom-atom mapping(s) used in the alignment")
+      .add_property("weights", &getWeights, &setWeightsFromPyObject,
+                    "the weights used in the alignment");
 
   std::string docString =
       "Compute the transformation required to align a molecule\n\
@@ -657,13 +753,20 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
     \n";
 
   python::def(
-      "GetBestAlignmentTransform", RDKit::getBestMolAlignTransform,
+      "GetBestAlignmentTransform", RDKit::getBestMolAlignTransform2,
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbCid") = -1,
        python::arg("refCid") = -1, python::arg("map") = python::list(),
        python::arg("maxMatches") = 1000000,
        python::arg("symmetrizeConjugatedTerminalGroups") = true,
        python::arg("weights") = python::list(), python::arg("reflect") = false,
        python::arg("maxIters") = 50, python::arg("numThreads") = 1),
+      docString.c_str());
+
+  python::def(
+      "GetBestAlignmentTransform", RDKit::getBestMolAlignTransform,
+      (python::arg("prbMol"), python::arg("refMol"), python::arg("params"),
+       python::arg("prbCid") = -1, python::arg("refCid") = -1,
+       python::arg("reflect") = false, python::arg("maxIters") = 50),
       docString.c_str());
 
   docString =
@@ -733,12 +836,17 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       The best RMSD found\n\
     \n";
   python::def(
-      "GetBestRMS", RDKit::GetBestRMS,
+      "GetBestRMS", RDKit::GetBestRMS2,
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbId") = -1,
        python::arg("refId") = -1, python::arg("map") = python::object(),
        python::arg("maxMatches") = 1000000,
        python::arg("symmetrizeConjugatedTerminalGroups") = true,
        python::arg("weights") = python::list(), python::arg("numThreads") = 1),
+      docString.c_str());
+  python::def(
+      "GetBestRMS", RDKit::GetBestRMS,
+      (python::arg("prbMol"), python::arg("refMol"), python::arg("params"),
+       python::arg("prbId") = -1, python::arg("refId") = -1),
       docString.c_str());
 
   docString =
@@ -762,13 +870,15 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       RETURNS
       A tuple with the best RMSDS. The ordering is [(1,0),(2,0),(2,1),(3,0),... etc]
   )DOC";
-  python::def("GetAllConformerBestRMS", RDKit::GetAllConformerBestRMS,
+  python::def("GetAllConformerBestRMS", RDKit::GetAllConformerBestRMS2,
               (python::arg("mol"), python::arg("numThreads") = 1,
                python::arg("map") = python::object(),
                python::arg("maxMatches") = 1000000,
                python::arg("symmetrizeConjugatedTerminalGroups") = true,
                python::arg("weights") = python::list()),
               docString.c_str());
+  python::def("GetAllConformerBestRMS", RDKit::GetAllConformerBestRMS,
+              (python::arg("mol"), python::arg("params")), docString.c_str());
 
   docString =
       "Returns the RMS between two molecules, taking symmetry into account.\n\
