@@ -763,7 +763,7 @@ TEST_CASE("Testing Hydrogen Ops") {
 
   {
     // test the onlyOnAtoms option (github #758)
-    std::string smi = "CCC";
+    constexpr const char *smi = "CCC";
     m = SmilesToMol(smi);
     CHECK_INVARIANT(m, "");
     CHECK_INVARIANT(m->getNumAtoms() == 3, "");
@@ -1810,7 +1810,7 @@ TEST_CASE("Testing Issue 190: BondDirs incorrectly cleared") {
 
 TEST_CASE("Testing shortest path code") {
   {
-    std::string smi = "CC(OC1C(CCCC3)C3C(CCCC2)C2C1OC(C)=O)=O";
+    constexpr const char *smi = "CC(OC1C(CCCC3)C3C(CCCC2)C2C1OC(C)=O)=O";
     ROMol *m = SmilesToMol(smi);
 
     INT_LIST path = MolOps::getShortestPath(*m, 1, 20);
@@ -1834,7 +1834,7 @@ TEST_CASE("Testing shortest path code") {
   }
   {
     // issue 2219400
-    std::string smi = "CC.C";
+    constexpr const char *smi = "CC.C";
     ROMol *m = SmilesToMol(smi);
 
     INT_LIST path = MolOps::getShortestPath(*m, 0, 1);
@@ -1854,7 +1854,7 @@ TEST_CASE("Testing shortest path code") {
   }
   // fused ring test
   {
-    std::string smi = "[H]c1nc2c(C(=O)N([H])C2([H])Cl)c([H])c1Cl";
+    constexpr const char *smi = "[H]c1nc2c(C(=O)N([H])C2([H])Cl)c([H])c1Cl";
     ROMol *m = SmilesToMol(smi);
 
     INT_LIST path = MolOps::getShortestPath(*m, 8, 11);
@@ -1879,7 +1879,7 @@ TEST_CASE("Testing shortest path code") {
 TEST_CASE("Testing Issue 210") {
   ROMol *m, *m2;
 
-  std::string smi = "C1CC1";
+  constexpr const char *smi = "C1CC1";
   m = SmilesToMol(smi);
   REQUIRE(m);
   REQUIRE(m->getNumAtoms() == 3);
@@ -1896,7 +1896,7 @@ TEST_CASE("Testing Issue 210") {
 TEST_CASE("Testing Issue 211") {
   ROMol *m;
 
-  std::string smi = "P(c1ccccc1)(c1ccccc1)c1ccccc1";
+  constexpr const char *smi = "P(c1ccccc1)(c1ccccc1)c1ccccc1";
   m = SmilesToMol(smi);
   REQUIRE(m);
   REQUIRE(m->getNumAtoms() == 19);
@@ -1908,8 +1908,7 @@ TEST_CASE("Testing Issue 211") {
 
 TEST_CASE("Testing Issue 212") {
   ROMol *m, *m2;
-  std::string smi, mb;
-  smi = "C";
+  constexpr const char *smi = "C";
   m = SmilesToMol(smi);
   REQUIRE(m);
   REQUIRE(m->getNumAtoms() == 1);
@@ -2334,7 +2333,7 @@ TEST_CASE("Sanitization special cases") {
 }
 
 TEST_CASE("Testing Add Confomers") {
-  std::string smi = "CC";
+  constexpr const char *smi = "CC";
   ROMol *m = SmilesToMol(smi);
   unsigned int i;
   for (i = 0; i < 5; i++) {
@@ -2364,7 +2363,7 @@ TEST_CASE("Testing Add Confomers") {
 
 TEST_CASE("testIssue252") {
   // lets check if we can sanitize C60
-  std::string smi =
+  constexpr const char *smi =
       "C12=C3C4=C5C6=C1C7=C8C9=C1C%10=C%11C(=C29)C3=C2C3=C4C4=C5C5=C9C6=C7C6="
       "C7C8=C1C1=C8C%10=C%10C%11=C2C2=C3C3=C4C4=C5C5=C%11C%12=C(C6=C95)C7=C1C1="
       "C%12C5=C%11C4=C3C3=C5C(=C81)C%10=C23";
@@ -2392,7 +2391,7 @@ TEST_CASE("testIssue252") {
 }
 
 TEST_CASE("Issue 276") {
-  std::string smi = "CP1(C)=CC=CN=C1C";
+  constexpr const char *smi = "CP1(C)=CC=CN=C1C";
   ROMol *mol = SmilesToMol(smi);
   REQUIRE(mol);
   // as of this writing, I'm not 100% sure what the right answer is here,
@@ -3002,9 +3001,7 @@ TEST_CASE("Testing sf.net issue 1942657") {
 TEST_CASE("Testing sf.net issue 198608") {
   RWMol *m;
 
-  std::string smi;
-
-  smi = "C1CC1CC1CC1";
+  constexpr const char *smi = "C1CC1CC1CC1";
   m = SmilesToMol(smi);
   REQUIRE(m->getRingInfo()->minAtomRingSize(0) == 3);
   REQUIRE(m->getRingInfo()->minAtomRingSize(3) == 0);
@@ -3016,7 +3013,7 @@ TEST_CASE("Testing sf.net issue 198608") {
 TEST_CASE("Testing hybridization assignment") {
   {
     RWMol *m;
-    std::string smi = "CCC";
+    constexpr const char *smi = "CCC";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP3);
@@ -3026,7 +3023,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "CNC";
+    constexpr const char *smi = "CNC";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP3);
@@ -3036,7 +3033,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "COC";
+    constexpr const char *smi = "COC";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP3);
@@ -3046,7 +3043,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C[C-2]C";
+    constexpr const char *smi = "C[C-2]C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP3);
@@ -3056,7 +3053,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C[CH-]C";
+    constexpr const char *smi = "C[CH-]C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP3);
@@ -3066,7 +3063,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C[CH]C";
+    constexpr const char *smi = "C[CH]C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP3);
@@ -3076,7 +3073,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C[C]C";
+    constexpr const char *smi = "C[C]C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP3);
@@ -3086,7 +3083,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C[C-]C";
+    constexpr const char *smi = "C[C-]C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP3);
@@ -3096,7 +3093,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C[CH+]C";
+    constexpr const char *smi = "C[CH+]C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP2);
@@ -3106,7 +3103,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "CC=C";
+    constexpr const char *smi = "CC=C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP2);
@@ -3116,7 +3113,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "CN=C";
+    constexpr const char *smi = "CN=C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP2);
@@ -3126,7 +3123,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C[C-]=C";
+    constexpr const char *smi = "C[C-]=C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP2);
@@ -3136,7 +3133,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C[C]=C";
+    constexpr const char *smi = "C[C]=C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP2);
@@ -3146,7 +3143,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C[N+]=C";
+    constexpr const char *smi = "C[N+]=C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP2);
@@ -3156,7 +3153,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C#C";
+    constexpr const char *smi = "C#C";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP);
@@ -3165,7 +3162,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C#[C-]";
+    constexpr const char *smi = "C#[C-]";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP);
@@ -3174,7 +3171,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C#[C]";
+    constexpr const char *smi = "C#[C]";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP);
@@ -3183,7 +3180,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C[O]";
+    constexpr const char *smi = "C[O]";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP3);
@@ -3192,7 +3189,7 @@ TEST_CASE("Testing hybridization assignment") {
 
   {
     RWMol *m;
-    std::string smi = "C[N-]";
+    constexpr const char *smi = "C[N-]";
     m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::SP3);
@@ -3217,7 +3214,7 @@ TEST_CASE("Testing sf.net issue 2196817: handling of aromatic dummies") {
   }
 
   {
-    std::string smi = "*1cncc1";
+    constexpr const char *smi = "*1cncc1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getAtomicNum() == 0);
@@ -3226,7 +3223,7 @@ TEST_CASE("Testing sf.net issue 2196817: handling of aromatic dummies") {
   }
 
   {
-    std::string smi = "*1C=NC=C1";
+    constexpr const char *smi = "*1C=NC=C1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getAtomicNum() == 0);
@@ -3236,7 +3233,7 @@ TEST_CASE("Testing sf.net issue 2196817: handling of aromatic dummies") {
 
   {
     // case where all must be ignored:
-    std::string smi = "c1*ccc1-c1*ccc1-c1*ccc1";
+    constexpr const char *smi = "c1*ccc1-c1*ccc1-c1*ccc1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     delete m;
@@ -3287,14 +3284,14 @@ TEST_CASE("Testing sf.net issue 2196817: handling of aromatic dummies") {
   }
 
   {
-    std::string smi = "c1*[nH]cc1-c1*[nH]cc1-c1*[nH]cc1";
+    constexpr const char *smi = "c1*[nH]cc1-c1*[nH]cc1-c1*[nH]cc1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     delete m;
   }
 
   {
-    std::string smi = "c1ccc(C2CC(n4cc*c4=C2))cc1";
+    constexpr const char *smi = "c1ccc(C2CC(n4cc*c4=C2))cc1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getBondBetweenAtoms(0, 1)->getIsAromatic());
@@ -3423,7 +3420,7 @@ TEST_CASE("Testing sf.net issue 2196817: handling of aromatic dummies") {
 
 TEST_CASE("Testing sf.net issue 2208994 : kekulization error") {
   {
-    std::string smi = "Cn1ccc(=O)n1C";
+    constexpr const char *smi = "Cn1ccc(=O)n1C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getIsAromatic() == true);
@@ -3433,7 +3430,7 @@ TEST_CASE("Testing sf.net issue 2208994 : kekulization error") {
   }
 
   {
-    std::string smi = "c:1:c:c:c:c:c1";
+    constexpr const char *smi = "c:1:c:c:c:c:c1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getIsAromatic() == true);
@@ -3443,7 +3440,7 @@ TEST_CASE("Testing sf.net issue 2208994 : kekulization error") {
   }
 
   {
-    std::string smi = "c1:c:c:c:c:c:1";
+    constexpr const char *smi = "c1:c:c:c:c:c:1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getIsAromatic() == true);
@@ -3487,7 +3484,7 @@ TEST_CASE("Testing sf.net issue 2316677 : canonicalization error") {
 TEST_CASE(
     "Testing sf.net issue 2830244: make sure that non-ring aromatic atoms generate errors") {
   {
-    std::string smi = "c-C";
+    constexpr const char *smi = "c-C";
 
     RWMol *m = SmilesToMol(smi, 0, false);
     bool ok = false;
@@ -3500,7 +3497,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smi = "c-C";
+    constexpr const char *smi = "c-C";
 
     RWMol *m = SmilesToMol(smi, 0, false);
     bool ok = false;
@@ -3580,126 +3577,126 @@ TEST_CASE(
 TEST_CASE(
     "Testing sf.net issue 2952255 : bad assignment of radicals to early elements") {
   {
-    std::string smi = "[C](C)(C)C";
+    constexpr const char *smi = "[C](C)(C)C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
     delete m;
   }
   {
-    std::string smi = "[C](C)C";
+    constexpr const char *smi = "[C](C)C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 2);
     delete m;
   }
   {
-    std::string smi = "[CH](C)C";
+    constexpr const char *smi = "[CH](C)C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
     delete m;
   }
   {
-    std::string smi = "[CH+](C)C";
+    constexpr const char *smi = "[CH+](C)C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
     delete m;
   }
   {
-    std::string smi = "[C-](C)C";
+    constexpr const char *smi = "[C-](C)C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
     delete m;
   }
   {
-    std::string smi = "C(C)(C)(C)C";
+    constexpr const char *smi = "C(C)(C)(C)C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
     delete m;
   }
   {
-    std::string smi = "[N](C)C";
+    constexpr const char *smi = "[N](C)C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
     delete m;
   }
   {
-    std::string smi = "[N+](C)(C)C";
+    constexpr const char *smi = "[N+](C)(C)C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
     delete m;
   }
   {
-    std::string smi = "[Cl]";
+    constexpr const char *smi = "[Cl]";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
     delete m;
   }
   {
-    std::string smi = "[Cl-]";
+    constexpr const char *smi = "[Cl-]";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
     delete m;
   }
   {
-    std::string smi = "[Cl]C";
+    constexpr const char *smi = "[Cl]C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
     delete m;
   }
   {
-    std::string smi = "[Na]";
+    constexpr const char *smi = "[Na]";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
     delete m;
   }
   {
-    std::string smi = "[Na+]";
+    constexpr const char *smi = "[Na+]";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
     delete m;
   }
   {
-    std::string smi = "[Na]C";
+    constexpr const char *smi = "[Na]C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
     delete m;
   }
   {
-    std::string smi = "[Mg+]C";
+    constexpr const char *smi = "[Mg+]C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
     delete m;
   }
   {
-    std::string smi = "[Mg]C";
+    constexpr const char *smi = "[Mg]C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
     delete m;
   }
   {
-    std::string smi = "[Mg+]";
+    constexpr const char *smi = "[Mg+]";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
     delete m;
   }
   {
-    std::string smi = "[Mg+2]";
+    constexpr const char *smi = "[Mg+2]";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
@@ -3739,7 +3736,7 @@ TEST_CASE("Testing sf.net issue 3185548 : problems with SSSR code") {
 
 TEST_CASE("Testing Issue 3349243") {
   {
-    std::string smi = "c1cccc[n+]1";
+    constexpr const char *smi = "c1cccc[n+]1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     MolOps::Kekulize(*m);
@@ -3751,7 +3748,7 @@ TEST_CASE("Testing Issue 3349243") {
 
 TEST_CASE("Testing fast find rings") {
   {
-    std::string smi = "CCC";
+    constexpr const char *smi = "CCC";
     RWMol *m = SmilesToMol(smi, 0, 0);
     REQUIRE(m);
     MolOps::fastFindRings(*m);
@@ -3761,7 +3758,7 @@ TEST_CASE("Testing fast find rings") {
     delete m;
   }
   {
-    std::string smi = "C1CC1";
+    constexpr const char *smi = "C1CC1";
     RWMol *m = SmilesToMol(smi, 0, 0);
     REQUIRE(m);
     MolOps::fastFindRings(*m);
@@ -3772,7 +3769,7 @@ TEST_CASE("Testing fast find rings") {
   }
 
   {
-    std::string smi = "CC1CC1";
+    constexpr const char *smi = "CC1CC1";
     RWMol *m = SmilesToMol(smi, 0, 0);
     REQUIRE(m);
     MolOps::fastFindRings(*m);
@@ -3783,7 +3780,7 @@ TEST_CASE("Testing fast find rings") {
   }
 
   {
-    std::string smi = "C1CC1.C1CC1";
+    constexpr const char *smi = "C1CC1.C1CC1";
     RWMol *m = SmilesToMol(smi, 0, 0);
     REQUIRE(m);
     MolOps::fastFindRings(*m);
@@ -3793,7 +3790,7 @@ TEST_CASE("Testing fast find rings") {
     delete m;
   }
   {
-    std::string smi = "C1C(C)C1";
+    constexpr const char *smi = "C1C(C)C1";
     RWMol *m = SmilesToMol(smi, 0, 0);
     REQUIRE(m);
     MolOps::fastFindRings(*m);
@@ -3803,7 +3800,7 @@ TEST_CASE("Testing fast find rings") {
     delete m;
   }
   {
-    std::string smi = "c1c(=O)nc2[nH]cnn2c1O";
+    constexpr const char *smi = "c1c(=O)nc2[nH]cnn2c1O";
     RWMol *m = SmilesToMol(smi, 0, 0);
     REQUIRE(m);
     MolOps::fastFindRings(*m);
@@ -3816,7 +3813,7 @@ TEST_CASE("Testing fast find rings") {
 
 TEST_CASE("Testing Issue 3487473") {
   {
-    std::string smi = "C*C";
+    constexpr const char *smi = "C*C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getHybridization() == Atom::UNSPECIFIED);
@@ -3824,7 +3821,7 @@ TEST_CASE("Testing Issue 3487473") {
   }
 
   {
-    std::string smi = "C*C";
+    constexpr const char *smi = "C*C";
     RWMol *m = SmartsToMol(smi);
     REQUIRE(m);
     m->updatePropertyCache(false);
@@ -3943,7 +3940,7 @@ TEST_CASE("Testing canonicalization basics") {
   // these are all cases that were problematic at one time or another during
   // the canonicalization rewrite.
   {
-    std::string smi = "FC1C(=C/Cl)\\C1";
+    constexpr const char *smi = "FC1C(=C/Cl)\\C1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getBondBetweenAtoms(2, 3)->getBondType() == Bond::DOUBLE);
@@ -3976,7 +3973,8 @@ TEST_CASE("Testing canonicalization basics") {
   }
 
   {
-    std::string smi = "CC1(C)C2CCC1(C)C(=O)/C2=C\\C(N=N/c1ccccc1)=N/Nc1ccccc1";
+    constexpr const char *smi =
+        "CC1(C)C2CCC1(C)C(=O)/C2=C\\C(N=N/c1ccccc1)=N/Nc1ccccc1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getBondBetweenAtoms(10, 11)->getBondType() == Bond::DOUBLE);
@@ -4020,7 +4018,7 @@ TEST_CASE("Testing canonicalization basics") {
   }
 
   {
-    std::string smi = "COc1ccc(OC)c2[nH]c(=O)cc(C)c21";
+    constexpr const char *smi = "COc1ccc(OC)c2[nH]c(=O)cc(C)c21";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     // std::cerr<<"-------------\n";
@@ -4035,7 +4033,7 @@ TEST_CASE("Testing canonicalization basics") {
     delete m;
   }
   {
-    std::string smi = "COc1cc(C)c(C(=O)[O-])cc1OC";
+    constexpr const char *smi = "COc1cc(C)c(C(=O)[O-])cc1OC";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     // std::cerr<<"-------------\n";
@@ -4050,7 +4048,7 @@ TEST_CASE("Testing canonicalization basics") {
     delete m;
   }
   {
-    std::string smi = "COc1ccc(C(=O)OC(c2ccc(OC)cc2)C(C)O)cc1";
+    constexpr const char *smi = "COc1ccc(C(=O)OC(c2ccc(OC)cc2)C(C)O)cc1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     // std::cerr<<"-------------\n";
@@ -4065,7 +4063,7 @@ TEST_CASE("Testing canonicalization basics") {
     delete m;
   }
   {
-    std::string smi = "CC(C)C1CCC(C)=CC1=NNC(N)=O";
+    constexpr const char *smi = "CC(C)C1CCC(C)=CC1=NNC(N)=O";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     // std::cerr<<"-------------\n";
@@ -4080,7 +4078,8 @@ TEST_CASE("Testing canonicalization basics") {
     delete m;
   }
   {
-    std::string smi = "COCCNC(=O)c1ccccc1N1C(=O)C2(C)c3[nH]c4ccccc4c3CCN2C1=O";
+    constexpr const char *smi =
+        "COCCNC(=O)c1ccccc1N1C(=O)C2(C)c3[nH]c4ccccc4c3CCN2C1=O";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     // std::cerr<<"-------------\n";
@@ -4095,7 +4094,7 @@ TEST_CASE("Testing canonicalization basics") {
     delete m;
   }
   {
-    std::string smi = "Cc1c(Br)cc(Br)cc1C(F)(F)F";
+    constexpr const char *smi = "Cc1c(Br)cc(Br)cc1C(F)(F)F";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     // std::cerr<<"-------------\n";
@@ -4226,7 +4225,7 @@ TEST_CASE("Testing canonicalization basics") {
     delete m2;
   }
   {
-    std::string smi = "C\\N=c1/s/c(=N\\Cl)/c/1=N/F";
+    constexpr const char *smi = "C\\N=c1/s/c(=N\\Cl)/c/1=N/F";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     // std::cerr<<"-------------\n";
@@ -4241,7 +4240,7 @@ TEST_CASE("Testing canonicalization basics") {
     delete m;
   }
   {
-    std::string smi =
+    constexpr const char *smi =
         "Cc1ccc(S(=O)(=O)/N=c2sc(=N\\C(C)(C)C)/c\\2=N/C(C)(C)C)cc1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
@@ -4319,7 +4318,7 @@ TEST_CASE("Testing canonicalization basics") {
     delete m;
   }
   {
-    std::string smi = "F/C=C/C=C(C)/C=C/Cl";
+    constexpr const char *smi = "F/C=C/C=C(C)/C=C/Cl";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DOUBLE);
@@ -4408,7 +4407,7 @@ TEST_CASE("Testing sf.net issue 3549146: problems after mergeQueryHs") {
     delete m2;
   }
   {
-    std::string smi = "CCC.C";
+    constexpr const char *smi = "CCC.C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 4);
@@ -4424,7 +4423,7 @@ TEST_CASE("Testing sf.net issue 3549146: problems after mergeQueryHs") {
     delete m;
   }
   {
-    std::string smi = "C1CC1C";
+    constexpr const char *smi = "C1CC1C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 4);
@@ -4434,7 +4433,7 @@ TEST_CASE("Testing sf.net issue 3549146: problems after mergeQueryHs") {
     delete m;
   }
   {
-    std::string smi = "C1CC1C";
+    constexpr const char *smi = "C1CC1C";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 4);
@@ -4447,7 +4446,7 @@ TEST_CASE("Testing sf.net issue 3549146: problems after mergeQueryHs") {
 
 TEST_CASE("Testing sf.net issue 249: finding rings consumes all memory") {
   {
-    std::string smi =
+    constexpr const char *smi =
         "Cc1cc2cc(c1)C(=O)NCc1cc-3cc(CNC(=O)c4cc(C)cc(c4)C(=O)NCc4cc(cc(CNC2=O)"
         "c4O)-c2cc4CNC(=O)c5cc(C)cc(c5)C(=O)NCc5cc-3cc(CNC(=O)c3cc(C)cc(c3)C(="
         "O)NCc(c2)c4O)c5O)c1O";
@@ -4463,7 +4462,7 @@ TEST_CASE("Testing sf.net issue 249: finding rings consumes all memory") {
   }
 
   {
-    std::string smi =
+    constexpr const char *smi =
         "CCCOc1c2CNC(=O)c3cc(cc(c3)C(=O)NCc3cc4cc(CNC(=O)c5cc(C(=O)NCc1cc(c2)"
         "c1cc2CNC(=O)c6cc(cc(c6)C(=O)NCc6cc4cc(CNC(=O)c4cc(C(=O)NCc(c1)c2OCCC)"
         "cc(c4)C(=O)NC(COCCC(=O)O)(COCCC(=O)O)COCCC(=O)O)c6OCCC)C(=O)NC(COCCC(="
@@ -4481,7 +4480,7 @@ TEST_CASE("Testing sf.net issue 249: finding rings consumes all memory") {
   }
 
   {
-    std::string smi =
+    constexpr const char *smi =
         "CCn1nnc(c1)CN=C(C1CC2C3CCC4C5C3C3C6C2C2C1C1CCC7C(C1)C1C8C9C7C(C(=O)O)"
         "C(C(=O)O)C7C9C(C9C8C8C%10C1C1C(C2C2C6C6C%11C3C(C5)C3C(C(=O)O)C5C%"
         "12CC9C9C8C8C(C%10)C%10C%13C(C%14C(C2C1C(=O)O)C6C1C2C%11C3C3C5C(C5C%"
@@ -4499,7 +4498,7 @@ TEST_CASE("Testing sf.net issue 249: finding rings consumes all memory") {
   }
 
   {
-    std::string smi =
+    constexpr const char *smi =
         "C/C=N/"
         "c1ccc(cc1)c1cc2cc(c1)c1ccc(cc1)N=Cc1ccc(cc1)c1cc(cc(c1)c1ccc(cc1)C)"
         "c1ccc(cc1)C=Nc1ccc(cc1)c1cc(cc(c1)c1ccc(cc1)/N=C/"
@@ -4520,7 +4519,7 @@ TEST_CASE("Testing sf.net issue 249: finding rings consumes all memory") {
   }
 
   {
-    std::string smi =
+    constexpr const char *smi =
         "COc1cc2ccc1n1c(=O)n(c3ccc(cc3OC)c3ccc(c(c3)OC)n3c(=O)n(c4ccc(cc4OC)"
         "c4ccc(c(c4)OC)n4c(=O)n(c5ccc(cc5OC)c5ccc(n6c(=O)n(c7ccc(c8ccc(n9c(=O)"
         "n(c%10ccc(c%11ccc(n%12c(=O)n(c%13ccc2cc%13OC)c(=O)n(c%12=O)c2ccc("
@@ -4539,7 +4538,7 @@ TEST_CASE("Testing sf.net issue 249: finding rings consumes all memory") {
 
 TEST_CASE("Testing sf.net issue 256: bad atom counts") {
   {
-    std::string smi = "*CC[H]";
+    constexpr const char *smi = "*CC[H]";
     ROMol *m = SmilesToMol(smi, 0, 0);
     REQUIRE(m);
     m->updatePropertyCache(false);
@@ -4549,7 +4548,7 @@ TEST_CASE("Testing sf.net issue 256: bad atom counts") {
     delete m;
   }
   {
-    std::string smi = "*CC[2H]";
+    constexpr const char *smi = "*CC[2H]";
     ROMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 4);
@@ -4576,14 +4575,14 @@ TEST_CASE("Testing sf.net issue 266: ring finding error") {
 
 TEST_CASE("Testing sf.net issue 272: removing two-coordinate Hs") {
   {
-    std::string smi = "C[H-]C";
+    constexpr const char *smi = "C[H-]C";
     ROMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 3);
     delete m;
   }
   {
-    std::string smi = "C[H].C";
+    constexpr const char *smi = "C[H].C";
     ROMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 2);
@@ -4594,7 +4593,7 @@ TEST_CASE("Testing sf.net issue 272: removing two-coordinate Hs") {
 TEST_CASE(
     "Testing Github issue 8 (impact of removeAtom on bond stereo atoms)") {
   {
-    std::string smi = "Cl/C=C/Cl";
+    constexpr const char *smi = "Cl/C=C/Cl";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     MolOps::assignStereochemistry(*m);
@@ -4604,7 +4603,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smi = "CC/C=C/Cl";
+    constexpr const char *smi = "CC/C=C/Cl";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     MolOps::assignStereochemistry(*m);
@@ -4618,7 +4617,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smi = "C/C=C/CC";
+    constexpr const char *smi = "C/C=C/CC";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
     MolOps::assignStereochemistry(*m);
@@ -4639,7 +4638,8 @@ TEST_CASE("Testing Github issue 42 (impact of removeAtom on atom stereochem)") {
       "CCN1CCN(c2cc3[nH]c(C(=O)[C@@]4(CC)CC[C@](C)(O)CC4)nc3cc2Cl)CC1";
   RWMol *m = SmilesToMol(smi);
   REQUIRE(m);
-  int indices[] = {29, 28, 27, 26, 25, 24, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1};
+  constexpr int indices[] = {29, 28, 27, 26, 25, 24, 8, 7,
+                             6,  5,  4,  3,  2,  1,  0, -1};
   for (unsigned int i = 0; indices[i] > -1; ++i) {
     m->removeAtom((unsigned int)indices[i]);
   }
@@ -4650,7 +4650,7 @@ TEST_CASE("Testing Github issue 42 (impact of removeAtom on atom stereochem)") {
 
 TEST_CASE(
     "Testing Github issue 65 (kekulization of boron-containing aromatic rings)") {
-  std::string smi = "C[B-]1=CC=CC=C1";
+  constexpr const char *smi = "C[B-]1=CC=CC=C1";
   RWMol *m = SmilesToMol(smi);
   REQUIRE(m);
   REQUIRE(m->getAtomWithIdx(1)->getIsAromatic());
@@ -4756,21 +4756,21 @@ void _renumberTest(const ROMol *m) {
 
 TEST_CASE("Testing renumbering atoms") {
   {
-    std::string smiles = "CC1CCCC(C)C1C";
+    constexpr const char *smiles = "CC1CCCC(C)C1C";
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     _renumberTest(m);
     delete m;
   }
   {
-    std::string smiles = "C[C@H]1C[C@H](F)C1";
+    constexpr const char *smiles = "C[C@H]1C[C@H](F)C1";
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     _renumberTest(m);
     delete m;
   }
   {
-    std::string smiles = "C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1";
+    constexpr const char *smiles = "C[C@H]1CC[C@H](C/C=C/[C@H](F)Cl)CC1";
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     _renumberTest(m);
@@ -4799,7 +4799,7 @@ TEST_CASE("Testing renumbering atoms") {
 }
 TEST_CASE(
     "Testing github issue 141: Kekulization of molecule with aromatic N leaves the explicit H there") {
-  std::string smiles = "N1C=CC=C1";
+  constexpr const char *smiles = "N1C=CC=C1";
   RWMol *m = SmilesToMol(smiles);
   REQUIRE(m);
   MolOps::Kekulize(*m, true);
@@ -4857,7 +4857,7 @@ TEST_CASE("Testing ZBO basics") {
 }
 
 TEST_CASE("Testing operator= on molecules") {
-  std::string smi =
+  constexpr const char *smi =
       "CCN1CCN(c2cc3[nH]c(C(=O)[C@@]4(CC)CC[C@](C)(O)CC4)nc3cc2Cl)CC1";
   RWMol *m = SmilesToMol(smi);
   REQUIRE(m);
@@ -4877,7 +4877,7 @@ TEST_CASE("Testing operator= on molecules") {
 }
 
 TEST_CASE("Testing github issue 190: Don't merge Hs onto dummy atoms") {
-  std::string smiles = "*[H]";
+  constexpr const char *smiles = "*[H]";
   RWMol *m = SmilesToMol(smiles);
   REQUIRE(m);
   REQUIRE(m->getNumAtoms() == 2);
@@ -4891,7 +4891,7 @@ inline int getAtNum(const ROMol &, const Atom *at) {
 }  // namespace
 TEST_CASE("Testing getMolFragsWithQuery()") {
   {
-    std::string smiles = "C1CCC1ONNC";
+    constexpr const char *smiles = "C1CCC1ONNC";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 8);
@@ -4925,7 +4925,7 @@ TEST_CASE("Testing getMolFragsWithQuery()") {
     delete m;
   }
   {
-    std::string smiles = "C1CCC1ONNC";
+    constexpr const char *smiles = "C1CCC1ONNC";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 8);
@@ -4956,7 +4956,7 @@ TEST_CASE("Testing getMolFragsWithQuery()") {
     delete m;
   }
   {
-    std::string smiles = "C1CCC1ONNC";
+    constexpr const char *smiles = "C1CCC1ONNC";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 8);
@@ -5002,7 +5002,7 @@ TEST_CASE("Testing github issue 418: removeHs not updating H count") {
     delete m2;
   }
   {
-    std::string smiles = "[H][N+]([H])([H])[H]";
+    constexpr const char *smiles = "[H][N+]([H])([H])[H]";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 1);
@@ -5010,7 +5010,7 @@ TEST_CASE("Testing github issue 418: removeHs not updating H count") {
     delete m;
   }
   {
-    std::string smiles = "[H]N([H])([H])[H]";
+    constexpr const char *smiles = "[H]N([H])([H])[H]";
     bool ok = false;
     try {
       SmilesToMol(smiles);
@@ -5024,7 +5024,7 @@ TEST_CASE("Testing github issue 418: removeHs not updating H count") {
 TEST_CASE(
     "Testing github issue 432: problems caused by aromatic Ns with radical electrons") {
   {
-    std::string smiles = "C1=NN=N[N]1";
+    constexpr const char *smiles = "C1=NN=N[N]1";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(4)->getNumRadicalElectrons() == 1);
@@ -5054,7 +5054,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smiles = "C1=C[N]C=C1";
+    constexpr const char *smiles = "C1=C[N]C=C1";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
@@ -5107,7 +5107,7 @@ TEST_CASE(
 TEST_CASE(
     "Testing github issue 447: Radicals are not correctly assigned when reading from SMILES") {
   {
-    std::string smiles = "C[S]";
+    constexpr const char *smiles = "C[S]";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getNoImplicit());
@@ -5115,7 +5115,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smiles = "C[SH]C";
+    constexpr const char *smiles = "C[SH]C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getNoImplicit());
@@ -5123,7 +5123,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smiles = "C[SH3]C";
+    constexpr const char *smiles = "C[SH3]C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getNoImplicit());
@@ -5131,7 +5131,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smiles = "C[SH4]C";
+    constexpr const char *smiles = "C[SH4]C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getNoImplicit());
@@ -5139,7 +5139,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smiles = "C[SH3]C";
+    constexpr const char *smiles = "C[SH3]C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getNoImplicit());
@@ -5147,7 +5147,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smiles = "C[SH2+]C";
+    constexpr const char *smiles = "C[SH2+]C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getNoImplicit());
@@ -5156,7 +5156,7 @@ TEST_CASE(
   }
 
   {
-    std::string smiles = "C[P]C";
+    constexpr const char *smiles = "C[P]C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getNoImplicit());
@@ -5164,7 +5164,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smiles = "C[PH2]C";
+    constexpr const char *smiles = "C[PH2]C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(1)->getNoImplicit());
@@ -5175,7 +5175,7 @@ TEST_CASE(
 
 TEST_CASE("Testing generation of new molecules from molecule fragments") {
   {
-    std::string smiles = "c1ccccc1.O.CCC(=O)O";
+    constexpr const char *smiles = "c1ccccc1.O.CCC(=O)O";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
 
@@ -5207,7 +5207,8 @@ TEST_CASE("Testing generation of new molecules from molecule fragments") {
     pathName += "/Code/GraphMol/test_data/";
     RWMol *m = MolFileToMol(pathName + "chembl1203199.mol");
     REQUIRE(m);
-    std::string smi = "C[C@H](NC(=O)[C@H]1Cc2c(sc3ccccc23)CN1)c1ccccc1.Cl";
+    constexpr const char *smi =
+        "C[C@H](NC(=O)[C@H]1Cc2c(sc3ccccc23)CN1)c1ccccc1.Cl";
     REQUIRE(MolToSmiles(*m, true) == smi);
 
     INT_VECT fragsMapping;
@@ -5250,7 +5251,7 @@ TEST_CASE("Testing generation of new molecules from molecule fragments") {
     delete m;
   }
   {  // confirm bond-only stereogroups are not removed during GetmolFrags
-    std::string smiles =
+    constexpr const char *smiles =
         "Cc1cccc(Cl)c1-c1c(C)cccc1I.Cc1cccc(F)c1-c1c(C)cccc1Cl |wD:8.15,wU:23.23,o1:23,&1:8|";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
@@ -5307,14 +5308,15 @@ TEST_CASE("Testing github issue 510: Hexafluorophosphate cannot be handled") {
 TEST_CASE(
     "Testing github issue 526: Bad ring finding in a complex fused ring") {
   {
-    std::string smiles = "N1C2[C@@H]3N[C@H]4[C@@H]5N[C@@H]([C@@H]1C35)C24";
+    constexpr const char *smiles =
+        "N1C2[C@@H]3N[C@H]4[C@@H]5N[C@@H]([C@@H]1C35)C24";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getRingInfo()->numRings() == 6);
     delete m;
   }
   {
-    std::string smiles =
+    constexpr const char *smiles =
         "NN1C2C3[C@@H]4[C@@H]1C1[C@H]2N([C@H]3[C@@H]1N4N1C(=O)C2=C(C=CC=C2)C1="
         "O)N1C(=O)C2=C(C=CC=C2)C1=O";
     RWMol *m = SmilesToMol(smiles);
@@ -5327,7 +5329,7 @@ TEST_CASE(
 TEST_CASE(
     "Testing github issue 539: Lack of conjugation in allyl cations, lack of aromaticity perception/ability to kekulize aromatic carbocations such as cyclopropenyl and tropylium") {
   {
-    std::string smiles = "C=C-[CH2+]";
+    constexpr const char *smiles = "C=C-[CH2+]";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     bool allConjugated = true;
@@ -5362,7 +5364,7 @@ TEST_CASE(
   }
 
   {
-    std::string smiles = "C=C-C";
+    constexpr const char *smiles = "C=C-C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(2)->getHybridization() == Atom::SP3);
@@ -5372,7 +5374,7 @@ TEST_CASE(
   }
 
   {
-    std::string smiles = "C=C-O";
+    constexpr const char *smiles = "C=C-O";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(2)->getHybridization() == Atom::SP2);
@@ -5382,7 +5384,7 @@ TEST_CASE(
   }
 
   {
-    std::string smiles = "C=C-N";
+    constexpr const char *smiles = "C=C-N";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(2)->getHybridization() == Atom::SP2);
@@ -5392,7 +5394,7 @@ TEST_CASE(
   }
 
   {
-    std::string smiles = "C=C-[NH3+]";
+    constexpr const char *smiles = "C=C-[NH3+]";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getAtomWithIdx(2)->getHybridization() == Atom::SP3);
@@ -5401,7 +5403,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smiles = "Cc1ccccc1";
+    constexpr const char *smiles = "Cc1ccccc1";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getBondWithIdx(0)->getBondType() == Bond::SINGLE);
@@ -5413,7 +5415,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smiles = "Fc1c[nH]c(=O)[nH]c1=O";
+    constexpr const char *smiles = "Fc1c[nH]c(=O)[nH]c1=O";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getBondWithIdx(0)->getBondType() == Bond::SINGLE);
@@ -5649,8 +5651,8 @@ TEST_CASE("Testing adjustQueryProperties()") {
     delete aqm;
   }
   {  // CTAB
-    //  -- only match rgroups
-    std::string mb =
+     //  -- only match rgroups
+    constexpr const char *mb =
         "adjust.mol\n"
         "  ChemDraw06271617272D\n"
         "\n"
@@ -5704,8 +5706,8 @@ TEST_CASE("Testing adjustQueryProperties()") {
   }
 
   {  // CTAB
-    //  -- match non rgroups if mapped
-    std::string mb =
+     //  -- match non rgroups if mapped
+    constexpr const char *mb =
         "adjust.mol\n"
         "  ChemDraw06271617272D\n"
         "\n"
@@ -5752,7 +5754,7 @@ TEST_CASE("Testing adjustQueryProperties()") {
     delete t;
   }
   {  // make atoms generic
-    std::string smiles = "C1CC1CC";
+    constexpr const char *smiles = "C1CC1CC";
     ROMol *qm = SmilesToMol(smiles);
     REQUIRE(qm);
     REQUIRE(qm->getNumAtoms() == 5);
@@ -5768,7 +5770,7 @@ TEST_CASE("Testing adjustQueryProperties()") {
       {
         MatchVectType match;
         REQUIRE(SubstructMatch(*qm, *aqm, match));
-        std::string smiles = "O1CN1NN";
+        constexpr const char *smiles = "O1CN1NN";
         ROMol *m = SmilesToMol(smiles);
         // std::cerr << MolToSmiles(*m) << std::endl;
 
@@ -5836,7 +5838,7 @@ TEST_CASE("Testing adjustQueryProperties()") {
   }
 
   {  // make bonds generic
-    std::string smiles = "N1C=C1C=C";
+    constexpr const char *smiles = "N1C=C1C=C";
     ROMol *qm = SmilesToMol(smiles);
     REQUIRE(qm);
     REQUIRE(qm->getNumAtoms() == 5);
@@ -5851,7 +5853,7 @@ TEST_CASE("Testing adjustQueryProperties()") {
       {
         MatchVectType match;
         REQUIRE(SubstructMatch(*qm, *aqm, match));
-        std::string smiles = "N1=CC1=CC";
+        constexpr const char *smiles = "N1=CC1=CC";
         ROMol *m = SmilesToMol(smiles);
         REQUIRE(m);
         REQUIRE(!SubstructMatch(*m, *qm, match));
@@ -5987,7 +5989,7 @@ TEST_CASE("Testing adjustQueryProperties()") {
 TEST_CASE(
     "Testing github issue 678: failure in AddHs when addCoords is true and coords are all zero") {
   {
-    std::string smiles = "CC";
+    constexpr const char *smiles = "CC";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     auto *conf = new Conformer(2);
@@ -5998,7 +6000,7 @@ TEST_CASE(
   }
 
   {  // single connected atom with degenerate coords
-    std::string mb =
+    constexpr const char *mb =
         "example\n"
         "  Mrv0541 12171503572D          \n"
         "\n"
@@ -6033,7 +6035,7 @@ TEST_CASE(
     delete m;
   }
   {  // doubly connected atom(s) with degenerate coords
-    std::string mb =
+    constexpr const char *mb =
         "example\n"
         "  Mrv0541 12171503572D          \n"
         "\n"
@@ -6069,7 +6071,7 @@ TEST_CASE(
   }
 
   {  // triply connected atom(s) with degenerate coords
-    std::string mb =
+    constexpr const char *mb =
         "example\n"
         "  Mrv0541 12171503572D          \n"
         "\n"
@@ -6108,7 +6110,7 @@ TEST_CASE(
 TEST_CASE(
     "Testing github issue 717: AddHs cip rank is declared <int> should be unsigned int") {
   // single connected atom with degenerate coords
-  std::string mb =
+  constexpr const char *mb =
       "mol\n"
       "  Mrv1561 01051606293D\n"
       "\n"
@@ -6138,7 +6140,7 @@ TEST_CASE("Testing findPotentialStereoBonds") {
   {  // starting point: full sanitization
     auto m1 = "BrC(=NN=c1nn[nH][nH]1)c1ccncc1"_smiles;
     REQUIRE(m1);
-    std::string smiles =
+    constexpr const char *smiles =
         "Br/C(=N\\N=c1/nn[nH][nH]1)c1ccncc1";  // possible problem reported by
                                                // Steve Roughley
     ROMol *m = SmilesToMol(smiles);
@@ -6168,7 +6170,7 @@ TEST_CASE("Testing findPotentialStereoBonds") {
 
   // this next block is for github1230: FindPotentialStereoBonds() failure
   {  // simple
-    std::string smiles = "CC=CC";
+    constexpr const char *smiles = "CC=CC";
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 4);
@@ -6181,7 +6183,7 @@ TEST_CASE("Testing findPotentialStereoBonds") {
     delete m;
   }
   {  // simple2
-    std::string smiles = "CC=C(C)C";
+    constexpr const char *smiles = "CC=C(C)C";
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 5);
@@ -6194,7 +6196,7 @@ TEST_CASE("Testing findPotentialStereoBonds") {
     delete m;
   }
   {  // the real problem
-    std::string smiles = "CC/C=C/C(\\C=C/CC)=C(CC)CO";
+    constexpr const char *smiles = "CC/C=C/C(\\C=C/CC)=C(CC)CO";
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 14);
@@ -6215,7 +6217,7 @@ TEST_CASE("Testing findPotentialStereoBonds") {
     delete m;
   }
   {  // repeat the real problem, but set the cleanIt argument to false
-    std::string smiles = "CC/C=C/C(\\C=C/CC)=C(CC)CO";
+    constexpr const char *smiles = "CC/C=C/C(\\C=C/CC)=C(CC)CO";
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 14);
@@ -6237,7 +6239,7 @@ TEST_CASE("Testing findPotentialStereoBonds") {
   }
 
   {  // just do document that we still don't do this one, which is much harder
-    std::string smiles = "CC/C=C/C(/C=C/CC)=C(CC)CO";
+    constexpr const char *smiles = "CC/C=C/C(/C=C/CC)=C(CC)CO";
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 14);
@@ -6262,12 +6264,12 @@ TEST_CASE("Testing findPotentialStereoBonds") {
 TEST_CASE("Testing Bond::setStereo(Bond::STEREOCIS / Bond::STEREOTRANS)") {
   // tests to make sure neighboring bond stereo is handled properly
   {
-    const char *smiles[] = {"CC=CC",         "CC=C/C=C/C",    "CC=C/C=C\\C",
-                            "CC=C\\C=C/C",   "CC=C\\C=C\\C",  "C(C)=CC",
-                            "C(C)=C/C=C/C",  "C(C)=C/C=C\\C", "C(C)=C\\C=C/C",
-                            "C(C)=C\\C=C\\C"};
-    const Bond::BondStereo stereos[] = {Bond::STEREOCIS, Bond::STEREOTRANS};
-    const Bond::BondStereo ezstros[] = {Bond::STEREOZ, Bond::STEREOE};
+    constexpr const char *smiles[] = {
+        "CC=CC",         "CC=C/C=C/C",    "CC=C/C=C\\C",  "CC=C\\C=C/C",
+        "CC=C\\C=C\\C",  "C(C)=CC",       "C(C)=C/C=C/C", "C(C)=C/C=C\\C",
+        "C(C)=C\\C=C/C", "C(C)=C\\C=C\\C"};
+    constexpr Bond::BondStereo stereos[] = {Bond::STEREOCIS, Bond::STEREOTRANS};
+    constexpr Bond::BondStereo ezstros[] = {Bond::STEREOZ, Bond::STEREOE};
 
     for (auto &smile : smiles) {
       ROMol *m = SmilesToMol(smile);
@@ -6306,8 +6308,9 @@ TEST_CASE("Testing Bond::setStereo(Bond::STEREOCIS / Bond::STEREOTRANS)") {
   // tests enumerating all possible smiles with halogens still yield
   // the same isomeric canonical smiles strings.
   {
-    const char *smiles[] = {"ClC=CF", "FC=CCl", "C(Cl)=CF", "C(F)=CCl"};
-    const Bond::BondStereo stereos[] = {Bond::STEREOCIS, Bond::STEREOTRANS};
+    constexpr const char *smiles[] = {"ClC=CF", "FC=CCl", "C(Cl)=CF",
+                                      "C(F)=CCl"};
+    constexpr Bond::BondStereo stereos[] = {Bond::STEREOCIS, Bond::STEREOTRANS};
 
     for (auto desired_stereo : stereos) {
       std::string refSmiles;
@@ -6339,7 +6342,7 @@ TEST_CASE("Testing Bond::setStereoAtoms(...)") {
   // tests to make sure setStereoAtoms works as expected
 
   bool doIsomericSmiles = true;
-  std::string unspec_smiles = "FC(Cl)=C(Br)I";
+  constexpr const char *unspec_smiles = "FC(Cl)=C(Br)I";
 
   ROMol *m = SmilesToMol(unspec_smiles);
 
@@ -6390,7 +6393,7 @@ TEST_CASE("Testing Bond::setStereoAtoms(...)") {
 
 TEST_CASE("Testing github #754 : loss of double bond geometry with removeHs") {
   {  // starting point: full sanitization
-    std::string smiles =
+    constexpr const char *smiles =
         "[H]C([H])([H])/C([H])=C(/[H])C([H])([H])[H]";  // possible problem
                                                         // reported by
                                                         // Steve Roughley
@@ -6411,7 +6414,7 @@ TEST_CASE("Testing github #754 : loss of double bond geometry with removeHs") {
     delete m;
   }
   {  // another basic test
-    std::string smiles = "[H]/C(C)=C/C";
+    constexpr const char *smiles = "[H]/C(C)=C/C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 4);
@@ -6420,7 +6423,7 @@ TEST_CASE("Testing github #754 : loss of double bond geometry with removeHs") {
     delete m;
   }
   {  // H following the C:
-    std::string smiles = "CC(\\[H])=C/C";
+    constexpr const char *smiles = "CC(\\[H])=C/C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 4);
@@ -6429,7 +6432,7 @@ TEST_CASE("Testing github #754 : loss of double bond geometry with removeHs") {
     delete m;
   }
   {  // bond dir already set :
-    std::string smiles = "[H]/C(/C)=C\\C";
+    constexpr const char *smiles = "[H]/C(/C)=C\\C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 4);
@@ -6439,7 +6442,7 @@ TEST_CASE("Testing github #754 : loss of double bond geometry with removeHs") {
   }
 
   {  // chained bonds :
-    std::string smiles = "[H]/C(C=C/C)=C\\C";
+    constexpr const char *smiles = "[H]/C(C=C/C)=C\\C";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 6);
@@ -6489,7 +6492,7 @@ TEST_CASE("Testing github #805 : Pre-condition Violation: bad bond type") {
 TEST_CASE(
     "Testing github #518 : Rings containing all dummy atoms with single bonds are flagged as aromatic") {
   {
-    std::string smi = "*-1-*-*-*-1";
+    constexpr const char *smi = "*-1-*-*-*-1";
     ROMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 4);
@@ -6500,7 +6503,7 @@ TEST_CASE(
     delete m;
   }
   {  // in this case we leave it aromatic since it's all dummies
-    std::string smi = "*:1:*:*:*:1";
+    constexpr const char *smi = "*:1:*:*:*:1";
     ROMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 4);
@@ -6510,7 +6513,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smi = "*-1-*-C-*-*-*-1";
+    constexpr const char *smi = "*-1-*-C-*-*-*-1";
     ROMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 6);
@@ -6521,7 +6524,7 @@ TEST_CASE(
     delete m;
   }
   {
-    std::string smi = "C1=CC=*2*(=C1)*1=CC=CC=*1*1=CC=CC=*21";
+    constexpr const char *smi = "C1=CC=*2*(=C1)*1=CC=CC=*1*1=CC=CC=*21";
     ROMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 18);
@@ -6538,7 +6541,7 @@ TEST_CASE(
 
 TEST_CASE("Testing simple aromaticity") {
   {
-    std::string smiles = "c1ccccc1";
+    constexpr const char *smiles = "c1ccccc1";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getBondWithIdx(0)->getIsAromatic() == true);
@@ -6552,7 +6555,7 @@ TEST_CASE("Testing simple aromaticity") {
     delete m;
   }
   {
-    std::string smiles = "c1[nH]ccc1";
+    constexpr const char *smiles = "c1[nH]ccc1";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getBondWithIdx(0)->getIsAromatic() == true);
@@ -6566,7 +6569,7 @@ TEST_CASE("Testing simple aromaticity") {
     delete m;
   }
   {  // ring size constraints
-    std::string smiles = "c1cccoocc1";
+    constexpr const char *smiles = "c1cccoocc1";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getBondWithIdx(0)->getIsAromatic() == true);
@@ -6580,7 +6583,7 @@ TEST_CASE("Testing simple aromaticity") {
     delete m;
   }
   {  // ring size constraints
-    std::string smiles = "c1coo1";
+    constexpr const char *smiles = "c1coo1";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getBondWithIdx(0)->getIsAromatic() == true);
@@ -6594,7 +6597,7 @@ TEST_CASE("Testing simple aromaticity") {
     delete m;
   }
   {  // fused rings are not considered
-    std::string smiles = "C1=CC2=CC=CC=CC2=C1";  // azulene
+    constexpr const char *smiles = "C1=CC2=CC=CC=CC2=C1";  // azulene
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getBondWithIdx(0)->getIsAromatic() == true);
@@ -6613,7 +6616,7 @@ TEST_CASE("Testing MMFF94 aromaticity") {
   // test one known difference between RDKit and MMFF94 aromaticity models:
   // the latter does not recognize azulene as aromatic
 
-  std::string smiles = "C1=CC=C2C=CC=C2C=C1";
+  constexpr const char *smiles = "C1=CC=C2C=CC=C2C=C1";
   RWMol *m = SmilesToMol(smiles);
   MolOps::Kekulize(*m, true);
 
@@ -6655,7 +6658,7 @@ int customAromaticity(RWMol &m) {
 
 TEST_CASE("Testing custom aromaticity") {
   {
-    std::string smiles = "C1=CC=CC=C1";
+    constexpr const char *smiles = "C1=CC=CC=C1";
     RWMol *m = SmilesToMol(smiles, 0, false);
     REQUIRE(m);
     REQUIRE(m->getBondWithIdx(0)->getIsAromatic() == false);
@@ -6666,7 +6669,7 @@ TEST_CASE("Testing custom aromaticity") {
     delete m;
   }
   {
-    std::string smiles = "C1CC=CC=C1";
+    constexpr const char *smiles = "C1CC=CC=C1";
     RWMol *m = SmilesToMol(smiles, 0, false);
     REQUIRE(m);
     REQUIRE(m->getBondWithIdx(0)->getIsAromatic() == false);
@@ -6682,7 +6685,7 @@ TEST_CASE("Testing custom aromaticity") {
 
 TEST_CASE(
     "Testing github issue #1730: setAromaticity() should work even if there are aromatic atoms present") {
-  std::string smiles = "C1=CC=CC=C1-c2ccccc2";
+  constexpr const char *smiles = "C1=CC=CC=C1-c2ccccc2";
   RWMol *m = SmilesToMol(smiles, 0, false);
   m->updatePropertyCache();
   REQUIRE(m);
@@ -6701,7 +6704,7 @@ TEST_CASE("Testing error reporting for kekulization") {
   rdErrorLog->SetTee(sstrm);
   {
     sstrm.str("");
-    std::string smi = "c1ccccc1";
+    constexpr const char *smi = "c1ccccc1";
     ROMol *m = SmilesToMol(smi);
     REQUIRE(m);
     REQUIRE(sstrm.str() == "");
@@ -6709,7 +6712,7 @@ TEST_CASE("Testing error reporting for kekulization") {
   }
   {
     sstrm.str("");
-    std::string smi = "c1cccc1";
+    constexpr const char *smi = "c1cccc1";
     ROMol *m;
     try {
       m = SmilesToMol(smi);
@@ -6722,7 +6725,7 @@ TEST_CASE("Testing error reporting for kekulization") {
   }
   {
     sstrm.str("");
-    std::string smi = "c1ccccc1.c1cccc1";
+    constexpr const char *smi = "c1ccccc1.c1cccc1";
     ROMol *m;
     try {
       m = SmilesToMol(smi);
@@ -6735,7 +6738,7 @@ TEST_CASE("Testing error reporting for kekulization") {
   }
   {
     sstrm.str("");
-    std::string smi = "c1cccc1.c1cccc1";
+    constexpr const char *smi = "c1cccc1.c1cccc1";
     ROMol *m;
     try {
       m = SmilesToMol(smi);
@@ -6756,7 +6759,7 @@ TEST_CASE(
   {
     sstrm.str("");
 
-    std::string sma = "[SX3](=O)[O-,#1]";
+    constexpr const char *sma = "[SX3](=O)[O-,#1]";
     RWMol *m = SmartsToMol(sma);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 3);
@@ -6772,7 +6775,7 @@ TEST_CASE(
   {
     sstrm.str("");
 
-    std::string sma = "[SX3](=O)[O-,H1]";
+    constexpr const char *sma = "[SX3](=O)[O-,H1]";
     RWMol *m = SmartsToMol(sma);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 3);
@@ -6786,7 +6789,7 @@ TEST_CASE(
   {
     sstrm.str("");
 
-    std::string sma = "[SX3](=O)[O-,H]";
+    constexpr const char *sma = "[SX3](=O)[O-,H]";
     RWMol *m = SmartsToMol(sma);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 3);
@@ -6819,7 +6822,7 @@ TEST_CASE(
     sstrm.str("");
     REQUIRE(sstrm.str() == "");
     // github 7687 - merge with more than one option in or
-    std::string sma = "[#6]-[#1,#6,#7]";
+    constexpr const char *sma = "[#6]-[#1,#6,#7]";
     RWMol *m = SmartsToMol(sma);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 2);
@@ -6837,7 +6840,7 @@ TEST_CASE(
 
 TEST_CASE(
     "Testing github issue 908: AddHs() using 3D coordinates with 2D conformations") {
-  std::string mb =
+  constexpr const char *mb =
       "\n     RDKit          2D\n\n  4  3  0  0  0  0  0  0  0  0999 "
       "V2000\n "
       "  -0.0000   -1.5000    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  "
@@ -6860,7 +6863,7 @@ TEST_CASE(
 TEST_CASE(
     "Testing github issue 962: Kekulization issues post successful smiles parsing") {
   {
-    std::string smi = "C2*c1ccccc1C2";
+    constexpr const char *smi = "C2*c1ccccc1C2";
     RWMol *m = SmilesToMol(smi, 0, false);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 9);
@@ -6874,7 +6877,7 @@ TEST_CASE(
     delete m;
   }
   {  // this one did not cause problems before, but verify!
-    std::string smi = "*2Cc1ccccc1C2";
+    constexpr const char *smi = "*2Cc1ccccc1C2";
     RWMol *m = SmilesToMol(smi, 0, false);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 9);
@@ -6891,7 +6894,7 @@ TEST_CASE(
 
 TEST_CASE(
     "Testing github issue 1021: AssignStereochemistry() giving incorrect results after  FastFindRings()") {
-  std::string smi = "C[C@H]1CC2CCCC(C1)[C@H]2N";
+  constexpr const char *smi = "C[C@H]1CC2CCCC(C1)[C@H]2N";
   RWMol *m = SmilesToMol(smi);
   REQUIRE(m);
   REQUIRE(m->getNumAtoms() == 11);
@@ -6969,13 +6972,13 @@ TEST_CASE(
 
 TEST_CASE("Testing github issue 1204: Support tetravalent and hexavalent Te") {
   {
-    std::string smiles = "F[Te](F)(F)(F)(F)F";
+    constexpr const char *smiles = "F[Te](F)(F)(F)(F)F";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     delete m;
   }
   {
-    std::string smiles = "F[Te](F)(F)(F)";
+    constexpr const char *smiles = "F[Te](F)(F)(F)";
     RWMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     delete m;
@@ -6985,7 +6988,7 @@ TEST_CASE("Testing github issue 1204: Support tetravalent and hexavalent Te") {
 TEST_CASE(
     "Testing github issue 1478: Aromatic rings composed solely of dummy atoms should not be kekulized") {
   {  // basics
-    std::string smiles = "*:1:*:*:*:*:*:1";
+    constexpr const char *smiles = "*:1:*:*:*:*:*:1";
     RWMol *m = SmilesToMol(smiles, false);
     REQUIRE(m);
     m->updatePropertyCache();
@@ -6997,7 +7000,7 @@ TEST_CASE(
   }
 
   {  // fused rings where one is kekulized
-    std::string smiles = "*:1:*:*:*:*:2:*:1cccc2";
+    constexpr const char *smiles = "*:1:*:*:*:*:2:*:1cccc2";
     RWMol *m = SmilesToMol(smiles, false);
     REQUIRE(m);
     m->updatePropertyCache();
@@ -7010,7 +7013,7 @@ TEST_CASE(
 
 TEST_CASE(
     "Testing github issue 1439: RemoveHs() removes H atom attached to dummy if it came from AddHs()") {
-  std::string smiles = "F";
+  constexpr const char *smiles = "F";
   RWMol *m = SmilesToMol(smiles);
   REQUIRE(m);
   MolOps::addHs(*m);
@@ -7024,7 +7027,7 @@ TEST_CASE(
 TEST_CASE(
     "Testing github issue 1281: RDKit gets stuck on PubChem CID 102128817") {
   {  // basics
-    std::string smiles =
+    constexpr const char *smiles =
         "COC1=CC=C(C=C1)C2C3=C(C=CC4=CC=CC=C43)OC5=CC6=C(C=C5)C7=NC8=C9C=CC1="
         "CC9=C(N8)N=C3C4=C5C=CC(=C4)OC4=C(C(C8=C(C=CC9=CC=CC=C98)OC8=CC9=C(C="
         "C8)C8=NC9=NC9=C%10C=C(C=CC%10=C(N9)N=C9C%10=C(C=C(C=C%10)OC%10=C2C2="
@@ -7062,7 +7065,7 @@ TEST_CASE(
 
 TEST_CASE(
     "Testing Github issue 1605: Inappropriate bad valence exception during partial sanitization") {
-  std::string smiles = "C1=CC=CC=C1N(=O)=O";
+  constexpr const char *smiles = "C1=CC=CC=C1N(=O)=O";
   {  // easy to test; we shouldn't throw an exception. :-)
     RWMol *m = SmilesToMol(smiles, 0, false);
     REQUIRE(m);
@@ -7078,50 +7081,49 @@ TEST_CASE(
 TEST_CASE("Testing Github issue 1622: add MDL aromaticity perception") {
   {
     // rings that should be aromatic
-    string aromaticSmis[] = {"C1=CC=CC=C1",  // benzene, of course
-                                             // heterocyclics
-                             "N1=CC=CC=C1",  // pyridine
-                             "N1=CC=CC=N1",  // pyridazine
-                             "N1=CC=CN=C1",  // pyrimidine
-                             "N1=CC=NC=C1",  // pyrazine
-                             "N1=CN=CN=C1",  // 1,3,5-triazine
-                             // polycyclic aromatics
-                             "C1=CC2=CC=CC=CC2=C1",            // azulene
-                             "C1=CC=CC2=CC=CC=C12",            // 6-6 fused
-                             "C1=CC2=CC=CC=CC=C12",            // 4-8 fused
-                             "C1=CC=C2C(=C1)N=CC=N2",          // 6-6 with Ns
-                             "C1=CN=CC2C=CC=CC1=2",            // 6-6
-                             "C1=CC=C2C(=C1)N=C3C=CC=CC3=N2",  // 6-6-6
-                             "C1=CN=NC2C=CC=CC1=2",            // 6-6 with Ns
-                             // macrocycle aromatics
-                             "C1=CC=CC=CC=CC=C1",              // 10 atoms
-                             "C1=CC=CC=CC=CC=CC=CC=CC=CC=C1",  // 18 atoms
-                             "N1=CN=NC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=C1",
-                             "EOS"};
-    unsigned int i = 0;
-    while (aromaticSmis[i] != "EOS") {
-      string smi = aromaticSmis[i];
+    constexpr const char *aromaticSmis[] = {
+        "C1=CC=CC=C1",  // benzene, of course
+                        // heterocyclics
+        "N1=CC=CC=C1",  // pyridine
+        "N1=CC=CC=N1",  // pyridazine
+        "N1=CC=CN=C1",  // pyrimidine
+        "N1=CC=NC=C1",  // pyrazine
+        "N1=CN=CN=C1",  // 1,3,5-triazine
+        // polycyclic aromatics
+        "C1=CC2=CC=CC=CC2=C1",            // azulene
+        "C1=CC=CC2=CC=CC=C12",            // 6-6 fused
+        "C1=CC2=CC=CC=CC=C12",            // 4-8 fused
+        "C1=CC=C2C(=C1)N=CC=N2",          // 6-6 with Ns
+        "C1=CN=CC2C=CC=CC1=2",            // 6-6
+        "C1=CC=C2C(=C1)N=C3C=CC=CC3=N2",  // 6-6-6
+        "C1=CN=NC2C=CC=CC1=2",            // 6-6 with Ns
+        // macrocycle aromatics
+        "C1=CC=CC=CC=CC=C1",              // 10 atoms
+        "C1=CC=CC=CC=CC=CC=CC=CC=CC=C1",  // 18 atoms
+        "N1=CN=NC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=C1"};
+    for (auto smi : aromaticSmis) {
       // std::cerr << smi << std::endl;
       int debugParse = 0;
       bool sanitize = false;
       RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
       REQUIRE(mol);
       unsigned int whatFailed = 0;
-      unsigned int sanitFlags =
+      constexpr unsigned int sanitFlags =
           MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_SETAROMATICITY;
       MolOps::sanitizeMol(*mol, whatFailed, sanitFlags);
       MolOps::setAromaticity(*mol, MolOps::AROMATICITY_MDL);
       REQUIRE(mol->getAtomWithIdx(0)->getIsAromatic());
       delete mol;
-      ++i;
     }
   }
   {
     // rings that should not be aromatic
-    string nonaromaticSmis[] = {
+    constexpr const char *nonaromaticSmis[] = {
         "C1=C[N]C=C1",  // radicals are not two electron donors
         // exocyclic double bonds disqualify us
-        "C1(=O)C=CNC=C1", "C1(=C)C=CC(=C)C=C1", "C1(=O)C=CC(=O)C=C1",
+        "C1(=O)C=CNC=C1",
+        "C1(=C)C=CC(=C)C=C1",
+        "C1(=O)C=CC(=O)C=C1",
 
         "C1#CC=CC=C1",  // not benzyne
         // five-membered heterocycles
@@ -7140,54 +7142,50 @@ TEST_CASE("Testing Github issue 1622: add MDL aromaticity perception") {
         "C1=CS(=O)C=C1",  // not sure how to classify this example from the
                           // OEChem docs
         //  outside the second rows
-        "C1=CC=C[Si]=C1", "C1=CC=CC=P1",
+        "C1=CC=C[Si]=C1",
+        "C1=CC=CC=P1",
         // 5-membered heterocycles outside the second row
-        "C1=C[Se]C=C1", "C1=C[Te]C=C1",
+        "C1=C[Se]C=C1",
+        "C1=C[Te]C=C1",
 
-        "EOS"};
-    unsigned int i = 0;
-    while (nonaromaticSmis[i] != "EOS") {
-      string smi = nonaromaticSmis[i];
+    };
+    for (auto smi : nonaromaticSmis) {
       // std::cerr << smi << std::endl;
       int debugParse = 0;
       bool sanitize = false;
       RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
       REQUIRE(mol);
       unsigned int whatFailed = 0;
-      unsigned int sanitFlags =
+      constexpr unsigned int sanitFlags =
           MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_SETAROMATICITY;
       MolOps::sanitizeMol(*mol, whatFailed, sanitFlags);
       MolOps::setAromaticity(*mol, MolOps::AROMATICITY_MDL);
       REQUIRE(!(mol->getAtomWithIdx(0)->getIsAromatic()));
       delete mol;
-      ++i;
     }
   }
 
   {
     // ring systems where part is aromatic, part not
-    string mixedaromaticSmis[] = {
+    constexpr const char *mixedaromaticSmis[] = {
         "O1C=CC2=CC=CC=C12",         "S1C=CC2=CC=CC=C12",
         "N1C2=CC=CC=C2C2=CC=CC=C12", "N1C=CC2=CC=CC=C12",
         "N1C=NC2=CC=CC=C12",         "N1C=NC2=CN=CN=C12",
-        "C1CCCC2=CC3=CCCCC3=CC2=1",  "EOS"};
-    unsigned int i = 0;
-    while (mixedaromaticSmis[i] != "EOS") {
-      string smi = mixedaromaticSmis[i];
+        "C1CCCC2=CC3=CCCCC3=CC2=1"};
+    for (auto smi : mixedaromaticSmis) {
       // std::cerr << smi << std::endl;
       int debugParse = 0;
       bool sanitize = false;
       RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
       REQUIRE(mol);
       unsigned int whatFailed = 0;
-      unsigned int sanitFlags =
+      constexpr unsigned int sanitFlags =
           MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_SETAROMATICITY;
       MolOps::sanitizeMol(*mol, whatFailed, sanitFlags);
       MolOps::setAromaticity(*mol, MolOps::AROMATICITY_MDL);
       REQUIRE(!(mol->getAtomWithIdx(0)->getIsAromatic()));
       REQUIRE((mol->getAtomWithIdx(mol->getNumAtoms() - 1)->getIsAromatic()));
       delete mol;
-      ++i;
     }
   }
 }
@@ -7826,7 +7824,7 @@ TEST_CASE("Testing removeAndTrackIsotopes parameter") {
 
 TEST_CASE(
     "Testing github issue 3854: AddHs creates H atom with nan coordinates on edge case 2D structure") {
-  std::string molb = R"CTAB(
+  constexpr const char *molb = R"CTAB(
      RDKit          2D
 
   7  8  0  0  1  0  0  0  0  0999 V2000
@@ -7885,7 +7883,7 @@ M  END)CTAB";
 #ifdef RDK_USE_URF
 TEST_CASE("Testing ring family calculation") {
   {
-    std::string smiles = "C(C1C2C3C41)(C2C35)C45";  // cubane
+    constexpr const char *smiles = "C(C1C2C3C41)(C2C35)C45";  // cubane
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 8);
@@ -7906,7 +7904,8 @@ TEST_CASE("Testing ring family calculation") {
     delete m;
   }
   {
-    std::string smiles = "C1CC2CCC1CC1CCC(CC1)CC1CCC(CC1)CC1CCC(CC1)C2";
+    constexpr const char *smiles =
+        "C1CC2CCC1CC1CCC(CC1)CC1CCC(CC1)CC1CCC(CC1)C2";
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 28);
@@ -8002,7 +8001,7 @@ M  END)CTAB"_ctab;
 
 TEST_CASE(
     "Testing github issue 5099: Removing H preserving only wedged ones strips all H") {
-  std::string smi{"FC([H])(O)Cl"};
+  constexpr const char *smi{"FC([H])(O)Cl"};
   std::unique_ptr<RWMol> m{SmilesToMol(smi, false, false)};
   REQUIRE(m);
   REQUIRE(m->getNumAtoms() == 5);
