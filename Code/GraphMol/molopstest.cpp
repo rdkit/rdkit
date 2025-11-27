@@ -1575,7 +1575,6 @@ TEST_CASE("Testing Issue 183") {
   REQUIRE(m2->getBondWithIdx(5)->getStereo() == Bond::STEREOE);
   REQUIRE(m2->getBondWithIdx(10)->getStereo() == Bond::STEREOZ);
 
-  // m2->debugMol(std::cerr);
   refSmi = MolToSmiles(*m2, 1);
   BOOST_LOG(rdInfoLog) << "ref: " << refSmi << std::endl;
   m = SmilesToMol(refSmi);
@@ -2409,7 +2408,7 @@ TEST_CASE("testHsAndAromaticity: Additional Aromaticity Cases") {
   smi = "[CH]1-[CH]-[CH]-[CH]-[CH]-[CH]-1";
   mol = SmilesToMol(smi);
   REQUIRE(mol);
-  // std::cerr << mol->getAtomWithIdx(0)->getHybridization() << std::endl;
+
   REQUIRE(mol->getAtomWithIdx(0)->getHybridization() == Atom::SP3);
   REQUIRE(mol->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
   REQUIRE(mol->getAtomWithIdx(0)->getNumImplicitHs() == 0);
@@ -3795,7 +3794,7 @@ void aamatchtest(std::string smi1, std::string smi2, bool shouldMatch, int idx1,
   RWMol *m2 = SmilesToMol(smi2);
   REQUIRE(m1);
   REQUIRE(m2);
-  // std::cerr<<"   "<<smi1<<" "<<smi2<<std::endl;
+
   REQUIRE(m2->getAtomWithIdx(idx2)->Match(m1->getAtomWithIdx(idx1)) ==
           shouldMatch);
   delete m1;
@@ -3890,9 +3889,8 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(m->getBondBetweenAtoms(2, 3)->getBondType() == Bond::DOUBLE);
     REQUIRE(m->getBondBetweenAtoms(2, 3)->getStereo() == Bond::STEREOZ);
 
-    // std::cerr<<"-------------\n";
     std::string csmi1 = MolToSmiles(*m, true);
-    // std::cerr<<csmi1<<std::endl;
+
     RWMol *m2 = SmilesToMol(csmi1);
     REQUIRE(m2);
 
@@ -3908,9 +3906,8 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(m2->getBondBetweenAtoms(mmap[2], mmap[3])->getStereo() ==
             Bond::STEREOZ);
 
-    // std::cerr<<"-------------\n";
     std::string csmi2 = MolToSmiles(*m2, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
     delete m2;
@@ -3927,7 +3924,7 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(m->getBondBetweenAtoms(12, 21)->getStereo() == Bond::STEREOE);
     REQUIRE(m->getBondBetweenAtoms(13, 14)->getBondType() == Bond::DOUBLE);
     REQUIRE(m->getBondBetweenAtoms(13, 14)->getStereo() == Bond::STEREONONE);
-    // std::cerr<<"-------------\n";
+
     std::string csmi1 = MolToSmiles(*m, true);
 
     RWMol *m2 = SmilesToMol(csmi1);
@@ -3953,9 +3950,8 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(m2->getBondBetweenAtoms(mmap[13], mmap[14])->getStereo() ==
             Bond::STEREONONE);
 
-    // std::cerr<<"-------------\n";
     std::string csmi2 = MolToSmiles(*m2, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
     delete m2;
@@ -3965,14 +3961,14 @@ TEST_CASE("Testing canonicalization basics") {
     constexpr const char *smi = "COc1ccc(OC)c2[nH]c(=O)cc(C)c21";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi1 = MolToSmiles(*m, true);
     delete m;
     m = SmilesToMol(csmi1);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi2 = MolToSmiles(*m, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
   }
@@ -3980,14 +3976,14 @@ TEST_CASE("Testing canonicalization basics") {
     constexpr const char *smi = "COc1cc(C)c(C(=O)[O-])cc1OC";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi1 = MolToSmiles(*m, true);
     delete m;
     m = SmilesToMol(csmi1);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi2 = MolToSmiles(*m, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
   }
@@ -3995,14 +3991,14 @@ TEST_CASE("Testing canonicalization basics") {
     constexpr const char *smi = "COc1ccc(C(=O)OC(c2ccc(OC)cc2)C(C)O)cc1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi1 = MolToSmiles(*m, true);
     delete m;
     m = SmilesToMol(csmi1);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi2 = MolToSmiles(*m, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
   }
@@ -4010,14 +4006,14 @@ TEST_CASE("Testing canonicalization basics") {
     constexpr const char *smi = "CC(C)C1CCC(C)=CC1=NNC(N)=O";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi1 = MolToSmiles(*m, true);
     delete m;
     m = SmilesToMol(csmi1);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi2 = MolToSmiles(*m, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
   }
@@ -4026,14 +4022,14 @@ TEST_CASE("Testing canonicalization basics") {
         "COCCNC(=O)c1ccccc1N1C(=O)C2(C)c3[nH]c4ccccc4c3CCN2C1=O";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi1 = MolToSmiles(*m, true);
     delete m;
     m = SmilesToMol(csmi1);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi2 = MolToSmiles(*m, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
   }
@@ -4041,14 +4037,14 @@ TEST_CASE("Testing canonicalization basics") {
     constexpr const char *smi = "Cc1c(Br)cc(Br)cc1C(F)(F)F";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi1 = MolToSmiles(*m, true);
     delete m;
     m = SmilesToMol(csmi1);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi2 = MolToSmiles(*m, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
   }
@@ -4062,7 +4058,7 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(m->getBondBetweenAtoms(7, 8)->getBondType() == Bond::DOUBLE);
     REQUIRE(m->getBondBetweenAtoms(7, 8)->getStereo() == Bond::STEREOZ);
     std::string smi = MolToSmiles(*m, true);
-    // std::cerr<<"SMILES: "<<smi<<std::endl;
+
     RWMol *m2 = SmilesToMol(smi);
     MatchVectType mv;
     REQUIRE(SubstructMatch(*m, *m2, mv));
@@ -4120,9 +4116,9 @@ TEST_CASE("Testing canonicalization basics") {
     std::string csmi1 = MolToSmiles(*m, true);
     delete m;
     m = SmilesToMol(csmi1);
-    // std::cerr<<"-------------\n";
+
     std::string csmi2 = MolToSmiles(*m, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
   }
@@ -4138,7 +4134,7 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(m->getBondBetweenAtoms(4, 5)->getBondType() == Bond::DOUBLE);
     REQUIRE(m->getBondBetweenAtoms(4, 5)->getStereo() == Bond::STEREOE);
     std::string csmi1 = MolToSmiles(*m, true);
-    // std::cerr<<"SMI1: "<<csmi1<<std::endl;
+
     RWMol *m2 = SmilesToMol(csmi1);
     MatchVectType mv;
     REQUIRE(SubstructMatch(*m, *m2, mv));
@@ -4161,9 +4157,8 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(m2->getBondBetweenAtoms(mmap[4], mmap[5])->getStereo() ==
             Bond::STEREOE);
 
-    // std::cerr<<"-------------\n";
     std::string csmi2 = MolToSmiles(*m2, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
     delete m2;
@@ -4172,14 +4167,14 @@ TEST_CASE("Testing canonicalization basics") {
     constexpr const char *smi = "C\\N=c1/s/c(=N\\Cl)/c/1=N/F";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi1 = MolToSmiles(*m, true);
     delete m;
     m = SmilesToMol(csmi1);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi2 = MolToSmiles(*m, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
   }
@@ -4188,14 +4183,14 @@ TEST_CASE("Testing canonicalization basics") {
         "Cc1ccc(S(=O)(=O)/N=c2sc(=N\\C(C)(C)C)/c\\2=N/C(C)(C)C)cc1";
     RWMol *m = SmilesToMol(smi);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi1 = MolToSmiles(*m, true);
     delete m;
     m = SmilesToMol(csmi1);
     REQUIRE(m);
-    // std::cerr<<"-------------\n";
+
     std::string csmi2 = MolToSmiles(*m, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m;
   }
@@ -4210,7 +4205,7 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(m->getBondBetweenAtoms(5, 12)->getStereo() == Bond::STEREOZ);
 
     std::string csmi1 = MolToSmiles(*m, true);
-    // std::cerr<<"SMI1: "<<csmi1<<std::endl;
+
     RWMol *m2 = SmilesToMol(csmi1);
     MatchVectType mv;
     REQUIRE(SubstructMatch(*m, *m2, mv));
@@ -4229,15 +4224,13 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(m2->getBondBetweenAtoms(mmap[5], mmap[12])->getStereo() ==
             Bond::STEREOZ);
 
-    // std::cerr<<"-------------\n";
     std::string csmi2 = MolToSmiles(*m2, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m2;
 
     std::string tsmi = MolToSmiles(*m, true, false, 7, false);
-    // std::cerr<<"-------------\n";
-    // std::cerr<<"T:\n"<<tsmi<<"\n-------------\n"<<std::endl;
+
     m2 = SmilesToMol(tsmi);
     REQUIRE(SubstructMatch(*m, *m2, mv));
     mmap.clear();
@@ -4254,9 +4247,8 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(m2->getBondBetweenAtoms(mmap[5], mmap[12])->getStereo() ==
             Bond::STEREOZ);
 
-    // std::cerr<<"-------------\n";
     csmi2 = MolToSmiles(*m2, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
     delete m2;
     delete m;
@@ -4273,8 +4265,7 @@ TEST_CASE("Testing canonicalization basics") {
     REQUIRE(m->getBondBetweenAtoms(6, 7)->getStereo() == Bond::STEREOE);
 
     std::string tsmi = MolToSmiles(*m, true, false, 3, false);
-    // std::cerr<<"-------------\n";
-    // std::cerr<<"T:\n"<<tsmi<<"\n-------------\n"<<std::endl;
+
     RWMol *m2 = SmilesToMol(tsmi);
     MatchVectType mv;
     REQUIRE(SubstructMatch(*m, *m2, mv));
@@ -4298,10 +4289,9 @@ TEST_CASE("Testing canonicalization basics") {
             Bond::STEREOE);
 
     std::string csmi1 = MolToSmiles(*m, true);
-    // std::cerr<<"SMI1: "<<csmi1<<std::endl;
-    // std::cerr<<"-------------\n";
+
     std::string csmi2 = MolToSmiles(*m2, true);
-    // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+
     REQUIRE(csmi1 == csmi2);
 
     delete m2;
@@ -4655,9 +4645,6 @@ void _renumberTest(const ROMol *m) {
   for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
     std::vector<unsigned int> nVect(idxV);
     std::shuffle(nVect.begin(), nVect.end(), std::mt19937(0xf00d));
-    // std::copy(nVect.begin(),nVect.end(),std::ostream_iterator<int>(std::cerr,",
-    // "));
-    // std::cerr<<std::endl;
 
     ROMol *nm = MolOps::renumberAtoms(*m, nVect);
     REQUIRE(nm);
@@ -5701,7 +5688,7 @@ TEST_CASE("Testing adjustQueryProperties()") {
       params.makeAtomsGeneric = true;
 
       ROMol *aqm = MolOps::adjustQueryProperties(*qm, &params);
-      // std::cerr << MolToSmarts(*aqm) << std::endl;
+
       REQUIRE(aqm);
       REQUIRE(aqm->getNumAtoms() == qm->getNumAtoms());
       {
@@ -5709,7 +5696,6 @@ TEST_CASE("Testing adjustQueryProperties()") {
         REQUIRE(SubstructMatch(*qm, *aqm, match));
         constexpr const char *smiles = "O1CN1NN";
         ROMol *m = SmilesToMol(smiles);
-        // std::cerr << MolToSmiles(*m) << std::endl;
 
         REQUIRE(m);
         REQUIRE(!SubstructMatch(*m, *qm, match));
@@ -6081,8 +6067,7 @@ TEST_CASE("Testing findPotentialStereoBonds") {
         "Br/C(=N\\N=c1/nn[nH][nH]1)c1ccncc1";  // possible problem reported by
                                                // Steve Roughley
     ROMol *m = SmilesToMol(smiles);
-    // m->updatePropertyCache(false);
-    // m->debugMol(std::cerr);
+
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 15);
     REQUIRE(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
@@ -7047,7 +7032,6 @@ TEST_CASE("Testing Github issue 1622: add MDL aromaticity perception") {
 
     };
     for (auto smi : nonaromaticSmis) {
-      // std::cerr << smi << std::endl;
       int debugParse = 0;
       bool sanitize = false;
       RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
@@ -7070,7 +7054,6 @@ TEST_CASE("Testing Github issue 1622: add MDL aromaticity perception") {
         "N1C=NC2=CC=CC=C12",         "N1C=NC2=CN=CN=C12",
         "C1CCCC2=CC3=CCCCC3=CC2=1"};
     for (auto smi : mixedaromaticSmis) {
-      // std::cerr << smi << std::endl;
       int debugParse = 0;
       bool sanitize = false;
       RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
@@ -7133,7 +7116,7 @@ TEST_CASE(
       MolOps::setDoubleBondNeighborDirections(nm);
 
       MolOps::assignStereochemistry(nm, cleanIt, force);
-      // nm.debugMol(std::cerr);
+
       REQUIRE(nm.getBondBetweenAtoms(1, 2)->getStereo() > Bond::STEREOANY);
       std::string smi = MolToSmiles(nm, true);
       std::cerr << smi << std::endl;
@@ -7145,7 +7128,7 @@ TEST_CASE(
       bool force = true, cleanIt = true;
       MolOps::setDoubleBondNeighborDirections(nm);
       MolOps::assignStereochemistry(nm, cleanIt, force);
-      // nm.debugMol(std::cerr);
+
       REQUIRE(nm.getBondBetweenAtoms(1, 2)->getStereo() > Bond::STEREOANY);
       std::string smi = MolToSmiles(nm, true);
       std::cerr << smi << std::endl;
@@ -7172,7 +7155,7 @@ TEST_CASE(
       MolOps::setDoubleBondNeighborDirections(nm);
 
       MolOps::assignStereochemistry(nm, cleanIt, force);
-      // nm.debugMol(std::cerr);
+
       REQUIRE(nm.getBondBetweenAtoms(1, 2)->getStereo() > Bond::STEREOANY);
       std::string smi = MolToSmiles(nm, true);
       std::cerr << smi << std::endl;
@@ -7198,7 +7181,7 @@ TEST_CASE(
       MolOps::setDoubleBondNeighborDirections(nm);
 
       MolOps::assignStereochemistry(nm, cleanIt, force);
-      // nm.debugMol(std::cerr);
+
       REQUIRE(nm.getBondBetweenAtoms(1, 2)->getStereo() > Bond::STEREOANY);
       std::string smi = MolToSmiles(nm, true);
       std::cerr << smi << std::endl;
@@ -7230,7 +7213,7 @@ TEST_CASE(
       MolOps::setDoubleBondNeighborDirections(nm);
 
       MolOps::assignStereochemistry(nm, cleanIt, force);
-      // nm.debugMol(std::cerr);
+
       REQUIRE(nm.getBondBetweenAtoms(1, 2)->getStereo() > Bond::STEREOANY);
       std::string smi = MolToSmiles(nm, true);
       std::cerr << smi << std::endl;
@@ -7245,10 +7228,10 @@ TEST_CASE(
     {
       RWMol nm(*m);
       MolOps::setDoubleBondNeighborDirections(nm);
-      // nm.debugMol(std::cerr);
+
       bool force = true, cleanIt = true;
       MolOps::assignStereochemistry(nm, cleanIt, force);
-      // nm.debugMol(std::cerr);
+
       REQUIRE(nm.getBondBetweenAtoms(4, 5)->getStereo() == Bond::STEREOE);
       REQUIRE(nm.getBondBetweenAtoms(8, 9)->getStereo() == Bond::STEREOZ);
       REQUIRE(nm.getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
@@ -7268,7 +7251,7 @@ TEST_CASE(
     {
       RWMol nm(*m);
       MolOps::setDoubleBondNeighborDirections(nm);
-      // nm.debugMol(std::cerr);
+
       bool force = true, cleanIt = true;
       MolOps::assignStereochemistry(nm, cleanIt, force);
       REQUIRE(nm.getBondBetweenAtoms(4, 5)->getStereo() == Bond::STEREOE);
@@ -7812,11 +7795,11 @@ TEST_CASE("Testing ring family calculation") {
     REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
     int numRC = RDL_getNofRC(m->getRingInfo()->dp_urfData.get());
-    // std::cerr << " URF, RC " << numURF << " " << numRC << std::endl;
+
     REQUIRE(numURF == 5);
     REQUIRE(numRC == 20);
     int numRings = m->getRingInfo()->numRings();
-    // std::cerr << "num rings: " << numRings << std::endl;
+
     REQUIRE(numRings == 14);
     REQUIRE(m->getRingInfo()->numRingFamilies() == 5);
     delete m;
