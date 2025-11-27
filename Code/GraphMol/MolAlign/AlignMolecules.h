@@ -47,12 +47,11 @@ struct RDKIT_MOLALIGN_EXPORT BestAlignmentParams {
   bool ignoreHs = true;  //< ignore Hs in the alignment. Note that atoms in map
                          /// will always be used
   int numThreads = 1;
-  const std::vector<MatchVectType>
-      map;  //< a vector of vectors of pairs of atom IDs
-            /// (probe AtomId, ref AtomId) used to
-            /// compute the alignments.
-            /// If not provided, these will be
-            /// generated using a substructure search.
+  std::vector<MatchVectType> map;  //< a vector of vectors of pairs of atom IDs
+                                   /// (probe AtomId, ref AtomId) used to
+                                   /// compute the alignments.
+                                   /// If not provided, these will be
+                                   /// generated using a substructure search.
   const RDNumeric::DoubleVector *weights =
       nullptr;  //< weights for each pair of atoms
 };

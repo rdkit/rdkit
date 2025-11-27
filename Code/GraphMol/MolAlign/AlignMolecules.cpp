@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2023 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,6 +20,7 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <RDGeneral/RDThreads.h>
 #include <algorithm>
+#include <boost/format.hpp>
 
 namespace RDKit {
 namespace MolAlign {
@@ -93,18 +94,19 @@ void getAllMatchesPrbRef(const ROMol &prbMol, const ROMol &refMol,
   if (matches.size() > 1e6) {
     std::string name;
     prbMol.getPropIfPresent(common_properties::_Name, name);
-    std::cerr << "Warning in " << __FUNCTION__ << ": " << matches.size()
-              << " matches detected for molecule " << name << ", this may "
-              << "lead to a performance slowdown.\n";
+    BOOST_LOG(rdWarningLog)
+        << "Warning in " << __FUNCTION__ << ": " << matches.size()
+        << " matches detected for molecule " << name << ", this may "
+        << "lead to a performance slowdown." << std::endl;
   }
   if (ignoreHs) {
     // filter Hs out of the matches
     for (auto &match : matches) {
-      std::remove_if(
+      match.erase(std::remove_if(
           match.begin(), match.end(),
           [&prbMolForMatch](const std::pair<int, int> &mi) {
             return prbMolForMatch.getAtomWithIdx(mi.first)->getAtomicNum() == 1;
-          });
+          }));
     }
   }
 }
@@ -280,6 +282,16 @@ double getBestRMS(ROMol &prbMol, const ROMol &refMol,
   const auto &matches = params.map.empty() ? allMatches : params.map;
 
   // TODO: check mismatch between weights size and match size.
+  if (!params.map.empty() && params.weights) {
+    auto nAtms = params.map[0].size();
+    if (params.weights->size() != nAtms) {
+      throw ValueErrorException(
+          (boost::format(
+               "Mismatch between number of weights (%d) and number of atoms in the alignment map (%d).") %
+           params.weights->size() % nAtms)
+              .str());
+    }
+  }
 
   RDGeom::Transform3D trans;
   bool reflect = false;
