@@ -576,6 +576,8 @@ void testSulfinamideExamplesHaveNoAtropisomers() {
       "sulfinamide-single-bond-O-S.mol",
   };
   std::string rdbase = getenv("RDBASE");
+  std::stringstream warningCapture;
+  rdWarningLog->SetTee(warningCapture);
   for (const auto &file : controlFiles) {
     auto fName = rdbase +
                  "/Code/GraphMol/FileParsers/test_data/atropisomers/" +
@@ -589,6 +591,8 @@ void testSulfinamideExamplesHaveNoAtropisomers() {
     Atropisomers::detectAtropisomerChirality(*mol, conf);
     TEST_ASSERT(!Atropisomers::doesMolHaveAtropisomers(*mol));
   }
+  rdWarningLog->ClearTee();
+  TEST_ASSERT(warningCapture.str().empty());
 }
 
 int main(int argc, char *argv[]) {
