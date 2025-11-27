@@ -40,6 +40,12 @@ using namespace std;
 RWMol _t;
 typedef class ROMol Mol;
 
+#define REQUIRE_MSG(condition, msg) \
+  {                                 \
+    INFO((msg));                    \
+    REQUIRE((condition));           \
+  }
+
 TEST_CASE("test1") {
   string smi;
   Mol *m;
