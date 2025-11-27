@@ -538,19 +538,35 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
     }
   }
 
+  bool needsHybridization = false;
   for (auto bondToTry : bondsToTry) {
-    if (bondToTry->getBeginAtom()->needsUpdatePropertyCache()) {
-      bondToTry->getBeginAtom()->updatePropertyCache(false);
+    // defer cache update on the whole mol unless we actually have bonds to try
+    // we need to do an update on the whole mol and not just incident atoms
+    // because we need to calculate hybridization, which is non-local
+    for (const auto atom : mol.atoms()) {
+      if (atom->getAtomicNum() == 0) {
+        continue;  // dummy atoms stay unspecified
+      }
+      if (atom->getHybridization() == Atom::HybridizationType::UNSPECIFIED) {
+        needsHybridization = true;
+        break;
+      }
     }
-    if (bondToTry->getEndAtom()->needsUpdatePropertyCache()) {
-      bondToTry->getEndAtom()->updatePropertyCache(false);
+    if (mol.needsUpdatePropertyCache() || needsHybridization) {
+      mol.updatePropertyCache(false);
+      MolOps::setConjugation(mol);
+      MolOps::setHybridization(mol);
     }
     if (bondToTry->getBondType() != Bond::SINGLE ||
         bondToTry->getStereo() == Bond::BondStereo::STEREOANY ||
-        bondToTry->getBeginAtom()->getTotalDegree() < 2 ||
-        bondToTry->getEndAtom()->getTotalDegree() < 2 ||
-        bondToTry->getBeginAtom()->getTotalDegree() > 3 ||
-        bondToTry->getEndAtom()->getTotalDegree() > 3) {
+        // before, we checked only on totalDegree = 2 or 3,
+        // but this causes false positives for something like a chiral sulfoxide
+        // since the S is tetrahedral (sp3) but has only 3 substituents.
+        // the hybridization code relies on totalDegree,
+        // but modified to include and making sure to include conjugation
+        // so while this is more expensive per molecule, it is closer to intent
+        bondToTry->getBeginAtom()->getHybridization() != Atom::SP2 ||
+        bondToTry->getEndAtom()->getHybridization() != Atom::SP2) {
       continue;
     }
 
