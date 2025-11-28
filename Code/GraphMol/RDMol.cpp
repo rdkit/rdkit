@@ -2443,15 +2443,16 @@ void RDMol::copySingleProp(const PropToken &destinationName,
     uint32_t destSize = (scope == Scope::ATOM) ? getNumAtoms() : getNumBonds();
     destProp->d_arrayData = PropArray(destSize, sourceProp->d_arrayData.family, false);
   } else if (sourceProp->d_arrayData.family != destProp->d_arrayData.family) {
-    // Check if types are storage-compatible (e.g., INT32 and UINT32 both use int32_t storage)
+    // Check if types are compatible signed/unsigned integer pairs
     auto sourceFamily = sourceProp->d_arrayData.family;
     auto destFamily = destProp->d_arrayData.family;
-    bool storageCompatible =
-        (is8BitType(sourceFamily) && is8BitType(destFamily)) ||
-        (is32BitType(sourceFamily) && is32BitType(destFamily)) ||
-        (is64BitType(sourceFamily) && is64BitType(destFamily));
+    bool integerCompatible =
+        (sourceFamily == PropertyType::INT32 && destFamily == PropertyType::UINT32) ||
+        (sourceFamily == PropertyType::UINT32 && destFamily == PropertyType::INT32) ||
+        (sourceFamily == PropertyType::INT64 && destFamily == PropertyType::UINT64) ||
+        (sourceFamily == PropertyType::UINT64 && destFamily == PropertyType::INT64);
 
-    if (!storageCompatible) {
+    if (!integerCompatible) {
       // Convert to RDValue to support type mismatch
       if (destProp->d_arrayData.family != PropertyType::ANY) {
         destProp->d_arrayData.convertToRDValue();
@@ -2472,15 +2473,27 @@ void RDMol::copySingleProp(const PropToken &destinationName,
       }
       return;
     }
-    // If storage-compatible, fall through to direct copy
+    // If integer-compatible, fall through to direct copy
   }
 
-  // Copy directly (including storage-compatible types with different family enums)
+  // Copy directly (including integer-compatible types with different family enums)
   destProp->d_isComputed = sourceProp->d_isComputed;
+  auto sourceFamily = sourceProp->d_arrayData.family;
   auto destFamily = destProp->d_arrayData.family;
   const auto *sourceData = sourceProp->d_arrayData.data;
   auto *destData = destProp->d_arrayData.data;
-  if (is8BitType(destFamily)) {
+
+  if ((sourceFamily == PropertyType::INT32 || sourceFamily == PropertyType::UINT32) &&
+      (destFamily == PropertyType::INT32 || destFamily == PropertyType::UINT32)) {
+    // Copy 32-bit integer (signed or unsigned)
+    static_cast<int32_t *>(destData)[destinationIndex] =
+        static_cast<const int32_t *>(sourceData)[sourceIndex];
+  } else if ((sourceFamily == PropertyType::INT64 || sourceFamily == PropertyType::UINT64) &&
+             (destFamily == PropertyType::INT64 || destFamily == PropertyType::UINT64)) {
+    // Copy 64-bit integer (signed or unsigned)
+    static_cast<int64_t *>(destData)[destinationIndex] =
+        static_cast<const int64_t *>(sourceData)[sourceIndex];
+  } else if (is8BitType(destFamily)) {
     static_cast<char *>(destData)[destinationIndex] =
         static_cast<const char *>(sourceData)[sourceIndex];
   } else if (is32BitType(destFamily)) {

@@ -1862,29 +1862,28 @@ public:
       if (!supportTypeMismatch) {
         throw ValueErrorException("Property type mismatch");
       }
-      // Check if types are storage-compatible (e.g., INT32 and UINT32 both use int32_t storage)
-      auto is8Bit = [](PropertyType f) { return f == PropertyType::CHAR || f == PropertyType::BOOL; };
-      auto is32Bit = [](PropertyType f) { return f == PropertyType::INT32 || f == PropertyType::UINT32 || f == PropertyType::FLOAT; };
-      auto is64Bit = [](PropertyType f) { return f == PropertyType::INT64 || f == PropertyType::UINT64 || f == PropertyType::DOUBLE; };
-      bool storageCompatible =
-          (is8Bit(existingFamily) && is8Bit(newFamily)) ||
-          (is32Bit(existingFamily) && is32Bit(newFamily)) ||
-          (is64Bit(existingFamily) && is64Bit(newFamily));
 
-      if (!storageCompatible) {
-        // Convert to RDValue only if not storage-compatible
+      // Check if types are compatible signed/unsigned integer pairs
+      bool integerCompatible =
+          (existingFamily == PropertyType::INT32 && newFamily == PropertyType::UINT32) ||
+          (existingFamily == PropertyType::UINT32 && newFamily == PropertyType::INT32) ||
+          (existingFamily == PropertyType::INT64 && newFamily == PropertyType::UINT64) ||
+          (existingFamily == PropertyType::UINT64 && newFamily == PropertyType::INT64);
+
+      if (!integerCompatible) {
+        // Convert to RDValue for non-compatible type mismatches
         existing->d_arrayData.convertToRDValue();
         PRECONDITION(existing->d_arrayData.family == PropertyType::ANY,
                      "convertToRDValue should make family ANY");
         existingFamily = PropertyType::ANY;
       }
-      // If storage-compatible, keep the existing type and fall through
+      // If integer-compatible, keep existing type and fall through
     }
 
     auto &arr = existing->d_arrayData;
     if (newFamily == PropertyType::ANY || existingFamily == PropertyType::ANY) {
+      // Store as RDValue
       auto* data = static_cast<RDValue*>(arr.data);
-      // Default value may still need cleaning even if not previously set.
       RDValue::cleanup_rdvalue(data[index]);
       if constexpr (std::is_same_v<T, RDValue>) {
         copy_rdvalue(data[index], value);
@@ -1893,24 +1892,26 @@ public:
       } else {
         data[index] = value;
       }
-    } else if (existingFamily == PropertyType::CHAR || existingFamily == PropertyType::BOOL) {
-      // Use existing family's storage type for storage-compatible types
-      auto *data = static_cast<char *>(arr.data);
-      if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, char>) {
-        data[index] = static_cast<char>(value);
-      }
-    } else if (existingFamily == PropertyType::INT32 || existingFamily == PropertyType::UINT32 || existingFamily == PropertyType::FLOAT) {
+    } else if ((existingFamily == PropertyType::INT32 || existingFamily == PropertyType::UINT32) &&
+               (newFamily == PropertyType::INT32 || newFamily == PropertyType::UINT32)) {
+      // Store 32-bit int/uint using existing family's storage
       auto *data = static_cast<int32_t *>(arr.data);
-      if constexpr (std::is_same_v<T, int> || std::is_same_v<T, unsigned int> || std::is_same_v<T, float>) {
+      if constexpr (std::is_same_v<T, int> || std::is_same_v<T, unsigned int>) {
         data[index] = *reinterpret_cast<const int32_t*>(&value);
+      } else {
+        throw ValueErrorException("Type mismatch in setSingleProp for 32-bit integer");
       }
-    } else if (existingFamily == PropertyType::INT64 || existingFamily == PropertyType::UINT64 || existingFamily == PropertyType::DOUBLE) {
+    } else if ((existingFamily == PropertyType::INT64 || existingFamily == PropertyType::UINT64) &&
+               (newFamily == PropertyType::INT64 || newFamily == PropertyType::UINT64)) {
+      // Store 64-bit int/uint using existing family's storage
       auto *data = static_cast<int64_t *>(arr.data);
-      if constexpr (std::is_same_v<T, int64_t> || std::is_same_v<T, uint64_t> || std::is_same_v<T, double>) {
+      if constexpr (std::is_same_v<T, int64_t> || std::is_same_v<T, uint64_t>) {
         data[index] = *reinterpret_cast<const int64_t*>(&value);
+      } else {
+        throw ValueErrorException("Type mismatch in setSingleProp for 64-bit integer");
       }
     } else {
-      // Exact match - use T's storage type directly
+      // Exact type match
       auto *data = static_cast<T *>(arr.data);
       data[index] = value;
     }
