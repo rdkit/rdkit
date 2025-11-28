@@ -188,6 +188,9 @@ one n/a three
 >  <bond.prop.foo>  (1)
 bar baz blah
 
+> <atom.iprop.TooLong>  (1) 
+0 1 2 3 4
+
 $$$$
 )SDF";
   SECTION("no processing") {
@@ -210,6 +213,9 @@ $$$$
     std::string val;
     CHECK(m->getBondWithIdx(0)->getPropIfPresent("foo", val));
     CHECK(val == "bar");
+
+    CHECK(m->hasProp("atom.iprop.TooLong"));
+    CHECK(!m->getAtomWithIdx(0)->hasProp("TooLong"));
   }
 }
 
