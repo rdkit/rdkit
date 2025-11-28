@@ -2443,32 +2443,50 @@ void RDMol::copySingleProp(const PropToken &destinationName,
     uint32_t destSize = (scope == Scope::ATOM) ? getNumAtoms() : getNumBonds();
     destProp->d_arrayData = PropArray(destSize, sourceProp->d_arrayData.family, false);
   } else if (sourceProp->d_arrayData.family != destProp->d_arrayData.family) {
-    // Convert to RDValue to support type mismatch
-    if (destProp->d_arrayData.family != PropertyType::ANY) {
-      destProp->d_arrayData.convertToRDValue();
+    // Check if types are storage-compatible (e.g., INT32 and UINT32 both use int32_t storage)
+    auto sourceFamily = sourceProp->d_arrayData.family;
+    auto destFamily = destProp->d_arrayData.family;
+    bool storageCompatible =
+        (is8BitType(sourceFamily) && is8BitType(destFamily)) ||
+        (is32BitType(sourceFamily) && is32BitType(destFamily)) ||
+        (is64BitType(sourceFamily) && is64BitType(destFamily));
+
+    if (!storageCompatible) {
+      // Convert to RDValue to support type mismatch
+      if (destProp->d_arrayData.family != PropertyType::ANY) {
+        destProp->d_arrayData.convertToRDValue();
+      }
+      PRECONDITION(destProp->d_arrayData.family == PropertyType::ANY,
+                   "convertToRDValue should make family ANY");
+      destProp->d_isComputed = sourceProp->d_isComputed;
+      auto *destData = static_cast<RDValue *>(destProp->d_arrayData.data);
+      RDValue::cleanup_rdvalue(destData[destinationIndex]);
+      static_cast<RDValue *>(destData)[destinationIndex] =
+          sourceProp->d_arrayData.getValueAs<RDValue>(sourceIndex);
+
+      // Set the isSetMask when copying with type conversion
+      bool &isSet = destProp->d_arrayData.isSetMask[destinationIndex];
+      if (!isSet) {
+        isSet = true;
+        ++destProp->d_arrayData.numSet;
+      }
+      return;
     }
-    PRECONDITION(destProp->d_arrayData.family == PropertyType::ANY,
-                 "convertToRDValue should make family ANY");
-    destProp->d_isComputed = sourceProp->d_isComputed;
-    auto *destData = static_cast<RDValue *>(destProp->d_arrayData.data);
-    RDValue::cleanup_rdvalue(destData[destinationIndex]);
-    static_cast<RDValue *>(destData)[destinationIndex] =
-        sourceProp->d_arrayData.getValueAs<RDValue>(sourceIndex);
-    return;
+    // If storage-compatible, fall through to direct copy
   }
 
-  // Copy directly
+  // Copy directly (including storage-compatible types with different family enums)
   destProp->d_isComputed = sourceProp->d_isComputed;
-  auto family = sourceProp->d_arrayData.family;
+  auto destFamily = destProp->d_arrayData.family;
   const auto *sourceData = sourceProp->d_arrayData.data;
   auto *destData = destProp->d_arrayData.data;
-  if (is8BitType(family)) {
+  if (is8BitType(destFamily)) {
     static_cast<char *>(destData)[destinationIndex] =
         static_cast<const char *>(sourceData)[sourceIndex];
-  } else if (is32BitType(family)) {
+  } else if (is32BitType(destFamily)) {
     static_cast<int32_t *>(destData)[destinationIndex] =
         static_cast<const int32_t *>(sourceData)[sourceIndex];
-  } else if (is64BitType(family)) {
+  } else if (is64BitType(destFamily)) {
     static_cast<int64_t *>(destData)[destinationIndex] =
         static_cast<const int64_t *>(sourceData)[sourceIndex];
   } else {

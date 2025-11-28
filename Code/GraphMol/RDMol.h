@@ -1856,18 +1856,33 @@ public:
     }
     existing->d_isComputed = computed;
     auto existingFamily = existing->d_arrayData.family;
-    if (existingFamily != TypeToPropertyType<T>::family && existingFamily != PropertyType::ANY) {
+    auto newFamily = TypeToPropertyType<T>::family;
+
+    if (existingFamily != newFamily && existingFamily != PropertyType::ANY) {
       if (!supportTypeMismatch) {
         throw ValueErrorException("Property type mismatch");
       }
-      // Convert to RDValue
-      existing->d_arrayData.convertToRDValue();
-      PRECONDITION(existing->d_arrayData.family == PropertyType::ANY,
-                   "convertToRDValue should make family ANY");
-      existingFamily = PropertyType::ANY;
+      // Check if types are storage-compatible (e.g., INT32 and UINT32 both use int32_t storage)
+      auto is8Bit = [](PropertyType f) { return f == PropertyType::CHAR || f == PropertyType::BOOL; };
+      auto is32Bit = [](PropertyType f) { return f == PropertyType::INT32 || f == PropertyType::UINT32 || f == PropertyType::FLOAT; };
+      auto is64Bit = [](PropertyType f) { return f == PropertyType::INT64 || f == PropertyType::UINT64 || f == PropertyType::DOUBLE; };
+      bool storageCompatible =
+          (is8Bit(existingFamily) && is8Bit(newFamily)) ||
+          (is32Bit(existingFamily) && is32Bit(newFamily)) ||
+          (is64Bit(existingFamily) && is64Bit(newFamily));
+
+      if (!storageCompatible) {
+        // Convert to RDValue only if not storage-compatible
+        existing->d_arrayData.convertToRDValue();
+        PRECONDITION(existing->d_arrayData.family == PropertyType::ANY,
+                     "convertToRDValue should make family ANY");
+        existingFamily = PropertyType::ANY;
+      }
+      // If storage-compatible, keep the existing type and fall through
     }
+
     auto &arr = existing->d_arrayData;
-    if (TypeToPropertyType<T>::family == PropertyType::ANY || existingFamily == PropertyType::ANY) {
+    if (newFamily == PropertyType::ANY || existingFamily == PropertyType::ANY) {
       auto* data = static_cast<RDValue*>(arr.data);
       // Default value may still need cleaning even if not previously set.
       RDValue::cleanup_rdvalue(data[index]);
@@ -1878,7 +1893,24 @@ public:
       } else {
         data[index] = value;
       }
+    } else if (existingFamily == PropertyType::CHAR || existingFamily == PropertyType::BOOL) {
+      // Use existing family's storage type for storage-compatible types
+      auto *data = static_cast<char *>(arr.data);
+      if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, char>) {
+        data[index] = static_cast<char>(value);
+      }
+    } else if (existingFamily == PropertyType::INT32 || existingFamily == PropertyType::UINT32 || existingFamily == PropertyType::FLOAT) {
+      auto *data = static_cast<int32_t *>(arr.data);
+      if constexpr (std::is_same_v<T, int> || std::is_same_v<T, unsigned int> || std::is_same_v<T, float>) {
+        data[index] = *reinterpret_cast<const int32_t*>(&value);
+      }
+    } else if (existingFamily == PropertyType::INT64 || existingFamily == PropertyType::UINT64 || existingFamily == PropertyType::DOUBLE) {
+      auto *data = static_cast<int64_t *>(arr.data);
+      if constexpr (std::is_same_v<T, int64_t> || std::is_same_v<T, uint64_t> || std::is_same_v<T, double>) {
+        data[index] = *reinterpret_cast<const int64_t*>(&value);
+      }
     } else {
+      // Exact match - use T's storage type directly
       auto *data = static_cast<T *>(arr.data);
       data[index] = value;
     }
