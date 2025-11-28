@@ -117,7 +117,7 @@ std::string embedParametersToJSON(const EmbedParameters &params) {
 
       for (unsigned j = 0; j < N; ++j) {
         boost::property_tree::ptree v;
-        v.put("", params.boundsMat->getVal(i,j));
+        v.put("", params.boundsMat->getVal(i, j));
         rowPT.push_back({"", v});
       }
 
