@@ -1,3 +1,86 @@
+# Release_2025.09.3
+(Changes relative to Release_2025.09.2)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+David Cosgrove, Andrew Dirksen, Justin Gullingsrud, Tad Hurst, Brian Kelley,
+Phong Lam, Niels Maeder, Dan Nealschneider, Patrick Penner, Rachael Pirie Max
+Rietmann, Ricardo Rodriguez, Anton Siomchen, Rachel Walker, dehaenw, paconius,
+
+## New Features and Enhancements:
+  - Incremental synthon search
+ (github pull #8855 from jgullingsrud)
+  - [CONTRIB]: Freewilson now keeps the coordinates passed in
+ (github pull #8868 from bp-kelley)
+  - add more benchmarking
+ (github pull #8878 from bddap)
+  - added new attributes for scsr template as per BIOVIA doc 2023
+ (github pull #8911 from tadhurst-cdd)
+  - Allow using generators for similarity maps
+ (github pull #8912 from greglandrum)
+  - Return original molecule from StereoisomerEnumerator when no unspecified stereocenters are available
+ (github pull #8924 from phonglam3103)
+  - Add function to compute shape scores without overlay.
+ (github pull #8950 from DavidACosgrove)
+  - expose Bond::invertChirality() to Python
+ (github pull #8951 from paconius)
+  - Add a couple of utility functions for working with flat matrices
+ (github pull #8955 from nmaeder)
+  - Add test to watch the state of canonicalization problems reported in #8775
+ (github pull #8958 from ricrogz)
+
+## Bug Fixes:
+  - Multiple absolute stereo groups shouldn't be allowed on a single mol
+ (github issue #8873 from rachelnwalker)
+  - Unrecognized attachment points in synthon library results in broken molecules
+ (github issue #8898 from jgullingsrud)
+  - CXSmiles strips away isotopes
+ (github issue #8906 from bp-kelley)
+  - Unable to build any rdkit >= 2025.3.6, when RDK_BUILD_DESCRIPTORS3D=OFF
+ (github issue #8922 from asiomchen)
+  - Ignore whitespace when patching RapidJSON
+ (github pull #8927 from ricrogz)
+  - Fixes a bug with chirality perception of T-shaped centers in very large rings
+ (github pull #8930 from greglandrum)
+  - Fixes for nontetrahedral stereo parsing from SMILES/SMARTS
+ (github pull #8932 from greglandrum)
+  - Allow abbreviations without XBonds
+ (github pull #8933 from greglandrum)
+  - Fix potential iterator invalidation
+ (github pull #8944 from rietmann-nv)
+  - N#N=O and O=N#N parse to different mol
+ (github issue #8945 from dehaenw)
+  - Valence error when parsing SCSR
+ (github pull #8948 from tadhurst-cdd)
+  - Modern stereo perception: Smiles stereochemistry inversion at rings
+ (github issue #8956 from d-b-w)
+  - stop ignoring confId in CalcMolDescriptors3D()
+ (github pull #8967 from greglandrum)
+  - Valence error in scsr temlates for nitro and metal complexes
+ (github pull #8969 from tadhurst-cdd)
+
+## Cleanup work:
+  - Switch from using RapidJSON to Boost::JSON for MolInterchange
+ (github pull #8859 from greglandrum)
+  - Fix for issue with deprecated boost functions for MacOS build from source
+ (github pull #8929 from RPirie96)
+  - Do not add a `__computedProps` property to molecules when initializing them
+ (github pull #8931 from greglandrum)
+  - Do not reset the ringInfo information when adding bonds to RWMol
+ (github pull #8934 from greglandrum)
+
+## Documentation:
+  - Extra documentation for EnumerateLibraries
+ (github pull #8909 from DavidACosgrove)
+  - Update installation instructions for building RDKit from source for macOS 
+ (github pull #8928 from phonglam3103)
+  - Fixed Typo in Getting Started Docs
+ (github pull #8947 from PatrickPenner)
+
+
 # Release_2025.09.2
 (Changes relative to Release_2025.09.1)
 
@@ -97,7 +180,6 @@ spparel
  (github pull #8872 from ricrogz)
   - make Point2D and Point3D constexpr
  (github pull #8882 from greglandrum)
-
 
 # Release_2025.09.1
 (Changes relative to Release_2025.03.1)
