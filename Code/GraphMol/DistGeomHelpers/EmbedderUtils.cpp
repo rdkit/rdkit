@@ -109,6 +109,24 @@ std::string embedParametersToJSON(const EmbedParameters &params) {
     pt.add_child("coordMap", coordMapPT);
   }
 
+  if (params.boundsMat) {
+    boost::property_tree::ptree matrixPT;
+    const unsigned int N = params.boundsMat->numCols();
+    for (unsigned i = 0; i < N; ++i) {
+      boost::property_tree::ptree rowPT;
+
+      for (unsigned j = 0; j < N; ++j) {
+        boost::property_tree::ptree v;
+        v.put("", params.boundsMat->getVal(i,j));
+        rowPT.push_back({"", v});
+      }
+
+      matrixPT.push_back({"", rowPT});
+    }
+
+    pt.add_child("boundsMatrix", matrixPT);
+  }
+
   std::ostringstream ss;
   boost::property_tree::write_json(ss, pt, false);
   return ss.str();
