@@ -192,22 +192,35 @@ TEST_CASE("update parameters from JSON") {
 }
 
 TEST_CASE("EmbedParameters to JSON") {
+  SECTION("No map") {
   auto ps = DGeomHelpers::KDG;
   auto json = DGeomHelpers::embedParametersToJSON(ps);
   std::string goal =
       R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false"}
 )JSON";
-  CHECK(json == goal);
+    CHECK(json == goal);
+  }
+  SECTION("With CoordMap") {
+    auto ps = DGeomHelpers::KDG;
   auto p = RDGeom::Point3D(1.1, 2.2, 3.3);
   auto coordMap = new std::map<int, RDGeom::Point3D>();
   coordMap->insert({3, p});
   ps.coordMap = coordMap;
-  json = DGeomHelpers::embedParametersToJSON(ps, true);
-  goal =
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    std::string goal =
       R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","coordMap":{"3":["1.100000","2.200000","3.300000"]}}
 )JSON";
   CHECK(json == goal);
   delete coordMap;
+  }
+  SECTION("Round trip") {
+    auto ps = DGeomHelpers::ETKDGv3;
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    auto ps2 = DGeomHelpers::EmbedParameters();
+    DGeomHelpers::updateEmbedParametersFromJSON(ps2, json);
+    auto json2 = DGeomHelpers::embedParametersToJSON(ps2);
+    CHECK(json == json2);
+  }
 }
 
 TEST_CASE(
