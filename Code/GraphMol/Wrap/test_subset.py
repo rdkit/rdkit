@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2021  Greg Landrum and other RDKit contributors
+#  Copyright (C) 2025 Hussein Faara, Brian Kelley and other RDKit contributors
 #         All Rights Reserved
 #
 import doctest

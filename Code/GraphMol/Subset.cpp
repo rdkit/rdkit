@@ -24,7 +24,7 @@ inline void copyComputedProps(const ROMol &src, ROMol &dst) {
   }
 }
 
-static void copySelectedAtomsAndBonds(::RDKit::RWMol &extracted_mol,
+static void copySelectedAtomsAndBonds(RWMol &extracted_mol,
                                       const RDKit::ROMol &reference_mol,
                                       SubsetInfo &selection_info,
 				      const SubsetOptions &options) {
@@ -35,11 +35,11 @@ static void copySelectedAtomsAndBonds(::RDKit::RWMol &extracted_mol,
       continue;
     }
 
-    std::unique_ptr<::RDKit::Atom> extracted_atom{
+    std::unique_ptr<Atom> extracted_atom{
       options.copyAsQuery ? new QueryAtom(*ref_atom) : ref_atom->copy() };
 
-    static constinit bool updateLabel = false;
-    static constinit bool takeOwnership = true;
+    constexpr bool updateLabel = false;
+    constexpr bool takeOwnership = true;
     atomMapping[ref_atom->getIdx()] = extracted_mol.addAtom(
         extracted_atom.release(), updateLabel, takeOwnership);
   }
@@ -49,7 +49,7 @@ static void copySelectedAtomsAndBonds(::RDKit::RWMol &extracted_mol,
       continue;
     }
 
-    std::unique_ptr<::RDKit::Bond> extracted_bond{
+    std::unique_ptr<Bond> extracted_bond{
       options.copyAsQuery ? new QueryBond(*ref_bond) : ref_bond->copy() };
 
     // Check the stereo atoms
@@ -74,37 +74,37 @@ static void copySelectedAtomsAndBonds(::RDKit::RWMol &extracted_mol,
     extracted_bond->setBeginAtomIdx(atomMapping[ref_bond->getBeginAtomIdx()]);
     extracted_bond->setEndAtomIdx(atomMapping[ref_bond->getEndAtomIdx()]);
 
-    static constinit bool takeOwnership = true;
+    constexpr bool takeOwnership = true;
     auto num_bonds =
         extracted_mol.addBond(extracted_bond.release(), takeOwnership);
     bondMapping[ref_bond->getIdx()] = num_bonds - 1;
 
-    // we need to update rings now
-    if(selectedBonds.any() && reference_mol.getRingInfo()->isInitialized()) {
-      extracted_mol.getRingInfo()->reset();
-    }
   }
+  // we need to update rings now
+
+  if(selectedBonds.any() && reference_mol.getRingInfo()->isInitialized()) {
+    extracted_mol.getRingInfo()->reset();
+  }
+
 }
 
-[[nodiscard]] static bool is_selected_sgroup(
-    const ::RDKit::SubstanceGroup &sgroup,
+static bool isSelectedSGroup(
+    const SubstanceGroup &sgroup,
     const SubsetInfo &selection_info) {
   auto is_selected_component = [](auto &indices, auto &selection_test) {
     return indices.empty() ||
            std::all_of(indices.begin(), indices.end(), selection_test);
   };
 
-  // clang-format off
-    auto atom_test = [&](int idx) { return selection_info.selectedAtoms[idx]; };
-    auto bond_test = [&](int idx) { return selection_info.selectedBonds[idx]; };
-    return is_selected_component(sgroup.getAtoms(), atom_test) &&
-           is_selected_component(sgroup.getBonds(), bond_test) &&
-           is_selected_component(sgroup.getParentAtoms(), atom_test);
-  // clang-format on
+  auto atom_test = [&](int idx) { return selection_info.selectedAtoms[idx]; };
+  auto bond_test = [&](int idx) { return selection_info.selectedBonds[idx]; };
+  return is_selected_component(sgroup.getAtoms(), atom_test) &&
+    is_selected_component(sgroup.getBonds(), bond_test) &&
+    is_selected_component(sgroup.getParentAtoms(), atom_test);
 }
 
 static void copySelectedSubstanceGroups(
-    ::RDKit::RWMol &extracted_mol, const RDKit::ROMol &reference_mol,
+    RWMol &extracted_mol, const RDKit::ROMol &reference_mol,
     const SubsetInfo &selection_info, const SubsetOptions &) {
   auto update_indices = [](auto &sgroup, auto getter, auto setter,
                            auto &mapping) {
@@ -116,29 +116,29 @@ static void copySelectedSubstanceGroups(
 
   const auto &[selectedAtoms, selectedBonds, atomMapping, bondMapping] =
       selection_info;
-  for (const auto &sgroup : ::RDKit::getSubstanceGroups(reference_mol)) {
-    if (!is_selected_sgroup(sgroup, selection_info)) {
+  for (const auto &sgroup : getSubstanceGroups(reference_mol)) {
+    if (!isSelectedSGroup(sgroup, selection_info)) {
       continue;
     }
 
-    ::RDKit::SubstanceGroup extracted_sgroup(sgroup);
+    SubstanceGroup extracted_sgroup(sgroup);
     extracted_sgroup.setOwningMol(&extracted_mol);
 
     update_indices(
-        extracted_sgroup, std::mem_fn(&::RDKit::SubstanceGroup::getAtoms),
-        std::mem_fn(&::RDKit::SubstanceGroup::setAtoms), atomMapping);
+        extracted_sgroup, std::mem_fn(&SubstanceGroup::getAtoms),
+        std::mem_fn(&SubstanceGroup::setAtoms), atomMapping);
     update_indices(
-        extracted_sgroup, std::mem_fn(&::RDKit::SubstanceGroup::getParentAtoms),
-        std::mem_fn(&::RDKit::SubstanceGroup::setParentAtoms), atomMapping);
+        extracted_sgroup, std::mem_fn(&SubstanceGroup::getParentAtoms),
+        std::mem_fn(&SubstanceGroup::setParentAtoms), atomMapping);
     update_indices(
-        extracted_sgroup, std::mem_fn(&::RDKit::SubstanceGroup::getBonds),
-        std::mem_fn(&::RDKit::SubstanceGroup::setBonds), bondMapping);
+        extracted_sgroup, std::mem_fn(&SubstanceGroup::getBonds),
+        std::mem_fn(&SubstanceGroup::setBonds), bondMapping);
 
-    ::RDKit::addSubstanceGroup(extracted_mol, std::move(extracted_sgroup));
+    addSubstanceGroup(extracted_mol, std::move(extracted_sgroup));
   }
 }
 
-static void copySelectedStereoGroups(::RDKit::RWMol &extracted_mol,
+static void copySelectedStereoGroups(RWMol &extracted_mol,
                                      const RDKit::ROMol &reference_mol,
                                      const SubsetInfo &selection_info) {
   auto is_selected_component = [](auto &objects, auto &selected_indices) {
@@ -155,32 +155,32 @@ static void copySelectedStereoGroups(::RDKit::RWMol &extracted_mol,
                                  selection_info.selectedBonds);
   };
 
-  std::vector<::RDKit::Atom *> extracted_atoms(extracted_mol.getNumAtoms());
+  std::vector<Atom *> extracted_atoms(extracted_mol.getNumAtoms());
   for (const auto &atom : extracted_mol.atoms()) {
     extracted_atoms[atom->getIdx()] = atom;
   }
 
-  std::vector<::RDKit::Bond *> extracted_bonds(extracted_mol.getNumBonds());
+  std::vector<Bond *> extracted_bonds(extracted_mol.getNumBonds());
   for (const auto &bond : extracted_mol.bonds()) {
     extracted_bonds[bond->getIdx()] = bond;
   }
 
   const auto &[selectedAtoms, selectedBonds, atomMapping, bondMapping] =
       selection_info;
-  std::vector<::RDKit::StereoGroup> extracted_stereo_groups;
+  std::vector<StereoGroup> extracted_stereo_groups;
   for (const auto &stereo_group : reference_mol.getStereoGroups()) {
     if (!is_selected_stereo_group(stereo_group)) {
       continue;
     }
 
-    std::vector<::RDKit::Atom *> atoms;
+    std::vector<Atom *> atoms;
     for (const auto &atom : stereo_group.getAtoms()) {
       auto mapping = atomMapping.find(atom->getIdx());
       if(mapping != atomMapping.end())
 	atoms.push_back(extracted_atoms[mapping->second]);
     }
 
-    std::vector<::RDKit::Bond *> bonds;
+    std::vector<Bond *> bonds;
     for (const auto &bond : stereo_group.getBonds()) {
       auto mapping = bondMapping.find(bond->getIdx());
       if(mapping != bondMapping.end()) {
@@ -255,7 +255,7 @@ void copyCoords(RDKit::RWMol &copy, const RDKit::RWMol &mol, SubsetInfo &subset_
 std::unique_ptr<RDKit::RWMol> copyMolSubset(
     const RDKit::ROMol &mol, SubsetInfo & selection_info,
     const SubsetOptions &options) {
-  auto extracted_mol = std::make_unique<::RDKit::RWMol>();
+  auto extracted_mol = std::make_unique<RWMol>();
   copySelectedAtomsAndBonds(*extracted_mol, mol, selection_info, options);
   copySelectedSubstanceGroups(*extracted_mol, mol, selection_info, options);
   copySelectedStereoGroups(*extracted_mol, mol, selection_info);
@@ -263,7 +263,7 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(
     copyCoords(*extracted_mol, mol, selection_info);
   
   if (options.sanitize) {
-    ::RDKit::MolOps::sanitizeMol(*extracted_mol);
+    MolOps::sanitizeMol(*extracted_mol);
   }
   
   if (options.clearComputedProps) {

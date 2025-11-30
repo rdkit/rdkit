@@ -425,7 +425,7 @@ struct SelectedComponents {
 };
 
 // helper api to get test mol for copyMolSubset api.
-[[nodiscard]] static std::unique_ptr<RDKit::RWMol> get_test_mol()
+static std::unique_ptr<RDKit::RWMol> getTestMol()
 {
   std::unique_ptr<RDKit::RWMol> mol{RDKit::SmilesToMol("CCCCCCCCCCCCCCC")};
   for (auto& atom : mol->atoms()) {
@@ -477,7 +477,7 @@ TEST_CASE("test_extract_atoms", "[copyMolSubset]") {
 
   std::vector<unsigned int> expected_atoms{0, 2, 4, 6, 8, 10, 12};
 
-  auto mol = get_test_mol();
+  auto mol = getTestMol();
   auto extracted_mol = copyMolSubset(*mol, selected_atoms);
   REQUIRE(extracted_mol->getNumAtoms() == expected_atoms.size());
 
@@ -492,7 +492,7 @@ TEST_CASE("test_extract_atoms", "[copyMolSubset]") {
 // This test makes sure we correctly extract atoms
 TEST_CASE("test_extract_bonds", "[copyMolSubset]")
 {
-  auto test_mol = get_test_mol();
+  auto test_mol = getTestMol();
 
   for (auto& bond : test_mol->bonds()) {
     bond->setProp("test_prop", true);
@@ -513,7 +513,7 @@ TEST_CASE("test_extract_bonds", "[copyMolSubset]")
 
 // This test makes sure we correctly extract substance groups
 TEST_CASE("test_extract_substance_groups", "[copyMolSubset]") {
-  auto mol = get_test_mol();
+  auto mol = getTestMol();
   ::RDKit::SubstanceGroup sgroup{mol.get(), "COP"};
 
   auto test_sgroup_atoms = GENERATE(
@@ -594,7 +594,7 @@ TEST_CASE("test_extract_substance_groups", "[copyMolSubset]") {
 //  atoms from stereo groups, it doesn't remove the stereogroup
 //  completely.
 TEST_CASE("test_extract_stereo_groups", "[copyMolSubset]") {
-  auto mol = get_test_mol();
+  auto mol = getTestMol();
 
   auto test_stereo_group_atoms = GENERATE(
      std::vector<unsigned int>{},

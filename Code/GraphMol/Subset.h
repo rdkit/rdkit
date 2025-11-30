@@ -11,7 +11,6 @@
 #define RD_SUBSET_H
 
 #include <RDGeneral/export.h>
-#include <RDGeneral/BetterEnums.h>
 #include <boost/dynamic_bitset.hpp>
 
 #include <memory>
