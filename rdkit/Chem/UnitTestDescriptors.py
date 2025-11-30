@@ -167,9 +167,9 @@ class TestCase(unittest.TestCase):
       f = getattr(Descriptors, n)
       self.assertEqual(results[i], f(m))
 
-  @unittest.skipIf(
-    not hasattr(rdMolDescriptors, 'BCUT2D') or not hasattr(rdMolDescriptors, 'CalcAUTOCORR2D'),
-    "BCUT or AUTOCORR descriptors not available")
+  @unittest.skipIf(not hasattr(rdMolDescriptors, 'BCUT2D')
+                   or not hasattr(rdMolDescriptors, 'CalcAUTOCORR2D'),
+                   "BCUT or AUTOCORR descriptors not available")
   def testVectorDescriptorsInDescList(self):
     # First try only bcuts should exist
     descriptors = set([n for n, _ in Descriptors.descList])
@@ -212,6 +212,15 @@ class TestCase(unittest.TestCase):
     descs = Descriptors3D.CalcMolDescriptors3D(mol)
     self.assertTrue('InertialShapeFactor' in descs)
     self.assertAlmostEqual(descs['PMI1'], 20.9582649071385, delta=1e-4)
+
+    # test function returns expected outputs
+    AllChem.EmbedMultipleConfs(mol, 10, randomSeed=0xf00d)
+    descs = Descriptors3D.CalcMolDescriptors3D(mol)
+    self.assertTrue('InertialShapeFactor' in descs)
+    self.assertAlmostEqual(descs['PMI1'], 20.9582649071385, delta=1e-4)
+    descs2 = Descriptors3D.CalcMolDescriptors3D(mol, confId=2)
+    for key in descs:
+      self.assertNotEqual(descs2[key], descs[key])
 
 
 if __name__ == '__main__':

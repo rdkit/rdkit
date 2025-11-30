@@ -301,6 +301,11 @@ python::tuple getExpTorsHelperWithParams(
                           ps.useBasicKnowledge, ps.ETversion, ps.verbose);
 }
 
+python::str embedParametersToJSONHelper(
+    const DGeomHelpers::EmbedParameters &ps) {
+  return python::str(embedParametersToJSON(ps));
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -436,7 +441,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - useBasicKnowledge : impose basic knowledge such as flat rings\n\
   - printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
-    List of new conformation IDs \n\
+    Iterator which yields new conformation IDs \n\
 \n";
   python::def(
       "EmbedMultipleConfs", RDKit::EmbedMultipleConfs,
@@ -595,7 +600,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - numConfs : the number of conformers to generate \n\
   - params : an EmbedParameters object \n\
  RETURNS:\n\n\
-    List of new conformation IDs \n\
+    Iterator which yields new conformation IDs \n\
 \n";
   python::def(
       "EmbedMultipleConfs", RDKit::EmbedMultipleConfs2,
@@ -663,4 +668,15 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("doTriangleSmoothing") = true,
                python::arg("useMacrocycle14config") = false),
               docString.c_str());
+
+  docString =
+      "Returns json string containing embedParameters attributes\n\
+  \n\
+  ARGUMENTS:\n\n\
+    - embedParameters : the Params object you want serialized\n\
+  RETURNS:\n\n\
+    The Params object as json string\n\
+  \n";
+  python::def("EmbedParametersToJSON", RDKit::embedParametersToJSONHelper,
+              (python::arg("embedParameters")), docString.c_str());
 }

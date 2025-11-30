@@ -3324,3 +3324,43 @@ TEST_CASE("bond labels not being used in fragment canonicalization") {
     CHECK(smi1 == smi2);
   }
 }
+
+TEST_CASE("github #8906") {
+  SECTION("as reported") {
+    auto m = "[1*][2C] ||"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getIsotope() == 1);
+    CHECK(m->getAtomWithIdx(1)->getIsotope() == 2);
+    auto csmi1 = MolToSmiles(*m);
+    CHECK(csmi1 == "[1*][2C]");
+  }
+}
+
+TEST_CASE("chiral class must be nonzero") {
+  SECTION("basics") {
+    {
+      auto m = "C[As@TB0](F)(Cl)(O)Br"_smiles;
+      REQUIRE(!m);
+    }
+    {
+      auto m = "C[As@TB0](F)(Cl)(O)Br"_smarts;
+      REQUIRE(!m);
+    }
+    {
+      auto m = "[As@TB1]"_smarts;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+            Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+      CHECK(m->getAtomWithIdx(0)->getProp<int>(
+                common_properties::_chiralPermutation) == 1);
+    }
+    {
+      auto m = "C[As@TB1](F)(Cl)(O)Br"_smarts;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+      CHECK(m->getAtomWithIdx(1)->getProp<int>(
+                common_properties::_chiralPermutation) == 1);
+    }
+  }
+}

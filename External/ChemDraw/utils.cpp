@@ -108,8 +108,16 @@ struct FragmentReplacement {
     auto bond_ordering =
         replacement_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
 
+    // The "addBond" lower in the loop potentially modifies the atomBonds
+    // iterator. To ensure safety, we copy the bonds first.
+    std::vector<Bond *> replacement_bonds(
+                                          mol.atomBonds(replacement_atom).begin(),
+                                          mol.atomBonds(replacement_atom).end());
+
+    std::vector<Bond *> xbonds;  // Reuse this vector to reduce repeated allocations
+
     // Find the connecting atoms and and do the replacement
-    for (auto bond : mol.atomBonds(replacement_atom)) {
+    for (auto bond : replacement_bonds) {
       // find the position of the attachment bonds in the bond ordering
       unsigned bond_id = 0;
       if (!bond->getPropIfPresent<unsigned int>(CDX_BOND_ID, bond_id)) {
@@ -134,7 +142,12 @@ struct FragmentReplacement {
 
       auto &xatom = fragment_atoms[pos];
 
-      for (auto &xbond : mol.atomBonds(xatom)) {
+      // The "addBond" lower in the loop potentially modifies the atomBonds
+      // iterator. To ensure safety, we copy the bonds first.
+      xbonds.assign(mol.atomBonds(xatom).begin(),
+                    mol.atomBonds(xatom).end());
+
+      for (auto &xbond : xbonds) {
         // xatom is the fragment dummy atom
         // xbond is the fragment bond
         if (bond->getBeginAtom() == replacement_atom) {
