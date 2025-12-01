@@ -91,9 +91,9 @@ std::string getQuotedToken(const char *&linePtr) {
       if (*linePtr == '\0') {
         break;
       }
-
-      res += *linePtr++;
     }
+
+    res += *linePtr++;
   }
   if (*linePtr != '"') {
     res = "";  // error: no closing quote
@@ -173,7 +173,7 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
     }
     std::string attrValue;
     if (*linePtr == '"') {
-      attrValue = getQuotedToken(++linePtr);
+      attrValue = getQuotedToken(linePtr);
     } else {
       attrValue = getToken(linePtr, ' ');
     }
