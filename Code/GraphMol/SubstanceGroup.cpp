@@ -423,6 +423,10 @@ void removeSubstanceGroupsReferencing(RWMol &mol, unsigned int idx) {
         ++nRemoved;
       }
     }
+    if (!parentsPresent && nRemoved == 0) {
+      // nothing to do, return early to avoid unnecessary moves
+      return;
+    }
 
     // if we're going to be removing anything and there are PARENTS present,
     // we need to build a lookup map between index->position in original array
