@@ -83,7 +83,7 @@ std::string getQuotedToken(const char *&linePtr) {
   if (*linePtr != '"') {
     return res;
   }
-  *linePtr++;  // skip opening quote
+  linePtr++;  // skip opening quote
   while (*linePtr && *linePtr != '"') {
     if (*linePtr == '\\') {
       // escaped char
@@ -234,61 +234,6 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
 
     parseTemplateLine(templateMol, tempStr.c_str(), line);
 
-    // res->addTemplate(std::move(templateMol));
-
-    // while (tempStr.substr(0, 8) == "TEMPLATE") {
-    //   std::vector<std::string> tokens;
-    //   std::vector<std::string> subTokens;
-    //   boost::algorithm::split(tokens, tempStr, boost::algorithm::is_space());
-
-    //   if (tokens.size() < 3) {
-    //     std::ostringstream errout;
-    //     errout << "Bad Template entry at line  " << line;
-    //     throw FileParseException(errout.str());
-    //   }
-
-    //   // get the class and template names
-
-    //   boost::algorithm::split(subTokens, tokens[2],
-    //                           boost::algorithm::is_any_of("/"));
-    //   if (subTokens.size() < 3) {
-    //     std::ostringstream errout;
-    //     errout << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at
-    //     line
-    //     "
-    //            << line;
-    //     throw FileParseException(errout.str());
-    //   }
-
-    //   res->addTemplate(std::unique_ptr<ROMol>(new ROMol()));
-    //   auto templateMol = (RWMol *)res->getTemplate(res->getTemplateCount() -
-    //   1);
-
-    //   templateMol->setProp(common_properties::molAtomClass, subTokens[0]);
-
-    //   std::vector<std::string> templateNames;
-
-    //   for (unsigned int i = 1; i < subTokens.size(); ++i) {
-    //     if (subTokens[i] != "") {
-    //       templateNames.push_back(subTokens[i]);
-    //     }
-    //   }
-    //   templateMol->setProp(common_properties::templateNames, templateNames);
-
-    //   for (unsigned int i = 3; i < tokens.size(); ++i) {
-    //     boost::algorithm::split(subTokens, tokens[i],
-    //                             boost::algorithm::is_any_of("="));
-    //     if (subTokens.size() != 2) {
-    //       std::ostringstream errout;
-    //       errout
-    //           << "Attribute  string is not of the form \"AttrName=value\" at
-    //           line  "
-    //           << line;
-    //       throw FileParseException(errout.str());
-    //     }
-    //     templateMol->setProp(subTokens[0], subTokens[1]);
-    //   }
-
     auto molComplete = false;
     Conformer *conf = nullptr;
     try {
@@ -334,13 +279,11 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
       throw FileParseException(errout.str());
     }
 
-    // if (templateMol) {
     auto tempParams = params;
     tempParams.sanitize = false;
     tempParams.removeHs = false;
     FileParserUtils::finishMolProcessing(templateMol, chiralityPossible,
                                          tempParams);
-    //}
 
     tempStr = FileParserUtils::getV3000Line(&inStream, line);
   }
