@@ -22,44 +22,36 @@ class RWMol;
 //! Subsetting Methods for copyMolSubset
 /*
  * These control what the path structures mean in copyMolSubset
- *     \param BONDS_BETWEEN_ATOMS - extract the specified atoms and the bonds between them
- *     \param BONDS - extract the specified bonds and their attached atoms
  *
  *  NOTE: when the atoms and bonds are fully specified, the subset method is ignored.
  */ 
 enum class SubsetMethod {
-  BONDS_BETWEEN_ATOMS=0,
-  BONDS=1
+  BONDS_BETWEEN_ATOMS=0, //<! extract the specified atoms and the bonds between them
+  BONDS=1                //<! extract the specified bonds and their attached atoms
 };  
 
 //! Subsetting Options for copyMolSubset
 /*
  * These control what is copied over from the original molecule
- *     \param sanitize - perform sanitization automatically on the subset
- *     \param clearComputedProps - clear all computed props on the subsetted molecule
- *     \param copyAsQuery - Return the subset as a query
- *     \param copyCoordinates - Copy the active coordinates from the molecule
- *     \param conformerIdx - What conformer idx to use for the coordinates default is -1
- *     \param method - Subsetting method to use.  *Note* if atoms and bonds are fully specified
- *                      the method is ignored.
  *
  *  NOTE: when the atoms and bonds are fully specified, the subset method is ignored.
  */ 
 struct RDKIT_GRAPHMOL_EXPORT SubsetOptions {
-  bool sanitize = false;
-  bool clearComputedProps = false;
-  bool copyAsQuery = false;
-  bool copyCoordinates = true;
-  unsigned int conformerIdx = -1u;
+  bool sanitize = false; /**< perform sanitization automatically on the subset */
+  bool clearComputedProps = false; /**< clear all computed props on the subsetted molecule */
+  bool copyAsQuery = false; /**< Return the subset as a query */
+  bool copyCoordinates = true; /**< *Copy the active coordinates from the molecule */
+  unsigned int conformerIdx = -1u; /**< What conformer idx to use for the coordinates default is -1 */
   
-  SubsetMethod method = SubsetMethod::BONDS_BETWEEN_ATOMS;
+  SubsetMethod method = SubsetMethod::BONDS_BETWEEN_ATOMS; /**< Subsetting method to use.  *Note* if atoms and bonds are fully specified
+							    * the method is ignored.*/
 };
 
 struct RDKIT_GRAPHMOL_EXPORT SubsetInfo {
-  boost::dynamic_bitset<> selectedAtoms;
-  boost::dynamic_bitset<> selectedBonds;
-  std::map<unsigned int, unsigned int> atomMapping;
-  std::map<unsigned int, unsigned int> bondMapping;
+  boost::dynamic_bitset<> selectedAtoms; /**< atoms selected in the subset */
+  boost::dynamic_bitset<> selectedBonds; /**< bonds selected in the subset */
+  std::map<unsigned int, unsigned int> atomMapping; /**< mapping of original atom indices to new ones */
+  std::map<unsigned int, unsigned int> bondMapping; /**< mapping of original bond indices to new ones */
 };
 
 //!
