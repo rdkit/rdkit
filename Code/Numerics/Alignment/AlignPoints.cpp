@@ -41,7 +41,6 @@ double _weightedSumOfLenSq(const RDGeom::Point3DConstPtrVect &points,
                            const DoubleVector *weights) {
   PRECONDITION(!weights || (points.size() == weights->size()), "");
   double res = 0.0;
-  RDGeom::Point3DConstPtrVect_CI pti;
   const double *wData = weights ? weights->getData() : nullptr;
   unsigned int i = 0;
   for (const auto &pti : points) {
