@@ -1122,7 +1122,7 @@ void test7() {
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     MolOps::assignStereochemistry(*m, true);
-    //_renumberTest(m, smiles, 1000);
+    _renumberTest(m, smiles, 1000);
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
