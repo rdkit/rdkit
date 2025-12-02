@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <array>
 #include <map>
+#include <string_view>
 
 namespace SmilesParseOps {
 using namespace RDKit;
@@ -100,7 +101,7 @@ void processCXSmilesLabels(RWMol &mol) {
                       symb.substr(0, symb.size() - 2));
         atom->clearProp(common_properties::atomLabel);
       }
-    } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() &&
+    } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() && !atom->getIsotope() &&
                atom->getSymbol() == "*") {
       addquery(makeAAtomQuery(), "", mol, atom->getIdx());
     }
@@ -2026,7 +2027,7 @@ std::string get_coords_block(const ROMol &mol,
 
 std::string get_atom_props_block(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
-  static const std::array<std::string, 3> skip = {
+  constexpr std::array<std::string_view, 3> skip = {
       common_properties::atomLabel,
       common_properties::molFileValue,
       common_properties::molParity,

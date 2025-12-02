@@ -62,38 +62,23 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include <boost/json.hpp>
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #include <atomic>
 #endif
 
-#ifndef _MSC_VER
-// shutoff some warnings from rapidjson
-#if !defined(__clang__) && defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#endif
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
-#ifndef _MSC_VER
-#if !defined(__clang__) && defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
-#endif
-
 #define GET_JSON_VALUE(doc, drawingDetails, key, type)                     \
-  const auto key##It = doc.FindMember(#key);                               \
-  if (key##It != doc.MemberEnd()) {                                        \
-    if (!key##It->value.Is##type()) {                                      \
+  if (doc.contains(#key)) {                                                \
+    const auto &key##Val = doc.at(#key);                                   \
+    if (!key##Val.is_##type()) {                                           \
       return "JSON contains '" #key "' field, but its type is not '" #type \
              "'";                                                          \
     }                                                                      \
-    drawingDetails.key = key##It->value.Get##type();                       \
+    drawingDetails.key = key##Val.as_##type();                             \
   }
 
-namespace rj = rapidjson;
+namespace bj = boost::json;
 
 namespace RDKit {
 namespace MinimalLib {
@@ -347,62 +332,70 @@ ChemicalReaction *rxn_from_input(const std::string &input,
   return rxn_from_input(input, json);
 }
 
-std::string parse_int_array(const rj::Document &doc, std::vector<int> &intVec,
+std::string parse_int_array(const bj::object &doc, std::vector<int> &intVec,
                             const std::string &keyName,
                             const std::string &valueName) {
-  const auto it = doc.FindMember(keyName.c_str());
-  if (it != doc.MemberEnd()) {
-    if (!it->value.IsArray()) {
+  if (doc.contains(keyName)) {
+    const auto &val = doc.at(keyName);
+    if (!val.is_array()) {
       return "JSON contains '" + keyName + "' field, but it is not an array";
     }
     intVec.clear();
-    for (const auto &val : it->value.GetArray()) {
-      if (!val.IsInt()) {
+    const auto &arr = val.as_array();
+    for (const auto &item : arr) {
+      if (!item.is_int64()) {
         return valueName + " should be integers";
       }
-      intVec.push_back(val.GetInt());
+      intVec.push_back(static_cast<int>(item.as_int64()));
     }
   }
   return "";
 }
 
-std::string parse_double_array(const rj::Document &doc,
+std::string parse_double_array(const bj::object &doc,
                                std::vector<double> &doubleVec,
                                const std::string &keyName,
                                const std::string &valueName) {
-  const auto it = doc.FindMember(keyName.c_str());
-  if (it != doc.MemberEnd()) {
-    if (!it->value.IsArray()) {
+  if (doc.contains(keyName)) {
+    const auto &val = doc.at(keyName);
+    if (!val.is_array()) {
       return "JSON contains '" + keyName + "' field, but it is not an array";
     }
     doubleVec.clear();
-    for (const auto &val : it->value.GetArray()) {
-      if (!val.IsNumber()) {
+    const auto &arr = val.as_array();
+    for (const auto &item : arr) {
+      if (!item.is_number()) {
         return valueName + " should be floats";
       }
-      doubleVec.push_back(val.GetDouble());
+      doubleVec.push_back(item.to_number<double>());
     }
   }
   return "";
 }
 
-std::string parse_rgba_array(const rj::Value &val, DrawColour &color,
+std::string parse_rgba_array(const bj::value &val, DrawColour &color,
                              const std::string &keyName) {
-  if (!val.IsArray() || val.Size() < 3 || val.Size() > 4) {
+  if (!val.is_array()) {
+    return "JSON contains '" + keyName +
+           "' field, but the "
+           "colors are not arrays";
+  }
+  const auto &arr = val.as_array();
+  if (arr.size() < 3 || arr.size() > 4) {
     return "JSON contains '" + keyName +
            "' field, but the "
            "colors are not R,G,B[,A] arrays";
   }
   std::vector<double> rgba(4, 1.0);
   unsigned int i = 0;
-  for (const auto &component : val.GetArray()) {
-    if (!component.IsNumber()) {
+  for (const auto &component : arr) {
+    if (!component.is_number()) {
       return "JSON contains '" + keyName +
              "' field, but the "
              "R,G,B[,A] arrays contain non-float values";
     }
     CHECK_INVARIANT(i < 4, "");
-    rgba[i++] = component.GetDouble();
+    rgba[i++] = component.to_number<double>();
   }
   color.r = rgba[0];
   color.g = rgba[1];
@@ -412,23 +405,30 @@ std::string parse_rgba_array(const rj::Value &val, DrawColour &color,
 }
 
 std::string parse_highlight_multi_colors(
-    const rj::Document &doc, std::map<int, std::vector<DrawColour>> &colorMap,
+    const bj::object &doc, std::map<int, std::vector<DrawColour>> &colorMap,
     const std::string &keyName, bool &haveMultiColors) {
-  const auto it = doc.FindMember(keyName.c_str());
-  haveMultiColors = (it != doc.MemberEnd());
+  haveMultiColors = doc.contains(keyName);
   if (!haveMultiColors) {
     return "";
   }
-  if (!it->value.IsObject()) {
+  const auto &val = doc.at(keyName);
+  if (!val.is_object()) {
     return "JSON contains '" + keyName + "' field, but it is not an object";
   }
-  for (const auto &entry : it->value.GetObject()) {
-    int idx = std::atoi(entry.name.GetString());
+  const auto &obj = val.as_object();
+  for (const auto &entry : obj) {
+    int idx = std::atoi(entry.key().data());
     auto &drawColorVect = colorMap[idx];
-    if (entry.value.IsArray()) {
-      const auto &arr = entry.value.GetArray();
-      if (std::all_of(arr.begin(), arr.end(),
-                      [](const auto &item) { return item.IsArray(); })) {
+    if (entry.value().is_array()) {
+      const auto &arr = entry.value().as_array();
+      bool allAreArrays = true;
+      for (const auto &item : arr) {
+        if (!item.is_array()) {
+          allAreArrays = false;
+          break;
+        }
+      }
+      if (allAreArrays) {
         for (const auto &item : arr) {
           DrawColour color;
           auto problems = parse_rgba_array(item, color, keyName);
@@ -446,33 +446,40 @@ std::string parse_highlight_multi_colors(
   return "";
 }
 
-std::string parse_highlight_colors(const rj::Document &doc,
+std::string parse_highlight_colors(const bj::object &doc,
                                    std::map<int, DrawColour> &colorMap,
                                    const std::string &keyName) {
-  const auto it = doc.FindMember(keyName.c_str());
-  if (it != doc.MemberEnd()) {
-    if (!it->value.IsObject()) {
+  if (doc.contains(keyName)) {
+    const auto &val = doc.at(keyName);
+    if (!val.is_object()) {
       return "JSON contains '" + keyName + "' field, but it is not an object";
     }
-    for (const auto &entry : it->value.GetObject()) {
+    const auto &obj = val.as_object();
+    for (const auto &entry : obj) {
       DrawColour color;
-      auto problems = parse_rgba_array(entry.value, color, keyName);
+      auto problems = parse_rgba_array(entry.value(), color, keyName);
       if (!problems.empty()) {
         return problems;
       }
-      int idx = std::atoi(entry.name.GetString());
+      int idx = std::atoi(entry.key().data());
       colorMap[idx] = std::move(color);
     }
   }
   return "";
 }
 
-std::string process_details(rj::Document &doc, const std::string &details,
+std::string process_details(bj::object &doc, const std::string &details,
                             DrawingDetails &drawingDetails) {
-  doc.Parse(details.c_str());
-  if (!doc.IsObject()) {
+  try {
+    auto parsed = bj::parse(details);
+    if (!parsed.is_object()) {
+      return "Invalid JSON";
+    }
+    doc = parsed.as_object();
+  } catch (...) {
     return "Invalid JSON";
   }
+
   std::string problems;
   problems = parse_int_array(doc, drawingDetails.atomIds, "atoms", "Atom IDs");
   if (!problems.empty()) {
@@ -484,28 +491,34 @@ std::string process_details(rj::Document &doc, const std::string &details,
     return problems;
   }
 
-  GET_JSON_VALUE(doc, drawingDetails, width, Int)
-  GET_JSON_VALUE(doc, drawingDetails, height, Int)
-  GET_JSON_VALUE(doc, drawingDetails, offsetx, Int)
-  GET_JSON_VALUE(doc, drawingDetails, offsety, Int)
-  GET_JSON_VALUE(doc, drawingDetails, panelWidth, Int)
-  GET_JSON_VALUE(doc, drawingDetails, panelHeight, Int)
-  GET_JSON_VALUE(doc, drawingDetails, noFreetype, Bool)
-  GET_JSON_VALUE(doc, drawingDetails, legend, String)
-  GET_JSON_VALUE(doc, drawingDetails, kekulize, Bool)
-  GET_JSON_VALUE(doc, drawingDetails, addChiralHs, Bool)
-  GET_JSON_VALUE(doc, drawingDetails, wedgeBonds, Bool)
-  GET_JSON_VALUE(doc, drawingDetails, forceCoords, Bool)
-  GET_JSON_VALUE(doc, drawingDetails, wavyBonds, Bool)
-  GET_JSON_VALUE(doc, drawingDetails, useMolBlockWedging, Bool)
-  GET_JSON_VALUE(doc, drawingDetails, returnDrawCoords, Bool)
+  GET_JSON_VALUE(doc, drawingDetails, width, int64)
+  GET_JSON_VALUE(doc, drawingDetails, height, int64)
+  GET_JSON_VALUE(doc, drawingDetails, offsetx, int64)
+  GET_JSON_VALUE(doc, drawingDetails, offsety, int64)
+  GET_JSON_VALUE(doc, drawingDetails, panelWidth, int64)
+  GET_JSON_VALUE(doc, drawingDetails, panelHeight, int64)
+  GET_JSON_VALUE(doc, drawingDetails, noFreetype, bool)
+  if (doc.contains("legend")) {
+    const auto &legendVal = doc.at("legend");
+    if (!legendVal.is_string()) {
+      return "JSON contains 'legend' field, but its type is not 'string'";
+    }
+    drawingDetails.legend = std::string(legendVal.as_string());
+  }
+  GET_JSON_VALUE(doc, drawingDetails, kekulize, bool)
+  GET_JSON_VALUE(doc, drawingDetails, addChiralHs, bool)
+  GET_JSON_VALUE(doc, drawingDetails, wedgeBonds, bool)
+  GET_JSON_VALUE(doc, drawingDetails, forceCoords, bool)
+  GET_JSON_VALUE(doc, drawingDetails, wavyBonds, bool)
+  GET_JSON_VALUE(doc, drawingDetails, useMolBlockWedging, bool)
+  GET_JSON_VALUE(doc, drawingDetails, returnDrawCoords, bool)
 
   return "";
 }
 
 [[deprecated(
     "please use the overload taking DrawingDetails& as parameter")]] std::string
-process_details(rj::Document &doc, const std::string &details, int &width,
+process_details(bj::object &doc, const std::string &details, int &width,
                 int &height, int &offsetx, int &offsety, std::string &legend,
                 std::vector<int> &atomIds, std::vector<int> &bondIds,
                 bool &kekulize, bool &addChiralHs, bool &wedgeBonds,
@@ -529,7 +542,7 @@ process_details(rj::Document &doc, const std::string &details, int &width,
 
 std::string process_mol_details(const std::string &details,
                                 MolDrawingDetails &molDrawingDetails) {
-  rj::Document doc;
+  bj::object doc;
   auto problems = process_details(doc, details, molDrawingDetails);
   if (!problems.empty()) {
     return problems;
@@ -549,19 +562,21 @@ std::string process_mol_details(const std::string &details,
     return problems;
   }
   if (haveAtomMultiColors || haveBondMultiColors) {
-    const auto lineWidthMultiplierMapit =
-        doc.FindMember("highlightLineWidthMultipliers");
-    if (lineWidthMultiplierMapit != doc.MemberEnd()) {
-      if (!lineWidthMultiplierMapit->value.IsObject()) {
+    if (const auto it = doc.find("highlightLineWidthMultipliers");
+        it != doc.end()) {
+      const auto &val = it->value();
+      if (!val.is_object()) {
         return "JSON contains 'highlightLineWidthMultipliers' field, but it is not an object";
       }
-      for (const auto &entry : lineWidthMultiplierMapit->value.GetObject()) {
-        if (!entry.value.IsInt()) {
+      const auto &obj = val.as_object();
+      for (const auto &entry : obj) {
+        if (!entry.value().is_int64()) {
           return "JSON contains 'highlightLineWidthMultipliers' field, but the multipliers"
                  "are not ints";
         }
-        int idx = std::atoi(entry.name.GetString());
-        molDrawingDetails.lineWidthMultiplierMap[idx] = entry.value.GetInt();
+        int idx = std::atoi(entry.key().data());
+        molDrawingDetails.lineWidthMultiplierMap[idx] =
+            static_cast<int>(entry.value().as_int64());
       }
     }
   } else {
@@ -576,18 +591,19 @@ std::string process_mol_details(const std::string &details,
       return problems;
     }
   }
-  const auto radiiMapit = doc.FindMember("highlightAtomRadii");
-  if (radiiMapit != doc.MemberEnd()) {
-    if (!radiiMapit->value.IsObject()) {
+  if (const auto it = doc.find("highlightAtomRadii"); it != doc.end()) {
+    const auto &val = it->value();
+    if (!val.is_object()) {
       return "JSON contains 'highlightAtomRadii' field, but it is not an object";
     }
-    for (const auto &entry : radiiMapit->value.GetObject()) {
-      if (!entry.value.IsNumber()) {
+    const auto &obj = val.as_object();
+    for (const auto &entry : obj) {
+      if (!entry.value().is_number()) {
         return "JSON contains 'highlightAtomRadii' field, but the radii"
                "are not floats";
       }
-      int idx = std::atoi(entry.name.GetString());
-      molDrawingDetails.radiiMap[idx] = entry.value.GetDouble();
+      int idx = std::atoi(entry.key().data());
+      molDrawingDetails.radiiMap[idx] = entry.value().to_number<double>();
     }
   }
   return "";
@@ -626,19 +642,20 @@ std::string process_mol_details(const std::string &details,
 
 std::string process_rxn_details(const std::string &details,
                                 RxnDrawingDetails &rxnDrawingDetails) {
-  rj::Document doc;
+  bj::object doc;
   auto problems = process_details(doc, details, rxnDrawingDetails);
   if (!problems.empty()) {
     return problems;
   }
-  GET_JSON_VALUE(doc, rxnDrawingDetails, highlightByReactant, Bool)
-  auto highlightColorsReactantsIt = doc.FindMember("highlightColorsReactants");
-  if (highlightColorsReactantsIt != doc.MemberEnd()) {
-    if (!highlightColorsReactantsIt->value.IsArray()) {
+  GET_JSON_VALUE(doc, rxnDrawingDetails, highlightByReactant, bool)
+  if (const auto it = doc.find("highlightColorsReactants"); it != doc.end()) {
+    const auto &val = it->value();
+    if (!val.is_array()) {
       return "JSON contains 'highlightColorsReactants' field, but it is not an "
              "array";
     }
-    for (const auto &rgbaArray : highlightColorsReactantsIt->value.GetArray()) {
+    const auto &arr = val.as_array();
+    for (const auto &rgbaArray : arr) {
       DrawColour color;
       problems = parse_rgba_array(rgbaArray, color, "highlightColorsReactants");
       if (!problems.empty()) {
@@ -743,15 +760,14 @@ std::string molblock_helper(const RWMol &mol, const char *details_json,
 }
 
 void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
-                  const MatchVectType &match, rj::Value &obj,
-                  rj::Document &doc) {
-  rj::Value rjAtoms(rj::kArrayType);
+                  const MatchVectType &match, bj::object &obj) {
+  bj::array bjAtoms;
   for (const auto &pr : match) {
-    rjAtoms.PushBack(pr.second, doc.GetAllocator());
+    bjAtoms.push_back(pr.second);
   }
-  obj.AddMember("atoms", rjAtoms, doc.GetAllocator());
+  obj["atoms"] = bjAtoms;
 
-  rj::Value rjBonds(rj::kArrayType);
+  bj::array bjBonds;
   std::vector<int> invMatch(q_mol.getNumAtoms(), -1);
   for (const auto &pair : match) {
     invMatch[pair.first] = &pair - &match.front();
@@ -766,10 +782,10 @@ void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
     unsigned int idx2 = match.at(endIdx).second;
     const auto bond = d_mol.getBondBetweenAtoms(idx1, idx2);
     if (bond != nullptr) {
-      rjBonds.PushBack(bond->getIdx(), doc.GetAllocator());
+      bjBonds.push_back(bond->getIdx());
     }
   }
-  obj.AddMember("bonds", rjBonds, doc.GetAllocator());
+  obj["bonds"] = bjBonds;
 }
 
 namespace {
@@ -818,23 +834,16 @@ std::string rxn_to_svg(const ChemicalReaction &rxn, int w = -1, int h = -1,
 }
 
 std::string get_descriptors(const ROMol &m) {
-  rj::Document doc;
-  doc.SetObject();
+  bj::object doc;
 
   Descriptors::Properties props;
   std::vector<std::string> dns = props.getPropertyNames();
   std::vector<double> dvs = props.computeProperties(m);
   for (size_t i = 0; i < dns.size(); ++i) {
-    rj::Value v(dvs[i]);
-    const auto srt = rj::StringRef(dns[i].c_str());
-    doc.AddMember(srt, v, doc.GetAllocator());
+    doc[dns[i]] = dvs[i];
   }
 
-  rj::StringBuffer buffer;
-  rj::Writer<rj::StringBuffer> writer(buffer);
-  writer.SetMaxDecimalPlaces(5);
-  doc.Accept(writer);
-  return buffer.GetString();
+  return bj::serialize(doc);
 }
 
 namespace {
@@ -1151,13 +1160,9 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
   if (match.empty()) {
     res = (p.acceptFailure ? "{}" : "");
   } else {
-    rj::Document doc;
-    doc.SetObject();
-    MinimalLib::get_sss_json(mol, templateMol, match, doc, doc);
-    rj::StringBuffer buffer;
-    rj::Writer<rj::StringBuffer> writer(buffer);
-    doc.Accept(writer);
-    res = buffer.GetString();
+    bj::object doc;
+    MinimalLib::get_sss_json(mol, templateMol, match, doc);
+    res = bj::serialize(doc);
   }
   return res;
 }
@@ -1177,27 +1182,22 @@ void get_mol_frags_details(const std::string &details_json, bool &sanitizeFrags,
 std::string get_mol_frags_mappings(
     const std::vector<int> &frags,
     const std::vector<std::vector<int>> &fragsMolAtomMapping) {
-  rj::Document doc;
-  doc.SetObject();
-  rj::Value rjFrags(rj::kArrayType);
+  bj::object doc;
+  bj::array bjFrags;
   for (int fragIdx : frags) {
-    rjFrags.PushBack(fragIdx, doc.GetAllocator());
+    bjFrags.push_back(fragIdx);
   }
-  doc.AddMember("frags", rjFrags, doc.GetAllocator());
-  rj::Value rjFragsMolAtomMapping(rj::kArrayType);
+  doc["frags"] = bjFrags;
+  bj::array bjFragsMolAtomMapping;
   for (const auto &atomIdxVec : fragsMolAtomMapping) {
-    rj::Value rjAtomIndices(rj::kArrayType);
+    bj::array bjAtomIndices;
     for (int atomIdx : atomIdxVec) {
-      rjAtomIndices.PushBack(atomIdx, doc.GetAllocator());
+      bjAtomIndices.push_back(atomIdx);
     }
-    rjFragsMolAtomMapping.PushBack(rjAtomIndices, doc.GetAllocator());
+    bjFragsMolAtomMapping.push_back(std::move(bjAtomIndices));
   }
-  doc.AddMember("fragsMolAtomMapping", rjFragsMolAtomMapping,
-                doc.GetAllocator());
-  rj::StringBuffer buffer;
-  rj::Writer<rj::StringBuffer> writer(buffer);
-  doc.Accept(writer);
-  return buffer.GetString();
+  doc["fragsMolAtomMapping"] = bjFragsMolAtomMapping;
+  return bj::serialize(doc);
 }
 
 #ifdef RDK_BUILD_INCHI_SUPPORT
@@ -1488,15 +1488,20 @@ std::string combine_mols_internal(const ROMol &mol1, const ROMol &mol2,
   std::vector<double> offset(3, 0.0);
   combinedMol = nullptr;
   if (details_json) {
-    rj::Document doc;
-    doc.Parse(details_json);
-    if (!doc.IsObject()) {
+    try {
+      auto parsed = bj::parse(details_json);
+      if (!parsed.is_object()) {
+        return "Invalid JSON";
+      }
+      auto doc = parsed.as_object();
+      std::string problems;
+      problems =
+          parse_double_array(doc, offset, "offset", "offset coordinates");
+      if (!problems.empty()) {
+        return problems;
+      }
+    } catch (...) {
       return "Invalid JSON";
-    }
-    std::string problems;
-    problems = parse_double_array(doc, offset, "offset", "offset coordinates");
-    if (!problems.empty()) {
-      return problems;
     }
   }
   try {

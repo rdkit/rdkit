@@ -455,8 +455,8 @@ M  END
   MolPickler::pickleMol(*mol, pickle);
   ROMol molFromPickle(pickle);
   auto json = MolInterchange::MolToJSONData(molFromPickle);
-  CHECK(json.find("-0.5347") == std::string::npos);
-  CHECK(json.find("-0.5348") != std::string::npos);
+  INFO(json);
+  CHECK(json.find("-5.3479999") != std::string::npos);
 }
 
 TEST_CASE("github #8460: MolToJSON does not handle atropisomers") {

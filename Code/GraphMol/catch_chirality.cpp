@@ -6321,13 +6321,6 @@ TEST_CASE("extra ring stereo with new stereo perception") {
     std::string smi = "C2O[C@H]3[C@@]4([C@](CCC(C24))(O)CC=C3)C";
     auto m = v2::SmilesParse::MolFromSmiles(smi);
     REQUIRE(m);
-    m->debugMol(std::cerr);
-    // for (const auto atm : m->atoms()) {
-    //   std::cerr << atm->getIdx() << ": "
-    //             << atm->getProp<unsigned int>(
-    //                    common_properties::_ChiralAtomRank)
-    //             << std::endl;
-    // }
     for (auto idx : {2, 3, 4}) {
       INFO(idx);
       const auto atm = m->getAtomWithIdx(idx);
@@ -6355,6 +6348,28 @@ TEST_CASE("extra ring stereo with new stereo perception") {
       CHECK(atm->hasProp(common_properties::_ringStereoAtoms));
     }
   }
+  SECTION("#8956 ensure ring stereochemistry is not inverted on round trip") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+    auto [smi1, smi2] = GENERATE(
+        std::make_pair("CC[C@]1(C)CCC[C@](C)(O)C1",
+                       "CC[C@@]1(C)CCC[C@@](C)(O)C1"),
+        std::make_pair("C[C@H]1CCC[C@](C)(O)C1", "C[C@@H]1CCC[C@@](C)(O)C1"));
+    auto m1 = v2::SmilesParse::MolFromSmiles(smi1);
+    REQUIRE(m1);
+    auto m2 = v2::SmilesParse::MolFromSmiles(smi2);
+    REQUIRE(m2);
+
+    MolOps::assignStereochemistry(*m1, true, true, true);
+    MolOps::assignStereochemistry(*m2, true, true, true);
+
+    auto roundtrip1 = MolToSmiles(*m1);
+    auto roundtrip2 = MolToSmiles(*m2);
+    CHECK(roundtrip1 == smi1);
+    CHECK(roundtrip2 == smi2);
+    CHECK(roundtrip2 != roundtrip1);
+  }
 }
 TEST_CASE("ring stereo basics with new stereo") {
   UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
@@ -6362,4 +6377,111 @@ TEST_CASE("ring stereo basics with new stereo") {
   REQUIRE(m);
   auto smi = MolToCXSmiles(*m);
   CHECK(smi == "CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,11,&1:14|");
+}
+
+TEST_CASE("zero chiral volume and T shape molecule") {
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+
+  SECTION("simplified") {
+    auto m1 = R"CTAB(178 degrees (not T shaped)
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C  0.000000 1.000000 0.000000 0
+M  V30 2 C  0.000000 0.000000 0.000000 0
+M  V30 3 O -0.999847 -0.017452 0.000000 0
+M  V30 4 F  0.999847 -0.017452 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m1);
+    // make sure we perceived it correctly:
+    CHECK(m1->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    // make sure we round trip it:
+    auto m1mb = MolToV3KMolBlock(*m1);
+    auto m1r = v2::FileParsers::MolFromMolBlock(m1mb);
+    REQUIRE(m1r);
+    CHECK(MolToSmiles(*m1) == MolToSmiles(*m1r));
+
+    auto m2 = R"CTAB(179 degrees (T shaped)
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C  0.000000 1.000000 0.000000 0
+M  V30 2 C  0.000000 0.000000 0.000000 0
+M  V30 3 O -0.999962 -0.0087265 0.000000 0
+M  V30 4 F  0.999962 -0.0087265 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m2);
+    CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    auto m2mb = MolToV3KMolBlock(*m2);
+    auto m2r = v2::FileParsers::MolFromMolBlock(m2mb);
+    REQUIRE(m2r);
+    CHECK(MolToSmiles(*m2) == MolToSmiles(*m2r));
+  }
+
+  SECTION("as reported") {
+    pathName += "zero_chiral_volume_1.sdf";
+    auto m = v2::FileParsers::MolFromMolFile(pathName);
+    REQUIRE(m);
+    for (const auto idx : {15, 22, 39}) {
+      INFO(idx);
+      CHECK(m->getAtomWithIdx(idx)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("large rings") {
+    for (const std::string fn :
+         {"zero_chiral_volume_2.60.mol", "zero_chiral_volume_2.80.mol"}) {
+      INFO(fn);
+      std::string lpath = pathName + fn;
+      auto m = v2::FileParsers::MolFromMolFile(lpath);
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    }
+  }
+  SECTION("mol block round trip") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fname =
+        rdbase + "/Code/GraphMol/test_data/zero_chiral_volume_simple.mol";
+    auto mol = v2::FileParsers::MolFromMolFile(fname);
+    REQUIRE(mol);
+
+    {
+      ROMol mol2(*mol);
+      Chirality::wedgeMolBonds(mol2);
+      CHECK(mol2.getBondBetweenAtoms(0, 1)->getBondDir() ==
+            Bond::BondDir::BEGINDASH);
+    }
+    auto mb = MolToMolBlock(*mol);
+    auto mol2 = v2::FileParsers::MolFromMolBlock(mb);
+
+    auto smi = MolToSmiles(*mol);
+    auto smimb = MolToSmiles(*mol2);
+    CHECK(smi == smimb);
+  }
 }

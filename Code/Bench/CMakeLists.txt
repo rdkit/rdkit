@@ -1,5 +1,25 @@
-add_executable(bench EXCLUDE_FROM_ALL smiles.cpp stereo.cpp)
-target_link_libraries(bench rdkitCatch SmilesParse CIPLabeler)
+add_executable(bench EXCLUDE_FROM_ALL bench_common.cpp
+  descriptors.cpp
+  fingerprint.cpp
+  meta.cpp
+  mol.cpp
+  molops.cpp
+  pickle.cpp
+  smiles.cpp
+  stereo.cpp
+  substruct_match.cpp
+)
+target_link_libraries(bench rdkitCatch
+  CIPLabeler
+  Descriptors
+  Fingerprints
+  SmilesParse
+)
+
+if(RDK_BUILD_INCHI_SUPPORT)
+  target_link_libraries(bench RDInchiLib)
+  target_sources(bench PRIVATE inchi.cpp)
+endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_CPP_TESTS)
   # add a fast version of the benchmarks to the default unit tests
