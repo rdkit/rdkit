@@ -14,7 +14,6 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <iostream>
 
 using namespace RDKit;
 using namespace std;
@@ -416,8 +415,9 @@ void testQueryQueryMatches() {
   {
     QueryAtom a1;
     std::string excStr;
+    std::unique_ptr<ATOM_EQUALS_QUERY> q(makeAtomNumQuery(7));
     try {
-      a1.expandQuery(makeAtomNumQuery(7), Queries::COMPOSITE_OR);
+      a1.expandQuery(q.get(), Queries::COMPOSITE_OR);
     } catch (std::exception &e) {
       excStr = e.what();
     }

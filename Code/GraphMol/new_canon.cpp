@@ -246,7 +246,7 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
 namespace detail {
 template <typename T>
 void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
-                     bool useChirality,
+                     bool useChirality, bool includeRingStereo,
                      const boost::dynamic_bitset<> *atomsInPlay,
                      const boost::dynamic_bitset<> *bondsInPlay) {
   PRECONDITION(order, "bad pointer");
@@ -293,7 +293,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
       ties = true;
     }
   }
-  if (useChirality && ties) {
+  if (useChirality && ties && includeRingStereo) {
     SpecialChiralityAtomCompareFunctor scftor(atoms, mol, atomsInPlay,
                                               bondsInPlay);
     ActivatePartitions(nAts, order, count, activeset, next, changed);
@@ -754,7 +754,8 @@ void updateAtomNeighborNumSwaps(
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                   bool breakTies, bool includeChirality, bool includeIsotopes,
                   bool includeAtomMaps, bool includeChiralPresence,
-                  bool includeStereoGroups, bool useNonStereoRanks) {
+                  bool includeStereoGroups, bool useNonStereoRanks,
+                  bool includeRingStereo) {
   if (!mol.getNumAtoms()) {
     return;
   }
@@ -771,14 +772,14 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   AtomCompareFunctor ftor(&atoms.front(), mol);
   ftor.df_useIsotopes = includeIsotopes;
   ftor.df_useChirality = includeChirality;
-  ftor.df_useChiralityRings = includeChirality;
+  ftor.df_useChiralityRings = includeChirality && includeRingStereo;
   ftor.df_useAtomMaps = includeAtomMaps;
   ftor.df_useNonStereoRanks = useNonStereoRanks;
   ftor.df_useChiralPresence = includeChiralPresence;
 
   std::vector<int> order(mol.getNumAtoms());
-  detail::rankWithFunctor(ftor, breakTies, order.data(), true,
-                          includeChirality);
+  detail::rankWithFunctor(ftor, breakTies, order.data(), true, includeChirality,
+                          includeRingStereo);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
@@ -796,7 +797,7 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                        const std::vector<std::string> *bondSymbols,
                        bool breakTies, bool includeChirality,
                        bool includeIsotopes, bool includeAtomMaps,
-                       bool includeChiralPresence) {
+                       bool includeChiralPresence, bool includeRingStereo) {
   PRECONDITION(atomsInPlay.size() == mol.getNumAtoms(), "bad atomsInPlay size");
   PRECONDITION(bondsInPlay.size() == mol.getNumBonds(), "bad bondsInPlay size");
   PRECONDITION(!atomSymbols || atomSymbols->size() == mol.getNumAtoms(),
@@ -828,7 +829,7 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
 
   std::vector<int> order(mol.getNumAtoms());
   detail::rankWithFunctor(ftor, breakTies, order.data(), true, includeChirality,
-                          &atomsInPlay, &bondsInPlay);
+                          includeRingStereo, &atomsInPlay, &bondsInPlay);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;

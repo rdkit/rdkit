@@ -251,6 +251,8 @@ The features which are parsed include:
   ``Q_e``, ``QH_p``, ``AH_P``, ``X_p``, ``XH_p``, ``M_p``, ``MH_p``, ``*``)
 - atomic properties ``atomprop``
 - coordinate/dative bonds ``C`` (these are translated into dative bonds)
+- hydrogen bonds ``H``
+- zero order bonds bonds ``Z`` (custom extension, same syntax as c/t/ctu below)
 - radicals ``^``
 - enhanced stereo (these are converted into ``StereoGroups``)
 - linknodes ``LN``
@@ -292,8 +294,9 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
   >>> m.GetAtomWithIdx(1).SetProp('p2','A1')
   >>> m.GetAtomWithIdx(0).SetProp('atomLabel','O1')
   >>> m.GetAtomWithIdx(1).SetProp('atomLabel','C2')
+  >>> m.GetBondWithIdx(0).SetBondType(Chem.BondType.ZERO)
   >>> Chem.MolToCXSmiles(m)
-  'CO |$C2;O1$,atomProp:0.p1.5:0.p2.A1:1.p1.2|'
+  'C~O |$C2;O1$,atomProp:0.p1.5:0.p2.A1:1.p1.2,Z:0|'
 
 Reading molecule names
 ----------------------
@@ -554,6 +557,130 @@ Here's a partial list of the features that are supported:
   - Sgroups: Sgroups are read and written, but interpretation of their contents is still very much
     a work in progress
   - Dative bonds in V2000 (type 9), despite them not being part of the standard, we support them because they frequently show up in real-world data
+
+Interpretation of the 2D/3D Flag and Stereochemistry
+----------------------------------------------------
+
+Mol blocks can describe 2D or 3D molecules and include a flag (called
+"dimensional code" in the spec) to indicate whether the coordinates are 2D or
+3D. Of course real-world files include every possible combination of 2D/3D flag
+and 2D/3D coordinates, so we need to decide how to interpret these combinations.
+Things are made more complicated by the possible presence of wedged bonds in the mol block.
+
+The following table describes how the RDKit interprets all possible combinations
+of these three variables:
+
++------+--------+---------+-------+-----------------------+
+| flag | coords | wedging | result| notes                 |
++======+========+=========+=======+=======================+
+| 2D   | 2D     | no      | 2D    | no chirality          |
++------+--------+---------+-------+-----------------------+
+| 3D   | 2D     | no      | 3D    | no chirality          |
++------+--------+---------+-------+-----------------------+
+| 3D   | 3D     | no      | 3D    | chirality from coords |
++------+--------+---------+-------+-----------------------+
+| 2D   | 3D     | no      | 3D    | chirality from coords |
++------+--------+---------+-------+-----------------------+
+| 2D   | 2D     | yes     | 2D    | chirality from wedging|
++------+--------+---------+-------+-----------------------+
+| 3D   | 2D     | yes     | 2D    | chirality from wedging|
++------+--------+---------+-------+-----------------------+
+| 3D   | 3D     | yes     | 3D    | chirality from coords |
++------+--------+---------+-------+-----------------------+
+| 2D   | 3D     | yes     | 3D    | chirality from coords |
++------+--------+---------+-------+-----------------------+
+
+Here's what the Molfile specification from Biovia says:
+
+  The "dimensional code" is maintained explicitly. Thus "3D" really means 3D,
+  although "2D" will be interpreted as 3D if any non-zero Z-coordinates are
+  found
+
+We are consistent with this except for the case where the 3D flag is set for 2D
+coordinates and a wedge is present, in which case we ignore the 3D flag, mark
+the conformer as 2D, and set the stereochemistry based on the wedging
+
+In cases where no 2D/3D flag is provided, the default value of the flag is 2D. 
+
+In a 2D structure, wedging is interpreted as a signal to indicate that
+stereochemistry is present and to indicate what the stereochemistry is.
+
+When 3D coordinates are provided, stereochemistry is perceived from the
+coordinates themselves. If wedging is also present it will be ignored; the 3D
+signal is "stronger" than the wedging signal. The exception to this rule is
+atropisomeric bonds (see :ref:`atropisomeric-bonds`), where the wedging simply
+indicates that atropisomerism should be perceived, but the direction of the
+wedge is ignored.
+
+Here's some code demonstrating that (and acting as a test):
+
+.. doctest::
+
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem import rdDistGeom
+
+  # start with a molecule without defined chirality
+  >>> m = Chem.MolFromSmiles('FC(Cl)(Br)I')  
+  >>> m3d = Chem.Mol(m)
+  >>> rdDistGeom.EmbedMolecule(m3d,randomSeed=0xa100f)
+  0
+  >>> mb_2d_2d = Chem.MolToMolBlock(m)       # 2D flag, 2D coords
+  >>> t = Chem.MolFromMolBlock(mb_2d_2d)
+  >>> t.GetConformer().Is3D()
+  False
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_UNSPECIFIED
+  >>> mb_3d_2d = mb_2d_2d.replace('2D','3D') # 3D flag, 2D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_2d)
+  >>> t.GetConformer().Is3D()
+  True
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_UNSPECIFIED
+  >>> mb_3d_3d = Chem.MolToMolBlock(m3d)     # 3D flag, 3D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_3d)
+  >>> t.GetConformer().Is3D()
+  True
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+  >>> mb_2d_3d = mb_3d_3d.replace('3D','2D') # 2D flag, 3D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_3d)
+  >>> t.GetConformer().Is3D()
+  True
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+
+  # Now do a molecule with defined chirality, this will have wedged bonds in the mol blocks
+  >>> m = Chem.MolFromSmiles('F[C@@](Cl)(Br)I')  
+  >>> m3d = Chem.Mol(m)
+  >>> rdDistGeom.EmbedMolecule(m3d,randomSeed=0xa100f)
+  0
+  >>> mb_2d_2d = Chem.MolToMolBlock(m)       # 2D flag, 2D coords
+  >>> t = Chem.MolFromMolBlock(mb_2d_2d)
+  >>> t.GetConformer().Is3D()
+  False
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+  >>> mb_3d_2d = mb_2d_2d.replace('2D','3D') # 3D flag, 2D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_2d)
+  >>> t.GetConformer().Is3D()
+  False
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+  >>> mb_3d_3d = Chem.MolToMolBlock(m3d)     # 3D flag, 3D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_3d)
+  >>> t.GetConformer().Is3D()
+  True
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+  >>> mb_2d_3d = mb_3d_3d.replace('3D','2D') # 2D flag, 3D coords
+  >>> t = Chem.MolFromMolBlock(mb_3d_3d)
+  >>> t.GetConformer().Is3D()
+  True
+  >>> t.GetAtomWithIdx(1).GetChiralTag()
+  rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
+
+
+
 
 Ring Finding and SSSR
 =====================
@@ -2249,6 +2376,8 @@ Some concrete examples of this:
   >>> m_OR.HasSubstructMatch(m_AND,ps)
   False
 
+.. _atropisomeric-bonds:
+
 Atropisomeric Bonds
 *******************
 
@@ -2701,6 +2830,208 @@ path) enumeration algorithm used in the RDKit fingerprint. After a subgraph has
 been generated, it is used to set multiple bits based on different atom and bond
 type definitions.
 
+Self-Contained Structure Representations (SCSR) for Macromolecules
+*******************
+
+The SCSR support added to RDKit follows the description in the BIOVIA document “biovia_ctfileformats_2020.pdf” available from 
+“CTfile Formats - Dassault Systèmes”.  That document does not provide any real detail for that format, and contains one example file.
+
+In addition, Biovia Draw supports reading and writing this format.  As much as possible, the RDKit support allows the functionality
+supported by Biovia Draw.  One exception is the RDKit treatment of hydrogen bonds in SCSR files/blocks (vide infra).
+
+Representation
+==============
+
+Main mol
+--------
+An SCSR file contains a mol with a CTAB in v3000 format.   That CTAB can contain elemental atoms and macro atoms corresponding to amino acids (AA), RNA, and DNA elements.  
+The RNA and DNA elements are represented by three parts – a phosphate group, a sugar, and a base.  
+
+Each atom line in the CTAB can refer to an elemental atom or a macro atom.  Macro atom lines have a text description of the macro name and must have a CLASS and an
+ATTCHORD attributed.  They can also have an optional SEQID attribute.  
+
+According to the Biovia doc, the CLASS attribute must have a value that is one of:  AA, dAA, DNA, RNA, SUGAR, BASE, PHOSPHATE, LINKER, CHEM, LGRP, MODAA, MODdAA, MODDNA, MODRNA, XLINKAA, XLINKdAA, XLINKDNA, XLINKRNA.   
+For an SCSR mol block, (and for any SGROUP), RDKit requires that the CLASS attribute be one of these values.
+
+The SEQID is a sequential integer and is ignored by this treatment.  Typically, the three parts of an RNA or DNA element have the same SEQID.
+
+The ATTCHORD attribute must have a specification for each bond that comes from the macro atom.   The specification is contained between parentheses, and the first 
+character is a integer that indicates the number of items that follow.  Each connection is specified with the atom ID (1 offset) for the connected atom in the main
+CTAB, and a string that indicates the attachment point for this macro atom.   The attachment point string is always two characters.  
+The first indicates the order, and is a capital letter starting at A.  The second char is one of “l” (left), “r” (right), “x” (cross connections – e.g. for cysteine).  
+In this implementation, the second character can also be “h” for hydrogen bond.   
+Thus, the attach connections are almost always in the list: “Al”, “Br”, “Cx” or “Ch”.   For example::
+
+    ATTCHORD=(6 15 Br 13 Al 21 Cx)
+
+Templates
+---------
+
+Template Header
+^^^^^^^^^^^^^^^
+
+In addition to the CTAB for the main molecule, each macro atom is detailed automatically in a TEMPLATE.  The TEMPLATES are numbered and appear between a 
+BEGIN TEMPLATES line and an END TEMPLATES line. Each template starts with a TEMPLATE line that indicates the template number (1 to n), the template Class and 
+Name, and the NATREPLACE attribute.
+
+The Class and Name consists of three (or more) parts separated by forward slashes.  The first part is the CLASS, and must match the CLASS attribute in 
+one or more of the atoms in the main CTAB.  The second and third (and subsequent) items are choices for names of the macro atom template.  Typically, the 
+first name is the long form and second is the short form, as in “AA/Ala/A” for alanine.  This treatment does not enforce any restrictions on the name lengths.    
+The name given the macro atom in the main CTAB must match one of the names in one of the templates with the correct class.
+The NATREPLACE attribute specifies the natural replacement for this macro atom, and is ignored by this treatment.  Example::
+
+    M  V30 TEMPLATE 1 SUGAR/Rib/R NATREPLACE=SUGAR/R
+
+Main Template CTAB and SGROUPs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+After the TEMPLATE is a full CTAB with the atoms and bonds of the template.   Each CTAB must contain an SGROUP for the main macro definition atoms and bonds, 
+and one for each leaving group.  The main SGROUP for the template must have a LABEL attribute that is the same as one of the names in the TEMPLATE line, and 
+it must have a CLASS attribute that matches the TEMPLATE line class.
+
+In addition, the main SGROUP must have ATOMS, XBONDS, NATREPLACE attributes.  ATOMS is a list of all atom IDs (1-offset).  XBONDS are the IDs of the connecting 
+bonds.   NATRELACE is the natural replacement as discussed above.  The XBONDS and NATREPLACE attributes are ignored by this treatment.  
+
+The main SGROUP must also contain a list of SAP (SGROUP attachment points) attributes.  Each one is enclosed in parentheses, and starts with a “3”.  
+That is followed by two atom IDs of a bond that starts in this SGROUP and goes to an atom NOT in this SGROUP,  and this is followed by a string indicating 
+the connection name.  The connection name, as discussed above, is usually one of “Al”, “Br”, “Cx” or “Ch”.  SAPs “Al”, “Br”, “Cx” will have one SAP, and 
+“Ch” will typically have two or three distinct SAP attributes.  The order of the SAP attributes for hydrogen bonds (“Ch”) matters, and should go from the H-bond 
+atom nearest to the connecting “Al” atom to the most distant.  Hydrogen bonds do not have a leaving group, so the second ID of the designation is “0”.
+
+Example::
+
+    M  V30 2 SUP 2 ATOMS=(8 1 2 3 4 5 6 7 8) XBONDS=(1 7)-
+    M  V30 LABEL=U CLASS=BASE SAP=(3 4 9 Al) SAP=(3 8 0 Ch) SAP=(3 6 0 Ch) SAP=(3 7 0 Ch)-
+    NATREPLACE=BASE/U
+
+In addition to the main SGROUP, there will be an SGROUP that identifies each leaving group.  Most leaving groups have one atom, but they could have multiple 
+atoms.  The leaving group SGROUPS have ATOMS, XBONDS, LABEL, and CLASS attributes.   The XBONDS attribute is ignored in this treatment.   LABEL must be 
+“LGRP” (leaving group).
+
+Example::
+
+    M  V30 1 SUP 1 ATOMS=(1 11) XBONDS=(1 11) LABEL=H CLASS=LGRP
+
+ 
+Parsing SCSR files and text blocks
+==================================
+
+RDKit converts the SCSR data into a fully atomistic representation. 
+
+An SGROUP is produced in the resulting RWMol for each template and retained leaving group from the SCSRMol.  The name of each SGROUP is derived from the 
+template name, the sequence number if present, and, for leaving groups, the leaving group SAP ID (e.g. “Al”, “Br”, “Cx” or “Ch”).
+
+The following calls parse the SCSR mol or block produces a fully atomistic RDKit mol.: 
+
+  * MolFromSCSRDataStream  (stream to mol)
+  * MolFromSCSRBlock  (SCSR text block to mol)
+  * MolFromSCSRFile  (SCSR file to mol)
+
+These functions all take, in addition to the strean, text block, or file name, a MolFileParserParams and a MolFromSCSRParams parameter.  
+The MolFileParserParams parameter is used to control the parsing of the SCSR data, as is describe elsewhere in this document.  
+The MolFromSCSRParams parameter is used to control the conversion of the SCSR data into a full atomistic representation.
+
+MolFromScsrParams has three properties: 
+
+    * The “ScsrTemplateNames” property controls how the Sgoups of the expanded file are generated, and must be one of: ScsrTemplateNamesAsEntered, 
+    ScsrTemplateNamesUseFirstName, or ScsrTemplateNamesUseLastName.   If ScsrTemplateNamesAsEntered is specified, the name as referenced in the main 
+    SCSR CTAB will be used.  
+
+    * The ”includeLeavingGroups” property controls whether leaving groups that are not replaced in the main CTAB are included in the resulting atomistic file.   
+    The leaving groups that are so retained become end caps and caps on unused cross-link sites.    Setting this property to “false” causes the end caps and cross-link caps to remain unsubstituted.  This allows the results to be used as a full atom query for the sub-units from the SCSR mol.
+
+    * The "SCSRBaseHbondOptions" property controls the treatment of hydrogen bonds in the SCSR file.  This is described in the following section.
+
+Hydrogen Bonds
+-------
+
+For sense-antisense pairings in DNA and RNA, the hydrogen bonds are represented as a single hydrogen bond in the SCSR representation.   
+When converted to a full atomistic representation, each such hydrogen bond can represent up to 3 hydrogen bonds between the full-atomistic representations of 
+the Base groups.  
+
+The processing of H-bonds is contorlled by the ScsrBaseHbondOptions
+member of the ScsrMolFileParserParams parameter.  The options are:
+
+ 1. ScsrBaseHbondOptionsIgnore - if this is selected, all H-bonds are
+    ignored and not processed.
+
+ 2. ScsrBaseHbondOptionsUseSapAll = 1
+    If this is selected, all SAPs
+    for the hbond are used.  They must be defined in the template in the
+    correct order, which starts with the first atom nearest the "Al"
+    connection, and continues sequentially
+
+    If there are 3 sites on each side and they are complimentary (the
+    donors match acceptors and vice versa), we add the bonds. and
+    we are done.  THis is the standard Watson-Crick binding (“https://water.lsbu.ac.uk/water/nucleic_acid_hydration.html”)
+
+    If not, we check to check to see if they comply to a wobble bond
+    configuration. There are four generally accepted wobble bonds, and we
+    deal with these four types only.  The four known wobble bonds are:
+
+     1. I-C
+     2. I-U
+     3. I-A
+     4. G-U
+
+    "I" stands for inosine - it has only two available hbond sites . The
+    pair G-U has three sites on each end, but they are not complimentary.
+    (https://en.wikipedia.org/wiki/Wobble_base_pair#:~:text=A%20wobble%20base%20pair%20is,hypoxanthine%2Dcytosine%20(I%2DC).
+
+    For pairs that have I (inosine) or something like it, the configuration must be
+    DA, so those two atoms form the two H bonds. The other side (C,U or A)
+    has confiuration of AAD (C), ADA (U), or DAD (A). For C-type bases and
+    A type bases, the second and third atoms are used (AD), and for U
+    types, the first two atoms are used (AD).
+
+    For the GU pair, both sides have 3 atoms, but they are not
+    complimentary.  The second and third sites on the G side are used (DA),
+    and the first two sites on the U side are used (AD).
+
+    In any other case, we punt and add just one bond between the first
+    hydrogen-bond atom on both sides even if they are NOT complemenary.  This just
+    indicates that the sides are h-bonded somehow and keeps the overall
+    pairing straight.
+
+ 3. ScsrBaseHbondOptionsUseSapOne
+    If this is selected, only one SAP hbond per base is used.
+    If multiple SAPs are defined, the first hbond site is used
+    even if it is not the best.  No attempt is made to match the Donor/Acceptor 
+    status of the chosen bond sites.
+    (this just maintains the relationship between
+    the to base pairs)
+
+ 4. ScsrBaseHbondOptionsAuto
+    For bases that are C,G,A,T,U,In (and
+    derivatives) the standard Watson-Crick
+    Hbonding is used, and is determined by substructure matching.
+    No Hbond SAPs ("Ch") need to be defined in the template, and if
+    defined, they are ignored.
+
+    Processing of the H-bond sites so determined is done just as it is when ScsrBaseHbondOptionsUseSapAll is selected.
+    (see above).
+    
+Example of Peptide conversion:
+
+.. image:: images/PeptideConversion.png
+ 
+Example of DNA-RNA paired strands conversion: 
+
+.. image:: images/DnaDoubleStrand.png
+ 
+Example of “Wobble” pairing conversion:  
+
+.. image:: images/WobbleRna.png
+ 
+ Full Example of SCSR files:
+===========================
+
+ Here are two examples of SCSR files:
+
+`DnaTest3 <https://github.com/rdkit/rdkit/blob/master/Docs/Book/data/DnaTest3.mol>`_.
+
+`CrossLink.mol <https://github.com/rdkit/rdkit/blob/master/Docs/Book/data/CrossLink.mol>`_.
+
 
 Feature Flags: global variables affecting RDKit behavior
 ********************************************************
@@ -2777,3 +3108,4 @@ To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/
 
 The intent of this license is similar to that of the RDKit itself.
 In simple words: “Do whatever you want with it, but please give us some credit.”
+

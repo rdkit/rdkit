@@ -150,6 +150,52 @@ TEST_CASE("S Amide 1") {
     enumSmi.insert(MolToSmiles(*subsLib->getMol(i)));
   }
   CHECK(resSmi == enumSmi);
+
+  resSmi.clear();
+  SearchResultCallback cb = [&resSmi](const std::vector<std::unique_ptr<ROMol>> &r) {
+    for (auto &elem : r) {
+      resSmi.insert(MolToSmiles(*elem));
+    }
+    return false;
+  };
+  synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
+  CHECK(resSmi == enumSmi);
+}
+
+TEST_CASE("Search Callback returns true") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space.txt";
+  std::string enumLibName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_enum.smi";
+
+  auto queryMol = "c1ccccc1"_smiles;
+  SynthonSpace synthonspace;
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
+  SubstructMatchParameters matchParams;
+  SynthonSpaceSearchParams params;
+
+  // set chunk size small so that we get multiple chunks back
+  params.toTryChunkSize = 2;
+  std::set<std::string> cbSmi;
+  bool retval = false;
+  SearchResultCallback cb = [&cbSmi,&retval](const std::vector<std::unique_ptr<ROMol>> &r) {
+    for (auto &elem : r) {
+      CHECK(r.size() == 2);
+      cbSmi.insert(MolToSmiles(*elem));
+    }
+    return retval;
+  };
+  synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
+  CHECK(cbSmi.size() == 6);
+
+  cbSmi.clear();
+  // return true from callback unconditionally, we receive only one chunk
+  retval = true;
+  synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
+  CHECK(cbSmi.size() == 2);
 }
 
 TEST_CASE("S Urea 1") {
@@ -641,7 +687,8 @@ M  END)CTAB"_ctab;
     auto results1 = synthonspace.substructureSearch(xrq, mparams, params);
     CHECK(results1.getHitMolecules().size() == 5);
 #else
-    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq, mparams, params), Invar::Invariant);
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq, mparams, params),
+                    Invar::Invariant);
 #endif
   }
 
@@ -697,7 +744,92 @@ M  END)CTAB"_ctab;
     auto results1 = synthonspace.substructureSearch(xrq, mparams);
     CHECK(results1.getHitMolecules().size() == 2);
 #else
-    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq, mparams), Invar::Invariant);
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq, mparams),
+                    Invar::Invariant);
 #endif
   }
+}
+
+TEST_CASE("Fails simple test (Github 8502)") {
+  SynthonSpace space;
+  std::istringstream iss(R"(SMILES	synton_id	synton#	reaction_id
+F[1*]	277310376-742385846	0	fake-chiral
+Cl[1*]	287123986-010598048	0	fake-chiral
+OC(N)([1*])[2*]	584456271-623025187	1	fake-chiral
+OC(Br)([1*])[2*]	584456271-623025187	1	fake-chiral
+F[2*]	277310376-742385dd	2	fake-chiral
+)");
+  bool cancelled = false;
+  space.readStream(iss, cancelled);
+
+  auto mol1 = "C"_smiles;
+  REQUIRE(mol1);
+  auto res1 = space.substructureSearch(*mol1);
+  CHECK(res1.getHitMolecules().size() == 2);
+
+  auto mol2 = "CF"_smiles;
+  REQUIRE(mol2);
+  auto res2 = space.substructureSearch(*mol2);
+  CHECK(res2.getHitMolecules().size() == 2);
+}
+
+TEST_CASE("Chiral substructure search") {
+  SynthonSpace space;
+  std::istringstream iss(R"(SMILES	synton_id	synton#	reaction_id
+F[1*]	277310376-742385846	0	fake-chiral
+Cl[1*]	287123986-010598048	0	fake-chiral
+O[C@H](F)C(N)([1*])[2*]	584456271-623025187	1	fake-chiral
+O[C@H](F)C(Br)([1*])[2*]	584456271-623025187	1	fake-chiral
+F[2*]	277310376-742385dd	2	fake-chiral
+)");
+  bool cancelled = false;
+  space.readStream(iss, cancelled);
+
+  auto qmol = "N-C-C"_smarts;
+  REQUIRE(qmol);
+  auto res1 = space.substructureSearch(*qmol);
+  CHECK(res1.getHitMolecules().size() == 2);
+
+  SubstructMatchParameters mparams;
+  SynthonSpaceSearchParams sparams;
+  sparams.minHitChiralAtoms = 2;
+  auto res2 = space.substructureSearch(*qmol, mparams, sparams);
+  REQUIRE(res2.getHitMolecules().size() == 1);
+  CHECK(MolToSmiles(*res2.getHitMolecules().front()) == "NC(F)(Cl)[C@H](O)F");
+
+  sparams.minHitChiralAtoms = 0;
+  sparams.maxHitChiralAtoms = 1;
+  auto res3 = space.substructureSearch(*qmol, mparams, sparams);
+  REQUIRE(res3.getHitMolecules().size() == 1);
+  CHECK(MolToSmiles(*res3.getHitMolecules().front()) == "NC(F)(F)[C@H](O)F");
+
+  sparams.maxHitChiralAtoms = 0;
+  auto res4 = space.substructureSearch(*qmol, mparams, sparams);
+  CHECK(res4.getHitMolecules().size() == 0);
+}
+
+TEST_CASE("Bad Chiral Atom Count") {
+  SynthonSpace space;
+  std::istringstream iss(
+      R"(SMILES	synton_id	synton#	reaction_id	release
+C[U]	200011483129	1	4a	2024-09
+c1c/c2n3/c1=C\C1=N/C(=C\c4c(C)c5c(n4[Mg]3)/C(=C3\N=C(\C=2)[C@@H](C)[C@@H]3C)[C@@H](C)C5=[U])C=C1	bad	2	4a	2024-09
+)");
+  bool cancelled = false;
+  CHECK_NOTHROW(space.readStream(iss, cancelled));
+}
+
+TEST_CASE("Enhanced Stereochemistry - Github 8650") {
+  SynthonSpace space;
+  std::istringstream iss(
+      "SMILES\tsynton_id\tsynton#\treaction_id\trelease\nC[C@H]1CC[C@H](CC1)F |&1:1,4|\tABCDEFGHIJKL1234567890\t1\tx_1abc\t2024-02\n");
+  bool cancelled = false;
+  CHECK_NOTHROW(space.readStream(iss, cancelled));
+  // Bonus bug - it returned a valid reaction even if it had a different name.
+  CHECK_THROWS(space.getReaction("rhubarb"));
+  auto rxn = space.getReaction("x_1abc");
+  auto synthons = rxn->getSynthons();
+  REQUIRE(synthons.size() == 1);
+  REQUIRE(synthons[0].size() == 1);
+  CHECK(synthons[0][0].second->getSmiles() == "C[C@H]1CC[C@H](CC1)F |&1:1,4|");
 }

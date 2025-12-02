@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (C)  2004-2006 Rational Discovery LLC
+// Copyright (C)  2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,9 +8,9 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/test.h>
-#include <iostream>
 #include <cmath>
 #include <RDGeneral/Invariant.h>
+#include <catch2/catch_all.hpp>
 
 #include "BFGSOpt.h"
 
@@ -64,10 +63,7 @@ double grad2(double *v, double *grad) {
   return 1.0;
 }
 
-void test1() {
-  std::cerr << "-------------------------------------" << std::endl;
-  std::cerr << "Testing linear search." << std::endl;
-
+TEST_CASE("testLinearSearch") {
   int dim = 2;
   double oLoc[2], oVal;
   double grad[2], dir[2];
@@ -81,57 +77,51 @@ void test1() {
   oLoc[0] = 0;
   oLoc[1] = 1.0;
   oVal = func(oLoc);
-  TEST_ASSERT(fabs(oVal - 1.0) < 1e-4);
+  REQUIRE_THAT(oVal, Catch::Matchers::WithinAbs(1.0, 1e-4));
   gradFunc(oLoc, grad);
   dir[0] = 0;
   dir[1] = -.5;
 
   BFGSOpt::linearSearch(dim, oLoc, oVal, grad, dir, nLoc, nVal, func, 0.5,
                         resCode);
-  TEST_ASSERT(resCode == 0);
-  TEST_ASSERT(fabs(nVal - 0.25) < 1e-4);
-  TEST_ASSERT(fabs(nLoc[0]) < 1e-4);
-  TEST_ASSERT(fabs(nLoc[1] - 0.5) < 1e-4);
+  REQUIRE(resCode == 0);
+  REQUIRE_THAT(nVal, Catch::Matchers::WithinAbs(0.25, 1e-4));
+  REQUIRE_THAT(nLoc[0], Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(nLoc[1], Catch::Matchers::WithinAbs(0.5, 1e-4));
 
   oLoc[0] = 1.0;
   oLoc[1] = 1.0;
   oVal = func(oLoc);
-  TEST_ASSERT(fabs(oVal - 2.0) < 1e-4);
+  REQUIRE_THAT(oVal, Catch::Matchers::WithinAbs(2.0, 1e-4));
   gradFunc(oLoc, grad);
   dir[0] = -.5;
   dir[1] = -.5;
 
   BFGSOpt::linearSearch(dim, oLoc, oVal, grad, dir, nLoc, nVal, func, 1.0,
                         resCode);
-  TEST_ASSERT(resCode == 0);
-  TEST_ASSERT(fabs(nVal - 0.5) < 1e-4);
-  TEST_ASSERT(fabs(nLoc[0] - 0.5) < 1e-4);
-  TEST_ASSERT(fabs(nLoc[1] - 0.5) < 1e-4);
+  REQUIRE(resCode == 0);
+  REQUIRE_THAT(nVal, Catch::Matchers::WithinAbs(0.5, 1e-4));
+  REQUIRE_THAT(nLoc[0], Catch::Matchers::WithinAbs(0.5, 1e-4));
+  REQUIRE_THAT(nLoc[1], Catch::Matchers::WithinAbs(0.5, 1e-4));
 
-  // we go hugely too far, but the dir gets cut in half, so we
-  // immediately hit the minimum
   func = circ_0_0;
   oLoc[0] = 0;
   oLoc[1] = 1.0;
   oVal = func(oLoc);
-  TEST_ASSERT(fabs(oVal - 1.0) < 1e-4);
+  REQUIRE_THAT(oVal, Catch::Matchers::WithinAbs(1.0, 1e-4));
   gradFunc(oLoc, grad);
   dir[0] = 0;
   dir[1] = -2;
 
   BFGSOpt::linearSearch(dim, oLoc, oVal, grad, dir, nLoc, nVal, func, 2.0,
                         resCode);
-  TEST_ASSERT(resCode == 0);
-  TEST_ASSERT(fabs(nVal) < 1e-4);
-  TEST_ASSERT(fabs(nLoc[0]) < 1e-4);
-  TEST_ASSERT(fabs(nLoc[1]) < 1e-4);
-  std::cerr << "  done" << std::endl;
+  REQUIRE(resCode == 0);
+  REQUIRE_THAT(nVal, Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(nLoc[0], Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(nLoc[1], Catch::Matchers::WithinAbs(0.0, 1e-4));
 }
 
-void test2() {
-  std::cerr << "-------------------------------------" << std::endl;
-  std::cerr << "Testing BFGS optimization." << std::endl;
-
+TEST_CASE("testBFGSOptimization") {
   unsigned int dim = 2;
   double oLoc[2], oVal;
   double nVal;
@@ -144,37 +134,27 @@ void test2() {
   oLoc[0] = 0;
   oLoc[1] = 1.0;
   oVal = func(oLoc);
-  TEST_ASSERT(fabs(oVal - 1.0) < 1e-4);
+  REQUIRE_THAT(oVal, Catch::Matchers::WithinAbs(1.0, 1e-4));
 
   BFGSOpt::minimize(dim, oLoc, 1e-4, nIters, nVal, func, gradFunc);
-  TEST_ASSERT(nIters = 1);
-  TEST_ASSERT(fabs(nVal) < 1e-4);
-  TEST_ASSERT(fabs(oLoc[0]) < 1e-4);
-  TEST_ASSERT(fabs(oLoc[1]) < 1e-4);
+  REQUIRE(nIters == 1);
+  REQUIRE_THAT(nVal, Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(oLoc[0], Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(oLoc[1], Catch::Matchers::WithinAbs(0.0, 1e-4));
 
   func = func2;
   gradFunc = grad2;
   oLoc[0] = 2.0;
   oLoc[1] = 0.5;
   BFGSOpt::minimize(dim, oLoc, 1e-4, nIters, nVal, func, gradFunc);
-  // TEST_ASSERT(nIters=1);
-  TEST_ASSERT(fabs(nVal) < 1e-4);
-  TEST_ASSERT(fabs(oLoc[0] - 1) < 1e-3);
-  TEST_ASSERT(fabs(oLoc[1]) < 1e-3);
+  REQUIRE_THAT(nVal, Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(oLoc[0], Catch::Matchers::WithinAbs(1.0, 1e-3));
+  REQUIRE_THAT(oLoc[1], Catch::Matchers::WithinAbs(0.0, 1e-3));
 
-  // up the tolerance:
   oLoc[0] = 2.0;
   oLoc[1] = 0.5;
   BFGSOpt::minimize(dim, oLoc, 1e-4, nIters, nVal, func, gradFunc, 1e-8);
-  // TEST_ASSERT(nIters=1);
-  TEST_ASSERT(fabs(nVal) < 1e-4);
-  TEST_ASSERT(fabs(oLoc[0] - 1) < 1e-4);
-  TEST_ASSERT(fabs(oLoc[1]) < 1e-4);
-
-  std::cerr << "  done" << std::endl;
-}
-
-int main() {
-  test1();
-  test2();
+  REQUIRE_THAT(nVal, Catch::Matchers::WithinAbs(0.0, 1e-4));
+  REQUIRE_THAT(oLoc[0], Catch::Matchers::WithinAbs(1.0, 1e-4));
+  REQUIRE_THAT(oLoc[1], Catch::Matchers::WithinAbs(0.0, 1e-4));
 }

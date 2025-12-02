@@ -17,7 +17,6 @@
 #include "EmbeddedFrag.h"
 #include "DepictUtils.h"
 #include "Templates.h"
-#include <iostream>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Bond.h>
 #include "RDDepictor.h"

@@ -15,6 +15,7 @@
 #define RDKIT_MOLDRAW2DHELPERS_H
 
 #include <Geometry/point.h>
+#include <RDGeneral/BetterEnums.h>
 
 using RDGeom::Point2D;
 
@@ -158,6 +159,18 @@ enum class MultiColourHighlightStyle {
   LASSO
 };
 
+BETTER_ENUM(DrawElement, uint32_t,  // clang-format off
+  NONE = 0,
+  PRESHAPES = 1 << 0,
+  BONDS = 1 << 1,
+  ATOMLABELS = 1 << 2,
+  HIGHLIGHTS = 1 << 3,
+  ANNOTATIONS = 1 << 4,
+  RADICALS = 1 << 5,
+  POSTSHAPES = 1 << 6,
+  ALL = 0x7fffffff
+);
+
 struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomLabelDeuteriumTritium =
       false;  // toggles replacing 2H with D and 3H with T
@@ -259,6 +272,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool dummyIsotopeLabels = true;  // adds isotope labels to dummy atoms.
 
   bool addStereoAnnotation = false;       // adds E/Z and R/S to drawings.
+  bool showAllCIPCodes = false;           // show CIP codes for 'or' & 'and'
+                                          // StereoGroups that are normally hidden
   bool atomHighlightsAreCircles = false;  // forces atom highlights always to be
                                           // circles. Default (false) is to put
                                           // ellipses round longer labels.
@@ -266,6 +281,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       MultiColourHighlightStyle::CIRCLEANDLINE;
   bool centreMoleculesBeforeDrawing = false;  // moves the centre of the drawn
                                               // molecule to (0,0)
+  std::uint32_t drawingExtentsInclude =
+      DrawElement::ALL;  // which elements should be included
+                         // when computing drawing extents
   bool explicitMethyl = false;  // draw terminal methyl and related as CH3
   bool includeRadicals =
       true;  // include radicals in the drawing (it can be useful to turn this

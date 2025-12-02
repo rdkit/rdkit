@@ -9,12 +9,14 @@ steps:
     conda config --add channels conda-forge
     conda config --set solver libmamba
     conda info -a
-    conda create --name rdkit_build $(python) cmake \
+    conda create --name rdkit_build -c conda-forge --override-channels $(python) cmake \
         libboost=$(boost_version) libboost-devel=$(boost_version) \
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         numpy pillow eigen pandas=2.1 \
         qt pytest
     conda activate rdkit_build
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -26,6 +28,7 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF \
     -DRDK_BUILD_CPP_TESTS=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
+    -DRDK_BUILD_CHEMDRAW_SUPPORT=OFF \
     -DRDK_BUILD_COORDGEN_SUPPORT=OFF \
     -DRDK_BUILD_MAEPARSER_SUPPORT=OFF \
     -DRDK_OPTIMIZE_POPCNT=ON \

@@ -39,7 +39,7 @@ from pathlib import Path
 
 from rdkit import Chem, rdBase
 from rdkit.Chem import (rdSynthonSpaceSearch, rdFingerprintGenerator,
-                        rdRascalMCES, rdGeneralizedSubstruct)
+                        rdRascalMCES, rdGeneralizedSubstruct, rdMolDescriptors)
 
 
 class TestCase(unittest.TestCase):
@@ -53,13 +53,57 @@ class TestCase(unittest.TestCase):
     synthonspace.ReadDBFile(fName)
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.maxHits = 10
-    results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"), params=params)
+    query = Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1")
+    results = synthonspace.SubstructureSearch(query, params=params)
     self.assertEqual(10, len(results.GetHitMolecules()))
     smParams = Chem.SubstructMatchParameters()
-    results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"),
+    results = synthonspace.SubstructureSearch(query,
                                               substructMatchParams=smParams,
                                               params=params)
     self.assertEqual(10, len(results.GetHitMolecules()))
+
+    # callback returns None, stil get all results
+    mols = []
+    synthonspace.SubstructureSearchIncremental(
+            query,
+            lambda results: mols.extend(results),
+            substructMatchParams=smParams,
+            params=params)
+    self.assertEqual(10, len(mols))
+
+    # callback returns True, get one chunk
+    mols = []
+    params.toTryChunkSize = 2
+    def callback_returns_true(chunk):
+        mols.extend(chunk)
+        return True
+    synthonspace.SubstructureSearchIncremental(
+            query,
+            callback_returns_true,
+            substructMatchParams=smParams,
+            params=params)
+    self.assertEqual(2, len(mols))
+
+    # Exceptions thrown in the callback propagate back here
+    mols = []
+    params.toTryChunkSize = 2
+    def callback_raises(chunk):
+        mols.extend(chunk)
+        raise StopIteration
+
+    try:
+        synthonspace.SubstructureSearchIncremental(
+                query,
+                callback_raises,
+                substructMatchParams=smParams,
+                params=params)
+    except StopIteration:
+        pass
+    else:
+        assert False, "Expected exception"
+    self.assertEqual(2, len(mols))
+
+
 
   def testFingerprintSearch(self):
     fName = self.sssDir / "idorsia_toy_space_a.spc"
@@ -73,6 +117,13 @@ class TestCase(unittest.TestCase):
     results = synthonspace.FingerprintSearch(
       Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"), fpgen, params)
     self.assertEqual(278, len(results.GetHitMolecules()))
+    mols = []
+    synthonspace.FingerprintSearchIncremental(
+      Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"),
+      fpgen,
+      lambda results: mols.extend(results),
+      params)
+    self.assertEqual(278, len(mols))
     
 
   def testEnumerate(self):
@@ -126,7 +177,49 @@ class TestCase(unittest.TestCase):
     xqry = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
     results = synthonspace.SubstructureSearch(xqry)
     self.assertEqual(12, len(results.GetHitMolecules()))
-  
+
+  def testHeavyAtomCutoffs(self):
+    fName = self.sssDir / "idorsia_toy_space_a.spc"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadDBFile(fName)
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = -1
+    params.maxHitHeavyAtoms = 30
+    params.minHitHeavyAtoms = 25
+    q = Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1")
+    results = synthonspace.SubstructureSearch(q)
+    self.assertEqual(220, len(results.GetHitMolecules()))
+    results = synthonspace.SubstructureSearch(q, params=params)
+    self.assertEqual(141, len(results.GetHitMolecules()))
+
+  def testMolWeightCutoffs(self):
+    fName = self.sssDir / "idorsia_toy_space_a.spc"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadDBFile(fName)
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = -1
+    params.maxHitMolWt = 450
+    params.minHitMolWt = 350
+    q = Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1")
+    results = synthonspace.SubstructureSearch(q)
+    self.assertEqual(220, len(results.GetHitMolecules()))
+    results = synthonspace.SubstructureSearch(q, params=params)
+    self.assertEqual(185, len(results.GetHitMolecules()))
+    
+  def testChiralAtomtCutoffs(self):
+    fName = self.sssDir / "idorsia_toy_space_a.spc"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadDBFile(fName)
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = -1
+    params.maxHitChiralAtoms = 2
+    params.minHitChiralAtoms = 1
+    q = Chem.MolFromSmarts("Cc1nc(-c2ccnn2CC(C))n([C@@H]2CCOC2)n1")
+    results = synthonspace.SubstructureSearch(q)
+    self.assertEqual(20, len(results.GetHitMolecules()))
+    results = synthonspace.SubstructureSearch(q, params=params)
+    self.assertEqual(10, len(results.GetHitMolecules()))
+    
     
 if __name__ == "__main__":
   unittest.main()

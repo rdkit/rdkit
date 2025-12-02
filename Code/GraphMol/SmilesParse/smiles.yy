@@ -8,7 +8,6 @@
   //
 
 #include <cstring>
-#include <iostream>
 #include <limits>
 #include <string>
 #include <string_view>
@@ -49,7 +48,10 @@ yysmiles_error( const char *input,
 		void *,int, unsigned int bad_token_position, const char * msg )
 {
   yyErrorCleanup(ms);
-  SmilesParseOps::detail::printSyntaxErrorMessage(input, msg, bad_token_position);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMILES");
 }
 
 void
@@ -59,9 +61,23 @@ yysmiles_error( const char *input,
 		void *,int, unsigned int bad_token_position, const char * msg )
 {
   yyErrorCleanup(ms);
-  SmilesParseOps::detail::printSyntaxErrorMessage(input, msg, bad_token_position);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMILES");
 }
 
+void
+yysmiles_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
+                unsigned int bad_token_position, const char * msg )
+{
+  yyErrorCleanup(ms);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMILES");
+}
 
 %}
 
@@ -106,6 +122,7 @@ yysmiles_error( const char *input,
 %type <bond> bondd
 %type <ival> nonzero_number number ring_number digit branch_open_token
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
+%token BAD_CHARACTER
 %token EOS_TOKEN
 
 %destructor { delete $$; } <atom>
@@ -136,6 +153,12 @@ START_MOL mol {
   YYABORT;
 }
 | START_BOND {
+  YYABORT;
+}
+| meta_start BAD_CHARACTER {
+  yyerrok;
+  yyErrorCleanup(molList);
+  yyerror(input, molList, current_token_position, "syntax error");
   YYABORT;
 }
 | meta_start error EOS_TOKEN{
@@ -391,8 +414,15 @@ chiral_element:	 element
 | element AT_TOKEN { $1->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW); }
 | element AT_TOKEN AT_TOKEN { $1->setChiralTag(Atom::CHI_TETRAHEDRAL_CW); }
 | element CHI_CLASS_TOKEN { $1->setChiralTag($2); $1->setProp(common_properties::_chiralPermutation,0); }
-| element CHI_CLASS_TOKEN number { $1->setChiralTag($2); $1->setProp(common_properties::_chiralPermutation,$3); }
-;
+| element CHI_CLASS_TOKEN number { 
+    if($3==0){
+      yyerror(input,molList,branchPoints,scanner,start_token, current_token_position,
+            "chiral permutation cannot be zero");
+      yyErrorCleanup(molList);
+      YYABORT;
+    }
+    $1->setChiralTag($2); $1->setProp(common_properties::_chiralPermutation,$3); 
+};
 
 /* --------------------------------------------------------------- */
 element:	simple_atom

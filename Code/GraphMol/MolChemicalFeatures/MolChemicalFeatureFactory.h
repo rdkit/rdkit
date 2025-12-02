@@ -12,7 +12,6 @@
 #define __CHEMICALFEATUREFACTORY_H_02122004_1545__
 
 #include "MolChemicalFeatureDef.h"
-#include <iostream>
 #include <boost/shared_ptr.hpp>
 
 namespace RDKit {

@@ -32,6 +32,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/test_fixtures.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
@@ -2199,7 +2200,7 @@ M  V30 1 C -22.5833 11.0833 0 0 EXACHG=1
 M  V30 2 C -21.2497 11.8533 0 0 INVRET=2
 M  V30 3 C -23.917 11.8533 0 0 ATTCHORD=3
 M  V30 4 C -25.2507 11.0833 0 0 CLASS=foo
-M  V30 5 C -26.5844 11.8533 0 0 SEQID=4
+M  V30 5 C -26.5844 11.8533 0 0 SEQID=4 SEQNAME=foo1
 M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
@@ -2221,12 +2222,15 @@ M  END
               common_properties::molAtomClass) == "foo");
     CHECK(mol->getAtomWithIdx(4)->getProp<int>(
               common_properties::molAtomSeqId) == 4);
+    CHECK(mol->getAtomWithIdx(4)->getProp<std::string>(
+              common_properties::molAtomSeqName) == "foo1");
     auto molb = MolToV3KMolBlock(*mol);
     CHECK(molb.find("EXACHG=1") != std::string::npos);
     CHECK(molb.find("INVRET=2") != std::string::npos);
     CHECK(molb.find("ATTCHORD=3") != std::string::npos);
     CHECK(molb.find("CLASS=foo") != std::string::npos);
     CHECK(molb.find("SEQID=4") != std::string::npos);
+    CHECK(molb.find("SEQNAME=foo1") != std::string::npos);
   }
   SECTION("SUBST") {
     auto mol = R"CTAB(test
@@ -2752,6 +2756,216 @@ TEST_CASE("write molecule to PNG", "[writer][PNG]") {
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 29);
     CHECK(mol->getNumConformers() == 1);
+  }
+  SECTION("use PKL") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    auto colchicine =
+        "COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2"_smiles;
+    REQUIRE(colchicine);
+    RDDepict::compute2DCoords(*colchicine);
+    CHECK(colchicine->getNumConformers() == 1);
+    static const std::string propertyName("property");
+    static const std::string propertyValue("value");
+    colchicine->setProp<std::string>(propertyName, propertyValue);
+    PNGMetadataParams params;
+    params.includePkl = true;
+    params.includeSmiles = false;
+    params.includeMol = false;
+    {
+      std::ifstream strm(fname, std::ios::in | std::ios::binary);
+      params.propertyFlags = PicklerOps::PropertyPickleOptions::NoProps;
+      auto pngString = addMolToPNGStream(*colchicine, strm, params);
+      // read it back out
+      std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+      REQUIRE(mol);
+      CHECK(mol->getNumAtoms() == 29);
+      CHECK(mol->getNumConformers() == 1);
+      CHECK(!mol->hasProp(propertyName));
+    }
+    {
+      std::ifstream strm(fname, std::ios::in | std::ios::binary);
+      params.propertyFlags = PicklerOps::PropertyPickleOptions::AllProps;
+      auto pngString = addMolToPNGStream(*colchicine, strm, params);
+      // read it back out
+      std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+      REQUIRE(mol);
+      CHECK(mol->getNumAtoms() == 29);
+      CHECK(mol->getNumConformers() == 1);
+      CHECK(mol->hasProp(propertyName));
+      CHECK(mol->getProp<std::string>(propertyName) == propertyValue);
+    }
+    {
+      std::ifstream strm(fname, std::ios::in | std::ios::binary);
+      params.includePkl = false;
+      params.includeSmiles = true;
+      params.cxSmilesFlags = SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS;
+      auto pngString = addMolToPNGStream(*colchicine, strm, params);
+      // read it back out
+      std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+      REQUIRE(mol);
+      CHECK(mol->getNumAtoms() == 29);
+      CHECK(mol->getNumConformers() == 0);
+      CHECK(!mol->hasProp(propertyName));
+    }
+  }
+  SECTION("use original wedging") {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/colchicine.no_metadata.png";
+    auto colchicineUnusualWedging =
+        R"CTAB(
+     RDKit          2D
+
+ 29 31  0  0  0  0  0  0  0  0999 V2000
+    6.4602    1.0300    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3062    1.9883    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8993    1.4680    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7453    2.4262    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3384    1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0856    0.4273    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2396   -0.5309    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9868   -2.0094    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1408   -2.9677    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6465   -0.0106    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.8005   -0.9688    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5477   -2.4474    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2280   -0.2968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1857   -1.7387    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6836   -2.9611    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1813   -3.0436    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7569   -4.4288    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2442   -4.6230    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1797   -1.9240    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.6215   -2.3378    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9268   -0.4455    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6132    0.2787    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0269    1.7205    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5055    1.9733    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0258    3.3802    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5043    3.6330    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0675    4.5342    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1576    2.9429    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3401    3.0254    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  7  1  0
+  7  8  1  0
+  8  9  1  0
+  7 10  2  0
+ 10 11  1  0
+ 11 12  1  0
+  6 13  1  0
+ 13 14  2  0
+ 14 15  1  0
+ 15 16  2  0
+ 16 17  1  0
+ 17 18  1  0
+ 16 19  1  0
+ 19 20  2  0
+ 19 21  1  0
+ 21 22  2  0
+ 23 22  1  1
+ 23 24  1  0
+ 24 25  1  0
+ 25 26  1  0
+ 25 27  2  0
+ 23 28  1  0
+ 28 29  1  0
+ 10  3  1  0
+ 22 13  1  0
+ 29  5  1  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(colchicineUnusualWedging);
+    CHECK(colchicineUnusualWedging->getNumConformers() == 1);
+    SmilesWriteParams ps;
+    CHECK(MolToCXSmiles(*colchicineUnusualWedging).find("wU:22.24|") !=
+          std::string::npos);
+    CHECK(MolToCXSmiles(*colchicineUnusualWedging, ps, SmilesWrite::CX_ALL,
+                        RestoreBondDirOptionTrue)
+              .find("wU:22.23|") != std::string::npos);
+    PNGMetadataParams params;
+    params.includePkl = true;
+    params.includeSmiles = true;
+    params.includeMol = true;
+    params.propertyFlags = PicklerOps::PropertyPickleOptions::AtomProps |
+                           PicklerOps::PropertyPickleOptions::BondProps;
+    {
+      std::ifstream strm(fname, std::ios::in | std::ios::binary);
+      auto pngString =
+          addMolToPNGStream(*colchicineUnusualWedging, strm, params);
+      // read it back out
+      std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+      REQUIRE(mol);
+      CHECK(mol->getNumAtoms() == 29);
+      CHECK(mol->getNumConformers() == 1);
+      CHECK(
+          MolToCXSmiles(*mol, ps, SmilesWrite::CX_ALL, RestoreBondDirOptionTrue)
+              .find("wU:22.23|") != std::string::npos);
+      auto metadata = PNGStringToMetadata(pngString);
+      auto smilesFound = false;
+      auto ctabFound = false;
+      auto pklFound = false;
+      for (const auto &[key, value] : metadata) {
+        if (key.substr(0, 6) == "SMILES") {
+          smilesFound = true;
+          CHECK(value.find("wU:22.24|") != std::string::npos);
+        } else if (key.substr(0, 3) == "MOL") {
+          ctabFound = true;
+          CHECK(value.find(" 23 24  1  1") != std::string::npos);
+        } else if (key.substr(0, 8) == "rdkitPKL") {
+          pklFound = true;
+          RWMol molFromPkl(value);
+          CHECK(MolToMolBlock(molFromPkl).find(" 23 24  1  1") !=
+                std::string::npos);
+          Chirality::reapplyMolBlockWedging(molFromPkl);
+          CHECK(MolToMolBlock(molFromPkl).find(" 23 22  1  1") !=
+                std::string::npos);
+        }
+      }
+      CHECK((smilesFound && ctabFound && pklFound));
+    }
+    {
+      params.restoreBondDirs = RestoreBondDirOptionTrue;
+      std::ifstream strm(fname, std::ios::in | std::ios::binary);
+      auto pngString =
+          addMolToPNGStream(*colchicineUnusualWedging, strm, params);
+      // read it back out
+      std::unique_ptr<ROMol> mol(PNGStringToMol(pngString));
+      REQUIRE(mol);
+      CHECK(mol->getNumAtoms() == 29);
+      CHECK(mol->getNumConformers() == 1);
+      CHECK(
+          MolToCXSmiles(*mol, ps, SmilesWrite::CX_ALL, RestoreBondDirOptionTrue)
+              .find("wU:22.23|") != std::string::npos);
+      auto metadata = PNGStringToMetadata(pngString);
+      auto smilesFound = false;
+      auto ctabFound = false;
+      auto pklFound = false;
+      for (const auto &[key, value] : metadata) {
+        if (key.substr(0, 6) == "SMILES") {
+          smilesFound = true;
+          CHECK(value.find("wU:22.23|") != std::string::npos);
+        } else if (key.substr(0, 3) == "MOL") {
+          ctabFound = true;
+          CHECK(value.find(" 23 22  1  1") != std::string::npos);
+        } else if (key.substr(0, 8) == "rdkitPKL") {
+          pklFound = true;
+          RWMol molFromPkl(value);
+          CHECK(MolToMolBlock(molFromPkl).find(" 23 24  1  1") !=
+                std::string::npos);
+          Chirality::reapplyMolBlockWedging(molFromPkl);
+          CHECK(MolToMolBlock(molFromPkl).find(" 23 22  1  1") !=
+                std::string::npos);
+        }
+      }
+      CHECK((smilesFound && ctabFound && pklFound));
+    }
   }
 }
 TEST_CASE("multiple molecules in the PNG", "[writer][PNG]") {
@@ -3431,7 +3645,7 @@ M  END
     auto mb = MolToV3KMolBlock(*m);
     CHECK(mb.find("V30 8 10 5 8") != std::string::npos);
     CHECK(MolToSmiles(*m) ==
-          "CC1=O~[H]OC(C)C1");  // the SMILES writer still doesn't know what to
+          "CC1CC(C)O[H]~O=1");  // the SMILES writer still doesn't know what to
                                 // do with it
   }
 }
@@ -3893,9 +4107,7 @@ M  V30 1 1 1 2
 M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB";
-    {
-      REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException);
-    }
+    { REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException); }
     {
       bool sanitize = true;
       bool removeHs = true;
@@ -5558,7 +5770,7 @@ M  END
       CHECK(mb.find("NOT [N]") != std::string::npos);
     }
   }
-  SECTION("don't output the query if it's not negated") {
+  SECTION("output the query even if it's not negated") {
     auto m = R"CTAB(
   Mrv2211 01052305042D
 
@@ -5577,7 +5789,7 @@ M  END
     auto mb = MolToV3KMolBlock(*m);
     {
       INFO(mb);
-      CHECK(mb.find("[N]") == std::string::npos);
+      CHECK(mb.find("V30 1 [N]") != std::string::npos);
     }
   }
   SECTION("v2000") {
@@ -7150,7 +7362,7 @@ class FragTest {
         expectedResult(expectedResultInit),
         reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
         origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit) {};
+        newSgroupCount(newSgroupCountInit){};
 };
 
 void testFragmentation(const FragTest &fragTest) {
@@ -7554,5 +7766,206 @@ M  END)CTAB";
       auto m = v2::FileParsers::MolFromMolBlock(molblock);
       REQUIRE(m);
     }
+  }
+}
+
+TEST_CASE("Github #8820: allowed list atoms should be read as dummy atoms") {
+  SECTION("v3k basics") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -14.969697 7.242424 0.000000 0
+M  V30 2 [C,N] -13.670659 7.992424 0.000000 0
+M  V30 3 C -12.371621 7.242424 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 0);
+    auto ctab = MolToV3KMolBlock(*mol);
+    CHECK(ctab.find("V30 2 [C,N]") != std::string::npos);
+  }
+  SECTION("v3k not") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -14.969697 7.242424 0.000000 0
+M  V30 2 "NOT [C,N]" -13.670659 7.992424 0.000000 0
+M  V30 3 C -12.371621 7.242424 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 0);
+    auto ctab = MolToV3KMolBlock(*mol);
+    CHECK(ctab.find("V30 2 \"NOT [C,N]\"") != std::string::npos);
+  }
+  SECTION("v3k single atom") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -14.969697 7.242424 0.000000 0
+M  V30 2 [C] -13.670659 7.992424 0.000000 0
+M  V30 3 C -12.371621 7.242424 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 0);
+    auto ctab = MolToV3KMolBlock(*mol);
+    CHECK(ctab.find("V30 2 [C]") != std::string::npos);
+  }
+
+  SECTION("v3k not single atom") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -14.969697 7.242424 0.000000 0
+M  V30 2 "NOT [C]" -13.670659 7.992424 0.000000 0
+M  V30 3 C -12.371621 7.242424 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 0);
+    auto ctab = MolToV3KMolBlock(*mol);
+    // this now ends up being a NOT list query on output:
+    CHECK(ctab.find("V30 2 \"NOT [C]\"") != std::string::npos);
+  }
+
+  SECTION("v2k") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+  -14.9697    7.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.6707    7.9924    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.3716    7.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  ALS   2  2 F C   N   
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(mol->getAtomWithIdx(1)->getAtomicNum() == 0);
+    auto ctab = MolToMolBlock(*mol);
+    CHECK(ctab.find("ALS") != std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "Github #8823: aromaticity perception with list queries depends on ordering of atoms") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/github8823.sdf";
+  auto suppl = v2::FileParsers::SDMolSupplier(fName);
+  REQUIRE(suppl.length() == 3);
+  for (auto i = 0u; i < suppl.length(); ++i) {
+    auto m = suppl[i];
+    REQUIRE(m);
+    REQUIRE(m->getNumAtoms() == 5);
+    CHECK(m->getBondWithIdx(0)->getBondType() == Bond::AROMATIC);
+  }
+}
+
+TEST_CASE("GitHub Issue #8873: Warn/fail on multiple ABS stereo groups") {
+  // This is illegal, according to the spec (ABS groups must be unique)
+  auto mb = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N -3.696970 2.121212 0.000000 0
+M  V30 2 C -2.397932 2.871212 0.000000 0
+M  V30 3 C -1.098893 2.121212 0.000000 0
+M  V30 4 C 0.200145 2.871212 0.000000 0
+M  V30 5 O 1.499183 2.121212 0.000000 0
+M  V30 6 C -2.397932 4.371212 0.000000 0
+M  V30 7 C 0.200145 4.371212 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 2 6 CFG=1
+M  V30 6 1 4 7 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 2)
+M  V30 MDLV30/STEABS ATOMS=(1 4)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB";
+
+  constexpr bool removeHs = true;
+  constexpr bool sanitize = true;
+
+  SECTION("strict parsing disabled: warn and collapse") {
+    bool strictParsing = false;
+    std::unique_ptr<ROMol> m{
+        MolBlockToMol(mb, sanitize, removeHs, strictParsing)};
+    REQUIRE(m);
+
+    const auto &stgs = m->getStereoGroups();
+    REQUIRE(stgs.size() == 1);
+    const auto &stg = stgs.front();
+    CHECK(stg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+    CHECK(stg.getAtoms().size() == 2);
+  }
+
+  SECTION("strict parsing disabled: throw") {
+    bool strictParsing = true;
+    REQUIRE_THROWS_AS(MolBlockToMol(mb, sanitize, removeHs, strictParsing),
+                      FileParseException);
   }
 }

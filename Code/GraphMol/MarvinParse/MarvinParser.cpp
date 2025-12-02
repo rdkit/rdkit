@@ -12,7 +12,6 @@
 
 #include <string>
 #include <exception>
-#include <iostream>
 #include <fstream>
 #include <vector>
 #include <sstream>
@@ -172,6 +171,9 @@ class MarvinCMLReader {
           query->setProp(common_properties::molFileAlias, marvinAtom->mrvAlias);
         }
         query->setQuery(makeAtomNullQuery());
+        query->setIsotope(marvinAtom->rgroupRef);
+        query->setProp(common_properties::_MolFileRLabel,
+                       static_cast<unsigned int>(marvinAtom->rgroupRef));
       }
 
       else if (symb.size() <= 2) {
@@ -291,6 +293,10 @@ class MarvinCMLReader {
       } else if (marvinBondType == "DATIVE") {
         bond = new Bond();
         type = Bond::DATIVE;
+        bType = 1;
+      } else if (marvinBondType == "HYDROGEN") {
+        bond = new Bond();
+        type = Bond::HYDROGEN;
         bType = 1;
       } else if (marvinBondType == "1") {
         type = Bond::SINGLE;

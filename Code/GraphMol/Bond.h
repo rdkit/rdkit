@@ -12,7 +12,6 @@
 #define RD_BOND_H
 
 // std stuff
-#include <iostream>
 #include <utility>
 
 // Ours
@@ -125,6 +124,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     // the molecule will still be pointing to the original object
     dp_mol = std::exchange(o.dp_mol, nullptr);
     dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
+    d_flags = std::exchange(o.d_flags, 0);
   }
   Bond &operator=(Bond &&o) noexcept {
     if (this == &o) {
@@ -144,6 +144,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     delete dp_stereoAtoms;
     dp_mol = std::exchange(o.dp_mol, nullptr);
     dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
+    d_flags = std::exchange(o.d_flags, 0);
     return *this;
   }
 
@@ -368,6 +369,14 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   */
   void updatePropertyCache(bool strict = true) { (void)strict; }
 
+  //! Flags that can be used by to store information on bonds.
+  //!   These are not serialized and should be treated as temporary values.
+  //!   No guarantees are made about preserving these flags across library
+  //!   calls.
+  void setFlags(std::uint64_t flags) { d_flags = flags; }
+  std::uint64_t getFlags() const { return d_flags; }
+  std::uint64_t &getFlags() { return d_flags; }
+
  protected:
   //! sets our owning molecule
   /// void setOwningMol(ROMol *other);
@@ -382,14 +391,19 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   std::uint8_t d_bondType;
   std::uint8_t d_dirTag;
   std::uint8_t d_stereo;
+  std::uint64_t d_flags = 0;
 
   void initBond();
 };
 
-inline bool isDative(const Bond &bond) {
-  auto bt = bond.getBondType();
+inline bool isDative(const Bond::BondType bt) {
   return bt == Bond::BondType::DATIVE || bt == Bond::BondType::DATIVEL ||
          bt == Bond::BondType::DATIVER || bt == Bond::BondType::DATIVEONE;
+}
+
+inline bool isDative(const Bond &bond) {
+  auto bt = bond.getBondType();
+  return isDative(bt);
 }
 
 inline bool canSetDoubleBondStereo(const Bond &bond) {

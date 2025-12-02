@@ -157,22 +157,11 @@ static void applyHuckelToFused(
     unsigned int maxNumFusedRings, const std::vector<Bond *> &bondsByIdx,
     unsigned int minRingSize = 0);
 
-void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
-                        const VECT_INT_VECT &brings, const INT_VECT &ringIds,
+void markAtomsBondsArom(const VECT_INT_VECT &brings, const INT_VECT &ringIds,
                         std::set<unsigned int> &doneBonds,
                         const std::vector<Bond *> &bondsByIdx) {
-  // first mark the atoms in the rings
-  for (auto ri : ringIds) {
-    const auto &aring = srings[ri];
-
-    // first mark the atoms in the ring
-    for (auto ai : aring) {
-      mol.getAtomWithIdx(ai)->setIsAromatic(true);
-    }
-  }
-
   // mark the bonds
-  // here we want to be more careful. We don't want to mark the fusing bonds
+  // here we want to be careful. We don't want to mark the fusing bonds
   // as aromatic - only the outside bonds in a fused system are marked aromatic.
   // - loop through the rings and count the number of times each bond appears in
   //   all the fused rings.
@@ -185,18 +174,18 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
       ++bndCntr[bi];
     }
   }
-  // now mark bonds that have a count of 1 to be aromatic;
-  // std::cerr << "bring:";
+  // now mark single or double bonds that have a count of 1 and the atoms they
+  // connect as aromatic
   for (const auto &bci : bndCntr) {
-    // std::cerr << " " << bci->first << "(" << bci->second << ")";
     if (bci.second == 1) {
       auto bond = bondsByIdx[bci.first];
-      // Bond *bond = mol.get BondWithIdx(bci->first);
       bond->setIsAromatic(true);
       switch (bond->getBondType()) {
         case Bond::SINGLE:
         case Bond::DOUBLE:
           bond->setBondType(Bond::AROMATIC);
+          bond->getBeginAtom()->setIsAromatic(true);
+          bond->getEndAtom()->setIsAromatic(true);
           break;
         default:
           break;
@@ -204,7 +193,6 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
       doneBonds.insert(bond->getIdx());
     }
   }
-  // std::cerr << std::endl;
 }
 
 void getMinMaxAtomElecs(ElectronDonorType dtype, int &atlw, int &atup) {
@@ -408,14 +396,14 @@ void applyHuckelToFused(
     }
     if (applyHuckel(mol, unon, edon, minRingSize)) {
       // mark the atoms and bonds in these rings to be aromatic
-      markAtomsBondsArom(mol, srings, brings, curRs, doneBonds, bondsByIdx);
+      markAtomsBondsArom(brings, curRs, doneBonds, bondsByIdx);
 
       // add the ring IDs to the aromatic rings found so far
       // avoid duplicates
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
     }  // end check huckel rule
-  }    // end while(1)
+  }  // end while(1)
   narom += rdcast<int>(aromRings.size());
 }
 
@@ -682,6 +670,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   for (auto &sring : srings) {
     bool allAromatic = true;
     bool allDummy = true;
+
     for (auto firstIdx : sring) {
       const auto at = mol.getAtomWithIdx(firstIdx);
 
@@ -831,7 +820,6 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
         (maxRingSize && ringSz > maxRingSize)) {
       continue;
     }
-
     bool allAromatic = true;
     bool allDummy = true;
     for (auto firstIdx : sring) {

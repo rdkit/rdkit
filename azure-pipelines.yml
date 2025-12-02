@@ -9,13 +9,15 @@ jobs:
   pool:
     vmImage: ubuntu-latest
   steps:
-  - task: Docker@2
+  - task: DockerCompose@1
     displayName: 'Build MinimalLib JS bindings'
     inputs:
-      command: build
-      Dockerfile: './Code/MinimalLib/docker/Dockerfile_CI'
-      buildContext: '.'
-      tags: 'latest' 
+      projectName: 'rdkit-minimallib-ci'
+      action: 'Build services'
+      dockerComposeFile: './Code/MinimalLib/docker/docker_compose_build_minimallib.yml'
+      dockerComposeFileArgs: |
+        GET_SRC=copy_from_local
+        COMPOSE_BAKE=false
 - job: Ubuntu_x64
   timeoutInMinutes: 120
   pool:
@@ -70,9 +72,9 @@ jobs:
   steps:
   - template: .azure-pipelines/mac_build_java.yml
 - job: Windows_VS2022_x64
-  timeoutInMinutes: 120
+  timeoutInMinutes: 150
   pool:
-    vmImage: windows-2019
+    vmImage: windows-2022
   variables:
     boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
@@ -82,7 +84,7 @@ jobs:
 - job: Windows_VS2022_x64_dll
   timeoutInMinutes: 120
   pool:
-    vmImage: windows-2019
+    vmImage: windows-2022
   variables:
     boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
@@ -130,7 +132,7 @@ jobs:
 - job: Windows_VS2022_x64_swig
   timeoutInMinutes: 90
   pool:
-    vmImage: windows-2019
+    vmImage: windows-2022
   variables:
     boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'

@@ -38,6 +38,7 @@ Bond::Bond(const Bond &other) : RDProps(other) {
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
+  d_flags = other.d_flags;
 }
 
 Bond::~Bond() { delete dp_stereoAtoms; }
@@ -61,6 +62,7 @@ Bond &Bond::operator=(const Bond &other) {
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
   d_props = other.d_props;
+  d_flags = other.d_flags;
 
   return *this;
 }
@@ -190,6 +192,8 @@ double Bond::getValenceContrib(const Atom *atom) const {
   double res;
   if ((getBondType() == DATIVE || getBondType() == DATIVEONE) &&
       atom->getIdx() != getEndAtomIdx()) {
+    res = 0.0;
+  } else if (getBondType() == HYDROGEN) {
     res = 0.0;
   } else {
     res = getBondTypeAsDouble();

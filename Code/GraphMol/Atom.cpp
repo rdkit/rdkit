@@ -216,6 +216,7 @@ void Atom::initFromOther(const Atom &other) {
   } else {
     dp_monomerInfo = nullptr;
   }
+  d_flags = other.d_flags;
 }
 
 Atom::Atom(const Atom &other) : RDProps() { initFromOther(other); }
@@ -740,6 +741,11 @@ void Atom::updatePropertyCache(bool strict) {
 bool Atom::needsUpdatePropertyCache() const {
   return !(this->d_explicitValence >= 0 &&
            (this->df_noImplicit || this->d_implicitValence >= 0));
+}
+
+void Atom::clearPropertyCache() {
+  d_explicitValence = -1;
+  d_implicitValence = -1;
 }
 
 // returns the number of swaps required to convert the ordering

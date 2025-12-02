@@ -40,7 +40,7 @@ namespace RxnOps {
 // molFileRLabel ==> unsigned int
 namespace {
 template <class T>
-T getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
+T getMaxProp(ChemicalReaction &rxn, const std::string_view &prop) {
   T max_atom = (T)0;
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it) {

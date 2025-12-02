@@ -163,12 +163,12 @@ void MolDraw2D::drawMoleculeWithHighlights(
       break;
   }
   drawMols_.emplace_back(dm);
+  drawMols_.back()->setOffsets(x_offset_, y_offset_);
   drawMols_.back()->createDrawObjects();
   fixVariableDimensions(*drawMols_.back());
   ++activeMolIdx_;
   startDrawing();
   drawTheMolecule((*drawMols_.back()));
-  return;
 }
 
 // ****************************************************************************
@@ -418,13 +418,17 @@ void MolDraw2D::drawArc(const Point2D &centre, double xradius, double yradius,
     double y = centre.y + yradius * sin(ang);
     pts.emplace_back(x, y);
   }
-
   if (fillPolys()) {
     // otherwise it draws an arc back to the pts.front() rather than filling
     // in the sector.
     pts.push_back(centre);
   }
-  drawPolygon(pts, rawCoords);
+  // Very short arcs can be drawn as lines.
+  if (pts.size() == 2) {
+    drawLine(pts[0], pts[1], rawCoords);
+  } else {
+    drawPolygon(pts, rawCoords);
+  }
 }
 
 // ****************************************************************************
@@ -465,24 +469,21 @@ void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
                           bool asPolygon, double frac, double angle,
                           const DrawColour &col, bool rawCoords) {
+  PRECONDITION(angle > 1.0e-6,
+               "Arrow angle must be positive and greater than 0.0.");
   Point2D ae(arrowEnd), p1, p2;
-  MolDraw2D_detail::calcArrowHead(ae, p1, p2, arrowBegin, asPolygon, frac,
-                                  angle);
+  MolDraw2D_detail::calcArrowHead(ae, p1, p2, arrowBegin, frac,
+                                  getDrawLineWidth(), angle);
 
   drawLine(arrowBegin, ae, col, col, rawCoords);
-  if (!asPolygon) {
-    drawLine(ae, p1, col, col, rawCoords);
-    drawLine(ae, p2, col, col, rawCoords);
-  } else {
-    std::vector<Point2D> pts = {p1, ae, p2};
-    bool fps = fillPolys();
-    auto dc = colour();
-    setFillPolys(true);
-    setColour(col);
-    drawPolygon(pts, rawCoords);
-    setFillPolys(fps);
-    setColour(dc);
-  }
+  std::vector<Point2D> pts = {p1, ae, p2};
+  bool fps = fillPolys();
+  auto dc = colour();
+  setFillPolys(asPolygon);
+  setColour(col);
+  drawPolygon(pts, rawCoords);
+  setFillPolys(fps);
+  setColour(dc);
 }
 
 // ****************************************************************************

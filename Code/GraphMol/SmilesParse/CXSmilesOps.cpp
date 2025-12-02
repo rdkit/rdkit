@@ -18,26 +18,28 @@
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
 
-#include <iostream>
-#include <algorithm>
 #include "SmilesWrite.h"
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/MolEnumerator/LinkNode.h>
 #include <GraphMol/Chirality.h>
+
+#include <algorithm>
+#include <array>
 #include <map>
+#include <string_view>
 
 namespace SmilesParseOps {
 using namespace RDKit;
 
-const std::string cxsmilesindex = "_cxsmilesindex";
-const std::string cxsgTracker = "_sgTracker";
+constexpr std::string_view cxsmilesindex = "_cxsmilesindex";
+constexpr std::string_view cxsgTracker = "_sgTracker";
 
 // FIX: once this can be automated using constexpr, do so
-const std::vector<std::string_view> pseudoatoms{"Pol", "Mod"};
-const std::vector<std::string_view> pseudoatoms_p{"Pol_p", "Mod_p"};
+constexpr std::array<std::string_view, 2> pseudoatoms{"Pol", "Mod"};
+constexpr std::array<std::string_view, 2> pseudoatoms_p{"Pol_p", "Mod_p"};
 
-std::map<std::string, std::string> sgroupTypemap = {
+const std::map<std::string, std::string> sgroupTypemap = {
     {"n", "SRU"},   {"mon", "MON"}, {"mer", "MER"}, {"co", "COP"},
     {"xl", "CRO"},  {"mod", "MOD"}, {"mix", "MIX"}, {"f", "FOR"},
     {"any", "ANY"}, {"gen", "GEN"}, {"c", "COM"},   {"grf", "GRA"},
@@ -49,7 +51,9 @@ void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
   auto *qa = new QueryAtom(0);
   qa->setQuery(qry);
   qa->setNoImplicit(true);
-  mol.replaceAtom(idx, qa);
+  bool updateLabel = false;
+  bool preserveProps = true;
+  mol.replaceAtom(idx, qa, updateLabel, preserveProps);
   if (symbol != "") {
     mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
                                      symbol);
@@ -97,7 +101,7 @@ void processCXSmilesLabels(RWMol &mol) {
                       symb.substr(0, symb.size() - 2));
         atom->clearProp(common_properties::atomLabel);
       }
-    } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() &&
+    } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() && !atom->getIsotope() &&
                atom->getSymbol() == "*") {
       addquery(makeAAtomQuery(), "", mol, atom->getIdx());
     }
@@ -510,6 +514,42 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
 }
 
 template <typename Iterator>
+bool parse_zero_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                      unsigned int, unsigned int startBondIdx) {
+  // these look like: C1CCCCC~CCCC1 |Z:5|
+  if (first >= last || *first != 'Z') {
+    return false;
+  }
+  ++first;
+  if (first >= last || *first != ':') {
+    return false;
+  }
+  ++first;
+
+  while (first < last && *first >= '0' && *first <= '9') {
+    unsigned int bondIdx;
+    if (!read_int(first, last, bondIdx)) {
+      return false;
+    }
+    if (VALID_BNDIDX(bondIdx)) {
+      auto bond = get_bond_with_smiles_idx(mol, bondIdx - startBondIdx);
+
+      if (!bond) {
+        BOOST_LOG(rdWarningLog)
+            << "bond " << bondIdx
+            << " not found, cannot mark as zero order bond." << std::endl;
+        return false;
+      }
+      bond->setBondType(Bond::ZERO);
+    }
+    if (first < last && *first == ',') {
+      ++first;
+    }
+  }
+  return true;
+}
+
+template <typename Iterator>
 bool parse_unsaturation(Iterator &first, Iterator last, RDKit::RWMol &mol,
                         unsigned int startAtomIdx) {
   if (first + 1 >= last || *first != 'u') {
@@ -861,19 +901,20 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
   }
   first += 3;
 
-  std::string typ = read_text_to(first, last, ":");
+  const auto type_code = read_text_to(first, last, ":");
   ++first;
-  if (sgroupTypemap.find(typ) == sgroupTypemap.end()) {
+  const auto type = sgroupTypemap.find(type_code);
+  if (type == sgroupTypemap.end()) {
     return false;
   }
   bool keepSGroup = false;
-  SubstanceGroup sgroup(&mol, sgroupTypemap[typ]);
+  SubstanceGroup sgroup(&mol, type->second);
   sgroup.setProp(cxsmilesindex, nSGroups);
-  if (typ == "alt") {
+  if (type_code == "alt") {
     sgroup.setProp("SUBTYPE", std::string("ALT"));
-  } else if (typ == "ran") {
+  } else if (type_code == "ran") {
     sgroup.setProp("SUBTYPE", std::string("RAN"));
-  } else if (typ == "blk") {
+  } else if (type_code == "blk") {
     sgroup.setProp("SUBTYPE", std::string("BLO"));
   }
 
@@ -1407,6 +1448,10 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
                                   startAtomIdx, startBondIdx)) {
         return false;
       }
+    } else if (*first == 'Z') {
+      if (!parse_zero_bonds(first, last, mol, startAtomIdx, startBondIdx)) {
+        return false;
+      }
     } else if (*first == '^') {
       if (!parse_radicals(first, last, mol, startAtomIdx)) {
         return false;
@@ -1900,7 +1945,7 @@ std::string get_atomlabel_block(const ROMol &mol,
 
 std::string get_value_block(const ROMol &mol,
                             const std::vector<unsigned int> &atomOrder,
-                            const std::string &prop) {
+                            const std::string_view &prop) {
   std::string res = "";
   bool first = true;
   for (auto idx : atomOrder) {
@@ -1982,9 +2027,11 @@ std::string get_coords_block(const ROMol &mol,
 
 std::string get_atom_props_block(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
-  std::vector<std::string> skip = {common_properties::atomLabel,
-                                   common_properties::molFileValue,
-                                   common_properties::molParity};
+  constexpr std::array<std::string_view, 3> skip = {
+      common_properties::atomLabel,
+      common_properties::molFileValue,
+      common_properties::molParity,
+  };
   std::string res = "";
   unsigned int which = 0;
   for (auto idx : atomOrder) {
@@ -2215,14 +2262,15 @@ std::string get_bond_config_block(
   return res;
 }
 
-std::string get_coordbonds_block(const ROMol &mol,
-                                 const std::vector<unsigned int> &atomOrder,
-                                 const std::vector<unsigned int> &bondOrder) {
+std::string get_coord_or_hydrogen_bonds_block(
+    const ROMol &mol, Bond::BondType bondType, std::string symbol,
+    const std::vector<unsigned int> &atomOrder,
+    const std::vector<unsigned int> &bondOrder) {
   std::string res = "";
   for (unsigned int i = 0; i < bondOrder.size(); ++i) {
     auto idx = bondOrder[i];
     const auto bond = mol.getBondWithIdx(idx);
-    if (bond->getBondType() != Bond::BondType::DATIVE) {
+    if (bond->getBondType() != bondType) {
       continue;
     }
     auto begAtomOrder =
@@ -2231,9 +2279,29 @@ std::string get_coordbonds_block(const ROMol &mol,
     if (!res.empty()) {
       res += ",";
     } else {
-      res = "C:";
+      res = symbol + ":";
     }
     res += boost::str(boost::format("%d.%d") % begAtomOrder % i);
+  }
+  return res;
+}
+
+std::string get_zerobonds_block(const ROMol &mol,
+                                const std::vector<unsigned int> &,
+                                const std::vector<unsigned int> &bondOrder) {
+  std::string res = "";
+  for (unsigned int i = 0; i < bondOrder.size(); ++i) {
+    auto idx = bondOrder[i];
+    const auto bond = mol.getBondWithIdx(idx);
+    if (bond->getBondType() != Bond::BondType::ZERO) {
+      continue;
+    }
+    if (!res.empty()) {
+      res += ",";
+    } else {
+      res = "Z:";
+    }
+    res += boost::str(boost::format("%d") % i);
   }
   return res;
 }
@@ -2529,7 +2597,19 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   }
 
   if (flags & SmilesWrite::CXSmilesFields::CX_COORDINATE_BONDS) {
-    const auto block = get_coordbonds_block(mol, atomOrder, bondOrder);
+    const auto block = get_coord_or_hydrogen_bonds_block(
+        mol, Bond::BondType::DATIVE, "C", atomOrder, bondOrder);
+    appendToCXExtension(block, res);
+  }
+
+  if (flags & SmilesWrite::CXSmilesFields::CX_HYDROGEN_BONDS) {
+    const auto block = get_coord_or_hydrogen_bonds_block(
+        mol, Bond::BondType::HYDROGEN, "H", atomOrder, bondOrder);
+    appendToCXExtension(block, res);
+  }
+
+  if (flags & SmilesWrite::CXSmilesFields::CX_ZERO_BONDS) {
+    const auto block = get_zerobonds_block(mol, atomOrder, bondOrder);
     appendToCXExtension(block, res);
   }
 

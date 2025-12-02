@@ -31,7 +31,6 @@
 #include <GraphMol/Chirality.h>
 #include "EmbeddedFrag.h"
 #include "DepictUtils.h"
-#include <iostream>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
 
@@ -772,7 +771,8 @@ void generateDepictionMatching2DStructure(
   RDGeom::Transform3D trans;
   if (p.alignOnly) {
     if (!hasExistingCoords) {
-      compute2DCoords(mol, nullptr, false, true, 0, 0, 0, false, p.forceRDKit);
+      compute2DCoords(mol, nullptr, false, true, 0, 0, 0, false, p.forceRDKit,
+                      p.useRingTemplates);
     }
     RDKit::MatchVectType atomMap(refMatchVect.size());
     std::transform(
@@ -796,7 +796,7 @@ void generateDepictionMatching2DStructure(
     auto newConfId = compute2DCoords(
         mol, &coordMap, false /* canonOrient */,
         !(p.adjustMolBlockWedging && hasExistingCoords) /* clearConfs */, 0, 0,
-        0, false, p.forceRDKit);
+        0, false, p.forceRDKit, p.useRingTemplates);
     if (p.adjustMolBlockWedging) {
       // we need to clear the existing wedging information if:
       // 1. the original molecule had no coordinates to start with
@@ -1032,8 +1032,8 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
       // need to generate some before attempting the alignment
       // and clear any existing wedging info if requested
       if (!mol.getNumConformers()) {
-        compute2DCoords(mol, nullptr, false, true, 0, 0, 0, false,
-                        p.forceRDKit);
+        compute2DCoords(mol, nullptr, false, true, 0, 0, 0, false, p.forceRDKit,
+                        p.useRingTemplates);
         if (p.adjustMolBlockWedging) {
           RDKit::Chirality::clearMolBlockWedgingInfo(mol);
           p.adjustMolBlockWedging = false;
@@ -1088,7 +1088,8 @@ RDKit::MatchVectType generateDepictionMatching2DStructure(
     if (p.acceptFailure) {
       // if we accept failure, we generate a standard set of
       // coordinates and clear any existing wedging info if requested
-      compute2DCoords(mol, nullptr, false, true, 0, 0, 0, false, p.forceRDKit);
+      compute2DCoords(mol, nullptr, false, true, 0, 0, 0, false, p.forceRDKit,
+                      p.useRingTemplates);
       if (p.adjustMolBlockWedging) {
         RDKit::Chirality::clearMolBlockWedgingInfo(mol);
       }

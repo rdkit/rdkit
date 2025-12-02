@@ -16,9 +16,6 @@
 #ifndef _RD_ATOM_H
 #define _RD_ATOM_H
 
-// Std stuff
-#include <iostream>
-
 // ours
 #include <RDGeneral/Invariant.h>
 #include <Query/QueryObjects.h>
@@ -345,6 +342,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   void updatePropertyCache(bool strict = true);
 
   bool needsUpdatePropertyCache() const;
+  void clearPropertyCache();
 
   //! calculates and returns our explicit valence
   /*!
@@ -384,6 +382,14 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     return mapno;
   }
 
+  //! Flags that can be used by to store information on atoms.
+  //!   These are not serialized and should be treated as temporary values.
+  //!   No guarantees are made about preserving these flags across library
+  //!   calls.
+  void setFlags(std::uint64_t flags) { d_flags = flags; }
+  std::uint64_t getFlags() const { return d_flags; }
+  std::uint64_t &getFlags() { return d_flags; }
+
  protected:
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
@@ -405,6 +411,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
 
   std::uint16_t d_isotope;
   atomindex_t d_index;
+  std::uint64_t d_flags = 0ul;
 
   ROMol *dp_mol;
   AtomMonomerInfo *dp_monomerInfo;

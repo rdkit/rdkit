@@ -16,6 +16,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include "RDGeneral/ControlCHandler.h"
 
 namespace python = boost::python;
 using RDKit::CIPLabeler::assignCIPLabels;
@@ -41,6 +42,10 @@ void assignCIPLabelsWrapHelper(RDKit::ROMol &mol,
   }
 
   assignCIPLabels(mol, atoms, bonds, maxRecursiveIterations);
+  if (RDKit::ControlCHandler::getGotSignal()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "Assign CIP labels cancelled");
+    boost::python::throw_error_already_set();
+  }
 }
 
 BOOST_PYTHON_MODULE(rdCIPLabeler) {

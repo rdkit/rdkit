@@ -52,12 +52,6 @@ std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
 namespace detail {
 
 std::pair<bool, INT_VECT> countChiralNbrs(const ROMol &mol, int noNbrs) {
-  // we need ring information; make sure findSSSR has been called before
-  // if not call now
-  if (!mol.getRingInfo()->isSssrOrBetter()) {
-    MolOps::findSSSR(mol);
-  }
-
   INT_VECT nChiralNbrs(mol.getNumAtoms(), noNbrs);
 
   // start by looking for bonds that are already wedged
@@ -216,7 +210,10 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
     double angle1 = (*angleIt);
     ++angleIt;
     double angle2 = (*angleIt);
-    if (angle2 - angle1 >= (M_PI - 1e-4)) {
+    constexpr double angleTol =
+        M_PI * 1.9 / 180.;  // just under 2 degrees tolerance, which is what we
+                            // use when perceiving T-shaped geometries
+    if (angle2 - angle1 >= (M_PI - angleTol)) {
       // we have the above situation
       nSwaps++;
     }
@@ -287,6 +284,12 @@ int pickBondToWedge(
   //   the first bond that is not yet picked by any other chiral centers
   // we use the orders calculated above to determine which order to do the
   // wedging
+
+  // we need ring information; make sure findSSSR has been called before
+  // if not call now
+  if (!mol.getRingInfo()->isSssrOrBetter()) {
+    MolOps::findSSSR(mol);
+  }
 
   std::vector<std::pair<int, int>> nbrScores;
   for (const auto bond : mol.atomBonds(atom)) {

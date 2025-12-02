@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021-2024 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2021-2025 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -25,6 +25,7 @@
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include <tuple>
+#include <map>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
@@ -187,6 +188,53 @@ TEST_CASE("update parameters from JSON") {
       auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
       CHECK(v1.angleTo(v2) == Catch::Approx(M_PI / 2).margin(0.15));
     }
+  }
+}
+
+TEST_CASE("EmbedParameters to JSON") {
+  SECTION("No map") {
+    auto ps = DGeomHelpers::KDG;
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    std::string goal =
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false"}
+)JSON";
+    CHECK(json == goal);
+  }
+  SECTION("With CoordMap") {
+    auto ps = DGeomHelpers::KDG;
+    auto p = RDGeom::Point3D(1.1, 2.2, 3.3);
+    auto coordMap = new std::map<int, RDGeom::Point3D>();
+    coordMap->insert({3, p});
+    ps.coordMap = coordMap;
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    std::string goal =
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","coordMap":{"3":["1.100000","2.200000","3.300000"]}}
+)JSON";
+    CHECK(json == goal);
+    delete coordMap;
+  }
+  SECTION("With BoundsMat") {
+    auto ps = DGeomHelpers::KDG;
+    auto mol = "O"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(3));
+    DGeomHelpers::initBoundsMat(mat);
+    DGeomHelpers::setTopolBounds(*mol, mat, true, false, false);
+    ps.boundsMat = mat;
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    std::string goal =
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6573654663221247"],["0.98025420400136154","1.5773654663221246","0"]]}
+)JSON";
+    CHECK(json == goal);
+  }
+  SECTION("Round trip") {
+    auto ps = DGeomHelpers::ETKDGv3;
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    auto ps2 = DGeomHelpers::EmbedParameters();
+    DGeomHelpers::updateEmbedParametersFromJSON(ps2, json);
+    auto json2 = DGeomHelpers::embedParametersToJSON(ps2);
+    CHECK(json == json2);
   }
 }
 
@@ -607,7 +655,7 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
     RWMol cp(*m);
     MolOps::addHs(cp);
     DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-    ps.enforceChirality = false;
+    ps.enforceChirality = true;
     for (unsigned int iter = 0; iter < 10; ++iter) {
       INFO(iter);
       RWMol lcp(cp);
@@ -623,64 +671,63 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
   }
 }
 
-TEST_CASE("tracking failure causes") {
-  SECTION("basics") {
+TEST_CASE("tracking failure causes"){SECTION("basics"){
     auto mol =
         "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-    ps.trackFailures = true;
-    ps.maxIterations = 50;
-    ps.randomSeed = 42;
-    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-    CHECK(cid < 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
-    auto fail_cp = ps.failures;
-    // make sure we reset the counts each time
-    cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-    CHECK(ps.failures == fail_cp);
-  }
-  SECTION("chirality") {
-    std::string rdbase = getenv("RDBASE");
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/chirality_failure_test.mol";
-    std::unique_ptr<RWMol> mol{MolFileToMol(fname, true, false)};
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-    ps.randomSeed = 0xf00d;
-    ps.trackFailures = true;
-    ps.maxIterations = 50;
-    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-    CHECK(cid < 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
-          4);
-  }
+REQUIRE(mol);
+MolOps::addHs(*mol);
+DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+ps.trackFailures = true;
+ps.maxIterations = 50;
+ps.randomSeed = 42;
+auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+CHECK(cid < 0);
+CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
+CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
+auto fail_cp = ps.failures;
+// make sure we reset the counts each time
+cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+CHECK(ps.failures == fail_cp);
+}
+SECTION("chirality") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase +
+      "/Code/GraphMol/DistGeomHelpers/test_data/chirality_failure_test.mol";
+  std::unique_ptr<RWMol> mol{MolFileToMol(fname, true, false)};
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 0xf00d;
+  ps.trackFailures = true;
+  ps.maxIterations = 50;
+  auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+  CHECK(cid < 0);
+  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
+  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
+        3);
+}
 
 #ifdef RDK_TEST_MULTITHREADED
-  SECTION("multithreaded") {
-    auto mol =
-        "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-    ps.trackFailures = true;
-    ps.maxIterations = 10;
-    ps.randomSeed = 42;
-    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
+SECTION("multithreaded") {
+  auto mol =
+      "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+  ps.trackFailures = true;
+  ps.maxIterations = 10;
+  ps.randomSeed = 42;
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
 
-    DGeomHelpers::EmbedParameters ps2 = ps;
-    ps2.numThreads = 4;
+  DGeomHelpers::EmbedParameters ps2 = ps;
+  ps2.numThreads = 4;
 
-    auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
-    CHECK(cids2 == cids);
+  auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
+  CHECK(cids2 == cids);
 
-    CHECK(ps.failures == ps2.failures);
-  }
+  CHECK(ps.failures == ps2.failures);
+}
 #endif
 }
 
@@ -1044,7 +1091,7 @@ TEST_CASE("No overlapping atoms") {
       for (unsigned int j = 0; j < i; ++j) {
         const auto minDist = bm->getLowerBound(i, j);
         const auto length = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
-        CHECK((minDist - length) < .375);
+        CHECK((minDist - length) < .395);
       }
     }
   }
@@ -1058,7 +1105,7 @@ TEST_CASE("github #8001: RMS pruning misses conformers") {
   ps.randomSeed = 1;
   ps.pruneRmsThresh = 0.5;
   auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
-  CHECK(cids.size() == 88);
+  CHECK(cids.size() == 87);
   ps.pruneRmsThresh = 1.0;
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
   CHECK(cids.size() == 4);
@@ -1130,11 +1177,119 @@ TEST_CASE("github #8250: Seg fault in EmbedMultipleConfs") {
 M  RAD  2   7   2  14   2
 M  END)CTAB"_ctab;
   REQUIRE(mol);
-  mol->debugMol(std::cerr);
   MolOps::addHs(*mol);
   DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
   ps.randomSeed = 0xf00d;
   // with the bug, this would segfault
   auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
   CHECK(cids.size() == 10);
+}
+
+TEST_CASE("allenes and cumulenes") {
+  SECTION("allene") {
+    auto m = "C=C=C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+    CHECK(cid >= 0);
+    auto conf = m->getConformer(cid);
+    {
+      auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
+      auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+  }
+  SECTION("cumulene") {
+    auto m = "C=C=C=C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+    CHECK(cid >= 0);
+    auto conf = m->getConformer(cid);
+    {
+      auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
+      auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+    {
+      auto v1 = conf.getAtomPos(1) - conf.getAtomPos(2);
+      auto v2 = conf.getAtomPos(3) - conf.getAtomPos(2);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+  }
+  SECTION("azide") {
+    auto m = "CN=[N+]=[N-]"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+    CHECK(cid >= 0);
+    auto conf = m->getConformer(cid);
+    {
+      auto v1 = conf.getAtomPos(1) - conf.getAtomPos(2);
+      auto v2 = conf.getAtomPos(3) - conf.getAtomPos(2);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+  }
+}
+
+namespace RDKit {
+namespace DGeomHelpers {
+namespace EmbeddingOps {
+RDKIT_DISTGEOMHELPERS_EXPORT void findDoubleBonds(
+    const ROMol &mol,
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        &doubleBondEnds,
+    std::vector<std::pair<std::vector<unsigned int>, int>> &stereoDoubleBonds,
+    const std::map<int, RDGeom::Point3D> *coordMap);
+}
+}  // namespace DGeomHelpers
+}  // namespace RDKit
+
+TEST_CASE("FindDoubleBonds") {
+  SECTION("Allene") {
+    auto m = "C=C=C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        doubleBondEnds;
+    std::vector<std::pair<std::vector<unsigned int>, int>> stereoDoubleBonds;
+    DGeomHelpers::EmbeddingOps::findDoubleBonds(*m, doubleBondEnds,
+                                                stereoDoubleBonds, nullptr);
+    // This is 4, we still have two double bonds to Hydrogens on each
+    // side that should not be linear but the C=C=C should be, so not 5.
+    CHECK(doubleBondEnds.size() == 4);
+    CHECK(stereoDoubleBonds.empty());
+  }
+  SECTION("Sulfone") {
+    auto m = "CS(=O)(=O)C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        doubleBondEnds;
+    std::vector<std::pair<std::vector<unsigned int>, int>> stereoDoubleBonds;
+    DGeomHelpers::EmbeddingOps::findDoubleBonds(*m, doubleBondEnds,
+                                                stereoDoubleBonds, nullptr);
+    // We want 6 and not 4, the angle between O=S=O should not be linear
+    // (the current implementation counts it twice, hence not 5).
+    CHECK(doubleBondEnds.size() == 6);
+    CHECK(stereoDoubleBonds.empty());
+  }
+}
+
+TEST_CASE("Github #8559: seg fault in setTopolBounds") {
+  SECTION("as reported") {
+    auto mol =
+        "CC1CN([C@H]2C[C@H](O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CCC(N)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(O)NC(N)NC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(O)NC(N)NC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CCC(N)NC4O)C[C@@H]3O)[C@@H](CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO)O2)C(O)NC1O"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+  }
 }

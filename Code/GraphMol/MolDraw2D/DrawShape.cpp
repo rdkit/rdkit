@@ -99,13 +99,17 @@ DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
       frac_(frac),
       angle_(angle) {
   PRECONDITION(points_.size() == 2, "arrow bad points size");
-
-  // the two ends of the arrowhead are used for collision detection so we
-  // may as well store them.
+  // The two ends of the arrowhead are used for collision detection so we
+  // may as well store them.  They won't be used for drawing.  lineWidth_ is
+  // in pixels rather than drawing coords, so keep another set of coords that
+  // are the original ends and arrowhead ends, with a lineWidth_ of 0, used
+  // for findExtremes and doesRectClash.
+  origPts_[0] = points_[0];
+  origPts_[1] = points_[1];
   Point2D ab(points_[1]), p1, p2;
-  MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[0], fill_, frac_, angle_);
-  points_.push_back(p1);
-  points_.push_back(p2);
+  MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[1], frac_, 0.0, angle_);
+  origPts_[2] = p1;
+  origPts_[3] = p2;
 }
 
 // ****************************************************************************
@@ -121,19 +125,55 @@ void DrawShapeArrow::myDraw(MolDraw2D &drawer) const {
 }
 
 // ****************************************************************************
+void DrawShapeArrow::findExtremes(double &xmin, double &xmax, double &ymin,
+                                  double &ymax) const {
+  // do it for origPts_ rather than points_.  The difference is that the
+  // arrow ends haven't been adjusted for the lineWidth_.  It's pretty
+  // inconceivable that this will matter for these purposes as the chances
+  // of a dative bond going to an atom without a symbol on the edge of the
+  // drawing seem slim.  findExtremes is only used for finding the extremes
+  // of the whole drawing so as to set the scale.
+  for (int i = 0; i < 4; i++) {
+    const Point2D &p = origPts_[i];
+    xmin = std::min(xmin, p.x);
+    xmax = std::max(xmax, p.x);
+    ymin = std::min(ymin, p.y);
+    ymax = std::max(ymax, p.y);
+  }
+}
+
+// ****************************************************************************
+void DrawShapeArrow::scale(const Point2D &scale_factor) {
+  DrawShape::scale(scale_factor);
+  for (int i = 0; i < 4; i++) {
+    Point2D &p = origPts_[i];
+    p.x *= scale_factor.x;
+    p.y *= scale_factor.y;
+  }
+}
+
+// ****************************************************************************
+void DrawShapeArrow::move(const Point2D &trans) {
+  DrawShape::move(trans);
+  for (int i = 0; i < 4; i++) {
+    origPts_[i] += trans;
+  }
+}
+
+// ****************************************************************************
 bool DrawShapeArrow::doesRectClash(const StringRect &rect,
                                    double padding) const {
   padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
-  if (doesLineIntersect(rect, points_[0], points_[1], padding)) {
+  if (doesLineIntersect(rect, origPts_[0], origPts_[1], padding)) {
     return true;
   }
-  if (doesLineIntersect(rect, points_[1], points_[2], padding)) {
+  if (doesLineIntersect(rect, origPts_[1], origPts_[2], padding)) {
     return true;
   }
-  if (doesLineIntersect(rect, points_[1], points_[3], padding)) {
+  if (doesLineIntersect(rect, origPts_[1], origPts_[3], padding)) {
     return true;
   }
-  if (doesLineIntersect(rect, points_[2], points_[3], padding)) {
+  if (doesLineIntersect(rect, origPts_[2], origPts_[3], padding)) {
     return true;
   }
   return false;
@@ -425,15 +465,24 @@ void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
     drawer.setActiveAtmIdx(atom1_, atom2_);
   }
   drawer.setActiveBndIdx(bond_);
-  drawer.drawTriangle(points_[0], points_[1], points_[2], true);
-  if (points_.size() > 3) {
+  if (points_.size() == 3 || points_.size() == 9) {
+    drawer.drawTriangle(points_[0], points_[1], points_[2], true);
+  }
+  if (points_.size() == 6) {
+    // This is a 2 triangle drawing where the wedge goes onto a Y shape, as in
+    // Github 7739 tests in catch_tests.cpp.
+    std::vector<Point2D> quadPoints{points_[0], points_[1], points_[2],
+                                    points_[5]};
+    drawer.drawPolygon(quadPoints, true);
+  } else if (points_.size() == 9) {
+    // This is a conventional 2-colour wedge originally drawn as 3 triangles.
     if (drawer.drawOptions().splitBonds) {
       drawer.setActiveAtmIdx(atom2_);
     }
     drawer.setColour(col2_);
-  }
-  for (unsigned int i = 3; i < points_.size(); i += 3) {
-    drawer.drawTriangle(points_[i], points_[i + 1], points_[i + 2], true);
+    std::vector<Point2D> quadPoints{points_[4], points_[5], points_[6],
+                                    points_[7]};
+    drawer.drawPolygon(quadPoints, true);
   }
 }
 

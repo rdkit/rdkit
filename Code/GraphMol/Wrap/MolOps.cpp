@@ -43,6 +43,16 @@ using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 
+python::tuple computeAtomCIPRanksHelper(ROMol &mol) {
+  UINT_VECT atomRanks;
+  Chirality::assignAtomCIPRanks(mol, atomRanks);
+  python::list res;
+  for (auto rank : atomRanks) {
+    res.append(rank);
+  }
+  return python::tuple(res);
+}
+
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
                                         unsigned int nToBreak, bool addDummies,
@@ -56,8 +66,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
 
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
   if (pyDummyLabels) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
+    unsigned int nVs = python::len(pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       unsigned int v1 = python::extract<unsigned int>(pyDummyLabels[i][0]);
@@ -67,8 +76,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
   }
   std::vector<Bond::BondType> *bondTypes = nullptr;
   if (pyBondTypes) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyBondTypes.attr("__len__")());
+    unsigned int nVs = python::len(pyBondTypes);
     if (nVs != bondIndices->size()) {
       throw_value_error("bondTypes shorter than bondIndices");
     }
@@ -129,8 +137,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
   }
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
   if (pyDummyLabels) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
+    unsigned int nVs = python::len(pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       unsigned int v1 = python::extract<unsigned int>(pyDummyLabels[i][0]);
@@ -140,8 +147,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
   }
   std::vector<Bond::BondType> *bondTypes = nullptr;
   if (pyBondTypes) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyBondTypes.attr("__len__")());
+    unsigned int nVs = python::len(pyBondTypes);
     if (nVs != bondIndices->size()) {
       throw_value_error("bondTypes shorter than bondIndices");
     }
@@ -153,8 +159,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
   std::vector<unsigned int> *cutsPerAtom = nullptr;
   if (pyCutsPerAtom) {
     cutsPerAtom = new std::vector<unsigned int>;
-    unsigned int nAts =
-        python::extract<unsigned int>(pyCutsPerAtom.attr("__len__")());
+    unsigned int nAts = python::len(pyCutsPerAtom);
     if (nAts < mol.getNumAtoms()) {
       throw_value_error("cutsPerAtom shorter than the number of atoms");
     }
@@ -176,8 +181,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
 }
 
 ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
-  if (python::extract<unsigned int>(pyNewOrder.attr("__len__")()) <
-      mol.getNumAtoms()) {
+  if (python::len(pyNewOrder) < mol.getNumAtoms()) {
     throw_value_error("atomCounts shorter than the number of atoms");
   }
   auto newOrder = pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
@@ -210,8 +214,7 @@ python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
                                    bool negateList) {
   std::vector<std::string> *whiteList = nullptr;
   if (pyWhiteList) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyWhiteList.attr("__len__")());
+    unsigned int nVs = python::len(pyWhiteList);
     whiteList = new std::vector<std::string>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
@@ -234,8 +237,7 @@ python::dict splitMolByPDBChainId(const ROMol &mol, python::object pyWhiteList,
                                   bool negateList) {
   std::vector<std::string> *whiteList = nullptr;
   if (pyWhiteList) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyWhiteList.attr("__len__")());
+    unsigned int nVs = python::len(pyWhiteList);
     whiteList = new std::vector<std::string>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
@@ -285,12 +287,12 @@ python::dict parseQueryDefFileHelper(python::object &input, bool standardize,
 void addRecursiveQueriesHelper(ROMol &mol, python::dict replDict,
                                std::string propName) {
   std::map<std::string, ROMOL_SPTR> replacements;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(replDict.keys().attr("__len__")());
-       ++i) {
-    ROMol *m = python::extract<ROMol *>(replDict.values()[i]);
+  const auto items = replDict.items();
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    const auto item = items[i];
+    ROMol *m = python::extract<ROMol *>(item[1]);
     ROMOL_SPTR nm(new ROMol(*m));
-    std::string k = python::extract<std::string>(replDict.keys()[i]);
+    std::string k = python::extract<std::string>(item[0]);
     replacements[k] = nm;
   }
   addRecursiveQueries(mol, replacements, propName);
@@ -628,8 +630,7 @@ ExplicitBitVect *wrapLayeredFingerprint(
   std::unique_ptr<std::vector<unsigned int>> atomCountsV;
   if (atomCounts) {
     atomCountsV.reset(new std::vector<unsigned int>);
-    unsigned int nAts =
-        python::extract<unsigned int>(atomCounts.attr("__len__")());
+    unsigned int nAts = python::len(atomCounts);
     if (nAts < mol.getNumAtoms()) {
       throw_value_error("atomCounts shorter than the number of atoms");
     }
@@ -659,8 +660,7 @@ ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
   std::vector<unsigned int> *atomCountsV = nullptr;
   if (atomCounts) {
     atomCountsV = new std::vector<unsigned int>;
-    unsigned int nAts =
-        python::extract<unsigned int>(atomCounts.attr("__len__")());
+    unsigned int nAts = python::len(atomCounts);
     if (nAts < mol.getNumAtoms()) {
       throw_value_error("atomCounts shorter than the number of atoms");
     }
@@ -859,8 +859,7 @@ ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, bool useQuery,
                           python::object atomMap) {
   ROMol *result;
   PATH_TYPE pth;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(path.attr("__len__")()); ++i) {
+  for (unsigned int i = 0; i < python::len(path); ++i) {
     pth.push_back(python::extract<unsigned int>(path[i]));
   }
   std::map<int, int> mapping;
@@ -905,10 +904,12 @@ python::tuple detectChemistryProblemsHelper(const ROMol &mol,
 }
 
 ROMol *canonicalizeStereoGroupsHelper(
-    ROMol &mol, RDKit::StereoGroupAbsOptions stereoGroupAbsOptions) {
+    ROMol &mol, RDKit::StereoGroupAbsOptions stereoGroupAbsOptions,
+    unsigned int maxStereoGroups) {
   auto mol_uptr = std::unique_ptr<ROMol>(new ROMol(mol));
 
-  RDKit::canonicalizeStereoGroups(mol_uptr, stereoGroupAbsOptions);
+  RDKit::canonicalizeStereoGroups(mol_uptr, stereoGroupAbsOptions,
+                                  maxStereoGroups);
   return mol_uptr.release();
   ;
 }
@@ -919,13 +920,14 @@ ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
   // convert input to MatchVect
   MatchVectType matchVect;
 
-  unsigned int length = python::extract<unsigned int>(match.attr("__len__")());
-
+  unsigned int length = python::len(match);
   for (unsigned int i = 0; i < length; ++i) {
-    int sz = 1;
-    if (PyObject_HasAttrString(static_cast<python::object>(match[i]).ptr(),
-                               "__len__")) {
-      sz = python::extract<unsigned int>(match[i].attr("__len__")());
+    // This is what boost::python::len() does internally
+    auto pyObj = static_cast<python::object>(match[i]).ptr();
+    unsigned int sz = PyObject_Length(pyObj);
+    if (PyErr_Occurred()) {
+      PyErr_Clear();
+      sz = 1;
     }
 
     int v1, v2;
@@ -971,7 +973,7 @@ void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
 void setAtomSymbols(MolzipParams &p, python::object symbols) {
   p.atomSymbols.clear();
   if (symbols) {
-    unsigned int nVs = python::extract<unsigned int>(symbols.attr("__len__")());
+    unsigned int nVs = python::len(symbols);
     for (unsigned int i = 0; i < nVs; ++i) {
       p.atomSymbols.push_back(python::extract<std::string>(symbols[i]));
     }
@@ -2221,6 +2223,12 @@ RETURNS:
                  python::arg("flagPossibleStereoCenters") = false),
                 docString.c_str());
 
+    python::def("ComputeAtomCIPRanks", computeAtomCIPRanksHelper,
+                (python::arg("mol")),
+                R"DOC(Computes the CIP ranks for the atoms in a molecule.
+  The ranks are stored as an atom property '_CIPRank' and returned as a tuple.
+)DOC");
+
     // ------------------------------------------------------------------------
     docString =
         "Uses bond directions to assign ChiralTypes to a molecule's atoms.\n\
@@ -2636,13 +2644,15 @@ ARGUMENTS:\n\
             - molecule: the molecule to update\n\
             -StereoGroupAbsOptions outputAbsoluteGroups: controls output of abs groups: \n\
               one of: OnlyIncludeWhenOtherGroupsExist, NeverInclude, AlwaysInclude \n\
+             maxStereoGroups: maximm number of OR or AND stereo groups to process (default is 12): \n\
         \n\
         \n ";
     python::def(
         "CanonicalizeStereoGroups", canonicalizeStereoGroupsHelper,
         (python::arg("mol"),
          python::arg("outputAbsoluteGroups") =
-             RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist),
+             RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist,
+         python::arg("maxStereoGroups") = 12),
         docString.c_str(),
         python::return_value_policy<python::manage_new_object>());
 
@@ -2911,19 +2921,19 @@ EXAMPLES:\n\n\
         .value("AtomType", MolzipLabel::AtomType);
 
     docString =
-        "Parameters controllnig how to zip molecules together\n\
+        "Parameters controlling how to zip molecules together\n\
 \n\
   OPTIONS:\n\
       label : set the MolzipLabel option [default MolzipLabel.AtomMapNumber]\n\
 \n\
   MolzipLabel.AtomMapNumber: atom maps are on dummy atoms, zip together the corresponding\n\
-     attaced atoms, i.e.  zip 'C[*:1]' 'N[*:1]' results in 'CN'\n\
+     attached atoms, i.e.  zip 'C[*:1]' 'N[*:1]' results in 'CN'\n\
 \n\
   MolzipLabel.Isotope: isotope labels are on dummy atoms, zip together the corresponding\n\
-     attaced atoms, i.e.  zip 'C[1*]' 'N[1*]' results in 'CN'\n\
+     attached atoms, i.e.  zip 'C[1*]' 'N[1*]' results in 'CN'\n\
 \n\
   MolzipLabel.FragmentOnBonds: zip together molecules generated by fragment on bonds.\n\
-    Note the atom indices cannot change or be reorderd from the output of fragmentOnBonds\n\
+    Note the atom indices cannot change or be reordered from the output of fragmentOnBonds\n\
 \n\
   MolzipLabel.AtomTypes: choose the atom types to act as matching dummy atoms.\n\
     i.e.  'C[V]' and 'N[Xe]' with atoms pairs [('V', 'Xe')] results in 'CN'\n\
@@ -2932,7 +2942,7 @@ EXAMPLES:\n\n\
     python::class_<MolzipParams>("MolzipParams", docString.c_str(),
                                  python::init<>(python::args("self")))
         .def_readwrite("label", &MolzipParams::label,
-                       "Set the atom labelling system to zip together")
+                       "Set the atom labeling system to zip together")
         .def_readwrite("enforceValenceRules",
                        &MolzipParams::enforceValenceRules,
                        "If true (default) enforce valences after zipping\n\
@@ -2947,7 +2957,7 @@ zipped molecule (for molzipFragments only)")
              "AtomType labeling");
 
     docString =
-        "molzip: zip two molecules together preserving bond and atom stereochemistry.\n\
+        "molzip: zip molecules together preserving bond and atom stereochemistry.\n\
 \n\
 This is useful when dealing with results from fragmentOnBonds, RGroupDecomposition and MMPs.\n\
 \n\
@@ -2956,6 +2966,14 @@ Example:\n\
     >>> a = MolFromSmiles('C=C[*:1]')\n\
     >>> b = MolFromSmiles('O/C=N/[*:1]')\n\
     >>> c = molzip(a,b)\n\
+    >>> MolToSmiles(c)\n\
+    'C=C/N=C/O'\n\
+\n\
+    >>> from rdkit.Chem import CombineMols, MolFromSmiles,  MolToSmiles, molzip\n\
+    >>> a = MolFromSmiles('C=C[*:1]')\n\
+    >>> b = MolFromSmiles('O/C=N/[*:1]')\n\
+    >>> combined = CombineMols(a, b)\n\
+    >>> c = molzip(combined)\n\
     >>> MolToSmiles(c)\n\
     'C=C/N=C/O'\n\
 \n\
@@ -2982,7 +3000,7 @@ The atoms to zip can be specified with the MolzipParams class.\n\
         "molzip",
         (ROMol * (*)(const ROMol &, const MolzipParams &)) & molzip_new,
         (python::arg("a"), python::arg("params") = MolzipParams()),
-        "zip together two molecules using the given matching parameters",
+        "zip together multiple molecules within a combined molecule using the given matching parameters",
         python::return_value_policy<python::manage_new_object>());
 
     python::def(

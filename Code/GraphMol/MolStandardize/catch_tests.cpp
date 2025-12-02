@@ -21,7 +21,6 @@
 #include <GraphMol/MolStandardize/Tautomer.h>
 #include <GraphMol/MolStandardize/Validate.h>
 
-#include <iostream>
 #include <fstream>
 
 using namespace RDKit;

@@ -8,8 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include <iostream>
-
 // our stuff
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -166,15 +164,6 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
 void ROMol::initMol() {
   d_props.reset();
   dp_ringInfo = new RingInfo();
-  // ok every molecule contains a property entry called
-  // RDKit::detail::computedPropName
-  // which provides
-  //  list of property keys that correspond to value that have been computed
-  // this can used to blow out all computed properties while leaving the rest
-  // along
-  // initialize this list to an empty vector of strings
-  STR_VECT computed;
-  d_props.setVal(RDKit::detail::computedPropName, computed);
 }
 
 unsigned int ROMol::getAtomDegree(const Atom *at) const {
@@ -439,7 +428,35 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
 }
 
 void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
-  d_stereo_groups = std::move(stereo_groups);
+  auto is_abs = [](const auto &sg) {
+    return sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE;
+  };
+
+  // if there's more than one ABS group, merge them
+  if (auto num_abs = std::ranges::count_if(stereo_groups, is_abs);
+      num_abs <= 1) {
+    d_stereo_groups = std::move(stereo_groups);
+  } else {
+    std::vector<Atom *> abs_atoms;
+    std::vector<Bond *> abs_bonds;
+    std::vector<StereoGroup> new_stereo_groups;
+    new_stereo_groups.reserve(stereo_groups.size() - num_abs + 1);
+    for (auto &&sg : stereo_groups) {
+      if (is_abs(sg)) {
+        auto &other_atoms = sg.getAtoms();
+        auto &other_bonds = sg.getBonds();
+        abs_atoms.insert(abs_atoms.begin(), other_atoms.begin(),
+                         other_atoms.end());
+        abs_bonds.insert(abs_bonds.begin(), other_bonds.begin(),
+                         other_bonds.end());
+      } else {
+        new_stereo_groups.push_back(std::move(sg));
+      }
+    }
+    new_stereo_groups.emplace_back(StereoGroupType::STEREO_ABSOLUTE,
+                                   std::move(abs_atoms), std::move(abs_bonds));
+    d_stereo_groups = std::move(new_stereo_groups);
+  }
 }
 
 void ROMol::debugMol(std::ostream &str) const {
@@ -602,6 +619,12 @@ bool ROMol::needsUpdatePropertyCache() const {
   }
   // there is no test for bonds yet since they do not obtain a valence property
   return false;
+}
+
+void ROMol::clearPropertyCache() {
+  for (auto atom : atoms()) {
+    atom->clearPropertyCache();
+  }
 }
 
 const Conformer &ROMol::getConformer(int id) const {

@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/test.h>
-#include <iostream>
 #include <string>
 #include <GraphMol/RDKitBase.h>
 #include "SmilesParse.h"
@@ -129,6 +128,7 @@ void testFail() {
       "[Fe@AL3]",    "C",  //
       "[Fe@TB21]",   "C",  //
       "[Fe@OH31]",   "C",  //
+      "baz",         "C",  //
       "EOS"};
 
   // turn off the error log temporarily:
@@ -3208,7 +3208,7 @@ void testFragmentSmiles() {
     std::string csmiles =
         MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     std::cerr << csmiles << std::endl;
-    TEST_ASSERT(csmiles == "CaC(bC)aC" || csmiles == "CbC(ac)ac");
+    TEST_ASSERT(csmiles == "CaC(aC)bC");
     delete m;
   }
   {
@@ -3223,7 +3223,7 @@ void testFragmentSmiles() {
     std::string csmiles =
         MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     std::cerr << csmiles << std::endl;
-    TEST_ASSERT(csmiles == "CaC(bC)bC" || csmiles == "CbC(bC)aC");
+    TEST_ASSERT(csmiles == "CbC(aC)bC");
     delete m;
   }
   {
@@ -4347,6 +4347,52 @@ void testGithub6349() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testParserErrorMessage() {
+  const std::string smis[] = {
+      "CC=(CO)C",
+      "baz",
+      "fff",
+      "C+0",
+      "[555555555555555555C]",
+      "[Fe@TD]",
+      "c%()ccccc%()",
+      "c%(100000)ccccc%(100000)",
+      "COc(c1)cccc1C#",
+      "C)",
+  };
+  for (const auto &smi : smis) {
+    // Test SMILES parsing
+    {
+      std::stringstream ss;
+      rdErrorLog->SetTee(ss);
+
+      auto mol = v2::SmilesParse::MolFromSmiles(smi);
+      CHECK_INVARIANT(!mol, smi);
+
+      rdErrorLog->ClearTee();
+      auto error_msg = ss.str();
+      CHECK_INVARIANT(error_msg.find("check for mistakes around position") !=
+                          std::string::npos,
+                      smi)
+    }
+
+    // Test SMARTS parsing
+    {
+      std::stringstream ss;
+      rdErrorLog->SetTee(ss);
+
+      auto mol = v2::SmilesParse::MolFromSmarts(smi);
+      CHECK_INVARIANT(!mol, smi);
+
+      rdErrorLog->ClearTee();
+      auto error_msg = ss.str();
+      CHECK_INVARIANT(error_msg.find("check for mistakes around position") !=
+                          std::string::npos,
+                      smi)
+    }
+  }
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4424,4 +4470,5 @@ int main(int argc, char *argv[]) {
   testGithub3967();
   testGithub6349();
   testOSSFuzzFailures();
+  testParserErrorMessage();
 }

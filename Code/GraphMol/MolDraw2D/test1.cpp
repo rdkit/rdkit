@@ -30,7 +30,6 @@
 #include <algorithm>
 #include <cstdio>
 #include <iosfwd>
-#include <iostream>
 #include <iterator>
 #include <map>
 #include <fstream>
@@ -4036,12 +4035,12 @@ void test20Annotate() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // last note
-    TEST_ASSERT(text.find("<path class='note' d='M 273.9 236.3") !=
+    TEST_ASSERT(text.find("<path class='CIP_Code' d='M 273.9 236.3") !=
                 std::string::npos);
 #endif
 #else
     // this is the (E)
-    TEST_ASSERT(text.find("<text x='260.3' y='232.0' class='note' "
+    TEST_ASSERT(text.find("<text x='260.3' y='232.0' class='CIP_Code' "
                           "style='font-size:20px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#7F7FFF' >E</text>") !=

@@ -11,7 +11,6 @@
 //
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
 
 #include <Geometry/Transform2D.h>
@@ -33,6 +32,7 @@
 #include <GraphMol/MolEnumerator/LinkNode.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/StereoGroup.h>
 #include <GraphMol/Atropisomers.h>
 
 namespace RDKit {
@@ -194,9 +194,6 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
     bool removeAffectedStereoGroups = true;
     Chirality::simplifyEnhancedStereo(*drawMol_, removeAffectedStereoGroups);
   }
-  if (drawOptions_.addStereoAnnotation) {
-    Chirality::addStereoAnnotations(*drawMol_);
-  }
   if (drawOptions_.addAtomIndices) {
     addAtomIndices(*drawMol_);
   }
@@ -220,9 +217,10 @@ void DrawMol::extractAll(double scale) {
   extractHighlights(scale);
   extractAttachments();
   extractAtomNotes();
-  if (!drawOptions_.addStereoAnnotation) {
-    extractStereoGroups();
+  if (drawOptions_.addStereoAnnotation) {
+    extractCIPCodes(drawOptions_.showAllCIPCodes);
   }
+  extractStereoGroups();  // always show StereoGroups
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
@@ -459,6 +457,70 @@ void DrawMol::extractAtomNotes() {
             drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
             drawOptions_.atomNoteColour, textDrawer_);
         calcAnnotationPosition(atom, *annot);
+        annotations_.emplace_back(annot);
+      }
+    }
+  }
+}
+
+// ****************************************************************************
+void DrawMol::extractCIPCodes(bool showAllCIPCodes) {
+  boost::dynamic_bitset<> maskedAtoms(drawMol_->getNumAtoms());
+  boost::dynamic_bitset<> maskedBonds(drawMol_->getNumBonds());
+
+  if (!showAllCIPCodes) {  // record atoms and bonds whose codes should be
+                           // hidden
+    for (const StereoGroup &group : drawMol_->getStereoGroups()) {
+      StereoGroupType stereoGroupType;
+
+      stereoGroupType = group.getGroupType();
+      if (stereoGroupType == RDKit::StereoGroupType::STEREO_OR ||
+          stereoGroupType == RDKit::StereoGroupType::STEREO_AND) {
+        for (const auto atom : group.getAtoms()) {
+          maskedAtoms.set(atom->getIdx());
+        }
+        for (const auto bond : group.getBonds()) {
+          maskedBonds.set(bond->getIdx());
+        }
+      }
+    }
+  }
+
+  for (auto atom : drawMol_->atoms()) {
+    std::string cip;
+    if (!maskedAtoms[atom->getIdx()] &&
+        atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+      cip = "(" + cip + ")";
+      DrawAnnotation *annot = new DrawAnnotation(
+          cip, TextAlignType::MIDDLE, "CIP_Code",
+          drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+          drawOptions_.atomNoteColour, textDrawer_);
+      calcAnnotationPosition(atom, *annot);
+      annotations_.emplace_back(annot);
+    }
+  }
+
+  for (auto bond : drawMol_->bonds()) {
+    std::string cip;
+    // Add E or Z CIP codes if missing to be compatible with previous
+    // implemtnation. In future, user should be responsible for calling
+    // AssignCIPLabels() before drawing to harmonize behavior with
+    // how R,S,M,P CIP codes are handled
+    if (!maskedBonds[bond->getIdx()]) {
+      if (!bond->getPropIfPresent(common_properties::_CIPCode, cip)) {
+        if (bond->getStereo() == Bond::STEREOE) {
+          cip = "E";
+        } else if (bond->getStereo() == Bond::STEREOZ) {
+          cip = "Z";
+        }
+      }
+      if (!cip.empty()) {
+        cip = "(" + cip + ")";
+        DrawAnnotation *annot = new DrawAnnotation(
+            cip, TextAlignType::MIDDLE, "CIP_Code",
+            drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+            drawOptions_.bondNoteColour, textDrawer_);
+        calcAnnotationPosition(bond, *annot);
         annotations_.emplace_back(annot);
       }
     }
@@ -1154,28 +1216,43 @@ void DrawMol::calculateScale() {
 
 // ****************************************************************************
 void DrawMol::findExtremes() {
-  for (const auto &ps : preShapes_) {
-    ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
-  }
-  for (const auto &bond : bonds_) {
-    bond->findExtremes(xMin_, xMax_, yMin_, yMax_);
-  }
-  for (const auto &atLab : atomLabels_) {
-    if (atLab) {
-      atLab->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  if (drawOptions_.drawingExtentsInclude & DrawElement::PRESHAPES) {
+    for (const auto &ps : preShapes_) {
+      ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
     }
   }
-  for (const auto &hl : highlights_) {
-    hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  if (drawOptions_.drawingExtentsInclude & DrawElement::BONDS) {
+    for (const auto &bond : bonds_) {
+      bond->findExtremes(xMin_, xMax_, yMin_, yMax_);
+    }
   }
-  if (includeAnnotations_) {
+  if (drawOptions_.drawingExtentsInclude & DrawElement::ATOMLABELS) {
+    for (const auto &atLab : atomLabels_) {
+      if (atLab) {
+        atLab->findExtremes(xMin_, xMax_, yMin_, yMax_);
+      }
+    }
+  }
+  if (drawOptions_.drawingExtentsInclude & DrawElement::HIGHLIGHTS) {
+    for (const auto &hl : highlights_) {
+      hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
+    }
+  }
+  if (includeAnnotations_ &&
+      (drawOptions_.drawingExtentsInclude & DrawElement::ANNOTATIONS)) {
     for (const auto &a : annotations_) {
       a->findExtremes(xMin_, xMax_, yMin_, yMax_);
     }
   }
-  findRadicalExtremes(radicals_, xMin_, xMax_, yMin_, yMax_);
-  for (const auto &ps : postShapes_) {
-    ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  if (drawOptions_.drawingExtentsInclude & DrawElement::RADICALS) {
+    // radicals are drawn in black, so they can extend the extents
+    // even if the atom is not drawn.
+    findRadicalExtremes(radicals_, xMin_, xMax_, yMin_, yMax_);
+  }
+  if (drawOptions_.drawingExtentsInclude & DrawElement::POSTSHAPES) {
+    for (const auto &ps : postShapes_) {
+      ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
+    }
   }
 
   if (atCds_.empty()) {

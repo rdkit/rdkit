@@ -47,6 +47,7 @@ class SynthonSpaceSearcher {
   virtual ~SynthonSpaceSearcher() = default;
 
   SearchResults search();
+  void search(const SearchResultCallback &cb);
 
   SynthonSpace &getSpace() const { return d_space; }
   const ROMol &getQuery() const { return d_query; }
@@ -68,6 +69,20 @@ class SynthonSpaceSearcher {
       const SynthonSpaceHitSet *hitset,
       const std::vector<size_t> &synthNums) const;
 
+ protected:
+  // Checks that the given molecule is definitely a hit according to
+  // the derived class' criteria.  This function checks the chiralAtomCount
+  // if appropriate, which required a non-const ROMol.
+  virtual bool verifyHit(ROMol &mol) const;
+
+  // Do a check against number of heavy atoms etc. if options call for it
+  // which can be done without having to build the full molecule from the
+  // synthons. Some of the search methods (fingerprints, for example) can do
+  // additional quick checks on whether this set of synthons can match the query
+  // without building the full molecule.
+  virtual bool quickVerify(const SynthonSpaceHitSet *hitset,
+                           const std::vector<size_t> &synthNums) const;
+
  private:
   std::unique_ptr<std::mt19937> d_randGen;
 
@@ -86,19 +101,6 @@ class SynthonSpaceSearcher {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> doTheSearch(
       std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
       const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits);
-
-  // Some of the search methods (fingerprints, for example) can do a quick
-  // check on whether this set of synthons can match the query without having to
-  // build the full molecule from the synthons.  They will over-ride this
-  // function which by default passes everything.
-  virtual bool quickVerify(
-      [[maybe_unused]] const SynthonSpaceHitSet *hitset,
-      [[maybe_unused]] const std::vector<size_t> &synthNums) const {
-    return true;
-  }
-  // Checks that the given molecule is definitely a hit according to
-  // the derived class' criteria.
-  virtual bool verifyHit(const ROMol &mol) const = 0;
 
   // Build the molecules from the synthons identified in hitsets.
   // Checks that all the results produced match the
@@ -129,33 +131,6 @@ class SynthonSpaceSearcher {
       const std::vector<boost::dynamic_bitset<>> &synthonsToUse,
       const std::string &reaction_id) const;
 };
-
-#if 0
-  // Build the molecules from the synthons identified in hitsets.
-  // Checks that all the results produced match the
-  // query.  totHits is the maximum number of hits that are possible from
-  // the hitsets, including duplicates.  Duplicates by name are not returned,
-  // but duplicate SMILES from different reactions will be.  Hitsets will
-  // be re-ordered on exit.
-  void buildHits(std::vector<std::unique_ptr<SynthonSpaceHitSet>> &hitsets,
-                 size_t totHits, const TimePoint *endTime, bool &timedOut,
-                 std::vector<std::unique_ptr<ROMol>> &results) const;
-  void buildAllHits(
-      const std::vector<std::unique_ptr<SynthonSpaceHitSet>> &hitsets,
-      std::set<std::string> &resultsNames, const TimePoint *endTime,
-      bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const;
-  void buildRandomHits(
-      const std::vector<std::unique_ptr<SynthonSpaceHitSet>> &hitsets,
-      size_t totHits, std::set<std::string> &resultsNames,
-      const TimePoint *endTime, bool &timedOut,
-      std::vector<std::unique_ptr<ROMol>> &results) const;
-  // get the subset of synthons for the given reaction to use for this
-  // enumeration.
-  std::vector<std::vector<ROMol *>> getSynthonsToUse(
-      const std::vector<boost::dynamic_bitset<>> &synthonsToUse,
-      const std::string &reaction_id) const;
-};
-#endif
 
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit

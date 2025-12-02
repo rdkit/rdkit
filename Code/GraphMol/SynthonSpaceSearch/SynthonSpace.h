@@ -27,6 +27,7 @@
 */
 
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -109,6 +110,16 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
              // appropriate for Morgan fingerprints.  With RDKit fingerprints,
              // 0.05 is adequate, and higher than that has been seen to
              // produce long run times.
+  unsigned int minHitHeavyAtoms{0};  // Minimum number of heavy atoms in a hit.
+  int maxHitHeavyAtoms{-1};          // Maximum number of heavy atoms in a hit.
+                                     // -1 means no maximum.
+  double minHitMolWt{0};             // Minimum molecular weight for a hit.
+  double maxHitMolWt{0};  // Maximum molecular weight for a hit.  0.0 means
+                          // no maximum.
+  unsigned int minHitChiralAtoms{
+      0};                      // Minimum number of chiral atoms in a hit.
+  int maxHitChiralAtoms{-1};   // Maximum number of chiral atoms in a hit.
+                               // -1 means no maximum.
   std::uint64_t timeOut{600};  // Maximum number of seconds to spend on a single
                                // search.  0 means no maximum.
   int numThreads = 1;  // The number of threads to use.  If > 0, will use that
@@ -184,6 +195,23 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
   /*!
+   * Perform a substructure search with the given query molecule across
+   * the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.  Search results are returned
+   * incrementally through the provided callback, which will receive
+   * at most `toTryChunkSize` sized lists of ROMols at a time, thereby
+   * reducing the amount of memory required to hold search results.
+   *
+   * @param query : query molecule
+   * @param callback: user-provided callback receiving chunks of ROMols.
+   * @param params : (optional) settings for the search
+   */
+  void substructureSearch(
+      const ROMol &query, const SearchResultCallback &callback,
+      const SubstructMatchParameters &matchParams = SubstructMatchParameters(),
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
+  /*!
    * Perform a substructure search with the given generalized query
    * molecule across the synthonspace library.  Duplicate SMILES strings
    * produced by different reactions will be returned.
@@ -211,6 +239,26 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
+  // Perform a fingerprint similarity search with the given query molecule
+  /*!
+   * Perform a fingerprint similarity search with the given query molecule
+   * across the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.  Search results are returned
+   * incrementally through the provided callback, which will receive
+   * at most `toTryChunkSize` sized lists of ROMols at a time, thereby
+   * reducing the amount of memory required to hold search results.
+   *
+   * @param query : query molecule
+   * @param fpGen: a FingerprintGenerator object that will provide the
+   *               fingerprints for the similarity calculation
+   * @param callback: user-provided callback receiving chunks of ROMols.
+   * @param params : (optional) settings for the search
+   */
+  void fingerprintSearch(
+      const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
+      const SearchResultCallback &callback,
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
   // Perform a RASCAL similarity search with the given query molecule
   // across the synthonspace library.  Duplicate SMILES strings produced by
   // different reactions will be returned.
@@ -230,6 +278,27 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
+  // Perform a RASCAL similarity search with the given query molecule
+  /* across the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.  Search results are returned
+   * incrementally through the provided callback, which will receive
+   * at most `toTryChunkSize` sized lists of ROMols at a time, thereby
+   * reducing the amount of memory required to hold search results.
+   *
+   * @param query : query molecule
+   * @param callback: user-provided callback receiving chunks of ROMols.
+   * @param rascalOptions: RASCAL options.  The similarityThreshold value
+   *                       in the rascalOptions will be used rather than
+   *                       params.similarityCutoff,
+   *                       but params.fragSimilarityAdjuster will be used
+   *                       to adjust the threshold for the fragment
+   *                       comparisons.
+   * @param params : (optional) settings for the search
+   */
+  void rascalSearch(
+      const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
+      const SearchResultCallback &callback,
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
   /*!
    *
    * @param inFilename: name of the file containing the synthon-based library.
@@ -250,7 +319,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * SMILES,synton_id,synton_role,reaction_id
    * but with the 3rd column named differently but with the same meaning.
    * The formatting of the first 2 formats has been relaxed such that any
-   * whitespace may be used as the field separator.
+   * whitespace may be used as the field separator, but a tab is tried first
+   * so that a tab-separated file may have spaces in the columns.
    *
    * Attachment points are U, Np, Pu and Am for up to 4 synthons per reaction.
    * A product is created by taking a synthon from each synton# value and
@@ -264,6 +334,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * If it receives a SIGINT, returns cancelled=true.
    */
   void readTextFile(const std::string &inFilename, bool &cancelled);
+  void readStream(std::istream &is, bool &cancelled);
 
   /*!
    * Writes to a binary DB File in our format.
@@ -296,6 +367,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param outFilename: name of the file to write
    */
   void writeEnumeratedFile(const std::string &outFilename) const;
+  void enumerateToStream(std::ostream &os) const;
 
   /*!
    * Create the fingerprints for the synthons ready for fingerprint searches.
@@ -383,7 +455,8 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void convertTextToDBFile(
  *
  * @return std::string
  */
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::string formattedIntegerString(std::int64_t value);
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::string formattedIntegerString(
+    std::int64_t value);
 
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit

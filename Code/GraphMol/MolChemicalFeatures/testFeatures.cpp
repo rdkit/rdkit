@@ -10,7 +10,6 @@
 //
 #include <RDGeneral/test.h>
 #include <fstream>
-#include <iostream>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>

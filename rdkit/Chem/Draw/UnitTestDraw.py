@@ -417,6 +417,34 @@ class TestCase(unittest.TestCase):
     # this should run without generating an exception:
     Draw.DrawMorganBit(mol, bitId, info)
 
+  def testMolToSVG(self):
+    smiles = "c1ccccc1"
+    mol = Chem.MolFromSmiles(smiles)
+    svg = Draw.MolToSVG(mol)
+    self.assertTrue(svg)
+
+  def testHighlightMatch(self):
+    smiles = "c1ccc(C)c(C)c1C"
+    mol = Chem.MolFromSmiles(smiles)
+
+    # a case where we should not have bond highlights (single atom matches):
+    qry = Chem.MolFromSmarts("[cH1]")
+    matches = mol.GetSubstructMatches(qry)
+    self.assertEqual(len(matches), 3)
+    svg = Draw.DrawMolWithMatches(mol, matches, qry=qry, doPNG=False)
+    # make sure we don't have bond highlights between the highlighted atoms:
+    self.assertIsNone(re.search(r'bond-0 atom-0 atom-1.*fill:#FF7F7F\;', svg))
+    self.assertIsNone(re.search(r'bond-1 atom-1 atom-2.*fill:#FF7F7F\;', svg))
+
+    # a case where we should have bond highlights:
+    qry = Chem.MolFromSmarts("[cH1][cH1]")
+    matches = mol.GetSubstructMatches(qry)
+    self.assertEqual(len(matches), 2)
+    svg = Draw.DrawMolWithMatches(mol, matches, qry=qry, doPNG=False)
+    # make sure we *do* have bond highlights between the highlighted atoms:
+    self.assertIsNotNone(re.search(r'bond-0 atom-0 atom-1.*fill:#FF7F7F\;', svg))
+    self.assertIsNotNone(re.search(r'bond-1 atom-1 atom-2.*fill:#FF7F7F\;', svg))
+
 
 if __name__ == '__main__':
   unittest.main()

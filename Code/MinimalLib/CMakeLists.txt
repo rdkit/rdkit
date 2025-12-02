@@ -1,35 +1,38 @@
 include_directories(${RDKit_ExternalDir})
-include_directories(${RDKit_ExternalDir}/rapidjson-1.1.0/include)
 
 if(RDK_BUILD_MINIMAL_LIB)
-    set(MINIMAL_LIB_LIBRARIES "MolInterchange_static;Abbreviations_static;"
-        "CIPLabeler_static;MolDraw2D_static;Depictor_static;"
-        "Descriptors_static;SubstructMatch_static;FileParsers_static;"
-        "SmilesParse_static;GraphMol_static;RDGeometryLib_static;"
-        "RDGeneral_static;RGroupDecomposition_static;Fingerprints_static")
+    set(MINIMAL_LIB_LIBRARIES "MolInterchange;Abbreviations;"
+        "CIPLabeler;MolDraw2D;Depictor;"
+        "Descriptors;SubstructMatch;FileParsers;"
+        "SmilesParse;GraphMol;RDGeometryLib;"
+        "RDGeneral;RGroupDecomposition;Fingerprints")
     if(RDK_BUILD_INCHI_SUPPORT)
         add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};RDInchiLib_static")
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};RDInchiLib")
     endif()
     if(RDK_BUILD_MINIMAL_LIB_RXN)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_RXN)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ChemReactions_static")
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ChemReactions")
     endif()
     if(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};SubstructLibrary_static")
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};SubstructLibrary")
     endif()
     if(RDK_BUILD_MINIMAL_LIB_MCS)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_MCS)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};FMCS_static")
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};FMCS")
     endif()
     if(RDK_BUILD_MINIMAL_LIB_MMPA)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_MMPA)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};MMPA_static")
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};MMPA")
     endif()
     if(RDK_BUILD_MINIMAL_LIB_MOLZIP)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_MOLZIP)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ChemTransforms_static")
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ChemTransforms")
+    endif()
+    if(RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP)
+        add_definitions(-DRDK_BUILD_MINIMAL_LIB_RGROUPDECOMP)
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};RGroupDecomposition")
     endif()
     if(RDK_BUILD_FREETYPE_SUPPORT)
         if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")

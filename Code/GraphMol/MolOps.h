@@ -332,7 +332,7 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeNonimplicit = true; /**< DEPRECATED equivalent of !implicitOnly */
   bool updateExplicitCount =
       false; /**< DEPRECATED equivalent of updateExplicitCount */
-  bool removeHydrides = true; /**< Removing Hydrides */
+  bool removeHydrides = false; /**< Removing Hydrides */
   bool removeNontetrahedralNeighbors =
       false; /**<  remove Hs which are bonded to atoms with specified
                 non-tetrahedral stereochemistry */
@@ -831,11 +831,13 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
                                    std::vector<std::vector<int>> &res,
-                                   bool includeDativeBonds = false);
+                                   bool includeDativeBonds = false,
+                                   bool includeHydrogenBonds = false);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
                                    std::vector<std::vector<int>> *res = nullptr,
-                                   bool includeDativeBonds = false);
+                                   bool includeDativeBonds = false,
+                                   bool includeHydrogenBonds = false);
 
 //! use a DFS algorithm to identify ring bonds and atoms in a molecule
 /*!
@@ -876,10 +878,12 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
                                          std::vector<std::vector<int>> &res,
-                                         bool includeDativeBonds = false);
+                                         bool includeDativeBonds = false,
+                                         bool includeHydrogenBonds = false);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
-                                         bool includeDativeBonds = false);
+                                         bool includeDativeBonds = false,
+                                         bool includeHydrogenBonds = false);
 
 //! @}
 
@@ -1199,7 +1203,7 @@ RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromMolParity(
 
 //! returns the number of atoms which have a particular property set
 RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(
-    const ROMol &mol, std::string prop);
+    const ROMol &mol, const std::string_view &prop);
 
 //! returns whether or not a molecule needs to have Hs added to it.
 RDKIT_GRAPHMOL_EXPORT bool needsHs(const ROMol &mol);

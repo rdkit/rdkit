@@ -9,7 +9,6 @@
 //  of the RDKit source tree.
 //
 #include <string>
-#include <iostream>
 #include "minilib.h"
 #include "common.h"
 
@@ -52,11 +51,9 @@
 #include <INCHI-API/inchi.h>
 #endif
 
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
+#include <boost/json.hpp>
 
-namespace rj = rapidjson;
+namespace bj = boost::json;
 
 using namespace RDKit;
 
@@ -73,24 +70,19 @@ std::string mappingToJsonArray(const ROMol &mol) {
                        atomMapping);
   mol.getPropIfPresent(Abbreviations::common_properties::origBondMapping,
                        bondMapping);
-  rj::Document doc;
-  doc.SetObject();
-  auto &alloc = doc.GetAllocator();
-  rj::Value rjAtoms(rj::kArrayType);
+  bj::object doc;
+  bj::array bjAtoms;
   for (auto i : atomMapping) {
-    rjAtoms.PushBack(i, alloc);
+    bjAtoms.push_back(i);
   }
-  doc.AddMember("atoms", rjAtoms, alloc);
+  doc["atoms"] = bjAtoms;
 
-  rj::Value rjBonds(rj::kArrayType);
+  bj::array bjBonds;
   for (auto i : bondMapping) {
-    rjBonds.PushBack(i, alloc);
+    bjBonds.push_back(i);
   }
-  doc.AddMember("bonds", rjBonds, alloc);
-  rj::StringBuffer buffer;
-  rj::Writer<rj::StringBuffer> writer(buffer);
-  doc.Accept(writer);
-  std::string res = buffer.GetString();
+  doc["bonds"] = bjBonds;
+  std::string res = bj::serialize(doc);
   return res;
 }
 
@@ -152,10 +144,16 @@ std::string JSMolBase::get_inchi(const std::string &options) const {
 }
 #endif
 std::string JSMolBase::get_molblock(const std::string &details) const {
-  return MinimalLib::molblock_helper(get(), details.c_str(), false);
+  return MinimalLib::molblock_helper(get(), details.c_str(),
+                                     MinimalLib::MDLVersion::AUTO);
 }
 std::string JSMolBase::get_v3Kmolblock(const std::string &details) const {
-  return MinimalLib::molblock_helper(get(), details.c_str(), true);
+  return MinimalLib::molblock_helper(get(), details.c_str(),
+                                     MinimalLib::MDLVersion::V3000);
+}
+std::string JSMolBase::get_v2Kmolblock(const std::string &details) const {
+  return MinimalLib::molblock_helper(get(), details.c_str(),
+                                     MinimalLib::MDLVersion::V2000);
 }
 std::string JSMolBase::get_json() const {
   return MolInterchange::MolToJSONData(get());
@@ -174,13 +172,9 @@ std::string JSMolBase::get_substruct_match(const JSMolBase &q) const {
 
   MatchVectType match;
   if (SubstructMatch(get(), q.get(), match)) {
-    rj::Document doc;
-    doc.SetObject();
-    MinimalLib::get_sss_json(get(), q.get(), match, doc, doc);
-    rj::StringBuffer buffer;
-    rj::Writer<rj::StringBuffer> writer(buffer);
-    doc.Accept(writer);
-    res = buffer.GetString();
+    bj::object doc;
+    MinimalLib::get_sss_json(get(), q.get(), match, doc);
+    res = bj::serialize(doc);
   }
 
   return res;
@@ -191,19 +185,15 @@ std::string JSMolBase::get_substruct_matches(const JSMolBase &q) const {
 
   auto matches = SubstructMatch(get(), q.get());
   if (!matches.empty()) {
-    rj::Document doc;
-    doc.SetArray();
+    bj::array doc;
 
     for (const auto &match : matches) {
-      rj::Value rjMatch(rj::kObjectType);
-      MinimalLib::get_sss_json(get(), q.get(), match, rjMatch, doc);
-      doc.PushBack(rjMatch, doc.GetAllocator());
+      bj::object bjMatch;
+      MinimalLib::get_sss_json(get(), q.get(), match, bjMatch);
+      doc.push_back(bjMatch);
     }
 
-    rj::StringBuffer buffer;
-    rj::Writer<rj::StringBuffer> writer(buffer);
-    doc.Accept(writer);
-    res = buffer.GetString();
+    res = bj::serialize(doc);
   }
 
   return res;
@@ -308,8 +298,7 @@ std::string get_avalon_fp_as_binary_text(const std::string &details) const {
 #endif
 
 std::string JSMolBase::get_stereo_tags() {
-  rj::Document doc;
-  doc.SetObject();
+  bj::object doc;
 
   bool cleanIt = true;
   bool force = true;
@@ -318,7 +307,7 @@ std::string JSMolBase::get_stereo_tags() {
                                 flagPossibleStereocenters);
   CIPLabeler::assignCIPLabels(get());
 
-  rj::Value rjAtoms(rj::kArrayType);
+  bj::array bjAtoms;
   for (const auto atom : get().atoms()) {
     std::string cip;
     if (!atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
@@ -328,37 +317,30 @@ std::string JSMolBase::get_stereo_tags() {
     }
     if (!cip.empty()) {
       cip = "(" + cip + ")";
-      rj::Value entry(rj::kArrayType);
-      entry.PushBack(atom->getIdx(), doc.GetAllocator());
-      rj::Value v;
-      v.SetString(cip.c_str(), cip.size(), doc.GetAllocator());
-      entry.PushBack(v, doc.GetAllocator());
-      rjAtoms.PushBack(entry, doc.GetAllocator());
+      bj::array entry;
+      entry.push_back(atom->getIdx());
+      entry.push_back(cip.c_str());
+      bjAtoms.push_back(std::move(entry));
     }
   }
-  doc.AddMember("CIP_atoms", rjAtoms, doc.GetAllocator());
+  doc["CIP_atoms"] = bjAtoms;
 
-  rj::Value rjBonds(rj::kArrayType);
+  bj::array bjBonds;
   for (const auto bond : get().bonds()) {
     std::string cip;
     if (bond->getPropIfPresent(common_properties::_CIPCode, cip)) {
       cip = "(" + cip + ")";
-      rj::Value entry(rj::kArrayType);
-      entry.PushBack(bond->getBeginAtomIdx(), doc.GetAllocator());
-      entry.PushBack(bond->getEndAtomIdx(), doc.GetAllocator());
-      rj::Value v;
-      v.SetString(cip.c_str(), cip.size(), doc.GetAllocator());
-      entry.PushBack(v, doc.GetAllocator());
-      rjBonds.PushBack(entry, doc.GetAllocator());
+      bj::array entry;
+      entry.push_back(bond->getBeginAtomIdx());
+      entry.push_back(bond->getEndAtomIdx());
+      entry.push_back(cip.c_str());
+      bjBonds.push_back(std::move(entry));
     }
   }
 
-  doc.AddMember("CIP_bonds", rjBonds, doc.GetAllocator());
+  doc["CIP_bonds"] = bjBonds;
 
-  rj::StringBuffer buffer;
-  rj::Writer<rj::StringBuffer> writer(buffer);
-  doc.Accept(writer);
-  return buffer.GetString();
+  return bj::serialize(doc);
 }
 
 void JSMolBase::convert_to_aromatic_form() {
@@ -531,6 +513,12 @@ int JSMolBase::has_coords() const {
   return (get().getConformer().is3D() ? 3 : 2);
 }
 
+const RDGeom::POINT3D_VECT &JSMolBase::get_coords() const {
+  static const RDGeom::POINT3D_VECT empty;
+  return (get().getNumConformers() ? get().getConformer().getPositions()
+                                   : empty);
+}
+
 double JSMolBase::normalize_depiction(int canonicalize, double scaleFactor) {
   if (!get().getNumConformers()) {
     return -1.;
@@ -605,6 +593,29 @@ std::pair<JSMolList *, JSMolList *> JSMolBase::get_mmpa_frags(
                         new JSMolList(std::move(sidechains)));
 }
 #endif
+
+std::string JSMolBase::add_to_png_blob(const std::string &pngString,
+                                       const std::string &details) const {
+  PNGMetadataParams params;
+  std::string res;
+  try {
+    MinimalLib::updatePNGMetadataParamsFromJSON(params, details.c_str());
+    res = addMolToPNGString(get(), pngString, params);
+  } catch (...) {
+  }
+  return res;
+}
+
+std::string JSMolBase::combine_with(const JSMolBase &other,
+                                    const std::string &details) {
+  std::unique_ptr<ROMol> combinedMol;
+  auto res = MinimalLib::combine_mols_internal(get(), other.get(), combinedMol,
+                                               details.c_str());
+  if (res.empty() && combinedMol) {
+    reset(static_cast<RWMol *>(combinedMol.release()));
+  }
+  return "";
+}
 
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
 std::string JSReaction::get_svg(int w, int h) const {
@@ -781,16 +792,11 @@ std::string JSSubstructLibrary::get_matches(const JSMolBase &q,
   }
   auto indices = d_sslib->getMatches(q.get(), true, useChirality, false,
                                      numThreads, maxResults);
-  rj::Document doc;
-  doc.SetArray();
-  auto &alloc = doc.GetAllocator();
+  bj::array doc;
   for (const auto &i : indices) {
-    doc.PushBack(i, alloc);
+    doc.push_back(i);
   }
-  rj::StringBuffer buffer;
-  rj::Writer<rj::StringBuffer> writer(buffer);
-  doc.Accept(writer);
-  std::string res = buffer.GetString();
+  std::string res = bj::serialize(doc);
   return res;
 }
 
@@ -879,34 +885,22 @@ MCSResult getMcsResult(const JSMolList &molList,
 std::string get_mcs_as_json(const JSMolList &molList,
                             const std::string &details_json) {
   auto mcsResult = getMcsResult(molList, details_json);
-  rj::Document doc;
-  doc.SetObject();
-  auto &alloc = doc.GetAllocator();
-  rj::Value rjSmarts;
+  bj::object doc;
+  bj::value bjSmarts;
   if (!mcsResult.DegenerateSmartsQueryMolDict.empty()) {
-    rjSmarts.SetArray();
+    bj::array smartsArray;
     for (const auto &pair : mcsResult.DegenerateSmartsQueryMolDict) {
-      rjSmarts.PushBack(rj::Value(pair.first.c_str(), pair.first.size()),
-                        alloc);
+      smartsArray.push_back(pair.first);
     }
+    bjSmarts = smartsArray;
   } else {
-    rjSmarts.SetString(mcsResult.SmartsString.c_str(),
-                       mcsResult.SmartsString.size());
+    bjSmarts = mcsResult.SmartsString;
   }
-  doc.AddMember("smarts", rjSmarts, alloc);
-  rj::Value rjCanceled;
-  rjCanceled.SetBool(mcsResult.Canceled);
-  doc.AddMember("canceled", rjCanceled, alloc);
-  rj::Value rjNumAtoms;
-  rjNumAtoms.SetInt(mcsResult.NumAtoms);
-  doc.AddMember("numAtoms", rjNumAtoms, alloc);
-  rj::Value rjNumBonds;
-  rjNumBonds.SetInt(mcsResult.NumBonds);
-  doc.AddMember("numBonds", rjNumBonds, alloc);
-  rj::StringBuffer buffer;
-  rj::Writer<rj::StringBuffer> writer(buffer);
-  doc.Accept(writer);
-  std::string res = buffer.GetString();
+  doc["smarts"] = bjSmarts;
+  doc["canceled"] = mcsResult.Canceled;
+  doc["numAtoms"] = mcsResult.NumAtoms;
+  doc["numBonds"] = mcsResult.NumBonds;
+  std::string res = bj::serialize(doc);
   return res;
 }
 
@@ -955,6 +949,26 @@ bool disable_logging(const std::string &logName) {
 }
 
 void disable_logging() { RDKit::MinimalLib::LogHandle::disableLogging(); }
+
+JSMolBase *get_mol_from_png_blob(const std::string &pngString,
+                                 const std::string &details) {
+  auto mols = MinimalLib::get_mols_from_png_blob_internal(pngString, true,
+                                                          details.c_str());
+  if (mols.empty()) {
+    return nullptr;
+  }
+  return new JSMol(new RWMol(*mols.front()));
+}
+
+JSMolList *get_mols_from_png_blob(const std::string &pngString,
+                                  const std::string &details) {
+  auto mols = MinimalLib::get_mols_from_png_blob_internal(pngString, false,
+                                                          details.c_str());
+  if (mols.empty()) {
+    return nullptr;
+  }
+  return new JSMolList(mols);
+}
 
 #ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
 JSRGroupDecomposition::JSRGroupDecomposition(const JSMolBase &core,

@@ -112,8 +112,10 @@ void DrawMolMCHLasso::extractAtomColourLists(
     for (size_t i = 0U; i < colourLists.size() - 1; ++i) {
       for (size_t j = i + 1; j < colourLists.size(); ++j) {
         if (listsIntersect(colourLists[i], colourLists[j], colourAtoms)) {
-          colourLists[i].insert(colourLists[i].end(), colourLists[j].begin(),
-                                colourLists[j].end());
+          colourLists[i].reserve(colourLists[i].size() + colourLists[j].size());
+          colourLists[i].insert(colourLists[i].end(),
+                                std::make_move_iterator(colourLists[j].begin()),
+                                std::make_move_iterator(colourLists[j].end()));
           colourLists[j].clear();
           didSomething = true;
           break;

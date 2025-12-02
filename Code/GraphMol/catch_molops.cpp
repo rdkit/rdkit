@@ -416,3 +416,23 @@ M  END)CTAB";
           Bond::BondType::SINGLE);
   }
 }
+
+TEST_CASE("GitHub #8726: Do not remove hydrides by default") {
+  auto m = "[OH+][H-]"_smiles;
+  REQUIRE(m);
+  CHECK(m->getNumAtoms() == 2);
+  auto h_atom = m->getAtomWithIdx(1);
+  CHECK(h_atom->getAtomicNum() == 1);
+  CHECK(h_atom->getFormalCharge() == -1);
+}
+
+TEST_CASE("Github #8945") {
+  SECTION("as reported") {
+    auto m1 = "N#N=O"_smiles;
+    REQUIRE(m1);
+    auto m2 = "O=N#N"_smiles;
+    REQUIRE(m2);
+
+    CHECK(MolToSmiles(*m1) == MolToSmiles(*m2));
+  }
+}

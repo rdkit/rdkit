@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019-2022 Greg Landrum
+//  Copyright (C) 2019-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,7 +15,6 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include "MolHash.h"
 
-#include <iostream>
 #include <fstream>
 
 using namespace RDKit;
@@ -1082,6 +1081,38 @@ TEST_CASE("github #8405: some tautomer mismatches") {
             MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
         CHECK(hsh == hsh0);
       }
+    }
+  }
+}
+
+TEST_CASE("github #8654: stereogroups incorrectly included in hash") {
+  SECTION("as reported") {
+    auto m =
+        "O=C(N[C@H]1C[C@@H](C(=O)O)[C@@H]2C[C@H]12)C1CC(=O)N(Cc2ccccn2)C1 |&1:3,5,9,11|"_smiles;
+    REQUIRE(m);
+    auto m2 =
+        "O=C(N[C@H]1C[C@@H](C(=O)O)[C@@H]2C[C@@H]21)C1CC(=O)N(Cc2ccccn2)C1"_smiles;
+    REQUIRE(m2);
+    bool useCxSmiles = true;
+    {
+      auto cxToSkip = SmilesWrite::CXSmilesFields::CX_ALL;
+      auto hsh1 =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2,
+                           useCxSmiles, cxToSkip);
+      auto hsh2 =
+          MolHash::MolHash(m2.get(), MolHash::HashFunction::HetAtomTautomerv2,
+                           useCxSmiles, cxToSkip);
+      CHECK(hsh1 == hsh2);
+    }
+    {
+      auto cxToSkip = SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
+      auto hsh1 =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2,
+                           useCxSmiles, cxToSkip);
+      auto hsh2 =
+          MolHash::MolHash(m2.get(), MolHash::HashFunction::HetAtomTautomerv2,
+                           useCxSmiles, cxToSkip);
+      CHECK(hsh1 == hsh2);
     }
   }
 }

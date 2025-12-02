@@ -110,7 +110,12 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
 
   std::string descrip = query->getDescription();
   bool hasVal = false;
-  enum class Modifiers : std::uint8_t { NONE, RANGE, LESS, GREATER };
+  enum class Modifiers : std::uint8_t {
+    NONE,
+    RANGE,
+    LESS,
+    GREATER
+  };
   Modifiers mods = Modifiers::NONE;
   if (boost::starts_with(descrip, "range_")) {
     mods = Modifiers::RANGE;
@@ -372,6 +377,13 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
       break;
     case Bond::AROMATIC:
       res = ":";
+      if (params.doIsomericSmiles) {
+        if (dir == Bond::ENDDOWNRIGHT) {
+          res = "\\";
+        } else if (dir == Bond::ENDUPRIGHT) {
+          res = "/";
+        }
+      }
       break;
     case Bond::DATIVE:
       if (params.includeDativeBonds) {
@@ -411,7 +423,7 @@ std::string getBondSmartsSimple(const Bond *bond,
     res += "@";
   } else if (descrip == "SingleOrAromaticBond") {
     auto dir = bond->getBondDir();
-    switch(dir) {
+    switch (dir) {
       case Bond::ENDDOWNRIGHT: {
         res += "\\";
         break;
@@ -735,7 +747,7 @@ std::string getNonQueryAtomSmarts(const Atom *atom) {
   } else {
     res << atom->getSymbol();
   }
-
+  bool addedChirality = false;
   if (atom->hasOwningMol() &&
       atom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
     if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
@@ -745,9 +757,11 @@ std::string getNonQueryAtomSmarts(const Atom *atom) {
       switch (atom->getChiralTag()) {
         case Atom::CHI_TETRAHEDRAL_CW:
           res << "@@";
+          addedChirality = true;
           break;
         case Atom::CHI_TETRAHEDRAL_CCW:
           res << "@";
+          addedChirality = true;
           break;
         default:
           break;
@@ -755,13 +769,11 @@ std::string getNonQueryAtomSmarts(const Atom *atom) {
     }
   }
 
-  auto hs = atom->getNumExplicitHs();
-  // FIX: probably should be smarter about Hs:
-  if (hs) {
+  if (addedChirality && atom->getNumExplicitHs() == 1) {
+    // FIX: this isn't really correct in many cases, but
+    //   fixing it requires opening a fairly large construction site on the
+    //   SMARTS handling side. We'll do this later.
     res << "H";
-    if (hs > 1) {
-      res << hs;
-    }
   }
   auto chg = atom->getFormalCharge();
   if (chg) {
@@ -793,6 +805,14 @@ std::string getNonQueryBondSmarts(const Bond *qbond, int atomToLeftIdx,
 
   if (qbond->getIsAromatic()) {
     res = ":";
+    if (params.doIsomericSmiles) {
+      if (qbond->getBondDir() == Bond::ENDDOWNRIGHT) {
+        res = "\\";
+      } else if (qbond->getBondDir() == Bond::ENDUPRIGHT) {
+        res = "/";
+      }
+    }
+
   } else {
     bool reverseDative =
         (atomToLeftIdx >= 0 &&

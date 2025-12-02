@@ -18,12 +18,12 @@
 #include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
+#include <GraphMol/SmilesParse/SmilesJSONParsers.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
 #include "SmartsWrite.h"
 #include <RDGeneral/RDLog.h>
 #include <fstream>
-#include <iostream>
 
 constexpr bool GenerateExpectedFiles = false;
 
@@ -1509,7 +1509,7 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;
     REQUIRE(m);
     auto smi = MolToCXSmarts(*m);
-    CHECK(smi == "[#7H3]-[Fe]-[#7H2] |C:0.0|");
+    CHECK(smi == "[#7]-[Fe]-[#7] |C:0.0|");
   }
   SECTION("two dative bonds") {
     auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
@@ -1521,7 +1521,7 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
     REQUIRE(m);
     auto smi = MolToCXSmarts(*m);
-    CHECK(smi == "[#7H3]-[Fe]-[#7H3] |C:0.0,2.1|");
+    CHECK(smi == "[#7]-[Fe]-[#7] |C:0.0,2.1|");
   }
 }
 
@@ -1634,5 +1634,89 @@ TEST_CASE("Github #8348: Unable to write wiggly bond information by default") {
         MolToCXSmiles(*mol, ps, flags, bond_dir_option);
     // we should always be able to write wiggly bond information
     CHECK(output_cxsmiles.find("w:") != std::string::npos);
+  }
+}
+
+TEST_CASE("Github #8586: MolFromSmiles loses atom maps if cxsmiles is used") {
+  SECTION("as reported") {
+    auto m = "[CH3:3]N([*:1])C[C@](C([*:2])=O)([H])CS |o1:4|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getAtomMapNum() == 3);
+    CHECK(m->getAtomWithIdx(2)->getAtomMapNum() == 1);
+    CHECK(m->getAtomWithIdx(6)->getAtomMapNum() == 2);
+  }
+  SECTION("additional properties") {
+    auto m =
+        "[CH3:3]N([*:1])C[C@](C([*:2])=O)([H])CS |atomProp:7.dummyLabel.d:2.dummyLabel.d,o1:4|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->getAtomMapNum() == 1);
+    CHECK(m->getAtomWithIdx(6)->getAtomMapNum() == 2);
+    std::string dlabel;
+    CHECK(m->getAtomWithIdx(7)->getPropIfPresent(common_properties::dummyLabel,
+                                                 dlabel));
+    CHECK(dlabel == "d");
+    CHECK(m->getAtomWithIdx(2)->getPropIfPresent(common_properties::dummyLabel,
+                                                 dlabel));
+    CHECK(dlabel == "d");
+  }
+}
+
+TEST_CASE("Test CXSmilesFields option parsing from JSON") {
+  SECTION("Empty JSON string preserves current values") {
+    std::uint32_t cxSmilesFields =
+        SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS;
+    unsigned int restoreBondDirs = RestoreBondDirOptionClear;
+    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, "{}");
+    CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
+  }
+  SECTION("No CXSmilesFields key preserves current values") {
+    std::uint32_t cxSmilesFields =
+        SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS;
+    unsigned int restoreBondDirs = RestoreBondDirOptionTrue;
+    updateCXSmilesFieldsFromJSON(
+        cxSmilesFields, restoreBondDirs,
+        "{\"restoreBondDirOption\":\"RestoreBondDirOptionClear\"}");
+    CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
+  }
+  SECTION("Multiple CXSmilesFields keys with true value are ORed together") {
+    std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
+    unsigned int restoreBondDirs = RestoreBondDirOptionClear;
+    updateCXSmilesFieldsFromJSON(
+        cxSmilesFields, restoreBondDirs,
+        "{\"CX_MOLFILE_VALUES\":true,\"CX_COORDS\":true}");
+    CHECK(cxSmilesFields == (SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
+                             SmilesWrite::CXSmilesFields::CX_COORDS));
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
+  }
+  SECTION(
+      "Multiple CXSmilesFields keys with true value are ORed together; adding unrelated false values makes no difference") {
+    std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
+    unsigned int restoreBondDirs = RestoreBondDirOptionClear;
+    updateCXSmilesFieldsFromJSON(
+        cxSmilesFields, restoreBondDirs,
+        "{\"CX_MOLFILE_VALUES\":true,\"CX_COORDS\":true,\"CX_ATOM_PROPS\":false,\"CX_BOND_CFG\":false}");
+    CHECK(cxSmilesFields == (SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
+                             SmilesWrite::CXSmilesFields::CX_COORDS));
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
+  }
+  SECTION(
+      "Multiple CXSmilesFields keys with true value are ORed together, then AND NOTed with ORed false values") {
+    std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
+    unsigned int restoreBondDirs = RestoreBondDirOptionClear;
+    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
+                                 "{\"CX_ALL\":true,\"CX_COORDS\":false}");
+    CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
+  }
+  SECTION(
+      "Multiple CXSmilesFields keys with true value are ORed together, then AND NOTed with ORed false values; order does not matter") {
+    std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
+    unsigned int restoreBondDirs = RestoreBondDirOptionClear;
+    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
+                                 "{\"CX_COORDS\":false,\"CX_ALL\":true}");
+    CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
   }
 }

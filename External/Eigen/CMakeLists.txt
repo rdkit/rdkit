@@ -1,5 +1,5 @@
 include(ExternalProject)
-set(EIGEN3_VERSION "3.3.9")
+set(EIGEN3_VERSION "3.4.0")
 set(EIGEN3_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/eigen)
 ExternalProject_Add(Eigen
   GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git

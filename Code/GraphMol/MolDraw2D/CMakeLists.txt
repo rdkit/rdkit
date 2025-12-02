@@ -39,7 +39,7 @@ rdkit_headers(MolDraw2D.h
 )
 
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
-        MolDraw2DDetails.cpp MolDraw2DUtils.cpp AtomSymbol.cpp
+        MolDraw2DDetails.cpp MolDraw2DUtils.cpp MolDrawOptionsJSONParsers.cpp AtomSymbol.cpp
         DrawAnnotation.cpp DrawMol.cpp DrawMolMCH.cpp DrawMolMCHCircleAndLine.cpp
         DrawMolMCHLasso.cpp
         DrawShape.cpp DrawText.cpp DrawTextNotFT.cpp DrawTextSVG.cpp
@@ -59,7 +59,7 @@ if (RDK_BUILD_CAIRO_SUPPORT)
     target_compile_definitions(MolDraw2D PUBLIC "-DRDK_BUILD_CAIRO_SUPPORT")
     target_link_libraries(MolDraw2D PUBLIC Cairo::Cairo)
     target_sources(MolDraw2D PRIVATE MolDraw2DCairo.cpp DrawTextCairo.cpp)
-    if (RDK_INSTALL_STATIC_LIBS AND NOT WIN32)
+    if (RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
         target_compile_definitions(MolDraw2D_static PUBLIC "-DRDK_BUILD_CAIRO_SUPPORT")
         target_link_libraries(MolDraw2D_static PUBLIC Cairo::Cairo)
         target_sources(MolDraw2D_static PRIVATE MolDraw2DCairo.cpp DrawTextCairo.cpp)
@@ -71,7 +71,7 @@ if (RDK_BUILD_FREETYPE_SUPPORT)
     target_compile_definitions(MolDraw2D PUBLIC "-DRDK_BUILD_FREETYPE_SUPPORT")
     target_sources(MolDraw2D PRIVATE DrawText.cpp
             DrawTextFT.cpp DrawTextFTSVG.cpp DrawTextFTJS.cpp)
-    if (RDK_INSTALL_STATIC_LIBS AND NOT WIN32)
+    if (RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
         target_compile_definitions(MolDraw2D_static PUBLIC "-DRDK_BUILD_FREETYPE_SUPPORT")
         target_sources(MolDraw2D_static PRIVATE DrawText.cpp
                 DrawTextFT.cpp DrawTextFTSVG.cpp DrawTextFTJS.cpp)
@@ -84,13 +84,13 @@ if (RDK_BUILD_FREETYPE_SUPPORT)
     find_package(Freetype REQUIRED)
     target_include_directories(MolDraw2D PUBLIC ${FREETYPE_INCLUDE_DIRS})
     target_link_libraries(MolDraw2D PUBLIC ${FREETYPE_LIBRARIES})
-    if (RDK_INSTALL_STATIC_LIBS AND NOT WIN32)
+    if (RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
         target_include_directories(MolDraw2D_static PUBLIC ${FREETYPE_INCLUDE_DIRS})
         target_link_libraries(MolDraw2D_static PUBLIC ${FREETYPE_LIBRARIES})
     endif ()
     if (RDK_BUILD_CAIRO_SUPPORT)
         target_sources(MolDraw2D PRIVATE DrawTextFTCairo.cpp)
-        if (RDK_INSTALL_STATIC_LIBS AND NOT WIN32)
+        if (RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
             target_sources(MolDraw2D_static PRIVATE DrawTextFTCairo.cpp)
         endif ()
     endif ()

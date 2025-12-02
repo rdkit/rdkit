@@ -20,7 +20,6 @@
 namespace python = boost::python;
 
 namespace RDKit {
-
 python::list hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
   python::list pyres;
   for (auto &r : res.getHitMolecules()) {
@@ -99,6 +98,36 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper2(
   return results;
 }
 
+struct CallbackAdapter {
+  python::object py_callable;
+
+  bool operator()(std::vector<std::unique_ptr<ROMol>> &results) const {
+    python::list pyres;
+    for (auto &mol : results) {
+      pyres.append(boost::shared_ptr<ROMol>(mol.release()));
+    }
+    return bool(py_callable(pyres));
+  }
+};
+
+static void substructureSearch_helper3(SynthonSpaceSearch::SynthonSpace &self,
+                                       const ROMol &query,
+                                       python::object py_callable,
+                                       const python::object &py_smParams,
+                                       const python::object &py_params) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  SubstructMatchParameters smParams;
+  if (!py_smParams.is_none()) {
+    smParams = python::extract<SubstructMatchParameters>(py_smParams);
+  }
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  CallbackAdapter callback{py_callable};
+  self.substructureSearch(query, callback, smParams, params);
+}
+
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &fingerprintGenerator,
@@ -122,6 +151,23 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
   return results;
 }
 
+static void fingerprintSearch_helper_2(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const python::object &fingerprintGenerator, python::object py_callable,
+    const python::object &py_params) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  const FingerprintGenerator<std::uint64_t> *fpGen =
+      python::extract<FingerprintGenerator<std::uint64_t> *>(
+          fingerprintGenerator);
+
+  CallbackAdapter callback{py_callable};
+  self.fingerprintSearch(query, *fpGen, callback, params);
+}
+
 SynthonSpaceSearch::SearchResults rascalSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &py_rascalOptions, const python::object &py_params) {
@@ -136,6 +182,22 @@ SynthonSpaceSearch::SearchResults rascalSearch_helper(
     NOGIL gil;
     return self.rascalSearch(query, rascalOptions, params);
   }
+}
+
+static void rascalSearch_helper_2(SynthonSpaceSearch::SynthonSpace &self,
+                                  const ROMol &query,
+                                  const python::object &py_rascalOptions,
+                                  python::object py_callable,
+                                  const python::object &py_params) {
+  RascalMCES::RascalOptions rascalOptions;
+  rascalOptions = python::extract<RascalMCES::RascalOptions>(py_rascalOptions);
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  CallbackAdapter callback{py_callable};
+  self.rascalSearch(query, rascalOptions, callback, params);
 }
 
 void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
@@ -247,9 +309,36 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " 0.05 is adequate, and higher than that has been seen to"
           " produce long run times.")
       .def_readwrite(
+          "minHitHeavyAtoms",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::minHitHeavyAtoms,
+          "Minimum number of heavy atoms in a hit.  Default=0.")
+      .def_readwrite(
+          "maxHitHeavyAtoms",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHitHeavyAtoms,
+          "Maximum number of heavy atoms in a hit.  Default=-1 means no maximum.")
+      .def_readwrite("minHitMolWt",
+                     &SynthonSpaceSearch::SynthonSpaceSearchParams::minHitMolWt,
+                     "Minimum molecular weight for a hit.  Default=0.0.")
+      .def_readwrite(
+          "maxHitMolWt",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHitMolWt,
+          "Maximum molecular weight for a hit.  Default=0.0 mean no maximum.")
+      .def_readwrite(
+          "minHitChiralAtoms",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::minHitChiralAtoms,
+          "Minimum number of chiral atoms in a hit.  Default=0.")
+      .def_readwrite(
+          "maxHitChiralAtoms",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHitChiralAtoms,
+          "Maximum number of chiral atoms in a hit.  Default=-1 means no maximum.")
+      .def_readwrite(
           "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
           "Time limit for search, in seconds.  Default is 600s, 0 means no"
           " timeout.  Requires an integer")
+      .def_readwrite(
+          "toTryChunkSize",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::toTryChunkSize,
+          "Process possible hits using the given chunk size")
       .def_readwrite(
           "numThreads",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::numThreads,
@@ -257,7 +346,8 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " number.  If <= 0, will use the number of hardware"
           " threads plus this number.  So if the number of"
           " hardware threads is 8, and numThreads is -1, it will"
-          " use 7 threads.  Default=1.");
+          " use 7 threads.  Default=1.")
+      .def("__setattr__", &safeSetattr);
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(
@@ -303,12 +393,24 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
             python::arg("params") = python::object()),
            "Does a substructure search in the SynthonSpace using an"
            " extended query.")
+      .def(
+          "SubstructureSearchIncremental", &substructureSearch_helper3,
+          (python::arg("self"), python::arg("query"), python::arg("callback"),
+           python::arg("substructMatchParams") = python::object(),
+           python::arg("params") = python::object()),
+          "Does a substructure search in the SynthonSpace returning results in the callback.")
       .def("FingerprintSearch", &fingerprintSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("fingerprintGenerator"),
             python::arg("params") = python::object()),
            "Does a fingerprint search in the SynthonSpace using the"
            " FingerprintGenerator passed in.")
+      .def("FingerprintSearchIncremental", &fingerprintSearch_helper_2,
+           (python::arg("self"), python::arg("query"),
+            python::arg("fingerprintGenerator"), python::arg("callback"),
+            python::arg("params") = python::object()),
+           "Does a fingerprint search in the SynthonSpace using the"
+           " FingerprintGenerator passed in, returning results the callback.")
       .def("RascalSearch", &rascalSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("rascalOptions"),
@@ -316,6 +418,13 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            "Does a search using the Rascal similarity score.  The similarity"
            " threshold used is provided by rascalOptions, and the one in"
            " params is ignored.")
+      .def("RascalSearchIncremental", &rascalSearch_helper_2,
+           (python::arg("self"), python::arg("query"),
+            python::arg("rascalOptions"), python::arg("callback"),
+            python::arg("params") = python::object()),
+           "Does a search using the Rascal similarity score.  The similarity"
+           " threshold used is provided by rascalOptions, and the one in"
+           " params is ignored.  Returns results iteratively in the callback.")
       .def(
           "BuildSynthonFingerprints",
           &SynthonSpaceSearch::SynthonSpace::buildSynthonFingerprints,

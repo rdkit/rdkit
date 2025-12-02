@@ -12,9 +12,11 @@
 #include <thread>
 #include <boost/random/discrete_distribution.hpp>
 
+#include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
@@ -45,6 +47,70 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
         d_randGen = std::make_unique<std::mt19937>(d_params.randomSeed);
       }
     }
+  }
+}
+
+void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
+  bool timedOut = false;
+  const TimePoint *endTime = nullptr;
+  auto fragments = details::splitMolecule(
+      d_query, getSpace().getMaxNumSynthons(), d_params.maxNumFragSets, endTime,
+      d_params.numThreads, timedOut);
+  extraSearchSetup(fragments);
+  std::uint64_t totHits = 0;
+  auto allHits = doTheSearch(fragments, endTime, timedOut, totHits);
+
+  std::sort(allHits.begin(), allHits.end(),
+            [](const auto &hs1, const auto &hs2) -> bool {
+              if (hs1->d_reaction->getId() == hs2->d_reaction->getId()) {
+                return hs1->numHits < hs2->numHits;
+              }
+              return hs1->d_reaction->getId() < hs2->d_reaction->getId();
+            });
+
+  // from buildAllhits
+  std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> toTry;
+  std::int64_t hitCount = 0;
+  bool stop = false;  // set by callback
+
+  // Each hitset contains possible hits from a single SynthonSet.
+  for (const auto &hitset : allHits) {
+    // Set up the stepper to move through the synthons.
+    std::vector<size_t> numSynthons;
+    numSynthons.reserve(hitset->synthonsToUse.size());
+    for (auto &stu : hitset->synthonsToUse) {
+      numSynthons.push_back(stu.size());
+    }
+    details::Stepper stepper(numSynthons);
+
+    const auto &reaction = getSpace().getReaction(hitset->d_reaction->getId());
+    std::vector<size_t> theseSynthNums(reaction->getSynthons().size(), 0);
+    // process the synthons
+    while (stepper.d_currState[0] != numSynthons[0]) {
+      toTry.emplace_back(hitset.get(), stepper.d_currState);
+      if (toTry.size() == static_cast<size_t>(d_params.toTryChunkSize)) {
+        std::vector<std::unique_ptr<ROMol>> partResults;
+        processToTrySet(toTry, endTime, partResults);
+        hitCount += partResults.size();
+        stop = cb(partResults);
+        toTry.clear();
+        if (stop || (d_params.maxHits != -1 && hitCount >= d_params.maxHits)) {
+          break;
+        }
+      }
+      stepper.step();
+    }
+    if (stop || (d_params.maxHits != -1 && hitCount >= d_params.maxHits)) {
+      break;
+    }
+  }
+
+  // Do any remaining.
+  if ((d_params.maxHits == -1 || hitCount < d_params.maxHits) &&
+      !stop && !toTry.empty()) {
+    std::vector<std::unique_ptr<ROMol>> partResults;
+    processToTrySet(toTry, endTime, partResults);
+    cb(partResults);
   }
 }
 
@@ -85,7 +151,8 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   std::vector<const ROMol *> synths(synthNums.size());
   std::vector<std::string> synthNames(synthNums.size());
   for (size_t i = 0; i < synthNums.size(); i++) {
-    synths[i] = hitset->synthonsToUse[i][synthNums[i]].second;
+    synths[i] =
+        hitset->synthonsToUse[i][synthNums[i]].second->getOrigMol().get();
     synthNames[i] = hitset->synthonsToUse[i][synthNums[i]].first;
   }
 
@@ -94,7 +161,6 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
     return prod;
   }
   prod = details::buildProduct(synths);
-
   // Do a final check of the whole thing.  It can happen that the
   // fragments match synthons but the final product doesn't match.
   // A key example is when the 2 synthons come together to form an
@@ -160,7 +226,6 @@ void processReactions(
 
   while (true) {
     std::int64_t thisR = ++mostRecentReaction;
-    // std::cout << thisR << " vs " << lastReaction << std::endl;
     if (thisR > lastReaction) {
       break;
     }
@@ -229,6 +294,68 @@ SynthonSpaceSearcher::doTheSearch(
   return allHits;
 }
 
+bool SynthonSpaceSearcher::quickVerify(
+    const SynthonSpaceHitSet *hitset,
+    const std::vector<size_t> &synthNums) const {
+  if (getParams().minHitHeavyAtoms || getParams().maxHitHeavyAtoms > -1) {
+    unsigned int numHeavyAtoms = 0;
+    for (unsigned int i = 0; i < synthNums.size(); ++i) {
+      numHeavyAtoms +=
+          hitset->synthonsToUse[i][synthNums[i]].second->getNumHeavyAtoms();
+    }
+    if (numHeavyAtoms < getParams().minHitHeavyAtoms ||
+        (getParams().maxHitHeavyAtoms > -1 &&
+         numHeavyAtoms >
+             static_cast<unsigned int>(getParams().maxHitHeavyAtoms))) {
+      return false;
+    }
+  }
+  if (getParams().minHitMolWt > 0.0 || getParams().maxHitMolWt > 0.0) {
+    double molWt = 0.0;
+    for (unsigned int i = 0; i < synthNums.size(); ++i) {
+      molWt += hitset->synthonsToUse[i][synthNums[i]].second->getMolWt();
+    }
+    if (molWt < getParams().minHitMolWt ||
+        (getParams().maxHitMolWt > 0.0 && molWt > getParams().maxHitMolWt)) {
+      return false;
+    }
+  }
+  if (getParams().minHitChiralAtoms || getParams().maxHitChiralAtoms > -1) {
+    unsigned int numChiralAtoms = 0;
+    unsigned int numExcDummies = 0;
+    for (unsigned int i = 0; i < synthNums.size(); ++i) {
+      numChiralAtoms +=
+          hitset->synthonsToUse[i][synthNums[i]].second->getNumChiralAtoms();
+      numExcDummies += hitset->synthonsToUse[i][synthNums[i]]
+                           .second->getNumChiralAtomsExcDummies();
+    }
+    // numChiralAtoms is the upper bound on the number of chiral atoms in
+    // the hit, numExcDummies the lower bound.
+    if (numChiralAtoms < getParams().minHitChiralAtoms ||
+        (getParams().maxHitChiralAtoms > -1 &&
+         numExcDummies >
+             static_cast<unsigned int>(getParams().maxHitChiralAtoms))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// It's conceivable that building the full molecule has changed the
+// chiral atom count.
+bool SynthonSpaceSearcher::verifyHit(ROMol &mol) const {
+  if (getParams().minHitChiralAtoms || getParams().maxHitChiralAtoms) {
+    auto numChiralAtoms = details::countChiralAtoms(mol);
+    if (numChiralAtoms < getParams().minHitChiralAtoms ||
+        (getParams().maxHitChiralAtoms > -1 &&
+         numChiralAtoms >
+             static_cast<unsigned int>(getParams().maxHitChiralAtoms))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 namespace {
 void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
   if (!hits.empty() && hits.front()->hasProp("Similarity")) {
@@ -266,8 +393,11 @@ void sortAndUniquifyToTry(
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
       newToTry;
   newToTry.reserve(tmp.size());
-  std::transform(tmp.begin(), tmp.end(), back_inserter(newToTry),
-                 [&](const auto &p) -> auto { return toTry[p.first]; });
+  std::transform(
+      tmp.begin(), tmp.end(),
+      back_inserter(newToTry), [&](const auto &p) -> auto{
+        return toTry[p.first];
+      });
   toTry = newToTry;
 }
 

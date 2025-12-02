@@ -11,7 +11,6 @@
 #include <GraphMol/test_fixtures.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
-#include <iostream>
 #include <fstream>
 #include <sstream>
 
@@ -1647,7 +1646,7 @@ void testMolFileGithub8265() {
       conf->setAtomPos(0, pos);
       auto mbV2K = MolToMolBlock(*m);
       TEST_ASSERT(mbV2K.find("M  V30") != std::string::npos);
-      MolBlockToMol(mbV2K);
+      TEST_ASSERT(v2::FileParsers::MolFromMolBlock(mbV2K));
       try {
         MolToV2KMolBlock(*m);
         TEST_ASSERT(0);
@@ -1664,7 +1663,7 @@ void testMolFileGithub8265() {
       conf->setAtomPos(0, pos);
       auto mbV2k = MolToMolBlock(*m);
       TEST_ASSERT(mbV2k.find("M  V30") == std::string::npos);
-      MolBlockToMol(mbV2k);
+      TEST_ASSERT(v2::FileParsers::MolFromMolBlock(mbV2k));
     }
 
     {
@@ -1672,7 +1671,7 @@ void testMolFileGithub8265() {
       conf->setAtomPos(0, pos);
       auto mbV2k = MolToMolBlock(*m);
       TEST_ASSERT(mbV2k.find("M  V30") != std::string::npos);
-      MolBlockToMol(mbV2k);
+      TEST_ASSERT(v2::FileParsers::MolFromMolBlock(mbV2k));
       try {
         MolToV2KMolBlock(*m);
         TEST_ASSERT(0);
@@ -1689,7 +1688,7 @@ void testMolFileGithub8265() {
       conf->setAtomPos(0, pos);
       auto mbV2k = MolToMolBlock(*m);
       TEST_ASSERT(mbV2k.find("M  V30") == std::string::npos);
-      MolBlockToMol(mbV2k);
+      TEST_ASSERT(v2::FileParsers::MolFromMolBlock(mbV2k));
     }
   }
   BOOST_LOG(rdInfoLog) << "Finished\n";

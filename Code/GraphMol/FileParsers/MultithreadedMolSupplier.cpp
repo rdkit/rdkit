@@ -17,25 +17,59 @@ namespace RDKit {
 namespace v2 {
 namespace FileParsers {
 
-MultithreadedMolSupplier::~MultithreadedMolSupplier() {
-  endThreads();
-  // destroy all objects in the input queue
-  d_inputQueue->clear();
+void MultithreadedMolSupplier::close() {
+  df_forceStop = true;
+  d_outputQueue->setDone();
+
   if (df_started) {
-    std::tuple<RWMol *, std::string, unsigned int> r;
-    while (d_outputQueue->pop(r)) {
-      RWMol *m = std::get<0>(r);
-      delete m;
+    // Clear the queues until they are empty
+    //  d_inputQueue->clear is not thread-safe
+    std::tuple<std::string, unsigned int, unsigned int> r;
+    while (d_inputQueue->pop(r)) {
+    }
+    // clear the output queues, they might be full
+    //  and blocking the writer threads, note
+    //  that while ending threads the writers may
+    //  put a few more items back in the queue
+    std::tuple<RWMol *, std::string, unsigned int> mol_r;
+    while (d_outputQueue->pop(mol_r)) {
+      delete std::get<0>(mol_r);
     }
   }
-  // destroy all objects in the output queue
-  d_outputQueue->clear();
+
+  endThreads();
+
+  // notify the queue again that it is done in case
+  //  anyone is waiting on it
+  d_outputQueue->setDone();
+
+  // destroy all objects in the input and output queues
+  //  and anything missed put in the queues while
+  //  the threads were endings
+  if (df_started) {
+    d_inputQueue->clear();
+  }
+
+  if (d_outputQueue) {
+    // destroy all objects in the output queue
+    std::tuple<RWMol *, std::string, unsigned int> r;
+    while (d_outputQueue->pop(r)) {
+      delete std::get<0>(r);
+    }
+  }
+
+  // close external streams if any
+  //  destructors are called child to parent, however the threads
+  //  need to be ended before shutting down streams, so override this
+  //  in the child class.
+  closeStreams();
+  df_started = false;
 }
 
 void MultithreadedMolSupplier::reader() {
   std::string record;
   unsigned int lineNum, index;
-  while (extractNextRecord(record, lineNum, index)) {
+  while (!df_forceStop && extractNextRecord(record, lineNum, index)) {
     if (readCallback) {
       try {
         record = readCallback(record, index);
@@ -45,22 +79,25 @@ void MultithreadedMolSupplier::reader() {
       }
     }
     auto r = std::make_tuple(record, lineNum, index);
-    d_inputQueue->push(r);
+    if (!df_forceStop) {
+      d_inputQueue->push(r);
+    }
   }
   d_inputQueue->setDone();
 }
 
 void MultithreadedMolSupplier::writer() {
   std::tuple<std::string, unsigned int, unsigned int> r;
-  while (d_inputQueue->pop(r)) {
+  while (!df_forceStop && d_inputQueue->pop(r)) {
     try {
       std::unique_ptr<RWMol> mol(
           processMoleculeRecord(std::get<0>(r), std::get<1>(r)));
-      if (mol && writeCallback) {
+      if (!df_forceStop && mol && writeCallback) {
         writeCallback(*mol, std::get<0>(r), std::get<2>(r));
       }
       auto temp = std::tuple<RWMol *, std::string, unsigned int>{
           mol.release(), std::get<0>(r), std::get<2>(r)};
+
       d_outputQueue->push(temp);
     } catch (...) {
       // fill the queue wih a null value
@@ -69,9 +106,21 @@ void MultithreadedMolSupplier::writer() {
       d_outputQueue->push(nullValue);
     }
   }
-  if (d_threadCounter != d_params.numWriterThreads) {
+
+  // we need a lock here otherwise two threads
+  //  can increment d_threadCounter even though it's
+  //  atomic.
+  d_threadCounterMutex.lock();
+  if (d_threadCounter < d_params.numWriterThreads) {
     ++d_threadCounter;
+    d_threadCounterMutex.unlock();
   } else {
+    // Here we need to unlock the threadCounterMutex before we setDone on the
+    //  outputQueue.  This causes a notification to the queue which may actually
+    //  have elements in it.  This notification may unblock the queue which
+    //  allows waiting threads to get their last attempt at adding to it
+    //  which will end up here and deadlock.
+    d_threadCounterMutex.unlock();
     d_outputQueue->setDone();
   }
 }
@@ -82,7 +131,7 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
     startThreads();
   }
   std::tuple<RWMol *, std::string, unsigned int> r;
-  if (d_outputQueue->pop(r)) {
+  if (!df_forceStop && d_outputQueue->pop(r)) {
     d_lastItemText = std::get<1>(r);
     d_lastRecordId = std::get<2>(r);
     std::unique_ptr<RWMol> res{std::get<0>(r)};
@@ -98,14 +147,20 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
   return nullptr;
 }
 
+// this calls joins on the reader and writer threads
+//  and waits until completion.  To actually force a stop
+//  call close which handles the input and output queues
 void MultithreadedMolSupplier::endThreads() {
   if (!df_started) {
     return;
   }
-  d_readerThread.join();
+
+  // stop the writers before stopping the readers
+  //  otherwise there might be a deadlock
   for (auto &thread : d_writerThreads) {
     thread.join();
   }
+  d_readerThread.join();
 }
 
 void MultithreadedMolSupplier::startThreads() {

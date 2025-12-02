@@ -47,7 +47,7 @@ const int ci_LOCAL_INF = static_cast<int>(1e8);
 namespace RDKit {
 namespace MolOps {
 namespace {
-void nitrogenCleanup(RWMol &mol, Atom *atom) {
+void nitrogensCleanup(RWMol &mol) {
   // conversions here:
   // - neutral 5 coordinate Ns with double bonds to Os to the
   //   zwitterionic form.  e.g.:
@@ -58,28 +58,34 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
   //   zwitterionic form.  e.g.:
   //   C-N=N#N -> C-N=[N+]=[N-]
 
-  PRECONDITION(atom, "bad atom");
-  bool aromHolder;
+  boost::dynamic_bitset<> nitrogensToConsider(mol.getNumAtoms());
+  for (auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() != 7) {
+      continue;
+    }
+    // we only want to do neutrals so that things like this don't get
+    // munged:
+    //  O=[n+]1occcc1
+    // this was sf.net issue 1811276
+    if (atom->getFormalCharge()) {
+      continue;
+    }
 
-  // we only want to do neutrals so that things like this don't get
-  // munged:
-  //  O=[n+]1occcc1
-  // this was sf.net issue 1811276
-  if (atom->getFormalCharge()) {
-    return;
-  }
-
-  // we need to play this little aromaticity game because the
-  // explicit valence code modifies its results for aromatic
-  // atoms.
-  aromHolder = atom->getIsAromatic();
-  atom->setIsAromatic(0);
-  // NOTE that we are calling calcExplicitValence() here, we do
-  // this because we cannot be sure that it has already been
-  // called on the atom (cleanUp() gets called pretty early in
-  // the sanitization process):
-  if (atom->calcExplicitValence(false) == 5) {
+    // NOTE that we are calling calcExplicitValence() here, we do
+    // this because we cannot be sure that it has already been
+    // called on the atom (cleanUp() gets called pretty early in
+    // the sanitization process):
+    if (atom->calcExplicitValence(false) != 5) {
+      continue;
+    }
+    nitrogensToConsider.set(atom->getIdx());
+    // we need to play this little aromaticity game because the
+    // explicit valence code modifies its results for aromatic
+    // atoms.
+    auto aromHolder = atom->getIsAromatic();
+    atom->setIsAromatic(0);
     unsigned int aid = atom->getIdx();
+    bool updateNeeded = false;
     for (const auto nbr : mol.atomNeighbors(atom)) {
       if ((nbr->getAtomicNum() == 8) && (nbr->getFormalCharge() == 0) &&
           (mol.getBondBetweenAtoms(aid, nbr->getIdx())->getBondType() ==
@@ -89,22 +95,44 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
         b->setBondType(Bond::SINGLE);
         atom->setFormalCharge(1);
         nbr->setFormalCharge(-1);
+        updateNeeded = true;
         break;
-      } else if ((nbr->getAtomicNum() == 7) && (nbr->getFormalCharge() == 0) &&
-                 (mol.getBondBetweenAtoms(aid, nbr->getIdx())->getBondType() ==
-                  Bond::TRIPLE)) {
+      }
+    }
+    // force a recalculation of the explicit valence if we changed anything
+    atom->setIsAromatic(aromHolder);
+    if (updateNeeded) {
+      atom->calcExplicitValence(false);
+    }
+  }
+
+  // now repeat for the weird N#N case:
+  for (auto aid = nitrogensToConsider.find_first();
+       aid != boost::dynamic_bitset<>::npos;
+       aid = nitrogensToConsider.find_next(aid)) {
+    Atom *atom = mol.getAtomWithIdx(aid);
+    auto aromHolder = atom->getIsAromatic();
+    atom->setIsAromatic(0);
+    bool updateNeeded = false;
+    for (const auto nbr : mol.atomNeighbors(atom)) {
+      if ((nbr->getAtomicNum() == 7) && (nbr->getFormalCharge() == 0) &&
+          (mol.getBondBetweenAtoms(aid, nbr->getIdx())->getBondType() ==
+           Bond::TRIPLE)) {
         // here's the triple bonded nitrogen
         auto b = mol.getBondBetweenAtoms(aid, nbr->getIdx());
         b->setBondType(Bond::DOUBLE);
         atom->setFormalCharge(1);
         nbr->setFormalCharge(-1);
+        updateNeeded = true;
         break;
       }
-    }  // end of loop over the first neigh
-  }  // if this atom is 5 coordinate nitrogen
-  // force a recalculation of the explicit valence here
-  atom->setIsAromatic(aromHolder);
-  atom->calcExplicitValence(false);
+    }
+    // force a recalculation of the explicit valence here
+    atom->setIsAromatic(aromHolder);
+    if (updateNeeded) {
+      atom->calcExplicitValence(false);
+    }
+  }
 }
 
 void phosphorusCleanup(RWMol &mol, Atom *atom) {
@@ -243,10 +271,10 @@ bool noDative(const Atom *a) {
 void metalBondCleanup(RWMol &mol, Atom *atom,
                       const std::vector<unsigned int> &ranks) {
   PRECONDITION(atom, "bad atom in metalBondCleanup");
-  // The IUPAC recommendation for ligand->metal coordination bonds is that they
-  // be single.  This upsets the RDKit valence model, as seen in CHEBI:26355,
-  // heme b.  If the valence of a non-metal atom is above the maximum in the
-  // RDKit model, and there are single bonds from it to metal
+  // The IUPAC recommendation for ligand->metal coordination bonds is that
+  // they be single.  This upsets the RDKit valence model, as seen in
+  // CHEBI:26355, heme b.  If the valence of a non-metal atom is above the
+  // maximum in the RDKit model, and there are single bonds from it to metal
   // change those bonds to atom->metal dative.
   // If the atom is bonded to more than 1 metal atom, choose the one
   // with the fewer dative bonds incident on it, with the canonical
@@ -284,11 +312,9 @@ void metalBondCleanup(RWMol &mol, Atom *atom,
 }  // namespace
 
 void cleanUp(RWMol &mol) {
+  nitrogensCleanup(mol);
   for (auto atom : mol.atoms()) {
     switch (atom->getAtomicNum()) {
-      case 7:
-        nitrogenCleanup(mol, atom);
-        break;
       case 15:
         phosphorusCleanup(mol, atom);
         break;
@@ -492,33 +518,37 @@ void cleanupAtropisomers(RWMol &mol) {
   MolOps::cleanupAtropisomers(mol, hybs);
 }
 
-void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
-  // make sure that ring info is available
-  // (defensive, current calls have it available)
+namespace {
+void checkBond(RWMol &mol, Bond *bond, MolOps::Hybridizations &hybs) {
   if (!mol.getRingInfo()->isSssrOrBetter()) {
     RDKit::MolOps::findSSSR(mol);
   }
   const RingInfo *ri = mol.getRingInfo();
+  if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
+      hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
+      // do not clear bonds that part of a macrocycle
+      // because they can be linking actual atropisomeric portions
+      (ri->numBondRings(bond->getIdx()) > 0 &&
+       ri->minBondRingSize(bond->getIdx()) < 8)) {
+    bond->setStereo(Bond::BondStereo::STEREONONE);
+  }
+}
+}  // namespace
+
+void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
+  // make sure that ring info is available
+  // (defensive, current calls have it available)
   for (auto bond : mol.bonds()) {
     switch (bond->getStereo()) {
       case Bond::BondStereo::STEREOATROPCW:
       case Bond::BondStereo::STEREOATROPCCW:
-        if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
-            hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
-            // do not clear bonds that part of a macrocycle
-            // because they can be linking actual atropisomeric portions
-            (ri->numBondRings(bond->getIdx()) > 0 &&
-             ri->minBondRingSize(bond->getIdx()) < 8)) {
-          bond->setStereo(Bond::BondStereo::STEREONONE);
-        }
+        checkBond(mol, bond, hybs);
         break;
-
       default:
         break;
     }
   }
 }
-
 void sanitizeMol(RWMol &mol) {
   unsigned int failedOp = 0;
   sanitizeMol(mol, failedOp, SANITIZE_ALL);
@@ -721,12 +751,19 @@ std::vector<std::unique_ptr<ROMol>> getTheFrags(
             }
           }
         }
-        // doesn't seem like this should be necessary, but in case
-        // we ever need stereogroups where the atoms aren't marked
-        // with stereo...
         for (auto stereoGroup : mol.getStereoGroups()) {
+          // doesn't seem like this should be necessary, but in case
+          // we ever need stereogroups where the atoms aren't marked
+          // with stereo...
           for (auto atom : stereoGroup.getAtoms()) {
             if (atomsInFrag[atom->getIdx()]) {
+              return true;
+            }
+          }
+          // same check for stereo groups involving bonds:
+          for (auto bond : stereoGroup.getBonds()) {
+            if (atomsInFrag[bond->getBeginAtomIdx()] &&
+                atomsInFrag[bond->getEndAtomIdx()]) {
               return true;
             }
           }
@@ -772,6 +809,7 @@ std::vector<std::unique_ptr<ROMol>> getTheFrags(
       } else {
         res.emplace_back(new RWMol(mol));
         auto &frag = res.back();
+
         frag->beginBatchEdit();
         for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
           if (!atomsInFrag[idx]) {
@@ -989,7 +1027,8 @@ int getFormalCharge(const ROMol &mol) {
   return accum;
 };
 
-unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
+unsigned getNumAtomsWithDistinctProperty(const ROMol &mol,
+                                         const std::string_view &prop) {
   unsigned numPropAtoms = 0;
   for (const auto atom : mol.atoms()) {
     if (atom->hasProp(prop)) {
@@ -1086,7 +1125,7 @@ std::vector<std::vector<unsigned int>> contiguousAtoms(
 // add to the molecule a dummy atom centred on the
 // atoms passed in, with a dative bond from it to the metal atom.
 void addHapticBond(RWMol &mol, unsigned int metalIdx,
-                   std::vector<unsigned int> hapticAtoms) {
+                   const std::vector<unsigned int> &hapticAtoms) {
   // So there is a * in the V3000 file as the symbol for the atom.
   auto dummyAt = new QueryAtom(0);
   dummyAt->setQuery(makeAtomNullQuery());

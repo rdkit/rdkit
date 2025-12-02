@@ -1,0 +1,109 @@
+# Example usage of this Dockerfile:
+# (the --build-arg arguments are all optional)
+#
+# 1. cd to Code/MinimalLib/docker
+# cd Code/MinimalLib/docker
+#
+# 2. build the MinimalLib rdkit-minimallib-deps image:
+# docker build --target deps-stage -t rdkit-minimallib-deps \
+#   --build-arg http_proxy=$HTTP_PROXY \
+#   --build-arg https_proxy=$HTTP_PROXY \
+#   --network=host --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
+#   -f Dockerfile_1_deps .
+
+
+ARG EMSDK_VERSION="latest"
+ARG EXCEPTION_HANDLING="-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
+ARG BOOST_MAJOR_VERSION="1"
+ARG BOOST_MINOR_VERSION="87"
+ARG BOOST_PATCH_VERSION="0"
+ARG BOOST_DOT_VERSION
+ARG BOOST_UNDERSCORE_VERSION
+ARG FREETYPE_VERSION="2.13.3"
+ARG ZLIB_VERSION="1.3.1"
+ARG http_proxy
+ARG https_proxy
+
+FROM debian:bookworm AS deps-stage
+ARG EMSDK_VERSION
+ARG EXCEPTION_HANDLING
+ARG RDKIT_GIT_URL
+ARG RDKIT_BRANCH
+ARG BOOST_MAJOR_VERSION
+ARG BOOST_MINOR_VERSION
+ARG BOOST_PATCH_VERSION
+ARG FREETYPE_VERSION
+ARG ZLIB_VERSION
+ARG http_proxy
+ARG https_proxy
+
+LABEL maintainer="Greg Landrum <greg.landrum@t5informatics.com>"
+
+RUN [ -n "${http_proxy}" ] && echo "export http_proxy=${http_proxy}" >> ~/.bashrc || true
+RUN [ -n "${https_proxy}" ] && echo "export https_proxy=${https_proxy}" >> ~/.bashrc || true
+SHELL ["/bin/bash", "-c", "-l"]
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get upgrade -y && apt install -y \
+  curl \
+  wget \
+  cmake \
+  python3 \
+  g++ \
+  libeigen3-dev \
+  git \
+  xz-utils \
+  nodejs
+
+# If you are in an organization, put your organization certs inside
+# the certs directory otherwise HTTPS might not work
+COPY certs /usr/local/share/ca-certificates/
+RUN update-ca-certificates
+
+ENV LANG C
+
+WORKDIR /opt
+RUN git clone https://github.com/emscripten-core/emsdk.git
+
+WORKDIR /src
+ARG BOOST_DOT_VERSION="${BOOST_MAJOR_VERSION}.${BOOST_MINOR_VERSION}.${BOOST_PATCH_VERSION}"
+ARG BOOST_UNDERSCORE_VERSION="${BOOST_MAJOR_VERSION}_${BOOST_MINOR_VERSION}_${BOOST_PATCH_VERSION}"
+RUN wget -q https://archives.boost.io/release/${BOOST_DOT_VERSION}/source/boost_${BOOST_UNDERSCORE_VERSION}.tar.gz && \
+  tar xzf boost_${BOOST_UNDERSCORE_VERSION}.tar.gz
+WORKDIR /src/boost_${BOOST_UNDERSCORE_VERSION}
+RUN ./bootstrap.sh --prefix=/opt/boost --with-libraries=system && \
+  ./b2 install
+
+WORKDIR /opt/emsdk
+RUN ./emsdk install ${EMSDK_VERSION} && \
+  ./emsdk activate ${EMSDK_VERSION}
+
+#RUN source ./emsdk_env.sh
+
+RUN echo "source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1" >> ~/.bashrc
+
+WORKDIR /src
+RUN wget -q https://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VERSION}.tar.gz && \
+  tar xzf freetype-${FREETYPE_VERSION}.tar.gz
+WORKDIR /src/freetype-${FREETYPE_VERSION}
+RUN mkdir build
+WORKDIR /src/freetype-${FREETYPE_VERSION}/build
+RUN emcmake cmake -DCMAKE_BUILD_TYPE=Release \
+  -DFT_DISABLE_ZLIB=TRUE -DFT_DISABLE_BZIP2=TRUE -DFT_DISABLE_PNG=TRUE \
+  -DFT_DISABLE_HARFBUZZ=TRUE -DFT_DISABLE_BROTLI=TRUE \
+  -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING}" -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING}" \
+  -DCMAKE_INSTALL_PREFIX=/opt/freetype ..
+RUN make -j2 && make -j2 install
+
+WORKDIR /src
+RUN wget -q https://zlib.net/zlib-${ZLIB_VERSION}.tar.gz && \
+  tar xzf zlib-${ZLIB_VERSION}.tar.gz
+WORKDIR /src/zlib-${ZLIB_VERSION}
+RUN mkdir build
+WORKDIR /src/zlib-${ZLIB_VERSION}/build
+RUN emcmake cmake -DCMAKE_BUILD_TYPE=Release -DZLIB_BUILD_EXAMPLES=OFF \
+  -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING}" -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING}" \
+  -DCMAKE_INSTALL_PREFIX=/opt/zlib ..
+RUN make && make install
+RUN echo "export BOOST_DOT_VERSION=${BOOST_DOT_VERSION}" >> ~/.bashrc
+RUN echo "export BOOST_UNDERSCORE_VERSION=${BOOST_UNDERSCORE_VERSION}" >> ~/.bashrc

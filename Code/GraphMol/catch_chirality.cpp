@@ -18,6 +18,7 @@
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/test_fixtures.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -2149,7 +2150,7 @@ TEST_CASE(
   RDLog::LogStateSetter setter;  // disable irritating warning messages
   auto molblock = R"CTAB(
      RDKit          3D
-     
+
   0  0  0  0  0  0  0  0  0  0999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 5 4 0 0 0
@@ -2679,7 +2680,7 @@ TEST_CASE("useLegacyStereoPerception feature flag") {
     CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
   }
   std::string molblock = R"CTAB(
-  Mrv2108 05202206352D          
+  Mrv2108 05202206352D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2797,7 +2798,7 @@ M  END
 TEST_CASE("github 5307: AssignAtomChiralTagsFromStructure ignores Hydrogens") {
   std::string mb = R"CTAB(
      RDKit          3D
-     
+
   0  0  0  0  0  0  0  0  0  0999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 5 4 0 0 0
@@ -3317,7 +3318,7 @@ void testStereoValidationFromMol(std::string molBlock,
 }
 
 std::string validateStereoMolBlockSpiro = R"(
-  Mrv2308 06232316112D          
+  Mrv2308 06232316112D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3359,7 +3360,7 @@ M  END
   )";
 
 std::string validateStereoMolBlockDoubleBondNoStereo = R"(
-  Mrv2308 06232316392D          
+  Mrv2308 06232316392D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3391,7 +3392,7 @@ M  END
   )";
 
 std::string validateStereoMolBlockDoubleBondNoStereo2 = R"(
-  Mrv0541 07011416342D          
+  Mrv0541 07011416342D
 
  21 22  0  0  0  0            999 V2000
    -1.9814    1.4834    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3449,7 +3450,7 @@ $$$$
 )";
 
 std::string validateStereoError1 = R"(
-  -ISIS-  -- StrEd -- 
+  -ISIS-  -- StrEd --
 
  29 32  0  0  0  0  0  0  0  0999 V2000
    -1.2050   -4.7172    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3525,7 +3526,7 @@ $$$$
 )";
 
 std::string validateStereoUniq1 = R"(
-  Mrv0541 06301412152D          
+  Mrv0541 06301412152D
 
  15 15  0  0  0  0            999 V2000
     1.0464   -0.3197    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3764,7 +3765,7 @@ TEST_CASE(
   }
   SECTION("ensure we can enumerate stereo on either double bonds") {
     auto mol = R"CTAB(
-  Mrv2004 11072316002D          
+  Mrv2004 11072316002D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3807,7 +3808,7 @@ M  END)CTAB"_ctab;
 TEST_CASE("adding two wedges to chiral centers") {
   SECTION("basics") {
     auto mol = R"CTAB(
-  Mrv2219 02112315062D          
+  Mrv2219 02112315062D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4102,7 +4103,7 @@ TEST_CASE("zero bond-length chirality cases") {
   SECTION("basics") {
     {
       auto m = R"CTAB(derived from CHEMBL3183068
-  Mrv2211 07202306222D          
+  Mrv2211 07202306222D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4140,7 +4141,7 @@ M  END
     }
     {
       auto m = R"CTAB(derived from CHEMBL3183068
-  Mrv2211 07202306222D          
+  Mrv2211 07202306222D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4255,7 +4256,7 @@ M  END
   SECTION("four-coordinate") {
     {
       auto m = R"CTAB(
-  Mrv2211 07202306492D          
+  Mrv2211 07202306492D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4282,7 +4283,7 @@ M  END
     }
     {
       auto m = R"CTAB(
-  Mrv2211 07202306492D          
+  Mrv2211 07202306492D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4309,7 +4310,7 @@ M  END
     }
     {
       auto m = R"CTAB(
-  Mrv2211 07202306492D          
+  Mrv2211 07202306492D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4470,7 +4471,7 @@ M  END
     auto m =
         R"CTAB(derived from CHEMBL2373651. This was wrong in the RDKit implementation
   Mrv2211 07212313282D
-            
+
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 7 7 0 0 1
@@ -4666,7 +4667,7 @@ M  V30 BEGIN BOND
 M  V30 1 1 2 1 CFG=1
 M  V30 2 1 3 2
 M  V30 3 1 4 6
-M  V30 4 1 5 3 
+M  V30 4 1 5 3
 M  V30 5 1 6 2
 M  V30 6 1 5 7 CFG=1
 M  V30 7 1 2 8 CFG=3
@@ -4925,7 +4926,7 @@ TEST_CASE(
   UseLegacyStereoPerceptionFixture reset_stereo_perception(legacy_stereo);
 
   auto m = R"CTAB(
-  Mrv2311 12122315472D          
+  Mrv2311 12122315472D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4961,7 +4962,7 @@ TEST_CASE(
     UseLegacyStereoPerceptionFixture reset_stereo_perception(legacy_stereo);
 
     auto m = R"CTAB(
-  Mrv2211 01252410552D          
+  Mrv2211 01252410552D
 
  10  9  0  0  0  0            999 V2000
     0.0000   -1.4364    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -5237,7 +5238,7 @@ M  END
   }
   SECTION("cage") {
     auto m = R"CTAB(
-  Mrv2305 03052406362D          
+  Mrv2305 03052406362D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -5535,7 +5536,7 @@ M  END
   }
   SECTION("favor larger rings") {
     auto m = R"CTAB(
-  Mrv2401 04262410272D          
+  Mrv2401 04262410272D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -6020,7 +6021,7 @@ TEST_CASE(
 TEST_CASE("Github issue #7983: stereogroup lost on chiral sulfoxide") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2317 02032512242D          
+  Mrv2317 02032512242D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -6133,7 +6134,7 @@ $$$$
     pathName += "/Code/GraphMol/test_data/Github8323.sdf";
     SDMolSupplier suppl(pathName);
     while (!suppl.atEnd()) {
-      auto mol = suppl.next();
+      std::unique_ptr<ROMol> mol(suppl.next());
       REQUIRE(mol);
       auto &sgs = mol->getStereoGroups();
       REQUIRE(sgs.size() == 1);
@@ -6151,7 +6152,7 @@ TEST_CASE("Github #8420: imines and crossed bonds") {
   UseLegacyStereoPerceptionFixture reset_stereo_perception(useLegacy);
   SECTION("as reported") {
     std::string ctab = R"CTAB(
-  MJ250100                      
+  MJ250100
 
   7  7  0  0  1  0  0  0  0  0999 V2000
     0.6961    0.4995    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -6172,5 +6173,315 @@ M  END)CTAB";
     auto m = v2::FileParsers::MolFromMolBlock(ctab);
     REQUIRE(m);
     CHECK(m->getBondWithIdx(0)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+}
+
+TEST_CASE(
+    "Github #8712: Modern stereo + 3D SD file leads to bad stereo detection for some molecules") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+
+  constexpr bool cleanUpStereo = false;
+  constexpr bool flagPossibleCenters = true;
+
+  SECTION("as reported") {
+    std::string ctab = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 23 23 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.628222 -0.014974 0.390914 0
+M  V30 2 N 1.918195 0.260032 -0.835284 0
+M  V30 3 C 0.487110 0.206615 -0.681308 0
+M  V30 4 C 0.079788 -1.165009 -0.217881 0
+M  V30 5 C -1.428295 -1.378335 -0.390798 0
+M  V30 6 S -2.156694 -0.136366 0.671587 0
+M  V30 7 O -1.585579 -0.347357 2.045208 0
+M  V30 8 O -3.651696 -0.172351 0.647489 0
+M  V30 9 C -1.519569 1.415993 0.067834 0
+M  V30 10 C -0.010801 1.307036 0.207366 0
+M  V30 11 H 1.988100 -0.320407 1.230786 0
+M  V30 12 H 3.238742 0.867078 0.711200 0
+M  V30 13 H 3.359131 -0.825206 0.185242 0
+M  V30 14 H 2.223613 -0.317010 -1.647727 0
+M  V30 15 H 0.041778 0.347830 -1.688472 0
+M  V30 16 H 0.284353 -1.370499 0.832996 0
+M  V30 17 H 0.580676 -1.905979 -0.844599 0
+M  V30 18 H -1.673500 -2.379109 -0.016810 0
+M  V30 19 H -1.696056 -1.195326 -1.452807 0
+M  V30 20 H -1.827609 1.481487 -0.996993 0
+M  V30 21 H -1.921584 2.283368 0.626641 0
+M  V30 22 H 0.172726 1.108075 1.288878 0
+M  V30 23 H 0.468947 2.250412 -0.133459 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 2 6 7
+M  V30 7 2 6 8
+M  V30 8 1 6 9
+M  V30 9 1 9 10
+M  V30 10 1 10 3
+M  V30 11 1 1 11
+M  V30 12 1 1 12
+M  V30 13 1 1 13
+M  V30 14 1 2 14
+M  V30 15 1 3 15
+M  V30 16 1 4 16
+M  V30 17 1 4 17
+M  V30 18 1 5 18
+M  V30 19 1 5 19
+M  V30 20 1 9 20
+M  V30 21 1 9 21
+M  V30 22 1 10 22
+M  V30 23 1 10 23
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+    auto m = v2::FileParsers::MolFromMolBlock(ctab);
+    REQUIRE(m);
+
+    auto centers =
+        Chirality::findPotentialStereo(*m, cleanUpStereo, flagPossibleCenters);
+    CHECK(centers.empty());
+  }
+  SECTION("overcorrection #1") {
+    // Do not break this one!
+    // This one comes from the doctests. I'm adding it here because it seems we
+    // don't have this case in any other C++ test.
+    auto m = R"SMI(C1C[C@H](C)[C@H](C)[C@H](C)C1)SMI"_smiles;
+    REQUIRE(m);
+    auto centers =
+        Chirality::findPotentialStereo(*m, cleanUpStereo, flagPossibleCenters);
+    CHECK(centers.size() == 3);
+  }
+  SECTION("overcorrection #2") {
+    // Do not break this one either!
+    // This case seems to be related to the order of the atoms, since I haven't
+    // been able to reproduce with the equivalent SMILES with explicit Hs.
+    auto m = R"SMI(C[C@H]1C[C@@H](C)C1)SMI"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);  // This only manifests if Hs are present
+    auto centers =
+        Chirality::findPotentialStereo(*m, cleanUpStereo, flagPossibleCenters);
+    CHECK(centers.size() == 2);
+  }
+}
+
+#if 1
+TEST_CASE(
+    "Github #8689: stereo canonicalization depends on bond iteration order") {
+  bool useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(useLegacy);
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+
+  SECTION("simplified") {
+    pathName += "github8689_2.sdf";
+    v2::FileParsers::SDMolSupplier suppl(pathName);
+    auto m1 = suppl[0];
+    REQUIRE(m1);
+    auto m2 = suppl[1];
+    REQUIRE(m2);
+    // m1->debugMol(std::cerr);
+    // m2->debugMol(std::cerr);
+
+    CIPLabeler::assignCIPLabels(*m1);
+    CIPLabeler::assignCIPLabels(*m2);
+    REQUIRE(m1->getAtomWithIdx(7)->hasProp(common_properties::_CIPCode));
+    REQUIRE(m1->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
+    REQUIRE(m2->getAtomWithIdx(7)->hasProp(common_properties::_CIPCode));
+    REQUIRE(m2->getAtomWithIdx(8)->hasProp(common_properties::_CIPCode));
+
+    CHECK(m1->getAtomWithIdx(7)->getProp<std::string>(
+              common_properties::_CIPCode) ==
+          m2->getAtomWithIdx(7)->getProp<std::string>(
+              common_properties::_CIPCode));
+    CHECK(m1->getAtomWithIdx(8)->getProp<std::string>(
+              common_properties::_CIPCode) ==
+          m2->getAtomWithIdx(8)->getProp<std::string>(
+              common_properties::_CIPCode));
+
+    auto smi1 = MolToSmiles(*m1);
+    auto smi2 = MolToSmiles(*m2);
+    CHECK(smi1 == smi2);
+  }
+}
+#endif
+TEST_CASE("extra ring stereo with new stereo perception") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+  SECTION("basics") {
+    std::string smi = "C2O[C@H]3[C@@]4([C@](CCC(C24))(O)CC=C3)C";
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m);
+    for (auto idx : {2, 3, 4}) {
+      INFO(idx);
+      const auto atm = m->getAtomWithIdx(idx);
+      REQUIRE(atm);
+      CHECK(atm->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(!atm->hasProp(common_properties::_ringStereoAtoms));
+    }
+  }
+  SECTION("don't destroy actual ring stereo") {
+    std::string smi = "C[C@@H]1CC[C@@H](C)CC1";
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m);
+    // m->debugMol(std::cerr);
+    // for (const auto atm : m->atoms()) {
+    //   std::cerr << atm->getIdx() << ": "
+    //             << atm->getProp<unsigned int>(
+    //                    common_properties::_ChiralAtomRank)
+    //             << std::endl;
+    // }
+    for (auto idx : {1, 4}) {
+      INFO(idx);
+      const auto atm = m->getAtomWithIdx(idx);
+      REQUIRE(atm);
+      CHECK(atm->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
+      CHECK(atm->hasProp(common_properties::_ringStereoAtoms));
+    }
+  }
+  SECTION("#8956 ensure ring stereochemistry is not inverted on round trip") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+    auto [smi1, smi2] = GENERATE(
+        std::make_pair("CC[C@]1(C)CCC[C@](C)(O)C1",
+                       "CC[C@@]1(C)CCC[C@@](C)(O)C1"),
+        std::make_pair("C[C@H]1CCC[C@](C)(O)C1", "C[C@@H]1CCC[C@@](C)(O)C1"));
+    auto m1 = v2::SmilesParse::MolFromSmiles(smi1);
+    REQUIRE(m1);
+    auto m2 = v2::SmilesParse::MolFromSmiles(smi2);
+    REQUIRE(m2);
+
+    MolOps::assignStereochemistry(*m1, true, true, true);
+    MolOps::assignStereochemistry(*m2, true, true, true);
+
+    auto roundtrip1 = MolToSmiles(*m1);
+    auto roundtrip2 = MolToSmiles(*m2);
+    CHECK(roundtrip1 == smi1);
+    CHECK(roundtrip2 == smi2);
+    CHECK(roundtrip2 != roundtrip1);
+  }
+}
+TEST_CASE("ring stereo basics with new stereo") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+  auto m = "CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,11,&1:14|"_smiles;
+  REQUIRE(m);
+  auto smi = MolToCXSmiles(*m);
+  CHECK(smi == "CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,11,&1:14|");
+}
+
+TEST_CASE("zero chiral volume and T shape molecule") {
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+
+  SECTION("simplified") {
+    auto m1 = R"CTAB(178 degrees (not T shaped)
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C  0.000000 1.000000 0.000000 0
+M  V30 2 C  0.000000 0.000000 0.000000 0
+M  V30 3 O -0.999847 -0.017452 0.000000 0
+M  V30 4 F  0.999847 -0.017452 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m1);
+    // make sure we perceived it correctly:
+    CHECK(m1->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    // make sure we round trip it:
+    auto m1mb = MolToV3KMolBlock(*m1);
+    auto m1r = v2::FileParsers::MolFromMolBlock(m1mb);
+    REQUIRE(m1r);
+    CHECK(MolToSmiles(*m1) == MolToSmiles(*m1r));
+
+    auto m2 = R"CTAB(179 degrees (T shaped)
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C  0.000000 1.000000 0.000000 0
+M  V30 2 C  0.000000 0.000000 0.000000 0
+M  V30 3 O -0.999962 -0.0087265 0.000000 0
+M  V30 4 F  0.999962 -0.0087265 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=1
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m2);
+    CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    auto m2mb = MolToV3KMolBlock(*m2);
+    auto m2r = v2::FileParsers::MolFromMolBlock(m2mb);
+    REQUIRE(m2r);
+    CHECK(MolToSmiles(*m2) == MolToSmiles(*m2r));
+  }
+
+  SECTION("as reported") {
+    pathName += "zero_chiral_volume_1.sdf";
+    auto m = v2::FileParsers::MolFromMolFile(pathName);
+    REQUIRE(m);
+    for (const auto idx : {15, 22, 39}) {
+      INFO(idx);
+      CHECK(m->getAtomWithIdx(idx)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("large rings") {
+    for (const std::string fn :
+         {"zero_chiral_volume_2.60.mol", "zero_chiral_volume_2.80.mol"}) {
+      INFO(fn);
+      std::string lpath = pathName + fn;
+      auto m = v2::FileParsers::MolFromMolFile(lpath);
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    }
+  }
+  SECTION("mol block round trip") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fname =
+        rdbase + "/Code/GraphMol/test_data/zero_chiral_volume_simple.mol";
+    auto mol = v2::FileParsers::MolFromMolFile(fname);
+    REQUIRE(mol);
+
+    {
+      ROMol mol2(*mol);
+      Chirality::wedgeMolBonds(mol2);
+      CHECK(mol2.getBondBetweenAtoms(0, 1)->getBondDir() ==
+            Bond::BondDir::BEGINDASH);
+    }
+    auto mb = MolToMolBlock(*mol);
+    auto mol2 = v2::FileParsers::MolFromMolBlock(mb);
+
+    auto smi = MolToSmiles(*mol);
+    auto smimb = MolToSmiles(*mol2);
+    CHECK(smi == smimb);
   }
 }

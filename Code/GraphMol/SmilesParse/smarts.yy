@@ -1,12 +1,14 @@
 %{
 
   //
-  //  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
+  //  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
   //
   //   @@ All Rights Reserved  @@
   //
 #include <cstring>
-#include <iostream>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include <GraphMol/RDKitBase.h>
@@ -18,7 +20,7 @@
 #define YYDEBUG 1
 #include "smarts.tab.hpp"
 
-extern int yysmarts_lex(YYSTYPE *,void *, int &);
+extern int yysmarts_lex(YYSTYPE *,void *, int &, unsigned int&);
 
 using namespace RDKit;
 namespace {
@@ -31,28 +33,87 @@ namespace {
   molList->clear();
   molList->resize(0);
  }
+  const std::uint64_t SMARTS_H_MASK = 0x1;
+  const std::uint64_t SMARTS_CHARGE_MASK = 0x2;
+
+  void atom_expr_and_point_query(QueryAtom *atom_expr, QueryAtom *point_query) {
+    atom_expr->expandQuery(point_query->getQuery()->copy(), Queries::COMPOSITE_AND, true);
+    if (atom_expr->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+      atom_expr->setChiralTag(point_query->getChiralTag());
+      int perm;
+      if (point_query->getPropIfPresent(common_properties::_chiralPermutation, perm)) {
+        atom_expr->setProp(common_properties::_chiralPermutation, perm);
+      }
+    }
+    if (point_query->getFlags() & SMARTS_H_MASK) {
+      if (!(atom_expr->getFlags() & SMARTS_H_MASK)) {
+        atom_expr->setNumExplicitHs(point_query->getNumExplicitHs());
+        atom_expr->setNoImplicit(true);
+        atom_expr->getFlags() |= SMARTS_H_MASK;
+      } else if (atom_expr->getNumExplicitHs() != point_query->getNumExplicitHs()) {
+        // conflicting queries...
+        atom_expr->setNumExplicitHs(0);
+        atom_expr->setNoImplicit(true);
+      }
+    }
+    if (point_query->getFlags() & SMARTS_CHARGE_MASK) {
+      if (!(atom_expr->getFlags() & SMARTS_CHARGE_MASK)) {
+        atom_expr->setFormalCharge(point_query->getFormalCharge());
+        atom_expr->getFlags() |= SMARTS_CHARGE_MASK;
+      } else if (atom_expr->getFormalCharge() != point_query->getFormalCharge()) {
+        // conflicting queries...
+        atom_expr->setFormalCharge(0);
+      }
+    }
+  }
+
 }
 void
 yysmarts_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
                 RDKit::Atom* &,
                 RDKit::Bond* &,
-                unsigned int &,unsigned int &,
-                std::list<unsigned int> *,
-		void *,int , const char *msg  )
+                unsigned int &,
+                unsigned int &,
+                std::vector<std::pair<unsigned int, unsigned int>>&,
+                void *,
+                int,
+                unsigned int bad_token_position,
+                const char *msg  )
 {
   yyErrorCleanup(ms);
-  BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << msg << " while parsing: " << input << std::endl;
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMARTS");
 }
 
 void
 yysmarts_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
-                std::list<unsigned int> *,
-		void *,int, const char * msg )
+                std::vector<std::pair<unsigned int, unsigned int>>&,
+                void *,
+                int,
+                unsigned int bad_token_position,
+                const char * msg )
 {
   yyErrorCleanup(ms);
-  BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << msg << " while parsing: " << input << std::endl;
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMARTS");
+}
+
+void
+yysmarts_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
+                unsigned int bad_token_position, const char * msg )
+{
+  yyErrorCleanup(ms);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input,
+                                                  msg,
+                                                  bad_token_position,
+                                                  "SMARTS");
 }
 
 
@@ -61,20 +122,22 @@ yysmarts_error( const char *input,
 %define api.pure full
 %lex-param   {yyscan_t *scanner}
 %lex-param   {int& start_token}
+%lex-param   {unsigned int& current_token_position}
 %parse-param {const char *input}
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {RDKit::Atom* &lastAtom}
 %parse-param {RDKit::Bond* &lastBond}
 %parse-param {unsigned &numAtomsParsed}
 %parse-param {unsigned &numBondsParsed}
-%parse-param {std::list<unsigned int> *branchPoints}
+%parse-param {std::vector<std::pair<unsigned int, unsigned int>>& branchPoints}
 %parse-param {void *scanner}
 %parse-param {int& start_token}
+%parse-param {unsigned int& current_token_position}
 
 %code provides {
 #ifndef YY_DECL
 #define YY_DECL int yylex \
-               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token, unsigned int& current_token_position)
 #endif
 }
 
@@ -101,12 +164,13 @@ yysmarts_error( const char *input,
 %token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN BEGIN_RECURSE END_RECURSE
 %token COLON_TOKEN UNDERSCORE_TOKEN
 %token <bond> BOND_TOKEN
-%token <chiraltype> CHI_CLASS_TOKEN 
+%token <chiraltype> CHI_CLASS_TOKEN
 %type <moli>  mol
 %type <atom> atomd simple_atom hydrogen_atom
 %type <atom> atom_expr point_query atom_query recursive_query possible_range_query
-%type <ival> ring_number nonzero_number number charge_spec digit
+%type <ival> ring_number nonzero_number number charge_spec digit branch_open_token
 %type <bond> bondd bond_expr bond_query
+%token BAD_CHARACTER
 %token EOS_TOKEN
 
 %left SEMI_TOKEN
@@ -145,6 +209,12 @@ START_MOL mol {
   YYABORT;
 }
 | START_BOND {
+  YYABORT;
+}
+| meta_start BAD_CHARACTER {
+  yyerrok;
+  yyErrorCleanup(molList);
+  yyerror(input, molList, current_token_position, "syntax error");
   YYABORT;
 }
 | meta_start error EOS_TOKEN{
@@ -269,7 +339,7 @@ mol: atomd {
 
 }
 
-| mol GROUP_OPEN_TOKEN atomd {
+| mol branch_open_token atomd {
   RWMol *mp = (*molList)[$$];
   Atom *a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
@@ -283,10 +353,10 @@ mol: atomd {
   mp->addBond(newB);
   delete newB;
 
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back({atomIdx1, $2});
 }
 
-| mol GROUP_OPEN_TOKEN bond_expr atomd  {
+| mol branch_open_token bond_expr atomd  {
   RWMol *mp = (*molList)[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($4,true,true);
@@ -304,20 +374,20 @@ mol: atomd {
   }
   $3->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->addBond($3,true);
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back({atomIdx1, $2});
 
 }
 
 
 | mol GROUP_CLOSE_TOKEN {
-  if(branchPoints->empty()){
-     yyerror(input,molList,branchPoints,scanner,start_token,"extra close parentheses");
+  if(branchPoints.empty()){
+     yyerror(input,molList,branchPoints,scanner,start_token, current_token_position, "extra close parentheses");
      yyErrorCleanup(molList);
      YYABORT;
   }
   RWMol *mp = (*molList)[$$];
-  mp->setActiveAtom(branchPoints->back());
-  branchPoints->pop_back();
+  mp->setActiveAtom(branchPoints.back().first);
+  branchPoints.pop_back();
 }
 
 ;
@@ -379,12 +449,14 @@ hydrogen_atom:	ATOM_OPEN_TOKEN H_TOKEN ATOM_CLOSE_TOKEN
 | ATOM_OPEN_TOKEN H_TOKEN charge_spec ATOM_CLOSE_TOKEN {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setFormalCharge($3);
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomFormalChargeQuery($3),Queries::COMPOSITE_AND,true);
   $$=newQ;
 }
 | ATOM_OPEN_TOKEN H_TOKEN charge_spec COLON_TOKEN number ATOM_CLOSE_TOKEN {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setFormalCharge($3);
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomFormalChargeQuery($3),Queries::COMPOSITE_AND,true);
   newQ->setProp(RDKit::common_properties::molAtomMapNumber,$5);
 
@@ -394,6 +466,7 @@ hydrogen_atom:	ATOM_OPEN_TOKEN H_TOKEN ATOM_CLOSE_TOKEN
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope($2);
   newQ->setFormalCharge($4);
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomIsotopeQuery($2),Queries::COMPOSITE_AND,true);
   newQ->expandQuery(makeAtomFormalChargeQuery($4),Queries::COMPOSITE_AND,true);
   $$=newQ;
@@ -402,6 +475,7 @@ hydrogen_atom:	ATOM_OPEN_TOKEN H_TOKEN ATOM_CLOSE_TOKEN
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope($2);
   newQ->setFormalCharge($4);
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomIsotopeQuery($2),Queries::COMPOSITE_AND,true);
   newQ->expandQuery(makeAtomFormalChargeQuery($4),Queries::COMPOSITE_AND,true);
   newQ->setProp(RDKit::common_properties::molAtomMapNumber,$6);
@@ -416,6 +490,7 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
   if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
   SmilesParseOps::ClearAtomChemicalProps($1);
   delete $3;
+  $$ = $1;
 }
 | atom_expr OR_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_OR,true);
@@ -423,35 +498,24 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
   SmilesParseOps::ClearAtomChemicalProps($1);
   $1->setAtomicNum(0);
   delete $3;
+  $$ = $1;
 }
 | atom_expr SEMI_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
   SmilesParseOps::ClearAtomChemicalProps($1);
   delete $3;
+  $$ = $1;
 }
 | atom_expr point_query {
-  $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($2->getChiralTag());
-  if($2->getNumExplicitHs()){
-    if(!$1->getNumExplicitHs()){
-      $1->setNumExplicitHs($2->getNumExplicitHs());
-      $1->setNoImplicit(true);
-    } else if($1->getNumExplicitHs()!=$2->getNumExplicitHs()){
-      // conflicting queries...
-      $1->setNumExplicitHs(0);
-      $1->setNoImplicit(false);
-    }
-  }
-  if($2->getFormalCharge()){
-    if(!$1->getFormalCharge()){
-      $1->setFormalCharge($2->getFormalCharge());
-    } else if($1->getFormalCharge()!=$2->getFormalCharge()){
-      // conflicting queries...
-      $1->setFormalCharge(0);
-    }
-  }
+  atom_expr_and_point_query($1, $2);
   delete $2;
+  $$ = $1;
+}
+| atom_expr AND_TOKEN point_query {
+  atom_expr_and_point_query($1, $3);
+  delete $3;
+  $$ = $1;
 }
 | point_query
 ;
@@ -534,33 +598,41 @@ atom_query:	simple_atom
 | IMPLICIT_H_ATOM_QUERY_TOKEN
 | COMPLEX_ATOM_QUERY_TOKEN number {
   static_cast<ATOM_EQUALS_QUERY *>($1->getQuery())->setVal($2);
+  $$ = $1;
 }
 | HETERONEIGHBOR_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomNumHeteroatomNbrsQuery($2));
+  $$ = $1;
 }
 | ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery($2));
+  $$ = $1;
 }
 | RINGSIZE_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomMinRingSizeQuery($2));
+  $$ = $1;
 }
 | RINGBOND_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomRingBondCountQuery($2));
+  $$ = $1;
 }
 | IMPLICIT_H_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomImplicitHCountQuery($2));
+  $$ = $1;
 }
 | possible_range_query RANGE_OPEN_TOKEN MINUS_TOKEN number RANGE_CLOSE_TOKEN {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());
   ATOM_GREATEREQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_GREATEREQUAL_QUERY>($4,oq->getDataFunc(),
     std::string("greater_")+oq->getDescription());
   $1->setQuery(nq);
+  $$ = $1;
 }
 | possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN RANGE_CLOSE_TOKEN {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());
   ATOM_LESSEQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>($3,oq->getDataFunc(),
     std::string("less_")+oq->getDescription());
   $1->setQuery(nq);
+  $$ = $1;
 }
 | possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN number RANGE_CLOSE_TOKEN {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());
@@ -568,6 +640,7 @@ atom_query:	simple_atom
     oq->getDataFunc(),
     std::string("range_")+oq->getDescription());
   $1->setQuery(nq);
+  $$ = $1;
 }
 | number H_TOKEN {
   QueryAtom *newQ = new QueryAtom();
@@ -575,6 +648,8 @@ atom_query:	simple_atom
   newQ->setIsotope($1);
   newQ->expandQuery(makeAtomHCountQuery(1),Queries::COMPOSITE_AND,true);
   newQ->setNumExplicitHs(1);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   $$=newQ;
 }
 | number H_TOKEN number {
@@ -583,24 +658,32 @@ atom_query:	simple_atom
   newQ->setIsotope($1);
   newQ->expandQuery(makeAtomHCountQuery($3),Queries::COMPOSITE_AND,true);
   newQ->setNumExplicitHs($3);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   $$=newQ;
 }
 | H_TOKEN number {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery($2));
   newQ->setNumExplicitHs($2);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   $$=newQ;
+  
 }
 | H_TOKEN {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery(1));
   newQ->setNumExplicitHs(1);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   $$=newQ;
 }
 | charge_spec {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomFormalChargeQuery($1));
   newQ->setFormalCharge($1);
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   $$=newQ;
 }
 | AT_TOKEN AT_TOKEN {
@@ -623,6 +706,13 @@ atom_query:	simple_atom
   $$=newQ;
 }
 | CHI_CLASS_TOKEN number {
+  if($2==0){
+    yyerror(input,molList,branchPoints,scanner,start_token, current_token_position,
+            "chiral permutation cannot be zero");
+    yyErrorCleanup(molList);
+    YYABORT;
+  }
+
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
   newQ->setChiralTag($1);
@@ -640,18 +730,23 @@ atom_query:	simple_atom
 possible_range_query : COMPLEX_ATOM_QUERY_TOKEN
 | HETERONEIGHBOR_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomNumHeteroatomNbrsQuery(0));
+  $$ = $1;
 }
 | ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery(0));
+  $$ = $1;
 }
 | RINGSIZE_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomMinRingSizeQuery(5)); // this is going to be ignored anyway
+  $$ = $1;
 }
 | RINGBOND_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomRingBondCountQuery(0));
+  $$ = $1;
 }
 | IMPLICIT_H_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomImplicitHCountQuery(0));
+  $$ = $1;
 }
 | PLUS_TOKEN {
   QueryAtom *newQ = new QueryAtom();
@@ -691,14 +786,17 @@ simple_atom: 	ORGANIC_ATOM_TOKEN {
 bond_expr:bond_expr AND_TOKEN bond_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $3;
+  $$ = $1;
 }
 | bond_expr OR_TOKEN bond_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_OR,true);
   delete $3;
+  $$ = $1;
 }
 | bond_expr SEMI_TOKEN bond_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $3;
+  $$ = $1;
 }
 | bond_query
 ;
@@ -707,6 +805,7 @@ bond_query: bondd
 | bond_query bondd {
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $2;
+  $$ = $1;
 }
 ;
 
@@ -768,10 +867,10 @@ number:  ZERO_TOKEN
 
 /* --------------------------------------------------------------- */
 nonzero_number:  NONZERO_DIGIT_TOKEN
-| nonzero_number digit { 
-    if($1 >= std::numeric_limits<std::int32_t>::max()/10 || 
+| nonzero_number digit {
+    if($1 >= std::numeric_limits<std::int32_t>::max()/10 ||
      $1*10 >= std::numeric_limits<std::int32_t>::max()-$2 ){
-     yysmarts_error(input,molList,lastAtom,lastBond,numAtomsParsed,numBondsParsed,branchPoints,scanner,start_token,"number too large");
+     yysmarts_error(input,molList,lastAtom,lastBond,numAtomsParsed,numBondsParsed,branchPoints,scanner,start_token, current_token_position, "number too large");
      YYABORT;
   }
   $$ = $1*10 + $2; }
@@ -780,5 +879,8 @@ nonzero_number:  NONZERO_DIGIT_TOKEN
 digit: NONZERO_DIGIT_TOKEN
 | ZERO_TOKEN
 ;
+
+// We'll use the token position for unclosed branch syntax error messages
+branch_open_token: GROUP_OPEN_TOKEN { $$ = current_token_position; };
 
 %%

@@ -99,7 +99,7 @@ python::list findMCESWrapper(const ROMol &mol1, const ROMol &mol2,
 
 std::vector<std::shared_ptr<ROMol>> extractMols(python::object mols) {
   std::vector<std::shared_ptr<ROMol>> cmols;
-  unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
+  unsigned int nElems = python::len(mols);
   cmols.resize(nElems);
   for (unsigned int i = 0; i < nElems; ++i) {
     if (!mols[i]) {
@@ -203,6 +203,11 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
           "allBestMCESs", &RDKit::RascalMCES::RascalOptions::allBestMCESs,
           "If True, reports all MCESs found of the same maximum size.  Default False means just report the first found.")
       .def_readwrite(
+          "maxBestMCESs", &RDKit::RascalMCES::RascalOptions::maxBestMCESs,
+          "Some pathological cases produce huge numbers of equivalent solutions that can crash"
+          " the program due to memory depletion.  This caps the number of such solutions to prevent"
+          " this happening.  Default=10000.")
+      .def_readwrite(
           "returnEmptyMCES", &RDKit::RascalMCES::RascalOptions::returnEmptyMCES,
           "If the estimated similarity between the 2 molecules doesn't meet the similarityThreshold, no results are returned.  If you want to know what the"
           " estimates were, set this to True, and examine the tier1Sim and tier2Sim properties of the result then returned.")
@@ -239,7 +244,8 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
                      " is > 0, it will over-ride the"
                      " similarityThreshold."
                      "  Note that this refers to the"
-                     " minimum number of BONDS in the MCES. Default=0.");
+                     " minimum number of BONDS in the MCES. Default=0.")
+      .def("__setattr__", &safeSetattr);
 
   docString =
       "Find one or more MCESs between the 2 molecules given.  Returns a list of "
@@ -285,7 +291,8 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
       .def_readwrite(
           "clusterMergeSim",
           &RDKit::RascalMCES::RascalClusterOptions::clusterMergeSim,
-          "Two clusters are merged if the fraction of molecules they have in common is greater than this.  Default=0.6.");
+          "Two clusters are merged if the fraction of molecules they have in common is greater than this.  Default=0.6.")
+      .def("__setattr__", &safeSetattr);
 
   docString =
       "Use the RASCAL MCES similarity metric to do fuzzy clustering.  Returns a list of lists "
