@@ -22,6 +22,7 @@
 #include <vector>
 #include <random>
 #include <cstdlib>
+#include <span>
 
 using namespace RDKit;
 
@@ -77,21 +78,19 @@ void qs1(const std::vector<std::vector<int>> &vects) {
 void hs1(const std::vector<std::vector<int>> &vects) {
   BOOST_LOG(rdInfoLog) << "sorting (hanoi sort) vectors" << std::endl;
   for (const auto &vect : vects) {
-    const int *data = &vect.front();
+    const int *data = vect.data();
     int_compare_ftor icmp(data);
-    int *indices = (int *)malloc(vect.size() * sizeof(int));
+    std::vector<int> indices(vect.size());
+    std::span<int> ispan(indices);
     for (unsigned int j = 0; j < vect.size(); ++j) {
       indices[j] = j;
     }
     std::vector<int> count(vect.size());
-    int *changed = (int *)malloc(vect.size() * sizeof(int));
-    memset(changed, 1, vect.size() * sizeof(int));
-    RDKit::hanoisort(indices, vect.size(), count.data(), changed, icmp);
+    std::vector<int> changed(vect.size(), 1);
+    RDKit::hanoisort(ispan, vect.size(), count, changed, icmp);
     for (unsigned int j = 1; j < vect.size(); ++j) {
       TEST_ASSERT(data[indices[j]] >= data[indices[j - 1]]);
     }
-    free(indices);
-    free(changed);
   }
   BOOST_LOG(rdInfoLog) << "done: " << vects.size() << std::endl;
 }
@@ -204,10 +203,11 @@ void test2() {
   // make sure that hanoi works with a functor and "molecule data"
   {
     std::string smi = "FC1C(Cl)C1C";
-    RWMol *m = SmilesToMol(smi);
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     std::vector<int> indices(m->getNumAtoms());
+    std::span<int> ispan(indices);
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
       atoms[i].atom = m->getAtomWithIdx(i);
       atoms[i].index = 0;
@@ -215,11 +215,9 @@ void test2() {
     }
     atomcomparefunctor ftor(&atoms.front());
 
-    int *data = &indices.front();
     std::vector<int> count(atoms.size());
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
-    RDKit::hanoisort(data, atoms.size(), count.data(), changed, ftor);
+    std::vector<int> changed(atoms.size(), 1);
+    RDKit::hanoisort(ispan, atoms.size(), count, changed, ftor);
 
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
       // std::cerr<<indices[i]<<" "<<" index: "<<atoms[indices[i]].index<<"
@@ -237,8 +235,6 @@ void test2() {
         TEST_ASSERT(count[indices[i]] != 0);
       }
     }
-    delete m;
-    free(changed);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
@@ -256,7 +252,7 @@ void test3() {
 
     RDKit::Canon::canon_atom *data = &atoms.front();
     std::vector<int> count(atoms.size());
-    int *order = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> order(atoms.size());
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
@@ -296,7 +292,6 @@ void test3() {
     TEST_ASSERT(count[order[7]] == 1);
 
     delete m;
-    free(order);
   }
   {
     // this time with smarter invariants
@@ -309,7 +304,8 @@ void test3() {
 
     RDKit::Canon::canon_atom *data = &atoms.front();
     std::vector<int> count(atoms.size());
-    int *order = (int *)malloc(atoms.size() * sizeof(int));
+
+    std::vector<int> order(atoms.size());
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
@@ -341,7 +337,6 @@ void test3() {
     TEST_ASSERT(count[order[5]] == 3);
     TEST_ASSERT(count[order[6]] == 0);
     delete m;
-    free(order);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
@@ -445,7 +440,7 @@ void test4() {
     atomcomparefunctor3 ftor(&atoms.front(), *m);
     RDKit::Canon::canon_atom *data = &atoms.front();
     std::vector<int> count(atoms.size());
-    int *order = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> order(atoms.size());
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
@@ -493,7 +488,6 @@ void test4() {
       }
     }
     delete m;
-    free(order);
   }
 
   {
@@ -506,7 +500,7 @@ void test4() {
 
     RDKit::Canon::canon_atom *data = &atoms.front();
     std::vector<int> count(atoms.size());
-    int *order = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> order(atoms.size());
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
@@ -541,7 +535,6 @@ void test4() {
       }
     }
     delete m;
-    free(order);
   }
 
   {
@@ -554,7 +547,7 @@ void test4() {
 
     RDKit::Canon::canon_atom *data = &atoms.front();
     std::vector<int> count(atoms.size());
-    int *order = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> order(atoms.size());
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
@@ -604,7 +597,6 @@ void test4() {
     TEST_ASSERT(order[9] == 1 && count[1] == 1);
 
     delete m;
-    free(order);
   }
 
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
@@ -624,7 +616,7 @@ void test5() {
 
     RDKit::Canon::canon_atom *data = &atoms.front();
     std::vector<int> count(atoms.size());
-    int *order = (int *)malloc(atoms.size() * sizeof(int));
+    std::vector<int> order(atoms.size());
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
@@ -676,7 +668,6 @@ void test5() {
       TEST_ASSERT(count[order[i]] == 1);
     }
     delete m;
-    free(order);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
@@ -1117,6 +1108,8 @@ std::string smis[] = {
 void test7() {
   BOOST_LOG(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;
   unsigned int i = 0;
+  auto start = std::chrono::high_resolution_clock::now();
+
   while (smis[i] != "EOS") {
     std::string smiles = smis[i++];
     ROMol *m = SmilesToMol(smiles);
@@ -1125,6 +1118,10 @@ void test7() {
     _renumberTest(m, smiles, 1000);
     delete m;
   }
+  auto end = std::chrono::high_resolution_clock::now();
+  auto diff =
+      std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  BOOST_LOG(rdInfoLog) << "      Finished in " << diff.count() << " ms" << std::endl;
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
