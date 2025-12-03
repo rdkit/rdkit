@@ -183,18 +183,16 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   Bond *firstFromAtom2 = nullptr, *secondFromAtom2 = nullptr;
 
   ROMol &mol = dblBond->getOwningMol();
-  auto firstVisitOrder = mol.getNumBonds() + 1;
 
-  ROMol::OBOND_ITER_PAIR atomBonds;
   // -------------------------------------------------------
   // find the lowest visit order bonds from each end and determine
   // if anything is already constraining our choice of directions:
   bool dir1Set = false, dir2Set = false;
 
-  auto findNeighborBonds = [&mol, &dblBond, &bondDirCounts, &bondVisitOrders,
-                            &firstVisitOrder](
+  auto findNeighborBonds = [&mol, &dblBond, &bondDirCounts, &bondVisitOrders](
                                auto atom, auto &firstNeighborBond,
                                auto &secondNeighborBond, auto &dirSet) {
+    auto firstVisitOrder = mol.getNumBonds() + 1;
     for (const auto bond : mol.atomBonds(atom)) {
       if (bond == dblBond || !canSetDoubleBondStereo(*bond)) {
         continue;
@@ -217,7 +215,6 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   };
 
   findNeighborBonds(atom1, firstFromAtom1, secondFromAtom1, dir1Set);
-  firstVisitOrder = mol.getNumBonds() + 1;
   findNeighborBonds(atom2, firstFromAtom2, secondFromAtom2, dir2Set);
 
   // Make sure we found everything we need to find.
@@ -376,11 +373,11 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
     atomDirCounts[atom2->getIdx()] += 1;
   } else {
     // we come before a ring closure:
-    if (dblBond->getStereo() == Bond::STEREOZ ||
-        dblBond->getStereo() == Bond::STEREOCIS) {
+    if (dblBond->getStereo() == Bond::STEREOE ||
+        dblBond->getStereo() == Bond::STEREOTRANS) {
       atom1Dir = atom2Dir;
-    } else if (dblBond->getStereo() == Bond::STEREOE ||
-               dblBond->getStereo() == Bond::STEREOTRANS) {
+    } else if (dblBond->getStereo() == Bond::STEREOZ ||
+               dblBond->getStereo() == Bond::STEREOCIS) {
       atom1Dir = flipBondDir(atom2Dir);
     }
     CHECK_INVARIANT(atom1Dir != Bond::NONE, "stereo not set");
@@ -403,7 +400,6 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
     }
 
     firstFromAtom1->setBondDir(atom1Dir);
-    switchBondDir(firstFromAtom1);
     bondDirCounts[firstFromAtom1->getIdx()] += 1;
     atomDirCounts[atom1->getIdx()] += 1;
   }
@@ -518,17 +514,14 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   if (atom3->getDegree() == 3) {
     Bond *otherAtom3Bond = nullptr;
     bool dblBondPresent = false;
-    atomBonds = mol.getAtomBonds(atom3);
-    while (atomBonds.first != atomBonds.second) {
-      Bond *tbond = mol[*atomBonds.first];
+    for (auto tbond : mol.atomBonds(atom3)) {
       if (tbond->getBondType() == Bond::DOUBLE &&
           tbond->getStereo() > Bond::STEREOANY) {
         dblBondPresent = true;
-      } else if ((tbond->getBondType() == Bond::SINGLE) &&
-                 (tbond != firstFromAtom2)) {
+      } else if (tbond->getBondType() == Bond::SINGLE &&
+                 tbond != firstFromAtom2) {
         otherAtom3Bond = tbond;
       }
-      atomBonds.first++;
     }
     if (dblBondPresent && otherAtom3Bond &&
         otherAtom3Bond->getBondDir() == Bond::NONE) {
@@ -682,7 +675,6 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
                    const std::vector<std::string> *bondSymbols, bool doRandom) {
-
   Atom *atom = mol.getAtomWithIdx(atomIdx);
   INT_LIST directTravList, cycleEndList;
   boost::dynamic_bitset<> seenFromHere(mol.getNumAtoms());
