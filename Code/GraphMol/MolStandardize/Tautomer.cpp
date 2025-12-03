@@ -16,6 +16,8 @@
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
 #include <limits>
+#include <sstream>
+#include <unordered_set>
 
 #include <utility>
 
@@ -28,6 +30,61 @@
 namespace RDKit {
 
 namespace MolStandardize {
+
+namespace {
+// Generate a cheap tautomer state key for deduplication.
+// Since all tautomers share the same molecular graph, we only need to
+// encode what differs: H counts, formal charges, bond orders, and aromaticity.
+// This is O(n) vs O(n log n) for canonical SMILES.
+std::string getTautomerStateKey(const ROMol &mol) {
+  std::string key;
+  // Reserve approximate space: 3 chars per atom + 2 chars per bond
+  key.reserve(mol.getNumAtoms() * 3 + mol.getNumBonds() * 2);
+
+  // Encode atom state: H count, formal charge, and aromaticity
+  for (const auto atom : mol.atoms()) {
+    // Total H count (0-9 should cover most cases)
+    unsigned int totalH = atom->getTotalNumHs();
+    key += static_cast<char>('0' + std::min(totalH, 9u));
+    // Formal charge (-4 to +4 mapped to '0'-'8')
+    int charge = atom->getFormalCharge();
+    key += static_cast<char>('4' + std::max(-4, std::min(4, charge)));
+    key += atom->getIsAromatic() ? 'a' : 'A';
+  }
+
+  // Separator between atoms and bonds
+  key += '|';
+
+  for (const auto bond : mol.bonds()) {
+    // Bond type as single char
+    auto bt = bond->getBondType();
+    char c;
+    switch (bt) {
+      case Bond::SINGLE:
+        c = '1';
+        break;
+      case Bond::DOUBLE:
+        c = '2';
+        break;
+      case Bond::TRIPLE:
+        c = '3';
+        break;
+      case Bond::AROMATIC:
+        c = '4';
+        break;
+      default:
+        c = '0';
+        break;
+    }
+    key += c;
+    // Bond stereo (important for E/Z isomers)
+    auto st = bond->getStereo();
+    key += static_cast<char>('0' + static_cast<int>(st));
+  }
+
+  return key;
+}
+}  // namespace
 
 namespace TautomerScoringFunctions {
 int scoreRings(const ROMol &mol) {
@@ -279,6 +336,12 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
   res.d_tautomers = {{smi, Tautomer(taut, kekulized, 0, 0)}};
   res.d_modifiedAtoms.resize(mol.getNumAtoms());
   res.d_modifiedBonds.resize(mol.getNumBonds());
+
+  // Track seen tautomer states with a cheap hash for fast duplicate detection.
+  // This avoids computing expensive canonical SMILES for duplicates.
+  std::unordered_set<std::string> seenStateKeys;
+  seenStateKeys.insert(getTautomerStateKey(*taut));
+
   bool completed = false;
   bool bailOut = false;
   unsigned int nTransforms = 0;
@@ -439,12 +502,25 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
                     << MolToSmiles(*product, smilesWriteParams) << std::endl;
 #endif
           setTautomerStereoAndIsoHs(mol, *product, res);
+
+          // Quick duplicate check using cheap state key before computing SMILES
+          std::string stateKey = getTautomerStateKey(*product);
+          if (seenStateKeys.find(stateKey) != seenStateKeys.end()) {
+#ifdef VERBOSE_ENUMERATION
+            std::cout << "Previous tautomer state seen again (cheap check)"
+                      << std::endl;
+#endif
+            continue;
+          }
+
+          // New tautomer state - compute canonical SMILES for storage
           tsmiles = MolToSmiles(*product, true);
 #ifdef VERBOSE_ENUMERATION
           (transform.Mol)->getProp(common_properties::_Name, name);
           std::cout << "Applied rule: " << name << " to "
                     << smilesTautomerPair.first << std::endl;
 #endif
+          // Double-check with SMILES (handles rare hash collisions)
           if (res.d_tautomers.find(tsmiles) != res.d_tautomers.end()) {
 #ifdef VERBOSE_ENUMERATION
             std::cout << "Previous tautomer produced again: " << tsmiles
@@ -452,6 +528,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #endif
             continue;
           }
+          seenStateKeys.insert(stateKey);
           // in addition to the above transformations, sanitization may modify
           // bonds, e.g. Cc1nc2ccccc2[nH]1
           for (size_t i = 0; i < mol.getNumBonds(); i++) {
