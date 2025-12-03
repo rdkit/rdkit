@@ -136,7 +136,7 @@ rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES SmilesParse GraphMol)
 
 rdkit_test(graphmolqueryTest querytest.cpp LINK_LIBRARIES SubstructMatch SmilesParse GraphMol)
 
-rdkit_test(graphmolMolOpsTest molopstest.cpp
+rdkit_catch_test(graphmolMolOpsTest molopstest.cpp
         LINK_LIBRARIES SubstructMatch FileParsers
         SmilesParse GraphMol)
 
