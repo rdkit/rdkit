@@ -107,7 +107,7 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
 
   for (size_t i = 0; i < numAtoms; i++) {
     auto valences = possibleValences(mol.getAtomWithIdx(i), atomicValence);
-    if (valences.size() == 0) {
+    if (valences.empty()) {
       auto atom = mol.getAtomWithIdx(i);
       std::stringstream ss;
       ss << "Atom " << i << " with atomic number " << atom->getAtomicNum()
