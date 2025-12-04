@@ -464,7 +464,6 @@ get_selected_components(::RDKit::RWMol& mol,
   return {std::move(selected_atoms), std::move(selected_bonds)};
 }
 
-// This test makes sure we correctly extract atoms
 TEST_CASE("test_extract_atoms", "[copyMolSubset]") {
   auto selected_atoms = GENERATE(
     // unique values
@@ -489,7 +488,6 @@ TEST_CASE("test_extract_atoms", "[copyMolSubset]") {
   CHECK(extracted_atoms == expected_atoms);
 }
 
-// This test makes sure we correctly extract atoms
 TEST_CASE("test_extract_bonds", "[copyMolSubset]")
 {
   auto test_mol = getTestMol();
@@ -511,7 +509,6 @@ TEST_CASE("test_extract_bonds", "[copyMolSubset]")
   }
 }
 
-// This test makes sure we correctly extract substance groups
 TEST_CASE("test_extract_substance_groups", "[copyMolSubset]") {
   auto mol = getTestMol();
   ::RDKit::SubstanceGroup sgroup{mol.get(), "COP"};
@@ -556,14 +553,12 @@ TEST_CASE("test_extract_substance_groups", "[copyMolSubset]") {
   auto extracted_mol = copyMolSubset(*mol, test_selected_atoms);
 
   auto [selected_atoms, selected_bonds] = get_selected_components(*mol, test_selected_atoms);
-  // sgroup should only be copied if all components are selected
   auto flag = ::RDKit::getSubstanceGroups(*extracted_mol).size() == 1;
   REQUIRE(flag ==
              (has_selected_components(test_sgroup_atoms, selected_atoms) &&
               has_selected_components(test_sgroup_patoms, selected_atoms) &&
               has_selected_components(test_sgroup_bonds, selected_bonds)));
 
-  // now make sure we copied the correct components
   if (flag) {
       auto& extracted_sgroup = ::RDKit::getSubstanceGroups(*extracted_mol)[0];
       for (auto& idx : extracted_sgroup.getAtoms()) {
@@ -589,10 +584,6 @@ TEST_CASE("test_extract_substance_groups", "[copyMolSubset]") {
   }
 }
 
-// This test makes sure we correctly extract stereo groups
-//  Note that this follows commitBatchEdit which removes
-//  atoms from stereo groups, it doesn't remove the stereogroup
-//  completely.
 TEST_CASE("test_extract_stereo_groups", "[copyMolSubset]") {
   auto mol = getTestMol();
 
@@ -636,7 +627,6 @@ TEST_CASE("test_extract_stereo_groups", "[copyMolSubset]") {
 
   auto flag = extracted_mol->getStereoGroups().size() == 1;
 
-  // now make sure we copied the correct components
   if (flag) {
       auto& extracted_stereo_group = extracted_mol->getStereoGroups()[0];
       for (auto& atom : extracted_stereo_group.getAtoms()) {
