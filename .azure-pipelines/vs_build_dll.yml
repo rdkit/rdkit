@@ -11,7 +11,7 @@ steps:
         libboost-python-devel=(boost_version) ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        numpy matplotlib cairo pillow eigen pandas=2.1
+        numpy matplotlib cairo pillow eigen pandas=2.1 lapack liblapacke blas
     call activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
