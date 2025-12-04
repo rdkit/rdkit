@@ -586,8 +586,6 @@ void testSulfinamideExamplesHaveNoAtropisomers() {
                          << std::endl;
     auto mol = std::unique_ptr<RWMol>(MolFileToMol(fName, true, false, false));
     TEST_ASSERT(mol);
-    const Conformer *conf =
-        mol->getNumConformers() ? &mol->getConformer() : nullptr;
     Atropisomers::detectAtropisomerChirality(*mol, conf);
     TEST_ASSERT(!Atropisomers::doesMolHaveAtropisomers(*mol));
   }

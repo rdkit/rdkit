@@ -538,25 +538,26 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
     }
   }
 
-  bool needsHybridization = false;
+  if (bondsToTry.empty()) {
+    return;
+  }
+
+  // defer cache update on the whole mol unless we actually have bonds to try
+  // we need to do an update on the whole mol and not just incident atoms
+  // because we need to calculate hybridization, which is non-local
+  bool needsUpdate =
+      mol.needsUpdatePropertyCache() ||
+      std::any_of(mol.atoms().begin(), mol.atoms().end(), [](const auto atom) {
+        return atom->getAtomicNum() != 0 &&
+               atom->getHybridization() == Atom::HybridizationType::UNSPECIFIED;
+      });
+  if (needsUpdate) {
+    mol.updatePropertyCache(false);
+    MolOps::setConjugation(mol);
+    MolOps::setHybridization(mol);
+  }
+
   for (auto bondToTry : bondsToTry) {
-    // defer cache update on the whole mol unless we actually have bonds to try
-    // we need to do an update on the whole mol and not just incident atoms
-    // because we need to calculate hybridization, which is non-local
-    for (const auto atom : mol.atoms()) {
-      if (atom->getAtomicNum() == 0) {
-        continue;  // dummy atoms stay unspecified
-      }
-      if (atom->getHybridization() == Atom::HybridizationType::UNSPECIFIED) {
-        needsHybridization = true;
-        break;
-      }
-    }
-    if (mol.needsUpdatePropertyCache() || needsHybridization) {
-      mol.updatePropertyCache(false);
-      MolOps::setConjugation(mol);
-      MolOps::setHybridization(mol);
-    }
     if (bondToTry->getBondType() != Bond::SINGLE ||
         bondToTry->getStereo() == Bond::BondStereo::STEREOANY ||
         // before, we checked only on totalDegree = 2 or 3,
