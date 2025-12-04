@@ -102,19 +102,9 @@ void getAllMatchesPrbRef(const ROMol &prbMol, const ROMol &refMol,
   if (ignoreHs) {
     // filter Hs out of the matches
     for (auto &match : matches) {
-      auto tmatch = match;
-      match.clear();
-      std::copy_if(
-          tmatch.begin(), tmatch.end(), std::back_inserter(match),
-          [&prbMolForMatch](const std::pair<int, int> &mi) {
-            return prbMolForMatch.getAtomWithIdx(mi.first)->getAtomicNum() != 1;
-          });
-      // match.erase(std::remove_if(
-      //     match.begin(), match.end(),
-      //     [&prbMolForMatch](const std::pair<int, int> &mi) {
-      //       return prbMolForMatch.getAtomWithIdx(mi.first)->getAtomicNum() ==
-      //       1;
-      //     }));
+      std::erase_if(match, [&prbMolForMatch](const auto &mi) {
+        return prbMolForMatch.getAtomWithIdx(mi.first)->getAtomicNum() == 1;
+      });
     }
   }
 }

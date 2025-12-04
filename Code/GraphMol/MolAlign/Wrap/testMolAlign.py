@@ -585,7 +585,6 @@ class TestCase(unittest.TestCase):
     mol = Chem.Mol(ms[0])
     for i in range(1, len(ms)):
       mol.AddConformer(ms[i].GetConformer(), assignId=True)
-      break
 
     nconfs = mol.GetNumConformers()
     mcp = Chem.Mol(mol)
