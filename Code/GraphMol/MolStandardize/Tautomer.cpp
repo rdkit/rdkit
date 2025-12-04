@@ -338,10 +338,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
     MolOps::symmetrizeSSSR(*taut);
   }
 
-  // Create a kekulized form of the molecule to match the SMARTS against
-  RWMOL_SPTR kekulized(new RWMol(*taut));
-  MolOps::Kekulize(*kekulized, false);
-  res.d_tautomers = {{smi, Tautomer(taut, kekulized, 0, 0)}};
+  // Kekulized form will be created lazily when needed for transform matching
+  res.d_tautomers = {{smi, Tautomer(taut, 0, 0)}};
   res.d_modifiedAtoms.resize(mol.getNumAtoms());
   res.d_modifiedBonds.resize(mol.getNumBonds());
   bool completed = false;
@@ -379,8 +377,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
         if (bailOut) {
           break;
         }
-        // kmol is the kekulized version of the tautomer
-        const auto &kmol = smilesTautomerPair.second.kekulized;
+        // kmol is the kekulized version of the tautomer (created lazily)
+        const auto &kmol = smilesTautomerPair.second.getKekulized();
         std::vector<MatchVectType> matches;
         unsigned int matched = SubstructMatch(*kmol, *(transform.Mol), matches);
 
@@ -529,8 +527,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
               res.d_modifiedBonds.set(i);
             }
           }
-          RWMOL_SPTR kekulized_product(new RWMol(*product));
-          MolOps::Kekulize(*kekulized_product, false);
+          // Kekulized form will be created lazily when needed
 #ifdef VERBOSE_ENUMERATION
           auto it = res.d_tautomers.find(tsmiles);
           if (it == res.d_tautomers.end()) {
@@ -539,8 +536,6 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
             std::cout << "New tautomer replaced for ";
           }
           std::cout << tsmiles << ", taut: " << MolToSmiles(*product)
-                    << ", kek: "
-                    << MolToSmiles(*kekulized_product, smilesWriteParams)
                     << std::endl;
 #endif
           // BOOST_LOG(rdInfoLog)
@@ -549,7 +544,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           //     transform.Mol->getProp<std::string>(common_properties::_Name)
           //     << " produced tautomer " << tsmiles << std::endl;
           res.d_tautomers[tsmiles] = Tautomer(
-              std::move(product), std::move(kekulized_product),
+              std::move(product),
               res.d_modifiedAtoms.count(), res.d_modifiedBonds.count());
         }
       }

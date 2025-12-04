@@ -103,6 +103,13 @@ class Tautomer {
 
  public:
   Tautomer() : d_numModifiedAtoms(0), d_numModifiedBonds(0), d_done(false) {}
+  // Constructor with just the tautomer - kekulized form will be created lazily
+  Tautomer(ROMOL_SPTR t, size_t a = 0, size_t b = 0)
+      : tautomer(std::move(t)),
+        d_numModifiedAtoms(a),
+        d_numModifiedBonds(b),
+        d_done(false) {}
+  // Legacy constructor for compatibility
   Tautomer(ROMOL_SPTR t, ROMOL_SPTR k, size_t a = 0, size_t b = 0)
       : tautomer(std::move(t)),
         kekulized(std::move(k)),
@@ -110,7 +117,16 @@ class Tautomer {
         d_numModifiedBonds(b),
         d_done(false) {}
   ROMOL_SPTR tautomer;
-  ROMOL_SPTR kekulized;
+  mutable ROMOL_SPTR kekulized;  // Lazily initialized
+
+  // Get the kekulized form, creating it lazily if needed
+  const ROMOL_SPTR &getKekulized() const {
+    if (!kekulized && tautomer) {
+      kekulized.reset(new RWMol(*tautomer));
+      MolOps::Kekulize(static_cast<RWMol &>(*kekulized), false);
+    }
+    return kekulized;
+  }
 
  private:
   size_t d_numModifiedAtoms;
