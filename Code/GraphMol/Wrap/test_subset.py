@@ -46,7 +46,6 @@ class TestCase(unittest.TestCase):
     sub = Chem.CopyMolSubset(m, N, opts)
     self.assertEqual(Chem.MolToSmiles(sub), "ccccccC")
 
-    # reuse the existing subsetinfo, it should be properly cleared
     sub = Chem.CopyMolSubset(m, N, info, opts)
     check(info.atomMapping, [True]*7 + [False]*2)
     check(info.bondMapping, [True]*6 + [False]*3)
@@ -54,7 +53,6 @@ class TestCase(unittest.TestCase):
       self.assertEqual(info.atomMapping[i], i)
       self.assertEqual(info.bondMapping[i], i)                     
     
-    # try the trailing edge
     N = list(range(6,11))
     sub = Chem.CopyMolSubset(m, N)
     self.assertEqual(Chem.MolToSmiles(sub), "CCN")
