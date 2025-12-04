@@ -159,6 +159,12 @@ struct RDKIT_FMCS_EXPORT MCSParameters {
   double Threshold = 1.0;    // match all molecules
   unsigned int Timeout = 0;  // in seconds
   bool Verbose = false;
+  bool UseCliqueDetection =
+      false; /* Whether to do an approximate MCSS determination first.  2
+                molecule cases only. */
+  unsigned int MinMCSSSize =
+      1; /* minimum number of atoms in MCSS that will be
+            returned.  Only for useCliqueDetection=True. */
   MCSAtomCompareParameters AtomCompareParameters;
   MCSBondCompareParameters BondCompareParameters;
   MCSAtomCompareFunction AtomTyper = MCSAtomCompareElements;
@@ -225,5 +231,25 @@ RDKIT_FMCS_EXPORT MCSResult findMCS(
     bool completeRingsOnly = false, bool matchChiralTag = false,
     AtomComparator atomComp = AtomCompareElements,
     BondComparator bondComp = BondCompareOrder);
+
+//! Make an MCSS from the 2 molecules using Koch's modification of
+//! the Bron-Kerbosch algorithm so that it only returns a single
+//! fragment.  There may be more than 1 result.  Each element of a pair in the
+//! output vectors is the index of an atom in mol1 that matches
+//! an atom in mol2.  The MCSSs will be of at least size params->MinMCCSSize.
+/*!
+ \param mol1        : first molecule
+ \param mol2        : second molecule
+ \param uniquify    : If true, symmetrically equivalent solutions involving the
+                     same atoms will be reduced to a single example.
+ \param maxCliques  : the results.  Each outer vector is an MCSS, each pair in
+                      the inner vector holds the indices of an atom in mol1 that
+                      matches an atom in mol2
+ \param params      : (optional) pointer to instance of MCSParameters
+ */
+RDKIT_FMCS_EXPORT void twoMolMCSS(
+    const ROMol &mol1, const ROMol &mol2,
+    std::vector<std::vector<std::pair<unsigned int, unsigned int>>> &maxCliques,
+    bool uniquify, const MCSParameters *params = nullptr);
 
 }  // namespace RDKit
