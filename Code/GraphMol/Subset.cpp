@@ -67,8 +67,9 @@ static void copySelectedAtomsAndBonds(RWMol &extracted_mol,
     
     for(auto &atomidx : atoms) {
       auto map = atomMapping.find(atomidx);
-      if(map != atomMapping.end())
+      if(map != atomMapping.end()) {
 	atomidx = map->second;
+      }
     }
     
     extracted_bond->setBeginAtomIdx(atomMapping[ref_bond->getBeginAtomIdx()]);
@@ -176,8 +177,9 @@ static void copySelectedStereoGroups(RWMol &extracted_mol,
     std::vector<Atom *> atoms;
     for (const auto &atom : stereo_group.getAtoms()) {
       auto mapping = atomMapping.find(atom->getIdx());
-      if(mapping != atomMapping.end())
+      if(mapping != atomMapping.end()) {
 	atoms.push_back(extracted_atoms[mapping->second]);
+      }
     }
 
     std::vector<Bond *> bonds;
@@ -259,8 +261,9 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(
   copySelectedAtomsAndBonds(*extracted_mol, mol, selection_info, options);
   copySelectedSubstanceGroups(*extracted_mol, mol, selection_info, options);
   copySelectedStereoGroups(*extracted_mol, mol, selection_info);
-  if(options.copyCoordinates)
+  if(options.copyCoordinates) {
     copyCoords(*extracted_mol, mol, selection_info);
+  }
   
   if (options.sanitize) {
     MolOps::sanitizeMol(*extracted_mol);
