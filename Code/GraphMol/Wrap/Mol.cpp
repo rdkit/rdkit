@@ -153,36 +153,11 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
 }
 
 namespace {
-class pyFinalMatchFunctor {
- public:
-  pyFinalMatchFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyFinalMatchFunctor() = default;
-  bool operator()(const ROMol &m, std::span<const unsigned int> match) {
-    // boost::python doesn't handle std::span, so we need to convert the span to
-    // a vector before calling into python:
-    std::vector<unsigned int> matchVec(match.begin(), match.end());
-    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(matchVec)));
-  }
-
- private:
-  python::object dp_obj;
-};
 void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
                                  python::object func) {
   ps.extraFinalCheck = pyFinalMatchFunctor(func);
 }
-template <typename T>
-class pyMatchFunctor {
- public:
-  pyMatchFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyMatchFunctor() = default;
-  bool operator()(const T &a1, const T &a2) {
-    return python::extract<bool>(dp_obj(boost::ref(a1), boost::ref(a2)));
-  }
 
- private:
-  python::object dp_obj;
-};
 void setExtraAtomCheckFunc(SubstructMatchParameters &ps, python::object func) {
   ps.extraAtomCheck = pyMatchFunctor<Atom>(func);
 }
