@@ -81,7 +81,8 @@ template <typename T1, typename T2>
 void pySubstructHelper(T1 &mol, T2 &query,
                        const SubstructMatchParameters &params,
                        std::vector<MatchVectType> &matches) {
-  if (params.extraFinalCheck) {
+  if (params.extraFinalCheck || params.extraAtomCheck ||
+      params.extraBondCheck) {
     // NOTE: Because we are going into/out of python here, we can't
     // run with NOGIL
     matches = SubstructMatch(mol, query, params);

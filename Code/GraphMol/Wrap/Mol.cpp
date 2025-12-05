@@ -153,10 +153,10 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
 }
 
 namespace {
-class pyobjFunctor {
+class pyFinalMatchFunctor {
  public:
-  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() = default;
+  pyFinalMatchFunctor(python::object obj) : dp_obj(std::move(obj)) {}
+  ~pyFinalMatchFunctor() = default;
   bool operator()(const ROMol &m, std::span<const unsigned int> match) {
     // boost::python doesn't handle std::span, so we need to convert the span to
     // a vector before calling into python:
@@ -169,7 +169,25 @@ class pyobjFunctor {
 };
 void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
                                  python::object func) {
-  ps.extraFinalCheck = pyobjFunctor(func);
+  ps.extraFinalCheck = pyFinalMatchFunctor(func);
+}
+template <typename T>
+class pyMatchFunctor {
+ public:
+  pyMatchFunctor(python::object obj) : dp_obj(std::move(obj)) {}
+  ~pyMatchFunctor() = default;
+  bool operator()(const T &a1, const T &a2) {
+    return python::extract<bool>(dp_obj(boost::ref(a1), boost::ref(a2)));
+  }
+
+ private:
+  python::object dp_obj;
+};
+void setExtraAtomCheckFunc(SubstructMatchParameters &ps, python::object func) {
+  ps.extraAtomCheck = pyMatchFunctor<Atom>(func);
+}
+void setExtraBondCheckFunc(SubstructMatchParameters &ps, python::object func) {
+  ps.extraBondCheck = pyMatchFunctor<Bond>(func);
 }
 
 }  // namespace
@@ -360,7 +378,23 @@ struct mol_wrapper {
                with the molecule
            and a vector of atom IDs containing a potential match.
            The function should return true or false indicating whether or not
-           that match should be accepted.)DOC");
+           that match should be accepted.)DOC")
+        .def("setExtraAtomCheckFunc", setExtraAtomCheckFunc,
+             python::with_custodian_and_ward<1, 2>(),
+             python::args("self", "func"),
+             R"DOC(allows you to provide a function that will be called
+           for each atom pair that matches during substructure searching,
+           after all other comparisons have passed.
+           The function should return true or false indicating whether or not
+           that atom-match should be accepted.)DOC")
+        .def("setExtraBondCheckFunc", setExtraBondCheckFunc,
+             python::with_custodian_and_ward<1, 2>(),
+             python::args("self", "func"),
+             R"DOC(allows you to provide a function that will be called
+           for each bond pair that matches during substructure searching,
+           after all other comparisons have passed.
+           The function should return true or false indicating whether or not
+           that bond-match should be accepted.)DOC");
 
     python::class_<ROMol, ROMOL_SPTR, boost::noncopyable>(
         "Mol", molClassDoc.c_str(),
@@ -797,7 +831,7 @@ struct mol_wrapper {
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false,
               python::arg("autoConvertStrings") = true),
-	     getPropsAsDictDocString.c_str())
+             getPropsAsDictDocString.c_str())
 
         .def("GetAromaticAtoms", MolGetAromaticAtoms,
              python::return_value_policy<
