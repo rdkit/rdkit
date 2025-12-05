@@ -924,6 +924,10 @@ TEST_CASE("extra atom and bond queries") {
     q->getAtomWithIdx(1)->setFlags(0x3);
     q->getBondWithIdx(0)->setFlags(0x7);
 
+    SubstructMatchParameters ps;
+    auto matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 3);
+
     {
       SubstructMatchParameters ps;
       auto atomQuery = [](const Atom &queryAtom,
