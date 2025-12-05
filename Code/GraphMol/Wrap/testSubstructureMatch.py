@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2025 Tad Hurst
+#  Copyright (C) 2025 Greg Landrum
 #         All Rights Reserved
 #
 #  This file is part of the RDKit.

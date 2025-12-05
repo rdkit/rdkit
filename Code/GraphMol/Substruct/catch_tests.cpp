@@ -981,7 +981,7 @@ TEST_CASE("extra atom and bond queries") {
   SECTION("AtomCoordsMatchFunctor") {
     auto m = "CCCC |(0,0,0;1,0,0;2,0,0;3,0,0)|"_smiles;
     REQUIRE(m);
-    auto q = "CC |(3,0,0;2,0,0)|"_smiles;
+    auto q = "CC |(3,0,0.1;2,0,0)|"_smiles;
     REQUIRE(q);
     SubstructMatchParameters ps;
     AtomCoordsMatchFunctor atomQuery;
@@ -991,7 +991,12 @@ TEST_CASE("extra atom and bond queries") {
                   std::placeholders::_1, std::placeholders::_2);
     {
       auto matches = SubstructMatch(*m, *q, ps);
-      CHECK(matches.size() == 1);
+      REQUIRE(matches.empty());
+    }
+    atomQuery.d_tol2 = 0.15 * 0.15;
+    {
+      auto matches = SubstructMatch(*m, *q, ps);
+      REQUIRE(matches.size() == 1);
       CHECK(matches[0][0].second == 3);
       CHECK(matches[0][1].second == 2);
     }
@@ -1025,12 +1030,12 @@ TEST_CASE("extra atom and bond queries") {
       CHECK(matches.empty());
 
       SubstructMatchParameters ps2;
-      AtomCoordsMatchFunctor atomQuery2(cid, -1);
+      AtomCoordsMatchFunctor atomQuery2(cid, -1, .15);
       ps2.extraAtomCheck =
           std::bind(&AtomCoordsMatchFunctor::operator(), &atomQuery2,
                     std::placeholders::_1, std::placeholders::_2);
       matches = SubstructMatch(mcp, *q, ps2);
-      CHECK(matches.size() == 1);
+      REQUIRE(matches.size() == 1);
       CHECK(matches[0][0].second == 3);
       CHECK(matches[0][1].second == 2);
     }
@@ -1044,12 +1049,12 @@ TEST_CASE("extra atom and bond queries") {
       CHECK(matches.empty());
 
       SubstructMatchParameters ps2;
-      AtomCoordsMatchFunctor atomQuery2(-1, cid);
+      AtomCoordsMatchFunctor atomQuery2(-1, cid, .15);
       ps2.extraAtomCheck =
           std::bind(&AtomCoordsMatchFunctor::operator(), &atomQuery2,
                     std::placeholders::_1, std::placeholders::_2);
       matches = SubstructMatch(*m, qcp, ps2);
-      CHECK(matches.size() == 1);
+      REQUIRE(matches.size() == 1);
       CHECK(matches[0][0].second == 3);
       CHECK(matches[0][1].second == 2);
     }
