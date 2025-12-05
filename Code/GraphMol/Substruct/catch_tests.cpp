@@ -978,4 +978,80 @@ TEST_CASE("extra atom and bond queries") {
       CHECK(matches[0][1].second == 2);
     }
   }
+  SECTION("AtomCoordsMatchFunctor") {
+    auto m = "CCCC |(0,0,0;1,0,0;2,0,0;3,0,0)|"_smiles;
+    REQUIRE(m);
+    auto q = "CC |(3,0,0;2,0,0)|"_smiles;
+    REQUIRE(q);
+    SubstructMatchParameters ps;
+    AtomCoordsMatchFunctor atomQuery;
+    // I "<heart>" C++ syntax
+    ps.extraAtomCheck =
+        std::bind(&AtomCoordsMatchFunctor::operator(), &atomQuery,
+                  std::placeholders::_1, std::placeholders::_2);
+    {
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+    {
+      ROMol mcp(*m);
+      mcp.clearConformers();
+      auto matches = SubstructMatch(mcp, *q, ps);
+      CHECK(matches.empty());
+    }
+    {
+      ROMol qcp(*q);
+      qcp.clearConformers();
+      auto matches = SubstructMatch(*m, qcp, ps);
+      CHECK(matches.empty());
+    }
+    {
+      ROMol mcp(*m);
+      mcp.clearConformers();
+      ROMol qcp(*q);
+      qcp.clearConformers();
+      auto matches = SubstructMatch(mcp, qcp, ps);
+      CHECK(matches.empty());
+    }
+    {
+      // specifying conformer ID on the molecule
+      ROMol mcp(*m);
+      Conformer *conf = new Conformer(mcp.getConformer());
+      mcp.getConformer().getAtomPos(3).z += 10;
+      auto cid = mcp.addConformer(conf, true);
+      auto matches = SubstructMatch(mcp, *q, ps);
+      CHECK(matches.empty());
+
+      SubstructMatchParameters ps2;
+      AtomCoordsMatchFunctor atomQuery2(cid, -1);
+      ps2.extraAtomCheck =
+          std::bind(&AtomCoordsMatchFunctor::operator(), &atomQuery2,
+                    std::placeholders::_1, std::placeholders::_2);
+      matches = SubstructMatch(mcp, *q, ps2);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+    {
+      // specifying conformer ID on the query
+      ROMol qcp(*q);
+      Conformer *conf = new Conformer(qcp.getConformer());
+      qcp.getConformer().getAtomPos(0).z += 10;
+      auto cid = qcp.addConformer(conf, true);
+      auto matches = SubstructMatch(*m, qcp, ps);
+      CHECK(matches.empty());
+
+      SubstructMatchParameters ps2;
+      AtomCoordsMatchFunctor atomQuery2(-1, cid);
+      ps2.extraAtomCheck =
+          std::bind(&AtomCoordsMatchFunctor::operator(), &atomQuery2,
+                    std::placeholders::_1, std::placeholders::_2);
+      matches = SubstructMatch(*m, qcp, ps2);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+  }
 }
