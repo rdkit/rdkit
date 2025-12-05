@@ -909,3 +909,69 @@ TEST_CASE(
     CHECK(!SubstructMatch(*m2, *m1, ps).empty());
   }
 }
+
+TEST_CASE("extra atom and bond queries") {
+  SECTION("basics") {
+    auto m = "CCCC"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(1)->setFlags(0x3);
+    m->getAtomWithIdx(2)->setFlags(0x5);
+    m->getBondWithIdx(1)->setFlags(0x7);
+
+    auto q = "CC"_smiles;
+    REQUIRE(q);
+    q->getAtomWithIdx(0)->setFlags(0x5);
+    q->getAtomWithIdx(1)->setFlags(0x3);
+    q->getBondWithIdx(0)->setFlags(0x7);
+
+    {
+      SubstructMatchParameters ps;
+      auto atomQuery = [](const Atom &queryAtom,
+                          const Atom &targetAtom) -> bool {
+        return queryAtom.getFlags() == targetAtom.getFlags();
+      };
+      ps.extraAtomCheck = atomQuery;
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 2);
+      CHECK(matches[0][1].second == 1);
+    }
+    {
+      SubstructMatchParameters ps;
+      auto bondQuery = [](const Bond &query, const Bond &target) -> bool {
+        return query.getFlags() == target.getFlags();
+      };
+      ps.extraBondCheck = bondQuery;
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 1);
+      CHECK(matches[0][1].second == 2);
+    }
+  }
+  SECTION("3D") {
+    auto m = "CCCC |(0,0,0;1,0,0;2,0,0;3,0,0)|"_smiles;
+    REQUIRE(m);
+    auto q = "CC |(3,0,0;2,0,0)|"_smiles;
+    REQUIRE(q);
+    {
+      SubstructMatchParameters ps;
+      auto atomQuery = [](const Atom &queryAtom,
+                          const Atom &targetAtom) -> bool {
+        auto qconf = queryAtom.getOwningMol().getConformer();
+        auto tconf = targetAtom.getOwningMol().getConformer();
+        auto qpos = qconf.getAtomPos(queryAtom.getIdx());
+        auto tpos = tconf.getAtomPos(targetAtom.getIdx());
+        auto dist = (qpos - tpos).length();
+        return dist < 0.1;
+      };
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 3);
+
+      ps.extraAtomCheck = atomQuery;
+      matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+  }
+}

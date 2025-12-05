@@ -74,6 +74,12 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
               //!< will match atoms and bonds with unspecified stereochemistry
   bool aromaticMatchesSingleOrDouble = false;  //!< Aromatic bonds match single
                                                //!< or double bonds
+  std::function<bool(const Atom &queryAtom, const Atom &molAtom)>
+      extraAtomCheck;  //!< a function to be called after other atom comparisons
+                       //!< have passed
+  std::function<bool(const Bond &queryBond, const Bond &molBond)>
+      extraBondCheck;  //!< a function to be called after other bond comparisons
+                       //!< have passed
   SubstructMatchParameters() {}
 };
 
