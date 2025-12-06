@@ -13,9 +13,10 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Atropisomers.h>
-#include <cstdint>
+#include <algorithm>
 #include <cstring>
 #include <cassert>
+#include <vector>
 // #define VERBOSE_CANON 1
 
 namespace RDKit {
@@ -92,10 +93,10 @@ int bondholder::compareStereo(const bondholder &o) const {
   return 0;
 }
 
-void CreateSinglePartition(unsigned int nAtoms, int *order, int *count,
-                           canon_atom *atoms) {
-  PRECONDITION(order, "bad pointer");
-  PRECONDITION(count, "bad pointer");
+void CreateSinglePartition(unsigned int nAtoms, std::vector<int> &order,
+                           std::vector<int> &count, canon_atom *atoms) {
+  PRECONDITION(!order.empty(), "order should not be empty");
+  PRECONDITION(!count.empty(), "count should not be empty");
   PRECONDITION(atoms, "bad pointer");
 
   for (unsigned int i = 0; i < nAtoms; i++) {
@@ -106,12 +107,13 @@ void CreateSinglePartition(unsigned int nAtoms, int *order, int *count,
   count[0] = nAtoms;
 }
 
-void ActivatePartitions(unsigned int nAtoms, int *order, int *count,
-                        int &activeset, int *next, int *changed) {
-  PRECONDITION(order, "bad pointer");
-  PRECONDITION(count, "bad pointer");
-  PRECONDITION(next, "bad pointer");
-  PRECONDITION(changed, "bad pointer");
+void ActivatePartitions(unsigned int nAtoms, std::vector<int> &order,
+                        std::vector<int> &count, int &activeset,
+                        std::vector<int> &next, std::vector<int> &changed) {
+  PRECONDITION(!order.empty(), "order should not be empty");
+  PRECONDITION(!count.empty(), "count should not be empty");
+  PRECONDITION(!next.empty(), "next should not be empty");
+  PRECONDITION(!changed.empty(), "changed should not be empty");
   unsigned int i, j;
   activeset = -1;
   for (i = 0; i < nAtoms; i++) {
@@ -150,10 +152,10 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
   PRECONDITION(atoms, "bad pointer");
   RingInfo *ringInfo = mol.getRingInfo();
 
-  auto visited = std::make_unique<char[]>(nAtoms);
-  auto lastLevelNbrs = std::make_unique<char[]>(nAtoms);
-  auto currentLevelNbrs = std::make_unique<char[]>(nAtoms);
-  auto revisitedNeighbors = std::make_unique<int[]>(nAtoms);
+  std::vector<char> visited(nAtoms);
+  std::vector<char> lastLevelNbrs(nAtoms);
+  std::vector<char> currentLevelNbrs(nAtoms);
+  std::vector<int> revisitedNeighbors(nAtoms);
   for (unsigned idx = 0; idx < nAtoms; ++idx) {
     const Canon::canon_atom &a = atoms[idx];
     if (!ringInfo->isInitialized() ||
@@ -166,10 +168,10 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
     atoms[idx].neighborNum.reserve(1000);
     atoms[idx].revistedNeighbors.assign(1000, 0);
 
-    memset(visited.get(), 0, nAtoms * sizeof(char));
-    memset(lastLevelNbrs.get(), 0, nAtoms * sizeof(char));
-    memset(currentLevelNbrs.get(), 0, nAtoms * sizeof(char));
-    memset(revisitedNeighbors.get(), 0, nAtoms * sizeof(int));
+    std::fill(visited.begin(), visited.end(), 0);
+    std::fill(lastLevelNbrs.begin(), lastLevelNbrs.end(), 0);
+    std::fill(currentLevelNbrs.begin(), currentLevelNbrs.end(), 0);
+    std::fill(revisitedNeighbors.begin(), revisitedNeighbors.end(), 0);
     std::vector<int> nextLevelNbrs;
     while (!neighbors.empty()) {
       unsigned int numLevelNbrs = 0;
@@ -205,13 +207,13 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
           }
         }
       }
-      memset(lastLevelNbrs.get(), 0, nAtoms * sizeof(char));
+      std::fill(lastLevelNbrs.begin(), lastLevelNbrs.end(), 0);
       for (unsigned i = 0; i < nAtoms; ++i) {
         if (currentLevelNbrs[i]) {
           lastLevelNbrs[i] = 1;
         }
       }
-      memset(currentLevelNbrs.get(), 0, nAtoms * sizeof(char));
+      std::fill(currentLevelNbrs.begin(), currentLevelNbrs.end(), 0);
       std::vector<int> tmp;
       tmp.reserve(30);
       for (unsigned i = 0; i < nAtoms; ++i) {
@@ -229,7 +231,7 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
         atoms[idx].revistedNeighbors[currentRNIdx] = i;
         currentRNIdx++;
       }
-      memset(revisitedNeighbors.get(), 0, nAtoms * sizeof(int));
+      std::fill(revisitedNeighbors.begin(), revisitedNeighbors.end(), 0);
 
       atoms[idx].neighborNum.push_back(numLevelNbrs);
       atoms[idx].neighborNum.push_back(-1);
@@ -243,25 +245,21 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
 
 namespace detail {
 template <typename T>
-void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
-                     bool useChirality, bool includeRingStereo,
+void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
+                     bool useSpecial, bool useChirality, bool includeRingStereo,
                      const boost::dynamic_bitset<> *atomsInPlay,
                      const boost::dynamic_bitset<> *bondsInPlay) {
-  PRECONDITION(order, "bad pointer");
+  PRECONDITION(!order.empty(), "order should not be empty");
   const ROMol &mol = *ftor.dp_mol;
   canon_atom *atoms = ftor.dp_atoms;
-  unsigned int nAts = mol.getNumAtoms();
+  const unsigned int nAts = mol.getNumAtoms();
 
-  //  auto order = std::make_unique<int[]>(mol.getNumAtoms());
-
-  auto count = std::make_unique<int[]>(nAts);
-  auto next = std::make_unique<int[]>(nAts);
-  auto changed = std::make_unique<int[]>(nAts);
-  memset(changed.get(), 1, nAts * sizeof(int));
-  auto touched = std::make_unique<char[]>(nAts);
-  memset(touched.get(), 0, nAts * sizeof(char));
+  std::vector<int> count(nAts);
+  std::vector<int> next(nAts);
+  std::vector<int> changed(nAts, 1);
+  std::vector<char> touched(nAts, 0);
   int activeset;
-  CreateSinglePartition(nAts, order, count.get(), atoms);
+  CreateSinglePartition(nAts, order, count, atoms);
 // ActivatePartitions(nAts,order,count,activeset,next,changed);
 // RefinePartitions(mol,atoms,ftor,false,order,count,activeset,next,changed,touched);
 #ifdef VERBOSE_CANON
@@ -272,8 +270,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
   }
 #endif
   ftor.df_useNbrs = true;
-  ActivatePartitions(nAts, order, count.get(), activeset, next.get(),
-                     changed.get());
+  ActivatePartitions(nAts, order, count, activeset, next, changed);
 #ifdef VERBOSE_CANON
   std::cerr << "1a--------" << std::endl;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -281,8 +278,8 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
               << " count: " << count[order[i]] << std::endl;
   }
 #endif
-  RefinePartitions(mol, atoms, ftor, true, order, count.get(), activeset,
-                   next.get(), changed.get(), touched.get());
+  RefinePartitions(mol, atoms, ftor, true, order, count, activeset, next,
+                   changed, touched);
 #ifdef VERBOSE_CANON
   std::cerr << "2--------" << std::endl;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -299,10 +296,9 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
   if (useChirality && ties && includeRingStereo) {
     SpecialChiralityAtomCompareFunctor scftor(atoms, mol, atomsInPlay,
                                               bondsInPlay);
-    ActivatePartitions(nAts, order, count.get(), activeset, next.get(),
-                       changed.get());
-    RefinePartitions(mol, atoms, scftor, true, order, count.get(), activeset,
-                     next.get(), changed.get(), touched.get());
+    ActivatePartitions(nAts, order, count, activeset, next, changed);
+    RefinePartitions(mol, atoms, scftor, true, order, count, activeset, next,
+                     changed, touched);
 #ifdef VERBOSE_CANON
     std::cerr << "2a--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -337,10 +333,9 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
     SpecialSymmetryAtomCompareFunctor sftor(atoms, mol, atomsInPlay,
                                             bondsInPlay);
     compareRingAtomsConcerningNumNeighbors(atoms, nAts, mol);
-    ActivatePartitions(nAts, order, count.get(), activeset, next.get(),
-                       changed.get());
-    RefinePartitions(mol, atoms, sftor, true, order, count.get(), activeset,
-                     next.get(), changed.get(), touched.get());
+    ActivatePartitions(nAts, order, count, activeset, next, changed);
+    RefinePartitions(mol, atoms, sftor, true, order, count, activeset, next,
+                     changed, touched);
 #ifdef VERBOSE_CANON
     std::cerr << "2b--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -350,8 +345,8 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
 #endif
   }
   if (breakTies) {
-    BreakTies(mol, atoms, ftor, true, order, count.get(), activeset, next.get(),
-              changed.get(), touched.get());
+    BreakTies(mol, atoms, ftor, true, order, count, activeset, next, changed,
+              touched);
 #ifdef VERBOSE_CANON
     std::cerr << "3--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -782,8 +777,8 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   ftor.df_useNonStereoRanks = useNonStereoRanks;
   ftor.df_useChiralPresence = includeChiralPresence;
 
-  auto order = std::make_unique<int[]>(mol.getNumAtoms());
-  detail::rankWithFunctor(ftor, breakTies, order.get(), true, includeChirality,
+  std::vector<int> order(mol.getNumAtoms());
+  detail::rankWithFunctor(ftor, breakTies, order, true, includeChirality,
                           includeRingStereo);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -832,8 +827,8 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   ftor.df_useChiralityRings = includeChirality;
   ftor.df_useChiralPresence = includeChiralPresence;
 
-  auto order = std::make_unique<int[]>(mol.getNumAtoms());
-  detail::rankWithFunctor(ftor, breakTies, order.get(), true, includeChirality,
+  std::vector<int> order(mol.getNumAtoms());
+  detail::rankWithFunctor(ftor, breakTies, order, true, includeChirality,
                           includeRingStereo, &atomsInPlay, &bondsInPlay);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -861,8 +856,8 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   detail::initChiralCanonAtoms(mol, atoms);
   ChiralAtomCompareFunctor ftor(&atoms.front(), mol);
 
-  auto order = std::make_unique<int[]>(mol.getNumAtoms());
-  detail::rankWithFunctor(ftor, false, order.get());
+  std::vector<int> order(mol.getNumAtoms());
+  detail::rankWithFunctor(ftor, false, order);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;

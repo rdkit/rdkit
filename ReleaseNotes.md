@@ -43,6 +43,8 @@ GitHub)
 ## Code removed in this release:
 
 ## Deprecated code (to be removed in a future release):
+- The version of hanoiSort() that takes raw pointers has been deprecated. Please use the version that takes std::span and std::vector.
+
 
 
 # Release_2025.09.1
