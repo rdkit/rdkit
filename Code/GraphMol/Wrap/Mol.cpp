@@ -161,6 +161,11 @@ void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
 void setExtraAtomCheckFunc(SubstructMatchParameters &ps, python::object func) {
   ps.extraAtomCheck = pyMatchFunctor<Atom>(func);
 }
+void setExtraAtomCheckFunc2(SubstructMatchParameters &ps,
+                            const AtomCoordsMatchFunctor &ftor) {
+  ps.extraAtomCheck = std::bind(&AtomCoordsMatchFunctor::operator(), &ftor,
+                                std::placeholders::_1, std::placeholders::_2);
+}
 void setExtraBondCheckFunc(SubstructMatchParameters &ps, python::object func) {
   ps.extraBondCheck = pyMatchFunctor<Bond>(func);
 }
@@ -290,7 +295,23 @@ struct mol_wrapper {
                 MolPickler::setDefaultPickleProperties, python::args("arg1"),
                 "Set the current global mol pickler options.");
 
-    // REVIEW: There's probably a better place for this definition
+    // REVIEW: There's probably a better place for the next few definitions
+    python::class_<RDKit::AtomCoordsMatchFunctor, boost::noncopyable>(
+        "AtomCoordsMatcher",
+        "Allows using atom coordinates as part of substructure matching",
+        python::init<>(python::args("self")))
+        .def(python::init<int, int, double>(
+            (python::arg("self"), python::arg("refConfId") = -1,
+             python::arg("queryConfId") = -1, python::arg("tol") = 1e-4),
+            "constructor taking reference and query conformer IDs and a distance tolerance"))
+        .def("__call__", &RDKit::AtomCoordsMatchFunctor::operator())
+        .def_readwrite("refConfId", &RDKit::AtomCoordsMatchFunctor::d_refConfId,
+                       "reference conformer ID")
+        .def_readwrite("queryConfId",
+                       &RDKit::AtomCoordsMatchFunctor::d_queryConfId,
+                       "query conformer ID")
+        .def_readwrite("tol2", &RDKit::AtomCoordsMatchFunctor::d_tol2,
+                       "squared distance tolerance");
     python::class_<RDKit::SubstructMatchParameters, boost::noncopyable>(
         "SubstructMatchParameters",
         "Parameters controlling substructure matching")
@@ -362,6 +383,13 @@ struct mol_wrapper {
            after all other comparisons have passed.
            The function should return true or false indicating whether or not
            that atom-match should be accepted.)DOC")
+        .def(
+            "setExtraAtomCheckFunc", setExtraAtomCheckFunc2,
+            python::with_custodian_and_ward<1, 2>(),
+            python::args("self", "atomCoordsMatcher"),
+            R"DOC(allows you to provide an AtomCoordsMatcher that will be called
+           for each atom pair that matches during substructure searching,
+           after all other comparisons have passed.)DOC")
         .def("setExtraBondCheckFunc", setExtraBondCheckFunc,
              python::with_custodian_and_ward<1, 2>(),
              python::args("self", "func"),

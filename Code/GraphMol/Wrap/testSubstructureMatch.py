@@ -65,6 +65,29 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(matches), 1)
     self.assertEqual(matches[0], (1, 2))
 
+  def testCoordsFunctor(self):
+    m = Chem.MolFromSmiles('CCCC |(0,0,0;1,0,0;2,0,0;3,0,0)|')
+    patt = Chem.MolFromSmiles('CC |(3,0,0.1;2,0,0)|')
+
+    params = Chem.SubstructMatchParameters()
+    coordMatcher = Chem.AtomCoordsMatcher(tol=.11)
+    params.setExtraAtomCheckFunc(coordMatcher)
+    matches = m.GetSubstructMatches(patt, params)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches[0], (3, 2))
+    
+    # lifetime management 1:
+    coordMatcher = None
+    matches = m.GetSubstructMatches(patt, params)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches[0], (3, 2))
+    
+    # lifetime management 2:
+    params.setExtraAtomCheckFunc(Chem.AtomCoordsMatcher(tol=.11))
+    matches = m.GetSubstructMatches(patt, params)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches[0], (3, 2))
+
 
 if __name__ == '__main__':
   unittest.main()
