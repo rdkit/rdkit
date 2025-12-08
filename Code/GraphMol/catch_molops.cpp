@@ -425,14 +425,13 @@ struct SelectedComponents {
 };
 
 // helper api to get test mol for copyMolSubset api.
-static std::unique_ptr<RDKit::RWMol> getTestMol()
-{
+static std::unique_ptr<RDKit::RWMol> getTestMol() {
   std::unique_ptr<RDKit::RWMol> mol{RDKit::SmilesToMol("CCCCCCCCCCCCCCC")};
-  for (auto& atom : mol->atoms()) {
+  for (auto &atom : mol->atoms()) {
     atom->setProp("orig_idx", atom->getIdx());
   }
 
-  for (auto& bond : mol->bonds()) {
+  for (auto &bond : mol->bonds()) {
     bond->setProp("orig_idx", bond->getIdx());
   }
 
@@ -440,23 +439,21 @@ static std::unique_ptr<RDKit::RWMol> getTestMol()
 }
 
 // Helper api to get the included atoms and bonds from test atom indices.
-[[nodiscard]] static SelectedComponents
-get_selected_components(::RDKit::RWMol& mol,
-		                        const std::vector<unsigned int>& atom_ids)
-{
+[[nodiscard]] static SelectedComponents get_selected_components(
+    ::RDKit::RWMol &mol, const std::vector<unsigned int> &atom_ids) {
   const auto num_atoms = mol.getNumAtoms();
   std::vector<bool> selected_atoms(num_atoms);
 
-  for (auto& atom_idx : atom_ids) {
+  for (auto &atom_idx : atom_ids) {
     if (atom_idx < num_atoms) {
       selected_atoms[atom_idx] = true;
     }
   }
 
   std::vector<bool> selected_bonds(mol.getNumBonds());
-  for (auto& bond : mol.bonds()) {
+  for (auto &bond : mol.bonds()) {
     if (selected_atoms[bond->getBeginAtomIdx()] &&
-      selected_atoms[bond->getEndAtomIdx()]) {
+        selected_atoms[bond->getEndAtomIdx()]) {
       selected_bonds[bond->getIdx()] = true;
     }
   }
@@ -466,13 +463,12 @@ get_selected_components(::RDKit::RWMol& mol,
 
 TEST_CASE("test_extract_atoms", "[copyMolSubset]") {
   auto selected_atoms = GENERATE(
-    // unique values
-    std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12},
-    // duplicate values
-    std::vector<unsigned int>{0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12},
-    // values outside of atom indices
-    std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12, 100, 200, 300}
-  );
+      // unique values
+      std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12},
+      // duplicate values
+      std::vector<unsigned int>{0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12},
+      // values outside of atom indices
+      std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12, 100, 200, 300});
 
   std::vector<unsigned int> expected_atoms{0, 2, 4, 6, 8, 10, 12};
 
@@ -481,22 +477,21 @@ TEST_CASE("test_extract_atoms", "[copyMolSubset]") {
   REQUIRE(extracted_mol->getNumAtoms() == expected_atoms.size());
 
   std::vector<unsigned int> extracted_atoms;
-  for (auto& atom : extracted_mol->atoms()) {
+  for (auto &atom : extracted_mol->atoms()) {
     extracted_atoms.push_back(atom->template getProp<unsigned int>("orig_idx"));
   }
 
   CHECK(extracted_atoms == expected_atoms);
 }
 
-TEST_CASE("test_extract_bonds", "[copyMolSubset]")
-{
+TEST_CASE("test_extract_bonds", "[copyMolSubset]") {
   auto test_mol = getTestMol();
 
-  for (auto& bond : test_mol->bonds()) {
+  for (auto &bond : test_mol->bonds()) {
     bond->setProp("test_prop", true);
   }
 
-  for (auto& bond : test_mol->bonds()) {
+  for (auto &bond : test_mol->bonds()) {
     auto begin_idx = bond->getBeginAtomIdx();
     auto end_idx = bond->getEndAtomIdx();
     auto m = copyMolSubset(*test_mol, {begin_idx, end_idx});
@@ -513,74 +508,65 @@ TEST_CASE("test_extract_substance_groups", "[copyMolSubset]") {
   auto mol = getTestMol();
   ::RDKit::SubstanceGroup sgroup{mol.get(), "COP"};
 
-  auto test_sgroup_atoms = GENERATE(
-     std::vector<unsigned int>{},
-     std::vector<unsigned int>{0, 1, 2, 3, 4},
-     std::vector<unsigned int>{9, 10, 11}
-  );
+  auto test_sgroup_atoms = GENERATE(std::vector<unsigned int>{},
+                                    std::vector<unsigned int>{0, 1, 2, 3, 4},
+                                    std::vector<unsigned int>{9, 10, 11});
   sgroup.setAtoms(test_sgroup_atoms);
 
-  auto test_sgroup_bonds = GENERATE(
-     std::vector<unsigned int>{},
-     std::vector<unsigned int>{0, 1, 2},
-     std::vector<unsigned int>{3, 4, 5}
-  );
+  auto test_sgroup_bonds =
+      GENERATE(std::vector<unsigned int>{}, std::vector<unsigned int>{0, 1, 2},
+               std::vector<unsigned int>{3, 4, 5});
   sgroup.setBonds(test_sgroup_bonds);
 
-  auto test_sgroup_patoms = GENERATE(
-     std::vector<unsigned int>{},
-     std::vector<unsigned int>{3, 4},
-     std::vector<unsigned int>{5, 6}
-  );
+  auto test_sgroup_patoms =
+      GENERATE(std::vector<unsigned int>{}, std::vector<unsigned int>{3, 4},
+               std::vector<unsigned int>{5, 6});
   sgroup.setParentAtoms(test_sgroup_patoms);
 
   ::RDKit::addSubstanceGroup(*mol, std::move(sgroup));
 
-  auto has_selected_components = [&](auto& components, auto& ref_bitset) {
-   return components.empty() ||
-     std::ranges::all_of(components, [&](auto& idx) {
-         return idx < ref_bitset.size() && ref_bitset[idx];
-       });
+  auto has_selected_components = [&](auto &components, auto &ref_bitset) {
+    return components.empty() ||
+           std::ranges::all_of(components, [&](auto &idx) {
+             return idx < ref_bitset.size() && ref_bitset[idx];
+           });
   };
 
   auto test_selected_atoms = GENERATE(
-     std::vector<unsigned int>{0, 1, 2, 3, 4, 5},
-     std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12},
-     std::vector<unsigned int>{0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12},
-     std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12, 100, 200, 300}
-  );
+      std::vector<unsigned int>{0, 1, 2, 3, 4, 5},
+      std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12},
+      std::vector<unsigned int>{0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12},
+      std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12, 100, 200, 300});
 
   auto extracted_mol = copyMolSubset(*mol, test_selected_atoms);
 
-  auto [selected_atoms, selected_bonds] = get_selected_components(*mol, test_selected_atoms);
+  auto [selected_atoms, selected_bonds] =
+      get_selected_components(*mol, test_selected_atoms);
   auto flag = ::RDKit::getSubstanceGroups(*extracted_mol).size() == 1;
   REQUIRE(flag ==
-             (has_selected_components(test_sgroup_atoms, selected_atoms) &&
-              has_selected_components(test_sgroup_patoms, selected_atoms) &&
-              has_selected_components(test_sgroup_bonds, selected_bonds)));
+          (has_selected_components(test_sgroup_atoms, selected_atoms) &&
+           has_selected_components(test_sgroup_patoms, selected_atoms) &&
+           has_selected_components(test_sgroup_bonds, selected_bonds)));
 
   if (flag) {
-      auto& extracted_sgroup = ::RDKit::getSubstanceGroups(*extracted_mol)[0];
-      for (auto& idx : extracted_sgroup.getAtoms()) {
-          auto atom = extracted_mol->getAtomWithIdx(idx);
-          CHECK(
-              selected_atoms[atom->template getProp<unsigned int>("orig_idx")] ==
-              true);
-      }
+    auto &extracted_sgroup = ::RDKit::getSubstanceGroups(*extracted_mol)[0];
+    for (auto &idx : extracted_sgroup.getAtoms()) {
+      auto atom = extracted_mol->getAtomWithIdx(idx);
+      CHECK(selected_atoms[atom->template getProp<unsigned int>("orig_idx")] ==
+            true);
+    }
 
-      for (auto& idx : extracted_sgroup.getParentAtoms()) {
-          auto atom = extracted_mol->getAtomWithIdx(idx);
-          CHECK(
-              selected_atoms[atom->template getProp<unsigned int>("orig_idx")] ==
-              true);
-      }
+    for (auto &idx : extracted_sgroup.getParentAtoms()) {
+      auto atom = extracted_mol->getAtomWithIdx(idx);
+      CHECK(selected_atoms[atom->template getProp<unsigned int>("orig_idx")] ==
+            true);
+    }
 
-      for (auto& idx : extracted_sgroup.getBonds()) {
-          auto bond = extracted_mol->getBondWithIdx(idx);
-          CHECK(
-              selected_bonds[bond->template getProp<unsigned int>("orig_idx")] ==
-              true);
-      }
+    for (auto &idx : extracted_sgroup.getBonds()) {
+      auto bond = extracted_mol->getBondWithIdx(idx);
+      CHECK(selected_bonds[bond->template getProp<unsigned int>("orig_idx")] ==
+            true);
+    }
   }
 }
 
@@ -588,25 +574,21 @@ TEST_CASE("test_extract_stereo_groups", "[copyMolSubset]") {
   auto mol = getTestMol();
 
   auto test_stereo_group_atoms = GENERATE(
-     std::vector<unsigned int>{},
-     std::vector<unsigned int>{0, 1, 2, 3, 4},
-     std::vector<unsigned int>{9, 10, 11}
-  );
+      std::vector<unsigned int>{}, std::vector<unsigned int>{0, 1, 2, 3, 4},
+      std::vector<unsigned int>{9, 10, 11});
 
-  std::vector<::RDKit::Atom*> sg_atoms;
-  for (auto& idx : test_stereo_group_atoms) {
-      sg_atoms.push_back(mol->getAtomWithIdx(idx));
+  std::vector<::RDKit::Atom *> sg_atoms;
+  for (auto &idx : test_stereo_group_atoms) {
+    sg_atoms.push_back(mol->getAtomWithIdx(idx));
   }
 
-  auto test_stereo_group_bonds = GENERATE(
-     std::vector<unsigned int>{},
-     std::vector<unsigned int>{0, 1, 2},
-     std::vector<unsigned int>{3, 4, 5}
-  );
+  auto test_stereo_group_bonds =
+      GENERATE(std::vector<unsigned int>{}, std::vector<unsigned int>{0, 1, 2},
+               std::vector<unsigned int>{3, 4, 5});
 
-  std::vector<::RDKit::Bond*> sg_bonds;
-  for (auto& idx : test_stereo_group_bonds) {
-      sg_bonds.push_back(mol->getBondWithIdx(idx));
+  std::vector<::RDKit::Bond *> sg_bonds;
+  for (auto &idx : test_stereo_group_bonds) {
+    sg_bonds.push_back(mol->getBondWithIdx(idx));
   }
 
   ::RDKit::StereoGroup stereo_group{::RDKit::StereoGroupType::STEREO_ABSOLUTE,
@@ -614,11 +596,10 @@ TEST_CASE("test_extract_stereo_groups", "[copyMolSubset]") {
   mol->setStereoGroups({std::move(stereo_group)});
 
   auto test_selected_atoms = GENERATE(
-     std::vector<unsigned int>{0, 1, 2, 3, 4, 5},
-     std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12},
-     std::vector<unsigned int>{0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12},
-     std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12, 100, 200, 300}
-  );
+      std::vector<unsigned int>{0, 1, 2, 3, 4, 5},
+      std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12},
+      std::vector<unsigned int>{0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12},
+      std::vector<unsigned int>{0, 2, 4, 6, 8, 10, 12, 100, 200, 300});
 
   auto extracted_mol = copyMolSubset(*mol, test_selected_atoms);
 
@@ -628,18 +609,14 @@ TEST_CASE("test_extract_stereo_groups", "[copyMolSubset]") {
   auto flag = extracted_mol->getStereoGroups().size() == 1;
 
   if (flag) {
-      auto& extracted_stereo_group = extracted_mol->getStereoGroups()[0];
-      for (auto& atom : extracted_stereo_group.getAtoms()) {
-          CHECK(
-              selected_atoms[atom->template getProp<int>("orig_idx")] ==
-              true);
-      }
+    auto &extracted_stereo_group = extracted_mol->getStereoGroups()[0];
+    for (auto &atom : extracted_stereo_group.getAtoms()) {
+      CHECK(selected_atoms[atom->template getProp<int>("orig_idx")] == true);
+    }
 
-      for (auto& bond : extracted_stereo_group.getBonds()) {
-          CHECK(
-              selected_bonds[bond->template getProp<int>("orig_idx")] ==
-              true);
-      }
+    for (auto &bond : extracted_stereo_group.getBonds()) {
+      CHECK(selected_bonds[bond->template getProp<int>("orig_idx")] == true);
+    }
   }
 }
 
@@ -662,4 +639,3 @@ TEST_CASE("Github #8945") {
     CHECK(MolToSmiles(*m1) == MolToSmiles(*m2));
   }
 }
-

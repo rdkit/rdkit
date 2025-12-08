@@ -691,7 +691,7 @@ std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
 }
 
 namespace {
-  std::vector<std::unique_ptr<ROMol>> getTheFrags(
+std::vector<std::unique_ptr<ROMol>> getTheFrags(
     const ROMol &mol, bool sanitizeFrags, INT_VECT *frags,
     VECT_INT_VECT *fragsMolAtomMapping, bool copyConformers) {
   std::unique_ptr<INT_VECT> mappingStorage;
@@ -701,7 +701,7 @@ namespace {
   }
   int nFrags = getMolFrags(mol, *frags);
   std::vector<std::unique_ptr<RWMol>> res;
-  
+
   if (nFrags == 1) {
     res.emplace_back(new RWMol(mol));
     if (fragsMolAtomMapping) {
@@ -779,16 +779,14 @@ namespace {
         // empirical. This is mainly intended to catch situations like proteins
         // where you have a bunch of single-atom fragments (waters); the
         // standard approach below ends up being horribly inefficient there
-	SubsetOptions opts {
-	  .sanitize = sanitizeFrags,
-	  .clearComputedProps = true,
-	  .copyCoordinates = copyConformers,
-	  .method = SubsetMethod::BONDS_BETWEEN_ATOMS
-	};
-	std::vector<unsigned int> atoms{comp.begin(), comp.end()};
-	SubsetInfo info;
-	auto submol = copyMolSubset(mol, atoms, info, opts);
-	res.push_back(std::move(submol));
+        SubsetOptions opts{.sanitize = sanitizeFrags,
+                           .clearComputedProps = true,
+                           .copyCoordinates = copyConformers,
+                           .method = SubsetMethod::BONDS_BETWEEN_ATOMS};
+        std::vector<unsigned int> atoms{comp.begin(), comp.end()};
+        SubsetInfo info;
+        auto submol = copyMolSubset(mol, atoms, info, opts);
+        res.push_back(std::move(submol));
       } else {
         res.emplace_back(new RWMol(mol));
         auto &frag = res.back();
