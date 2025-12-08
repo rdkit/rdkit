@@ -483,6 +483,26 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
         }
       }
     }
+  } else {
+    // Same case, but on the other side of the double bond. Note the initial
+    // condition is different. I'm not 100% sure this is right, but tests
+    // seem to pass when we do this.
+    if (bondVisitOrders[atom1ControllingBond->getIdx()] >
+        atomVisitOrders[atom2->getIdx()]) {
+      if (bondDirCounts[atom1ControllingBond->getIdx()] == 1) {
+        if (!atom1ControllingBond->hasProp(
+                common_properties::_TraversalRingClosureBond)) {
+          switchBondDir(atom1ControllingBond);
+        }
+      } else if (bondDirCounts[firstFromAtom2->getIdx()] == 1) {
+        // the controlling bond at atom1 is being set by someone else, flip the
+        // direction on the atom2 bond instead:
+        switchBondDir(firstFromAtom2);
+        if (secondFromAtom2 && bondDirCounts[secondFromAtom2->getIdx()] >= 1) {
+          switchBondDir(secondFromAtom2);
+        }
+      }
+    }
   }
 
   // something to watch out for here. For this molecule and traversal order:
