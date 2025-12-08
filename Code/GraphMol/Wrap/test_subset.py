@@ -16,8 +16,7 @@ from rdkit import Chem
 
 def check(info, selection):
   for i,v in enumerate(selection):
-    if v: assert i in info
-    else: assert i not in info
+    assert (v and i in info) or (i not in info)
 
 class TestCase(unittest.TestCase):
 
@@ -74,15 +73,3 @@ class TestCase(unittest.TestCase):
     opts.clearComputedProps = True
     sub = Chem.CopyMolSubset(m, N, opts)
     self.assertFalse(sub.HasProp("foo"))
-    
-if __name__ == '__main__':
-  if "RDTESTCASE" in os.environ:
-    suite = unittest.TestSuite()
-    testcases = os.environ["RDTESTCASE"]
-    for name in testcases.split(':'):
-      suite.addTest(TestCase(name))
-
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
-  else:
-    unittest.main()
