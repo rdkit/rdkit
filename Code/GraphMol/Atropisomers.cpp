@@ -542,6 +542,32 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
     return;
   }
 
+  // First, do a simple check with TotalDegree to see if any bonds might be
+  // candidates before doing the expensive hybridization calculation.
+  bool anyBondPassesDegreeCheck = false;
+  for (auto bondToTry : bondsToTry) {
+    if (bondToTry->getBeginAtom()->needsUpdatePropertyCache()) {
+      bondToTry->getBeginAtom()->updatePropertyCache(false);
+    }
+    if (bondToTry->getEndAtom()->needsUpdatePropertyCache()) {
+      bondToTry->getEndAtom()->updatePropertyCache(false);
+    }
+
+    if (bondToTry->getBondType() == Bond::SINGLE &&
+        bondToTry->getStereo() != Bond::BondStereo::STEREOANY &&
+        bondToTry->getBeginAtom()->getTotalDegree() >= 2 &&
+        bondToTry->getBeginAtom()->getTotalDegree() <= 3 &&
+        bondToTry->getEndAtom()->getTotalDegree() >= 2 &&
+        bondToTry->getEndAtom()->getTotalDegree() <= 3) {
+      anyBondPassesDegreeCheck = true;
+      break;
+    }
+  }
+
+  if (!anyBondPassesDegreeCheck) {
+    return;
+  }
+
   // defer cache update on the whole mol unless we actually have bonds to try
   // we need to do an update on the whole mol and not just incident atoms
   // because we need to calculate hybridization, which is non-local
