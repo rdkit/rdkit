@@ -390,6 +390,11 @@ struct mol_wrapper {
             R"DOC(allows you to provide an AtomCoordsMatcher that will be called
            for each atom pair that matches during substructure searching,
            after all other comparisons have passed.)DOC")
+        .def_readwrite(
+            "extraAtomCheckOverridesDefaultCheck",
+            &RDKit::SubstructMatchParameters::
+                extraAtomCheckOverridesDefaultCheck,
+            "if set, only the extraAtomCheck will be used to determine whether or not atoms match")
         .def("setExtraBondCheckFunc", setExtraBondCheckFunc,
              python::with_custodian_and_ward<1, 2>(),
              python::args("self", "func"),
@@ -397,7 +402,13 @@ struct mol_wrapper {
            for each bond pair that matches during substructure searching,
            after all other comparisons have passed.
            The function should return true or false indicating whether or not
-           that bond-match should be accepted.)DOC");
+           that bond-match should be accepted.)DOC")
+        .def_readwrite(
+            "extraBondCheckOverridesDefaultCheck",
+            &RDKit::SubstructMatchParameters::
+                extraBondCheckOverridesDefaultCheck,
+            "if set, only the extraBondCheck will be used to determine whether or not bonds match")
+        .def("__setattr__", &safeSetattr);
 
     python::class_<ROMol, ROMOL_SPTR, boost::noncopyable>(
         "Mol", molClassDoc.c_str(),

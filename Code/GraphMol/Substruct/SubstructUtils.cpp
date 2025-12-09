@@ -130,6 +130,10 @@ bool atomCompat(const Atom *a1, const Atom *a2,
   PRECONDITION(a2, "bad atom");
   // std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 <<
   // " " << a2->getIdx() << std::endl;
+
+  if (ps.extraAtomCheckOverridesDefaultCheck && ps.extraAtomCheck) {
+    return ps.extraAtomCheck(*a1, *a2);
+  }
   bool res;
   if (ps.useQueryQueryMatches && a1->hasQuery() && a2->hasQuery()) {
     res = static_cast<const QueryAtom *>(a1)->QueryMatch(
@@ -175,6 +179,11 @@ bool bondCompat(const Bond *b1, const Bond *b2,
                 const SubstructMatchParameters &ps) {
   PRECONDITION(b1, "bad bond");
   PRECONDITION(b2, "bad bond");
+
+  if (ps.extraBondCheckOverridesDefaultCheck && ps.extraBondCheck) {
+    return ps.extraBondCheck(*b1, *b2);
+  }
+
   bool res;
 
   auto isConjugatedSingleOrDoubleBond([](const Bond *bond) {

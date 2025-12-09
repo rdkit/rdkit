@@ -77,9 +77,15 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   std::function<bool(const Atom &queryAtom, const Atom &molAtom)>
       extraAtomCheck;  //!< a function to be called after other atom comparisons
                        //!< have passed
+  bool extraAtomCheckOverridesDefaultCheck =
+      false;  //!< if set, only the extraAtomCheck will be used to determine
+              //!< whether or not atoms match
   std::function<bool(const Bond &queryBond, const Bond &molBond)>
       extraBondCheck;  //!< a function to be called after other bond comparisons
                        //!< have passed
+  bool extraBondCheckOverridesDefaultCheck =
+      false;  //!< if set, only the extraBondCheck will be used to determine
+              //!< whether or not bonds match
   SubstructMatchParameters() {}
 };
 

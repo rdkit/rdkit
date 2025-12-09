@@ -952,6 +952,51 @@ TEST_CASE("extra atom and bond queries") {
       CHECK(matches[0][1].second == 2);
     }
   }
+  SECTION("extra atom and bond checks override defaults") {
+    auto m = "CCCC"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(1)->setFlags(0x3);
+    m->getAtomWithIdx(2)->setFlags(0x5);
+    m->getBondWithIdx(1)->setFlags(0x7);
+
+    auto q = "O=C"_smiles;
+    REQUIRE(q);
+    q->getAtomWithIdx(0)->setFlags(0x5);
+    q->getAtomWithIdx(1)->setFlags(0x3);
+    q->getBondWithIdx(0)->setFlags(0x7);
+
+    SubstructMatchParameters ps;
+    auto matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+
+    auto atomQuery = [](const Atom &queryAtom, const Atom &targetAtom) -> bool {
+      return queryAtom.getFlags() == targetAtom.getFlags();
+    };
+    auto bondQuery = [](const Bond &query, const Bond &target) -> bool {
+      return query.getFlags() == target.getFlags();
+    };
+    ps.extraAtomCheck = atomQuery;
+    ps.extraBondCheck = bondQuery;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+    ps.extraAtomCheckOverridesDefaultCheck = true;
+    ps.extraBondCheckOverridesDefaultCheck = true;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 1);
+    CHECK(matches[0][0].second == 2);
+    CHECK(matches[0][1].second == 1);
+
+    // either of the options by themselves does not work:
+    ps.extraAtomCheckOverridesDefaultCheck = false;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+
+    ps.extraAtomCheckOverridesDefaultCheck = true;
+    ps.extraBondCheckOverridesDefaultCheck = false;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+  }
+
   SECTION("3D") {
     auto m = "CCCC |(0,0,0;1,0,0;2,0,0;3,0,0)|"_smiles;
     REQUIRE(m);
