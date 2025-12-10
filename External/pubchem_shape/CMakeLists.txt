@@ -48,7 +48,7 @@ if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
 endif()
 
 rdkit_library(PubChemShape PubChemShape.cpp SHARED
- LINK_LIBRARIES pubchem_align3d SmilesParse SubstructMatch)
+ LINK_LIBRARIES pubchem_align3d SmilesParse SubstructMatch MolTransforms)
 target_compile_definitions(PubChemShape PRIVATE RDKIT_PUBCHEMSHAPE_BUILD)
 
 rdkit_headers(PubChemShape.hpp DEST GraphMol)
