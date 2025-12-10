@@ -68,48 +68,47 @@ bool SmilesToMol(const char *smiles,
                  RDMol &mol, SmilesParseTemp &temp) {
   bool success = SmilesParseInternal::parseSmiles(smiles, mol, temp);
   if (success && (params.sanitize || params.removeHs)) {
-    raiseNonImplementedDetail("sanitization or removeHs in new SmilesToMol");
-#if 0
-    if (res->hasProp(SmilesParseOps::detail::_needsDetectAtomStereo)) {
-      // we encountered a wedged bond in the CXSMILES,
-      // these need to be handled the same way they were in mol files
-      res->clearProp(SmilesParseOps::detail::_needsDetectAtomStereo);
-      if (res->getNumConformers()) {
-        const auto &conf = res->getConformer();
-        if (!conf.is3D()) {
-          MolOps::assignChiralTypesFromBondDirs(*res, conf.getId());
+    // Handle stereochemistry from CXSMILES wedged bonds
+    if (mol.hasProp(PropToken(SmilesParseOps::detail::_needsDetectAtomStereo))) {
+      mol.clearMolPropIfPresent(PropToken(SmilesParseOps::detail::_needsDetectAtomStereo));
+      for(unsigned int i=0; i<mol.getNumConformers(); ++i) {
+        if(!mol.is3DConformer(i)) {
+          MolOps::assignChiralTypesFromBondDirs(mol.asROMol(), i);
         }
       }
     }
-    // if we read a 3D conformer, set the stereo:
-    if (res->getNumConformers() && res->getConformer().is3D()) {
-      res->updatePropertyCache(false);
-      MolOps::assignChiralTypesFrom3D(*res, res->getConformer().getId(), true);
+
+    // Handle 3D conformer stereochemistry
+    for(unsigned int i=0; i<mol.getNumConformers(); ++i) {
+      if (mol.is3DConformer(i)) {
+        mol.updatePropertyCache(false);
+        MolOps::assignChiralTypesFrom3D(mol.asROMol(), i, true);
+      }
     }
-#endif
-#if 0
     try {
       if (params.removeHs) {
         bool implicitOnly = false, updateExplicitCount = true;
-        MolOps::removeHs(mol, temp.sanitizeTemp, implicitOnly, updateExplicitCount,
+        MolOps::RemoveHsParameters ps;
+        ps.updateExplicitCount = updateExplicitCount;
+        ps.removeNonimplicit = !implicitOnly;
+        MolOps::removeHs(mol.asRWMol(), ps,
                          params.sanitize);
       } else if (params.sanitize) {
-        MolOps::sanitizeMol(mol, temp.sanitizeTemp);
+        // RDMol doesn't have sanitizeMol yet, convert to RWMol temporarily
+        MolOps::sanitizeMol(mol.asRWMol());
       }
     } catch (...) {
       mol.clear();
       return false;
     }
-#endif
-#if 0
-    if (res->hasProp(SmilesParseOps::detail::_needsDetectBondStereo)) {
-      // we encountered either wiggly bond in the CXSMILES,
-      // these need to be handled the same way they were in mol files
-      res->clearProp(SmilesParseOps::detail::_needsDetectBondStereo);
-      MolOps::clearSingleBondDirFlags(*res);
-      MolOps::detectBondStereochemistry(*res);
+
+    // Handle wiggly bonds from CXSMILES
+    if (mol.hasProp(PropToken(SmilesParseOps::detail::_needsDetectBondStereo))) {
+      mol.asROMol().clearProp(SmilesParseOps::detail::_needsDetectBondStereo);
+      MolOps::clearSingleBondDirFlags(mol.asROMol());
+      MolOps::detectBondStereochemistry(mol.asROMol());
     }
-#endif
+
     // figure out stereochemistry:
     //bool cleanIt = true, force = true, flagPossible = true;
     //MolOps::assignStereochemistry(mol, temp.chiralityTemp, cleanIt, force, flagPossible);
