@@ -37,6 +37,7 @@ if(needDownload)
 endif()
 
 # simple patch for a typo in the pubchem_align library
+# This should no longer be necessary, as it has been fixed upstream.  Maybe take it out?
 file(READ ${PUBCHEMSHAPE_DIR}/shape_neighbor.cpp FILE_CONTENTS)
 string(REPLACE "memcpy( qom, old_quattrans, 7 * sizeof( float ) );" "memcpy( qom, old_quattrans, 7 * sizeof( double ) );" FILE_CONTENTS "${FILE_CONTENTS}")
 file(WRITE ${PUBCHEMSHAPE_DIR}/shape_neighbor.cpp "${FILE_CONTENTS}")
