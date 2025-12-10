@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <iostream>
 #include "MolData3Ddescriptors.h"
 #include <GraphMol/RDKitBase.h>
 

@@ -17,7 +17,6 @@
 #include "RDProps.h"
 #include <string>
 #include <sstream>
-#include <iostream>
 #include <unordered_set>
 #include <boost/cstdint.hpp>
 #include <boost/predef.h>
@@ -491,7 +490,7 @@ template <typename COUNT_TYPE = unsigned int>
 inline bool streamWriteProps(
     std::ostream &ss, const RDProps &props, bool savePrivate = false,
     bool saveComputed = false, const CustomPropHandlerVec &handlers = {},
-    const std::unordered_set<std::string> &ignore = {}) {
+    const std::unordered_set<std::string_view> &ignore = {}) {
   STR_VECT propsToSave = props.getPropList(savePrivate, saveComputed);
   std::unordered_set<std::string> propnames;
   for (const auto &pn : propsToSave) {

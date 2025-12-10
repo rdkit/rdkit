@@ -12,9 +12,6 @@
 #pragma warning(disable : 4788)  // warning: long & complicated stl warning
 #endif
 
-// std bits
-#include <iostream>
-
 // RD bits
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>

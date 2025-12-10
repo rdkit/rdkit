@@ -31,6 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.RDKit;
+
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -44,14 +45,14 @@ public class AromaticTests extends GraphMolTest {
 	@Test
 	public void testAromaticRegression() throws Exception {
 		String filePath = getFilePath("aromat_regress.txt");
-		performAromaticTest(filePath,0);
+		performAromaticTest(filePath, 0);
 	}
 
 	@Test
 	public void testNCIAromaticRegression() throws Exception {
 		String filePath = getFilePath("NCI_aromat_regress.txt");
 		// assertEquals(filePath,"foo");
-		performAromaticTest(filePath,0);
+		performAromaticTest(filePath, 0);
 	}
 
 	public void performAromaticTest(String filePath, int expectedFailures) throws Exception {
@@ -74,13 +75,14 @@ public class AromaticTests extends GraphMolTest {
 				}
 			}
 		}
-		assertEquals("More than " + expectedFailures + " on file " + filePath, expectedFailures, nFailed);
-
+		assertEquals("More than " + expectedFailures + " on file " + filePath,
+				expectedFailures, nFailed);
 	}
 
 	public String getFilePath(String fileName) {
 		File base = getRdBase();
-		File testFileDir = new File(base, "rdkit" + File.separator + "Chem" + File.separator + "test_data");
+		File testFileDir = new File(base, "rdkit" + File.separator + "Chem" +
+				File.separator + "test_data");
 		return testFileDir.getAbsolutePath() + File.separator + fileName;
 	}
 
@@ -88,7 +90,7 @@ public class AromaticTests extends GraphMolTest {
 		String smi1;
 		String smi2;
 		int numAromatics;
-		int[] aromaticIdx; 
+		int[] aromaticIdx;
 		int lineNo;
 
 		public AromaticTestEntry(int lineNo, String[] line) {
@@ -100,7 +102,8 @@ public class AromaticTests extends GraphMolTest {
 			// Catch a null string
 			String[] aromatics = aromaticList.length() > 0 ? aromaticList.split(",")
 					: new String[0];
-			assertTrue("bad test line at " + lineNo, aromatics.length == numAromatics || smi2.equals("FAIL"));
+			assertTrue("bad test line at " + lineNo, aromatics.length == numAromatics ||
+					smi2.equals("FAIL"));
 			aromaticIdx = new int[aromatics.length];
 			for (int i = 0; i < aromatics.length; i++)
 				aromaticIdx[i] = Integer.parseInt(aromatics[i].trim());

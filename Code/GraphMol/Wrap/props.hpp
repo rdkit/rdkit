@@ -36,6 +36,7 @@
 #include <RDBoost/Wrap.h>
 #include <RDGeneral/Dict.h>
 #include <algorithm>
+#include <boost/algorithm/string.hpp>
 
 namespace RDKit {
 
@@ -75,6 +76,24 @@ bool AddToDict(const U &ob, boost::python::dict &dict, const std::string &key) {
   return true;
 }
 
+const std::string getPropsAsDictDocString =
+    "Returns a dictionary populated with properties.\n"
+    "When possible, string values will be converted to integers or doubles (trimming if necessary)\n"
+
+    " n.b. Some properties are not able to be converted to python "
+    "types.\n\n"
+    "  ARGUMENTS:\n"
+    "    - includePrivate: (optional) toggles inclusion of private "
+    "properties in the result set.\n"
+    "                      Defaults to False.\n"
+    "    - includeComputed: (optional) toggles inclusion of computed "
+    "properties in the result set.\n"
+    "                      Defaults to False.\n\n"
+    "    - autoConvertStrings: (optional) toggles automatic conversion of string "
+    "properties to integers or doubles.\n"
+    "                      Defaults to True.\n\n"
+    "  RETURNS: a dictionary\n";
+
 template <class T>
 boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
                                    bool includeComputed,
@@ -99,14 +118,16 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         case RDTypeTag::StringTag: {
           auto value = from_rdvalue<std::string>(rdvalue.val);
           if (autoConvertStrings) {
+            auto trimVal = value;
+            boost::trim(trimVal);
             // Auto convert strings to ints and double if possible
             int ivalue;
-            if (boost::conversion::try_lexical_convert(value, ivalue)) {
+            if (boost::conversion::try_lexical_convert(trimVal, ivalue)) {
               dict[rdvalue.key] = ivalue;
               break;
             }
             double dvalue;
-            if (boost::conversion::try_lexical_convert(value, dvalue)) {
+            if (boost::conversion::try_lexical_convert(trimVal, dvalue)) {
               dict[rdvalue.key] = dvalue;
               break;
             }
@@ -175,7 +196,7 @@ PyObject *rawPy(T &&thing) {
 }
 
 template <class RDOb, class T>
-PyObject* GetProp(const RDOb *ob, const std::string &key) {
+PyObject *GetProp(const RDOb *ob, const std::string &key) {
   T res;
   try {
     if (!ob->getPropIfPresent(key, res)) {
@@ -183,9 +204,8 @@ PyObject* GetProp(const RDOb *ob, const std::string &key) {
       return nullptr;
     }
   } catch (const std::exception &e) {
-    auto msg = std::string("key `") + key +
-                              "` exists but does not result in " +
-                              GetTypeName<T>() + " reason: " + e.what();
+    auto msg = std::string("key `") + key + "` exists but does not result in " +
+               GetTypeName<T>() + " reason: " + e.what();
     PyErr_SetString(PyExc_ValueError, msg.c_str());
     return nullptr;
   }
@@ -207,8 +227,6 @@ python::object autoConvertString(const RDOb *ob, const std::string &key) {
 
   return python::object();
 }
-
-
 
 template <class RDOb>
 PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {

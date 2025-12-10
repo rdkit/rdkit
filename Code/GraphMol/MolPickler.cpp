@@ -21,8 +21,8 @@
 #include <DataStructs/DatastructsStreamOps.h>
 #include <Query/QueryObjects.h>
 #include <map>
-#include <iostream>
 #include <cstdint>
+#include <string_view>
 #include <boost/algorithm/string.hpp>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -121,10 +121,10 @@ void MolPickler::_pickleProperties(std::ostream &ss, const RDProps &props,
 
 namespace {
 
-template <typename SAVEAS, typename STOREAS>
-void unpickleExplicitProperties(
-    std::istream &ss, RDProps &props, int version,
-    const std::vector<std::pair<std::string, std::uint16_t>> &explicitProps) {
+template <typename SAVEAS, typename STOREAS, typename EXPLICIT>
+inline void unpickleExplicitProperties(std::istream &ss, RDProps &props,
+                                       int version,
+                                       const EXPLICIT &explicitProps) {
   if (version >= 14000) {
     std::uint8_t bprops;
     streamRead(ss, bprops, version);
@@ -138,10 +138,9 @@ void unpickleExplicitProperties(
   }
 }
 
-template <typename SAVEAS>
-bool pickleExplicitProperties(
-    std::ostream &ss, const RDProps &props,
-    const std::vector<std::pair<std::string, std::uint16_t>> &explicitProps) {
+template <typename SAVEAS, typename EXPLICIT>
+inline bool pickleExplicitProperties(std::ostream &ss, const RDProps &props,
+                                     const EXPLICIT &explicitProps) {
   std::uint8_t bprops = 0;
   std::vector<SAVEAS> ps;
   SAVEAS bv;
@@ -167,28 +166,30 @@ class PropTracker {
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
   // the properties themselves are stored as std::int8_t
-  const std::vector<std::pair<std::string, std::uint16_t>> explicitBondProps = {
-      {RDKit::common_properties::_MolFileBondType, 0x1},
-      {RDKit::common_properties::_MolFileBondStereo, 0x2},
-      {RDKit::common_properties::_MolFileBondCfg, 0x4},
-      {RDKit::common_properties::_MolFileBondQuery, 0x8},
-      {RDKit::common_properties::molStereoCare, 0x10},
-  };
+  static constexpr std::array<std::pair<std::string_view, std::uint16_t>, 5>
+      explicitBondProps{{
+          {RDKit::common_properties::_MolFileBondType, 0x1},
+          {RDKit::common_properties::_MolFileBondStereo, 0x2},
+          {RDKit::common_properties::_MolFileBondCfg, 0x4},
+          {RDKit::common_properties::_MolFileBondQuery, 0x8},
+          {RDKit::common_properties::molStereoCare, 0x10},
+      }};
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
   // the properties themselves are stored as std::int16_t
-  const std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {
-      {common_properties::molStereoCare, 0x1},
-      {common_properties::molParity, 0x2},
-      {common_properties::molInversionFlag, 0x4},
-      {common_properties::_ChiralityPossible, 0x8},
+  static constexpr std::array<std::pair<std::string_view, std::uint16_t>, 4>
+      explicitAtomProps{{
+          {common_properties::molStereoCare, 0x1},
+          {common_properties::molParity, 0x2},
+          {common_properties::molInversionFlag, 0x4},
+          {common_properties::_ChiralityPossible, 0x8},
 
-  };
-  const std::vector<std::string> ignoreAtomProps = {
+      }};
+  static constexpr std::array<std::string_view, 2> ignoreAtomProps{
       common_properties::molAtomMapNumber,
       common_properties::dummyLabel,
   };
-  std::unordered_set<std::string> ignoreBondProps;
+  std::unordered_set<std::string_view> ignoreBondProps;
   PropTracker() {
     for (const auto &pr : explicitBondProps) {
       ignoreBondProps.insert(pr.first);
@@ -199,7 +200,7 @@ class PropTracker {
 bool pickleAtomProperties(std::ostream &ss, const RDProps &props,
                           unsigned int pickleFlags) {
   const static PropTracker aprops;
-  static std::unordered_set<std::string> ignoreProps;
+  static std::unordered_set<std::string_view> ignoreProps;
   if (ignoreProps.empty()) {
     for (const auto &pr : aprops.explicitAtomProps) {
       ignoreProps.insert(pr.first);
@@ -219,7 +220,7 @@ bool pickleAtomProperties(std::ostream &ss, const RDProps &props,
       MolPickler::getCustomPropHandlers(), ignoreProps);
 
   res |= pickleExplicitProperties<std::int16_t>(ss, props,
-                                                aprops.explicitAtomProps);
+                                                PropTracker::explicitAtomProps);
   return res;
 }
 
@@ -233,7 +234,7 @@ void unpickleAtomProperties(std::istream &ss, RDProps &props, int version) {
                                   MolPickler::getCustomPropHandlers(), false);
   }
   unpickleExplicitProperties<std::int16_t, int>(ss, props, version,
-                                                aprops.explicitAtomProps);
+                                                PropTracker::explicitAtomProps);
 }
 
 bool pickleBondProperties(std::ostream &ss, const RDProps &props,
@@ -247,7 +248,7 @@ bool pickleBondProperties(std::ostream &ss, const RDProps &props,
       pickleFlags & PicklerOps::ComputedProps,
       MolPickler::getCustomPropHandlers(), bprops.ignoreBondProps);
   res |= pickleExplicitProperties<std::int8_t>(ss, props,
-                                               bprops.explicitBondProps);
+                                               PropTracker::explicitBondProps);
   return res;
 }
 
@@ -261,7 +262,7 @@ void unpickleBondProperties(std::istream &ss, RDProps &props, int version) {
                                   MolPickler::getCustomPropHandlers(), false);
   }
   unpickleExplicitProperties<std::int8_t, int>(ss, props, version,
-                                               bprops.explicitBondProps);
+                                               PropTracker::explicitBondProps);
 }
 
 }  // namespace

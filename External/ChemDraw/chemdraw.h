@@ -41,29 +41,37 @@ namespace RDKit {
 namespace v2 {
 enum class CDXFormat {
   CDX = 1,
-  CDXML = 2
+  CDXML = 2,
+  AUTO = 3
 };
 
 struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {
-  bool sanitize = true;
-  bool removeHs = true;
-  CDXFormat format = CDXFormat::CDXML;
+  bool sanitize;
+  bool removeHs;
+  CDXFormat format;
+  ChemDrawParserParams()
+      : sanitize(true), removeHs(true), format(CDXFormat::AUTO) {}
+  ChemDrawParserParams(bool sanitize, bool removeHs, CDXFormat format)
+      : sanitize(sanitize), removeHs(removeHs), format(format) {}
 };
 
 std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
-MolsFromChemDrawDataStream(std::istream &inStream,
-               const ChemDrawParserParams &params = ChemDrawParserParams());
+MolsFromChemDrawDataStream(
+    std::istream &inStream,
+    const ChemDrawParserParams &params = ChemDrawParserParams());
 
 std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
-MolsFromChemDrawFile(const std::string &filename,
-               const ChemDrawParserParams &params = ChemDrawParserParams());
+MolsFromChemDrawFile(
+    const std::string &filename,
+    const ChemDrawParserParams &params = ChemDrawParserParams());
 
 std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
-MolsFromChemDrawBlock(const std::string &block,
-               const ChemDrawParserParams &params = ChemDrawParserParams());
+MolsFromChemDrawBlock(
+    const std::string &block,
+    const ChemDrawParserParams &params = ChemDrawParserParams());
 
 std::string RDKIT_RDCHEMDRAWLIB_EXPORT
 MolToChemDrawBlock(const ROMol &mol, CDXFormat format = CDXFormat::CDXML);
-}
+}  // namespace v2
 }  // namespace RDKit
 #endif

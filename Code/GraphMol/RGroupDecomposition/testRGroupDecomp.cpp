@@ -33,7 +33,6 @@
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
-#include <iostream>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -4147,13 +4146,42 @@ void testRgroupDecompZipping() {
   }
 }
 
+void testSmartsOnDummyAtoms() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test we can reconstruct rgroup decomps that break rings" << std::endl;
+
+  const auto core = "[$([1C]):1]C[$([2C]):2]"_smarts;
+    
+  const auto mol1 = "N[1C]C[2C]"_smiles;
+  const auto mol2 = "N[2C]C[1C]"_smiles;
+
+  const std::vector<std::string> expected = {
+    "Core:C([*:1])[*:2] R1:N[1C][*:1] R2:[2C][*:2]",
+    "Core:C([*:1])[*:2] R1:[1C][*:1] R2:N[2C][*:2]"
+  };
+
+  RGroupDecomposition decomp(*core);
+  auto add11 = decomp.add(*mol1);
+  TEST_ASSERT(add11 == 0);
+  add11 = decomp.add(*mol2);
+  TEST_ASSERT(add11 == 1)
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  int i = 0;
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+       ++it, ++i) {
+    CHECK_RGROUP(it, expected[i]);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
-
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
@@ -4211,6 +4239,7 @@ int main() {
   testStereoBondBug();
   testNotEnumeratedCore();
   testRgroupDecompZipping();
+  testSmartsOnDummyAtoms();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

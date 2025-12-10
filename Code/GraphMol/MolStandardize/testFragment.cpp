@@ -21,7 +21,6 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
 
-#include <iostream>
 #include <fstream>
 
 using namespace RDKit;

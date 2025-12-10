@@ -10,7 +10,6 @@
 
 #include <algorithm>
 #include <fstream>
-#include <iostream>
 #include <random>
 #include <regex>
 #include <set>
@@ -115,6 +114,16 @@ SearchResults SynthonSpace::substructureSearch(
   return ssss.search();
 }
 
+void SynthonSpace::substructureSearch(
+    const ROMol &query, const SearchResultCallback &cb,
+    const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  ControlCHandler::reset();
+  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
+  ssss.search(cb);
+}
+
 SearchResults SynthonSpace::substructureSearch(
     const GeneralizedSubstruct::ExtendedQueryMol &query,
     const SubstructMatchParameters &matchParams,
@@ -162,12 +171,30 @@ SearchResults SynthonSpace::fingerprintSearch(
   return ssss.search();
 }
 
+void SynthonSpace::fingerprintSearch(
+    const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
+    const SearchResultCallback &cb, const SynthonSpaceSearchParams &params) {
+  ControlCHandler::reset();
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
+  ssss.search(cb);
+}
+
 SearchResults SynthonSpace::rascalSearch(
     const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceRascalSearcher ssss(query, rascalOptions, params, *this);
   return ssss.search();
+}
+
+void SynthonSpace::rascalSearch(const ROMol &query,
+                                const RascalMCES::RascalOptions &rascalOptions,
+                                const SearchResultCallback &cb,
+                                const SynthonSpaceSearchParams &params) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  SynthonSpaceRascalSearcher ssss(query, rascalOptions, params, *this);
+  ssss.search(cb);
 }
 
 namespace {

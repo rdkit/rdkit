@@ -11,7 +11,6 @@
 #include <GraphMol/SynthonSpaceSearch/MemoryMappedFileReader.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 
-#include <iostream>
 #include <string>
 
 #include <RDGeneral/RDLog.h>
@@ -89,7 +88,7 @@ MemoryMappedFileReader::MemoryMappedFileReader(const std::string &filePath) {
     throw(std::runtime_error("Error reading file " + filePath + "."));
   }
 
-  close(fd); // File descriptor is no longer needed
+  close(fd);  // File descriptor is no longer needed
 #endif
 }
 
@@ -111,7 +110,7 @@ MemoryMappedFileReader::~MemoryMappedFileReader() {
 }
 
 MemoryMappedFileReader &MemoryMappedFileReader::operator=(
-  MemoryMappedFileReader &&other) {
+    MemoryMappedFileReader &&other) {
   if (this != &other) {
 #ifdef _WIN32
     // Windows-specific unmapping
@@ -127,4 +126,4 @@ MemoryMappedFileReader &MemoryMappedFileReader::operator=(
   }
   return *this;
 }
-}; // namespace RDKit::SynthonSpaceSearch::details
+};  // namespace RDKit::SynthonSpaceSearch::details

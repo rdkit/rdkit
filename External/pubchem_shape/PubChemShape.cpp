@@ -1,4 +1,3 @@
-#include <iostream>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
@@ -541,7 +540,6 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
   DEBUG_MSG("Running alignment...");
   double nbr_st = 0.0;
   double nbr_ct = 0.0;
-
   Align3D::Neighbor_Conformers(
       refShape.coord.data(), refShape.alpha_vector,
       refShape.volumeAtomIndexVector, mapCp, refShape.sov, refShape.sof,
@@ -556,7 +554,6 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
   std::vector<float> transformed(fitShape.coord.size());
   Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
                                 fitShape.coord.size() / 3, matrix.data());
-  fitShape.coord = transformed;
   fitShape.coord = transformed;
   return std::make_pair(nbr_st, nbr_ct);
 }
@@ -638,6 +635,7 @@ std::pair<double, double> AlignMolecule(
   PRECONDITION(matrix.size() == 12, "bad matrix size");
   Align3D::setUseCutOff(true);
 
+  DEBUG_MSG("Fit details:");
   auto fitShape = PrepareConformer(fit, fitConfId, shapeOpts);
   auto tanis = AlignShape(refShape, fitShape, matrix, opt_param, max_preiters,
                           max_postiters);

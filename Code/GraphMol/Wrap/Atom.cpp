@@ -29,6 +29,9 @@ namespace python = boost::python;
 namespace RDKit {
 void expandQuery(QueryAtom *self, const QueryAtom *other,
                  Queries::CompositeQueryType how, bool maintainOrder) {
+  if (!other) {
+    throw_value_error("other Atom is null");
+  }
   if (other->hasQuery()) {
     const QueryAtom::QUERYATOM_QUERY *qry = other->getQuery();
     self->expandQuery(qry->copy(), how, maintainOrder);
@@ -36,6 +39,9 @@ void expandQuery(QueryAtom *self, const QueryAtom *other,
 }
 
 void setQuery(QueryAtom *self, const QueryAtom *other) {
+  if (!other) {
+    throw_value_error("other Atom is null");
+  }
   if (other->hasQuery()) {
     self->setQuery(other->getQuery()->copy());
   }
@@ -281,7 +287,7 @@ struct atom_wrapper {
         .def("GetBonds", AtomGetBonds, python::args("self"),
              "Returns a read-only sequence of the atom's bonds\n")
 
-        .def("Match", (bool(Atom::*)(const Atom *) const) & Atom::Match,
+        .def("Match", (bool (Atom::*)(const Atom *) const) & Atom::Match,
              python::args("self", "what"),
              "Returns whether or not this atom matches another Atom.\n\n"
              "  Each Atom (or query Atom) has a query function which is\n"
@@ -445,8 +451,7 @@ struct atom_wrapper {
              (python::arg("self"), python::arg("includePrivate") = true,
               python::arg("includeComputed") = true,
               python::arg("autoConvertStrings") = true),
-             "Returns a dictionary of the properties set on the Atom.\n"
-             " n.b. some properties cannot be converted to python types.\n")
+             getPropsAsDictDocString.c_str())
 
         .def("UpdatePropertyCache", &Atom::updatePropertyCache,
              (python::arg("self"), python::arg("strict") = true),

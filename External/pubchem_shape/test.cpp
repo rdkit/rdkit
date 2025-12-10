@@ -36,7 +36,6 @@ TEST_CASE("basic alignment") {
     auto [nbr_st, nbr_ct] =
         AlignMolecule(*ref, cp, matrix, -1, -1, test_use_colors, test_opt_param,
                       test_max_preiters, test_max_postiters);
-    std::cout << "Scores : " << nbr_st << ", " << nbr_ct << std::endl;
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.773, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.303, 0.005));
     for (auto i = 0u; i < probe->getNumAtoms(); ++i) {
@@ -135,8 +134,6 @@ TEST_CASE("handling molecules with Hs") {
   auto probe = suppl[1];
   REQUIRE(probe);
   ShapeInputOptions mol1Opts, mol2Opts;
-  auto [singleShape, singleColor] =
-      ScoreMolecule(*ref, *probe, mol1Opts, mol2Opts);
   SECTION("basics") {
     RWMol cp(*probe);
     std::vector<float> matrix(12, 0.0);

@@ -11,10 +11,18 @@
 #ifndef RDKIT_SYNTHONSPACE_SEARCHRESULTS_H
 #define RDKIT_SYNTHONSPACE_SEARCHRESULTS_H
 
+#include <functional>
 #include <RDGeneral/export.h>
 #include <GraphMol/ROMol.h>
 
 namespace RDKit::SynthonSpaceSearch {
+
+// takes vector of search results; returns true if enough hits have been
+// returned, false if the search should continue.
+// Invoking the callback transfers ownership of the molecules to the
+// callee, which avoids an extra copy of the molecule.
+using SearchResultCallback =
+    std::function<bool(std::vector<std::unique_ptr<ROMol>> &)>;
 
 // A class holding a set of results from a search.  Contains the hit
 // molecules and information about how the search progressed, whether
@@ -22,8 +30,8 @@ namespace RDKit::SynthonSpaceSearch {
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
  public:
   explicit SearchResults() : d_maxNumResults(0) {}
-  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols, std::uint64_t maxNumRes,
-                bool timedOut, bool cancelled);
+  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols,
+                std::uint64_t maxNumRes, bool timedOut, bool cancelled);
   SearchResults(const SearchResults &other);
   SearchResults(SearchResults &&other) = default;
   ~SearchResults() = default;

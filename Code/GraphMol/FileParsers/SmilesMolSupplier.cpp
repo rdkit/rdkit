@@ -17,7 +17,6 @@
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <cstdlib>
