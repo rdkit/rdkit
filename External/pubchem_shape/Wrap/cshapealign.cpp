@@ -183,6 +183,17 @@ python::list get_shapeShift(const ShapeInput &shp) {
   return py_list;
 }
 
+void set_inertialRot(ShapeInput &shp, const python::object &rot) {
+  pythonObjectToVect<double>(rot, shp.inertialRot);
+}
+python::list get_inertialRot(const ShapeInput &shp) {
+  python::list py_list;
+  for (const auto &val : shp.inertialRot) {
+    py_list.append(val);
+  }
+  return py_list;
+}
+
 void set_customFeatures(ShapeInputOptions &shp, const python::object &s) {
   shp.customFeatures.clear();
   auto len = python::len(s);
@@ -436,6 +447,9 @@ Returns
                      &ShapeInput::volumeAtomIndexVector)
       .add_property("shift", &helpers::get_shapeShift, &helpers::set_shapeShift,
                     "Translation of centre of shape coordinates to origin.")
+      .add_property(
+          "inertialRot", &helpers::get_inertialRot, &helpers::set_inertialRot,
+          "Rotation applied to put the shape into its principal axes frame of reference.")
       .def_readwrite("sov", &ShapeInput::sov)
       .def_readwrite("sof", &ShapeInput::sof);
 
