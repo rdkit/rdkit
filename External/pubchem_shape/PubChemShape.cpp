@@ -16,6 +16,10 @@
 #include "pubchem-align3d/shape_functions.hpp"
 #include "PubChemShape.hpp"
 
+#include "Geometry/Transform3D.h"
+#include "GraphMol/MolTransforms/MolTransforms.h"
+#include "GraphMol/SmilesParse/SmilesWrite.h"
+
 constexpr auto pubchemFeatureName = "PUBCHEM_PHARMACOPHORE_FEATURES";
 
 // #define DEBUG_MSG(msg_stream) cout << msg_stream << '\n'
@@ -316,7 +320,9 @@ void extractAtomCoords(const Conformer &conformer, const unsigned int nAtoms,
     unsigned int Z = conformer.getOwningMol().getAtomWithIdx(i)->getAtomicNum();
     if (Z > 1 || (shapeOpts.includeDummies && Z == 0)) {
       RDGeom::Point3D pos = conformer.getAtomPos(i);
-      pos -= ave;
+      if (shapeOpts.normalize) {
+        pos -= ave;
+      }
       coords[j * 3] = pos.x;
       coords[(j * 3) + 1] = pos.y;
       coords[(j * 3) + 2] = pos.z;
@@ -353,7 +359,9 @@ void extractFeatureCoords(
     }
     if (nSel == feature_idx_type[i].first.size()) {
       floc /= nSel;
-      floc -= ave;
+      if (shapeOpts.normalize) {
+        floc -= ave;
+      }
       DEBUG_MSG("feature type " << feature_idx_type[i].second << " (" << floc
                                 << ")");
 
@@ -368,10 +376,39 @@ void extractFeatureCoords(
   }
 }
 
+void extractCustomFeatureCoords(
+    const unsigned int nSelectedAtoms, const ShapeInputOptions &shapeOpts,
+    const RDGeom::Point3D &ave, unsigned int &numFeatures, ShapeInput &res,
+    std::vector<double> &rad_vector,
+    const std::unique_ptr<RDGeom::Transform3D> &trans) {
+  for (const auto &feature : shapeOpts.customFeatures) {
+    unsigned int feature_type = std::get<0>(feature);
+    RDGeom::Point3D floc = std::get<1>(feature);
+    if (trans) {
+      trans->TransformPoint(floc);
+    }
+    double radius = std::get<2>(feature);
+    floc -= ave;
+    DEBUG_MSG("custom feature type " << feature_type << " (" << floc << ")");
+
+    auto array_idx = nSelectedAtoms + numFeatures;
+    res.coord[array_idx * 3] = floc.x;
+    res.coord[(array_idx * 3) + 1] = floc.y;
+    res.coord[(array_idx * 3) + 2] = floc.z;
+    rad_vector[array_idx] = radius;
+    res.atom_type_vector[array_idx] = feature_type;
+    ++numFeatures;
+  }
+}
+
 }  // namespace
-// The conformer is left where it is, the shape is translated to the origin.
+// The conformer is left where it is, the shape is translated to the origin
+// and aligned to the principal axes.
 ShapeInput PrepareConformer(const ROMol &mol, int confId,
                             const ShapeInputOptions &shapeOpts) {
+  std::cout << "PrepareConformer normalize = " << shapeOpts.normalize
+            << std::endl;
+
   Align3D::setUseCutOff(true);
   ShapeInput res;
 
@@ -386,24 +423,80 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
 
   // Start with the arrays as large as they will possibly have to be.
   // They will be re-sized later.
-  unsigned int nAlignmentAtoms = nAtoms + feature_idx_type.size();
+  unsigned int nAlignmentAtoms = nAtoms;
+  if (shapeOpts.customFeatures.empty()) {
+    nAlignmentAtoms += feature_idx_type.size();
+  } else {
+    nAlignmentAtoms += shapeOpts.customFeatures.size();
+  }
   std::vector<double> rad_vector(nAlignmentAtoms);
   res.atom_type_vector.resize(nAlignmentAtoms, 0);
 
+  Conformer confCp(conformer);
+  std::unique_ptr<RDGeom::Transform3D> trans;
+  RDGeom::Point3D initialCentroid;
+  if (shapeOpts.normalize) {
+    // This ignores hydrogens by default, which is what is needed here.
+    trans.reset(MolTransforms::computeCanonicalTransform(confCp));
+    std::cout << "canonical transform : ";
+    for (unsigned int i = 0; i < 4; ++i) {
+      for (unsigned int j = 0; j < 4; ++j) {
+        std::cout << trans->getValUnchecked(i, j) << ", ";
+      }
+      std::cout << std::endl;
+    }
+    MolTransforms::transformConformer(confCp, *trans);
+
+    // Save the rotation part of the transformation.  The coords will be centred
+    // below and left that way so we don't need to keep the translation.
+    for (unsigned int i = 0, k = 0; i < 3; ++i) {
+      for (unsigned int j = 0; j < 3; ++j, ++k) {
+        res.inertialRot[k] = trans->getValUnchecked(i, j);
+      }
+    }
+
+    // Work back from the canonical transformation to get the initial
+    // centroid by the inverse rotation of the current translation
+    // but not taking its negative so it can be used directly as the shift.
+    initialCentroid = RDGeom::Point3D{trans->getValUnchecked(0, 3),
+                                      trans->getValUnchecked(1, 3),
+                                      trans->getValUnchecked(2, 3)};
+    RDGeom::Transform3D invTrans;
+    invTrans.setValUnchecked(0, 0, trans->getValUnchecked(0, 0));
+    invTrans.setValUnchecked(0, 1, trans->getValUnchecked(1, 0));
+    invTrans.setValUnchecked(0, 2, trans->getValUnchecked(2, 0));
+    invTrans.setValUnchecked(1, 0, trans->getValUnchecked(0, 1));
+    invTrans.setValUnchecked(1, 1, trans->getValUnchecked(1, 1));
+    invTrans.setValUnchecked(1, 2, trans->getValUnchecked(2, 1));
+    invTrans.setValUnchecked(2, 0, trans->getValUnchecked(0, 2));
+    invTrans.setValUnchecked(2, 1, trans->getValUnchecked(1, 2));
+    invTrans.setValUnchecked(2, 2, trans->getValUnchecked(2, 2));
+    invTrans.TransformPoint(initialCentroid);
+  }
+  std::cout << "initialCentroid : " << initialCentroid << std::endl;
+  RWMol molCp(mol);
+  molCp.removeConformer(0);
+  molCp.addConformer(new Conformer(confCp), true);
+  std::cout << "Normalised conformer : " << MolToCXSmiles(molCp) << std::endl;
+
   RDGeom::Point3D ave;
   unsigned int nSelectedAtoms = 0;
-  extractAtomRadii(conformer, nAtoms, shapeOpts, ave, nSelectedAtoms,
-                   rad_vector);
-
+  // Calculates the average coord as by-product
+  extractAtomRadii(confCp, nAtoms, shapeOpts, ave, nSelectedAtoms, rad_vector);
   // translate steric center to origin
   DEBUG_MSG("steric center: (" << ave << ")");
   res.shift = {-ave.x, -ave.y, -ave.z};
   res.coord.resize(nAlignmentAtoms * 3);
 
-  extractAtomCoords(conformer, nAtoms, shapeOpts, ave, res.coord);
+  extractAtomCoords(confCp, nAtoms, shapeOpts, ave, res.coord);
   unsigned int numFeatures = 0;
-  extractFeatureCoords(conformer, nAtoms, nSelectedAtoms, feature_idx_type,
-                       shapeOpts, ave, numFeatures, res, rad_vector);
+  if (shapeOpts.customFeatures.empty()) {
+    extractFeatureCoords(confCp, nAtoms, nSelectedAtoms, feature_idx_type,
+                         shapeOpts, ave, numFeatures, res, rad_vector);
+  } else if (shapeOpts.useColors) {
+    extractCustomFeatureCoords(nSelectedAtoms, shapeOpts, ave, numFeatures, res,
+                               rad_vector, trans);
+  }
 
   // Now cut the final vectors down to the actual number of atoms and
   // features used.
@@ -432,6 +525,23 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
         res.coord.data(), res.alpha_vector, res.colorAtomType2IndexVectorMap);
     DEBUG_MSG("sof: " << res.sof);
   }
+
+  std::cout << "PrepareConformer for " << mol.getNumAtoms()
+            << " atoms  of which " << nSelectedAtoms << " selected"
+            << std::endl;
+  std::cout << "Number of coords total " << res.coord.size() / 3 << std::endl;
+  for (size_t i = 0; i < res.coord.size(); i += 3) {
+    if (i < 3 * nSelectedAtoms) {
+      std::cout << "A ";
+    } else {
+      std::cout << "F ";
+    }
+    std::cout << res.coord[i] << "," << res.coord[i + 1] << ","
+              << res.coord[i + 2] << ";" << std::endl;
+  }
+
+  // Finally set the shift to the negative of the original average coords.
+  res.shift = {initialCentroid.x, initialCentroid.y, initialCentroid.z};
   return res;
 }
 
@@ -457,6 +567,19 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
   DEBUG_MSG("Running alignment...");
   double nbr_st = 0.0;
   double nbr_ct = 0.0;
+  std::cout << "aligning fit cds : ";
+  for (size_t i = 0; i < fitShape.coord.size(); i += 3) {
+    std::cout << fitShape.coord[i] << "," << fitShape.coord[i + 1] << ","
+              << fitShape.coord[i + 2] << ";";
+  }
+  std::cout << std::endl;
+  std::cout << "onto  ref cds : ";
+  for (size_t i = 0; i < refShape.coord.size(); i += 3) {
+    std::cout << refShape.coord[i] << "," << refShape.coord[i + 1] << ","
+              << refShape.coord[i + 2] << ";";
+  }
+  std::cout << std::endl;
+
   Align3D::Neighbor_Conformers(
       refShape.coord.data(), refShape.alpha_vector,
       refShape.volumeAtomIndexVector, mapCp, refShape.sov, refShape.sof,
@@ -464,7 +587,13 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
       fitShape.volumeAtomIndexVector, fitMapCp, fitShape.sov, fitShape.sof,
       !jointColorAtomTypeSet.empty(), max_preiters, max_postiters, opt_param,
       matrix.data(), nbr_st, nbr_ct);
-
+  std::cout << "alignment matrix : " << std::endl;
+  std::cout << matrix[0] << ", " << matrix[1] << ", " << matrix[2] << std::endl;
+  std::cout << matrix[3] << ", " << matrix[4] << ", " << matrix[5] << std::endl;
+  std::cout << matrix[6] << ", " << matrix[7] << ", " << matrix[8] << std::endl;
+  std::cout << matrix[9] << ", " << matrix[10] << ", " << matrix[11]
+            << std::endl;
+  std::cout << "SCORES : " << nbr_st << ", " << nbr_ct << std::endl;
   DEBUG_MSG("Done!");
   DEBUG_MSG("nbr_st: " << nbr_st);
   DEBUG_MSG("nbr_ct: " << nbr_ct);
@@ -473,12 +602,141 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
   Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
                                 fitShape.coord.size() / 3, matrix.data());
   fitShape.coord = transformed;
+  std::cout << "initial fitted cds : ";
+  for (size_t i = 0; i < transformed.size(); i += 3) {
+    std::cout << transformed[i] << "," << transformed[i + 1] << ","
+              << transformed[i + 2] << ";";
+  }
+  std::cout << std::endl;
+  fitShape.coord = transformed;
   return std::make_pair(nbr_st, nbr_ct);
 }
 
 void TransformConformer(const std::vector<double> &finalTrans,
+                        const std::vector<double> &finalRot,
                         const std::vector<float> &matrix, ShapeInput &fitShape,
                         Conformer &fitConf) {
+  std::cout << "rot matrix : " << std::endl;
+  std::cout << matrix[0] << ", " << matrix[1] << ", " << matrix[2] << std::endl;
+  std::cout << matrix[3] << ", " << matrix[4] << ", " << matrix[5] << std::endl;
+  std::cout << matrix[6] << ", " << matrix[7] << ", " << matrix[8] << std::endl;
+  std::cout << "finalTrans : " << finalTrans[0] << ", " << finalTrans[1] << ", "
+            << finalTrans[2] << std::endl;
+  std::cout << "final rot" << std::endl;
+  std::cout << finalRot[0] << ", " << finalRot[1] << ", " << finalRot[2]
+            << std::endl;
+  std::cout << finalRot[3] << ", " << finalRot[4] << ", " << finalRot[5]
+            << std::endl;
+  std::cout << finalRot[6] << ", " << finalRot[7] << ", " << finalRot[8]
+            << std::endl;
+  std::cout << "Transforming the fit conf :: " << fitShape.shift[0] << ", "
+            << fitShape.shift[1] << ", " << fitShape.shift[2]
+            << " ::: " << std::endl;
+  for (size_t i = 0; i < fitConf.getNumAtoms(); ++i) {
+    auto &pos = fitConf.getAtomPos(i);
+    std::cout << pos.x << "," << pos.y << "," << pos.z << ";";
+  }
+  std::cout << std::endl;
+
+  // move the fitConf to the centre of "mass" and rotate it into
+  // its inertial frame.
+  const unsigned int nAtoms = fitConf.getOwningMol().getNumAtoms();
+  RDGeom::Point3D ave1, ave2;
+  for (unsigned int i = 0; i < nAtoms; ++i) {
+    auto &pos = fitConf.getAtomPos(i);
+    ave1 += pos;
+    pos.x += fitShape.shift[0];
+    pos.y += fitShape.shift[1];
+    pos.z += fitShape.shift[2];
+    ave2 += pos;
+  }
+  std::cout << "Shifted the fit conf :: " << std::endl;
+  for (size_t i = 0; i < fitConf.getNumAtoms(); ++i) {
+    auto &pos = fitConf.getAtomPos(i);
+    std::cout << pos.x << "," << pos.y << "," << pos.z << ";";
+  }
+  std::cout << std::endl;
+  std::cout << "ave 1 : " << ave1 / nAtoms << " ave2 : " << ave2 / nAtoms
+            << std::endl;
+
+  RDGeom::Transform3D transform1;
+  transform1.setValUnchecked(0, 0, fitShape.inertialRot[0]);
+  transform1.setValUnchecked(0, 1, fitShape.inertialRot[1]);
+  transform1.setValUnchecked(0, 2, fitShape.inertialRot[2]);
+  transform1.setValUnchecked(1, 0, fitShape.inertialRot[3]);
+  transform1.setValUnchecked(1, 1, fitShape.inertialRot[4]);
+  transform1.setValUnchecked(1, 2, fitShape.inertialRot[5]);
+  transform1.setValUnchecked(2, 0, fitShape.inertialRot[6]);
+  transform1.setValUnchecked(2, 1, fitShape.inertialRot[7]);
+  transform1.setValUnchecked(2, 2, fitShape.inertialRot[8]);
+  transform1.setValUnchecked(2, 3, 0.0);
+  transform1.setValUnchecked(3, 0, 0.0);
+  transform1.setValUnchecked(3, 1, 0.0);
+  transform1.setValUnchecked(3, 2, 0.0);
+  transform1.setValUnchecked(3, 3, 1.0);
+  MolTransforms::transformConformer(fitConf, transform1);
+  std::cout << "Inertial frame fit conf :: " << std::endl;
+  for (size_t i = 0; i < fitConf.getNumAtoms(); ++i) {
+    auto &pos = fitConf.getAtomPos(i);
+    std::cout << pos.x << "," << pos.y << "," << pos.z << ";";
+  }
+  std::cout << std::endl;
+
+  // Apply the overlay matrix.
+  // The matrix comes in as a linear form of a 3x3 rotation matrix and a
+  // 3x1 translation.  Convert that into a RDGeom::Trans3D
+  RDGeom::Transform3D transform2;
+  transform2.setValUnchecked(0, 0, matrix[0]);
+  transform2.setValUnchecked(0, 1, matrix[1]);
+  transform2.setValUnchecked(0, 2, matrix[2]);
+  transform2.setValUnchecked(0, 3, matrix[9]);
+  transform2.setValUnchecked(1, 0, matrix[3]);
+  transform2.setValUnchecked(1, 1, matrix[4]);
+  transform2.setValUnchecked(1, 2, matrix[5]);
+  transform2.setValUnchecked(1, 3, matrix[10]);
+  transform2.setValUnchecked(2, 0, matrix[6]);
+  transform2.setValUnchecked(2, 1, matrix[7]);
+  transform2.setValUnchecked(2, 2, matrix[8]);
+  transform2.setValUnchecked(2, 3, matrix[11]);
+  transform2.setValUnchecked(3, 0, 0.0);
+  transform2.setValUnchecked(3, 1, 0.0);
+  transform2.setValUnchecked(3, 2, 0.0);
+  transform2.setValUnchecked(3, 3, 1.0);
+  MolTransforms::transformConformer(fitConf, transform2);
+  std::cout << "aligned fit conf :: " << std::endl;
+  for (size_t i = 0; i < fitConf.getNumAtoms(); ++i) {
+    auto &pos = fitConf.getAtomPos(i);
+    std::cout << pos.x << "," << pos.y << "," << pos.z << ";";
+  }
+  std::cout << std::endl;
+
+  // Now apply the final rotation and final translation
+  RDGeom::Transform3D transform3;
+  transform3.setValUnchecked(0, 0, finalRot[0]);
+  transform3.setValUnchecked(0, 1, finalRot[1]);
+  transform3.setValUnchecked(0, 2, finalRot[2]);
+  transform3.setValUnchecked(0, 3, finalTrans[0]);
+  transform3.setValUnchecked(1, 0, finalRot[3]);
+  transform3.setValUnchecked(1, 1, finalRot[4]);
+  transform3.setValUnchecked(1, 2, finalRot[5]);
+  transform3.setValUnchecked(1, 3, finalTrans[1]);
+  transform3.setValUnchecked(2, 0, finalRot[6]);
+  transform3.setValUnchecked(2, 1, finalRot[7]);
+  transform3.setValUnchecked(2, 2, finalRot[8]);
+  transform3.setValUnchecked(2, 3, finalTrans[2]);
+  transform3.setValUnchecked(3, 0, 0.0);
+  transform3.setValUnchecked(3, 1, 0.0);
+  transform3.setValUnchecked(3, 2, 0.0);
+  transform3.setValUnchecked(3, 3, 1.0);
+  MolTransforms::transformConformer(fitConf, transform3);
+  std::cout << "final answer fit conf :: " << std::endl;
+  for (size_t i = 0; i < fitConf.getNumAtoms(); ++i) {
+    auto &pos = fitConf.getAtomPos(i);
+    std::cout << pos.x << "," << pos.y << "," << pos.z << ";";
+  }
+  std::cout << std::endl;
+
+#if 0
   // we reuse/modify the coord member of fitShape in order to avoid memory
   // allocations
   const unsigned int nAtoms = fitConf.getOwningMol().getNumAtoms();
@@ -496,44 +754,118 @@ void TransformConformer(const std::vector<double> &finalTrans,
   }
 
   std::vector<float> transformed(nAtoms * 3);
+  // fitShape.coord.data() is the source coords, sent into transformed.data()
   Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
                                 nAtoms, matrix.data());
+
+  // Undo the move to the inertial reference frame but applying the transpose
+  // of the refShape's inertial rotation and final translation.
+  // And again, leaving the final answer back in fitShape coords.
+  const auto &r = finalRot;
+  float invMatrix[12]{
+      float(r[0]),          float(r[1]),          float(r[2]),
+      float(r[3]),          float(r[4]),          float(r[5]),
+      float(r[6]),          float(r[7]),          float(r[8]),
+      float(finalTrans[0]), float(finalTrans[1]), float(finalTrans[2])};
+  Align3D::VApplyRotTransMatrix(fitShape.coord.data(), transformed.data(),
+                                nAtoms, invMatrix);
 
   // now set the coordinates in the conformer; undo the shift of the reference
   // shape to center of "mass" coordinates
   for (unsigned i = 0; i < nAtoms; ++i) {
     RDGeom::Point3D &pos = fitConf.getAtomPos(i);
-    pos.x = transformed[i * 3] - finalTrans[0];
-    pos.y = transformed[(i * 3) + 1] - finalTrans[1];
-    pos.z = transformed[(i * 3) + 2] - finalTrans[2];
+    pos.x = fitShape.coord[i * 3];
+    pos.y = fitShape.coord[(i * 3) + 1];
+    pos.z = fitShape.coord[(i * 3) + 2];
   }
+#endif
+}
+
+std::pair<double, double> AlignMolecule(
+    const ShapeInput &refShape, ROMol &fit, std::vector<float> &matrix,
+    const ShapeInputOptions &shapeOpts, int fitConfId, double opt_param,
+    unsigned int max_preiters, unsigned int max_postiters, bool applyRefShift) {
+  PRECONDITION(matrix.size() == 12, "bad matrix size");
+  Align3D::setUseCutOff(true);
+
+  std::cout << "Number of refShape coords : " << refShape.coord.size() / 3
+            << std::endl;
+  auto fitShape = PrepareConformer(fit, fitConfId, shapeOpts);
+  std::cout << "Number of fitShape coords : " << fitShape.coord.size() / 3
+            << std::endl;
+  auto tanis = AlignShape(refShape, fitShape, matrix, opt_param, max_preiters,
+                          max_postiters);
+  int nfitAtoms = 0;
+  for (const auto atom : fit.atoms()) {
+    if (atom->getAtomicNum() != 1) {
+      ++nfitAtoms;
+    }
+  }
+  std::cout << "overlaid fit shape coords" << std::endl;
+  for (size_t i = 0; i < fitShape.coord.size(); i += 3) {
+    if (i < 3 * nfitAtoms) {
+      std::cout << "A ";
+    } else {
+      std::cout << "F ";
+    }
+    std::cout << fitShape.coord[i] << "," << fitShape.coord[i + 1] << ","
+              << fitShape.coord[i + 2] << ";" << std::endl;
+  }
+
+  // transform fit coords
+  Conformer &fit_conformer = fit.getConformer(fitConfId);
+  std::vector<double> finalTrans{0.0, 0.0, 0.0};
+  std::vector<double> finalRot{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+  if (applyRefShift) {
+    finalTrans = std::vector<double>{-refShape.shift[0], -refShape.shift[1],
+                                     -refShape.shift[2]};
+    // set the final rotation to the inverse of the original inertialRot
+    // of the reference.
+    finalRot =
+        std::vector<double>{refShape.inertialRot[0], refShape.inertialRot[3],
+                            refShape.inertialRot[6], refShape.inertialRot[1],
+                            refShape.inertialRot[4], refShape.inertialRot[7],
+                            refShape.inertialRot[2], refShape.inertialRot[5],
+                            refShape.inertialRot[8]};
+  }
+  TransformConformer(finalTrans, finalRot, matrix, fitShape, fit_conformer);
+  fit.setProp("shape_align_shape_tanimoto", tanis.first);
+  fit.setProp("shape_align_color_tanimoto", tanis.second);
+
+  return tanis;
 }
 
 std::pair<double, double> AlignMolecule(
     const ShapeInput &refShape, ROMol &fit, std::vector<float> &matrix,
     int fitConfId, bool useColors, double opt_param, unsigned int max_preiters,
     unsigned int max_postiters, bool applyRefShift) {
-  PRECONDITION(matrix.size() == 12, "bad matrix size");
-  Align3D::setUseCutOff(true);
-
-  DEBUG_MSG("Fit details:");
   ShapeInputOptions shapeOpts;
   shapeOpts.useColors = useColors;
-  auto fitShape = PrepareConformer(fit, fitConfId, shapeOpts);
-  auto tanis = AlignShape(refShape, fitShape, matrix, opt_param, max_preiters,
-                          max_postiters);
+  return AlignMolecule(refShape, fit, matrix, shapeOpts, fitConfId, opt_param,
+                       max_preiters, max_postiters, applyRefShift);
+}
 
-  // transform fit coords
-  Conformer &fit_conformer = fit.getConformer(fitConfId);
-  std::vector<double> finalTrans{0.0, 0.0, 0.0};
-  if (applyRefShift) {
-    finalTrans = refShape.shift;
+std::pair<double, double> AlignMolecule(
+    const ROMol &ref, ROMol &fit, std::vector<float> &matrix,
+    const ShapeInputOptions &refShapeOpts,
+    const ShapeInputOptions &fitShapeOpts, int refConfId, int fitConfId,
+    double opt_param, unsigned int max_preiters, unsigned int max_postiters) {
+  Align3D::setUseCutOff(true);
+
+  if (refShapeOpts.useColors != fitShapeOpts.useColors) {
+    BOOST_LOG(rdWarningLog)
+        << "useColor values inconsistent between the reference and fit molecules. Colors will not be used in the alignment."
+        << std::endl;
   }
-  TransformConformer(finalTrans, matrix, fitShape, fit_conformer);
-  fit.setProp("shape_align_shape_tanimoto", tanis.first);
-  fit.setProp("shape_align_color_tanimoto", tanis.second);
 
-  return tanis;
+  DEBUG_MSG("Reference details:");
+  std::cout << "Number of ref atoms : " << ref.getNumAtoms() << std::endl;
+  auto refShape = PrepareConformer(ref, refConfId, refShapeOpts);
+  bool applyRefShift = true;
+  auto scores =
+      AlignMolecule(refShape, fit, matrix, fitShapeOpts, fitConfId, opt_param,
+                    max_preiters, max_postiters, applyRefShift);
+  return scores;
 }
 
 std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
@@ -547,9 +879,63 @@ std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
   DEBUG_MSG("Reference details:");
   ShapeInputOptions shapeOpts;
   shapeOpts.useColors = useColors;
-  auto refShape = PrepareConformer(ref, refConfId, shapeOpts);
+  return AlignMolecule(ref, fit, matrix, shapeOpts, shapeOpts, refConfId,
+                       fitConfId, opt_param, max_preiters, max_postiters);
+}
 
-  auto scores = AlignMolecule(refShape, fit, matrix, fitConfId, useColors,
-                              opt_param, max_preiters, max_postiters, true);
-  return scores;
+std::pair<double, double> ScoreShape(const ShapeInput &shape1,
+                                     ShapeInput &shape2, bool useColors) {
+  double shapeOverlap = Align3D::ComputeShapeOverlap(
+      shape1.coord.data(), shape1.alpha_vector, shape1.volumeAtomIndexVector,
+      shape2.coord.data(), shape2.alpha_vector, shape2.volumeAtomIndexVector);
+
+  double shape = shapeOverlap / (shape1.sov + shape2.sov - shapeOverlap);
+
+  std::set<unsigned int> jointColorAtomTypeSet;
+  Align3D::getJointColorTypeSet(
+      shape1.atom_type_vector.data(), shape1.atom_type_vector.size(),
+      shape2.atom_type_vector.data(), shape2.atom_type_vector.size(),
+      jointColorAtomTypeSet);
+  // Take copy of the color atom mappings so as not to alter the input shape
+  // which might be re-used.
+  double color = 0.0;
+  if (useColors) {
+    auto shape1MapCp = shape1.colorAtomType2IndexVectorMap;
+    Align3D::restrictColorAtomType2IndexVectorMap(shape1MapCp,
+                                                  jointColorAtomTypeSet);
+    auto shape2MapCp = shape2.colorAtomType2IndexVectorMap;
+    Align3D::restrictColorAtomType2IndexVectorMap(shape2MapCp,
+                                                  jointColorAtomTypeSet);
+    double featureOverlap = Align3D::ComputeFeatureOverlap(
+        shape1.coord.data(), shape1.alpha_vector, shape1MapCp,
+        shape2.coord.data(), shape2.alpha_vector, shape2MapCp, nullptr);
+    color = featureOverlap / (shape1.sof + shape2.sof - featureOverlap);
+  }
+  return std::make_pair(shape, color);
+}
+
+std::pair<double, double> ScoreMolecule(const ShapeInput &shape,
+                                        RDKit::ROMol &mol,
+                                        const ShapeInputOptions &molShapeOpts,
+                                        int molConfId) {
+  ShapeInputOptions shapeOpts = molShapeOpts;
+  shapeOpts.normalize = false;
+  auto shape2 = PrepareConformer(mol, molConfId, shapeOpts);
+  return ScoreShape(shape, shape2, shapeOpts.useColors);
+}
+
+std::pair<double, double> ScoreMolecule(const RDKit::ROMol &mol1,
+                                        RDKit::ROMol &mol2,
+                                        const ShapeInputOptions &mol1ShapeOpts,
+                                        const ShapeInputOptions &mol2ShapeOpts,
+                                        int mol1ConfId, int mol2ConfId) {
+  ShapeInputOptions shapeOpts = mol1ShapeOpts;
+  shapeOpts.normalize = false;
+  auto shape1 = PrepareConformer(mol1, mol1ConfId, shapeOpts);
+  shapeOpts = mol2ShapeOpts;
+  shapeOpts.normalize = false;
+  auto shape2 = PrepareConformer(mol2, mol2ConfId, shapeOpts);
+  // If either shapeOpts has useColors of false, we have to go with that.
+  bool useColors = mol1ShapeOpts.useColors && mol2ShapeOpts.useColors;
+  return ScoreShape(shape1, shape2, useColors);
 }

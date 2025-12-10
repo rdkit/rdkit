@@ -66,6 +66,7 @@ python::tuple alignShapes(const ShapeInput &refShape, ShapeInput &fitShape,
   return python::make_tuple(nbr_st, nbr_ct, pyMatrix);
 }
 void transformConformer(const python::list &pyFinalTrans,
+                        const python::list &pyFinalRot,
                         const python::list &pyMatrix, ShapeInput probeShape,
                         RDKit::Conformer &probeConf) {
   std::vector<float> matrix;
@@ -82,7 +83,14 @@ void transformConformer(const python::list &pyFinalTrans,
         "The final translation vector must have 3 values.  It had " +
         std::to_string(finalTrans.size()) + ".");
   }
-  TransformConformer(finalTrans, matrix, probeShape, probeConf);
+  std::vector<double> finalRot;
+  pythonObjectToVect<double>(pyFinalRot, finalRot);
+  if (finalRot.size() != 9) {
+    throw_value_error("The final rotation vector must have 9 values.  It had " +
+                      std::to_string(finalRot.size()) + ".");
+  }
+
+  TransformConformer(finalTrans, finalRot, matrix, probeShape, probeConf);
 }
 ShapeInput *prepConf(const RDKit::ROMol &mol, int confId,
                      const python::object &py_opts) {
