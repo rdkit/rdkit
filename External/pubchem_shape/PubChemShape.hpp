@@ -105,7 +105,8 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInputOptions {
   \param confId     (optional) the conformer to use
   \param shapeOpts  (optional) Change the default behaviour.
 
-  \return a ShapeInput object, translated to the origin
+  \return a ShapeInput object, translated to the origin and aligned along its
+          principal axes.
 */
 RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput
 PrepareConformer(const RDKit::ROMol &mol, int confId = -1,
@@ -142,7 +143,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignShape(
 */
 RDKIT_PUBCHEMSHAPE_EXPORT void TransformConformer(
     const std::vector<double> &finalTrans, const std::vector<double> &finalRot,
-    const std::vector<float> &matrix, ShapeInput &fitShape,
+    const std::vector<float> &matrix, const ShapeInput &fitShape,
     RDKit::Conformer &fitConf);
 
 //! Align a molecule to a reference shape

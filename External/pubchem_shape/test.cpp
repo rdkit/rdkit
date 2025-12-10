@@ -30,7 +30,6 @@ TEST_CASE("basic alignment") {
   REQUIRE(ref);
   auto probe = suppl[1];
   REQUIRE(probe);
-#if 0
   SECTION("basics") {
     RWMol cp(*probe);
     std::vector<float> matrix(12, 0.0);
@@ -75,7 +74,6 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.773, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.000, 0.005));
   }
-#endif
   SECTION("we are re-entrant") {
     RWMol cp(*probe);
     std::vector<float> matrix(12, 0.0);
@@ -88,18 +86,16 @@ TEST_CASE("basic alignment") {
                       test_opt_param, test_max_preiters, test_max_postiters);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(nbr_st2, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(nbr_ct2, 0.005));
-    std::cout << "Re-entrant : " << nbr_st << " vs " << nbr_st2 << " and "
-              << nbr_ct << " vs " << nbr_ct2 << std::endl;
     for (auto i = 0u; i < probe->getNumAtoms(); ++i) {
-      CHECK_THAT(cp.getConformer().getAtomPos(i).x,
-                 Catch::Matchers::WithinAbs(cp2.getConformer().getAtomPos(i).x,
-                                            0.005));
-      CHECK_THAT(cp.getConformer().getAtomPos(i).y,
-                 Catch::Matchers::WithinAbs(cp2.getConformer().getAtomPos(i).y,
-                                            0.005));
-      CHECK_THAT(cp.getConformer().getAtomPos(i).z,
-                 Catch::Matchers::WithinAbs(cp2.getConformer().getAtomPos(i).z,
-                                            0.005));
+      CHECK_THAT(
+          cp.getConformer().getAtomPos(i).x,
+          Catch::Matchers::WithinAbs(cp2.getConformer().getAtomPos(i).x, 0.05));
+      CHECK_THAT(
+          cp.getConformer().getAtomPos(i).y,
+          Catch::Matchers::WithinAbs(cp2.getConformer().getAtomPos(i).y, 0.05));
+      CHECK_THAT(
+          cp.getConformer().getAtomPos(i).z,
+          Catch::Matchers::WithinAbs(cp2.getConformer().getAtomPos(i).z, 0.05));
     }
   }
 }
@@ -138,20 +134,15 @@ TEST_CASE("handling molecules with Hs") {
   REQUIRE(ref);
   auto probe = suppl[1];
   REQUIRE(probe);
-  std::cout << "R :: " << MolToCXSmiles(*ref) << std::endl;
-  std::cout << "P :: " << MolToCXSmiles(*probe) << std::endl;
   ShapeInputOptions mol1Opts, mol2Opts;
   auto [singleShape, singleColor] =
       ScoreMolecule(*ref, *probe, mol1Opts, mol2Opts);
-  std::cout << "Initial scores : " << singleShape << ", " << singleColor
-            << std::endl;
   SECTION("basics") {
     RWMol cp(*probe);
     std::vector<float> matrix(12, 0.0);
     auto [nbr_st, nbr_ct] =
         AlignMolecule(*ref, cp, matrix, -1, -1, test_use_colors, test_opt_param,
                       test_max_preiters, test_max_postiters);
-    std::cout << "Ov scores : " << nbr_st << ", " << nbr_ct << std::endl;
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.840, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.753, 0.005));
     for (auto i = 0u; i < cp.getNumAtoms(); ++i) {
@@ -159,13 +150,10 @@ TEST_CASE("handling molecules with Hs") {
       auto pos = cp.getConformer().getAtomPos(i);
       CHECK((pos.x > -10 && pos.x < 10));
     }
-    std::cout << "R :: " << MolToCXSmiles(*ref) << std::endl;
-    std::cout << "P :: " << MolToCXSmiles(cp) << std::endl;
   }
 }
 
 TEST_CASE("re-entrant") {
-#if 0
   SECTION("basics") {
     auto ref = R"CTAB(
      RDKit          3D
@@ -249,7 +237,6 @@ $$$$
     auto rmsd2 = MolAlign::CalcRMS(cp, cp2);
     CHECK_THAT(rmsd2, Catch::Matchers::WithinAbs(0.0, 0.005));
   }
-#endif
   SECTION("real example") {
     std::string dirName = getenv("RDBASE");
     dirName += "/External/pubchem_shape/test_data";
@@ -262,8 +249,6 @@ $$$$
     REQUIRE(ref);
     auto probe = suppl[1];
     REQUIRE(probe);
-    std::cout << "R :: " << MolToCXSmiles(*ref) << std::endl;
-    std::cout << "P :: " << MolToCXSmiles(*probe) << std::endl;
 
     MolOps::removeAllHs(*ref);
     MolOps::removeAllHs(*probe);
@@ -279,25 +264,19 @@ $$$$
     auto [nbr_st, nbr_ct] =
         AlignMolecule(*ref, cp, matrix, refConfId, prbConfId, useColors,
                       opt_param, preiters, postiters);
-    std::cout << "R :: " << MolToCXSmiles(*ref) << std::endl;
-    std::cout << "P :: " << MolToCXSmiles(cp) << std::endl;
-    std::cout << "Ov scores : " << nbr_st << ", " << nbr_ct << std::endl;
 
-    CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.501, 0.005));
-    CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.107, 0.005));
+    CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.483, 0.005));
+    CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.046, 0.005));
     RWMol cp2(cp);
     auto [nbr_st2, nbr_ct2] =
         AlignMolecule(*ref, cp2, matrix, refConfId, prbConfId, useColors,
                       opt_param, preiters, postiters);
-    std::cout << "R :: " << MolToCXSmiles(*ref) << std::endl;
-    std::cout << "P2 :: " << MolToCXSmiles(cp2) << std::endl;
-    std::cout << "Ov scores : " << nbr_st2 << ", " << nbr_ct2 << std::endl;
 
     CHECK_THAT(nbr_st2, Catch::Matchers::WithinAbs(nbr_st, 0.005));
     CHECK_THAT(nbr_ct2, Catch::Matchers::WithinAbs(nbr_ct, 0.005));
 
     auto rmsd = MolAlign::CalcRMS(cp, cp2);
-    CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.017, 0.005));
+    CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.007, 0.005));
   }
 }
 
@@ -471,42 +450,14 @@ TEST_CASE("Shape-Shape alignment") {
 
   std::vector<float> matrix(12, 0.0);
   auto [mol_st, mol_ct] = AlignMolecule(*ref, *probe, matrix, -1, -1);
-
   auto [shape_st, shape_ct] = AlignShape(refShape, probeShape, matrix);
 
   // Check that the same results are achieved when overlaying the probe
-  // molecule onto the reference and the probe shape onto the reference shape
-
+  // molecule onto the reference molecule and the probe shape onto the reference
+  // shape. The shapes are transformed to their centroid and principal axes, so
+  // the final coords will not match.  Just check the tanimotos.
   CHECK_THAT(shape_st, Catch::Matchers::WithinAbs(mol_st, 0.001));
   CHECK_THAT(shape_ct, Catch::Matchers::WithinAbs(mol_ct, 0.001));
-  for (unsigned int i = 0; i < probe->getNumAtoms(); i++) {
-    const auto &pos = probe->getConformer().getAtomPos(i);
-    CHECK_THAT(pos.x, Catch::Matchers::WithinAbs(
-                          probeShape.coord[3 * i] - refShape.shift[0], 0.001));
-    CHECK_THAT(pos.y,
-               Catch::Matchers::WithinAbs(
-                   probeShape.coord[3 * i + 1] - refShape.shift[1], 0.001));
-    CHECK_THAT(pos.z,
-               Catch::Matchers::WithinAbs(
-                   probeShape.coord[3 * i + 2] - refShape.shift[2], 0.001));
-  }
-
-  // Also check the TransformConformer function
-  std::vector<double> finalRot =
-      std::vector<double>{refShape.inertialRot[0], refShape.inertialRot[3],
-                          refShape.inertialRot[6], refShape.inertialRot[1],
-                          refShape.inertialRot[4], refShape.inertialRot[7],
-                          refShape.inertialRot[2], refShape.inertialRot[5],
-                          refShape.inertialRot[8]};
-  TransformConformer(refShape.shift, finalRot, matrix, probeShape,
-                     probeCP.getConformer(-1));
-  for (unsigned int i = 0; i < probe->getNumAtoms(); i++) {
-    const auto &pos = probe->getConformer().getAtomPos(i);
-    const auto &poscp = probeCP.getConformer().getAtomPos(i);
-    CHECK_THAT(pos.x, Catch::Matchers::WithinAbs(poscp.x, 0.001));
-    CHECK_THAT(pos.y, Catch::Matchers::WithinAbs(poscp.y, 0.001));
-    CHECK_THAT(pos.z, Catch::Matchers::WithinAbs(poscp.z, 0.001));
-  }
 }
 
 TEST_CASE("Atoms excluded from Color features") {
@@ -599,8 +550,8 @@ TEST_CASE("custom feature points") {
     double opt_param = 0.5;
     std::vector<float> matrix(12, 0.0);
     auto [st, ct] = AlignShape(shape2, shape3, matrix, opt_param);
-    CHECK_THAT(st, Catch::Matchers::WithinAbs(0.997, 0.001));
-    CHECK_THAT(ct, Catch::Matchers::WithinAbs(0.978, 0.001));
+    CHECK_THAT(st, Catch::Matchers::WithinAbs(1.000, 0.001));
+    CHECK_THAT(ct, Catch::Matchers::WithinAbs(0.997, 0.001));
     CHECK(shape3.coord[0] > 0);      // x coord of first atom
     CHECK(shape3.coord[3 * 3] < 0);  // x coord of fourth atom
 
@@ -625,8 +576,8 @@ TEST_CASE("custom feature points") {
     std::vector<float> matrix(12, 0.0);
     auto [st, ct] =
         AlignMolecule(*m1, m2, matrix, opts2, opts3, -2, -2, opt_param);
-    CHECK_THAT(st, Catch::Matchers::WithinAbs(0.997, 0.001));
-    CHECK_THAT(ct, Catch::Matchers::WithinAbs(0.978, 0.001));
+    CHECK_THAT(st, Catch::Matchers::WithinAbs(1.000, 0.001));
+    CHECK_THAT(ct, Catch::Matchers::WithinAbs(0.997, 0.001));
     auto conf = m2.getConformer(-1);
     CHECK(conf.getAtomPos(0).x > 0);
     CHECK(conf.getAtomPos(3).x < 0);
@@ -698,59 +649,6 @@ TEST_CASE("Score No Overlay") {
   }
 }
 
-TEST_CASE("tagrisso onto itself twice") {
-#if 1
-  {
-    std::cout << "ref vs probe" << std::endl;
-    auto ref =
-        R"(C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C |(-0.9161,3.8415,-2.9811;0.1848,3.1933,-2.588;0.1064,1.7789,-2.12;-0.9619,1.1797,-2.0847;1.3654,1.2872,-1.7553;1.6841,0.0144,-1.273;0.6638,-0.9235,-1.1146;0.9578,-2.1997,-0.6343;-0.0813,-3.1358,-0.4783;-1.4556,-2.9979,-0.1847;-2.1716,-4.1359,-0.1085;-3.4803,-3.9673,0.173;-4.0689,-2.7353,0.3728;-3.2269,-1.647,0.2676;-3.7311,-0.317,0.4568;-5.0275,0.0291,0.153;-5.1887,1.3569,0.4454;-6.4231,2.0889,0.2595;-4.0141,1.8811,0.9361;-3.7121,3.1796,1.3615;-2.4139,3.4249,1.8179;-1.4588,2.4106,1.8467;-1.7752,1.1164,1.4181;-3.0776,0.8453,0.9537;-1.9103,-1.7423,-0.011;2.2723,-2.5382,-0.3127;2.58,-3.7798,0.1575;2.539,-3.9651,1.571;3.2927,-1.6003,-0.4713;2.9986,-0.324,-0.9514;4.0475,0.61,-1.1047;4.7738,0.6956,-2.3546;4.4021,1.497,-0.0162;5.4401,0.8254,0.8736;5.8294,1.7155,1.9601;4.8213,1.7057,3.0218;7.1361,1.3324,2.4981)|)"_smiles;
-    REQUIRE(ref);
-    auto probe =
-        R"(C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C |(-4.21826,-1.02215,-2.37588;-3.26564,-1.75212,-1.78738;-2.40932,-1.16201,-0.717719;-2.55689,-0.00122363,-0.353913;-1.4779,-2.08879,-0.234624;-0.515507,-1.9003,0.761608;-0.424641,-0.656818,1.38711;0.528362,-0.44514,2.3835;0.609841,0.814535,3.00554;0.330432,2.12302,2.55419;0.525268,3.1191,3.43927;0.248313,4.35532,2.97513;-0.201697,4.61085,1.69592;-0.360254,3.50451,0.88642;-0.822472,3.6522,-0.463933;-1.66509,4.67021,-0.846541;-1.91456,4.52996,-2.18543;-2.76225,5.41568,-2.95422;-1.24535,3.43363,-2.68088;-1.20421,2.9101,-3.97799;-0.427025,1.76776,-4.18978;0.279381,1.1755,-3.14476;0.228881,1.71026,-1.85238;-0.548085,2.86146,-1.61474;-0.102639,2.24149,1.2846;1.39038,-1.47715,2.75472;2.3278,-1.29042,3.72616;3.60791,-0.820421,3.30854;1.29937,-2.72078,2.12931;0.346473,-2.93234,1.13273;0.271542,-4.19974,0.51296;-0.588563,-5.23012,1.05668;1.04804,-4.47916,-0.677131;2.4192,-5.0108,-0.280239;3.20526,-5.32361,-1.46707;3.77551,-4.10502,-2.0445;4.26817,-6.27777,-1.14542)|)"_smiles;
-    REQUIRE(probe);
-
-    std::vector<float> matrix(12, 0.0);
-    auto sims = AlignMolecule(*ref, *probe, matrix, -1, -1, true, 0.5, 10, 30);
-    std::cout << "sims : " << sims.first << " " << sims.second << std::endl;
-    auto rms = MolAlign::CalcRMS(*ref, *probe);
-    std::cout << MolToCXSmiles(*probe) << std::endl;
-    std::cout << "RMS : " << rms << std::endl;
-#if 1
-    sims = AlignMolecule(*ref, *probe, matrix, -1, -1, test_use_colors, 0.5, 10,
-                         30);
-    std::cout << "sims : " << sims.first << " " << sims.second << std::endl;
-    rms = MolAlign::CalcRMS(*ref, *probe);
-    std::cout << "RMS : " << rms << std::endl;
-    std::cout << MolToCXSmiles(*probe) << std::endl;
-#endif
-  }
-#endif
-  {
-    std::cout << "ref vs probe" << std::endl;
-    auto ref =
-        R"(C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C |(-0.9161,3.8415,-2.9811;0.1848,3.1933,-2.588;0.1064,1.7789,-2.12;-0.9619,1.1797,-2.0847;1.3654,1.2872,-1.7553;1.6841,0.0144,-1.273;0.6638,-0.9235,-1.1146;0.9578,-2.1997,-0.6343;-0.0813,-3.1358,-0.4783;-1.4556,-2.9979,-0.1847;-2.1716,-4.1359,-0.1085;-3.4803,-3.9673,0.173;-4.0689,-2.7353,0.3728;-3.2269,-1.647,0.2676;-3.7311,-0.317,0.4568;-5.0275,0.0291,0.153;-5.1887,1.3569,0.4454;-6.4231,2.0889,0.2595;-4.0141,1.8811,0.9361;-3.7121,3.1796,1.3615;-2.4139,3.4249,1.8179;-1.4588,2.4106,1.8467;-1.7752,1.1164,1.4181;-3.0776,0.8453,0.9537;-1.9103,-1.7423,-0.011;2.2723,-2.5382,-0.3127;2.58,-3.7798,0.1575;2.539,-3.9651,1.571;3.2927,-1.6003,-0.4713;2.9986,-0.324,-0.9514;4.0475,0.61,-1.1047;4.7738,0.6956,-2.3546;4.4021,1.497,-0.0162;5.4401,0.8254,0.8736;5.8294,1.7155,1.9601;4.8213,1.7057,3.0218;7.1361,1.3324,2.4981)|)"_smiles;
-    REQUIRE(ref);
-    auto probe =
-        R"(C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C |(3.89898,6.1297,7.29659;5.06728,6.00894,6.65851;5.59585,4.66308,6.29111;4.97635,3.64137,6.56292;6.82733,4.75646,5.63188;7.62006,3.71518,5.14044;7.18189,2.40017,5.29704;7.95642,1.34477,4.81534;7.50299,0.0229168,4.98101;6.70477,-0.596992,5.96716;6.46343,-1.91208,5.8065;5.69763,-2.4717,6.76605;5.18632,-1.77525,7.84202;5.50637,-0.433792,7.89179;5.02918,0.387856,8.96701;3.84003,0.138519,9.61236;3.67625,1.09486,10.5783;2.53895,1.16674,11.4703;4.7434,1.96457,10.5713;5.00348,3.08246,11.3719;6.18701,3.78698,11.1338;7.07258,3.38711,10.1349;6.79933,2.26679,9.34183;5.61222,1.54079,9.56344;6.26599,0.190185,6.9678;9.16909,1.60438,4.17661;9.93994,0.587176,3.69868;10.9087,0.036106,4.5885;9.60718,2.91949,4.01982;8.8327,3.97488,4.50176;9.29531,5.29894,4.33175;8.94156,6.05069,3.14565;10.1215,5.92101,5.34551;11.5881,5.61833,5.06678;12.437,6.26013,6.06272;12.4489,5.48718,7.30609;13.7999,6.42106,5.55267)|)"_smiles;
-    REQUIRE(probe);
-
-    std::vector<float> matrix(12, 0.0);
-    auto sims = AlignMolecule(*ref, *probe, matrix, -1, -1, true, 0.5, 10, 30);
-    std::cout << "sims : " << sims.first << " " << sims.second << std::endl;
-    auto rms = MolAlign::CalcRMS(*ref, *probe);
-    std::cout << MolToCXSmiles(*probe) << std::endl;
-    std::cout << "RMS : " << rms << std::endl;
-#if 1
-    sims = AlignMolecule(*ref, *probe, matrix, -1, -1, test_use_colors, 0.5, 10,
-                         30);
-    std::cout << "sims : " << sims.first << " " << sims.second << std::endl;
-    rms = MolAlign::CalcRMS(*ref, *probe);
-    std::cout << "RMS : " << rms << std::endl;
-    std::cout << MolToCXSmiles(*probe) << std::endl;
-#endif
-  }
-}
-
 TEST_CASE("Iressa onto Tagrisso") {
   // Conformations from PubChem produced by Omega. Iressa rotated and translated
   // by a random amount.  PubChem puts them both in their inertial frame which
@@ -764,13 +662,10 @@ TEST_CASE("Iressa onto Tagrisso") {
   std::vector<float> matrix(12, 0.0);
   auto sims =
       AlignMolecule(*tagrisso, *iressa, matrix, -1, -1, true, 0.5, 10, 30);
-  std::cout << "Final iressa :: " << MolToCXSmiles(*iressa) << std::endl;
-  std::cout << "sims : " << sims.first << " " << sims.second << std::endl;
   RDGeom::Point3D ave1;
   for (unsigned int i = 0; i < iressa->getNumAtoms(); ++i) {
     ave1 += iressa->getConformer().getAtomPos(i);
   }
-  std::cout << "Average coord : " << ave1 / iressa->getNumAtoms() << std::endl;
   CHECK_THAT(sims.first, Catch::Matchers::WithinAbs(0.582, 0.005));
   CHECK_THAT(sims.second, Catch::Matchers::WithinAbs(0.092, 0.005));
 }

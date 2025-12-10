@@ -406,9 +406,6 @@ void extractCustomFeatureCoords(
 // and aligned to the principal axes.
 ShapeInput PrepareConformer(const ROMol &mol, int confId,
                             const ShapeInputOptions &shapeOpts) {
-  std::cout << "PrepareConformer normalize = " << shapeOpts.normalize
-            << std::endl;
-
   Align3D::setUseCutOff(true);
   ShapeInput res;
 
@@ -438,13 +435,6 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
   if (shapeOpts.normalize) {
     // This ignores hydrogens by default, which is what is needed here.
     trans.reset(MolTransforms::computeCanonicalTransform(confCp));
-    std::cout << "canonical transform : ";
-    for (unsigned int i = 0; i < 4; ++i) {
-      for (unsigned int j = 0; j < 4; ++j) {
-        std::cout << trans->getValUnchecked(i, j) << ", ";
-      }
-      std::cout << std::endl;
-    }
     MolTransforms::transformConformer(confCp, *trans);
 
     // Save the rotation part of the transformation.  The coords will be centred
@@ -473,11 +463,9 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
     invTrans.setValUnchecked(2, 2, trans->getValUnchecked(2, 2));
     invTrans.TransformPoint(initialCentroid);
   }
-  std::cout << "initialCentroid : " << initialCentroid << std::endl;
   RWMol molCp(mol);
   molCp.removeConformer(0);
   molCp.addConformer(new Conformer(confCp), true);
-  std::cout << "Normalised conformer : " << MolToCXSmiles(molCp) << std::endl;
 
   RDGeom::Point3D ave;
   unsigned int nSelectedAtoms = 0;
@@ -526,20 +514,6 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
     DEBUG_MSG("sof: " << res.sof);
   }
 
-  std::cout << "PrepareConformer for " << mol.getNumAtoms()
-            << " atoms  of which " << nSelectedAtoms << " selected"
-            << std::endl;
-  std::cout << "Number of coords total " << res.coord.size() / 3 << std::endl;
-  for (size_t i = 0; i < res.coord.size(); i += 3) {
-    if (i < 3 * nSelectedAtoms) {
-      std::cout << "A ";
-    } else {
-      std::cout << "F ";
-    }
-    std::cout << res.coord[i] << "," << res.coord[i + 1] << ","
-              << res.coord[i + 2] << ";" << std::endl;
-  }
-
   // Finally set the shift to the negative of the original average coords.
   res.shift = {initialCentroid.x, initialCentroid.y, initialCentroid.z};
   return res;
@@ -567,18 +541,6 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
   DEBUG_MSG("Running alignment...");
   double nbr_st = 0.0;
   double nbr_ct = 0.0;
-  std::cout << "aligning fit cds : ";
-  for (size_t i = 0; i < fitShape.coord.size(); i += 3) {
-    std::cout << fitShape.coord[i] << "," << fitShape.coord[i + 1] << ","
-              << fitShape.coord[i + 2] << ";";
-  }
-  std::cout << std::endl;
-  std::cout << "onto  ref cds : ";
-  for (size_t i = 0; i < refShape.coord.size(); i += 3) {
-    std::cout << refShape.coord[i] << "," << refShape.coord[i + 1] << ","
-              << refShape.coord[i + 2] << ";";
-  }
-  std::cout << std::endl;
 
   Align3D::Neighbor_Conformers(
       refShape.coord.data(), refShape.alpha_vector,
@@ -587,13 +549,6 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
       fitShape.volumeAtomIndexVector, fitMapCp, fitShape.sov, fitShape.sof,
       !jointColorAtomTypeSet.empty(), max_preiters, max_postiters, opt_param,
       matrix.data(), nbr_st, nbr_ct);
-  std::cout << "alignment matrix : " << std::endl;
-  std::cout << matrix[0] << ", " << matrix[1] << ", " << matrix[2] << std::endl;
-  std::cout << matrix[3] << ", " << matrix[4] << ", " << matrix[5] << std::endl;
-  std::cout << matrix[6] << ", " << matrix[7] << ", " << matrix[8] << std::endl;
-  std::cout << matrix[9] << ", " << matrix[10] << ", " << matrix[11]
-            << std::endl;
-  std::cout << "SCORES : " << nbr_st << ", " << nbr_ct << std::endl;
   DEBUG_MSG("Done!");
   DEBUG_MSG("nbr_st: " << nbr_st);
   DEBUG_MSG("nbr_ct: " << nbr_ct);
@@ -602,62 +557,18 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
   Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
                                 fitShape.coord.size() / 3, matrix.data());
   fitShape.coord = transformed;
-  std::cout << "initial fitted cds : ";
-  for (size_t i = 0; i < transformed.size(); i += 3) {
-    std::cout << transformed[i] << "," << transformed[i + 1] << ","
-              << transformed[i + 2] << ";";
-  }
-  std::cout << std::endl;
   fitShape.coord = transformed;
   return std::make_pair(nbr_st, nbr_ct);
 }
 
 void TransformConformer(const std::vector<double> &finalTrans,
                         const std::vector<double> &finalRot,
-                        const std::vector<float> &matrix, ShapeInput &fitShape,
-                        Conformer &fitConf) {
-  std::cout << "rot matrix : " << std::endl;
-  std::cout << matrix[0] << ", " << matrix[1] << ", " << matrix[2] << std::endl;
-  std::cout << matrix[3] << ", " << matrix[4] << ", " << matrix[5] << std::endl;
-  std::cout << matrix[6] << ", " << matrix[7] << ", " << matrix[8] << std::endl;
-  std::cout << "finalTrans : " << finalTrans[0] << ", " << finalTrans[1] << ", "
-            << finalTrans[2] << std::endl;
-  std::cout << "final rot" << std::endl;
-  std::cout << finalRot[0] << ", " << finalRot[1] << ", " << finalRot[2]
-            << std::endl;
-  std::cout << finalRot[3] << ", " << finalRot[4] << ", " << finalRot[5]
-            << std::endl;
-  std::cout << finalRot[6] << ", " << finalRot[7] << ", " << finalRot[8]
-            << std::endl;
-  std::cout << "Transforming the fit conf :: " << fitShape.shift[0] << ", "
-            << fitShape.shift[1] << ", " << fitShape.shift[2]
-            << " ::: " << std::endl;
-  for (size_t i = 0; i < fitConf.getNumAtoms(); ++i) {
-    auto &pos = fitConf.getAtomPos(i);
-    std::cout << pos.x << "," << pos.y << "," << pos.z << ";";
-  }
-  std::cout << std::endl;
-
-  // move the fitConf to the centre of "mass" and rotate it into
-  // its inertial frame.
-  const unsigned int nAtoms = fitConf.getOwningMol().getNumAtoms();
-  RDGeom::Point3D ave1, ave2;
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    auto &pos = fitConf.getAtomPos(i);
-    ave1 += pos;
-    pos.x += fitShape.shift[0];
-    pos.y += fitShape.shift[1];
-    pos.z += fitShape.shift[2];
-    ave2 += pos;
-  }
-  std::cout << "Shifted the fit conf :: " << std::endl;
-  for (size_t i = 0; i < fitConf.getNumAtoms(); ++i) {
-    auto &pos = fitConf.getAtomPos(i);
-    std::cout << pos.x << "," << pos.y << "," << pos.z << ";";
-  }
-  std::cout << std::endl;
-  std::cout << "ave 1 : " << ave1 / nAtoms << " ave2 : " << ave2 / nAtoms
-            << std::endl;
+                        const std::vector<float> &matrix,
+                        const ShapeInput &fitShape, Conformer &fitConf) {
+  // Move fitConf to fitShape's initial centroid and principal axes
+  RDGeom::Transform3D transform0;
+  transform0.SetTranslation(
+      RDGeom::Point3D{fitShape.shift[0], fitShape.shift[1], fitShape.shift[2]});
 
   RDGeom::Transform3D transform1;
   transform1.setValUnchecked(0, 0, fitShape.inertialRot[0]);
@@ -674,13 +585,6 @@ void TransformConformer(const std::vector<double> &finalTrans,
   transform1.setValUnchecked(3, 1, 0.0);
   transform1.setValUnchecked(3, 2, 0.0);
   transform1.setValUnchecked(3, 3, 1.0);
-  MolTransforms::transformConformer(fitConf, transform1);
-  std::cout << "Inertial frame fit conf :: " << std::endl;
-  for (size_t i = 0; i < fitConf.getNumAtoms(); ++i) {
-    auto &pos = fitConf.getAtomPos(i);
-    std::cout << pos.x << "," << pos.y << "," << pos.z << ";";
-  }
-  std::cout << std::endl;
 
   // Apply the overlay matrix.
   // The matrix comes in as a linear form of a 3x3 rotation matrix and a
@@ -702,15 +606,9 @@ void TransformConformer(const std::vector<double> &finalTrans,
   transform2.setValUnchecked(3, 1, 0.0);
   transform2.setValUnchecked(3, 2, 0.0);
   transform2.setValUnchecked(3, 3, 1.0);
-  MolTransforms::transformConformer(fitConf, transform2);
-  std::cout << "aligned fit conf :: " << std::endl;
-  for (size_t i = 0; i < fitConf.getNumAtoms(); ++i) {
-    auto &pos = fitConf.getAtomPos(i);
-    std::cout << pos.x << "," << pos.y << "," << pos.z << ";";
-  }
-  std::cout << std::endl;
 
-  // Now apply the final rotation and final translation
+  // Now apply the final rotation and final translation, which
+  // is to put it into the reference shape's frame of reference.
   RDGeom::Transform3D transform3;
   transform3.setValUnchecked(0, 0, finalRot[0]);
   transform3.setValUnchecked(0, 1, finalRot[1]);
@@ -728,57 +626,9 @@ void TransformConformer(const std::vector<double> &finalTrans,
   transform3.setValUnchecked(3, 1, 0.0);
   transform3.setValUnchecked(3, 2, 0.0);
   transform3.setValUnchecked(3, 3, 1.0);
-  MolTransforms::transformConformer(fitConf, transform3);
-  std::cout << "final answer fit conf :: " << std::endl;
-  for (size_t i = 0; i < fitConf.getNumAtoms(); ++i) {
-    auto &pos = fitConf.getAtomPos(i);
-    std::cout << pos.x << "," << pos.y << "," << pos.z << ";";
-  }
-  std::cout << std::endl;
 
-#if 0
-  // we reuse/modify the coord member of fitShape in order to avoid memory
-  // allocations
-  const unsigned int nAtoms = fitConf.getOwningMol().getNumAtoms();
-  if (nAtoms > fitShape.volumeAtomIndexVector.size()) {
-    // Hs are missing... make sure we have space for them
-    fitShape.coord.resize(3 * nAtoms);
-  }
-  // initialize the fitShape coords with the starting atomic positions from
-  // the conformer shifted to the center of "mass" coordinates.
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    const auto &pos = fitConf.getAtomPos(i);
-    fitShape.coord[i * 3] = pos.x + fitShape.shift[0];
-    fitShape.coord[i * 3 + 1] = pos.y + fitShape.shift[1];
-    fitShape.coord[i * 3 + 2] = pos.z + fitShape.shift[2];
-  }
-
-  std::vector<float> transformed(nAtoms * 3);
-  // fitShape.coord.data() is the source coords, sent into transformed.data()
-  Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
-                                nAtoms, matrix.data());
-
-  // Undo the move to the inertial reference frame but applying the transpose
-  // of the refShape's inertial rotation and final translation.
-  // And again, leaving the final answer back in fitShape coords.
-  const auto &r = finalRot;
-  float invMatrix[12]{
-      float(r[0]),          float(r[1]),          float(r[2]),
-      float(r[3]),          float(r[4]),          float(r[5]),
-      float(r[6]),          float(r[7]),          float(r[8]),
-      float(finalTrans[0]), float(finalTrans[1]), float(finalTrans[2])};
-  Align3D::VApplyRotTransMatrix(fitShape.coord.data(), transformed.data(),
-                                nAtoms, invMatrix);
-
-  // now set the coordinates in the conformer; undo the shift of the reference
-  // shape to center of "mass" coordinates
-  for (unsigned i = 0; i < nAtoms; ++i) {
-    RDGeom::Point3D &pos = fitConf.getAtomPos(i);
-    pos.x = fitShape.coord[i * 3];
-    pos.y = fitShape.coord[(i * 3) + 1];
-    pos.z = fitShape.coord[(i * 3) + 2];
-  }
-#endif
+  auto finalTransform = transform3 * transform2 * transform1 * transform0;
+  MolTransforms::transformConformer(fitConf, finalTransform);
 }
 
 std::pair<double, double> AlignMolecule(
@@ -788,11 +638,7 @@ std::pair<double, double> AlignMolecule(
   PRECONDITION(matrix.size() == 12, "bad matrix size");
   Align3D::setUseCutOff(true);
 
-  std::cout << "Number of refShape coords : " << refShape.coord.size() / 3
-            << std::endl;
   auto fitShape = PrepareConformer(fit, fitConfId, shapeOpts);
-  std::cout << "Number of fitShape coords : " << fitShape.coord.size() / 3
-            << std::endl;
   auto tanis = AlignShape(refShape, fitShape, matrix, opt_param, max_preiters,
                           max_postiters);
   int nfitAtoms = 0;
@@ -800,16 +646,6 @@ std::pair<double, double> AlignMolecule(
     if (atom->getAtomicNum() != 1) {
       ++nfitAtoms;
     }
-  }
-  std::cout << "overlaid fit shape coords" << std::endl;
-  for (size_t i = 0; i < fitShape.coord.size(); i += 3) {
-    if (i < 3 * nfitAtoms) {
-      std::cout << "A ";
-    } else {
-      std::cout << "F ";
-    }
-    std::cout << fitShape.coord[i] << "," << fitShape.coord[i + 1] << ","
-              << fitShape.coord[i + 2] << ";" << std::endl;
   }
 
   // transform fit coords
@@ -859,7 +695,6 @@ std::pair<double, double> AlignMolecule(
   }
 
   DEBUG_MSG("Reference details:");
-  std::cout << "Number of ref atoms : " << ref.getNumAtoms() << std::endl;
   auto refShape = PrepareConformer(ref, refConfId, refShapeOpts);
   bool applyRefShift = true;
   auto scores =
