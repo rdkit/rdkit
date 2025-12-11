@@ -321,7 +321,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
       firstFromAtom1->setBondDir(atom1Dir);
 
       bondDirCounts[firstFromAtom1->getIdx()] += 1;
-      atomDirCounts[atom1->getIdx()] += 1;
+      atomDirCounts[atom1->getIdx()] += 2;
       atom1ControllingBond = secondFromAtom1;
     }
   } else {
@@ -356,7 +356,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
       firstFromAtom2->setBondDir(atom2Dir);
 
       bondDirCounts[firstFromAtom2->getIdx()] += 1;
-      atomDirCounts[atom2->getIdx()] += 1;
+      atomDirCounts[atom2->getIdx()] += 2;
       atom2ControllingBond = secondFromAtom2;
     }
     // CHECK_INVARIANT(0,"ring stereochemistry not handled");
