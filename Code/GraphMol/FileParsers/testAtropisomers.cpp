@@ -586,7 +586,7 @@ void testSulfinamideExamplesHaveNoAtropisomers() {
                          << std::endl;
     auto mol = std::unique_ptr<RWMol>(MolFileToMol(fName, true, false, false));
     TEST_ASSERT(mol);
-    Atropisomers::detectAtropisomerChirality(*mol, conf);
+    Atropisomers::detectAtropisomerChirality(*mol, &mol->getConformer());
     TEST_ASSERT(!Atropisomers::doesMolHaveAtropisomers(*mol));
   }
   rdWarningLog->ClearTee();
