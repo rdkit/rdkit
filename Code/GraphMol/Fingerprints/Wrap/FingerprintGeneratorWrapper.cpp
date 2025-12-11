@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -34,6 +34,11 @@ namespace np = boost::python::numpy;
 
 namespace RDKit {
 namespace FingerprintWrapper {
+
+FingerprintGenerator<std::uint64_t> *generatorFromJSONHelper(
+    const std::string &jsonStr) {
+  return generatorFromJSON(jsonStr).release();
+}
 
 void convertPyArguments(
     python::object py_fromAtoms, python::object py_ignoreAtoms,
@@ -659,7 +664,9 @@ void wrapGenerator(const std::string &nm) {
       .def("GetOptions", getOptions<T>,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1>>(),
-           python::args("self"), "return the fingerprint options object");
+           python::args("self"), "return the fingerprint options object")
+      .def("ToJSON", &generatorToJSON<T>, (python::arg("self")),
+           "Serialize a FingerprintGenerator to JSON");
 }
 
 void setCountBoundsHelper(FingerprintArguments &opts, python::object bounds) {
@@ -758,6 +765,11 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
               (python::arg("molecules") = python::list(),
                python::arg("fpType") = FPType::MorganFP),
               "");
+
+  python::def("FingerprintGeneratorFromJSON", &generatorFromJSONHelper,
+              (python::arg("jsonString")),
+              "Deserialize a FingerprintGenerator from a JSON string",
+              python::return_value_policy<python::manage_new_object>());
 
   AtomPairWrapper::exportAtompair();
   MorganWrapper::exportMorgan();
