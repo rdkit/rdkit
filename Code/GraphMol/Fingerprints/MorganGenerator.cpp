@@ -25,6 +25,11 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 namespace RDKit {
 namespace MorganFingerprint {
 
@@ -46,6 +51,11 @@ std::string MorganAtomInvGenerator::infoString() const {
   return "MorganInvariantGenerator includeRingMembership=" +
          std::to_string(df_includeRingMembership);
 }
+void MorganAtomInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "MorganAtomInvGenerator");
+  pt.put("includeRingMembership", df_includeRingMembership);
+  AtomInvariantsGenerator::toJSON(pt);
+}
 
 MorganAtomInvGenerator *MorganAtomInvGenerator::clone() const {
   return new MorganAtomInvGenerator(df_includeRingMembership);
@@ -58,6 +68,12 @@ MorganFeatureAtomInvGenerator::MorganFeatureAtomInvGenerator(
 
 std::string MorganFeatureAtomInvGenerator::infoString() const {
   return "MorganFeatureInvariantGenerator";
+}
+void MorganFeatureAtomInvGenerator::toJSON(
+    boost::property_tree::ptree &pt) const {
+  pt.put("type", "MorganFeatureAtomInvGenerator");
+  // FIX: include SMARTS for the features?
+  AtomInvariantsGenerator::toJSON(pt);
 }
 
 MorganFeatureAtomInvGenerator *MorganFeatureAtomInvGenerator::clone() const {
@@ -125,6 +141,12 @@ std::string MorganBondInvGenerator::infoString() const {
          std::to_string(df_useBondTypes) +
          " useChirality=" + std::to_string(df_useChirality);
 }
+void MorganBondInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "MorganBondInvGenerator");
+  pt.put("useBondTypes", df_useBondTypes);
+  pt.put("useChirality", df_useChirality);
+  BondInvariantsGenerator::toJSON(pt);
+}
 
 MorganBondInvGenerator *MorganBondInvGenerator::clone() const {
   return new MorganBondInvGenerator(df_useBondTypes, df_useChirality);
@@ -139,6 +161,12 @@ std::string MorganArguments::infoString() const {
   return "MorganArguments onlyNonzeroInvariants=" +
          std::to_string(df_onlyNonzeroInvariants) +
          " radius=" + std::to_string(d_radius);
+}
+void MorganArguments::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "MorganArguments");
+  pt.put("onlyNonzeroInvariants", df_onlyNonzeroInvariants);
+  pt.put("radius", d_radius);
+  FingerprintArguments::toJSON(pt);
 }
 
 template <typename OutputType>
@@ -414,6 +442,12 @@ MorganEnvGenerator<OutputType>::getEnvironments(
 template <typename OutputType>
 std::string MorganEnvGenerator<OutputType>::infoString() const {
   return "MorganEnvironmentGenerator";
+}
+template <typename OutputType>
+void MorganEnvGenerator<OutputType>::toJSON(
+    boost::property_tree::ptree &pt) const {
+  pt.put("type", "MorganEnvGenerator");
+  AtomEnvironmentGenerator<OutputType>::toJSON(pt);
 }
 
 template <typename OutputType>

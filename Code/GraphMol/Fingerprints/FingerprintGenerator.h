@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <cstdint>
+#include <boost/property_tree/ptree_fwd.hpp>
 
 namespace RDKit {
 class ROMol;
@@ -106,6 +107,7 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments {
    \return std::string information string
    */
   virtual std::string infoString() const = 0;
+  virtual void toJSON(boost::property_tree::ptree &pt) const;
 
   /**
    \brief method that returns information string about common fingerprinting
@@ -201,6 +203,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironmentGenerator
    \return std::string information string
    */
   virtual std::string infoString() const = 0;
+  virtual void toJSON(boost::property_tree::ptree &) const {};
   /*!
     \brief Returns the size of the fingerprint based on arguments
 
@@ -238,6 +241,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomInvariantsGenerator
    \return std::string information string
    */
   virtual std::string infoString() const = 0;
+  virtual void toJSON(boost::property_tree::ptree &) const {};
 
   virtual ~AtomInvariantsGenerator() {}
   virtual AtomInvariantsGenerator *clone() const = 0;
@@ -268,6 +272,7 @@ class RDKIT_FINGERPRINTS_EXPORT BondInvariantsGenerator
  \return std::string information string
  */
   virtual std::string infoString() const = 0;
+  virtual void toJSON(boost::property_tree::ptree &) const {};
 
   virtual ~BondInvariantsGenerator() {}
   virtual BondInvariantsGenerator *clone() const = 0;
@@ -410,7 +415,12 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
   };
 
   std::string infoString() const;
+  void toJSON(boost::property_tree::ptree &pt) const;
+  void fromJSON(boost::property_tree::ptree &pt);
 };
+template <typename OutputType>
+RDKIT_FINGERPRINTS_EXPORT std::string generatorToJSON(
+    const FingerprintGenerator<OutputType> &generator);
 
 template RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
 FingerprintGenerator<std::uint32_t>::getFingerprint(

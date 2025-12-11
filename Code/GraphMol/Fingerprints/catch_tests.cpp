@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019-2021 Greg Landrum
+//  Copyright (C) 2019-2025 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -802,4 +802,47 @@ TEST_CASE("github #7533: IndexError while computing fingerprint") {
       MorganFingerprints::getFingerprint(*mol, 2));
   REQUIRE(fp);
   CHECK(fp->getLength() == std::numeric_limits<unsigned>::max());
+}
+
+TEST_CASE("toJSON") {
+  SECTION("morgan") {
+    unsigned radius = 2;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(radius));
+    REQUIRE(fpGenerator);
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"MorganArguments\"") != std::string::npos);
+    std::cerr << "Morgan JSON: " << jsonStr << std::endl;
+  }
+  SECTION("RDKit") {
+    unsigned int minPath = 1;
+    unsigned int maxPath = 3;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>(minPath, maxPath));
+    REQUIRE(fpGenerator);
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"RDKitFPArguments\"") != std::string::npos);
+    std::cerr << "RDKit JSON: " << jsonStr << std::endl;
+  }
+  SECTION("topological torsion") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>());
+    REQUIRE(fpGenerator);
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"TopologicalTorsionArguments\"") !=
+          std::string::npos);
+    std::cerr << "Topological Torsion JSON: " << jsonStr << std::endl;
+  }
+  SECTION("atom pair") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        AtomPair::getAtomPairGenerator<std::uint64_t>());
+    REQUIRE(fpGenerator);
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"AtomPairArguments\"") != std::string::npos);
+    std::cerr << "Atom Pair JSON: " << jsonStr << std::endl;
+  }
 }

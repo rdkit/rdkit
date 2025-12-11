@@ -40,6 +40,8 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomInvGenerator
       const ROMol &mol) const override;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
+
   AtomPairAtomInvGenerator *clone() const override;
 };
 
@@ -55,25 +57,23 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairArguments
   unsigned int d_maxDistance = maxPathLen - 1;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
 
   /*!
     \brief construct a new AtomPairArguments object
 
-    \param countSimulation  if set, use count simulation while generating the
-    fingerprint
-    \param includeChirality if set, chirality will be used in the atom
-    invariants, this is ignored if atomInvariantsGenerator is present for
-    the /c FingerprintGenerator that uses this
-    \param use2D            if set, the 2D (topological) distance matrix will be
-    used
-    \param minDistance      minimum distance between atoms to be considered in a
+    \param countSimulation  if set, use count simulation while generating
+    the fingerprint \param includeChirality if set, chirality will be used
+    in the atom invariants, this is ignored if atomInvariantsGenerator is
+    present for the /c FingerprintGenerator that uses this \param use2D if
+    set, the 2D (topological) distance matrix will be used \param
+    minDistance      minimum distance between atoms to be considered in a
     pair, default is 1 bond
-    \param maxDistance      maximum distance between atoms to be considered in a
-    pair, default is maxPathLen-1 bonds
-    \param countBounds      boundaries for count simulation, corresponding bit
-    will be set if the count is higher than the number provided for that spot
-    \param fpSize size of the generated fingerprint, does not affect the sparse
-    versions
+    \param maxDistance      maximum distance between atoms to be considered
+    in a pair, default is maxPathLen-1 bonds \param countBounds boundaries
+    for count simulation, corresponding bit will be set if the count is
+    higher than the number provided for that spot \param fpSize size of the
+    generated fingerprint, does not affect the sparse versions
 
    */
   AtomPairArguments(const bool countSimulation = true,
@@ -137,6 +137,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
   OutputType getResultSize() const override;
 };
 

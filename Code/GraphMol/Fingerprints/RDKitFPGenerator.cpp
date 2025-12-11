@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -33,6 +33,11 @@
 
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 namespace RDKit {
 namespace RDKitFP {
 
@@ -53,6 +58,10 @@ std::string RDKitFPAtomInvGenerator::infoString() const {
   return "RDKitFPAtomInvGenerator";
 }
 
+void RDKitFPAtomInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "RDKitFPAtomInvGenerator");
+}
+
 RDKitFPAtomInvGenerator *RDKitFPAtomInvGenerator::clone() const {
   return new RDKitFPAtomInvGenerator();
 }
@@ -68,6 +77,16 @@ std::string RDKitFPArguments::infoString() const {
          " useHs=" + std::to_string(df_useHs) +
          " branchedPaths=" + std::to_string(df_branchedPaths) +
          " useBondOrder=" + std::to_string(df_useBondOrder);
+}
+
+void RDKitFPArguments::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "RDKitFPArguments");
+  pt.put("minPath", d_minPath);
+  pt.put("maxPath", d_maxPath);
+  pt.put("useHs", df_useHs);
+  pt.put("branchedPaths", df_branchedPaths);
+  pt.put("useBondOrder", df_useBondOrder);
+  FingerprintArguments::toJSON(pt);
 }
 
 RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
@@ -133,6 +152,13 @@ OutputType RDKitFPAtomEnv<OutputType>::getBitId(
 template <typename OutputType>
 std::string RDKitFPEnvGenerator<OutputType>::infoString() const {
   return "RDKitFPEnvGenerator";
+}
+
+template <typename OutputType>
+void RDKitFPEnvGenerator<OutputType>::toJSON(
+    boost::property_tree::ptree &pt) const {
+  pt.put("type", "RDKitFPEnvGenerator");
+  AtomEnvironmentGenerator<OutputType>::toJSON(pt);
 }
 
 template <typename OutputType>
