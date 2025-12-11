@@ -71,6 +71,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganFeatureAtomInvGenerator
 
   std::string infoString() const override;
   void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &) override;
   MorganFeatureAtomInvGenerator *clone() const override;
 };
 

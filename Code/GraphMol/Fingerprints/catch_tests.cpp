@@ -886,4 +886,61 @@ TEST_CASE("toJSON") {
     auto jsonStr2 = generatorToJSON(*fpGenerator2);
     CHECK(jsonStr == jsonStr2);
   }
+  SECTION("feature morgan") {
+    MorganFingerprint::MorganArguments args;
+    args.d_radius = 2;
+    MorganFingerprint::MorganFeatureAtomInvGenerator atomInvGen;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(args,
+                                                             &atomInvGen));
+    REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"MorganFeatureAtomInvGenerator\"") !=
+          std::string::npos);
+    // NO patterns there when we use the defaults:
+    CHECK(jsonStr.find("\"patternSMARTS\"") == std::string::npos);
+
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
+    CHECK(*fp1 == *fp2);
+  }
+  SECTION("custom feature morgan") {
+    // dumb feature definitions
+    auto p1 = "OC"_smarts;
+    REQUIRE(p1);
+    auto p2 = "NC"_smarts;
+    REQUIRE(p2);
+    auto p3 = "FC"_smarts;
+    REQUIRE(p3);
+    std::vector<const ROMol *> patterns = {p1.get(), p2.get(), p3.get()};
+    MorganFingerprint::MorganArguments args;
+    args.d_radius = 2;
+    MorganFingerprint::MorganFeatureAtomInvGenerator atomInvGen(&patterns);
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(args,
+                                                             &atomInvGen));
+    REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"MorganFeatureAtomInvGenerator\"") !=
+          std::string::npos);
+    CHECK(jsonStr.find("\"patternSMARTS\"") != std::string::npos);
+
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
+    CHECK(*fp1 == *fp2);
+  }
 }

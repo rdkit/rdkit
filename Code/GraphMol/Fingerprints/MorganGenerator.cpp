@@ -14,6 +14,7 @@
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <RDGeneral/BoostStartInclude.h>
@@ -77,8 +78,32 @@ std::string MorganFeatureAtomInvGenerator::infoString() const {
 void MorganFeatureAtomInvGenerator::toJSON(
     boost::property_tree::ptree &pt) const {
   pt.put("type", "MorganFeatureAtomInvGenerator");
-  // FIX: include SMARTS for the features?
+  if (dp_patterns) {
+    boost::property_tree::ptree patternsNode;
+    for (const auto &pattern : *dp_patterns) {
+      boost::property_tree::ptree patternNode;
+      std::string smarts = MolToSmarts(*pattern);
+      patternNode.put("", smarts);
+      patternsNode.push_back(std::make_pair("", patternNode));
+    }
+    pt.add_child("patternSMARTS", patternsNode);
+  }
   AtomInvariantsGenerator::toJSON(pt);
+}
+void MorganFeatureAtomInvGenerator::fromJSON(
+    const boost::property_tree::ptree &pt) {
+  if (pt.get_child_optional("patternSMARTS")) {
+    const auto &patternsNode = pt.get_child("patternSMARTS");
+    dp_patterns = new std::vector<const ROMol *>();
+    for (const auto &patternNode : patternsNode) {
+      std::string smarts = patternNode.second.get_value<std::string>();
+      ROMol *patternMol = SmartsToMol(smarts);
+      if (patternMol) {
+        dp_patterns->push_back(patternMol);
+      }
+    }
+  }
+  AtomInvariantsGenerator::fromJSON(pt);
 }
 
 MorganFeatureAtomInvGenerator *MorganFeatureAtomInvGenerator::clone() const {
@@ -112,13 +137,14 @@ std::vector<std::uint32_t> *MorganBondInvGenerator::getBondInvariants(
       } else {
         auto bondStereo = static_cast<int32_t>(bond->getStereo());
         if (!Chirality::getUseLegacyStereoPerception()) {
-          // if we aren't using legacy stereo, we need to compute the CIP codes
+          // if we aren't using legacy stereo, we need to compute the CIP
+          // codes
           if (!mol.hasProp(common_properties::_CIPComputed)) {
             CIPLabeler::assignCIPLabels(const_cast<ROMol &>(mol));
           }
 
-          // for backwards compatibility, if we are E or Z, set those, otherwise
-          // just use whatever the bondStereo is set to.
+          // for backwards compatibility, if we are E or Z, set those,
+          // otherwise just use whatever the bondStereo is set to.
           std::string cipCode;
           if (bond->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
             if (cipCode == "E") {

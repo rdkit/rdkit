@@ -286,6 +286,8 @@ std::unique_ptr<FingerprintGenerator<std::uint64_t>> generatorFromJSON(
     }
     if (*typ == "MorganAtomInvGenerator") {
       atomInvGen.reset(new MorganFingerprint::MorganAtomInvGenerator());
+    } else if (*typ == "MorganFeatureAtomInvGenerator") {
+      atomInvGen.reset(new MorganFingerprint::MorganFeatureAtomInvGenerator());
     } else if (*typ == "RDKitFPAtomInvGenerator") {
       atomInvGen.reset(new RDKitFP::RDKitFPAtomInvGenerator());
     } else if (*typ == "AtomPairAtomInvGenerator") {
