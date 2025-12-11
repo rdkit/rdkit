@@ -53,6 +53,12 @@ void AtomPairAtomInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
   pt.put("topologicalTorsionCorrection", df_topologicalTorsionCorrection);
   AtomInvariantsGenerator::toJSON(pt);
 }
+void AtomPairAtomInvGenerator::fromJSON(const boost::property_tree::ptree &pt) {
+  df_includeChirality = pt.get<bool>("includeChirality", df_includeChirality);
+  df_topologicalTorsionCorrection = pt.get<bool>(
+      "topologicalTorsionCorrection", df_topologicalTorsionCorrection);
+  AtomInvariantsGenerator::fromJSON(pt);
+}
 
 AtomPairAtomInvGenerator *AtomPairAtomInvGenerator::clone() const {
   return new AtomPairAtomInvGenerator(df_includeChirality,
@@ -91,6 +97,12 @@ void AtomPairArguments::toJSON(boost::property_tree::ptree &pt) const {
   pt.put("minDistance", d_minDistance);
   pt.put("maxDistance", d_maxDistance);
   FingerprintArguments::toJSON(pt);
+}
+void AtomPairArguments::fromJSON(const boost::property_tree::ptree &pt) {
+  df_use2D = pt.get<bool>("use2D", df_use2D);
+  d_minDistance = pt.get<unsigned int>("minDistance", d_minDistance);
+  d_maxDistance = pt.get<unsigned int>("maxDistance", d_maxDistance);
+  FingerprintArguments::fromJSON(pt);
 }
 
 template <typename OutputType>

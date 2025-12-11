@@ -56,6 +56,13 @@ void TopologicalTorsionArguments::toJSON(
   pt.put("onlyShortestPaths", df_onlyShortestPaths);
   FingerprintArguments::toJSON(pt);
 }
+void TopologicalTorsionArguments::fromJSON(
+    const boost::property_tree::ptree &pt) {
+  d_torsionAtomCount = pt.get<uint32_t>("torsionAtomCount", d_torsionAtomCount);
+  df_onlyShortestPaths =
+      pt.get<bool>("onlyShortestPaths", df_onlyShortestPaths);
+  FingerprintArguments::fromJSON(pt);
+}
 
 template <typename OutputType>
 void TopologicalTorsionAtomEnv<OutputType>::updateAdditionalOutput(
@@ -195,6 +202,11 @@ void TopologicalTorsionEnvGenerator<OutputType>::toJSON(
     boost::property_tree::ptree &pt) const {
   pt.put("type", "TopologicalTorsionEnvGenerator");
   AtomEnvironmentGenerator<OutputType>::toJSON(pt);
+};
+template <typename OutputType>
+void TopologicalTorsionEnvGenerator<OutputType>::fromJSON(
+    const boost::property_tree::ptree &pt) {
+  AtomEnvironmentGenerator<OutputType>::fromJSON(pt);
 };
 
 template <typename OutputType>

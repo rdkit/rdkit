@@ -70,6 +70,22 @@ void FingerprintArguments::toJSON(boost::property_tree::ptree &pt) const {
   pt.add_child("countBounds", countBoundsNode);
 }
 
+void FingerprintArguments::fromJSON(const boost::property_tree::ptree &pt) {
+  df_countSimulation = pt.get<bool>("countSimulation", df_countSimulation);
+  d_fpSize = pt.get<std::uint32_t>("fpSize", d_fpSize);
+  d_numBitsPerFeature =
+      pt.get<std::uint32_t>("numBitsPerFeature", d_numBitsPerFeature);
+  df_includeChirality = pt.get<bool>("includeChirality", df_includeChirality);
+
+  d_countBounds.clear();
+  auto countBoundsNode = pt.get_child_optional("countBounds");
+  if (countBoundsNode) {
+    for (const auto &boundNode : *countBoundsNode) {
+      d_countBounds.push_back(boundNode.second.get_value<std::uint32_t>());
+    }
+  }
+}
+
 template <typename OutputType>
 FingerprintGenerator<OutputType>::FingerprintGenerator(
     AtomEnvironmentGenerator<OutputType> *atomEnvironmentGenerator,
@@ -183,6 +199,15 @@ void FingerprintGenerator<OutputType>::toJSON(
     pt.add_child("bondInvariantsGenerator", bondInvGenNode);
   }
 }
+
+template void FingerprintGenerator<std::uint32_t>::fromJSON(
+    const boost::property_tree::ptree &pt);
+template void FingerprintGenerator<std::uint64_t>::fromJSON(
+    const boost::property_tree::ptree &pt);
+template <typename OutputType>
+void FingerprintGenerator<OutputType>::fromJSON(
+    const boost::property_tree::ptree &) {}
+
 template std::string generatorToJSON(
     const FingerprintGenerator<std::uint32_t> &generator);
 template std::string generatorToJSON(
@@ -198,6 +223,111 @@ std::string generatorToJSON(const FingerprintGenerator<OutputType> &generator) {
   boost::algorithm::trim(str);
   return str;
 }
+
+std::unique_ptr<FingerprintGenerator<std::uint64_t>> generatorFromJSON(
+    const std::string &json) {
+  std::istringstream ss;
+  ss.str(json);
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_json(ss, pt);
+
+  std::unique_ptr<AtomEnvironmentGenerator<std::uint64_t>> envGen;
+  std::unique_ptr<FingerprintArguments> fpArgs;
+  std::unique_ptr<AtomInvariantsGenerator> atomInvGen;
+  std::unique_ptr<BondInvariantsGenerator> bondInvGen;
+
+  auto fpArgsNode = pt.get_child_optional("fingerprintArguments");
+  if (fpArgsNode) {
+    auto typ = fpArgsNode->get_optional<std::string>("type");
+    if (!typ) {
+      throw ValueErrorException(
+          "FingerprintArguments type not specified in JSON");
+    }
+    if (*typ == "MorganArguments") {
+      fpArgs.reset(new MorganFingerprint::MorganArguments());
+    } else if (*typ == "RDKitFPArguments") {
+      fpArgs.reset(new RDKitFP::RDKitFPArguments());
+    } else if (*typ == "AtomPairArguments") {
+      fpArgs.reset(new AtomPair::AtomPairArguments());
+    } else if (*typ == "TopologicalTorsionArguments") {
+      fpArgs.reset(new TopologicalTorsion::TopologicalTorsionArguments());
+    } else {
+      throw ValueErrorException("Unknown FingerprintArguments type: " + *typ);
+    }
+    fpArgs->fromJSON(*fpArgsNode);
+  }
+  auto envGenNode = pt.get_child_optional("atomEnvironmentGenerator");
+  if (envGenNode) {
+    auto typ = envGenNode->get_optional<std::string>("type");
+    if (!typ) {
+      throw ValueErrorException(
+          "AtomEnvironmentGenerator type not specified in JSON");
+    }
+    if (*typ == "MorganEnvGenerator") {
+      envGen.reset(new MorganFingerprint::MorganEnvGenerator<std::uint64_t>());
+    } else if (*typ == "RDKitFPEnvGenerator") {
+      envGen.reset(new RDKitFP::RDKitFPEnvGenerator<std::uint64_t>());
+    } else if (*typ == "AtomPairEnvGenerator") {
+      envGen.reset(new AtomPair::AtomPairEnvGenerator<std::uint64_t>());
+    } else if (*typ == "TopologicalTorsionEnvGenerator") {
+      envGen.reset(new TopologicalTorsion::TopologicalTorsionEnvGenerator<
+                   std::uint64_t>());
+    } else {
+      throw ValueErrorException("Unknown AtomEnvGenerator type: " + *typ);
+    }
+    envGen->fromJSON(*envGenNode);
+  }
+  auto atomInvGenNode = pt.get_child_optional("atomInvariantsGenerator");
+  if (atomInvGenNode) {
+    auto typ = atomInvGenNode->get_optional<std::string>("type");
+    if (!typ) {
+      throw ValueErrorException(
+          "AtomInvariantsGenerator type not specified in JSON");
+    }
+    if (*typ == "MorganAtomInvGenerator") {
+      atomInvGen.reset(new MorganFingerprint::MorganAtomInvGenerator());
+    } else if (*typ == "RDKitFPAtomInvGenerator") {
+      atomInvGen.reset(new RDKitFP::RDKitFPAtomInvGenerator());
+    } else if (*typ == "AtomPairAtomInvGenerator") {
+      atomInvGen.reset(new AtomPair::AtomPairAtomInvGenerator());
+    } else {
+      throw ValueErrorException("Unknown AtomInvariantsGenerator type: " +
+                                *typ);
+    }
+    atomInvGen->fromJSON(*atomInvGenNode);
+  }
+  auto bondInvGenNode = pt.get_child_optional("bondInvariantsGenerator");
+  if (bondInvGenNode) {
+    auto typ = bondInvGenNode->get_optional<std::string>("type");
+    if (!typ) {
+      throw ValueErrorException(
+          "BondInvariantsGenerator type not specified in JSON");
+    }
+    if (*typ == "MorganBondInvGenerator") {
+      bondInvGen.reset(new MorganFingerprint::MorganBondInvGenerator());
+    } else {
+      throw ValueErrorException("Unknown BondInvariantsGenerator type: " +
+                                *typ);
+    }
+    bondInvGen->fromJSON(*bondInvGenNode);
+  }
+  //   dp_atomInvariantsGenerator = new AtomInvariantsGenerator();
+  //   df_ownsAtomInvGenerator = true;
+  //   dp_atomInvariantsGenerator->fromJSON(*atomInvGenNode);
+  // }
+  // auto bondInvGenNode = pt.get_child_optional("bondInvariantsGenerator");
+  // if (bondInvGenNode) {
+  //   dp_bondInvariantsGenerator = new BondInvariantsGenerator();
+  //   df_ownsBondInvGenerator = true;
+  //   dp_bondInvariantsGenerator->fromJSON(*bondInvGenNode);
+  // }
+
+  return std::make_unique<FingerprintGenerator<std::uint64_t>>(
+      envGen.release(), fpArgs.release(),
+      atomInvGen ? atomInvGen.release() : nullptr,
+      bondInvGen ? bondInvGen.release() : nullptr);
+}
+
 template <typename OutputType>
 std::unique_ptr<SparseIntVect<OutputType>>
 FingerprintGenerator<OutputType>::getFingerprintHelper(

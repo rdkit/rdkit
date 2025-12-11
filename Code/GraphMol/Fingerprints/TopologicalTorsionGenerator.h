@@ -26,6 +26,7 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionArguments
 
   std::string infoString() const override;
   void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
 
   /**
    \brief Construct a new Topological Torsion Arguments object
@@ -87,6 +88,7 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
 
   std::string infoString() const override;
   void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
 
   OutputType getResultSize() const override;
 };

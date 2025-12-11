@@ -108,6 +108,7 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments {
    */
   virtual std::string infoString() const = 0;
   virtual void toJSON(boost::property_tree::ptree &pt) const;
+  virtual void fromJSON(const boost::property_tree::ptree &pt);
 
   /**
    \brief method that returns information string about common fingerprinting
@@ -204,6 +205,8 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironmentGenerator
    */
   virtual std::string infoString() const = 0;
   virtual void toJSON(boost::property_tree::ptree &) const {};
+  virtual void fromJSON(const boost::property_tree::ptree &) {};
+
   /*!
     \brief Returns the size of the fingerprint based on arguments
 
@@ -242,6 +245,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomInvariantsGenerator
    */
   virtual std::string infoString() const = 0;
   virtual void toJSON(boost::property_tree::ptree &) const {};
+  virtual void fromJSON(const boost::property_tree::ptree &) {};
 
   virtual ~AtomInvariantsGenerator() {}
   virtual AtomInvariantsGenerator *clone() const = 0;
@@ -273,6 +277,7 @@ class RDKIT_FINGERPRINTS_EXPORT BondInvariantsGenerator
  */
   virtual std::string infoString() const = 0;
   virtual void toJSON(boost::property_tree::ptree &) const {};
+  virtual void fromJSON(const boost::property_tree::ptree &) {};
 
   virtual ~BondInvariantsGenerator() {}
   virtual BondInvariantsGenerator *clone() const = 0;
@@ -416,11 +421,14 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
 
   std::string infoString() const;
   void toJSON(boost::property_tree::ptree &pt) const;
-  void fromJSON(boost::property_tree::ptree &pt);
+  void fromJSON(const boost::property_tree::ptree &pt);
 };
 template <typename OutputType>
 RDKIT_FINGERPRINTS_EXPORT std::string generatorToJSON(
     const FingerprintGenerator<OutputType> &generator);
+
+RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<FingerprintGenerator<std::uint64_t>>
+generatorFromJSON(const std::string &jsonStr);
 
 template RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
 FingerprintGenerator<std::uint32_t>::getFingerprint(

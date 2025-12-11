@@ -814,6 +814,11 @@ TEST_CASE("toJSON") {
     CHECK(!jsonStr.empty());
     CHECK(jsonStr.find("\"type\":\"MorganArguments\"") != std::string::npos);
     std::cerr << "Morgan JSON: " << jsonStr << std::endl;
+
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
   }
   SECTION("RDKit") {
     unsigned int minPath = 1;
@@ -825,6 +830,10 @@ TEST_CASE("toJSON") {
     CHECK(!jsonStr.empty());
     CHECK(jsonStr.find("\"type\":\"RDKitFPArguments\"") != std::string::npos);
     std::cerr << "RDKit JSON: " << jsonStr << std::endl;
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
   }
   SECTION("topological torsion") {
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
@@ -835,6 +844,10 @@ TEST_CASE("toJSON") {
     CHECK(jsonStr.find("\"type\":\"TopologicalTorsionArguments\"") !=
           std::string::npos);
     std::cerr << "Topological Torsion JSON: " << jsonStr << std::endl;
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
   }
   SECTION("atom pair") {
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
@@ -844,5 +857,9 @@ TEST_CASE("toJSON") {
     CHECK(!jsonStr.empty());
     CHECK(jsonStr.find("\"type\":\"AtomPairArguments\"") != std::string::npos);
     std::cerr << "Atom Pair JSON: " << jsonStr << std::endl;
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
   }
 }

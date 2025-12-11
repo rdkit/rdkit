@@ -61,6 +61,9 @@ std::string RDKitFPAtomInvGenerator::infoString() const {
 void RDKitFPAtomInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
   pt.put("type", "RDKitFPAtomInvGenerator");
 }
+void RDKitFPAtomInvGenerator::fromJSON(const boost::property_tree::ptree &) {
+  // no parameters to set
+}
 
 RDKitFPAtomInvGenerator *RDKitFPAtomInvGenerator::clone() const {
   return new RDKitFPAtomInvGenerator();
@@ -87,6 +90,14 @@ void RDKitFPArguments::toJSON(boost::property_tree::ptree &pt) const {
   pt.put("branchedPaths", df_branchedPaths);
   pt.put("useBondOrder", df_useBondOrder);
   FingerprintArguments::toJSON(pt);
+}
+void RDKitFPArguments::fromJSON(const boost::property_tree::ptree &pt) {
+  d_minPath = pt.get<unsigned int>("minPath", d_minPath);
+  d_maxPath = pt.get<unsigned int>("maxPath", d_maxPath);
+  df_useHs = pt.get<bool>("useHs", df_useHs);
+  df_branchedPaths = pt.get<bool>("branchedPaths", df_branchedPaths);
+  df_useBondOrder = pt.get<bool>("useBondOrder", df_useBondOrder);
+  FingerprintArguments::fromJSON(pt);
 }
 
 RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
@@ -160,6 +171,11 @@ void RDKitFPEnvGenerator<OutputType>::toJSON(
   pt.put("type", "RDKitFPEnvGenerator");
   AtomEnvironmentGenerator<OutputType>::toJSON(pt);
 }
+template <typename OutputType>
+void RDKitFPEnvGenerator<OutputType>::fromJSON(
+    const boost::property_tree::ptree &pt) {
+  AtomEnvironmentGenerator<OutputType>::fromJSON(pt);
+};
 
 template <typename OutputType>
 std::vector<AtomEnvironment<OutputType> *>

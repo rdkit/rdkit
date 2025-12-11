@@ -21,8 +21,8 @@ using namespace AtomPairs;
 
 class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomInvGenerator
     : public AtomInvariantsGenerator {
-  const bool df_includeChirality;
-  const bool df_topologicalTorsionCorrection;
+  bool df_includeChirality;
+  bool df_topologicalTorsionCorrection;
 
  public:
   /**
@@ -41,6 +41,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomInvGenerator
 
   std::string infoString() const override;
   void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
 
   AtomPairAtomInvGenerator *clone() const override;
 };
@@ -58,6 +59,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairArguments
 
   std::string infoString() const override;
   void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
 
   /*!
     \brief construct a new AtomPairArguments object

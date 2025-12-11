@@ -26,7 +26,7 @@ namespace MorganFingerprint {
  */
 class RDKIT_FINGERPRINTS_EXPORT MorganAtomInvGenerator
     : public AtomInvariantsGenerator {
-  const bool df_includeRingMembership;
+  bool df_includeRingMembership;
 
  public:
   /**
@@ -42,6 +42,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomInvGenerator
 
   std::string infoString() const override;
   void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &) override;
   MorganAtomInvGenerator *clone() const override;
 };
 
@@ -79,8 +80,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganFeatureAtomInvGenerator
  */
 class RDKIT_FINGERPRINTS_EXPORT MorganBondInvGenerator
     : public BondInvariantsGenerator {
-  const bool df_useBondTypes;
-  const bool df_useChirality;
+  bool df_useBondTypes;
+  bool df_useChirality;
 
  public:
   /**
@@ -99,6 +100,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganBondInvGenerator
 
   std::string infoString() const override;
   void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
   MorganBondInvGenerator *clone() const override;
   ~MorganBondInvGenerator() override = default;
 };
@@ -116,6 +118,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments : public FingerprintArguments {
 
   std::string infoString() const override;
   void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
 
   /**
    \brief Construct a new MorganArguments object
@@ -206,6 +209,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
 
   std::string infoString() const override;
   void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
+
   OutputType getResultSize() const override;
 };
 

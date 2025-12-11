@@ -56,6 +56,11 @@ void MorganAtomInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
   pt.put("includeRingMembership", df_includeRingMembership);
   AtomInvariantsGenerator::toJSON(pt);
 }
+void MorganAtomInvGenerator::fromJSON(const boost::property_tree::ptree &pt) {
+  df_includeRingMembership =
+      pt.get<bool>("includeRingMembership", df_includeRingMembership);
+  AtomInvariantsGenerator::fromJSON(pt);
+}
 
 MorganAtomInvGenerator *MorganAtomInvGenerator::clone() const {
   return new MorganAtomInvGenerator(df_includeRingMembership);
@@ -147,6 +152,11 @@ void MorganBondInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
   pt.put("useChirality", df_useChirality);
   BondInvariantsGenerator::toJSON(pt);
 }
+void MorganBondInvGenerator::fromJSON(const boost::property_tree::ptree &pt) {
+  df_useBondTypes = pt.get<bool>("useBondTypes", df_useBondTypes);
+  df_useChirality = pt.get<bool>("useChirality", df_useChirality);
+  BondInvariantsGenerator::fromJSON(pt);
+}
 
 MorganBondInvGenerator *MorganBondInvGenerator::clone() const {
   return new MorganBondInvGenerator(df_useBondTypes, df_useChirality);
@@ -167,6 +177,12 @@ void MorganArguments::toJSON(boost::property_tree::ptree &pt) const {
   pt.put("onlyNonzeroInvariants", df_onlyNonzeroInvariants);
   pt.put("radius", d_radius);
   FingerprintArguments::toJSON(pt);
+}
+void MorganArguments::fromJSON(const boost::property_tree::ptree &pt) {
+  d_radius = pt.get<std::uint32_t>("radius", d_radius);
+  df_onlyNonzeroInvariants =
+      pt.get<bool>("onlyNonzeroInvariants", df_onlyNonzeroInvariants);
+  FingerprintArguments::fromJSON(pt);
 }
 
 template <typename OutputType>
@@ -448,6 +464,12 @@ void MorganEnvGenerator<OutputType>::toJSON(
     boost::property_tree::ptree &pt) const {
   pt.put("type", "MorganEnvGenerator");
   AtomEnvironmentGenerator<OutputType>::toJSON(pt);
+}
+
+template <typename OutputType>
+void MorganEnvGenerator<OutputType>::fromJSON(
+    const boost::property_tree::ptree &pt) {
+  AtomEnvironmentGenerator<OutputType>::fromJSON(pt);
 }
 
 template <typename OutputType>
