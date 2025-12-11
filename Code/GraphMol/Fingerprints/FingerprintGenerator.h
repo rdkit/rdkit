@@ -423,10 +423,13 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
   void toJSON(boost::property_tree::ptree &pt) const;
   void fromJSON(const boost::property_tree::ptree &pt);
 };
+//! generate JSON representation of a FingerprintGenerator
 template <typename OutputType>
 RDKIT_FINGERPRINTS_EXPORT std::string generatorToJSON(
     const FingerprintGenerator<OutputType> &generator);
 
+//! create a FingerprintGenerator from its JSON representation
+///  note that the returned generator always uses std::uint64_t as OutputType.
 RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<FingerprintGenerator<std::uint64_t>>
 generatorFromJSON(const std::string &jsonStr);
 

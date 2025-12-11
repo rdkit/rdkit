@@ -805,20 +805,26 @@ TEST_CASE("github #7533: IndexError while computing fingerprint") {
 }
 
 TEST_CASE("toJSON") {
+  auto m1 = "C[C@H](F)Oc1ccc(CCNC(=O)c2ccccc2C(=O)NCCc2ccc(OC)cc2)cc1"_smiles;
+  REQUIRE(m1);
   SECTION("morgan") {
     unsigned radius = 2;
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
         MorganFingerprint::getMorganGenerator<std::uint64_t>(radius));
     REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
     auto jsonStr = generatorToJSON(*fpGenerator);
     CHECK(!jsonStr.empty());
     CHECK(jsonStr.find("\"type\":\"MorganArguments\"") != std::string::npos);
-    std::cerr << "Morgan JSON: " << jsonStr << std::endl;
 
     auto fpGenerator2 = generatorFromJSON(jsonStr);
     REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
     auto jsonStr2 = generatorToJSON(*fpGenerator2);
     CHECK(jsonStr == jsonStr2);
+    CHECK(*fp1 == *fp2);
   }
   SECTION("RDKit") {
     unsigned int minPath = 1;
@@ -826,39 +832,57 @@ TEST_CASE("toJSON") {
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
         RDKitFP::getRDKitFPGenerator<std::uint64_t>(minPath, maxPath));
     REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
+
     auto jsonStr = generatorToJSON(*fpGenerator);
     CHECK(!jsonStr.empty());
     CHECK(jsonStr.find("\"type\":\"RDKitFPArguments\"") != std::string::npos);
-    std::cerr << "RDKit JSON: " << jsonStr << std::endl;
     auto fpGenerator2 = generatorFromJSON(jsonStr);
     REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
+    CHECK(*fp1 == *fp2);
     auto jsonStr2 = generatorToJSON(*fpGenerator2);
     CHECK(jsonStr == jsonStr2);
   }
   SECTION("topological torsion") {
+    bool includeChirality = true;
+    std::uint32_t torsionAtomCount = 5;
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
-        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>());
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
+            includeChirality, torsionAtomCount));
     REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
     auto jsonStr = generatorToJSON(*fpGenerator);
     CHECK(!jsonStr.empty());
     CHECK(jsonStr.find("\"type\":\"TopologicalTorsionArguments\"") !=
           std::string::npos);
-    std::cerr << "Topological Torsion JSON: " << jsonStr << std::endl;
     auto fpGenerator2 = generatorFromJSON(jsonStr);
     REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
     auto jsonStr2 = generatorToJSON(*fpGenerator2);
     CHECK(jsonStr == jsonStr2);
   }
   SECTION("atom pair") {
+    unsigned int minDistance = 2;
+    unsigned int maxDistance = 6;
+    bool includeChirality = true;
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
-        AtomPair::getAtomPairGenerator<std::uint64_t>());
+        AtomPair::getAtomPairGenerator<std::uint64_t>(minDistance, maxDistance,
+                                                      includeChirality));
     REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
     auto jsonStr = generatorToJSON(*fpGenerator);
     CHECK(!jsonStr.empty());
     CHECK(jsonStr.find("\"type\":\"AtomPairArguments\"") != std::string::npos);
-    std::cerr << "Atom Pair JSON: " << jsonStr << std::endl;
     auto fpGenerator2 = generatorFromJSON(jsonStr);
     REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
     auto jsonStr2 = generatorToJSON(*fpGenerator2);
     CHECK(jsonStr == jsonStr2);
   }
