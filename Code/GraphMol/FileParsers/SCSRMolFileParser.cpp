@@ -1192,8 +1192,8 @@ class MolFromSCSRMolConverter {
           const std::string type = "SUP";
           newSgroups.emplace_back(new SubstanceGroup(resMol.get(), type));
           auto newSg = newSgroups.back().get();
-          // RDKit::SubstanceGroup newSg(sg);
 
+          newSg->updateProps(sg, false);
           newSg->setAtoms(newAtoms);
         }
       }

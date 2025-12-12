@@ -61,23 +61,6 @@ std::string SCSRMolToSCSRMolBlock(SCSRMol &scsrMol,
     std::string collaborator = "";
     std::string protection = "";
 
-    // scsrTemplate->getPropIfPresent<std::string>(common_properties::natReplace,
-    //                                             natReplace);
-    // scsrTemplate->getPropIfPresent<std::string>(
-    //     common_properties::molTemplateComment, comment);
-    // scsrTemplate->getPropIfPresent<std::string>(
-    //     common_properties::molTemplateFullName, fullname);
-    // scsrTemplate->getPropIfPresent<std::string>(
-    //     common_properties::molTemplateCategory, category);
-    // scsrTemplate->getPropIfPresent<std::string>(
-    //     common_properties::molTemplateUniqueId, uniqueId);
-    // scsrTemplate->getPropIfPresent<std::string>(
-    //     common_properties::molTemplateCasNumber, casNumber);
-    // scsrTemplate->getPropIfPresent<std::string>(
-    //     common_properties::molTemplateCollaborator, collaborator);
-    // scsrTemplate->getPropIfPresent<std::string>(
-    //     common_properties::molTemplateProtection, protection);
-
     scsrTemplate->getProp(common_properties::molAtomClass, templateClass);
 
     scsrTemplate->getProp(common_properties::templateNames, templateNames);
@@ -216,13 +199,13 @@ bool isTemplateMatchAHit(
   //  if the external bond is a hydrogen bond, record that attachment.
   //  if the external bond is NOT a hydrogen bond, skip this match.
 
+  std::vector<bool> attachPointUsed(supAttachPoints.size(), false);
   for (auto molToQueryMapItem : molToQueryMap) {
     auto atom = mol.getAtomWithIdx(molToQueryMapItem.first);
     auto queryAtom = queryMol->getAtomWithIdx(molToQueryMapItem.second);
     unsigned int templateAtomIdx =
         queryAtom->getProp<unsigned int>("origAtomId");
-    for (auto nbri : boost::make_iterator_range(mol.getAtomBonds(atom))) {
-      auto bond = mol[nbri];
+    for (const auto bond : mol.atomBonds(atom)) {
       unsigned int nbrAtomIdx = bond->getOtherAtomIdx(atom->getIdx());
       if (molToQueryMap.contains(nbrAtomIdx)) {
         // make sure the bond is also in the query mol - if not skip this
@@ -242,28 +225,35 @@ bool isTemplateMatchAHit(
         // bond to an atom NOT in the main SUP - could be a leaving group
 
         bool sapFound = false;
-        for (auto &attachPoint : supAttachPoints) {
+        for (unsigned int attachPointIndex = 0;
+             attachPointIndex < supAttachPoints.size(); ++attachPointIndex) {
+          auto attachPoint = supAttachPoints[attachPointIndex];
+          if (attachPointUsed[attachPointIndex]) {
+            continue;
+          }
+
           if (attachPoint.aIdx == templateAtomIdx) {
             // see if the attachment point is an H or OH, and the nbr atom is
             // also an H or OH if so, this leaving group can be considered part
             // of the template
 
             sapFound = true;
+            attachPointUsed[attachPointIndex] = true;
+
             auto nbrAtom = mol.getAtomWithIdx(nbrAtomIdx);
             const Atom *templateNbrAtom = nullptr;
             if (attachPoint.lvIdx >= 0) {
               templateNbrAtom = templateMol->getAtomWithIdx(attachPoint.lvIdx);
             }
-
-            if (attachPoint.lvIdx >= 0 &&
-                ((nbrAtom->getAtomicNum() == 1 &&
-                  nbrAtom->getTotalDegree() == 1) ||
-                 (nbrAtom->getAtomicNum() == 8 &&
-                  nbrAtom->getTotalDegree() == 2)) &&
+            // if the template nbr atom is a single atoms and so is the matched
+            // atom, and they have the same atomic num and numHs, treat this as
+            // part of the template
+            if (attachPoint.lvIdx >= 0 && nbrAtom->getDegree() == 1 &&
+                templateNbrAtom->getDegree() == 1 &&
                 templateNbrAtom->getAtomicNum() == nbrAtom->getAtomicNum() &&
-                templateNbrAtom->getTotalDegree() ==
-                    nbrAtom->getTotalDegree()) {
+                templateNbrAtom->getTotalNumHs() == nbrAtom->getTotalNumHs()) {
               // ok - treat this as part of the template
+
               atomsInMatch.push_back(nbrAtomIdx);
             } else {
               newAttachOrds.push_back(
@@ -295,13 +285,15 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> MolToScsrMol(
     MolToSCSRParams molToSCSRParams) {
   auto res = std::unique_ptr<SCSRMol>(new SCSRMol());
   auto resMol = std::unique_ptr<RWMol>(new RWMol());
+  Conformer *conf = new Conformer();
+  resMol->addConformer(conf, true);
 
   std::map<unsigned int, unsigned int> atomMap;
 
   for (unsigned int templateIndex = 0;
        templateIndex < templates.getTemplateCount(); ++templateIndex) {
     auto templateMol = templates.getTemplate(templateIndex);
-    templateMol->updatePropertyCache();
+    templateMol->updatePropertyCache(false);
     std::vector<std::string> templateNames;
 
     std::string templateAtomClass;
@@ -411,6 +403,17 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> MolToScsrMol(
       resAtom->setProp(common_properties::dummyLabel, templateNameToUse);
       resAtom->setProp(common_properties::molAtomClass, templateAtomClass);
 
+      conf->resize(resMol->getNumAtoms());
+
+      RDGeom::Point3D pos;
+      for (const auto atomMatch : atomsInMatch) {
+        RDGeom::Point3D atomPos = mol.getConformer().getAtomPos(atomMatch);
+        pos += atomPos;
+      }
+      pos /= static_cast<double>(atomsInMatch.size());
+
+      conf->setAtomPos(resAtom->getIdx(), pos);
+
       // add the attach ords
 
       if (newAttachOrds.size() > 0) {
@@ -430,6 +433,9 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> MolToScsrMol(
       auto newAtomIdx = resMol->getNumAtoms();
       resMol->addAtom(new Atom(*atom), true, true);
       atomMap[atom->getIdx()] = newAtomIdx;
+      conf->resize(resMol->getNumAtoms());
+      conf->setAtomPos(newAtomIdx,
+                       mol.getConformer().getAtomPos(atom->getIdx()));
     }
   }
 

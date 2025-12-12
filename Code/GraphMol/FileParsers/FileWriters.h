@@ -45,7 +45,9 @@ struct RDKIT_FILEPARSERS_EXPORT MolToSCSRParams {
 };
 
 const std::vector<std::string> ScsrClasses{
-    "AA", "DNA", "RNA", "SUGAR", "BASE", "PHOSPHATE", "LGRP",
+    "AA",        "dAA",     "DNA",      "RNA",      "SUGAR",    "BASE",
+    "PHOSPHATE", "LINKER",  "CHEM",     "MODAA",    "MODdAA",   "MODDNA",
+    "MODRNA",    "XLINKAA", "XLINKdAA", "XLINKDNA", "XLINKRNA",
 };
 
 // \brief generates an MDL mol block for a molecule
