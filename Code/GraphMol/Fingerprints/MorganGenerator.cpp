@@ -546,6 +546,9 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
 template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
 getMorganGenerator(const MorganArguments &, AtomInvariantsGenerator *,
                    BondInvariantsGenerator *, bool, bool);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *
+getMorganGenerator(const MorganArguments &, AtomInvariantsGenerator *,
+                   BondInvariantsGenerator *, bool, bool);
 
 template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
 getMorganGenerator(unsigned int radius, bool countSimulation,
