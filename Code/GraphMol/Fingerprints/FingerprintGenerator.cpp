@@ -172,11 +172,11 @@ std::string FingerprintGenerator<OutputType>::infoString() const {
               : "No bond invariants generator");
 }
 
-template void FingerprintGenerator<std::uint32_t>::toJSON(
-    boost::property_tree::ptree &pt) const;
+template RDKIT_FINGERPRINTS_EXPORT void FingerprintGenerator<
+    std::uint32_t>::toJSON(boost::property_tree::ptree &pt) const;
 
-template void FingerprintGenerator<std::uint64_t>::toJSON(
-    boost::property_tree::ptree &pt) const;
+template RDKIT_FINGERPRINTS_EXPORT void FingerprintGenerator<
+    std::uint64_t>::toJSON(boost::property_tree::ptree &pt) const;
 
 template <typename OutputType>
 void FingerprintGenerator<OutputType>::toJSON(
@@ -208,9 +208,9 @@ template <typename OutputType>
 void FingerprintGenerator<OutputType>::fromJSON(
     const boost::property_tree::ptree &) {}
 
-template std::string generatorToJSON(
+template RDKIT_FINGERPRINTS_EXPORT std::string generatorToJSON(
     const FingerprintGenerator<std::uint32_t> &generator);
-template std::string generatorToJSON(
+template RDKIT_FINGERPRINTS_EXPORT std::string generatorToJSON(
     const FingerprintGenerator<std::uint64_t> &generator);
 
 template <typename OutputType>
