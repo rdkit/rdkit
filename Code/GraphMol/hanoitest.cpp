@@ -67,7 +67,7 @@ class int_compare_ftor {
 void qs1(const std::vector<std::vector<int>> &vects) {
   BOOST_LOG(rdInfoLog) << "sorting (qsort) vectors" << std::endl;
   for (auto tv : vects) {
-    int *data = &tv.front();
+    auto *data = tv.data();
     qsort(data, tv.size(), sizeof(int), pcmp);
     for (unsigned int j = 1; j < tv.size(); ++j) {
       TEST_ASSERT(tv[j] >= tv[j - 1]);
@@ -88,7 +88,7 @@ void hs1(const std::vector<std::vector<int>> &vects) {
     }
     std::vector<int> count(vect.size());
     std::vector<int> changed(vect.size(), 1);
-    RDKit::hanoisort(ispan, vect.size(), count, changed, icmp);
+    RDKit::hanoisort(ispan, count, changed, icmp);
     for (unsigned int j = 1; j < vect.size(); ++j) {
       TEST_ASSERT(data[indices[j]] >= data[indices[j - 1]]);
     }
@@ -208,17 +208,17 @@ void test2() {
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     std::vector<int> indices(m->getNumAtoms());
-    std::span<int> ispan(indices);
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
       atoms[i].atom = m->getAtomWithIdx(i);
       atoms[i].index = 0;
       indices[i] = i;
     }
-    atomcomparefunctor ftor(&atoms.front());
+    atomcomparefunctor ftor(atoms.data());
 
+    std::span<int> ispan(indices);
     std::vector<int> count(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
-    RDKit::hanoisort(ispan, atoms.size(), count, changed, ftor);
+    RDKit::hanoisort(ispan, count, changed, ftor);
 
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
       // std::cerr<<indices[i]<<" "<<" index: "<<atoms[indices[i]].index<<"
@@ -249,9 +249,9 @@ void test3() {
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     initCanonAtoms(*m, atoms, true);
-    atomcomparefunctor ftor(&atoms.front());
+    atomcomparefunctor ftor(atoms.data());
 
-    RDKit::Canon::canon_atom *data = &atoms.front();
+    auto *data = atoms.data();
     std::vector<int> count(atoms.size());
     std::vector<int> order(atoms.size());
     int activeset;
@@ -301,9 +301,9 @@ void test3() {
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     initCanonAtoms(*m, atoms, true);
-    atomcomparefunctor2 ftor(&atoms.front());
+    atomcomparefunctor2 ftor(atoms.data());
 
-    RDKit::Canon::canon_atom *data = &atoms.front();
+    auto *data = atoms.data();
     std::vector<int> count(atoms.size());
 
     std::vector<int> order(atoms.size());
@@ -438,8 +438,8 @@ void test4() {
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     initCanonAtoms(*m, atoms, true);
-    atomcomparefunctor3 ftor(&atoms.front(), *m);
-    RDKit::Canon::canon_atom *data = &atoms.front();
+    atomcomparefunctor3 ftor(atoms.data(), *m);
+    auto *data = atoms.data();
     std::vector<int> count(atoms.size());
     std::vector<int> order(atoms.size());
     int activeset;
@@ -497,9 +497,9 @@ void test4() {
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     initCanonAtoms(*m, atoms, true);
-    atomcomparefunctor3 ftor(&atoms.front(), *m);
+    atomcomparefunctor3 ftor(atoms.data(), *m);
 
-    RDKit::Canon::canon_atom *data = &atoms.front();
+    auto data = atoms.data();
     std::vector<int> count(atoms.size());
     std::vector<int> order(atoms.size());
     int activeset;
@@ -544,9 +544,9 @@ void test4() {
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     initCanonAtoms(*m, atoms, true);
-    atomcomparefunctor3 ftor(&atoms.front(), *m);
+    atomcomparefunctor3 ftor(atoms.data(), *m);
 
-    RDKit::Canon::canon_atom *data = &atoms.front();
+    auto *data = atoms.data();
     std::vector<int> count(atoms.size());
     std::vector<int> order(atoms.size());
     int activeset;
@@ -613,9 +613,9 @@ void test5() {
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
     initCanonAtoms(*m, atoms, true);
-    atomcomparefunctor3 ftor(&atoms.front(), *m);
+    atomcomparefunctor3 ftor(atoms.data(), *m);
 
-    RDKit::Canon::canon_atom *data = &atoms.front();
+    auto *data = atoms.data();
     std::vector<int> count(atoms.size());
     std::vector<int> order(atoms.size());
     int activeset;
@@ -1122,7 +1122,8 @@ void test7() {
   auto end = std::chrono::high_resolution_clock::now();
   auto diff =
       std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-  BOOST_LOG(rdInfoLog) << "      Finished in " << diff.count() << " ms" << std::endl;
+  BOOST_LOG(rdInfoLog) << "      Finished in " << diff.count() << " ms"
+                       << std::endl;
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 

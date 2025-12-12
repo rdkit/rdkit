@@ -737,7 +737,7 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     //   std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index:
     //   "<<atoms[order[ii]].index<<std::endl;
     // }
-    hanoisort(start, len, count, changed, compar);
+    hanoisort(start, count, changed, compar);
     // std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
     // std::cerr<<"  result:";
     // for(unsigned int ii=0;ii<nAtoms;++ii){
