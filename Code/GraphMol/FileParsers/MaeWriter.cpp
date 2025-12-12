@@ -160,14 +160,28 @@ void copyProperties(
       continue;
     }
 
-    switch (prop.getRDValueTag()) {
+    // Get the RDValue tag based on scope
+    auto tag = (scope == RDMol::Scope::MOL) ? prop.getRDValueTag() : prop.getRDValueTag(idx);
+
+    // Helper lambda to get property value based on scope
+    auto getPropValue = [&](const auto& token) -> RDValue {
+      if (scope == RDMol::Scope::MOL) {
+        return mol.getMolProp<RDValue>(token);
+      } else if (scope == RDMol::Scope::ATOM) {
+        return mol.getAtomProp<RDValue>(token, idx);
+      } else { // BOND
+        return mol.getBondProp<RDValue>(token, idx);
+      }
+    };
+
+    switch (tag) {
       case RDTypeTag::BoolTag: {
         auto propName = prop.name().getString();
         if (!std::regex_match(prop.name().getString(), MMCT_PROP_REGEX)) {
           propName.insert(0, "b_rdkit_");
         }
 
-        bool v = mol.getAtomProp<bool>(prop.name(), idx);
+        bool v = rdvalue_cast<bool>(getPropValue(prop.name()));
         boolSetter(propName, idx, v);
         break;
       }
@@ -182,7 +196,7 @@ void copyProperties(
           propName.insert(0, "i_rdkit_");
         }
 
-        int v = mol.getAtomProp<int>(prop.name(), idx);
+        int v = rdvalue_cast<int>(getPropValue(prop.name()));
         intSetter(propName, idx, v);
         break;
       }
@@ -194,7 +208,7 @@ void copyProperties(
           propName.insert(0, "r_rdkit_");
         }
 
-        double v = mol.getAtomProp<double>(prop.name(), idx);
+        double v = rdvalue_cast<double>(getPropValue(prop.name()));
         realSetter(propName, idx, v);
         break;
       }
@@ -205,7 +219,7 @@ void copyProperties(
           propName.insert(0, "s_rdkit_");
         }
 
-        std::string v = mol.getAtomProp<std::string>(prop.name(), idx);
+        std::string v = rdvalue_cast<std::string>(getPropValue(prop.name()));
         stringSetter(propName, idx, v);
         break;
       }
