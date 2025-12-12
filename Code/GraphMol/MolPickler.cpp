@@ -373,6 +373,21 @@ bool _picklePropertiesFromIterator(
       continue;
     }
 
+    // Check if the RDValue contains a PropToken and convert it to a string
+    // This handles cases where properties were stored as PropTokens (e.g., via setAtomValue)
+    if (val.getTag() == RDTypeTag::AnyTag) {
+      try {
+        auto &anyVal = rdvalue_cast<std::any &>(val);
+        if (anyVal.type() == typeid(PropToken)) {
+          // Convert PropToken to string for serialization
+          std::string strVal = std::any_cast<PropToken>(anyVal).getString();
+          val = RDValue(strVal);
+        }
+      } catch (...) {
+        // If conversion fails, continue with original value
+      }
+    }
+
     // Check if this value is actually serializable (same check as streamWriteProp)
     if (!isSerializable(val, handlers)) {
       continue;
@@ -421,6 +436,22 @@ bool _picklePropertiesFromIterator(
       // If we can't get the value, skip this property
       continue;
     }
+
+    // Check if the RDValue contains a PropToken and convert it to a string
+    // This handles cases where properties were stored as PropTokens (e.g., via setAtomValue)
+    if (val.getTag() == RDTypeTag::AnyTag) {
+      try {
+        auto &anyVal = rdvalue_cast<std::any &>(val);
+        if (anyVal.type() == typeid(PropToken)) {
+          // Convert PropToken to string for serialization
+          std::string strVal = std::any_cast<PropToken>(anyVal).getString();
+          val = RDValue(strVal);
+        }
+      } catch (...) {
+        // If conversion fails, continue with original value
+      }
+    }
+
     if (streamWriteProp(ss, propName, val, handlers)) {
       writtenCount++;
     }
