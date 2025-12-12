@@ -607,6 +607,17 @@ struct RDKIT_GRAPHMOL_EXPORT PropArray {
         RDValue &caster = static_cast<RDValue *>(data)[index];
         if constexpr (std::is_same_v<RawType, std::string>) {
           std::string res;
+          // Check if the RDValue contains a PropToken and handle it specially
+          if (caster.getTag() == RDTypeTag::AnyTag) {
+            try {
+              auto &anyVal = rdvalue_cast<std::any &>(caster);
+              if (anyVal.type() == typeid(PropToken)) {
+                return std::any_cast<PropToken>(anyVal).getString();
+              }
+            } catch (...) {
+              // Fall through to rdvalue_tostring
+            }
+          }
           rdvalue_tostring(caster, res);
           return res;
         } else {
