@@ -1711,6 +1711,7 @@ yyreduce:
       yyerror(input,molList,branchPoints,scanner,start_token, current_token_position,
             "chiral permutation cannot be zero");
       yyErrorCleanup(molList);
+      delete (yyvsp[-2].atom);
       YYABORT;
     }
     (yyvsp[-2].atom)->setChiralTag((yyvsp[-1].chiraltype)); (yyvsp[-2].atom)->setProp(common_properties::_chiralPermutation,(yyvsp[0].ival)); 
