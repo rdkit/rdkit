@@ -47,7 +47,7 @@ namespace MolInterchange {
 
 namespace {
 struct DefaultValueCache {
-  DefaultValueCache(const bj::value &defs) : bjDefaults(defs) {};
+  DefaultValueCache(const bj::value &defs) : bjDefaults(defs){};
   const bj::value &bjDefaults;
   mutable std::map<const char *, int> intMap;
   mutable std::map<const char *, bool> boolMap;
@@ -203,7 +203,8 @@ void readBond(RWMol *mol, const bj::value &bondVal,
   bnd->setBeginAtomIdx(static_cast<int>(aids.at(0).as_int64()));
   bnd->setEndAtomIdx(static_cast<int>(aids.at(1).as_int64()));
   bnd->setBondType(bondOrder->second);
-  mol->addBond(bnd.release());
+  bool takeOwnership = true;
+  mol->addBond(bnd.release(), takeOwnership);
   std::string stereo = getStringDefaultValue("stereo", bondVal, bondDefaults);
   if (stereo != "unspecified") {
     needStereoLoop = true;
