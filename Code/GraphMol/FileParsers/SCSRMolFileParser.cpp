@@ -83,7 +83,7 @@ std::string getQuotedToken(const char *&linePtr) {
   if (*linePtr != '"') {
     return res;
   }
-  linePtr++;  // skip opening quote
+  ++linePtr;  // skip opening quote
   while (*linePtr && *linePtr != '"') {
     if (*linePtr == '\\') {
       // escaped char
