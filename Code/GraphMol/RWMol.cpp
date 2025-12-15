@@ -276,6 +276,15 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps,
   newBond->setEndAtomIdx(existingBond->getEndAtomIdx());
   existingBond->initFromOther(*newBond, preserveProps);
 
+  // If the new bond doesn't have a query but the old one did, clear it from
+  // compat data before replacing the bond pointer to avoid dangling pointer.
+  // We need to clear it directly to avoid crashes from makeNewNonCompatQuery(nullptr)
+  if (!newBond->hasQuery() && existingBond->hasQuery()) {
+    if (dp_mol->bondQueries.size() > idx) {
+      dp_mol->bondQueries[idx].reset();
+    }
+  }
+
   dp_mol->replaceBondPointerCompat(newBond, idx);
 
   // Update explicit Hs, if set, on both ends. This was github #7128
