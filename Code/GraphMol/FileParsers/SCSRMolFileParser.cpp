@@ -140,10 +140,8 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
     throw FileParseException(errout.str());
   }
 
-  std::vector<std::string> subTokens;
-
   // get the class and template names from the token
-
+  std::vector<std::string> subTokens;
   boost::algorithm::split(subTokens, token, boost::algorithm::is_any_of("/"));
   if (subTokens.size() < 3) {
     std::ostringstream errout;
