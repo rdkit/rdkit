@@ -98,7 +98,7 @@ std::string getQuotedToken(const char *&linePtr) {
   if (*linePtr != '"') {
     res = "";  // error: no closing quote
   } else {
-    linePtr++;  // skip closing quote
+    ++linePtr;  // skip closing quote
   }
 
   return res;
