@@ -122,7 +122,6 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
   }
 
   const char *linePtr = lineStr.c_str() + 9;
-
   std::string token = getToken(linePtr, ' ');  // Template ID
   if (token.empty()) {
     std::ostringstream errout;
