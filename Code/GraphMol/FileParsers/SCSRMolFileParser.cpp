@@ -152,7 +152,6 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
   templateMol->setProp(common_properties::molAtomClass, subTokens[0]);
 
   std::vector<std::string> templateNames;
-
   for (unsigned int i = 1; i < subTokens.size(); ++i) {
     if (subTokens[i] != "") {
       templateNames.push_back(subTokens[i]);
