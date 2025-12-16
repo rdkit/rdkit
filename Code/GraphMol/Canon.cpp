@@ -17,6 +17,9 @@
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/utils.h>
+
+#include <ranges>
+#include <queue>
 #include <algorithm>
 
 namespace RDKit {
@@ -114,6 +117,47 @@ bool isClosingRingBond(Bond *bond) {
          bond->hasProp(common_properties::_TraversalRingClosureBond);
 }
 
+Bond::BondDir flipBondDir(Bond::BondDir bondDir) {
+  return (bondDir == Bond::ENDUPRIGHT) ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT;
+}
+
+std::pair<Bond::BondDir, bool> getReferenceDirection(
+    const Bond *dblBond, const Atom *refAtom, const Atom *targetAtom,
+    const Bond *refControllingBond, const Bond *targetBond) {
+  Bond::BondDir dir = Bond::NONE;
+  if (dblBond->getStereo() == Bond::STEREOE ||
+      dblBond->getStereo() == Bond::STEREOTRANS) {
+    dir = refControllingBond->getBondDir();
+  } else if (dblBond->getStereo() == Bond::STEREOZ ||
+             dblBond->getStereo() == Bond::STEREOCIS) {
+    dir = flipBondDir(refControllingBond->getBondDir());
+  }
+  CHECK_INVARIANT(dir != Bond::NONE, "stereo not set");
+
+  // If we're not looking at the bonds used to determine the
+  // stereochemistry, we need to flip the setting on the other bond:
+  const INT_VECT &stereoAtoms = dblBond->getStereoAtoms();
+
+  auto isFlipped = false;
+
+  if (refAtom->getDegree() == 3 &&
+      std::ranges::find(stereoAtoms,
+                        static_cast<int>(refControllingBond->getOtherAtomIdx(
+                            refAtom->getIdx()))) == stereoAtoms.end()) {
+    isFlipped = true;
+    dir = flipBondDir(dir);
+  }
+  if (targetAtom->getDegree() == 3 &&
+      std::ranges::find(stereoAtoms,
+                        static_cast<int>(targetBond->getOtherAtomIdx(
+                            targetAtom->getIdx()))) == stereoAtoms.end()) {
+    isFlipped = true;
+    dir = flipBondDir(dir);
+  }
+
+  return std::make_pair(dir, isFlipped);
+}
+
 }  // namespace
 // FIX: this may only be of interest from the SmilesWriter, should we
 // move it there?
@@ -192,9 +236,15 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     return;
   }
 
+  if (dir1Set && dir2Set) {
+    // Both directions are already set. Nothing to do.
+
+    // To do: check that the directions are consistent with each other.
+
+    return;
+  }
+
   bool setFromBond1 = true;
-  Bond::BondDir atom1Dir = Bond::NONE;
-  Bond::BondDir atom2Dir = Bond::NONE;
   Bond *atom1ControllingBond = firstFromAtom1;
   Bond *atom2ControllingBond = firstFromAtom2;
   if (!dir1Set && !dir2Set) {
@@ -203,15 +253,16 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     // directions to "arbitrary" values:
 
     // the bond we came in on becomes ENDUPRIGHT:
-    atom1Dir = Bond::ENDUPRIGHT;
+    auto atom1Dir = Bond::ENDUPRIGHT;
     firstFromAtom1->setBondDir(atom1Dir);
+
     bondDirCounts[firstFromAtom1->getIdx()] += 1;
     atomDirCounts[atom1->getIdx()] += 1;
+
   } else if (!dir2Set) {
     // at least one of the bonds on atom1 has its directionality set already:
     if (bondDirCounts[firstFromAtom1->getIdx()] > 0) {
       // The first bond's direction has been set at some earlier point:
-      atom1Dir = firstFromAtom1->getBondDir();
       bondDirCounts[firstFromAtom1->getIdx()] += 1;
       atomDirCounts[atom1->getIdx()] += 1;
       if (secondFromAtom1) {
@@ -244,9 +295,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       //
       // This addresses parts of Issue 185 and sf.net Issue 1842174
       //
-      atom1Dir = secondFromAtom1->getBondDir();
-
+      auto atom1Dir = secondFromAtom1->getBondDir();
       firstFromAtom1->setBondDir(atom1Dir);
+
       bondDirCounts[firstFromAtom1->getIdx()] += 1;
       atomDirCounts[atom1->getIdx()] += 2;
       atom1ControllingBond = secondFromAtom1;
@@ -258,7 +309,6 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     // at least one of the bonds on atom2 has its directionality set already:
     if (bondDirCounts[firstFromAtom2->getIdx()] > 0) {
       // The second bond's direction has been set at some earlier point:
-      atom2Dir = firstFromAtom2->getBondDir();
       bondDirCounts[firstFromAtom2->getIdx()] += 1;
       atomDirCounts[atom2->getIdx()] += 1;
     } else {
@@ -280,9 +330,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       //
       // This addresses parts of Issue 185 and sf.net Issue 1842174
       //
-      atom2Dir = secondFromAtom2->getBondDir();
-
+      auto atom2Dir = secondFromAtom2->getBondDir();
       firstFromAtom2->setBondDir(atom2Dir);
+
       bondDirCounts[firstFromAtom2->getIdx()] += 1;
       atomDirCounts[atom2->getIdx()] += 2;
       atom2ControllingBond = secondFromAtom2;
@@ -290,83 +340,25 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     // CHECK_INVARIANT(0,"ring stereochemistry not handled");
   }  // end of the ring stereochemistry if
 
-  auto flipBondDir = [](Bond::BondDir bondDir) {
-    return (bondDir == Bond::ENDUPRIGHT) ? Bond::ENDDOWNRIGHT
-                                         : Bond::ENDUPRIGHT;
-  };
   // now set the directionality on the other side:
   if (setFromBond1) {
-    if (dblBond->getStereo() == Bond::STEREOE ||
-        dblBond->getStereo() == Bond::STEREOTRANS) {
-      atom2Dir = atom1Dir;
-    } else if (dblBond->getStereo() == Bond::STEREOZ ||
-               dblBond->getStereo() == Bond::STEREOCIS) {
-      atom2Dir = flipBondDir(atom1Dir);
-    }
-    CHECK_INVARIANT(atom2Dir != Bond::NONE, "stereo not set");
-
-    // If we're not looking at the bonds used to determine the
-    // stereochemistry, we need to flip the setting on the other bond:
-    const INT_VECT &stereoAtoms = dblBond->getStereoAtoms();
-
-    auto isFlipped = false;
-
-    if (atom1->getDegree() == 3 &&  // atom1ControllingBond == firstFromAtom1 &&
-        std::find(stereoAtoms.begin(), stereoAtoms.end(),
-                  static_cast<int>(atom1ControllingBond->getOtherAtomIdx(
-                      atom1->getIdx()))) == stereoAtoms.end()) {
-      isFlipped = true;
-      atom2Dir = flipBondDir(atom2Dir);
-    }
-    // std::cerr << " 0 set bond 2: " << firstFromAtom2->getIdx() << " "
-    //           << atom2Dir << std::endl;
-    if (atom2->getDegree() == 3 &&
-        std::find(stereoAtoms.begin(), stereoAtoms.end(),
-                  static_cast<int>(firstFromAtom2->getOtherAtomIdx(
-                      atom2->getIdx()))) == stereoAtoms.end()) {
-      isFlipped = true;
-      atom2Dir = flipBondDir(atom2Dir);
-    }
+    auto [atom2Dir, isFlipped] = getReferenceDirection(
+        dblBond, atom1, atom2, atom1ControllingBond, firstFromAtom2);
 
     if (!isFlipped && isClosingRingBond(dblBond)) {
       atom2Dir = flipBondDir(atom2Dir);
     }
 
-    // std::cerr << " 1 set bond 2: " << firstFromAtom2->getIdx() << " "
-    //           << atom2Dir << std::endl;
     firstFromAtom2->setBondDir(atom2Dir);
 
     bondDirCounts[firstFromAtom2->getIdx()] += 1;
     atomDirCounts[atom2->getIdx()] += 1;
   } else {
-    // we come before a ring closure:
-    if (dblBond->getStereo() == Bond::STEREOE ||
-        dblBond->getStereo() == Bond::STEREOTRANS) {
-      atom1Dir = atom2Dir;
-    } else if (dblBond->getStereo() == Bond::STEREOZ ||
-               dblBond->getStereo() == Bond::STEREOCIS) {
-      atom1Dir = flipBondDir(atom2Dir);
-    }
-    CHECK_INVARIANT(atom1Dir != Bond::NONE, "stereo not set");
-    // If we're not looking at the bonds used to determine the
-    // stereochemistry, we need to flip the setting on the other bond:
-    const INT_VECT &stereoAtoms = dblBond->getStereoAtoms();
-    if (atom2->getDegree() == 3 &&
-        std::find(stereoAtoms.begin(), stereoAtoms.end(),
-                  static_cast<int>(atom2ControllingBond->getOtherAtomIdx(
-                      atom2->getIdx()))) == stereoAtoms.end()) {
-      // std::cerr<<"flip 1"<<std::endl;
-      atom1Dir = flipBondDir(atom1Dir);
-    }
-    if (atom1->getDegree() == 3 &&
-        std::find(stereoAtoms.begin(), stereoAtoms.end(),
-                  static_cast<int>(firstFromAtom1->getOtherAtomIdx(
-                      atom1->getIdx()))) == stereoAtoms.end()) {
-      // std::cerr<<"flip 2"<<std::endl;
-      atom1Dir = flipBondDir(atom1Dir);
-    }
+    auto [atom1Dir, isFlipped] = getReferenceDirection(
+        dblBond, atom2, atom1, atom2ControllingBond, firstFromAtom1);
 
     firstFromAtom1->setBondDir(atom1Dir);
+
     bondDirCounts[firstFromAtom1->getIdx()] += 1;
     atomDirCounts[atom1->getIdx()] += 1;
   }
@@ -481,6 +473,26 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
         }
       }
     }
+  } else {
+    // Same case, but on the other side of the double bond. Note the initial
+    // condition is different. I'm not 100% sure this is right, but tests
+    // seem to pass when we do this.
+    if (bondVisitOrders[atom1ControllingBond->getIdx()] >
+        atomVisitOrders[atom2->getIdx()]) {
+      if (bondDirCounts[atom1ControllingBond->getIdx()] == 1) {
+        if (!atom1ControllingBond->hasProp(
+                common_properties::_TraversalRingClosureBond)) {
+          switchBondDir(atom1ControllingBond);
+        }
+      } else if (bondDirCounts[firstFromAtom2->getIdx()] == 1) {
+        // the controlling bond at atom1 is being set by someone else, flip the
+        // direction on the atom2 bond instead:
+        switchBondDir(firstFromAtom2);
+        if (secondFromAtom2 && bondDirCounts[secondFromAtom2->getIdx()] >= 1) {
+          switchBondDir(secondFromAtom2);
+        }
+      }
+    }
   }
 
   // something to watch out for here. For this molecule and traversal order:
@@ -518,6 +530,127 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       otherAtom3Bond->setBondDir(dir);
       bondDirCounts[otherAtom3Bond->getIdx()] += 1;
       atomDirCounts[atom3->getIdx()] += 1;
+    }
+  }
+}
+
+void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
+                             const UINT_VECT &atomVisitOrders,
+                             UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts,
+                             const MolStack &molStack) {
+  auto getNeighboringStereoBond = [&mol](const Atom *dblBndAtom,
+                                         const Bond *nbrBnd) -> Bond * {
+    auto otherAtom = nbrBnd->getOtherAtom(dblBndAtom);
+    for (const auto bond : mol.atomBonds(otherAtom)) {
+      if (bond != nbrBnd && bond->getBondType() == Bond::DOUBLE &&
+          bond->getStereo() > Bond::STEREOANY) {
+        return bond;
+      }
+    }
+    return nullptr;
+  };
+
+  // start by removing the current directions on single bonds
+  // around double bonds. At the same time, we build a prioritized
+  // queue to decide the order in which we will canonicalize bonds.
+
+  // We want to start with bonds with the most neighboring stereo
+  // bonds, and in case of ties, start with the bond that has
+  // the lowest position in the molStack
+  std::greater<const unsigned int &> molStackComparer;
+  std::less<const unsigned int &> numStereoNbrsComparer;
+
+  std::unordered_map<const Bond *, std::vector<Bond *>> stereoBondNbrs;
+  auto compareBondPriority = [&stereoBondNbrs, &bondVisitOrders,
+                              &molStackComparer, &numStereoNbrsComparer](
+                                 const Bond *aBnd, const Bond *bBnd) {
+    const auto aNumStereoNbrs = stereoBondNbrs[aBnd].size();
+    const auto bNumStereoNbrs = stereoBondNbrs[bBnd].size();
+
+    if (aNumStereoNbrs == bNumStereoNbrs) {
+      return molStackComparer(bondVisitOrders[aBnd->getIdx()],
+                              bondVisitOrders[bBnd->getIdx()]);
+    }
+    return numStereoNbrsComparer(aNumStereoNbrs, bNumStereoNbrs);
+  };
+
+  std::priority_queue<Bond *, std::vector<Bond *>,
+                      decltype(compareBondPriority)>
+      q{compareBondPriority};
+
+  for (auto &msI : molStack) {
+    if (msI.type != MOL_STACK_BOND) {
+      // not a bond, skip it
+      continue;
+    }
+
+    auto bond = msI.obj.bond;
+    Bond::BondDir dir = bond->getBondDir();
+    if (dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT) {
+      bond->setBondDir(Bond::NONE);
+    }
+
+    if (bond->getBondType() != Bond::DOUBLE ||
+        bond->getStereo() <= Bond::STEREOANY ||
+        bond->getStereoAtoms().size() < 2) {
+      // not a bond that can have stereo nor needs canonicalization
+      bond->setStereo(Bond::STEREONONE);
+      continue;
+    }
+
+    auto &currentNbrs = stereoBondNbrs[bond];
+    for (const auto *dblBondAtom :
+         std::array<Atom *, 2>{bond->getBeginAtom(), bond->getEndAtom()}) {
+      for (const auto *bond : mol.atomBonds(dblBondAtom)) {
+        if (!canHaveDirection(*bond)) {
+          continue;
+        }
+        auto nbrDblBnd = getNeighboringStereoBond(dblBondAtom, bond);
+        if (nbrDblBnd != nullptr) {
+          currentNbrs.push_back(nbrDblBnd);
+        }
+      }
+    }
+    std::ranges::sort(currentNbrs,
+                      [&molStackComparer](const Bond *aBnd, const Bond *bBnd) {
+                        // Reversing the bonds is intentional: molStackComparer
+                        // is a std::greater comparer (priority queue returns
+                        // the highest element), but here we want to sort in
+                        // increasing order, so we want a std::less comparer,
+                        // which can be achieved by reversing the std::greater
+                        // because we can have no ties here
+                        return molStackComparer(bBnd->getIdx(), aBnd->getIdx());
+                      });
+
+    q.emplace(bond);
+  }
+
+  // Now that we have bonds in the order we want to handle them,
+  // do the canonicalization
+  boost::dynamic_bitset<> seen_bonds(mol.getNumBonds());
+  while (!q.empty()) {
+    const auto bond = q.top();
+    q.pop();
+    if (seen_bonds.test(bond->getIdx())) {
+      continue;
+    }
+
+    std::queue<Bond *> connectedBondsQ;
+    connectedBondsQ.push(bond);
+
+    while (!connectedBondsQ.empty()) {
+      const auto currentBond = connectedBondsQ.front();
+      connectedBondsQ.pop();
+
+      Canon::canonicalizeDoubleBond(currentBond, bondVisitOrders,
+                                    atomVisitOrders, bondDirCounts,
+                                    atomDirCounts, molStack);
+      seen_bonds.set(currentBond->getIdx());
+      for (auto nbrStereoBnd : stereoBondNbrs[currentBond]) {
+        if (!seen_bonds.test(nbrStereoBnd->getIdx())) {
+          connectedBondsQ.push(nbrStereoBnd);
+        }
+      }
     }
   }
 }
@@ -1112,22 +1245,12 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     ++pos;
   }
 
-  // traverse the stack and canonicalize double bonds and atoms with (ring)
-  // stereochemistry
-  for (auto &msI : molStack) {
-    if (msI.type == MOL_STACK_BOND &&
-        msI.obj.bond->getBondType() == Bond::DOUBLE &&
-        msI.obj.bond->getStereo() > Bond::STEREOANY) {
-      if (msI.obj.bond->getStereoAtoms().size() >= 2) {
-        Canon::canonicalizeDoubleBond(msI.obj.bond, bondVisitOrders,
-                                      atomVisitOrders, bondDirCounts,
-                                      atomDirCounts, molStack);
-      } else {
-        // bad stereo spec:
-        msI.obj.bond->setStereo(Bond::STEREONONE);
-      }
-    }
-    if (doIsomericSmiles) {
+  canonicalizeDoubleBonds(mol, bondVisitOrders, atomVisitOrders, bondDirCounts,
+                          atomDirCounts, molStack);
+
+  // traverse the stack and canonicalize atoms with (ring) stereochemistry
+  if (doIsomericSmiles) {
+    for (auto &msI : molStack) {
       if (msI.type == MOL_STACK_ATOM &&
           msI.obj.atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
           !msI.obj.atom->hasProp(common_properties::_brokenChirality)) {
