@@ -51,7 +51,7 @@ std::string getQuotedToken(const char *&linePtr) {
   if (*linePtr != '"') {
     return res;
   }
-  linePtr++;  // skip opening quote
+  ++linePtr;  // skip opening quote
   while (*linePtr && *linePtr != '"') {
     if (*linePtr == '\\') {
       // escaped char
@@ -66,7 +66,7 @@ std::string getQuotedToken(const char *&linePtr) {
   if (*linePtr != '"') {
     res = "";  // error: no closing quote
   } else {
-    linePtr++;  // skip closing quote
+    ++linePtr;  // skip closing quote
   }
 
   return res;
@@ -90,7 +90,6 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
   }
 
   const char *linePtr = lineStr.c_str() + 9;
-
   std::string token = getToken(linePtr, ' ');  // Template ID
   if (token.empty()) {
     std::ostringstream errout;
@@ -108,10 +107,8 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
     throw FileParseException(errout.str());
   }
 
-  std::vector<std::string> subTokens;
-
   // get the class and template names from the token
-
+  std::vector<std::string> subTokens;
   boost::algorithm::split(subTokens, token, boost::algorithm::is_any_of("/"));
   if (subTokens.size() < 3) {
     std::ostringstream errout;
@@ -123,7 +120,6 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
   templateMol->setProp(common_properties::molAtomClass, subTokens[0]);
 
   std::vector<std::string> templateNames;
-
   for (unsigned int i = 1; i < subTokens.size(); ++i) {
     if (subTokens[i] != "") {
       templateNames.push_back(subTokens[i]);
