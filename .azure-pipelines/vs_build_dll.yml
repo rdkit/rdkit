@@ -11,7 +11,7 @@ steps:
         libboost-python-devel=(boost_version) ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        numpy matplotlib cairo pillow eigen pandas=2.1
+        numpy matplotlib cairo pillow eigen pandas=2.1 ninja
     call activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
@@ -22,7 +22,7 @@ steps:
     mkdir build && cd build
     call activate rdkit_build
     cmake .. ^
-    -G "Visual Studio 17 2022" ^
+    -G Ninja ^
     -DCMAKE_BUILD_TYPE=Release ^
     -DRDK_INSTALL_INTREE=ON ^
     -DRDK_INSTALL_STATIC_LIBS=OFF ^
@@ -49,7 +49,7 @@ steps:
 - script: |
     call activate rdkit_build
     cd build
-    cmake --build . --config Release --target install -j $(number_of_cores)
+    ninja install
   displayName: Build
 - script: |
     call activate rdkit_build
