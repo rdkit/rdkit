@@ -43,6 +43,7 @@ rdkit_headers(Atom.h
         Rings.h
         ROMol.h
         RWMol.h
+        SCSRMol.h
         SanitException.h
         SubstanceGroup.h
         StereoGroup.h
