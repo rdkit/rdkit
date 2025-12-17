@@ -119,6 +119,40 @@ void SDMolSupplier::checkForEnd() {
   }
 }
 
+void SDMolSupplier::peekCheckForEnd(char* bufPtr, char* bufEnd, std::streampos molStartPos) {
+  PRECONDITION(dp_inStream, "no stream");
+  int emptyLines = 0;
+  char* p = bufPtr;
+  
+  while (p < bufEnd) {
+      if (!std::isspace(*p)) {
+          return; 
+      }
+      if (*p == '\n') {
+          emptyLines++;
+          if (emptyLines >= 4) { // the 4th empty line found
+              this->df_end = true;
+              this->d_len = rdcast<int>(this->d_molpos.size());
+              return;
+          }
+      }
+      p++;
+  }
+
+  // buffer was exhausted without finding 4 empty lines or data. Need to check the stream.
+  std::streampos saveBlockPos = dp_inStream->tellg();
+  
+  dp_inStream->clear();
+  dp_inStream->seekg(molStartPos);
+  
+  // run the standard (slow) logic
+  this->checkForEnd();
+  
+  // restore the stream position
+  dp_inStream->clear();
+  dp_inStream->seekg(saveBlockPos);
+}
+
 void SDMolSupplier::reset() {
   PRECONDITION(dp_inStream, "no stream");
   dp_inStream->clear();
@@ -192,31 +226,70 @@ void SDMolSupplier::moveTo(unsigned int idx) {
   if (idx < d_molpos.size()) {
     dp_inStream->seekg(d_molpos[idx]);
     d_last = idx;
-  } else {
-    std::string tempStr;
+  } 
+  // actually scan with buffering
+  else {
     dp_inStream->seekg(d_molpos.back());
     d_last = rdcast<int>(d_molpos.size()) - 1;
-    while (d_last < static_cast<int>(idx) && !dp_inStream->eof() &&
-           !dp_inStream->fail()) {
-      d_line++;
-      tempStr = getLine(dp_inStream);
 
-      if (tempStr[0] == '$' && tempStr.substr(0, 4) == "$$$$") {
-        std::streampos posHold = dp_inStream->tellg();
-        this->checkForEnd();
-        if (!this->df_end) {
-          d_molpos.push_back(posHold);
-          d_last++;
+    const size_t CHUNK_SIZE = 65536;
+    const size_t OVERLAP = 4;
+    std::vector<char> buffer(CHUNK_SIZE + OVERLAP);
+    std::fill(buffer.begin(), buffer.begin() + OVERLAP, '\n'); //safe init
+    std::streampos currentStreamPos = dp_inStream->tellg();
+    bool foundTarget = false;
+
+    while (dp_inStream->good() && !foundTarget) {
+      dp_inStream->read(&buffer[OVERLAP], CHUNK_SIZE);
+      std::streamsize bytesRead = dp_inStream->gcount();
+      if (bytesRead == 0) break;
+
+      char *bufStart = &buffer[0];
+      char *bufEnd = bufStart + OVERLAP + bytesRead;
+      char *ptr = bufStart + 1;
+
+      while (true) {
+        static const char dollarSigns[] = "$$$$";
+        auto match = std::search(ptr, bufEnd, dollarSigns, dollarSigns + 4);
+        if (match == bufEnd) break;
+        if (*(match - 1) == '\n') {
+          char *nlPos = match + 4;
+          while (nlPos < bufEnd && *nlPos != '\n') ++nlPos;
+          if (nlPos < bufEnd) ++nlPos;
+          std::streampos posHold = currentStreamPos + std::streamoff(nlPos - bufStart - OVERLAP);
+          bool atTrueEOF = (bytesRead < (std::streamsize)CHUNK_SIZE) && (nlPos >= bufEnd);
+          if (!atTrueEOF) {
+            this->peekCheckForEnd(nlPos, bufEnd, posHold);//the optimized peek version
+            if (!this->df_end) {
+              d_molpos.push_back(posHold);
+              d_last++;
+              if (static_cast<unsigned int>(d_last) == idx) { //not really needed but this way we only index as much as needed
+                  foundTarget = true;
+                  break; 
+              }
+            }
+          }
         }
+        ptr = match + 4;
       }
+      
+      if (foundTarget) break;
+
+      if (bytesRead >= OVERLAP) std::memcpy(&buffer[0], bufEnd - OVERLAP, OVERLAP);
+      currentStreamPos += bytesRead;
     }
-    // if we reached end of file without reaching "idx" we have an index error
-    if (dp_inStream->eof()) {
-      d_len = rdcast<int>(d_molpos.size());
-      std::ostringstream errout;
-      errout << "ERROR: Index error (idx = " << idx << ") : "
-             << " we do no have enough mol blocks";
-      throw FileParseException(errout.str());
+
+    if (foundTarget) {
+        dp_inStream->clear();
+        dp_inStream->seekg(d_molpos[idx]);
+        d_last = idx;
+    } else {
+        // if we reached end of file without reaching "idx" we have an index error
+        d_len = rdcast<int>(d_molpos.size());
+        std::ostringstream errout;
+        errout << "ERROR: Index error (idx = " << idx << ") : "
+               << " we do not have enough mol blocks";
+        throw FileParseException(errout.str());
     }
   }
 }
@@ -234,21 +307,44 @@ unsigned int SDMolSupplier::length() {
   if (d_len > 0 || (df_end && d_len == 0)) {
     return d_len;
   } else {
-    std::string tempStr;
     d_len = rdcast<int>(d_molpos.size());
     dp_inStream->seekg(d_molpos.back());
-    while (!dp_inStream->eof() && !dp_inStream->fail()) {
-      std::getline(*dp_inStream, tempStr);
-      if (tempStr.length() >= 4 && tempStr[0] == '$' && tempStr[1] == '$' &&
-          tempStr[2] == '$' && tempStr[3] == '$') {
-        std::streampos posHold = dp_inStream->tellg();
-        // don't worry about the last molecule:
-        this->checkForEnd();
-        if (!this->df_end) {
-          d_molpos.push_back(posHold);
-          ++d_len;
+    const size_t CHUNK_SIZE = 65536;
+    const size_t OVERLAP = 4; // to catch "$$$$" at chunk boundaries ("...\n$$ <new chunk> $$...")
+    std::vector<char> buffer(CHUNK_SIZE + OVERLAP);
+    std::fill(buffer.begin(), buffer.begin() + OVERLAP, '\n'); //safe init
+    std::streampos currentStreamPos = dp_inStream->tellg();
+
+    while (dp_inStream->good()) {
+      dp_inStream->read(&buffer[OVERLAP], CHUNK_SIZE);
+      std::streamsize bytesRead = dp_inStream->gcount();
+      if (bytesRead == 0) break; // EOF
+      char *bufStart = &buffer[0];
+      char *bufEnd = bufStart + OVERLAP + bytesRead;
+      char *ptr = bufStart + 1;
+
+      while (true) {
+        static const char dollarSigns[] = "$$$$";
+        auto match = std::search(ptr, bufEnd, dollarSigns, dollarSigns + 4);
+        if (match == bufEnd) break;
+        if (*(match - 1) == '\n') { //ensure $$$$ is at start of line
+          char *nlPos = match + 4;
+          while (nlPos < bufEnd && *nlPos != '\n') ++nlPos;
+          if (nlPos < bufEnd) ++nlPos; //move past newline
+          std::streampos posHold = currentStreamPos + std::streamoff(nlPos - bufStart - OVERLAP);
+          bool atTrueEOF = (bytesRead < (std::streamsize)CHUNK_SIZE) && (nlPos >= bufEnd);
+          if (!atTrueEOF) {
+            this->peekCheckForEnd(nlPos, bufEnd, posHold);
+            if (!this->df_end) {
+              d_molpos.push_back(posHold);
+              ++d_len;
+            }
+          }
         }
+        ptr = match + 4;
       }
+      if (bytesRead >= OVERLAP) std::memcpy(&buffer[0], bufEnd - OVERLAP, OVERLAP);
+      currentStreamPos += bytesRead;
     }
     // now remember to set the stream to the last position we want to read
     dp_inStream->clear();
