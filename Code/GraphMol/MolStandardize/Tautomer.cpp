@@ -104,19 +104,15 @@ const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs() {
 int scoreSubstructs(const ROMol &mol,
                     const std::vector<SubstructTerm> &substructureTerms) {
   int score = 0;
+  SubstructMatchParameters params;
   for (const auto &term : substructureTerms) {
     if (!term.matcher.getNumAtoms()) {
       BOOST_LOG(rdErrorLog) << " matcher for term " << term.name
                             << " is invalid, ignoring it." << std::endl;
       continue;
     }
-    SubstructMatchParameters params;
-    const auto matches = SubstructMatch(mol, term.matcher, params);
-    // if (!matches.empty()) {
-    //   std::cerr << " " << matches.size() << " matches to " << term.name
-    //             << std::endl;
-    // }
-    score += static_cast<int>(matches.size()) * term.score;
+    const auto nMatches = SubstructMatchCount(mol, term.matcher, params);
+    score += static_cast<int>(nMatches) * term.score;
   }
   return score;
 }
