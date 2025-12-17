@@ -275,7 +275,7 @@ void SDMolSupplier::moveTo(unsigned int idx) {
       
       if (foundTarget) break;
 
-      if (bytesRead >= OVERLAP) std::memcpy(&buffer[0], bufEnd - OVERLAP, OVERLAP);
+      if (bytesRead >= static_cast<std::streamsize>(OVERLAP)) std::memcpy(&buffer[0], bufEnd - OVERLAP, OVERLAP);
       currentStreamPos += bytesRead;
     }
 
@@ -343,7 +343,7 @@ unsigned int SDMolSupplier::length() {
         }
         ptr = match + 4;
       }
-      if (bytesRead >= OVERLAP) std::memcpy(&buffer[0], bufEnd - OVERLAP, OVERLAP);
+      if (bytesRead >= static_cast<std::streamsize>(OVERLAP)) std::memcpy(&buffer[0], bufEnd - OVERLAP, OVERLAP);
       currentStreamPos += bytesRead;
     }
     // now remember to set the stream to the last position we want to read
