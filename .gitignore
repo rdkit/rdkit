@@ -131,6 +131,8 @@ __pycache__/
 /Code/GraphMol/test_data/bilastine_trajectory.sdf
 /Code/GraphMol/test_data/prop.pkl
 
+/Data/eht_parms.dat
+
 /Projects/DbCLI/testData/bzr/
 
 /rdkit/sping/tests/testallps.ps
@@ -145,6 +147,8 @@ __pycache__/
 /rdkit/not_changed.csv
 /rdkit/similarityMap1_out.svg
 /rdkit/similarityMap1_out2.svg
+
+/Testing/
 
 # JS distribution or temp files
 Code/MinimalLib/dist
