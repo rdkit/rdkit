@@ -314,6 +314,12 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
     const SynthonSet &reaction) const {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
 
+  std::cout << "searching fragset : " << fragSet.size() << " :: " << std::endl;
+  for (const auto &f : fragSet) {
+    std::cout << MolToSmiles(*f) << ":" << f->getNumAtoms() << " ";
+  }
+  std::cout << std::endl;
+
   const auto pattFPs = gatherPatternFPs(fragSet, d_pattFPs);
   std::vector<int> numFragConns;
   numFragConns.reserve(fragSet.size());

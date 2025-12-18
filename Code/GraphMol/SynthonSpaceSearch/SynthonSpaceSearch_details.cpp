@@ -348,11 +348,57 @@ void makeFragmentsForMol(
       numFragsPoss > maxNumFrags) {
     return;
   }
-  auto fragMol = MolFragmenter::fragmentOnBonds(mol, splitBonds[splitBondNum],
-                                                true, &dummyLabels);
-  const std::string fragSmi(MolToSmiles(*fragMol));
-  fragments[splitBondNum] =
-      std::pair<std::string, std::unique_ptr<ROMol>>(fragSmi, fragMol);
+  if (splitBonds[splitBondNum].size() == 1 &&
+      splitBonds[splitBondNum][0] == 6) {
+    std::cout << "it's the split" << std::endl;
+    auto bond = mol.getBondWithIdx(2);
+    std::cout << bond->getBeginAtomIdx() << " -> " << bond->getEndAtomIdx()
+              << " :: " << bond->getBondType() << std::endl;
+    std::cout << bond->getBeginAtom()->getAtomicNum() << " and "
+              << bond->getEndAtom()->getAtomicNum() << std::endl;
+    if (bond->hasQuery()) {
+      std::cout << "query = " << bond->hasQuery() << " : "
+                << bond->getQuery()->getDescription() << std::endl;
+    } else {
+      std::cout << "query = " << bond->hasQuery() << std::endl;
+    }
+  }
+
+  auto fragMol = std::unique_ptr<ROMol>(MolFragmenter::fragmentOnBonds(
+      mol, splitBonds[splitBondNum], true, &dummyLabels));
+  auto fragMolCp = std::make_unique<RWMol>(*fragMol);
+  // The fragmenter transfers the type of the bond to the new bonds to the
+  // dummies, but not any queries.  This is especially an issue with aromatic
+  // bonds which have an attached query for SingleOrAromaticBond, and was
+  // shown up by Github9009.
+  for (const auto &atom : fragMolCp->atoms()) {
+    if (atom->getAtomicNum() == 0 && atom->getIsotope() > 0 &&
+        atom->getIsotope() < 5) {
+      // It's one of the introduced dummy atoms, so add any query to it.
+      for (int i = 0; i < 4; ++i) {
+        if (atom->getIsotope() == dummyLabels[i].first) {
+          auto origBond = mol.getBondWithIdx(splitBonds[splitBondNum][i]);
+          if (origBond->hasQuery()) {
+            auto bond = *fragMolCp->atomBonds(atom).begin();
+            std::cout << "setting query "
+                      << origBond->getQuery()->getDescription() << " on "
+                      << bond->getIdx() << " : " << bond->hasQuery() << " : "
+                      << bond->getBondType() << std::endl;
+            auto qb = std::make_unique<QueryBond>(*bond);
+            qb->setQuery(origBond->getQuery()->copy());
+            fragMolCp->replaceBond(bond->getIdx(), qb.get());
+          }
+        }
+      }
+    }
+  }
+  const std::string fragSmi(MolToSmiles(*fragMolCp));
+  fragments[splitBondNum] = std::pair<std::string, std::unique_ptr<ROMol>>(
+      fragSmi, std::move(fragMolCp));
+  if (splitBonds[splitBondNum].size() == 1 &&
+      splitBonds[splitBondNum][0] == 6) {
+    std::cout << fragments[splitBondNum].first << std::endl;
+  }
 }
 
 void doPartInitialFragmentation(
@@ -366,8 +412,6 @@ void doPartInitialFragmentation(
   bool timedOut = false;
   while (true) {
     std::int64_t thisRB = ++mostRecentRingBond;
-    // std::cout << "ring bond " << thisRB << " of " << lastRingBond << " and "
-    // << tmpFrags.size() << std::endl;
     if (thisRB > lastRingBond) {
       break;
     }
@@ -575,7 +619,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     return fragments;
   }
 
-  // Keep unique SMILES onlyu
+  // Keep unique SMILES only
   std::sort(tmpFrags.begin(), tmpFrags.end(),
             [](const auto &lhs, const auto &rhs) -> bool {
               return lhs.first < rhs.first;

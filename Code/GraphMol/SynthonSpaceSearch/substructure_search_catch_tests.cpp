@@ -152,12 +152,13 @@ TEST_CASE("S Amide 1") {
   CHECK(resSmi == enumSmi);
 
   resSmi.clear();
-  SearchResultCallback cb = [&resSmi](const std::vector<std::unique_ptr<ROMol>> &r) {
-    for (auto &elem : r) {
-      resSmi.insert(MolToSmiles(*elem));
-    }
-    return false;
-  };
+  SearchResultCallback cb =
+      [&resSmi](const std::vector<std::unique_ptr<ROMol>> &r) {
+        for (auto &elem : r) {
+          resSmi.insert(MolToSmiles(*elem));
+        }
+        return false;
+      };
   synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
   CHECK(resSmi == enumSmi);
 }
@@ -181,13 +182,14 @@ TEST_CASE("Search Callback returns true") {
   params.toTryChunkSize = 2;
   std::set<std::string> cbSmi;
   bool retval = false;
-  SearchResultCallback cb = [&cbSmi,&retval](const std::vector<std::unique_ptr<ROMol>> &r) {
-    for (auto &elem : r) {
-      CHECK(r.size() == 2);
-      cbSmi.insert(MolToSmiles(*elem));
-    }
-    return retval;
-  };
+  SearchResultCallback cb =
+      [&cbSmi, &retval](const std::vector<std::unique_ptr<ROMol>> &r) {
+        for (auto &elem : r) {
+          CHECK(r.size() == 2);
+          cbSmi.insert(MolToSmiles(*elem));
+        }
+        return retval;
+      };
   synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
   CHECK(cbSmi.size() == 6);
 
@@ -832,4 +834,51 @@ TEST_CASE("Enhanced Stereochemistry - Github 8650") {
   REQUIRE(synthons.size() == 1);
   REQUIRE(synthons[0].size() == 1);
   CHECK(synthons[0][0].second->getSmiles() == "C[C@H]1CC[C@H](CC1)F |&1:1,4|");
+}
+
+TEST_CASE("Github 9009") {
+#if 1
+  {
+    // Single bond to "extra" aromatic C
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+O=c1ccncn1[1*]	192	1	r2	1
+[1*]c1ccccc1	227	2	r2	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+    auto q1 = "O=c1n([c])cncc1"_smarts;
+    auto res1 = space.substructureSearch(*q1);
+    CHECK(res1.getHitMolecules().size() == 1);
+    for (const auto &hm : res1.getHitMolecules()) {
+      std::cout << "q1 " << MolToSmiles(*hm) << std::endl;
+    }
+    auto q2 = "O=c1n([a])cncc1"_smarts;
+    auto res2 = space.substructureSearch(*q2);
+    CHECK(res2.getHitMolecules().size() == 1);
+    for (const auto &hm : res2.getHitMolecules()) {
+      std::cout << "q2 " << MolToSmiles(*hm) << std::endl;
+    }
+  }
+#endif
+#if 1
+  {
+    // Check that aromatic bond works
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+[1*]C=CC=C[2*]	192	1	r2	1
+O=C1NC=NC([2*])=C1[1*]	227	2	r2	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+    auto q3 = "O=c1ncncc1c"_smarts;
+    auto res3 = space.substructureSearch(*q3);
+    CHECK(res3.getHitMolecules().size() == 1);
+    for (const auto &hm : res3.getHitMolecules()) {
+      std::cout << "q3 " << MolToSmiles(*hm) << std::endl;
+    }
+  }
+#endif
 }
