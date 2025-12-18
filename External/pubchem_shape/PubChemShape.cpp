@@ -3,7 +3,10 @@
 #include <stdexcept>
 
 #include <GraphMol/RWMol.h>
+#include "Geometry/Transform3D.h"
+#include "GraphMol/MolTransforms/MolTransforms.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include "GraphMol/SmilesParse/SmilesWrite.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <RDGeneral/BoostStartInclude.h>
@@ -14,10 +17,6 @@
 
 #include "pubchem-align3d/shape_functions.hpp"
 #include "PubChemShape.hpp"
-
-#include "Geometry/Transform3D.h"
-#include "GraphMol/MolTransforms/MolTransforms.h"
-#include "GraphMol/SmilesParse/SmilesWrite.h"
 
 constexpr auto pubchemFeatureName = "PUBCHEM_PHARMACOPHORE_FEATURES";
 
@@ -639,13 +638,6 @@ std::pair<double, double> AlignMolecule(
   auto fitShape = PrepareConformer(fit, fitConfId, shapeOpts);
   auto tanis = AlignShape(refShape, fitShape, matrix, opt_param, max_preiters,
                           max_postiters);
-  int nfitAtoms = 0;
-  for (const auto atom : fit.atoms()) {
-    if (atom->getAtomicNum() != 1) {
-      ++nfitAtoms;
-    }
-  }
-
   // transform fit coords
   Conformer &fit_conformer = fit.getConformer(fitConfId);
   std::vector<double> finalTrans{0.0, 0.0, 0.0};
