@@ -348,22 +348,6 @@ void makeFragmentsForMol(
       numFragsPoss > maxNumFrags) {
     return;
   }
-  if (splitBonds[splitBondNum].size() == 1 &&
-      splitBonds[splitBondNum][0] == 6) {
-    std::cout << "it's the split" << std::endl;
-    auto bond = mol.getBondWithIdx(2);
-    std::cout << bond->getBeginAtomIdx() << " -> " << bond->getEndAtomIdx()
-              << " :: " << bond->getBondType() << std::endl;
-    std::cout << bond->getBeginAtom()->getAtomicNum() << " and "
-              << bond->getEndAtom()->getAtomicNum() << std::endl;
-    if (bond->hasQuery()) {
-      std::cout << "query = " << bond->hasQuery() << " : "
-                << bond->getQuery()->getDescription() << std::endl;
-    } else {
-      std::cout << "query = " << bond->hasQuery() << std::endl;
-    }
-  }
-
   auto fragMol = std::unique_ptr<ROMol>(MolFragmenter::fragmentOnBonds(
       mol, splitBonds[splitBondNum], true, &dummyLabels));
   auto fragMolCp = std::make_unique<RWMol>(*fragMol);
@@ -380,10 +364,6 @@ void makeFragmentsForMol(
           auto origBond = mol.getBondWithIdx(splitBonds[splitBondNum][i]);
           if (origBond->hasQuery()) {
             auto bond = *fragMolCp->atomBonds(atom).begin();
-            std::cout << "setting query "
-                      << origBond->getQuery()->getDescription() << " on "
-                      << bond->getIdx() << " : " << bond->hasQuery() << " : "
-                      << bond->getBondType() << std::endl;
             auto qb = std::make_unique<QueryBond>(*bond);
             qb->setQuery(origBond->getQuery()->copy());
             fragMolCp->replaceBond(bond->getIdx(), qb.get());
@@ -395,10 +375,6 @@ void makeFragmentsForMol(
   const std::string fragSmi(MolToSmiles(*fragMolCp));
   fragments[splitBondNum] = std::pair<std::string, std::unique_ptr<ROMol>>(
       fragSmi, std::move(fragMolCp));
-  if (splitBonds[splitBondNum].size() == 1 &&
-      splitBonds[splitBondNum][0] == 6) {
-    std::cout << fragments[splitBondNum].first << std::endl;
-  }
 }
 
 void doPartInitialFragmentation(
