@@ -837,7 +837,6 @@ TEST_CASE("Enhanced Stereochemistry - Github 8650") {
 }
 
 TEST_CASE("Github 9009") {
-#if 1
   {
     // Single bond to "extra" aromatic C
     SynthonSpace space;
@@ -851,18 +850,10 @@ O=c1ccncn1[1*]	192	1	r2	1
     auto q1 = "O=c1n([c])cncc1"_smarts;
     auto res1 = space.substructureSearch(*q1);
     CHECK(res1.getHitMolecules().size() == 1);
-    for (const auto &hm : res1.getHitMolecules()) {
-      std::cout << "q1 " << MolToSmiles(*hm) << std::endl;
-    }
     auto q2 = "O=c1n([a])cncc1"_smarts;
     auto res2 = space.substructureSearch(*q2);
     CHECK(res2.getHitMolecules().size() == 1);
-    for (const auto &hm : res2.getHitMolecules()) {
-      std::cout << "q2 " << MolToSmiles(*hm) << std::endl;
-    }
   }
-#endif
-#if 1
   {
     // Check that aromatic bond works
     SynthonSpace space;
@@ -876,9 +867,5 @@ O=C1NC=NC([2*])=C1[1*]	227	2	r2	1
     auto q3 = "O=c1ncncc1c"_smarts;
     auto res3 = space.substructureSearch(*q3);
     CHECK(res3.getHitMolecules().size() == 1);
-    for (const auto &hm : res3.getHitMolecules()) {
-      std::cout << "q3 " << MolToSmiles(*hm) << std::endl;
-    }
   }
-#endif
 }

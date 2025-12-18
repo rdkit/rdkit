@@ -46,6 +46,8 @@ struct RDKIT_CHEMTRANSFORMS_EXPORT FragmenterBondType {
 
   \return a new ROMol with the modifications
   The client is responsible for deleting this molecule.
+  The bonds to the new dummy atoms will be of the same type as the bond
+  that is broken, but any queries on the bond will be lost.
 
 */
 RDKIT_CHEMTRANSFORMS_EXPORT ROMol *fragmentOnBonds(
