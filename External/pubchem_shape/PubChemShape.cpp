@@ -3,10 +3,10 @@
 #include <stdexcept>
 
 #include <GraphMol/RWMol.h>
-#include "Geometry/Transform3D.h"
-#include "GraphMol/MolTransforms/MolTransforms.h"
+#include <Geometry/Transform3D.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include "GraphMol/SmilesParse/SmilesWrite.h"
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <RDGeneral/BoostStartInclude.h>
