@@ -19,13 +19,13 @@
 namespace RDKit {
 // local utility namespace:
 namespace {
-bool isAtomConjugCand(const Atom *at) {
+bool isAtomConjugCand(const Atom *at, const PeriodicTable *periodicTable) {
   PRECONDITION(at, "bad atom");
+  PRECONDITION(periodicTable, "bad PeriodicTable");
   // return false for neutral atoms where the current valence exceeds the
   // minimal valence for the atom. logic: if we're hypervalent we aren't
   // conjugated
-  const auto &vals =
-      PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
+  const auto &vals = periodicTable->getValenceList(at->getAtomicNum());
   if (!at->getFormalCharge() && vals.front() >= 0 &&
       at->getTotalValence() > static_cast<unsigned int>(vals.front())) {
     return false;
@@ -36,16 +36,17 @@ bool isAtomConjugCand(const Atom *at) {
   // hack and forbid this check from adding conjugation to anything out of
   // the first row of the periodic table.  (Conjugation in aromatic rings
   // has already been attended to, so this is safe.)
-  int nouter = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
+  int nouter = periodicTable->getNouterElecs(at->getAtomicNum());
   auto res = ((at->getAtomicNum() <= 10) || (nouter != 5 && nouter != 6) ||
               (nouter == 6 && at->getTotalDegree() < 2u)) &&
              MolOps::countAtomElec(at) > 0;
   return res;
 }
 
-void markConjAtomBonds(Atom *at) {
+void markConjAtomBonds(Atom *at, const PeriodicTable *periodicTable) {
   PRECONDITION(at, "bad atom");
-  if (!isAtomConjugCand(at)) {
+  PRECONDITION(periodicTable, "bad PeriodicTable");
+  if (!isAtomConjugCand(at, periodicTable)) {
     return;
   }
   auto &mol = at->getOwningMol();
@@ -59,7 +60,7 @@ void markConjAtomBonds(Atom *at) {
 
   for (const auto bnd1 : mol.atomBonds(at)) {
     if (bnd1->getValenceContrib(at) < 1.5 ||
-        !isAtomConjugCand(bnd1->getOtherAtom(at))) {
+        !isAtomConjugCand(bnd1->getOtherAtom(at), periodicTable)) {
       continue;
     }
     for (const auto bnd2 : mol.atomBonds(at)) {
@@ -71,7 +72,7 @@ void markConjAtomBonds(Atom *at) {
       if (sbo > 3) {
         continue;
       }
-      if (isAtomConjugCand(at2)) {
+      if (isAtomConjugCand(at2, periodicTable)) {
         bnd1->setIsConjugated(true);
         bnd2->setIsConjugated(true);
       }
@@ -79,8 +80,9 @@ void markConjAtomBonds(Atom *at) {
   }
 }
 
-int numBondsPlusLonePairs(Atom *at) {
+int numBondsPlusLonePairs(Atom *at, const PeriodicTable *periodicTable) {
   PRECONDITION(at, "bad atom");
+  PRECONDITION(periodicTable, "bad PeriodicTable");
   int deg = at->getTotalDegree();
 
   auto &mol = at->getOwningMol();
@@ -94,7 +96,7 @@ int numBondsPlusLonePairs(Atom *at) {
   if (at->getAtomicNum() <= 1) {
     return deg;
   }
-  int nouter = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
+  int nouter = periodicTable->getNouterElecs(at->getAtomicNum());
   int totalValence = at->getTotalValence();
   int chg = at->getFormalCharge();
 
@@ -126,6 +128,7 @@ bool atomHasConjugatedBond(const Atom *at) {
 }
 
 void setConjugation(ROMol &mol) {
+  const auto *periodicTable = PeriodicTable::getTable();
   // start with all bonds being marked unconjugated
   // except for aromatic bonds
   for (auto bond : mol.bonds()) {
@@ -135,11 +138,12 @@ void setConjugation(ROMol &mol) {
   // loop over each atom and check if the bonds connecting to it can
   // be conjugated
   for (auto atom : mol.atoms()) {
-    markConjAtomBonds(atom);
+    markConjAtomBonds(atom, periodicTable);
   }
 }
 
 void setHybridization(ROMol &mol) {
+  const auto *periodicTable = PeriodicTable::getTable();
   for (auto atom : mol.atoms()) {
     if (atom->getAtomicNum() == 0) {
       atom->setHybridization(Atom::UNSPECIFIED);
@@ -181,7 +185,7 @@ void setHybridization(ROMol &mol) {
       // ones just use the degree
       // FIX: we should probably also be using the degree for metals
       if (atom->getAtomicNum() < 89) {
-        norbs = numBondsPlusLonePairs(atom);
+        norbs = numBondsPlusLonePairs(atom, periodicTable);
       } else {
         norbs = atom->getTotalDegree();
       }
