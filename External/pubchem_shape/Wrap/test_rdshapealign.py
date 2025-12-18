@@ -59,6 +59,10 @@ class TestCase(unittest.TestCase):
     tpl = rdShapeAlign.AlignShapes(refShp, probeShp)
     probeCp = Chem.Mol(self.probe)
     rdShapeAlign.TransformConformer(refShp.shift, refShp.inertialRot, tpl[2], probeShp, probeCp.GetConformer(-1))
+    self.assertEqual(len(refShp.inertialRot), 9)
+    self.assertAlmostEqual(refShp.inertialRot[0], -0.926125, places=6)
+    self.assertAlmostEqual(refShp.inertialRot[8], -0.852890, places=6)
+    
     # Just show it did something.  The full test is in the C++ layer.
     self.assertNotEqual(self.probe.GetConformer().GetAtomPosition(0),
                         probeCp.GetConformer().GetAtomPosition(0))

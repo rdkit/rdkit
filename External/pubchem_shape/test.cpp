@@ -7,6 +7,7 @@
 
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/RWMol.h>
@@ -659,10 +660,6 @@ TEST_CASE("Iressa onto Tagrisso") {
   std::vector<float> matrix(12, 0.0);
   auto sims =
       AlignMolecule(*tagrisso, *iressa, matrix, -1, -1, true, 0.5, 10, 30);
-  RDGeom::Point3D ave1;
-  for (unsigned int i = 0; i < iressa->getNumAtoms(); ++i) {
-    ave1 += iressa->getConformer().getAtomPos(i);
-  }
   CHECK_THAT(sims.first, Catch::Matchers::WithinAbs(0.582, 0.005));
   CHECK_THAT(sims.second, Catch::Matchers::WithinAbs(0.092, 0.005));
 }
