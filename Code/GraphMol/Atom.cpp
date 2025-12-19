@@ -412,13 +412,14 @@ bool Atom::Match(Atom const* what) const {
   //   [*] matches [*],[1*],[2*],etc.
   //   [1*] only matches [*] and [1*]
   if (res) {
-    if (hasOwningMol() && what->hasOwningMol() &&
-        this->getOwningMol().getRingInfo()->isInitialized() &&
-        what->getOwningMol().getRingInfo()->isInitialized() &&
-        this->getOwningMol().getRingInfo()->numAtomRings(d_index) >
-            what->getOwningMol().getRingInfo()->numAtomRings(what->d_index)) {
-      res = false;
-    } else if (!this->getAtomicNum()) {
+    // if (hasOwningMol() && what->hasOwningMol() &&
+        // this->getOwningMol().getRingInfo()->isInitialized() &&
+        // what->getOwningMol().getRingInfo()->isInitialized() &&
+        // this->getOwningMol().getRingInfo()->numAtomRings(d_index) >
+            // what->getOwningMol().getRingInfo()->numAtomRings(what->d_index)) {
+      // res = false;
+  // } else if (!this->getAtomicNum()) {
+  if (!this->getAtomicNum()) {
       // this is the new behavior, based on the isotopes:
       int tgt = this->getIsotope();
       int test = what->getIsotope();

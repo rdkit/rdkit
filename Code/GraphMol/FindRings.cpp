@@ -1880,6 +1880,7 @@ int symmetrizeSSSR(RDMol &mol, bool includeDativeBonds,
     FindRings::buildRingInfoFromAtoms(mol, mol.getRingInfo());
   }
 
+  mol.markRingInfoAsRDMolModified();
   return rdcast<int>(mol.getRingInfo().numRings());
 }
 
