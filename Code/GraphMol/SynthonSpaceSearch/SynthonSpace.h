@@ -136,6 +136,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   friend class SynthonSpaceSearcher;
   friend class SynthonSpaceFingerprintSearcher;
   friend class SynthonSpaceRascalSearcher;
+  friend class SynthonSpaceSubstructureSearcher;
 
  public:
   explicit SynthonSpace() = default;
@@ -380,7 +381,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
  protected:
   unsigned int getMaxNumSynthons() const { return d_maxNumSynthons; }
-
+  unsigned int getMaxNumConnectors() const;
   bool hasFingerprints() const;
 
   bool hasAddAndSubstractFingerprints() const;

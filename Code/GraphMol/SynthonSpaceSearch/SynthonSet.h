@@ -41,8 +41,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   SynthonSet(SynthonSet &&rhs) = delete;
 
   const std::string &getId() const { return d_id; }
-  const std::vector<std::vector<std::pair<std::string, Synthon *>>>
-      &getSynthons() const {
+  const std::vector<std::vector<std::pair<std::string, Synthon *>>> &
+  getSynthons() const {
     return d_synthons;
   }
   const boost::dynamic_bitset<> &getConnectors() const { return d_connectors; }
@@ -59,6 +59,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   std::uint64_t getNumProducts() const;
   bool hasFingerprints() const;
   bool hasAddAndSubtractFPs() const;
+  unsigned int getNumRingFormers() const { return d_numRingFormers; }
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
@@ -109,6 +110,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   std::unique_ptr<ROMol> buildProduct(
       const std::vector<size_t> &synthNums) const;
 
+  void assessRingFormers();
+
  private:
   std::string d_id;
   // The lists of synthons.  A product of the reaction is created by
@@ -146,6 +149,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
 
   // The number of connectors in the synthons in each synthon set.
   std::vector<int> d_numConnectors;
+  // The number of rings that may be formed by the syntons.  If there
+  // are a pair of synthons A([1*])[2*] and B([1*])[2*] 1 ring can be
+  // formed.
+  unsigned int d_numRingFormers{0};
 };
 
 }  // namespace SynthonSpaceSearch
