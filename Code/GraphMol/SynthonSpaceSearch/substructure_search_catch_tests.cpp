@@ -864,6 +864,16 @@ TEST_CASE("Github 9007") {
     std::cout << "Query 2" << std::endl;
     auto res2 = space.substructureSearch(*q2);
     CHECK(res2.getHitMolecules().size() == 1);
+
+    // Simpler case of just 1 dangling subsituent
+    auto q6 = "O=c1ncncc1c"_smarts;
+    REQUIRE(q6);
+    auto res6 = space.substructureSearch(*q6);
+    CHECK(res6.getHitMolecules().size() == 1);
+    auto q7 = "O=c1ncncc1a"_smarts;
+    REQUIRE(q7);
+    auto res7 = space.substructureSearch(*q7);
+    CHECK(res7.getHitMolecules().size() == 2);
   }
 #endif
 #if 1
