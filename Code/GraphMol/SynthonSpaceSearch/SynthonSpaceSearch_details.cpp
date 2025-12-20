@@ -541,11 +541,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   if (maxNumFrags < 1) {
     maxNumFrags = 1;
   }
-  std::cout << "maxNumFrags: " << maxNumFrags << std::endl;
-  std::cout << MAX_CONNECTOR_NUM << std::endl;
-  std::cout << query.getNumBonds() + 1 << std::endl;
   maxNumFrags = std::min({maxNumFrags, query.getNumBonds() + 1});
-  std::cout << "maxNumFrags: " << maxNumFrags << std::endl;
 
   auto ringBonds = flagRingBonds(query);
 

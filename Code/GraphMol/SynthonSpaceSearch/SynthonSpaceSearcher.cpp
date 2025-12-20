@@ -176,14 +176,7 @@ std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
   int numTries = 100;
   bool timedOut = false;
 
-  int i = 0;
   for (auto &fragSet : fragments) {
-    std::cout << "FFFFFragment set " << i << " : "
-              << reaction.getNumRingFormers() << std::endl;
-    // if (i != 190) {
-    //   continue;
-    // }
-    i++;
     if (ControlCHandler::getGotSignal()) {
       break;
     }
@@ -197,15 +190,6 @@ std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
     }
     if (auto theseHits = searcher->searchFragSet(fragSet, reaction);
         !theseHits.empty()) {
-      for (const auto &hs : theseHits) {
-        std::cout << "Next hitset" << std::endl;
-        for (const auto &stu : hs->synthonsToUse) {
-          for (const auto &p : stu) {
-            std::cout << p.first << " : ";
-          }
-          std::cout << std::endl;
-        }
-      }
       hits.insert(hits.end(), std::make_move_iterator(theseHits.begin()),
                   std::make_move_iterator(theseHits.end()));
     }
@@ -255,20 +239,6 @@ SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
   auto fragments = details::splitMolecule(
       d_query, getNumQueryFragmentsRequired(), d_params.maxNumFragSets, endTime,
       d_params.numThreads, timedOut);
-  std::cout << "fragments: " << fragments.size() << " : "
-            << getNumQueryFragmentsRequired() << std::endl;
-  int i = 0;
-  for (const auto &fs : fragments) {
-    if (fs.size() == 5) {
-      std::cout << i++ << " F " << fs.size() << " : ";
-    } else {
-      std::cout << i++ << " : " << fs.size() << " : ";
-    }
-    for (const auto &f : fs) {
-      std::cout << MolToSmiles(*f) << ":" << f->getNumAtoms() << " ";
-    }
-    std::cout << std::endl;
-  }
   if (timedOut || ControlCHandler::getGotSignal()) {
     return std::vector<std::unique_ptr<SynthonSpaceHitSet>>();
   }
@@ -415,7 +385,6 @@ void sortAndUniquifyToTry(
   for (size_t i = 0; i < toTry.size(); i++) {
     tmp.emplace_back(
         i, details::buildProductName(toTry[i].first, toTry[i].second));
-    std::cout << i << " : " << tmp.back().second << std::endl;
   }
   std::sort(tmp.begin(), tmp.end(),
             [](const auto &lhs, const auto &rhs) -> bool {

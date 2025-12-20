@@ -841,7 +841,6 @@ TEST_CASE("Github 9007") {
   REQUIRE(q1);
   auto q2 = "O=c1ncnc([c])c1[c]"_smarts;
   REQUIRE(q2);
-#if 1
   {
     // Basic test. In the original bug, q1 gave hits, q2 didn't.  q1 gave
     // them for the wrong reason, though.
@@ -855,13 +854,9 @@ TEST_CASE("Github 9007") {
     bool cancelled = false;
     space.readStream(iss, cancelled);
 
-    std::cout << "Query 1" << std::endl;
     auto res1 = space.substructureSearch(*q1);
     CHECK(res1.getHitMolecules().size() == 2);
-    for (const auto &hm : res1.getHitMolecules()) {
-      std::cout << MolToSmiles(*hm) << std::endl;
-    }
-    std::cout << "Query 2" << std::endl;
+
     auto res2 = space.substructureSearch(*q2);
     CHECK(res2.getHitMolecules().size() == 1);
 
@@ -875,8 +870,6 @@ TEST_CASE("Github 9007") {
     auto res7 = space.substructureSearch(*q7);
     CHECK(res7.getHitMolecules().size() == 2);
   }
-#endif
-#if 1
   {
     // More complex case - 1 ring creation, extra substituent
     SynthonSpace space;
@@ -889,26 +882,15 @@ TEST_CASE("Github 9007") {
     bool cancelled = false;
     space.readStream(iss, cancelled);
 
-    std::cout << "Query 1" << std::endl;
     auto res1 = space.substructureSearch(*q1);
     CHECK(res1.getHitMolecules().size() == 1);
-    for (const auto &hm : res1.getHitMolecules()) {
-      std::cout << MolToSmiles(*hm) << std::endl;
-    }
-    std::cout << "Query 2" << std::endl;
     auto res2 = space.substructureSearch(*q2);
     CHECK(res2.getHitMolecules().size() == 1);
 
-    std::cout << "Query 3" << std::endl;
     auto q3 = "O=c1n(c)cnc(c)c1c"_smarts;
     auto res3 = space.substructureSearch(*q3);
     CHECK(res3.getHitMolecules().size() == 1);
-    for (const auto &hm : res3.getHitMolecules()) {
-      std::cout << MolToSmiles(*hm) << std::endl;
-    }
   }
-#endif
-#if 1
   {
     // 2 ring creations.
     SynthonSpace space;
@@ -925,16 +907,9 @@ TEST_CASE("Github 9007") {
     REQUIRE(q4);
     auto res4 = space.substructureSearch(*q4);
     CHECK(res4.getHitMolecules().size() == 1);
-    for (const auto &hm : res4.getHitMolecules()) {
-      std::cout << MolToSmiles(*hm) << std::endl;
-    }
     auto q5 = "O=c1n([A])c([A])nc([a])c([a])1"_smarts;
     REQUIRE(q5);
     auto res5 = space.substructureSearch(*q5);
     CHECK(res5.getHitMolecules().size() == 1);
-    for (const auto &hm : res5.getHitMolecules()) {
-      std::cout << MolToSmiles(*hm) << std::endl;
-    }
   }
-#endif
 }
