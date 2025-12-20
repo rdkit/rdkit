@@ -585,3 +585,28 @@ TEST_CASE(
     CHECK(MolToSmiles(*res) == "[1*]/C=C/N.[2*]CC");
   }
 }
+
+TEST_CASE("align fragments") {
+  SECTION("2D basics") {
+    auto m = "CC[1*].O[1*] |(1,0,0;2,0,0;3,0,0;0,1,0;0,2.1,0)|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getNumConformers() == 1);
+    MolzipParams params;
+    params.alignCoordinates = true;
+    params.label = MolzipLabel::Isotope;
+    auto res = molzip(*m, params);
+    REQUIRE(res);
+    REQUIRE(res->getNumConformers() == 1);
+    const auto &conf = res->getConformer();
+    std::cerr << MolToXYZBlock(*res) << std::endl;
+    CHECK_THAT(conf.getAtomPos(0).x, Catch::Matchers::WithinAbs(1.0, 0.01));
+    CHECK_THAT(conf.getAtomPos(0).y, Catch::Matchers::WithinAbs(0.0, 0.01));
+    CHECK_THAT(conf.getAtomPos(0).z, Catch::Matchers::WithinAbs(0.0, 0.01));
+    CHECK_THAT(conf.getAtomPos(1).x, Catch::Matchers::WithinAbs(2.0, 0.01));
+    CHECK_THAT(conf.getAtomPos(1).y, Catch::Matchers::WithinAbs(0.0, 0.01));
+    CHECK_THAT(conf.getAtomPos(1).z, Catch::Matchers::WithinAbs(0.0, 0.01));
+    CHECK_THAT(conf.getAtomPos(2).x, Catch::Matchers::WithinAbs(3.1, 0.01));
+    CHECK_THAT(conf.getAtomPos(2).y, Catch::Matchers::WithinAbs(0.0, 0.01));
+    CHECK_THAT(conf.getAtomPos(2).z, Catch::Matchers::WithinAbs(0.0, 0.01));
+  }
+}
