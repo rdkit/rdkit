@@ -348,45 +348,11 @@ void makeFragmentsForMol(
       numFragsPoss > maxNumFrags) {
     return;
   }
-  auto fragMol = std::unique_ptr<ROMol>(MolFragmenter::fragmentOnBonds(
-      mol, splitBonds[splitBondNum], true, &dummyLabels));
-  // At present, fragmentOnBonds returns an RWMol * explicitly cast
-  // to ROMol *.  Since here an RWMol is needed, see if we can avoid
-  // an extra copy but since this is relying on an undocumented
-  // implementation detail, keep a fallback.
-  RWMol *tmp = dynamic_cast<RWMol *>(fragMol.get());
-  std::unique_ptr<RWMol> fragMolCp;
-  if (tmp) {
-    fragMolCp.reset(tmp);
-    fragMol.release();
-  } else {
-    fragMolCp.reset(new RWMol(*fragMol));
-    fragMol.reset();
-  }
-  // The fragmenter transfers the type of the split bond to the new bonds to
-  // the dummies, but not any queries.  This is especially an issue with
-  // aromatic bonds which have an attached query for SingleOrAromaticBond,
-  // and was shown up by Github9009.
-  for (const auto &atom : fragMolCp->atoms()) {
-    if (atom->getAtomicNum() == 0 && atom->getIsotope() > 0 &&
-        atom->getIsotope() < 5) {
-      // It's one of the introduced dummy atoms, so add any query to it.
-      for (int i = 0; i < 4; ++i) {
-        if (atom->getIsotope() == dummyLabels[i].first) {
-          auto origBond = mol.getBondWithIdx(splitBonds[splitBondNum][i]);
-          if (origBond->hasQuery()) {
-            auto bond = *fragMolCp->atomBonds(atom).begin();
-            auto qb = std::make_unique<QueryBond>(*bond);
-            qb->setQuery(origBond->getQuery()->copy());
-            fragMolCp->replaceBond(bond->getIdx(), qb.get());
-          }
-        }
-      }
-    }
-  }
-  const std::string fragSmi(MolToSmiles(*fragMolCp));
-  fragments[splitBondNum] = std::pair<std::string, std::unique_ptr<ROMol>>(
-      fragSmi, std::move(fragMolCp));
+  auto fragMol = MolFragmenter::fragmentOnBonds(mol, splitBonds[splitBondNum],
+                                                true, &dummyLabels);
+  const std::string fragSmi(MolToSmiles(*fragMol));
+  fragments[splitBondNum] =
+      std::pair<std::string, std::unique_ptr<ROMol>>(fragSmi, fragMol);
 }
 
 void doPartInitialFragmentation(
