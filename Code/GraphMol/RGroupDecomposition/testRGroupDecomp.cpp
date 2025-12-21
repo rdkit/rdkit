@@ -1316,8 +1316,7 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
     RGroupRows rows;
     bool ok = false;
     try {
-      auto res = RGroupDecompose(cores, ms, rows, nullptr, ps);
-      RDUNUSED_PARAM(res);
+      [[maybe_unused]] auto res = RGroupDecompose(cores, ms, rows, nullptr, ps);
     } catch (const std::runtime_error &) {
       ok = true;
     }
@@ -1337,8 +1336,7 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
     RGroupRows rows;
     bool ok = true;
     try {
-      auto res = RGroupDecompose(cores, ms, rows, nullptr, ps);
-      RDUNUSED_PARAM(res);
+      [[maybe_unused]] auto res = RGroupDecompose(cores, ms, rows, nullptr, ps);
     } catch (const std::runtime_error &) {
       ok = false;
     }
