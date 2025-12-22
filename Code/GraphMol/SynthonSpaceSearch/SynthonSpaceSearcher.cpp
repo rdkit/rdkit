@@ -240,11 +240,11 @@ SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
       d_query, getNumQueryFragmentsRequired(), d_params.maxNumFragSets, endTime,
       d_params.numThreads, timedOut);
   if (timedOut || ControlCHandler::getGotSignal()) {
-    return std::vector<std::unique_ptr<SynthonSpaceHitSet>>();
+    return {};
   }
   extraSearchSetup(fragments);
   if (ControlCHandler::getGotSignal()) {
-    return std::vector<std::unique_ptr<SynthonSpaceHitSet>>();
+    return {};
   }
 
   return doTheSearch(fragments, endTime, timedOut, totHits);

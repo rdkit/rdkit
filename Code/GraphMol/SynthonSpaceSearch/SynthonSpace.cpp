@@ -636,9 +636,9 @@ void SynthonSpace::enumerateToStream(std::ostream &os) const {
 unsigned int SynthonSpace::getMaxNumConnectors() const {
   unsigned int maxNumConns = 0;
   for (const auto &[id, synSet] : d_reactions) {
-    if (synSet->getConnectors().count() > maxNumConns) {
-      maxNumConns = synSet->getConnectors().count();
-    }
+    maxNumConns =
+        std::max(maxNumConns,
+                 static_cast<unsigned int>(synSet->getConnectors().count()));
   }
   return maxNumConns;
 }
