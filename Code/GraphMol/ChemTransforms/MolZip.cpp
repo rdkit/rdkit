@@ -605,15 +605,11 @@ std::unique_ptr<ROMol> molzip(
   // Make all the bonds
   boost::dynamic_bitset<> aligned(atomsInFragment.size());
   for (auto &kv : mappings) {
-    if (kv.second.bond(*newmol, params) && params.alignCoordinates) {
-      // handle rotating coordinates here if we made the bond
+    if (kv.second.bond(*newmol, params)) {
+      // we made the bond, now handle rotating coordinates
       if (params.alignCoordinates) {
         // make sure we haven't aligned this fragment already:
         if (!aligned[fragmentForAtom[kv.second.b->getIdx()]]) {
-          std::cerr << "rotate: " << kv.second.a->getIdx() << "-"
-                    << kv.second.b->getIdx() << " "
-                    << kv.second.a_dummy->getIdx() << "-"
-                    << kv.second.b_dummy->getIdx() << std::endl;
           rotateFragmentToBondVector(*newmol, *(kv.second.a), *(kv.second.b),
                                      *(kv.second.a_dummy), *(kv.second.b_dummy),
                                      fragmentForAtom, atomsInFragment);
@@ -621,9 +617,6 @@ std::unique_ptr<ROMol> molzip(
         }
       }
     }
-    // handle rotating coordinates here if we made the bond
-    // be sure to detect cases where the same fragment ends up attaching
-    // multiple times. Can probably do that using the __molzip_used tag
   }
   newmol->beginBatchEdit();
 
