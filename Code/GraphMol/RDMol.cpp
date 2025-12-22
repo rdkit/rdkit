@@ -3640,18 +3640,6 @@ void RDMol::markConformersAsCompatModified() const {
   }
 }
 
-void RDMol::markRingInfoAsCompatModified() const {
-  if (const CompatibilityData* compatData = getCompatibilityDataIfPresent(); compatData != nullptr) {
-    compatData->ringInfoSyncStatus.store(CompatSyncStatus::lastUpdatedCompat, std::memory_order_relaxed);
-  }
-}
-
-void RDMol::markRingInfoAsRDMolModified() const {
-  if (const CompatibilityData* compatData = getCompatibilityDataIfPresent(); compatData != nullptr) {
-    compatData->ringInfoSyncStatus.store(CompatSyncStatus::lastUpdatedRDMol, std::memory_order_release);
-  }
-}
-
 
 void RDMol::removeConformer(uint32_t id) {
   if (int32_t(id) < 0) {
