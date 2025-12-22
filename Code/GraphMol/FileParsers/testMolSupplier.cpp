@@ -7,14 +7,19 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/test.h>
-#include <GraphMol/test_fixtures.h>
-#include <GraphMol/RDKitBase.h>
 #include <string>
 #include <fstream>
 #include <map>
 #include <memory>
 
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+
+#include <catch2/catch_all.hpp>
+
+#include <RDGeneral/test.h>
+#include <GraphMol/test_fixtures.h>
+#include <GraphMol/RDKitBase.h>
 #include "MolSupplier.h"
 #include "MolWriters.h"
 #include "FileParsers.h"
@@ -28,14 +33,13 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 
-#include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
 namespace io = boost::iostreams;
+
+static const std::string rdbase = getenv("RDBASE");
 
 using namespace RDKit;
 
-int testMolSup() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testMolSup") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
 
@@ -45,33 +49,27 @@ int testMolSup() {
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        REQUIRE(nmol->hasProp(common_properties::_Name));
+        REQUIRE(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
       }
       i++;
     }
-    TEST_ASSERT(i == 16);
+    REQUIRE(i == 16);
   }
   {
     SDMolSupplier sdsup(fname);
     for (unsigned int i = 0; i < 16; ++i) {
       ROMol *nmol = sdsup.next();
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        REQUIRE(nmol->hasProp(common_properties::_Name));
+        REQUIRE(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
       }
     }
     // test issue 3524949:
-    TEST_ASSERT(sdsup.atEnd());
-    bool ok = false;
-    try {
-      sdsup.next();
-    } catch (FileParseException &) {
-      ok = true;
-    }
-    TEST_ASSERT(ok);
+    REQUIRE(sdsup.atEnd());
+    CHECK_THROWS_AS(sdsup.next(), FileParseException);
   }
   {
     std::ifstream strm(fname.c_str());
@@ -80,13 +78,13 @@ int testMolSup() {
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        REQUIRE(nmol->hasProp(common_properties::_Name));
+        REQUIRE(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
       }
       i++;
     }
-    TEST_ASSERT(i == 16);
+    REQUIRE(i == 16);
   }
   {
     auto *strm = new std::ifstream(fname.c_str());
@@ -95,13 +93,13 @@ int testMolSup() {
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        REQUIRE(nmol->hasProp(common_properties::_Name));
+        REQUIRE(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
       }
       i++;
     }
-    TEST_ASSERT(i == 16);
+    REQUIRE(i == 16);
   }
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
   for (const bool useLegacy : {true, false}) {
@@ -111,55 +109,52 @@ int testMolSup() {
 
       MaeMolSupplier maesup(fname);
       std::unique_ptr<ROMol> nmol(maesup.next());
-      TEST_ASSERT(nmol);
+      REQUIRE(nmol);
 
       // Test mol properties
-      TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-      TEST_ASSERT(nmol->hasProp("b_sd_chiral_flag"));
-      TEST_ASSERT(nmol->getProp<bool>("b_sd_chiral_flag") == false);
-      TEST_ASSERT(nmol->hasProp("i_sd_NSC"));
-      TEST_ASSERT(nmol->getProp<int>("i_sd_NSC") == 48);
-      TEST_ASSERT(nmol->hasProp("s_m_entry_name"));
-      TEST_ASSERT(nmol->getProp<std::string>("s_m_entry_name") ==
-                  "NCI_aids_few.1");
-      TEST_ASSERT(nmol->hasProp("r_f3d_dummy"));
-      TEST_ASSERT(std::abs(nmol->getProp<double>("r_f3d_dummy") - 42.123) <
-                  0.0001);
+      REQUIRE(nmol->hasProp(common_properties::_Name));
+      REQUIRE(nmol->hasProp("b_sd_chiral_flag"));
+      REQUIRE(nmol->getProp<bool>("b_sd_chiral_flag") == false);
+      REQUIRE(nmol->hasProp("i_sd_NSC"));
+      REQUIRE(nmol->getProp<int>("i_sd_NSC") == 48);
+      REQUIRE(nmol->hasProp("s_m_entry_name"));
+      REQUIRE(nmol->getProp<std::string>("s_m_entry_name") == "NCI_aids_few.1");
+      REQUIRE(nmol->hasProp("r_f3d_dummy"));
+      REQUIRE(std::abs(nmol->getProp<double>("r_f3d_dummy") - 42.123) < 0.0001);
 
       // Test atom properties
-      TEST_ASSERT(nmol->getNumAtoms() == 19);
+      REQUIRE(nmol->getNumAtoms() == 19);
       for (int i = 0; i < 19; ++i) {
         const auto *atom = nmol->getAtomWithIdx(i);
 
         // The integer property is present for all atoms
-        TEST_ASSERT(atom->hasProp("i_m_minimize_atom_index"));
-        TEST_ASSERT(atom->getProp<int>("i_m_minimize_atom_index") == 1 + i);
+        REQUIRE(atom->hasProp("i_m_minimize_atom_index"));
+        REQUIRE(atom->getProp<int>("i_m_minimize_atom_index") == 1 + i);
 
         // The bool property is only defined for i < 10
         if (i < 10) {
-          TEST_ASSERT(atom->hasProp("b_m_dummy"));
-          TEST_ASSERT(atom->getProp<bool>("b_m_dummy") ==
-                      static_cast<bool>(i % 2));
+          REQUIRE(atom->hasProp("b_m_dummy"));
+          REQUIRE(atom->getProp<bool>("b_m_dummy") == static_cast<bool>(i % 2));
         } else {
-          TEST_ASSERT(!atom->hasProp("b_m_dummy"));
+          REQUIRE(!atom->hasProp("b_m_dummy"));
         }
 
         // The real property is only defined for i >= 10
         if (i >= 10) {
-          TEST_ASSERT(atom->hasProp("r_f3d_dummy"));
-          TEST_ASSERT(std::abs(atom->getProp<double>("r_f3d_dummy") -
-                               (19.1 - i)) < 0.0001);
+          REQUIRE(atom->hasProp("r_f3d_dummy"));
+          REQUIRE(std::abs(atom->getProp<double>("r_f3d_dummy") - (19.1 - i)) <
+                  0.0001);
         } else {
-          TEST_ASSERT(!atom->hasProp("r_f3d_dummy"));
+          REQUIRE(!atom->hasProp("r_f3d_dummy"));
         }
 
         // All atoms have the string prop
-        TEST_ASSERT(atom->hasProp("s_m_dummy"));
-        TEST_ASSERT(atom->getProp<std::string>("s_m_dummy") ==
-                    std::to_string(19 - i));
+        REQUIRE(atom->hasProp("s_m_dummy"));
+        REQUIRE(atom->getProp<std::string>("s_m_dummy") ==
+                std::to_string(19 - i));
       }
 
-      TEST_ASSERT(maesup.atEnd());
+      REQUIRE(maesup.atEnd());
     }
 
     {  // Test parsing stereo properties. Mol is 2D and has stereo labels.
@@ -168,81 +163,81 @@ int testMolSup() {
 
       {  // Stereo bonds. These get overwritten by the double bond detection.
         std::unique_ptr<ROMol> nmol(maesup.next());
-        TEST_ASSERT(nmol);
+        REQUIRE(nmol);
         {
           Bond *bnd = nmol->getBondWithIdx(1);
-          TEST_ASSERT(bnd);
-          TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({0, 3}));
-          TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
+          REQUIRE(bnd);
+          REQUIRE(bnd->getStereoAtoms() == INT_VECT({0, 3}));
+          REQUIRE(bnd->getStereo() == Bond::STEREOTRANS);
         }
         {
           Bond *bnd = nmol->getBondWithIdx(3);
-          TEST_ASSERT(bnd);
-          TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({2, 5}));
-          TEST_ASSERT(bnd->getStereo() == Bond::STEREOCIS);
+          REQUIRE(bnd);
+          REQUIRE(bnd->getStereoAtoms() == INT_VECT({2, 5}));
+          REQUIRE(bnd->getStereo() == Bond::STEREOCIS);
         }
       }
       {  // Chiralities (these get CIP codes)
         std::unique_ptr<ROMol> nmol(maesup.next());
-        TEST_ASSERT(nmol);
+        REQUIRE(nmol);
         {
           Atom *at = nmol->getAtomWithIdx(1);
-          TEST_ASSERT(at);
-          TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+          REQUIRE(at);
+          REQUIRE(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
           if (useLegacy) {
-            TEST_ASSERT(at->getProp<std::string>(common_properties::_CIPCode) ==
-                        "R");
+            REQUIRE(at->getProp<std::string>(common_properties::_CIPCode) ==
+                    "R");
           }
         }
         {
           Atom *at = nmol->getAtomWithIdx(3);
-          TEST_ASSERT(at);
-          TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+          REQUIRE(at);
+          REQUIRE(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
           if (useLegacy) {
-            TEST_ASSERT(at->getProp<std::string>(common_properties::_CIPCode) ==
-                        "S");
+            REQUIRE(at->getProp<std::string>(common_properties::_CIPCode) ==
+                    "S");
           }
         }
       }
       {  // Pseudochiralities (no CIP codes)
         std::unique_ptr<ROMol> nmol(maesup.next());
-        TEST_ASSERT(nmol);
+        REQUIRE(nmol);
         {
           Atom *at = nmol->getAtomWithIdx(2);
-          TEST_ASSERT(at);
-          TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
-          TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+          REQUIRE(at);
+          REQUIRE(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+          REQUIRE(!at->hasProp(common_properties::_CIPCode));
         }
         {
           Atom *at = nmol->getAtomWithIdx(5);
-          TEST_ASSERT(at);
-          TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
-          TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+          REQUIRE(at);
+          REQUIRE(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+          REQUIRE(!at->hasProp(common_properties::_CIPCode));
         }
       }
       {  // intentionally bad chirality label, intended to
         // make sure we can step over parse errors
         std::unique_ptr<ROMol> nmol(maesup.next());
-        TEST_ASSERT(nmol);
-        TEST_ASSERT(nmol->getNumAtoms() > 1);
+        REQUIRE(nmol);
+        REQUIRE(nmol->getNumAtoms() > 1);
       }
       {  // "Undefined" chirality label
         std::unique_ptr<ROMol> nmol(maesup.next());
-        TEST_ASSERT(nmol);
+        REQUIRE(nmol);
         {
           Atom *at = nmol->getAtomWithIdx(2);
-          TEST_ASSERT(at);
-          TEST_ASSERT(at->getChiralTag() == Atom::CHI_UNSPECIFIED);
-          TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+          REQUIRE(at);
+          REQUIRE(at->getChiralTag() == Atom::CHI_UNSPECIFIED);
+          REQUIRE(!at->hasProp(common_properties::_CIPCode));
         }
         {
           Atom *at = nmol->getAtomWithIdx(5);
-          TEST_ASSERT(at);
-          TEST_ASSERT(at->getChiralTag() == Atom::CHI_UNSPECIFIED);
-          TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+          REQUIRE(at);
+          REQUIRE(at->getChiralTag() == Atom::CHI_UNSPECIFIED);
+          REQUIRE(!at->hasProp(common_properties::_CIPCode));
         }
       }
-      TEST_ASSERT(maesup.atEnd());
+      REQUIRE(maesup.atEnd());
     }
     {  // Test loop reading
       fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
@@ -251,23 +246,17 @@ int testMolSup() {
       for (unsigned int i = 0; i < 16; ++i) {
         nmol.reset(maesup.next());
         if (nmol) {
-          TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-          TEST_ASSERT(nmol->getNumAtoms() > 0);
+          REQUIRE(nmol->hasProp(common_properties::_Name));
+          REQUIRE(nmol->getNumAtoms() > 0);
           if (i == 0) {
             auto smiles = MolToSmiles(*nmol);
-            TEST_ASSERT(smiles ==
-                        "CCC1=[O+][Cu@]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2");
+            REQUIRE(smiles ==
+                    "CCC1=[O+][Cu@]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2");
           }
         }
       }
-      TEST_ASSERT(maesup.atEnd());
-      bool ok = false;
-      try {
-        maesup.next();
-      } catch (FileParseException &) {
-        ok = true;
-      }
-      TEST_ASSERT(ok);
+      REQUIRE(maesup.atEnd());
+      CHECK_THROWS_AS(maesup.next(), FileParseException);
     }
 
     {
@@ -285,18 +274,18 @@ int testMolSup() {
           mol.reset(maesup.next());
         } catch (const FileParseException &e) {
           const std::string err_msg(e.what());
-          TEST_ASSERT(i == 1);
-          TEST_ASSERT(err_msg.find(err_msg_substr) != std::string::npos);
+          REQUIRE(i == 1);
+          REQUIRE(err_msg.find(err_msg_substr) != std::string::npos);
           ok = true;
           break;
         }
-        TEST_ASSERT(mol);
-        TEST_ASSERT(mol->hasProp(common_properties::_Name));
-        TEST_ASSERT(mol->getNumAtoms() == 1);
-        TEST_ASSERT(!maesup.atEnd());
+        REQUIRE(mol);
+        REQUIRE(mol->hasProp(common_properties::_Name));
+        REQUIRE(mol->getNumAtoms() == 1);
+        REQUIRE(!maesup.atEnd());
       }
-      TEST_ASSERT(!maesup.atEnd());
-      TEST_ASSERT(ok);
+      REQUIRE(!maesup.atEnd());
+      REQUIRE(ok);
     }
 
 #if RDK_USE_BOOST_IOSTREAMS
@@ -309,28 +298,25 @@ int testMolSup() {
       nmol.reset(maesup.next());
       const Atom *atom = nmol->getAtomWithIdx(0);
       auto *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
-      TEST_ASSERT(info->getResidueName() == "ARG ");
-      TEST_ASSERT(info->getChainId() == "A");
-      TEST_ASSERT(info->getResidueNumber() == 5);
+      REQUIRE(info->getResidueName() == "ARG ");
+      REQUIRE(info->getChainId() == "A");
+      REQUIRE(info->getResidueNumber() == 5);
     }
 
 #endif
   }
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
-  return 1;
 }
 
-void testRandMolSup() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testRandMolSup") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
-  // std::string fname("../test_data/NCI_aids_few.sdf");
   SDMolSupplier sdsup(fname);
 
   ROMol *tmol = sdsup[7];
   delete tmol;
 
-  CHECK_INVARIANT(sdsup.length() == 16, "");
+  REQUIRE(sdsup.length() == 16);
 
   STR_VECT names;
   names.push_back(std::string("48"));
@@ -347,65 +333,64 @@ void testRandMolSup() {
     ROMol *mol = sdsup[2 * i];
     std::string mname;
     mol->getProp(common_properties::_Name, mname);
-    CHECK_INVARIANT(mname == names[i], "");
+    REQUIRE(mname == names[i]);
     delete mol;
   }
 
   // get a random molecule
   ROMol *mol = sdsup[5];
-  TEST_ASSERT(mol);
+  REQUIRE(mol);
   std::string mname;
   mol->getProp(common_properties::_Name, mname);
   delete mol;
-  CHECK_INVARIANT(mname == "170", "");
+  REQUIRE(mname == "170");
 
   // get the last molecule:
   mol = sdsup[15];
-  TEST_ASSERT(mol);
+  REQUIRE(mol);
   delete mol;
 
   // and make sure we're at the end:
-  TEST_ASSERT(sdsup.atEnd());
+  REQUIRE(sdsup.atEnd());
   // now make sure we can grab earlier mols (was sf.net issue 1904170):
   mol = sdsup[0];
-  TEST_ASSERT(mol);
+  REQUIRE(mol);
   delete mol;
 
   // Issue 113: calling length before grabbing a molecule results in crashes:
   SDMolSupplier sdsup2(fname);
-  CHECK_INVARIANT(sdsup2.length() == 16, "");
+  REQUIRE(sdsup2.length() == 16);
 }
 
-void testSmilesSup() {
+TEST_CASE("testSmilesSup") {
   std::string mname;
   std::string fname;
   ROMol *mol;
 
-  std::string rdbase = getenv("RDBASE");
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
   {
     SmilesMolSupplier nSup2(fname, ",", 1, 0, true);
-    TEST_ASSERT(nSup2.length() == 10);
+    REQUIRE(nSup2.length() == 10);
   }
   {
     SmilesMolSupplier nSup2(fname, ",", 1, 0, true);
 
     mol = nSup2[3];
-    TEST_ASSERT(!nSup2.atEnd())
-    TEST_ASSERT(nSup2.length() == 10);
+    REQUIRE(!nSup2.atEnd());
+    REQUIRE(nSup2.length() == 10);
 
     mol->getProp(common_properties::_Name, mname);
-    CHECK_INVARIANT(mname == "4", "");
+    REQUIRE(mname == "4");
     mol->getProp("TPSA", mname);
-    CHECK_INVARIANT(mname == "82.78", "");
+    REQUIRE(mname == "82.78");
     delete mol;
 
     mol = nSup2[9];
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     delete mol;
     // now make sure we can grab earlier mols (was sf.net issue 1904170):
     mol = nSup2[0];
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     delete mol;
   }
   {
@@ -413,20 +398,20 @@ void testSmilesSup() {
     SmilesMolSupplier nSup2(&strm, false, ",", 1, 0, true);
 
     mol = nSup2[3];
-    CHECK_INVARIANT(nSup2.length() == 10, "");
+    REQUIRE(nSup2.length() == 10);
 
     mol->getProp(common_properties::_Name, mname);
-    CHECK_INVARIANT(mname == "4", "");
+    REQUIRE(mname == "4");
     mol->getProp("TPSA", mname);
-    CHECK_INVARIANT(mname == "82.78", "");
+    REQUIRE(mname == "82.78");
     delete mol;
 
     mol = nSup2[9];
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     delete mol;
     // now make sure we can grab earlier mols (was sf.net issue 1904170):
     mol = nSup2[0];
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     delete mol;
   }
 
@@ -436,16 +421,16 @@ void testSmilesSup() {
   mol = smiSup[16];
 
   mol->getProp("TPSA", mname);
-  CHECK_INVARIANT(mname == "46.25", "");
+  REQUIRE(mname == "46.25");
   delete mol;
 
   mol = smiSup[8];
   mol->getProp("TPSA", mname);
-  CHECK_INVARIANT(mname == "65.18", "");
+  REQUIRE(mname == "65.18");
   delete mol;
 
   int len = smiSup.length();
-  CHECK_INVARIANT(len == 200, "");
+  REQUIRE(len == 200);
 
   smiSup.reset();
   int i = 0;
@@ -462,20 +447,20 @@ void testSmilesSup() {
     }
   }
 
-  CHECK_INVARIANT(i == 200, "");
+  REQUIRE(i == 200);
 
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
   SmilesMolSupplier *nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
 
   // check the length before we read anything out...
   //  this was a problem at one point (Issue 113)
-  CHECK_INVARIANT(nSup->length() == 10, "");
+  REQUIRE(nSup->length() == 10);
   mol = (*nSup)[3];
 
   mol->getProp(common_properties::_Name, mname);
-  CHECK_INVARIANT(mname == "4", "");
+  REQUIRE(mname == "4");
   mol->getProp("Column_2", mname);
-  CHECK_INVARIANT(mname == "82.78", "");
+  REQUIRE(mname == "82.78");
 
   delete nSup;
   nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
@@ -483,29 +468,25 @@ void testSmilesSup() {
   while (!nSup->atEnd()) {
     delete mol;
     mol = nSup->next();
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     nRead++;
   }
-  TEST_ASSERT(nSup->length() == 10);
-  TEST_ASSERT(nRead == 10);
+  REQUIRE(nSup->length() == 10);
+  REQUIRE(nRead == 10);
 
   delete nSup;
   delete mol;
 }
 
-void testSmilesSupFromText() {
+TEST_CASE("testSmilesSupFromText") {
   std::string mname;
   std::string fname;
   ROMol *mol;
 
   SmilesMolSupplier nSup2;
   std::string text;
-  bool failed;
   int nAts;
 
-  // this was a delightful boundary condition:
-  BOOST_LOG(rdErrorLog)
-      << "------------------------------------------------------" << std::endl;
   text =
       "CC\n"
       "CCC\n"
@@ -513,72 +494,66 @@ void testSmilesSupFromText() {
       "CCCCOC";
   {
     nSup2.setData(text, " ", 0, -1, false, true);
-    //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+
     mol = nSup2.next();
     nAts = mol->getNumAtoms();
     delete mol;
-    TEST_ASSERT(nAts == 2);
+    REQUIRE(nAts == 2);
 
     mol = nSup2[3];
     nAts = mol->getNumAtoms();
     delete mol;
-    TEST_ASSERT(nAts == 6);
-    TEST_ASSERT(nSup2.length() == 4);
+    REQUIRE(nAts == 6);
+    REQUIRE(nSup2.length() == 4);
 
-    failed = false;
-    try {
-      mol = nSup2[4];
-      delete mol;
-    } catch (FileParseException &) {
-      failed = true;
-    }
-    TEST_ASSERT(failed);
+    CHECK_THROWS_AS(nSup2[4], FileParseException);
+
     mol = nSup2[2];
     nAts = mol->getNumAtoms();
-    TEST_ASSERT(nAts == 4);
-    TEST_ASSERT(mol->hasProp(common_properties::_Name));
+    REQUIRE(nAts == 4);
+    REQUIRE(mol->hasProp(common_properties::_Name));
     mol->getProp(common_properties::_Name, mname);
-    TEST_ASSERT(mname == "2");
+    REQUIRE(mname == "2");
     delete mol;
   }
   {
     nSup2.setData(text, " ", 0, -1, false, true);
     mol = nSup2[2];
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     nAts = mol->getNumAtoms();
-    TEST_ASSERT(nAts == 4);
-    TEST_ASSERT(mol->hasProp(common_properties::_Name));
+    REQUIRE(nAts == 4);
+    REQUIRE(mol->hasProp(common_properties::_Name));
     mol->getProp(common_properties::_Name, mname);
-    TEST_ASSERT(mname == "2");
+    REQUIRE(mname == "2");
     delete mol;
 
     mol = nSup2[3];
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     nAts = mol->getNumAtoms();
-    TEST_ASSERT(nAts == 6);
-    TEST_ASSERT(mol->hasProp(common_properties::_Name));
+    REQUIRE(nAts == 6);
+    REQUIRE(mol->hasProp(common_properties::_Name));
     mol->getProp(common_properties::_Name, mname);
-    TEST_ASSERT(mname == "3");
+    REQUIRE(mname == "3");
     delete mol;
   }
   {
     nSup2.setData(text, " ", 0, -1, false, true);
     mol = nSup2[3];
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     nAts = mol->getNumAtoms();
-    TEST_ASSERT(nAts == 6);
-    TEST_ASSERT(mol->hasProp(common_properties::_Name));
+    REQUIRE(nAts == 6);
+    REQUIRE(mol->hasProp(common_properties::_Name));
     mol->getProp(common_properties::_Name, mname);
-    TEST_ASSERT(mname == "3");
+    REQUIRE(mname == "3");
 
     delete mol;
     mol = nSup2[2];
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     nAts = mol->getNumAtoms();
-    TEST_ASSERT(nAts == 4);
-    TEST_ASSERT(mol->hasProp(common_properties::_Name));
+    REQUIRE(nAts == 4);
+    REQUIRE(mol->hasProp(common_properties::_Name));
     mol->getProp(common_properties::_Name, mname);
-    TEST_ASSERT(mname == "2");
+    REQUIRE(mname == "2");
     delete mol;
   }
   // --------------
@@ -591,12 +566,12 @@ void testSmilesSupFromText() {
       "mol-4 CCCC 16.0\n";
   nSup2.setData(text, " ", 1, 0, true, true);
   mol = nSup2[3];
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
-  CHECK_INVARIANT(nSup2.length() == 4, "");
+
+  REQUIRE(nSup2.length() == 4);
   mol->getProp(common_properties::_Name, mname);
-  TEST_ASSERT(mname == "mol-4");
+  REQUIRE(mname == "mol-4");
   mol->getProp("Column_2", mname);
-  TEST_ASSERT(mname == "16.0");
+  REQUIRE(mname == "16.0");
   delete mol;
 
   // ensure that we can call setData a second time:
@@ -606,12 +581,12 @@ void testSmilesSupFromText() {
       "mol-2 CC 4.0\n"
       "mol-3 CCC 9.0\n";
   nSup2.setData(text, " ", 1, 0, true, true);
-  CHECK_INVARIANT(nSup2.length() == 3, "");
+  REQUIRE(nSup2.length() == 3);
   mol = nSup2[2];
   mol->getProp(common_properties::_Name, mname);
-  TEST_ASSERT(mname == "mol-3");
+  REQUIRE(mname == "mol-3");
   mol->getProp("Column_2", mname);
-  TEST_ASSERT(mname == "9.0");
+  REQUIRE(mname == "9.0");
   delete mol;
 
   // now test for failure handling:
@@ -623,17 +598,17 @@ void testSmilesSupFromText() {
       "mol-4 CCCC 16.0\n";
   nSup2.setData(text, " ", 1, 0, true, true);
   mol = nSup2[3];
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
-  TEST_ASSERT(nSup2.length() == 4);
+
+  REQUIRE(nSup2.length() == 4);
   mol->getProp(common_properties::_Name, mname);
-  TEST_ASSERT(mname == "mol-4");
+  REQUIRE(mname == "mol-4");
   mol->getProp("Column_2", mname);
-  TEST_ASSERT(mname == "16.0");
+  REQUIRE(mname == "16.0");
   delete mol;
 
   // failures should give null molecules:
   mol = nSup2[2];
-  TEST_ASSERT(!mol);
+  REQUIRE(!mol);
   delete mol;
 
   // issue 114, no \n at EOF:
@@ -643,15 +618,15 @@ void testSmilesSupFromText() {
       "mol-2 CC 4.0\n"
       "mol-4 CCCC 16.0\n";
   nSup2.setData(text, " ", 1, 0, true, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
-  TEST_ASSERT(nSup2.length() == 3);
+
+  REQUIRE(nSup2.length() == 3);
   mol = nSup2[2];
-  TEST_ASSERT(mol);
+  REQUIRE(mol);
   mol->getProp(common_properties::_Name, mname);
-  TEST_ASSERT(mname == "mol-4");
+  REQUIRE(mname == "mol-4");
   mol->getProp("Column_2", mname);
-  TEST_ASSERT(mname == "16.0");
-  TEST_ASSERT(nSup2.atEnd());
+  REQUIRE(mname == "16.0");
+  REQUIRE(nSup2.atEnd());
   delete mol;
 
   text =
@@ -660,38 +635,32 @@ void testSmilesSupFromText() {
       "mol-2 CC 4.0\n"
       "mol-4 CCCC 16.0";
   nSup2.setData(text, " ", 1, 0, true, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
-  TEST_ASSERT(nSup2.length() == 3);
+
+  REQUIRE(nSup2.length() == 3);
   mol = nSup2[2];
-  TEST_ASSERT(mol);
+  REQUIRE(mol);
   mol->getProp(common_properties::_Name, mname);
-  TEST_ASSERT(mname == "mol-4");
+  REQUIRE(mname == "mol-4");
   mol->getProp("Column_2", mname);
-  TEST_ASSERT(mname == "16.0");
-  TEST_ASSERT(nSup2.atEnd());
+  REQUIRE(mname == "16.0");
+  REQUIRE(nSup2.atEnd());
   delete mol;
 
-  try {
-    mol = nSup2[3];
-    delete mol;
-  } catch (FileParseException &) {
-    failed = true;
-  }
-  TEST_ASSERT(failed);
+  CHECK_THROWS_AS(nSup2[3], FileParseException);
 
   text =
       "mol-1 C 1.0\n"
       "mol-2 CC 4.0\n"
       "mol-4 CCCC 16.0";
   nSup2.setData(text, " ", 1, 0, false, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
-  TEST_ASSERT(nSup2.length() == 3);
+
+  REQUIRE(nSup2.length() == 3);
   mol = nSup2[2];
-  TEST_ASSERT(mol);
+  REQUIRE(mol);
   mol->getProp(common_properties::_Name, mname);
-  TEST_ASSERT(mname == "mol-4");
+  REQUIRE(mname == "mol-4");
   mol->getProp("Column_2", mname);
-  TEST_ASSERT(mname == "16.0");
+  REQUIRE(mname == "16.0");
   delete mol;
 
   text =
@@ -699,62 +668,40 @@ void testSmilesSupFromText() {
       "CC\n"
       "CCCC";
   nSup2.setData(text, " ", 0, -1, false, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
-  TEST_ASSERT(nSup2.length() == 3);
+
+  REQUIRE(nSup2.length() == 3);
   mol = nSup2[2];
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 4);
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 4);
   delete mol;
 
-  // this was a delightful boundary condition:
-  BOOST_LOG(rdErrorLog)
-      << "------------------------------------------------------" << std::endl;
   text =
       "CC\n"
       "CCC\n"
       "CCOC\n"
       "CCCCOC";
   nSup2.setData(text, " ", 0, -1, false, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+
   mol = nSup2.next();
   delete mol;
 
   mol = nSup2[3];
-  TEST_ASSERT(nSup2.length() == 4);
+  REQUIRE(nSup2.length() == 4);
   delete mol;
 
-  failed = false;
-  try {
-    mol = nSup2[4];
-    delete mol;
-  } catch (FileParseException &) {
-    failed = true;
-  }
-  TEST_ASSERT(failed);
+  CHECK_THROWS_AS(nSup2[4], FileParseException);
 
-  BOOST_LOG(rdErrorLog)
-      << "------------------------------------------------------" << std::endl;
-  // this was a delightful boundary condition:
   text =
       "CC\n"
       "CCC\n"
       "CCOC\n"
       "CCCCOC";
   nSup2.setData(text, " ", 0, -1, false, true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
-  failed = false;
-  try {
-    mol = nSup2[4];
-    delete mol;
-  } catch (FileParseException &) {
-    failed = true;
-  }
-  TEST_ASSERT(failed);
-  BOOST_LOG(rdErrorLog) << ">>> This may result in an infinite loop.  It "
-                           "should finish almost immediately:"
-                        << std::endl;
-  TEST_ASSERT(nSup2.length() == 4);
-  BOOST_LOG(rdErrorLog) << "<<< done." << std::endl;
+
+  CHECK_THROWS_AS(nSup2[4], FileParseException);
+
+  // This may result in an infinite loop.  It should finish almost immediately:
+  REQUIRE(nSup2.length() == 4);
 
   nSup2.reset();
   unsigned int nDone = 0;
@@ -763,7 +710,7 @@ void testSmilesSupFromText() {
     nDone++;
     delete mol;
   }
-  TEST_ASSERT(nDone == nSup2.length());
+  REQUIRE(nDone == nSup2.length());
 
   // ensure that we can call setData a second time:
   text =
@@ -776,16 +723,16 @@ void testSmilesSupFromText() {
   nSup2.setData(text, " ", 1, 0, true, true);
   mol = nSup2[2];
   mol->getProp(common_properties::_Name, mname);
-  TEST_ASSERT(mname == "mol-3");
+  REQUIRE(mname == "mol-3");
   mol->getProp("Column_2", mname);
-  TEST_ASSERT(mname == "9.0");
+  REQUIRE(mname == "9.0");
   delete mol;
 
   mol = nSup2[1];
   mol->getProp(common_properties::_Name, mname);
-  TEST_ASSERT(mname == "mol-2");
+  REQUIRE(mname == "mol-2");
   mol->getProp("Column_2", mname);
-  TEST_ASSERT(mname == "4.0");
+  REQUIRE(mname == "4.0");
   delete mol;
 
   // this was a delightful boundary condition:
@@ -797,7 +744,7 @@ void testSmilesSupFromText() {
       "\n"
       "\n";
   nSup2.setData(text, " ", 0, -1, false, true);
-  TEST_ASSERT(nSup2.length() == 4);
+  REQUIRE(nSup2.length() == 4);
   nSup2.reset();
   nDone = 0;
   while (!nSup2.atEnd()) {
@@ -805,18 +752,16 @@ void testSmilesSupFromText() {
     nDone++;
     delete mol;
   }
-  TEST_ASSERT(nDone == nSup2.length());
-};
+  REQUIRE(nDone == nSup2.length());
+}
 
-void testSmilesWriter() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testSmilesWriter") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
-  // std::string fname = "../test_data/fewSmi.csv";
+
   SmilesMolSupplier *nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
   std::string oname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles_molsupplier.csv";
-  // std::string oname = "../test_data/outSmiles.csv";
 
   STR_VECT propNames;
   propNames.push_back(std::string("Column_2"));
@@ -826,9 +771,8 @@ void testSmilesWriter() {
   STR_VECT names;
   STR_VECT props;
   ROMol *mol = nSup->next();
-  // BOOST_LOG(rdErrorLog) << "WRITING" << std::endl;
+
   while (mol) {
-    // BOOST_LOG(rdErrorLog) << "MOL: " << MolToSmiles(*mol) << std::endl;
     std::string mname, pval;
     mol->getProp(common_properties::_Name, mname);
     mol->getProp("Column_2", pval);
@@ -853,8 +797,8 @@ void testSmilesWriter() {
     std::string mname, pval;
     mol->getProp(common_properties::_Name, mname);
     mol->getProp("Column_2", pval);
-    CHECK_INVARIANT(mname == names[i], "");
-    CHECK_INVARIANT(pval == props[i], "");
+    REQUIRE(mname == names[i]);
+    REQUIRE(pval == props[i]);
     i++;
     delete mol;
     try {
@@ -863,14 +807,13 @@ void testSmilesWriter() {
       break;
     }
   }
-  TEST_ASSERT(nSup->length() == writer->numMols());
+  REQUIRE(nSup->length() == writer->numMols());
   writer->close();
   delete writer;
   delete nSup;
 }
 
-void testSDWriter() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testSDWriter") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
   SDMolSupplier sdsup(fname);
@@ -893,7 +836,7 @@ void testSDWriter() {
     delete mol;
   }
   writer->flush();
-  CHECK_INVARIANT(writer->numMols() == 16, "");
+  REQUIRE(writer->numMols() == 16);
   writer->close();
   delete writer;
 
@@ -903,41 +846,17 @@ void testSDWriter() {
   int i = 0;
   while (!reader.atEnd()) {
     ROMol *mol = reader.next();
-    std::string mname;
-    mol->getProp(common_properties::_Name, mname);
-    BOOST_LOG(rdInfoLog) << mname << "\n";
-    // CHECK_INVARIANT(mname == names[i], "");
+    CHECK(mol->hasProp(common_properties::_Name));
 
     delete mol;
     i++;
   }
-
-  BOOST_LOG(rdInfoLog) << i << "\n";
-  /*
-  // now read in a file with aromatic information on the bonds
-  std::string infile = rdbase +
-  "/Code/GraphMol/FileParsers/test_data/outNCI_arom.sdf";
-  SDMolSupplier nreader(infile);
-  i = 0;
-  while (!nreader.atEnd()) {
-    ROMol *mol = nreader.next();
-    std::string mname;
-    mol->getProp(common_properties::_Name, mname);
-    BOOST_LOG(rdInfoLog) << mname << "\n";
-    //CHECK_INVARIANT(mname == names[i], "");
-    i++;
-
-    delete mol;
-    }*/
 }
 
-void testSDSupplierEnding() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testSDSupplierEnding") {
   // test the SD supplier to check if it properly handle the end of sd file
-  // conditions
-  // should work fine if the sd file end with  a $$$$ follwed by blank line or
-  // no
-  // no blank lines
+  // conditions should work fine if the sd file end with  a $$$$ followed by
+  // blank line or no no blank lines
   std::string infile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/esters_end.sdf";
   int i = 0;
@@ -949,68 +868,49 @@ void testSDSupplierEnding() {
     i++;
     delete mol;
   }
-  CHECK_INVARIANT(i == 6, "");
+  REQUIRE(i == 6);
 }
 
-void testSuppliersEmptyFile() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testSuppliersEmptyFile") {
   {  // contains no records
     std::string infile =
         rdbase + "/Code/GraphMol/FileParsers/test_data/empty.sdf";
     SDMolSupplier reader(infile);
-    TEST_ASSERT(reader.atEnd());
+    REQUIRE(reader.atEnd());
   }
   {
     std::string infile =
         rdbase + "/Code/GraphMol/FileParsers/test_data/empty.smi";
     SmilesMolSupplier smiSup(infile, ",", 0, -1);
-    TEST_ASSERT(smiSup.atEnd());
+    REQUIRE(smiSup.atEnd());
   }
   // tests for GitHub issue 19:
   {  // actually an empty file, throws an exception:
     std::string infile =
         rdbase + "/Code/GraphMol/FileParsers/test_data/empty2.sdf";
-    bool failed = false;
-    try {
-      SDMolSupplier reader(infile);
-    } catch (BadFileException &) {
-      failed = true;
-    }
-    TEST_ASSERT(failed);
+    CHECK_THROWS_AS(SDMolSupplier(infile), BadFileException);
   }
   {
     SDMolSupplier reader;
     reader.setData("");
-    TEST_ASSERT(reader.atEnd());
-    bool failed = false;
-    try {
-      reader[0];
-    } catch (FileParseException &) {
-      failed = true;
-    }
-    TEST_ASSERT(failed);
-    TEST_ASSERT(reader.length() == 0);
+    REQUIRE(reader.atEnd());
+    CHECK_THROWS_AS(reader[0], FileParseException);
+    CHECK(reader.length() == 0);
   }
   {
     SDMolSupplier reader;
     reader.setData("");
-    bool failed = false;
-    try {
-      reader[0];
-    } catch (FileParseException &) {
-      failed = true;
-    }
-    TEST_ASSERT(failed);
-    TEST_ASSERT(reader.length() == 0);
+    CHECK_THROWS_AS(reader[0], FileParseException);
+    CHECK(reader.length() == 0);
   }
   {
     SDMolSupplier reader;
     reader.setData("");
-    TEST_ASSERT(reader.length() == 0);
+    CHECK(reader.length() == 0);
   }
 }
 
-void testCisTrans() {
+TEST_CASE("testCisTrans") {
   std::string text;
   text =
       "mol-1 ClC(C)=C(Br)C\n"
@@ -1023,7 +923,7 @@ void testCisTrans() {
   SDWriter writer(ofile);
   while (!smiSup.atEnd()) {
     ROMol *mol = smiSup.next();
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     RDDepict::compute2DCoords(*mol);
     writer.write(*mol);
     delete mol;
@@ -1033,38 +933,27 @@ void testCisTrans() {
   // parse the sd file and write it out to smiles
 
   SDMolSupplier *reader;
-  try {
-    reader = new SDMolSupplier("cisTrans_molsupplier.sdf");
-  } catch (FileParseException &) {
-    reader = nullptr;
-  }
-  TEST_ASSERT(reader);
+  REQUIRE_NOTHROW(reader = new SDMolSupplier("cisTrans_molsupplier.sdf"));
+  REQUIRE(reader);
   while (!reader->atEnd()) {
     ROMol *mol = reader->next();
-    std::string mname;
-    mol->getProp(common_properties::_Name, mname);
-    BOOST_LOG(rdInfoLog) << mname << " ";
-    BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, 1) << "\n";
+    REQUIRE(mol->hasProp(common_properties::_Name));
     delete mol;
   }
   delete reader;
 }
 
-void testStereoRound() {
+TEST_CASE("testStereoRound") {
   // - we will read ina bunch of cdk2 smiles with stereo on them
   // - generate the canonical smiles for each one
   // - generate 2D coordinates, write to an sdf file
   // - read the sdf file back in and compare the canonical smiles
-  std::string rdbase = getenv("RDBASE");
   std::string infile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/cdk2_stereo.csv";
   SmilesMolSupplier *smiSup;
-  try {
-    smiSup = new SmilesMolSupplier(infile, ",", 0, 1, false, true);
-  } catch (FileParseException &) {
-    smiSup = nullptr;
-  }
-  TEST_ASSERT(smiSup)
+  REQUIRE_NOTHROW(smiSup =
+                      new SmilesMolSupplier(infile, ",", 0, 1, false, true));
+  REQUIRE(smiSup);
   std::map<std::string, std::string> nameSmi;
   std::string ofile =
       rdbase +
@@ -1074,29 +963,21 @@ void testStereoRound() {
 
   while (!smiSup->atEnd()) {
     ROMol *mol = smiSup->next();
-    // mol->debugMol(std::cout);
+
     std::string mname;
     mol->getProp(common_properties::_Name, mname);
     nameSmi[mname] = MolToSmiles(*mol, 1);
 
     ROMol *nmol = SmilesToMol(nameSmi[mname]);
-    // nmol->debugMol(std::cout);
 
     std::string nsmi = MolToSmiles(*nmol, 1);
-    // BOOST_LOG(rdErrorLog) << mname << "\n";
-    if (nameSmi[mname] != nsmi) {
-      BOOST_LOG(rdInfoLog) << mname << " " << nameSmi[mname] << " " << nsmi
-                           << "\n";
-    }
+    CHECK(nameSmi[mname] == nsmi);
+
     RDDepict::compute2DCoords(*mol);
     writer->write(*mol);
     count++;
     delete mol;
     delete nmol;
-
-    if (count % 50 == 0) {
-      BOOST_LOG(rdInfoLog) << count << " " << mname << "\n";
-    }
   }
   writer->close();
   delete smiSup;
@@ -1104,32 +985,24 @@ void testStereoRound() {
 
   // now read the SD file back in check if the canonical smiles are the same
   SDMolSupplier *reader;
-  try {
-    reader = new SDMolSupplier(ofile);
-  } catch (FileParseException &) {
-    reader = nullptr;
-  }
-  TEST_ASSERT(reader);
+  REQUIRE_NOTHROW(reader = new SDMolSupplier(ofile));
+  REQUIRE(reader);
   count = 0;
 
   while (!reader->atEnd()) {
     ROMol *mol = reader->next();
-    // mol->debugMol(std::cout);
+
     std::string smiles = MolToSmiles(*mol, 1);
     std::string mname;
     mol->getProp(common_properties::_Name, mname);
-    if (nameSmi[mname] != smiles) {
-      BOOST_LOG(rdInfoLog) << mname << " " << nameSmi[mname] << " " << smiles
-                           << "\n";
-    }
+    CHECK(nameSmi[mname] == smiles);
     delete mol;
     count++;
   }
   delete reader;
 }
 
-void testIssue226() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testIssue226") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/Issue226.sdf";
   SDMolSupplier sdsup(fname);
@@ -1137,20 +1010,19 @@ void testIssue226() {
   ROMol *mol;
 
   mol = sdsup.next();
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->hasProp("E1"));
-  TEST_ASSERT(mol->hasProp("E2"));
+  REQUIRE(mol);
+  REQUIRE(mol->hasProp("E1"));
+  REQUIRE(mol->hasProp("E2"));
   delete mol;
 
   mol = sdsup.next();
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->hasProp("E1"));
-  TEST_ASSERT(mol->hasProp("E2"));
+  REQUIRE(mol);
+  REQUIRE(mol->hasProp("E1"));
+  REQUIRE(mol->hasProp("E2"));
   delete mol;
 }
 
-int testTDTSupplier1() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testTDTSupplier1") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
   {
@@ -1160,25 +1032,25 @@ int testTDTSupplier1() {
       ROMol *nmol = suppl.next();
       if (nmol) {
         std::string prop1, prop2;
-        TEST_ASSERT(nmol->getNumAtoms() > 0);
-        TEST_ASSERT(nmol->hasProp("PN"));
-        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-        TEST_ASSERT(nmol->hasProp("MFCD"));
+        REQUIRE(nmol->getNumAtoms() > 0);
+        REQUIRE(nmol->hasProp("PN"));
+        REQUIRE(nmol->hasProp(common_properties::_Name));
+        REQUIRE(nmol->hasProp("MFCD"));
 
         nmol->getProp("PN", prop1);
         nmol->getProp(common_properties::_Name, prop2);
-        TEST_ASSERT(prop1 == prop2);
+        REQUIRE(prop1 == prop2);
 
         // we didn't ask for 2D conformers, so there should be a property 2D:
-        TEST_ASSERT(nmol->hasProp(common_properties::TWOD));
+        REQUIRE(nmol->hasProp(common_properties::TWOD));
         // and no conformer:
-        TEST_ASSERT(!nmol->getNumConformers());
+        REQUIRE(!nmol->getNumConformers());
 
         delete nmol;
         i++;
       }
     }
-    TEST_ASSERT(i == 10);
+    REQUIRE(i == 10);
   }
   {
     std::ifstream strm(fname.c_str(), std::ios_base::binary);
@@ -1188,30 +1060,29 @@ int testTDTSupplier1() {
       ROMol *nmol = suppl.next();
       if (nmol) {
         std::string prop1, prop2;
-        TEST_ASSERT(nmol->getNumAtoms() > 0);
-        TEST_ASSERT(nmol->hasProp("PN"));
-        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-        TEST_ASSERT(nmol->hasProp("MFCD"));
+        REQUIRE(nmol->getNumAtoms() > 0);
+        REQUIRE(nmol->hasProp("PN"));
+        REQUIRE(nmol->hasProp(common_properties::_Name));
+        REQUIRE(nmol->hasProp("MFCD"));
 
         nmol->getProp("PN", prop1);
         nmol->getProp(common_properties::_Name, prop2);
-        TEST_ASSERT(prop1 == prop2);
+        REQUIRE(prop1 == prop2);
 
         // we didn't ask for 2D conformers, so there should be a property 2D:
-        TEST_ASSERT(nmol->hasProp(common_properties::TWOD));
+        REQUIRE(nmol->hasProp(common_properties::TWOD));
         // and no conformer:
-        TEST_ASSERT(!nmol->getNumConformers());
+        REQUIRE(!nmol->getNumConformers());
 
         delete nmol;
         i++;
       }
     }
-    TEST_ASSERT(i == 10);
+    REQUIRE(i == 10);
   }
-  return 1;
 }
-int testTDTSupplier2() {
-  std::string rdbase = getenv("RDBASE");
+
+TEST_CASE("testTDTSupplier2") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
   int i;
@@ -1222,37 +1093,36 @@ int testTDTSupplier2() {
   while (!suppl.atEnd()) {
     ROMol *nmol = suppl.next();
     if (nmol) {
-      TEST_ASSERT(nmol->getNumAtoms() > 0);
-      TEST_ASSERT(nmol->hasProp("PN"));
-      TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-      TEST_ASSERT(nmol->hasProp("MFCD"));
+      REQUIRE(nmol->getNumAtoms() > 0);
+      REQUIRE(nmol->hasProp("PN"));
+      REQUIRE(nmol->hasProp(common_properties::_Name));
+      REQUIRE(nmol->hasProp("MFCD"));
 
       nmol->getProp("PN", prop1);
       nmol->getProp(common_properties::_Name, prop2);
-      TEST_ASSERT(prop1 == prop2);
+      REQUIRE(prop1 == prop2);
 
       // we asked for 2D conformers, so there should be no property 2D:
-      TEST_ASSERT(!nmol->hasProp(common_properties::TWOD));
+      REQUIRE(!nmol->hasProp(common_properties::TWOD));
       // and a conformer:
-      TEST_ASSERT(nmol->getNumConformers() == 1);
+      REQUIRE(nmol->getNumConformers() == 1);
       // with id "2":
-      TEST_ASSERT(nmol->beginConformers()->get()->getId() == 2);
+      REQUIRE(nmol->beginConformers()->get()->getId() == 2);
 
       delete nmol;
       i++;
     }
   }
-  TEST_ASSERT(i == 10);
-  return 1;
+  REQUIRE(i == 10);
 }
-int testTDTSupplier3() {
-  std::string data;
+
+TEST_CASE("testTDTSupplier3") {
   int i;
   std::string prop1, prop2;
 
   TDTMolSupplier suppl;
 
-  data =
+  constexpr const char *data =
       "$SMI<Cc1nnc(N)nc1C>\n"
       "CAS<17584-12-2>\n"
       "|\n"
@@ -1271,27 +1141,27 @@ int testTDTSupplier3() {
   while (!suppl.atEnd()) {
     ROMol *nmol = suppl.next();
     if (nmol) {
-      TEST_ASSERT(nmol->getNumAtoms() > 0);
-      TEST_ASSERT(nmol->hasProp("CAS"));
-      TEST_ASSERT(nmol->hasProp(common_properties::_Name));
+      REQUIRE(nmol->getNumAtoms() > 0);
+      REQUIRE(nmol->hasProp("CAS"));
+      REQUIRE(nmol->hasProp(common_properties::_Name));
 
       nmol->getProp("CAS", prop1);
       nmol->getProp(common_properties::_Name, prop2);
-      TEST_ASSERT(prop1 == prop2);
+      REQUIRE(prop1 == prop2);
 
       // no conformers should have been read:
-      TEST_ASSERT(nmol->getNumConformers() == 0);
+      REQUIRE(nmol->getNumConformers() == 0);
 
       delete nmol;
       i++;
     }
   }
-  TEST_ASSERT(i == 4);
-  TEST_ASSERT(suppl.length() == 4);
+  REQUIRE(i == 4);
+  REQUIRE(suppl.length() == 4);
 
   // now make sure we can grab earlier mols (was sf.net issue 1904170):
   ROMol *mol = suppl[0];
-  TEST_ASSERT(mol);
+  REQUIRE(mol);
   delete mol;
 
   // make sure we can reset the supplier and still process it properly;
@@ -1301,32 +1171,29 @@ int testTDTSupplier3() {
   while (!suppl.atEnd()) {
     ROMol *nmol = suppl.next();
     if (nmol) {
-      TEST_ASSERT(nmol->getNumAtoms() > 0);
-      TEST_ASSERT(nmol->hasProp("CAS"));
-      TEST_ASSERT(nmol->hasProp(common_properties::_Name));
+      REQUIRE(nmol->getNumAtoms() > 0);
+      REQUIRE(nmol->hasProp("CAS"));
+      REQUIRE(nmol->hasProp(common_properties::_Name));
 
       nmol->getProp("CAS", prop1);
       nmol->getProp(common_properties::_Name, prop2);
-      TEST_ASSERT(prop1 == prop2);
+      REQUIRE(prop1 == prop2);
 
       // no conformers should have been read:
-      TEST_ASSERT(nmol->getNumConformers() == 0);
+      REQUIRE(nmol->getNumConformers() == 0);
 
       delete nmol;
       i++;
     }
   }
-  TEST_ASSERT(i == 4);
-
-  return 1;
+  REQUIRE(i == 4);
 }
 
-void testSDSupplierFromText() {
-  std::string text;
+TEST_CASE("testSDSupplierFromText") {
   int i = 0;
   SDMolSupplier reader;
 
-  text =
+  constexpr const char *text =
       "Structure1\n"
       "csChFnd70/05230312262D\n"
       "\n"
@@ -1371,17 +1238,16 @@ void testSDSupplierFromText() {
   while (!reader.atEnd()) {
     ROMol *mol = reader.next();
     std::string mname;
-    TEST_ASSERT(mol->hasProp(common_properties::_Name));
-    TEST_ASSERT(mol->hasProp("ID"));
+    REQUIRE(mol->hasProp(common_properties::_Name));
+    REQUIRE(mol->hasProp("ID"));
     i++;
     delete mol;
   }
-  TEST_ASSERT(i == 2);
+  REQUIRE(i == 2);
 }
 
-void testSDSupplierFromTextStrLax1() {
-  std::string text;
-  text =
+TEST_CASE("testSDSupplierFromTextStrLax1") {
+  constexpr const char *text =
       "Structure1\n"
       "csChFnd70/05230312262D\n"
       "\n"
@@ -1444,15 +1310,15 @@ void testSDSupplierFromTextStrLax1() {
     int i = 0;
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
-      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      REQUIRE(mol->hasProp(common_properties::_Name));
       if (i == 0) {
-        TEST_ASSERT(!mol->hasProp("ID"));
+        REQUIRE(!mol->hasProp("ID"));
       }
-      TEST_ASSERT(!mol->hasProp("ANOTHER_PROPERTY"));
+      REQUIRE(!mol->hasProp("ANOTHER_PROPERTY"));
       i++;
       delete mol;
     }
-    TEST_ASSERT(i == 2);
+    REQUIRE(i == 2);
   }
   // lax
   {
@@ -1463,19 +1329,18 @@ void testSDSupplierFromTextStrLax1() {
     int i = 0;
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
-      TEST_ASSERT(mol->hasProp(common_properties::_Name));
-      TEST_ASSERT(mol->hasProp("ID"));
-      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      REQUIRE(mol->hasProp(common_properties::_Name));
+      REQUIRE(mol->hasProp("ID"));
+      REQUIRE(mol->hasProp("ANOTHER_PROPERTY"));
       i++;
       delete mol;
     }
-    TEST_ASSERT(i == 2);
+    REQUIRE(i == 2);
   }
 }
 
-void testSDSupplierFromTextStrLax2() {
-  std::string text;
-  text =
+TEST_CASE("testSDSupplierFromTextStrLax2") {
+  constexpr const char *text =
       "Structure1\n"
       "csChFnd70/05230312262D\n"
       "\n"
@@ -1529,22 +1394,22 @@ void testSDSupplierFromTextStrLax2() {
     int i = 0;
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
-      TEST_ASSERT(mol->hasProp(common_properties::_Name));
-      TEST_ASSERT(mol->hasProp("ID"));
-      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      REQUIRE(mol->hasProp(common_properties::_Name));
+      REQUIRE(mol->hasProp("ID"));
+      REQUIRE(mol->hasProp("ANOTHER_PROPERTY"));
       std::string s;
       mol->getProp("ID", s);
-      TEST_ASSERT(s == "Lig1");
+      REQUIRE(s == "Lig1");
       mol->getProp("ANOTHER_PROPERTY", s);
-      TEST_ASSERT(s ==
-                  "No blank line before dollars\n"
-                  "$$$$\n"
-                  "Structure1\n"
-                  "csChFnd70/05230312262D");
+      REQUIRE(s ==
+              "No blank line before dollars\n"
+              "$$$$\n"
+              "Structure1\n"
+              "csChFnd70/05230312262D");
       i++;
       delete mol;
     }
-    TEST_ASSERT(i == 1);
+    REQUIRE(i == 1);
   }
   // lax
   {
@@ -1555,23 +1420,22 @@ void testSDSupplierFromTextStrLax2() {
     int i = 0;
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
-      TEST_ASSERT(mol->hasProp(common_properties::_Name));
-      TEST_ASSERT(mol->hasProp("ID"));
-      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      REQUIRE(mol->hasProp(common_properties::_Name));
+      REQUIRE(mol->hasProp("ID"));
+      REQUIRE(mol->hasProp("ANOTHER_PROPERTY"));
       std::string s;
       mol->getProp("ID", s);
-      TEST_ASSERT(s == "Lig2");
+      REQUIRE(s == "Lig2");
       mol->getProp("ANOTHER_PROPERTY", s);
-      TEST_ASSERT(s == "Value2");
+      REQUIRE(s == "Value2");
       i++;
       delete mol;
     }
-    TEST_ASSERT(i == 1);
+    REQUIRE(i == 1);
   }
 }
 
-void testSDSupplierStrLax1() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testSDSupplierStrLax1") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/strictLax1.sdf";
   // strict
@@ -1581,15 +1445,15 @@ void testSDSupplierStrLax1() {
     int i = 0;
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
-      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      REQUIRE(mol->hasProp(common_properties::_Name));
       if (i == 0) {
-        TEST_ASSERT(!mol->hasProp("ID"));
+        REQUIRE(!mol->hasProp("ID"));
       }
-      TEST_ASSERT(!mol->hasProp("ANOTHER_PROPERTY"));
+      REQUIRE(!mol->hasProp("ANOTHER_PROPERTY"));
       i++;
       delete mol;
     }
-    TEST_ASSERT(i == 2);
+    REQUIRE(i == 2);
   }
   // lax
   {
@@ -1598,18 +1462,17 @@ void testSDSupplierStrLax1() {
     int i = 0;
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
-      TEST_ASSERT(mol->hasProp(common_properties::_Name));
-      TEST_ASSERT(mol->hasProp("ID"));
-      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      REQUIRE(mol->hasProp(common_properties::_Name));
+      REQUIRE(mol->hasProp("ID"));
+      REQUIRE(mol->hasProp("ANOTHER_PROPERTY"));
       i++;
       delete mol;
     }
-    TEST_ASSERT(i == 2);
+    REQUIRE(i == 2);
   }
 }
 
-void testSDSupplierStrLax2() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testSDSupplierStrLax2") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/strictLax2.sdf";
   // strict
@@ -1619,22 +1482,22 @@ void testSDSupplierStrLax2() {
     int i = 0;
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
-      TEST_ASSERT(mol->hasProp(common_properties::_Name));
-      TEST_ASSERT(mol->hasProp("ID"));
-      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      REQUIRE(mol->hasProp(common_properties::_Name));
+      REQUIRE(mol->hasProp("ID"));
+      REQUIRE(mol->hasProp("ANOTHER_PROPERTY"));
       std::string s;
       mol->getProp("ID", s);
-      TEST_ASSERT(s == "Lig1");
+      REQUIRE(s == "Lig1");
       mol->getProp("ANOTHER_PROPERTY", s);
-      TEST_ASSERT(s ==
-                  "No blank line before dollars\n"
-                  "$$$$\n"
-                  "Structure1\n"
-                  "csChFnd70/05230312262D");
+      REQUIRE(s ==
+              "No blank line before dollars\n"
+              "$$$$\n"
+              "Structure1\n"
+              "csChFnd70/05230312262D");
       i++;
       delete mol;
     }
-    TEST_ASSERT(i == 1);
+    REQUIRE(i == 1);
   }
   // lax
   {
@@ -1643,53 +1506,32 @@ void testSDSupplierStrLax2() {
     int i = 0;
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
-      TEST_ASSERT(mol->hasProp(common_properties::_Name));
-      TEST_ASSERT(mol->hasProp("ID"));
-      TEST_ASSERT(mol->hasProp("ANOTHER_PROPERTY"));
+      REQUIRE(mol->hasProp(common_properties::_Name));
+      REQUIRE(mol->hasProp("ID"));
+      REQUIRE(mol->hasProp("ANOTHER_PROPERTY"));
       std::string s;
       mol->getProp("ID", s);
-      TEST_ASSERT(s == "Lig2");
+      REQUIRE(s == "Lig2");
       mol->getProp("ANOTHER_PROPERTY", s);
-      TEST_ASSERT(s == "Value2");
+      REQUIRE(s == "Value2");
       i++;
       delete mol;
     }
-    TEST_ASSERT(i == 1);
+    REQUIRE(i == 1);
   }
 }
 
-void testIssue265() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testIssue265") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NotThere.sdf";
-  bool ok = false;
-  try {
-    SDMolSupplier reader(fname);
-    ok = false;
-  } catch (BadFileException &) {
-    ok = true;
-  }
-  TEST_ASSERT(ok);
+  CHECK_THROWS_AS(SDMolSupplier(fname), BadFileException);
 
-  try {
-    SmilesMolSupplier reader(fname);
-    ok = false;
-  } catch (BadFileException &) {
-    ok = true;
-  }
-  TEST_ASSERT(ok);
+  CHECK_THROWS_AS(SmilesMolSupplier(fname), BadFileException);
 
-  try {
-    TDTMolSupplier reader(fname);
-    ok = false;
-  } catch (BadFileException &) {
-    ok = true;
-  }
-  TEST_ASSERT(ok);
+  CHECK_THROWS_AS(TDTMolSupplier(fname), BadFileException);
 }
 
-void testSDErrorHandling() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testSDErrorHandling") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors1.sdf";
   SDMolSupplier *sdsup;
@@ -1697,46 +1539,45 @@ void testSDErrorHandling() {
 
   // entry 1: bad properties
   sdsup = new SDMolSupplier(fname);
-  TEST_ASSERT(!sdsup->atEnd());
+  REQUIRE(!sdsup->atEnd());
   nmol = sdsup->next();
-  TEST_ASSERT(nmol);
-  TEST_ASSERT(!nmol->hasProp("ID"));
+  REQUIRE(nmol);
+  REQUIRE(!nmol->hasProp("ID"));
   delete sdsup;
   delete nmol;
 
   // case 2: can't be sanitized
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors2.sdf";
   sdsup = new SDMolSupplier(fname);
-  TEST_ASSERT(!sdsup->atEnd());
+  REQUIRE(!sdsup->atEnd());
   nmol = sdsup->next();
-  TEST_ASSERT(!nmol);
-  TEST_ASSERT(sdsup->atEnd());
+  REQUIRE(!nmol);
+  REQUIRE(sdsup->atEnd());
   delete sdsup;
   delete nmol;
 
   // entry 3: bad number of atoms
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors3.sdf";
   sdsup = new SDMolSupplier(fname);
-  TEST_ASSERT(!sdsup->atEnd());
+  REQUIRE(!sdsup->atEnd());
   nmol = sdsup->next();
-  TEST_ASSERT(!nmol);
-  TEST_ASSERT(sdsup->atEnd());
+  REQUIRE(!nmol);
+  REQUIRE(sdsup->atEnd());
   delete sdsup;
   delete nmol;
 
   // entry 4: bad number of bonds
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors4.sdf";
   sdsup = new SDMolSupplier(fname);
-  TEST_ASSERT(!sdsup->atEnd());
+  REQUIRE(!sdsup->atEnd());
   nmol = sdsup->next();
-  TEST_ASSERT(!nmol);
-  TEST_ASSERT(sdsup->atEnd());
+  REQUIRE(!nmol);
+  REQUIRE(sdsup->atEnd());
   delete sdsup;
   delete nmol;
 }
 
-void testIssue381() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testIssue381") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/Issue381.sdf";
   SDMolSupplier *sdsup;
@@ -1746,7 +1587,7 @@ void testIssue381() {
 
   // entry 1: bad properties
   sdsup = new SDMolSupplier(fname);
-  TEST_ASSERT(!sdsup->atEnd());
+  REQUIRE(!sdsup->atEnd());
   count = 0;
   while (!sdsup->atEnd()) {
     nmol = sdsup->next();
@@ -1755,16 +1596,15 @@ void testIssue381() {
     }
     count++;
   }
-  TEST_ASSERT(sdsup->atEnd());
-  TEST_ASSERT(count == 9);
+  REQUIRE(sdsup->atEnd());
+  REQUIRE(count == 9);
 
-  TEST_ASSERT(sdsup->length() == 9);
+  REQUIRE(sdsup->length() == 9);
 
   delete sdsup;
 }
 
-void testSetStreamIndices() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testSetStreamIndices") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
   std::ifstream ifs(fname.c_str(), std::ios_base::binary);
@@ -1793,8 +1633,8 @@ void testSetStreamIndices() {
 
   sdsup = new SDMolSupplier(fname);
   sdsup->setStreamIndices(indices);
-  TEST_ASSERT(!sdsup->atEnd());
-  TEST_ASSERT(sdsup->length() == 16);
+  REQUIRE(!sdsup->atEnd());
+  REQUIRE(sdsup->length() == 16);
 
   count = 0;
   while (!sdsup->atEnd()) {
@@ -1804,188 +1644,168 @@ void testSetStreamIndices() {
     }
     count++;
   }
-  TEST_ASSERT(sdsup->atEnd());
-  TEST_ASSERT(count == 16);
+  REQUIRE(sdsup->atEnd());
+  REQUIRE(count == 16);
 
-  TEST_ASSERT(sdsup->length() == 16);
+  REQUIRE(sdsup->length() == 16);
 
   delete sdsup;
 }
 
-int testMixIterAndRandom() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testMixIterAndRandom") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/esters.sdf";
-  bool ok;
 
   SDMolSupplier *sdsup;
   ROMol *mol;
   std::string name;
 
   sdsup = new SDMolSupplier(fname);
-  TEST_ASSERT(sdsup);
+  REQUIRE(sdsup);
   unsigned int i = 0;
   while (!sdsup->atEnd()) {
     mol = sdsup->next();
     if (mol) {
-      TEST_ASSERT(mol->hasProp("ID"));
+      REQUIRE(mol->hasProp("ID"));
       delete mol;
     }
     i++;
   }
-  TEST_ASSERT(i == 6);
-  TEST_ASSERT(sdsup->length() == 6);
+  REQUIRE(i == 6);
+  REQUIRE(sdsup->length() == 6);
 
   delete sdsup;
   sdsup = new SDMolSupplier(fname);
-  TEST_ASSERT(sdsup);
-  TEST_ASSERT(sdsup->length() == 6);
+  REQUIRE(sdsup);
+  REQUIRE(sdsup->length() == 6);
 
   mol = sdsup->next();
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->hasProp("ID"));
+  REQUIRE(mol);
+  REQUIRE(mol->hasProp("ID"));
   mol->getProp("ID", name);
-  TEST_ASSERT(name == "Lig1");
+  REQUIRE(name == "Lig1");
   delete mol;
 
   mol = (*sdsup)[0];
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->hasProp("ID"));
+  REQUIRE(mol);
+  REQUIRE(mol->hasProp("ID"));
   mol->getProp("ID", name);
-  TEST_ASSERT(name == "Lig1");
+  REQUIRE(name == "Lig1");
   delete mol;
 
   sdsup->reset();
   mol = sdsup->next();
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->hasProp("ID"));
+  REQUIRE(mol);
+  REQUIRE(mol->hasProp("ID"));
   mol->getProp("ID", name);
-  TEST_ASSERT(name == "Lig1");
+  REQUIRE(name == "Lig1");
   delete mol;
   mol = sdsup->next();
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->hasProp("ID"));
+  REQUIRE(mol);
+  REQUIRE(mol->hasProp("ID"));
   mol->getProp("ID", name);
-  TEST_ASSERT(name == "Lig2");
+  REQUIRE(name == "Lig2");
   delete mol;
   delete sdsup;
 
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
   SmilesMolSupplier *nSup;
   nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
-  TEST_ASSERT(nSup);
-  TEST_ASSERT(nSup->length() == 10);
+  REQUIRE(nSup);
+  REQUIRE(nSup->length() == 10);
   mol = (*nSup)[0];
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 9);
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 9);
   delete mol;
   delete nSup;
 
   nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
-  TEST_ASSERT(nSup);
+  REQUIRE(nSup);
   mol = (*nSup)[0];
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 9);
-  TEST_ASSERT(nSup->length() == 10);
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 9);
+  REQUIRE(nSup->length() == 10);
   delete mol;
   delete nSup;
 
   nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
-  TEST_ASSERT(nSup);
+  REQUIRE(nSup);
   mol = nSup->next();
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 9);
-  TEST_ASSERT(nSup->length() == 10);
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 9);
+  REQUIRE(nSup->length() == 10);
   delete mol;
   mol = (*nSup)[0];
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 9);
-  TEST_ASSERT(nSup->length() == 10);
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 9);
+  REQUIRE(nSup->length() == 10);
   delete mol;
   mol = nSup->next();
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 20);
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 20);
   delete nSup;
   delete mol;
 
   nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
-  TEST_ASSERT(nSup);
-  mol = nullptr;
-  try {
-    mol = (*nSup)[20];
-    ok = false;
-  } catch (FileParseException &) {
-    ok = true;
-  }
-  TEST_ASSERT(ok);
+  REQUIRE(nSup);
+  CHECK_THROWS_AS((*nSup)[20], FileParseException);
   delete nSup;
 
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
   TDTMolSupplier *tSup;
   tSup = new TDTMolSupplier(fname);
-  TEST_ASSERT(tSup);
-  TEST_ASSERT(tSup->length() == 10);
+  REQUIRE(tSup);
+  REQUIRE(tSup->length() == 10);
   mol = (*tSup)[0];
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 9);
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 9);
   delete mol;
   delete tSup;
 
   tSup = new TDTMolSupplier(fname);
-  TEST_ASSERT(tSup);
+  REQUIRE(tSup);
   mol = (*tSup)[0];
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 9);
-  TEST_ASSERT(tSup->length() == 10);
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 9);
+  REQUIRE(tSup->length() == 10);
   delete mol;
   delete tSup;
 
   tSup = new TDTMolSupplier(fname);
-  TEST_ASSERT(tSup);
+  REQUIRE(tSup);
   mol = tSup->next();
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 9);
-  TEST_ASSERT(tSup->length() == 10);
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 9);
+  REQUIRE(tSup->length() == 10);
   delete mol;
 
   mol = (*tSup)[0];
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 9);
-  TEST_ASSERT(tSup->length() == 10);
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 9);
+  REQUIRE(tSup->length() == 10);
   delete mol;
 
   mol = tSup->next();
-  TEST_ASSERT(mol);
+  REQUIRE(mol);
   delete mol;
 
   mol = tSup->next();
-  TEST_ASSERT(mol);
+  REQUIRE(mol);
   delete mol;
 
   mol = tSup->next();
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 10);
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms() == 10);
   delete tSup;
   delete mol;
 
   tSup = new TDTMolSupplier(fname);
-  TEST_ASSERT(tSup);
-  mol = nullptr;
-  try {
-    mol = (*tSup)[20];
-    delete mol;
-    ok = false;
-  } catch (FileParseException &) {
-    ok = true;
-  }
-  TEST_ASSERT(ok);
+  REQUIRE(tSup);
+  CHECK_THROWS_AS((*tSup)[20], FileParseException);
   delete tSup;
-
-  return 1;
 }
 
-int testRemoveHs() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testRemoveHs") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/withHs.sdf";
 
@@ -1993,48 +1813,44 @@ int testRemoveHs() {
   ROMol *nmol;
 
   nmol = sdsup.next();
-  TEST_ASSERT(nmol);
-  TEST_ASSERT(nmol->getNumAtoms() == 23);
+  REQUIRE(nmol);
+  REQUIRE(nmol->getNumAtoms() == 23);
   delete nmol;
   nmol = sdsup.next();
-  TEST_ASSERT(nmol);
-  TEST_ASSERT(nmol->getNumAtoms() == 28);
+  REQUIRE(nmol);
+  REQUIRE(nmol->getNumAtoms() == 28);
   delete nmol;
 
   std::cerr << "build:" << std::endl;
   SDMolSupplier sdsup2(fname, true, false);
   nmol = sdsup2.next();
-  TEST_ASSERT(nmol);
-  // std::cerr<<" count: "<<nmol->getNumAtoms()<<std::endl;
-  TEST_ASSERT(nmol->getNumAtoms() == 39);
+  REQUIRE(nmol);
+
+  REQUIRE(nmol->getNumAtoms() == 39);
   delete nmol;
   nmol = sdsup2.next();
-  TEST_ASSERT(nmol);
-  TEST_ASSERT(nmol->getNumAtoms() == 30);
+  REQUIRE(nmol);
+  REQUIRE(nmol->getNumAtoms() == 30);
   delete nmol;
-
-  return 1;
 }
 
-void testGetItemText() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testGetItemText") {
   std::string fname;
 
   ROMol *mol1, *mol2;
   std::string molB, smiles;
-  bool ok;
 
   {
     fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
     SDMolSupplier sdsup(fname);
-    TEST_ASSERT(sdsup.length() == 16);
+    REQUIRE(sdsup.length() == 16);
 
     molB = sdsup.getItemText(0);
     mol1 = sdsup[0];
-    TEST_ASSERT(mol1);
+    REQUIRE(mol1);
     mol2 = MolBlockToMol(molB);
-    TEST_ASSERT(mol2);
-    TEST_ASSERT(mol2->getNumAtoms() == mol1->getNumAtoms());
+    REQUIRE(mol2);
+    REQUIRE(mol2->getNumAtoms() == mol1->getNumAtoms());
     delete mol1;
     delete mol2;
 
@@ -2042,10 +1858,10 @@ void testGetItemText() {
     molB = sdsup.getItemText(10);
     mol1 = sdsup.next();
     molB = sdsup.getItemText(1);
-    TEST_ASSERT(mol1);
+    REQUIRE(mol1);
     mol2 = MolBlockToMol(molB);
-    TEST_ASSERT(mol2);
-    TEST_ASSERT(mol2->getNumAtoms() == mol1->getNumAtoms());
+    REQUIRE(mol2);
+    REQUIRE(mol2->getNumAtoms() == mol1->getNumAtoms());
     delete mol1;
     delete mol2;
 
@@ -2054,26 +1870,14 @@ void testGetItemText() {
     molB = sdsup.getItemText(15);
     mol1 = sdsup[15];
     mol2 = MolBlockToMol(molB);
-    TEST_ASSERT(mol2);
-    TEST_ASSERT(mol2->getNumAtoms() == mol1->getNumAtoms());
+    REQUIRE(mol2);
+    REQUIRE(mol2->getNumAtoms() == mol1->getNumAtoms());
     delete mol1;
     delete mol2;
 
-    try {
-      molB = sdsup.getItemText(16);
-      ok = false;
-    } catch (FileParseException &) {
-      ok = true;
-    }
-    TEST_ASSERT(ok);
+    CHECK_THROWS_AS(sdsup.getItemText(16), FileParseException);
 
-    try {
-      molB = sdsup.getItemText(20);
-      ok = false;
-    } catch (FileParseException &) {
-      ok = true;
-    }
-    TEST_ASSERT(ok);
+    CHECK_THROWS_AS(sdsup.getItemText(20), FileParseException);
   }
 
   {
@@ -2085,20 +1889,20 @@ void testGetItemText() {
     // (this was sf.net issue 2632960)
     molB = sdsup.getItemText(0);
     mol2 = MolBlockToMol(molB);
-    TEST_ASSERT(mol2);
+    REQUIRE(mol2);
     mol1 = sdsup[0];
-    TEST_ASSERT(mol1);
-    TEST_ASSERT(mol2->getNumAtoms() == mol1->getNumAtoms());
+    REQUIRE(mol1);
+    REQUIRE(mol2->getNumAtoms() == mol1->getNumAtoms());
     delete mol1;
     delete mol2;
 
     molB = sdsup.getItemText(5);
     mol2 = MolBlockToMol(molB);
-    TEST_ASSERT(mol2);
-    TEST_ASSERT(mol2->getNumAtoms() == 16);
+    REQUIRE(mol2);
+    REQUIRE(mol2->getNumAtoms() == 16);
     mol1 = sdsup[5];
-    TEST_ASSERT(mol1);
-    TEST_ASSERT(mol2->getNumAtoms() == mol1->getNumAtoms());
+    REQUIRE(mol1);
+    REQUIRE(mol2->getNumAtoms() == mol1->getNumAtoms());
     delete mol1;
     delete mol2;
   }
@@ -2106,35 +1910,35 @@ void testGetItemText() {
   {
     fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
     SmilesMolSupplier smisup(fname, ",", 1, 0, false);
-    TEST_ASSERT(smisup.length() == 10);
+    REQUIRE(smisup.length() == 10);
 
     molB = smisup.getItemText(0);
-    TEST_ASSERT(molB == "1, CC1=CC(=O)C=CC1=O, 34.14");
+    REQUIRE(molB == "1, CC1=CC(=O)C=CC1=O, 34.14");
     mol1 = smisup[0];
-    TEST_ASSERT(mol1);
+    REQUIRE(mol1);
     delete mol1;
 
     molB = smisup.getItemText(5);
-    TEST_ASSERT(
+    REQUIRE(
         molB ==
         "6, OC(=O)C1=C(C=CC=C1)C2=C3C=CC(=O)C(=C3OC4=C2C=CC(=C4Br)O)Br, 87.74");
     mol1 = smisup.next();
-    TEST_ASSERT(mol1);
-    TEST_ASSERT(mol1->getNumAtoms() == 20);
+    REQUIRE(mol1);
+    REQUIRE(mol1->getNumAtoms() == 20);
     delete mol1;
 
     // make sure getItemText() works on the last molecule
     // (this was sf.net issue 1874882
     molB = smisup.getItemText(8);
-    TEST_ASSERT(molB == "9, CC(=NO)C(C)=NO, 65.18");
+    REQUIRE(molB == "9, CC(=NO)C(C)=NO, 65.18");
     molB = smisup.getItemText(9);
-    TEST_ASSERT(molB == "10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00");
+    REQUIRE(molB == "10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00");
 
     mol1 = smisup[0];
-    TEST_ASSERT(mol1);
+    REQUIRE(mol1);
     smiles = MolToSmiles(*mol1, 1);
-    TEST_ASSERT(smiles == "CC1=CC(=O)C=CC1=O");
-    TEST_ASSERT(mol1->getNumAtoms() == 9);
+    REQUIRE(smiles == "CC1=CC(=O)C=CC1=O");
+    REQUIRE(mol1->getNumAtoms() == 9);
     delete mol1;
   }
 
@@ -2146,17 +1950,17 @@ void testGetItemText() {
     // supplier:
     // (this was sf.net issue 2632960)
     molB = smisup.getItemText(0);
-    TEST_ASSERT(molB == "1, CC1=CC(=O)C=CC1=O, 34.14");
+    REQUIRE(molB == "1, CC1=CC(=O)C=CC1=O, 34.14");
 
     molB = smisup.getItemText(5);
-    TEST_ASSERT(
+    REQUIRE(
         molB ==
         "6, OC(=O)C1=C(C=CC=C1)C2=C3C=CC(=O)C(=C3OC4=C2C=CC(=C4Br)O)Br, 87.74");
 
     molB = smisup.getItemText(8);
-    TEST_ASSERT(molB == "9, CC(=NO)C(C)=NO, 65.18");
+    REQUIRE(molB == "9, CC(=NO)C(C)=NO, 65.18");
     molB = smisup.getItemText(9);
-    TEST_ASSERT(molB == "10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00");
+    REQUIRE(molB == "10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00");
   }
 
   {
@@ -2166,15 +1970,15 @@ void testGetItemText() {
     // make sure getItemText() flags EOF
     // (this was sf.net issue 3299878)
     molB = smisup.getItemText(0);
-    TEST_ASSERT(molB == "1, CC1=CC(=O)C=CC1=O, 34.14");
+    REQUIRE(molB == "1, CC1=CC(=O)C=CC1=O, 34.14");
 
     ROMol *m = smisup[9];
-    TEST_ASSERT(m);
+    REQUIRE(m);
     delete m;
-    TEST_ASSERT(smisup.atEnd());
+    REQUIRE(smisup.atEnd());
     molB = smisup.getItemText(9);
-    TEST_ASSERT(molB == "10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00");
-    TEST_ASSERT(smisup.atEnd());
+    REQUIRE(molB == "10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00");
+    REQUIRE(smisup.atEnd());
   }
 
   {
@@ -2184,60 +1988,59 @@ void testGetItemText() {
     // supplier:
     // (this was sf.net issue 2632960)
     molB = tdtsup.getItemText(0);
-    TEST_ASSERT(molB != "");
+    REQUIRE(molB != "");
   }
 
   {
     fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
     TDTMolSupplier tdtsup(fname);
-    TEST_ASSERT(tdtsup.length() == 10);
+    REQUIRE(tdtsup.length() == 10);
 
     molB = tdtsup.getItemText(0);
-    TEST_ASSERT(molB != "");
+    REQUIRE(molB != "");
 
     mol1 = tdtsup[0];
-    TEST_ASSERT(mol1);
+    REQUIRE(mol1);
     smiles = MolToSmiles(*mol1, 1);
-    TEST_ASSERT(smiles == "Cc1nnc(N)nc1C");
-    TEST_ASSERT(mol1->getNumAtoms() == 9);
+    REQUIRE(smiles == "Cc1nnc(N)nc1C");
+    REQUIRE(mol1->getNumAtoms() == 9);
     delete mol1;
 
     // make sure getItemText doesn't screw up next()
     molB = tdtsup.getItemText(5);
     mol1 = tdtsup.next();
-    TEST_ASSERT(mol1);
-    TEST_ASSERT(mol1->getNumAtoms() == 9);
+    REQUIRE(mol1);
+    REQUIRE(mol1->getNumAtoms() == 9);
     smiles = MolToSmiles(*mol1, 1);
-    TEST_ASSERT(smiles == "Cc1n[nH]c(=O)nc1N");
+    REQUIRE(smiles == "Cc1n[nH]c(=O)nc1N");
     delete mol1;
 
     // make sure getItemText() works on the last molecule
     // (this was sf.net issue 1874882
     molB = tdtsup.getItemText(9);
-    TEST_ASSERT(molB != "");
-    TEST_ASSERT(molB.substr(0, 12) == "$SMI<Cc1n[nH");
+    REQUIRE(molB != "");
+    REQUIRE(molB.substr(0, 12) == "$SMI<Cc1n[nH");
   }
 
   {
     fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
     TDTMolSupplier tdtsup(fname);
-    TEST_ASSERT(tdtsup.length() == 10);
+    REQUIRE(tdtsup.length() == 10);
 
     ROMol *mol = tdtsup[9];
-    TEST_ASSERT(mol);
+    REQUIRE(mol);
     delete mol;
-    TEST_ASSERT(tdtsup.atEnd());
+    REQUIRE(tdtsup.atEnd());
 
     // (this was sf.net issue 3299878
     molB = tdtsup.getItemText(9);
-    TEST_ASSERT(molB != "");
-    TEST_ASSERT(molB.substr(0, 12) == "$SMI<Cc1n[nH");
-    TEST_ASSERT(tdtsup.atEnd());
+    REQUIRE(molB != "");
+    REQUIRE(molB.substr(0, 12) == "$SMI<Cc1n[nH");
+    REQUIRE(tdtsup.atEnd());
   }
 }
 
-int testForwardSDSupplier() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testForwardSDSupplier") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
   std::string fname2 =
@@ -2249,15 +2052,15 @@ int testForwardSDSupplier() {
     unsigned int i = 0;
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
-      TEST_ASSERT(nmol || sdsup.atEnd());
+      REQUIRE((nmol || sdsup.atEnd()));
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        REQUIRE(nmol->hasProp(common_properties::_Name));
+        REQUIRE(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
         i++;
       }
     }
-    TEST_ASSERT(i == 16);
+    REQUIRE(i == 16);
   }
 #ifdef RDK_USE_BOOST_IOSTREAMS
   // make sure the boost::iostreams are working
@@ -2276,7 +2079,7 @@ int testForwardSDSupplier() {
         break;
       }
     }
-    TEST_ASSERT(i == 998);
+    REQUIRE(i == 998);
   }
   {
     gzstream strm(fname2);
@@ -2291,7 +2094,7 @@ int testForwardSDSupplier() {
         break;
       }
     }
-    TEST_ASSERT(i == 997);
+    REQUIRE(i == 997);
   }
   // looks good, now do a supplier:
   {
@@ -2302,13 +2105,13 @@ int testForwardSDSupplier() {
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
       if (nmol) {
-        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        REQUIRE(nmol->hasProp(common_properties::_Name));
+        REQUIRE(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
         delete nmol;
         i++;
       }
     }
-    TEST_ASSERT(i == 16);
+    REQUIRE(i == 16);
   }
 #endif
 
@@ -2333,7 +2136,7 @@ int testForwardSDSupplier() {
         break;
       }
     }
-    TEST_ASSERT(i == 1663);
+    REQUIRE(i == 1663);
   }
 #if RDK_USE_BOOST_IOSTREAMS
   {
@@ -2350,7 +2153,7 @@ int testForwardSDSupplier() {
         break;
       }
     }
-    TEST_ASSERT(i == 1663);
+    REQUIRE(i == 1663);
   }
   // looks good, now do a supplier:
   {
@@ -2365,38 +2168,33 @@ int testForwardSDSupplier() {
         i++;
       }
     }
-    TEST_ASSERT(i == 16);
+    REQUIRE(i == 16);
   }
 #endif
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
-
-  return 1;
 }
 
-void testMissingCRSDSupplier() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testMissingCRSDSupplier") {
   std::string infile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/missingCR.sdf";
   SDMolSupplier reader(infile);
   auto *mol = reader.next();
   delete mol;
-  TEST_ASSERT(reader.atEnd());
+  REQUIRE(reader.atEnd());
 }
 
-void testIssue3482695() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testIssue3482695") {
   std::string infile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3482695.sdf";
   SDMolSupplier reader(infile);
   ROMol *nmol = reader.next();
-  TEST_ASSERT(nmol);
-  TEST_ASSERT(nmol->getNumAtoms() == 0);
-  TEST_ASSERT(nmol->hasProp("test"));
+  REQUIRE(nmol);
+  REQUIRE(nmol->getNumAtoms() == 0);
+  REQUIRE(nmol->hasProp("test"));
   delete nmol;
 }
 
-void testIssue3525673() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testIssue3525673") {
   std::string infile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525673.sdf";
   std::ifstream ins(infile.c_str());
@@ -2404,46 +2202,45 @@ void testIssue3525673() {
   ROMol *nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(nmol);
+  REQUIRE(nmol);
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(nmol);
-  TEST_ASSERT(nmol->getNumAtoms() == 37);
+  REQUIRE(nmol);
+  REQUIRE(nmol->getNumAtoms() == 37);
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(nmol);
+  REQUIRE(nmol);
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(nmol);
+  REQUIRE(nmol);
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(nmol);
-  TEST_ASSERT(nmol->getNumAtoms() == 58);
+  REQUIRE(nmol);
+  REQUIRE(nmol->getNumAtoms() == 58);
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(nmol);
+  REQUIRE(nmol);
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);  // broken due to 'foo' in counts line!
+  REQUIRE(!nmol);  // broken due to 'foo' in counts line!
 
   nmol = reader.next();
-  TEST_ASSERT(nmol);
-  TEST_ASSERT(nmol->getNumAtoms() == 58);
+  REQUIRE(nmol);
+  REQUIRE(nmol->getNumAtoms() == 58);
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(nmol);
+  REQUIRE(nmol);
   delete nmol;
 }
 
-void testBlankLinesInProps() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testBlankLinesInProps") {
   std::string infile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/BlankPropLines.sdf";
   std::ifstream ins(infile.c_str());
@@ -2452,20 +2249,19 @@ void testBlankLinesInProps() {
   std::string pval;
 
   nmol = reader.next();
-  TEST_ASSERT(nmol);
-  TEST_ASSERT(nmol->getNumAtoms() == 19);
-  TEST_ASSERT(nmol->hasProp("MultiLineProperty1"));
+  REQUIRE(nmol);
+  REQUIRE(nmol->getNumAtoms() == 19);
+  REQUIRE(nmol->hasProp("MultiLineProperty1"));
   nmol->getProp("MultiLineProperty1", pval);
-  TEST_ASSERT(pval == "foo\nbar\n \nbaz");
-  TEST_ASSERT(nmol->hasProp("MultiLineProperty2"));
-  TEST_ASSERT(!(nmol->hasProp("fooprop")));
+  REQUIRE(pval == "foo\nbar\n \nbaz");
+  REQUIRE(nmol->hasProp("MultiLineProperty2"));
+  REQUIRE(!(nmol->hasProp("fooprop")));
   nmol->getProp("MultiLineProperty2", pval);
-  TEST_ASSERT(pval == "foo\n>  <fooprop>\nbaz\n ");
+  REQUIRE(pval == "foo\n>  <fooprop>\nbaz\n ");
   delete nmol;
 }
 
-void testSkipLines() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testSkipLines") {
   std::string infile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/SkipLines.sdf";
   std::ifstream ins(infile.c_str());
@@ -2474,14 +2270,13 @@ void testSkipLines() {
   std::string pval;
 
   nmol = reader.next();
-  TEST_ASSERT(nmol);
-  TEST_ASSERT(nmol->getNumAtoms() == 1);
-  TEST_ASSERT(nmol->hasProp("prop1"));
+  REQUIRE(nmol);
+  REQUIRE(nmol->getNumAtoms() == 1);
+  REQUIRE(nmol->hasProp("prop1"));
   delete nmol;
 }
 
-void testGitHub23() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testGitHub23") {
   std::string ofile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/blah_molsupplier.sdf";
   auto *writer = new SDWriter(ofile);
@@ -2498,8 +2293,7 @@ void testGitHub23() {
   delete writer;
 }
 
-void testGitHub88() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testGitHub88") {
   std::string infile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/github88.v3k.sdf";
   std::ifstream ins(infile.c_str());
@@ -2507,17 +2301,16 @@ void testGitHub88() {
   ROMol *nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(nmol);
-  TEST_ASSERT(nmol->getNumAtoms() == 8);
-  TEST_ASSERT(nmol->hasProp("prop1"));
+  REQUIRE(nmol);
+  REQUIRE(nmol->getNumAtoms() == 8);
+  REQUIRE(nmol->hasProp("prop1"));
   std::string pval;
   nmol->getProp("prop1", pval);
-  TEST_ASSERT(pval == "4");
+  REQUIRE(pval == "4");
   delete nmol;
 }
 
-void testGitHub2285() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testGitHub2285") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/github2285.sdf";
 
@@ -2526,7 +2319,7 @@ void testGitHub2285() {
     SDMolSupplier sdsup(fname);
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
-      TEST_ASSERT(nmol);
+      REQUIRE(nmol);
       smiles.push_back(MolToSmiles(*nmol));
       delete nmol;
     }
@@ -2536,18 +2329,18 @@ void testGitHub2285() {
     int i = 0;
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
-      TEST_ASSERT(nmol);
+      REQUIRE(nmol);
       ROMol *m = MolOps::removeHs(*nmol);
-      TEST_ASSERT(MolToSmiles(*m) == smiles[i++]);
+      REQUIRE(MolToSmiles(*m) == smiles[i++]);
       delete nmol;
       delete m;
     }
-    TEST_ASSERT(i > 0);
+    REQUIRE(i > 0);
   }
 }
 
-void testGitHub2479() {
-  std::string smiles1 = R"DATA(smiles id
+TEST_CASE("testGitHub2479") {
+  constexpr const char *smiles1 = R"DATA(smiles id
 c1ccccc duff
 c1ccccc1 ok
 C(C garbage
@@ -2561,14 +2354,14 @@ CC(C)(C)(C)C duff2
     while (!suppl.atEnd()) {
       std::unique_ptr<ROMol> mol(suppl.next());
       if (cnt % 2) {
-        TEST_ASSERT(mol);
+        REQUIRE(mol);
       }
       ++cnt;
     }
-    TEST_ASSERT(cnt == 5);
+    REQUIRE(cnt == 5);
   }
 
-  std::string sdf1 = R"SDF(
+  constexpr const char *sdf1 = R"SDF(
   Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
@@ -2595,28 +2388,28 @@ $$$$
     std::stringstream iss(sdf1);
     SDMolSupplier suppl(&iss, false);
     std::unique_ptr<ROMol> mol1(suppl.next());
-    TEST_ASSERT(mol1);
+    REQUIRE(mol1);
     std::unique_ptr<ROMol> mol2(suppl.next());
-    TEST_ASSERT(!mol2);
-    TEST_ASSERT(suppl.atEnd());
+    REQUIRE(!mol2);
+    REQUIRE(suppl.atEnd());
   }
   {
     std::stringstream iss(sdf1);
     ForwardSDMolSupplier suppl(&iss, false);
     std::unique_ptr<ROMol> mol1(suppl.next());
-    TEST_ASSERT(mol1);
+    REQUIRE(mol1);
     std::unique_ptr<ROMol> mol2(suppl.next());
-    TEST_ASSERT(!mol2);
-    TEST_ASSERT(!suppl.atEnd());
-    TEST_ASSERT(!suppl.getEOFHitOnRead());
+    REQUIRE(!mol2);
+    REQUIRE(!suppl.atEnd());
+    REQUIRE(!suppl.getEOFHitOnRead());
     std::unique_ptr<ROMol> mol3(suppl.next());
-    TEST_ASSERT(!mol3);
-    TEST_ASSERT(suppl.atEnd());
-    TEST_ASSERT(suppl.getEOFHitOnRead());
+    REQUIRE(!mol3);
+    REQUIRE(suppl.atEnd());
+    REQUIRE(suppl.getEOFHitOnRead());
   }
 
   // truncated file1
-  std::string sdf2 = R"SDF(
+  constexpr const char *sdf2 = R"SDF(
   Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
@@ -2649,29 +2442,29 @@ $$$$
     std::stringstream iss(sdf2);
     SDMolSupplier suppl(&iss, false);
     std::unique_ptr<ROMol> mol1(suppl.next());
-    TEST_ASSERT(mol1);
+    REQUIRE(mol1);
     std::unique_ptr<ROMol> mol2(suppl.next());
-    TEST_ASSERT(!mol2);
+    REQUIRE(!mol2);
     std::unique_ptr<ROMol> mol3(suppl.next());
-    TEST_ASSERT(!mol3);
-    TEST_ASSERT(suppl.atEnd());
+    REQUIRE(!mol3);
+    REQUIRE(suppl.atEnd());
   }
   {
     std::stringstream iss(sdf2);
     ForwardSDMolSupplier suppl(&iss, false);
     std::unique_ptr<ROMol> mol1(suppl.next());
-    TEST_ASSERT(mol1);
+    REQUIRE(mol1);
     std::unique_ptr<ROMol> mol2(suppl.next());
-    TEST_ASSERT(!mol2);
-    TEST_ASSERT(!suppl.atEnd());
-    TEST_ASSERT(!suppl.getEOFHitOnRead());
+    REQUIRE(!mol2);
+    REQUIRE(!suppl.atEnd());
+    REQUIRE(!suppl.getEOFHitOnRead());
     std::unique_ptr<ROMol> mol3(suppl.next());
-    TEST_ASSERT(!mol3);
-    TEST_ASSERT(suppl.atEnd());
-    TEST_ASSERT(!suppl.getEOFHitOnRead());
+    REQUIRE(!mol3);
+    REQUIRE(suppl.atEnd());
+    REQUIRE(!suppl.getEOFHitOnRead());
   }
   // truncated file2
-  std::string sdf3 = R"SDF(
+  constexpr const char *sdf3 = R"SDF(
   Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
@@ -2702,25 +2495,25 @@ M  END
     std::stringstream iss(sdf3);
     SDMolSupplier suppl(&iss, false);
     std::unique_ptr<ROMol> mol1(suppl.next());
-    TEST_ASSERT(mol1);
+    REQUIRE(mol1);
     std::unique_ptr<ROMol> mol2(suppl.next());
-    TEST_ASSERT(mol2);
-    TEST_ASSERT(suppl.atEnd());
+    REQUIRE(mol2);
+    REQUIRE(suppl.atEnd());
   }
   {
     std::stringstream iss(sdf3);
     ForwardSDMolSupplier suppl(&iss, false);
     std::unique_ptr<ROMol> mol1(suppl.next());
-    TEST_ASSERT(mol1);
+    REQUIRE(mol1);
     std::unique_ptr<ROMol> mol2(suppl.next());
-    TEST_ASSERT(mol2);
-    TEST_ASSERT(suppl.atEnd());
+    REQUIRE(mol2);
+    REQUIRE(suppl.atEnd());
   }
 }
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
-void testGitHub2881() {
-  std::string data = R"DATA(f_m_ct {
+TEST_CASE("testGitHub2881") {
+  constexpr const char *data = R"DATA(f_m_ct {
  s_m_title
  s_m_entry_id
  s_m_entry_name
@@ -2817,220 +2610,20 @@ void testGitHub2881() {
     bool takeOwnership = true;
     MaeMolSupplier suppl(iss, takeOwnership, sanitize);
     std::unique_ptr<ROMol> mol(suppl.next());
-    TEST_ASSERT(mol);
-    TEST_ASSERT(mol->getNumAtoms() == 15);
-    TEST_ASSERT(mol->getNumBonds() == 17);
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 15);
+    REQUIRE(mol->getNumBonds() == 17);
   }
 }
-#else
-void testGitHub2881() {}
 #endif
 
-void testGitHub3517() {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("testGitHub3517") {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
 
   SDMolSupplier sdsup(fname);
-  TEST_ASSERT(!sdsup.atEnd());
+  REQUIRE(!sdsup.atEnd());
   size_t l = sdsup.length();
-  TEST_ASSERT(l > 0);
-  TEST_ASSERT(!sdsup.atEnd());
-}
-
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
-  RDLog::InitLogs();
-
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testMolSup();
-  BOOST_LOG(rdErrorLog) << "Finished: testMolSup()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testRandMolSup();
-  BOOST_LOG(rdErrorLog) << "Finished: testRandMolSup()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSmilesSup();
-  BOOST_LOG(rdErrorLog) << "Finished: testSmilesSup()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSmilesSupFromText();
-  BOOST_LOG(rdErrorLog) << "Finished: testSmilesSupFromText()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSmilesWriter();
-  BOOST_LOG(rdErrorLog) << "Finished: testSmilesWriter()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSDWriter();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDWriter()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSDSupplierEnding();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierEnding()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSuppliersEmptyFile();
-  BOOST_LOG(rdErrorLog) << "Finished: testSuppliersEmptyFile()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testCisTrans();
-  BOOST_LOG(rdErrorLog) << "Finished: testCisTrans()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testStereoRound();
-  BOOST_LOG(rdErrorLog) << "Finished: testStereoRound()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testIssue226();
-  BOOST_LOG(rdErrorLog) << "Finished: testIssue226()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testTDTSupplier1();
-  BOOST_LOG(rdErrorLog) << "Finished: testTDTSupplier1()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testTDTSupplier2();
-  BOOST_LOG(rdErrorLog) << "Finished: testTDTSupplier2()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testTDTSupplier3();
-  BOOST_LOG(rdErrorLog) << "Finished: testTDTSupplier3()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSDSupplierFromText();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierFromText()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSDSupplierStrLax1();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierStrLax1()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSDSupplierStrLax2();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierStrLax2()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSDSupplierFromTextStrLax1();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierFromTextStrLax1()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSDSupplierFromTextStrLax2();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDSupplierFromTextStrLax2()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testIssue265();
-  BOOST_LOG(rdErrorLog) << "Finished: testIssue265()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSDErrorHandling();
-  BOOST_LOG(rdErrorLog) << "Finished: testSDErrorHandling()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testIssue381();
-  BOOST_LOG(rdErrorLog) << "Finished: testIssue381()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSetStreamIndices();
-  BOOST_LOG(rdErrorLog) << "Finished: testSetStreamIndices()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testMixIterAndRandom();
-  BOOST_LOG(rdErrorLog) << "Finished: testMixIterAndRandom()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testRemoveHs();
-  BOOST_LOG(rdErrorLog) << "Finished: testRemoveHs()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testGetItemText();
-  BOOST_LOG(rdErrorLog) << "Finished: testGetItemText()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testForwardSDSupplier();
-  BOOST_LOG(rdErrorLog) << "Finished: testForwardSDSupplier()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testMissingCRSDSupplier();
-  BOOST_LOG(rdErrorLog) << "Finished: testMissingCRSDSupplier()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testIssue3482695();
-  BOOST_LOG(rdErrorLog) << "Finished: testIssue3482695()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testIssue3525673();
-  BOOST_LOG(rdErrorLog) << "Finished: testIssue3525673()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testBlankLinesInProps();
-  BOOST_LOG(rdErrorLog) << "Finished: testBlankLinesInProps()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testSkipLines();
-  BOOST_LOG(rdErrorLog) << "Finished: testSkipLines()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testGitHub23();
-  BOOST_LOG(rdErrorLog) << "Finished: testGitHub23()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testGitHub88();
-  BOOST_LOG(rdErrorLog) << "Finished: testGitHub88()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testGitHub2285();
-  BOOST_LOG(rdErrorLog) << "Finished: testGitHub2285()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testGitHub2479();
-  BOOST_LOG(rdErrorLog) << "Finished: testGitHub2479()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testGitHub2881();
-  BOOST_LOG(rdErrorLog) << "Finished: testGitHub2881()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testGitHub3517();
-  BOOST_LOG(rdErrorLog) << "Finished: testGitHub3517()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  return 0;
+  REQUIRE(l > 0);
+  REQUIRE(!sdsup.atEnd());
 }
