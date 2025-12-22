@@ -10,8 +10,8 @@
 
 #include "MolFragmenter.h"
 
-#include <GraphMol/QueryBond.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryBond.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/Invariant.h>
