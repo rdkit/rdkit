@@ -836,6 +836,39 @@ TEST_CASE("Enhanced Stereochemistry - Github 8650") {
   CHECK(synthons[0][0].second->getSmiles() == "C[C@H]1CC[C@H](CC1)F |&1:1,4|");
 }
 
+TEST_CASE("Github 9009") {
+  {
+    // Single bond to "extra" aromatic C
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+O=c1ccncn1[1*]	192	1	r2	1
+[1*]c1ccccc1	227	2	r2	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+    auto q1 = "O=c1n([c])cncc1"_smarts;
+    auto res1 = space.substructureSearch(*q1);
+    CHECK(res1.getHitMolecules().size() == 1);
+    auto q2 = "O=c1n([a])cncc1"_smarts;
+    auto res2 = space.substructureSearch(*q2);
+    CHECK(res2.getHitMolecules().size() == 1);
+  }
+  {
+    // Check that aromatic bond works
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+[1*]C=CC=C[2*]	192	1	r2	1
+O=C1NC=NC([2*])=C1[1*]	227	2	r2	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+    auto q3 = "O=c1ncncc1c"_smarts;
+    auto res3 = space.substructureSearch(*q3);
+    CHECK(res3.getHitMolecules().size() == 1);
+  }
+}
 TEST_CASE("Github 9007") {
   auto q1 = "O=c1ncnc([a])c1[a]"_smarts;
   REQUIRE(q1);

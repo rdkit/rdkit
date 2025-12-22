@@ -585,3 +585,69 @@ TEST_CASE(
     CHECK(MolToSmiles(*res) == "[1*]/C=C/N.[2*]CC");
   }
 }
+
+TEST_CASE(
+    "Github #9009: fragmentOnBonds should transfer queries on deleted bonds") {
+  // Basic test
+  auto m1 = "c1ccccc1-C1CCCCC1"_smarts;
+  REQUIRE(m1);
+  auto bond1 = m1->getBondWithIdx(1);
+  REQUIRE(bond1);
+  REQUIRE(bond1->hasQuery());
+  auto splitM1(
+      MolFragmenter::fragmentOnBonds(*m1, std::vector<unsigned int>{1, 5}));
+  REQUIRE(splitM1);
+  auto nb1 = splitM1->getBondWithIdx(11);
+  REQUIRE(nb1);
+  CHECK(nb1->hasQuery());
+  CHECK(nb1->getQuery()->getDescription() == "SingleOrAromaticBond");
+
+  auto nb2 = splitM1->getBondWithIdx(12);
+  REQUIRE(nb2);
+  CHECK(nb2->hasQuery());
+  CHECK(nb2->getQuery()->getDescription() == "SingleOrAromaticBond");
+
+  auto nb3 = splitM1->getBondWithIdx(13);
+  REQUIRE(nb3);
+  CHECK(nb3->hasQuery());
+  CHECK(nb3->getQuery()->getDescription() == "BondOrder");
+  auto nb4 = splitM1->getBondWithIdx(14);
+  REQUIRE(nb4);
+  CHECK(nb4->hasQuery());
+  CHECK(nb4->getQuery()->getDescription() == "BondOrder");
+
+  // Check it does nothing if there isn't a query
+  auto m2 = "c1ccccc1"_smiles;
+  REQUIRE(m2);
+  auto bond2 = m2->getBondWithIdx(1);
+  REQUIRE(bond2);
+  REQUIRE(!bond2->hasQuery());
+  auto splitM2(
+      MolFragmenter::fragmentOnBonds(*m2, std::vector<unsigned int>{1}));
+  REQUIRE(splitM2);
+  auto nb5 = splitM2->getBondWithIdx(5);
+  REQUIRE(nb5);
+  CHECK(!nb5->hasQuery());
+  auto nb6 = splitM2->getBondWithIdx(6);
+  REQUIRE(nb6);
+  CHECK(!nb6->hasQuery());
+
+  // Check it does nothing if bond types are specified
+  auto m3 = "c1ccccc1"_smiles;
+  REQUIRE(m3);
+  auto bond3 = m3->getBondWithIdx(1);
+  REQUIRE(bond3);
+  REQUIRE(!bond3->hasQuery());
+  auto dummyLabels =
+      std::vector<std::pair<unsigned int, unsigned int>>{{25, 26}};
+  auto newTypes = std::vector<Bond::BondType>{Bond::DOUBLE};
+  auto splitM3(MolFragmenter::fragmentOnBonds(*m3, std::vector<unsigned int>{1},
+                                              true, &dummyLabels, &newTypes));
+  REQUIRE(splitM3);
+  auto nb7 = splitM3->getBondWithIdx(5);
+  REQUIRE(nb7);
+  CHECK(!nb7->hasQuery());
+  auto nb8 = splitM3->getBondWithIdx(6);
+  REQUIRE(nb8);
+  CHECK(!nb8->hasQuery());
+}
