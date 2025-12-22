@@ -146,7 +146,8 @@ __pycache__/
 /rdkit/hetero_atom_mutations.csv
 /rdkit/not_changed.csv
 /rdkit/similarityMap1_out.svg
-/rdkit/similarityMap1_out2.svg
+/rdkit/similarityMap1_out*.svg
+/rdkit/github4763.svg
 
 /Testing/
 

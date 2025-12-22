@@ -280,16 +280,22 @@ void SDMolSupplier::moveTo(unsigned int idx) {
     }
 
     if (foundTarget) {
-        dp_inStream->clear();
-        dp_inStream->seekg(d_molpos[idx]);
-        d_last = idx;
+      dp_inStream->clear();
+      dp_inStream->seekg(d_molpos[idx]);
+      d_last = idx;
     } else {
-        // if we reached end of file without reaching "idx" we have an index error
-        d_len = rdcast<int>(d_molpos.size());
-        std::ostringstream errout;
-        errout << "ERROR: Index error (idx = " << idx << ") : "
-               << " we do not have enough mol blocks";
-        throw FileParseException(errout.str());
+      /*Unfortunately, the FileParseException is not being catched and thrown on python directly.
+      Instead, we use this df_end flag workaround to indicate that we reached the end of file (and signal the error).
+      There's a comment on MolSupplier.h about problems with Boost exception handling and the full explanation
+      That's the only reason for the following line*/
+      df_end = true;
+
+      // if we reached end of file without reaching "idx" we have an index error
+      d_len = rdcast<int>(d_molpos.size());
+      std::ostringstream errout;
+      errout << "ERROR: Index error (idx = " << idx << ") : "
+              << " we do not have enough mol blocks";
+      throw FileParseException(errout.str());
     }
   }
 }
