@@ -149,7 +149,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
 
   // The number of connectors in the synthons in each synthon set.
   std::vector<int> d_numConnectors;
-  // The number of rings that may be formed by the syntons.  If there
+  // The number of rings that may be formed by the synthons.  If there
   // are a pair of synthons A([1*])[2*] and B([1*])[2*] 1 ring can be
   // formed.
   unsigned int d_numRingFormers{0};

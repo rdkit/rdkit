@@ -869,6 +869,7 @@ O=C1NC=NC([2*])=C1[1*]	227	2	r2	1
     CHECK(res3.getHitMolecules().size() == 1);
   }
 }
+
 TEST_CASE("Github 9007") {
   auto q1 = "O=c1ncnc([a])c1[a]"_smarts;
   REQUIRE(q1);
