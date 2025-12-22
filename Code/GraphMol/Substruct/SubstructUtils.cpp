@@ -102,16 +102,18 @@ class ScoreMatchesByDegreeOfCoreSubstitution {
 };
 }  // namespace detail
 
-bool propertyCompat(const RDProps *r1, const RDProps *r2,
+// Template version that works with Atom and Bond
+template <typename T>
+bool propertyCompat(const T *r1, const T *r2,
                     const std::vector<std::string> &properties) {
-  PRECONDITION(r1, "bad RDProps");
-  PRECONDITION(r2, "bad RDProps");
+  PRECONDITION(r1, "bad object");
+  PRECONDITION(r2, "bad object");
 
   for (const auto &prop : properties) {
     std::string prop1;
-    bool hasprop1 = r1->getPropIfPresent<std::string>(prop, prop1);
+    bool hasprop1 = r1->template getPropIfPresent<std::string>(prop, prop1);
     std::string prop2;
-    bool hasprop2 = r2->getPropIfPresent<std::string>(prop, prop2);
+    bool hasprop2 = r2->template getPropIfPresent<std::string>(prop, prop2);
     if (hasprop1 && hasprop2) {
       if (prop1 != prop2) {
         return false;
@@ -123,6 +125,12 @@ bool propertyCompat(const RDProps *r1, const RDProps *r2,
   }
   return true;
 }
+
+// Explicit instantiations for Atom and Bond
+template bool propertyCompat<Atom>(const Atom *r1, const Atom *r2,
+                                   const std::vector<std::string> &properties);
+template bool propertyCompat<Bond>(const Bond *r1, const Bond *r2,
+                                   const std::vector<std::string> &properties);
 
 bool atomCompat(const Atom *a1, const Atom *a2,
                 const SubstructMatchParameters &ps) {
@@ -138,8 +146,7 @@ bool atomCompat(const Atom *a1, const Atom *a2,
     res = a1->Match(a2);
   }
   if (res && !ps.atomProperties.empty()) {
-    raiseNonImplementedDetail("Cast atom to prop");
-    // res = propertyCompat(a1, a2, ps.atomProperties);
+    res = propertyCompat(a1, a2, ps.atomProperties);
   }
 
   return res;
@@ -212,8 +219,7 @@ bool bondCompat(const Bond *b1, const Bond *b2,
     }
   }
   if (res && !ps.bondProperties.empty()) {
-    raiseNonImplementedDetail("cast bond to prop");
-    // res = propertyCompat(b1, b2, ps.bondProperties);
+    res = propertyCompat(b1, b2, ps.bondProperties);
   }
   // std::cerr << "\t\tbondCompat: " << b1->getIdx() << "-" << b2->getIdx() <<
   // ":"
