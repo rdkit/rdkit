@@ -366,8 +366,6 @@ void doPartInitialFragmentation(
   bool timedOut = false;
   while (true) {
     std::int64_t thisRB = ++mostRecentRingBond;
-    // std::cout << "ring bond " << thisRB << " of " << lastRingBond << " and "
-    // << tmpFrags.size() << std::endl;
     if (thisRB > lastRingBond) {
       break;
     }
@@ -575,7 +573,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     return fragments;
   }
 
-  // Keep unique SMILES onlyu
+  // Keep unique SMILES only
   std::sort(tmpFrags.begin(), tmpFrags.end(),
             [](const auto &lhs, const auto &rhs) -> bool {
               return lhs.first < rhs.first;
