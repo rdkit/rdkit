@@ -342,6 +342,9 @@ void SynthonSpace::readStream(std::istream &is, bool &cancelled) {
     reaction->buildConnectorRegions();
     reaction->assignConnectorsUsed();
     reaction->assessRingFormers();
+    if (reaction->getNumRingFormers()) {
+      d_hasRingFormer = true;
+    }
     d_numProducts += reaction->getNumProducts();
     if (reaction->getSynthons().size() > d_maxNumSynthons) {
       d_maxNumSynthons = reaction->getSynthons().size();
@@ -587,6 +590,9 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
   }
   for (const auto &[id, reaction] : d_reactions) {
     reaction->assessRingFormers();
+    if (reaction->getNumRingFormers()) {
+      d_hasRingFormer = true;
+    }
     if (reaction->getSynthons().size() > d_maxNumSynthons) {
       d_maxNumSynthons = reaction->getSynthons().size();
     }

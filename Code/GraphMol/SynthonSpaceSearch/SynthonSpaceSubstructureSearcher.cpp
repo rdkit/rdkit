@@ -124,8 +124,8 @@ bool checkConnectorRegions(
 // Matches the pattFPs with the synthon sets in the order synthonOrder, but
 // returns the bitsets in the original order.
 std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
-    const std::vector<std::unique_ptr<ExplicitBitVect>> &pattFPs,
-    const SynthonSet &reaction, const std::vector<unsigned int> &synthonOrder) {
+    const std::vector<ExplicitBitVect *> &pattFPs, const SynthonSet &reaction,
+    const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> passedFPs;
   for (const auto &synthonSet : reaction.getSynthons()) {
     passedFPs.emplace_back(synthonSet.size());
@@ -207,6 +207,83 @@ std::vector<std::vector<size_t>> getHitSynthons(
   return retSynthons;
 }
 
+std::vector<std::unique_ptr<ROMol>> mergeFragments(
+    size_t i, size_t one, size_t two, const std::vector<size_t> &others,
+    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
+  std::vector<std::unique_ptr<ROMol>> retFrags;
+  retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[i]));
+  retFrags.emplace_back(
+      std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
+  for (auto o : others) {
+    if (o != one && o != two) {
+      retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[o]));
+    }
+  }
+  return retFrags;
+}
+std::vector<std::unique_ptr<ROMol>> mergeFragments(
+    size_t i, size_t one, size_t two, size_t three, size_t four,
+    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
+  std::vector<std::unique_ptr<ROMol>> retFrags;
+  retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[i]));
+  retFrags.emplace_back(
+      std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
+  retFrags.emplace_back(
+      std::unique_ptr<ROMol>(combineMols(*fragSet[three], *fragSet[four])));
+  return retFrags;
+}
+
+// If there is a ring-forming reaction, we will need to merge all possible
+// pairs of fragments creating multiple possible fragment sets.  Do that for
+// all fragSets of size more than 2.
+std::vector<std::vector<std::unique_ptr<ROMol>>> mergeRingFormingFrags(
+    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
+  std::vector<std::vector<std::unique_ptr<ROMol>>> fragSetCps;
+
+  // There can be 1 or 2 ring closures in a reaction, so
+  // either 2 of the synthons will be bidentate (1 ring closure), or
+  // 1 synthon will be 4-dentate.
+  // We need to allow for a query that only has a part-ring trying to match
+  // it. O=c1ncnc([c])c1[c] was ground zero for this. For a 1 ring-former,
+  // take each bi-dentate fragment and make all combinations of 1 pair from
+  // the rest and then the rest. Within the current constraint of only 4
+  // connectors being allowed, 2 ring forming reactions must mean a single
+  // 4-connector fragment and 4 1-connector fragments
+  const auto &connPatts = details::getConnectorPatterns(fragSet);
+  for (size_t i = 0; i < connPatts.size(); ++i) {
+    if (connPatts[i].count() > 1) {
+      std::vector<size_t> others;
+      for (size_t j = 0; j < connPatts.size(); ++j) {
+        if (i != j) {
+          others.push_back(j);
+        }
+      }
+      // If there are only 2 other fragments, it's easy
+      if (others.size() == 2) {
+        fragSetCps.push_back(
+            mergeFragments(i, others[0], others[1], others, fragSet));
+      } else if (others.size() == 3) {
+        // Merge each possible pair, leaving the other one
+        fragSetCps.push_back(
+            mergeFragments(i, others[0], others[1], others, fragSet));
+        fragSetCps.push_back(
+            mergeFragments(i, others[0], others[2], others, fragSet));
+        fragSetCps.push_back(
+            mergeFragments(i, others[1], others[2], others, fragSet));
+      } else if (others.size() == 4) {
+        // merge all combinations of pairs - it's the 4-dentate fragment
+        fragSetCps.push_back(mergeFragments(i, others[0], others[1], others[2],
+                                            others[3], fragSet));
+        fragSetCps.push_back(mergeFragments(i, others[0], others[2], others[1],
+                                            others[3], fragSet));
+        fragSetCps.push_back(mergeFragments(i, others[1], others[2], others[0],
+                                            others[3], fragSet));
+      }
+    }
+  }
+  return fragSetCps;
+}
+
 }  // namespace
 
 unsigned int SynthonSpaceSubstructureSearcher::getNumQueryFragmentsRequired() {
@@ -217,6 +294,27 @@ unsigned int SynthonSpaceSubstructureSearcher::getNumQueryFragmentsRequired() {
 
 void SynthonSpaceSubstructureSearcher::extraSearchSetup(
     std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) {
+  if (getSpace().getHasRingFormer()) {
+    // If there is a reaction that has a pair of synthons that form a ring,
+    // extra merged fragments are required.
+    std::vector<std::vector<std::unique_ptr<ROMol>>> extraFragSets;
+    for (const auto &fragSet : fragSets) {
+      // There's no need to do this for a fragSet of size 2, because if there
+      // is a ring-forming reaction both fragments will be bi-dentate so might
+      // match, or at least one of them isn't, in which case there can't be a
+      // match.
+      if (fragSet.size() > 2) {
+        auto fragSetCps = mergeRingFormingFrags(fragSet);
+        for (auto &fs : fragSetCps) {
+          extraFragSets.emplace_back(std::move(fs));
+        }
+      }
+    }
+    for (auto &fs : extraFragSets) {
+      fragSets.emplace_back(std::move(fs));
+    }
+  }
+
   bool cancelled = false;
   auto fragSmiToFrag = details::mapFragsBySmiles(fragSets, cancelled);
   if (cancelled) {
@@ -311,142 +409,6 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
   }
 }
 
-namespace {
-std::vector<std::unique_ptr<ROMol>> mergeFragments(
-    size_t i, size_t one, size_t two, const std::vector<size_t> &others,
-    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
-  std::vector<std::unique_ptr<ROMol>> retFrags;
-  retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[i]));
-  retFrags.emplace_back(
-      std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
-  for (auto o : others) {
-    if (o != one && o != two) {
-      retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[o]));
-    }
-  }
-  return retFrags;
-}
-std::vector<std::unique_ptr<ROMol>> mergeFragments(
-    size_t i, size_t one, size_t two, size_t three, size_t four,
-    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
-  std::vector<std::unique_ptr<ROMol>> retFrags;
-  retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[i]));
-  retFrags.emplace_back(
-      std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
-  retFrags.emplace_back(
-      std::unique_ptr<ROMol>(combineMols(*fragSet[three], *fragSet[four])));
-  return retFrags;
-}
-
-std::vector<std::unique_ptr<ExplicitBitVect>> mergeBitVects(
-    size_t i, size_t one, size_t two, const std::vector<size_t> &others,
-    const std::vector<ExplicitBitVect *> &bitVects) {
-  std::vector<std::unique_ptr<ExplicitBitVect>> retVects;
-  retVects.emplace_back(std::make_unique<ExplicitBitVect>(*bitVects[i]));
-  retVects.emplace_back(
-      std::make_unique<ExplicitBitVect>(*bitVects[one] | *bitVects[two]));
-  for (auto o : others) {
-    if (o != one && o != two) {
-      retVects.emplace_back(std::make_unique<ExplicitBitVect>(*bitVects[o]));
-    }
-  }
-  return retVects;
-}
-std::vector<std::unique_ptr<ExplicitBitVect>> mergeBitVects(
-    size_t i, size_t one, size_t two, size_t three, size_t four,
-    const std::vector<ExplicitBitVect *> &bitVects) {
-  std::vector<std::unique_ptr<ExplicitBitVect>> retVects;
-  retVects.emplace_back(std::make_unique<ExplicitBitVect>(*bitVects[i]));
-  retVects.emplace_back(
-      std::make_unique<ExplicitBitVect>(*bitVects[one] | *bitVects[two]));
-  retVects.emplace_back(
-      std::make_unique<ExplicitBitVect>(*bitVects[three] | *bitVects[four]));
-  return retVects;
-}
-
-// If this is a ring-forming reaction, merge all possible pairs or fragments,
-// creating multiple possible fragment sets
-std::pair<std::vector<std::vector<std::unique_ptr<ROMol>>>,
-          std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>>>
-mergeRingFormingFrags(const std::vector<std::unique_ptr<ROMol>> &fragSet,
-                      const std::vector<ExplicitBitVect *> &pattFPs,
-                      const SynthonSet &reaction) {
-  std::vector<std::vector<std::unique_ptr<ROMol>>> fragSetCps;
-  std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> pattFPsMerged;
-  // A copy of the input set will always be needed.
-  fragSetCps.push_back(std::vector<std::unique_ptr<ROMol>>());
-  pattFPsMerged.push_back(std::vector<std::unique_ptr<ExplicitBitVect>>());
-  for (unsigned int i = 0; i < fragSet.size(); ++i) {
-    fragSetCps.back().emplace_back(std::make_unique<ROMol>(*fragSet[i]));
-    pattFPsMerged.back().emplace_back(
-        std::make_unique<ExplicitBitVect>(*pattFPs[i]));
-  }
-  // If there are only 1 or 2 query fragments, no complications arise
-  if (fragSet.size() < 3) {
-    return std::make_pair(std::move(fragSetCps), std::move(pattFPsMerged));
-  }
-
-  if (reaction.getNumRingFormers() > 0) {
-    // This is the case where there's 1 or 2 ring closures in the reaction, so
-    // either 2 of the synthons will be bidentate (1 ring closure), or
-    // 1 synthon will be 4-dentate.
-    // We need to allow for a query that only has a part-ring trying to match
-    // it. O=c1ncnc([c])c1[c] was ground zero for this. For a 1 ring-former,
-    // take each bi-dentate fragment and make all combinations of 1 pair from
-    // the rest and then the rest. Within the current constraint of only 4
-    // connectors being allowed, 2 ring forming reactions must mean a single
-    // 4-connector fragment and 4 1-connector fragments
-    const auto &connPatts = details::getConnectorPatterns(fragSet);
-    for (size_t i = 0; i < connPatts.size(); ++i) {
-      if (connPatts[i].count() > 1) {
-        std::vector<size_t> others;
-        for (size_t j = 0; j < connPatts.size(); ++j) {
-          if (i != j) {
-            others.push_back(j);
-          }
-        }
-        // If there are only 2 other fragments, it's easy
-        if (others.size() == 2) {
-          fragSetCps.push_back(
-              mergeFragments(i, others[0], others[1], others, fragSet));
-          pattFPsMerged.push_back(
-              mergeBitVects(i, others[0], others[1], others, pattFPs));
-        } else if (others.size() == 3) {
-          // Merge each possible pair, leaving the other one
-          fragSetCps.push_back(
-              mergeFragments(i, others[0], others[1], others, fragSet));
-          fragSetCps.push_back(
-              mergeFragments(i, others[0], others[2], others, fragSet));
-          fragSetCps.push_back(
-              mergeFragments(i, others[1], others[2], others, fragSet));
-          pattFPsMerged.push_back(
-              mergeBitVects(i, others[0], others[1], others, pattFPs));
-          pattFPsMerged.push_back(
-              mergeBitVects(i, others[0], others[2], others, pattFPs));
-          pattFPsMerged.push_back(
-              mergeBitVects(i, others[1], others[2], others, pattFPs));
-        } else if (others.size() == 4) {
-          // merge all combinations of pairs - it's the 4-dentate fragment
-          fragSetCps.push_back(mergeFragments(i, others[0], others[1],
-                                              others[2], others[3], fragSet));
-          fragSetCps.push_back(mergeFragments(i, others[0], others[2],
-                                              others[1], others[3], fragSet));
-          fragSetCps.push_back(mergeFragments(i, others[1], others[2],
-                                              others[0], others[3], fragSet));
-          pattFPsMerged.push_back(mergeBitVects(i, others[0], others[1],
-                                                others[2], others[3], pattFPs));
-          pattFPsMerged.push_back(mergeBitVects(i, others[0], others[2],
-                                                others[1], others[3], pattFPs));
-          pattFPsMerged.push_back(mergeBitVects(i, others[1], others[2],
-                                                others[0], others[3], pattFPs));
-        }
-      }
-    }
-  }
-  return std::make_pair(std::move(fragSetCps), std::move(pattFPsMerged));
-}
-}  // namespace
-
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSubstructureSearcher::searchFragSet(
     const std::vector<std::unique_ptr<ROMol>> &fragSet,
@@ -466,67 +428,68 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
   if (fragSet.size() > reaction.getConnectors().count() + 1) {
     return results;
   }
-  auto [fragSetCps, mergedPattFPs] =
-      mergeRingFormingFrags(fragSet, pattFPs, reaction);
 
-  for (size_t fragNum = 0; fragNum < fragSetCps.size(); ++fragNum) {
-    const auto &fragSetCp = fragSetCps[fragNum];
-    const auto &mergedPattFp = mergedPattFPs[fragNum];
-    // Check that all the frags have a connector region that matches something
-    // in this reaction set.  Skip if not.
-    std::vector<std::vector<ROMol *>> connRegs;
-    std::vector<std::vector<const std::string *>> connRegSmis;
-    std::vector<std::vector<ExplicitBitVect *>> connRegFPs;
-    getConnectorRegions(fragSetCp, connRegs, connRegSmis, connRegFPs);
-    if (!checkConnectorRegions(reaction, connRegs, connRegSmis, connRegFPs)) {
+  // Check that all the frags have a connector region that matches something
+  // in this reaction set.  Skip if not.
+  std::vector<std::vector<ROMol *>> connRegs;
+  std::vector<std::vector<const std::string *>> connRegSmis;
+  std::vector<std::vector<ExplicitBitVect *>> connRegFPs;
+  getConnectorRegions(fragSet, connRegs, connRegSmis, connRegFPs);
+  if (!checkConnectorRegions(reaction, connRegs, connRegSmis, connRegFPs)) {
+    return results;
+  }
+
+  // Need to copy fragSet into a working set, then apply the results to
+  // the working copy below.
+  std::vector<std::unique_ptr<ROMol>> fragSetCp(fragSet.size());
+  for (unsigned int i = 0; i < fragSet.size(); ++i) {
+    fragSetCp[i] = std::make_unique<ROMol>(*fragSet[i]);
+  }
+
+  // Get all the possible permutations of connector numbers compatible with
+  // the number of synthon sets in this reaction.  So if the
+  // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
+  // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
+  // that might be how they're labelled in the reaction database.
+
+  const auto connCombs = details::getConnectorPermutations(
+      fragSetCp, conns, reaction.getConnectors());
+
+  // Select only the synthons that have fingerprints that are a superset
+  // of the fragment fingerprints.
+  // Need to try all combinations of synthon orders.
+  const auto synthonOrders =
+      details::permMFromN(fragSetCp.size(), reaction.getSynthons().size());
+  for (const auto &so : synthonOrders) {
+    auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, so);
+    // If none of the synthons passed the screens, move right along, nothing
+    // to see.
+    const bool skip = std::all_of(
+        passedScreens.begin(), passedScreens.end(),
+        [](const boost::dynamic_bitset<> &s) -> bool { return s.none(); });
+    if (skip) {
       continue;
     }
 
-    // Get all the possible permutations of connector numbers compatible with
-    // the number of synthon sets in this reaction.  So if the
-    // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
-    // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
-    // that might be how they're labelled in the reaction database.
-
-    const auto connCombs = details::getConnectorPermutations(
-        fragSetCp, conns, reaction.getConnectors());
-
-    // Select only the synthons that have fingerprints that are a superset
-    // of the fragment fingerprints.
-    // Need to try all combinations of synthon orders.
-    const auto synthonOrders =
-        details::permMFromN(fragSetCp.size(), reaction.getSynthons().size());
-    for (const auto &so : synthonOrders) {
-      auto passedScreens = screenSynthonsWithFPs(mergedPattFp, reaction, so);
-      // If none of the synthons passed the screens, move right along, nothing
-      // to see.
-      const bool skip = std::all_of(
-          passedScreens.begin(), passedScreens.end(),
-          [](const boost::dynamic_bitset<> &s) -> bool { return s.none(); });
-      if (skip) {
-        continue;
-      }
-
-      // Find all synthons that match the fragments with each connector
-      // combination.
-      for (const auto &connComb : connCombs) {
-        for (size_t i = 0; i < connComb.size(); ++i) {
-          for (const auto &[atom, isotopeNum] : connComb[i]) {
-            atom->setIsotope(isotopeNum);
-            if (atom->hasQuery()) {
-              atom->setQuery(makeAtomTypeQuery(0, false));
-              atom->expandQuery(makeAtomIsotopeQuery(isotopeNum));
-            }
+    // Find all synthons that match the fragments with each connector
+    // combination.
+    for (const auto &connComb : connCombs) {
+      for (size_t i = 0; i < connComb.size(); ++i) {
+        for (const auto &[atom, isotopeNum] : connComb[i]) {
+          atom->setIsotope(isotopeNum);
+          if (atom->hasQuery()) {
+            atom->setQuery(makeAtomTypeQuery(0, false));
+            atom->expandQuery(makeAtomIsotopeQuery(isotopeNum));
           }
         }
-        auto theseSynthons =
-            getHitSynthons(fragSetCp, passedScreens, reaction, so);
-        if (!theseSynthons.empty()) {
-          std::unique_ptr<SynthonSpaceHitSet> hs(
-              new SynthonSpaceHitSet(reaction, theseSynthons, fragSet));
-          if (hs->numHits) {
-            results.push_back(std::move(hs));
-          }
+      }
+      auto theseSynthons =
+          getHitSynthons(fragSetCp, passedScreens, reaction, so);
+      if (!theseSynthons.empty()) {
+        std::unique_ptr<SynthonSpaceHitSet> hs(
+            new SynthonSpaceHitSet(reaction, theseSynthons, fragSet));
+        if (hs->numHits) {
+          results.push_back(std::move(hs));
         }
       }
     }

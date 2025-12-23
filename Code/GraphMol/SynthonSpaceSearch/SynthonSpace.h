@@ -385,7 +385,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   bool hasFingerprints() const;
 
   bool hasAddAndSubstractFingerprints() const;
-
+  // Return whether the space contains a ring-forming reaction.
+  bool getHasRingFormer() const { return d_hasRingFormer; }
   // Take the SMILES for a Synthon and if it's not in
   // d_synthonPool make it and add it.  If it is in the pool,
   // just look it up.  Either way, return a pointer to the
@@ -422,6 +423,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // For the similarity search, this records the generator used for
   // creating synthon fingerprints that are read from a binary file.
   std::string d_fpType;
+
+  // Whether there is a ring-forming reaction in the space.
+  bool d_hasRingFormer{false};
 
   SearchResults extendedSearch(const MolBundle &query,
                                const SubstructMatchParameters &matchParams,
