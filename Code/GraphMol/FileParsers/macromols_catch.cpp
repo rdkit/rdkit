@@ -122,73 +122,6 @@ class ScsiMolTest {
           scsiTest->querySgroupCount);
   }
 
-  void testFullnameAttr() {
-    BOOST_LOG(rdInfoLog) << "testing scsr  files" << std::endl;
-
-    INFO("Attribute Check for FULLNAME");
-    std::string rdbase = getenv("RDBASE");
-    std::string fName =
-        rdbase +
-        "/Code/GraphMol/FileParsers/test_data/macromols/RiboseFullname.mol";
-
-    RDKit::v2::FileParsers::MolFileParserParams pp;
-    pp.sanitize = true;
-    pp.removeHs = false;
-    pp.strictParsing = true;
-
-    RDKit::v2::FileParsers::MolFromSCSRParams molFromSCSRParams;
-    molFromSCSRParams.includeLeavingGroups = true;
-    molFromSCSRParams.scsrBaseHbondOptions = SCSRBaseHbondOptions::UseSapAll;
-
-    std::unique_ptr<RDKit::SCSRMol> scsrMol;
-    REQUIRE_NOTHROW(scsrMol = SCSRMolFromSCSRFile(fName, pp));
-
-    // check for new attributes including FULLNAME
-
-    auto template1 = scsrMol->getTemplate(0);
-    std::string attrValue = "";
-
-    if (!template1->getPropIfPresent("FULLNAME", attrValue) ||
-        attrValue != "Adenine") {
-      FAIL("FULLNAME attribute not found or incorrect");
-    }
-
-    if (!template1->getPropIfPresent("COMMENT", attrValue) ||
-        attrValue != "testComment") {
-      FAIL("COMMENT attribute not found or incorrect");
-    }
-    if (!template1->getPropIfPresent("CATEGORY", attrValue) ||
-        attrValue != "cat") {
-      FAIL("CATEGORY attribute not found or incorrect");
-    }
-    if (!template1->getPropIfPresent("UNIQUEID", attrValue) ||
-        attrValue != "uniqueid1") {
-      FAIL("UNIQUEID attribute not found or incorrect");
-    }
-
-    if (!template1->getPropIfPresent("CASNUMBER", attrValue) ||
-        attrValue != "111-22222-33") {
-      FAIL("CASNUMBER attribute not found or incorrect");
-    }
-
-    if (!template1->getPropIfPresent("COLLABORATOR", attrValue) ||
-        attrValue != "col2") {
-      FAIL("COLLABORATOR attribute not found or incorrect");
-    }
-
-    if (!template1->getPropIfPresent("PROTECTION", attrValue) ||
-        attrValue != "keep") {
-      FAIL("PROTECTION attribute not found or incorrect");
-    }
-
-    auto template3 = scsrMol->getTemplate(2);
-    if (!template3->getPropIfPresent("FULLNAME", attrValue) ||
-        attrValue != "Phosphate with extra \"spaces\" and special chars%") {
-      FAIL(
-          "FULLNAME with spaces and special chars attribute not found or incorrect");
-    }
-  }
-
   void threeLetterCodeTest(const ScsiTest *scsiTest) {
     BOOST_LOG(rdInfoLog) << "testing scsr  files with three letter codes"
                          << std::endl;
@@ -367,13 +300,6 @@ TEST_CASE("scsiTests", "scsiTests") {
 
       scsiMolTest.testScsiFiles(&scsiTest);
     }
-  }
-}
-
-TEST_CASE("scsiFullnameAttr", "scsiFullnameAttr") {
-  SECTION("basics") {
-    ScsiMolTest scsiMolTest;
-    scsiMolTest.testFullnameAttr();
   }
 }
 

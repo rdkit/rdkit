@@ -13,7 +13,6 @@
 #include <RDGeneral/StreamOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <GraphMol/SCSRMol.h>
 
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
@@ -24,6 +23,123 @@ namespace RDKit {
 
 namespace v2 {
 namespace FileParsers {
+
+class SCSRMol {
+ private:
+  std::unique_ptr<ROMol> p_mol;
+  std::vector<std::unique_ptr<ROMol>> p_templates;
+
+ public:
+  SCSRMol() {};
+  SCSRMol(const SCSRMol &other) = delete;
+  SCSRMol(SCSRMol &&other) noexcept = delete;
+  SCSRMol &operator=(SCSRMol &&other) noexcept = delete;
+
+  SCSRMol &operator=(const SCSRMol &) = delete;  // disable assignment
+  ~SCSRMol() {}
+
+  void addTemplate(std::unique_ptr<ROMol> templateMol) {
+    PRECONDITION(templateMol, "bad template molecule");
+    p_templates.push_back(std::move(templateMol));
+  }
+
+  unsigned int getTemplateCount() const { return p_templates.size(); }
+
+  ROMol *getTemplate(unsigned int index) { return p_templates[index].get(); };
+
+  const ROMol *getMol() const { return p_mol.get(); }
+
+  void setMol(std::unique_ptr<ROMol> mol) {
+    PRECONDITION(mol, "bad molecule");
+    p_mol = std::move(mol);
+  };
+};
+
+// TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment FULLNAME=fullname
+// CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx, COLLABORATOR=col,
+// PROTECTION=prot
+
+// other attributes are allowed.  We capture them and ignore them, except
+// for writing them back out
+
+// void parseTemplateLine(RWMol *templateMol, std::string lineStr,
+//                        unsigned int &line) {
+//   PRECONDITION(templateMol, "bad template molecule");
+
+//   const char *linePtr = lineStr.c_str() + 9;
+//   std::string token = getToken(linePtr, ' ');  // Template ID
+//   if (token.empty()) {
+//     std::ostringstream errout;
+//     errout << "Expected a Template ID at line  " << line;
+//     throw FileParseException(errout.str());
+//   }
+//   // get the class and template names
+
+//   token = getToken(linePtr, ' ');  // Template ID
+//   if (token.empty()) {
+//     std::ostringstream errout;
+//     errout
+//         << "Type/Name(s) string of the form \"AA/Gly/G/\" was not found at
+//         line  "
+//         << line;
+//     throw FileParseException(errout.str());
+//   }
+
+//   // get the class and template names from the token
+//   std::vector<std::string> subTokens;
+//   boost::algorithm::split(subTokens, token,
+//   boost::algorithm::is_any_of("/")); if (subTokens.size() < 3) {
+//     std::ostringstream errout;
+//     errout << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line
+//     "
+//            << line;
+//     throw FileParseException(errout.str());
+//   }
+
+//   templateMol->setProp(common_properties::molAtomClass, subTokens[0]);
+
+//   std::vector<std::string> templateNames;
+//   for (unsigned int i = 1; i < subTokens.size(); ++i) {
+//     if (subTokens[i] != "") {
+//       templateNames.push_back(subTokens[i]);
+//     }
+//   }
+//   templateMol->setProp(common_properties::templateNames, templateNames);
+
+//   // now parse attrs of the form ATTRNAME=VALUE or ATTRNAME="VALUE WITH
+//   // SPACES"
+
+//   while (true) {
+//     std::string attrName = getToken(linePtr, '=');
+//     if (attrName.empty()) {
+//       break;
+//     }
+//     std::string attrValue;
+//     if (*linePtr == '"') {
+//       attrValue = getQuotedToken(linePtr);
+//     } else {
+//       attrValue = getToken(linePtr, ' ');
+//     }
+
+//     templateMol->setProp(attrName, attrValue);
+//   }
+
+//   if (*linePtr != '\0') {
+//     std::ostringstream errout;
+//     errout
+//         << "extra characters at the end of a TEMPLATE definition line at
+//         line  "
+//         << line;
+//     throw FileParseException(errout.str());
+//   }
+
+//   return;
+// }
+
+// if (lineStr.substr(0, 9) != "TEMPLATE ") {
+//   std::ostringstream errout;
+//   errout << "Expected \"TEMPLATE\" at line  " << line;
+//   throw FileParseException(errout.str());
 
 void skipSpaces(const char *&linePtr) {
   while (*linePtr == ' ') {
@@ -76,9 +192,9 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
                        unsigned int &line) {
   PRECONDITION(templateMol, "bad template molecule");
 
-  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment FULLNAME=fullname
-  // CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx, COLLABORATOR=col,
-  // PROTECTION=prot
+  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment
+  // FULLNAME=fullname CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx,
+  // COLLABORATOR=col, PROTECTION=prot
 
   // other attributes are allowed.  We capture them and ignore them, except
   // for writing them back out
@@ -161,7 +277,7 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
 //  Read a SCVSR molecule from a stream
 //
 //------------------------------------------------
- std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
+static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
     std::istream &inStream, unsigned int &line,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   bool chiralityPossible = false;
@@ -185,9 +301,9 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
   }
   tempStr = FileParserUtils::getV3000Line(&inStream, line);
 
-  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment FULLNAME=fullname
-  // CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx, COLLABORATOR=col,
-  // PROTECTION=prot
+  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment
+  // FULLNAME=fullname CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx,
+  // COLLABORATOR=col, PROTECTION=prot
 
   // other attributes are allowed.  We capture them and ignore them, except
   // for writing them back out
@@ -357,7 +473,7 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
 //  Read a molecule from a string
 //
 //------------------------------------------------
-std::unique_ptr<SCSRMol> SCSRMolFromSCSRBlock(
+static std::unique_ptr<SCSRMol> SCSRMolFromSCSRBlock(
     const std::string &molBlock,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::istringstream inStream(molBlock);
@@ -370,7 +486,7 @@ std::unique_ptr<SCSRMol> SCSRMolFromSCSRBlock(
 //  Read a molecule from a file
 //
 //------------------------------------------------
- std::unique_ptr<SCSRMol> SCSRMolFromSCSRFile(
+static std::unique_ptr<SCSRMol> SCSRMolFromSCSRFile(
     const std::string &fName, const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
@@ -508,9 +624,9 @@ class MolFromSCSRMolConverter {
     }
 
     // if here , it is a template atom
-    // there could be more than one atom in the template that matches the atom
-    // for instance, the hydrogen bonds to the template can result in multiple
-    // hydrogen bonds in the expanded molecule
+    // there could be more than one atom in the template that matches the
+    // atom for instance, the hydrogen bonds to the template can result in
+    // multiple hydrogen bonds in the expanded molecule
 
     std::vector<std::pair<unsigned int, std::string>> attchOrds;
     atom->getProp(common_properties::molAttachOrderTemplate, attchOrds);
@@ -545,9 +661,9 @@ class MolFromSCSRMolConverter {
       std::vector<std::unique_ptr<SubstanceGroup>> &newSgroups,
       RDKit::Conformer *newConf, const RDGeom::Point3D &coordOffset) {
     // add a superatom sgroup to mark the atoms from this macro atom
-    // expansion. These new superatom sgroups are not put into the output mol
-    // yet, because the bonds have not be added to the mol nor to the sgroup.
-    // They are saved in an array to be added later
+    // expansion. These new superatom sgroups are not put into the output
+    // mol yet, because the bonds have not be added to the mol nor to the
+    // sgroup. They are saved in an array to be added later
 
     const std::string typ = "SUP";
     newSgroups.emplace_back(new SubstanceGroup((ROMol *)resMol.get(), typ));
@@ -657,13 +773,13 @@ class MolFromSCSRMolConverter {
 
     // For pairs that have I or something like it, the configuration must be
     // DA, so the two atoms form the two H bonds. The other side (C,U or A)
-    // has confiuration of AAD (C), ADA (U), or DAD (A). For C-type bases and
-    // A type bases, the second and third atoms are used (AD), and for U
+    // has confiuration of AAD (C), ADA (U), or DAD (A). For C-type bases
+    // and A type bases, the second and third atoms are used (AD), and for U
     // types, the first two atoms are used (AD).
 
     // for the GU pair, both sides have 3 atoms, but they are not
-    // complimentary.  The second and third sites on the G side are used (DA),
-    // and the first two sites on the U side are used (AD).
+    // complimentary.  The second and third sites on the G side are used
+    // (DA), and the first two sites on the U side are used (AD).
 
     // in any other case, we punt and add just one bond,  between the first
     // atom on both sides even if they are NOT complemenary.  This just
