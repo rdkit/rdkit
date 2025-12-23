@@ -286,14 +286,14 @@ void Atom::setAtomicNum(int newNum) {
 }
 std::string Atom::getSymbol() const {
   int atomicNum = getAtomicNum();
-  if (atomicNum == 0) {
-    // handle dummies differently:
-    std::string res;
-    dp_dataMol->getAtomPropIfPresent<std::string>(
-        common_properties::dummyLabelToken, d_index, res);
-    return res;
+  std::string res;
+  // handle dummies differently:
+  if (atomicNum != 0 ||
+      !dp_dataMol->getAtomPropIfPresent<std::string>(
+          common_properties::dummyLabelToken, d_index, res)) {
+    res = PeriodicTable::getTable()->getElementSymbol(atomicNum);
   }
-  return PeriodicTable::getTable()->getElementSymbol(atomicNum);
+  return res;
 }
 ROMol &Atom::getOwningMol() const {
   PRECONDITION(dp_owningMol != nullptr, "no owner");
