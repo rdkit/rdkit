@@ -227,19 +227,25 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
 
     // loop over the central atom's (the first atom in match) bonds
     // and duplicate any that connect to the remainder of the molecule:
+    // Collect neighbor indices first since addBond will invalidate iterators
     Atom *origAtom = newMol->getAtomWithIdx(match[0]);
+    std::vector<unsigned int> neighbors;
     ROMol::ADJ_ITER nbrIdx, endNbrs;
     boost::tie(nbrIdx, endNbrs) = newMol->getAtomNeighbors(origAtom);
     while (nbrIdx != endNbrs) {
+      neighbors.push_back(*nbrIdx);
+      nbrIdx++;
+    }
+
+    for (auto neighborIdx : neighbors) {
       // we don't want to duplicate any "intra-match" bonds:
       if (!std::binary_search(sortMatch.begin(), sortMatch.end(),
-                              int(*nbrIdx))) {
-        Bond *oBond = newMol->getBondBetweenAtoms(match[0], *nbrIdx);
+                              int(neighborIdx))) {
+        Bond *oBond = newMol->getBondBetweenAtoms(match[0], neighborIdx);
         CHECK_INVARIANT(oBond, "required bond not found");
-        newMol->addBond(numOrigAtoms + replacementConnectionPoint, *nbrIdx,
+        newMol->addBond(numOrigAtoms + replacementConnectionPoint, neighborIdx,
                         oBond->getBondType());
       }
-      nbrIdx++;
     }
 
     if (replaceAll) {
