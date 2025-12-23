@@ -551,6 +551,16 @@ void addHs(RWMol &mol, const AddHsParameters &params,
   }
   std::vector<unsigned int> numExplicitHs(mol.getNumAtoms(), 0);
   std::vector<unsigned int> numImplicitHs(mol.getNumAtoms(), 0);
+
+  // Ensure all atoms have implicit valence calculated (e.g., after unpickling)
+  // If noImplicit is false, the atom may need implicit valence calculated
+  // Skip query atoms (or atoms connected to query bonds) as they are handled separately
+  for (auto at : mol.atoms()) {
+    if (!at->getNoImplicit() && !isQueryAtom(mol, *at)) {
+      at->updatePropertyCache(false);
+    }
+  }
+
   for (auto at : mol.atoms()) {
     numExplicitHs[at->getIdx()] = at->getNumExplicitHs();
     numImplicitHs[at->getIdx()] = at->getNumImplicitHs();
@@ -559,6 +569,7 @@ void addHs(RWMol &mol, const AddHsParameters &params,
         onAtoms.set(at->getIdx(), 0);
         continue;
       }
+      
       numAddHyds += at->getNumExplicitHs();
       if (!params.explicitOnly) {
         numAddHyds += at->getNumImplicitHs();
