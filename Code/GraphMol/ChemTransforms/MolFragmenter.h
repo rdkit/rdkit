@@ -123,13 +123,13 @@ struct RDKIT_CHEMTRANSFORMS_EXPORT MolzipParams {
   std::string atomProperty;
   bool enforceValenceRules = true;
   bool generateCoordinates =
-      false;  //< if true, 2D coords will be generated for
-              //  the output molecule and assigned to the input fragments as
-              //  well
+      false;  ///< if true, 2D coords will be generated for
+              ///  the output molecule and assigned to the input fragments as
+              ///  well
   bool alignCoordinates =
-      false;  //< if true and the input fragments have coordinates,
-              //  the fragments will be aligned along connection vectors in the
-              //  output molecule
+      false;  ///< if true and the input fragments have coordinates,
+              ///  the fragments will be aligned along connection vectors in the
+              ///  output molecule
 };
 
 RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
