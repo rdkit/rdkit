@@ -224,6 +224,48 @@ RDKit::ROMol *MolFromSCSRFile(const std::string &molFilename, bool sanitize,
   return static_cast<ROMol *>(nullptr);
 }
 
+RDKit::SCSRMol *SCSRMolFromSCSRBlock(const std::string &molBlock, bool sanitize,
+                                     bool removeHs) {
+  std::istringstream inStream(molBlock);
+  unsigned int line = 0;
+  try {
+    RDKit::v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = false;
+    auto scsrMol = RDKit::v2::FileParsers::SCSRMolFromSCSRDataStream(
+        inStream, line, params);
+
+    return static_cast<SCSRMol *>(scsrMol.release());
+
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return static_cast<SCSRMol *>(nullptr);
+}
+
+RDKit::SCSRMol *SCSRMolFromSCSRFile(const std::string &molFilename,
+                                    bool sanitize, bool removeHs) {
+  try {
+    RDKit::v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = false;
+    auto mol = RDKit::v2::FileParsers::SCSRMolFromSCSRFile(molFilename, params);
+
+    return static_cast<SCSRMol *>(mol.release());
+
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return static_cast<SCSRMol *>(nullptr);
+}
+
 ROMol *MolFromMrvFile(const std::string &molFilename, bool sanitize,
                       bool removeHs) {
   RWMol *newM = nullptr;
@@ -1276,7 +1318,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               python::return_value_policy<python::manage_new_object>());
 
   docString =
-      "Construct a molecule from an SCSR Mol block.\n\n\
+      "Construct a molecule from an SCSR Mol file.\n\n\
       ARGUMENTS:\n\
     \n\
         - filename: string containing the SCSR filename\n\
@@ -1296,6 +1338,48 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg("filename"), python::arg("sanitize") = true,
                python::arg("removeHs") = true,
                python::arg("molFromSCSRParams") = python::object()),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      "Construct an SCSR molecule from an SCSR Mol block.\n\n\
+      ARGUMENTS:\n\
+    \n\
+        - molBlock: string containing the SCSR Mol block\n\
+    \n\
+        - sanitize: (optional) toggles sanitization of the molecule.\n\
+          Defaults to True.\n\
+    \n\
+        - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+          This only make sense when sanitization is done.\n\
+          Defaults to true.\n\
+    \n RETURNS :\n\
+    \n a Mol object, None on failure.\n\
+    \n ";
+  python::def("SCSRMolFromSCSRBlock", RDKit::SCSRMolFromSCSRBlock,
+              (python::arg("molBlock"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      "Construct an SCSR molecule from an SCSR Mol file.\n\n\
+      ARGUMENTS:\n\
+    \n\
+        - filename: string containing the SCSR filename\n\
+    \n\
+        - sanitize: (optional) toggles sanitization of the molecule.\n\
+          Defaults to True.\n\
+    \n\
+        - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+          This only make sense when sanitization is done.\n\
+          Defaults to true.\n\
+    \n RETURNS :\n\
+    \n a Mol object, None on failure.\n\
+    \n ";
+  python::def("SCSRMolFromSCSRFile", RDKit::SCSRMolFromSCSRFile,
+              (python::arg("filename"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
@@ -2584,7 +2668,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
           "restoreBondDirs", &RDKit::PNGMetadataParams::restoreBondDirs,
           "choose what to do with bond dirs in the CXSMILES string (default=rdkit.Chem.rdmolfiles.RestoreBondDirOption.RestoreBondDirOptionClear)")
       .def("__setattr__", &safeSetattr);
-      
+
   docString =
       R"DOC(Construct a molecule from metadata in a PNG string.
 
