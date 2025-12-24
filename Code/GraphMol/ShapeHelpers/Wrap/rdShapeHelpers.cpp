@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2005-2006 Rational Discovery LLC
+//   Copyright (C) 2005-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -158,8 +157,6 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
       "molecules";
 
   rdkit_import_array();
-
-  // RegisterListConverter<RDKit::Atom*>();
 
   std::string docString =
       "Encode the shape of a molecule (one of its conformer) onto a grid\n\n\

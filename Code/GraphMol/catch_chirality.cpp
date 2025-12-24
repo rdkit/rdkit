@@ -1251,6 +1251,17 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 2);
   }
+  SECTION("bad ring chirality due to pair being in 2 rings") {
+    // from canonicalization watch test.
+
+    auto mol = "[O-]C1=C2C[C@H](C2)[C@@]12CC2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
+  }
   SECTION(
       "Removal of stereoatoms requires removing CIS/TRANS when using legacy stereo") {
     UseLegacyStereoPerceptionFixture reset_stereo_perception(false);

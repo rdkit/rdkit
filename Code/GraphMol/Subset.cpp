@@ -36,6 +36,7 @@ static void copySelectedAtomsAndBonds(RWMol &extracted_mol,
 
     std::unique_ptr<Atom> extracted_atom{
         options.copyAsQuery ? new QueryAtom(*ref_atom) : ref_atom->copy()};
+    extracted_atom->clearComputedProps();
 
     constexpr bool updateLabel = false;
     constexpr bool takeOwnership = true;
