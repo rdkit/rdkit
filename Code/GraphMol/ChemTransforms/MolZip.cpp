@@ -369,20 +369,18 @@ void rotateFragmentToBondVector(
   RDGeom::Transform3D templateTform;
   templateTform.SetTranslation(Pma);
 
-  double sinT, cosT;
-  cosT = Us.dotProduct(Um);
-  if (cosT > 1.0) cosT = 1.0;
+  auto cosT = Us.dotProduct(Um);
   if (fabs(cosT) < 1.0) {
-    sinT = sqrt(1.0 - cosT * cosT);
+    auto sinT = sqrt(1.0 - cosT * cosT);
     RDGeom::Point3D rotnAxis = Us.crossProduct(Um);
     rotnAxis.normalize();
     templateTform.SetRotation(cosT, sinT, rotnAxis);
-  } else if (cosT == 1.0) {
+  } else {
     RDGeom::Point3D normal(1, 0, 0);
     if (fabs(Us.dotProduct(normal)) == 1.0) {
       normal = RDGeom::Point3D(0, 1, 0);
     }
-    RDGeom::Point3D rotnAxis = Us.crossProduct(normal);
+    auto rotnAxis = Us.crossProduct(normal);
     templateTform.SetRotation(-1, 0, rotnAxis);
   }
 
@@ -396,9 +394,8 @@ void rotateFragmentToBondVector(
   // ---------
   auto fragId = fragmentForAtom[b.getIdx()];
   for (const auto atomIdx : atomsInFragment.at(fragId)) {
-    RDGeom::Point3D pos = conf.getAtomPos(atomIdx);
+    auto &pos = conf.getAtomPos(atomIdx);
     templateTform.TransformPoint(pos);
-    conf.setAtomPos(atomIdx, pos);
   }
 }
 
