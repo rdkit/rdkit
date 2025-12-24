@@ -869,3 +869,81 @@ O=C1NC=NC([2*])=C1[1*]	227	2	r2	1
     CHECK(res3.getHitMolecules().size() == 1);
   }
 }
+
+TEST_CASE("Github 9007") {
+  auto q1 = "O=c1ncnc([a])c1[a]"_smarts;
+  REQUIRE(q1);
+  auto q2 = "O=c1ncnc([c])c1[c]"_smarts;
+  REQUIRE(q2);
+  {
+    // Basic test. In the original bug, q1 gave hits, q2 didn't.  q1 gave
+    // them for the wrong reason, though.
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+[1*]c1nc[nH]c(=O)c1[2*]	1	1	r1	1
+[1*]ccc(c[2*])[N+](=O)[O-]	10	2	r1	1
+[2*]ncc(c[1*])[N+](=O)[O-]	11	2	r1	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+
+    auto res1 = space.substructureSearch(*q1);
+    CHECK(res1.getHitMolecules().size() == 2);
+
+    auto res2 = space.substructureSearch(*q2);
+    CHECK(res2.getHitMolecules().size() == 1);
+
+    // Simpler case of just 1 dangling subsituent
+    auto q6 = "O=c1ncncc1c"_smarts;
+    REQUIRE(q6);
+    auto res6 = space.substructureSearch(*q6);
+    CHECK(res6.getHitMolecules().size() == 1);
+    auto q7 = "O=c1ncncc1a"_smarts;
+    REQUIRE(q7);
+    auto res7 = space.substructureSearch(*q7);
+    CHECK(res7.getHitMolecules().size() == 2);
+  }
+  {
+    // More complex case - 1 ring creation, extra substituent
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+[1*]C1:C([2*])C(=O)N([3*])C=N1	192	1	r2	1
+[1*]cc(C)cc([2*])Br	227	2	r2	1
+[3*]c1c(Cl)ncnc1Cl	384	3	r2	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+
+    auto res1 = space.substructureSearch(*q1);
+    CHECK(res1.getHitMolecules().size() == 1);
+    auto res2 = space.substructureSearch(*q2);
+    CHECK(res2.getHitMolecules().size() == 1);
+
+    auto q3 = "O=c1n(c)cnc(c)c1c"_smarts;
+    auto res3 = space.substructureSearch(*q3);
+    CHECK(res3.getHitMolecules().size() == 1);
+  }
+  {
+    // 2 ring creations.
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+[1*]C1:C([2*])C(=O)N([3*])C([4*])=N1	1	1	r1	1
+[1*]ccc(c[2*])[N+](=O)[O-]	10	2	r1	1
+[3*]CCCC[4*]	100	3	r1	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+
+    auto q4 = "O=c1n(C)c(C)nc(c)c(c)1"_smarts;
+    REQUIRE(q4);
+    auto res4 = space.substructureSearch(*q4);
+    CHECK(res4.getHitMolecules().size() == 1);
+    auto q5 = "O=c1n([A])c([A])nc([a])c([a])1"_smarts;
+    REQUIRE(q5);
+    auto res5 = space.substructureSearch(*q5);
+    CHECK(res5.getHitMolecules().size() == 1);
+  }
+}

@@ -57,6 +57,7 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
       std::pair<void *, std::vector<std::unique_ptr<ExplicitBitVect>> *>>
       d_connRegFPs;
 
+  unsigned int getNumQueryFragmentsRequired() override;
   void extraSearchSetup(
       std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) override;
 
