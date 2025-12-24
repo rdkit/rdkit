@@ -1135,7 +1135,9 @@ ROMol *copyMolSubsetHelper2(const ROMol &mol, python::object pyAtomIndices,
 ROMol *copyMolSubsetHelper3(const ROMol &mol, python::object path,
                             const SubsetOptions &options = SubsetOptions()) {
   auto pathvect = pythonObjectToVect<unsigned int>(path);
-  if (!pathvect.get()) pathvect = std::make_unique<std::vector<unsigned int>>();
+  if (!pathvect.get()) {
+    pathvect = std::make_unique<std::vector<unsigned int>>();
+  }
   return copyMolSubset(mol, *pathvect, options).release();
 }
 
@@ -1143,7 +1145,9 @@ ROMol *copyMolSubsetHelper4(const ROMol &mol, python::object path,
                             SubsetInfo &selectionInfo,
                             const SubsetOptions &options = SubsetOptions()) {
   auto pathvect = pythonObjectToVect<unsigned int>(path);
-  if (!pathvect.get()) pathvect = std::make_unique<std::vector<unsigned int>>();
+  if (!pathvect.get()) {
+    pathvect = std::make_unique<std::vector<unsigned int>>();
+  }
   return copyMolSubset(mol, *pathvect, selectionInfo, options).release();
 }
 
@@ -3007,7 +3011,8 @@ will be aligned along connection vectors in the output molecule")
         .def("setAtomSymbols", &RDKit::setAtomSymbols,
              python::args("self", "symbols"),
              "Set the atom symbols used to zip mols together when using "
-             "AtomType labeling");
+             "AtomType labeling")
+        .def("__setattr__", &safeSetattr);
 
     docString =
         "molzip: zip molecules together preserving bond and atom stereochemistry.\n\
