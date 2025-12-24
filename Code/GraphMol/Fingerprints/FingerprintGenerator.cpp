@@ -313,16 +313,6 @@ std::unique_ptr<FingerprintGenerator<std::uint64_t>> generatorFromJSON(
     }
     bondInvGen->fromJSON(*bondInvGenNode);
   }
-  //   dp_atomInvariantsGenerator = new AtomInvariantsGenerator();
-  //   df_ownsAtomInvGenerator = true;
-  //   dp_atomInvariantsGenerator->fromJSON(*atomInvGenNode);
-  // }
-  // auto bondInvGenNode = pt.get_child_optional("bondInvariantsGenerator");
-  // if (bondInvGenNode) {
-  //   dp_bondInvariantsGenerator = new BondInvariantsGenerator();
-  //   df_ownsBondInvGenerator = true;
-  //   dp_bondInvariantsGenerator->fromJSON(*bondInvGenNode);
-  // }
 
   return std::make_unique<FingerprintGenerator<std::uint64_t>>(
       envGen.release(), fpArgs.release(),
