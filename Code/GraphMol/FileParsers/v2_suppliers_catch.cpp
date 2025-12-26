@@ -29,13 +29,13 @@ TEST_CASE("ForwardSDMolSupplier") {
     std::string fName = getenv("RDBASE");
     fName += "/Data/NCI/first_200.props.sdf";
     {
-      std::ifstream inStream(fName, std::ios::binary);
+      std::ifstream inStream(fName);
       FileParsers::ForwardSDMolSupplier sdsup(&inStream, false);
       auto mol = sdsup.next();
       REQUIRE(mol);
     }
     {  // v1
-      std::ifstream inStream(fName, std::ios::binary);
+      std::ifstream inStream(fName);
       ForwardSDMolSupplier sdsup(&inStream, false);
       std::unique_ptr<ROMol> mol{sdsup.next()};
       REQUIRE(mol);
@@ -48,7 +48,7 @@ TEST_CASE("SDMolSupplier") {
     std::string fName = getenv("RDBASE");
     fName += "/Data/NCI/first_200.props.sdf";
     {
-      std::ifstream inStream(fName, std::ios::binary);
+      std::ifstream inStream(fName);
       FileParsers::SDMolSupplier sdsup(&inStream, false);
       auto mol = sdsup.next();
       REQUIRE(mol);
@@ -56,7 +56,7 @@ TEST_CASE("SDMolSupplier") {
       REQUIRE(mol2);
     }
     {  // v1
-      std::ifstream inStream(fName, std::ios::binary);
+      std::ifstream inStream(fName);
       SDMolSupplier sdsup(&inStream, false);
       std::unique_ptr<ROMol> mol{sdsup.next()};
       REQUIRE(mol);
@@ -69,7 +69,7 @@ TEST_CASE("SmilesMolSupplier") {
     std::string fName = getenv("RDBASE");
     fName += "/Data/NCI/first_200.tpsa.csv";
     {
-      std::ifstream inStream(fName, std::ios::binary);
+      std::ifstream inStream(fName);
       FileParsers::SmilesMolSupplierParams params;
       params.delimiter = ',';
       FileParsers::SmilesMolSupplier smsup(&inStream, false, params);
@@ -79,7 +79,7 @@ TEST_CASE("SmilesMolSupplier") {
       REQUIRE(mol2);
     }
     {  // v1
-      std::ifstream inStream(fName, std::ios::binary);
+      std::ifstream inStream(fName);
       SmilesMolSupplier smsup(&inStream, false, ",");
       std::unique_ptr<ROMol> mol{smsup.next()};
       REQUIRE(mol);
@@ -92,7 +92,7 @@ TEST_CASE("TDTMolSupplier") {
     std::string fName = getenv("RDBASE");
     fName += "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
     {
-      std::ifstream inStream(fName, std::ios::binary);
+      std::ifstream inStream(fName);
       FileParsers::TDTMolSupplier smsup(&inStream, false);
       auto mol = smsup.next();
       REQUIRE(mol);
@@ -101,7 +101,7 @@ TEST_CASE("TDTMolSupplier") {
       REQUIRE(mol2);
     }
     {  // v1
-      std::ifstream inStream(fName, std::ios::binary);
+      std::ifstream inStream(fName);
       TDTMolSupplier smsup(&inStream, false, ",");
       std::unique_ptr<ROMol> mol{smsup.next()};
       REQUIRE(mol);

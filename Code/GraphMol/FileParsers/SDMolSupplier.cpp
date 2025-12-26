@@ -229,57 +229,9 @@ void SDMolSupplier::moveTo(unsigned int idx) {
   } 
   // actually scan with buffering
   else {
-    dp_inStream->seekg(d_molpos.back());
-    d_last = rdcast<int>(d_molpos.size()) - 1;
+    buildIndexTo(idx);
 
-    const size_t CHUNK_SIZE = 65536;
-    const size_t OVERLAP = 4;
-    std::vector<char> buffer(CHUNK_SIZE + OVERLAP);
-    std::fill(buffer.begin(), buffer.begin() + OVERLAP, '\n'); //safe init
-    std::streampos currentStreamPos = dp_inStream->tellg();
-    bool foundTarget = false;
-
-    while (dp_inStream->good() && !foundTarget) {
-      dp_inStream->read(&buffer[OVERLAP], CHUNK_SIZE);
-      std::streamsize bytesRead = dp_inStream->gcount();
-      if (bytesRead == 0) break;
-
-      char *bufStart = &buffer[0];
-      char *bufEnd = bufStart + OVERLAP + bytesRead;
-      char *ptr = bufStart + 1;
-
-      while (true) {
-        static const char dollarSigns[] = "$$$$";
-        auto match = std::search(ptr, bufEnd, dollarSigns, dollarSigns + 4);
-        if (match == bufEnd) break;
-        if (*(match - 1) == '\n') {
-          char *nlPos = match + 4;
-          while (nlPos < bufEnd && *nlPos != '\n') ++nlPos;
-          if (nlPos < bufEnd) ++nlPos;
-          std::streampos posHold = currentStreamPos + std::streamoff(nlPos - bufStart - OVERLAP);
-          bool atTrueEOF = (bytesRead < (std::streamsize)CHUNK_SIZE) && (nlPos >= bufEnd);
-          if (!atTrueEOF) {
-            this->peekCheckForEnd(nlPos, bufEnd, posHold);//the optimized peek version
-            if (!this->df_end) {
-              d_molpos.push_back(posHold);
-              d_last++;
-              if (static_cast<unsigned int>(d_last) == idx) { //not really needed but this way we only index as much as needed
-                  foundTarget = true;
-                  break; 
-              }
-            }
-          }
-        }
-        ptr = match + 4;
-      }
-      
-      if (foundTarget) break;
-
-      if (bytesRead >= static_cast<std::streamsize>(OVERLAP)) std::memcpy(&buffer[0], bufEnd - OVERLAP, OVERLAP);
-      currentStreamPos += bytesRead;
-    }
-
-    if (foundTarget) {
+    if (idx < d_molpos.size()) {
       dp_inStream->clear();
       dp_inStream->seekg(d_molpos[idx]);
       d_last = idx;
@@ -313,50 +265,85 @@ unsigned int SDMolSupplier::length() {
   if (d_len > 0 || (df_end && d_len == 0)) {
     return d_len;
   } else {
+    int old_last = d_last;
+    buildIndexTo(UINT32_MAX);
     d_len = rdcast<int>(d_molpos.size());
-    dp_inStream->seekg(d_molpos.back());
-    const size_t CHUNK_SIZE = 65536;
-    const size_t OVERLAP = 4; // to catch "$$$$" at chunk boundaries ("...\n$$ <new chunk> $$...")
-    std::vector<char> buffer(CHUNK_SIZE + OVERLAP);
-    std::fill(buffer.begin(), buffer.begin() + OVERLAP, '\n'); //safe init
-    std::streampos currentStreamPos = dp_inStream->tellg();
 
-    while (dp_inStream->good()) {
-      dp_inStream->read(&buffer[OVERLAP], CHUNK_SIZE);
-      std::streamsize bytesRead = dp_inStream->gcount();
-      if (bytesRead == 0) break; // EOF
-      char *bufStart = &buffer[0];
-      char *bufEnd = bufStart + OVERLAP + bytesRead;
-      char *ptr = bufStart + 1;
-
-      while (true) {
-        static const char dollarSigns[] = "$$$$";
-        auto match = std::search(ptr, bufEnd, dollarSigns, dollarSigns + 4);
-        if (match == bufEnd) break;
-        if (*(match - 1) == '\n') { //ensure $$$$ is at start of line
-          char *nlPos = match + 4;
-          while (nlPos < bufEnd && *nlPos != '\n') ++nlPos;
-          if (nlPos < bufEnd) ++nlPos; //move past newline
-          std::streampos posHold = currentStreamPos + std::streamoff(nlPos - bufStart - OVERLAP);
-          bool atTrueEOF = (bytesRead < (std::streamsize)CHUNK_SIZE) && (nlPos >= bufEnd);
-          if (!atTrueEOF) {
-            this->peekCheckForEnd(nlPos, bufEnd, posHold);
-            if (!this->df_end) {
-              d_molpos.push_back(posHold);
-              ++d_len;
-            }
-          }
-        }
-        ptr = match + 4;
-      }
-      if (bytesRead >= static_cast<std::streamsize>(OVERLAP)) std::memcpy(&buffer[0], bufEnd - OVERLAP, OVERLAP);
-      currentStreamPos += bytesRead;
-    }
-    // now remember to set the stream to the last position we want to read
+    //safeguard to restore the pointer to the last read molecule
+    d_last = old_last;
     dp_inStream->clear();
     dp_inStream->seekg(d_molpos[d_last]);
     df_end = false;
     return d_len;
+  }
+}
+
+void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
+  dp_inStream->seekg(d_molpos.back());
+  d_last = rdcast<int>(d_molpos.size()) - 1;
+  const size_t CHUNK_SIZE = 65536;
+  const size_t OVERLAP = 4;// to catch "$$$$" at chunk boundaries ("...\n$$ <new chunk> $$...")
+  std::vector<char> buffer(CHUNK_SIZE + OVERLAP);
+  std::fill(buffer.begin(), buffer.begin() + OVERLAP, '\n'); //safe init
+  std::streampos currentStreamPos = dp_inStream->tellg();
+  bool foundTarget = false;
+
+  while (dp_inStream->good() && !foundTarget) {
+    std::streampos chunkStartPos = currentStreamPos;
+    dp_inStream->read(&buffer[OVERLAP], CHUNK_SIZE);
+    std::streamsize bytesRead = dp_inStream->gcount();
+    if (bytesRead == 0) break;// EOF
+
+    std::streampos chunkEndPos = dp_inStream->tellg();
+    //check if the stream is "honest" (binary or text mode with 1 byte newlines (like UNIX), meaning read bytes map 1:1 to disk bytes)
+    bool isBinaryLike = (bytesRead == (chunkEndPos - chunkStartPos));
+    char *bufStart = &buffer[0];
+    char *bufEnd = bufStart + OVERLAP + bytesRead;
+    char *ptr = bufStart + 1;
+
+    while (true) {
+      static const char dollarSigns[] = "$$$$";
+      auto match = std::search(ptr, bufEnd, dollarSigns, dollarSigns + 4);
+      if (match == bufEnd) break;
+      if (*(match - 1) == '\n') {//ensure $$$$ is at start of line
+        char *nlPos = match + 4;
+        while (nlPos < bufEnd && *nlPos != '\n') ++nlPos;
+        if (nlPos < bufEnd) ++nlPos;
+        
+        std::streampos posHold;
+        if (isBinaryLike) { //fast path, math checks out, no need to seek
+          posHold = chunkStartPos + std::streamoff(nlPos - bufStart - OVERLAP);
+        } else { //slow path, there is byte translation going on, need to seek and use the std translation magic to find the actual byte position
+          dp_inStream->clear();
+          dp_inStream->seekg(chunkStartPos); //rollback to the start of the chunk
+          dp_inStream->ignore(nlPos - bufStart - OVERLAP); //advance but with the magic translation in effect now
+          posHold = dp_inStream->tellg(); //this is the physical position on disk we want
+        }
+        
+        bool atTrueEOF = (bytesRead < (std::streamsize)CHUNK_SIZE) && (nlPos >= bufEnd);
+        if (!atTrueEOF) {
+          this->peekCheckForEnd(nlPos, bufEnd, posHold);//the optimized peek version
+          if (!this->df_end) {
+            d_molpos.push_back(posHold);
+            d_last++;
+            if (static_cast<unsigned int>(d_last) == targetIdx) { //not really needed but this way we only index as much as needed
+                foundTarget = true;
+                break; 
+            }
+          }
+        }
+      }
+      ptr = match + 4;
+    }
+    if (foundTarget) break;
+
+    if (!isBinaryLike) {//need to seek to the end of the chunk again to make sure next read is from the right position
+      dp_inStream->clear();
+      dp_inStream->seekg(chunkEndPos);
+    }
+
+    if (bytesRead >= static_cast<std::streamsize>(OVERLAP)) std::memcpy(&buffer[0], bufEnd - OVERLAP, OVERLAP);
+    currentStreamPos = chunkEndPos;
   }
 }
 
