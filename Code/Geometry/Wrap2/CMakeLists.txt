@@ -13,19 +13,20 @@ execute_process(
   COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
   OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
 find_package(nanobind CONFIG REQUIRED)
-
-nanobind_add_module(rdGeometry NB_SHARED rdGeometry.cpp)
-
-#target_link_libraries(rdGeometry PUBLIC RDGeometryLib rdkit_py_base rdkit_base)
-target_link_libraries(rdGeometry PUBLIC RDGeometryLib rdkit_base)
-
 # if("${PYTHON_LDSHARED}" STREQUAL "")
 # else()
 #    set_target_properties(rd PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
 #endif()
 set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
 
-INSTALL(TARGETS rdGeometry
+nanobind_add_module(rdGeometry NB_SHARED rdGeometry.cpp)
+target_link_libraries(rdGeometry PUBLIC RDGeometryLib rdkit_base)
+
+nanobind_add_module(rdGeometryTest NB_SHARED rdGeometryTest.cpp)
+target_link_libraries(rdGeometryTest PUBLIC RDGeometryLib rdkit_base)
+
+
+INSTALL(TARGETS rdGeometry rdGeometryTest
         LIBRARY DESTINATION ${RDKit_PythonDir}/Geometry COMPONENT python)
 
 set_target_properties(nanobind

@@ -44,11 +44,11 @@ NB_MODULE(rdGeometry, m) {
 
   nb::class_<Point2D>(m, "Point2D")
       .def(nb::init<>())
-      .def(nb::init<double, double>())
+      .def(nb::init<double, double>(), "x"_a, "y"_a)
       .def(nb::init<const Point3D &>())
       .def_rw("x", &Point2D::x)
       .def_rw("y", &Point2D::y)
-      .def("__getitem__", point2dGetItem, "idx"_a)
+      .def("__getitem__", point2dGetItem)
       .def("__len__", &Point2D::dimension)
       .def(nb::self - nb::self)
 #ifdef __clang__
@@ -69,15 +69,14 @@ NB_MODULE(rdGeometry, m) {
            "Normalize the vector (using L2 norm)")
       .def("Length", &Point2D::length, "Length of the vector")
       .def("LengthSq", &Point2D::lengthSq, "Square of the length")
-      .def("DotProduct", &Point2D::dotProduct, "other"_a,
-           "Dot product with another point")
-      .def("AngleTo", &Point2D::angleTo, "other"_a,
+      .def("DotProduct", &Point2D::dotProduct, "Dot product with another point")
+      .def("AngleTo", &Point2D::angleTo,
            "determines the angle between a vector to this point (between 0 "
            "and PI)")
-      .def("SignedAngleTo", &Point2D::signedAngleTo, "other"_a,
+      .def("SignedAngleTo", &Point2D::signedAngleTo,
            "determines the signed angle between a vector to this point "
            "(between 0 and 2*PI)")
-      .def("DirectionVector", &Point2D::directionVector, "other"_a,
+      .def("DirectionVector", &Point2D::directionVector,
            "return a normalized direction vector from this point to another")
       .def("__getstate__",
            [](const Point2D &pt) { return std::make_tuple(pt.x, pt.y); })
