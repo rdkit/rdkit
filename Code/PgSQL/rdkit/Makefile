@@ -26,7 +26,9 @@ ifeq ($(USE_AVALON),1)
   AVALONREGRESS=avalon
 endif
 
-POPCOUNTFLAGS=-DRDK_OPTIMIZE_POPCNT -mpopcnt
+ifneq (,$(filter x86_64 i%86,$(shell uname -m)))
+  POPCOUNTFLAGS=-DRDK_OPTIMIZE_POPCNT -mpopcnt
+endif
 
 ifeq ($(USE_THREADS),1)
   THREADLIBS=-L${BOOSTHOME}/lib -lboost_thread -lboost_system
