@@ -55,92 +55,6 @@ class SCSRMol {
   };
 };
 
-// TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment FULLNAME=fullname
-// CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx, COLLABORATOR=col,
-// PROTECTION=prot
-
-// other attributes are allowed.  We capture them and ignore them, except
-// for writing them back out
-
-// void parseTemplateLine(RWMol *templateMol, std::string lineStr,
-//                        unsigned int &line) {
-//   PRECONDITION(templateMol, "bad template molecule");
-
-//   const char *linePtr = lineStr.c_str() + 9;
-//   std::string token = getToken(linePtr, ' ');  // Template ID
-//   if (token.empty()) {
-//     std::ostringstream errout;
-//     errout << "Expected a Template ID at line  " << line;
-//     throw FileParseException(errout.str());
-//   }
-//   // get the class and template names
-
-//   token = getToken(linePtr, ' ');  // Template ID
-//   if (token.empty()) {
-//     std::ostringstream errout;
-//     errout
-//         << "Type/Name(s) string of the form \"AA/Gly/G/\" was not found at
-//         line  "
-//         << line;
-//     throw FileParseException(errout.str());
-//   }
-
-//   // get the class and template names from the token
-//   std::vector<std::string> subTokens;
-//   boost::algorithm::split(subTokens, token,
-//   boost::algorithm::is_any_of("/")); if (subTokens.size() < 3) {
-//     std::ostringstream errout;
-//     errout << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line
-//     "
-//            << line;
-//     throw FileParseException(errout.str());
-//   }
-
-//   templateMol->setProp(common_properties::molAtomClass, subTokens[0]);
-
-//   std::vector<std::string> templateNames;
-//   for (unsigned int i = 1; i < subTokens.size(); ++i) {
-//     if (subTokens[i] != "") {
-//       templateNames.push_back(subTokens[i]);
-//     }
-//   }
-//   templateMol->setProp(common_properties::templateNames, templateNames);
-
-//   // now parse attrs of the form ATTRNAME=VALUE or ATTRNAME="VALUE WITH
-//   // SPACES"
-
-//   while (true) {
-//     std::string attrName = getToken(linePtr, '=');
-//     if (attrName.empty()) {
-//       break;
-//     }
-//     std::string attrValue;
-//     if (*linePtr == '"') {
-//       attrValue = getQuotedToken(linePtr);
-//     } else {
-//       attrValue = getToken(linePtr, ' ');
-//     }
-
-//     templateMol->setProp(attrName, attrValue);
-//   }
-
-//   if (*linePtr != '\0') {
-//     std::ostringstream errout;
-//     errout
-//         << "extra characters at the end of a TEMPLATE definition line at
-//         line  "
-//         << line;
-//     throw FileParseException(errout.str());
-//   }
-
-//   return;
-// }
-
-// if (lineStr.substr(0, 9) != "TEMPLATE ") {
-//   std::ostringstream errout;
-//   errout << "Expected \"TEMPLATE\" at line  " << line;
-//   throw FileParseException(errout.str());
-
 void skipSpaces(const char *&linePtr) {
   while (*linePtr == ' ') {
     ++linePtr;  // skip spaces
@@ -236,11 +150,10 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
   templateMol->setProp(common_properties::molAtomClass, subTokens[0]);
 
   std::vector<std::string> templateNames;
-  for (unsigned int i = 1; i < subTokens.size(); ++i) {
-    if (subTokens[i] != "") {
-      templateNames.push_back(subTokens[i]);
-    }
-  }
+  std::copy_if(subTokens.begin() + 1, subTokens.end(),
+               std::back_inserter(templateNames),
+               [](const std::string &s) { return !s.empty(); });
+
   templateMol->setProp(common_properties::templateNames, templateNames);
 
   // now parse attrs of the form ATTRNAME=VALUE or ATTRNAME="VALUE WITH
