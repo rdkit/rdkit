@@ -341,6 +341,10 @@ void SynthonSpace::readStream(std::istream &is, bool &cancelled) {
     reaction->makeSynthonSearchMols();
     reaction->buildConnectorRegions();
     reaction->assignConnectorsUsed();
+    reaction->assessRingFormers();
+    if (reaction->getNumRingFormers()) {
+      d_hasRingFormer = true;
+    }
     d_numProducts += reaction->getNumProducts();
     if (reaction->getSynthons().size() > d_maxNumSynthons) {
       d_maxNumSynthons = reaction->getSynthons().size();
@@ -585,6 +589,10 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
                   -> bool { return p1.first < p2.first; });
   }
   for (const auto &[id, reaction] : d_reactions) {
+    reaction->assessRingFormers();
+    if (reaction->getNumRingFormers()) {
+      d_hasRingFormer = true;
+    }
     if (reaction->getSynthons().size() > d_maxNumSynthons) {
       d_maxNumSynthons = reaction->getSynthons().size();
     }
@@ -629,6 +637,16 @@ void SynthonSpace::enumerateToStream(std::ostream &os) const {
   for (const auto &[fst, snd] : d_reactions) {
     snd->enumerateToStream(os);
   }
+}
+
+unsigned int SynthonSpace::getMaxNumConnectors() const {
+  unsigned int maxNumConns = 0;
+  for (const auto &[id, synSet] : d_reactions) {
+    maxNumConns =
+        std::max(maxNumConns,
+                 static_cast<unsigned int>(synSet->getConnectors().count()));
+  }
+  return maxNumConns;
 }
 
 bool SynthonSpace::hasFingerprints() const { return !d_fpType.empty(); }
