@@ -302,6 +302,7 @@ TEST_CASE("scsiTests", "scsiTests") {
     }
   }
 }
+
 TEST_CASE("nestedParens", "nestedParens") {
   SECTION("basics") {
     BOOST_LOG(rdInfoLog) << "testing names with parens" << std::endl;
