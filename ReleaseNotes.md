@@ -1,3 +1,77 @@
+# Release_2025.09.4
+(Changes relative to Release_2025.09.3)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Kevin Boyd, Chi Cheng, David Cosgrove, Tad Hurst, Brian Kelley, Niels Maeder,
+Yakov Pechersky, Eliot Ragueneau, Pat Riley, Ricardo Rodriguez
+
+## New Features and Enhancements:
+  - Add extract mol fragment api
+ (github pull #8811 from bp-kelley)
+  - Improve `DetermineBonds` and `DetermineBondOrders` performance
+ (github pull #8888 from ChiCheng45)
+  - Allow Hs to be ignored in the RMSD alignment functions
+ (github pull #8976 from greglandrum)
+  - Embed Parameters to JSON
+ (github pull #8977 from nmaeder)
+  - Allow spaces and special chars in SCSR fullname attrs
+ (github pull #8982 from tadhurst-cdd)
+  - Allow H removal to be skipped in ShowFeats.py
+ (github pull #8986 from greglandrum)
+  - some optimizations of AlignPoints()
+ (github pull #8987 from greglandrum)
+  - Allow adding custom atom and bond matcher functions for substructure searching
+ (github pull #8994 from greglandrum)
+  - Support serializing/deserializing FP generators to JSON
+ (github pull #9000 from greglandrum)
+  - Stop writing so many atom properties to cxsmiles
+ (github pull #9002 from greglandrum)
+
+## Bug Fixes:
+  - rdShapeAlign is sensitive to starting conformation
+ (github issue #8513 from priley-vv)
+  - SVG exports of bicolor solid wedge bound not working with stroke-width
+ (github issue #8936 from EliotRagueneau)
+  - Small fix in ring stereo/canonicalization
+ (github pull #8962 from ricrogz)
+  - Atropisomer bond is found in N-S(=O)C system
+ (github issue #8973 from pechersky)
+  - SynthonSpace Substructure search misses some hits
+ (github issue #9007 from DavidACosgrove)
+  - SynthonSpace Substructure search misses a hit - Mk2
+ (github issue #9009 from DavidACosgrove)
+  - SDMolSupplier enters an infinite loop if number of SGroups is incorrect
+ (github issue #9014 from ricrogz)
+  - Invalid sulfonamide SMARTS in FragmentDescriptors.csv
+ (github issue #9018 from scal444)
+
+## Cleanup work:
+  - A bunch of modernization of the ShapeHelpers code
+ (github pull #8954 from greglandrum)
+  - Minor clean up in SMILES Writing double bond canonicalization
+ (github pull #8971 from ricrogz)
+  - Refactor atomVisitOrders and bondVisitOrders in SMILES Writer canonicalization
+ (github pull #8972 from ricrogz)
+  - Convert graphmolMolOpsTest to catch2
+ (github pull #8978 from ricrogz)
+  - Some more cleaning up in SMILES Writing
+ (github pull #8991 from ricrogz)
+  - Converts testSubgraph2 to catch
+ (github pull #9003 from ricrogz)
+  - Convert smiTest1 to catch
+ (github pull #9004 from ricrogz)
+  - Last leak fixes for 2025!
+ (github pull #9006 from ricrogz)
+  - move molzip to its own file
+ (github pull #9013 from greglandrum)
+  - Convert testMolSupplier to catch2
+ (github pull #9015 from ricrogz)
+
+
 # Release_2025.09.3
 (Changes relative to Release_2025.09.2)
 
