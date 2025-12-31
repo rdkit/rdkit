@@ -51,20 +51,39 @@ TEST_CASE("basic alignment") {
   }
 
   SECTION("with color") {
-    RDGeom::Transform3D xformc;
+    ROMol cp(*probe);
     const auto &[tsc, tcc] =
-        ShapeAlign::AlignMolecule(*ref, *probe, xformc, overlayOpts);
+        ShapeAlign::AlignMolecule(*ref, cp, nullptr, overlayOpts);
     CHECK_THAT(tsc, Catch::Matchers::WithinAbs(0.702, 0.005));
     CHECK_THAT(tcc, Catch::Matchers::WithinAbs(0.556, 0.005));
   }
 
   SECTION("without color") {
+    ROMol cp(*probe);
     overlayOpts.d_useColors = false;
-    RDGeom::Transform3D xformnc;
     const auto &[tsnc, tcnc] =
-        ShapeAlign::AlignMolecule(*ref, *probe, xformnc, overlayOpts);
+        ShapeAlign::AlignMolecule(*ref, cp, nullptr, overlayOpts);
     CHECK_THAT(tsnc, Catch::Matchers::WithinAbs(0.761, 0.005));
     CHECK_THAT(tcnc, Catch::Matchers::WithinAbs(0.0, 0.005));
+  }
+
+  SECTION("collect transform") {
+    overlayOpts.d_useColors = true;
+    ROMol cp(*probe);
+    RDGeom::Transform3D xform;
+    const auto &[tsnc, tcnc] =
+        ShapeAlign::AlignMolecule(*ref, cp, &xform, overlayOpts);
+    CHECK_THAT(tsnc, Catch::Matchers::WithinAbs(0.702, 0.005));
+    CHECK_THAT(tcnc, Catch::Matchers::WithinAbs(0.556, 0.005));
+    // Check a few values from the transform, just to be sure
+    CHECK_THAT(xform.getValUnchecked(0, 0),
+               Catch::Matchers::WithinAbs(0.958, 0.005));
+    CHECK_THAT(xform.getValUnchecked(1, 1),
+               Catch::Matchers::WithinAbs(0 - 0.992, 0.005));
+    CHECK_THAT(xform.getValUnchecked(2, 2),
+               Catch::Matchers::WithinAbs(-0.956, 0.005));
+    CHECK_THAT(xform.getValUnchecked(3, 3),
+               Catch::Matchers::WithinAbs(1.0, 0.005));
   }
 }
 
@@ -74,16 +93,13 @@ TEST_CASE("bulk") {
   auto suppl = v2::FileParsers::SDMolSupplier(dirName + "/bulk.pubchem.sdf");
   auto ref = suppl[0];
   REQUIRE(ref);
-  ShapeAlign::ShapeOverlayOptions overlayOpts;
   std::string testout = dirName + "/bulk.pubchem_out.sdf";
   auto writer = SDWriter(testout);
   writer.write(*ref);
   for (auto i = 1u; i < suppl.length(); ++i) {
     auto probe = suppl[1];
     REQUIRE(probe);
-    RDGeom::Transform3D xform;
-    auto [nbr_st, nbr_ct] =
-        ShapeAlign::AlignMolecule(*ref, *probe, xform, overlayOpts);
+    auto [nbr_st, nbr_ct] = ShapeAlign::AlignMolecule(*ref, *probe);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.811, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.525, 0.005));
     writer.write(*probe);
@@ -103,13 +119,10 @@ TEST_CASE("handling molecules with Hs") {
   REQUIRE(ref);
   auto probe = suppl[1];
   REQUIRE(probe);
-  ShapeAlign::ShapeOverlayOptions overlayOpts;
-  overlayOpts.d_useColors = true;
   SECTION("basics") {
     RWMol cp(*probe);
     RDGeom::Transform3D xform;
-    auto [nbr_st, nbr_ct] =
-        ShapeAlign::AlignMolecule(*ref, cp, xform, overlayOpts);
+    auto [nbr_st, nbr_ct] = ShapeAlign::AlignMolecule(*ref, cp);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.828, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.994, 0.005));
     for (auto i = 0u; i < cp.getNumAtoms(); ++i) {
@@ -119,7 +132,7 @@ TEST_CASE("handling molecules with Hs") {
     }
     // Check the fixed calculation which will not be identical but should be
     // very close.
-    auto news = ShapeAlign::ScoreMolecule(*ref, cp, overlayOpts);
+    auto news = ShapeAlign::ScoreMolecule(*ref, cp);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(news.first, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(news.second, 0.005));
   }
@@ -133,8 +146,7 @@ TEST_CASE("Github #8096") {
     auto m2 =
         "[H]c1c([H])c([H])c([H])c([H])c1[H] |(-2.06264,-0.844763,-0.0261403;-1.04035,-0.481453,-0.0114878;-0.00743655,-1.41861,-0.0137121;-0.215455,-2.47997,-0.0295909;1.29853,-0.949412,0.00507497;2.12524,-1.65277,0.00390664;1.58501,0.395878,0.0254188;2.61997,0.704365,0.0394811;0.550242,1.31385,0.0273741;0.783172,2.37039,0.0434262;-0.763786,0.88847,0.00908113;-1.60557,1.58532,0.0100194)|"_smiles;
     REQUIRE(m2);
-    RDGeom::Transform3D xform;
-    auto [nbr_st, nbr_ct] = ShapeAlign::AlignMolecule(*m1, *m2, xform);
+    auto [nbr_st, nbr_ct] = ShapeAlign::AlignMolecule(*m1, *m2);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.994, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(1.0, 0.005));
   }
@@ -155,10 +167,7 @@ TEST_CASE("Hs not properly transformed when hcount = feature count") {
     REQUIRE(mol2);
     {
       RWMol cp(*mol2);
-      RDGeom::Transform3D xform;
-      ShapeAlign::ShapeOverlayOptions overlayOpts;
-      auto [nbr_st, nbr_ct] =
-          ShapeAlign::AlignMolecule(*mol1, cp, xform, overlayOpts, -1, -1);
+      auto [nbr_st, nbr_ct] = ShapeAlign::AlignMolecule(*mol1, cp);
       CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.901, 0.005));
       CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.860, 0.005));
       // the bug led to H atoms in stupid positions, so we can detect it by just
@@ -252,10 +261,7 @@ TEST_CASE("Iressa onto Tagrisso") {
   auto iressa =
       "COc1cc2ncnc(Nc3ccc(F)c(Cl)c3)c2cc1OCCCN1CCOCC1 |(11.4672,-0.467948,5.63989;12.0133,0.532631,6.49693;11.2039,1.5801,6.81985;11.2014,2.71958,6.00975;10.3926,3.81652,6.29699;10.4038,4.90395,5.50623;9.58889,5.91871,5.85946;8.76443,5.96486,6.91838;8.77814,4.86059,7.68868;7.92337,4.86224,8.81914;7.44878,5.8925,9.64622;8.22182,7.03851,9.85619;7.75051,8.06265,10.6777;6.50441,7.94546,11.2936;6.06567,8.93802,12.0809;5.72932,6.80403,11.0875;4.19056,6.65372,11.8447;6.20047,5.78015,10.2656;9.57161,3.74547,7.43436;9.56851,2.60328,8.25407;10.3868,1.52933,7.93769;10.3797,0.419365,8.74203;11.3064,0.402096,9.81907;10.7104,-0.399165,10.9685;9.40938,0.22121,11.4678;9.64205,1.59049,11.9223;8.38006,2.22985,12.3199;8.64991,3.65266,12.8011;9.56883,3.64192,13.8942;10.8103,3.05101,13.5078;10.5931,1.61394,13.0425)|"_smiles;
   REQUIRE(iressa);
-  RDGeom::Transform3D xform;
-  ShapeAlign::ShapeOverlayOptions overlayOpts;
-  auto sims =
-      ShapeAlign::AlignMolecule(*tagrisso, *iressa, xform, overlayOpts, -1, -1);
+  auto sims = ShapeAlign::AlignMolecule(*tagrisso, *iressa);
   CHECK_THAT(sims.first, Catch::Matchers::WithinAbs(0.571, 0.005));
   CHECK_THAT(sims.second, Catch::Matchers::WithinAbs(0.360, 0.005));
 }

@@ -41,24 +41,25 @@ RDKIT_ROSHAMBO2SHAPE_EXPORT void TransformConformer(
   \param refShape      the reference shape
   \param fitShape      the shape to align
   \param overlayOpts   options for the overlay
-  \param xform         the transformation matrix (populated on return) that
-                       aligns fit onto ref, with the latter on its input
-                       position.
+  \param xform         if passed in as non-null, will be populated with the
+                       transformation matrix that aligns fit onto ref, with the
+                       latter on its input position.
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
   if useColors is false)
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignShape(
     const ShapeInput &refShape, ShapeInput &fitShape,
-    const ShapeOverlayOptions &overlayOpts, RDGeom::Transform3D &xform);
+    const ShapeOverlayOptions &overlayOpts,
+    RDGeom::Transform3D *xform = nullptr);
 
 //! Align a molecule to a reference molecule
 /*!
   \param ref           the reference molecule
   \param fit           the molecule to align
-  \param xform         the transformation matrix (populated on return) that
-                       aligns fit onto ref, with the latter on its input
-                       position.
+  \param xform         if passed in as non-null, will be populated with the
+                       transformation matrix that aligns fit onto ref, with the
+                       latter on its input position.
   \param overlayOpts   options for setting up and running the overlay
   \param refConfId     (optional) the conformer to use for the reference
                        molecule
@@ -70,7 +71,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignShape(
           types for the features.
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
-    const ROMol &ref, ROMol &fit, RDGeom::Transform3D &xform,
+    const ROMol &ref, ROMol &fit, RDGeom::Transform3D *xform = nullptr,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
     int refConfId = -1, int fitConfId = -1);
 

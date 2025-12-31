@@ -105,7 +105,7 @@ void getInitialTransformation(int index, RDGeom::Transform3D &initXform) {
 std::pair<double, double> AlignShape(const ShapeInput &refShape,
                                      ShapeInput &fitShape,
                                      const ShapeOverlayOptions &overlayOpts,
-                                     RDGeom::Transform3D &xform) {
+                                     RDGeom::Transform3D *xform) {
   int finalIndex = 1;
   switch (overlayOpts.d_mode) {
     case StartMode::AS_IS:
@@ -155,18 +155,24 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
       copyTransform(tt, bestXform);
     }
   }
-  copyTransform(bestXform, xform);
+  if (xform) {
+    copyTransform(bestXform, *xform);
+  }
   return bestScore;
 }
 
 std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
-                                        RDGeom::Transform3D &xform,
+                                        RDGeom::Transform3D *xform,
                                         const ShapeOverlayOptions &overlayOpts,
                                         int refConfId, int fitConfId) {
   auto refShape = ShapeInput(ref, refConfId, overlayOpts);
   auto fitShape = ShapeInput(fit, fitConfId, overlayOpts);
-  auto tcs = AlignShape(refShape, fitShape, overlayOpts, xform);
-  TransformConformer(fit.getConformer(fitConfId), refShape, fitShape, xform);
+  RDGeom::Transform3D tmpXform;
+  auto tcs = AlignShape(refShape, fitShape, overlayOpts, &tmpXform);
+  TransformConformer(fit.getConformer(fitConfId), refShape, fitShape, tmpXform);
+  if (xform) {
+    copyTransform(tmpXform, *xform);
+  }
   return tcs;
 }
 
