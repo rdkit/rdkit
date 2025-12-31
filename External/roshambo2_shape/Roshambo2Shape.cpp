@@ -161,11 +161,10 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
   return bestScore;
 }
 
-std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
+std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
                                         RDGeom::Transform3D *xform,
                                         const ShapeOverlayOptions &overlayOpts,
-                                        int refConfId, int fitConfId) {
-  auto refShape = ShapeInput(ref, refConfId, overlayOpts);
+                                        int fitConfId) {
   auto fitShape = ShapeInput(fit, fitConfId, overlayOpts);
   RDGeom::Transform3D tmpXform;
   auto tcs = AlignShape(refShape, fitShape, overlayOpts, &tmpXform);
@@ -173,6 +172,15 @@ std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
   if (xform) {
     copyTransform(tmpXform, *xform);
   }
+  return tcs;
+}
+
+std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
+                                        RDGeom::Transform3D *xform,
+                                        const ShapeOverlayOptions &overlayOpts,
+                                        int refConfId, int fitConfId) {
+  auto refShape = ShapeInput(ref, refConfId, overlayOpts);
+  auto tcs = AlignMolecule(refShape, fit, xform, overlayOpts, fitConfId);
   return tcs;
 }
 
