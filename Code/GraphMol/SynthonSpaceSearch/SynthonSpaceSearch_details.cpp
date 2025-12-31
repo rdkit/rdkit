@@ -167,10 +167,13 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
 
 namespace {
 boost::dynamic_bitset<> flagRingBonds(const ROMol &mol) {
-  const auto ringInfo = mol.getRingInfo();
+  auto ringInfo = mol.getRingInfo();
   if (!ringInfo->isInitialized()) {
     // Query molecules don't seem to have the ring info generated on creation.
     MolOps::findSSSR(mol);
+    // Get fresh pointer after findSSSR initializes ring info
+    // New backend might update the compat interface lazily
+    ringInfo = mol.getRingInfo();
   }
   boost::dynamic_bitset<> ringBonds(mol.getNumBonds());
   for (const auto &r : ringInfo->bondRings()) {
