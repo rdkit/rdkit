@@ -19,7 +19,14 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
-add_library(rdkit_base INTERFACE)
+add_library(rdkit_base INTERFACE
+        External/roshambo2_shape/Roshambo2Shape.hpp
+        External/roshambo2_shape/Roshambo2Shape.cpp
+        External/roshambo2_shape/catch_tests.cpp
+        External/roshambo2_shape/ShapeOverlayOptions.h
+        External/roshambo2_shape/ShapeOverlayOptions.cpp
+        External/roshambo2_shape/ShapeInput.h
+        External/roshambo2_shape/ShapeInput.cpp)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
@@ -63,6 +70,7 @@ option(RDK_BUILD_YAEHMOP_SUPPORT "build support for the YAeHMOP wrapper" OFF)
 option(RDK_BUILD_XYZ2MOL_SUPPORT "build in support for the RDKit's implementation of xyz2mol (in the DetermineBonds library)" OFF )
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
 option(RDK_BUILD_PUBCHEMSHAPE_SUPPORT "build the rdkit wrapper around pubchem-align3d" ON )
+option(RDK_BUILD_ROSHAMBOSHAPE_SUPPORT "build the rdkit wrapper around pubchem-align3d" ON )
 option(RDK_USE_URF "Build support for Florian Flachsenberg's URF library" ON)
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
