@@ -108,8 +108,8 @@ void getInitialTransformation(int index, RDGeom::Transform3D &initXform) {
 
 std::pair<double, double> AlignShape(const ShapeInput &refShape,
                                      ShapeInput &fitShape,
-                                     const ShapeOverlayOptions &overlayOpts,
-                                     RDGeom::Transform3D *xform) {
+                                     RDGeom::Transform3D *xform,
+                                     const ShapeOverlayOptions &overlayOpts) {
   int finalIndex = 1;
   switch (overlayOpts.d_mode) {
     case StartMode::AS_IS:
@@ -120,6 +120,23 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
     case StartMode::ROTATE_90:
       finalIndex = 10;
       break;
+  }
+
+  // The shapes aren't necessarily normalized (it's not done on creation, for
+  // example) but they might need to be.
+  const ShapeInput *workingRefShape = &refShape;
+  std::unique_ptr<ShapeInput> refCp;
+  if (overlayOpts.d_normalize && !refShape.getNormalized()) {
+    refCp.reset(new ShapeInput(refShape));
+    refCp->normalizeCoords();
+    workingRefShape = refCp.get();
+  }
+  const ShapeInput *workingFitShape = &fitShape;
+  std::unique_ptr<ShapeInput> fitCp;
+  if (overlayOpts.d_normalize && !fitShape.getNormalized()) {
+    fitCp.reset(new ShapeInput(fitShape));
+    fitCp->normalizeCoords();
+    workingFitShape = fitCp.get();
   }
 
   RDGeom::Transform3D setupXForm;
@@ -138,20 +155,21 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
 
   for (int i = 0; i < finalIndex; i++) {
     getInitialTransformation(i, initialXform);
-    std::vector<DTYPE> startFit(fitShape.getCoords());
+    std::vector<DTYPE> startFit(workingFitShape->getCoords());
     applyTransformToShape(startFit, initialXform);
     std::vector<DTYPE> workingFit(startFit);
-    std::vector<DTYPE> workingRef(refShape.getCoords());
+    std::vector<DTYPE> workingRef(workingRefShape->getCoords());
     std::array<DTYPE, 20> outScores;
     single_conformer_optimiser(
-        refShape.getCoords().data(), workingRef.data(),
-        refShape.getTypes().data(),
-        refShape.getNumAtoms() + refShape.getNumFeatures(),
-        refShape.getNumAtoms(), refShape.getNumFeatures(),
-        refShape.getSelfOverlapVol(), refShape.getSelfOverlapColor(),
-        startFit.data(), workingFit.data(), fitShape.getTypes().data(),
-        fitShape.getNumAtoms() + fitShape.getNumFeatures(),
-        fitShape.getNumAtoms(), fitShape.getNumFeatures(),
+        workingRefShape->getCoords().data(), workingRef.data(),
+        workingRefShape->getTypes().data(),
+        workingRefShape->getNumAtoms() + workingRefShape->getNumFeatures(),
+        workingRefShape->getNumAtoms(), workingRefShape->getNumFeatures(),
+        workingRefShape->getSelfOverlapVol(),
+        workingRefShape->getSelfOverlapColor(), startFit.data(),
+        workingFit.data(), workingFitShape->getTypes().data(),
+        workingFitShape->getNumAtoms() + workingFitShape->getNumFeatures(),
+        workingFitShape->getNumAtoms(), workingFitShape->getNumFeatures(),
         overlayOpts.d_rMat.data(), overlayOpts.d_pMat.data(),
         overlayOpts.d_nTypes, overlayOpts.d_useColors, overlayOpts.d_optParam,
         overlayOpts.lr_q, overlayOpts.lr_t, overlayOpts.d_nSteps,
@@ -204,7 +222,7 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
   }
 
   RDGeom::Transform3D tmpXform;
-  auto tcs = AlignShape(refShapeCp, fitShape, overlayOpts, &tmpXform);
+  auto tcs = AlignShape(refShapeCp, fitShape, &tmpXform, overlayOpts);
   if (!overlayOpts.d_normalize) {
     // Shove it back again.
     auto finalXform = moveFromOrigin * tmpXform * moveToOrigin;
@@ -253,7 +271,7 @@ std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
     refShape.transformCoords(moveToOrigin);
   }
   RDGeom::Transform3D tmpXform;
-  auto tcs = AlignShape(refShape, fitShape, overlayOpts, &tmpXform);
+  auto tcs = AlignShape(refShape, fitShape, &tmpXform, overlayOpts);
   if (!overlayOpts.d_normalize) {
     // Shove it back again.
     auto finalXform = moveFromOrigin * tmpXform * moveToOrigin;

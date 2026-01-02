@@ -26,7 +26,8 @@ add_library(rdkit_base INTERFACE
         External/roshambo2_shape/ShapeOverlayOptions.h
         External/roshambo2_shape/ShapeOverlayOptions.cpp
         External/roshambo2_shape/ShapeInput.h
-        External/roshambo2_shape/ShapeInput.cpp)
+        External/roshambo2_shape/ShapeInput.cpp
+        External/roshambo2_shape/Wrap/rshapealign.cpp)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )

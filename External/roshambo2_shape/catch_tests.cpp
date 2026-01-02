@@ -107,6 +107,33 @@ TEST_CASE("bulk") {
   writer.close();
 }
 
+TEST_CASE("shape alignment") {
+  std::string dirName = getenv("RDBASE");
+  dirName += "/External/pubchem_shape/test_data";
+
+  auto suppl = v2::FileParsers::SDMolSupplier(dirName + "/test1.sdf");
+  auto ref = suppl[0];
+  REQUIRE(ref);
+  auto probe = suppl[1];
+  REQUIRE(probe);
+  auto refShape = ShapeAlign::ShapeInput(*ref, -1);
+  auto probeShape = ShapeAlign::ShapeInput(*probe, -1);
+
+  auto [st, ct] = ShapeAlign::AlignShape(refShape, probeShape, nullptr);
+  CHECK_THAT(st, Catch::Matchers::WithinAbs(0.702, 0.005));
+  CHECK_THAT(ct, Catch::Matchers::WithinAbs(0.556, 0.005));
+
+  // And pre-normalizing the shapes
+  refShape.normalizeCoords();
+  auto [st1, ct1] = ShapeAlign::AlignShape(refShape, probeShape, nullptr);
+  CHECK_THAT(st1, Catch::Matchers::WithinAbs(0.702, 0.005));
+  CHECK_THAT(ct1, Catch::Matchers::WithinAbs(0.556, 0.005));
+  probeShape.normalizeCoords();
+  auto [st2, ct2] = ShapeAlign::AlignShape(refShape, probeShape, nullptr);
+  CHECK_THAT(st2, Catch::Matchers::WithinAbs(0.702, 0.005));
+  CHECK_THAT(ct2, Catch::Matchers::WithinAbs(0.556, 0.005));
+}
+
 TEST_CASE("Overlay onto shape bug (Github8462)") {
   auto m1 =
       R"(c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|)"_smiles;

@@ -28,7 +28,6 @@ namespace ShapeAlign {
 // Data for Roshambo2 shape alignment code
 class RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeInput {
  public:
-  ShapeInput() = default;
   ShapeInput(const ROMol &mol, int confId = -1,
              const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
   ShapeInput(const ShapeInput &other);
@@ -38,6 +37,7 @@ class RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeInput {
   ~ShapeInput() = default;
 
   const std::vector<DTYPE> &getCoords() const { return d_coords; }
+  bool getNormalized() const { return d_normalized; }
   const std::vector<int> &getTypes() const { return d_types; }
   int getNumAtoms() const { return d_numAtoms; }
   int getNumFeatures() const { return d_numFeats; }

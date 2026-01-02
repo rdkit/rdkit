@@ -19,6 +19,7 @@
 #include "roshambo2/roshambo2/backends/cpp_src/cpp_helper_functions.h"
 
 namespace RDKit {
+class ROMol;
 namespace ShapeAlign {
 
 enum class StartMode {

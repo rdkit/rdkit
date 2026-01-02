@@ -21,6 +21,8 @@
 
 namespace RDKit {
 class ROMol;
+class Conformer;
+
 namespace ShapeAlign {
 
 class ShapeInput;
@@ -51,8 +53,8 @@ RDKIT_ROSHAMBO2SHAPE_EXPORT RDGeom::Transform3D TransformConformer(
 */
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignShape(
     const ShapeInput &refShape, ShapeInput &fitShape,
-    const ShapeOverlayOptions &overlayOpts,
-    RDGeom::Transform3D *xform = nullptr);
+    RDGeom::Transform3D *xform = nullptr,
+    const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
 
 //! Align a molecule to a reference shape
 /*!
