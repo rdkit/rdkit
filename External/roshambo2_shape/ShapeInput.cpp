@@ -37,18 +37,14 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   if (overlayOpts.d_useColors) {
     extractFeatures(mol, confId, overlayOpts);
   }
-  if (overlayOpts.d_normalize) {
-    normalizeCoords(mol, confId);
-  }
+  calcNormalization(mol, confId);
   d_selfOverlapVol =
       volume(d_coords.data(), d_numAtoms, d_coords.data(), d_numAtoms);
-  if (overlayOpts.d_useColors) {
-    d_selfOverlapColor = volume_color(
-        d_coords.data() + 4 * d_numAtoms, d_numFeats,
-        d_types.data() + d_numAtoms, d_coords.data() + 4 * d_numAtoms,
-        d_numFeats, d_types.data() + d_numAtoms, overlayOpts.d_rMat.data(),
-        overlayOpts.d_pMat.data(), overlayOpts.d_nTypes);
-  }
+  d_selfOverlapColor = volume_color(
+      d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
+      d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
+      overlayOpts.d_rMat.data(), overlayOpts.d_pMat.data(),
+      overlayOpts.d_nTypes);
 }
 
 ShapeInput::ShapeInput(const ShapeInput &other)
@@ -58,8 +54,9 @@ ShapeInput::ShapeInput(const ShapeInput &other)
       d_numFeats(other.d_numFeats),
       d_selfOverlapVol(other.d_selfOverlapVol),
       d_selfOverlapColor(other.d_selfOverlapColor),
-      d_canonRot(other.d_canonRot),
-      d_canonTrans(other.d_canonTrans) {}
+      d_normalized(other.d_normalized),
+      d_canonRot(new std::array<double, 9>(*other.d_canonRot)),
+      d_centroid(new std::array<double, 3>(*other.d_centroid)) {}
 
 ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   if (this == &other) {
@@ -71,26 +68,49 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   d_numFeats = other.d_numFeats;
   d_selfOverlapVol = other.d_selfOverlapVol;
   d_selfOverlapColor = other.d_selfOverlapColor;
-  d_canonRot = other.d_canonRot;
-  d_canonTrans = other.d_canonTrans;
+  d_normalized = other.d_normalized;
+  d_canonRot.reset(new std::array<double, 9>(*other.d_canonRot));
+  d_centroid.reset(new std::array<double, 3>(*other.d_centroid));
   return *this;
 }
 
-// This is a public version that doesn't assume the shape was created
-// from a molecule.
 void ShapeInput::normalizeCoords() {
-  // For consistency, create a dummy molecule and use the same code
-  // as for shapes created from a molecule.
-  RWMol mol;
-  Conformer *conf = new Conformer(d_coords.size() / 4);
-  for (size_t i = 0, j = 0; i < d_coords.size(); i += 4, ++j) {
-    Atom *atom = new Atom(6);
-    mol.addAtom(atom, true, true);
-    RDGeom::Point3D pos{d_coords[i], d_coords[i + 1], d_coords[i + 2]};
-    conf->setAtomPos(j, pos);
+  if (!d_canonRot) {
+    // For consistency, create a dummy molecule and use the same code
+    // as for shapes created from a molecule.
+    RWMol mol;
+    Conformer *conf = new Conformer(d_coords.size() / 4);
+    for (size_t i = 0, j = 0; i < d_coords.size(); i += 4, ++j) {
+      Atom *atom = new Atom(6);
+      mol.addAtom(atom, true, true);
+      RDGeom::Point3D pos{d_coords[i], d_coords[i + 1], d_coords[i + 2]};
+      conf->setAtomPos(j, pos);
+    }
+    auto confId = mol.addConformer(conf);
+    calcNormalization(mol, confId);
   }
-  auto confId = mol.addConformer(conf);
-  normalizeCoords(mol, confId);
+  RDGeom::Transform3D canonRot;
+  for (unsigned int i = 0, k = 0; i < 3; ++i) {
+    for (unsigned int j = 0; j < 3; ++j, ++k) {
+      canonRot.setValUnchecked(i, j, (*d_canonRot)[k]);
+    }
+  }
+  RDGeom::Point3D trans{(*d_centroid)[0], (*d_centroid)[1], (*d_centroid)[2]};
+  canonRot.TransformPoint(trans);
+  canonRot.SetTranslation(trans);
+
+  for (size_t i = 0; i < d_coords.size(); i += 4) {
+    RDGeom::Point3D pos{d_coords[i], d_coords[i + 1], d_coords[i + 2]};
+    canonRot.TransformPoint(pos);
+    d_coords[i] = pos.x;
+    d_coords[i + 1] = pos.y;
+    d_coords[i + 2] = pos.z;
+  }
+  d_normalized = true;
+}
+
+void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
+  applyTransformToShape(d_coords, xform);
 }
 
 void ShapeInput::extractAtoms(const ROMol &mol, int confId) {
@@ -143,41 +163,25 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
   }
 }
 
-void ShapeInput::normalizeCoords(const ROMol &mol, int confId) {
+void ShapeInput::calcNormalization(const ROMol &mol, int confId) {
   std::unique_ptr<RDGeom::Transform3D> canonXform(
       MolTransforms::computeCanonicalTransform(mol.getConformer(confId)));
+  d_canonRot.reset(
+      new std::array<double, 9>{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0});
   for (unsigned int i = 0, k = 0; i < 3; ++i) {
     for (unsigned int j = 0; j < 3; ++j, ++k) {
-      d_canonRot[k] = canonXform->getValUnchecked(i, j);
+      (*d_canonRot)[k] = canonXform->getValUnchecked(i, j);
     }
   }
-  RDGeom::Point3D ave;
-  int j = 0;
-  for (size_t i = 0; i < d_coords.size(); i += 4) {
-    RDGeom::Point3D pos{d_coords[i], d_coords[i + 1], d_coords[i + 2]};
-    if (j++ < d_numAtoms) {
-      ave += pos;
-    }
-    canonXform->TransformPoint(pos);
-    d_coords[i] = pos.x;
-    d_coords[i + 1] = pos.y;
-    d_coords[i + 2] = pos.z;
-  }
-  ave /= d_numAtoms;
-  d_canonTrans[0] = -ave.x;
-  d_canonTrans[1] = -ave.y;
-  d_canonTrans[2] = -ave.z;
-}
-
-void ShapeInput::computeCentroid() {
+  d_centroid.reset(new std::array<double, 3>{0.0, 0.0, 0.0});
   for (int i = 0; i < 4 * d_numAtoms; i += 4) {
-    d_canonTrans[0] -= d_coords[i];
-    d_canonTrans[1] -= d_coords[i + 1];
-    d_canonTrans[2] -= d_coords[i + 2];
+    (*d_centroid)[0] -= d_coords[i];
+    (*d_centroid)[1] -= d_coords[i + 1];
+    (*d_centroid)[2] -= d_coords[i + 2];
   }
-  d_canonTrans[0] /= d_numAtoms;
-  d_canonTrans[1] /= d_numAtoms;
-  d_canonTrans[2] /= d_numAtoms;
+  (*d_centroid)[0] /= d_numAtoms;
+  (*d_centroid)[1] /= d_numAtoms;
+  (*d_centroid)[2] /= d_numAtoms;
 }
 
 RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,

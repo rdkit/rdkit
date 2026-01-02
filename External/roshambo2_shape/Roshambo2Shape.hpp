@@ -30,8 +30,9 @@ class ShapeInput;
 //  the conformation (assumed to be the one that fitShape is derived from)
 //  is moved to its centroid and principal axes, the ovXform is applied
 //  and it is then moved with the inverse of the refShape normalization
-//  transformation so it is finally in refShape's coordinate frame.
-RDKIT_ROSHAMBO2SHAPE_EXPORT void TransformConformer(
+//  transformation so it is finally in refShape's coordinate frame.  The
+//  cumultative transformation matrix that achieves this is returned.
+RDKIT_ROSHAMBO2SHAPE_EXPORT RDGeom::Transform3D TransformConformer(
     Conformer &fitConf, const ShapeInput &refShape, const ShapeInput &fitShape,
     RDGeom::Transform3D &ovXform);
 

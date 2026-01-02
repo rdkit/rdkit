@@ -44,16 +44,17 @@ class RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeInput {
   DTYPE getSelfOverlapVol() const { return d_selfOverlapVol; }
   DTYPE getSelfOverlapColor() const { return d_selfOverlapColor; }
   const std::array<double, 9> &getCanonicalRotation() const {
-    return d_canonRot;
+    return *d_canonRot;
   }
   const std::array<double, 3> &getCanonicalTranslation() const {
-    return d_canonTrans;
+    return *d_centroid;
   }
   // Align the principal axes to the cartesian axes and centre on the origin.
-  // Doesn't require that the shape was created from a molecule.
+  // Doesn't require that the shape was created from a molecule.  Creates
+  // the necessary transformation if not already done.
   void normalizeCoords();
-  // Put the centroid for just the atoms (not features) into d_canonTrans.
-  void computeCentroid();
+
+  void transformCoords(RDGeom::Transform3D &xform);
 
  private:
   void extractAtoms(const ROMol &mol, int confId);
@@ -61,9 +62,9 @@ class RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeInput {
   // for now.  Other options to be added later.
   void extractFeatures(const ROMol &mol, int confId,
                        const ShapeOverlayOptions &shapeOpts);
-  // align the principal axes to the cartesian axes and centre on the origin,
-  // using the conformer.
-  void normalizeCoords(const ROMol &mol, int confId);
+  // Calculate the rotation and translation that will align the principal axes
+  // to the cartesian axes and centre on the origin, using the conformer.
+  void calcNormalization(const ROMol &mol, int confId);
 
   std::vector<DTYPE> d_coords;  // The coordinates and w parameter for the
   // atoms and features, packed as 4 floats per
@@ -80,12 +81,12 @@ class RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeInput {
   DTYPE d_selfOverlapVol{0.0};    // Shape volume
   DTYPE d_selfOverlapColor{0.0};  // Color volume
 
-  // If the conformer the shape was created from was transformed to its
-  // canonical reference frame at the start this is the rotation matrix
-  // and translation that did it.  The inverse is used to transform
-  // back again.
-  std::array<double, 9> d_canonRot{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
-  std::array<double, 3> d_canonTrans{0.0, 0.0, 0.0};
+  // This is the rotation and translation to align the principal axes of the
+  // shape with cartesian axes.  If d_normalized is true, it has been applied
+  // to the coordinates.
+  bool d_normalized{false};
+  std::unique_ptr<std::array<double, 9>> d_canonRot;
+  std::unique_ptr<std::array<double, 3>> d_centroid;
 };
 
 // Calculate the mean position of the given atoms.

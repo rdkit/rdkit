@@ -77,11 +77,11 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(tcnc, Catch::Matchers::WithinAbs(0.556, 0.005));
     // Check a few values from the transform, just to be sure
     CHECK_THAT(xform.getValUnchecked(0, 0),
-               Catch::Matchers::WithinAbs(0.958, 0.005));
+               Catch::Matchers::WithinAbs(-0.864, 0.005));
     CHECK_THAT(xform.getValUnchecked(1, 1),
-               Catch::Matchers::WithinAbs(0 - 0.992, 0.005));
+               Catch::Matchers::WithinAbs(-0.804, 0.005));
     CHECK_THAT(xform.getValUnchecked(2, 2),
-               Catch::Matchers::WithinAbs(-0.956, 0.005));
+               Catch::Matchers::WithinAbs(0.686, 0.005));
     CHECK_THAT(xform.getValUnchecked(3, 3),
                Catch::Matchers::WithinAbs(1.0, 0.005));
   }
@@ -300,4 +300,52 @@ TEST_CASE("Iressa onto Tagrisso") {
   auto sims = ShapeAlign::AlignMolecule(*tagrisso, *iressa);
   CHECK_THAT(sims.first, Catch::Matchers::WithinAbs(0.571, 0.005));
   CHECK_THAT(sims.second, Catch::Matchers::WithinAbs(0.360, 0.005));
+}
+
+TEST_CASE("Optimise in place") {
+  // These are 2 ligands used by Andy Grant and Co in their original paper
+  // https://onlinelibrary.wiley.com/doi/10.1002/(SICI)1096-987X(19961115)17:14%3C1653::AID-JCC7%3E3.0.CO;2-K
+  // Ligands as extracted from PDB, with a bit of munging to get them as
+  // SMILES strings (downloaded the Ideal ligand structures from RCSB
+  // as SDFs and transferred the corresponding atom coords from 3tmn and 1tmn).
+  auto pdb_trp_3tmn =
+      R"(N[C@H](C(=O)O)Cc1c[nH]c2c1cccc2 |(37.935,40.394,-3.825;39.119,39.593,-4.13;38.758,38.486,-5.101;37.526,38.337,-5.395;39.716,37.852,-5.605;39.883,39.108,-2.906;39.086,38.098,-2.209;38.093,38.363,-1.34;37.565,37.179,-0.881;38.201,36.136,-1.471;39.193,36.684,-2.308;40.015,35.812,-3.036;39.846,34.441,-2.913;38.844,33.933,-2.075;38.015,34.752,-1.333),wU:1.0|)"_smiles;
+  REQUIRE(pdb_trp_3tmn);
+  auto pdb_0zn_1tmn =
+      R"([C@H](CCc1ccccc1)(C(=O)O)N[C@H](C(=O)N[C@H](C(=O)O)Cc1c[nH]c2c1cccc2)CC(C)C |(35.672,41.482,-5.722;34.516,40.842,-6.512;34.843,39.355,-6.7;33.819,38.475,-7.45;33.825,38.414,-8.838;32.951,37.553,-9.53;32.064,36.747,-8.81;32.096,36.799,-7.402;32.985,37.656,-6.73;35.934,42.778,-6.452;36.833,42.858,-7.316;35.175,43.735,-6.275;35.516,41.561,-4.218;36.707,42.096,-3.513;38.055,41.449,-3.859;39.11,42.138,-3.959;37.975,40.129,-3.983;39.134,39.277,-4.298;38.825,38.04,-5.133;37.649,37.934,-5.605;39.788,37.369,-5.652;39.985,38.945,-3.037;39.221,37.953,-2.164;37.934,37.961,-1.823;37.579,36.695,-1.314;38.63,35.975,-1.286;39.736,36.771,-1.642;41.052,36.341,-1.48;41.213,35.042,-0.964;40.095,34.215,-0.69;38.765,34.665,-0.855;36.506,41.966,-2.002;37.6,42.757,-1.31;37.546,44.225,-1.728;37.408,42.58,0.19),wD:0.0,wU:17.21,13.33|)"_smiles;
+  REQUIRE(pdb_0zn_1tmn);
+  auto initScores = ShapeAlign::ScoreMolecule(*pdb_trp_3tmn, *pdb_0zn_1tmn);
+  CHECK_THAT(initScores.first, Catch::Matchers::WithinAbs(0.349, 0.001));
+  CHECK_THAT(initScores.second, Catch::Matchers::WithinAbs(0.342, 0.001));
+  {
+    ShapeAlign::ShapeOverlayOptions opts;
+    opts.d_mode = ShapeAlign::StartMode::AS_IS;
+    opts.d_normalize = false;
+    ROMol cp(*pdb_0zn_1tmn);
+    auto [singleShape, singleColor] =
+        ShapeAlign::AlignMolecule(*pdb_trp_3tmn, cp, nullptr, opts);
+    CHECK_THAT(singleShape, Catch::Matchers::WithinAbs(0.404, 0.001));
+    CHECK_THAT(singleColor, Catch::Matchers::WithinAbs(0.354, 0.001));
+  }
+  {
+    // With default settings, it does a poor job.
+    ShapeAlign::ShapeOverlayOptions opts;
+    ROMol cp(*pdb_0zn_1tmn);
+    auto [singleShape, singleColor] =
+        ShapeAlign::AlignMolecule(*pdb_trp_3tmn, cp, nullptr, opts);
+    CHECK_THAT(singleShape, Catch::Matchers::WithinAbs(0.288, 0.001));
+    CHECK_THAT(singleColor, Catch::Matchers::WithinAbs(0.383, 0.001));
+  }
+  {
+    // And with shapes the same
+    ShapeAlign::ShapeOverlayOptions opts;
+    opts.d_mode = ShapeAlign::StartMode::AS_IS;
+    opts.d_normalize = false;
+    auto refShape = ShapeAlign::ShapeInput(*pdb_trp_3tmn, -1, opts);
+    ROMol cp(*pdb_0zn_1tmn);
+    auto [singleShape, singleColor] =
+        ShapeAlign::AlignMolecule(refShape, cp, nullptr, opts);
+    CHECK_THAT(singleShape, Catch::Matchers::WithinAbs(0.404, 0.001));
+    CHECK_THAT(singleColor, Catch::Matchers::WithinAbs(0.354, 0.001));
+  }
 }
