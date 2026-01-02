@@ -42,7 +42,6 @@ void TransformConformer(Conformer &fitConf, const ShapeInput &refShape,
                       fitShape.getCanonicalTranslation()[2]});
 
   RDGeom::Transform3D transform1;
-  transform1.setToIdentity();
   transform1.setValUnchecked(0, 0, fitShape.getCanonicalRotation()[0]);
   transform1.setValUnchecked(0, 1, fitShape.getCanonicalRotation()[1]);
   transform1.setValUnchecked(0, 2, fitShape.getCanonicalRotation()[2]);
@@ -54,7 +53,6 @@ void TransformConformer(Conformer &fitConf, const ShapeInput &refShape,
   transform1.setValUnchecked(2, 2, fitShape.getCanonicalRotation()[8]);
 
   RDGeom::Transform3D toRefRefFrame;
-  toRefRefFrame.setToIdentity();
   // Rotate by the inverse of the ref shape's canonical rotation and
   // translate by the negative of its canonical translation.
   toRefRefFrame.setValUnchecked(0, 0, refShape.getCanonicalRotation()[0]);
@@ -75,6 +73,9 @@ void TransformConformer(Conformer &fitConf, const ShapeInput &refShape,
 }
 
 namespace {
+// Copied from Roshambo2's cpp_functions.cpp, but using double rather than
+// DTYPE.  axisAngle is 3 doubles for the axis and the last is the angle.
+// Axis assumed to be normalised.
 std::array<double, 4> axisAngleToQuaternion(std::array<double, 4> axisAngle) {
   std::array<double, 4> quat;
   double hangle = axisAngle[3] * 0.5;
@@ -118,6 +119,15 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
       break;
   }
 
+  RDGeom::Transform3D setupXForm;
+  if (!overlayOpts.d_normalize) {
+    // Optimising in place, but still need to translate both to the centroid
+    // of fitShape.
+    setupXForm.SetTranslation(
+        RDGeom::Point3D{fitShape.getCanonicalTranslation()[0],
+                        fitShape.getCanonicalTranslation()[1],
+                        fitShape.getCanonicalTranslation()[2]});
+  }
   std::pair<double, double> bestScore;
   double bestTotal = 0.0;
   RDGeom::Transform3D bestXform;
@@ -165,10 +175,15 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
                                         RDGeom::Transform3D *xform,
                                         const ShapeOverlayOptions &overlayOpts,
                                         int fitConfId) {
+  // The refShape may not have been normalized, so its canonical transformation
+  // may not have been filled in.  Take a copy for the optimisation.
+  ShapeInput refShapeCp(refShape);
+  refShapeCp.normalizeCoords();
   auto fitShape = ShapeInput(fit, fitConfId, overlayOpts);
   RDGeom::Transform3D tmpXform;
-  auto tcs = AlignShape(refShape, fitShape, overlayOpts, &tmpXform);
-  TransformConformer(fit.getConformer(fitConfId), refShape, fitShape, tmpXform);
+  auto tcs = AlignShape(refShapeCp, fitShape, overlayOpts, &tmpXform);
+  TransformConformer(fit.getConformer(fitConfId), refShapeCp, fitShape,
+                     tmpXform);
   if (xform) {
     copyTransform(tmpXform, *xform);
   }
@@ -179,8 +194,17 @@ std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
                                         RDGeom::Transform3D *xform,
                                         const ShapeOverlayOptions &overlayOpts,
                                         int refConfId, int fitConfId) {
+  // Don't use AlignMolecule for shape and molecule because that doesn't assume
+  // the shape has been normalised so the final transformation back to
+  // ref's reference frame will be lost.
+  auto fitShape = ShapeInput(fit, fitConfId, overlayOpts);
   auto refShape = ShapeInput(ref, refConfId, overlayOpts);
-  auto tcs = AlignMolecule(refShape, fit, xform, overlayOpts, fitConfId);
+  RDGeom::Transform3D tmpXform;
+  auto tcs = AlignShape(refShape, fitShape, overlayOpts, &tmpXform);
+  TransformConformer(fit.getConformer(fitConfId), refShape, fitShape, tmpXform);
+  if (xform) {
+    copyTransform(tmpXform, *xform);
+  }
   return tcs;
 }
 

@@ -16,6 +16,7 @@
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/RWMol.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -75,29 +76,39 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   return *this;
 }
 
+// This is a public version that doesn't assume the shape was created
+// from a molecule.
+void ShapeInput::normalizeCoords() {
+  // For consistency, create a dummy molecule and use the same code
+  // as for shapes created from a molecule.
+  RWMol mol;
+  Conformer *conf = new Conformer(d_coords.size() / 4);
+  for (size_t i = 0, j = 0; i < d_coords.size(); i += 4, ++j) {
+    Atom *atom = new Atom(6);
+    mol.addAtom(atom, true, true);
+    RDGeom::Point3D pos{d_coords[i], d_coords[i + 1], d_coords[i + 2]};
+    conf->setAtomPos(j, pos);
+  }
+  auto confId = mol.addConformer(conf);
+  normalizeCoords(mol, confId);
+}
+
 void ShapeInput::extractAtoms(const ROMol &mol, int confId) {
-  // std::cout << "Extracting " << MolToSmiles(mol) << std::endl;
   d_coords.reserve(mol.getNumAtoms() * 4);
   auto conf = mol.getConformer(confId);
-  RDGeom::Point3D ave;
   for (const auto atom : mol.atoms()) {
     if (atom->getAtomicNum() > 1) {
       unsigned int idx = atom->getIdx();
       auto &pos = conf.getAtomPos(idx);
-      // std::cout << idx << " : " << atom->getAtomicNum() << " : "
-      //           << atom->getIsAromatic() << " : " << d_coords.size() / 4
-      //           << " :: " << pos << std::endl;
       d_coords.push_back(pos.x);
       d_coords.push_back(pos.y);
       d_coords.push_back(pos.z);
       d_coords.push_back(1.0);
-      ave += pos;
     }
   }
   d_numAtoms = d_coords.size() / 4;
   d_types.resize(d_numAtoms);
   d_numFeats = 0;
-  ave /= d_numAtoms;
 }
 
 // Extract the features for the color scores, using RDKit pphore features
@@ -156,6 +167,17 @@ void ShapeInput::normalizeCoords(const ROMol &mol, int confId) {
   d_canonTrans[0] = -ave.x;
   d_canonTrans[1] = -ave.y;
   d_canonTrans[2] = -ave.z;
+}
+
+void ShapeInput::computeCentroid() {
+  for (int i = 0; i < 4 * d_numAtoms; i += 4) {
+    d_canonTrans[0] -= d_coords[i];
+    d_canonTrans[1] -= d_coords[i + 1];
+    d_canonTrans[2] -= d_coords[i + 2];
+  }
+  d_canonTrans[0] /= d_numAtoms;
+  d_canonTrans[1] /= d_numAtoms;
+  d_canonTrans[2] /= d_numAtoms;
 }
 
 RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,

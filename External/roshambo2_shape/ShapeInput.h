@@ -49,6 +49,11 @@ class RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeInput {
   const std::array<double, 3> &getCanonicalTranslation() const {
     return d_canonTrans;
   }
+  // Align the principal axes to the cartesian axes and centre on the origin.
+  // Doesn't require that the shape was created from a molecule.
+  void normalizeCoords();
+  // Put the centroid for just the atoms (not features) into d_canonTrans.
+  void computeCentroid();
 
  private:
   void extractAtoms(const ROMol &mol, int confId);
@@ -56,6 +61,8 @@ class RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeInput {
   // for now.  Other options to be added later.
   void extractFeatures(const ROMol &mol, int confId,
                        const ShapeOverlayOptions &shapeOpts);
+  // align the principal axes to the cartesian axes and centre on the origin,
+  // using the conformer.
   void normalizeCoords(const ROMol &mol, int confId);
 
   std::vector<DTYPE> d_coords;  // The coordinates and w parameter for the

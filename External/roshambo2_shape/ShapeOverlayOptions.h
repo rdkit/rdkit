@@ -49,8 +49,8 @@ struct RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeOverlayOptions {
   // optimisation.
   DTYPE d_optParam{0.5};  // If using colors, the relative weights of shape and
   // color scores.
-  DTYPE lr_q{0.1};    // Scale factor for optimising quaternion
-  DTYPE lr_t{0.1};    // Scale factor for optimising translation
+  DTYPE lr_q{0.1};    // Learning rate for optimising quaternion
+  DTYPE lr_t{0.1};    // Learning rate for optimising translation
   int d_nSteps{100};  // Number of steps for optimiser to take.
 
   // Patterns for assigning features. Uses the normal RDKit ones by default.
