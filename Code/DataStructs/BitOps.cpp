@@ -290,7 +290,7 @@ double TanimotoSimilarity(const T1 &bv1, const T2 &bv2) {
   }
   unsigned int total = bv1.getNumOnBits() + bv2.getNumOnBits();
   if (total == 0) {
-    return 1.0;
+    return 0.0;
   }
   unsigned int common = NumOnBitsInCommon(bv1, bv2);
   return (double)common / (double)(total - common);
@@ -304,8 +304,11 @@ double TverskySimilarity(const T1 &bv1, const T2 &bv2, double a, double b) {
     throw ValueErrorException("BitVects must be same length");
   }
   double x = NumOnBitsInCommon(bv1, bv2);
-  double y = bv1.getNumOnBits();
-  double z = bv2.getNumOnBits();
+  auto y = bv1.getNumOnBits();
+  auto z = bv2.getNumOnBits();
+  if (y == 0 || z == 0) {
+    return 0.0;
+  }
   double denom = a * y + b * z + (1 - a - b) * x;
   if (denom == 0.0) {
     return 1.0;
@@ -368,10 +371,13 @@ double SokalSimilarity(const T1 &bv1, const T2 &bv2) {
     throw ValueErrorException("BitVects must be same length");
   }
   double x = NumOnBitsInCommon(bv1, bv2);
-  double y = bv1.getNumOnBits();
-  double z = bv2.getNumOnBits();
+  auto y = bv1.getNumOnBits();
+  auto z = bv2.getNumOnBits();
+  if (y == 0 || z == 0) {
+    return 0.0;
+  }
 
-  return x / (2 * y + 2 * z - 3 * x);
+  return x / (2. * y + 2. * z - 3. * x);
 }
 
 template <typename T1, typename T2>
@@ -390,16 +396,6 @@ double McConnaugheySimilarity(const T1 &bv1, const T2 &bv2) {
   }
 }
 
-template <typename T>
-inline T tmin(T v1, T v2) {
-  return std::min(v2, v1);
-}
-
-template <typename T>
-inline T tmax(T v1, T v2) {
-  return std::max(v2, v1);
-}
-
 template <typename T1, typename T2>
 double AsymmetricSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
@@ -409,7 +405,7 @@ double AsymmetricSimilarity(const T1 &bv1, const T2 &bv2) {
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
 
-  double min = tmin(y, z);
+  double min = std::min(y, z);
   if (min > 0.0) {
     return x / min;
   } else {
@@ -426,7 +422,7 @@ double BraunBlanquetSimilarity(const T1 &bv1, const T2 &bv2) {
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
 
-  double max = tmax(y, z);
+  double max = std::max(y, z);
   if (max > 0.0) {
     return x / max;
   } else {
@@ -439,6 +435,7 @@ double RusselSimilarity(const T1 &bv1, const T2 &bv2) {
   if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
   }
+
   double x = NumOnBitsInCommon(bv1, bv2);
   return x / bv1.getNumBits();
 }
@@ -449,8 +446,12 @@ double RogotGoldbergSimilarity(const T1 &bv1, const T2 &bv2) {
     throw ValueErrorException("BitVects must be same length");
   }
   double x = NumOnBitsInCommon(bv1, bv2);
-  double y = bv1.getNumOnBits();
-  double z = bv2.getNumOnBits();
+  auto y = bv1.getNumOnBits();
+  auto z = bv2.getNumOnBits();
+  if (y == 0 || z == 0) {
+    return 0.0;
+  }
+
   double l = bv1.getNumBits();
   double d = l - y - z + x;
 
