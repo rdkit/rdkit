@@ -97,4 +97,7 @@ RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Transform3D operator*(
 RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Point3D operator*(
     const RDGeom::Transform3D &t, const RDGeom::Point3D &pt);
 
+RDKIT_RDGEOMETRYLIB_EXPORT std::ostream &operator<<(
+    std::ostream &out, const RDGeom::Transform3D &transform);
+
 #endif
