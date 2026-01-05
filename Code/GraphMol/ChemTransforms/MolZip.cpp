@@ -357,10 +357,10 @@ void rotateFragmentToBondVector(
   //    Vs: Psc-Psa (sidechain attachment vector)
   //
   //-----------------------------------------
-  const auto Pma = conf.getAtomPos(a.getIdx());
-  const auto Psa = conf.getAtomPos(b.getIdx());
-  const auto Pmc = conf.getAtomPos(a_dummy.getIdx());
-  const auto Psc = conf.getAtomPos(b_dummy.getIdx());
+  const auto &Pma = conf.getAtomPos(a.getIdx());
+  const auto &Psa = conf.getAtomPos(b.getIdx());
+  const auto &Pmc = conf.getAtomPos(a_dummy.getIdx());
+  const auto &Psc = conf.getAtomPos(b_dummy.getIdx());
 
   auto Um = Pma.directionVector(Pmc);
   // note the opposite direction here:
