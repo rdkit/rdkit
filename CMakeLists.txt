@@ -19,15 +19,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
-add_library(rdkit_base INTERFACE
-        External/roshambo2_shape/Roshambo2Shape.hpp
-        External/roshambo2_shape/Roshambo2Shape.cpp
-        External/roshambo2_shape/catch_tests.cpp
-        External/roshambo2_shape/ShapeOverlayOptions.h
-        External/roshambo2_shape/ShapeOverlayOptions.cpp
-        External/roshambo2_shape/ShapeInput.h
-        External/roshambo2_shape/ShapeInput.cpp
-        External/roshambo2_shape/Wrap/rshapealign.cpp)
+add_library(rdkit_base INTERFACE)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )

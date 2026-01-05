@@ -190,7 +190,11 @@ Returns
  3-tuple of double, double, list of doubles
     The results are (shape_score, color_score, matrix)
     The matrix is a 16-float list giving the transformation matrix that
-    overlays the probe onto the reference.)DOC");
+    overlays the probe onto the reference.  To turn it into a numpy array
+    that can be used to transform conformations, do something like:
+    ttrans = [tpl[2][0:4], tpl[2][4:8], tpl[2][8:12], tpl[2][12:16]]
+    nptrans = np.array(ttrans)
+)DOC");
 }
 
 BOOST_PYTHON_MODULE(rdShapeAlign2) { wrap_roshambo2shape(); }

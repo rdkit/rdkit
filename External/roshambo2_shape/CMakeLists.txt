@@ -44,7 +44,8 @@ target_compile_definitions(Roshambo2Shape PRIVATE RDKIT_PUBCHEMSHAPE_BUILD)
 
 rdkit_headers(Roshambo2Shape.hpp ShapeInput.h ShapeOverlayOptions.h DEST GraphMol)
 
-rdkit_catch_test(roshambo2_test catch_tests.cpp LINK_LIBRARIES Roshambo2Shape FileParsers MolAlign MolTransforms)
+rdkit_catch_test(roshambo2_test catch_tests.cpp LINK_LIBRARIES Roshambo2Shape FileParsers
+        MolAlign MolTransforms)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(Wrap)

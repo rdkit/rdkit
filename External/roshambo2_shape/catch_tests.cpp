@@ -25,6 +25,21 @@
 
 using namespace RDKit;
 
+bool checkMolsHaveRoughlySameCoords(const ROMol &m1, const ROMol &m2,
+                                    double margin = 0.005) {
+  for (unsigned int i = 0; i < m1.getNumAtoms(); ++i) {
+    auto pos1 = m1.getConformer().getAtomPos(i);
+    auto pos2 = m2.getConformer().getAtomPos(i);
+    if ((pos1 - pos2).length() > margin) {
+      // So the error is printed in a relevant place.
+      CHECK_THAT((pos1 - pos2).length(),
+                 Catch::Matchers::WithinAbs(0.0, margin));
+      return false;
+    }
+  }
+  return true;
+}
+
 TEST_CASE("basic alignment") {
   std::string dirName = getenv("RDBASE");
   dirName += "/External/pubchem_shape/test_data";
@@ -119,19 +134,30 @@ TEST_CASE("shape alignment") {
   auto refShape = ShapeAlign::ShapeInput(*ref, -1);
   auto probeShape = ShapeAlign::ShapeInput(*probe, -1);
 
-  auto [st, ct] = ShapeAlign::AlignShape(refShape, probeShape, nullptr);
+  const auto ovProbe =
+      "FC1(F)C[C@H](C(O)=O)N(Cc2ocnc2)C1 |(-13.573,-4.87636,4.55432;-13.079,-5.83883,3.73936;-11.9512,-6.31454,4.30169;-12.8234,-5.27977,2.35569;-14.1213,-5.56229,1.59437;-14.8393,-4.29672,1.24533;-14.4685,-3.85942,0.0166781;-15.6525,-3.72945,1.96125;-14.9834,-6.29975,2.52647;-15.8453,-7.2704,1.86409;-17.0412,-6.61398,1.2237;-17.8606,-5.8852,2.03347;-18.825,-5.43016,1.18516;-18.6929,-5.79923,-0.0701024;-17.5495,-6.55903,-0.0517151;-14.1074,-6.923,3.52306),wU:4.4|"_smiles;
+  RDGeom::Transform3D xform;
+  auto [st, ct] = ShapeAlign::AlignShape(refShape, probeShape, &xform);
   CHECK_THAT(st, Catch::Matchers::WithinAbs(0.702, 0.005));
   CHECK_THAT(ct, Catch::Matchers::WithinAbs(0.556, 0.005));
+  SmilesWriteParams params;
+  params.canonical = false;
+  // The input structure being from an SDF doesn't have the atoms in an order
+  // that will make a SMILES string so bounce it through one for comparison.
+  auto probeCp1 = v2::SmilesParse::MolFromSmiles(MolToCXSmiles(*probe, params));
+  MolTransforms::transformConformer(probeCp1->getConformer(), xform);
+  CHECK(checkMolsHaveRoughlySameCoords(*ovProbe, *probeCp1));
 
   // And pre-normalizing the shapes
   refShape.normalizeCoords();
-  auto [st1, ct1] = ShapeAlign::AlignShape(refShape, probeShape, nullptr);
+  probeShape.normalizeCoords();
+  RDGeom::Transform3D xform1;
+  auto [st1, ct1] = ShapeAlign::AlignShape(refShape, probeShape, &xform1);
   CHECK_THAT(st1, Catch::Matchers::WithinAbs(0.702, 0.005));
   CHECK_THAT(ct1, Catch::Matchers::WithinAbs(0.556, 0.005));
-  probeShape.normalizeCoords();
-  auto [st2, ct2] = ShapeAlign::AlignShape(refShape, probeShape, nullptr);
-  CHECK_THAT(st2, Catch::Matchers::WithinAbs(0.702, 0.005));
-  CHECK_THAT(ct2, Catch::Matchers::WithinAbs(0.556, 0.005));
+  auto probeCp2 = v2::SmilesParse::MolFromSmiles(MolToCXSmiles(*probe, params));
+  MolTransforms::transformConformer(probeCp2->getConformer(), xform1);
+  CHECK(checkMolsHaveRoughlySameCoords(*ovProbe, *probeCp2));
 }
 
 TEST_CASE("Overlay onto shape bug (Github8462)") {
@@ -149,11 +175,7 @@ TEST_CASE("Overlay onto shape bug (Github8462)") {
   auto [st, ct] = ShapeAlign::AlignMolecule(*m1, m2);
   CHECK_THAT(st, Catch::Matchers::WithinAbs(1.0, 0.005));
   CHECK_THAT(ct, Catch::Matchers::WithinAbs(1.0, 0.005));
-  for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
-    auto pos1 = m1->getConformer().getAtomPos(i);
-    auto pos2 = m2.getConformer().getAtomPos(i);
-    CHECK_THAT((pos1 - pos2).length(), Catch::Matchers::WithinAbs(0.0, 0.005));
-  }
+  CHECK(checkMolsHaveRoughlySameCoords(*m1, m2, 0.005));
 
   // Create the shape without normalization to mimic an arbitrary shape.
   ShapeAlign::ShapeOverlayOptions opts;
@@ -340,39 +362,55 @@ TEST_CASE("Optimise in place") {
   REQUIRE(pdb_trp_3tmn);
   auto pdb_0zn_1tmn =
       R"([C@H](CCc1ccccc1)(C(=O)O)N[C@H](C(=O)N[C@H](C(=O)O)Cc1c[nH]c2c1cccc2)CC(C)C |(35.672,41.482,-5.722;34.516,40.842,-6.512;34.843,39.355,-6.7;33.819,38.475,-7.45;33.825,38.414,-8.838;32.951,37.553,-9.53;32.064,36.747,-8.81;32.096,36.799,-7.402;32.985,37.656,-6.73;35.934,42.778,-6.452;36.833,42.858,-7.316;35.175,43.735,-6.275;35.516,41.561,-4.218;36.707,42.096,-3.513;38.055,41.449,-3.859;39.11,42.138,-3.959;37.975,40.129,-3.983;39.134,39.277,-4.298;38.825,38.04,-5.133;37.649,37.934,-5.605;39.788,37.369,-5.652;39.985,38.945,-3.037;39.221,37.953,-2.164;37.934,37.961,-1.823;37.579,36.695,-1.314;38.63,35.975,-1.286;39.736,36.771,-1.642;41.052,36.341,-1.48;41.213,35.042,-0.964;40.095,34.215,-0.69;38.765,34.665,-0.855;36.506,41.966,-2.002;37.6,42.757,-1.31;37.546,44.225,-1.728;37.408,42.58,0.19),wD:0.0,wU:17.21,13.33|)"_smiles;
+  auto ov_pdb_0zn_1tmn =
+      R"(CC(C)C[C@H](N[C@@H](CCc1ccccc1)C(=O)O)C(=O)N[C@@H](Cc1c[nH]c2ccccc12)C(=O)O |(39.0169,44.1407,-0.743809;38.7739,42.6444,-0.551057;38.7074,42.2594,0.920819;37.4585,42.2324,-1.18692;37.5217,42.5722,-2.67755;36.1703,42.4295,-3.27593;36.1424,42.5764,-4.78311;34.7914,42.3396,-5.48471;34.7434,40.8704,-5.92718;33.4689,40.3677,-6.64249;33.3124,40.544,-8.01218;32.1936,40.0179,-8.68919;31.2257,39.3072,-7.97285;31.419,39.1108,-6.59022;32.5493,39.6333,-5.93551;36.6179,43.8931,-5.35088;37.414,43.9267,-6.3135;36.1241,44.9454,-4.93353;38.6392,41.7224,-3.29977;39.8087,42.1792,-3.44903;38.2429,40.4893,-3.59807;39.1334,39.4768,-4.19236;40.0145,38.7621,-3.12453;39.1389,37.8202,-2.30219;37.932,38.0426,-1.78458;37.3498,36.8121,-1.41592;38.2029,35.8912,-1.63998;38.0763,34.5278,-1.42345;39.2765,33.7844,-1.5143;40.5203,34.3905,-1.82332;40.6102,35.7633,-2.12103;39.4192,36.4839,-2.03207;38.4589,38.4933,-5.14312;37.2462,38.7208,-5.45416;39.1798,37.7314,-5.88375),wU:4.3,6.6,21.22|)"_smiles;
   REQUIRE(pdb_0zn_1tmn);
   auto initScores = ShapeAlign::ScoreMolecule(*pdb_trp_3tmn, *pdb_0zn_1tmn);
   CHECK_THAT(initScores.first, Catch::Matchers::WithinAbs(0.349, 0.001));
   CHECK_THAT(initScores.second, Catch::Matchers::WithinAbs(0.342, 0.001));
+  // The PDB atom order isn't canonical, so bounce in and out of SMILES
+  // to make it easier to check.
+  auto canon_probe =
+      v2::SmilesParse::MolFromSmiles(MolToCXSmiles(*pdb_0zn_1tmn));
   {
     ShapeAlign::ShapeOverlayOptions opts;
     opts.d_mode = ShapeAlign::StartMode::AS_IS;
     opts.d_normalize = false;
-    ROMol cp(*pdb_0zn_1tmn);
+    ROMol cp(*canon_probe);
+    RDGeom::Transform3D xform;
     auto [singleShape, singleColor] =
-        ShapeAlign::AlignMolecule(*pdb_trp_3tmn, cp, nullptr, opts);
+        ShapeAlign::AlignMolecule(*pdb_trp_3tmn, cp, &xform, opts);
     CHECK_THAT(singleShape, Catch::Matchers::WithinAbs(0.404, 0.001));
     CHECK_THAT(singleColor, Catch::Matchers::WithinAbs(0.354, 0.001));
+    CHECK(checkMolsHaveRoughlySameCoords(cp, *ov_pdb_0zn_1tmn));
+    ROMol cp1(*canon_probe);
+    MolTransforms::transformConformer(cp1.getConformer(), xform);
   }
   {
     // With default settings, it does a poor job.
     ShapeAlign::ShapeOverlayOptions opts;
-    ROMol cp(*pdb_0zn_1tmn);
+    ROMol cp(*canon_probe);
     auto [singleShape, singleColor] =
         ShapeAlign::AlignMolecule(*pdb_trp_3tmn, cp, nullptr, opts);
     CHECK_THAT(singleShape, Catch::Matchers::WithinAbs(0.288, 0.001));
     CHECK_THAT(singleColor, Catch::Matchers::WithinAbs(0.383, 0.001));
   }
   {
-    // And with shapes the same
+    // And with refrerence shape the same
     ShapeAlign::ShapeOverlayOptions opts;
     opts.d_mode = ShapeAlign::StartMode::AS_IS;
     opts.d_normalize = false;
     auto refShape = ShapeAlign::ShapeInput(*pdb_trp_3tmn, -1, opts);
-    ROMol cp(*pdb_0zn_1tmn);
+    ROMol cp(*canon_probe);
+    RDGeom::Transform3D xform;
     auto [singleShape, singleColor] =
-        ShapeAlign::AlignMolecule(refShape, cp, nullptr, opts);
+        ShapeAlign::AlignMolecule(refShape, cp, &xform, opts);
     CHECK_THAT(singleShape, Catch::Matchers::WithinAbs(0.404, 0.001));
     CHECK_THAT(singleColor, Catch::Matchers::WithinAbs(0.354, 0.001));
+    CHECK(checkMolsHaveRoughlySameCoords(cp, *ov_pdb_0zn_1tmn));
+    MolTransforms::transformConformer(cp.getConformer(), xform);
+    ROMol cp1(*canon_probe);
+    MolTransforms::transformConformer(cp1.getConformer(), xform);
+    CHECK(checkMolsHaveRoughlySameCoords(cp1, *ov_pdb_0zn_1tmn));
   }
 }

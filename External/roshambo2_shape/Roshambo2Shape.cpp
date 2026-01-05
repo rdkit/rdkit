@@ -30,12 +30,13 @@
 namespace RDKit {
 namespace ShapeAlign {
 
-// Apply the final overlay transform to the conformer, returning what
-// was actually done.
-RDGeom::Transform3D TransformConformer(Conformer &fitConf,
-                                       const ShapeInput &refShape,
-                                       const ShapeInput &fitShape,
-                                       RDGeom::Transform3D &ovXform) {
+namespace {
+// Compute final overlay transform, with applies fitShape's
+// canonical transformation, followed by the overlay transform and
+// finally the inverse of refShape's canonical transformation.
+RDGeom::Transform3D computeFinalTransform(const ShapeInput &refShape,
+                                          const ShapeInput &fitShape,
+                                          RDGeom::Transform3D &ovXform) {
   // Move fitConf to fitShape's initial centroid and principal axes
   RDGeom::Transform3D transform0;
   transform0.SetTranslation(
@@ -71,11 +72,9 @@ RDGeom::Transform3D TransformConformer(Conformer &fitConf,
   toRefRefFrame.setValUnchecked(2, 3, -refShape.getCanonicalTranslation()[2]);
 
   auto finalTransform = toRefRefFrame * ovXform * transform1 * transform0;
-  MolTransforms::transformConformer(fitConf, finalTransform);
   return finalTransform;
 }
 
-namespace {
 // Copied from Roshambo2's cpp_functions.cpp, but using double rather than
 // DTYPE.  axisAngle is 3 doubles for the axis and the last is the angle.
 // Axis assumed to be normalised.
@@ -104,11 +103,9 @@ void getInitialTransformation(int index, RDGeom::Transform3D &initXform) {
   initXform.SetRotationFromQuaternion(quat.data());
 }
 
-}  // namespace
-
-std::pair<double, double> AlignShape(const ShapeInput &refShape,
+std::pair<double, double> alignShape(const ShapeInput &refShape,
                                      ShapeInput &fitShape,
-                                     RDGeom::Transform3D *xform,
+                                     RDGeom::Transform3D &bestXform,
                                      const ShapeOverlayOptions &overlayOpts) {
   int finalIndex = 1;
   switch (overlayOpts.d_mode) {
@@ -122,23 +119,6 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
       break;
   }
 
-  // The shapes aren't necessarily normalized (it's not done on creation, for
-  // example) but they might need to be.
-  const ShapeInput *workingRefShape = &refShape;
-  std::unique_ptr<ShapeInput> refCp;
-  if (overlayOpts.d_normalize && !refShape.getNormalized()) {
-    refCp.reset(new ShapeInput(refShape));
-    refCp->normalizeCoords();
-    workingRefShape = refCp.get();
-  }
-  const ShapeInput *workingFitShape = &fitShape;
-  std::unique_ptr<ShapeInput> fitCp;
-  if (overlayOpts.d_normalize && !fitShape.getNormalized()) {
-    fitCp.reset(new ShapeInput(fitShape));
-    fitCp->normalizeCoords();
-    workingFitShape = fitCp.get();
-  }
-
   RDGeom::Transform3D setupXForm;
   if (!overlayOpts.d_normalize) {
     // Optimising in place, but still need to translate both to the centroid
@@ -149,27 +129,25 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
                         fitShape.getCanonicalTranslation()[2]});
   }
   std::pair<double, double> bestScore;
-  double bestTotal = 0.0;
-  RDGeom::Transform3D bestXform;
+  double bestTotal = -1.0;
   RDGeom::Transform3D initialXform;
 
   for (int i = 0; i < finalIndex; i++) {
     getInitialTransformation(i, initialXform);
-    std::vector<DTYPE> startFit(workingFitShape->getCoords());
+    std::vector<DTYPE> startFit(fitShape.getCoords());
     applyTransformToShape(startFit, initialXform);
     std::vector<DTYPE> workingFit(startFit);
-    std::vector<DTYPE> workingRef(workingRefShape->getCoords());
+    std::vector<DTYPE> workingRef(refShape.getCoords());
     std::array<DTYPE, 20> outScores;
     single_conformer_optimiser(
-        workingRefShape->getCoords().data(), workingRef.data(),
-        workingRefShape->getTypes().data(),
-        workingRefShape->getNumAtoms() + workingRefShape->getNumFeatures(),
-        workingRefShape->getNumAtoms(), workingRefShape->getNumFeatures(),
-        workingRefShape->getSelfOverlapVol(),
-        workingRefShape->getSelfOverlapColor(), startFit.data(),
-        workingFit.data(), workingFitShape->getTypes().data(),
-        workingFitShape->getNumAtoms() + workingFitShape->getNumFeatures(),
-        workingFitShape->getNumAtoms(), workingFitShape->getNumFeatures(),
+        refShape.getCoords().data(), workingRef.data(),
+        refShape.getTypes().data(),
+        refShape.getNumAtoms() + refShape.getNumFeatures(),
+        refShape.getNumAtoms(), refShape.getNumFeatures(),
+        refShape.getSelfOverlapVol(), refShape.getSelfOverlapColor(),
+        startFit.data(), workingFit.data(), fitShape.getTypes().data(),
+        fitShape.getNumAtoms() + fitShape.getNumFeatures(),
+        fitShape.getNumAtoms(), fitShape.getNumFeatures(),
         overlayOpts.d_rMat.data(), overlayOpts.d_pMat.data(),
         overlayOpts.d_nTypes, overlayOpts.d_useColors, overlayOpts.d_optParam,
         overlayOpts.lr_q, overlayOpts.lr_t, overlayOpts.d_nSteps,
@@ -186,53 +164,79 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
       copyTransform(tt, bestXform);
     }
   }
+  return bestScore;
+}
+
+}  // namespace
+
+// Apply the final overlay transform to the conformer, returning what
+// was actually done.
+RDGeom::Transform3D TransformConformer(Conformer &fitConf,
+                                       const ShapeInput &refShape,
+                                       const ShapeInput &fitShape,
+                                       RDGeom::Transform3D &ovXform) {
+  auto finalTransform = computeFinalTransform(refShape, fitShape, ovXform);
+  MolTransforms::transformConformer(fitConf, finalTransform);
+  return finalTransform;
+}
+
+std::pair<double, double> AlignShape(const ShapeInput &refShape,
+                                     ShapeInput &fitShape,
+                                     RDGeom::Transform3D *xform,
+                                     const ShapeOverlayOptions &overlayOpts) {
+  // The shapes aren't necessarily normalized (it's not done on creation, for
+  // example) but they might need to be.
+  auto workingRefShape = std::make_unique<ShapeInput>(refShape);
+  auto workingFitShape = std::make_unique<ShapeInput>(fitShape);
+  if (overlayOpts.d_normalize && !refShape.getNormalized()) {
+    workingRefShape->normalizeCoords();
+  }
+  if (overlayOpts.d_normalize && !fitShape.getNormalized()) {
+    workingFitShape->normalizeCoords();
+  }
+
+  // If we're not normalizing, translate both shapes so that the fit
+  // is at the origin, so the rotations work.
+  RDGeom::Transform3D moveToOrigin;
+  RDGeom::Transform3D moveFromOrigin;
+  if (!overlayOpts.d_normalize) {
+    moveToOrigin.SetTranslation(
+        RDGeom::Point3D{workingFitShape->getCanonicalTranslation()[0],
+                        workingFitShape->getCanonicalTranslation()[1],
+                        workingFitShape->getCanonicalTranslation()[2]});
+    moveFromOrigin.SetTranslation(
+        RDGeom::Point3D{-fitShape.getCanonicalTranslation()[0],
+                        -fitShape.getCanonicalTranslation()[1],
+                        -fitShape.getCanonicalTranslation()[2]});
+    workingFitShape->transformCoords(moveToOrigin);
+    workingRefShape->transformCoords(moveToOrigin);
+  }
+
+  RDGeom::Transform3D bestXform;
+  auto scores =
+      alignShape(*workingRefShape, *workingFitShape, bestXform, overlayOpts);
+  if (!overlayOpts.d_normalize) {
+    // Shove it back again.
+    auto finalXform = moveFromOrigin * bestXform * moveToOrigin;
+    copyTransform(finalXform, bestXform);
+  } else {
+    auto finalXform = computeFinalTransform(refShape, fitShape, bestXform);
+    copyTransform(finalXform, bestXform);
+  }
   if (xform) {
     copyTransform(bestXform, *xform);
   }
-  return bestScore;
+  return scores;
 }
 
 std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
                                         RDGeom::Transform3D *xform,
                                         const ShapeOverlayOptions &overlayOpts,
                                         int fitConfId) {
-  // The refShape may not have been normalized, so its canonical transformation
-  // may not have been filled in.  Take a copy for the optimisation.
-  ShapeInput refShapeCp(refShape);
   auto fitShape = ShapeInput(fit, fitConfId, overlayOpts);
-  if (overlayOpts.d_normalize) {
-    refShapeCp.normalizeCoords();
-    fitShape.normalizeCoords();
-  }
-  RDGeom::Transform3D moveToOrigin;
-  RDGeom::Transform3D moveFromOrigin;
-  // If we're not normalizing, translate both shapes so that the fit
-  // is at the origin, so the rotations work.
-  if (!overlayOpts.d_normalize) {
-    moveToOrigin.SetTranslation(
-        RDGeom::Point3D{fitShape.getCanonicalTranslation()[0],
-                        fitShape.getCanonicalTranslation()[1],
-                        fitShape.getCanonicalTranslation()[2]});
-    moveFromOrigin.SetTranslation(
-        RDGeom::Point3D{-fitShape.getCanonicalTranslation()[0],
-                        -fitShape.getCanonicalTranslation()[1],
-                        -fitShape.getCanonicalTranslation()[2]});
-    fitShape.transformCoords(moveToOrigin);
-    refShapeCp.transformCoords(moveToOrigin);
-  }
-
   RDGeom::Transform3D tmpXform;
-  auto tcs = AlignShape(refShapeCp, fitShape, &tmpXform, overlayOpts);
-  if (!overlayOpts.d_normalize) {
-    // Shove it back again.
-    auto finalXform = moveFromOrigin * tmpXform * moveToOrigin;
-    MolTransforms::transformConformer(fit.getConformer(fitConfId), finalXform);
-    copyTransform(finalXform, tmpXform);
-  } else {
-    auto finalXform = TransformConformer(fit.getConformer(fitConfId), refShape,
-                                         fitShape, tmpXform);
-    copyTransform(finalXform, tmpXform);
-  }
+  auto tcs = AlignShape(refShape, fitShape, &tmpXform, overlayOpts);
+  MolTransforms::transformConformer(fit.getConformer(fitConfId), tmpXform);
   if (xform) {
     copyTransform(tmpXform, *xform);
   }
@@ -243,48 +247,9 @@ std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
                                         RDGeom::Transform3D *xform,
                                         const ShapeOverlayOptions &overlayOpts,
                                         int refConfId, int fitConfId) {
-  // Don't use AlignMolecule for shape and molecule because that normalises
-  // a copy of the ref shape so the final transformation back into ref's
-  // reference frame would be lost.
-  auto fitShape = ShapeInput(fit, fitConfId, overlayOpts);
-  if (overlayOpts.d_normalize) {
-    fitShape.normalizeCoords();
-  }
   auto refShape = ShapeInput(ref, refConfId, overlayOpts);
-  if (overlayOpts.d_normalize) {
-    refShape.normalizeCoords();
-  }
-  RDGeom::Transform3D moveToOrigin;
-  RDGeom::Transform3D moveFromOrigin;
-  // If we're not normalizing, translate both molecules so that the fit
-  // is at the origin, so the rotations work.
-  if (!overlayOpts.d_normalize) {
-    moveToOrigin.SetTranslation(
-        RDGeom::Point3D{fitShape.getCanonicalTranslation()[0],
-                        fitShape.getCanonicalTranslation()[1],
-                        fitShape.getCanonicalTranslation()[2]});
-    moveFromOrigin.SetTranslation(
-        RDGeom::Point3D{-fitShape.getCanonicalTranslation()[0],
-                        -fitShape.getCanonicalTranslation()[1],
-                        -fitShape.getCanonicalTranslation()[2]});
-    fitShape.transformCoords(moveToOrigin);
-    refShape.transformCoords(moveToOrigin);
-  }
   RDGeom::Transform3D tmpXform;
-  auto tcs = AlignShape(refShape, fitShape, &tmpXform, overlayOpts);
-  if (!overlayOpts.d_normalize) {
-    // Shove it back again.
-    auto finalXform = moveFromOrigin * tmpXform * moveToOrigin;
-    MolTransforms::transformConformer(fit.getConformer(fitConfId), finalXform);
-    copyTransform(finalXform, tmpXform);
-  } else {
-    auto finalXform = TransformConformer(fit.getConformer(fitConfId), refShape,
-                                         fitShape, tmpXform);
-    copyTransform(finalXform, tmpXform);
-  }
-  if (xform) {
-    copyTransform(tmpXform, *xform);
-  }
+  auto tcs = AlignMolecule(refShape, fit, xform, overlayOpts, fitConfId);
   return tcs;
 }
 
