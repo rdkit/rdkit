@@ -45,7 +45,7 @@ struct RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeOverlayOptions {
   // defined by Grant and Pickup - 180 rotations about the x, y and z axes,
   // although here the molecules are normalized so the principal axes are along
   // the cartesian axes rather than the shape quadrupole axes.
-  StartMode d_mode{StartMode::ROTATE_180};
+  StartMode d_startMode{StartMode::ROTATE_180};
   bool d_useColors{true};  // Whether to use the features/colors as part of the
   // optimisation.
   DTYPE d_optParam{0.5};  // If using colors, the relative weights of shape and

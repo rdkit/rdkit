@@ -374,7 +374,7 @@ TEST_CASE("Optimise in place") {
       v2::SmilesParse::MolFromSmiles(MolToCXSmiles(*pdb_0zn_1tmn));
   {
     ShapeAlign::ShapeOverlayOptions opts;
-    opts.d_mode = ShapeAlign::StartMode::AS_IS;
+    opts.d_startMode = ShapeAlign::StartMode::AS_IS;
     opts.d_normalize = false;
     ROMol cp(*canon_probe);
     RDGeom::Transform3D xform;
@@ -396,9 +396,9 @@ TEST_CASE("Optimise in place") {
     CHECK_THAT(singleColor, Catch::Matchers::WithinAbs(0.383, 0.001));
   }
   {
-    // And with refrerence shape the same
+    // And with reference shape the same
     ShapeAlign::ShapeOverlayOptions opts;
-    opts.d_mode = ShapeAlign::StartMode::AS_IS;
+    opts.d_startMode = ShapeAlign::StartMode::AS_IS;
     opts.d_normalize = false;
     auto refShape = ShapeAlign::ShapeInput(*pdb_trp_3tmn, -1, opts);
     ROMol cp(*canon_probe);

@@ -58,7 +58,7 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(pos1.y, -4.87636, places=5)
     self.assertAlmostEqual(pos1.z, 4.55432, places=5)
 
-  def test4_scoreOnly(self):
+  def test4_ScoreOnly(self):
     # These are 2gu8_lig_796 and 3ama_lig_SKE from Ilenia Giangreco's
     # ligand overlay set.
     mol1 = Chem.MolFromSmiles("CNc1nccc(-c2ccc(C(=O)N[C@H](C[NH3+])Cc3ccc(Cl)cc3Cl)s2)n1 |(-3.234,-9.922,0.988;-2.567,-10.239,2.232;-3.313,-10.306,3.299;-2.759,-10.404,4.518;-3.487,-10.471,5.637;-4.885,-10.444,5.491;-5.456,-10.373,4.213;-6.935,-10.268,4.033;-8.015,-10.254,4.915;-9.243,-10.001,4.289;-9.142,-9.794,2.927;-10.094,-9.522,1.832;-9.69,-9.261,0.684;-11.364,-9.586,2.201;-12.392,-8.987,1.375;-12.597,-7.523,1.75;-13.369,-6.797,0.753;-13.592,-9.862,1.699;-13.475,-11.196,0.951;-13.875,-11.306,-0.371;-13.79,-12.54,-1.033;-13.307,-13.645,-0.365;-13.168,-15.231,-1.141;-12.885,-13.567,0.922;-12.966,-12.343,1.553;-12.406,-12.346,3.24;-7.476,-9.917,2.366;-4.667,-10.294,3.115),wU:14.14|")
@@ -78,6 +78,36 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(scores[0], 0.262113, places=6)
     self.assertAlmostEqual(scores[1], 0.355309, places=6)
 
+  def test5_OptimiseFromInput(self):
+    # These are the LOBSTER molecules 1D1_A_401-4I5P and 11G_A_401-4I6B
+    # respectively.
+    mol1 = Chem.MolFromSmiles("CC[C@@H]1C(=O)N(C)c2cnc(-c3ccc[nH]3)nc2N1C1CCCC1 |(12.5846,6.7088,8.1521;13.2854,6.9331,9.4894;12.5146,6.3877,10.7066;12.5167,4.9218,10.4741;13.6199,4.3394,10.4996;11.3439,4.1903,10.1704;11.4418,2.75,9.899;10.0969,4.8441,10.1252;8.9115,4.1784,9.8385;7.7618,4.8606,9.8156;7.7087,6.1931,10.0763;6.4005,6.8977,10.0241;5.1599,6.5268,9.5477;4.3546,7.6253,9.7593;5.1305,8.6178,10.33;6.3944,8.1554,10.4865;8.8228,6.9055,10.3637;10.0267,6.3014,10.4072;11.1937,7.04,10.7008;11.0272,8.4858,10.9997;10.922,9.4513,9.8291;11.2442,10.8146,10.4451;12.0524,10.5627,11.7193;12.1073,9.0549,11.9258),wD:2.1|")
+    mol2 = Chem.MolFromSmiles("CC[C@@H]1C(=O)N(C)c2cncnc2N1C1CCCC1 |(12.4405,6.6667,7.9974;13.1998,6.9634,9.3043;12.5553,6.3954,10.5958;12.6406,4.9395,10.3645;13.7894,4.4428,10.3494;11.5066,4.1352,10.0896;11.6873,2.7043,9.7926;10.2189,4.7262,10.0771;9.0581,3.9966,9.8132;7.8726,4.6211,9.8263;7.7641,5.9335,10.1031;8.8273,6.7054,10.3791;10.0728,6.1742,10.3871;11.2049,6.9725,10.6578;11.0071,8.41,10.9985;10.8537,9.4217,9.8798;11.1166,10.7637,10.5685;12.0115,10.486,11.7845;12.0927,8.9675,11.9237),wD:2.1|")
+    initScores = rdShapeAlign2.ScoreMol(mol1, mol2)
+    self.assertAlmostEqual(initScores[0], 0.786204, places=6)
+    self.assertAlmostEqual(initScores[1], 0.748902, places=6)
+    print(initScores)
+
+    opts = rdShapeAlign2.ShapeOverlayOptions()
+    opts.startMode = rdShapeAlign2.StartMode.AS_IS
+    opts.normalize = False
+    mol2cp = Chem.Mol(mol2)
+    optScores = rdShapeAlign2.AlignMol(mol1, mol2cp, opts)
+    self.assertAlmostEqual(optScores[0], 0.800930, places=6)
+    self.assertAlmostEqual(optScores[1], 0.765407, places=6)
+    print(optScores)
+    print(Chem.MolToCXSmiles(mol2cp))
+
+    # Disappointingly, it's worse using default parameters.
+    opts.startMode = rdShapeAlign2.StartMode.ROTATE_180
+    opts.normalize = True
+    mol2cp = Chem.Mol(mol2)
+    optScores = rdShapeAlign2.AlignMol(mol1, mol2cp, opts)
+    self.assertAlmostEqual(optScores[0], 0.576009, places=6)
+    self.assertAlmostEqual(optScores[1], 0.648412, places=6)
+    print(optScores)
+    print(Chem.MolToCXSmiles(mol2cp))
+    
     
 if __name__ == '__main__':
   unittest.main()

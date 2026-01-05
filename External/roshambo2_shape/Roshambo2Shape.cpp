@@ -108,7 +108,7 @@ std::pair<double, double> alignShape(const ShapeInput &refShape,
                                      RDGeom::Transform3D &bestXform,
                                      const ShapeOverlayOptions &overlayOpts) {
   int finalIndex = 1;
-  switch (overlayOpts.d_mode) {
+  switch (overlayOpts.d_startMode) {
     case StartMode::AS_IS:
       break;
     case StartMode::ROTATE_180:

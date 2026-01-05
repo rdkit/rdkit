@@ -120,13 +120,21 @@ python::list getShapeType_helper(const RDKit::ShapeAlign::ShapeInput &shape) {
 void wrap_roshambo2shape() {
   python::class_<RDKit::ShapeAlign::ShapeOverlayOptions, boost::noncopyable>(
       "ShapeOverlayOptions", "Shape Overlay Options")
-      .def_readwrite(
-          "useColors", &RDKit::ShapeAlign::ShapeOverlayOptions::d_useColors,
-          "Whether to use colors (pharmacophore features) in the score.  Default=True.")
       .def_readwrite("normalize",
                      &RDKit::ShapeAlign::ShapeOverlayOptions::d_normalize,
                      "Whether to normalise the shape by putting it into"
                      "its inertial frame.  Default=True.")
+      .def_readwrite(
+          "startMode", &RDKit::ShapeAlign::ShapeOverlayOptions::d_startMode,
+          "Start modes for optimisation.  Default is ROTATE_180 - align the"
+          " probe molecule or shape along its principal axes and use that and"
+          " after a rotation by 180 degrees around each of the principal"
+          " axes as 4 start points. ROTATE_90 uses 90 degree rotations for 9"
+          " start points and AS_IS leaves the relative orientations of the 2"
+          " molecules as passed in before optimisation.")
+      .def_readwrite(
+          "useColors", &RDKit::ShapeAlign::ShapeOverlayOptions::d_useColors,
+          "Whether to use colors (pharmacophore features) in the score.  Default=True.")
       .def_readwrite(
           "optParam", &RDKit::ShapeAlign::ShapeOverlayOptions::d_optParam,
           "If using colors, the relative weights fo shape and color scores. Default=0.5.")
@@ -155,6 +163,12 @@ void wrap_roshambo2shape() {
       .def("GetColorVolume",
            &RDKit::ShapeAlign::ShapeInput::getSelfOverlapColor,
            "Get the color volume.");
+
+  python::enum_<RDKit::ShapeAlign::StartMode>("StartMode")
+      .value("AS_IS", RDKit::ShapeAlign::StartMode::AS_IS)
+      .value("ROTATE_180", RDKit::ShapeAlign::StartMode::ROTATE_180)
+      .value("ROTATE_90", RDKit::ShapeAlign::StartMode::ROTATE_90)
+      .export_values();
 
   docString =
       R"DOC(Aligns a probe molecule to a reference molecule. The probe is modified.

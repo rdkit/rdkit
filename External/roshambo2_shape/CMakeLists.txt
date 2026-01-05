@@ -23,7 +23,7 @@ if(needDownload)
     set(ROSHAMBOSHAPE_URL "https://github.com/davidacosgrove/roshambo2/archive/${ROSHAMBOSHAPE_BASE}")
   endif()
   if(NOT DEFINED ROSHAMBOSHAPE_MD5SUM)
-    set(ROSHAMBOSHAPE_MD5SUM "0fd67dbb4251d2f00804578b94bddcbe")
+    set(ROSHAMBOSHAPE_MD5SUM "6b96a114704298cad266ff359045a73d")
   endif()
   downloadAndCheckMD5(${ROSHAMBOSHAPE_URL} "${CMAKE_CURRENT_SOURCE_DIR}/${ROSHAMBOSHAPE_BASE}" ${ROSHAMBOSHAPE_MD5SUM})
   execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf
