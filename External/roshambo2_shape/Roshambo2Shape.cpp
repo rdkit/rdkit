@@ -169,17 +169,6 @@ std::pair<double, double> alignShape(const ShapeInput &refShape,
 
 }  // namespace
 
-// Apply the final overlay transform to the conformer, returning what
-// was actually done.
-RDGeom::Transform3D TransformConformer(Conformer &fitConf,
-                                       const ShapeInput &refShape,
-                                       const ShapeInput &fitShape,
-                                       RDGeom::Transform3D &ovXform) {
-  auto finalTransform = computeFinalTransform(refShape, fitShape, ovXform);
-  MolTransforms::transformConformer(fitConf, finalTransform);
-  return finalTransform;
-}
-
 std::pair<double, double> AlignShape(const ShapeInput &refShape,
                                      ShapeInput &fitShape,
                                      RDGeom::Transform3D *xform,

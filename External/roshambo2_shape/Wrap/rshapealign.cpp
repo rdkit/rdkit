@@ -70,6 +70,44 @@ python::tuple alignShape(const RDKit::ShapeAlign::ShapeInput &refShape,
   return python::make_tuple(st, ct, pyMatrix);
 }
 
+python::tuple scoreShape(const RDKit::ShapeAlign::ShapeInput &refShape,
+                         const RDKit::ShapeAlign::ShapeInput &probeShape,
+                         const python::object &py_opts) {
+  RDKit::ShapeAlign::ShapeOverlayOptions opts;
+  if (!py_opts.is_none()) {
+    opts = python::extract<RDKit::ShapeAlign::ShapeOverlayOptions>(py_opts);
+  }
+
+  auto [st, ct] = RDKit::ShapeAlign::ScoreShape(refShape, probeShape, opts);
+  return python::make_tuple(st, ct);
+}
+
+python::tuple scoreMol1(const RDKit::ROMol &ref, const RDKit::ROMol &probe,
+                        const python::object &py_opts, int refConfId,
+                        int probeConfId) {
+  RDKit::ShapeAlign::ShapeOverlayOptions opts;
+  if (!py_opts.is_none()) {
+    opts = python::extract<RDKit::ShapeAlign::ShapeOverlayOptions>(py_opts);
+  }
+
+  auto [st, ct] = RDKit::ShapeAlign::ScoreMolecule(ref, probe, opts, refConfId,
+                                                   probeConfId);
+  return python::make_tuple(st, ct);
+}
+
+python::tuple scoreMol2(const RDKit::ShapeAlign::ShapeInput &refShape,
+                        const RDKit::ROMol &probe,
+                        const python::object &py_opts, int probeConfId) {
+  RDKit::ShapeAlign::ShapeOverlayOptions opts;
+  if (!py_opts.is_none()) {
+    opts = python::extract<RDKit::ShapeAlign::ShapeOverlayOptions>(py_opts);
+  }
+
+  auto [st, ct] =
+      RDKit::ShapeAlign::ScoreMolecule(refShape, probe, opts, probeConfId);
+  return python::make_tuple(st, ct);
+}
+
 python::list getShapeType_helper(const RDKit::ShapeAlign::ShapeInput &shape) {
   python::list types;
   for (auto &t : shape.getTypes()) {
@@ -118,11 +156,7 @@ void wrap_roshambo2shape() {
            &RDKit::ShapeAlign::ShapeInput::getSelfOverlapColor,
            "Get the color volume.");
 
-  python::def(
-      "AlignMol", &helpers::alignMol1,
-      (python::arg("ref"), python::arg("probe"),
-       python::arg("opts") = python::object(), python::arg("refConfId") = -1,
-       python::arg("probeConfId") = -1),
+  docString =
       R"DOC(Aligns a probe molecule to a reference molecule. The probe is modified.
 
 Parameters
@@ -143,12 +177,15 @@ Returns
 -------
  2-tuple of doubles
     The results are (shape_score, color_score)
-    The color_score is zero if color optimisation not selected is 1.0.)DOC");
+    The color_score is zero if color optimisation not selected is 1.0.)DOC";
 
-  python::def(
-      "AlignMol", &helpers::alignMol2,
-      (python::arg("refShape"), python::arg("probe"),
-       python::arg("opts") = python::object(), python::arg("probeConfId") = -1),
+  python::def("AlignMol", &helpers::alignMol1,
+              (python::arg("ref"), python::arg("probe"),
+               python::arg("opts") = python::object(),
+               python::arg("refConfId") = -1, python::arg("probeConfId") = -1),
+              docString.c_str());
+
+  docString =
       R"DOC(Aligns a probe molecule to a reference shape. The probe is modified.
 
 Parameters
@@ -167,12 +204,15 @@ Returns
 -------
  2-tuple of doubles
     The results are (shape_score, color_score)
-    The color_score is zero if color optimisation not selected is 1.0.)DOC");
+    The color_score is zero if color optimisation not selected is 1.0.)DOC";
 
   python::def(
-      "AlignShape", &helpers::alignShape,
-      (python::arg("refShape"), python::arg("probeShape"),
-       python::arg("opts") = python::object()),
+      "AlignMol", &helpers::alignMol2,
+      (python::arg("refShape"), python::arg("probe"),
+       python::arg("opts") = python::object(), python::arg("probeConfId") = -1),
+      docString.c_str());
+
+  docString =
       R"DOC(Aligns a probe shape to a reference shape. The probe is modified.
 
 Parameters
@@ -194,7 +234,100 @@ Returns
     that can be used to transform conformations, do something like:
     ttrans = [tpl[2][0:4], tpl[2][4:8], tpl[2][8:12], tpl[2][12:16]]
     nptrans = np.array(ttrans)
-)DOC");
+)DOC";
+
+  python::def("AlignShape", &helpers::alignShape,
+              (python::arg("refShape"), python::arg("probeShape"),
+               python::arg("opts") = python::object()),
+              docString.c_str());
+
+  docString =
+      R"DOC(Score the overlap of a shape to a reference shape without moving
+either.  Note that if you take the output from one of the Align...
+functions and feed it into a Score... function you won't get
+exactly the same answer.  This is because the formula for the
+tanimoto uses the fit volume and that is calculated once at the
+start before the rotations and translations that form the
+optimisation.  Floating point cruft moves the atoms by small
+amounts relative to each other which means that the final
+calculated volume differs slightly from the one calculated at
+the start.  The fixed scoring obviously doesn't have this effect.
+
+Parameters
+----------
+refShape : ShapeInput
+    Reference shape
+probeShape : ShapeInput
+    Probe shape
+opts : ShapeOverlayOptions, optional
+    Options for the scoring
+
+
+Returns
+-------
+ 2-tuple of doubles
+    The results are (shape_score, color_score)
+    The color_score is zero if color optimisation not selected is 1.0.)DOC";
+  python::def("ScoreShape", &helpers::scoreShape,
+              (python::arg("refShape"), python::arg("probeShape"),
+               python::arg("opts") = python::object()),
+              docString.c_str());
+
+  docString =
+      R"DOC(Score the overlap of a molecule to a reference shape without moving
+either.
+Parameters
+----------
+refShape : ShapeInput
+    Reference shape
+probe : RDKit.ROMol
+    Probe molecule
+opts : ShapeOverlayOptions, optional
+    Options for the scoring
+probeConfId : int, optional
+    Probe conformer ID (default is -1)
+
+
+Returns
+-------
+ 2-tuple of doubles
+    The results are (shape_score, color_score)
+    The color_score is zero if color optimisation not selected is 1.0.)DOC";
+
+  python::def(
+      "ScoreMol", &helpers::scoreMol2,
+      (python::arg("refShape"), python::arg("probe"),
+       python::arg("opts") = python::object(), python::arg("probeConfId") = -1),
+      docString.c_str());
+
+  docString =
+      R"DOC(Score the overlap of a molecule to a reference molecule without moving
+either.
+Parameters
+----------
+ref : RDKit.ROMol
+    Reference molecule
+probe : RDKit.ROMol
+    Probe molecule
+opts : ShapeOverlayOptions, optional
+    Options for the scoring
+refConfId : int, optional
+    Reference conformer ID (default is -1)
+probeConfId : int, optional
+    Probe conformer ID (default is -1)
+
+
+Returns
+-------
+ 2-tuple of doubles
+    The results are (shape_score, color_score)
+    The color_score is zero if color optimisation not selected is 1.0.)DOC";
+
+  python::def("ScoreMol", &helpers::scoreMol1,
+              (python::arg("ref"), python::arg("probe"),
+               python::arg("opts") = python::object(),
+               python::arg("refConfId") = -1, python::arg("probeConfId") = -1),
+              docString.c_str());
 }
 
 BOOST_PYTHON_MODULE(rdShapeAlign2) { wrap_roshambo2shape(); }
