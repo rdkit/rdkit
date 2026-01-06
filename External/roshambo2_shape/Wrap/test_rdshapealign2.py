@@ -86,7 +86,6 @@ class TestCase(unittest.TestCase):
     initScores = rdShapeAlign2.ScoreMol(mol1, mol2)
     self.assertAlmostEqual(initScores[0], 0.786204, places=6)
     self.assertAlmostEqual(initScores[1], 0.748902, places=6)
-    print(initScores)
 
     opts = rdShapeAlign2.ShapeOverlayOptions()
     opts.startMode = rdShapeAlign2.StartMode.AS_IS
@@ -95,9 +94,6 @@ class TestCase(unittest.TestCase):
     optScores = rdShapeAlign2.AlignMol(mol1, mol2cp, opts)
     self.assertAlmostEqual(optScores[0], 0.800930, places=6)
     self.assertAlmostEqual(optScores[1], 0.765407, places=6)
-    print(optScores)
-    print(Chem.MolToCXSmiles(mol2cp))
-
     # Disappointingly, it's worse using default parameters.
     opts.startMode = rdShapeAlign2.StartMode.ROTATE_180
     opts.normalize = True
@@ -105,8 +101,6 @@ class TestCase(unittest.TestCase):
     optScores = rdShapeAlign2.AlignMol(mol1, mol2cp, opts)
     self.assertAlmostEqual(optScores[0], 0.576009, places=6)
     self.assertAlmostEqual(optScores[1], 0.648412, places=6)
-    print(optScores)
-    print(Chem.MolToCXSmiles(mol2cp))
     
     
 if __name__ == '__main__':
