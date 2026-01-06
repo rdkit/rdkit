@@ -22,7 +22,7 @@ namespace RDKit {
 class ROMol;
 namespace ShapeAlign {
 
-enum class StartMode {
+enum class RDKIT_ROSHAMBO2SHAPE_EXPORT StartMode {
   AS_IS,
   ROTATE_180,
   ROTATE_90

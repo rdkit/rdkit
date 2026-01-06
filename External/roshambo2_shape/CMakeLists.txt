@@ -40,7 +40,7 @@ endif()
 rdkit_library(Roshambo2Shape Roshambo2Shape.cpp ShapeInput.cpp ShapeOverlayOptions.cpp
         ./roshambo2/roshambo2/backends/cpp_src/cpp_helper_functions.cpp SHARED
         LINK_LIBRARIES SmilesParse SubstructMatch MolTransforms)
-target_compile_definitions(Roshambo2Shape PRIVATE RDKIT_PUBCHEMSHAPE_BUILD)
+target_compile_definitions(Roshambo2Shape PRIVATE RDKIT_ROSHAMBOSHAPE_BUILD)
 
 rdkit_headers(Roshambo2Shape.hpp ShapeInput.h ShapeOverlayOptions.h DEST GraphMol)
 

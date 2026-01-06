@@ -13,6 +13,7 @@
 #include <cmath>
 #include <mutex>
 
+#include <RDGeneral/export.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
 #include <GraphMol/ROMol.h>

@@ -111,4 +111,4 @@ RDKIT_ROSHAMBO2SHAPE_EXPORT void applyTransformToShape(
 }  // namespace ShapeAlign
 }  // namespace RDKit
 
-#endif  // RDKIT_SHAPEINPUT_GURAD
+#endif  // RDKIT_SHAPEINPUT_GUARD

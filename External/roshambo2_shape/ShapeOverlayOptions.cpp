@@ -10,6 +10,7 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
+#include <RDGeneral/export.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
