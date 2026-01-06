@@ -15,6 +15,7 @@
 #ifndef RDKIT_ROSHAMBO2SHAPE_GUARD
 #define RDKIT_ROSHAMBO2SHAPE_GUARD
 
+#include <RDGeneral/export.h>
 #include <Geometry/Transform3D.h>
 
 #include "ShapeOverlayOptions.h"
@@ -39,7 +40,7 @@ class ShapeInput;
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
   if useColors is false)
 */
-RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignShape(
+RDKIT_ROSHAMBO2SHAPE_EXPORT std::pair<double, double> AlignShape(
     const ShapeInput &refShape, ShapeInput &fitShape,
     RDGeom::Transform3D *xform = nullptr,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
@@ -58,7 +59,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignShape(
           if opt_param is 1.0.)  If useColors is True, uses RDKit pphore
           types for the features.
 */
-RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
+RDKIT_ROSHAMBO2SHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const ShapeInput &refShape, ROMol &fit,
     RDGeom::Transform3D *xform = nullptr,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
@@ -104,7 +105,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
           if opt_param is 1.0.)  If useColors is True, uses RDKit pphore
           types for the features.
 */
-RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> ScoreShape(
+RDKIT_ROSHAMBO2SHAPE_EXPORT std::pair<double, double> ScoreShape(
     const ShapeInput &refShape, const ShapeInput &fitShape,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
 
@@ -121,7 +122,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> ScoreShape(
           if opt_param is 1.0.)  If useColors is True, uses RDKit pphore
           types for the features.
 */
-RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
+RDKIT_ROSHAMBO2SHAPE_EXPORT std::pair<double, double> ScoreMolecule(
     const ShapeInput &refShape, const ROMol &fit,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
     int fitConfId = -1);
@@ -141,7 +142,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
           if opt_param is 1.0.)  If useColors is True, uses RDKit pphore
           types for the features.
 */
-RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
+RDKIT_ROSHAMBO2SHAPE_EXPORT std::pair<double, double> ScoreMolecule(
     const ROMol &ref, const ROMol &fit,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
     int refConfId = -1, int fitConfId = -1);
