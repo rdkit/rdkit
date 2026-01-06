@@ -90,8 +90,8 @@ class RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeInput {
 };
 
 // Calculate the mean position of the given atoms.
-RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,
-                                  const std::vector<unsigned int> &ats);
+RDKIT_ROSHAMBO2SHAPE_EXPORT RDGeom::Point3D computeFeaturePos(
+    const ROMol &mol, int confId, const std::vector<unsigned int> &ats);
 
 RDKIT_ROSHAMBO2SHAPE_EXPORT void writeCoords(const std::vector<DTYPE> &shape,
                                              const std::string &label,
