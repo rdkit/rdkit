@@ -101,8 +101,6 @@ void Bond::setOwningMol(ROMol *other) {
 }
 
 void Bond::setOwningMol(RDMol* other) {
-  PRECONDITION(dp_owningMol == nullptr || dp_owningMol == other,
-               "setOwningMol called twice");
   dp_owningMol = other;
 }
 
