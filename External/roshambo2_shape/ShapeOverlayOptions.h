@@ -16,7 +16,7 @@
 
 #include <RDGeneral/export.h>
 
-#include "roshambo2/roshambo2/backends/cpp_src/cpp_helper_functions.h"
+using DTYPE = float;
 
 namespace RDKit {
 class ROMol;

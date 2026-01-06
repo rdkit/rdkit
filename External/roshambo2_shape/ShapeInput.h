@@ -19,7 +19,8 @@
 #include <Geometry/point.h>
 
 #include "ShapeOverlayOptions.h"
-#include "roshambo2/roshambo2/backends/cpp_src/cpp_helper_functions.h"
+
+using DTYPE = float;
 
 namespace RDKit {
 class ROMol;
@@ -66,6 +67,8 @@ class RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeInput {
   // to the cartesian axes and centre on the origin, using the conformer.
   void calcNormalization(const ROMol &mol, int confId);
 
+  void calcExtremes();
+
   std::vector<DTYPE> d_coords;  // The coordinates and w parameter for the
   // atoms and features, packed as 4 floats per
   // item - x, y, z and w.  At present, w is
@@ -80,6 +83,9 @@ class RDKIT_ROSHAMBO2SHAPE_EXPORT ShapeInput {
   int d_numFeats;                 // The number of features
   DTYPE d_selfOverlapVol{0.0};    // Shape volume
   DTYPE d_selfOverlapColor{0.0};  // Color volume
+  // These are the points at the extremes of the x, y and z axes.
+  // they are min_x, min_y, min_z and max_x, max_y, max_z.
+  std::array<size_t, 6> d_extreme_points;
 
   // This is the rotation and translation to align the principal axes of the
   // shape with cartesian axes.  If d_normalized is true, it has been applied

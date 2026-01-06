@@ -126,15 +126,6 @@ std::pair<double, double> alignShape(const ShapeInput &refShape,
       break;
   }
 
-  RDGeom::Transform3D setupXForm;
-  if (!overlayOpts.d_normalize) {
-    // Optimising in place, but still need to translate both to the centroid
-    // of fitShape.
-    setupXForm.SetTranslation(
-        RDGeom::Point3D{fitShape.getCanonicalTranslation()[0],
-                        fitShape.getCanonicalTranslation()[1],
-                        fitShape.getCanonicalTranslation()[2]});
-  }
   std::pair<double, double> bestScore;
   double bestTotal = -1.0;
   RDGeom::Transform3D initialXform;
