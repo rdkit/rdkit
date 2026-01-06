@@ -13,7 +13,6 @@
 #include <boost/python.hpp>
 
 #include <GraphMol/ROMol.h>
-#include "numpy/arrayobject.h"
 #include <RDBoost/Wrap.h>
 #include "../Roshambo2Shape.hpp"
 #include "../ShapeInput.h"
