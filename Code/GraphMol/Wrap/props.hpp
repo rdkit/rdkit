@@ -149,32 +149,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
     } catch (std::bad_any_cast &) {}
     if (found) continue;
 
-    try {
-      std::string v;
-      if (obj.getPropIfPresent(key, v)) {
-        if (autoConvertStrings) {
-          auto trimmed = v;
-          boost::trim(trimmed);
-          int iconv;
-          if (boost::conversion::try_lexical_convert(trimmed, iconv)) {
-            dict[key] = iconv;
-            found = true;
-          } else {
-            double dconv;
-            if (boost::conversion::try_lexical_convert(trimmed, dconv)) {
-              dict[key] = dconv;
-              found = true;
-            }
-          }
-        }
-        if (!found) {
-          dict[key] = v;
-          found = true;
-        }
-      }
-    } catch (std::bad_any_cast &) {}
-    if (found) continue;
-
+    // Try vectors before string to avoid implicit vector->string conversion
     try {
       std::vector<double> v;
       if (obj.getPropIfPresent(key, v)) {
@@ -216,6 +191,33 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
       if (obj.getPropIfPresent(key, v)) {
         dict[key] = v;
         found = true;
+      }
+    } catch (std::bad_any_cast &) {}
+    if (found) continue;
+
+    // Try string last to avoid catching vector->string conversions
+    try {
+      std::string v;
+      if (obj.getPropIfPresent(key, v)) {
+        if (autoConvertStrings) {
+          auto trimmed = v;
+          boost::trim(trimmed);
+          int iconv;
+          if (boost::conversion::try_lexical_convert(trimmed, iconv)) {
+            dict[key] = iconv;
+            found = true;
+          } else {
+            double dconv;
+            if (boost::conversion::try_lexical_convert(trimmed, dconv)) {
+              dict[key] = dconv;
+              found = true;
+            }
+          }
+        }
+        if (!found) {
+          dict[key] = v;
+          found = true;
+        }
       }
     } catch (std::bad_any_cast &) {}
   }
@@ -305,25 +307,7 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
     }
   } catch (std::bad_any_cast &) {}
 
-  try {
-    std::string v;
-    if (obj->getPropIfPresent(key, v)) {
-      if (autoConvert) {
-        auto trimmed = v;
-        boost::trim(trimmed);
-        int iconv;
-        if (boost::conversion::try_lexical_convert(trimmed, iconv)) {
-          return rawPy(iconv);
-        }
-        double dconv;
-        if (boost::conversion::try_lexical_convert(trimmed, dconv)) {
-          return rawPy(dconv);
-        }
-      }
-      return rawPy(v);
-    }
-  } catch (std::bad_any_cast &) {}
-
+  // Try vectors before string to avoid implicit vector->string conversion
   try {
     std::vector<double> v;
     if (obj->getPropIfPresent(key, v)) {
@@ -355,6 +339,26 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
   try {
     std::vector<std::string> v;
     if (obj->getPropIfPresent(key, v)) {
+      return rawPy(v);
+    }
+  } catch (std::bad_any_cast &) {}
+
+  // Try string last to avoid catching vector->string conversions
+  try {
+    std::string v;
+    if (obj->getPropIfPresent(key, v)) {
+      if (autoConvert) {
+        auto trimmed = v;
+        boost::trim(trimmed);
+        int iconv;
+        if (boost::conversion::try_lexical_convert(trimmed, iconv)) {
+          return rawPy(iconv);
+        }
+        double dconv;
+        if (boost::conversion::try_lexical_convert(trimmed, dconv)) {
+          return rawPy(dconv);
+        }
+      }
       return rawPy(v);
     }
   } catch (std::bad_any_cast &) {}
