@@ -737,4 +737,22 @@ O      3.100000    0.000000    0.000000
       }
     }
   }
+  SECTION("first fragment should not move") {
+    auto m3 =
+        "[1*]c1ccccc1.[1*]c1ncccc1 |(2.57143,0,;1.07143,0,;0.321429,-1.29904,;-1.17857,-1.29904,;-1.92857,0,;-1.17857,1.29904,;0.321429,1.29904,;12.5714,0,;11.0714,0,;10.3214,1.29904,;8.82143,1.29904,;8.07143,0,;8.82143,-1.29904,;10.3214,-1.29904,)|"_smiles;
+    MolzipParams params;
+    params.alignCoordinates = true;
+    params.label = MolzipLabel::Isotope;
+    auto res = molzip(*m3, params);
+    INFO(MolToCXSmiles(*res));
+    auto resconf = res->getConformer();
+    auto molconf = m3->getConformer();
+    for (unsigned int i = 0; i < 6; ++i) {
+      auto rap = resconf.getAtomPos(i);
+      auto map = molconf.getAtomPos(i + 1);
+      CHECK_THAT(rap.x, Catch::Matchers::WithinAbs(map.x, 1e-4));
+      CHECK_THAT(rap.y, Catch::Matchers::WithinAbs(map.y, 1e-4));
+      CHECK_THAT(rap.z, Catch::Matchers::WithinAbs(map.z, 1e-4));
+    }
+  }
 }
