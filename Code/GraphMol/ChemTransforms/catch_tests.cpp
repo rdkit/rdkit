@@ -651,3 +651,108 @@ TEST_CASE(
   REQUIRE(nb8);
   CHECK(!nb8->hasQuery());
 }
+
+TEST_CASE("align fragments") {
+  SECTION("basics") {
+    auto m = "CC[1*].O[1*] |(1,0,0;2,0,0;3.5,0,0;0,1,0;0,2.1,0)|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getNumConformers() == 1);
+    MolzipParams params;
+    params.alignCoordinates = true;
+    params.label = MolzipLabel::Isotope;
+    auto res = molzip(*m, params);
+    REQUIRE(res);
+    REQUIRE(res->getNumConformers() == 1);
+    CHECK(MolToXYZBlock(*res) == R"XYZ(3
+
+C      1.000000    0.000000    0.000000
+C      2.000000    0.000000    0.000000
+O      3.100000    0.000000    0.000000
+)XYZ");
+  }
+  SECTION("2D multiple attachment points") {
+    auto m =
+        "[2*]CCC[1*].[2*]O[1*] |(2,1.2;1,1;1,0;2,0;3,0;\
+0,0;0,1;0,2.1)|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getNumConformers() == 1);
+    MolzipParams params;
+    params.alignCoordinates = true;
+    params.label = MolzipLabel::Isotope;
+    auto res = molzip(*m, params);
+    REQUIRE(res);
+    REQUIRE(res->getNumConformers() == 1);
+    CHECK(MolToXYZBlock(*res) == R"XYZ(4
+
+C      1.000000    1.000000    0.000000
+C      1.000000    0.000000    0.000000
+C      2.000000    0.000000    0.000000
+O      3.100000    0.000000    0.000000
+)XYZ");
+  }
+  SECTION("3D, more real") {
+    auto m1 =
+        "[6*]C1CCCCC1 |(-1.08968,0.169713,-0.700677;0.254816,-0.328544,-0.482737;0.56879,-1.01027,0.899618;1.09147,0.21675,1.40903;2.37628,0.102667,0.427592;2.29478,-0.272363,-1.13357;1.24328,0.638789,-1.31851)|"_smiles;
+    REQUIRE(m1);
+    auto conf1 = m1->getConformer();
+    auto m2 =
+        "[6*]C1CCC1 |(3.18447,1.72863,2.51726;1.96576,1.94984,2.29932;1.43402,2.74418,3.09468;0.109542,1.58059,3.19096;0.655465,0.761837,2.3866)|"_smiles;
+    REQUIRE(m2);
+    auto conf2 = m2->getConformer();
+    auto origv = conf2.getAtomPos(0) - conf2.getAtomPos(1);
+
+    MolzipParams params;
+    params.alignCoordinates = true;
+    params.label = MolzipLabel::Isotope;
+    auto res = molzip(*m1, *m2, params);
+    REQUIRE(res);
+    REQUIRE(res->getNumConformers() == 1);
+    auto resconf = res->getConformer();
+    // check that the first fragment's coords are unchanged
+    CHECK_THAT(resconf.getAtomPos(0).x,
+               Catch::Matchers::WithinAbs(conf1.getAtomPos(1).x, 1e-4));
+    CHECK_THAT(resconf.getAtomPos(0).y,
+               Catch::Matchers::WithinAbs(conf1.getAtomPos(1).y, 1e-4));
+    CHECK_THAT(resconf.getAtomPos(0).z,
+               Catch::Matchers::WithinAbs(conf1.getAtomPos(1).z, 1e-4));
+    // make sure the bond length is right:
+    auto v = resconf.getAtomPos(0) - resconf.getAtomPos(6);
+    CHECK_THAT(v.length(), Catch::Matchers::WithinAbs(origv.length(), 1e-2));
+  }
+  SECTION("on top") {
+    auto m3 =
+        "[1*]c1ccccc1.[1*]c1ncccc1 |(2.57143,0,;1.07143,0,;0.321429,-1.29904,;-1.17857,-1.29904,;-1.92857,0,;-1.17857,1.29904,;0.321429,1.29904,;12.5714,0,;11.0714,0,;10.3214,1.29904,;8.82143,1.29904,;8.07143,0,;8.82143,-1.29904,;10.3214,-1.29904,)|"_smiles;
+    MolzipParams params;
+    params.alignCoordinates = true;
+    params.label = MolzipLabel::Isotope;
+    auto res = molzip(*m3, params);
+    INFO(MolToCXSmiles(*res));
+    auto resconf = res->getConformer();
+    // check that we don't have overlapping atoms:
+    for (unsigned int i = 0; i < res->getNumAtoms(); ++i) {
+      auto api = resconf.getAtomPos(i);
+      for (unsigned int j = i + 1; j < res->getNumAtoms(); ++j) {
+        auto apj = resconf.getAtomPos(j);
+        CHECK((api - apj).length() > 1.0);
+      }
+    }
+  }
+  SECTION("first fragment should not move") {
+    auto m3 =
+        "[1*]c1ccccc1.[1*]c1ncccc1 |(2.57143,0,;1.07143,0,;0.321429,-1.29904,;-1.17857,-1.29904,;-1.92857,0,;-1.17857,1.29904,;0.321429,1.29904,;12.5714,0,;11.0714,0,;10.3214,1.29904,;8.82143,1.29904,;8.07143,0,;8.82143,-1.29904,;10.3214,-1.29904,)|"_smiles;
+    MolzipParams params;
+    params.alignCoordinates = true;
+    params.label = MolzipLabel::Isotope;
+    auto res = molzip(*m3, params);
+    INFO(MolToCXSmiles(*res));
+    auto resconf = res->getConformer();
+    auto molconf = m3->getConformer();
+    for (unsigned int i = 0; i < 6; ++i) {
+      auto rap = resconf.getAtomPos(i);
+      auto map = molconf.getAtomPos(i + 1);
+      CHECK_THAT(rap.x, Catch::Matchers::WithinAbs(map.x, 1e-4));
+      CHECK_THAT(rap.y, Catch::Matchers::WithinAbs(map.y, 1e-4));
+      CHECK_THAT(rap.z, Catch::Matchers::WithinAbs(map.z, 1e-4));
+    }
+  }
+}
