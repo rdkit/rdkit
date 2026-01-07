@@ -497,14 +497,20 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           }
 #endif
 
-          unsigned int failedOp;
           try {
-            MolOps::sanitizeMol(*product, failedOp,
-                      MolOps::SANITIZE_KEKULIZE |
-                        MolOps::SANITIZE_SETAROMATICITY |
-                                    MolOps::SANITIZE_SETCONJUGATION |
-                                    MolOps::SANITIZE_SETHYBRIDIZATION |
-                                    MolOps::SANITIZE_ADJUSTHS);
+            // We only change bond orders/H counts/charges; the molecular graph
+            // (and therefore ring topology) is unchanged.
+            // `sanitizeMol()` always calls `clearComputedProps()` which resets
+            // ring info and forces ring-finding for each generated tautomer.
+            // Avoid that by clearing computed props without touching rings,
+            // then running the specific sanitize steps we need.
+            product->clearComputedProps(false);
+            product->updatePropertyCache(false);
+            MolOps::Kekulize(*product);
+            MolOps::setAromaticity(*product);
+            MolOps::setConjugation(*product);
+            MolOps::setHybridization(*product);
+            MolOps::adjustHs(*product);
           } catch (const KekulizeException &) {
             continue;
           }
