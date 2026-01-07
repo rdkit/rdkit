@@ -104,6 +104,17 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
 
     bool found = false;
     // Try each type with exception handling
+
+    // Note: Try unsigned int BEFORE int to avoid overflow in getPropIfPresent conversion
+    try {
+      unsigned int v;
+      if (obj.getPropIfPresent(key, v)) {
+        dict[key] = v;
+        found = true;
+      }
+    } catch (std::bad_any_cast &) {}
+    if (found) continue;
+
     try {
       int v;
       if (obj.getPropIfPresent(key, v)) {
@@ -132,15 +143,6 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
     if (found) continue;
 
     try {
-      unsigned int v;
-      if (obj.getPropIfPresent(key, v)) {
-        dict[key] = v;
-        found = true;
-      }
-    } catch (std::bad_any_cast &) {}
-    if (found) continue;
-
-    try {
       float v;
       if (obj.getPropIfPresent(key, v)) {
         dict[key] = v;
@@ -150,6 +152,16 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
     if (found) continue;
 
     // Try vectors before string to avoid implicit vector->string conversion
+    // Try unsigned vectors before signed to avoid overflow in getPropIfPresent
+    try {
+      std::vector<unsigned int> v;
+      if (obj.getPropIfPresent(key, v)) {
+        dict[key] = v;
+        found = true;
+      }
+    } catch (std::bad_any_cast &) {}
+    if (found) continue;
+
     try {
       std::vector<double> v;
       if (obj.getPropIfPresent(key, v)) {
@@ -170,15 +182,6 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
 
     try {
       std::vector<int> v;
-      if (obj.getPropIfPresent(key, v)) {
-        dict[key] = v;
-        found = true;
-      }
-    } catch (std::bad_any_cast &) {}
-    if (found) continue;
-
-    try {
-      std::vector<unsigned int> v;
       if (obj.getPropIfPresent(key, v)) {
         dict[key] = v;
         found = true;
@@ -286,6 +289,14 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
   }
 
   // When autoConvert=True, try native types first
+  // Try unsigned int BEFORE int to avoid overflow in getPropIfPresent conversion
+  try {
+    unsigned int v;
+    if (obj->getPropIfPresent(key, v)) {
+      return rawPy(v);
+    }
+  } catch (std::bad_any_cast &) {}
+
   try {
     int v;
     if (obj->getPropIfPresent(key, v)) {
@@ -308,13 +319,6 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
   } catch (std::bad_any_cast &) {}
 
   try {
-    unsigned int v;
-    if (obj->getPropIfPresent(key, v)) {
-      return rawPy(v);
-    }
-  } catch (std::bad_any_cast &) {}
-
-  try {
     float v;
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
@@ -322,6 +326,14 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
   } catch (std::bad_any_cast &) {}
 
   // Try vectors before string to avoid implicit vector->string conversion
+  // Try unsigned vectors before signed to avoid overflow in getPropIfPresent
+  try {
+    std::vector<unsigned int> v;
+    if (obj->getPropIfPresent(key, v)) {
+      return rawPy(v);
+    }
+  } catch (std::bad_any_cast &) {}
+
   try {
     std::vector<double> v;
     if (obj->getPropIfPresent(key, v)) {
@@ -338,13 +350,6 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
 
   try {
     std::vector<int> v;
-    if (obj->getPropIfPresent(key, v)) {
-      return rawPy(v);
-    }
-  } catch (std::bad_any_cast &) {}
-
-  try {
-    std::vector<unsigned int> v;
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
     }
