@@ -39,6 +39,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
     extractFeatures(mol, confId, overlayOpts);
   }
   calcNormalization(mol, confId);
+  calcExtremes();
   d_selfOverlapVol =
       volume(d_coords.data(), d_numAtoms, d_coords.data(), d_numAtoms);
   d_selfOverlapColor = volume_color(
@@ -55,6 +56,7 @@ ShapeInput::ShapeInput(const ShapeInput &other)
       d_numFeats(other.d_numFeats),
       d_selfOverlapVol(other.d_selfOverlapVol),
       d_selfOverlapColor(other.d_selfOverlapColor),
+      d_extreme_points(other.d_extreme_points),
       d_normalized(other.d_normalized),
       d_canonRot(new std::array<double, 9>(*other.d_canonRot)),
       d_centroid(new std::array<double, 3>(*other.d_centroid)) {}
@@ -69,6 +71,7 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   d_numFeats = other.d_numFeats;
   d_selfOverlapVol = other.d_selfOverlapVol;
   d_selfOverlapColor = other.d_selfOverlapColor;
+  d_extreme_points = other.d_extreme_points;
   d_normalized = other.d_normalized;
   d_canonRot.reset(new std::array<double, 9>(*other.d_canonRot));
   d_centroid.reset(new std::array<double, 3>(*other.d_centroid));
@@ -108,6 +111,8 @@ void ShapeInput::normalizeCoords() {
     d_coords[i + 2] = pos.z;
   }
   d_normalized = true;
+  // Recalculate the extremes now we've changed the coordinates.
+  calcExtremes();
 }
 
 void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
@@ -183,6 +188,32 @@ void ShapeInput::calcNormalization(const ROMol &mol, int confId) {
   (*d_centroid)[0] /= d_numAtoms;
   (*d_centroid)[1] /= d_numAtoms;
   (*d_centroid)[2] /= d_numAtoms;
+}
+
+void ShapeInput::calcExtremes() {
+  d_extreme_points = std::array<size_t, 6>{0, 0, 0, 0, 0, 0};
+  for (size_t i = 0, j = 0; i < d_coords.size(); i += 4, ++j) {
+    if (d_coords[i] < d_coords[4 * d_extreme_points[0]]) {
+      d_extreme_points[0] = j;
+    }
+    if (d_coords[i] > d_coords[4 * d_extreme_points[3]]) {
+      d_extreme_points[3] = j;
+    }
+
+    if (d_coords[i + 1] < d_coords[4 * d_extreme_points[1] + 1]) {
+      d_extreme_points[1] = j;
+    }
+    if (d_coords[i + 1] > d_coords[4 * d_extreme_points[4] + 1]) {
+      d_extreme_points[4] = j;
+    }
+
+    if (d_coords[i + 2] < d_coords[4 * d_extreme_points[2] + 2]) {
+      d_extreme_points[2] = j;
+    }
+    if (d_coords[i + 2] > d_coords[4 * d_extreme_points[5] + 2]) {
+      d_extreme_points[5] = j;
+    }
+  }
 }
 
 RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,
