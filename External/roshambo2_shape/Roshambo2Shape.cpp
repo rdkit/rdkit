@@ -19,7 +19,6 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
 
 #include "Roshambo2Shape.hpp"
 #include "ShapeInput.h"

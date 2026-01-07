@@ -81,7 +81,7 @@ RDKIT_ROSHAMBO2SHAPE_EXPORT std::pair<double, double> AlignMolecule(
           if opt_param is 1.0.)  If useColors is True, uses RDKit pphore
           types for the features.
 */
-RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
+RDKIT_ROSHAMBO2SHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const ROMol &ref, ROMol &fit, RDGeom::Transform3D *xform = nullptr,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
     int refConfId = -1, int fitConfId = -1);
