@@ -25,6 +25,8 @@ void applyMatches(RWMol &mol, const std::vector<AbbreviationMatch> &matches) {
   std::vector<unsigned int> prevBondMapping;
   std::vector<unsigned int> addedBonds;
   addedBonds.reserve(mol.getNumBonds());
+  // Store bonds to add - pairs of (atom1, atom2, originalBondIdx)
+  std::vector<std::tuple<unsigned int, unsigned int, unsigned int>> bondsToAdd;
   bool hasPrevMapping =
       mol.getPropIfPresent(common_properties::origAtomMapping,
                            prevAtomMapping) &&
@@ -74,10 +76,10 @@ void applyMatches(RWMol &mol, const std::vector<AbbreviationMatch> &matches) {
                            [nbrIdx](const std::pair<int, int> &tpr) {
                              return tpr.second == rdcast<int>(nbrIdx);
                            })) {
-            mol.addBond(nbrIdx, connectIdx, Bond::BondType::SINGLE);
-            addedBonds.push_back(hasPrevMapping
-                                     ? prevBondMapping.at(bond->getIdx())
-                                     : bond->getIdx());
+            // Defer bond addition to avoid iterator invalidation
+            bondsToAdd.emplace_back(nbrIdx, connectIdx,
+                                    hasPrevMapping ? prevBondMapping.at(bond->getIdx())
+                                                   : bond->getIdx());
           }
         }
       }
@@ -92,11 +94,19 @@ void applyMatches(RWMol &mol, const std::vector<AbbreviationMatch> &matches) {
         }
       }
       CHECK_INVARIANT(bondIdx != -1, "bondIdx not found");
-      mol.addBond(oaidx, connectIdx, Bond::BondType::SINGLE);
-      addedBonds.push_back(hasPrevMapping ? prevBondMapping.at(bondIdx)
-                                          : bondIdx);
+      // Defer bond addition to avoid iterator invalidation
+      bondsToAdd.emplace_back(oaidx, connectIdx,
+                              hasPrevMapping ? prevBondMapping.at(bondIdx)
+                                             : bondIdx);
     }
   }
+
+  // Now add all the deferred bonds, checking for duplicates
+  for (const auto &[atom1, atom2, origBondIdx] : bondsToAdd) {
+    mol.addBond(atom1, atom2, Bond::BondType::SINGLE);
+    addedBonds.push_back(origBondIdx);
+  }
+
   std::vector<unsigned int> atomMapping;
   atomMapping.reserve(mol.getNumAtoms());
   std::vector<unsigned int> bondMapping;
