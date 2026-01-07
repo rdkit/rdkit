@@ -178,6 +178,13 @@ class ScsiMolTest {
 TEST_CASE("scsiTests", "scsiTests") {
   SECTION("basics") {
     std::list<ScsiMolTest::ScsiTest> scsiTests{
+        ScsiMolTest::ScsiTest("ValenceErrorScsr.mol", true,
+                              SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
+        ScsiMolTest::ScsiTest("ValenceErrorScsr2.mol", true,
+                              SCSRBaseHbondOptions::Auto, 28, 28, 6, 25, 25, 3),
+
+        ScsiMolTest::ScsiTest("RiboseFullname.mol", true,
+                              SCSRBaseHbondOptions::Auto, 45, 49, 8, 43, 47, 6),
         ScsiMolTest::ScsiTest("Conjugate.mol", true, SCSRBaseHbondOptions::Auto,
                               91, 91, 14, 87, 87, 10),
         ScsiMolTest::ScsiTest("ModifiedPeptide2.mol", true,

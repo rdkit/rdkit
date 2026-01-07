@@ -53,13 +53,57 @@ class TestCase(unittest.TestCase):
     synthonspace.ReadDBFile(fName)
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.maxHits = 10
-    results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"), params=params)
+    query = Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1")
+    results = synthonspace.SubstructureSearch(query, params=params)
     self.assertEqual(10, len(results.GetHitMolecules()))
     smParams = Chem.SubstructMatchParameters()
-    results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"),
+    results = synthonspace.SubstructureSearch(query,
                                               substructMatchParams=smParams,
                                               params=params)
     self.assertEqual(10, len(results.GetHitMolecules()))
+
+    # callback returns None, stil get all results
+    mols = []
+    synthonspace.SubstructureSearchIncremental(
+            query,
+            lambda results: mols.extend(results),
+            substructMatchParams=smParams,
+            params=params)
+    self.assertEqual(10, len(mols))
+
+    # callback returns True, get one chunk
+    mols = []
+    params.toTryChunkSize = 2
+    def callback_returns_true(chunk):
+        mols.extend(chunk)
+        return True
+    synthonspace.SubstructureSearchIncremental(
+            query,
+            callback_returns_true,
+            substructMatchParams=smParams,
+            params=params)
+    self.assertEqual(2, len(mols))
+
+    # Exceptions thrown in the callback propagate back here
+    mols = []
+    params.toTryChunkSize = 2
+    def callback_raises(chunk):
+        mols.extend(chunk)
+        raise StopIteration
+
+    try:
+        synthonspace.SubstructureSearchIncremental(
+                query,
+                callback_raises,
+                substructMatchParams=smParams,
+                params=params)
+    except StopIteration:
+        pass
+    else:
+        assert False, "Expected exception"
+    self.assertEqual(2, len(mols))
+
+
 
   def testFingerprintSearch(self):
     fName = self.sssDir / "idorsia_toy_space_a.spc"
@@ -73,6 +117,13 @@ class TestCase(unittest.TestCase):
     results = synthonspace.FingerprintSearch(
       Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"), fpgen, params)
     self.assertEqual(278, len(results.GetHitMolecules()))
+    mols = []
+    synthonspace.FingerprintSearchIncremental(
+      Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"),
+      fpgen,
+      lambda results: mols.extend(results),
+      params)
+    self.assertEqual(278, len(mols))
     
 
   def testEnumerate(self):
