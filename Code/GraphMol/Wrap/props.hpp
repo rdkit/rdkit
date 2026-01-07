@@ -271,7 +271,21 @@ python::object autoConvertString(const RDOb *ob, const std::string &key) {
 
 template <class RDOb>
 PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
-  // Try different types with exception handling
+  // When autoConvert=False (default), always return as string to match legacy behavior
+  if (!autoConvert) {
+    try {
+      std::string v;
+      if (obj->getPropIfPresent(key, v)) {
+        return rawPy(v);
+      }
+    } catch (std::bad_any_cast &) {}
+
+    // Property not found
+    PyErr_SetString(PyExc_KeyError, key.c_str());
+    return nullptr;
+  }
+
+  // When autoConvert=True, try native types first
   try {
     int v;
     if (obj->getPropIfPresent(key, v)) {
@@ -343,21 +357,19 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
     }
   } catch (std::bad_any_cast &) {}
 
-  // Try string last to avoid catching vector->string conversions
+  // Try string last with autoConvert for numeric strings
   try {
     std::string v;
     if (obj->getPropIfPresent(key, v)) {
-      if (autoConvert) {
-        auto trimmed = v;
-        boost::trim(trimmed);
-        int iconv;
-        if (boost::conversion::try_lexical_convert(trimmed, iconv)) {
-          return rawPy(iconv);
-        }
-        double dconv;
-        if (boost::conversion::try_lexical_convert(trimmed, dconv)) {
-          return rawPy(dconv);
-        }
+      auto trimmed = v;
+      boost::trim(trimmed);
+      int iconv;
+      if (boost::conversion::try_lexical_convert(trimmed, iconv)) {
+        return rawPy(iconv);
+      }
+      double dconv;
+      if (boost::conversion::try_lexical_convert(trimmed, dconv)) {
+        return rawPy(dconv);
       }
       return rawPy(v);
     }
