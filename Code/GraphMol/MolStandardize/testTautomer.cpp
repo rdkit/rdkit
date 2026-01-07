@@ -830,6 +830,61 @@ void testCanonicalize() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testCanonicalizeInvariantAcrossInputTautomers() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing canonicalize() invariance across input tautomers"
+      << std::endl;
+
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
+
+  // The core behavior guarantee we care about for perf work: regardless of which
+  // tautomer form is provided as input, canonicalize() selects the same
+  // canonical tautomer.
+  //
+  // Keep this bounded so the unit test stays fast.
+  constexpr size_t maxMoleculesToCheck = 25;
+  constexpr size_t maxTautomersToCheck = 25;
+
+  size_t moleculesChecked = 0;
+  for (const auto &itm : canonTautomerData) {
+    if (moleculesChecked >= maxMoleculesToCheck) {
+      break;
+    }
+    std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
+    TEST_ASSERT(mol);
+
+    auto tautRes = te.enumerate(*mol);
+    if (tautRes.status() != TautomerEnumeratorStatus::Completed) {
+      continue;
+    }
+    if (tautRes.size() > maxTautomersToCheck) {
+      continue;
+    }
+
+    bool expectedPresent = false;
+    for (const auto &taut : tautRes) {
+      if (MolToSmiles(*taut) == itm.second) {
+        expectedPresent = true;
+        break;
+      }
+    }
+    TEST_ASSERT(expectedPresent);
+
+    for (const auto &taut : tautRes) {
+      std::unique_ptr<ROMol> canon{te.canonicalize(*taut)};
+      TEST_ASSERT(canon);
+      TEST_ASSERT(MolToSmiles(*canon) == itm.second);
+    }
+    ++moleculesChecked;
+  }
+
+  // Make sure we actually exercised the logic.
+  TEST_ASSERT(moleculesChecked >= 10);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 void testPickCanonical() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing pickCanonical"
                        << std::endl;
@@ -1494,6 +1549,7 @@ int main() {
   testEnumeratorParams();
   testEnumeratorCallback();
   testCanonicalize();
+  testCanonicalizeInvariantAcrossInputTautomers();
   testPickCanonical();
   testCustomScoreFunc();
   testEnumerationProblems();

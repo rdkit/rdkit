@@ -205,11 +205,11 @@ TautomerEnumerator::TautomerEnumerator(const CleanupParameters &params)
 bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     const ROMol &mol, ROMol &taut, const TautomerEnumeratorResult &res) const {
   bool modified = false;
-  for (auto atom : mol.atoms()) {
-    auto atomIdx = atom->getIdx();
-    if (!res.d_modifiedAtoms.test(atomIdx)) {
-      continue;
-    }
+  // Iterate only the atoms/bonds actually modified by transforms.
+  for (auto atomIdx = res.d_modifiedAtoms.find_first();
+       atomIdx != boost::dynamic_bitset<>::npos;
+       atomIdx = res.d_modifiedAtoms.find_next(atomIdx)) {
+    const auto atom = mol.getAtomWithIdx(static_cast<unsigned int>(atomIdx));
     auto tautAtom = taut.getAtomWithIdx(atomIdx);
     // clear chiral tag on sp2 atoms (also sp3 if d_removeSp3Stereo is true)
     if (tautAtom->getHybridization() == Atom::SP2 || d_removeSp3Stereo) {
@@ -234,11 +234,10 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     }
   }
   // remove stereochemistry on bonds that are part of a tautomeric path
-  for (auto bond : mol.bonds()) {
-    auto bondIdx = bond->getIdx();
-    if (!res.d_modifiedBonds.test(bondIdx)) {
-      continue;
-    }
+  for (auto bondIdx = res.d_modifiedBonds.find_first();
+       bondIdx != boost::dynamic_bitset<>::npos;
+       bondIdx = res.d_modifiedBonds.find_next(bondIdx)) {
+    const auto bond = mol.getBondWithIdx(static_cast<unsigned int>(bondIdx));
     std::vector<unsigned int> bondsToClearDirs;
     if (bond->getBondType() == Bond::DOUBLE &&
         bond->getStereo() > Bond::STEREOANY) {
@@ -255,7 +254,7 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
         }
       }
     }
-    auto tautBond = taut.getBondWithIdx(bondIdx);
+    auto tautBond = taut.getBondWithIdx(static_cast<unsigned int>(bondIdx));
     if (tautBond->getBondType() != Bond::DOUBLE || d_removeBondStereo) {
       modified |= (tautBond->getStereo() != Bond::STEREONONE);
       tautBond->setStereo(Bond::STEREONONE);
@@ -331,7 +330,25 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
   res.d_modifiedAtoms.resize(mol.getNumAtoms());
   res.d_modifiedBonds.resize(mol.getNumBonds());
 
-  // Track seen tautomer states with a cheap hash for fast duplicate detection.
+  // Keep running counts of modified atoms/bonds.
+  // `boost::dynamic_bitset<>::count()` is O(n) in the number of blocks, and we
+  // were previously calling it once per new tautomer, which is avoidable.
+  size_t numModifiedAtoms = 0;
+  size_t numModifiedBonds = 0;
+  const auto markAtomModified = [&res, &numModifiedAtoms](unsigned int idx) {
+    if (!res.d_modifiedAtoms.test(idx)) {
+      res.d_modifiedAtoms.set(idx);
+      ++numModifiedAtoms;
+    }
+  };
+  const auto markBondModified = [&res, &numModifiedBonds](unsigned int idx) {
+    if (!res.d_modifiedBonds.test(idx)) {
+      res.d_modifiedBonds.set(idx);
+      ++numModifiedBonds;
+    }
+  };
+
+  // Track seen tautomer states with a cheap key for fast duplicate detection.
   // This avoids computing expensive canonical SMILES for duplicates.
   std::unordered_set<std::string> seenStateKeys;
   seenStateKeys.insert(getTautomerStateKey(*taut));
@@ -417,8 +434,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           int lastIdx = match.back().second;
           Atom *first = product->getAtomWithIdx(firstIdx);
           Atom *last = product->getAtomWithIdx(lastIdx);
-          res.d_modifiedAtoms.set(firstIdx);
-          res.d_modifiedAtoms.set(lastIdx);
+          markAtomModified(static_cast<unsigned int>(firstIdx));
+          markAtomModified(static_cast<unsigned int>(lastIdx));
           first->setNumExplicitHs(
               std::max(0, static_cast<int>(first->getTotalNumHs()) - 1));
           last->setNumExplicitHs(last->getTotalNumHs() + 1);
@@ -458,7 +475,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #endif
               }
             }
-            res.d_modifiedBonds.set(bond->getIdx());
+            markBondModified(bond->getIdx());
           }
           // TODO adjust charges
           if (!transform.Charges.empty()) {
@@ -481,8 +498,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           unsigned int failedOp;
           try {
             MolOps::sanitizeMol(*product, failedOp,
-                                MolOps::SANITIZE_KEKULIZE |
-                                    MolOps::SANITIZE_SETAROMATICITY |
+                      MolOps::SANITIZE_KEKULIZE |
+                        MolOps::SANITIZE_SETAROMATICITY |
                                     MolOps::SANITIZE_SETCONJUGATION |
                                     MolOps::SANITIZE_SETHYBRIDIZATION |
                                     MolOps::SANITIZE_ADJUSTHS);
@@ -532,7 +549,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #ifdef VERBOSE_ENUMERATION
               std::cout << "Sanitization has modified bond " << i << std::endl;
 #endif
-              res.d_modifiedBonds.set(i);
+              markBondModified(static_cast<unsigned int>(i));
             }
           }
           // Kekulized form will be created lazily when needed
@@ -553,14 +570,14 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           //     << " produced tautomer " << tsmiles << std::endl;
           res.d_tautomers[tsmiles] = Tautomer(
               std::move(product),
-              res.d_modifiedAtoms.count(), res.d_modifiedBonds.count());
+              numModifiedAtoms, numModifiedBonds);
         }
       }
       smilesTautomerPair.second.d_done = true;
     }
     completed = true;
-    size_t maxNumModifiedAtoms = res.d_modifiedAtoms.count();
-    size_t maxNumModifiedBonds = res.d_modifiedBonds.count();
+    size_t maxNumModifiedAtoms = numModifiedAtoms;
+    size_t maxNumModifiedBonds = numModifiedBonds;
     for (auto it = res.d_tautomers.begin(); it != res.d_tautomers.end();) {
       auto &taut = it->second;
       if (!taut.d_done) {
