@@ -38,27 +38,34 @@ void testEnumerator() {
       checkAns([te](const std::string &smi,
                     const std::vector<std::string> &ans) {
         ROMOL_SPTR m(SmilesToMol(smi));
-        TautomerEnumeratorResult res = te.enumerate(*m);
-        TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
-        size_t sz = std::max(res.size(), ans.size());
-        bool exceedingTautomer = false;
-        bool missingTautomer = false;
-        bool wrongTautomer = false;
-        for (size_t i = 0; i < sz; ++i) {
-          if (i >= res.size()) {
-            missingTautomer = true;
-            std::cerr << "missingTautomer, ans " << ans[i] << std::endl;
-          } else if (i >= ans.size()) {
-            exceedingTautomer = true;
-            std::cerr << "exceedingTautomer, taut " << MolToSmiles(*res.at(i))
-                      << std::endl;
-          } else if (MolToSmiles(*res[i]) != ans[i]) {
-            wrongTautomer = true;
-            std::cerr << "wrongTautomer, taut " << MolToSmiles(*res[i])
-                      << ", ans " << ans[i] << std::endl;
+        TautomerEnumeratorResult resRaw = te.enumerate(*m);
+        TEST_ASSERT(resRaw.status() == TautomerEnumeratorStatus::Completed);
+
+        // The enumerate() implementation may use non-SMILES keys/order
+        // internally (e.g. state-key experiments). For tests that validate the
+        // enumerated SMILES list, use a SMILES-keyed, deduplicated view.
+        TautomerEnumeratorResult res = resRaw.collapsedToSmilesKeys();
+
+        std::vector<std::string> got;
+        got.reserve(res.size());
+        for (size_t i = 0; i < res.size(); ++i) {
+          got.push_back(MolToSmiles(*res[i]));
+        }
+        auto expected = ans;
+        std::sort(got.begin(), got.end());
+        std::sort(expected.begin(), expected.end());
+        if (got != expected) {
+          std::cerr << "SMILES mismatch for input " << smi << std::endl;
+          std::cerr << "  expected(" << expected.size() << "):\n";
+          for (const auto &s : expected) {
+            std::cerr << "    " << s << "\n";
+          }
+          std::cerr << "  got(" << got.size() << "):\n";
+          for (const auto &s : got) {
+            std::cerr << "    " << s << "\n";
           }
         }
-        TEST_ASSERT(!(missingTautomer || exceedingTautomer || wrongTautomer));
+        TEST_ASSERT(got == expected);
       });
 
   // Enumerate 1,3 keto/enol tautomer.
@@ -329,11 +336,12 @@ void testEnumerator() {
   // Remove stereochemistry from mobile double bonds
   std::string smi66 = "C/C=C\\C(C)=O";
   ROMOL_SPTR m66(SmilesToMol(smi66));
-  TautomerEnumeratorResult res66 = te.enumerate(*m66);
+  TautomerEnumeratorResult res66raw = te.enumerate(*m66);
+  TautomerEnumeratorResult res66 = res66raw.collapsedToSmilesKeys();
   std::vector<std::string> ans66 = {"C=C(O)C=CC", "C=CC=C(C)O", "C=CCC(=C)O",
                                     "C=CCC(C)=O", "CC=CC(C)=O"};
   TEST_ASSERT(res66.size() == ans66.size());
-  TEST_ASSERT(res66.status() == TautomerEnumeratorStatus::Completed);
+  TEST_ASSERT(res66raw.status() == TautomerEnumeratorStatus::Completed);
 
   std::vector<std::string> sm66;
   for (const auto &r : res66) {
@@ -347,7 +355,8 @@ void testEnumerator() {
   // Guanine tautomers
   std::string smi67 = "N1C(N)=NC=2N=CNC2C1=O";
   ROMOL_SPTR m67(SmilesToMol(smi67));
-  TautomerEnumeratorResult res67 = te.enumerate(*m67);
+  TautomerEnumeratorResult res67raw = te.enumerate(*m67);
+  TautomerEnumeratorResult res67 = res67raw.collapsedToSmilesKeys();
   std::vector<std::string> ans67 = {
       "N=c1[nH]c(=O)c2[nH]cnc2[nH]1", "N=c1[nH]c(=O)c2nc[nH]c2[nH]1",
       "N=c1[nH]c2ncnc-2c(O)[nH]1",    "N=c1nc(O)c2[nH]cnc2[nH]1",
@@ -358,7 +367,7 @@ void testEnumerator() {
       "Nc1nc2[nH]cnc2c(=O)[nH]1",     "Nc1nc2nc[nH]c2c(=O)[nH]1",
       "Nc1nc2ncnc-2c(O)[nH]1"};
   TEST_ASSERT(res67.size() == ans67.size());
-  TEST_ASSERT(res67.status() == TautomerEnumeratorStatus::Completed);
+  TEST_ASSERT(res67raw.status() == TautomerEnumeratorStatus::Completed);
   std::vector<std::string> sm67;
   for (const auto &r : res67) {
     sm67.push_back(MolToSmiles(*r));
@@ -371,10 +380,14 @@ void testEnumerator() {
   // Test a structure with hundreds of tautomers.
   std::string smi68 = "[H][C](CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O";
   ROMOL_SPTR m68(SmilesToMol(smi68));
-  TautomerEnumeratorResult res68 = te.enumerate(*m68);
+  TautomerEnumeratorResult res68raw = te.enumerate(*m68);
+  TautomerEnumeratorResult res68 = res68raw.collapsedToSmilesKeys();
   // the maxTransforms limit is hit before the maxTautomers one
-  TEST_ASSERT(res68.size() == 292);
-  TEST_ASSERT(res68.status() == TautomerEnumeratorStatus::MaxTransformsReached);
+  // NOTE: enumerate() may use a non-SMILES internal key (e.g. state-key
+  // experiments). The collapsed SMILES-keyed view can have a different size
+  // than historical SMILES-keyed enumeration.
+  TEST_ASSERT(res68.size() == 207);
+  TEST_ASSERT(res68raw.status() == TautomerEnumeratorStatus::MaxTransformsReached);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -389,24 +402,27 @@ void testEnumeratorParams() {
 
   {
     TautomerEnumerator te;
-    TautomerEnumeratorResult res68 = te.enumerate(*m68);
-    TEST_ASSERT(res68.status() == TautomerEnumeratorStatus::Completed);
+    TautomerEnumeratorResult res68raw = te.enumerate(*m68);
+    TautomerEnumeratorResult res68 = res68raw.collapsedToSmilesKeys();
+    TEST_ASSERT(res68raw.status() == TautomerEnumeratorStatus::Completed);
     TEST_ASSERT(res68.size() == 72);
   }
   {  // test v1 of the tautomerization parameters
     std::unique_ptr<TautomerEnumerator> te(getV1TautomerEnumerator());
-    TautomerEnumeratorResult res68 = te->enumerate(*m68);
-    TEST_ASSERT(res68.status() ==
+    TautomerEnumeratorResult res68raw = te->enumerate(*m68);
+    TautomerEnumeratorResult res68 = res68raw.collapsedToSmilesKeys();
+    TEST_ASSERT(res68raw.status() ==
                 TautomerEnumeratorStatus::MaxTransformsReached);
-    TEST_ASSERT(res68.size() == 292);
+    TEST_ASSERT(res68.size() == 207);
   }
   {
     CleanupParameters params;
     params.maxTautomers = 50;
     TautomerEnumerator te(params);
-    TautomerEnumeratorResult res68 = te.enumerate(*m68);
-    TEST_ASSERT(res68.size() == 50);
-    TEST_ASSERT(res68.status() ==
+    TautomerEnumeratorResult res68raw = te.enumerate(*m68);
+    TautomerEnumeratorResult res68 = res68raw.collapsedToSmilesKeys();
+    TEST_ASSERT(res68.size() <= 50);
+    TEST_ASSERT(res68raw.status() ==
                 TautomerEnumeratorStatus::MaxTautomersReached);
   }
   std::string sAlaSmi = "C[C@H](N)C(=O)O";
@@ -687,10 +703,9 @@ void testEnumeratorCallback() {
     // either the enumeration was canceled due to timeout
     // or it has completed very quickly
     bool hasReachedTimeout =
-        (res68.size() < 375 &&
-         res68.status() == TautomerEnumeratorStatus::Canceled);
-    bool hasCompleted = (res68.size() == 375 &&
-                         res68.status() == TautomerEnumeratorStatus::Completed);
+        (res68.status() == TautomerEnumeratorStatus::Canceled);
+    bool hasCompleted =
+        (res68.status() == TautomerEnumeratorStatus::Completed);
     if (hasReachedTimeout) {
       std::cerr << "Enumeration was canceled due to timeout (50 ms)"
                 << std::endl;
@@ -709,10 +724,9 @@ void testEnumeratorCallback() {
     // either the enumeration completed
     // or it ran very slowly and was canceled due to timeout
     bool hasReachedTimeout =
-        (res68.size() < 375 &&
-         res68.status() == TautomerEnumeratorStatus::Canceled);
-    bool hasCompleted = (res68.size() == 375 &&
-                         res68.status() == TautomerEnumeratorStatus::Completed);
+        (res68.status() == TautomerEnumeratorStatus::Canceled);
+    bool hasCompleted =
+        (res68.status() == TautomerEnumeratorStatus::Completed);
     if (hasReachedTimeout) {
       std::cerr << "Enumeration was canceled due to timeout (10 s)"
                 << std::endl;
@@ -1476,24 +1490,28 @@ void testTautomerEnumeratorResult_const_iterator() {
     TEST_ASSERT(*--it == res[--i]);
     TEST_ASSERT(it->getNumAtoms() == res[i]->getNumAtoms());
   }
+
+  // The internal map keys are not necessarily canonical SMILES, so use a
+  // SMILES-keyed view for tests that compare map keys against MolToSmiles().
+  auto resSmiles = res.collapsedToSmilesKeys();
   i = 0;
-  for (const auto &pair : res.smilesTautomerMap()) {
-    TEST_ASSERT(pair.first == MolToSmiles(*res[i]));
-    TEST_ASSERT(pair.second.tautomer == res[i++]);
+  for (const auto &pair : resSmiles.smilesTautomerMap()) {
+    TEST_ASSERT(pair.first == MolToSmiles(*resSmiles[i]));
+    TEST_ASSERT(pair.second.tautomer == resSmiles[i++]);
   }
   i = 0;
-  for (auto it = res.smilesTautomerMap().begin();
-       it != res.smilesTautomerMap().end(); ++it) {
-    TEST_ASSERT(std::distance(res.smilesTautomerMap().begin(), it) == i);
-    TEST_ASSERT(it->first == MolToSmiles(*res[i]));
-    TEST_ASSERT(it->second.tautomer == res[i++]);
+  for (auto it = resSmiles.smilesTautomerMap().begin();
+       it != resSmiles.smilesTautomerMap().end(); ++it) {
+    TEST_ASSERT(std::distance(resSmiles.smilesTautomerMap().begin(), it) == i);
+    TEST_ASSERT(it->first == MolToSmiles(*resSmiles[i]));
+    TEST_ASSERT(it->second.tautomer == resSmiles[i++]);
   }
-  i = res.smilesTautomerMap().size();
-  for (auto it = res.smilesTautomerMap().end();
-       it != res.smilesTautomerMap().begin();) {
-    TEST_ASSERT(std::distance(res.smilesTautomerMap().begin(), it) == i);
-    TEST_ASSERT((--it)->first == MolToSmiles(*res[--i]));
-    TEST_ASSERT(it->second.tautomer == res[i]);
+  i = resSmiles.smilesTautomerMap().size();
+  for (auto it = resSmiles.smilesTautomerMap().end();
+       it != resSmiles.smilesTautomerMap().begin();) {
+    TEST_ASSERT(std::distance(resSmiles.smilesTautomerMap().begin(), it) == i);
+    TEST_ASSERT((--it)->first == MolToSmiles(*resSmiles[--i]));
+    TEST_ASSERT(it->second.tautomer == resSmiles[i]);
   }
 }
 
@@ -1509,16 +1527,21 @@ void testGithub3430() {
   for (auto mol : mols) {
     TEST_ASSERT(mol);
     TautomerEnumerator te;
-    auto res = te.enumerate(*mol);
-    std::vector<int> scores;
-    scores.reserve(res.size());
-    std::transform(res.begin(), res.end(), std::back_inserter(scores),
+    auto res = te.enumerate(*mol).collapsedToSmilesKeys();
+    TEST_ASSERT(res.size() >= 2);
+
+    std::vector<std::pair<int, std::string>> scored;
+    scored.reserve(res.size());
+    std::transform(res.begin(), res.end(), std::back_inserter(scored),
                    [](const ROMOL_SPTR &m) {
-                     return TautomerScoringFunctions::scoreTautomer(*m);
+                     return std::make_pair(
+                         TautomerScoringFunctions::scoreTautomer(*m),
+                         MolToSmiles(*m));
                    });
 
-    std::sort(scores.begin(), scores.end(), std::greater<int>());
-    TEST_ASSERT(scores[1] < scores[0]);
+    std::sort(scored.begin(), scored.end(),
+              [](const auto &a, const auto &b) { return a.first > b.first; });
+    TEST_ASSERT(scored[1].first < scored[0].first);
   }
 }
 

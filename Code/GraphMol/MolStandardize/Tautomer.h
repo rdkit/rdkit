@@ -227,6 +227,17 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumeratorResult {
   }
   const SmilesTautomerMap &smilesTautomerMap() const { return d_tautomers; }
 
+  // Returns a new result where the internal map is re-keyed by canonical
+  // SMILES (MolToSmiles(..., true)).
+  //
+  // This is intended for callers/tests that expect a SMILES-keyed, SMILES-
+  // ordered, de-duplicated view of the enumerated tautomers.
+  //
+  // NOTE: this computes canonical SMILES for each enumerated tautomer and
+  // therefore can be expensive; callers should only use it when they need
+  // SMILES-keyed semantics.
+  TautomerEnumeratorResult collapsedToSmilesKeys() const;
+
  private:
   void fillTautomersItVec() {
     for (auto it = d_tautomers.begin(); it != d_tautomers.end(); ++it) {

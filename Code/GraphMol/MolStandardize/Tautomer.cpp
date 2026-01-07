@@ -313,8 +313,6 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
       tautparams->getTransforms();
 
   // Enumerate all possible tautomers and return them as a vector.
-  // smi is the input molecule SMILES
-  std::string smi = MolToSmiles(mol, true);
   // taut is a copy of the input molecule
   ROMOL_SPTR taut(new ROMol(mol));
   // do whatever sanitization bits are required
@@ -326,7 +324,11 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
   }
 
   // Kekulized form will be created lazily when needed for transform matching
-  res.d_tautomers = {{smi, Tautomer(taut, 0, 0)}};
+  // NOTE: we key the internal map by a cheap "state key" rather than SMILES.
+  // This is an experiment to avoid per-tautomer canonical SMILES generation
+  // during enumeration. See perf/tautomer-canonicalization.md for notes.
+  std::string initKey = getTautomerStateKey(*taut);
+  res.d_tautomers = {{initKey, Tautomer(taut, 0, 0)}};
   res.d_modifiedAtoms.resize(mol.getNumAtoms());
   res.d_modifiedBonds.resize(mol.getNumBonds());
 
@@ -348,11 +350,6 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
     }
   };
 
-  // Track seen tautomer states with a cheap key for fast duplicate detection.
-  // This avoids computing expensive canonical SMILES for duplicates.
-  std::unordered_set<std::string> seenStateKeys;
-  seenStateKeys.insert(getTautomerStateKey(*taut));
-
   bool completed = false;
   bool bailOut = false;
   unsigned int nTransforms = 0;
@@ -362,7 +359,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 
   while (!completed && !bailOut) {
     // std::map automatically sorts res.d_tautomers into alphabetical order
-    // (SMILES)
+    // (state key)
     for (auto &smilesTautomerPair : res.d_tautomers) {
 #ifdef VERBOSE_ENUMERATION
       std::cout << "Current tautomers: " << std::endl;
@@ -371,7 +368,6 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
                   << smilesTautomerPair.second.d_done << std::endl;
       }
 #endif
-      std::string tsmiles;
       if (smilesTautomerPair.second.d_done) {
 #ifdef VERBOSE_ENUMERATION
         std::cout << "Skipping " << smilesTautomerPair.first
@@ -520,9 +516,9 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #endif
           setTautomerStereoAndIsoHs(mol, *product, res);
 
-          // Quick duplicate check using cheap state key before computing SMILES
+          // Quick duplicate check using cheap state key (also the map key)
           std::string stateKey = getTautomerStateKey(*product);
-          if (seenStateKeys.find(stateKey) != seenStateKeys.end()) {
+          if (res.d_tautomers.find(stateKey) != res.d_tautomers.end()) {
 #ifdef VERBOSE_ENUMERATION
             std::cout << "Previous tautomer state seen again (cheap check)"
                       << std::endl;
@@ -530,22 +526,11 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
             continue;
           }
 
-          // New tautomer state - compute canonical SMILES for storage
-          tsmiles = MolToSmiles(*product, true);
 #ifdef VERBOSE_ENUMERATION
           (transform.Mol)->getProp(common_properties::_Name, name);
           std::cout << "Applied rule: " << name << " to "
                     << smilesTautomerPair.first << std::endl;
 #endif
-          // Double-check with SMILES (handles rare hash collisions)
-          if (res.d_tautomers.find(tsmiles) != res.d_tautomers.end()) {
-#ifdef VERBOSE_ENUMERATION
-            std::cout << "Previous tautomer produced again: " << tsmiles
-                      << std::endl;
-#endif
-            continue;
-          }
-          seenStateKeys.insert(stateKey);
           // in addition to the above transformations, sanitization may modify
           // bonds, e.g. Cc1nc2ccccc2[nH]1
           for (size_t i = 0; i < mol.getNumBonds(); i++) {
@@ -560,13 +545,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           }
           // Kekulized form will be created lazily when needed
 #ifdef VERBOSE_ENUMERATION
-          auto it = res.d_tautomers.find(tsmiles);
-          if (it == res.d_tautomers.end()) {
-            std::cout << "New tautomer added as ";
-          } else {
-            std::cout << "New tautomer replaced for ";
-          }
-          std::cout << tsmiles << ", taut: " << MolToSmiles(*product)
+          std::cout << "New tautomer added with state key: " << stateKey
                     << std::endl;
 #endif
           // BOOST_LOG(rdInfoLog)
@@ -574,9 +553,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           //     <<
           //     transform.Mol->getProp<std::string>(common_properties::_Name)
           //     << " produced tautomer " << tsmiles << std::endl;
-          res.d_tautomers[tsmiles] = Tautomer(
-              std::move(product),
-              numModifiedAtoms, numModifiedBonds);
+          res.d_tautomers[stateKey] =
+              Tautomer(std::move(product), numModifiedAtoms, numModifiedBonds);
         }
       }
       smilesTautomerPair.second.d_done = true;
@@ -597,7 +575,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
         tautStored.d_numModifiedAtoms = maxNumModifiedAtoms;
         tautStored.d_numModifiedBonds = maxNumModifiedBonds;
         auto insertRes = res.d_tautomers.insert(std::make_pair(
-            MolToSmiles(*tautStored.tautomer), std::move(tautStored)));
+            getTautomerStateKey(*tautStored.tautomer), std::move(tautStored)));
         if (insertRes.second) {
           it = insertRes.first;
         }
@@ -622,6 +600,27 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
   return res;
 }
 
+TautomerEnumeratorResult TautomerEnumeratorResult::collapsedToSmilesKeys()
+    const {
+  TautomerEnumeratorResult out;
+  out.d_status = d_status;
+  out.d_modifiedAtoms = d_modifiedAtoms;
+  out.d_modifiedBonds = d_modifiedBonds;
+
+  for (const auto &kv : d_tautomers) {
+    if (!kv.second.tautomer) {
+      continue;
+    }
+    std::string smi = MolToSmiles(*kv.second.tautomer, true);
+    // Deduplicate by SMILES: keep the first occurrence.
+    if (out.d_tautomers.find(smi) == out.d_tautomers.end()) {
+      out.d_tautomers.emplace(std::move(smi), kv.second);
+    }
+  }
+  out.fillTautomersItVec();
+  return out;
+}
+
 // pickCanonical non-templated overload that avoids recomputing SMILES
 ROMol *TautomerEnumerator::pickCanonical(
     const TautomerEnumeratorResult &tautRes,
@@ -632,7 +631,8 @@ ROMol *TautomerEnumerator::pickCanonical(
   } else {
     // Calculate score for each tautomer
     int bestScore = std::numeric_limits<int>::min();
-    std::string bestSmiles = "";
+    std::string bestSmiles;
+    bool bestSmilesInitialized = false;
     for (const auto &t : tautRes.d_tautomers) {
       auto score = scoreFunc(*t.second.tautomer);
 #ifdef VERBOSE_ENUMERATION
@@ -640,11 +640,18 @@ ROMol *TautomerEnumerator::pickCanonical(
 #endif
       if (score > bestScore) {
         bestScore = score;
-        bestSmiles = t.first;
         bestMol = t.second.tautomer;
+        bestSmilesInitialized = false;
       } else if (score == bestScore) {
-        if (t.first < bestSmiles) {
-          bestSmiles = t.first;
+        // Tie-break by canonical SMILES (computed lazily only on ties).
+        if (!bestSmilesInitialized && bestMol) {
+          bestSmiles = MolToSmiles(*bestMol, true);
+          bestSmilesInitialized = true;
+        }
+        auto curSmiles = MolToSmiles(*t.second.tautomer, true);
+        if (!bestSmilesInitialized || curSmiles < bestSmiles) {
+          bestSmiles = std::move(curSmiles);
+          bestSmilesInitialized = true;
           bestMol = t.second.tautomer;
         }
       }
