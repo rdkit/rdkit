@@ -39,17 +39,18 @@ bool isAromaticAtom(const Atom &atom) {
 }
 
 unsigned int getEffectiveAtomicNum(const Atom &atom, bool checkValue) {
+  const auto *periodicTable = PeriodicTable::getTable();
   auto effectiveAtomicNum = atom.getAtomicNum() - atom.getFormalCharge();
   if (checkValue &&
       (effectiveAtomicNum < 0 ||
        effectiveAtomicNum >
-           static_cast<int>(PeriodicTable::getTable()->getMaxAtomicNumber()))) {
+           static_cast<int>(periodicTable->getMaxAtomicNumber()))) {
     throw AtomValenceException("Effective atomic number out of range",
                                atom.getIdx());
   }
   effectiveAtomicNum = std::clamp(
       effectiveAtomicNum, 0,
-      static_cast<int>(PeriodicTable::getTable()->getMaxAtomicNumber()));
+      static_cast<int>(periodicTable->getMaxAtomicNumber()));
   return static_cast<unsigned int>(effectiveAtomicNum);
 }
 
