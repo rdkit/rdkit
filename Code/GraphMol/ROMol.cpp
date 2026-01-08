@@ -47,9 +47,23 @@ ROMol::ROMol(const ROMol &other, bool quickCopy , int confId) {
 }
 ROMol::ROMol(const std::string &pickle) : ROMol() {
   MolPickler::molFromPickle(pickle, *this);
+  // Ensure property cache (including implicit valence) is updated after unpickling
+  // Wrap in try-catch since some molecules (e.g., with query atoms) may not support this
+  try {
+    updatePropertyCache(false);
+  } catch (...) {
+    BOOST_LOG(rdWarningLog) << "Could not update property cache after unpickling" << std::endl;
+  }
 }
 ROMol::ROMol(const std::string &pickle, unsigned int propertyFlags) : ROMol() {
   MolPickler::molFromPickle(pickle, *this, propertyFlags);
+  // Ensure property cache (including implicit valence) is updated after unpickling
+  // Wrap in try-catch since some molecules (e.g., with query atoms) may not support this
+  try {
+    updatePropertyCache(false);
+  } catch (...) {
+    BOOST_LOG(rdWarningLog) << "Could not update property cache after unpickling" << std::endl;
+  }
 }
 ROMol::ROMol(ROMol&& other) noexcept{
   dp_mol = other.dp_mol;
