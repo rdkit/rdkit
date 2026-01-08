@@ -48,7 +48,15 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
   int score;
   RWMol matcher;  // requires assignment
 
-  SubstructTerm(std::string aname, std::string asmarts, int ascore);
+  // Pre-screening support: elements that must be present (empty = no filter)
+  std::vector<int> requiredElements;
+  // Bond-order-agnostic connectivity pattern for pre-screening (may be empty)
+  std::string connectivitySmarts;
+  RWMol connectivityMatcher;
+
+  SubstructTerm(std::string aname, std::string asmarts, int ascore,
+                std::vector<int> reqElements = {},
+                std::string connSmarts = "");
   SubstructTerm(const SubstructTerm &rhs) = default;
 
   bool operator==(const SubstructTerm &rhs) const {
@@ -78,6 +86,23 @@ RDKIT_MOLSTANDARDIZE_EXPORT int scoreRings(const ROMol &mol);
 RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(
     const ROMol &mol, const std::vector<SubstructTerm> &terms =
                           getDefaultTautomerScoreSubstructs());
+
+//! Determine which SubstructTerms are potentially relevant for a molecule.
+/// This pre-filters terms in two stages:
+///   1. Element check: skip terms requiring elements not in the molecule
+///   2. Connectivity check: skip terms whose bond-order-agnostic pattern
+///      doesn't match (since tautomerization doesn't create/destroy bonds)
+/// Returns indices into the terms vector for relevant terms.
+RDKIT_MOLSTANDARDIZE_EXPORT std::vector<size_t> getRelevantSubstructTermIndices(
+    const ROMol &mol,
+    const std::vector<SubstructTerm> &terms = getDefaultTautomerScoreSubstructs());
+
+//! Score substructures using only the terms at the specified indices.
+/// Use with getRelevantSubstructTermIndices for efficient scoring of many
+/// tautomers from the same parent molecule.
+RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructsFiltered(
+    const ROMol &mol, const std::vector<SubstructTerm> &terms,
+    const std::vector<size_t> &relevantIndices);
 //! scoreHeteroHs score the molecules hydrogens
 /// This gives a negative penalty to hydrogens attached to S,P, Se and Te
 /*!
@@ -88,6 +113,25 @@ RDKIT_MOLSTANDARDIZE_EXPORT int scoreHeteroHs(const ROMol &mol);
 
 inline int scoreTautomer(const ROMol &mol) {
   return scoreRings(mol) + scoreSubstructs(mol) + scoreHeteroHs(mol);
+}
+
+//! Create an optimized scoring function for tautomers of a specific molecule.
+/// This pre-filters SubstructTerms based on elements and connectivity present
+/// in the input molecule, avoiding unnecessary substructure searches for
+/// patterns that can never match any tautomer of this molecule.
+/// The returned function captures the filtered term indices and can be passed
+/// to pickCanonical or canonicalize.
+inline boost::function<int(const ROMol &)> makeOptimizedScorer(
+    const ROMol &mol) {
+  auto relevantIndices = getRelevantSubstructTermIndices(mol);
+  // Capture by value since the indices are small and we want the lambda to
+  // outlive this function.
+  return [relevantIndices](const ROMol &taut) {
+    const auto &terms = getDefaultTautomerScoreSubstructs();
+    return scoreRings(taut) +
+           scoreSubstructsFiltered(taut, terms, relevantIndices) +
+           scoreHeteroHs(taut);
+  };
 }
 }  // namespace TautomerScoringFunctions
 
@@ -456,12 +500,13 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
     https://doi.org/10.1007/s10822-010-9346-4
 
   */
-  ROMol *canonicalize(const ROMol &mol,
-                      boost::function<int(const ROMol &mol)> scoreFunc =
-                          TautomerScoringFunctions::scoreTautomer) const;
-  void canonicalizeInPlace(RWMol &mol,
-                           boost::function<int(const ROMol &mol)> scoreFunc =
-                               TautomerScoringFunctions::scoreTautomer) const;
+  /// When \p scoreFunc is empty (default), an optimized scorer is created
+  /// that pre-filters substructure patterns once for the input molecule.
+  ROMol *canonicalize(
+      const ROMol &mol,
+      boost::function<int(const ROMol &mol)> scoreFunc = {}) const;
+  void canonicalizeInPlace(
+      RWMol &mol, boost::function<int(const ROMol &mol)> scoreFunc = {}) const;
 
  private:
   bool setTautomerStereoAndIsoHs(const ROMol &mol, ROMol &taut,

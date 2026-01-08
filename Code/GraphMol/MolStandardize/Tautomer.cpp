@@ -75,30 +75,109 @@ int scoreRings(const ROMol &mol) {
   return score;
 };
 
-SubstructTerm::SubstructTerm(std::string aname, std::string asmarts, int ascore)
-    : name(std::move(aname)), smarts(std::move(asmarts)), score(ascore) {
+SubstructTerm::SubstructTerm(std::string aname, std::string asmarts, int ascore,
+                             std::vector<int> reqElements,
+                             std::string connSmarts)
+    : name(std::move(aname)),
+      smarts(std::move(asmarts)),
+      score(ascore),
+      requiredElements(std::move(reqElements)),
+      connectivitySmarts(std::move(connSmarts)) {
   std::unique_ptr<ROMol> pattern(SmartsToMol(smarts));
   if (pattern) {
     matcher = std::move(*pattern);
   }
+  // Initialize connectivity matcher if provided
+  if (!connectivitySmarts.empty()) {
+    std::unique_ptr<ROMol> connPattern(SmartsToMol(connectivitySmarts));
+    if (connPattern) {
+      connectivityMatcher = std::move(*connPattern);
+    }
+  }
 }
 
 const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs() {
+  // Each term specifies:
+  //   - name, SMARTS, score
+  //   - requiredElements: atomic numbers that must be present (empty = no filter)
+  //   - connectivitySmarts: bond-order-agnostic pattern for pre-screening
+  // Since tautomerization only moves H and changes bond orders (never creates/
+  // destroys heavy-atom bonds), we can skip patterns whose connectivity
+  // prerequisites aren't met by the input molecule.
   static std::vector<SubstructTerm> substructureTerms{
-      {"benzoquinone", "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]",
-       25},
-      {"oxim", "[#6]=[N][OH]", 4},
-      {"C=O", "[#6]=,:[#8]", 2},
-      {"N=O", "[#7]=,:[#8]", 2},
-      {"P=O", "[#15]=,:[#8]", 2},
-      {"C=hetero", "[C]=[!#1;!#6]", 1},
-      {"C(=hetero)-hetero", "[C](=[!#1;!#6])[!#1;!#6]", 2},
-      {"aromatic C = exocyclic N", "[c]=!@[N]", -1},
-      {"methyl", "[CX4H3]", 1},
-      {"guanidine terminal=N", "[#7]C(=[NR0])[#7H0]", 1},
-      {"guanidine endocyclic=N", "[#7;R][#6;R]([N])=[#7;R]", 2},
-      {"aci-nitro", "[#6]=[N+]([O-])[OH]", -4}};
+      {"benzoquinone", "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]", 25, {6}, "[#6]1(~[#6]~[#6]~[#6](~[#6]~[#6]~1)~[N,S,O])~[N,S,O]"},
+      {"oxim", "[#6]=[N][OH]", 4, {6, 7, 8}, "[#6]~[#7]~[#8]"},
+      {"C=O", "[#6]=,:[#8]", 2, {6, 8}, "[#6]~[#8]"},
+      {"N=O", "[#7]=,:[#8]", 2, {7, 8}, "[#7]~[#8]"},
+      {"P=O", "[#15]=,:[#8]", 2, {15, 8}, "[#15]~[#8]"},
+      {"C=hetero", "[C]=[!#1;!#6]", 1, {6}, "[C]~[!#1;!#6]"},
+      {"C(=hetero)-hetero", "[C](=[!#1;!#6])[!#1;!#6]", 2, {6}, "[C](~[!#1;!#6])~[!#1;!#6]"},
+      {"aromatic C = exocyclic N", "[c]=!@[N]", -1, {6, 7}, "[c]~[N]"},
+      {"methyl", "[CX4H3]", 1, {6}, ""},
+      {"guanidine terminal=N", "[#7]C(=[NR0])[#7H0]", 1, {6, 7}, "[#7]~[#6]~[#7]"},
+      {"guanidine endocyclic=N", "[#7;R][#6;R]([N])=[#7;R]", 2, {6, 7}, "[#7]~[#6]~[#7]"},
+      {"aci-nitro", "[#6]=[N+]([O-])[OH]", -4, {6, 7, 8}, "[#6]~[#7]~[#8]"}};
   return substructureTerms;
+}
+
+std::vector<size_t> getRelevantSubstructTermIndices(
+    const ROMol &mol, const std::vector<SubstructTerm> &terms) {
+  // Prepare relevant SubstructTerms for this molecule by filtering in two
+  // stages:
+  //   1. Element check: skip terms requiring elements not in the molecule
+  //   2. Connectivity check: skip terms whose bond-order-agnostic pattern
+  //      doesn't match (since tautomerization doesn't create/destroy bonds)
+
+  std::unordered_set<int> presentElements;
+  for (const auto atom : mol.atoms()) {
+    presentElements.insert(atom->getAtomicNum());
+  }
+
+  std::vector<size_t> relevantIndices;
+  relevantIndices.reserve(terms.size());
+
+  SubstructMatchParameters params;
+  params.maxMatches = 1;
+
+  for (size_t i = 0; i < terms.size(); ++i) {
+    const auto &term = terms[i];
+
+    bool hasAllElements = true;
+    for (int elem : term.requiredElements) {
+      if (presentElements.find(elem) == presentElements.end()) {
+        hasAllElements = false;
+        break;
+      }
+    }
+    if (!hasAllElements) {
+      continue;
+    }
+    if (term.connectivityMatcher.getNumAtoms() > 0) {
+      auto matches = SubstructMatch(mol, term.connectivityMatcher, params);
+      if (matches.empty()) {
+        continue;
+      }
+    }
+    relevantIndices.push_back(i);
+  }
+
+  return relevantIndices;
+}
+
+int scoreSubstructsFiltered(const ROMol &mol,
+                            const std::vector<SubstructTerm> &terms,
+                            const std::vector<size_t> &relevantIndices) {
+  int score = 0;
+  SubstructMatchParameters params;
+  for (size_t idx : relevantIndices) {
+    const auto &term = terms[idx];
+    if (!term.matcher.getNumAtoms()) {
+      continue;
+    }
+    const auto nMatches = SubstructMatchCount(mol, term.matcher, params);
+    score += static_cast<int>(nMatches) * term.score;
+  }
+  return score;
 }
 
 int scoreSubstructs(const ROMol &mol,
@@ -656,6 +735,14 @@ ROMol *TautomerEnumerator::canonicalize(
         << "no tautomers found, returning input molecule" << std::endl;
     return new ROMol(mol);
   }
+  // When no custom scorer provided, use optimized scoring that pre-filters
+  // SubstructTerm patterns once for the input molecule rather than evaluating
+  // all 12 substructure matches per tautomer. This is safe because
+  // tautomerization only moves H and changes bond orders, never creates or
+  // destroys heavy-atom bonds.
+  if (!scoreFunc) {
+    scoreFunc = TautomerScoringFunctions::makeOptimizedScorer(mol);
+  }
   return pickCanonical(res, scoreFunc);
 }
 
@@ -668,6 +755,11 @@ void TautomerEnumerator::canonicalizeInPlace(
     BOOST_LOG(rdWarningLog)
         << "no tautomers found, molecule unchanged" << std::endl;
     return;
+  }
+  // When no custom scorer provided, use optimized scoring that pre-filters
+  // SubstructTerm patterns once for the input molecule.
+  if (!scoreFunc) {
+    scoreFunc = TautomerScoringFunctions::makeOptimizedScorer(mol);
   }
   std::unique_ptr<ROMol> tmp{pickCanonical(res, scoreFunc)};
 
