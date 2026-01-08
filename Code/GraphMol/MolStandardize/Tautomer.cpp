@@ -309,6 +309,12 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 
   TautomerEnumeratorResult res;
 
+  // Additional fast path: track state keys computed *before* the expensive
+  // sanitize steps (Kekulize/setAromaticity/...) so we can skip redundant
+  // candidates early.
+  std::unordered_set<std::string> preSanitizeStateKeys;
+  preSanitizeStateKeys.reserve(d_maxTautomers * 2);
+
   const std::vector<TautomerTransform> &transforms =
       tautparams->getTransforms();
 
@@ -500,6 +506,24 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
             // then running the specific sanitize steps we need.
             product->clearComputedProps(false);
             product->updatePropertyCache(false);
+
+            // Compute a state key *before* running the most expensive sanitize
+            // steps, and skip if we've already seen this state.
+            // This is intended to avoid repeated Kekulize/aromaticity work in
+            // cases where multiple transform matches converge to the same end
+            // state.
+            {
+              std::string preKey = getTautomerStateKey(*product);
+              if (!preSanitizeStateKeys.insert(preKey).second) {
+#ifdef VERBOSE_ENUMERATION
+                std::cout
+                    << "Previous tautomer state seen again (pre-sanitize)"
+                    << std::endl;
+#endif
+                continue;
+              }
+            }
+
             MolOps::Kekulize(*product);
             MolOps::setAromaticity(*product);
             MolOps::setConjugation(*product);
