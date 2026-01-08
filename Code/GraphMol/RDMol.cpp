@@ -196,6 +196,9 @@ Query<int,
                          RDKit::ConstRDMolAtom, RDKit::ConstRDMolBond>,
       true> *
 makeNewNonCompatQuery(Query<int, CompatType, true> *inner) {
+  if (inner == nullptr) {
+     return nullptr;
+  }
   static constexpr bool isAtom = std::is_same_v<CompatType, const RDKit::Atom *>;
   using NonCompatType = std::conditional_t<isAtom, RDKit::ConstRDMolAtom, RDKit::ConstRDMolBond>;
   using INNER_TYPE = CompatQuery<CompatType>;
