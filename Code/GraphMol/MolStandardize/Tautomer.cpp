@@ -429,7 +429,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           // Create a copy of in the input molecule so we can modify it
           // Use kekule form so bonds are explicitly single/double instead of
           // aromatic
-          RWMOL_SPTR product(new RWMol(*kmol));
+          RWMOL_SPTR product(new RWMol(*kmol, true));
           // Remove a hydrogen from the first matched atom and add one to the
           // last
           int firstIdx = match.front().second;
