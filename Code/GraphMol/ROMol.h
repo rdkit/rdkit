@@ -956,6 +956,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol {
   */
   void setStereoGroups(std::vector<StereoGroup> stereo_groups);
 
+  //! Manually mark stereo groups compatibility layer as modified (called by StereoGroup::setWriteId)
+  void markStereoGroupsAsCompatModified() const;
 
   //! returns a list with the names of our \c properties
   STR_VECT getPropList(bool includePrivate = true,

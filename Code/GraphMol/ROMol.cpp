@@ -338,6 +338,10 @@ void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
   dp_mol->setStereoGroups(std::move(newGroups));
 }
 
+void ROMol::markStereoGroupsAsCompatModified() const {
+  dp_mol->markStereoGroupsAsCompatModified();
+}
+
 STR_VECT ROMol::getPropList(bool includePrivate, bool includeComputed) const {
   STR_VECT res = dp_mol->getPropList(includePrivate, includeComputed);
   if (includePrivate && includeComputed) {

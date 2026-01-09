@@ -1622,6 +1622,8 @@ public:
     return stereoGroups.get();
   }
   void setStereoGroups(std::unique_ptr<StereoGroups> &&groups);
+  //! Manually tell rdmol that the compat data conformers may have been modified.
+  void markStereoGroupsAsCompatModified() const;
 
   std::vector<SubstanceGroup>& getSubstanceGroups() { return substanceGroups; }
   const std::vector<SubstanceGroup>& getSubstanceGroups() const { return substanceGroups; }

@@ -369,6 +369,7 @@ struct RDMol::CompatibilityData {
   std::vector<std::unique_ptr<INT_VECT>> bondStereoAtoms;
   // stereoGroups is initialized on demand in getStereoGroupsCompat
   std::atomic<std::vector<StereoGroup> *> stereoGroups = nullptr;
+  mutable std::atomic<CompatSyncStatus> stereoGroupsSyncStatus;
 
   ROMol::CONF_SPTR_LIST conformers;
   mutable std::atomic<CompatSyncStatus> conformerSyncStatus;
@@ -380,6 +381,7 @@ struct RDMol::CompatibilityData {
       : atoms(rdmol.getNumAtoms()),
         bonds(rdmol.getNumBonds()),
         bondStereoAtoms(rdmol.getNumBonds()),
+        stereoGroupsSyncStatus(CompatSyncStatus::inSync),
         conformerSyncStatus(CompatSyncStatus::inSync),
         ringInfoSyncStatus(CompatSyncStatus::inSync) {
     // For a self-owning compat mol, we need pointer compatibility.
@@ -831,22 +833,35 @@ const std::vector<StereoGroup> &RDMol::getStereoGroupsCompat() {
   // requires dereferencing the pointer, so would all be dependent reads.
   auto *stereoGroupsData =
       compat->stereoGroups.load(std::memory_order_relaxed);
-  if (stereoGroupsData != nullptr) {
+
+  // Check if we need to repopulate (either nullptr or empty after clear)
+  bool needsRepopulate = (stereoGroupsData == nullptr) ||
+                          (stereoGroups.get() != nullptr &&
+                           stereoGroupsData->size() != stereoGroups->getNumGroups());
+
+  if (!needsRepopulate) {
     return *stereoGroupsData;
   }
 
   std::lock_guard<std::mutex> lock_scope(compatibilityMutex);
   // Check again after locking
   stereoGroupsData = compat->stereoGroups.load(std::memory_order_relaxed);
-  if (stereoGroupsData != nullptr) {
+  needsRepopulate = (stereoGroupsData == nullptr) ||
+                    (stereoGroups.get() != nullptr &&
+                     stereoGroupsData->size() != stereoGroups->getNumGroups());
+
+  if (!needsRepopulate) {
     return *stereoGroupsData;
   }
 
-  // TODO: This approach of allocating a new std::vector<StereoGroup> after
-  // modification results in a varying address, whereas the previous interface
-  // had a persistent address across writes. Does this need to be preserved?
-  // See also setStereoGroups
-  stereoGroupsData = new std::vector<StereoGroup>();
+  // Create new vector if needed, otherwise reuse existing one
+  if (stereoGroupsData == nullptr) {
+    stereoGroupsData = new std::vector<StereoGroup>();
+    compat->stereoGroups.store(stereoGroupsData, std::memory_order_relaxed);
+  } else {
+    // Clear existing vector to repopulate it
+    stereoGroupsData->clear();
+  }
 
   if (stereoGroups.get() != nullptr) {
     const std::vector<StereoGroupType> &types = stereoGroups->stereoTypes;
@@ -875,13 +890,13 @@ const std::vector<StereoGroup> &RDMol::getStereoGroupsCompat() {
       stereoGroupsData->emplace_back(types[i], std::move(atomPtrs),
                                 std::move(bondPtrs),
                                 stereoGroups->readIds[i]);
+      // Set writeId BEFORE setOwningMol to avoid marking as modified during initialization
       stereoGroupsData->back().setWriteId(stereoGroups->writeIds[i]);
+      // Now set the owner so future setWriteId calls will mark as modified
+      stereoGroupsData->back().setOwningMol(compat->compatMol);
     }
   }
 
-  // std::memory_order_release ensures that the other data has been written to
-  // memory before the pointer is written.
-  compat->stereoGroups.store(stereoGroupsData, std::memory_order_release);
   return *stereoGroupsData;
 }
 
@@ -894,12 +909,9 @@ void RDMol::clearStereoGroupsCompat() {
     auto *compatStereoGroups =
         compat->stereoGroups.load(std::memory_order_relaxed);
     if (compatStereoGroups != nullptr) {
-      // TODO: This approach of allocating a new std::vector<StereoGroup> after
-      // modification results in a varying address, whereas the previous
-      // interface had a persistent address across writes. Does this need to be
-      // preserved? See also getStereoGroupsCompat
-      delete compatStereoGroups;
-      compat->stereoGroups.store(nullptr, std::memory_order_relaxed);
+      // Clear the vector contents but keep the vector object alive to preserve
+      // Python references. The vector will be repopulated on next access.
+      compatStereoGroups->clear();
     }
   }
 }
@@ -971,6 +983,19 @@ void RDMol::copyFromCompatibilityData(const CompatibilityData *source,
                                       getNumAtoms(), getNumBonds());
   }
 
+  // Sync stereo groups from compat layer if they were modified
+  if (source->stereoGroupsSyncStatus.load(std::memory_order_acquire) ==
+      CompatSyncStatus::lastUpdatedCompat) {
+    auto *compatStereoGroups = source->stereoGroups.load(std::memory_order_acquire);
+    if (compatStereoGroups != nullptr && stereoGroups != nullptr &&
+        compatStereoGroups->size() == stereoGroups->getNumGroups()) {
+      // Sync writeIds from compat layer back to flat structure
+      for (size_t i = 0; i < compatStereoGroups->size(); ++i) {
+        stereoGroups->writeIds[i] = (*compatStereoGroups)[i].getWriteId();
+      }
+    }
+  }
+
   delete compatibilityData.load(std::memory_order_relaxed);
   compatibilityData.store(nullptr, std::memory_order_relaxed);
 }
@@ -1019,6 +1044,23 @@ RDMol &RDMol::operator=(const RDMol &other) {
 
   for (const auto &[key, value] : other.monomerInfo) {
     monomerInfo[key] = std::unique_ptr<AtomMonomerInfo>(value->copy());
+  }
+
+  // Sync stereo groups from compat layer before copying if they were modified
+  if (other.hasCompatibilityData()) {
+    auto *otherCompat = other.getCompatibilityDataIfPresent();
+    if (otherCompat != nullptr &&
+        otherCompat->stereoGroupsSyncStatus.load(std::memory_order_acquire) ==
+            CompatSyncStatus::lastUpdatedCompat) {
+      auto *compatStereoGroups = otherCompat->stereoGroups.load(std::memory_order_acquire);
+      if (compatStereoGroups != nullptr && other.stereoGroups != nullptr &&
+          compatStereoGroups->size() == other.stereoGroups->getNumGroups()) {
+        // Sync writeIds from compat layer to flat structure before copying
+        for (size_t i = 0; i < compatStereoGroups->size(); ++i) {
+          const_cast<RDMol&>(other).stereoGroups->writeIds[i] = (*compatStereoGroups)[i].getWriteId();
+        }
+      }
+    }
   }
 
   if (other.stereoGroups != nullptr) {
@@ -1122,6 +1164,23 @@ void RDMol::initFromOther(const RDMol &other, bool quickCopy, int confId, ROMol 
     bondQueries.reserve(other.bondQueries.size());
     for (auto &&query : other.bondQueries) {
       bondQueries.emplace_back((query != nullptr) ? query->copy() : nullptr);
+    }
+  }
+
+  // Sync stereo groups from compat layer before copying if they were modified
+  if (other.hasCompatibilityData()) {
+    auto *otherCompat = other.getCompatibilityDataIfPresent();
+    if (otherCompat != nullptr &&
+        otherCompat->stereoGroupsSyncStatus.load(std::memory_order_acquire) ==
+            CompatSyncStatus::lastUpdatedCompat) {
+      auto *compatStereoGroups = otherCompat->stereoGroups.load(std::memory_order_acquire);
+      if (compatStereoGroups != nullptr && other.stereoGroups != nullptr &&
+          compatStereoGroups->size() == other.stereoGroups->getNumGroups()) {
+        // Sync writeIds from compat layer to flat structure before copying
+        for (size_t i = 0; i < compatStereoGroups->size(); ++i) {
+          const_cast<RDMol&>(other).stereoGroups->writeIds[i] = (*compatStereoGroups)[i].getWriteId();
+        }
+      }
     }
   }
 
@@ -2329,6 +2388,11 @@ void RDMol::clearComputedProps(bool includeRings) {
   // the SSSR information:
   if (includeRings) {
     ringInfo.reset();
+    // Mark the compatibility layer's ring info as out of sync so it gets updated
+    if (hasCompatibilityData()) {
+      auto *compat = getCompatibilityDataIfPresent();
+      compat->ringInfoSyncStatus.store(CompatSyncStatus::lastUpdatedRDMol, std::memory_order_release);
+    }
   }
 
   // Clear "computed" properties
@@ -3377,7 +3441,20 @@ void RDMol::setStereoGroups(std::unique_ptr<StereoGroups> &&groups) {
   clearStereoGroupsCompat();
 
   stereoGroups = std::move(groups);
+
+  // Repopulate the compatibility layer immediately to keep existing Python references valid
+  // The vector object is kept alive by clearStereoGroupsCompat, we just need to refill it
+  if (hasCompatibilityData()) {
+    getStereoGroupsCompat();
+  }
 }
+
+void RDMol::markStereoGroupsAsCompatModified() const {
+ if (const CompatibilityData* compatData = getCompatibilityDataIfPresent(); compatData != nullptr) {
+  compatData->stereoGroupsSyncStatus = CompatSyncStatus::lastUpdatedCompat;
+ }
+}
+
 
 void RDMol::setAtomQuery(atomindex_t atomIndex,
                          std::unique_ptr<QUERYATOM_QUERY> query) {
@@ -3639,7 +3716,6 @@ void RDMol::markConformersAsCompatModified() const {
     compatData->conformerSyncStatus = CompatSyncStatus::lastUpdatedCompat;
   }
 }
-
 
 void RDMol::removeConformer(uint32_t id) {
   if (int32_t(id) < 0) {
