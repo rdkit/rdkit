@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019-2021 Greg Landrum
+//  Copyright (C) 2019-2025 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -802,4 +802,145 @@ TEST_CASE("github #7533: IndexError while computing fingerprint") {
       MorganFingerprints::getFingerprint(*mol, 2));
   REQUIRE(fp);
   CHECK(fp->getLength() == std::numeric_limits<unsigned>::max());
+}
+
+TEST_CASE("toJSON") {
+  auto m1 = "C[C@H](F)Oc1ccc(CCNC(=O)c2ccccc2C(=O)NCCc2ccc(OC)cc2)cc1"_smiles;
+  REQUIRE(m1);
+  SECTION("morgan") {
+    unsigned radius = 2;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(radius));
+    REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"MorganArguments\"") != std::string::npos);
+
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
+    CHECK(*fp1 == *fp2);
+  }
+  SECTION("RDKit") {
+    unsigned int minPath = 1;
+    unsigned int maxPath = 3;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>(minPath, maxPath));
+    REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
+
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"RDKitFPArguments\"") != std::string::npos);
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
+    CHECK(*fp1 == *fp2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
+  }
+  SECTION("topological torsion") {
+    bool includeChirality = true;
+    std::uint32_t torsionAtomCount = 5;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
+            includeChirality, torsionAtomCount));
+    REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"TopologicalTorsionArguments\"") !=
+          std::string::npos);
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
+  }
+  SECTION("atom pair") {
+    unsigned int minDistance = 2;
+    unsigned int maxDistance = 6;
+    bool includeChirality = true;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        AtomPair::getAtomPairGenerator<std::uint64_t>(minDistance, maxDistance,
+                                                      includeChirality));
+    REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"AtomPairArguments\"") != std::string::npos);
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
+  }
+  SECTION("feature morgan") {
+    MorganFingerprint::MorganArguments args;
+    args.d_radius = 2;
+    MorganFingerprint::MorganFeatureAtomInvGenerator atomInvGen;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(args,
+                                                             &atomInvGen));
+    REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"MorganFeatureAtomInvGenerator\"") !=
+          std::string::npos);
+    // NO patterns there when we use the defaults:
+    CHECK(jsonStr.find("\"patternSMARTS\"") == std::string::npos);
+
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
+    CHECK(*fp1 == *fp2);
+  }
+  SECTION("custom feature morgan") {
+    // dumb feature definitions
+    auto p1 = "OC"_smarts;
+    REQUIRE(p1);
+    auto p2 = "NC"_smarts;
+    REQUIRE(p2);
+    auto p3 = "FC"_smarts;
+    REQUIRE(p3);
+    std::vector<const ROMol *> patterns = {p1.get(), p2.get(), p3.get()};
+    MorganFingerprint::MorganArguments args;
+    args.d_radius = 2;
+    MorganFingerprint::MorganFeatureAtomInvGenerator atomInvGen(&patterns);
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(args,
+                                                             &atomInvGen));
+    REQUIRE(fpGenerator);
+    std::unique_ptr<ExplicitBitVect> fp1{fpGenerator->getFingerprint(*m1)};
+    REQUIRE(fp1);
+    auto jsonStr = generatorToJSON(*fpGenerator);
+    CHECK(!jsonStr.empty());
+    CHECK(jsonStr.find("\"type\":\"MorganFeatureAtomInvGenerator\"") !=
+          std::string::npos);
+    CHECK(jsonStr.find("\"patternSMARTS\"") != std::string::npos);
+
+    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    REQUIRE(fpGenerator2);
+    std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
+    REQUIRE(fp2);
+    auto jsonStr2 = generatorToJSON(*fpGenerator2);
+    CHECK(jsonStr == jsonStr2);
+    CHECK(*fp1 == *fp2);
+  }
 }

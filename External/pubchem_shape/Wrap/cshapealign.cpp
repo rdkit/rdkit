@@ -96,6 +96,7 @@ python::tuple scoreShape(const ShapeInput &shape1, ShapeInput &shape2,
   return python::make_tuple(nbr_st, nbr_ct);
 }
 void transformConformer(const python::list &pyFinalTrans,
+                        const python::list &pyFinalRot,
                         const python::list &pyMatrix, ShapeInput probeShape,
                         RDKit::Conformer &probeConf) {
   std::vector<float> matrix;
@@ -112,7 +113,14 @@ void transformConformer(const python::list &pyFinalTrans,
         "The final translation vector must have 3 values.  It had " +
         std::to_string(finalTrans.size()) + ".");
   }
-  TransformConformer(finalTrans, matrix, probeShape, probeConf);
+  std::vector<double> finalRot;
+  pythonObjectToVect<double>(pyFinalRot, finalRot);
+  if (finalRot.size() != 9) {
+    throw_value_error("The final rotation vector must have 9 values.  It had " +
+                      std::to_string(finalRot.size()) + ".");
+  }
+
+  TransformConformer(finalTrans, finalRot, matrix, probeShape, probeConf);
 }
 ShapeInput *prepConf(const RDKit::ROMol &mol, int confId,
                      const python::object &py_opts) {
@@ -170,6 +178,14 @@ void set_shapeShift(ShapeInput &shp, const python::object &s) {
 python::list get_shapeShift(const ShapeInput &shp) {
   python::list py_list;
   for (const auto &val : shp.shift) {
+    py_list.append(val);
+  }
+  return py_list;
+}
+
+python::list get_inertialRot(const ShapeInput &shp) {
+  python::list py_list;
+  for (const auto &val : shp.inertialRot) {
     py_list.append(val);
   }
   return py_list;
@@ -428,6 +444,9 @@ Returns
                      &ShapeInput::volumeAtomIndexVector)
       .add_property("shift", &helpers::get_shapeShift, &helpers::set_shapeShift,
                     "Translation of centre of shape coordinates to origin.")
+      .add_property(
+          "inertialRot", &helpers::get_inertialRot,
+          "Rotation applied to put the shape into its principal axes frame of reference.")
       .def_readwrite("sov", &ShapeInput::sov)
       .def_readwrite("sof", &ShapeInput::sof);
 

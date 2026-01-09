@@ -1720,3 +1720,15 @@ TEST_CASE("Test CXSmilesFields option parsing from JSON") {
     CHECK(restoreBondDirs == RestoreBondDirOptionClear);
   }
 }
+
+TEST_CASE("atom maps and dummy labels in CXSMILES") {
+  SECTION("basics") {
+    auto m = "CC[*:1]"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::molAtomMapNumber));
+    CHECK(MolToCXSmiles(*m) == "CC[*:1]");
+    m->getAtomWithIdx(2)->setProp(common_properties::dummyLabel, "R1");
+    CHECK(MolToCXSmiles(*m) == "CC[*:1] |atomProp:2.dummyLabel.R1|");
+  }
+}

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,6 +19,11 @@
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/RDThreads.h>
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -48,6 +53,37 @@ std::string FingerprintArguments::commonArgumentsString() const {
          " fpSize=" + std::to_string(d_fpSize) +
          " bitsPerFeature=" + std::to_string(d_numBitsPerFeature) +
          " includeChirality=" + std::to_string(df_includeChirality);
+}
+
+void FingerprintArguments::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("countSimulation", df_countSimulation);
+  pt.put("fpSize", d_fpSize);
+  pt.put("numBitsPerFeature", d_numBitsPerFeature);
+  pt.put("includeChirality", df_includeChirality);
+
+  boost::property_tree::ptree countBoundsNode;
+  for (const auto &bound : d_countBounds) {
+    boost::property_tree::ptree boundNode;
+    boundNode.put("", bound);
+    countBoundsNode.push_back(std::make_pair("", boundNode));
+  }
+  pt.add_child("countBounds", countBoundsNode);
+}
+
+void FingerprintArguments::fromJSON(const boost::property_tree::ptree &pt) {
+  df_countSimulation = pt.get<bool>("countSimulation", df_countSimulation);
+  d_fpSize = pt.get<std::uint32_t>("fpSize", d_fpSize);
+  d_numBitsPerFeature =
+      pt.get<std::uint32_t>("numBitsPerFeature", d_numBitsPerFeature);
+  df_includeChirality = pt.get<bool>("includeChirality", df_includeChirality);
+
+  d_countBounds.clear();
+  auto countBoundsNode = pt.get_child_optional("countBounds");
+  if (countBoundsNode) {
+    for (const auto &boundNode : *countBoundsNode) {
+      d_countBounds.push_back(boundNode.second.get_value<std::uint32_t>());
+    }
+  }
 }
 
 template <typename OutputType>
@@ -136,6 +172,154 @@ std::string FingerprintGenerator<OutputType>::infoString() const {
               : "No bond invariants generator");
 }
 
+template RDKIT_FINGERPRINTS_EXPORT void FingerprintGenerator<
+    std::uint32_t>::toJSON(boost::property_tree::ptree &pt) const;
+
+template RDKIT_FINGERPRINTS_EXPORT void FingerprintGenerator<
+    std::uint64_t>::toJSON(boost::property_tree::ptree &pt) const;
+
+template <typename OutputType>
+void FingerprintGenerator<OutputType>::toJSON(
+    boost::property_tree::ptree &pt) const {
+  pt.put("name", "FingerprintGenerator");
+  boost::property_tree::ptree argsNode;
+  dp_fingerprintArguments->toJSON(argsNode);
+  pt.add_child("fingerprintArguments", argsNode);
+  boost::property_tree::ptree envGenNode;
+  dp_atomEnvironmentGenerator->toJSON(envGenNode);
+  pt.add_child("atomEnvironmentGenerator", envGenNode);
+  if (dp_atomInvariantsGenerator) {
+    boost::property_tree::ptree atomInvGenNode;
+    dp_atomInvariantsGenerator->toJSON(atomInvGenNode);
+    pt.add_child("atomInvariantsGenerator", atomInvGenNode);
+  }
+  if (dp_bondInvariantsGenerator) {
+    boost::property_tree::ptree bondInvGenNode;
+    dp_bondInvariantsGenerator->toJSON(bondInvGenNode);
+    pt.add_child("bondInvariantsGenerator", bondInvGenNode);
+  }
+}
+
+template void FingerprintGenerator<std::uint32_t>::fromJSON(
+    const boost::property_tree::ptree &pt);
+template void FingerprintGenerator<std::uint64_t>::fromJSON(
+    const boost::property_tree::ptree &pt);
+template <typename OutputType>
+void FingerprintGenerator<OutputType>::fromJSON(
+    const boost::property_tree::ptree &) {}
+
+template RDKIT_FINGERPRINTS_EXPORT std::string generatorToJSON(
+    const FingerprintGenerator<std::uint32_t> &generator);
+template RDKIT_FINGERPRINTS_EXPORT std::string generatorToJSON(
+    const FingerprintGenerator<std::uint64_t> &generator);
+
+template <typename OutputType>
+std::string generatorToJSON(const FingerprintGenerator<OutputType> &generator) {
+  boost::property_tree::ptree pt;
+  generator.toJSON(pt);
+  std::ostringstream buf;
+  boost::property_tree::write_json(buf, pt, false);
+  auto str = buf.str();
+  boost::algorithm::trim(str);
+  return str;
+}
+
+std::unique_ptr<FingerprintGenerator<std::uint64_t>> generatorFromJSON(
+    const std::string &json) {
+  std::istringstream ss;
+  ss.str(json);
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_json(ss, pt);
+
+  std::unique_ptr<AtomEnvironmentGenerator<std::uint64_t>> envGen;
+  std::unique_ptr<FingerprintArguments> fpArgs;
+  std::unique_ptr<AtomInvariantsGenerator> atomInvGen;
+  std::unique_ptr<BondInvariantsGenerator> bondInvGen;
+
+  auto fpArgsNode = pt.get_child_optional("fingerprintArguments");
+  if (fpArgsNode) {
+    auto typ = fpArgsNode->get_optional<std::string>("type");
+    if (!typ) {
+      throw ValueErrorException(
+          "FingerprintArguments type not specified in JSON");
+    }
+    if (*typ == "MorganArguments") {
+      fpArgs.reset(new MorganFingerprint::MorganArguments());
+    } else if (*typ == "RDKitFPArguments") {
+      fpArgs.reset(new RDKitFP::RDKitFPArguments());
+    } else if (*typ == "AtomPairArguments") {
+      fpArgs.reset(new AtomPair::AtomPairArguments());
+    } else if (*typ == "TopologicalTorsionArguments") {
+      fpArgs.reset(new TopologicalTorsion::TopologicalTorsionArguments());
+    } else {
+      throw ValueErrorException("Unknown FingerprintArguments type: " + *typ);
+    }
+    fpArgs->fromJSON(*fpArgsNode);
+  }
+  auto envGenNode = pt.get_child_optional("atomEnvironmentGenerator");
+  if (envGenNode) {
+    auto typ = envGenNode->get_optional<std::string>("type");
+    if (!typ) {
+      throw ValueErrorException(
+          "AtomEnvironmentGenerator type not specified in JSON");
+    }
+    if (*typ == "MorganEnvGenerator") {
+      envGen.reset(new MorganFingerprint::MorganEnvGenerator<std::uint64_t>());
+    } else if (*typ == "RDKitFPEnvGenerator") {
+      envGen.reset(new RDKitFP::RDKitFPEnvGenerator<std::uint64_t>());
+    } else if (*typ == "AtomPairEnvGenerator") {
+      envGen.reset(new AtomPair::AtomPairEnvGenerator<std::uint64_t>());
+    } else if (*typ == "TopologicalTorsionEnvGenerator") {
+      envGen.reset(new TopologicalTorsion::TopologicalTorsionEnvGenerator<
+                   std::uint64_t>());
+    } else {
+      throw ValueErrorException("Unknown AtomEnvGenerator type: " + *typ);
+    }
+    envGen->fromJSON(*envGenNode);
+  }
+  auto atomInvGenNode = pt.get_child_optional("atomInvariantsGenerator");
+  if (atomInvGenNode) {
+    auto typ = atomInvGenNode->get_optional<std::string>("type");
+    if (!typ) {
+      throw ValueErrorException(
+          "AtomInvariantsGenerator type not specified in JSON");
+    }
+    if (*typ == "MorganAtomInvGenerator") {
+      atomInvGen.reset(new MorganFingerprint::MorganAtomInvGenerator());
+    } else if (*typ == "MorganFeatureAtomInvGenerator") {
+      atomInvGen.reset(new MorganFingerprint::MorganFeatureAtomInvGenerator());
+    } else if (*typ == "RDKitFPAtomInvGenerator") {
+      atomInvGen.reset(new RDKitFP::RDKitFPAtomInvGenerator());
+    } else if (*typ == "AtomPairAtomInvGenerator") {
+      atomInvGen.reset(new AtomPair::AtomPairAtomInvGenerator());
+    } else {
+      throw ValueErrorException("Unknown AtomInvariantsGenerator type: " +
+                                *typ);
+    }
+    atomInvGen->fromJSON(*atomInvGenNode);
+  }
+  auto bondInvGenNode = pt.get_child_optional("bondInvariantsGenerator");
+  if (bondInvGenNode) {
+    auto typ = bondInvGenNode->get_optional<std::string>("type");
+    if (!typ) {
+      throw ValueErrorException(
+          "BondInvariantsGenerator type not specified in JSON");
+    }
+    if (*typ == "MorganBondInvGenerator") {
+      bondInvGen.reset(new MorganFingerprint::MorganBondInvGenerator());
+    } else {
+      throw ValueErrorException("Unknown BondInvariantsGenerator type: " +
+                                *typ);
+    }
+    bondInvGen->fromJSON(*bondInvGenNode);
+  }
+
+  return std::make_unique<FingerprintGenerator<std::uint64_t>>(
+      envGen.release(), fpArgs.release(),
+      atomInvGen ? atomInvGen.release() : nullptr,
+      bondInvGen ? bondInvGen.release() : nullptr);
+}
+
 template <typename OutputType>
 std::unique_ptr<SparseIntVect<OutputType>>
 FingerprintGenerator<OutputType>::getFingerprintHelper(
@@ -175,8 +359,8 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
     bondInvariants.reset(dp_bondInvariantsGenerator->getBondInvariants(mol));
   }
 
-  // create all atom environments that will generate the bit-ids that will make
-  // up the fingerprint
+  // create all atom environments that will generate the bit-ids that will
+  // make up the fingerprint
   auto atomEnvironments = dp_atomEnvironmentGenerator->getEnvironments(
       *lmol, dp_fingerprintArguments, args.fromAtoms, args.ignoreAtoms,
       args.confId, args.additionalOutput, atomInvariants.get(),
@@ -213,8 +397,8 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
     randomSource.reset(new source_type(*generator, *dist));
   }
 
-  // iterate over every atom environment and generate bit-ids that will make up
-  // the fingerprint
+  // iterate over every atom environment and generate bit-ids that will make
+  // up the fingerprint
   for (const auto env : atomEnvironments) {
     OutputType seed = env->getBitId(dp_fingerprintArguments,
                                     atomInvariants.get(), bondInvariants.get(),
@@ -326,7 +510,8 @@ FingerprintGenerator<OutputType>::getSparseCountFingerprint(
 // todo getSparseFingerprint does not completely produce the same output as
 // getSparseCountFingerprint. Count simulation and potential 64 bit outputs
 // makes size limiting necessary for getSparseFingerprint. This can be
-// changed if there is another way to avoid the size limitation of SparseBitVect
+// changed if there is another way to avoid the size limitation of
+// SparseBitVect
 template <typename OutputType>
 std::unique_ptr<SparseBitVect>
 FingerprintGenerator<OutputType>::getSparseFingerprint(
@@ -359,9 +544,9 @@ FingerprintGenerator<OutputType>::getSparseFingerprint(
     if (dp_fingerprintArguments->df_countSimulation) {
       for (unsigned int i = 0;
            i < dp_fingerprintArguments->d_countBounds.size(); ++i) {
-        // for every bound in the d_countBounds in dp_fingerprintArguments, set
-        // a bit if the occurrence count is equal or higher than the bound for
-        // that bit
+        // for every bound in the d_countBounds in dp_fingerprintArguments,
+        // set a bit if the occurrence count is equal or higher than the bound
+        // for that bit
         const auto &bounds_count = dp_fingerprintArguments->d_countBounds;
         if (val.second >= static_cast<int>(bounds_count[i])) {
           OutputType nBitId = val.first * bounds_count.size() + i;
