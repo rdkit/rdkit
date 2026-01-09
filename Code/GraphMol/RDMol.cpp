@@ -839,8 +839,7 @@ const std::vector<StereoGroup> &RDMol::getStereoGroupsCompat() {
 
   // Check if we need to repopulate (either nullptr or empty after clear)
   bool needsRepopulate = (stereoGroupsData == nullptr) ||
-                          (stereoGroups.get() != nullptr &&
-                           stereoGroupsData->size() != stereoGroups->getNumGroups());
+                          (stereoGroupsData->size() == 0);
 
   if (!needsRepopulate) {
     return *stereoGroupsData;
@@ -850,8 +849,7 @@ const std::vector<StereoGroup> &RDMol::getStereoGroupsCompat() {
   // Check again after locking
   stereoGroupsData = compat->stereoGroups.load(std::memory_order_relaxed);
   needsRepopulate = (stereoGroupsData == nullptr) ||
-                    (stereoGroups.get() != nullptr &&
-                     stereoGroupsData->size() != stereoGroups->getNumGroups());
+                    (stereoGroupsData->size() == 0);
 
   if (!needsRepopulate) {
     return *stereoGroupsData;
