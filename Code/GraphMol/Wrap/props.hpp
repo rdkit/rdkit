@@ -112,7 +112,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         dict[key] = v;
         found = true;
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions including overflow during Python conversion
     if (found) continue;
 
     try {
@@ -121,7 +121,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         dict[key] = v;
         found = true;
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions including overflow during Python conversion
     if (found) continue;
 
     try {
@@ -130,7 +130,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         dict[key] = v;
         found = true;
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions
     if (found) continue;
 
     try {
@@ -139,7 +139,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         dict[key] = v;
         found = true;
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions
     if (found) continue;
 
     try {
@@ -148,7 +148,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         dict[key] = v;
         found = true;
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions
     if (found) continue;
 
     // Try vectors before string to avoid implicit vector->string conversion
@@ -159,7 +159,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         dict[key] = v;
         found = true;
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions
     if (found) continue;
 
     try {
@@ -168,7 +168,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         dict[key] = v;
         found = true;
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions
     if (found) continue;
 
     try {
@@ -177,7 +177,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         dict[key] = v;
         found = true;
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions
     if (found) continue;
 
     try {
@@ -186,7 +186,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         dict[key] = v;
         found = true;
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions
     if (found) continue;
 
     try {
@@ -195,7 +195,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         dict[key] = v;
         found = true;
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions
     if (found) continue;
 
     // Try string last to avoid catching vector->string conversions
@@ -222,7 +222,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
           found = true;
         }
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions
   }
 
   return dict;
@@ -281,7 +281,7 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
       if (obj->getPropIfPresent(key, v)) {
         return rawPy(v);
       }
-    } catch (std::bad_any_cast &) {}
+    } catch (...) {}  // Catch all exceptions
 
     // Property not found
     PyErr_SetString(PyExc_KeyError, key.c_str());
@@ -295,35 +295,35 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
     }
-  } catch (std::bad_any_cast &) {}
+  } catch (...) {}  // Catch all exceptions
 
   try {
     int v;
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
     }
-  } catch (std::bad_any_cast &) {}
+  } catch (...) {}  // Catch all exceptions
 
   try {
     double v;
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
     }
-  } catch (std::bad_any_cast &) {}
+  } catch (...) {}  // Catch all exceptions
 
   try {
     bool v;
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
     }
-  } catch (std::bad_any_cast &) {}
+  } catch (...) {}  // Catch all exceptions
 
   try {
     float v;
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
     }
-  } catch (std::bad_any_cast &) {}
+  } catch (...) {}  // Catch all exceptions
 
   // Try vectors before string to avoid implicit vector->string conversion
   // Try unsigned vectors before signed to avoid overflow in getPropIfPresent
@@ -332,35 +332,35 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
     }
-  } catch (std::bad_any_cast &) {}
+  } catch (...) {}  // Catch all exceptions
 
   try {
     std::vector<double> v;
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
     }
-  } catch (std::bad_any_cast &) {}
+  } catch (...) {}  // Catch all exceptions
 
   try {
     std::vector<float> v;
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
     }
-  } catch (std::bad_any_cast &) {}
+  } catch (...) {}  // Catch all exceptions
 
   try {
     std::vector<int> v;
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
     }
-  } catch (std::bad_any_cast &) {}
+  } catch (...) {}  // Catch all exceptions
 
   try {
     std::vector<std::string> v;
     if (obj->getPropIfPresent(key, v)) {
       return rawPy(v);
     }
-  } catch (std::bad_any_cast &) {}
+  } catch (...) {}  // Catch all exceptions
 
   // Try string last with autoConvert for numeric strings
   try {
@@ -378,7 +378,7 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
       }
       return rawPy(v);
     }
-  } catch (std::bad_any_cast &) {}
+  } catch (...) {}  // Catch all exceptions
 
   // Property not found
   PyErr_SetString(PyExc_KeyError, key.c_str());
