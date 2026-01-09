@@ -84,6 +84,101 @@ std::string getTautomerStateKey(const ROMol &mol) {
 
   return key;
 }
+
+// Compute what the state key WOULD be after applying a tautomer transform,
+// without actually modifying the molecule. This allows us to check for
+// duplicates before making an expensive molecule copy.
+//
+// Returns the perturbed key. The baseKey should be from the source molecule
+// (kmol). The match, transform describe what would change.
+std::string getPerturbedStateKey(const std::string &baseKey, const ROMol &mol,
+                                 const MatchVectType &match,
+                                 const TautomerTransform &transform) {
+  // Key format: [H-charge-arom per atom] | [bondtype-stereo per bond]
+  // Each atom takes 3 chars, separator is 1 char, each bond takes 2 chars
+  const unsigned int numAtoms = mol.getNumAtoms();
+  const size_t atomSectionEnd = numAtoms * 3;  // position of '|'
+
+  std::string key = baseKey;
+
+  // Modify H counts for first and last atoms
+  int firstIdx = match.front().second;
+  int lastIdx = match.back().second;
+
+  // First atom: H count decreases by 1 (position = atomIdx * 3)
+  size_t firstHPos = static_cast<size_t>(firstIdx) * 3;
+  if (key[firstHPos] > '0') {
+    key[firstHPos] = static_cast<char>(key[firstHPos] - 1);
+  }
+
+  // Last atom: H count increases by 1
+  size_t lastHPos = static_cast<size_t>(lastIdx) * 3;
+  if (key[lastHPos] < '9') {
+    key[lastHPos] = static_cast<char>(key[lastHPos] + 1);
+  }
+
+  // Modify formal charges if specified
+  if (!transform.Charges.empty()) {
+    unsigned int ci = 0;
+    for (const auto &pair : match) {
+      int chargeAdj = transform.Charges[ci++];
+      if (chargeAdj != 0) {
+        size_t chargePos = static_cast<size_t>(pair.second) * 3 + 1;
+        int newCharge = (key[chargePos] - '4') + chargeAdj;
+        key[chargePos] =
+            static_cast<char>('4' + std::max(-4, std::min(4, newCharge)));
+      }
+    }
+  }
+
+  // Modify bond orders
+  for (size_t i = 0; i < transform.Mol->getNumBonds(); ++i) {
+    const auto tbond = transform.Mol->getBondWithIdx(i);
+    const Bond *bond = mol.getBondBetweenAtoms(
+        match[tbond->getBeginAtomIdx()].second,
+        match[tbond->getEndAtomIdx()].second);
+    if (!bond) {
+      continue;
+    }
+
+    // Bond position in key: after atom section + separator, 2 chars per bond
+    size_t bondPos = atomSectionEnd + 1 + bond->getIdx() * 2;
+
+    if (!transform.BondTypes.empty()) {
+      // Explicit bond type from transform
+      Bond::BondType newType = transform.BondTypes[i];
+      char c;
+      switch (newType) {
+        case Bond::SINGLE:
+          c = '1';
+          break;
+        case Bond::DOUBLE:
+          c = '2';
+          break;
+        case Bond::TRIPLE:
+          c = '3';
+          break;
+        case Bond::AROMATIC:
+          c = '4';
+          break;
+        default:
+          c = '0';
+          break;
+      }
+      key[bondPos] = c;
+    } else {
+      // Flip SINGLE <-> DOUBLE
+      if (key[bondPos] == '1') {
+        key[bondPos] = '2';
+      } else if (key[bondPos] == '2') {
+        key[bondPos] = '1';
+      }
+    }
+  }
+
+  return key;
+}
+
 }  // namespace
 
 namespace TautomerScoringFunctions {
@@ -490,6 +585,10 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 
         std::cout << "Matched: " << name << std::endl;
 #endif
+        // Compute the base state key from kmol once, before the match loop.
+        // This will be used to compute perturbed keys for each match.
+        std::string kmolKey = getTautomerStateKey(*kmol);
+
         // loop over transform matches
         for (const auto &match : matches) {
           if (nTransforms >= d_maxTransforms) {
@@ -505,9 +604,21 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           if (bailOut) {
             break;
           }
-          // Create a copy of in the input molecule so we can modify it
-          // Use kekule form so bonds are explicitly single/double instead of
-          // aromatic
+
+          // Compute what the state key WOULD be after applying this transform,
+          // WITHOUT copying the molecule. This allows us to skip duplicate
+          // tautomers before the expensive molecule copy.
+          std::string perturbedKey =
+              getPerturbedStateKey(kmolKey, *kmol, match, transform);
+          if (!preSanitizeStateKeys.insert(perturbedKey).second) {
+#ifdef VERBOSE_ENUMERATION
+            std::cout << "Previous tautomer state seen again (pre-copy check)"
+                      << std::endl;
+#endif
+            continue;
+          }
+
+          // This is a potentially new tautomer - now create the copy
           RWMOL_SPTR product(new RWMol(*kmol, true));
           // Remove a hydrogen from the first matched atom and add one to the
           // last
@@ -524,6 +635,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           // now we have set the count explicitly
           first->setNoImplicit(true);
           last->setNoImplicit(true);
+
           // Adjust bond orders
           unsigned int bi = 0;
           for (size_t i = 0; i < transform.Mol->getNumBonds(); ++i) {
@@ -586,22 +698,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
             product->clearComputedProps(false);
             product->updatePropertyCache(false);
 
-            // Compute a state key *before* running the most expensive sanitize
-            // steps, and skip if we've already seen this state.
-            // This is intended to avoid repeated Kekulize/aromaticity work in
-            // cases where multiple transform matches converge to the same end
-            // state.
-            {
-              std::string preKey = getTautomerStateKey(*product);
-              if (!preSanitizeStateKeys.insert(preKey).second) {
-#ifdef VERBOSE_ENUMERATION
-                std::cout
-                    << "Previous tautomer state seen again (pre-sanitize)"
-                    << std::endl;
-#endif
-                continue;
-              }
-            }
+            // Note: We already checked for duplicates using the perturbed key
+            // BEFORE copying the molecule. No need to check again here.
 
             MolOps::Kekulize(*product);
             MolOps::setAromaticity(*product);
