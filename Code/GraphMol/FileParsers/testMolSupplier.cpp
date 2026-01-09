@@ -845,13 +845,11 @@ TEST_CASE("testSDWriter") {
   // now read in the file we just finished writing
 
   SDMolSupplier reader(ofile);
-  int i = 0;
   while (!reader.atEnd()) {
     ROMol *mol = reader.next();
     CHECK(mol->hasProp(common_properties::_Name));
 
     delete mol;
-    i++;
   }
 }
 
@@ -961,7 +959,6 @@ TEST_CASE("testStereoRound") {
       rdbase +
       "/Code/GraphMol/FileParsers/test_data/cdk2_stereo_molsupplier.sdf";
   auto *writer = new SDWriter(ofile);
-  int count = 0;
 
   while (!smiSup->atEnd()) {
     ROMol *mol = smiSup->next();
@@ -977,7 +974,6 @@ TEST_CASE("testStereoRound") {
 
     RDDepict::compute2DCoords(*mol);
     writer->write(*mol);
-    count++;
     delete mol;
     delete nmol;
   }
@@ -989,7 +985,6 @@ TEST_CASE("testStereoRound") {
   SDMolSupplier *reader;
   REQUIRE_NOTHROW(reader = new SDMolSupplier(ofile));
   REQUIRE(reader);
-  count = 0;
 
   while (!reader->atEnd()) {
     ROMol *mol = reader->next();
@@ -999,7 +994,6 @@ TEST_CASE("testStereoRound") {
     mol->getProp(common_properties::_Name, mname);
     CHECK(nameSmi[mname] == smiles);
     delete mol;
-    count++;
   }
   delete reader;
 }
@@ -2692,4 +2686,22 @@ $$$$)CTAB";
     CHECK(mol->getNumAtoms() == 5);  // only heavy atoms are kept
     CHECK(getSubstanceGroups(*mol).size() == 1);
   }
+}
+
+TEST_CASE("Read SD properties till last '>'") {
+  auto m = v2::SmilesParse::MolFromSmiles("C");
+  REQUIRE(m);
+
+  constexpr const char *prop_name = "654 > 321";
+  m->setProp(prop_name, "this is not important");
+
+  auto molblock = SDWriter::getText(*m);
+  REQUIRE_THAT(molblock, Catch::Matchers::ContainsSubstring(prop_name));
+
+  SDMolSupplier supplier;
+  supplier.setData(molblock);
+
+  auto m2 = supplier.next();
+  REQUIRE(m2);
+  CHECK(m2->hasProp(prop_name));
 }
