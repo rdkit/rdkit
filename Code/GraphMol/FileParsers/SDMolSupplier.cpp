@@ -129,14 +129,14 @@ void SDMolSupplier::peekCheckForEnd(char* bufPtr, char* bufEnd, std::streampos m
           return; 
       }
       if (*p == '\n') {
-          emptyLines++;
+          ++emptyLines;
           if (emptyLines >= 4) { // the 4th empty line found
               this->df_end = true;
               this->d_len = rdcast<int>(this->d_molpos.size());
               return;
           }
       }
-      p++;
+      ++p;
   }
 
   // buffer was exhausted without finding 4 empty lines or data. Need to check the stream.
@@ -292,7 +292,9 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
     std::streampos chunkStartPos = currentStreamPos;
     dp_inStream->read(&buffer[OVERLAP], CHUNK_SIZE);
     std::streamsize bytesRead = dp_inStream->gcount();
-    if (bytesRead == 0) break;// EOF
+    if (bytesRead == 0) {
+      break;// EOF
+    }
 
     std::streampos chunkEndPos = dp_inStream->tellg();
     //check if the stream is "honest" (binary or text mode with 1 byte newlines (like UNIX), meaning read bytes map 1:1 to disk bytes)
@@ -302,13 +304,17 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
     char *ptr = bufStart + 1;
 
     while (true) {
-      static const char dollarSigns[] = "$$$$";
+      constexpr char dollarSigns[]{"$$$$"};
       auto match = std::search(ptr, bufEnd, dollarSigns, dollarSigns + 4);
       if (match == bufEnd) break;
       if (*(match - 1) == '\n') {//ensure $$$$ is at start of line
         char *nlPos = match + 4;
-        while (nlPos < bufEnd && *nlPos != '\n') ++nlPos;
-        if (nlPos < bufEnd) ++nlPos;
+        while (nlPos < bufEnd && *nlPos != '\n') {
+          ++nlPos;
+        }
+        if (nlPos < bufEnd) {
+          ++nlPos;
+        }
         
         std::streampos posHold;
         if (isBinaryLike) { //fast path, math checks out, no need to seek
@@ -320,12 +326,12 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
           posHold = dp_inStream->tellg(); //this is the physical position on disk we want
         }
         
-        bool atTrueEOF = (bytesRead < (std::streamsize)CHUNK_SIZE) && (nlPos >= bufEnd);
+        bool atTrueEOF = (bytesRead < static_cast<std::streamsize>(CHUNK_SIZE)) && (nlPos >= bufEnd);
         if (!atTrueEOF) {
           this->peekCheckForEnd(nlPos, bufEnd, posHold);//the optimized peek version
           if (!this->df_end) {
             d_molpos.push_back(posHold);
-            d_last++;
+            ++d_last;
             if (static_cast<unsigned int>(d_last) == targetIdx) { //not really needed but this way we only index as much as needed
                 foundTarget = true;
                 break; 
@@ -335,7 +341,9 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
       }
       ptr = match + 4;
     }
-    if (foundTarget) break;
+    if (foundTarget) {
+      break;
+    }
 
     if (!isBinaryLike) {//need to seek to the end of the chunk again to make sure next read is from the right position
       dp_inStream->clear();
