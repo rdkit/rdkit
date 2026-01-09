@@ -22,7 +22,7 @@ Atom *QueryAtom::copy() const {
 void QueryAtom::setQuery(QUERYATOM_QUERY *what) {
   dp_query.reset(what);
   getDataRDMol().setAtomQueryCompat(getIdx(), what);
-  PRECONDITION(getDataRDMol().getAtomQuery(getIdx()) != nullptr,
+  PRECONDITION(what == nullptr ||getDataRDMol().getAtomQuery(getIdx()) != nullptr,
                "Missing new query");
 }
 

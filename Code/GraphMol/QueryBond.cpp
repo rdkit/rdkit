@@ -67,7 +67,7 @@ void QueryBond::setBondDir(BondDir bD) {
 void QueryBond::setQuery(QUERYBOND_QUERY *what) {
   dp_query.reset(what);
   getDataRDMol().setBondQueryCompat(getIdx(), what);
-  PRECONDITION(getDataRDMol().getBondQuery(getIdx()) != nullptr,
+  PRECONDITION(what == nullptr || getDataRDMol().getBondQuery(getIdx()) != nullptr,
                "Missing new query");
 }
 
