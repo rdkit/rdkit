@@ -8607,6 +8607,12 @@ M  END
     for atom in m.GetAtoms():
       self.assertTrue(atom.NeedsUpdatePropertyCache())
 
+  def testGithub8877(self):
+    m = Chem.MolFromSmarts('CC')
+    self.assertRaises(ValueError, lambda: m.GetAtomWithIdx(0).SetQuery(None))
+    self.assertRaises(ValueError, lambda: m.GetAtomWithIdx(0).ExpandQuery(None))
+    self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).SetQuery(None))
+    self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).ExpandQuery(None))
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
