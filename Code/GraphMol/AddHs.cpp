@@ -561,6 +561,7 @@ void addHs(RWMol &mol, const AddHsParameters &params,
     }
   }
 
+  // Cache H counts before adding bonds (which will clear property cache per #8934)
   for (auto at : mol.atoms()) {
     numExplicitHs[at->getIdx()] = at->getNumExplicitHs();
     numImplicitHs[at->getIdx()] = at->getNumImplicitHs();
@@ -620,7 +621,7 @@ void addHs(RWMol &mol, const AddHsParameters &params,
 
     if (!params.explicitOnly) {
       // take care of implicits
-      for (unsigned int i = 0; i < mol.getAtomWithIdx(aidx)->getNumImplicitHs(); i++) {
+      for (unsigned int i = 0; i < numImplicitHs[aidx]; i++) {
         newIdx = mol.addAtom(new Atom(1), false, true);
         mol.addBond(aidx, newIdx, Bond::SINGLE);
         // set the isImplicit label so that we can strip these back

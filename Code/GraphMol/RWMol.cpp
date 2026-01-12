@@ -334,6 +334,11 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
                             Bond::BondType bondType) {
   // Note that the RWMol version updates aromaticity, while the ROMol version does not.
   dp_mol->addBond(atomIdx1, atomIdx2, BondEnums::BondType(bondType), /*updateAromaticity=*/true);
+  
+  // the valence values on the begin and end atoms need to be updated (from #8934):
+  getAtomWithIdx(atomIdx1)->clearPropertyCache();
+  getAtomWithIdx(atomIdx2)->clearPropertyCache();
+  
   return getNumBonds();
 }
 
