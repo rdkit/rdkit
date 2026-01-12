@@ -7,10 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <string>
+#include <csignal>
 #include <fstream>
+#include <future>
 #include <map>
 #include <memory>
+#include <string>
 
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -2626,4 +2628,68 @@ TEST_CASE("testGitHub3517") {
   size_t l = sdsup.length();
   REQUIRE(l > 0);
   REQUIRE(!sdsup.atEnd());
+}
+
+TEST_CASE(
+    "GitHub Issue #9014: SDMolSupplier enters an infinite loop if number of SGroups is incorrect") {
+  constexpr const char *molblock = R"CTAB(
+                    2D
+
+  0  0  0  0  0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.299038 0.750000 0.000000 0
+M  V30 2 C 1.299038 2.250000 0.000000 0
+M  V30 3 O 2.598076 3.000000 0.000000 0
+M  V30 4 C 2.598076 -0.000000 0.000000 0
+M  V30 5 C 0.000000 0.000000 0.000000 0
+M  V30 6 H 3.897114 0.750000 0.000000 0
+M  V30 7 H 2.598076 4.500000 0.000000 0
+M  V30 8 H 2.598076 -1.500000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5
+M  V30 5 1 4 6
+M  V30 6 1 3 7
+M  V30 7 1 4 8
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(8 1 2 3 4 5 6 7 8)
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+$$$$)CTAB";
+
+  v2::FileParsers::SDMolSupplier sdsup;
+  v2::FileParsers::MolFileParserParams p{.strictParsing = false};
+
+  sdsup.setData(molblock, p);
+
+  std::unique_ptr<ROMol> mol;
+  auto parser_thread = std::async(std::launch::async, [&sdsup, &mol]() {
+    // This might run forever if the code is bugged...
+    mol = sdsup.next();
+  });
+
+  // wait a few seconds (allow extra time for debugging),
+  // and send sigint if the parser thread hasn't finished
+#ifndef DNDEBUG
+  auto timeout = std::chrono::seconds(900);
+#else
+  auto timeout = std::chrono::seconds(10);
+#endif
+  auto status = parser_thread.wait_for(timeout);
+  if (status != std::future_status::ready) {
+    // There's no safe way to terminate a rogue thread in C++,
+    //  so just send Ctrl+C and abort the whole test run
+    raise(SIGINT);
+  } else {
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 5);  // only heavy atoms are kept
+    CHECK(getSubstanceGroups(*mol).size() == 1);
+  }
 }
