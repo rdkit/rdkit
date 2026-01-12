@@ -3052,10 +3052,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }  // end of 2 and 3 coordinated atoms only
-        }  // end of we want it or CIP code is not set
-      }  // end of double bond
-    }  // end of for loop over all bonds
+          }    // end of 2 and 3 coordinated atoms only
+        }      // end of we want it or CIP code is not set
+      }        // end of double bond
+    }          // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
@@ -3578,14 +3578,6 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
     atom->setChiralTag(chiralTypeVect[parity]);
     if (atom->needsUpdatePropertyCache()) {
       atom->updatePropertyCache(false);
-    }
-    // within the RD representation, if a three-coordinate atom
-    // is chiral and has an implicit H, that H needs to be made explicit:
-    if (atom->getDegree() == 3 && !atom->getNumExplicitHs() &&
-        atom->getNumImplicitHs() == 1) {
-      atom->setNumExplicitHs(1);
-      // recalculated number of implicit Hs:
-      atom->updatePropertyCache();
     }
   }
 }
