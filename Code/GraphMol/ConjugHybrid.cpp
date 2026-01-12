@@ -114,6 +114,15 @@ int numBondsPlusLonePairs(Atom *at, const PeriodicTable *periodicTable) {
 }
 }  // namespace
 
+// Wrapper functions for SWIG bindings - these get the PeriodicTable internally
+void markConjAtomBonds(Atom *at) {
+  markConjAtomBonds(at, PeriodicTable::getTable());
+}
+
+int numBondsPlusLonePairs(Atom *at) {
+  return numBondsPlusLonePairs(at, PeriodicTable::getTable());
+}
+
 namespace MolOps {
 bool atomHasConjugatedBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
