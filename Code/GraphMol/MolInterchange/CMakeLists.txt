@@ -10,7 +10,7 @@ if(NOT EXISTS "${RDKit_ExternalDir}/rapidjson/rapidjson-1.1.0")
     # (based on the change which has already been applied to the RapidJSON master branch, see
     # https://github.com/Tencent/rapidjson/blob/24b5e7a8b27f42fa16b96fc70aade9106cf7102f/include/rapidjson/document.h#L414
     # and https://patch-diff.githubusercontent.com/raw/Tencent/rapidjson/pull/1698.diff
-    execute_process(COMMAND git --git-dir= apply
+    execute_process(COMMAND git --git-dir= apply --ignore-whitespace
       ${RDKit_ExternalDir}/rapidjson/patch-rapidjson-1.1.0.diff
       WORKING_DIRECTORY ${RDKit_ExternalDir}/rapidjson)
 else()
