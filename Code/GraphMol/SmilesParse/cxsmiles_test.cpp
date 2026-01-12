@@ -1516,7 +1516,7 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;
     REQUIRE(m);
     auto smi = MolToCXSmarts(*m);
-    CHECK(smi == "[#7H3]-[Fe]-[#7H2] |C:0.0|");
+    CHECK(smi == "[#7]-[Fe]-[#7] |C:0.0|");
   }
   SECTION("two dative bonds") {
     auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
@@ -1528,7 +1528,7 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
     REQUIRE(m);
     auto smi = MolToCXSmarts(*m);
-    CHECK(smi == "[#7H3]-[Fe]-[#7H3] |C:0.0,2.1|");
+    CHECK(smi == "[#7]-[Fe]-[#7] |C:0.0,2.1|");
   }
 }
 

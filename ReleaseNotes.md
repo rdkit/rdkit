@@ -22,6 +22,9 @@ GitHub)
   `Chem.CanonicalRankAtoms(mol, breakTies=False)`.
 - The behavior of H removal has changed slightly: hydrides will no longer removed
   by default, as this changes the global charge of the mol.
+- `MolToSmarts()` no longer adds implicit hydrogens to atoms without queries. The 
+  one exception to this is for chiral atoms, which will still have an implicit H 
+  added if present.
 
 ## New Features and Enhancements:
 
