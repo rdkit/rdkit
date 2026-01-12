@@ -879,7 +879,7 @@ class MolFromSCSRMolConverter {
       for (unsigned int templateIdx = 0;
            templateIdx < scsrMol->getTemplateCount(); ++templateIdx) {
         auto templateMol = scsrMol->getTemplate(templateIdx);
-        templateMol->updatePropertyCache();
+        templateMol->updatePropertyCache(false);
 
         if (templateMol->getProp<std::string>(
                 common_properties::molAtomClass) != "BASE") {
