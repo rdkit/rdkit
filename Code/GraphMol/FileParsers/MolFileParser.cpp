@@ -1668,7 +1668,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
              << line;
       throw FileParseException(errout.str());
     }
-    res->setProp("molExactChangeFlag", exactChangeFlag);
+    res->setProp(common_properties::molRxnExactChange, exactChangeFlag);
   }
   return res.release();
 }
