@@ -8626,6 +8626,13 @@ M  END
     self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).SetQuery(None))
     self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).ExpandQuery(None))
 
+  def testBondChiralityInversion(self):
+    mol1 = Chem.MolFromSmiles("Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.7,&1:7|")
+    mol2 = Chem.MolFromSmiles("Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.6,&1:7|")
+    self.assertNotEqual(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
+    mol1.GetBonds()[7].InvertChirality()
+    self.assertEqual(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
