@@ -1349,12 +1349,21 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
        true},  // #8862
   };
 
-  auto roundtripSmiles = [](const std::string &smi,
-                            bool useLegacyStereo) -> std::string {
-    UseLegacyStereoPerceptionFixture useLegacy(useLegacyStereo);
-    auto m = v2::SmilesParse::MolFromSmiles(smi);
-    REQUIRE(m);
-    return MolToSmiles(*m);
+  auto count_features = [](RWMol m) {
+    unsigned int nChiralCenters = 0;
+    for (const auto atom : m.atoms()) {
+      if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
+        ++nChiralCenters;
+      }
+    }
+    unsigned int nDoubleBondStereo = 0;
+    for (const auto bond : m.bonds()) {
+      if (bond->getStereo() > Bond::STEREOANY) {
+        ++nDoubleBondStereo;
+      }
+    }
+
+    return std::make_pair(nChiralCenters, nDoubleBondStereo);
   };
 
   const auto &[smiles, legacyState, modernState] =
@@ -1362,14 +1371,36 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   auto usingLegacyStereo = GENERATE(false, true);
   CAPTURE(smiles, usingLegacyStereo);
 
+  UseLegacyStereoPerceptionFixture useLegacy(usingLegacyStereo);
+
   // pre-canonicalize SMILES: the inputs get outdated when
   // we make changes to the canonicalization algorithm
-  const auto firstRoundtrip = roundtripSmiles(smiles, usingLegacyStereo);
+  auto m1 = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(m1);
+  const auto firstRoundtrip = MolToSmiles(*m1);
+
+  // Get the stereo features after the SMILES roundtrip,
+  // so that assigning labels can't have any influence
+  // on the SMILES
+  const auto refFeatures = count_features(*m1);
+
+  auto m2 = v2::SmilesParse::MolFromSmiles(firstRoundtrip);
+  REQUIRE(m2);
+  const auto secondRoundtrip = MolToSmiles(*m2);
 
   auto shouldMatch = usingLegacyStereo ? legacyState : modernState;
   if (shouldMatch) {
-    CHECK(firstRoundtrip == roundtripSmiles(firstRoundtrip, usingLegacyStereo));
+    CHECK(firstRoundtrip == secondRoundtrip);
+
+    // If the stereo labels don't match after round-tripping, something is wrong
+    CHECK(refFeatures == count_features(*m2));
+
+    // Check the second roundtrip too
+    auto m3 = v2::SmilesParse::MolFromSmiles(secondRoundtrip);
+    REQUIRE(m3);
+    CHECK(refFeatures == count_features(*m3));
+
   } else {
-    CHECK(firstRoundtrip != roundtripSmiles(firstRoundtrip, usingLegacyStereo));
+    CHECK(firstRoundtrip != secondRoundtrip);
   }
 }
