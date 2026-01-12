@@ -86,3 +86,6 @@ add_pytest(pyTestPropertyLists
 
 add_pytest(pyCDXMLTest
          ${CMAKE_CURRENT_SOURCE_DIR}/test_cdxml.py)
+
+add_pytest(pySubsetTest
+         ${CMAKE_CURRENT_SOURCE_DIR}/test_subset.py)
