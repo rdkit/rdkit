@@ -16,6 +16,7 @@
 #include "ChemTransforms.h"
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <Geometry/Transform3D.h>
 
 #include <cstdint>
 #include <map>
@@ -129,6 +130,7 @@ struct ZipBond {
 
   // bond a<->b for now only use single bonds
   //  XXX FIX ME take the highest bond order.
+  // RETURNS true if a new bond was made
   bool bond(RWMol &newmol, const MolzipParams &params) const {
     if (!a || !b || !a_dummy || !b_dummy) {
       BOOST_LOG(rdWarningLog)
@@ -144,7 +146,6 @@ struct ZipBond {
         params.label == MolzipLabel::FragmentOnBonds ||
             !a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx()),
         "molzip: zipped Bond already exists, perhaps labels are duplicated");
-
     if (!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {
       CHECK_INVARIANT(&a->getOwningMol() == &newmol,
                       "Owning mol is not the combined molecule!!");
@@ -334,6 +335,70 @@ struct ZipBond {
     }
   }
 };
+
+void rotateFragmentToBondVector(
+    ROMol &mol, const Atom &a, const Atom &b, const Atom &a_dummy,
+    const Atom &b_dummy, const std::vector<int> &fragmentForAtom,
+    const std::map<int, std::vector<int>> &atomsInFragment, int confId = -1) {
+  if (!mol.getNumConformers()) {
+    return;
+  }
+  auto &conf = mol.getConformer(confId);
+
+  //-----------------------------------------
+  //  Notation:
+  //    Pmc: molecule connection point (the atom that will be
+  //     removed from the molecule).
+  //    Pma: molecule attachment point (the atom to which we'll form
+  //     the bond).
+  //    Psc: sidechain connection point
+  //    Psa: sidechain attachment point
+  //    Vm: Pmc-Pma (molecular attachment vector)
+  //    Vs: Psc-Psa (sidechain attachment vector)
+  //
+  //-----------------------------------------
+  const auto &Pma = conf.getAtomPos(a.getIdx());
+  const auto &Psa = conf.getAtomPos(b.getIdx());
+  const auto &Pmc = conf.getAtomPos(a_dummy.getIdx());
+  const auto &Psc = conf.getAtomPos(b_dummy.getIdx());
+
+  auto Um = Pma.directionVector(Pmc);
+  // note the opposite direction here:
+  auto Us = Psc.directionVector(Psa);
+
+  RDGeom::Transform3D templateTform;
+  templateTform.SetTranslation(Pma);
+
+  auto cosT = Us.dotProduct(Um);
+  if (fabs(cosT) < 1.0) {
+    auto sinT = sqrt(1.0 - cosT * cosT);
+    RDGeom::Point3D rotnAxis = Us.crossProduct(Um);
+    rotnAxis.normalize();
+    templateTform.SetRotation(cosT, sinT, rotnAxis);
+  } else {
+    RDGeom::Point3D normal(1, 0, 0);
+    if (fabs(Us.dotProduct(normal)) == 1.0) {
+      normal = RDGeom::Point3D(0, 1, 0);
+    }
+    auto rotnAxis = Us.crossProduct(normal);
+    templateTform.SetRotation(-1, 0, rotnAxis);
+  }
+
+  // we use the second attachment vector to set the bond distance
+  RDGeom::Transform3D tmpTform;
+  tmpTform.SetTranslation(Psc * -1.0);
+  templateTform *= tmpTform;
+
+  // ---------
+  // transform the atomic positions in the sidechain:
+  // ---------
+  auto fragId = fragmentForAtom[b.getIdx()];
+  for (const auto atomIdx : atomsInFragment.at(fragId)) {
+    auto &pos = conf.getAtomPos(atomIdx);
+    templateTform.TransformPoint(pos);
+  }
+}
+
 }  // namespace
 
 static const std::string indexPropName("__zipIndex");
@@ -349,6 +414,17 @@ std::unique_ptr<ROMol> molzip(
     newmol.reset(static_cast<RWMol *>(combineMols(a, b)));
   } else {
     newmol.reset(new RWMol(a));
+  }
+
+  // doing the coordinate alignment is quicker if we know which atoms are in
+  // which fragments
+  std::vector<int> fragmentForAtom;
+  std::map<int, std::vector<int>> atomsInFragment;
+  if (params.alignCoordinates) {
+    MolOps::getMolFrags(*newmol, fragmentForAtom);
+    for (size_t i = 0; i < fragmentForAtom.size(); ++i) {
+      atomsInFragment[fragmentForAtom[i]].push_back(static_cast<int>(i));
+    }
   }
 
   std::map<unsigned int, ZipBond> mappings;
@@ -524,8 +600,20 @@ std::unique_ptr<ROMol> molzip(
   }
 
   // Make all the bonds
+  boost::dynamic_bitset<> aligned(atomsInFragment.size());
   for (auto &kv : mappings) {
-    kv.second.bond(*newmol, params);
+    if (kv.second.bond(*newmol, params)) {
+      // we made the bond, now handle rotating coordinates
+      if (params.alignCoordinates) {
+        // make sure we haven't aligned this fragment already:
+        if (!aligned[fragmentForAtom[kv.second.b->getIdx()]]) {
+          rotateFragmentToBondVector(*newmol, *(kv.second.a), *(kv.second.b),
+                                     *(kv.second.a_dummy), *(kv.second.b_dummy),
+                                     fragmentForAtom, atomsInFragment);
+          aligned.set(fragmentForAtom[kv.second.b->getIdx()]);
+        }
+      }
+    }
   }
   newmol->beginBatchEdit();
 

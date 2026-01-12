@@ -1103,11 +1103,10 @@ python::object findMesoHelper(const ROMol &mol, bool includeIsotopes,
   return python::tuple(res);
 }
 
-ROMol *copyMolSubsetHelper1(const ROMol &mol,
-			    python::object pyAtomIndices,
-			    python::object pyBondIndices,
-			    const SubsetOptions &options = SubsetOptions()) {
-  auto atomIndices = pythonObjectToVect<unsigned int>(pyAtomIndices);  
+ROMol *copyMolSubsetHelper1(const ROMol &mol, python::object pyAtomIndices,
+                            python::object pyBondIndices,
+                            const SubsetOptions &options = SubsetOptions()) {
+  auto atomIndices = pythonObjectToVect<unsigned int>(pyAtomIndices);
   auto bondIndices = pythonObjectToVect<unsigned int>(pyBondIndices);
   if (!atomIndices.get()) {
     atomIndices = std::make_unique<std::vector<unsigned int>>();
@@ -1119,12 +1118,10 @@ ROMol *copyMolSubsetHelper1(const ROMol &mol,
   return copyMolSubset(mol, *atomIndices, *bondIndices, options).release();
 }
 
-ROMol *copyMolSubsetHelper2(const ROMol &mol,
-			    python::object pyAtomIndices,
-			    python::object pyBondIndices,
-			    SubsetInfo &info,
-			    const SubsetOptions &options = SubsetOptions()) {
-  auto atomIndices = pythonObjectToVect<unsigned int>(pyAtomIndices);  
+ROMol *copyMolSubsetHelper2(const ROMol &mol, python::object pyAtomIndices,
+                            python::object pyBondIndices, SubsetInfo &info,
+                            const SubsetOptions &options = SubsetOptions()) {
+  auto atomIndices = pythonObjectToVect<unsigned int>(pyAtomIndices);
   auto bondIndices = pythonObjectToVect<unsigned int>(pyBondIndices);
   if (!atomIndices.get()) {
     atomIndices = std::make_unique<std::vector<unsigned int>>();
@@ -1133,29 +1130,28 @@ ROMol *copyMolSubsetHelper2(const ROMol &mol,
     bondIndices = std::make_unique<std::vector<unsigned int>>();
   }
 
-  return copyMolSubset(mol, *atomIndices, *bondIndices, info, options).release();
+  return copyMolSubset(mol, *atomIndices, *bondIndices, info, options)
+      .release();
 }
 
-
-ROMol *copyMolSubsetHelper3(const ROMol &mol,
-			    python::object path,
-			    const SubsetOptions &options = SubsetOptions()) {
+ROMol *copyMolSubsetHelper3(const ROMol &mol, python::object path,
+                            const SubsetOptions &options = SubsetOptions()) {
   auto pathvect = pythonObjectToVect<unsigned int>(path);
-  if (!pathvect.get())
+  if (!pathvect.get()) {
     pathvect = std::make_unique<std::vector<unsigned int>>();
+  }
   return copyMolSubset(mol, *pathvect, options).release();
 }
 
-ROMol *copyMolSubsetHelper4(const ROMol &mol,
-			    python::object path,
-			    SubsetInfo &selectionInfo,
-			    const SubsetOptions &options = SubsetOptions()) {
+ROMol *copyMolSubsetHelper4(const ROMol &mol, python::object path,
+                            SubsetInfo &selectionInfo,
+                            const SubsetOptions &options = SubsetOptions()) {
   auto pathvect = pythonObjectToVect<unsigned int>(path);
-  if (!pathvect.get())
+  if (!pathvect.get()) {
     pathvect = std::make_unique<std::vector<unsigned int>>();
+  }
   return copyMolSubset(mol, *pathvect, selectionInfo, options).release();
 }
-
 
 struct molops_wrapper {
   static void wrap() {
@@ -3010,10 +3006,15 @@ Setting this to false allows assembling chemically incorrect fragments.")
             "generateCoordinates", &MolzipParams::generateCoordinates,
             "If true will add depiction coordinates to input molecules and\n\
 zipped molecule (for molzipFragments only)")
+        .def_readwrite(
+            "alignCoordinates", &MolzipParams::alignCoordinates,
+            "if true and the input fragments have coordinates, the fragments\n\
+will be aligned along connection vectors in the output molecule")
         .def("setAtomSymbols", &RDKit::setAtomSymbols,
              python::args("self", "symbols"),
              "Set the atom symbols used to zip mols together when using "
-             "AtomType labeling");
+             "AtomType labeling")
+        .def("__setattr__", &safeSetattr);
 
     docString =
         "molzip: zip molecules together preserving bond and atom stereochemistry.\n\
@@ -3386,44 +3387,48 @@ enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
         "AtomHasConjugatedBond", MolOps::atomHasConjugatedBond,
         (python::arg("atom")),
         "returns whether or not the atom is involved in a conjugated bond");
-  
 
     python::enum_<RDKit::SubsetMethod>("SubsetMethod")
-      .value("BONDS_BETWEEN_ATOMS",
-	     RDKit::SubsetMethod::BONDS_BETWEEN_ATOMS)
-      .value("BONDS", RDKit::SubsetMethod::BONDS);
-    
+        .value("BONDS_BETWEEN_ATOMS", RDKit::SubsetMethod::BONDS_BETWEEN_ATOMS)
+        .value("BONDS", RDKit::SubsetMethod::BONDS);
+
     python::class_<std::vector<bool>>("BoolVector")
-      .def(python::vector_indexing_suite<std::vector<bool>>());
+        .def(python::vector_indexing_suite<std::vector<bool>>());
 
     python::class_<RDKit::SubsetOptions>("SubsetOptions")
-      .def_readwrite("sanitize",
-		     &RDKit::SubsetOptions::sanitize, "Sanitize the resulting subset")
-      .def_readwrite("clearComputedProps", &RDKit::SubsetOptions::clearComputedProps,
-		     "clear all computed props on the subsetted molecule")
-      .def_readwrite("copyAsQuery", &RDKit::SubsetOptions::copyAsQuery,
-		     "Return the subset as a query")
-      .def_readwrite("copyCoordinates", &RDKit::SubsetOptions::copyCoordinates,
-		     "Copy the active coordinates from the molecule")
-      .def_readwrite("conformerIdx", &RDKit::SubsetOptions::conformerIdx,
-		     "What conformer idx to use for the coordinates default is -1")
-      .def_readwrite("method", &RDKit::SubsetOptions::method,
-		     "Subsetting method to use");
+        .def_readwrite("sanitize", &RDKit::SubsetOptions::sanitize,
+                       "Sanitize the resulting subset")
+        .def_readwrite("clearComputedProps",
+                       &RDKit::SubsetOptions::clearComputedProps,
+                       "clear all computed props on the subsetted molecule")
+        .def_readwrite("copyAsQuery", &RDKit::SubsetOptions::copyAsQuery,
+                       "Return the subset as a query")
+        .def_readwrite("copyCoordinates",
+                       &RDKit::SubsetOptions::copyCoordinates,
+                       "Copy the active coordinates from the molecule")
+        .def_readwrite(
+            "conformerIdx", &RDKit::SubsetOptions::conformerIdx,
+            "What conformer idx to use for the coordinates default is -1")
+        .def_readwrite("method", &RDKit::SubsetOptions::method,
+                       "Subsetting method to use");
 
-    if (!is_python_converter_registered<std::map<unsigned int, unsigned int>>()) {
+    if (!is_python_converter_registered<
+            std::map<unsigned int, unsigned int>>()) {
       python::class_<std::map<unsigned int, unsigned int>>("UIntUIntMap")
-        .def(python::map_indexing_suite<std::map<unsigned int, unsigned int>, true>());
+          .def(python::map_indexing_suite<std::map<unsigned int, unsigned int>,
+                                          true>());
     }
 
     python::class_<RDKit::SubsetInfo>("SubsetInfo")
-      .def_readwrite("atomMapping", &RDKit::SubsetInfo::atomMapping,
-		     "mapping from the original atom index to the subset atom index")
-      .def_readwrite("bondMapping", &RDKit::SubsetInfo::bondMapping,
-		     " mapping from the original bond index to the subset bond index");
+        .def_readwrite(
+            "atomMapping", &RDKit::SubsetInfo::atomMapping,
+            "mapping from the original atom index to the subset atom index")
+        .def_readwrite(
+            "bondMapping", &RDKit::SubsetInfo::bondMapping,
+            " mapping from the original bond index to the subset bond index");
 
-    
-
-        docString = "Extract a subgraph from an ROMol. Bonds, atoms, substance groups and \n\
+    docString =
+        "Extract a subgraph from an ROMol. Bonds, atoms, substance groups and \n\
 stereo groups are only extracted to the subgraph if all participant entities \n\
 are contained within the given atoms and bonds. \n\
 \n\
@@ -3435,19 +3440,21 @@ ARGUMENTS:\n\
  - options - optional subset options, note the method is ignored since all the atoms and bonds are sp \n\
 \n";
 
-    python::def("CopyMolSubset", copyMolSubsetHelper1,
-		(python::arg("mol"), python::arg("atomIndices"), python::arg("bondIndices"),
-		 python::arg("options")=SubsetOptions()),
-		docString.c_str(),
-		python::return_value_policy<python::manage_new_object>());
+    python::def(
+        "CopyMolSubset", copyMolSubsetHelper1,
+        (python::arg("mol"), python::arg("atomIndices"),
+         python::arg("bondIndices"), python::arg("options") = SubsetOptions()),
+        docString.c_str(),
+        python::return_value_policy<python::manage_new_object>());
     python::def("CopyMolSubset", copyMolSubsetHelper2,
-		(python::arg("mol"), python::arg("atomIndices"), python::arg("bondIndices"),
-		 python::arg("subsetInfo"),
-		 python::arg("options")=SubsetOptions()),
-		docString.c_str(),
-		python::return_value_policy<python::manage_new_object>());
+                (python::arg("mol"), python::arg("atomIndices"),
+                 python::arg("bondIndices"), python::arg("subsetInfo"),
+                 python::arg("options") = SubsetOptions()),
+                docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());
 
-        docString = "Extract a subgraph from an ROMol. Bonds, atoms, substance groups and \n\
+    docString =
+        "Extract a subgraph from an ROMol. Bonds, atoms, substance groups and \n\
 stereo groups are only extracted to the subgraph if all participant entities \n\
 are contained within the given atoms and bonds. \n\
 \n\
@@ -3460,19 +3467,18 @@ ARGUMENTS:\n\
  - subsetInfo - optional subsetInfo to record the atoms and bonds used \n\
  - options - optional subset options, note the method is ignored since all the atoms and bonds are sp \n\
 \n";
-    
+
     python::def("CopyMolSubset", copyMolSubsetHelper3,
-		(python::arg("mol"), python::arg("path"),
-		 python::arg("options")=SubsetOptions()),
-		"copy a subset of a molecule",
-		python::return_value_policy<python::manage_new_object>());
-    python::def("CopyMolSubset", copyMolSubsetHelper4,
-		(python::arg("mol"), python::arg("path"),
-		 python::arg("subsetInfo"),
-		 python::arg("options")=SubsetOptions()),
-		"copy a subset of a molecule",
-		python::return_value_policy<python::manage_new_object>());
-    
+                (python::arg("mol"), python::arg("path"),
+                 python::arg("options") = SubsetOptions()),
+                "copy a subset of a molecule",
+                python::return_value_policy<python::manage_new_object>());
+    python::def(
+        "CopyMolSubset", copyMolSubsetHelper4,
+        (python::arg("mol"), python::arg("path"), python::arg("subsetInfo"),
+         python::arg("options") = SubsetOptions()),
+        "copy a subset of a molecule",
+        python::return_value_policy<python::manage_new_object>());
   }
 };
 }  // namespace RDKit
