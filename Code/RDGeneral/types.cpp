@@ -13,7 +13,6 @@
 
 namespace RDKit {
 namespace detail {
-const std::string computedPropName = "__computedProps";
 const PropToken computedPropNameToken = PropToken(computedPropName);
 }
 
