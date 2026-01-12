@@ -88,6 +88,9 @@ const std::string getPropsAsDictDocString =
     "    - includeComputed: (optional) toggles inclusion of computed "
     "properties in the result set.\n"
     "                      Defaults to False.\n\n"
+    "    - autoConvertStrings: (optional) toggles automatic conversion of string "
+    "properties to integers or doubles.\n"
+    "                      Defaults to True.\n\n"
     "  RETURNS: a dictionary\n";
 
 template <class T>
@@ -239,7 +242,7 @@ PyObject *rawPy(T &&thing) {
 }
 
 template <class RDOb, class T>
-PyObject* GetProp(const RDOb *ob, const std::string &key) {
+PyObject *GetProp(const RDOb *ob, const std::string &key) {
   T res;
   try {
     if (!ob->getPropIfPresent(key, res)) {
@@ -247,9 +250,8 @@ PyObject* GetProp(const RDOb *ob, const std::string &key) {
       return nullptr;
     }
   } catch (const std::exception &e) {
-    auto msg = std::string("key `") + key +
-                              "` exists but does not result in " +
-                              GetTypeName<T>() + " reason: " + e.what();
+    auto msg = std::string("key `") + key + "` exists but does not result in " +
+               GetTypeName<T>() + " reason: " + e.what();
     PyErr_SetString(PyExc_ValueError, msg.c_str());
     return nullptr;
   }
