@@ -32,11 +32,14 @@ void applyMatches(RWMol &mol, const std::vector<AbbreviationMatch> &matches) {
                            prevAtomMapping) &&
       mol.getPropIfPresent(common_properties::origBondMapping, prevBondMapping);
   for (const auto &amatch : matches) {
-    // throughout this remember that atom 0 in the match is the dummy
+    // if we have bonds, then atom 0 in the match will be the dummy atom
+    // and atom 1 will end up being the abbreviation.
+    // If there are no bonds, atom 0 in the match will be the abbreviation.
 
     // convert atom 1 to be the abbreviation so that we don't have to
     // worry about messing up chirality, etc.
-    auto connectIdx = amatch.match.at(1).second;
+    unsigned int whichAtom = amatch.abbrev.includesXBonds ? 1 : 0;
+    auto connectIdx = amatch.match.at(whichAtom).second;
     auto connectingAtom = mol.getAtomWithIdx(connectIdx);
     connectingAtom->setProp(RDKit::common_properties::atomLabel,
                             amatch.abbrev.label);
@@ -57,7 +60,7 @@ void applyMatches(RWMol &mol, const std::vector<AbbreviationMatch> &matches) {
     // set the hybridization so these are drawn linearly
     connectingAtom->setHybridization(Atom::HybridizationType::SP);
 
-    for (unsigned int i = 2; i < amatch.match.size(); ++i) {
+    for (unsigned int i = whichAtom + 1; i < amatch.match.size(); ++i) {
       const auto &pr = amatch.match.at(i);
       CHECK_INVARIANT(!atomsToRemove[pr.second], "overlapping matches");
       atomsToRemove.set(pr.second);
@@ -86,8 +89,10 @@ void applyMatches(RWMol &mol, const std::vector<AbbreviationMatch> &matches) {
     }
     // make connections between any extraAttachAtoms and the connection point
     for (auto oaidx : amatch.abbrev.extraAttachAtoms) {
+      auto oatom = mol.getAtomWithIdx(oaidx);
+      CHECK_INVARIANT(oatom, "bad extra attachment atom index");
       int bondIdx = -1;
-      for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oaidx))) {
+      for (const auto bond : mol.atomBonds(oatom)) {
         if (bondsToRemove.test(bond->getIdx())) {
           CHECK_INVARIANT(bondIdx == -1, "bondIdx must be unique");
           bondIdx = bond->getIdx();
@@ -263,7 +268,9 @@ RDKIT_ABBREVIATIONS_EXPORT void condenseAbbreviationSubstanceGroups(
       auto bnds = sg.getBonds();
       if (bnds.empty()) {
         BOOST_LOG(rdWarningLog) << "SUP group without any bonds" << std::endl;
+        abbrevMatch.abbrev.includesXBonds = false;
       } else {
+        abbrevMatch.abbrev.includesXBonds = true;
         bool firstAttachFound = false;
         for (unsigned int i = 0; i < bnds.size(); ++i) {
           auto bnd = mol.getBondWithIdx(bnds[i]);
