@@ -73,6 +73,10 @@ add_pytest(pyTestSGroups
 add_pytest(pyTestSCSR
          ${CMAKE_CURRENT_SOURCE_DIR}/testSCSR.py)
 
+add_pytest(pySubstructureMatch
+         ${CMAKE_CURRENT_SOURCE_DIR}/testSubstructureMatch.py)
+
+
 
 if (RDK_TEST_MULTITHREADED)
   add_pytest(pyTestThreads
