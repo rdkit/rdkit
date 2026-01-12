@@ -127,7 +127,8 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
                    const EnumerationParams &params = EnumerationParams());
   EnumerateLibrary(const EnumerateLibrary &rhs);
 
-  //! Return the reagents used in the library
+  //! Return the reagents used in the library.  This may be fewer reagents than
+  // the input as it is only those compatible with the reaction.
   const EnumerationTypes::BBS &getReagents() const { return m_bbs; }
 
   //! Get the next product set
