@@ -76,7 +76,7 @@ rdkit_headers(SmartsWrite.h
               CanonicalizeStereoGroups.h
               SmilesJSONParsers.h DEST GraphMol/SmilesParse)
 
-rdkit_test(smiTest1 test.cpp LINK_LIBRARIES CIPLabeler FileParsers SmilesParse )
+rdkit_catch_test(smiTest1 smitest1.cpp LINK_LIBRARIES CIPLabeler FileParsers SmilesParse )
 rdkit_test(smiTest2 test2.cpp LINK_LIBRARIES SmilesParse )
 rdkit_catch_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse MarvinParser )
 
