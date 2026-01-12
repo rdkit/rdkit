@@ -1447,7 +1447,8 @@ void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
 }
 
 // conditions for an atom to be a candidate for ring stereochem:
-//   1) two non-ring neighbors that have different ranks
+//   1) two non-ring neighbors that have different ranks (the ring neighbors
+//      will have the same rank)
 //   2) one non-ring neighbor and two ring neighbors (the ring neighbors will
 //      have the same rank)
 //   3) four ring neighbors with three different ranks
@@ -1459,7 +1460,6 @@ bool atomIsCandidateForRingStereochem(
     const std::vector<unsigned int> &atomRanks) {
   PRECONDITION(atom, "bad atom");
   bool res = false;
-  std::set<unsigned int> nbrRanks;
   if (!atom->getPropIfPresent(common_properties::_ringStereochemCand, res)) {
     const RingInfo *ringInfo = mol.getRingInfo();
     if (ringInfo->isInitialized() && ringInfo->numAtomRings(atom->getIdx())) {
@@ -1474,33 +1474,35 @@ bool atomIsCandidateForRingStereochem(
       }
       std::vector<const Atom *> nonRingNbrs;
       std::vector<const Atom *> ringNbrs;
+      std::set<unsigned int> ringNbrRanks;
       for (const auto bond : mol.atomBonds(atom)) {
         if (!ringInfo->numBondRings(bond->getIdx())) {
           nonRingNbrs.push_back(bond->getOtherAtom(atom));
         } else {
           const Atom *nbr = bond->getOtherAtom(atom);
           ringNbrs.push_back(nbr);
-          nbrRanks.insert(atomRanks[nbr->getIdx()]);
+          ringNbrRanks.insert(atomRanks[nbr->getIdx()]);
         }
       }
-      // std::cerr << "!!!! " << atom->getIdx() << " " << nbrRanks.size() << " "
+      // std::cerr << "!!!! " << atom->getIdx() << " " << ringNbrRanks.size() << " "
       //           << ringNbrs.size() << " " << nonRingNbrs.size() << std::endl;
       switch (nonRingNbrs.size()) {
         case 2:
-          // they have to be different
+          // the ranks of the non ring neighbors must be different AND
+          // the ranks of the ring neighbors must be the same (see issue #8956)
           res = atomRanks[nonRingNbrs[0]->getIdx()] !=
                 atomRanks[nonRingNbrs[1]->getIdx()];
-
+          res &= (ringNbrs.size() != ringNbrRanks.size());
           break;
         case 1:
-          if (ringNbrs.size() > nbrRanks.size()) {
+          if (ringNbrs.size() > ringNbrRanks.size()) {
             res = true;
           }
           break;
         case 0:
-          if (ringNbrs.size() == 4 && nbrRanks.size() == 3) {
+          if (ringNbrs.size() == 4 && ringNbrRanks.size() == 3) {
             res = true;
-          } else if (ringNbrs.size() == 3 && nbrRanks.size() == 2) {
+          } else if (ringNbrs.size() == 3 && ringNbrRanks.size() == 2) {
             res = true;
           } else {
             res = false;
