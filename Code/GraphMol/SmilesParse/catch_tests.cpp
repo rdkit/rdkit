@@ -3364,3 +3364,38 @@ TEST_CASE("chiral class must be nonzero") {
     }
   }
 }
+
+TEST_CASE("Non-encodeable SGroups", "[CX][CXSmiles]") {
+  constexpr const char *molblock = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.242424 -0.515152 0.000000 0
+M  V30 2 C 0.257576 -0.515152 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 1 ATOMS=(1 1)
+M  V30 2 SUP 2 ATOMS=(1 2)
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+$$$$)CTAB";
+
+  auto m = v2::FileParsers::MolFromMolBlock(molblock);
+  REQUIRE(m);
+
+  // Write to smiles to populate atom and bond output order properties
+  MolToSmiles(*m);
+
+  CHECK(SmilesWrite::getCXExtensions(*m) ==
+        "|(-1.24242,-0.515152,;0.257576,-0.515152,)|");
+
+  CHECK(SmilesWrite::getCXExtensions(
+            *m, RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) == "");
+}
