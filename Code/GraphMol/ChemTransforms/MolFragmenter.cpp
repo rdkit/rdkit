@@ -11,6 +11,7 @@
 #include "MolFragmenter.h"
 
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/QueryBond.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -464,6 +465,12 @@ ROMol *fragmentOnBonds(
     Bond::BondDir bD = bond->getBondDir();
     unsigned int bondidx;
     auto nbr_bond_stereo = getNbrBondStereo(*res, bond);
+    // Grab a copy of any query on the outgoing bond if it will be needed later.
+    auto outBond = res->getBondBetweenAtoms(bidx, eidx);
+    std::unique_ptr<Bond::QUERYBOND_QUERY> outQuery;
+    if (!bondTypes && outBond->hasQuery()) {
+      outQuery.reset(outBond->getQuery()->copy());
+    }
     res->removeBond(bidx, eidx);
     if (nCutsPerAtom) {
       (*nCutsPerAtom)[bidx] += 1;
@@ -491,12 +498,23 @@ ROMol *fragmentOnBonds(
       if (bD == Bond::ENDDOWNRIGHT || bD == Bond::ENDUPRIGHT) {
         res->getBondWithIdx(bondidx)->setBondDir(bD);
       }
+      // transfer any query from the outgoing bond to the new one
+      if (outQuery) {
+        auto qb = std::make_unique<QueryBond>(*res->getBondWithIdx(bondidx));
+        qb->setQuery(outQuery->copy());
+        res->replaceBond(bondidx, qb.get());
+      }
 
       unsigned int idx2 = res->addAtom(at2, false, true);
       bondidx = res->addBond(bidx, at2->getIdx(), bT) - 1;
       // this bond starts at the same atom, so its direction should always be
       // correct:
       res->getBondWithIdx(bondidx)->setBondDir(bD);
+      if (outQuery) {
+        auto qb = std::make_unique<QueryBond>(*res->getBondWithIdx(bondidx));
+        qb->setQuery(outQuery->copy());
+        res->replaceBond(bondidx, qb.get());
+      }
 
       // restore stereo atoms
       for (auto &stereo_atoms : nbr_bond_stereo) {

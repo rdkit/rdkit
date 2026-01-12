@@ -106,8 +106,8 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
   }
 
   // Do any remaining.
-  if ((d_params.maxHits == -1 || hitCount < d_params.maxHits) &&
-      !stop && !toTry.empty()) {
+  if ((d_params.maxHits == -1 || hitCount < d_params.maxHits) && !stop &&
+      !toTry.empty()) {
     std::vector<std::unique_ptr<ROMol>> partResults;
     processToTrySet(toTry, endTime, partResults);
     cb(partResults);
@@ -393,11 +393,8 @@ void sortAndUniquifyToTry(
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
       newToTry;
   newToTry.reserve(tmp.size());
-  std::transform(
-      tmp.begin(), tmp.end(),
-      back_inserter(newToTry), [&](const auto &p) -> auto{
-        return toTry[p.first];
-      });
+  std::transform(tmp.begin(), tmp.end(), back_inserter(newToTry),
+                 [&](const auto &p) -> auto { return toTry[p.first]; });
   toTry = newToTry;
 }
 
