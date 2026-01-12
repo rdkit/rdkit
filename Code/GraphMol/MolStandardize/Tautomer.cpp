@@ -884,7 +884,12 @@ ROMol *TautomerEnumerator::canonicalize(
   if (!scoreFunc) {
     scoreFunc = TautomerScoringFunctions::makeOptimizedScorer(mol);
   }
-  return pickCanonical(res, scoreFunc);
+  ROMol *canonical = pickCanonical(res, scoreFunc);
+  // quickCopy during enumeration doesn't copy molecule properties, so copy
+  // them from the original molecule to preserve extended SMILES data (e.g.
+  // link nodes)
+  canonical->updateProps(mol);
+  return canonical;
 }
 
 void TautomerEnumerator::canonicalizeInPlace(
