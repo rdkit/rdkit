@@ -146,7 +146,8 @@ TautomerQuery *TautomerQuery::fromMol(
       new MolStandardize::TautomerCatalogParams(tautomerTransformFile));
   MolStandardize::TautomerEnumerator tautomerEnumerator(
       new MolStandardize::TautomerCatalog(tautomerParams.get()));
-  const auto res = tautomerEnumerator.enumerate(query);
+  // Collapse to SMILES keys to deduplicate symmetry-equivalent tautomers
+  const auto res = tautomerEnumerator.enumerate(query).collapsedToSmilesKeys();
 
   std::vector<size_t> modifiedAtoms;
   modifiedAtoms.reserve(res.modifiedAtoms().count());

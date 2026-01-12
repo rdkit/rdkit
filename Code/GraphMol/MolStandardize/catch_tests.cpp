@@ -858,8 +858,8 @@ TEST_CASE("provide tautomer parameters as JSON") {
     REQUIRE(m);
     auto tauts = te.enumerate(*m);
     CHECK(tauts.size() == 2);
-    CHECK(MolToSmiles(*tauts[0]) == "C#N");
-    CHECK(MolToSmiles(*tauts[1]) == "[C-]#[NH+]");
+    CHECK(MolToSmiles(*tauts[0]) == "[C-]#[NH+]");
+    CHECK(MolToSmiles(*tauts[1]) == "C#N");
   }
   SECTION("example3") {
     std::string json = R"JSON({"tautomerTransformData":[
