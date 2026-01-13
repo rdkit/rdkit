@@ -223,11 +223,11 @@ struct atom_wrapper {
         .def(
             "GetExplicitValence", &getExplicitValenceHelper,
             python::args("self"),
-            "DEPRECATED, please use GetValence(Chem.ValenceType,EXPLICIT) instead.\nReturns the explicit valence of the atom.\n")
+            "DEPRECATED, please use GetValence(Chem.ValenceType.EXPLICIT) instead.\nReturns the explicit valence of the atom.\n")
         .def(
             "GetImplicitValence", &getImplicitValenceHelper,
             python::args("self"),
-            "DEPRECATED, please use getValence(Chem.ValenceType,IMPLICIT) instead.\nReturns the number of implicit Hs on the atom.\n")
+            "DEPRECATED, please use getValence(Chem.ValenceType.IMPLICIT) instead.\nReturns the number of implicit Hs on the atom.\n")
         .def("GetValence", &Atom::getValence,
              (python::args("self"), python::args("which")),
              "Returns the valence (explicit or implicit) of the atom.\n")
