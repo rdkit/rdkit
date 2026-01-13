@@ -256,10 +256,26 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     }
   }
   // remove stereochemistry on bonds that are part of a tautomeric path
+  // Build bond lookup caches to avoid O(n) getBondWithIdx calls.
+  // getBondWithIdx iterates through all bonds to find the one with the given
+  // index, which is expensive when called multiple times in a loop.
+  std::vector<const Bond *> molBonds;
+  std::vector<Bond *> tautBonds;
+  if (res.d_modifiedBonds.any()) {
+    const auto numBonds = mol.getNumBonds();
+    molBonds.resize(numBonds);
+    tautBonds.resize(numBonds);
+    for (auto bond : mol.bonds()) {
+      molBonds[bond->getIdx()] = bond;
+    }
+    for (auto bond : taut.bonds()) {
+      tautBonds[bond->getIdx()] = bond;
+    }
+  }
   for (auto bondIdx = res.d_modifiedBonds.find_first();
        bondIdx != boost::dynamic_bitset<>::npos;
        bondIdx = res.d_modifiedBonds.find_next(bondIdx)) {
-    const auto bond = mol.getBondWithIdx(static_cast<unsigned int>(bondIdx));
+    const auto bond = molBonds[bondIdx];
     std::vector<unsigned int> bondsToClearDirs;
     if (bond->getBondType() == Bond::DOUBLE &&
         bond->getStereo() > Bond::STEREOANY) {
@@ -276,7 +292,7 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
         }
       }
     }
-    auto tautBond = taut.getBondWithIdx(static_cast<unsigned int>(bondIdx));
+    auto tautBond = tautBonds[bondIdx];
     if (tautBond->getBondType() != Bond::DOUBLE || d_removeBondStereo) {
       // When bond stereo is being removed for bonds involved in tautomerism,
       // use STEREOANY (for *non-ring* double bonds) instead of STEREONONE.
@@ -313,7 +329,7 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
       tautBond->setStereo(targetStereo);
       tautBond->getStereoAtoms().clear();
       for (auto bi : bondsToClearDirs) {
-        taut.getBondWithIdx(bi)->setBondDir(Bond::NONE);
+        tautBonds[bi]->setBondDir(Bond::NONE);
       }
     } else {
       const INT_VECT &sa = bond->getStereoAtoms();
@@ -324,8 +340,7 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
       }
       tautBond->setStereo(bond->getStereo());
       for (auto bi : bondsToClearDirs) {
-        taut.getBondWithIdx(bi)->setBondDir(
-            mol.getBondWithIdx(bi)->getBondDir());
+        tautBonds[bi]->setBondDir(molBonds[bi]->getBondDir());
       }
     }
   }
@@ -615,14 +630,21 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           }
           // in addition to the above transformations, sanitization may modify
           // bonds, e.g. Cc1nc2ccccc2[nH]1
-          for (size_t i = 0; i < mol.getNumBonds(); i++) {
-            auto molBondType = mol.getBondWithIdx(i)->getBondType();
-            auto tautBondType = product->getBondWithIdx(i)->getBondType();
-            if (molBondType != tautBondType && !res.d_modifiedBonds.test(i)) {
+          // Use parallel iteration to avoid O(n) getBondWithIdx lookups
+          {
+            auto productBondIt = product->bonds().begin();
+            for (const auto molBond : mol.bonds()) {
+              const auto productBond = *productBondIt;
+              ++productBondIt;
+              auto i = molBond->getIdx();
+              if (molBond->getBondType() != productBond->getBondType() &&
+                  !res.d_modifiedBonds.test(i)) {
 #ifdef VERBOSE_ENUMERATION
-              std::cout << "Sanitization has modified bond " << i << std::endl;
+                std::cout << "Sanitization has modified bond " << i
+                          << std::endl;
 #endif
-              markBondModified(static_cast<unsigned int>(i));
+                markBondModified(static_cast<unsigned int>(i));
+              }
             }
           }
           // Kekulized form will be created lazily when needed
@@ -771,29 +793,38 @@ void TautomerEnumerator::canonicalizeInPlace(
   TEST_ASSERT(tmp->getNumAtoms() == mol.getNumAtoms());
   TEST_ASSERT(tmp->getNumBonds() == mol.getNumBonds());
   // now copy the info from the canonical tautomer over to the input molecule
-  for (const auto tmpAtom : tmp->atoms()) {
-    auto atom = mol.getAtomWithIdx(tmpAtom->getIdx());
-    TEST_ASSERT(tmpAtom->getAtomicNum() == atom->getAtomicNum());
-    atom->setFormalCharge(tmpAtom->getFormalCharge());
-    atom->setNoImplicit(tmpAtom->getNoImplicit());
-    atom->setIsAromatic(tmpAtom->getIsAromatic());
-    atom->setNumExplicitHs(tmpAtom->getNumExplicitHs());
-    atom->setNumRadicalElectrons(tmpAtom->getNumRadicalElectrons());
-    atom->setChiralTag(tmpAtom->getChiralTag());
-  }
-  for (const auto tmpBond : tmp->bonds()) {
-    auto bond = mol.getBondWithIdx(tmpBond->getIdx());
-    TEST_ASSERT(tmpBond->getBeginAtomIdx() == bond->getBeginAtomIdx());
-    TEST_ASSERT(tmpBond->getEndAtomIdx() == bond->getEndAtomIdx());
-    bond->setBondType(tmpBond->getBondType());
-    bond->setBondDir(tmpBond->getBondDir());
-    bond->setIsAromatic(tmpBond->getIsAromatic());
-    bond->setIsConjugated(tmpBond->getIsConjugated());
-    if (tmpBond->getStereoAtoms().size() == 2) {
-      bond->setStereoAtoms(tmpBond->getStereoAtoms()[0],
-                           tmpBond->getStereoAtoms()[1]);
+  // iterate both molecules' atoms and bonds in parallel - they have matching indices
+  {
+    auto molAtomIt = mol.atoms().begin();
+    for (const auto tmpAtom : tmp->atoms()) {
+      auto atom = *molAtomIt;
+      ++molAtomIt;
+      TEST_ASSERT(tmpAtom->getAtomicNum() == atom->getAtomicNum());
+      atom->setFormalCharge(tmpAtom->getFormalCharge());
+      atom->setNoImplicit(tmpAtom->getNoImplicit());
+      atom->setIsAromatic(tmpAtom->getIsAromatic());
+      atom->setNumExplicitHs(tmpAtom->getNumExplicitHs());
+      atom->setNumRadicalElectrons(tmpAtom->getNumRadicalElectrons());
+      atom->setChiralTag(tmpAtom->getChiralTag());
     }
-    bond->setStereo(tmpBond->getStereo());
+  }
+  {
+    auto molBondIt = mol.bonds().begin();
+    for (const auto tmpBond : tmp->bonds()) {
+      auto bond = *molBondIt;
+      ++molBondIt;
+      TEST_ASSERT(tmpBond->getBeginAtomIdx() == bond->getBeginAtomIdx());
+      TEST_ASSERT(tmpBond->getEndAtomIdx() == bond->getEndAtomIdx());
+      bond->setBondType(tmpBond->getBondType());
+      bond->setBondDir(tmpBond->getBondDir());
+      bond->setIsAromatic(tmpBond->getIsAromatic());
+      bond->setIsConjugated(tmpBond->getIsConjugated());
+      if (tmpBond->getStereoAtoms().size() == 2) {
+        bond->setStereoAtoms(tmpBond->getStereoAtoms()[0],
+                             tmpBond->getStereoAtoms()[1]);
+      }
+      bond->setStereo(tmpBond->getStereo());
+    }
   }
   mol.updatePropertyCache(false);
 }
