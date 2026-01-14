@@ -316,17 +316,162 @@ std::vector<size_t> getRelevantSubstructTermIndices(
   return relevantIndices;
 }
 
+// ---------------------------------------------------------------------------
+// Specialized matchers for simple scoring patterns.
+// These avoid VF2 graph matching overhead by directly iterating atoms/bonds.
+// Each function is equivalent to the corresponding SMARTS pattern but runs
+// in O(n) time without the graph isomorphism overhead.
+// ---------------------------------------------------------------------------
+
+// Count bonds between two element types with double or aromatic bond order.
+// Matches: [#elem1]=,:[#elem2]
+inline unsigned int countDoubleOrAromaticBonds(const ROMol &mol, int elem1,
+                                               int elem2) {
+  unsigned int count = 0;
+  for (const auto bond : mol.bonds()) {
+    const auto bt = bond->getBondType();
+    if (bt != Bond::DOUBLE && bt != Bond::AROMATIC) {
+      continue;
+    }
+    const int a1 = bond->getBeginAtom()->getAtomicNum();
+    const int a2 = bond->getEndAtom()->getAtomicNum();
+    if ((a1 == elem1 && a2 == elem2) || (a1 == elem2 && a2 == elem1)) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+// Count methyl groups: [CX4H3] - sp3 carbon with exactly 3 total H
+inline unsigned int countMethyls(const ROMol &mol) {
+  unsigned int count = 0;
+  for (const auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() != 6) {
+      continue;
+    }
+    // X4 means total degree 4 (including implicit H)
+    if (atom->getTotalDegree() != 4) {
+      continue;
+    }
+    // H3 means exactly 3 total hydrogens
+    if (atom->getTotalNumHs() != 3) {
+      continue;
+    }
+    ++count;
+  }
+  return count;
+}
+
+// Count [C]=[!#1;!#6] - aliphatic carbon double-bonded to heteroatom
+inline unsigned int countCarbonDoubleHetero(const ROMol &mol) {
+  unsigned int count = 0;
+  for (const auto bond : mol.bonds()) {
+    if (bond->getBondType() != Bond::DOUBLE) {
+      continue;
+    }
+    const auto *a1 = bond->getBeginAtom();
+    const auto *a2 = bond->getEndAtom();
+    // [C] is aliphatic carbon (not aromatic)
+    // Check C double-bonded to heteroatom (not H, not C)
+    auto isAliphaticCarbonToHetero = [](const Atom *c, const Atom *het) {
+      return c->getAtomicNum() == 6 && !c->getIsAromatic() &&
+             het->getAtomicNum() != 1 && het->getAtomicNum() != 6;
+    };
+    if (isAliphaticCarbonToHetero(a1, a2) ||
+        isAliphaticCarbonToHetero(a2, a1)) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+// Count [c]=!@[N] - aromatic carbon double-bonded to nitrogen (exocyclic)
+inline unsigned int countAromaticCarbonExocyclicN(const ROMol &mol) {
+  unsigned int count = 0;
+  const auto *ringInfo = mol.getRingInfo();
+  for (const auto bond : mol.bonds()) {
+    if (bond->getBondType() != Bond::DOUBLE) {
+      continue;
+    }
+    // !@ means bond not in ring
+    if (ringInfo->numBondRings(bond->getIdx()) > 0) {
+      continue;
+    }
+    const auto *a1 = bond->getBeginAtom();
+    const auto *a2 = bond->getEndAtom();
+    // [c] is aromatic carbon, [N] is any nitrogen
+    auto isAromaticCarbonToN = [](const Atom *c, const Atom *n) {
+      return c->getAtomicNum() == 6 && c->getIsAromatic() &&
+             n->getAtomicNum() == 7;
+    };
+    if (isAromaticCarbonToN(a1, a2) || isAromaticCarbonToN(a2, a1)) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+// Pattern indices in getDefaultTautomerScoreSubstructs().
+// These must match the order of patterns in that function.
+// Used for O(1) dispatch to specialized matchers.
+namespace {
+enum PatternIdx {
+  kBenzoquinone = 0,
+  kOxim = 1,
+  kCarbonylO = 2,
+  kNO = 3,
+  kPO = 4,
+  kCHetero = 5,
+  kCHeteroHetero = 6,
+  kAromaticCN = 7,
+  kMethyl = 8,
+  kGuanidineTerminal = 9,
+  kGuanidineEndocyclic = 10,
+  kAciNitro = 11
+};
+}  // namespace
+
 int scoreSubstructsFiltered(const ROMol &mol,
                             const std::vector<SubstructTerm> &terms,
                             const std::vector<size_t> &relevantIndices) {
   int score = 0;
   SubstructMatchParameters params;
-  for (size_t idx : relevantIndices) {
+
+  for (const size_t idx : relevantIndices) {
     const auto &term = terms[idx];
     if (!term.matcher.getNumAtoms()) {
       continue;
     }
-    const auto nMatches = SubstructMatchCount(mol, term.matcher, params);
+
+    unsigned int nMatches = 0;
+
+    // Use specialized matchers for simple patterns, VF2 for complex ones
+    switch (idx) {
+      case kCarbonylO:
+        nMatches = countDoubleOrAromaticBonds(mol, 6, 8);  // C=O
+        break;
+      case kNO:
+        nMatches = countDoubleOrAromaticBonds(mol, 7, 8);  // N=O
+        break;
+      case kPO:
+        nMatches = countDoubleOrAromaticBonds(mol, 15, 8);  // P=O
+        break;
+      case kCHetero:
+        nMatches = countCarbonDoubleHetero(mol);
+        break;
+      case kAromaticCN:
+        nMatches = countAromaticCarbonExocyclicN(mol);
+        break;
+      case kMethyl:
+        nMatches = countMethyls(mol);
+        break;
+      default:
+        // Fall back to VF2 for complex patterns (benzoquinone, oxim,
+        // C(=hetero)-hetero, guanidine, aci-nitro)
+        nMatches = SubstructMatchCount(mol, term.matcher, params);
+        break;
+    }
+
     score += static_cast<int>(nMatches) * term.score;
   }
   return score;

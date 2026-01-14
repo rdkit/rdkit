@@ -98,8 +98,10 @@ RDKIT_MOLSTANDARDIZE_EXPORT std::vector<size_t> getRelevantSubstructTermIndices(
     const std::vector<SubstructTerm> &terms = getDefaultTautomerScoreSubstructs());
 
 //! Score substructures using only the terms at the specified indices.
-/// Use with getRelevantSubstructTermIndices for efficient scoring of many
-/// tautomers from the same parent molecule.
+/// Uses specialized matchers for simple patterns (C=O, N=O, P=O, methyl, etc.)
+/// and falls back to VF2 for complex patterns. Use with
+/// getRelevantSubstructTermIndices for efficient scoring of many tautomers
+/// from the same parent molecule.
 RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructsFiltered(
     const ROMol &mol, const std::vector<SubstructTerm> &terms,
     const std::vector<size_t> &relevantIndices);
