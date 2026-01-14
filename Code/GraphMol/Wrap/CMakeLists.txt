@@ -73,6 +73,10 @@ add_pytest(pyTestSGroups
 add_pytest(pyTestSCSR
          ${CMAKE_CURRENT_SOURCE_DIR}/testSCSR.py)
 
+add_pytest(pySubstructureMatch
+         ${CMAKE_CURRENT_SOURCE_DIR}/testSubstructureMatch.py)
+
+
 
 if (RDK_TEST_MULTITHREADED)
   add_pytest(pyTestThreads
@@ -86,3 +90,6 @@ add_pytest(pyTestPropertyLists
 
 add_pytest(pyCDXMLTest
          ${CMAKE_CURRENT_SOURCE_DIR}/test_cdxml.py)
+
+add_pytest(pySubsetTest
+         ${CMAKE_CURRENT_SOURCE_DIR}/test_subset.py)

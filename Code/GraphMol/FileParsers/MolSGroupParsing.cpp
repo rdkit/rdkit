@@ -1235,6 +1235,14 @@ std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
       std::ostringstream errout;
       errout << "Unsupported SGroup type '" << type << "' on line " << line;
       throw MolFileUnhandledFeatureException(errout.str());
+    } else if (!strictParsing &&
+               nSgroups == std::numeric_limits<unsigned int>::max() &&
+               lineStream.fail()) {
+      // something went wrong and we didn't know how many SGroups to expect, and
+      // now we have seen something that doesn't look like an SGroup start.
+      // So we assume we're done.
+      nSgroups = 0;
+      break;
     }
 
     SubstanceGroup sgroup(mol, type);

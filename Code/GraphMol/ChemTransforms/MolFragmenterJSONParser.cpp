@@ -47,6 +47,8 @@ void parseMolzipParametersJSON(MolzipParams &params, const char *details_json) {
       pt.get<bool>("EnforceValenceRules", params.enforceValenceRules);
   params.generateCoordinates =
       pt.get<bool>("GenerateCoordinates", params.generateCoordinates);
+  params.alignCoordinates =
+      pt.get<bool>("AlignCoordinates", params.alignCoordinates);
 }
 
 }  // end namespace RDKit

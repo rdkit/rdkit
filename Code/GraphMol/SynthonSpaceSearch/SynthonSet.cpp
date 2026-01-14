@@ -554,4 +554,15 @@ std::unique_ptr<ROMol> SynthonSet::buildProduct(
   return details::buildProduct(synths);
 }
 
+void SynthonSet::assessRingFormers() {
+  d_numRingFormers = 0;
+  for (size_t i = 1; i < d_synthons.size(); ++i) {
+    for (size_t j = 0; j < i; ++j) {
+      if ((d_synthConnPatts[i] & d_synthConnPatts[j]).count() > 1) {
+        ++d_numRingFormers;
+      }
+    }
+  }
+}
+
 }  // namespace RDKit::SynthonSpaceSearch

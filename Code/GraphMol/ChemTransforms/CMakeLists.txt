@@ -1,6 +1,6 @@
 
 rdkit_library(ChemTransforms ChemTransforms.cpp
-  MolFragmenter.cpp MolFragmenterJSONParser.cpp LINK_LIBRARIES
+  MolFragmenter.cpp MolFragmenterJSONParser.cpp MolZip.cpp LINK_LIBRARIES
   GraphMol SubstructMatch SmilesParse Depictor)
 target_compile_definitions(ChemTransforms PRIVATE -DRDKIT_CHEMTRANSFORMS_BUILD)
 

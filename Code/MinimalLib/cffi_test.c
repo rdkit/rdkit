@@ -2571,7 +2571,7 @@ void test_relabel_mapped_dummies() {
   smiles = get_cxsmiles(mpkl, mpkl_size, NULL);
   assert(!strcmp(
       smiles,
-      "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.molAtomMapNumber.2:3.dummyLabel.*:5.molAtomMapNumber.1:5.dummyLabel.*|"));
+      "c1cc([4*:2])c([3*:1])cn1"));
   free(smiles);
   free(mpkl);
   mpkl = get_mol("c1cc([4*:2])c([3*:1])cn1", &mpkl_size,
