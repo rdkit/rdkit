@@ -391,7 +391,13 @@ STR_VECT ROMol::getPropList(bool includePrivate, bool includeComputed) const {
 bool ROMol::hasProp(const std::string_view &key) const {
   PropToken token(key);
   if (token == detail::computedPropNameToken) {
-    return true;
+    // Check if there are any computed properties
+    for (auto it = dp_mol->beginProps(true); it != dp_mol->endProps(); ++it) {
+      if (it->isComputed()) {
+        return true;
+      }
+    }
+    return false;
   }
   return dp_mol->hasProp(token);
 }
