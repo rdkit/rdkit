@@ -365,6 +365,8 @@ inline constexpr std::string_view _QueryAtomGenericLabel = "_QueryAtomGenericLab
 inline constexpr std::string_view _displayLabel = "_displayLabel";
 inline constexpr std::string_view _displayLabelW = "_displayLabelW";
 
+///////////////////////////////////////////////////////////////
+// misc props
 RDKIT_RDGENERAL_EXPORT extern const PropToken _hasMassQueryToken;  // atom bool
 
 RDKIT_RDGENERAL_EXPORT extern const PropToken _ChiralityPossibleToken;  // bool
