@@ -21,20 +21,22 @@
 #include <chrono>
 #endif
 
+#include <boost/algorithm/string.hpp>
+
 #include <catch2/catch_all.hpp>
 
-#include <GraphMol/MolOps.h>
+#include <RDGeneral/BoostStartInclude.h>
+
+#include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/MarvinParse/MarvinParser.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
-#include <GraphMol/MarvinParse/MarvinParser.h>
-#include <GraphMol/test_fixtures.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/test_fixtures.h>
 
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include "CIPLabeler.h"
@@ -1405,4 +1407,112 @@ $$$$
   // This will fail if this chiral center is not resolved first (which
   // depends on the order of the atoms in the molBlock).
   CHECK(at->getProp<std::string>(common_properties::_CIPCode) == "S");
+}
+
+// Do we annotate/label the molecule with the ranks of their neighbors?
+TEST_CASE("neighbor_annotations", "[basic]") {
+  SECTION("chirality") {
+    auto mol = R"(C1C[C@H](C)C(=O)C[C@H]1O)"_smiles;
+    REQUIRE(mol);
+
+    auto a = mol->getAtomWithIdx(2);
+    REQUIRE(a->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    CIPLabeler::assignCIPLabels(*mol, 100);
+
+    std::vector<unsigned int> ranked_anchors;
+    REQUIRE(a->getPropIfPresent(common_properties::_CIPNeighborRanks,
+                                ranked_anchors) == true);
+    CHECK(ranked_anchors == std::vector<unsigned int>{4, 1, 3});
+  }
+
+  SECTION("bond_stereo") {
+    auto mol = R"(C/C=C(C)/N)"_smiles;
+    REQUIRE(mol);
+
+    auto b = mol->getBondWithIdx(1);
+    REQUIRE(b->getBondType() == Bond::DOUBLE);
+
+    b->setStereoAtoms(0, 3);
+    auto &stereo_atoms1 = mol->getBondWithIdx(1)->getStereoAtoms();
+    CHECK(stereo_atoms1[0] == 0);
+    CHECK(stereo_atoms1[1] == 3);
+
+    CIPLabeler::assignCIPLabels(*mol, 100);
+
+    std::vector<unsigned int> ranked_anchors;
+    REQUIRE(b->getPropIfPresent(common_properties::_CIPNeighborRanks,
+                                ranked_anchors) == true);
+    CHECK(ranked_anchors == std::vector<unsigned int>{0, 4});
+  }
+
+  SECTION("atropisomer") {
+    auto mol = R"(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 13 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.488395 0.189263 0.000000 0
+M  V30 2 C -1.189356 0.939262 0.000000 0
+M  V30 3 C -1.189356 2.439262 0.000000 0
+M  V30 4 C -2.488395 3.189262 0.000000 0
+M  V30 5 C -3.787433 2.439262 0.000000 0
+M  V30 6 N -3.787433 0.939262 0.000000 0
+M  V30 7 C -2.488395 -1.310738 0.000000 0
+M  V30 8 N -3.701920 -2.192416 0.000000 0
+M  V30 9 N -3.238394 -3.619001 0.000000 0
+M  V30 10 C -1.738395 -3.619001 0.000000 0
+M  V30 11 C -1.274869 -2.192416 0.000000 0
+M  V30 12 C 0.109682 0.189263 0.000000 0
+M  V30 13 C -5.128505 -1.728890 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 6 1
+M  V30 7 1 1 7
+M  V30 8 1 8 9
+M  V30 9 2 9 10
+M  V30 10 1 10 11
+M  V30 11 2 11 7
+M  V30 12 1 7 8 CFG=1
+M  V30 13 1 2 12
+M  V30 14 1 8 13
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STERAC1 ATOMS=(1 7)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+$$$$
+)"_ctab;
+    REQUIRE(mol);
+
+    auto b = mol->getBondWithIdx(6);
+    REQUIRE(b->getStereo() == Bond::STEREOATROPCW);
+
+    // Check that reference atoms for the atropisomer bond
+    // are atoms 1 and 7
+    Atropisomers::AtropAtomAndBondVec atomAndBondVecs[2];
+    REQUIRE(
+        Atropisomers::getAtropisomerAtomsAndBonds(b, atomAndBondVecs, *mol));
+
+    REQUIRE(atomAndBondVecs[0].second[0]->getOtherAtomIdx(
+                atomAndBondVecs[0].first->getIdx()) == 1);
+    REQUIRE(atomAndBondVecs[1].second[0]->getOtherAtomIdx(
+                atomAndBondVecs[1].first->getIdx()) == 7);
+
+    CIPLabeler::assignCIPLabels(*mol, 100);
+
+    // ... but the highest ranked anchors are 5 and 7
+    std::vector<unsigned int> ranked_anchors;
+    REQUIRE(b->getPropIfPresent(common_properties::_CIPNeighborRanks,
+                                ranked_anchors) == true);
+    CHECK(ranked_anchors == std::vector<unsigned int>{5, 7});
+  }
 }
