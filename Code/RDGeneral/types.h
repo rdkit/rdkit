@@ -65,12 +65,15 @@ inline constexpr std::string_view NullBond = "NullBond";
 inline constexpr std::string_view _2DConf = "_2DConf";
 inline constexpr std::string_view _3DConf = "_3DConf";
 inline constexpr std::string_view _AtomID = "_AtomID";
-inline constexpr std::string_view _BondsPotentialStereo = "_BondsPotentialStereo";
+inline constexpr std::string_view _BondsPotentialStereo =
+    "_BondsPotentialStereo";
 inline constexpr std::string_view _ChiralAtomRank = "_chiralAtomRank";
 inline constexpr std::string_view _CIPCode = "_CIPCode";
 inline constexpr std::string_view _CIPRank = "_CIPRank";
 inline constexpr std::string_view _CIPComputed = "_CIPComputed";
-inline constexpr std::string_view _CanonicalRankingNumber = "_CanonicalRankingNumber";
+inline constexpr std::string_view _CIPNeighborRanks = "_CIPNeighborRanks";
+inline constexpr std::string_view _CanonicalRankingNumber =
+    "_CanonicalRankingNumber";
 inline constexpr std::string_view _ChiralityPossible = "_ChiralityPossible";
 inline constexpr std::string_view _CrippenLogP = "_CrippenLogP";
 inline constexpr std::string_view _CrippenMR = "_CrippenMR";
@@ -88,12 +91,14 @@ inline constexpr std::string_view _MolFileBondCfg = "_MolFileBondCfg";
 
 inline constexpr std::string_view _Name = "_Name";
 inline constexpr std::string_view _NeedsQueryScan = "_NeedsQueryScan";
-inline constexpr std::string_view _NonExplicit3DChirality = "_NonExplicit3DChirality";
+inline constexpr std::string_view _NonExplicit3DChirality =
+    "_NonExplicit3DChirality";
 inline constexpr std::string_view _QueryFormalCharge = "_QueryFormalCharge";
 inline constexpr std::string_view _QueryHCount = "_QueryHCount";
 inline constexpr std::string_view _QueryIsotope = "_QueryIsotope";
 inline constexpr std::string_view _QueryMass = "_QueryMass";
-inline constexpr std::string_view _ReactionDegreeChanged = "_ReactionDegreeChanged";
+inline constexpr std::string_view _ReactionDegreeChanged =
+    "_ReactionDegreeChanged";
 inline constexpr std::string_view reactantAtomIdx = "react_atom_idx";
 inline constexpr std::string_view reactionMapNum = "old_mapno";
 inline constexpr std::string_view reactantIdx = "react_idx";
@@ -102,14 +107,16 @@ inline constexpr std::string_view _RingClosures = "_RingClosures";
 inline constexpr std::string_view _SLN_s = "_SLN_s";
 inline constexpr std::string_view _SmilesStart = "_SmilesStart";
 inline constexpr std::string_view _StereochemDone = "_StereochemDone";
-inline constexpr std::string_view _TraversalBondIndexOrder = "_TraversalBondIndexOrder";
+inline constexpr std::string_view _TraversalBondIndexOrder =
+    "_TraversalBondIndexOrder";
 inline constexpr std::string_view _TraversalRingClosureBond =
     "_TraversalRingClosureBond";
 inline constexpr std::string_view _TraversalStartPoint = "_TraversalStartPoint";
 inline constexpr std::string_view _TriposAtomType = "_TriposAtomType";
 inline constexpr std::string_view _Unfinished_SLN_ = "_Unfinished_SLN_";
 inline constexpr std::string_view _UnknownStereo = "_UnknownStereo";
-inline constexpr std::string_view _connectivityHKDeltas = "_connectivityHKDeltas";
+inline constexpr std::string_view _connectivityHKDeltas =
+    "_connectivityHKDeltas";
 inline constexpr std::string_view _connectivityNVals = "_connectivityNVals";
 inline constexpr std::string_view _crippenLogP = "_crippenLogP";
 inline constexpr std::string_view _crippenLogPContribs = "_crippenLogPContribs";
@@ -131,10 +138,13 @@ inline constexpr std::string_view _ringStereochemCand = "_ringStereochemCand";
 inline constexpr std::string_view _ringStereoOtherAtom = "_ringStereoOtherAtom";
 inline constexpr std::string_view _mesoOtherAtom = "_mesoOtherAtom";
 inline constexpr std::string_view _chiralPermutation = "_chiralPermutation";
-inline constexpr std::string_view _smilesAtomOutputOrder = "_smilesAtomOutputOrder";
-inline constexpr std::string_view _smilesBondOutputOrder = "_smilesBondOutputOrder";
+inline constexpr std::string_view _smilesAtomOutputOrder =
+    "_smilesAtomOutputOrder";
+inline constexpr std::string_view _smilesBondOutputOrder =
+    "_smilesBondOutputOrder";
 inline constexpr std::string_view _starred = "_starred";
-inline constexpr std::string_view _supplementalSmilesLabel = "_supplementalSmilesLabel";
+inline constexpr std::string_view _supplementalSmilesLabel =
+    "_supplementalSmilesLabel";
 inline constexpr std::string_view _tpsa = "_tpsa";
 inline constexpr std::string_view _tpsaAtomContribs = "_tpsaAtomContribs";
 inline constexpr std::string_view _unspecifiedOrder = "_unspecifiedOrder";
@@ -167,7 +177,8 @@ inline constexpr std::string_view molRingBondCount = "molRingBondCount";
 inline constexpr std::string_view molSubstCount = "molSubstCount";
 inline constexpr std::string_view molAttachPoint = "molAttchpt";
 inline constexpr std::string_view molAttachOrder = "molAttchord";
-inline constexpr std::string_view molAttachOrderTemplate = "molAttachOrderTemplate";
+inline constexpr std::string_view molAttachOrderTemplate =
+    "molAttachOrderTemplate";
 inline constexpr std::string_view molAtomClass = "molClass";
 inline constexpr std::string_view molAtomSeqId = "molSeqid";
 inline constexpr std::string_view molAtomSeqName = "molSeqName";
@@ -182,7 +193,8 @@ inline constexpr std::string_view atomNote = "atomNote";
 inline constexpr std::string_view bondNote = "bondNote";
 inline constexpr std::string_view _isotopicHs = "_isotopicHs";
 
-inline constexpr std::string_view _QueryAtomGenericLabel = "_QueryAtomGenericLabel";
+inline constexpr std::string_view _QueryAtomGenericLabel =
+    "_QueryAtomGenericLabel";
 
 // molecule drawing
 inline constexpr std::string_view _displayLabel = "_displayLabel";
