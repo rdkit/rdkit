@@ -44,6 +44,8 @@ void Sp2Bond::setPrimaryLabel(Descriptor desc) {
       dp_bond->setStereoAtoms(carriers[0]->getIdx(), carriers[1]->getIdx());
       dp_bond->setStereo(d_cfg);
       dp_bond->setProp(common_properties::_CIPCode, to_string(desc));
+      dp_bond->setProp(common_properties::_CIPNeighborRanks, d_ranked_anchors,
+                       true);
       return;
     }
     case Descriptor::R:
@@ -85,6 +87,8 @@ Descriptor Sp2Bond::label(const Rules &comp) {
 Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
   const auto &focus1 = getFoci()[0];
   const auto &focus2 = getFoci()[1];
+
+  d_ranked_anchors.clear();
 
   const auto &internal = findInternalEdge(root1->getEdges(), focus1, focus2);
   if (internal == nullptr) {
@@ -131,6 +135,31 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
     }
   }
 
+  {
+    // At this point, edges1 and edges2 are sorted by priority starting from
+    // this node. Record that now! - they may be resorted after processing
+    // other nodes.
+    auto ranked_carrier1 = edges1[0]->getEnd()->getAtom();
+    auto ranked_carrier2 = edges2[0]->getEnd()->getAtom();
+
+    // This seems weird, but we need it: the paper on which this algorithm is
+    // based (see "Rule 2" in the paper referenced in CIPLabeler.h) it is
+    // stated that, in CIP ranks, H > 1H, so implicit H actually has a higher
+    // priority than 1H (!!!). This means we need a placeholder for
+    // (implicit) atoms that might not be there!
+    auto carrier1_idx =
+        (ranked_carrier1 ? ranked_carrier1->getIdx() : IMPLICITH);
+    auto carrier2_idx =
+        (ranked_carrier2 ? ranked_carrier2->getIdx() : IMPLICITH);
+
+    // Make sure the stereo atoms are in the right order
+    if (edges1[0]->getBeg()->getAtom() == focus1) {
+      d_ranked_anchors.assign({carrier1_idx, carrier2_idx});
+    } else if (edges2[0]->getBeg()->getAtom() == focus1) {
+      d_ranked_anchors.assign({carrier2_idx, carrier1_idx});
+    }
+  }
+
   if (config == Bond::STEREOCIS) {
     if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
       return Descriptor::seqCis;
@@ -144,6 +173,7 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
       return Descriptor::E;
     }
   }
+
   return Descriptor::UNKNOWN;
 }
 
