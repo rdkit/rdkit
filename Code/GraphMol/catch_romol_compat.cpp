@@ -602,7 +602,7 @@ TEST_CASE("ROMol Compat Mol properties") {
     CHECK_THAT(mol.getPropList(true, true),
                Catch::Matchers::UnorderedEquals(std::vector<std::string>(
                    {floatToken, signedIntToken, privateToken,
-                    detail::computedPropName})));
+                    std::string(detail::computedPropName)})));
     CHECK_THAT(mol.getPropList(true, false), Catch::Matchers::UnorderedEquals(std::vector<std::string>({floatToken, privateToken})));
     CHECK_THAT(mol.getPropList(false, true), Catch::Matchers::UnorderedEquals(std::vector<std::string>({floatToken, signedIntToken,})));
     CHECK_THAT(mol.getPropList(false, false), Catch::Matchers::UnorderedEquals(std::vector<std::string>({floatToken})));

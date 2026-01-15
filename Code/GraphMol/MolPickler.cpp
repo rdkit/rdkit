@@ -334,7 +334,7 @@ template <typename COUNT_TYPE>
 bool _picklePropertiesFromIterator(
     std::ostream &ss, const RDMol &mol, RDMol::Scope scope, uint32_t index,
     unsigned int pickleFlags,
-    const std::unordered_set<std::string> &ignoreProps,
+    const std::unordered_set<std::string_view> &ignoreProps,
     const CustomPropHandlerVec &handlers = {}) {
   if (!pickleFlags) {
     return false;
@@ -667,7 +667,7 @@ void unpicklePropertiesFromIterator(std::istream &ss, RDMol &mol,
 bool _pickleAtomPropertiesFromMol(std::ostream &ss, const RDMol &mol,
                                   uint32_t atomIdx, unsigned int pickleFlags) {
   const static PropTracker aprops;
-  static std::unordered_set<std::string> ignoreProps;
+  static std::unordered_set<std::string_view> ignoreProps;
   if (ignoreProps.empty()) {
     for (const auto &pr : aprops.explicitAtomProps) {
       ignoreProps.insert(pr.first);

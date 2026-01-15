@@ -380,7 +380,7 @@ STR_VECT ROMol::getPropList(bool includePrivate, bool includeComputed) const {
     auto end = dp_mol->endProps();
     for (; begin != end; ++begin) {
       if (begin->isComputed()) {
-        res.push_back(detail::computedPropName);
+        res.push_back(std::string(detail::computedPropName));
         break;
       }
     }
