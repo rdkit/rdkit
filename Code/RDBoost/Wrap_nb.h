@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2008 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2026 greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,23 +8,12 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_WRAP_H_
-#define _RD_WRAP_H_
+#ifndef RD_WRAP_NB_H
+#define RD_WRAP_NB_H
 
 #include <RDGeneral/Invariant.h>
 
 #include <Numerics/Vector.h>
-#include <RDGeneral/BoostStartInclude.h>
-//
-// Generic Wrapper utility functionality
-//
-#include <boost/python.hpp>
-#include <boost/python/stl_iterator.hpp>
-#include <boost/dynamic_bitset.hpp>
-
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include "list_indexing_suite.hpp"
-#include <RDGeneral/BoostEndInclude.h>
 #include <memory>
 #include <cstdint>
 
@@ -32,8 +21,8 @@
 #include <string_view>
 #include <vector>
 #include <RDGeneral/Exceptions.h>
-
-namespace python = boost::python;
+#include <nanobind/nanobind.h>
+namespace nb = nanobind;
 
 RDKIT_RDBOOST_EXPORT void throw_index_error(
     int key);  //!< construct and throw an \c IndexError
@@ -58,15 +47,16 @@ RDKIT_RDBOOST_EXPORT void translate_key_error(KeyErrorException const &e);
   \throws AttributeError if the attribute does not exist
   \throws Python error if assignment fails
 */
-RDKIT_RDBOOST_EXPORT void safeSetattr(python::object self,
-                                      std::string const &name,
-                                      python::object const &value);
+RDKIT_RDBOOST_EXPORT void safeSetattr(nb::object self, std::string const &name,
+                                      nb::object const &value);
 
 #ifdef INVARIANT_EXCEPTION_METHOD
 RDKIT_RDBOOST_EXPORT void throw_runtime_error(
     const std::string err);  //!< construct and throw a \c ValueError
 RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 #endif
+
+#if 0
 
 //! \brief Checks whether there is already a registered Python converter for a
 //!        particular type.
@@ -181,7 +171,7 @@ RDKIT_RDBOOST_EXPORT RDNumeric::DoubleVector *translateDoubleSeq(
     const python::object &doubleSeq);
 RDKIT_RDBOOST_EXPORT std::vector<unsigned int> *translateIntSeq(
     const python::object &intSeq);
-
+#endif
 // Quiet warnings on GCC
 #if defined(__GNUC__) || defined(__GNUG__)
 #define RDUNUSED __attribute__((__unused__))
@@ -221,6 +211,7 @@ class RDKIT_RDBOOST_EXPORT RDUNUSED NOGIL {
 struct RDUNUSED NOGIL {};
 #endif
 
+#if 0
 // -------------------
 // This block was adapted from this mailing list post by Matthew Scouten:
 // https://mail.python.org/pipermail/cplusplus-sig/2009-May/014505.html
@@ -346,5 +337,5 @@ struct rdkit_pickle_suite : python::pickle_suite {
 
   static bool getstate_manages_dict() { return true; }
 };
-
+#endif
 #endif

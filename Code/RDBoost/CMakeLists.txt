@@ -1,3 +1,4 @@
+if(RDK_BUILD_PYTHON_WRAPPERS)
 rdkit_library(RDBoost Wrap.cpp
               LINK_LIBRARIES RDGeneral rdkit_py_base)
 if(NOT WIN32 AND
@@ -17,12 +18,25 @@ rdkit_headers(Wrap.h PySequenceHolder.h
               pyint_api.h
               DEST RDBoost)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.13.0")
    cmake_policy(SET CMP0079 NEW)
 endif()
 add_subdirectory(Wrap)
 endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+
+rdkit_headers(Wrap.h PySequenceHolder.h
+              python_streambuf.h
+              DEST RDBoost)
+
+
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.13.0")
+   cmake_policy(SET CMP0079 NEW)
+endif()
+add_subdirectory(Wrap2)
+endif()
+
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
   # this is a particularly nasty little bit of hackery.
