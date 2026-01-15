@@ -38,7 +38,7 @@ Tetrahedral::Tetrahedral(const CIPMol &mol, Atom *focus)
     // than the implicit H.
     carriers.push_back(nullptr);
   }
-  POSTCONDITION(carriers.size() == 4, "configurtion must have 4 carriers");
+  POSTCONDITION(carriers.size() == 4, "configuration must have 4 carriers");
 
   setCarriers(std::move(carriers));
 };
@@ -48,9 +48,13 @@ void Tetrahedral::setPrimaryLabel(Descriptor desc) {
     case Descriptor::R:
     case Descriptor::S:
     case Descriptor::r:
-    case Descriptor::s:
-      getFocus()->setProp(common_properties::_CIPCode, to_string(desc));
+    case Descriptor::s: {
+      auto chiralAtom = getFocus();
+      chiralAtom->setProp(common_properties::_CIPCode, to_string(desc));
+      chiralAtom->setProp(common_properties::_CIPNeighborRanks,
+                          d_ranked_anchors, true);
       return;
+    }
     case Descriptor::seqTrans:
     case Descriptor::seqCis:
     case Descriptor::E:
@@ -93,9 +97,11 @@ Descriptor Tetrahedral::label(Node *node, Digraph &digraph, const Rules &comp) {
   return label(node, comp);
 }
 
-Descriptor Tetrahedral::label(Node *node, const Rules &comp) const {
+Descriptor Tetrahedral::label(Node *node, const Rules &comp) {
   auto focus = getFocus();
   auto edges = node->getEdges();
+
+  d_ranked_anchors.clear();
 
   // something not right!?! bad creation
   if (edges.size() < 3) {
@@ -142,14 +148,30 @@ Descriptor Tetrahedral::label(Node *node, const Rules &comp) const {
   // it must be different than the representation of the implicit H.
   auto ordered = std::vector<Atom *>(4, nullptr);
   int idx = 0;
+  d_ranked_anchors.reserve(4);
   for (const auto &edge : edges) {
     if (edge->getEnd()->isSet(Node::BOND_DUPLICATE) ||
         edge->getEnd()->isSet(Node::IMPL_HYDROGEN)) {
       continue;
     }
-    ordered[idx] = edge->getEnd()->getAtom();
+
+    auto atom = edge->getEnd()->getAtom();
+    ordered[idx] = atom;
+
+    // This seems weird, but we need it: the paper on which this algorithm is
+    // based (see "Rule 2" in the paper referenced in CIPLabeler.h) it is
+    // stated that, in CIP ranks, H > 1H, so implicit H actually has a higher
+    // priority than 1H (!!!). This means we need a placeholder for
+    // (implicit) atoms that might not be there!
+    if (atom) {
+      d_ranked_anchors.push_back(atom->getIdx());
+    } else {
+      d_ranked_anchors.push_back(IMPLICITH);
+    }
+
     ++idx;
   }
+
   if (idx < 4) {
     ordered[idx] = focus;
   }

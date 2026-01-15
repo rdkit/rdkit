@@ -24,6 +24,10 @@ class Bond;
 
 namespace CIPLabeler {
 
+// used to represent the index of implicit Hs
+inline constexpr unsigned int IMPLICITH =
+    std::numeric_limits<unsigned int>::max();
+
 class Rules;
 
 class Configuration {
