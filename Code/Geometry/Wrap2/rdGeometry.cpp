@@ -18,9 +18,11 @@
 namespace nb = nanobind;
 void wrap_point(nb::module_ &m);
 void wrap_uniformGrid(nb::module_ &m);
+void wrap_uniformrealvalueGrid(nb::module_ &m);
 
 NB_MODULE(rdGeometry, m) {
   m.doc() = "Module containing geometry objects like points, grids, etc.";
   wrap_point(m);
   wrap_uniformGrid(m);
+  wrap_uniformrealvalueGrid(m);
 }

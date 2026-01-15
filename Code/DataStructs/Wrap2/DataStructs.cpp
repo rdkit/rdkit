@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2026 greg Landrum
+// Copyright (C) 2026 greg Landrum
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,9 +11,9 @@
 #include <nanobind/nanobind.h>
 
 #include <DataStructs/DiscreteValueVect.h>
+#include <DataStructs/RealValueVect.h>
 // #include <DataStructs/BitVects.h>
 // #include <DataStructs/SparseIntVect.h>
-// #include <DataStructs/RealValueVect.h>
 #include <numpy/npy_common.h>
 #include <RDBoost/import_array.h>
 // #include <RDBoost/pyint_api.h>
@@ -26,7 +26,7 @@ void wrap_discreteValVect(nb::module_ &m);
 // void wrap_EBV();
 // void wrap_BitOps();
 // void wrap_Utils();
-// void wrap_realValVect();
+void wrap_realValVect(nb::module_ &m);
 // void wrap_sparseIntVect();
 // void wrap_FPB();
 
@@ -83,13 +83,17 @@ NB_MODULE(cDataStructs, m) {
   // wrap_EBV();
   // wrap_BitOps();
   wrap_discreteValVect(m);
-  // wrap_realValVect();
+  wrap_realValVect(m);
   // wrap_sparseIntVect();
   // wrap_FPB();
   m.def("ConvertToNumpyArray",
         (void (*)(const RDKit::DiscreteValueVect &,
                   nb::object))convertToIntNumpyArray,
         "bv"_a, "destArray"_a);
+  m.def("ConvertToNumpyArray",
+        (void (*)(const RDKit::RealValueVect &,
+                  nb::object))convertToDoubleNumpyArray,
+        "rvv"_a, "destArray"_a);
 #if 0
   python::def(
       "ConvertToNumpyArray",
@@ -111,9 +115,5 @@ NB_MODULE(cDataStructs, m) {
               (void (*)(const RDKit::SparseIntVect<boost::uint64_t> &,
                         python::object))convertToIntNumpyArray,
               (python::arg("bv"), python::arg("destArray")));
-  python::def("ConvertToNumpyArray",
-              (void (*)(const RDKit::RealValueVect &,
-                        python::object))convertToDoubleNumpyArray,
-              (python::arg("rvv"), python::arg("destArray")));
 #endif
 }

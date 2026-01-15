@@ -590,16 +590,16 @@ class TestCase(unittest.TestCase):
       bPt1.y = -2.0
       bPt2.y = -2.0
 
-  # def test4UniformRealValueGrid(self):
-  #   ugrid = geom.UniformRealValueGrid3D(20, 18, 15)
-  #   self.assertTrue(ugrid.GetNumX() == 40)
-  #   self.assertTrue(ugrid.GetNumY() == 36)
-  #   self.assertTrue(ugrid.GetNumZ() == 30)
-  #   dvect = ugrid.GetOccupancyVect()
-  #   ugrid = geom.UniformRealValueGrid3D(20, 18, 15, 0.5)
-  #   ugrid.SetVal(50, 2.3)
-  #   val = ugrid.GetVal(50)
-  #   self.assertTrue(feq(val, 2.3))
+  def test4UniformRealValueGrid(self):
+    ugrid = geom.UniformRealValueGrid3D(20, 18, 15)
+    self.assertTrue(ugrid.GetNumX() == 40)
+    self.assertTrue(ugrid.GetNumY() == 36)
+    self.assertTrue(ugrid.GetNumZ() == 30)
+    dvect = ugrid.GetOccupancyVect()
+    ugrid = geom.UniformRealValueGrid3D(20, 18, 15, 0.5)
+    ugrid.SetVal(50, 2.3)
+    val = ugrid.GetVal(50)
+    self.assertTrue(feq(val, 2.3))
 
   def test5PointPickles(self):
     pt = geom.Point3D(2.0, -3.0, 1.0)
@@ -631,16 +631,16 @@ class TestCase(unittest.TestCase):
     self.assertTrue(grd2.GetNumZ() == 16)
     self.assertTrue(geom.TanimotoDistance(grd, grd2) == 0.0)
 
-  # def test7RealGridPickles(self):
-  #   grd = geom.UniformRealValueGrid3D(10.0, 9.0, 8.0, 0.5)
-  #   self.assertTrue(grd.GetNumX() == 20)
-  #   self.assertTrue(grd.GetNumY() == 18)
-  #   self.assertTrue(grd.GetNumZ() == 16)
+  def test7RealGridPickles(self):
+    grd = geom.UniformRealValueGrid3D(10.0, 9.0, 8.0, 0.5)
+    self.assertTrue(grd.GetNumX() == 20)
+    self.assertTrue(grd.GetNumY() == 18)
+    self.assertTrue(grd.GetNumZ() == 16)
 
-  #   grd2 = pickle.loads(pickle.dumps(grd))
-  #   self.assertTrue(grd2.GetNumX() == 20)
-  #   self.assertTrue(grd2.GetNumY() == 18)
-  #   self.assertTrue(grd2.GetNumZ() == 16)
+    grd2 = pickle.loads(pickle.dumps(grd))
+    self.assertTrue(grd2.GetNumX() == 20)
+    self.assertTrue(grd2.GetNumY() == 18)
+    self.assertTrue(grd2.GetNumZ() == 16)
 
   def test8GridOps(self):
     grd = geom.UniformGrid3D(10, 10, 10)
@@ -679,50 +679,50 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(geom.TanimotoDistance(grd4, grd), 1.0))
     self.assertTrue(feq(geom.TanimotoDistance(grd4, grd2), .5))
 
-  # def test9RealGridOps(self):
-  #   grd1 = geom.UniformRealValueGrid3D(5.0, 5.0, 5.0, 0.1)
-  #   grd2 = geom.UniformRealValueGrid3D(5.0, 5.0, 5.0, 0.1)
+  def test9RealGridOps(self):
+    grd1 = geom.UniformRealValueGrid3D(5.0, 5.0, 5.0, 0.1)
+    grd2 = geom.UniformRealValueGrid3D(5.0, 5.0, 5.0, 0.1)
 
-  #   grd1.SetVal(50, 37.37)
-  #   grd2.SetVal(50, 1.03)
-  #   grd3 = copy.deepcopy(grd2)
-  #   grd4 = geom.UniformRealValueGrid3D(grd2)
+    grd1.SetVal(50, 37.37)
+    grd2.SetVal(50, 1.03)
+    grd3 = copy.deepcopy(grd2)
+    grd4 = geom.UniformRealValueGrid3D(grd2)
 
-  #   grd1 |= grd2
-  #   self.assertTrue(feq(grd1.GetVal(50), 37.37))
-  #   self.assertTrue(feq(grd2.GetVal(50), 1.03))
+    grd1 |= grd2
+    self.assertTrue(feq(grd1.GetVal(50), 37.37))
+    self.assertTrue(feq(grd2.GetVal(50), 1.03))
 
-  #   grd2 |= grd1
-  #   self.assertTrue(feq(grd1.GetVal(50), 37.37))
-  #   self.assertTrue(feq(grd2.GetVal(50), 37.37))
+    grd2 |= grd1
+    self.assertTrue(feq(grd1.GetVal(50), 37.37))
+    self.assertTrue(feq(grd2.GetVal(50), 37.37))
 
-  #   grd2 &= grd3
-  #   self.assertTrue(feq(grd2.GetVal(50), 1.03))
-  #   self.assertTrue(feq(grd3.GetVal(50), 1.03))
+    grd2 &= grd3
+    self.assertTrue(feq(grd2.GetVal(50), 1.03))
+    self.assertTrue(feq(grd3.GetVal(50), 1.03))
 
-  #   grd3 &= grd1
-  #   self.assertTrue(feq(grd1.GetVal(50), 37.37))
-  #   self.assertTrue(feq(grd3.GetVal(50), 1.03))
+    grd3 &= grd1
+    self.assertTrue(feq(grd1.GetVal(50), 37.37))
+    self.assertTrue(feq(grd3.GetVal(50), 1.03))
 
-  #   grd2 &= grd4
-  #   self.assertTrue(feq(grd2.GetVal(50), 1.03))
-  #   self.assertTrue(feq(grd4.GetVal(50), 1.03))
+    grd2 &= grd4
+    self.assertTrue(feq(grd2.GetVal(50), 1.03))
+    self.assertTrue(feq(grd4.GetVal(50), 1.03))
 
-  #   grd4 &= grd1
-  #   self.assertTrue(feq(grd1.GetVal(50), 37.37))
-  #   self.assertTrue(feq(grd4.GetVal(50), 1.03))
+    grd4 &= grd1
+    self.assertTrue(feq(grd1.GetVal(50), 37.37))
+    self.assertTrue(feq(grd4.GetVal(50), 1.03))
 
-  #   grd1 += grd2
-  #   self.assertTrue(feq(grd1.GetVal(50), 38.40))
-  #   self.assertTrue(feq(grd2.GetVal(50), 1.03))
+    grd1 += grd2
+    self.assertTrue(feq(grd1.GetVal(50), 38.40))
+    self.assertTrue(feq(grd2.GetVal(50), 1.03))
 
-  #   grd1 -= grd2
-  #   self.assertTrue(feq(grd1.GetVal(50), 37.37))
-  #   self.assertTrue(feq(grd2.GetVal(50), 1.03))
+    grd1 -= grd2
+    self.assertTrue(feq(grd1.GetVal(50), 37.37))
+    self.assertTrue(feq(grd2.GetVal(50), 1.03))
 
-  #   grd2 -= grd1
-  #   self.assertTrue(feq(grd1.GetVal(50), 37.37))
-  #   self.assertTrue(feq(grd2.GetVal(50), -36.34))
+    grd2 -= grd1
+    self.assertTrue(feq(grd1.GetVal(50), 37.37))
+    self.assertTrue(feq(grd2.GetVal(50), -36.34))
 
   def test10Dihedrals(self):
     p1 = geom.Point3D(1, 0, 0)
@@ -785,25 +785,25 @@ class TestCase(unittest.TestCase):
     self.assertEqual(yi, 2)
     self.assertEqual(zi, 1)
 
-  # def test12UniformRealGridIndices(self):
-  #   ugrid = geom.UniformRealValueGrid3D(20, 18, 15)
-  #   idx = ugrid.GetGridIndex(3, 2, 1)
-  #   xi, yi, zi = ugrid.GetGridIndices(idx)
-  #   self.assertEqual(xi, 3)
-  #   self.assertEqual(yi, 2)
-  #   self.assertEqual(zi, 1)
+  def test12UniformRealGridIndices(self):
+    ugrid = geom.UniformRealValueGrid3D(20, 18, 15)
+    idx = ugrid.GetGridIndex(3, 2, 1)
+    xi, yi, zi = ugrid.GetGridIndices(idx)
+    self.assertEqual(xi, 3)
+    self.assertEqual(yi, 2)
+    self.assertEqual(zi, 1)
 
-  #   pt = ugrid.GetOffset()
-  #   ugrid.SetValPoint(pt, 2.3)
-  #   idx = ugrid.GetGridPointIndex(pt)
-  #   self.assertTrue(feq(ugrid.GetValPoint(pt), 2.3))
-  #   self.assertTrue(idx == 0)
-  #   self.assertTrue(feq(ugrid.GetVal(idx), 2.3))
+    pt = ugrid.GetOffset()
+    ugrid.SetValPoint(pt, 2.3)
+    idx = ugrid.GetGridPointIndex(pt)
+    self.assertTrue(feq(ugrid.GetValPoint(pt), 2.3))
+    self.assertTrue(idx == 0)
+    self.assertTrue(feq(ugrid.GetVal(idx), 2.3))
 
-  #   pt2 = ugrid.GetGridPointLoc(idx)
-  #   self.assertTrue(feq(pt.x, pt2.x))
-  #   self.assertTrue(feq(pt.y, pt2.y))
-  #   self.assertTrue(feq(pt.z, pt2.z))
+    pt2 = ugrid.GetGridPointLoc(idx)
+    self.assertTrue(feq(pt.x, pt2.x))
+    self.assertTrue(feq(pt.y, pt2.y))
+    self.assertTrue(feq(pt.z, pt2.z))
 
 
 if __name__ == '__main__':
