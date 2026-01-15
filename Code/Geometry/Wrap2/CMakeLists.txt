@@ -2,7 +2,7 @@ remove_definitions(-DRDKIT_RDGEOMETRYLIB_BUILD)
 
 
 rdkit_nanobind_extension(rdGeometry
-    rdGeometry.cpp Point.cpp DEST Geometry
+    rdGeometry.cpp Point.cpp UniformGrid3D.cpp DEST Geometry
     LINK_LIBRARIES RDGeometryLib rdkit_base)
 rdkit_nanobind_extension(rdGeometryTest
     rdGeometryTest.cpp DEST Geometry

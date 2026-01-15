@@ -320,7 +320,8 @@ if(RDK_BUILD_NANOBIND_WRAPPERS)
     message(FATAL_ERROR "RDK_BUILD_PYTHON_WRAPPERS and RDK_BUILD_NANOBIND_WRAPPERS are mutually exclusive.")
   endif()
 
-find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)
+find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} NumPy REQUIRED)
+target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
 
 # Detect the installed nanobind package and import it into CMake
 execute_process(
