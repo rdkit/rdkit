@@ -98,15 +98,114 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
                                    bool includeComputed,
                                    bool autoConvertStrings = true) {
   boost::python::dict dict;
-  STR_VECT keys = obj.getPropList(includePrivate, includeComputed);
+  try {
+    auto &rd_dict = obj.getDict();
+    auto &data = rd_dict.getData();
 
+    STR_VECT keys = obj.getPropList(includePrivate, includeComputed);
+    for (auto &rdvalue : data) {
+      if (std::find(keys.begin(), keys.end(), rdvalue.key) == keys.end()) {
+        continue;
+      }
+      try {
+        const auto tag = rdvalue.val.getTag();
+        switch (tag) {
+          case RDTypeTag::IntTag:
+            dict[rdvalue.key] = from_rdvalue<int>(rdvalue.val);
+            break;
+          case RDTypeTag::DoubleTag:
+            dict[rdvalue.key] = from_rdvalue<double>(rdvalue.val);
+            break;
+          case RDTypeTag::StringTag: {
+            auto value = from_rdvalue<std::string>(rdvalue.val);
+            if (autoConvertStrings) {
+              auto trimmed = value;
+              boost::trim(trimmed);
+              int iconv;
+              if (boost::conversion::try_lexical_convert(trimmed, iconv)) {
+                dict[rdvalue.key] = iconv;
+                break;
+              }
+              double dconv;
+              if (boost::conversion::try_lexical_convert(trimmed, dconv)) {
+                dict[rdvalue.key] = dconv;
+                break;
+              }
+            }
+            dict[rdvalue.key] = value;
+          } break;
+          case RDTypeTag::FloatTag:
+            dict[rdvalue.key] = from_rdvalue<float>(rdvalue.val);
+            break;
+          case RDTypeTag::BoolTag:
+            dict[rdvalue.key] = from_rdvalue<bool>(rdvalue.val);
+            break;
+          case RDTypeTag::UnsignedIntTag:
+            dict[rdvalue.key] = from_rdvalue<unsigned int>(rdvalue.val);
+            break;
+          case RDTypeTag::AnyTag:
+            // we skip these for now
+            break;
+          case RDTypeTag::VecDoubleTag:
+            dict[rdvalue.key] = from_rdvalue<std::vector<double>>(rdvalue.val);
+            break;
+          case RDTypeTag::VecFloatTag:
+            dict[rdvalue.key] = from_rdvalue<std::vector<float>>(rdvalue.val);
+            break;
+          case RDTypeTag::VecIntTag:
+            dict[rdvalue.key] = from_rdvalue<std::vector<int>>(rdvalue.val);
+            break;
+          case RDTypeTag::VecUnsignedIntTag:
+            dict[rdvalue.key] =
+                from_rdvalue<std::vector<unsigned int>>(rdvalue.val);
+            break;
+          case RDTypeTag::VecStringTag:
+            dict[rdvalue.key] =
+                from_rdvalue<std::vector<std::string>>(rdvalue.val);
+            break;
+          case RDTypeTag::EmptyTag:
+            dict[rdvalue.key] = boost::python::object();
+            break;
+          default: {
+            std::string message =
+                std::string(
+                    "Unhandled property type encountered for property: ") +
+                rdvalue.key;
+            UNDER_CONSTRUCTION(message.c_str());
+          }
+        }
+      } catch (std::bad_any_cast &) {
+        // C++ datatypes can really be anything, this just captures mislabelled
+        // data, it really shouldn't happen
+        std::string message =
+            std::string("Unhandled type conversion occured for property: ") +
+            rdvalue.key;
+        UNDER_CONSTRUCTION(message.c_str());
+      }
+    }
+    return dict;
+  } catch (...) {
+    // Fallback for minimal_rdmol types that do not implement getDict().
+  }
+
+  STR_VECT keys = obj.getPropList(includePrivate, includeComputed);
   for (const auto &key : keys) {
-    if (key == "__computedProps") {
+    if (key == std::string(RDKit::detail::computedPropName)) {
       continue;
     }
-
     bool found = false;
     // Try each type with exception handling
+    // When autoConvertStrings=False, try string FIRST and return as-is
+    if (!autoConvertStrings) {
+      try {
+        std::string v;
+        if (obj.getPropIfPresent(key, v)) {
+          dict[key] = v;
+          found = true;
+        }
+      } catch (...) {}  // Catch all exceptions
+      if (found) continue;
+    }
 
     // Note: Try unsigned int BEFORE int to avoid overflow in getPropIfPresent conversion
     try {
