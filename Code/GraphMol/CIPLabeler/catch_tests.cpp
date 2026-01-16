@@ -1513,4 +1513,25 @@ $$$$
                                 ranked_anchors) == true);
     CHECK(ranked_anchors == std::vector<unsigned int>{5, 7});
   }
+
+  SECTION("_CIPNeighborRanks includes NOATOM") {
+    // This is VS185 in https://cipvalidationsuite.github.io/ValidationSuite/
+    auto mol = R"([2H]/C(=C(/[1H])\[H])/[H])"_smiles;
+    REQUIRE(mol);
+
+    auto b = mol->getBondWithIdx(1);
+    REQUIRE(b->getBondType() == Bond::DOUBLE);
+
+    b->setStereoAtoms(0, 3);
+    auto &stereo_atoms1 = mol->getBondWithIdx(1)->getStereoAtoms();
+    CHECK(stereo_atoms1[0] == 0);
+    CHECK(stereo_atoms1[1] == 3);
+
+    CIPLabeler::assignCIPLabels(*mol, 100);
+
+    std::vector<unsigned int> ranked_anchors;
+    REQUIRE(b->getPropIfPresent(common_properties::_CIPNeighborRanks,
+                                ranked_anchors) == true);
+    CHECK(ranked_anchors == std::vector<unsigned int>{0, Atom::NOATOM});
+  }
 }
