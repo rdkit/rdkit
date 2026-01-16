@@ -142,10 +142,6 @@ Descriptor Tetrahedral::label(Node *node, const Rules &comp) {
     return Descriptor::UNKNOWN;
   }
 
-  // if we are resolving a trigonal pyramid with an implicit H,
-  // the 4th carrier will be a nullptr: we need to add a phantom
-  // atom, which will always have the lowest priority, so that
-  // it must be different than the representation of the implicit H.
   auto ordered = std::vector<Atom *>(4, nullptr);
   int idx = 0;
   d_ranked_anchors.reserve(4);
@@ -158,20 +154,20 @@ Descriptor Tetrahedral::label(Node *node, const Rules &comp) {
     auto atom = edge->getEnd()->getAtom();
     ordered[idx] = atom;
 
-    // This seems weird, but we need it: the paper on which this algorithm is
-    // based (see "Rule 2" in the paper referenced in CIPLabeler.h) it is
-    // stated that, in CIP ranks, H > 1H, so implicit H actually has a higher
-    // priority than 1H (!!!). This means we need a placeholder for
-    // (implicit) atoms that might not be there!
-    if (atom) {
-      d_ranked_anchors.push_back(atom->getIdx());
-    } else {
-      d_ranked_anchors.push_back(IMPLICITH);
-    }
+    // In this case we don't worry about implicit H (see Sp2Bond
+    // and Atropisomer): chirality is positional, and we don't
+    // know where the implicit H may be ("before" or "after" a
+    // potential 1H with lower priority?), so we just ignore it
+    // in the ranked neighbors list
+    d_ranked_anchors.push_back(atom->getIdx());
 
     ++idx;
   }
 
+  // if we are resolving a trigonal pyramid with an implicit H,
+  // the 4th carrier will be a nullptr: we need to add a phantom
+  // atom, which will always have the lowest priority, so that
+  // it must be different than the representation of the implicit H.
   if (idx < 4) {
     ordered[idx] = focus;
   }
