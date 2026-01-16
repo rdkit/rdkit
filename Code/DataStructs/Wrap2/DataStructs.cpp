@@ -23,7 +23,7 @@ using namespace nb::literals;
 
 void wrap_discreteValVect(nb::module_ &m);
 // void wrap_SBV();
-// void wrap_EBV();
+void wrap_EBV(nb::module_ &m);
 // void wrap_BitOps();
 // void wrap_Utils();
 void wrap_realValVect(nb::module_ &m);
@@ -80,7 +80,7 @@ NB_MODULE(cDataStructs, m) {
 
   // wrap_Utils();
   // wrap_SBV();
-  // wrap_EBV();
+  // wrap_EBV(m);
   // wrap_BitOps();
   wrap_discreteValVect(m);
   wrap_realValVect(m);
