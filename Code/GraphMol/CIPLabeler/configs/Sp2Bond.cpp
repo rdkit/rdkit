@@ -139,18 +139,14 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
     // At this point, edges1 and edges2 are sorted by priority starting from
     // this node. Record that now! - they may be resorted after processing
     // other nodes.
-    auto ranked_carrier1 = edges1[0]->getEnd()->getAtom();
-    auto ranked_carrier2 = edges2[0]->getEnd()->getAtom();
 
-    // This seems weird, but we need it: the paper on which this algorithm is
-    // based (see "Rule 2" in the paper referenced in CIPLabeler.h) it is
-    // stated that, in CIP ranks, H > 1H, so implicit H actually has a higher
-    // priority than 1H (!!!). This means we need a placeholder for
-    // (implicit) atoms that might not be there!
-    auto carrier1_idx =
-        (ranked_carrier1 ? ranked_carrier1->getIdx() : IMPLICITH);
-    auto carrier2_idx =
-        (ranked_carrier2 ? ranked_carrier2->getIdx() : IMPLICITH);
+    // As weird as it seems, these may actually be implicit Hs: Rule 2
+    // in the paper on which this code is based states that,
+    // in CIP ranks, H > 1H, so implicit H actually has a higher
+    // priority than 1H (!!!). getAtomIdx() returns Atom::NOATOM
+    // if that is the case.
+    auto carrier1_idx = edges1[0]->getEnd()->getAtomIdx();
+    auto carrier2_idx = edges2[0]->getEnd()->getAtomIdx();
 
     // Make sure the stereo atoms are in the right order
     if (edges1[0]->getBeg()->getAtom() == focus1) {
