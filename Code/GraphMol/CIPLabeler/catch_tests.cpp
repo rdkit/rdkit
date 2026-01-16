@@ -21,11 +21,11 @@
 #include <chrono>
 #endif
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <catch2/catch_all.hpp>
-
-#include <RDGeneral/BoostStartInclude.h>
 
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
@@ -36,8 +36,6 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/test_fixtures.h>
-
-#include <RDGeneral/BoostEndInclude.h>
 
 #include "CIPLabeler.h"
 #include "Digraph.h"
