@@ -15,6 +15,7 @@
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/pair.h>
+#include <nanobind/make_iterator.h>
 // #include "props.hpp"
 // #include "rdchem.h"
 // #include "seqs.hpp"
@@ -175,6 +176,15 @@ void MolDebug(const ROMol &mol, bool useStdout) {
     }
   }
 }
+
+struct AtomSeqHolder {
+  ROMol &d_mol;
+  AtomSeqHolder(ROMol &mol) : d_mol(mol) {};
+  size_t size() const { return d_mol.getNumAtoms(); }
+  ROMol::AtomIterator begin() const { return d_mol.beginAtoms(); }
+  ROMol::AtomIterator end() const { return d_mol.endAtoms(); }
+};
+
 }  // namespace
 
 #if 0
@@ -410,6 +420,17 @@ struct mol_wrapper {
             "if set, only the extraBondCheck will be used to determine whether or not bonds match")
         .def("__setattr__", &safeSetattr);
 
+    nb::class_<AtomSeqHolder>(m, "_AtomSeqHolder",
+                              "A sequence-like holder of a molecule's atoms")
+        .def(nb::init<ROMol &>(), "mol"_a)
+        .def("__len__", &AtomSeqHolder::size)
+        .def(
+            "__iter__",
+            [](const AtomSeqHolder &a) {
+              return nb::make_iterator(nb::type<AtomSeqHolder>(), "iterator",
+                                       a.begin(), a.end());
+            },
+            nb::keep_alive<0, 1>());
     nb::class_<ROMol>(m, "Mol", nb::dynamic_attr())
         .def(nb::init<>(), "Constructor, takes no arguments")
         .def(
@@ -432,6 +453,25 @@ struct mol_wrapper {
              "quickCopy"_a = false, "confId"_a = -1)
         .def("__copy__", &generic__copy__<ROMol>)
         .def("__deepcopy__", &generic__deepcopy__<ROMol>, "memo"_a)
+#if 0
+        .def(
+            "GetAtoms",
+            [](ROMol &mol) {
+              nb::list res;
+              for (auto atomIt = mol.beginAtoms(); atomIt != mol.endAtoms();
+                   ++atomIt) {
+                res.append(*atomIt);
+              }
+              return res;
+            },
+            nb::keep_alive<1, 0>(), "Returns a list of the molecule's atoms.")
+#else
+        .def(
+            "GetAtoms", [](ROMol &mol) { return AtomSeqHolder(mol); },
+            nb::keep_alive<0, 1>(),
+            "Returns a sequence-like object of the molecule's atoms.")
+#endif
+
         .def("GetNumAtoms",
              nb::overload_cast<>(&ROMol::getNumAtoms, nb::const_),
              "Returns the number of atoms in the molecule.")
@@ -839,6 +879,12 @@ struct mol_wrapper {
             "Atom query options are defined in the rdkit.Chem.rdqueries module.\n")
 
 #endif
+        /*
+        AtomIterSeq *MolGetAtoms(const ROMOL_SPTR &mol) {
+          AtomIterSeq *res = new AtomIterSeq(mol, mol->beginAtoms(),
+        mol->endAtoms(), AtomCountFunctor(mol)); return res;
+        }
+        */
 
         .def("Debug", MolDebug, "useStdout"_a = true,
              "Prints debugging information about the molecule.")
