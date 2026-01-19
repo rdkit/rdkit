@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/Chirality.h>
+#include <RDGeneral/types.h>
 
 #include "Sp2Bond.h"
 #include "../Sort.h"
@@ -61,6 +62,14 @@ void Sp2Bond::setPrimaryLabel(Descriptor desc) {
     default:
       throw std::runtime_error("Received an invalid Bond Descriptor");
   }
+}
+
+bool Sp2Bond::hasPrimaryLabel() const {
+  return dp_bond->hasProp(common_properties::_CIPCode);
+}
+
+void Sp2Bond::resetPrimaryLabel() const {
+  dp_bond->clearProp(common_properties::_CIPCode);
 }
 
 Descriptor Sp2Bond::label(const Rules &comp) {

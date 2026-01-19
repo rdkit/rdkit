@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/types.h>
 
 #include "Tetrahedral.h"
 #include "../rules/Rules.h"
@@ -66,6 +67,14 @@ void Tetrahedral::setPrimaryLabel(Descriptor desc) {
     default:
       throw std::runtime_error("Received an invalid Atom Descriptor");
   }
+}
+
+bool Tetrahedral::hasPrimaryLabel() const {
+  return getFocus()->hasProp(common_properties::_CIPCode);
+}
+
+void Tetrahedral::resetPrimaryLabel() const {
+  getFocus()->clearProp(common_properties::_CIPCode);
 }
 
 Descriptor Tetrahedral::label(const Rules &comp) {
