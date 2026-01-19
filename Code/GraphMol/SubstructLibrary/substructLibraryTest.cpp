@@ -121,7 +121,7 @@ TEST_CASE("test1", "[substruct]") {
 
   int i = 0;
   for (auto lib : libs) {
-    ROMol *query = SmartsToMol("[#6;$([#6]([#6])[!#6])]");
+    auto query = "[#6;$([#6]([#6])[!#6])]"_smarts;
     if (i == 0) {
       hasMatch = runTest(*lib, *query, 1);
     } else {
@@ -131,13 +131,12 @@ TEST_CASE("test1", "[substruct]") {
 #ifdef RDK_TEST_MULTITHREADED
     runTest(*lib, *query, -1, hasMatch);
 #endif
-    delete query;
     ++i;
   }
 
   i = 0;
   for (auto lib : libs) {
-    ROMol *query = SmartsToMol("[$([O,S]-[!$(*=O)])]");
+    auto query = "[$([O,S]-[!$(*=O)])]"_smarts;
     if (i == 0) {
       hasMatch = runTest(*lib, *query, 1);
     } else {
@@ -147,7 +146,6 @@ TEST_CASE("test1", "[substruct]") {
 #ifdef RDK_TEST_MULTITHREADED
     runTest(*lib, *query, -1, hasMatch);
 #endif
-    delete query;
     ++i;
   }
 }
@@ -199,30 +197,25 @@ TEST_CASE("test2", "[substruct]") {
 #endif
 
   for (auto lib : libs) {
-    ROMol *query = SmartsToMol("[#6]([#6])[!#6]");
+    auto query = "[#6]([#6])[!#6]"_smarts;
     runTest(*lib, *query, 1);
 #ifdef RDK_TEST_MULTITHREADED
     runTest(*lib, *query, -1);
 #endif
-    delete query;
   }
 }
 
 TEST_CASE("test3", "[substruct][stereochemistry]") {
   SubstructLibrary ssslib(boost::make_shared<MolHolder>());
   for (int i = 0; i < 10; ++i) {
-    ROMol *m1 = SmilesToMol("C1CCO[C@@](N)(O)1");
-    ROMol *m2 = SmilesToMol("C1CCO[C@](N)(O)1");
-    ROMol *m3 = SmilesToMol("C1CCO[C@@](O)(N)1");
-    ROMol *m4 = SmilesToMol("C1CCO[C@](O)(N)1");
+    auto m1 = "C1CCO[C@@](N)(O)1"_smiles;
+    auto m2 = "C1CCO[C@](N)(O)1"_smiles;
+    auto m3 = "C1CCO[C@@](O)(N)1"_smiles;
+    auto m4 = "C1CCO[C@](O)(N)1"_smiles;
     ssslib.addMol(*m1);
     ssslib.addMol(*m2);
     ssslib.addMol(*m3);
     ssslib.addMol(*m4);
-    delete m1;
-    delete m2;
-    delete m3;
-    delete m4;
   }
 
   std::vector<SubstructLibrary *> libs;
@@ -241,20 +234,17 @@ TEST_CASE("test3", "[substruct][stereochemistry]") {
 #endif
 
   for (auto lib : libs) {
-    ROMol *query = SmartsToMol("C-1-C-C-O-C(-[O])(-[N])1");
+    auto query = "C-1-C-C-O-C(-[O])(-[N])1"_smarts;
     std::vector<unsigned int> res = lib->getMatches(*query, true, false);
     REQUIRE(res.size() == 40);
 
-    delete query;
-    query = SmartsToMol("C-1-C-C-O-[C@@](-[O])(-[N])1");
+    query = "C-1-C-C-O-[C@@](-[O])(-[N])1"_smarts;
 
     res = lib->getMatches(*query, true, true);
     REQUIRE(res.size() == 20);
 
     res = lib->getMatches(*query, true, false);
     REQUIRE(res.size() == 40);
-
-    delete query;
   }
 }
 
@@ -286,26 +276,23 @@ TEST_CASE("test4", "[substruct]") {
 #endif
 
   for (auto lib : libs) {
-    ROMol *query = SmartsToMol("C-1-C-C-O-C(-[O])(-[N])1");
+    auto query = "C-1-C-C-O-C(-[O])(-[N])1"_smarts;
 
     std::vector<unsigned int> res = lib->getMatches(*query, true, false);
     REQUIRE(res.size() == 40);
-
-    delete query;
-    query = SmartsToMol("C-1-C-C-O-[C@@](-[O])(-[N])1");
+    query = "C-1-C-C-O-[C@@](-[O])(-[N])1"_smarts;
 
     res = lib->getMatches(*query, true, true);
     REQUIRE(res.size() == 20);
 
     res = lib->getMatches(*query, true, false);
     REQUIRE(res.size() == 40);
-    delete query;
   }
 }
 
 TEST_CASE("docTest", "[substruct]") {
-  ROMol *q = SmartsToMol("C-1-C-C-O-C(-[O])(-[N])1");
-  ROMol *m = SmilesToMol("C1CCO[C@@](N)(O)1");
+  auto q = "C-1-C-C-O-C(-[O])(-[N])1"_smarts;
+  auto m = "C1CCO[C@@](N)(O)1"_smiles;
   ROMol &query = *q;
   ROMol &mol = *m;
 
@@ -339,28 +326,24 @@ TEST_CASE("docTest", "[substruct]") {
     //  These, of course, can be read from a file.  For demonstration
     //   purposes we construct them here.
     const std::string trustedSmiles = "c1ccccc1";
-    ROMol *m = SmilesToMol(trustedSmiles);
-    const ExplicitBitVect *bitVector = patternHolder->makeFingerprint(*m);
+    auto m = v2::SmilesParse::MolFromSmiles(trustedSmiles);
+    std::unique_ptr<const ExplicitBitVect> bitVector(
+        patternHolder->makeFingerprint(*m));
 
     // The trusted smiles and bitVector can be read from any source.
     //  This is the fastest way to load a substruct library.
     molHolder->addSmiles(trustedSmiles);
     patternHolder->addFingerprint(*bitVector);
     SubstructLibrary lib(molHolder, patternHolder);
-    delete m;
-    delete bitVector;
   }
-
-  delete q;
-  delete m;
 }
 
 template <typename Holder>
 void ringTest() {
-  std::unique_ptr<ROMol> q(SmartsToMol("[C&R1]"));
-  std::unique_ptr<ROMol> q2(SmartsToMol("C@C"));
+  auto q = "[C&R1]"_smarts;
+  auto q2 = "C@C"_smarts;
 
-  std::unique_ptr<ROMol> m(SmilesToMol("C1CCO[C@@](N)(O)1"));
+  auto m = "C1CCO[C@@](N)(O)1"_smiles;
 
   boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder =
       boost::make_shared<CachedTrustedSmilesMolHolder>();
