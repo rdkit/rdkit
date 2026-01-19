@@ -3757,8 +3757,7 @@ void assignStereochemistryFrom3D(ROMol &mol, int confId,
 }
 
 void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
-                                   const bool replaceExistingTags,
-                                   bool allowTwoHs) {
+                                   const bool replaceExistingTags) {
   if (!mol.getNumConformers()) {
     return;
   }
