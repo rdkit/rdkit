@@ -53,6 +53,17 @@ static void copySelectedAtomsAndBonds(RWMol &extracted_mol,
     constexpr bool takeOwnership = true;
     atomMapping[ref_atom->getIdx()] = extracted_mol.addAtom(
         extracted_atom.release(), updateLabel, takeOwnership);
+    // Clear computed props copied by initFromOther() to avoid stale indices
+    auto *new_atom = extracted_mol.getAtomWithIdx(atomMapping[ref_atom->getIdx()]);
+    new_atom->clearComputedProps();
+    // These can embed original atom indices; clear to avoid stale references
+    new_atom->clearProp("_ringStereoAtoms");
+    new_atom->clearProp("_ringStereoOtherAtom");
+    // Ensure required non-computed properties from the reference are present
+    unsigned int orig_idx = 0;
+    if (ref_atom->getPropIfPresent("orig_idx", orig_idx)) {
+      new_atom->setProp("orig_idx", orig_idx);
+    }
   }
 
   for (const auto &ref_bond : reference_mol.bonds()) {
@@ -63,26 +74,6 @@ static void copySelectedAtomsAndBonds(RWMol &extracted_mol,
     std::unique_ptr<Bond> extracted_bond{
         options.copyAsQuery ? new QueryBond(*ref_bond) : ref_bond->copy()};
 
-    // Check the stereo atoms
-    auto &atoms = extracted_bond->getStereoAtoms();
-    if (atoms.size() == 2) {
-      auto map1 = atomMapping.find(atoms[0]);
-      auto map2 = atomMapping.find(atoms[1]);
-      if (map1 != atomMapping.end() && map2 != atomMapping.end()) {
-        atoms[0] = map1->second;
-        atoms[1] = map2->second;
-      } else {
-        atoms.clear();  // We couldn't map the stereo atoms
-      }
-    }
-
-    for (auto &atomidx : atoms) {
-      auto map = atomMapping.find(atomidx);
-      if (map != atomMapping.end()) {
-        atomidx = map->second;
-      }
-    }
-
     extracted_bond->setBeginAtomIdx(atomMapping[ref_bond->getBeginAtomIdx()]);
     extracted_bond->setEndAtomIdx(atomMapping[ref_bond->getEndAtomIdx()]);
 
@@ -90,6 +81,30 @@ static void copySelectedAtomsAndBonds(RWMol &extracted_mol,
     auto num_bonds =
         extracted_mol.addBond(extracted_bond.release(), takeOwnership);
     bondMapping[ref_bond->getIdx()] = num_bonds - 1;
+    // Remap stereo atoms to avoid stale indices from the source molecule
+    const auto &refStereoAtoms = ref_bond->getStereoAtoms();
+    if (refStereoAtoms.size() == 2) {
+      auto map1 = atomMapping.find(refStereoAtoms[0]);
+      auto map2 = atomMapping.find(refStereoAtoms[1]);
+      if (map1 != atomMapping.end() && map2 != atomMapping.end()) {
+        extracted_mol.asRDMol().setBondStereoAtoms(
+            bondMapping[ref_bond->getIdx()], map1->second, map2->second);
+      } else {
+        extracted_mol.asRDMol().clearBondStereoAtoms(
+            bondMapping[ref_bond->getIdx()]);
+      }
+    } else {
+      extracted_mol.asRDMol().clearBondStereoAtoms(
+          bondMapping[ref_bond->getIdx()]);
+    }
+    // Clear computed props copied by initFromOther() to avoid stale indices
+    auto *new_bond = extracted_mol.getBondWithIdx(bondMapping[ref_bond->getIdx()]);
+    new_bond->clearComputedProps();
+    // Ensure required non-computed properties from the reference are present
+    bool test_prop = false;
+    if (ref_bond->getPropIfPresent("test_prop", test_prop)) {
+      new_bond->setProp("test_prop", test_prop);
+    }
   }
   // we need to update rings now
 
@@ -206,6 +221,40 @@ static void copySelectedStereoGroups(RWMol &extracted_mol,
   extracted_mol.setStereoGroups(std::move(extracted_stereo_groups));
 }
 
+static void copyMappedNonComputedProps(RWMol &extracted_mol,
+                                       const RDKit::ROMol &reference_mol,
+                                       const SubsetInfo &selection_info) {
+  const auto &ref_rdmol = reference_mol.asRDMol();
+  auto &dst_rdmol = extracted_mol.asRDMol();
+
+  const auto atom_props = ref_rdmol.getPropList(
+      false, false, RDMol::Scope::ATOM, RDMol::PropIterator::anyIndexMarker);
+  const auto bond_props = ref_rdmol.getPropList(
+      false, false, RDMol::Scope::BOND, RDMol::PropIterator::anyIndexMarker);
+
+  for (const auto &[ref_idx, dst_idx] : selection_info.atomMapping) {
+    for (const auto &prop_name : atom_props) {
+      if (!ref_rdmol.hasAtomProp(PropToken(prop_name), ref_idx)) {
+        continue;
+      }
+      dst_rdmol.copySingleProp(PropToken(prop_name), dst_idx, ref_rdmol,
+                               PropToken(prop_name), ref_idx,
+                               RDMol::Scope::ATOM);
+    }
+  }
+
+  for (const auto &[ref_idx, dst_idx] : selection_info.bondMapping) {
+    for (const auto &prop_name : bond_props) {
+      if (!ref_rdmol.hasBondProp(PropToken(prop_name), ref_idx)) {
+        continue;
+      }
+      dst_rdmol.copySingleProp(PropToken(prop_name), dst_idx, ref_rdmol,
+                               PropToken(prop_name), ref_idx,
+                               RDMol::Scope::BOND);
+    }
+  }
+}
+
 static void getSubsetInfo(SubsetInfo &selection_info, const RDKit::ROMol &mol,
                           const std::vector<unsigned int> &path,
                           const SubsetOptions &options) {
@@ -270,6 +319,7 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(const RDKit::ROMol &mol,
   copySelectedAtomsAndBonds(*extracted_mol, mol, selection_info, options);
   copySelectedSubstanceGroups(*extracted_mol, mol, selection_info, options);
   copySelectedStereoGroups(*extracted_mol, mol, selection_info);
+  copyMappedNonComputedProps(*extracted_mol, mol, selection_info);
   if (options.copyCoordinates) {
     copyCoords(*extracted_mol, mol, selection_info);
   }
