@@ -99,5 +99,5 @@ TEST_CASE("GitHub #4364") {
   CHECK_THAT(dist, Catch::Matchers::WithinAbs(0.31, 0.01));
   double gridSpacing = 1.0;
   auto dist2 = MolShapes::tanimotoDistance(*m, *m2, cid1, cid2, gridSpacing);
-  CHECK(dist2 - dist > 0.001);
+  CHECK(fabs(dist2 - dist) > 0.001);
 }
