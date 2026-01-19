@@ -30,25 +30,22 @@
 using namespace RDKit;
 
 TEST_CASE("test1", "[substruct]") {
-  MatchVectType matchV;
-  std::vector<MatchVectType> matches;
-  unsigned int n = 1;
-  REQUIRE(n == 1);
-  RWMol *m, *q1;
   bool updateLabel = true;
   bool takeOwnership = true;
-  m = new RWMol();
+  std::unique_ptr<RWMol> m = std::make_unique<RWMol>();
   m->addAtom(new Atom(8), updateLabel, takeOwnership);
   m->addAtom(new Atom(6), updateLabel, takeOwnership);
   m->addAtom(new Atom(6), updateLabel, takeOwnership);
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
 
-  q1 = new RWMol();
+  std::unique_ptr<RWMol> q1 = std::make_unique<RWMol>();
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::SINGLE);
-  n = SubstructMatch(*m, *q1, matches, false);
+
+  std::vector<MatchVectType> matches;
+  auto n = SubstructMatch(*m, *q1, matches, false);
   REQUIRE(n == 2);
   REQUIRE(matches.size() == n);
   REQUIRE(matches[0].size() == 2);
@@ -76,6 +73,7 @@ TEST_CASE("test1", "[substruct]") {
   CHECK(matches[0][1].second != matches[0][0].second);
   CHECK((matches[0][1].second == 1 || matches[0][1].second == 2));
 
+  MatchVectType matchV;
   REQUIRE(SubstructMatch(*m, *q1, matchV));
   REQUIRE(matchV.size() == 2);
   // make sure we reset the match vectors.
@@ -91,18 +89,10 @@ TEST_CASE("test1", "[substruct]") {
   n = SubstructMatch(*m, *q1, matches, false);
   CHECK(n == 0);
   CHECK(matches.size() == 0);
-
-  delete m;
-  delete q1;
 }
 
 TEST_CASE("test2", "[substruct]") {
-  MatchVectType matchV;
-  std::vector<MatchVectType> matches;
-  unsigned int n;
-
-  RWMol *m, *q1;
-  m = new RWMol();
+  std::unique_ptr<RWMol> m = std::make_unique<RWMol>();
   bool updateLabel = true;
   bool takeOwnership = true;
   m->addAtom(new Atom(6), updateLabel, takeOwnership);
@@ -111,12 +101,13 @@ TEST_CASE("test2", "[substruct]") {
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
 
-  q1 = new RWMol();
+  std::unique_ptr<RWMol> q1 = std::make_unique<RWMol>();
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::SINGLE);
 
-  n = SubstructMatch(*m, *q1, matchV);
+  MatchVectType matchV;
+  auto n = SubstructMatch(*m, *q1, matchV);
   CHECK(n);
   CHECK(matchV.size() == 2);
   CHECK(matchV[0].first == 0);
@@ -124,6 +115,7 @@ TEST_CASE("test2", "[substruct]") {
   CHECK(matchV[1].first == 1);
   CHECK(matchV[1].second == 2);
 
+  std::vector<MatchVectType> matches;
   n = SubstructMatch(*m, *q1, matches, false);
   REQUIRE(n == 1);
   REQUIRE(matches.size() == n);
@@ -134,8 +126,7 @@ TEST_CASE("test2", "[substruct]") {
   REQUIRE(matches[0].size() == 2);
   REQUIRE(SubstructMatch(*m, *q1, matchV));
   REQUIRE(matchV.size() == 2);
-  delete m;
-  m = new RWMol();
+  m.reset(new RWMol());
   m->addAtom(new Atom(6), updateLabel, takeOwnership);
   m->addAtom(new Atom(6), updateLabel, takeOwnership);
   m->addAtom(new Atom(8), updateLabel, takeOwnership);
@@ -150,17 +141,10 @@ TEST_CASE("test2", "[substruct]") {
   REQUIRE(n == 0);
   REQUIRE(matches.size() == n);
   REQUIRE(!SubstructMatch(*m, *q1, matchV));
-  delete m;
-  delete q1;
 }
 
 TEST_CASE("test3", "[substruct]") {
-  MatchVectType matchV;
-  std::vector<MatchVectType> matches;
-  unsigned int n;
-
-  RWMol *m, *q1;
-  m = new RWMol();
+  std::unique_ptr<RWMol> m = std::make_unique<RWMol>();
   bool updateLabel = true;
   bool takeOwnership = true;
   m->addAtom(new Atom(6), updateLabel, takeOwnership);
@@ -169,11 +153,13 @@ TEST_CASE("test3", "[substruct]") {
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
 
-  q1 = new RWMol();
+  std::unique_ptr<RWMol> q1 = std::make_unique<RWMol>();
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
-  n = SubstructMatch(*m, *q1, matches, false);
+
+  std::vector<MatchVectType> matches;
+  auto n = SubstructMatch(*m, *q1, matches, false);
   REQUIRE(n == 1);
   REQUIRE(matches.size() == n);
   REQUIRE(matches[0].size() == 2);
@@ -181,10 +167,11 @@ TEST_CASE("test3", "[substruct]") {
   REQUIRE(n == 1);
   REQUIRE(matches.size() == n);
   REQUIRE(matches[0].size() == 2);
+
+  MatchVectType matchV;
   REQUIRE(SubstructMatch(*m, *q1, matchV));
   REQUIRE(matchV.size() == 2);
-  delete m;
-  m = new RWMol();
+  m = std::make_unique<RWMol>();
   m->addAtom(new Atom(6), updateLabel, takeOwnership);
   m->addAtom(new Atom(6), updateLabel, takeOwnership);
   m->addAtom(new Atom(8), updateLabel, takeOwnership);
@@ -202,8 +189,7 @@ TEST_CASE("test3", "[substruct]") {
   REQUIRE(matches[0].size() == 2);
   REQUIRE(SubstructMatch(*m, *q1, matchV));
   REQUIRE(matchV.size() == 2);
-  delete q1;
-  q1 = new RWMol();
+  q1 = std::make_unique<RWMol>();
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
@@ -217,42 +203,35 @@ TEST_CASE("test3", "[substruct]") {
   n = SubstructMatch(*m, *q1, matches, true);
   CHECK(n == 1);
   CHECK(matches.size() == n);
-
-  delete m;
-  delete q1;
 }
 
 TEST_CASE("test4", "[substruct]") {
-  MatchVectType matchV;
-  std::vector<MatchVectType> matches;
-  int n;
   bool updateLabel = true;
   bool takeOwnership = true;
 
-  RWMol *m, *q1, *q2;
-  auto *a6 = new Atom(6);
-  auto *a8 = new Atom(8);
-  m = new RWMol();
-  m->addAtom(a6);
-  m->addAtom(a6);
-  m->addAtom(a8);
-  m->addAtom(a6);
-  m->addAtom(a6);
+  std::unique_ptr<Atom> a6 = std::make_unique<Atom>(6);
+  std::unique_ptr<Atom> a8 = std::make_unique<Atom>(8);
+  std::unique_ptr<RWMol> m = std::make_unique<RWMol>();
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
+  m->addAtom(a8.get());
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
   m->addBond(1, 0, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
   m->addBond(1, 3, Bond::SINGLE);
   m->addBond(2, 4, Bond::SINGLE);
 
   // this will be the recursive query
-  q1 = new RWMol();
+  std::unique_ptr<RWMol> q1 = std::make_unique<RWMol>();
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
 
   // here's the main query
-  q2 = new RWMol();
+  std::unique_ptr<RWMol> q2 = std::make_unique<RWMol>();
+  auto *rsq = new RecursiveStructureQuery(q1.release());
   auto *qA = new QueryAtom(6);
-  auto *rsq = new RecursiveStructureQuery(q1);
   qA->expandQuery(rsq, Queries::COMPOSITE_AND);
   // std::cout << "post expand: " << qA->getQuery() << std::endl;
   q2->addAtom(qA, true, true);
@@ -260,6 +239,7 @@ TEST_CASE("test4", "[substruct]") {
   q2->addAtom(new QueryAtom(6), true, true);
   q2->addBond(0, 1, Bond::UNSPECIFIED);
 
+  MatchVectType matchV;
   bool found = SubstructMatch(*m, *q2, matchV);
   REQUIRE(found);
   REQUIRE(matchV.size() == 2);
@@ -267,146 +247,126 @@ TEST_CASE("test4", "[substruct]") {
   CHECK(matchV[0].second == 1);
   CHECK(matchV[1].first == 1);
   CHECK((matchV[1].second == 0 || matchV[1].second == 3));
-  n = SubstructMatch(*m, *q2, matches, true);
+  std::vector<MatchVectType> matches;
+  auto n = SubstructMatch(*m, *q2, matches, true);
   CHECK(n == 2);
   CHECK(matches.size() == (size_t)n);
   CHECK(matches[0].size() == 2);
   CHECK(matches[1].size() == 2);
   CHECK(matches[0][0].second == matches[1][0].second);
   CHECK(matches[0][1].second != matches[1][1].second);
-  delete m;
-  delete a6;
-  delete a8;
-  delete q2;
 }
 
 TEST_CASE("test5", "[substruct]") {
-  MatchVectType matchV;
-  std::vector<MatchVectType> matches;
-  int n;
-  bool updateLabel = true;
-  bool takeOwnership = true;
-
-  RWMol *m, *q1, *q2;
-  auto *a6 = new Atom(6);
-  auto *a8 = new Atom(8);
+  auto a6 = std::make_unique<Atom>(6);
+  auto a8 = std::make_unique<Atom>(8);
   // CC(OC)C
-  m = new RWMol();
-  m->addAtom(a6);
-  m->addAtom(a6);
-  m->addAtom(a8);
-  m->addAtom(a6);
-  m->addAtom(a6);
+  auto m = std::make_unique<RWMol>();
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
+  m->addAtom(a8.get());
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
   m->addBond(1, 4, Bond::SINGLE);
   m->addBond(2, 3, Bond::SINGLE);
 
   // this will be the recursive query
-  q1 = new RWMol();
+  bool updateLabel = true;
+  bool takeOwnership = true;
+  auto q1 = std::make_unique<RWMol>();
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
 
   // here's the main query
-  q2 = new RWMol();
-  auto *qA = new QueryAtom();
-  auto *rsq = new RecursiveStructureQuery(q1);
+  auto q2 = std::make_unique<RWMol>();
+  auto qA = std::make_unique<QueryAtom>();
+  auto *rsq = new RecursiveStructureQuery(q1.release());
   qA->setQuery(rsq);
-  q2->addAtom(qA, true, true);
+  q2->addAtom(qA.release(), true, true);
   q2->addAtom(new QueryAtom(6), true, true);
   q2->addBond(0, 1, Bond::UNSPECIFIED);
 
+  MatchVectType matchV;
   bool found = SubstructMatch(*m, *q2, matchV);
   REQUIRE(found);
   REQUIRE(matchV.size() == 2);
-  n = SubstructMatch(*m, *q2, matches, true);
+  std::vector<MatchVectType> matches;
+  auto n = SubstructMatch(*m, *q2, matches, true);
   REQUIRE(n == 2);
   REQUIRE(matches[0].size() == 2);
-  delete m;
-  delete a6;
-  delete a8;
-  delete q2;
 }
 TEST_CASE("test5QueryRoot", "[substruct]") {
-  MatchVectType matchV;
-  std::vector<MatchVectType> matches;
-  int n;
-  bool updateLabel = true;
-  bool takeOwnership = true;
-
-  RWMol *m, *q1, *q2;
-  auto *a6 = new Atom(6);
-  auto *a8 = new Atom(8);
+  auto a6 = std::unique_ptr<Atom>(new Atom(6));
+  auto a8 = std::unique_ptr<Atom>(new Atom(8));
   // CC(OC)C
-  m = new RWMol();
-  m->addAtom(a6);
-  m->addAtom(a6);
-  m->addAtom(a8);
-  m->addAtom(a6);
-  m->addAtom(a6);
+  auto m = std::make_unique<RWMol>();
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
+  m->addAtom(a8.get());
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
   m->addBond(1, 4, Bond::SINGLE);
   m->addBond(2, 3, Bond::SINGLE);
 
   // this will be the recursive query
-  q1 = new RWMol();
+  bool updateLabel = true;
+  bool takeOwnership = true;
+  auto q1 = std::make_unique<RWMol>();
   q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
   q1->setProp(common_properties::_queryRootAtom, 1);
 
   // here's the main query
-  q2 = new RWMol();
-  auto *qA = new QueryAtom();
-  auto *rsq = new RecursiveStructureQuery(q1);
+  auto q2 = std::make_unique<RWMol>();
+  auto qA = std::make_unique<QueryAtom>();
+  auto *rsq = new RecursiveStructureQuery(q1.release());
   qA->setQuery(rsq);
-  q2->addAtom(qA, true, true);
+  q2->addAtom(qA.release(), true, true);
   q2->addAtom(new QueryAtom(6), true, true);
   q2->addBond(0, 1, Bond::UNSPECIFIED);
 
+  MatchVectType matchV;
   bool found = SubstructMatch(*m, *q2, matchV);
   REQUIRE(found);
   REQUIRE(matchV.size() == 2);
-  n = SubstructMatch(*m, *q2, matches, true);
+  std::vector<MatchVectType> matches;
+  auto n = SubstructMatch(*m, *q2, matches, true);
   REQUIRE(n == 2);
   REQUIRE(matches[0].size() == 2);
-  delete m;
-  delete a6;
-  delete a8;
-  delete q2;
 }
 
 TEST_CASE("test6", "[substruct][Issue71]") {
-  MatchVectType matchV;
-  std::vector<MatchVectType> matches;
-  int n;
-  bool updateLabel = true;
-  bool takeOwnership = true;
+  auto a6 = std::make_unique<Atom>(6);
 
-  RWMol *m, *q1;
-  auto *a6 = new Atom(6);
-
-  m = new RWMol();
-  m->addAtom(a6);
-  m->addAtom(a6);
-  m->addAtom(a6);
+  auto m = std::make_unique<RWMol>();
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
   m->addBond(0, 2, Bond::SINGLE);
 
-  q1 = new RWMol();
+  auto q1 = std::make_unique<RWMol>();
+  bool updateLabel = true;
+  bool takeOwnership = true;
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
   q1->addBond(1, 2, Bond::UNSPECIFIED);
 
+  MatchVectType matchV;
   bool found = SubstructMatch(*m, *q1, matchV);
   REQUIRE(found);
   REQUIRE(matchV.size() == 3);
-  n = SubstructMatch(*m, *q1, matches, true);
+  std::vector<MatchVectType> matches;
+  auto n = SubstructMatch(*m, *q1, matches, true);
   REQUIRE(n == 1);
   REQUIRE(matches[0].size() == 3);
   // close the loop and try again (we should still match)
@@ -417,100 +377,47 @@ TEST_CASE("test6", "[substruct][Issue71]") {
   n = SubstructMatch(*m, *q1, matches, true);
   REQUIRE(n == 1);
   REQUIRE(matches[0].size() == 3);
-  delete m;
-  delete a6;
-  delete q1;
 }
 
 TEST_CASE("test7", "[substruct][leak]") {
-  MatchVectType matchV;
-  int n;
+  auto a6 = std::make_unique<Atom>(6);
 
-  RWMol *m, *q1;
-  auto *a6 = new Atom(6);
-  bool updateLabel = true;
-  bool takeOwnership = true;
-
-  m = new RWMol();
-  m->addAtom(a6);
-  m->addAtom(a6);
-  m->addAtom(a6);
+  std::unique_ptr<RWMol> m = std::make_unique<RWMol>();
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
   m->addBond(0, 2, Bond::SINGLE);
 
-  q1 = new RWMol();
+  std::unique_ptr<RWMol> q1 = std::make_unique<RWMol>();
+  bool updateLabel = true;
+  bool takeOwnership = true;
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
   q1->addBond(1, 2, Bond::UNSPECIFIED);
 
+  MatchVectType matchV;
   bool found = SubstructMatch(*m, *q1, matchV);
   REQUIRE(found);
   REQUIRE(matchV.size() == 3);
   std::vector<MatchVectType> matches;
   for (int i = 0; i < 300000; i++) {
-    n = SubstructMatch(*m, *q1, matches, true, true);
+    auto n = SubstructMatch(*m, *q1, matches, true, true);
     REQUIRE(n == 1);
     REQUIRE(matches[0].size() == 3);
   }
-  delete m;
-  delete a6;
-  delete q1;
 }
-
-#ifdef CACHE_ARMOLGRAPHS
-TEST_CASE("test8", "[substruct][cache]") {
-  MatchVectType matchV;
-  int n;
-
-  RWMol *m, *q1;
-  Atom *a6 = new Atom(6);
-
-  m = new RWMol();
-  m->addAtom(a6);
-  m->addAtom(a6);
-  m->addAtom(a6);
-  m->addBond(0, 1, Bond::SINGLE);
-  m->addBond(1, 2, Bond::SINGLE);
-  m->addBond(0, 2, Bond::SINGLE);
-
-  q1 = new RWMol();
-  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
-  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
-  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
-  q1->addBond(0, 1, Bond::UNSPECIFIED);
-  q1->addBond(1, 2, Bond::UNSPECIFIED);
-
-  bool found = SubstructMatch(*m, *q1, matchV);
-  REQUIRE(found);
-  REQUIRE(matchV.size() == 3);
-  std::vector<MatchVectType> matches;
-  for (int i = 0; i < 30000; i++) {
-    n = SubstructMatch(*m, *q1, matches, true, true);
-    REQUIRE(n == 1);
-    REQUIRE(matches[0].size() == 3);
-    if (!(i % 500)) std::cout << i << std::endl;
-  }
-  delete m;
-  delete a6;
-  delete q1;
-}
-#endif
 
 TEST_CASE("test9", "[substruct][chiral]") {
-  MatchVectType matchV;
-  std::vector<MatchVectType> matches;
-  int n;
+  auto a6 = std::make_unique<Atom>(6);
 
-  RWMol *m, *q1;
-  auto *a6 = new Atom(6);
-
-  m = new RWMol();
+  auto m = std::make_unique<RWMol>();
+  m->addAtom(a6.get());
   bool updateLabel = true;
   bool takeOwnership = true;
-  m->addAtom(a6);
   m->addAtom(new Atom(6), updateLabel, takeOwnership);
   m->addAtom(new Atom(7), updateLabel, takeOwnership);
   m->addAtom(new Atom(8), updateLabel, takeOwnership);
@@ -521,8 +428,8 @@ TEST_CASE("test9", "[substruct][chiral]") {
   m->addBond(0, 4, Bond::SINGLE);
   m->getAtomWithIdx(0)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
 
-  q1 = new RWMol();
-  q1->addAtom(a6);
+  auto q1 = std::make_unique<RWMol>();
+  q1->addAtom(a6.get());
   q1->addAtom(new Atom(6));
   q1->addAtom(new Atom(7));
   q1->addAtom(new Atom(8));
@@ -538,11 +445,12 @@ TEST_CASE("test9", "[substruct][chiral]") {
   MolOps::sanitizeMol(*q1);
   MolOps::assignStereochemistry(*q1);
 
-  bool found;
   // test with default options (no chirality):
-  found = SubstructMatch(*m, *q1, matchV);
+  MatchVectType matchV;
+  auto found = SubstructMatch(*m, *q1, matchV);
   CHECK(found);
-  n = SubstructMatch(*m, *q1, matches, true);
+  std::vector<MatchVectType> matches;
+  auto n = SubstructMatch(*m, *q1, matches, true);
   CHECK(n == 1);
 
   // test with chirality
@@ -560,27 +468,17 @@ TEST_CASE("test9", "[substruct][chiral]") {
   CHECK(found);
   n = SubstructMatch(*q1, *q1, matches, true, true, true);
   CHECK(n == 1);
-  delete m;
-  delete a6;
-  delete q1;
 }
 
 TEST_CASE("testRecursiveSerialNumbers", "[substruct][recursive]") {
-  MatchVectType matchV;
-  std::vector<MatchVectType> matches;
-  int n;
-  bool updateLabel = true;
-  bool takeOwnership = true;
-
-  RWMol *m, *q1, *q2;
-  auto *a6 = new Atom(6);
-  auto *a8 = new Atom(8);
-  m = new RWMol();
-  m->addAtom(a6);
-  m->addAtom(a6);
-  m->addAtom(a8);
-  m->addAtom(a6);
-  m->addAtom(a6);
+  auto a6 = std::make_unique<Atom>(6);
+  auto a8 = std::make_unique<Atom>(8);
+  auto m = std::make_unique<RWMol>();
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
+  m->addAtom(a8.get());
+  m->addAtom(a6.get());
+  m->addAtom(a6.get());
   m->addBond(1, 0, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
   m->addBond(1, 3, Bond::SINGLE);
@@ -588,41 +486,40 @@ TEST_CASE("testRecursiveSerialNumbers", "[substruct][recursive]") {
 
   {
     // this will be the recursive query
-    q1 = new RWMol();
+    auto q1 = std::make_unique<RWMol>();
+    bool updateLabel = true;
+    bool takeOwnership = true;
     q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
     q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
     q1->addBond(0, 1, Bond::UNSPECIFIED);
 
     // here's the main query
-    q2 = new RWMol();
-    auto *qA = new QueryAtom(6);
-    auto *rsq = new RecursiveStructureQuery(new RWMol(*q1), 1);
-    qA->expandQuery(rsq, Queries::COMPOSITE_AND);
+    auto q2 = std::make_unique<RWMol>();
+    auto qA = std::make_unique<QueryAtom>(6);
+    auto rsq = std::make_unique<RecursiveStructureQuery>(new RWMol(*q1), 1);
+    qA->expandQuery(rsq.release(), Queries::COMPOSITE_AND);
     // std::cout << "post expand: " << qA->getQuery() << std::endl;
-    q2->addAtom(qA, true, true);
+    q2->addAtom(qA.release(), true, true);
     // std::cout << "mol: " << q2->getAtomWithIdx(0)->getQuery() << std::endl;
     q2->addAtom(new QueryAtom(8), true, true);
     q2->addBond(0, 1, Bond::UNSPECIFIED);
 
-    qA = new QueryAtom(6);
-    rsq = new RecursiveStructureQuery(new RWMol(*q1), 1);
-    qA->expandQuery(rsq, Queries::COMPOSITE_AND);
-    q2->addAtom(qA, true, true);
+    qA.reset(new QueryAtom(6));
+    rsq.reset(new RecursiveStructureQuery(new RWMol(*q1), 1));
+    qA->expandQuery(rsq.release(), Queries::COMPOSITE_AND);
+    q2->addAtom(qA.release(), true, true);
     q2->addBond(1, 2, Bond::UNSPECIFIED);
 
+    MatchVectType matchV;
     bool found = SubstructMatch(*m, *q2, matchV);
     REQUIRE(found);
     REQUIRE(matchV.size() == 3);
-    n = SubstructMatch(*m, *q2, matches, true);
+    std::vector<MatchVectType> matches;
+    auto n = SubstructMatch(*m, *q2, matches, true);
     CHECK(n == 1);
     CHECK(matches.size() == 1);
     CHECK(matches[0].size() == 3);
-    delete q1;
-    delete q2;
   }
-  delete m;
-  delete a6;
-  delete a8;
 }
 
 #ifdef RDK_TEST_MULTITHREADED
