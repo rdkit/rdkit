@@ -17,10 +17,21 @@ namespace RDKit {
 namespace {
 
 inline void copyComputedProps(const ROMol &src, ROMol &dst) {
-  dst.updateProps(src);
+  // Only clear mol-scoped props so atom/bond props survive in RDMol
+  for (const auto &prop : dst.getPropList(true, true)) {
+    dst.clearProp(prop);
+  }
+  dst.updateProps(src, true);
   for (auto &v : dst.getPropList(true, false)) {
     if (v != RDKit::detail::computedPropName) dst.clearProp(v);
   }
+  // These computed props carry atom/bond indices from the source molecule and
+  // are not valid on a subset (will be regenerated on the subsetted molecule)
+  dst.clearProp("_smilesAtomOutputOrder");
+  dst.clearProp("_smilesBondOutputOrder");
+  dst.clearProp("_StereochemDone");
+  dst.clearProp("_ringStereoAtomsAll");
+  dst.clearProp("_ringStereoAtomsBegins");
 }
 
 static void copySelectedAtomsAndBonds(RWMol &extracted_mol,
