@@ -56,6 +56,8 @@ def calculateScore(m):
   if _fscores is None:
     readFragmentScores()
 
+  m = Chem.RemoveHs(m)
+  
   # fragment score
   sfp = mfpgen.GetSparseCountFingerprint(m)
 
