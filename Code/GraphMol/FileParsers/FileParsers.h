@@ -52,9 +52,6 @@ struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
   bool expandAttachmentPoints =
       false; /**< toggle conversion of attachment points into dummy atoms */
   bool parsingSCSRMol = false; /**< if true, we are parsing a SCSR mol file */
-  bool allowTwoHs =
-      false; /**< if true, allow two hydrogens on chiral centers - used in SCSR
-                parsing where a leaving Group is a Hydrogen*/
 };
 enum class SCSRTemplateNames {
   AsEntered,     //<! use the name of the temlate as entered in the SCSR Mol

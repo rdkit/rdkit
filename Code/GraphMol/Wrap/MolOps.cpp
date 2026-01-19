@@ -2291,13 +2291,11 @@ RETURNS:
     - mol: the molecule to use\n\
     - confId: (optional) the conformation to use \n\
     - replaceExistingTags: (optional) replace any existing information about stereochemistry\n\
-    - allowTwoHs: (optional) allow two hydrogens on a chiral center (used in SCSR treatment)\n\
 \n";
     python::def("AssignChiralTypesFromBondDirs",
                 MolOps::assignChiralTypesFromBondDirs,
                 (python::arg("mol"), python::arg("confId") = -1,
-                 python::arg("replaceExistingTags") = true,
-                 python::arg("allowTwoHs") = false),
+                 python::arg("replaceExistingTags") = true),
                 docString.c_str());
     // ------------------------------------------------------------------------
     docString =

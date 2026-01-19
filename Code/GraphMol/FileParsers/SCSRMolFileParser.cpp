@@ -275,8 +275,6 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
     auto tempParams = params;
     tempParams.sanitize = false;
     tempParams.removeHs = false;
-    tempParams.allowTwoHs =
-        true;  // templates may have leaving Hs on chiral centers
     FileParserUtils::finishMolProcessing(templateMol, chiralityPossible,
                                          tempParams);
 
