@@ -8,6 +8,6 @@ rdkit_headers(Subgraphs.h
 
 target_include_directories(Subgraphs PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/External/boost-numeric-bindings>)
 
-rdkit_test(testSubgraphs1 test1.cpp LINK_LIBRARIES Subgraphs SmilesParse)
+rdkit_catch_test(testSubgraphs1 test1.cpp LINK_LIBRARIES Subgraphs SmilesParse)
 rdkit_catch_test(testSubgraphs2 testSubgraphs2.cpp LINK_LIBRARIES SmilesParse Subgraphs)
 rdkit_catch_test(subgraphsCatch catch_tests.cpp LINK_LIBRARIES SmilesParse Subgraphs)
