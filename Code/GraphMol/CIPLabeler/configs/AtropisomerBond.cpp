@@ -10,6 +10,7 @@
 //
 #include <GraphMol/Chirality.h>
 #include <GraphMol/Atropisomers.h>
+#include <RDGeneral/types.h>
 
 #include "AtropisomerBond.h"
 #include "../Sort.h"
@@ -47,9 +48,6 @@ void AtropisomerBond::setPrimaryLabel(Descriptor desc) {
     case Descriptor::P:
     case Descriptor::m:
     case Descriptor::p: {
-      auto carriers = getCarriers();
-      // dp_bond->setStereoAtoms(carriers[0]->getIdx(), carriers[1]->getIdx());
-      // dp_bond->setStereo(d_cfg);
       dp_bond->setProp(common_properties::_CIPCode, to_string(desc));
       return;
     }
@@ -69,6 +67,14 @@ void AtropisomerBond::setPrimaryLabel(Descriptor desc) {
     default:
       throw std::runtime_error("Received an invalid Bond Descriptor");
   }
+}
+
+bool AtropisomerBond::hasPrimaryLabel() const {
+  return dp_bond->hasProp(common_properties::_CIPCode);
+}
+
+void AtropisomerBond::resetPrimaryLabel() const {
+  dp_bond->clearProp(common_properties::_CIPCode);
 }
 
 Descriptor AtropisomerBond::label(const Rules &comp) {

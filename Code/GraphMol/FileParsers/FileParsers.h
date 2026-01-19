@@ -491,8 +491,8 @@ RDKIT_FILEPARSERS_EXPORT RWMol *RDKitSVGToMol(std::istream *instream,
                                               bool sanitize = true,
                                               bool removeHs = true);
 
-inline std::unique_ptr<RDKit::RWMol> operator"" _ctab(const char *text,
-                                                      size_t len) {
+inline std::unique_ptr<RDKit::RWMol> operator""_ctab(const char *text,
+                                                     size_t len) {
   std::string data(text, len);
   try {
     return v2::FileParsers::MolFromMolBlock(data);
@@ -500,8 +500,8 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _ctab(const char *text,
     return nullptr;
   }
 }
-inline std::unique_ptr<RDKit::RWMol> operator"" _mol2(const char *text,
-                                                      size_t len) {
+inline std::unique_ptr<RDKit::RWMol> operator""_mol2(const char *text,
+                                                     size_t len) {
   std::string data(text, len);
   try {
     return v2::FileParsers::MolFromMol2Block(data);
@@ -510,8 +510,8 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _mol2(const char *text,
   }
 }
 
-inline std::unique_ptr<RDKit::RWMol> operator"" _pdb(const char *text,
-                                                     size_t len) {
+inline std::unique_ptr<RDKit::RWMol> operator""_pdb(const char *text,
+                                                    size_t len) {
   std::string data(text, len);
   try {
     return v2::FileParsers::MolFromPDBBlock(data);
