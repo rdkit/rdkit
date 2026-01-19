@@ -73,11 +73,6 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, const std::string &expected,
   }
   std::string result = str.str();
 
-  if (expected != result) {
-    std::cerr << "Expected: '" << expected << "'" << std::endl;
-    std::cerr << "Got:      '" << result << "'" << std::endl;
-  }
-
   CHECK(result == expected);
   if (mol) {
     auto smi1 = MolToSmiles(*res);
@@ -94,7 +89,6 @@ void DUMP_RGROUP(RGroupRows::const_iterator &it, std::string &result) {
     str << rgroups.first << ":" << MolToSmiles(*rgroups.second.get(), true)
         << " ";
   }
-  std::cerr << str.str() << std::endl;
   result = str.str();
 }
 
@@ -1243,7 +1237,6 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
   auto core = "O=C(NS(=O)(=O)c1ccccc1)c1ccccc1Oc1ccccc1"_smiles;
 
   {
-    std::cerr << "iterative" << std::endl;
     RGroupDecompositionParameters ps = RGroupDecompositionParameters();
     ps.timeout = 0.1;
     RGroupDecomposition decomp(*core, ps);
@@ -1263,7 +1256,6 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
   {
     RGroupDecompositionParameters ps = RGroupDecompositionParameters();
     ps.timeout = 2.0;
-    std::cerr << "bulk" << std::endl;
     std::vector<ROMOL_SPTR> cores;
     cores.push_back(ROMOL_SPTR(new ROMol(*core)));
     RGroupRows rows;
@@ -1284,7 +1276,6 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
     ps.timeout = 25.0;
 #endif
     ps.matchingStrategy = RDKit::NoSymmetrization;
-    std::cerr << "bulk, no symmetry" << std::endl;
     std::vector<ROMOL_SPTR> cores;
     cores.push_back(ROMOL_SPTR(new ROMol(*core)));
     RGroupRows rows;
@@ -1460,13 +1451,7 @@ CCC[*:2]
 CCCC[*:2]
 )RES";
 
-    if (ss.str() != expected) {
-      std::cerr << __LINE__ << " ERROR got\n"
-                << ss.str() << "\nexpected\n"
-                << expected << std::endl;
-    }
-
-    REQUIRE(ss.str() == expected);
+    CHECK(ss.str() == expected);
   }
 }
 
@@ -2712,7 +2697,6 @@ M  END
   }
 
   decomp.process();
-  std::cerr << "Best mapping" << std::endl;
   RGroupRows rows = decomp.getRGroupsAsRows();
   REQUIRE(rows.size() == 11);
   for (const auto &row : rows) {
