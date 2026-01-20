@@ -45,8 +45,12 @@
 %newobject RDKit::MolOps::adjustQueryProperties;
 
 %ignore RDKit::MolOps::detectChemistryProblems;
-%include <GraphMol/MolOps.h>
 %ignore RDKit::MolOps::sanitizeMol(RWMol &,unsigned int &,unsigned int &);
+%ignore RDKit::MolOps::findSSSR;
+%ignore RDKit::MolOps::countAtomElec(const RDMol &,const atomindex_t);
+%ignore RDKit::MolOps::atomHasConjugatedBond(const RDMol &,const atomindex_t);
+
+%include <GraphMol/MolOps.h>
 %template(BoolPair) std::pair<bool, bool>;
 
 %inline %{
@@ -68,4 +72,12 @@
     }
     return res;
   };
+
+  int findSSSR(const RDKit::ROMol &mol,
+               std::vector<std::vector<int>> &res,
+               bool includeDativeBonds = false,
+               bool includeHydrogenBonds = false) {
+       return RDKit::MolOps::findSSSR(mol, res, includeDativeBonds, includeHydrogenBonds);
+  };  
+
 %}

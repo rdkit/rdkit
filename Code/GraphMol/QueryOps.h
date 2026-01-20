@@ -77,8 +77,10 @@ typedef Queries::LessQuery<int, ConstRDMolBond, true> BOND_LESS_QUERY2;
 typedef Queries::LessQuery<int, Atom const *, true> ATOM_LESS_QUERY;
 typedef Queries::LessQuery<int, Bond const *, true> BOND_LESS_QUERY;
 
-typedef Queries::LessEqualQuery<int, ConstRDMolAtom, true> ATOM_LESSEQUAL_QUERY2;
-typedef Queries::LessEqualQuery<int, ConstRDMolBond, true> BOND_LESSEQUAL_QUERY2;
+typedef Queries::LessEqualQuery<int, ConstRDMolAtom, true>
+    ATOM_LESSEQUAL_QUERY2;
+typedef Queries::LessEqualQuery<int, ConstRDMolBond, true>
+    BOND_LESSEQUAL_QUERY2;
 typedef Queries::LessEqualQuery<int, Atom const *, true> ATOM_LESSEQUAL_QUERY;
 typedef Queries::LessEqualQuery<int, Bond const *, true> BOND_LESSEQUAL_QUERY;
 
@@ -252,7 +254,8 @@ static inline int queryAtomType(Atom const *at) {
 };
 const int massIntegerConversionFactor = 1000;
 static inline int queryAtomMass2(ConstRDMolAtom at) {
-  return static_cast<int>(std::round(massIntegerConversionFactor * at.data().getMass()));
+  return static_cast<int>(
+      std::round(massIntegerConversionFactor * at.data().getMass()));
 };
 static inline int queryAtomMass(Atom const *at) {
   return static_cast<int>(
@@ -311,7 +314,7 @@ static inline int queryAtomMissingChiralTag(Atom const *at) {
 static inline int queryAtomHasHeteroatomNbrs2(ConstRDMolAtom at) {
   auto [nbrIdx, endNbrs] = at.mol().getAtomNeighbors(at.index());
   while (nbrIdx != endNbrs) {
-    const AtomData& nbr = at.mol().getAtom(*nbrIdx);
+    const AtomData &nbr = at.mol().getAtom(*nbrIdx);
     if (nbr.getAtomicNum() != 6 && nbr.getAtomicNum() != 1) {
       return 1;
     }
@@ -336,7 +339,7 @@ static inline int queryAtomNumHeteroatomNbrs2(ConstRDMolAtom at) {
   int res = 0;
   auto [nbrIdx, endNbrs] = at.mol().getAtomNeighbors(at.index());
   while (nbrIdx != endNbrs) {
-    const AtomData& nbr = at.mol().getAtom(*nbrIdx);
+    const AtomData &nbr = at.mol().getAtom(*nbrIdx);
     if (nbr.getAtomicNum() != 6 && nbr.getAtomicNum() != 1) {
       ++res;
     }
@@ -521,9 +524,13 @@ static inline int queryAtomHasRingBond(Atom const *at) {
   }
   return 0;
 };
-RDKIT_GRAPHMOL_EXPORT bool queryIsAtomBridgeheadInternal(const RDMol &mol, atomindex_t atomIndex, const RingInfoCache &rings);
+RDKIT_GRAPHMOL_EXPORT bool queryIsAtomBridgeheadInternal(
+    const RDMol &mol, atomindex_t atomIndex, const RingInfoCache &rings);
 static inline int queryIsAtomBridgehead2(ConstRDMolAtom at) {
-  return queryIsAtomBridgeheadInternal(at.mol(), at.index(), at.mol().getRingInfo()) ? 1 : 0;
+  return queryIsAtomBridgeheadInternal(at.mol(), at.index(),
+                                       at.mol().getRingInfo())
+             ? 1
+             : 0;
 }
 RDKIT_GRAPHMOL_EXPORT int queryIsAtomBridgehead(Atom const *at);
 
@@ -610,7 +617,7 @@ int queryBondIsInRingOfSize(Bond const *bond) {
 
 template <class T>
 T *makeAtomSimpleQuery2(int what, int func(ConstRDMolAtom),
-                       const std::string &description = "Atom Simple") {
+                        const std::string &description = "Atom Simple") {
   T *res = new T;
   res->setVal(what);
   res->setDataFunc(func);
@@ -665,7 +672,7 @@ RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomNumQuery(int what);
 template <class T>
 T *makeAtomTypeQuery2(int num, int aromatic, const std::string &descr) {
   return makeAtomSimpleQuery2<T>(makeAtomType(num, aromatic), queryAtomType2,
-                                descr);
+                                 descr);
 }
 //! returns a Query for matching atomic number and aromaticity
 template <class T>
@@ -691,7 +698,8 @@ T *makeAtomImplicitValenceQuery(int what, const std::string &descr) {
   return makeAtomSimpleQuery<T>(what, queryAtomImplicitValence, descr);
 }
 //! \overload
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomImplicitValenceQuery2(int what);
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomImplicitValenceQuery2(
+    int what);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomImplicitValenceQuery(int what);
 
@@ -706,7 +714,8 @@ T *makeAtomExplicitValenceQuery(int what, const std::string &descr) {
   return makeAtomSimpleQuery<T>(what, queryAtomExplicitValence, descr);
 }
 //! \overload
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomExplicitValenceQuery2(int what);
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomExplicitValenceQuery2(
+    int what);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomExplicitValenceQuery(int what);
 
@@ -736,7 +745,8 @@ T *makeAtomExplicitDegreeQuery(int what, const std::string &descr) {
   return makeAtomSimpleQuery<T>(what, queryAtomExplicitDegree, descr);
 }
 //! \overload
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomExplicitDegreeQuery2(int what);
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomExplicitDegreeQuery2(
+    int what);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomExplicitDegreeQuery(int what);
 
@@ -766,7 +776,8 @@ T *makeAtomHeavyAtomDegreeQuery(int what, const std::string &descr) {
   return makeAtomSimpleQuery<T>(what, queryAtomHeavyAtomDegree, descr);
 }
 //! \overload
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomHeavyAtomDegreeQuery2(int what);
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomHeavyAtomDegreeQuery2(
+    int what);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomHeavyAtomDegreeQuery(int what);
 
@@ -811,7 +822,8 @@ T *makeAtomImplicitHCountQuery(int what, const std::string &descr) {
   return makeAtomSimpleQuery<T>(what, queryAtomImplicitHCount, descr);
 }
 //! \overload
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomImplicitHCountQuery2(int what);
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomImplicitHCountQuery2(
+    int what);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomImplicitHCountQuery(int what);
 
@@ -849,7 +861,7 @@ RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomAliphaticQuery();
 template <class T>
 T *makeAtomMassQuery2(int what, const std::string &descr) {
   return makeAtomSimpleQuery2<T>(massIntegerConversionFactor * what,
-                                queryAtomMass2, descr);
+                                 queryAtomMass2, descr);
 }
 //! returns a Query for matching atoms with a particular mass
 template <class T>
@@ -1095,7 +1107,7 @@ RDKIT_GRAPHMOL_EXPORT ATOM_OR_QUERY *makeMHAtomQuery();
 const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
                                                  "X", "XH", "M", "MH"};
 RDKIT_GRAPHMOL_EXPORT void convertComplexNameToQuery2(RDMolAtom query,
-                                                     std::string_view symb);
+                                                      std::string_view symb);
 RDKIT_GRAPHMOL_EXPORT void convertComplexNameToQuery(Atom *query,
                                                      std::string_view symb);
 
@@ -1148,9 +1160,10 @@ RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomHasHeteroatomNbrsQuery();
 
 //! returns a Query for matching the number of aliphatic heteroatom neighbors
 template <class T>
-T *makeAtomNumAliphaticHeteroatomNbrsQuery2(int what, const std::string &descr) {
+T *makeAtomNumAliphaticHeteroatomNbrsQuery2(int what,
+                                            const std::string &descr) {
   return makeAtomSimpleQuery2<T>(what, queryAtomNumAliphaticHeteroatomNbrs2,
-                                descr);
+                                 descr);
 }
 //! returns a Query for matching the number of aliphatic heteroatom neighbors
 template <class T>
@@ -1168,7 +1181,8 @@ makeAtomNumAliphaticHeteroatomNbrsQuery(int what);
 //! returns a Query for matching atoms that have heteroatom neighbors
 template <class T>
 T *makeAtomHasAliphaticHeteroatomNbrsQuery2(const std::string &descr) {
-  return makeAtomSimpleQuery2<T>(1, queryAtomHasAliphaticHeteroatomNbrs2, descr);
+  return makeAtomSimpleQuery2<T>(1, queryAtomHasAliphaticHeteroatomNbrs2,
+                                 descr);
 }
 //! returns a Query for matching atoms that have heteroatom neighbors
 template <class T>
@@ -1276,8 +1290,7 @@ RDKIT_GRAPHMOL_EXPORT ATOM_NULL_QUERY2 *makeAtomNullQuery2();
 RDKIT_GRAPHMOL_EXPORT ATOM_NULL_QUERY *makeAtomNullQuery();
 
 static inline int queryAtomRingMembership2(ConstRDMolAtom at) {
-  return static_cast<int>(
-      at.mol().getRingInfo().numAtomRings(at.index()));
+  return static_cast<int>(at.mol().getRingInfo().numAtomRings(at.index()));
 }
 static inline int queryAtomRingMembership(Atom const *at) {
   return static_cast<int>(
@@ -1293,8 +1306,10 @@ class AtomRingQuery;
 class AtomRingQuery2;
 
 template <bool newVersion>
-class AtomRingQueryBase : public Queries::EqualityQuery<int,
-    std::conditional_t<newVersion, ConstRDMolAtom, ConstAtomPtr>, true> {
+class AtomRingQueryBase
+    : public Queries::EqualityQuery<
+          int, std::conditional_t<newVersion, ConstRDMolAtom, ConstAtomPtr>,
+          true> {
   using DataFuncArgType =
       std::conditional_t<newVersion, ConstRDMolAtom, ConstAtomPtr>;
 
@@ -1335,7 +1350,8 @@ class AtomRingQueryBase : public Queries::EqualityQuery<int,
 
   //! returns a copy of this query
   Queries::Query<int, DataFuncArgType, true> *copy() const override {
-    using RingQueryType = std::conditional_t<newVersion, AtomRingQuery2, AtomRingQuery>;
+    using RingQueryType =
+        std::conditional_t<newVersion, AtomRingQuery2, AtomRingQuery>;
     RingQueryType *res = new RingQueryType(this->d_val);
     res->setNegation(this->getNegation());
     res->setTol(this->getTol());
@@ -1346,18 +1362,18 @@ class AtomRingQueryBase : public Queries::EqualityQuery<int,
 };
 class RDKIT_GRAPHMOL_EXPORT AtomRingQuery2 : public AtomRingQueryBase<true> {
  public:
-    using AtomRingQueryBase::AtomRingQueryBase;
+  using AtomRingQueryBase::AtomRingQueryBase;
 };
 class RDKIT_GRAPHMOL_EXPORT AtomRingQuery : public AtomRingQueryBase<false> {
  public:
-    using AtomRingQueryBase::AtomRingQueryBase;
+  using AtomRingQueryBase::AtomRingQueryBase;
 };
 
 //! allows use of recursive structure queries (e.g. recursive SMARTS)
 class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery2
     : public Queries::SetQuery<int, ConstRDMolAtom, true> {
  public:
-    RecursiveStructureQuery2() : Queries::SetQuery<int, ConstRDMolAtom, true>() {
+  RecursiveStructureQuery2() : Queries::SetQuery<int, ConstRDMolAtom, true>() {
     setDataFunc(getAtIdx);
     setDescription("RecursiveStructure");
   }
@@ -1602,13 +1618,16 @@ class HasPropWithValueQuery
       try {
         T atom_val;
         if constexpr (std::is_same_v<TargetPtr, ConstRDMolAtom>) {
-          atom_val = what.mol().template getAtomPropValue<T>(propname, what.index());
+          atom_val =
+              what.mol().template getAtomPropValue<T>(propname, what.index());
         } else if constexpr (std::is_same_v<TargetPtr, ConstRDMolBond>) {
-          atom_val = what.mol().template getBondPropValue<T>(propname, what.index());
+          atom_val =
+              what.mol().template getBondPropValue<T>(propname, what.index());
         } else {
           atom_val = what->template getProp<T>(propname.getString());
         }
-        res = Queries::queryCmp(atom_val, this->val, static_cast<T>(this->tolerance)) == 0;
+        res = Queries::queryCmp(atom_val, this->val,
+                                static_cast<T>(this->tolerance)) == 0;
       } catch (KeyErrorException &) {
         res = false;
       } catch (std::bad_any_cast &) {
@@ -1687,13 +1706,16 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     if (res) {
       try {
         if constexpr (std::is_same_v<TargetPtr, ConstRDMolAtom>) {
-          PropToken token = what.mol().template getAtomProp<PropToken>(propname, what.index());
+          PropToken token = what.mol().template getAtomProp<PropToken>(
+              propname, what.index());
           res = token == this->val;
         } else if constexpr (std::is_same_v<TargetPtr, ConstRDMolBond>) {
-          PropToken token = what.mol().template getBondProp<PropToken>(propname, what.index());
+          PropToken token = what.mol().template getBondProp<PropToken>(
+              propname, what.index());
           res = token == this->val;
         } else {
-          std::string atom_val = what->template getProp<std::string>(propname.getString());
+          std::string atom_val =
+              what->template getProp<std::string>(propname.getString());
           res = atom_val == this->val.getString();
         }
       } catch (KeyErrorException &) {
@@ -1725,8 +1747,8 @@ class HasPropWithValueQuery<TargetPtr, std::string>
   //! returns a copy of this query
   Queries::Query<int, TargetPtr, true> *copy() const override {
     HasPropWithValueQuery<TargetPtr, std::string> *res =
-        new HasPropWithValueQuery<TargetPtr, std::string>(this->propname.getString(),
-                                                          this->val.getString());
+        new HasPropWithValueQuery<TargetPtr, std::string>(
+            this->propname.getString(), this->val.getString());
     res->setNegation(this->getNegation());
     res->d_description = this->d_description;
     return res;
@@ -1776,7 +1798,8 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
     if (res) {
       try {
         const ExplicitBitVect &bv =
-            what->template getProp<const ExplicitBitVect &>(propname.getString());
+            what->template getProp<const ExplicitBitVect &>(
+                propname.getString());
         const double tani = TanimotoSimilarity(val, bv);
         res = (1.0 - tani) <= tol;
       } catch (KeyErrorException &) {
@@ -1844,9 +1867,10 @@ RDKIT_GRAPHMOL_EXPORT void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
                                                 std::vector<int> &vals);
 
 //! Checks if an atom is dummy or not.
-//! 1. A dummy non-query atom (e.g., "*" in SMILES) is defined by its zero atomic
-//!    number. This rule breaks for query atoms because a COMPOSITE_OR query atom
-//!    also has a zero atomic number (#6349).
+//! 1. A dummy non-query atom (e.g., "*" in SMILES) is defined by its zero
+//! atomic
+//!    number. This rule breaks for query atoms because a COMPOSITE_OR query
+//!    atom also has a zero atomic number (#6349).
 //! 2. A dummy query atom (e.g., "*" in SMARTS) is defined by its explicit
 //!    description: "AtomNull".
 inline bool isAtomDummy(ConstRDMolAtom a) {
@@ -1908,7 +1932,8 @@ void expandQuery(
       UNDER_CONSTRUCTION("unrecognized combination query");
   }
   firstQuery->setDescription(descrip);
-  using CHILD_TYPE = typename Queries::Query<int, DataFuncArgType, true>::CHILD_TYPE;
+  using CHILD_TYPE =
+      typename Queries::Query<int, DataFuncArgType, true>::CHILD_TYPE;
   if (maintainOrder) {
     firstQuery->addChild(CHILD_TYPE(origQ));
     firstQuery->addChild(CHILD_TYPE(newQuery.release()));

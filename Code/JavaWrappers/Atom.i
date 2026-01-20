@@ -81,6 +81,12 @@ std::string describeQueryHelper(const RDKit::Atom::QUERYATOM_QUERY *q, unsigned 
 %newobject RDKit::Atom::getProp;
 %newobject RDKit::Atom::getBonds;
 
+%template(setProp)  RDKit::Atom::setProp<std::string>;
+%template(setIntProp) RDKit::Atom::setProp<int>;
+%template(setBoolProp) RDKit::Atom::setProp<bool>;
+%template(setDoubleProp) RDKit::Atom::setProp<double>;
+
+
 %extend RDKit::Atom {
   std::string getProp(const std::string key){
     std::string res;

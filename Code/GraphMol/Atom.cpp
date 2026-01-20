@@ -201,15 +201,13 @@ Atom::Atom() {
   dp_owningMol = nullptr;
 }
 
-Atom::Atom(unsigned int num): Atom() { setAtomicNum(num); }
+Atom::Atom(unsigned int num) : Atom() { setAtomicNum(num); }
 
 Atom::Atom(const std::string &what) : Atom() {
   setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(what));
 };
 
-Atom::Atom(const Atom &other): Atom() {
-  initFromOther(other);
-}
+Atom::Atom(const Atom &other) : Atom() { initFromOther(other); }
 
 Atom &Atom::operator=(const Atom &other) {
   if (this == &other) {
@@ -251,14 +249,16 @@ void Atom::initFromOther(const Atom &other, const bool preserveProps) {
                                                 other.d_index),
               end = other.dp_dataMol->endProps();
          it != end; ++it) {
-      dp_dataMol->copySingleProp(it->name(), d_index, *other.dp_dataMol, it->name(),
-                                 other.d_index, RDMol::Scope::ATOM);
+      dp_dataMol->copySingleProp(it->name(), d_index, *other.dp_dataMol,
+                                 it->name(), other.d_index, RDMol::Scope::ATOM);
     }
   }
   const auto &otherMonomerInfo = other.dp_dataMol->monomerInfo;
-  if (auto it = otherMonomerInfo.find(other.d_index); it != otherMonomerInfo.end()) {
-    AtomMonomerInfo* monomerInfo = it->second.get();
-    auto monomerInfoCopy = std::unique_ptr<AtomMonomerInfo>(monomerInfo->copy());
+  if (auto it = otherMonomerInfo.find(other.d_index);
+      it != otherMonomerInfo.end()) {
+    AtomMonomerInfo *monomerInfo = it->second.get();
+    auto monomerInfoCopy =
+        std::unique_ptr<AtomMonomerInfo>(monomerInfo->copy());
     dp_dataMol->monomerInfo[d_index] = std::move(monomerInfoCopy);
   } else {
     // If the atom doesn't have monomer info, remove it from the copy. Useful in
@@ -288,9 +288,8 @@ std::string Atom::getSymbol() const {
   int atomicNum = getAtomicNum();
   std::string res;
   // handle dummies differently:
-  if (atomicNum != 0 ||
-      !dp_dataMol->getAtomPropIfPresent<std::string>(
-          common_properties::dummyLabelToken, d_index, res)) {
+  if (atomicNum != 0 || !dp_dataMol->getAtomPropIfPresent<std::string>(
+                            common_properties::dummyLabelToken, d_index, res)) {
     res = PeriodicTable::getTable()->getElementSymbol(atomicNum);
   }
   return res;
@@ -320,7 +319,8 @@ unsigned int Atom::getValence(ValenceType which) const {
   if (!dp_owningMol) {
     return 0;
   }
-  const uint32_t valence = dp_dataMol->getAtom(d_index).getValence(which);
+  const uint32_t valence = dp_dataMol->getAtom(d_index).getValence(
+      static_cast<AtomData::ValenceType>(std::uint8_t(which)));
   return valence == AtomData::unsetValenceVal ? (unsigned int)-1 : valence;
 }
 
@@ -365,9 +365,7 @@ void Atom::setIsAromatic(bool what) {
 bool Atom::getIsAromatic() const {
   return dp_dataMol->getAtom(d_index).getIsAromatic();
 }
-double Atom::getMass() const {
-  return dp_dataMol->getAtom(d_index).getMass();
-}
+double Atom::getMass() const { return dp_dataMol->getAtom(d_index).getMass(); }
 void Atom::setIsotope(unsigned int what) {
   dp_dataMol->getAtom(d_index).setIsotope(what);
 }
@@ -393,18 +391,17 @@ Atom::HybridizationType Atom::getHybridization() const {
       dp_dataMol->getAtom(d_index).getHybridization());
 }
 
-void Atom::setQuery([[maybe_unused]] QUERYATOM_QUERY* what) {
+void Atom::setQuery([[maybe_unused]] QUERYATOM_QUERY *what) {
   //  Atoms don't have complex queries so this has to fail
   PRECONDITION(0, "plain atoms have no Query");
 }
-Atom::QUERYATOM_QUERY* Atom::getQuery() const { return nullptr; }
-void Atom::expandQuery(
-    [[maybe_unused]] QUERYATOM_QUERY* what,
-    [[maybe_unused]] Queries::CompositeQueryType how,
-    [[maybe_unused]] bool maintainOrder) {
+Atom::QUERYATOM_QUERY *Atom::getQuery() const { return nullptr; }
+void Atom::expandQuery([[maybe_unused]] QUERYATOM_QUERY *what,
+                       [[maybe_unused]] Queries::CompositeQueryType how,
+                       [[maybe_unused]] bool maintainOrder) {
   PRECONDITION(0, "plain atoms have no Query");
 }
-bool Atom::Match(Atom const* what) const {
+bool Atom::Match(Atom const *what) const {
   PRECONDITION(what, "bad query atom");
   bool res = getAtomicNum() == what->getAtomicNum();
 
@@ -413,13 +410,13 @@ bool Atom::Match(Atom const* what) const {
   //   [1*] only matches [*] and [1*]
   if (res) {
     // if (hasOwningMol() && what->hasOwningMol() &&
-        // this->getOwningMol().getRingInfo()->isInitialized() &&
-        // what->getOwningMol().getRingInfo()->isInitialized() &&
-        // this->getOwningMol().getRingInfo()->numAtomRings(d_index) >
-            // what->getOwningMol().getRingInfo()->numAtomRings(what->d_index)) {
-      // res = false;
-  // } else if (!this->getAtomicNum()) {
-  if (!this->getAtomicNum()) {
+    // this->getOwningMol().getRingInfo()->isInitialized() &&
+    // what->getOwningMol().getRingInfo()->isInitialized() &&
+    // this->getOwningMol().getRingInfo()->numAtomRings(d_index) >
+    // what->getOwningMol().getRingInfo()->numAtomRings(what->d_index)) {
+    // res = false;
+    // } else if (!this->getAtomicNum()) {
+    if (!this->getAtomicNum()) {
       // this is the new behavior, based on the isotopes:
       int tgt = this->getIsotope();
       int test = what->getIsotope();
@@ -493,13 +490,11 @@ void Atom::clearPropertyCache() {
   dp_dataMol->getAtom(d_index).clearPropertyCache();
 }
 int Atom::calcExplicitValence(bool strict) {
-  PRECONDITION(dp_owningMol,
-               "calcExplicitValence requires an owning molecule");
+  PRECONDITION(dp_owningMol, "calcExplicitValence requires an owning molecule");
   return dp_owningMol->calcExplicitValence(d_index, strict);
 }
 int Atom::calcImplicitValence(bool strict) {
-  PRECONDITION(dp_owningMol,
-               "calcImplicitValence requires an owning molecule");
+  PRECONDITION(dp_owningMol, "calcImplicitValence requires an owning molecule");
   return dp_owningMol->calcImplicitValence(d_index, strict);
 }
 
@@ -538,11 +533,12 @@ int getAtomRLabel(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   const uint32_t *prop =
       atom->getDataRDMol().getAtomPropArrayIfPresent<uint32_t>(
-      common_properties::_MolFileRLabelToken);
+          common_properties::_MolFileRLabelToken);
   return (prop != nullptr) ? prop[atom->getIdx()] : 0;
 }
 
-void setAtomStringProp(Atom* atom, const PropToken& token, const std::string& value) {
+void setAtomStringProp(Atom *atom, const PropToken &token,
+                       const std::string &value) {
   PRECONDITION(atom, "bad atom");
   if (value.empty()) {
     atom->getDataRDMol().clearSingleAtomProp(token, atom->getIdx());
@@ -552,7 +548,7 @@ void setAtomStringProp(Atom* atom, const PropToken& token, const std::string& va
   }
 }
 
-std::string getAtomStringProp(const Atom* atom, const PropToken& token) {
+std::string getAtomStringProp(const Atom *atom, const PropToken &token) {
   PRECONDITION(atom, "bad atom");
   PropToken prop;
   bool found = atom->getDataRDMol().getAtomPropIfPresent<PropToken>(
@@ -577,11 +573,13 @@ std::string getAtomValue(const Atom *atom) {
 }
 
 void setSupplementalSmilesLabel(Atom *atom, const std::string &label) {
-  setAtomStringProp(atom, common_properties::_supplementalSmilesLabelToken, label);
+  setAtomStringProp(atom, common_properties::_supplementalSmilesLabelToken,
+                    label);
 }
 
 std::string getSupplementalSmilesLabel(const Atom *atom) {
-  return getAtomStringProp(atom, common_properties::_supplementalSmilesLabelToken);
+  return getAtomStringProp(atom,
+                           common_properties::_supplementalSmilesLabelToken);
 }
 
 unsigned int numPiElectrons(const Atom &atom) {
@@ -662,7 +660,7 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   target << " exp: ";
   target << (at.getExplicitValencePrivate() >= 0
                  ? std::to_string(at.getExplicitValencePrivate())
-                                       : "N/A");
+                 : "N/A");
 
   target << " imp: ";
   if (at.getNoImplicit()) {
@@ -670,7 +668,7 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   } else {
     target << (at.getImplicitValencePrivate() >= 0
                    ? std::to_string(at.getImplicitValencePrivate())
-                                         : "N/A");
+                   : "N/A");
   }
   target << " hyb: " << hybridizationToString(at.getHybridization());
   if (at.getIsAromatic()) {
@@ -712,7 +710,7 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
 
 namespace RDKit {
 
-AtomMonomerInfo * Atom::getMonomerInfo() {
+AtomMonomerInfo *Atom::getMonomerInfo() {
   auto found = dp_dataMol->monomerInfo.find(d_index);
   if (found != dp_dataMol->monomerInfo.end()) {
     return found->second.get();
@@ -720,7 +718,7 @@ AtomMonomerInfo * Atom::getMonomerInfo() {
   return nullptr;
 }
 
-const AtomMonomerInfo * Atom::getMonomerInfo() const {
+const AtomMonomerInfo *Atom::getMonomerInfo() const {
   const auto found = dp_dataMol->monomerInfo.find(d_index);
   if (found != dp_dataMol->monomerInfo.end()) {
     return found->second.get();
@@ -738,9 +736,12 @@ void Atom::setAtomMapNum(int mapno, bool strict) {
       "atom map number out of range [0..1000], use strict=false to override");
   const uint32_t idx = getIdx();
   if (mapno != 0) {
-    dp_dataMol->setSingleAtomProp(common_properties::molAtomMapNumberToken, idx, mapno, false, true);
-  } else if (dp_dataMol->hasAtomProp(common_properties::molAtomMapNumberToken, idx)) {
-    dp_dataMol->clearSingleAtomProp(common_properties::molAtomMapNumberToken, idx);
+    dp_dataMol->setSingleAtomProp(common_properties::molAtomMapNumberToken, idx,
+                                  mapno, false, true);
+  } else if (dp_dataMol->hasAtomProp(common_properties::molAtomMapNumberToken,
+                                     idx)) {
+    dp_dataMol->clearSingleAtomProp(common_properties::molAtomMapNumberToken,
+                                    idx);
   }
 }
 
@@ -778,7 +779,6 @@ STR_VECT Atom::getPropList(bool includePrivate, bool includeComputed) const {
   return res;
 }
 
-
 bool Atom::hasProp(const std::string_view &key) const {
   PropToken token(key);
   if (token == detail::computedPropNameToken) {
@@ -811,7 +811,8 @@ void Atom::updateProps(const RDProps &source, bool preserveExisting) {
     bool isComputed =
         std::find(computedPropList.begin(), computedPropList.end(), key) !=
         computedPropList.end();
-    getDataRDMol().setSingleAtomProp(PropToken(key), getIdx(), val, isComputed, true);
+    getDataRDMol().setSingleAtomProp(PropToken(key), getIdx(), val, isComputed,
+                                     true);
   }
 }
 
@@ -823,16 +824,14 @@ void Atom::updateProps(const Atom &source, bool preserveExisting) {
                                                source.d_index),
             end = source.dp_dataMol->endProps();
        it != end; ++it) {
-    dp_dataMol->copySingleProp(it->name(), d_index, *source.dp_dataMol, it->name(),
-                               source.d_index, RDMol::Scope::ATOM);
+    dp_dataMol->copySingleProp(it->name(), d_index, *source.dp_dataMol,
+                               it->name(), source.d_index, RDMol::Scope::ATOM);
   }
 }
 
 void Atom::clear() { dp_dataMol->clearSingleAtomAllProps(getIdx(), false); }
 
-void Atom::setOwningMol(ROMol *other) {
-  setOwningMol(&other->asRDMol());
-}
+void Atom::setOwningMol(ROMol *other) { setOwningMol(&other->asRDMol()); }
 
 void Atom::setOwningMol(RDKit::RDMol *other) {
   PRECONDITION(dp_owningMol == nullptr || dp_owningMol == other,
