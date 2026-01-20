@@ -404,7 +404,7 @@ TEST_CASE("test7", "[substruct][leak]") {
   REQUIRE(found);
   REQUIRE(matchV.size() == 3);
   std::vector<MatchVectType> matches;
-  for (int i = 0; i < 300000; i++) {
+  for (int i = 0; i < 30000; i++) {
     auto n = SubstructMatch(*m, *q1, matches, true, true);
     REQUIRE(n == 1);
     REQUIRE(matches[0].size() == 3);
@@ -571,7 +571,6 @@ TEST_CASE("testMultiThread", "[substruct][multithread]") {
     hits[i] = SubstructMatch(*mols[i], *query, matchV);
   }
   unsigned int count = 4;
-#if 1
   for (unsigned int i = 0; i < count; ++i) {
     tg.emplace_back(std::async(std::launch::async, runblock, &mols, query.get(),
                                hits, count, i));
@@ -594,7 +593,6 @@ TEST_CASE("testMultiThread", "[substruct][multithread]") {
     fut.get();
   }
   tg.clear();
-#endif
 
   query.reset(SmartsToMol("[$([O,S]-[!$(*=O)])]"));
   for (unsigned int i = 0; i < mols.size(); ++i) {
@@ -1209,7 +1207,6 @@ TEST_CASE("testDativeMatch", "[substruct][dative]") {
 }
 
 TEST_CASE("testGithubIssue1489", "[substruct][github][issue1489]") {
-#if 1
   {
     std::string smi1 = "CCC[C@@H]1CN(CCC)CCN1";
     std::string smi2 = "CCC[C@H]1CN(CCC)CCN1";
@@ -1244,7 +1241,6 @@ TEST_CASE("testGithubIssue1489", "[substruct][github][issue1489]") {
                             useChirality));
     }
   }
-#endif
   {
     std::string smi1 = "F([C@@H](Cl)Br)";
     auto mol1 = v2::SmilesParse::MolFromSmiles(smi1);

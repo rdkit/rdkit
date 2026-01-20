@@ -149,34 +149,9 @@ TEST_CASE("testSymmetryMatching", "[RGroupDecomp]") {
 }
 
 TEST_CASE("testGaSymmetryMatching", "[RGroupDecomp]") {
-  SECTION("FingerprintVariance") {
-    RGroupScore scoreMethod = FingerprintVariance;
-    UMOLS mols;
-    RWMol *core = SmilesToMol("c1ccccc1");
-    RGroupDecompositionParameters params;
-    params.matchingStrategy = GA;
-    params.scoreMethod = scoreMethod;
-    RGroupDecomposition decomp(*core, params);
-    for (int i = 0; i < 5; ++i) {
-      ROMol *mol = SmilesToMol(symdata[i]);
-      int res = decomp.add(*mol);
-      REQUIRE(res == i);
-      mols.push_back(UPTR(mol));
-    }
-
-    decomp.process();
-    RGroupRows rows = decomp.getRGroupsAsRows();
-
-    // All Cl's should be labeled with the same rgroup
-    int i = 0;
-    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
-         ++it, ++i) {
-      CHECK_RGROUP(it, "Core:c1ccc([*:1])cc1 R1:Cl[*:1]", mols[i].get());
-    }
-    delete core;
-  }
-  SECTION("Match") {
-    RGroupScore scoreMethod = Match;
+  SECTION("RGD") {
+    auto scoreMethod = GENERATE(FingerprintVariance, Match);
+    CAPTURE(scoreMethod);
     UMOLS mols;
     RWMol *core = SmilesToMol("c1ccccc1");
     RGroupDecompositionParameters params;
