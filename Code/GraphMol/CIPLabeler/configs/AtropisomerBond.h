@@ -24,6 +24,10 @@ class AtropisomerBond : public Configuration {
 
   void setPrimaryLabel(Descriptor desc) override;
 
+  bool hasPrimaryLabel() const override;
+
+  void resetPrimaryLabel() const override;
+
   Descriptor label(const Rules &comp) override;
 
   Descriptor label(Node *root1, Digraph &digraph, const Rules &comp) override;
@@ -34,8 +38,7 @@ class AtropisomerBond : public Configuration {
   // bond->getStereo() can return both E/Z or CIS/TRANS,
   // so we cache CIS/TRANS we found.
   Bond::BondStereo d_cfg;
-
-};  // namespace CIPLabeler
+};
 
 }  // namespace CIPLabeler
 }  // namespace RDKit
