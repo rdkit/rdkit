@@ -1072,3 +1072,22 @@ TEST_CASE("RWMol assignment operator") {
   }
 }
 
+TEST_CASE("remove atom with MonomerInfo") {
+  SECTION("Basics") {
+    RWMol mol;
+    auto atom1 = std::make_unique<Atom>(6);
+    auto atom2 = std::make_unique<Atom>(7);
+    atom1->setMonomerInfo(new AtomPDBResidueInfo("ALA1", /*serial=*/1));
+    atom2->setMonomerInfo(new AtomPDBResidueInfo("ALA2", /*serial=*/2));
+    mol.addAtom(atom1.get());
+    mol.addAtom(atom2.get());
+    mol.addBond(0, 1, Bond::BondType::SINGLE);
+
+    mol.removeAtom(0u);
+    REQUIRE(mol.getNumAtoms() == 1);
+    REQUIRE(mol.getNumBonds() == 0);
+    CHECK(mol.getAtomWithIdx(0)->getAtomicNum() == 7);
+    CHECK(mol.getAtomWithIdx(0)->getMonomerInfo() != nullptr);
+    CHECK(mol.getAtomWithIdx(0)->getMonomerInfo()->getName() == "ALA2");
+  }
+}
