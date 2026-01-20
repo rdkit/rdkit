@@ -710,6 +710,7 @@ struct RDKIT_GRAPHMOL_EXPORT PropArray {
       case PropertyType::ANY:
         return static_cast<RDValue *>(data)[index].getTag();
     }
+    return RDTypeTag::EmptyTag;
   }
 
   //! Adds a single new property to the end of the array.

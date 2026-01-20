@@ -1414,22 +1414,22 @@ TEST_CASE("Atom valence conversions from RDMol") {
   Atom* atom3 = mol.getAtomWithIdx(3);
 
   SECTION("Neither implicit nor explicit set") {
-    CHECK_THROWS_AS(atom0->getValence(AtomData::ValenceType::EXPLICIT),
+    CHECK_THROWS_AS(atom0->getValence(Atom::ValenceType::EXPLICIT),
                     Invar::Invariant);
-    CHECK_THROWS_AS(atom0->getValence(AtomData::ValenceType::IMPLICIT),
+    CHECK_THROWS_AS(atom0->getValence(Atom::ValenceType::IMPLICIT),
                     Invar::Invariant);
   }
 
   SECTION("Explicit set") {
     atom0->calcExplicitValence(false);
-    CHECK(atom0->getValence(AtomData::ValenceType::EXPLICIT) == 1);
-    CHECK_THROWS_AS(atom0->getValence(AtomData::ValenceType::IMPLICIT),
+    CHECK(atom0->getValence(Atom::ValenceType::EXPLICIT) == 1);
+    CHECK_THROWS_AS(atom0->getValence(Atom::ValenceType::IMPLICIT),
                     Invar::Invariant);
   }
 
   SECTION("No implict set") {
     atom0->setNoImplicit(true);
-    CHECK(atom0->getValence(AtomData::ValenceType::IMPLICIT) == 0);
+    CHECK(atom0->getValence(Atom::ValenceType::IMPLICIT) == 0);
   }
 
   SECTION("Correct after calculation") {
@@ -1438,16 +1438,16 @@ TEST_CASE("Atom valence conversions from RDMol") {
     atom2->calcImplicitValence(false);
     atom3->calcImplicitValence(false);
 
-    CHECK(atom0->getValence(AtomData::ValenceType::EXPLICIT) == 1);
-    CHECK(atom1->getValence(AtomData::ValenceType::EXPLICIT) == 2);
+    CHECK(atom0->getValence(Atom::ValenceType::EXPLICIT) == 1);
+    CHECK(atom1->getValence(Atom::ValenceType::EXPLICIT) == 2);
     // double bond
-    CHECK(atom2->getValence(AtomData::ValenceType::EXPLICIT) == 3);
-    CHECK(atom3->getValence(AtomData::ValenceType::EXPLICIT) == 2);
+    CHECK(atom2->getValence(Atom::ValenceType::EXPLICIT) == 3);
+    CHECK(atom3->getValence(Atom::ValenceType::EXPLICIT) == 2);
 
-    CHECK(atom0->getValence(AtomData::ValenceType::IMPLICIT) == 3);
-    CHECK(atom1->getValence(AtomData::ValenceType::IMPLICIT) == 2);
-    CHECK(atom2->getValence(AtomData::ValenceType::IMPLICIT) == 1);
-    CHECK(atom3->getValence(AtomData::ValenceType::IMPLICIT) == 2);
+    CHECK(atom0->getValence(Atom::ValenceType::IMPLICIT) == 3);
+    CHECK(atom1->getValence(Atom::ValenceType::IMPLICIT) == 2);
+    CHECK(atom2->getValence(Atom::ValenceType::IMPLICIT) == 1);
+    CHECK(atom3->getValence(Atom::ValenceType::IMPLICIT) == 2);
   }
 
   SECTION("Atom with no bonds but explicit hydrogens") {
@@ -1456,7 +1456,7 @@ TEST_CASE("Atom valence conversions from RDMol") {
     auto* atom = romol.getAtomWithIdx(0);
     atom->setNumExplicitHs(3);
     atom->calcExplicitValence(false);
-    CHECK(atom->getValence(AtomData::ValenceType::EXPLICIT) == 3);
+    CHECK(atom->getValence(Atom::ValenceType::EXPLICIT) == 3);
   }
 }
 
