@@ -2086,7 +2086,6 @@ void testSubstructMatchCount() {
 
   {
     // Uniquify=false should still match counts with the full match materializer.
-    // (We don't assert an exact number here because it depends on automorphisms.)
     auto mol = "c1ccccc1"_smiles;
     TEST_ASSERT(mol);
     std::unique_ptr<ROMol> query{SmartsToMol("c:c")};
