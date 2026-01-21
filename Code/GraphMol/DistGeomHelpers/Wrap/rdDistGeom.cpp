@@ -94,7 +94,7 @@ struct PyEmbedParameters
     memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),
            dSize * sizeof(double));
     DistGeom::BoundsMatrix::DATA_SPTR sdata(cData);
-    this->boundsMat = boost::shared_ptr<const DistGeom::BoundsMatrix>(
+    this->boundsMat = std::shared_ptr<const DistGeom::BoundsMatrix>(
         new DistGeom::BoundsMatrix(nrows, sdata));
   }
 

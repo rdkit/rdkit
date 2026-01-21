@@ -942,9 +942,9 @@ void processMol(RWMol *mol, const bj::value &molval,
   mol->setProp(common_properties::_StereochemDone, 1);
 }
 
-std::vector<boost::shared_ptr<ROMol>> DocToMols(
+std::vector<std::shared_ptr<ROMol>> DocToMols(
     bj::value &doc, const JSONParseParameters &params) {
-  std::vector<boost::shared_ptr<ROMol>> res;
+  std::vector<std::shared_ptr<ROMol>> res;
 
   // some error checking
   if (!doc.is_object()) {
@@ -1013,7 +1013,7 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
 
 }  // namespace
 
-std::vector<boost::shared_ptr<ROMol>> JSONDataStreamToMols(
+std::vector<std::shared_ptr<ROMol>> JSONDataStreamToMols(
     std::istream *inStream, const JSONParseParameters &params) {
   PRECONDITION(inStream, "no stream");
 
@@ -1024,7 +1024,7 @@ std::vector<boost::shared_ptr<ROMol>> JSONDataStreamToMols(
 
   return DocToMols(doc, params);
 }
-std::vector<boost::shared_ptr<ROMol>> JSONDataToMols(
+std::vector<std::shared_ptr<ROMol>> JSONDataToMols(
     const std::string &jsonBlock, const JSONParseParameters &params) {
   bj::monotonic_resource mr;
   bj::value doc = bj::parse(jsonBlock, &mr);

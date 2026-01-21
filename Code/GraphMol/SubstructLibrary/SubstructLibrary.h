@@ -73,7 +73,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolderBase {
   virtual unsigned int addMol(const ROMol &m) = 0;
 
   // implementations should throw IndexError on out of range
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int) const = 0;
+  virtual std::shared_ptr<ROMol> getMol(unsigned int) const = 0;
 
   //! Get the current library size
   virtual unsigned int size() const = 0;
@@ -85,17 +85,17 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolderBase {
     However it is very memory intensive.
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolder : public MolHolderBase {
-  std::vector<boost::shared_ptr<ROMol>> mols;
+  std::vector<std::shared_ptr<ROMol>> mols;
 
  public:
   MolHolder() : MolHolderBase(), mols() {}
 
   unsigned int addMol(const ROMol &m) override {
-    mols.push_back(boost::make_shared<ROMol>(m));
+    mols.push_back(std::make_shared<ROMol>(m));
     return size() - 1;
   }
 
-  boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
+  std::shared_ptr<ROMol> getMol(unsigned int idx) const override {
     if (idx >= mols.size()) {
       throw IndexErrorException(idx);
     }
@@ -106,8 +106,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolder : public MolHolderBase {
     return rdcast<unsigned int>(mols.size());
   }
 
-  std::vector<boost::shared_ptr<ROMol>> &getMols() { return mols; }
-  const std::vector<boost::shared_ptr<ROMol>> &getMols() const { return mols; }
+  std::vector<std::shared_ptr<ROMol>> &getMols() { return mols; }
+  const std::vector<std::shared_ptr<ROMol>> &getMols() const { return mols; }
 };
 
 //! Concrete class that holds binary cached molecules in memory
@@ -137,11 +137,11 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
     return size() - 1;
   }
 
-  boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
+  std::shared_ptr<ROMol> getMol(unsigned int idx) const override {
     if (idx >= mols.size()) {
       throw IndexErrorException(idx);
     }
-    boost::shared_ptr<ROMol> mol(new ROMol);
+    std::shared_ptr<ROMol> mol(new ROMol);
     MolPickler::molFromPickle(mols[idx], mol.get());
     return mol;
   }
@@ -183,12 +183,12 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
     return size() - 1;
   }
 
-  boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
+  std::shared_ptr<ROMol> getMol(unsigned int idx) const override {
     if (idx >= mols.size()) {
       throw IndexErrorException(idx);
     }
 
-    boost::shared_ptr<ROMol> mol(SmilesToMol(mols[idx]));
+    std::shared_ptr<ROMol> mol(SmilesToMol(mols[idx]));
     return mol;
   }
 
@@ -234,7 +234,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
     return size() - 1;
   }
 
-  boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
+  std::shared_ptr<ROMol> getMol(unsigned int idx) const override {
     if (idx >= mols.size()) {
       throw IndexErrorException(idx);
     }
@@ -243,7 +243,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
     if (m) {
       m->updatePropertyCache();
     }
-    return boost::shared_ptr<ROMol>(m);
+    return std::shared_ptr<ROMol>(m);
   }
 
   unsigned int size() const override {
@@ -437,17 +437,17 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
      for(std::vector<unsigned int>::const_iterator matchIndex=results.begin();
              matchIndex != results.end();
              ++matchIndex) {
-       boost::shared_ptr<ROMol> match = lib.getMol(*matchIndex);
+       std::shared_ptr<ROMol> match = lib.getMol(*matchIndex);
      }
      \endcode
 
      Using different mol holders and pattern fingerprints.
 
      \code
-     boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
-        boost::make_shared<CachedTrustedSmilesMolHolder>();
-     boost::shared_ptr<PatternHolder> patternHolder = \
-        boost::make_shared<PatternHolder>();
+     std::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
+        std::make_shared<CachedTrustedSmilesMolHolder>();
+     std::shared_ptr<PatternHolder> patternHolder = \
+        std::make_shared<PatternHolder>();
 
      SubstructLibrary lib(molHolder, patternHolder);
      lib.addMol(mol);
@@ -477,10 +477,10 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
      compatible with the patterns made when analyzing queries.
 
      \code
-     boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
-         boost::make_shared<CachedTrustedSmilesMolHolder>();
-     boost::shared_ptr<PatternHolder> patternHolder =    \
-         boost::make_shared<PatternHolder>();
+     std::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
+         std::make_shared<CachedTrustedSmilesMolHolder>();
+     std::shared_ptr<PatternHolder> patternHolder =    \
+         std::make_shared<PatternHolder>();
 
      // the PatternHolder instance is able to make fingerprints.
      //  These, of course, can be read from a file.  For demonstration
@@ -503,10 +503,10 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
      to any property.
 
      \code
-     boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
-         boost::make_shared<CachedTrustedSmilesMolHolder>();
-     boost::shared_ptr<KeyFromPropHolder> keyHolder = \
-         boost::make_shared<KeyFromPropHolder>();
+     std::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
+         std::make_shared<CachedTrustedSmilesMolHolder>();
+     std::shared_ptr<KeyFromPropHolder> keyHolder = \
+         std::make_shared<KeyFromPropHolder>();
      SubstructLibrary lib(molHolder, keyHolder);
      ...
 
@@ -517,9 +517,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
 
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
-  boost::shared_ptr<MolHolderBase> molholder;
-  boost::shared_ptr<FPHolderBase> fpholder;
-  boost::shared_ptr<KeyHolderBase> keyholder;
+  std::shared_ptr<MolHolderBase> molholder;
+  std::shared_ptr<FPHolderBase> fpholder;
+  std::shared_ptr<KeyHolderBase> keyholder;
 
   MolHolderBase *mols;  // used for a small optimization
   FPHolderBase *fps{nullptr};
@@ -533,15 +533,15 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
         keyholder(),
         mols(molholder.get()) {}
 
-  SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules)
+  SubstructLibrary(std::shared_ptr<MolHolderBase> molecules)
       : molholder(std::move(molecules)),
         fpholder(),
         keyholder(),
         mols(molholder.get()),
         fps(nullptr) {}
 
-  SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
-                   boost::shared_ptr<FPHolderBase> fingerprints)
+  SubstructLibrary(std::shared_ptr<MolHolderBase> molecules,
+                   std::shared_ptr<FPHolderBase> fingerprints)
       : molholder(std::move(molecules)),
         fpholder(std::move(fingerprints)),
         keyholder(),
@@ -553,8 +553,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     }
   }
 
-  SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
-                   boost::shared_ptr<KeyHolderBase> keys)
+  SubstructLibrary(std::shared_ptr<MolHolderBase> molecules,
+                   std::shared_ptr<KeyHolderBase> keys)
       : molholder(std::move(molecules)),
         fpholder(),
         keyholder(std::move(keys)),
@@ -566,9 +566,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     }
   }
 
-  SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
-                   boost::shared_ptr<FPHolderBase> fingerprints,
-                   boost::shared_ptr<KeyHolderBase> keys)
+  SubstructLibrary(std::shared_ptr<MolHolderBase> molecules,
+                   std::shared_ptr<FPHolderBase> fingerprints,
+                   std::shared_ptr<KeyHolderBase> keys)
       : molholder(std::move(molecules)),
         fpholder(std::move(fingerprints)),
         keyholder(std::move(keys)),
@@ -593,25 +593,23 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   }
 
   //! Get the underlying molecule holder implementation
-  boost::shared_ptr<MolHolderBase> &getMolHolder() { return molholder; }
+  std::shared_ptr<MolHolderBase> &getMolHolder() { return molholder; }
 
-  const boost::shared_ptr<MolHolderBase> &getMolHolder() const {
+  const std::shared_ptr<MolHolderBase> &getMolHolder() const {
     return molholder;
   }
 
   //! Get the underlying molecule holder implementation
-  boost::shared_ptr<FPHolderBase> &getFpHolder() { return fpholder; }
+  std::shared_ptr<FPHolderBase> &getFpHolder() { return fpholder; }
 
   //! Get the underlying molecule holder implementation
-  const boost::shared_ptr<FPHolderBase> &getFpHolder() const {
-    return fpholder;
-  }
+  const std::shared_ptr<FPHolderBase> &getFpHolder() const { return fpholder; }
 
   //! Get the underlying molecule holder implementation
-  boost::shared_ptr<KeyHolderBase> &getKeyHolder() { return keyholder; }
+  std::shared_ptr<KeyHolderBase> &getKeyHolder() { return keyholder; }
 
   //! Get the underlying molecule holder implementation
-  const boost::shared_ptr<KeyHolderBase> &getKeyHolder() const {
+  const std::shared_ptr<KeyHolderBase> &getKeyHolder() const {
     return keyholder;
   }
 
@@ -907,7 +905,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     \param idx       Index of the molecule in the library (n.b. could contain
     null)
   */
-  boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+  std::shared_ptr<ROMol> getMol(unsigned int idx) const {
     // expects implementation to throw IndexError if out of range
     PRECONDITION(mols, "molholder is null in SubstructLibrary");
     return mols->getMol(idx);
@@ -918,7 +916,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     \param idx       Index of the molecule in the library (n.b. could contain
     null)
   */
-  boost::shared_ptr<ROMol> operator[](unsigned int idx) {
+  std::shared_ptr<ROMol> operator[](unsigned int idx) {
     // expects implementation to throw IndexError if out of range
     PRECONDITION(mols, "molholder is null in SubstructLibrary");
     return mols->getMol(idx);

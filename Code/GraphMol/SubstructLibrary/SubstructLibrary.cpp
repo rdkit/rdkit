@@ -253,7 +253,7 @@ void SubSearcher(const Query &in_query, const Bits &bits,
     }
     // need shared_ptr as it (may) control the lifespan of the
     //  returned molecule!
-    const boost::shared_ptr<ROMol> &m = mols.getMol(sidx);
+    const std::shared_ptr<ROMol> &m = mols.getMol(sidx);
     ROMol *mol = m.get();
     if (!mol) {
       continue;

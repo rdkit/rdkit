@@ -428,7 +428,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
 
 class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
  public:
-  typedef boost::shared_ptr<RDNumeric::Vector<double>> VECT_SH_PTR;
+  typedef std::shared_ptr<RDNumeric::Vector<double>> VECT_SH_PTR;
 
   PointND(unsigned int dim) {
     RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(dim, 0.0);

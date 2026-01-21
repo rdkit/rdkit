@@ -900,11 +900,11 @@ int registerPropertyHelper(python::object o) {
   // and the (static) registry can share ownership.
 
   python::incref(o.ptr());
-  python::extract<boost::shared_ptr<PythonPropertyFunctor>> ptr(o);
+  python::extract<std::shared_ptr<PythonPropertyFunctor>> ptr(o);
   return RDKit::Descriptors::Properties::registerProperty(ptr());
 }
 
-boost::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>
+std::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>
 getDoubleCubicLatticeVolume(const RDKit::ROMol &mol, const python::list &radii,
                             bool isProtein = false, bool includeLigand = true,
                             double probeRadius = 1.4, int confId = -1) {
@@ -912,7 +912,7 @@ getDoubleCubicLatticeVolume(const RDKit::ROMol &mol, const python::list &radii,
   radiiAsVector.reserve(mol.getNumAtoms());
   pythonObjectToVect<double>(radii, radiiAsVector);
 
-  return boost::make_shared<RDKit::Descriptors::DoubleCubicLatticeVolume>(
+  return std::make_shared<RDKit::Descriptors::DoubleCubicLatticeVolume>(
       mol, std::move(radiiAsVector), isProtein, includeLigand, probeRadius,
       confId);
 }
@@ -1604,7 +1604,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "See rdkit.Chem.rdMolDescriptor.Properties.GetProperty and \n"
       "rdkit.Chem.Descriptor.Properties.PropertyFunctor for creating new ones";
   python::class_<RDKit::Descriptors::PropertyFunctor,
-                 boost::shared_ptr<RDKit::Descriptors::PropertyFunctor>,
+                 std::shared_ptr<RDKit::Descriptors::PropertyFunctor>,
                  boost::noncopyable>("PropertyFunctor", docString.c_str(),
                                      python::no_init)
       .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
@@ -1634,7 +1634,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "";
 
   python::class_<RDKit::Descriptors::Properties,
-                 boost::shared_ptr<RDKit::Descriptors::Properties>>(
+                 std::shared_ptr<RDKit::Descriptors::Properties>>(
       "Properties", docString.c_str(), python::init<>(python::args("self")))
       .def(python::init<const std::vector<std::string> &>(
           python::args("self", "propNames")))
@@ -1708,9 +1708,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "   - confId: conformer ID to consider (default=-1)
       ")DOC";
 
-  python::class_<
-      RDKit::Descriptors::DoubleCubicLatticeVolume,
-      boost::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>>(
+  python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume,
+                 std::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>>(
       "DoubleCubicLatticeVolume",
       "Class for the Double Cubic Lattice Volume method",
       python::init<const RDKit::ROMol &, bool, bool, double, int>(

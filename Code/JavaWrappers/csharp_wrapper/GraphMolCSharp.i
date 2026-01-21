@@ -35,9 +35,9 @@
 /* Suppress the unimportant warnings */
 #pragma SWIG nowarn=503,516
 
-%include <boost_shared_ptr.i>
+%include <std_shared_ptr.i>
 %{
-    #include <boost/shared_ptr.hpp>
+    #include <memory>
     #include <boost/shared_array.hpp>
 %}
 // The actual definition isn't in the top level hpp file!

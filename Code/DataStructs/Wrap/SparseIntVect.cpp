@@ -133,7 +133,7 @@ struct sparseIntVec_wrapper {
   template <typename IndexType>
   static void wrapOne(const char *className) {
     python::class_<SparseIntVect<IndexType>,
-                   boost::shared_ptr<SparseIntVect<IndexType>>>(
+                   std::shared_ptr<SparseIntVect<IndexType>>>(
         className, sparseIntVectDoc.c_str(),
         python::init<IndexType>("Constructor"))
         .def(python::init<std::string>(python::args("self", "pkl")))

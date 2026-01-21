@@ -14,7 +14,7 @@
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/property_map.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <set>
 
 namespace RDKit {
@@ -44,7 +44,7 @@ typedef boost::property<FeatTreeEdge_t, unsigned int> FeatTreeEdge;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
                               FeatTreeNode, FeatTreeEdge>
     FeatTreeGraph;
-typedef boost::shared_ptr<FeatTreeGraph> FeatTreeGraphSPtr;
+typedef std::shared_ptr<FeatTreeGraph> FeatTreeGraphSPtr;
 
 typedef boost::property_map<FeatTreeGraph, FeatTreeEdge_t>::type
     FeatTreeEdgePMap;

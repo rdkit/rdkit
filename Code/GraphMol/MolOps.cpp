@@ -831,7 +831,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
                                     bool copyConformers) {
   auto upFrags = getTheFrags(mol, sanitizeFrags, frags, fragsMolAtomMapping,
                              copyConformers);
-  std::vector<boost::shared_ptr<ROMol>> finalRes;
+  std::vector<std::shared_ptr<ROMol>> finalRes;
   for (auto &r : upFrags) {
     finalRes.emplace_back(r.get());
     r.release();
@@ -945,30 +945,30 @@ std::map<T, std::unique_ptr<ROMol>> getTheFragsWithQuery(
 }  // namespace
 
 template <typename T>
-std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
+std::map<T, std::shared_ptr<ROMol>> getMolFragsWithQuery(
     const ROMol &mol, T (*query)(const ROMol &, const Atom *),
     bool sanitizeFrags, const std::vector<T> *whiteList, bool negateList) {
   PRECONDITION(query, "no query");
 
   auto rawRes =
       getTheFragsWithQuery(mol, query, sanitizeFrags, whiteList, negateList);
-  std::map<T, boost::shared_ptr<ROMol>> res;
+  std::map<T, std::shared_ptr<ROMol>> res;
   for (auto &it : rawRes) {
     res.insert(std::make_pair(it.first, it.second.get()));
     it.second.release();
   }
   return res;
 }
-template RDKIT_GRAPHMOL_EXPORT std::map<std::string, boost::shared_ptr<ROMol>>
+template RDKIT_GRAPHMOL_EXPORT std::map<std::string, std::shared_ptr<ROMol>>
 getMolFragsWithQuery(const ROMol &mol,
                      std::string (*query)(const ROMol &, const Atom *),
                      bool sanitizeFrags, const std::vector<std::string> *,
                      bool);
-template RDKIT_GRAPHMOL_EXPORT std::map<int, boost::shared_ptr<ROMol>>
+template RDKIT_GRAPHMOL_EXPORT std::map<int, std::shared_ptr<ROMol>>
 getMolFragsWithQuery(const ROMol &mol,
                      int (*query)(const ROMol &, const Atom *),
                      bool sanitizeFrags, const std::vector<int> *, bool);
-template RDKIT_GRAPHMOL_EXPORT std::map<unsigned int, boost::shared_ptr<ROMol>>
+template RDKIT_GRAPHMOL_EXPORT std::map<unsigned int, std::shared_ptr<ROMol>>
 getMolFragsWithQuery(const ROMol &mol,
                      unsigned int (*query)(const ROMol &, const Atom *),
                      bool sanitizeFrags, const std::vector<unsigned int> *,
