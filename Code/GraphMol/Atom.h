@@ -106,7 +106,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
  public:
   // FIX: grn...
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
-  //typedef Queries::Query<int, ConstRDMolAtom, true> QUERYATOM_QUERY;
+  // typedef Queries::Query<int, ConstRDMolAtom, true> QUERYATOM_QUERY;
 
   //! store hybridization
   enum HybridizationType {
@@ -119,7 +119,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
     SP2D = AtomEnums::HybridizationType::SP2D,
     SP3D = AtomEnums::HybridizationType::SP3D,
     SP3D2 = AtomEnums::HybridizationType::SP3D2,
-    OTHER = AtomEnums::HybridizationType::OTHER //!< unrecognized hybridization
+    OTHER = AtomEnums::HybridizationType::OTHER  //!< unrecognized hybridization
   };
 
   //! store type of chirality
@@ -144,9 +144,11 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
     CHI_OCTAHEDRAL = AtomEnums::ChiralType::CHI_OCTAHEDRAL
   };
 
-  // A "using" statement works for ValenceType, because it's an enum class,
-  // so needs ValenceType::IMPLICIT instead of just IMPLICIT, for example.
-  using ValenceType = AtomData::ValenceType;
+  // this can be done with a `using` definition, but that breaks the SWIG bindings
+  enum class ValenceType : std::uint8_t {
+    IMPLICIT = 0,
+    EXPLICIT
+  };
 
   Atom();
   //! construct an Atom with a particular atomic number
@@ -158,13 +160,13 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
   Atom &operator=(const Atom &other);
   // NOTE: the move methods are somewhat fraught for atoms associated with
   // molecules since the molecule will still be pointing to the original object
-  Atom(Atom && other);
-  Atom& operator=(Atom&& other);
+  Atom(Atom &&other);
+  Atom &operator=(Atom &&other);
 
  private:
   void initFromOther(const Atom &other, bool preserveProps = false);
- public:
 
+ public:
   virtual ~Atom();
 
   //! makes a copy of this Atom and returns a pointer to it.
@@ -178,7 +180,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
   /*!
     <b>Note:</b> the caller is responsible for <tt>delete</tt>ing the result
   */
-  //virtual Atom *copy() const;
+  // virtual Atom *copy() const;
 
   //! returns our atomic number
   int getAtomicNum() const;
@@ -208,19 +210,16 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
  protected:
   //! returns a reference to the RDMol that contains the data for this atom,
   //! for internal use only
-  const RDMol &getDataRDMol() const {
-    return *dp_dataMol;
-  }
+  const RDMol &getDataRDMol() const { return *dp_dataMol; }
   //! overload
-  RDMol &getDataRDMol() {
-    return *dp_dataMol;
-  }
+  RDMol &getDataRDMol() { return *dp_dataMol; }
   friend RDKIT_GRAPHMOL_EXPORT int getAtomRLabel(const Atom *atom);
-  friend std::string getAtomStringProp(const Atom *atom, const PropToken &token);
+  friend std::string getAtomStringProp(const Atom *atom,
+                                       const PropToken &token);
   friend void setAtomStringProp(Atom *atom, const PropToken &token,
                                 const std::string &value);
- public:
 
+ public:
   //! returns our index within the ROMol
   unsigned int getIdx() const { return d_index; }
   //! sets our index within the ROMol
@@ -474,7 +473,8 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
     // Continue support for mixed-type cases like:
     // atom0->setProp("a", 1.7); atom1->setProp("a", 123);
     // If there is a type mismatch, this option will convert to RDValue
-    dp_dataMol->setSingleAtomProp(PropToken(key), getIdx(), val, computed, true);
+    dp_dataMol->setSingleAtomProp(PropToken(key), getIdx(), val, computed,
+                                  true);
   }
   void setProp(const std::string_view &key, const char *val,
                bool computed = false) const {
@@ -580,24 +580,23 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
     \param preserve  Existing If true keep existing data, else override from
     the source
   */
-  void updateProps(const Atom& source, bool preserveExisting = false);
-  void updateProps(const RDProps& source, bool preserveExisting = false);
+  void updateProps(const Atom &source, bool preserveExisting = false);
+  void updateProps(const RDProps &source, bool preserveExisting = false);
 
   //! Clears all properties of this Atom, but leaves everything else
   void clear();
-  [[noreturn]] Dict &getDict() {
-    raiseNonImplementedFunction("GetDict");
-  }
+  [[noreturn]] Dict &getDict() { raiseNonImplementedFunction("GetDict"); }
   [[noreturn]] const Dict &getDict() const {
     raiseNonImplementedFunction("GetDict");
   }
+
  protected:
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
   //! \overload
   void setOwningMol(ROMol &other) { setOwningMol(&other); }
   //! \overload
-  void setOwningMol(RDMol* other);
+  void setOwningMol(RDMol *other);
 
   int getExplicitValencePrivate() const;
   int getImplicitValencePrivate() const;
