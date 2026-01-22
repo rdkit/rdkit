@@ -1084,9 +1084,12 @@ private:
     return bondData[bondIndex];
   }
 
-  uint32_t getTotalNumHs(uint32_t atomIndex, bool includeNeighbors = false) const {
-    PRECONDITION(atomIndex < getNumAtoms(), "RDMol::getTotalNumHs called with out of bounds atomIndex");
-    const AtomData& atom = atomData[atomIndex];
+  uint32_t getAtomTotalNumHs(uint32_t atomIndex,
+                             bool includeNeighbors = false) const {
+    PRECONDITION(
+        atomIndex < getNumAtoms(),
+        "RDMol::getAtomTotalNumHs called with out of bounds atomIndex");
+    const AtomData &atom = atomData[atomIndex];
     uint32_t res = atom.getNumExplicitHs() + atom.getNumImplicitHs();
     if (includeNeighbors) {
       uint32_t atomBegin = atomBondStarts[atomIndex];
@@ -1107,7 +1110,7 @@ private:
     return atomEnd - atomBegin;
   }
   uint32_t getAtomTotalDegree(uint32_t atomIndex) const {
-    return getTotalNumHs(atomIndex, false) + getAtomDegree(atomIndex);
+    return getAtomTotalNumHs(atomIndex, false) + getAtomDegree(atomIndex);
   }
   uint32_t getNumBonds(bool onlyHeavy = true) const {
     // By default return the bonds that connect only the heavy atoms

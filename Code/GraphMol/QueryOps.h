@@ -178,19 +178,19 @@ static inline int queryAtomHeavyAtomDegree(Atom const *at) {
   return heavyDegree;
 };
 static inline int queryAtomHCount2(ConstRDMolAtom at) {
-  return at.mol().getTotalNumHs(at.index(), true);
+  return at.mol().getAtomTotalNumHs(at.index(), true);
 };
 static inline int queryAtomHCount(Atom const *at) {
   return at->getTotalNumHs(true);
 };
 static inline int queryAtomImplicitHCount2(ConstRDMolAtom at) {
-  return at.mol().getTotalNumHs(at.index(), false);
+  return at.mol().getAtomTotalNumHs(at.index(), false);
 };
 static inline int queryAtomImplicitHCount(Atom const *at) {
   return at->getTotalNumHs(false);
 };
 static inline int queryAtomHasImplicitH2(ConstRDMolAtom at) {
-  return int(at.mol().getTotalNumHs(at.index(), false) > 0);
+  return int(at.mol().getAtomTotalNumHs(at.index(), false) > 0);
 };
 static inline int queryAtomHasImplicitH(Atom const *at) {
   return int(at->getTotalNumHs(false) > 0);

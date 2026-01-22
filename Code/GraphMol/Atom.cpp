@@ -306,7 +306,7 @@ unsigned int Atom::getTotalDegree() const {
 }
 unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
   // Support for isolated Atoms by using data mol, instead of owning mol.
-  return dp_dataMol->getTotalNumHs(d_index, includeNeighbors);
+  return dp_dataMol->getAtomTotalNumHs(d_index, includeNeighbors);
 }
 unsigned int Atom::getTotalValence() const {
   return getValence(ValenceType::EXPLICIT) + getValence(ValenceType::IMPLICIT);

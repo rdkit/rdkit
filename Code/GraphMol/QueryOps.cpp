@@ -257,7 +257,7 @@ unsigned int queryAtomAllBondProduct2(ConstRDMolAtom at) {
         firstThousandPrimes[at.mol().getBond(*beg).getBondType()]);
     ++beg;
   }
-  for (unsigned int i = 0, n = at.mol().getTotalNumHs(at.index()); i < n; i++) {
+  for (unsigned int i = 0, n = at.mol().getAtomTotalNumHs(at.index()); i < n; i++) {
     prod *= static_cast<unsigned int>(firstThousandPrimes[Bond::SINGLE]);
   }
   return prod;
