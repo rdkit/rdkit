@@ -1311,43 +1311,47 @@ void RDMol::initFromOther(const RDMol &other, bool quickCopy, int confId,
   }
 }
 
-PropArray::PropArray() {
+RDProperties::PropArray::PropArray() {
   size = 0;
-  family = PropertyType::CHAR;
+  family = RDProperties::PropertyType::CHAR;
   data = nullptr;
 }
 
-PropArray::PropArray(uint32_t size, PropertyType family, bool isSet)
+RDProperties::PropArray::PropArray(uint32_t size, PropertyType family,
+                                   bool isSet)
     : size(size), family(family) {
   construct(isSet);
 }
 
 namespace {
 
-constexpr bool is8BitType(PropertyType family) {
+constexpr bool is8BitType(RDProperties::PropertyType family) {
   static_assert(sizeof(bool) == sizeof(char),
                 "size assumption bool==char violated");
-  return family == PropertyType::CHAR || family == PropertyType::BOOL;
+  return family == RDProperties::PropertyType::CHAR ||
+         family == RDProperties::PropertyType::BOOL;
 }
 
-constexpr bool is32BitType(PropertyType family) {
+constexpr bool is32BitType(RDProperties::PropertyType family) {
   static_assert(sizeof(float) == sizeof(int),
                 "size assumption float==int violated");
-  return family == PropertyType::INT32 || family == PropertyType::UINT32 ||
-         family == PropertyType::FLOAT;
+  return family == RDProperties::PropertyType::INT32 ||
+         family == RDProperties::PropertyType::UINT32 ||
+         family == RDProperties::PropertyType::FLOAT;
 }
 
-constexpr bool is64BitType(PropertyType family) {
+constexpr bool is64BitType(RDProperties::PropertyType family) {
   static_assert(sizeof(double) == sizeof(int64_t),
                 "size assumption double==int64_t violated");
-  return family == PropertyType::INT64 || family == PropertyType::UINT64 ||
-         family == PropertyType::DOUBLE;
+  return family == RDProperties::PropertyType::INT64 ||
+         family == RDProperties::PropertyType::UINT64 ||
+         family == RDProperties::PropertyType::DOUBLE;
 }
 
 }  // namespace
 
-PropArray::PropArray(const PropArray &other)
-    : PropArray(other.size, other.family, false) {
+RDProperties::PropArray::PropArray(const RDProperties::PropArray &other)
+    : RDProperties::PropArray(other.size, other.family, false) {
   if (is8BitType(family)) {
     std::copy(static_cast<char *>(other.data),
               static_cast<char *>(other.data) + size,
@@ -1371,7 +1375,8 @@ PropArray::PropArray(const PropArray &other)
   numSet = other.numSet;
 };
 
-PropArray &PropArray::operator=(const PropArray &other) {
+RDProperties::PropArray &RDProperties::PropArray::operator=(
+    const RDProperties::PropArray &other) {
   if (this == &other) {
     return *this;
   }
@@ -1388,7 +1393,7 @@ PropArray &PropArray::operator=(const PropArray &other) {
   return *this;
 }
 
-PropArray::PropArray(PropArray &&other) {
+RDProperties::PropArray::PropArray(RDProperties::PropArray &&other) {
   size = other.size;
   family = other.family;
   data = other.data;
@@ -1398,7 +1403,8 @@ PropArray::PropArray(PropArray &&other) {
   other.size = 0;
 }
 
-PropArray &PropArray::operator=(PropArray &&other) {
+RDProperties::PropArray &RDProperties::PropArray::operator=(
+    RDProperties::PropArray &&other) {
   if (this == &other) {
     return *this;
   }
@@ -1415,9 +1421,9 @@ PropArray &PropArray::operator=(PropArray &&other) {
   return *this;
 }
 
-PropArray::~PropArray() noexcept { destroy(); }
+RDProperties::PropArray::~PropArray() noexcept { destroy(); }
 
-void PropArray::construct(bool isSet) {
+void RDProperties::PropArray::construct(bool isSet) {
   PRECONDITION(data == nullptr, "Constructing on existing data");
   isSetMask = std::make_unique<bool[]>(size);
   std::fill(isSetMask.get(), isSetMask.get() + size, isSet);
@@ -1434,7 +1440,7 @@ void PropArray::construct(bool isSet) {
   }
 }
 
-void PropArray::destroy() {
+void RDProperties::PropArray::destroy() {
   if (is8BitType(family)) {
     delete[] static_cast<char *>(data);
   } else if (is32BitType(family)) {
@@ -1449,24 +1455,24 @@ void PropArray::destroy() {
   }
 }
 
-RDValue PropArray::toRDValue(uint32_t idx) const {
+RDValue RDProperties::PropArray::toRDValue(uint32_t idx) const {
   PRECONDITION(data != nullptr, "Accessing null prop array");
   switch (family) {
-    case PropertyType::CHAR:
+    case RDProperties::PropertyType::CHAR:
       return RDValue(static_cast<char *>(data)[idx]);
-    case PropertyType::BOOL:
+    case RDProperties::PropertyType::BOOL:
       return RDValue(static_cast<bool *>(data)[idx]);
-    case PropertyType::INT32:
+    case RDProperties::PropertyType::INT32:
       return RDValue(static_cast<int32_t *>(data)[idx]);
-    case PropertyType::UINT32:
+    case RDProperties::PropertyType::UINT32:
       return RDValue(static_cast<uint32_t *>(data)[idx]);
-    case PropertyType::FLOAT:
+    case RDProperties::PropertyType::FLOAT:
       return RDValue(static_cast<float *>(data)[idx]);
-    case PropertyType::INT64:
+    case RDProperties::PropertyType::INT64:
       return RDValue(static_cast<int64_t *>(data)[idx]);
-    case PropertyType::UINT64:
+    case RDProperties::PropertyType::UINT64:
       return RDValue(static_cast<uint64_t *>(data)[idx]);
-    case PropertyType::DOUBLE:
+    case RDProperties::PropertyType::DOUBLE:
       return RDValue(static_cast<double *>(data)[idx]);
     default:
       RDValue res;
@@ -1475,7 +1481,7 @@ RDValue PropArray::toRDValue(uint32_t idx) const {
   }
 }
 
-void PropArray::appendElement() {
+void RDProperties::PropArray::appendElement() {
   ++size;
   std::unique_ptr<bool[]> newMask = std::make_unique<bool[]>(size);
   std::copy(isSetMask.get(), isSetMask.get() + size - 1, newMask.get());
@@ -1513,7 +1519,7 @@ void PropArray::appendElement() {
   }
 }
 
-void PropArray::removeElement(uint32_t index) {
+void RDProperties::PropArray::removeElement(uint32_t index) {
   URANGE_CHECK(index, size);
 
   // Shift down isSetMask. Note that isSetMask is now at least one element
@@ -1557,8 +1563,8 @@ RDValue *convertToRDValueHelper(const T *data, bool *isSetMask, uint32_t size) {
 }
 }  // namespace
 
-void PropArray::convertToRDValue() {
-  if (family == PropertyType::ANY) {
+void RDProperties::PropArray::convertToRDValue() {
+  if (family == RDProperties::PropertyType::ANY) {
     return;
   }
   PRECONDITION(data != nullptr, "Accessing null prop array");
@@ -1566,45 +1572,45 @@ void PropArray::convertToRDValue() {
   // warnings.
   RDValue *newData = nullptr;
   switch (family) {
-    case PropertyType::CHAR:
+    case RDProperties::PropertyType::CHAR:
       newData = convertToRDValueHelper(static_cast<char *>(data),
                                        isSetMask.get(), size);
       break;
-    case PropertyType::BOOL:
+    case RDProperties::PropertyType::BOOL:
       newData = convertToRDValueHelper(static_cast<bool *>(data),
                                        isSetMask.get(), size);
       break;
-    case PropertyType::INT32:
+    case RDProperties::PropertyType::INT32:
       newData = convertToRDValueHelper(static_cast<int32_t *>(data),
                                        isSetMask.get(), size);
       break;
-    case PropertyType::UINT32:
+    case RDProperties::PropertyType::UINT32:
       newData = convertToRDValueHelper(static_cast<uint32_t *>(data),
                                        isSetMask.get(), size);
       break;
-    case PropertyType::FLOAT:
+    case RDProperties::PropertyType::FLOAT:
       newData = convertToRDValueHelper(static_cast<float *>(data),
                                        isSetMask.get(), size);
       break;
-    case PropertyType::INT64:
+    case RDProperties::PropertyType::INT64:
       newData = convertToRDValueHelper(static_cast<int64_t *>(data),
                                        isSetMask.get(), size);
       break;
-    case PropertyType::UINT64:
+    case RDProperties::PropertyType::UINT64:
       newData = convertToRDValueHelper(static_cast<uint64_t *>(data),
                                        isSetMask.get(), size);
       break;
-    case PropertyType::DOUBLE:
+    case RDProperties::PropertyType::DOUBLE:
       newData = convertToRDValueHelper(static_cast<double *>(data),
                                        isSetMask.get(), size);
       break;
     default:
       raiseNonImplementedDetail(
-          "Unsupported type in PropArray::convertToRDValue");
+          "Unsupported type in Properties::PropArray::convertToRDValue");
   }
   destroy();
   data = newData;
-  family = PropertyType::ANY;
+  family = RDProperties::PropertyType::ANY;
 }
 
 void RingInfoCache::initFusedInfoFromBondMemberships() {
@@ -2487,21 +2493,21 @@ void RDMol::clearComputedProps(bool includeRings) {
 
 std::vector<std::string> RDMol::getPropList(bool includePrivate,
                                             bool includeComputed,
-                                            Properties::Scope scope,
+                                            RDProperties::Scope scope,
                                             uint32_t index) const {
   PRECONDITION(
-      scope == Properties::Scope::MOL ||
-          index == Properties::PropIterator::anyIndexMarker ||
-          (scope == Properties::Scope::ATOM && index < getNumAtoms()) ||
-          (scope == Properties::Scope::BOND && index < getNumBonds()),
+      scope == RDProperties::Scope::MOL ||
+          index == RDProperties::PropIterator::anyIndexMarker ||
+          (scope == RDProperties::Scope::ATOM && index < getNumAtoms()) ||
+          (scope == RDProperties::Scope::BOND && index < getNumBonds()),
       "RDMol::getPropList index out of range");
   std::vector<std::string> res;
   for (const auto &prop : properties) {
     if (prop.scope() != scope) {
       continue;
     }
-    if (scope != Properties::Scope::MOL &&
-        index != Properties::PropIterator::anyIndexMarker &&
+    if (scope != RDProperties::Scope::MOL &&
+        index != RDProperties::PropIterator::anyIndexMarker &&
         !prop.d_arrayData.isSetMask[index]) {
       continue;
     }
@@ -2517,15 +2523,15 @@ std::vector<std::string> RDMol::getPropList(bool includePrivate,
   return res;
 }
 
-void RDMol::getComputedPropList(STR_VECT &res, Properties::Scope scope,
+void RDMol::getComputedPropList(STR_VECT &res, RDProperties::Scope scope,
                                 uint32_t index) const {
   res.clear();
   for (const auto &prop : properties) {
     if (prop.scope() != scope) {
       continue;
     }
-    if (scope != Properties::Scope::MOL &&
-        index != Properties::PropIterator::anyIndexMarker &&
+    if (scope != RDProperties::Scope::MOL &&
+        index != RDProperties::PropIterator::anyIndexMarker &&
         !prop.d_arrayData.isSetMask[index]) {
       continue;
     }
@@ -2539,11 +2545,11 @@ void RDMol::getComputedPropList(STR_VECT &res, Properties::Scope scope,
 void RDMol::clearProps() { properties.clear(); }
 
 void RDMol::copyProp(const PropToken &destinationName, const RDMol &sourceMol,
-                     const PropToken &sourceName, Properties::Scope scope) {
-  PRECONDITION(scope == Properties::Scope::MOL ||
-                   (scope == Properties::Scope::ATOM &&
+                     const PropToken &sourceName, RDProperties::Scope scope) {
+  PRECONDITION(scope == RDProperties::Scope::MOL ||
+                   (scope == RDProperties::Scope::ATOM &&
                     getNumAtoms() == sourceMol.getNumAtoms()) ||
-                   (scope == Properties::Scope::BOND &&
+                   (scope == RDProperties::Scope::BOND &&
                     getNumBonds() == sourceMol.getNumBonds()),
                "Atom or bond counts must match in RDMol::copyProp");
   const auto *sourceProp = sourceMol.findProp(sourceName, scope);
@@ -2568,14 +2574,14 @@ void RDMol::copyProp(const PropToken &destinationName, const RDMol &sourceMol,
 void RDMol::copySingleProp(const PropToken &destinationName,
                            uint32_t destinationIndex, const RDMol &sourceMol,
                            const PropToken &sourceName, uint32_t sourceIndex,
-                           Properties::Scope scope) {
-  PRECONDITION(scope != Properties::Scope::MOL,
+                           RDProperties::Scope scope) {
+  PRECONDITION(scope != RDProperties::Scope::MOL,
                "RDMol::copyPropSingleIndex doesn't support molecule scope");
   PRECONDITION(
-      (scope == Properties::Scope::ATOM &&
+      (scope == RDProperties::Scope::ATOM &&
        sourceIndex < sourceMol.getNumAtoms() &&
        destinationIndex < getNumAtoms()) ||
-          (scope == Properties::Scope::BOND &&
+          (scope == RDProperties::Scope::BOND &&
            sourceIndex < sourceMol.getNumBonds() &&
            destinationIndex < getNumBonds()),
       "atom or bond indices must be in bounds in RDMol::copyPropSingleIndex");
@@ -2590,29 +2596,31 @@ void RDMol::copySingleProp(const PropToken &destinationName,
     destProp->d_isComputed = sourceProp->d_isComputed;
     destProp->d_scope = scope;
     uint32_t destSize =
-        (scope == Properties::Scope::ATOM) ? getNumAtoms() : getNumBonds();
-    destProp->d_arrayData =
-        PropArray(destSize, sourceProp->d_arrayData.family, false);
+        (scope == RDProperties::Scope::ATOM) ? getNumAtoms() : getNumBonds();
+    destProp->d_arrayData = RDProperties::PropArray(
+        destSize, sourceProp->d_arrayData.family, false);
   } else if (sourceProp->d_arrayData.family != destProp->d_arrayData.family) {
     // Check if types are compatible signed/unsigned integer pairs
     auto sourceFamily = sourceProp->d_arrayData.family;
     auto destFamily = destProp->d_arrayData.family;
-    bool integerCompatible = (sourceFamily == PropertyType::INT32 &&
-                              destFamily == PropertyType::UINT32) ||
-                             (sourceFamily == PropertyType::UINT32 &&
-                              destFamily == PropertyType::INT32) ||
-                             (sourceFamily == PropertyType::INT64 &&
-                              destFamily == PropertyType::UINT64) ||
-                             (sourceFamily == PropertyType::UINT64 &&
-                              destFamily == PropertyType::INT64);
+    bool integerCompatible =
+        (sourceFamily == RDProperties::PropertyType::INT32 &&
+         destFamily == RDProperties::PropertyType::UINT32) ||
+        (sourceFamily == RDProperties::PropertyType::UINT32 &&
+         destFamily == RDProperties::PropertyType::INT32) ||
+        (sourceFamily == RDProperties::PropertyType::INT64 &&
+         destFamily == RDProperties::PropertyType::UINT64) ||
+        (sourceFamily == RDProperties::PropertyType::UINT64 &&
+         destFamily == RDProperties::PropertyType::INT64);
 
     if (!integerCompatible) {
       // Convert to RDValue to support type mismatch
-      if (destProp->d_arrayData.family != PropertyType::ANY) {
+      if (destProp->d_arrayData.family != RDProperties::PropertyType::ANY) {
         destProp->d_arrayData.convertToRDValue();
       }
-      PRECONDITION(destProp->d_arrayData.family == PropertyType::ANY,
-                   "convertToRDValue should make family ANY");
+      PRECONDITION(
+          destProp->d_arrayData.family == RDProperties::PropertyType::ANY,
+          "convertToRDValue should make family ANY");
       destProp->d_isComputed = sourceProp->d_isComputed;
       auto *destData = static_cast<RDValue *>(destProp->d_arrayData.data);
       RDValue::cleanup_rdvalue(destData[destinationIndex]);
@@ -2638,17 +2646,17 @@ void RDMol::copySingleProp(const PropToken &destinationName,
   const auto *sourceData = sourceProp->d_arrayData.data;
   auto *destData = destProp->d_arrayData.data;
 
-  if ((sourceFamily == PropertyType::INT32 ||
-       sourceFamily == PropertyType::UINT32) &&
-      (destFamily == PropertyType::INT32 ||
-       destFamily == PropertyType::UINT32)) {
+  if ((sourceFamily == RDProperties::PropertyType::INT32 ||
+       sourceFamily == RDProperties::PropertyType::UINT32) &&
+      (destFamily == RDProperties::PropertyType::INT32 ||
+       destFamily == RDProperties::PropertyType::UINT32)) {
     // Copy 32-bit integer (signed or unsigned)
     static_cast<int32_t *>(destData)[destinationIndex] =
         static_cast<const int32_t *>(sourceData)[sourceIndex];
-  } else if ((sourceFamily == PropertyType::INT64 ||
-              sourceFamily == PropertyType::UINT64) &&
-             (destFamily == PropertyType::INT64 ||
-              destFamily == PropertyType::UINT64)) {
+  } else if ((sourceFamily == RDProperties::PropertyType::INT64 ||
+              sourceFamily == RDProperties::PropertyType::UINT64) &&
+             (destFamily == RDProperties::PropertyType::INT64 ||
+              destFamily == RDProperties::PropertyType::UINT64)) {
     // Copy 64-bit integer (signed or unsigned)
     static_cast<int64_t *>(destData)[destinationIndex] =
         static_cast<const int64_t *>(sourceData)[sourceIndex];
@@ -2673,12 +2681,13 @@ void RDMol::copySingleProp(const PropToken &destinationName,
 }
 
 bool RDMol::hasProp(const PropToken &name) const {
-  return findProp(name, Properties::Scope::MOL) != nullptr;
+  return findProp(name, RDProperties::Scope::MOL) != nullptr;
 }
 
 bool RDMol::hasAtomProp(const PropToken &name,
                         const std::uint32_t index) const {
-  const Properties::Property *prop = findProp(name, Properties::Scope::ATOM);
+  const RDProperties::Property *prop =
+      findProp(name, RDProperties::Scope::ATOM);
   if (prop == nullptr) {
     return false;
   }
@@ -2687,7 +2696,8 @@ bool RDMol::hasAtomProp(const PropToken &name,
 
 bool RDMol::hasBondProp(const PropToken &name,
                         const std::uint32_t index) const {
-  const Properties::Property *prop = findProp(name, Properties::Scope::BOND);
+  const RDProperties::Property *prop =
+      findProp(name, RDProperties::Scope::BOND);
   if (prop == nullptr) {
     return false;
   }
@@ -2729,8 +2739,8 @@ AtomData &RDMol::addAtom() {
   atomBondStarts.push_back(bondDataIndices.size());
 
   // Handle properties
-  for (Properties::Property &property : properties) {
-    if (property.scope() != Properties::Scope::ATOM) {
+  for (RDProperties::Property &property : properties) {
+    if (property.scope() != RDProperties::Scope::ATOM) {
       continue;
     }
     property.d_arrayData.appendElement();
@@ -2818,8 +2828,8 @@ BondData &RDMol::addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx,
   }
 
   // Handle properties
-  for (Properties::Property &property : properties) {
-    if (property.scope() != Properties::Scope::BOND) {
+  for (RDProperties::Property &property : properties) {
+    if (property.scope() != RDProperties::Scope::BOND) {
       continue;
     }
     property.d_arrayData.appendElement();
@@ -3029,8 +3039,8 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
   }
 
   // Shift atom property data back
-  for (Properties::Property &property : properties) {
-    if (property.scope() != Properties::Scope::ATOM) {
+  for (RDProperties::Property &property : properties) {
+    if (property.scope() != RDProperties::Scope::ATOM) {
       continue;
     }
     property.d_arrayData.removeElement(atomIndex);
@@ -3041,9 +3051,9 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
   // _ringStereoGroup properties are all "computed", so should be removed above.
   // TODO: Do they need to be removed in case !clearProps?
 
-  const Properties::Property *molFileBondEndPts =
+  const RDProperties::Property *molFileBondEndPts =
       findProp(RDKit::common_properties::_MolFileBondEndPtsToken,
-               Properties::Scope::BOND);
+               RDProperties::Scope::BOND);
   if (molFileBondEndPts != nullptr) {
     // Bond end indices may need to be decremented and their
     // indices will need to be handled and if they have an
@@ -3135,8 +3145,8 @@ void RDMol::removeBond(uint32_t bondIndex) {
   uint32_t endAtom = getBond(bondIndex).endAtomIdx;
   const uint32_t numBondsOrig = getNumBonds();
   // Handle props
-  for (Properties::Property &property : properties) {
-    if (property.scope() != Properties::Scope::BOND) {
+  for (RDProperties::Property &property : properties) {
+    if (property.scope() != RDProperties::Scope::BOND) {
       continue;
     }
     property.d_arrayData.removeElement(bondIndex);

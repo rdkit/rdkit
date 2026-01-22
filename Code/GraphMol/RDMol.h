@@ -542,6 +542,16 @@ struct ConformerIdAndFlags {
   bool is3D;
 };
 
+namespace Ranges {
+template <bool ISBOND, bool ISCONST>
+class IndexRange;
+template <bool ISBOND, bool ISCONST>
+class IndirectRange;
+}  // namespace Ranges
+
+class RDKIT_GRAPHMOL_EXPORT RDMol;
+
+namespace RDProperties {
 enum class PropertyType : uint8_t {
   CHAR,    // 8 bit
   BOOL,    // 8 bit,
@@ -766,16 +776,6 @@ struct RDKIT_GRAPHMOL_EXPORT PropArray {
   void convertToRDValue();
 };
 
-namespace Ranges {
-template <bool ISBOND, bool ISCONST>
-class IndexRange;
-template <bool ISBOND, bool ISCONST>
-class IndirectRange;
-}  // namespace Ranges
-
-class RDKIT_GRAPHMOL_EXPORT RDMol;
-
-namespace Properties {
 class RDKIT_GRAPHMOL_EXPORT PropIterator;
 
 enum class Scope : uint8_t {
@@ -1004,7 +1004,7 @@ class RDKIT_GRAPHMOL_EXPORT PropIterator {
   }
   bool operator!=(const PropIterator &that) const { return !(*this == that); }
 };
-}  // namespace Properties
+}  // namespace RDProperties
 
 class RDKIT_GRAPHMOL_EXPORT RDMol {
   std::vector<AtomData> atomData;
@@ -1060,7 +1060,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   mutable std::atomic<CompatibilityData *> compatibilityData = nullptr;
 
  private:
-  std::vector<Properties::Property> properties;
+  std::vector<RDProperties::Property> properties;
 
   //! Map of bookmarks to atom indices associated with that bookmark
   std::unordered_map<int, std::vector<int>> atomBookmarks;
@@ -1316,32 +1316,33 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
 
   std::vector<std::string> getPropList(
       bool includePrivate = true, bool includeComputed = true,
-      Properties::Scope scope = Properties::Scope::MOL,
-      uint32_t index = Properties::PropIterator::anyIndexMarker) const;
+      RDProperties::Scope scope = RDProperties::Scope::MOL,
+      uint32_t index = RDProperties::PropIterator::anyIndexMarker) const;
 
  private:
   // This is used by ROMol, Atom, and Bond to get the "__computedProps" prop
   void getComputedPropList(
-      STR_VECT &res, Properties::Scope scope = Properties::Scope::MOL,
-      uint32_t index = Properties::PropIterator::anyIndexMarker) const;
+      STR_VECT &res, RDProperties::Scope scope = RDProperties::Scope::MOL,
+      uint32_t index = RDProperties::PropIterator::anyIndexMarker) const;
 
  public:
-  Properties::PropIterator beginProps(
+  RDProperties::PropIterator beginProps(
       bool includeComputed = true,
-      Properties::Scope scope = Properties::Scope::MOL,
-      uint32_t index = Properties::PropIterator::anyIndexMarker) const {
-    return Properties::PropIterator(properties.cbegin(), properties.cend(),
-                                    includeComputed, scope, index);
+      RDProperties::Scope scope = RDProperties::Scope::MOL,
+      uint32_t index = RDProperties::PropIterator::anyIndexMarker) const {
+    return RDProperties::PropIterator(properties.cbegin(), properties.cend(),
+                                      includeComputed, scope, index);
   }
-  Properties::PropIterator endProps() const {
-    return Properties::PropIterator(properties.cend(), properties.cend(), true,
-                                    Properties::Scope::MOL,
-                                    Properties::PropIterator::anyIndexMarker);
+  RDProperties::PropIterator endProps() const {
+    return RDProperties::PropIterator(
+        properties.cend(), properties.cend(), true, RDProperties::Scope::MOL,
+        RDProperties::PropIterator::anyIndexMarker);
   }
 
   template <typename T>
   T getMolProp(const PropToken &name) const {
-    const Properties::Property *prop = findProp(name, Properties::Scope::MOL);
+    const RDProperties::Property *prop =
+        findProp(name, RDProperties::Scope::MOL);
     if (prop == nullptr) {
       throw KeyErrorException(name.getString());
     }
@@ -1350,7 +1351,8 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
 
   template <typename T>
   T getAtomProp(const PropToken &name, uint32_t index) const {
-    const Properties::Property *prop = findProp(name, Properties::Scope::ATOM);
+    const RDProperties::Property *prop =
+        findProp(name, RDProperties::Scope::ATOM);
     if (prop == nullptr || !prop->d_arrayData.isSetMask[index]) {
       throw KeyErrorException(name.getString());
     }
@@ -1359,7 +1361,8 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
 
   template <typename T>
   T getBondProp(const PropToken &name, uint32_t index) const {
-    const Properties::Property *prop = findProp(name, Properties::Scope::BOND);
+    const RDProperties::Property *prop =
+        findProp(name, RDProperties::Scope::BOND);
     if (prop == nullptr || !prop->d_arrayData.isSetMask[index]) {
       throw KeyErrorException(name.getString());
     }
@@ -1370,7 +1373,8 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   //! whether token was found.
   template <typename T>
   bool getMolPropIfPresent(const PropToken &name, T &res) const {
-    const Properties::Property *prop = findProp(name, Properties::Scope::MOL);
+    const RDProperties::Property *prop =
+        findProp(name, RDProperties::Scope::MOL);
     if (prop == nullptr) {
       return false;
     }
@@ -1387,7 +1391,8 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   template <typename T>
   bool getAtomPropIfPresent(const PropToken &name, uint32_t index,
                             T &res) const {
-    return getArrayPropIfPresent<T>(name, Properties::Scope::ATOM, index, res);
+    return getArrayPropIfPresent<T>(name, RDProperties::Scope::ATOM, index,
+                                    res);
   }
 
   //! Populates res with the property with token name, if present. Returns
@@ -1395,7 +1400,8 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   template <typename T>
   bool getBondPropIfPresent(const PropToken &name, uint32_t index,
                             T &res) const {
-    return getArrayPropIfPresent<T>(name, Properties::Scope::BOND, index, res);
+    return getArrayPropIfPresent<T>(name, RDProperties::Scope::BOND, index,
+                                    res);
   }
 
   //! Returns pointer to array of atom properties with token name, or nullptr if
@@ -1403,14 +1409,17 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   //! (use getAtomPropIfPresent).
   template <typename T>
   T *getAtomPropArrayIfPresent(const PropToken &name) {
-    if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
+    if constexpr (RDProperties::TypeToPropertyType<T>::family ==
+                  RDProperties::PropertyType::ANY) {
       return nullptr;
     }
-    const Properties::Property *prop = findProp(name, Properties::Scope::ATOM);
+    const RDProperties::Property *prop =
+        findProp(name, RDProperties::Scope::ATOM);
     if (prop == nullptr) {
       return nullptr;
     }
-    if (prop->d_arrayData.family != TypeToPropertyType<T>::family) {
+    if (prop->d_arrayData.family !=
+        RDProperties::TypeToPropertyType<T>::family) {
       return nullptr;
     }
     return static_cast<T *>(prop->d_arrayData.data);
@@ -1419,14 +1428,17 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   //! \overload
   template <typename T>
   const T *getAtomPropArrayIfPresent(const PropToken &name) const {
-    if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
+    if constexpr (RDProperties::TypeToPropertyType<T>::family ==
+                  RDProperties::PropertyType::ANY) {
       return nullptr;
     }
-    const Properties::Property *prop = findProp(name, Properties::Scope::ATOM);
+    const RDProperties::Property *prop =
+        findProp(name, RDProperties::Scope::ATOM);
     if (prop == nullptr) {
       return nullptr;
     }
-    if (prop->d_arrayData.family != TypeToPropertyType<T>::family) {
+    if (prop->d_arrayData.family !=
+        RDProperties::TypeToPropertyType<T>::family) {
       return nullptr;
     }
     return static_cast<T *>(prop->d_arrayData.data);
@@ -1437,14 +1449,17 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   //! (use getBondPropIfPresent).
   template <typename T>
   T *getBondPropArrayIfPresent(const PropToken &name) {
-    if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
+    if constexpr (RDProperties::TypeToPropertyType<T>::family ==
+                  RDProperties::PropertyType::ANY) {
       return nullptr;
     }
-    const Properties::Property *prop = findProp(name, Properties::Scope::BOND);
+    const RDProperties::Property *prop =
+        findProp(name, RDProperties::Scope::BOND);
     if (prop == nullptr) {
       return nullptr;
     }
-    if (prop->d_arrayData.family != TypeToPropertyType<T>::family) {
+    if (prop->d_arrayData.family !=
+        RDProperties::TypeToPropertyType<T>::family) {
       return nullptr;
     }
     return static_cast<T *>(prop->d_arrayData.data);
@@ -1453,14 +1468,17 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   //! \overload
   template <typename T>
   const T *getBondPropArrayIfPresent(const PropToken &name) const {
-    if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
+    if constexpr (RDProperties::TypeToPropertyType<T>::family ==
+                  RDProperties::PropertyType::ANY) {
       return nullptr;
     }
-    const Properties::Property *prop = findProp(name, Properties::Scope::BOND);
+    const RDProperties::Property *prop =
+        findProp(name, RDProperties::Scope::BOND);
     if (prop == nullptr) {
       return nullptr;
     }
-    if (prop->d_arrayData.family != TypeToPropertyType<T>::family) {
+    if (prop->d_arrayData.family !=
+        RDProperties::TypeToPropertyType<T>::family) {
       return nullptr;
     }
     return static_cast<T *>(prop->d_arrayData.data);
@@ -1471,15 +1489,15 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   template <typename T>
   void addMolProp(const PropToken &name, const T &value,
                   bool computed = false) {
-    if (Properties::Property *prop = findProp(name, Properties::Scope::MOL);
+    if (RDProperties::Property *prop = findProp(name, RDProperties::Scope::MOL);
         prop != nullptr) {
       prop->setVal(value);
       prop->d_isComputed = computed;
       return;
     }
-    Properties::Property &newProp = properties.emplace_back();
+    RDProperties::Property &newProp = properties.emplace_back();
     newProp.d_name = std::move(name);
-    newProp.d_scope = Properties::Scope::MOL;
+    newProp.d_scope = RDProperties::Scope::MOL;
     newProp.d_isComputed = computed;
     newProp.setVal(value);
   }
@@ -1495,9 +1513,10 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   //! Returns a pointer to the array if a scalar type, or nullptr if not.
   template <typename T>
   T *addAtomProp(const PropToken &name, T defaultValue, bool computed = false) {
-    Properties::Property *newProp = addPerElementProp<T>(
-        name, Properties::Scope::ATOM, defaultValue, computed);
-    if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
+    RDProperties::Property *newProp = addPerElementProp<T>(
+        name, RDProperties::Scope::ATOM, defaultValue, computed);
+    if constexpr (RDProperties::TypeToPropertyType<T>::family ==
+                  RDProperties::PropertyType::ANY) {
       return nullptr;
     }
     return static_cast<T *>(newProp->d_arrayData.data);
@@ -1507,9 +1526,10 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   //! Returns a pointer to the array if a scalar type, or nullptr if not.
   template <typename T>
   T *addBondProp(const PropToken &name, T defaultValue, bool computed = false) {
-    Properties::Property *newProp = addPerElementProp<T>(
-        name, Properties::Scope::BOND, defaultValue, computed);
-    if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
+    RDProperties::Property *newProp = addPerElementProp<T>(
+        name, RDProperties::Scope::BOND, defaultValue, computed);
+    if constexpr (RDProperties::TypeToPropertyType<T>::family ==
+                  RDProperties::PropertyType::ANY) {
       return nullptr;
     }
     return static_cast<T *>(newProp->d_arrayData.data);
@@ -1520,7 +1540,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   void setSingleAtomProp(const PropToken &name, const std::uint32_t index,
                          const T &value, bool computed = false,
                          bool supportTypeMismatch = false) {
-    setSingleProp<T>(name, Properties::Scope::ATOM, index, value, computed,
+    setSingleProp<T>(name, RDProperties::Scope::ATOM, index, value, computed,
                      supportTypeMismatch);
   }
 
@@ -1529,7 +1549,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   void setSingleBondProp(const PropToken &name, const std::uint32_t index,
                          const T &value, bool computed = false,
                          bool supportTypeMismatch = false) {
-    setSingleProp<T>(name, Properties::Scope::BOND, index, value, computed,
+    setSingleProp<T>(name, RDProperties::Scope::BOND, index, value, computed,
                      supportTypeMismatch);
   }
 
@@ -1537,7 +1557,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   void clearMolPropIfPresent(const PropToken &name) {
     for (auto it = properties.begin(), end = properties.end(); it != end;
          ++it) {
-      if (it->name() == name && it->scope() == Properties::Scope::MOL) {
+      if (it->name() == name && it->scope() == RDProperties::Scope::MOL) {
         properties.erase(it);
         return;
       }
@@ -1548,7 +1568,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   void clearAtomPropIfPresent(const PropToken &name) {
     for (auto it = properties.begin(), end = properties.end(); it != end;
          ++it) {
-      if (it->name() == name && it->scope() == Properties::Scope::ATOM) {
+      if (it->name() == name && it->scope() == RDProperties::Scope::ATOM) {
         properties.erase(it);
         return;
       }
@@ -1559,7 +1579,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   void clearBondPropIfPresent(const PropToken &name) {
     for (auto it = properties.begin(), end = properties.end(); it != end;
          ++it) {
-      if (it->name() == name && it->scope() == Properties::Scope::BOND) {
+      if (it->name() == name && it->scope() == RDProperties::Scope::BOND) {
         properties.erase(it);
         return;
       }
@@ -1571,7 +1591,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
                            const std::uint32_t atomIndex) {
     for (auto it = properties.begin(), end = properties.end(); it != end;
          ++it) {
-      if (it->name() == name && it->scope() == Properties::Scope::ATOM &&
+      if (it->name() == name && it->scope() == RDProperties::Scope::ATOM &&
           it->d_arrayData.isSetMask[atomIndex]) {
         --it->d_arrayData.numSet;
         if (it->d_arrayData.numSet == 0) {
@@ -1589,7 +1609,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
                            const std::uint32_t bondIndex) {
     for (auto it = properties.begin(), end = properties.end(); it != end;
          ++it) {
-      if (it->name() == name && it->scope() == Properties::Scope::BOND &&
+      if (it->name() == name && it->scope() == RDProperties::Scope::BOND &&
           it->d_arrayData.isSetMask[bondIndex]) {
         --it->d_arrayData.numSet;
         if (it->d_arrayData.numSet == 0) {
@@ -1607,7 +1627,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
                                const bool onlyComputed = false) {
     for (auto it = properties.begin(), end = properties.end(); it != end;) {
       bool erased = false;
-      if (it->scope() == Properties::Scope::ATOM &&
+      if (it->scope() == RDProperties::Scope::ATOM &&
           (!onlyComputed || it->isComputed()) &&
           it->d_arrayData.isSetMask[atomIndex]) {
         --it->d_arrayData.numSet;
@@ -1630,7 +1650,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
                                const bool onlyComputed = false) {
     for (auto it = properties.begin(), end = properties.end(); it != end;) {
       bool erased = false;
-      if (it->scope() == Properties::Scope::BOND &&
+      if (it->scope() == RDProperties::Scope::BOND &&
           (!onlyComputed || it->isComputed()) &&
           it->d_arrayData.isSetMask[bondIndex]) {
         --it->d_arrayData.numSet;
@@ -1652,11 +1672,11 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
 
   void copyProp(const PropToken &destinationName, const RDMol &sourceMol,
                 const PropToken &sourceName,
-                Properties::Scope scope = Properties::Scope::MOL);
+                RDProperties::Scope scope = RDProperties::Scope::MOL);
   void copySingleProp(const PropToken &destinationName,
                       uint32_t destinationIndex, const RDMol &sourceMol,
                       const PropToken &sourceName, uint32_t sourceIndex,
-                      Properties::Scope scope);
+                      RDProperties::Scope scope);
 
   //! Associates an atom index with a bookmark
   void setAtomBookmark(int atomIdx, int mark);
@@ -1856,8 +1876,8 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   void addUnconnectedBond() { bondData.resize(1); }
 
   //! Returns handle to property if found, else nullptr
-  const Properties::Property *findProp(const PropToken &name,
-                                       Properties::Scope scope) const {
+  const RDProperties::Property *findProp(const PropToken &name,
+                                         RDProperties::Scope scope) const {
     for (const auto &property : properties) {
       if (property.name() == name && property.scope() == scope) {
         return &property;
@@ -1867,8 +1887,8 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   }
 
   //! Non-const overload
-  Properties::Property *findProp(const PropToken &name,
-                                 Properties::Scope scope) {
+  RDProperties::Property *findProp(const PropToken &name,
+                                   RDProperties::Scope scope) {
     for (auto &property : properties) {
       if (property.name() == name && property.scope() == scope) {
         return &property;
@@ -1879,24 +1899,26 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
 
   //! Adds a new array property for bonds or atoms.
   template <typename T>
-  Properties::Property *addPerElementProp(const PropToken &name,
-                                          Properties::Scope scope,
-                                          const T &defaultValue,
-                                          bool computed = false,
-                                          bool setAll = true) {
+  RDProperties::Property *addPerElementProp(const PropToken &name,
+                                            RDProperties::Scope scope,
+                                            const T &defaultValue,
+                                            bool computed = false,
+                                            bool setAll = true) {
     // Throw if not atom or bond scope
-    if (scope != Properties::Scope::ATOM && scope != Properties::Scope::BOND) {
+    if (scope != RDProperties::Scope::ATOM &&
+        scope != RDProperties::Scope::BOND) {
       throw ValueErrorException(
           "Per-element properties must be atom or bond scope");
     }
-    Properties::Property *existing = findProp(name, scope);
+    RDProperties::Property *existing = findProp(name, scope);
     if (existing != nullptr) {
-      if (existing->d_arrayData.family == TypeToPropertyType<T>::family) {
+      if (existing->d_arrayData.family ==
+          RDProperties::TypeToPropertyType<T>::family) {
         existing->d_isComputed = computed;
         return existing;
       }
       // If we have an existing prop with the wrong type, clear it.
-      if (scope == Properties::Scope::ATOM) {
+      if (scope == RDProperties::Scope::ATOM) {
         clearAtomPropIfPresent(name);
       } else {
         clearBondPropIfPresent(name);
@@ -1904,16 +1926,18 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
     }
 
     const uint32_t numElements =
-        scope == Properties::Scope::ATOM ? getNumAtoms() : getNumBonds();
-    Properties::Property &newProperty = properties.emplace_back();
+        scope == RDProperties::Scope::ATOM ? getNumAtoms() : getNumBonds();
+    RDProperties::Property &newProperty = properties.emplace_back();
     newProperty.d_name = name;
     newProperty.d_scope = scope;
     newProperty.d_isComputed = computed;
     newProperty.d_arrayData.size = numElements;
-    newProperty.d_arrayData.family = TypeToPropertyType<T>::family;
+    newProperty.d_arrayData.family =
+        RDProperties::TypeToPropertyType<T>::family;
     newProperty.d_arrayData.construct(setAll);
 
-    if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
+    if constexpr (RDProperties::TypeToPropertyType<T>::family ==
+                  RDProperties::PropertyType::ANY) {
       auto *data = static_cast<RDValue *>(newProperty.d_arrayData.data);
       for (uint32_t i = 0; i < numElements; ++i) {
         if constexpr (std::is_same_v<T, RDValue>) {
@@ -1934,20 +1958,20 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   }
 
   // Overload to treat const char* as a string
-  Properties::Property *addPerElementProp(const PropToken &name,
-                                          Properties::Scope scope,
-                                          const char *defaultValue,
-                                          bool computed = false,
-                                          bool setAll = true) {
+  RDProperties::Property *addPerElementProp(const PropToken &name,
+                                            RDProperties::Scope scope,
+                                            const char *defaultValue,
+                                            bool computed = false,
+                                            bool setAll = true) {
     std::string s = defaultValue == nullptr ? "" : defaultValue;
     return addPerElementProp(name, scope, s, computed, setAll);
   }
 
   template <typename T>
-  void setSingleProp(const PropToken &name, const Properties::Scope scope,
+  void setSingleProp(const PropToken &name, const RDProperties::Scope scope,
                      const std::uint32_t index, const T &value,
                      bool computed = false, bool supportTypeMismatch = false) {
-    Properties::Property *existing = findProp(name, scope);
+    RDProperties::Property *existing = findProp(name, scope);
     if (existing == nullptr) {
       if constexpr (std::is_default_constructible_v<T>) {
         existing = addPerElementProp(name, scope, T(), computed, false);
@@ -1957,35 +1981,39 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
     }
     existing->d_isComputed = computed;
     auto existingFamily = existing->d_arrayData.family;
-    auto newFamily = TypeToPropertyType<T>::family;
+    auto newFamily = RDProperties::TypeToPropertyType<T>::family;
 
-    if (existingFamily != newFamily && existingFamily != PropertyType::ANY) {
+    if (existingFamily != newFamily &&
+        existingFamily != RDProperties::PropertyType::ANY) {
       if (!supportTypeMismatch) {
         throw ValueErrorException("Property type mismatch");
       }
 
       // Check if types are compatible signed/unsigned integer pairs
-      bool integerCompatible = (existingFamily == PropertyType::INT32 &&
-                                newFamily == PropertyType::UINT32) ||
-                               (existingFamily == PropertyType::UINT32 &&
-                                newFamily == PropertyType::INT32) ||
-                               (existingFamily == PropertyType::INT64 &&
-                                newFamily == PropertyType::UINT64) ||
-                               (existingFamily == PropertyType::UINT64 &&
-                                newFamily == PropertyType::INT64);
+      bool integerCompatible =
+          (existingFamily == RDProperties::PropertyType::INT32 &&
+           newFamily == RDProperties::PropertyType::UINT32) ||
+          (existingFamily == RDProperties::PropertyType::UINT32 &&
+           newFamily == RDProperties::PropertyType::INT32) ||
+          (existingFamily == RDProperties::PropertyType::INT64 &&
+           newFamily == RDProperties::PropertyType::UINT64) ||
+          (existingFamily == RDProperties::PropertyType::UINT64 &&
+           newFamily == RDProperties::PropertyType::INT64);
 
       if (!integerCompatible) {
         // Convert to RDValue for non-compatible type mismatches
         existing->d_arrayData.convertToRDValue();
-        PRECONDITION(existing->d_arrayData.family == PropertyType::ANY,
-                     "convertToRDValue should make family ANY");
-        existingFamily = PropertyType::ANY;
+        PRECONDITION(
+            existing->d_arrayData.family == RDProperties::PropertyType::ANY,
+            "convertToRDValue should make family ANY");
+        existingFamily = RDProperties::PropertyType::ANY;
       }
       // If integer-compatible, keep existing type and fall through
     }
 
     auto &arr = existing->d_arrayData;
-    if (newFamily == PropertyType::ANY || existingFamily == PropertyType::ANY) {
+    if (newFamily == RDProperties::PropertyType::ANY ||
+        existingFamily == RDProperties::PropertyType::ANY) {
       // Store as RDValue
       auto *data = static_cast<RDValue *>(arr.data);
       RDValue::cleanup_rdvalue(data[index]);
@@ -1996,10 +2024,10 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
       } else {
         data[index] = value;
       }
-    } else if ((existingFamily == PropertyType::INT32 ||
-                existingFamily == PropertyType::UINT32) &&
-               (newFamily == PropertyType::INT32 ||
-                newFamily == PropertyType::UINT32)) {
+    } else if ((existingFamily == RDProperties::PropertyType::INT32 ||
+                existingFamily == RDProperties::PropertyType::UINT32) &&
+               (newFamily == RDProperties::PropertyType::INT32 ||
+                newFamily == RDProperties::PropertyType::UINT32)) {
       // Store 32-bit int/uint using existing family's storage
       auto *data = static_cast<int32_t *>(arr.data);
       if constexpr (std::is_same_v<T, int> || std::is_same_v<T, unsigned int>) {
@@ -2008,10 +2036,10 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
         throw ValueErrorException(
             "Type mismatch in setSingleProp for 32-bit integer");
       }
-    } else if ((existingFamily == PropertyType::INT64 ||
-                existingFamily == PropertyType::UINT64) &&
-               (newFamily == PropertyType::INT64 ||
-                newFamily == PropertyType::UINT64)) {
+    } else if ((existingFamily == RDProperties::PropertyType::INT64 ||
+                existingFamily == RDProperties::PropertyType::UINT64) &&
+               (newFamily == RDProperties::PropertyType::INT64 ||
+                newFamily == RDProperties::PropertyType::UINT64)) {
       // Store 64-bit int/uint using existing family's storage
       auto *data = static_cast<int64_t *>(arr.data);
       if constexpr (std::is_same_v<T, int64_t> || std::is_same_v<T, uint64_t>) {
@@ -2030,7 +2058,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   }
 
   // Overload to treat const char* as a string
-  void setSingleProp(const PropToken &name, const Properties::Scope scope,
+  void setSingleProp(const PropToken &name, const RDProperties::Scope scope,
                      const std::uint32_t index, const char *value,
                      bool computed = false, bool supportTypeMismatch = false) {
     std::string s(value);
@@ -2038,22 +2066,22 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   }
 
   template <typename T>
-  bool getArrayPropIfPresent(const PropToken &name, Properties::Scope scope,
+  bool getArrayPropIfPresent(const PropToken &name, RDProperties::Scope scope,
                              std::uint32_t index, T &res) const {
-    const Properties::Property *prop = findProp(name, scope);
+    const RDProperties::Property *prop = findProp(name, scope);
     if (prop == nullptr) {
       return false;
     }
 
-    if (scope == Properties::Scope::ATOM && index >= getNumAtoms()) {
+    if (scope == RDProperties::Scope::ATOM && index >= getNumAtoms()) {
       throw ValueErrorException("Atom index out of bounds");
     }
 
-    if (scope == Properties::Scope::BOND && index >= getNumBonds()) {
+    if (scope == RDProperties::Scope::BOND && index >= getNumBonds()) {
       throw ValueErrorException("Bond index out of bounds");
     }
 
-    const PropArray &arr = prop->d_arrayData;
+    const RDProperties::PropArray &arr = prop->d_arrayData;
     if (arr.isSetMask[index]) {
       res = arr.getValueAs<T>(index);
       return true;

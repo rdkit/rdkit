@@ -21,13 +21,13 @@ void Bond::initFromOther(const Bond &other, const bool preserveProps) {
 
   if (!preserveProps) {
     dp_dataMol->clearSingleBondAllProps(d_index);
-    for (auto it = other.dp_dataMol->beginProps(true, Properties::Scope::BOND,
+    for (auto it = other.dp_dataMol->beginProps(true, RDProperties::Scope::BOND,
                                                 other.d_index),
               end = other.dp_dataMol->endProps();
          it != end; ++it) {
       dp_dataMol->copySingleProp(it->name(), d_index, *other.dp_dataMol,
                                  it->name(), other.d_index,
-                                 Properties::Scope::BOND);
+                                 RDProperties::Scope::BOND);
     }
   }
 
@@ -336,10 +336,11 @@ Atom *Bond::getOtherAtom(Atom const *what) const {
 
 STR_VECT Bond::getPropList(bool includePrivate, bool includeComputed) const {
   STR_VECT res = dp_dataMol->getPropList(includePrivate, includeComputed,
-                                         Properties::Scope::BOND, d_index);
+                                         RDProperties::Scope::BOND, d_index);
   if (includePrivate && includeComputed) {
     // Only include __computedProps if there is a computed prop
-    auto begin = dp_dataMol->beginProps(true, Properties::Scope::BOND, d_index);
+    auto begin =
+        dp_dataMol->beginProps(true, RDProperties::Scope::BOND, d_index);
     auto end = dp_dataMol->endProps();
     for (; begin != end; ++begin) {
       if (begin->isComputed()) {
@@ -391,13 +392,13 @@ void Bond::updateProps(const Bond &source, bool preserveExisting) {
   if (!preserveExisting) {
     clear();
   }
-  for (auto it = source.dp_dataMol->beginProps(true, Properties::Scope::BOND,
+  for (auto it = source.dp_dataMol->beginProps(true, RDProperties::Scope::BOND,
                                                source.d_index),
             end = source.dp_dataMol->endProps();
        it != end; ++it) {
     dp_dataMol->copySingleProp(it->name(), d_index, *source.dp_dataMol,
                                it->name(), source.d_index,
-                               Properties::Scope::BOND);
+                               RDProperties::Scope::BOND);
   }
 }
 

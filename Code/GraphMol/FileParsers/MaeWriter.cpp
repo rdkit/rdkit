@@ -139,13 +139,13 @@ void copyProperties(
   // since we don't want to export these.
   origin.clearComputedProps();
 
-  Properties::Scope scope =
+  RDProperties::Scope scope =
       std::is_same_v<PropsT, Atom>
-          ? Properties::Scope::ATOM
-          : (std::is_same_v<PropsT, Bond> ? Properties::Scope::BOND
-                                          : Properties::Scope::MOL);
-  RDMol::PropIterator begin = mol.beginProps(false, scope, idx);
-  RDMol::PropIterator end = mol.endProps();
+          ? RDProperties::Scope::ATOM
+          : (std::is_same_v<PropsT, Bond> ? RDProperties::Scope::BOND
+                                          : RDProperties::Scope::MOL);
+  RDProperties::PropIterator begin = mol.beginProps(false, scope, idx);
+  RDProperties::PropIterator end = mol.endProps();
 
   for (; begin != end; ++begin) {
     // Skip the property holding the names of the computed properties
@@ -164,14 +164,14 @@ void copyProperties(
     }
 
     // Get the RDValue tag based on scope
-    auto tag = (scope == Properties::Scope::MOL) ? prop.getRDValueTag()
-                                                 : prop.getRDValueTag(idx);
+    auto tag = (scope == RDProperties::Scope::MOL) ? prop.getRDValueTag()
+                                                   : prop.getRDValueTag(idx);
 
     // Helper lambda to get property value based on scope
     auto getPropValue = [&](const auto &token) -> RDValue {
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         return mol.getMolProp<RDValue>(token);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         return mol.getAtomProp<RDValue>(token, idx);
       } else {  // BOND
         return mol.getBondProp<RDValue>(token, idx);

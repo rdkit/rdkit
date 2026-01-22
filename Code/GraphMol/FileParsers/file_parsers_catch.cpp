@@ -6207,7 +6207,7 @@ void check_roundtripped_properties(const ROMol &original,
 
   // Iterate through original properties using RDMol API
   const auto &mol = original.asRDMol();
-  for (auto it = mol.beginProps(false, Properties::Scope::MOL, 0);
+  for (auto it = mol.beginProps(false, RDProperties::Scope::MOL, 0);
        it != mol.endProps(); ++it) {
     const auto &prop = *it;
     std::string propName = prop.name().getString();
@@ -6266,7 +6266,7 @@ void check_roundtripped_properties(const Atom &original,
   // Iterate through original properties using RDMol API
   const auto &mol = original.getRDMol();
   uint32_t idx = original.getIdx();
-  for (auto it = mol.beginProps(false, Properties::Scope::ATOM, idx);
+  for (auto it = mol.beginProps(false, RDProperties::Scope::ATOM, idx);
        it != mol.endProps(); ++it) {
     const auto &prop = *it;
     std::string propName = prop.name().getString();

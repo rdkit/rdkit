@@ -143,7 +143,7 @@ inline void unpickleExplicitProperties(std::istream &ss, RDProps &props,
 // Version that works with mol and property index
 template <typename SAVEAS, typename STOREAS, typename EXPLICIT>
 inline void unpickleExplicitPropertiesFromMol(std::istream &ss, RDMol &mol,
-                                              Properties::Scope scope,
+                                              RDProperties::Scope scope,
                                               uint32_t index, int version,
                                               const EXPLICIT &explicitProps) {
   if (version >= 14000) {
@@ -153,10 +153,10 @@ inline void unpickleExplicitPropertiesFromMol(std::istream &ss, RDMol &mol,
       if (bprops & pr.second) {
         SAVEAS bv;
         streamRead(ss, bv, version);
-        if (scope == Properties::Scope::ATOM) {
+        if (scope == RDProperties::Scope::ATOM) {
           mol.setSingleAtomProp(PropToken(pr.first), index,
                                 static_cast<STOREAS>(bv));
-        } else if (scope == Properties::Scope::BOND) {
+        } else if (scope == RDProperties::Scope::BOND) {
           mol.setSingleBondProp(PropToken(pr.first), index,
                                 static_cast<STOREAS>(bv));
         }
@@ -188,7 +188,7 @@ inline bool pickleExplicitProperties(std::ostream &ss, const RDProps &props,
 // Version that works with mol and property index
 template <typename SAVEAS, typename EXPLICIT>
 inline bool pickleExplicitPropertiesFromMol(std::ostream &ss, const RDMol &mol,
-                                            Properties::Scope scope,
+                                            RDProperties::Scope scope,
                                             uint32_t index,
                                             const EXPLICIT &explicitProps) {
   std::uint8_t bprops = 0;
@@ -197,9 +197,9 @@ inline bool pickleExplicitPropertiesFromMol(std::ostream &ss, const RDMol &mol,
   for (const auto &pr : explicitProps) {
     bool hasProp = false;
     try {
-      if (scope == Properties::Scope::ATOM) {
+      if (scope == RDProperties::Scope::ATOM) {
         hasProp = mol.getAtomPropIfPresent(PropToken(pr.first), index, bv);
-      } else if (scope == Properties::Scope::BOND) {
+      } else if (scope == RDProperties::Scope::BOND) {
         hasProp = mol.getBondPropIfPresent(PropToken(pr.first), index, bv);
       } else {
         // Error if scope isn't atom or bond
@@ -339,8 +339,8 @@ void unpickleBondProperties(std::istream &ss, RDProps &props, int version) {
 // Generic function to pickle properties using PropIterator
 template <typename COUNT_TYPE>
 bool _picklePropertiesFromIterator(
-    std::ostream &ss, const RDMol &mol, Properties::Scope scope, uint32_t index,
-    unsigned int pickleFlags,
+    std::ostream &ss, const RDMol &mol, RDProperties::Scope scope,
+    uint32_t index, unsigned int pickleFlags,
     const std::unordered_set<std::string_view> &ignoreProps,
     const CustomPropHandlerVec &handlers = {}) {
   if (!pickleFlags) {
@@ -354,7 +354,7 @@ bool _picklePropertiesFromIterator(
   COUNT_TYPE count = 0;
   for (auto it = mol.beginProps(saveComputed, scope, index);
        it != mol.endProps(); ++it) {
-    const RDKit::Properties::Property &prop = *it;
+    const RDKit::RDProperties::Property &prop = *it;
     const std::string &propName = prop.name().getString();
 
     // Skip ignored properties
@@ -372,9 +372,9 @@ bool _picklePropertiesFromIterator(
     const PropToken &token = prop.name();
     RDValue val;
     try {
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         val = mol.getMolProp<RDValue>(token);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         val = mol.getAtomProp<RDValue>(token, index);
       } else {  // BOND
         val = mol.getBondProp<RDValue>(token, index);
@@ -418,7 +418,7 @@ bool _picklePropertiesFromIterator(
   COUNT_TYPE writtenCount = 0;
   for (auto it = mol.beginProps(saveComputed, scope, index);
        it != mol.endProps(); ++it) {
-    const RDKit::Properties::Property &prop = *it;
+    const RDKit::RDProperties::Property &prop = *it;
     const std::string &propName = prop.name().getString();
 
     // Skip ignored properties
@@ -439,9 +439,9 @@ bool _picklePropertiesFromIterator(
     RDValue val;
     // Get the value using RDMol's public API based on type
     try {
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         val = mol.getMolProp<RDValue>(token);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         val = mol.getAtomProp<RDValue>(token, index);
       } else {  // BOND
         val = mol.getBondProp<RDValue>(token, index);
@@ -484,7 +484,7 @@ bool _picklePropertiesFromIterator(
 // Helper function to read a single property and set it on RDMol
 template <typename COUNT_TYPE>
 bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
-                           Properties::Scope scope, uint32_t index) {
+                           RDProperties::Scope scope, uint32_t index) {
   std::string key;
   int version = 0;
   streamRead(ss, key, version);
@@ -498,9 +498,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
     case DTags::IntTag: {
       int val;
       streamRead(ss, val);
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         mol.setMolProp(token, val);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         mol.setSingleAtomProp(token, index, val);
       } else {
         mol.setSingleBondProp(token, index, val);
@@ -510,9 +510,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
     case DTags::UnsignedIntTag: {
       unsigned int val;
       streamRead(ss, val);
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         mol.setMolProp(token, val);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         mol.setSingleAtomProp(token, index, val);
       } else {
         mol.setSingleBondProp(token, index, val);
@@ -522,9 +522,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
     case DTags::BoolTag: {
       bool val;
       streamRead(ss, val);
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         mol.setMolProp(token, val);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         mol.setSingleAtomProp(token, index, val);
       } else {
         mol.setSingleBondProp(token, index, val);
@@ -534,9 +534,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
     case DTags::FloatTag: {
       float val;
       streamRead(ss, val);
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         mol.setMolProp(token, val);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         mol.setSingleAtomProp(token, index, val);
       } else {
         mol.setSingleBondProp(token, index, val);
@@ -546,9 +546,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
     case DTags::DoubleTag: {
       double val;
       streamRead(ss, val);
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         mol.setMolProp(token, val);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         mol.setSingleAtomProp(token, index, val);
       } else {
         mol.setSingleBondProp(token, index, val);
@@ -558,9 +558,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
     case DTags::StringTag: {
       std::string val;
       streamRead(ss, val, version);
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         mol.setMolProp(token, val);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         mol.setSingleAtomProp(token, index, val);
       } else {
         mol.setSingleBondProp(token, index, val);
@@ -570,9 +570,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
     case DTags::VecDoubleTag: {
       std::vector<double> val;
       streamReadVec(ss, val);
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         mol.setMolProp(token, val);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         mol.setSingleAtomProp(token, index, val);
       } else {
         mol.setSingleBondProp(token, index, val);
@@ -582,9 +582,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
     case DTags::VecFloatTag: {
       std::vector<float> val;
       streamReadVec(ss, val);
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         mol.setMolProp(token, val);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         mol.setSingleAtomProp(token, index, val);
       } else {
         mol.setSingleBondProp(token, index, val);
@@ -594,9 +594,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
     case DTags::VecIntTag: {
       std::vector<int> val;
       streamReadVec(ss, val);
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         mol.setMolProp(token, val);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         mol.setSingleAtomProp(token, index, val);
       } else {
         mol.setSingleBondProp(token, index, val);
@@ -606,9 +606,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
     case DTags::VecUIntTag: {
       std::vector<unsigned int> val;
       streamReadVec(ss, val);
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         mol.setMolProp(token, val);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         mol.setSingleAtomProp(token, index, val);
       } else {
         mol.setSingleBondProp(token, index, val);
@@ -618,9 +618,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
     case DTags::VecStringTag: {
       std::vector<std::string> val;
       streamReadStringVec(ss, val, version);
-      if (scope == Properties::Scope::MOL) {
+      if (scope == RDProperties::Scope::MOL) {
         mol.setMolProp(token, val);
-      } else if (scope == Properties::Scope::ATOM) {
+      } else if (scope == RDProperties::Scope::ATOM) {
         mol.setSingleAtomProp(token, index, val);
       } else {
         mol.setSingleBondProp(token, index, val);
@@ -638,9 +638,9 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
       bool handled = false;
       for (const auto &handler : handlers) {
         if (handler->getPropName() == propType && handler->read(ss, val)) {
-          if (scope == Properties::Scope::MOL) {
+          if (scope == RDProperties::Scope::MOL) {
             mol.setMolProp(token, val);
-          } else if (scope == Properties::Scope::ATOM) {
+          } else if (scope == RDProperties::Scope::ATOM) {
             mol.setSingleAtomProp(token, index, val);
           } else {
             mol.setSingleBondProp(token, index, val);
@@ -664,7 +664,7 @@ bool streamReadPropToRDMol(std::istream &ss, RDMol &mol,
 // Generic function to unpickle properties using RDMol API
 template <typename COUNT_TYPE>
 void unpicklePropertiesFromIterator(std::istream &ss, RDMol &mol,
-                                    Properties::Scope scope, uint32_t index) {
+                                    RDProperties::Scope scope, uint32_t index) {
   COUNT_TYPE count;
   streamRead(ss, count);
 
@@ -693,12 +693,12 @@ bool _pickleAtomPropertiesFromMol(std::ostream &ss, const RDMol &mol,
   }
 
   bool res = _picklePropertiesFromIterator<std::uint16_t>(
-      ss, mol, Properties::Scope::ATOM, atomIdx, pickleFlags, ignoreProps,
+      ss, mol, RDProperties::Scope::ATOM, atomIdx, pickleFlags, ignoreProps,
       MolPickler::getCustomPropHandlers());
 
   // Handle explicit atom properties (compressed as bitflags)
   res |= pickleExplicitPropertiesFromMol<std::int16_t>(
-      ss, mol, Properties::Scope::ATOM, atomIdx, aprops.explicitAtomProps);
+      ss, mol, RDProperties::Scope::ATOM, atomIdx, aprops.explicitAtomProps);
 
   return res;
 }
@@ -710,15 +710,15 @@ void _unpickleAtomPropertiesFromMol(std::istream &ss, RDMol &mol,
 
   if (version >= 14000) {
     unpicklePropertiesFromIterator<std::uint16_t>(
-        ss, mol, Properties::Scope::ATOM, atomIdx);
+        ss, mol, RDProperties::Scope::ATOM, atomIdx);
   } else {
     unpicklePropertiesFromIterator<unsigned int>(
-        ss, mol, Properties::Scope::ATOM, atomIdx);
+        ss, mol, RDProperties::Scope::ATOM, atomIdx);
   }
 
   // Handle explicit atom properties (compressed as bitflags)
   unpickleExplicitPropertiesFromMol<std::int16_t, int>(
-      ss, mol, Properties::Scope::ATOM, atomIdx, version,
+      ss, mol, RDProperties::Scope::ATOM, atomIdx, version,
       aprops.explicitAtomProps);
 }
 
@@ -732,12 +732,12 @@ bool _pickleBondPropertiesFromMol(std::ostream &ss, const RDMol &mol,
   }
 
   bool res = _picklePropertiesFromIterator<std::uint16_t>(
-      ss, mol, Properties::Scope::BOND, bondIdx, pickleFlags,
+      ss, mol, RDProperties::Scope::BOND, bondIdx, pickleFlags,
       bprops.ignoreBondProps, MolPickler::getCustomPropHandlers());
 
   // Handle explicit bond properties (compressed as bitflags)
   res |= pickleExplicitPropertiesFromMol<std::int8_t>(
-      ss, mol, Properties::Scope::BOND, bondIdx, bprops.explicitBondProps);
+      ss, mol, RDProperties::Scope::BOND, bondIdx, bprops.explicitBondProps);
 
   return res;
 }
@@ -749,15 +749,15 @@ void _unpickleBondPropertiesFromMol(std::istream &ss, RDMol &mol,
 
   if (version >= 14000) {
     unpicklePropertiesFromIterator<std::uint16_t>(
-        ss, mol, Properties::Scope::BOND, bondIdx);
+        ss, mol, RDProperties::Scope::BOND, bondIdx);
   } else {
     unpicklePropertiesFromIterator<unsigned int>(
-        ss, mol, Properties::Scope::BOND, bondIdx);
+        ss, mol, RDProperties::Scope::BOND, bondIdx);
   }
 
   // Handle explicit bond properties (compressed as bitflags)
   unpickleExplicitPropertiesFromMol<std::int8_t, unsigned int>(
-      ss, mol, Properties::Scope::BOND, bondIdx, version,
+      ss, mol, RDProperties::Scope::BOND, bondIdx, version,
       bprops.explicitBondProps);
 }
 
@@ -765,20 +765,21 @@ void _unpickleBondPropertiesFromMol(std::istream &ss, RDMol &mol,
 bool _pickleMolPropertiesFromMol(std::ostream &ss, const RDMol &mol,
                                  unsigned int pickleFlags) {
   return _picklePropertiesFromIterator<std::uint16_t>(
-      ss, mol, Properties::Scope::MOL, Properties::PropIterator::anyIndexMarker,
-      pickleFlags, {}, MolPickler::getCustomPropHandlers());
+      ss, mol, RDProperties::Scope::MOL,
+      RDProperties::PropIterator::anyIndexMarker, pickleFlags, {},
+      MolPickler::getCustomPropHandlers());
 }
 
 // New implementation for unpickling molecule properties
 void _unpickleMolPropertiesFromMol(std::istream &ss, RDMol &mol, int version) {
   if (version >= 14000) {
     unpicklePropertiesFromIterator<std::uint16_t>(
-        ss, mol, Properties::Scope::MOL,
-        Properties::PropIterator::anyIndexMarker);
+        ss, mol, RDProperties::Scope::MOL,
+        RDProperties::PropIterator::anyIndexMarker);
   } else {
     unpicklePropertiesFromIterator<unsigned int>(
-        ss, mol, Properties::Scope::MOL,
-        Properties::PropIterator::anyIndexMarker);
+        ss, mol, RDProperties::Scope::MOL,
+        RDProperties::PropIterator::anyIndexMarker);
   }
 }
 

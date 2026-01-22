@@ -436,7 +436,8 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
-        dp_dataMol->getComputedPropList(res, Properties::Scope::BOND, getIdx());
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::BOND,
+                                        getIdx());
         return;
       }
     }
@@ -453,7 +454,8 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
         STR_VECT res;
-        dp_dataMol->getComputedPropList(res, Properties::Scope::BOND, getIdx());
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::BOND,
+                                        getIdx());
         return res;
       }
     }
@@ -468,7 +470,8 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
-        dp_dataMol->getComputedPropList(res, Properties::Scope::BOND, getIdx());
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::BOND,
+                                        getIdx());
         return true;
       }
     }

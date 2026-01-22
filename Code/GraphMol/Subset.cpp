@@ -230,11 +230,11 @@ static void copyMappedNonComputedProps(RWMol &extracted_mol,
   auto &dst_rdmol = extracted_mol.asRDMol();
 
   const auto atom_props =
-      ref_rdmol.getPropList(false, false, Properties::Scope::ATOM,
-                            Properties::PropIterator::anyIndexMarker);
+      ref_rdmol.getPropList(false, false, RDProperties::Scope::ATOM,
+                            RDProperties::PropIterator::anyIndexMarker);
   const auto bond_props =
-      ref_rdmol.getPropList(false, false, Properties::Scope::BOND,
-                            Properties::PropIterator::anyIndexMarker);
+      ref_rdmol.getPropList(false, false, RDProperties::Scope::BOND,
+                            RDProperties::PropIterator::anyIndexMarker);
 
   for (const auto &[ref_idx, dst_idx] : selection_info.atomMapping) {
     for (const auto &prop_name : atom_props) {
@@ -243,7 +243,7 @@ static void copyMappedNonComputedProps(RWMol &extracted_mol,
       }
       dst_rdmol.copySingleProp(PropToken(prop_name), dst_idx, ref_rdmol,
                                PropToken(prop_name), ref_idx,
-                               Properties::Scope::ATOM);
+                               RDProperties::Scope::ATOM);
     }
   }
 
@@ -254,7 +254,7 @@ static void copyMappedNonComputedProps(RWMol &extracted_mol,
       }
       dst_rdmol.copySingleProp(PropToken(prop_name), dst_idx, ref_rdmol,
                                PropToken(prop_name), ref_idx,
-                               Properties::Scope::BOND);
+                               RDProperties::Scope::BOND);
     }
   }
 }
