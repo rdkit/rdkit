@@ -1255,7 +1255,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   uint32_t calcAtomExplicitValence(atomindex_t atomIndex, bool strict);
   uint32_t calcAtomImplicitValence(atomindex_t atomIndex, bool strict);
 
-  bool hasValenceViolation(atomindex_t atomIndex) const;
+  bool hasAtomValenceViolation(atomindex_t atomIndex) const;
 
   //! inverts the atom's \c chiralTag, returns whether or not a change was made
   bool invertAtomChirality(atomindex_t atomIndex);

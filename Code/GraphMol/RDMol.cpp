@@ -2309,7 +2309,7 @@ uint32_t RDMol::calcAtomImplicitValence(atomindex_t atomIndex, bool strict) {
   return atom.implicitValence;
 }
 
-bool RDMol::hasValenceViolation(atomindex_t atomIndex) const {
+bool RDMol::hasAtomValenceViolation(atomindex_t atomIndex) const {
   // Ignore dummy atoms, query atoms, or atoms attached to query bonds
   auto [begin, end] = getAtomBonds(atomIndex);
   auto is_query = [this](auto b) { return hasBondQuery(b); };

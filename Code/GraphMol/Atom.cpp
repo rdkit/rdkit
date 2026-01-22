@@ -500,7 +500,7 @@ int Atom::calcImplicitValence(bool strict) {
 
 bool Atom::hasValenceViolation() const {
   PRECONDITION(dp_owningMol, "hasValenceViolation requires an owning molecule");
-  return dp_owningMol->hasValenceViolation(d_index);
+  return dp_owningMol->hasAtomValenceViolation(d_index);
 }
 
 int Atom::getExplicitValencePrivate() const {
