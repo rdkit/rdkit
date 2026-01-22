@@ -383,12 +383,15 @@ void adjustHs(RWMol &mol) {
   //  sanitized, aromaticity has been perceived, and the implicit
   //  valence of everything has been calculated.
   //
-  for (auto atom : mol.atoms()) {
-    int origImplicitV = atom->getValence(Atom::ValenceType::IMPLICIT);
-    atom->calcExplicitValence(false);
-    int origExplicitV = atom->getNumExplicitHs();
+  auto &rdmol = mol.asRDMol();
+  for (uint32_t atomIdx = 0, numAtoms = rdmol.getNumAtoms(); atomIdx < numAtoms;
+       ++atomIdx) {
+    AtomData &atom = rdmol.getAtom(atomIdx);
+    int origImplicitV = atom.getValence(AtomData::ValenceType::IMPLICIT);
+    rdmol.calcAtomExplicitValence(atomIdx, false);
+    int origExplicitV = atom.getNumExplicitHs();
 
-    int newImplicitV = atom->calcImplicitValence(false);
+    int newImplicitV = rdmol.calcAtomImplicitValence(atomIdx, false);
     //
     //  Case 1: The disappearing Hydrogen
     //    Smiles:  O=C1NC=CC2=C1C=CC=C2
@@ -406,8 +409,8 @@ void adjustHs(RWMol &mol) {
     //    <phew> that takes way longer to comment than it does to
     //    write:
     if (newImplicitV < origImplicitV) {
-      atom->setNumExplicitHs(origExplicitV + (origImplicitV - newImplicitV));
-      atom->calcExplicitValence(false);
+      atom.setNumExplicitHs(origExplicitV + (origImplicitV - newImplicitV));
+      rdmol.calcAtomExplicitValence(atomIdx, false);
     }
   }
 }
@@ -847,7 +850,8 @@ unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
   mapping.resize(numAtoms, uint32_t(-1));
   // The reinterpret_cast is only valid if the size of the integers is the same.
   static_assert(sizeof(mapping[0]) == sizeof(uint32_t));
-  return getMolFrags(mol.asRDMol(), reinterpret_cast<uint32_t *>(mapping.data()));
+  return getMolFrags(mol.asRDMol(),
+                     reinterpret_cast<uint32_t *>(mapping.data()));
 };
 
 unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {
@@ -895,7 +899,7 @@ static void getMolFragsHelper(const RDMol &mol, uint32_t componentIndex,
 }
 }  // namespace
 
-uint32_t getMolFrags(const RDMol &mol, uint32_t* mapping) {
+uint32_t getMolFrags(const RDMol &mol, uint32_t *mapping) {
   const uint32_t numAtoms = mol.getNumAtoms();
   uint32_t numComponents = 0;
   for (uint32_t atomIndex = 0; atomIndex < numAtoms; ++atomIndex) {
