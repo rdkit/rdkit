@@ -245,12 +245,13 @@ void Atom::initFromOther(const Atom &other, const bool preserveProps) {
   dp_dataMol->getAtom(d_index) = other.dp_dataMol->getAtom(other.d_index);
   if (!preserveProps) {
     dp_dataMol->clearSingleAtomAllProps(d_index);
-    for (auto it = other.dp_dataMol->beginProps(true, RDMol::Scope::ATOM,
+    for (auto it = other.dp_dataMol->beginProps(true, Properties::Scope::ATOM,
                                                 other.d_index),
               end = other.dp_dataMol->endProps();
          it != end; ++it) {
       dp_dataMol->copySingleProp(it->name(), d_index, *other.dp_dataMol,
-                                 it->name(), other.d_index, RDMol::Scope::ATOM);
+                                 it->name(), other.d_index,
+                                 Properties::Scope::ATOM);
     }
   }
   const auto &otherMonomerInfo = other.dp_dataMol->monomerInfo;
@@ -764,10 +765,10 @@ std::uint64_t &Atom::getFlags() {
 
 STR_VECT Atom::getPropList(bool includePrivate, bool includeComputed) const {
   STR_VECT res = dp_dataMol->getPropList(includePrivate, includeComputed,
-                                         RDMol::Scope::ATOM, d_index);
+                                         Properties::Scope::ATOM, d_index);
   if (includePrivate && includeComputed) {
     // Only include __computedProps if there is a computed prop
-    auto begin = dp_dataMol->beginProps(true, RDMol::Scope::ATOM, d_index);
+    auto begin = dp_dataMol->beginProps(true, Properties::Scope::ATOM, d_index);
     auto end = dp_dataMol->endProps();
     for (; begin != end; ++begin) {
       if (begin->isComputed()) {
@@ -820,12 +821,13 @@ void Atom::updateProps(const Atom &source, bool preserveExisting) {
   if (!preserveExisting) {
     clear();
   }
-  for (auto it = source.dp_dataMol->beginProps(true, RDMol::Scope::ATOM,
+  for (auto it = source.dp_dataMol->beginProps(true, Properties::Scope::ATOM,
                                                source.d_index),
             end = source.dp_dataMol->endProps();
        it != end; ++it) {
     dp_dataMol->copySingleProp(it->name(), d_index, *source.dp_dataMol,
-                               it->name(), source.d_index, RDMol::Scope::ATOM);
+                               it->name(), source.d_index,
+                               Properties::Scope::ATOM);
   }
 }
 

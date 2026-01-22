@@ -2486,18 +2486,22 @@ void RDMol::clearComputedProps(bool includeRings) {
 }
 
 std::vector<std::string> RDMol::getPropList(bool includePrivate,
-                                            bool includeComputed, Scope scope,
+                                            bool includeComputed,
+                                            Properties::Scope scope,
                                             uint32_t index) const {
-  PRECONDITION(scope == Scope::MOL || index == PropIterator::anyIndexMarker ||
-                   (scope == Scope::ATOM && index < getNumAtoms()) ||
-                   (scope == Scope::BOND && index < getNumBonds()),
-               "RDMol::getPropList index out of range");
+  PRECONDITION(
+      scope == Properties::Scope::MOL ||
+          index == Properties::PropIterator::anyIndexMarker ||
+          (scope == Properties::Scope::ATOM && index < getNumAtoms()) ||
+          (scope == Properties::Scope::BOND && index < getNumBonds()),
+      "RDMol::getPropList index out of range");
   std::vector<std::string> res;
   for (const auto &prop : properties) {
     if (prop.scope() != scope) {
       continue;
     }
-    if (scope != Scope::MOL && index != PropIterator::anyIndexMarker &&
+    if (scope != Properties::Scope::MOL &&
+        index != Properties::PropIterator::anyIndexMarker &&
         !prop.d_arrayData.isSetMask[index]) {
       continue;
     }
@@ -2513,14 +2517,15 @@ std::vector<std::string> RDMol::getPropList(bool includePrivate,
   return res;
 }
 
-void RDMol::getComputedPropList(STR_VECT &res, Scope scope,
+void RDMol::getComputedPropList(STR_VECT &res, Properties::Scope scope,
                                 uint32_t index) const {
   res.clear();
   for (const auto &prop : properties) {
     if (prop.scope() != scope) {
       continue;
     }
-    if (scope != Scope::MOL && index != PropIterator::anyIndexMarker &&
+    if (scope != Properties::Scope::MOL &&
+        index != Properties::PropIterator::anyIndexMarker &&
         !prop.d_arrayData.isSetMask[index]) {
       continue;
     }
@@ -2534,12 +2539,13 @@ void RDMol::getComputedPropList(STR_VECT &res, Scope scope,
 void RDMol::clearProps() { properties.clear(); }
 
 void RDMol::copyProp(const PropToken &destinationName, const RDMol &sourceMol,
-                     const PropToken &sourceName, Scope scope) {
-  PRECONDITION(
-      scope == Scope::MOL ||
-          (scope == Scope::ATOM && getNumAtoms() == sourceMol.getNumAtoms()) ||
-          (scope == Scope::BOND && getNumBonds() == sourceMol.getNumBonds()),
-      "Atom or bond counts must match in RDMol::copyProp");
+                     const PropToken &sourceName, Properties::Scope scope) {
+  PRECONDITION(scope == Properties::Scope::MOL ||
+                   (scope == Properties::Scope::ATOM &&
+                    getNumAtoms() == sourceMol.getNumAtoms()) ||
+                   (scope == Properties::Scope::BOND &&
+                    getNumBonds() == sourceMol.getNumBonds()),
+               "Atom or bond counts must match in RDMol::copyProp");
   const auto *sourceProp = sourceMol.findProp(sourceName, scope);
   PRECONDITION(sourceProp != nullptr,
                "Source property missing in RDMol::copyProp");
@@ -2562,13 +2568,15 @@ void RDMol::copyProp(const PropToken &destinationName, const RDMol &sourceMol,
 void RDMol::copySingleProp(const PropToken &destinationName,
                            uint32_t destinationIndex, const RDMol &sourceMol,
                            const PropToken &sourceName, uint32_t sourceIndex,
-                           Scope scope) {
-  PRECONDITION(scope != Scope::MOL,
+                           Properties::Scope scope) {
+  PRECONDITION(scope != Properties::Scope::MOL,
                "RDMol::copyPropSingleIndex doesn't support molecule scope");
   PRECONDITION(
-      (scope == Scope::ATOM && sourceIndex < sourceMol.getNumAtoms() &&
+      (scope == Properties::Scope::ATOM &&
+       sourceIndex < sourceMol.getNumAtoms() &&
        destinationIndex < getNumAtoms()) ||
-          (scope == Scope::BOND && sourceIndex < sourceMol.getNumBonds() &&
+          (scope == Properties::Scope::BOND &&
+           sourceIndex < sourceMol.getNumBonds() &&
            destinationIndex < getNumBonds()),
       "atom or bond indices must be in bounds in RDMol::copyPropSingleIndex");
   const auto *sourceProp = sourceMol.findProp(sourceName, scope);
@@ -2581,7 +2589,8 @@ void RDMol::copySingleProp(const PropToken &destinationName,
     destProp->d_name = destinationName;
     destProp->d_isComputed = sourceProp->d_isComputed;
     destProp->d_scope = scope;
-    uint32_t destSize = (scope == Scope::ATOM) ? getNumAtoms() : getNumBonds();
+    uint32_t destSize =
+        (scope == Properties::Scope::ATOM) ? getNumAtoms() : getNumBonds();
     destProp->d_arrayData =
         PropArray(destSize, sourceProp->d_arrayData.family, false);
   } else if (sourceProp->d_arrayData.family != destProp->d_arrayData.family) {
@@ -2664,12 +2673,12 @@ void RDMol::copySingleProp(const PropToken &destinationName,
 }
 
 bool RDMol::hasProp(const PropToken &name) const {
-  return findProp(name, Scope::MOL) != nullptr;
+  return findProp(name, Properties::Scope::MOL) != nullptr;
 }
 
 bool RDMol::hasAtomProp(const PropToken &name,
                         const std::uint32_t index) const {
-  const Property *prop = findProp(name, Scope::ATOM);
+  const Properties::Property *prop = findProp(name, Properties::Scope::ATOM);
   if (prop == nullptr) {
     return false;
   }
@@ -2678,7 +2687,7 @@ bool RDMol::hasAtomProp(const PropToken &name,
 
 bool RDMol::hasBondProp(const PropToken &name,
                         const std::uint32_t index) const {
-  const Property *prop = findProp(name, Scope::BOND);
+  const Properties::Property *prop = findProp(name, Properties::Scope::BOND);
   if (prop == nullptr) {
     return false;
   }
@@ -2720,8 +2729,8 @@ AtomData &RDMol::addAtom() {
   atomBondStarts.push_back(bondDataIndices.size());
 
   // Handle properties
-  for (Property &property : properties) {
-    if (property.scope() != Scope::ATOM) {
+  for (Properties::Property &property : properties) {
+    if (property.scope() != Properties::Scope::ATOM) {
       continue;
     }
     property.d_arrayData.appendElement();
@@ -2809,8 +2818,8 @@ BondData &RDMol::addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx,
   }
 
   // Handle properties
-  for (Property &property : properties) {
-    if (property.scope() != Scope::BOND) {
+  for (Properties::Property &property : properties) {
+    if (property.scope() != Properties::Scope::BOND) {
       continue;
     }
     property.d_arrayData.appendElement();
@@ -3020,8 +3029,8 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
   }
 
   // Shift atom property data back
-  for (Property &property : properties) {
-    if (property.scope() != Scope::ATOM) {
+  for (Properties::Property &property : properties) {
+    if (property.scope() != Properties::Scope::ATOM) {
       continue;
     }
     property.d_arrayData.removeElement(atomIndex);
@@ -3032,8 +3041,9 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
   // _ringStereoGroup properties are all "computed", so should be removed above.
   // TODO: Do they need to be removed in case !clearProps?
 
-  const Property *molFileBondEndPts =
-      findProp(RDKit::common_properties::_MolFileBondEndPtsToken, Scope::BOND);
+  const Properties::Property *molFileBondEndPts =
+      findProp(RDKit::common_properties::_MolFileBondEndPtsToken,
+               Properties::Scope::BOND);
   if (molFileBondEndPts != nullptr) {
     // Bond end indices may need to be decremented and their
     // indices will need to be handled and if they have an
@@ -3125,8 +3135,8 @@ void RDMol::removeBond(uint32_t bondIndex) {
   uint32_t endAtom = getBond(bondIndex).endAtomIdx;
   const uint32_t numBondsOrig = getNumBonds();
   // Handle props
-  for (Property &property : properties) {
-    if (property.scope() != Scope::BOND) {
+  for (Properties::Property &property : properties) {
+    if (property.scope() != Properties::Scope::BOND) {
       continue;
     }
     property.d_arrayData.removeElement(bondIndex);

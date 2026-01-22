@@ -126,9 +126,10 @@ getIndexedProperty<std::string>(mae::IndexedBlock &indexedBlock,
                                          &mae::IndexedBlock::setStringProperty);
 }
 
-template<typename PropsT>
+template <typename PropsT>
 void copyProperties(
-    const PropsT &origin, const RDMol &mol, const STR_VECT &propNames, unsigned idx,
+    const PropsT &origin, const RDMol &mol, const STR_VECT &propNames,
+    unsigned idx,
     std::function<void(const std::string &, unsigned, bool)> boolSetter,
     std::function<void(const std::string &, unsigned, int)> intSetter,
     std::function<void(const std::string &, unsigned, double)> realSetter,
@@ -138,16 +139,17 @@ void copyProperties(
   // since we don't want to export these.
   origin.clearComputedProps();
 
-  RDMol::Scope scope = std::is_same_v<PropsT, Atom>
-                           ? RDMol::Scope::ATOM
-                           : (std::is_same_v<PropsT, Bond> ? RDMol::Scope::BOND
-                                                           : RDMol::Scope::MOL);
+  Properties::Scope scope =
+      std::is_same_v<PropsT, Atom>
+          ? Properties::Scope::ATOM
+          : (std::is_same_v<PropsT, Bond> ? Properties::Scope::BOND
+                                          : Properties::Scope::MOL);
   RDMol::PropIterator begin = mol.beginProps(false, scope, idx);
   RDMol::PropIterator end = mol.endProps();
 
   for (; begin != end; ++begin) {
     // Skip the property holding the names of the computed properties
-    //if (prop.key == detail::computedPropName) {
+    // if (prop.key == detail::computedPropName) {
     //  continue;
     //}
 
@@ -155,21 +157,23 @@ void copyProperties(
 
     // Also skip the property if we have a list of properties we want to export
     // and this one is not one of them.
-    if (!propNames.empty() && (std::find(propNames.begin(), propNames.end(),
+    if (!propNames.empty() &&
+        (std::find(propNames.begin(), propNames.end(),
                    prop.name().getString()) == propNames.end())) {
       continue;
     }
 
     // Get the RDValue tag based on scope
-    auto tag = (scope == RDMol::Scope::MOL) ? prop.getRDValueTag() : prop.getRDValueTag(idx);
+    auto tag = (scope == Properties::Scope::MOL) ? prop.getRDValueTag()
+                                                 : prop.getRDValueTag(idx);
 
     // Helper lambda to get property value based on scope
-    auto getPropValue = [&](const auto& token) -> RDValue {
-      if (scope == RDMol::Scope::MOL) {
+    auto getPropValue = [&](const auto &token) -> RDValue {
+      if (scope == Properties::Scope::MOL) {
         return mol.getMolProp<RDValue>(token);
-      } else if (scope == RDMol::Scope::ATOM) {
+      } else if (scope == Properties::Scope::ATOM) {
         return mol.getAtomProp<RDValue>(token, idx);
-      } else { // BOND
+      } else {  // BOND
         return mol.getBondProp<RDValue>(token, idx);
       }
     };

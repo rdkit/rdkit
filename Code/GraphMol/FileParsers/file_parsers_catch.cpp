@@ -6187,8 +6187,10 @@ TEST_CASE("MaeMolSupplier is3D flag", "[mae][MaeMolSupplier][reader]") {
   CHECK(mol->getConformer().is3D() == false);
 }
 
-// Helper function to check roundtripped properties for ROMol (using RDMol backend)
-void check_roundtripped_properties(const ROMol &original, const ROMol &roundtrip) {
+// Helper function to check roundtripped properties for ROMol (using RDMol
+// backend)
+void check_roundtripped_properties(const ROMol &original,
+                                   const ROMol &roundtrip) {
   auto includePrivate = false;
   auto originalPropNames = original.getPropList(includePrivate, false);
   auto roundtripPropNames = roundtrip.getPropList(includePrivate, false);
@@ -6205,7 +6207,8 @@ void check_roundtripped_properties(const ROMol &original, const ROMol &roundtrip
 
   // Iterate through original properties using RDMol API
   const auto &mol = original.asRDMol();
-  for (auto it = mol.beginProps(false, RDMol::Scope::MOL, 0); it != mol.endProps(); ++it) {
+  for (auto it = mol.beginProps(false, Properties::Scope::MOL, 0);
+       it != mol.endProps(); ++it) {
     const auto &prop = *it;
     std::string propName = prop.name().getString();
 
@@ -6242,8 +6245,10 @@ void check_roundtripped_properties(const ROMol &original, const ROMol &roundtrip
   }
 }
 
-// Helper function to check roundtripped properties for Atom (using RDMol backend)
-void check_roundtripped_properties(const Atom &original, const Atom &roundtrip) {
+// Helper function to check roundtripped properties for Atom (using RDMol
+// backend)
+void check_roundtripped_properties(const Atom &original,
+                                   const Atom &roundtrip) {
   auto includePrivate = false;
   auto originalPropNames = original.getPropList(includePrivate, false);
   auto roundtripPropNames = roundtrip.getPropList(includePrivate, false);
@@ -6261,7 +6266,8 @@ void check_roundtripped_properties(const Atom &original, const Atom &roundtrip) 
   // Iterate through original properties using RDMol API
   const auto &mol = original.getRDMol();
   uint32_t idx = original.getIdx();
-  for (auto it = mol.beginProps(false, RDMol::Scope::ATOM, idx); it != mol.endProps(); ++it) {
+  for (auto it = mol.beginProps(false, Properties::Scope::ATOM, idx);
+       it != mol.endProps(); ++it) {
     const auto &prop = *it;
     std::string propName = prop.name().getString();
 
@@ -7473,7 +7479,7 @@ class FragTest {
         expectedResult(expectedResultInit),
         reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
         origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit){};
+        newSgroupCount(newSgroupCountInit) {};
 };
 
 void testFragmentation(const FragTest &fragTest) {

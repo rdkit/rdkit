@@ -16,23 +16,26 @@
 namespace RDKit {
 
 void Bond::initFromOther(const Bond &other, const bool preserveProps) {
-  auto& newBondInfo = dp_dataMol->getBond(d_index);
+  auto &newBondInfo = dp_dataMol->getBond(d_index);
   newBondInfo = other.dp_dataMol->getBond(other.d_index);
 
   if (!preserveProps) {
     dp_dataMol->clearSingleBondAllProps(d_index);
-    for (auto it = other.dp_dataMol->beginProps(true, RDMol::Scope::BOND,
+    for (auto it = other.dp_dataMol->beginProps(true, Properties::Scope::BOND,
                                                 other.d_index),
               end = other.dp_dataMol->endProps();
          it != end; ++it) {
       dp_dataMol->copySingleProp(it->name(), d_index, *other.dp_dataMol,
-                                 it->name(), other.d_index, RDMol::Scope::BOND);
+                                 it->name(), other.d_index,
+                                 Properties::Scope::BOND);
     }
   }
 
   // These may come from compat data
-  const atomindex_t *stereoAtoms = other.dp_dataMol->getBondStereoAtoms(other.d_index);
-  if (stereoAtoms != nullptr && stereoAtoms[0] != atomindex_t(-1) && stereoAtoms[1] != atomindex_t(-1)) {
+  const atomindex_t *stereoAtoms =
+      other.dp_dataMol->getBondStereoAtoms(other.d_index);
+  if (stereoAtoms != nullptr && stereoAtoms[0] != atomindex_t(-1) &&
+      stereoAtoms[1] != atomindex_t(-1)) {
     // Don't check the atom indices if this is a Bond outside a molecule
     dp_dataMol->setBondStereoAtoms(d_index, stereoAtoms[0], stereoAtoms[1],
                                    dp_dataMol->getNumAtoms() != 0);
@@ -47,15 +50,11 @@ Bond::Bond() {
   dp_owningMol = nullptr;
 };
 
-Bond::Bond(BondType bT): Bond() {
-  setBondType(bT);
-}
+Bond::Bond(BondType bT) : Bond() { setBondType(bT); }
 
-Bond::Bond(const Bond& other): Bond() {
-  initFromOther(other);
-}
+Bond::Bond(const Bond &other) : Bond() { initFromOther(other); }
 
-Bond& Bond::operator=(const Bond &other) {
+Bond &Bond::operator=(const Bond &other) {
   if (this == &other) {
     return *this;
   }
@@ -96,13 +95,9 @@ ROMol &Bond::getOwningMol() const {
   return dp_owningMol->asROMol();
 }
 
-void Bond::setOwningMol(ROMol *other) {
-  setOwningMol(&other->asRDMol());
-}
+void Bond::setOwningMol(ROMol *other) { setOwningMol(&other->asRDMol()); }
 
-void Bond::setOwningMol(RDMol* other) {
-  dp_owningMol = other;
-}
+void Bond::setOwningMol(RDMol *other) { dp_owningMol = other; }
 
 Bond::~Bond() {
   if (dp_dataMol != dp_owningMol) {
@@ -175,8 +170,9 @@ double Bond::getBondTypeAsDouble() const {
   }
   return res;
 }
-double Bond::getValenceContrib(const Atom* atom) const {
-  return 0.5 * dp_dataMol->getBond(d_index).getTwiceValenceContrib(atom->getIdx());
+double Bond::getValenceContrib(const Atom *atom) const {
+  return 0.5 *
+         dp_dataMol->getBond(d_index).getTwiceValenceContrib(atom->getIdx());
 }
 void Bond::setIsAromatic(bool what) {
   dp_dataMol->getBond(d_index).setIsAromatic(what);
@@ -211,27 +207,27 @@ void Bond::setEndAtomIdx(unsigned int what) {
   }
   dp_dataMol->getBond(d_index).setEndAtomIdx(what);
 }
-void Bond::setBeginAtom(Atom* at) {
+void Bond::setBeginAtom(Atom *at) {
   PRECONDITION(dp_owningMol != nullptr, "no owning molecule for bond");
   // TODO: Should this assert that at is from the same molecule?
   dp_dataMol->getBond(d_index).setBeginAtomIdx(at->getIdx());
 }
-void Bond::setEndAtom(Atom* at) {
+void Bond::setEndAtom(Atom *at) {
   PRECONDITION(dp_owningMol != nullptr, "no owning molecule for bond");
   // TODO: Should this assert that at is from the same molecule?
   dp_dataMol->getBond(d_index).setEndAtomIdx(at->getIdx());
 }
-Atom* Bond::getBeginAtom() const {
+Atom *Bond::getBeginAtom() const {
   PRECONDITION(dp_owningMol, "no owning molecule for bond");
   return dp_owningMol->asROMol().getAtomWithIdx(
       dp_dataMol->getBond(d_index).getBeginAtomIdx());
 }
-Atom* Bond::getEndAtom() const {
+Atom *Bond::getEndAtom() const {
   PRECONDITION(dp_owningMol, "no owning molecule for bond");
   return dp_owningMol->asROMol().getAtomWithIdx(
       dp_dataMol->getBond(d_index).getEndAtomIdx());
 }
-void Bond::setQuery([[maybe_unused]] QUERYBOND_QUERY* what) {
+void Bond::setQuery([[maybe_unused]] QUERYBOND_QUERY *what) {
   //  Bonds don't have queries at the moment because I have not
   //  yet figured out what a good base query should be.
   //  It would be nice to be able to do substructure searches
@@ -239,17 +235,16 @@ void Bond::setQuery([[maybe_unused]] QUERYBOND_QUERY* what) {
   //  issue resolved ASAP.
   PRECONDITION(0, "plain bonds have no Query");
 }
-Bond::QUERYBOND_QUERY* Bond::getQuery() const {
+Bond::QUERYBOND_QUERY *Bond::getQuery() const {
   PRECONDITION(0, "plain bonds have no Query");
   return nullptr;
 }
-void Bond::expandQuery(
-    [[maybe_unused]] QUERYBOND_QUERY* what,
-    [[maybe_unused]] Queries::CompositeQueryType how,
-    [[maybe_unused]] bool maintainOrder) {
+void Bond::expandQuery([[maybe_unused]] QUERYBOND_QUERY *what,
+                       [[maybe_unused]] Queries::CompositeQueryType how,
+                       [[maybe_unused]] bool maintainOrder) {
   PRECONDITION(0, "plain bonds have no query");
 }
-bool Bond::Match(Bond const* what) const {
+bool Bond::Match(Bond const *what) const {
   bool res;
   if (getBondType() == Bond::UNSPECIFIED ||
       what->getBondType() == Bond::UNSPECIFIED) {
@@ -292,10 +287,10 @@ void Bond::setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx) {
     compatStereo->push_back(endIdx);
   }
 }
-const INT_VECT& Bond::getStereoAtoms() const {
+const INT_VECT &Bond::getStereoAtoms() const {
   return *dp_dataMol->getBondStereoAtomsCompat(d_index);
 }
-INT_VECT& Bond::getStereoAtoms() {
+INT_VECT &Bond::getStereoAtoms() {
   return *dp_dataMol->getBondStereoAtomsCompat(d_index);
 }
 void Bond::updatePropertyCache(bool strict) { (void)strict; }
@@ -333,7 +328,7 @@ uint8_t getTwiceBondType(const Bond &b) {
   return getTwiceBondType(b.getBondType());
 }
 
-Atom * Bond::getOtherAtom(Atom const *what) const {
+Atom *Bond::getOtherAtom(Atom const *what) const {
   PRECONDITION(what != nullptr, "null input Atom");
   PRECONDITION(dp_owningMol != nullptr, "no owning molecule for bond");
   return dp_owningMol->getAtomCompat(getOtherAtomIdx(what->getIdx()));
@@ -341,10 +336,10 @@ Atom * Bond::getOtherAtom(Atom const *what) const {
 
 STR_VECT Bond::getPropList(bool includePrivate, bool includeComputed) const {
   STR_VECT res = dp_dataMol->getPropList(includePrivate, includeComputed,
-                                         RDMol::Scope::BOND, d_index);
+                                         Properties::Scope::BOND, d_index);
   if (includePrivate && includeComputed) {
     // Only include __computedProps if there is a computed prop
-    auto begin = dp_dataMol->beginProps(true, RDMol::Scope::BOND, d_index);
+    auto begin = dp_dataMol->beginProps(true, Properties::Scope::BOND, d_index);
     auto end = dp_dataMol->endProps();
     for (; begin != end; ++begin) {
       if (begin->isComputed()) {
@@ -387,7 +382,8 @@ void Bond::updateProps(const RDProps &source, bool preserveExisting) {
     bool isComputed =
         std::find(computedPropList.begin(), computedPropList.end(), key) !=
         computedPropList.end();
-    getDataRDMol().setSingleBondProp(PropToken(key), getIdx(), val, isComputed, true);
+    getDataRDMol().setSingleBondProp(PropToken(key), getIdx(), val, isComputed,
+                                     true);
   }
 }
 
@@ -395,18 +391,17 @@ void Bond::updateProps(const Bond &source, bool preserveExisting) {
   if (!preserveExisting) {
     clear();
   }
-  for (auto it = source.dp_dataMol->beginProps(true, RDMol::Scope::BOND,
+  for (auto it = source.dp_dataMol->beginProps(true, Properties::Scope::BOND,
                                                source.d_index),
             end = source.dp_dataMol->endProps();
        it != end; ++it) {
-    dp_dataMol->copySingleProp(it->name(), d_index, *source.dp_dataMol, it->name(),
-                               source.d_index, RDMol::Scope::BOND);
+    dp_dataMol->copySingleProp(it->name(), d_index, *source.dp_dataMol,
+                               it->name(), source.d_index,
+                               Properties::Scope::BOND);
   }
 }
 
-void Bond::clear() {
-  dp_dataMol->clearSingleBondAllProps(getIdx(), false);
-}
+void Bond::clear() { dp_dataMol->clearSingleBondAllProps(getIdx(), false); }
 
 };  // namespace RDKit
 
