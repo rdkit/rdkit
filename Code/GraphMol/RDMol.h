@@ -269,6 +269,29 @@ class BondData {
     return getTwiceBondType(BondType(bondType));
   }
 
+  void clearStereoAtoms() {
+    stereoAtoms[0] = atomindex_t(-1);
+    stereoAtoms[1] = atomindex_t(-1);
+  }
+  bool hasStereoAtoms() const {
+    PRECONDITION(
+        (stereoAtoms[0] == atomindex_t(-1)) ==
+            (stereoAtoms[1] == atomindex_t(-1)),
+        "BondData::hasStereoAtoms called and only one valid stereo atom index");
+    return stereoAtoms[0] != atomindex_t(-1) &&
+           stereoAtoms[1] != atomindex_t(-1);
+  }
+  void setStereoAtoms(atomindex_t a, atomindex_t b,
+                      bool checkAtomIndices = true) {
+    if (checkAtomIndices) {
+      PRECONDITION(a != atomindex_t(-1) && b != atomindex_t(-1),
+                   "BondData::setStereoAtoms called with invalid indices");
+    }
+    stereoAtoms[0] = a;
+    stereoAtoms[1] = b;
+  }
+  const atomindex_t *getStereoAtoms() const { return stereoAtoms; }
+
   //! Flags that can be used by to store information on bonds.
   //!   These are not serialized and should be treated as temporary values.
   //!   No guarantees are made about preserving these flags across library
@@ -1181,13 +1204,9 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   }
   bool hasBondStereoAtoms(uint32_t bondIndex) const {
     URANGE_CHECK(bondIndex, getNumBonds());
-    const BondData &bond = bondData[bondIndex];
     if (!hasCompatibilityData()) {
-      PRECONDITION(
-          (bond.stereoAtoms[0] == atomindex_t(-1)) ==
-              (bond.stereoAtoms[1] == atomindex_t(-1)),
-          "BondData::hasStereoAtoms called and only one valid stereo atom index");
-      return (bond.stereoAtoms[0] != atomindex_t(-1));
+      const BondData &bond = bondData[bondIndex];
+      return bond.hasStereoAtoms();
     }
     return hasBondStereoAtomsCompat(bondIndex);
   }
@@ -1195,14 +1214,11 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
                           bool checkAtomIndices = true) {
     URANGE_CHECK(bondIndex, getNumBonds());
     if (checkAtomIndices) {
-      PRECONDITION(a != atomindex_t(-1) && b != atomindex_t(-1),
-                   "BondData::setStereoAtoms called with invalid indices");
       URANGE_CHECK(a, getNumAtoms());
       URANGE_CHECK(b, getNumAtoms());
     }
     BondData &bond = bondData[bondIndex];
-    bond.stereoAtoms[0] = a;
-    bond.stereoAtoms[1] = b;
+    bond.setStereoAtoms(a, b, checkAtomIndices);
     if (hasCompatibilityData()) {
       auto *compatStereo = getBondStereoAtomsCompat(bondIndex);
       CHECK_INVARIANT(compatStereo, "No stereo atoms in compatibility data");
@@ -1233,7 +1249,7 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
       return bond.stereoAtoms;
     }
     const BondData &bond = bondData[bondIndex];
-    return bond.stereoAtoms;
+    return bond.getStereoAtoms();
   }
 
   uint32_t calcExplicitValence(atomindex_t atomIndex, bool strict);
