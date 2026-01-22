@@ -15,7 +15,6 @@
 
 #include <vector>
 #include <string>
-#include <iostream>
 #include <ForceField/MMFF/Params.h>
 #include <cstdint>
 
@@ -65,7 +64,10 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFAtomProperties {
 };
 
 typedef boost::shared_ptr<MMFFAtomProperties> MMFFAtomPropertiesPtr;
-enum { CONSTANT = 1, DISTANCE = 2 };
+enum {
+  CONSTANT = 1,
+  DISTANCE = 2
+};
 enum {
   MMFF_VERBOSITY_NONE = 0,
   MMFF_VERBOSITY_LOW = 1,

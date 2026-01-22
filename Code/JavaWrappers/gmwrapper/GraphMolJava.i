@@ -227,6 +227,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../GeneralizedSubstruct.i"
 %include "../RascalMCES.i"
 %include "../Queries.i"
+%include "../Subset.i"
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java
 #ifdef INCLUDE_ERROR_GENERATOR
@@ -310,7 +311,9 @@ typedef unsigned long long int	uintmax_t;
 #ifdef RDK_BUILD_INCHI_SUPPORT
 %include "../Inchi.i"
 #endif
-
+#ifdef RDK_BUILD_CHEMDRAW_SUPPORT
+%include "../ChemDraw.i"
+#endif
 %include "../DiversityPick.i"
 
 %{

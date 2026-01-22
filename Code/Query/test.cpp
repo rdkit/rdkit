@@ -10,7 +10,6 @@
 
 #include <catch2/catch_all.hpp>
 #include "QueryObjects.h"
-#include <iostream>
 #include <cmath>
 #include <boost/lexical_cast.hpp>
 

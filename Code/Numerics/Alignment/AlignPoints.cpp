@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,15 +20,17 @@ namespace RDNumeric {
 namespace Alignments {
 
 RDGeom::Point3D _weightedSumOfPoints(const RDGeom::Point3DConstPtrVect &points,
-                                     const DoubleVector &weights) {
-  PRECONDITION(points.size() == weights.size(), "");
+                                     const DoubleVector *weights) {
+  PRECONDITION(!weights || points.size() == weights->size(), "");
   RDGeom::Point3DConstPtrVect_CI pti;
   RDGeom::Point3D tmpPt, res;
-  const double *wData = weights.getData();
+  const double *wData = weights ? weights->getData() : nullptr;
   unsigned int i = 0;
   for (pti = points.begin(); pti != points.end(); pti++) {
     tmpPt = (*(*pti));
-    tmpPt *= wData[i];
+    if (weights) {
+      tmpPt *= wData[i];
+    }
     res += tmpPt;
     i++;
   }
@@ -37,14 +38,17 @@ RDGeom::Point3D _weightedSumOfPoints(const RDGeom::Point3DConstPtrVect &points,
 }
 
 double _weightedSumOfLenSq(const RDGeom::Point3DConstPtrVect &points,
-                           const DoubleVector &weights) {
-  PRECONDITION(points.size() == weights.size(), "");
+                           const DoubleVector *weights) {
+  PRECONDITION(!weights || (points.size() == weights->size()), "");
   double res = 0.0;
-  RDGeom::Point3DConstPtrVect_CI pti;
-  const double *wData = weights.getData();
+  const double *wData = weights ? weights->getData() : nullptr;
   unsigned int i = 0;
-  for (pti = points.begin(); pti != points.end(); pti++) {
-    res += (wData[i] * ((*pti)->lengthSq()));
+  for (const auto &pti : points) {
+    auto l = pti->lengthSq();
+    if (weights) {
+      l *= wData[i];
+    }
+    res += l;
     i++;
   }
   return res;
@@ -62,25 +66,19 @@ double _sumOfWeights(const DoubleVector &weights) {
 
 void _computeCovarianceMat(const RDGeom::Point3DConstPtrVect &refPoints,
                            const RDGeom::Point3DConstPtrVect &probePoints,
-                           const DoubleVector &weights, double covMat[3][3]) {
-  unsigned int i, j;
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
-      covMat[i][j] = 0.0;
-    }
-  }
+                           const DoubleVector *weights, double covMat[3][3]) {
+  memset(static_cast<void *>(covMat), 0, 9 * sizeof(double));
   unsigned int npt = refPoints.size();
   CHECK_INVARIANT(npt == probePoints.size(), "Number of points mismatch");
-  CHECK_INVARIANT(npt == weights.size(),
+  CHECK_INVARIANT(!weights || (npt == weights->size()),
                   "Number of points and number of weights do not match");
-  const double *wData = weights.getData();
+  const double *wData = weights ? weights->getData() : nullptr;
 
   const RDGeom::Point3D *rpt, *ppt;
-  double w;
-  for (i = 0; i < npt; i++) {
+  for (unsigned int i = 0; i < npt; i++) {
     rpt = refPoints[i];
     ppt = probePoints[i];
-    w = wData[i];
+    double w = weights ? wData[i] : 1.0;
 
     covMat[0][0] += w * (ppt->x) * (rpt->x);
     covMat[0][1] += w * (ppt->x) * (rpt->y);
@@ -278,34 +276,24 @@ double AlignPoints(const RDGeom::Point3DConstPtrVect &refPoints,
   unsigned int npt = refPoints.size();
   PRECONDITION(npt == probePoints.size(), "Mismatch in number of points");
   trans.setToIdentity();
-  const DoubleVector *wts;
-  double wtsSum;
-  bool ownWts;
+  double wtsSum = 0.0;
   if (weights) {
     PRECONDITION(npt == weights->size(), "Mismatch in number of points");
-    wts = weights;
-    wtsSum = _sumOfWeights(*wts);
-    ownWts = false;
+    wtsSum = _sumOfWeights(*weights);
   } else {
-    wts = new DoubleVector(npt, 1.0);
     wtsSum = static_cast<double>(npt);
-    ownWts = true;
   }
 
-  RDGeom::Point3D rptSum = _weightedSumOfPoints(refPoints, *wts);
-  RDGeom::Point3D pptSum = _weightedSumOfPoints(probePoints, *wts);
+  RDGeom::Point3D rptSum = _weightedSumOfPoints(refPoints, weights);
+  RDGeom::Point3D pptSum = _weightedSumOfPoints(probePoints, weights);
 
-  double rptSumLenSq = _weightedSumOfLenSq(refPoints, *wts);
-  double pptSumLenSq = _weightedSumOfLenSq(probePoints, *wts);
+  double rptSumLenSq = _weightedSumOfLenSq(refPoints, weights);
+  double pptSumLenSq = _weightedSumOfLenSq(probePoints, weights);
 
   double covMat[3][3];
 
   // compute the co-variance matrix
-  _computeCovarianceMat(refPoints, probePoints, *wts, covMat);
-  if (ownWts) {
-    delete wts;
-    wts = nullptr;
-  }
+  _computeCovarianceMat(refPoints, probePoints, weights, covMat);
   if (reflect) {
     rptSum *= -1.0;
     reflectCovMat(covMat);

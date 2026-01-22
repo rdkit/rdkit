@@ -22,19 +22,23 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
     endif()
 endif()
 
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  add_definitions("-DRDK_BUILD_CHEMDRAW_SUPPORT")
+endif()
+
 rdkit_library(FileParsers
     CDXMLParser.cpp
-    Mol2FileParser.cpp MolFileParser.cpp 
+    Mol2FileParser.cpp MolFileParser.cpp
     SCSRMolFileParser.cpp
     MolSGroupParsing.cpp MolSGroupWriting.cpp
     MolFileStereochem.cpp MolFileWriter.cpp
     ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
-    SmilesMolSupplier.cpp 
+    SmilesMolSupplier.cpp
     SmilesWriter.cpp
-    TDTMolSupplier.cpp 
+    TDTMolSupplier.cpp
     TDTWriter.cpp
     TplFileParser.cpp TplFileWriter.cpp
-    PDBParser.cpp PDBWriter.cpp 
+    PDBParser.cpp PDBWriter.cpp
     CMLWriter.cpp XYZFileWriter.cpp XYZFileParser.cpp
     ${maesupplier}
     ProximityBonds.cpp
@@ -74,7 +78,7 @@ rdkit_test(testAtropisomers testAtropisomers.cpp
 rdkit_catch_test(testSquiggleDoubleBonds testSquiggleDoubleBonds.cpp
     LINK_LIBRARIES FileParsers SubstructMatch)
 
-rdkit_test(testMolSupplier testMolSupplier.cpp
+rdkit_catch_test(testMolSupplier testMolSupplier.cpp
     LINK_LIBRARIES FileParsers RDStreams)
 
 rdkit_test(testGeneralFileReader testGeneralFileReader.cpp

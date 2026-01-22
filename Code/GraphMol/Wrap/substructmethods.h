@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2017 Greg Landrum
+//  Copyright (C) 2017-2025 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,42 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 namespace RDKit {
+
+class pyFunctor {
+ public:
+  virtual ~pyFunctor() = default;
+};
+
+class pyFinalMatchFunctor : public pyFunctor {
+ public:
+  pyFinalMatchFunctor(python::object obj) : dp_obj(std::move(obj)) {}
+  ~pyFinalMatchFunctor() = default;
+  bool operator()(const ROMol &m, std::span<const unsigned int> match) {
+    // grab the GIL
+    PyGILStateHolder h;
+    // boost::python doesn't handle std::span, so we need to convert the span to
+    // a vector before calling into python:
+    std::vector<unsigned int> matchVec(match.begin(), match.end());
+    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(matchVec)));
+  }
+
+ private:
+  python::object dp_obj;
+};
+template <typename T>
+class pyMatchFunctor : public pyFunctor {
+ public:
+  pyMatchFunctor(python::object obj) : dp_obj(std::move(obj)) {}
+  ~pyMatchFunctor() = default;
+  bool operator()(const T &a1, const T &a2) {
+    // grab the GIL
+    PyGILStateHolder h;
+    return python::extract<bool>(dp_obj(boost::ref(a1), boost::ref(a2)));
+  }
+
+ private:
+  python::object dp_obj;
+};
 
 inline PyObject *convertMatches(const MatchVectType &matches) {
   PyObject *res = PyTuple_New(matches.size());
@@ -81,16 +117,11 @@ template <typename T1, typename T2>
 void pySubstructHelper(T1 &mol, T2 &query,
                        const SubstructMatchParameters &params,
                        std::vector<MatchVectType> &matches) {
-  if (params.extraFinalCheck) {
-    // NOTE: Because we are going into/out of python here, we can't
-    // run with NOGIL
-    matches = SubstructMatch(mol, query, params);
-  } else {
-    NOGIL gil;
-    matches = SubstructMatch(mol, query, params);
-  }
+  // it's safe to release the GIL here since the functors wrapping the python
+  // callbacks will reacquire it as needed
+  NOGIL gil;
+  matches = SubstructMatch(mol, query, params);
 }
-
 template <typename T1, typename T2>
 bool helpHasSubstructMatch(T1 &mol, T2 &query,
                            const SubstructMatchParameters &params) {

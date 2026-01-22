@@ -10,7 +10,6 @@
 #include <cctype>
 #include <memory.h>
 #include <cerrno>
-#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <boost/property_tree/json_parser.hpp>

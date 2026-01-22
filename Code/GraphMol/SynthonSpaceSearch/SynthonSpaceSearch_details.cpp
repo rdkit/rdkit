@@ -10,7 +10,6 @@
 
 #include <algorithm>
 #include <fstream>
-#include <iostream>
 #include <list>
 #include <memory>
 #include <regex>
@@ -367,8 +366,6 @@ void doPartInitialFragmentation(
   bool timedOut = false;
   while (true) {
     std::int64_t thisRB = ++mostRecentRingBond;
-    // std::cout << "ring bond " << thisRB << " of " << lastRingBond << " and "
-    // << tmpFrags.size() << std::endl;
     if (thisRB > lastRingBond) {
       break;
     }
@@ -542,8 +539,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   if (maxNumFrags < 1) {
     maxNumFrags = 1;
   }
-  maxNumFrags =
-      std::min({maxNumFrags, MAX_CONNECTOR_NUM, query.getNumBonds() + 1});
+  maxNumFrags = std::min(maxNumFrags, query.getNumBonds() + 1);
 
   auto ringBonds = flagRingBonds(query);
 
@@ -576,7 +572,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     return fragments;
   }
 
-  // Keep unique SMILES onlyu
+  // Keep unique SMILES only
   std::sort(tmpFrags.begin(), tmpFrags.end(),
             [](const auto &lhs, const auto &rhs) -> bool {
               return lhs.first < rhs.first;
@@ -624,7 +620,8 @@ std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
       mols.size(), boost::dynamic_bitset<>(MAX_CONNECTOR_NUM + 1));
   for (size_t i = 0; i < mols.size(); i++) {
     for (const auto &a : mols[i]->atoms()) {
-      if (!a->getAtomicNum() && a->getIsotope() <= MAX_CONNECTOR_NUM) {
+      if (!a->getAtomicNum() && a->getIsotope() &&
+          a->getIsotope() <= MAX_CONNECTOR_NUM) {
         connPatterns[i].set(a->getIsotope());
       }
     }

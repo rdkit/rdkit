@@ -19,7 +19,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <cstring>
-#include <iostream>
 #include <cassert>
 #include <cstring>
 #include <vector>
@@ -179,12 +178,15 @@ class RDKIT_GRAPHMOL_EXPORT SpecialChiralityAtomCompareFunctor {
     if (!dp_atomsInPlay || (*dp_atomsInPlay)[j]) {
       updateAtomNeighborNumSwaps(dp_atoms, dp_atoms[j].bonds, j, swapsj);
     }
+
     for (unsigned int ii = 0; ii < swapsi.size() && ii < swapsj.size(); ++ii) {
       int cmp = swapsi[ii].second - swapsj[ii].second;
+
       if (cmp) {
         return cmp;
       }
     }
+
     return 0;
   }
 };
@@ -692,12 +694,13 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
 
 template <typename CompareFunc>
 void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
-                      int mode, int *order, int *count, int &activeset,
-                      int *next, int *changed, char *touchedPartitions) {
+                      int mode, std::vector<int> &order,
+                      std::vector<int> &count, int &activeset,
+                      std::vector<int> &next, std::vector<int> &changed,
+                      std::vector<char> &touchedPartitions) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
   int symclass = 0;
-  int *start;
   int offset;
   int index;
   int len;
@@ -723,10 +726,10 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
 
     len = count[partition];
     offset = atoms[partition].index;
-    start = order + offset;
+    auto start = std::span<int>(&order[offset], len);
     // std::cerr<<"\n\n**************************************************************"<<std::endl;
-    // std::cerr<<"  sort - class:"<<atoms[partition].index<<" len: "<<len<<":";
-    // for(unsigned int ii=0;ii<len;++ii){
+    // std::cerr<<"  sort - class:"<<atoms[partition].index<<" len:
+    // "<<len<<":"; for(unsigned int ii=0;ii<len;++ii){
     //   std::cerr<<" "<<order[offset+ii]+1;
     // }
     // std::cerr<<std::endl;
@@ -734,7 +737,7 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     //   std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index:
     //   "<<atoms[order[ii]].index<<std::endl;
     // }
-    hanoisort(start, len, count, changed, compar);
+    hanoisort(start, count, changed, compar);
     // std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
     // std::cerr<<"  result:";
     // for(unsigned int ii=0;ii<nAtoms;++ii){
@@ -789,8 +792,10 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
 
 template <typename CompareFunc>
 void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
-               int mode, int *order, int *count, int &activeset, int *next,
-               int *changed, char *touchedPartitions) {
+               int mode, std::vector<int> &order, std::vector<int> &count,
+               int &activeset, std::vector<int> &next,
+               std::vector<int> &changed,
+               std::vector<char> &touchedPartitions) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
   int offset;
@@ -840,19 +845,21 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
 }  // end of BreakTies()
 
 RDKIT_GRAPHMOL_EXPORT void CreateSinglePartition(unsigned int nAtoms,
-                                                 int *order, int *count,
+                                                 std::vector<int> &order,
+                                                 std::vector<int> &count,
                                                  canon_atom *atoms);
 
-RDKIT_GRAPHMOL_EXPORT void ActivatePartitions(unsigned int nAtoms, int *order,
-                                              int *count, int &activeset,
-                                              int *next, int *changed);
+RDKIT_GRAPHMOL_EXPORT void ActivatePartitions(
+    unsigned int nAtoms, std::vector<int> &order, std::vector<int> &count,
+    int &activeset, std::vector<int> &next, std::vector<int> &changed);
 
 //! Note that atom maps on dummy atoms will always be used
 RDKIT_GRAPHMOL_EXPORT void rankMolAtoms(
     const ROMol &mol, std::vector<unsigned int> &res, bool breakTies = true,
     bool includeChirality = true, bool includeIsotopes = true,
     bool includeAtomMaps = true, bool includeChiralPresence = false,
-    bool includeStereoGroups = true, bool useNonStereoRanks = false);
+    bool includeStereoGroups = true, bool useNonStereoRanks = false,
+    bool includeRingStereo = true);
 
 //! Note that atom maps on dummy atoms will always be used
 RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
@@ -862,7 +869,7 @@ RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
     const std::vector<std::string> *atomSymbols,
     const std::vector<std::string> *bondSymbols, bool breakTies,
     bool includeChirality, bool includeIsotope, bool includeAtomMaps,
-    bool includeChiralPresence);
+    bool includeChiralPresence, bool includeRingStereo = true);
 
 //! Note that atom maps on dummy atoms will always be used
 inline void rankFragmentAtoms(
@@ -872,10 +879,10 @@ inline void rankFragmentAtoms(
     const std::vector<std::string> *atomSymbols = nullptr,
     bool breakTies = true, bool includeChirality = true,
     bool includeIsotopes = true, bool includeAtomMaps = true,
-    bool includeChiralPresence = false) {
+    bool includeChiralPresence = false, bool includeRingStereo = true) {
   rankFragmentAtoms(mol, res, atomsInPlay, bondsInPlay, atomSymbols, nullptr,
                     breakTies, includeChirality, includeIsotopes,
-                    includeAtomMaps, includeChiralPresence);
+                    includeAtomMaps, includeChiralPresence, includeRingStereo);
 };
 
 RDKIT_GRAPHMOL_EXPORT void chiralRankMolAtoms(const ROMol &mol,
@@ -896,8 +903,9 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             const boost::dynamic_bitset<> &bondsInPlay,
                             bool needsInit);
 template <typename T>
-void rankWithFunctor(T &ftor, bool breakTies, int *order,
+void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
                      bool useSpecial = false, bool useChirality = false,
+                     bool includeRingStereo = true,
                      const boost::dynamic_bitset<> *atomsInPlay = nullptr,
                      const boost::dynamic_bitset<> *bondsInPlay = nullptr);
 

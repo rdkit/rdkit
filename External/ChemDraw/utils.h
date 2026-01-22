@@ -104,7 +104,7 @@ struct StereoGroupInfo {
 // check to see if we have a tetrahedral flag and ChemDraw CIP set but no
 //  stereo assigned, if so check the bond ordering for CW and CCW
 void checkChemDrawTetrahedralGeometries(RWMol &mol);
-}
+}  // namespace ChemDraw
 }  // namespace RDKit
 
 #endif

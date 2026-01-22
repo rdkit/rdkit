@@ -1,5 +1,4 @@
 include_directories(${RDKit_ExternalDir})
-include_directories(${RDKit_ExternalDir}/rapidjson-1.1.0/include)
 
 if(RDK_BUILD_MINIMAL_LIB)
     set(MINIMAL_LIB_LIBRARIES "MolInterchange;Abbreviations;"
@@ -30,6 +29,10 @@ if(RDK_BUILD_MINIMAL_LIB)
     if(RDK_BUILD_MINIMAL_LIB_MOLZIP)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_MOLZIP)
         set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ChemTransforms")
+    endif()
+    if(RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP)
+        add_definitions(-DRDK_BUILD_MINIMAL_LIB_RGROUPDECOMP)
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};RGroupDecomposition")
     endif()
     if(RDK_BUILD_FREETYPE_SUPPORT)
         if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")

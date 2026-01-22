@@ -59,7 +59,7 @@ class JSDrawerFromDetails : public MinimalLib::DrawerFromDetails {
                                    drawingDetails.noFreetype));
     updateDrawerParamsFromJSON();
   }
-  std::string finalizeDrawing() { return ""; }
+  std::string finalizeDrawing() { return createDrawingResult(""); }
   std::unique_ptr<MolDraw2DJS> d_drawer;
   emscripten::val d_ctx;
 };
@@ -492,7 +492,8 @@ emscripten::val get_rgroups_as_cols_helper(const JSRGroupDecomposition &self) {
 
   for (auto &rlabelJSMolListPair : cols) {
     obj.set(std::move(rlabelJSMolListPair.first),
-            rlabelJSMolListPair.second.release());
+            emscripten::val(rlabelJSMolListPair.second.release(),
+                            emscripten::allow_raw_pointers()));
   }
 
   return obj;
@@ -506,7 +507,8 @@ emscripten::val get_rgroups_as_rows_helper(const JSRGroupDecomposition &self) {
     auto obj = emscripten::val::object();
     for (auto &rlabelJSMolPair : row) {
       obj.set(std::move(rlabelJSMolPair.first),
-              rlabelJSMolPair.second.release());
+              emscripten::val(rlabelJSMolPair.second.release(),
+                              emscripten::allow_raw_pointers()));
     }
     arr.call<void>("push", std::move(obj));
   }
@@ -559,6 +561,11 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_v3Kmolblock",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_v3Kmolblock))
+      .function("get_v2Kmolblock", select_overload<std::string() const>(
+                                       &JSMolBase::get_v2Kmolblock))
+      .function("get_v2Kmolblock",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMolBase::get_v2Kmolblock))
       .function("get_as_uint8array", &get_as_uint8array)
       .function("get_as_uint8array", &get_as_uint8array_no_details)
 #ifdef RDK_BUILD_INCHI_SUPPORT

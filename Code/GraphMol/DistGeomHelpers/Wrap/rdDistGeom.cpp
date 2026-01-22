@@ -36,11 +36,11 @@ struct PyEmbedParameters
     // the EmbedParameters object doesn't own the memory for the coordMap, so we
     // have to take ownership here.
     d_coordMap.reset(new std::map<int, RDGeom::Point3D>());
-    for (unsigned int i = 0;
-         i < python::extract<unsigned int>(cmap.keys().attr("__len__")());
-         ++i) {
-      (*d_coordMap)[python::extract<int>(cmap.keys()[i])] =
-          python::extract<RDGeom::Point3D>(cmap.values()[i]);
+    const auto items = cmap.items();
+    for (unsigned int i = 0; i < python::len(items); ++i) {
+      const auto item = items[i];
+      (*d_coordMap)[python::extract<int>(item[0])] =
+          python::extract<RDGeom::Point3D>(item[1]);
     }
     coordMap = d_coordMap.get();
   }
@@ -58,7 +58,7 @@ struct PyEmbedParameters
         new std::map<std::pair<unsigned int, unsigned int>, double>);
 
     python::list ks = CPCIdict.keys();
-    unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
+    unsigned int nKeys = python::len(ks);
 
     for (unsigned int i = 0; i < nKeys; ++i) {
       python::tuple id = python::extract<python::tuple>(ks[i]);
@@ -115,7 +115,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
                   bool useMacrocycle14config) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
-  unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
+  unsigned int nKeys = python::len(ks);
   for (unsigned int i = 0; i < nKeys; ++i) {
     unsigned int id = python::extract<unsigned int>(ks[i]);
     pMap[id] = python::extract<RDGeom::Point3D>(coordMap[id]);
@@ -173,7 +173,7 @@ INT_VECT EmbedMultipleConfs(
     bool useMacrocycle14config) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
-  unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
+  unsigned int nKeys = python::len(ks);
   for (unsigned int i = 0; i < nKeys; ++i) {
     unsigned int id = python::extract<unsigned int>(ks[i]);
     pMap[id] = python::extract<RDGeom::Point3D>(coordMap[id]);
@@ -301,6 +301,11 @@ python::tuple getExpTorsHelperWithParams(
                           ps.useBasicKnowledge, ps.ETversion, ps.verbose);
 }
 
+python::str embedParametersToJSONHelper(
+    const DGeomHelpers::EmbedParameters &ps) {
+  return python::str(embedParametersToJSON(ps));
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -331,7 +336,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
  \n\
  ARGUMENTS:\n\n\
     - mol : the molecule of interest\n\
-    - maxAttempts : the maximum number of attempts to try embedding \n\
+    - maxAttempts : maximum number of embedding attempts to use for a single conformation \n\
     - randomSeed : provide a seed for the random number generator \n\
                    so that the same coordinates can be obtained \n\
                    for a molecule on multiple runs. If -1, the \n\
@@ -367,7 +372,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - useMacrocycle14config : use the 1-4 distance bounds from ETKDGv3\n\
 \n\
  RETURNS:\n\n\
-    ID of the new conformation added to the molecule \n\
+    ID of the new conformation added to the molecule or -1 if the embedding fails.\n\
 \n";
   python::def(
       "EmbedMolecule", RDKit::EmbedMolecule,
@@ -394,7 +399,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
  ARGUMENTS:\n\n\
   - mol : the molecule of interest\n\
   - numConfs : the number of conformers to generate \n\
-  - maxAttempts : the maximum number of attempts to try embedding \n\
+  - maxAttempts : maximum number of embedding attempts to use for a single conformation \n\
   - randomSeed : provide a seed for the random number generator \n\
                  so that the same coordinates can be obtained \n\
                  for a molecule on multiple runs. If -1, the \n\
@@ -436,7 +441,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - useBasicKnowledge : impose basic knowledge such as flat rings\n\
   - printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
-    List of new conformation IDs \n\
+    Iterator which yields new conformation IDs \n\
 \n";
   python::def(
       "EmbedMultipleConfs", RDKit::EmbedMultipleConfs,
@@ -480,6 +485,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
              RDKit::DGeomHelpers::EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO)
       .value("CHECK_CHIRAL_CENTERS2",
              RDKit::DGeomHelpers::EmbedFailureCauses::CHECK_CHIRAL_CENTERS2)
+      .value("EXCEEDED_TIMEOUT",
+             RDKit::DGeomHelpers::EmbedFailureCauses::EXCEEDED_TIMEOUT)
       .export_values();
 
   python::class_<PyEmbedParameters, boost::noncopyable>(
@@ -593,7 +600,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - numConfs : the number of conformers to generate \n\
   - params : an EmbedParameters object \n\
  RETURNS:\n\n\
-    List of new conformation IDs \n\
+    Iterator which yields new conformation IDs \n\
 \n";
   python::def(
       "EmbedMultipleConfs", RDKit::EmbedMultipleConfs2,
@@ -609,7 +616,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - params : an EmbedParameters object \n\
 \n\
  RETURNS:\n\n\
-    ID of the new conformation added to the molecule \n\
+    ID of the new conformation added to the molecule or -1 if the embedding fails. \n\
 \n";
   python::def("EmbedMolecule", RDKit::EmbedMolecule2,
               (python::arg("mol"), python::arg("params")), docString.c_str());
@@ -661,4 +668,15 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("doTriangleSmoothing") = true,
                python::arg("useMacrocycle14config") = false),
               docString.c_str());
+
+  docString =
+      "Returns json string containing embedParameters attributes\n\
+  \n\
+  ARGUMENTS:\n\n\
+    - embedParameters : the Params object you want serialized\n\
+  RETURNS:\n\n\
+    The Params object as json string\n\
+  \n";
+  python::def("EmbedParametersToJSON", RDKit::embedParametersToJSONHelper,
+              (python::arg("embedParameters")), docString.c_str());
 }

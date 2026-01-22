@@ -25,6 +25,8 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionArguments
   bool df_onlyShortestPaths = false;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
 
   /**
    \brief Construct a new Topological Torsion Arguments object
@@ -85,6 +87,9 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
+
   OutputType getResultSize() const override;
 };
 

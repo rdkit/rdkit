@@ -99,7 +99,7 @@ python::list findMCESWrapper(const ROMol &mol1, const ROMol &mol2,
 
 std::vector<std::shared_ptr<ROMol>> extractMols(python::object mols) {
   std::vector<std::shared_ptr<ROMol>> cmols;
-  unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
+  unsigned int nElems = python::len(mols);
   cmols.resize(nElems);
   for (unsigned int i = 0; i < nElems; ++i) {
     if (!mols[i]) {
@@ -244,7 +244,8 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
                      " is > 0, it will over-ride the"
                      " similarityThreshold."
                      "  Note that this refers to the"
-                     " minimum number of BONDS in the MCES. Default=0.");
+                     " minimum number of BONDS in the MCES. Default=0.")
+      .def("__setattr__", &safeSetattr);
 
   docString =
       "Find one or more MCESs between the 2 molecules given.  Returns a list of "
@@ -290,7 +291,8 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
       .def_readwrite(
           "clusterMergeSim",
           &RDKit::RascalMCES::RascalClusterOptions::clusterMergeSim,
-          "Two clusters are merged if the fraction of molecules they have in common is greater than this.  Default=0.6.");
+          "Two clusters are merged if the fraction of molecules they have in common is greater than this.  Default=0.6.")
+      .def("__setattr__", &safeSetattr);
 
   docString =
       "Use the RASCAL MCES similarity metric to do fuzzy clustering.  Returns a list of lists "
