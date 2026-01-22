@@ -682,7 +682,7 @@ int countAtomElec(const RDMol &mol, const atomindex_t atomIndex) {
     // if the bond is "real" (not undefined or zero), it always contributes to
     // valence/degree, and in case the bond is a query bond with no order, we
     // still need to check if the query is a bond query
-    if (bond.getTwiceValenceContrib(atomIndex) &&
+    if (!bond.getTwiceValenceContrib(atomIndex) &&
         !isBondOrderQuery(mol, bondIdx)) {
       --degree;
     }
@@ -703,7 +703,6 @@ int countAtomElec(const RDMol &mol, const atomindex_t atomIndex) {
 
   // num electrons available for donation into the pi system:
   int res = (dv - degree) + nlp - nRadicals;
-
   if (res > 1) {
     // if we have an incident bond with order higher than 2,
     // (e.g. triple or higher), we only want to return 1 electron
