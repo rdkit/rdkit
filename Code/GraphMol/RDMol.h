@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2025 NVIDIA Corporation & Affiliates and other RDKit contributors
+//  Copyright (C) 2025 NVIDIA Corporation & Affiliates and other RDKit
+//  contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -66,12 +67,10 @@ class AtomData {
   friend class MolPickler;
   friend class Atom;
 
-public:
+ public:
   uint32_t getAtomicNum() const { return atomicNum; }
   void setAtomicNum(uint32_t num) { atomicNum = num; }
-  uint32_t getNumExplicitHs() const {
-    return numExplicitHs;
-  }
+  uint32_t getNumExplicitHs() const { return numExplicitHs; }
   void setNumExplicitHs(uint32_t num) {
     PRECONDITION(num <= unsetValenceVal,
                  "setNumExplicitHs called with too large number");
@@ -120,9 +119,7 @@ public:
                  "calcImplicitValence()");
     return getImplicitValence();
   }
-  int8_t getFormalCharge() const {
-    return formalCharge;
-  }
+  int8_t getFormalCharge() const { return formalCharge; }
   void setFormalCharge(int8_t charge) { formalCharge = charge; }
 
   uint32_t getIsotope() const { return isotope; }
@@ -131,9 +128,7 @@ public:
   AtomEnums::ChiralType getChiralTag() const {
     return AtomEnums::ChiralType(chiralTag);
   }
-  void setChiralTag(AtomEnums::ChiralType tag) {
-    chiralTag = uint8_t(tag);
-  }
+  void setChiralTag(AtomEnums::ChiralType tag) { chiralTag = uint8_t(tag); }
 
   AtomEnums::HybridizationType getHybridization() const {
     return AtomEnums::HybridizationType(hybridization);
@@ -200,9 +195,9 @@ inline uint32_t getTwiceBondType(BondEnums::BondType type) {
     case BondType::AROMATIC:
       return 3;
     case BondType::DATIVEONE:
-      return 2; // FIX: this should probably be different
+      return 2;  // FIX: this should probably be different
     case BondType::DATIVE:
-      return 2; // FIX: again probably wrong
+      return 2;  // FIX: again probably wrong
     case BondType::HYDROGEN:
       return 0;
     default:
@@ -224,8 +219,8 @@ class BondData {
 
   friend class RDMol;
   friend class Bond;
- public:
 
+ public:
   BondEnums::BondType getBondType() const {
     return BondEnums::BondType(bondType);
   }
@@ -235,9 +230,9 @@ class BondData {
     return BondEnums::BondStereo(stereo);
   }
   void setStereo(BondEnums::BondStereo value) {
-    //PRECONDITION(value <= BondEnums::BondStereo::STEREOE || hasStereoAtoms(),
-    //             "Stereo atoms should be specified before specifying CIS/TRANS "
-    //             "bond stereochemistry")
+    // PRECONDITION(value <= BondEnums::BondStereo::STEREOE || hasStereoAtoms(),
+    //              "Stereo atoms should be specified before specifying
+    //              CIS/TRANS " "bond stereochemistry")
     stereo = uint8_t(value);
   }
 
@@ -247,8 +242,7 @@ class BondData {
   void setEndAtomIdx(atomindex_t atomIdx) { endAtomIdx = atomIdx; }
 
   atomindex_t getOtherAtomIdx(const atomindex_t thisIdx) const {
-    PRECONDITION(beginAtomIdx == thisIdx || endAtomIdx == thisIdx,
-                 "bad index");
+    PRECONDITION(beginAtomIdx == thisIdx || endAtomIdx == thisIdx, "bad index");
     return (beginAtomIdx == thisIdx) ? endAtomIdx : beginAtomIdx;
   }
 
@@ -294,7 +288,8 @@ class RingInfoCache {
   std::vector<uint32_t> atomsInRings;
   // Size is the combined size of all rings (ringBegins.back())
   // Each ring starts at ringBegins[ringIndex]
-  // TODO: Consider combining bondsInRings with atomsInRings, since they're always kept the same length.
+  // TODO: Consider combining bondsInRings with atomsInRings, since they're
+  // always kept the same length.
   std::vector<uint32_t> bondsInRings;
   // Size is numAtoms+1
   std::vector<uint32_t> atomMembershipBegins;
@@ -307,8 +302,8 @@ class RingInfoCache {
   // Each bond's list of rings starts at bondMembershipBegins[bondIndex]
   std::vector<uint32_t> bondMemberships;
 
-  // 2D bit vector representing whether each pair of rings shares at least one bond.
-  // Size is numRings x numRings, in one contiguous bit vector
+  // 2D bit vector representing whether each pair of rings shares at least one
+  // bond. Size is numRings x numRings, in one contiguous bit vector
   std::vector<bool> areRingsFused;
   // The number of bonds in each ring that are shared with any other rings.
   // Size is numRings
@@ -371,9 +366,9 @@ class RingInfoCache {
   }
 
   bool isAtomInRingOfSize(atomindex_t atomIndex, uint32_t size) const {
-    const uint32_t* atomMembershipBegin =
+    const uint32_t *atomMembershipBegin =
         atomMemberships.data() + atomMembershipBegins[atomIndex];
-    const uint32_t* atomMembershipEnd =
+    const uint32_t *atomMembershipEnd =
         atomMemberships.data() + atomMembershipBegins[atomIndex + 1];
     for (; atomMembershipBegin != atomMembershipEnd; ++atomMembershipBegin) {
       const uint32_t ring = *atomMembershipBegin;
@@ -385,9 +380,9 @@ class RingInfoCache {
   }
 
   bool isBondInRingOfSize(uint32_t bondIndex, uint32_t size) const {
-    const uint32_t* bondMembershipBegin =
+    const uint32_t *bondMembershipBegin =
         bondMemberships.data() + bondMembershipBegins[bondIndex];
-    const uint32_t* bondMembershipEnd =
+    const uint32_t *bondMembershipEnd =
         bondMemberships.data() + bondMembershipBegins[bondIndex + 1];
     for (; bondMembershipBegin != bondMembershipEnd; ++bondMembershipBegin) {
       const uint32_t ring = *bondMembershipBegin;
@@ -400,32 +395,28 @@ class RingInfoCache {
 
   uint32_t minAtomRingSize(atomindex_t atomIndex) const {
     uint32_t minSize = std::numeric_limits<uint32_t>::max();
-    const uint32_t* atomMembershipBegin =
+    const uint32_t *atomMembershipBegin =
         atomMemberships.data() + atomMembershipBegins[atomIndex];
-    const uint32_t* atomMembershipEnd =
+    const uint32_t *atomMembershipEnd =
         atomMemberships.data() + atomMembershipBegins[atomIndex + 1];
     for (; atomMembershipBegin != atomMembershipEnd; ++atomMembershipBegin) {
       const uint32_t ring = *atomMembershipBegin;
       const uint32_t size = ringBegins[ring + 1] - ringBegins[ring];
-      if (size < minSize) {
-        minSize = size;
-      }
+      minSize = std::min(minSize, size);
     }
     return minSize;
   }
 
   uint32_t minBondRingSize(uint32_t bondIndex) const {
     uint32_t minSize = std::numeric_limits<uint32_t>::max();
-    const uint32_t* bondMembershipBegin =
+    const uint32_t *bondMembershipBegin =
         bondMemberships.data() + bondMembershipBegins[bondIndex];
-    const uint32_t* bondMembershipEnd =
+    const uint32_t *bondMembershipEnd =
         bondMemberships.data() + bondMembershipBegins[bondIndex + 1];
     for (; bondMembershipBegin != bondMembershipEnd; ++bondMembershipBegin) {
       const uint32_t ring = *bondMembershipBegin;
       const uint32_t size = ringBegins[ring + 1] - ringBegins[ring];
-      if (size < minSize) {
-        minSize = size;
-      }
+      minSize = std::min(minSize, size);
     }
     return minSize;
   }
@@ -450,14 +441,14 @@ struct RDKIT_GRAPHMOL_EXPORT StereoGroups {
   // Size bondBegins[n_bonds]
   std::vector<uint32_t> bonds;
 
-
   //! Returns the number of stereo groups.
-  uint32_t getNumGroups() const {return stereoTypes.size();}
+  uint32_t getNumGroups() const { return stereoTypes.size(); }
   //! Removes a stereo group by index.
   void removeGroup(uint32_t groupIndex);
 
-  void addGroup(StereoGroupType type, const std::vector<uint32_t>& atomIndices,
-                const std::vector<uint32_t>& bondIndices, uint32_t readId = undefinedGroupId);
+  void addGroup(StereoGroupType type, const std::vector<uint32_t> &atomIndices,
+                const std::vector<uint32_t> &bondIndices,
+                uint32_t readId = undefinedGroupId);
 
   StereoGroupType getGroupType(uint32_t groupIndex) const {
     URANGE_CHECK(groupIndex, stereoTypes.size());
@@ -478,27 +469,33 @@ struct RDKIT_GRAPHMOL_EXPORT StereoGroups {
     writeIds[groupIndex] = value;
   }
 
-  std::pair<uint32_t*, uint32_t*> getAtoms(uint32_t groupIndex) {
+  std::pair<uint32_t *, uint32_t *> getAtoms(uint32_t groupIndex) {
     URANGE_CHECK(groupIndex + 1, atomBegins.size());
-    return {atoms.data() + atomBegins[groupIndex], atoms.data() + atomBegins[groupIndex + 1]};
+    return {atoms.data() + atomBegins[groupIndex],
+            atoms.data() + atomBegins[groupIndex + 1]};
   }
-  std::pair<const uint32_t*, const uint32_t*> getAtoms(uint32_t groupIndex) const {
+  std::pair<const uint32_t *, const uint32_t *> getAtoms(
+      uint32_t groupIndex) const {
     URANGE_CHECK(groupIndex + 1, atomBegins.size());
-    return {atoms.data() + atomBegins[groupIndex], atoms.data() + atomBegins[groupIndex + 1]};
+    return {atoms.data() + atomBegins[groupIndex],
+            atoms.data() + atomBegins[groupIndex + 1]};
   }
-  std::pair<uint32_t*, uint32_t*> getBonds(uint32_t groupIndex) {
+  std::pair<uint32_t *, uint32_t *> getBonds(uint32_t groupIndex) {
     URANGE_CHECK(groupIndex + 1, bondBegins.size());
-    return {bonds.data() + bondBegins[groupIndex], bonds.data() + bondBegins[groupIndex + 1]};
+    return {bonds.data() + bondBegins[groupIndex],
+            bonds.data() + bondBegins[groupIndex + 1]};
   }
-  std::pair<const uint32_t*, const uint32_t*> getBonds(uint32_t groupIndex) const {
+  std::pair<const uint32_t *, const uint32_t *> getBonds(
+      uint32_t groupIndex) const {
     URANGE_CHECK(groupIndex + 1, bondBegins.size());
-    return {bonds.data() + bondBegins[groupIndex], bonds.data() + bondBegins[groupIndex + 1]};
+    return {bonds.data() + bondBegins[groupIndex],
+            bonds.data() + bondBegins[groupIndex + 1]};
   }
 
   //! Compare two groups for equality. Does not compare read and write IDs.
   bool GroupsEq(uint32_t index1, uint32_t index2);
-  //! Removes atom index from all groups where present. If decrementIndices is true,
-  //! all atom indices greater than the removed index are decremented.
+  //! Removes atom index from all groups where present. If decrementIndices is
+  //! true, all atom indices greater than the removed index are decremented.
   void removeAtomFromGroups(uint32_t atomIndex, bool decrementIndices = false);
   //! Removes bond index from all groups where present. If decrementIndices is
   //! true, all bond indices greater than the removed index are decremented.
@@ -506,11 +503,11 @@ struct RDKIT_GRAPHMOL_EXPORT StereoGroups {
   //! Remove any group containing the specified atom.
   void removeGroupsWithAtom(uint32_t atomIndex);
   //! Remove any group containing any of the specified atoms.
-  void removeGroupsWithAtoms(const std::vector<uint32_t>& atomIndices);
+  void removeGroupsWithAtoms(const std::vector<uint32_t> &atomIndices);
   //! Remove any group containing the specified bond.
   void removeGroupsWithBond(uint32_t bondIndex);
   //! Remove any group containing any of the specified bonds.
-  void removeGroupsWithBonds(const std::vector<uint32_t>& bondIndices);
+  void removeGroupsWithBonds(const std::vector<uint32_t> &bondIndices);
   //! Populates write IDs for stereo groups that don't have them.
   void assignStereoGroupIds();
   //! Populates all write IDs from read IDs.
@@ -523,29 +520,53 @@ struct ConformerIdAndFlags {
 };
 
 enum class PropertyType : uint8_t {
-  CHAR,     // 8 bit
-  BOOL,     // 8 bit,
-  INT32,    // 32 bit
-  UINT32,   // 32 bit
-  INT64,    // 64 bit
-  UINT64,   // 64 bit
-  FLOAT,    // 32 bit
-  DOUBLE,   // 64 bit
-  ANY       // RDValue
+  CHAR,    // 8 bit
+  BOOL,    // 8 bit,
+  INT32,   // 32 bit
+  UINT32,  // 32 bit
+  INT64,   // 64 bit
+  UINT64,  // 64 bit
+  FLOAT,   // 32 bit
+  DOUBLE,  // 64 bit
+  ANY      // RDValue
 };
 
 template <typename T>
 struct TypeToPropertyType {
   static constexpr PropertyType family = PropertyType::ANY;
 };
-template<> struct TypeToPropertyType<bool> { static constexpr PropertyType family = PropertyType::BOOL;};
-template<> struct TypeToPropertyType<char> { static constexpr PropertyType family = PropertyType::CHAR;};
-template<> struct TypeToPropertyType<int> { static constexpr PropertyType family = PropertyType::INT32;};
-template<> struct TypeToPropertyType<unsigned int> { static constexpr PropertyType family = PropertyType::UINT32;};
-template<> struct TypeToPropertyType<int64_t> { static constexpr PropertyType family = PropertyType::INT64;};
-template<> struct TypeToPropertyType<uint64_t> { static constexpr PropertyType family = PropertyType::UINT64;};
-template<> struct TypeToPropertyType<float> { static constexpr PropertyType family = PropertyType::FLOAT;};
-template<> struct TypeToPropertyType<double> { static constexpr PropertyType family = PropertyType::DOUBLE;};
+template <>
+struct TypeToPropertyType<bool> {
+  static constexpr PropertyType family = PropertyType::BOOL;
+};
+template <>
+struct TypeToPropertyType<char> {
+  static constexpr PropertyType family = PropertyType::CHAR;
+};
+template <>
+struct TypeToPropertyType<int> {
+  static constexpr PropertyType family = PropertyType::INT32;
+};
+template <>
+struct TypeToPropertyType<unsigned int> {
+  static constexpr PropertyType family = PropertyType::UINT32;
+};
+template <>
+struct TypeToPropertyType<int64_t> {
+  static constexpr PropertyType family = PropertyType::INT64;
+};
+template <>
+struct TypeToPropertyType<uint64_t> {
+  static constexpr PropertyType family = PropertyType::UINT64;
+};
+template <>
+struct TypeToPropertyType<float> {
+  static constexpr PropertyType family = PropertyType::FLOAT;
+};
+template <>
+struct TypeToPropertyType<double> {
+  static constexpr PropertyType family = PropertyType::DOUBLE;
+};
 
 inline PropertyType RDValueTagToPropertyType(
     decltype(std::declval<RDValue>().getTag()) tag) {
@@ -572,17 +593,17 @@ struct RDKIT_GRAPHMOL_EXPORT PropArray {
   //! Scalar family
   PropertyType family;
   //! Data pointer
-  void* data = nullptr;
+  void *data = nullptr;
   //! Mask for set values (bool);
   std::unique_ptr<bool[]> isSetMask = nullptr;
   uint32_t numSet = 0;
 
   PropArray();
   PropArray(uint32_t size, PropertyType family, bool isSet);
-  PropArray(const PropArray& other);
-  PropArray& operator=(const PropArray& other);
-  PropArray(PropArray&& other);
-  PropArray& operator=(PropArray&& other);
+  PropArray(const PropArray &other);
+  PropArray &operator=(const PropArray &other);
+  PropArray(PropArray &&other);
+  PropArray &operator=(PropArray &&other);
   ~PropArray() noexcept;
 
   //! Set up array data.
@@ -594,7 +615,7 @@ struct RDKIT_GRAPHMOL_EXPORT PropArray {
   //! Cast an array data point to an RDValue containing that data point.
   RDValue toRDValue(uint32_t idx) const;
 
-  template<typename T>
+  template <typename T>
   T getValueAs(uint32_t index) const {
     using RawType = std::remove_cv_t<std::remove_reference_t<T>>;
     // There are 4 combinations of scalar/RDvalue request/content we need to
@@ -665,10 +686,9 @@ struct RDKIT_GRAPHMOL_EXPORT PropArray {
           RDValue::cleanup_rdvalue(tempVal);
           return res;
         } catch (...) {
-            RDValue::cleanup_rdvalue(tempVal);
-            throw;
+          RDValue::cleanup_rdvalue(tempVal);
+          throw;
         };
-
       }
     }
   }
@@ -760,11 +780,11 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   // Mutable only for compatibility synchronization while locked.
   mutable std::vector<ConformerIdAndFlags> conformerIdsAndFlags;
 
-public:
+ public:
   using QUERYATOM_QUERY = Queries::Query<int, ConstRDMolAtom, true>;
   using QUERYBOND_QUERY = Queries::Query<int, ConstRDMolBond, true>;
 
-private:
+ private:
   std::vector<std::unique_ptr<QUERYATOM_QUERY>> atomQueries;
   std::vector<std::unique_ptr<QUERYBOND_QUERY>> bondQueries;
 
@@ -777,10 +797,11 @@ private:
 
   struct CompatibilityData;
   // CompatibilityData needs private access to Conformer for setOwningMol,
-  // but CompatibilityData itself is private, so Conformer needs private access here.
+  // but CompatibilityData itself is private, so Conformer needs private access
+  // here.
   friend class Conformer;
   mutable std::mutex compatibilityMutex;
-  mutable std::atomic<CompatibilityData*> compatibilityData = nullptr;
+  mutable std::atomic<CompatibilityData *> compatibilityData = nullptr;
 
  public:
   enum class Scope : uint8_t {
@@ -822,7 +843,7 @@ private:
       }
     }
     ~Property() { RDValue::cleanup_rdvalue(d_inPlaceData); }
-    Property& operator=(Property&& other) noexcept {
+    Property &operator=(Property &&other) noexcept {
       if (this == &other) {
         return *this;
       }
@@ -863,8 +884,8 @@ private:
     Scope scope() const { return d_scope; }
     bool isComputed() const { return d_isComputed; }
 
-    template<typename T>
-    void setVal(const T& val) {
+    template <typename T>
+    void setVal(const T &val) {
       PRECONDITION(d_scope == Scope::MOL, "In-place data only for MOL scope");
       RDValue::cleanup_rdvalue(d_inPlaceData);
       d_inPlaceData = val;
@@ -878,7 +899,7 @@ private:
       setVal(s);
     }
 
-    template<typename T>
+    template <typename T>
     T getVal() {
       PRECONDITION(d_scope == Scope::MOL, "In-place data only for MOL scope");
       return rdvalue_cast<T>(d_inPlaceData);
@@ -945,15 +966,15 @@ private:
 
     using difference_type = size_t;
     using value_type = PropToken;
-    using pointer = PropToken*;
-    using reference = PropToken&;
+    using pointer = PropToken *;
+    using reference = PropToken &;
     using iterator_category = std::forward_iterator_tag;
 
     PropIterator() = default;
-    PropIterator(PropIterator&&) = default;
-    PropIterator(const PropIterator&) = default;
-    PropIterator &operator=(PropIterator&&) = default;
-    PropIterator &operator=(const PropIterator&) = default;
+    PropIterator(PropIterator &&) = default;
+    PropIterator(const PropIterator &) = default;
+    PropIterator &operator=(PropIterator &&) = default;
+    PropIterator &operator=(const PropIterator &) = default;
 
     PropIterator(std::vector<Property>::const_iterator current,
                  std::vector<Property>::const_iterator end,
@@ -1013,7 +1034,6 @@ private:
   };
 
  private:
-
   std::vector<Property> properties;
 
   //! Map of bookmarks to atom indices associated with that bookmark
@@ -1030,7 +1050,7 @@ private:
   friend class QueryBond;
 
  public:
-  using ADJ_ITER_PAIR = std::pair<const uint32_t*,const uint32_t*>;
+  using ADJ_ITER_PAIR = std::pair<const uint32_t *, const uint32_t *>;
 
   RDMol() = default;
   explicit RDMol(const RDMol &other);
@@ -1043,15 +1063,13 @@ private:
   void clear();
 
   // Returns the number of explicit atoms
-  uint32_t getNumAtoms() const {
-    return uint32_t(atomData.size());
-  }
+  uint32_t getNumAtoms() const { return uint32_t(atomData.size()); }
   uint32_t getNumAtoms(bool onlyExplicit) const {
     const uint32_t numAtoms = uint32_t(atomData.size());
     uint32_t res = numAtoms;
     if (!onlyExplicit) {
       for (uint32_t atom = 0; atom < numAtoms; ++atom) {
-        res += getTotalNumHs(atom, false);
+        res += getAtomTotalNumHs(atom, false);
       }
     }
     return res;
@@ -1067,19 +1085,19 @@ private:
     return res;
   };
 
-  const AtomData& getAtom(uint32_t atomIndex) const {
+  const AtomData &getAtom(uint32_t atomIndex) const {
     URANGE_CHECK(atomIndex, getNumAtoms());
     return atomData[atomIndex];
   }
-  AtomData& getAtom(uint32_t atomIndex) {
+  AtomData &getAtom(uint32_t atomIndex) {
     URANGE_CHECK(atomIndex, getNumAtoms());
     return atomData[atomIndex];
   }
-  const BondData& getBond(uint32_t bondIndex) const {
+  const BondData &getBond(uint32_t bondIndex) const {
     URANGE_CHECK(bondIndex, getNumBonds());
     return bondData[bondIndex];
   }
-  BondData& getBond(uint32_t bondIndex) {
+  BondData &getBond(uint32_t bondIndex) {
     URANGE_CHECK(bondIndex, getNumBonds());
     return bondData[bondIndex];
   }
@@ -1093,9 +1111,9 @@ private:
     uint32_t res = atom.getNumExplicitHs() + atom.getNumImplicitHs();
     if (includeNeighbors) {
       uint32_t atomBegin = atomBondStarts[atomIndex];
-      const uint32_t atomEnd = atomBondStarts[atomIndex+1];
+      const uint32_t atomEnd = atomBondStarts[atomIndex + 1];
       for (; atomBegin < atomEnd; ++atomBegin) {
-        const AtomData& nbr = atomData[otherAtomIndices[atomBegin]];
+        const AtomData &nbr = atomData[otherAtomIndices[atomBegin]];
         if (nbr.getAtomicNum() == 1) {
           ++res;
         }
@@ -1118,8 +1136,9 @@ private:
     uint32_t numBonds = uint32_t(bondData.size());
     if (!onlyHeavy) {
       // If we need hydrogen connecting bonds add them up
-      for (uint32_t atom = 0, numAtoms = getNumAtoms(); atom < numAtoms; ++atom) {
-        numBonds += getTotalNumHs(atom, false);
+      for (uint32_t atom = 0, numAtoms = getNumAtoms(); atom < numAtoms;
+           ++atom) {
+        numBonds += getAtomTotalNumHs(atom, false);
       }
     }
     return numBonds;
@@ -1128,14 +1147,14 @@ private:
   bool isAromaticAtom(atomindex_t atomIndex) const {
     PRECONDITION(atomIndex < getNumAtoms(),
                  "RDMol::isAromaticAtom called with out of bounds atomIndex");
-    const AtomData& atom = atomData[atomIndex];
+    const AtomData &atom = atomData[atomIndex];
     if (atom.getIsAromatic()) {
       return true;
     }
     uint32_t atomBegin = atomBondStarts[atomIndex];
     const uint32_t atomEnd = atomBondStarts[atomIndex + 1];
     for (; atomBegin < atomEnd; ++atomBegin) {
-      const BondData& bond = bondData[bondDataIndices[atomBegin]];
+      const BondData &bond = bondData[bondDataIndices[atomBegin]];
       if (bond.getIsAromatic() ||
           bond.getBondType() == BondEnums::BondType::AROMATIC) {
         return true;
@@ -1153,7 +1172,7 @@ private:
 
   void clearBondStereoAtoms(uint32_t bondIndex) {
     URANGE_CHECK(bondIndex, getNumBonds());
-    BondData& bond = bondData[bondIndex];
+    BondData &bond = bondData[bondIndex];
     bond.stereoAtoms[0] = atomindex_t(-1);
     bond.stereoAtoms[1] = atomindex_t(-1);
     if (hasCompatibilityData()) {
@@ -1162,7 +1181,7 @@ private:
   }
   bool hasBondStereoAtoms(uint32_t bondIndex) const {
     URANGE_CHECK(bondIndex, getNumBonds());
-    const BondData& bond = bondData[bondIndex];
+    const BondData &bond = bondData[bondIndex];
     if (!hasCompatibilityData()) {
       PRECONDITION(
           (bond.stereoAtoms[0] == atomindex_t(-1)) ==
@@ -1172,7 +1191,8 @@ private:
     }
     return hasBondStereoAtomsCompat(bondIndex);
   }
-  void setBondStereoAtoms(uint32_t bondIndex, atomindex_t a, atomindex_t b, bool checkAtomIndices = true) {
+  void setBondStereoAtoms(uint32_t bondIndex, atomindex_t a, atomindex_t b,
+                          bool checkAtomIndices = true) {
     URANGE_CHECK(bondIndex, getNumBonds());
     if (checkAtomIndices) {
       PRECONDITION(a != atomindex_t(-1) && b != atomindex_t(-1),
@@ -1180,7 +1200,7 @@ private:
       URANGE_CHECK(a, getNumAtoms());
       URANGE_CHECK(b, getNumAtoms());
     }
-    BondData& bond = bondData[bondIndex];
+    BondData &bond = bondData[bondIndex];
     bond.stereoAtoms[0] = a;
     bond.stereoAtoms[1] = b;
     if (hasCompatibilityData()) {
@@ -1191,15 +1211,15 @@ private:
       compatStereo->push_back(b);
     }
   }
-  const atomindex_t* getBondStereoAtoms(uint32_t bondIndex) const {
+  const atomindex_t *getBondStereoAtoms(uint32_t bondIndex) const {
     URANGE_CHECK(bondIndex, getNumBonds());
     if (hasCompatibilityData()) {
-      const INT_VECT* data = getBondStereoAtomsCompat(bondIndex);
+      const INT_VECT *data = getBondStereoAtomsCompat(bondIndex);
       PRECONDITION(data, "bond stereo compat data not initialized");
       if (data->size() > 0) {
         PRECONDITION(data->size() == 2, "bond stereo compat data not size 2");
         static_assert(sizeof(atomindex_t) == sizeof((*data)[0]));
-        return reinterpret_cast<const atomindex_t*>(data->data());
+        return reinterpret_cast<const atomindex_t *>(data->data());
       }
 
       // If the non-const overload of Bond::getStereoAtoms is called and the
@@ -1212,7 +1232,7 @@ private:
       bond.stereoAtoms[1] = atomindex_t(-1);
       return bond.stereoAtoms;
     }
-    const BondData& bond = bondData[bondIndex];
+    const BondData &bond = bondData[bondIndex];
     return bond.stereoAtoms;
   }
 
@@ -1238,7 +1258,8 @@ private:
     return ADJ_ITER_PAIR(bondDataIndices.data() + atomBegin,
                          bondDataIndices.data() + atomEnd);
   }
-  uint32_t getBondIndexBetweenAtoms(atomindex_t atom0, atomindex_t atom1) const {
+  uint32_t getBondIndexBetweenAtoms(atomindex_t atom0,
+                                    atomindex_t atom1) const {
     URANGE_CHECK(atom0, getNumAtoms());
     URANGE_CHECK(atom1, getNumAtoms());
     uint32_t atomBegin = atomBondStarts[atom0];
@@ -1251,45 +1272,40 @@ private:
     }
     return std::numeric_limits<std::uint32_t>::max();
   }
-  const uint32_t* getAtomBondStarts() const {
-    return atomBondStarts.data();
-  }
-  const uint32_t* getOtherAtomIndices() const {
+  const uint32_t *getAtomBondStarts() const { return atomBondStarts.data(); }
+  const uint32_t *getOtherAtomIndices() const {
     return otherAtomIndices.data();
   }
-  const uint32_t* getBondDataIndices() const {
-    return bondDataIndices.data();
+  const uint32_t *getBondDataIndices() const { return bondDataIndices.data(); }
+
+  // For RDKit use only
+  std::vector<AtomData> &getAtomDataVector() { return atomData; }
+  // For RDKit use only
+  std::vector<BondData> &getBondDataVector() { return bondData; }
+  // For RDKit use only
+  std::vector<uint32_t> &getAtomBondStartsVector() { return atomBondStarts; }
+  // For RDKit use only
+  std::vector<uint32_t> &getOtherAtomIndicesVector() {
+    return otherAtomIndices;
   }
+  // For RDKit use only
+  std::vector<uint32_t> &getBondDataIndicesVector() { return bondDataIndices; }
 
-  // For RDKit use only
-  std::vector<AtomData>& getAtomDataVector() { return atomData; }
-  // For RDKit use only
-  std::vector<BondData>& getBondDataVector() { return bondData; }
-  // For RDKit use only
-  std::vector<uint32_t>& getAtomBondStartsVector() { return atomBondStarts; }
-  // For RDKit use only
-  std::vector<uint32_t>& getOtherAtomIndicesVector() { return otherAtomIndices; }
-  // For RDKit use only
-  std::vector<uint32_t>& getBondDataIndicesVector() { return bondDataIndices; }
-
-  bool hasProp(const PropToken& name) const;
-  bool hasAtomProp(const PropToken& name, uint32_t index) const;
-  bool hasBondProp(const PropToken& name, uint32_t index) const;
+  bool hasProp(const PropToken &name) const;
+  bool hasAtomProp(const PropToken &name, uint32_t index) const;
+  bool hasBondProp(const PropToken &name, uint32_t index) const;
 
   std::vector<std::string> getPropList(
-      bool includePrivate = true,
-      bool includeComputed = true,
+      bool includePrivate = true, bool includeComputed = true,
       Scope scope = Scope::MOL,
       uint32_t index = PropIterator::anyIndexMarker) const;
 
-private:
+ private:
   // This is used by ROMol, Atom, and Bond to get the "__computedProps" prop
-  void getComputedPropList(
-      STR_VECT &res, Scope scope = Scope::MOL,
-      uint32_t index = PropIterator::anyIndexMarker) const;
+  void getComputedPropList(STR_VECT &res, Scope scope = Scope::MOL,
+                           uint32_t index = PropIterator::anyIndexMarker) const;
 
-public:
-
+ public:
   PropIterator beginProps(bool includeComputed = true, Scope scope = Scope::MOL,
                           uint32_t index = PropIterator::anyIndexMarker) const {
     return PropIterator(properties.cbegin(), properties.cend(), includeComputed,
@@ -1327,10 +1343,11 @@ public:
     return prop->d_arrayData.getValueAs<T>(index);
   }
 
-  //! Populates res with the property with token name, if present. Returns whether token was found.
+  //! Populates res with the property with token name, if present. Returns
+  //! whether token was found.
   template <typename T>
-  bool getMolPropIfPresent(const PropToken& name, T& res) const {
-    const Property* prop = findProp(name, Scope::MOL);
+  bool getMolPropIfPresent(const PropToken &name, T &res) const {
+    const Property *prop = findProp(name, Scope::MOL);
     if (prop == nullptr) {
       return false;
     }
@@ -1342,25 +1359,31 @@ public:
     return true;
   }
 
-  //! Populates res with the property with token name, if present. Returns whether token was found.
+  //! Populates res with the property with token name, if present. Returns
+  //! whether token was found.
   template <typename T>
-  bool getAtomPropIfPresent(const PropToken& name, uint32_t index, T& res) const {
+  bool getAtomPropIfPresent(const PropToken &name, uint32_t index,
+                            T &res) const {
     return getArrayPropIfPresent<T>(name, Scope::ATOM, index, res);
   }
 
-  //! Populates res with the property with token name, if present. Returns whether token was found.
+  //! Populates res with the property with token name, if present. Returns
+  //! whether token was found.
   template <typename T>
-  bool getBondPropIfPresent(const PropToken& name, uint32_t index, T& res) const {
+  bool getBondPropIfPresent(const PropToken &name, uint32_t index,
+                            T &res) const {
     return getArrayPropIfPresent<T>(name, Scope::BOND, index, res);
   }
 
-  //! Returns pointer to array of atom properties with token name, or nullptr if not present.
-  //! Returns nullptr if the property is not a basic scalar type (use getAtomPropIfPresent).
-  template <typename T> T* getAtomPropArrayIfPresent(const PropToken& name) {
+  //! Returns pointer to array of atom properties with token name, or nullptr if
+  //! not present. Returns nullptr if the property is not a basic scalar type
+  //! (use getAtomPropIfPresent).
+  template <typename T>
+  T *getAtomPropArrayIfPresent(const PropToken &name) {
     if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
       return nullptr;
     }
-    const Property* prop = findProp(name, Scope::ATOM);
+    const Property *prop = findProp(name, Scope::ATOM);
     if (prop == nullptr) {
       return nullptr;
     }
@@ -1371,11 +1394,12 @@ public:
   }
 
   //! \overload
-  template <typename T> const T* getAtomPropArrayIfPresent(const PropToken& name) const {
+  template <typename T>
+  const T *getAtomPropArrayIfPresent(const PropToken &name) const {
     if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
       return nullptr;
     }
-    const Property* prop = findProp(name, Scope::ATOM);
+    const Property *prop = findProp(name, Scope::ATOM);
     if (prop == nullptr) {
       return nullptr;
     }
@@ -1385,13 +1409,15 @@ public:
     return static_cast<T *>(prop->d_arrayData.data);
   }
 
-  //! Returns pointer to array of bond properties with token name, or nullptr if not present.
-  //! Returns nullptr if the property is not a basic scalar type (use getBondPropIfPresent).
-  template <typename T> T* getBondPropArrayIfPresent(const PropToken& name) {
+  //! Returns pointer to array of bond properties with token name, or nullptr if
+  //! not present. Returns nullptr if the property is not a basic scalar type
+  //! (use getBondPropIfPresent).
+  template <typename T>
+  T *getBondPropArrayIfPresent(const PropToken &name) {
     if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
       return nullptr;
     }
-    const Property* prop = findProp(name, Scope::BOND);
+    const Property *prop = findProp(name, Scope::BOND);
     if (prop == nullptr) {
       return nullptr;
     }
@@ -1402,11 +1428,12 @@ public:
   }
 
   //! \overload
-  template <typename T> const T* getBondPropArrayIfPresent(const PropToken& name) const {
+  template <typename T>
+  const T *getBondPropArrayIfPresent(const PropToken &name) const {
     if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
       return nullptr;
     }
-    const Property* prop = findProp(name, Scope::BOND);
+    const Property *prop = findProp(name, Scope::BOND);
     if (prop == nullptr) {
       return nullptr;
     }
@@ -1416,14 +1443,17 @@ public:
     return static_cast<T *>(prop->d_arrayData.data);
   }
 
-  //! Adds a property with token name and value to the molecule. If the property already exists, it is overwritten.
-  template <typename T> void addMolProp(const PropToken& name, const T& value, bool computed = false) {
+  //! Adds a property with token name and value to the molecule. If the property
+  //! already exists, it is overwritten.
+  template <typename T>
+  void addMolProp(const PropToken &name, const T &value,
+                  bool computed = false) {
     if (Property *prop = findProp(name, Scope::MOL); prop != nullptr) {
       prop->setVal(value);
       prop->d_isComputed = computed;
       return;
     }
-    Property& newProp = properties.emplace_back();
+    Property &newProp = properties.emplace_back();
     newProp.d_name = std::move(name);
     newProp.d_scope = Scope::MOL;
     newProp.d_isComputed = computed;
@@ -1431,15 +1461,18 @@ public:
   }
 
   //! Alias of addMolProp
-  template <typename T> void setMolProp(const PropToken& name, const T& value, bool computed = false) {
+  template <typename T>
+  void setMolProp(const PropToken &name, const T &value,
+                  bool computed = false) {
     addMolProp(name, value, computed);
   }
 
   //! Adds a property array with token name and value for all atoms
   //! Returns a pointer to the array if a scalar type, or nullptr if not.
   template <typename T>
-  T* addAtomProp(const PropToken& name, T defaultValue, bool computed = false) {
-    Property * newProp = addPerElementProp<T>(name, Scope::ATOM, defaultValue, computed);
+  T *addAtomProp(const PropToken &name, T defaultValue, bool computed = false) {
+    Property *newProp =
+        addPerElementProp<T>(name, Scope::ATOM, defaultValue, computed);
     if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
       return nullptr;
     }
@@ -1448,9 +1481,10 @@ public:
 
   //! Adds a property array with token name and value for all bonds
   //! Returns a pointer to the array if a scalar type, or nullptr if not.
-  template<typename T>
-  T* addBondProp(const PropToken& name, T defaultValue, bool computed = false) {
-    Property * newProp = addPerElementProp<T>(name, Scope::BOND, defaultValue, computed);
+  template <typename T>
+  T *addBondProp(const PropToken &name, T defaultValue, bool computed = false) {
+    Property *newProp =
+        addPerElementProp<T>(name, Scope::BOND, defaultValue, computed);
     if constexpr (TypeToPropertyType<T>::family == PropertyType::ANY) {
       return nullptr;
     }
@@ -1458,7 +1492,7 @@ public:
   }
 
   //! Sets an atom property at the given index
-  template<typename T>
+  template <typename T>
   void setSingleAtomProp(const PropToken &name, const std::uint32_t index,
                          const T &value, bool computed = false,
                          bool supportTypeMismatch = false) {
@@ -1467,7 +1501,7 @@ public:
   }
 
   //! Sets a bond property at the given index
-  template<typename T>
+  template <typename T>
   void setSingleBondProp(const PropToken &name, const std::uint32_t index,
                          const T &value, bool computed = false,
                          bool supportTypeMismatch = false) {
@@ -1476,8 +1510,9 @@ public:
   }
 
   //! Clears a molecule property if present
-  void clearMolPropIfPresent(const PropToken& name) {
-    for (auto it = properties.begin(), end = properties.end(); it != end; ++it) {
+  void clearMolPropIfPresent(const PropToken &name) {
+    for (auto it = properties.begin(), end = properties.end(); it != end;
+         ++it) {
       if (it->name() == name && it->scope() == Scope::MOL) {
         properties.erase(it);
         return;
@@ -1486,8 +1521,9 @@ public:
   }
 
   //! Clears all atom props with the given name
-  void clearAtomPropIfPresent(const PropToken& name) {
-    for (auto it = properties.begin(), end = properties.end(); it != end; ++it) {
+  void clearAtomPropIfPresent(const PropToken &name) {
+    for (auto it = properties.begin(), end = properties.end(); it != end;
+         ++it) {
       if (it->name() == name && it->scope() == Scope::ATOM) {
         properties.erase(it);
         return;
@@ -1496,8 +1532,9 @@ public:
   }
 
   //! Clears all bond props with the given name
-  void clearBondPropIfPresent(const PropToken& name) {
-    for (auto it = properties.begin(), end = properties.end(); it != end; ++it) {
+  void clearBondPropIfPresent(const PropToken &name) {
+    for (auto it = properties.begin(), end = properties.end(); it != end;
+         ++it) {
       if (it->name() == name && it->scope() == Scope::BOND) {
         properties.erase(it);
         return;
@@ -1506,8 +1543,10 @@ public:
   }
 
   //! Clears a single atom prop at the given index
-  void clearSingleAtomProp(const PropToken& name, const std::uint32_t atomIndex) {
-    for (auto it = properties.begin(), end = properties.end(); it != end; ++it) {
+  void clearSingleAtomProp(const PropToken &name,
+                           const std::uint32_t atomIndex) {
+    for (auto it = properties.begin(), end = properties.end(); it != end;
+         ++it) {
       if (it->name() == name && it->scope() == Scope::ATOM &&
           it->d_arrayData.isSetMask[atomIndex]) {
         --it->d_arrayData.numSet;
@@ -1522,8 +1561,10 @@ public:
   }
 
   //! Clears a single bond prop at the given index
-  void clearSingleBondProp(const PropToken& name, const std::uint32_t bondIndex) {
-    for (auto it = properties.begin(), end = properties.end(); it != end; ++it) {
+  void clearSingleBondProp(const PropToken &name,
+                           const std::uint32_t bondIndex) {
+    for (auto it = properties.begin(), end = properties.end(); it != end;
+         ++it) {
       if (it->name() == name && it->scope() == Scope::BOND &&
           it->d_arrayData.isSetMask[bondIndex]) {
         --it->d_arrayData.numSet;
@@ -1538,8 +1579,9 @@ public:
   }
 
   //! Clears all props for a given atom
-  void clearSingleAtomAllProps(const std::uint32_t atomIndex, const bool onlyComputed = false) {
-    for (auto it = properties.begin(), end = properties.end(); it != end; ) {
+  void clearSingleAtomAllProps(const std::uint32_t atomIndex,
+                               const bool onlyComputed = false) {
+    for (auto it = properties.begin(), end = properties.end(); it != end;) {
       bool erased = false;
       if (it->scope() == Scope::ATOM && (!onlyComputed || it->isComputed()) &&
           it->d_arrayData.isSetMask[atomIndex]) {
@@ -1559,8 +1601,9 @@ public:
   }
 
   //! Clears all props for a given bond
-  void clearSingleBondAllProps(const std::uint32_t bondIndex, const bool onlyComputed = false) {
-    for (auto it = properties.begin(), end = properties.end(); it != end; ) {
+  void clearSingleBondAllProps(const std::uint32_t bondIndex,
+                               const bool onlyComputed = false) {
+    for (auto it = properties.begin(), end = properties.end(); it != end;) {
       bool erased = false;
       if (it->scope() == Scope::BOND && (!onlyComputed || it->isComputed()) &&
           it->d_arrayData.isSetMask[bondIndex]) {
@@ -1584,17 +1627,19 @@ public:
   void copyProp(const PropToken &destinationName, const RDMol &sourceMol,
                 const PropToken &sourceName, Scope scope = Scope::MOL);
   void copySingleProp(const PropToken &destinationName,
-                           uint32_t destinationIndex, const RDMol &sourceMol,
-                           const PropToken &sourceName, uint32_t sourceIndex,
-                           Scope scope);
+                      uint32_t destinationIndex, const RDMol &sourceMol,
+                      const PropToken &sourceName, uint32_t sourceIndex,
+                      Scope scope);
 
   //! Associates an atom index with a bookmark
   void setAtomBookmark(int atomIdx, int mark);
-  //! Associates an atom index with a bookmark, removing any previous bookmark with the same mark
+  //! Associates an atom index with a bookmark, removing any previous bookmark
+  //! with the same mark
   void replaceAtomBookmark(int atomIdx, int mark);
   //! Returns a vector of atom indices associated with a bookmark
   std::vector<int> getAllAtomsWithBookmarks(int mark);
-  //! Returns the first atom index associated with a bookmark. This will be the first atom bookmarked with the given mark.
+  //! Returns the first atom index associated with a bookmark. This will be the
+  //! first atom bookmarked with the given mark.
   int getAtomWithBookmark(int mark);
   //! Removes a bookmark.
   void clearAtomBookmark(int mark);
@@ -1609,7 +1654,8 @@ public:
   void setBondBookmark(int bondIdx, int mark);
   //! Returns a vector of Bond indices associated with a bookmark
   std::vector<int> getAllBondsWithBookmarks(int mark);
-  //! Returns the first bond index associated with a bookmark. This will be the first bond bookmarked with the given mark.
+  //! Returns the first bond index associated with a bookmark. This will be the
+  //! first bond bookmarked with the given mark.
   int getBondWithBookmark(int mark);
   //! Removes a bookmark.
   void clearBondBookmark(int mark);
@@ -1620,17 +1666,20 @@ public:
   //! Returns whether a bookmark exists.
   bool hasBondBookmark(int mark) const;
 
-  const StereoGroups* getStereoGroups() const { return stereoGroups.get(); }
+  const StereoGroups *getStereoGroups() const { return stereoGroups.get(); }
   StereoGroups *getStereoGroups() {
     clearStereoGroupsCompat();
     return stereoGroups.get();
   }
   void setStereoGroups(std::unique_ptr<StereoGroups> &&groups);
-  //! Manually tell rdmol that the compat data conformers may have been modified.
+  //! Manually tell rdmol that the compat data conformers may have been
+  //! modified.
   void markStereoGroupsAsCompatModified() const;
 
-  std::vector<SubstanceGroup>& getSubstanceGroups() { return substanceGroups; }
-  const std::vector<SubstanceGroup>& getSubstanceGroups() const { return substanceGroups; }
+  std::vector<SubstanceGroup> &getSubstanceGroups() { return substanceGroups; }
+  const std::vector<SubstanceGroup> &getSubstanceGroups() const {
+    return substanceGroups;
+  }
 
   bool getIsStereochemDone() const { return isStereochemDone; }
   void setIsStereochemDone(bool value) { isStereochemDone = value; }
@@ -1662,7 +1711,7 @@ public:
   //! @}
 
   int getAtomMapNum(uint32_t atomIndex) const {
-    const int* atomMap = getAtomPropArrayIfPresent<int>(
+    const int *atomMap = getAtomPropArrayIfPresent<int>(
         common_properties::molAtomMapNumberToken);
     return (atomMap != nullptr) ? atomMap[atomIndex] : 0;
   }
@@ -1699,10 +1748,13 @@ public:
   }
 
   //! Add a new atom to the molecule.
-  AtomData& addAtom();
+  AtomData &addAtom();
   //! Add a new bond to the molecule between the atoms with the given indices.
-  //! If updateAromaticity is true, the atoms will be marked as aromatic if the bond is aromatic.
-  BondData& addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx, BondEnums::BondType bondType, bool updateAromaticity = true);
+  //! If updateAromaticity is true, the atoms will be marked as aromatic if the
+  //! bond is aromatic.
+  BondData &addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx,
+                    BondEnums::BondType bondType,
+                    bool updateAromaticity = true);
   void removeAtom(atomindex_t atomIndex, bool clearProps = true);
   void removeBond(uint32_t bondIndex);
 
@@ -1716,9 +1768,9 @@ public:
   //! Returns the number of conformers.
   uint32_t getNumConformers() const;
   //! Return the coordinates of the conformer with the given ID.
-  const double* getConformerPositions(int32_t id = -1) const;
+  const double *getConformerPositions(int32_t id = -1) const;
   //! Return the coordinates of the conformer with the given ID.
-  double* getConformerPositions(int32_t id = -1);
+  double *getConformerPositions(int32_t id = -1);
   //! Remove all conformers.
   //! Return whether the conformer with the given ID is 3D.
   bool is3DConformer(uint32_t id) const;
@@ -1726,10 +1778,13 @@ public:
   //! Remove the given conformer ID if it exists;
   void removeConformer(uint32_t id);
   //! Add a conformer, return the index. Assigns an ID if id < 0;
-  uint32_t addConformer(const double* positions, int32_t id = -1, bool is3D = true);
-  //! Adds an unset conformer, returns the index and data pointer. Assigns an ID if id < 0;
-  std::pair<uint32_t, double*> addConformer(int32_t id = -1, bool is3D = true);
-  //! Allocates memory for n conformers. Helpful for performance when adding many conformers or atoms.
+  uint32_t addConformer(const double *positions, int32_t id = -1,
+                        bool is3D = true);
+  //! Adds an unset conformer, returns the index and data pointer. Assigns an ID
+  //! if id < 0;
+  std::pair<uint32_t, double *> addConformer(int32_t id = -1, bool is3D = true);
+  //! Allocates memory for n conformers. Helpful for performance when adding
+  //! many conformers or atoms.
   void allocateConformers(size_t newNumConformers) {
     allocateConformers(newNumConformers, getNumAtoms());
   }
@@ -1741,14 +1796,13 @@ public:
 
   void setAtomQuery(atomindex_t atomIndex,
                     std::unique_ptr<QUERYATOM_QUERY> query);
-  void setBondQuery(uint32_t bondIndex,
-                    std::unique_ptr<QUERYBOND_QUERY> query);
+  void setBondQuery(uint32_t bondIndex, std::unique_ptr<QUERYBOND_QUERY> query);
 
   // Compatibity interface access
-  ROMol& asROMol();
-  const ROMol& asROMol() const;
-  RWMol& asRWMol();
-  const RWMol& asRWMol() const;
+  ROMol &asROMol();
+  const ROMol &asROMol() const;
+  RWMol &asRWMol();
+  const RWMol &asRWMol() const;
 
   Ranges::IndexRange<false, false> atoms();
   Ranges::IndexRange<false, true> atoms() const;
@@ -1761,19 +1815,21 @@ public:
 
  private:
   //! Instantiate an RDMol with a stable ROMol pointer.
-  RDMol(ROMol* existingPtr);
+  RDMol(ROMol *existingPtr);
   //! Copy constructor with stable ROMol pointer.
   RDMol(const RDMol &other, ROMol *existingPtr);
   //! \overload
   RDMol(const RDMol &other, bool quickCopy, int confId, ROMol *existingPtr);
 
-  void initFromOther(const RDMol &other, bool quickCopy, int confId, ROMol *existingPtr);
+  void initFromOther(const RDMol &other, bool quickCopy, int confId,
+                     ROMol *existingPtr);
 
-  //! Used by Bond to initialize single-bond non-owning molecule. Avoids atom index bounds checking.
-  void addUnconnectedBond() {bondData.resize(1);}
+  //! Used by Bond to initialize single-bond non-owning molecule. Avoids atom
+  //! index bounds checking.
+  void addUnconnectedBond() { bondData.resize(1); }
 
   //! Returns handle to property if found, else nullptr
-  const Property* findProp(const PropToken& name, Scope scope) const {
+  const Property *findProp(const PropToken &name, Scope scope) const {
     for (const auto &property : properties) {
       if (property.name() == name && property.scope() == scope) {
         return &property;
@@ -1783,7 +1839,7 @@ public:
   }
 
   //! Non-const overload
-  Property* findProp(const PropToken& name, Scope scope) {
+  Property *findProp(const PropToken &name, Scope scope) {
     for (auto &property : properties) {
       if (property.name() == name && property.scope() == scope) {
         return &property;
@@ -1794,12 +1850,15 @@ public:
 
   //! Adds a new array property for bonds or atoms.
   template <typename T>
-  Property* addPerElementProp(const PropToken& name, Scope scope, const T& defaultValue, bool computed = false, bool setAll = true) {
+  Property *addPerElementProp(const PropToken &name, Scope scope,
+                              const T &defaultValue, bool computed = false,
+                              bool setAll = true) {
     // Throw if not atom or bond scope
     if (scope != Scope::ATOM && scope != Scope::BOND) {
-      throw ValueErrorException("Per-element properties must be atom or bond scope");
+      throw ValueErrorException(
+          "Per-element properties must be atom or bond scope");
     }
-    Property* existing = findProp(name, scope);
+    Property *existing = findProp(name, scope);
     if (existing != nullptr) {
       if (existing->d_arrayData.family == TypeToPropertyType<T>::family) {
         existing->d_isComputed = computed;
@@ -1813,8 +1872,9 @@ public:
       }
     }
 
-    const uint32_t numElements = scope == Scope::ATOM ? getNumAtoms() : getNumBonds();
-    Property& newProperty = properties.emplace_back();
+    const uint32_t numElements =
+        scope == Scope::ATOM ? getNumAtoms() : getNumBonds();
+    Property &newProperty = properties.emplace_back();
     newProperty.d_name = name;
     newProperty.d_scope = scope;
     newProperty.d_isComputed = computed;
@@ -1827,7 +1887,7 @@ public:
       for (uint32_t i = 0; i < numElements; ++i) {
         if constexpr (std::is_same_v<T, RDValue>) {
           copy_rdvalue(data[i], defaultValue);
-        } else if constexpr (std::is_same_v<T, const char*>) {
+        } else if constexpr (std::is_same_v<T, const char *>) {
           data[i] = std::string(defaultValue);
         } else {
           data[i] = defaultValue;
@@ -1850,12 +1910,11 @@ public:
     return addPerElementProp(name, scope, s, computed, setAll);
   }
 
-
-  template<typename T>
+  template <typename T>
   void setSingleProp(const PropToken &name, const Scope scope,
                      const std::uint32_t index, const T &value,
                      bool computed = false, bool supportTypeMismatch = false) {
-    Property* existing = findProp(name, scope);
+    Property *existing = findProp(name, scope);
     if (existing == nullptr) {
       if constexpr (std::is_default_constructible_v<T>) {
         existing = addPerElementProp(name, scope, T(), computed, false);
@@ -1873,11 +1932,14 @@ public:
       }
 
       // Check if types are compatible signed/unsigned integer pairs
-      bool integerCompatible =
-          (existingFamily == PropertyType::INT32 && newFamily == PropertyType::UINT32) ||
-          (existingFamily == PropertyType::UINT32 && newFamily == PropertyType::INT32) ||
-          (existingFamily == PropertyType::INT64 && newFamily == PropertyType::UINT64) ||
-          (existingFamily == PropertyType::UINT64 && newFamily == PropertyType::INT64);
+      bool integerCompatible = (existingFamily == PropertyType::INT32 &&
+                                newFamily == PropertyType::UINT32) ||
+                               (existingFamily == PropertyType::UINT32 &&
+                                newFamily == PropertyType::INT32) ||
+                               (existingFamily == PropertyType::INT64 &&
+                                newFamily == PropertyType::UINT64) ||
+                               (existingFamily == PropertyType::UINT64 &&
+                                newFamily == PropertyType::INT64);
 
       if (!integerCompatible) {
         // Convert to RDValue for non-compatible type mismatches
@@ -1892,32 +1954,38 @@ public:
     auto &arr = existing->d_arrayData;
     if (newFamily == PropertyType::ANY || existingFamily == PropertyType::ANY) {
       // Store as RDValue
-      auto* data = static_cast<RDValue*>(arr.data);
+      auto *data = static_cast<RDValue *>(arr.data);
       RDValue::cleanup_rdvalue(data[index]);
       if constexpr (std::is_same_v<T, RDValue>) {
         copy_rdvalue(data[index], value);
-      } else if constexpr (std::is_same_v<T, const char*>) {
+      } else if constexpr (std::is_same_v<T, const char *>) {
         data[index] = std::string(value);
       } else {
         data[index] = value;
       }
-    } else if ((existingFamily == PropertyType::INT32 || existingFamily == PropertyType::UINT32) &&
-               (newFamily == PropertyType::INT32 || newFamily == PropertyType::UINT32)) {
+    } else if ((existingFamily == PropertyType::INT32 ||
+                existingFamily == PropertyType::UINT32) &&
+               (newFamily == PropertyType::INT32 ||
+                newFamily == PropertyType::UINT32)) {
       // Store 32-bit int/uint using existing family's storage
       auto *data = static_cast<int32_t *>(arr.data);
       if constexpr (std::is_same_v<T, int> || std::is_same_v<T, unsigned int>) {
-        data[index] = *reinterpret_cast<const int32_t*>(&value);
+        data[index] = *reinterpret_cast<const int32_t *>(&value);
       } else {
-        throw ValueErrorException("Type mismatch in setSingleProp for 32-bit integer");
+        throw ValueErrorException(
+            "Type mismatch in setSingleProp for 32-bit integer");
       }
-    } else if ((existingFamily == PropertyType::INT64 || existingFamily == PropertyType::UINT64) &&
-               (newFamily == PropertyType::INT64 || newFamily == PropertyType::UINT64)) {
+    } else if ((existingFamily == PropertyType::INT64 ||
+                existingFamily == PropertyType::UINT64) &&
+               (newFamily == PropertyType::INT64 ||
+                newFamily == PropertyType::UINT64)) {
       // Store 64-bit int/uint using existing family's storage
       auto *data = static_cast<int64_t *>(arr.data);
       if constexpr (std::is_same_v<T, int64_t> || std::is_same_v<T, uint64_t>) {
-        data[index] = *reinterpret_cast<const int64_t*>(&value);
+        data[index] = *reinterpret_cast<const int64_t *>(&value);
       } else {
-        throw ValueErrorException("Type mismatch in setSingleProp for 64-bit integer");
+        throw ValueErrorException(
+            "Type mismatch in setSingleProp for 64-bit integer");
       }
     } else {
       // Exact type match
@@ -1937,8 +2005,9 @@ public:
   }
 
   template <typename T>
-  bool getArrayPropIfPresent(const PropToken& name, Scope scope, std::uint32_t index, T& res) const {
-    const Property* prop = findProp(name, scope);
+  bool getArrayPropIfPresent(const PropToken &name, Scope scope,
+                             std::uint32_t index, T &res) const {
+    const Property *prop = findProp(name, scope);
     if (prop == nullptr) {
       return false;
     }
@@ -1966,10 +2035,12 @@ public:
   //! If confId is -1, all conformers are copied.
   //! If confId is positive, only the conformer with that id is copied,
   //! or none, if no conformer exists with that id.
-  void copyConformersFromCompatibilityData(const CompatibilityData* compatData, int confId = -1) const;
+  void copyConformersFromCompatibilityData(const CompatibilityData *compatData,
+                                           int confId = -1) const;
   //! Pulls positions and metadata from compatibility data to conformers.
-  void copyConformersToCompatibilityData(CompatibilityData* compatData) const;
-  //! Manually tell rdmol that the compat data conformers may have been modified.
+  void copyConformersToCompatibilityData(CompatibilityData *compatData) const;
+  //! Manually tell rdmol that the compat data conformers may have been
+  //! modified.
   void markConformersAsCompatModified() const;
 
   int calculateExplicitValence(atomindex_t atomIndex, bool strict,
@@ -1983,37 +2054,36 @@ public:
   bool hasCompatibilityData() const {
     return compatibilityData.load(std::memory_order_relaxed) != nullptr;
   }
-  CompatibilityData* getCompatibilityDataIfPresent() {
+  CompatibilityData *getCompatibilityDataIfPresent() {
     return compatibilityData.load(std::memory_order_relaxed);
   }
-  const CompatibilityData* getCompatibilityDataIfPresent() const {
+  const CompatibilityData *getCompatibilityDataIfPresent() const {
     return compatibilityData.load(std::memory_order_relaxed);
   }
-  CompatibilityData* ensureCompatInit() const;
+  CompatibilityData *ensureCompatInit() const;
   void clearBondStereoAtomsCompat(uint32_t bondIndex);
   bool hasBondStereoAtomsCompat(uint32_t bondIndex) const;
-  const INT_VECT* getBondStereoAtomsCompat(uint32_t bondIndex) const;
-  INT_VECT* getBondStereoAtomsCompat(uint32_t bondIndex);
-  Atom* getAtomCompat(uint32_t atomIndex);
-  const Atom* getAtomCompat(uint32_t atomIndex) const;
-  Bond* getBondCompat(uint32_t bondIndex);
-  const Bond* getBondCompat(uint32_t bondIndex) const;
+  const INT_VECT *getBondStereoAtomsCompat(uint32_t bondIndex) const;
+  INT_VECT *getBondStereoAtomsCompat(uint32_t bondIndex);
+  Atom *getAtomCompat(uint32_t atomIndex);
+  const Atom *getAtomCompat(uint32_t atomIndex) const;
+  Bond *getBondCompat(uint32_t bondIndex);
+  const Bond *getBondCompat(uint32_t bondIndex) const;
   void releaseCompatMolOwnership();
   //! Set atom, bond, conformer pointers to be owned by this RDMol. Required for
   //! move operation ownership transfer.
   void setCompatPointersToSelf();
   //! Sets the compatibililty data ROMol pointer.
-  void setROMolPointerCompat(ROMol* ptr);
+  void setROMolPointerCompat(ROMol *ptr);
 
-  std::list<Atom *>& getAtomBookmarksCompat(int mark);
-  std::list<Bond *>& getBondBookmarksCompat(int mark);
+  std::list<Atom *> &getAtomBookmarksCompat(int mark);
+  std::list<Bond *> &getBondBookmarksCompat(int mark);
 
-  std::map<int, std::list<Atom *>>* getAtomBookmarksCompat();
-  std::map<int, std::list<Bond *>>* getBondBookmarksCompat();
+  std::map<int, std::list<Atom *>> *getAtomBookmarksCompat();
+  std::map<int, std::list<Bond *>> *getBondBookmarksCompat();
 
-
-  std::list<boost::shared_ptr<Conformer>>& getConformersCompat();
-  const std::list<boost::shared_ptr<Conformer>>& getConformersCompat() const;
+  std::list<boost::shared_ptr<Conformer>> &getConformersCompat();
+  const std::list<boost::shared_ptr<Conformer>> &getConformersCompat() const;
 
   RingInfo &getRingInfoCompat();
   const RingInfo &getRingInfoCompat() const;
@@ -2023,10 +2093,10 @@ public:
 
   // Replaces an atom handle in compatibility data. Cleans up previous data mol.
   // Does not copy any data, but replaces pointers in compatibility structures.
-  void replaceAtomPointerCompat(Atom* atom, uint32_t index);
+  void replaceAtomPointerCompat(Atom *atom, uint32_t index);
   // Replaces a bond handle in compatibility data. Cleans up previous data mol.
   // Does not copy any data, but replaces pointers in compatibility structures.
-  void replaceBondPointerCompat(Bond* atom, uint32_t index);
+  void replaceBondPointerCompat(Bond *atom, uint32_t index);
 
   // source can be owned by a different RDMol, but null means to copy from
   // this RDMol's compatibilityData.
@@ -2039,112 +2109,121 @@ public:
 
   // This only wraps query and sets the wrapper into atomQueries.
   // Called from QueryAtom, which must have already updated its Query
-  void setAtomQueryCompat(atomindex_t atomIndex, Queries::Query<int, const Atom *, true> *query);
+  void setAtomQueryCompat(atomindex_t atomIndex,
+                          Queries::Query<int, const Atom *, true> *query);
 
   // This only wraps query and sets the wrapper into bondQueries.
   // Called from QueryBond, which must have already updated its Query
-  void setBondQueryCompat(uint32_t bondIndex, Queries::Query<int, const Bond *, true> *query);
+  void setBondQueryCompat(uint32_t bondIndex,
+                          Queries::Query<int, const Bond *, true> *query);
 
-  // This forces the specified atom to be a QueryAtom, sets its query to this, taking ownership,
-  // and then also wraps it and sets the wrapper into atomQueries.
+  // This forces the specified atom to be a QueryAtom, sets its query to this,
+  // taking ownership, and then also wraps it and sets the wrapper into
+  // atomQueries.
   void setAtomQueryCompatFull(atomindex_t atomIndex,
                               Queries::Query<int, const Atom *, true> *query);
 
-  // This forces the specified bond to be a QueryBond, sets its query to this, taking ownership,
-  // and then also wraps it and sets the wrapper into bondQueries.
+  // This forces the specified bond to be a QueryBond, sets its query to this,
+  // taking ownership, and then also wraps it and sets the wrapper into
+  // bondQueries.
   void setBondQueryCompatFull(uint32_t bondIndex,
                               Queries::Query<int, const Bond *, true> *query);
 };
 
-
-template<bool ISCONST>
+template <bool ISCONST>
 class RDMolWrapperBase {
  protected:
   using MolType = std::conditional_t<ISCONST, const RDMol, RDMol>;
 
  private:
-  MolType* d_mol;
+  MolType *d_mol;
   uint32_t d_index;
 
  protected:
   RDMolWrapperBase() : d_mol(nullptr), d_index(0) {}
-  RDMolWrapperBase(MolType* mol, uint32_t index)
-      : d_mol(mol), d_index(index) {}
-  RDMolWrapperBase(const RDMolWrapperBase&) = default;
-  RDMolWrapperBase& operator=(const RDMolWrapperBase&) = default;
+  RDMolWrapperBase(MolType *mol, uint32_t index) : d_mol(mol), d_index(index) {}
+  RDMolWrapperBase(const RDMolWrapperBase &) = default;
+  RDMolWrapperBase &operator=(const RDMolWrapperBase &) = default;
+
  public:
   bool isValid() const { return (d_mol != nullptr); }
-  MolType& mol() { return *d_mol; }
-  const RDMol& mol() const { return *d_mol; }
+  MolType &mol() { return *d_mol; }
+  const RDMol &mol() const { return *d_mol; }
   uint32_t index() const { return d_index; }
 };
 
-template<bool ISCONST>
+template <bool ISCONST>
 class RDMolAtomBase : public RDMolWrapperBase<ISCONST> {
   using MolType = typename RDMolWrapperBase<ISCONST>::MolType;
+
  protected:
   RDMolAtomBase() : RDMolWrapperBase<ISCONST>() {}
-  RDMolAtomBase(MolType* mol, uint32_t atomIndex) : RDMolWrapperBase<ISCONST>(mol, atomIndex) {}
-  RDMolAtomBase(const RDMolAtomBase&) = default;
-  RDMolAtomBase& operator=(const RDMolAtomBase&) = default;
+  RDMolAtomBase(MolType *mol, uint32_t atomIndex)
+      : RDMolWrapperBase<ISCONST>(mol, atomIndex) {}
+  RDMolAtomBase(const RDMolAtomBase &) = default;
+  RDMolAtomBase &operator=(const RDMolAtomBase &) = default;
 };
 
 class ConstRDMolAtom : public RDMolAtomBase<true> {
  public:
   ConstRDMolAtom() : RDMolAtomBase() {}
-  ConstRDMolAtom(const RDMol* mol, uint32_t atomIndex) : RDMolAtomBase(mol, atomIndex) {}
-  ConstRDMolAtom(const ConstRDMolAtom&) = default;
-  ConstRDMolAtom& operator=(const ConstRDMolAtom&) = default;
-  ConstRDMolAtom(const RDMolAtom&);
+  ConstRDMolAtom(const RDMol *mol, uint32_t atomIndex)
+      : RDMolAtomBase(mol, atomIndex) {}
+  ConstRDMolAtom(const ConstRDMolAtom &) = default;
+  ConstRDMolAtom &operator=(const ConstRDMolAtom &) = default;
+  ConstRDMolAtom(const RDMolAtom &);
 
-  const AtomData& data() const { return mol().getAtom(index()); }
+  const AtomData &data() const { return mol().getAtom(index()); }
 };
 
 class RDMolAtom : public RDMolAtomBase<false> {
  public:
   RDMolAtom() : RDMolAtomBase() {}
-  RDMolAtom(RDMol* mol, uint32_t atomIndex) : RDMolAtomBase(mol, atomIndex) {}
-  RDMolAtom(const RDMolAtom&) = default;
-  RDMolAtom& operator=(const RDMolAtom&) = default;
+  RDMolAtom(RDMol *mol, uint32_t atomIndex) : RDMolAtomBase(mol, atomIndex) {}
+  RDMolAtom(const RDMolAtom &) = default;
+  RDMolAtom &operator=(const RDMolAtom &) = default;
 
-  AtomData& data() { return mol().getAtom(index()); }
+  AtomData &data() { return mol().getAtom(index()); }
 };
 
-inline ConstRDMolAtom::ConstRDMolAtom(const RDMolAtom& other)
+inline ConstRDMolAtom::ConstRDMolAtom(const RDMolAtom &other)
     : RDMolAtomBase(&other.mol(), other.index()) {}
 
-template<bool ISCONST>
+template <bool ISCONST>
 class RDMolBondBase : public RDMolWrapperBase<ISCONST> {
   using MolType = typename RDMolWrapperBase<ISCONST>::MolType;
+
  protected:
   RDMolBondBase() : RDMolWrapperBase<ISCONST>() {}
-  RDMolBondBase(MolType* mol, uint32_t bondIndex) : RDMolWrapperBase<ISCONST>(mol, bondIndex) {}
-  RDMolBondBase(const RDMolBondBase&) = default;
-  RDMolBondBase& operator=(const RDMolBondBase&) = default;
+  RDMolBondBase(MolType *mol, uint32_t bondIndex)
+      : RDMolWrapperBase<ISCONST>(mol, bondIndex) {}
+  RDMolBondBase(const RDMolBondBase &) = default;
+  RDMolBondBase &operator=(const RDMolBondBase &) = default;
 };
 
 class ConstRDMolBond : public RDMolBondBase<true> {
  public:
   ConstRDMolBond() : RDMolBondBase() {}
-  ConstRDMolBond(const RDMol* mol, uint32_t bondIndex) : RDMolBondBase(mol, bondIndex) {}
-  ConstRDMolBond(const ConstRDMolBond&) = default;
-  ConstRDMolBond& operator=(const ConstRDMolBond&) = default;
-  ConstRDMolBond(const RDMolBond&);
+  ConstRDMolBond(const RDMol *mol, uint32_t bondIndex)
+      : RDMolBondBase(mol, bondIndex) {}
+  ConstRDMolBond(const ConstRDMolBond &) = default;
+  ConstRDMolBond &operator=(const ConstRDMolBond &) = default;
+  ConstRDMolBond(const RDMolBond &);
 
-  const BondData& data() const { return mol().getBond(index()); }
+  const BondData &data() const { return mol().getBond(index()); }
 };
 
 class RDMolBond : public RDMolBondBase<false> {
  public:
   RDMolBond() : RDMolBondBase() {}
-  RDMolBond(RDMol* mol, uint32_t bondIndex) : RDMolBondBase(mol, bondIndex) {}
-  RDMolBond(const RDMolBond&) = default;
-  RDMolBond& operator=(const RDMolBond&) = default;
+  RDMolBond(RDMol *mol, uint32_t bondIndex) : RDMolBondBase(mol, bondIndex) {}
+  RDMolBond(const RDMolBond &) = default;
+  RDMolBond &operator=(const RDMolBond &) = default;
 
-  BondData& data() { return mol().getBond(index()); }
+  BondData &data() { return mol().getBond(index()); }
 };
 
-inline ConstRDMolBond::ConstRDMolBond(const RDMolBond& other)
+inline ConstRDMolBond::ConstRDMolBond(const RDMolBond &other)
     : RDMolBondBase(&other.mol(), other.index()) {}
 
 namespace Ranges {
@@ -2155,8 +2234,8 @@ class IndexIter {
   MolType *d_mol;
   uint32_t d_index;
 
-  using value_type = std::conditional_t<ISBOND,
-      std::conditional_t<ISCONST, ConstRDMolBond, RDMolBond>,
+  using value_type = std::conditional_t<
+      ISBOND, std::conditional_t<ISCONST, ConstRDMolBond, RDMolBond>,
       std::conditional_t<ISCONST, ConstRDMolAtom, RDMolAtom>>;
   using iterator_category = std::forward_iterator_tag;
 
@@ -2210,8 +2289,8 @@ class IndirectIter {
   MolType *d_mol;
   const uint32_t *d_indices;
 
-  using value_type = std::conditional_t<ISBOND,
-      std::conditional_t<ISCONST, ConstRDMolBond, RDMolBond>,
+  using value_type = std::conditional_t<
+      ISBOND, std::conditional_t<ISCONST, ConstRDMolBond, RDMolBond>,
       std::conditional_t<ISCONST, ConstRDMolAtom, RDMolAtom>>;
   using iterator_category = std::forward_iterator_tag;
 
@@ -2253,7 +2332,7 @@ class IndirectRange {
 
   friend class RDKit::RDMol;
   IndirectRange(MolType *mol, const uint32_t *beginIndices,
-                     const uint32_t *endIndices)
+                const uint32_t *endIndices)
       : d_mol(mol), d_begin(beginIndices), d_end(endIndices) {}
 
  public:
@@ -2277,19 +2356,23 @@ inline Ranges::IndexRange<true, false> RDMol::bonds() {
 inline Ranges::IndexRange<true, true> RDMol::bonds() const {
   return Ranges::IndexRange<true, true>(this);
 }
-inline Ranges::IndirectRange<false, false> RDMol::atomNeighbors(atomindex_t atomIndex) {
+inline Ranges::IndirectRange<false, false> RDMol::atomNeighbors(
+    atomindex_t atomIndex) {
   auto [begin, end] = getAtomNeighbors(atomIndex);
   return Ranges::IndirectRange<false, false>(this, begin, end);
 }
-inline Ranges::IndirectRange<false, true> RDMol::atomNeighbors(atomindex_t atomIndex) const {
+inline Ranges::IndirectRange<false, true> RDMol::atomNeighbors(
+    atomindex_t atomIndex) const {
   auto [begin, end] = getAtomNeighbors(atomIndex);
   return Ranges::IndirectRange<false, true>(this, begin, end);
 }
-inline Ranges::IndirectRange<true, false> RDMol::atomBonds(atomindex_t atomIndex) {
+inline Ranges::IndirectRange<true, false> RDMol::atomBonds(
+    atomindex_t atomIndex) {
   auto [begin, end] = getAtomBonds(atomIndex);
   return Ranges::IndirectRange<true, false>(this, begin, end);
 }
-inline Ranges::IndirectRange<true, true> RDMol::atomBonds(atomindex_t atomIndex) const {
+inline Ranges::IndirectRange<true, true> RDMol::atomBonds(
+    atomindex_t atomIndex) const {
   auto [begin, end] = getAtomBonds(atomIndex);
   return Ranges::IndirectRange<true, true>(this, begin, end);
 }

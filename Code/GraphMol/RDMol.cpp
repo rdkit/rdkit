@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2025 NVIDIA Corporation & Affiliates and other RDKit contributors
+//  Copyright (C) 2025 NVIDIA Corporation & Affiliates and other RDKit
+//  contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -34,9 +35,10 @@ class RDKIT_QUERY_EXPORT NonCompatQuery;
 //! atom/bond types, for example, when constructing CompatibilityData, or when
 //! setting a Query when CompatibilityData already exists.
 //!
-//! It's unlikely, but possible, for callers to call the modification functions, so they need
-//! to work, but don't need to be efficient. This also needs to reflect changes applied to the
-//! other Query. If callers hold onto pointers to both, that's not feasible to support, though.
+//! It's unlikely, but possible, for callers to call the modification functions,
+//! so they need to work, but don't need to be efficient. This also needs to
+//! reflect changes applied to the other Query. If callers hold onto pointers to
+//! both, that's not feasible to support, though.
 template <class CompatType>
 class RDKIT_QUERY_EXPORT CompatQuery : public Query<int, CompatType, true> {
  public:
@@ -44,8 +46,10 @@ class RDKIT_QUERY_EXPORT CompatQuery : public Query<int, CompatType, true> {
   using DataFuncArgType = CompatType;
   static constexpr bool needsConversion = true;
   using BASE = Query<int, CompatType, true>;
-  static constexpr bool isAtom = std::is_same_v<CompatType, const RDKit::Atom *>;
-  using NonCompatType = std::conditional_t<isAtom, RDKit::ConstRDMolAtom, RDKit::ConstRDMolBond>;
+  static constexpr bool isAtom =
+      std::is_same_v<CompatType, const RDKit::Atom *>;
+  using NonCompatType =
+      std::conditional_t<isAtom, RDKit::ConstRDMolAtom, RDKit::ConstRDMolBond>;
   using INNER_TYPE = Query<int, NonCompatType, true>;
 
   INNER_TYPE *inner;
@@ -75,7 +79,8 @@ class RDKIT_QUERY_EXPORT CompatQuery : public Query<int, CompatType, true> {
     PRECONDITION(BASE::d_children.size() == 0,
                  "Children must be added to the inner query, not this");
     // This copy will own the inner query
-    CompatQuery<CompatType> *res = new CompatQuery<CompatType>(inner->copy(), true);
+    CompatQuery<CompatType> *res =
+        new CompatQuery<CompatType>(inner->copy(), true);
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
@@ -84,7 +89,8 @@ class RDKIT_QUERY_EXPORT CompatQuery : public Query<int, CompatType, true> {
   void setMatchFunc([[maybe_unused]] bool (*what)(MatchFuncArgType)) override {
     raiseNonImplementedFunction("CompatQuery::setMatchFunc");
   }
-  void setDataFunc([[maybe_unused]] MatchFuncArgType(*what)(DataFuncArgType)) override {
+  void setDataFunc(
+      [[maybe_unused]] MatchFuncArgType (*what)(DataFuncArgType)) override {
     raiseNonImplementedFunction("CompatQuery::setDataFunc");
   }
   void setNegation(bool what) override { inner->setNegation(what); }
@@ -94,16 +100,20 @@ class RDKIT_QUERY_EXPORT CompatQuery : public Query<int, CompatType, true> {
 };
 
 //! This class is for wrapping an existing Query that was created using the
-//! compatibility atom/bond types, for example, when QueryAtom::setQuery is called.
+//! compatibility atom/bond types, for example, when QueryAtom::setQuery is
+//! called.
 template <class NonCompatType>
-class RDKIT_QUERY_EXPORT NonCompatQuery : public Query<int, NonCompatType, true> {
+class RDKIT_QUERY_EXPORT NonCompatQuery
+    : public Query<int, NonCompatType, true> {
  public:
   using MatchFuncArgType = int;
   using DataFuncArgType = NonCompatType;
   static constexpr bool needsConversion = true;
   using BASE = Query<int, NonCompatType, true>;
-  static constexpr bool isAtom = std::is_same_v<NonCompatType, RDKit::ConstRDMolAtom>;
-  using CompatType = std::conditional_t<isAtom, const RDKit::Atom *, const RDKit::Bond *>;
+  static constexpr bool isAtom =
+      std::is_same_v<NonCompatType, RDKit::ConstRDMolAtom>;
+  using CompatType =
+      std::conditional_t<isAtom, const RDKit::Atom *, const RDKit::Bond *>;
   using INNER_TYPE = Query<int, CompatType, true>;
 
   INNER_TYPE *inner;
@@ -146,7 +156,8 @@ class RDKIT_QUERY_EXPORT NonCompatQuery : public Query<int, NonCompatType, true>
   void setMatchFunc([[maybe_unused]] bool (*what)(MatchFuncArgType)) override {
     raiseNonImplementedFunction("NonCompatQuery::setMatchFunc");
   }
-  void setDataFunc([[maybe_unused]] MatchFuncArgType(*what)(DataFuncArgType)) override {
+  void setDataFunc(
+      [[maybe_unused]] MatchFuncArgType (*what)(DataFuncArgType)) override {
     raiseNonImplementedFunction("NonCompatQuery::setDataFunc");
   }
   void setNegation(bool what) override { inner->setNegation(what); }
@@ -171,15 +182,18 @@ Query<int,
                          const RDKit::Atom *, const RDKit::Bond *>,
       true> *
 makeNewCompatQuery(Query<int, NonCompatType, true> *inner) {
-  static constexpr bool isAtom = std::is_same_v<NonCompatType, RDKit::ConstRDMolAtom>;
-  using CompatType = std::conditional_t<isAtom, const RDKit::Atom *, const RDKit::Bond *>;
+  static constexpr bool isAtom =
+      std::is_same_v<NonCompatType, RDKit::ConstRDMolAtom>;
+  using CompatType =
+      std::conditional_t<isAtom, const RDKit::Atom *, const RDKit::Bond *>;
   using INNER_TYPE = NonCompatQuery<NonCompatType>;
   using OUTER_TYPE = CompatQuery<CompatType>;
   auto *nonCompatInner = dynamic_cast<INNER_TYPE *>(inner);
   if (nonCompatInner != nullptr) {
     // Don't re-wrap if already wrapped
     if (nonCompatInner->ownsInner) {
-      // This was from a copy, so take ownership of inner, to avoid duplicating it again
+      // This was from a copy, so take ownership of inner, to avoid duplicating
+      // it again
       nonCompatInner->ownsInner = false;
       return nonCompatInner->inner;
     }
@@ -197,17 +211,20 @@ Query<int,
       true> *
 makeNewNonCompatQuery(Query<int, CompatType, true> *inner) {
   if (inner == nullptr) {
-     return nullptr;
+    return nullptr;
   }
-  static constexpr bool isAtom = std::is_same_v<CompatType, const RDKit::Atom *>;
-  using NonCompatType = std::conditional_t<isAtom, RDKit::ConstRDMolAtom, RDKit::ConstRDMolBond>;
+  static constexpr bool isAtom =
+      std::is_same_v<CompatType, const RDKit::Atom *>;
+  using NonCompatType =
+      std::conditional_t<isAtom, RDKit::ConstRDMolAtom, RDKit::ConstRDMolBond>;
   using INNER_TYPE = CompatQuery<CompatType>;
   using OUTER_TYPE = NonCompatQuery<NonCompatType>;
   auto *compatInner = dynamic_cast<INNER_TYPE *>(inner);
   if (compatInner != nullptr) {
     // Don't re-wrap if already wrapped
     if (compatInner->ownsInner) {
-      // This was from a copy, so take ownership of inner, to avoid duplicating it again
+      // This was from a copy, so take ownership of inner, to avoid duplicating
+      // it again
       compatInner->ownsInner = false;
       return compatInner->inner;
     }
@@ -236,13 +253,16 @@ double AtomData::getMass() const {
 
 namespace {
 
-enum class CompatSyncStatus { lastUpdatedRDMol = 0, lastUpdatedCompat, inSync };
+enum class CompatSyncStatus {
+  lastUpdatedRDMol = 0,
+  lastUpdatedCompat,
+  inSync
+};
 
-void copyRingInfoToCompatibilityData(
-    const RingInfoCache &input,
-    RingInfo &output,
-    [[maybe_unused]] uint32_t numAtoms,
-    [[maybe_unused]] uint32_t numBonds) {
+void copyRingInfoToCompatibilityData(const RingInfoCache &input,
+                                     RingInfo &output,
+                                     [[maybe_unused]] uint32_t numAtoms,
+                                     [[maybe_unused]] uint32_t numBonds) {
   output.reset();
 
   // This handles the case where input is uninitialized, in case
@@ -293,7 +313,8 @@ void copyRingInfoFromCompatibilityData(const RingInfo &input,
   for (size_t i = 0; i < numRings; ++i) {
     output.ringBegins.push_back(offset);
     offset += atomRings[i].size();
-    PRECONDITION(atomRings[i].size() == bondRings[i].size(), "atom vs. bond ring mismatch");
+    PRECONDITION(atomRings[i].size() == bondRings[i].size(),
+                 "atom vs. bond ring mismatch");
   }
   const size_t totalSize = offset;
   output.ringBegins.push_back(totalSize);
@@ -393,7 +414,8 @@ struct RDMol::CompatibilityData {
       if (!existingROMolPtr->d_ownedBySelf) {
         auto rwmolPtr = dynamic_cast<RWMol *>(existingROMolPtr);
         if (!rwmolPtr) {
-          throw ValueErrorException("Existing ROMol ptr must be an RWMol if not owned by self");
+          throw ValueErrorException(
+              "Existing ROMol ptr must be an RWMol if not owned by self");
         }
         mol.reset(rwmolPtr);
       }
@@ -446,8 +468,7 @@ struct RDMol::CompatibilityData {
         conformer->getPositions().push_back(RDGeom::Point3D(
             conformerPositions[conformerOffset + 3 * atomIndex + 0],
             conformerPositions[conformerOffset + 3 * atomIndex + 1],
-            conformerPositions[conformerOffset + 3 * atomIndex + 2]
-            ));
+            conformerPositions[conformerOffset + 3 * atomIndex + 2]));
       }
       if (rdmol.conformerIdsAndFlags.size() > 0) {
         conformer->setId(rdmol.conformerIdsAndFlags[conformerIndex].id);
@@ -478,15 +499,14 @@ struct RDMol::CompatibilityData {
     }
   }
 
-  ~CompatibilityData() {
-    delete stereoGroups.load(std::memory_order_relaxed);
-  }
+  ~CompatibilityData() { delete stereoGroups.load(std::memory_order_relaxed); }
 
   // Copy conformers (including properties) from another CompatibilityData
   void copyConformersFrom(const CompatibilityData *source) {
     conformers.clear();
-    for (const auto& otherConf : source->conformers) {
-      auto *confCopy = new Conformer(*otherConf);  // Copy constructor preserves properties
+    for (const auto &otherConf : source->conformers) {
+      auto *confCopy =
+          new Conformer(*otherConf);  // Copy constructor preserves properties
       confCopy->setOwningMol(compatMol);
       conformers.push_back(CONFORMER_SPTR(confCopy));
     }
@@ -516,7 +536,7 @@ void RDMol::setCompatPointersToSelf() {
   ensureCompatInit()->setNewOwner(*this);
 }
 
-void RDMol::setROMolPointerCompat(ROMol* ptr) {
+void RDMol::setROMolPointerCompat(ROMol *ptr) {
   auto *compat = ensureCompatInit();
   compat->compatMol = ptr;
   if (!ptr->d_ownedBySelf) {
@@ -546,29 +566,29 @@ const Bond *RDMol::getBondCompat(uint32_t bondIndex) const {
   return ensureCompatInit()->bonds[bondIndex].get();
 }
 
-std::list<Atom *>& RDMol::getAtomBookmarksCompat(int mark) {
-  RDMol::CompatibilityData* compat = ensureCompatInit();
+std::list<Atom *> &RDMol::getAtomBookmarksCompat(int mark) {
+  RDMol::CompatibilityData *compat = ensureCompatInit();
   auto found = compat->atomBookmarks.find(mark);
   PRECONDITION(found != compat->atomBookmarks.end(),
                "No atom bookmark with mark " + std::to_string(mark));
   return found->second;
 }
 
-std::list<Bond *>& RDMol::getBondBookmarksCompat(int mark) {
-  RDMol::CompatibilityData* compat = ensureCompatInit();
+std::list<Bond *> &RDMol::getBondBookmarksCompat(int mark) {
+  RDMol::CompatibilityData *compat = ensureCompatInit();
   auto found = compat->bondBookmarks.find(mark);
   PRECONDITION(found != compat->bondBookmarks.end(),
                "No bond bookmark with mark " + std::to_string(mark));
   return found->second;
 }
 
-std::map<int, std::list<Atom *>>* RDMol::getAtomBookmarksCompat() {
-  RDMol::CompatibilityData* compat = ensureCompatInit();
+std::map<int, std::list<Atom *>> *RDMol::getAtomBookmarksCompat() {
+  RDMol::CompatibilityData *compat = ensureCompatInit();
   return &compat->atomBookmarks;
 }
 
-std::map<int, std::list<Bond *>>* RDMol::getBondBookmarksCompat() {
-  RDMol::CompatibilityData* compat = ensureCompatInit();
+std::map<int, std::list<Bond *>> *RDMol::getBondBookmarksCompat() {
+  RDMol::CompatibilityData *compat = ensureCompatInit();
   return &compat->bondBookmarks;
 }
 
@@ -580,7 +600,8 @@ void RDMol::setAtomQueryCompat(atomindex_t atomIndex,
   atomQueries[atomIndex].reset(makeNewNonCompatQuery(query));
 }
 
-void RDMol::setBondQueryCompat(uint32_t bondIndex, Bond::QUERYBOND_QUERY *query) {
+void RDMol::setBondQueryCompat(uint32_t bondIndex,
+                               Bond::QUERYBOND_QUERY *query) {
   if (bondQueries.size() != getNumBonds()) {
     bondQueries.resize(getNumBonds());
   }
@@ -617,25 +638,24 @@ void RDMol::setBondQueryCompatFull(
   setBondQueryCompat(bondIndex, query);
 }
 
-
 void RDMol::clearBondStereoAtomsCompat(uint32_t bondIndex) {
   ensureCompatInit()->bondStereoAtoms[bondIndex]->clear();
 }
 bool RDMol::hasBondStereoAtomsCompat(uint32_t bondIndex) const {
   return !ensureCompatInit()->bondStereoAtoms[bondIndex]->empty();
 }
-const INT_VECT* RDMol::getBondStereoAtomsCompat(uint32_t bondIndex) const {
+const INT_VECT *RDMol::getBondStereoAtomsCompat(uint32_t bondIndex) const {
   // Because RDMol::setBondStereoAtoms and RDMol::clearBondStereoAtoms update
   // these lists, no synchronization is needed here.
   return ensureCompatInit()->bondStereoAtoms[bondIndex].get();
 }
-INT_VECT* RDMol::getBondStereoAtomsCompat(uint32_t bondIndex) {
+INT_VECT *RDMol::getBondStereoAtomsCompat(uint32_t bondIndex) {
   // Because RDMol::setBondStereoAtoms and RDMol::clearBondStereoAtoms update
   // these lists, no synchronization is needed here.
   return ensureCompatInit()->bondStereoAtoms[bondIndex].get();
 }
 
-void RDMol::replaceAtomPointerCompat(Atom* atom, uint32_t index) {
+void RDMol::replaceAtomPointerCompat(Atom *atom, uint32_t index) {
   PRECONDITION(atom->dp_owningMol == nullptr || atom->dp_owningMol == this,
                "Atom cannot have another owning mol");
   PRECONDITION(atom->dp_dataMol != this, "About to delete this RDMol");
@@ -682,7 +702,7 @@ void RDMol::replaceAtomPointerCompat(Atom* atom, uint32_t index) {
   }
 }
 
-void RDMol::replaceBondPointerCompat(Bond* bond, uint32_t index) {
+void RDMol::replaceBondPointerCompat(Bond *bond, uint32_t index) {
   PRECONDITION(bond->dp_owningMol == nullptr || bond->dp_owningMol == this,
                "Bond cannot have another owning mol");
   PRECONDITION(bond->dp_dataMol != this, "About to delete this RDMol");
@@ -795,36 +815,37 @@ void initCompatForReadHelper(std::atomic<CompatSyncStatus> &syncStatus,
   }
 }
 
-ROMol::CONF_SPTR_LIST& RDMol::getConformersCompat() {
+ROMol::CONF_SPTR_LIST &RDMol::getConformersCompat() {
   auto *const compat = ensureCompatInit();
   initCompatForWriteHelper<true>(
       compat->conformerSyncStatus, compatibilityMutex,
       [&]() { copyConformersToCompatibilityData(compat); });
   return compat->conformers;
 }
-const ROMol::CONF_SPTR_LIST& RDMol::getConformersCompat() const {
+const ROMol::CONF_SPTR_LIST &RDMol::getConformersCompat() const {
   auto *const compat = ensureCompatInit();
-  initCompatForReadHelper<true>(compat->conformerSyncStatus, compatibilityMutex,
-                          [&]() { copyConformersToCompatibilityData(compat); });
+  initCompatForReadHelper<true>(
+      compat->conformerSyncStatus, compatibilityMutex,
+      [&]() { copyConformersToCompatibilityData(compat); });
   return compat->conformers;
 }
 
 RingInfo &RDMol::getRingInfoCompat() {
   auto *const compat = ensureCompatInit();
   initCompatForWriteHelper<true>(
-    compat->ringInfoSyncStatus, compatibilityMutex, [&]() {
-      copyRingInfoToCompatibilityData(ringInfo, *compat->ringInfo,
-                                      getNumAtoms(), getNumBonds());
-  });
+      compat->ringInfoSyncStatus, compatibilityMutex, [&]() {
+        copyRingInfoToCompatibilityData(ringInfo, *compat->ringInfo,
+                                        getNumAtoms(), getNumBonds());
+      });
   return *compat->ringInfo;
 }
 const RingInfo &RDMol::getRingInfoCompat() const {
   auto *const compat = ensureCompatInit();
   initCompatForReadHelper<true>(
-    compat->ringInfoSyncStatus, compatibilityMutex, [&]() {
-      copyRingInfoToCompatibilityData(ringInfo, *compat->ringInfo,
-                                      getNumAtoms(), getNumBonds());
-  });
+      compat->ringInfoSyncStatus, compatibilityMutex, [&]() {
+        copyRingInfoToCompatibilityData(ringInfo, *compat->ringInfo,
+                                        getNumAtoms(), getNumBonds());
+      });
   return *compat->ringInfo;
 }
 
@@ -834,12 +855,11 @@ const std::vector<StereoGroup> &RDMol::getStereoGroupsCompat() {
   // First, try without locking
   // We can do a relaxed load of the pointer, because accessing the other data
   // requires dereferencing the pointer, so would all be dependent reads.
-  auto *stereoGroupsData =
-      compat->stereoGroups.load(std::memory_order_relaxed);
+  auto *stereoGroupsData = compat->stereoGroups.load(std::memory_order_relaxed);
 
   // Check if we need to repopulate (either nullptr or empty after clear)
-  bool needsRepopulate = (stereoGroupsData == nullptr) ||
-                          (stereoGroupsData->size() == 0);
+  bool needsRepopulate =
+      (stereoGroupsData == nullptr) || (stereoGroupsData->size() == 0);
 
   if (!needsRepopulate) {
     return *stereoGroupsData;
@@ -848,8 +868,8 @@ const std::vector<StereoGroup> &RDMol::getStereoGroupsCompat() {
   std::lock_guard<std::mutex> lock_scope(compatibilityMutex);
   // Check again after locking
   stereoGroupsData = compat->stereoGroups.load(std::memory_order_relaxed);
-  needsRepopulate = (stereoGroupsData == nullptr) ||
-                    (stereoGroupsData->size() == 0);
+  needsRepopulate =
+      (stereoGroupsData == nullptr) || (stereoGroupsData->size() == 0);
 
   if (!needsRepopulate) {
     return *stereoGroupsData;
@@ -889,9 +909,10 @@ const std::vector<StereoGroup> &RDMol::getStereoGroupsCompat() {
         bondPtrs.push_back(compat->bonds[bondIndices[j]].get());
       }
       stereoGroupsData->emplace_back(types[i], std::move(atomPtrs),
-                                std::move(bondPtrs),
-                                stereoGroups->readIds[i]);
-      // Set writeId BEFORE setOwningMol to avoid marking as modified during initialization
+                                     std::move(bondPtrs),
+                                     stereoGroups->readIds[i]);
+      // Set writeId BEFORE setOwningMol to avoid marking as modified during
+      // initialization
       stereoGroupsData->back().setWriteId(stereoGroups->writeIds[i]);
       // Now set the owner so future setWriteId calls will mark as modified
       stereoGroupsData->back().setOwningMol(compat->compatMol);
@@ -936,7 +957,7 @@ void RDMol::copyFromCompatibilityData(const CompatibilityData *source,
       std::vector<int> atomIndices;
       atomIndices.reserve(sourcePair.second.size());
       for (const auto *atom : sourcePair.second) {
-            atomIndices.push_back(atom->getIdx());
+        atomIndices.push_back(atom->getIdx());
       }
       atomBookmarks.insert(
           std::make_pair(sourcePair.first, std::move(atomIndices)));
@@ -949,20 +970,24 @@ void RDMol::copyFromCompatibilityData(const CompatibilityData *source,
       std::vector<int> bondIndices;
       bondIndices.reserve(sourcePair.second.size());
       for (const auto *bond : sourcePair.second) {
-            bondIndices.push_back(bond->getIdx());
+        bondIndices.push_back(bond->getIdx());
       }
       bondBookmarks.insert(
           std::make_pair(sourcePair.first, std::move(bondIndices)));
     }
   }
 
-  // Copy back bond stereo atoms.  Values are only in CompatibilityData for non-empty vectors.
-  // Any other values are expected to have been copied separately, if source is not owned by this.
-  PRECONDITION(source->bondStereoAtoms.size() == getNumBonds(), "CompatibilityData::bondStereoAtoms must have correct size for this RDMol");
+  // Copy back bond stereo atoms.  Values are only in CompatibilityData for
+  // non-empty vectors. Any other values are expected to have been copied
+  // separately, if source is not owned by this.
+  PRECONDITION(
+      source->bondStereoAtoms.size() == getNumBonds(),
+      "CompatibilityData::bondStereoAtoms must have correct size for this RDMol");
   for (uint32_t bondIndex = 0, numBonds = getNumBonds(); bondIndex < numBonds;
        ++bondIndex) {
     const auto &atoms = *source->bondStereoAtoms[bondIndex];
-    PRECONDITION(atoms.size() == 0 || atoms.size() == 2, "bondStereoAtoms must have either no atoms or 2 atoms");
+    PRECONDITION(atoms.size() == 0 || atoms.size() == 2,
+                 "bondStereoAtoms must have either no atoms or 2 atoms");
     if (atoms.size() == 2) {
       BondData &bond = getBond(bondIndex);
       bond.stereoAtoms[0] = atoms[0];
@@ -987,7 +1012,8 @@ void RDMol::copyFromCompatibilityData(const CompatibilityData *source,
   // Sync stereo groups from compat layer if they were modified
   if (source->stereoGroupsSyncStatus.load(std::memory_order_acquire) ==
       CompatSyncStatus::lastUpdatedCompat) {
-    auto *compatStereoGroups = source->stereoGroups.load(std::memory_order_acquire);
+    auto *compatStereoGroups =
+        source->stereoGroups.load(std::memory_order_acquire);
     if (compatStereoGroups != nullptr && stereoGroups != nullptr &&
         compatStereoGroups->size() == stereoGroups->getNumGroups()) {
       // Sync writeIds from compat layer back to flat structure
@@ -1001,12 +1027,13 @@ void RDMol::copyFromCompatibilityData(const CompatibilityData *source,
   compatibilityData.store(nullptr, std::memory_order_relaxed);
 }
 
-RDMol::RDMol(ROMol* existingPtr): RDMol() {
-  auto* dataCopy = new CompatibilityData(*this, existingPtr);
+RDMol::RDMol(ROMol *existingPtr) : RDMol() {
+  auto *dataCopy = new CompatibilityData(*this, existingPtr);
   compatibilityData.store(dataCopy, std::memory_order_relaxed);
 }
 
-RDMol::RDMol(const RDMol &other, bool quickCopy, int confId, ROMol *existingPtr) {
+RDMol::RDMol(const RDMol &other, bool quickCopy, int confId,
+             ROMol *existingPtr) {
   initFromOther(other, quickCopy, confId, existingPtr);
 }
 
@@ -1053,12 +1080,14 @@ RDMol &RDMol::operator=(const RDMol &other) {
     if (otherCompat != nullptr &&
         otherCompat->stereoGroupsSyncStatus.load(std::memory_order_acquire) ==
             CompatSyncStatus::lastUpdatedCompat) {
-      auto *compatStereoGroups = otherCompat->stereoGroups.load(std::memory_order_acquire);
+      auto *compatStereoGroups =
+          otherCompat->stereoGroups.load(std::memory_order_acquire);
       if (compatStereoGroups != nullptr && other.stereoGroups != nullptr &&
           compatStereoGroups->size() == other.stereoGroups->getNumGroups()) {
         // Sync writeIds from compat layer to flat structure before copying
         for (size_t i = 0; i < compatStereoGroups->size(); ++i) {
-          const_cast<RDMol&>(other).stereoGroups->writeIds[i] = (*compatStereoGroups)[i].getWriteId();
+          const_cast<RDMol &>(other).stereoGroups->writeIds[i] =
+              (*compatStereoGroups)[i].getWriteId();
         }
       }
     }
@@ -1100,8 +1129,7 @@ RDMol::RDMol(RDMol &&other) noexcept
       properties(std::move(other.properties)),
       atomBookmarks(std::move(other.atomBookmarks)),
       bondBookmarks(std::move(other.bondBookmarks)),
-      monomerInfo(std::move(other.monomerInfo))
-{
+      monomerInfo(std::move(other.monomerInfo)) {
   CompatibilityData *data =
       other.compatibilityData.load(std::memory_order_relaxed);
   if (data != nullptr) {
@@ -1148,7 +1176,8 @@ RDMol &RDMol::operator=(RDMol &&other) noexcept {
   return *this;
 }
 
-void RDMol::initFromOther(const RDMol &other, bool quickCopy, int confId, ROMol *existingPtr) {
+void RDMol::initFromOther(const RDMol &other, bool quickCopy, int confId,
+                          ROMol *existingPtr) {
   atomData = other.atomData;
   atomBondStarts = other.atomBondStarts;
   otherAtomIndices = other.otherAtomIndices;
@@ -1174,12 +1203,14 @@ void RDMol::initFromOther(const RDMol &other, bool quickCopy, int confId, ROMol 
     if (otherCompat != nullptr &&
         otherCompat->stereoGroupsSyncStatus.load(std::memory_order_acquire) ==
             CompatSyncStatus::lastUpdatedCompat) {
-      auto *compatStereoGroups = otherCompat->stereoGroups.load(std::memory_order_acquire);
+      auto *compatStereoGroups =
+          otherCompat->stereoGroups.load(std::memory_order_acquire);
       if (compatStereoGroups != nullptr && other.stereoGroups != nullptr &&
           compatStereoGroups->size() == other.stereoGroups->getNumGroups()) {
         // Sync writeIds from compat layer to flat structure before copying
         for (size_t i = 0; i < compatStereoGroups->size(); ++i) {
-          const_cast<RDMol&>(other).stereoGroups->writeIds[i] = (*compatStereoGroups)[i].getWriteId();
+          const_cast<RDMol &>(other).stereoGroups->writeIds[i] =
+              (*compatStereoGroups)[i].getWriteId();
         }
       }
     }
@@ -1223,14 +1254,15 @@ void RDMol::initFromOther(const RDMol &other, bool quickCopy, int confId, ROMol 
       uint32_t index = other.numConformers;
       try {
         index = other.findConformerIndex(confId);
-      } catch (const ConformerException&) {
+      } catch (const ConformerException &) {
         // Noop, matching ROMol behavior.
       }
       if (index != other.numConformers) {
         allocateConformers(1, other.getNumAtoms());
         const double *otherData = other.conformerPositionData.data() +
                                   index * other.conformerAtomCapacity * 3;
-        std::copy(otherData, otherData + other.getNumAtoms() * 3, conformerPositionData.begin());
+        std::copy(otherData, otherData + other.getNumAtoms() * 3,
+                  conformerPositionData.begin());
         if (other.conformerIdsAndFlags.size() > 0 &&
             (confId != 0 || !other.conformerIdsAndFlags[index].is3D)) {
           conformerIdsAndFlags.push_back(other.conformerIdsAndFlags[index]);
@@ -1240,7 +1272,7 @@ void RDMol::initFromOther(const RDMol &other, bool quickCopy, int confId, ROMol 
     }
   }
 
-  const CompatibilityData* otherCompat = other.getCompatibilityDataIfPresent();
+  const CompatibilityData *otherCompat = other.getCompatibilityDataIfPresent();
   const bool otherHasCompat = otherCompat != nullptr;
   if (otherHasCompat) {
     // The behaviour of quickCopy and confId above must match the behaviour
@@ -1249,11 +1281,14 @@ void RDMol::initFromOther(const RDMol &other, bool quickCopy, int confId, ROMol 
   }
 
   if (existingPtr) {
-    PRECONDITION(!hasCompatibilityData(), "Cannot create RDMol with existing ROMol pointer and compatibility data");
+    PRECONDITION(
+        !hasCompatibilityData(),
+        "Cannot create RDMol with existing ROMol pointer and compatibility data");
     CompatibilityData *data = new CompatibilityData(*this, existingPtr);
 
-    // If the other molecule had CompatibilityData with conformers containing properties,
-    // copy those Conformer objects (including properties) instead of using the newly created empty ones
+    // If the other molecule had CompatibilityData with conformers containing
+    // properties, copy those Conformer objects (including properties) instead
+    // of using the newly created empty ones
     if (otherHasCompat && !quickCopy && confId < 0 && numConformers > 0 &&
         otherCompat->conformers.size() == numConformers) {
       data->copyConformersFrom(otherCompat);
@@ -1269,7 +1304,7 @@ void RDMol::initFromOther(const RDMol &other, bool quickCopy, int confId, ROMol 
   if (!quickCopy && other.substanceGroups.size() > 0) {
     // If substance groups exist, instantiate after we have an ROMol pointer.
     substanceGroups = other.substanceGroups;
-    ROMol* thisROMol = &asROMol();
+    ROMol *thisROMol = &asROMol();
     for (auto &sg : substanceGroups) {
       sg.setOwningMol(thisROMol);
     }
@@ -1290,42 +1325,53 @@ PropArray::PropArray(uint32_t size, PropertyType family, bool isSet)
 namespace {
 
 constexpr bool is8BitType(PropertyType family) {
-  static_assert(sizeof(bool) == sizeof(char), "size assumption bool==char violated");
+  static_assert(sizeof(bool) == sizeof(char),
+                "size assumption bool==char violated");
   return family == PropertyType::CHAR || family == PropertyType::BOOL;
 }
 
 constexpr bool is32BitType(PropertyType family) {
-  static_assert(sizeof(float) == sizeof(int), "size assumption float==int violated");
+  static_assert(sizeof(float) == sizeof(int),
+                "size assumption float==int violated");
   return family == PropertyType::INT32 || family == PropertyType::UINT32 ||
          family == PropertyType::FLOAT;
 }
 
 constexpr bool is64BitType(PropertyType family) {
-  static_assert(sizeof(double) == sizeof(int64_t), "size assumption double==int64_t violated");
+  static_assert(sizeof(double) == sizeof(int64_t),
+                "size assumption double==int64_t violated");
   return family == PropertyType::INT64 || family == PropertyType::UINT64 ||
          family == PropertyType::DOUBLE;
 }
 
 }  // namespace
 
-
-PropArray::PropArray(const PropArray& other): PropArray(other.size, other.family, false) {
+PropArray::PropArray(const PropArray &other)
+    : PropArray(other.size, other.family, false) {
   if (is8BitType(family)) {
-    std::copy(static_cast<char*>(other.data), static_cast<char*>(other.data) + size, static_cast<char*>(data));
+    std::copy(static_cast<char *>(other.data),
+              static_cast<char *>(other.data) + size,
+              static_cast<char *>(data));
   } else if (is32BitType(family)) {
-    std::copy(static_cast<int32_t*>(other.data), static_cast<int32_t*>(other.data) + size, static_cast<int32_t*>(data));
+    std::copy(static_cast<int32_t *>(other.data),
+              static_cast<int32_t *>(other.data) + size,
+              static_cast<int32_t *>(data));
   } else if (is64BitType(family)) {
-    std::copy(static_cast<int64_t*>(other.data), static_cast<int64_t*>(other.data) + size, static_cast<int64_t*>(data));
+    std::copy(static_cast<int64_t *>(other.data),
+              static_cast<int64_t *>(other.data) + size,
+              static_cast<int64_t *>(data));
   } else {
     for (uint32_t i = 0; i < size; ++i) {
-      copy_rdvalue(static_cast<RDValue*>(data)[i], static_cast<RDValue*>(other.data)[i]);
+      copy_rdvalue(static_cast<RDValue *>(data)[i],
+                   static_cast<RDValue *>(other.data)[i]);
     }
   }
-  std::copy(other.isSetMask.get(), other.isSetMask.get() + size, isSetMask.get());
+  std::copy(other.isSetMask.get(), other.isSetMask.get() + size,
+            isSetMask.get());
   numSet = other.numSet;
 };
 
-PropArray& PropArray::operator=(const PropArray& other) {
+PropArray &PropArray::operator=(const PropArray &other) {
   if (this == &other) {
     return *this;
   }
@@ -1336,12 +1382,13 @@ PropArray& PropArray::operator=(const PropArray& other) {
   family = other.family;
   construct(/*isSet=*/false);
   isSetMask = std::make_unique<bool[]>(size);
-  std::copy(other.isSetMask.get(), other.isSetMask.get() + size, isSetMask.get());
+  std::copy(other.isSetMask.get(), other.isSetMask.get() + size,
+            isSetMask.get());
   numSet = other.numSet;
   return *this;
 }
 
-PropArray::PropArray(PropArray&& other) {
+PropArray::PropArray(PropArray &&other) {
   size = other.size;
   family = other.family;
   data = other.data;
@@ -1351,7 +1398,7 @@ PropArray::PropArray(PropArray&& other) {
   other.size = 0;
 }
 
-PropArray& PropArray::operator=(PropArray&& other) {
+PropArray &PropArray::operator=(PropArray &&other) {
   if (this == &other) {
     return *this;
   }
@@ -1368,11 +1415,9 @@ PropArray& PropArray::operator=(PropArray&& other) {
   return *this;
 }
 
-PropArray::~PropArray() noexcept {
-  destroy();
-}
+PropArray::~PropArray() noexcept { destroy(); }
 
-void PropArray::construct(bool isSet)  {
+void PropArray::construct(bool isSet) {
   PRECONDITION(data == nullptr, "Constructing on existing data");
   isSetMask = std::make_unique<bool[]>(size);
   std::fill(isSetMask.get(), isSetMask.get() + size, isSet);
@@ -1391,16 +1436,16 @@ void PropArray::construct(bool isSet)  {
 
 void PropArray::destroy() {
   if (is8BitType(family)) {
-    delete[] static_cast<char*>(data);
+    delete[] static_cast<char *>(data);
   } else if (is32BitType(family)) {
     delete[] static_cast<int32_t *>(data);
   } else if (is64BitType(family)) {
-    delete[] static_cast<double*>(data);
+    delete[] static_cast<double *>(data);
   } else {
     for (uint32_t i = 0; i < size; ++i) {
-      RDValue::cleanup_rdvalue(static_cast<RDValue*>(data)[i]);
+      RDValue::cleanup_rdvalue(static_cast<RDValue *>(data)[i]);
     }
-    delete[] static_cast<RDValue*>(data);
+    delete[] static_cast<RDValue *>(data);
   }
 }
 
@@ -1408,28 +1453,27 @@ RDValue PropArray::toRDValue(uint32_t idx) const {
   PRECONDITION(data != nullptr, "Accessing null prop array");
   switch (family) {
     case PropertyType::CHAR:
-      return RDValue(static_cast<char*>(data)[idx]);
+      return RDValue(static_cast<char *>(data)[idx]);
     case PropertyType::BOOL:
-      return RDValue(static_cast<bool*>(data)[idx]);
+      return RDValue(static_cast<bool *>(data)[idx]);
     case PropertyType::INT32:
-      return RDValue(static_cast<int32_t*>(data)[idx]);
+      return RDValue(static_cast<int32_t *>(data)[idx]);
     case PropertyType::UINT32:
-      return RDValue(static_cast<uint32_t*>(data)[idx]);
+      return RDValue(static_cast<uint32_t *>(data)[idx]);
     case PropertyType::FLOAT:
-      return RDValue(static_cast<float*>(data)[idx]);
+      return RDValue(static_cast<float *>(data)[idx]);
     case PropertyType::INT64:
-      return RDValue(static_cast<int64_t*>(data)[idx]);
+      return RDValue(static_cast<int64_t *>(data)[idx]);
     case PropertyType::UINT64:
-      return RDValue(static_cast<uint64_t*>(data)[idx]);
+      return RDValue(static_cast<uint64_t *>(data)[idx]);
     case PropertyType::DOUBLE:
-        return RDValue(static_cast<double*>(data)[idx]);
+      return RDValue(static_cast<double *>(data)[idx]);
     default:
       RDValue res;
-      copy_rdvalue(res, static_cast<RDValue*>(data)[idx]);
+      copy_rdvalue(res, static_cast<RDValue *>(data)[idx]);
       return res;
   }
 }
-
 
 void PropArray::appendElement() {
   ++size;
@@ -1458,13 +1502,13 @@ void PropArray::appendElement() {
   } else {
     auto *newData = new RDValue[size];
     for (uint32_t i = 0; i < size - 1; ++i) {
-      RDValue* orig = static_cast<RDValue *>(data) + i;
+      RDValue *orig = static_cast<RDValue *>(data) + i;
       // TODO: A move should be possible here.
       copy_rdvalue(newData[i], *orig);
       RDValue::cleanup_rdvalue(*orig);
     }
     newData[size - 1] = RDValue();
-    delete[] static_cast<RDValue*>(data);
+    delete[] static_cast<RDValue *>(data);
     data = newData;
   }
 }
@@ -1472,22 +1516,26 @@ void PropArray::appendElement() {
 void PropArray::removeElement(uint32_t index) {
   URANGE_CHECK(index, size);
 
-  // Shift down isSetMask. Note that isSetMask is now at least one element larger
-  // than data, but this is never a problem. If elements are added instead of
-  // removed, the mask is recreated.
+  // Shift down isSetMask. Note that isSetMask is now at least one element
+  // larger than data, but this is never a problem. If elements are added
+  // instead of removed, the mask is recreated.
   std::copy(isSetMask.get() + index + 1, isSetMask.get() + size,
             isSetMask.get() + index);
 
   if (is8BitType(family)) {
-    std::copy(static_cast<char*>(data) + index + 1, static_cast<char*>(data) + size, static_cast<char*>(data) + index);
+    std::copy(static_cast<char *>(data) + index + 1,
+              static_cast<char *>(data) + size,
+              static_cast<char *>(data) + index);
   } else if (is32BitType(family)) {
-    std::copy(static_cast<int32_t*>(data) + index + 1, static_cast<int32_t*>(data) + size, static_cast<int32_t*>(data) + index);
+    std::copy(static_cast<int32_t *>(data) + index + 1,
+              static_cast<int32_t *>(data) + size,
+              static_cast<int32_t *>(data) + index);
   } else if (is64BitType(family)) {
     std::copy(static_cast<int64_t *>(data) + index + 1,
               static_cast<int64_t *>(data) + size,
               static_cast<int64_t *>(data) + index);
   } else {
-    auto* dataPtr = static_cast<RDValue*>(data);
+    auto *dataPtr = static_cast<RDValue *>(data);
     for (uint32_t i = index + 1; i < size; ++i) {
       copy_rdvalue(dataPtr[i - 1], dataPtr[i]);
     }
@@ -1497,7 +1545,7 @@ void PropArray::removeElement(uint32_t index) {
 }
 
 namespace {
-template<typename T>
+template <typename T>
 RDValue *convertToRDValueHelper(const T *data, bool *isSetMask, uint32_t size) {
   RDValue *output = new RDValue[size];
   for (uint32_t i = 0; i < size; ++i) {
@@ -1507,42 +1555,52 @@ RDValue *convertToRDValueHelper(const T *data, bool *isSetMask, uint32_t size) {
   }
   return output;
 }
-}
+}  // namespace
 
 void PropArray::convertToRDValue() {
   if (family == PropertyType::ANY) {
     return;
   }
   PRECONDITION(data != nullptr, "Accessing null prop array");
-  // This null value will never be used. It's to avoid uninitialized value warnings.
+  // This null value will never be used. It's to avoid uninitialized value
+  // warnings.
   RDValue *newData = nullptr;
   switch (family) {
     case PropertyType::CHAR:
-      newData = convertToRDValueHelper(static_cast<char *>(data), isSetMask.get(), size);
+      newData = convertToRDValueHelper(static_cast<char *>(data),
+                                       isSetMask.get(), size);
       break;
     case PropertyType::BOOL:
-      newData = convertToRDValueHelper(static_cast<bool *>(data), isSetMask.get(), size);
+      newData = convertToRDValueHelper(static_cast<bool *>(data),
+                                       isSetMask.get(), size);
       break;
     case PropertyType::INT32:
-      newData = convertToRDValueHelper(static_cast<int32_t *>(data), isSetMask.get(), size);
+      newData = convertToRDValueHelper(static_cast<int32_t *>(data),
+                                       isSetMask.get(), size);
       break;
     case PropertyType::UINT32:
-      newData = convertToRDValueHelper(static_cast<uint32_t *>(data), isSetMask.get(), size);
+      newData = convertToRDValueHelper(static_cast<uint32_t *>(data),
+                                       isSetMask.get(), size);
       break;
     case PropertyType::FLOAT:
-      newData = convertToRDValueHelper(static_cast<float *>(data), isSetMask.get(), size);
+      newData = convertToRDValueHelper(static_cast<float *>(data),
+                                       isSetMask.get(), size);
       break;
     case PropertyType::INT64:
-      newData = convertToRDValueHelper(static_cast<int64_t *>(data), isSetMask.get(), size);
+      newData = convertToRDValueHelper(static_cast<int64_t *>(data),
+                                       isSetMask.get(), size);
       break;
     case PropertyType::UINT64:
-      newData = convertToRDValueHelper(static_cast<uint64_t *>(data), isSetMask.get(), size);
+      newData = convertToRDValueHelper(static_cast<uint64_t *>(data),
+                                       isSetMask.get(), size);
       break;
     case PropertyType::DOUBLE:
-      newData = convertToRDValueHelper(static_cast<double *>(data), isSetMask.get(), size);
+      newData = convertToRDValueHelper(static_cast<double *>(data),
+                                       isSetMask.get(), size);
       break;
     default:
-      raiseNonImplementedDetail("Unsupported type in PropArray::convertToRDValue");
+      raiseNonImplementedDetail(
+          "Unsupported type in PropArray::convertToRDValue");
   }
   destroy();
   data = newData;
@@ -1578,8 +1636,10 @@ void RingInfoCache::initFusedInfoFromBondMemberships() {
   }
 }
 
-void StereoGroups::addGroup(StereoGroupType type, const std::vector<uint32_t>& atomIndices,
-                            const std::vector<uint32_t>& bondIndices, uint32_t readId) {
+void StereoGroups::addGroup(StereoGroupType type,
+                            const std::vector<uint32_t> &atomIndices,
+                            const std::vector<uint32_t> &bondIndices,
+                            uint32_t readId) {
   const uint32_t currentNumGroups = stereoTypes.size();
   stereoTypes.push_back(type);
   readIds.push_back(readId);
@@ -1616,8 +1676,10 @@ bool StereoGroups::GroupsEq(uint32_t index1, uint32_t index2) {
     return false;
   }
 
-  return std::equal(atoms.begin() + atomBegin1, atoms.begin() + atomEnd1, atoms.begin() + atomBegin2) &&
-           std::equal(bonds.begin() + bondBegin1, bonds.begin() + bondEnd1, bonds.begin() + bondBegin2);
+  return std::equal(atoms.begin() + atomBegin1, atoms.begin() + atomEnd1,
+                    atoms.begin() + atomBegin2) &&
+         std::equal(bonds.begin() + bondBegin1, bonds.begin() + bondEnd1,
+                    bonds.begin() + bondBegin2);
 }
 
 void StereoGroups::removeGroup(uint32_t groupIndex) {
@@ -1667,8 +1729,8 @@ void removeGroups(StereoGroups &groups, const T &keepPredicate) {
     if (runningNumAtoms != groups.atomBegins[i]) {
       for (uint32_t j = groups.atomBegins[i], end = groups.atomBegins[i + 1];
            j < end; ++j) {
-            groups.atoms[runningNumAtoms] = groups.atoms[j];
-            ++runningNumAtoms;
+        groups.atoms[runningNumAtoms] = groups.atoms[j];
+        ++runningNumAtoms;
       }
     } else {
       runningNumAtoms = groups.atomBegins[i + 1];
@@ -1677,8 +1739,8 @@ void removeGroups(StereoGroups &groups, const T &keepPredicate) {
     if (runningNumBonds != groups.bondBegins[i]) {
       for (uint32_t j = groups.bondBegins[i], end = groups.bondBegins[i + 1];
            j < end; ++j) {
-            groups.bonds[runningNumBonds] = groups.bonds[j];
-            ++runningNumBonds;
+        groups.bonds[runningNumBonds] = groups.bonds[j];
+        ++runningNumBonds;
       }
     } else {
       runningNumBonds = groups.bondBegins[i + 1];
@@ -1706,7 +1768,8 @@ void removeGroups(StereoGroups &groups, const T &keepPredicate) {
 }
 }  // namespace
 
-void StereoGroups::removeAtomFromGroups(uint32_t atomIndex, bool decrementIndices) {
+void StereoGroups::removeAtomFromGroups(uint32_t atomIndex,
+                                        bool decrementIndices) {
   const uint32_t numGroups = stereoTypes.size();
   uint32_t runningNumAtoms = 0;
   for (uint32_t i = 0; i < numGroups; i++) {
@@ -1737,7 +1800,8 @@ void StereoGroups::removeAtomFromGroups(uint32_t atomIndex, bool decrementIndice
   });
 }
 
-void StereoGroups::removeBondFromGroups(uint32_t bondIndex, bool decrementIndices) {
+void StereoGroups::removeBondFromGroups(uint32_t bondIndex,
+                                        bool decrementIndices) {
   const uint32_t numGroups = stereoTypes.size();
   uint32_t runningNumBonds = 0;
   for (uint32_t i = 0; i < numGroups; i++) {
@@ -1781,7 +1845,8 @@ void StereoGroups::removeGroupsWithAtom(const uint32_t atomIndex) {
   });
 }
 
-void StereoGroups::removeGroupsWithAtoms(const std::vector<uint32_t>& atomIndices) {
+void StereoGroups::removeGroupsWithAtoms(
+    const std::vector<uint32_t> &atomIndices) {
   removeGroups(*this, [&atomIndices](const StereoGroups &groups, uint32_t i) {
     const uint32_t atomBegin = groups.atomBegins[i];
     const uint32_t atomEnd = groups.atomBegins[i + 1];
@@ -1808,7 +1873,8 @@ void StereoGroups::removeGroupsWithBond(const uint32_t bondIndex) {
   });
 }
 
-void StereoGroups::removeGroupsWithBonds(const std::vector<uint32_t>& bondIndices) {
+void StereoGroups::removeGroupsWithBonds(
+    const std::vector<uint32_t> &bondIndices) {
   removeGroups(*this, [&bondIndices](const StereoGroups &groups, uint32_t i) {
     const uint32_t bondBegin = groups.bondBegins[i];
     const uint32_t bondEnd = groups.bondBegins[i + 1];
@@ -1824,7 +1890,7 @@ void StereoGroups::removeGroupsWithBonds(const std::vector<uint32_t>& bondIndice
 
 // Stero group ID assignment adapted directly from StereoGroup.cpp
 namespace {
-void storeIdsInUse(boost::dynamic_bitset<> &ids, unsigned int& groupId) {
+void storeIdsInUse(boost::dynamic_bitset<> &ids, unsigned int &groupId) {
   if (groupId == StereoGroups::undefinedGroupId) {
     return;
   } else if (groupId >= ids.size()) {
@@ -1842,7 +1908,8 @@ void storeIdsInUse(boost::dynamic_bitset<> &ids, unsigned int& groupId) {
   }
 };
 
-void assignMissingIds(const boost::dynamic_bitset<> &ids, unsigned &nextId, unsigned& groupId) {
+void assignMissingIds(const boost::dynamic_bitset<> &ids, unsigned &nextId,
+                      unsigned &groupId) {
   if (groupId == StereoGroups::undefinedGroupId) {
     ++nextId;
     while (nextId < ids.size() && ids[nextId]) {
@@ -1865,7 +1932,7 @@ void StereoGroups::assignStereoGroupIds() {
     const StereoGroupType groupType = stereoTypes[i];
     if (groupType == StereoGroupType::STEREO_AND) {
       storeIdsInUse(andIds, writeIds[i]);
-    } else if (groupType== StereoGroupType::STEREO_OR) {
+    } else if (groupType == StereoGroupType::STEREO_OR) {
       storeIdsInUse(orIds, writeIds[i]);
     }
   }
@@ -1882,7 +1949,7 @@ void StereoGroups::assignStereoGroupIds() {
   }
 }
 
-void StereoGroups::forwardStereoGroupIds(){
+void StereoGroups::forwardStereoGroupIds() {
   for (uint32_t i = 0; i < stereoTypes.size(); i++) {
     writeIds[i] = readIds[i];
   }
@@ -2037,7 +2104,8 @@ int RDMol::calculateExplicitValence(atomindex_t atomIndex, bool strict,
       maxValence = 2;
     }
     // maxValence == -1 signifies that we'll take anything at the high end
-    if (maxValence >= 0 && ovalens.back() >= 0 && (int(res) + offset) > maxValence) {
+    if (maxValence >= 0 && ovalens.back() >= 0 &&
+        (int(res) + offset) > maxValence) {
       // the explicit valence is greater than any
       // allowed valence for the atoms
 
@@ -2354,7 +2422,8 @@ bool RDMol::invertAtomChirality(atomindex_t atomIndex) {
     atom.setChiralTag(ChiralType::CHI_TETRAHEDRAL_CW);
     return true;
   }
-  uint32_t *permProp = getAtomPropArrayIfPresent<uint32_t>(common_properties::_chiralPermutationToken);
+  uint32_t *permProp = getAtomPropArrayIfPresent<uint32_t>(
+      common_properties::_chiralPermutationToken);
   if (permProp == nullptr) {
     return false;
   }
@@ -2389,10 +2458,12 @@ void RDMol::clearComputedProps(bool includeRings) {
   // the SSSR information:
   if (includeRings) {
     ringInfo.reset();
-    // Mark the compatibility layer's ring info as out of sync so it gets updated
+    // Mark the compatibility layer's ring info as out of sync so it gets
+    // updated
     if (hasCompatibilityData()) {
       auto *compat = getCompatibilityDataIfPresent();
-      compat->ringInfoSyncStatus.store(CompatSyncStatus::lastUpdatedRDMol, std::memory_order_release);
+      compat->ringInfoSyncStatus.store(CompatSyncStatus::lastUpdatedRDMol,
+                                       std::memory_order_release);
     }
   }
 
@@ -2424,7 +2495,8 @@ std::vector<std::string> RDMol::getPropList(bool includePrivate,
     if (prop.scope() != scope) {
       continue;
     }
-    if (scope != Scope::MOL && index != PropIterator::anyIndexMarker && !prop.d_arrayData.isSetMask[index]) {
+    if (scope != Scope::MOL && index != PropIterator::anyIndexMarker &&
+        !prop.d_arrayData.isSetMask[index]) {
       continue;
     }
     if (!includeComputed && prop.isComputed()) {
@@ -2446,7 +2518,8 @@ void RDMol::getComputedPropList(STR_VECT &res, Scope scope,
     if (prop.scope() != scope) {
       continue;
     }
-    if (scope != Scope::MOL && index != PropIterator::anyIndexMarker && !prop.d_arrayData.isSetMask[index]) {
+    if (scope != Scope::MOL && index != PropIterator::anyIndexMarker &&
+        !prop.d_arrayData.isSetMask[index]) {
       continue;
     }
     if (!prop.isComputed()) {
@@ -2456,9 +2529,7 @@ void RDMol::getComputedPropList(STR_VECT &res, Scope scope,
   }
 }
 
-void RDMol::clearProps() {
-  properties.clear();
-}
+void RDMol::clearProps() { properties.clear(); }
 
 void RDMol::copyProp(const PropToken &destinationName, const RDMol &sourceMol,
                      const PropToken &sourceName, Scope scope) {
@@ -2468,7 +2539,8 @@ void RDMol::copyProp(const PropToken &destinationName, const RDMol &sourceMol,
           (scope == Scope::BOND && getNumBonds() == sourceMol.getNumBonds()),
       "Atom or bond counts must match in RDMol::copyProp");
   const auto *sourceProp = sourceMol.findProp(sourceName, scope);
-  PRECONDITION(sourceProp != nullptr, "Source property missing in RDMol::copyProp");
+  PRECONDITION(sourceProp != nullptr,
+               "Source property missing in RDMol::copyProp");
   if (!sourceProp) {
     return;
   }
@@ -2481,14 +2553,16 @@ void RDMol::copyProp(const PropToken &destinationName, const RDMol &sourceMol,
     }
     return;
   }
-  auto& destProp = properties.emplace_back(*sourceProp);
+  auto &destProp = properties.emplace_back(*sourceProp);
   destProp.d_name = destinationName;
 }
 
 void RDMol::copySingleProp(const PropToken &destinationName,
-    uint32_t destinationIndex, const RDMol& sourceMol,
-    const PropToken& sourceName, uint32_t sourceIndex, Scope scope) {
-  PRECONDITION(scope != Scope::MOL, "RDMol::copyPropSingleIndex doesn't support molecule scope");
+                           uint32_t destinationIndex, const RDMol &sourceMol,
+                           const PropToken &sourceName, uint32_t sourceIndex,
+                           Scope scope) {
+  PRECONDITION(scope != Scope::MOL,
+               "RDMol::copyPropSingleIndex doesn't support molecule scope");
   PRECONDITION(
       (scope == Scope::ATOM && sourceIndex < sourceMol.getNumAtoms() &&
        destinationIndex < getNumAtoms()) ||
@@ -2506,16 +2580,20 @@ void RDMol::copySingleProp(const PropToken &destinationName,
     destProp->d_isComputed = sourceProp->d_isComputed;
     destProp->d_scope = scope;
     uint32_t destSize = (scope == Scope::ATOM) ? getNumAtoms() : getNumBonds();
-    destProp->d_arrayData = PropArray(destSize, sourceProp->d_arrayData.family, false);
+    destProp->d_arrayData =
+        PropArray(destSize, sourceProp->d_arrayData.family, false);
   } else if (sourceProp->d_arrayData.family != destProp->d_arrayData.family) {
     // Check if types are compatible signed/unsigned integer pairs
     auto sourceFamily = sourceProp->d_arrayData.family;
     auto destFamily = destProp->d_arrayData.family;
-    bool integerCompatible =
-        (sourceFamily == PropertyType::INT32 && destFamily == PropertyType::UINT32) ||
-        (sourceFamily == PropertyType::UINT32 && destFamily == PropertyType::INT32) ||
-        (sourceFamily == PropertyType::INT64 && destFamily == PropertyType::UINT64) ||
-        (sourceFamily == PropertyType::UINT64 && destFamily == PropertyType::INT64);
+    bool integerCompatible = (sourceFamily == PropertyType::INT32 &&
+                              destFamily == PropertyType::UINT32) ||
+                             (sourceFamily == PropertyType::UINT32 &&
+                              destFamily == PropertyType::INT32) ||
+                             (sourceFamily == PropertyType::INT64 &&
+                              destFamily == PropertyType::UINT64) ||
+                             (sourceFamily == PropertyType::UINT64 &&
+                              destFamily == PropertyType::INT64);
 
     if (!integerCompatible) {
       // Convert to RDValue to support type mismatch
@@ -2541,20 +2619,25 @@ void RDMol::copySingleProp(const PropToken &destinationName,
     // If integer-compatible, fall through to direct copy
   }
 
-  // Copy directly (including integer-compatible types with different family enums)
+  // Copy directly (including integer-compatible types with different family
+  // enums)
   destProp->d_isComputed = sourceProp->d_isComputed;
   auto sourceFamily = sourceProp->d_arrayData.family;
   auto destFamily = destProp->d_arrayData.family;
   const auto *sourceData = sourceProp->d_arrayData.data;
   auto *destData = destProp->d_arrayData.data;
 
-  if ((sourceFamily == PropertyType::INT32 || sourceFamily == PropertyType::UINT32) &&
-      (destFamily == PropertyType::INT32 || destFamily == PropertyType::UINT32)) {
+  if ((sourceFamily == PropertyType::INT32 ||
+       sourceFamily == PropertyType::UINT32) &&
+      (destFamily == PropertyType::INT32 ||
+       destFamily == PropertyType::UINT32)) {
     // Copy 32-bit integer (signed or unsigned)
     static_cast<int32_t *>(destData)[destinationIndex] =
         static_cast<const int32_t *>(sourceData)[sourceIndex];
-  } else if ((sourceFamily == PropertyType::INT64 || sourceFamily == PropertyType::UINT64) &&
-             (destFamily == PropertyType::INT64 || destFamily == PropertyType::UINT64)) {
+  } else if ((sourceFamily == PropertyType::INT64 ||
+              sourceFamily == PropertyType::UINT64) &&
+             (destFamily == PropertyType::INT64 ||
+              destFamily == PropertyType::UINT64)) {
     // Copy 64-bit integer (signed or unsigned)
     static_cast<int64_t *>(destData)[destinationIndex] =
         static_cast<const int64_t *>(sourceData)[sourceIndex];
@@ -2578,20 +2661,22 @@ void RDMol::copySingleProp(const PropToken &destinationName,
   }
 }
 
-bool RDMol::hasProp(const PropToken& name) const {
+bool RDMol::hasProp(const PropToken &name) const {
   return findProp(name, Scope::MOL) != nullptr;
 }
 
-bool RDMol::hasAtomProp(const PropToken& name, const std::uint32_t index) const {
-    const Property* prop = findProp(name, Scope::ATOM);
-    if (prop == nullptr) {
-        return false;
-    }
-    return prop->d_arrayData.isSetMask[index];
+bool RDMol::hasAtomProp(const PropToken &name,
+                        const std::uint32_t index) const {
+  const Property *prop = findProp(name, Scope::ATOM);
+  if (prop == nullptr) {
+    return false;
+  }
+  return prop->d_arrayData.isSetMask[index];
 }
 
-bool RDMol::hasBondProp(const PropToken& name, const std::uint32_t index) const {
-  const Property* prop = findProp(name, Scope::BOND);
+bool RDMol::hasBondProp(const PropToken &name,
+                        const std::uint32_t index) const {
+  const Property *prop = findProp(name, Scope::BOND);
   if (prop == nullptr) {
     return false;
   }
@@ -2599,12 +2684,12 @@ bool RDMol::hasBondProp(const PropToken& name, const std::uint32_t index) const 
 }
 
 void RDMol::updatePropertyCache(bool strict) {
-  for (uint32_t atomIndex = 0, numAtoms = getNumAtoms();
-       atomIndex < numAtoms; ++atomIndex) {
+  for (uint32_t atomIndex = 0, numAtoms = getNumAtoms(); atomIndex < numAtoms;
+       ++atomIndex) {
     updateAtomPropertyCache(atomIndex, strict);
   }
-  for (uint32_t bondIndex = 0, numBonds = getNumBonds();
-       bondIndex < numBonds; ++bondIndex) {
+  for (uint32_t bondIndex = 0, numBonds = getNumBonds(); bondIndex < numBonds;
+       ++bondIndex) {
     updateBondPropertyCache(bondIndex, strict);
   }
 }
@@ -2627,13 +2712,13 @@ void RDMol::clearPropertyCache() {
   }
 }
 
-AtomData& RDMol::addAtom() {
+AtomData &RDMol::addAtom() {
   const atomindex_t newAtomIndex = atomData.size();
-  auto& newAtom = atomData.emplace_back();
+  auto &newAtom = atomData.emplace_back();
   atomBondStarts.push_back(bondDataIndices.size());
 
   // Handle properties
-  for (Property& property : properties) {
+  for (Property &property : properties) {
     if (property.scope() != Scope::ATOM) {
       continue;
     }
@@ -2648,7 +2733,8 @@ AtomData& RDMol::addAtom() {
   if (numConformers > 0) {
     allocateConformers(numConformers, getNumAtoms());
     for (size_t i = 0; i < numConformers; i++) {
-      const size_t lastElementAtomIdx = i * 3 * conformerAtomCapacity + 3 * newAtomIndex;
+      const size_t lastElementAtomIdx =
+          i * 3 * conformerAtomCapacity + 3 * newAtomIndex;
       for (int j = 0; j < 3; j++) {
         conformerPositionData[lastElementAtomIdx + j] = 0.0;
       }
@@ -2661,7 +2747,7 @@ AtomData& RDMol::addAtom() {
     // Assume that it's a regular Atom until a query is added
     compat->atoms.emplace_back(new Atom(this, newAtomIndex));
 
-    for (auto& conf: compat->conformers) {
+    for (auto &conf : compat->conformers) {
       conf->resize(getNumAtoms());
       conf->setAtomPos(newAtomIndex, RDGeom::Point3D(0.0, 0.0, 0.0));
     }
@@ -2670,28 +2756,40 @@ AtomData& RDMol::addAtom() {
   return newAtom;
 }
 
-BondData& RDMol::addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx, BondEnums::BondType bondType, bool updateAromaticity) {
+BondData &RDMol::addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx,
+                         BondEnums::BondType bondType, bool updateAromaticity) {
   URANGE_CHECK(beginAtomIdx, getNumAtoms());
   URANGE_CHECK(endAtomIdx, getNumAtoms());
-  PRECONDITION(beginAtomIdx != endAtomIdx, "Cannot create a bond between an atom and itself");
-  PRECONDITION(getBondIndexBetweenAtoms(beginAtomIdx, endAtomIdx) == std::numeric_limits<uint32_t>::max(), "Bond already exists between atoms");
+  PRECONDITION(beginAtomIdx != endAtomIdx,
+               "Cannot create a bond between an atom and itself");
+  PRECONDITION(getBondIndexBetweenAtoms(beginAtomIdx, endAtomIdx) ==
+                   std::numeric_limits<uint32_t>::max(),
+               "Bond already exists between atoms");
   const int firstAtomIdx = std::max(beginAtomIdx, endAtomIdx);
   const int secondAtomIdx = std::min(beginAtomIdx, endAtomIdx);
 
   // Insert the larger atom index first
   const uint32_t newBondIndex = bondData.size();
   auto &newBond = bondData.emplace_back();
-  bondDataIndices.insert(bondDataIndices.begin() + atomBondStarts[firstAtomIdx + 1], bondData.size() - 1);
-  bondDataIndices.insert(bondDataIndices.begin() + atomBondStarts[secondAtomIdx + 1], bondData.size() - 1);
-  otherAtomIndices.insert(otherAtomIndices.begin() + atomBondStarts[firstAtomIdx + 1], secondAtomIdx);
-  otherAtomIndices.insert(otherAtomIndices.begin() + atomBondStarts[secondAtomIdx + 1], firstAtomIdx);
+  bondDataIndices.insert(
+      bondDataIndices.begin() + atomBondStarts[firstAtomIdx + 1],
+      bondData.size() - 1);
+  bondDataIndices.insert(
+      bondDataIndices.begin() + atomBondStarts[secondAtomIdx + 1],
+      bondData.size() - 1);
+  otherAtomIndices.insert(
+      otherAtomIndices.begin() + atomBondStarts[firstAtomIdx + 1],
+      secondAtomIdx);
+  otherAtomIndices.insert(
+      otherAtomIndices.begin() + atomBondStarts[secondAtomIdx + 1],
+      firstAtomIdx);
 
   newBond.bondType = bondType;
   newBond.beginAtomIdx = beginAtomIdx;
   newBond.endAtomIdx = endAtomIdx;
-  
+
   for (uint32_t i = 0; i < atomBondStarts.size(); i++) {
-    auto& atomBondStart = atomBondStarts[i];
+    auto &atomBondStart = atomBondStarts[i];
     if (i > endAtomIdx) {
       atomBondStart++;
     }
@@ -2709,7 +2807,7 @@ BondData& RDMol::addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx, BondEnums::
   }
 
   // Handle properties
-  for (Property& property : properties) {
+  for (Property &property : properties) {
     if (property.scope() != Scope::BOND) {
       continue;
     }
@@ -2724,7 +2822,8 @@ BondData& RDMol::addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx, BondEnums::
   // we're in a batch edit, and at least one of the bond ends is scheduled
   // for deletion, so mark the new bond for deletion too:
   if (dp_delAtoms &&
-      ((beginAtomIdx < dp_delAtoms->size() && dp_delAtoms->test(beginAtomIdx)) ||
+      ((beginAtomIdx < dp_delAtoms->size() &&
+        dp_delAtoms->test(beginAtomIdx)) ||
        (endAtomIdx < dp_delAtoms->size() && dp_delAtoms->test(endAtomIdx)))) {
     if (dp_delBonds->size() < newBondIndex + 1) {
       dp_delBonds->resize(newBondIndex + 1);
@@ -2751,9 +2850,11 @@ BondData& RDMol::addBond(uint32_t beginAtomIdx, uint32_t endAtomIdx, BondEnums::
 
 namespace {
 
-//! Finds all instances of index and removes them from vectors. Decrements all indices greater than index.
-void removeIndexAndDecrementBookmarks(std::unordered_map<int, std::vector<int>>& bookmarks, int index) {
-  for (auto& [idx, marks] : bookmarks) {
+//! Finds all instances of index and removes them from vectors. Decrements all
+//! indices greater than index.
+void removeIndexAndDecrementBookmarks(
+    std::unordered_map<int, std::vector<int>> &bookmarks, int index) {
+  for (auto &[idx, marks] : bookmarks) {
     auto removeIt = marks.end();
     for (auto it = marks.begin(); it != marks.end(); ++it) {
       if (*it == int(index)) {
@@ -2770,7 +2871,7 @@ void removeIndexAndDecrementBookmarks(std::unordered_map<int, std::vector<int>>&
   }
 }
 
-} // namespace
+}  // namespace
 
 void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
   URANGE_CHECK(atomIndex, getNumAtoms());
@@ -2785,8 +2886,8 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
 
   // Remove bonds attached to the atom.  removeBond will change this array,
   // so we copy it, first.
-  // TODO: To avoid having to copy the atom indices to a new array and delete the
-  // bonds based on atom indices, and shift bond properties multiple times,
+  // TODO: To avoid having to copy the atom indices to a new array and delete
+  // the bonds based on atom indices, and shift bond properties multiple times,
   // delete all of the bonds in bulk.
   const uint32_t numAtomsOrig = getNumAtoms();
   auto [atomBondsBegin, atomBondsEnd] = getAtomBonds(atomIndex);
@@ -2804,7 +2905,8 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
   for (uint32_t i = 0; i < numBonds; i++) {
     bondsToDelete[i] = atomBondsBegin[i];
   }
-  // Sort in descending order so that we can remove bonds without changing the indexing
+  // Sort in descending order so that we can remove bonds without changing the
+  // indexing
   std::sort(bondsToDelete, bondsToDelete + numBonds, std::greater<uint32_t>());
 
   for (uint32_t i = 0; i < numBonds; ++i) {
@@ -2812,7 +2914,7 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
   }
 
   // Update atom indices in otherAtomIndices
-  for (unsigned int & a : otherAtomIndices) {
+  for (unsigned int &a : otherAtomIndices) {
     if (a > atomIndex) {
       --a;
     }
@@ -2878,7 +2980,7 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
   // Update atom indices in bond stereoAtoms
   for (size_t i = 0, n = getNumBonds(); i < n; ++i) {
     if (hasBondStereoAtoms(i)) {
-      const atomindex_t* stereoAtoms = getBondStereoAtoms(i);
+      const atomindex_t *stereoAtoms = getBondStereoAtoms(i);
       if (stereoAtoms[0] == atomIndex || stereoAtoms[1] == atomIndex) {
         clearBondStereoAtoms(i);
       } else {
@@ -2962,7 +3064,8 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
         --num_ats;
       }
       if (!num_ats) {
-        clearSingleBondProp(RDKit::common_properties::_MolFileBondEndPtsToken, i);
+        clearSingleBondProp(RDKit::common_properties::_MolFileBondEndPtsToken,
+                            i);
         clearSingleBondProp(common_properties::_MolFileBondAttachToken, i);
       } else {
         sprop = "(" + std::to_string(num_ats) + " ";
@@ -2973,7 +3076,8 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
           sprop += std::to_string(i) + " ";
         }
         sprop[sprop.length() - 1] = ')';
-        setSingleBondProp(RDKit::common_properties::_MolFileBondEndPtsToken, i, sprop);
+        setSingleBondProp(RDKit::common_properties::_MolFileBondEndPtsToken, i,
+                          sprop);
       }
     }
   }
@@ -2991,7 +3095,8 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
 
   if (compat != nullptr) {
     compat->ringInfo->reset();
-    compat->ringInfoSyncStatus.store(CompatSyncStatus::inSync, std::memory_order_relaxed);
+    compat->ringInfoSyncStatus.store(CompatSyncStatus::inSync,
+                                     std::memory_order_relaxed);
 
     for (uint32_t i = atomIndex + 1; i < numAtomsOrig; ++i) {
       compat->atoms[i]->d_index--;
@@ -3016,7 +3121,7 @@ void RDMol::removeBond(uint32_t bondIndex) {
 
   uint32_t startAtom = getBond(bondIndex).beginAtomIdx;
   uint32_t endAtom = getBond(bondIndex).endAtomIdx;
-  const uint32_t  numBondsOrig = getNumBonds();
+  const uint32_t numBondsOrig = getNumBonds();
   // Handle props
   for (Property &property : properties) {
     if (property.scope() != Scope::BOND) {
@@ -3056,10 +3161,10 @@ void RDMol::removeBond(uint32_t bondIndex) {
   // bonds. See RWMol removeBond for details.
   std::array<std::pair<uint32_t, uint32_t>, 2> iterateAndLookupIndices = {
       std::pair<uint32_t, uint32_t>{startAtom, endAtom},
-      std::pair<uint32_t, uint32_t>{endAtom, startAtom}
-  };
+      std::pair<uint32_t, uint32_t>{endAtom, startAtom}};
 
-  for (const auto& [iterateOverBondsIndex, lookForAtomAsStereoIndex] : iterateAndLookupIndices) {
+  for (const auto &[iterateOverBondsIndex, lookForAtomAsStereoIndex] :
+       iterateAndLookupIndices) {
     auto [begin, end] = getAtomBonds(iterateOverBondsIndex);
     for (auto bondIterator = begin; bondIterator != end; ++bondIterator) {
       if (*bondIterator == bondIndex) {
@@ -3067,7 +3172,8 @@ void RDMol::removeBond(uint32_t bondIndex) {
         continue;
       }
       auto stereoAtoms = getBondStereoAtoms(*bondIterator);
-      if (stereoAtoms[0] == lookForAtomAsStereoIndex || stereoAtoms[1] == lookForAtomAsStereoIndex) {
+      if (stereoAtoms[0] == lookForAtomAsStereoIndex ||
+          stereoAtoms[1] == lookForAtomAsStereoIndex) {
         clearBondStereoAtoms(*bondIterator);
         // github #6900 if we remove stereo atoms we need to remove
         //  the CIS and or TRANS since this requires stereo atoms
@@ -3086,7 +3192,8 @@ void RDMol::removeBond(uint32_t bondIndex) {
   ringInfo.reset();
   if (compat != nullptr) {
     compat->ringInfo->reset();
-    compat->ringInfoSyncStatus.store(CompatSyncStatus::inSync, std::memory_order_relaxed);
+    compat->ringInfoSyncStatus.store(CompatSyncStatus::inSync,
+                                     std::memory_order_relaxed);
   }
   // Handle substance groups
   removeSubstanceGroupsReferencingBond(*this, bondIndex);
@@ -3106,7 +3213,8 @@ void RDMol::removeBond(uint32_t bondIndex) {
   // Finally remove the bond and update index vectors.
   bondData.erase(bondData.begin() + bondIndex);
 
-  // Find the relevant entry in bondDataIndices. Note that these may be out of order.
+  // Find the relevant entry in bondDataIndices. Note that these may be out of
+  // order.
   uint32_t beginSearchIdx = atomBondStarts[endAtom];
   uint32_t endSearchIdx = atomBondStarts[endAtom + 1];
   while (beginSearchIdx < endSearchIdx) {
@@ -3134,14 +3242,13 @@ void RDMol::removeBond(uint32_t bondIndex) {
   }
   const uint32_t beginToErase = beginSearchIdx;
 
-  const uint32_t removeIndices[2]{
-      std::min(beginToErase, endToErase), std::max(beginToErase, endToErase)
-  };
+  const uint32_t removeIndices[2]{std::min(beginToErase, endToErase),
+                                  std::max(beginToErase, endToErase)};
   eraseMultipleIndices(bondDataIndices, removeIndices, 2);
   eraseMultipleIndices(otherAtomIndices, removeIndices, 2);
 
   for (uint32_t i = 0; i < atomBondStarts.size(); i++) {
-    auto& atomBondStart = atomBondStarts[i];
+    auto &atomBondStart = atomBondStarts[i];
     if (i > endAtom) {
       atomBondStart--;
     }
@@ -3150,7 +3257,7 @@ void RDMol::removeBond(uint32_t bondIndex) {
     }
   }
 
-  for (uint32_t& dataIndex: bondDataIndices) {
+  for (uint32_t &dataIndex : bondDataIndices) {
     if (dataIndex > bondIndex) {
       --dataIndex;
     }
@@ -3171,7 +3278,6 @@ void RDMol::beginBatchEdit() {
   }
   dp_delAtoms = std::make_unique<boost::dynamic_bitset<>>(getNumAtoms(), false);
   dp_delBonds = std::make_unique<boost::dynamic_bitset<>>(getNumBonds(), false);
-
 }
 
 void RDMol::commitBatchEdit() {
@@ -3223,7 +3329,7 @@ void RDMol::rollbackBatchEdit() {
 // -----------------------------
 
 void RDMol::setAtomBookmark(int atomIdx, int mark) {
-  CompatibilityData* compatData = getCompatibilityDataIfPresent();
+  CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     compatData->atomBookmarks[mark].push_back(compatData->atoms[atomIdx].get());
     return;
@@ -3233,24 +3339,24 @@ void RDMol::setAtomBookmark(int atomIdx, int mark) {
   atomBookmarks[mark].push_back(atomIdx);
 }
 void RDMol::replaceAtomBookmark(int atomIdx, int mark) {
-  CompatibilityData* compatData = getCompatibilityDataIfPresent();
+  CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
-    auto& bookmark = compatData->atomBookmarks[mark];
+    auto &bookmark = compatData->atomBookmarks[mark];
     bookmark.clear();
     bookmark.push_back(compatData->atoms[atomIdx].get());
     return;
   }
   // Nonlegacy path
-  std::vector<int>& marks = atomBookmarks[mark];
+  std::vector<int> &marks = atomBookmarks[mark];
   marks.resize(1);
   marks[0] = atomIdx;
 }
 std::vector<int> RDMol::getAllAtomsWithBookmarks(int mark) {
   if (hasCompatibilityData()) {
-    std::list<Atom*>& bookmarks = getAtomBookmarksCompat(mark);
+    std::list<Atom *> &bookmarks = getAtomBookmarksCompat(mark);
     std::vector<int> res;
     res.reserve(bookmarks.size());
-    for (Atom* atom : bookmarks) {
+    for (Atom *atom : bookmarks) {
       res.push_back(atom->getIdx());
     }
     return res;
@@ -3262,11 +3368,12 @@ std::vector<int> RDMol::getAllAtomsWithBookmarks(int mark) {
   return it->second;
 }
 
-int RDMol::getAtomWithBookmark(int mark)  {
-  const CompatibilityData* compatData = getCompatibilityDataIfPresent();
+int RDMol::getAtomWithBookmark(int mark) {
+  const CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     auto found = compatData->atomBookmarks.find(mark);
-    PRECONDITION(found != compatData->atomBookmarks.end(), "Bookmark not found");
+    PRECONDITION(found != compatData->atomBookmarks.end(),
+                 "Bookmark not found");
     return found->second.front()->getIdx();
   }
 
@@ -3276,7 +3383,7 @@ int RDMol::getAtomWithBookmark(int mark)  {
   return *it->second.begin();
 }
 void RDMol::clearAtomBookmark(int mark) {
-  CompatibilityData* compatData = getCompatibilityDataIfPresent();
+  CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     compatData->atomBookmarks.erase(mark);
     return;
@@ -3287,16 +3394,16 @@ void RDMol::clearAtomBookmark(int mark) {
 }
 
 void RDMol::clearAtomBookmark(int atomIdx, int mark) {
-  CompatibilityData* compatData = getCompatibilityDataIfPresent();
+  CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     auto foundMark = compatData->atomBookmarks.find(mark);
     if (foundMark == compatData->atomBookmarks.end()) {
       return;
     }
-    auto& marks = foundMark->second;
-    auto removeIt = std::find_if(marks.begin(), marks.end(), [atomIdx](const Atom* atom) {
-      return int(atom->getIdx()) == atomIdx;
-    });
+    auto &marks = foundMark->second;
+    auto removeIt = std::find_if(
+        marks.begin(), marks.end(),
+        [atomIdx](const Atom *atom) { return int(atom->getIdx()) == atomIdx; });
     if (removeIt != marks.end()) {
       marks.erase(removeIt);
     }
@@ -3307,7 +3414,7 @@ void RDMol::clearAtomBookmark(int atomIdx, int mark) {
   if (it == atomBookmarks.end()) {
     return;
   }
-  std::vector<int>& marks = it->second;
+  std::vector<int> &marks = it->second;
   auto removeIt = std::find(marks.begin(), marks.end(), atomIdx);
   if (removeIt != marks.end()) {
     marks.erase(removeIt);
@@ -3315,7 +3422,7 @@ void RDMol::clearAtomBookmark(int atomIdx, int mark) {
 }
 
 void RDMol::clearAllAtomBookmarks() {
-  CompatibilityData* compatData = getCompatibilityDataIfPresent();
+  CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     compatData->atomBookmarks.clear();
   }
@@ -3323,7 +3430,7 @@ void RDMol::clearAllAtomBookmarks() {
 }
 
 bool RDMol::hasAtomBookmark(int mark) const {
-  const CompatibilityData* compatData = getCompatibilityDataIfPresent();
+  const CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     return compatData->atomBookmarks.count(mark) > 0;
   }
@@ -3339,7 +3446,7 @@ bool RDMol::hasAtomBookmark(int mark) const {
 // -----------------------------
 
 void RDMol::setBondBookmark(int bondIdx, int mark) {
-  CompatibilityData* compatData = getCompatibilityDataIfPresent();
+  CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     compatData->bondBookmarks[mark].push_back(compatData->bonds[bondIdx].get());
     return;
@@ -3351,10 +3458,10 @@ void RDMol::setBondBookmark(int bondIdx, int mark) {
 
 std::vector<int> RDMol::getAllBondsWithBookmarks(int mark) {
   if (hasCompatibilityData()) {
-    std::list<Bond*> bookmarks = getBondBookmarksCompat(mark);
+    std::list<Bond *> bookmarks = getBondBookmarksCompat(mark);
     std::vector<int> res;
     res.reserve(bookmarks.size());
-    for (Bond* bond : bookmarks) {
+    for (Bond *bond : bookmarks) {
       res.push_back(bond->getIdx());
     }
     return res;
@@ -3366,11 +3473,12 @@ std::vector<int> RDMol::getAllBondsWithBookmarks(int mark) {
   return it->second;
 }
 
-int RDMol::getBondWithBookmark(int mark)  {
-  const CompatibilityData* compatData = getCompatibilityDataIfPresent();
+int RDMol::getBondWithBookmark(int mark) {
+  const CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     auto found = compatData->bondBookmarks.find(mark);
-    PRECONDITION(found != compatData->bondBookmarks.end(), "Bookmark not found");
+    PRECONDITION(found != compatData->bondBookmarks.end(),
+                 "Bookmark not found");
     return found->second.front()->getIdx();
   }
 
@@ -3381,7 +3489,7 @@ int RDMol::getBondWithBookmark(int mark)  {
 }
 
 void RDMol::clearBondBookmark(int mark) {
-  CompatibilityData* compatData = getCompatibilityDataIfPresent();
+  CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     compatData->bondBookmarks.erase(mark);
     return;
@@ -3391,16 +3499,16 @@ void RDMol::clearBondBookmark(int mark) {
   bondBookmarks.erase(mark);
 }
 void RDMol::clearBondBookmark(int bondIdx, int mark) {
-  CompatibilityData* compatData = getCompatibilityDataIfPresent();
+  CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     auto foundMark = compatData->bondBookmarks.find(mark);
     if (foundMark == compatData->bondBookmarks.end()) {
       return;
     }
-    auto& marks = foundMark->second;
-    auto removeIt = std::find_if(marks.begin(), marks.end(), [bondIdx](const Bond* bond) {
-      return int(bond->getIdx()) == bondIdx;
-    });
+    auto &marks = foundMark->second;
+    auto removeIt = std::find_if(
+        marks.begin(), marks.end(),
+        [bondIdx](const Bond *bond) { return int(bond->getIdx()) == bondIdx; });
     if (removeIt != marks.end()) {
       marks.erase(removeIt);
     }
@@ -3411,7 +3519,7 @@ void RDMol::clearBondBookmark(int bondIdx, int mark) {
   if (it == bondBookmarks.end()) {
     return;
   }
-  std::vector<int>& marks = it->second;
+  std::vector<int> &marks = it->second;
   auto removeIt = std::find(marks.begin(), marks.end(), bondIdx);
   if (removeIt != marks.end()) {
     marks.erase(removeIt);
@@ -3419,7 +3527,7 @@ void RDMol::clearBondBookmark(int bondIdx, int mark) {
 }
 
 void RDMol::clearAllBondBookmarks() {
-  CompatibilityData* compatData = getCompatibilityDataIfPresent();
+  CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     compatData->bondBookmarks.clear();
   }
@@ -3427,7 +3535,7 @@ void RDMol::clearAllBondBookmarks() {
 }
 
 bool RDMol::hasBondBookmark(int mark) const {
-  const CompatibilityData* compatData = getCompatibilityDataIfPresent();
+  const CompatibilityData *compatData = getCompatibilityDataIfPresent();
   if (compatData != nullptr) {
     return compatData->bondBookmarks.count(mark) > 0;
   }
@@ -3443,19 +3551,20 @@ void RDMol::setStereoGroups(std::unique_ptr<StereoGroups> &&groups) {
 
   stereoGroups = std::move(groups);
 
-  // Repopulate the compatibility layer immediately to keep existing Python references valid
-  // The vector object is kept alive by clearStereoGroupsCompat, we just need to refill it
+  // Repopulate the compatibility layer immediately to keep existing Python
+  // references valid The vector object is kept alive by
+  // clearStereoGroupsCompat, we just need to refill it
   if (hasCompatibilityData()) {
     getStereoGroupsCompat();
   }
 }
 
 void RDMol::markStereoGroupsAsCompatModified() const {
- if (const CompatibilityData* compatData = getCompatibilityDataIfPresent(); compatData != nullptr) {
-  compatData->stereoGroupsSyncStatus = CompatSyncStatus::lastUpdatedCompat;
- }
+  if (const CompatibilityData *compatData = getCompatibilityDataIfPresent();
+      compatData != nullptr) {
+    compatData->stereoGroupsSyncStatus = CompatSyncStatus::lastUpdatedCompat;
+  }
 }
-
 
 void RDMol::setAtomQuery(atomindex_t atomIndex,
                          std::unique_ptr<QUERYATOM_QUERY> query) {
@@ -3501,23 +3610,23 @@ void RDMol::setBondQuery(uint32_t bondIndex,
 }
 
 ROMol &RDMol::asROMol() { return *ensureCompatInit()->compatMol; }
-const ROMol& RDMol::asROMol() const { return *ensureCompatInit()->compatMol; }
+const ROMol &RDMol::asROMol() const { return *ensureCompatInit()->compatMol; }
 RWMol &RDMol::asRWMol() {
-  auto* mol = dynamic_cast<RWMol* >(&asROMol());
+  auto *mol = dynamic_cast<RWMol *>(&asROMol());
   CHECK_INVARIANT(mol, "Failed to cast ROMol to RWMol");
   return *mol;
 }
 
-const RWMol& RDMol::asRWMol() const {
-  const auto* mol = dynamic_cast<const RWMol* >(&asROMol());
+const RWMol &RDMol::asRWMol() const {
+  const auto *mol = dynamic_cast<const RWMol *>(&asROMol());
   CHECK_INVARIANT(mol, "Failed to cast ROMol to RWMol");
   return *mol;
 }
 
 RDMol::CompatibilityData *RDMol::ensureCompatInit() const {
   // First, try without locking
-  // We can do a relaxed load of the pointer, because accessing the other data requires
-  // dereferencing the pointer, so would all be dependent reads.
+  // We can do a relaxed load of the pointer, because accessing the other data
+  // requires dereferencing the pointer, so would all be dependent reads.
   CompatibilityData *data = compatibilityData.load(std::memory_order_relaxed);
   if (data != nullptr) {
     return data;
@@ -3533,14 +3642,12 @@ RDMol::CompatibilityData *RDMol::ensureCompatInit() const {
   // NOTE: This casts away const because Atom and Bond structures may later
   // need write access.  This is in a private function for initializing
   // a mutable data member, so it should be okay.
-  data = new CompatibilityData(const_cast<RDMol&>(*this));
+  data = new CompatibilityData(const_cast<RDMol &>(*this));
   compatibilityData.store(data, std::memory_order_release);
   return data;
 }
 
-uint32_t RDMol::getNumConformers() const {
-  return numConformers;
-}
+uint32_t RDMol::getNumConformers() const { return numConformers; }
 
 namespace {
 
@@ -3550,7 +3657,7 @@ namespace {
   throw ConformerException(std::move(exceptionMessage));
 }
 
-} // namespace
+}  // namespace
 
 uint32_t RDMol::findConformerIndex(int32_t id) const {
   // make sure we have more than one conformation
@@ -3580,7 +3687,7 @@ uint32_t RDMol::findConformerIndex(int32_t id) const {
   throwIDNotFound(id);
 }
 
-const double* RDMol::getConformerPositions(int32_t id) const {
+const double *RDMol::getConformerPositions(int32_t id) const {
   auto *compat = getCompatibilityDataIfPresent();
   if (compat != nullptr) {
     initCompatForReadHelper<false>(
@@ -3594,7 +3701,7 @@ const double* RDMol::getConformerPositions(int32_t id) const {
          size_t(3) * conformerAtomCapacity * index;
 }
 
-double* RDMol::getConformerPositions(int32_t id) {
+double *RDMol::getConformerPositions(int32_t id) {
   auto *compat = getCompatibilityDataIfPresent();
   if (compat != nullptr) {
     initCompatForWriteHelper<false>(
@@ -3631,7 +3738,8 @@ void RDMol::clearConformers() {
   numConformers = 0;
   conformerAtomCapacity = 0;
 
-  if (auto* compatData = getCompatibilityDataIfPresent(); compatData != nullptr) {
+  if (auto *compatData = getCompatibilityDataIfPresent();
+      compatData != nullptr) {
     compatData->conformers.clear();
     // It might be excessive to use memory_order_release, but this will ensure
     // that the clearing of the conformers is completed before marking them
@@ -3644,7 +3752,8 @@ void RDMol::clearConformers() {
 static void expandConformerIdsAndFlags(
     std::vector<ConformerIdAndFlags> &conformerIdsAndFlags,
     size_t numConformers) {
-  PRECONDITION(conformerIdsAndFlags.size() == 0, "Expanding conformerIdsAndFlags that's already expanded");
+  PRECONDITION(conformerIdsAndFlags.size() == 0,
+               "Expanding conformerIdsAndFlags that's already expanded");
   conformerIdsAndFlags.reserve(numConformers);
   for (size_t i = 0; i < numConformers; ++i) {
     auto &confData = conformerIdsAndFlags.emplace_back();
@@ -3653,20 +3762,22 @@ static void expandConformerIdsAndFlags(
   }
 }
 
-void RDMol::copyConformersFromCompatibilityData(const CompatibilityData* compatData, int confId) const {
+void RDMol::copyConformersFromCompatibilityData(
+    const CompatibilityData *compatData, int confId) const {
   PRECONDITION(compatData != nullptr, "No compatibility data to copy from");
-  PRECONDITION((confId >= 0 && numConformers <= 1) ||
-                   compatData->conformers.size() == numConformers,
-               "Add space for conformers before copying from compatibility data");
+  PRECONDITION(
+      (confId >= 0 && numConformers <= 1) ||
+          compatData->conformers.size() == numConformers,
+      "Add space for conformers before copying from compatibility data");
   size_t confIndex = 0;
   const size_t numAtoms = getNumAtoms();
-  for (const auto& conf : compatData->conformers) {
+  for (const auto &conf : compatData->conformers) {
     if (confId < 0 || int(conf->getId()) == confId) {
       PRECONDITION(
           confIndex < numConformers,
           "Add space for conformers before copying from compatibility data");
       size_t atomPositionOffset = confIndex * conformerAtomCapacity * 3;
-      const RDGeom::POINT3D_VECT& positions = conf->getPositions();
+      const RDGeom::POINT3D_VECT &positions = conf->getPositions();
       PRECONDITION(positions.size() == numAtoms,
                    "Conformers must have one position per atom");
       for (size_t i = 0; i < numAtoms; ++i) {
@@ -3689,7 +3800,8 @@ void RDMol::copyConformersFromCompatibilityData(const CompatibilityData* compatD
   }
 }
 
-void RDMol::copyConformersToCompatibilityData(CompatibilityData* compatData) const {
+void RDMol::copyConformersToCompatibilityData(
+    CompatibilityData *compatData) const {
   PRECONDITION(compatData != nullptr, "No compatibility data to copy to");
   PRECONDITION(compatData->conformers.size() == numConformers,
                "Add conformers before copying to compatibility data");
@@ -3713,7 +3825,8 @@ void RDMol::copyConformersToCompatibilityData(CompatibilityData* compatData) con
 }
 
 void RDMol::markConformersAsCompatModified() const {
-  if (const CompatibilityData* compatData = getCompatibilityDataIfPresent(); compatData != nullptr) {
+  if (const CompatibilityData *compatData = getCompatibilityDataIfPresent();
+      compatData != nullptr) {
     compatData->conformerSyncStatus = CompatSyncStatus::lastUpdatedCompat;
   }
 }
@@ -3752,12 +3865,15 @@ void RDMol::removeConformer(uint32_t id) {
       conformerIdsAndFlags.pop_back();
     }
   } else if (conformerIdsAndFlags.size() != 0) {
-    // Removing last conformer, so remove the last entry from conformerIdsAndFlags
+    // Removing last conformer, so remove the last entry from
+    // conformerIdsAndFlags
     conformerIdsAndFlags.pop_back();
   }
 
-  if (auto* compatData = getCompatibilityDataIfPresent(); compatData != nullptr) {
-    for (auto iter = compatData->conformers.begin(); iter != compatData->conformers.end(); ++iter) {
+  if (auto *compatData = getCompatibilityDataIfPresent();
+      compatData != nullptr) {
+    for (auto iter = compatData->conformers.begin();
+         iter != compatData->conformers.end(); ++iter) {
       if ((*iter)->getId() == id) {
         compatData->conformers.erase(iter);
         break;
@@ -3784,13 +3900,16 @@ uint32_t RDMol::addConformer(const double *positions, int32_t id, bool is3D) {
   // Add to compat data. Only need if this is not being invoked as part of the
   // ROMol addConformer, so we check to make sure ROMol hasn't already appended
   // for itself.
-  auto* compatData = getCompatibilityDataIfPresent();
-  const bool needsCompatUpdate = compatData != nullptr && compatData->conformers.size() < numConformers;
+  auto *compatData = getCompatibilityDataIfPresent();
+  const bool needsCompatUpdate =
+      compatData != nullptr && compatData->conformers.size() < numConformers;
   if (needsCompatUpdate) {
     auto *conf = new Conformer(getNumAtoms());
     if (positions != nullptr) {
       for (size_t i = 0; i < getNumAtoms(); ++i) {
-        conf->setAtomPos(i, RDGeom::Point3D(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]));
+        conf->setAtomPos(i,
+                         RDGeom::Point3D(positions[i * 3], positions[i * 3 + 1],
+                                         positions[i * 3 + 2]));
       }
     }
     conf->set3D(is3D);
@@ -3799,7 +3918,8 @@ uint32_t RDMol::addConformer(const double *positions, int32_t id, bool is3D) {
 
   const bool hadLinearIds = conformerIdsAndFlags.size() == 0;
   // Case where we're allowed to set ID, and default flags.
-  const bool allowsLinearIds = is3D && (id < 0 || size_t(id) == numConformersPrev);  
+  const bool allowsLinearIds =
+      is3D && (id < 0 || size_t(id) == numConformersPrev);
 
   if (allowsLinearIds && hadLinearIds) {
     if (needsCompatUpdate) {
@@ -3812,7 +3932,7 @@ uint32_t RDMol::addConformer(const double *positions, int32_t id, bool is3D) {
     // We now need to populate all IDs that were previously implicit.
     // We know they were 3D and the implict IDs were in order.
     expandConformerIdsAndFlags(conformerIdsAndFlags, numConformers);
-    auto& newConfData = conformerIdsAndFlags.back();
+    auto &newConfData = conformerIdsAndFlags.back();
     newConfData.is3D = is3D;
     newConfData.id = id < 0 ? numConformersPrev : id;
     if (needsCompatUpdate) {
@@ -3842,11 +3962,10 @@ uint32_t RDMol::addConformer(const double *positions, int32_t id, bool is3D) {
   return newConfData.id;
 }
 
-std::pair<uint32_t, double*> RDMol::addConformer(int32_t id, bool is3D) {
+std::pair<uint32_t, double *> RDMol::addConformer(int32_t id, bool is3D) {
   uint32_t gotId = addConformer(nullptr, id, is3D);
   return {gotId, getConformerPositions(gotId)};
 }
-
 
 void RDMol::allocateConformers(size_t newNumConformers, size_t newNumAtoms) {
   size_t newConformerAtomCapacity = conformerAtomCapacity;
@@ -3854,7 +3973,9 @@ void RDMol::allocateConformers(size_t newNumConformers, size_t newNumAtoms) {
     newConformerAtomCapacity = std::max(2 * conformerAtomCapacity, newNumAtoms);
   }
   size_t numConformersCapacity =
-      (conformerAtomCapacity!= 0) ? (conformerPositionData.size() / (size_t(3) * conformerAtomCapacity)) : 0;
+      (conformerAtomCapacity != 0)
+          ? (conformerPositionData.size() / (size_t(3) * conformerAtomCapacity))
+          : 0;
   if (numConformersCapacity < newNumConformers) {
     numConformersCapacity =
         std::max(2 * numConformersCapacity, newNumConformers);
@@ -3867,33 +3988,33 @@ void RDMol::allocateConformers(size_t newNumConformers, size_t newNumAtoms) {
     // This only works if we can't decrease the atom capacity
     assert(newConformerAtomCapacity > conformerAtomCapacity);
 
-    // Copy the previous data to the new locations, with a backward loop and memmove
-    // to avoid issues with overlap.
+    // Copy the previous data to the new locations, with a backward loop and
+    // memmove to avoid issues with overlap.
     size_t numConformersToCopy =
         (getNumAtoms() != 0) ? std::min(numConformers, newNumConformers) : 0;
     const size_t oldConformerStride = 3 * conformerAtomCapacity;
     const size_t newConformerStride = 3 * newConformerAtomCapacity;
-    for (size_t i = numConformersToCopy; i > 0; ) {
-        --i;
-        auto *dest = conformerPositionData.data() + i * newConformerStride;
-        const auto *source =
-            conformerPositionData.data() + i * oldConformerStride;
-        // Move the existing data
-        std::memmove(dest, source,
-                     sizeof(conformerPositionData[0]) * 3 * getNumAtoms() );
+    for (size_t i = numConformersToCopy; i > 0;) {
+      --i;
+      auto *dest = conformerPositionData.data() + i * newConformerStride;
+      const auto *source =
+          conformerPositionData.data() + i * oldConformerStride;
+      // Move the existing data
+      std::memmove(dest, source,
+                   sizeof(conformerPositionData[0]) * 3 * getNumAtoms());
     }
 
     conformerAtomCapacity = newConformerAtomCapacity;
   }
 }
 
-const RingInfoCache& RDMol::getRingInfo() const {
-  auto* compat = getCompatibilityDataIfPresent();
+const RingInfoCache &RDMol::getRingInfo() const {
+  auto *compat = getCompatibilityDataIfPresent();
   if (compat != nullptr) {
     initCompatForReadHelper<false>(
         compat->ringInfoSyncStatus, compatibilityMutex, [&]() {
           copyRingInfoFromCompatibilityData(*compat->ringInfo, ringInfo,
-                                          getNumAtoms(), getNumBonds());
+                                            getNumAtoms(), getNumBonds());
         });
   }
   return ringInfo;
@@ -3910,5 +4031,4 @@ RingInfoCache &RDMol::getRingInfo() {
   return ringInfo;
 }
 
-} // namespace RDKit
-
+}  // namespace RDKit
