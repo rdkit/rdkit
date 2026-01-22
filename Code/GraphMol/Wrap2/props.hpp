@@ -1,42 +1,21 @@
-//  Copyright (c) 2015-2018, Novartis Institutes for BioMedical Research Inc.
-//  All rights reserved.
+//  Copyright (C) 2026, Greg Landrum
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-//     * Redistributions of source code must retain the above copyright
-//       notice, this list of conditions and the following disclaimer.
-//     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following
-//       disclaimer in the documentation and/or other materials provided
-//       with the distribution.
-//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
-//       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written
-//       permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 #ifndef RD_WRAPPED_PROPS_H
 #define RD_WRAPPED_PROPS_H
 
-#include <RDBoost/python.h>
-#include <RDBoost/pyint_api.h>
-#include <RDBoost/Wrap.h>
+#include <nanobind/nanobind.h>
+
 #include <RDGeneral/Dict.h>
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
+
+namespace nb = nanobind;
 
 namespace RDKit {
 
@@ -64,7 +43,7 @@ inline const char *GetTypeName<bool>() {
 }
 
 template <class T, class U>
-bool AddToDict(const U &ob, boost::python::dict &dict, const std::string &key) {
+bool AddToDict(const U &ob, nb::dict &dict, const std::string &key) {
   T res;
   try {
     if (ob.getPropIfPresent(key, res)) {
@@ -95,10 +74,9 @@ const std::string getPropsAsDictDocString =
     "  RETURNS: a dictionary\n";
 
 template <class T>
-boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
-                                   bool includeComputed,
-                                   bool autoConvertStrings = true) {
-  boost::python::dict dict;
+nb::dict GetPropsAsDict(const T &obj, bool includePrivate, bool includeComputed,
+                        bool autoConvertStrings = true) {
+  nb::dict dict;
   auto &rd_dict = obj.getDict();
   auto &data = rd_dict.getData();
 
@@ -164,7 +142,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
               from_rdvalue<std::vector<std::string>>(rdvalue.val);
           break;
         case RDTypeTag::EmptyTag:
-          dict[rdvalue.key] = boost::python::object();
+          dict[rdvalue.key] = nb::none();
           break;
         default:
           std::string message =
@@ -184,7 +162,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
   }
   return dict;
 }
-
+#if 0
 static PyObject *rawPy(python::object &&pyobj) {
   Py_INCREF(pyobj.ptr());
   return pyobj.ptr();
@@ -194,22 +172,22 @@ template <class T>
 PyObject *rawPy(T &&thing) {
   return rawPy(python::object(thing));
 }
+#endif
 
 template <class RDOb, class T>
-PyObject *GetProp(const RDOb *ob, const std::string &key) {
+nb::object GetProp(const RDOb *ob, const std::string &key) {
   T res;
   try {
-    if (!ob->getPropIfPresent(key, res)) {
-      PyErr_SetString(PyExc_KeyError, key.c_str());
-      return nullptr;
-    }
+    ob->getProp(key, res);
+  } catch (const KeyErrorException &) {
+    auto msg = std::string("key `") + key + "` not found";
+    throw nb::key_error(msg.c_str());
   } catch (const std::exception &e) {
     auto msg = std::string("key `") + key + "` exists but does not result in " +
                GetTypeName<T>() + " reason: " + e.what();
-    PyErr_SetString(PyExc_ValueError, msg.c_str());
-    return nullptr;
+    throw nb::value_error(msg.c_str());
   }
-  return rawPy(std::move(res));
+  return nb::object(res);
 }
 
 template <class RDOb>
