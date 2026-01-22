@@ -102,7 +102,7 @@ class AtomData {
     EXPLICIT
   };
 
-  uint32_t getValence(ValenceType which) {
+  uint32_t getValence(ValenceType which) const {
     if (which == ValenceType::EXPLICIT) {
       return getExplicitValence();
     }

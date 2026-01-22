@@ -1845,6 +1845,35 @@ TEST_CASE("Batch edits") {
   }
 }
 
+TEST_CASE("benchmarking construction from smiles") {
+  // from hanoittest.cpp
+  std::vector<std::string> smileses = {
+      "C[C@@H]1CCC[C@H](C)[C@H]1C",
+      "N[C@@]1(C[C@H]([18F])C1)C(=O)O",
+      "CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2",
+      "CC(C)CCCC[C@@H]1C[C@H](/C=C/[C@]2(C)CC[C@H](O)CC2)[C@@H](O)[C@H]1O",
+      "C[C@@]12CCC[C@H]1[C@@H]1CC[C@H]3C[C@@H](O)CC[C@]3(C)[C@H]1CC2",
+      "CCCN[C@H]1CC[C@H](NC)CC1",
+      "O=S(=O)(NC[C@H]1CC[C@H](CNCc2ccc3ccccc3c2)CC1)c1ccc2ccccc2c1",
+      "CC(C)[C@H]1CC[C@H](C(=O)N[C@H](Cc2ccccc2)C(=O)O)CC1",
+      "O=[N+]([O-])c1ccccc1S(=O)(=O)NC[C@H]1CC[C@H](CNCC2Cc3ccccc3CC2)CC1",
+      "Oc1ccc2c(Cc3ccc(OCCN4CCCCC4)cc3)c([C@H]3CC[C@H](O)CC3)sc2c1",
+      "O=C(c1ccc(OCCN2CCCCC2)cc1)c1c2ccc(O)cc2sc1[C@H]1CC[C@H](O)CC1",
+      "N#Cc1ccc2c(c1)CCN(CC[C@@H]1CC[C@@H](NC(=O)c3ccnc4ccccc34)CC1)C2",
+      "COCCOC[C@H](CC1(C(=O)N[C@H]2CC[C@@H](C(=O)O)CC2)CCCC1)C(=O)O",
+      "c1ccc(CN[C@H]2CC[C@H](Nc3ccc4[nH]ncc4c3)CC2)cc1",
+  };
+  std::uint64_t total = 0;
+  for (auto i = 0u; i < 100; ++i) {
+    for (const auto &smiles : smileses) {
+      auto molPtr = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(molPtr);
+      total += molPtr->getNumAtoms();
+    }
+  }
+  REQUIRE(total > 100);
+}
+
 // Explicit main needed as Catch returns odd exit codes by default and messes
 // with gcovr.
 int main(int argc, char *argv[]) { return Catch::Session().run(argc, argv); }
