@@ -491,11 +491,11 @@ void Atom::clearPropertyCache() {
 }
 int Atom::calcExplicitValence(bool strict) {
   PRECONDITION(dp_owningMol, "calcExplicitValence requires an owning molecule");
-  return dp_owningMol->calcExplicitValence(d_index, strict);
+  return dp_owningMol->calcAtomExplicitValence(d_index, strict);
 }
 int Atom::calcImplicitValence(bool strict) {
   PRECONDITION(dp_owningMol, "calcImplicitValence requires an owning molecule");
-  return dp_owningMol->calcImplicitValence(d_index, strict);
+  return dp_owningMol->calcAtomImplicitValence(d_index, strict);
 }
 
 bool Atom::hasValenceViolation() const {

@@ -1252,8 +1252,8 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
     return bond.getStereoAtoms();
   }
 
-  uint32_t calcExplicitValence(atomindex_t atomIndex, bool strict);
-  uint32_t calcImplicitValence(atomindex_t atomIndex, bool strict);
+  uint32_t calcAtomExplicitValence(atomindex_t atomIndex, bool strict);
+  uint32_t calcAtomImplicitValence(atomindex_t atomIndex, bool strict);
 
   bool hasValenceViolation(atomindex_t atomIndex) const;
 
@@ -1713,8 +1713,8 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   void updatePropertyCache(bool strict = true);
 
   void updateAtomPropertyCache(atomindex_t atomIndex, bool strict = true) {
-    calcExplicitValence(atomIndex, strict);
-    calcImplicitValence(atomIndex, strict);
+    calcAtomExplicitValence(atomIndex, strict);
+    calcAtomImplicitValence(atomIndex, strict);
   }
   void updateBondPropertyCache([[maybe_unused]] uint32_t bondIndex,
                                [[maybe_unused]] bool strict = true) {
@@ -2059,10 +2059,10 @@ class RDKIT_GRAPHMOL_EXPORT RDMol {
   //! modified.
   void markConformersAsCompatModified() const;
 
-  int calculateExplicitValence(atomindex_t atomIndex, bool strict,
-                               bool checkIt) const;
-  int calculateImplicitValence(atomindex_t atomIndex, bool strict,
-                               bool checkIt) const;
+  int calculateAtomExplicitValence(atomindex_t atomIndex, bool strict,
+                                   bool checkIt) const;
+  int calculateAtomImplicitValence(atomindex_t atomIndex, bool strict,
+                                   bool checkIt) const;
 
   // NOTE: This can change in another thread, so only use it in situations where
   // the caller is planning to modify data or where the result changing would

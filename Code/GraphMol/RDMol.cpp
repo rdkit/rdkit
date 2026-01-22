@@ -2013,8 +2013,8 @@ bool canBeHypervalent(const AtomData &atom, unsigned int effectiveAtomicNum) {
 
 }  // namespace
 
-int RDMol::calculateExplicitValence(atomindex_t atomIndex, bool strict,
-                                    bool checkIt) const {
+int RDMol::calculateAtomExplicitValence(atomindex_t atomIndex, bool strict,
+                                        bool checkIt) const {
   const AtomData &atom = getAtom(atomIndex);
 
   // FIX: contributions of bonds to valence are being done at best
@@ -2129,15 +2129,15 @@ int RDMol::calculateExplicitValence(atomindex_t atomIndex, bool strict,
 
 // NOTE: this uses the explicitValence, so it will call
 // calculateExplicitValence if it is not set on the given atom
-int RDMol::calculateImplicitValence(atomindex_t atomIndex, bool strict,
-                                    bool checkIt) const {
+int RDMol::calculateAtomImplicitValence(atomindex_t atomIndex, bool strict,
+                                        bool checkIt) const {
   const AtomData &atom = getAtom(atomIndex);
   if (atom.noImplicit) {
     return 0;
   }
   auto explicitValence = atom.explicitValence;
   if (explicitValence == AtomData::unsetValenceVal) {
-    explicitValence = calculateExplicitValence(atomIndex, strict, checkIt);
+    explicitValence = calculateAtomExplicitValence(atomIndex, strict, checkIt);
   }
   // special cases
   auto atomicNum = atom.getAtomicNum();
@@ -2290,20 +2290,22 @@ int RDMol::calculateImplicitValence(atomindex_t atomIndex, bool strict,
   return res;
 }
 
-uint32_t RDMol::calcExplicitValence(atomindex_t atomIndex, bool strict) {
+uint32_t RDMol::calcAtomExplicitValence(atomindex_t atomIndex, bool strict) {
   bool checkIt = false;
   AtomData &atom = getAtom(atomIndex);
-  atom.explicitValence = calculateExplicitValence(atomIndex, strict, checkIt);
+  atom.explicitValence =
+      calculateAtomExplicitValence(atomIndex, strict, checkIt);
   return atom.explicitValence;
 }
 
-uint32_t RDMol::calcImplicitValence(atomindex_t atomIndex, bool strict) {
+uint32_t RDMol::calcAtomImplicitValence(atomindex_t atomIndex, bool strict) {
   AtomData &atom = getAtom(atomIndex);
   if (atom.explicitValence == AtomData::unsetValenceVal) {
-    calcExplicitValence(atomIndex, strict);
+    calcAtomExplicitValence(atomIndex, strict);
   }
   bool checkIt = false;
-  atom.implicitValence = calculateImplicitValence(atomIndex, strict, checkIt);
+  atom.implicitValence =
+      calculateAtomImplicitValence(atomIndex, strict, checkIt);
   return atom.implicitValence;
 }
 
@@ -2344,8 +2346,8 @@ bool RDMol::hasValenceViolation(atomindex_t atomIndex) const {
 
   bool strict = false;
   bool checkIt = true;
-  if (calculateExplicitValence(atomIndex, strict, checkIt) == -1 ||
-      calculateImplicitValence(atomIndex, strict, checkIt) == -1) {
+  if (calculateAtomExplicitValence(atomIndex, strict, checkIt) == -1 ||
+      calculateAtomImplicitValence(atomIndex, strict, checkIt) == -1) {
     return true;
   }
   return false;
