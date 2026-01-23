@@ -13,14 +13,15 @@ namespace RDKit
 {
 class ROMol;
 class RWMol;
+class MonomerMol;
 
 /**
- * Converts an atomistic ROMol into a Monomer-based ROMol.
+ * Converts an atomistic ROMol into a MonomerMol.
  *
  * @param atomistic_mol Atomistic molecule to convert to MonomerMol
  * @return MonomerMol
  */
-RDKIT_MONOMERMOL_EXPORT std::unique_ptr<RDKit::RWMol>
+RDKIT_MONOMERMOL_EXPORT std::unique_ptr<RDKit::MonomerMol>
 toMonomeric(const RDKit::ROMol& atomistic_mol);
 
 /**

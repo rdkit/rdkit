@@ -18,13 +18,12 @@
 
 #include <RDGeneral/BetterEnums.h>
 #include <RDGeneral/export.h>
+#include <GraphMol/RWMol.h>
 
 namespace RDKit
 {
 
 // Forward declarations
-class ROMol;
-class RWMol;
 class Atom;
 class Bond;
 class SubstanceGroup;
@@ -61,53 +60,88 @@ RDKIT_MONOMERMOL_EXPORT ChainType toChainType(std::string_view chain_type);
 
 RDKIT_MONOMERMOL_EXPORT std::string toString(ChainType chain_type);
 
-/*
- * Add a monomer to the molecule
- *
- * @param monomer_mol The Monomeric molecule to add the monomer to
- * @param name The name of the monomer
- * @param residue_number The residue number of the monomer
- * @param chain_id The chain ID of the monomer
- * @param monomer_type The type of monomer to add
- *
- * @return The index of the added monomer
+//! MonomerMol is an RWMol that represents molecules using monomers as atoms.
+/*!
+ * A MonomerMol uses RDKit atoms to represent monomers. Chains are represented
+ * via the PDBAtomResidueInfo structs on atoms, and linkages are stored as a
+ * LINKAGE property on bonds in the form of RX-RY, where X is the attachment
+ * point used on the begin monomer and Y is the attachment point used on the
+ * end monomer.
  */
-RDKIT_MONOMERMOL_EXPORT size_t addMonomer(
-    RDKit::RWMol& monomer_mol, std::string_view name, int residue_number,
-    std::string_view chain_id, MonomerType monomer_type = MonomerType::REGULAR);
+class RDKIT_MONOMERMOL_EXPORT MonomerMol : public RWMol {
+ public:
+  //! Default constructor
+  MonomerMol() : RWMol() {}
 
-/*
- * Add a monomer to the molecule. Overload that uses the last monomer
- * added to the molecule to determine the chain ID and residue number.
- *
- * @param monomer_mol The Monomeric molecule to add the monomer to
- * @param name The name of the monomer
- * @param monomer_type The type of monomer to add
- *
- * @return The index of the added monomer
- */
-RDKIT_MONOMERMOL_EXPORT size_t
-addMonomer(RDKit::RWMol& monomer_mol, std::string_view name,
-           MonomerType monomer_type = MonomerType::REGULAR);
+  //! Copy constructor
+  MonomerMol(const MonomerMol& other) : RWMol(other) {}
 
-/*
- * Add a connection between two monomers in the molecule. The connection has
- * directionality that starts at monomer1 and ends at monomer2.
- *
- * @param mol The molecule to add the connection to
- * @param monomer1 The index of the first monomer
- * @param monomer2 The index of the second monomer
- * @param connection_type The type of connection to add
- */
-RDKIT_MONOMERMOL_EXPORT void
-addConnection(RDKit::RWMol& mol, size_t monomer1, size_t monomer2,
-              ConnectionType connection_type = ConnectionType::FORWARD);
+  //! Move constructor
+  MonomerMol(MonomerMol&& other) noexcept : RWMol(std::move(other)) {}
 
-// overload for helm writer
-RDKIT_MONOMERMOL_EXPORT void addConnection(RDKit::RWMol& mol, size_t monomer1,
-                                        size_t monomer2,
-                                        const std::string& linkage,
-                                        const bool is_custom_bond = false);
+  //! Construct from an ROMol
+  explicit MonomerMol(const ROMol& other) : RWMol(other) {}
+
+  //! Copy assignment operator
+  MonomerMol& operator=(const MonomerMol& other);
+
+  //! Move assignment operator
+  MonomerMol& operator=(MonomerMol&& other) noexcept;
+
+  /*!
+   * Add a monomer to the molecule
+   *
+   * @param name The name of the monomer
+   * @param residue_number The residue number of the monomer
+   * @param chain_id The chain ID of the monomer
+   * @param monomer_type The type of monomer to add
+   *
+   * @return The index of the added monomer
+   */
+  size_t addMonomer(std::string_view name, int residue_number,
+                    std::string_view chain_id,
+                    MonomerType monomer_type = MonomerType::REGULAR);
+
+  /*!
+   * Add a monomer to the molecule. Overload that uses the last monomer
+   * added to the molecule to determine the chain ID and residue number.
+   *
+   * @param name The name of the monomer
+   * @param monomer_type The type of monomer to add
+   *
+   * @return The index of the added monomer
+   */
+  size_t addMonomer(std::string_view name,
+                    MonomerType monomer_type = MonomerType::REGULAR);
+
+  /*!
+   * Add a connection between two monomers in the molecule. The connection has
+   * directionality that starts at monomer1 and ends at monomer2.
+   *
+   * @param monomer1 The index of the first monomer
+   * @param monomer2 The index of the second monomer
+   * @param connection_type The type of connection to add
+   */
+  void addConnection(size_t monomer1, size_t monomer2,
+                     ConnectionType connection_type = ConnectionType::FORWARD);
+
+  /*!
+   * Add a connection between two monomers with a specific linkage string.
+   *
+   * @param monomer1 The index of the first monomer
+   * @param monomer2 The index of the second monomer
+   * @param linkage The linkage string in RX-RY format
+   * @param is_custom_bond Whether this is a custom bond
+   */
+  void addConnection(size_t monomer1, size_t monomer2,
+                     const std::string& linkage, bool is_custom_bond = false);
+
+  //! Discards existing chains and reassigns monomers to sequential chains.
+  //! (in HELM world, "chains" are called "polymers")
+  void assignChains();
+};
+
+// Free functions for querying - these work on any molecule with monomer info
 
 [[nodiscard]] RDKIT_MONOMERMOL_EXPORT Chain
 getPolymer(const RDKit::ROMol& cg_mol, std::string_view polymer_id);
@@ -120,9 +154,5 @@ getPolymerIds(const RDKit::ROMol& monomer_mol);
 
 [[nodiscard]] RDKIT_MONOMERMOL_EXPORT unsigned int
 getResidueNumber(const RDKit::Atom* atom);
-
-// Discards existing chains and reassigns monomers to sequential chains.
-// (in HELM world, "chains" are called "polymers")
-RDKIT_MONOMERMOL_EXPORT void assignChains(RDKit::RWMol& mol);
 
 } // namespace RDKit

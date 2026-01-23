@@ -419,7 +419,7 @@ int getAttchpt(const RDKit::Atom& monomer, const RDKit::Bond& bond,
     }
 }
 
-void detectLinkages(RDKit::RWMol& monomer_mol,
+void detectLinkages(RDKit::MonomerMol& monomer_mol,
                     const RDKit::RWMol& atomistic_mol)
 {
     // Find all linkages between monomers (used when PDB residue info is
@@ -481,17 +481,17 @@ void detectLinkages(RDKit::RWMol& monomer_mol,
         // Backbone connections (R2-R1) should be added in that order when
         // possible.
         if (begin_attchpt == 2 && end_attchpt == 1) {
-            addConnection(monomer_mol, begin_monomer_idx, end_monomer_idx,
-                          "R2-R1");
+            monomer_mol.addConnection(begin_monomer_idx, end_monomer_idx,
+                                      "R2-R1");
         } else if (begin_attchpt == 1 && end_attchpt == 2) {
-            addConnection(monomer_mol, end_monomer_idx, begin_monomer_idx,
-                          "R2-R1");
+            monomer_mol.addConnection(end_monomer_idx, begin_monomer_idx,
+                                      "R2-R1");
         } else if (begin_monomer_idx < end_monomer_idx) {
-            addConnection(monomer_mol, begin_monomer_idx, end_monomer_idx,
-                          "R" + std::to_string(begin_attchpt) + "-R" + std::to_string(end_attchpt));
+            monomer_mol.addConnection(begin_monomer_idx, end_monomer_idx,
+                                      "R" + std::to_string(begin_attchpt) + "-R" + std::to_string(end_attchpt));
         } else {
-            addConnection(monomer_mol, end_monomer_idx, begin_monomer_idx,
-                          "R" + std::to_string(end_attchpt) + "-R" + std::to_string(begin_attchpt));
+            monomer_mol.addConnection(end_monomer_idx, begin_monomer_idx,
+                                      "R" + std::to_string(end_attchpt) + "-R" + std::to_string(begin_attchpt));
         }
     }
 }
@@ -509,7 +509,7 @@ getHelmInfo(MonomerDatabase& db, const RDKit::Atom* atom)
     return db.getHelmInfo(res_name);
 }
 
-std::unique_ptr<RDKit::RWMol>
+std::unique_ptr<RDKit::MonomerMol>
 pdbInfoAtomisticToMM(const RDKit::ROMol& input_mol)
 {
     // A couple preprocessing steps; remove waters and neutralize atoms
@@ -533,8 +533,7 @@ pdbInfoAtomisticToMM(const RDKit::ROMol& input_mol)
                                                       {ChainType::RNA, 0},
                                                       {ChainType::DNA, 0},
                                                       {ChainType::CHEM, 0}};
-    std::unique_ptr<RDKit::RWMol> monomer_mol =
-        std::make_unique<RDKit::RWMol>();
+    auto monomer_mol = std::make_unique<RDKit::MonomerMol>();
     for (const auto& [chain_id, residues] : chains_and_residues) {
         // Use first residue to determine chain type. We assume that PDB data
         // is correct and there aren't multiple chain types in a single chain.
@@ -556,13 +555,14 @@ pdbInfoAtomisticToMM(const RDKit::ROMol& input_mol)
                 // Standard residue in monomer DB, Verify that the fragment
                 // labeled as the residue matches what is in the monomer
                 // database
-                this_monomer = addMonomer(*monomer_mol, std::get<0>(*helm_info),
-                                          res_num, helm_chain_id);
+                this_monomer = monomer_mol->addMonomer(std::get<0>(*helm_info),
+                                                       res_num, helm_chain_id);
             } else {
                 auto smiles = getMonomerSmiles(mol, atom_idxs, chain_id, key,
                                                res_num, end_of_chain);
-                this_monomer = addMonomer(*monomer_mol, smiles, res_num,
-                                          helm_chain_id, MonomerType::SMILES);
+                this_monomer = monomer_mol->addMonomer(smiles, res_num,
+                                                       helm_chain_id,
+                                                       MonomerType::SMILES);
             }
 
             // Track which atoms are in which monomer
@@ -588,7 +588,7 @@ bool hasPdbResidueInfo(const RDKit::ROMol& mol)
 }
 } // unnamed namespace
 
-std::unique_ptr<RDKit::RWMol> toMonomeric(const RDKit::ROMol& atomistic_mol)
+std::unique_ptr<RDKit::MonomerMol> toMonomeric(const RDKit::ROMol& atomistic_mol)
 {
     if (!hasPdbResidueInfo(atomistic_mol)) {
         // If there is no residue information, we cannot convert to monomeric
@@ -598,7 +598,7 @@ std::unique_ptr<RDKit::RWMol> toMonomeric(const RDKit::ROMol& atomistic_mol)
             "monomeric form");
     }
     auto monomer_mol = pdbInfoAtomisticToMM(atomistic_mol);
-    assignChains(*monomer_mol);
+    monomer_mol->assignChains();
     return monomer_mol;
 }
 

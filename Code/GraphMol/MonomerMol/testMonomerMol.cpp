@@ -148,17 +148,17 @@ static bool same_roundtrip_mol(const RDKit::ROMol& original,
 TEST_CASE("FASTAConversions") {
   SECTION("SIMPLE") {
     // Build MonomerMol with a single chain
-    RWMol monomer_mol;
-    addMonomer(monomer_mol, "R", 1, "PEPTIDE1");
-    addMonomer(monomer_mol, "D");
-    addMonomer(monomer_mol, "K");
-    addMonomer(monomer_mol, "I");
-    addMonomer(monomer_mol, "T");
+    MonomerMol monomer_mol;
+    monomer_mol.addMonomer("R", 1, "PEPTIDE1");
+    monomer_mol.addMonomer("D");
+    monomer_mol.addMonomer("K");
+    monomer_mol.addMonomer("I");
+    monomer_mol.addMonomer("T");
 
-    addConnection(monomer_mol, 0, 1, ConnectionType::FORWARD);
-    addConnection(monomer_mol, 1, 2, ConnectionType::FORWARD);
-    addConnection(monomer_mol, 2, 3, ConnectionType::FORWARD);
-    addConnection(monomer_mol, 3, 4, ConnectionType::FORWARD);
+    monomer_mol.addConnection(0, 1, ConnectionType::FORWARD);
+    monomer_mol.addConnection(1, 2, ConnectionType::FORWARD);
+    monomer_mol.addConnection(2, 3, ConnectionType::FORWARD);
+    monomer_mol.addConnection(3, 4, ConnectionType::FORWARD);
 
     CHECK(monomer_mol.getNumAtoms() == 5);
     CHECK(monomer_mol.getNumBonds() == 4);
@@ -167,17 +167,17 @@ TEST_CASE("FASTAConversions") {
 
   SECTION("MultipleChains") {
     // Build MonomerMol with two chains
-    RWMol monomer_mol;
-    auto midx1 = addMonomer(monomer_mol, "R", 1, "A");
-    auto midx2 = addMonomer(monomer_mol, "D");
+    MonomerMol monomer_mol;
+    auto midx1 = monomer_mol.addMonomer("R", 1, "A");
+    auto midx2 = monomer_mol.addMonomer("D");
 
-    auto midx3 = addMonomer(monomer_mol, "K", 1, "B");
-    auto midx4 = addMonomer(monomer_mol, "I");
-    auto midx5 = addMonomer(monomer_mol, "T");
+    auto midx3 = monomer_mol.addMonomer("K", 1, "B");
+    auto midx4 = monomer_mol.addMonomer("I");
+    auto midx5 = monomer_mol.addMonomer("T");
 
-    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx1, midx2, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx3, midx4, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx4, midx5, ConnectionType::FORWARD);
 
     CHECK(monomer_mol.getNumAtoms() == 5);
     CHECK(monomer_mol.getNumBonds() == 3);
@@ -203,17 +203,17 @@ TEST_CASE("Conversions") {
     std::string seq = "CGCGA";
     auto atomistic_mol = SequenceToMol(seq);
 
-    RWMol monomer_mol;
-    auto midx1 = addMonomer(monomer_mol, "C", 1, "PEPTIDE1");
-    auto midx2 = addMonomer(monomer_mol, "G");
-    auto midx3 = addMonomer(monomer_mol, "C");
-    auto midx4 = addMonomer(monomer_mol, "G");
-    auto midx5 = addMonomer(monomer_mol, "A");
+    MonomerMol monomer_mol;
+    auto midx1 = monomer_mol.addMonomer("C", 1, "PEPTIDE1");
+    auto midx2 = monomer_mol.addMonomer("G");
+    auto midx3 = monomer_mol.addMonomer("C");
+    auto midx4 = monomer_mol.addMonomer("G");
+    auto midx5 = monomer_mol.addMonomer("A");
 
-    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx2, midx3, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx1, midx2, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx2, midx3, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx3, midx4, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx4, midx5, ConnectionType::FORWARD);
     auto atomistic_mol2 = toAtomistic(monomer_mol);
 
     // atomistic structure is same as using sequence parser
@@ -226,15 +226,15 @@ TEST_CASE("Conversions") {
 
   SECTION("toAtomisticWithBranch") {
     // This is equivalent to HELM string "PEPTIDE1{A.D(C)P}$$$$"
-    RWMol monomer_mol;
-    auto midx1 = addMonomer(monomer_mol, "A", 1, "PEPTIDE1");
-    auto midx2 = addMonomer(monomer_mol, "D");
-    auto midx3 = addMonomer(monomer_mol, "C");
-    auto midx4 = addMonomer(monomer_mol, "P");
+    MonomerMol monomer_mol;
+    auto midx1 = monomer_mol.addMonomer("A", 1, "PEPTIDE1");
+    auto midx2 = monomer_mol.addMonomer("D");
+    auto midx3 = monomer_mol.addMonomer("C");
+    auto midx4 = monomer_mol.addMonomer("P");
 
-    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx2, midx3, ConnectionType::SIDECHAIN);
-    addConnection(monomer_mol, midx2, midx4, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx1, midx2, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx2, midx3, ConnectionType::SIDECHAIN);
+    monomer_mol.addConnection(midx2, midx4, ConnectionType::FORWARD);
 
     std::string smi = MolToSmiles(*toAtomistic(monomer_mol));
     CHECK(smi == "C[C@H](N)C(=O)N[C@@H](CC(=O)N[C@@H](CS)C(=O)O)C(=O)N1CCC[C@H]1C(=O)O");
@@ -245,18 +245,18 @@ TEST_CASE("Conversions") {
     std::string helm = "PEPTIDE1{C.A.A.A.C}$PEPTIDE1,PEPTIDE1,1:R3-5:R3$$$V2.0";
     auto atomistic_mol = HELMToMol(helm);
 
-    RWMol monomer_mol;
-    auto midx1 = addMonomer(monomer_mol, "C", 1, "PEPTIDE1");
-    auto midx2 = addMonomer(monomer_mol, "A");
-    auto midx3 = addMonomer(monomer_mol, "A");
-    auto midx4 = addMonomer(monomer_mol, "A");
-    auto midx5 = addMonomer(monomer_mol, "C");
+    MonomerMol monomer_mol;
+    auto midx1 = monomer_mol.addMonomer("C", 1, "PEPTIDE1");
+    auto midx2 = monomer_mol.addMonomer("A");
+    auto midx3 = monomer_mol.addMonomer("A");
+    auto midx4 = monomer_mol.addMonomer("A");
+    auto midx5 = monomer_mol.addMonomer("C");
 
-    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx2, midx3, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx1, midx5, ConnectionType::CROSSLINK);
+    monomer_mol.addConnection(midx1, midx2, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx2, midx3, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx3, midx4, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx4, midx5, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx1, midx5, ConnectionType::CROSSLINK);
 
     std::string smi1 = MolToSmiles(*atomistic_mol);
     std::string smi2 = MolToSmiles(*toAtomistic(monomer_mol));
@@ -268,19 +268,19 @@ TEST_CASE("Conversions") {
     std::string helm = "PEPTIDE1{F.Y.K.A.R.L}$PEPTIDE1,PEPTIDE1,6:R2-1:R1$$$V2.0";
     auto atomistic_mol = HELMToMol(helm);
 
-    RWMol monomer_mol;
-    auto midx1 = addMonomer(monomer_mol, "F", 1, "PEPTIDE1");
-    auto midx2 = addMonomer(monomer_mol, "Y");
-    auto midx3 = addMonomer(monomer_mol, "K");
-    auto midx4 = addMonomer(monomer_mol, "A");
-    auto midx5 = addMonomer(monomer_mol, "R");
-    auto midx6 = addMonomer(monomer_mol, "L");
-    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx2, midx3, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx5, midx6, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx6, midx1, ConnectionType::FORWARD);
+    MonomerMol monomer_mol;
+    auto midx1 = monomer_mol.addMonomer("F", 1, "PEPTIDE1");
+    auto midx2 = monomer_mol.addMonomer("Y");
+    auto midx3 = monomer_mol.addMonomer("K");
+    auto midx4 = monomer_mol.addMonomer("A");
+    auto midx5 = monomer_mol.addMonomer("R");
+    auto midx6 = monomer_mol.addMonomer("L");
+    monomer_mol.addConnection(midx1, midx2, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx2, midx3, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx3, midx4, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx4, midx5, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx5, midx6, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx6, midx1, ConnectionType::FORWARD);
 
     CHECK(monomer_mol.getNumAtoms() == 6);
     CHECK(monomer_mol.getNumBonds() == 6);
@@ -297,20 +297,20 @@ TEST_CASE("Conversions") {
 
 
     // toAtomistic should still work even when monomers are added out of order
-    RWMol monomer_mol;
-    auto midx1 = addMonomer(monomer_mol, "A", 1, "PEPTIDE1");
-    auto midx2 = addMonomer(monomer_mol, "K");
-    auto midx3 = addMonomer(monomer_mol, "Y");
-    auto midx4 = addMonomer(monomer_mol, "F");
-    auto midx5 = addMonomer(monomer_mol, "L");
-    auto midx6 = addMonomer(monomer_mol, "R");
-    addConnection(monomer_mol, midx4, midx3, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx3, midx2, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx2, midx1, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx1, midx6, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx6, midx5, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx5, midx4, ConnectionType::FORWARD);
-    assignChains(monomer_mol);
+    MonomerMol monomer_mol;
+    auto midx1 = monomer_mol.addMonomer("A", 1, "PEPTIDE1");
+    auto midx2 = monomer_mol.addMonomer("K");
+    auto midx3 = monomer_mol.addMonomer("Y");
+    auto midx4 = monomer_mol.addMonomer("F");
+    auto midx5 = monomer_mol.addMonomer("L");
+    auto midx6 = monomer_mol.addMonomer("R");
+    monomer_mol.addConnection(midx4, midx3, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx3, midx2, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx2, midx1, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx1, midx6, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx6, midx5, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx5, midx4, ConnectionType::FORWARD);
+    monomer_mol.assignChains();
 
     CHECK(monomer_mol.getNumAtoms() == 6);
     CHECK(monomer_mol.getNumBonds() == 6);
@@ -323,13 +323,13 @@ TEST_CASE("Conversions") {
 
   SECTION("toAtomisticSmilesMonomer") {
     // This is equivelent to HELM string "PEPTIDE1{A.[O=C([C@H]1CCCN1[*:1])[*:2]].P}$$$$"
-    RWMol monomer_mol;
-    auto midx1 = addMonomer(monomer_mol, "A", 1, "PEPTIDE1");
-    auto midx2 = addMonomer(monomer_mol, "O=C([C@H]1CCCN1[*:1])[*:2]", MonomerType::SMILES);
-    auto midx3 = addMonomer(monomer_mol, "P");
-    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
-    addConnection(monomer_mol, midx2, midx3, ConnectionType::FORWARD);
-    assignChains(monomer_mol);
+    MonomerMol monomer_mol;
+    auto midx1 = monomer_mol.addMonomer("A", 1, "PEPTIDE1");
+    auto midx2 = monomer_mol.addMonomer("O=C([C@H]1CCCN1[*:1])[*:2]", MonomerType::SMILES);
+    auto midx3 = monomer_mol.addMonomer("P");
+    monomer_mol.addConnection(midx1, midx2, ConnectionType::FORWARD);
+    monomer_mol.addConnection(midx2, midx3, ConnectionType::FORWARD);
+    monomer_mol.assignChains();
     CHECK(monomer_mol.getNumAtoms() == 3);
     CHECK(monomer_mol.getNumBonds() == 2);
     auto atomistic_mol = toAtomistic(monomer_mol);
