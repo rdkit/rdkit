@@ -222,7 +222,7 @@ static inline int queryAtomUnsaturated(Atom const *at) {
   return at->getTotalDegree() < at->getTotalValence();
 };
 static inline int queryAtomNum2(ConstRDMolAtom at) {
-  return at.datap()->getAtomicNum();
+  return at.data().getAtomicNum();
 }
 static inline int queryAtomNum(Atom const *at) { return at->getAtomicNum(); }
 static inline int makeAtomType(int atomic_num, bool aromatic) {

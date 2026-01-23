@@ -2237,11 +2237,7 @@ class ConstRDMolAtom : public RDMolAtomBase<true> {
   ConstRDMolAtom &operator=(const ConstRDMolAtom &other) = default;
   ConstRDMolAtom(const RDMolAtom &);
 
-  const AtomData &data() const {
-    PRECONDITION(d_data != nullptr, "bad atom");
-    return *d_data;
-  }
-  const AtomData *datap() const { return d_data; }
+  const AtomData &data() const { return *d_data; }
 };
 
 class RDMolAtom : public RDMolAtomBase<false> {
@@ -2254,14 +2250,8 @@ class RDMolAtom : public RDMolAtomBase<false> {
   RDMolAtom(const RDMolAtom &) = default;
   RDMolAtom &operator=(const RDMolAtom &other) = default;
 
-  AtomData &data() {
-    PRECONDITION(d_data != nullptr, "bad atom");
-    return *d_data;
-  }
-  const AtomData &data() const {
-    PRECONDITION(d_data != nullptr, "bad atom");
-    return *d_data;
-  }
+  AtomData &data() { return *d_data; }
+  const AtomData &data() const { return *d_data; }
 };
 
 inline ConstRDMolAtom::ConstRDMolAtom(const RDMolAtom &other)
@@ -2290,11 +2280,7 @@ class ConstRDMolBond : public RDMolBondBase<true> {
   ConstRDMolBond &operator=(const ConstRDMolBond &) = default;
   ConstRDMolBond(const RDMolBond &);
 
-  const BondData &data() const {
-    PRECONDITION(d_data != nullptr, "bad bond");
-    return *d_data;
-  }
-  const BondData *datap() const { return d_data; }
+  const BondData &data() const { return *d_data; }
 };
 
 class RDMolBond : public RDMolBondBase<false> {
@@ -2307,18 +2293,13 @@ class RDMolBond : public RDMolBondBase<false> {
   RDMolBond(const RDMolBond &) = default;
   RDMolBond &operator=(const RDMolBond &) = default;
 
-  BondData &data() {
-    PRECONDITION(d_data != nullptr, "bad bond");
-    return *d_data;
-  }
-  const BondData &data() const {
-    PRECONDITION(d_data != nullptr, "bad bond");
-    return *d_data;
-  }
+  BondData &data() { return *d_data; }
+  const BondData &data() const { return *d_data; }
 };
 
 inline ConstRDMolBond::ConstRDMolBond(const RDMolBond &other)
     : RDMolBondBase(&other.mol(), other.index()), d_data(&other.data()) {}
+
 namespace Ranges {
 //! This class is only intended to be used by IndexRange
 template <bool ISBOND, bool ISCONST>
