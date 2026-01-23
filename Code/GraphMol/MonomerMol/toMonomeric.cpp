@@ -23,7 +23,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
-#include "MonomerDatabase.h"
+#include "MonomerLibrary.h"
 #include "MonomerMol.h"
 
 namespace RDKit
@@ -496,8 +496,8 @@ void detectLinkages(RDKit::MonomerMol& monomer_mol,
     }
 }
 
-std::optional<std::tuple<std::string, std::string, ChainType>>
-getHelmInfo(MonomerDatabase& db, const RDKit::Atom* atom)
+std::optional<std::tuple<std::string, std::string, std::string>>
+getHelmInfo(const MonomerLibrary& lib, const RDKit::Atom* atom)
 {
     // This comes from something like a PDB or MAE file
     auto res_info = dynamic_cast<const RDKit::AtomPDBResidueInfo*>(
@@ -506,7 +506,7 @@ getHelmInfo(MonomerDatabase& db, const RDKit::Atom* atom)
     res_name.erase(
         std::remove_if(res_name.begin(), res_name.end(), ::isspace),
         res_name.end());
-    return db.getHelmInfo(res_name);
+    return lib.getHelmInfo(res_name);
 }
 
 std::unique_ptr<RDKit::MonomerMol>
@@ -526,28 +526,28 @@ pdbInfoAtomisticToMM(const RDKit::ROMol& input_mol)
     ChainsAndResidues chains_and_residues;
     findChainsAndResidues(mol, chains_and_residues);
 
-    // Eventually, this will be connecting to a database of monomers or accessing an
-    // in-memory datastructure
-    MonomerDatabase db;
-    std::map<ChainType, unsigned int> chain_counts = {{ChainType::PEPTIDE, 0},
-                                                      {ChainType::RNA, 0},
-                                                      {ChainType::DNA, 0},
-                                                      {ChainType::CHEM, 0}};
+    // Get the global library for monomer lookups
+    auto lib = MonomerLibrary::getGlobalLibrary();
+    std::map<std::string, unsigned int> chain_counts = {{"PEPTIDE", 0},
+                                                         {"RNA", 0},
+                                                         {"DNA", 0},
+                                                         {"CHEM", 0}};
     auto monomer_mol = std::make_unique<RDKit::MonomerMol>();
+    monomer_mol->setMonomerLibrary(lib);
     for (const auto& [chain_id, residues] : chains_and_residues) {
         // Use first residue to determine chain type. We assume that PDB data
         // is correct and there aren't multiple chain types in a single chain.
         // Default chain type is PEPTIDE if not specified.
         auto helm_info = getHelmInfo(
-            db, mol.getAtomWithIdx(residues.begin()->second[0]));
-        auto chain_type =
-            helm_info ? std::get<2>(*helm_info) : ChainType::PEPTIDE;
-        std::string helm_chain_id = toString(chain_type) +
-                                     std::to_string(++chain_counts[chain_type]);
+            *lib, mol.getAtomWithIdx(residues.begin()->second[0]));
+        auto monomer_type =
+            helm_info ? std::get<2>(*helm_info) : std::string("PEPTIDE");
+        std::string helm_chain_id = monomer_type +
+                                     std::to_string(++chain_counts[monomer_type]);
         // Assuming residues are ordered correctly
         unsigned int res_num = 1;
         for (const auto& [key, atom_idxs] : residues) {
-            helm_info = getHelmInfo(db, mol.getAtomWithIdx(atom_idxs[0]));
+            helm_info = getHelmInfo(*lib, mol.getAtomWithIdx(atom_idxs[0]));
             bool end_of_chain = res_num == residues.size();
             unsigned int this_monomer;
             if (helm_info &&

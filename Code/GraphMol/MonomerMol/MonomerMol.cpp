@@ -9,6 +9,7 @@
 //
 
 #include "MonomerMol.h"
+#include "MonomerLibrary.h"
 
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/ROMol.h>
@@ -21,37 +22,6 @@
 
 namespace RDKit
 {
-
-ChainType toChainType(std::string_view chain_type)
-{
-    if (chain_type == "PEPTIDE") {
-        return ChainType::PEPTIDE;
-    } else if (chain_type == "RNA") {
-        return ChainType::RNA;
-    } else if (chain_type == "DNA") {
-        return ChainType::DNA;
-    } else if (chain_type == "CHEM") {
-        return ChainType::CHEM;
-    } else {
-        throw std::invalid_argument("Invalid chain type");
-    }
-}
-
-std::string toString(ChainType chain_type)
-{
-    switch (chain_type) {
-        case ChainType::PEPTIDE:
-            return "PEPTIDE";
-        case ChainType::RNA:
-            return "RNA";
-        case ChainType::DNA:
-            return "DNA";
-        case ChainType::CHEM:
-            return "CHEM";
-        default:
-            throw std::invalid_argument("Invalid chain type");
-    }
-}
 
 namespace {
 
@@ -73,6 +43,7 @@ MonomerMol& MonomerMol::operator=(const MonomerMol& other)
 {
     if (this != &other) {
         RWMol::operator=(other);
+        dp_library = other.dp_library;
     }
     return *this;
 }
@@ -81,8 +52,17 @@ MonomerMol& MonomerMol::operator=(MonomerMol&& other) noexcept
 {
     if (this != &other) {
         RWMol::operator=(std::move(other));
+        dp_library = std::move(other.dp_library);
     }
     return *this;
+}
+
+std::shared_ptr<MonomerLibrary> MonomerMol::getEffectiveLibrary() const
+{
+    if (dp_library) {
+        return dp_library;
+    }
+    return MonomerLibrary::getGlobalLibrary();
 }
 
 void MonomerMol::addConnection(size_t monomer1, size_t monomer2,

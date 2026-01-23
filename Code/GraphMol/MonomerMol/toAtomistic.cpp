@@ -24,7 +24,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
-#include "MonomerDatabase.h"
+#include "MonomerLibrary.h"
 #include "MonomerMol.h"
 
 namespace RDKit
@@ -79,13 +79,13 @@ void fillAttachmentPointMap(const RDKit::ROMol& new_monomer,
 
 void setResidueInfo(RDKit::RWMol& new_monomer, const std::string& monomer_label,
                     unsigned int residue_number, char chain_id,
-                    ChainType chain_type,
-                    MonomerDatabase& db)
+                    std::string_view monomer_type,
+                    const MonomerLibrary& lib)
 {
     std::string residue_name =
-        (chain_type == ChainType::PEPTIDE) ? "UNK" : "UNL";
+        (monomer_type == "PEPTIDE") ? "UNK" : "UNL";
 
-    auto pdb_code = db.getPdbCode(monomer_label, chain_type);
+    auto pdb_code = lib.getPdbCode(monomer_label, monomer_type);
     if (pdb_code) {
         residue_name = *pdb_code;
     }
@@ -112,15 +112,15 @@ void setResidueInfo(RDKit::RWMol& new_monomer, const std::string& monomer_label,
     }
 }
 
-ChainType getChainType(std::string_view polymer_id)
+std::string getMonomerType(std::string_view polymer_id)
 {
     if (polymer_id.find("PEPTIDE") == 0) {
-        return ChainType::PEPTIDE;
+        return "PEPTIDE";
     } else if (polymer_id.find("RNA") == 0) {
         // HELM labels both DNA and RNA as RNA
-        return ChainType::RNA;
+        return "RNA";
     } else if (polymer_id.find("CHEM") == 0) {
-        return ChainType::CHEM;
+        return "CHEM";
     } else {
         throw std::out_of_range(
             "Invalid polymer id: " + std::string(polymer_id) +
@@ -131,7 +131,8 @@ ChainType getChainType(std::string_view polymer_id)
 AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
                          const RDKit::RWMol& monomer_mol,
                          const std::string& polymer_id,
-                         std::vector<unsigned int>& remove_atoms, char chain_id)
+                         std::vector<unsigned int>& remove_atoms, char chain_id,
+                         const MonomerLibrary& lib)
 {
     // Maps residue number and attachment point number to the atom index in
     // atomistic_mol that should be attached to and the atom index of the rgroup
@@ -139,12 +140,8 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
     AttachmentMap attachment_point_map;
 
     auto chain = getPolymer(monomer_mol, polymer_id);
-    auto chain_type = getChainType(polymer_id);
+    auto monomer_type = getMonomerType(polymer_id);
     bool sanitize = false;
-
-    // Eventually, this will be connecting to a database of monomers or accessing an
-    // in-memory datastructure
-    MonomerDatabase db;
 
     // Add the monomers to the atomistic mol
     for (const auto monomer_idx : chain.atoms) {
@@ -156,10 +153,10 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
             smiles = monomer_label;
         } else {
             auto monomer_smiles =
-                db.getMonomerSmiles(monomer_label, chain_type);
+                lib.getMonomerSmiles(monomer_label, monomer_type);
             if (!monomer_smiles) {
                 throw std::out_of_range(
-                    "Peptide Monomer " + monomer_label + " not found in Monomer database");
+                    "Monomer " + monomer_label + " not found in MonomerLibrary");
             }
             smiles = *monomer_smiles;
         }
@@ -195,7 +192,7 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
         fillAttachmentPointMap(*new_monomer, attachment_point_map,
                                residue_number, atomistic_mol.getNumAtoms());
         setResidueInfo(*new_monomer, monomer_label, residue_number, chain_id,
-                       chain_type, db);
+                       monomer_type, lib);
         atomistic_mol.insertMol(*new_monomer);
     }
 
@@ -289,6 +286,14 @@ std::unique_ptr<RDKit::RWMol> toAtomistic(const RDKit::ROMol& monomer_mol)
         }
     }
 
+    // Get the effective library - try to get from MonomerMol, fall back to global
+    std::shared_ptr<MonomerLibrary> lib;
+    if (const auto* mm = dynamic_cast<const MonomerMol*>(&monomer_mol)) {
+        lib = mm->getEffectiveLibrary();
+    } else {
+        lib = MonomerLibrary::getGlobalLibrary();
+    }
+
     // Map to track Polymer ID -> attachment point map
     std::unordered_map<std::string, AttachmentMap> polymer_attachment_points;
     std::vector<unsigned int> remove_atoms;
@@ -296,7 +301,7 @@ std::unique_ptr<RDKit::RWMol> toAtomistic(const RDKit::ROMol& monomer_mol)
     for (const auto& polymer_id : getPolymerIds(monomer_mol)) {
         polymer_attachment_points[polymer_id] =
             addPolymer(*atomistic_mol, monomer_mol, polymer_id, remove_atoms,
-                       chain_id);
+                       chain_id, *lib);
         ++chain_id;
     }
 

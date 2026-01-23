@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -21,6 +22,7 @@ namespace RDKit
 class Atom;
 class Bond;
 class SubstanceGroup;
+class MonomerLibrary;
 
 const std::string ANNOTATION{"ANNOTATION"};
 const std::string LINKAGE{"attachmentPoints"};
@@ -44,13 +46,14 @@ struct Chain {
     std::string annotation;
 };
 
-enum class ChainType { PEPTIDE, RNA, DNA, CHEM };
+// Monomer type constants
+const std::string MONOMER_TYPE_PEPTIDE{"PEPTIDE"};
+const std::string MONOMER_TYPE_RNA{"RNA"};
+const std::string MONOMER_TYPE_DNA{"DNA"};
+const std::string MONOMER_TYPE_CHEM{"CHEM"};
+
 enum class ConnectionType { FORWARD, SIDECHAIN, CROSSLINK };
 enum class MonomerType { REGULAR, SMILES };
-
-RDKIT_MONOMERMOL_EXPORT ChainType toChainType(std::string_view chain_type);
-
-RDKIT_MONOMERMOL_EXPORT std::string toString(ChainType chain_type);
 
 //! MonomerMol is an RWMol that represents molecules using both monomers and atoms.
 /*!
@@ -64,11 +67,13 @@ class RDKIT_MONOMERMOL_EXPORT MonomerMol : public RWMol {
   //! Default constructor
   MonomerMol() : RWMol() {}
 
-  //! Copy constructor
-  MonomerMol(const MonomerMol& other) : RWMol(other) {}
+  //! Copy constructor (shares the library reference)
+  MonomerMol(const MonomerMol& other)
+      : RWMol(other), dp_library(other.dp_library) {}
 
   //! Move constructor
-  MonomerMol(MonomerMol&& other) noexcept : RWMol(std::move(other)) {}
+  MonomerMol(MonomerMol&& other) noexcept
+      : RWMol(std::move(other)), dp_library(std::move(other.dp_library)) {}
 
   //! Construct from an ROMol
   explicit MonomerMol(const ROMol& other) : RWMol(other) {}
@@ -78,6 +83,19 @@ class RDKIT_MONOMERMOL_EXPORT MonomerMol : public RWMol {
 
   //! Move assignment operator
   MonomerMol& operator=(MonomerMol&& other) noexcept;
+
+  //! Get the attached monomer library (may be nullptr)
+  [[nodiscard]] std::shared_ptr<MonomerLibrary> getMonomerLibrary() const {
+      return dp_library;
+  }
+
+  //! Set the monomer library for this molecule
+  void setMonomerLibrary(std::shared_ptr<MonomerLibrary> library) {
+      dp_library = std::move(library);
+  }
+
+  //! Get effective library (attached library or global fallback)
+  [[nodiscard]] std::shared_ptr<MonomerLibrary> getEffectiveLibrary() const;
 
   /*!
    * Add a monomer to the molecule
@@ -164,6 +182,9 @@ class RDKIT_MONOMERMOL_EXPORT MonomerMol : public RWMol {
   unsigned int addBond(unsigned int monomerIdx, unsigned int atomIdx,
                        unsigned int attachmentPoint,
                        Bond::BondType order = Bond::SINGLE);
+
+ private:
+  std::shared_ptr<MonomerLibrary> dp_library;
 };
 
 // Free functions for querying - these work on any molecule with monomer info
