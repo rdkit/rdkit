@@ -1988,12 +1988,14 @@ inline bool hasComplexBondTypeQuery(const Bond &bond) {
   }
   return hasComplexBondTypeQuery(*bond.getQuery());
 }
-inline bool hasComplexBondTypeQuery(ConstRDMolBond bond) {
-  auto *query = bond.mol().getBondQuery(bond.index());
+inline bool hasComplexBondTypeQuery(const RDMol::QUERYBOND_QUERY *query) {
   if (query == nullptr) {
     return false;
   }
   return hasComplexBondTypeQuery(*query);
+}
+inline bool hasComplexBondTypeQuery(ConstRDMolBond &bond) {
+  return hasComplexBondTypeQuery(bond.mol().getBondQuery(bond.index()));
 }
 
 RDKIT_GRAPHMOL_EXPORT bool isMetal(const Atom &atom);

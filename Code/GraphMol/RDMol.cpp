@@ -2151,7 +2151,7 @@ int RDMol::calculateAtomImplicitValence(atomindex_t atomIndex, bool strict,
     return 0;
   }
   for (auto [begin, end] = getAtomBonds(atomIndex); begin != end; ++begin) {
-    if (QueryOps::hasComplexBondTypeQuery(ConstRDMolBond(this, *begin))) {
+    if (QueryOps::hasComplexBondTypeQuery(getBondQuery(*begin))) {
       return 0;
     }
   }
