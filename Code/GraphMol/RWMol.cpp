@@ -691,7 +691,9 @@ void RWMol::batchRemoveBonds() {
   auto &delBonds = *dp_delBonds;
   unsigned int min_idx = getNumBonds();
   for (unsigned int i = rdcast<unsigned int>(delBonds.size()); i > 0; --i) {
-    if (!delBonds[i - 1]) continue;
+    if (!delBonds[i - 1]) {
+      continue;
+    }
     unsigned int idx = rdcast<unsigned int>(i - 1);
     Bond *bnd = getBondWithIdx(idx);
     if (!bnd) {
@@ -776,10 +778,14 @@ void RWMol::batchRemoveAtoms() {
 
   auto &delAtoms = *dp_delAtoms;
   for (unsigned int i = rdcast<unsigned int>(delAtoms.size()); i > 0; --i) {
-    if (!delAtoms[i - 1]) continue;
+    if (!delAtoms[i - 1]) {
+      continue;
+    }
     unsigned int idx = i - 1;
     Atom *atom = getAtomWithIdx(idx);
-    if (!atom) continue;
+    if (!atom) {
+      continue;
+    }
 
     // remove any bookmarks which point to this atom:
     ATOM_BOOKMARK_MAP *marks = getAtomBookmarks();
