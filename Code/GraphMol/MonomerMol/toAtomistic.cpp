@@ -239,11 +239,55 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
 
     return attachment_point_map;
 }
-} // namespace
+
+bool isMonomerAtom(const RDKit::Atom* atom)
+{
+    return atom->hasProp(ATOM_LABEL);
+}
+
+std::pair<unsigned int, unsigned int> getMonomerAtomAttchpt(
+    const std::string& linkage)
+{
+    // Parse linkage in form "RX-" (monomer to atom), returns {X, 0}
+    // The trailing dash indicates this is a monomer-to-atom connection
+    if (linkage.size() >= 3 && linkage[0] == 'R' &&
+        linkage.back() == '-') {
+        auto rgroup = std::stoi(linkage.substr(1, linkage.size() - 2));
+        return {rgroup, 0};
+    }
+    throw std::runtime_error("Invalid monomer-to-atom linkage format: " +
+                             linkage);
+}
+
+}  // namespace
 
 std::unique_ptr<RDKit::RWMol> toAtomistic(const RDKit::ROMol& monomer_mol)
 {
     auto atomistic_mol = std::make_unique<RDKit::RWMol>();
+
+    // Map from monomer_mol atom index to atomistic_mol atom index for
+    // non-monomer atoms
+    std::unordered_map<unsigned int, unsigned int> regular_atom_map;
+
+    // First, copy all non-monomer (regular) atoms to the atomistic mol
+    for (const auto atom : monomer_mol.atoms()) {
+        if (!isMonomerAtom(atom)) {
+            auto new_atom = new RDKit::Atom(*atom);
+            auto new_idx = atomistic_mol->addAtom(new_atom, true, true);
+            regular_atom_map[atom->getIdx()] = new_idx;
+        }
+    }
+
+    // Add bonds between regular atoms
+    for (const auto bond : monomer_mol.bonds()) {
+        auto begin_atom = bond->getBeginAtom();
+        auto end_atom = bond->getEndAtom();
+        if (!isMonomerAtom(begin_atom) && !isMonomerAtom(end_atom)) {
+            auto new_begin = regular_atom_map.at(begin_atom->getIdx());
+            auto new_end = regular_atom_map.at(end_atom->getIdx());
+            atomistic_mol->addBond(new_begin, new_end, bond->getBondType());
+        }
+    }
 
     // Map to track Polymer ID -> attachment point map
     std::unordered_map<std::string, AttachmentMap> polymer_attachment_points;
@@ -256,39 +300,27 @@ std::unique_ptr<RDKit::RWMol> toAtomistic(const RDKit::ROMol& monomer_mol)
         ++chain_id;
     }
 
-    // Add bonds from interpolymer connections
+    // Add bonds from interpolymer connections (monomer-to-monomer across chains)
+    // and monomer-to-atom connections
     for (const auto bnd : monomer_mol.bonds()) {
         auto begin_atom = bnd->getBeginAtom();
         auto end_atom = bnd->getEndAtom();
-        if (getPolymerId(begin_atom) == getPolymerId(end_atom)) {
+
+        bool begin_is_monomer = isMonomerAtom(begin_atom);
+        bool end_is_monomer = isMonomerAtom(end_atom);
+
+        // Skip bonds between regular atoms (already handled above)
+        if (!begin_is_monomer && !end_is_monomer) {
             continue;
         }
-        auto begin_res = getResidueNumber(begin_atom);
-        auto end_res = getResidueNumber(end_atom);
-        auto [from_rgroup, to_rgroup] =
-            getAttchpts(bnd->getProp<std::string>(LINKAGE));
 
-        const auto& begin_attachment_points =
-            polymer_attachment_points.at(getPolymerId(begin_atom));
-        const auto& end_attachment_points =
-            polymer_attachment_points.at(getPolymerId(end_atom));
-
-        if (begin_attachment_points.find({begin_res, from_rgroup}) ==
-                begin_attachment_points.end() ||
-            end_attachment_points.find({end_res, to_rgroup}) ==
-                end_attachment_points.end()) {
-            // One of these attachment points is not present
-            std::string error_msg =
-                "Invalid linkage " + bnd->getProp<std::string>(LINKAGE) +
-                " between monomers " + std::to_string(begin_atom->getIdx()) + " and " +
-                std::to_string(end_atom->getIdx());
-            throw std::runtime_error(error_msg);
+        // Skip intra-polymer monomer-to-monomer bonds (handled in addPolymer)
+        if (begin_is_monomer && end_is_monomer &&
+            getPolymerId(begin_atom) == getPolymerId(end_atom)) {
+            continue;
         }
 
-        auto [core_atom1, attachment_point1] =
-            begin_attachment_points.at({begin_res, from_rgroup});
-        auto [core_atom2, attachment_point2] =
-            end_attachment_points.at({end_res, to_rgroup});
+        auto linkage = bnd->getProp<std::string>(LINKAGE);
 
         // Dative bonds are only relevant at the monomer mol level for
         // directionality; at the atomistic level they are single bonds
@@ -296,9 +328,64 @@ std::unique_ptr<RDKit::RWMol> toAtomistic(const RDKit::ROMol& monomer_mol)
         if (bond_type == RDKit::Bond::DATIVE) {
             bond_type = RDKit::Bond::SINGLE;
         }
-        atomistic_mol->addBond(core_atom1, core_atom2, bond_type);
-        remove_atoms.push_back(attachment_point1);
-        remove_atoms.push_back(attachment_point2);
+
+        if (begin_is_monomer && end_is_monomer) {
+            // Inter-polymer monomer-to-monomer connection
+            auto begin_res = getResidueNumber(begin_atom);
+            auto end_res = getResidueNumber(end_atom);
+            auto [from_rgroup, to_rgroup] = getAttchpts(linkage);
+
+            const auto& begin_attachment_points =
+                polymer_attachment_points.at(getPolymerId(begin_atom));
+            const auto& end_attachment_points =
+                polymer_attachment_points.at(getPolymerId(end_atom));
+
+            if (begin_attachment_points.find({begin_res, from_rgroup}) ==
+                    begin_attachment_points.end() ||
+                end_attachment_points.find({end_res, to_rgroup}) ==
+                    end_attachment_points.end()) {
+                throw std::runtime_error(
+                    "Invalid linkage " + linkage + " between monomers " +
+                    std::to_string(begin_atom->getIdx()) + " and " +
+                    std::to_string(end_atom->getIdx()));
+            }
+
+            auto [core_atom1, attachment_point1] =
+                begin_attachment_points.at({begin_res, from_rgroup});
+            auto [core_atom2, attachment_point2] =
+                end_attachment_points.at({end_res, to_rgroup});
+
+            atomistic_mol->addBond(core_atom1, core_atom2, bond_type);
+            remove_atoms.push_back(attachment_point1);
+            remove_atoms.push_back(attachment_point2);
+        } else {
+            // Monomer-to-atom connection (hybrid molecule)
+            auto [rgroup, _] = getMonomerAtomAttchpt(linkage);
+
+            const RDKit::Atom* monomer =
+                begin_is_monomer ? begin_atom : end_atom;
+            const RDKit::Atom* regular_atom =
+                begin_is_monomer ? end_atom : begin_atom;
+
+            auto monomer_res = getResidueNumber(monomer);
+            const auto& attachment_points =
+                polymer_attachment_points.at(getPolymerId(monomer));
+
+            if (attachment_points.find({monomer_res, rgroup}) ==
+                attachment_points.end()) {
+                throw std::runtime_error(
+                    "Invalid attachment point R" + std::to_string(rgroup) +
+                    " for monomer " + std::to_string(monomer->getIdx()));
+            }
+
+            auto [core_atom, attachment_point] =
+                attachment_points.at({monomer_res, rgroup});
+            auto regular_atom_idx =
+                regular_atom_map.at(regular_atom->getIdx());
+
+            atomistic_mol->addBond(core_atom, regular_atom_idx, bond_type);
+            remove_atoms.push_back(attachment_point);
+        }
     }
 
     // Remove atoms that represented attachment points and dummy atoms

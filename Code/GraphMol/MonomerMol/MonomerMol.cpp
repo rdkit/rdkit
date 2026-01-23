@@ -272,8 +272,12 @@ unsigned int MonomerMol::addBond(unsigned int monomerIdx, unsigned int atomIdx,
 {
     std::vector<std::string> polymer_ids;
     for (auto atom : monomer_mol.atoms()) {
+        // Skip non-monomer atoms (regular atoms don't have polymer info)
+        if (!atom->hasProp(ATOM_LABEL)) {
+            continue;
+        }
         auto id = getPolymerId(atom);
-        // in vector to preseve order of polymers
+        // in vector to preserve order of polymers
         if (std::find(polymer_ids.begin(), polymer_ids.end(), id) ==
             polymer_ids.end()) {
             polymer_ids.push_back(id);
@@ -359,6 +363,10 @@ Chain getPolymer(const RDKit::ROMol& cg_mol, std::string_view polymer_id)
 {
     std::vector<unsigned int> atoms;
     for (auto atom : cg_mol.atoms()) {
+        // Skip non-monomer atoms
+        if (!atom->hasProp(ATOM_LABEL)) {
+            continue;
+        }
         if (getPolymerId(atom) == polymer_id) {
             atoms.push_back(atom->getIdx());
         }
@@ -371,6 +379,11 @@ Chain getPolymer(const RDKit::ROMol& cg_mol, std::string_view polymer_id)
               });
     std::vector<unsigned int> bonds;
     for (auto bond : cg_mol.bonds()) {
+        // Skip bonds involving non-monomer atoms
+        if (!bond->getBeginAtom()->hasProp(ATOM_LABEL) ||
+            !bond->getEndAtom()->hasProp(ATOM_LABEL)) {
+            continue;
+        }
         if (getPolymerId(bond->getBeginAtom()) == polymer_id &&
             getPolymerId(bond->getEndAtom()) == polymer_id) {
             bonds.push_back(bond->getIdx());

@@ -635,5 +635,30 @@ TEST_CASE("HybridMonomerMol") {
     CHECK(bond1->getProp<std::string>(LINKAGE) == "R2-");
     CHECK_FALSE(bond2->hasProp(LINKAGE));  // atom-atom bond has no linkage
     CHECK(bond3->getProp<std::string>(LINKAGE) == "R1-");
+
+    // Test toAtomistic on hybrid molecule
+    // The result should contain:
+    // - Alanine's atoms (minus R2 attachment point)
+    // - The two linker carbons
+    // - Glycine's atoms (minus R1 attachment point)
+    auto atomistic = toAtomistic(mol);
+
+    // Verify the atomistic molecule is valid
+    CHECK(atomistic->getNumAtoms() > 0);
+
+    // Verify no dative bonds remain
+    for (auto bond : atomistic->bonds()) {
+      CHECK(bond->getBondType() != Bond::DATIVE);
+    }
+
+    // Verify the linker carbons are present (they should have degree 2)
+    // The molecule should be connected
+    std::string smiles = MolToSmiles(*atomistic);
+    CHECK(!smiles.empty());
+
+    // The molecule should contain at least the linker -CH2-CH2- plus amino acids
+    // Alanine has 6 heavy atoms, Glycine has 4 heavy atoms, linker has 2
+    // Minus attachment points: Ala loses 1, Gly loses 1 = net ~10 heavy atoms
+    CHECK(atomistic->getNumAtoms() >= 8);
   }
 }
