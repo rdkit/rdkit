@@ -391,35 +391,35 @@ void orderResidues(RDKit::MonomerMol& monomer_mol)
 
 }  // namespace
 
-void MonomerMol::assignChains()
+void assignChains(MonomerMol& monomer_mol)
 {
-    setProp("HELM_MODEL", true);
+    monomer_mol.setProp("HELM_MODEL", true);
 
     // Currently, orderResidues only works when there is a single chain
-    auto chain_ids = getPolymerIds(*this);
-    if (chain_ids.size() == 1 && !isValidChain(*this, chain_ids[0])) {
-        orderResidues(*this);
+    auto chain_ids = getPolymerIds(monomer_mol);
+    if (chain_ids.size() == 1 && !isValidChain(monomer_mol, chain_ids[0])) {
+        orderResidues(monomer_mol);
     }
 
     // Determine and mark the 'connection bonds'
-    if (!getRingInfo()->isInitialized()) {
-        ::RDKit::MolOps::findSSSR(*this);
+    if (!monomer_mol.getRingInfo()->isInitialized()) {
+        ::RDKit::MolOps::findSSSR(monomer_mol);
     }
     // get atom rings that belong to a single polymer
-    const auto& bnd_rings = getRingInfo()->bondRings();
+    const auto& bnd_rings = monomer_mol.getRingInfo()->bondRings();
 
     for (const auto& ring : bnd_rings) {
         if (std::ranges::all_of(ring, [&](const auto& idx) {
-                auto begin_at = getBondWithIdx(idx)->getBeginAtom();
-                auto end_at = getBondWithIdx(idx)->getEndAtom();
+                auto begin_at = monomer_mol.getBondWithIdx(idx)->getBeginAtom();
+                auto end_at = monomer_mol.getBondWithIdx(idx)->getEndAtom();
                 return getPolymerId(begin_at) == getPolymerId(end_at);
             })) {
             // break this ring -- find bond between residue #s with largest
             // difference
-            unsigned int connection_bond = getNumBonds();
+            unsigned int connection_bond = monomer_mol.getNumBonds();
             int max_diff = 0;
             for (const auto& idx : ring) {
-                const auto bond = getBondWithIdx(idx);
+                const auto bond = monomer_mol.getBondWithIdx(idx);
                 auto begin_at = bond->getBeginAtom();
                 auto end_at = bond->getEndAtom();
                 int diff =
@@ -429,17 +429,18 @@ void MonomerMol::assignChains()
                     max_diff = std::abs(diff);
                 }
             }
-            if (connection_bond != getNumBonds()) {
-                std::string linkage = getBondWithIdx(connection_bond)
+            if (connection_bond != monomer_mol.getNumBonds()) {
+                std::string linkage = monomer_mol.getBondWithIdx(connection_bond)
                                           ->getProp<std::string>(LINKAGE);
-                getBondWithIdx(connection_bond)->setProp(CUSTOM_BOND, linkage);
+                monomer_mol.getBondWithIdx(connection_bond)
+                    ->setProp(CUSTOM_BOND, linkage);
             } else {
                 // temporary error handling
                 throw std::runtime_error("Could not find connection bond");
             }
         }
     }
-    for (auto bond : bonds()) {
+    for (auto bond : monomer_mol.bonds()) {
         if (getPolymerId(bond->getBeginAtom()) !=
             getPolymerId(bond->getEndAtom())) {
             std::string linkage = bond->getProp<std::string>(LINKAGE);

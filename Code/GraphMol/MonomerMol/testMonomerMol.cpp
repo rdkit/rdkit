@@ -310,7 +310,7 @@ TEST_CASE("Conversions") {
     monomer_mol.addConnection(midx1, midx6, ConnectionType::FORWARD);
     monomer_mol.addConnection(midx6, midx5, ConnectionType::FORWARD);
     monomer_mol.addConnection(midx5, midx4, ConnectionType::FORWARD);
-    monomer_mol.assignChains();
+    assignChains(monomer_mol);
 
     CHECK(monomer_mol.getNumAtoms() == 6);
     CHECK(monomer_mol.getNumBonds() == 6);
@@ -329,7 +329,7 @@ TEST_CASE("Conversions") {
     auto midx3 = monomer_mol.addMonomer("P");
     monomer_mol.addConnection(midx1, midx2, ConnectionType::FORWARD);
     monomer_mol.addConnection(midx2, midx3, ConnectionType::FORWARD);
-    monomer_mol.assignChains();
+    assignChains(monomer_mol);
     CHECK(monomer_mol.getNumAtoms() == 3);
     CHECK(monomer_mol.getNumBonds() == 2);
     auto atomistic_mol = toAtomistic(monomer_mol);

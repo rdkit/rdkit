@@ -135,10 +135,6 @@ class RDKIT_MONOMERMOL_EXPORT MonomerMol : public RWMol {
    */
   void addConnection(size_t monomer1, size_t monomer2,
                      const std::string& linkage, bool is_custom_bond = false);
-
-  //! Discards existing chains and reassigns monomers to sequential chains.
-  //! (in HELM world, "chains" are called "polymers")
-  void assignChains();
 };
 
 // Free functions for querying - these work on any molecule with monomer info
@@ -154,5 +150,9 @@ getPolymerIds(const RDKit::ROMol& monomer_mol);
 
 [[nodiscard]] RDKIT_MONOMERMOL_EXPORT unsigned int
 getResidueNumber(const RDKit::Atom* atom);
+
+//! Discards existing chains and reassigns monomers to sequential chains.
+//! (in HELM world, "chains" are called "polymers")
+RDKIT_MONOMERMOL_EXPORT void assignChains(MonomerMol& mol);
 
 } // namespace RDKit

@@ -598,7 +598,7 @@ std::unique_ptr<RDKit::MonomerMol> toMonomeric(const RDKit::ROMol& atomistic_mol
             "monomeric form");
     }
     auto monomer_mol = pdbInfoAtomisticToMM(atomistic_mol);
-    monomer_mol->assignChains();
+    assignChains(*monomer_mol);
     return monomer_mol;
 }
 
