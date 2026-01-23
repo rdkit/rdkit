@@ -53,6 +53,22 @@ std::string toString(ChainType chain_type)
     }
 }
 
+namespace {
+
+std::pair<unsigned int, unsigned int> getAttchpts(const std::string& linkage)
+{
+    // Parse linkage in form RX-RY, returns {X, Y}
+    auto dash = linkage.find('-');
+    if (dash == std::string::npos || linkage.size() < 5 ||
+        linkage[0] != 'R' || linkage[dash + 1] != 'R') {
+        throw std::runtime_error("Invalid linkage format: " + linkage);
+    }
+    return {std::stoi(linkage.substr(1, dash - 1)),
+            std::stoi(linkage.substr(dash + 2))};
+}
+
+}  // namespace
+
 MonomerMol& MonomerMol::operator=(const MonomerMol& other)
 {
     if (this != &other) {
@@ -112,15 +128,44 @@ void MonomerMol::addConnection(size_t monomer1, size_t monomer2,
         // Update the linkage property
         bond->setProp(CUSTOM_BOND, linkage);
     } else {
-        auto bond_type = (linkage.front() == 'p' ? ::RDKit::Bond::ZERO
-                                                 : ::RDKit::Bond::SINGLE);
-        // Use RWMol::addBond directly to bypass our overridden addBond
-        const auto new_total = RWMol::addBond(monomer1, monomer2, bond_type);
-        bond = getBondWithIdx(new_total - 1);
-        bond->setProp(LINKAGE, linkage);
+        auto create_bond = [&](size_t first_monomer, size_t second_monomer,
+                               ::RDKit::Bond::BondType bond_type,
+                               const std::string& linkage_prop) {
+            // Use RWMol::addBond directly to bypass our overridden addBond
+            const auto new_total =
+                RWMol::addBond(first_monomer, second_monomer, bond_type);
+            auto new_bond = getBondWithIdx(new_total - 1);
+            new_bond->setProp(LINKAGE, linkage_prop);
+            if (is_custom_bond) {
+                new_bond->setProp(CUSTOM_BOND, linkage_prop);
+            }
+        };
 
-        if (is_custom_bond) {
-            bond->setProp(CUSTOM_BOND, linkage);
+        // Connections that use specific and different attachment points (such
+        // as R2-R1 or R3-R1) should be set as directional (dative) bonds so
+        // that substructure matching and canonicalization can take sequence
+        // direction into account. To ensure consistent bond directionality, we
+        // always set the direction from the higher attachment point to the
+        // lower attachment point.
+        bool set_directional_bond = false;
+        if (linkage.front() != 'p' && linkage.find('?') == std::string::npos) {
+            auto [begin_attchpt, end_attchpt] = getAttchpts(linkage);
+            if (begin_attchpt > end_attchpt) {
+                create_bond(monomer1, monomer2, ::RDKit::Bond::DATIVE, linkage);
+                set_directional_bond = true;
+            } else if (begin_attchpt < end_attchpt) {
+                auto new_linkage = "R" + std::to_string(end_attchpt) + "-R" +
+                                   std::to_string(begin_attchpt);
+                create_bond(monomer2, monomer1, ::RDKit::Bond::DATIVE,
+                            new_linkage);
+                set_directional_bond = true;
+            }
+        }
+
+        if (!set_directional_bond) {
+            auto bond_type = (linkage.front() == 'p' ? ::RDKit::Bond::ZERO
+                                                     : ::RDKit::Bond::SINGLE);
+            create_bond(monomer1, monomer2, bond_type, linkage);
         }
     }
 
@@ -468,9 +513,11 @@ void assignChains(MonomerMol& monomer_mol)
     }
 
     // Determine and mark the 'connection bonds'
-    if (!monomer_mol.getRingInfo()->isInitialized()) {
-        ::RDKit::MolOps::findSSSR(monomer_mol);
-    }
+    // Include dative bonds in ring finding since we use them for directional
+    // monomer-to-monomer connections
+    constexpr bool include_dative_bonds = true;
+    ::RDKit::MolOps::findSSSR(monomer_mol, /*res=*/nullptr, include_dative_bonds);
+
     // get atom rings that belong to a single polymer
     const auto& bnd_rings = monomer_mol.getRingInfo()->bondRings();
 

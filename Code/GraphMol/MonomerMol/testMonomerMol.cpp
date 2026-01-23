@@ -412,6 +412,98 @@ TEST_CASE("Conversions") {
   }
 }
 
+TEST_CASE("DativeBonds") {
+  SECTION("BackboneConnectionsUseDativeBonds") {
+    // Test that backbone connections (R2-R1) use dative bonds
+    MonomerMol mol;
+    auto m1 = mol.addMonomer("A", 1, "PEPTIDE1");
+    auto m2 = mol.addMonomer("G");
+
+    mol.addConnection(m1, m2, ConnectionType::FORWARD);
+
+    CHECK(mol.getNumBonds() == 1);
+    auto bond = mol.getBondWithIdx(0);
+
+    // Should be a dative bond since R2 > R1
+    CHECK(bond->getBondType() == Bond::DATIVE);
+    // Linkage should be R2-R1 (higher to lower)
+    CHECK(bond->getProp<std::string>(LINKAGE) == "R2-R1");
+    // Direction: begin atom should have the higher attachment point (R2)
+    CHECK(bond->getBeginAtomIdx() == m1);
+    CHECK(bond->getEndAtomIdx() == m2);
+  }
+
+  SECTION("SidechainConnectionsUseDativeBonds") {
+    // Test that sidechain connections (R3-R1) use dative bonds
+    MonomerMol mol;
+    auto m1 = mol.addMonomer("D", 1, "PEPTIDE1");  // Aspartic acid has R3
+    auto m2 = mol.addMonomer("C");                  // Cysteine
+
+    mol.addConnection(m1, m2, ConnectionType::SIDECHAIN);
+
+    CHECK(mol.getNumBonds() == 1);
+    auto bond = mol.getBondWithIdx(0);
+
+    // Should be a dative bond since R3 > R1
+    CHECK(bond->getBondType() == Bond::DATIVE);
+    CHECK(bond->getProp<std::string>(LINKAGE) == "R3-R1");
+  }
+
+  SECTION("CrosslinkConnectionsUseSingleBonds") {
+    // Test that crosslink connections (R3-R3) use single bonds (same attachment)
+    MonomerMol mol;
+    auto m1 = mol.addMonomer("C", 1, "PEPTIDE1");
+    auto m2 = mol.addMonomer("C", 2, "PEPTIDE1");
+
+    mol.addConnection(m1, m2, ConnectionType::CROSSLINK);
+
+    CHECK(mol.getNumBonds() == 1);
+    auto bond = mol.getBondWithIdx(0);
+
+    // Should be a single bond since R3 == R3
+    CHECK(bond->getBondType() == Bond::SINGLE);
+    CHECK(bond->getProp<std::string>(LINKAGE) == "R3-R3");
+  }
+
+  SECTION("DirectionalityIsNormalized") {
+    // Test that linkage is always normalized to higher-to-lower
+    MonomerMol mol;
+    auto m1 = mol.addMonomer("A", 1, "PEPTIDE1");
+    auto m2 = mol.addMonomer("G");
+
+    // Add connection with R1-R2 (lower to higher) - should be normalized
+    mol.addConnection(m1, m2, "R1-R2");
+
+    auto bond = mol.getBondWithIdx(0);
+
+    // Should be normalized to R2-R1 with swapped atom order
+    CHECK(bond->getBondType() == Bond::DATIVE);
+    CHECK(bond->getProp<std::string>(LINKAGE) == "R2-R1");
+    // m2 should be the begin atom (has R2), m1 should be end (has R1)
+    CHECK(bond->getBeginAtomIdx() == m2);
+    CHECK(bond->getEndAtomIdx() == m1);
+  }
+
+  SECTION("ToAtomisticConvertsDativeToSingle") {
+    // Test that toAtomistic converts dative bonds back to single bonds
+    MonomerMol monomer_mol;
+    auto m1 = monomer_mol.addMonomer("A", 1, "PEPTIDE1");
+    auto m2 = monomer_mol.addMonomer("G");
+    monomer_mol.addConnection(m1, m2, ConnectionType::FORWARD);
+
+    // Verify it's dative at the monomer level
+    CHECK(monomer_mol.getBondWithIdx(0)->getBondType() == Bond::DATIVE);
+
+    // Convert to atomistic
+    auto atomistic = toAtomistic(monomer_mol);
+
+    // All bonds should be single (or aromatic, etc.) - no dative bonds
+    for (auto bond : atomistic->bonds()) {
+      CHECK(bond->getBondType() != Bond::DATIVE);
+    }
+  }
+}
+
 TEST_CASE("HybridMonomerMol") {
   SECTION("isMonomer") {
     // Test that isMonomer correctly distinguishes monomers from atoms
