@@ -1,12 +1,6 @@
 /* -------------------------------------------------------------------------
  * Declares tools for Monomeric ROMols
  *
- * A "MonomerMol" is an ROMol that uses RDKit atoms to represent monomers. Chains
- * are represented via the PDBAtomResidueInfo structs on atoms, and linkages are
- * stord as a LINKAGE property on bonds in the form of RX-RY, where X is the attachment
- * point used on the begin monomer and Y is the attachment point used on the monomer.
- *
- *
  * Copyright Schrodinger LLC, All Rights Reserved.
  --------------------------------------------------------------------------- */
 
@@ -39,11 +33,9 @@ const std::string HELM_MODEL{"HELM_MODEL"};
 const std::string MONOMER_LIST{"MONOMER_LIST"};
 const std::string UNKNOWN_MONOMER{"UNKNOWN_MONOMER"};
 const std::string REPETITION_DUMMY_ID{"REPETITION_DUMMY_ID"};
-
-// NOTE: These are to allow replacement of the python api
 const std::string BRANCH_MONOMER{"isBranchMonomer"};
 const std::string SMILES_MONOMER{"isSmilesMonomer"};
-const std::string CUSTOM_BOND{"customBond"};
+const std::string CUSTOM_BOND{"customBond"}; // TODO: remove?
 
 // acts as a view to a polymer chain
 struct Chain {
@@ -60,11 +52,10 @@ RDKIT_MONOMERMOL_EXPORT ChainType toChainType(std::string_view chain_type);
 
 RDKIT_MONOMERMOL_EXPORT std::string toString(ChainType chain_type);
 
-//! MonomerMol is an RWMol that represents molecules using monomers as atoms.
+//! MonomerMol is an RWMol that represents molecules using both monomers and atoms.
 /*!
- * A MonomerMol uses RDKit atoms to represent monomers. Chains are represented
- * via the PDBAtomResidueInfo structs on atoms, and linkages are stored as a
- * LINKAGE property on bonds in the form of RX-RY, where X is the attachment
+ * Monomers are represented as atoms with specific properties set, and linkages are
+ * stored as a LINKAGE property on bonds in the form of RX-RY, where X is the attachment
  * point used on the begin monomer and Y is the attachment point used on the
  * end monomer.
  */
@@ -178,7 +169,7 @@ class RDKIT_MONOMERMOL_EXPORT MonomerMol : public RWMol {
 // Free functions for querying - these work on any molecule with monomer info
 
 [[nodiscard]] RDKIT_MONOMERMOL_EXPORT Chain
-getPolymer(const RDKit::ROMol& cg_mol, std::string_view polymer_id);
+getPolymer(const RDKit::ROMol& monomer_mol, std::string_view polymer_id);
 
 [[nodiscard]] RDKIT_MONOMERMOL_EXPORT std::string
 getPolymerId(const RDKit::Atom* atom);

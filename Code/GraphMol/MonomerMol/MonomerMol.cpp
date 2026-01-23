@@ -359,10 +359,10 @@ void setResidueNumber(RDKit::Atom* atom, int residue_number)
     residue_info->setResidueNumber(residue_number);
 }
 
-Chain getPolymer(const RDKit::ROMol& cg_mol, std::string_view polymer_id)
+Chain getPolymer(const RDKit::ROMol& monomer_mol, std::string_view polymer_id)
 {
     std::vector<unsigned int> atoms;
-    for (auto atom : cg_mol.atoms()) {
+    for (auto atom : monomer_mol.atoms()) {
         // Skip non-monomer atoms
         if (!atom->hasProp(ATOM_LABEL)) {
             continue;
@@ -373,12 +373,12 @@ Chain getPolymer(const RDKit::ROMol& cg_mol, std::string_view polymer_id)
     }
     // Sort by get_residue_num
     std::sort(atoms.begin(), atoms.end(),
-              [&cg_mol](unsigned int a, unsigned int b) {
-                  return getResidueNumber(cg_mol.getAtomWithIdx(a)) <
-                         getResidueNumber(cg_mol.getAtomWithIdx(b));
+              [&monomer_mol](unsigned int a, unsigned int b) {
+                  return getResidueNumber(monomer_mol.getAtomWithIdx(a)) <
+                         getResidueNumber(monomer_mol.getAtomWithIdx(b));
               });
     std::vector<unsigned int> bonds;
-    for (auto bond : cg_mol.bonds()) {
+    for (auto bond : monomer_mol.bonds()) {
         // Skip bonds involving non-monomer atoms
         if (!bond->getBeginAtom()->hasProp(ATOM_LABEL) ||
             !bond->getEndAtom()->hasProp(ATOM_LABEL)) {
@@ -391,7 +391,7 @@ Chain getPolymer(const RDKit::ROMol& cg_mol, std::string_view polymer_id)
     }
 
     std::string annotation{};
-    for (const auto& sg : ::RDKit::getSubstanceGroups(cg_mol)) {
+    for (const auto& sg : ::RDKit::getSubstanceGroups(monomer_mol)) {
         if ((sg.getProp<std::string>("TYPE") != "COP") ||
             !sg.hasProp(ANNOTATION) || !sg.hasProp("ID")) {
             continue;
