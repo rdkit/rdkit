@@ -10,3 +10,6 @@ rdkit_headers(MonomerMol.h MonomerLibrary.h Conversions.h
 rdkit_catch_test(testMonomerMol testMonomerMol.cpp
     LINK_LIBRARIES MonomerMol FileParsers SubstructMatch GraphMol)
 
+rdkit_catch_test(testMonomerLibrary testMonomerLibrary.cpp
+    LINK_LIBRARIES MonomerMol SmilesParse GraphMol)
+

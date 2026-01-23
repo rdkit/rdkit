@@ -20,15 +20,18 @@
 #include <vector>
 
 #include <RDGeneral/export.h>
+#include <GraphMol/ROMol.h>
 
 namespace RDKit {
 
 //! Represents a single monomer definition
 struct RDKIT_MONOMERMOL_EXPORT MonomerDef {
-    std::string helmSymbol;   // Single letter code (e.g., "A")
-    std::string pdbCode;      // 3-letter PDB code (e.g., "ALA") -- optional
-    std::string smiles;       // SMILES with attachment points OR SDF with attachment points
-    std::string monomerType;  // "PEPTIDE", "RNA", "DNA", "CHEM", free string
+    std::string helmSymbol;       // Single letter code (e.g., "A")
+    std::string pdbCode;          // 3-letter PDB code (e.g., "ALA") -- optional
+    std::string monomerType;      // "PEPTIDE", "RNA", "DNA", "CHEM", free string
+    std::string sourceFormat;     // Original format: "SMILES", "SDF", "MOL", etc.
+    std::string sourceData;       // Original text data (SMILES string, SDF block, etc.)
+    std::shared_ptr<ROMol> mol;   // Parsed RDKit molecule with attachment points
 };
 
 //! Library of monomer definitions for converting between representations
@@ -37,6 +40,7 @@ struct RDKIT_MONOMERMOL_EXPORT MonomerDef {
  * - HELM single-letter symbols (e.g., "A" for Alanine)
  * - PDB 3-letter codes (e.g., "ALA") -- optional
  * - SMILES with attachment point annotations
+ * - RDKit molecules with attachment point annotations
  *
  * Three usage patterns are supported:
  * 1. Per-molecule: Create a library during SCSR parsing, attach to MonomerMol
@@ -63,15 +67,32 @@ class RDKIT_MONOMERMOL_EXPORT MonomerLibrary {
 
     ~MonomerLibrary();
 
-    //! Add a single monomer definition
+    //! Add a monomer from SMILES
     /*!
-     * @param def The monomer definition to add
-     * @throws std::runtime_error if a monomer with the same HELM symbol and
-     *         monomer type already exists with a different SMILES
-     *
-     * If an identical definition already exists, this is a no-op.
+     * @param helmSymbol The HELM symbol (e.g., "A")
+     * @param monomerType The monomer type (e.g., "PEPTIDE")
+     * @param smiles SMILES string with attachment points
+     * @param pdbCode Optional PDB 3-letter code
+     * @throws std::runtime_error if SMILES cannot be parsed or if a conflicting
+     *         definition already exists
      */
-    void addMonomer(const MonomerDef& def);
+    void addMonomerFromSmiles(std::string_view helmSymbol,
+                              std::string_view monomerType,
+                              std::string_view smiles,
+                              std::string_view pdbCode = "");
+
+    //! Add a monomer from an RDKit molecule
+    /*!
+     * @param helmSymbol The HELM symbol (e.g., "A")
+     * @param monomerType The monomer type (e.g., "PEPTIDE")
+     * @param mol The RDKit molecule with attachment points marked
+     * @param pdbCode Optional PDB 3-letter code
+     * @throws std::runtime_error if a conflicting definition already exists
+     */
+    void addMonomerFromMol(std::string_view helmSymbol,
+                           std::string_view monomerType,
+                           std::shared_ptr<ROMol> mol,
+                           std::string_view pdbCode = "");
 
     //! Add a PDB code alias for an existing monomer
     /*!
@@ -90,7 +111,27 @@ class RDKIT_MONOMERMOL_EXPORT MonomerLibrary {
     [[nodiscard]] bool hasMonomer(std::string_view helmSymbol,
                                   std::string_view monomerType) const;
 
-    //! Get SMILES for a monomer by HELM symbol
+    //! Get the RDKit molecule for a monomer
+    /*!
+     * Returns a copy of the monomer's molecule template.
+     * @param helmSymbol The HELM symbol
+     * @param monomerType The monomer type
+     * @return A new RWMol copy of the monomer, or nullptr if not found
+     */
+    [[nodiscard]] std::unique_ptr<RWMol>
+    getMonomerMol(std::string_view helmSymbol,
+                  std::string_view monomerType) const;
+
+    //! Get the original source data for a monomer (SMILES, SDF, etc.)
+    [[nodiscard]] std::optional<std::string>
+    getMonomerSourceData(std::string_view helmSymbol,
+                         std::string_view monomerType) const;
+
+    //! Get SMILES for a monomer by HELM symbol (for backwards compatibility)
+    /*!
+     * If the monomer was added from SMILES, returns the original SMILES.
+     * Otherwise, generates SMILES from the stored molecule.
+     */
     [[nodiscard]] std::optional<std::string>
     getMonomerSmiles(std::string_view monomerId,
                      std::string_view monomerType) const;
@@ -101,6 +142,11 @@ class RDKIT_MONOMERMOL_EXPORT MonomerLibrary {
     //! Get PDB code from HELM symbol
     [[nodiscard]] std::optional<std::string>
     getPdbCode(std::string_view helmSymbol, std::string_view monomerType) const;
+
+    //! Get the full monomer definition
+    [[nodiscard]] const MonomerDef*
+    getMonomerDef(std::string_view helmSymbol,
+                  std::string_view monomerType) const;
 
     //! Get the number of monomers in the library
     [[nodiscard]] size_t size() const;
@@ -136,6 +182,9 @@ class RDKIT_MONOMERMOL_EXPORT MonomerLibrary {
     // Helper to create lookup key
     static std::string makeHelmKey(std::string_view symbol,
                                    std::string_view monomerType);
+
+    // Helper to add a monomer definition (used by addMonomerFromSmiles/Mol)
+    void addMonomerDef(MonomerDef def);
 
     // Static global library instance
     static std::shared_ptr<MonomerLibrary> s_globalLibrary;

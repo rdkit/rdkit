@@ -12,6 +12,10 @@
 
 #include <stdexcept>
 
+#include <GraphMol/RWMol.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+
 namespace RDKit {
 
 // Static member initialization
@@ -45,19 +49,24 @@ MonomerLibrary& MonomerLibrary::operator=(MonomerLibrary&& other) noexcept
 
 MonomerLibrary::~MonomerLibrary() = default;
 
-void MonomerLibrary::addMonomer(const MonomerDef& def)
+void MonomerLibrary::addMonomerDef(MonomerDef def)
 {
     auto key = makeHelmKey(def.helmSymbol, def.monomerType);
     auto it = d_helmIndex.find(key);
 
     if (it != d_helmIndex.end()) {
-        // Check if the existing definition matches
+        // Check if the existing definition matches by comparing molecules
         const auto& existing = d_monomers[it->second];
-        if (existing.smiles != def.smiles) {
-            throw std::runtime_error(
-                "Conflicting monomer definition for '" + def.helmSymbol +
-                "': existing SMILES '" + existing.smiles +
-                "' differs from new SMILES '" + def.smiles + "'");
+
+        // Compare by canonical SMILES if both have molecules
+        if (existing.mol && def.mol) {
+            auto existingSmiles = MolToSmiles(*existing.mol);
+            auto newSmiles = MolToSmiles(*def.mol);
+            if (existingSmiles != newSmiles) {
+                throw std::runtime_error(
+                    "Conflicting monomer definition for '" + def.helmSymbol +
+                    "': existing structure differs from new structure");
+            }
         }
         // Identical definition, skip silently
         return;
@@ -65,12 +74,59 @@ void MonomerLibrary::addMonomer(const MonomerDef& def)
 
     // Add new monomer
     size_t index = d_monomers.size();
-    d_monomers.push_back(def);
+    d_monomers.push_back(std::move(def));
     d_helmIndex[key] = index;
 
-    if (!def.pdbCode.empty()) {
-        d_pdbIndex[def.pdbCode] = index;
+    if (!d_monomers.back().pdbCode.empty()) {
+        d_pdbIndex[d_monomers.back().pdbCode] = index;
     }
+}
+
+void MonomerLibrary::addMonomerFromSmiles(std::string_view helmSymbol,
+                                           std::string_view monomerType,
+                                           std::string_view smiles,
+                                           std::string_view pdbCode)
+{
+    // Parse the SMILES without sanitization to preserve attachment points
+    bool sanitize = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol(std::string(smiles), 0, sanitize));
+
+    if (!mol) {
+        throw std::runtime_error("Failed to parse SMILES for monomer '" +
+                                 std::string(helmSymbol) + "': " +
+                                 std::string(smiles));
+    }
+
+    MonomerDef def;
+    def.helmSymbol = std::string(helmSymbol);
+    def.pdbCode = std::string(pdbCode);
+    def.monomerType = std::string(monomerType);
+    def.sourceFormat = "SMILES";
+    def.sourceData = std::string(smiles);
+    def.mol = std::move(mol);
+
+    addMonomerDef(std::move(def));
+}
+
+void MonomerLibrary::addMonomerFromMol(std::string_view helmSymbol,
+                                        std::string_view monomerType,
+                                        std::shared_ptr<ROMol> mol,
+                                        std::string_view pdbCode)
+{
+    if (!mol) {
+        throw std::runtime_error("Cannot add null molecule for monomer '" +
+                                 std::string(helmSymbol) + "'");
+    }
+
+    MonomerDef def;
+    def.helmSymbol = std::string(helmSymbol);
+    def.pdbCode = std::string(pdbCode);
+    def.monomerType = std::string(monomerType);
+    def.sourceFormat = "MOL";
+    def.sourceData = "";  // No text source for molecules added directly
+    def.mol = std::move(mol);
+
+    addMonomerDef(std::move(def));
 }
 
 void MonomerLibrary::addPdbAlias(std::string_view pdbCode,
@@ -97,6 +153,33 @@ bool MonomerLibrary::hasMonomer(std::string_view helmSymbol,
     return d_helmIndex.find(key) != d_helmIndex.end();
 }
 
+std::unique_ptr<RWMol>
+MonomerLibrary::getMonomerMol(std::string_view helmSymbol,
+                               std::string_view monomerType) const
+{
+    auto key = makeHelmKey(helmSymbol, monomerType);
+    auto it = d_helmIndex.find(key);
+
+    if (it != d_helmIndex.end() && d_monomers[it->second].mol) {
+        // Return a copy of the molecule
+        return std::make_unique<RWMol>(*d_monomers[it->second].mol);
+    }
+    return nullptr;
+}
+
+std::optional<std::string>
+MonomerLibrary::getMonomerSourceData(std::string_view helmSymbol,
+                                      std::string_view monomerType) const
+{
+    auto key = makeHelmKey(helmSymbol, monomerType);
+    auto it = d_helmIndex.find(key);
+
+    if (it != d_helmIndex.end()) {
+        return d_monomers[it->second].sourceData;
+    }
+    return std::nullopt;
+}
+
 std::optional<std::string>
 MonomerLibrary::getMonomerSmiles(std::string_view monomerId,
                                   std::string_view monomerType) const
@@ -105,7 +188,15 @@ MonomerLibrary::getMonomerSmiles(std::string_view monomerId,
     auto it = d_helmIndex.find(key);
 
     if (it != d_helmIndex.end()) {
-        return d_monomers[it->second].smiles;
+        const auto& def = d_monomers[it->second];
+        // If originally from SMILES, return the original
+        if (def.sourceFormat == "SMILES" && !def.sourceData.empty()) {
+            return def.sourceData;
+        }
+        // Otherwise generate SMILES from the molecule
+        if (def.mol) {
+            return MolToSmiles(*def.mol);
+        }
     }
     return std::nullopt;
 }
@@ -117,7 +208,13 @@ MonomerLibrary::getHelmInfo(std::string_view pdbCode) const
 
     if (it != d_pdbIndex.end()) {
         const auto& def = d_monomers[it->second];
-        return std::make_tuple(def.helmSymbol, def.smiles, def.monomerType);
+        std::string smiles;
+        if (def.sourceFormat == "SMILES" && !def.sourceData.empty()) {
+            smiles = def.sourceData;
+        } else if (def.mol) {
+            smiles = MolToSmiles(*def.mol);
+        }
+        return std::make_tuple(def.helmSymbol, smiles, def.monomerType);
     }
     return std::nullopt;
 }
@@ -136,6 +233,19 @@ MonomerLibrary::getPdbCode(std::string_view helmSymbol,
         }
     }
     return std::nullopt;
+}
+
+const MonomerDef*
+MonomerLibrary::getMonomerDef(std::string_view helmSymbol,
+                               std::string_view monomerType) const
+{
+    auto key = makeHelmKey(helmSymbol, monomerType);
+    auto it = d_helmIndex.find(key);
+
+    if (it != d_helmIndex.end()) {
+        return &d_monomers[it->second];
+    }
+    return nullptr;
 }
 
 size_t MonomerLibrary::size() const
@@ -160,7 +270,8 @@ std::shared_ptr<MonomerLibrary> MonomerLibrary::createWithDefaults()
     auto lib = std::make_shared<MonomerLibrary>();
 
     for (const auto& def : getDefaultAminoAcids()) {
-        lib->addMonomer(def);
+        lib->addMonomerFromSmiles(def.helmSymbol, def.monomerType,
+                                   def.sourceData, def.pdbCode);
     }
 
     // Add PDB code aliases for protonation variants
@@ -205,134 +316,135 @@ void MonomerLibrary::setGlobalLibrary(std::shared_ptr<MonomerLibrary> library)
 }
 
 // Default amino acid definitions
+// Note: These return MonomerDef with sourceData populated for SMILES parsing
 std::vector<MonomerDef> getDefaultAminoAcids()
 {
     return {
-        {"A", "ALA",
+        {"A", "ALA", "PEPTIDE", "SMILES",
          "C[C@H](N[H:1])C(=O)[OH:2] |atomProp:0.pdbName. CB :1.pdbName. CA "
          ":2.pdbName. N  :3.pdbName. H  :4.pdbName. C  :5.pdbName. O  "
          ":6.pdbName. OXT|",
-         "PEPTIDE"},
-        {"C", "CYS",
+         nullptr},
+        {"C", "CYS", "PEPTIDE", "SMILES",
          "O=C([C@H](CS[H:3])N[H:1])[OH:2] |atomProp:0.pdbName. O  "
          ":1.pdbName. C  :2.pdbName. CA :3.pdbName. CB :4.pdbName. SG "
          ":5.pdbName. HG :6.pdbName. N  :7.pdbName. H  :8.pdbName. OXT|",
-         "PEPTIDE"},
-        {"D", "ASP",
+         nullptr},
+        {"D", "ASP", "PEPTIDE", "SMILES",
          "O=C([C@H](CC(=O)[OH:3])N[H:1])[OH:2] |atomProp:0.pdbName. O  "
          ":1.pdbName. C  :2.pdbName. CA :3.pdbName. CB :4.pdbName. CG :5.pdbName. "
          "OD1:6.pdbName. OD2:7.pdbName. N  :8.pdbName. H  :9.pdbName. OXT|",
-         "PEPTIDE"},
-        {"E", "GLU",
+         nullptr},
+        {"E", "GLU", "PEPTIDE", "SMILES",
          "O=C([C@H](CCC(=O)[OH:3])N[H:1])[OH:2] |atomProp:0.pdbName. O  "
          ":1.pdbName. C  :2.pdbName. CA :3.pdbName. CB :4.pdbName. CG "
          ":5.pdbName. CD :6.pdbName. OE1:7.pdbName. OE2:8.pdbName. N  "
          ":9.pdbName. H  :10.pdbName. OXT|",
-         "PEPTIDE"},
-        {"F", "PHE",
+         nullptr},
+        {"F", "PHE", "PEPTIDE", "SMILES",
          "O=C([C@H](Cc1ccccc1)N[H:1])[OH:2] |atomProp:0.pdbName. O  :1.pdbName. C "
          " :2.pdbName. CA :3.pdbName. CB :4.pdbName. CG :5.pdbName. "
          "CD1:6.pdbName. CE1:7.pdbName. CZ :8.pdbName. CE2:9.pdbName. "
          "CD2:10.pdbName. N  :11.pdbName. H  :12.pdbName. OXT|",
-         "PEPTIDE"},
-        {"G", "GLY",
+         nullptr},
+        {"G", "GLY", "PEPTIDE", "SMILES",
          "O=C(CN[H:1])[OH:2] |atomProp:0.pdbName. O  :1.pdbName. C  "
          ":2.pdbName. CA :3.pdbName. N  :4.pdbName. H  :5.pdbName. OXT|",
-         "PEPTIDE"},
-        {"H", "HIS",
+         nullptr},
+        {"H", "HIS", "PEPTIDE", "SMILES",
          "O=C([C@H](Cc1cnc[nH]1)N[H:1])[OH:2] |atomProp:0.pdbName. O  "
          ":1.pdbName. C  :2.pdbName. CA :3.pdbName. CB :4.pdbName. CG "
          ":5.pdbName. CD2:6.pdbName. NE2:7.pdbName. CE1:8.pdbName. "
          "ND1:9.pdbName. N  :10.pdbName. H  :11.pdbName. OXT|",
-         "PEPTIDE"},
-        {"I", "ILE",
+         nullptr},
+        {"I", "ILE", "PEPTIDE", "SMILES",
          "CC[C@H](C)[C@H](N[H:1])C(=O)[OH:2] |atomProp:0.pdbName. CD1:1.pdbName. "
          "CG1:2.pdbName. CB :3.pdbName. CG2:4.pdbName. CA :5.pdbName. N  "
          ":6.pdbName. H  :7.pdbName. C  :8.pdbName. O  :9.pdbName. OXT|",
-         "PEPTIDE"},
-        {"K", "LYS",
+         nullptr},
+        {"K", "LYS", "PEPTIDE", "SMILES",
          "O=C([C@H](CCCCN[H:3])N[H:1])[OH:2] |atomProp:0.pdbName. O  "
          ":1.pdbName. C  :2.pdbName. CA :3.pdbName. CB :4.pdbName. CG "
          ":5.pdbName. CD :6.pdbName. CE :7.pdbName. NZ :8.pdbName. "
          "HZ1:9.pdbName. N  :10.pdbName. H  :11.pdbName. OXT|",
-         "PEPTIDE"},
-        {"L", "LEU",
+         nullptr},
+        {"L", "LEU", "PEPTIDE", "SMILES",
          "CC(C)C[C@H](N[H:1])C(=O)[OH:2] |atomProp:0.pdbName. CD1:1.pdbName. "
          "CG :2.pdbName. CD2:3.pdbName. CB :4.pdbName. CA :5.pdbName. N  "
          ":6.pdbName. H  :7.pdbName. C  :8.pdbName. O  :9.pdbName. OXT|",
-         "PEPTIDE"},
-        {"M", "MET",
+         nullptr},
+        {"M", "MET", "PEPTIDE", "SMILES",
          "CSCC[C@H](N[H:1])C(=O)[OH:2] |atomProp:0.pdbName. CE :1.pdbName. "
          "SD :2.pdbName. CG :3.pdbName. CB :4.pdbName. CA :5.pdbName. N  "
          ":6.pdbName. H  :7.pdbName. C  :8.pdbName. O  :9.pdbName. OXT|",
-         "PEPTIDE"},
-        {"N", "ASN",
+         nullptr},
+        {"N", "ASN", "PEPTIDE", "SMILES",
          "NC(=O)C[C@H](N[H:1])C(=O)[OH:2] |atomProp:0.pdbName. ND2:1.pdbName. CG "
          ":2.pdbName. OD1:3.pdbName. CB :4.pdbName. CA :5.pdbName. N  :6.pdbName. "
          "H  :7.pdbName. C  :8.pdbName. O  :9.pdbName. OXT|",
-         "PEPTIDE"},
-        {"O", "PYL",
+         nullptr},
+        {"O", "PYL", "PEPTIDE", "SMILES",
          "C[C@@H]1CC=N[C@H]1C(=O)NCCCC[C@H](N[H:1])C(=O)[OH:2] "
          "|atomProp:0.pdbName. CB2:1.pdbName. CG2:2.pdbName. CD2:3.pdbName. "
          "CE2:4.pdbName. N2 :5.pdbName. CA2:6.pdbName. C2 :7.pdbName. O2 "
          ":8.pdbName. NZ :9.pdbName. CE :10.pdbName. CD :11.pdbName. CG "
          ":12.pdbName. CB :13.pdbName. CA :14.pdbName. N  :15.pdbName. H  "
          ":16.pdbName. C  :17.pdbName. O  :18.pdbName. OXT|",
-         "PEPTIDE"},
-        {"P", "PRO",
+         nullptr},
+        {"P", "PRO", "PEPTIDE", "SMILES",
          "O=C([C@@H]1CCCN1[H:1])[OH:2] |atomProp:0.pdbName. O  :1.pdbName. C "
          " :2.pdbName. CA :3.pdbName. CB :4.pdbName. CG :5.pdbName. CD "
          ":6.pdbName. N  :7.pdbName. H  :8.pdbName. OXT|",
-         "PEPTIDE"},
-        {"Q", "GLN",
+         nullptr},
+        {"Q", "GLN", "PEPTIDE", "SMILES",
          "NC(=O)CC[C@H](N[H:1])C(=O)[OH:2] |atomProp:0.pdbName. NE2:1.pdbName. CD "
          ":2.pdbName. OE1:3.pdbName. CG :4.pdbName. CB :5.pdbName. CA :6.pdbName. "
          "N  :7.pdbName. H  :8.pdbName. C  :9.pdbName. O  :10.pdbName. OXT|",
-         "PEPTIDE"},
-        {"R", "ARG",
+         nullptr},
+        {"R", "ARG", "PEPTIDE", "SMILES",
          "N=C(N)NCCC[C@H](N[H:1])C(=O)[OH:2] |atomProp:0.pdbName. "
          "NH2:1.pdbName. CZ :2.pdbName. NH1:3.pdbName. NE :4.pdbName. CD "
          ":5.pdbName. CG :6.pdbName. CB :7.pdbName. CA :8.pdbName. N  "
          ":9.pdbName. H  :10.pdbName. C  :11.pdbName. O  :12.pdbName. OXT|",
-         "PEPTIDE"},
-        {"S", "SER",
+         nullptr},
+        {"S", "SER", "PEPTIDE", "SMILES",
          "O=C([C@H](CO)N[H:1])[OH:2] |atomProp:0.pdbName. O  :1.pdbName. C  "
          ":2.pdbName. CA :3.pdbName. CB :4.pdbName. OG :5.pdbName. N  "
          ":6.pdbName. H  :7.pdbName. OXT|",
-         "PEPTIDE"},
-        {"T", "THR",
+         nullptr},
+        {"T", "THR", "PEPTIDE", "SMILES",
          "C[C@@H](O)[C@H](N[H:1])C(=O)[OH:2] |atomProp:0.pdbName. "
          "CG2:1.pdbName. CB :2.pdbName. OG1:3.pdbName. CA :4.pdbName. N  "
          ":5.pdbName. H  :6.pdbName. C  :7.pdbName. O  :8.pdbName. OXT|",
-         "PEPTIDE"},
-        {"U", "SEC",
+         nullptr},
+        {"U", "SEC", "PEPTIDE", "SMILES",
          "O=C([C@H](C[SeH])N[H:1])[OH:2] |atomProp:0.pdbName. O  :1.pdbName. "
          "C  :2.pdbName. CA :3.pdbName. CB :4.pdbName.SE  :5.pdbName. N  "
          ":6.pdbName. H  :7.pdbName. OXT|",
-         "PEPTIDE"},
-        {"V", "VAL",
+         nullptr},
+        {"V", "VAL", "PEPTIDE", "SMILES",
          "CC(C)[C@H](N[H:1])C(=O)[OH:2] |atomProp:0.pdbName. CG1:1.pdbName. "
          "CB :2.pdbName. CG2:3.pdbName. CA :4.pdbName. N  :5.pdbName. H  "
          ":6.pdbName. C  :7.pdbName. O  :8.pdbName. OXT|",
-         "PEPTIDE"},
-        {"W", "TRP",
+         nullptr},
+        {"W", "TRP", "PEPTIDE", "SMILES",
          "O=C([C@H](Cc1c[nH]c2ccccc12)N[H:1])[OH:2] |atomProp:0.pdbName. O  "
          ":1.pdbName. C  :2.pdbName. CA :3.pdbName. CB :4.pdbName. CG "
          ":5.pdbName. CD1:6.pdbName. NE1:7.pdbName. CE2:8.pdbName. "
          "CZ2:9.pdbName. CH2:10.pdbName. CZ3:11.pdbName. CE3:12.pdbName. "
          "CD2:13.pdbName. N  :14.pdbName. H  :15.pdbName. OXT|",
-         "PEPTIDE"},
-        {"Y", "TYR",
+         nullptr},
+        {"Y", "TYR", "PEPTIDE", "SMILES",
          "O=C([C@H](Cc1ccc(O)cc1)N[H:1])[OH:2] |atomProp:0.pdbName. O  "
          ":1.pdbName. C  :2.pdbName. CA :3.pdbName. CB :4.pdbName. CG :5.pdbName. "
          "CD1:6.pdbName. CE1:7.pdbName. CZ :8.pdbName. OH :9.pdbName. "
          "CE2:10.pdbName. CD2:11.pdbName. N  :12.pdbName. H  :13.pdbName. OXT|",
-         "PEPTIDE"},
+         nullptr},
         // X for unknown amino acid - mapped to glycine structure
-        {"X", "UNK",
+        {"X", "UNK", "PEPTIDE", "SMILES",
          "O=C(CN[H:1])[OH:2] |atomProp:0.pdbName. O  :1.pdbName. C  "
          ":2.pdbName. CA :3.pdbName. N  :4.pdbName. H  :5.pdbName. OXT|",
-         "PEPTIDE"},
+         nullptr},
     };
 }
 
