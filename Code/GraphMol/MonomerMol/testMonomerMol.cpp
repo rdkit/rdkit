@@ -411,3 +411,137 @@ TEST_CASE("Conversions") {
     CHECK(same_roundtrip_mol(*mol, *roundtrip, getPolymerIds(*monomer_mol).size()));
   }
 }
+
+TEST_CASE("HybridMonomerMol") {
+  SECTION("isMonomer") {
+    // Test that isMonomer correctly distinguishes monomers from atoms
+    MonomerMol mol;
+
+    // Add a monomer
+    auto monomerIdx = mol.addMonomer("A", 1, "PEPTIDE1");
+
+    // Add a regular atom (carbon)
+    Atom carbon(6);
+    auto atomIdx = mol.addAtom(&carbon);
+
+    CHECK(mol.isMonomer(monomerIdx) == true);
+    CHECK(mol.isMonomer(atomIdx) == false);
+  }
+
+  SECTION("addBondAtomToAtom") {
+    // Test that addBond works for atom-to-atom bonds
+    MonomerMol mol;
+
+    // Add two regular atoms
+    Atom carbon1(6);
+    Atom carbon2(6);
+    auto idx1 = mol.addAtom(&carbon1);
+    auto idx2 = mol.addAtom(&carbon2);
+
+    // Should work - both are regular atoms
+    auto numBonds = mol.addBond(idx1, idx2, Bond::SINGLE);
+    CHECK(numBonds == 1);
+    CHECK(mol.getNumBonds() == 1);
+  }
+
+  SECTION("addBondMonomerToAtom") {
+    // Test addBond between a monomer and an atom with attachment point
+    MonomerMol mol;
+
+    // Add a monomer (Alanine)
+    auto monomerIdx = mol.addMonomer("A", 1, "PEPTIDE1");
+
+    // Add a regular atom (nitrogen, simulating an N-terminal modification)
+    Atom nitrogen(7);
+    auto atomIdx = mol.addAtom(&nitrogen);
+
+    // Add bond from monomer's R1 attachment point to the atom
+    auto numBonds = mol.addBond(monomerIdx, atomIdx, 1, Bond::SINGLE);
+    CHECK(numBonds == 1);
+    CHECK(mol.getNumBonds() == 1);
+
+    // Check that the linkage property is set correctly
+    auto bond = mol.getBondWithIdx(0);
+    CHECK(bond->getProp<std::string>(LINKAGE) == "R1-");
+  }
+
+  SECTION("addBondMonomerToAtomReversedOrder") {
+    // Test that addBond works even if atom comes before monomer in args
+    MonomerMol mol;
+
+    auto monomerIdx = mol.addMonomer("A", 1, "PEPTIDE1");
+    Atom oxygen(8);
+    auto atomIdx = mol.addAtom(&oxygen);
+
+    // Pass atom first, monomer second - should still work
+    auto numBonds = mol.addBond(atomIdx, monomerIdx, 2, Bond::SINGLE);
+    CHECK(numBonds == 1);
+
+    // Linkage should still be set correctly
+    auto bond = mol.getBondWithIdx(0);
+    CHECK(bond->getProp<std::string>(LINKAGE) == "R2-");
+  }
+
+  SECTION("addBondMonomerToMonomerThrows") {
+    // Test that addBond throws for monomer-to-monomer bonds
+    MonomerMol mol;
+
+    auto m1 = mol.addMonomer("A", 1, "PEPTIDE1");
+    auto m2 = mol.addMonomer("G");
+
+    // Should throw - must use addConnection for monomer-to-monomer
+    CHECK_THROWS_AS(mol.addBond(m1, m2, Bond::SINGLE), std::invalid_argument);
+  }
+
+  SECTION("addBondMixedWithoutAttachmentThrows") {
+    // Test that addBond without attachment point throws for mixed bonds
+    MonomerMol mol;
+
+    auto monomerIdx = mol.addMonomer("A", 1, "PEPTIDE1");
+    Atom carbon(6);
+    auto atomIdx = mol.addAtom(&carbon);
+
+    // Should throw - need to specify attachment point
+    CHECK_THROWS_AS(mol.addBond(monomerIdx, atomIdx, Bond::SINGLE),
+                    std::invalid_argument);
+  }
+
+  SECTION("hybridMoleculeConstruction") {
+    // Build a hybrid molecule: monomer - atom - atom - monomer
+    // This could represent a peptide with a non-standard linker
+    MonomerMol mol;
+
+    // Add monomers
+    auto m1 = mol.addMonomer("A", 1, "PEPTIDE1");
+    auto m2 = mol.addMonomer("G", 2, "PEPTIDE1");
+
+    // Add linker atoms (e.g., -CH2-CH2-)
+    Atom c1(6);
+    Atom c2(6);
+    auto a1 = mol.addAtom(&c1);
+    auto a2 = mol.addAtom(&c2);
+
+    // Connect: monomer1 -R2-> atom1 - atom2 <-R1- monomer2
+    mol.addBond(m1, a1, 2, Bond::SINGLE);  // Alanine R2 to first carbon
+    mol.addBond(a1, a2, Bond::SINGLE);      // Carbon to carbon
+    mol.addBond(m2, a2, 1, Bond::SINGLE);  // Glycine R1 to second carbon
+
+    CHECK(mol.getNumAtoms() == 4);
+    CHECK(mol.getNumBonds() == 3);
+
+    // Verify monomer detection
+    CHECK(mol.isMonomer(m1) == true);
+    CHECK(mol.isMonomer(m2) == true);
+    CHECK(mol.isMonomer(a1) == false);
+    CHECK(mol.isMonomer(a2) == false);
+
+    // Verify linkage properties on monomer-atom bonds
+    auto bond1 = mol.getBondBetweenAtoms(m1, a1);
+    auto bond2 = mol.getBondBetweenAtoms(a1, a2);
+    auto bond3 = mol.getBondBetweenAtoms(m2, a2);
+
+    CHECK(bond1->getProp<std::string>(LINKAGE) == "R2-");
+    CHECK_FALSE(bond2->hasProp(LINKAGE));  // atom-atom bond has no linkage
+    CHECK(bond3->getProp<std::string>(LINKAGE) == "R1-");
+  }
+}

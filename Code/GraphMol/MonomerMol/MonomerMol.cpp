@@ -114,7 +114,8 @@ void MonomerMol::addConnection(size_t monomer1, size_t monomer2,
     } else {
         auto bond_type = (linkage.front() == 'p' ? ::RDKit::Bond::ZERO
                                                  : ::RDKit::Bond::SINGLE);
-        const auto new_total = addBond(monomer1, monomer2, bond_type);
+        // Use RWMol::addBond directly to bypass our overridden addBond
+        const auto new_total = RWMol::addBond(monomer1, monomer2, bond_type);
         bond = getBondWithIdx(new_total - 1);
         bond->setProp(LINKAGE, linkage);
 
@@ -143,6 +144,71 @@ void MonomerMol::addConnection(size_t monomer1, size_t monomer2,
             addConnection(monomer1, monomer2, CROSS_LINKAGE);
             break;
     }
+}
+
+bool MonomerMol::isMonomer(unsigned int atomIdx) const
+{
+    const auto* atom = getAtomWithIdx(atomIdx);
+    // An atom is a monomer if it has the ATOM_LABEL property
+    return atom->hasProp(ATOM_LABEL);
+}
+
+unsigned int MonomerMol::addBond(unsigned int beginAtomIdx,
+                                 unsigned int endAtomIdx, Bond::BondType order)
+{
+    bool beginIsMonomer = isMonomer(beginAtomIdx);
+    bool endIsMonomer = isMonomer(endAtomIdx);
+
+    if (beginIsMonomer && endIsMonomer) {
+        throw std::invalid_argument(
+            "Cannot add bond between two monomers using addBond. "
+            "Use addConnection instead.");
+    }
+
+    if (beginIsMonomer || endIsMonomer) {
+        throw std::invalid_argument(
+            "Cannot add bond between monomer and atom without specifying "
+            "attachment point. Use addBond(monomerIdx, atomIdx, "
+            "attachmentPoint) instead.");
+    }
+
+    // Both are regular atoms, delegate to RWMol::addBond
+    return RWMol::addBond(beginAtomIdx, endAtomIdx, order);
+}
+
+unsigned int MonomerMol::addBond(unsigned int monomerIdx, unsigned int atomIdx,
+                                 unsigned int attachmentPoint,
+                                 Bond::BondType order)
+{
+    // TODO: Should this all be under addLinkage?
+    bool monomerIsMonomer = isMonomer(monomerIdx);
+    bool atomIsMonomer = isMonomer(atomIdx);
+
+    if (monomerIsMonomer && atomIsMonomer) {
+        throw std::invalid_argument(
+            "Both indices are monomers. Use addConnection for monomer-to-monomer "
+            "bonds.");
+    }
+
+    if (!monomerIsMonomer && !atomIsMonomer) {
+        throw std::invalid_argument(
+            "Neither index is a monomer. Use addBond for atom-to-atom "
+            "bonds.");
+    }
+
+    // Ensure monomerIdx is the monomer
+    unsigned int actualMonomerIdx = monomerIsMonomer ? monomerIdx : atomIdx;
+    unsigned int actualAtomIdx = monomerIsMonomer ? atomIdx : monomerIdx;
+
+    // Create the bond
+    const auto new_total = RWMol::addBond(actualMonomerIdx, actualAtomIdx, order);
+    auto* bond = getBondWithIdx(new_total - 1);
+
+    // Set the linkage property - use "RX-" format to indicate monomer-to-atom
+    std::string linkage = "R" + std::to_string(attachmentPoint) + "-";
+    bond->setProp(LINKAGE, linkage);
+
+    return new_total;
 }
 
 [[nodiscard]] std::string getPolymerId(const ::RDKit::Atom* atom)

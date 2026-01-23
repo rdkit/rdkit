@@ -135,6 +135,44 @@ class RDKIT_MONOMERMOL_EXPORT MonomerMol : public RWMol {
    */
   void addConnection(size_t monomer1, size_t monomer2,
                      const std::string& linkage, bool is_custom_bond = false);
+
+  /*!
+   * Check if an atom at the given index is a monomer.
+   *
+   * @param atomIdx The index of the atom to check
+   * @return true if the atom is a monomer, false if it's a regular atom
+   */
+  bool isMonomer(unsigned int atomIdx) const;
+
+  /*!
+   * Add a bond between two atoms/monomers with automatic type detection.
+   * - If both are regular atoms: creates a normal bond
+   * - If both are monomers: throws (use addConnection instead)
+   * - If one is a monomer and one is an atom: throws (use overload with
+   *   attachment point)
+   *
+   * @param beginAtomIdx The index of the first atom
+   * @param endAtomIdx The index of the second atom
+   * @param order The bond type
+   * @return The new number of bonds
+   */
+  unsigned int addBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
+                       Bond::BondType order = Bond::UNSPECIFIED);
+
+  /*!
+   * Add a bond between a monomer and an atom, specifying the attachment point
+   * on the monomer.
+   *
+   * @param monomerIdx The index of the monomer
+   * @param atomIdx The index of the atom
+   * @param attachmentPoint The attachment point on the monomer (1 for R1, 2 for
+   *   R2, etc.)
+   * @param order The bond type
+   * @return The new number of bonds
+   */
+  unsigned int addBond(unsigned int monomerIdx, unsigned int atomIdx,
+                       unsigned int attachmentPoint,
+                       Bond::BondType order = Bond::SINGLE);
 };
 
 // Free functions for querying - these work on any molecule with monomer info
