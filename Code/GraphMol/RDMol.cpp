@@ -2892,6 +2892,22 @@ void removeIndexAndDecrementBookmarks(
   }
 }
 
+void removeIndexAndDecrementMonomerInfo(
+    std::unordered_map<int, std::unique_ptr<AtomMonomerInfo>> &monomerInfo,
+    int index, uint32_t numAtoms) {
+  auto it = monomerInfo.find(index);
+  if (it == monomerInfo.end()) {
+    return;
+  }
+  monomerInfo.erase(it);
+  for (uint32_t i = index + 1; i < numAtoms; ++i) {
+    auto mit = monomerInfo.find(i);
+    if (mit != monomerInfo.end()) {
+      monomerInfo[i - 1] = std::move(mit->second);
+      monomerInfo.erase(mit);
+    }
+  }
+}
 }  // namespace
 
 void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
@@ -2996,6 +3012,11 @@ void RDMol::removeAtom(atomindex_t atomIndex, bool clearProps) {
     }
   } else {
     removeIndexAndDecrementBookmarks(atomBookmarks, atomIndex);
+  }
+
+  // update MonomerInfo
+  if (!monomerInfo.empty()) {
+    removeIndexAndDecrementMonomerInfo(monomerInfo, atomIndex, numAtomsOrig);
   }
 
   // Update atom indices in bond stereoAtoms
