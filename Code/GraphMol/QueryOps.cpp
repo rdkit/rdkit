@@ -24,10 +24,12 @@ namespace RDKit {
 
 int queryIsAtomBridgehead(Atom const *at) {
   return queryIsAtomBridgeheadInternal(at->getRDMol(), at->getIdx(),
-                                       at->getRDMol().getRingInfo()) ? 1 : 0;
+                                       at->getRDMol().getRingInfo())
+             ? 1
+             : 0;
 }
 bool queryIsAtomBridgeheadInternal(const RDMol &mol, atomindex_t atomIndex,
-                           const RingInfoCache &rings) {
+                                   const RingInfoCache &rings) {
   // at least three ring bonds, at least one ring bond in a ring which shares at
   // least two bonds with another ring involving this atom
   //
@@ -58,16 +60,16 @@ bool queryIsAtomBridgeheadInternal(const RDMol &mol, atomindex_t atomIndex,
 
   // Check all pairs of rings that contain this atom.
   const uint32_t beginAtomRings = rings.atomMembershipBegins[atomIndex];
-  const uint32_t endAtomRings = rings.atomMembershipBegins[atomIndex+1];
+  const uint32_t endAtomRings = rings.atomMembershipBegins[atomIndex + 1];
   boost::dynamic_bitset<> bondsInRing(mol.getNumBonds());
   boost::dynamic_bitset<> ringsOverlap(rings.numRings());
-  for (uint32_t atomRingIndexI = beginAtomRings;
-       atomRingIndexI != endAtomRings; ++atomRingIndexI) {
+  for (uint32_t atomRingIndexI = beginAtomRings; atomRingIndexI != endAtomRings;
+       ++atomRingIndexI) {
     const uint32_t ringIndexI = rings.atomMemberships[atomRingIndexI];
 
     bondsInRing.reset();
     uint32_t beginBondRingI = rings.ringBegins[ringIndexI];
-    const uint32_t endBondRingI = rings.ringBegins[ringIndexI+1];
+    const uint32_t endBondRingI = rings.ringBegins[ringIndexI + 1];
     for (; beginBondRingI != endBondRingI; ++beginBondRingI) {
       const uint32_t bondIndex = rings.bondsInRings[beginBondRingI];
       bondsInRing.set(bondIndex);
@@ -117,11 +119,12 @@ ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what) {
 };
 
 template <bool isBond, bool newVersion>
-using ParamType = std::conditional_t<isBond,
-      std::conditional_t<newVersion, ConstRDMolBond, Bond const *>,
-      std::conditional_t<newVersion, ConstRDMolAtom, Atom const *>>;
+using ParamType = std::conditional_t<
+    isBond, std::conditional_t<newVersion, ConstRDMolBond, Bond const *>,
+    std::conditional_t<newVersion, ConstRDMolAtom, Atom const *>>;
 template <bool isBond, bool newVersion>
-using EqualsType = std::conditional_t<isBond,
+using EqualsType = std::conditional_t<
+    isBond,
     std::conditional_t<newVersion, BOND_EQUALS_QUERY2, BOND_EQUALS_QUERY>,
     std::conditional_t<newVersion, ATOM_EQUALS_QUERY2, ATOM_EQUALS_QUERY>>;
 
@@ -148,24 +151,42 @@ int queryIsInRingOfSizeTmpl(ParamType<isBond, newVersion> at) {
 template <bool isBond, bool newVersion>
 DataFuncPtrType<isBond, newVersion> getQueryIsInRingOfSizeTmpl(int tgt) {
   switch (tgt) {
-    case 3:  return queryIsInRingOfSizeTmpl<isBond, newVersion, 3>;
-    case 4:  return queryIsInRingOfSizeTmpl<isBond, newVersion, 4>;
-    case 5:  return queryIsInRingOfSizeTmpl<isBond, newVersion, 5>;
-    case 6:  return queryIsInRingOfSizeTmpl<isBond, newVersion, 6>;
-    case 7:  return queryIsInRingOfSizeTmpl<isBond, newVersion, 7>;
-    case 8:  return queryIsInRingOfSizeTmpl<isBond, newVersion, 8>;
-    case 9:  return queryIsInRingOfSizeTmpl<isBond, newVersion, 9>;
-    case 10: return queryIsInRingOfSizeTmpl<isBond, newVersion, 10>;
-    case 11: return queryIsInRingOfSizeTmpl<isBond, newVersion, 11>;
-    case 12: return queryIsInRingOfSizeTmpl<isBond, newVersion, 12>;
-    case 13: return queryIsInRingOfSizeTmpl<isBond, newVersion, 13>;
-    case 14: return queryIsInRingOfSizeTmpl<isBond, newVersion, 14>;
-    case 15: return queryIsInRingOfSizeTmpl<isBond, newVersion, 15>;
-    case 16: return queryIsInRingOfSizeTmpl<isBond, newVersion, 16>;
-    case 17: return queryIsInRingOfSizeTmpl<isBond, newVersion, 17>;
-    case 18: return queryIsInRingOfSizeTmpl<isBond, newVersion, 18>;
-    case 19: return queryIsInRingOfSizeTmpl<isBond, newVersion, 19>;
-    case 20: return queryIsInRingOfSizeTmpl<isBond, newVersion, 20>;
+    case 3:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 3>;
+    case 4:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 4>;
+    case 5:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 5>;
+    case 6:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 6>;
+    case 7:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 7>;
+    case 8:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 8>;
+    case 9:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 9>;
+    case 10:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 10>;
+    case 11:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 11>;
+    case 12:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 12>;
+    case 13:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 13>;
+    case 14:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 14>;
+    case 15:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 15>;
+    case 16:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 16>;
+    case 17:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 17>;
+    case 18:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 18>;
+    case 19:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 19>;
+    case 20:
+      return queryIsInRingOfSizeTmpl<isBond, newVersion, 20>;
   }
   return nullptr;
 }
@@ -257,7 +278,8 @@ unsigned int queryAtomAllBondProduct2(ConstRDMolAtom at) {
         firstThousandPrimes[at.mol().getBond(*beg).getBondType()]);
     ++beg;
   }
-  for (unsigned int i = 0, n = at.mol().getAtomTotalNumHs(at.index()); i < n; i++) {
+  for (unsigned int i = 0, n = at.mol().getAtomTotalNumHs(at.index()); i < n;
+       i++) {
     prod *= static_cast<unsigned int>(firstThousandPrimes[Bond::SINGLE]);
   }
   return prod;
@@ -408,7 +430,8 @@ ATOM_EQUALS_QUERY *makeAtomHasImplicitHQuery() {
 }
 
 ATOM_EQUALS_QUERY2 *makeAtomAromaticQuery2() {
-  auto *res = makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(true, queryAtomAromatic2);
+  auto *res =
+      makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(true, queryAtomAromatic2);
   res->setDescription("AtomIsAromatic");
   return res;
 }
@@ -419,7 +442,8 @@ ATOM_EQUALS_QUERY *makeAtomAromaticQuery() {
 }
 
 ATOM_EQUALS_QUERY2 *makeAtomAliphaticQuery2() {
-  auto *res = makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(true, queryAtomAliphatic2);
+  auto *res =
+      makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(true, queryAtomAliphatic2);
   res->setDescription("AtomIsAliphatic");
   return res;
 }
@@ -532,8 +556,8 @@ ATOM_EQUALS_QUERY *makeAtomHasChiralTagQuery() {
 }
 
 ATOM_EQUALS_QUERY2 *makeAtomMissingChiralTagQuery2() {
-  auto *res =
-      makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(true, queryAtomMissingChiralTag2);
+  auto *res = makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(
+      true, queryAtomMissingChiralTag2);
   res->setDescription("AtomMissingChiralTag");
   return res;
 }
@@ -545,7 +569,8 @@ ATOM_EQUALS_QUERY *makeAtomMissingChiralTagQuery() {
 }
 
 ATOM_EQUALS_QUERY2 *makeAtomInRingQuery2() {
-  auto *res = makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(true, queryIsAtomInRing2);
+  auto *res =
+      makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(true, queryIsAtomInRing2);
   res->setDescription("AtomInRing");
   return res;
 }
@@ -632,12 +657,12 @@ void addAtomNumQueries(
   for (size_t i = 0; i < count; ++i) {
     if constexpr (newVersion) {
       res->addChild(
-          typename Queries::Query<int, ParamType<false, newVersion>, true>::CHILD_TYPE(
-              makeAtomNumQuery2(nums[i])));
+          typename Queries::Query<int, ParamType<false, newVersion>, true>::
+              CHILD_TYPE(makeAtomNumQuery2(nums[i])));
     } else {
       res->addChild(
-          typename Queries::Query<int, ParamType<false, newVersion>, true>::CHILD_TYPE(
-              makeAtomNumQuery(nums[i])));
+          typename Queries::Query<int, ParamType<false, newVersion>,
+                                  true>::CHILD_TYPE(makeAtomNumQuery(nums[i])));
     }
   }
 }
@@ -660,8 +685,8 @@ ATOM_OR_QUERY *makeXAtomQuery() {
 }
 ATOM_OR_QUERY2 *makeXHAtomQuery2() {
   ATOM_OR_QUERY2 *res = makeXAtomQuery2();
-  res->addChild(
-      Queries::Query<int, ConstRDMolAtom, true>::CHILD_TYPE(makeAtomNumQuery2(1)));
+  res->addChild(Queries::Query<int, ConstRDMolAtom, true>::CHILD_TYPE(
+      makeAtomNumQuery2(1)));
   res->setTypeLabel("XH");
   return res;
 }
@@ -680,8 +705,8 @@ ATOM_OR_QUERY2 *makeMAtomQuery2() {
   // We expanded this with !#0 as part of #6106
   // it's easier to define what isn't a metal than what is. :-)
   ATOM_OR_QUERY2 *res = makeMHAtomQuery2();
-  res->addChild(
-      Queries::Query<int, ConstRDMolAtom, true>::CHILD_TYPE(makeAtomNumQuery2(1)));
+  res->addChild(Queries::Query<int, ConstRDMolAtom, true>::CHILD_TYPE(
+      makeAtomNumQuery2(1)));
   res->setTypeLabel("M");
   return res;
 }
@@ -706,9 +731,8 @@ ATOM_OR_QUERY2 *makeMHAtomQuery2() {
   auto *res = new ATOM_OR_QUERY2;
   res->setDescription("AtomOr");
   res->setNegation(true);
-  const std::array nums = {
-      0, 2, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 33, 34, 35, 36, 52, 53, 54, 85, 86
-  };
+  const std::array nums = {0,  2,  5,  6,  7,  8,  9,  10, 14, 15, 16,
+                           17, 18, 33, 34, 35, 36, 52, 53, 54, 85, 86};
   addAtomNumQueries<true>(res, nums);
   res->setTypeLabel("MH");
   return res;
@@ -722,16 +746,16 @@ ATOM_OR_QUERY *makeMHAtomQuery() {
   auto *res = new ATOM_OR_QUERY;
   res->setDescription("AtomOr");
   res->setNegation(true);
-  const std::array nums = {
-      0, 2, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 33, 34, 35, 36, 52, 53, 54, 85, 86
-  };
+  const std::array nums = {0,  2,  5,  6,  7,  8,  9,  10, 14, 15, 16,
+                           17, 18, 33, 34, 35, 36, 52, 53, 54, 85, 86};
   addAtomNumQueries<false>(res, nums);
   res->setTypeLabel("MH");
   return res;
 }
 
 ATOM_EQUALS_QUERY2 *makeAtomInNRingsQuery2(int what) {
-  auto *res = makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(what, queryIsAtomInNRings2);
+  auto *res =
+      makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(what, queryIsAtomInNRings2);
   res->setDescription("AtomInNRings");
   return res;
 }
@@ -755,8 +779,8 @@ ATOM_EQUALS_QUERY *makeAtomHasRingBondQuery() {
 }
 
 ATOM_EQUALS_QUERY2 *makeAtomNumHeteroatomNbrsQuery2(int what) {
-  auto *res =
-      makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(what, queryAtomNumHeteroatomNbrs2);
+  auto *res = makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(
+      what, queryAtomNumHeteroatomNbrs2);
   res->setDescription("AtomNumHeteroatomNeighbors");
   return res;
 }
@@ -768,8 +792,8 @@ ATOM_EQUALS_QUERY *makeAtomNumHeteroatomNbrsQuery(int what) {
 }
 
 ATOM_EQUALS_QUERY2 *makeAtomHasHeteroatomNbrsQuery2() {
-  auto *res =
-      makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(true, queryAtomHasHeteroatomNbrs2);
+  auto *res = makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(
+      true, queryAtomHasHeteroatomNbrs2);
   res->setDescription("AtomHasHeteroatomNeighbors");
   return res;
 }
@@ -806,8 +830,8 @@ ATOM_EQUALS_QUERY *makeAtomHasAliphaticHeteroatomNbrsQuery() {
 }
 
 ATOM_EQUALS_QUERY2 *makeAtomNonHydrogenDegreeQuery2(int what) {
-  auto *res =
-      makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(what, queryAtomNonHydrogenDegree2);
+  auto *res = makeAtomSimpleQuery2<ATOM_EQUALS_QUERY2>(
+      what, queryAtomNonHydrogenDegree2);
   res->setDescription("AtomNonHydrogenDegree");
   return res;
 }
@@ -1081,21 +1105,37 @@ ATOM_NULL_QUERY *makeAtomNullQuery() {
 
 void convertComplexNameToQuery2(RDMolAtom atom, std::string_view symb) {
   if (symb == "Q") {
-    atom.mol().setAtomQuery(atom.index(), std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeQAtomQuery2()));
+    atom.mol().setAtomQuery(
+        atom.index(),
+        std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeQAtomQuery2()));
   } else if (symb == "QH") {
-    atom.mol().setAtomQuery(atom.index(), std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeQHAtomQuery2()));
+    atom.mol().setAtomQuery(
+        atom.index(),
+        std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeQHAtomQuery2()));
   } else if (symb == "A") {
-    atom.mol().setAtomQuery(atom.index(), std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeAAtomQuery2()));
+    atom.mol().setAtomQuery(
+        atom.index(),
+        std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeAAtomQuery2()));
   } else if (symb == "AH") {
-    atom.mol().setAtomQuery(atom.index(), std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeAHAtomQuery2()));
+    atom.mol().setAtomQuery(
+        atom.index(),
+        std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeAHAtomQuery2()));
   } else if (symb == "X") {
-    atom.mol().setAtomQuery(atom.index(), std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeXAtomQuery2()));
+    atom.mol().setAtomQuery(
+        atom.index(),
+        std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeXAtomQuery2()));
   } else if (symb == "XH") {
-    atom.mol().setAtomQuery(atom.index(), std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeXHAtomQuery2()));
+    atom.mol().setAtomQuery(
+        atom.index(),
+        std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeXHAtomQuery2()));
   } else if (symb == "M") {
-    atom.mol().setAtomQuery(atom.index(), std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeMAtomQuery2()));
+    atom.mol().setAtomQuery(
+        atom.index(),
+        std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeMAtomQuery2()));
   } else if (symb == "MH") {
-    atom.mol().setAtomQuery(atom.index(), std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeMHAtomQuery2()));
+    atom.mol().setAtomQuery(
+        atom.index(),
+        std::unique_ptr<RDMol::QUERYATOM_QUERY>(makeMHAtomQuery2()));
   } else {
     // we control what this function gets called with, so we should never land
     // here
@@ -1127,8 +1167,8 @@ void convertComplexNameToQuery(Atom *query, std::string_view symb) {
 }
 
 namespace {
-template<typename QUERY_T>
-bool _complexBondQueryHelper(const QUERY_T* query) {
+template <typename QUERY_T>
+bool _complexBondQueryHelper(const QUERY_T *query) {
   if (query == nullptr) {
     return false;
   }
@@ -1153,7 +1193,9 @@ bool _complexBondQueryHelper(const QUERY_T* query) {
             (*child)->getNegation()) {
           return true;
         }
-        using BOND_EQUALS_QUERY_TYPE = Queries::EqualityQuery<int, typename QUERY_T::DATA_FUNC_ARG_TYPE, true>;
+        using BOND_EQUALS_QUERY_TYPE =
+            Queries::EqualityQuery<int, typename QUERY_T::DATA_FUNC_ARG_TYPE,
+                                   true>;
         if (static_cast<BOND_EQUALS_QUERY_TYPE *>(child->get())->getVal() !=
                 Bond::SINGLE &&
             static_cast<BOND_EQUALS_QUERY_TYPE *>(child->get())->getVal() !=
@@ -1171,7 +1213,7 @@ bool _complexBondQueryHelper(const QUERY_T* query) {
 
 bool isComplexQuery(ConstRDMolBond b) {
   PRECONDITION(b.index() < b.mol().getNumBonds(), "bad bond");
-  const auto* query = b.mol().getBondQuery(b.index());
+  const auto *query = b.mol().getBondQuery(b.index());
   return _complexBondQueryHelper(query);
 }
 bool isComplexQuery(const Bond *b) {
@@ -1212,8 +1254,7 @@ bool _isAtomListQuery(const QUERY_T *query, int atomicNum) {
   }
   using EQUALS_QUERY_T = std::conditional_t<
       std::is_same_v<typename QUERY_T::DATA_FUNC_ARG_TYPE, ConstRDMolAtom>,
-      ATOM_EQUALS_QUERY2,
-      ATOM_EQUALS_QUERY>;
+      ATOM_EQUALS_QUERY2, ATOM_EQUALS_QUERY>;
   if (query->getDescription() == "AtomOr") {
     for (const auto &child : boost::make_iterator_range(query->beginChildren(),
                                                         query->endChildren())) {
@@ -1227,7 +1268,8 @@ bool _isAtomListQuery(const QUERY_T *query, int atomicNum) {
     // being lost on output
     return true;
   } else if (query->getDescription() == "AtomAtomicNum" &&
-             static_cast<const EQUALS_QUERY_T *>(query)->getVal() != atomicNum) {
+             static_cast<const EQUALS_QUERY_T *>(query)->getVal() !=
+                 atomicNum) {
     // when reading single-member atom lists from CTABs we end up with simple
     // AtomAtomicNum queries where the atomic number of the atom itself is zero.
     // Recognize this case.
@@ -1254,7 +1296,8 @@ template <typename QUERY_T>
 void _getAtomListQueryValsHelper(const QUERY_T *q, std::vector<int> &vals) {
   // list queries are series of nested ors of AtomAtomicNum queries
   PRECONDITION(q, "bad query");
-  using ATOM_EQUALS_QUERY_TYPE = Queries::EqualityQuery<int, typename QUERY_T::DATA_FUNC_ARG_TYPE, true>;
+  using ATOM_EQUALS_QUERY_TYPE =
+      Queries::EqualityQuery<int, typename QUERY_T::DATA_FUNC_ARG_TYPE, true>;
   auto descr = q->getDescription();
   if (descr == "AtomOr") {
     for (const auto &child :
@@ -1269,7 +1312,8 @@ void _getAtomListQueryValsHelper(const QUERY_T *q, std::vector<int> &vals) {
       if (descr == "AtomOr") {
         _getAtomListQueryValsHelper(child.get(), vals);
       } else if (descr == "AtomAtomicNum") {
-        vals.push_back(static_cast<ATOM_EQUALS_QUERY_TYPE *>(child.get())->getVal());
+        vals.push_back(
+            static_cast<ATOM_EQUALS_QUERY_TYPE *>(child.get())->getVal());
       } else if (descr == "AtomType") {
         auto v = static_cast<ATOM_EQUALS_QUERY_TYPE *>(child.get())->getVal();
         // aromatic AtomType queries add 1000 to the atomic number;
@@ -1379,7 +1423,8 @@ bool isComplexQuery(const Atom *a) {
 
 namespace {
 template <typename QUERY_T, typename ATOM_T>
-bool _isAtomAromatic(const QUERY_T *query, const ATOM_T &atom, const bool isAromaticDataMember) {
+bool _isAtomAromatic(const QUERY_T *query, const ATOM_T &atom,
+                     const bool isAromaticDataMember) {
   if (query == nullptr) {
     return isAromaticAtom(atom);
   }
@@ -1438,7 +1483,8 @@ template <typename QUERY_T, typename ATOM_T>
 void completeQueryAndChildren(QUERY_T *query, ATOM_T tgt,
                               unsigned int magicVal) {
   PRECONDITION(query, "no query");
-  using ATOM_EQUALS_QUERY_TYPE = Queries::EqualityQuery<int, typename QUERY_T::DATA_FUNC_ARG_TYPE, true>;
+  using ATOM_EQUALS_QUERY_TYPE =
+      Queries::EqualityQuery<int, typename QUERY_T::DATA_FUNC_ARG_TYPE, true>;
   auto eqQuery = dynamic_cast<ATOM_EQUALS_QUERY_TYPE *>(query);
   if (eqQuery) {
     if (static_cast<unsigned int>(eqQuery->getVal()) == magicVal) {
@@ -1480,24 +1526,25 @@ void replaceAtomWithQueryAtom(RDMol *mol, atomindex_t atomIndex) {
 
   // This is based on the QueryAtom constructor that accepts (const Atom &)
   auto &atom = mol->getAtom(atomIndex);
-  std::unique_ptr<RDMol::QUERYATOM_QUERY> query(makeAtomNumQuery2(atom.getAtomicNum()));
+  std::unique_ptr<RDMol::QUERYATOM_QUERY> query(
+      makeAtomNumQuery2(atom.getAtomicNum()));
   if (atom.getIsotope()) {
     std::unique_ptr<RDMol::QUERYATOM_QUERY> newQuery(
         makeAtomIsotopeQuery2(atom.getIsotope()));
     expandQuery(query, std::move(newQuery),
-                      Queries::CompositeQueryType::COMPOSITE_AND);
+                Queries::CompositeQueryType::COMPOSITE_AND);
   }
   if (atom.getFormalCharge()) {
     std::unique_ptr<RDMol::QUERYATOM_QUERY> newQuery(
         makeAtomFormalChargeQuery2(atom.getFormalCharge()));
     expandQuery(query, std::move(newQuery),
-                      Queries::CompositeQueryType::COMPOSITE_AND);
+                Queries::CompositeQueryType::COMPOSITE_AND);
   }
   if (atom.getNumRadicalElectrons()) {
     std::unique_ptr<RDMol::QUERYATOM_QUERY> newQuery(
         makeAtomNumRadicalElectronsQuery2(atom.getNumRadicalElectrons()));
     expandQuery(query, std::move(newQuery),
-        Queries::CompositeQueryType::COMPOSITE_AND);
+                Queries::CompositeQueryType::COMPOSITE_AND);
   }
 
   // This is based on the original replaceAtomWithQueryAtom
@@ -1529,21 +1576,27 @@ Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
   return mol->getAtomWithIdx(idx);
 }
 
-static const std::unordered_map<std::string,
+static const std::unordered_map<
+    std::string,
     std::pair<DataFuncPtrType<false, false>, DataFuncPtrType<false, true>>>
     atom_descr_to_func = {
-        {"AtomRingBondCount", {queryAtomRingBondCount, queryAtomRingBondCount2}},
+        {"AtomRingBondCount",
+         {queryAtomRingBondCount, queryAtomRingBondCount2}},
         {"AtomHasRingBond", {queryAtomHasRingBond, queryAtomHasRingBond2}},
         {"AtomRingSize", {nullptr, nullptr}},
         {"AtomMinRingSize", {queryAtomMinRingSize, queryAtomMinRingSize2}},
-        {"AtomImplicitValence", {queryAtomImplicitValence, queryAtomImplicitValence2}},
+        {"AtomImplicitValence",
+         {queryAtomImplicitValence, queryAtomImplicitValence2}},
         {"AtomTotalValence", {queryAtomTotalValence, queryAtomTotalValence2}},
         {"AtomAtomicNum", {queryAtomNum, queryAtomNum2}},
-        {"AtomExplicitDegree", {queryAtomExplicitDegree, queryAtomExplicitDegree2}},
+        {"AtomExplicitDegree",
+         {queryAtomExplicitDegree, queryAtomExplicitDegree2}},
         {"AtomTotalDegree", {queryAtomTotalDegree, queryAtomTotalDegree2}},
-        {"AtomHeavyAtomDegree", {queryAtomHeavyAtomDegree, queryAtomHeavyAtomDegree2}},
+        {"AtomHeavyAtomDegree",
+         {queryAtomHeavyAtomDegree, queryAtomHeavyAtomDegree2}},
         {"AtomHCount", {queryAtomHCount, queryAtomHCount2}},
-        {"AtomImplicitHCount", {queryAtomImplicitHCount, queryAtomImplicitHCount2}},
+        {"AtomImplicitHCount",
+         {queryAtomImplicitHCount, queryAtomImplicitHCount2}},
         {"AtomHasImplicitH", {queryAtomHasImplicitH, queryAtomHasImplicitH2}},
         {"AtomIsAromatic", {queryAtomAromatic, queryAtomAromatic2}},
         {"AtomIsAliphatic", {queryAtomAliphatic, queryAtomAliphatic2}},
@@ -1551,18 +1604,28 @@ static const std::unordered_map<std::string,
         {"AtomMass", {queryAtomMass, queryAtomMass2}},
         {"AtomIsotope", {queryAtomIsotope, queryAtomIsotope2}},
         {"AtomFormalCharge", {queryAtomFormalCharge, queryAtomFormalCharge2}},
-        {"AtomNegativeFormalCharge", {queryAtomNegativeFormalCharge, queryAtomNegativeFormalCharge2}},
-        {"AtomHybridization", {queryAtomHybridization, queryAtomHybridization2}},
+        {"AtomNegativeFormalCharge",
+         {queryAtomNegativeFormalCharge, queryAtomNegativeFormalCharge2}},
+        {"AtomHybridization",
+         {queryAtomHybridization, queryAtomHybridization2}},
         {"AtomInRing", {queryIsAtomInRing, queryIsAtomInRing2}},
         {"AtomInNRings", {queryIsAtomInNRings, queryIsAtomInNRings2}},
-        {"AtomHasHeteroatomNeighbors", {queryAtomHasHeteroatomNbrs, queryAtomHasHeteroatomNbrs2}},
-        {"AtomNumHeteroatomNeighbors", {queryAtomNumHeteroatomNbrs, queryAtomNumHeteroatomNbrs2}},
-        {"AtomNonHydrogenDegree", {queryAtomNonHydrogenDegree, queryAtomNonHydrogenDegree2}},
-        {"AtomHasAliphaticHeteroatomNeighbors", {queryAtomHasAliphaticHeteroatomNbrs, queryAtomHasAliphaticHeteroatomNbrs2}},
-        {"AtomNumAliphaticHeteroatomNeighbors", {queryAtomNumAliphaticHeteroatomNbrs, queryAtomNumAliphaticHeteroatomNbrs2}},
+        {"AtomHasHeteroatomNeighbors",
+         {queryAtomHasHeteroatomNbrs, queryAtomHasHeteroatomNbrs2}},
+        {"AtomNumHeteroatomNeighbors",
+         {queryAtomNumHeteroatomNbrs, queryAtomNumHeteroatomNbrs2}},
+        {"AtomNonHydrogenDegree",
+         {queryAtomNonHydrogenDegree, queryAtomNonHydrogenDegree2}},
+        {"AtomHasAliphaticHeteroatomNeighbors",
+         {queryAtomHasAliphaticHeteroatomNbrs,
+          queryAtomHasAliphaticHeteroatomNbrs2}},
+        {"AtomNumAliphaticHeteroatomNeighbors",
+         {queryAtomNumAliphaticHeteroatomNbrs,
+          queryAtomNumAliphaticHeteroatomNbrs2}},
         {"AtomNull", {nullDataFun, nullDataFun}},
         {"AtomType", {queryAtomType, queryAtomType2}},
-        {"AtomNumRadicalElectrons", {queryAtomNumRadicalElectrons, queryAtomNumRadicalElectrons2}},
+        {"AtomNumRadicalElectrons",
+         {queryAtomNumRadicalElectrons, queryAtomNumRadicalElectrons2}},
         {"RecursiveStructure", {nullptr, nullptr}},
         {"AtomAnd", {nullptr, nullptr}},
         {"AtomOr", {nullptr, nullptr}},
@@ -1636,7 +1699,8 @@ void finalizeQueryFromDescription(
   }
 }
 
-static const std::unordered_map<std::string,
+static const std::unordered_map<
+    std::string,
     std::pair<DataFuncPtrType<true, false>, DataFuncPtrType<true, true>>>
     bond_descr_to_func = {
         {"BondRingSize", {nullptr, nullptr}},
@@ -1645,10 +1709,15 @@ static const std::unordered_map<std::string,
         {"BondDir", {queryBondDir, queryBondDir2}},
         {"BondInRing", {queryIsBondInRing, queryIsBondInRing2}},
         {"BondInNRings", {queryIsBondInNRings, queryIsBondInNRings2}},
-        {"SingleOrAromaticBond", {queryBondIsSingleOrAromatic, queryBondIsSingleOrAromatic2}},
-        {"SingleOrDoubleBond", {queryBondIsSingleOrDouble, queryBondIsSingleOrDouble2}},
-        {"DoubleOrAromaticBond", {queryBondIsDoubleOrAromatic, queryBondIsDoubleOrAromatic2}},
-        {"SingleOrDoubleOrAromaticBond", {queryBondIsSingleOrDoubleOrAromatic, queryBondIsSingleOrDoubleOrAromatic2}},
+        {"SingleOrAromaticBond",
+         {queryBondIsSingleOrAromatic, queryBondIsSingleOrAromatic2}},
+        {"SingleOrDoubleBond",
+         {queryBondIsSingleOrDouble, queryBondIsSingleOrDouble2}},
+        {"DoubleOrAromaticBond",
+         {queryBondIsDoubleOrAromatic, queryBondIsDoubleOrAromatic2}},
+        {"SingleOrDoubleOrAromaticBond",
+         {queryBondIsSingleOrDoubleOrAromatic,
+          queryBondIsSingleOrDoubleOrAromatic2}},
         {"BondNull", {nullDataFun, nullDataFun}},
         {"BondAnd", {nullptr, nullptr}},
         {"BondOr", {nullptr, nullptr}},
@@ -1707,6 +1776,10 @@ void finalizeQueryFromDescription(
 bool isMetal(const Atom &atom) {
   static const std::unique_ptr<ATOM_OR_QUERY> q(makeMAtomQuery());
   return q->Match(&atom);
+}
+bool isMetal(const ConstRDMolAtom &atom) {
+  static const std::unique_ptr<ATOM_OR_QUERY2> q(makeMAtomQuery2());
+  return q->Match(atom);
 }
 
 }  // namespace QueryOps

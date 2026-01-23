@@ -222,7 +222,7 @@ static inline int queryAtomUnsaturated(Atom const *at) {
   return at->getTotalDegree() < at->getTotalValence();
 };
 static inline int queryAtomNum2(ConstRDMolAtom at) {
-  return at.data().getAtomicNum();
+  return at.datap()->getAtomicNum();
 }
 static inline int queryAtomNum(Atom const *at) { return at->getAtomicNum(); }
 static inline int makeAtomType(int atomic_num, bool aromatic) {
@@ -1997,6 +1997,7 @@ inline bool hasComplexBondTypeQuery(ConstRDMolBond bond) {
 }
 
 RDKIT_GRAPHMOL_EXPORT bool isMetal(const Atom &atom);
+RDKIT_GRAPHMOL_EXPORT bool isMetal(const ConstRDMolAtom &atom);
 }  // namespace QueryOps
 }  // namespace RDKit
 #endif

@@ -2226,29 +2226,46 @@ class RDMolAtomBase : public RDMolWrapperBase<ISCONST> {
 };
 
 class ConstRDMolAtom : public RDMolAtomBase<true> {
+ private:
+  const AtomData *const d_data = nullptr;
+
  public:
-  ConstRDMolAtom() : RDMolAtomBase() {}
+  ConstRDMolAtom() = delete;
   ConstRDMolAtom(const RDMol *mol, uint32_t atomIndex)
-      : RDMolAtomBase(mol, atomIndex) {}
+      : RDMolAtomBase(mol, atomIndex), d_data(&mol->getAtom(atomIndex)) {}
   ConstRDMolAtom(const ConstRDMolAtom &) = default;
-  ConstRDMolAtom &operator=(const ConstRDMolAtom &) = default;
+  ConstRDMolAtom &operator=(const ConstRDMolAtom &other) = default;
   ConstRDMolAtom(const RDMolAtom &);
 
-  const AtomData &data() const { return mol().getAtom(index()); }
+  const AtomData &data() const {
+    PRECONDITION(d_data != nullptr, "bad atom");
+    return *d_data;
+  }
+  const AtomData *datap() const { return d_data; }
 };
 
 class RDMolAtom : public RDMolAtomBase<false> {
- public:
-  RDMolAtom() : RDMolAtomBase() {}
-  RDMolAtom(RDMol *mol, uint32_t atomIndex) : RDMolAtomBase(mol, atomIndex) {}
-  RDMolAtom(const RDMolAtom &) = default;
-  RDMolAtom &operator=(const RDMolAtom &) = default;
+  AtomData *d_data = nullptr;
 
-  AtomData &data() { return mol().getAtom(index()); }
+ public:
+  RDMolAtom() = delete;
+  RDMolAtom(RDMol *mol, uint32_t atomIndex)
+      : RDMolAtomBase(mol, atomIndex), d_data(&mol->getAtom(atomIndex)) {}
+  RDMolAtom(const RDMolAtom &) = default;
+  RDMolAtom &operator=(const RDMolAtom &other) = default;
+
+  AtomData &data() {
+    PRECONDITION(d_data != nullptr, "bad atom");
+    return *d_data;
+  }
+  const AtomData &data() const {
+    PRECONDITION(d_data != nullptr, "bad atom");
+    return *d_data;
+  }
 };
 
 inline ConstRDMolAtom::ConstRDMolAtom(const RDMolAtom &other)
-    : RDMolAtomBase(&other.mol(), other.index()) {}
+    : RDMolAtomBase(&other.mol(), other.index()), d_data(&other.data()) {}
 
 template <bool ISCONST>
 class RDMolBondBase : public RDMolWrapperBase<ISCONST> {
@@ -2263,30 +2280,45 @@ class RDMolBondBase : public RDMolWrapperBase<ISCONST> {
 };
 
 class ConstRDMolBond : public RDMolBondBase<true> {
+  const BondData *const d_data = nullptr;
+
  public:
-  ConstRDMolBond() : RDMolBondBase() {}
+  ConstRDMolBond() = delete;
   ConstRDMolBond(const RDMol *mol, uint32_t bondIndex)
-      : RDMolBondBase(mol, bondIndex) {}
+      : RDMolBondBase(mol, bondIndex), d_data(&mol->getBond(bondIndex)) {}
   ConstRDMolBond(const ConstRDMolBond &) = default;
   ConstRDMolBond &operator=(const ConstRDMolBond &) = default;
   ConstRDMolBond(const RDMolBond &);
 
-  const BondData &data() const { return mol().getBond(index()); }
+  const BondData &data() const {
+    PRECONDITION(d_data != nullptr, "bad bond");
+    return *d_data;
+  }
+  const BondData *datap() const { return d_data; }
 };
 
 class RDMolBond : public RDMolBondBase<false> {
+  BondData *d_data = nullptr;
+
  public:
   RDMolBond() : RDMolBondBase() {}
-  RDMolBond(RDMol *mol, uint32_t bondIndex) : RDMolBondBase(mol, bondIndex) {}
+  RDMolBond(RDMol *mol, uint32_t bondIndex)
+      : RDMolBondBase(mol, bondIndex), d_data(&mol->getBond(bondIndex)) {}
   RDMolBond(const RDMolBond &) = default;
   RDMolBond &operator=(const RDMolBond &) = default;
 
-  BondData &data() { return mol().getBond(index()); }
+  BondData &data() {
+    PRECONDITION(d_data != nullptr, "bad bond");
+    return *d_data;
+  }
+  const BondData &data() const {
+    PRECONDITION(d_data != nullptr, "bad bond");
+    return *d_data;
+  }
 };
 
 inline ConstRDMolBond::ConstRDMolBond(const RDMolBond &other)
-    : RDMolBondBase(&other.mol(), other.index()) {}
-
+    : RDMolBondBase(&other.mol(), other.index()), d_data(&other.data()) {}
 namespace Ranges {
 //! This class is only intended to be used by IndexRange
 template <bool ISBOND, bool ISCONST>
