@@ -1862,6 +1862,11 @@ TEST_CASE("benchmarking construction from smiles") {
       "N#Cc1ccc2c(c1)CCN(CC[C@@H]1CC[C@@H](NC(=O)c3ccnc4ccccc34)CC1)C2",
       "COCCOC[C@H](CC1(C(=O)N[C@H]2CC[C@@H](C(=O)O)CC2)CCCC1)C(=O)O",
       "c1ccc(CN[C@H]2CC[C@H](Nc3ccc4[nH]ncc4c3)CC2)cc1",
+      "[CH]12=[CH]3[CH]4=[CH]5[CH-]16.[Fe]23456",
+      "[CH]12=[CH]3[CH]4=[CH]5[CH]6=[CH]17.[Fe]234567",
+      "[cH]12[cH]3[cH]4[cH]5[cH]6[cH]17.[Fe]234567",
+      "[cH]12[cH]3[cH]4[cH]5[nH]16.[Fe]23456",
+      "[CH]12=[CH]3[CH]4=[CH]5[NH]16.[Fe]23456",
   };
   std::uint64_t total = 0;
   for (auto i = 0u; i < 100; ++i) {
