@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2005-2025 Greg Landrum and other RDKit contributors
+//   Copyright (C) 2005-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +9,6 @@
 //
 
 #include <catch2/catch_all.hpp>
-
-#include <RDGeneral/test.h>
 #include <Geometry/UniformGrid3D.h>
 #include "ShapeEncoder.h"
 #include "ShapeUtils.h"
@@ -24,7 +22,7 @@
 
 using namespace RDKit;
 
-TEST_CASE("Encode") {
+TEST_CASE("Encode", "[shapehelpers]") {
   RDGeom::UniformGrid3D grd(30.0, 16.0, 10.0);
   std::string rdbase = getenv("RDBASE");
   std::string fname1 =
@@ -38,7 +36,7 @@ TEST_CASE("Encode") {
   CHECK(grd.getOccupancyVect()->getTotalVal() == 7405);
 }
 
-TEST_CASE("Compare") {
+TEST_CASE("Compare", "[shapehelpers]") {
   std::string rdbase = getenv("RDBASE");
   std::string fname1 =
       rdbase + "/Code/GraphMol/ShapeHelpers/test_data/1oir.mol";
@@ -51,9 +49,9 @@ TEST_CASE("Compare") {
   MolTransforms::canonicalizeMol(*mdup);
 
   double dist = MolShapes::tanimotoDistance(*m, *mdup);
-  CHECK(dist == 0.0);
+  CHECK_THAT(dist, Catch::Matchers::WithinAbs(0.0, 1e-8));
   dist = MolShapes::tverskyIndex(*m, *mdup, 1.0, 1.0);
-  CHECK(dist == 1.0);
+  CHECK_THAT(dist, Catch::Matchers::WithinAbs(1.0, 1e-8));
 
   m = v2::FileParsers::MolFromMolFile(fname1);
   REQUIRE(m);
@@ -83,16 +81,18 @@ TEST_CASE("Compare") {
   CHECK_THAT(dist, Catch::Matchers::WithinAbs(0.3561, 0.01));
 }
 
-TEST_CASE("GitHub #4364") {
+TEST_CASE("GitHub #4364", "[shapehelpers]") {
   std::string rdbase = getenv("RDBASE");
   std::string fname1 =
       rdbase + "/Code/GraphMol/ShapeHelpers/test_data/1oir.mol";
   auto m = v2::FileParsers::MolFromMolFile(fname1);
+  REQUIRE(m);
   MolTransforms::canonicalizeMol(*m);
 
   std::string fname2 =
       rdbase + "/Code/GraphMol/ShapeHelpers/test_data/1oir_conf.mol";
   auto m2 = v2::FileParsers::MolFromMolFile(fname2);
+  REQUIRE(m2);
   MolTransforms::canonicalizeMol(*m2);
   int cid1 = -1, cid2 = -1;
   auto dist = MolShapes::tanimotoDistance(*m, *m2, cid1, cid2);
