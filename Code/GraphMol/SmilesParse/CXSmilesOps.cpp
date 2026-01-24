@@ -2113,7 +2113,7 @@ std::string get_bond_config_block(
             if (!Atropisomers::getAtropisomerAtomsAndBonds(
                     bondNbr, atomAndBondVecs, mol)) {
               throw ValueErrorException("Internal error - should not occur");
-              // should not happened
+              // should not happen
             } else {
               unsigned int swaps = 0;
 
