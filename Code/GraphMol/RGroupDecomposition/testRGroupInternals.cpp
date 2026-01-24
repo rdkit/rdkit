@@ -1,4 +1,5 @@
-//  Copyright (C) 2020 Gareth Jones, Glysade LLC
+//  Copyright (C) 2020-2026 Gareth Jones, Glysade LLC and other RDKit
+//  contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,9 +29,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <catch2/catch_all.hpp>
+
 #include <string>
 #include <vector>
-#include <RDGeneral/test.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
@@ -44,16 +46,12 @@
 
 using namespace RDKit;
 
-void testCoresLabelledProperly() {
+TEST_CASE("testCoresLabelledProperly", "[RGroupInternals]") {
   // Tests for an error in RGroupDecompositionParameters::prepareCore where
   // the same unindexed label could be mistakenly given to multiple rgroups
   // in different cores
 
   // See https://github.com/rdkit/rdkit/pull/3565
-
-  BOOST_LOG(rdInfoLog)
-      << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test cores labelled properly" << std::endl;
 
   std::vector<std::string> coreSmi = {"N1([*:1])CCN([*:2])CC1",
                                       "C1(O[*:1])CCC(O[*:2])CC1",
@@ -78,7 +76,7 @@ void testCoresLabelledProperly() {
       if (atom->hasProp(RLABEL)) {
         int rlabel = atom->getProp<int>(RLABEL);
         if (rlabel < 0) {
-          TEST_ASSERT(rlabels.find(rlabel) == rlabels.end());
+          CHECK(rlabels.find(rlabel) == rlabels.end());
           rlabels.insert(rlabel);
         }
       }
@@ -104,13 +102,7 @@ std::pair<int, RData> makeRData(int attachment, const std::string &smiles) {
   return makeRData(attachment, attachments, smiles);
 }
 
-void testRingMatching3Score() {
-  BOOST_LOG(rdInfoLog)
-      << "********************************************************\n";
-  BOOST_LOG(rdInfoLog)
-      << "Test scoring function for RingMatching3- see GitHub ##3924"
-      << std::endl;
-
+TEST_CASE("testRingMatching3Score", "[RGroupInternals]") {
   R_DECOMP decomp1Mol1 = {makeRData(-4, "*[H]"), makeRData(-2, "*[H]"),
                           makeRData(-1, "*[H]"), makeRData(1, "*C([H])([H])C")};
   R_DECOMP decomp1Mol2 = {makeRData(-4, "*[H]"), makeRData(-3, "*[H]"),
@@ -151,19 +143,15 @@ void testRingMatching3Score() {
 
   // expect test1 to have better score than test2 since all halogens are on R1
 
-  TEST_ASSERT(test1 > test2);
+  CHECK(test1 > test2);
 
   auto testFp1 = fingerprintVarianceScore(permutation, allMatches1, labels);
   auto testFp2 = fingerprintVarianceScore(permutation, allMatches2, labels);
 
-  TEST_ASSERT(testFp1 > testFp2);
+  CHECK(testFp1 > testFp2);
 }
 
-void testGithub3746() {
-  BOOST_LOG(rdInfoLog)
-      << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test GA falls over to exhaustive on simple system"
-                       << std::endl;
+TEST_CASE("testGithub3746", "[RGroupInternals]") {
   const std::vector<ROMOL_SPTR> cores{"c1([*:1])c([*:2])c([*:3])ccc1"_smiles,
                                       "c1([*:1])c([*:2])c([*:3])cnc1"_smiles};
   const std::vector<const char *> smilesData{"c1(CO)cc(CN)ccc1",
@@ -179,31 +167,14 @@ void testGithub3746() {
   size_t i = 0;
   for (const auto &smi : smilesData) {
     ROMOL_SPTR mol(static_cast<ROMol *>(SmilesToMol(smi)));
-    TEST_ASSERT(decomposition.add(*mol) == static_cast<int>(i++));
+    CHECK(decomposition.add(*mol) == static_cast<int>(i++));
   }
 
   auto data = decomposition.data;
   RGroupGa ga(*data);
   auto numberPermutations = ga.numberPermutations();
 
-  TEST_ASSERT(numberPermutations == 4);
+  CHECK(numberPermutations == 4);
   // criteria for exhaustive search instead of GA
-  TEST_ASSERT(numberPermutations < ga.getPopsize() * 100);
-}
-
-int main() {
-  RDLog::InitLogs();
-  boost::logging::disable_logs("rdApp.debug");
-
-  BOOST_LOG(rdInfoLog)
-      << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition Internals\n";
-
-  testRingMatching3Score();
-  testGithub3746();
-  testCoresLabelledProperly();
-
-  BOOST_LOG(rdInfoLog)
-      << "********************************************************\n";
-  return 0;
+  CHECK(numberPermutations < ga.getPopsize() * 100);
 }

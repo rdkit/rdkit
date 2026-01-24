@@ -180,6 +180,10 @@ class Configuration {
 
   virtual void setPrimaryLabel(Descriptor desc) = 0;
 
+  virtual bool hasPrimaryLabel() const = 0;
+
+  virtual void resetPrimaryLabel() const = 0;
+
  protected:
   Edge *findInternalEdge(const std::vector<Edge *> &edges, Atom *f1, Atom *f2);
 

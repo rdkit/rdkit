@@ -16,10 +16,10 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(Wrap)
 endif()
 
-rdkit_test(testRGroupDecomp testRGroupDecomp.cpp
+rdkit_catch_test(testRGroupDecomp testRGroupDecomp.cpp
   LINK_LIBRARIES RGroupDecomposition)
 
-rdkit_test(testRGroupDecompInternals testRGroupInternals.cpp
+rdkit_catch_test(testRGroupDecompInternals testRGroupInternals.cpp
   LINK_LIBRARIES RGroupDecomposition)
 
 rdkit_catch_test(rgroupCatchTests catch_rgd.cpp 

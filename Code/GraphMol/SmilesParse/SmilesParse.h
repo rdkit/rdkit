@@ -267,8 +267,8 @@ inline Bond *SmartsToBond(const std::string &sma) {
 }
 }  // namespace v1
 
-inline std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text,
-                                                        size_t len) {
+inline std::unique_ptr<RDKit::RWMol> operator""_smiles(const char *text,
+                                                       size_t len) {
   std::string smi(text, len);
   try {
     return v2::SmilesParse::MolFromSmiles(smi);
@@ -276,8 +276,8 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text,
     return nullptr;
   }
 }
-inline std::unique_ptr<RDKit::RWMol> operator"" _smarts(const char *text,
-                                                        size_t len) {
+inline std::unique_ptr<RDKit::RWMol> operator""_smarts(const char *text,
+                                                       size_t len) {
   std::string smi(text, len);
   return v2::SmilesParse::MolFromSmarts(smi);
 }
