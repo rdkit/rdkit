@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2025 NVIDIA Corporation & Affiliates and other RDKit contributors
+//  Copyright (C) 2025 NVIDIA Corporation & Affiliates and other RDKit
+//  contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -43,9 +44,7 @@ struct MyCustomClass {
   int value;
   MyCustomClass() : value(0) {}
   MyCustomClass(int initValue) : value(initValue) {}
-  MyCustomClass(const MyCustomClass &that) : value(that.value) {
-      ++copyCount;
-  }
+  MyCustomClass(const MyCustomClass &that) : value(that.value) { ++copyCount; }
   MyCustomClass &operator=(const MyCustomClass &that) noexcept {
     value = that.value;
     ++copyCount;
@@ -66,8 +65,8 @@ TEST_CASE("ROMol self initialization") {
 
 TEST_CASE("ROMol move constructor") {
   ROMol mol;
-  RDMol* rdmol = &mol.asRDMol();
-  auto* conf = new Conformer();
+  RDMol *rdmol = &mol.asRDMol();
+  auto *conf = new Conformer();
   mol.addConformer(conf, true);
   CHECK(&conf->getOwningMol() == &mol);
   mol.setProp("test", 1);
@@ -84,8 +83,8 @@ TEST_CASE("ROMol move constructor") {
 
 TEST_CASE("ROMol move assignment operator") {
   ROMol mol;
-  RDMol* rdmol = &mol.asRDMol();
-  auto* conf = new Conformer();
+  RDMol *rdmol = &mol.asRDMol();
+  auto *conf = new Conformer();
   mol.addConformer(conf, true);
   CHECK(&conf->getOwningMol() == &mol);
   mol.setProp("test", 1);
@@ -102,11 +101,11 @@ TEST_CASE("ROMol move assignment operator") {
 
 TEST_CASE("ROMol move constructor - previous owner") {
   auto molPtr = basicMol();
-  RDMol& mol = *molPtr;
-  molPtr.release(); // Will be moved from.
-  ROMol& romol = mol.asROMol();
+  RDMol &mol = *molPtr;
+  molPtr.release();  // Will be moved from.
+  ROMol &romol = mol.asROMol();
   romol.setProp("test", 1);
-  Atom* atom = romol.getAtomWithIdx(0);
+  Atom *atom = romol.getAtomWithIdx(0);
   CHECK(&atom->getOwningMol() == &romol);
   ROMol mol2(std::move(romol));
   CHECK(&mol2.asRDMol() == &mol);
@@ -124,7 +123,6 @@ TEST_CASE("ROMol move constructor - previous owner") {
   CHECK(&mol2.asRDMol().asROMol() == &mol2);
 }
 
-
 TEST_CASE("ROMol copy constructor") {
   auto mol = std::make_unique<ROMol>();
 
@@ -138,9 +136,9 @@ TEST_CASE("ROMol copy constructor") {
   CHECK(res == 3);
 }
 
-template<typename MolT>
+template <typename MolT>
 void createConformer(MolT &mol) {
-  auto * conf = new Conformer(mol.getNumAtoms());
+  auto *conf = new Conformer(mol.getNumAtoms());
   conf->set3D(false);
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     conf->setAtomPos(i, RDGeom::Point3D(i, i, i));
@@ -148,7 +146,7 @@ void createConformer(MolT &mol) {
   mol.addConformer(conf, true);
 }
 
-void checkConformer(const ROMol& mol) {
+void checkConformer(const ROMol &mol) {
   const Conformer &conf = mol.getConformer();
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     const RDGeom::Point3D &pos = conf.getAtomPos(i);
@@ -173,14 +171,13 @@ TEST_CASE("ROMol copy constructor with owning RDMol") {
   // Stereo groups
   std::vector<StereoGroup> groups;
   std::vector<Atom *> atoms = {mol.getAtomWithIdx(1)};
-  groups.push_back(StereoGroup(StereoGroupType::STEREO_OR, std::move(atoms),
-                               {}));
+  groups.push_back(
+      StereoGroup(StereoGroupType::STEREO_OR, std::move(atoms), {}));
   mol.setStereoGroups(groups);
 
   // Substance groups
   std::vector<SubstanceGroup> &sgs = getSubstanceGroups(mol);
   sgs.emplace_back(&mol, "TEST");
-
 
   ROMol mol2(mol);
 
@@ -214,10 +211,12 @@ TEST_CASE("ROMol copy constructor with owning RDMol") {
   const std::vector<StereoGroup> &resultStereoGroups = mol2.getStereoGroups();
   CHECK(resultStereoGroups.size() == 1);
   CHECK(resultStereoGroups[0].getGroupType() == StereoGroupType::STEREO_OR);
-  CHECK(resultStereoGroups[0].getAtoms() == std::vector<Atom*>{mol2.getAtomWithIdx(1)});
+  CHECK(resultStereoGroups[0].getAtoms() ==
+        std::vector<Atom *>{mol2.getAtomWithIdx(1)});
 
   // Get substance groups
-  const std::vector<SubstanceGroup> & resultSubstanceGroups = getSubstanceGroups(mol2);
+  const std::vector<SubstanceGroup> &resultSubstanceGroups =
+      getSubstanceGroups(mol2);
   CHECK(resultSubstanceGroups.size() == 1);
   CHECK(resultSubstanceGroups[0].getProp<std::string>("TYPE") == "TEST");
 }
@@ -434,7 +433,7 @@ TEST_CASE("ROMol Compat Mol properties") {
   std::string unsignedIntToken("unsigned int");
   std::string floatToken("float");
   RDMol rdmol;
-  auto& mol = rdmol.asROMol();
+  auto &mol = rdmol.asROMol();
 
   SECTION("Self basic properties") {
     mol.setProp(signedIntToken, 3);
@@ -488,7 +487,7 @@ TEST_CASE("ROMol Compat Mol properties") {
   }
 
   SECTION("nonPOD Data") {
-    mol.setProp(signedIntToken, boost::shared_array<int>(new int[3]{1,2,3}));
+    mol.setProp(signedIntToken, boost::shared_array<int>(new int[3]{1, 2, 3}));
 
     boost::shared_array<int> res;
     REQUIRE(mol.getPropIfPresent(signedIntToken, res));
@@ -538,7 +537,6 @@ TEST_CASE("ROMol Compat Mol properties") {
     CHECK(vectorRes == vectorValue);
     CHECK_FALSE(mol.getPropIfPresent(vector2Token, vectorRes));
 
-
     RDMol rdmol2;
     rdmol2.addAtom();
     rdmol2.addAtom();
@@ -561,7 +559,8 @@ TEST_CASE("ROMol Compat Mol properties") {
     CHECK_FALSE(
         rdmol2.asROMol().getPropIfPresent(bondPropName.getString(), intres));
 
-    // Update from other with preserve should add and replace props, but not remove
+    // Update from other with preserve should add and replace props, but not
+    // remove
     mol.updateProps(props, /*preserve=*/true);
 
     REQUIRE(mol.getPropIfPresent(floatToken, res));
@@ -603,9 +602,17 @@ TEST_CASE("ROMol Compat Mol properties") {
                Catch::Matchers::UnorderedEquals(std::vector<std::string>(
                    {floatToken, signedIntToken, privateToken,
                     std::string(detail::computedPropName)})));
-    CHECK_THAT(mol.getPropList(true, false), Catch::Matchers::UnorderedEquals(std::vector<std::string>({floatToken, privateToken})));
-    CHECK_THAT(mol.getPropList(false, true), Catch::Matchers::UnorderedEquals(std::vector<std::string>({floatToken, signedIntToken,})));
-    CHECK_THAT(mol.getPropList(false, false), Catch::Matchers::UnorderedEquals(std::vector<std::string>({floatToken})));
+    CHECK_THAT(mol.getPropList(true, false),
+               Catch::Matchers::UnorderedEquals(
+                   std::vector<std::string>({floatToken, privateToken})));
+    CHECK_THAT(mol.getPropList(false, true),
+               Catch::Matchers::UnorderedEquals(std::vector<std::string>({
+                   floatToken,
+                   signedIntToken,
+               })));
+    CHECK_THAT(mol.getPropList(false, false),
+               Catch::Matchers::UnorderedEquals(
+                   std::vector<std::string>({floatToken})));
   }
 
   SECTION("Custom Data Copying") {
@@ -627,16 +634,17 @@ TEST_CASE("ROMol Compat Mol properties") {
   }
 }
 
-
-template<typename T>
-void addPropToAllAtoms(ROMol& mol, const std::string& token, const T& val, bool computed = false) {
+template <typename T>
+void addPropToAllAtoms(ROMol &mol, const std::string &token, const T &val,
+                       bool computed = false) {
   for (auto atom : mol.atoms()) {
     atom->setProp<T>(token, val, computed);
   }
 }
 
-template<typename T>
-void addPropToAllBonds(ROMol& mol, const std::string& token, const T& val, bool computed = false) {
+template <typename T>
+void addPropToAllBonds(ROMol &mol, const std::string &token, const T &val,
+                       bool computed = false) {
   for (auto bond : mol.bonds()) {
     bond->setProp<T>(token, val, computed);
   }
@@ -650,7 +658,7 @@ TEST_CASE("ROMol compat Atom/bond properties") {
 
   RDMol rdmol;
   RDKit::SmilesParseTemp temp;
-  static const char* basicSmiles = "CCCC";
+  static const char *basicSmiles = "CCCC";
 
   SmilesParserParams params;
   params.sanitize = false;
@@ -659,18 +667,18 @@ TEST_CASE("ROMol compat Atom/bond properties") {
   REQUIRE(RDKit::SmilesToMol(basicSmiles, params, rdmol, temp) == true);
   REQUIRE(rdmol.getNumAtoms() == 4);
   REQUIRE(rdmol.getNumBonds() == 3);
-  auto& mol = rdmol.asROMol();
+  auto &mol = rdmol.asROMol();
 
-  Atom* atom0 = mol.getAtomWithIdx(0);
-  Atom* atom1 = mol.getAtomWithIdx(1);
-  Atom* atom2 = mol.getAtomWithIdx(2);
+  Atom *atom0 = mol.getAtomWithIdx(0);
+  Atom *atom1 = mol.getAtomWithIdx(1);
+  Atom *atom2 = mol.getAtomWithIdx(2);
 
   REQUIRE(atom0 != nullptr);
   REQUIRE(atom1 != nullptr);
   REQUIRE(atom2 != nullptr);
 
-  Bond* bond0 = mol.getBondWithIdx(0);
-  Bond* bond1 = mol.getBondWithIdx(1);
+  Bond *bond0 = mol.getBondWithIdx(0);
+  Bond *bond1 = mol.getBondWithIdx(1);
 
   REQUIRE(bond0 != nullptr);
   REQUIRE(bond1 != nullptr);
@@ -691,7 +699,7 @@ TEST_CASE("ROMol compat Atom/bond properties") {
   }
 
   SECTION("Atom non-POD") {
-    addPropToAllAtoms(mol, signedIntToken, std::vector<int>({1,2,3}));
+    addPropToAllAtoms(mol, signedIntToken, std::vector<int>({1, 2, 3}));
     std::vector<int> res;
     REQUIRE(atom1->getPropIfPresent(signedIntToken, res));
     CHECK(res[1] == 2);
@@ -709,20 +717,20 @@ TEST_CASE("ROMol compat Atom/bond properties") {
     REQUIRE(bond1->getPropIfPresent<int>(signedIntToken, res));
     CHECK(res == 4);
 
-    Bond* bond2 = mol.getBondWithIdx(2);
+    Bond *bond2 = mol.getBondWithIdx(2);
     REQUIRE(bond2 != nullptr);
     REQUIRE(bond2->getPropIfPresent<int>(signedIntToken, res));
     CHECK(res == 3);
   }
 
   SECTION("Bond non-POD") {
-    addPropToAllBonds(mol, signedIntToken, boost::shared_array<int>(new int[3]{1,2,3}));
-    Bond* bond = mol.getBondWithIdx(0);
+    addPropToAllBonds(mol, signedIntToken,
+                      boost::shared_array<int>(new int[3]{1, 2, 3}));
+    Bond *bond = mol.getBondWithIdx(0);
     boost::shared_array<int> res;
     REQUIRE(bond->getPropIfPresent(signedIntToken, res));
     CHECK(res[1] == 2);
   }
-
 
   SECTION("Clear atom properties") {
     addPropToAllAtoms(mol, floatToken, 3.0f);
@@ -838,9 +846,11 @@ TEST_CASE("ROMol compat Atom/bond properties") {
     size_t copyCount1 = MyCustomClass::copyCount;
     MyCustomClass copy = atom0->getProp<MyCustomClass>(testPropName);
     size_t copyCount2 = MyCustomClass::copyCount;
-    const MyCustomClass &a0 = atom0->getProp<const MyCustomClass &>(testPropName);
+    const MyCustomClass &a0 =
+        atom0->getProp<const MyCustomClass &>(testPropName);
     size_t copyCount3 = MyCustomClass::copyCount;
-    const MyCustomClass &b0 = atom0->getProp<const MyCustomClass &>(testPropName);
+    const MyCustomClass &b0 =
+        atom0->getProp<const MyCustomClass &>(testPropName);
     size_t copyCount4 = MyCustomClass::copyCount;
 
     CHECK(copy.value == 11);
@@ -852,9 +862,11 @@ TEST_CASE("ROMol compat Atom/bond properties") {
 
     copy = atom1->getProp<MyCustomClass>(testPropName);
     size_t copyCount5 = MyCustomClass::copyCount;
-    const MyCustomClass &a1 = atom1->getProp<const MyCustomClass &>(testPropName);
+    const MyCustomClass &a1 =
+        atom1->getProp<const MyCustomClass &>(testPropName);
     size_t copyCount6 = MyCustomClass::copyCount;
-    const MyCustomClass &b1 = atom1->getProp<const MyCustomClass &>(testPropName);
+    const MyCustomClass &b1 =
+        atom1->getProp<const MyCustomClass &>(testPropName);
     size_t copyCount7 = MyCustomClass::copyCount;
 
     CHECK(copy.value == 17);
@@ -873,9 +885,11 @@ TEST_CASE("ROMol compat Atom/bond properties") {
     MyCustomClass copy = bond0->getProp<MyCustomClass>(testPropName);
 
     size_t copyCount2 = MyCustomClass::copyCount;
-    const MyCustomClass &a0 = bond0->getProp<const MyCustomClass &>(testPropName);
+    const MyCustomClass &a0 =
+        bond0->getProp<const MyCustomClass &>(testPropName);
     size_t copyCount3 = MyCustomClass::copyCount;
-    const MyCustomClass &b0 = bond0->getProp<const MyCustomClass &>(testPropName);
+    const MyCustomClass &b0 =
+        bond0->getProp<const MyCustomClass &>(testPropName);
     size_t copyCount4 = MyCustomClass::copyCount;
 
     CHECK(copy.value == 12);
@@ -887,9 +901,11 @@ TEST_CASE("ROMol compat Atom/bond properties") {
 
     copy = bond1->getProp<MyCustomClass>(testPropName);
     size_t copyCount5 = MyCustomClass::copyCount;
-    const MyCustomClass &a1 = bond1->getProp<const MyCustomClass &>(testPropName);
+    const MyCustomClass &a1 =
+        bond1->getProp<const MyCustomClass &>(testPropName);
     size_t copyCount6 = MyCustomClass::copyCount;
-    const MyCustomClass &b1 = bond1->getProp<const MyCustomClass &>(testPropName);
+    const MyCustomClass &b1 =
+        bond1->getProp<const MyCustomClass &>(testPropName);
     size_t copyCount7 = MyCustomClass::copyCount;
 
     CHECK(copy.value == 18);
@@ -1078,8 +1094,10 @@ TEST_CASE("Atom Monomomer info") {
   ROMol &romol = mol->asROMol();
   Atom *atom = romol.getAtomWithIdx(0);
   Atom *atom2 = romol.getAtomWithIdx(1);
-  const Atom* atom3 = romol.getAtomWithIdx(2);  // Used to check const overload of null entry
-  Atom* atom4 = romol.getAtomWithIdx(3); // Used to check non-const overload of null entry
+  const Atom *atom3 =
+      romol.getAtomWithIdx(2);  // Used to check const overload of null entry
+  Atom *atom4 = romol.getAtomWithIdx(
+      3);  // Used to check non-const overload of null entry
 
   SECTION("Has None") {
     CHECK(atom->getMonomerInfo() == nullptr);
@@ -1137,7 +1155,7 @@ TEST_CASE("Atom constructors/ownership") {
 
   SECTION("Copy, no previous owner") {
     Atom atom(6);
-    atom.setProp("test", 3, /*computed=*/ true);
+    atom.setProp("test", 3, /*computed=*/true);
     atom.setProp("complexTest", std::vector<int>({1, 2, 3}));
     atom.setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER));
 
@@ -1165,11 +1183,11 @@ TEST_CASE("Atom constructors/ownership") {
 
   SECTION("Copy, previous owner") {
     auto molPtr = basicMol();
-    RDMol& mol = *molPtr;
+    RDMol &mol = *molPtr;
     auto &romol = mol.asROMol();
 
     Atom *atom = romol.getAtomWithIdx(0);
-    atom->setProp("test", 3, /*computed=*/ true);
+    atom->setProp("test", 3, /*computed=*/true);
     atom->setProp("complexTest", std::vector<int>({1, 2, 3}));
     atom->setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER));
 
@@ -1197,7 +1215,7 @@ TEST_CASE("Atom constructors/ownership") {
 
   SECTION("move, no previous owner") {
     Atom atom(6);
-    atom.setProp("test", 3, /*computed=*/ true);
+    atom.setProp("test", 3, /*computed=*/true);
     atom.setProp("complexTest", std::vector<int>({1, 2, 3}));
     atom.setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER));
     Atom atom2 = std::move(atom);
@@ -1220,11 +1238,11 @@ TEST_CASE("Atom constructors/ownership") {
 
   SECTION("Move, previous owner") {
     auto molPtr = basicMol();
-    RDMol& mol = *molPtr;
+    RDMol &mol = *molPtr;
     auto &romol = mol.asROMol();
 
     Atom *atom = romol.getAtomWithIdx(0);
-    atom->setProp("test", 3, /*computed=*/ true);
+    atom->setProp("test", 3, /*computed=*/true);
     atom->setProp("complexTest", std::vector<int>({1, 2, 3}));
     atom->setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER));
 
@@ -1263,7 +1281,7 @@ TEST_CASE("Bond constructors/ownership") {
 
   SECTION("Constructors, no previous owner") {
     Bond bond(Bond::BondType::SINGLE);
-    bond.setProp("test", 3, /*computed=*/ true);
+    bond.setProp("test", 3, /*computed=*/true);
     bond.setProp("complexTest", std::vector<int>({1, 2, 3}));
     Bond bond2(bond);
     CHECK(!bond2.hasOwningMol());
@@ -1283,11 +1301,11 @@ TEST_CASE("Bond constructors/ownership") {
 
   SECTION("Copy assignment operator, previous owner") {
     auto molPtr = basicMol();
-    RDMol& mol = *molPtr;
+    RDMol &mol = *molPtr;
     auto &romol = mol.asROMol();
 
     Bond *bond = romol.getBondWithIdx(0);
-    bond->setProp("test", 3, /*computed=*/ true);
+    bond->setProp("test", 3, /*computed=*/true);
     bond->setProp("complexTest", std::vector<int>({1, 2, 3}));
     REQUIRE(bond != nullptr);
     REQUIRE(bond->getBondType() == Bond::BondType::SINGLE);
@@ -1307,7 +1325,7 @@ TEST_CASE("Bond constructors/ownership") {
 
   SECTION("Move assign operator, no previous owner") {
     Bond bond(Bond::BondType::SINGLE);
-    bond.setProp("test", 3, /*computed=*/ true);
+    bond.setProp("test", 3, /*computed=*/true);
     bond.setProp("complexTest", std::vector<int>({1, 2, 3}));
     Bond bond2 = std::move(bond);
     CHECK(!bond2.hasOwningMol());
@@ -1323,11 +1341,11 @@ TEST_CASE("Bond constructors/ownership") {
 
   SECTION("Move constructor, previous owner") {
     auto molPtr = basicMol();
-    RDMol& mol = *molPtr;
+    RDMol &mol = *molPtr;
     auto &romol = mol.asROMol();
 
     Bond *bond = romol.getBondWithIdx(0);
-    bond->setProp("test", 3, /*computed=*/ true);
+    bond->setProp("test", 3, /*computed=*/true);
     bond->setProp("complexTest", std::vector<int>({1, 2, 3}));
     REQUIRE(bond != nullptr);
     REQUIRE(bond->getBondType() == Bond::BondType::SINGLE);
@@ -1411,7 +1429,7 @@ TEST_CASE("Atom valence conversions from RDMol") {
   Atom *atom0 = mol.getAtomWithIdx(0);
   Atom *atom1 = mol.getAtomWithIdx(1);
   Atom *atom2 = mol.getAtomWithIdx(2);
-  Atom* atom3 = mol.getAtomWithIdx(3);
+  Atom *atom3 = mol.getAtomWithIdx(3);
 
   SECTION("Neither implicit nor explicit set") {
     CHECK_THROWS_AS(atom0->getValence(Atom::ValenceType::EXPLICIT),
@@ -1452,8 +1470,8 @@ TEST_CASE("Atom valence conversions from RDMol") {
 
   SECTION("Atom with no bonds but explicit hydrogens") {
     auto singleAtomMol = parseSmiles("C", false, false);
-    auto& romol = singleAtomMol->asROMol();
-    auto* atom = romol.getAtomWithIdx(0);
+    auto &romol = singleAtomMol->asROMol();
+    auto *atom = romol.getAtomWithIdx(0);
     atom->setNumExplicitHs(3);
     atom->calcExplicitValence(false);
     CHECK(atom->getValence(Atom::ValenceType::EXPLICIT) == 3);
@@ -1469,10 +1487,10 @@ TEST_CASE("Bond getOtherAtom and getOtherAtomIdx") {
   REQUIRE(bond1->getEndAtomIdx() == 2);
 
   SECTION("getOtherAtom") {
-    Atom* atom1 = bond1->getBeginAtom();
-    Atom* atom2 = bond1->getEndAtom();
-    Atom* other1 = bond1->getOtherAtom(atom1);
-    Atom* other2 = bond1->getOtherAtom(atom2);
+    Atom *atom1 = bond1->getBeginAtom();
+    Atom *atom2 = bond1->getEndAtom();
+    Atom *other1 = bond1->getOtherAtom(atom1);
+    Atom *other2 = bond1->getOtherAtom(atom2);
     CHECK(other1 == atom2);
     CHECK(other2 == atom1);
   }
@@ -1481,8 +1499,7 @@ TEST_CASE("Bond getOtherAtom and getOtherAtomIdx") {
     CHECK_THROWS_AS(bond1->getOtherAtom(nullptr), Invar::Invariant);
 
     // getOtherAtom needs an owning molecule
-    std::unique_ptr<Bond> isolatedBond(
-        new Bond(RDKit::Bond::BondType::SINGLE));
+    std::unique_ptr<Bond> isolatedBond(new Bond(RDKit::Bond::BondType::SINGLE));
     isolatedBond->setBeginAtomIdx(bond1->getBeginAtomIdx());
     isolatedBond->setEndAtomIdx(bond1->getEndAtomIdx());
     CHECK_THROWS_AS(isolatedBond->getOtherAtom(bond1->getBeginAtom()),
@@ -1653,14 +1670,12 @@ TEST_CASE("Stereo Groups") {
     std::vector<StereoGroup> groups;
     std::vector<Atom *> atoms = {atom0, atom2, atom1};
     std::vector<Bond *> bonds = {bond4, bond3};
-    groups.push_back(StereoGroup(StereoGroupType::STEREO_OR, atoms,
-                                 bonds));
+    groups.push_back(StereoGroup(StereoGroupType::STEREO_OR, atoms, bonds));
 
     std::vector<Atom *> atoms2 = {atom5, atom4};
     std::vector<Bond *> bonds2 = {bond2};
 
-    groups.push_back(StereoGroup(StereoGroupType::STEREO_AND, atoms2,
-                                 bonds2));
+    groups.push_back(StereoGroup(StereoGroupType::STEREO_AND, atoms2, bonds2));
 
     mol.setStereoGroups(std::move(groups));
 
@@ -1772,31 +1787,31 @@ TEST_CASE("Stereo Groups") {
     const size_t numThreads = 8;
     std::vector<std::thread> threads;
     std::atomic_int atomicInt(0);
-    std::atomic<const std::vector<StereoGroup>*> atomicPtr(nullptr);
+    std::atomic<const std::vector<StereoGroup> *> atomicPtr(nullptr);
     std::atomic_int successCount(0);
 
     for (size_t i = 0; i < numThreads; ++i) {
       threads.emplace_back([&atomicInt, &atomicPtr, numThreads = numThreads,
                             &mol, &successCount]() {
-            atomicInt.fetch_add(1);
-            // Just spin as a barrier, to increase the chances of all threads
-            // being in sync
-            while (uint32_t(atomicInt.load()) != numThreads) {
-            }
-            // Have all threads call getStereoGroups at the same time
-            const std::vector<StereoGroup> &res = mol.getStereoGroups();
-            const std::vector<StereoGroup> *value = nullptr;
-            if (!atomicPtr.compare_exchange_strong(value, &res)) {
-              // All threads should have received the same address without
-              // crashing
-              CHECK(&res == value);
-              if (&res == value) {
-                ++successCount;
-              }
-            } else {
-              ++successCount;
-            }
-          });
+        atomicInt.fetch_add(1);
+        // Just spin as a barrier, to increase the chances of all threads
+        // being in sync
+        while (uint32_t(atomicInt.load()) != numThreads) {
+        }
+        // Have all threads call getStereoGroups at the same time
+        const std::vector<StereoGroup> &res = mol.getStereoGroups();
+        const std::vector<StereoGroup> *value = nullptr;
+        if (!atomicPtr.compare_exchange_strong(value, &res)) {
+          // All threads should have received the same address without
+          // crashing
+          CHECK(&res == value);
+          if (&res == value) {
+            ++successCount;
+          }
+        } else {
+          ++successCount;
+        }
+      });
     }
     for (auto &thread : threads) {
       thread.join();
@@ -1809,9 +1824,7 @@ TEST_CASE("Substance groups") {
   auto mol = basicMol();
   auto &romol = mol->asROMol();
 
-  SECTION("No substance groups") {
-    CHECK(getSubstanceGroups(romol).empty());
-  }
+  SECTION("No substance groups") { CHECK(getSubstanceGroups(romol).empty()); }
 
   SECTION("Set from RDMol") {
     std::vector<SubstanceGroup> &sgs = mol->getSubstanceGroups();
@@ -1849,9 +1862,7 @@ TEST_CASE("Conformers ROMol") {
     conf->setAtomPos(i, RDGeom::Point3D(i, i, i));
   }
 
-  SECTION("No conformers") {
-    CHECK(romol.getNumConformers() == 0);
-  }
+  SECTION("No conformers") { CHECK(romol.getNumConformers() == 0); }
 
   SECTION("Add conformer to empty mol") {
     ROMol emptyMol;
@@ -1874,7 +1885,7 @@ TEST_CASE("Conformers ROMol") {
   SECTION("Add conformer") {
     romol.addConformer(conf.release());
     CHECK(romol.getNumConformers() == 1);
-    const auto& resultConf = romol.getConformer();
+    const auto &resultConf = romol.getConformer();
     CHECK(resultConf.getNumAtoms() == 4);
     CHECK(&resultConf.getOwningMol() == &romol);
     CHECK(resultConf.getId() == 0);
@@ -1889,15 +1900,15 @@ TEST_CASE("Conformers ROMol") {
     conf->setId(3);
     romol.addConformer(conf.release());
     CHECK(romol.getNumConformers() == 1);
-    const auto& resultConf = romol.getConformer();
+    const auto &resultConf = romol.getConformer();
     CHECK(resultConf.getId() == 3);
   }
 
   SECTION("Add conformer with assignId") {
     conf->setId(3);
-    romol.addConformer(conf.release(), /*assignID=*/ true);
+    romol.addConformer(conf.release(), /*assignID=*/true);
     CHECK(romol.getNumConformers() == 1);
-    const auto& resultConf = romol.getConformer();
+    const auto &resultConf = romol.getConformer();
     CHECK(resultConf.getId() == 0);
   }
 
@@ -1905,23 +1916,25 @@ TEST_CASE("Conformers ROMol") {
     conf->set3D(false);
     romol.addConformer(conf.release());
     CHECK(romol.getNumConformers() == 1);
-    const auto& resultConf = romol.getConformer();
+    const auto &resultConf = romol.getConformer();
     CHECK(resultConf.is3D() == false);
   }
 
   SECTION("Remove conformer") {
     auto secondConf = std::make_unique<Conformer>(romol.getNumAtoms());
     for (size_t i = 0; i < romol.getNumAtoms(); ++i) {
-      secondConf->setAtomPos(i, RDGeom::Point3D(i + romol.getNumAtoms(), i + romol.getNumAtoms(), i + romol.getNumAtoms()));
+      secondConf->setAtomPos(
+          i, RDGeom::Point3D(i + romol.getNumAtoms(), i + romol.getNumAtoms(),
+                             i + romol.getNumAtoms()));
     }
     secondConf->set3D(false);
     romol.addConformer(conf.release());
-    romol.addConformer(secondConf.release(), /*assignId=*/ true);
+    romol.addConformer(secondConf.release(), /*assignId=*/true);
     CHECK(romol.getNumConformers() == 2);
     romol.removeConformer(0);
     CHECK(romol.getNumConformers() == 1);
 
-    auto& resultConf = romol.getConformer();
+    auto &resultConf = romol.getConformer();
     CHECK(resultConf.getNumAtoms() == 4);
     CHECK(resultConf.getId() == 1);
     CHECK(resultConf.is3D() == false);
@@ -1962,14 +1975,14 @@ TEST_CASE("Conformers RDMol/ROMol interop") {
 
     auto &romol = mol.asROMol();
     CHECK(romol.getNumConformers() == 2);
-    const auto& conf = romol.getConformer(confId);
+    const auto &conf = romol.getConformer(confId);
     CHECK(conf.getNumAtoms() == 2);
     CHECK(conf.getAtomPos(0).x == 0);
     CHECK(conf.getAtomPos(1).x == 3);
     CHECK(conf.getId() == confId);
     CHECK(conf.is3D() == true);
 
-    const auto& conf2 = romol.getConformer(confId2);
+    const auto &conf2 = romol.getConformer(confId2);
     CHECK(conf2.getNumAtoms() == 2);
     CHECK(conf2.getAtomPos(0).x == 6);
     CHECK(conf2.getAtomPos(1).x == 9);
@@ -2000,14 +2013,14 @@ TEST_CASE("Conformers RDMol/ROMol interop") {
     auto confId2 = mol.addConformer(pos2.data(), -1, false);
 
     CHECK(romol.getNumConformers() == 2);
-    const auto& conf = romol.getConformer(confId);
+    const auto &conf = romol.getConformer(confId);
     CHECK(conf.getNumAtoms() == 2);
     CHECK(conf.getAtomPos(0).x == 0);
     CHECK(conf.getAtomPos(1).x == 3);
     CHECK(conf.getId() == confId);
     CHECK(conf.is3D() == true);
 
-    const auto& conf2 = romol.getConformer(confId2);
+    const auto &conf2 = romol.getConformer(confId2);
     CHECK(conf2.getNumAtoms() == 2);
     CHECK(conf2.getAtomPos(0).x == 6);
     CHECK(conf2.getAtomPos(1).x == 9);
@@ -2023,7 +2036,7 @@ TEST_CASE("Conformers RDMol/ROMol interop") {
     RDMol mol;
     mol.addAtom();
     mol.addAtom();
-    ROMol& romol = mol.asROMol();
+    ROMol &romol = mol.asROMol();
 
     auto conf1 = std::make_unique<Conformer>(2);
     conf1->setAtomPos(0, RDGeom::Point3D(0, 1, 2));
@@ -2039,8 +2052,8 @@ TEST_CASE("Conformers RDMol/ROMol interop") {
     romol.addConformer(conf2.release(), true);
 
     CHECK(mol.getNumConformers() == 2);
-    const double* conf1Pos = mol.getConformerPositions(3);
-    const double* conf2Pos = mol.getConformerPositions(4);
+    const double *conf1Pos = mol.getConformerPositions(3);
+    const double *conf2Pos = mol.getConformerPositions(4);
     REQUIRE(conf1Pos != nullptr);
     REQUIRE(conf2Pos != nullptr);
 
@@ -2054,7 +2067,7 @@ TEST_CASE("Conformers RDMol/ROMol interop") {
 
     romol.removeConformer(3);
     CHECK(mol.getNumConformers() == 1);
-    double* pos = mol.getConformerPositions(4);
+    double *pos = mol.getConformerPositions(4);
     REQUIRE(pos != nullptr);
     CHECK(pos[0] == 6);
     CHECK(pos[3] == 9);
@@ -2065,17 +2078,17 @@ TEST_CASE("Conformers RDMol/ROMol interop") {
     RDMol mol;
     mol.addAtom();
     mol.addAtom();
-    ROMol& romol = mol.asROMol();
+    ROMol &romol = mol.asROMol();
     auto conf = std::make_unique<Conformer>(2);
     conf->setAtomPos(0, RDGeom::Point3D(0, 1, 2));
     romol.addConformer(conf.release());
 
-    double* pos = mol.getConformerPositions(0);
+    double *pos = mol.getConformerPositions(0);
     pos[0]++;
     pos[1]++;
     pos[2]++;
 
-    Conformer& confHandle = romol.getConformer();
+    Conformer &confHandle = romol.getConformer();
     CHECK(confHandle.getAtomPos(0).x == 1);
     CHECK(confHandle.getAtomPos(0).y == 2);
     CHECK(confHandle.getAtomPos(0).z == 3);
@@ -2084,7 +2097,7 @@ TEST_CASE("Conformers RDMol/ROMol interop") {
     confHandle.getAtomPos(0).y++;
     confHandle.getAtomPos(0).z++;
 
-    const double* nextCheckedPos = mol.getConformerPositions(0);
+    const double *nextCheckedPos = mol.getConformerPositions(0);
     CHECK(nextCheckedPos[0] == 2);
     CHECK(nextCheckedPos[1] == 3);
     CHECK(nextCheckedPos[2] == 4);
@@ -2094,14 +2107,14 @@ TEST_CASE("Conformers RDMol/ROMol interop") {
     RDMol mol;
     mol.addAtom();
     mol.addAtom();
-    ROMol& romol = mol.asROMol();
+    ROMol &romol = mol.asROMol();
     auto conf = std::make_unique<Conformer>(2);
     conf->setAtomPos(0, RDGeom::Point3D(0, 1, 2));
     romol.addConformer(conf.release());
-    auto& romolPos = romol.getConformer();
+    auto &romolPos = romol.getConformer();
     // Update the compat position to make sure they're not equal to the
     // RDMol positions.
-    auto& atomPos = romolPos.getAtomPos(0);
+    auto &atomPos = romolPos.getAtomPos(0);
     atomPos.x++;
     atomPos.y++;
     atomPos.z++;
@@ -2110,17 +2123,17 @@ TEST_CASE("Conformers RDMol/ROMol interop") {
     REQUIRE(atomPos.z == 3);
 
     auto checkPos = [&mol]() {
-        const double* rdmolPos = mol.getConformerPositions(0);
-        CHECK(rdmolPos[0] == 1);
-        CHECK(rdmolPos[1] == 2);
-        CHECK(rdmolPos[2] == 3);
+      const double *rdmolPos = mol.getConformerPositions(0);
+      CHECK(rdmolPos[0] == 1);
+      CHECK(rdmolPos[1] == 2);
+      CHECK(rdmolPos[2] == 3);
     };
     checkPos();
     std::thread checkThread1(checkPos);
     std::thread checkThread2(checkPos);
     checkThread1.join();
     checkThread2.join();
-   }
+  }
 }
 
 TEST_CASE("RingInfo RDMol/ROMol interop") {
@@ -2138,7 +2151,7 @@ TEST_CASE("RingInfo RDMol/ROMol interop") {
 
     CHECK(ringInfoNew.numRings() == 2);
     CHECK((ringInfoNew.ringBegins[0] == 0 && ringInfoNew.ringBegins[1] == 5 &&
-          ringInfoNew.ringBegins[2] == 10));
+           ringInfoNew.ringBegins[2] == 10));
     CHECK(ringInfoNew.findRingType == FIND_RING_TYPE_SSSR);
 
     // Modify the new data structure
@@ -2171,29 +2184,29 @@ TEST_CASE("RingInfo RDMol/ROMol interop") {
       // compilers.
       threads.emplace_back([&atomicInt, &atomicPtr, numThreads = numThreads,
                             &mol, &successCount]() {
-            atomicInt.fetch_add(1);
-            // Just spin as a barrier, to increase the chances of all threads
-            // being in sync
-            while (uint32_t(atomicInt.load()) != numThreads) {
-            }
-            // Have all threads call getRingInfo at the same time
-            const RingInfoCache &res = mol->getRingInfo();
-            // The ring info is a member variable, so they'd get the same
-            // address of res regardless of whether the results clobbered each
-            // other, so check one of the vectors.
-            const uint32_t *atomsInRings = res.atomsInRings.data();
-            const uint32_t *value = nullptr;
-            if (!atomicPtr.compare_exchange_strong(value, atomsInRings)) {
-              // All threads should have received the same address without
-              // crashing
-              CHECK(atomsInRings == value);
-              if (atomsInRings == value) {
-                ++successCount;
-              }
-            } else {
-              ++successCount;
-            }
-          });
+        atomicInt.fetch_add(1);
+        // Just spin as a barrier, to increase the chances of all threads
+        // being in sync
+        while (uint32_t(atomicInt.load()) != numThreads) {
+        }
+        // Have all threads call getRingInfo at the same time
+        const RingInfoCache &res = mol->getRingInfo();
+        // The ring info is a member variable, so they'd get the same
+        // address of res regardless of whether the results clobbered each
+        // other, so check one of the vectors.
+        const uint32_t *atomsInRings = res.atomsInRings.data();
+        const uint32_t *value = nullptr;
+        if (!atomicPtr.compare_exchange_strong(value, atomsInRings)) {
+          // All threads should have received the same address without
+          // crashing
+          CHECK(atomsInRings == value);
+          if (atomsInRings == value) {
+            ++successCount;
+          }
+        } else {
+          ++successCount;
+        }
+      });
     }
     for (auto &thread : threads) {
       thread.join();

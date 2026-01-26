@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2025 NVIDIA Corporation & Affiliates and other RDKit contributors
+//  Copyright (C) 2025 NVIDIA Corporation & Affiliates and other RDKit
+//  contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -38,7 +39,6 @@ std::unique_ptr<RDMol> basicMol() {
 
   return mol;
 }
-
 
 TEST_CASE("Add atom") {
   RWMol mol;
@@ -171,19 +171,20 @@ TEST_CASE("Add atom via Atom* API") {
   }
 }
 
-std::vector<int> getAtomNeighborIndices(const RWMol& mol, int atomIdx) {
+std::vector<int> getAtomNeighborIndices(const RWMol &mol, int atomIdx) {
   std::vector<int> neighbors;
-  for (const auto& bondIter:  boost::make_iterator_range(mol.getAtomBonds(mol.getAtomWithIdx(atomIdx)))) {
+  for (const auto &bondIter : boost::make_iterator_range(
+           mol.getAtomBonds(mol.getAtomWithIdx(atomIdx)))) {
     const auto &nbr = (mol)[bondIter];
     neighbors.push_back(nbr->getOtherAtomIdx(atomIdx));
   }
   return neighbors;
 }
 
-template<typename pointerT>
-std::vector<int> stdListToVec(const std::list<pointerT*>& lst) {
+template <typename pointerT>
+std::vector<int> stdListToVec(const std::list<pointerT *> &lst) {
   std::vector<int> res;
-  for (const auto& element: lst) {
+  for (const auto &element : lst) {
     res.push_back(element->getIdx());
   }
   return res;
@@ -192,7 +193,6 @@ std::vector<int> stdListToVec(const std::list<pointerT*>& lst) {
 TEST_CASE("Remove Atom") {
   auto molPtr = basicMol();
   RWMol &rwmol = molPtr->asRWMol();
-
 
   SECTION("Basic, no bond removal, no stereochem") {
     // Change up atom numbers for better testing.
@@ -221,9 +221,12 @@ TEST_CASE("Remove Atom") {
     std::vector<int> neighbors0 = getAtomNeighborIndices(rwmol, 0);
     std::vector<int> neighbors1 = getAtomNeighborIndices(rwmol, 1);
     std::vector<int> neighbors2 = getAtomNeighborIndices(rwmol, 2);
-    CHECK_THAT(neighbors0, Catch::Matchers::UnorderedEquals(std::vector<int>{1}));
-    CHECK_THAT(neighbors1, Catch::Matchers::UnorderedEquals(std::vector<int>{0, 2}));
-    CHECK_THAT(neighbors2, Catch::Matchers::UnorderedEquals(std::vector<int>{1}));
+    CHECK_THAT(neighbors0,
+               Catch::Matchers::UnorderedEquals(std::vector<int>{1}));
+    CHECK_THAT(neighbors1,
+               Catch::Matchers::UnorderedEquals(std::vector<int>{0, 2}));
+    CHECK_THAT(neighbors2,
+               Catch::Matchers::UnorderedEquals(std::vector<int>{1}));
   }
 
   SECTION("Removes associated bonds") {
@@ -238,31 +241,37 @@ TEST_CASE("Remove Atom") {
     std::vector<int> neighbors0 = getAtomNeighborIndices(rwmol, 0);
     std::vector<int> neighbors1 = getAtomNeighborIndices(rwmol, 1);
     std::vector<int> neighbors2 = getAtomNeighborIndices(rwmol, 2);
-    CHECK_THAT(neighbors0, Catch::Matchers::UnorderedEquals(std::vector<int>{}));
-    CHECK_THAT(neighbors1, Catch::Matchers::UnorderedEquals(std::vector<int>{2}));
-    CHECK_THAT(neighbors2, Catch::Matchers::UnorderedEquals(std::vector<int>{1}));
+    CHECK_THAT(neighbors0,
+               Catch::Matchers::UnorderedEquals(std::vector<int>{}));
+    CHECK_THAT(neighbors1,
+               Catch::Matchers::UnorderedEquals(std::vector<int>{2}));
+    CHECK_THAT(neighbors2,
+               Catch::Matchers::UnorderedEquals(std::vector<int>{1}));
   }
 
   SECTION("Stereo groups") {
-    Atom* atom0 = rwmol.getAtomWithIdx(0);
-    Atom* atom1 = rwmol.getAtomWithIdx(1);
-    Atom* atom2 = rwmol.getAtomWithIdx(2);
+    Atom *atom0 = rwmol.getAtomWithIdx(0);
+    Atom *atom1 = rwmol.getAtomWithIdx(1);
+    Atom *atom2 = rwmol.getAtomWithIdx(2);
 
     std::vector<StereoGroup> groups;
     std::vector<Atom *> atoms = {atom0, atom2, atom1};
-    groups.push_back(StereoGroup(StereoGroupType::STEREO_OR, std::move(atoms), {}));
+    groups.push_back(
+        StereoGroup(StereoGroupType::STEREO_OR, std::move(atoms), {}));
     std::vector<Atom *> atoms2 = {rwmol.getAtomWithIdx(1)};
-    groups.push_back(StereoGroup(StereoGroupType::STEREO_AND, std::move(atoms2), {}));
+    groups.push_back(
+        StereoGroup(StereoGroupType::STEREO_AND, std::move(atoms2), {}));
     rwmol.setStereoGroups(std::move(groups));
 
     rwmol.removeAtom(1);
 
-    const auto& resultGroups = rwmol.getStereoGroups();
+    const auto &resultGroups = rwmol.getStereoGroups();
     REQUIRE(resultGroups.size() == 1);
-    const auto& group = resultGroups[0];
+    const auto &group = resultGroups[0];
 
     CHECK(group.getGroupType() == StereoGroupType::STEREO_OR);
-    CHECK_THAT(group.getAtoms(), Catch::Matchers::UnorderedEquals(std::vector<Atom *>({atom0, atom2})));
+    CHECK_THAT(group.getAtoms(), Catch::Matchers::UnorderedEquals(
+                                     std::vector<Atom *>({atom0, atom2})));
   }
 
   SECTION("Bookmarks") {
@@ -291,16 +300,17 @@ TEST_CASE("Remove Atom") {
     // 1: 0, 1
     // 2: 2
 
-    // We are deleting bonds 0 and 1, atom 1. Bond 2 now maps to 0. Atoms 2 and 3 now map to 1 and 2.
+    // We are deleting bonds 0 and 1, atom 1. Bond 2 now maps to 0. Atoms 2 and
+    // 3 now map to 1 and 2.
     rwmol.removeAtom(1);
 
-    auto& atomBookmarks0 = rwmol.getAllAtomsWithBookmark(0);
-    auto& atomBookmarks1 = rwmol.getAllAtomsWithBookmark(1);
-    auto& atomBookmarks2 = rwmol.getAllAtomsWithBookmark(2);
+    auto &atomBookmarks0 = rwmol.getAllAtomsWithBookmark(0);
+    auto &atomBookmarks1 = rwmol.getAllAtomsWithBookmark(1);
+    auto &atomBookmarks2 = rwmol.getAllAtomsWithBookmark(2);
 
-    auto& bondBookmarks0 = rwmol.getAllBondsWithBookmark(0);
+    auto &bondBookmarks0 = rwmol.getAllBondsWithBookmark(0);
     CHECK_THROWS_AS(rwmol.getAllBondsWithBookmark(1), Invar::Invariant);
-    auto& bondBookmarks2 = rwmol.getAllBondsWithBookmark(2);
+    auto &bondBookmarks2 = rwmol.getAllBondsWithBookmark(2);
 
     CHECK(stdListToVec(atomBookmarks0) == std::vector<int>{0, 1, 2});
     CHECK(stdListToVec(atomBookmarks1) == std::vector<int>{1});
@@ -326,16 +336,16 @@ TEST_CASE("Remove Atom") {
   }
 
   SECTION("Does not clear computed props") {
-    rwmol.getAtomWithIdx(0)->setProp("computed", 3, /*computed=*/ true);
-    rwmol.setProp("computed", 3, /*computed=*/ true);
+    rwmol.getAtomWithIdx(0)->setProp("computed", 3, /*computed=*/true);
+    rwmol.setProp("computed", 3, /*computed=*/true);
     rwmol.removeAtom(rwmol.getAtomWithIdx(1), /*clearComputedProps=*/false);
     CHECK(rwmol.getAtomWithIdx(0)->getProp<int>("computed") == 3);
     CHECK(rwmol.getProp<int>("computed") == 3);
   }
 
   SECTION("Clears computed props") {
-    rwmol.getAtomWithIdx(0)->setProp("computed", 3, /*computed=*/ true);
-    rwmol.setProp("computed", 3, /*computed=*/ true);
+    rwmol.getAtomWithIdx(0)->setProp("computed", 3, /*computed=*/true);
+    rwmol.setProp("computed", 3, /*computed=*/true);
     rwmol.removeAtom(rwmol.getAtomWithIdx(1), /*clearComputedProps=*/true);
     CHECK(!rwmol.getAtomWithIdx(0)->hasProp("computed"));
     CHECK(!rwmol.hasProp("computed"));
@@ -346,9 +356,10 @@ TEST_CASE("Remove Atom") {
     auto conf2 = std::make_unique<Conformer>(rwmol.getNumAtoms());
 
     const int numAtoms = 4;
-    for (int i = 0; i < numAtoms; i ++) {
+    for (int i = 0; i < numAtoms; i++) {
       conf1->setAtomPos(i, RDGeom::Point3D(i, i, i));
-      conf2->setAtomPos(i, RDGeom::Point3D(i + numAtoms, i + numAtoms, i + numAtoms));
+      conf2->setAtomPos(
+          i, RDGeom::Point3D(i + numAtoms, i + numAtoms, i + numAtoms));
     }
 
     uint32_t id1 = rwmol.addConformer(conf1.release(), true);
@@ -356,8 +367,8 @@ TEST_CASE("Remove Atom") {
 
     rwmol.removeAtom(1);
 
-    const Conformer* confResult = &rwmol.getConformer(id1);
-    const Conformer* conf2Result = &rwmol.getConformer(id2);
+    const Conformer *confResult = &rwmol.getConformer(id1);
+    const Conformer *conf2Result = &rwmol.getConformer(id2);
 
     REQUIRE(rwmol.getNumConformers() == 2);
     REQUIRE(confResult != nullptr);
@@ -403,11 +414,11 @@ TEST_CASE("Replace atom") {
   mol.addAtom();
   mol.addAtom();
   mol.getAtomWithIdx(1)->setAtomicNum(6);
-  Atom* existingAtom = mol.getAtomWithIdx(1);
+  Atom *existingAtom = mol.getAtomWithIdx(1);
 
   auto atom = std::make_unique<Atom>(7);
-  Atom* newAtom = atom.get();
-  
+  Atom *newAtom = atom.get();
+
   SECTION("Fails - null input") {
     CHECK_THROWS_AS(mol.replaceAtom(0, nullptr), Invar::Invariant);
   }
@@ -468,8 +479,8 @@ TEST_CASE("Replace atom") {
 
 TEST_CASE("Replace bond") {
   auto rdmol = basicMol();
-  auto& rwmol = rdmol->asRWMol();
-  Bond* existingBond = rwmol.getBondWithIdx(1);
+  auto &rwmol = rdmol->asRWMol();
+  Bond *existingBond = rwmol.getBondWithIdx(1);
   auto newBond = std::make_unique<Bond>();
   newBond->setBondType(Bond::BondType::TRIPLE);
 
@@ -559,7 +570,7 @@ TEST_CASE("Replace bond") {
 }
 
 // Expects a bond add between atoms 1 and 3
-void checkBondConnections(const RWMol& mol, const Bond* bond) {
+void checkBondConnections(const RWMol &mol, const Bond *bond) {
   REQUIRE(bond != nullptr);
 
   // Check neighbors of each atom
@@ -575,7 +586,7 @@ void checkBondConnections(const RWMol& mol, const Bond* bond) {
 
 TEST_CASE("Add bond") {
   auto rdmol = basicMol();
-  auto& rwmol = rdmol->asRWMol();
+  auto &rwmol = rdmol->asRWMol();
   REQUIRE(rwmol.getNumAtoms() == 4);
   REQUIRE(rwmol.getNumBonds() == 3);
 
@@ -589,21 +600,25 @@ TEST_CASE("Add bond") {
   bondToAdd->setProp("test", 3);
 
   SECTION("Index API fails, bad atom numbers") {
-      CHECK_THROWS_AS(rwmol.addBond(3, 5, Bond::BondType::SINGLE), Invar::Invariant);
-      CHECK_THROWS_AS(rwmol.addBond(5, 3, Bond::BondType::SINGLE), Invar::Invariant);
+    CHECK_THROWS_AS(rwmol.addBond(3, 5, Bond::BondType::SINGLE),
+                    Invar::Invariant);
+    CHECK_THROWS_AS(rwmol.addBond(5, 3, Bond::BondType::SINGLE),
+                    Invar::Invariant);
   }
 
   SECTION("Index API fails, same atoms for bond") {
-      CHECK_THROWS_AS(rwmol.addBond(1, 1, Bond::BondType::SINGLE), Invar::Invariant);
+    CHECK_THROWS_AS(rwmol.addBond(1, 1, Bond::BondType::SINGLE),
+                    Invar::Invariant);
   }
 
   SECTION("Index API fails, bond exists") {
-      CHECK_THROWS_AS(rwmol.addBond(0, 1, Bond::BondType::SINGLE), Invar::Invariant);
+    CHECK_THROWS_AS(rwmol.addBond(0, 1, Bond::BondType::SINGLE),
+                    Invar::Invariant);
   }
 
   SECTION("Index API succeeds") {
     uint32_t idx = rwmol.addBond(3, 1, Bond::BondType::TRIPLE);
-    const Bond* bond = rwmol.getBondWithIdx(idx - 1);
+    const Bond *bond = rwmol.getBondWithIdx(idx - 1);
     checkBondConnections(rwmol, bond);
 
     CHECK(bond->getBeginAtomIdx() == 3);
@@ -613,11 +628,11 @@ TEST_CASE("Add bond") {
 
   SECTION("Index API with aromatic bond sets aromatic atoms") {
     uint32_t idx = rwmol.addBond(1, 3, Bond::BondType::AROMATIC);
-    const Bond* bond = rwmol.getBondWithIdx(idx - 1);
+    const Bond *bond = rwmol.getBondWithIdx(idx - 1);
     checkBondConnections(rwmol, bond);
 
-    auto* atom1 = rwmol.getAtomWithIdx(1);
-    auto* atom3 = rwmol.getAtomWithIdx(3);
+    auto *atom1 = rwmol.getAtomWithIdx(1);
+    auto *atom3 = rwmol.getAtomWithIdx(3);
     CHECK(bond->getIsAromatic());
     CHECK(atom1->getIsAromatic());
     CHECK(atom3->getIsAromatic());
@@ -625,20 +640,22 @@ TEST_CASE("Add bond") {
 
   SECTION("Atom* API fails, null atoms") {
     auto atom = std::make_unique<Atom>();
-    CHECK_THROWS_AS(rwmol.addBond(atom.get(), nullptr, Bond::BondType::SINGLE), Invar::Invariant);
-    CHECK_THROWS_AS(rwmol.addBond(nullptr, atom.get(), Bond::BondType::SINGLE), Invar::Invariant);
+    CHECK_THROWS_AS(rwmol.addBond(atom.get(), nullptr, Bond::BondType::SINGLE),
+                    Invar::Invariant);
+    CHECK_THROWS_AS(rwmol.addBond(nullptr, atom.get(), Bond::BondType::SINGLE),
+                    Invar::Invariant);
   }
 
   SECTION("Atom API succeeds") {
-    auto* atom1 = rwmol.getAtomWithIdx(1);
-    auto* atom2 = rwmol.getAtomWithIdx(3);
+    auto *atom1 = rwmol.getAtomWithIdx(1);
+    auto *atom2 = rwmol.getAtomWithIdx(3);
     REQUIRE(atom1 != nullptr);
     REQUIRE(atom2 != nullptr);
 
     uint32_t idx = rwmol.addBond(atom1, atom2, Bond::BondType::TRIPLE);
     // New number of bonds
     CHECK(idx == 4);
-    auto* bond = rwmol.getBondWithIdx(idx - 1);
+    auto *bond = rwmol.getBondWithIdx(idx - 1);
     checkBondConnections(rwmol, bond);
   }
 
@@ -647,36 +664,40 @@ TEST_CASE("Add bond") {
   }
 
   SECTION("Bond API fails, takeownership when already owned by mol") {
-    Bond* bond = rwmol.getBondWithIdx(0);
+    Bond *bond = rwmol.getBondWithIdx(0);
     REQUIRE(bond != nullptr);
-    CHECK_THROWS_AS(rwmol.addBond(bond, /*takeOwnership=*/true), Invar::Invariant);
+    CHECK_THROWS_AS(rwmol.addBond(bond, /*takeOwnership=*/true),
+                    Invar::Invariant);
   }
 
   SECTION("Bond API fails, bad bond indices") {
     bondToAdd->setBeginAtomIdx(5);
     bondToAdd->setEndAtomIdx(3);
-    CHECK_THROWS_AS(rwmol.addBond(bondToAdd.get(), /*takeOwnership=*/false), Invar::Invariant);
+    CHECK_THROWS_AS(rwmol.addBond(bondToAdd.get(), /*takeOwnership=*/false),
+                    Invar::Invariant);
   }
 
   SECTION("Bond API fails, self indices") {
     bondToAdd->setBeginAtomIdx(1);
     bondToAdd->setEndAtomIdx(1);
-    CHECK_THROWS_AS(rwmol.addBond(bondToAdd.get(), /*takeOwnership=*/false), Invar::Invariant);
+    CHECK_THROWS_AS(rwmol.addBond(bondToAdd.get(), /*takeOwnership=*/false),
+                    Invar::Invariant);
   }
 
   SECTION("Bond API fail, existing bond in mol") {
     REQUIRE(rwmol.getBondBetweenAtoms(1, 2) != nullptr);
     bondToAdd->setBeginAtomIdx(1);
     bondToAdd->setEndAtomIdx(2);
-    CHECK_THROWS_AS(rwmol.addBond(bondToAdd.get(), /*takeOwnership=*/false), Invar::Invariant);
+    CHECK_THROWS_AS(rwmol.addBond(bondToAdd.get(), /*takeOwnership=*/false),
+                    Invar::Invariant);
   }
 
   SECTION("Bond API succeeds, don't take ownership") {
     bondToAdd->setBeginAtomIdx(1);
     bondToAdd->setEndAtomIdx(3);
-    Bond* bondPtrOrig = bondToAdd.get();
+    Bond *bondPtrOrig = bondToAdd.get();
     uint32_t idx = rwmol.addBond(bondToAdd.get(), /*takeOwnership=*/false);
-    auto* bond = rwmol.getBondWithIdx(idx - 1);
+    auto *bond = rwmol.getBondWithIdx(idx - 1);
     checkBondConnections(rwmol, bond);
     CHECK(bond != bondPtrOrig);
 
@@ -692,10 +713,10 @@ TEST_CASE("Add bond") {
     bondToAdd->setEndAtomIdx(3);
     bondToAdd->setBondType(Bond::BondType::AROMATIC);
     uint32_t idx = rwmol.addBond(bondToAdd.get(), /*takeOwnership=*/false);
-    auto* bond = rwmol.getBondWithIdx(idx - 1);
+    auto *bond = rwmol.getBondWithIdx(idx - 1);
     checkBondConnections(rwmol, bond);
-    auto* atom1 = rwmol.getAtomWithIdx(1);
-    auto* atom3 = rwmol.getAtomWithIdx(3);
+    auto *atom1 = rwmol.getAtomWithIdx(1);
+    auto *atom3 = rwmol.getAtomWithIdx(3);
     CHECK(!bond->getIsAromatic());
     CHECK(!atom1->getIsAromatic());
     CHECK(!atom3->getIsAromatic());
@@ -704,9 +725,9 @@ TEST_CASE("Add bond") {
   SECTION("Bond API succeeds, take ownership") {
     bondToAdd->setBeginAtomIdx(1);
     bondToAdd->setEndAtomIdx(3);
-    Bond* bondPtrOrig = bondToAdd.get();
+    Bond *bondPtrOrig = bondToAdd.get();
     uint32_t idx = rwmol.addBond(bondToAdd.release(), /*takeOwnership=*/true);
-    auto* bond = rwmol.getBondWithIdx(idx - 1);
+    auto *bond = rwmol.getBondWithIdx(idx - 1);
     CHECK(bond == bondPtrOrig);
     checkBondConnections(rwmol, bond);
 
@@ -718,18 +739,19 @@ TEST_CASE("Add bond") {
   }
 }
 
-void addTestConformer(RWMol& mol, int startVal) {
+void addTestConformer(RWMol &mol, int startVal) {
   auto conf = new Conformer(mol.getNumAtoms());
   // Set each atom value to its index + startVal
   for (uint32_t i = 0; i < mol.getNumAtoms(); ++i) {
-    conf->setAtomPos(i, RDGeom::Point3D(i + startVal, i + startVal, i + startVal));
+    conf->setAtomPos(i,
+                     RDGeom::Point3D(i + startVal, i + startVal, i + startVal));
   }
   mol.addConformer(conf, /*assignId=*/true);
 }
 
 TEST_CASE("InsertMol") {
   auto rdmol = basicMol();
-  auto& rwmol = rdmol->asRWMol();
+  auto &rwmol = rdmol->asRWMol();
   rwmol.getAtomWithIdx(0)->setProp("test_prev_atom", 5.0);
 
   std::vector<SubstanceGroup> &sgs = getSubstanceGroups(rwmol);
@@ -739,8 +761,8 @@ TEST_CASE("InsertMol") {
 
   std::vector<StereoGroup> groups;
   std::vector<Atom *> atoms = {rwmol.getAtomWithIdx(1)};
-  groups.push_back(StereoGroup(StereoGroupType::STEREO_OR, std::move(atoms),
-                               {}));
+  groups.push_back(
+      StereoGroup(StereoGroupType::STEREO_OR, std::move(atoms), {}));
   rwmol.setStereoGroups(std::move(groups));
 
   RWMol mol2;
@@ -771,7 +793,7 @@ TEST_CASE("InsertMol") {
 
     // Check bond neighbor indices
     CHECK_THAT(getAtomNeighborIndices(rwmol, 3),
-             Catch::Matchers::UnorderedEquals(std::vector<int>({2})));
+               Catch::Matchers::UnorderedEquals(std::vector<int>({2})));
     CHECK_THAT(getAtomNeighborIndices(rwmol, 4),
                Catch::Matchers::UnorderedEquals(std::vector<int>({5})));
     CHECK_THAT(getAtomNeighborIndices(rwmol, 6),
@@ -786,37 +808,41 @@ TEST_CASE("InsertMol") {
   }
 
   SECTION("_ringStereoAtoms prop update") {
-    mol2.getAtomWithIdx(3)->setProp(common_properties::_ringStereoAtoms, std::vector<int>({0, -1, 2}));
+    mol2.getAtomWithIdx(3)->setProp(common_properties::_ringStereoAtoms,
+                                    std::vector<int>({0, -1, 2}));
     rwmol.insertMol(mol2);
 
     std::vector<int> gotStereoAtoms;
-    REQUIRE(rwmol.getAtomWithIdx(7)->getPropIfPresent(common_properties::_ringStereoAtoms, gotStereoAtoms));
+    REQUIRE(rwmol.getAtomWithIdx(7)->getPropIfPresent(
+        common_properties::_ringStereoAtoms, gotStereoAtoms));
     CHECK(gotStereoAtoms == std::vector<int>({4, -5, 6}));
   }
 
   SECTION("Stereo atoms") {
     mol2.getBondWithIdx(1)->setStereoAtoms(0, 3);
     rwmol.insertMol(mol2);
-    const auto& result = rwmol.getBondWithIdx(4)->getStereoAtoms();
+    const auto &result = rwmol.getBondWithIdx(4)->getStereoAtoms();
     CHECK(result == std::vector<int>{4, 7});
   }
 
   SECTION("Stereo groups") {
     std::vector<StereoGroup> groups2;
     std::vector<Atom *> atoms2 = {mol2.getAtomWithIdx(3)};
-    groups2.push_back(StereoGroup(StereoGroupType::STEREO_AND, std::move(atoms2),
-                                 {}));
+    groups2.push_back(
+        StereoGroup(StereoGroupType::STEREO_AND, std::move(atoms2), {}));
     mol2.setStereoGroups(std::move(groups2));
 
     rwmol.insertMol(mol2);
 
-    const auto& result = rwmol.getStereoGroups();
+    const auto &result = rwmol.getStereoGroups();
     REQUIRE(result.size() == 2);
     CHECK(result[0].getGroupType() == StereoGroupType::STEREO_OR);
     CHECK(result[1].getGroupType() == StereoGroupType::STEREO_AND);
 
-    CHECK(result[0].getAtoms() == std::vector<Atom *>({rwmol.getAtomWithIdx(1)}));
-    CHECK(result[1].getAtoms() == std::vector<Atom *>({rwmol.getAtomWithIdx(7)}));
+    CHECK(result[0].getAtoms() ==
+          std::vector<Atom *>({rwmol.getAtomWithIdx(1)}));
+    CHECK(result[1].getAtoms() ==
+          std::vector<Atom *>({rwmol.getAtomWithIdx(7)}));
   }
 
   SECTION("Substance groups") {
@@ -843,7 +869,7 @@ TEST_CASE("InsertMol") {
     rwmol.insertMol(mol2);
 
     REQUIRE(rwmol.getNumConformers() == 1);
-    const auto& conf = rwmol.getConformer();
+    const auto &conf = rwmol.getConformer();
     CHECK(conf.getNumAtoms() == 8);
     CHECK(conf.getAtomPos(0).x == 0.0);
     CHECK(conf.getAtomPos(3).y == 3.0);
@@ -857,7 +883,7 @@ TEST_CASE("InsertMol") {
     rwmol.insertMol(mol2);
 
     REQUIRE(rwmol.getNumConformers() == 1);
-    const auto& conf = rwmol.getConformer();
+    const auto &conf = rwmol.getConformer();
     CHECK(conf.getNumAtoms() == 8);
     CHECK(conf.getAtomPos(0).x == 0.0);
     CHECK(conf.getAtomPos(3).y == 0.0);
@@ -872,7 +898,7 @@ TEST_CASE("InsertMol") {
 
     rwmol.insertMol(mol2);
     REQUIRE(rwmol.getNumConformers() == 1);
-    const auto& conf = rwmol.getConformer();
+    const auto &conf = rwmol.getConformer();
     CHECK(conf.getNumAtoms() == 8);
     CHECK(conf.getAtomPos(0).x == 0.0);
     CHECK(conf.getAtomPos(3).y == 3.0);
@@ -889,13 +915,13 @@ TEST_CASE("InsertMol") {
     rwmol.insertMol(mol2);
     REQUIRE(rwmol.getNumConformers() == 2);
 
-    const auto& conf1 = rwmol.getConformer(0);
+    const auto &conf1 = rwmol.getConformer(0);
     CHECK(conf1.getNumAtoms() == 8);
     CHECK(conf1.getAtomPos(0).x == 0.0);
     CHECK(conf1.getAtomPos(3).y == 3.0);
-    CHECK(conf1.getAtomPos(4).x == 0.0); // New atoms not copied in this case.
+    CHECK(conf1.getAtomPos(4).x == 0.0);  // New atoms not copied in this case.
 
-    const auto& conf2 = rwmol.getConformer(1);
+    const auto &conf2 = rwmol.getConformer(1);
     CHECK(conf2.getNumAtoms() == 8);
     CHECK(conf2.getAtomPos(0).x == 10.0);
     CHECK(conf2.getAtomPos(3).y == 13.0);
@@ -909,30 +935,31 @@ TEST_CASE("InsertMol") {
 
     rwmol.insertMol(mol2);
     REQUIRE(rwmol.getNumConformers() == 1);
-    const auto& conf = rwmol.getConformer();
+    const auto &conf = rwmol.getConformer();
     CHECK(conf.getNumAtoms() == 8);
     CHECK(conf.getAtomPos(0).x == 0.0);
     CHECK(conf.getAtomPos(3).y == 3.0);
-    CHECK(conf.getAtomPos(4).x == 0.0); // New atoms not copied in this case.
+    CHECK(conf.getAtomPos(4).x == 0.0);  // New atoms not copied in this case.
   }
 }
 
 TEST_CASE("RWMol assignment operator") {
   SECTION("Basic molecule assignment") {
     auto mol1ptr = parseSmiles("CCC=C");
-    RWMol& mol1 = mol1ptr->asRWMol();
+    RWMol &mol1 = mol1ptr->asRWMol();
     RWMol mol2;
     mol2 = mol1;
 
     CHECK(mol2.getNumAtoms() == 4);
     CHECK(mol2.getNumBonds() == 3);
     CHECK(mol2.getBondWithIdx(2)->getBondType() == Bond::BondType::DOUBLE);
-    
+
     // Check atoms are properly copied
     for (unsigned int i = 0; i < mol2.getNumAtoms(); ++i) {
-      CHECK(mol2.getAtomWithIdx(i)->getAtomicNum() == mol1.getAtomWithIdx(i)->getAtomicNum());
+      CHECK(mol2.getAtomWithIdx(i)->getAtomicNum() ==
+            mol1.getAtomWithIdx(i)->getAtomicNum());
     }
-    mol1ptr.reset(); // Check lifetimes.
+    mol1ptr.reset();  // Check lifetimes.
     CHECK(mol2.getNumAtoms() == 4);
     CHECK(mol2.getNumBonds() == 3);
     CHECK(mol2.getBondWithIdx(2)->getBondType() == Bond::BondType::DOUBLE);
@@ -940,36 +967,37 @@ TEST_CASE("RWMol assignment operator") {
 
   SECTION("Assignment with atom properties") {
     auto mol1ptr = parseSmiles("CC");
-    RWMol& mol1 = mol1ptr->asRWMol();
+    RWMol &mol1 = mol1ptr->asRWMol();
     mol1.getAtomWithIdx(0)->setProp("test_prop", 42);
     mol1.getAtomWithIdx(1)->setProp("other_prop", "value");
-    
+
     RWMol mol2;
     mol2 = mol1;
-    mol1ptr.reset(); // Check lifetimes.
+    mol1ptr.reset();  // Check lifetimes.
 
     CHECK(mol2.getAtomWithIdx(0)->getProp<int>("test_prop") == 42);
-    CHECK(mol2.getAtomWithIdx(1)->getProp<std::string>("other_prop") == "value");
+    CHECK(mol2.getAtomWithIdx(1)->getProp<std::string>("other_prop") ==
+          "value");
   }
 
   SECTION("Assignment with conformers") {
     auto mol1ptr = parseSmiles("CC");
-    RWMol& mol1 = mol1ptr->asRWMol();
+    RWMol &mol1 = mol1ptr->asRWMol();
     addTestConformer(mol1, 1);
     addTestConformer(mol1, 2);
-    
+
     RWMol mol2;
     mol2 = mol1;
-    mol1ptr.reset(); // Check lifetimes.
+    mol1ptr.reset();  // Check lifetimes.
 
     CHECK(mol2.getNumConformers() == 2);
-    
+
     // Check conformer coordinates
     const auto conf1 = mol2.getConformer(0);
     CHECK(conf1.getAtomPos(0).x == 1.0);
     CHECK(conf1.getAtomPos(0).y == 1.0);
     CHECK(conf1.getAtomPos(0).z == 1.0);
-    
+
     const auto conf2 = mol2.getConformer(1);
     CHECK(conf2.getAtomPos(0).x == 2.0);
     CHECK(conf2.getAtomPos(0).y == 2.0);
@@ -978,21 +1006,21 @@ TEST_CASE("RWMol assignment operator") {
 
   SECTION("Assignment with stereo information") {
     auto mol1ptr = parseSmiles("C[C@H](F)Cl");
-    RWMol& mol1 = mol1ptr->asRWMol();
+    RWMol &mol1 = mol1ptr->asRWMol();
     RWMol mol2;
     mol2 = mol1;
 
     CHECK(mol2.getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
-    
+
     // Add stereo groups to source molecule
-    std::vector<Atom*> atoms = {mol1.getAtomWithIdx(1)};
-    std::vector<Bond*> bonds;
+    std::vector<Atom *> atoms = {mol1.getAtomWithIdx(1)};
+    std::vector<Bond *> bonds;
     std::vector<StereoGroup> groups;
     groups.emplace_back(StereoGroupType::STEREO_OR, atoms, bonds);
     mol1.setStereoGroups(std::move(groups));
-    
+
     mol2 = mol1;
-    const auto& resultGroups = mol2.getStereoGroups();
+    const auto &resultGroups = mol2.getStereoGroups();
     CHECK(resultGroups.size() == 1);
     CHECK(resultGroups[0].getGroupType() == StereoGroupType::STEREO_OR);
     CHECK(resultGroups[0].getAtoms().size() == 1);
@@ -1000,13 +1028,13 @@ TEST_CASE("RWMol assignment operator") {
 
   SECTION("Assignment with bookmarks") {
     auto mol1ptr = parseSmiles("CC");
-    RWMol& mol1 = mol1ptr->asRWMol();
+    RWMol &mol1 = mol1ptr->asRWMol();
     mol1.setAtomBookmark(mol1.getAtomWithIdx(0), 1);
     mol1.setBondBookmark(mol1.getBondWithIdx(0), 2);
-    
+
     RWMol mol2;
     mol2 = mol1;
-    mol1ptr.reset(); // Check lifetimes.
+    mol1ptr.reset();  // Check lifetimes.
 
     CHECK(mol2.hasAtomBookmark(1));
     CHECK(mol2.hasAtomBookmark(1));
@@ -1030,13 +1058,13 @@ TEST_CASE("RWMol assignment operator") {
 
   SECTION("Assignment with queries") {
     auto mol1ptr = parseSmiles("CC");
-    RWMol& mol1 = mol1ptr->asRWMol();
+    RWMol &mol1 = mol1ptr->asRWMol();
     auto query = std::make_unique<QueryAtom>(6);
     mol1.replaceAtom(0, query.get());
-    
+
     RWMol mol2;
     mol2 = mol1;
-    mol1ptr.reset(); // Check lifetimes.
+    mol1ptr.reset();  // Check lifetimes.
 
     CHECK(mol2.getAtomWithIdx(0)->hasQuery());
     CHECK(!mol2.getAtomWithIdx(1)->hasQuery());
@@ -1044,31 +1072,31 @@ TEST_CASE("RWMol assignment operator") {
 
   SECTION("Previously owned assignment") {
     auto mol1ptr = parseSmiles("CC");
-    RWMol& mol1 = mol1ptr->asRWMol();
+    RWMol &mol1 = mol1ptr->asRWMol();
     auto mol2ptr = parseSmiles("CCC");
-    RWMol& mol2 = mol2ptr->asRWMol();
+    RWMol &mol2 = mol2ptr->asRWMol();
 
     mol2 = mol1;
-    mol1ptr.reset(); // Check lifetimes.
+    mol1ptr.reset();  // Check lifetimes.
 
     CHECK(mol2.getNumAtoms() == 2);
     CHECK(mol2.getNumBonds() == 1);
   }
 
   SECTION("Both self-owned assignment") {
-        auto mol1Ptr = std::make_unique<RWMol>();
-        RWMol& mol1 = *mol1Ptr;
-        RWMol mol2;
-        auto atom = std::make_unique<Atom>(6);
-        auto atom2 = std::make_unique<Atom>(7);
-        mol1.addAtom(atom.get());
-        mol1.addAtom(atom2.get());
-        mol1.addBond(0, 1, Bond::BondType::SINGLE);
-        mol2 = mol1;
-        mol1Ptr.reset();
+    auto mol1Ptr = std::make_unique<RWMol>();
+    RWMol &mol1 = *mol1Ptr;
+    RWMol mol2;
+    auto atom = std::make_unique<Atom>(6);
+    auto atom2 = std::make_unique<Atom>(7);
+    mol1.addAtom(atom.get());
+    mol1.addAtom(atom2.get());
+    mol1.addBond(0, 1, Bond::BondType::SINGLE);
+    mol2 = mol1;
+    mol1Ptr.reset();
 
-        CHECK(mol2.getNumAtoms() == 2);
-        CHECK(mol2.getNumBonds() == 1);
+    CHECK(mol2.getNumAtoms() == 2);
+    CHECK(mol2.getNumBonds() == 1);
   }
 }
 

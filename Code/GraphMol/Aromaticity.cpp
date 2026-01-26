@@ -596,6 +596,16 @@ bool isBondOrderQuery(const Bond *bond) {
   }
   return false;
 }
+bool isBondOrderQuery(const RDMol &mol, const uint32_t bondIndex) {
+  if (const auto q = mol.getBondQuery(bondIndex)) {
+    // complex bond type queries are also bond order queries!
+    if (q->getTypeLabel() == "BondOrder" ||
+        QueryOps::hasComplexBondTypeQuery(*q)) {
+      return true;
+    }
+  }
+  return false;
+}
 int countAtomElec(const Atom *at) {
   PRECONDITION(at, "bad atom");
 
@@ -645,6 +655,62 @@ int countAtomElec(const Atom *at) {
     // above in isAtomCandForArom())
     int nUnsaturations =
         at->getValence(Atom::ValenceType::EXPLICIT) - at->getDegree();
+    if (nUnsaturations > 1) {
+      res = 1;
+    }
+  }
+
+  return res;
+}
+
+int countAtomElec(const RDMol &mol, const atomindex_t atomIndex) {
+  const auto &at = mol.getAtom(atomIndex);
+  // default valence :
+  auto dv = PeriodicTable::getTable()->getDefaultValence(at.getAtomicNum());
+  if (dv <= 1) {
+    // univalent elements can't be either aromatic or conjugated
+    return -1;
+  }
+
+  // total atom degree:
+  int degree = mol.getAtomTotalDegree(atomIndex);
+  auto [begin, end] = mol.getAtomBonds(atomIndex);
+  for (; begin != end; ++begin) {
+    uint32_t bondIdx = *begin;
+    const auto &bond = mol.getBond(bondIdx);
+    // don't count bonds that aren't actually contributing to the valence here:
+    // if the bond is "real" (not undefined or zero), it always contributes to
+    // valence/degree, and in case the bond is a query bond with no order, we
+    // still need to check if the query is a bond query
+    if (!bond.getTwiceValenceContrib(atomIndex) &&
+        !isBondOrderQuery(mol, bondIdx)) {
+      --degree;
+    }
+  }
+
+  // if we are more than 3 coordinated we should not be aromatic
+  if (degree > 3) {
+    return -1;
+  }
+
+  // number of lone pair electrons = (outer shell elecs) - (default valence)
+  auto nlp = PeriodicTable::getTable()->getNouterElecs(at.getAtomicNum()) - dv;
+
+  // subtract the charge to get the true number of lone pair electrons:
+  nlp = std::max(nlp - at.getFormalCharge(), 0);
+
+  int nRadicals = at.getNumRadicalElectrons();
+
+  // num electrons available for donation into the pi system:
+  int res = (dv - degree) + nlp - nRadicals;
+  if (res > 1) {
+    // if we have an incident bond with order higher than 2,
+    // (e.g. triple or higher), we only want to return 1 electron
+    // we detect this using the total unsaturation, because we
+    // know that there aren't multiple unsaturations (detected
+    // above in isAtomCandForArom())
+    int nUnsaturations = at.getValence(AtomData::ValenceType::EXPLICIT) -
+                         mol.getAtomDegree(atomIndex);
     if (nUnsaturations > 1) {
       res = 1;
     }

@@ -144,7 +144,8 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
     CHI_OCTAHEDRAL = AtomEnums::ChiralType::CHI_OCTAHEDRAL
   };
 
-  // this can be done with a `using` definition, but that breaks the SWIG bindings
+  // this can be done with a `using` definition, but that breaks the SWIG
+  // bindings
   enum class ValenceType : std::uint8_t {
     IMPLICIT = 0,
     EXPLICIT
@@ -505,7 +506,8 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
-        dp_dataMol->getComputedPropList(res, RDMol::Scope::ATOM, getIdx());
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::ATOM,
+                                        getIdx());
         return;
       }
     }
@@ -522,7 +524,8 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
         STR_VECT res;
-        dp_dataMol->getComputedPropList(res, RDMol::Scope::ATOM, getIdx());
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::ATOM,
+                                        getIdx());
         return res;
       }
     }
@@ -537,7 +540,8 @@ class RDKIT_GRAPHMOL_EXPORT Atom {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
-        dp_dataMol->getComputedPropList(res, RDMol::Scope::ATOM, getIdx());
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::ATOM,
+                                        getIdx());
         return true;
       }
     }

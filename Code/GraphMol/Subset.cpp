@@ -54,7 +54,8 @@ static void copySelectedAtomsAndBonds(RWMol &extracted_mol,
     atomMapping[ref_atom->getIdx()] = extracted_mol.addAtom(
         extracted_atom.release(), updateLabel, takeOwnership);
     // Clear computed props copied by initFromOther() to avoid stale indices
-    auto *new_atom = extracted_mol.getAtomWithIdx(atomMapping[ref_atom->getIdx()]);
+    auto *new_atom =
+        extracted_mol.getAtomWithIdx(atomMapping[ref_atom->getIdx()]);
     new_atom->clearComputedProps();
     // These can embed original atom indices; clear to avoid stale references
     new_atom->clearProp("_ringStereoAtoms");
@@ -98,7 +99,8 @@ static void copySelectedAtomsAndBonds(RWMol &extracted_mol,
           bondMapping[ref_bond->getIdx()]);
     }
     // Clear computed props copied by initFromOther() to avoid stale indices
-    auto *new_bond = extracted_mol.getBondWithIdx(bondMapping[ref_bond->getIdx()]);
+    auto *new_bond =
+        extracted_mol.getBondWithIdx(bondMapping[ref_bond->getIdx()]);
     new_bond->clearComputedProps();
     // Ensure required non-computed properties from the reference are present
     bool test_prop = false;
@@ -227,10 +229,12 @@ static void copyMappedNonComputedProps(RWMol &extracted_mol,
   const auto &ref_rdmol = reference_mol.asRDMol();
   auto &dst_rdmol = extracted_mol.asRDMol();
 
-  const auto atom_props = ref_rdmol.getPropList(
-      false, false, RDMol::Scope::ATOM, RDMol::PropIterator::anyIndexMarker);
-  const auto bond_props = ref_rdmol.getPropList(
-      false, false, RDMol::Scope::BOND, RDMol::PropIterator::anyIndexMarker);
+  const auto atom_props =
+      ref_rdmol.getPropList(false, false, RDProperties::Scope::ATOM,
+                            RDProperties::PropIterator::anyIndexMarker);
+  const auto bond_props =
+      ref_rdmol.getPropList(false, false, RDProperties::Scope::BOND,
+                            RDProperties::PropIterator::anyIndexMarker);
 
   for (const auto &[ref_idx, dst_idx] : selection_info.atomMapping) {
     for (const auto &prop_name : atom_props) {
@@ -239,7 +243,7 @@ static void copyMappedNonComputedProps(RWMol &extracted_mol,
       }
       dst_rdmol.copySingleProp(PropToken(prop_name), dst_idx, ref_rdmol,
                                PropToken(prop_name), ref_idx,
-                               RDMol::Scope::ATOM);
+                               RDProperties::Scope::ATOM);
     }
   }
 
@@ -250,7 +254,7 @@ static void copyMappedNonComputedProps(RWMol &extracted_mol,
       }
       dst_rdmol.copySingleProp(PropToken(prop_name), dst_idx, ref_rdmol,
                                PropToken(prop_name), ref_idx,
-                               RDMol::Scope::BOND);
+                               RDProperties::Scope::BOND);
     }
   }
 }

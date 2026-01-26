@@ -17,7 +17,7 @@
 
 #ifndef __BGL_VF2_SUB_STATE_H__
 #define __BGL_VF2_SUB_STATE_H__
-//#define RDK_VF2_PRUNING
+// #define RDK_VF2_PRUNING
 #define RDK_ADJ_ITER typename Graph::adjacency_iterator
 
 namespace boost {
@@ -36,12 +36,11 @@ inline size_t out_degree(vertex_descriptor v, const ROMol &g) {
 inline std::pair<edge_descriptor, bool> edge(vertex_descriptor v1,
                                              vertex_descriptor v2,
                                              const ROMol &g) {
-  try {
-    auto bond = g.getBondBetweenAtoms(v1, v2);
-    CHECK_INVARIANT(bond, "This may not be expected");
+  auto bond = g.getBondBetweenAtoms(v1, v2);
+  if (bond) {
     return std::make_pair(edge_descriptor(bond->getIdx()), true);
 
-  } catch (const Invar::Invariant &) {
+  } else {
     return std::make_pair(edge_descriptor(0), false);
   }
 }
@@ -663,9 +662,7 @@ bool match(node_id c1[], node_id c2[], SubState &s,
   return !res.empty();
 }
 
-
 };  // end of namespace detail
-
 
 template <
     class Graph, class VertexLabeling  // binary predicate
@@ -682,7 +679,6 @@ template <
 bool vf2(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
          EdgeLabeling &edge_labeling, MatchChecking &match_checking,
          BackInsertionSequence &F) {
-
   detail::VF2SubState<const Graph, VertexLabeling, EdgeLabeling, MatchChecking>
       s0(&g1, &g2, vertex_labeling, edge_labeling, match_checking, false);
   detail::node_id *ni1 = new detail::node_id[num_vertices(g1)];
@@ -701,7 +697,6 @@ bool vf2(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
   delete[] ni2;
   return !F.empty();
 };
-
 
 template <class Graph, class VertexLabeling  // binary predicate
           ,
@@ -732,4 +727,4 @@ bool vf2_all(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
 #undef RDK_VF2_PRUNING
 #undef RDK_ADJ_ITER
 
-#endif // __BGL_VF2_SUB_STATE_H__
+#endif  // __BGL_VF2_SUB_STATE_H__

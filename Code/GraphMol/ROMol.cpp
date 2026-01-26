@@ -40,32 +40,36 @@ ROMol::ROMol() : d_ownedBySelf(true) {
   // compat data initialization depends on d_ownedBySelf.
   dp_mol = new RDKit::RDMol(this);
 }
-ROMol::ROMol(const ROMol &other, bool quickCopy , int confId) {
+ROMol::ROMol(const ROMol &other, bool quickCopy, int confId) {
   // Self ownership must be set before dp_mol is created.
   d_ownedBySelf = true;
   dp_mol = new RDKit::RDMol(*other.dp_mol, quickCopy, confId, this);
 }
 ROMol::ROMol(const std::string &pickle) : ROMol() {
   MolPickler::molFromPickle(pickle, *this);
-  // Ensure property cache (including implicit valence) is updated after unpickling
-  // Wrap in try-catch since some molecules (e.g., with query atoms) may not support this
+  // Ensure property cache (including implicit valence) is updated after
+  // unpickling Wrap in try-catch since some molecules (e.g., with query atoms)
+  // may not support this
   try {
     updatePropertyCache(false);
   } catch (...) {
-    BOOST_LOG(rdWarningLog) << "Could not update property cache after unpickling" << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "Could not update property cache after unpickling" << std::endl;
   }
 }
 ROMol::ROMol(const std::string &pickle, unsigned int propertyFlags) : ROMol() {
   MolPickler::molFromPickle(pickle, *this, propertyFlags);
-  // Ensure property cache (including implicit valence) is updated after unpickling
-  // Wrap in try-catch since some molecules (e.g., with query atoms) may not support this
+  // Ensure property cache (including implicit valence) is updated after
+  // unpickling Wrap in try-catch since some molecules (e.g., with query atoms)
+  // may not support this
   try {
     updatePropertyCache(false);
   } catch (...) {
-    BOOST_LOG(rdWarningLog) << "Could not update property cache after unpickling" << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "Could not update property cache after unpickling" << std::endl;
   }
 }
-ROMol::ROMol(ROMol&& other) noexcept{
+ROMol::ROMol(ROMol &&other) noexcept {
   dp_mol = other.dp_mol;
   d_ownedBySelf = true;
   if (other.d_ownedBySelf) {
@@ -93,7 +97,8 @@ ROMol &ROMol::operator=(ROMol &&other) noexcept {
     // mol.asROMol() = std::move(inputROMol);
     // in which case, this can't own the RDMol, so dp_mol must stay
     // the same and d_ownedBySelf must stay the same as before.
-    // To avoid dp_mol deleting this upon assignment, temporarily release ownership of this.
+    // To avoid dp_mol deleting this upon assignment, temporarily release
+    // ownership of this.
     if (!d_ownedBySelf) {
       dp_mol->releaseCompatMolOwnership();
     }
@@ -112,7 +117,7 @@ ROMol::~ROMol() {
   }
 }
 
-RingInfo* ROMol::getRingInfo() const {
+RingInfo *ROMol::getRingInfo() const {
   auto &ringInfo = dp_mol->getRingInfoCompat();
   return &ringInfo;
 }
@@ -124,17 +129,17 @@ unsigned int ROMol::getNumAtoms(bool onlyExplicit) const {
 unsigned int ROMol::getNumHeavyAtoms() const {
   return dp_mol->getNumHeavyAtoms();
 }
-Atom* ROMol::getAtomWithIdx(unsigned int idx) {
+Atom *ROMol::getAtomWithIdx(unsigned int idx) {
   PRECONDITION(getNumAtoms() > 0, "no atoms");
   URANGE_CHECK(idx, getNumAtoms());
   return dp_mol->getAtomCompat(idx);
 }
-const Atom* ROMol::getAtomWithIdx(unsigned int idx) const {
+const Atom *ROMol::getAtomWithIdx(unsigned int idx) const {
   PRECONDITION(getNumAtoms() > 0, "no atoms");
   URANGE_CHECK(idx, getNumAtoms());
   return dp_mol->getAtomCompat(idx);
 }
-unsigned int ROMol::getAtomDegree(const Atom* at) const {
+unsigned int ROMol::getAtomDegree(const Atom *at) const {
   PRECONDITION(at, "no atom");
   PRECONDITION(at->hasOwningMol(), "atom not associated with a molecule");
   PRECONDITION(&at->getOwningMol() == this,
@@ -144,17 +149,17 @@ unsigned int ROMol::getAtomDegree(const Atom* at) const {
 unsigned int ROMol::getNumBonds(bool onlyHeavy) const {
   return dp_mol->getNumBonds(onlyHeavy);
 }
-Bond* ROMol::getBondWithIdx(unsigned int idx) {
+Bond *ROMol::getBondWithIdx(unsigned int idx) {
   PRECONDITION(getNumBonds() > 0, "no bonds");
   URANGE_CHECK(idx, getNumBonds());
   return dp_mol->getBondCompat(idx);
 }
-const Bond* ROMol::getBondWithIdx(unsigned int idx) const {
+const Bond *ROMol::getBondWithIdx(unsigned int idx) const {
   PRECONDITION(getNumBonds() > 0, "no bonds");
   URANGE_CHECK(idx, getNumBonds());
   return dp_mol->getBondCompat(idx);
 }
-Bond* ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
+Bond *ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
   URANGE_CHECK(idx1, getNumAtoms());
   URANGE_CHECK(idx2, getNumAtoms());
   const uint32_t bondIndex = dp_mol->getBondIndexBetweenAtoms(idx1, idx2);
@@ -162,7 +167,8 @@ Bond* ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
              ? nullptr
              : getBondWithIdx(bondIndex);
 }
-const Bond* ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) const {
+const Bond *ROMol::getBondBetweenAtoms(unsigned int idx1,
+                                       unsigned int idx2) const {
   URANGE_CHECK(idx1, getNumAtoms());
   URANGE_CHECK(idx2, getNumAtoms());
   const uint32_t bondIndex = dp_mol->getBondIndexBetweenAtoms(idx1, idx2);
@@ -170,12 +176,12 @@ const Bond* ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) con
              ? nullptr
              : getBondWithIdx(bondIndex);
 }
-ROMol::ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom const* at) const {
+ROMol::ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom const *at) const {
   PRECONDITION(at, "no atom");
   auto [beginNeighbors, endNeighbors] = dp_mol->getAtomNeighbors(at->getIdx());
   return ADJ_ITER_PAIR{ADJ_ITER{beginNeighbors}, ADJ_ITER{endNeighbors}};
 }
-ROMol::OBOND_ITER_PAIR ROMol::getAtomBonds(Atom const* at) const {
+ROMol::OBOND_ITER_PAIR ROMol::getAtomBonds(Atom const *at) const {
   PRECONDITION(at, "no atom");
   auto [beginBonds, endBonds] = dp_mol->getAtomBonds(at->getIdx());
   return OBOND_ITER_PAIR{OEDGE_ITER{beginBonds}, OEDGE_ITER{endBonds}};
@@ -244,11 +250,11 @@ bool ROMol::hasQuery() const {
   return false;
 }
 
-ROMol::QueryAtomIterator ROMol::beginQueryAtoms(QueryAtom const* what) {
+ROMol::QueryAtomIterator ROMol::beginQueryAtoms(QueryAtom const *what) {
   return QueryAtomIterator(this, what);
 }
 ROMol::ConstQueryAtomIterator ROMol::beginQueryAtoms(
-    QueryAtom const* what) const {
+    QueryAtom const *what) const {
   return ConstQueryAtomIterator(this, what);
 }
 ROMol::QueryAtomIterator ROMol::endQueryAtoms() {
@@ -257,11 +263,11 @@ ROMol::QueryAtomIterator ROMol::endQueryAtoms() {
 ROMol::ConstQueryAtomIterator ROMol::endQueryAtoms() const {
   return ConstQueryAtomIterator(this, getNumAtoms());
 }
-ROMol::MatchingAtomIterator ROMol::beginMatchingAtoms(bool (*what)(Atom*)) {
+ROMol::MatchingAtomIterator ROMol::beginMatchingAtoms(bool (*what)(Atom *)) {
   return MatchingAtomIterator(this, what);
 }
 ROMol::ConstMatchingAtomIterator ROMol::beginMatchingAtoms(
-    bool (*what)(const Atom*)) const {
+    bool (*what)(const Atom *)) const {
   return ConstMatchingAtomIterator(this, what);
 }
 ROMol::MatchingAtomIterator ROMol::endMatchingAtoms() {
@@ -300,9 +306,7 @@ void ROMol::updatePropertyCache(bool strict) {
   dp_mol->updatePropertyCache(strict);
 }
 
-void ROMol::clearPropertyCache() {
-  dp_mol->clearPropertyCache();
-}
+void ROMol::clearPropertyCache() { dp_mol->clearPropertyCache(); }
 
 const std::vector<StereoGroup> &ROMol::getStereoGroups() const {
   return dp_mol->getStereoGroupsCompat();
@@ -415,8 +419,8 @@ void ROMol::updateProps(const RDKit::ROMol &source, bool preserveExisting) {
     dp_mol->clearProps();
   }
 
-  for (const RDMol::Property &prop : source.asRDMol().properties) {
-    if (prop.scope() == RDMol::Scope::MOL) {
+  for (const RDProperties::Property &prop : source.asRDMol().properties) {
+    if (prop.scope() == RDProperties::Scope::MOL) {
       dp_mol->copyProp(prop.name(), source.asRDMol(), prop.name());
     }
   }
@@ -445,9 +449,9 @@ void ROMol::updateProps(const RDProps &source, bool preserveExisting) {
   }
 }
 
-void ROMol::clear(){dp_mol->clearProps();}
+void ROMol::clear() { dp_mol->clearProps(); }
 
-void ROMol::debugMol(std::ostream& str) const {
+void ROMol::debugMol(std::ostream &str) const {
   str << "Atoms:" << std::endl;
   for (const auto atom : atoms()) {
     str << "\t" << *atom << std::endl;
@@ -509,7 +513,7 @@ void ROMol::replaceAtomBookmark(Atom *at, int mark) {
   marks.clear();
   marks.push_back(at);
 }
-Atom * ROMol::getAtomWithBookmark(int mark) {
+Atom *ROMol::getAtomWithBookmark(int mark) {
   auto *allMarks = dp_mol->getAtomBookmarksCompat();
   PRECONDITION(allMarks != nullptr, "null atom bookmarks map");
   auto it = allMarks->find(mark);
@@ -519,16 +523,14 @@ Atom * ROMol::getAtomWithBookmark(int mark) {
   return marks.front();
 }
 
-Atom * ROMol::getUniqueAtomWithBookmark(int mark) {
+Atom *ROMol::getUniqueAtomWithBookmark(int mark) {
   return getAtomWithBookmark(mark);
 }
 
-ROMol::ATOM_PTR_LIST & ROMol::getAllAtomsWithBookmark(int mark) {
+ROMol::ATOM_PTR_LIST &ROMol::getAllAtomsWithBookmark(int mark) {
   return dp_mol->getAtomBookmarksCompat(mark);
 }
-void ROMol::clearAtomBookmark(int mark) {
-  dp_mol->clearAtomBookmark(mark);
-}
+void ROMol::clearAtomBookmark(int mark) { dp_mol->clearAtomBookmark(mark); }
 void ROMol::clearAtomBookmark(int mark, const Atom *at) {
   // The atom may not be added to its owning molecule yet if it's an isolated
   // atom, but the ROMol still needs to be able to store a bookmark for it,
@@ -552,9 +554,7 @@ void ROMol::clearAtomBookmark(int mark, const Atom *at) {
   }
 }
 
-void ROMol::clearAllAtomBookmarks() {
-  dp_mol->clearAllAtomBookmarks();
-}
+void ROMol::clearAllAtomBookmarks() { dp_mol->clearAllAtomBookmarks(); }
 
 bool ROMol::hasAtomBookmark(int mark) const {
   return dp_mol->hasAtomBookmark(mark);
@@ -580,7 +580,7 @@ void ROMol::setBondBookmark(Bond *bond, int mark) {
   auto &marks = (*dp_mol->getBondBookmarksCompat())[mark];
   marks.push_back(bond);
 }
-Bond * ROMol::getBondWithBookmark(int mark) {
+Bond *ROMol::getBondWithBookmark(int mark) {
   auto *allMarks = dp_mol->getBondBookmarksCompat();
   PRECONDITION(allMarks != nullptr, "null bond bookmarks map");
   auto it = allMarks->find(mark);
@@ -590,15 +590,13 @@ Bond * ROMol::getBondWithBookmark(int mark) {
   return marks.front();
 }
 
-Bond * ROMol::getUniqueBondWithBookmark(int mark) {
+Bond *ROMol::getUniqueBondWithBookmark(int mark) {
   return getBondWithBookmark(mark);
 }
-ROMol::BOND_PTR_LIST & ROMol::getAllBondsWithBookmark(int mark) {
+ROMol::BOND_PTR_LIST &ROMol::getAllBondsWithBookmark(int mark) {
   return dp_mol->getBondBookmarksCompat(mark);
 }
-void ROMol::clearBondBookmark(int mark) {
-  dp_mol->clearBondBookmark(mark);
-}
+void ROMol::clearBondBookmark(int mark) { dp_mol->clearBondBookmark(mark); }
 void ROMol::clearBondBookmark(int mark, const Bond *bond) {
   // The bond may not be added to its owning molecule yet if it's an isolated
   // bond, but the ROMol still needs to be able to store a bookmark for it,
@@ -621,19 +619,16 @@ void ROMol::clearBondBookmark(int mark, const Bond *bond) {
     }
   }
 }
-void ROMol::clearAllBondBookmarks() {
-  dp_mol->clearAllBondBookmarks();
-}
+void ROMol::clearAllBondBookmarks() { dp_mol->clearAllBondBookmarks(); }
 bool ROMol::hasBondBookmark(int mark) const {
   return dp_mol->hasBondBookmark(mark);
 }
-ROMol::BOND_BOOKMARK_MAP * ROMol::getBondBookmarks() {
+ROMol::BOND_BOOKMARK_MAP *ROMol::getBondBookmarks() {
   return dp_mol->getBondBookmarksCompat();
 }
 
-
-const Conformer& ROMol::getConformer(int id) const {
-  const auto& confs = dp_mol->getConformersCompat();
+const Conformer &ROMol::getConformer(int id) const {
+  const auto &confs = dp_mol->getConformersCompat();
   if (confs.size() == 0) {
     throw ConformerException("No conformations available on the molecule");
   }
@@ -642,7 +637,7 @@ const Conformer& ROMol::getConformer(int id) const {
     return *(confs.front());
   }
   auto cid = (unsigned int)id;
-  for (auto& conf : confs) {
+  for (auto &conf : confs) {
     if (conf->getId() == cid) {
       return *conf;
     }
@@ -653,8 +648,8 @@ const Conformer& ROMol::getConformer(int id) const {
   throw ConformerException(mesg);
 }
 
-Conformer& ROMol::getConformer(int id) {
-  auto& confs = dp_mol->getConformersCompat();
+Conformer &ROMol::getConformer(int id) {
+  auto &confs = dp_mol->getConformersCompat();
   if (confs.size() == 0) {
     throw ConformerException("No conformations available on the molecule");
   }
@@ -663,7 +658,7 @@ Conformer& ROMol::getConformer(int id) {
     return *(confs.front());
   }
   auto cid = (unsigned int)id;
-  for (auto& conf : confs) {
+  for (auto &conf : confs) {
     if (conf->getId() == cid) {
       return *conf;
     }
@@ -674,22 +669,18 @@ Conformer& ROMol::getConformer(int id) {
   throw ConformerException(mesg);
 }
 
-void ROMol::removeConformer(unsigned int id) {
-  dp_mol->removeConformer(id);
-}
+void ROMol::removeConformer(unsigned int id) { dp_mol->removeConformer(id); }
 
-void ROMol::clearConformers() {
-  dp_mol->clearConformers();
-}
+void ROMol::clearConformers() { dp_mol->clearConformers(); }
 
-unsigned int ROMol::addConformer(Conformer* conf, bool assignId) {
+unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   PRECONDITION(conf, "bad conformer");
   PRECONDITION(conf->getNumAtoms() == this->getNumAtoms(),
                "Number of atom mismatch");
-  auto& confs = dp_mol->getConformersCompat();
+  auto &confs = dp_mol->getConformersCompat();
   int maxId = -1;
   if (assignId) {
-    for (const auto& cptr : confs) {
+    for (const auto &cptr : confs) {
       maxId = std::max((int)(cptr->getId()), maxId);
     }
     maxId++;
@@ -702,7 +693,8 @@ unsigned int ROMol::addConformer(Conformer* conf, bool assignId) {
 
   auto [returnId, confData] = dp_mol->addConformer(maxId, conf->is3D());
   PRECONDITION(int(returnId) == maxId, "Id mismatch");
-  PRECONDITION(getNumAtoms() == 0 || confData != nullptr, "Null conformer positions");
+  PRECONDITION(getNumAtoms() == 0 || confData != nullptr,
+               "Null conformer positions");
 
   // Special case of addConformer - non-const confData means that it marked the
   // conformer as being out of sync after synchronizing the positions, but
@@ -714,11 +706,9 @@ unsigned int ROMol::addConformer(Conformer* conf, bool assignId) {
   return conf->getId();
 }
 
-void ROMol::clearSubstanceGroups() {
-  dp_mol->getSubstanceGroups().clear();
-}
+void ROMol::clearSubstanceGroups() { dp_mol->getSubstanceGroups().clear(); }
 
-unsigned int ROMol::addAtom(Atom* atom, bool updateLabel, bool takeOwnership) {
+unsigned int ROMol::addAtom(Atom *atom, bool updateLabel, bool takeOwnership) {
   PRECONDITION(atom, "NULL atom provided");
   // A test in catch_graphmol.cpp requires that this precondition, copied from
   // replaceAtomPointerCompat, must fail before adding the atom.
@@ -744,7 +734,7 @@ unsigned int ROMol::addAtom(Atom* atom, bool updateLabel, bool takeOwnership) {
   return newAtomIdx;
 }
 
-unsigned int ROMol::addBond(Bond* bond, bool takeOwnership) {
+unsigned int ROMol::addBond(Bond *bond, bool takeOwnership) {
   PRECONDITION(bond, "NULL bond passed in");
   // A test in catch_graphmol.cpp requires that this precondition, copied from
   // replaceBondPointerCompat, must fail before adding the bond.
@@ -754,8 +744,7 @@ unsigned int ROMol::addBond(Bond* bond, bool takeOwnership) {
 
   const uint32_t newBondIdx = getNumBonds();
   // Note that the ROMol version does not do aromaticity updates.
-  dp_mol->addBond(bond->getBeginAtomIdx(),
-                  bond->getEndAtomIdx(),
+  dp_mol->addBond(bond->getBeginAtomIdx(), bond->getEndAtomIdx(),
                   BondEnums::BondType(bond->getBondType()),
                   /*updateAromaticity=*/false);
   getBondWithIdx(newBondIdx)->initFromOther(*bond);
@@ -770,10 +759,9 @@ unsigned int ROMol::addBond(Bond* bond, bool takeOwnership) {
   return getNumBonds();
 }
 
-void ROMol::initFromOther(
-    [[maybe_unused]] const ROMol& other,
-    [[maybe_unused]] bool quickCopy,
-    [[maybe_unused]] int confId) {
+void ROMol::initFromOther([[maybe_unused]] const ROMol &other,
+                          [[maybe_unused]] bool quickCopy,
+                          [[maybe_unused]] int confId) {
   raiseNonImplementedFunction("initFromOther");
 }
 
@@ -797,15 +785,10 @@ template RDKIT_GRAPHMOL_EXPORT void ROMol::save<boost::archive::text_oarchive>(
     boost::archive::text_oarchive &, const unsigned int) const;
 template RDKIT_GRAPHMOL_EXPORT void ROMol::load<boost::archive::text_iarchive>(
     boost::archive::text_iarchive &, const unsigned int);
-#endif // RDK_USE_BOOST_SERIALIZATION
+#endif  // RDK_USE_BOOST_SERIALIZATION
 
+uint32_t num_vertices(const ROMol &mol) { return mol.getNumAtoms(); }
 
-uint32_t num_vertices(const ROMol& mol) {
-  return mol.getNumAtoms();
-}
-
-uint32_t num_edges(const ROMol& mol) {
-  return mol.getNumBonds();
-}
+uint32_t num_edges(const ROMol &mol) { return mol.getNumBonds(); }
 
 }  // namespace RDKit

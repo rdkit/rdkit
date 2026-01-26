@@ -178,19 +178,19 @@ static inline int queryAtomHeavyAtomDegree(Atom const *at) {
   return heavyDegree;
 };
 static inline int queryAtomHCount2(ConstRDMolAtom at) {
-  return at.mol().getTotalNumHs(at.index(), true);
+  return at.mol().getAtomTotalNumHs(at.index(), true);
 };
 static inline int queryAtomHCount(Atom const *at) {
   return at->getTotalNumHs(true);
 };
 static inline int queryAtomImplicitHCount2(ConstRDMolAtom at) {
-  return at.mol().getTotalNumHs(at.index(), false);
+  return at.mol().getAtomTotalNumHs(at.index(), false);
 };
 static inline int queryAtomImplicitHCount(Atom const *at) {
   return at->getTotalNumHs(false);
 };
 static inline int queryAtomHasImplicitH2(ConstRDMolAtom at) {
-  return int(at.mol().getTotalNumHs(at.index(), false) > 0);
+  return int(at.mol().getAtomTotalNumHs(at.index(), false) > 0);
 };
 static inline int queryAtomHasImplicitH(Atom const *at) {
   return int(at->getTotalNumHs(false) > 0);
@@ -1988,15 +1988,18 @@ inline bool hasComplexBondTypeQuery(const Bond &bond) {
   }
   return hasComplexBondTypeQuery(*bond.getQuery());
 }
-inline bool hasComplexBondTypeQuery(ConstRDMolBond bond) {
-  auto *query = bond.mol().getBondQuery(bond.index());
+inline bool hasComplexBondTypeQuery(const RDMol::QUERYBOND_QUERY *query) {
   if (query == nullptr) {
     return false;
   }
   return hasComplexBondTypeQuery(*query);
 }
+inline bool hasComplexBondTypeQuery(ConstRDMolBond &bond) {
+  return hasComplexBondTypeQuery(bond.mol().getBondQuery(bond.index()));
+}
 
 RDKIT_GRAPHMOL_EXPORT bool isMetal(const Atom &atom);
+RDKIT_GRAPHMOL_EXPORT bool isMetal(const ConstRDMolAtom &atom);
 }  // namespace QueryOps
 }  // namespace RDKit
 #endif

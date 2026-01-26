@@ -79,7 +79,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
  public:
   // FIX: grn...
   typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
-  //typedef Queries::Query<int, ConstRDMolBond, true> QUERYBOND_QUERY;
+  // typedef Queries::Query<int, ConstRDMolBond, true> QUERYBOND_QUERY;
 
   //! the type of Bond
   enum BondType {
@@ -125,8 +125,8 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
 
   //! the nature of the bond's stereochem (for cis/trans)
   enum BondStereo {  // stereochemistry of double bonds
-    STEREONONE = BondEnums::BondStereo::STEREONONE,         // no special style
-    STEREOANY = BondEnums::BondStereo::STEREOANY,           // intentionally unspecified
+    STEREONONE = BondEnums::BondStereo::STEREONONE,  // no special style
+    STEREOANY = BondEnums::BondStereo::STEREOANY,  // intentionally unspecified
     // -- Put any true specifications about this point so
     // that we can do comparisons like if(bond->getStereo()>Bond::STEREOANY)
     STEREOZ = BondEnums::BondStereo::STEREOZ,               // Z double bond
@@ -177,15 +177,11 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
  protected:
   //! returns a reference to the RDMol that contains the data for this bond,
   //! for internal use only
-  const RDMol &getDataRDMol() const {
-    return *dp_dataMol;
-  }
+  const RDMol &getDataRDMol() const { return *dp_dataMol; }
   //! overload
-  RDMol &getDataRDMol() {
-    return *dp_dataMol;
-  }
- public:
+  RDMol &getDataRDMol() { return *dp_dataMol; }
 
+ public:
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
   //! \overload
@@ -204,7 +200,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
       - this makes no sense if we do not have an owning molecule
       - the index should be <tt>< this->getOwningMol()->getNumBonds()</tt>
   */
-  void setIdx(unsigned int index) {d_index = index;}
+  void setIdx(unsigned int index) { d_index = index; }
 
   //! returns our \c bondType
   BondType getBondType() const;
@@ -408,7 +404,8 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
     // Continue support for mixed-type cases like:
     // bond0->setProp("a", 1.7); bond1->setProp("a", 123);
     // If there is a type mismatch, this option will convert to RDValue
-    dp_dataMol->setSingleBondProp(PropToken(key), getIdx(), val, computed, true);
+    dp_dataMol->setSingleBondProp(PropToken(key), getIdx(), val, computed,
+                                  true);
   }
   void setProp(const std::string_view &key, const char *val,
                bool computed = false) const {
@@ -439,7 +436,8 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
-        dp_dataMol->getComputedPropList(res, RDMol::Scope::BOND, getIdx());
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::BOND,
+                                        getIdx());
         return;
       }
     }
@@ -456,7 +454,8 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
         STR_VECT res;
-        dp_dataMol->getComputedPropList(res, RDMol::Scope::BOND, getIdx());
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::BOND,
+                                        getIdx());
         return res;
       }
     }
@@ -471,7 +470,8 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
     PropToken token(key);
     if constexpr (std::is_same_v<T, STR_VECT>) {
       if (token == detail::computedPropNameToken) {
-        dp_dataMol->getComputedPropList(res, RDMol::Scope::BOND, getIdx());
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::BOND,
+                                        getIdx());
         return true;
       }
     }
@@ -514,19 +514,18 @@ class RDKIT_GRAPHMOL_EXPORT Bond {
     \param preserve  Existing If true keep existing data, else override from
     the source
   */
-  void updateProps(const Bond& source, bool preserveExisting = false);
-  void updateProps(const RDProps& source, bool preserveExisting = false);
+  void updateProps(const Bond &source, bool preserveExisting = false);
+  void updateProps(const RDProps &source, bool preserveExisting = false);
 
   //! Clears all properties of this Bond, but leaves everything else
   void clear();
-  [[noreturn]] Dict &getDict() {
-    raiseNonImplementedFunction("GetDict");
-  }
+  [[noreturn]] Dict &getDict() { raiseNonImplementedFunction("GetDict"); }
   [[noreturn]] const Dict &getDict() const {
     raiseNonImplementedFunction("GetDict");
   }
+
  private:
-  void initFromOther(const Bond& other, bool preserveProps = false);
+  void initFromOther(const Bond &other, bool preserveProps = false);
 };
 
 inline bool isDative(BondEnums::BondType bt) {
@@ -543,8 +542,7 @@ inline bool isDative(const Bond &bond) {
 
 inline bool canSetDoubleBondStereo(BondEnums::BondType bondType) {
   return (bondType == BondEnums::BondType::SINGLE ||
-          bondType == BondEnums::BondType::AROMATIC ||
-          isDative(bondType));
+          bondType == BondEnums::BondType::AROMATIC || isDative(bondType));
 }
 
 inline bool canSetDoubleBondStereo(const Bond &bond) {

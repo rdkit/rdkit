@@ -29,7 +29,9 @@
 
 #include <RDGeneral/BoostStartInclude.h>
 #define BOOST_JSON_NO_LIB
+#ifndef BOOST_CONTAINER_NO_LIB
 #define BOOST_CONTAINER_NO_LIB
+#endif
 #include <boost/json.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 

@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2025 NVIDIA Corporation & Affiliates and other RDKit contributors
+//  Copyright (C) 2025 NVIDIA Corporation & Affiliates and other RDKit
+//  contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -163,7 +164,7 @@ TEST_CASE("RDMol Constructors") {
     CHECK(mol2.getNumBonds() == 3);
 
     CHECK(mol2.getNumConformers() == 1);
-    const double* confPos = mol2.getConformerPositions(5);
+    const double *confPos = mol2.getConformerPositions(5);
     REQUIRE(confPos != nullptr);
     CHECK(confPos[0] == 2.0);
     CHECK(confPos[11] == 2.0);
@@ -228,7 +229,7 @@ TEST_CASE("RDMol Constructors") {
   }
 
   SECTION("Copy constructor with compat data copies back") {
-    auto& romol = mol.asROMol();
+    auto &romol = mol.asROMol();
     romol.setAtomBookmark(romol.getAtomWithIdx(1), 5);
     romol.setBondBookmark(romol.getBondWithIdx(2), 6);
     romol.getBondWithIdx(2)->setStereoAtoms(1, 2);
@@ -239,7 +240,7 @@ TEST_CASE("RDMol Constructors") {
     CHECK(mol2.getAtomWithBookmark(5) == 1);
     CHECK(mol2.getBondWithBookmark(6) == 2);
 
-    const auto* stereoAtoms = mol2.getBondStereoAtoms(2);
+    const auto *stereoAtoms = mol2.getBondStereoAtoms(2);
     REQUIRE(stereoAtoms != nullptr);
     CHECK(stereoAtoms[0] == 1);
     CHECK(stereoAtoms[1] == 2);
@@ -653,7 +654,6 @@ TEST_CASE("RDMol Atom/bond properties") {
     CHECK(bondRes == 5.0f);
   }
 
-
   SECTION("Overrides existing prop of different type") {
     mol.addBondProp(floatToken, 3.0f);
     mol.addAtomProp(floatToken, 4.0f);
@@ -731,15 +731,19 @@ TEST_CASE("RDMol Atom/bond properties") {
   }
 }
 
-static  PropToken testToken("test");
+static PropToken testToken("test");
 
-template<typename initT, typename resT> void checkCast(RDMol& mol) {
-  std::string message = "Testing with type: " + std::string(typeid(initT).name()) + "->" + std::string(typeid(resT).name());
+template <typename initT, typename resT>
+void checkCast(RDMol &mol) {
+  std::string message =
+      "Testing with type: " + std::string(typeid(initT).name()) + "->" +
+      std::string(typeid(resT).name());
   INFO(message);
 
   // Check basic positive, negative, and overflow values
-  constexpr std::array<int64_t, 3> testVals = {5, -10, int64_t (std::numeric_limits<int>::max()) + 1};
-  for (auto& testVal: testVals) {
+  constexpr std::array<int64_t, 3> testVals = {
+      5, -10, int64_t(std::numeric_limits<int>::max()) + 1};
+  for (auto &testVal : testVals) {
     auto typedVal = initT(testVal);
     mol.clearAtomPropIfPresent(testToken);
     mol.addAtomProp<initT>(testToken, typedVal);
@@ -772,9 +776,8 @@ template<typename initT, typename resT> void checkCast(RDMol& mol) {
   }
 }
 
-TEMPLATE_TEST_CASE("Property default type conversions", "",
-                   bool, char, int16_t, int, unsigned int, int64_t, uint64_t, float,
-                   double) {
+TEMPLATE_TEST_CASE("Property default type conversions", "", bool, char, int16_t,
+                   int, unsigned int, int64_t, uint64_t, float, double) {
   RDMol mol;
   RDKit::SmilesParseTemp temp;
   static const char *basicSmiles = "CCCC";
@@ -786,33 +789,15 @@ TEMPLATE_TEST_CASE("Property default type conversions", "",
   REQUIRE(RDKit::SmilesToMol(basicSmiles, params, mol, temp) == true);
   REQUIRE(mol.getNumAtoms() == 4);
   REQUIRE(mol.getNumBonds() == 3);
-  SECTION("Cast to char") {
-    checkCast<TestType, char>(mol);
-  }
-  SECTION("Cast to bool") {
-    checkCast<TestType, bool>(mol);
-  }
-  SECTION("Cast to int16") {
-    checkCast<TestType, int16_t>(mol);
-  }
-  SECTION("Cast to int") {
-    checkCast<TestType, int>(mol);
-  }
-  SECTION("Cast to unsigned int") {
-    checkCast<TestType, unsigned int>(mol);
-  }
-  SECTION("Cast to int64_t") {
-    checkCast<TestType, int64_t>(mol);
-  }
-  SECTION("Cast to uint64_t") {
-    checkCast<TestType, uint64_t>(mol);
-  }
-  SECTION("Cast to float") {
-    checkCast<TestType, float>(mol);
-  }
-  SECTION("Cast to double") {
-    checkCast<TestType, double>(mol);
-  }
+  SECTION("Cast to char") { checkCast<TestType, char>(mol); }
+  SECTION("Cast to bool") { checkCast<TestType, bool>(mol); }
+  SECTION("Cast to int16") { checkCast<TestType, int16_t>(mol); }
+  SECTION("Cast to int") { checkCast<TestType, int>(mol); }
+  SECTION("Cast to unsigned int") { checkCast<TestType, unsigned int>(mol); }
+  SECTION("Cast to int64_t") { checkCast<TestType, int64_t>(mol); }
+  SECTION("Cast to uint64_t") { checkCast<TestType, uint64_t>(mol); }
+  SECTION("Cast to float") { checkCast<TestType, float>(mol); }
+  SECTION("Cast to double") { checkCast<TestType, double>(mol); }
 }
 
 TEST_CASE("Bond stereo atoms") {
@@ -828,7 +813,7 @@ TEST_CASE("Bond stereo atoms") {
     CHECK(mol.hasBondStereoAtoms(1));
 
     CHECK(!mol.hasBondStereoAtoms(2));
-    auto* stereoAtoms2 = mol.getBondStereoAtoms(2);
+    auto *stereoAtoms2 = mol.getBondStereoAtoms(2);
     CHECK(stereoAtoms2 != nullptr);
     CHECK(stereoAtoms2[0] == atomindex_t(-1));
   }
@@ -844,7 +829,7 @@ TEST_CASE("Bond stereo atoms") {
   }
 
   SECTION("Get, populated from ROMol API") {
-    ROMol& romol = mol.asROMol();
+    ROMol &romol = mol.asROMol();
     romol.getBondWithIdx(1)->setStereoAtoms(0, 3);
     const auto *stereoAtoms = mol.getBondStereoAtoms(1);
     REQUIRE(stereoAtoms != nullptr);
@@ -853,17 +838,16 @@ TEST_CASE("Bond stereo atoms") {
     CHECK(mol.hasBondStereoAtoms(1));
 
     CHECK(!mol.hasBondStereoAtoms(2));
-    auto* stereoAtoms2 = mol.getBondStereoAtoms(2);
+    auto *stereoAtoms2 = mol.getBondStereoAtoms(2);
     CHECK(stereoAtoms2 != nullptr);
     CHECK(stereoAtoms2[0] == atomindex_t(-1));
   }
 }
 
-
 TEST_CASE("RDMol add atom") {
   RDMol mol;
   RDKit::SmilesParseTemp temp;
-  static const char* basicSmiles = "CNPO";
+  static const char *basicSmiles = "CNPO";
   SmilesParserParams params;
   params.sanitize = false;
   params.removeHs = false;
@@ -873,7 +857,8 @@ TEST_CASE("RDMol add atom") {
   REQUIRE(mol.getNumBonds() == 3);
 
   mol.setSingleAtomProp(signedIntToken, 1, 3);
-  mol.setSingleBondProp(signedIntToken, 1, 4); // Checking filter out of non-atom props
+  mol.setSingleBondProp(signedIntToken, 1,
+                        4);  // Checking filter out of non-atom props
   REQUIRE(mol.hasAtomProp(signedIntToken, 1));
 
   std::vector<double> conf1(3 * mol.getNumAtoms(), 1.0);
@@ -881,19 +866,19 @@ TEST_CASE("RDMol add atom") {
   mol.addConformer(conf1.data());
   mol.addConformer(conf2.data());
 
-  AtomData& newAtom = mol.addAtom();
+  AtomData &newAtom = mol.addAtom();
   SECTION("Default values and set") {
     CHECK(mol.getNumAtoms() == 5);
     CHECK(mol.getNumBonds() == 3);
     CHECK(newAtom.getAtomicNum() == 0);
     newAtom.setAtomicNum(6);
 
-    AtomData& secondHandle = mol.getAtom(4);
+    AtomData &secondHandle = mol.getAtom(4);
     CHECK(secondHandle.getAtomicNum() == 6);
 
-    const double* confPos = mol.getConformerPositions(0);
+    const double *confPos = mol.getConformerPositions(0);
     REQUIRE(confPos != nullptr);
-    const double* confPos2 = mol.getConformerPositions(1);
+    const double *confPos2 = mol.getConformerPositions(1);
     REQUIRE(confPos2 != nullptr);
     for (size_t i = 0; i < 12; i++) {
       CHECK(confPos[i] == 1.0);
@@ -912,12 +897,12 @@ TEST_CASE("RDMol add atom") {
     mol.setSingleAtomProp(signedIntToken, 4, 5);
     CHECK(mol.hasAtomProp(signedIntToken, 4));
   }
-
 }
 
-std::vector<uint32_t> iteratorToIndexVector(const std::pair<const uint32_t*, const uint32_t*>& iter) {
+std::vector<uint32_t> iteratorToIndexVector(
+    const std::pair<const uint32_t *, const uint32_t *> &iter) {
   std::vector<uint32_t> res;
-  for (const uint32_t* idx = iter.first; idx != iter.second; idx++) {
+  for (const uint32_t *idx = iter.first; idx != iter.second; idx++) {
     res.push_back(*idx);
   }
   return res;
@@ -925,24 +910,26 @@ std::vector<uint32_t> iteratorToIndexVector(const std::pair<const uint32_t*, con
 
 TEST_CASE("Add Bond") {
   auto molPtr = basicMol();
-  RDMol& mol = *molPtr;
+  RDMol &mol = *molPtr;
 
   SECTION("Bond to self throws") {
-    CHECK_THROWS_AS(mol.addBond(1, 1, BondEnums::BondType::SINGLE), Invar::Invariant);
+    CHECK_THROWS_AS(mol.addBond(1, 1, BondEnums::BondType::SINGLE),
+                    Invar::Invariant);
   }
 
   SECTION("Bond to out of bounds throws") {
-    CHECK_THROWS_AS(mol.addBond(1, 5, BondEnums::BondType::SINGLE), Invar::Invariant);
+    CHECK_THROWS_AS(mol.addBond(1, 5, BondEnums::BondType::SINGLE),
+                    Invar::Invariant);
   }
 
   SECTION("Basic set") {
-    BondData& newBond =  mol.addBond(1, 3, BondEnums::BondType::DOUBLE);
+    BondData &newBond = mol.addBond(1, 3, BondEnums::BondType::DOUBLE);
     CHECK(mol.getNumBonds() == 4);
     CHECK(!newBond.getIsAromatic());
     CHECK(newBond.getBondType() == BondEnums::BondType::DOUBLE);
     newBond.setBondDir(BondEnums::BondDir::ENDUPRIGHT);
 
-    BondData& sameBondNewRef = mol.getBond(3);
+    BondData &sameBondNewRef = mol.getBond(3);
     CHECK(sameBondNewRef.getBondDir() == BondEnums::BondDir::ENDUPRIGHT);
   }
 
@@ -953,13 +940,19 @@ TEST_CASE("Add Bond") {
     auto atom2BondIterator = mol.getAtomBonds(2);
     auto atom3BondIterator = mol.getAtomBonds(3);
 
-    std::vector<uint32_t> atom1BondIdxs = iteratorToIndexVector(atom1BondIterator);
-    std::vector<uint32_t> atom2BondIdxs = iteratorToIndexVector(atom2BondIterator);
-    std::vector<uint32_t> atom3BondIdxs = iteratorToIndexVector(atom3BondIterator);
+    std::vector<uint32_t> atom1BondIdxs =
+        iteratorToIndexVector(atom1BondIterator);
+    std::vector<uint32_t> atom2BondIdxs =
+        iteratorToIndexVector(atom2BondIterator);
+    std::vector<uint32_t> atom3BondIdxs =
+        iteratorToIndexVector(atom3BondIterator);
 
-    CHECK_THAT(atom1BondIdxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{0, 1, 3}));
-    CHECK_THAT(atom2BondIdxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1, 2}));
-    CHECK_THAT(atom3BondIdxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{2, 3}));
+    CHECK_THAT(atom1BondIdxs, Catch::Matchers::UnorderedEquals(
+                                  std::vector<uint32_t>{0, 1, 3}));
+    CHECK_THAT(atom2BondIdxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1, 2}));
+    CHECK_THAT(atom3BondIdxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{2, 3}));
 
     auto neighbors1 = mol.getAtomNeighbors(1);
     auto neighbors2 = mol.getAtomNeighbors(2);
@@ -969,13 +962,16 @@ TEST_CASE("Add Bond") {
     std::vector<uint32_t> neighbors2Idxs = iteratorToIndexVector(neighbors2);
     std::vector<uint32_t> neighbors3Idxs = iteratorToIndexVector(neighbors3);
 
-    CHECK_THAT(neighbors1Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{0, 2, 3}));
-    CHECK_THAT(neighbors2Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1, 3}));
-    CHECK_THAT(neighbors3Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1, 2}));
+    CHECK_THAT(neighbors1Idxs, Catch::Matchers::UnorderedEquals(
+                                   std::vector<uint32_t>{0, 2, 3}));
+    CHECK_THAT(neighbors2Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1, 3}));
+    CHECK_THAT(neighbors3Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1, 2}));
   }
 
   SECTION("Set reverse order") {
-    BondData& newBond =  mol.addBond(3, 1, BondEnums::BondType::DOUBLE);
+    BondData &newBond = mol.addBond(3, 1, BondEnums::BondType::DOUBLE);
     CHECK(mol.getNumBonds() == 4);
     CHECK(!newBond.getIsAromatic());
     CHECK(newBond.getBondType() == BondEnums::BondType::DOUBLE);
@@ -984,29 +980,30 @@ TEST_CASE("Add Bond") {
   }
 
   SECTION("Set aromatic") {
-    AtomData& atom1 = mol.getAtom(1);
-    AtomData& atom3 = mol.getAtom(3);
+    AtomData &atom1 = mol.getAtom(1);
+    AtomData &atom3 = mol.getAtom(3);
     CHECK(atom1.getIsAromatic() == false);
     CHECK(atom3.getIsAromatic() == false);
-    BondData& newBond =  mol.addBond(1, 3, BondEnums::BondType::AROMATIC);
+    BondData &newBond = mol.addBond(1, 3, BondEnums::BondType::AROMATIC);
     CHECK(newBond.getIsAromatic());
     CHECK(atom1.getIsAromatic());
     CHECK(atom3.getIsAromatic());
   }
 
   SECTION("Set aromatic, noAromaticity") {
-    AtomData& atom1 = mol.getAtom(1);
-    AtomData& atom3 = mol.getAtom(3);
+    AtomData &atom1 = mol.getAtom(1);
+    AtomData &atom3 = mol.getAtom(3);
     CHECK(atom1.getIsAromatic() == false);
     CHECK(atom3.getIsAromatic() == false);
-    BondData& newBond =  mol.addBond(1, 3, BondEnums::BondType::AROMATIC, false);
+    BondData &newBond = mol.addBond(1, 3, BondEnums::BondType::AROMATIC, false);
     CHECK(newBond.getIsAromatic());
     CHECK(!atom1.getIsAromatic());
     CHECK(!atom3.getIsAromatic());
   }
 
   SECTION("Properties") {
-    mol.setSingleAtomProp(signedIntToken, 1, 5); // Checking filtering out of non-bond type props
+    mol.setSingleAtomProp(signedIntToken, 1,
+                          5);  // Checking filtering out of non-bond type props
     mol.setSingleBondProp(signedIntToken, 1, 3);
     mol.setSingleBondProp(signedIntToken, 2, 4);
     mol.setSingleBondProp(complexToken, 0, std::vector<int>({1, 2, 3}));
@@ -1039,7 +1036,7 @@ TEST_CASE("Atom valence") {
   SECTION("Explicit valence set") {
     RDMol mol;
     mol.addAtom().setAtomicNum(6);
-    mol.calcExplicitValence(0, false);
+    mol.calcAtomExplicitValence(0, false);
     CHECK(mol.getAtom(0).getExplicitValence() == 0);
     CHECK_THROWS_AS(mol.getAtom(0).getImplicitValence(), Invar::Invariant);
 
@@ -1049,31 +1046,31 @@ TEST_CASE("Atom valence") {
 
   SECTION("No implicit set") {
     RDMol mol;
-    AtomData& atom = mol.addAtom();
+    AtomData &atom = mol.addAtom();
     atom.setAtomicNum(6);
     atom.setNoImplicit(true);
     CHECK(atom.getImplicitValence() == 0);
 
     // Check that no implicit means no need to update implicit.
     CHECK(atom.needsUpdatePropertyCache());
-    mol.calcExplicitValence(0, false);
+    mol.calcAtomExplicitValence(0, false);
     CHECK(!atom.needsUpdatePropertyCache());
   }
 
   SECTION("Correct after calculation") {
     auto molPtr = basicMol();
-    RDMol& mol = *molPtr;
+    RDMol &mol = *molPtr;
 
-    mol.calcImplicitValence(0, false);
-    mol.calcImplicitValence(1, false);
-    mol.calcImplicitValence(2, false);
-    mol.calcImplicitValence(3, false);
+    mol.calcAtomImplicitValence(0, false);
+    mol.calcAtomImplicitValence(1, false);
+    mol.calcAtomImplicitValence(2, false);
+    mol.calcAtomImplicitValence(3, false);
 
     CHECK(!mol.getAtom(0).needsUpdatePropertyCache());
 
     CHECK(mol.getAtom(0).getExplicitValence() == 1);
     CHECK(mol.getAtom(1).getExplicitValence() == 2);
-    CHECK(mol.getAtom(2).getExplicitValence() == 3); // Double bond to 3
+    CHECK(mol.getAtom(2).getExplicitValence() == 3);  // Double bond to 3
     CHECK(mol.getAtom(3).getExplicitValence() == 2);
 
     CHECK(mol.getAtom(0).getImplicitValence() == 3);
@@ -1085,7 +1082,7 @@ TEST_CASE("Atom valence") {
 
 TEST_CASE("Conformers") {
   auto molPtr = basicMol();
-  RDMol& mol = *molPtr;
+  RDMol &mol = *molPtr;
   const int numDoublesInConf = 3 * mol.getNumAtoms();
 
   std::vector<double> conf0(numDoublesInConf, 1.0);
@@ -1117,13 +1114,13 @@ TEST_CASE("Conformers") {
     CHECK(id2 == 1);
     CHECK(id3 == 2);
 
-    double* res1 = mol.getConformerPositions(id1);
+    double *res1 = mol.getConformerPositions(id1);
     CHECK(res1[0] == 2.0);
     CHECK(res1[numDoublesInConf - 1] == 2.0);
-    double* res2 = mol.getConformerPositions(id2);
+    double *res2 = mol.getConformerPositions(id2);
     CHECK(res2[0] == 1.0);
     CHECK(res2[numDoublesInConf - 1] == 1.0);
-    double* res3 = mol.getConformerPositions(id3);
+    double *res3 = mol.getConformerPositions(id3);
     CHECK(res3[0] == 3.0);
     CHECK(res3[numDoublesInConf - 1] == 3.0);
 
@@ -1135,23 +1132,23 @@ TEST_CASE("Conformers") {
   SECTION("Get default conformer") {
     mol.addConformer(conf1.data());
     mol.addConformer(conf0.data());
-    double* res1 = mol.getConformerPositions();
+    double *res1 = mol.getConformerPositions();
     CHECK(res1[0] == 2.0);
   }
 
   SECTION("Add in order, then add one non3D") {
     uint32_t id1 = mol.addConformer(conf1.data());
     uint32_t id2 = mol.addConformer(conf0.data());
-    uint32_t id3 = mol.addConformer(conf2.data(), -1 , false);
+    uint32_t id3 = mol.addConformer(conf2.data(), -1, false);
 
     CHECK(mol.getNumConformers() == 3);
-    double* res1 = mol.getConformerPositions(id1);
+    double *res1 = mol.getConformerPositions(id1);
     CHECK(res1[0] == 2.0);
     CHECK(res1[numDoublesInConf - 1] == 2.0);
-    double* res2 = mol.getConformerPositions(id2);
+    double *res2 = mol.getConformerPositions(id2);
     CHECK(res2[0] == 1.0);
     CHECK(res2[numDoublesInConf - 1] == 1.0);
-    const double* res3 = mol.getConformerPositions(id3);
+    const double *res3 = mol.getConformerPositions(id3);
     CHECK(res3[0] == 3.0);
     CHECK(res3[numDoublesInConf - 1] == 3.0);
 
@@ -1168,13 +1165,13 @@ TEST_CASE("Conformers") {
     CHECK(id3 == 42);
 
     CHECK(mol.getNumConformers() == 3);
-    double* res1 = mol.getConformerPositions(id1);
+    double *res1 = mol.getConformerPositions(id1);
     CHECK(res1[0] == 2.0);
     CHECK(res1[numDoublesInConf - 1] == 2.0);
-    double* res2 = mol.getConformerPositions(id2);
+    double *res2 = mol.getConformerPositions(id2);
     CHECK(res2[0] == 1.0);
     CHECK(res2[numDoublesInConf - 1] == 1.0);
-    const double* res3 = mol.getConformerPositions(id3);
+    const double *res3 = mol.getConformerPositions(id3);
     CHECK(res3[0] == 3.0);
     CHECK(res3[numDoublesInConf - 1] == 3.0);
 
@@ -1191,13 +1188,13 @@ TEST_CASE("Conformers") {
     CHECK(id1 == 42);
 
     CHECK(mol.getNumConformers() == 3);
-    double* res1 = mol.getConformerPositions(id1);
+    double *res1 = mol.getConformerPositions(id1);
     CHECK(res1[0] == 2.0);
     CHECK(res1[numDoublesInConf - 1] == 2.0);
-    double* res2 = mol.getConformerPositions(id2);
+    double *res2 = mol.getConformerPositions(id2);
     CHECK(res2[0] == 1.0);
     CHECK(res2[numDoublesInConf - 1] == 1.0);
-    const double* res3 = mol.getConformerPositions(id3);
+    const double *res3 = mol.getConformerPositions(id3);
     CHECK(res3[0] == 3.0);
     CHECK(res3[numDoublesInConf - 1] == 3.0);
 
@@ -1226,10 +1223,10 @@ TEST_CASE("Conformers") {
     CHECK(mol.getNumConformers() == 2);
 
     CHECK_THROWS_AS(mol.getConformerPositions(id1), ConformerException);
-    double* res2 = mol.getConformerPositions(id2);
+    double *res2 = mol.getConformerPositions(id2);
     CHECK(res2[0] == 1.0);
     CHECK(res2[numDoublesInConf - 1] == 1.0);
-    double* res3 = mol.getConformerPositions(id3);
+    double *res3 = mol.getConformerPositions(id3);
     CHECK(res3[0] == 3.0);
     CHECK(res3[numDoublesInConf - 1] == 3.0);
 
@@ -1248,10 +1245,10 @@ TEST_CASE("Conformers") {
     CHECK(mol.getNumConformers() == 2);
 
     CHECK_THROWS_AS(mol.getConformerPositions(id1), ConformerException);
-    double* res2 = mol.getConformerPositions(id2);
+    double *res2 = mol.getConformerPositions(id2);
     CHECK(res2[0] == 1.0);
     CHECK(res2[numDoublesInConf - 1] == 1.0);
-    double* res3 = mol.getConformerPositions(id3);
+    double *res3 = mol.getConformerPositions(id3);
     CHECK(res3[0] == 3.0);
     CHECK(res3[numDoublesInConf - 1] == 3.0);
 
@@ -1291,7 +1288,7 @@ TEST_CASE("Conformers") {
     uint32_t id2 = mol.addConformer(conf0.data(), 3, true);
     CHECK(mol.getNumConformers() == 2);
     CHECK(id1 == id2);
-    double* res1 = mol.getConformerPositions(id1);
+    double *res1 = mol.getConformerPositions(id1);
     CHECK(res1[0] == 2.0);
     CHECK(!mol.is3DConformer(id1));
   }
@@ -1299,7 +1296,7 @@ TEST_CASE("Conformers") {
 
 TEST_CASE("Remove bond") {
   auto molPtr = basicMol();
-  RDMol& mol = *molPtr;
+  RDMol &mol = *molPtr;
 
   SECTION("Nullop") {
     mol.removeBond(5);
@@ -1309,7 +1306,7 @@ TEST_CASE("Remove bond") {
   SECTION("Basic remove") {
     int atomIdx1, atomIdx2;
     {
-      BondData& bondToRemove = mol.getBond(1);
+      BondData &bondToRemove = mol.getBond(1);
       atomIdx1 = bondToRemove.getBeginAtomIdx();
       atomIdx2 = bondToRemove.getEndAtomIdx();
     }
@@ -1336,10 +1333,14 @@ TEST_CASE("Remove bond") {
     std::vector<uint32_t> neighbors2Idxs = iteratorToIndexVector(neighbors2);
     std::vector<uint32_t> neighbors3Idxs = iteratorToIndexVector(neighbors3);
 
-    CHECK_THAT(neighbors0Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1}));
-    CHECK_THAT(neighbors1Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{0}));
-    CHECK_THAT(neighbors2Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{3}));
-    CHECK_THAT(neighbors3Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{2}));
+    CHECK_THAT(neighbors0Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1}));
+    CHECK_THAT(neighbors1Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{0}));
+    CHECK_THAT(neighbors2Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{3}));
+    CHECK_THAT(neighbors3Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{2}));
   }
 
   SECTION("Properties") {
@@ -1348,7 +1349,8 @@ TEST_CASE("Remove bond") {
 
     mol.removeBond(1);
 
-    // Check that we shifted down, and index 1 now points to what was previously index 2.
+    // Check that we shifted down, and index 1 now points to what was previously
+    // index 2.
     CHECK(mol.getNumBonds() == 2);
     // This value is never used, but GCC can no longer deduce that it's
     // initialized, and maybe-uninitialized is currently treated as an error.
@@ -1371,7 +1373,7 @@ TEST_CASE("Remove bond") {
     // The bookmark for bond 2 should now be 1.
     CHECK(mol.getBondWithBookmark(0) == 1);
 
-    std::vector<int> res  = mol.getAllBondsWithBookmarks(3);
+    std::vector<int> res = mol.getAllBondsWithBookmarks(3);
     // The previous bond 1 bookmark is gone, but bond 2 shifts to 1 now.
     CHECK(res == std::vector<int>{0, 1});
 
@@ -1381,52 +1383,54 @@ TEST_CASE("Remove bond") {
   }
 
   SECTION("Substance groups") {
-    auto& sgs = mol.getSubstanceGroups();
+    auto &sgs = mol.getSubstanceGroups();
     REQUIRE(sgs.size() == 0);
 
-    ROMol& romol = mol.asROMol();
+    ROMol &romol = mol.asROMol();
 
-    SubstanceGroup& sg = sgs.emplace_back(&romol, "A");
+    SubstanceGroup &sg = sgs.emplace_back(&romol, "A");
     sg.addAtomWithIdx(0);
     sg.addBondWithIdx(1);
     sg.addBondWithIdx(2);
     sg.setProp("index", 0);
-    SubstanceGroup& sg2 = sgs.emplace_back(&romol, "B");
+    SubstanceGroup &sg2 = sgs.emplace_back(&romol, "B");
     sg2.addAtomWithIdx(1);
     sg2.addBondWithIdx(0);
     sg2.setProp("PARENT", 0);
-    SubstanceGroup& sg3 = sgs.emplace_back(&romol, "C");
+    SubstanceGroup &sg3 = sgs.emplace_back(&romol, "C");
     sg3.addAtomWithIdx(2);
     sg3.addBondWithIdx(2);
 
     mol.removeBond(1);
 
     CHECK(sgs.size() == 1);
-    // SG 0 should be removed. Since it is the parent of 1, so is 1. 2 Remains shifted down.
+    // SG 0 should be removed. Since it is the parent of 1, so is 1. 2 Remains
+    // shifted down.
     CHECK(sgs[0].getAtoms() == std::vector<unsigned int>{2});
     CHECK(sgs[0].getBonds() == std::vector<unsigned int>{1});
   }
 }
 
 TEST_CASE("Remove bond with stereo") {
-  //RDKit::SmilesParseTemp temp;
+  // RDKit::SmilesParseTemp temp;
 
   // The middle bond is trans, so the stereo atoms are 0 and 3, on the far ends
-  // of the double bond respectively. The other 2 ends of the 4 bonds that determine
-  // the cis/trans stereo are hydrogens.
-  static const char* basicSmiles = "C/C=C/C";
+  // of the double bond respectively. The other 2 ends of the 4 bonds that
+  // determine the cis/trans stereo are hydrogens.
+  static const char *basicSmiles = "C/C=C/C";
 
   RDKit::v2::SmilesParse::SmilesParserParams params;
   params.sanitize = true;
   params.removeHs = true;
 
-  //REQUIRE(RDKit::SmilesToMol(basicSmiles, params, mol, temp) == true);
-  std::unique_ptr<RWMol> molOwner = RDKit::v2::SmilesParse::MolFromSmiles(basicSmiles, params);
+  // REQUIRE(RDKit::SmilesToMol(basicSmiles, params, mol, temp) == true);
+  std::unique_ptr<RWMol> molOwner =
+      RDKit::v2::SmilesParse::MolFromSmiles(basicSmiles, params);
   RDMol &mol = molOwner->asRDMol();
   REQUIRE(mol.getNumAtoms() == 4);
   REQUIRE(mol.getNumBonds() == 3);
 
-  auto& doubleBond = mol.getBond(1);
+  auto &doubleBond = mol.getBond(1);
   doubleBond.setStereo(BondEnums::BondStereo::STEREOTRANS);
   mol.setBondStereoAtoms(1, 0, 3);
   REQUIRE(mol.getBond(1).getStereo() == BondEnums::BondStereo::STEREOTRANS);
@@ -1476,9 +1480,12 @@ TEST_CASE("Remove Atom") {
     std::vector<uint32_t> neighbors1Idxs = iteratorToIndexVector(neighbors1);
     std::vector<uint32_t> neighbors2Idxs = iteratorToIndexVector(neighbors2);
 
-    CHECK_THAT(neighbors0Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1}));
-    CHECK_THAT(neighbors1Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{0, 2}));
-    CHECK_THAT(neighbors2Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1}));
+    CHECK_THAT(neighbors0Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1}));
+    CHECK_THAT(neighbors1Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{0, 2}));
+    CHECK_THAT(neighbors2Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1}));
   }
 
   SECTION("Removes associated bonds") {
@@ -1499,9 +1506,12 @@ TEST_CASE("Remove Atom") {
     std::vector<uint32_t> neighbors1Idxs = iteratorToIndexVector(neighbors1);
     std::vector<uint32_t> neighbors2Idxs = iteratorToIndexVector(neighbors2);
 
-    CHECK_THAT(neighbors0Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{}));
-    CHECK_THAT(neighbors1Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{2}));
-    CHECK_THAT(neighbors2Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1}));
+    CHECK_THAT(neighbors0Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{}));
+    CHECK_THAT(neighbors1Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{2}));
+    CHECK_THAT(neighbors2Idxs,
+               Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1}));
   }
 
   SECTION("Stereo groups") {
@@ -1516,7 +1526,7 @@ TEST_CASE("Remove Atom") {
     mol.setStereoGroups(std::move(groups));
 
     mol.removeAtom(1);
-    StereoGroups* res = mol.getStereoGroups();
+    StereoGroups *res = mol.getStereoGroups();
     REQUIRE(res != nullptr);
     REQUIRE(res->getNumGroups() == 2);
     auto group1Atoms = iteratorToIndexVector(res->getAtoms(0));
@@ -1552,7 +1562,8 @@ TEST_CASE("Remove Atom") {
     // 1: 0, 1
     // 2: 2
 
-    // We are deleting bonds 0 and 1, atom 1. Bond 2 now maps to 0. Atoms 2 and 3 now map to 1 and 2.
+    // We are deleting bonds 0 and 1, atom 1. Bond 2 now maps to 0. Atoms 2 and
+    // 3 now map to 1 and 2.
     mol.removeAtom(1);
 
     std::vector<int> atomBookmarks0 = mol.getAllAtomsWithBookmarks(0);
@@ -1580,8 +1591,8 @@ TEST_CASE("Remove Atom") {
       std::iota(bondProps, bondProps + mol.getNumBonds(), 0);
     }
     mol.removeAtom(1);
-    int* atomProps = mol.getAtomPropArrayIfPresent<int>(signedIntToken);
-    int* bondProps = mol.getBondPropArrayIfPresent<int>(signedIntToken);
+    int *atomProps = mol.getAtomPropArrayIfPresent<int>(signedIntToken);
+    int *bondProps = mol.getBondPropArrayIfPresent<int>(signedIntToken);
     CHECK(atomProps[0] == 0);
     CHECK(atomProps[1] == 2);
     CHECK(atomProps[2] == 3);
@@ -1603,13 +1614,13 @@ TEST_CASE("Remove Atom") {
     const int newNumDoublesInConf = 3 * mol.getNumAtoms();
 
     CHECK(mol.getNumConformers() == 3);
-    double* res1 = mol.getConformerPositions(id1);
+    double *res1 = mol.getConformerPositions(id1);
     CHECK(res1[0] == 1.0);
     CHECK(res1[newNumDoublesInConf - 1] == 1.0);
-    double* res2 = mol.getConformerPositions(id2);
+    double *res2 = mol.getConformerPositions(id2);
     CHECK(res2[0] == 2.0);
     CHECK(res2[newNumDoublesInConf - 1] == 2.0);
-    const double* res3 = mol.getConformerPositions(id3);
+    const double *res3 = mol.getConformerPositions(id3);
     CHECK(res3[0] == 3.0);
     CHECK(res3[newNumDoublesInConf - 1] == 3.0);
 
@@ -1619,8 +1630,7 @@ TEST_CASE("Remove Atom") {
   }
 }
 
-
-void checkBasicEdit(const RDMol& mol) {
+void checkBasicEdit(const RDMol &mol) {
   CHECK(mol.getNumAtoms() == 3);
   CHECK(mol.getNumBonds() == 1);
 
@@ -1640,14 +1650,17 @@ void checkBasicEdit(const RDMol& mol) {
   std::vector<uint32_t> neighbors1Idxs = iteratorToIndexVector(neighbors1);
   std::vector<uint32_t> neighbors2Idxs = iteratorToIndexVector(neighbors2);
 
-  CHECK_THAT(neighbors0Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{}));
-  CHECK_THAT(neighbors1Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{2}));
-  CHECK_THAT(neighbors2Idxs, Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1}));
+  CHECK_THAT(neighbors0Idxs,
+             Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{}));
+  CHECK_THAT(neighbors1Idxs,
+             Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{2}));
+  CHECK_THAT(neighbors2Idxs,
+             Catch::Matchers::UnorderedEquals(std::vector<uint32_t>{1}));
 }
 
 TEST_CASE("Batch edits") {
   auto molPtr = parseSmiles("OCC=NC");
-  RDMol& mol = *molPtr;
+  RDMol &mol = *molPtr;
   mol.setAtomBookmark(0, 0);
   mol.setAtomBookmark(1, 1);
   mol.setBondBookmark(0, 0);
@@ -1677,7 +1690,8 @@ TEST_CASE("Batch edits") {
     mol.beginBatchEdit();
     mol.removeAtom(0);
     mol.removeBond(1);
-    mol.removeAtom(4); // Note that if incorrectly set, this would be past nAtoms.
+    mol.removeAtom(
+        4);  // Note that if incorrectly set, this would be past nAtoms.
     // Include that atoms and bonds aren't deleted until end of edit.
 
     CHECK(mol.getNumAtoms() == 5);
@@ -1767,7 +1781,6 @@ TEST_CASE("Batch edits") {
     CHECK(res == 2);
     CHECK(mol.getBondPropIfPresent(signedIntToken, 0, res));
     CHECK(res == 4);
-
   }
 
   SECTION("Copy during edit") {
@@ -1832,8 +1845,40 @@ TEST_CASE("Batch edits") {
   }
 }
 
-
-// Explicit main needed as Catch returns odd exit codes by default and messes with gcovr.
-int main( int argc, char* argv[] ) {
-  return Catch::Session().run( argc, argv );
+TEST_CASE("benchmarking construction from smiles") {
+  // from hanoittest.cpp
+  std::vector<std::string> smileses = {
+      "C[C@@H]1CCC[C@H](C)[C@H]1C",
+      "N[C@@]1(C[C@H]([18F])C1)C(=O)O",
+      "CC12CCCC1C1CCC3CC(O)CCC3(C)C1CC2",
+      "CC(C)CCCC[C@@H]1C[C@H](/C=C/[C@]2(C)CC[C@H](O)CC2)[C@@H](O)[C@H]1O",
+      "C[C@@]12CCC[C@H]1[C@@H]1CC[C@H]3C[C@@H](O)CC[C@]3(C)[C@H]1CC2",
+      "CCCN[C@H]1CC[C@H](NC)CC1",
+      "O=S(=O)(NC[C@H]1CC[C@H](CNCc2ccc3ccccc3c2)CC1)c1ccc2ccccc2c1",
+      "CC(C)[C@H]1CC[C@H](C(=O)N[C@H](Cc2ccccc2)C(=O)O)CC1",
+      "O=[N+]([O-])c1ccccc1S(=O)(=O)NC[C@H]1CC[C@H](CNCC2Cc3ccccc3CC2)CC1",
+      "Oc1ccc2c(Cc3ccc(OCCN4CCCCC4)cc3)c([C@H]3CC[C@H](O)CC3)sc2c1",
+      "O=C(c1ccc(OCCN2CCCCC2)cc1)c1c2ccc(O)cc2sc1[C@H]1CC[C@H](O)CC1",
+      "N#Cc1ccc2c(c1)CCN(CC[C@@H]1CC[C@@H](NC(=O)c3ccnc4ccccc34)CC1)C2",
+      "COCCOC[C@H](CC1(C(=O)N[C@H]2CC[C@@H](C(=O)O)CC2)CCCC1)C(=O)O",
+      "c1ccc(CN[C@H]2CC[C@H](Nc3ccc4[nH]ncc4c3)CC2)cc1",
+      "[CH]12=[CH]3[CH]4=[CH]5[CH-]16.[Fe]23456",
+      "[CH]12=[CH]3[CH]4=[CH]5[CH]6=[CH]17.[Fe]234567",
+      "[cH]12[cH]3[cH]4[cH]5[cH]6[cH]17.[Fe]234567",
+      "[cH]12[cH]3[cH]4[cH]5[nH]16.[Fe]23456",
+      "[CH]12=[CH]3[CH]4=[CH]5[NH]16.[Fe]23456",
+  };
+  std::uint64_t total = 0;
+  for (auto i = 0u; i < 100; ++i) {
+    for (const auto &smiles : smileses) {
+      auto molPtr = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(molPtr);
+      total += molPtr->getNumAtoms();
+    }
+  }
+  REQUIRE(total > 100);
 }
+
+// Explicit main needed as Catch returns odd exit codes by default and messes
+// with gcovr.
+int main(int argc, char *argv[]) { return Catch::Session().run(argc, argv); }
