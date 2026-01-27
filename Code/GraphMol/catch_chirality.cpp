@@ -3604,20 +3604,17 @@ $$$$
 TEST_CASE("ValidateStereo", "[accurateCIP]") {
   SECTION("validateStereoUniqOldCanon1") {
     testStereoValidationFromMol(validateStereoUniq1,
-                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1* |,,,|", true,
-                                true);
+                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1*", true, true);
   }
 
   SECTION("validateStereoUniqNewCanon1") {
     testStereoValidationFromMol(validateStereoUniq1,
-                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1* |,,,|", false,
-                                true);
+                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1*", false, true);
   }
 
   SECTION("validateStereoUniqNewNoCanon1") {
-    testStereoValidationFromMol(validateStereoUniq1,
-                                "N1C(=O)N(*)C(*)=C(C(/C=C/*)=O)C1* |,,,|",
-                                false, false);
+    testStereoValidationFromMol(
+        validateStereoUniq1, "N1C(=O)N(*)C(*)=C(C(/C=C/*)=O)C1*", false, false);
   }
 
   SECTION("SprioChiralLostOldNoCanon") {
