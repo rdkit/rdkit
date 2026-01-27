@@ -36,7 +36,7 @@
 #include <GraphMol/test_fixtures.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
-
+#include <GraphMol/rdmol_throw.h>
 using namespace RDKit;
 
 TEST_CASE("Basic SVG Parsing", "[SVG][reader]") {
@@ -6187,6 +6187,123 @@ TEST_CASE("MaeMolSupplier is3D flag", "[mae][MaeMolSupplier][reader]") {
   CHECK(mol->getConformer().is3D() == false);
 }
 
+// Helper function to check roundtripped properties for ROMol (using RDMol
+// backend)
+void check_roundtripped_properties(const ROMol &original,
+                                   const ROMol &roundtrip) {
+  auto includePrivate = false;
+  auto originalPropNames = original.getPropList(includePrivate, false);
+  auto roundtripPropNames = roundtrip.getPropList(includePrivate, false);
+
+  // We allow the roundtrip to add extra info, but the original
+  // properties must be present
+  REQUIRE(roundtripPropNames.size() >= originalPropNames.size());
+
+  std::sort(originalPropNames.begin(), originalPropNames.end());
+  std::sort(roundtripPropNames.begin(), roundtripPropNames.end());
+
+  REQUIRE(std::includes(roundtripPropNames.begin(), roundtripPropNames.end(),
+                        originalPropNames.begin(), originalPropNames.end()));
+
+  // Iterate through original properties using RDMol API
+  const auto &mol = original.asRDMol();
+  for (auto it = mol.beginProps(false, RDProperties::Scope::MOL, 0);
+       it != mol.endProps(); ++it) {
+    const auto &prop = *it;
+    std::string propName = prop.name().getString();
+
+    UNSCOPED_INFO("Checking property = " << propName);
+
+    auto tag = prop.getRDValueTag();
+    switch (tag) {
+      case RDTypeTag::BoolTag: {
+        bool origVal = original.getProp<bool>(propName);
+        CHECK(origVal == roundtrip.getProp<bool>(propName));
+        break;
+      }
+      case RDTypeTag::IntTag:
+      case RDTypeTag::UnsignedIntTag: {
+        int origVal = original.getProp<int>(propName);
+        CHECK(origVal == roundtrip.getProp<int>(propName));
+        break;
+      }
+      case RDTypeTag::DoubleTag:
+      case RDTypeTag::FloatTag: {
+        double origVal = original.getProp<double>(propName);
+        CHECK(origVal == roundtrip.getProp<double>(propName));
+        break;
+      }
+      case RDTypeTag::StringTag: {
+        std::string origVal = original.getProp<std::string>(propName);
+        CHECK(origVal == roundtrip.getProp<std::string>(propName));
+        break;
+      }
+      default:
+        // Skip unsupported types
+        break;
+    }
+  }
+}
+
+// Helper function to check roundtripped properties for Atom (using RDMol
+// backend)
+void check_roundtripped_properties(const Atom &original,
+                                   const Atom &roundtrip) {
+  auto includePrivate = false;
+  auto originalPropNames = original.getPropList(includePrivate, false);
+  auto roundtripPropNames = roundtrip.getPropList(includePrivate, false);
+
+  // We allow the roundtrip to add extra info, but the original
+  // properties must be present
+  REQUIRE(roundtripPropNames.size() >= originalPropNames.size());
+
+  std::sort(originalPropNames.begin(), originalPropNames.end());
+  std::sort(roundtripPropNames.begin(), roundtripPropNames.end());
+
+  REQUIRE(std::includes(roundtripPropNames.begin(), roundtripPropNames.end(),
+                        originalPropNames.begin(), originalPropNames.end()));
+
+  // Iterate through original properties using RDMol API
+  const auto &mol = original.getRDMol();
+  uint32_t idx = original.getIdx();
+  for (auto it = mol.beginProps(false, RDProperties::Scope::ATOM, idx);
+       it != mol.endProps(); ++it) {
+    const auto &prop = *it;
+    std::string propName = prop.name().getString();
+
+    UNSCOPED_INFO("Checking property = " << propName);
+
+    auto tag = prop.getRDValueTag(idx);
+    switch (tag) {
+      case RDTypeTag::BoolTag: {
+        bool origVal = original.getProp<bool>(propName);
+        CHECK(origVal == roundtrip.getProp<bool>(propName));
+        break;
+      }
+      case RDTypeTag::IntTag:
+      case RDTypeTag::UnsignedIntTag: {
+        int origVal = original.getProp<int>(propName);
+        CHECK(origVal == roundtrip.getProp<int>(propName));
+        break;
+      }
+      case RDTypeTag::DoubleTag:
+      case RDTypeTag::FloatTag: {
+        double origVal = original.getProp<double>(propName);
+        CHECK(origVal == roundtrip.getProp<double>(propName));
+        break;
+      }
+      case RDTypeTag::StringTag: {
+        std::string origVal = original.getProp<std::string>(propName);
+        CHECK(origVal == roundtrip.getProp<std::string>(propName));
+        break;
+      }
+      default:
+        // Skip unsupported types
+        break;
+    }
+  }
+}
+
 void check_roundtripped_properties(RDProps &original, RDProps &roundtrip) {
   // We don't care about the computed or private props
   original.clearComputedProps();
@@ -6309,7 +6426,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
   auto mol = "C1CCC(*)CC1"_smiles;
   REQUIRE(mol);
 
-  auto add_some_props = [](RDProps &obj, const std::string &prefix) {
+  auto add_some_props = [](auto &obj, const std::string &prefix) {
     obj.setProp(prefix + "_bool_prop", false);
     obj.setProp(prefix + "_int_prop", 42);
     obj.setProp(prefix + "_real_prop", 3.141592);
@@ -7362,7 +7479,7 @@ class FragTest {
         expectedResult(expectedResultInit),
         reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
         origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit){};
+        newSgroupCount(newSgroupCountInit) {};
 };
 
 void testFragmentation(const FragTest &fragTest) {

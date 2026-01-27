@@ -425,7 +425,7 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
 
     // copy properties over:
     bool preserveExisting = true;
-    newB->updateProps(*static_cast<const RDProps *>(oldB), preserveExisting);
+    newB->updateProps(*oldB, preserveExisting);
   }
   return RWMOL_SPTR(res);
 }  // end of convertTemplateToMol()

@@ -712,6 +712,13 @@ ForceFields::ForceField *constructForceField(ROMol &mol,
 ForceFields::ForceField *constructForceField(ROMol &mol, double vdwThresh,
                                              int confId,
                                              bool ignoreInterfragInteractions) {
+  // Ensure all atoms have implicit valence calculated (e.g., after unpickling)
+  for (auto atom : mol.atoms()) {
+    if (!atom->getNoImplicit() && !atom->hasQuery()) {
+      atom->updatePropertyCache(false);
+    }
+  }
+
   bool foundAll;
   AtomicParamVect params;
   boost::tie(params, foundAll) = getAtomTypes(mol);

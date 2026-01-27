@@ -19,15 +19,15 @@
 namespace RDKit {
 // local utility namespace:
 namespace {
-bool isAtomConjugCand(const Atom *at) {
-  PRECONDITION(at, "bad atom");
+bool isAtomConjugCand(const RDMol &mol, std::uint32_t atomIdx,
+                      const AtomData &at) {
   // return false for neutral atoms where the current valence exceeds the
   // minimal valence for the atom. logic: if we're hypervalent we aren't
   // conjugated
   const auto &vals =
-      PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
-  if (!at->getFormalCharge() && vals.front() >= 0 &&
-      at->getTotalValence() > static_cast<unsigned int>(vals.front())) {
+      PeriodicTable::getTable()->getValenceList(at.getAtomicNum());
+  if (!at.getFormalCharge() && vals.front() >= 0 &&
+      at.getTotalValence() > static_cast<unsigned int>(vals.front())) {
     return false;
   }
   // the second check here is for Issue211, where the c-P bonds in
@@ -36,73 +36,80 @@ bool isAtomConjugCand(const Atom *at) {
   // hack and forbid this check from adding conjugation to anything out of
   // the first row of the periodic table.  (Conjugation in aromatic rings
   // has already been attended to, so this is safe.)
-  int nouter = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
-  auto res = ((at->getAtomicNum() <= 10) || (nouter != 5 && nouter != 6) ||
-              (nouter == 6 && at->getTotalDegree() < 2u)) &&
-             MolOps::countAtomElec(at) > 0;
+  int nouter = PeriodicTable::getTable()->getNouterElecs(at.getAtomicNum());
+  auto res = ((at.getAtomicNum() <= 10) || (nouter != 5 && nouter != 6) ||
+              (nouter == 6 && mol.getAtomTotalDegree(atomIdx) < 2u)) &&
+             MolOps::countAtomElec(mol, atomIdx) > 0;
+
   return res;
 }
 
-void markConjAtomBonds(Atom *at) {
-  PRECONDITION(at, "bad atom");
-  if (!isAtomConjugCand(at)) {
+void markConjAtomBonds(RDMol &mol, std::uint32_t atomIdx) {
+  const AtomData &at = mol.getAtom(atomIdx);
+  if (!isAtomConjugCand(mol, atomIdx, at)) {
     return;
   }
-  auto &mol = at->getOwningMol();
 
-  int atx = at->getIdx();
   // make sure that have either 2 or 3 substitutions on this atom
-  int sbo = at->getDegree() + at->getTotalNumHs();
+  int sbo = mol.getAtomTotalDegree(atomIdx);
   if ((sbo < 2) || (sbo > 3)) {
     return;
   }
-
-  for (const auto bnd1 : mol.atomBonds(at)) {
-    if (bnd1->getValenceContrib(at) < 1.5 ||
-        !isAtomConjugCand(bnd1->getOtherAtom(at))) {
+  auto [beg1, end1] = mol.getAtomBonds(atomIdx);
+  for (; beg1 != end1; ++beg1) {
+    uint32_t bondIdx = *beg1;
+    BondData &bnd1 = mol.getBond(bondIdx);
+    if (bnd1.getTwiceValenceContrib(atomIdx) < 3 ||
+        !isAtomConjugCand(mol, bnd1.getOtherAtomIdx(atomIdx),
+                          mol.getAtom(bnd1.getOtherAtomIdx(atomIdx)))) {
       continue;
     }
-    for (const auto bnd2 : mol.atomBonds(at)) {
-      if (bnd1 == bnd2) {
+    auto [beg2, end2] = mol.getAtomBonds(atomIdx);
+    for (; beg2 != end2; ++beg2) {
+      if (beg1 == beg2) {
         continue;
       }
-      auto at2 = mol.getAtomWithIdx(bnd2->getOtherAtomIdx(atx));
-      sbo = at2->getDegree() + at2->getTotalNumHs();
+      BondData &bnd2 = mol.getBond(*beg2);
+      auto atomIdx2 = bnd2.getOtherAtomIdx(atomIdx);
+      auto at2 = mol.getAtom(atomIdx2);
+      sbo = mol.getAtomTotalDegree(atomIdx2);
       if (sbo > 3) {
         continue;
       }
-      if (isAtomConjugCand(at2)) {
-        bnd1->setIsConjugated(true);
-        bnd2->setIsConjugated(true);
+      if (isAtomConjugCand(mol, atomIdx2, at2)) {
+        bnd1.setIsConjugated(true);
+        bnd2.setIsConjugated(true);
       }
     }
   }
 }
 
-int numBondsPlusLonePairs(Atom *at) {
-  PRECONDITION(at, "bad atom");
-  int deg = at->getTotalDegree();
+int numBondsPlusLonePairs(const RDMol &mol, std::uint32_t atomIdx,
+                          const AtomData &atom) {
+  int deg = mol.getAtomTotalDegree(atomIdx);
 
-  auto &mol = at->getOwningMol();
-  for (const auto bond : mol.atomBonds(at)) {
-    if (bond->getBondType() == Bond::ZERO ||
-        (isDative(*bond) && at->getIdx() != bond->getEndAtomIdx())) {
+  auto [beg, end] = mol.getAtomBonds(atomIdx);
+  for (; beg != end; ++beg) {
+    uint32_t bondIdx = *beg;
+    const BondData &bond = mol.getBond(bondIdx);
+    if (bond.getBondType() == BondEnums::BondType::ZERO ||
+        (isDative(bond.getBondType()) && atomIdx != bond.getEndAtomIdx())) {
       --deg;
     }
   }
 
-  if (at->getAtomicNum() <= 1) {
+  if (atom.getAtomicNum() <= 1) {
     return deg;
   }
-  int nouter = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
-  int totalValence = at->getTotalValence();
-  int chg = at->getFormalCharge();
+  int nouter = PeriodicTable::getTable()->getNouterElecs(atom.getAtomicNum());
+  int totalValence = atom.getTotalValence();
+  int chg = atom.getFormalCharge();
 
   int numFreeElectrons = nouter - (totalValence + chg);
   if (totalValence + nouter - chg < 8) {
     // we're below an octet, so we need to think
     // about radicals:
-    int numRadicals = at->getNumRadicalElectrons();
+    int numRadicals = atom.getNumRadicalElectrons();
     int numLonePairs = (numFreeElectrons - numRadicals) / 2;
     return deg + numLonePairs + numRadicals;
   } else {
@@ -124,51 +131,73 @@ bool atomHasConjugatedBond(const Atom *at) {
   }
   return false;
 }
+bool atomHasConjugatedBond(const RDMol &mol, std::uint32_t atomIdx) {
+  auto [beg, end] = mol.getAtomBonds(atomIdx);
+  for (; beg != end; ++beg) {
+    uint32_t bondIdx = *beg;
+    const BondData &bnd = mol.getBond(bondIdx);
+    if (bnd.getIsConjugated()) {
+      return true;
+    }
+  }
+  return false;
+}
 
 void setConjugation(ROMol &mol) {
   // start with all bonds being marked unconjugated
   // except for aromatic bonds
-  for (auto bond : mol.bonds()) {
-    bond->setIsConjugated(bond->getIsAromatic());
+  auto &rdmol = mol.asRDMol();
+
+  for (uint32_t bondIdx = 0, numBonds = rdmol.getNumBonds(); bondIdx < numBonds;
+       ++bondIdx) {
+    BondData &bond = rdmol.getBond(bondIdx);
+    bond.setIsConjugated(bond.getIsAromatic());
   }
 
   // loop over each atom and check if the bonds connecting to it can
   // be conjugated
-  for (auto atom : mol.atoms()) {
-    markConjAtomBonds(atom);
+
+  for (uint32_t atomIdx = 0, numAtoms = rdmol.getNumAtoms(); atomIdx < numAtoms;
+       ++atomIdx) {
+    markConjAtomBonds(rdmol, atomIdx);
   }
 }
 
 void setHybridization(ROMol &mol) {
-  for (auto atom : mol.atoms()) {
-    if (atom->getAtomicNum() == 0) {
-      atom->setHybridization(Atom::UNSPECIFIED);
+  auto &rdmol = mol.asRDMol();
+
+  for (uint32_t atomIdx = 0, numAtoms = rdmol.getNumAtoms(); atomIdx < numAtoms;
+       ++atomIdx) {
+    auto &atom = rdmol.getAtom(atomIdx);
+    if (atom.getAtomicNum() == 0) {
+      atom.setHybridization(AtomEnums::HybridizationType::UNSPECIFIED);
     } else {
       // if the stereo spec matches the coordination number, this is easy
-      switch (atom->getChiralTag()) {
+      const auto totalDegree = rdmol.getAtomTotalDegree(atomIdx);
+      switch (atom.getChiralTag()) {
         case Atom::ChiralType::CHI_TETRAHEDRAL:
         case Atom::ChiralType::CHI_TETRAHEDRAL_CW:
         case Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
-          if (atom->getTotalDegree() == 4) {
-            atom->setHybridization(Atom::HybridizationType::SP3);
+          if (totalDegree == 4) {
+            atom.setHybridization(AtomEnums::HybridizationType::SP3);
             continue;
           }
           break;
         case Atom::ChiralType::CHI_SQUAREPLANAR:
-          if (atom->getTotalDegree() <= 4 && atom->getTotalDegree() >= 2) {
-            atom->setHybridization(Atom::HybridizationType::SP2D);
+          if (totalDegree <= 4 && totalDegree >= 2) {
+            atom.setHybridization(AtomEnums::HybridizationType::SP2D);
             continue;
           }
           break;
         case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
-          if (atom->getTotalDegree() <= 5 && atom->getTotalDegree() >= 2) {
-            atom->setHybridization(Atom::HybridizationType::SP3D);
+          if (totalDegree <= 5 && totalDegree >= 2) {
+            atom.setHybridization(AtomEnums::HybridizationType::SP3D);
             continue;
           }
           break;
         case Atom::ChiralType::CHI_OCTAHEDRAL:
-          if (atom->getTotalDegree() <= 6 && atom->getTotalDegree() >= 2) {
-            atom->setHybridization(Atom::HybridizationType::SP3D2);
+          if (totalDegree <= 6 && totalDegree >= 2) {
+            atom.setHybridization(AtomEnums::HybridizationType::SP3D2);
             continue;
           }
           break;
@@ -176,28 +205,28 @@ void setHybridization(ROMol &mol) {
           break;
       }
       // otherwise we have to do some work
-      int norbs;
+      int norbs = 0;
       // try to be smart for early elements, but for later
       // ones just use the degree
       // FIX: we should probably also be using the degree for metals
-      if (atom->getAtomicNum() < 89) {
-        norbs = numBondsPlusLonePairs(atom);
+      if (atom.getAtomicNum() < 89) {
+        norbs = numBondsPlusLonePairs(rdmol, atomIdx, atom);
       } else {
-        norbs = atom->getTotalDegree();
+        norbs = totalDegree;
       }
       switch (norbs) {
         case 0:
           // This occurs for things like Na+
-          atom->setHybridization(Atom::S);
+          atom.setHybridization(AtomEnums::HybridizationType::S);
           break;
         case 1:
-          atom->setHybridization(Atom::S);
+          atom.setHybridization(AtomEnums::HybridizationType::S);
           break;
         case 2:
-          atom->setHybridization(Atom::SP);
+          atom.setHybridization(AtomEnums::HybridizationType::SP);
           break;
         case 3:
-          atom->setHybridization(Atom::SP2);
+          atom.setHybridization(AtomEnums::HybridizationType::SP2);
           break;
         case 4:
           // potentially SP3, but we'll set it down to SP2
@@ -209,21 +238,21 @@ void setHybridization(ROMol &mol) {
           //   has norbs = 4, and a conjugated bond, but clearly should
           //   not be SP2)
           // This is Issue276
-          if (atom->getTotalDegree() > 3 ||
-              !MolOps::atomHasConjugatedBond(atom)) {
-            atom->setHybridization(Atom::SP3);
+          if (totalDegree > 3 ||
+              !MolOps::atomHasConjugatedBond(rdmol, atomIdx)) {
+            atom.setHybridization(AtomEnums::HybridizationType::SP3);
           } else {
-            atom->setHybridization(Atom::SP2);
+            atom.setHybridization(AtomEnums::HybridizationType::SP2);
           }
           break;
         case 5:
-          atom->setHybridization(Atom::SP3D);
+          atom.setHybridization(AtomEnums::HybridizationType::SP3D);
           break;
         case 6:
-          atom->setHybridization(Atom::SP3D2);
+          atom.setHybridization(AtomEnums::HybridizationType::SP3D2);
           break;
         default:
-          atom->setHybridization(Atom::UNSPECIFIED);
+          atom.setHybridization(AtomEnums::HybridizationType::UNSPECIFIED);
       }
     }
   }

@@ -49,8 +49,18 @@
 %ignore RDKit::getTwiceBondType(const RDKit::Bond &b);
 %ignore RDKit::Bond::setQuery;
 %ignore RDKit::Bond::expandQuery;
+%ignore RDKit::isDative(BondEnums::BondType bt);
+%ignore RDKit::canSetDoubleBondStereo(BondEnums::BondType bt);
+%ignore RDKit::canHaveDirection(BondEnums::BondType bt);
+
 
 %include <GraphMol/Bond.h>
+
+%template(setProp)  RDKit::Bond::setProp<std::string>;
+%template(setIntProp) RDKit::Bond::setProp<int>;
+%template(setBoolProp) RDKit::Bond::setProp<bool>;
+%template(setDoubleProp) RDKit::Bond::setProp<double>;
+
 
 %extend RDKit::Bond {
   std::string getProp(const std::string key){

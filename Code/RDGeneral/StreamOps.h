@@ -386,9 +386,9 @@ class CustomPropHandler {
 typedef std::vector<std::shared_ptr<const CustomPropHandler>>
     CustomPropHandlerVec;
 
-inline bool isSerializable(const Dict::Pair &pair,
+inline bool isSerializable(const RDValue &val,
                            const CustomPropHandlerVec &handlers = {}) {
-  switch (pair.val.getTag()) {
+  switch (val.getTag()) {
     case RDTypeTag::StringTag:
     case RDTypeTag::IntTag:
     case RDTypeTag::UnsignedIntTag:
@@ -404,7 +404,7 @@ inline bool isSerializable(const Dict::Pair &pair,
       return true;
     case RDTypeTag::AnyTag:
       for (auto &handler : handlers) {
-        if (handler->canSerialize(pair.val)) {
+        if (handler->canSerialize(val)) {
           return true;
         }
       }
@@ -414,69 +414,69 @@ inline bool isSerializable(const Dict::Pair &pair,
   }
 }
 
-inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair,
+  inline bool streamWriteProp(std::ostream &ss, const std::string& key, const RDValue& val,
                             const CustomPropHandlerVec &handlers = {}) {
-  if (!isSerializable(pair, handlers)) {
+    if (!isSerializable(val, handlers)) {
     return false;
   }
 
-  streamWrite(ss, pair.key);
-  switch (pair.val.getTag()) {
+  streamWrite(ss, key);
+  switch (val.getTag()) {
     case RDTypeTag::StringTag:
       streamWrite(ss, DTags::StringTag);
-      streamWrite(ss, rdvalue_cast<std::string>(pair.val));
+      streamWrite(ss, rdvalue_cast<std::string>(val));
       break;
     case RDTypeTag::IntTag:
       streamWrite(ss, DTags::IntTag);
-      streamWrite(ss, rdvalue_cast<int>(pair.val));
+      streamWrite(ss, rdvalue_cast<int>(val));
       break;
     case RDTypeTag::UnsignedIntTag:
       streamWrite(ss, DTags::UnsignedIntTag);
-      streamWrite(ss, rdvalue_cast<unsigned int>(pair.val));
+      streamWrite(ss, rdvalue_cast<unsigned int>(val));
       break;
     case RDTypeTag::BoolTag:
       streamWrite(ss, DTags::BoolTag);
-      streamWrite(ss, rdvalue_cast<bool>(pair.val));
+      streamWrite(ss, rdvalue_cast<bool>(val));
       break;
     case RDTypeTag::FloatTag:
       streamWrite(ss, DTags::FloatTag);
-      streamWrite(ss, rdvalue_cast<float>(pair.val));
+      streamWrite(ss, rdvalue_cast<float>(val));
       break;
     case RDTypeTag::DoubleTag:
       streamWrite(ss, DTags::DoubleTag);
-      streamWrite(ss, rdvalue_cast<double>(pair.val));
+      streamWrite(ss, rdvalue_cast<double>(val));
       break;
 
     case RDTypeTag::VecStringTag:
       streamWrite(ss, DTags::VecStringTag);
-      streamWriteVec(ss, rdvalue_cast<std::vector<std::string>>(pair.val));
+      streamWriteVec(ss, rdvalue_cast<std::vector<std::string>>(val));
       break;
     case RDTypeTag::VecDoubleTag:
       streamWrite(ss, DTags::VecDoubleTag);
-      streamWriteVec(ss, rdvalue_cast<std::vector<double>>(pair.val));
+      streamWriteVec(ss, rdvalue_cast<std::vector<double>>(val));
       break;
     case RDTypeTag::VecFloatTag:
       streamWrite(ss, DTags::VecFloatTag);
-      streamWriteVec(ss, rdvalue_cast<std::vector<float>>(pair.val));
+      streamWriteVec(ss, rdvalue_cast<std::vector<float>>(val));
       break;
     case RDTypeTag::VecIntTag:
       streamWrite(ss, DTags::VecIntTag);
-      streamWriteVec(ss, rdvalue_cast<std::vector<int>>(pair.val));
+      streamWriteVec(ss, rdvalue_cast<std::vector<int>>(val));
       break;
     case RDTypeTag::VecUnsignedIntTag:
       streamWrite(ss, DTags::VecUIntTag);
-      streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int>>(pair.val));
+      streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int>>(val));
       break;
     default:
       for (auto &handler : handlers) {
-        if (handler->canSerialize(pair.val)) {
+        if (handler->canSerialize(val)) {
           // The form of a custom tag is
           //  CustomTag
           //  customPropName (must be unique)
           //  custom serialization
           streamWrite(ss, DTags::CustomTag);
           streamWrite(ss, std::string(handler->getPropName()));
-          handler->write(ss, pair.val);
+          handler->write(ss, val);
           return true;
         }
       }
@@ -503,7 +503,7 @@ inline bool streamWriteProps(
   COUNT_TYPE count = 0;
   for (const auto &elem : dict.getData()) {
     if (propnames.find(elem.key) != propnames.end()) {
-      if (isSerializable(elem, handlers)) {
+      if (isSerializable(elem.val, handlers)) {
         count++;
       }
     }
@@ -516,10 +516,10 @@ inline bool streamWriteProps(
   COUNT_TYPE writtenCount = 0;
   for (const auto &elem : dict.getData()) {
     if (propnames.find(elem.key) != propnames.end()) {
-      if (isSerializable(elem, handlers)) {
+      if (isSerializable(elem.val, handlers)) {
         // note - not all properties are serializable, this may be
         //  a null op
-        if (streamWriteProp(ss, elem, handlers)) {
+        if (streamWriteProp(ss, elem.key, elem.val, handlers)) {
           writtenCount++;
         }
       }

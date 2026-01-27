@@ -143,8 +143,8 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
   while (!toDo.empty()) {
     const auto nextBond = toDo.front();
     toDo.pop_front();
-    for (const auto nbr :
-         make_iterator_range(mol.getAtomNeighbors(nextBond->getBeginAtom()))) {
+    for (const auto nbr : boost::make_iterator_range(
+         mol.getAtomNeighbors(nextBond->getBeginAtom()))) {
       if (auto bond = mol.getBondBetweenAtoms(nextBond->getBeginAtomIdx(), nbr);
           !done[bond->getIdx()] && bond->getIsAromatic()) {
         aromBonds.push_back(bond);
@@ -152,8 +152,8 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
         toDo.push_back(bond);
       }
     }
-    for (const auto nbr :
-         make_iterator_range(mol.getAtomNeighbors(nextBond->getEndAtom()))) {
+    for (const auto nbr : boost::make_iterator_range(
+         mol.getAtomNeighbors(nextBond->getEndAtom()))) {
       if (auto bond = mol.getBondBetweenAtoms(nextBond->getEndAtomIdx(), nbr);
           !done[bond->getIdx()] && bond->getIsAromatic()) {
         aromBonds.push_back(bond);
@@ -167,10 +167,13 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
 
 namespace {
 boost::dynamic_bitset<> flagRingBonds(const ROMol &mol) {
-  const auto ringInfo = mol.getRingInfo();
+  auto ringInfo = mol.getRingInfo();
   if (!ringInfo->isInitialized()) {
     // Query molecules don't seem to have the ring info generated on creation.
     MolOps::findSSSR(mol);
+    // Get fresh pointer after findSSSR initializes ring info
+    // New backend might update the compat interface lazily
+    ringInfo = mol.getRingInfo();
   }
   boost::dynamic_bitset<> ringBonds(mol.getNumBonds());
   for (const auto &r : ringInfo->bondRings()) {

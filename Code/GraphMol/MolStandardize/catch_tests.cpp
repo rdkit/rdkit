@@ -704,8 +704,7 @@ TEST_CASE("github #2965: molecules properties not retained after cleanup",
     m->setProp("testing_prop", "1234");
     std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
     REQUIRE(res);
-    auto x = res->getDict();
-    CHECK(x.getVal<std::string>("testing_prop") == "1234");
+    CHECK(res->getProp<std::string>("testing_prop") == "1234");
   }
 }
 

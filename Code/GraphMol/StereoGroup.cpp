@@ -9,6 +9,7 @@
 #include "StereoGroup.h"
 #include "Atom.h"
 #include "ROMol.h"
+#include "RDMol.h"
 
 namespace RDKit {
 
@@ -63,6 +64,26 @@ StereoGroupType StereoGroup::getGroupType() const { return d_grouptype; }
 
 const std::vector<Atom *> &StereoGroup::getAtoms() const { return d_atoms; }
 const std::vector<Bond *> &StereoGroup::getBonds() const { return d_bonds; }
+
+void StereoGroup::setOwningMol(ROMol *mol) {
+  PRECONDITION(mol, "null molecule pointer");
+  dp_mol = mol;
+}
+
+void StereoGroup::setOwningMol(ROMol &mol) { setOwningMol(&mol); }
+
+ROMol &StereoGroup::getOwningMol() const {
+  PRECONDITION(dp_mol, "no owning molecule");
+  return *dp_mol;
+}
+
+void StereoGroup::setWriteId(unsigned id) {
+  d_writeId = id;
+  // Mark the compatibility layer as modified so changes sync back to flat structure
+  if (dp_mol) {
+    dp_mol->markStereoGroupsAsCompatModified();
+  }
+}
 
 void removeGroupsWithAtom(const Atom *atom, std::vector<StereoGroup> &groups) {
   auto containsAtom = [atom](const StereoGroup &group) {

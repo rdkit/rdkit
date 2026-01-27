@@ -15,6 +15,7 @@
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/RDMol.h>
 
 #include <vector>
 #include <algorithm>
@@ -214,12 +215,14 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
   }
 }
 
-bool isHypervalentNonMetal(Atom *atom) {
-  if (QueryOps::isMetal(*atom)) {
+bool isHypervalentNonMetal(RDMolAtom &rdatom) {
+  if (QueryOps::isMetal(rdatom)) {
     return false;
   }
-  atom->updatePropertyCache(false);
-  int ev = atom->getValence(Atom::ValenceType::EXPLICIT);
+  auto &rdmol = rdatom.mol();
+  auto &atom = rdatom.data();
+  rdmol.updateAtomPropertyCache(rdatom.index(), false);
+  int ev = atom.getValence(AtomData::ValenceType::EXPLICIT);
   // Check the explicit valence of the non-metal against the allowed
   // valences of the atom, adjusted by its formal charge.  This means that
   // N+ is treated the same as C, O+ the same as N.  This allows for,
@@ -228,7 +231,7 @@ bool isHypervalentNonMetal(Atom *atom) {
   // a poor example because c1ccccn1->[Fe] appears to be the normal
   // way that pyridine complexes with transition metals.  Heme b in
   // CHEBI:26355 is an example of when this is required.
-  int effAtomicNum = atom->getAtomicNum() - atom->getFormalCharge();
+  int effAtomicNum = atom.getAtomicNum() - atom.getFormalCharge();
   if (effAtomicNum <= 0) {
     return false;
   }
@@ -241,22 +244,23 @@ bool isHypervalentNonMetal(Atom *atom) {
   const auto &otherValens =
       PeriodicTable::getTable()->getValenceList(effAtomicNum);
   auto maxV = otherValens.back();
-  if (maxV > 0 && (ev > maxV || (ev == maxV && atom->getIsAromatic() &&
-                                 atom->getTotalDegree() == 4))) {
+  if (maxV > 0 &&
+      (ev > maxV || (ev == maxV && atom.getIsAromatic() &&
+                     rdmol.getAtomTotalDegree(rdatom.index()) == 4))) {
     return true;
   }
 
   return false;
 }
 
-int numDativeBonds(const Atom *atom) {
+int numDativeBonds(const RDMolAtom &atom) {
   int numDatives = 0;
-  auto &mol = atom->getOwningMol();
-  for (auto bond : mol.atomBonds(atom)) {
-    if (bond->getBondType() == Bond::BondType::DATIVE ||
-        bond->getBondType() == Bond::BondType::DATIVEONE ||
-        bond->getBondType() == Bond::BondType::DATIVEL ||
-        bond->getBondType() == Bond::BondType::DATIVER) {
+  auto &mol = atom.mol();
+  for (auto bond : mol.atomBonds(atom.index())) {
+    if (bond.data().getBondType() == BondEnums::BondType::DATIVE ||
+        bond.data().getBondType() == BondEnums::BondType::DATIVEONE ||
+        bond.data().getBondType() == BondEnums::BondType::DATIVEL ||
+        bond.data().getBondType() == BondEnums::BondType::DATIVER) {
       ++numDatives;
     }
   }
@@ -264,14 +268,13 @@ int numDativeBonds(const Atom *atom) {
 }
 
 // Returns true if the atom shouldn't do dative bonds.
-bool noDative(const Atom *a) {
+bool noDative(const AtomData &a) {
   static const std::set<int> noD{1, 2, 9, 10};
-  return (noD.find(a->getAtomicNum()) != noD.end());
+  return (noD.find(a.getAtomicNum()) != noD.end());
 };
 
-void metalBondCleanup(RWMol &mol, Atom *atom,
+void metalBondCleanup(RDMol &mol, atomindex_t atomIdx,
                       const std::vector<unsigned int> &ranks) {
-  PRECONDITION(atom, "bad atom in metalBondCleanup");
   // The IUPAC recommendation for ligand->metal coordination bonds is that
   // they be single.  This upsets the RDKit valence model, as seen in
   // CHEBI:26355, heme b.  If the valence of a non-metal atom is above the
@@ -280,32 +283,37 @@ void metalBondCleanup(RWMol &mol, Atom *atom,
   // If the atom is bonded to more than 1 metal atom, choose the one
   // with the fewer dative bonds incident on it, with the canonical
   // rank of the atoms as a tie-breaker.
-  if (isHypervalentNonMetal(atom) && !noDative(atom)) {
-    std::vector<Atom *> metals;
+  RDMolAtom atom(&mol, atomIdx);
+  if (isHypervalentNonMetal(atom) && !noDative(atom.data())) {
+    std::vector<RDMolAtom> metals;
     // see if there are any metals bonded to it by a single bond
-    for (auto bond : mol.atomBonds(atom)) {
-      if (bond->getBondType() == Bond::BondType::SINGLE &&
-          QueryOps::isMetal(*bond->getOtherAtom(atom))) {
-        metals.push_back(bond->getOtherAtom(atom));
+    for (auto bond : mol.atomBonds(atom.index())) {
+      if (bond.data().getBondType() == BondEnums::BondType::SINGLE) {
+        auto otherAtom =
+            RDMolAtom(&mol, bond.data().getOtherAtomIdx(atom.index()));
+        if (QueryOps::isMetal(otherAtom)) {
+          metals.push_back(otherAtom);
+        }
       }
     }
     if (!metals.empty()) {
       std::sort(metals.begin(), metals.end(),
-                [&](const Atom *a1, const Atom *a2) -> bool {
+                [&](const RDMolAtom &a1, const RDMolAtom &a2) -> bool {
                   int nda1 = numDativeBonds(a1);
                   int nda2 = numDativeBonds(a2);
                   if (nda1 == nda2) {
-                    return ranks[a1->getIdx()] > ranks[a2->getIdx()];
+                    return ranks[a1.index()] > ranks[a2.index()];
                   } else {
                     return nda1 < nda2;
                   }
                 });
-      auto bond =
-          mol.getBondBetweenAtoms(atom->getIdx(), metals.front()->getIdx());
-      if (bond) {
-        bond->setBondType(RDKit::Bond::BondType::DATIVE);
-        bond->setBeginAtom(atom);
-        bond->setEndAtom(metals.front());
+      auto bondIdx =
+          mol.getBondIndexBetweenAtoms(atom.index(), metals.front().index());
+      if (bondIdx != std::numeric_limits<std::uint32_t>::max()) {
+        auto &bond = mol.getBond(bondIdx);
+        bond.setBondType(BondEnums::BondType::DATIVE);
+        bond.setBeginAtomIdx(atom.index());
+        bond.setEndAtomIdx(metals.front().index());
       }
     }
   }
@@ -329,17 +337,19 @@ void cleanUp(RWMol &mol) {
 }
 
 void cleanUpOrganometallics(RWMol &mol) {
+  auto &rdmol = mol.asRDMol();
   // At present all this does is look for single bonds between
   // non-metals and metals where the non-metal exceeds one of
   // its normal valence states, and replaces that bond with
   // a dative one from the non-metal to the metal.
   bool needsFixing = false;
-  for (const auto atom : mol.atoms()) {
-    if (isHypervalentNonMetal(atom) && !noDative(atom)) {
+  for (auto atom : rdmol.atoms()) {
+    if (isHypervalentNonMetal(atom) && !noDative(atom.data())) {
       // see if there are any metals bonded to it by a single bond
-      for (auto bond : mol.atomBonds(atom)) {
-        if (bond->getBondType() == Bond::BondType::SINGLE &&
-            QueryOps::isMetal(*bond->getOtherAtom(atom))) {
+      for (auto bond : rdmol.atomBonds(atom.index())) {
+        if (bond.data().getBondType() == BondEnums::BondType::SINGLE &&
+            QueryOps::isMetal(
+                RDMolAtom(&rdmol, bond.data().getOtherAtomIdx(atom.index())))) {
           needsFixing = true;
           break;
         }
@@ -366,8 +376,7 @@ void cleanUpOrganometallics(RWMol &mol) {
               return p1.second < p2.second;
             });
   for (auto ar : atom_ranks) {
-    auto atom = mol.getAtomWithIdx(ar.first);
-    metalBondCleanup(mol, atom, ranks);
+    metalBondCleanup(rdmol, ar.first, ranks);
   }
 }
 
@@ -382,12 +391,15 @@ void adjustHs(RWMol &mol) {
   //  sanitized, aromaticity has been perceived, and the implicit
   //  valence of everything has been calculated.
   //
-  for (auto atom : mol.atoms()) {
-    int origImplicitV = atom->getValence(Atom::ValenceType::IMPLICIT);
-    atom->calcExplicitValence(false);
-    int origExplicitV = atom->getNumExplicitHs();
+  auto &rdmol = mol.asRDMol();
+  for (uint32_t atomIdx = 0, numAtoms = rdmol.getNumAtoms(); atomIdx < numAtoms;
+       ++atomIdx) {
+    AtomData &atom = rdmol.getAtom(atomIdx);
+    int origImplicitV = atom.getValence(AtomData::ValenceType::IMPLICIT);
+    rdmol.calcAtomExplicitValence(atomIdx, false);
+    int origExplicitV = atom.getNumExplicitHs();
 
-    int newImplicitV = atom->calcImplicitValence(false);
+    int newImplicitV = rdmol.calcAtomImplicitValence(atomIdx, false);
     //
     //  Case 1: The disappearing Hydrogen
     //    Smiles:  O=C1NC=CC2=C1C=CC=C2
@@ -405,8 +417,8 @@ void adjustHs(RWMol &mol) {
     //    <phew> that takes way longer to comment than it does to
     //    write:
     if (newImplicitV < origImplicitV) {
-      atom->setNumExplicitHs(origExplicitV + (origImplicitV - newImplicitV));
-      atom->calcExplicitValence(false);
+      atom.setNumExplicitHs(origExplicitV + (origImplicitV - newImplicitV));
+      rdmol.calcAtomExplicitValence(atomIdx, false);
     }
   }
 }
@@ -840,10 +852,14 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
 }
 
 unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
-  unsigned int natms = mol.getNumAtoms();
-  mapping.resize(natms);
-  return natms ? boost::connected_components(mol.getTopology(), &mapping[0])
-               : 0;
+  const uint32_t numAtoms = mol.getNumAtoms();
+  // Resize to zero first, so that the entire array is initialized to -1 next.
+  mapping.resize(0);
+  mapping.resize(numAtoms, uint32_t(-1));
+  // The reinterpret_cast is only valid if the size of the integers is the same.
+  static_assert(sizeof(mapping[0]) == sizeof(uint32_t));
+  return getMolFrags(mol.asRDMol(),
+                     reinterpret_cast<uint32_t *>(mapping.data()));
 };
 
 unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {
@@ -876,6 +892,48 @@ unsigned int getMolFrags(const ROMol &mol,
                          copyConformers);
   return rdcast<unsigned int>(molFrags.size());
 }
+
+namespace {
+static void getMolFragsHelper(const RDMol &mol, uint32_t componentIndex,
+                              uint32_t *mapping, atomindex_t atomIndex) {
+  auto [beginNeighbors, endNeighbors] = mol.getAtomNeighbors(atomIndex);
+  for (; beginNeighbors != endNeighbors; ++beginNeighbors) {
+    const uint32_t neighbor = *beginNeighbors;
+    if (mapping[neighbor] == uint32_t(-1)) {
+      mapping[neighbor] = componentIndex;
+      getMolFragsHelper(mol, componentIndex, mapping, neighbor);
+    }
+  }
+}
+}  // namespace
+
+uint32_t getMolFrags(const RDMol &mol, uint32_t *mapping) {
+  const uint32_t numAtoms = mol.getNumAtoms();
+  uint32_t numComponents = 0;
+  for (uint32_t atomIndex = 0; atomIndex < numAtoms; ++atomIndex) {
+    if (mapping[atomIndex] != uint32_t(-1)) {
+      continue;
+    }
+    mapping[atomIndex] = numComponents;
+    auto [beginNeighbors, endNeighbors] = mol.getAtomNeighbors(atomIndex);
+    for (; beginNeighbors != endNeighbors; ++beginNeighbors) {
+      const uint32_t neighbor = *beginNeighbors;
+      if (mapping[neighbor] == uint32_t(-1)) {
+        mapping[neighbor] = numComponents;
+        getMolFragsHelper(mol, numComponents, mapping, neighbor);
+      }
+    }
+    ++numComponents;
+  }
+  return uint32_t(numComponents);
+}
+uint32_t getMolFrags(const RDMol &mol, std::vector<uint32_t> &mapping) {
+  const uint32_t numAtoms = mol.getNumAtoms();
+  // Resize to zero first, so that the entire array is initialized to -1 next.
+  mapping.resize(0);
+  mapping.resize(numAtoms, uint32_t(-1));
+  return getMolFrags(mol, mapping.data());
+};
 
 namespace {
 template <typename T>
@@ -1267,7 +1325,9 @@ bool isAttachmentPoint(const Atom *atom, bool markedOnly) {
 
 void expandAttachmentPoints(RWMol &mol, bool addAsQueries, bool addCoords) {
   for (auto atom : mol.atoms()) {
-    int value;
+    // This value is never used, but GCC can no longer deduce that it's
+    // initialized, and maybe-uninitialized is currently treated as an error.
+    int value = 0;
     if (atom->getPropIfPresent(common_properties::molAttachPoint, value)) {
       std::vector<int> tgtVals;
       if (value == 1 || value == -1) {

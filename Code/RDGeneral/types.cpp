@@ -12,6 +12,33 @@
 #include "types.h"
 
 namespace RDKit {
+namespace detail {
+const PropToken computedPropNameToken = PropToken(computedPropName);
+}
+
+namespace common_properties {
+const PropToken _hasMassQueryToken = PropToken(_hasMassQuery);
+
+const PropToken _ChiralityPossibleToken = PropToken(_ChiralityPossible);
+const PropToken _chiralPermutationToken = PropToken(_chiralPermutation);
+const PropToken _CIPCodeToken = PropToken(_CIPCode);
+const PropToken _CIPRankToken = PropToken(_CIPRank);
+const PropToken _isotopicHsToken = PropToken(_isotopicHs);
+const PropToken _MolFileBondEndPtsToken = PropToken(_MolFileBondEndPts);
+const PropToken _MolFileBondAttachToken = PropToken(_MolFileBondAttach);
+const PropToken _MolFileRLabelToken = PropToken(_MolFileRLabel);
+const PropToken _ringStereoAtomsAllToken = PropToken("_ringStereoAtomsAll");
+const PropToken _ringStereoAtomsBeginsToken = PropToken("_ringStereoAtomsBegins");
+const PropToken _ringStereoGroupToken = PropToken("_ringStereoGroup");
+const PropToken _supplementalSmilesLabelToken = PropToken(_supplementalSmilesLabel);
+const PropToken _UnknownStereoToken = PropToken(_UnknownStereo);
+const PropToken dummyLabelToken = PropToken(dummyLabel);
+const PropToken isImplicitToken = PropToken(isImplicit);
+const PropToken molAtomMapNumberToken = PropToken(molAtomMapNumber);
+const PropToken molFileAliasToken = PropToken(molFileAlias);
+const PropToken molFileValueToken = PropToken(molFileValue);
+
+}  // namespace common_properties
 
 const double MAX_DOUBLE = std::numeric_limits<double>::max();
 const double EPS_DOUBLE = std::numeric_limits<double>::epsilon();

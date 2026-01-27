@@ -36,6 +36,7 @@
 %}
 
 
+%ignore RDKit::RDProps::getPropRDValue;
 %include <RDGeneral/RDProps.h>
 
 %template(setProp)  RDKit::RDProps::setProp<std::string>;

@@ -1746,8 +1746,8 @@ yyreduce:
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
 
-  mp->setBondBookmark((yyvsp[-1].bond),(yyvsp[0].ival));
   (yyvsp[-1].bond)->setOwningMol(mp);
+  mp->setBondBookmark((yyvsp[-1].bond),(yyvsp[0].ival));
   (yyvsp[-1].bond)->setBeginAtomIdx(atom->getIdx());
   (yyvsp[-1].bond)->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->setAtomBookmark(atom,(yyvsp[0].ival));

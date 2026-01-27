@@ -349,16 +349,16 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
   if (inParams) {
     params = *inParams;
   }
-  const auto ringInfo = mol.getRingInfo();
-
   if (params.aromatizeIfPossible) {
     unsigned int failed;
     sanitizeMol(mol, failed, SANITIZE_SYMMRINGS | SANITIZE_SETAROMATICITY);
   } else {
+    const auto ringInfo = mol.getRingInfo();
     if (!ringInfo->isSymmSssr()) {
       MolOps::symmetrizeSSSR(mol);
     }
   }
+  const auto ringInfo = mol.getRingInfo();
   QueryAtom qaTmpl;
   QueryBond qbTmpl;
 

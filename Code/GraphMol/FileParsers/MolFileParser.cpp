@@ -1361,7 +1361,7 @@ void ParseAtomAlias(RWMol *mol, std::string text, const std::string &nextLine,
   }
   URANGE_CHECK(idx, mol->getNumAtoms());
   Atom *at = mol->getAtomWithIdx(idx);
-  at->setProp(common_properties::molFileAlias, nextLine);
+  setAtomAlias(at, nextLine);
 }
 
 void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
@@ -1380,8 +1380,7 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
   }
   URANGE_CHECK(idx, mol->getNumAtoms());
   Atom *at = mol->getAtomWithIdx(idx);
-  at->setProp(common_properties::molFileValue,
-              text.substr(7, text.length() - 7));
+  setAtomValue(at, text.substr(7, text.length() - 7));
 }
 
 namespace {

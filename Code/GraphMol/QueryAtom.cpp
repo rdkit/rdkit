@@ -14,55 +14,26 @@
 
 namespace RDKit {
 
-QueryAtom::~QueryAtom() {
-  delete dp_query;
-  dp_query = nullptr;
-};
-
 Atom *QueryAtom::copy() const {
   auto *res = new QueryAtom(*this);
   return static_cast<Atom *>(res);
+}
+
+void QueryAtom::setQuery(QUERYATOM_QUERY *what) {
+  dp_query.reset(what);
+  getDataRDMol().setAtomQueryCompat(getIdx(), what);
+  PRECONDITION(what == nullptr ||getDataRDMol().getAtomQuery(getIdx()) != nullptr,
+               "Missing new query");
 }
 
 void QueryAtom::expandQuery(QUERYATOM_QUERY *what,
                             Queries::CompositeQueryType how,
                             bool maintainOrder) {
   PRECONDITION(dp_query, "Can't expand empty query");
-  bool thisIsNullQuery = dp_query->getDescription() == "AtomNull";
-  bool otherIsNullQuery = what->getDescription() == "AtomNull";
-
-  if (thisIsNullQuery || otherIsNullQuery) {
-    mergeNullQueries(dp_query, thisIsNullQuery, what, otherIsNullQuery, how);
-    delete what;
-    return;
-  }
-
-  QUERYATOM_QUERY *origQ = dp_query;
-  std::string descrip;
-  switch (how) {
-    case Queries::COMPOSITE_AND:
-      dp_query = new ATOM_AND_QUERY;
-      descrip = "AtomAnd";
-      break;
-    case Queries::COMPOSITE_OR:
-      dp_query = new ATOM_OR_QUERY;
-      descrip = "AtomOr";
-      break;
-    case Queries::COMPOSITE_XOR:
-      dp_query = new ATOM_XOR_QUERY;
-      descrip = "AtomXor";
-      break;
-    default:
-      UNDER_CONSTRUCTION("unrecognized combination query");
-  }
-  dp_query->setDescription(descrip);
-  if (maintainOrder) {
-    dp_query->addChild(QUERYATOM_QUERY::CHILD_TYPE(origQ));
-    dp_query->addChild(QUERYATOM_QUERY::CHILD_TYPE(what));
-  } else {
-    dp_query->addChild(QUERYATOM_QUERY::CHILD_TYPE(what));
-    dp_query->addChild(QUERYATOM_QUERY::CHILD_TYPE(origQ));
-  }
+  std::unique_ptr<QUERYATOM_QUERY> origPtr(std::move(dp_query));
+  std::unique_ptr<QUERYATOM_QUERY> whatPtr(what);
+  QueryOps::expandQuery(origPtr, std::move(whatPtr), how, maintainOrder);
+  setQuery(origPtr.release());
 }
 
 namespace {
@@ -189,7 +160,7 @@ bool QueryAtom::QueryMatch(QueryAtom const *what) const {
   if (!what->hasQuery()) {
     return dp_query->Match(what);
   } else {
-    return queriesMatch(dp_query, what->getQuery());
+    return queriesMatch(dp_query.get(), what->getQuery());
   }
 }
 

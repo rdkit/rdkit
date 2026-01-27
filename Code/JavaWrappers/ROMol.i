@@ -272,6 +272,12 @@ unsigned int getDefaultPickleProperties() {
 void setDefaultPickleProperties(unsigned int propertyFlags);
 unsigned int getDefaultPickleProperties();
 
+
+%template(setProp)  RDKit::ROMol::setProp<std::string>;
+%template(setIntProp) RDKit::ROMol::setProp<int>;
+%template(setBoolProp) RDKit::ROMol::setProp<bool>;
+%template(setDoubleProp) RDKit::ROMol::setProp<double>;
+
 %extend RDKit::ROMol {
   std::string getProp(const std::string key){
     std::string res;
