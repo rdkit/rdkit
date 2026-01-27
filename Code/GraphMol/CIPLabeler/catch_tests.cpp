@@ -1419,7 +1419,7 @@ TEST_CASE("neighbor_annotations", "[basic]") {
     CIPLabeler::assignCIPLabels(*mol, 100);
 
     std::vector<unsigned int> ranked_anchors;
-    REQUIRE(a->getPropIfPresent(common_properties::_CIPNeighborRanks,
+    REQUIRE(a->getPropIfPresent(common_properties::_CIPPrioritizedAnchors,
                                 ranked_anchors) == true);
     CHECK(ranked_anchors == std::vector<unsigned int>{4, 1, 3});
   }
@@ -1439,7 +1439,7 @@ TEST_CASE("neighbor_annotations", "[basic]") {
     CIPLabeler::assignCIPLabels(*mol, 100);
 
     std::vector<unsigned int> ranked_anchors;
-    REQUIRE(b->getPropIfPresent(common_properties::_CIPNeighborRanks,
+    REQUIRE(b->getPropIfPresent(common_properties::_CIPPrioritizedAnchors,
                                 ranked_anchors) == true);
     CHECK(ranked_anchors == std::vector<unsigned int>{0, 4});
   }
@@ -1509,12 +1509,12 @@ $$$$
 
     // ... but the highest ranked anchors are 5 and 7
     std::vector<unsigned int> ranked_anchors;
-    REQUIRE(b->getPropIfPresent(common_properties::_CIPNeighborRanks,
+    REQUIRE(b->getPropIfPresent(common_properties::_CIPPrioritizedAnchors,
                                 ranked_anchors) == true);
     CHECK(ranked_anchors == std::vector<unsigned int>{5, 7});
   }
 
-  SECTION("_CIPNeighborRanks includes NOATOM") {
+  SECTION("_CIPPrioritizedAnchors includes NOATOM") {
     // This is VS185 in https://cipvalidationsuite.github.io/ValidationSuite/
     auto mol = R"([2H]/C(=C(/[1H])\[H])/[H])"_smiles;
     REQUIRE(mol);
@@ -1530,7 +1530,7 @@ $$$$
     CIPLabeler::assignCIPLabels(*mol, 100);
 
     std::vector<unsigned int> ranked_anchors;
-    REQUIRE(b->getPropIfPresent(common_properties::_CIPNeighborRanks,
+    REQUIRE(b->getPropIfPresent(common_properties::_CIPPrioritizedAnchors,
                                 ranked_anchors) == true);
     CHECK(ranked_anchors == std::vector<unsigned int>{0, Atom::NOATOM});
   }

@@ -71,7 +71,8 @@ inline constexpr std::string_view _ChiralAtomRank = "_chiralAtomRank";
 inline constexpr std::string_view _CIPCode = "_CIPCode";
 inline constexpr std::string_view _CIPRank = "_CIPRank";
 inline constexpr std::string_view _CIPComputed = "_CIPComputed";
-inline constexpr std::string_view _CIPNeighborRanks = "_CIPNeighborRanks";
+inline constexpr std::string_view _CIPPrioritizedAnchors =
+    "_CIPPrioritizedAnchors";
 inline constexpr std::string_view _CanonicalRankingNumber =
     "_CanonicalRankingNumber";
 inline constexpr std::string_view _ChiralityPossible = "_ChiralityPossible";
