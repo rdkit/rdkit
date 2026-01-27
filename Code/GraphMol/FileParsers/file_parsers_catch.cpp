@@ -4107,7 +4107,9 @@ M  V30 1 1 1 2
 M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB";
-    { REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException); }
+    {
+      REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException);
+    }
     {
       bool sanitize = true;
       bool removeHs = true;
@@ -7362,7 +7364,20 @@ class FragTest {
         expectedResult(expectedResultInit),
         reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
         origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit){};
+        newSgroupCount(newSgroupCountInit) {};
+};
+
+class WedgeTest {
+ public:
+  std::string fileName;
+  unsigned int origWedgeCount;
+  unsigned int newWedgeCount;
+
+  WedgeTest(std::string fileNameInit, unsigned int origWedgeCountInit,
+            unsigned int newWedgeCountInit)
+      : fileName(fileNameInit),
+        origWedgeCount(origWedgeCountInit),
+        newWedgeCount(newWedgeCountInit) {};
 };
 
 void testFragmentation(const FragTest &fragTest) {
@@ -7406,7 +7421,6 @@ void testFragmentation(const FragTest &fragTest) {
 }
 
 TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
-  std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
     std::vector<FragTest> tests = {
         FragTest("polymerSalt.mol", true, true, 1, 1),
@@ -7437,6 +7451,57 @@ TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
     };
     for (auto test : tests) {
       testFragmentation(test);
+    }
+  };
+}
+
+void testWedges(const WedgeTest &wedgeTest) {
+  INFO(wedgeTest.fileName);
+
+  UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+
+  std::string rdbase = getenv("RDBASE");
+
+  std::string fName = rdbase +
+                      "/Code/GraphMol/FileParsers/test_data/wedgeTests/" +
+                      wedgeTest.fileName;
+  std::unique_ptr<RWMol> mol(MolFileToMol(fName, true));  //
+  REQUIRE(mol);
+
+  RDKit::Chirality::reapplyMolBlockWedging(*mol, true, false);
+
+  unsigned int wedgeCount = 0;
+  for (const auto bond : mol->bonds()) {
+    if (bond->getBondDir() == Bond::BEGINWEDGE ||
+        bond->getBondDir() == Bond::BEGINDASH) {
+      ++wedgeCount;
+    }
+  }
+
+  CHECK(wedgeCount == wedgeTest.origWedgeCount);
+
+  RDKit::Chirality::reapplyMolBlockWedging(*mol, true, true);
+
+  wedgeCount = 0;
+  for (const auto bond : mol->bonds()) {
+    if (bond->getBondDir() == Bond::BEGINWEDGE ||
+        bond->getBondDir() == Bond::BEGINDASH) {
+      ++wedgeCount;
+    }
+  }
+
+  CHECK(wedgeCount == wedgeTest.newWedgeCount);
+}
+
+TEST_CASE("WedgeTest", "[bug][reader]") {
+  SECTION("basics") {
+    std::vector<WedgeTest> tests = {
+        WedgeTest("JDQ443_atropBad1.sdf", 2, 0),
+        WedgeTest("badWedgeError.sdf", 1, 0),
+        WedgeTest("StereoGroupError.mol", 2, 1),
+    };
+    for (auto test : tests) {
+      testWedges(test);
     }
   };
 }

@@ -14,6 +14,7 @@
 #include <GraphMol/BondIterators.h>
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Atropisomers.h>
 #include <GraphMol/RDKitQueries.h>
 
 #include <vector>
@@ -520,7 +521,7 @@ void cleanupAtropisomers(RWMol &mol) {
 }
 
 namespace {
-void checkBond(RWMol &mol, Bond *bond, MolOps::Hybridizations &hybs) {
+bool checkBond(RWMol &mol, Bond *bond, MolOps::Hybridizations &hybs) {
   if (!mol.getRingInfo()->isSssrOrBetter()) {
     RDKit::MolOps::findSSSR(mol);
   }
@@ -532,22 +533,31 @@ void checkBond(RWMol &mol, Bond *bond, MolOps::Hybridizations &hybs) {
       (ri->numBondRings(bond->getIdx()) > 0 &&
        ri->minBondRingSize(bond->getIdx()) < 8)) {
     bond->setStereo(Bond::BondStereo::STEREONONE);
+    return true;
   }
+  return false;
 }
 }  // namespace
 
 void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
   // make sure that ring info is available
   // (defensive, current calls have it available)
+  bool needCleanupAtropisomerStereoGroups = false;
   for (auto bond : mol.bonds()) {
     switch (bond->getStereo()) {
       case Bond::BondStereo::STEREOATROPCW:
       case Bond::BondStereo::STEREOATROPCCW:
-        checkBond(mol, bond, hybs);
+        if (checkBond(mol, bond, hybs)) {
+          needCleanupAtropisomerStereoGroups = true;
+        }
         break;
       default:
         break;
     }
+  }
+
+  if (needCleanupAtropisomerStereoGroups) {
+    Atropisomers::cleanupAtropisomerStereoGroups(mol);
   }
 }
 void sanitizeMol(RWMol &mol) {
@@ -622,15 +632,15 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
     setHybridization(mol);
   }
 
+  operationThatFailed = SANITIZE_CLEANUPATROPISOMERS;
+  if (sanitizeOps & operationThatFailed) {
+    cleanupAtropisomers(mol);
+  }
+
   // remove bogus chirality specs:
   operationThatFailed = SANITIZE_CLEANUPCHIRALITY;
   if (sanitizeOps & operationThatFailed) {
     cleanupChirality(mol);
-  }
-
-  operationThatFailed = SANITIZE_CLEANUPATROPISOMERS;
-  if (sanitizeOps & operationThatFailed) {
-    cleanupAtropisomers(mol);
   }
 
   // adjust Hydrogen counts:
