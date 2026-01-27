@@ -81,7 +81,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
 
  public:
   // used to mark missing atoms, e.g. in Chirality::StereoInfo
-  // and the _CIPPrioritizedAnchors in CIP labeler
+  // and the _CIPNeighborOrder in CIP labeler
   inline static constexpr unsigned int NOATOM =
       std::numeric_limits<unsigned int>::max();
 

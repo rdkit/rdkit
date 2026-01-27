@@ -51,7 +51,7 @@ void Tetrahedral::setPrimaryLabel(Descriptor desc) {
     case Descriptor::s: {
       auto chiralAtom = getFocus();
       chiralAtom->setProp(common_properties::_CIPCode, to_string(desc));
-      chiralAtom->setProp(common_properties::_CIPPrioritizedAnchors,
+      chiralAtom->setProp(common_properties::_CIPNeighborOrder,
                           d_ranked_anchors, true);
       return;
     }

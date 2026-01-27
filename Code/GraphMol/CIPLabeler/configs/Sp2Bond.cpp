@@ -44,8 +44,8 @@ void Sp2Bond::setPrimaryLabel(Descriptor desc) {
       dp_bond->setStereoAtoms(carriers[0]->getIdx(), carriers[1]->getIdx());
       dp_bond->setStereo(d_cfg);
       dp_bond->setProp(common_properties::_CIPCode, to_string(desc));
-      dp_bond->setProp(common_properties::_CIPPrioritizedAnchors,
-                       d_ranked_anchors, true);
+      dp_bond->setProp(common_properties::_CIPNeighborOrder, d_ranked_anchors,
+                       true);
       return;
     }
     case Descriptor::R:
