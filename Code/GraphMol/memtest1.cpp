@@ -24,12 +24,9 @@ using namespace RDKit;
 void testBasics() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Basic Allocations"
                        << std::endl;
-  auto *a1 = new Atom(6);
-  auto *b1 = new Bond();
-  auto *m1 = new ROMol();
-  (void)a1;
-  (void)b1;
-  (void)m1;
+  [[maybe_unused]] auto *a1 = new Atom(6);
+  [[maybe_unused]] auto *b1 = new Bond();
+  [[maybe_unused]] auto *m1 = new ROMol();
   a1 = nullptr;  // intentional leak
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -37,8 +34,7 @@ void testBasics() {
 void testSMILES() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n SMILES Read" << std::endl;
   string smi = "CCOC";
-  ROMol *m = SmilesToMol(smi);
-  (void)m;  // leak al the things
+  [[maybe_unused]] ROMol *m = SmilesToMol(smi);
   m = SmilesToMol(smi, 0, false);
   smi = "C1COC1";
   RWMol *m2 = SmilesToMol(smi);
