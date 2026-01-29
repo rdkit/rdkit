@@ -577,7 +577,7 @@ bool wedgingHasChirality(const ROMol &mol, const Bond *b) {
 }
 
 void reapplyMolBlockWedging(ROMol &mol, bool allBondTypes,
-                            bool reapplyWedgingVerify) {
+                            bool verify) {
   MolOps::clearDirFlags(mol, true);
   for (auto b : mol.bonds()) {
     int explicit_unknown_stereo = -1;
@@ -591,7 +591,7 @@ void reapplyMolBlockWedging(ROMol &mol, bool allBondTypes,
     // atropisomer bond AND if the start atom  is not chiral, we will skip it -
     // it should not have a wedge or dash
 
-    if (reapplyWedgingVerify &&
+    if (verify &&
         (!canHaveDirection(*b) || !wedgingHasChirality(mol, b))) {
       continue;
     }
