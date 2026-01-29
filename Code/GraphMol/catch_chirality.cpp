@@ -50,7 +50,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Unspecified);
@@ -64,9 +64,9 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
-      CHECK(sinfo.controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[3] == Atom::NOATOM);
     }
   }
   SECTION("stereo") {
@@ -87,7 +87,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
@@ -107,7 +107,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 4);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
@@ -126,7 +126,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
@@ -143,7 +143,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Unknown);
@@ -484,8 +484,7 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
       CHECK(stereoInfo[0].centeredOn == 1);
-      std::vector<unsigned> catoms = {0, Chirality::StereoInfo::NOATOM, 3,
-                                      Chirality::StereoInfo::NOATOM};
+      std::vector<unsigned> catoms = {0, Atom::NOATOM, 3, Atom::NOATOM};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
     {
@@ -517,7 +516,7 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
       CHECK(stereoInfo[0].centeredOn == 1);
-      std::vector<unsigned> catoms = {0, Chirality::StereoInfo::NOATOM, 3, 4};
+      std::vector<unsigned> catoms = {0, Atom::NOATOM, 3, 4};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
   }
@@ -4086,8 +4085,8 @@ M  END)CTAB";
     REQUIRE(sinfo.controllingAtoms.size() == 4);
     CHECK(sinfo.controllingAtoms[0] == 0);
     CHECK(sinfo.controllingAtoms[1] == 1);
-    CHECK(sinfo.controllingAtoms[2] == Chirality::StereoInfo::NOATOM);
-    CHECK(sinfo.controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
+    CHECK(sinfo.controllingAtoms[2] == Atom::NOATOM);
+    CHECK(sinfo.controllingAtoms[3] == Atom::NOATOM);
   }
 }
 

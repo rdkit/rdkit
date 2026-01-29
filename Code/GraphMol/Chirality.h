@@ -118,11 +118,13 @@ struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
   // REVIEW: absolute stereo data member?
 
   // used to mark missing atoms
-  inline static constexpr unsigned int NOATOM = Atom::NOATOM;
+  [[deprecated(
+      "please use Atom::NOATOM")]] inline static constexpr unsigned int NOATOM =
+      Atom::NOATOM;
 
   StereoType type = StereoType::Unspecified;
   StereoSpecified specified = StereoSpecified::Unspecified;
-  unsigned centeredOn = NOATOM;
+  unsigned centeredOn = Atom::NOATOM;
   StereoDescriptor descriptor = StereoDescriptor::None;
   unsigned permutation = 0;  // for the non-tetrahedral stereo cases
   std::vector<unsigned> controllingAtoms;  // all atoms around the atom or bond.

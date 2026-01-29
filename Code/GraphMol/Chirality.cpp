@@ -1487,7 +1487,8 @@ bool atomIsCandidateForRingStereochem(
           ringNbrRanks.insert(atomRanks[nbr->getIdx()]);
         }
       }
-      // std::cerr << "!!!! " << atom->getIdx() << " " << ringNbrRanks.size() << " "
+      // std::cerr << "!!!! " << atom->getIdx() << " " << ringNbrRanks.size() <<
+      // " "
       //           << ringNbrs.size() << " " << nonRingNbrs.size() << std::endl;
       switch (nonRingNbrs.size()) {
         case 2:
@@ -1986,10 +1987,10 @@ void assignBondCisTrans(ROMol &mol, const StereoInfo &sinfo) {
   if (sinfo.type != StereoType::Bond_Double ||
       sinfo.specified != StereoSpecified::Unspecified ||
       sinfo.controllingAtoms.size() != 4 ||
-      ((sinfo.controllingAtoms[0] == StereoInfo::NOATOM &&
-        sinfo.controllingAtoms[1] == StereoInfo::NOATOM) ||
-       (sinfo.controllingAtoms[2] == StereoInfo::NOATOM &&
-        sinfo.controllingAtoms[3] == StereoInfo::NOATOM))) {
+      ((sinfo.controllingAtoms[0] == Atom::NOATOM &&
+        sinfo.controllingAtoms[1] == Atom::NOATOM) ||
+       (sinfo.controllingAtoms[2] == Atom::NOATOM &&
+        sinfo.controllingAtoms[3] == Atom::NOATOM))) {
     return;
   }
 
@@ -2003,7 +2004,7 @@ void assignBondCisTrans(ROMol &mol, const StereoInfo &sinfo) {
   if (begDir != Bond::BondDir::ENDDOWNRIGHT &&
       begDir != Bond::BondDir::ENDUPRIGHT) {
     begFirstNeighbor = false;
-    if (sinfo.controllingAtoms[1] != StereoInfo::NOATOM) {
+    if (sinfo.controllingAtoms[1] != Atom::NOATOM) {
       begBond = mol.getBondBetweenAtoms(dblBond->getBeginAtomIdx(),
                                         sinfo.controllingAtoms[1]);
       CHECK_INVARIANT(begBond, "no initial bond found");
@@ -2029,7 +2030,7 @@ void assignBondCisTrans(ROMol &mol, const StereoInfo &sinfo) {
   if (endDir != Bond::BondDir::ENDDOWNRIGHT &&
       endDir != Bond::BondDir::ENDUPRIGHT) {
     endFirstNeighbor = false;
-    if (sinfo.controllingAtoms[3] != StereoInfo::NOATOM) {
+    if (sinfo.controllingAtoms[3] != Atom::NOATOM) {
       endBond = mol.getBondBetweenAtoms(dblBond->getEndAtomIdx(),
                                         sinfo.controllingAtoms[3]);
       CHECK_INVARIANT(endBond, "no final bond found");
@@ -2539,8 +2540,8 @@ void updateDoubleBondStereo(ROMol &mol, const std::vector<StereoInfo> &sinfo,
         // Unknown stereo but with only one neighbor on the N. Catch those and
         // clear the stereochem
         if (si.controllingAtoms.size() == 4 &&
-            si.controllingAtoms[0] != StereoInfo::NOATOM &&
-            si.controllingAtoms[2] != StereoInfo::NOATOM) {
+            si.controllingAtoms[0] != Atom::NOATOM &&
+            si.controllingAtoms[2] != Atom::NOATOM) {
           bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
           bond->setStereo(Bond::BondStereo::STEREOANY);
         } else {
@@ -3028,10 +3029,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }  // end of 2 and 3 coordinated atoms only
-        }  // end of we want it or CIP code is not set
-      }  // end of double bond
-    }  // end of for loop over all bonds
+          }    // end of 2 and 3 coordinated atoms only
+        }      // end of we want it or CIP code is not set
+      }        // end of double bond
+    }          // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
