@@ -35,7 +35,9 @@ using namespace Queries;
 #include <RDGeneral/BoostStartInclude.h>
 // make sure we're using boost::json header-only
 #define BOOST_JSON_NO_LIB
+#ifndef BOOST_CONTAINER_NO_LIB
 #define BOOST_CONTAINER_NO_LIB
+#endif
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>  // only include this once in the project!
 #include <RDGeneral/BoostEndInclude.h>

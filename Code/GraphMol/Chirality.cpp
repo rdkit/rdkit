@@ -425,8 +425,7 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 namespace Chirality {
 
 std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
-    const ROMol &mol, const Bond *bond, const Conformer *conf,
-    double pseudo3DOffset = 0.1) {
+    const ROMol &mol, const Bond *bond, const Conformer *conf) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(conf, "no conformer");
   auto bondDir = bond->getBondDir();
@@ -438,6 +437,9 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       0.00031;  // used to recognize T-shaped arrangements
   // corresponds to an angle between the two vectors of just under 178 degrees
   // degree
+
+  constexpr double pseudo3DOffset = 0.1;  // z-displacement for wedged bonds
+
   constexpr double volumeTolerance =
       0.00174;  // used to recognize zero chiral volume
   // This is what we get for a T-shaped arrangement with just over 178 degrees
@@ -477,12 +479,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   //  at the end of this process bond 0 is the input wedged bond
   //
   //----------------------------------------------------------
-  bool hSeen = false;
 
   INT_VECT neighborBondIndices;
-  if (is_regular_h(*bondAtom)) {
-    hSeen = true;
-  }
 
   unsigned int refIdx = mol.getNumBonds() + 1;
   std::vector<RDGeom::Point3D> bondVects;
@@ -528,9 +526,6 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       allSingle = false;
     }
     bondVects.push_back(centerLoc.directionVector(tmpPt));
-    if (is_regular_h(*oAtom)) {
-      hSeen = true;
-    }
     neighborBondIndices.push_back(nbrBond->getIdx());
   }
   CHECK_INVARIANT(refIdx < mol.getNumBonds(),
@@ -540,12 +535,11 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
 
   //----------------------------------------------------------
   //
-  //  Return now if there aren't at least 3 non-H bonds to the atom.
-  //  (we can implicitly add a single H to 3 coordinate atoms, but
-  //  we're horked otherwise).
+  //  Return now if there aren't at least 3 bonds to the atom.
+  //  (we can implicitly add a single H to 3 coordinate atoms).
   //
   //----------------------------------------------------------
-  if (nNbrs < 3 || nNbrs > 4 || (hSeen && nNbrs < 4)) {
+  if (nNbrs < 3 || nNbrs > 4) {
     return std::nullopt;
   }
 
@@ -1987,10 +1981,10 @@ void assignBondCisTrans(ROMol &mol, const StereoInfo &sinfo) {
   if (sinfo.type != StereoType::Bond_Double ||
       sinfo.specified != StereoSpecified::Unspecified ||
       sinfo.controllingAtoms.size() != 4 ||
-      ((sinfo.controllingAtoms[0] == StereoInfo::NOATOM &&
-        sinfo.controllingAtoms[1] == StereoInfo::NOATOM) ||
-       (sinfo.controllingAtoms[2] == StereoInfo::NOATOM &&
-        sinfo.controllingAtoms[3] == StereoInfo::NOATOM))) {
+      ((sinfo.controllingAtoms[0] == Atom::NOATOM &&
+        sinfo.controllingAtoms[1] == Atom::NOATOM) ||
+       (sinfo.controllingAtoms[2] == Atom::NOATOM &&
+        sinfo.controllingAtoms[3] == Atom::NOATOM))) {
     return;
   }
 
@@ -2004,7 +1998,7 @@ void assignBondCisTrans(ROMol &mol, const StereoInfo &sinfo) {
   if (begDir != Bond::BondDir::ENDDOWNRIGHT &&
       begDir != Bond::BondDir::ENDUPRIGHT) {
     begFirstNeighbor = false;
-    if (sinfo.controllingAtoms[1] != StereoInfo::NOATOM) {
+    if (sinfo.controllingAtoms[1] != Atom::NOATOM) {
       begBond = mol.getBondBetweenAtoms(dblBond->getBeginAtomIdx(),
                                         sinfo.controllingAtoms[1]);
       CHECK_INVARIANT(begBond, "no initial bond found");
@@ -2030,7 +2024,7 @@ void assignBondCisTrans(ROMol &mol, const StereoInfo &sinfo) {
   if (endDir != Bond::BondDir::ENDDOWNRIGHT &&
       endDir != Bond::BondDir::ENDUPRIGHT) {
     endFirstNeighbor = false;
-    if (sinfo.controllingAtoms[3] != StereoInfo::NOATOM) {
+    if (sinfo.controllingAtoms[3] != Atom::NOATOM) {
       endBond = mol.getBondBetweenAtoms(dblBond->getEndAtomIdx(),
                                         sinfo.controllingAtoms[3]);
       CHECK_INVARIANT(endBond, "no final bond found");
@@ -2540,8 +2534,8 @@ void updateDoubleBondStereo(ROMol &mol, const std::vector<StereoInfo> &sinfo,
         // Unknown stereo but with only one neighbor on the N. Catch those and
         // clear the stereochem
         if (si.controllingAtoms.size() == 4 &&
-            si.controllingAtoms[0] != StereoInfo::NOATOM &&
-            si.controllingAtoms[2] != StereoInfo::NOATOM) {
+            si.controllingAtoms[0] != Atom::NOATOM &&
+            si.controllingAtoms[2] != Atom::NOATOM) {
           bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
           bond->setStereo(Bond::BondStereo::STEREOANY);
         } else {
@@ -3029,10 +3023,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }  // end of 2 and 3 coordinated atoms only
-        }  // end of we want it or CIP code is not set
-      }  // end of double bond
-    }  // end of for loop over all bonds
+          }    // end of 2 and 3 coordinated atoms only
+        }      // end of we want it or CIP code is not set
+      }        // end of double bond
+    }          // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }

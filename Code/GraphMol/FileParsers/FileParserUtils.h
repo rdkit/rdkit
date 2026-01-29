@@ -12,6 +12,7 @@
 #define RD_FILEPARSERUTILS_H
 
 #include <string>
+#include <iostream>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -119,12 +120,6 @@ void applyMolListProp(ROMol &mol, const std::string &pn,
   std::vector<std::string> tokens;
   boost::split(tokens, strVect, boost::is_any_of(" \t\n"),
                boost::token_compress_on);
-  if (tokens.size() < nItems) {
-    BOOST_LOG(rdWarningLog) << "Property list " << pn << " too short, only "
-                            << tokens.size() << " elements found; expecting "
-                            << nItems << ". Ignoring it." << std::endl;
-    return;
-  }
   std::string mv = missingValueMarker;
   size_t first_token = 0;
   if (tokens.size() == nItems + 1 && tokens[0].front() == '[' &&
@@ -135,6 +130,12 @@ void applyMolListProp(ROMol &mol, const std::string &pn,
   if (mv.empty()) {
     BOOST_LOG(rdWarningLog) << "Missing value marker for property " << pn
                             << " is empty." << std::endl;
+  }
+  if(tokens.size() - first_token != nItems) {
+    BOOST_LOG(rdWarningLog) << "Property list " << pn << " has incompatible size, "
+                            << tokens.size() << " elements found; expecting "
+                            << nItems << ". Ignoring it." << std::endl;
+    return;
   }
   for (size_t i = first_token; i < tokens.size(); ++i) {
     if (tokens[i] != mv) {

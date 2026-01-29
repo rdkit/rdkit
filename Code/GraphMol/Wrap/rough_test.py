@@ -22,13 +22,12 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 
+import numpy as np
+
 import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
-from rdkit.Chem import rdqueries
-from rdkit.Chem import AllChem
+from rdkit.Chem import AllChem, rdqueries
 from rdkit.Chem.Scaffolds import MurckoScaffold
-
-import numpy as np
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
@@ -617,20 +616,22 @@ class TestCase(unittest.TestCase):
     # Github #8890: test that string properties preserve spaces
     m.SetProp("string spaces", " foo ")
     m.SetProp("string whitespace", " \t")
-    self.assertEqual(m.GetPropsAsDict(), {
-      "int": 1000,
-      "double": 10000.123,
-      "double spaces": 10000.123,
-      "string spaces": " foo ",
-      "string whitespace": " \t"
-    })
-    self.assertEqual(m.GetPropsAsDict(autoConvertStrings=False), {
-      "int": "1000",
-      "double": "10000.123",
-      "double spaces": " 10000.123 ",
-      "string spaces": " foo ",
-      "string whitespace": " \t"
-    })
+    self.assertEqual(
+      m.GetPropsAsDict(), {
+        "int": 1000,
+        "double": 10000.123,
+        "double spaces": 10000.123,
+        "string spaces": " foo ",
+        "string whitespace": " \t"
+      })
+    self.assertEqual(
+      m.GetPropsAsDict(autoConvertStrings=False), {
+        "int": "1000",
+        "double": "10000.123",
+        "double spaces": " 10000.123 ",
+        "string spaces": " foo ",
+        "string whitespace": " \t"
+      })
 
     self.assertEqual(type(m.GetPropsAsDict()['int']), int)
     self.assertEqual(type(m.GetPropsAsDict()['double']), float)
@@ -6693,8 +6694,7 @@ M  END
     self.assertEqual(si[1].specified, Chem.StereoSpecified.Unspecified)
     self.assertEqual(si[1].centeredOn, 3)
     self.assertEqual(si[1].descriptor, Chem.StereoDescriptor.NoValue)
-    self.assertEqual(list(si[1].controllingAtoms),
-                     [1, Chem.StereoInfo.NOATOM, 5, Chem.StereoInfo.NOATOM])
+    self.assertEqual(list(si[1].controllingAtoms), [1, Chem.Atom.NOATOM, 5, Chem.Atom.NOATOM])
 
   def testNewFindMolChiralCenters(self):
     mol = Chem.MolFromSmiles('C[C@H](F)C=CC(F)Cl')
