@@ -425,8 +425,7 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 namespace Chirality {
 
 std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
-    const ROMol &mol, const Bond *bond, const Conformer *conf,
-    double pseudo3DOffset = 0.1) {
+    const ROMol &mol, const Bond *bond, const Conformer *conf) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(conf, "no conformer");
   auto bondDir = bond->getBondDir();
@@ -438,6 +437,9 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       0.00031;  // used to recognize T-shaped arrangements
   // corresponds to an angle between the two vectors of just under 178 degrees
   // degree
+
+  constexpr double pseudo3DOffset = 0.1;  // z-displacement for wedged bonds
+
   constexpr double volumeTolerance =
       0.00174;  // used to recognize zero chiral volume
   // This is what we get for a T-shaped arrangement with just over 178 degrees
@@ -477,12 +479,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
   //  at the end of this process bond 0 is the input wedged bond
   //
   //----------------------------------------------------------
-  bool hSeen = false;
 
   INT_VECT neighborBondIndices;
-  if (is_regular_h(*bondAtom)) {
-    hSeen = true;
-  }
 
   unsigned int refIdx = mol.getNumBonds() + 1;
   std::vector<RDGeom::Point3D> bondVects;
@@ -528,9 +526,6 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       allSingle = false;
     }
     bondVects.push_back(centerLoc.directionVector(tmpPt));
-    if (is_regular_h(*oAtom)) {
-      hSeen = true;
-    }
     neighborBondIndices.push_back(nbrBond->getIdx());
   }
   CHECK_INVARIANT(refIdx < mol.getNumBonds(),
@@ -540,12 +535,11 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
 
   //----------------------------------------------------------
   //
-  //  Return now if there aren't at least 3 non-H bonds to the atom.
-  //  (we can implicitly add a single H to 3 coordinate atoms, but
-  //  we're horked otherwise).
+  //  Return now if there aren't at least 3 bonds to the atom.
+  //  (we can implicitly add a single H to 3 coordinate atoms).
   //
   //----------------------------------------------------------
-  if (nNbrs < 3 || nNbrs > 4 || (hSeen && nNbrs < 4)) {
+  if (nNbrs < 3 || nNbrs > 4) {
     return std::nullopt;
   }
 
@@ -1487,7 +1481,8 @@ bool atomIsCandidateForRingStereochem(
           ringNbrRanks.insert(atomRanks[nbr->getIdx()]);
         }
       }
-      // std::cerr << "!!!! " << atom->getIdx() << " " << ringNbrRanks.size() << " "
+      // std::cerr << "!!!! " << atom->getIdx() << " " << ringNbrRanks.size() <<
+      // " "
       //           << ringNbrs.size() << " " << nonRingNbrs.size() << std::endl;
       switch (nonRingNbrs.size()) {
         case 2:
