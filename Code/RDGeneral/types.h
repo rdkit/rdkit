@@ -125,6 +125,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string _CIPRank;  // int COMPUTED
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _CIPComputed;  // int (bool) COMPUTED
+RDKIT_RDGENERAL_EXPORT extern const std::string _CIPNeighborOrder;
+
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _CanonicalRankingNumber;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _ChiralityPossible;  // int

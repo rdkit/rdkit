@@ -38,6 +38,8 @@ class AtropisomerBond : public Configuration {
   // bond->getStereo() can return both E/Z or CIS/TRANS,
   // so we cache CIS/TRANS we found.
   Bond::BondStereo d_cfg;
+
+  std::vector<unsigned int> d_ranked_anchors;
 };
 
 }  // namespace CIPLabeler
