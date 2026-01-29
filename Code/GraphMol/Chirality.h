@@ -19,11 +19,16 @@
 #include <boost/dynamic_bitset.hpp>
 #include <limits>
 
+#include "MolOps.h"
+
 namespace RDKit {
 class Atom;
+class AtomData;
 class Bond;
+class BondData;
 class ROMol;
 class Conformer;
+class RingInfoCache;
 
 namespace Chirality {
 
@@ -54,6 +59,19 @@ RDKIT_GRAPHMOL_EXPORT extern bool
     useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
                                 //!< perception code
 
+typedef INT_VECT CIP_ENTRY;
+typedef std::vector<CIP_ENTRY> CIP_ENTRY_VECT;
+
+struct CIPRanksTempData {
+  INT_VECT invars;
+  CIP_ENTRY_VECT cipEntries;
+  std::vector<unsigned int> counts;
+  std::vector<unsigned int> updatedNbrIdxs;
+};
+
+typedef std::pair<int, int> INT_PAIR;
+typedef std::vector<INT_PAIR> INT_PAIR_VECT;
+
 /// @cond
 /*!
   \param mol the molecule to be altered
@@ -65,10 +83,11 @@ RDKIT_GRAPHMOL_EXPORT extern bool
        CIP ranking.
 
 */
-RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol,
+RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(ROMol &mol,
                                               UINT_VECT &ranks);
 
 RDKIT_GRAPHMOL_EXPORT bool hasStereoBondDir(const Bond *bond);
+RDKIT_GRAPHMOL_EXPORT bool hasStereoBondDir(const BondData &bond);
 
 /**
  *  Returns the first neighboring bond that can be found which has a stereo
@@ -154,6 +173,8 @@ RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
     const ROMol &mol);
 
 //! removes atoms without specified chirality from stereo groups
+RDKIT_GRAPHMOL_EXPORT void cleanupStereoGroups(RDMol &mol);
+//! overload
 RDKIT_GRAPHMOL_EXPORT void cleanupStereoGroups(ROMol &mol);
 
 //! calls the approximate legacy code for assigning CIP labels
@@ -184,6 +205,7 @@ RDKIT_GRAPHMOL_EXPORT INT_VECT findStereoAtoms(const Bond *bond);
 //! \name Non-tetrahedral stereochemistry
 //! @{
 RDKIT_GRAPHMOL_EXPORT bool hasNonTetrahedralStereo(const Atom *center);
+RDKIT_GRAPHMOL_EXPORT bool hasNonTetrahedralStereo(const AtomData &center);
 RDKIT_GRAPHMOL_EXPORT Bond *getChiralAcrossBond(const Atom *center,
                                                 const Bond *qry);
 RDKIT_GRAPHMOL_EXPORT Bond *getChiralAcrossBond(const Atom *center,

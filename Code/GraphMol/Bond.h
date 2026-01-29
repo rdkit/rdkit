@@ -20,11 +20,16 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDProps.h>
 #include <GraphMol/details.h>
+#include <GraphMol/RDMol.h>
+#include <GraphMol/rdmol_throw.h>
+
+#include "GraphMolEnums.h"
 
 namespace RDKit {
 class ROMol;
 class RWMol;
 class Atom;
+class ConstRDMolBond;
 
 //! class for representing a bond
 /*!
@@ -43,110 +48,107 @@ class Atom;
           clients who need to store extra data on Bond objects.
 
 */
-class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
-  friend class RWMol;
+class RDKIT_GRAPHMOL_EXPORT Bond {
   friend class ROMol;
+  friend class RWMol;
+  friend class RDMol;
+
+  // When a bond is created on its own, it owns dp_dataMol to store its data
+  // and dp_owningMol is nullptr. Calling setOwningMol will set dp_owningMol,
+  // but as before, this does not actually insert the Bond's data into the
+  // owning RDMol, so dp_dataMol will continue keeping the data until
+  // ROMol::addBond copies the data and frees dp_dataMol, setting dp_dataMol
+  // to be equal to dp_owningMol, to indicate that dp_dataMol is no longer
+  // owned by this Bond, and setting d_index accordingly.
+  //
+  // The 3 states are:
+  // 1) dp_owningMol == nullptr: dp_dataMol owned by this & no owning mol
+  // 2) else if dp_dataMol != dp_owningMol: dp_dataMol owned by this
+  // 3) dp_dataMol == dp_owningMol: dp_owningMol owns this
+  //
+  // This is necessary for compatibility with previous workflows that would
+  // call setOwningMol and separately ROMol::addBond.
+  RDMol *dp_dataMol = nullptr;
+  RDMol *dp_owningMol = nullptr;
+  uint32_t d_index = 0;
+
+ protected:
+  Bond(RDMol *mol, uint32_t bondIndex)
+      : dp_dataMol(mol), dp_owningMol(mol), d_index(bondIndex) {}
 
  public:
   // FIX: grn...
   typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
+  // typedef Queries::Query<int, ConstRDMolBond, true> QUERYBOND_QUERY;
 
   //! the type of Bond
-  typedef enum {
-    UNSPECIFIED = 0,
-    SINGLE,
-    DOUBLE,
-    TRIPLE,
-    QUADRUPLE,
-    QUINTUPLE,
-    HEXTUPLE,
-    ONEANDAHALF,
-    TWOANDAHALF,
-    THREEANDAHALF,
-    FOURANDAHALF,
-    FIVEANDAHALF,
-    AROMATIC,
-    IONIC,
-    HYDROGEN,
-    THREECENTER,
-    DATIVEONE,  //!< one-electron dative (e.g. from a C in a Cp ring to a metal)
-    DATIVE,     //!< standard two-electron dative
-    DATIVEL,    //!< standard two-electron dative
-    DATIVER,    //!< standard two-electron dative
-    OTHER,
-    ZERO  //!< Zero-order bond (from
+  enum BondType {
+    UNSPECIFIED = BondEnums::BondType::UNSPECIFIED,
+    SINGLE = BondEnums::BondType::SINGLE,
+    DOUBLE = BondEnums::BondType::DOUBLE,
+    TRIPLE = BondEnums::BondType::TRIPLE,
+    QUADRUPLE = BondEnums::BondType::QUADRUPLE,
+    QUINTUPLE = BondEnums::BondType::QUINTUPLE,
+    HEXTUPLE = BondEnums::BondType::HEXTUPLE,
+    ONEANDAHALF = BondEnums::BondType::ONEANDAHALF,
+    TWOANDAHALF = BondEnums::BondType::TWOANDAHALF,
+    THREEANDAHALF = BondEnums::BondType::THREEANDAHALF,
+    FOURANDAHALF = BondEnums::BondType::FOURANDAHALF,
+    FIVEANDAHALF = BondEnums::BondType::FIVEANDAHALF,
+    AROMATIC = BondEnums::BondType::AROMATIC,
+    IONIC = BondEnums::BondType::IONIC,
+    HYDROGEN = BondEnums::BondType::HYDROGEN,
+    THREECENTER = BondEnums::BondType::THREECENTER,
+    //!< one-electron dative (e.g. from a C in a Cp ring to a metal)
+    DATIVEONE = BondEnums::BondType::DATIVEONE,
+    DATIVE = BondEnums::BondType::DATIVE,    //!< standard two-electron dative
+    DATIVEL = BondEnums::BondType::DATIVEL,  //!< standard two-electron dative
+    DATIVER = BondEnums::BondType::DATIVER,  //!< standard two-electron dative
+    OTHER = BondEnums::BondType::OTHER,
+    ZERO = BondEnums::BondType::ZERO  //!< Zero-order bond (from
     // http://pubs.acs.org/doi/abs/10.1021/ci200488k)
-  } BondType;
+  };
 
   //! the bond's direction (for chirality)
-  typedef enum {
-    NONE = 0,    //!< no special style
-    BEGINWEDGE,  //!< wedged: narrow at begin
-    BEGINDASH,   //!< dashed: narrow at begin
+  enum BondDir {
+    NONE = BondEnums::BondDir::NONE,              //!< no special style
+    BEGINWEDGE = BondEnums::BondDir::BEGINWEDGE,  //!< wedged: narrow at begin
+    BEGINDASH = BondEnums::BondDir::BEGINDASH,    //!< dashed: narrow at begin
     // FIX: this may not really be adequate
-    ENDDOWNRIGHT,  //!< for cis/trans
-    ENDUPRIGHT,    //!<  ditto
-    EITHERDOUBLE,  //!< a "crossed" double bond
-    UNKNOWN,       //!< intentionally unspecified stereochemistry
-  } BondDir;
+    ENDDOWNRIGHT = BondEnums::BondDir::ENDDOWNRIGHT,  //!< for cis/trans
+    ENDUPRIGHT = BondEnums::BondDir::ENDUPRIGHT,      //!<  ditto
+    //!< a "crossed" double bond
+    EITHERDOUBLE = BondEnums::BondDir::EITHERDOUBLE,
+    //!< intentionally unspecified stereochemistry
+    UNKNOWN = BondEnums::BondDir::UNKNOWN,
+  };
 
   //! the nature of the bond's stereochem (for cis/trans)
-  typedef enum {     // stereochemistry of double bonds
-    STEREONONE = 0,  // no special style
-    STEREOANY,       // intentionally unspecified
+  enum BondStereo {  // stereochemistry of double bonds
+    STEREONONE = BondEnums::BondStereo::STEREONONE,  // no special style
+    STEREOANY = BondEnums::BondStereo::STEREOANY,  // intentionally unspecified
     // -- Put any true specifications about this point so
     // that we can do comparisons like if(bond->getStereo()>Bond::STEREOANY)
-    STEREOZ,         // Z double bond
-    STEREOE,         // E double bond
-    STEREOCIS,       // cis double bond
-    STEREOTRANS,     // trans double bond
-    STEREOATROPCW,   //  atropisomer clockwise rotation
-    STEREOATROPCCW,  //  atropisomer counter clockwise rotation
-  } BondStereo;
+    STEREOZ = BondEnums::BondStereo::STEREOZ,               // Z double bond
+    STEREOE = BondEnums::BondStereo::STEREOE,               // E double bond
+    STEREOCIS = BondEnums::BondStereo::STEREOCIS,           // cis double bond
+    STEREOTRANS = BondEnums::BondStereo::STEREOTRANS,       // trans double bond
+    STEREOATROPCW = BondEnums::BondStereo::STEREOATROPCW,   // cis double bond
+    STEREOATROPCCW = BondEnums::BondStereo::STEREOATROPCCW  // trans double bond
+  };
 
   Bond();
   //! construct with a particular BondType
   explicit Bond(BondType bT);
   Bond(const Bond &other);
+
   virtual ~Bond();
   Bond &operator=(const Bond &other);
 
-  Bond(Bond &&o) noexcept : RDProps(std::move(o)) {
-    df_isAromatic = o.df_isAromatic;
-    df_isConjugated = o.df_isConjugated;
-    d_bondType = o.d_bondType;
-    d_dirTag = o.d_dirTag;
-    d_stereo = o.d_stereo;
-    d_index = o.d_index;
-    d_beginAtomIdx = o.d_beginAtomIdx;
-    d_endAtomIdx = o.d_endAtomIdx;
-    // NOTE: this is somewhat fraught for bonds associated with molecules since
-    // the molecule will still be pointing to the original object
-    dp_mol = std::exchange(o.dp_mol, nullptr);
-    dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
-    d_flags = std::exchange(o.d_flags, 0);
-  }
-  Bond &operator=(Bond &&o) noexcept {
-    if (this == &o) {
-      return *this;
-    }
-    RDProps::operator=(std::move(o));
-    df_isAromatic = o.df_isAromatic;
-    df_isConjugated = o.df_isConjugated;
-    d_bondType = o.d_bondType;
-    d_dirTag = o.d_dirTag;
-    d_stereo = o.d_stereo;
-    d_index = o.d_index;
-    d_beginAtomIdx = o.d_beginAtomIdx;
-    d_endAtomIdx = o.d_endAtomIdx;
-    // NOTE: this is somewhat fraught for bonds associated with molecules since
-    // the molecule will still be pointing to the original object
-    delete dp_stereoAtoms;
-    dp_mol = std::exchange(o.dp_mol, nullptr);
-    dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
-    d_flags = std::exchange(o.d_flags, 0);
-    return *this;
-  }
+  // NOTE: the move methods are somewhat fraught for bonds associated with
+  // molecules since the molecule will still be pointing to the original object
+  Bond(Bond &&o) noexcept;
+  Bond &operator=(Bond &&o) noexcept;
 
   //! returns a copy
   /*!
@@ -155,10 +157,55 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   */
   virtual Bond *copy() const;
 
+  //! returns whether or not this instance belongs to a molecule
+  bool hasOwningMol() const { return dp_owningMol != nullptr; }
+
+  //! returns a reference to the ROMol that owns this instance
+  ROMol &getOwningMol() const;
+
+  //! returns a reference to the RDMol that owns this instance
+  const RDMol &getRDMol() const {
+    PRECONDITION(dp_owningMol, "no owner");
+    return *dp_owningMol;
+  }
+  //! overload
+  RDMol &getRDMol() {
+    PRECONDITION(dp_owningMol, "no owner");
+    return *dp_owningMol;
+  }
+
+ protected:
+  //! returns a reference to the RDMol that contains the data for this bond,
+  //! for internal use only
+  const RDMol &getDataRDMol() const { return *dp_dataMol; }
+  //! overload
+  RDMol &getDataRDMol() { return *dp_dataMol; }
+
+ public:
+  //! sets our owning molecule
+  void setOwningMol(ROMol *other);
+  //! \overload
+  void setOwningMol(ROMol &other) { setOwningMol(&other); }
+  //! \overload
+  void setOwningMol(RDMol *other);
+
+  // inverts the chirality of an atropisomer
+  bool invertChirality();
+
+  //! returns our index within the ROMol
+  unsigned int getIdx() const { return d_index; }
+  //! sets our index within the ROMol
+  /*!
+    <b>Notes:</b>
+      - this makes no sense if we do not have an owning molecule
+      - the index should be <tt>< this->getOwningMol()->getNumBonds()</tt>
+  */
+  void setIdx(unsigned int index) { d_index = index; }
+
   //! returns our \c bondType
-  BondType getBondType() const { return static_cast<BondType>(d_bondType); }
+  BondType getBondType() const;
   //! sets our \c bondType
-  void setBondType(BondType bT) { d_bondType = bT; }
+  void setBondType(BondType bT);
   //! \brief returns our \c bondType as a double
   //!   (e.g. SINGLE->1.0, AROMATIC->1.5, etc.)
   double getBondTypeAsDouble() const;
@@ -171,59 +218,28 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   virtual double getValenceContrib(const Atom *at) const;
 
   //! sets our \c isAromatic flag
-  void setIsAromatic(bool what) { df_isAromatic = what; }
+  void setIsAromatic(bool what);
   //! returns the status of our \c isAromatic flag
-  bool getIsAromatic() const { return df_isAromatic; }
+  bool getIsAromatic() const;
 
   //! sets our \c isConjugated flag
-  void setIsConjugated(bool what) { df_isConjugated = what; }
+  void setIsConjugated(bool what);
   //! returns the status of our \c isConjugated flag
-  bool getIsConjugated() const { return df_isConjugated; }
-
-  //! returns whether or not this instance belongs to a molecule
-  bool hasOwningMol() const { return dp_mol != nullptr; }
-
-  //! returns a reference to the ROMol that owns this instance
-  ROMol &getOwningMol() const {
-    PRECONDITION(dp_mol, "no owner");
-    return *dp_mol;
-  }
-  //! sets our owning molecule
-  void setOwningMol(ROMol *other);
-  //! sets our owning molecule
-  void setOwningMol(ROMol &other) { setOwningMol(&other); }
-
-  // inverts the chirality of an atropisomer
-  bool invertChirality();
-
-  //! returns our index within the ROMol
-  /*!
-    <b>Notes:</b>
-      - this makes no sense if we do not have an owning molecule
-
-  */
-  unsigned int getIdx() const { return d_index; }
-  //! sets our index within the ROMol
-  /*!
-    <b>Notes:</b>
-      - this makes no sense if we do not have an owning molecule
-      - the index should be <tt>< this->getOwningMol()->getNumBonds()</tt>
-  */
-  void setIdx(unsigned int index) { d_index = index; }
+  bool getIsConjugated() const;
 
   //! returns the index of our begin Atom
   /*!
     <b>Notes:</b>
       - this makes no sense if we do not have an owning molecule
   */
-  unsigned int getBeginAtomIdx() const { return d_beginAtomIdx; }
+  unsigned int getBeginAtomIdx() const;
 
   //! returns the index of our end Atom
   /*!
     <b>Notes:</b>
       - this makes no sense if we do not have an owning molecule
   */
-  unsigned int getEndAtomIdx() const { return d_endAtomIdx; }
+  unsigned int getEndAtomIdx() const;
 
   //! given the index of one Atom, returns the index of the other
   /*!
@@ -307,9 +323,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   virtual bool Match(Bond const *what) const;
 
   //! sets our direction
-  void setBondDir(BondDir what) { d_dirTag = what; }
+  void setBondDir(BondDir what);
   //! returns our direction
-  BondDir getBondDir() const { return static_cast<BondDir>(d_dirTag); }
+  BondDir getBondDir() const;
 
   //! sets our stereo code
   /*!
@@ -323,15 +339,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
         - MolOps::findPotentialStereoBonds can be used to set
           getStereoAtoms before setting CIS/TRANS
   */
-  void setStereo(BondStereo what) {
-    PRECONDITION(((what != STEREOCIS && what != STEREOTRANS) ||
-                  getStereoAtoms().size() == 2),
-                 "Stereo atoms should be specified before specifying CIS/TRANS "
-                 "bond stereochemistry")
-    d_stereo = what;
-  }
+  void setStereo(BondStereo what);
   //! returns our stereo code
-  BondStereo getStereo() const { return static_cast<BondStereo>(d_stereo); }
+  BondStereo getStereo() const;
 
   //! sets the atoms to be considered as reference points for bond stereo
   /*!
@@ -348,62 +358,191 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   void setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx);
 
   //! returns the indices of our stereo atoms
-  const INT_VECT &getStereoAtoms() const {
-    if (!dp_stereoAtoms) {
-      const_cast<Bond *>(this)->dp_stereoAtoms = new INT_VECT();
-    }
-    return *dp_stereoAtoms;
-  }
+  const INT_VECT &getStereoAtoms() const;
   //! \overload
-  INT_VECT &getStereoAtoms() {
-    if (!dp_stereoAtoms) {
-      dp_stereoAtoms = new INT_VECT();
-    }
-    return *dp_stereoAtoms;
-  }
+  INT_VECT &getStereoAtoms();
 
   //! calculates any of our lazy \c properties
   /*!
     <b>Notes:</b>
       - requires an owning molecule
   */
-  void updatePropertyCache(bool strict = true) { (void)strict; }
+  void updatePropertyCache(bool strict = true);
 
   //! Flags that can be used by to store information on bonds.
   //!   These are not serialized and should be treated as temporary values.
   //!   No guarantees are made about preserving these flags across library
   //!   calls.
-  void setFlags(std::uint64_t flags) { d_flags = flags; }
-  std::uint64_t getFlags() const { return d_flags; }
-  std::uint64_t &getFlags() { return d_flags; }
+  void setFlags(std::uint64_t flags);
+  std::uint64_t getFlags() const;
+  std::uint64_t &getFlags();
 
- protected:
-  //! sets our owning molecule
-  /// void setOwningMol(ROMol *other);
-  //! sets our owning molecule
-  /// void setOwningMol(ROMol &other) { setOwningMol(&other); }
-  ROMol *dp_mol;
-  INT_VECT *dp_stereoAtoms;
-  atomindex_t d_index;
-  atomindex_t d_beginAtomIdx, d_endAtomIdx;
-  bool df_isAromatic;
-  bool df_isConjugated;
-  std::uint8_t d_bondType;
-  std::uint8_t d_dirTag;
-  std::uint8_t d_stereo;
-  std::uint64_t d_flags = 0;
+  //! returns a list with the names of our \c properties
+  STR_VECT getPropList(bool includePrivate = true,
+                       bool includeComputed = true) const;
 
-  void initBond();
+  //! sets a \c property value
+  /*!
+    \param key the name under which the \c property should be stored.
+    If a \c property is already stored under this name, it will be
+    replaced.
+    \param val the value to be stored
+    \param computed (optional) allows the \c property to be flagged
+    \c computed.
+
+    <b>Notes:</b>
+    - This must be allowed on a const Bond for backward compatibility,
+    but DO NOT call this while this bond might be being modified in another
+    thread, NOR while any properties on the same molecule might be being read or
+    written.
+  */
+
+  //! \overload
+  template <typename T>
+  void setProp(const std::string_view &key, T val,
+               bool computed = false) const {
+    // Continue support for mixed-type cases like:
+    // bond0->setProp("a", 1.7); bond1->setProp("a", 123);
+    // If there is a type mismatch, this option will convert to RDValue
+    dp_dataMol->setSingleBondProp(PropToken(key), getIdx(), val, computed,
+                                  true);
+  }
+  void setProp(const std::string_view &key, const char *val,
+               bool computed = false) const {
+    std::string sv(val);
+    // Continue support for mixed-type cases like:
+    // bond0->setProp("a", 1.7); bond1->setProp("a", 123);
+    // If there is a type mismatch, this option will convert to RDValue
+    dp_dataMol->setSingleBondProp(PropToken(key), getIdx(), sv, computed, true);
+  }
+
+  //! allows retrieval of a particular property value
+  /*!
+    \param key the name under which the \c property should be stored.
+    If a \c property is already stored under this name, it will be
+    replaced.
+    \param res a reference to the storage location for the value.
+
+    <b>Notes:</b>
+    - if no \c property with name \c key exists, a KeyErrorException will be
+    thrown.
+    - the \c boost::lexical_cast machinery is used to attempt type
+    conversions.
+    If this fails, a \c boost::bad_lexical_cast exception will be thrown.
+  */
+  //! \overload
+  template <typename T>
+  void getProp(const std::string_view &key, T &res) const {
+    PropToken token(key);
+    if constexpr (std::is_same_v<T, STR_VECT>) {
+      if (token == detail::computedPropNameToken) {
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::BOND,
+                                        getIdx());
+        return;
+      }
+    }
+    bool found = dp_dataMol->getBondPropIfPresent(token, getIdx(), res);
+    if (!found) {
+      throw KeyErrorException(key);
+    }
+  }
+
+  //! \overload
+  template <typename T>
+  T getProp(const std::string_view &key) const {
+    PropToken token(key);
+    if constexpr (std::is_same_v<T, STR_VECT>) {
+      if (token == detail::computedPropNameToken) {
+        STR_VECT res;
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::BOND,
+                                        getIdx());
+        return res;
+      }
+    }
+    return dp_dataMol->getBondProp<T>(token, getIdx());
+  }
+
+  //! returns whether or not we have a \c property with name \c key
+  //!  and assigns the value if we do
+  //! \overload
+  template <typename T>
+  bool getPropIfPresent(const std::string_view &key, T &res) const {
+    PropToken token(key);
+    if constexpr (std::is_same_v<T, STR_VECT>) {
+      if (token == detail::computedPropNameToken) {
+        dp_dataMol->getComputedPropList(res, RDProperties::Scope::BOND,
+                                        getIdx());
+        return true;
+      }
+    }
+    return dp_dataMol->getBondPropIfPresent(token, getIdx(), res);
+  }
+
+  //! \overload
+  bool hasProp(const std::string_view &key) const;
+
+  //! clears the value of a \c property
+  /*!
+    <b>Notes:</b>
+    - if no \c property with name \c key exists, a KeyErrorException
+    will be thrown.
+    - if the \c property is marked as \c computed, it will also be removed
+    from our list of \c computedProperties
+
+    <b>Notes:</b>
+    - This must be allowed on a const Bond for backward compatibility,
+    but DO NOT call this while this bond might be being modified in another
+    thread, NOR while any properties on the same molecule might be being read or
+    written.
+  */
+  //! \overload
+  void clearProp(const std::string_view &key) const;
+
+  //! clears all of our \c computed \c properties
+  /*!
+    <b>Notes:</b>
+    - This must be allowed on a const Bond for backward compatibility,
+    but DO NOT call this while this bond might be being modified in another
+    thread, NOR while any properties on the same molecule might be being read or
+    written.
+  */
+  void clearComputedProps() const;
+
+  //! update the properties from another
+  /*
+    \param source    Source to update the properties from
+    \param preserve  Existing If true keep existing data, else override from
+    the source
+  */
+  void updateProps(const Bond &source, bool preserveExisting = false);
+  void updateProps(const RDProps &source, bool preserveExisting = false);
+
+  //! Clears all properties of this Bond, but leaves everything else
+  void clear();
+  [[noreturn]] Dict &getDict() { raiseNonImplementedFunction("GetDict"); }
+  [[noreturn]] const Dict &getDict() const {
+    raiseNonImplementedFunction("GetDict");
+  }
+
+ private:
+  void initFromOther(const Bond &other, bool preserveProps = false);
 };
 
-inline bool isDative(const Bond::BondType bt) {
-  return bt == Bond::BondType::DATIVE || bt == Bond::BondType::DATIVEL ||
-         bt == Bond::BondType::DATIVER || bt == Bond::BondType::DATIVEONE;
+inline bool isDative(BondEnums::BondType bt) {
+  return bt == BondEnums::BondType::DATIVE ||
+         bt == BondEnums::BondType::DATIVEL ||
+         bt == BondEnums::BondType::DATIVER ||
+         bt == BondEnums::BondType::DATIVEONE;
 }
 
 inline bool isDative(const Bond &bond) {
   auto bt = bond.getBondType();
-  return isDative(bt);
+  return isDative(BondEnums::BondType(bt));
+}
+
+inline bool canSetDoubleBondStereo(BondEnums::BondType bondType) {
+  return (bondType == BondEnums::BondType::SINGLE ||
+          bondType == BondEnums::BondType::AROMATIC || isDative(bondType));
 }
 
 inline bool canSetDoubleBondStereo(const Bond &bond) {
@@ -412,6 +551,10 @@ inline bool canSetDoubleBondStereo(const Bond &bond) {
           isDative(bond));
 }
 
+inline bool canHaveDirection(BondEnums::BondType bondType) {
+  return (bondType == BondEnums::BondType::SINGLE ||
+          bondType == BondEnums::BondType::AROMATIC);
+}
 inline bool canHaveDirection(const Bond &bond) {
   auto bondType = bond.getBondType();
   return (bondType == Bond::SINGLE || bondType == Bond::AROMATIC);
@@ -419,6 +562,7 @@ inline bool canHaveDirection(const Bond &bond) {
 
 //! returns twice the \c bondType
 //! (e.g. SINGLE->2, AROMATIC->3, etc.)
+RDKIT_GRAPHMOL_EXPORT extern uint8_t getTwiceBondType(RDKit::Bond::BondType b);
 RDKIT_GRAPHMOL_EXPORT extern uint8_t getTwiceBondType(const RDKit::Bond &b);
 
 };  // namespace RDKit

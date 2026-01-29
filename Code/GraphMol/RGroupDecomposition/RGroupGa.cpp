@@ -179,7 +179,7 @@ void RGroupGa::rGroupMutateOperation(
 #endif
 #ifdef DEBUG
   std::cerr << "Starting child score" << std::endl;
-  fingerprintVarianceGroupScore(fingerprintVarianceScoreData);
+  fingerprintVarianceScoreData.fingerprintVarianceGroupScore();
 #endif
 
   auto &parentPermutation = parent->getPermutation();
@@ -196,13 +196,13 @@ void RGroupGa::rGroupMutateOperation(
                                                       labels);
 #ifdef DEBUG
       std::cerr << "After removing parent" << std::endl;
-      fingerprintVarianceGroupScore(fingerprintVarianceScoreData);
+      fingerprintVarianceScoreData.fingerprintVarianceGroupScore();
 #endif
       fingerprintVarianceScoreData.addVarianceData(pos, childValue, matches,
                                                    labels);
 #ifdef DEBUG
       std::cerr << "After adding child" << std::endl;
-      fingerprintVarianceGroupScore(fingerprintVarianceScoreData);
+      fingerprintVarianceScoreData.fingerprintVarianceGroupScore();
 #endif
     }
   }

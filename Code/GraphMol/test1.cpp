@@ -594,6 +594,7 @@ void testIssue1993296() {
   } catch (...) {
     ok = true;
   }
+  TEST_ASSERT(ok);
 
   auto *newB = new Bond();
   newB->setBeginAtomIdx(0);

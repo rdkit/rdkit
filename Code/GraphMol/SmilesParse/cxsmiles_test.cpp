@@ -11,6 +11,7 @@
 #include <RDGeneral/test.h>
 #include <string>
 #include <vector>
+#include <GraphMol/RDMol.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/test_fixtures.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -38,6 +39,12 @@ TEST_CASE("base functionality") {
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 2);
     delete m;
+
+    SmilesParseTemp temp;
+    RDMol mol;
+    bool success = SmilesToMol(smiles.c_str(), params, mol, temp);
+    TEST_ASSERT(success);
+    TEST_ASSERT(mol.getNumAtoms() == 2);
   }
 }
 TEST_CASE("reading 2D coordinates") {

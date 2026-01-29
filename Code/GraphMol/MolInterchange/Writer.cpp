@@ -245,32 +245,25 @@ void addBond(const Bond &bond, bj::object &bjBond, const bj::object &bjDefaults,
 template <typename T>
 void addProperties(const T &obj, const std::vector<std::string> &propNames,
                    bj::object &properties) {
-  const auto &data = obj.getDict().getData();
-
-  for (auto &rdvalue : data) {
-    if (std::find(propNames.begin(), propNames.end(), rdvalue.key) ==
-        propNames.end()) {
-      continue;
-    }
-    const auto tag = rdvalue.val.getTag();
-    switch (tag) {
-      case RDTypeTag::IntTag:
-      case RDTypeTag::UnsignedIntTag:
-        properties[rdvalue.key] = from_rdvalue<int>(rdvalue.val);
-        break;
-      case RDTypeTag::DoubleTag:
-      case RDTypeTag::FloatTag:
-        properties[rdvalue.key] = from_rdvalue<double>(rdvalue.val);
-        break;
-      default:
+  for (const auto &pN : propNames) {
+    try {
+      auto val = obj.template getProp<int>(pN);
+      properties[pN] = val;
+    } catch (const std::bad_any_cast &) {
+      try {
+        auto val = obj.template getProp<double>(pN);
+        properties[pN] = val;
+      } catch (const std::bad_any_cast &) {
         try {
-          properties[rdvalue.key] = from_rdvalue<std::string>(rdvalue.val);
+          auto val = obj.template getProp<std::string>(pN);
+          properties[pN] = val;
         } catch (const std::bad_any_cast &) {
           BOOST_LOG(rdWarningLog)
-              << "Warning: Could not convert property " << rdvalue.key
+              << "Warning: Could not convert property " << pN
               << " to a recognized type. Skipping it." << std::endl;
+          continue;
         }
-        break;
+      }
     }
   }
 }

@@ -334,6 +334,7 @@ void RGroupDecompData::relabelCore(
   //  core that takes the place of numBondsToRlabel
 
   std::vector<std::pair<Atom *, Atom *>> atomsToAdd;  // adds -R if necessary
+  std::vector<std::pair<Atom *, int>> newAtomsToLabel;  // track rlabels for new atoms
 
   // Deal with user supplied labels
   for (const auto &rlabels : atoms) {
@@ -364,8 +365,8 @@ void RGroupDecompData::relabelCore(
       }
       if (addNew) {
         auto *newAt = new Atom(0);
-        setRlabel(newAt, userLabel);
         atomsToAdd.emplace_back(atom, newAt);
+        newAtomsToLabel.emplace_back(newAt, userLabel);
       }
     }
   }
@@ -405,8 +406,8 @@ void RGroupDecompData::relabelCore(
       }
       if (addNew) {
         auto *newAt = new Atom(0);
-        setRlabel(newAt, rlabel);
         atomsToAdd.emplace_back(atom, newAt);
+        newAtomsToLabel.emplace_back(newAt, rlabel);
       }
     }
   }
@@ -426,12 +427,17 @@ void RGroupDecompData::relabelCore(
           atom->getAtomicNum() > 1,
           "Multiple attachments to a dummy (or hydrogen) is weird.");
       auto *newAt = new Atom(0);
-      setRlabel(newAt, rlabel);
       atomsToAdd.emplace_back(atom, newAt);
+      newAtomsToLabel.emplace_back(newAt, rlabel);
     }
   }
 
   addAtoms(core, atomsToAdd);
+
+  // Now set rlabels on newly added atoms (they have an owner now)
+  for (const auto &atomLabel : newAtomsToLabel) {
+    setRlabel(atomLabel.first, atomLabel.second);
+  }
   for (const auto &rlabels : atoms) {
     auto atom = rlabels.second;
     atom->clearProp(RLABEL);
@@ -458,6 +464,7 @@ void RGroupDecompData::relabelRGroup(RGroupData &rgroup,
 
   mol.setProp(done, true);
   std::vector<std::pair<Atom *, Atom *>> atomsToAdd;  // adds -R if necessary
+  std::vector<std::pair<Atom *, int>> newAtomsToLabel;  // track rlabels for new atoms
   std::map<int, int> rLabelCoreIndexToAtomicWt;
 
   for (RWMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
@@ -482,8 +489,8 @@ void RGroupDecompData::relabelRGroup(RGroupData &rgroup,
           setRlabel(atom, label->second);
         } else {
           auto *newAt = new Atom(0);
-          setRlabel(newAt, label->second);
           atomsToAdd.emplace_back(atom, newAt);
+          newAtomsToLabel.emplace_back(newAt, label->second);
         }
       }
     }
@@ -497,6 +504,11 @@ void RGroupDecompData::relabelRGroup(RGroupData &rgroup,
   }
 
   addAtoms(mol, atomsToAdd);
+
+  // Now set rlabels on newly added atoms (they have an owner now)
+  for (const auto &atomLabel : newAtomsToLabel) {
+    setRlabel(atomLabel.first, atomLabel.second);
+  }
 
   if (params.removeHydrogensPostMatch) {
     RDLog::LogStateSetter blocker;

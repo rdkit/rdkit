@@ -34,6 +34,7 @@
 #include <string>
 #include <string_view>
 #include <algorithm>
+#include <memory>
 #include <numeric>
 #include <list>
 #include <limits>
@@ -46,9 +47,185 @@
 
 namespace RDKit {
 
+class PropToken {
+  struct PropTokenImpl {
+    uint64_t hash;
+    std::string text;
+    PropTokenImpl(uint64_t initHash, std::string initText)
+        : hash(initHash), text(std::move(initText)) {}
+    PropTokenImpl(uint64_t initHash, const std::string_view &initText)
+        : hash(initHash), text(initText) {}
+  };
+  std::shared_ptr<PropTokenImpl> impl;
+
+ public:
+  static uint64_t computeHash(const char *text) {
+    size_t length = strlen(text);
+    uint64_t hash = 0;
+    while (length >= 8) {
+      uint64_t v = *reinterpret_cast<const uint64_t*>(text);
+      // The large magic number is the golden ratio minus 1, times 2^64,
+      // which is good for a simple low discrepancy sequence.
+      // 12345 is arbitrary.
+      hash = 12345 * hash + v + 0x9E3779B97F4A7C15;
+      length -= 8;
+      text += 8;
+    }
+    if (length != 0) {
+      uint64_t v = 0;
+      for (size_t i = 0; i < length; ++i) {
+        v |= uint64_t(uint8_t(*text)) << (i * 8);
+        ++text;
+      }
+      hash = 12345 * hash + v + 0x9E3779B97F4A7C15;
+    }
+    return hash;
+  }
+
+  constexpr PropToken() = default;
+  explicit PropToken(const char *text)
+      : impl(std::make_shared<PropTokenImpl>(computeHash(text),
+                                             std::string(text))) {}
+  explicit PropToken(const std::string &text)
+      : impl(std::make_shared<PropTokenImpl>(computeHash(text.c_str()), text)) {}
+  explicit PropToken(const std::string_view &text)
+      : impl(nullptr) {
+    std::string textString(text);
+    auto hash = computeHash(textString.c_str());
+    impl.reset(new PropTokenImpl(hash, std::move(textString)));
+  }
+  PropToken(const PropToken &) = default;
+  PropToken(PropToken &&) = default;
+  PropToken &operator=(const PropToken &) = default;
+  PropToken &operator=(PropToken &&) = default;
+  ~PropToken() = default;
+  bool operator==(const PropToken &other)
+          const {
+    const PropTokenImpl *p0 = impl.get();
+    const PropTokenImpl *p1 = other.impl.get();
+    if (p0 == p1) {
+      return true;
+    }
+    if (p0->hash != p1->hash) {
+      return false;
+    }
+    // For common tokens, this case should be relatively uncommon
+    return (p0->text == p1->text);
+  }
+  bool operator!=(const PropToken &other) const {
+    return !(*this == other);
+  }
+  bool operator==(const std::string &other) const {
+    return (impl->text == other);
+  }
+  bool operator!=(const std::string &other) const {
+    return !(*this == other);
+  }
+  bool operator==(const char *other) const {
+    return (impl->text == other);
+  }
+  bool operator!=(const char *other) const {
+    return !(*this == other);
+  }
+  const std::string &getString() const {
+    return impl->text;
+  }
+  const char *getText() const {
+    return impl->text.c_str();
+  }
+  bool isNull() const { return impl.get() == nullptr; }
+  operator bool() const { return impl.get() != nullptr; }
+  bool operator!() const { return impl.get() == nullptr; }
+};
+
 namespace detail {
 // used in various places for computed properties
 inline constexpr std::string_view computedPropName = "__computedProps";
+RDKIT_RDGENERAL_EXPORT extern const PropToken computedPropNameToken;
+
+// This wraps a vector or local buffer as a bit set,
+// so that often, no allocation is needed, and if it is
+// needed, it can be reused.
+class BitSetWrapper {
+  constexpr static size_t localBufferSize = 2;
+  uint64_t localBuffer[2] = {0, 0};
+  uint64_t *const buffer;
+  const size_t n;
+
+ public:
+  BitSetWrapper(std::vector<uint64_t> &storage, size_t n_, bool value = false)
+      : buffer((n_ > 64 * localBufferSize)
+                   ? (storage.clear(), storage.resize((n_ + 63) / 64, value ? ~uint64_t(0) : 0),
+                      storage.data())
+                   : localBuffer),
+        n(n_) {
+    if (value && n_ <= 64 * localBufferSize) {
+      for (size_t i = 0; i < localBufferSize; ++i) {
+        localBuffer[i] = ~uint64_t(0);
+      }
+    }
+  }
+  BitSetWrapper(uint64_t *storage, size_t n_) : buffer(storage), n(n_) {}
+  BitSetWrapper(uint64_t *storage, size_t n_, bool value)
+      : buffer(storage), n(n_) {
+    const size_t bufferSize = (n + 63) / 64;
+    for (size_t i = 0; i < bufferSize; ++i) {
+      buffer[i] = value ? ~uint64_t(0) : 0;
+    }
+  }
+
+  bool get(size_t i) const {
+    return (buffer[i / 64] & (uint64_t(1) << (i % 64))) != 0;
+  }
+  bool operator[](size_t i) const { return get(i); }
+  void set(size_t i) {
+    PRECONDITION(i < n, "BitSetWrapper::set index out of bounds");
+    buffer[i / 64] |= (uint64_t(1) << (i % 64));
+  }
+  void reset(size_t i) {
+    PRECONDITION(i < n, "BitSetWrapper::reset index out of bounds");
+    buffer[i / 64] &= ~(uint64_t(1) << (i % 64));
+  }
+  void set(size_t i, bool value) {
+    PRECONDITION(i < n, "BitSetWrapper::set index out of bounds");
+    if (value) {
+      buffer[i / 64] |= (uint64_t(1) << (i % 64));
+    } else {
+      buffer[i / 64] &= ~(uint64_t(1) << (i % 64));
+    }
+  }
+  void set() {
+    for (size_t i = 0; 64 * i < n; ++i) {
+      buffer[i] = ~uint64_t(0);
+    }
+  }
+  void reset() {
+    for (size_t i = 0; 64 * i < n; ++i) {
+      buffer[i] = 0;
+    }
+  }
+  size_t size() const { return n; }
+
+  const uint64_t *data() const { return buffer; }
+  uint64_t *data() { return buffer; }
+  size_t dataSize() const { return (n + 63) / 64; }
+
+  bool empty() const {
+    assert(n != 0);
+    if (n == 0) {
+      return true;
+    }
+    const size_t bufferSize = (n + 63) / 64;
+    // Just OR together all the bits
+    uint64_t bits = 0;
+    for (size_t i = 0; i < bufferSize-1; ++i) {
+      bits |= buffer[i];
+    }
+    // Only include the valid bits for the last buffer element.
+    bits |= (buffer[bufferSize - 1] & (~uint64_t(0) >> ((-int64_t(n)) & 0x3F)));
+    return (bits == 0);
+  }
+};
 }  // namespace detail
 
 namespace common_properties {
@@ -199,6 +376,29 @@ inline constexpr std::string_view _QueryAtomGenericLabel =
 // molecule drawing
 inline constexpr std::string_view _displayLabel = "_displayLabel";
 inline constexpr std::string_view _displayLabelW = "_displayLabelW";
+
+///////////////////////////////////////////////////////////////
+// misc props
+RDKIT_RDGENERAL_EXPORT extern const PropToken _hasMassQueryToken;  // atom bool
+
+RDKIT_RDGENERAL_EXPORT extern const PropToken _ChiralityPossibleToken;  // bool
+RDKIT_RDGENERAL_EXPORT extern const PropToken _chiralPermutationToken;  // uint
+RDKIT_RDGENERAL_EXPORT extern const PropToken _CIPCodeToken;            // char
+RDKIT_RDGENERAL_EXPORT extern const PropToken _CIPRankToken;            // uint
+RDKIT_RDGENERAL_EXPORT extern const PropToken _isotopicHsToken;         // uint64
+RDKIT_RDGENERAL_EXPORT extern const PropToken _MolFileBondEndPtsToken;  // string
+RDKIT_RDGENERAL_EXPORT extern const PropToken _MolFileBondAttachToken;  // string
+RDKIT_RDGENERAL_EXPORT extern const PropToken _MolFileRLabelToken;      // uint
+RDKIT_RDGENERAL_EXPORT extern const PropToken _ringStereoAtomsAllToken; // int
+RDKIT_RDGENERAL_EXPORT extern const PropToken _ringStereoAtomsBeginsToken;// uint
+RDKIT_RDGENERAL_EXPORT extern const PropToken _ringStereoGroupToken;    // int
+RDKIT_RDGENERAL_EXPORT extern const PropToken _supplementalSmilesLabelToken;// string
+RDKIT_RDGENERAL_EXPORT extern const PropToken _UnknownStereoToken;      // bool
+RDKIT_RDGENERAL_EXPORT extern const PropToken dummyLabelToken;          // token
+RDKIT_RDGENERAL_EXPORT extern const PropToken isImplicitToken;          // bool
+RDKIT_RDGENERAL_EXPORT extern const PropToken molAtomMapNumberToken;    // int
+RDKIT_RDGENERAL_EXPORT extern const PropToken molFileAliasToken;        // string
+RDKIT_RDGENERAL_EXPORT extern const PropToken molFileValueToken;        // string
 
 }  // namespace common_properties
 #ifndef WIN32

@@ -12,6 +12,7 @@
 
 #include "RGroupScore.h"
 #include "RDGeneral/Invariant.h"
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <vector>
 #include <map>
 #include <algorithm>

@@ -26,9 +26,16 @@ namespace RDKit {
  */
 
 class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
- public:
-  typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
+  friend class RDMol;
 
+ public:
+  using QUERYBOND_QUERY = Bond::QUERYBOND_QUERY;
+
+ protected:
+  QueryBond(RDMol *mol, atomindex_t atomIndex, QUERYBOND_QUERY *query)
+      : Bond(mol, atomIndex), dp_query(query) {}
+
+ public:
   QueryBond() : Bond() {}
   //! initialize with a particular bond order
   explicit QueryBond(BondType bT);
@@ -37,24 +44,13 @@ class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
       : Bond(other), dp_query(makeBondOrderEqualsQuery(other.getBondType())) {}
   QueryBond(const QueryBond &other) : Bond(other) {
     if (other.dp_query) {
-      dp_query = other.dp_query->copy();
-    } else {
-      dp_query = nullptr;
+      dp_query.reset(other.dp_query->copy());
     }
   }
-  QueryBond(QueryBond &&other) noexcept : Bond(std::move(other)) {
-    dp_query = std::move(other.dp_query);
-  }
-  QueryBond &operator=(QueryBond &&other) noexcept {
-    if (this == &other) {
-      return *this;
-    }
-    QueryBond::operator=(std::move(other));
-    dp_query = std::move(other.dp_query);
-    return *this;
-  }
+  QueryBond(QueryBond &&other) noexcept = default;
+  QueryBond &operator=(QueryBond &&other) noexcept = default;
 
-  ~QueryBond() override;
+  ~QueryBond() override = default;
 
   //! returns a copy of this query, owned by the caller
   Bond *copy() const override;
@@ -73,16 +69,22 @@ class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
   bool QueryMatch(QueryBond const *what) const;
 
   // This method can be used to distinguish query bonds from standard bonds
-  bool hasQuery() const override { return dp_query != nullptr; }
+  bool hasQuery() const override { return dp_query.get() != nullptr; }
 
   //! returns our current query
-  QUERYBOND_QUERY *getQuery() const override { return dp_query; }
+  QUERYBOND_QUERY *getQuery() const override { return dp_query.get(); }
   //! replaces our current query with the value passed in
-  void setQuery(QUERYBOND_QUERY *what) override {
+  void setQuery(QUERYBOND_QUERY *what) override;
+
+ protected:
+  //! replaces our current query with the value passed in, without updating
+  //! the RDMol. To be called from RDMol
+  void setQueryPrivate(QUERYBOND_QUERY *what) {
     // free up any existing query (Issue255):
-    delete dp_query;
-    dp_query = what;
+    dp_query.reset(what);
   }
+
+ public:
 
   //! expands our current query
   /*!
@@ -114,7 +116,7 @@ class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
   double getValenceContrib(const Atom *at) const override;
 
  protected:
-  QUERYBOND_QUERY *dp_query{nullptr};
+  std::unique_ptr<QUERYBOND_QUERY> dp_query;
 };
 
 namespace detail {

@@ -24,6 +24,7 @@ namespace RDKit {
 class Atom;
 class Bond;
 class ROMol;
+class RDMol;
 
 // OR means that it is known to be one or the other, but not both
 // AND means that it is known to be a mix.
@@ -41,6 +42,9 @@ enum class StereoGroupType {
 
  */
 class RDKIT_GRAPHMOL_EXPORT StereoGroup {
+ public:
+  friend class ROMol;
+
  private:
   StereoGroupType d_grouptype{StereoGroupType::STEREO_ABSOLUTE};
   std::vector<Atom *> d_atoms;
@@ -50,6 +54,7 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
   // 0 means no group ID is defined.
   unsigned d_readId = 0u;
   unsigned d_writeId = 0u;
+  ROMol *dp_mol{nullptr};  // owning molecule
 
  public:
   StereoGroup() {}
@@ -70,8 +75,19 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
 
   unsigned getReadId() const { return d_readId; }
   unsigned getWriteId() const { return d_writeId; }
-  void setWriteId(unsigned id) { d_writeId = id; }
+  void setWriteId(unsigned id);
 
+  //! returns whether or not this instance belongs to a molecule
+  bool hasOwningMol() const { return dp_mol != nullptr; }
+
+  //! Get the molecule that owns this instance
+  ROMol &getOwningMol() const;
+
+  //! Set owning molecule (called internally by RDMol when creating compat stereo groups)
+  void setOwningMol(ROMol *mol);
+
+  //! Set owning molecule
+  void setOwningMol(ROMol &mol);
   // Seems odd to have to define these, but otherwise the SWIG wrappers
   // won't build
   bool operator==(const StereoGroup &other) const {

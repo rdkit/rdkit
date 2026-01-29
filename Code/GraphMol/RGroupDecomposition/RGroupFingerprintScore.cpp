@@ -12,6 +12,7 @@
 #include "GraphMol/Fingerprints/Fingerprints.h"
 #include "GraphMol//Fingerprints/MorganFingerprints.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include "../../../External/GA/util/Util.h"
 #include <memory>
 #include <utility>

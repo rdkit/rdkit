@@ -40,6 +40,7 @@
 
 %ignore RDKit::Dict::Pair;
 %ignore RDKit::PairHolder;
+%ignore RDKit::Dict::getRDValue;
 %include <RDGeneral/Dict.h>
 
 
