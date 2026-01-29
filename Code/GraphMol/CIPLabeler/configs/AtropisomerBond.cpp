@@ -49,6 +49,8 @@ void AtropisomerBond::setPrimaryLabel(Descriptor desc) {
     case Descriptor::m:
     case Descriptor::p: {
       dp_bond->setProp(common_properties::_CIPCode, to_string(desc));
+      dp_bond->setProp(common_properties::_CIPNeighborOrder, d_ranked_anchors,
+                       true);
       return;
     }
     case Descriptor::R:
@@ -91,6 +93,8 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
                                   const Rules &comp) {
   const auto &focus1 = getFoci()[0];
   const auto &focus2 = getFoci()[1];
+
+  d_ranked_anchors.clear();
 
   const auto &internal = findInternalEdge(root1->getEdges(), focus1, focus2);
   if (internal == nullptr) {
@@ -140,6 +144,29 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
     }
   }
 
+  {
+    // This is mostly the same as in Sp2Bonds, but I doubt the anchors will be
+    // implicit Hs in this case.
+
+    // At this point, edges1 and edges2 are sorted by priority starting from
+    // this node. Record that now! - they may be resorted after processing
+    // other nodes.
+
+    // As weird as it seems, these may actually be implicit Hs: Rule 2
+    // in the paper on which this code is based states that,
+    // in CIP ranks, H > 1H, so implicit H actually has a higher
+    // priority than 1H (!!!). getAtomIdx() returns Atom::NOATOM
+    // if that is the case.
+    auto carrier1_idx = edges1[0]->getEnd()->getAtomIdx();
+    auto carrier2_idx = edges2[0]->getEnd()->getAtomIdx();
+
+    // Make sure the stereo atoms are in the right order
+    if (edges1[0]->getBeg()->getAtom() == focus1) {
+      d_ranked_anchors.assign({carrier1_idx, carrier2_idx});
+    } else if (edges2[0]->getBeg()->getAtom() == focus1) {
+      d_ranked_anchors.assign({carrier2_idx, carrier1_idx});
+    }
+  }
   if (config == Bond::STEREOATROPCCW) {
     if (priority1.isPseudoAsymetric() || priority2.isPseudoAsymetric()) {
       return Descriptor::m;
