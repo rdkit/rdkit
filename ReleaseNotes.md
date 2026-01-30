@@ -6,11 +6,62 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
- 
+Chris Von Bargen, David Cosgrove, Tad Hurst, Eisuke Kawashima, Brian Kelley,
+Niels Maeder, Syed Zayyan Masud, Yakov Pechersky, Vandan Revanur, Ricardo
+Rodriguez, Raul Sofia, Philip Ullmann, kuzp, wszqkzqk, stephenting22, DrrDom,
+diogomart
+
+## New Features and Enhancements:
+  - Performance improvement: Implement buffered reading for SDMolSupplier
+ (github pull #9010 from RaulSofia)
+  - Allow molzip to position fragments when joining them
+ (github pull #9021 from greglandrum)
+  - Improve POPCNT optimization flag handling to build on other arches like riscv64 and loong64
+ (github pull #9029 from wszqkzqk)
+  - Read SD property names till the last '>'
+ (github pull #9047 from ricrogz)
+  - cleanup of stereogroups and wedges for non-chiral sites
+ (github pull #9051 from tadhurst-cdd)
+  - Store CIP-ranked anchors after CIP labeling.
+ (github pull #9056 from ricrogz)
+
+## Bug Fixes:
+  - Atom properties as SDF file data break if the array is too long
+ (github issue #8918 from bp-kelley)
+  - Handle chiral atoms with 2 hydrogens in SCSR parser
+ (github pull #8939 from tadhurst-cdd)
+  - Incorrect hydrogen bond acceptor count for N-heterocycles
+ (github issue #8997 from stephenting22)
+  - Hs labeled implicit or explicit depending on presence of 3D conformer. Chem.RemoveHs differs from MolFromMolBlock removeHs
+ (github issue #9020 from diogomart)
+  - Tversky for zero prototype string with alpha=1 and beta=0 returns incorrect output
+ (github issue #9033 from DrrDom)
+  - SIGSEGV in rdFMCS.FindMCS when params.StoreAll = True
+ (github issue #9034 from kuzp)
+  - BestAlignmentParams does not compile on macos due to clang issues
+ (github issue #9041 from pechersky)
+  - CXSMILES: do not add separators for unserializable Substance Groups
+ (github pull #9048 from ricrogz)
+  - Prevent CIP labels of bonds from being calculated twice.
+ (github pull #9052 from ricrogz)
+  - added FABS to test for issue #4364
+ (github pull #9053 from tadhurst-cdd)
+  - Fix removing (non)redundant bond dir specs when exporting SMILES
+ (github pull #9066 from ricrogz)
+
+## Cleanup work:
+  - Fix deprecated literal operators and macro redefinition warnings for modern compilers
+ (github pull #9055 from cdvonbargen)
+  - Move some more tests over to catch2
+ (github pull #9058 from greglandrum)
+  - Transform::SetRotationFromQuaternion takes const.
+ (github pull #9063 from DavidACosgrove)
+
+## Documentation:
+  - Update deprecation messages for valence methods
+ (github pull #9050 from philipullmann)
 
 ## Deprecated code (to be removed in a future release):
-
-- The version of hanoiSort() that takes raw pointers has been deprecated. Please use the version that takes std::span and std::vector.
 - `Chirality::StereoInfo::NOATOM` (C++) and `Chem.StereoInfo.NOATOM` (Python) have been deprecated in favor of `Atom::NOATOM` and `Chem.Atom.NOATOM`.
 
 
