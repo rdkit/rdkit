@@ -435,13 +435,6 @@ typedef int yy_state_fast_t;
 # endif
 #endif
 
-/* Suppress unused-variable warnings by "using" E.  */
-#if ! defined lint || defined __GNUC__
-# define YY_USE(E) ((void) (E))
-#else
-# define YY_USE(E) /* empty */
-#endif
-
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
 #if defined __GNUC__ && ! defined __ICC && 406 <= __GNUC__ * 100 + __GNUC_MINOR__
 # if __GNUC__ * 100 + __GNUC_MINOR__ < 407
@@ -1066,25 +1059,11 @@ do {                                                                      \
 
 static void
 yy_symbol_value_print (FILE *yyo,
-                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::vector<std::pair<unsigned int, unsigned int>>& branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, [[maybe_unused]] const char *input, [[maybe_unused]] std::vector<RDKit::RWMol *> *molList, [[maybe_unused]] RDKit::Atom* &lastAtom, [[maybe_unused]] RDKit::Bond* &lastBond, [[maybe_unused]] unsigned &numAtomsParsed, [[maybe_unused]] unsigned &numBondsParsed, [[maybe_unused]] std::vector<std::pair<unsigned int, unsigned int>>& branchPoints, [[maybe_unused]] void *scanner, [[maybe_unused]] int& start_token, [[maybe_unused]] unsigned int& current_token_position)
 {
-  FILE *yyoutput = yyo;
-  YY_USE (yyoutput);
-  YY_USE (input);
-  YY_USE (molList);
-  YY_USE (lastAtom);
-  YY_USE (lastBond);
-  YY_USE (numAtomsParsed);
-  YY_USE (numBondsParsed);
-  YY_USE (branchPoints);
-  YY_USE (scanner);
-  YY_USE (start_token);
-  YY_USE (current_token_position);
+  [[maybe_unused]] FILE *yyoutput = yyo;
   if (!yyvaluep)
     return;
-  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YY_USE (yykind);
-  YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
 
@@ -1195,19 +1174,8 @@ int yydebug;
 
 static void
 yydestruct (const char *yymsg,
-            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::vector<std::pair<unsigned int, unsigned int>>& branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
+            yysymbol_kind_t yykind, [[maybe_unused]] YYSTYPE *yyvaluep, [[maybe_unused]] const char *input, [[maybe_unused]] std::vector<RDKit::RWMol *> *molList, [[maybe_unused]] RDKit::Atom* &lastAtom, [[maybe_unused]] RDKit::Bond* &lastBond, [[maybe_unused]] unsigned &numAtomsParsed, [[maybe_unused]] unsigned &numBondsParsed, [[maybe_unused]] std::vector<std::pair<unsigned int, unsigned int>>& branchPoints, [[maybe_unused]] void *scanner, [[maybe_unused]] int& start_token, [[maybe_unused]] unsigned int& current_token_position)
 {
-  YY_USE (yyvaluep);
-  YY_USE (input);
-  YY_USE (molList);
-  YY_USE (lastAtom);
-  YY_USE (lastBond);
-  YY_USE (numAtomsParsed);
-  YY_USE (numBondsParsed);
-  YY_USE (branchPoints);
-  YY_USE (scanner);
-  YY_USE (start_token);
-  YY_USE (current_token_position);
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
