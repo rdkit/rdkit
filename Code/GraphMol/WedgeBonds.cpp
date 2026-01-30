@@ -551,7 +551,33 @@ void wedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
   }
 }
 
-void reapplyMolBlockWedging(ROMol &mol, bool allBondTypes) {
+bool wedgingHasChirality(const ROMol &mol, const Bond *b) {
+  // see if this wedge should have wedging.  It can if the begin atom
+  // has chirality or the begin atom is the part of an atropisomer bond
+
+  Atom *atom = b->getBeginAtom();
+  if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+    return true;
+  }
+
+  // see if this is part of an atropisomer bond
+  for (const auto bond2 : mol.atomBonds(atom)) {
+    if (bond2->getBondType() == Bond::BondType::SINGLE) {
+      if (bond2 == b) {
+        continue;  // a bond is NOT its own neighbor
+      }
+      if (bond2->getStereo() == Bond::STEREOATROPCCW ||
+          bond2->getStereo() == Bond::STEREOATROPCW) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+void reapplyMolBlockWedging(ROMol &mol, bool allBondTypes,
+                            bool verify) {
   MolOps::clearDirFlags(mol, true);
   for (auto b : mol.bonds()) {
     int explicit_unknown_stereo = -1;
@@ -560,6 +586,16 @@ void reapplyMolBlockWedging(ROMol &mol, bool allBondTypes) {
         explicit_unknown_stereo) {
       b->setBondDir(Bond::UNKNOWN);
     }
+
+    // if the bond is not a double bond, and it is not connected to an
+    // atropisomer bond AND if the start atom  is not chiral, we will skip it -
+    // it should not have a wedge or dash
+
+    if (verify &&
+        (!canHaveDirection(*b) || !wedgingHasChirality(mol, b))) {
+      continue;
+    }
+
     int bond_dir = -1;
     if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
                                  bond_dir)) {

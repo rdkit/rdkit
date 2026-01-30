@@ -3034,18 +3034,21 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
 // removes chirality markers from sp and sp2 hybridized centers:
 void cleanupChirality(RWMol &mol) {
   unsigned int degree, perm;
+  bool needCleanupStereoGroups = false;
   for (auto atom : mol.atoms()) {
     switch (atom->getChiralTag()) {
       case Atom::CHI_TETRAHEDRAL_CW:
       case Atom::CHI_TETRAHEDRAL_CCW:
         if (atom->getHybridization() != Atom::SP3) {
           atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+          needCleanupStereoGroups = true;
         }
         break;
 
       case Atom::CHI_TETRAHEDRAL:
         if (atom->getHybridization() != Atom::SP3) {
           atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+          needCleanupStereoGroups = true;
         } else {
           perm = 0;
           atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
@@ -3102,6 +3105,9 @@ void cleanupChirality(RWMol &mol) {
         /* ??? Handle other types in future.  */
         break;
     }
+  }
+  if (needCleanupStereoGroups) {
+    Chirality::cleanupStereoGroups(mol);
   }
 }
 
