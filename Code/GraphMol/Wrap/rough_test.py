@@ -8635,6 +8635,22 @@ M  END
     mol1.GetBonds()[7].InvertChirality()
     self.assertEqual(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
 
+  def testVerifyWedges(self):
+    rdbase = os.environ['RDBASE']
+    filename = os.path.join(rdbase,
+                            'Code/GraphMol/FileParsers/test_data/wedgeTests/StereoGroupError.mol')
+    m = Chem.MolFromMolFile(filename)
+    self.assertIsNotNone(m)
+    Chem.ReapplyMolBlockWedging(m)
+    numWedges = sum(1 for b in m.GetBonds()
+                    if b.GetBondDir() in (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH))
+    self.assertEqual(numWedges, 2)
+
+    Chem.ReapplyMolBlockWedging(m, verify=True)
+    numWedges = sum(1 for b in m.GetBonds()
+                    if b.GetBondDir() in (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH))
+    self.assertEqual(numWedges, 1)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

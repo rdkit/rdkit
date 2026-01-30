@@ -340,9 +340,14 @@ RDKIT_GRAPHMOL_EXPORT bool shouldBeACrossedBond(const Bond *bond);
  \param mol: molecule to have its wedges altered
  \param allBondTypes: reapply the wedging also on bonds other than single and
  aromatic ones
+ \param verify: if true, the function will check that the wedges are only
+ applied in sensible places (i.e. single bonds connected to chiral centers or
+ atropisomeric bonds)
  */
 RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol,
-                                                  bool allBondTypes = true);
+                                                  bool allBondTypes = true,
+                                                  bool verify = false);
+
 //! Remove MolBlock bond wedging information from molecule.
 /*!
  \param mol: molecule to modify
