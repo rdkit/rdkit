@@ -714,4 +714,20 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
 }
 
 }  // end of namespace detail
+
+bool AtomCoordsMatchFunctor::operator()(const Atom &queryAtom,
+                                        const Atom &targetAtom) const {
+  if (!queryAtom.getOwningMol().getNumConformers() ||
+      !targetAtom.getOwningMol().getNumConformers()) {
+    return false;
+  }
+  const auto &queryPos = queryAtom.getOwningMol()
+                             .getConformer(d_queryConfId)
+                             .getAtomPos(queryAtom.getIdx());
+  const auto &targetPos = targetAtom.getOwningMol()
+                              .getConformer(d_refConfId)
+                              .getAtomPos(targetAtom.getIdx());
+  return (queryPos - targetPos).lengthSq() <= d_tol2;
+};
+
 }  // namespace RDKit

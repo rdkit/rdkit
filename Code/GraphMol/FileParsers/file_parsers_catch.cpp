@@ -2200,7 +2200,7 @@ M  V30 1 C -22.5833 11.0833 0 0 EXACHG=1
 M  V30 2 C -21.2497 11.8533 0 0 INVRET=2
 M  V30 3 C -23.917 11.8533 0 0 ATTCHORD=3
 M  V30 4 C -25.2507 11.0833 0 0 CLASS=foo
-M  V30 5 C -26.5844 11.8533 0 0 SEQID=4
+M  V30 5 C -26.5844 11.8533 0 0 SEQID=4 SEQNAME=foo1
 M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
@@ -2222,12 +2222,15 @@ M  END
               common_properties::molAtomClass) == "foo");
     CHECK(mol->getAtomWithIdx(4)->getProp<int>(
               common_properties::molAtomSeqId) == 4);
+    CHECK(mol->getAtomWithIdx(4)->getProp<std::string>(
+              common_properties::molAtomSeqName) == "foo1");
     auto molb = MolToV3KMolBlock(*mol);
     CHECK(molb.find("EXACHG=1") != std::string::npos);
     CHECK(molb.find("INVRET=2") != std::string::npos);
     CHECK(molb.find("ATTCHORD=3") != std::string::npos);
     CHECK(molb.find("CLASS=foo") != std::string::npos);
     CHECK(molb.find("SEQID=4") != std::string::npos);
+    CHECK(molb.find("SEQNAME=foo1") != std::string::npos);
   }
   SECTION("SUBST") {
     auto mol = R"CTAB(test
@@ -7344,34 +7347,18 @@ TEST_CASE(
   }
 }
 
-class FragTest {
- public:
-  std::string fileName;
-  bool expectedResult;
-  bool reapplyMolBlockWedging;
-  unsigned int origSgroupCount;
-  unsigned int newSgroupCount;
-
-  FragTest(std::string fileNameInit, bool expectedResultInit,
-           bool reapplyMolBlockWedgingInit, unsigned int origSgroupCountInit,
-           unsigned int newSgroupCountInit)
-      : fileName(fileNameInit),
-        expectedResult(expectedResultInit),
-        reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
-        origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit) {};
-};
-
-void testFragmentation(const FragTest &fragTest) {
-  INFO(fragTest.fileName);
+void testFragmentation(const std::string &fileName,
+                       unsigned int origSgroupCount,
+                       unsigned int newSgroupCount) {
+  INFO(fileName);
   std::string rdbase = getenv("RDBASE");
 
   std::string fName = rdbase +
                       "/Code/GraphMol/FileParsers/test_data/sgroupFragments/" +
-                      fragTest.fileName;
+                      fileName;
   std::unique_ptr<RWMol> mol(MolFileToMol(fName, false));  // don't sanitize yet
   REQUIRE(mol);
-  CHECK(getSubstanceGroups(*mol).size() == fragTest.origSgroupCount);
+  CHECK(getSubstanceGroups(*mol).size() == origSgroupCount);
 
   auto frags = MolOps::getMolFrags(*mol, true);
   CHECK(frags.size() > 1);
@@ -7388,9 +7375,9 @@ void testFragmentation(const FragTest &fragTest) {
   }
 
   CHECK(largestFrag);
-  CHECK(getSubstanceGroups(*largestFrag).size() == fragTest.newSgroupCount);
+  CHECK(getSubstanceGroups(*largestFrag).size() == newSgroupCount);
 
-  if (fragTest.origSgroupCount == fragTest.newSgroupCount) {
+  if (origSgroupCount == newSgroupCount) {
     // if the number of sgroups is the same, then the sgroups should be the
     // same
     for (unsigned int sgIndex = 0;
@@ -7403,37 +7390,86 @@ void testFragmentation(const FragTest &fragTest) {
 }
 
 TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
-  std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
-    std::vector<FragTest> tests = {
-        FragTest("polymerSalt.mol", true, true, 1, 1),
-        FragTest("copolymer_sgroup.sdf", true, true, 1,
-                 0),  // fragmntation does not keep the sgroup for this one
-        FragTest("DataSgroup.sdf", true, true, 2, 2),
-        FragTest("DataSgroupMissingUnitsDisplayed.sdf", true, true, 1, 1),
-        FragTest("EmbeddedSGroupSUP_MUL.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupCOP_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupDAT_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupMUL_MUL.sdf", true, true, 3, 3),
-        FragTest("EmbeddedSgroupMUL_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupSRU_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupSUPEXP_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupSUPEXP_SUP2.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupSUP_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupSUP_SUP2.sdf", true, true, 2, 2),
-        FragTest("GenericSgroup.sdf", true, true, 1, 1),
-        FragTest("MarvinOldSuperGroupTest.sdf", true, true, 9, 5),
-        FragTest("MonomerSgroup.sdf", true, true, 1, 1),
-        FragTest("MultipleSgroup.sdf", true, true, 1, 1),
-        FragTest("MultipleSgroupParentInMiddleOfAtomBlock.sdf", true, true, 1,
-                 1),
-        FragTest("SgroupExpanded.sdf", true, true, 1, 1),
-        FragTest("SgroupMultAttach.sdf", true, true, 4, 4),
-        FragTest("Sgroup_MUL_ParentInMiddle.sdf", true, true, 1, 1),
-        FragTest("modification_sgroup.sdf", true, true, 2, 1),
+    std::vector<std::tuple<std::string, unsigned int, unsigned int>> tests = {
+        {"polymerSalt.mol", 1, 1},
+        {"copolymer_sgroup.sdf", 1,
+         0},  // fragmntation does not keep the sgroup for this one
+        {"DataSgroup.sdf", 2, 2},
+        {"DataSgroupMissingUnitsDisplayed.sdf", 1, 1},
+        {"EmbeddedSGroupSUP_MUL.sdf", 2, 2},
+        {"EmbeddedSgroupCOP_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupDAT_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupMUL_MUL.sdf", 3, 3},
+        {"EmbeddedSgroupMUL_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupSRU_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupSUPEXP_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupSUPEXP_SUP2.sdf", 2, 2},
+        {"EmbeddedSgroupSUP_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupSUP_SUP2.sdf", 2, 2},
+        {"GenericSgroup.sdf", 1, 1},
+        {"MarvinOldSuperGroupTest.sdf", 9, 5},
+        {"MonomerSgroup.sdf", 1, 1},
+        {"MultipleSgroup.sdf", 1, 1},
+        {"MultipleSgroupParentInMiddleOfAtomBlock.sdf", 1, 1},
+        {"SgroupExpanded.sdf", 1, 1},
+        {"SgroupMultAttach.sdf", 4, 4},
+        {"Sgroup_MUL_ParentInMiddle.sdf", 1, 1},
+        {"modification_sgroup.sdf", 2, 1},
     };
-    for (auto test : tests) {
-      testFragmentation(test);
+    for (const auto &[fileName, origSgroupCount, newSgroupCount] : tests) {
+      testFragmentation(fileName, origSgroupCount, newSgroupCount);
+    }
+  };
+}
+
+void testWedges(const std::string &fileName, unsigned int origWedgeCount,
+                unsigned int newWedgeCount) {
+  INFO(fileName);
+
+  UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+
+  std::string rdbase = getenv("RDBASE");
+
+  std::string fName =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/wedgeTests/" + fileName;
+  std::unique_ptr<RWMol> mol(MolFileToMol(fName, true));  //
+  REQUIRE(mol);
+
+  RDKit::Chirality::reapplyMolBlockWedging(*mol, true, false);
+
+  unsigned int wedgeCount = 0;
+  for (const auto bond : mol->bonds()) {
+    if (bond->getBondDir() == Bond::BEGINWEDGE ||
+        bond->getBondDir() == Bond::BEGINDASH) {
+      ++wedgeCount;
+    }
+  }
+
+  CHECK(wedgeCount == origWedgeCount);
+
+  RDKit::Chirality::reapplyMolBlockWedging(*mol, true, true);
+
+  wedgeCount = 0;
+  for (const auto bond : mol->bonds()) {
+    if (bond->getBondDir() == Bond::BEGINWEDGE ||
+        bond->getBondDir() == Bond::BEGINDASH) {
+      ++wedgeCount;
+    }
+  }
+
+  CHECK(wedgeCount == newWedgeCount);
+}
+
+TEST_CASE("WedgeTest", "[bug][reader]") {
+  SECTION("basics") {
+    std::vector<std::tuple<std::string, unsigned int, unsigned int>> tests = {
+        {"JDQ443_atropBad1.sdf", 2, 0},
+        {"badWedgeError.sdf", 1, 0},
+        {"StereoGroupError.mol", 2, 1},
+    };
+    for (const auto &[fileName, origWedgeCount, newWedgeCount] : tests) {
+      testWedges(fileName, origWedgeCount, newWedgeCount);
     }
   };
 }
@@ -7907,5 +7943,62 @@ TEST_CASE(
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 5);
     CHECK(m->getBondWithIdx(0)->getBondType() == Bond::AROMATIC);
+  }
+}
+
+TEST_CASE("GitHub Issue #8873: Warn/fail on multiple ABS stereo groups") {
+  // This is illegal, according to the spec (ABS groups must be unique)
+  auto mb = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N -3.696970 2.121212 0.000000 0
+M  V30 2 C -2.397932 2.871212 0.000000 0
+M  V30 3 C -1.098893 2.121212 0.000000 0
+M  V30 4 C 0.200145 2.871212 0.000000 0
+M  V30 5 O 1.499183 2.121212 0.000000 0
+M  V30 6 C -2.397932 4.371212 0.000000 0
+M  V30 7 C 0.200145 4.371212 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 2 6 CFG=1
+M  V30 6 1 4 7 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 2)
+M  V30 MDLV30/STEABS ATOMS=(1 4)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB";
+
+  constexpr bool removeHs = true;
+  constexpr bool sanitize = true;
+
+  SECTION("strict parsing disabled: warn and collapse") {
+    bool strictParsing = false;
+    std::unique_ptr<ROMol> m{
+        MolBlockToMol(mb, sanitize, removeHs, strictParsing)};
+    REQUIRE(m);
+
+    const auto &stgs = m->getStereoGroups();
+    REQUIRE(stgs.size() == 1);
+    const auto &stg = stgs.front();
+    CHECK(stg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+    CHECK(stg.getAtoms().size() == 2);
+  }
+
+  SECTION("strict parsing disabled: throw") {
+    bool strictParsing = true;
+    REQUIRE_THROWS_AS(MolBlockToMol(mb, sanitize, removeHs, strictParsing),
+                      FileParseException);
   }
 }

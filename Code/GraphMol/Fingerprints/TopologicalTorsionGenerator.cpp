@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,11 @@
 #include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace TopologicalTorsion {
@@ -44,12 +49,25 @@ std::string TopologicalTorsionArguments::infoString() const {
          std::to_string(d_torsionAtomCount) +
          " onlyShortestPaths=" + std::to_string(df_onlyShortestPaths);
 };
+void TopologicalTorsionArguments::toJSON(
+    boost::property_tree::ptree &pt) const {
+  pt.put("type", "TopologicalTorsionArguments");
+  pt.put("torsionAtomCount", d_torsionAtomCount);
+  pt.put("onlyShortestPaths", df_onlyShortestPaths);
+  FingerprintArguments::toJSON(pt);
+}
+void TopologicalTorsionArguments::fromJSON(
+    const boost::property_tree::ptree &pt) {
+  d_torsionAtomCount = pt.get<uint32_t>("torsionAtomCount", d_torsionAtomCount);
+  df_onlyShortestPaths =
+      pt.get<bool>("onlyShortestPaths", df_onlyShortestPaths);
+  FingerprintArguments::fromJSON(pt);
+}
 
 template <typename OutputType>
 void TopologicalTorsionAtomEnv<OutputType>::updateAdditionalOutput(
     AdditionalOutput *additionalOutput, size_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
-
   if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
     for (auto aid : d_atomPath) {
       if (additionalOutput->atomToBits) {
@@ -62,6 +80,9 @@ void TopologicalTorsionAtomEnv<OutputType>::updateAdditionalOutput(
   }
   if (additionalOutput->bitPaths) {
     (*additionalOutput->bitPaths)[bitId].push_back(d_atomPath);
+  }
+  if (additionalOutput->atomsPerBit) {
+    (*additionalOutput->atomsPerBit)[bitId].push_back(d_atomPath);
   }
 }
 
@@ -175,6 +196,17 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
 template <typename OutputType>
 std::string TopologicalTorsionEnvGenerator<OutputType>::infoString() const {
   return "TopologicalTorsionEnvGenerator";
+};
+template <typename OutputType>
+void TopologicalTorsionEnvGenerator<OutputType>::toJSON(
+    boost::property_tree::ptree &pt) const {
+  pt.put("type", "TopologicalTorsionEnvGenerator");
+  AtomEnvironmentGenerator<OutputType>::toJSON(pt);
+};
+template <typename OutputType>
+void TopologicalTorsionEnvGenerator<OutputType>::fromJSON(
+    const boost::property_tree::ptree &pt) {
+  AtomEnvironmentGenerator<OutputType>::fromJSON(pt);
 };
 
 template <typename OutputType>

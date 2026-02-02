@@ -190,7 +190,7 @@ bool startsWith(const std::string &haystack, const char *needle, size_t size) {
 
 //! parse a collection block to find enhanced stereo groups
 std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
-                                RWMol *mol) {
+                                RWMol *mol, bool strictParsing) {
   // Lines like (absolute, relative, racemic):
   // M  V30 MDLV30/STEABS ATOMS=(2 2 3)
   // M  V30 MDLV30/STEREL1 ATOMS=(1 12)
@@ -204,6 +204,7 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   // Read the collection until the end
   auto tempStr = getV3000Line(inStream, line);
   boost::to_upper(tempStr);
+  unsigned abs_group_seen = 0;
   while (!startsWith(tempStr, "END", 3)) {
     // If this line in the collection is part of a stereo group
     if (regex_match(tempStr, match, stereo_label)) {
@@ -212,6 +213,18 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
 
       if (match[1] == "ABS") {
         grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
+        // Warn only one per mol about multiple ABS groups
+        if (abs_group_seen == 1) {
+          std::ostringstream errout;
+          errout << "Seen a second ABS stereo group on line " << line
+                 << std::endl;
+          if (strictParsing) {
+            throw FileParseException(errout.str());
+          } else {
+            BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+          }
+        }
+        ++abs_group_seen;
       } else if (match[1] == "REL") {
         grouptype = RDKit::StereoGroupType::STEREO_OR;
         groupid = FileParserUtils::toUnsigned(match[2], true);
@@ -1656,7 +1669,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
              << line;
       throw FileParseException(errout.str());
     }
-    res->setProp("molExactChangeFlag", exactChangeFlag);
+    res->setProp(common_properties::molRxnExactChange, exactChangeFlag);
   }
   return res.release();
 }
@@ -2430,6 +2443,10 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
       if (val != "0") {
         auto ival = FileParserUtils::toInt(val);
         atom->setProp(common_properties::molAtomSeqId, ival);
+      }
+    } else if (prop == "SEQNAME") {
+      if (val != "") {
+        atom->setProp(common_properties::molAtomSeqName, std::string(val));
       }
     }
     ++token;
@@ -3281,29 +3298,30 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
           throw FileParseException(errout.str());
         } else {
           BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+          // Prepare to read a lot of sgroups
+          nSgroups = std::numeric_limits<unsigned int>::max();
+        }
+      }
+      sgroupFound = true;
+      tempStr =
+          ParseV3000SGroupsBlock(inStream, line, nSgroups, mol, strictParsing);
+      boost::to_upper(tempStr);
+      if (tempStr.length() < 10 || tempStr.substr(0, 10) != "END SGROUP") {
+        std::ostringstream errout;
+        errout << "END SGROUP line not found on line " << line;
+        if (strictParsing) {
+          throw FileParseException(errout.str());
+        } else {
+          BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
         }
       } else {
-        sgroupFound = true;
-        tempStr = ParseV3000SGroupsBlock(inStream, line, nSgroups, mol,
-                                         strictParsing);
+        tempStr = getV3000Line(inStream, line);
         boost::to_upper(tempStr);
-        if (tempStr.length() < 10 || tempStr.substr(0, 10) != "END SGROUP") {
-          std::ostringstream errout;
-          errout << "END SGROUP line not found on line " << line;
-          if (strictParsing) {
-            throw FileParseException(errout.str());
-          } else {
-            BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
-          }
-        } else {
-          tempStr = getV3000Line(inStream, line);
-          boost::to_upper(tempStr);
-        }
       }
 
     } else if (tempStr.length() >= 15 &&
                tempStr.substr(6, 10) == "COLLECTION") {
-      tempStr = parseEnhancedStereo(inStream, line, mol);
+      tempStr = parseEnhancedStereo(inStream, line, mol, strictParsing);
       boost::to_upper(tempStr);
     } else if (tempStr.length() >= 11 &&
                tempStr.substr(0, 11) == "BEGIN OBJ3D") {

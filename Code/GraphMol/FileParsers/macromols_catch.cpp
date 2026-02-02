@@ -20,6 +20,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/Atom.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
@@ -48,15 +49,20 @@ class ScsiMolTest {
     unsigned int querySgroupCount;
     bool scsrExpandResult;
     SCSRBaseHbondOptions scsrBaseHbondOptions;
+    std::vector<std::pair<unsigned int, Atom::ChiralType>> chiralChecks;
+    std::vector<std::pair<unsigned int, Atom::ChiralType>> chiralChecksQuery;
 
     ScsiTest(std::string fileNameInit, bool scsrExpandResult,
              SCSRBaseHbondOptions scsrBaseHbondOptions,
              unsigned int totalAtomCountInit, unsigned int totalBondCountInit,
              unsigned int sgroupCountInit, unsigned int totalQueryAtomCountInit,
              unsigned int totalQueryBondCountInit,
-             unsigned int querySgroupCountInit = 0)
+             unsigned int querySgroupCountInit,
+             std::vector<std::pair<unsigned int, Atom::ChiralType>>
+                 chiralChecksInit = {},
+             std::vector<std::pair<unsigned int, Atom::ChiralType>>
+                 chiralChecksQueryInit = {})
         : fileName(fileNameInit),
-
           totalAtomCount(totalAtomCountInit),
           totalBondCount(totalBondCountInit),
           sgroupCount(sgroupCountInit),
@@ -64,7 +70,9 @@ class ScsiMolTest {
           totalQueryBondCount(totalQueryBondCountInit),
           querySgroupCount(querySgroupCountInit),
           scsrExpandResult(scsrExpandResult),
-          scsrBaseHbondOptions(scsrBaseHbondOptions) {};
+          scsrBaseHbondOptions(scsrBaseHbondOptions),
+          chiralChecks(chiralChecksInit),
+          chiralChecksQuery(chiralChecksQueryInit) {};
   };
 
   void testScsiFiles(const ScsiTest *scsiTest) {
@@ -101,6 +109,11 @@ class ScsiMolTest {
     CHECK(mol->getNumBonds() == scsiTest->totalBondCount);
     CHECK(getSubstanceGroups(*mol).size() == scsiTest->sgroupCount);
 
+    for (auto chiralCheck : scsiTest->chiralChecks) {
+      CHECK(mol->getAtomWithIdx(chiralCheck.first)->getChiralTag() ==
+            chiralCheck.second);
+    }
+
     // now make the expanded mol in "query" mode - not including any leaving
     // groups
 
@@ -120,6 +133,11 @@ class ScsiMolTest {
     CHECK(molNoLeavingGroups->getNumBonds() == scsiTest->totalQueryBondCount);
     CHECK(getSubstanceGroups(*molNoLeavingGroups).size() ==
           scsiTest->querySgroupCount);
+
+    for (auto chiralCheck : scsiTest->chiralChecksQuery) {
+      CHECK(mol->getAtomWithIdx(chiralCheck.first)->getChiralTag() ==
+            chiralCheck.second);
+    }
   }
 
   void threeLetterCodeTest(const ScsiTest *scsiTest) {
@@ -178,6 +196,35 @@ class ScsiMolTest {
 TEST_CASE("scsiTests", "scsiTests") {
   SECTION("basics") {
     std::list<ScsiMolTest::ScsiTest> scsiTests{
+        ScsiMolTest::ScsiTest("DNASlurpErrorImport.mol", true,
+                              SCSRBaseHbondOptions::Auto, 81, 90, 13, 79, 88,
+                              11,
+                              {{0, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {22, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {41, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {61, Atom::ChiralType::CHI_TETRAHEDRAL_CW}},
+                              {{0, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {22, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {41, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {61, Atom::ChiralType::CHI_TETRAHEDRAL_CW}}),
+        ScsiMolTest::ScsiTest("DNASlurpErrorSketch.mol", true,
+                              SCSRBaseHbondOptions::Auto, 84, 93, 14, 82, 91,
+                              12,
+                              {{51, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {60, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {68, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {76, Atom::ChiralType::CHI_TETRAHEDRAL_CCW}},
+                              {{51, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {60, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {68, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {76, Atom::ChiralType::CHI_TETRAHEDRAL_CCW}}),
+        ScsiMolTest::ScsiTest("ValenceErrorScsr.mol", true,
+                              SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
+        ScsiMolTest::ScsiTest("ValenceErrorScsr2.mol", true,
+                              SCSRBaseHbondOptions::Auto, 28, 28, 6, 25, 25, 3),
+
+        ScsiMolTest::ScsiTest("RiboseFullname.mol", true,
+                              SCSRBaseHbondOptions::Auto, 45, 49, 8, 43, 47, 6),
         ScsiMolTest::ScsiTest("Conjugate.mol", true, SCSRBaseHbondOptions::Auto,
                               91, 91, 14, 87, 87, 10),
         ScsiMolTest::ScsiTest("ModifiedPeptide2.mol", true,
@@ -295,6 +342,7 @@ TEST_CASE("scsiTests", "scsiTests") {
     }
   }
 }
+
 TEST_CASE("nestedParens", "nestedParens") {
   SECTION("basics") {
     BOOST_LOG(rdInfoLog) << "testing names with parens" << std::endl;

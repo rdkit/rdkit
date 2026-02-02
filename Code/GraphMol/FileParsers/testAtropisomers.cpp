@@ -27,6 +27,8 @@
 
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <vector>
 #include <boost/lexical_cast.hpp>
 #include <filesystem>
 using namespace RDKit;
@@ -567,6 +569,30 @@ void testLookForAtropisomersInSDdfFiles(std::string fileName,
   TEST_ASSERT(notFoundCount == expectedMisses);
 }
 
+void testSulfinamideExamplesHaveNoAtropisomers() {
+  const std::vector<std::string> controlFiles = {
+      "sulfinamide-double-bond-O-R.mol",
+      "sulfinamide-single-bond-O-R.mol",
+      "sulfinamide-single-bond-O-S.mol",
+  };
+  std::string rdbase = getenv("RDBASE");
+  std::stringstream warningCapture;
+  rdWarningLog->SetTee(warningCapture);
+  for (const auto &file : controlFiles) {
+    auto fName = rdbase +
+                 "/Code/GraphMol/FileParsers/test_data/atropisomers/" +
+                 file;
+    BOOST_LOG(rdInfoLog) << "Validating absence of atropisomers in " << file
+                         << std::endl;
+    auto mol = std::unique_ptr<RWMol>(MolFileToMol(fName, true, false, false));
+    TEST_ASSERT(mol);
+    Atropisomers::detectAtropisomerChirality(*mol, &mol->getConformer());
+    TEST_ASSERT(!Atropisomers::doesMolHaveAtropisomers(*mol));
+  }
+  rdWarningLog->ClearTee();
+  TEST_ASSERT(warningCapture.str().empty());
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -589,6 +615,7 @@ int main(int argc, char *argv[]) {
 
   molAtropTest.RunTests();
   testLookForAtropisomersInSDdfFiles("TestMultInSDF.sdf", 1, 4);
+  testSulfinamideExamplesHaveNoAtropisomers();
 
   return 0;
 }

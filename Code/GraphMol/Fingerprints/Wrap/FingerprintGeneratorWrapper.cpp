@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -34,6 +34,11 @@ namespace np = boost::python::numpy;
 
 namespace RDKit {
 namespace FingerprintWrapper {
+
+FingerprintGenerator<std::uint64_t> *generatorFromJSONHelper(
+    const std::string &jsonStr) {
+  return generatorFromJSON(jsonStr).release();
+}
 
 void convertPyArguments(
     python::object py_fromAtoms, python::object py_ignoreAtoms,
@@ -448,6 +453,24 @@ python::object getBitInfoMapHelper(const AdditionalOutput &ao) {
   }
   return res;
 }
+python::object getAtomsPerBitHelper(const AdditionalOutput &ao) {
+  if (!ao.atomsPerBit) {
+    return python::object();
+  }
+  python::dict res;
+  for (const auto &pr : *ao.atomsPerBit) {
+    python::list local;
+    for (const auto &lst : pr.second) {
+      python::list inner;
+      for (const auto v : lst) {
+        inner.append(v);
+      }
+      local.append(python::tuple(inner));
+    }
+    res[pr.first] = python::tuple(local);
+  }
+  return res;
+}
 
 namespace {
 template <typename T>
@@ -641,7 +664,9 @@ void wrapGenerator(const std::string &nm) {
       .def("GetOptions", getOptions<T>,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1>>(),
-           python::args("self"), "return the fingerprint options object");
+           python::args("self"), "return the fingerprint options object")
+      .def("ToJSON", &generatorToJSON<T>, (python::arg("self")),
+           "Serialize a FingerprintGenerator to JSON");
 }
 
 void setCountBoundsHelper(FingerprintArguments &opts, python::object bounds) {
@@ -666,6 +691,8 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            python::args("self"), "synonym for CollectBitPaths()")
       .def("AllocateAtomCounts", &AdditionalOutput::allocateAtomCounts,
            python::args("self"), "synonym for CollectAtomCounts()")
+      .def("AllocateAtomsPerBit", &AdditionalOutput::allocateAtomsPerBit,
+           python::args("self"), "synonym for CollectAtomsPerBit()")
       .def(
           "CollectAtomToBits", &AdditionalOutput::allocateAtomToBits,
           python::args("self"),
@@ -682,10 +709,15 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
           "CollectAtomCounts", &AdditionalOutput::allocateAtomCounts,
           python::args("self"),
           "toggles collection of information about the number of bits each atom is involved in")
+      .def(
+          "CollectAtomsPerBit", &AdditionalOutput::allocateAtomsPerBit,
+          python::args("self"),
+          "toggles collection of information about all atoms involved in setting each bit")
       .def("GetAtomToBits", &getAtomToBitsHelper, python::args("self"))
       .def("GetBitInfoMap", &getBitInfoMapHelper, python::args("self"))
       .def("GetBitPaths", &getBitPathsHelper, python::args("self"))
-      .def("GetAtomCounts", &getAtomCountsHelper, python::args("self"));
+      .def("GetAtomCounts", &getAtomCountsHelper, python::args("self"))
+      .def("GetAtomsPerBit", &getAtomsPerBitHelper, python::args("self"));
 
   python::class_<FingerprintArguments, boost::noncopyable>("FingerprintOptions",
                                                            python::no_init)
@@ -733,6 +765,11 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
               (python::arg("molecules") = python::list(),
                python::arg("fpType") = FPType::MorganFP),
               "");
+
+  python::def("FingerprintGeneratorFromJSON", &generatorFromJSONHelper,
+              (python::arg("jsonString")),
+              "Deserialize a FingerprintGenerator from a JSON string",
+              python::return_value_policy<python::manage_new_object>());
 
   AtomPairWrapper::exportAtompair();
   MorganWrapper::exportMorgan();

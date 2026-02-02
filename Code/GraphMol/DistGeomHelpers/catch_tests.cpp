@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021-2024 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2021-2025 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -25,6 +25,7 @@
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include <tuple>
+#include <map>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
@@ -187,6 +188,50 @@ TEST_CASE("update parameters from JSON") {
       auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
       CHECK(v1.angleTo(v2) == Catch::Approx(M_PI / 2).margin(0.15));
     }
+  }
+}
+
+TEST_CASE("EmbedParameters to JSON") {
+  SECTION("No map") {
+    auto ps = DGeomHelpers::KDG;
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    std::string goal =
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false"})JSON";
+    CHECK(json == goal);
+  }
+  SECTION("With CoordMap") {
+    auto ps = DGeomHelpers::KDG;
+    auto p = RDGeom::Point3D(1.1, 2.2, 3.3);
+    auto coordMap = new std::map<int, RDGeom::Point3D>();
+    coordMap->insert({3, p});
+    ps.coordMap = coordMap;
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    std::string goal =
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","coordMap":{"3":["1.100000","2.200000","3.300000"]}})JSON";
+    CHECK(json == goal);
+    delete coordMap;
+  }
+  SECTION("With BoundsMat") {
+    auto ps = DGeomHelpers::KDG;
+    auto mol = "O"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(3));
+    DGeomHelpers::initBoundsMat(mat);
+    DGeomHelpers::setTopolBounds(*mol, mat, true, false, false);
+    ps.boundsMat = mat;
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    std::string goal =
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6573654663221247"],["0.98025420400136154","1.5773654663221246","0"]]})JSON";
+    CHECK(json == goal);
+  }
+  SECTION("Round trip") {
+    auto ps = DGeomHelpers::ETKDGv3;
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    auto ps2 = DGeomHelpers::EmbedParameters();
+    DGeomHelpers::updateEmbedParametersFromJSON(ps2, json);
+    auto json2 = DGeomHelpers::embedParametersToJSON(ps2);
+    CHECK(json == json2);
   }
 }
 
