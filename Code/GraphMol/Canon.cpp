@@ -242,9 +242,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
   // We interpret double bond looks like this:
   //
   //   anchor1
-  //          \
+  //          |
   //           atom1 === atom2
-  //                          \
+  //                          |
   //                           anchor2
   //
   // When parsing a SMILES, we expect anchor1 to come before atom1,
