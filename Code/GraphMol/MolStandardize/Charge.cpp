@@ -329,13 +329,31 @@ int hDeltaRemovingNeg(const Atom *atom, bool protonationOnly) {
   return earlyAtom ? -1 : 1;
 }
 
+bool canAdjustValence(const Atom *atom, int hDelta) {
+  if (hDelta == 0) {
+    return false;
+  }
+  const PeriodicTable *table = PeriodicTable::getTable();
+  INT_VECT valence_list = table->getValenceList(atom->getAtomicNum());
+  if (valence_list.empty()) {
+    return true;
+  }
+  int target_valence = atom->getTotalValence() + hDelta;
+  if (target_valence < 0) {
+    return false;
+  }
+  return std::find(valence_list.begin(), valence_list.end(),
+                   target_valence) != valence_list.end();
+}
+
 bool canRemoveNeg(const Atom *atom, bool protonationOnly) {
-  return hDeltaRemovingNeg(atom, protonationOnly) != 0;
+  int hDelta = hDeltaRemovingNeg(atom, protonationOnly);
+  return hDelta != 0 && canAdjustValence(atom, hDelta);
 }
 
 bool removeNegIfPossible(Atom *atom, bool protonationOnly) {
   int hDelta = hDeltaRemovingNeg(atom, protonationOnly);
-  if (hDelta != 0) {
+  if (hDelta != 0 && canAdjustValence(atom, hDelta)) {
     removeCharge(atom, -1, hDelta);
     return true;
   }
