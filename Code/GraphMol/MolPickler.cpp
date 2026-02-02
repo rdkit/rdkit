@@ -933,7 +933,7 @@ void pickleAtomMonomerInfo(std::ostream &ss, const AtomMonomerInfo *info) {
   streamWrite(ss, info->getName());
 
   auto monomer_type = info->getMonomerType();
-  streamWrite(ss, static_cast<unsigned int>(monomer_type));
+  streamWrite(ss, static_cast<std::uint8_t>(monomer_type));
 
   // Additional AtomMonomerInfo base class fields added in version 16.3,
   // these fields are pickled for all MonomerTypes
@@ -957,7 +957,7 @@ void pickleAtomMonomerInfo(std::ostream &ss, const AtomMonomerInfo *info) {
 
 AtomMonomerInfo *unpickleAtomMonomerInfo(std::istream &ss, int version) {
   std::string nm;
-  unsigned int typ;
+  std::uint8_t typ;
   streamRead(ss, nm, version);
   streamRead(ss, typ, version);
   auto info = new AtomMonomerInfo(static_cast<RDKit::AtomMonomerInfo::AtomMonomerType>(typ), nm);
