@@ -937,7 +937,7 @@ void pickleAtomMonomerInfo(std::ostream &ss, const AtomMonomerInfo *info) {
 
   // Additional AtomMonomerInfo base class fields added in version 16.3,
   // these fields are pickled for all MonomerTypes
-  if (info->getResidueName() != "") {
+  if (!info->getResidueName().empty()) {
     streamWrite(ss, MolPickler::ATOM_MONOMER_INFO_RESIDUENAME,
                 info->getResidueName());
   }
@@ -945,11 +945,11 @@ void pickleAtomMonomerInfo(std::ostream &ss, const AtomMonomerInfo *info) {
     streamWrite(ss, MolPickler::ATOM_MONOMER_INFO_RESIDUENUMBER,
                 info->getResidueNumber());
   }
-  if (info->getChainId() != "") {
+  if (!info->getChainId().empty()) {
     streamWrite(ss, MolPickler::ATOM_MONOMER_INFO_CHAINID,
                 info->getChainId());
   }
-  if (info->getMonomerClass() != "") {
+  if (!info->getMonomerClass().empty()) {
     streamWrite(ss, MolPickler::ATOM_MONOMER_INFO_MONOMERCLASS,
                 info->getMonomerClass());
   }
