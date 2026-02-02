@@ -72,7 +72,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D
   void SetRotation(double cosT, double sinT, const Point3D &axis);
 
   //! Set the rotation matrix from a quaternion
-  void SetRotationFromQuaternion(double quaternion[4]);
+  void SetRotationFromQuaternion(const double quaternion[4]);
 
   //! Reflect the rotation
   void Reflect();
@@ -85,7 +85,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D
  *
  * The order is important here, on two transforms t1 and t2
  * t3 = t1*t2
- * The resulting transform t3 has the folliwng effect
+ * The resulting transform t3 has the following effect
  *  t3(point) = t1(t2(point))
  */
 RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Transform3D operator*(

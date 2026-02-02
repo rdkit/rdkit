@@ -909,3 +909,199 @@ TEST_CASE(
     CHECK(!SubstructMatch(*m2, *m1, ps).empty());
   }
 }
+
+TEST_CASE("extra atom and bond queries") {
+  SECTION("basics") {
+    auto m = "CCCC"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(1)->setFlags(0x3);
+    m->getAtomWithIdx(2)->setFlags(0x5);
+    m->getBondWithIdx(1)->setFlags(0x7);
+
+    auto q = "CC"_smiles;
+    REQUIRE(q);
+    q->getAtomWithIdx(0)->setFlags(0x5);
+    q->getAtomWithIdx(1)->setFlags(0x3);
+    q->getBondWithIdx(0)->setFlags(0x7);
+
+    SubstructMatchParameters ps;
+    auto matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 3);
+
+    {
+      SubstructMatchParameters ps;
+      auto atomQuery = [](const Atom &queryAtom,
+                          const Atom &targetAtom) -> bool {
+        return queryAtom.getFlags() == targetAtom.getFlags();
+      };
+      ps.extraAtomCheck = atomQuery;
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 2);
+      CHECK(matches[0][1].second == 1);
+    }
+    {
+      SubstructMatchParameters ps;
+      auto bondQuery = [](const Bond &query, const Bond &target) -> bool {
+        return query.getFlags() == target.getFlags();
+      };
+      ps.extraBondCheck = bondQuery;
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 1);
+      CHECK(matches[0][1].second == 2);
+    }
+  }
+  SECTION("extra atom and bond checks override defaults") {
+    auto m = "CCCC"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(1)->setFlags(0x3);
+    m->getAtomWithIdx(2)->setFlags(0x5);
+    m->getBondWithIdx(1)->setFlags(0x7);
+
+    auto q = "O=C"_smiles;
+    REQUIRE(q);
+    q->getAtomWithIdx(0)->setFlags(0x5);
+    q->getAtomWithIdx(1)->setFlags(0x3);
+    q->getBondWithIdx(0)->setFlags(0x7);
+
+    SubstructMatchParameters ps;
+    auto matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+
+    auto atomQuery = [](const Atom &queryAtom, const Atom &targetAtom) -> bool {
+      return queryAtom.getFlags() == targetAtom.getFlags();
+    };
+    auto bondQuery = [](const Bond &query, const Bond &target) -> bool {
+      return query.getFlags() == target.getFlags();
+    };
+    ps.extraAtomCheck = atomQuery;
+    ps.extraBondCheck = bondQuery;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+    ps.extraAtomCheckOverridesDefaultCheck = true;
+    ps.extraBondCheckOverridesDefaultCheck = true;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 1);
+    CHECK(matches[0][0].second == 2);
+    CHECK(matches[0][1].second == 1);
+
+    // either of the options by themselves does not work:
+    ps.extraAtomCheckOverridesDefaultCheck = false;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+
+    ps.extraAtomCheckOverridesDefaultCheck = true;
+    ps.extraBondCheckOverridesDefaultCheck = false;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+  }
+
+  SECTION("3D") {
+    auto m = "CCCC |(0,0,0;1,0,0;2,0,0;3,0,0)|"_smiles;
+    REQUIRE(m);
+    auto q = "CC |(3,0,0;2,0,0)|"_smiles;
+    REQUIRE(q);
+    {
+      SubstructMatchParameters ps;
+      auto atomQuery = [](const Atom &queryAtom,
+                          const Atom &targetAtom) -> bool {
+        auto qconf = queryAtom.getOwningMol().getConformer();
+        auto tconf = targetAtom.getOwningMol().getConformer();
+        auto qpos = qconf.getAtomPos(queryAtom.getIdx());
+        auto tpos = tconf.getAtomPos(targetAtom.getIdx());
+        auto dist = (qpos - tpos).length();
+        return dist < 0.1;
+      };
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 3);
+
+      ps.extraAtomCheck = atomQuery;
+      matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+  }
+  SECTION("AtomCoordsMatchFunctor") {
+    auto m = "CCCC |(0,0,0;1,0,0;2,0,0;3,0,0)|"_smiles;
+    REQUIRE(m);
+    auto q = "CC |(3,0,0.1;2,0,0)|"_smiles;
+    REQUIRE(q);
+    SubstructMatchParameters ps;
+    AtomCoordsMatchFunctor atomQuery;
+    // I "<heart>" C++ syntax
+    ps.extraAtomCheck =
+        std::bind(&AtomCoordsMatchFunctor::operator(), &atomQuery,
+                  std::placeholders::_1, std::placeholders::_2);
+    {
+      auto matches = SubstructMatch(*m, *q, ps);
+      REQUIRE(matches.empty());
+    }
+    atomQuery.d_tol2 = 0.15 * 0.15;
+    {
+      auto matches = SubstructMatch(*m, *q, ps);
+      REQUIRE(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+    {
+      ROMol mcp(*m);
+      mcp.clearConformers();
+      auto matches = SubstructMatch(mcp, *q, ps);
+      CHECK(matches.empty());
+    }
+    {
+      ROMol qcp(*q);
+      qcp.clearConformers();
+      auto matches = SubstructMatch(*m, qcp, ps);
+      CHECK(matches.empty());
+    }
+    {
+      ROMol mcp(*m);
+      mcp.clearConformers();
+      ROMol qcp(*q);
+      qcp.clearConformers();
+      auto matches = SubstructMatch(mcp, qcp, ps);
+      CHECK(matches.empty());
+    }
+    {
+      // specifying conformer ID on the molecule
+      ROMol mcp(*m);
+      Conformer *conf = new Conformer(mcp.getConformer());
+      mcp.getConformer().getAtomPos(3).z += 10;
+      auto cid = mcp.addConformer(conf, true);
+      auto matches = SubstructMatch(mcp, *q, ps);
+      CHECK(matches.empty());
+
+      SubstructMatchParameters ps2;
+      AtomCoordsMatchFunctor atomQuery2(cid, -1, .15);
+      ps2.extraAtomCheck =
+          std::bind(&AtomCoordsMatchFunctor::operator(), &atomQuery2,
+                    std::placeholders::_1, std::placeholders::_2);
+      matches = SubstructMatch(mcp, *q, ps2);
+      REQUIRE(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+    {
+      // specifying conformer ID on the query
+      ROMol qcp(*q);
+      Conformer *conf = new Conformer(qcp.getConformer());
+      qcp.getConformer().getAtomPos(0).z += 10;
+      auto cid = qcp.addConformer(conf, true);
+      auto matches = SubstructMatch(*m, qcp, ps);
+      CHECK(matches.empty());
+
+      SubstructMatchParameters ps2;
+      AtomCoordsMatchFunctor atomQuery2(-1, cid, .15);
+      ps2.extraAtomCheck =
+          std::bind(&AtomCoordsMatchFunctor::operator(), &atomQuery2,
+                    std::placeholders::_1, std::placeholders::_2);
+      matches = SubstructMatch(*m, qcp, ps2);
+      REQUIRE(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+  }
+}

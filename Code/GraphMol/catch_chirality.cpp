@@ -50,7 +50,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Unspecified);
@@ -64,9 +64,9 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
-      CHECK(sinfo.controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[3] == Atom::NOATOM);
     }
   }
   SECTION("stereo") {
@@ -87,7 +87,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
@@ -107,7 +107,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 4);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
@@ -126,7 +126,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
@@ -143,7 +143,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Unknown);
@@ -484,8 +484,7 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
       CHECK(stereoInfo[0].centeredOn == 1);
-      std::vector<unsigned> catoms = {0, Chirality::StereoInfo::NOATOM, 3,
-                                      Chirality::StereoInfo::NOATOM};
+      std::vector<unsigned> catoms = {0, Atom::NOATOM, 3, Atom::NOATOM};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
     {
@@ -517,7 +516,7 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
       CHECK(stereoInfo[0].centeredOn == 1);
-      std::vector<unsigned> catoms = {0, Chirality::StereoInfo::NOATOM, 3, 4};
+      std::vector<unsigned> catoms = {0, Atom::NOATOM, 3, 4};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
   }
@@ -1250,6 +1249,17 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
     auto stereoInfo =
         Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
     CHECK(stereoInfo.size() == 2);
+  }
+  SECTION("bad ring chirality due to pair being in 2 rings") {
+    // from canonicalization watch test.
+
+    auto mol = "[O-]C1=C2C[C@H](C2)[C@@]12CC2"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = true;
+    bool flagPossible = true;
+    auto stereoInfo =
+        Chirality::findPotentialStereo(*mol, cleanIt, flagPossible);
+    CHECK(stereoInfo.size() == 0);
   }
   SECTION(
       "Removal of stereoatoms requires removing CIS/TRANS when using legacy stereo") {
@@ -3593,20 +3603,17 @@ $$$$
 TEST_CASE("ValidateStereo", "[accurateCIP]") {
   SECTION("validateStereoUniqOldCanon1") {
     testStereoValidationFromMol(validateStereoUniq1,
-                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1* |,,,|", true,
-                                true);
+                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1*", true, true);
   }
 
   SECTION("validateStereoUniqNewCanon1") {
     testStereoValidationFromMol(validateStereoUniq1,
-                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1* |,,,|", false,
-                                true);
+                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1*", false, true);
   }
 
   SECTION("validateStereoUniqNewNoCanon1") {
-    testStereoValidationFromMol(validateStereoUniq1,
-                                "N1C(=O)N(*)C(*)=C(C(/C=C/*)=O)C1* |,,,|",
-                                false, false);
+    testStereoValidationFromMol(
+        validateStereoUniq1, "N1C(=O)N(*)C(*)=C(C(/C=C/*)=O)C1*", false, false);
   }
 
   SECTION("SprioChiralLostOldNoCanon") {
@@ -4075,8 +4082,8 @@ M  END)CTAB";
     REQUIRE(sinfo.controllingAtoms.size() == 4);
     CHECK(sinfo.controllingAtoms[0] == 0);
     CHECK(sinfo.controllingAtoms[1] == 1);
-    CHECK(sinfo.controllingAtoms[2] == Chirality::StereoInfo::NOATOM);
-    CHECK(sinfo.controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
+    CHECK(sinfo.controllingAtoms[2] == Atom::NOATOM);
+    CHECK(sinfo.controllingAtoms[3] == Atom::NOATOM);
   }
 }
 
@@ -6347,6 +6354,28 @@ TEST_CASE("extra ring stereo with new stereo perception") {
       CHECK(atm->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
       CHECK(atm->hasProp(common_properties::_ringStereoAtoms));
     }
+  }
+  SECTION("#8956 ensure ring stereochemistry is not inverted on round trip") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+    auto [smi1, smi2] = GENERATE(
+        std::make_pair("CC[C@]1(C)CCC[C@](C)(O)C1",
+                       "CC[C@@]1(C)CCC[C@@](C)(O)C1"),
+        std::make_pair("C[C@H]1CCC[C@](C)(O)C1", "C[C@@H]1CCC[C@@](C)(O)C1"));
+    auto m1 = v2::SmilesParse::MolFromSmiles(smi1);
+    REQUIRE(m1);
+    auto m2 = v2::SmilesParse::MolFromSmiles(smi2);
+    REQUIRE(m2);
+
+    MolOps::assignStereochemistry(*m1, true, true, true);
+    MolOps::assignStereochemistry(*m2, true, true, true);
+
+    auto roundtrip1 = MolToSmiles(*m1);
+    auto roundtrip2 = MolToSmiles(*m2);
+    CHECK(roundtrip1 == smi1);
+    CHECK(roundtrip2 == smi2);
+    CHECK(roundtrip2 != roundtrip1);
   }
 }
 TEST_CASE("ring stereo basics with new stereo") {

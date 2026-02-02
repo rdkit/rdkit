@@ -101,8 +101,8 @@ void processCXSmilesLabels(RWMol &mol) {
                       symb.substr(0, symb.size() - 2));
         atom->clearProp(common_properties::atomLabel);
       }
-    } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() && !atom->getIsotope() &&
-               atom->getSymbol() == "*") {
+    } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() &&
+               !atom->getIsotope() && atom->getSymbol() == "*") {
       addquery(makeAAtomQuery(), "", mol, atom->getIdx());
     }
   }
@@ -1768,7 +1768,7 @@ std::string get_sgroup_polymer_block(
     if (sg.getPropIfPresent("TYPE", typ) &&
         reverseTypemap.find(typ) != reverseTypemap.end()) {
       sg.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
-      sgroupOutputIndex++;
+      ++sgroupOutputIndex;
 
       res << "Sg:";
       std::string subtype;
@@ -1823,8 +1823,8 @@ std::string get_sgroup_polymer_block(
         res.seekp(-1, res.cur);
       }
       res << ":";
+      res << ",";  // only add a comma if we wrote something
     }
-    res << ",";
   }
 
   std::string resStr = res.str();
@@ -1856,7 +1856,7 @@ std::string get_sgroup_data_block(const ROMol &mol,
   for (const auto &sg : sgs) {
     if (sg.hasProp("TYPE") && sg.getProp<std::string>("TYPE") == "DAT") {
       sg.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
-      sgroupOutputIndex++;
+      ++sgroupOutputIndex;
 
       res << "SgD:";
       // we don't attempt to canonicalize the atom order because the user
@@ -1894,8 +1894,8 @@ std::string get_sgroup_data_block(const ROMol &mol,
       }
       res << ":";
       // FIX: do something about the coordinates
+      res << ",";  // only add a comma if we wrote something
     }
-    res << ",";
   }
 
   std::string resStr = res.str();
@@ -2027,11 +2027,11 @@ std::string get_coords_block(const ROMol &mol,
 
 std::string get_atom_props_block(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
-  constexpr std::array<std::string_view, 3> skip = {
-      common_properties::atomLabel,
-      common_properties::molFileValue,
-      common_properties::molParity,
-  };
+  constexpr std::array<std::string_view, 7> skip = {
+      common_properties::atomLabel,       common_properties::molFileValue,
+      common_properties::molParity,       common_properties::molAtomMapNumber,
+      common_properties::molStereoCare,   common_properties::molRxnExactChange,
+      common_properties::molInversionFlag};
   std::string res = "";
   unsigned int which = 0;
   for (auto idx : atomOrder) {
@@ -2043,7 +2043,7 @@ std::string get_atom_props_block(const ROMol &mol,
       if (std::find(skip.begin(), skip.end(), pn) == skip.end()) {
         std::string pv = atom->getProp<std::string>(pn);
         if (pn == "dummyLabel" &&
-            (isAttachmentPoint ||
+            (isAttachmentPoint || pv == "*" ||
              std::find(SmilesParseOps::pseudoatoms.begin(),
                        SmilesParseOps::pseudoatoms.end(),
                        pv) != SmilesParseOps::pseudoatoms.end())) {
@@ -2113,7 +2113,7 @@ std::string get_bond_config_block(
             if (!Atropisomers::getAtropisomerAtomsAndBonds(
                     bondNbr, atomAndBondVecs, mol)) {
               throw ValueErrorException("Internal error - should not occur");
-              // should not happend
+              // should not happen
             } else {
               unsigned int swaps = 0;
 

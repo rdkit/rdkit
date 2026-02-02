@@ -35,7 +35,9 @@ using namespace Queries;
 #include <RDGeneral/BoostStartInclude.h>
 // make sure we're using boost::json header-only
 #define BOOST_JSON_NO_LIB
+#ifndef BOOST_CONTAINER_NO_LIB
 #define BOOST_CONTAINER_NO_LIB
+#endif
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>  // only include this once in the project!
 #include <RDGeneral/BoostEndInclude.h>
@@ -47,7 +49,7 @@ namespace MolInterchange {
 
 namespace {
 struct DefaultValueCache {
-  DefaultValueCache(const bj::value &defs) : bjDefaults(defs) {};
+  DefaultValueCache(const bj::value &defs) : bjDefaults(defs){};
   const bj::value &bjDefaults;
   mutable std::map<const char *, int> intMap;
   mutable std::map<const char *, bool> boolMap;
@@ -203,7 +205,8 @@ void readBond(RWMol *mol, const bj::value &bondVal,
   bnd->setBeginAtomIdx(static_cast<int>(aids.at(0).as_int64()));
   bnd->setEndAtomIdx(static_cast<int>(aids.at(1).as_int64()));
   bnd->setBondType(bondOrder->second);
-  mol->addBond(bnd.release());
+  bool takeOwnership = true;
+  mol->addBond(bnd.release(), takeOwnership);
   std::string stereo = getStringDefaultValue("stereo", bondVal, bondDefaults);
   if (stereo != "unspecified") {
     needStereoLoop = true;

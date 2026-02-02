@@ -76,7 +76,27 @@ python::tuple alignShapes(const ShapeInput &refShape, ShapeInput &fitShape,
   }
   return python::make_tuple(nbr_st, nbr_ct, pyMatrix);
 }
+python::tuple scoreMolecule1(const RDKit::ROMol &mol1, RDKit::ROMol &mol2,
+                             const ShapeInputOptions &mol1ShapeOpts,
+                             const ShapeInputOptions &mol2ShapeOpts,
+                             int mol1ConfId, int mol2ConfId) {
+  auto [nbr_st, nbr_ct] = ScoreMolecule(mol1, mol2, mol1ShapeOpts,
+                                        mol2ShapeOpts, mol1ConfId, mol2ConfId);
+  return python::make_tuple(nbr_st, nbr_ct);
+}
+python::tuple scoreMolecule2(const ShapeInput &shape, RDKit::ROMol &mol,
+                             const ShapeInputOptions &molShapeOpts,
+                             int molConfId) {
+  auto [nbr_st, nbr_ct] = ScoreMolecule(shape, mol, molShapeOpts, molConfId);
+  return python::make_tuple(nbr_st, nbr_ct);
+}
+python::tuple scoreShape(const ShapeInput &shape1, ShapeInput &shape2,
+                         bool useColors) {
+  auto [nbr_st, nbr_ct] = ScoreShape(shape1, shape2, useColors);
+  return python::make_tuple(nbr_st, nbr_ct);
+}
 void transformConformer(const python::list &pyFinalTrans,
+                        const python::list &pyFinalRot,
                         const python::list &pyMatrix, ShapeInput probeShape,
                         RDKit::Conformer &probeConf) {
   std::vector<float> matrix;
@@ -93,7 +113,14 @@ void transformConformer(const python::list &pyFinalTrans,
         "The final translation vector must have 3 values.  It had " +
         std::to_string(finalTrans.size()) + ".");
   }
-  TransformConformer(finalTrans, matrix, probeShape, probeConf);
+  std::vector<double> finalRot;
+  pythonObjectToVect<double>(pyFinalRot, finalRot);
+  if (finalRot.size() != 9) {
+    throw_value_error("The final rotation vector must have 9 values.  It had " +
+                      std::to_string(finalRot.size()) + ".");
+  }
+
+  TransformConformer(finalTrans, finalRot, matrix, probeShape, probeConf);
 }
 ShapeInput *prepConf(const RDKit::ROMol &mol, int confId,
                      const python::object &py_opts) {
@@ -156,6 +183,14 @@ python::list get_shapeShift(const ShapeInput &shp) {
   return py_list;
 }
 
+python::list get_inertialRot(const ShapeInput &shp) {
+  python::list py_list;
+  for (const auto &val : shp.inertialRot) {
+    py_list.append(val);
+  }
+  return py_list;
+}
+
 void set_customFeatures(ShapeInputOptions &shp, const python::object &s) {
   shp.customFeatures.clear();
   auto len = python::len(s);
@@ -213,6 +248,9 @@ void wrap_pubchemshape() {
       .add_property("customFeatures", &helpers::get_customFeatures,
                     &helpers::set_customFeatures,
                     "Custom features for the shape.")
+      .def_readwrite("normalize", &ShapeInputOptions::normalize,
+                     "Whether to normalise the shape by putting into"
+                     "its inertial frame.  Default=True.")
       .def("__setattr__", &safeSetattr);
 
   python::def(
@@ -237,7 +275,8 @@ useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
 opt_param : float, optional
     Balance of shape and color for optimization.
-    0 is only color, 0.5 is equal weight, and 1.0 is only shape
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape.
+    Default is 1.0.
 max_preiters : int, optional
     In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
@@ -249,7 +288,7 @@ Returns
 -------
  2-tuple of doubles
     The results are (shape_score, color_score)
-    The color_score is zero if useColors is False)DOC");
+    The color_score is zero if opt_param is 1.0.)DOC");
 
   python::def(
       "AlignMol", &helpers::alignMol3,
@@ -275,7 +314,8 @@ probeConfId : int, optional
     Probe conformer ID (default is -1)
 opt_param : float, optional
     Balance of shape and color for optimization.
-    0 is only color, 0.5 is equal weight, and 1.0 is only shape
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape.
+    Default is 1.0.
 max_preiters : int, optional
     In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
@@ -287,7 +327,7 @@ Returns
 -------
  2-tuple of doubles
     The results are (shape_score, color_score)
-    The color_score is zero if useColors is False)DOC");
+    The color_score is zero if opt_param is 1.0.)DOC");
 
   python::def(
       "AlignMol", &helpers::alignMol2,
@@ -310,7 +350,8 @@ useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
 opt_param : float, optional
     Balance of shape and color for optimization.
-    0 is only color, 0.5 is equal weight, and 1.0 is only shape
+    0 is only color, 0.5 is equal weight, and 1.0 is only shape.
+    Default is 1.0.
 max_preiters : int, optional
     In the two phase optimization, the maximum iterations done on all poses.
 max_postiters : int, optional
@@ -325,7 +366,7 @@ Returns
 -------
  2-tuple of doubles
     The results are (shape_score, color_score)
-    The color_score is zero if useColors is False)DOC");
+    The color_score is zero if opt_param is 1.0.)DOC");
 
   python::def(
       "AlignShapes", &helpers::alignShapes,
@@ -403,8 +444,83 @@ Returns
                      &ShapeInput::volumeAtomIndexVector)
       .add_property("shift", &helpers::get_shapeShift, &helpers::set_shapeShift,
                     "Translation of centre of shape coordinates to origin.")
+      .add_property(
+          "inertialRot", &helpers::get_inertialRot,
+          "Rotation applied to put the shape into its principal axes frame of reference.")
       .def_readwrite("sov", &ShapeInput::sov)
       .def_readwrite("sof", &ShapeInput::sof);
+
+  python::def(
+      "ScoreMol", &helpers::scoreMolecule1,
+      (python::arg("mol1"), python::arg("mol2"), python::arg("mol1ShapeOpts"),
+       python::arg("mol2ShapeOpts"), python::arg("mol1ConfId") = -1,
+       python::arg("mol2ConfId") = -1),
+      R"DOC(Calculate the scores between a shape and a molecule without moving them.
+
+Parameters
+----------
+mol1 : RDKit.ROMol
+    First molecule
+mol2 : RDKit.ROMol
+    Second molecule
+mol1ShapeOptions:
+    Options for constructing the shape for molecule 1
+mol2ShapeOptions:
+    Options for constructing the shape for molecule 2
+mol1ConfId : int, optional
+    First molecule conformer ID (default is -1)
+mol2ConfId : int, optional
+    Second conformer ID (default is -1)
+
+
+Returns
+-------
+ 2-tuple of doubles
+    The results are (shape_score, color_score)
+    The color_score is zero if useColors is False for either of the
+shape options)DOC");
+
+  python::def(
+      "ScoreMol", &helpers::scoreMolecule2,
+      (python::arg("shape"), python::arg("mol"), python::arg("molShapeOpts"),
+       python::arg("molConfId") = -1),
+      R"DOC(Calculate the scores between 2 molecules without moving them.
+
+Parameters
+----------
+shape : ShapeInput
+    Shape
+mol : RDKit.ROMol
+    Molecule
+molShapeOptions:
+    Options for constructing the shape for molecule
+molConfId : int, optional
+    Molecule conformer ID (default is -1)
+
+Returns
+-------
+ 2-tuple of doubles
+    The results are (shape_score, color_score)
+    The color_score is zero if shape.useColors is False)DOC");
+
+  python::def("ScoreShape", &helpers::scoreShape,
+              (python::arg("shape1"), python::arg("shape2"),
+               python::arg("useColors") = false),
+              R"DOC(Calculate the scores between 2 shapes without moving them.
+
+Parameters
+----------
+shape1 : ShapeInput
+    Shape
+shape2 : ShapeInput
+    Shape
+useColors : bool
+    Whether to use colors for the score or not.
+Returns
+-------
+ 2-tuple of doubles
+    The results are (shape_score, color_score)
+    The color_score is zero if useColors is False)DOC");
 }
 
 BOOST_PYTHON_MODULE(rdShapeAlign) { wrap_pubchemshape(); }
