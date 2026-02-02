@@ -76,7 +76,7 @@ jobs:
   pool:
     vmImage: windows-2022
   variables:
-    boost_version: 1.84.0
+    boost_version: 1.89.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python: python=3.12
   steps:
