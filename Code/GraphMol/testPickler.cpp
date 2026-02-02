@@ -1768,7 +1768,6 @@ void testAtomMonomerInfoFields() {
         new AtomMonomerInfo(AtomMonomerInfo::AMINO_ACID, "N"));
 
     MolOps::sanitizeMol(*m);
-
     std::string pkl;
     MolPickler::pickleMol(*m, pkl);
     delete m;
