@@ -2402,8 +2402,7 @@ TEST_CASE("switchBondDir") {
   Canon::switchBondDir(bond);
   CHECK(bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT);
   bond->setBondDir(Bond::BondDir::UNKNOWN);
-  Canon::switchBondDir(bond);
-  CHECK(bond->getBondDir() == Bond::BondDir::UNKNOWN);
+  CHECK_THROWS_AS(Canon::switchBondDir(bond), std::logic_error);
 }
 #endif
 
