@@ -32,20 +32,20 @@ jobs:
     cxx: g++-11
   steps:
   - template: .azure-pipelines/linux_build.yml
-- job: Ubuntu_x64_py311
+- job: Ubuntu_x64_py312
   timeoutInMinutes: 120
   pool:
     vmImage: ubuntu-latest
   variables:
-    python: python=3.11
-    boost_version: 1.82.0
+    python: python=3.12
+    boost_version: 1.89.0
     compiler: gxx_linux-64
     cc: gcc-13
     cxx: g++-13
     number_of_cores: nproc
-    python_name: python311
+    python_name: python312
   steps:
-  - template: .azure-pipelines/linux_build_py311.yml
+  - template: .azure-pipelines/linux_build_py312.yml
 - job: macOS_x64
   timeoutInMinutes: 120
   pool:
@@ -76,7 +76,7 @@ jobs:
   pool:
     vmImage: windows-2022
   variables:
-    boost_version: 1.89.0
+    boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python: python=3.12
   steps:
