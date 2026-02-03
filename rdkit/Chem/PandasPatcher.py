@@ -89,11 +89,12 @@ except ImportError:
   raise
 
 try:
-  if tuple(map(int, (pd.__version__.split(".")))) >= (2, 1, 0):
+  if tuple(map(int, (pd.__version__.split(".")))) < (2, 1, 0):
+    dataframe_applymap = pd.DataFrame.applymap
+  else:
     dataframe_applymap = pd.DataFrame.map
 except:
-  dataframe_applymap = pd.DataFrame.applymap
-
+  log.warning("Failed to find a suitable map function for data frames")
 
 orig_to_html = getattr(to_html_class, "to_html")
 pprint_thing = pandas_formats.printing.pprint_thing
