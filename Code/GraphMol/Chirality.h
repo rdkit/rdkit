@@ -116,15 +116,15 @@ enum class StereoSpecified {
 
 struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
   // REVIEW: absolute stereo data member?
-#ifdef _MSC_VER
-  static const unsigned NOATOM =
-      std::numeric_limits<unsigned>::max();  // used to mark missing atoms
-#else
-  static const unsigned NOATOM;  // used to mark missing atoms
-#endif
+
+  // used to mark missing atoms
+  [[deprecated(
+      "please use Atom::NOATOM")]] inline static constexpr unsigned int NOATOM =
+      Atom::NOATOM;
+
   StereoType type = StereoType::Unspecified;
   StereoSpecified specified = StereoSpecified::Unspecified;
-  unsigned centeredOn = NOATOM;
+  unsigned centeredOn = Atom::NOATOM;
   StereoDescriptor descriptor = StereoDescriptor::None;
   unsigned permutation = 0;  // for the non-tetrahedral stereo cases
   std::vector<unsigned> controllingAtoms;  // all atoms around the atom or bond.
@@ -244,8 +244,8 @@ enum class WedgeInfoType {
 
 class WedgeInfoBase {
  public:
-  WedgeInfoBase(int idxInit) : idx(idxInit) {};
-  virtual ~WedgeInfoBase() {};
+  WedgeInfoBase(int idxInit) : idx(idxInit){};
+  virtual ~WedgeInfoBase(){};
 
   virtual WedgeInfoType getType() const = 0;
   virtual Bond::BondDir getDir() const = 0;
@@ -258,7 +258,7 @@ class WedgeInfoBase {
 
 class WedgeInfoChiral : public WedgeInfoBase {
  public:
-  WedgeInfoChiral(int atomId) : WedgeInfoBase(atomId) {};
+  WedgeInfoChiral(int atomId) : WedgeInfoBase(atomId){};
   ~WedgeInfoChiral() override {}
 
   WedgeInfoType getType() const override {
@@ -340,9 +340,14 @@ RDKIT_GRAPHMOL_EXPORT bool shouldBeACrossedBond(const Bond *bond);
  \param mol: molecule to have its wedges altered
  \param allBondTypes: reapply the wedging also on bonds other than single and
  aromatic ones
+ \param verify: if true, the function will check that the wedges are only
+ applied in sensible places (i.e. single bonds connected to chiral centers or
+ atropisomeric bonds)
  */
 RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol,
-                                                  bool allBondTypes = true);
+                                                  bool allBondTypes = true,
+                                                  bool verify = false);
+
 //! Remove MolBlock bond wedging information from molecule.
 /*!
  \param mol: molecule to modify

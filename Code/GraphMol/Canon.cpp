@@ -287,6 +287,11 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       auto atom1Dir = secondFromAtom1->getBondDir();
       firstFromAtom1->setBondDir(atom1Dir);
 
+      // acknowledge that secondFromAtom1 is relevant for this bond,
+      // and prevent removeRedundantBondDirSpecs from removing this
+      // direction.
+      bondDirCounts[secondFromAtom1->getIdx()] += 1;
+
       bondDirCounts[firstFromAtom1->getIdx()] += 1;
       atomDirCounts[atom1->getIdx()] += 2;
       atom1ControllingBond = secondFromAtom1;
@@ -321,6 +326,11 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       //
       auto atom2Dir = secondFromAtom2->getBondDir();
       firstFromAtom2->setBondDir(atom2Dir);
+
+      // acknowledge that secondFromAtom2 is relevant for this bond,
+      // and prevent removeRedundantBondDirSpecs from removing this
+      // direction.
+      bondDirCounts[secondFromAtom2->getIdx()] += 1;
 
       bondDirCounts[firstFromAtom2->getIdx()] += 1;
       atomDirCounts[atom2->getIdx()] += 2;

@@ -1768,7 +1768,7 @@ std::string get_sgroup_polymer_block(
     if (sg.getPropIfPresent("TYPE", typ) &&
         reverseTypemap.find(typ) != reverseTypemap.end()) {
       sg.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
-      sgroupOutputIndex++;
+      ++sgroupOutputIndex;
 
       res << "Sg:";
       std::string subtype;
@@ -1823,8 +1823,8 @@ std::string get_sgroup_polymer_block(
         res.seekp(-1, res.cur);
       }
       res << ":";
+      res << ",";  // only add a comma if we wrote something
     }
-    res << ",";
   }
 
   std::string resStr = res.str();
@@ -1856,7 +1856,7 @@ std::string get_sgroup_data_block(const ROMol &mol,
   for (const auto &sg : sgs) {
     if (sg.hasProp("TYPE") && sg.getProp<std::string>("TYPE") == "DAT") {
       sg.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
-      sgroupOutputIndex++;
+      ++sgroupOutputIndex;
 
       res << "SgD:";
       // we don't attempt to canonicalize the atom order because the user
@@ -1894,8 +1894,8 @@ std::string get_sgroup_data_block(const ROMol &mol,
       }
       res << ":";
       // FIX: do something about the coordinates
+      res << ",";  // only add a comma if we wrote something
     }
-    res << ",";
   }
 
   std::string resStr = res.str();
@@ -2113,7 +2113,7 @@ std::string get_bond_config_block(
             if (!Atropisomers::getAtropisomerAtomsAndBonds(
                     bondNbr, atomAndBondVecs, mol)) {
               throw ValueErrorException("Internal error - should not occur");
-              // should not happend
+              // should not happen
             } else {
               unsigned int swaps = 0;
 
