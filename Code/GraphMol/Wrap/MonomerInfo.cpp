@@ -66,9 +66,7 @@ struct monomerinfo_wrapper {
     python::enum_<AtomMonomerInfo::AtomMonomerType>("AtomMonomerType")
         .value("UNKNOWN", AtomMonomerInfo::UNKNOWN)
         .value("PDBRESIDUE", AtomMonomerInfo::PDBRESIDUE)
-        .value("OTHER", AtomMonomerInfo::OTHER)
-        .value("AMINO_ACID", AtomMonomerInfo::AMINO_ACID)
-        .value("NUCLEIC_ACID", AtomMonomerInfo::NUCLEIC_ACID);
+        .value("OTHER", AtomMonomerInfo::OTHER);
 
     classDoc = "The class to store PDB residue information attached to Atoms\n";
     python::class_<AtomPDBResidueInfo, python::bases<AtomMonomerInfo>>(

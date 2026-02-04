@@ -25,7 +25,7 @@ namespace RDKit {
 //! The abstract base class for atom-level monomer info
 class RDKIT_GRAPHMOL_EXPORT AtomMonomerInfo {
  public:
-  typedef enum { UNKNOWN = 0, PDBRESIDUE, OTHER, AMINO_ACID, NUCLEIC_ACID } AtomMonomerType;
+  typedef enum { UNKNOWN = 0, PDBRESIDUE, OTHER } AtomMonomerType;
 
   virtual ~AtomMonomerInfo() {}
 
@@ -36,8 +36,6 @@ class RDKIT_GRAPHMOL_EXPORT AtomMonomerInfo {
    *               * UNKNOWN default for base class
    *               * PDBRESIDUE set when AtomPDBResidueInfo is instantiated
    *               * OTHER
-   *               * AMINO_ACID
-   *               * NUCLEIC_ACID
    * \param nm the atom name (e.g. "CA" using PDB atom naming)
    * \param residueName the residue name (e.g. "ALA")
    * \param resNum the residue number (e.g. 12)

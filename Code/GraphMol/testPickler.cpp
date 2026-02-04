@@ -1765,7 +1765,7 @@ void testAtomMonomerInfoFields() {
 
     // Create AtomMonomerInfo with partial fields (test defaults)
     m->getAtomWithIdx(2)->setMonomerInfo(
-        new AtomMonomerInfo(AtomMonomerInfo::AMINO_ACID, "N"));
+        new AtomMonomerInfo(AtomMonomerInfo::OTHER, "N"));
 
     MolOps::sanitizeMol(*m);
     std::string pkl;
@@ -1811,7 +1811,7 @@ void testAtomMonomerInfoFields() {
     TEST_ASSERT(info2->getResidueNumber() == 0);
     TEST_ASSERT(info2->getChainId() == "");
     TEST_ASSERT(info2->getMonomerClass() == "");
-    TEST_ASSERT(info2->getMonomerType() == AtomMonomerInfo::AMINO_ACID);
+    TEST_ASSERT(info2->getMonomerType() == AtomMonomerInfo::OTHER);
 
     delete m2;
   }
