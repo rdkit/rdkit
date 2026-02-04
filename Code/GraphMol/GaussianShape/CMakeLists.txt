@@ -5,5 +5,5 @@ target_compile_definitions(GaussianShape PRIVATE RDKIT_GAUSSIANSHAPE_BUILD)
 
 rdkit_headers(GaussianShape.h ShapeInput.h ShapeOverlayOptions.h SingleConformerAlignment.h)
 
-rdkit_catch_test(test_gaussian_shape catch_tests.cpp LINK_LIBRARIES GaussianShape
+rdkit_catch_test(testGaussianShape catch_tests.cpp LINK_LIBRARIES GaussianShape
         FileParsers MolAlign MolTransforms)

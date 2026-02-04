@@ -29,13 +29,12 @@ namespace RDKit {
 namespace GaussianShape {
 
 // Bondi radii
-//  can find more of these in Table 12 of this publication:
-//   https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3658832/
+// You can find more of these in Table 12 of this publication:
+// https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3658832/
 // The dummy atom radius (atomic number 0) is set to
-// 2.16 in ShapeInputOptions and may be varied there, as
-// may all the other radii if required, including the
-// addition of atoms not covered here.
+// 2.16.
 const std::map<unsigned int, double> vdw_radii = {
+    {0, 2.16},   // Dummy
     {1, 1.10},   // H
     {2, 1.40},   // He
     {3, 1.81},   // Li

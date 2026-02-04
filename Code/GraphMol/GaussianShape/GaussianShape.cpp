@@ -9,8 +9,12 @@
 //
 // Original author: David Cosgrove (CozChemIx Limited)
 //
-// This is the implementation of the functions for using the Roshambo2 backend
-// to perform shape-based molecule alignments and scoring.
+// This is an implementation of the Gaussian overlap molecular overlay
+// method of Grant, Pickup and Gallardo.
+// J. Comp. Chem., 17, 1653-1666 (1996)
+// https://doi.org/10.1002/(SICI)1096-987X(19961115)17:14%3C1653::AID-JCC7%3E3.0.CO;2-K
+// It uses implementation ideas and some code from the PubChem implementation
+// https://github.com/ncbi/pubchem-align3d/blob/main/shape_neighbor.cpp.
 
 #include <cmath>
 
@@ -271,8 +275,6 @@ std::pair<double, double> alignShape(const ShapeInput &refShape,
         reverseInitialTrans.SetTranslation(-refDisp);
         auto tt = reverseInitialTrans * tmp * initialRot;
         copyTransform(tt, bestXform);
-        std::vector<DTYPE> newFit(fitShape.getCoords());
-        applyTransformToShape(newFit, tt);
       }
     }
   }

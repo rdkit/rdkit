@@ -22,86 +22,46 @@
 #include <GraphMol/GaussianShape/SingleConformerAlignment.h>
 
 constexpr int D = 4;
-static const DTYPE PI = 4.0 * atan(1.0);
 
 namespace RDKit {
 namespace GaussianShape {
-void normalizeQuaternion(DTYPE *q) {
-  double magq = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] * q[3] * q[3]);
-  q[0] /= magq;
-  q[1] /= magq;
-  q[2] /= magq;
-  q[3] /= magq;
-}
-
-// Extract the quaternion from the optimizer's pos,  normalizing it
-// in situ in pos first.
-std::array<DTYPE, 4> extractNormalizedQuaternion(double *pos) {
-  double magq = sqrt(pos[0] * pos[0] + pos[1] * pos[1] +
-                     pos[2] * pos[2] * pos[3] * pos[3]);
-  pos[0] /= magq;
-  pos[1] /= magq;
-  pos[2] /= magq;
-  pos[3] /= magq;
-  std::array<DTYPE, 4> q;
-  q[0] = pos[0];
-  q[1] = pos[1];
-  q[2] = pos[2];
-  q[3] = pos[3];
-
-  return q;
-}
-
-std::array<DTYPE, 3> extractTranslation(double *pos, bool reversed) {
-  std::array<DTYPE, 3> t;
-  if (reversed) {
-    t[0] = -pos[4];
-    t[1] = -pos[5];
-    t[2] = -pos[6];
-  } else {
-    t[0] = pos[4];
-    t[1] = pos[5];
-    t[2] = pos[6];
-  }
-  return t;
-}
 
 SingleConformerAlignment::SingleConformerAlignment(
-    const DTYPE *molA, DTYPE *molAT, const int *molA_type, int NmolA_shape,
-    int NmolA_color, DTYPE shapeVolA, DTYPE colorVolA, const DTYPE *molB,
-    DTYPE *molBT, const int *molB_type, int NmolB_shape, int NmolB_color,
-    DTYPE shapeVolB, DTYPE colorVolB, OptimMode optimMode, DTYPE mixing_param,
-    bool all_carbon_radii, unsigned int maxIts)
-    : d_molA(molA),
-      d_molAT(molAT),
-      d_NmolA_shape(NmolA_shape),
-      d_NmolA_color(NmolA_color),
-      d_molA_type(molA_type),
-      d_shapeVolA(shapeVolA),
-      d_colorVolA(colorVolA),
-      d_molB(molB),
-      d_molBT(molBT),
-      d_NmolB_shape(NmolB_shape),
-      d_NmolB_color(NmolB_color),
-      d_molB_type(molB_type),
-      d_shapeVolB(shapeVolB),
-      d_colorVolB(colorVolB),
+    const DTYPE *ref, DTYPE *refTemp, const int *refTypes, int nRefShape,
+    int nRefColor, DTYPE refShapeVol, DTYPE refColorVol, const DTYPE *fit,
+    DTYPE *fitTemp, const int *fitTypes, int nFitShape, int nFitColor,
+    DTYPE fitShapeVol, DTYPE fitColorVol, OptimMode optimMode,
+    DTYPE mixingParam, bool allCarbonRadii, unsigned int maxIts)
+    : d_ref(ref),
+      d_refTemp(refTemp),
+      d_nRefShape(nRefShape),
+      d_nRefColor(nRefColor),
+      d_refTypes(refTypes),
+      d_refShapeVol(refShapeVol),
+      d_refColorVol(refColorVol),
+      d_fit(fit),
+      d_fitTemp(fitTemp),
+      d_nFitShape(nFitShape),
+      d_nFitColor(nFitColor),
+      d_fitTypes(fitTypes),
+      d_fitShapeVol(fitShapeVol),
+      d_fitColorVol(fitColorVol),
       d_optimMode(optimMode),
-      d_mixing_param(mixing_param),
-      d_all_carbon_radii(all_carbon_radii),
+      d_mixingParam(mixingParam),
+      d_allCarbonRadii(allCarbonRadii),
       d_maxIts(maxIts) {}
 
 std::array<DTYPE, 5> SingleConformerAlignment::calcScores(
-    const DTYPE *molA, const DTYPE *molB, bool includeColor) const {
+    const DTYPE *ref, const DTYPE *fit, bool includeColor) const {
   std::array<DTYPE, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
-  scores[3] = calcVolAndGrads(molA, d_NmolA_shape, molB, d_NmolB_shape,
-                              d_all_carbon_radii, nullptr, nullptr);
-  if (d_NmolA_color && d_NmolB_color &&
+  scores[3] = calcVolAndGrads(ref, d_nRefShape, fit, d_nFitShape,
+                              d_allCarbonRadii, nullptr, nullptr);
+  if (d_nRefColor && d_nFitColor &&
       (d_optimMode == OptimMode::SHAPE_PLUS_COLOR || includeColor)) {
-    scores[4] = calcVolAndGrads(molA + d_NmolA_shape * D, d_NmolA_color,
-                                d_molA_type + d_NmolA_shape,
-                                molB + d_NmolB_shape * D, d_NmolB_color,
-                                d_molB_type + d_NmolB_shape, nullptr, nullptr);
+    scores[4] = calcVolAndGrads(ref + d_nRefShape * D, d_nRefColor,
+                                d_refTypes + d_nRefShape, fit + d_nFitShape * D,
+                                d_nFitColor, d_fitTypes + d_nFitShape, nullptr,
+                                nullptr);
   }
   scores = calcScores(scores[3], scores[4]);
   return scores;
@@ -112,30 +72,24 @@ std::array<DTYPE, 5> SingleConformerAlignment::calcScores(
   std::array<DTYPE, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
   scores[3] = shapeOvVol;
   scores[4] = colorOvVol;
-  scores[1] = scores[3] / (d_shapeVolA + d_shapeVolB - scores[3]);
-  if (d_NmolA_color && d_NmolB_color && d_colorVolA > 0.0 &&
-      d_colorVolB > 0.0) {
-    scores[2] = scores[4] / (d_colorVolA + d_colorVolB - scores[4]);
-    scores[0] = scores[1] * (1 - d_mixing_param) + scores[2] * d_mixing_param;
+  scores[1] = scores[3] / (d_refShapeVol + d_fitShapeVol - scores[3]);
+  if (d_nRefColor && d_nFitColor && d_refColorVol > 0.0 &&
+      d_fitColorVol > 0.0) {
+    scores[2] = scores[4] / (d_refColorVol + d_fitColorVol - scores[4]);
+    scores[0] = scores[1] * (1 - d_mixingParam) + scores[2] * d_mixingParam;
   } else {
     scores[0] = scores[1];
   }
   return scores;
 }
 
-void SingleConformerAlignment::calcGradients(const DTYPE *molA,
-                                             const DTYPE *molB,
-                                             const DTYPE *quat,
-                                             DTYPE *gradients) const {
-  calcVolAndGrads(molA, d_NmolA_shape, molB, d_NmolB_shape, d_all_carbon_radii,
-                  quat, gradients);
-}
-
 namespace {
-// Set of values to convert the cartesian gradients to quaternion gradients
-using Adapt = std::array<DTYPE, 12>;
-void makeQuaternionAdapters(const DTYPE *quat, const DTYPE *molB, int numBPts,
-                            std::vector<Adapt> &derivAdapters) {
+// Set of values to convert the cartesian gradients to quaternion gradients.
+// This uses the chain rule: the dV/qQ = (dV/dr) * dr/dQ) where V is the
+// volume overlap and r is the Cartesian space.
+using GradConverter = std::array<DTYPE, 12>;
+void cartToQuatGrads(const DTYPE *quat, const DTYPE *mol, int numBPts,
+                     std::vector<GradConverter> &gradConverters) {
   // for ease of ref
   auto q = quat[0];
   auto r = quat[1];
@@ -143,9 +97,9 @@ void makeQuaternionAdapters(const DTYPE *quat, const DTYPE *molB, int numBPts,
   auto u = quat[3];
   auto coef = 1.0 / (q * q + r * r + s * s + u * u);
   for (int i = 0; i < 4 * numBPts; i += 4) {
-    auto x = molB[i];
-    auto y = molB[i + 1];
-    auto z = molB[i + 2];
+    auto x = mol[i];
+    auto y = mol[i + 1];
+    auto z = mol[i + 2];
     auto dx_dq = coef * 2.0 * (q * x + u * y - s * z);
     auto dx_dr = coef * 2.0 * (r * x + s * y + u * z);
     auto dy_dr = coef * 2.0 * (s * x - r * y + q * z);
@@ -158,58 +112,61 @@ void makeQuaternionAdapters(const DTYPE *quat, const DTYPE *molB, int numBPts,
     auto dz_dq = dy_dr;
     auto dy_dq = dx_du;
     auto dz_dr = -dx_du;
-    derivAdapters.emplace_back(Adapt{dx_dq, dy_dq, dz_dq, dx_dr, dy_dr, dz_dr,
-                                     dx_ds, dy_ds, dz_ds, dx_du, dy_du, dz_du});
+    gradConverters.emplace_back(GradConverter{dx_dq, dy_dq, dz_dq, dx_dr, dy_dr,
+                                              dz_dr, dx_ds, dy_ds, dz_ds, dx_du,
+                                              dy_du, dz_du});
   }
 }
 }  // namespace
 
 // Compute the volume overlap and optionally "quaternion" gradients for the
-// overlap volume of A and B, wrt B.  molB is the original coords of B,
-// molBT is those subject to any transformation applied by the quaternion
-// we're using to optimise the overlap volume.  If gradients is null, they
-// won't be calculated.  They are assumed to be initialised correctly.
-DTYPE calcVolAndGrads(const DTYPE *molA, int numAPts, const DTYPE *molB,
-                      int numBPts, const bool all_carbon_radii,
+// overlap volume of ref and fit, wrt fit.  fit is the original coords of
+// the fit molecule, fitTemp is those subject to any transformation applied
+// by the quaternion we're using to optimise the overlap volume.  If
+// gradients is null, they won't be calculated.  They are assumed to be
+// initialised correctly.
+DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts, const DTYPE *fit,
+                      int numFitPts, const bool allCarbonRadii,
                       const DTYPE *quat, DTYPE *gradients) {
-  std::vector<Adapt> quatAdapters;
+  std::vector<GradConverter> gradConverters;
   if (gradients) {
-    makeQuaternionAdapters(quat, molB, numBPts, quatAdapters);
+    cartToQuatGrads(quat, fit, numFitPts, gradConverters);
   }
 
   static constexpr DTYPE KAPPA = 2.41798793102;
   static const DTYPE CARBON_A = KAPPA / (1.7 * 1.7);
-  static const DTYPE CARBON_BIT = pow(PI / (2 * CARBON_A), 1.5);
+  static const DTYPE CARBON_BIT = 8.0 * pow(PI / (2 * CARBON_A), 1.5);
   DTYPE vol = 0.0;
-  for (int i = 0; i < numAPts * 4; i += 4) {
-    const auto ai = all_carbon_radii ? CARBON_A : molA[i + 3];
-    for (int j = 0, j_idx = 0; j < numBPts * 4; j += 4, j_idx++) {
-      auto dx = molA[i] - molB[j];
-      auto dy = molA[i + 1] - molB[j + 1];
-      auto dz = molA[i + 2] - molB[j + 2];
+  for (int i = 0; i < numRefPts * 4; i += 4) {
+    const auto ai = allCarbonRadii ? CARBON_A : ref[i + 3];
+    for (int j = 0, j_idx = 0; j < numFitPts * 4; j += 4, j_idx++) {
+      auto dx = ref[i] - fit[j];
+      auto dy = ref[i + 1] - fit[j + 1];
+      auto dz = ref[i + 2] - fit[j + 2];
       auto d2 = dx * dx + dy * dy + dz * dz;
-      const auto aj = all_carbon_radii ? CARBON_A : molB[j + 3];
+      const auto aj = allCarbonRadii ? CARBON_A : fit[j + 3];
       auto mult = -(ai * aj) / (ai + aj);
       auto kij = exp(mult * d2);
 
-      auto vij = all_carbon_radii ? 8 * kij * CARBON_BIT
-                                  : 8 * kij * pow((PI / (ai + aj)), 1.5);
+      auto vij = allCarbonRadii ? kij * CARBON_BIT
+                                : 8 * kij * pow((PI / (ai + aj)), 1.5);
       vol += vij;
       if (gradients) {
         auto r = 2.0 * vij * mult;
-        // Use the adapters to calculate the gradients in quaternion space
+        // Use the gradient converters to calculate the gradients in quaternion
+        // space
         gradients[0] +=
-            r * (dx * quatAdapters[j_idx][0] + dy * quatAdapters[j_idx][1] +
-                 dz * quatAdapters[j_idx][2]);
+            r * (dx * gradConverters[j_idx][0] + dy * gradConverters[j_idx][1] +
+                 dz * gradConverters[j_idx][2]);
         gradients[1] +=
-            r * (dx * quatAdapters[j_idx][3] + dy * quatAdapters[j_idx][4] +
-                 dz * quatAdapters[j_idx][5]);
+            r * (dx * gradConverters[j_idx][3] + dy * gradConverters[j_idx][4] +
+                 dz * gradConverters[j_idx][5]);
         gradients[2] +=
-            r * (dx * quatAdapters[j_idx][6] + dy * quatAdapters[j_idx][7] +
-                 dz * quatAdapters[j_idx][8]);
-        gradients[3] +=
-            r * (dx * quatAdapters[j_idx][9] + dy * quatAdapters[j_idx][10] +
-                 dz * quatAdapters[j_idx][11]);
+            r * (dx * gradConverters[j_idx][6] + dy * gradConverters[j_idx][7] +
+                 dz * gradConverters[j_idx][8]);
+        gradients[3] += r * (dx * gradConverters[j_idx][9] +
+                             dy * gradConverters[j_idx][10] +
+                             dz * gradConverters[j_idx][11]);
         gradients[4] += r * dx;
         gradients[5] += r * dy;
         gradients[6] += r * dz;
@@ -219,30 +176,28 @@ DTYPE calcVolAndGrads(const DTYPE *molA, int numAPts, const DTYPE *molB,
   return vol;
 }
 
-DTYPE calcVolAndGrads(const DTYPE *molA, int numAPts, const int *molATypes,
-                      const DTYPE *molB, int numBPts, const int *molBTypes,
+DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts, const int *refTypes,
+                      const DTYPE *fit, int numFitPts, const int *fitTypes,
                       const DTYPE *quat, DTYPE *gradients) {
   DTYPE vol = 0.0;
-  std::vector<Adapt> quatAdapters;
+  std::vector<GradConverter> gradConverters;
   if (gradients) {
-    makeQuaternionAdapters(quat, molB, numBPts, quatAdapters);
+    cartToQuatGrads(quat, fit, numFitPts, gradConverters);
   }
 
-  double sum_d2 = 0.0;
-  for (int i = 0, i_idx = 0; i < numAPts * 4; i += 4, i_idx++) {
-    const auto ai = molA[i + 3];
-    const auto aType = molATypes[i_idx];
-    for (int j = 0, j_idx = 0; j < numBPts * 4; j += 4, j_idx++) {
-      const auto bType = molBTypes[j_idx];
+  for (int i = 0, i_idx = 0; i < numRefPts * 4; i += 4, i_idx++) {
+    const auto ai = ref[i + 3];
+    const auto aType = refTypes[i_idx];
+    for (int j = 0, j_idx = 0; j < numFitPts * 4; j += 4, j_idx++) {
+      const auto bType = fitTypes[j_idx];
       if (aType != bType) {
         continue;
       }
-      auto dx = molA[i] - molB[j];
-      auto dy = molA[i + 1] - molB[j + 1];
-      auto dz = molA[i + 2] - molB[j + 2];
+      auto dx = ref[i] - fit[j];
+      auto dy = ref[i + 1] - fit[j + 1];
+      auto dz = ref[i + 2] - fit[j + 2];
       auto d2 = dx * dx + dy * dy + dz * dz;
-      sum_d2 += d2;
-      const auto aj = molB[j + 3];
+      const auto aj = fit[j + 3];
       auto mult = -(ai * aj) / (ai + aj);
       auto kij = exp(mult * d2);
 
@@ -250,19 +205,19 @@ DTYPE calcVolAndGrads(const DTYPE *molA, int numAPts, const int *molATypes,
       vol += vij;
       if (gradients) {
         auto r = 2.0 * vij * mult;
-        // Use the adapters to calculate the gradients in quaternion space
+        // Use the converters to calculate the gradients in quaternion space
         gradients[0] +=
-            r * (dx * quatAdapters[j_idx][0] + dy * quatAdapters[j_idx][1] +
-                 dz * quatAdapters[j_idx][2]);
+            r * (dx * gradConverters[j_idx][0] + dy * gradConverters[j_idx][1] +
+                 dz * gradConverters[j_idx][2]);
         gradients[1] +=
-            r * (dx * quatAdapters[j_idx][3] + dy * quatAdapters[j_idx][4] +
-                 dz * quatAdapters[j_idx][5]);
+            r * (dx * gradConverters[j_idx][3] + dy * gradConverters[j_idx][4] +
+                 dz * gradConverters[j_idx][5]);
         gradients[2] +=
-            r * (dx * quatAdapters[j_idx][6] + dy * quatAdapters[j_idx][7] +
-                 dz * quatAdapters[j_idx][8]);
-        gradients[3] +=
-            r * (dx * quatAdapters[j_idx][9] + dy * quatAdapters[j_idx][10] +
-                 dz * quatAdapters[j_idx][11]);
+            r * (dx * gradConverters[j_idx][6] + dy * gradConverters[j_idx][7] +
+                 dz * gradConverters[j_idx][8]);
+        gradients[3] += r * (dx * gradConverters[j_idx][9] +
+                             dy * gradConverters[j_idx][10] +
+                             dz * gradConverters[j_idx][11]);
         gradients[4] += r * dx;
         gradients[5] += r * dy;
         gradients[6] += r * dz;
@@ -274,47 +229,43 @@ DTYPE calcVolAndGrads(const DTYPE *molA, int numAPts, const int *molATypes,
 
 void SingleConformerAlignment::calcVolumeAndGradients(
     const std::array<DTYPE, 7> &quat, DTYPE &shapeOvlpVol, DTYPE &colorOvlpVol,
-    std::array<DTYPE, 7> *gradients) {
+    std::array<DTYPE, 7> &gradients) {
   RDGeom::Transform3D transformB;
-  // Leave B at the origin, and move A to meet it.
+  // Leave fit at the origin, and move ref to meet it.
   RDGeom::Point3D translateA{-quat[4], -quat[5], -quat[6]};
-  translateShape(d_molA, d_molAT, d_NmolA_shape + d_NmolA_color, translateA);
-  double tq[4]{quat[0], quat[1], quat[2], quat[3]};
+  translateShape(d_ref, d_refTemp, d_nRefShape + d_nRefColor, translateA);
+  // Rotate fit by quaternion
+  DTYPE tq[4]{quat[0], quat[1], quat[2], quat[3]};
   transformB.SetRotationFromQuaternion(tq);
-  applyTransformToShape(d_molB, d_molBT, d_NmolB_shape + d_NmolB_color,
+  applyTransformToShape(d_fit, d_fitTemp, d_nFitShape + d_nFitColor,
                         transformB);
 
-  // We assume that d_molAT was once initialised to d_MolA and the same with
-  // B so that the types are already there.
-  if (gradients) {
-    (*gradients)[0] = (*gradients)[1] = (*gradients)[2] = (*gradients)[3] =
-        (*gradients)[4] = (*gradients)[5] = (*gradients)[6] = 0.0;
-    shapeOvlpVol =
-        calcVolAndGrads(d_molAT, d_NmolA_shape, d_molBT, d_NmolB_shape,
-                        d_all_carbon_radii, quat.data(), gradients->data());
-  } else {
-    shapeOvlpVol = calcVolAndGrads(d_molAT, d_NmolA_shape, d_molBT,
-                                   d_NmolB_shape, true, quat.data(), nullptr);
-  }
-  if (d_optimMode == OptimMode::SHAPE_PLUS_COLOR && gradients) {
+  // We assume that d_refTemp was once initialised to d_ref and the same with
+  // fit so that the types are already there.
+  gradients[0] = gradients[1] = gradients[2] = gradients[3] = gradients[4] =
+      gradients[5] = gradients[6] = 0.0;
+  shapeOvlpVol =
+      calcVolAndGrads(d_refTemp, d_nRefShape, d_fitTemp, d_nFitShape,
+                      d_allCarbonRadii, quat.data(), gradients.data());
+  if (d_optimMode == OptimMode::SHAPE_PLUS_COLOR) {
     std::array<DTYPE, 7> colorGrads{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     colorOvlpVol = calcVolAndGrads(
-        d_molAT + 4 * d_NmolA_shape, d_NmolA_color, d_molA_type + d_NmolA_shape,
-        d_molBT + 4 * d_NmolB_shape, d_NmolB_color, d_molB_type + d_NmolB_shape,
+        d_refTemp + 4 * d_nRefShape, d_nRefColor, d_refTypes + d_nRefShape,
+        d_fitTemp + 4 * d_nFitShape, d_nFitColor, d_fitTypes + d_nFitShape,
         quat.data(), colorGrads.data());
     // The color gradients are normally dwarfed by the shape gradients, so
     // normalize them and then mix by the same rule as the final score.
     auto shapeSum = sqrt(std::accumulate(
-        gradients->begin(), gradients->end(), 0.0,
+        gradients.begin(), gradients.end(), 0.0,
         [](const auto init, const auto g) -> DTYPE { return init + g * g; }));
     auto colorSum = sqrt(std::accumulate(
         colorGrads.begin(), colorGrads.end(), 0.0,
         [](const auto init, const auto g) -> DTYPE { return init + g * g; }));
     auto ratio = shapeSum / colorSum;
     std::transform(
-        gradients->begin(), gradients->end(), colorGrads.begin(),
-        gradients->begin(), [&](const auto g1, const auto g2) -> DTYPE {
-          return g1 * (1 - d_mixing_param) + g2 * ratio * d_mixing_param;
+        gradients.begin(), gradients.end(), colorGrads.begin(),
+        gradients.begin(), [&](const auto g1, const auto g2) -> DTYPE {
+          return g1 * (1 - d_mixingParam) + g2 * ratio * d_mixingParam;
         });
   } else {
     colorOvlpVol = 0.0;
@@ -322,7 +273,7 @@ void SingleConformerAlignment::calcVolumeAndGradients(
 }
 
 bool SingleConformerAlignment::doOverlay(std::array<DTYPE, 20> &scores) {
-  std::array<double, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  std::array<DTYPE, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   auto res = optimise(quatTrans);
 
   // Get the final coords for B into d_molBT, and compute the scores
@@ -330,18 +281,18 @@ bool SingleConformerAlignment::doOverlay(std::array<DTYPE, 20> &scores) {
   xform.SetRotationFromQuaternion(quatTrans.data());
   xform.SetTranslation(
       RDGeom::Point3D{quatTrans[4], quatTrans[5], quatTrans[6]});
-  applyTransformToShape(d_molB, d_molBT, d_NmolB_shape + d_NmolB_color, xform);
+  applyTransformToShape(d_fit, d_fitTemp, d_nFitShape + d_nFitColor, xform);
 
-  auto tscores = calcScores(d_molA, d_molBT, true);
+  auto tscores = calcScores(d_ref, d_fitTemp, true);
   scores[0] = tscores[0];
   scores[1] = tscores[1];
   scores[2] = tscores[2];
   scores[3] = tscores[3];
   scores[4] = tscores[4];
-  scores[5] = d_shapeVolA;
-  scores[6] = d_colorVolA;
-  scores[7] = d_shapeVolB;
-  scores[8] = d_colorVolB;
+  scores[5] = d_refShapeVol;
+  scores[6] = d_refColorVol;
+  scores[7] = d_fitShapeVol;
+  scores[8] = d_fitColorVol;
   scores[9] = quatTrans[0];
   scores[10] = quatTrans[1];
   scores[11] = quatTrans[2];
@@ -357,7 +308,7 @@ bool SingleConformerAlignment::doOverlay(std::array<DTYPE, 20> &scores) {
 }
 
 namespace {
-DTYPE oneStep(DTYPE grad, double stepSize, DTYPE quatTrans, DTYPE oldGrad,
+DTYPE oneStep(DTYPE grad, DTYPE stepSize, DTYPE quatTrans, DTYPE oldGrad,
               DTYPE oldQuatTrans) {
   DTYPE step = 0.0;
   if (std::signbit(grad) != std::signbit(oldGrad)) {
@@ -405,7 +356,7 @@ void calcStep(std::array<DTYPE, 7> &grad, DTYPE qStepSize, DTYPE tStepSize,
   }
 }
 
-DTYPE constrainStep(DTYPE maxStep, DTYPE *step) {
+DTYPE constrainStep(DTYPE maxStep, DTYPE *step, bool checkSize) {
   DTYPE mStep = std::max({fabs(step[0]), fabs(step[1]), fabs(step[2])});
   if (mStep > maxStep) {
     DTYPE scaleFactor = maxStep / mStep;
@@ -419,12 +370,15 @@ DTYPE constrainStep(DTYPE maxStep, DTYPE *step) {
       step[2] *= scaleFactor;
     }
   }
-  DTYPE quatSquared = step[0] * step[0] + step[1] * step[1] + step[2] * step[2];
-  if (quatSquared > 1.0) {
-    DTYPE scaleFactor = 1.0 / (2.0 * quatSquared);
-    step[0] *= scaleFactor;
-    step[1] *= scaleFactor;
-    step[2] *= scaleFactor;
+  if (checkSize) {
+    DTYPE quatSquared =
+        step[0] * step[0] + step[1] * step[1] + step[2] * step[2];
+    if (quatSquared > 1.0) {
+      DTYPE scaleFactor = 1.0 / (2.0 * quatSquared);
+      step[0] *= scaleFactor;
+      step[1] *= scaleFactor;
+      step[2] *= scaleFactor;
+    }
   }
   return mStep;
 }
@@ -528,7 +482,7 @@ bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans) {
   DTYPE qStepSize{-0.001}, tStepSize{-0.01};
   bool finished = false;
   for (unsigned iter = 0; iter < d_maxIts; iter++) {
-    calcVolumeAndGradients(quatTrans, shapeOvlpVol, colorOvlpVol, &grad);
+    calcVolumeAndGradients(quatTrans, shapeOvlpVol, colorOvlpVol, grad);
     auto scores = calcScores(shapeOvlpVol, colorOvlpVol);
     comboScore = scores[0];
     calcStep(grad, qStepSize, tStepSize, oldGrad, quatTrans, oldQuatTrans, iter,
@@ -544,8 +498,8 @@ bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans) {
     for (unsigned int lineIter = 0; !converged; lineIter++) {
       // Check that the absolute max step size does not go beyond some
       // reasonable size
-      DTYPE mqStep = constrainStep(maxQuaternionStep, step.data() + 1);
-      DTYPE mtStep = constrainStep(maxTranslationStep, step.data() + 4);
+      DTYPE mqStep = constrainStep(maxQuaternionStep, step.data() + 1, true);
+      DTYPE mtStep = constrainStep(maxTranslationStep, step.data() + 4, false);
       if (mqStep <= minQuaternionStep && mtStep <= minTranslationStep) {
         converged = true;
         comboScore = 0.0;  // Make sure we return to the old one.
@@ -558,7 +512,7 @@ bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans) {
       step[0] = sqrt(1.0 - quatSquared);
       // Update the quaternion with the step, multiplying them.
       auto newQuatTrans = combineQuatTrans(quatTrans, step);
-      calcVolumeAndGradients(newQuatTrans, shapeOvlpVol, colorOvlpVol, &grad);
+      calcVolumeAndGradients(newQuatTrans, shapeOvlpVol, colorOvlpVol, grad);
       auto scores = calcScores(shapeOvlpVol, colorOvlpVol);
       comboScore = scores[0];
       // if we made a good step, keep the quaternion and we're done

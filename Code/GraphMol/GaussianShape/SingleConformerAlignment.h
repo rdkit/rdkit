@@ -9,6 +9,11 @@
 //
 // Original author: David Cosgrove (CozChemIx Limited)
 //
+// This is the class that does optimises a moving molecule (fit)
+// to maximise its Gaussian overlap with the reference molecule (ref).
+// The optimiser is a modified BFGS taken in large part, but re-arranged
+// for readability, from the PubChem shape overlay code
+// https://github.com/ncbi/pubchem-align3d/blob/main/shape_neighbor.cpp
 
 #ifndef RDKIT_SINGLECONFORMERALIGNMENT_GUARD
 #define RDKIT_SINGLECONFORMERALIGNMENT_GUARD
@@ -22,37 +27,39 @@ namespace RDKit {
 namespace GaussianShape {
 struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   SingleConformerAlignment() = delete;
-  /// @brief Do the overlay for a single conformer of A against a single
-  /// conformer of B.  The output in scores is the rotation and translation that
-  /// moves B to optimise its score with A.
-  /// @param molA - the query molecule as 1D array of 4 * NmolA entries. Each
-  /// block of 4 is the coords and w parameter
-  /// @param molAT - the working copy of A
-  /// @param molA_type - the features types for molecule A
-  /// @param NmolA - the number of atoms and features in A
-  /// @param NmolA_real - the number of atoms in A
-  /// @param NmolA_color - the number of features in A
-  /// @param self_overlap_A - overlap volume of A with itself
-  /// @param self_overlap_A_color - color overlap of A with itself
-  /// @param molB - the target molecule as 1D array of 4 * NmolB entries. Each
-  /// block of 4 is the coords and w parameter
-  /// @param molBT - the working copy of B - the final overlaid coordinates will
-  /// be left here
-  /// @param molB_type - the features types for molecule B
-  /// @param NmolB - the number of atoms and features in B
-  /// @param NmolB_real - the number of atoms in B
-  /// @param NmolB_color - the number of features in B
+  /// @brief Do the overlay for a single conformer of fit against a single
+  /// conformer of ref.  The output in scores is the rotation and translation
+  /// that moves fit to optimise its score with ref.
+  /// @param ref - the query molecule as 1D array of 4 * N entries. Each
+  /// block of 4 is the coords and atom radius
+  /// @param refTemp - the working copy of ref
+  /// @param refTypes - the feature types for molecule ref
+  /// @param nRefShape - the number of atoms in ref
+  /// @param nRefColor - the number of features in ref
+  /// @param refShapeVol - overlap volume of ref with itself
+  /// @param refColorVol - color overlap of ref with itself
+  /// @param fit - the fit molecule as 1D array of 4 * N entries. Each
+  /// block of 4 is the coords and atom radius.
+  /// @param fitTemp - the working copy of fit - the final overlaid coordinates
+  /// will be left here
+  /// @param fitTypes - the feature types for fit molecule
+  /// @param nFitShape - the number of atoms in fit
+  /// @param nFitColor - the number of features in fit
+  /// @param fitShapeVol - overlap volume of fit with itself
+  /// @param fitColorVol - color overlap of fit with itself
   /// @param optimMode - optimisation mode
-  /// @param mixing_param - how to mix the 2 tanimoto values
+  /// @param mixingParam - how to mix the 2 tanimoto values
+  /// @param allCarbonRadii - if true, atomic radii are all set to values for
+  /// carbon.  This makes it faster but less correct.
   /// @param maxIts - maximum number of iterations for optimiser
-  SingleConformerAlignment(const DTYPE *molA, DTYPE *molAT,
-                           const int *molA_type, int NmolA_shape,
-                           int NmolA_color, DTYPE shapeVolA, DTYPE colorVolA,
-                           const DTYPE *molB, DTYPE *molBT,
-                           const int *molB_type, int NmolB_shape,
-                           int NmolB_color, DTYPE shapeVolB, DTYPE colorVolB,
-                           OptimMode optimMode, DTYPE mixing_param,
-                           bool all_carbon_radii, unsigned int maxIts);
+  SingleConformerAlignment(const DTYPE *ref, DTYPE *refTemp,
+                           const int *refTypes, int nRefShape, int nRefColor,
+                           DTYPE refShapeVol, DTYPE refColorVol,
+                           const DTYPE *fit, DTYPE *fitTemp,
+                           const int *fitTypes, int nFitShape, int nFitColor,
+                           DTYPE fitShapeVol, DTYPE fitColorVol,
+                           OptimMode optimMode, DTYPE mixingParam,
+                           bool allCarbonRadii, unsigned int maxIts);
 
   SingleConformerAlignment(const SingleConformerAlignment &other) = delete;
   SingleConformerAlignment(SingleConformerAlignment &&other) = delete;
@@ -64,30 +71,24 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
 
   // Calculate the combined, shape, and color tanimotos as appropriate,
   // plus the volume of the shape and color overlaps, in that order.
-  // Assumes that molA and molB are already in the correct configurations.
+  // Assumes that ref and fit are already in the correct configurations.
   // If includeColor is passed in true, it will compute the color score
   // irrespective of the value in d_optimMode.  We still want the color
   // score even if doing SHAPE_ONLY optimisation, for example.
-  std::array<DTYPE, 5> calcScores(const DTYPE *molA, const DTYPE *molB,
+  std::array<DTYPE, 5> calcScores(const DTYPE *ref, const DTYPE *fit,
                                   bool includeColor = false) const;
   // This one computes the scores from the given overlap volumes.  Color score
   // only calculated if the color volumes are non-zero.
   std::array<DTYPE, 5> calcScores(const DTYPE shapeOvVol,
                                   const DTYPE colorOvVol) const;
 
-  // Calculate the gradients as appropriate.  Assumes that molA and molB are
-  // already in the correct configurations.
-  void calcGradients(const DTYPE *molA, const DTYPE *molB, const DTYPE *quat,
-                     DTYPE *gradients) const;
-
   // Calculate the overlap volume between A and B after the given "quaternion"
   // has been applied.  The "quaternion" is 7 elements, the first 4 the
   // quaternion the last 3 the translation that currently form the
-  // transformation that overlays B onto A.  If gradients is non-null,
-  // they will be computed as well.
+  // transformation that overlays B onto A.
   void calcVolumeAndGradients(const std::array<DTYPE, 7> &quat,
                               DTYPE &shapeOvlpVol, DTYPE &colorOvlpVol,
-                              std::array<DTYPE, 7> *gradients = nullptr);
+                              std::array<DTYPE, 7> &gradients);
 
   /// @brief Do the overlay, feeding the results into scores.
   /// @return scores - the output scores and transformation to reproduce the
@@ -95,54 +96,56 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// 0 - the combo score
   /// 1 - the shape tanimoto
   /// 2 - the color tanimoto
-  /// 3 - the overlap volume
+  /// 3 - the shape overlap volume
   /// 4 - the color overlap volume
-  /// 5 - the volume of A
-  /// 6 - the volume of B
-  /// 7 - the color volume of A
-  /// 8 - the color volume of B
-  /// 9-12 - the quaternion to rotate B onto A. Applied first.
-  /// 13-15 - the translation to move B onto A. Applied second.
+  /// 5 - the shape volume of fit
+  /// 6 - the shape volume of ref
+  /// 7 - the color volume of fit
+  /// 8 - the color volume of ref
+  /// 9-12 - the quaternion to rotate fit onto ref. Applied first.
+  /// 13-15 - the translation to move fit onto ref. Applied second.
   /// 16-19 - not used at present, returned as zeros.
   /// Returns false if it didn't finish with the allowed maximum number of
   /// iterations.
   bool doOverlay(std::array<DTYPE, 20> &scores);
 
   // Find the quaternion and translation that maximises the volume
-  // overlap.  Assume it is set to 1,0,0,0,0,0,0 on input.  Returns
-  // false if it didn't finish with the allowed maximum number of
-  // iterations.
+  // overlap appropriate to d_optimMode.  Assume it is set to 1,0,0,0,0,0,0
+  // on input. Returns false if it didn't finish with the allowed maximum
+  // number of iterations.
   bool optimise(std::array<DTYPE, 7> &quatTrans);
 
-  const DTYPE *d_molA;
-  DTYPE *d_molAT;
-  const int d_NmolA_shape;
-  const int d_NmolA_color;
-  const int *d_molA_type;
-  const DTYPE d_shapeVolA;
-  const DTYPE d_colorVolA;
-  const DTYPE *d_molB;
-  DTYPE *d_molBT;
-  const int d_NmolB_shape;
-  const int d_NmolB_color;
-  const int *d_molB_type;
-  DTYPE d_shapeVolB;
-  DTYPE d_colorVolB;
+  const DTYPE *d_ref;
+  DTYPE *d_refTemp;
+  const int d_nRefShape;
+  const int d_nRefColor;
+  const int *d_refTypes;
+  const DTYPE d_refShapeVol;
+  const DTYPE d_refColorVol;
+  const DTYPE *d_fit;
+  DTYPE *d_fitTemp;
+  const int d_nFitShape;
+  const int d_nFitColor;
+  const int *d_fitTypes;
+  DTYPE d_fitShapeVol;
+  DTYPE d_fitColorVol;
   const OptimMode d_optimMode;
-  const DTYPE d_mixing_param;
-  const bool d_all_carbon_radii;
+  const DTYPE d_mixingParam;
+  const bool d_allCarbonRadii;
   const unsigned int d_maxIts;
 };
 
-DTYPE calcVolAndGrads(const DTYPE *molA, int numAPts, const DTYPE *molB,
-                      int numBPts, const bool all_carbon_radii = true,
+// This is for the atoms/shape features.
+DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts, const DTYPE *fit,
+                      int numFitPts, const bool allCarbonRadii = true,
                       const DTYPE *quat = nullptr, DTYPE *gradients = nullptr);
-// This one if for the features, and only calculates values if the types
+// This one is for the features, and only calculates values if the types
 // of 2 features match.
-DTYPE calcVolAndGrads(const DTYPE *molA, int numAPts, const int *molATypes,
-                      const DTYPE *molB, int numBPts, const int *molBTypes,
+DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts, const int *refTypes,
+                      const DTYPE *fit, int numFitPts, const int *fitTypes,
                       const DTYPE *quat, DTYPE *gradients);
-}  // namespace ShapeAlign
+
+}  // namespace GaussianShape
 }  // namespace RDKit
 
 #endif  // RDKIT_SINGLECONFORMERALIGNMENT_GUARD
