@@ -1020,11 +1020,9 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
           continue;
         }
 
-        // Check if the atom can be chiral, and if chirality needs inversion
-        const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
-
         // Extra check needed if/when @AL1/@AL2 supported
-        if (trueOrder.size() >= 3 || Chirality::hasNonTetrahedralStereo(atom)) {
+        if (Chirality::detail::isAtomPotentialTetrahedralCenter(atom) ||
+            Chirality::hasNonTetrahedralStereo(atom)) {
           int nSwaps = 0;
           int perm = 0;
           if (Chirality::hasNonTetrahedralStereo(atom)) {
@@ -1033,6 +1031,9 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
           const unsigned int firstIdx = molStack.begin()->obj.atom->getIdx();
           const bool firstInPart = atom->getIdx() == firstIdx;
+
+          // Check if the atom can be chiral, and if chirality needs inversion
+          const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
 
           // We have to make sure that trueOrder contains all the
           // bonds, even if they won't be written to the SMILES
