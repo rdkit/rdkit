@@ -78,6 +78,7 @@ add_subdirectory(MolAlign)
 add_subdirectory(MolChemicalFeatures)
 add_subdirectory(ShapeHelpers)
 add_subdirectory(MolCatalog)
+add_subdirectory(GaussianShape)
 
 add_subdirectory(MolDraw2D)
 
