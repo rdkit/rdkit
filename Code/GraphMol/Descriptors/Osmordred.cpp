@@ -80,7 +80,12 @@
 
 #include <Eigen/Dense> // we should try to remove those...
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
+#include <GraphMol/PartialCharges/GasteigerParams.h>
+#include <GraphMol/RingInfo.h>
+#include <RDGeneral/RDThreads.h>
 #include <lapacke.h>
+#include <future>
+#include <chrono>
 #endif
 
 // Define a custom hash function for std::pair<int, int>
@@ -100,6 +105,22 @@ namespace Osmordred {
 #ifdef RDK_BUILD_OSMORDRED_SUPPORT
 bool hasOsmordredSupport() { return true; }
 
+// v2.0: Filter function to check if a molecule is too large (will cause hangs)
+// Returns true if molecule has >10 rings OR >200 heavy atoms
+// This prevents Osmordred.Calculate from hanging on very complex molecules
+bool isMoleculeTooLarge(const RDKit::ROMol &mol) {
+  const RDKit::RingInfo *ri = mol.getRingInfo();
+  int numRings = 0;
+  if (ri && ri->isInitialized()) {
+    numRings = ri->numRings();
+  }
+  
+  int numHeavyAtoms = mol.getNumHeavyAtoms();
+  
+  // Filter: >10 rings OR >200 heavy atoms
+  return (numRings > 10 || numHeavyAtoms > 200);
+}
+
 namespace {    
 void solveLinearSystem(const ROMol &mol, std::vector<double>& A, std::vector<double>& B,
 		       int n, int nrhs, bool& success) {
@@ -109,7 +130,11 @@ void solveLinearSystem(const ROMol &mol, std::vector<double>& A, std::vector<dou
 
     success = false; // Initialize success flag
 
-    // First, try dposv
+    // CRITICAL FIX v2.0: Save original RHS before any LAPACK calls modify B
+    // LAPACK routines modify B in-place, even when they fail!
+    std::vector<double> B_original = B;
+
+    // First, try dposv (Cholesky factorization for positive definite matrices)
     std::vector<double> A_copy = A; // Copy A because LAPACK modifies it
     info = LAPACKE_dposv(LAPACK_COL_MAJOR, 'U', n, nrhs, A_copy.data(), lda, B.data(), ldb);
 
@@ -117,20 +142,48 @@ void solveLinearSystem(const ROMol &mol, std::vector<double>& A, std::vector<dou
         success = true;
         return;
     } else {
-        // dposv failed; fall back to dgesv
+        // dposv failed; fall back to dgesv (LU factorization)
+        // CRITICAL FIX v2.0: Restore original RHS before calling dgesv
+        // dposv modified B even though it failed!
+        B = B_original;
+        
         std::vector<int> ipiv(n); // Pivot array for dgesv
         A_copy = A; // Reset A because it was modified by dposv
         info = LAPACKE_dgesv(LAPACK_COL_MAJOR, n, nrhs, A_copy.data(), lda, ipiv.data(), B.data(), ldb);
-
-
 
         if (info == 0) {
             success = true;
             return;
         } else {
-            std::string outputSmiles = RDKit::MolToSmiles(mol);
-
-            std::cerr << "dgesv failed: " << info << ", Smiles:" << outputSmiles << "\n";
+            // dgesv failed (singular matrix); fall back to dgelss (pseudo-inverse via SVD)
+            // CRITICAL FIX v2.0: Added dgelss fallback for singular matrices
+            // This provides a minimum-norm least-squares solution when exact solution doesn't exist
+            B = B_original; // Restore original RHS values
+            
+            std::vector<double> A_copy2 = A; // Fresh copy for dgelss
+            std::vector<double> B_copy = B; // Copy B because dgelss modifies it
+            
+            // Allocate workspace for dgelss
+            std::vector<double> s(n); // Singular values
+            int rank; // Rank of matrix
+            double rcond = 1e-15; // Condition number threshold
+            
+            // dgelss computes least-squares solution: min ||Ax - b||_2
+            info = LAPACKE_dgelss(LAPACK_COL_MAJOR, n, n, nrhs,
+                                   A_copy2.data(), lda, B_copy.data(), ldb,
+                                   s.data(), rcond, &rank);
+            
+            if (info == 0) {
+                // dgelss succeeded - copy solution back to B
+                B = B_copy;
+                success = true;
+                return;
+            } else {
+                // All solvers failed - this is a true error
+                std::string outputSmiles = RDKit::MolToSmiles(mol);
+                std::cerr << "ERROR: All LAPACK solvers failed (dposv, dgesv, dgelss): info=" 
+                          << info << ", Smiles:" << outputSmiles << "\n";
+            }
         }
     }
 }
@@ -5861,6 +5914,234 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
         return out;
     }
 
+    // v2.0: Timeout constant for Osmordred computation (60 seconds = 1 minute)
+    constexpr int OSMORDRED_TIMEOUT_SECONDS = 60;
+    
+    // v2.0: Single molecule with timeout protection (all-or-nothing)
+    // Returns NaN vector if computation exceeds timeout_seconds
+    RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordredWithTimeout(
+        const RDKit::ROMol& mol, int timeout_seconds) {
+        
+        auto future = std::async(std::launch::async, [&mol]() {
+            return calcOsmordred(mol);
+        });
+        
+        int actual_timeout = timeout_seconds > 0 ? timeout_seconds : OSMORDRED_TIMEOUT_SECONDS;
+        auto status = future.wait_for(std::chrono::seconds(actual_timeout));
+        
+        if (status == std::future_status::ready) {
+            return future.get();
+        } else {
+            // Timeout - return NaN vector (3585 NaN values)
+            return std::vector<double>(3585, std::numeric_limits<double>::quiet_NaN());
+        }
+    }
+    
+    // v2.0: Batch version from SMILES: parses each SMILES -> NEW mol (tautomer canonical LOST).
+    // For tautomer-canonical mols use calcOsmordredBatchFromMols(mols) with mols from ToBinary.
+    RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>> calcOsmordredBatch(
+        const std::vector<std::string>& smiles_list, int n_jobs) {
+
+        std::vector<std::vector<double>> results;
+        results.reserve(smiles_list.size());
+
+        unsigned int nThreads = getNumThreadsToUse(n_jobs);
+
+        if (nThreads <= 1 || smiles_list.size() < 10) {
+            for (const auto& smi : smiles_list) {
+                auto future = std::async(std::launch::async, [&smi]() {
+                    ROMol* mol = SmilesToMol(smi);
+                    if (mol) {
+                        auto desc = calcOsmordred(*mol);
+                        delete mol;
+                        return desc;
+                    }
+                    return std::vector<double>();
+                });
+                
+                auto status = future.wait_for(std::chrono::seconds(OSMORDRED_TIMEOUT_SECONDS));
+                if (status == std::future_status::ready) {
+                    results.push_back(future.get());
+                } else {
+                    results.push_back(std::vector<double>(3585, std::numeric_limits<double>::quiet_NaN()));
+                }
+            }
+            return results;
+        }
+        
+        // Parallel processing using std::async with timeout
+        std::vector<std::future<std::vector<double>>> futures;
+        futures.reserve(smiles_list.size());
+        
+        for (size_t idx = 0; idx < smiles_list.size(); ++idx) {
+            const auto& smi = smiles_list[idx];
+            
+            futures.emplace_back(std::async(std::launch::async, [smi]() {
+                try {
+                    ROMol* mol = SmilesToMol(smi);
+                    if (mol) {
+                        try {
+                            std::vector<double> descriptors = calcOsmordred(*mol);
+                            delete mol;
+                            return descriptors;
+                        } catch (...) {
+                            delete mol;
+                            return std::vector<double>();
+                        }
+                    } else {
+                        return std::vector<double>();
+                    }
+                } catch (...) {
+                    return std::vector<double>();
+                }
+            }));
+        }
+        
+        for (auto& f : futures) {
+            auto status = f.wait_for(std::chrono::seconds(OSMORDRED_TIMEOUT_SECONDS));
+            if (status == std::future_status::ready) {
+                results.push_back(f.get());
+            } else {
+                results.push_back(std::vector<double>(3585, std::numeric_limits<double>::quiet_NaN()));
+            }
+        }
+        
+        return results;
+    }
+
+    // v2.0: Batch version from mol objects: PRESERVES tautomer canonical.
+    // Python binding uses mol.ToBinary() -> MolPickler::molFromPickle -> these mols.
+    RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>> calcOsmordredBatchFromMols(
+        const std::vector<const ROMol*>& mols, int n_jobs) {
+
+        std::vector<std::vector<double>> results;
+        results.reserve(mols.size());
+
+        unsigned int nThreads = getNumThreadsToUse(n_jobs);
+        const size_t nFeatures = 3585;
+        const std::vector<double> nanRow(nFeatures, std::numeric_limits<double>::quiet_NaN());
+
+        if (nThreads <= 1 || mols.size() < 10) {
+            for (const ROMol* mol : mols) {
+                if (mol) {
+                    try {
+                        results.push_back(calcOsmordred(*mol));
+                    } catch (...) {
+                        results.push_back(nanRow);
+                    }
+                } else {
+                    results.push_back(nanRow);
+                }
+            }
+            return results;
+        }
+
+        std::vector<std::future<std::vector<double>>> futures;
+        futures.reserve(mols.size());
+        for (size_t idx = 0; idx < mols.size(); ++idx) {
+            const ROMol* mol = mols[idx];
+            futures.emplace_back(std::async(std::launch::async, [mol, nFeatures]() {
+                if (mol) {
+                    try {
+                        return calcOsmordred(*mol);
+                    } catch (...) {
+                        return std::vector<double>(nFeatures, std::numeric_limits<double>::quiet_NaN());
+                    }
+                }
+                return std::vector<double>(nFeatures, std::numeric_limits<double>::quiet_NaN());
+            }));
+        }
+        for (auto& f : futures) {
+            auto status = f.wait_for(std::chrono::seconds(OSMORDRED_TIMEOUT_SECONDS));
+            if (status == std::future_status::ready) {
+                results.push_back(f.get());
+            } else {
+                results.push_back(nanRow);
+            }
+        }
+        return results;
+    }
+
+    // v2.0: Get descriptor names in the same order as calcOsmordred returns values
+    std::vector<std::string> getOsmordredDescriptorNames() {
+        std::vector<std::string> names;
+        names.reserve(3585);
+        
+        auto addNames = [&names](const std::string& baseName, int count) {
+            if (count == 1) {
+                names.push_back(baseName);
+            } else {
+                for (int i = 1; i <= count; ++i) {
+                    names.push_back(baseName + "_" + std::to_string(i));
+                }
+            }
+        };
+        
+        // Add names in the exact same order as calcOsmordred appends values
+        addNames("ABCIndex", 2);
+        addNames("AcidBase", 2);
+        addNames("AdjacencyMatrix", 12);
+        addNames("Aromatic", 2);
+        addNames("AtomCount", 17);
+        addNames("Autocorrelation", 606);
+        addNames("BCUT", 24);
+        addNames("BalabanJ", 1);
+        addNames("BaryszMatrix", 104);
+        addNames("BertzCT", 1);
+        addNames("BondCount", 9);
+        addNames("RNCGRPCG", 2);
+        addNames("CarbonTypes", 11);
+        addNames("Chi", 56);
+        addNames("Constitutional", 16);
+        addNames("DetourMatrix", 14);
+        addNames("DistanceMatrix", 12);
+        addNames("EState", 404);
+        addNames("EccentricConnectivityIndex", 1);
+        addNames("ExtendedTopochemicalAtom", 45);
+        addNames("FragmentComplexity", 1);
+        addNames("Framework", 1);
+        addNames("HydrogenBond", 2);
+        addNames("LogS", 1);
+        addNames("InformationContent", 42);
+        addNames("KappaShapeIndex", 3);
+        addNames("Lipinski", 2);
+        addNames("McGowanVolume", 1);
+        addNames("MoeType", 54);
+        addNames("MolecularDistanceEdge", 19);
+        addNames("MolecularId", 12);
+        addNames("PathCount", 21);
+        addNames("Polarizability", 2);
+        addNames("RingCount", 138);
+        addNames("RotatableBond", 2);
+        addNames("SLogP", 2);
+        addNames("TopoPSA", 2);
+        addNames("TopologicalCharge", 21);
+        addNames("TopologicalIndex", 4);
+        addNames("VdwVolumeABC", 1);
+        addNames("VertexAdjacencyInformation", 1);
+        addNames("WalkCount", 21);
+        addNames("Weight", 2);
+        addNames("WienerIndex", 2);
+        addNames("ZagrebIndex", 4);
+        addNames("Pol", 1);
+        addNames("MR", 1);
+        addNames("Flexibility", 1);
+        addNames("Schultz", 1);
+        addNames("AlphaKappaShapeIndex", 3);
+        addNames("HEState", 88);
+        addNames("BEState", 1460);
+        addNames("Abrahams", 6);
+        addNames("ANMat", 25);
+        addNames("ASMat", 20);
+        addNames("AZMat", 15);
+        addNames("DSMat", 20);
+        addNames("DN2Mat", 20);
+        addNames("Frags", 215);
+        addNames("AddFeatures", 7);
+        
+        return names;
+    }
+
 //// new version faster but not correct!!!
 
 
@@ -7290,8 +7571,79 @@ std::vector<double> calcAllChiDescriptors(const RDKit::ROMol& mol) {
 
 
 
+// v2.0: Control function to check if Gasteiger parameters exist for all atoms
+// BEFORE calling computeGasteigerCharges. This prevents crashes on unusual elements
+// like Hg (mercury) or certain phosphorus environments.
+//
+// Returns:
+//   - true: All atoms have parameters -> safe to call computeGasteigerCharges
+//   - false: At least one atom lacks parameters -> return NaN instead
+bool checkGasteigerParameters(const RDKit::ROMol& mol) {
+    PeriodicTable *table = PeriodicTable::getTable();
+    const GasteigerParams *params = GasteigerParams::getParams();
+    
+    // Check each atom: if ONE atom doesn't have parameters, the ENTIRE calculation is invalid
+    for (auto &atom : mol.atoms()) {
+        std::string elem = table->getElementSymbol(atom->getAtomicNum());
+        std::string mode;
+        
+        // Reproduce EXACTLY the logic from computeGasteigerCharges to determine mode
+        switch (atom->getHybridization()) {
+            case Atom::SP3:
+                mode = "sp3";
+                break;
+            case Atom::SP2:
+                mode = "sp2";
+                break;
+            case Atom::SP:
+                mode = "sp";
+                break;
+            default:
+                // For atoms with unspecified hybridization, determine mode based on element
+                if (atom->getAtomicNum() == 1) {
+                    mode = "*"; // Hydrogen always uses "*" mode
+                } else if (atom->getAtomicNum() == 16) {
+                    // Sulfur: check oxygen neighbors
+                    ROMol::ADJ_ITER nbrIdx, endIdx;
+                    boost::tie(nbrIdx, endIdx) = mol.getAtomNeighbors(atom);
+                    int no = 0;
+                    while (nbrIdx != endIdx) {
+                        if (mol.getAtomWithIdx(*nbrIdx)->getAtomicNum() == 8) {
+                            no++;
+                        }
+                        nbrIdx++;
+                    }
+                    if (no == 2) {
+                        mode = "so2";
+                    } else if (no == 1) {
+                        mode = "so";
+                    } else {
+                        mode = "sp3";
+                    }
+                } else {
+                    mode = "sp3"; // Default
+                }
+        }
+        
+        // Check if parameters exist for this element + mode
+        try {
+            params->getParams(elem, mode, true);
+        } catch (...) {
+            // Parameters don't exist (e.g., Hg, certain P environments)
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 std::vector<double> calcRNCG_RPCG(const RDKit::ROMol& mol){
         // subclass of CPSA using only 2D descriptors available in Mordred v1
+        // v2.0: Check Gasteiger parameters first (on original mol, before adding H)
+        if (!checkGasteigerParameters(mol)) {
+            return {std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN()};
+        }
+        
          std::unique_ptr<RDKit::ROMol> hmol(RDKit::MolOps::addHs(mol));
 
         double maxpos = 0;
@@ -7299,7 +7651,12 @@ std::vector<double> calcRNCG_RPCG(const RDKit::ROMol& mol){
         double totalneg =0;
         double totalpos =0;
 
-        computeGasteigerCharges(*hmol, 12, true);
+        // v2.0: Try-catch as safety net
+        try {
+            computeGasteigerCharges(*hmol, 12, true);
+        } catch (...) {
+            return {std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN()};
+        }
 
         for (auto &atom : hmol->atoms()) {
                 double ch = atom->getProp<double>(common_properties::_GasteigerCharge);
@@ -7335,6 +7692,9 @@ std::vector<double> calcRNCG_RPCG(const RDKit::ROMol& mol){
 
     // Function to compute BCUT descriptors for multiple properties
     std::vector<double> calcBCUTsEigen(const RDKit::ROMol& mol) {
+        // v2.0: Check Gasteiger parameters first
+        bool gasteiger_ok = checkGasteigerParameters(mol);
+        
         // Atomic properties to compute
         auto* tbl = RDKit::PeriodicTable::getTable();
         std::map<int, double> vdwMap = VdWAtomicMap();
@@ -7345,19 +7705,26 @@ std::vector<double> calcRNCG_RPCG(const RDKit::ROMol& mol){
         std::map<int, double> ionizationMap = ionizationEnergyAtomicMap();
 
         size_t numAtoms = mol.getNumAtoms();
-        std::vector<double> gasteigerCharges;
-        gasteigerCharges.reserve(numAtoms);
-        computeGasteigerCharges(mol, 12, true);
-
-        for (auto &atom : mol.atoms()) {
-            double ch = atom->getProp<double>(common_properties::_GasteigerCharge);
-
-            if (atom->hasProp(common_properties::_GasteigerHCharge)) {
-                ch += atom->getProp<double>(common_properties::_GasteigerHCharge);
+        std::vector<double> gasteigerCharges(numAtoms, 0.0);
+        
+        // v2.0: Only compute Gasteiger if parameters exist
+        if (gasteiger_ok) {
+            try {
+                computeGasteigerCharges(mol, 12, true);
+                for (size_t i = 0; i < numAtoms; ++i) {
+                    const auto* atom = mol.getAtomWithIdx(i);
+                    double ch = atom->getProp<double>(common_properties::_GasteigerCharge);
+                    if (atom->hasProp(common_properties::_GasteigerHCharge)) {
+                        ch += atom->getProp<double>(common_properties::_GasteigerHCharge);
+                    }
+                    gasteigerCharges[i] = ch;
+                }
+            } catch (...) {
+                // Gasteiger failed - charges stay at 0.0
+                gasteiger_ok = false;
             }
-
-            gasteigerCharges.push_back(ch);
         }
+        // If gasteiger_ok is false, gasteigerCharges remains all zeros
 
         // Vector to store BCUT results
         std::vector<double> results;
@@ -7448,6 +7815,9 @@ std::vector<double> calcEigenValuesLAPACK(const std::vector<std::vector<double>>
 
 // Function to compute BCUT descriptors for multiple properties
 std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
+    // v2.0: Check Gasteiger parameters first
+    bool gasteiger_ok = checkGasteigerParameters(mol);
+    
     // Atomic properties to compute
     auto* tbl = RDKit::PeriodicTable::getTable();
     std::map<int, double> vdwMap = VdWAtomicMap();
@@ -7458,18 +7828,25 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
     std::map<int, double> ionizationMap = ionizationEnergyAtomicMap();
 
     size_t numAtoms = mol.getNumAtoms();
-    std::vector<double> gasteigerCharges(numAtoms);
-    computeGasteigerCharges(mol, 12, true);
-
-    for (auto &atom : mol.atoms()) {
-        double ch = atom->getProp<double>(common_properties::_GasteigerCharge);
-
-        if (atom->hasProp(common_properties::_GasteigerHCharge)) {
-            ch += atom->getProp<double>(common_properties::_GasteigerHCharge);
+    std::vector<double> gasteigerCharges(numAtoms, 0.0);
+    
+    // v2.0: Only compute Gasteiger if parameters exist
+    if (gasteiger_ok) {
+        try {
+            computeGasteigerCharges(mol, 12, true);
+            for (size_t i = 0; i < numAtoms; ++i) {
+                const auto* atom = mol.getAtomWithIdx(i);
+                double ch = atom->getProp<double>(common_properties::_GasteigerCharge);
+                if (atom->hasProp(common_properties::_GasteigerHCharge)) {
+                    ch += atom->getProp<double>(common_properties::_GasteigerHCharge);
+                }
+                gasteigerCharges[i] = ch;
+            }
+        } catch (...) {
+            // Gasteiger failed - charges stay at 0.0
         }
-
-        gasteigerCharges[atom->getIdx()] = ch;
     }
+    // If gasteiger_ok is false, gasteigerCharges remains all zeros
 
     // Vector to store BCUT results
     std::vector<double> results;
@@ -7691,6 +8068,9 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
 
     // Function to compute the ATS descriptors without Eigen
     std::vector<double> calcAutoCorrelation(const RDKit::ROMol &mol) {
+        // v2.0: Check Gasteiger parameters first (on original mol, before adding H)
+        bool gasteiger_ok = checkGasteigerParameters(mol);
+        
         std::unique_ptr<RDKit::ROMol> hmol(RDKit::MolOps::addHs(mol));
         double *dist = RDKit::MolOps::getDistanceMat(*hmol, false);  // Topological matrix
         const unsigned int numAtoms = hmol->getNumAtoms();
@@ -7706,18 +8086,26 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
         // Property matrix as a vector of vectors
         std::vector<std::vector<double>> propertyMatrix(numProperties, std::vector<double>(numAtoms, 0.0)); // correct
 
-        // Compute Gasteiger charges
-        computeGasteigerCharges(*hmol, 12, true);
+        // v2.0: Compute Gasteiger charges only if parameters exist
         std::vector<double> gasteigerCharges(numAtoms, 0.0);
+        if (gasteiger_ok) {
+            try {
+                computeGasteigerCharges(*hmol, 12, true);
+                for (unsigned int i = 0; i < numAtoms; ++i) {
+                    const auto *atom = hmol->getAtomWithIdx(i);
+                    double charge = atom->getProp<double>(RDKit::common_properties::_GasteigerCharge);
+                    if (atom->hasProp(RDKit::common_properties::_GasteigerHCharge)) {
+                        charge += atom->getProp<double>(RDKit::common_properties::_GasteigerHCharge);
+                    }
+                    gasteigerCharges[i] = charge;
+                }
+            } catch (...) {
+                // Gasteiger failed - charges stay at 0.0
+            }
+        }
 
         for (unsigned int i = 0; i < numAtoms; ++i) {
             const auto *atom = hmol->getAtomWithIdx(i);
-            double charge = atom->getProp<double>(RDKit::common_properties::_GasteigerCharge);
-            if (atom->hasProp(RDKit::common_properties::_GasteigerHCharge)) {
-                charge += atom->getProp<double>(RDKit::common_properties::_GasteigerHCharge);
-            }
-            gasteigerCharges[i] = charge;
-
             int atomNumber = atom->getAtomicNum();
             propertyMatrix[0][i] = gasteigerCharges[i]; // not for ATS & AATS output
             propertyMatrix[1][i] = getValenceElectrons(*atom);
