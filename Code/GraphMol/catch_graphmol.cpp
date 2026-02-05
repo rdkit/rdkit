@@ -2371,7 +2371,6 @@ namespace details {
 bool atomHasFourthValence(const Atom *atom);
 bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q);
 }  // namespace details
-void switchBondDir(Bond *bond);
 }  // namespace Canon
 }  // namespace RDKit
 TEST_CASE("canon details") {
@@ -2393,16 +2392,6 @@ TEST_CASE("canon details") {
       CHECK(RDKit::Canon::details::atomHasFourthValence(m->getAtomWithIdx(1)));
     }
   }
-}
-TEST_CASE("switchBondDir") {
-  auto m = "C/C=C/C"_smiles;
-  REQUIRE(m);
-  auto bond = m->getBondWithIdx(0);
-  CHECK(bond->getBondDir() == Bond::BondDir::ENDUPRIGHT);
-  Canon::switchBondDir(bond);
-  CHECK(bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT);
-  bond->setBondDir(Bond::BondDir::UNKNOWN);
-  CHECK_THROWS_AS(Canon::switchBondDir(bond), std::logic_error);
 }
 #endif
 
