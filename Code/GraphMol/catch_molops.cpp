@@ -622,11 +622,37 @@ TEST_CASE("test_extract_stereo_groups", "[copyMolSubset]") {
 
 TEST_CASE("test_manual_atom_bond_subset", "[copyMolSubset]") {
   auto m = "CCC"_smiles;
-  std::vector<unsigned int> atoms = {};
-  std::vector<unsigned int> bonds = {0};
-  // this should throw a ValueErrorException
-  REQUIRE_THROWS_AS(copyMolSubset(*m, atoms, bonds),
-		    ValueErrorException);
+  {
+    std::vector<unsigned int> atoms = {};
+    std::vector<unsigned int> bonds = {0};
+    // this should throw a ValueErrorException
+    REQUIRE_THROWS_AS(copyMolSubset(*m, atoms, bonds),
+		      ValueErrorException);
+  }
+  {
+    std::vector<unsigned int> atoms = {0,1,2};
+    std::vector<unsigned int> bonds = {0};
+    auto m2 = copyMolSubset(*m, atoms, bonds);
+    CHECK(m2->getNumAtoms() == 3);
+    CHECK(m2->getNumBonds() == 1);
+  }
+  {
+    std::vector<unsigned int> atoms = {0,1,2};
+    std::vector<unsigned int> bonds = {0,1};
+    auto m2 = copyMolSubset(*m, atoms, bonds);
+    CHECK(m2->getNumAtoms() == 3);
+    CHECK(m2->getNumBonds() == 2);
+  }
+  {
+    std::vector<unsigned int> atoms = {0,1,2,3};
+    std::vector<unsigned int> bonds = {0,1};
+    REQUIRE_THROWS_AS(copyMolSubset(*m, atoms, bonds), IndexErrorException);
+  }
+  {
+    std::vector<unsigned int> atoms = {0,1,2};
+    std::vector<unsigned int> bonds = {2};
+    REQUIRE_THROWS_AS(copyMolSubset(*m, atoms, bonds), IndexErrorException);
+  }
 }
 
 TEST_CASE("GitHub #8726: Do not remove hydrides by default") {
