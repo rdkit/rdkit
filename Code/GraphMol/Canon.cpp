@@ -227,7 +227,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     return;
   }
 
-  // We interpret double bond looks like this:
+  // We interpret double bonds like this (this is a TRANS bond,
+  // a CIS one would be similar, but both anchors would be either
+  // above or below the double bond):
   //
   //   anchor1
   //          |
