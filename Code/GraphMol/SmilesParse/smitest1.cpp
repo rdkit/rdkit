@@ -2060,7 +2060,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
   // the parsing part of this is in ../testChirality.cpp, here we look at
   // smiles generation
 
-  {
+  SECTION("case 1") {
     RWMol *m;
     std::string smiles = "C1COC/C=C\\CCC1";
     m = SmilesToMol(smiles);
@@ -2071,7 +2071,8 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     CHECK(smiles == "C1=C\\COCCCCC/1");
     delete m;
   }
-  {
+
+  SECTION("case 2") {
     RWMol *m;
     std::string smiles = "C1COC/C=C/CCC1";
     m = SmilesToMol(smiles);
@@ -2083,7 +2084,8 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
 
     delete m;
   }
-  {
+
+  SECTION("case 3") {
     RWMol *m;
     std::string smiles = "C1CC/C=C/C=C/CCC1";
     m = SmilesToMol(smiles);
@@ -2096,7 +2098,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     delete m;
   }
 
-  {
+  SECTION("case 4") {
     RWMol *m;
     std::string smiles = "C/1=C/C=C/CCCCCC1";
     m = SmilesToMol(smiles);
@@ -2107,7 +2109,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     delete m;
   }
 
-  {
+  SECTION("case 5") {
     RWMol *m;
     std::string smiles = "C1COC/C=C/C=C/C1";
     m = SmilesToMol(smiles);
@@ -2120,7 +2122,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     delete m;
   }
 
-  {
+  SECTION("case 6") {
     RWMol *m;
     std::string smiles = "C1=C/OCC/C=C\\CC\\1";
     m = SmilesToMol(smiles);
@@ -2130,7 +2132,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     delete m;
   }
 
-  {
+  SECTION("case 7") {
     RWMol *m;
     std::string smiles = "C1CCCCN/C=C/1";
     m = SmilesToMol(smiles);
@@ -2145,7 +2147,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     delete m;
   }
 
-  {
+  SECTION("case 8") {
     RWMol *m;
     // the 2 initial directed bonds are redundant (/bad ??)
     std::string smiles = "CCC/[N+]/1=C/c2ccccc2OC(=O)/C=C1/O";
@@ -2173,7 +2175,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     delete m;
   }
 
-  {  // Github #2023
+  SECTION("case 9") {  // Github #2023
     RWMol *m;
     // the initial directed bond is redundant
     std::string smiles = R"(CO/C1=C/C=C\C=C/C=N\1)";
@@ -2207,7 +2209,8 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
 
   // some torture tests with natural products (thanks to James Davidson for the
   // examples)
-  {
+
+  SECTION("case 10") {
     RWMol *m;
     std::string smiles =
         "NC(=O)O[C@H]1C(/C)=C/[C@H](C)[C@@H](O)[C@@H](OC)C[C@H](C)C\\C2=C(/"
@@ -2232,7 +2235,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     delete m;
   }
 
-  {
+  SECTION("case 11") {
     RWMol *m;
     std::string smiles =
         "CC(O[C@@H]1C=C(C)[C@H]2[C@H]([C@H]3O[C@@H]2C/"
@@ -2255,7 +2258,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     delete m;
   }
 
-  {
+  SECTION("case 12") {
     RWMol *m;
     std::string smiles =
         "CC(O[C@@H]1C=C(C)[C@H]2[C@H]([C@H]3O[C@@H]2C/C(C)=C/"
@@ -2278,7 +2281,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     delete m;
   }
 
-  {
+  SECTION("case 13") {
     RWMol *m;
     std::string smiles =
         "CC(=O)[C@@H]1CC=C(C)[C@@H]2[C@@H]3O[C@@H]([C@@H](O)C/"

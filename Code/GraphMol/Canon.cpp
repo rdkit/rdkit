@@ -1270,8 +1270,13 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
       }
     }
   }
-  Canon::removeRedundantBondDirSpecs(mol, molStack, bondDirCounts,
-                                     atomDirCounts, bondVisitOrders);
+  // Added for debugging. Please ask me to remove it if I don't
+  // remember doing it before posting a PR
+  bool remove = true;
+  if (remove) {
+    Canon::removeRedundantBondDirSpecs(mol, molStack, bondDirCounts,
+                                       atomDirCounts, bondVisitOrders);
+  }
 }
 
 void canonicalizeEnhancedStereo(ROMol &mol,
