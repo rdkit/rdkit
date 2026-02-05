@@ -527,16 +527,17 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
         }
       }
     }
-    std::ranges::sort(currentNbrs,
-                      [&molStackComparer](const Bond *aBnd, const Bond *bBnd) {
-                        // Reversing the bonds is intentional: molStackComparer
-                        // is a std::greater comparer (priority queue returns
-                        // the highest element), but here we want to sort in
-                        // increasing order, so we want a std::less comparer,
-                        // which can be achieved by reversing the std::greater
-                        // because we can have no ties here
-                        return molStackComparer(bBnd->getIdx(), aBnd->getIdx());
-                      });
+    std::ranges::sort(currentNbrs, [&molStackComparer, &bondVisitOrders](
+                                       const Bond *aBnd, const Bond *bBnd) {
+      // Reversing the bonds is intentional: molStackComparer
+      // is a std::greater comparer (priority queue returns
+      // the highest element), but here we want to sort in
+      // increasing order, so we want a std::less comparer,
+      // which can be achieved by reversing the std::greater
+      // because we can have no ties here
+      return molStackComparer(bondVisitOrders[bBnd->getIdx()],
+                              bondVisitOrders[aBnd->getIdx()]);
+    });
 
     q.emplace(bond);
   }
