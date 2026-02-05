@@ -298,8 +298,7 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(
     const SubsetOptions &options) {
   const auto natoms = mol.getNumAtoms();
   const auto nbonds = mol.getNumBonds();
-
-  if ((atoms.size() == natoms &&
+  if ((atoms.size() == natoms && bonds.size() == 0 &&
        options.method == SubsetMethod::BONDS_BETWEEN_ATOMS) ||
       (bonds.size() == nbonds && options.method == SubsetMethod::BONDS) ||
       (atoms.size() == natoms && bonds.size() == nbonds)) {
@@ -315,10 +314,18 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(
   selection_info.bondMapping.clear();
 
   for (auto v : atoms) {
-    selection_info.selectedAtoms.set(v);
+    if (v < natoms) {
+      selection_info.selectedAtoms.set(v);
+    } else {
+      throw IndexErrorException(static_cast<int>(v));
+    }
   }
   for (auto v : bonds) {
-    selection_info.selectedBonds.set(v);
+    if (v < nbonds) {
+      selection_info.selectedBonds.set(v);
+    } else {
+      throw IndexErrorException(static_cast<int>(v));
+    }
   }
 
   auto res = copyMolSubset(mol, selection_info, options);
