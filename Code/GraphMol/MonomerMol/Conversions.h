@@ -26,7 +26,7 @@ toMonomeric(const ROMol& atomistic_mol);
 
 /**
  * Build an atomistic molecule from a MonomerMol using monomers
- * in MonomerDatabase.cpp
+ * in MonomerLibrary.cpp
  *
  * @param monomer_mol Monomeric molecule to convert to atomistic
  * @return Atomistic molecule

@@ -24,7 +24,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
-#include "MonomerDatabase.h"
+#include "MonomerLibrary.h"
 #include "MonomerMol.h"
 
 namespace RDKit
@@ -79,13 +79,13 @@ void fillAttachmentPointMap(const RDKit::ROMol& new_monomer,
 
 void setPDBResidueInfo(RDKit::RWMol& new_monomer, const std::string& monomer_label,
                     unsigned int residue_number, char chain_id,
-                    ChainType chain_type,
-                    MonomerDatabase& db)
+                    const std::string& monomer_class,
+                    MonomerLibrary& db)
 {
     std::string residue_name =
-        (chain_type == ChainType::PEPTIDE) ? "UNK" : "UNL";
+        (monomer_class == "PEPTIDE") ? "UNK" : "UNL";
 
-    auto pdb_code = db.getPdbCode(monomer_label, chain_type);
+    auto pdb_code = db.getPdbCode(monomer_label, monomer_class);
     if (pdb_code) {
         residue_name = *pdb_code;
     }
@@ -112,17 +112,17 @@ void setPDBResidueInfo(RDKit::RWMol& new_monomer, const std::string& monomer_lab
     }
 }
 
-ChainType getChainType(std::string_view polymer_id)
+std::string getMonomerClass(std::string_view polymer_id)
 {
     if (polymer_id.find("PEPTIDE") == 0) {
-        return ChainType::PEPTIDE;
+        return "PEPTIDE";
     } else if (polymer_id.find("RNA") == 0) {
         // HELM labels both DNA and RNA as RNA
-        return ChainType::RNA;
+        return "RNA";
     } else if (polymer_id.find("CHEM") == 0) {
-        return ChainType::CHEM;
+        return "CHEM";
     } else {
-        return ChainType::OTHER;
+        return "OTHER";
     }
 }
 
@@ -162,12 +162,12 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
     AttachmentMap attachment_point_map;
 
     auto chain = getPolymer(monomer_mol, polymer_id);
-    auto chain_type = getChainType(polymer_id);
+    auto monomer_class = getMonomerClass(polymer_id);
     bool sanitize = false;
 
     // Eventually, this will be connecting to a database of monomers or accessing an
     // in-memory datastructure
-    MonomerDatabase db;
+    MonomerLibrary db;
 
     // Add the monomers to the atomistic mol
     for (const auto monomer_idx : chain.atoms) {
@@ -179,7 +179,7 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
             smiles = monomer_label;
         } else {
             auto monomer_smiles =
-                db.getMonomerSmiles(monomer_label, chain_type);
+                db.getMonomerSmiles(monomer_label, monomer_class);
             if (!monomer_smiles) {
                 throw std::out_of_range(
                     "Peptide Monomer " + monomer_label + " not found in Monomer database");
@@ -218,7 +218,7 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
         fillAttachmentPointMap(*new_monomer, attachment_point_map,
                                residue_number, atomistic_mol.getNumAtoms());
         setPDBResidueInfo(*new_monomer, monomer_label, residue_number, chain_id,
-                       chain_type, db);
+                       monomer_class, db);
         atomistic_mol.insertMol(*new_monomer);
     }
 

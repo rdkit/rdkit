@@ -23,7 +23,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
-#include "MonomerDatabase.h"
+#include "MonomerLibrary.h"
 #include "MonomerMol.h"
 
 namespace RDKit
@@ -496,8 +496,8 @@ void detectLinkages(MonomerMol& monomer_mol,
     }
 }
 
-std::optional<std::tuple<std::string, std::string, ChainType>>
-getHelmInfo(MonomerDatabase& db, const RDKit::Atom* atom)
+MonomerLibrary::helm_info_t
+getHelmInfo(MonomerLibrary& db, const RDKit::Atom* atom)
 {
     // This comes from something like a PDB or MAE file
     auto res_info = dynamic_cast<const RDKit::AtomPDBResidueInfo*>(
@@ -528,11 +528,11 @@ pdbInfoAtomisticToMM(const RDKit::ROMol& input_mol)
 
     // Eventually, this will be connecting to a database of monomers or accessing an
     // in-memory datastructure
-    MonomerDatabase db;
-    std::map<ChainType, unsigned int> chain_counts = {{ChainType::PEPTIDE, 0},
-                                                      {ChainType::RNA, 0},
-                                                      {ChainType::DNA, 0},
-                                                      {ChainType::CHEM, 0}};
+    MonomerLibrary db;
+    std::map<std::string, unsigned int> chain_counts = {{"PEPTIDE", 0},
+                                                        {"RNA", 0},
+                                                        {"DNA", 0},
+                                                        {"CHEM", 0}};
     auto monomer_mol = std::make_unique<MonomerMol>();
     for (const auto& [chain_id, residues] : chains_and_residues) {
         // Use first residue to determine chain type. We assume that PDB data
@@ -540,11 +540,10 @@ pdbInfoAtomisticToMM(const RDKit::ROMol& input_mol)
         // Default chain type is PEPTIDE if not specified.
         auto helm_info = getHelmInfo(
             db, mol.getAtomWithIdx(residues.begin()->second[0]));
-        auto chain_type =
-            helm_info ? std::get<2>(*helm_info) : ChainType::PEPTIDE;
-        auto monomer_class = toString(chain_type);
-        std::string helm_chain_id = toString(chain_type) +
-                                     std::to_string(++chain_counts[chain_type]);
+        auto monomer_class =
+            helm_info ? std::get<2>(*helm_info) : std::string("PEPTIDE");
+        std::string helm_chain_id = monomer_class +
+                                     std::to_string(++chain_counts[monomer_class]);
         // Assuming residues are ordered correctly
         unsigned int res_num = 1;
         for (const auto& [key, atom_idxs] : residues) {

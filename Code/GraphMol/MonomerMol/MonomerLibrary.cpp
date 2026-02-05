@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "MonomerDatabase.h"
+#include "MonomerLibrary.h"
 
 #include <array>
 #include <memory>
@@ -20,8 +20,6 @@
 
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/noncopyable.hpp"
-
-#include "MonomerMol.h" // ChainType
 
 namespace RDKit
 {
@@ -174,27 +172,27 @@ const std::unordered_map<std::string, std::string> single_to_three_letter({
     {"O", "PYL"}  // Pyrrolysine
 });
 
-MonomerDatabase::MonomerDatabase([[maybe_unused]] std::string_view database_path)
+MonomerLibrary::MonomerLibrary([[maybe_unused]] std::string_view database_path)
 {
     // TODO: integration with database
     return;
 }
 
-MonomerDatabase::MonomerDatabase()
+MonomerLibrary::MonomerLibrary()
 {
     // TODO: integration with database
     return;
 }
 
-MonomerDatabase::~MonomerDatabase()
+MonomerLibrary::~MonomerLibrary()
 {
     // TODO: close connection to database
     return;
 }
 
 [[nodiscard]] std::optional<std::string>
-MonomerDatabase::getMonomerSmiles(std::string monomer_id,
-                                        [[maybe_unused]] ChainType monomer_type)
+MonomerLibrary::getMonomerSmiles(const std::string& monomer_id,
+                                 [[maybe_unused]] const std::string& monomer_class)
 {
     // currently everything is a peptide
     if (monomer_to_smiles.find(monomer_id) != monomer_to_smiles.end()) {
@@ -203,20 +201,20 @@ MonomerDatabase::getMonomerSmiles(std::string monomer_id,
     return std::nullopt;
 }
 
-[[nodiscard]] MonomerDatabase::helm_info_t
-MonomerDatabase::getHelmInfo(const std::string& pdb_code)
+[[nodiscard]] MonomerLibrary::helm_info_t
+MonomerLibrary::getHelmInfo(const std::string& pdb_code)
 {
     // currently everything is a peptide
     if (three_character_codes.find(pdb_code) != three_character_codes.end()) {
         std::string monomer_id = three_character_codes.at(pdb_code);
-        return std::make_tuple(monomer_id, monomer_to_smiles.at(monomer_id), ChainType::PEPTIDE);
+        return std::make_tuple(monomer_id, monomer_to_smiles.at(monomer_id), std::string("PEPTIDE"));
     }
     return std::nullopt;
 }
 
 [[nodiscard]] std::optional<std::string>
-MonomerDatabase::getPdbCode(const std::string& helm_symbol,
-                                [[maybe_unused]] ChainType monomer_type)
+MonomerLibrary::getPdbCode(const std::string& helm_symbol,
+                           [[maybe_unused]] const std::string& monomer_class)
 {
     // currently everything is a peptide
     if (single_to_three_letter.find(helm_symbol) != single_to_three_letter.end()) {

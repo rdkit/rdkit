@@ -13,32 +13,35 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <tuple>
 
 #include "boost/noncopyable.hpp"
 
-#include "MonomerMol.h"
+#include <RDGeneral/export.h>
 
 namespace RDKit
 {
 
-class [[nodiscard]] MonomerDatabase : public boost::noncopyable
+class RDKIT_MONOMERMOL_EXPORT MonomerLibrary : public boost::noncopyable
 {
   public:
-    using helm_info_t = std::optional<std::tuple<std::string, std::string, ChainType>>;
+    // Returns: {helm_symbol, smiles, monomer_class}
+    using helm_info_t = std::optional<std::tuple<std::string, std::string, std::string>>;
 
-    MonomerDatabase(std::string_view database_path);
-    MonomerDatabase();
+    MonomerLibrary(std::string_view database_path);
+    MonomerLibrary();
 
-    ~MonomerDatabase();
+    ~MonomerLibrary();
 
-    [[nodiscard]] std::optional<std::string> getMonomerSmiles(std::string monomer_id,
-                                                      ChainType monomer_type);
+    [[nodiscard]] std::optional<std::string> getMonomerSmiles(
+        const std::string& monomer_id,
+        const std::string& monomer_class);
 
     [[nodiscard]] helm_info_t
     getHelmInfo(const std::string& three_letter_code);
 
     [[nodiscard]] std::optional<std::string>
-    getPdbCode(const std::string& helm_symbol, ChainType monomer_type);
+    getPdbCode(const std::string& helm_symbol, const std::string& monomer_class);
 
   // private:
     // sqlite3* m_db;

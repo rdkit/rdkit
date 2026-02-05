@@ -1,6 +1,6 @@
 
 rdkit_library(MonomerMol
-    MonomerMol.cpp toAtomistic.cpp toMonomeric.cpp MonomerDatabase.cpp
+    MonomerMol.cpp toAtomistic.cpp toMonomeric.cpp MonomerLibrary.cpp
     LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol)
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
