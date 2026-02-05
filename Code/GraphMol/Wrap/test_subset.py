@@ -73,3 +73,24 @@ class TestCase(unittest.TestCase):
     opts.clearComputedProps = True
     sub = Chem.CopyMolSubset(m, N, opts)
     self.assertFalse(sub.HasProp("foo"))
+
+  def test_explicit_atoms_bonds_inconsistent_raises(self):
+    m = Chem.MolFromSmiles("CCC")  # atoms 0-1-2, bonds: 0 (0-1), 1 (1-2)
+    # select atoms 0 and 2, but bond 1 references atom 1 (missing)
+    with self.assertRaises(ValueError):
+      Chem.CopyMolSubset(m, [0, 2], [1])
+
+  def test_explicit_atoms_bonds_consistent_ok(self):
+    m = Chem.MolFromSmiles("CCC")
+    sub = Chem.CopyMolSubset(m, [1, 2], [1])
+    self.assertEqual(Chem.MolToSmiles(sub), "CC")
+
+  def test_explicit_atoms_out_of_range_raises(self):
+    m = Chem.MolFromSmiles("CCC")
+    with self.assertRaises(ValueError):
+      Chem.CopyMolSubset(m, [0, 3], [0])  # atom index 3 is OOR
+
+  def test_explicit_bonds_out_of_range_raises(self):
+    m = Chem.MolFromSmiles("CCC")
+    with self.assertRaises(ValueError):
+      Chem.CopyMolSubset(m, [0, 1], [2])  # bond index 2 is OOR

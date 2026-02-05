@@ -311,10 +311,26 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(
   selection_info.bondMapping.clear();
 
   for (auto v : atoms) {
+    if (v >= natoms) {
+      throw ValueErrorException("Invalid atom index");
+    }
     selection_info.selectedAtoms.set(v);
   }
   for (auto v : bonds) {
+    if (v >= nbonds) {
+      throw ValueErrorException("Invalid bond index");
+    }
     selection_info.selectedBonds.set(v);
+  }
+
+  // Validate atoms includes all endpoints in bonds
+  for (auto bondIdx : bonds) {
+    const auto *bnd = mol.getBondWithIdx(bondIdx);
+    const auto a1 = bnd->getBeginAtomIdx();
+    const auto a2 = bnd->getEndAtomIdx();
+    if (!selection_info.selectedAtoms[a1] || !selection_info.selectedAtoms[a2]) {
+      throw ValueErrorException("Subset atoms must include all bond endpoints");
+    }
   }
 
   auto res = copyMolSubset(mol, selection_info, options);
