@@ -620,6 +620,15 @@ TEST_CASE("test_extract_stereo_groups", "[copyMolSubset]") {
   }
 }
 
+TEST_CASE("test_manual_atom_bond_subset", "[copyMolSubset]") {
+  auto m = "CCC"_smiles;
+  std::vector<unsigned int> atoms = {};
+  std::vector<unsigned int> bonds = {0};
+  // this should throw a ValueErrorException
+  REQUIRE_THROWS_AS(copyMolSubset(*m, atoms, bonds),
+		    ValueErrorException);
+}
+
 TEST_CASE("GitHub #8726: Do not remove hydrides by default") {
   auto m = "[OH+][H-]"_smiles;
   REQUIRE(m);
