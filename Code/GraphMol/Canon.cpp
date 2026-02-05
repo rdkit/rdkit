@@ -36,6 +36,22 @@ static constexpr Bond::BondDir flipStereoBondDir(Bond::BondDir bondDir) {
   }
 }
 
+void setDirectionFromNeighboringBond(Bond *sourceBond, bool isSourceBondFlipped,
+                                     Bond *targetBond,
+                                     bool isTargetBondFlipped) {
+  auto dir = sourceBond->getBondDir();
+
+  // By default, both bonds on the same side of the double bond
+  // should have opposite directions, but this can change if
+  // one (and only one) of the bonds is flipped (if both were
+  // flipped, the flips in the direction would cancel out).
+  if (isSourceBondFlipped == isTargetBondFlipped) {
+    dir = flipStereoBondDir(dir);
+  }
+
+  targetBond->setBondDir(dir);
+}
+
 Bond::BondDir getReferenceDirection(const Bond *dblBond, const Atom *refAtom,
                                     const Atom *targetAtom,
                                     const Bond *refControllingBond,
@@ -324,17 +340,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       CHECK_INVARIANT(secondFromAtom1, "inconsistent state");
       CHECK_INVARIANT(bondDirCounts[secondFromAtom1->getIdx()] > 0,
                       "inconsistent state");
-      auto atom1Dir = secondFromAtom1->getBondDir();
 
-      // By default, both bonds on the same side of the double bond
-      // should have opposite directions, but this can change if
-      // one (and only one) of the bonds is flipped (if both were
-      // flipped, the flips in the direction would cancel out).
-      if (isSecondFromAtom1Flipped == isFirstFromAtom1Flipped) {
-        atom1Dir = flipStereoBondDir(atom1Dir);
-      }
-
-      firstFromAtom1->setBondDir(atom1Dir);
+      setDirectionFromNeighboringBond(secondFromAtom1, isSecondFromAtom1Flipped,
+                                      firstFromAtom1, isFirstFromAtom1Flipped);
 
       // acknowledge that secondFromAtom1 is relevant for this bond,
       // and prevent removeRedundantBondDirSpecs from removing this
@@ -360,17 +368,8 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       CHECK_INVARIANT(bondDirCounts[secondFromAtom2->getIdx()] > 0,
                       "inconsistent state");
 
-      auto atom2Dir = secondFromAtom2->getBondDir();
-
-      // By default, both bonds on the same side of the double bond
-      // should have opposite directions, but this can change if
-      // one (and only one) of the bonds is flipped (if both were
-      // flipped, the flips in the direction would cancel out).
-      if (isSecondFromAtom2Flipped == isFirstFromAtom2Flipped) {
-        atom2Dir = flipStereoBondDir(atom2Dir);
-      }
-
-      firstFromAtom2->setBondDir(atom2Dir);
+      setDirectionFromNeighboringBond(secondFromAtom2, isSecondFromAtom2Flipped,
+                                      firstFromAtom2, isFirstFromAtom2Flipped);
 
       // acknowledge that secondFromAtom2 is relevant for this bond,
       // and prevent removeRedundantBondDirSpecs from removing this
@@ -418,16 +417,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
   ///
   if (atom1->getDegree() == 3 && secondFromAtom1) {
     if (!bondDirCounts[secondFromAtom1->getIdx()]) {
-      auto otherDir = firstFromAtom1->getBondDir();
-
-      // Again, bonds on the same side of the double bond default
-      // to have opposite directions, but we need to consider if
-      // they are flipped.
-      if (isFirstFromAtom1Flipped == isSecondFromAtom1Flipped) {
-        otherDir = flipStereoBondDir(otherDir);
-      }
-
-      secondFromAtom1->setBondDir(otherDir);
+      setDirectionFromNeighboringBond(firstFromAtom1, isFirstFromAtom1Flipped,
+                                      secondFromAtom1,
+                                      isSecondFromAtom1Flipped);
     }
     bondDirCounts[secondFromAtom1->getIdx()] += 1;
     atomDirCounts[atom1->getIdx()] += 1;
@@ -435,16 +427,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
 
   if (atom2->getDegree() == 3 && secondFromAtom2) {
     if (!bondDirCounts[secondFromAtom2->getIdx()]) {
-      auto otherDir = firstFromAtom2->getBondDir();
-
-      // Again, bonds on the same side of the double bond default
-      // to have opposite directions, but we need to consider if
-      // they are flipped.
-      if (isFirstFromAtom2Flipped == isSecondFromAtom2Flipped) {
-        otherDir = flipStereoBondDir(otherDir);
-      }
-
-      secondFromAtom2->setBondDir(otherDir);
+      setDirectionFromNeighboringBond(firstFromAtom2, isFirstFromAtom2Flipped,
+                                      secondFromAtom2,
+                                      isSecondFromAtom2Flipped);
     }
     bondDirCounts[secondFromAtom2->getIdx()] += 1;
     atomDirCounts[atom2->getIdx()] += 1;
