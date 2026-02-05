@@ -13,6 +13,7 @@
 #include <RDGeneral/Exceptions.h>
 
 #include <RDGeneral/utils.h>
+#include <GraphMol/PeriodicTable.h>
 #include <vector>
 #include <set>
 #include <algorithm>
