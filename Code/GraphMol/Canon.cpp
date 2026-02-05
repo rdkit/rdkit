@@ -580,6 +580,9 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
     while (!connectedBondsQ.empty()) {
       const auto currentBond = connectedBondsQ.front();
       connectedBondsQ.pop();
+      if (seen_bonds[currentBond->getIdx()]) {
+        continue;
+      }
 
       Canon::canonicalizeDoubleBond(currentBond, bondVisitOrders,
                                     atomVisitOrders, bondDirCounts,
