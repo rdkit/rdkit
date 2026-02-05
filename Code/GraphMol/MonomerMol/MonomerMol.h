@@ -61,10 +61,6 @@ struct Chain {
 enum class ChainType { PEPTIDE, RNA, DNA, CHEM, OTHER };
 enum class MonomerType { REGULAR, SMILES };
 
-// Free utility functions for ChainType conversion
-RDKIT_MONOMERMOL_EXPORT ChainType toChainType(std::string_view chain_type);
-RDKIT_MONOMERMOL_EXPORT std::string toString(ChainType chain_type);
-
 // Returns true if the atom represents a monomer in a MonomerMol, false otherwise
 RDKIT_MONOMERMOL_EXPORT bool isMonomer(const Atom* atom);
 

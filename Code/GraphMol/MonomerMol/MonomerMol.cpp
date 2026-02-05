@@ -24,38 +24,6 @@
 namespace RDKit
 {
 
-// Free utility functions
-ChainType toChainType(std::string_view chain_type)
-{
-    if (chain_type == "PEPTIDE") {
-        return ChainType::PEPTIDE;
-    } else if (chain_type == "RNA") {
-        return ChainType::RNA;
-    } else if (chain_type == "DNA") {
-        return ChainType::DNA;
-    } else if (chain_type == "CHEM") {
-        return ChainType::CHEM;
-    } else {
-        throw std::invalid_argument("Invalid chain type");
-    }
-}
-
-std::string toString(ChainType chain_type)
-{
-    switch (chain_type) {
-        case ChainType::PEPTIDE:
-            return "PEPTIDE";
-        case ChainType::RNA:
-            return "RNA";
-        case ChainType::DNA:
-            return "DNA";
-        case ChainType::CHEM:
-            return "CHEM";
-        default:
-            throw std::invalid_argument("Invalid chain type");
-    }
-}
-
 // Helper function to create a monomer atom
 namespace {
 std::unique_ptr<Atom> makeMonomer(std::string_view name,
@@ -536,8 +504,6 @@ void orderResidues(MonomerMol& monomer_mol)
 
 void MonomerMol::assignChains()
 {
-    setProp("HELM_MODEL", true);
-
     // Currently, orderResidues only works when there is a single chain
     auto chain_ids = getPolymerIds();
     if (chain_ids.size() == 1 && !isValidChain(*this, chain_ids[0])) {
