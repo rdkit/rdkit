@@ -516,13 +516,12 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
     }
 
     auto &currentNbrs = stereoBondNbrs[bond];
-    for (const auto *dblBondAtom :
-         std::array<Atom *, 2>{bond->getBeginAtom(), bond->getEndAtom()}) {
-      for (const auto *bond : mol.atomBonds(dblBondAtom)) {
-        if (!canHaveDirection(*bond)) {
+    for (const auto *dblBondAtom : {bond->getBeginAtom(), bond->getEndAtom()}) {
+      for (const auto *nbrBond : mol.atomBonds(dblBondAtom)) {
+        if (!canHaveDirection(*nbrBond)) {
           continue;
         }
-        auto nbrDblBnd = getNeighboringStereoBond(dblBondAtom, bond);
+        auto nbrDblBnd = getNeighboringStereoBond(dblBondAtom, nbrBond);
         if (nbrDblBnd != nullptr) {
           currentNbrs.push_back(nbrDblBnd);
         }
