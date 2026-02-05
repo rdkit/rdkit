@@ -644,6 +644,13 @@ TEST_CASE("test_manual_atom_bond_subset", "[copyMolSubset]") {
     CHECK(m2->getNumBonds() == 2);
   }
   {
+    std::vector<unsigned int> atoms = {0,1,2};
+    std::vector<unsigned int> bonds = {};
+    auto m2 = copyMolSubset(*m, atoms, bonds);
+    CHECK(m2->getNumAtoms() == 3);
+    CHECK(m2->getNumBonds() == 0);
+  }
+  {
     std::vector<unsigned int> atoms = {0,1,2,3};
     std::vector<unsigned int> bonds = {0,1};
     REQUIRE_THROWS_AS(copyMolSubset(*m, atoms, bonds), IndexErrorException);
