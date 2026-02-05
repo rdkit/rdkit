@@ -235,14 +235,6 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     return;
   }
 
-  if (dir1Set && dir2Set) {
-    // Both directions are already set. Nothing to do.
-
-    // To do: check that the directions are consistent with each other.
-
-    return;
-  }
-
   // We interpret double bonds like this (this is a TRANS bond,
   // a CIS one would be similar, but both anchors would be either
   // above or below the double bond):
@@ -302,6 +294,50 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
            secondFromAtom2->hasProp(
                common_properties::_TraversalRingClosureBond);
   }();
+
+  // Both directions are already set. Update accounting
+  // and check if both directions on each side are set.
+  // We hit this in cases with cycles like CO/C1=C/C=C\C=C/C=N\1.
+  if (dir1Set && dir2Set) {
+    // these are guaranteed to exist
+    bondDirCounts[firstFromAtom1->getIdx()] += 1;
+    bondDirCounts[firstFromAtom2->getIdx()] += 1;
+    atomDirCounts[atom1->getIdx()] += 1;
+    atomDirCounts[atom2->getIdx()] += 1;
+
+    // To do: check that the existing directions are consistent.
+    if (secondFromAtom1) {
+      if (!bondDirCounts[firstFromAtom1->getIdx()]) {
+        setDirectionFromNeighboringBond(
+            secondFromAtom1, isSecondFromAtom1Flipped, firstFromAtom1,
+            isFirstFromAtom1Flipped);
+      } else if (!bondDirCounts[secondFromAtom1->getIdx()]) {
+        setDirectionFromNeighboringBond(firstFromAtom1, isFirstFromAtom1Flipped,
+                                        secondFromAtom1,
+                                        isSecondFromAtom1Flipped);
+      }
+
+      bondDirCounts[secondFromAtom1->getIdx()] += 1;
+      atomDirCounts[atom1->getIdx()] += 1;
+    }
+
+    if (secondFromAtom2) {
+      if (!bondDirCounts[firstFromAtom2->getIdx()]) {
+        setDirectionFromNeighboringBond(
+            secondFromAtom2, isSecondFromAtom2Flipped, firstFromAtom2,
+            isFirstFromAtom2Flipped);
+      } else if (!bondDirCounts[secondFromAtom2->getIdx()]) {
+        setDirectionFromNeighboringBond(firstFromAtom2, isFirstFromAtom2Flipped,
+                                        secondFromAtom2,
+                                        isSecondFromAtom2Flipped);
+      }
+
+      bondDirCounts[secondFromAtom2->getIdx()] += 1;
+      atomDirCounts[atom2->getIdx()] += 1;
+    }
+
+    return;
+  }
 
   bool setFromBond1 = true;
   Bond *atom1ControllingBond = firstFromAtom1;
