@@ -544,11 +544,11 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
 
   // Now that we have bonds in the order we want to handle them,
   // do the canonicalization
-  boost::dynamic_bitset<> seen_bonds(mol.getNumBonds());
+  std::vector<bool> seen_bonds(mol.getNumBonds());
   while (!q.empty()) {
     const auto bond = q.top();
     q.pop();
-    if (seen_bonds.test(bond->getIdx())) {
+    if (seen_bonds[bond->getIdx()]) {
       continue;
     }
 
@@ -562,9 +562,9 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
       Canon::canonicalizeDoubleBond(currentBond, bondVisitOrders,
                                     atomVisitOrders, bondDirCounts,
                                     atomDirCounts);
-      seen_bonds.set(currentBond->getIdx());
+      seen_bonds[currentBond->getIdx()] = true;
       for (auto nbrStereoBnd : stereoBondNbrs[currentBond]) {
-        if (!seen_bonds.test(nbrStereoBnd->getIdx())) {
+        if (!seen_bonds[nbrStereoBnd->getIdx()]) {
           connectedBondsQ.push(nbrStereoBnd);
         }
       }
