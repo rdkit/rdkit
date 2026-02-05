@@ -22,13 +22,12 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 
+import numpy as np
+
 import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
-from rdkit.Chem import rdqueries
-from rdkit.Chem import AllChem
+from rdkit.Chem import AllChem, rdqueries
 from rdkit.Chem.Scaffolds import MurckoScaffold
-
-import numpy as np
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
@@ -617,20 +616,22 @@ class TestCase(unittest.TestCase):
     # Github #8890: test that string properties preserve spaces
     m.SetProp("string spaces", " foo ")
     m.SetProp("string whitespace", " \t")
-    self.assertEqual(m.GetPropsAsDict(), {
-      "int": 1000,
-      "double": 10000.123,
-      "double spaces": 10000.123,
-      "string spaces": " foo ",
-      "string whitespace": " \t"
-    })
-    self.assertEqual(m.GetPropsAsDict(autoConvertStrings=False), {
-      "int": "1000",
-      "double": "10000.123",
-      "double spaces": " 10000.123 ",
-      "string spaces": " foo ",
-      "string whitespace": " \t"
-    })
+    self.assertEqual(
+      m.GetPropsAsDict(), {
+        "int": 1000,
+        "double": 10000.123,
+        "double spaces": 10000.123,
+        "string spaces": " foo ",
+        "string whitespace": " \t"
+      })
+    self.assertEqual(
+      m.GetPropsAsDict(autoConvertStrings=False), {
+        "int": "1000",
+        "double": "10000.123",
+        "double spaces": " 10000.123 ",
+        "string spaces": " foo ",
+        "string whitespace": " \t"
+      })
 
     self.assertEqual(type(m.GetPropsAsDict()['int']), int)
     self.assertEqual(type(m.GetPropsAsDict()['double']), float)
@@ -3425,6 +3426,31 @@ CAS<~>
     atom = mol.GetAtomWithIdx(35)
     self.assertEqual(atom.GetPDBResidueInfo().GetResidueName(), 'HOH')
     self.assertEqual(atom.GetDegree(), 0)
+
+  def testAtomMonomerInfo(self):
+    m = Chem.MolFromSmiles('CCO')
+    info = Chem.AtomMonomerInfo()
+    info.SetChainId('A')
+    info.SetResidueName('FOO')
+    info.SetResidueNumber(12)
+    info.SetMonomerClass('LINK')
+    m.GetAtomWithIdx(1).SetMonomerInfo(info)
+
+    info2 = m.GetAtomWithIdx(1).GetMonomerInfo()
+    self.assertEqual(info2.GetChainId(), 'A')
+    self.assertEqual(info2.GetResidueName(), 'FOO')
+    self.assertEqual(info2.GetResidueNumber(), 12)
+    self.assertEqual(info2.GetMonomerClass(), 'LINK')
+
+    # test that this can be cast into the PDBResidueInfo subclass
+    info.SetMonomerType(Chem.AtomMonomerType.PDBRESIDUE)
+    m.GetAtomWithIdx(1).SetMonomerInfo(info)
+    pdb_res_info = m.GetAtomWithIdx(1).GetPDBResidueInfo()
+    self.assertIsNotNone(pdb_res_info)
+    self.assertEqual(pdb_res_info.GetChainId(), 'A')
+    self.assertEqual(pdb_res_info.GetResidueName(), 'FOO')
+    self.assertEqual(pdb_res_info.GetResidueNumber(), 12)
+    self.assertEqual(pdb_res_info.GetMonomerClass(), 'LINK')
 
   def test85AtomCopying(self):
     """Can a copied atom be added to a molecule?"""
@@ -6693,8 +6719,7 @@ M  END
     self.assertEqual(si[1].specified, Chem.StereoSpecified.Unspecified)
     self.assertEqual(si[1].centeredOn, 3)
     self.assertEqual(si[1].descriptor, Chem.StereoDescriptor.NoValue)
-    self.assertEqual(list(si[1].controllingAtoms),
-                     [1, Chem.StereoInfo.NOATOM, 5, Chem.StereoInfo.NOATOM])
+    self.assertEqual(list(si[1].controllingAtoms), [1, Chem.Atom.NOATOM, 5, Chem.Atom.NOATOM])
 
   def testNewFindMolChiralCenters(self):
     mol = Chem.MolFromSmiles('C[C@H](F)C=CC(F)Cl')
@@ -8634,6 +8659,23 @@ M  END
     self.assertNotEqual(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
     mol1.GetBonds()[7].InvertChirality()
     self.assertEqual(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
+
+  def testVerifyWedges(self):
+    rdbase = os.environ['RDBASE']
+    filename = os.path.join(rdbase,
+                            'Code/GraphMol/FileParsers/test_data/wedgeTests/StereoGroupError.mol')
+    m = Chem.MolFromMolFile(filename)
+    self.assertIsNotNone(m)
+    Chem.ReapplyMolBlockWedging(m)
+    numWedges = sum(1 for b in m.GetBonds()
+                    if b.GetBondDir() in (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH))
+    self.assertEqual(numWedges, 2)
+
+    Chem.ReapplyMolBlockWedging(m, verify=True)
+    numWedges = sum(1 for b in m.GetBonds()
+                    if b.GetBondDir() in (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH))
+    self.assertEqual(numWedges, 1)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
