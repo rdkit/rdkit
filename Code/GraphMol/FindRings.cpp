@@ -13,6 +13,7 @@
 #include <RDGeneral/Exceptions.h>
 
 #include <RDGeneral/utils.h>
+#include <GraphMol/PeriodicTable.h>
 #include <vector>
 #include <set>
 #include <algorithm>
@@ -1053,36 +1054,6 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
     // std::cerr<<"  check: "<<ssiz<<" "<<nexpt<<std::endl;
     if (ssiz > nexpt) {
       FindRings::removeExtraRings(fragRes, nexpt, mol);
-    }
-
-    // Post-processing: ensure all bonds connecting two ring atoms are marked as ring bonds
-    // This fixes issue #9064 where some bonds in highly fused ring systems were not
-    // being properly detected as ring bonds, causing incorrect SMARTS matching
-    // for non-ring bond queries (!@)
-    for (unsigned int i = 0; i < nbnds; ++i) {
-      if (!ringBonds[i]) {
-        const Bond *bnd = mol.getBondWithIdx(i);
-        if (ringAtoms[bnd->getBeginAtomIdx()] &&
-            ringAtoms[bnd->getEndAtomIdx()]) {
-          // This bond connects two ring atoms but wasn't found by SSSR
-          // Add it as a ring bond and update the ring atoms
-          ringBonds.set(i);
-          
-          // Find or create a ring containing this bond
-          VECT_INT_VECT newRings;
-          RINGINVAR_SET newInvars;
-          if (FindRings::findRingConnectingAtoms(mol, bnd, newRings, newInvars, ringBonds, ringAtoms)) {
-            for (const auto &newRing : newRings) {
-              auto invr = RingUtils::computeRingInvariant(newRing, mol.getNumAtoms());
-              if (invars.find(invr) == invars.end()) {
-                fragRes.push_back(newRing);
-                invars.insert(invr);
-                ssiz++;
-              }
-            }
-          }
-        }
-      }
     }
 
     res.reserve(res.size() + fragRes.size());
