@@ -168,10 +168,13 @@ DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts,
       if (gradients) {
         auto r = 2.0 * vij * mult;
         // Use the gradient converters to calculate the gradients in quaternion
-        // space
-        gradients[0] +=
-            r * (dx * gradConverters[j_idx][0] + dy * gradConverters[j_idx][1] +
-                 dz * gradConverters[j_idx][2]);
+        // space.
+        // The zeroth gradient is never used, so don't waste time calculating
+        // it but leave the code here for completeness and possible future use.
+        // gradients[0] +=
+        //     r * (dx * gradConverters[j_idx][0] + dy *
+        //     gradConverters[j_idx][1] +
+        //          dz * gradConverters[j_idx][2]);
         gradients[1] +=
             r * (dx * gradConverters[j_idx][3] + dy * gradConverters[j_idx][4] +
                  dz * gradConverters[j_idx][5]);
@@ -215,14 +218,18 @@ DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts, const int *refTypes,
       auto mult = -(ai * aj) / (ai + aj);
       auto kij = exp(mult * d2);
 
-      auto vij = 8 * kij * pow((PI / (ai + aj)), 1.5);
+      auto pi_ai_aj = PI / (ai + aj);
+      auto vij = 8 * kij * pi_ai_aj * std::sqrt(pi_ai_aj);
       vol += vij;
       if (gradients) {
         auto r = 2.0 * vij * mult;
-        // Use the converters to calculate the gradients in quaternion space
-        gradients[0] +=
-            r * (dx * gradConverters[j_idx][0] + dy * gradConverters[j_idx][1] +
-                 dz * gradConverters[j_idx][2]);
+        // Use the converters to calculate the gradients in quaternion space.
+        // The zeroth gradient is never used, so don't waste time calculating
+        // it but leave the code here for completeness and possible future use.
+        // gradients[0] +=
+        //     r * (dx * gradConverters[j_idx][0] + dy *
+        //     gradConverters[j_idx][1] +
+        //          dz * gradConverters[j_idx][2]);
         gradients[1] +=
             r * (dx * gradConverters[j_idx][3] + dy * gradConverters[j_idx][4] +
                  dz * gradConverters[j_idx][5]);
@@ -271,15 +278,15 @@ void SingleConformerAlignment::calcVolumeAndGradients(
     // The color gradients are normally dwarfed by the shape gradients, so
     // normalize them and then mix by the same rule as the final score.
     auto shapeSum = sqrt(std::accumulate(
-        gradients.begin(), gradients.end(), 0.0,
+        gradients.begin() + 1, gradients.end(), 0.0,
         [](const auto init, const auto g) -> DTYPE { return init + g * g; }));
     auto colorSum = sqrt(std::accumulate(
-        colorGrads.begin(), colorGrads.end(), 0.0,
+        colorGrads.begin() + 1, colorGrads.end(), 0.0,
         [](const auto init, const auto g) -> DTYPE { return init + g * g; }));
     auto ratio = shapeSum / colorSum;
     std::transform(
-        gradients.begin(), gradients.end(), colorGrads.begin(),
-        gradients.begin(), [&](const auto g1, const auto g2) -> DTYPE {
+        gradients.begin() + 1, gradients.end(), colorGrads.begin(),
+        gradients.begin() + 1, [&](const auto g1, const auto g2) -> DTYPE {
           return g1 * (1 - d_mixingParam) + g2 * ratio * d_mixingParam;
         });
   } else {

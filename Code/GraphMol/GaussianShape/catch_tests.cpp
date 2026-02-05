@@ -107,8 +107,8 @@ TEST_CASE("basic alignment") {
     ROMol cp(*probe);
     const auto &[tsc, tcc] = GaussianShape::AlignMolecule(
         *ref, cp, shapeOpts, shapeOpts, nullptr, overlayOpts);
-    CHECK_THAT(tsc, Catch::Matchers::WithinAbs(0.609, 0.005));
-    CHECK_THAT(tcc, Catch::Matchers::WithinAbs(0.363, 0.005));
+    CHECK_THAT(tsc, Catch::Matchers::WithinAbs(0.686, 0.005));
+    CHECK_THAT(tcc, Catch::Matchers::WithinAbs(0.111, 0.005));
   }
   SECTION("collect transform") {
     overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE;
@@ -564,24 +564,32 @@ TEST_CASE("LOBSTER") {
   std::mt19937 e2(1);
   std::uniform_real_distribution<double> unif(0, 1);
   GaussianShape::ShapeInputOptions opts;
-  opts.allCarbonRadii = true;
-  for (size_t i = 1; i < mols.size(); i++) {
-    for (size_t j = 0; j < i; j++) {
-      if (unif(e2) > 0.001) {
-        continue;
-      }
-      auto [st, ct] = GaussianShape::AlignMolecule(*mols[i], *mols[j]);
-      sum_st += st;
-      sum_ct += ct;
-      ++num;
-      if (!(num % 1000)) {
-        std::cout << num << "  " << i << "  " << j << std::endl;
+  for (const auto acr : std::vector<bool>{true, false}) {
+    opts.allCarbonRadii = acr;
+    for (size_t i = 1; i < mols.size(); i++) {
+      for (size_t j = 0; j < i; j++) {
+        if (unif(e2) > 0.001) {
+          continue;
+        }
+        auto [st, ct] =
+            GaussianShape::AlignMolecule(*mols[i], *mols[j], opts, opts);
+        sum_st += st;
+        sum_ct += ct;
+        ++num;
+        if (!(num % 1000)) {
+          std::cout << num << "  " << i << "  " << j << std::endl;
+        }
       }
     }
+    std::cout << "Mean st of " << num << " : " << sum_st / num << std::endl;
+    std::cout << "Mean ct of " << num << " : " << sum_ct / num << std::endl;
+    if (acr) {
+      CHECK_THAT(sum_st / num, Catch::Matchers::WithinAbs(0.558, 0.005));
+      CHECK_THAT(sum_ct / num, Catch::Matchers::WithinAbs(0.089, 0.005));
+    } else {
+      CHECK_THAT(sum_st / num, Catch::Matchers::WithinAbs(0.553, 0.005));
+      CHECK_THAT(sum_ct / num, Catch::Matchers::WithinAbs(0.089, 0.005));
+    }
   }
-  std::cout << "Mean st of " << num << " : " << sum_st / num << std::endl;
-  std::cout << "Mean ct of " << num << " : " << sum_ct / num << std::endl;
-  CHECK_THAT(sum_st / num, Catch::Matchers::WithinAbs(0.558, 0.005));
-  CHECK_THAT(sum_ct / num, Catch::Matchers::WithinAbs(0.089, 0.005));
 }
 #endif
