@@ -476,6 +476,14 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
                              const UINT_VECT &atomVisitOrders,
                              UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts,
                              const MolStack &molStack) {
+  // start by removing the current directions on single bonds
+  // around double bonds. At the same time, we build a prioritized
+  // queue to decide the order in which we will canonicalize bonds.
+
+  // We want to start with bonds with the most neighboring stereo
+  // bonds, and in case of ties, start with the bond that has
+  // the lowest position in the molStack
+
   auto getNeighboringStereoBond = [&mol](const Atom *dblBndAtom,
                                          const Bond *nbrBnd) -> Bond * {
     auto otherAtom = nbrBnd->getOtherAtom(dblBndAtom);
@@ -488,13 +496,6 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
     return nullptr;
   };
 
-  // start by removing the current directions on single bonds
-  // around double bonds. At the same time, we build a prioritized
-  // queue to decide the order in which we will canonicalize bonds.
-
-  // We want to start with bonds with the most neighboring stereo
-  // bonds, and in case of ties, start with the bond that has
-  // the lowest position in the molStack
   std::greater<const unsigned int &> molStackComparer;
   std::less<const unsigned int &> numStereoNbrsComparer;
 
