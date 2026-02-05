@@ -745,8 +745,7 @@ struct mol_wrapper {
             "    - autoConvert: if True attempt to convert the property into a python object\n\n"
             "  RETURNS: a string\n\n"
             "  NOTE:\n"
-            "    - If the property has not been set, a KeyError exception will be raised.\n",
-            boost::python::return_value_policy<return_pyobject_passthrough>())
+            "    - If the property has not been set, a KeyError exception will be raised.\n")
         .def("GetDoubleProp", GetProp<ROMol, double>, "key"_a,
              "Returns the double value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -763,8 +762,7 @@ struct mol_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-        .def("GetUnsignedProp", GetProp<ROMol, unsigned int>,
-             python::args("self", "key"),
+        .def("GetUnsignedProp", GetProp<ROMol, unsigned int>, "key"_a,
              "Returns the unsigned int value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
@@ -779,7 +777,7 @@ struct mol_wrapper {
              "  RETURNS: a bool\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n", )
+             "will be raised.\n")
         .def("ClearProp", MolClearProp<ROMol>, "key"_a,
              "Removes a property from the molecule.\n\n"
              "  ARGUMENTS:\n"
@@ -841,7 +839,6 @@ struct mol_wrapper {
 
         .def(
             "ClearPropertyCache", &ROMol::clearPropertyCache,
-            (python::arg("self")),
             "Clears implicit and explicit valence information from all atoms.\n\n")
 
         .def("Debug", MolDebug, "useStdout"_a = true,

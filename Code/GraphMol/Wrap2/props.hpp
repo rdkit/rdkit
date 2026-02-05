@@ -10,6 +10,7 @@
 #define RD_WRAPPED_PROPS_H
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 
 #include <RDGeneral/Dict.h>
 #include <algorithm>
@@ -47,7 +48,7 @@ bool AddToDict(const U &ob, nb::dict &dict, const std::string &key) {
   T res;
   try {
     if (ob.getPropIfPresent(key, res)) {
-      dict[key] = res;
+      dict[key.c_str()] = res;
     }
   } catch (std::bad_any_cast &) {
     return false;
@@ -88,10 +89,10 @@ nb::dict GetPropsAsDict(const T &obj, bool includePrivate, bool includeComputed,
       const auto tag = rdvalue.val.getTag();
       switch (tag) {
         case RDTypeTag::IntTag:
-          dict[rdvalue.key] = from_rdvalue<int>(rdvalue.val);
+          dict[rdvalue.key.c_str()] = from_rdvalue<int>(rdvalue.val);
           break;
         case RDTypeTag::DoubleTag:
-          dict[rdvalue.key] = from_rdvalue<double>(rdvalue.val);
+          dict[rdvalue.key.c_str()] = from_rdvalue<double>(rdvalue.val);
           break;
         case RDTypeTag::StringTag: {
           auto value = from_rdvalue<std::string>(rdvalue.val);
@@ -101,48 +102,51 @@ nb::dict GetPropsAsDict(const T &obj, bool includePrivate, bool includeComputed,
             // Auto convert strings to ints and double if possible
             int ivalue;
             if (boost::conversion::try_lexical_convert(trimVal, ivalue)) {
-              dict[rdvalue.key] = ivalue;
+              dict[rdvalue.key.c_str()] = ivalue;
               break;
             }
             double dvalue;
             if (boost::conversion::try_lexical_convert(trimVal, dvalue)) {
-              dict[rdvalue.key] = dvalue;
+              dict[rdvalue.key.c_str()] = dvalue;
               break;
             }
           }
-          dict[rdvalue.key] = value;
+          dict[rdvalue.key.c_str()] = value;
         } break;
         case RDTypeTag::FloatTag:
-          dict[rdvalue.key] = from_rdvalue<float>(rdvalue.val);
+          dict[rdvalue.key.c_str()] = from_rdvalue<float>(rdvalue.val);
           break;
         case RDTypeTag::BoolTag:
-          dict[rdvalue.key] = from_rdvalue<bool>(rdvalue.val);
+          dict[rdvalue.key.c_str()] = from_rdvalue<bool>(rdvalue.val);
           break;
         case RDTypeTag::UnsignedIntTag:
-          dict[rdvalue.key] = from_rdvalue<unsigned int>(rdvalue.val);
+          dict[rdvalue.key.c_str()] = from_rdvalue<unsigned int>(rdvalue.val);
           break;
         case RDTypeTag::AnyTag:
           // we skip these for now
           break;
         case RDTypeTag::VecDoubleTag:
-          dict[rdvalue.key] = from_rdvalue<std::vector<double>>(rdvalue.val);
+          dict[rdvalue.key.c_str()] =
+              from_rdvalue<std::vector<double>>(rdvalue.val);
           break;
         case RDTypeTag::VecFloatTag:
-          dict[rdvalue.key] = from_rdvalue<std::vector<float>>(rdvalue.val);
+          dict[rdvalue.key.c_str()] =
+              from_rdvalue<std::vector<float>>(rdvalue.val);
           break;
         case RDTypeTag::VecIntTag:
-          dict[rdvalue.key] = from_rdvalue<std::vector<int>>(rdvalue.val);
+          dict[rdvalue.key.c_str()] =
+              from_rdvalue<std::vector<int>>(rdvalue.val);
           break;
         case RDTypeTag::VecUnsignedIntTag:
-          dict[rdvalue.key] =
+          dict[rdvalue.key.c_str()] =
               from_rdvalue<std::vector<unsigned int>>(rdvalue.val);
           break;
         case RDTypeTag::VecStringTag:
-          dict[rdvalue.key] =
+          dict[rdvalue.key.c_str()] =
               from_rdvalue<std::vector<std::string>>(rdvalue.val);
           break;
         case RDTypeTag::EmptyTag:
-          dict[rdvalue.key] = nb::none();
+          dict[rdvalue.key.c_str()] = nb::none();
           break;
         default:
           std::string message =
@@ -162,17 +166,6 @@ nb::dict GetPropsAsDict(const T &obj, bool includePrivate, bool includeComputed,
   }
   return dict;
 }
-#if 0
-static PyObject *rawPy(python::object &&pyobj) {
-  Py_INCREF(pyobj.ptr());
-  return pyobj.ptr();
-}
-
-template <class T>
-PyObject *rawPy(T &&thing) {
-  return rawPy(python::object(thing));
-}
-#endif
 
 template <class RDOb, class T>
 nb::object GetProp(const RDOb *ob, const std::string &key) {
@@ -187,35 +180,34 @@ nb::object GetProp(const RDOb *ob, const std::string &key) {
                GetTypeName<T>() + " reason: " + e.what();
     throw nb::value_error(msg.c_str());
   }
-  return nb::object(res);
+  return nb::cast(res);
 }
 
 template <class RDOb>
-python::object autoConvertString(const RDOb *ob, const std::string &key) {
+nb::object autoConvertString(const RDOb *ob, const std::string &key) {
   int ivalue;
   double dvalue;
   std::string svalue;
 
   if (ob->getPropIfPresent(key, ivalue))
-    return python::object(ivalue);
+    return nb::cast(ivalue);
   else if (ob->getPropIfPresent(key, dvalue))
-    return python::object(dvalue);
+    return nb::cast(dvalue);
   else if (ob->getPropIfPresent(key, svalue))
-    return python::object(svalue);
-
-  return python::object();
+    return nb::cast(svalue);
+  return nb::none();
 }
 
 template <class RDOb>
-PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
-  python::object pobj;
+nb::object GetPyProp(const RDOb *obj, const std::string &key,
+                     bool autoConvert) {
+  nb::object pobj;
   if (!autoConvert) {
     std::string res;
     if (obj->getPropIfPresent(key, res)) {
-      return rawPy(res);
+      return nb::cast(res);
     } else {
-      PyErr_SetString(PyExc_KeyError, key.c_str());
-      return nullptr;
+      throw nb::key_error(key.c_str());
     }
   } else {
     const auto &data = obj->getDict().getData();
@@ -225,46 +217,47 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
           const auto tag = rdvalue.val.getTag();
           switch (tag) {
             case RDTypeTag::IntTag:
-              return rawPy(from_rdvalue<int>(rdvalue.val));
+              return nb::cast(from_rdvalue<int>(rdvalue.val));
 
             case RDTypeTag::DoubleTag:
-              return rawPy(from_rdvalue<double>(rdvalue.val));
+              return nb::cast(from_rdvalue<double>(rdvalue.val));
 
             case RDTypeTag::StringTag:
               if (autoConvert) {
                 pobj = autoConvertString(obj, rdvalue.key);
               }
-              return rawPy(from_rdvalue<std::string>(rdvalue.val));
+              return nb::cast(from_rdvalue<std::string>(rdvalue.val));
             case RDTypeTag::FloatTag:
-              return rawPy(from_rdvalue<float>(rdvalue.val));
+              return nb::cast(from_rdvalue<float>(rdvalue.val));
               break;
             case RDTypeTag::BoolTag:
-              return rawPy(from_rdvalue<bool>(rdvalue.val));
+              return nb::cast(from_rdvalue<bool>(rdvalue.val));
               break;
             case RDTypeTag::UnsignedIntTag:
-              return rawPy(from_rdvalue<unsigned int>(rdvalue.val));
+              return nb::cast(from_rdvalue<unsigned int>(rdvalue.val));
               break;
             case RDTypeTag::AnyTag:
               // we skip these for now
               break;
             case RDTypeTag::VecDoubleTag:
-              return rawPy(from_rdvalue<std::vector<double>>(rdvalue.val));
+              return nb::cast(from_rdvalue<std::vector<double>>(rdvalue.val));
               break;
             case RDTypeTag::VecFloatTag:
-              return rawPy(from_rdvalue<std::vector<float>>(rdvalue.val));
+              return nb::cast(from_rdvalue<std::vector<float>>(rdvalue.val));
               break;
             case RDTypeTag::VecIntTag:
-              return rawPy(from_rdvalue<std::vector<int>>(rdvalue.val));
+              return nb::cast(from_rdvalue<std::vector<int>>(rdvalue.val));
               break;
             case RDTypeTag::VecUnsignedIntTag:
-              return rawPy(
+              return nb::cast(
                   from_rdvalue<std::vector<unsigned int>>(rdvalue.val));
               break;
             case RDTypeTag::VecStringTag:
-              return rawPy(from_rdvalue<std::vector<std::string>>(rdvalue.val));
+              return nb::cast(
+                  from_rdvalue<std::vector<std::string>>(rdvalue.val));
               break;
             case RDTypeTag::EmptyTag:
-              return Py_None;
+              return nb::none();
               break;
             default:
               std::string message =
@@ -272,7 +265,7 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
                       "Unhandled property type encountered for property: ") +
                   rdvalue.key;
               UNDER_CONSTRUCTION(message.c_str());
-              return Py_None;
+              return nb::none();
           }
         } catch (std::bad_any_cast &) {
           // C++ datatypes can really be anything, this just captures
@@ -281,33 +274,13 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
               std::string("Unhandled type conversion occured for property: ") +
               rdvalue.key;
           UNDER_CONSTRUCTION(message.c_str());
-          return Py_None;
+          return nb::none();
         }
       }
     }
   }
-  PyErr_SetString(PyExc_KeyError, key.c_str());
-  return nullptr;
+  throw nb::key_error(key.c_str());
 }
-
-// Return policy for functions that directly return a PyObject* and
-// are fully responsible for setting the Python error state.
-struct return_pyobject_passthrough {
-  template <class T>
-  struct apply {
-    struct type {
-      static bool convertible() { return true; }
-
-      PyObject *operator()(PyObject *inner) const { return inner; }
-#ifndef BOOST_PYTHON_NO_PY_SIGNATURES
-      PyTypeObject const *get_pytype() const {
-        return boost::python::converter::expected_pytype_for_arg<
-            T>::get_pytype();
-      }
-#endif
-    };
-  };
-};
 
 template <class RDOb>
 int MolHasProp(const RDOb &mol, const std::string &key) {
