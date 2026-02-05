@@ -130,16 +130,6 @@ bool atomHasFourthValence(const Atom *atom) {
 }
 }  // namespace details
 
-void switchBondDir(Bond *bond) {
-  PRECONDITION(bond, "bad bond");
-  PRECONDITION(bond->getBondType() == Bond::SINGLE || bond->getIsAromatic() ||
-                   isDative(*bond),
-               "bad bond type");
-  auto bondDir = bond->getBondDir();
-  bondDir = flipBondDir(bondDir);
-  bond->setBondDir(bondDir);
-}
-
 bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
                                  const RDKit::Atom *atom, bool isAtomFirst,
                                  size_t numClosures) {
