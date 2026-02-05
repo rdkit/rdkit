@@ -16,6 +16,7 @@
 #include <array>
 #include <vector>
 
+#include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/export.h>
 #include <Geometry/Transform3D.h>
 
@@ -29,12 +30,44 @@ const DTYPE PI = 4 * std::atan(1.0);
 // From Grant et al.
 const DTYPE P = 2.7;
 const double KAPPA = 2.41798793102;
+using CustomFeatures =
+    std::vector<std::tuple<unsigned int, RDGeom::Point3D, double>>;
 
-// Data for Roshambo2 shape alignment code
+struct ShapeInputOptions {
+  ShapeInputOptions();
+  ShapeInputOptions(const ShapeInputOptions &) = default;
+  ShapeInputOptions(ShapeInputOptions &&) = default;
+  ShapeInputOptions &operator=(const ShapeInputOptions &) = default;
+  ShapeInputOptions &operator=(ShapeInputOptions &&) = default;
+
+  ~ShapeInputOptions() = default;
+
+  // By default, it will create features using the RDKit pharmacophore
+  // definitions.
+  bool useFeatures{true};
+  // Custom color features used verbatim.  A vector of
+  // tuples of integer type, Point3D coords, double radius.
+  CustomFeatures customFeatures;
+  // Whether to use carbon radii for all atoms (which is quicker) or
+  // vdw radii appropriate for the elements.
+  bool allCarbonRadii{true};
+  // Patterns for assigning features. Uses the normal RDKit ones by default.
+  std::vector<std::vector<std::shared_ptr<ROMol>>> d_ph4Patterns;
+  unsigned int d_nTypes{0};
+
+  // Construct the patterns for the pharmacophre features.
+  void buildPh4Patterns();
+};
+
+// Data for shape alignment code
 class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
  public:
+  //! Create the ShapeInput object.
+  //! @param mol: The molecule of interest
+  //! @param confId: The conformer to use
+  //! @param opts: Options for setting up the shape
   ShapeInput(const ROMol &mol, int confId = -1,
-             const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
+             const ShapeInputOptions &opts = ShapeInputOptions());
   ShapeInput(const ShapeInput &other);
   ShapeInput(ShapeInput &&other) = default;
   ShapeInput &operator=(const ShapeInput &other);
@@ -48,13 +81,16 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   unsigned int getNumFeatures() const { return d_numFeats; }
   DTYPE getSelfOverlapVol() const { return d_selfOverlapVol; }
   DTYPE getSelfOverlapColor() const { return d_selfOverlapColor; }
+  const boost::dynamic_bitset<> &getCarbonRadii() const {
+    return d_carbonRadii;
+  }
   const std::array<double, 9> &getCanonicalRotation() const {
     return *d_canonRot;
   }
   const std::array<double, 3> &getCanonicalTranslation() const {
     return *d_centroid;
   }
-  const std::array<size_t, 6> &getExtremes() const { return d_extreme_points; }
+  const std::array<size_t, 6> &getExtremes() const { return d_extremePoints; }
 
   // Align the principal axes to the cartesian axes and centre on the origin.
   // Doesn't require that the shape was created from a molecule.  Creates
@@ -64,11 +100,12 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   void transformCoords(RDGeom::Transform3D &xform);
 
  private:
-  void extractAtoms(const ROMol &mol, int confId);
+  void extractAtoms(const ROMol &mol, int confId,
+                    const ShapeInputOptions &opts);
   // Extract the features for the color scores, using RDKit pphore features
   // for now.  Other options to be added later.
   void extractFeatures(const ROMol &mol, int confId,
-                       const ShapeOverlayOptions &shapeOpts);
+                       const ShapeInputOptions &shapeOpts);
   // Calculate the rotation and translation that will align the principal axes
   // to the cartesian axes and centre on the origin, using the conformer.
   void calcNormalization(const ROMol &mol, int confId);
@@ -88,7 +125,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   DTYPE d_selfOverlapColor{0.0};  // Color volume
   // These are the points at the extremes of the x, y and z axes.
   // they are min_x, min_y, min_z and max_x, max_y, max_z.
-  std::array<size_t, 6> d_extreme_points;
+  std::array<size_t, 6> d_extremePoints;
+  boost::dynamic_bitset<>
+      d_carbonRadii;  // Flags those atoms with a carbon radius, for faster
+                      // calculation later.
 
   // This is the rotation and translation to align the principal axes of the
   // shape with cartesian axes.  If d_normalized is true, it has been applied

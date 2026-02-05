@@ -20,6 +20,7 @@
 #include <GraphMol/GaussianShape/ShapeInput.h>
 #include <GraphMol/GaussianShape/SingleConformerAlignment.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
@@ -34,7 +35,7 @@ namespace GaussianShape {
 // The dummy atom radius (atomic number 0) is set to
 // 2.16.
 const std::map<unsigned int, double> vdw_radii = {
-    {0, 2.16},   // Dummy
+    {0, 2.16},   // Dummy, same as Xe.
     {1, 1.10},   // H
     {2, 1.40},   // He
     {3, 1.81},   // Li
@@ -85,16 +86,16 @@ constexpr double radius_color =
               // PubChem code.
 
 ShapeInput::ShapeInput(const ROMol &mol, int confId,
-                       const ShapeOverlayOptions &overlayOpts) {
-  extractAtoms(mol, confId);
-  if (overlayOpts.optimMode != OptimMode::SHAPE_ONLY) {
-    extractFeatures(mol, confId, overlayOpts);
+                       const ShapeInputOptions &opts) {
+  extractAtoms(mol, confId, opts);
+  if (opts.useFeatures) {
+    extractFeatures(mol, confId, opts);
   }
   calcNormalization(mol, confId);
   calcExtremes();
   d_selfOverlapVol =
-      calcVolAndGrads(d_coords.data(), d_numAtoms, d_coords.data(), d_numAtoms,
-                      overlayOpts.all_carbon_radii);
+      calcVolAndGrads(d_coords.data(), d_numAtoms, d_carbonRadii,
+                      d_coords.data(), d_numAtoms, d_carbonRadii);
   d_selfOverlapColor = calcVolAndGrads(
       d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
       d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
@@ -108,7 +109,8 @@ ShapeInput::ShapeInput(const ShapeInput &other)
       d_numFeats(other.d_numFeats),
       d_selfOverlapVol(other.d_selfOverlapVol),
       d_selfOverlapColor(other.d_selfOverlapColor),
-      d_extreme_points(other.d_extreme_points),
+      d_extremePoints(other.d_extremePoints),
+      d_carbonRadii(other.d_carbonRadii),
       d_normalized(other.d_normalized),
       d_canonRot(new std::array<double, 9>(*other.d_canonRot)),
       d_centroid(new std::array<double, 3>(*other.d_centroid)) {}
@@ -123,7 +125,8 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   d_numFeats = other.d_numFeats;
   d_selfOverlapVol = other.d_selfOverlapVol;
   d_selfOverlapColor = other.d_selfOverlapColor;
-  d_extreme_points = other.d_extreme_points;
+  d_extremePoints = other.d_extremePoints;
+  d_carbonRadii = other.d_carbonRadii;
   d_normalized = other.d_normalized;
   d_canonRot.reset(new std::array<double, 9>(*other.d_canonRot));
   d_centroid.reset(new std::array<double, 3>(*other.d_centroid));
@@ -163,8 +166,10 @@ void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
   applyTransformToShape(d_coords, xform);
 }
 
-void ShapeInput::extractAtoms(const ROMol &mol, int confId) {
+void ShapeInput::extractAtoms(const ROMol &mol, int confId,
+                              const ShapeInputOptions &opts) {
   d_coords.reserve(mol.getNumAtoms() * 4);
+  d_carbonRadii = boost::dynamic_bitset<>(mol.getNumAtoms());
   auto conf = mol.getConformer(confId);
   for (const auto atom : mol.atoms()) {
     if (atom->getAtomicNum() > 1) {
@@ -173,13 +178,23 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId) {
       d_coords.push_back(pos.x);
       d_coords.push_back(pos.y);
       d_coords.push_back(pos.z);
-      if (auto rad =
-              vdw_radii.find(static_cast<unsigned int>(atom->getAtomicNum()));
-          rad != vdw_radii.end()) {
-        d_coords.push_back(KAPPA / (rad->second * rad->second));
+      if (opts.allCarbonRadii) {
+        d_coords.push_back(KAPPA / (1.7 * 1.7));
+        d_carbonRadii[idx] = true;
       } else {
-        throw ValueErrorException("No VdW radius for atom with Z=" +
-                                  std::to_string(atom->getAtomicNum()));
+        if (atom->getAtomicNum() == 6) {
+          d_coords.push_back(KAPPA / (1.7 * 1.7));
+          d_carbonRadii[idx] = true;
+        } else {
+          if (auto rad = vdw_radii.find(
+                  static_cast<unsigned int>(atom->getAtomicNum()));
+              rad != vdw_radii.end()) {
+            d_coords.push_back(KAPPA / (rad->second * rad->second));
+          } else {
+            throw ValueErrorException("No VdW radius for atom with Z=" +
+                                      std::to_string(atom->getAtomicNum()));
+          }
+        }
       }
     }
   }
@@ -191,32 +206,45 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId) {
 // Extract the features for the color scores, using RDKit pphore features
 // for now.  Other options to be added later.
 void ShapeInput::extractFeatures(const ROMol &mol, int confId,
-                                 const ShapeOverlayOptions &shapeOpts) {
-  const auto &pattVects = shapeOpts.d_ph4Patterns;
-  unsigned pattIdx = 1;
-  for (const auto &patts : pattVects) {
-    for (const auto &patt : patts) {
-      std::vector<MatchVectType> matches;
-      {
-        // recursive queries aren't thread safe.
-        std::unique_lock<std::mutex> lock(mtx);
-        matches = SubstructMatch(mol, *patt);
-      }
-      for (auto match : matches) {
-        std::vector<unsigned int> ats;
-        for (const auto &pr : match) {
-          ats.push_back(pr.second);
+                                 const ShapeInputOptions &opts) {
+  if (opts.customFeatures.empty()) {
+    const auto &pattVects = opts.d_ph4Patterns;
+    unsigned pattIdx = 1;
+    for (const auto &patts : pattVects) {
+      for (const auto &patt : patts) {
+        std::vector<MatchVectType> matches;
+        {
+          // recursive queries aren't thread safe.
+          std::unique_lock<std::mutex> lock(mtx);
+          matches = SubstructMatch(mol, *patt);
         }
-        auto featPos = computeFeaturePos(mol, confId, ats);
-        d_types.push_back(pattIdx);
-        d_coords.push_back(featPos.x);
-        d_coords.push_back(featPos.y);
-        d_coords.push_back(featPos.z);
-        d_coords.push_back(KAPPA / (radius_color * radius_color));
-        d_numFeats++;
+        for (auto match : matches) {
+          std::vector<unsigned int> ats;
+          for (const auto &pr : match) {
+            ats.push_back(pr.second);
+          }
+          auto featPos = computeFeaturePos(mol, confId, ats);
+          d_types.push_back(pattIdx);
+          d_coords.push_back(featPos.x);
+          d_coords.push_back(featPos.y);
+          d_coords.push_back(featPos.z);
+          d_coords.push_back(KAPPA / (radius_color * radius_color));
+          d_numFeats++;
+        }
       }
+      ++pattIdx;
     }
-    ++pattIdx;
+  } else {
+    // Just copy them directly
+    for (const auto &f : opts.customFeatures) {
+      d_types.push_back(std::get<0>(f));
+      d_numFeats++;
+      const auto &pos = std::get<1>(f);
+      d_coords.push_back(pos.x);
+      d_coords.push_back(pos.y);
+      d_coords.push_back(pos.z);
+      d_coords.push_back(std::get<2>(f));
+    }
   }
 }
 
@@ -242,27 +270,27 @@ void ShapeInput::calcNormalization(const ROMol &mol, int confId) {
 }
 
 void ShapeInput::calcExtremes() {
-  d_extreme_points = std::array<size_t, 6>{0, 0, 0, 0, 0, 0};
+  d_extremePoints = std::array<size_t, 6>{0, 0, 0, 0, 0, 0};
   for (size_t i = 0, j = 0; i < d_coords.size(); i += 4, ++j) {
-    if (d_coords[i] < d_coords[4 * d_extreme_points[0]]) {
-      d_extreme_points[0] = j;
+    if (d_coords[i] < d_coords[4 * d_extremePoints[0]]) {
+      d_extremePoints[0] = j;
     }
-    if (d_coords[i] > d_coords[4 * d_extreme_points[3]]) {
-      d_extreme_points[3] = j;
-    }
-
-    if (d_coords[i + 1] < d_coords[4 * d_extreme_points[1] + 1]) {
-      d_extreme_points[1] = j;
-    }
-    if (d_coords[i + 1] > d_coords[4 * d_extreme_points[4] + 1]) {
-      d_extreme_points[4] = j;
+    if (d_coords[i] > d_coords[4 * d_extremePoints[3]]) {
+      d_extremePoints[3] = j;
     }
 
-    if (d_coords[i + 2] < d_coords[4 * d_extreme_points[2] + 2]) {
-      d_extreme_points[2] = j;
+    if (d_coords[i + 1] < d_coords[4 * d_extremePoints[1] + 1]) {
+      d_extremePoints[1] = j;
     }
-    if (d_coords[i + 2] > d_coords[4 * d_extreme_points[5] + 2]) {
-      d_extreme_points[5] = j;
+    if (d_coords[i + 1] > d_coords[4 * d_extremePoints[4] + 1]) {
+      d_extremePoints[4] = j;
+    }
+
+    if (d_coords[i + 2] < d_coords[4 * d_extremePoints[2] + 2]) {
+      d_extremePoints[2] = j;
+    }
+    if (d_coords[i + 2] > d_coords[4 * d_extremePoints[5] + 2]) {
+      d_extremePoints[5] = j;
     }
   }
 }
@@ -351,5 +379,45 @@ void translateShape(const DTYPE *inShape, DTYPE *outShape, size_t numPoints,
     outShape[i + 3] = inShape[i + 3];
   }
 }
+
+ShapeInputOptions::ShapeInputOptions() { buildPh4Patterns(); }
+
+// Definitions for feature points adapted from:
+// Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
+const std::vector<std::vector<std::string>> smartsPatterns = {
+    {"[$([N;!H0;v3,v4&+1]),\
+$([O,S;H1;+0]),\
+n&H1&+0]"},                                // Donor
+    {"[$([O,S;H1;v2;!$(*-*=[O,N,P,S])]),\
+$([O,S;H0;v2]),\
+$([O,S;-]),\
+$([N;v3;!$(N-*=[O,N,P,S])]),\
+n&H0&+0,\
+$([o,s;+0;!$([o,s]:n);!$([o,s]:c:n)])]"},  // Acceptor
+    {
+        "[r]1[r][r]1",
+        "[r]1[r][r][r]1",
+        "[r]1[r][r][r][r]1",
+        "[r]1[r][r][r][r][r]1",
+        "[r]1[r][r][r][r][r][r]1",
+    },                                                       // rings
+    {"[#7;+,\
+$([N;H2&+0][$([C,a]);!$([C,a](=O))]),\
+$([N;H1&+0]([$([C,a]);!$([C,a](=O))])[$([C,a]);!$([C,a](=O))]),\
+$([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]"},  // Basic
+    {"[$([C,S](=[O,S,P])-[O;H1,-1])]"}                       // Acidic
+};
+
+void ShapeInputOptions::buildPh4Patterns() {
+  for (const auto &smartsV : smartsPatterns) {
+    std::vector<std::shared_ptr<ROMol>> v;
+    for (const auto &smarts : smartsV) {
+      v.emplace_back(v2::SmilesParse::MolFromSmarts(smarts));
+    }
+    d_ph4Patterns.emplace_back(v);
+  }
+  d_nTypes = d_ph4Patterns.size();
+}
+
 }  // namespace GaussianShape
 }  // namespace RDKit

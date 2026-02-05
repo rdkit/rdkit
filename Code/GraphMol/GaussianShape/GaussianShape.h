@@ -17,16 +17,14 @@
 
 #include <RDGeneral/export.h>
 #include <Geometry/Transform3D.h>
-
-#include "ShapeOverlayOptions.h"
+#include <GraphMol/GaussianShape/ShapeInput.h>
+#include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
 
 namespace RDKit {
 class ROMol;
 class Conformer;
 
 namespace GaussianShape {
-
-class ShapeInput;
 
 //! Align a shape onto a reference shape.  Assumes the shapes are both
 //! centred on the origin and aligned along their principal axes.
@@ -49,6 +47,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignShape(
 /*!
   \param refShape      the reference shape
   \param fit           the molecule to align
+  \param fitOpts       the options for creating the fit shape
   \param xform         if passed in as non-null, will be populated with the
                        transformation matrix that aligns fit onto ref.
   \param overlayOpts   options for setting up and running the overlay
@@ -61,6 +60,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignShape(
 */
 RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const ShapeInput &refShape, ROMol &fit,
+    const ShapeInputOptions &fitOpts = ShapeInputOptions(),
     RDGeom::Transform3D *xform = nullptr,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
     int fitConfId = -1);
@@ -69,6 +69,8 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignMolecule(
 /*!
   \param ref           the reference molecule
   \param fit           the molecule to align
+  \param refOpts       the options for creating the ref shape
+  \param fitOpts       the options for creating the fit shape
   \param xform         if passed in as non-null, will be populated with the
                        transformation matrix that aligns fit onto ref.
   \param overlayOpts   options for setting up and running the overlay
@@ -82,7 +84,10 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignMolecule(
           types for the features.
 */
 RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignMolecule(
-    const ROMol &ref, ROMol &fit, RDGeom::Transform3D *xform = nullptr,
+    const ROMol &ref, ROMol &fit,
+    const ShapeInputOptions &refOpts = ShapeInputOptions(),
+    const ShapeInputOptions &fitOpts = ShapeInputOptions(),
+    RDGeom::Transform3D *xform = nullptr,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
     int refConfId = -1, int fitConfId = -1);
 
@@ -114,6 +119,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> ScoreShape(
 /*!
   \param ref           the reference shape
   \param fit           the molecule to score
+  \param fitOpts       the options for creating the fit shape
   \param overlayOpts   options for setting up the shapes
   \param fitConfId     (optional) the conformer to use for the fit
                        molecule
@@ -124,6 +130,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> ScoreShape(
 */
 RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
     const ShapeInput &refShape, const ROMol &fit,
+    const ShapeInputOptions &fitOpts = ShapeInputOptions(),
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
     int fitConfId = -1);
 
@@ -132,6 +139,8 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
 /*!
   \param ref           the reference molecule
   \param fit           the molecule to score
+  \param refOpts       the options for creating the ref shape
+  \param fitOpts       the options for creating the fit shape
   \param overlayOpts   options for setting up the shapes
   \param refConfId     (optional) the conformer to use for the reference
                        molecule
@@ -144,10 +153,12 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
 */
 RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
     const ROMol &ref, const ROMol &fit,
+    const ShapeInputOptions &refOpts = ShapeInputOptions(),
+    const ShapeInputOptions &fitOpts = ShapeInputOptions(),
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
     int refConfId = -1, int fitConfId = -1);
 
-}  // namespace ShapeAlign
+}  // namespace GaussianShape
 }  // namespace RDKit
 
 #endif  // RDKIT_GAUSSIANSHAPE_GUARD

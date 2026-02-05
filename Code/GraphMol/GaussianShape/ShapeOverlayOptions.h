@@ -14,9 +14,6 @@
 #ifndef RDKIT_SHAPEOVERLAYOPTIONS_GUARD
 #define RDKIT_SHAPEOVERLAYOPTIONS_GUARD
 
-#include <memory>
-#include <vector>
-
 #include <RDGeneral/export.h>
 
 using DTYPE = double;
@@ -50,37 +47,20 @@ enum class RDKIT_GAUSSIANSHAPE_EXPORT OptimMode {
 };
 
 struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
-  ShapeOverlayOptions();
-  ShapeOverlayOptions(const ShapeOverlayOptions &) = default;
-  ShapeOverlayOptions(ShapeOverlayOptions &&) = default;
-  ShapeOverlayOptions &operator=(const ShapeOverlayOptions &) = default;
-  ShapeOverlayOptions &operator=(ShapeOverlayOptions &&) = default;
-
-  ~ShapeOverlayOptions() = default;
-
-  // Whether to normalise the shape by putting into
-  // its canonical conformation (centred at the origin,
-  // aligned along its principal axes).
-  bool normalize{true};
-  // Different modes for starting the optimisation.  Default is as originally
-  // defined by Grant and Pickup - 180 rotations about the x, y and z axes,
-  // although here the molecules are normalized so the principal axes are along
-  // the cartesian axes rather than the shape quadrupole axes.
-  StartMode startMode{StartMode::ROTATE_180};
+  // Different modes for starting the optimisation.  Default is as used by the
+  // PubChem code - 180 rotations about the x, y and z axes, then a small
+  // rotation about each axis from that point, using the best scoring one of
+  // those. The molecules are normalized so the principal axes are along the
+  // cartesian axes rather than the shape quadrupole axes as Grant et al. did.
+  StartMode startMode{StartMode::ROTATE_180_WIGGLE};
   OptimMode optimMode{OptimMode::SHAPE_PLUS_COLOR_SCORE};  // Optimisation mode.
-  // Whether to use carbon radii for all atoms (which is quicker) or
-  // vdw radii appropriate for the elements.
-  bool all_carbon_radii{true};
-
-  DTYPE optParam{0.5};  // If using colors, the relative weights of shape and
-  // color scores.
-  int nSteps{100};  // Number of steps for optimiser to take.
-
-  // Patterns for assigning features. Uses the normal RDKit ones by default.
-  std::vector<std::vector<std::shared_ptr<ROMol>>> d_ph4Patterns;
-  unsigned int d_nTypes{0};
-
-  void buildPh4Patterns();
+  DTYPE optParam{
+      0.5};  // If using colors, the relative weights of shape and color scores.
+  int nSteps{100};  // Maximum number of steps for optimiser to take.
+  // Whether to normalise the shapes by putting them into
+  // their canonical conformations (centred at the origin,
+  // aligned along its principal axes) before starting.
+  bool normalize{true};
 };
 }  // namespace GaussianShape
 }  // namespace RDKit

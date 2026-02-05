@@ -20,6 +20,8 @@
 
 #include <array>
 
+#include <boost/dynamic_bitset.hpp>
+
 #include <RDGeneral/export.h>
 #include "ShapeOverlayOptions.h"
 
@@ -34,6 +36,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// block of 4 is the coords and atom radius
   /// @param refTemp - the working copy of ref
   /// @param refTypes - the feature types for molecule ref
+  /// @param refCarbonRadii - whether each atom has a carbon radius
   /// @param nRefShape - the number of atoms in ref
   /// @param nRefColor - the number of features in ref
   /// @param refShapeVol - overlap volume of ref with itself
@@ -43,23 +46,25 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// @param fitTemp - the working copy of fit - the final overlaid coordinates
   /// will be left here
   /// @param fitTypes - the feature types for fit molecule
+  /// @param fitCarbonRadii - whether each atom has a carbon radius
   /// @param nFitShape - the number of atoms in fit
   /// @param nFitColor - the number of features in fit
   /// @param fitShapeVol - overlap volume of fit with itself
   /// @param fitColorVol - color overlap of fit with itself
   /// @param optimMode - optimisation mode
   /// @param mixingParam - how to mix the 2 tanimoto values
-  /// @param allCarbonRadii - if true, atomic radii are all set to values for
   /// carbon.  This makes it faster but less correct.
   /// @param maxIts - maximum number of iterations for optimiser
   SingleConformerAlignment(const DTYPE *ref, DTYPE *refTemp,
-                           const int *refTypes, int nRefShape, int nRefColor,
-                           DTYPE refShapeVol, DTYPE refColorVol,
-                           const DTYPE *fit, DTYPE *fitTemp,
-                           const int *fitTypes, int nFitShape, int nFitColor,
-                           DTYPE fitShapeVol, DTYPE fitColorVol,
-                           OptimMode optimMode, DTYPE mixingParam,
-                           bool allCarbonRadii, unsigned int maxIts);
+                           const int *refTypes,
+                           const boost::dynamic_bitset<> *refCarbonRadii,
+                           int nRefShape, int nRefColor, DTYPE refShapeVol,
+                           DTYPE refColorVol, const DTYPE *fit, DTYPE *fitTemp,
+                           const int *fitTypes,
+                           const boost::dynamic_bitset<> *fitCarbonRadii,
+                           int nFitShape, int nFitColor, DTYPE fitShapeVol,
+                           DTYPE fitColorVol, OptimMode optimMode,
+                           DTYPE mixingParam, unsigned int maxIts);
 
   SingleConformerAlignment(const SingleConformerAlignment &other) = delete;
   SingleConformerAlignment(SingleConformerAlignment &&other) = delete;
@@ -117,27 +122,30 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
 
   const DTYPE *d_ref;
   DTYPE *d_refTemp;
+  const int *d_refTypes;
+  const boost::dynamic_bitset<> *d_refCarbonRadii;
   const int d_nRefShape;
   const int d_nRefColor;
-  const int *d_refTypes;
   const DTYPE d_refShapeVol;
   const DTYPE d_refColorVol;
   const DTYPE *d_fit;
   DTYPE *d_fitTemp;
+  const int *d_fitTypes;
+  const boost::dynamic_bitset<> *d_fitCarbonRadii;
   const int d_nFitShape;
   const int d_nFitColor;
-  const int *d_fitTypes;
   DTYPE d_fitShapeVol;
   DTYPE d_fitColorVol;
   const OptimMode d_optimMode;
   const DTYPE d_mixingParam;
-  const bool d_allCarbonRadii;
   const unsigned int d_maxIts;
 };
 
 // This is for the atoms/shape features.
-DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts, const DTYPE *fit,
-                      int numFitPts, const bool allCarbonRadii = true,
+DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts,
+                      const boost::dynamic_bitset<> &refCarbonRadii,
+                      const DTYPE *fit, int numFitPts,
+                      const boost::dynamic_bitset<> &fitCarbonRadii,
                       const DTYPE *quat = nullptr, DTYPE *gradients = nullptr);
 // This one is for the features, and only calculates values if the types
 // of 2 features match.
