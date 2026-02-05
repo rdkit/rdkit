@@ -8,13 +8,14 @@
  *
  * Linkages between an atom and a monomer are represented similarly, but with just RX where
  * X is the attachment point on the monomer.
- * 
+ *
  *
  * Copyright Schrodinger LLC, All Rights Reserved.
  --------------------------------------------------------------------------- */
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -30,6 +31,7 @@ namespace RDKit
 class Atom;
 class Bond;
 class SubstanceGroup;
+class MonomerLibrary;
 
 const std::string LINKAGE{"attachmentPoints"};
 const std::string EXTRA_LINKAGE{"extraAttachmentPoints"};
@@ -77,6 +79,13 @@ class RDKIT_MONOMERMOL_EXPORT MonomerMol : public ROMol {
   // Default constructor
   MonomerMol() : ROMol() {}
 
+  //! Constructor with custom monomer library
+  /*!
+    \param library  shared pointer to a MonomerLibrary instance
+  */
+  explicit MonomerMol(std::shared_ptr<MonomerLibrary> library)
+      : ROMol(), d_library(std::move(library)) {}
+
   // Copy constructor from ROMol.
   /*!
     \param other     the molecule to be copied
@@ -87,9 +96,9 @@ class RDKIT_MONOMERMOL_EXPORT MonomerMol : public ROMol {
   */
   MonomerMol(const ROMol &other, bool quickCopy = false, int confId = -1)
       : ROMol(other, quickCopy, confId) {}
-  MonomerMol(const MonomerMol &other) : ROMol(other) {}
+  MonomerMol(const MonomerMol &other);
   MonomerMol &operator=(const MonomerMol &other);
-  MonomerMol(MonomerMol &&other) noexcept : ROMol(std::move(other)) {}
+  MonomerMol(MonomerMol &&other) noexcept;
   MonomerMol &operator=(MonomerMol &&other) noexcept;
   MonomerMol(const std::string &binStr); // Pickle constructor (for deserialization)
 
@@ -205,6 +214,30 @@ class RDKIT_MONOMERMOL_EXPORT MonomerMol : public ROMol {
   // Discards existing chains and reassigns monomers to sequential chains where monomers
   // are reordered based on connectivity.
   void assignChains();
+
+  // ---- Monomer Library Access ----
+
+  //! Get the monomer library for this molecule
+  /*!
+    Returns the instance library if one has been set, otherwise returns
+    the global library.
+    \return reference to the MonomerLibrary
+  */
+  MonomerLibrary& getMonomerLibrary();
+  const MonomerLibrary& getMonomerLibrary() const;
+
+  //! Set a custom monomer library for this molecule
+  /*!
+    \param library  shared pointer to a MonomerLibrary instance,
+                    or nullptr to use the global library
+  */
+  void setMonomerLibrary(std::shared_ptr<MonomerLibrary> library);
+
+  //! Check if this molecule has a custom library set
+  [[nodiscard]] bool hasCustomLibrary() const { return d_library != nullptr; }
+
+ private:
+  std::shared_ptr<MonomerLibrary> d_library;  // nullptr means use global
 };
 
 } // namespace RDKit

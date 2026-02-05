@@ -80,7 +80,7 @@ void fillAttachmentPointMap(const RDKit::ROMol& new_monomer,
 void setPDBResidueInfo(RDKit::RWMol& new_monomer, const std::string& monomer_label,
                     unsigned int residue_number, char chain_id,
                     const std::string& monomer_class,
-                    MonomerLibrary& db)
+                    const MonomerLibrary& db)
 {
     std::string residue_name =
         (monomer_class == "PEPTIDE") ? "UNK" : "UNL";
@@ -126,75 +126,46 @@ std::string getMonomerClass(std::string_view polymer_id)
     }
 }
 
-// Local helper to get polymer data from any ROMol (not just MonomerMol)
-Chain getPolymer(const RDKit::ROMol& mol, std::string_view polymer_id)
-{
-    std::vector<unsigned int> chain_atoms;
-    for (auto atom : mol.atoms()) {
-        if (MonomerMol::getPolymerId(atom) == polymer_id) {
-            chain_atoms.push_back(atom->getIdx());
-        }
-    }
-    // Sort by residue number
-    std::sort(chain_atoms.begin(), chain_atoms.end(),
-              [&mol](unsigned int a, unsigned int b) {
-                  return MonomerMol::getResidueNumber(mol.getAtomWithIdx(a)) <
-                         MonomerMol::getResidueNumber(mol.getAtomWithIdx(b));
-              });
-    std::vector<unsigned int> chain_bonds;
-    for (auto bond : mol.bonds()) {
-        if (MonomerMol::getPolymerId(bond->getBeginAtom()) == polymer_id &&
-            MonomerMol::getPolymerId(bond->getEndAtom()) == polymer_id) {
-            chain_bonds.push_back(bond->getIdx());
-        }
-    }
-    return {chain_atoms, chain_bonds, ""};
-}
-
 AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
-                         const RDKit::ROMol& monomer_mol,
+                         const MonomerMol& monomer_mol,
                          const std::string& polymer_id,
-                         std::vector<unsigned int>& remove_atoms, char chain_id)
+                         std::vector<unsigned int>& remove_atoms, char chain_id,
+                         const MonomerLibrary& db)
 {
     // Maps residue number and attachment point number to the atom index in
     // atomistic_mol that should be attached to and the atom index of the rgroup
     // that should later be removed
     AttachmentMap attachment_point_map;
 
-    auto chain = getPolymer(monomer_mol, polymer_id);
+    auto chain = monomer_mol.getPolymer(polymer_id);
     auto monomer_class = getMonomerClass(polymer_id);
     bool sanitize = false;
-
-    // Eventually, this will be connecting to a database of monomers or accessing an
-    // in-memory datastructure
-    MonomerLibrary db;
 
     // Add the monomers to the atomistic mol
     for (const auto monomer_idx : chain.atoms) {
         const auto monomer = monomer_mol.getAtomWithIdx(monomer_idx);
         auto monomer_label = monomer->getProp<std::string>(ATOM_LABEL);
 
-        std::string smiles;
+        std::string monomer_data;
         if (monomer->getProp<bool>(SMILES_MONOMER)) {
-            smiles = monomer_label;
+            monomer_data = monomer_label;
         } else {
-            auto monomer_smiles =
-                db.getMonomerSmiles(monomer_label, monomer_class);
-            if (!monomer_smiles) {
+            auto data = db.getMonomerData(monomer_label, monomer_class);
+            if (!data) {
                 throw std::out_of_range(
                     "Peptide Monomer " + monomer_label + " not found in Monomer database");
             }
-            smiles = *monomer_smiles;
+            monomer_data = *data;
         }
 
         std::unique_ptr<RDKit::RWMol> new_monomer(
-            RDKit::SmilesToMol(smiles, 0, sanitize));
+            RDKit::SmilesToMol(monomer_data, 0, sanitize));
 
         if (!new_monomer) {
             // FIXME: I think this is an issue with the HELM parser, see
             // SHARED-11457
             new_monomer.reset(
-                RDKit::SmilesToMol("[" + smiles + "]", 0, sanitize));
+                RDKit::SmilesToMol("[" + monomer_data + "]", 0, sanitize));
         }
 
         if (monomer->getProp<bool>(SMILES_MONOMER)) {
@@ -258,27 +229,22 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
 }
 } // namespace
 
-std::unique_ptr<RDKit::RWMol> toAtomistic(const RDKit::ROMol& monomer_mol)
+std::unique_ptr<RDKit::RWMol> toAtomistic(const MonomerMol& monomer_mol)
 {
     auto atomistic_mol = std::make_unique<RDKit::RWMol>();
+
+    // Get the monomer library from the MonomerMol
+    const auto& db = monomer_mol.getMonomerLibrary();
 
     // Map to track Polymer ID -> attachment point map
     std::unordered_map<std::string, AttachmentMap> polymer_attachment_points;
     std::vector<unsigned int> remove_atoms;
     char chain_id = 'A';
-    // Get polymer IDs from the monomer mol
-    std::vector<std::string> polymer_ids;
-    for (auto atom : monomer_mol.atoms()) {
-        auto id = MonomerMol::getPolymerId(atom);
-        if (std::find(polymer_ids.begin(), polymer_ids.end(), id) ==
-            polymer_ids.end()) {
-            polymer_ids.push_back(id);
-        }
-    }
-    for (const auto& polymer_id : polymer_ids) {
+
+    for (const auto& polymer_id : monomer_mol.getPolymerIds()) {
         polymer_attachment_points[polymer_id] =
             addPolymer(*atomistic_mol, monomer_mol, polymer_id, remove_atoms,
-                       chain_id);
+                       chain_id, db);
         ++chain_id;
     }
 

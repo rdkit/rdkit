@@ -26,12 +26,12 @@ toMonomeric(const ROMol& atomistic_mol);
 
 /**
  * Build an atomistic molecule from a MonomerMol using monomers
- * in MonomerLibrary.cpp
+ * from the molecule's MonomerLibrary.
  *
  * @param monomer_mol Monomeric molecule to convert to atomistic
  * @return Atomistic molecule
  */
 RDKIT_MONOMERMOL_EXPORT std::unique_ptr<RWMol>
-toAtomistic(const ROMol& monomer_mol);
+toAtomistic(const MonomerMol& monomer_mol);
 
 } // namespace RDKit

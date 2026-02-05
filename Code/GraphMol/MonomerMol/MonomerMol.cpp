@@ -9,6 +9,7 @@
 //
 
 #include "MonomerMol.h"
+#include "MonomerLibrary.h"
 
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/ROMol.h>
@@ -117,25 +118,56 @@ std::pair<unsigned int, unsigned int> getAttchpts(const std::string& linkage)
 
 // MonomerMol constructor/assignment implementations
 
+MonomerMol::MonomerMol(const MonomerMol &other)
+    : ROMol(other), d_library(other.d_library) {}
+
 MonomerMol &MonomerMol::operator=(const MonomerMol &other)
 {
   if (this != &other) {
     this->clear();
     numBonds = 0;
     initFromOther(other, false, -1);
+    d_library = other.d_library;
   }
   return *this;
 }
 
+MonomerMol::MonomerMol(MonomerMol &&other) noexcept
+    : ROMol(std::move(other)), d_library(std::move(other.d_library)) {}
+
 MonomerMol &MonomerMol::operator=(MonomerMol &&other) noexcept
 {
     ROMol::operator=(std::move(other));
+    d_library = std::move(other.d_library);
     return *this;
 }
 
 MonomerMol::MonomerMol(const std::string &binStr)
 {
     MolPickler::molFromPickle(binStr, *this);
+}
+
+// MonomerLibrary access implementations
+
+MonomerLibrary& MonomerMol::getMonomerLibrary()
+{
+    if (d_library) {
+        return *d_library;
+    }
+    return MonomerLibrary::getGlobalLibrary();
+}
+
+const MonomerLibrary& MonomerMol::getMonomerLibrary() const
+{
+    if (d_library) {
+        return *d_library;
+    }
+    return MonomerLibrary::getGlobalLibrary();
+}
+
+void MonomerMol::setMonomerLibrary(std::shared_ptr<MonomerLibrary> library)
+{
+    d_library = std::move(library);
 }
 
 // MonomerMol member function implementations
