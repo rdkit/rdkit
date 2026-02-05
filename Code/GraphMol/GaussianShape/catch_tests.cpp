@@ -60,13 +60,13 @@ TEST_CASE("basic alignment") {
   SECTION("setup") {
     auto refShape = GaussianShape::ShapeInput(*ref, -1, shapeOpts);
     CHECK_THAT(refShape.getSelfOverlapVol(),
-               Catch::Matchers::WithinAbs(591.073, 0.005));
+               Catch::Matchers::WithinAbs(591.057, 0.005));
     CHECK_THAT(refShape.getSelfOverlapColor(),
                Catch::Matchers::WithinAbs(31.935, 0.005));
 
     auto probeShape = GaussianShape::ShapeInput(*probe, -1, shapeOpts);
     CHECK_THAT(probeShape.getSelfOverlapVol(),
-               Catch::Matchers::WithinAbs(751.067, 0.005));
+               Catch::Matchers::WithinAbs(751.013, 0.005));
     CHECK_THAT(probeShape.getSelfOverlapColor(),
                Catch::Matchers::WithinAbs(42.530, 0.005));
   }
@@ -563,6 +563,8 @@ TEST_CASE("LOBSTER") {
   int num = 0;
   std::mt19937 e2(1);
   std::uniform_real_distribution<double> unif(0, 1);
+  GaussianShape::ShapeInputOptions opts;
+  opts.allCarbonRadii = true;
   for (size_t i = 1; i < mols.size(); i++) {
     for (size_t j = 0; j < i; j++) {
       if (unif(e2) > 0.001) {

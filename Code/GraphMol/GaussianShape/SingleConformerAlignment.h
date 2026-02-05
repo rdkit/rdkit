@@ -20,10 +20,12 @@
 
 #include <array>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/export.h>
-#include "ShapeOverlayOptions.h"
+#include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
 
 namespace RDKit {
 namespace GaussianShape {
@@ -53,18 +55,19 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// @param fitColorVol - color overlap of fit with itself
   /// @param optimMode - optimisation mode
   /// @param mixingParam - how to mix the 2 tanimoto values
+  /// @param useCutoff - whether to use a distance cutoff in the volume
+  /// calculation
+  /// @param distCutoff - the cutoff to use if we're doing it.
   /// carbon.  This makes it faster but less correct.
   /// @param maxIts - maximum number of iterations for optimiser
-  SingleConformerAlignment(const DTYPE *ref, DTYPE *refTemp,
-                           const int *refTypes,
-                           const boost::dynamic_bitset<> *refCarbonRadii,
-                           int nRefShape, int nRefColor, DTYPE refShapeVol,
-                           DTYPE refColorVol, const DTYPE *fit, DTYPE *fitTemp,
-                           const int *fitTypes,
-                           const boost::dynamic_bitset<> *fitCarbonRadii,
-                           int nFitShape, int nFitColor, DTYPE fitShapeVol,
-                           DTYPE fitColorVol, OptimMode optimMode,
-                           DTYPE mixingParam, unsigned int maxIts);
+  SingleConformerAlignment(
+      const DTYPE *ref, DTYPE *refTemp, const int *refTypes,
+      const boost::dynamic_bitset<> *refCarbonRadii, int nRefShape,
+      int nRefColor, DTYPE refShapeVol, DTYPE refColorVol, const DTYPE *fit,
+      DTYPE *fitTemp, const int *fitTypes,
+      const boost::dynamic_bitset<> *fitCarbonRadii, int nFitShape,
+      int nFitColor, DTYPE fitShapeVol, DTYPE fitColorVol, OptimMode optimMode,
+      DTYPE mixingParam, bool useCutoff, DTYPE distCutoff, unsigned int maxIts);
 
   SingleConformerAlignment(const SingleConformerAlignment &other) = delete;
   SingleConformerAlignment(SingleConformerAlignment &&other) = delete;
@@ -138,6 +141,8 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   DTYPE d_fitColorVol;
   const OptimMode d_optimMode;
   const DTYPE d_mixingParam;
+  const bool d_useCutoff;
+  const DTYPE d_distCutoff2;
   const unsigned int d_maxIts;
 };
 
@@ -146,6 +151,7 @@ DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts,
                       const boost::dynamic_bitset<> &refCarbonRadii,
                       const DTYPE *fit, int numFitPts,
                       const boost::dynamic_bitset<> &fitCarbonRadii,
+                      const bool useCutoff, const DTYPE distCutoff2,
                       const DTYPE *quat = nullptr, DTYPE *gradients = nullptr);
 // This one is for the features, and only calculates values if the types
 // of 2 features match.

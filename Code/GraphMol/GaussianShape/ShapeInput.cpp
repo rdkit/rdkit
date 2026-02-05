@@ -24,6 +24,12 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 std::mutex mtx;
 
 namespace RDKit {
@@ -86,16 +92,18 @@ constexpr double radius_color =
               // PubChem code.
 
 ShapeInput::ShapeInput(const ROMol &mol, int confId,
-                       const ShapeInputOptions &opts) {
+                       const ShapeInputOptions &opts,
+                       const ShapeOverlayOptions &shapeOpts) {
   extractAtoms(mol, confId, opts);
   if (opts.useFeatures) {
     extractFeatures(mol, confId, opts);
   }
   calcNormalization(mol, confId);
   calcExtremes();
-  d_selfOverlapVol =
-      calcVolAndGrads(d_coords.data(), d_numAtoms, d_carbonRadii,
-                      d_coords.data(), d_numAtoms, d_carbonRadii);
+  d_selfOverlapVol = calcVolAndGrads(
+      d_coords.data(), d_numAtoms, d_carbonRadii, d_coords.data(), d_numAtoms,
+      d_carbonRadii, shapeOpts.useDistCutoff,
+      shapeOpts.distCutoff * shapeOpts.distCutoff);
   d_selfOverlapColor = calcVolAndGrads(
       d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
       d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
@@ -203,14 +211,99 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
   d_numFeats = 0;
 }
 
+namespace {
+class ss_matcher {
+ public:
+  ss_matcher(const std::string &pattern) : m_pattern(pattern) {
+    m_needCopies = (pattern.find_first_of("$") != std::string::npos);
+    RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
+    m_matcher = p;
+    POSTCONDITION(m_matcher, "no matcher");
+  };
+  const RDKit::ROMol *getMatcher() const { return m_matcher; };
+  unsigned int countMatches(const RDKit::ROMol &mol) const {
+    PRECONDITION(m_matcher, "no matcher");
+    std::vector<RDKit::MatchVectType> matches;
+    // This is an ugly one. Recursive queries aren't thread safe.
+    // Unfortunately we have to take a performance hit here in order
+    // to guarantee thread safety
+    if (m_needCopies) {
+      const RDKit::ROMol nm(*(m_matcher), true);
+      RDKit::SubstructMatch(mol, nm, matches);
+    } else {
+      const RDKit::ROMol &nm = *m_matcher;
+      RDKit::SubstructMatch(mol, nm, matches);
+    }
+    return matches.size();
+  }
+  ~ss_matcher() { delete m_matcher; };
+
+ private:
+  ss_matcher() : m_pattern("") {};
+  std::string m_pattern;
+  bool m_needCopies{false};
+  const RDKit::ROMol *m_matcher{nullptr};
+};
+}  // namespace
+
+// This came from the original PubChemShape.cpp
+typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
+// Definitions for feature points adapted from:
+// Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
+const std::vector<std::vector<std::string>> smartsPatterns = {
+    {"[$([N;!H0;v3,v4&+1]),\
+$([O,S;H1;+0]),\
+n&H1&+0]"},                                // Donor
+    {"[$([O,S;H1;v2;!$(*-*=[O,N,P,S])]),\
+$([O,S;H0;v2]),\
+$([O,S;-]),\
+$([N;v3;!$(N-*=[O,N,P,S])]),\
+n&H0&+0,\
+$([o,s;+0;!$([o,s]:n);!$([o,s]:c:n)])]"},  // Acceptor
+    {
+        "[r]1[r][r]1",
+        "[r]1[r][r][r]1",
+        "[r]1[r][r][r][r]1",
+        "[r]1[r][r][r][r][r]1",
+        "[r]1[r][r][r][r][r][r]1",
+    },  // rings
+        //    "[a]",                                                  //
+        //    Aromatic
+        //    "[F,Cl,Br,I]",                                          // Halogen
+    {"[#7;+,\
+$([N;H2&+0][$([C,a]);!$([C,a](=O))]),\
+$([N;H1&+0]([$([C,a]);!$([C,a](=O))])[$([C,a]);!$([C,a](=O))]),\
+$([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]"},  // Basic
+    {"[$([C,S](=[O,S,P])-[O;H1,-1])]"}                       // Acidic
+};
+std::vector<std::vector<const ROMol *>> *getPh4Patterns() {
+  static std::unique_ptr<std::vector<std::vector<const ROMol *>>> patterns;
+  if (!patterns) {
+    patterns.reset(new std::vector<std::vector<const ROMol *>>());
+    for (const auto &smartsV : smartsPatterns) {
+      std::vector<const ROMol *> v;
+      for (const auto &smarts : smartsV) {
+        const ROMol *matcher = pattern_flyweight(smarts).get().getMatcher();
+        CHECK_INVARIANT(matcher, "bad smarts");
+        v.push_back(matcher);
+      }
+      patterns->push_back(std::move(v));
+    }
+  }
+
+  return patterns.get();
+}
+
 // Extract the features for the color scores, using RDKit pphore features
 // for now.  Other options to be added later.
 void ShapeInput::extractFeatures(const ROMol &mol, int confId,
                                  const ShapeInputOptions &opts) {
   if (opts.customFeatures.empty()) {
-    const auto &pattVects = opts.d_ph4Patterns;
     unsigned pattIdx = 1;
-    for (const auto &patts : pattVects) {
+    const auto pattVects = getPh4Patterns();
+    for (const auto &patts : *pattVects) {
       for (const auto &patt : patts) {
         std::vector<MatchVectType> matches;
         {
@@ -378,45 +471,6 @@ void translateShape(const DTYPE *inShape, DTYPE *outShape, size_t numPoints,
     outShape[i + 2] = inShape[i + 2] + translation.z;
     outShape[i + 3] = inShape[i + 3];
   }
-}
-
-ShapeInputOptions::ShapeInputOptions() { buildPh4Patterns(); }
-
-// Definitions for feature points adapted from:
-// Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
-const std::vector<std::vector<std::string>> smartsPatterns = {
-    {"[$([N;!H0;v3,v4&+1]),\
-$([O,S;H1;+0]),\
-n&H1&+0]"},                                // Donor
-    {"[$([O,S;H1;v2;!$(*-*=[O,N,P,S])]),\
-$([O,S;H0;v2]),\
-$([O,S;-]),\
-$([N;v3;!$(N-*=[O,N,P,S])]),\
-n&H0&+0,\
-$([o,s;+0;!$([o,s]:n);!$([o,s]:c:n)])]"},  // Acceptor
-    {
-        "[r]1[r][r]1",
-        "[r]1[r][r][r]1",
-        "[r]1[r][r][r][r]1",
-        "[r]1[r][r][r][r][r]1",
-        "[r]1[r][r][r][r][r][r]1",
-    },                                                       // rings
-    {"[#7;+,\
-$([N;H2&+0][$([C,a]);!$([C,a](=O))]),\
-$([N;H1&+0]([$([C,a]);!$([C,a](=O))])[$([C,a]);!$([C,a](=O))]),\
-$([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]"},  // Basic
-    {"[$([C,S](=[O,S,P])-[O;H1,-1])]"}                       // Acidic
-};
-
-void ShapeInputOptions::buildPh4Patterns() {
-  for (const auto &smartsV : smartsPatterns) {
-    std::vector<std::shared_ptr<ROMol>> v;
-    for (const auto &smarts : smartsV) {
-      v.emplace_back(v2::SmilesParse::MolFromSmarts(smarts));
-    }
-    d_ph4Patterns.emplace_back(v);
-  }
-  d_nTypes = d_ph4Patterns.size();
 }
 
 }  // namespace GaussianShape

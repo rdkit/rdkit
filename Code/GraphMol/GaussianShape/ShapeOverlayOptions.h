@@ -61,6 +61,8 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
   // their canonical conformations (centred at the origin,
   // aligned along its principal axes) before starting.
   bool normalize{true};
+  bool useDistCutoff{true};
+  DTYPE distCutoff{4.5};
 };
 }  // namespace GaussianShape
 }  // namespace RDKit

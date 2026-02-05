@@ -16,11 +16,14 @@
 #include <array>
 #include <vector>
 
-#include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/export.h>
 #include <Geometry/Transform3D.h>
 
-#include "ShapeOverlayOptions.h"
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
+#include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
 
 namespace RDKit {
 class ROMol;
@@ -34,7 +37,7 @@ using CustomFeatures =
     std::vector<std::tuple<unsigned int, RDGeom::Point3D, double>>;
 
 struct ShapeInputOptions {
-  ShapeInputOptions();
+  ShapeInputOptions() = default;
   ShapeInputOptions(const ShapeInputOptions &) = default;
   ShapeInputOptions(ShapeInputOptions &&) = default;
   ShapeInputOptions &operator=(const ShapeInputOptions &) = default;
@@ -51,12 +54,6 @@ struct ShapeInputOptions {
   // Whether to use carbon radii for all atoms (which is quicker) or
   // vdw radii appropriate for the elements.
   bool allCarbonRadii{true};
-  // Patterns for assigning features. Uses the normal RDKit ones by default.
-  std::vector<std::vector<std::shared_ptr<ROMol>>> d_ph4Patterns;
-  unsigned int d_nTypes{0};
-
-  // Construct the patterns for the pharmacophre features.
-  void buildPh4Patterns();
 };
 
 // Data for shape alignment code
@@ -67,7 +64,8 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   //! @param confId: The conformer to use
   //! @param opts: Options for setting up the shape
   ShapeInput(const ROMol &mol, int confId = -1,
-             const ShapeInputOptions &opts = ShapeInputOptions());
+             const ShapeInputOptions &opts = ShapeInputOptions(),
+             const ShapeOverlayOptions &shapeOpts = ShapeOverlayOptions());
   ShapeInput(const ShapeInput &other);
   ShapeInput(ShapeInput &&other) = default;
   ShapeInput &operator=(const ShapeInput &other);

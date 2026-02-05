@@ -32,7 +32,8 @@ SingleConformerAlignment::SingleConformerAlignment(
     DTYPE refShapeVol, DTYPE refColorVol, const DTYPE *fit, DTYPE *fitTemp,
     const int *fitTypes, const boost::dynamic_bitset<> *fitCarbonRadii,
     int nFitShape, int nFitColor, DTYPE fitShapeVol, DTYPE fitColorVol,
-    OptimMode optimMode, DTYPE mixingParam, unsigned int maxIts)
+    OptimMode optimMode, DTYPE mixingParam, bool useCutoff, DTYPE distCutoff,
+    unsigned int maxIts)
     : d_ref(ref),
       d_refTemp(refTemp),
       d_refTypes(refTypes),
@@ -51,13 +52,16 @@ SingleConformerAlignment::SingleConformerAlignment(
       d_fitColorVol(fitColorVol),
       d_optimMode(optimMode),
       d_mixingParam(mixingParam),
+      d_useCutoff(useCutoff),
+      d_distCutoff2(distCutoff * distCutoff),
       d_maxIts(maxIts) {}
 
 std::array<DTYPE, 5> SingleConformerAlignment::calcScores(
     const DTYPE *ref, const DTYPE *fit, bool includeColor) const {
   std::array<DTYPE, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
   scores[3] = calcVolAndGrads(ref, d_nRefShape, *d_refCarbonRadii, fit,
-                              d_nFitShape, *d_fitCarbonRadii, nullptr, nullptr);
+                              d_nFitShape, *d_fitCarbonRadii, d_useCutoff,
+                              d_distCutoff2, nullptr, nullptr);
   if (d_nRefColor && d_nFitColor &&
       (d_optimMode == OptimMode::SHAPE_PLUS_COLOR || includeColor)) {
     scores[4] = calcVolAndGrads(ref + d_nRefShape * D, d_nRefColor,
@@ -131,7 +135,8 @@ DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts,
                       const boost::dynamic_bitset<> &refCarbonRadii,
                       const DTYPE *fit, int numFitPts,
                       const boost::dynamic_bitset<> &fitCarbonRadii,
-                      const DTYPE *quat, DTYPE *gradients) {
+                      bool useCutoff, DTYPE distCutoff2, const DTYPE *quat,
+                      DTYPE *gradients) {
   std::vector<GradConverter> gradConverters;
   if (gradients) {
     cartToQuatGrads(quat, fit, numFitPts, gradConverters);
@@ -148,6 +153,9 @@ DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts,
       auto dy = ref[i + 1] - fit[j + 1];
       auto dz = ref[i + 2] - fit[j + 2];
       auto d2 = dx * dx + dy * dy + dz * dz;
+      if (useCutoff && d2 > distCutoff2) {
+        continue;
+      }
       const auto aj = fit[j + 3];
       auto mult = -(ai * aj) / (ai + aj);
       auto kij = exp(mult * d2);
@@ -250,9 +258,10 @@ void SingleConformerAlignment::calcVolumeAndGradients(
   // fit so that the types are already there.
   gradients[0] = gradients[1] = gradients[2] = gradients[3] = gradients[4] =
       gradients[5] = gradients[6] = 0.0;
-  shapeOvlpVol = calcVolAndGrads(d_refTemp, d_nRefShape, *d_refCarbonRadii,
-                                 d_fitTemp, d_nFitShape, *d_fitCarbonRadii,
-                                 quat.data(), gradients.data());
+  shapeOvlpVol =
+      calcVolAndGrads(d_refTemp, d_nRefShape, *d_refCarbonRadii, d_fitTemp,
+                      d_nFitShape, *d_fitCarbonRadii, d_useCutoff,
+                      d_distCutoff2, quat.data(), gradients.data());
   if (d_optimMode == OptimMode::SHAPE_PLUS_COLOR) {
     std::array<DTYPE, 7> colorGrads{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     colorOvlpVol = calcVolAndGrads(
