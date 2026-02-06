@@ -138,37 +138,28 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
     AttachmentMap attachment_point_map;
 
     auto chain = monomer_mol.getPolymer(polymer_id);
-    auto monomer_class = getMonomerClass(polymer_id);
     bool sanitize = false;
 
     // Add the monomers to the atomistic mol
     for (const auto monomer_idx : chain.atoms) {
         const auto monomer = monomer_mol.getAtomWithIdx(monomer_idx);
         auto monomer_label = monomer->getProp<std::string>(ATOM_LABEL);
+        auto monomer_class = monomer->getMonomerInfo()->getMonomerClass();
 
-        std::string monomer_data;
+        std::unique_ptr<RDKit::RWMol> new_monomer;
+
         if (monomer->getProp<bool>(SMILES_MONOMER)) {
-            monomer_data = monomer_label;
-        } else {
-            auto data = db.getMonomerData(monomer_label, monomer_class);
-            if (!data) {
-                throw std::out_of_range(
-                    "Peptide Monomer " + monomer_label + " not found in Monomer database");
+            // SMILES monomer - parse from the label
+            std::string monomer_data = monomer_label;
+            new_monomer.reset(RDKit::SmilesToMol(monomer_data, 0, sanitize));
+
+            if (!new_monomer) {
+                // FIXME: I think this is an issue with the HELM parser, see
+                // SHARED-11457
+                new_monomer.reset(
+                    RDKit::SmilesToMol("[" + monomer_data + "]", 0, sanitize));
             }
-            monomer_data = *data;
-        }
 
-        std::unique_ptr<RDKit::RWMol> new_monomer(
-            RDKit::SmilesToMol(monomer_data, 0, sanitize));
-
-        if (!new_monomer) {
-            // FIXME: I think this is an issue with the HELM parser, see
-            // SHARED-11457
-            new_monomer.reset(
-                RDKit::SmilesToMol("[" + monomer_data + "]", 0, sanitize));
-        }
-
-        if (monomer->getProp<bool>(SMILES_MONOMER)) {
             // SMILES monomers may be in rgroup form like
             // *N[C@H](C(=O)O)S* |$_R1;;;;;;;_R3$| or use atom map numbers like
             // [*:1]N[C@H](C(=O)O)S[*:3]. Translate the RGroup to atom map
@@ -182,6 +173,21 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
                     atom->setAtomMapNum(rgroup_num);
                     atom->clearProp(RDKit::common_properties::atomLabel);
                 }
+            }
+        } else {
+            // Try to get the pre-parsed molecule directly from the library
+            auto mol = db.getMonomer(monomer_label, monomer_class);
+            if (mol) {
+                // Copy the molecule so we can modify it
+                new_monomer = std::make_unique<RDKit::RWMol>(*mol);
+            } else {
+                // Fall back to parsing from data string (SMILES/SDF)
+                auto data = db.getMonomerData(monomer_label, monomer_class);
+                if (!data) {
+                    throw std::out_of_range(
+                        monomer_class + " monomer " + monomer_label + " not found in Monomer database");
+                }
+                new_monomer.reset(RDKit::SmilesToMol(*data, 0, sanitize));
             }
         }
 
