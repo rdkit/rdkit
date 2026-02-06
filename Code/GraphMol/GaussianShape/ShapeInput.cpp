@@ -95,7 +95,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
                        const ShapeInputOptions &opts,
                        const ShapeOverlayOptions &shapeOpts) {
   extractAtoms(mol, confId, opts);
-  if (opts.useFeatures) {
+  if (opts.useColors) {
     extractFeatures(mol, confId, opts);
   }
   calcNormalization(mol, confId);

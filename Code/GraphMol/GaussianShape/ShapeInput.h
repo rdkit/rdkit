@@ -47,7 +47,7 @@ struct ShapeInputOptions {
 
   // By default, it will create features using the RDKit pharmacophore
   // definitions.
-  bool useFeatures{true};
+  bool useColors{true};
   // Custom color features used verbatim.  A vector of
   // tuples of integer type, Point3D coords, double radius.
   CustomFeatures customFeatures;
