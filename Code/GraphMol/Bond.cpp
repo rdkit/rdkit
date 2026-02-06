@@ -85,7 +85,7 @@ unsigned int Bond::getOtherAtomIdx(const unsigned int thisIdx) const {
   }
   // This "precondition" would check exactly the same that is checked
   // above, but no need to be redundant, so just throw.
-  PRECONDITION(false, "bad index");
+  POSTCONDITION(false, "bad index");
 }
 
 void Bond::setBeginAtomIdx(unsigned int what) {
