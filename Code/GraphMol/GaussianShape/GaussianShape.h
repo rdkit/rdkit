@@ -35,10 +35,11 @@ namespace GaussianShape {
   \param xform         if passed in as non-null, will be populated with the
                        transformation matrix that aligns fit onto ref.
 
-  \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-  if useColors is false)
+\return an array of the combination score of the shape Tanimoto value and the
+  color Tanimoto value (zero if not colors used) and the individual values.  If
+  using color features, defaults to RDKit pphore types for the features.
 */
-RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignShape(
+RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignShape(
     const ShapeInput &refShape, ShapeInput &fitShape,
     RDGeom::Transform3D *xform = nullptr,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
@@ -54,11 +55,11 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignShape(
   \param fitConfId     (optional) the conformer to use for the fit
                        molecule
 
-  \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-          if opt_param is 1.0.)  If useColors is True, uses RDKit pphore
-          types for the features.
+\return an array of the combination score of the shape Tanimoto value and the
+  color Tanimoto value (zero if not colors used) and the individual values.  If
+  using color features, defaults to RDKit pphore types for the features.
 */
-RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignMolecule(
+RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignMolecule(
     const ShapeInput &refShape, ROMol &fit,
     const ShapeInputOptions &fitOpts = ShapeInputOptions(),
     RDGeom::Transform3D *xform = nullptr,
@@ -79,11 +80,11 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignMolecule(
   \param fitConfId     (optional) the conformer to use for the fit
                        molecule
 
-  \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-          if opt_param is 1.0.)  If useColors is True, uses RDKit pphore
-          types for the features.
+  \return an array of the combination score of the shape Tanimoto value and the
+  color Tanimoto value (zero if not colors used) and the individual values.  If
+  using color features, defaults to RDKit pphore types for the features.
 */
-RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignMolecule(
+RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignMolecule(
     const ROMol &ref, ROMol &fit,
     const ShapeInputOptions &refOpts = ShapeInputOptions(),
     const ShapeInputOptions &fitOpts = ShapeInputOptions(),
@@ -106,11 +107,11 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> AlignMolecule(
   \param fitShape      the shape to score
   \param overlayOpts   options for setting up the shapes
 
-  \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-          if opt_param is 1.0.)  If useColors is True, uses RDKit pphore
-          types for the features.
+\return an array of the combination score of the shape Tanimoto value and the
+  color Tanimoto value (zero if not colors used) and the individual values.  If
+  using color features, defaults to RDKit pphore types for the features.
 */
-RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> ScoreShape(
+RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreShape(
     const ShapeInput &refShape, const ShapeInput &fitShape,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
 
@@ -124,11 +125,11 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> ScoreShape(
   \param fitConfId     (optional) the conformer to use for the fit
                        molecule
 
-  \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-          if opt_param is 1.0.)  If useColors is True, uses RDKit pphore
-          types for the features.
+\return an array of the combination score of the shape Tanimoto value and the
+  color Tanimoto value (zero if not colors used) and the individual values.  If
+  using color features, defaults to RDKit pphore types for the features.
 */
-RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
+RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreMolecule(
     const ShapeInput &refShape, const ROMol &fit,
     const ShapeInputOptions &fitOpts = ShapeInputOptions(),
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
@@ -147,11 +148,11 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
   \param fitConfId     (optional) the conformer to use for the fit
                        molecule
 
-  \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
-          if opt_param is 1.0.)  If useColors is True, uses RDKit pphore
-          types for the features.
+\return an array of the combination score of the shape Tanimoto value and the
+  color Tanimoto value (zero if not colors used) and the individual values.  If
+  using color features, defaults to RDKit pphore types for the features.
 */
-RDKIT_GAUSSIANSHAPE_EXPORT std::pair<double, double> ScoreMolecule(
+RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreMolecule(
     const ROMol &ref, const ROMol &fit,
     const ShapeInputOptions &refOpts = ShapeInputOptions(),
     const ShapeInputOptions &fitOpts = ShapeInputOptions(),

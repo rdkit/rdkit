@@ -202,10 +202,10 @@ RDGeom::Point3D getInitialTranslation(int index, const ShapeInput &refShape,
   return disp;
 }
 
-std::pair<double, double> alignShape(const ShapeInput &refShape,
-                                     const ShapeInput &fitShape,
-                                     RDGeom::Transform3D &bestXform,
-                                     const ShapeOverlayOptions &overlayOpts) {
+std::array<double, 3> alignShape(const ShapeInput &refShape,
+                                 const ShapeInput &fitShape,
+                                 RDGeom::Transform3D &bestXform,
+                                 const ShapeOverlayOptions &overlayOpts) {
   unsigned int finalRotIndex = 1;
   switch (overlayOpts.startMode) {
     case StartMode::ROTATE_0:
@@ -229,7 +229,7 @@ std::pair<double, double> alignShape(const ShapeInput &refShape,
     finalTransIndex = 7;
   }
 
-  std::pair<double, double> bestScore;
+  std::array<double, 3> bestScore;
   double bestTotal = -1.0;
   RDGeom::Transform3D initialRot, initialTrans, initialXform;
 
@@ -266,7 +266,8 @@ std::pair<double, double> alignShape(const ShapeInput &refShape,
       sca.doOverlay(outScores);
       if (outScores[0] > bestTotal) {
         bestTotal = outScores[0];
-        bestScore = std::make_pair(outScores[1], outScores[2]);
+        bestScore =
+            std::array<double, 3>{outScores[0], outScores[1], outScores[2]};
         RDGeom::Transform3D tmp;
         tmp.SetRotationFromQuaternion(outScores.data() + 9);
         tmp.SetTranslation(
@@ -283,10 +284,10 @@ std::pair<double, double> alignShape(const ShapeInput &refShape,
 
 }  // namespace
 
-std::pair<double, double> AlignShape(const ShapeInput &refShape,
-                                     ShapeInput &fitShape,
-                                     RDGeom::Transform3D *xform,
-                                     const ShapeOverlayOptions &overlayOpts) {
+std::array<double, 3> AlignShape(const ShapeInput &refShape,
+                                 ShapeInput &fitShape,
+                                 RDGeom::Transform3D *xform,
+                                 const ShapeOverlayOptions &overlayOpts) {
   // The shapes aren't necessarily normalized (it's not done on creation, for
   // example) but they might need to be.
   auto workingRefShape = std::make_unique<ShapeInput>(refShape);
@@ -335,37 +336,37 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
   return scores;
 }
 
-std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
-                                        const ShapeInputOptions &fitOpts,
-                                        RDGeom::Transform3D *xform,
-                                        const ShapeOverlayOptions &overlayOpts,
-                                        int fitConfId) {
+std::array<double, 3> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
+                                    const ShapeInputOptions &fitOpts,
+                                    RDGeom::Transform3D *xform,
+                                    const ShapeOverlayOptions &overlayOpts,
+                                    int fitConfId) {
   auto fitShape = ShapeInput(fit, fitConfId, fitOpts, overlayOpts);
   RDGeom::Transform3D tmpXform;
-  auto tcs = AlignShape(refShape, fitShape, &tmpXform, overlayOpts);
+  auto scores = AlignShape(refShape, fitShape, &tmpXform, overlayOpts);
   MolTransforms::transformConformer(fit.getConformer(fitConfId), tmpXform);
   if (xform) {
     copyTransform(tmpXform, *xform);
   }
-  return tcs;
+  return scores;
 }
 
-std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
-                                        const ShapeInputOptions &refOpts,
-                                        const ShapeInputOptions &fitOpts,
-                                        RDGeom::Transform3D *xform,
-                                        const ShapeOverlayOptions &overlayOpts,
-                                        int refConfId, int fitConfId) {
+std::array<double, 3> AlignMolecule(const ROMol &ref, ROMol &fit,
+                                    const ShapeInputOptions &refOpts,
+                                    const ShapeInputOptions &fitOpts,
+                                    RDGeom::Transform3D *xform,
+                                    const ShapeOverlayOptions &overlayOpts,
+                                    int refConfId, int fitConfId) {
   auto refShape = ShapeInput(ref, refConfId, refOpts, overlayOpts);
   RDGeom::Transform3D tmpXform;
-  auto tcs =
+  auto scores =
       AlignMolecule(refShape, fit, fitOpts, xform, overlayOpts, fitConfId);
-  return tcs;
+  return scores;
 }
 
-std::pair<double, double> ScoreShape(const ShapeInput &refShape,
-                                     const ShapeInput &fitShape,
-                                     const ShapeOverlayOptions &overlayOpts) {
+std::array<double, 3> ScoreShape(const ShapeInput &refShape,
+                                 const ShapeInput &fitShape,
+                                 const ShapeOverlayOptions &overlayOpts) {
   auto refWorking = refShape.getCoords();
   auto fitWorking = fitShape.getCoords();
   SingleConformerAlignment sca(
@@ -382,23 +383,23 @@ std::pair<double, double> ScoreShape(const ShapeInput &refShape,
   bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   auto scores = sca.calcScores(refShape.getCoords().data(),
                                fitShape.getCoords().data(), includeColor);
-  return std::make_pair(scores[1], scores[2]);
+  return std::array{scores[0], scores[1], scores[2]};
 }
 
-std::pair<double, double> ScoreMolecule(const ShapeInput &refShape,
-                                        const ROMol &fit,
-                                        const ShapeInputOptions &fitOpts,
-                                        const ShapeOverlayOptions &overlayOpts,
-                                        int fitConfId) {
+std::array<double, 3> ScoreMolecule(const ShapeInput &refShape,
+                                    const ROMol &fit,
+                                    const ShapeInputOptions &fitOpts,
+                                    const ShapeOverlayOptions &overlayOpts,
+                                    int fitConfId) {
   auto fitShape = ShapeInput(fit, fitConfId, fitOpts, overlayOpts);
   return ScoreShape(refShape, fitShape, overlayOpts);
 }
 
-std::pair<double, double> ScoreMolecule(const ROMol &ref, const ROMol &fit,
-                                        const ShapeInputOptions &refOpts,
-                                        const ShapeInputOptions &fitOpts,
-                                        const ShapeOverlayOptions &overlayOpts,
-                                        int refConfId, int fitConfId) {
+std::array<double, 3> ScoreMolecule(const ROMol &ref, const ROMol &fit,
+                                    const ShapeInputOptions &refOpts,
+                                    const ShapeInputOptions &fitOpts,
+                                    const ShapeOverlayOptions &overlayOpts,
+                                    int refConfId, int fitConfId) {
   ShapeOverlayOptions tmpOpts = overlayOpts;
   tmpOpts.normalize = false;
   tmpOpts.startMode = StartMode::ROTATE_0;
