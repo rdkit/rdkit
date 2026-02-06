@@ -573,7 +573,9 @@ TEST_CASE("custom feature points") {
   }
 }
 
-#if 1
+#if 0
+// Using this for benchmarking at the moment.  It should probably come out
+// later.
 TEST_CASE("LOBSTER") {
   std::string lobster_file =
       "/Users/david/Projects/Lobster/LOBSTER_112024/all_ligands.sdf";
