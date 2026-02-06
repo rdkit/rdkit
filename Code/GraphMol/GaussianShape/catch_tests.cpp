@@ -135,6 +135,22 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(xform.getValUnchecked(3, 3),
                Catch::Matchers::WithinAbs(1.0, 0.005));
   }
+  SECTION("shape plus color score a la pubchem") {
+    overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE;
+    overlayOpts.startMode = GaussianShape::StartMode::A_LA_PUBCHEM;
+    ROMol cp(*probe);
+    const auto scores = GaussianShape::AlignMolecule(
+        *ref, cp, shapeOpts, shapeOpts, nullptr, overlayOpts);
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.494, 0.005));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.760, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.236, 0.005));
+    // Check that a re-score gives the same answer.
+    const auto rescores = GaussianShape::ScoreMolecule(*ref, cp, shapeOpts,
+                                                       shapeOpts, overlayOpts);
+    CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
+    CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
+    CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
+  }
 }
 
 TEST_CASE("bulk") {
@@ -591,6 +607,8 @@ TEST_CASE("LOBSTER") {
   std::mt19937 e2(1);
   std::uniform_real_distribution<double> unif(0, 1);
   GaussianShape::ShapeInputOptions opts;
+  GaussianShape::ShapeOverlayOptions overlayOpts;
+  overlayOpts.startMode = GaussianShape::StartMode::A_LA_PUBCHEM;
   for (const auto acr : std::vector<bool>{true, false}) {
     opts.allCarbonRadii = acr;
     for (size_t i = 1; i < mols.size(); i++) {
@@ -598,8 +616,8 @@ TEST_CASE("LOBSTER") {
         if (unif(e2) > 0.001) {
           continue;
         }
-        auto scores =
-            GaussianShape::AlignMolecule(*mols[i], *mols[j], opts, opts);
+        auto scores = GaussianShape::AlignMolecule(*mols[i], *mols[j], opts,
+                                                   opts, nullptr, overlayOpts);
         sum_st += scores[1];
         sum_ct += scores[2];
         ++num;

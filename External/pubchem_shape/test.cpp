@@ -65,6 +65,7 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.231, 0.005));
   }
   SECTION("no colors") {
+    std::cout << "no oclors" << std::endl;
     std::vector<float> matrix(12, 0.0);
     int refConfId = -1;
     int prbConfId = -1;

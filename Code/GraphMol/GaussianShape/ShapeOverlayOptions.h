@@ -29,11 +29,14 @@ enum class RDKIT_GAUSSIANSHAPE_EXPORT StartMode {
                       //! small amount (~25 degrees) about each axis and use the
                       //! highest scoring of those as the start point for that
                       //! rotation angle
-  ROTATE_90,  //! ROTATE_180 plus rotate by 90 degrees about each of x, y, z
+  ROTATE_45,  //! ROTATE_180 plus rotate by 45 degrees about pairs of each of x,
+              //! y, z
   ROTATE_0_FRAGMENT,    //! No rotation, translate probe to each end of ref
   ROTATE_180_FRAGMENT,  //! Translate probe to each end of ref and then
                         //! ROTATE_180
-  ROTATE_90_FRAGMENT,  //! Translate probe to each end of ref and then ROTATE_90
+  ROTATE_45_FRAGMENT,  //! Translate probe to each end of ref and then ROTATE_90
+  A_LA_PUBCHEM,  //! Uses the eigenvalues of the principal vectors do decide
+                 //! whether to do ROTATE_180_WIGGLE or ROTATE_45
 };
 
 enum class RDKIT_GAUSSIANSHAPE_EXPORT OptimMode {

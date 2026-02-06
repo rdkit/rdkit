@@ -77,18 +77,18 @@ RDGeom::Transform3D computeFinalTransform(const ShapeInput &refShape,
 // Return the original transformation matrix for the given index.
 // Different optimisation modes have different numbers of starting
 // orientations to try. In order these are no transformation, rotate 180
-// degrees about each axis and rotate +/- 90 degrees about each axis.
+// degrees about each axis and rotate +/- 45 degrees about 2 axes at a time.
 void getInitialRotation(int index, RDGeom::Transform3D &initXform) {
-  static const DTYPE sinpi_2 = std::sin(2.0 * std::atan(1.0));
+  static const DTYPE sinpi_4 = std::sin(std::atan(1.0));
   const static std::vector<std::array<DTYPE, 4>> quats{
       {1.0, 0.0, 0.0, 0.0},          {0.0, 1.0, 0.0, 0.0},
       {0.0, 0.0, 1.0, 0.0},          {0.0, 0.0, 0.0, 1.0},
-      {sinpi_2, -sinpi_2, 0.0, 0.0}, {sinpi_2, sinpi_2, 0.0, 0.0},
-      {0.0, 0.0, -sinpi_2, sinpi_2}, {0.0, 0.0, sinpi_2, sinpi_2},
-      {sinpi_2, 0.0, 0.0, -sinpi_2}, {0.0, sinpi_2, sinpi_2, 0.0},
-      {sinpi_2, 0.0, 0.0, sinpi_2},  {0.0, -sinpi_2, sinpi_2, 0.0},
-      {sinpi_2, 0.0, sinpi_2, 0.0},  {0.0, sinpi_2, 0.0, sinpi_2},
-      {0.0, -sinpi_2, 0.0, sinpi_2}, {sinpi_2, 0.0, -sinpi_2, 0.0}};
+      {sinpi_4, -sinpi_4, 0.0, 0.0}, {sinpi_4, sinpi_4, 0.0, 0.0},
+      {0.0, 0.0, -sinpi_4, sinpi_4}, {0.0, 0.0, sinpi_4, sinpi_4},
+      {sinpi_4, 0.0, 0.0, -sinpi_4}, {0.0, sinpi_4, sinpi_4, 0.0},
+      {sinpi_4, 0.0, 0.0, sinpi_4},  {0.0, -sinpi_4, sinpi_4, 0.0},
+      {sinpi_4, 0.0, sinpi_4, 0.0},  {0.0, sinpi_4, 0.0, sinpi_4},
+      {0.0, -sinpi_4, 0.0, sinpi_4}, {sinpi_4, 0.0, -sinpi_4, 0.0}};
   initXform.setToIdentity();
   initXform.SetRotationFromQuaternion(quats[index].data());
 }
@@ -202,12 +202,53 @@ RDGeom::Point3D getInitialTranslation(int index, const ShapeInput &refShape,
   return disp;
 }
 
+// This is how the PubChem code decides between ROTATE_180_WIGGLE and
+// ROTATE_45.  I have no clue.
+unsigned int calculateQrat(const std::array<double, 3> &eigenValues) {
+  const static double qrat_threshold = 0.7225;  // 0.85*0.85;
+  unsigned int qrat = 1000;
+  unsigned int u_rqyx, u_rqzy;
+  double double_ev_oe[3]{eigenValues[1] + eigenValues[2] - eigenValues[0],
+                         eigenValues[0] + eigenValues[2] - eigenValues[1],
+                         eigenValues[0] + eigenValues[1] - eigenValues[2]};
+  if (double_ev_oe[1] > 0) {
+    if (qrat_threshold < (double_ev_oe[1] / double_ev_oe[0])) {
+      u_rqyx = 1;
+    } else {
+      u_rqyx = 0;
+    }
+    if (qrat_threshold < (double_ev_oe[2] / double_ev_oe[1])) {
+      u_rqzy = 1;
+    } else {
+      u_rqzy = 0;
+    }
+
+    qrat = u_rqyx + u_rqzy;
+  }
+  return qrat;
+}
+
+StartMode decideStartModeFromEigenValues(const ShapeInput &refShape,
+                                         const ShapeInput &fitShape) {
+  auto rqrat = calculateQrat(refShape.getEigenValues());
+  auto fqrat = calculateQrat(fitShape.getEigenValues());
+  if (rqrat > 0 || fqrat > 0) {
+    return StartMode::ROTATE_45;
+  } else {
+    return StartMode::ROTATE_180_WIGGLE;
+  }
+}
+
 std::array<double, 3> alignShape(const ShapeInput &refShape,
                                  const ShapeInput &fitShape,
                                  RDGeom::Transform3D &bestXform,
                                  const ShapeOverlayOptions &overlayOpts) {
   unsigned int finalRotIndex = 1;
-  switch (overlayOpts.startMode) {
+  auto startMode = overlayOpts.startMode;
+  if (startMode == StartMode::A_LA_PUBCHEM) {
+    startMode = decideStartModeFromEigenValues(refShape, fitShape);
+  }
+  switch (startMode) {
     case StartMode::ROTATE_0:
     case StartMode::ROTATE_0_FRAGMENT:
       break;
@@ -216,16 +257,18 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
     case StartMode::ROTATE_180_WIGGLE:
       finalRotIndex = 4;
       break;
-    case StartMode::ROTATE_90:
-    case StartMode::ROTATE_90_FRAGMENT:
+    case StartMode::ROTATE_45:
+    case StartMode::ROTATE_45_FRAGMENT:
       finalRotIndex = 16;
+      break;
+    default:
       break;
   }
 
   unsigned int finalTransIndex = 1;
-  if (overlayOpts.startMode == StartMode::ROTATE_0_FRAGMENT ||
-      overlayOpts.startMode == StartMode::ROTATE_90_FRAGMENT ||
-      overlayOpts.startMode == StartMode::ROTATE_180_FRAGMENT) {
+  if (startMode == StartMode::ROTATE_0_FRAGMENT ||
+      startMode == StartMode::ROTATE_45_FRAGMENT ||
+      startMode == StartMode::ROTATE_180_FRAGMENT) {
     finalTransIndex = 7;
   }
 
@@ -239,7 +282,7 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
   for (unsigned int j = 0; j < finalTransIndex; j++) {
     auto refDisp = getInitialTranslation(j, refShape, fitShape);
     for (unsigned int i = 0; i < finalRotIndex; i++) {
-      if (overlayOpts.startMode == StartMode::ROTATE_180_WIGGLE) {
+      if (startMode == StartMode::ROTATE_180_WIGGLE) {
         getInitialRotation(i, refShape, fitShape, refDisp, overlayOpts,
                            workingRef, workingFit, initialRot);
       } else {

@@ -177,13 +177,14 @@ void wrap_rdGaussianShape() {
       .value("ROTATE_180", RDKit::GaussianShape::StartMode::ROTATE_180)
       .value("ROTATE_180_WIGGLE",
              RDKit::GaussianShape::StartMode::ROTATE_180_WIGGLE)
-      .value("ROTATE_90", RDKit::GaussianShape::StartMode::ROTATE_90)
+      .value("ROTATE_90", RDKit::GaussianShape::StartMode::ROTATE_45)
       .value("ROTATE_0_FRAGMENT",
              RDKit::GaussianShape::StartMode::ROTATE_0_FRAGMENT)
       .value("ROTATE_180_FRAGMENT",
              RDKit::GaussianShape::StartMode::ROTATE_180_FRAGMENT)
       .value("ROTATE_90_FRAGMENT",
-             RDKit::GaussianShape::StartMode::ROTATE_90_FRAGMENT)
+             RDKit::GaussianShape::StartMode::ROTATE_45_FRAGMENT)
+      .value("A_LA_PUBCHEM", GaussianShape::StartMode::A_LA_PUBCHEM)
       .export_values();
 
   python::enum_<RDKit::GaussianShape::OptimMode>("OptimMode")

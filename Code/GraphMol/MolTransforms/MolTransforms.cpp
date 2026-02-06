@@ -259,7 +259,8 @@ bool computePrincipalAxesAndMomentsFromGyrationMatrix(
 RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                                                const RDGeom::Point3D *center,
                                                bool normalizeCovar,
-                                               bool ignoreHs) {
+                                               bool ignoreHs,
+                                               double *retEigenValues) {
   constexpr unsigned int DIM = 3;
   RDGeom::Point3D origin;
   if (!center) {
@@ -291,6 +292,9 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                 });
       for (unsigned int col = 0; col < DIM; ++col) {
         unsigned int colSorted = eigValsSorted.at(col).first;
+        if (retEigenValues) {
+          retEigenValues[colSorted] = eigValsSorted.at(col).second;
+        }
         for (unsigned int row = 0; row < DIM; ++row) {
           trans->setVal(col, row, eigVecs(row, colSorted));
         }
