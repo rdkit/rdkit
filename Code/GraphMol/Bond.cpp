@@ -78,15 +78,14 @@ void Bond::setOwningMol(ROMol *other) {
 }
 
 unsigned int Bond::getOtherAtomIdx(const unsigned int thisIdx) const {
-  PRECONDITION(d_beginAtomIdx == thisIdx || d_endAtomIdx == thisIdx,
-               "bad index");
   if (d_beginAtomIdx == thisIdx) {
     return d_endAtomIdx;
   } else if (d_endAtomIdx == thisIdx) {
     return d_beginAtomIdx;
   }
-  // we cannot actually get down here
-  return 0;
+  // This "precondition" would check exactly the same that is checked
+  // above, but no need to be redundant, so just throw.
+  PRECONDITION(false, "bad index");
 }
 
 void Bond::setBeginAtomIdx(unsigned int what) {
