@@ -3014,8 +3014,7 @@ void processZBO(RWMol &mol, const SubstanceGroup &sg) {
   }
 }
 
-void processZCH(RWMol &mol, const SubstanceGroup &sg) {
-  RDUNUSED_PARAM(mol);
+void processZCH([[maybe_unused]] RWMol &mol, const SubstanceGroup &sg) {
   std::vector<std::string> dataFields;
   if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
     if (dataFields.empty()) {
@@ -3560,15 +3559,7 @@ std::unique_ptr<RWMol> MolFromMolDataStream(std::istream &inStream,
   tempStr = getLine(inStream);
   res->setProp("_MolFileComments", tempStr);
 
-  unsigned int nAtoms = 0, nBonds = 0, nLists = 0, chiralFlag = 0, nsText = 0,
-               nRxnComponents = 0;
-  int nReactants = 0, nProducts = 0, nIntermediates = 0;
-  (void)nLists;  // read from the file but unused
-  (void)nsText;
-  (void)nRxnComponents;
-  (void)nReactants;
-  (void)nProducts;
-  (void)nIntermediates;
+  unsigned int nAtoms = 0, nBonds = 0, chiralFlag = 0;
   // counts line, this is where we really get started
   line++;
   tempStr = getLine(inStream);
@@ -3599,7 +3590,8 @@ std::unique_ptr<RWMol> MolFromMolDataStream(std::istream &inStream,
   try {
     spos = 6;
     if (tempStr.size() >= 9) {
-      nLists = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
+      [[maybe_unused]] unsigned int nLists =
+          FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
     spos = 12;
@@ -3609,28 +3601,31 @@ std::unique_ptr<RWMol> MolFromMolDataStream(std::istream &inStream,
 
     spos = 15;
     if (tempStr.size() >= spos + 3) {
-      nsText = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
+      [[maybe_unused]] unsigned int nsText =
+          FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
     spos = 18;
     if (tempStr.size() >= spos + 3) {
-      nRxnComponents =
+      [[maybe_unused]] unsigned int nRxnComponents =
           FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
     spos = 21;
     if (tempStr.size() >= spos + 3) {
-      nReactants = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
+      [[maybe_unused]] int nReactants =
+          FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
     spos = 24;
     if (tempStr.size() >= spos + 3) {
-      nProducts = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
+      [[maybe_unused]] int nProducts =
+          FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
     spos = 27;
     if (tempStr.size() >= spos + 3) {
-      nIntermediates =
+      [[maybe_unused]] int nIntermediates =
           FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
     }
 
