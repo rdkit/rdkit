@@ -88,7 +88,8 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   // This one computes the scores from the given overlap volumes.  Color score
   // only calculated if the color volumes are non-zero.
   std::array<DTYPE, 5> calcScores(const DTYPE shapeOvVol,
-                                  const DTYPE colorOvVol) const;
+                                  const DTYPE colorOvVol,
+                                  bool includeColor = true) const;
 
   // Calculate the overlap volume between A and B after the given "quaternion"
   // has been applied.  The "quaternion" is 7 elements, the first 4 the

@@ -69,18 +69,18 @@ std::array<DTYPE, 5> SingleConformerAlignment::calcScores(
                                 d_nFitColor, d_fitTypes + d_nFitShape, nullptr,
                                 nullptr);
   }
-  scores = calcScores(scores[3], scores[4]);
+  scores = calcScores(scores[3], scores[4], includeColor);
   return scores;
 }
 
 std::array<DTYPE, 5> SingleConformerAlignment::calcScores(
-    const DTYPE shapeOvVol, const DTYPE colorOvVol) const {
+    const DTYPE shapeOvVol, const DTYPE colorOvVol, bool includeColor) const {
   std::array<DTYPE, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
   scores[3] = shapeOvVol;
   scores[4] = colorOvVol;
   scores[1] = scores[3] / (d_refShapeVol + d_fitShapeVol - scores[3]);
   if (d_nRefColor && d_nFitColor && d_refColorVol > 0.0 &&
-      d_fitColorVol > 0.0) {
+      d_fitColorVol > 0.0 && includeColor) {
     scores[2] = scores[4] / (d_refColorVol + d_fitColorVol - scores[4]);
     scores[0] = scores[1] * (1 - d_mixingParam) + scores[2] * d_mixingParam;
   } else {

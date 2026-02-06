@@ -105,7 +105,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignMolecule(
 /*!
   \param refShape      the reference shape
   \param fitShape      the shape to score
-  \param overlayOpts   options for setting up the shapes
+  \param overlayOpts   options for controlling the volume calculation
 
 \return an array of the combination score of the shape Tanimoto value and the
   color Tanimoto value (zero if not colors used) and the individual values.  If
@@ -121,7 +121,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreShape(
   \param ref           the reference shape
   \param fit           the molecule to score
   \param fitOpts       the options for creating the fit shape
-  \param overlayOpts   options for setting up the shapes
+  \param overlayOpts   options for controlling the volume calculation
   \param fitConfId     (optional) the conformer to use for the fit
                        molecule
 
@@ -142,7 +142,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreMolecule(
   \param fit           the molecule to score
   \param refOpts       the options for creating the ref shape
   \param fitOpts       the options for creating the fit shape
-  \param overlayOpts   options for setting up the shapes
+  \param overlayOpts   options for controlling the volume calculation
   \param refConfId     (optional) the conformer to use for the reference
                        molecule
   \param fitConfId     (optional) the conformer to use for the fit

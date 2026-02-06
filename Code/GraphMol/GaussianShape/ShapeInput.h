@@ -77,8 +77,8 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   const std::vector<int> &getTypes() const { return d_types; }
   unsigned int getNumAtoms() const { return d_numAtoms; }
   unsigned int getNumFeatures() const { return d_numFeats; }
-  DTYPE getSelfOverlapVol() const { return d_selfOverlapVol; }
-  DTYPE getSelfOverlapColor() const { return d_selfOverlapColor; }
+  DTYPE getShapeVolume() const { return d_selfOverlapVol; }
+  DTYPE getColorVolume() const { return d_selfOverlapColor; }
   const boost::dynamic_bitset<> &getCarbonRadii() const {
     return d_carbonRadii;
   }

@@ -59,15 +59,15 @@ TEST_CASE("basic alignment") {
   GaussianShape::ShapeInputOptions shapeOpts;
   SECTION("setup") {
     auto refShape = GaussianShape::ShapeInput(*ref, -1, shapeOpts);
-    CHECK_THAT(refShape.getSelfOverlapVol(),
+    CHECK_THAT(refShape.getShapeVolume(),
                Catch::Matchers::WithinAbs(591.057, 0.005));
-    CHECK_THAT(refShape.getSelfOverlapColor(),
+    CHECK_THAT(refShape.getColorVolume(),
                Catch::Matchers::WithinAbs(31.935, 0.005));
 
     auto probeShape = GaussianShape::ShapeInput(*probe, -1, shapeOpts);
-    CHECK_THAT(probeShape.getSelfOverlapVol(),
+    CHECK_THAT(probeShape.getShapeVolume(),
                Catch::Matchers::WithinAbs(751.013, 0.005));
-    CHECK_THAT(probeShape.getSelfOverlapColor(),
+    CHECK_THAT(probeShape.getColorVolume(),
                Catch::Matchers::WithinAbs(42.530, 0.005));
   }
   SECTION("shape only") {
@@ -95,9 +95,9 @@ TEST_CASE("basic alignment") {
     ROMol cp(*probe);
     const auto scores = GaussianShape::AlignMolecule(
         *ref, cp, shapeOpts, shapeOpts, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.496, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.494, 0.005));
     CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.760, 0.005));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.233, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.236, 0.005));
     // Check that a re-score gives the same answer.
     const auto rescores = GaussianShape::ScoreMolecule(*ref, cp, shapeOpts,
                                                        shapeOpts, overlayOpts);
@@ -122,9 +122,9 @@ TEST_CASE("basic alignment") {
     RDGeom::Transform3D xform;
     const auto scores = GaussianShape::AlignMolecule(
         *ref, cp, shapeOpts, shapeOpts, &xform, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.496, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.494, 0.005));
     CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.760, 0.005));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.233, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.236, 0.005));
     // Check a few values from the transform, just to be sure
     CHECK_THAT(xform.getValUnchecked(0, 0),
                Catch::Matchers::WithinAbs(-0.879, 0.005));
@@ -174,7 +174,7 @@ TEST_CASE("shape alignment") {
       "FC1(F)C[C@H](C(O)=O)N(Cc2ocnc2)C1 |(-13.7751,-5.72705,4.42607;-13.5139,-6.57336,3.4031;-12.4427,-7.31262,3.74501;-13.2753,-5.79909,2.12476;-14.6561,-5.72979,1.47003;-15.1758,-4.32852,1.43478;-14.8326,-3.71975,0.273487;-15.8245,-3.79789,2.32413;-15.5552,-6.49782,2.34045;-16.6155,-7.17947,1.6112;-17.7293,-6.23972,1.23299;-18.3498,-5.57012,2.24383;-19.2859,-4.81926,1.60121;-19.3144,-4.95061,0.294183;-18.3174,-5.86081,0.0518152;-14.7227,-7.42743,3.1071),wU:4.4|"_smiles;
   RDGeom::Transform3D xform;
   auto scores = GaussianShape::AlignShape(refShape, probeShape, &xform);
-  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.498, 0.005));
+  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.494, 0.005));
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.760, 0.005));
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.227, 0.005));
   SmilesWriteParams params;

@@ -7,3 +7,7 @@ rdkit_headers(GaussianShape.h ShapeInput.h ShapeOverlayOptions.h SingleConformer
 
 rdkit_catch_test(testGaussianShape catch_tests.cpp LINK_LIBRARIES GaussianShape
         FileParsers MolAlign MolTransforms)
+
+if(RDK_BUILD_PYTHON_WRAPPERS)
+    add_subdirectory(Wrap)
+endif()
