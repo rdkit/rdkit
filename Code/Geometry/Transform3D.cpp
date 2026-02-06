@@ -152,3 +152,13 @@ RDGeom::Point3D operator*(const RDGeom::Transform3D &t,
   t.TransformPoint(res);
   return res;
 };
+
+std::ostream &operator<<(std::ostream &out, const RDGeom::Transform3D &t) {
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      out << t.getValUnchecked(i, j) << " ";
+    }
+    out << std::endl;
+  }
+  return out;
+}
