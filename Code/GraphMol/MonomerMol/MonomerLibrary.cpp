@@ -183,8 +183,10 @@ const std::unordered_map<std::string, std::string> symbol_to_pdb({
 } // anonymous namespace
 
 // MonomerLibrary implementation
-MonomerLibrary::MonomerLibrary() {
-    loadBuiltinDefinitions();
+MonomerLibrary::MonomerLibrary(bool loadBuiltins) {
+    if (loadBuiltins) {
+        loadBuiltinDefinitions();
+    }
 }
 
 MonomerLibrary::MonomerLibrary([[maybe_unused]] std::string_view database_path) {
@@ -195,7 +197,7 @@ MonomerLibrary::MonomerLibrary([[maybe_unused]] std::string_view database_path) 
 MonomerLibrary::~MonomerLibrary() = default;
 
 void MonomerLibrary::loadBuiltinDefinitions() {
-    // Load all built-in peptide monomers
+    // Load all built-in peptide monomers. default PEPTIDE to begin
     for (const auto& [symbol, data] : builtin_monomer_data) {
         MonomerKey key{symbol, "PEPTIDE"};
         MonomerEntry entry{
@@ -261,7 +263,7 @@ MonomerLibrary::getPdbCode(const std::string& symbol,
     return std::nullopt;
 }
 
-std::shared_ptr<ROMol> MonomerLibrary::getMonomerMol(
+std::shared_ptr<ROMol> MonomerLibrary::getMonomer(
     const std::string& monomer_id,
     const std::string& monomer_class) const {
     MonomerKey key{monomer_id, monomer_class};
@@ -345,7 +347,7 @@ bool MonomerLibrary::isUsingGlobalLibrary() {
 
 MonomerLibrary& MonomerLibrary::getGlobalLibrary() {
     std::call_once(s_globalLibraryOnce, []() {
-        s_globalLibrary = std::make_unique<MonomerLibrary>();
+        s_globalLibrary = std::make_unique<MonomerLibrary>(true);  // global always has built-ins
     });
     return *s_globalLibrary;
 }

@@ -79,8 +79,8 @@ TEST_CASE("MonomerLibrary") {
   }
 
   SECTION("CustomLibraryViaConstructor") {
-    // Create a custom library with a non-standard monomer
-    auto customLib = std::make_shared<MonomerLibrary>();
+    // Create a custom library with built-ins plus a non-standard monomer
+    auto customLib = std::make_shared<MonomerLibrary>(true);  // load built-ins
 
     // The custom library starts with built-in definitions
     CHECK(customLib->hasMonomer("A", "PEPTIDE"));
@@ -125,8 +125,8 @@ TEST_CASE("MonomerLibrary") {
     MonomerMol mol;
     CHECK(mol.hasCustomLibrary() == false);
 
-    // Create and set a custom library
-    auto customLib = std::make_shared<MonomerLibrary>();
+    // Create and set a custom library with built-ins
+    auto customLib = std::make_shared<MonomerLibrary>(true);  // load built-ins
     customLib->addMonomerFromSmiles(
         "NCCC[C@H](N[H:1])C(=O)[OH:2]",  // ornithine-like
         "Z",
@@ -216,20 +216,20 @@ TEST_CASE("MonomerLibrary") {
     CHECK(mol2.getMonomerLibrary().hasMonomer("M1", "PEPTIDE"));
   }
 
-  SECTION("GetMonomerMol") {
+  SECTION("GetMonomer") {
     auto& lib = MonomerLibrary::getGlobalLibrary();
 
     // Get a parsed molecule for alanine
-    auto alaMol = lib.getMonomerMol("A", "PEPTIDE");
+    auto alaMol = lib.getMonomer("A", "PEPTIDE");
     REQUIRE(alaMol != nullptr);
     CHECK(alaMol->getNumAtoms() > 0);
 
     // Second call should return the same cached molecule
-    auto alaMol2 = lib.getMonomerMol("A", "PEPTIDE");
+    auto alaMol2 = lib.getMonomer("A", "PEPTIDE");
     CHECK(alaMol.get() == alaMol2.get());
 
     // Non-existent monomer returns nullptr
-    auto notFound = lib.getMonomerMol("NOTEXIST", "PEPTIDE");
+    auto notFound = lib.getMonomer("NOTEXIST", "PEPTIDE");
     CHECK(notFound == nullptr);
   }
 
@@ -243,7 +243,7 @@ TEST_CASE("MonomerLibrary") {
     customLib->addMonomer(mol, "TEST", "PEPTIDE", "TST");
 
     // getMol returns the same pre-parsed molecule
-    auto retrieved = customLib->getMonomerMol("TEST", "PEPTIDE");
+    auto retrieved = customLib->getMonomer("TEST", "PEPTIDE");
     CHECK(retrieved.get() == mol.get());
   }
 
@@ -270,7 +270,7 @@ M  END
     CHECK(customLib->hasMonomer("SDF1", "PEPTIDE"));
 
     // getMol should parse the SDF and return a molecule
-    auto mol = customLib->getMonomerMol("SDF1", "PEPTIDE");
+    auto mol = customLib->getMonomer("SDF1", "PEPTIDE");
     REQUIRE(mol != nullptr);
     CHECK(mol->getNumAtoms() == 4);
     CHECK(mol->getNumBonds() == 3);
@@ -289,5 +289,42 @@ M  END
 
     // Restore original state
     MonomerLibrary::useGlobalLibrary(originalState);
+  }
+
+  SECTION("EmptyLibrary") {
+    // Create an empty library (default behavior)
+    auto emptyLib = std::make_shared<MonomerLibrary>();
+
+    // Should not have any built-in monomers
+    CHECK(emptyLib->hasMonomer("A", "PEPTIDE") == false);
+    CHECK(emptyLib->hasMonomer("G", "PEPTIDE") == false);
+    CHECK(emptyLib->hasMonomer("C", "PEPTIDE") == false);
+
+    // Can still add custom monomers
+    emptyLib->addMonomerFromSmiles(
+        "CC[C@H](N[H:1])C(=O)[OH:2]",
+        "CUSTOM",
+        "PEPTIDE",
+        "CUS"
+    );
+    CHECK(emptyLib->hasMonomer("CUSTOM", "PEPTIDE"));
+
+    // Use with MonomerMol
+    MonomerMol mol(emptyLib);
+    mol.addMonomer("CUSTOM", 1, "PEPTIDE", "PEPTIDE1");
+    CHECK(mol.getNumAtoms() == 1);
+
+    // Convert to atomistic works with custom monomer
+    auto atomistic = toAtomistic(mol);
+    CHECK(atomistic->getNumAtoms() > 0);
+  }
+
+  SECTION("LibraryWithBuiltins") {
+    // Explicitly create library with built-ins
+    auto libWithBuiltins = std::make_shared<MonomerLibrary>(true);
+
+    // Should have built-in monomers
+    CHECK(libWithBuiltins->hasMonomer("A", "PEPTIDE"));
+    CHECK(libWithBuiltins->hasMonomer("G", "PEPTIDE"));
   }
 }

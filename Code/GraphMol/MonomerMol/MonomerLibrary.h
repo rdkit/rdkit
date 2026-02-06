@@ -47,8 +47,12 @@ class RDKIT_MONOMERMOL_EXPORT MonomerLibrary {
     //! Return type for getMonomerInfo: {symbol, original_data, monomer_class}
     using monomer_info_t = std::optional<std::tuple<std::string, std::string, std::string>>;
 
-    //! Default constructor - loads built-in definitions
-    MonomerLibrary();
+    //! Constructor
+    /*!
+        \param loadBuiltins If true, loads built-in monomer definitions.
+                            If false (default), creates an empty library.
+    */
+    explicit MonomerLibrary(bool loadBuiltins = false);
 
     //! Constructor with path to database/json file (future use)
     explicit MonomerLibrary(std::string_view database_path);
@@ -81,7 +85,7 @@ class RDKIT_MONOMERMOL_EXPORT MonomerLibrary {
     getPdbCode(const std::string& symbol, const std::string& monomer_class) const;
 
     //! Get parsed molecule for a monomer
-    [[nodiscard]] std::shared_ptr<ROMol> getMonomerMol(
+    [[nodiscard]] std::shared_ptr<ROMol> getMonomer(
         const std::string& monomer_id,
         const std::string& monomer_class) const;
 
@@ -139,6 +143,7 @@ class RDKIT_MONOMERMOL_EXPORT MonomerLibrary {
     std::unordered_map<std::string, MonomerKey> d_pdbCodeIndex;
 
     //! Load built-in monomer definitions
+    //! TODO: this may load in a preset json or sqlite DB
     void loadBuiltinDefinitions();
 
     //! Static state for global mode

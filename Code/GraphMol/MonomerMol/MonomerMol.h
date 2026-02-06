@@ -76,7 +76,8 @@ RDKIT_MONOMERMOL_EXPORT unsigned int getResidueNumber(const Atom* atom);
 /*!
     MonomerMol inherits from ROMol and provides methods for working with
     monomeric molecules where atoms represent monomers and bonds represent
-    linkages between monomers.
+    linkages between monomers. In the future I would like it to inherit from
+    RWMol instead, but that will require a bit more work to handle deletions.
 */
 class RDKIT_MONOMERMOL_EXPORT MonomerMol : public ROMol {
  public:

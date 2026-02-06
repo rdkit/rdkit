@@ -15,7 +15,6 @@
 
 namespace RDKit {
 
-// Free function implementations
 
 bool isMonomer(const Atom* atom) {
     return atom->hasProp(SMILES_MONOMER);
