@@ -42,7 +42,7 @@ static std::string to_fasta(const MonomerMol& mol)
     // make a set of all the chains in the molecule
     std::set<std::string> chains;
     for (auto atom : mol.atoms()) {
-        chains.insert(MonomerMol::getPolymerId(atom));
+        chains.insert(getPolymerId(atom));
     }
     std::stringstream fasta;
     bool first = true;

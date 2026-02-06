@@ -61,8 +61,16 @@ struct Chain {
 enum class ChainType { PEPTIDE, RNA, DNA, CHEM, OTHER };
 enum class MonomerType { REGULAR, SMILES };
 
+// Free utility functions for working with monomer atoms
+
 // Returns true if the atom represents a monomer in a MonomerMol, false otherwise
 RDKIT_MONOMERMOL_EXPORT bool isMonomer(const Atom* atom);
+
+// Get the polymer/chain ID for an atom
+RDKIT_MONOMERMOL_EXPORT std::string getPolymerId(const Atom* atom);
+
+// Get the residue number for an atom
+RDKIT_MONOMERMOL_EXPORT unsigned int getResidueNumber(const Atom* atom);
 
 //! MonomerMol is a molecule class for monomeric representations
 /*!
@@ -199,11 +207,6 @@ class RDKIT_MONOMERMOL_EXPORT MonomerMol : public ROMol {
   [[nodiscard]] Chain getPolymer(std::string_view polymer_id) const;
 
   [[nodiscard]] std::vector<std::string> getPolymerIds() const;
-
-  // Static helpers for atom queries
-  [[nodiscard]] static std::string getPolymerId(const Atom *atom);
-
-  [[nodiscard]] static unsigned int getResidueNumber(const Atom *atom);
 
   // ---- Chain Assignment ----
 

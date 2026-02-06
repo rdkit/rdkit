@@ -185,7 +185,7 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
             }
         }
 
-        auto residue_number = MonomerMol::getResidueNumber(monomer);
+        auto residue_number = getResidueNumber(monomer);
         fillAttachmentPointMap(*new_monomer, attachment_point_map,
                                residue_number, atomistic_mol.getNumAtoms());
         setPDBResidueInfo(*new_monomer, monomer_label, residue_number, chain_id,
@@ -199,12 +199,12 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
         auto bond = monomer_mol.getBondWithIdx(bond_idx);
         auto [from_rgroup, to_rgroup] =
             getAttchpts(bond->getProp<std::string>(LINKAGE));
-        auto from_res = MonomerMol::getResidueNumber(bond->getBeginAtom());
-        auto to_res = MonomerMol::getResidueNumber(bond->getEndAtom());
+        unsigned int from_res = getResidueNumber(bond->getBeginAtom());
+        unsigned int to_res = getResidueNumber(bond->getEndAtom());
 
-        if (attachment_point_map.find({from_res, from_rgroup}) ==
+        if (attachment_point_map.find(std::make_pair(from_res, from_rgroup)) ==
                 attachment_point_map.end() ||
-            attachment_point_map.find({to_res, to_rgroup}) ==
+            attachment_point_map.find(std::make_pair(to_res, to_rgroup)) ==
                 attachment_point_map.end()) {
             // One of these attachment points is not present
             throw std::runtime_error(
@@ -214,9 +214,9 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
         }
 
         auto [core_aid1, attachment_point1] =
-            attachment_point_map.at({from_res, from_rgroup});
+            attachment_point_map.at(std::make_pair(from_res, from_rgroup));
         auto [core_aid2, attachment_point2] =
-            attachment_point_map.at({to_res, to_rgroup});
+            attachment_point_map.at(std::make_pair(to_res, to_rgroup));
 
         [[maybe_unused]] auto atomistic_bond_idx = atomistic_mol.addBond(core_aid1, core_aid2, ::RDKit::Bond::SINGLE) -
             1;
@@ -252,22 +252,22 @@ std::unique_ptr<RDKit::RWMol> toAtomistic(const MonomerMol& monomer_mol)
     for (const auto bnd : monomer_mol.bonds()) {
         auto begin_atom = bnd->getBeginAtom();
         auto end_atom = bnd->getEndAtom();
-        if (MonomerMol::getPolymerId(begin_atom) == MonomerMol::getPolymerId(end_atom)) {
+        if (getPolymerId(begin_atom) == getPolymerId(end_atom)) {
             continue;
         }
-        auto begin_res = MonomerMol::getResidueNumber(begin_atom);
-        auto end_res = MonomerMol::getResidueNumber(end_atom);
+        unsigned int begin_res = getResidueNumber(begin_atom);
+        unsigned int end_res = getResidueNumber(end_atom);
         auto [from_rgroup, to_rgroup] =
             getAttchpts(bnd->getProp<std::string>(LINKAGE));
 
         const auto& begin_attachment_points =
-            polymer_attachment_points.at(MonomerMol::getPolymerId(begin_atom));
+            polymer_attachment_points.at(getPolymerId(begin_atom));
         const auto& end_attachment_points =
-            polymer_attachment_points.at(MonomerMol::getPolymerId(end_atom));
+            polymer_attachment_points.at(getPolymerId(end_atom));
 
-        if (begin_attachment_points.find({begin_res, from_rgroup}) ==
+        if (begin_attachment_points.find(std::make_pair(begin_res, from_rgroup)) ==
                 begin_attachment_points.end() ||
-            end_attachment_points.find({end_res, to_rgroup}) ==
+            end_attachment_points.find(std::make_pair(end_res, to_rgroup)) ==
                 end_attachment_points.end()) {
             // One of these attachment points is not present
             std::string error_msg =
@@ -278,9 +278,9 @@ std::unique_ptr<RDKit::RWMol> toAtomistic(const MonomerMol& monomer_mol)
         }
 
         auto [core_atom1, attachment_point1] =
-            begin_attachment_points.at({begin_res, from_rgroup});
+            begin_attachment_points.at(std::make_pair(begin_res, from_rgroup));
         auto [core_atom2, attachment_point2] =
-            end_attachment_points.at({end_res, to_rgroup});
+            end_attachment_points.at(std::make_pair(end_res, to_rgroup));
         atomistic_mol->addBond(core_atom1, core_atom2, ::RDKit::Bond::SINGLE);
         remove_atoms.push_back(attachment_point1);
         remove_atoms.push_back(attachment_point2);
