@@ -27,12 +27,12 @@ namespace RDKit {
 namespace GaussianShape {
 
 SingleConformerAlignment::SingleConformerAlignment(
-    const DTYPE *ref, DTYPE *refTemp, const int *refTypes,
+    const double *ref, double *refTemp, const int *refTypes,
     const boost::dynamic_bitset<> *refCarbonRadii, int nRefShape, int nRefColor,
-    DTYPE refShapeVol, DTYPE refColorVol, const DTYPE *fit, DTYPE *fitTemp,
+    double refShapeVol, double refColorVol, const double *fit, double *fitTemp,
     const int *fitTypes, const boost::dynamic_bitset<> *fitCarbonRadii,
-    int nFitShape, int nFitColor, DTYPE fitShapeVol, DTYPE fitColorVol,
-    OptimMode optimMode, DTYPE mixingParam, bool useCutoff, DTYPE distCutoff,
+    int nFitShape, int nFitColor, double fitShapeVol, double fitColorVol,
+    OptimMode optimMode, double mixingParam, bool useCutoff, double distCutoff,
     unsigned int maxIts)
     : d_ref(ref),
       d_refTemp(refTemp),
@@ -56,9 +56,9 @@ SingleConformerAlignment::SingleConformerAlignment(
       d_distCutoff2(distCutoff * distCutoff),
       d_maxIts(maxIts) {}
 
-std::array<DTYPE, 5> SingleConformerAlignment::calcScores(
-    const DTYPE *ref, const DTYPE *fit, bool includeColor) const {
-  std::array<DTYPE, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
+std::array<double, 5> SingleConformerAlignment::calcScores(
+    const double *ref, const double *fit, bool includeColor) const {
+  std::array<double, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
   scores[3] = calcVolAndGrads(ref, d_nRefShape, *d_refCarbonRadii, fit,
                               d_nFitShape, *d_fitCarbonRadii, d_useCutoff,
                               d_distCutoff2, nullptr, nullptr);
@@ -73,9 +73,9 @@ std::array<DTYPE, 5> SingleConformerAlignment::calcScores(
   return scores;
 }
 
-std::array<DTYPE, 5> SingleConformerAlignment::calcScores(
-    const DTYPE shapeOvVol, const DTYPE colorOvVol, bool includeColor) const {
-  std::array<DTYPE, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
+std::array<double, 5> SingleConformerAlignment::calcScores(
+    const double shapeOvVol, const double colorOvVol, bool includeColor) const {
+  std::array<double, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
   scores[3] = shapeOvVol;
   scores[4] = colorOvVol;
   scores[1] = scores[3] / (d_refShapeVol + d_fitShapeVol - scores[3]);
@@ -93,8 +93,8 @@ namespace {
 // Set of values to convert the cartesian gradients to quaternion gradients.
 // This uses the chain rule: the dV/qQ = (dV/dr) * dr/dQ) where V is the
 // volume overlap and r is the Cartesian space.
-using GradConverter = std::array<DTYPE, 12>;
-void cartToQuatGrads(const DTYPE *quat, const DTYPE *mol, int numBPts,
+using GradConverter = std::array<double, 12>;
+void cartToQuatGrads(const double *quat, const double *mol, int numBPts,
                      std::vector<GradConverter> &gradConverters) {
   // for ease of ref
   auto q = quat[0];
@@ -131,21 +131,21 @@ void cartToQuatGrads(const DTYPE *quat, const DTYPE *mol, int numBPts,
 // by the quaternion we're using to optimise the overlap volume.  If
 // gradients is null, they won't be calculated.  They are assumed to be
 // initialised correctly.
-DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts,
-                      const boost::dynamic_bitset<> &refCarbonRadii,
-                      const DTYPE *fit, int numFitPts,
-                      const boost::dynamic_bitset<> &fitCarbonRadii,
-                      bool useCutoff, DTYPE distCutoff2, const DTYPE *quat,
-                      DTYPE *gradients) {
+double calcVolAndGrads(const double *ref, int numRefPts,
+                       const boost::dynamic_bitset<> &refCarbonRadii,
+                       const double *fit, int numFitPts,
+                       const boost::dynamic_bitset<> &fitCarbonRadii,
+                       bool useCutoff, double distCutoff2, const double *quat,
+                       double *gradients) {
   std::vector<GradConverter> gradConverters;
   if (gradients) {
     cartToQuatGrads(quat, fit, numFitPts, gradConverters);
   }
-  static constexpr DTYPE KAPPA = 2.41798793102;
-  static const DTYPE CARBON_A = KAPPA / (1.7 * 1.7);
-  static const DTYPE CARBON_BIT = 8.0 * pow(PI / (2 * CARBON_A), 1.5);
-  DTYPE vol = 0.0;
-  DTYPE vij;
+  static constexpr double KAPPA = 2.41798793102;
+  static const double CARBON_A = KAPPA / (1.7 * 1.7);
+  static const double CARBON_BIT = 8.0 * pow(PI / (2 * CARBON_A), 1.5);
+  double vol = 0.0;
+  double vij;
   for (int i = 0, i_idx = 0; i < numRefPts * 4; i += 4, i_idx++) {
     const auto ai = ref[i + 3];
     for (int j = 0, j_idx = 0; j < numFitPts * 4; j += 4, j_idx++) {
@@ -193,10 +193,10 @@ DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts,
   return vol;
 }
 
-DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts, const int *refTypes,
-                      const DTYPE *fit, int numFitPts, const int *fitTypes,
-                      const DTYPE *quat, DTYPE *gradients) {
-  DTYPE vol = 0.0;
+double calcVolAndGrads(const double *ref, int numRefPts, const int *refTypes,
+                       const double *fit, int numFitPts, const int *fitTypes,
+                       const double *quat, double *gradients) {
+  double vol = 0.0;
   std::vector<GradConverter> gradConverters;
   if (gradients) {
     cartToQuatGrads(quat, fit, numFitPts, gradConverters);
@@ -249,14 +249,14 @@ DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts, const int *refTypes,
 }
 
 void SingleConformerAlignment::calcVolumeAndGradients(
-    const std::array<DTYPE, 7> &quat, DTYPE &shapeOvlpVol, DTYPE &colorOvlpVol,
-    std::array<DTYPE, 7> &gradients) {
+    const std::array<double, 7> &quat, double &shapeOvlpVol,
+    double &colorOvlpVol, std::array<double, 7> &gradients) {
   RDGeom::Transform3D transformB;
   // Leave fit at the origin, and move ref to meet it.
   RDGeom::Point3D translateA{-quat[4], -quat[5], -quat[6]};
   translateShape(d_ref, d_refTemp, d_nRefShape + d_nRefColor, translateA);
   // Rotate fit by quaternion
-  DTYPE tq[4]{quat[0], quat[1], quat[2], quat[3]};
+  double tq[4]{quat[0], quat[1], quat[2], quat[3]};
   transformB.SetRotationFromQuaternion(tq);
   applyTransformToShape(d_fit, d_fitTemp, d_nFitShape + d_nFitColor,
                         transformB);
@@ -270,7 +270,7 @@ void SingleConformerAlignment::calcVolumeAndGradients(
                       d_nFitShape, *d_fitCarbonRadii, d_useCutoff,
                       d_distCutoff2, quat.data(), gradients.data());
   if (d_optimMode == OptimMode::SHAPE_PLUS_COLOR) {
-    std::array<DTYPE, 7> colorGrads{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    std::array<double, 7> colorGrads{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     colorOvlpVol = calcVolAndGrads(
         d_refTemp + 4 * d_nRefShape, d_nRefColor, d_refTypes + d_nRefShape,
         d_fitTemp + 4 * d_nFitShape, d_nFitColor, d_fitTypes + d_nFitShape,
@@ -279,14 +279,14 @@ void SingleConformerAlignment::calcVolumeAndGradients(
     // normalize them and then mix by the same rule as the final score.
     auto shapeSum = sqrt(std::accumulate(
         gradients.begin() + 1, gradients.end(), 0.0,
-        [](const auto init, const auto g) -> DTYPE { return init + g * g; }));
+        [](const auto init, const auto g) -> double { return init + g * g; }));
     auto colorSum = sqrt(std::accumulate(
         colorGrads.begin() + 1, colorGrads.end(), 0.0,
-        [](const auto init, const auto g) -> DTYPE { return init + g * g; }));
+        [](const auto init, const auto g) -> double { return init + g * g; }));
     auto ratio = shapeSum / colorSum;
     std::transform(
         gradients.begin() + 1, gradients.end(), colorGrads.begin(),
-        gradients.begin() + 1, [&](const auto g1, const auto g2) -> DTYPE {
+        gradients.begin() + 1, [&](const auto g1, const auto g2) -> double {
           return g1 * (1 - d_mixingParam) + g2 * ratio * d_mixingParam;
         });
   } else {
@@ -295,11 +295,11 @@ void SingleConformerAlignment::calcVolumeAndGradients(
 }
 
 bool SingleConformerAlignment::doOverlay(
-    std::array<DTYPE, 20> &scores, const std::array<DTYPE, 7> &initQuatTrans,
+    std::array<double, 20> &scores, const std::array<double, 7> &initQuatTrans,
     unsigned int cycle) {
-  std::array<DTYPE, 7> quatTrans;
+  std::array<double, 7> quatTrans;
   // if (cycle == 0) {
-  //   quatTrans = std::array<DTYPE, 7>{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  //   quatTrans = std::array<double, 7>{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   // } else {
   //   quatTrans = initQuatTrans;
   // }
@@ -343,14 +343,14 @@ bool SingleConformerAlignment::doOverlay(
 }
 
 namespace {
-DTYPE oneStep(DTYPE grad, DTYPE stepSize, DTYPE quatTrans, DTYPE oldGrad,
-              DTYPE oldQuatTrans) {
-  DTYPE step = 0.0;
+double oneStep(double grad, double stepSize, double quatTrans, double oldGrad,
+               double oldQuatTrans) {
+  double step = 0.0;
   if (std::signbit(grad) != std::signbit(oldGrad)) {
     step = (((quatTrans * fabs(oldGrad)) + (oldQuatTrans * fabs(grad))) /
             (fabs(oldGrad) + fabs(grad) + fabs(grad))) -
            quatTrans;
-    DTYPE newStep = stepSize * grad;
+    double newStep = stepSize * grad;
     if (fabs(step) > fabs(newStep)) {
       // This is definitely what the PubChem code says!  I read it as keeping
       // the sign of step, but the value of newStep.
@@ -362,10 +362,10 @@ DTYPE oneStep(DTYPE grad, DTYPE stepSize, DTYPE quatTrans, DTYPE oldGrad,
   return step;
 }
 
-void calcStep(std::array<DTYPE, 7> &grad, DTYPE qStepSize, DTYPE tStepSize,
-              std::array<DTYPE, 7> &oldGrad, std::array<DTYPE, 7> &quatTrans,
-              std::array<DTYPE, 7> &oldQuatTrans, unsigned int iter,
-              std::array<DTYPE, 7> &step) {
+void calcStep(std::array<double, 7> &grad, double qStepSize, double tStepSize,
+              std::array<double, 7> &oldGrad, std::array<double, 7> &quatTrans,
+              std::array<double, 7> &oldQuatTrans, unsigned int iter,
+              std::array<double, 7> &step) {
   step[0] = 0.0;
   if (iter == 0) {
     // 1st iteration, use default step sizes
@@ -391,10 +391,10 @@ void calcStep(std::array<DTYPE, 7> &grad, DTYPE qStepSize, DTYPE tStepSize,
   }
 }
 
-DTYPE constrainStep(DTYPE maxStep, DTYPE *step, bool checkSize) {
-  DTYPE mStep = std::max({fabs(step[0]), fabs(step[1]), fabs(step[2])});
+double constrainStep(double maxStep, double *step, bool checkSize) {
+  double mStep = std::max({fabs(step[0]), fabs(step[1]), fabs(step[2])});
   if (mStep > maxStep) {
-    DTYPE scaleFactor = maxStep / mStep;
+    double scaleFactor = maxStep / mStep;
     if (fabs(step[0] > maxStep)) {
       step[0] *= scaleFactor;
     }
@@ -406,10 +406,10 @@ DTYPE constrainStep(DTYPE maxStep, DTYPE *step, bool checkSize) {
     }
   }
   if (checkSize) {
-    DTYPE quatSquared =
+    double quatSquared =
         step[0] * step[0] + step[1] * step[1] + step[2] * step[2];
     if (quatSquared > 1.0) {
-      DTYPE scaleFactor = 1.0 / (2.0 * quatSquared);
+      double scaleFactor = 1.0 / (2.0 * quatSquared);
       step[0] *= scaleFactor;
       step[1] *= scaleFactor;
       step[2] *= scaleFactor;
@@ -418,9 +418,9 @@ DTYPE constrainStep(DTYPE maxStep, DTYPE *step, bool checkSize) {
   return mStep;
 }
 
-std::array<DTYPE, 7> combineQuatTrans(const std::array<DTYPE, 7> &q1,
-                                      const std::array<DTYPE, 7> &q2) {
-  std::array<DTYPE, 7> res;
+std::array<double, 7> combineQuatTrans(const std::array<double, 7> &q1,
+                                       const std::array<double, 7> &q2) {
+  std::array<double, 7> res;
   // Multiply the quaternions, which are assumed to be normalised.
   res[0] = q1[0] * q2[0] - q1[1] * q2[1] - q1[2] * q2[2] - q1[3] * q2[3];
   res[1] = q1[0] * q2[1] + q1[1] * q2[0] + q1[2] * q2[3] - q1[3] * q2[2];
@@ -435,13 +435,13 @@ std::array<DTYPE, 7> combineQuatTrans(const std::array<DTYPE, 7> &q1,
   return res;
 }
 
-DTYPE oneReduceStep(DTYPE grad, DTYPE oldGrad, DTYPE quatTrans,
-                    DTYPE oldQuatTrans, DTYPE stepSize, DTYPE step) {
+double oneReduceStep(double grad, double oldGrad, double quatTrans,
+                     double oldQuatTrans, double stepSize, double step) {
   if (std::signbit(grad) != std::signbit(oldGrad)) {
     step = (((quatTrans * fabs(oldGrad)) + (oldQuatTrans * fabs(grad))) /
             (fabs(oldGrad + fabs(grad)))) -
            quatTrans;
-    DTYPE newStep = stepSize * grad;
+    double newStep = stepSize * grad;
     if (fabs(step) > fabs(newStep)) {
       step *= fabs(newStep / step);
     }
@@ -451,7 +451,7 @@ DTYPE oneReduceStep(DTYPE grad, DTYPE oldGrad, DTYPE quatTrans,
     // Going wrong way relative to other components?
     step += stepSize * grad;
   } else {
-    DTYPE delta = grad * (step / (oldGrad - grad));
+    double delta = grad * (step / (oldGrad - grad));
     if (fabs(delta) > fabs(step * 0.1) && fabs(delta) > 0.001) {
       delta *= 0.0005 / fabs(delta);
     }
@@ -460,11 +460,11 @@ DTYPE oneReduceStep(DTYPE grad, DTYPE oldGrad, DTYPE quatTrans,
   return step;
 }
 
-void reduceStep(std::array<DTYPE, 7> &grad, std::array<DTYPE, 7> &oldGrad,
-                std::array<DTYPE, 7> quatTrans,
-                std::array<DTYPE, 7> &oldQuatTrans, unsigned int lineIter,
-                std::array<DTYPE, 7> &step, DTYPE &qStepSize,
-                DTYPE &tStepSize) {
+void reduceStep(std::array<double, 7> &grad, std::array<double, 7> &oldGrad,
+                std::array<double, 7> quatTrans,
+                std::array<double, 7> &oldQuatTrans, unsigned int lineIter,
+                std::array<double, 7> &step, double &qStepSize,
+                double &tStepSize) {
   if (lineIter == 2) {
     qStepSize *= 0.1;
     tStepSize *= 0.1;
@@ -499,23 +499,23 @@ void reduceStep(std::array<DTYPE, 7> &grad, std::array<DTYPE, 7> &oldGrad,
 // code from
 // https://github.com/ncbi/pubchem-align3d/blob/main/shape_neighbor.cpp
 // Original Authors:  Evan Bolton, Leonid Zaslavsky, Paul Thiessen
-bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans,
+bool SingleConformerAlignment::optimise(std::array<double, 7> &quatTrans,
                                         unsigned int maxIters) {
-  const DTYPE maxQuaternionStep = 0.075;   // Maximum step size for quaternion
-  const DTYPE maxTranslationStep = 0.500;  // Maximum step size for translation
-  const DTYPE minQuaternionStep =
+  const double maxQuaternionStep = 0.075;   // Maximum step size for quaternion
+  const double maxTranslationStep = 0.500;  // Maximum step size for translation
+  const double minQuaternionStep =
       0.0002;  // Convergence criteria for quaternion
-  const DTYPE minTranslationStep =
-      0.0020;                          // Convergence criteria for translation
-  const DTYPE minScoreDiff = 0.00002;  // Convergence criteria for comboScore
+  const double minTranslationStep =
+      0.0020;                           // Convergence criteria for translation
+  const double minScoreDiff = 0.00002;  // Convergence criteria for comboScore
 
-  std::array<DTYPE, 7> grad;
-  std::array<DTYPE, 7> oldGrad{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  std::array<DTYPE, 7> oldQuatTrans;
-  std::array<DTYPE, 7> step;
-  DTYPE shapeOvlpVol, colorOvlpVol, comboScore = 0.0;
+  std::array<double, 7> grad;
+  std::array<double, 7> oldGrad{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  std::array<double, 7> oldQuatTrans;
+  std::array<double, 7> step;
+  double shapeOvlpVol, colorOvlpVol, comboScore = 0.0;
   // Steps for the quaternion and translation.
-  DTYPE qStepSize{-0.001}, tStepSize{-0.01};
+  double qStepSize{-0.001}, tStepSize{-0.01};
   bool finished = false;
   for (unsigned iter = 0; iter < maxIters; iter++) {
     calcVolumeAndGradients(quatTrans, shapeOvlpVol, colorOvlpVol, grad);
@@ -530,7 +530,7 @@ bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans,
              step);
 
     // In case we have to backtrack
-    DTYPE oldComboScore = comboScore;
+    double oldComboScore = comboScore;
     oldQuatTrans = quatTrans;
     oldGrad = grad;
 
@@ -539,8 +539,8 @@ bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans,
     for (unsigned int lineIter = 0; !converged; lineIter++) {
       // Check that the absolute max step size does not go beyond some
       // reasonable size
-      DTYPE mqStep = constrainStep(maxQuaternionStep, step.data() + 1, true);
-      DTYPE mtStep = constrainStep(maxTranslationStep, step.data() + 4, false);
+      double mqStep = constrainStep(maxQuaternionStep, step.data() + 1, true);
+      double mtStep = constrainStep(maxTranslationStep, step.data() + 4, false);
       if (mqStep <= minQuaternionStep && mtStep <= minTranslationStep) {
         converged = true;
         comboScore = 0.0;  // Make sure we return to the old one.
@@ -548,7 +548,7 @@ bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans,
       }
       // Calculate the 0th component of the quaternion.  Obviously it
       // relies on the other 3 components being small
-      DTYPE quatSquared =
+      double quatSquared =
           step[1] * step[1] + step[2] * step[2] + step[3] * step[3];
       step[0] = sqrt(1.0 - quatSquared);
       // Update the quaternion with the step, multiplying them.

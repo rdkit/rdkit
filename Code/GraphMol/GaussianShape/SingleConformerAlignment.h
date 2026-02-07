@@ -61,14 +61,17 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// carbon.  This makes it faster but less correct.
   /// @param maxIts - maximum number of iterations for optimiser
   /// of optimiser
-  SingleConformerAlignment(
-      const DTYPE *ref, DTYPE *refTemp, const int *refTypes,
-      const boost::dynamic_bitset<> *refCarbonRadii, int nRefShape,
-      int nRefColor, DTYPE refShapeVol, DTYPE refColorVol, const DTYPE *fit,
-      DTYPE *fitTemp, const int *fitTypes,
-      const boost::dynamic_bitset<> *fitCarbonRadii, int nFitShape,
-      int nFitColor, DTYPE fitShapeVol, DTYPE fitColorVol, OptimMode optimMode,
-      DTYPE mixingParam, bool useCutoff, DTYPE distCutoff, unsigned int maxIts);
+  SingleConformerAlignment(const double *ref, double *refTemp,
+                           const int *refTypes,
+                           const boost::dynamic_bitset<> *refCarbonRadii,
+                           int nRefShape, int nRefColor, double refShapeVol,
+                           double refColorVol, const double *fit,
+                           double *fitTemp, const int *fitTypes,
+                           const boost::dynamic_bitset<> *fitCarbonRadii,
+                           int nFitShape, int nFitColor, double fitShapeVol,
+                           double fitColorVol, OptimMode optimMode,
+                           double mixingParam, bool useCutoff,
+                           double distCutoff, unsigned int maxIts);
 
   SingleConformerAlignment(const SingleConformerAlignment &other) = delete;
   SingleConformerAlignment(SingleConformerAlignment &&other) = delete;
@@ -84,21 +87,21 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   // If includeColor is passed in true, it will compute the color score
   // irrespective of the value in d_optimMode.  We still want the color
   // score even if doing SHAPE_ONLY optimisation, for example.
-  std::array<DTYPE, 5> calcScores(const DTYPE *ref, const DTYPE *fit,
-                                  bool includeColor = false) const;
+  std::array<double, 5> calcScores(const double *ref, const double *fit,
+                                   bool includeColor = false) const;
   // This one computes the scores from the given overlap volumes.  Color score
   // only calculated if the color volumes are non-zero.
-  std::array<DTYPE, 5> calcScores(const DTYPE shapeOvVol,
-                                  const DTYPE colorOvVol,
-                                  bool includeColor = true) const;
+  std::array<double, 5> calcScores(const double shapeOvVol,
+                                   const double colorOvVol,
+                                   bool includeColor = true) const;
 
   // Calculate the overlap volume between A and B after the given "quaternion"
   // has been applied.  The "quaternion" is 7 elements, the first 4 the
   // quaternion the last 3 the translation that currently form the
   // transformation that overlays B onto A.
-  void calcVolumeAndGradients(const std::array<DTYPE, 7> &quat,
-                              DTYPE &shapeOvlpVol, DTYPE &colorOvlpVol,
-                              std::array<DTYPE, 7> &gradients);
+  void calcVolumeAndGradients(const std::array<double, 7> &quat,
+                              double &shapeOvlpVol, double &colorOvlpVol,
+                              std::array<double, 7> &gradients);
 
   /// @brief Do the overlay, feeding the results into scores.
   /// @return scores - the output scores and transformation to reproduce the
@@ -117,50 +120,52 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// 16-19 - not used at present, returned as zeros.
   /// Returns false if it didn't finish with the allowed maximum number of
   /// iterations.
-  bool doOverlay(std::array<DTYPE, 20> &scores,
-                 const std::array<DTYPE, 7> &initQuatTrans, unsigned int cycle);
+  bool doOverlay(std::array<double, 20> &scores,
+                 const std::array<double, 7> &initQuatTrans,
+                 unsigned int cycle);
 
   // Find the quaternion and translation that maximises the volume
   // overlap appropriate to d_optimMode.  Assume it is set to 1,0,0,0,0,0,0
   // on input. Returns false if it didn't finish with the allowed maximum
   // number of iterations.
-  bool optimise(std::array<DTYPE, 7> &quatTrans, unsigned int maxIters);
+  bool optimise(std::array<double, 7> &quatTrans, unsigned int maxIters);
 
-  const DTYPE *d_ref;
-  DTYPE *d_refTemp;
+  const double *d_ref;
+  double *d_refTemp;
   const int *d_refTypes;
   const boost::dynamic_bitset<> *d_refCarbonRadii;
   const int d_nRefShape;
   const int d_nRefColor;
-  const DTYPE d_refShapeVol;
-  const DTYPE d_refColorVol;
-  const DTYPE *d_fit;
-  DTYPE *d_fitTemp;
+  const double d_refShapeVol;
+  const double d_refColorVol;
+  const double *d_fit;
+  double *d_fitTemp;
   const int *d_fitTypes;
   const boost::dynamic_bitset<> *d_fitCarbonRadii;
   const int d_nFitShape;
   const int d_nFitColor;
-  DTYPE d_fitShapeVol;
-  DTYPE d_fitColorVol;
+  double d_fitShapeVol;
+  double d_fitColorVol;
   const OptimMode d_optimMode;
-  const DTYPE d_mixingParam;
+  const double d_mixingParam;
   const bool d_useCutoff;
-  const DTYPE d_distCutoff2;
+  const double d_distCutoff2;
   const unsigned int d_maxIts;
 };
 
 // This is for the atoms/shape features.
-DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts,
-                      const boost::dynamic_bitset<> &refCarbonRadii,
-                      const DTYPE *fit, int numFitPts,
-                      const boost::dynamic_bitset<> &fitCarbonRadii,
-                      const bool useCutoff, const DTYPE distCutoff2,
-                      const DTYPE *quat = nullptr, DTYPE *gradients = nullptr);
+double calcVolAndGrads(const double *ref, int numRefPts,
+                       const boost::dynamic_bitset<> &refCarbonRadii,
+                       const double *fit, int numFitPts,
+                       const boost::dynamic_bitset<> &fitCarbonRadii,
+                       const bool useCutoff, const double distCutoff2,
+                       const double *quat = nullptr,
+                       double *gradients = nullptr);
 // This one is for the features, and only calculates values if the types
 // of 2 features match.
-DTYPE calcVolAndGrads(const DTYPE *ref, int numRefPts, const int *refTypes,
-                      const DTYPE *fit, int numFitPts, const int *fitTypes,
-                      const DTYPE *quat, DTYPE *gradients);
+double calcVolAndGrads(const double *ref, int numRefPts, const int *refTypes,
+                       const double *fit, int numFitPts, const int *fitTypes,
+                       const double *quat, double *gradients);
 
 }  // namespace GaussianShape
 }  // namespace RDKit

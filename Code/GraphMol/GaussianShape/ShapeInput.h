@@ -29,9 +29,9 @@ namespace RDKit {
 class ROMol;
 namespace GaussianShape {
 
-const DTYPE PI = 4 * std::atan(1.0);
+const double PI = 4 * std::atan(1.0);
 // From Grant et al.
-const DTYPE P = 2.7;
+const double P = 2.7;
 const double KAPPA = 2.41798793102;
 using CustomFeatures =
     std::vector<std::tuple<unsigned int, RDGeom::Point3D, double>>;
@@ -72,13 +72,13 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   ShapeInput &operator=(ShapeInput &&other) = default;
   ~ShapeInput() = default;
 
-  const std::vector<DTYPE> &getCoords() const { return d_coords; }
+  const std::vector<double> &getCoords() const { return d_coords; }
   bool getNormalized() const { return d_normalized; }
   const std::vector<int> &getTypes() const { return d_types; }
   unsigned int getNumAtoms() const { return d_numAtoms; }
   unsigned int getNumFeatures() const { return d_numFeats; }
-  DTYPE getShapeVolume() const { return d_selfOverlapVol; }
-  DTYPE getColorVolume() const { return d_selfOverlapColor; }
+  double getShapeVolume() const { return d_selfOverlapVol; }
+  double getColorVolume() const { return d_selfOverlapColor; }
   const boost::dynamic_bitset<> &getCarbonRadii() const {
     return d_carbonRadii;
   }
@@ -111,17 +111,17 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
   void calcExtremes();
 
-  std::vector<DTYPE> d_coords;  // The coordinates and alpha parameter for the
+  std::vector<double> d_coords;  // The coordinates and alpha parameter for the
   // atoms and features, packed as 4 floats per
   // item - x, y, z and alpha. alpha is KAPPA / (r * r) where r is the radius
   // of the atom.  This is not used if using all_atoms_carbon mode.
   std::vector<int> d_types;  // The feature types.  The size is the same
   // as the number of coordinates, padded with 0
   // for the atoms.
-  int d_numAtoms;                 // The number of atoms
-  int d_numFeats;                 // The number of features
-  DTYPE d_selfOverlapVol{0.0};    // Shape volume
-  DTYPE d_selfOverlapColor{0.0};  // Color volume
+  int d_numAtoms;                  // The number of atoms
+  int d_numFeats;                  // The number of features
+  double d_selfOverlapVol{0.0};    // Shape volume
+  double d_selfOverlapColor{0.0};  // Color volume
   // These are the points at the extremes of the x, y and z axes.
   // they are min_x, min_y, min_z and max_x, max_y, max_z.
   std::array<size_t, 6> d_extremePoints;
@@ -143,16 +143,16 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Point3D computeFeaturePos(
     const ROMol &mol, int confId, const std::vector<unsigned int> &ats);
 
-RDKIT_GAUSSIANSHAPE_EXPORT void writeCoords(const std::vector<DTYPE> &shape,
+RDKIT_GAUSSIANSHAPE_EXPORT void writeCoords(const std::vector<double> &shape,
                                             const std::string &label,
                                             char lineEnd = '\n');
-RDKIT_GAUSSIANSHAPE_EXPORT void writeCoords(const DTYPE *shape,
+RDKIT_GAUSSIANSHAPE_EXPORT void writeCoords(const double *shape,
                                             unsigned int numPts,
                                             const std::string &label,
                                             char lineEnd = '\n');
 
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Transform3D quatTransToTransform(
-    const DTYPE *quat, const DTYPE *trans);
+    const double *quat, const double *trans);
 
 RDKIT_GAUSSIANSHAPE_EXPORT void copyTransform(const RDGeom::Transform3D &src,
                                               RDGeom::Transform3D &dest);
@@ -160,14 +160,14 @@ RDKIT_GAUSSIANSHAPE_EXPORT void copyTransform(const RDGeom::Transform3D &src,
 // Apply the transformation to the coordinates assumed to be in
 // ShapeInput.d_coords form.
 RDKIT_GAUSSIANSHAPE_EXPORT void applyTransformToShape(
-    std::vector<DTYPE> &shape, RDGeom::Transform3D &xform);
+    std::vector<double> &shape, RDGeom::Transform3D &xform);
 RDKIT_GAUSSIANSHAPE_EXPORT void applyTransformToShape(
-    const DTYPE *inShape, DTYPE *outShape, size_t numPoints,
+    const double *inShape, double *outShape, size_t numPoints,
     RDGeom::Transform3D &xform);
 RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
-    std::vector<DTYPE> &shape, const RDGeom::Point3D &translation);
+    std::vector<double> &shape, const RDGeom::Point3D &translation);
 RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
-    const DTYPE *inShape, DTYPE *outShape, size_t numPoints,
+    const double *inShape, double *outShape, size_t numPoints,
     const RDGeom::Point3D &translation);
 
 }  // namespace GaussianShape

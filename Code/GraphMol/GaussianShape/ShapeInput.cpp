@@ -405,7 +405,7 @@ RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,
   return featPos;
 }
 
-void writeCoords(const std::vector<DTYPE> &shape, const std::string &label,
+void writeCoords(const std::vector<double> &shape, const std::string &label,
                  char lineEnd) {
   std::cout << label << " :: ";
   if (lineEnd == '\n') {
@@ -417,7 +417,7 @@ void writeCoords(const std::vector<DTYPE> &shape, const std::string &label,
   }
 }
 
-void writeCoords(const DTYPE *shape, unsigned int numPts,
+void writeCoords(const double *shape, unsigned int numPts,
                  const std::string &label, char lineEnd) {
   std::cout << label << " :: ";
   if (lineEnd == '\n') {
@@ -437,7 +437,7 @@ void copyTransform(const RDGeom::Transform3D &src, RDGeom::Transform3D &dest) {
   }
 }
 
-void applyTransformToShape(std::vector<DTYPE> &shape,
+void applyTransformToShape(std::vector<double> &shape,
                            RDGeom::Transform3D &xform) {
   for (size_t i = 0; i < shape.size(); i += 4) {
     RDGeom::Point3D pos{shape[i], shape[i + 1], shape[i + 2]};
@@ -448,7 +448,7 @@ void applyTransformToShape(std::vector<DTYPE> &shape,
   }
 }
 
-void applyTransformToShape(const DTYPE *inShape, DTYPE *outShape,
+void applyTransformToShape(const double *inShape, double *outShape,
                            size_t numPoints, RDGeom::Transform3D &xform) {
   for (size_t i = 0; i < 4 * numPoints; i += 4) {
     RDGeom::Point3D pos{inShape[i], inShape[i + 1], inShape[i + 2]};
@@ -460,7 +460,7 @@ void applyTransformToShape(const DTYPE *inShape, DTYPE *outShape,
   }
 }
 
-void translateShape(std::vector<DTYPE> &shape,
+void translateShape(std::vector<double> &shape,
                     const RDGeom::Point3D &translation) {
   for (size_t i = 0; i < shape.size(); i += 4) {
     shape[i] += translation.x;
@@ -469,7 +469,7 @@ void translateShape(std::vector<DTYPE> &shape,
   }
 }
 
-void translateShape(const DTYPE *inShape, DTYPE *outShape, size_t numPoints,
+void translateShape(const double *inShape, double *outShape, size_t numPoints,
                     const RDGeom::Point3D &translation) {
   for (size_t i = 0; i < 4 * numPoints; i += 4) {
     outShape[i] = inShape[i] + translation.x;
