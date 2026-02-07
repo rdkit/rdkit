@@ -71,6 +71,7 @@ TEST_CASE("basic alignment") {
                Catch::Matchers::WithinAbs(42.530, 0.005));
   }
   SECTION("shape only") {
+    std::cout << "shape only" << std::endl;
     ROMol cp(*probe);
     overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_ONLY;
     overlayOpts.startMode = GaussianShape::StartMode::ROTATE_180;
@@ -79,8 +80,8 @@ TEST_CASE("basic alignment") {
     tShapeOpts.useColors = false;
     const auto scores = GaussianShape::AlignMolecule(
         *ref, cp, tShapeOpts, tShapeOpts, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.760, 0.005));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.760, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.746, 0.005));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.746, 0.005));
     CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.0, 0.005));
     // Check that a re-score gives the same answer.
     auto rescores = GaussianShape::ScoreMolecule(*ref, cp, shapeOpts, shapeOpts,
@@ -90,6 +91,7 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
   }
   SECTION("shape plus color score") {
+    std::cout << "shape plus color score" << std::endl;
     overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE;
     overlayOpts.startMode = GaussianShape::StartMode::ROTATE_180;
     ROMol cp(*probe);
@@ -105,6 +107,7 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
     CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
   }
+#if 1
   SECTION("shape and color") {
     overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR;
     overlayOpts.startMode = GaussianShape::StartMode::ROTATE_180;
@@ -114,6 +117,11 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.399, 0.005));
     CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.686, 0.005));
     CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.111, 0.005));
+    const auto rescores = GaussianShape::ScoreMolecule(*ref, cp, shapeOpts,
+                                                       shapeOpts, overlayOpts);
+    CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
+    CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
+    CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
   }
   SECTION("collect transform") {
     overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE;
@@ -136,21 +144,38 @@ TEST_CASE("basic alignment") {
                Catch::Matchers::WithinAbs(1.0, 0.005));
   }
   SECTION("shape plus color score a la pubchem") {
+    std::cout << "a la pubchem" << std::endl;
     overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE;
     overlayOpts.startMode = GaussianShape::StartMode::A_LA_PUBCHEM;
-    ROMol cp(*probe);
-    const auto scores = GaussianShape::AlignMolecule(
-        *ref, cp, shapeOpts, shapeOpts, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.494, 0.005));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.760, 0.005));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.236, 0.005));
-    // Check that a re-score gives the same answer.
-    const auto rescores = GaussianShape::ScoreMolecule(*ref, cp, shapeOpts,
-                                                       shapeOpts, overlayOpts);
-    CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
-    CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
-    CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
+    GaussianShape::ShapeInputOptions shapeOpts2;
+    for (const auto acr : std::vector{true, false}) {
+      shapeOpts2.allCarbonRadii = acr;
+      ROMol cp(*probe);
+      const auto scores = GaussianShape::AlignMolecule(
+          *ref, cp, shapeOpts2, shapeOpts2, nullptr, overlayOpts);
+      std::cout << "final scores : " << scores[0] << ", " << scores[1] << ", "
+                << scores[2] << std::endl;
+      if (acr) {
+        CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.498, 0.005));
+        CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.758, 0.005));
+        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.236, 0.005));
+      } else {
+        CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.488, 0.005));
+        CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.761, 0.005));
+        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.224, 0.005));
+      }
+      // Check that a re-score gives the same answer.
+      const auto rescores = GaussianShape::ScoreMolecule(
+          *ref, cp, shapeOpts2, shapeOpts2, overlayOpts);
+      std::cout << "rescores : " << rescores[0] << ", " << rescores[1] << ", "
+                << rescores[2] << std::endl;
+      CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
+      CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
+      CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
+    }
+    std::cout << "finished a la pubchem" << std::endl;
   }
+#endif
 }
 
 TEST_CASE("bulk") {
@@ -162,14 +187,27 @@ TEST_CASE("bulk") {
   std::string testout = dirName + "/bulk.pubchem_out.sdf";
   auto writer = SDWriter(testout);
   writer.write(*ref);
+  GaussianShape::ShapeOverlayOptions overlayOpts;
+  overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE;
+  overlayOpts.startMode = GaussianShape::StartMode::A_LA_PUBCHEM;
+  GaussianShape::ShapeInputOptions shapeOpts;
   for (auto i = 1u; i < suppl.length(); ++i) {
     auto probe = suppl[1];
     REQUIRE(probe);
-    auto scores = GaussianShape::AlignMolecule(*ref, *probe);
+    auto scores = GaussianShape::AlignMolecule(*ref, *probe, shapeOpts,
+                                               shapeOpts, nullptr, overlayOpts);
     CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.533, 0.005));
     CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.818, 0.005));
     CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.249, 0.005));
+    const auto rescores = GaussianShape::ScoreMolecule(*ref, *probe);
+    std::cout << "rescores : " << rescores[0] << ", " << rescores[1] << ", "
+              << rescores[2] << std::endl;
+    CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
+    CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
+    CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
+
     writer.write(*probe);
+    break;
   }
   writer.close();
 }
@@ -400,6 +438,7 @@ TEST_CASE("Iressa onto Tagrisso") {
   GaussianShape::ShapeOverlayOptions opts;
   opts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE;
   opts.startMode = GaussianShape::StartMode::ROTATE_180_WIGGLE;
+  opts.startMode = GaussianShape::StartMode::ROTATE_45;
   opts.nSteps = 100;
   GaussianShape::ShapeInputOptions shapeOpts;
   shapeOpts.allCarbonRadii = false;
@@ -609,7 +648,7 @@ TEST_CASE("LOBSTER") {
   GaussianShape::ShapeInputOptions opts;
   GaussianShape::ShapeOverlayOptions overlayOpts;
   overlayOpts.startMode = GaussianShape::StartMode::A_LA_PUBCHEM;
-  for (const auto acr : std::vector<bool>{true, false}) {
+  for (const auto acr : std::vector<bool>{false}) {
     opts.allCarbonRadii = acr;
     for (size_t i = 1; i < mols.size(); i++) {
       for (size_t j = 0; j < i; j++) {

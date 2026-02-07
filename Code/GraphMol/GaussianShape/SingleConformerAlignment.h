@@ -60,14 +60,19 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// @param distCutoff - the cutoff to use if we're doing it.
   /// carbon.  This makes it faster but less correct.
   /// @param maxIts - maximum number of iterations for optimiser
-  SingleConformerAlignment(
-      const DTYPE *ref, DTYPE *refTemp, const int *refTypes,
-      const boost::dynamic_bitset<> *refCarbonRadii, int nRefShape,
-      int nRefColor, DTYPE refShapeVol, DTYPE refColorVol, const DTYPE *fit,
-      DTYPE *fitTemp, const int *fitTypes,
-      const boost::dynamic_bitset<> *fitCarbonRadii, int nFitShape,
-      int nFitColor, DTYPE fitShapeVol, DTYPE fitColorVol, OptimMode optimMode,
-      DTYPE mixingParam, bool useCutoff, DTYPE distCutoff, unsigned int maxIts);
+  /// @param bestSoFar - the best score so far, used to decide on early finish
+  /// of optimiser
+  SingleConformerAlignment(const DTYPE *ref, DTYPE *refTemp,
+                           const int *refTypes,
+                           const boost::dynamic_bitset<> *refCarbonRadii,
+                           int nRefShape, int nRefColor, DTYPE refShapeVol,
+                           DTYPE refColorVol, const DTYPE *fit, DTYPE *fitTemp,
+                           const int *fitTypes,
+                           const boost::dynamic_bitset<> *fitCarbonRadii,
+                           int nFitShape, int nFitColor, DTYPE fitShapeVol,
+                           DTYPE fitColorVol, OptimMode optimMode,
+                           DTYPE mixingParam, bool useCutoff, DTYPE distCutoff,
+                           DTYPE bestSoFar, unsigned int maxIts);
 
   SingleConformerAlignment(const SingleConformerAlignment &other) = delete;
   SingleConformerAlignment(SingleConformerAlignment &&other) = delete;
@@ -116,13 +121,14 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// 16-19 - not used at present, returned as zeros.
   /// Returns false if it didn't finish with the allowed maximum number of
   /// iterations.
-  bool doOverlay(std::array<DTYPE, 20> &scores);
+  bool doOverlay(std::array<DTYPE, 20> &scores,
+                 const std::array<DTYPE, 7> &initQuatTrans, unsigned int cycle);
 
   // Find the quaternion and translation that maximises the volume
   // overlap appropriate to d_optimMode.  Assume it is set to 1,0,0,0,0,0,0
   // on input. Returns false if it didn't finish with the allowed maximum
   // number of iterations.
-  bool optimise(std::array<DTYPE, 7> &quatTrans);
+  bool optimise(std::array<DTYPE, 7> &quatTrans, unsigned int maxIters);
 
   const DTYPE *d_ref;
   DTYPE *d_refTemp;
@@ -144,6 +150,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   const DTYPE d_mixingParam;
   const bool d_useCutoff;
   const DTYPE d_distCutoff2;
+  const DTYPE d_bestSoFar;
   const unsigned int d_maxIts;
 };
 

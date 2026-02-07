@@ -33,7 +33,7 @@ SingleConformerAlignment::SingleConformerAlignment(
     const int *fitTypes, const boost::dynamic_bitset<> *fitCarbonRadii,
     int nFitShape, int nFitColor, DTYPE fitShapeVol, DTYPE fitColorVol,
     OptimMode optimMode, DTYPE mixingParam, bool useCutoff, DTYPE distCutoff,
-    unsigned int maxIts)
+    DTYPE bestSoFar, unsigned int maxIts)
     : d_ref(ref),
       d_refTemp(refTemp),
       d_refTypes(refTypes),
@@ -54,6 +54,7 @@ SingleConformerAlignment::SingleConformerAlignment(
       d_mixingParam(mixingParam),
       d_useCutoff(useCutoff),
       d_distCutoff2(distCutoff * distCutoff),
+      d_bestSoFar(bestSoFar),
       d_maxIts(maxIts) {}
 
 std::array<DTYPE, 5> SingleConformerAlignment::calcScores(
@@ -294,9 +295,18 @@ void SingleConformerAlignment::calcVolumeAndGradients(
   }
 }
 
-bool SingleConformerAlignment::doOverlay(std::array<DTYPE, 20> &scores) {
-  std::array<DTYPE, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  auto res = optimise(quatTrans);
+bool SingleConformerAlignment::doOverlay(
+    std::array<DTYPE, 20> &scores, const std::array<DTYPE, 7> &initQuatTrans,
+    unsigned int cycle) {
+  std::array<DTYPE, 7> quatTrans;
+  // if (cycle == 0) {
+  //   quatTrans = std::array<DTYPE, 7>{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  // } else {
+  //   quatTrans = initQuatTrans;
+  // }
+  quatTrans = initQuatTrans;
+  unsigned int maxIters = cycle == 0 ? 10 : d_maxIts - 10;
+  auto res = optimise(quatTrans, maxIters);
 
   // Get the final coords for fit into d_fitTemp, and compute the scores
   RDGeom::Transform3D xform;
@@ -306,6 +316,10 @@ bool SingleConformerAlignment::doOverlay(std::array<DTYPE, 20> &scores) {
   applyTransformToShape(d_fit, d_fitTemp, d_nFitShape + d_nFitColor, xform);
 
   auto tscores = calcScores(d_ref, d_fitTemp, true);
+  std::cout << "     rescore " << " : " << tscores[0] << ", " << tscores[1]
+            << ", " << tscores[2] << ", " << tscores[3] << ", " << tscores[4]
+            << std::endl;
+
   scores[0] = tscores[0];
   scores[1] = tscores[1];
   scores[2] = tscores[2];
@@ -486,7 +500,8 @@ void reduceStep(std::array<DTYPE, 7> &grad, std::array<DTYPE, 7> &oldGrad,
 // code from
 // https://github.com/ncbi/pubchem-align3d/blob/main/shape_neighbor.cpp
 // Original Authors:  Evan Bolton, Leonid Zaslavsky, Paul Thiessen
-bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans) {
+bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans,
+                                        unsigned int maxIters) {
   const DTYPE maxQuaternionStep = 0.075;   // Maximum step size for quaternion
   const DTYPE maxTranslationStep = 0.500;  // Maximum step size for translation
   const DTYPE minQuaternionStep =
@@ -503,9 +518,14 @@ bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans) {
   // Steps for the quaternion and translation.
   DTYPE qStepSize{-0.001}, tStepSize{-0.01};
   bool finished = false;
-  for (unsigned iter = 0; iter < d_maxIts; iter++) {
+  for (unsigned iter = 0; iter < maxIters; iter++) {
     calcVolumeAndGradients(quatTrans, shapeOvlpVol, colorOvlpVol, grad);
+    // Note that the combo score will have a zero color score so will be half
+    // the shape score unless we're optimising on with color gradients.
     auto scores = calcScores(shapeOvlpVol, colorOvlpVol);
+    std::cout << "     iter " << iter << " : " << scores[0] << ", " << scores[1]
+              << ", " << scores[2] << ", " << scores[3] << ", " << scores[4]
+              << std::endl;
     comboScore = scores[0];
     calcStep(grad, qStepSize, tStepSize, oldGrad, quatTrans, oldQuatTrans, iter,
              step);
@@ -536,6 +556,8 @@ bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans) {
       auto newQuatTrans = combineQuatTrans(quatTrans, step);
       calcVolumeAndGradients(newQuatTrans, shapeOvlpVol, colorOvlpVol, grad);
       auto scores = calcScores(shapeOvlpVol, colorOvlpVol);
+      std::cout << "    line_iter : " << lineIter << " : " << scores[0]
+                << std::endl;
       comboScore = scores[0];
       // if we made a good step, keep the quaternion and we're done
       if (comboScore > oldComboScore) {
@@ -559,6 +581,9 @@ bool SingleConformerAlignment::optimise(std::array<DTYPE, 7> &quatTrans) {
         comboScore = oldComboScore;
         quatTrans = oldQuatTrans;
       }
+      std::cout << "     iter converged : " << iter << " : " << comboScore
+                << "   steps are " << qStepSize << " and " << tStepSize
+                << std::endl;
       finished = true;
       break;
     }

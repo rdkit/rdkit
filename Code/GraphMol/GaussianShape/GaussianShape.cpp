@@ -78,7 +78,11 @@ RDGeom::Transform3D computeFinalTransform(const ShapeInput &refShape,
 // Different optimisation modes have different numbers of starting
 // orientations to try. In order these are no transformation, rotate 180
 // degrees about each axis and rotate +/- 45 degrees about 2 axes at a time.
-void getInitialRotation(int index, RDGeom::Transform3D &initXform) {
+std::array<DTYPE, 4> getInitialRotationPlain(
+    int index, const ShapeInput &refShape, const ShapeInput &fitShape,
+    const RDGeom::Point3D &refDisp, const ShapeOverlayOptions &overlayOpts,
+    std::vector<DTYPE> &workingRef, std::vector<DTYPE> &workingFit,
+    RDGeom::Transform3D &initXform, DTYPE &score) {
   static const DTYPE sinpi_4 = std::sin(std::atan(1.0));
   const static std::vector<std::array<DTYPE, 4>> quats{
       {1.0, 0.0, 0.0, 0.0},          {0.0, 1.0, 0.0, 0.0},
@@ -89,21 +93,40 @@ void getInitialRotation(int index, RDGeom::Transform3D &initXform) {
       {sinpi_4, 0.0, 0.0, sinpi_4},  {0.0, -sinpi_4, sinpi_4, 0.0},
       {sinpi_4, 0.0, sinpi_4, 0.0},  {0.0, sinpi_4, 0.0, sinpi_4},
       {0.0, -sinpi_4, 0.0, sinpi_4}, {sinpi_4, 0.0, -sinpi_4, 0.0}};
+  auto refCoords = refShape.getCoords();
+  translateShape(refCoords, refDisp);
+  bool useColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
+  auto fitCoords = fitShape.getCoords();
   initXform.setToIdentity();
   initXform.SetRotationFromQuaternion(quats[index].data());
+  applyTransformToShape(fitCoords, initXform);
+  SingleConformerAlignment sca(
+      refCoords.data(), workingRef.data(), refShape.getTypes().data(),
+      &refShape.getCarbonRadii(), refShape.getNumAtoms(),
+      refShape.getNumFeatures(), refShape.getShapeVolume(),
+      refShape.getColorVolume(), fitCoords.data(), workingFit.data(),
+      fitShape.getTypes().data(), &fitShape.getCarbonRadii(),
+      fitShape.getNumAtoms(), fitShape.getNumFeatures(),
+      fitShape.getShapeVolume(), fitShape.getColorVolume(),
+      overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
+      overlayOpts.distCutoff, 0.0, overlayOpts.nSteps);
+  auto scores = sca.calcScores(refCoords.data(), fitCoords.data(), useColor);
+  std::cout << "     index " << index << " : " << scores[0] << ", " << scores[1]
+            << ", " << scores[2] << ", " << scores[3] << ", " << scores[4]
+            << std::endl;
+  score = scores[0];
+  return quats[index];
 }
 
 // Return the initial transformation matrix in the manner of the PubChem
 // overlay code.  Rotate 180 degrees about each axis, and then
 // add +/ ~25 degrees from that.  It is not revealed where that
 // angle comes from.
-void getInitialRotation(int index, const ShapeInput &refShape,
-                        const ShapeInput &fitShape,
-                        const RDGeom::Point3D &refDisp,
-                        const ShapeOverlayOptions &overlayOpts,
-                        std::vector<DTYPE> &workingRef,
-                        std::vector<DTYPE> &workingFit,
-                        RDGeom::Transform3D &initXForm) {
+std::array<DTYPE, 4> getInitialRotationWiggle(
+    int index, const ShapeInput &refShape, const ShapeInput &fitShape,
+    const RDGeom::Point3D &refDisp, const ShapeOverlayOptions &overlayOpts,
+    std::vector<DTYPE> &workingRef, std::vector<DTYPE> &workingFit,
+    RDGeom::Transform3D &initXform, DTYPE &score) {
   const static double qrot1 = 0.977659114061,
                       qrot = 0.210196709523;  // 0.215 (un-normalized)
   const static std::vector<std::array<DTYPE, 4>> quats{
@@ -144,15 +167,17 @@ void getInitialRotation(int index, const ShapeInput &refShape,
         fitShape.getNumAtoms(), fitShape.getNumFeatures(),
         fitShape.getShapeVolume(), fitShape.getColorVolume(),
         overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-        overlayOpts.distCutoff, overlayOpts.nSteps);
+        overlayOpts.distCutoff, bestScore, overlayOpts.nSteps);
     auto scores = sca.calcScores(refCoords.data(), fitCoords.data(), useColor);
     if (scores[0] > bestScore) {
       bestScore = scores[0];
       bestQuat = i;
     }
   }
-  initXForm.setToIdentity();
-  initXForm.SetRotationFromQuaternion(quats[bestQuat].data());
+  initXform.setToIdentity();
+  initXform.SetRotationFromQuaternion(quats[bestQuat].data());
+  score = bestScore;
+  return quats[bestQuat];
 }
 
 // Return the translation that puts the extreme of refShape at the
@@ -234,9 +259,8 @@ StartMode decideStartModeFromEigenValues(const ShapeInput &refShape,
   auto fqrat = calculateQrat(fitShape.getEigenValues());
   if (rqrat > 0 || fqrat > 0) {
     return StartMode::ROTATE_45;
-  } else {
-    return StartMode::ROTATE_180_WIGGLE;
   }
+  return StartMode::ROTATE_180_WIGGLE;
 }
 
 std::array<double, 3> alignShape(const ShapeInput &refShape,
@@ -248,6 +272,7 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
   if (startMode == StartMode::A_LA_PUBCHEM) {
     startMode = decideStartModeFromEigenValues(refShape, fitShape);
   }
+  std::cout << "startMode : " << static_cast<int>(startMode) << std::endl;
   switch (startMode) {
     case StartMode::ROTATE_0:
     case StartMode::ROTATE_0_FRAGMENT:
@@ -275,25 +300,77 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
   std::array<double, 3> bestScore;
   double bestTotal = -1.0;
   RDGeom::Transform3D initialRot, initialTrans, initialXform;
-
   // For working values of the coordinates.
   std::vector<DTYPE> workingRef(refShape.getCoords());
   std::vector<DTYPE> workingFit(fitShape.getCoords());
+
+  // Get together the start transformations.
+  std::vector<RDGeom::Point3D> initialTranslations;
+  std::vector<RDGeom::Transform3D> initialRotations;
+  std::vector<std::array<DTYPE, 7>> initialQuats;
+  std::vector<std::pair<DTYPE, unsigned int>> bestScoreForStart;
+  initialTranslations.reserve(finalTransIndex * finalRotIndex);
+  initialRotations.reserve(finalTransIndex * finalRotIndex);
+  initialQuats.reserve(finalTransIndex * finalRotIndex);
+  bestScoreForStart.reserve(finalTransIndex * finalRotIndex);
+  unsigned int k = 0;
   for (unsigned int j = 0; j < finalTransIndex; j++) {
     auto refDisp = getInitialTranslation(j, refShape, fitShape);
-    for (unsigned int i = 0; i < finalRotIndex; i++) {
+    std::array<DTYPE, 4> quat;
+    for (unsigned int i = 0; i < finalRotIndex; i++, k++) {
+      DTYPE score = 0.0;
       if (startMode == StartMode::ROTATE_180_WIGGLE) {
-        getInitialRotation(i, refShape, fitShape, refDisp, overlayOpts,
-                           workingRef, workingFit, initialRot);
+        quat = getInitialRotationWiggle(i, refShape, fitShape, refDisp,
+                                        overlayOpts, workingRef, workingFit,
+                                        initialRot, score);
       } else {
-        getInitialRotation(i, initialRot);
+        quat =
+            getInitialRotationPlain(i, refShape, fitShape, refDisp, overlayOpts,
+                                    workingRef, workingFit, initialRot, score);
+      }
+      initialTranslations.push_back(refDisp);
+      initialRotations.push_back(initialRot);
+      initialQuats.push_back({quat[0], quat[1], quat[2], quat[3], refDisp.x,
+                              refDisp.y, refDisp.z});
+      bestScoreForStart.push_back({score, k});
+    }
+  }
+
+  // Do it in 2 cycles, a quick optimisation first, followed by an additional
+  // longer one for those that look like they're going to win.
+  for (unsigned int cycle = 0; cycle < 2; cycle++) {
+    std::cout << "__--------------------------  " << cycle << std::endl;
+    std::ranges::sort(bestScoreForStart,
+                      [](const auto &p1, const auto &p2) -> bool {
+                        return p1.first > p2.first;
+                      });
+    std::vector<std::pair<DTYPE, unsigned int>> nextBestScoreForStart;
+    nextBestScoreForStart.reserve(finalTransIndex * finalRotIndex);
+    for (const auto &[bssf, k] : bestScoreForStart) {
+      std::cout << "case " << k << " with bssf: " << bssf << std::endl;
+      RDGeom::Point3D refDisp{initialQuats[k][4], initialQuats[k][5],
+                              initialQuats[k][6]};
+      if (cycle == 1) {
+        if (bssf < 0.7 * bestScore[0]) {
+          std::cout << "skipping because " << bssf << " for " << k << " vs "
+                    << 0.7 * bestScore[0] << " from " << bestScore[0]
+                    << std::endl;
+          continue;
+        }
       }
       std::vector<DTYPE> startFit(fitShape.getCoords());
-      applyTransformToShape(startFit, initialRot);
+      // initialRot.setToIdentity();
+      // initialRot.SetRotationFromQuaternion(initialQuats[k].data());
+      // if (cycle == 1) {
+      //   // Add in where the optimisation started from in cycle 0.
+      //   copyTransform(initialRotations[k] * initialRot, initialRot);
+      //   refDisp += initialTranslations[k];
+      // }
+      // applyTransformToShape(startFit, initialRot);
       std::vector<DTYPE> startRef(refShape.getCoords());
-      // Move the reference by initialTrans, leaving fit at the origin where
-      // the rotations work properly.
-      translateShape(startRef, refDisp);
+      // // Move the reference by initialTrans, leaving fit at the origin where
+      // // the rotations work properly.
+      // translateShape(startRef, refDisp);
       std::array<DTYPE, 20> outScores;
       SingleConformerAlignment sca(
           startRef.data(), workingRef.data(), refShape.getTypes().data(),
@@ -304,9 +381,11 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
           fitShape.getNumAtoms(), fitShape.getNumFeatures(),
           fitShape.getShapeVolume(), fitShape.getColorVolume(),
           overlayOpts.optimMode, overlayOpts.optParam,
-          overlayOpts.useDistCutoff, overlayOpts.distCutoff,
+          overlayOpts.useDistCutoff, overlayOpts.distCutoff, bestScore[0],
           overlayOpts.nSteps);
-      sca.doOverlay(outScores);
+      sca.doOverlay(outScores, initialQuats[k], cycle);
+      std::cout << cycle << " : " << k << " : " << outScores[0] << std::endl;
+      nextBestScoreForStart.emplace_back(outScores[0], k);
       if (outScores[0] > bestTotal) {
         bestTotal = outScores[0];
         bestScore =
@@ -316,15 +395,19 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
         tmp.SetTranslation(
             RDGeom::Point3D{outScores[13], outScores[14], outScores[15]});
         RDGeom::Transform3D reverseInitialTrans;
-        reverseInitialTrans.SetTranslation(-refDisp);
-        auto tt = reverseInitialTrans * tmp * initialRot;
+        reverseInitialTrans.SetTranslation(-initialTranslations[k]);
+        auto tt = reverseInitialTrans * tmp * initialRotations[k];
         copyTransform(tt, bestXform);
+        copyTransform(tmp, bestXform);
       }
+      initialQuats[k] = std::array<DTYPE, 7>{
+          outScores[9],  outScores[10], outScores[11], outScores[12],
+          outScores[13], outScores[14], outScores[15]};
     }
+    bestScoreForStart = nextBestScoreForStart;
   }
   return bestScore;
 }
-
 }  // namespace
 
 std::array<double, 3> AlignShape(const ShapeInput &refShape,
@@ -422,7 +505,7 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(),
       overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, overlayOpts.nSteps);
+      overlayOpts.distCutoff, 0.0, overlayOpts.nSteps);
   bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   auto scores = sca.calcScores(refShape.getCoords().data(),
                                fitShape.getCoords().data(), includeColor);
