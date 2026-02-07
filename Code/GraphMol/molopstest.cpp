@@ -6537,7 +6537,9 @@ TEST_CASE("Testing MMFF94 aromaticity") {
   MolOps::setAromaticity(*m, MolOps::AROMATICITY_RDKIT);
   int arombondcount = 0;
   for (auto b : m->bonds()) {
-    if (b->getIsAromatic()) arombondcount++;
+    if (b->getIsAromatic()) {
+      arombondcount++;
+    }
   }
   // all bonds, except the fused one, should be aromatic
   REQUIRE(arombondcount == 10);
@@ -6546,7 +6548,9 @@ TEST_CASE("Testing MMFF94 aromaticity") {
   MolOps::setAromaticity(*m, MolOps::AROMATICITY_MMFF94);
   arombondcount = 0;
   for (auto b : m->bonds()) {
-    if (b->getIsAromatic()) arombondcount++;
+    if (b->getIsAromatic()) {
+      arombondcount++;
+    }
   }
   // no aromatics here
   REQUIRE(arombondcount == 0);
