@@ -6243,6 +6243,15 @@ H      0.635000    0.635000    0.635000
           self.assertEqual(order1, order3)
           self.assertEqual(order2, order4)
 
+  def testRankAtomsInFragmentsWithoutBonds(self):
+    mol = Chem.MolFromSmiles('ONCO')
+    order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False))
+    order2 = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
+    self.assertNotEqual(order1[:4], order2[4:])
+    order3 = list(
+      Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), bondsToUse=(0, 1, 2),
+                                        breakTies=False))
+
   def testSetBondStereoFromDirections(self):
     m1 = Chem.MolFromMolBlock(
       '''
