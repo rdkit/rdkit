@@ -331,7 +331,8 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
 RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                                                const RDGeom::Point3D *center,
                                                bool normalizeCovar,
-                                               bool ignoreHs) {
+                                               bool ignoreHs,
+                                               double *retEigenValues) {
   RDGeom::Point3D origin;
   if (!center) {
     origin = computeCentroid(conf, ignoreHs);
@@ -343,7 +344,7 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
   // find the eigen values and eigen vectors for the covMat
   RDNumeric::DoubleMatrix eigVecs(3, 3);
   RDNumeric::DoubleVector eigVals(3);
-  // if we have a single atom system we don't need to do anyhting other than
+  // if we have a single atom system we don't need to do anything other than
   // setting translation
   // translation
   unsigned int nAtms = conf.getNumAtoms();
@@ -352,11 +353,16 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
   // set the translation
   origin *= -1.0;
   // trans->SetTranslation(origin);
-  // if we have a single atom system we don't need to do anyhting setting
+  // if we have a single atom system we don't need to do anything setting
   // translation is sufficient
   if (nAtms > 1) {
     RDNumeric::EigenSolvers::powerEigenSolver(3, *covMat, eigVals, eigVecs,
                                               conf.getNumAtoms());
+    if (retEigenValues) {
+      retEigenValues[0] = eigVals[0];
+      retEigenValues[1] = eigVals[1];
+      retEigenValues[2] = eigVals[2];
+    }
     // deal with zero eigen value systems
     unsigned int i, j, dim = 3;
     for (i = 0; i < 3; ++i) {
