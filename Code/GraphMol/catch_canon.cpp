@@ -1212,8 +1212,8 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](CO)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
        false, false},  // #8089
       {R"smi(COC(=O)C1=C/c2cc3c(cc2-c2c(cc(OC)c(OC)c2OC)\C=C/1C(=O)OC)OCO3)smi",
-       false, false},                                           // #8089
-      {R"smi(N#C[P@@H]/C=C(/P=O)[P@@H]C#N)smi", false, false},  // #8089
+       false, false},                                         // #8089
+      {R"smi(N#C[P@@H]/C=C(/P=O)[P@@H]C#N)smi", true, true},  // #8089
       {R"smi(C1=C\C/C=C(\C)CC[C@H]2C(C)(C)[C@@H](\C=C/1)CC[C@]2(C)O)smi", true,
        true},                                                     // #8089
       {R"smi([H]/N=C(C=C)\C(/N=C\[O-])=N\[H])smi", false, true},  // #7759
