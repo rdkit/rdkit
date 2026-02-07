@@ -16,8 +16,6 @@
 
 #include <RDGeneral/export.h>
 
-using DTYPE = double;
-
 namespace RDKit {
 class ROMol;
 namespace GaussianShape {
@@ -57,7 +55,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
   // cartesian axes rather than the shape quadrupole axes as Grant et al. did.
   StartMode startMode{StartMode::ROTATE_180_WIGGLE};
   OptimMode optimMode{OptimMode::SHAPE_PLUS_COLOR_SCORE};  // Optimisation mode.
-  DTYPE optParam{
+  double optParam{
       0.5};  // If using colors, the relative weights of shape and color scores.
   int nSteps{100};  // Maximum number of steps for optimiser to take.
   // Whether to normalise the shapes by putting them into
@@ -65,7 +63,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
   // aligned along its principal axes) before starting.
   bool normalize{true};
   bool useDistCutoff{true};
-  DTYPE distCutoff{4.5};
+  double distCutoff{4.5};
 };
 }  // namespace GaussianShape
 }  // namespace RDKit

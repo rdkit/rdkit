@@ -74,7 +74,7 @@ RDGeom::Transform3D computeFinalTransform(const ShapeInput &refShape,
   return finalTransform;
 }
 
-// Return the original transformation matrix for the given index.
+// Return the original transformation quaternion for the given index.
 // Different optimisation modes have different numbers of starting
 // orientations to try. In order these are no transformation, rotate 180
 // degrees about each axis and rotate +/- 45 degrees about 2 axes at a time.
@@ -82,7 +82,7 @@ std::array<double, 4> getInitialRotationPlain(
     int index, const ShapeInput &refShape, const ShapeInput &fitShape,
     const RDGeom::Point3D &refDisp, const ShapeOverlayOptions &overlayOpts,
     std::vector<double> &workingRef, std::vector<double> &workingFit,
-    RDGeom::Transform3D &initXform, double &score) {
+    double &score) {
   static const double sinpi_4 = std::sin(std::atan(1.0));
   const static std::vector<std::array<double, 4>> quats{
       {1.0, 0.0, 0.0, 0.0},          {0.0, 1.0, 0.0, 0.0},
@@ -97,9 +97,10 @@ std::array<double, 4> getInitialRotationPlain(
   translateShape(refCoords, refDisp);
   bool useColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   auto fitCoords = fitShape.getCoords();
-  initXform.setToIdentity();
-  initXform.SetRotationFromQuaternion(quats[index].data());
-  applyTransformToShape(fitCoords, initXform);
+  RDGeom::Transform3D xform;
+  xform.setToIdentity();
+  xform.SetRotationFromQuaternion(quats[index].data());
+  applyTransformToShape(fitCoords, xform);
   SingleConformerAlignment sca(
       refCoords.data(), workingRef.data(), refShape.getTypes().data(),
       &refShape.getCarbonRadii(), refShape.getNumAtoms(),
@@ -126,7 +127,7 @@ std::array<double, 4> getInitialRotationWiggle(
     int index, const ShapeInput &refShape, const ShapeInput &fitShape,
     const RDGeom::Point3D &refDisp, const ShapeOverlayOptions &overlayOpts,
     std::vector<double> &workingRef, std::vector<double> &workingFit,
-    RDGeom::Transform3D &initXform, double &score) {
+    double &score) {
   const static double qrot1 = 0.977659114061,
                       qrot = 0.210196709523;  // 0.215 (un-normalized)
   const static std::vector<std::array<double, 4>> quats{
@@ -174,8 +175,6 @@ std::array<double, 4> getInitialRotationWiggle(
       bestQuat = i;
     }
   }
-  initXform.setToIdentity();
-  initXform.SetRotationFromQuaternion(quats[bestQuat].data());
   score = bestScore;
   return quats[bestQuat];
 }
@@ -298,18 +297,13 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
 
   std::array<double, 3> bestScore;
   double bestTotal = -1.0;
-  RDGeom::Transform3D initialRot, initialTrans, initialXform;
   // For working values of the coordinates.
   std::vector<double> workingRef(refShape.getCoords());
   std::vector<double> workingFit(fitShape.getCoords());
 
   // Get together the start transformations.
-  std::vector<RDGeom::Point3D> initialTranslations;
-  std::vector<RDGeom::Transform3D> initialRotations;
   std::vector<std::array<double, 7>> initialQuats;
   std::vector<std::pair<double, unsigned int>> bestScoreForStart;
-  initialTranslations.reserve(finalTransIndex * finalRotIndex);
-  initialRotations.reserve(finalTransIndex * finalRotIndex);
   initialQuats.reserve(finalTransIndex * finalRotIndex);
   bestScoreForStart.reserve(finalTransIndex * finalRotIndex);
   unsigned int k = 0;
@@ -321,14 +315,12 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
       if (startMode == StartMode::ROTATE_180_WIGGLE) {
         quat = getInitialRotationWiggle(i, refShape, fitShape, refDisp,
                                         overlayOpts, workingRef, workingFit,
-                                        initialRot, score);
+                                        score);
       } else {
         quat =
             getInitialRotationPlain(i, refShape, fitShape, refDisp, overlayOpts,
-                                    workingRef, workingFit, initialRot, score);
+                                    workingRef, workingFit, score);
       }
-      initialTranslations.push_back(refDisp);
-      initialRotations.push_back(initialRot);
       initialQuats.push_back({quat[0], quat[1], quat[2], quat[3], refDisp.x,
                               refDisp.y, refDisp.z});
       bestScoreForStart.push_back({score, k});
@@ -358,14 +350,6 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
         }
       }
       std::vector<double> startFit(fitShape.getCoords());
-      // initialRot.setToIdentity();
-      // initialRot.SetRotationFromQuaternion(initialQuats[k].data());
-      // if (cycle == 1) {
-      //   // Add in where the optimisation started from in cycle 0.
-      //   copyTransform(initialRotations[k] * initialRot, initialRot);
-      //   refDisp += initialTranslations[k];
-      // }
-      // applyTransformToShape(startFit, initialRot);
       std::vector<double> startRef(refShape.getCoords());
       // // Move the reference by initialTrans, leaving fit at the origin where
       // // the rotations work properly.
@@ -393,10 +377,6 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
         tmp.SetRotationFromQuaternion(outScores.data() + 9);
         tmp.SetTranslation(
             RDGeom::Point3D{outScores[13], outScores[14], outScores[15]});
-        RDGeom::Transform3D reverseInitialTrans;
-        reverseInitialTrans.SetTranslation(-initialTranslations[k]);
-        auto tt = reverseInitialTrans * tmp * initialRotations[k];
-        copyTransform(tt, bestXform);
         copyTransform(tmp, bestXform);
       }
       initialQuats[k] = std::array<double, 7>{
