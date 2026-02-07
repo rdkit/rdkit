@@ -283,6 +283,9 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   void setPODVal(const std::string_view what, T val) {
     static_assert(!std::is_same_v<T, std::string_view>,
                   "T cannot be string_view");
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
     // don't change the hasNonPodData status
     for (auto &&data : _data) {
       if (data.key == what) {
