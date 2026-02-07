@@ -33,7 +33,7 @@ SingleConformerAlignment::SingleConformerAlignment(
     const int *fitTypes, const boost::dynamic_bitset<> *fitCarbonRadii,
     int nFitShape, int nFitColor, DTYPE fitShapeVol, DTYPE fitColorVol,
     OptimMode optimMode, DTYPE mixingParam, bool useCutoff, DTYPE distCutoff,
-    DTYPE bestSoFar, unsigned int maxIts)
+    unsigned int maxIts)
     : d_ref(ref),
       d_refTemp(refTemp),
       d_refTypes(refTypes),
@@ -54,7 +54,6 @@ SingleConformerAlignment::SingleConformerAlignment(
       d_mixingParam(mixingParam),
       d_useCutoff(useCutoff),
       d_distCutoff2(distCutoff * distCutoff),
-      d_bestSoFar(bestSoFar),
       d_maxIts(maxIts) {}
 
 std::array<DTYPE, 5> SingleConformerAlignment::calcScores(

@@ -109,7 +109,7 @@ std::array<DTYPE, 4> getInitialRotationPlain(
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(),
       overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, 0.0, overlayOpts.nSteps);
+      overlayOpts.distCutoff, overlayOpts.nSteps);
   auto scores = sca.calcScores(refCoords.data(), fitCoords.data(), useColor);
   std::cout << "     index " << index << " : " << scores[0] << ", " << scores[1]
             << ", " << scores[2] << ", " << scores[3] << ", " << scores[4]
@@ -167,7 +167,7 @@ std::array<DTYPE, 4> getInitialRotationWiggle(
         fitShape.getNumAtoms(), fitShape.getNumFeatures(),
         fitShape.getShapeVolume(), fitShape.getColorVolume(),
         overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-        overlayOpts.distCutoff, bestScore, overlayOpts.nSteps);
+        overlayOpts.distCutoff, overlayOpts.nSteps);
     auto scores = sca.calcScores(refCoords.data(), fitCoords.data(), useColor);
     if (scores[0] > bestScore) {
       bestScore = scores[0];
@@ -272,7 +272,6 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
   if (startMode == StartMode::A_LA_PUBCHEM) {
     startMode = decideStartModeFromEigenValues(refShape, fitShape);
   }
-  std::cout << "startMode : " << static_cast<int>(startMode) << std::endl;
   switch (startMode) {
     case StartMode::ROTATE_0:
     case StartMode::ROTATE_0_FRAGMENT:
@@ -381,7 +380,7 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
           fitShape.getNumAtoms(), fitShape.getNumFeatures(),
           fitShape.getShapeVolume(), fitShape.getColorVolume(),
           overlayOpts.optimMode, overlayOpts.optParam,
-          overlayOpts.useDistCutoff, overlayOpts.distCutoff, bestScore[0],
+          overlayOpts.useDistCutoff, overlayOpts.distCutoff,
           overlayOpts.nSteps);
       sca.doOverlay(outScores, initialQuats[k], cycle);
       std::cout << cycle << " : " << k << " : " << outScores[0] << std::endl;
@@ -505,7 +504,7 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(),
       overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, 0.0, overlayOpts.nSteps);
+      overlayOpts.distCutoff, overlayOpts.nSteps);
   bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   auto scores = sca.calcScores(refShape.getCoords().data(),
                                fitShape.getCoords().data(), includeColor);

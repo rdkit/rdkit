@@ -60,19 +60,15 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// @param distCutoff - the cutoff to use if we're doing it.
   /// carbon.  This makes it faster but less correct.
   /// @param maxIts - maximum number of iterations for optimiser
-  /// @param bestSoFar - the best score so far, used to decide on early finish
   /// of optimiser
-  SingleConformerAlignment(const DTYPE *ref, DTYPE *refTemp,
-                           const int *refTypes,
-                           const boost::dynamic_bitset<> *refCarbonRadii,
-                           int nRefShape, int nRefColor, DTYPE refShapeVol,
-                           DTYPE refColorVol, const DTYPE *fit, DTYPE *fitTemp,
-                           const int *fitTypes,
-                           const boost::dynamic_bitset<> *fitCarbonRadii,
-                           int nFitShape, int nFitColor, DTYPE fitShapeVol,
-                           DTYPE fitColorVol, OptimMode optimMode,
-                           DTYPE mixingParam, bool useCutoff, DTYPE distCutoff,
-                           DTYPE bestSoFar, unsigned int maxIts);
+  SingleConformerAlignment(
+      const DTYPE *ref, DTYPE *refTemp, const int *refTypes,
+      const boost::dynamic_bitset<> *refCarbonRadii, int nRefShape,
+      int nRefColor, DTYPE refShapeVol, DTYPE refColorVol, const DTYPE *fit,
+      DTYPE *fitTemp, const int *fitTypes,
+      const boost::dynamic_bitset<> *fitCarbonRadii, int nFitShape,
+      int nFitColor, DTYPE fitShapeVol, DTYPE fitColorVol, OptimMode optimMode,
+      DTYPE mixingParam, bool useCutoff, DTYPE distCutoff, unsigned int maxIts);
 
   SingleConformerAlignment(const SingleConformerAlignment &other) = delete;
   SingleConformerAlignment(SingleConformerAlignment &&other) = delete;
@@ -150,7 +146,6 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   const DTYPE d_mixingParam;
   const bool d_useCutoff;
   const DTYPE d_distCutoff2;
-  const DTYPE d_bestSoFar;
   const unsigned int d_maxIts;
 };
 
