@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+// Copyright (C) 2003-2026 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -265,6 +265,9 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   void setVal(const std::string_view what, T &val) {
     static_assert(!std::is_same_v<T, std::string_view>,
                   "T cannot be string_view");
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
     _hasNonPodData = true;
     for (auto &&data : _data) {
       if (data.key == what) {
@@ -280,6 +283,9 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   void setPODVal(const std::string_view what, T val) {
     static_assert(!std::is_same_v<T, std::string_view>,
                   "T cannot be string_view");
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
     // don't change the hasNonPodData status
     for (auto &&data : _data) {
       if (data.key == what) {
@@ -291,20 +297,45 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     _data.push_back(Pair(what, val));
   }
 
-  void setVal(const std::string_view what, bool val) { setPODVal(what, val); }
+  void setVal(const std::string_view what, bool val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
+    setPODVal(what, val);
+  }
 
-  void setVal(const std::string_view what, double val) { setPODVal(what, val); }
+  void setVal(const std::string_view what, double val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
+    setPODVal(what, val);
+  }
 
-  void setVal(const std::string_view what, float val) { setPODVal(what, val); }
-
-  void setVal(const std::string_view what, int val) { setPODVal(what, val); }
+  void setVal(const std::string_view what, float val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
+    setPODVal(what, val);
+  }
+  void setVal(const std::string_view what, int val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
+    setPODVal(what, val);
+  }
 
   void setVal(const std::string_view what, unsigned int val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
     setPODVal(what, val);
   }
 
   //! \overload
   void setVal(const std::string_view what, const char *val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
     std::string h(val);
     setVal(what, h);
   }
