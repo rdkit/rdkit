@@ -218,6 +218,29 @@ void testGithub2346() {
   BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
+void testGithub9070() {
+  BOOST_LOG(rdDebugLog)
+      << "-----------------------\n Testing github #9070: "
+         "hypervalent silicates should not be neutralized"
+      << std::endl;
+
+  auto m1 = "F[Si-](F)(c1ccccc1)(c2ccccc2)c3ccccc3"_smiles;
+  TEST_ASSERT(m1);
+  MolStandardize::Uncharger uncharger;
+  std::unique_ptr<ROMol> res1(uncharger.uncharge(*m1));
+  TEST_ASSERT(res1);
+  TEST_ASSERT(MolToSmiles(*res1) == MolToSmiles(*m1));
+  bool sanitized = true;
+  try {
+    MolOps::sanitizeMol(*static_cast<RWMol *>(res1.get()));
+  } catch (...) {
+    sanitized = false;
+  }
+  TEST_ASSERT(sanitized);
+
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
+}
+
 void testChargedAromatics() {
   BOOST_LOG(rdDebugLog)
       << "-----------------------\n Testing charged aromatics: "
@@ -481,6 +504,7 @@ int main() {
   testChargeParent();
   testGithub2144();
   testGithub2346();
+  testGithub9070();
   testChargedAromatics();
   testUnchargerProtonationOnly();
   testInorganicAcids();

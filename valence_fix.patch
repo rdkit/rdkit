@@ -1,0 +1,28 @@
+@@ -589,7 +589,12 @@
+ void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
+                INT_VECT &atomDegrees, boost::dynamic_bitset<> &activeBonds) {
+   ROMol::OEDGE_ITER beg, end;
+-  boost::tie(beg, end) = tMol.getAtomBonds(tMol.getAtomWithIdx(cand));
++  const Atom *atom = tMol.getAtomWithIdx(cand);
++  int maxValence = PeriodicTable::getTable()->getMaxValence(atom->getAtomicNum());
++  boost::tie(beg, end) = tMol.getAtomBonds(atom);
++
++  if (atomDegrees[cand] >= maxValence) {
++    return; // Can't remove bond, atom is already at max valence
+   }
+   while (beg != end) {
+     const Bond *bond = tMol[*beg];
+@@ -603,7 +608,7 @@
+     if (atomDegrees[oIdx] <= 2) {
+       changed.insert(oIdx);
+     }
+-    activeBonds[bond->getIdx()] = 0;
+-    atomDegrees[oIdx] -= 1;
+-    atomDegrees[cand] -= 1;
++    if (atomDegrees[oIdx] < PeriodicTable::getTable()->getMaxValence(tMol.getAtomWithIdx(oIdx)->getAtomicNum())) {
++      activeBonds[bond->getIdx()] = 0;
++      atomDegrees[oIdx] -= 1;
++      atomDegrees[cand] -= 1;
+     }
+   }
+ }
