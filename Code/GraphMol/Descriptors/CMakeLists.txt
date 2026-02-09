@@ -5,17 +5,20 @@ if(RDK_BUILD_DESCRIPTORS3D)
 
 endif(RDK_BUILD_DESCRIPTORS3D)
 
-if(RDK_BUILD_OSMORDRED_SUPPORT)
  find_package(LAPACK REQUIRED)
  find_package(LAPACKE REQUIRED)
 
  if(NOT LAPACKE_FOUND)
    message(fatal_error "-- LAPACKE not found")
- endif()
-
+ endif(NOT LAPACKE_FOUND)
+ 
+ if(NOT LAPACKE_INCLUDE_DIRS)
+    message(fatal_error "-- LAPACKE headers not found")
+ endif(NOT LAPACKE_INCLUDE_DIRS)
+ 
  include_directories(Descriptors LAPACK::LAPACK ${LAPACK_INCLUDE_DIRS})
 
-endif(RDK_BUILD_OSMORDRED_SUPPORT)
+
 
 rdkit_library(Descriptors
               Crippen.cpp BCUT.cpp MolDescriptors.cpp MolSurf.cpp Lipinski.cpp ConnectivityDescriptors.cpp
