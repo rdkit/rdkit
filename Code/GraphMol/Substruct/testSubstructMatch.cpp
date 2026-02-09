@@ -1701,7 +1701,7 @@ M  ALS   7  9 F C   N   O   F   P   S   Cl  Br  I
 M  END
 )CTAB"_ctab;
     const auto rAtom = mol->getAtomWithIdx(mol->getNumAtoms() - 1);
-    TEST_ASSERT(!isAtomTerminalRGroupOrQueryHydrogen(rAtom));
+    CHECK(!isAtomTerminalRGroupOrQueryHydrogen(rAtom));
   }
 }
 
@@ -1756,37 +1756,4 @@ void testSubstructMatchCount() {
   }
 
   std::cout << "Done\n" << std::endl;
-}
-
-int main(int argc, char *argv[]) {
-  RDLog::InitLogs();
-  test1();
-  test2();
-  test3();
-  test4();
-  test5();
-  test5QueryRoot();
-  test6();
-  if (argc > 1 && !strcmp(argv[1], "-l")) {
-    test7();
-  }
-  // test9();
-  testRecursiveSerialNumbers();
-  testMultiThread();
-  testGitHubIssue15();
-  testGitHubIssue409();
-  testChiralMatch();
-  testGitHubIssue688();
-  testDativeMatch();
-  testCisTransMatch();
-  testCisTransMatch2();
-  testGithubIssue1489();
-  testGithub2570();
-  testEZVsCisTransMatch();
-  testMostSubstitutedCoreMatch();
-  testLongRing();
-  testIsAtomTerminalRGroupOrQueryHydrogen();
-  testSubstructMatchCount();
-
-  return 0;
 }
