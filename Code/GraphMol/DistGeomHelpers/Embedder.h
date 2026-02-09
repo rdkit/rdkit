@@ -35,7 +35,8 @@ enum EmbedFailureCauses {
   BAD_DOUBLE_BOND_STEREO = 9,
   CHECK_CHIRAL_CENTERS2 = 10,
   EXCEEDED_TIMEOUT = 11,
-  END_OF_ENUM = 12,
+  CLASH = 12,
+  END_OF_ENUM = 13,
 };
 
 //! Parameter object for controlling embedding
@@ -145,6 +146,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useMacrocycleTorsions{false};
   bool useMacrocycle14config{false};
   unsigned int timeout{0};
+  bool checkForClashes{false};
+  bool useAllInOne{false};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
   void (*callback)(unsigned int);
   bool forceTransAmides{true};
@@ -168,7 +171,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
       const DistGeom::BoundsMatrix *boundsMat = nullptr,
       bool embedFragmentsSeparately = true, bool useSmallRingTorsions = false,
       bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
-      unsigned int timeout = 0,
+      unsigned int timeout = 0, bool checkForClashes = false,
+      bool useAllInOne = false,
       std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>>
           CPCI = nullptr,
       void (*callback)(unsigned int) = nullptr)
@@ -197,6 +201,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         useMacrocycleTorsions(useMacrocycleTorsions),
         useMacrocycle14config(useMacrocycle14config),
         timeout(timeout),
+        checkForClashes(checkForClashes),
+        useAllInOne(useAllInOne),
         CPCI(std::move(CPCI)),
         callback(callback) {}
 };

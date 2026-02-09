@@ -40,6 +40,8 @@ namespace DGeomHelpers {
   X(randomSeed)                                   \
   X(symmetrizeConjugatedTerminalGroupsForPruning) \
   X(timeout)                                      \
+  X(checkForClashes)                              \
+  X(useAllInOne)                                  \
   X(trackFailures)                                \
   X(useBasicKnowledge)                            \
   X(useExpTorsionAnglePrefs)                      \

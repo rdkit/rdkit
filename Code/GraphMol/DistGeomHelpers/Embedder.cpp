@@ -121,10 +121,7 @@ const EmbedParameters KDG(0,        // maxIterations
                           true,     // embedFragmentsSeparately
                           false,    // useSmallRingTorsions
                           false,    // useMacrocycleTorsions
-                          false,    // useMacrocycle14config
-                          0,        // timeout
-                          nullptr,  // CPCI
-                          nullptr   // callback
+                          false     // useMacrocycle14config
 );
 
 //! Parameters corresponding to Sereina Riniker's ETDG approach
@@ -151,10 +148,7 @@ const EmbedParameters ETDG(0,        // maxIterations
                            true,     // embedFragmentsSeparately
                            false,    // useSmallRingTorsions
                            false,    // useMacrocycleTorsions
-                           false,    // useMacrocycle14config
-                           0,        // timeout
-                           nullptr,  // CPCI
-                           nullptr   // callback
+                           false     // useMacrocycle14config
 );
 //! Parameters corresponding to Sereina Riniker's ETDG approach with v2 of the
 //! torsion parameters
@@ -181,10 +175,7 @@ const EmbedParameters ETDGv2(0,        // maxIterations
                              true,     // embedFragmentsSeparately
                              false,    // useSmallRingTorsions
                              false,    // useMacrocycleTorsions
-                             false,    // useMacrocycle14config
-                             0,        // timeout
-                             nullptr,  // CPCI
-                             nullptr   // callback
+                             false     // useMacrocycle14config
 );
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
 const EmbedParameters ETKDG(0,        // maxIterations
@@ -210,10 +201,7 @@ const EmbedParameters ETKDG(0,        // maxIterations
                             true,     // embedFragmentsSeparately
                             false,    // useSmallRingTorsions
                             false,    // useMacrocycleTorsions
-                            false,    // useMacrocycle14config
-                            0,        // timeout
-                            nullptr,  // CPCI
-                            nullptr   // callback
+                            false     // useMacrocycle14config
 );
 
 //! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
@@ -240,10 +228,7 @@ const EmbedParameters ETKDGv2(0,        // maxIterations
                               true,     // embedFragmentsSeparately
                               false,    // useSmallRingTorsions
                               false,    // useMacrocycleTorsions
-                              false,    // useMacrocycle14config
-                              0,        // timeout
-                              nullptr,  // CPCI
-                              nullptr   // callback
+                              false     // useMacrocycle14config
 );
 
 //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
@@ -271,10 +256,7 @@ const EmbedParameters ETKDGv3(0,        // maxIterations
                               true,     // embedFragmentsSeparately
                               false,    // useSmallRingTorsions
                               true,     // useMacrocycleTorsions
-                              true,     // useMacrocycle14config
-                              0,        // timeout
-                              nullptr,  // CPCI
-                              nullptr   // callback
+                              true      // useMacrocycle14config
 );
 
 //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
@@ -302,10 +284,7 @@ const EmbedParameters srETKDGv3(0,        // maxIterations
                                 true,     // embedFragmentsSeparately
                                 true,     // useSmallRingTorsions
                                 false,    // useMacrocycleTorsions
-                                false,    // useMacrocycle14config
-                                0,        // timeout
-                                nullptr,  // CPCI
-                                nullptr   // callback
+                                false     // useMacrocycle14config
 );
 
 namespace detail {
