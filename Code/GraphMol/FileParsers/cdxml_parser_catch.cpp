@@ -1417,18 +1417,20 @@ TEST_CASE("CDX and Formats") {
 	  }
 
 	  bool expected = false;
-	  if(format == CDXMLFormat::CDX)
-	    expected = check.cdxres;
-	  else if(format == CDXMLFormat::CDXML)
-	    expected = check.cdxmlres;
-	  else
-	    expected = check.autores;
+          if (format == CDXMLFormat::CDX) {
+            expected = check.cdxres;
+          } else if (format == CDXMLFormat::CDXML) {
+            expected = check.cdxmlres;
+          } else {
+            expected = check.autores;
+          }
 
-	  if (exception)
-	    CHECK(expected == false);
-	  else
-	    CHECK(expected == hasmols);
-	}
+          if (exception) {
+            CHECK(expected == false);
+          } else {
+            CHECK(expected == hasmols);
+          }
+        }
       }
     }
   }

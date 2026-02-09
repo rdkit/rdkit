@@ -311,7 +311,9 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
     while (true) {
       constexpr char dollarSigns[]{"$$$$"};
       auto match = std::search(ptr, bufEnd, dollarSigns, dollarSigns + 4);
-      if (match == bufEnd) break;
+      if (match == bufEnd) {
+        break;
+      }
       if (*(match - 1) == '\n') {  // ensure $$$$ is at start of line
         char *nlPos = match + 4;
         while (nlPos < bufEnd && *nlPos != '\n') {
@@ -368,8 +370,9 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
       dp_inStream->seekg(chunkEndPos);
     }
 
-    if (bytesRead >= static_cast<std::streamsize>(OVERLAP))
+    if (bytesRead >= static_cast<std::streamsize>(OVERLAP)) {
       std::memcpy(&buffer[0], bufEnd - OVERLAP, OVERLAP);
+    }
     currentStreamPos = chunkEndPos;
   }
 }
