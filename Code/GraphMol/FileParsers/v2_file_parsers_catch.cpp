@@ -58,3 +58,19 @@ M  END
           "*OC |(-2.50869,4.52002,;-3.3747,4.02,;-4.7083,3.25,),$_AP1;;$|");
   }
 }
+
+TEST_CASE("empty column names in SmilesMolSupplier") {
+  std::string rdbase = getenv("RDBASE");
+
+  std::string fName =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/s1p_chembldoc89753.txt";
+  SmilesMolSupplierParams params;
+  params.delimiter = ",";
+  params.smilesColumn = 9;
+  params.nameColumn = 10;
+  v2::FileParsers::SmilesMolSupplier suppl(fName, params);
+  auto mol = suppl.next();
+  REQUIRE(mol);
+  CHECK(mol->hasProp("_Name"));
+  CHECK(mol->hasProp("Column_0"));
+}
