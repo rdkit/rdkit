@@ -56,7 +56,7 @@ void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
                      double **g, double &sinTerm, double &cosPhi) {
   // -------
   // dTheta/dx is trickier:
-  double dCos_dT[6] = {1.0 / d[0] * (t[1].x - cosPhi * t[0].x),
+  const double dCos_dT[6] = {1.0 / d[0] * (t[1].x - cosPhi * t[0].x),
                        1.0 / d[0] * (t[1].y - cosPhi * t[0].y),
                        1.0 / d[0] * (t[1].z - cosPhi * t[0].z),
                        1.0 / d[1] * (t[0].x - cosPhi * t[1].x),

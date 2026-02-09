@@ -266,15 +266,15 @@ ForceFields::ForceField *constructForceField(
 
 */
 void addImproperTorsionTerms(ForceFields::ForceField *ff,
-                             double forceScalingFactor,
+                             const double forceScalingFactor,
                              const std::vector<std::vector<int>> &improperAtoms,
                              boost::dynamic_bitset<> &isImproperConstrained) {
   PRECONDITION(ff, "bad force field");
   auto inversionContribs =
       std::make_unique<ForceFields::UFF::InversionContribs>(ff);
   for (const auto &improperAtom : improperAtoms) {
-    std::vector<int> n(4);
-    for (unsigned int i = 0; i < 3; ++i) {
+    std::vector<std::size_t> n(4);
+    for (std::size_t i = 0; i < 3; ++i) {
       n[1] = 1;
       switch (i) {
         case 0:
@@ -322,15 +322,15 @@ void addImproperTorsionTerms(ForceFields::ForceField *ff,
 void addExperimentalTorsionTerms(
     ForceFields::ForceField *ff,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-    boost::dynamic_bitset<> &atomPairs, unsigned int numAtoms) {
+    boost::dynamic_bitset<> &atomPairs, const std::size_t numAtoms) {
   PRECONDITION(ff, "bad force field");
   auto torsionContribs =
       std::make_unique<ForceFields::CrystalFF::TorsionAngleContribs>(ff);
-  for (unsigned int t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
-    int i = etkdgDetails.expTorsionAtoms[t][0];
-    int j = etkdgDetails.expTorsionAtoms[t][1];
-    int k = etkdgDetails.expTorsionAtoms[t][2];
-    int l = etkdgDetails.expTorsionAtoms[t][3];
+  for (std::size_t t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
+    const std::size_t i = etkdgDetails.expTorsionAtoms[t][0];
+    const std::size_t j = etkdgDetails.expTorsionAtoms[t][1];
+    const std::size_t k = etkdgDetails.expTorsionAtoms[t][2];
+    const std::size_t l = etkdgDetails.expTorsionAtoms[t][3];
     if (i < l) {
       atomPairs[i * numAtoms + l] = 1;
     } else {
