@@ -1286,6 +1286,9 @@ std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
       }
 
       std::getline(lineStream, label, '=');
+      if (label.empty()) {
+        continue;
+      }
       ParseV3000ParseLabel(label, lineStream, dataFields, line, sgroup,
                            nSgroups, mol, strictParsing);
       parsedLabels.insert(label);
@@ -1316,6 +1319,9 @@ std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
       }
 
       std::getline(lineStream, label, '=');
+      if (label.empty()) {
+        continue;
+      }
       if (std::find(parsedLabels.begin(), parsedLabels.end(), label) ==
           parsedLabels.end()) {
         ParseV3000ParseLabel(label, lineStream, dataFields, defaultLineNum,

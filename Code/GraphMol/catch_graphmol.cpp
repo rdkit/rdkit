@@ -4964,3 +4964,14 @@ TEST_CASE(
   CHECK(stg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
   CHECK(stg.getAtoms().size() == 2);
 }
+
+TEST_CASE("github #9068: properties with empty names") {
+  SECTION("basics") {
+    auto m = "CCO"_smiles;
+    REQUIRE(m);
+    CHECK_THROWS_AS(m->setProp("", "some value"), ValueErrorException);
+    CHECK_THROWS_AS(m->getProp<std::string>(""), KeyErrorException);
+    CHECK(!m->hasProp(""));
+    CHECK_NOTHROW(m->clearProp(""));
+  }
+}
