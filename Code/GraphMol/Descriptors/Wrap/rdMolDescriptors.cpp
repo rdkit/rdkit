@@ -437,26 +437,26 @@ MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
 }
 
 #ifdef RDK_HAS_EIGEN3
-python::list BCUT(const RDKit::ROMol &mol) {
-  return python::list(RDKit::Descriptors::BCUT2D(mol));
+  python::list BCUT(const RDKit::ROMol &mol, RDKit::Descriptors::BCUTOptions opts) {
+    return python::list(RDKit::Descriptors::BCUT2D(mol, opts));
 }
 
 std::pair<double, double> BCUT2D_list(const RDKit::ROMol &m,
-                                      python::list atomprops) {
+                                      python::list atomprops, RDKit::Descriptors::BCUTOptions opts) {
   std::vector<double> dvec;
   for (int i = 0; i < len(atomprops); ++i) {
     dvec.push_back(boost::python::extract<double>(atomprops[i]));
   }
-  return RDKit::Descriptors::BCUT2D(m, dvec);
+  return RDKit::Descriptors::BCUT2D(m, dvec, opts);
 }
 
 std::pair<double, double> BCUT2D_tuple(const RDKit::ROMol &m,
-                                       python::tuple atomprops) {
+                                       python::tuple atomprops,RDKit::Descriptors:: BCUTOptions opts) {
   std::vector<double> dvec;
   for (int i = 0; i < len(atomprops); ++i) {
     dvec.push_back(boost::python::extract<double>(atomprops[i]));
   }
-  return RDKit::Descriptors::BCUT2D(m, dvec);
+  return RDKit::Descriptors::BCUT2D(m, dvec, opts);
 }
 
 // From boost::python examples
@@ -1844,7 +1844,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 #ifdef RDK_HAS_EIGEN3
   python::scope().attr("_BCUT2D_version") = RDKit::Descriptors::BCUT2DVersion;
   std::pair<double, double> (*BCUT_atomprops)(
-      const RDKit::ROMol &, const std::string &) = &RDKit::Descriptors::BCUT2D;
+       const RDKit::ROMol &, const std::string &, RDKit::Descriptors::BCUTOptions) = &RDKit::Descriptors::BCUT2D;
   docString =
       "Implements BCUT descriptors From J. Chem. Inf. Comput. Sci., Vol. 39, "
       "No. 1, 1999"
@@ -1857,7 +1857,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "         crippen mr eigenvalue high, crippen mr low]\n"
       "";
 
-  python::def("BCUT2D", BCUT, (python::arg("mol")), docString.c_str());
+  python::enum_<RDKit::Descriptors::BCUTOptions>(
+      "BCUTOptions", docString.c_str())
+    .value("PERLMAN_MATRIX", RDKit::Descriptors::BCUTOptions::PERLMAN_MATRIX)
+    .value("BURDEN_MATRIX", RDKit::Descriptors::BCUTOptions::BURDEN_MATRIX);
+
+  python::def("BCUT2D", BCUT, (python::arg("mol"),
+			       python::arg("opts")=RDKit::Descriptors::BCUTOptions::PERLMAN_MATRIX),
+	      docString.c_str());
 
   std_pair_to_python_converter<double, double>();
   docString =
@@ -1867,10 +1874,12 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "size to the number of atoms in mol";
 
   python::def("BCUT2D", BCUT2D_list,
-              (python::arg("mol"), python::arg("atom_props")),
+              (python::arg("mol"), python::arg("atom_props"),
+	       python::arg("opts")=RDKit::Descriptors::BCUTOptions::PERLMAN_MATRIX),
               docString.c_str());
   python::def("BCUT2D", BCUT2D_tuple,
-              (python::arg("mol"), python::arg("atom_props")),
+              (python::arg("mol"), python::arg("atom_props"),
+	       python::arg("opts")=RDKit::Descriptors::BCUTOptions::PERLMAN_MATRIX),
               docString.c_str());
 
   docString =
@@ -1878,7 +1887,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "molecule and the specified atom prop name\n"
       "atom_propname must exist on each atom and be convertible to a float";
   python::def("BCUT2D", BCUT_atomprops,
-              (python::arg("mol"), python::arg("atom_propname")),
+              (python::arg("mol"), python::arg("atom_propname"),
+	       python::arg("opts")=RDKit::Descriptors::BCUTOptions::PERLMAN_MATRIX),
               docString.c_str());
 
   docString =
@@ -1974,7 +1984,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
         "CalcPathCount function\n");
     python::def("CalcKappaShapeIndex", RDKit::Descriptors::Osmordred::calcKappaShapeIndex,
         "CalcKappaShapeIndex function\n");
-    python::def("CalcRingCount", RDKit::Descriptors::Osmordred::calcRingCount,
+    python::def("CalcRingDescriptors", RDKit::Descriptors::Osmordred::calcRingDescriptors,
         "CalcRingCount function\n");
     python::def("CalcMolecularId", RDKit::Descriptors::Osmordred::calcMolecularId,
         "CalcMolecularId function\n");

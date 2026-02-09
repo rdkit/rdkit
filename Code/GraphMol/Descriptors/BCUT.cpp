@@ -25,7 +25,7 @@ constexpr int NUM_BCUTS = 8;
 //  Original burden matrix was .1, .2, .3, .15 for single,double,triple or
 //  aromatic all other elements are .001
 namespace {
-std::unique_ptr<Eigen::MatrixXd> make_burden(const ROMol &m) {
+std::unique_ptr<Eigen::MatrixXd> make_perlman_burden(const ROMol &m) {
   auto num_atoms = m.getNumAtoms();
   std::unique_ptr<Eigen::MatrixXd> burden(
       new Eigen::MatrixXd(num_atoms, num_atoms));
@@ -66,6 +66,39 @@ std::unique_ptr<Eigen::MatrixXd> make_burden(const ROMol &m) {
   return burden;
 }
 
+std::unique_ptr<Eigen::MatrixXd> make_burden_matrix(const ROMol &m) {
+  auto num_atoms = m.getNumAtoms();
+  std::unique_ptr<Eigen::MatrixXd> burden(
+      new Eigen::MatrixXd(num_atoms, num_atoms));
+
+  for (unsigned int i = 0; i < num_atoms; ++i) {
+    for (unsigned int j = 0; j < num_atoms; ++j) {
+      (*burden)(i, j) = (*burden)(j, i) = 0.001;
+    }
+  }
+
+  for (auto &bond : m.bonds()) {
+    const auto *a = bond->getBeginAtom();
+    const auto *b = bond->getEndAtom();
+    unsigned int i = bond->getBeginAtomIdx();
+    unsigned int j = bond->getEndAtomIdx();
+
+    double w = bond->getBondTypeAsDouble() / 10.0;
+    if (a->getDegree() == 1 || b->getDegree() == 1) {
+      w += 0.01;
+    }
+    (*burden)(i, j) = (*burden)(j, i) = w;
+  }
+  return burden;
+}
+
+std::unique_ptr<Eigen::MatrixXd> make_burden(const ROMol &m, BCUTOptions opts) {
+  if (opts == BCUTOptions::PERLMAN_MATRIX) {
+    return make_perlman_burden(m);
+  }
+  return make_burden_matrix(m);
+}
+
 std::pair<double, double> BCUT2D(std::unique_ptr<Eigen::MatrixXd> &burden,
                                  const std::vector<double> &atom_props) {
   if (atom_props.empty()) {
@@ -84,7 +117,8 @@ std::pair<double, double> BCUT2D(std::unique_ptr<Eigen::MatrixXd> &burden,
 }  // namespace
 
 std::pair<double, double> BCUT2D(const ROMol &m,
-                                 const std::vector<double> &atom_props) {
+                                 const std::vector<double> &atom_props,
+                                 BCUTOptions opts) {
   unsigned int num_atoms = m.getNumAtoms();
   PRECONDITION(atom_props.size() == num_atoms,
                "Number of atom props not equal to number of atoms");
@@ -92,12 +126,37 @@ std::pair<double, double> BCUT2D(const ROMol &m,
   if (num_atoms == 0) {
     return std::pair<double, double>(0, 0);
   }
-  auto burden = make_burden(m);
+  auto burden = make_burden(m, opts);
   return BCUT2D(burden, atom_props);
 }
 
+std::vector<std::pair<double, double>> BCUT2D(
+    const ROMol &m, const std::vector<std::vector<double>> &atom_props,
+    BCUTOptions opts) {
+  unsigned int num_atoms = m.getNumAtoms();
+  PRECONDITION(std::all_of(atom_props.begin(), atom_props.end(),
+                           [num_atoms](const std::vector<double> &v) {
+                             return v.size() == num_atoms;
+                           }),
+               "Number of atom props not equal to number of atoms");
+
+  auto burden = make_burden(m, opts);
+  std::vector<std::pair<double, double>> result;
+  result.reserve(atom_props.size());
+
+  for (auto &v : atom_props) {
+    if (num_atoms == 0) {
+      result.push_back(std::pair<double, double>(0, 0));
+    } else {
+      result.push_back(BCUT2D(burden, v));
+    }
+  }
+  return result;
+}
+
 std::pair<double, double> BCUT2D(const ROMol &m,
-                                 const std::string &atom_double_prop) {
+                                 const std::string &atom_double_prop,
+                                 BCUTOptions opts) {
   std::vector<double> props;
   props.reserve(m.getNumAtoms());
   for (auto &atom : m.atoms()) {
@@ -106,7 +165,7 @@ std::pair<double, double> BCUT2D(const ROMol &m,
   return BCUT2D(m, props);
 }
 
-std::vector<double> BCUT2D(const ROMol &m) {
+std::vector<double> BCUT2D(const ROMol &m, BCUTOptions opts) {
   if (!m.getNumAtoms()) {
     return std::vector<double>(NUM_BCUTS, 0.0);
   }
@@ -129,7 +188,7 @@ std::vector<double> BCUT2D(const ROMol &m) {
   getCrippenAtomContribs(*mol, slogp, cmr);
   // polarizability? - need model
   // slogp?  sasa?
-  auto burden = make_burden(*mol);
+  auto burden = make_burden(*mol, opts);
   auto atom_bcut = BCUT2D(burden, masses);
   auto gasteiger = BCUT2D(burden, charges);
   auto logp = BCUT2D(burden, slogp);
