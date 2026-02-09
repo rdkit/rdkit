@@ -2084,6 +2084,56 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
     // Fast aggregate binding
     python::def("CalcOsmordred", RDKit::Descriptors::Osmordred::calcOsmordred,
         "Compute all Osmordred descriptors at once (fast path)\n");
+    
+    // v2.0: Single molecule with timeout protection (all-or-nothing)
+    python::def("CalcOsmordredWithTimeout",
+        +[](const RDKit::ROMol& mol, int timeout_seconds) {
+            return RDKit::Descriptors::Osmordred::calcOsmordredWithTimeout(mol, timeout_seconds);
+        },
+        (python::arg("mol"), python::arg("timeout_seconds")=60),
+        "Compute Osmordred descriptors with timeout protection (default 60 seconds).\n"
+        "Returns NaN vector (3585 NaN values) if computation exceeds timeout.\n"
+        "This is the RECOMMENDED function to prevent hanging on complex molecules.\n");
+    
+    // v2.0: Batch version with parallel processing and timeout
+    python::def("CalcOsmordredBatch",
+        +[](const std::vector<std::string>& smiles_list, int n_jobs) {
+            return RDKit::Descriptors::Osmordred::calcOsmordredBatch(smiles_list, n_jobs);
+        },
+        (python::arg("smiles_list"), python::arg("n_jobs")=0),
+        "BATCH: Compute all Osmordred descriptors for multiple molecules in parallel.\n"
+        "Each molecule has a 60-second timeout - returns NaN if exceeded.\n"
+        "Returns vector of descriptor vectors (one per molecule).\n");
+    
+    // v2.0: Batch from mol objects (preserves tautomer canonical)
+    python::def("CalcOsmordredBatchFromMols",
+        +[](const python::list& mol_list, int n_jobs) {
+            std::vector<std::unique_ptr<RDKit::ROMol>> owned;
+            std::vector<const RDKit::ROMol*> mols;
+            owned.reserve(python::len(mol_list));
+            mols.reserve(python::len(mol_list));
+            for (int i = 0; i < python::len(mol_list); ++i) {
+                python::object obj = mol_list[i];
+                if (obj.is_none()) {
+                    mols.push_back(nullptr);
+                    continue;
+                }
+                try {
+                    const RDKit::ROMol& mol = python::extract<const RDKit::ROMol&>(obj);
+                    mols.push_back(&mol);
+                } catch (...) {
+                    mols.push_back(nullptr);
+                }
+            }
+            return RDKit::Descriptors::Osmordred::calcOsmordredBatchFromMols(mols, n_jobs);
+        },
+        (python::arg("mols"), python::arg("n_jobs")=0),
+        "BATCH: Compute Osmordred descriptors from mol objects.\n"
+        "Accepts list of RDKit Mol objects (can contain None). Returns NaN row for invalid/failed.\n");
+
+    python::def("GetOsmordredDescriptorNames", RDKit::Descriptors::Osmordred::getOsmordredDescriptorNames,
+        "Get descriptor names in the same order as CalcOsmordred returns values.\n"
+        "Returns a list of strings where multi-value descriptors have suffixes like '_1', '_2', etc.\n");
 
     python::def("HasOsmordredSupport", RDKit::Descriptors::Osmordred::hasOsmordredSupport,
 	"Returns True if the RDKit is compiled with osmordred support, False otherwise.\n"

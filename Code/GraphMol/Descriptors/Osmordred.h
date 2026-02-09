@@ -41,6 +41,16 @@ namespace Descriptors {
 namespace Osmordred {
 
 RDKIT_DESCRIPTORS_EXPORT  bool hasOsmordredSupport();
+
+// v2.0: Control function to check if Gasteiger parameters exist for all atoms
+// Returns true if all atoms have parameters for their specific environment, false otherwise
+// Use this BEFORE calling any function that uses Gasteiger charges to avoid crashes
+RDKIT_DESCRIPTORS_EXPORT bool checkGasteigerParameters(const RDKit::ROMol& mol);
+
+// v2.0: Filter function to check if a molecule is too large (will cause hangs)
+// Returns true if molecule has >10 rings OR >200 heavy atoms
+// Use this to filter out overly complex molecules before descriptor calculation
+RDKIT_DESCRIPTORS_EXPORT bool isMoleculeTooLarge(const RDKit::ROMol& mol);
   
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcABCIndex(const ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcAcidBase(const ROMol& mol);
@@ -139,6 +149,24 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcInformationContent(const RDKit:
 
 // Aggregated fast path that calls all Osmordred descriptors in C++
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordred(const RDKit::ROMol& mol);
+
+// v2.0: Single molecule with timeout protection (default 60 seconds)
+// Returns NaN vector (3585 NaN values) if computation exceeds timeout
+// This is the RECOMMENDED function for production use to prevent hanging
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordredWithTimeout(
+    const RDKit::ROMol& mol, int timeout_seconds = 60);
+
+// v2.0: Batch from SMILES: parses each SMILES with SmilesToMol() -> NEW mol. Tautomer canonical LOST.
+RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>> calcOsmordredBatch(
+    const std::vector<std::string>& smiles_list, int n_jobs = 0);
+
+// v2.0: Batch from mol objects (Python Mol via ToBinary/MolPickler). PRESERVES tautomer canonical.
+RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>> calcOsmordredBatchFromMols(
+    const std::vector<const RDKit::ROMol*>& mols, int n_jobs = 0);
+
+// v2.0: Get descriptor names in the same order as calcOsmordred returns values
+RDKIT_DESCRIPTORS_EXPORT std::vector<std::string> getOsmordredDescriptorNames();
+
 } // namespace Osmordred
 } // namespace Descriptors
 } // namespace RDKit
