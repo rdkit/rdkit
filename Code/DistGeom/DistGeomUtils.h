@@ -212,6 +212,24 @@ inline ForceFields::ForceField *construct3DImproperForceField(
       mmat, positions, etkdgDetails.improperAtoms, etkdgDetails.angles,
       etkdgDetails.atomNums);
 }
+
+//! Force Field for All-In-One Minimization
+/*!
+
+  \param mmat Distance bounds matrix
+  \param positions A vector of pointers to Points to place in the field
+  \param etkdgDetails Contains information about the ETKDG force field
+  \param csets The vector of chiral points (type: ChiralSet)
+  
+  \return a pointer to a ForceField for the All in One optimization
+    <b>NOTE:</b> the caller is responsible for deleting this force field.
+
+*/
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
+    const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
+    const VECT_CHIRALSET *csets);
+
 }  // namespace DistGeom
 
 #endif
