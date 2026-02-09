@@ -195,6 +195,9 @@ TEST_CASE(
     "molecule") {
   SECTION("basics") {
     auto m1 = "c1ccccc1c1ccc(CCC)cc1"_smiles;
+    RDKit::v2::SmilesParse::SmilesParserParams params;
+    params.removeHs = false;
+    auto m2 = RDKit::v2::SmilesParse::MolFromSmiles("CCCC", params);
     CHECK(Descriptors::calcNumRotatableBonds(
               *m1, Descriptors::NumRotatableBondsOptions::NonStrict) == 3);
     CHECK(Descriptors::calcNumRotatableBonds(
@@ -208,6 +211,8 @@ TEST_CASE(
               *m1, Descriptors::NumRotatableBondsOptions::Strict) == 3);
     CHECK(Descriptors::calcNumRotatableBonds(
               *m1, Descriptors::NumRotatableBondsOptions::StrictLinkages) == 2);
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m2, Descriptors::NumRotatableBondsOptions::Strict) == 1);
   }
   SECTION("as reported") {
     SmilesParserParams ps;
