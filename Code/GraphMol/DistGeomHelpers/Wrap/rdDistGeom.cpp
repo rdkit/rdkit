@@ -487,6 +487,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
              RDKit::DGeomHelpers::EmbedFailureCauses::CHECK_CHIRAL_CENTERS2)
       .value("EXCEEDED_TIMEOUT",
              RDKit::DGeomHelpers::EmbedFailureCauses::EXCEEDED_TIMEOUT)
+      .value("CLASH", RDKit::DGeomHelpers::EmbedFailureCauses::CLASH)
       .export_values();
 
   python::class_<PyEmbedParameters, boost::noncopyable>(

@@ -246,8 +246,14 @@ void getExperimentalTorsions(
           atoms[1] = aid2;
           atoms[2] = aid3;
           atoms[3] = aid4;
+          std::vector<double> vals(param.V);
+          if (details.aioForceConstants.etTermScaling != 1.0) {
+            for (auto &v : vals) {
+              v *= details.aioForceConstants.etTermScaling;
+            }
+          }
           details.expTorsionAtoms.push_back(atoms);
-          details.expTorsionAngles.emplace_back(param.signs, param.V);
+          details.expTorsionAngles.emplace_back(param.signs, vals);
           if (verbose) {
             // using the stringstream seems redundant, but we don't want the
             // extra formatting provided by the logger after every entry;
@@ -261,7 +267,7 @@ void getExperimentalTorsions(
             BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
           }
         }  // if not donePaths
-      }  // end loop over matches
+      }    // end loop over matches
 
     }  // end loop over patterns
   }
@@ -358,8 +364,8 @@ void getExperimentalTorsions(
         }
 
       }  // loop over atoms in ring
-    }  // loop over rings
-  }  // if useBasicKnowledge
+    }    // loop over rings
+  }      // if useBasicKnowledge
 
 }  // end function
 
