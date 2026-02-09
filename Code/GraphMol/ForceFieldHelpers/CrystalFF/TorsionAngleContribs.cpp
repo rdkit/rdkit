@@ -19,9 +19,9 @@
 
 namespace ForceFields {
 namespace CrystalFF {
-namespace {
-double calcTorsionEnergyM6(const std::vector<double> &forceConstants,
-                           const std::vector<int> &signs, const double cosPhi) {
+
+double calcTorsionEnergy(const std::vector<double> &forceConstants,
+                         const std::vector<int> &signs, const double cosPhi) {
   const double cosPhi2 = cosPhi * cosPhi;
   const double cosPhi3 = cosPhi * cosPhi2;
   const double cosPhi4 = cosPhi * cosPhi3;
@@ -41,7 +41,6 @@ double calcTorsionEnergyM6(const std::vector<double> &forceConstants,
           forceConstants[4] * (1.0 + signs[4] * cos5Phi) +
           forceConstants[5] * (1.0 + signs[5] * cos6Phi));
 }
-}  // namespace
 
 TorsionAngleContribs::TorsionAngleContribs(ForceField *owner) {
   PRECONDITION(owner, "bad owner");
@@ -67,20 +66,21 @@ double TorsionAngleContribs::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
   double accum = 0.0;
+  const unsigned int dim = dp_forceField->dimension();
   for (const auto &contrib : d_contribs) {
-    const RDGeom::Point3D iPoint(pos[3 * contrib.idx1],
-                                 pos[3 * contrib.idx1 + 1],
-                                 pos[3 * contrib.idx1 + 2]);
-    const RDGeom::Point3D jPoint(pos[3 * contrib.idx2],
-                                 pos[3 * contrib.idx2 + 1],
-                                 pos[3 * contrib.idx2 + 2]);
-    const RDGeom::Point3D kPoint(pos[3 * contrib.idx3],
-                                 pos[3 * contrib.idx3 + 1],
-                                 pos[3 * contrib.idx3 + 2]);
-    const RDGeom::Point3D lPoint(pos[3 * contrib.idx4],
-                                 pos[3 * contrib.idx4 + 1],
-                                 pos[3 * contrib.idx4 + 2]);
-    accum += calcTorsionEnergyM6(
+    const RDGeom::Point3D iPoint(pos[dim * contrib.idx1],
+                                 pos[dim * contrib.idx1 + 1],
+                                 pos[dim * contrib.idx1 + 2]);
+    const RDGeom::Point3D jPoint(pos[dim * contrib.idx2],
+                                 pos[dim * contrib.idx2 + 1],
+                                 pos[dim * contrib.idx2 + 2]);
+    const RDGeom::Point3D kPoint(pos[dim * contrib.idx3],
+                                 pos[dim * contrib.idx3 + 1],
+                                 pos[dim * contrib.idx3 + 2]);
+    const RDGeom::Point3D lPoint(pos[dim * contrib.idx4],
+                                 pos[dim * contrib.idx4 + 1],
+                                 pos[dim * contrib.idx4 + 2]);
+    accum += calcTorsionEnergy(
         contrib.forceConstants, contrib.signs,
         MMFF::Utils::calcTorsionCosPhi(iPoint, jPoint, kPoint, lPoint));
   }
@@ -92,21 +92,22 @@ void TorsionAngleContribs::getGrad(double *pos, double *grad) const {
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
 
+  const unsigned int dim = dp_forceField->dimension();
   for (const auto &contrib : d_contribs) {
-    const RDGeom::Point3D iPoint(pos[3 * contrib.idx1],
-                                 pos[3 * contrib.idx1 + 1],
-                                 pos[3 * contrib.idx1 + 2]);
-    const RDGeom::Point3D jPoint(pos[3 * contrib.idx2],
-                                 pos[3 * contrib.idx2 + 1],
-                                 pos[3 * contrib.idx2 + 2]);
-    const RDGeom::Point3D kPoint(pos[3 * contrib.idx3],
-                                 pos[3 * contrib.idx3 + 1],
-                                 pos[3 * contrib.idx3 + 2]);
-    const RDGeom::Point3D lPoint(pos[3 * contrib.idx4],
-                                 pos[3 * contrib.idx4 + 1],
-                                 pos[3 * contrib.idx4 + 2]);
-    double *g[4] = {&(grad[3 * contrib.idx1]), &(grad[3 * contrib.idx2]),
-                    &(grad[3 * contrib.idx3]), &(grad[3 * contrib.idx4])};
+    const RDGeom::Point3D iPoint(pos[dim * contrib.idx1],
+                                 pos[dim * contrib.idx1 + 1],
+                                 pos[dim * contrib.idx1 + 2]);
+    const RDGeom::Point3D jPoint(pos[dim * contrib.idx2],
+                                 pos[dim * contrib.idx2 + 1],
+                                 pos[dim * contrib.idx2 + 2]);
+    const RDGeom::Point3D kPoint(pos[dim * contrib.idx3],
+                                 pos[dim * contrib.idx3 + 1],
+                                 pos[dim * contrib.idx3 + 2]);
+    const RDGeom::Point3D lPoint(pos[dim * contrib.idx4],
+                                 pos[dim * contrib.idx4 + 1],
+                                 pos[dim * contrib.idx4 + 2]);
+    double *g[4] = {&(grad[dim * contrib.idx1]), &(grad[dim * contrib.idx2]),
+                    &(grad[dim * contrib.idx3]), &(grad[dim * contrib.idx4])};
 
     RDGeom::Point3D r[4] = {iPoint - jPoint, kPoint - jPoint, jPoint - kPoint,
                             lPoint - kPoint};
