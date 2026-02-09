@@ -62,7 +62,7 @@ class TestOsmordred(unittest.TestCase):
         self.assertGreater(len(aromatic_counts_list), 0)
         
         # Test ring count
-        ring_counts = rdMD.CalcRingCount(self.benzene)
+        ring_counts = rdMD.CalcRingDescriptors(self.benzene)
         ring_counts_list = to_list(ring_counts)
         self.assertGreater(len(ring_counts_list), 0)
         
@@ -396,7 +396,7 @@ class TestOsmordred(unittest.TestCase):
             'CalcBaryszMatrixEigen', 'CalcZagrebIndex', 'CalcMoeType',
             'CalcMolecularDistanceEdge', 'CalcEState', 'CalcWalkCount',
             'CalcTopologicalCharge', 'CalcChi', 'CalcPathCount', 'CalcKappaShapeIndex',
-            'CalcRingCount', 'CalcMolecularId', 'CalcBCUT', 'CalcAutocorrelation',
+            'CalcRingDescriptors', 'CalcMolecularId', 'CalcBCUT', 'CalcAutocorrelation',
             'CalcFramework', 'CalcExtendedTopochemicalAtom',
             'CalcChipath', 'CalcChichain', 'CalcChicluster', 'CalcChipathcluster',
             'CalcAcidicGroupCount', 'CalcBasicGroupCount', 'CalcCountAromaticAtoms',

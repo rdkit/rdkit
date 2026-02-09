@@ -54,7 +54,7 @@ TEST_CASE("Osmordred Basic Functionality") {
     REQUIRE(aromatic_counts[1] == 6); // Aromatic bonds
     
     // Test ring count
-    auto ring_counts = calcRingCount(*mol);
+    auto ring_counts = calcRingDescriptors(*mol);
     REQUIRE(!ring_counts.empty());
     REQUIRE(ring_counts[0] == 1); // Number of rings
   }
@@ -368,8 +368,10 @@ TEST_CASE("Osmordred v2.0 - solveLinearSystem (BCUT fix)") {
     // BCUT calculations use solveLinearSystem internally
     // v2.0 fix: saves B_original before LAPACK calls and adds dgelss fallback
     auto bcuts = calcBCUTs(*mol);
-    REQUIRE(!bcuts.empty());
+    const std::vector<double> expected = {0.11,-0.11,1.11,0.89,1.11,0.89,2.11,1.89,6.11,5.89,12.121,11.901,20.6895,20.4695,2.856,2.636,2.66,2.44,2.61,2.39,1.78,1.56,11.3703,11.1503};
     
+    REQUIRE(!bcuts.empty());
+
     // Check that we get valid (non-NaN) results
     bool has_valid = false;
     for (const auto& val : bcuts) {
@@ -379,6 +381,10 @@ TEST_CASE("Osmordred v2.0 - solveLinearSystem (BCUT fix)") {
       }
     }
     REQUIRE(has_valid);
+    REQUIRE(bcuts.size() == expected.size());
+    for(size_t i=0;i<bcuts.size();++i) {
+      CHECK(bcuts[i] == Catch::Approx(expected[i]).epsilon(1e-5));
+    }
   }
   
   SECTION("Benzene - BCUT test") {
@@ -386,6 +392,14 @@ TEST_CASE("Osmordred v2.0 - solveLinearSystem (BCUT fix)") {
     REQUIRE(mol != nullptr);
     
     auto bcuts = calcBCUTs(*mol);
+    const std::vector<double> expected = {0.303,-0.299,3.303,2.701,2.303,1.701,2.303,1.701,6.303,5.701,12.314,11.712,20.8825,20.2805,3.049,2.447,2.853,2.251,2.803,2.201,1.973,1.371,11.5633,10.9613};
+    
+    std::cerr << "benzene" << std::endl;
+    for(auto v:bcuts) {
+      std::cerr << v << ",";
+    }
+    std::cerr << std::endl;
+
     REQUIRE(!bcuts.empty());
     
     // Verify we get reasonable values
@@ -397,6 +411,10 @@ TEST_CASE("Osmordred v2.0 - solveLinearSystem (BCUT fix)") {
       }
     }
     REQUIRE(has_valid);
+    REQUIRE(bcuts.size() == expected.size());
+    for(size_t i=0;i<bcuts.size();++i) {
+      CHECK(bcuts[i] == Catch::Approx(expected[i]).epsilon(1e-5));
+    }
   }
   
   SECTION("Drug-like molecule - full BCUT test") {

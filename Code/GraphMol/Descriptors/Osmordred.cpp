@@ -5883,7 +5883,7 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
         append(calcMolecularId(mol));
         append(calcPathCount(mol));
         append(calcPolarizability(mol));
-        appendInt(calcRingCount(mol));
+        appendInt(calcRingDescriptors(mol));
         append(calcRotatableBond(mol));
         append(calcSLogP(mol));
         append(calcTopoPSA(mol));
@@ -6040,7 +6040,12 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
         futures.reserve(mols.size());
         for (size_t idx = 0; idx < mols.size(); ++idx) {
             const ROMol* mol = mols[idx];
-            futures.emplace_back(std::async(std::launch::async, [mol, nFeatures]() {
+#if defined(__clang__)
+	    // lambda capture divergence between clang and msvc
+            futures.emplace_back(std::async(std::launch::async, [mol]() {
+#else
+	    futures.emplace_back(std::async(std::launch::async, [mol, nFeatures]() {
+#endif	      
                 if (mol) {
                     try {
                         return calcOsmordred(*mol);
@@ -6574,7 +6579,7 @@ std::vector<double> calculateETADescriptors(const RDKit::ROMol& mol) {
     }
 
     // Calculate ring count descriptors
-    std::vector<int> calcRingCount(const ROMol& mol) {
+    std::vector<int> calcRingDescriptors(const ROMol& mol) {
         std::vector<int> descriptors(138, 0); // Placeholder for descriptor vector
 
         std::vector<std::vector<int>>  sssr = GetSSSR(mol);
@@ -10531,7 +10536,7 @@ std::vector<double> calcTopologicalChargeDescs(const RDKit::ROMol& mol) { return
 std::vector<double> calcAllChiDescriptors(const RDKit::ROMol& mol) { return std::vector<double>(); }
 std::vector<double> calcPathCount(const RDKit::ROMol& mol) { return std::vector<double>(); }
 std::vector<double> calcKappaShapeIndex(const RDKit::ROMol& mol) { return std::vector<double>(); }
-std::vector<int> calcRingCount(const ROMol& mol) { return std::vector<int>(); }
+std::vector<int> calcRingDescriptors(const ROMol& mol) { return std::vector<int>(); }
 std::vector<double> calcMolecularId(const RDKit::ROMol& mol) { return std::vector<double>(); }
 std::vector<double> calcBCUTs(const RDKit::ROMol& mol) { return std::vector<double>(); }
 std::vector<double> calcAutoCorrelation(const RDKit::ROMol& mol) { return std::vector<double>(); }

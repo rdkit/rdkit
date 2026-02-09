@@ -65,11 +65,15 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcWienerIndex(const ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcVdwVolumeABC(const ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcTopoPSA(const ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSLogP(const ROMol& mol);
+//! calcHydrogenBond Returns HBA and HBD 
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcHydrogenBond(const ROMol& mol);
+  
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcLogS(const RDKit::ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcLipinskiGhose(const RDKit::ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcMcGowanVolume(const RDKit::ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcPolarizability(const RDKit::ROMol& mol);
+  
+//! returns number or rotatable bonds, number of rotatbale bonds / heavy bond (bond has hvy atoms at ends)
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcRotatableBond(const ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcFragmentComplexity(const ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcConstitutional(const ROMol& mol);
@@ -93,7 +97,8 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcTopologicalChargeDescs(const RD
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcAllChiDescriptors(const RDKit::ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcPathCount(const RDKit::ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcKappaShapeIndex(const RDKit::ROMol& mol); // closer "missing" k3 path count not correct on few cases
-RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcRingCount(const ROMol& mol);
+  
+RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcRingDescriptors(const ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcMolecularId(const RDKit::ROMol& mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcBCUTs(const RDKit::ROMol& mol); // 10x faster the
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcAutoCorrelation(const RDKit::ROMol& mol);
