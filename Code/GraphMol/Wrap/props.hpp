@@ -104,8 +104,9 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
 
   STR_VECT keys = obj.getPropList(includePrivate, includeComputed);
   for (auto &rdvalue : data) {
-    if (std::find(keys.begin(), keys.end(), rdvalue.key) == keys.end())
+    if (std::find(keys.begin(), keys.end(), rdvalue.key) == keys.end()) {
       continue;
+    }
     try {
       const auto tag = rdvalue.val.getTag();
       switch (tag) {
@@ -218,12 +219,13 @@ python::object autoConvertString(const RDOb *ob, const std::string &key) {
   double dvalue;
   std::string svalue;
 
-  if (ob->getPropIfPresent(key, ivalue))
+  if (ob->getPropIfPresent(key, ivalue)) {
     return python::object(ivalue);
-  else if (ob->getPropIfPresent(key, dvalue))
+  } else if (ob->getPropIfPresent(key, dvalue)) {
     return python::object(dvalue);
-  else if (ob->getPropIfPresent(key, svalue))
+  } else if (ob->getPropIfPresent(key, svalue)) {
     return python::object(svalue);
+  }
 
   return python::object();
 }
