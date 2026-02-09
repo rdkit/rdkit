@@ -195,9 +195,8 @@ TEST_CASE(
     "molecule") {
   SECTION("basics") {
     auto m1 = "c1ccccc1c1ccc(CCC)cc1"_smiles;
-    RDKit::v2::SmilesParse::SmilesParserParams params;
-    params.removeHs = false;
-    auto m2 = RDKit::v2::SmilesParse::MolFromSmiles("CCCC", params);
+    auto m2 = "CCCC"_smiles;
+    MolOps::addHs(*m2);
     CHECK(Descriptors::calcNumRotatableBonds(
               *m1, Descriptors::NumRotatableBondsOptions::NonStrict) == 3);
     CHECK(Descriptors::calcNumRotatableBonds(
