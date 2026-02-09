@@ -4934,9 +4934,7 @@ TEST_CASE("Testing github issue 418: removeHs not updating H count") {
     REQUIRE(m->getAtomWithIdx(0)->getNumExplicitHs() == 4);
     delete m;
   }
-  {
-    REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException);
-  }
+  { REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException); }
 }
 
 TEST_CASE(
@@ -6386,7 +6384,7 @@ TEST_CASE("Testing github #805 : Pre-condition Violation: bad bond type") {
     REQUIRE(m->getBondBetweenAtoms(3, 10)->getBondType() == Bond::DOUBLE);
     REQUIRE(m->getBondBetweenAtoms(3, 10)->getStereo() != Bond::STEREONONE);
     std::string smi = MolToSmiles(*m, true);
-    REQUIRE(smi == "CCO/[P+]([O-])=C1\\CSC(c2cccs2)\\C1=[P+](\\[O-])OCC");
+    REQUIRE(smi == R"SMI(CCO/[P+]([O-])=C1CSC(c2cccs2)C\1=[P+](\[O-])OCC)SMI");
     delete m;
   }
   {
@@ -6539,7 +6537,9 @@ TEST_CASE("Testing MMFF94 aromaticity") {
   MolOps::setAromaticity(*m, MolOps::AROMATICITY_RDKIT);
   int arombondcount = 0;
   for (auto b : m->bonds()) {
-    if (b->getIsAromatic()) arombondcount++;
+    if (b->getIsAromatic()) {
+      arombondcount++;
+    }
   }
   // all bonds, except the fused one, should be aromatic
   REQUIRE(arombondcount == 10);
@@ -6548,7 +6548,9 @@ TEST_CASE("Testing MMFF94 aromaticity") {
   MolOps::setAromaticity(*m, MolOps::AROMATICITY_MMFF94);
   arombondcount = 0;
   for (auto b : m->bonds()) {
-    if (b->getIsAromatic()) arombondcount++;
+    if (b->getIsAromatic()) {
+      arombondcount++;
+    }
   }
   // no aromatics here
   REQUIRE(arombondcount == 0);
@@ -6934,9 +6936,7 @@ TEST_CASE(
       REQUIRE(m->getNumBonds() == 244);
       REQUIRE_THROWS_AS(MolOps::findSSSR(*m), ValueErrorException);
     }
-    {
-      REQUIRE_THROWS_AS(SmilesToMol(smiles), ValueErrorException);
-    }
+    { REQUIRE_THROWS_AS(SmilesToMol(smiles), ValueErrorException); }
   }
 }
 

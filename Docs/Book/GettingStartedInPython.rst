@@ -3500,7 +3500,7 @@ These are accessible using Python's help command:
   >>> m.GetNumAtoms()
   7
   >>> help(m.GetNumAtoms) 
-  Help on method GetNumAtoms:
+  Help on method GetNumAtoms...
   <BLANKLINE>
   GetNumAtoms(...) method of rdkit.Chem.rdchem.Mol instance
       GetNumAtoms( (Mol)self [, (int)onlyHeavy=-1 [, (bool)onlyExplicit=True]]) -> int :

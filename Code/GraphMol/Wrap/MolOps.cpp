@@ -400,9 +400,9 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
   }
 }
 
-void reapplyWedging(ROMol &mol, bool allBondTypes) {
+void reapplyWedging(ROMol &mol, bool allBondTypes, bool verify) {
   auto &wmol = static_cast<RWMol &>(mol);
-  RDKit::Chirality::reapplyMolBlockWedging(wmol, allBondTypes);
+  RDKit::Chirality::reapplyMolBlockWedging(wmol, allBondTypes, verify);
 }
 
 MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
@@ -2664,10 +2664,14 @@ ARGUMENTS:\n\
             - molecule: the molecule to update\n\
             - allBondTypes: reapply the wedging also on bonds other\n\
               than single and aromatic ones\n\
+            - verify: if true, the function will check that the wedges are only\n\
+              applied in sensible places (i.e.single bonds connected to chiral\n\
+              centers or atropisomeric bonds)\n\
         \n\
         \n";
     python::def("ReapplyMolBlockWedging", reapplyWedging,
-                (python::arg("mol"), python::arg("allBondTypes") = true),
+                (python::arg("mol"), python::arg("allBondTypes") = true,
+                 python::arg("verify") = false),
                 docString.c_str());
 
     docString =

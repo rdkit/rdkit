@@ -72,7 +72,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D
   void SetRotation(double cosT, double sinT, const Point3D &axis);
 
   //! Set the rotation matrix from a quaternion
-  void SetRotationFromQuaternion(double quaternion[4]);
+  void SetRotationFromQuaternion(const double quaternion[4]);
 
   //! Reflect the rotation
   void Reflect();
