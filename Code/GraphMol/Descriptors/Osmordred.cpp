@@ -37,6 +37,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
+#include <GraphMol/Descriptors/BCUT.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
@@ -1496,7 +1497,7 @@ std::vector<double> calcAddFeatures(const RDKit::ROMol& mol) {
 
 
 
-    // HygrogenBond from Rdkit code
+    // Hydrogen from Rdkit code
     std::vector<double> calcHydrogenBond(const ROMol& mol) {
         std::vector<double> res(2, 0.);
 
@@ -6044,7 +6045,7 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
 	    // lambda capture divergence between clang and msvc
             futures.emplace_back(std::async(std::launch::async, [mol]() {
 #else
-	    futures.emplace_back(std::async(std::launch::async, [mol, nFeatures]() {
+	      futures.emplace_back(std::async(std::launch::async, [mol, nFeatures]() {
 #endif	      
                 if (mol) {
                     try {
@@ -7538,43 +7539,6 @@ std::vector<double> calcAllChiDescriptors(const RDKit::ROMol& mol) {
         return results;
     }
 
-    // Function to build the Burden matrix
-    Eigen::MatrixXd buildBurdenMatrix(const RDKit::ROMol& mol) {
-        size_t numAtoms = mol.getNumAtoms();
-        Eigen::MatrixXd burdenMatrix = Eigen::MatrixXd::Constant(numAtoms, numAtoms, 0.001);
-
-        // Iterate through bonds in the molecule
-        for (const auto& bond : mol.bonds()) {
-            const auto* a = bond->getBeginAtom();
-            const auto* b = bond->getEndAtom();
-            int i = a->getIdx();
-            int j = b->getIdx();
-
-            double w = bond->getBondTypeAsDouble() / 10.0;
-            if (a->getDegree() == 1 || b->getDegree() == 1) {
-                w += 0.01;
-            }
-            burdenMatrix(i, j) = w;
-            burdenMatrix(j, i) = w;
-        }
-
-        return burdenMatrix;
-    }
-
-    // Function to compute the highest and lowest eigenvalues of the Burden matrix
-    Eigen::VectorXd calcEigenValues(const Eigen::MatrixXd& burdenMatrix) {
-        Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(burdenMatrix);
-
-        if (solver.info() != Eigen::Success) {
-            throw std::runtime_error("Eigenvalue computation failed");
-        }
-
-        Eigen::VectorXd eigenvalues = solver.eigenvalues().real();
-
-        return eigenvalues;
-    }
-
-
 
 // v2.0: Control function to check if Gasteiger parameters exist for all atoms
 // BEFORE calling computeGasteigerCharges. This prevents crashes on unusual elements
@@ -7695,129 +7659,6 @@ std::vector<double> calcRNCG_RPCG(const RDKit::ROMol& mol){
 
 }
 
-    // Function to compute BCUT descriptors for multiple properties
-    std::vector<double> calcBCUTsEigen(const RDKit::ROMol& mol) {
-        // v2.0: Check Gasteiger parameters first
-        bool gasteiger_ok = checkGasteigerParameters(mol);
-        
-        // Atomic properties to compute
-        auto* tbl = RDKit::PeriodicTable::getTable();
-        std::map<int, double> vdwMap = VdWAtomicMap();
-        std::map<int, double> sandersonENMap = SandersonENAtomicMap();
-        std::map<int, double> paulingENMap = PaulingENAtomicMap();
-        std::map<int, double> allredENMap = Allred_rocow_ENAtomicMap();
-        std::map<int, double> polarizabilityMap = Polarizability94AtomicMap();
-        std::map<int, double> ionizationMap = ionizationEnergyAtomicMap();
-
-        size_t numAtoms = mol.getNumAtoms();
-        std::vector<double> gasteigerCharges(numAtoms, 0.0);
-        
-        // v2.0: Only compute Gasteiger if parameters exist
-        if (gasteiger_ok) {
-            try {
-                computeGasteigerCharges(mol, 12, true);
-                for (size_t i = 0; i < numAtoms; ++i) {
-                    const auto* atom = mol.getAtomWithIdx(i);
-                    double ch = atom->getProp<double>(common_properties::_GasteigerCharge);
-                    if (atom->hasProp(common_properties::_GasteigerHCharge)) {
-                        ch += atom->getProp<double>(common_properties::_GasteigerHCharge);
-                    }
-                    gasteigerCharges[i] = ch;
-                }
-            } catch (...) {
-                // Gasteiger failed - charges stay at 0.0
-                gasteiger_ok = false;
-            }
-        }
-        // If gasteiger_ok is false, gasteigerCharges remains all zeros
-
-        // Vector to store BCUT results
-        std::vector<double> results;
-        results.reserve(24);
-
-        // Build the Burden matrix
-        Eigen::MatrixXd burdenMatrix = buildBurdenMatrix(mol);
-
-        // List of atomic property vectors
-        std::vector<std::vector<double>> atomicProperties(12, std::vector<double>(numAtoms, 0.0));
-
-
-        // Populate atomic property vectors
-        for (size_t i = 0; i < numAtoms; ++i) {
-            const auto* atom = mol.getAtomWithIdx(i);
-            int atomNumber = atom->getAtomicNum();
-            atomicProperties[0][i] = gasteigerCharges[i];                                    // Gasteiger charge (c)
-            atomicProperties[1][i] = getValenceElectrons(*atom);                             // Valence electrons (dv)
-            atomicProperties[2][i] = getSigmaElectrons(*atom);                              // Sigma electrons (d)
-            atomicProperties[3][i] = getIntrinsicState(*atom);                              // Intrinsic state (s)
-            atomicProperties[4][i] = static_cast<double>(atomNumber);                         // Atomic number (Z)
-            atomicProperties[5][i] = tbl->getAtomicWeight(atomNumber);                       // Atomic weight (m)
-            atomicProperties[6][i] = vdw_volume(vdwMap[atomNumber]);                          // Van der Waals volume need vdw_volume to go from (r) to (v)
-            atomicProperties[7][i] = sandersonENMap[atomNumber];                             // Sanderson electronegativity (se)
-            atomicProperties[8][i] = paulingENMap[atomNumber];                               // Pauling electronegativity (pe)
-            atomicProperties[9][i] = allredENMap[atomNumber];                                // Allred-Rocow electronegativity (are)
-            atomicProperties[10][i] = polarizabilityMap[atomNumber];                          // Polarizability (p)
-            atomicProperties[11][i] = ionizationMap[atomNumber];                              // Ionization energy (i)
-        }
-        // Compute eigenvalues for each atomic property
-        for (const auto& prop : atomicProperties) {
-            Eigen::MatrixXd adjustedMatrix = burdenMatrix;
-            for (size_t i = 0; i < numAtoms; ++i) {
-                adjustedMatrix(i, i) = prop[i];
-            }
-
-            auto eigenValues = calcEigenValues(adjustedMatrix);
-
-            results.push_back(eigenValues.maxCoeff());
-            results.push_back(eigenValues.minCoeff());
-        }
-
-        return results;
-    }
-
-// Function to build the Burden matrix
-std::vector<std::vector<double>> buildBurdenMatrixL(const RDKit::ROMol& mol) {
-    size_t numAtoms = mol.getNumAtoms();
-    std::vector<std::vector<double>> burdenMatrix(numAtoms, std::vector<double>(numAtoms, 0.001));
-
-    // Iterate through bonds in the molecule
-    for (const auto& bond : mol.bonds()) {
-        const auto* a = bond->getBeginAtom();
-        const auto* b = bond->getEndAtom();
-        int i = a->getIdx();
-        int j = b->getIdx();
-
-        double w = bond->getBondTypeAsDouble() / 10.0;
-        if (a->getDegree() == 1 || b->getDegree() == 1) {
-            w += 0.01;
-        }
-        burdenMatrix[i][j] = w;
-        burdenMatrix[j][i] = w;
-    }
-
-    return burdenMatrix;
-}
-
-// Function to compute eigenvalues using LAPACK ...
-std::vector<double> calcEigenValuesLAPACK(const std::vector<std::vector<double>>& matrix) {
-    int n = matrix.size();
-    std::vector<double> flatMatrix(n * n);
-    std::vector<double> eigenvalues(n);
-
-    // Convert 2D matrix to a flat array (column-major order)
-    for (int i = 0; i < n; ++i)
-        for (int j = 0; j < n; ++j)
-            flatMatrix[j * n + i] = matrix[i][j];
-
-    // LAPACKE_dsyev computes eigenvalues and eigenvectors
-    int info = LAPACKE_dsyev(LAPACK_COL_MAJOR, 'N', 'U', n, flatMatrix.data(), n, eigenvalues.data());
-    if (info != 0) {
-        throw std::runtime_error("Error in LAPACKE_dsyev: " + std::to_string(info));
-    }
-
-    return eigenvalues;
-}
-
 // Function to compute BCUT descriptors for multiple properties
 std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
     // v2.0: Check Gasteiger parameters first
@@ -7857,9 +7698,6 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
     std::vector<double> results;
     results.reserve(24);
 
-    // Build the Burden matrix
-    auto burdenMatrix = buildBurdenMatrixL(mol);
-
     // List of atomic property vectors
     std::vector<std::vector<double>> atomicProperties(12, std::vector<double>(numAtoms, 0.0));
 
@@ -7881,18 +7719,9 @@ std::vector<double> calcBCUTs(const RDKit::ROMol& mol) {
         atomicProperties[11][i] = ionizationMap[atomNumber];                              // Ionization energy (i)
     }
 
-    // Compute eigenvalues for each atomic property
-    for (const auto& prop : atomicProperties) {
-        // Adjust diagonal with atomic property
-        auto adjustedMatrix = burdenMatrix;
-        for (size_t i = 0; i < numAtoms; ++i) {
-            adjustedMatrix[i][i] = prop[i];
-        }
-
-        auto eigenValues = calcEigenValuesLAPACK(adjustedMatrix);
-
-        results.push_back(*std::max_element(eigenValues.begin(), eigenValues.end())); // Max eigenvalue
-        results.push_back(*std::min_element(eigenValues.begin(), eigenValues.end())); // Min eigenvalue
+    for(auto &result: BCUT2D(mol, atomicProperties, BCUTOptions::BURDEN_MATRIX)) {
+      results.push_back(result.first);
+      results.push_back(result.second);
     }
 
     return results;
