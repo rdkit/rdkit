@@ -38,8 +38,9 @@ std::vector<int> pickUsingFingerprints(
     const std::vector<ExplicitBitVect> &ebvs, unsigned int nToPick,
     int seed = -1, std::vector<int> firstPicks = std::vector<int>(),
     bool useCache = true) {
-  if (nToPick >= ebvs.size())
+  if (nToPick >= ebvs.size()) {
     throw ValueErrorException("nToPick is larger than the vector size");
+  }
   std::vector<int> res;
 
   RDPickers::MaxMinPicker picker;

@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <iostream>
 #include "Data3Ddescriptors.h"
 
 using namespace std;

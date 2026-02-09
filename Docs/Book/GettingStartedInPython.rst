@@ -2581,7 +2581,7 @@ reaction to be reconstructed:
 
   >>> newRxn = AllChem.ReactionFromPNGString(png)
   >>> AllChem.ReactionToSmarts(newRxn)
-  '[#6H:5]1:[#6H:6]:[#6:7]2:[#6H:8]:[#7:9]:[#6H:10]:[#6H:11]:[#6:12]:2:[#6:3](:[#6H:4]:1)-[#6:2](=[#8:1])-[#8].[#7-:13]=[#7+:14]=[#7-:15]>[#6](-[#17])-[#17].[#6](=[#8])(-[#6](=[#8])-[#17])-[#17]>[#6H:5]1:[#6H:6]:[#6:7]2:[#6H:8]:[#7:9]:[#6H:10]:[#6H:11]:[#6:12]:2:[#6:3](:[#6H:4]:1)-[#6:2](=[#8:1])-[#7:13]=[#7+:14]=[#7-:15]'
+  '[#6:5]1:[#6:6]:[#6:7]2:[#6:8]:[#7:9]:[#6:10]:[#6:11]:[#6:12]:2:[#6:3](:[#6:4]:1)-[#6:2](=[#8:1])-[#8].[#7-:13]=[#7+:14]=[#7-:15]>[#6](-[#17])-[#17].[#6](=[#8])(-[#6](=[#8])-[#17])-[#17]>[#6:5]1:[#6:6]:[#6:7]2:[#6:8]:[#7:9]:[#6:10]:[#6:11]:[#6:12]:2:[#6:3](:[#6:4]:1)-[#6:2](=[#8:1])-[#7:13]=[#7+:14]=[#7-:15]'
 
 Advanced Reaction Functionality
 ===============================
@@ -2916,7 +2916,7 @@ If the molecule has coordinates, then the features will also have reasonable loc
   >>> feats[0].GetPos()
   <rdkit.Geometry.rdGeometry.Point3D object at 0x...>
   >>> list(feats[0].GetPos())
-  [2.07..., -2.335..., 0.0]
+  [-2.999..., -1.558..., 0.0]
 
 
 2D Pharmacophore Fingerprints
@@ -3430,6 +3430,34 @@ The sizes of the hits can be limited by setting appropriate values to the Syntho
 minimum values can be set for the number of heavy atoms, the number of chiral atoms and the molecular weight.
 
 
+Incremental Search
+==================
+
+If the number of hits is large, the results object returned by `spc.SubstructureSearch` and
+friends may consume a significant amount of memory, because one `ROMol` is constructed for
+each hit.  To avoid this problem, use the incremental versions of the search routines, in which
+results are returned via a user-supplied callback function instead of in a search results object:
+
+.. doctest::
+
+  >>> params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+  >>> params.toTryChunkSize = 10
+  >>> smiles = []
+  >>> def callback(mols):
+  ...     for mol in mols:
+  ...             smiles.append(Chem.MolToSmiles(mol))
+  ...
+  >>> spc.SubstructureSearchIncremental(qmol, callback, params=params)
+  >>> print(f"Number of hits : {len(smiles)}")
+  Number of hits : 50
+
+In this example, the chunk size was set to 10, so the callback will receive chunks of at most
+10 molecules instead of the full hit size.  The callback function stores just the SMILES of
+the molecules instead of the molecules themselves; when the callback returns, the memory for
+the molecules is reclaimed.  In practice, choose a value for `toTryChunkSize` of at least 100
+in order to amortize the (small) overhead of invoking the callback function for each chunk.
+
+
 Non-Chemical Functionality
 **************************
 
@@ -3472,7 +3500,7 @@ These are accessible using Python's help command:
   >>> m.GetNumAtoms()
   7
   >>> help(m.GetNumAtoms) 
-  Help on method GetNumAtoms:
+  Help on method GetNumAtoms...
   <BLANKLINE>
   GetNumAtoms(...) method of rdkit.Chem.rdchem.Mol instance
       GetNumAtoms( (Mol)self [, (int)onlyHeavy=-1 [, (bool)onlyExplicit=True]]) -> int :

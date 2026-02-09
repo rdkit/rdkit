@@ -81,13 +81,8 @@ class TestCase(unittest.TestCase):
       self.assertEqual(actual, expected)
 
   def testMQNDetails(self):
+    # assuming the strict definition of rotatable bonds (default)
     refFile = os.path.join(os.path.dirname(__file__), 'test_data', 'MQNs_regress.pkl')
-    refFile2 = os.path.join(os.path.dirname(__file__), 'test_data', 'MQNs_non_strict_regress.pkl')
-    # figure out which definition we are currently using
-    m = Chem.MolFromSmiles("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C")
-    if Lipinski.NumRotatableBonds(m) == 2:
-      refFile = refFile2
-
     with open(refFile, 'rb') as intf:
       refData = pickle.load(intf)
     fn = os.path.join(os.path.dirname(__file__), 'test_data', 'aromat_regress.txt')
@@ -104,17 +99,10 @@ class TestCase(unittest.TestCase):
       self.assertEqual(mqns, refData[i][1])
 
   def testMQN(self):
-    m = Chem.MolFromSmiles("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C")
-    if Lipinski.NumRotatableBonds(m) == 2:
-      tgt = [
-        42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24061,
-        17820, 1, 9303, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
-        292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
-      ]
-    else:
-      tgt = [
+    # assuming the strict definition of rotatable bonds (default)
+    tgt = [
         42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24059,
-        17822, 1, 8314, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
+        17822, 1, 8313, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
         292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
       ]
     fn = os.path.join(os.path.dirname(__file__), 'test_data', 'aromat_regress.txt')
@@ -167,9 +155,9 @@ class TestCase(unittest.TestCase):
       f = getattr(Descriptors, n)
       self.assertEqual(results[i], f(m))
 
-  @unittest.skipIf(
-    not hasattr(rdMolDescriptors, 'BCUT2D') or not hasattr(rdMolDescriptors, 'CalcAUTOCORR2D'),
-    "BCUT or AUTOCORR descriptors not available")
+  @unittest.skipIf(not hasattr(rdMolDescriptors, 'BCUT2D')
+                   or not hasattr(rdMolDescriptors, 'CalcAUTOCORR2D'),
+                   "BCUT or AUTOCORR descriptors not available")
   def testVectorDescriptorsInDescList(self):
     # First try only bcuts should exist
     descriptors = set([n for n, _ in Descriptors.descList])
@@ -212,6 +200,15 @@ class TestCase(unittest.TestCase):
     descs = Descriptors3D.CalcMolDescriptors3D(mol)
     self.assertTrue('InertialShapeFactor' in descs)
     self.assertAlmostEqual(descs['PMI1'], 20.9582649071385, delta=1e-4)
+
+    # test function returns expected outputs
+    AllChem.EmbedMultipleConfs(mol, 10, randomSeed=0xf00d)
+    descs = Descriptors3D.CalcMolDescriptors3D(mol)
+    self.assertTrue('InertialShapeFactor' in descs)
+    self.assertAlmostEqual(descs['PMI1'], 20.9582649071385, delta=1e-4)
+    descs2 = Descriptors3D.CalcMolDescriptors3D(mol, confId=2)
+    for key in descs:
+      self.assertNotEqual(descs2[key], descs[key])
 
 
 if __name__ == '__main__':

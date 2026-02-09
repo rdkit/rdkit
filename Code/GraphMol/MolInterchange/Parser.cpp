@@ -32,25 +32,16 @@ using namespace Queries;
 #include <exception>
 #include <map>
 
-#if !defined(_MSC_VER)
-// g++ (at least as of v9.3.0) generates some spurious warnings from here.
-// disable them
-#if !defined(__clang__) and defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wclass-memaccess"
+#include <RDGeneral/BoostStartInclude.h>
+// make sure we're using boost::json header-only
+#define BOOST_JSON_NO_LIB
+#ifndef BOOST_CONTAINER_NO_LIB
+#define BOOST_CONTAINER_NO_LIB
 #endif
-#endif
-#include <rapidjson/document.h>
-#include <rapidjson/istreamwrapper.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/pointer.h>
-#if !defined(_MSC_VER)
-#if !defined(__clang__) and defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
-#endif
-namespace rj = rapidjson;
+#include <boost/json.hpp>
+#include <boost/json/src.hpp>  // only include this once in the project!
+#include <RDGeneral/BoostEndInclude.h>
+namespace bj = boost::json;
 
 namespace RDKit {
 
@@ -58,8 +49,8 @@ namespace MolInterchange {
 
 namespace {
 struct DefaultValueCache {
-  DefaultValueCache(const rj::Value &defs) : rjDefaults(defs) {};
-  const rj::Value &rjDefaults;
+  DefaultValueCache(const bj::value &defs) : bjDefaults(defs){};
+  const bj::value &bjDefaults;
   mutable std::map<const char *, int> intMap;
   mutable std::map<const char *, bool> boolMap;
   mutable std::map<const char *, std::string> stringMap;
@@ -69,16 +60,18 @@ struct DefaultValueCache {
     if (lookup != intMap.end()) {
       return lookup->second;
     }
-    const auto &miter = rjDefaults.FindMember(key);
-    if (miter != rjDefaults.MemberEnd()) {
-      if (!miter->value.IsInt()) {
-        throw FileParseException(std::string("Bad format: value of ") +
-                                 std::string(key) +
-                                 std::string(" is not an int"));
+    if (const auto fobj = bjDefaults.if_object()) {
+      if (const auto kit = fobj->find(key); kit != fobj->end()) {
+        const auto val = kit->value().if_int64();
+        if (!val) {
+          throw FileParseException(std::string("Bad format: value of ") +
+                                   std::string(key) +
+                                   std::string(" is not an int"));
+        }
+        auto res = static_cast<int>(*val);
+        intMap[key] = res;
+        return res;
       }
-      int res = miter->value.GetInt();
-      intMap[key] = res;
-      return res;
     }
     return 0;
   }
@@ -88,91 +81,105 @@ struct DefaultValueCache {
     if (lookup != boolMap.end()) {
       return lookup->second;
     }
-    const auto &miter = rjDefaults.FindMember(key);
-    if (miter != rjDefaults.MemberEnd()) {
-      if (!miter->value.IsBool()) {
-        throw FileParseException(std::string("Bad format: value of ") +
-                                 std::string(key) +
-                                 std::string(" is not a bool"));
+    if (const auto fobj = bjDefaults.if_object()) {
+      if (const auto kit = fobj->find(key); kit != fobj->end()) {
+        const auto val = kit->value().if_bool();
+        if (!val) {
+          throw FileParseException(std::string("Bad format: value of ") +
+                                   std::string(key) +
+                                   std::string(" is not a bool"));
+        }
+        bool res = *val;
+        boolMap[key] = res;
+        return res;
       }
-      bool res = miter->value.GetBool();
-      boolMap[key] = res;
-      return res;
     }
     return false;
   }
+
   std::string getString(const char *key) const {
     PRECONDITION(key, "no key");
     const auto &lookup = stringMap.find(key);
     if (lookup != stringMap.end()) {
       return lookup->second;
     }
-    const auto &miter = rjDefaults.FindMember(key);
-    if (miter != rjDefaults.MemberEnd()) {
-      if (!miter->value.IsString()) {
-        throw FileParseException(std::string("Bad format: value of ") +
-                                 std::string(key) +
-                                 std::string(" is not a string"));
+    if (const auto fobj = bjDefaults.if_object()) {
+      if (const auto kit = fobj->find(key); kit != fobj->end()) {
+        const auto val = kit->value().if_string();
+        if (!val) {
+          throw FileParseException(std::string("Bad format: value of ") +
+                                   std::string(key) +
+                                   std::string(" is not a string"));
+        }
+        auto res = val->c_str();
+        stringMap[key] = res;
+        return res;
       }
-      std::string res = miter->value.GetString();
-      stringMap[key] = res;
-      return res;
     }
     return "";
   }
 };
 
-int getIntDefaultValue(const char *key, const rj::Value &from,
+int getIntDefaultValue(const char *key, const bj::value &from,
                        const DefaultValueCache &defaults) {
   PRECONDITION(key, "no key");
-  auto endp = from.MemberEnd();
-  auto miter = from.FindMember(key);
-  if (miter != endp) {
-    if (!miter->value.IsInt()) {
-      throw FileParseException(std::string("Bad format: value of ") +
-                               std::string(key) +
-                               std::string(" is not an int"));
+  if (const auto fobj = from.if_object()) {
+    if (const auto kit = fobj->find(key); kit != fobj->end()) {
+      const auto val = kit->value().if_int64();
+      if (!val) {
+        throw FileParseException(std::string("Bad format: value of ") +
+                                 std::string(key) +
+                                 std::string(" is not an int"));
+      }
+      return static_cast<int>(*val);
     }
-    return miter->value.GetInt();
   }
   return defaults.getInt(key);
 }
-bool getBoolDefaultValue(const char *key, const rj::Value &from,
+bool getBoolDefaultValue(const char *key, const bj::value &from,
                          const DefaultValueCache &defaults) {
   PRECONDITION(key, "no key");
-  auto endp = from.MemberEnd();
-  auto miter = from.FindMember(key);
-  if (miter != endp) {
-    if (!miter->value.IsBool()) {
-      throw FileParseException(std::string("Bad format: value of ") +
-                               std::string(key) +
-                               std::string(" is not a bool"));
+  if (const auto fobj = from.if_object()) {
+    if (const auto kit = fobj->find(key); kit != fobj->end()) {
+      const auto val = kit->value().if_bool();
+      if (!val) {
+        throw FileParseException(std::string("Bad format: value of ") +
+                                 std::string(key) +
+                                 std::string(" is not a bool"));
+      }
+      return *val;
     }
-    return miter->value.GetBool();
   }
   return defaults.getBool(key);
 }
-std::string getStringDefaultValue(const char *key, const rj::Value &from,
+std::string getStringDefaultValue(const char *key, const bj::value &from,
                                   const DefaultValueCache &defaults) {
   PRECONDITION(key, "no key");
-  auto endp = from.MemberEnd();
-  auto miter = from.FindMember(key);
-  if (miter != endp) {
-    if (!miter->value.IsString()) {
-      throw FileParseException(std::string("Bad format: value of ") +
-                               std::string(key) +
-                               std::string(" is not a string"));
+  if (const auto fobj = from.if_object()) {
+    if (const auto kit = fobj->find(key); kit != fobj->end()) {
+      const auto val = kit->value().if_string();
+      if (!val) {
+        throw FileParseException(std::string("Bad format: value of ") +
+                                 std::string(key) +
+                                 std::string(" is not a string"));
+      }
+      return val->c_str();
     }
-    return miter->value.GetString();
   }
   return defaults.getString(key);
 }
 
-void readAtom(RWMol *mol, const rj::Value &atomVal,
+void readAtom(RWMol *mol, const bj::value &atomVal,
               const DefaultValueCache &atomDefaults,
               const JSONParseParameters &params) {
   PRECONDITION(mol, "no mol");
-  Atom *at = new Atom(getIntDefaultValue("z", atomVal, atomDefaults));
+  std::string stereo = getStringDefaultValue("stereo", atomVal, atomDefaults);
+  auto stereoVal = chilookup.find(stereo);
+  if (stereoVal == chilookup.end()) {
+    throw FileParseException("Bad Format: bad stereo value for atom");
+  }
+  std::unique_ptr<Atom> at(
+      new Atom(getIntDefaultValue("z", atomVal, atomDefaults)));
   if (params.useHCounts) {
     at->setNoImplicit(true);
     at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
@@ -180,27 +187,26 @@ void readAtom(RWMol *mol, const rj::Value &atomVal,
   at->setFormalCharge(getIntDefaultValue("chg", atomVal, atomDefaults));
   at->setNumRadicalElectrons(getIntDefaultValue("nRad", atomVal, atomDefaults));
   at->setIsotope(getIntDefaultValue("isotope", atomVal, atomDefaults));
-  std::string stereo = getStringDefaultValue("stereo", atomVal, atomDefaults);
-  if (chilookup.find(stereo) == chilookup.end()) {
-    delete at;
-    throw FileParseException("Bad Format: bad stereo value for atom");
-  }
-  at->setChiralTag(chilookup.find(stereo)->second);
+  at->setChiralTag(stereoVal->second);
   bool updateLabel = false, takeOwnership = true;
-  mol->addAtom(at, updateLabel, takeOwnership);
+  mol->addAtom(at.release(), updateLabel, takeOwnership);
 }
 
-void readBond(RWMol *mol, const rj::Value &bondVal,
+void readBond(RWMol *mol, const bj::value &bondVal,
               const DefaultValueCache &bondDefaults, bool &needStereoLoop) {
   PRECONDITION(mol, "no mol");
-  const auto &aids = bondVal["atoms"].GetArray();
-  unsigned int bid = mol->addBond(aids[0].GetInt(), aids[1].GetInt()) - 1;
-  Bond *bnd = mol->getBondWithIdx(bid);
   unsigned int bo = getIntDefaultValue("bo", bondVal, bondDefaults);
-  if (bolookup.find(bo) == bolookup.end()) {
+  auto bondOrder = bolookup.find(bo);
+  if (bondOrder == bolookup.end()) {
     throw FileParseException("Bad Format: bad bond order for bond");
   }
-  bnd->setBondType(bolookup.find(bo)->second);
+  const auto &aids = bondVal.at("atoms").as_array();
+  std::unique_ptr<Bond> bnd(new Bond());
+  bnd->setBeginAtomIdx(static_cast<int>(aids.at(0).as_int64()));
+  bnd->setEndAtomIdx(static_cast<int>(aids.at(1).as_int64()));
+  bnd->setBondType(bondOrder->second);
+  bool takeOwnership = true;
+  mol->addBond(bnd.release(), takeOwnership);
   std::string stereo = getStringDefaultValue("stereo", bondVal, bondDefaults);
   if (stereo != "unspecified") {
     needStereoLoop = true;
@@ -208,54 +214,59 @@ void readBond(RWMol *mol, const rj::Value &bondVal,
 }
 
 template <typename T>
-void parseProperties(T &obj, const rj::Value &propsVal) {
-  for (const auto &propVal : propsVal.GetObject()) {
-    if (propVal.value.IsInt()) {
-      obj.setProp(propVal.name.GetString(), propVal.value.GetInt());
-    } else if (propVal.value.IsDouble()) {
-      obj.setProp(propVal.name.GetString(), propVal.value.GetDouble());
-    } else if (propVal.value.IsString()) {
-      obj.setProp(propVal.name.GetString(), propVal.value.GetString());
+void parseProperties(T &obj, const bj::value &propsVal) {
+  for (const auto &propVal : propsVal.as_object()) {
+    if (propVal.value().is_int64()) {
+      obj.setProp(propVal.key(), static_cast<int>(propVal.value().as_int64()));
+    } else if (propVal.value().is_double()) {
+      obj.setProp(propVal.key(), propVal.value().as_double());
+    } else if (propVal.value().is_string()) {
+      obj.setProp(propVal.key(), propVal.value().as_string().data());
     }
   }
 }
 
-void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
+void readStereoGroups(RWMol *mol, const bj::value &sgVals) {
   PRECONDITION(mol, "no mol");
 
   std::vector<StereoGroup> molSGs(mol->getStereoGroups());
-  for (const auto &sgVal : sgVals.GetArray()) {
-    if (!sgVal.HasMember("type")) {
+  for (const auto &sgVal : sgVals.as_array()) {
+    if (!sgVal.as_object().contains("type")) {
       throw FileParseException("Bad Format: stereogroup does not have a type");
     }
-    if (!sgVal.HasMember("atoms") && !sgVal.HasMember("bonds")) {
+    if (!sgVal.as_object().contains("atoms") &&
+        !sgVal.as_object().contains("bonds")) {
       throw FileParseException(
           "Bad Format: stereogroup does not have either atoms or bonds");
     }
-    if (MolInterchange::stereoGrouplookup.find(sgVal["type"].GetString()) ==
+    if (MolInterchange::stereoGrouplookup.find(
+            sgVal.at("type").as_string().c_str()) ==
         MolInterchange::stereoGrouplookup.end()) {
       throw FileParseException("Bad Format: bad stereogroup type");
     }
-    const auto typ =
-        MolInterchange::stereoGrouplookup.at(sgVal["type"].GetString());
+    const auto typ = MolInterchange::stereoGrouplookup.at(
+        sgVal.at("type").as_string().c_str());
 
     unsigned gId = 0;
-    if (typ != StereoGroupType::STEREO_ABSOLUTE && sgVal.HasMember("id")) {
-      gId = sgVal["id"].GetUint();
+    if (typ != StereoGroupType::STEREO_ABSOLUTE &&
+        sgVal.as_object().contains("id")) {
+      gId = static_cast<unsigned>(sgVal.at("id").as_int64());
     }
 
     std::vector<Atom *> atoms;
     std::vector<Bond *> bonds;
-    if (sgVal.HasMember("atoms")) {
-      const auto &aids = sgVal["atoms"].GetArray();
+    if (sgVal.as_object().contains("atoms")) {
+      const auto &aids = sgVal.at("atoms").as_array();
       for (const auto &aid : aids) {
-        atoms.push_back(mol->getAtomWithIdx(aid.GetUint()));
+        atoms.push_back(
+            mol->getAtomWithIdx(static_cast<unsigned>(aid.as_int64())));
       }
     }
-    if (sgVal.HasMember("bonds")) {
-      const auto &bids = sgVal["bonds"].GetArray();
+    if (sgVal.as_object().contains("bonds")) {
+      const auto &bids = sgVal.at("bonds").as_array();
       for (const auto &bid : bids) {
-        bonds.push_back(mol->getBondWithIdx(bid.GetUint()));
+        bonds.push_back(
+            mol->getBondWithIdx(static_cast<unsigned>(bid.as_int64())));
       }
     }
 
@@ -266,17 +277,17 @@ void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
   mol->setStereoGroups(std::move(molSGs));
 }
 
-void readSubstanceGroups(RWMol *mol, const rj::Value &sgVals) {
+void readSubstanceGroups(RWMol *mol, const bj::value &sgVals) {
   PRECONDITION(mol, "no mol");
 
-  for (const auto &sgVal : sgVals.GetArray()) {
-    if (!sgVal.HasMember("properties") ||
-        !sgVal["properties"].HasMember("TYPE")) {
+  for (const auto &sgVal : sgVals.as_array()) {
+    if (!sgVal.as_object().contains("properties") ||
+        !sgVal.at("properties").as_object().contains("TYPE")) {
       throw FileParseException(
           "Bad Format: substance group does not have TYPE property");
     }
 
-    auto sgType = sgVal["properties"]["TYPE"].GetString();
+    auto sgType = sgVal.at("properties").at("TYPE").as_string().c_str();
     if (!SubstanceGroupChecks::isValidType(sgType)) {
       throw FileParseException(
           (boost::format(
@@ -286,7 +297,7 @@ void readSubstanceGroups(RWMol *mol, const rj::Value &sgVals) {
     }
     SubstanceGroup sg(mol, sgType);
 
-    parseProperties(sg, sgVal["properties"]);
+    parseProperties(sg, sgVal.at("properties"));
     std::string pval;
     if (sg.getPropIfPresent("SUBTYPE", pval) &&
         !SubstanceGroupChecks::isValidSubType(pval)) {
@@ -305,81 +316,81 @@ void readSubstanceGroups(RWMol *mol, const rj::Value &sgVals) {
               .str());
     }
 
-    if (sgVal.HasMember("atoms")) {
-      const auto &aids = sgVal["atoms"].GetArray();
+    if (sgVal.as_object().contains("atoms")) {
+      const auto &aids = sgVal.at("atoms").as_array();
       std::vector<unsigned int> atoms;
       for (const auto &aid : aids) {
-        atoms.push_back(aid.GetUint());
+        atoms.push_back(static_cast<unsigned>(aid.as_int64()));
       }
       sg.setAtoms(atoms);
     }
 
-    if (sgVal.HasMember("bonds")) {
-      const auto &aids = sgVal["bonds"].GetArray();
+    if (sgVal.as_object().contains("bonds")) {
+      const auto &aids = sgVal.at("bonds").as_array();
       std::vector<unsigned int> bonds;
       for (const auto &aid : aids) {
-        bonds.push_back(aid.GetUint());
+        bonds.push_back(static_cast<unsigned>(aid.as_int64()));
       }
       sg.setBonds(bonds);
     }
 
-    if (sgVal.HasMember("parentAtoms")) {
-      const auto &aids = sgVal["parentAtoms"].GetArray();
+    if (sgVal.as_object().contains("parentAtoms")) {
+      const auto &aids = sgVal.at("parentAtoms").as_array();
       std::vector<unsigned int> atoms;
       for (const auto &aid : aids) {
-        atoms.push_back(aid.GetUint());
+        atoms.push_back(static_cast<unsigned>(aid.as_int64()));
       }
       sg.setParentAtoms(atoms);
     }
 
-    if (sgVal.HasMember("brackets")) {
-      const auto &brks = sgVal["brackets"].GetArray();
+    if (sgVal.as_object().contains("brackets")) {
+      const auto &brks = sgVal.at("brackets").as_array();
       for (const auto &brk : brks) {
         SubstanceGroup::Bracket bracket;
         unsigned int idx = 0;
-        for (const auto &pt : brk.GetArray()) {
-          const auto &pta = pt.GetArray();
-          if (pta.Size() != 3) {
+        for (const auto &pt : brk.as_array()) {
+          const auto &pta = pt.as_array();
+          if (pta.size() != 3) {
             throw FileParseException(
                 "Bad Format: bracket point doesn't have three coordinates");
           }
-          RDGeom::Point3D loc(pta[0].GetDouble(), pta[1].GetDouble(),
-                              pta[2].GetDouble());
+          RDGeom::Point3D loc(pta[0].as_double(), pta[1].as_double(),
+                              pta[2].as_double());
           bracket[idx++] = std::move(loc);
         }
         sg.getBrackets().push_back(std::move(bracket));
       }
     }
 
-    if (sgVal.HasMember("cstates")) {
-      const auto &cstats = sgVal["cstates"].GetArray();
+    if (sgVal.as_object().contains("cstates")) {
+      const auto &cstats = sgVal.at("cstates").as_array();
       for (const auto &cstat : cstats) {
         SubstanceGroup::CState cstate;
-        cstate.bondIdx = cstat["bond"].GetUint();
-        if (cstat.HasMember("vector")) {
-          const auto &pta = cstat["vector"].GetArray();
-          if (pta.Size() != 3) {
+        cstate.bondIdx = static_cast<unsigned>(cstat.at("bond").as_int64());
+        if (cstat.as_object().contains("vector")) {
+          const auto &pta = cstat.at("vector").as_array();
+          if (pta.size() != 3) {
             throw FileParseException(
                 "Bad Format: cstate vector doesn't have three coordinates");
           }
-          RDGeom::Point3D loc(pta[0].GetDouble(), pta[1].GetDouble(),
-                              pta[2].GetDouble());
+          RDGeom::Point3D loc(pta[0].as_double(), pta[1].as_double(),
+                              pta[2].as_double());
           cstate.vector = std::move(loc);
         }
         sg.getCStates().push_back(std::move(cstate));
       }
     }
 
-    if (sgVal.HasMember("attachPoints")) {
-      const auto &aps = sgVal["attachPoints"].GetArray();
+    if (sgVal.as_object().contains("attachPoints")) {
+      const auto &aps = sgVal.at("attachPoints").as_array();
       for (const auto &ap : aps) {
         SubstanceGroup::AttachPoint attach;
-        attach.aIdx = ap["aIdx"].GetUint();
-        if (ap.HasMember("lvIdx")) {
-          attach.lvIdx = ap["lvIdx"].GetUint();
+        attach.aIdx = static_cast<unsigned>(ap.at("aIdx").as_int64());
+        if (ap.as_object().contains("lvIdx")) {
+          attach.lvIdx = static_cast<unsigned>(ap.at("lvIdx").as_int64());
         }
-        if (ap.HasMember("id")) {
-          attach.id = ap["id"].GetString();
+        if (ap.as_object().contains("id")) {
+          attach.id = ap.at("id").as_string().c_str();
         }
         sg.getAttachPoints().push_back(std::move(attach));
       }
@@ -388,7 +399,7 @@ void readSubstanceGroups(RWMol *mol, const rj::Value &sgVals) {
   }
 }
 
-void readBondStereo(Bond *bnd, const rj::Value &bondVal,
+void readBondStereo(Bond *bnd, const bj::value &bondVal,
                     const DefaultValueCache &bondDefaults) {
   PRECONDITION(bnd, "no bond");
 
@@ -399,10 +410,10 @@ void readBondStereo(Bond *bnd, const rj::Value &bondVal,
   if (stereoBondlookup.find(stereo) == stereoBondlookup.end()) {
     throw FileParseException("Bad Format: bond stereo value for bond");
   }
-  const auto &miter = bondVal.FindMember("stereoAtoms");
-  if (miter != bondVal.MemberEnd()) {
-    const auto aids = miter->value.GetArray();
-    bnd->setStereoAtoms(aids[0].GetInt(), aids[1].GetInt());
+  if (bondVal.as_object().contains("stereoAtoms")) {
+    const auto &aids = bondVal.at("stereoAtoms").as_array();
+    bnd->setStereoAtoms(static_cast<int>(aids[0].as_int64()),
+                        static_cast<int>(aids[1].as_int64()));
   } else if (stereo == "cis" || stereo == "trans") {
     throw FileParseException(
         "Bad Format: bond stereo provided without stereoAtoms");
@@ -410,13 +421,13 @@ void readBondStereo(Bond *bnd, const rj::Value &bondVal,
   bnd->setStereo(stereoBondlookup.find(stereo)->second);
 }  // namespace
 
-void readConformer(Conformer *conf, const rj::Value &confVal) {
+void readConformer(Conformer *conf, const bj::value &confVal) {
   PRECONDITION(conf, "no conformer");
 
-  if (!confVal.HasMember("dim")) {
+  if (!confVal.as_object().contains("dim")) {
     throw FileParseException("Bad Format: no conformer dimension");
   }
-  size_t dim = confVal["dim"].GetInt();
+  size_t dim = static_cast<size_t>(confVal.at("dim").as_int64());
   if (dim == 2) {
     conf->set3D(false);
   } else if (dim == 3) {
@@ -424,17 +435,17 @@ void readConformer(Conformer *conf, const rj::Value &confVal) {
   } else {
     throw FileParseException("Bad Format: conformer dimension != 2 or 3");
   }
-  if (!confVal.HasMember("coords")) {
+  if (!confVal.as_object().contains("coords")) {
     throw FileParseException("Bad Format: no conformer coords");
   }
   size_t idx = 0;
-  for (const auto &ptVal : confVal["coords"].GetArray()) {
-    const auto &arr = ptVal.GetArray();
-    if (arr.Size() != dim) {
+  for (const auto &ptVal : confVal.at("coords").as_array()) {
+    const auto &arr = ptVal.as_array();
+    if (arr.size() != dim) {
       throw FileParseException("coordinate contains wrong number of values");
     }
-    RDGeom::Point3D pt(arr[0].GetFloat(), arr[1].GetFloat(),
-                       (dim == 3 ? arr[2].GetFloat() : 0.0));
+    RDGeom::Point3D pt(arr[0].as_double(), arr[1].as_double(),
+                       (dim == 3 ? arr[2].as_double() : 0.0));
     conf->setAtomPos(idx++, pt);
   }
   if (idx != conf->getNumAtoms()) {
@@ -443,62 +454,63 @@ void readConformer(Conformer *conf, const rj::Value &confVal) {
   }
 }
 
-void readPartialCharges(RWMol *mol, const rj::Value &repVal,
+void readPartialCharges(RWMol *mol, const bj::value &repVal,
                         const JSONParseParameters &) {
   PRECONDITION(mol, "no molecule");
-  PRECONDITION(repVal["name"].GetString() == std::string("partialCharges"),
+  PRECONDITION(repVal.at("name").as_string() == std::string("partialCharges"),
                "bad charges");
-  if (!repVal.HasMember("formatVersion")) {
+  if (!repVal.as_object().contains("formatVersion")) {
     throw FileParseException("Bad Format: missing version");
   }
-  if (repVal["formatVersion"].GetInt() > currentChargeRepresentationVersion) {
+  if (static_cast<int>(repVal.at("formatVersion").as_int64()) >
+      currentChargeRepresentationVersion) {
     BOOST_LOG(rdWarningLog)
-        << "partialCharges version " << repVal["formatVersion"].GetInt()
+        << "partialCharges version "
+        << static_cast<int>(repVal.at("formatVersion").as_int64())
         << " too recent. Ignoring it." << std::endl;
     return;
   }
   {
-    const auto &miter = repVal.FindMember("values");
-    if (miter != repVal.MemberEnd()) {
-      if (miter->value.GetArray().Size() != mol->getNumAtoms()) {
+    if (repVal.as_object().contains("values")) {
+      const auto &values = repVal.at("values").as_array();
+      if (values.size() != mol->getNumAtoms()) {
         throw FileParseException(
             "Bad Format: size of values array != num atoms");
       }
       for (unsigned int idx = 0; idx != mol->getNumAtoms(); ++idx) {
-        const auto &aval = miter->value.GetArray();
-        const auto &val = aval[idx];
-        if (!val.IsDouble()) {
+        const auto &val = values[idx];
+        if (!val.is_double()) {
           throw FileParseException("Bad Format: partial charge not double");
         }
         mol->getAtomWithIdx(idx)->setProp(common_properties::_GasteigerCharge,
-                                          val.GetDouble());
+                                          val.as_double());
       }
     }
   }
 }
-void processMol(RWMol *mol, const rj::Value &molval,
+void processMol(RWMol *mol, const bj::value &molval,
                 const DefaultValueCache &atomDefaults,
                 const DefaultValueCache &bondDefaults,
                 const JSONParseParameters &params);
 Query<int, Atom const *, true> *readQuery(Atom const *owner,
-                                          const rj::Value &repVal,
+                                          const bj::value &repVal,
                                           const DefaultValueCache &atomDefaults,
                                           const DefaultValueCache &bondDefaults,
                                           const JSONParseParameters &params);
 Query<int, Bond const *, true> *readQuery(Bond const *owner,
-                                          const rj::Value &repVal,
+                                          const bj::value &repVal,
                                           const DefaultValueCache &atomDefaults,
                                           const DefaultValueCache &bondDefaults,
                                           const JSONParseParameters &params);
 
 template <class T>
 Query<int, T const *, true> *readBaseQuery(T const *owner,
-                                           const rj::Value &repVal,
+                                           const bj::value &repVal,
                                            const JSONParseParameters &) {
   PRECONDITION(owner, "no query");
-  PRECONDITION(repVal.HasMember("tag"), "no tag");
-  int tag = repVal["tag"].GetInt();
-  if (!repVal.HasMember("descr")) {
+  PRECONDITION(repVal.as_object().contains("tag"), "no tag");
+  int tag = repVal.at("tag").as_int64();
+  if (!repVal.as_object().contains("descr")) {
     throw FileParseException("Bad Format: missing query description");
   }
   Query<int, T const *, true> *res = nullptr;
@@ -515,46 +527,46 @@ Query<int, T const *, true> *readBaseQuery(T const *owner,
     case MolPickler::QUERY_EQUALS:
       res = new EqualityQuery<int, T const *, true>();
       static_cast<EqualityQuery<int, T const *, true> *>(res)->setVal(
-          repVal["val"].GetInt());
-      if (repVal.HasMember("tol")) {
+          repVal.at("val").as_int64());
+      if (repVal.as_object().contains("tol")) {
         static_cast<EqualityQuery<int, T const *, true> *>(res)->setTol(
-            repVal["tol"].GetInt());
+            repVal.at("tol").as_int64());
       }
       break;
     case MolPickler::QUERY_GREATER:
       res = new GreaterQuery<int, T const *, true>();
       static_cast<GreaterQuery<int, T const *, true> *>(res)->setVal(
-          repVal["val"].GetInt());
-      if (repVal.HasMember("tol")) {
+          repVal.at("val").as_int64());
+      if (repVal.as_object().contains("tol")) {
         static_cast<GreaterQuery<int, T const *, true> *>(res)->setTol(
-            repVal["tol"].GetInt());
+            repVal.at("tol").as_int64());
       }
       break;
     case MolPickler::QUERY_GREATEREQUAL:
       res = new GreaterEqualQuery<int, T const *, true>();
       static_cast<GreaterEqualQuery<int, T const *, true> *>(res)->setVal(
-          repVal["val"].GetInt());
-      if (repVal.HasMember("tol")) {
+          repVal.at("val").as_int64());
+      if (repVal.as_object().contains("tol")) {
         static_cast<GreaterEqualQuery<int, T const *, true> *>(res)->setTol(
-            repVal["tol"].GetInt());
+            repVal.at("tol").as_int64());
       }
       break;
     case MolPickler::QUERY_LESS:
       res = new LessQuery<int, T const *, true>();
       static_cast<LessQuery<int, T const *, true> *>(res)->setVal(
-          repVal["val"].GetInt());
-      if (repVal.HasMember("tol")) {
+          repVal.at("val").as_int64());
+      if (repVal.as_object().contains("tol")) {
         static_cast<LessQuery<int, T const *, true> *>(res)->setTol(
-            repVal["tol"].GetInt());
+            repVal.at("tol").as_int64());
       }
       break;
     case MolPickler::QUERY_LESSEQUAL:
       res = new LessEqualQuery<int, T const *, true>();
       static_cast<LessEqualQuery<int, T const *, true> *>(res)->setVal(
-          repVal["val"].GetInt());
-      if (repVal.HasMember("tol")) {
+          repVal.at("val").as_int64());
+      if (repVal.as_object().contains("tol")) {
         static_cast<LessEqualQuery<int, T const *, true> *>(res)->setTol(
-            repVal["tol"].GetInt());
+            repVal.at("tol").as_int64());
       }
       break;
     case MolPickler::QUERY_NULL:
@@ -563,15 +575,15 @@ Query<int, T const *, true> *readBaseQuery(T const *owner,
     case MolPickler::QUERY_RANGE:
       res = new RangeQuery<int, T const *, true>();
       static_cast<RangeQuery<int, T const *, true> *>(res)->setLower(
-          repVal["lower"].GetInt());
+          repVal.at("lower").as_int64());
       static_cast<RangeQuery<int, T const *, true> *>(res)->setUpper(
-          repVal["upper"].GetInt());
-      if (repVal.HasMember("tol")) {
+          repVal.at("upper").as_int64());
+      if (repVal.as_object().contains("tol")) {
         static_cast<RangeQuery<int, T const *, true> *>(res)->setTol(
-            repVal["tol"].GetInt());
+            repVal.at("tol").as_int64());
       }
-      if (repVal.HasMember("ends")) {
-        short ends = repVal["ends"].GetInt();
+      if (repVal.as_object().contains("ends")) {
+        short ends = repVal.at("ends").as_int64();
         const unsigned int lowerOpen = 1 << 1;
         const unsigned int upperOpen = 1;
         static_cast<RangeQuery<int, T const *, true> *>(res)->setEndsOpen(
@@ -580,10 +592,10 @@ Query<int, T const *, true> *readBaseQuery(T const *owner,
       break;
     case MolPickler::QUERY_SET:
       res = new SetQuery<int, T const *, true>();
-      if (repVal.HasMember("set")) {
-        for (const auto &member : repVal["set"].GetArray()) {
+      if (repVal.as_object().contains("set")) {
+        for (const auto &member : repVal.at("set").as_array()) {
           static_cast<SetQuery<int, T const *, true> *>(res)->insert(
-              member.GetInt());
+              member.as_int64());
         }
       }
       break;
@@ -596,30 +608,30 @@ Query<int, T const *, true> *readBaseQuery(T const *owner,
 }
 
 template <class T, class U>
-void finishQuery(T const *owner, U *res, const rj::Value &repVal,
+void finishQuery(T const *owner, U *res, const bj::value &repVal,
                  const DefaultValueCache &atomDefaults,
                  const DefaultValueCache &bondDefaults,
                  const JSONParseParameters &params) {
   PRECONDITION(owner, "no owner");
   PRECONDITION(res, "no result");
-  std::string descr = repVal["descr"].GetString();
+  auto descr = repVal.at("descr").as_string().c_str();
   res->setDescription(descr);
   std::string typ;
-  if (repVal.HasMember("type")) {
-    typ = repVal["type"].GetString();
+  if (repVal.as_object().contains("type")) {
+    typ = repVal.at("type").as_string().c_str();
   }
   if (!typ.empty()) {
     res->setTypeLabel(typ);
   }
   bool negated = false;
-  if (repVal.HasMember("negated")) {
-    negated = repVal["negated"].GetBool();
+  if (repVal.as_object().contains("negated")) {
+    negated = repVal.at("negated").as_bool();
   }
   res->setNegation(negated);
   QueryOps::finalizeQueryFromDescription(res, owner);
 
-  if (repVal.HasMember("children")) {
-    for (const auto &child : repVal["children"].GetArray()) {
+  if (repVal.as_object().contains("children")) {
+    for (const auto &child : repVal.at("children").as_array()) {
       typename U::CHILD_TYPE childq{
           readQuery(owner, child, atomDefaults, bondDefaults, params)};
       res->addChild(childq);
@@ -628,30 +640,30 @@ void finishQuery(T const *owner, U *res, const rj::Value &repVal,
 }
 
 Query<int, Atom const *, true> *readQuery(Atom const *owner,
-                                          const rj::Value &repVal,
+                                          const bj::value &repVal,
                                           const DefaultValueCache &atomDefaults,
                                           const DefaultValueCache &bondDefaults,
                                           const JSONParseParameters &params) {
   PRECONDITION(owner, "no owner");
-  if (!repVal.HasMember("tag")) {
+  if (!repVal.as_object().contains("tag")) {
     throw FileParseException("Bad Format: missing atom query tag");
   }
   Query<int, Atom const *, true> *res = nullptr;
-  int tag = repVal["tag"].GetInt();
+  int tag = static_cast<int>(repVal.at("tag").as_int64());
   if (tag == MolPickler::QUERY_RECURSIVE) {
-    if (!repVal.HasMember("subquery")) {
+    if (!repVal.as_object().contains("subquery")) {
       throw FileParseException("Bad Format: missing subquery");
     }
     auto *mol = new RWMol();
-    processMol(mol, repVal["subquery"], atomDefaults, bondDefaults, params);
+    processMol(mol, repVal.at("subquery"), atomDefaults, bondDefaults, params);
     res = new RecursiveStructureQuery(mol);
   } else if (tag == MolPickler::QUERY_ATOMRING) {
     res = new AtomRingQuery();
     static_cast<EqualityQuery<int, Atom const *, true> *>(res)->setVal(
-        repVal["val"].GetInt());
-    if (repVal.HasMember("tol")) {
+        static_cast<int>(repVal.at("val").as_int64()));
+    if (repVal.as_object().contains("tol")) {
       static_cast<EqualityQuery<int, Atom const *, true> *>(res)->setTol(
-          repVal["tol"].GetInt());
+          static_cast<int>(repVal.at("tol").as_int64()));
     }
   } else {
     res = readBaseQuery(owner, repVal, params);
@@ -662,12 +674,12 @@ Query<int, Atom const *, true> *readQuery(Atom const *owner,
   return res;
 }
 Query<int, Bond const *, true> *readQuery(Bond const *bond,
-                                          const rj::Value &repVal,
+                                          const bj::value &repVal,
                                           const DefaultValueCache &atomDefaults,
                                           const DefaultValueCache &bondDefaults,
                                           const JSONParseParameters &params) {
   PRECONDITION(bond, "no owner");
-  if (!repVal.HasMember("tag")) {
+  if (!repVal.as_object().contains("tag")) {
     throw FileParseException("Bad Format: missing bond query tag");
   }
   Query<int, Bond const *, true> *res = nullptr;
@@ -679,31 +691,32 @@ Query<int, Bond const *, true> *readQuery(Bond const *bond,
   return res;
 }
 
-void readQueries(RWMol *mol, const rj::Value &repVal,
+void readQueries(RWMol *mol, const bj::value &repVal,
                  const DefaultValueCache &atomDefaults,
                  const DefaultValueCache &bondDefaults,
                  const JSONParseParameters &params) {
   PRECONDITION(mol, "no molecule");
-  PRECONDITION(repVal["name"].GetString() == std::string("rdkitQueries"),
+  PRECONDITION(repVal.at("name").as_string() == std::string("rdkitQueries"),
                "bad queries");
-  if (!repVal.HasMember("formatVersion")) {
+  if (!repVal.as_object().contains("formatVersion")) {
     throw FileParseException("Bad Format: missing format_version");
   }
-  if (repVal["formatVersion"].GetInt() > currentQueryRepresentationVersion) {
+  if (repVal.at("formatVersion").as_int64() >
+      currentQueryRepresentationVersion) {
     BOOST_LOG(rdWarningLog) << "RDKit query representation format version "
-                            << repVal["formatVersion"].GetInt()
+                            << repVal.at("formatVersion").as_int64()
                             << " too recent. Ignoring it." << std::endl;
     return;
   }
   {
-    const auto &miter = repVal.FindMember("atomQueries");
-    if (miter != repVal.MemberEnd()) {
+    const auto &miter = repVal.as_object().find("atomQueries");
+    if (miter != repVal.as_object().end()) {
       size_t idx = 0;
-      for (const auto &val : miter->value.GetArray()) {
-        if (!val.IsObject()) {
+      for (const auto &val : miter->value().as_array()) {
+        if (!val.is_object()) {
           throw FileParseException("Bad Format: atomQuery not object");
         }
-        if (!val.HasMember("tag")) {
+        if (!val.as_object().contains("tag")) {
           // nothing here, continue
           continue;
         }
@@ -727,14 +740,14 @@ void readQueries(RWMol *mol, const rj::Value &repVal,
     }
   }
   {
-    const auto &miter = repVal.FindMember("bondQueries");
-    if (miter != repVal.MemberEnd()) {
+    const auto &miter = repVal.as_object().find("bondQueries");
+    if (miter != repVal.as_object().end()) {
       size_t idx = 0;
-      for (const auto &val : miter->value.GetArray()) {
-        if (!val.IsObject()) {
+      for (const auto &val : miter->value().as_array()) {
+        if (!val.is_object()) {
           throw FileParseException("Bad Format: bondQuery not object");
         }
-        if (!val.HasMember("tag")) {
+        if (!val.as_object().contains("tag")) {
           // nothing here, continue
           continue;
         }
@@ -755,97 +768,100 @@ void readQueries(RWMol *mol, const rj::Value &repVal,
   }
 }
 
-void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal,
+void readRDKitRepresentation(RWMol *mol, const bj::value &repVal,
                              const JSONParseParameters &params) {
   PRECONDITION(mol, "no molecule");
-  PRECONDITION(repVal["name"].GetString() == std::string("rdkitRepresentation"),
-               "bad representation");
-  if (!repVal.HasMember("formatVersion")) {
+  PRECONDITION(
+      repVal.at("name").as_string() == std::string("rdkitRepresentation"),
+      "bad representation");
+  if (!repVal.as_object().contains("formatVersion")) {
     throw FileParseException("Bad Format: missing format_version");
   }
-  if (repVal["formatVersion"].GetInt() > currentRDKitRepresentationVersion) {
+  if (repVal.at("formatVersion").as_int64() >
+      currentRDKitRepresentationVersion) {
     BOOST_LOG(rdWarningLog) << "RDKit representation format version "
-                            << repVal["formatVersion"].GetInt()
+                            << repVal.at("formatVersion").as_int64()
                             << " too recent. Ignoring it." << std::endl;
     return;
   }
   {
-    const auto &miter = repVal.FindMember("aromaticAtoms");
-    if (miter != repVal.MemberEnd()) {
-      for (const auto &val : miter->value.GetArray()) {
-        if (!val.IsInt()) {
+    const auto &miter = repVal.as_object().find("aromaticAtoms");
+    if (miter != repVal.as_object().end()) {
+      for (const auto &val : miter->value().as_array()) {
+        if (!val.is_int64()) {
           throw FileParseException("Bad Format: aromaticAtom not int");
         }
-        mol->getAtomWithIdx(val.GetInt())->setIsAromatic(true);
+        mol->getAtomWithIdx(val.as_int64())->setIsAromatic(true);
       }
     }
   }
   {
-    const auto &miter = repVal.FindMember("aromaticBonds");
-    if (miter != repVal.MemberEnd()) {
-      for (const auto &val : miter->value.GetArray()) {
-        if (!val.IsInt()) {
+    const auto &miter = repVal.as_object().find("aromaticBonds");
+    if (miter != repVal.as_object().end()) {
+      for (const auto &val : miter->value().as_array()) {
+        if (!val.is_int64()) {
           throw FileParseException("Bad Format: aromaticBond not int");
         }
-        mol->getBondWithIdx(val.GetInt())->setIsAromatic(true);
+        mol->getBondWithIdx(val.as_int64())->setIsAromatic(true);
         if (params.setAromaticBonds) {
-          mol->getBondWithIdx(val.GetInt())->setBondType(Bond::AROMATIC);
+          mol->getBondWithIdx(val.as_int64())->setBondType(Bond::AROMATIC);
         }
       }
     }
   }
   {
-    const auto &miter = repVal.FindMember("cipRanks");
-    if (miter != repVal.MemberEnd()) {
+    const auto &miter = repVal.as_object().find("cipRanks");
+    if (miter != repVal.as_object().end()) {
       size_t i = 0;
-      for (const auto &val : miter->value.GetArray()) {
-        if (!val.IsInt()) {
+      for (const auto &val : miter->value().as_array()) {
+        if (!val.is_int64()) {
           throw FileParseException("Bad Format: ciprank not int");
         }
         mol->getAtomWithIdx(i++)->setProp(
             common_properties::_CIPRank,
-            static_cast<unsigned int>(val.GetInt()));
+            static_cast<unsigned int>(val.as_int64()));
       }
     }
   }
   {
-    const auto &miter = repVal.FindMember("cipCodes");
-    if (miter != repVal.MemberEnd()) {
-      for (const auto &val : miter->value.GetArray()) {
-        if (!val.IsArray()) {
+    const auto &miter = repVal.as_object().find("cipCodes");
+    if (miter != repVal.as_object().end()) {
+      for (const auto &val : miter->value().as_array()) {
+        if (!val.is_array()) {
           throw FileParseException("Bad Format: CIPCode not string");
         }
-        mol->getAtomWithIdx(val[0].GetInt())
-            ->setProp(common_properties::_CIPCode, val[1].GetString());
+        mol->getAtomWithIdx(val.at(0).as_int64())
+            ->setProp(common_properties::_CIPCode,
+                      val.at(1).as_string().c_str());
       }
     }
   }
   {
-    const auto &miter = repVal.FindMember("atomRings");
-    if (miter != repVal.MemberEnd()) {
+    const auto &miter = repVal.as_object().find("atomRings");
+    if (miter != repVal.as_object().end()) {
       CHECK_INVARIANT(!mol->getRingInfo()->isInitialized(),
                       "rings already initialized");
       auto ri = mol->getRingInfo();
       ri->initialize();
-      for (const auto &val : miter->value.GetArray()) {
-        if (!val.IsArray()) {
+      for (const auto &val : miter->value().as_array()) {
+        if (!val.is_array()) {
           throw FileParseException("Bad Format: atomRing not array");
         }
         INT_VECT atomRing;
         INT_VECT bondRing;
-        size_t sz = val.Size();
+        size_t sz = val.as_array().size();
         atomRing.reserve(sz);
         bondRing.reserve(sz);
         for (size_t i = 0; i < sz - 1; ++i) {
-          int idx1 = val[i].GetInt();
-          int idx2 = val[i + 1].GetInt();
+          int idx1 = static_cast<int>(val.as_array()[i].as_int64());
+          int idx2 = static_cast<int>(val.as_array()[i + 1].as_int64());
           atomRing.push_back(idx1);
           const auto &bnd = mol->getBondBetweenAtoms(idx1, idx2);
           CHECK_INVARIANT(bnd, "no bond found for ring");
           bondRing.push_back(bnd->getIdx());
         }
-        int idx1 = val[sz - 1].GetInt();
-        int idx2 = val[0].GetInt();
+        int idx1 = static_cast<int>(val.as_array()[sz - 1].as_int64());
+        int idx2 = static_cast<int>(val.as_array()[0].as_int64());
         atomRing.push_back(idx1);
         const auto &bnd = mol->getBondBetweenAtoms(idx1, idx2);
         CHECK_INVARIANT(bnd, "no bond found for ring");
@@ -856,98 +872,102 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal,
   }
 }
 
-void processMol(RWMol *mol, const rj::Value &molval,
+void processMol(RWMol *mol, const bj::value &molval,
                 const DefaultValueCache &atomDefaults,
                 const DefaultValueCache &bondDefaults,
                 const JSONParseParameters &params) {
-  if (molval.HasMember("name")) {
-    mol->setProp(common_properties::_Name, molval["name"].GetString());
+  if (molval.as_object().contains("name")) {
+    mol->setProp(common_properties::_Name,
+                 molval.at("name").as_string().c_str());
   }
-  if (!molval.HasMember("atoms")) {
+  if (!molval.as_object().contains("atoms")) {
     throw FileParseException("Bad Format: missing atoms in JSON");
   }
-  if (!molval.HasMember("bonds")) {
+  if (!molval.as_object().contains("bonds")) {
     throw FileParseException("Bad Format: missing bonds in JSON");
   }
 
-  for (const auto &atomVal : molval["atoms"].GetArray()) {
+  for (const auto &atomVal : molval.at("atoms").as_array()) {
     readAtom(mol, atomVal, atomDefaults, params);
   }
   bool needStereoLoop = false;
-  for (const auto &bondVal : molval["bonds"].GetArray()) {
+  for (const auto &bondVal : molval.at("bonds").as_array()) {
     readBond(mol, bondVal, bondDefaults, needStereoLoop);
   }
   if (needStereoLoop) {
     // need to set bond stereo after the bonds are there
     unsigned int bidx = 0;
-    for (const auto &bondVal : molval["bonds"].GetArray()) {
+    for (const auto &bondVal : molval.at("bonds").as_array()) {
       Bond *bnd = mol->getBondWithIdx(bidx++);
       readBondStereo(bnd, bondVal, bondDefaults);
     }
   }
 
-  if (molval.HasMember("stereoGroups")) {
-    readStereoGroups(mol, molval["stereoGroups"]);
+  if (molval.as_object().contains("stereoGroups")) {
+    readStereoGroups(mol, molval.at("stereoGroups"));
   }
-  if (molval.HasMember("substanceGroups")) {
-    readSubstanceGroups(mol, molval["substanceGroups"]);
+  if (molval.as_object().contains("substanceGroups")) {
+    readSubstanceGroups(mol, molval.at("substanceGroups"));
   }
-  if (params.parseConformers && molval.HasMember("conformers")) {
-    for (const auto &confVal : molval["conformers"].GetArray()) {
+  if (params.parseConformers && molval.as_object().contains("conformers")) {
+    for (const auto &confVal : molval.at("conformers").as_array()) {
       auto *conf = new Conformer(mol->getNumAtoms());
       readConformer(conf, confVal);
       mol->addConformer(conf, true);
     }
   }
 
-  if (params.parseProperties && molval.HasMember("properties")) {
-    parseProperties(*mol, molval["properties"]);
+  if (params.parseProperties && molval.as_object().contains("properties")) {
+    parseProperties(*mol, molval.at("properties"));
   }
 
-  if (molval.HasMember("extensions")) {
-    for (const auto &propVal : molval["extensions"].GetArray()) {
-      if (!propVal.HasMember("name")) {
+  if (molval.as_object().contains("extensions")) {
+    for (const auto &propVal : molval.at("extensions").as_array()) {
+      if (!propVal.as_object().contains("name")) {
         throw FileParseException(
             "Bad Format: representation has no name member");
       }
-      if (propVal["name"].GetString() == std::string("rdkitRepresentation")) {
+      if (propVal.at("name").as_string() ==
+          std::string("rdkitRepresentation")) {
         readRDKitRepresentation(mol, propVal, params);
-      } else if (propVal["name"].GetString() == std::string("partialCharges")) {
+      } else if (propVal.at("name").as_string() ==
+                 std::string("partialCharges")) {
         readPartialCharges(mol, propVal, params);
-      } else if (propVal["name"].GetString() == std::string("rdkitQueries")) {
+      } else if (propVal.at("name").as_string() ==
+                 std::string("rdkitQueries")) {
         readQueries(mol, propVal, atomDefaults, bondDefaults, params);
       }
     }
   }
-  mol->updatePropertyCache(false);
   mol->setProp(common_properties::_StereochemDone, 1);
 }
 
 std::vector<boost::shared_ptr<ROMol>> DocToMols(
-    rj::Document &doc, const JSONParseParameters &params) {
+    bj::value &doc, const JSONParseParameters &params) {
   std::vector<boost::shared_ptr<ROMol>> res;
 
   // some error checking
-  if (!doc.IsObject()) {
+  if (!doc.is_object()) {
     throw FileParseException("Bad Format: JSON should be an object");
   }
 
-  if (doc.HasMember("commonchem")) {
-    if (!doc["commonchem"].IsObject() ||
-        !doc["commonchem"].HasMember("version")) {
+  if (doc.as_object().contains("commonchem")) {
+    auto jobj = doc.at("commonchem").if_object();
+    if (!jobj || !jobj->contains("version")) {
       throw FileParseException("Bad Format: missing version in JSON");
     }
-    if (doc["commonchem"]["version"].GetInt() != currentMolJSONVersion) {
+    if (jobj->at("version").as_int64() != currentMolJSONVersion) {
       throw FileParseException("Bad Format: bad version in JSON");
     }
-  } else if (doc.HasMember("rdkitjson")) {
-    if (!doc["rdkitjson"].IsObject() ||
-        !doc["rdkitjson"].HasMember("version")) {
+  } else if (doc.as_object().contains("rdkitjson")) {
+    if (!doc.at("rdkitjson").is_object() ||
+        !doc.at("rdkitjson").as_object().contains("version")) {
       throw FileParseException("Bad Format: missing version in JSON");
     }
     // FIX: we want to be backwards compatible
     // Version 10 files can be read by 11, but not vice versa.
-    if (int jsonVersion = doc["rdkitjson"]["version"].GetInt();
+    if (int jsonVersion =
+            static_cast<int>(doc.at("rdkitjson").at("version").as_int64());
         jsonVersion > currentRDKitJSONVersion || jsonVersion < 10) {
       throw FileParseException("Bad Format: bad version in JSON");
     }
@@ -955,29 +975,31 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
     throw FileParseException("Bad Format: missing header in JSON");
   }
 
-  rj::Value atomDefaults_;
-  if (rj::GetValueByPointer(doc, "/defaults/atom")) {
-    atomDefaults_ = *rj::GetValueByPointer(doc, "/defaults/atom");
-    if (!atomDefaults_.IsObject()) {
+  bj::value atomDefaults_;
+  if (doc.as_object().contains("defaults") &&
+      doc.at("defaults").as_object().contains("atom")) {
+    atomDefaults_ = doc.at("defaults").at("atom");
+    if (!atomDefaults_.is_object()) {
       throw FileParseException("Bad Format: atomDefaults is not an object");
     }
   }
   const DefaultValueCache atomDefaults(atomDefaults_);
 
-  rj::Value bondDefaults_;
-  if (rj::GetValueByPointer(doc, "/defaults/bond")) {
-    bondDefaults_ = *rj::GetValueByPointer(doc, "/defaults/bond");
-    if (!bondDefaults_.IsObject()) {
+  bj::value bondDefaults_;
+  if (doc.as_object().contains("defaults") &&
+      doc.at("defaults").as_object().contains("bond")) {
+    bondDefaults_ = doc.at("defaults").at("bond");
+    if (!bondDefaults_.is_object()) {
       throw FileParseException("Bad Format: bondDefaults is not an object");
     }
   }
   const DefaultValueCache bondDefaults(bondDefaults_);
 
-  if (doc.HasMember("molecules")) {
-    if (!doc["molecules"].IsArray()) {
+  if (doc.as_object().contains("molecules")) {
+    if (!doc.at("molecules").is_array()) {
       throw FileParseException("Bad Format: molecules is not an array");
     }
-    for (const auto &molval : doc["molecules"].GetArray()) {
+    for (const auto &molval : doc.at("molecules").as_array()) {
       std::unique_ptr<RWMol> mol(new RWMol());
       processMol(mol.get(), molval, atomDefaults, bondDefaults, params);
       mol->updatePropertyCache(params.strictValenceCheck);
@@ -995,16 +1017,18 @@ std::vector<boost::shared_ptr<ROMol>> JSONDataStreamToMols(
     std::istream *inStream, const JSONParseParameters &params) {
   PRECONDITION(inStream, "no stream");
 
-  rj::IStreamWrapper isw(*inStream);
-  rj::Document doc;
-  doc.ParseStream(isw);
+  std::string jsonString((std::istreambuf_iterator<char>(*inStream)),
+                         std::istreambuf_iterator<char>());
+  bj::monotonic_resource mr;
+  bj::value doc = bj::parse(jsonString, &mr);
 
   return DocToMols(doc, params);
 }
 std::vector<boost::shared_ptr<ROMol>> JSONDataToMols(
     const std::string &jsonBlock, const JSONParseParameters &params) {
-  rj::Document doc;
-  doc.Parse(jsonBlock.c_str());
+  bj::monotonic_resource mr;
+  bj::value doc = bj::parse(jsonBlock, &mr);
+
   return DocToMols(doc, params);
 }
 

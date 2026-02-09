@@ -26,17 +26,42 @@ struct monomerinfo_wrapper {
     python::class_<AtomMonomerInfo>("AtomMonomerInfo", classDoc.c_str(),
                                     python::init<>(python::args("self")))
         .def(
-            python::init<AtomMonomerInfo::AtomMonomerType, const std::string &>(
+            python::init<AtomMonomerInfo::AtomMonomerType, const std::string &,
+                         const std::string &, int,
+                         const std::string &, const std::string &>(
                 (python::arg("self"), python::arg("type"),
-                 python::arg("name") = "")))
+                 python::arg("name") = "", python::arg("residueName") = "",
+                 python::arg("resNum") = 0, python::arg("chainId") = "",
+                 python::arg("monomerClass") = "")))
         .def("GetName", &AtomMonomerInfo::getName,
              python::return_value_policy<python::copy_const_reference>(),
              python::args("self"))
         .def("GetMonomerType", &AtomMonomerInfo::getMonomerType,
              python::args("self"))
+        .def("GetResidueName", &AtomMonomerInfo::getResidueName,
+             python::return_value_policy<python::copy_const_reference>(),
+             python::args("self"))
+        .def("GetResidueNumber", &AtomMonomerInfo::getResidueNumber,
+                 python::args("self"))
+        .def("GetChainId", &AtomMonomerInfo::getChainId,
+             python::return_value_policy<python::copy_const_reference>(),
+             python::args("self"))
+        .def("GetMonomerClass", &AtomMonomerInfo::getMonomerClass,
+             python::return_value_policy<python::copy_const_reference>(),
+             python::args("self"))
+
         .def("SetName", &AtomMonomerInfo::setName, python::args("self", "nm"))
         .def("SetMonomerType", &AtomMonomerInfo::setMonomerType,
-             python::args("self", "typ"));
+             python::args("self", "typ"))
+        .def("SetResidueName", &AtomMonomerInfo::setResidueName,
+             python::args("self", "val"))
+        .def("SetResidueNumber", &AtomMonomerInfo::setResidueNumber,
+             python::args("self", "val"))
+        .def("SetChainId", &AtomMonomerInfo::setChainId,
+             python::args("self", "val"))
+        .def("SetMonomerClass", &AtomMonomerInfo::setMonomerClass,
+             python::args("self", "val"))
+        ;
 
     python::enum_<AtomMonomerInfo::AtomMonomerType>("AtomMonomerType")
         .value("UNKNOWN", AtomMonomerInfo::UNKNOWN)
@@ -49,7 +74,7 @@ struct monomerinfo_wrapper {
         python::init<>(python::args("self")))
         .def(python::init<std::string, int, std::string, std::string, int,
                           std::string, std::string, double, double, bool,
-                          unsigned int, unsigned int>(
+                          unsigned int, unsigned int, std::string>(
             (python::arg("self"), python::arg("atomName"),
              python::arg("serialNumber") = 1, python::arg("altLoc") = "",
              python::arg("residueName") = "", python::arg("residueNumber") = 0,
@@ -57,7 +82,8 @@ struct monomerinfo_wrapper {
              python::arg("occupancy") = 1.0, python::arg("tempFactor") = 0.0,
              python::arg("isHeteroAtom") = false,
              python::arg("secondaryStructure") = 0,
-             python::arg("segmentNumber") = 0)))
+             python::arg("segmentNumber") = 0,
+             python::arg("monomerClass") = "")))
         .def("GetSerialNumber", &AtomPDBResidueInfo::getSerialNumber,
              python::args("self"))
         .def("GetAltLoc", &AtomPDBResidueInfo::getAltLoc,
@@ -84,6 +110,9 @@ struct monomerinfo_wrapper {
              &AtomPDBResidueInfo::getSecondaryStructure, python::args("self"))
         .def("GetSegmentNumber", &AtomPDBResidueInfo::getSegmentNumber,
              python::args("self"))
+        .def("GetMonomerClass", &AtomPDBResidueInfo::getMonomerClass,
+             python::return_value_policy<python::copy_const_reference>(),
+             python::args("self"))
 
         .def("SetSerialNumber", &AtomPDBResidueInfo::setSerialNumber,
              python::args("self", "val"))
@@ -107,6 +136,8 @@ struct monomerinfo_wrapper {
              &AtomPDBResidueInfo::setSecondaryStructure,
              python::args("self", "val"))
         .def("SetSegmentNumber", &AtomPDBResidueInfo::setSegmentNumber,
+             python::args("self", "val"))
+        .def("SetMonomerClass", &AtomPDBResidueInfo::setMonomerClass,
              python::args("self", "val"))
 
         ;

@@ -12,6 +12,7 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/test_fixtures.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/FileParsers/SequenceWriters.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
@@ -26,6 +27,9 @@
 #include <string>
 #include <fstream>
 #include <filesystem>
+
+using namespace RDKit;
+using namespace v2::FileParsers;
 
 using namespace RDKit;
 
@@ -57,6 +61,26 @@ class MrvTests {
           expectedResult(expectedResultInit),
           sanitizeFlag(sanitizeFlagInit),
           reapplyMolBlockWedging(reapplyMolBlockWedgingInit) {};
+  };
+
+  class ScsrMolTest {
+   public:
+    unsigned int atomCount;
+    unsigned int bondCount;
+    std::vector<int> hbondIds;
+    unsigned int sGroupCount;
+    std::string fileName;
+    bool expectedResult;
+
+    ScsrMolTest(std::string fileNameInit, bool expectedResultInit,
+                int atomCountInit, int bondCountInit,
+                std::vector<int> hbondIdsInit, int sGroupCountInit)
+        : atomCount(atomCountInit),
+          bondCount(bondCountInit),
+          hbondIds(hbondIdsInit),
+          sGroupCount(sGroupCountInit),
+          fileName(fileNameInit),
+          expectedResult(expectedResultInit) {};
   };
 
   class RxnTest {
@@ -362,6 +386,62 @@ class MrvTests {
       return;
     }
     TEST_ASSERT(molTest->expectedResult == true);
+
+    return;
+  }
+
+  void testMarvinFromScsr(const ScsrMolTest *scsrMolTest) {
+    BOOST_LOG(rdInfoLog) << "testing marvin generate from an SCSR mol file"
+                         << std::endl;
+
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase + "/Code/GraphMol/MarvinParse/test_data/" +
+                        scsrMolTest->fileName;
+
+    try {
+      RDKit::v2::FileParsers::MolFileParserParams pp;
+      pp.sanitize = false;
+      pp.removeHs = false;
+      pp.strictParsing = true;
+
+      RDKit::v2::FileParsers::MolFromSCSRParams molFromSCSRParams;
+      molFromSCSRParams.includeLeavingGroups = true;
+      molFromSCSRParams.scsrBaseHbondOptions = SCSRBaseHbondOptions::Auto;
+
+      std::unique_ptr<RDKit::RWMol> mol;
+      mol = MolFromSCSRFile(fName, pp, molFromSCSRParams);
+
+      TEST_ASSERT(mol != nullptr);
+      TEST_ASSERT(mol->getNumAtoms() == scsrMolTest->atomCount);
+      TEST_ASSERT(mol->getNumBonds() == scsrMolTest->bondCount);
+      TEST_ASSERT(getSubstanceGroups(*mol).size() == scsrMolTest->sGroupCount);
+
+      std::string outMolStr = "";
+      outMolStr = MolToMrvBlock(*mol, true, -1, true, false);
+
+      RDKit::v2::MarvinParser::MrvParserParams mpp;
+      mol = RDKit::v2::MarvinParser::MolFromMrvBlock(outMolStr, mpp);
+
+      TEST_ASSERT(mol != nullptr);
+      TEST_ASSERT(mol->getNumAtoms() == scsrMolTest->atomCount);
+      TEST_ASSERT(mol->getNumBonds() == scsrMolTest->bondCount);
+      TEST_ASSERT(getSubstanceGroups(*mol).size() == scsrMolTest->sGroupCount);
+
+      // test for some H-bonds
+
+      for (auto hbondIndex : scsrMolTest->hbondIds) {
+        TEST_ASSERT(mol->getBondWithIdx(hbondIndex)->getBondType() ==
+                    RDKit::Bond::BondType::HYDROGEN);
+      }
+
+      BOOST_LOG(rdInfoLog) << "done" << std::endl;
+    } catch (const std::exception &) {
+      if (scsrMolTest->expectedResult != false) {
+        throw;
+      }
+      return;
+    }
+    TEST_ASSERT(scsrMolTest->expectedResult == true);
 
     return;
   }
@@ -1135,6 +1215,21 @@ M  END
 
         printf("Test\n\n %s\n\n", molFileTest.fileName.c_str());
         testMarvinMol(&molFileTest);
+      }
+    }
+
+    if (testToRun == "" || testToRun == "scsrFileTests") {
+      std::list<ScsrMolTest> scsrFileTests{
+          ScsrMolTest(
+              "153944501_original_structure.mol", true, 859, 1025,
+              {66, 67, 68, 72, 73, 74} /* Some but not all hbonds in the mol */,
+              128),
+          ScsrMolTest("rnaTest.mol", true, 22, 24, {}, 4)};
+
+      for (auto &scsrFileTest : scsrFileTests) {
+        BOOST_LOG(rdInfoLog) << "Test: " << scsrFileTest.fileName << std::endl;
+
+        testMarvinFromScsr(&scsrFileTest);
       }
     }
 

@@ -757,46 +757,60 @@ class TestCase(unittest.TestCase):
     rdbase = environ["RDBASE"]
     fname1 = str(Path(rdbase) / 'Code' / 'GraphMol' / 'Descriptors' / 'test_data' / '1mup.pdb')
     mol1 = Chem.MolFromPDBFile(fname1, sanitize=False, removeHs=False)
-
+    radii1 = [Chem.GetPeriodicTable().GetRvdw(atom.GetAtomicNum()) for atom in mol1.GetAtoms()]
     # test default params
-    default = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=False)
+    default = rdMD.DoubleCubicLatticeVolume(mol1, radii1, isProtein=True, includeLigand=False)
 
-    self.assertTrue(abs(default.GetSurfaceArea() - 8330.59) < 0.05)
-    self.assertTrue(abs(default.GetVolume() - 31789.6) < 0.05)
-    self.assertTrue(abs(default.GetVDWVolume() - 15355.3) < 0.05)
-    self.assertTrue(abs(default.GetCompactness() - 1.7166) < 0.05)
-    self.assertTrue(abs(default.GetPackingDensity() - 0.48303) < 0.05)
+    self.assertTrue(abs(default.GetSurfaceArea() - 8306.62) < 0.05)
+    self.assertTrue(abs(default.GetPolarSurfaceArea() - 4652.19) < 0.05)
+    self.assertTrue(abs(default.GetPolarSurfaceArea(includeSandP=True) - 4673.9) < 0.05)
+    self.assertTrue(abs(default.GetVolume() - 29952.3) < 0.05)
+    self.assertTrue(abs(default.GetVDWVolume() - 13541.5) < 0.05)
+    self.assertTrue(abs(default.GetPolarVolume() - 17096) < 0.05)
+    self.assertTrue(abs(default.GetCompactness() - 1.78096) < 0.05)
+    self.assertTrue(abs(default.GetPackingDensity() - 0.452103) < 0.05)
 
     # test set depth and radius
-    depthrad = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=False,
-                                             probeRadius=1.6, depth=6)
+    depthrad = rdMD.DoubleCubicLatticeVolume(mol1, radii1, isProtein=True, includeLigand=False,
+                                             probeRadius=1.6)
 
-    self.assertTrue(abs(depthrad.GetSurfaceArea() - 8186.06) < 0.05)
-    self.assertTrue(abs(depthrad.GetVolume() - 33464.5) < 0.05)
-    self.assertTrue(abs(depthrad.GetVDWVolume() - 15350.7) < 0.05)
-    self.assertTrue(abs(depthrad.GetCompactness() - 1.63005) < 0.05)
-    self.assertTrue(abs(depthrad.GetPackingDensity() - 0.458717) < 0.05)
+    self.assertTrue(abs(depthrad.GetSurfaceArea() - 8112.42) < 0.05)
+    self.assertTrue(abs(depthrad.GetPolarSurfaceArea() - 4656.8) < 0.05)
+    self.assertTrue(abs(depthrad.GetPolarSurfaceArea(includeSandP=True) - 4674.96) < 0.05)
+    self.assertTrue(abs(depthrad.GetVolume() - 31591) < 0.05)
+    self.assertTrue(abs(depthrad.GetVDWVolume() - 13541.5) < 0.05)
+    self.assertTrue(abs(depthrad.GetPolarVolume() - 18402.8) < 0.05)
+    self.assertTrue(abs(depthrad.GetCompactness() - 1.67864) < 0.05)
+    self.assertTrue(abs(depthrad.GetPackingDensity() - 0.428652) < 0.05)
 
     # test include ligand
-    withlig = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=True)
+    withlig = rdMD.DoubleCubicLatticeVolume(mol1, radii1, isProtein=True, includeLigand=True)
 
-    self.assertTrue(abs(withlig.GetSurfaceArea() - 8010.56) < 0.05)
-    self.assertTrue(abs(withlig.GetVolume() - 31228.4) < 0.05)
-    self.assertTrue(abs(withlig.GetVDWVolume() - 15155.7) < 0.05)
-    self.assertTrue(abs(withlig.GetCompactness() - 1.67037) < 0.05)
-    self.assertTrue(abs(withlig.GetPackingDensity() - 0.48532) < 0.05)
+    self.assertTrue(abs(withlig.GetSurfaceArea() - 8206.1) < 0.05)
+    self.assertTrue(abs(withlig.GetPolarSurfaceArea() - 4467.92) < 0.05)
+    self.assertTrue(abs(withlig.GetPolarSurfaceArea(includeSandP=True) - 4481.19) < 0.05)
+    self.assertTrue(abs(withlig.GetVolume() - 30340.1) < 0.05)
+    self.assertTrue(abs(withlig.GetVDWVolume() - 13789.7) < 0.05)
+    self.assertTrue(abs(withlig.GetPolarVolume() - 16507) < 0.05)
+    self.assertTrue(abs(withlig.GetCompactness() - 1.74438) < 0.05)
+    self.assertTrue(abs(withlig.GetPackingDensity() - 0.454504) < 0.05)
 
     fname2 = str(Path(rdbase) / 'Code' / 'GraphMol' / 'Descriptors' / 'test_data' / 'TZL_model.sdf')
     suppl = Chem.SDMolSupplier(fname2)
     for mol in suppl:
       mol2 = mol
+    radii2 = [Chem.GetPeriodicTable().GetRvdw(atom.GetAtomicNum()) for atom in mol2.GetAtoms()]
 
     # test from SDF file with defaults
-    sdf = rdMD.DoubleCubicLatticeVolume(mol2, isProtein=False)
+    for sdf in (rdMD.DoubleCubicLatticeVolume(mol2, radii2, isProtein=False),
+                rdMD.DoubleCubicLatticeVolume(mol2, isProtein=False)):
 
-    self.assertTrue(abs(sdf.GetSurfaceArea() - 296.466) < 0.05)
-    self.assertTrue(abs(sdf.GetVolume() - 411.972) < 0.05)
-    self.assertTrue(abs(sdf.GetVDWVolume() - 139.97) < 0.05)
+      self.assertTrue(abs(sdf.GetSurfaceArea() - 304.239) < 0.05)
+      self.assertTrue(abs(sdf.GetPolarSurfaceArea() - 18.7319) < 0.05)
+      self.assertTrue(abs(sdf.GetPolarSurfaceArea(includeSandP=True) - 64.9764) < 0.05)
+      self.assertTrue(abs(sdf.GetVolume() - 431.35) < 0.05)
+      self.assertTrue(abs(sdf.GetVDWVolume() - 119.296) < 0.05)
+      self.assertTrue(abs(sdf.GetPolarVolume() - 21.35) < 0.05)
 
 
 if __name__ == '__main__':

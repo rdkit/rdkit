@@ -7,11 +7,12 @@ steps:
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba
     conda create --name rdkit_build -c conda-forge --override-channels  $(python) ^
-        boost=$(boost_version) boost-cpp=$(boost_version) ^
+        libboost-python=(boost_version) ^
         libboost-python-devel=(boost_version) ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        numpy matplotlib cairo pillow eigen pandas=2.1 ^
+        numpy matplotlib cairo pillow eigen ^
+        numpy=2.4 pandas=3 ^
         sphinx myst-parser ipython jupyter pytest nbval cmake lapack liblapacke blas
     call activate rdkit_build
     conda config --env --add channels conda-forge 
@@ -59,6 +60,15 @@ steps:
     cd build
     ctest -C Release -j $(number_of_cores) --output-on-failure -T Test
   displayName: Run tests
+- script: |
+    call activate rdkit_build
+    conda install -c conda-forge --override-channels  numpy=1.26 pandas=2.2
+    set RDBASE=%cd%
+    set PYTHONPATH=%RDBASE%;%PYTHONPATH%
+    set PATH=%RDBASE%\lib;%PATH%
+    cd build
+    ctest -C Release -j $(number_of_cores) --output-on-failure -T Test
+  displayName: Run with older numpy and pandas
 - script: |
     call activate rdkit_build
     conda install -c conda-forge --override-channels  sphinx myst-parser

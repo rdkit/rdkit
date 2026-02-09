@@ -36,7 +36,6 @@
 #include <cassert>
 #include <any>
 #include "Invariant.h"
-#include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <vector>
@@ -184,8 +183,9 @@ struct RDValue {
       //  quiet NaNs are used for other types.
       otherBits = RDTypeTag::NaN;
       assert(boost::math::isnan(doubleBits));
-    } else
+    } else {
       doubleBits = number;
+    }
   }
 
   inline RDValue(float number) {
@@ -456,21 +456,24 @@ inline float rdvalue_cast<float>(RDValue_cast_t v) {
 //  and enable_if
 template <>
 inline int rdvalue_cast<int>(RDValue_cast_t v) {
-  if (rdvalue_is<int>(v))
+  if (rdvalue_is<int>(v)) {
     return static_cast<int32_t>(v.otherBits & ~RDTypeTag::IntTag);
+  }
   throw std::bad_any_cast();
 }
 template <>
 inline unsigned int rdvalue_cast<unsigned int>(RDValue_cast_t v) {
-  if (rdvalue_is<unsigned int>(v))
+  if (rdvalue_is<unsigned int>(v)) {
     return static_cast<uint32_t>(v.otherBits & ~RDTypeTag::UnsignedIntTag);
+  }
   throw std::bad_any_cast();
 }
 
 template <>
 inline bool rdvalue_cast<bool>(RDValue_cast_t v) {
-  if (rdvalue_is<bool>(v))
+  if (rdvalue_is<bool>(v)) {
     return static_cast<bool>(v.otherBits & ~RDTypeTag::BoolTag);
+  }
   throw std::bad_any_cast();
 }
 

@@ -500,8 +500,9 @@ void RWMol::removeAtom(Atom *atom) { removeAtom(atom, true); }
 
 unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
                             Bond::BondType bondType) {
-  URANGE_CHECK(atomIdx1, getNumAtoms());
-  URANGE_CHECK(atomIdx2, getNumAtoms());
+  // if the atom indices are bad, the next two calls will catch that.
+  auto beginAtom = getAtomWithIdx(atomIdx1);
+  auto endAtom = getAtomWithIdx(atomIdx2);
   PRECONDITION(atomIdx1 != atomIdx2, "attempt to add self-bond");
   PRECONDITION(!(boost::edge(atomIdx1, atomIdx2, d_graph).second),
                "bond already exists");
@@ -516,26 +517,32 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
     //   is no such thing as an aromatic atom, but bonds can be
     //   marked aromatic.
     //
-    getAtomWithIdx(atomIdx1)->setIsAromatic(1);
-    getAtomWithIdx(atomIdx2)->setIsAromatic(1);
+    beginAtom->setIsAromatic(1);
+    endAtom->setIsAromatic(1);
   }
   auto [which, ok] = boost::add_edge(atomIdx1, atomIdx2, d_graph);
   d_graph[which] = b;
-  // unsigned int res = rdcast<unsigned int>(boost::num_edges(d_graph));
   ++numBonds;
   b->setIdx(numBonds - 1);
   b->setBeginAtomIdx(atomIdx1);
   b->setEndAtomIdx(atomIdx2);
 
-  // if both atoms have a degree>1, reset our ring info structure,
-  // because there's a non-trivial chance that it's now wrong.
-  if (dp_ringInfo && dp_ringInfo->isInitialized() &&
-      boost::out_degree(atomIdx1, d_graph) > 1 &&
-      boost::out_degree(atomIdx2, d_graph) > 1) {
-    dp_ringInfo->reset();
+  // the valence values on the begin and end atoms need to be updated:
+  beginAtom->clearPropertyCache();
+  endAtom->clearPropertyCache();
+
+  // we're in a batch edit, and at least one of the bond ends is scheduled
+  // for deletion, so mark the new bond for deletion too:
+  if (dp_delAtoms &&
+      ((atomIdx1 < dp_delAtoms->size() && dp_delAtoms->test(atomIdx1)) ||
+       (atomIdx2 < dp_delAtoms->size() && dp_delAtoms->test(atomIdx2)))) {
+    if (dp_delBonds->size() < numBonds) {
+      dp_delBonds->resize(numBonds);
+    }
+    dp_delBonds->set(numBonds - 1);
   }
 
-  return numBonds;  // res;
+  return numBonds;
 }
 
 unsigned int RWMol::addBond(Atom *atom1, Atom *atom2, Bond::BondType bondType) {
@@ -684,7 +691,9 @@ void RWMol::batchRemoveBonds() {
   auto &delBonds = *dp_delBonds;
   unsigned int min_idx = getNumBonds();
   for (unsigned int i = rdcast<unsigned int>(delBonds.size()); i > 0; --i) {
-    if (!delBonds[i - 1]) continue;
+    if (!delBonds[i - 1]) {
+      continue;
+    }
     unsigned int idx = rdcast<unsigned int>(i - 1);
     Bond *bnd = getBondWithIdx(idx);
     if (!bnd) {
@@ -769,10 +778,14 @@ void RWMol::batchRemoveAtoms() {
 
   auto &delAtoms = *dp_delAtoms;
   for (unsigned int i = rdcast<unsigned int>(delAtoms.size()); i > 0; --i) {
-    if (!delAtoms[i - 1]) continue;
+    if (!delAtoms[i - 1]) {
+      continue;
+    }
     unsigned int idx = i - 1;
     Atom *atom = getAtomWithIdx(idx);
-    if (!atom) continue;
+    if (!atom) {
+      continue;
+    }
 
     // remove any bookmarks which point to this atom:
     ATOM_BOOKMARK_MAP *marks = getAtomBookmarks();
@@ -800,10 +813,11 @@ void RWMol::batchRemoveAtoms() {
       Bond *bond = d_graph[*beg++];
       if (bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
                                  sprop)) {
-        // This would ideally use ParseV3000Array but I'm buggered if I can get
-        // the linker to find it.
+        // This would ideally use ParseV3000Array but I'm buggered if I can
+        // get the linker to find it.
         //      std::vector<unsigned int> oats =
-        //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(sprop);
+        //          RDKit::SGroupParsing::ParseV3000Array<unsigned
+        //          int>(sprop);
         if ('(' == sprop.front() && ')' == sprop.back()) {
           sprop = sprop.substr(1, sprop.length() - 2);
 

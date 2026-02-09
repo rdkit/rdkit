@@ -1,3 +1,6 @@
+//  Copyright (C) 2016-2026 Brian Kelley and other RDKit contributors
+//   @@ All Rights Reserved @@
+//
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
@@ -48,7 +51,7 @@ class RDProps {
     STR_VECT res, computed;
     if (!includeComputed &&
         getPropIfPresent(RDKit::detail::computedPropName, computed)) {
-      computed.push_back(RDKit::detail::computedPropName);
+      computed.emplace_back(RDKit::detail::computedPropName);
     }
 
     auto pos = tmp.begin();
@@ -57,7 +60,7 @@ class RDProps {
           std::find(computed.begin(), computed.end(), *pos) == computed.end()) {
         res.push_back(*pos);
       }
-      pos++;
+      ++pos;
     }
     return res;
   }
@@ -74,12 +77,15 @@ class RDProps {
 
   //! \overload
   template <typename T>
-  void setProp(const std::string &key, T val, bool computed = false) const {
+  void setProp(const std::string_view key, T val, bool computed = false) const {
+    if(key.empty()) {
+      throw ValueErrorException("Cannot set property with empty key");
+    }
     if (computed) {
       STR_VECT compLst;
       getPropIfPresent(RDKit::detail::computedPropName, compLst);
       if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
-        compLst.push_back(key);
+        compLst.emplace_back(key);
         d_props.setVal(RDKit::detail::computedPropName, compLst);
       }
     }
@@ -104,13 +110,13 @@ class RDProps {
   */
   //! \overload
   template <typename T>
-  void getProp(const std::string &key, T &res) const {
+  void getProp(const std::string_view key, T &res) const {
     d_props.getVal(key, res);
   }
 
   //! \overload
   template <typename T>
-  T getProp(const std::string &key) const {
+  T getProp(const std::string_view key) const {
     return d_props.getVal<T>(key);
   }
 
@@ -118,12 +124,12 @@ class RDProps {
   //!  and assigns the value if we do
   //! \overload
   template <typename T>
-  bool getPropIfPresent(const std::string &key, T &res) const {
+  bool getPropIfPresent(const std::string_view key, T &res) const {
     return d_props.getValIfPresent(key, res);
   }
 
   //! \overload
-  bool hasProp(const std::string &key) const { return d_props.hasVal(key); }
+  bool hasProp(const std::string_view key) const { return d_props.hasVal(key); }
 
   //! clears the value of a \c property
   /*!
@@ -133,7 +139,7 @@ class RDProps {
     from our list of \c computedProperties
   */
   //! \overload
-  void clearProp(const std::string &key) const {
+  void clearProp(const std::string_view key) const {
     STR_VECT compLst;
     if (getPropIfPresent(RDKit::detail::computedPropName, compLst)) {
       auto svi = std::find(compLst.begin(), compLst.end(), key);

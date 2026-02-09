@@ -70,7 +70,7 @@ class TestCase(unittest.TestCase):
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 14)
 
-    invgen = rdFingerprintGenerator.GetMorganAtomInvGen()
+    invgen = rdFingerprintGenerator.GetMorganAtomInvGen(True)
     g = rdFingerprintGenerator.GetMorganGenerator(radius=3, atomInvariantsGenerator=invgen)
     fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
@@ -390,6 +390,30 @@ class TestCase(unittest.TestCase):
     # this should not result in a seg fault
     import inspect
     inspect.getmembers(rdFingerprintGenerator.GetRDKitFPGenerator().GetOptions())
+
+  def testGetAtomsPerBit(self):
+    fpg = rdFingerprintGenerator.GetTopologicalTorsionGenerator()
+    ao = rdFingerprintGenerator.AdditionalOutput()
+    ao.AllocateAtomsPerBit()
+    m = Chem.MolFromSmiles('c1ccccn1')
+    fp = fpg.GetFingerprint(m,additionalOutput=ao)
+    apb = ao.GetAtomsPerBit()
+    self.assertEqual(fp.GetNumOnBits(),len(apb))
+    self.assertEqual(apb[140],((2, 1, 0, 5), (2, 3, 4, 5)))
+
+    ao = rdFingerprintGenerator.AdditionalOutput()
+    _ = fpg.GetFingerprint(m,additionalOutput=ao)
+    self.assertIsNone(ao.GetAtomsPerBit())
+
+  def testJSONSerialization(self):
+    m = Chem.MolFromSmiles('CCC')
+    g1 = rdFingerprintGenerator.GetAtomPairGenerator()
+    fp1 = g1.GetFingerprint(m)
+    jsonStr = g1.ToJSON()
+    g2 = rdFingerprintGenerator.FingerprintGeneratorFromJSON(jsonStr)
+    fp2 = g2.GetFingerprint(m)
+    self.assertEqual(fp1, fp2)
+
 
 
 if __name__ == '__main__':

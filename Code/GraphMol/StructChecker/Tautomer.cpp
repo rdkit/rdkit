@@ -17,17 +17,19 @@ namespace StructureCheck {
 
 bool StructCheckTautomer::applyTautomer(unsigned it) {
   if (Options.FromTautomer.size() <= it || Options.ToTautomer.size() <= it) {
-    if (Options.Verbose)
+    if (Options.Verbose) {
       BOOST_LOG(rdInfoLog) << "ERROR: incorrect Tautomer index it=" << it
                            << "\n";
+    }
     return false;
   }
   const ROMol &fromTautomer = *Options.FromTautomer[it];
   const ROMol &toTautomer = *Options.ToTautomer[it];
   if (toTautomer.getNumAtoms() != fromTautomer.getNumAtoms()) {
-    if (Options.Verbose)
+    if (Options.Verbose) {
       BOOST_LOG(rdInfoLog) << "ERROR: incorrect data toTautomer.getNumAtoms() "
                               "!= fromTautomer.getNumAtoms()\n";
+    }
     // incorrect data
     // throw(.....);
     return false;
@@ -36,11 +38,13 @@ bool StructCheckTautomer::applyTautomer(unsigned it) {
   MatchVectType match;  // The format is (queryAtomIdx, molAtomIdx)
 
   if (!SubstructMatch(Mol, *Options.FromTautomer[it],
-                      match))  // SSMatch(mp, from_tautomer, SINGLE_MATCH);
+                      match)) {  // SSMatch(mp, from_tautomer, SINGLE_MATCH);
     return false;
-  if (Options.Verbose)
+  }
+  if (Options.Verbose) {
     BOOST_LOG(rdInfoLog) << "found match for from_tautomer with " << nta
                          << " atoms\n";
+  }
   // init
   size_t invalid_idx = 1 + Mol.getNumAtoms();
   std::vector<unsigned> atomIdxMap(Mol.getNumAtoms(),

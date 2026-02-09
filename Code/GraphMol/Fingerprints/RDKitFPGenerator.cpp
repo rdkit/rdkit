@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -33,6 +33,11 @@
 
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 namespace RDKit {
 namespace RDKitFP {
 
@@ -53,6 +58,13 @@ std::string RDKitFPAtomInvGenerator::infoString() const {
   return "RDKitFPAtomInvGenerator";
 }
 
+void RDKitFPAtomInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "RDKitFPAtomInvGenerator");
+}
+void RDKitFPAtomInvGenerator::fromJSON(const boost::property_tree::ptree &) {
+  // no parameters to set
+}
+
 RDKitFPAtomInvGenerator *RDKitFPAtomInvGenerator::clone() const {
   return new RDKitFPAtomInvGenerator();
 }
@@ -68,6 +80,24 @@ std::string RDKitFPArguments::infoString() const {
          " useHs=" + std::to_string(df_useHs) +
          " branchedPaths=" + std::to_string(df_branchedPaths) +
          " useBondOrder=" + std::to_string(df_useBondOrder);
+}
+
+void RDKitFPArguments::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "RDKitFPArguments");
+  pt.put("minPath", d_minPath);
+  pt.put("maxPath", d_maxPath);
+  pt.put("useHs", df_useHs);
+  pt.put("branchedPaths", df_branchedPaths);
+  pt.put("useBondOrder", df_useBondOrder);
+  FingerprintArguments::toJSON(pt);
+}
+void RDKitFPArguments::fromJSON(const boost::property_tree::ptree &pt) {
+  d_minPath = pt.get<unsigned int>("minPath", d_minPath);
+  d_maxPath = pt.get<unsigned int>("maxPath", d_maxPath);
+  df_useHs = pt.get<bool>("useHs", df_useHs);
+  df_branchedPaths = pt.get<bool>("branchedPaths", df_branchedPaths);
+  df_useBondOrder = pt.get<bool>("useBondOrder", df_useBondOrder);
+  FingerprintArguments::fromJSON(pt);
 }
 
 RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
@@ -94,9 +124,16 @@ void RDKitFPAtomEnv<OutputType>::updateAdditionalOutput(
   if (additionalOutput->bitPaths) {
     (*additionalOutput->bitPaths)[bitId].push_back(d_bondPath);
   }
-  if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
+  if (additionalOutput->atomToBits || additionalOutput->atomCounts ||
+      additionalOutput->atomsPerBit) {
+    if (additionalOutput->atomsPerBit) {
+      (*additionalOutput->atomsPerBit)[bitId].emplace_back();
+    }
     for (size_t i = 0; i < d_atomsInPath.size(); ++i) {
       if (d_atomsInPath[i]) {
+        if (additionalOutput->atomsPerBit) {
+          (*additionalOutput->atomsPerBit)[bitId].back().push_back(i);
+        }
         if (additionalOutput->atomToBits) {
           auto &alist = additionalOutput->atomToBits->at(i);
           if (std::find(alist.begin(), alist.end(), bitId) == alist.end()) {
@@ -127,6 +164,18 @@ template <typename OutputType>
 std::string RDKitFPEnvGenerator<OutputType>::infoString() const {
   return "RDKitFPEnvGenerator";
 }
+
+template <typename OutputType>
+void RDKitFPEnvGenerator<OutputType>::toJSON(
+    boost::property_tree::ptree &pt) const {
+  pt.put("type", "RDKitFPEnvGenerator");
+  AtomEnvironmentGenerator<OutputType>::toJSON(pt);
+}
+template <typename OutputType>
+void RDKitFPEnvGenerator<OutputType>::fromJSON(
+    const boost::property_tree::ptree &pt) {
+  AtomEnvironmentGenerator<OutputType>::fromJSON(pt);
+};
 
 template <typename OutputType>
 std::vector<AtomEnvironment<OutputType> *>

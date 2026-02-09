@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,7 +9,6 @@
 //
 
 #include <RDBoost/Wrap.h>
-#include <iostream>
 #include <string>
 #include <boost/python.hpp>
 #include <RDBoost/boost_numpy.h>
@@ -36,6 +35,11 @@ namespace np = boost::python::numpy;
 namespace RDKit {
 namespace FingerprintWrapper {
 
+FingerprintGenerator<std::uint64_t> *generatorFromJSONHelper(
+    const std::string &jsonStr) {
+  return generatorFromJSON(jsonStr).release();
+}
+
 void convertPyArguments(
     python::object py_fromAtoms, python::object py_ignoreAtoms,
     python::object py_atomInvs, python::object py_bondInvs,
@@ -44,8 +48,7 @@ void convertPyArguments(
     std::unique_ptr<std::vector<std::uint32_t>> &customAtomInvariants,
     std::unique_ptr<std::vector<std::uint32_t>> &customBondInvariants) {
   if (!py_fromAtoms.is_none()) {
-    unsigned int len =
-        python::extract<unsigned int>(py_fromAtoms.attr("__len__")());
+    unsigned int len = python::len(py_fromAtoms);
     if (len) {
       fromAtoms.reset(new std::vector<std::uint32_t>());
       fromAtoms->reserve(len);
@@ -56,8 +59,7 @@ void convertPyArguments(
   }
 
   if (!py_ignoreAtoms.is_none()) {
-    unsigned int len =
-        python::extract<unsigned int>(py_ignoreAtoms.attr("__len__")());
+    unsigned int len = python::len(py_ignoreAtoms);
     if (len) {
       ignoreAtoms.reset(new std::vector<std::uint32_t>());
       ignoreAtoms->reserve(len);
@@ -69,8 +71,7 @@ void convertPyArguments(
   }
 
   if (!py_atomInvs.is_none()) {
-    unsigned int len =
-        python::extract<unsigned int>(py_atomInvs.attr("__len__")());
+    unsigned int len = python::len(py_atomInvs);
     if (len) {
       customAtomInvariants.reset(new std::vector<std::uint32_t>());
       customAtomInvariants->reserve(len);
@@ -82,8 +83,7 @@ void convertPyArguments(
   }
 
   if (!py_bondInvs.is_none()) {
-    unsigned int len =
-        python::extract<unsigned int>(py_bondInvs.attr("__len__")());
+    unsigned int len = python::len(py_bondInvs);
     if (len) {
       customBondInvariants.reset(new std::vector<std::uint32_t>());
       customBondInvariants->reserve(len);
@@ -206,7 +206,7 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
 template <typename ReturnType, typename FuncType>
 python::tuple mtgetFingerprints(FuncType func, python::object mols,
                                 int numThreads) {
-  unsigned int nmols = python::extract<unsigned int>(mols.attr("__len__")());
+  unsigned int nmols = python::len(mols);
   std::vector<const ROMol *> tmols;
   for (auto i = 0u; i < nmols; ++i) {
     tmols.push_back(python::extract<const ROMol *>(mols[i])());
@@ -333,10 +333,9 @@ const std::vector<const ROMol *> convertPyArgumentsForBulk(
     const python::list &py_molVect) {
   std::vector<const ROMol *> molVect;
   if (!py_molVect.is_none()) {
-    unsigned int len =
-        python::extract<unsigned int>(py_molVect.attr("__len__")());
+    unsigned int len = python::len(py_molVect);
     if (len) {
-      for (unsigned int i = 0; i < len; i++) {
+      for (unsigned int i = 0; i < len; ++i) {
         molVect.push_back(python::extract<const ROMol *>(py_molVect[i]));
       }
     }
@@ -345,8 +344,7 @@ const std::vector<const ROMol *> convertPyArgumentsForBulk(
 }
 
 python::list getSparseCountFPBulkPy(python::list &py_molVect, FPType fPType) {
-  const std::vector<const ROMol *> molVect =
-      convertPyArgumentsForBulk(py_molVect);
+  const auto molVect = convertPyArgumentsForBulk(py_molVect);
   auto tempResult = getSparseCountFPBulk(molVect, fPType);
   python::list result;
 
@@ -450,6 +448,24 @@ python::object getBitInfoMapHelper(const AdditionalOutput &ao) {
     for (const auto &v : pr.second) {
       python::tuple inner = python::make_tuple(v.first, v.second);
       local.append(inner);
+    }
+    res[pr.first] = python::tuple(local);
+  }
+  return res;
+}
+python::object getAtomsPerBitHelper(const AdditionalOutput &ao) {
+  if (!ao.atomsPerBit) {
+    return python::object();
+  }
+  python::dict res;
+  for (const auto &pr : *ao.atomsPerBit) {
+    python::list local;
+    for (const auto &lst : pr.second) {
+      python::list inner;
+      for (const auto v : lst) {
+        inner.append(v);
+      }
+      local.append(python::tuple(inner));
     }
     res[pr.first] = python::tuple(local);
   }
@@ -648,7 +664,9 @@ void wrapGenerator(const std::string &nm) {
       .def("GetOptions", getOptions<T>,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1>>(),
-           python::args("self"), "return the fingerprint options object");
+           python::args("self"), "return the fingerprint options object")
+      .def("ToJSON", &generatorToJSON<T>, (python::arg("self")),
+           "Serialize a FingerprintGenerator to JSON");
 }
 
 void setCountBoundsHelper(FingerprintArguments &opts, python::object bounds) {
@@ -673,6 +691,8 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            python::args("self"), "synonym for CollectBitPaths()")
       .def("AllocateAtomCounts", &AdditionalOutput::allocateAtomCounts,
            python::args("self"), "synonym for CollectAtomCounts()")
+      .def("AllocateAtomsPerBit", &AdditionalOutput::allocateAtomsPerBit,
+           python::args("self"), "synonym for CollectAtomsPerBit()")
       .def(
           "CollectAtomToBits", &AdditionalOutput::allocateAtomToBits,
           python::args("self"),
@@ -689,10 +709,15 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
           "CollectAtomCounts", &AdditionalOutput::allocateAtomCounts,
           python::args("self"),
           "toggles collection of information about the number of bits each atom is involved in")
+      .def(
+          "CollectAtomsPerBit", &AdditionalOutput::allocateAtomsPerBit,
+          python::args("self"),
+          "toggles collection of information about all atoms involved in setting each bit")
       .def("GetAtomToBits", &getAtomToBitsHelper, python::args("self"))
       .def("GetBitInfoMap", &getBitInfoMapHelper, python::args("self"))
       .def("GetBitPaths", &getBitPathsHelper, python::args("self"))
-      .def("GetAtomCounts", &getAtomCountsHelper, python::args("self"));
+      .def("GetAtomCounts", &getAtomCountsHelper, python::args("self"))
+      .def("GetAtomsPerBit", &getAtomsPerBitHelper, python::args("self"));
 
   python::class_<FingerprintArguments, boost::noncopyable>("FingerprintOptions",
                                                            python::no_init)
@@ -740,6 +765,11 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
               (python::arg("molecules") = python::list(),
                python::arg("fpType") = FPType::MorganFP),
               "");
+
+  python::def("FingerprintGeneratorFromJSON", &generatorFromJSONHelper,
+              (python::arg("jsonString")),
+              "Deserialize a FingerprintGenerator from a JSON string",
+              python::return_value_policy<python::manage_new_object>());
 
   AtomPairWrapper::exportAtompair();
   MorganWrapper::exportMorgan();

@@ -18,7 +18,6 @@
 #ifndef RD_StereoGroup_092018
 #define RD_StereoGroup_092018
 
-#include <iostream>
 #include <vector>
 
 namespace RDKit {

@@ -37,6 +37,7 @@ if(needDownload)
 endif()
 
 # simple patch for a typo in the pubchem_align library
+# This should no longer be necessary, as it has been fixed upstream.  Maybe take it out?
 file(READ ${PUBCHEMSHAPE_DIR}/shape_neighbor.cpp FILE_CONTENTS)
 string(REPLACE "memcpy( qom, old_quattrans, 7 * sizeof( float ) );" "memcpy( qom, old_quattrans, 7 * sizeof( double ) );" FILE_CONTENTS "${FILE_CONTENTS}")
 file(WRITE ${PUBCHEMSHAPE_DIR}/shape_neighbor.cpp "${FILE_CONTENTS}")
@@ -48,7 +49,7 @@ if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
 endif()
 
 rdkit_library(PubChemShape PubChemShape.cpp SHARED
- LINK_LIBRARIES pubchem_align3d SmilesParse SubstructMatch)
+ LINK_LIBRARIES pubchem_align3d SmilesParse SubstructMatch MolTransforms)
 target_compile_definitions(PubChemShape PRIVATE RDKIT_PUBCHEMSHAPE_BUILD)
 
 rdkit_headers(PubChemShape.hpp DEST GraphMol)

@@ -8,6 +8,7 @@ from io import BytesIO
 from rdkit import Chem, RDConfig, rdBase
 from rdkit.Chem.rdmolops import _TestSetProps
 
+
 class TestCase(unittest.TestCase):
 
   def setUp(self):
@@ -39,6 +40,10 @@ one n/a three
 
 >  <atom.iprop.PartiallyMissingInt>  (1) 
 [?] 2 2 ?
+
+>  <bond.iprop.Number>  (1) 
+3 2 1
+
 $$$$"""
 
   def testForwardSupplier(self):
@@ -48,6 +53,8 @@ $$$$"""
     m = next(suppl)
     self.assertTrue(m.HasProp("atom.prop.AtomLabel"))
     self.assertFalse(m.GetAtomWithIdx(0).HasProp("AtomLabel"))
+    self.assertTrue(m.HasProp("bond.iprop.Number"))
+    self.assertFalse(m.GetBondWithIdx(0).HasProp("Number"))
 
     sio = BytesIO(self.sdf)
     suppl = Chem.ForwardSDMolSupplier(sio)
@@ -55,6 +62,11 @@ $$$$"""
     m = next(suppl)
     self.assertTrue(m.HasProp("atom.prop.AtomLabel"))
     self.assertTrue(m.GetAtomWithIdx(0).HasProp("AtomLabel"))
+
+    self.assertTrue(m.HasProp("bond.iprop.Number"))
+    self.assertTrue(m.GetBondWithIdx(0).HasProp("Number"))
+    self.assertTrue('Number' in m.GetBondWithIdx(0).GetPropsAsDict())
+    self.assertEqual(m.GetBondWithIdx(0).GetIntProp("Number"), 3)
 
   def testSupplier(self):
     suppl = Chem.SDMolSupplier()
@@ -118,23 +130,33 @@ $$$$"""
     for i in range(m.GetNumAtoms()):
       conf.SetAtomPosition(i, (0., 0., 0.))
     m.AddConformer(conf)
-    
+
     _TestSetProps(m)
-    default_expected = {'bool': True, 'uint': 4294967295, 'double': 3.14159, 'svint': [0, 1, 2, -2], 'svuint': [0, 1, 2, 4294967294], 'svdouble': [0.0, 1.0, 2.0], 'svstring': ['The', 'RDKit']}
+    default_expected = {
+      'bool': True,
+      'uint': 4294967295,
+      'double': 3.14159,
+      'svint': [0, 1, 2, -2],
+      'svuint': [0, 1, 2, 4294967294],
+      'svdouble': [0.0, 1.0, 2.0],
+      'svstring': ['The', 'RDKit']
+    }
 
     def check(ob, prefix):
-      expected = {prefix + k:v for k,v in default_expected.items()}      
+      expected = {prefix + k: v for k, v in default_expected.items()}
       d = ob.GetPropsAsDict(False, False)
-      for k,v in d.items():
-        if 'sv' in k: d[k] = list(v)
+      for k, v in d.items():
+        if 'sv' in k:
+          d[k] = list(v)
       assert d == expected, repr((d, expected))
-      for k,v in expected.items():
+      for k, v in expected.items():
         v2 = ob.GetProp(k, True)
-        if 'sv' in k: v2 = list(v2)
+        if 'sv' in k:
+          v2 = list(v2)
         assert v2 == v, repr(k, v2, v)
         assert type(ob.GetProp(k)) == str
       return len(d) > 0
-    
+
     assert check(m, "mol_")
     for atom in m.GetAtoms():
       check(atom, f"atom_{atom.GetIdx()}")
@@ -144,6 +166,7 @@ $$$$"""
 
     for idx, conf in enumerate(m.GetConformers()):
       check(conf, f"conf_{idx}")
+
 
 if __name__ == '__main__':
   unittest.main()

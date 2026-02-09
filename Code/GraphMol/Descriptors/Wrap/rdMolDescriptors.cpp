@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2007-2017 Greg Landrum
+//  Copyright (C) 2007-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -69,9 +69,9 @@ python::list computeCrippenContribs(
     python::list atomTypeLabels = python::list()) {
   std::vector<unsigned int> *tAtomTypes = nullptr;
   std::vector<std::string> *tAtomTypeLabels = nullptr;
-  if (python::extract<unsigned int>(atomTypes.attr("__len__")()) != 0) {
-    if (python::extract<unsigned int>(atomTypes.attr("__len__")()) !=
-        mol.getNumAtoms()) {
+  unsigned int numAtomTypes = python::len(atomTypes);
+  if (numAtomTypes != 0) {
+    if (numAtomTypes != mol.getNumAtoms()) {
       throw_value_error(
           "if atomTypes vector is provided, it must be as long as the number "
           "of atoms");
@@ -79,9 +79,9 @@ python::list computeCrippenContribs(
       tAtomTypes = new std::vector<unsigned int>(mol.getNumAtoms(), 0);
     }
   }
-  if (python::extract<unsigned int>(atomTypeLabels.attr("__len__")()) != 0) {
-    if (python::extract<unsigned int>(atomTypeLabels.attr("__len__")()) !=
-        mol.getNumAtoms()) {
+  unsigned int numAtomTypeLabels = python::len(atomTypeLabels);
+  if (numAtomTypeLabels != 0) {
+    if (numAtomTypeLabels != mol.getNumAtoms()) {
       throw_value_error(
           "if atomTypeLabels vector is provided, it must be as long as the "
           "number of atoms");
@@ -337,8 +337,7 @@ double kappaHelper(double (*fn)(const RDKit::ROMol &, std::vector<double> *),
     // make sure the optional argument actually was a list
     python::list typecheck = python::extract<python::list>(atomContribs);
 
-    if (python::extract<unsigned int>(typecheck.attr("__len__")()) !=
-        mol.getNumAtoms()) {
+    if (python::len(typecheck) != mol.getNumAtoms()) {
       throw_value_error("length of atomContribs list != number of atoms");
     }
 
@@ -368,8 +367,7 @@ MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
   RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
-    unsigned int nInvar =
-        python::extract<unsigned int>(invariants.attr("__len__")());
+    unsigned int nInvar = python::len(invariants);
     if (nInvar) {
       if (nInvar != mol.getNumAtoms()) {
         throw_value_error("length of invariant vector != number of atoms");
@@ -385,8 +383,7 @@ MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
   }
   std::vector<std::uint32_t> *froms = nullptr;
   if (fromAtoms) {
-    unsigned int nFrom =
-        python::extract<unsigned int>(fromAtoms.attr("__len__")());
+    unsigned int nFrom = python::len(fromAtoms);
     if (nFrom) {
       froms = new std::vector<std::uint32_t>();
       for (unsigned int i = 0; i < nFrom; ++i) {
@@ -511,8 +508,7 @@ GetMorganFingerprintBV(const RDKit::ROMol &mol, unsigned int radius,
   RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
-    unsigned int nInvar =
-        python::extract<unsigned int>(invariants.attr("__len__")());
+    unsigned int nInvar = python::len(invariants);
     if (nInvar) {
       if (nInvar != mol.getNumAtoms()) {
         throw_value_error("length of invariant vector != number of atoms");
@@ -607,8 +603,7 @@ python::list GetUSR(const RDKit::ROMol &mol, int confId) {
 }
 
 python::list GetUSRDistributions(python::object coords, python::object points) {
-  unsigned int numCoords =
-      python::extract<unsigned int>(coords.attr("__len__")());
+  unsigned int numCoords = python::len(coords);
   if (numCoords == 0) {
     throw_value_error("no coordinates");
   }
@@ -645,9 +640,8 @@ python::list GetUSRDistributions(python::object coords, python::object points) {
 
 python::list GetUSRDistributionsFromPoints(python::object coords,
                                            python::object points) {
-  unsigned int numCoords =
-      python::extract<unsigned int>(coords.attr("__len__")());
-  unsigned int numPts = python::extract<unsigned int>(points.attr("__len__")());
+  unsigned int numCoords = python::len(coords);
+  unsigned int numPts = python::len(points);
   if (numCoords == 0) {
     throw_value_error("no coordinates");
   }
@@ -677,15 +671,13 @@ python::list GetUSRDistributionsFromPoints(python::object coords,
 }
 
 python::list GetUSRFromDistributions(python::object distances) {
-  unsigned int numDist =
-      python::extract<unsigned int>(distances.attr("__len__")());
+  unsigned int numDist = python::len(distances);
   if (numDist == 0) {
     throw_value_error("no distances");
   }
   std::vector<std::vector<double>> dist(numDist);
   for (unsigned int i = 0; i < numDist; ++i) {
-    unsigned int numPts =
-        python::extract<unsigned int>(distances[i].attr("__len__")());
+    unsigned int numPts = python::len(distances[i]);
     if (numPts == 0) {
       throw_value_error("distances missing");
     }
@@ -706,15 +698,12 @@ python::list GetUSRFromDistributions(python::object distances) {
 
 double GetUSRScore(python::object descriptor1, python::object descriptor2,
                    python::object weights) {
-  unsigned int numElements =
-      python::extract<unsigned int>(descriptor1.attr("__len__")());
-  if (numElements !=
-      python::extract<unsigned int>(descriptor2.attr("__len__")())) {
+  unsigned int numElements = python::len(descriptor1);
+  if (numElements != python::len(descriptor2)) {
     throw_value_error("descriptors must have the same length");
   }
   unsigned int numWeights = numElements / 12;
-  unsigned int numPyWeights =
-      python::extract<unsigned int>(weights.attr("__len__")());
+  unsigned int numPyWeights = python::len(weights);
   std::vector<double> w(numWeights, 1.0);  // default weights: all to 1.0
   if ((numPyWeights > 0) && (numPyWeights != numWeights)) {
     throw_value_error("number of weights is not correct");
@@ -748,15 +737,13 @@ python::list GetUSRCAT(const RDKit::ROMol &mol, python::object atomSelections,
   if (atomSelections != python::object()) {
     // make sure the optional argument actually was a list
     python::list typecheck = python::extract<python::list>(atomSelections);
-    unsigned int numSel =
-        python::extract<unsigned int>(atomSelections.attr("__len__")());
+    unsigned int numSel = python::len(atomSelections);
     if (numSel == 0) {
       throw_value_error("empty atom selections");
     }
     atomIds.resize(numSel);
     for (unsigned int i = 0; i < numSel; ++i) {
-      unsigned int numPts =
-          python::extract<unsigned int>(atomSelections[i].attr("__len__")());
+      unsigned int numPts = python::len(atomSelections[i]);
       std::vector<unsigned int> tmpIds(numPts);
       for (unsigned int j = 0; j < numPts; ++j) {
         tmpIds[j] = python::extract<unsigned int>(atomSelections[i][j]) - 1;
@@ -778,7 +765,7 @@ python::list CalcSlogPVSA(const RDKit::ROMol &mol, python::object bins,
                           bool force) {
   std::vector<double> *lbins = nullptr;
   if (bins) {
-    unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
+    unsigned int nBins = python::len(bins);
     if (nBins) {
       lbins = new std::vector<double>(nBins, 0.0);
       for (unsigned int i = 0; i < nBins; ++i) {
@@ -799,7 +786,7 @@ python::list CalcSMRVSA(const RDKit::ROMol &mol, python::object bins,
                         bool force) {
   std::vector<double> *lbins = nullptr;
   if (bins) {
-    unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
+    unsigned int nBins = python::len(bins);
     if (nBins) {
       lbins = new std::vector<double>(nBins, 0.0);
       for (unsigned int i = 0; i < nBins; ++i) {
@@ -820,7 +807,7 @@ python::list CalcPEOEVSA(const RDKit::ROMol &mol, python::object bins,
                          bool force) {
   std::vector<double> *lbins = nullptr;
   if (bins) {
-    unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
+    unsigned int nBins = python::len(bins);
     if (nBins) {
       lbins = new std::vector<double>(nBins, 0.0);
       for (unsigned int i = 0; i < nBins; ++i) {
@@ -840,7 +827,7 @@ python::list CalcPEOEVSA(const RDKit::ROMol &mol, python::object bins,
 python::list CalcCustomPropVSA(const RDKit::ROMol &mol,
                                const std::string customPropName,
                                python::object bins, bool force) {
-  unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
+  unsigned int nBins = python::len(bins);
   std::vector<double> lbins = std::vector<double>(nBins, 0.0);
   for (unsigned int i = 0; i < nBins; ++i) {
     lbins[i] = python::extract<double>(bins[i]);
@@ -918,6 +905,60 @@ int registerPropertyHelper(python::object o) {
   return RDKit::Descriptors::Properties::registerProperty(ptr());
 }
 
+boost::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>
+getDoubleCubicLatticeVolume(const RDKit::ROMol &mol, const python::list &radii,
+                            bool isProtein = false, bool includeLigand = true,
+                            double probeRadius = 1.4, int confId = -1) {
+  std::vector<double> radiiAsVector;
+  radiiAsVector.reserve(mol.getNumAtoms());
+  pythonObjectToVect<double>(radii, radiiAsVector);
+
+  return boost::make_shared<RDKit::Descriptors::DoubleCubicLatticeVolume>(
+      mol, std::move(radiiAsVector), isProtein, includeLigand, probeRadius,
+      confId);
+}
+
+double getPartialSurfaceAreaHelper(
+    RDKit::Descriptors::DoubleCubicLatticeVolume &self,
+    const python::object &atomIdxs) {
+  unsigned int numAtoms = self.mol.getNumAtoms();
+  auto atoms = pythonObjectToDynBitset(atomIdxs, numAtoms);
+
+  if (atoms.empty()) {
+    throw_value_error("No atom indices supplied for Partial Surface Area");
+  }
+
+  return self.getPartialSurfaceArea(atoms);
+}
+
+double getPartialVolumeHelper(
+    RDKit::Descriptors::DoubleCubicLatticeVolume &self,
+    const python::object &atomIdxs) {
+  unsigned int numAtoms = self.mol.getNumAtoms();
+  auto atoms = pythonObjectToDynBitset(atomIdxs, numAtoms);
+  if (atoms.empty()) {
+    throw_value_error("No atom indices supplied for Partial Surface Area");
+  }
+
+  return self.getPartialVolume(atoms);
+}
+
+python::dict getSurfacePointsHelper(
+    RDKit::Descriptors::DoubleCubicLatticeVolume &self) {
+  const std::map<unsigned int, std::vector<RDGeom::Point3D>> &points =
+      self.getSurfacePoints();
+  python::dict surfacePoints;
+
+  for (const auto &it : points) {
+    python::list points3D;
+    for (const auto &p : it.second) {
+      points3D.append(p);
+    }
+    surfacePoints[it.first] = points3D;
+  }
+  return surfacePoints;
+}
+
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -936,7 +977,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .setattr("atomTypes", atomPairTypes)
       .setattr("numPathBits", RDKit::AtomPairs::numPathBits)
       .setattr("numAtomPairFingerprintBits",
-               RDKit::AtomPairs::numAtomPairFingerprintBits);
+               RDKit::AtomPairs::numAtomPairFingerprintBits)
+      .def("__setattr__", &safeSetattr);
   docString = "Returns the atom code (hash) for an atom";
   python::def("GetAtomPairAtomCode", RDKit::AtomPairs::getAtomCode,
               (python::arg("atom"), python::arg("branchSubtract") = 0,
@@ -1660,31 +1702,68 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString =
       R"DOC(ARGUMENTS:
       "   - mol: molecule or protein under consideration
+      "   - radii: radii for atoms of input mol (get using GetPeriodicTable or provide custom list)
       "   - isProtein: flag to indicate if the input is a protein (default=False, free ligand).
       "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=True)
       "   - probeRadius: radius of the solvent probe (default=1.2)
-      "   - depth: control of number of dots per atom (default=4)
-      "   - dotDensity: control of accuracy (default=0)
+      "   - confId: conformer ID to consider (default=-1)
       ")DOC";
-  python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume>(
+
+  python::class_<
+      RDKit::Descriptors::DoubleCubicLatticeVolume,
+      boost::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>>(
       "DoubleCubicLatticeVolume",
       "Class for the Double Cubic Lattice Volume method",
-      python::init<const RDKit::ROMol &,
-                   python::optional<bool, bool, double, int, int>>(
-          (python::args("self", "mol"), python::args("isProtein") = false,
-           python::args("includeLigand") = true,
-           python::args("probeRadius") = 1.2, python::args("depth") = 4,
-           python::args("dotDensity") = 0),
-          docString.c_str()))
+      python::init<const RDKit::ROMol &, bool, bool, double, int>(
+          (python::arg("mol"), python::arg("isProtein") = false,
+           python::arg("includeLigand") = true,
+           python::arg("probeRadius") = 1.4, python::arg("confId") = -1)))
+      .def("__init__",
+           python::make_constructor(
+               &getDoubleCubicLatticeVolume, python::default_call_policies(),
+               (python::arg("mol"), python::arg("radii"),
+                python::arg("isProtein") = false,
+                python::arg("includeLigand") = true,
+                python::arg("probeRadius") = 1.4, python::arg("confId") = -1)),
+           docString.c_str())
       .def("GetSurfaceArea",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
+           (python::args("self")),
            "Get the Surface Area of the Molecule or Protein")
+      .def("GetAtomSurfaceArea",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomSurfaceArea,
+           (python::arg("atom_idx")),
+           "Get the surface area of atom with atom_idx")
+      .def("GetPolarSurfaceArea",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getPolarSurfaceArea,
+           (python::arg("includeSandP") = false,
+            python::arg("includeHs") = false),
+           "Get the Polar Surface Area of the Molecule or Protein")
+      .def(
+          "GetPartialSurfaceArea", &getPartialSurfaceAreaHelper,
+          (python::arg("atomIndices")),
+          "Get the Partial Surface Area of the Molecule or Protein for specified subset of atoms")
+      .def("GetSurfacePoints", &getSurfacePointsHelper,
+           "Get the set of points representing the surface")
       .def("GetVolume",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getVolume,
            "Get the Total Volume of the Molecule or Protein")
       .def("GetVDWVolume",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getVDWVolume,
            "Get the van der Waals Volume of the Molecule or Protein")
+      .def(
+          "GetAtomVolume",
+          &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomVolume,
+          (python::arg("atomIdx"), python::arg("solventRadius")),
+          "Get the volume atom of atom_idx with volume for specified Probe Radius")
+      .def("GetPolarVolume",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getPolarVolume,
+           (python::arg("includeSandP") = false,
+            python::arg("includeHs") = false),
+           "Get the Polar Volume of the Molecule or Protein")
+      .def(
+          "GetPartialVolume", &getPartialVolumeHelper, python::arg("atomIdx"),
+          "Get the Partial Volume of the Molecule or Protein for specified subset of atoms")
       .def("GetCompactness",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getCompactness,
            "Get the Compactness of the Protein")

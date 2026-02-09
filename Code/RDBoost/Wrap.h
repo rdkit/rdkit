@@ -28,9 +28,9 @@
 #include "list_indexing_suite.hpp"
 #include <RDGeneral/BoostEndInclude.h>
 
-#include <vector>
 #include <list>
-#include <iostream>
+#include <string_view>
+#include <vector>
 #include <RDGeneral/Exceptions.h>
 
 namespace python = boost::python;
@@ -58,7 +58,9 @@ RDKIT_RDBOOST_EXPORT void translate_key_error(KeyErrorException const &e);
   \throws AttributeError if the attribute does not exist
   \throws Python error if assignment fails
 */
-RDKIT_RDBOOST_EXPORT void safeSetattr(python::object self, std::string const &name, python::object const &value);
+RDKIT_RDBOOST_EXPORT void safeSetattr(python::object self,
+                                      std::string const &name,
+                                      python::object const &value);
 
 #ifdef INVARIANT_EXCEPTION_METHOD
 RDKIT_RDBOOST_EXPORT void throw_runtime_error(
@@ -317,47 +319,6 @@ struct iterable_converter {
     // the python object to the container's constructor.
     new (storage) Container(iterator(python::object(handle)),  // begin
                             iterator());                       // end
-    data->convertible = storage;
-  }
-};
-
-/// Simple Boost.Python custom converter from pathlib.Path to std::string
-template <typename T = std::string>
-struct path_converter {
-  path_converter() {
-    python::converter::registry::push_back(&path_converter::convertible,
-                                           &path_converter::construct,
-                                           boost::python::type_id<T>());
-  }
-
-  /// Check PyObject is a pathlib.Path
-  static void *convertible(PyObject *object) {
-    // paranoia
-    if (object == nullptr) {
-      return nullptr;
-    }
-    python::object boost_object(python::handle<>(python::borrowed(object)));
-
-    std::string object_classname = boost::python::extract<std::string>(
-        boost_object.attr("__class__").attr("__name__"));
-    // pathlib.Path is always specialized to the below derived classes
-    if (object_classname == "WindowsPath" || object_classname == "PosixPath") {
-      return object;
-    }
-
-    return nullptr;
-  }
-
-  /// Construct a std::string from pathlib.Path using its own __str__ attribute
-  static void construct(
-      PyObject *object,
-      boost::python::converter::rvalue_from_python_stage1_data *data) {
-    void *storage =
-        ((boost::python::converter::rvalue_from_python_storage<T> *)data)
-            ->storage.bytes;
-    python::object boost_object{python::handle<>{python::borrowed(object)}};
-    new (storage)
-        T{boost::python::extract<std::string>{boost_object.attr("__str__")()}};
     data->convertible = storage;
   }
 };

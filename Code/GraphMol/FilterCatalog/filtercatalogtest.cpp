@@ -35,7 +35,6 @@
 #include <GraphMol/FilterCatalog/FilterCatalog.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <fstream>
-#include <iostream>
 #include <map>
 #include <algorithm>
 
@@ -313,7 +312,9 @@ void testFilterCatalogCHEMBL() {
       std::unique_ptr<RWMol> mol(SmilesToMol(test.first));
       std::string matches;
       for (auto &match : catalog.getMatches(*mol)) {
-        if (matches.size()) matches += "|";
+        if (matches.size()) {
+          matches += "|";
+        }
         matches += match->getDescription();
       }
 
@@ -334,7 +335,9 @@ void testFilterCatalogCHEMBL() {
       std::unique_ptr<RWMol> mol(SmilesToMol(test.first));
       std::string matches;
       for (auto &match : catalog.getMatches(*mol)) {
-        if (matches.size()) matches += "|";
+        if (matches.size()) {
+          matches += "|";
+        }
         matches += match->getDescription();
       }
       TEST_ASSERT(matches == test.second);

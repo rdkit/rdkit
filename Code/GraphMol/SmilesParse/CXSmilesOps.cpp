@@ -18,26 +18,28 @@
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
 
-#include <iostream>
-#include <algorithm>
 #include "SmilesWrite.h"
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/MolEnumerator/LinkNode.h>
 #include <GraphMol/Chirality.h>
+
+#include <algorithm>
+#include <array>
 #include <map>
+#include <string_view>
 
 namespace SmilesParseOps {
 using namespace RDKit;
 
-const std::string cxsmilesindex = "_cxsmilesindex";
-const std::string cxsgTracker = "_sgTracker";
+constexpr std::string_view cxsmilesindex = "_cxsmilesindex";
+constexpr std::string_view cxsgTracker = "_sgTracker";
 
 // FIX: once this can be automated using constexpr, do so
-const std::vector<std::string_view> pseudoatoms{"Pol", "Mod"};
-const std::vector<std::string_view> pseudoatoms_p{"Pol_p", "Mod_p"};
+constexpr std::array<std::string_view, 2> pseudoatoms{"Pol", "Mod"};
+constexpr std::array<std::string_view, 2> pseudoatoms_p{"Pol_p", "Mod_p"};
 
-std::map<std::string, std::string> sgroupTypemap = {
+const std::map<std::string, std::string> sgroupTypemap = {
     {"n", "SRU"},   {"mon", "MON"}, {"mer", "MER"}, {"co", "COP"},
     {"xl", "CRO"},  {"mod", "MOD"}, {"mix", "MIX"}, {"f", "FOR"},
     {"any", "ANY"}, {"gen", "GEN"}, {"c", "COM"},   {"grf", "GRA"},
@@ -100,7 +102,7 @@ void processCXSmilesLabels(RWMol &mol) {
         atom->clearProp(common_properties::atomLabel);
       }
     } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() &&
-               atom->getSymbol() == "*") {
+               !atom->getIsotope() && atom->getSymbol() == "*") {
       addquery(makeAAtomQuery(), "", mol, atom->getIdx());
     }
   }
@@ -899,19 +901,20 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
   }
   first += 3;
 
-  std::string typ = read_text_to(first, last, ":");
+  const auto type_code = read_text_to(first, last, ":");
   ++first;
-  if (sgroupTypemap.find(typ) == sgroupTypemap.end()) {
+  const auto type = sgroupTypemap.find(type_code);
+  if (type == sgroupTypemap.end()) {
     return false;
   }
   bool keepSGroup = false;
-  SubstanceGroup sgroup(&mol, sgroupTypemap[typ]);
+  SubstanceGroup sgroup(&mol, type->second);
   sgroup.setProp(cxsmilesindex, nSGroups);
-  if (typ == "alt") {
+  if (type_code == "alt") {
     sgroup.setProp("SUBTYPE", std::string("ALT"));
-  } else if (typ == "ran") {
+  } else if (type_code == "ran") {
     sgroup.setProp("SUBTYPE", std::string("RAN"));
-  } else if (typ == "blk") {
+  } else if (type_code == "blk") {
     sgroup.setProp("SUBTYPE", std::string("BLO"));
   }
 
@@ -1765,7 +1768,7 @@ std::string get_sgroup_polymer_block(
     if (sg.getPropIfPresent("TYPE", typ) &&
         reverseTypemap.find(typ) != reverseTypemap.end()) {
       sg.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
-      sgroupOutputIndex++;
+      ++sgroupOutputIndex;
 
       res << "Sg:";
       std::string subtype;
@@ -1820,8 +1823,8 @@ std::string get_sgroup_polymer_block(
         res.seekp(-1, res.cur);
       }
       res << ":";
+      res << ",";  // only add a comma if we wrote something
     }
-    res << ",";
   }
 
   std::string resStr = res.str();
@@ -1853,7 +1856,7 @@ std::string get_sgroup_data_block(const ROMol &mol,
   for (const auto &sg : sgs) {
     if (sg.hasProp("TYPE") && sg.getProp<std::string>("TYPE") == "DAT") {
       sg.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
-      sgroupOutputIndex++;
+      ++sgroupOutputIndex;
 
       res << "SgD:";
       // we don't attempt to canonicalize the atom order because the user
@@ -1891,8 +1894,8 @@ std::string get_sgroup_data_block(const ROMol &mol,
       }
       res << ":";
       // FIX: do something about the coordinates
+      res << ",";  // only add a comma if we wrote something
     }
-    res << ",";
   }
 
   std::string resStr = res.str();
@@ -1942,7 +1945,7 @@ std::string get_atomlabel_block(const ROMol &mol,
 
 std::string get_value_block(const ROMol &mol,
                             const std::vector<unsigned int> &atomOrder,
-                            const std::string &prop) {
+                            const std::string_view &prop) {
   std::string res = "";
   bool first = true;
   for (auto idx : atomOrder) {
@@ -2024,9 +2027,11 @@ std::string get_coords_block(const ROMol &mol,
 
 std::string get_atom_props_block(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
-  std::vector<std::string> skip = {common_properties::atomLabel,
-                                   common_properties::molFileValue,
-                                   common_properties::molParity};
+  constexpr std::array<std::string_view, 7> skip = {
+      common_properties::atomLabel,       common_properties::molFileValue,
+      common_properties::molParity,       common_properties::molAtomMapNumber,
+      common_properties::molStereoCare,   common_properties::molRxnExactChange,
+      common_properties::molInversionFlag};
   std::string res = "";
   unsigned int which = 0;
   for (auto idx : atomOrder) {
@@ -2038,7 +2043,7 @@ std::string get_atom_props_block(const ROMol &mol,
       if (std::find(skip.begin(), skip.end(), pn) == skip.end()) {
         std::string pv = atom->getProp<std::string>(pn);
         if (pn == "dummyLabel" &&
-            (isAttachmentPoint ||
+            (isAttachmentPoint || pv == "*" ||
              std::find(SmilesParseOps::pseudoatoms.begin(),
                        SmilesParseOps::pseudoatoms.end(),
                        pv) != SmilesParseOps::pseudoatoms.end())) {
@@ -2108,7 +2113,7 @@ std::string get_bond_config_block(
             if (!Atropisomers::getAtropisomerAtomsAndBonds(
                     bondNbr, atomAndBondVecs, mol)) {
               throw ValueErrorException("Internal error - should not occur");
-              // should not happend
+              // should not happen
             } else {
               unsigned int swaps = 0;
 
@@ -2126,9 +2131,10 @@ std::string get_bond_config_block(
 
               for (unsigned int bondAtomIndex = 0; bondAtomIndex < 2;
                    ++bondAtomIndex) {
-                if (atomAndBondVecs[bondAtomIndex].first == firstAtom)
+                if (atomAndBondVecs[bondAtomIndex].first == firstAtom) {
                   continue;  // swapped atoms on the side where the wedge bond
                              // is does NOT change the wedge bond
+                }
                 if (atomAndBondVecs[bondAtomIndex].second.size() == 2) {
                   unsigned int firstOtherAtomIdx =
                       atomAndBondVecs[bondAtomIndex]

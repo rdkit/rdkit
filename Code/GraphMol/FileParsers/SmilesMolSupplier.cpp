@@ -17,7 +17,6 @@
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <cstdlib>
@@ -175,11 +174,10 @@ std::unique_ptr<RWMol> SmilesMolSupplier::processLine(std::string inLine) {
       std::string pname, pval;
       if (d_props.size() > col) {
         pname = d_props[col];
-      } else {
+      }
+      if(pname.empty()){
         pname = "Column_";
-        std::stringstream ss;
-        ss << col;
-        pname += ss.str();
+        pname += std::to_string(col);
       }
 
       pval = recs[col];

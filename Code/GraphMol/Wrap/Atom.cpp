@@ -29,6 +29,9 @@ namespace python = boost::python;
 namespace RDKit {
 void expandQuery(QueryAtom *self, const QueryAtom *other,
                  Queries::CompositeQueryType how, bool maintainOrder) {
+  if (!other) {
+    throw_value_error("other Atom is null");
+  }
   if (other->hasQuery()) {
     const QueryAtom::QUERYATOM_QUERY *qry = other->getQuery();
     self->expandQuery(qry->copy(), how, maintainOrder);
@@ -36,6 +39,9 @@ void expandQuery(QueryAtom *self, const QueryAtom *other,
 }
 
 void setQuery(QueryAtom *self, const QueryAtom *other) {
+  if (!other) {
+    throw_value_error("other Atom is null");
+  }
   if (other->hasQuery()) {
     self->setQuery(other->getQuery()->copy());
   }
@@ -173,6 +179,9 @@ struct atom_wrapper {
         .def(python::init<unsigned int>(python::args("self", "num"),
                                         "Constructor, takes the atomic number"))
 
+        .def_readonly("NOATOM", &Atom::NOATOM,
+                      "marker for unspecified int values")
+
         .def("__copy__", &Atom::copy,
              python::return_value_policy<
                  python::manage_new_object,
@@ -217,11 +226,11 @@ struct atom_wrapper {
         .def(
             "GetExplicitValence", &getExplicitValenceHelper,
             python::args("self"),
-            "DEPRECATED, please use GetValence(Chem.ValenceType,EXPLICIT) instead.\nReturns the explicit valence of the atom.\n")
+            "DEPRECATED, please use GetValence(Chem.ValenceType.EXPLICIT) instead.\nReturns the explicit valence of the atom.\n")
         .def(
             "GetImplicitValence", &getImplicitValenceHelper,
             python::args("self"),
-            "DEPRECATED, please use getValence(Chem.ValenceType,IMPLICIT) instead.\nReturns the number of implicit Hs on the atom.\n")
+            "DEPRECATED, please use getValence(Chem.ValenceType.IMPLICIT) instead.\nReturns the number of implicit Hs on the atom.\n")
         .def("GetValence", &Atom::getValence,
              (python::args("self"), python::args("which")),
              "Returns the valence (explicit or implicit) of the atom.\n")
@@ -445,8 +454,7 @@ struct atom_wrapper {
              (python::arg("self"), python::arg("includePrivate") = true,
               python::arg("includeComputed") = true,
               python::arg("autoConvertStrings") = true),
-             "Returns a dictionary of the properties set on the Atom.\n"
-             " n.b. some properties cannot be converted to python types.\n")
+             getPropsAsDictDocString.c_str())
 
         .def("UpdatePropertyCache", &Atom::updatePropertyCache,
              (python::arg("self"), python::arg("strict") = true),
