@@ -22,13 +22,14 @@
 using RINGINVAR = boost::dynamic_bitset<>;
 using RINGINVAR_SET = std::set<RINGINVAR>;
 using RINGINVAR_VECT = std::vector<RINGINVAR>;
+using RINGINVAR_INT_VECT_MAP = std::map<RINGINVAR, std::vector<int>>;
 
 namespace RingUtils {
 constexpr const size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
 
 using namespace RDKit;
 
-RINGINVAR computeRingInvariant(INT_VECT ring, unsigned int numAtoms) {
+RINGINVAR computeRingInvariant(const INT_VECT &ring, unsigned int numAtoms) {
   boost::dynamic_bitset<> res(numAtoms);
   for (auto idx : ring) {
     res.set(idx);
@@ -140,10 +141,8 @@ void pickD2Nodes(const ROMol &tMol, INT_VECT &d2nodes, const INT_VECT &currFrag,
   }
 }
 
-using RINGINVAR_INT_VECT_MAP = std::map<RINGINVAR, INT_VECT>;
-
 void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
-                         RINGINVAR_SET &invars, const INT_INT_VECT_MAP dupMap,
+                         RINGINVAR_SET &invars, const INT_INT_VECT_MAP &dupMap,
                          const RINGINVAR_INT_VECT_MAP &dupD2Cands,
                          INT_VECT &atomDegrees,
                          boost::dynamic_bitset<> activeBonds) {
@@ -186,8 +185,8 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
           }
         }
       }  // end of loop over new rings found
-    }    // end if (dupCand.size() > 1)
-  }      // end of loop over all set of duplicate candidates
+    }  // end if (dupCand.size() > 1)
+  }  // end of loop over all set of duplicate candidates
 }
 
 auto compRingSize = [](const auto &v1, const auto &v2) {
@@ -306,16 +305,14 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
   // happen
   //  - there are 6 d2 node - 1, 6, 7, 9, 11, 13
   //  - both 6 and 7 find the same ring (5,6,12,13,8,7) but we do not find the 7
-  //  membered ring
-  //    (5,7,8,9,10,0,4)
+  //  membered ring (5,7,8,9,10,0,4)
   //  - similarly 9 and 11 find a duplicate ring (9,10,11,12,13)
   //  - when we move to 13 both the above duplicate rings are found
   //  - so we will keep track for each d2 all the other node that resulted in
   //  duplicate rings
   //  - the bonds to these nodes will be broken and we attempt to find a new
-  //  ring, for e.g. by breaking
-  //    bonds to 7 and 13, we will find a 7 membered ring with 6 (this is done
-  //    in findSSSRforDupCands)
+  //  ring, for e.g. by breaking bonds to 7 and 13, we will find a 7 membered
+  //  ring with 6 (this is done in findSSSRforDupCands)
   std::map<int, RINGINVAR_VECT> nodeInvars;
   BFSWorkspace bfs_workspace;
   for (auto &cand : d2nodes) {
@@ -527,7 +524,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
         }
       }
     }  // doing node of degree 3 - end of found only 1 smallest ring
-  }    // end of found less than 3 smallest ring for the degree 3 node
+  }  // end of found less than 3 smallest ring for the degree 3 node
 }
 
 int greatestComFac(long curfac, long nfac) {
@@ -699,7 +696,7 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
         }
       }
     }  // end of loop over neighbors of current atom
-  }    // moving to the next node
+  }  // moving to the next node
 
   // if we are here we should have found everything around the node
   return rdcast<unsigned int>(rings.size());
@@ -941,7 +938,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
         ++nAtomsDone;
         FindRings::trimBonds(cand, mol, changed, atomDegrees, activeBonds);
       }  // done with degree 3 node
-    }    // done finding rings in this fragment
+    }  // done finding rings in this fragment
 
     // calculate the cyclomatic number for the fragment:
     int nexpt = rdcast<int>((nbnds - curFrag.size() + 1));
