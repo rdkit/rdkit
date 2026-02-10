@@ -407,7 +407,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
   // first find all smallest possible rings
   VECT_INT_VECT srings;
   BFSWorkspace bfs_workspace;
-  int nsmall = bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
+  auto nsmall = bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
 
   for (const auto &nring : srings) {
     auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
