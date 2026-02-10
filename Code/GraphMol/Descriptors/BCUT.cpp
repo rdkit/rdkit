@@ -162,7 +162,7 @@ std::pair<double, double> BCUT2D(const ROMol &m,
   for (auto &atom : m.atoms()) {
     props.push_back(atom->getProp<double>(atom_double_prop));
   }
-  return BCUT2D(m, props);
+  return BCUT2D(m, props, opts);
 }
 
 std::vector<double> BCUT2D(const ROMol &m, BCUTOptions opts) {
