@@ -378,13 +378,14 @@ void getExperimentalTorsions(
 void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
                              bool useExpTorsions, bool useSmallRingTorsions,
                              bool useMacrocycleTorsions, bool useBasicKnowledge,
-                             unsigned int version, bool verbose) {
+                             unsigned int version, bool verbose,
+                             const bool scale) {
   std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
                          const ExpTorsionAngle *>>
       torsionBonds;
   getExperimentalTorsions(mol, details, torsionBonds, useExpTorsions,
                           useSmallRingTorsions, useMacrocycleTorsions,
-                          useBasicKnowledge, version, verbose);
+                          useBasicKnowledge, version, verbose, scale);
 }
 
 }  // namespace CrystalFF
