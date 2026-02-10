@@ -467,6 +467,8 @@ inline INT_VECT EmbedMultipleConfs(
   return res;
 };
 
+//! Parameters corresponding to plain Distance Geometry
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters DG;
 //! Parameters corresponding to Sereina Riniker's KDG approach
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters KDG;
 //! Parameters corresponding to Sereina Riniker's ETDG approach

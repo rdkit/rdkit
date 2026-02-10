@@ -267,6 +267,7 @@ PyEmbedParameters *getETDG() {
 PyEmbedParameters *getETDGv2() {
   return new PyEmbedParameters(DGeomHelpers::ETDGv2);
 }
+PyEmbedParameters *getDG() { return new PyEmbedParameters(DGeomHelpers::DG); }
 
 python::tuple getExpTorsHelper(const RDKit::ROMol &mol, bool useExpTorsions,
                                bool useSmallRingTorsions,
@@ -651,6 +652,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       python::return_value_policy<python::manage_new_object>());
   python::def("KDG", RDKit::getKDG,
               "Returns an EmbedParameters object for the KDG method.",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("DG", RDKit::getDG,
+              "REturns an EmbedParameters object for plain distance geometry.",
               python::return_value_policy<python::manage_new_object>());
 
   docString =

@@ -97,6 +97,7 @@ std::mutex &GetFailMutex() {
 namespace RDKit {
 namespace DGeomHelpers {
 
+const EmbedParameters DG;
 //! Parameters corresponding to Sereina Riniker's KDG approach
 const EmbedParameters KDG(true,   // useBasicKnowledge
                           false,  // useExpTorsionAnglePrefs
