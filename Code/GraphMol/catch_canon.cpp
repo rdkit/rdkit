@@ -25,6 +25,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <random>
 #include <tuple>
@@ -1526,4 +1527,57 @@ M  END)CTAB"_ctab;
   REQUIRE(mol2);
   auto smiles = MolToSmiles(*mol2);
   CHECK(smiles == csmiles);
+}
+
+TEST_CASE("x3") {
+  constexpr const char *smi = R"smi(N#C[P@@H]/C=C(/P=O)[P@@H]C#N)smi";
+  constexpr const char *refSmi = R"smi(N#C[P@H]/C(=C\[P@H]C#N)P=O)smi";
+  RWMol *m = SmilesToMol(smi);
+  REQUIRE(m);
+
+  auto csmi1 = MolToSmiles(*m, true);
+  CHECK(csmi1 == refSmi);
+  delete m;
+  m = SmilesToMol(csmi1);
+  REQUIRE(m);
+  delete m;
+}
+
+TEST_CASE("x4") {
+  constexpr const char *smi = R"smi(O=C=NC1=CC2c3ccc(N=C=O)c2c3C=C1)smi";
+  constexpr const char *refSmi = R"smi(O=C=NC1=CC2c3ccc(N=C=O)c2c3C=C1)smi";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto csmi1 = MolToSmiles(*m);
+  CHECK(csmi1 == refSmi);
+}
+
+TEST_CASE("x5") {
+  constexpr const char *smi = R"smi(O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3)smi";
+  constexpr const char *refSmi = R"smi(O=C=NC1=CC2c3ccc(N=C=O)c2c3C=C1)smi";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto csmi1 = MolToSmiles(*m);
+  CHECK(csmi1 == refSmi);
+}
+
+TEST_CASE("x6") {
+  constexpr const char *smi = R"smi(c1ccc2c(c1)C3CC3C4CC5CC4CC25)smi";
+  constexpr const char *sma = R"sma(C!@c)sma";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto q = v2::SmilesParse::MolFromSmarts(sma);
+  REQUIRE(q);
+
+  auto matches = SubstructMatch(*m, *q);
+  CHECK(matches.empty());
 }
