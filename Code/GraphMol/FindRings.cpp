@@ -145,7 +145,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
                          RINGINVAR_SET &invars, const INT_INT_VECT_MAP &dupMap,
                          const RINGINVAR_INT_VECT_MAP &dupD2Cands,
                          INT_VECT &atomDegrees,
-                         boost::dynamic_bitset<> activeBonds) {
+                         const boost::dynamic_bitset<> &activeBonds) {
   BFSWorkspace bfs_workspace;
   for (const auto &dupD2Cand : dupD2Cands) {
     const INT_VECT &dupCands = dupD2Cand.second;
@@ -381,7 +381,7 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
 
 void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
                      RINGINVAR_SET &invars, int cand, INT_VECT &,
-                     boost::dynamic_bitset<> activeBonds) {
+                     boost::dynamic_bitset<> &activeBonds) {
   // this is brutal - we have no degree 2 nodes - find the first possible degree
   // 3 node
 
