@@ -1565,6 +1565,63 @@ void testGithub3755() {
   }
 }
 
+void testCanonicalizePreservesNonTautomericBondStereo() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n "
+         "testCanonicalizePreservesNonTautomericBondStereo"
+      << std::endl;
+  // Molecule with E double-bond stereo on a C=C that is NOT part of
+  // any tautomeric path, plus a tautomerizable keto group.
+  // The E/Z must survive canonicalize() and canonicalizeInPlace().
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("O=CC/C=C/c1ccccc1"));
+    TEST_ASSERT(mol);
+    bool foundStereo = false;
+    for (const auto bond : mol->bonds()) {
+      if (bond->getBondType() == Bond::DOUBLE &&
+          bond->getStereo() > Bond::STEREOANY) {
+        foundStereo = true;
+        break;
+      }
+    }
+    TEST_ASSERT(foundStereo);
+
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = false;
+    params.tautomerRemoveSp3Stereo = false;
+    TautomerEnumerator te(params);
+
+    // canonicalize()
+    {
+      ROMOL_SPTR canon(te.canonicalize(*mol));
+      TEST_ASSERT(canon);
+      bool hasStereo = false;
+      for (const auto bond : canon->bonds()) {
+        if (bond->getBondType() == Bond::DOUBLE &&
+            bond->getStereo() > Bond::STEREOANY) {
+          hasStereo = true;
+          break;
+        }
+      }
+      TEST_ASSERT(hasStereo);
+    }
+    // canonicalizeInPlace()
+    {
+      RWMol molCopy(*mol);
+      te.canonicalizeInPlace(molCopy);
+      bool hasStereo = false;
+      for (const auto bond : molCopy.bonds()) {
+        if (bond->getBondType() == Bond::DOUBLE &&
+            bond->getStereo() > Bond::STEREOANY) {
+          hasStereo = true;
+          break;
+        }
+      }
+      TEST_ASSERT(hasStereo);
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1584,5 +1641,6 @@ int main() {
   testTautomerEnumeratorResult_const_iterator();
   testGithub3430();
   testGithub3755();
+  testCanonicalizePreservesNonTautomericBondStereo();
   return 0;
 }

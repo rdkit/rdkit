@@ -1052,10 +1052,15 @@ ROMol *TautomerEnumerator::canonicalize(
     scoreFunc = TautomerScoringFunctions::makeOptimizedScorer(mol);
   }
   ROMol *canonical = pickCanonical(res, scoreFunc);
-  // quickCopy during enumeration doesn't copy molecule properties, so copy
-  // them from the original molecule to preserve extended SMILES data (e.g.
-  // link nodes)
+  // quickCopy during enumeration doesn't copy molecule properties or
+  // conformers.  Restore both from the original molecule so that
+  // downstream code (e.g. InChI generation) that relies on 2D/3D
+  // coordinates or mol-level properties works correctly.
   canonical->updateProps(mol);
+  for (auto confIt = mol.beginConformers(); confIt != mol.endConformers();
+       ++confIt) {
+    canonical->addConformer(new Conformer(**confIt), true);
+  }
   return canonical;
 }
 
