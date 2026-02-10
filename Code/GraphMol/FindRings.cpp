@@ -25,7 +25,7 @@ using RINGINVAR_VECT = std::vector<RINGINVAR>;
 using RINGINVAR_INT_VECT_MAP = std::map<RINGINVAR, std::vector<int>>;
 
 namespace RingUtils {
-constexpr const size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
+constexpr size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
 
 using namespace RDKit;
 
