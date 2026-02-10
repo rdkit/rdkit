@@ -72,18 +72,9 @@ void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
 namespace FindRings {
 using namespace RDKit;
 
-// An optimization to create a memory workspace that gets reused
-class BFSWorkspace {
- public:
-  int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
-                       boost::dynamic_bitset<> &activeBonds,
-                       INT_VECT *forbidden = nullptr);
-
- private:
-  INT_VECT d_parents;
-  std::vector<unsigned int> d_depths;
-  INT_VECT d_done;
-};
+int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
+                     boost::dynamic_bitset<> &activeBonds,
+                     INT_VECT *forbidden = nullptr);
 
 void trimBonds(unsigned int cand, const ROMol &tMol, std::queue<int> &changed,
                INT_VECT &atomDegrees, boost::dynamic_bitset<> &activeBonds);
@@ -147,7 +138,6 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
                          const RINGINVAR_INT_VECT_MAP &dupD2Cands,
                          INT_VECT &atomDegrees,
                          const boost::dynamic_bitset<> &activeBonds) {
-  BFSWorkspace bfs_workspace;
   for (const auto &dupD2Cand : dupD2Cands) {
     const INT_VECT &dupCands = dupD2Cand.second;
     if (dupCands.size() > 1) {
@@ -168,7 +158,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
 
         // now find the smallest ring/s around (*dupi)
         VECT_INT_VECT srings;
-        bfs_workspace.smallestRingsBfs(mol, dupCand, srings, activeBondsCopy);
+        smallestRingsBfs(mol, dupCand, srings, activeBondsCopy);
         nrings.reserve(srings.size());
         for (const auto &sri : srings) {
           if (sri.size() < minSiz) {
@@ -312,11 +302,10 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
   //  - the bonds to these nodes will be broken and we attempt to find a new
   //  ring, for e.g. by breaking bonds to 7 and 13, we will find a 7 membered
   //  ring with 6 (this is done in findSSSRforDupCands)
-  BFSWorkspace bfs_workspace;
   for (auto &cand : d2nodes) {
     VECT_INT_VECT srings;
     // we have to find all non duplicate possible smallest rings for each node
-    bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
+    smallestRingsBfs(tMol, cand, srings, activeBonds);
     for (const auto &nring : srings) {
       // check if this ring is duplicate with something else
       auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
@@ -405,8 +394,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
 
   // first find all smallest possible rings
   VECT_INT_VECT srings;
-  BFSWorkspace bfs_workspace;
-  auto nsmall = bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
+  auto nsmall = smallestRingsBfs(tMol, cand, srings, activeBonds);
 
   for (const auto &nring : srings) {
     auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
@@ -463,7 +451,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       VECT_INT_VECT trings;
       INT_VECT forb;
       forb.push_back(f);
-      bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
+      smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (const auto &nring : trings) {
         auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
 
@@ -501,7 +489,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       VECT_INT_VECT trings;
       INT_VECT forb;
       forb.push_back(f2);
-      bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
+      smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (const auto &nring : trings) {
         auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
         if (invars.find(invr) == invars.end()) {
@@ -514,7 +502,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       trings.clear();
       forb.clear();
       forb.push_back(f1);
-      bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
+      smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (const auto &nring : trings) {
         auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
         if (invars.find(invr) == invars.end()) {
@@ -596,27 +584,28 @@ void trimBonds(unsigned int cand, const ROMol &tMol, std::queue<int> &changed,
  * RETURNS:
  *  number of smallest rings found
  ***********************************************************************************/
-int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
-                                   VECT_INT_VECT &rings,
-                                   boost::dynamic_bitset<> &activeBonds,
-                                   INT_VECT *forbidden) {
+int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
+                     boost::dynamic_bitset<> &activeBonds,
+                     INT_VECT *forbidden) {
   // this function finds the smallest ring with the given root atom.
   // if multiple smallest rings are found all of them are returned
   // if any atoms are specified in the forbidden list, those atoms are avoided.
 
   // FIX: this should be number of atoms in the fragment (if it's required at
   // all, see below)
-  const int WHITE = 0, GRAY = 1, BLACK = 2;
-  d_done.assign(mol.getNumAtoms(), WHITE);
+  constexpr const int WHITE = 0;
+  constexpr const int GRAY = 1;
+  constexpr const int BLACK = 2;
 
+  std::vector<int> done(mol.getNumAtoms(), WHITE);
   if (forbidden) {
     for (auto i : *forbidden) {
-      d_done[i] = BLACK;
+      done[i] = BLACK;
     }
   }
 
-  d_parents.assign(mol.getNumAtoms(), -1);
-  d_depths.assign(mol.getNumAtoms(), 0);
+  std::vector<int> parents(mol.getNumAtoms(), -1);
+  std::vector<int> depths(mol.getNumAtoms(), 0);
 
   std::deque<int> bfsq;
   bfsq.push_back(root);
@@ -635,9 +624,9 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
 
     const int curr = bfsq.front();
     bfsq.pop_front();
-    d_done[curr] = BLACK;
+    done[curr] = BLACK;
 
-    const unsigned int depth = d_depths[curr] + 1;
+    const unsigned int depth = depths[curr] + 1;
     if (depth > curSize) {
       // depth is the shortest cycle I _could_ find this round.
       break;
@@ -648,14 +637,14 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
         continue;
       }
       int nbrIdx = bond->getOtherAtomIdx(curr);
-      if (d_done[nbrIdx] == BLACK || d_parents[curr] == nbrIdx) {
+      if (done[nbrIdx] == BLACK || parents[curr] == nbrIdx) {
         continue;
       }
-      if (d_done[nbrIdx] == WHITE) {
+      if (done[nbrIdx] == WHITE) {
         // we have never been to this node before through via any path
-        d_parents[nbrIdx] = curr;
-        d_done[nbrIdx] = GRAY;
-        d_depths[nbrIdx] = depth;
+        parents[nbrIdx] = curr;
+        done[nbrIdx] = GRAY;
+        depths[nbrIdx] = depth;
         bfsq.push_back(nbrIdx);
       } else {
         // we have been here via a different path
@@ -664,15 +653,15 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
 
         ring = {nbrIdx};
         // forwards path
-        int parent = d_parents[nbrIdx];
+        int parent = parents[nbrIdx];
         while (parent != -1 && parent != root) {
           ring.push_back(parent);
-          parent = d_parents[parent];
+          parent = parents[parent];
         }
 
         // backwards path
         ring.insert(ring.begin(), curr);
-        parent = d_parents[curr];
+        parent = parents[curr];
         while (parent != -1) {
           // Is the least common ancestor not the root?
           if (std::find(ring.begin(), ring.end(), parent) != ring.end()) {
@@ -680,7 +669,7 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
             break;
           }
           ring.insert(ring.begin(), parent);
-          parent = d_parents[parent];
+          parent = parents[parent];
         }
 
         // Found a new small ring including the root.
