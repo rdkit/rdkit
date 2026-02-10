@@ -626,7 +626,7 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
   INT_VECT ring;
 
   unsigned int curSize = UINT_MAX;
-  while (bfsq.size() > 0) {
+  while (!bfsq.empty()) {
     if (bfsq.size() >= RingUtils::MAX_BFSQ_SIZE) {
       constexpr const char *msg =
           "Maximum BFS search size exceeded.\nThis is likely due to a highly "
@@ -743,7 +743,6 @@ bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
         }
       } else if (ringAtoms[nbrIdx] &&
                  std::find(tv.begin(), tv.end(), nbrIdx) == tv.end()) {
-        //} else if(ringAtoms[*nbrIdx]){
         INT_VECT nv(tv);
         nv.push_back(rdcast<unsigned int>(nbrIdx));
 
@@ -886,7 +885,10 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
     boost::dynamic_bitset<> doneAts(nats);
     unsigned int nAtomsDone = 0;
     VECT_INT_VECT fragRes;
-    while (nAtomsDone < curFrag.size()) {
+    while (nAtomsDone <= curFrag.size() - 3) {
+      // We can skip the 2 last atoms: if they were in a ring,
+      // we'd have already seen it.
+
       // trim all bonds that connect to degree 0 and 1 atoms
       while (!changed.empty()) {
         auto cand = changed.front();
@@ -914,9 +916,10 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
           ++nAtomsDone;
           FindRings::trimBonds(d2i, mol, changed, atomDegrees, activeBonds);
         }
-      }  // end of degree two nodes
-      else if (nAtomsDone <
-               curFrag.size()) {  // now deal with higher degree nodes
+        // end of degree two nodes
+      } else if (nAtomsDone <= curFrag.size() - 3) {
+        // now deal with higher degree nodes
+
         // this is brutal - we have no degree 2 nodes - find the first
         // possible degree 3 node
         int cand = -1;
