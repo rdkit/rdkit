@@ -145,7 +145,8 @@ void getExperimentalTorsions(
     std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
                            const ExpTorsionAngle *>> &torsionBonds,
     bool useExpTorsions, bool useSmallRingTorsions, bool useMacrocycleTorsions,
-    bool useBasicKnowledge, unsigned int version, bool verbose) {
+    bool useBasicKnowledge, unsigned int version, bool verbose,
+    const bool scale) {
   torsionBonds.clear();
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -247,7 +248,7 @@ void getExperimentalTorsions(
           atoms[2] = aid3;
           atoms[3] = aid4;
           std::vector<double> vals(param.V);
-          if (details.aioForceConstants.etTermScaling != 1.0) {
+          if (scale) {
             for (auto &v : vals) {
               v *= details.aioForceConstants.etTermScaling;
             }
@@ -355,7 +356,12 @@ void getExperimentalTorsions(
           std::vector<int> signs(6, 1);
           signs[1] = -1;  // MMFF sign for m = 2
           std::vector<double> fconsts(6, 0.0);
-          fconsts[1] = 100.0;  // 7.0 is MMFF force constants for aromatic rings
+          if (scale) {
+            fconsts[1] = details.aioForceConstants.kTorsionFC;
+          } else {
+            fconsts[1] =
+                100.0;  // 7.0 is MMFF force constants for aromatic rings
+          }
           details.expTorsionAngles.emplace_back(signs, fconsts);
           /*if (verbose) {
             std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 <<

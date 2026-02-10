@@ -1454,7 +1454,8 @@ void initETKDG(ROMol *mol, const EmbedParameters &params,
     ForceFields::CrystalFF::getExperimentalTorsions(
         *mol, etkdgDetails, params.useExpTorsionAnglePrefs,
         params.useSmallRingTorsions, params.useMacrocycleTorsions,
-        params.useBasicKnowledge, params.ETversion, params.verbose);
+        params.useBasicKnowledge, params.ETversion, params.verbose,
+        params.useAllInOne);
     etkdgDetails.atomNums.resize(nAtoms);
     for (unsigned int i = 0; i < nAtoms; ++i) {
       etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
