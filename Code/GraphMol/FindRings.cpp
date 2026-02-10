@@ -22,7 +22,6 @@
 
 using RINGINVAR = boost::dynamic_bitset<>;
 using RINGINVAR_SET = std::set<RINGINVAR>;
-using RINGINVAR_VECT = std::vector<RINGINVAR>;
 using RINGINVAR_INT_VECT_MAP = std::map<RINGINVAR, std::vector<int>>;
 
 namespace RingUtils {
@@ -313,15 +312,17 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
   //  - the bonds to these nodes will be broken and we attempt to find a new
   //  ring, for e.g. by breaking bonds to 7 and 13, we will find a 7 membered
   //  ring with 6 (this is done in findSSSRforDupCands)
-  std::map<int, RINGINVAR_VECT> nodeInvars;
   BFSWorkspace bfs_workspace;
   for (auto &cand : d2nodes) {
     VECT_INT_VECT srings;
     // we have to find all non duplicate possible smallest rings for each node
     bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
     for (const auto &nring : srings) {
+      // check if this ring is duplicate with something else
       auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
+      auto &duplicateInvars = dupD2Cands[invr];
       if (invars.find(invr) == invars.end()) {
+        // Not a duplicate. Store it.
         res.push_back(nring);
         invars.insert(invr);
         for (unsigned int i = 0; i < nring.size() - 1; ++i) {
@@ -334,22 +335,19 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
             tMol.getBondBetweenAtoms(nring[0], nring[nring.size() - 1])
                 ->getIdx());
         ringAtoms.set(nring[nring.size() - 1]);
-      }
+      } else {
+        // This is a duplicate. Flag it for later.
 
-      nodeInvars[cand].push_back(invr);
-      // check if this ring is duplicate with something else
-      for (auto &nici : nodeInvars) {
-        if (nici.first != cand) {
-          if (std::find(nici.second.begin(), nici.second.end(), invr) !=
-              nici.second.end()) {
-            // ok we discovered this ring via another node before
-            // add that node as duplicate to this node and vice versa
-            dupMap[cand].push_back(nici.first);
-            dupMap[nici.first].push_back(cand);
-          }
+        for (auto otherCand : duplicateInvars) {
+          // ok we discovered this ring via another node before
+          // add that node as duplicate to this node and vice versa
+          dupMap[cand].push_back(otherCand);
+          dupMap[otherCand].push_back(cand);
         }
       }
-      dupD2Cands[invr].push_back(cand);
+
+      // Add this to the map, so we can find duplicates later on.
+      duplicateInvars.push_back(cand);
     }
 
     // We don't want to trim the bonds connecting cand here - this can disrupt
