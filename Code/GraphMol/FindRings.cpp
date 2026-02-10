@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 #include <cstdint>
+#include <queue>
 
 using RINGINVAR = boost::dynamic_bitset<>;
 using RINGINVAR_SET = std::set<RINGINVAR>;
@@ -85,8 +86,9 @@ class BFSWorkspace {
   INT_VECT d_done;
 };
 
-void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
+void trimBonds(unsigned int cand, const ROMol &tMol, std::queue<int> &changed,
                INT_VECT &atomDegrees, boost::dynamic_bitset<> &activeBonds);
+
 void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
   INT_VECT bondIndices;
   RingUtils::convertToBonds(ring, bondIndices, mol);
@@ -158,7 +160,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
         // with (*dupi) and recompute smallest ring with (*dupi)
         INT_VECT atomDegreesCopy = atomDegrees;
         boost::dynamic_bitset<> activeBondsCopy = activeBonds;
-        INT_SET changed;
+        std::queue<int> changed;
         auto dmci = dupMap.find(dupCand);
         CHECK_INVARIANT(dmci != dupMap.end(), "duplicate could not be found");
         for (int dni : dmci->second) {
@@ -296,8 +298,6 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
                       boost::dynamic_bitset<> &ringAtoms) {
   // place to record any duplicate rings discovered from the current d2 nodes
   RINGINVAR_INT_VECT_MAP dupD2Cands;
-  INT_SET changed;
-
   INT_INT_VECT_MAP dupMap;
   // here is an example of molecule where the this scheme of finding other node
   // that result in duplicates is necessary : C12=CON=C1C(C4)CC3CC2CC4C3
@@ -360,11 +360,12 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
     // But if there were no rings found, trimming isn't dangerous, and can
     // save wasted time for long chains.
     if (srings.empty()) {
-      changed = {cand};
+      std::queue<int> changed;
+      changed.push(cand);
       while (!changed.empty()) {
-        int cand = *(changed.begin());
-        changed.erase(changed.begin());
-        trimBonds(cand, tMol, changed, atomDegrees, activeBonds);
+        auto local_cand = changed.front();
+        changed.pop();
+        trimBonds(local_cand, tMol, changed, atomDegrees, activeBonds);
       }
     }
   }
@@ -562,7 +563,7 @@ int greatestComFac(long curfac, long nfac) {
  *             the next round of pruning
  *
  ******************************************************************************/
-void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
+void trimBonds(unsigned int cand, const ROMol &tMol, std::queue<int> &changed,
                INT_VECT &atomDegrees, boost::dynamic_bitset<> &activeBonds) {
   for (auto bond : tMol.atomBonds(tMol.getAtomWithIdx(cand))) {
     if (!activeBonds[bond->getIdx()]) {
@@ -570,7 +571,7 @@ void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
     }
     unsigned int oIdx = bond->getOtherAtomIdx(cand);
     if (atomDegrees[oIdx] <= 2) {
-      changed.insert(oIdx);
+      changed.push(oIdx);
     }
     activeBonds[bond->getIdx()] = 0;
     atomDegrees[oIdx] -= 1;
@@ -855,7 +856,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
     // the following is the list of atoms that are useful in the next round of
     // trimming basically atoms that become degree 0 or 1 because of bond
     // removals initialized with atoms of degrees 0 and 1
-    INT_SET changed;
+    std::queue<int> changed;
     int bndcnt_with_zero_order_bonds = 0;
     unsigned int nbnds = 0;
     for (auto atom_idx : curFrag) {
@@ -865,7 +866,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
 
       nbnds += deg;
       if (deg < 2) {
-        changed.insert(atom_idx);
+        changed.push(atom_idx);
       }
     }
 
@@ -887,9 +888,9 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
     VECT_INT_VECT fragRes;
     while (nAtomsDone < curFrag.size()) {
       // trim all bonds that connect to degree 0 and 1 atoms
-      while (changed.size() > 0) {
-        int cand = *(changed.begin());
-        changed.erase(changed.begin());
+      while (!changed.empty()) {
+        auto cand = changed.front();
+        changed.pop();
         if (!doneAts[cand]) {
           doneAts.set(cand);
           ++nAtomsDone;
