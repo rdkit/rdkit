@@ -33,13 +33,13 @@ struct RDKIT_FORCEFIELDHELPERS_EXPORT ExpTorsionAngle {
 };
 
 struct AIOForceConstants {
-  double distanceFC = 1.0;
+  double distanceFC = 2.5;
   double kAngleFC = 0.01;
-  double kPlanarFC = 1.0;
-  double kTorsionFC = 0.5;
+  double kPlanarFC = 0.00025;
+  double kTorsionFC = 0.75;
   double chiralFC = 1.0;
   double fourdFC = 2.15;
-  double etTermScaling = 1.0;
+  double etTermScaling = 0.02;
 };
 
 struct CrystalFFDetails {
@@ -60,7 +60,7 @@ RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
     const RDKit::ROMol &mol, CrystalFFDetails &details,
     bool useExpTorsions = false, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = false, bool useBasicKnowledge = false,
-    unsigned int version = 2, bool verbose = false);
+    unsigned int version = 2, bool verbose = false, const bool scale = false);
 
 //! \overload
 RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
@@ -69,7 +69,7 @@ RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
                            const ExpTorsionAngle *>> &torsionBonds,
     bool useExpTorsions = false, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = false, bool useBasicKnowledge = false,
-    unsigned int version = 2, bool verbose = false);
+    unsigned int version = 2, bool verbose = false, const bool scale = false);
 
 }  // namespace CrystalFF
 }  // namespace ForceFields
