@@ -2201,19 +2201,15 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
             std::vector<const RDKit::ROMol*> mols;
             owned.reserve(python::len(mol_list));
             mols.reserve(python::len(mol_list));
-            for (int i = 0; i < python::len(mol_list); ++i) {
-                python::object obj = mol_list[i];
-                if (obj.is_none()) {
-                    mols.push_back(nullptr);
-                    continue;
-                }
-                try {
-                    const RDKit::ROMol& mol = python::extract<const RDKit::ROMol&>(obj);
-                    mols.push_back(&mol);
-                } catch (...) {
-                    mols.push_back(nullptr);
-                }
-            }
+	    python::stl_input_iterator<RDKit::ROMOL_SPTR> iter(mol_list), end;
+	    while (iter != end) {
+	      if (!*iter) {
+		mols.push_back(nullptr);
+	      } else {
+		mols.push_back(iter->get());
+	      }
+	      ++iter;
+	    }
             return RDKit::Descriptors::Osmordred::calcOsmordredBatchFromMols(mols, n_jobs);
         },
         (python::arg("mols"), python::arg("n_jobs")=0),
