@@ -14,7 +14,7 @@ steps:
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
         eigen \
-        cairo
+        cairo lapack liblapacke blas
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
