@@ -13,7 +13,7 @@ steps:
         libboost=$(boost_version) libboost-devel=$(boost_version) \
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         numpy pillow eigen pandas=2.1 \
-        qt pytest
+        qt pytest lapack liblapacke blas
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
@@ -44,7 +44,8 @@ steps:
     -DRDK_BUILD_SWIG_WRAPPERS=OFF \
     -DRDK_SWIG_STATIC=OFF \
     -DRDK_BUILD_THREADSAFE_SSS=OFF \
-    -DRDK_TEST_MULTITHREADED=OFF
+    -DRDK_TEST_MULTITHREADED=OFF \
+    -DRDK_BUILD_OSMORDRED_SUPPORT=OFF
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

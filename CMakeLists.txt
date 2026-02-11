@@ -76,7 +76,7 @@ option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrar
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
 option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
-
+option(RDK_BUILD_OSMORDRED "Build Osmordred descriptors" ON )
 set(RDK_BOOST_VERSION "1.81.0")
 
 if(NOT MSVC AND RDK_OPTIMIZE_POPCNT)
@@ -237,6 +237,10 @@ endif()
 if(RDK_BUILD_MAEPARSER_SUPPORT)
     add_definitions(-DRDK_BUILD_MAEPARSER_SUPPORT)
     include_directories(${RDKit_ExternalDir})
+endif()
+
+if(RDK_BUILD_OSMORDRED)
+    add_definitions(-DRDK_BUILD_OSMORDRED)
 endif()
 
 if(RDK_USE_URF)

@@ -12,7 +12,7 @@ steps:
         libboost-devel=$(boost_version) \
         libboost=$(boost_version) \
         numpy=2.4 pillow eigen pandas=3 matplotlib-base=3.8 \
-        cairo
+        cairo lapack liblapacke blas
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict

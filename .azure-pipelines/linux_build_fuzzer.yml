@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build cmake -c conda-forge --override-channels \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
-        cairo eigen
+        cairo eigen lapack liblapacke blas
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict	
