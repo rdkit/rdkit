@@ -33,6 +33,7 @@ class TestOsmordred(unittest.TestCase):
     @unittest.skipIf(rdMD.HasOsmordredSupport() == False, "No osmordred support")
     def test_basic_functionality(self):
         """Test basic Osmordred functions with simple molecules."""
+        self.assertTrue(rdMD.HasOsmordredSupport())
         self.assertIsNotNone(self.ethanol)
         
         # Test atom counts (using version 2 as default)

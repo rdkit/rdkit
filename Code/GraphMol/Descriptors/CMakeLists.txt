@@ -5,6 +5,8 @@ if(RDK_BUILD_DESCRIPTORS3D)
 
 endif(RDK_BUILD_DESCRIPTORS3D)
 
+if(RDK_BUILD_OSMORDRED)
+ message("-- adding OSMORDRED Descriptors")
  find_package(LAPACK REQUIRED)
  find_package(LAPACKE REQUIRED)
 
@@ -12,12 +14,8 @@ endif(RDK_BUILD_DESCRIPTORS3D)
    message(fatal_error "-- LAPACKE not found")
  endif(NOT LAPACKE_FOUND)
  
- if(NOT LAPACKE_INCLUDE_DIRS)
-    message(fatal_error "-- LAPACKE headers not found")
- endif(NOT LAPACKE_INCLUDE_DIRS)
- 
  include_directories(Descriptors LAPACK::LAPACK ${LAPACK_INCLUDE_DIRS})
-
+endif(RDK_BUILD_OSMORDRED)
 
 
 rdkit_library(Descriptors
@@ -87,7 +85,9 @@ endif(RDK_BUILD_DESCRIPTORS3D)
 
 rdkit_catch_test(descriptorsTestCatch catch_tests.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
 
-rdkit_catch_test(testOsmordred test_osmordred.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
+if(RDK_BUILD_OSMORDERED)
+ rdkit_catch_test(testOsmordred test_osmordred.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
+endif(RDK_BUILD_OSMORDERED)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

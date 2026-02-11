@@ -53,10 +53,7 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
   libeigen3-dev \
   git \
   xz-utils \
-  nodejs \
-  liblapack-dev \
-  liblapacke-dev \
-  libblas-dev
+  nodejs
 
 # If you are in an organization, put your organization certs inside
 # the certs directory otherwise HTTPS might not work

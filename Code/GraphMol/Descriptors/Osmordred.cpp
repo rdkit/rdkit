@@ -72,7 +72,7 @@
 #include <numeric>
 #include <stack>
 
-#ifdef RDK_BUILD_OSMORDRED_SUPPORT
+#ifdef RDK_BUILD_OSMORDRED
 #if defined(_MSC_VER) && !defined(__clang__) && !defined(__INTEL_COMPILER)
 #include <complex>
 #define lapack_complex_float std::complex<float>
@@ -103,7 +103,7 @@ namespace std {
 namespace RDKit {
 namespace Descriptors {
 namespace Osmordred {
-#ifdef RDK_BUILD_OSMORDRED_SUPPORT
+#ifdef RDK_BUILD_OSMORDRED
 bool hasOsmordredSupport() { return true; }
 
 // v2.0: Filter function to check if a molecule is too large (will cause hangs)
@@ -5920,7 +5920,7 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
     
     // v2.0: Single molecule with timeout protection (all-or-nothing)
     // Returns NaN vector if computation exceeds timeout_seconds
-    RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordredWithTimeout(
+    std::vector<double> calcOsmordredWithTimeout(
         const RDKit::ROMol& mol, int timeout_seconds) {
         
         auto future = std::async(std::launch::async, [&mol]() {
@@ -5940,7 +5940,7 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
     
     // v2.0: Batch version from SMILES: parses each SMILES -> NEW mol (tautomer canonical LOST).
     // For tautomer-canonical mols use calcOsmordredBatchFromMols(mols) with mols from ToBinary.
-    RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>> calcOsmordredBatch(
+    std::vector<std::vector<double>> calcOsmordredBatch(
         const std::vector<std::string>& smiles_list, int n_jobs) {
 
         std::vector<std::vector<double>> results;
@@ -6012,7 +6012,7 @@ std::vector<double> calculateEtaEpsilonAll(const RDKit::ROMol& mol) {
 
     // v2.0: Batch version from mol objects: PRESERVES tautomer canonical.
     // Python binding uses mol.ToBinary() -> MolPickler::molFromPickle -> these mols.
-    RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>> calcOsmordredBatchFromMols(
+    std::vector<std::vector<double>> calcOsmordredBatchFromMols(
         const std::vector<const ROMol*>& mols, int n_jobs) {
 
         std::vector<std::vector<double>> results;
@@ -10421,7 +10421,16 @@ std::vector<double> calcInformationContent(const RDKit::ROMol& mol, int maxradiu
 
 // Aggregated fast path that calls all Osmordred descriptors in C++
 std::vector<double> calcOsmordred(const RDKit::ROMol& mol) { return std::vector<double>(); }
-  
+std::vector<double> calcOsmordredWithTimeout(const RDKit::ROMol& mol, int timeout_seconds) { return {}; }
+	      
+std::vector<std::vector<double>> calcOsmordredBatch(const std::vector<std::string>& smiles_list, int) {
+  return {};
+}
+std::vector<std::vector<double>> calcOsmordredBatchFromMols(
+  const std::vector<const RDKit::ROMol*>& mols, int) {
+  return {};
+}
+std::vector<std::string> getOsmordredDescriptorNames() { return {}; }
 #endif
 } // end namespae descriptors
 } // end namespace osmordred

@@ -1980,7 +1980,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 #endif // eigen3
   
   // Osmordred descriptors
-#ifdef RDK_BUILD_OSMORDRED_SUPPORT
+#ifdef RDK_BUILD_OSMORDRED
       python::def("CalcABCIndex", RDKit::Descriptors::Osmordred::calcABCIndex,
         "CalcABCIndex function\n");
     python::def("CalcAcidBase", RDKit::Descriptors::Osmordred::calcAcidBase,
