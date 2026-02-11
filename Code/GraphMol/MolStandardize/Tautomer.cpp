@@ -32,14 +32,39 @@ namespace RDKit {
 namespace MolStandardize {
 
 namespace {
+
+// Count the number of bonds with non-trivial stereo (stereo != STEREONONE).
+// Used to break ties when multiple chemically-equivalent tautomers exist
+// in the state-key map but differ in preserved stereo information.
+unsigned int countBondStereo(const ROMol &mol) {
+  unsigned int count = 0;
+  for (const auto bond : mol.bonds()) {
+    if (bond->getStereo() != Bond::STEREONONE) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+// Count the number of atoms with non-trivial chiral tag (CHI_UNSPECIFIED).
+unsigned int countAtomStereo(const ROMol &mol) {
+  unsigned int count = 0;
+  for (const auto atom : mol.atoms()) {
+    if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+      ++count;
+    }
+  }
+  return count;
+}
+
 // Generate a cheap tautomer state key for deduplication.
 // Since all tautomers share the same molecular graph, we only need to
 // encode what differs: H counts, formal charges, bond orders, and aromaticity.
 // This is O(n) vs O(n log n) for canonical SMILES.
 std::string getTautomerStateKey(const ROMol &mol) {
   std::string key;
-  // Reserve approximate space: 3 chars per atom + 2 chars per bond
-  key.reserve(mol.getNumAtoms() * 3 + mol.getNumBonds() * 2);
+  // Reserve approximate space: 3 chars per atom + 1 char per bond
+  key.reserve(mol.getNumAtoms() * 3 + mol.getNumBonds() + 1);
 
   // Encode atom state: H count, formal charge, and aromaticity
   for (const auto atom : mol.atoms()) {
@@ -77,9 +102,6 @@ std::string getTautomerStateKey(const ROMol &mol) {
         break;
     }
     key += c;
-    // Bond stereo (important for E/Z isomers)
-    auto st = bond->getStereo();
-    key += static_cast<char>('0' + static_cast<int>(st));
   }
 
   return key;
@@ -94,8 +116,8 @@ std::string getTautomerStateKey(const ROMol &mol) {
 std::string getPerturbedStateKey(const std::string &baseKey, const ROMol &mol,
                                  const MatchVectType &match,
                                  const TautomerTransform &transform) {
-  // Key format: [H-charge-arom per atom] | [bondtype-stereo per bond]
-  // Each atom takes 3 chars, separator is 1 char, each bond takes 2 chars
+  // Key format: [H-charge-arom per atom] | [bondtype per bond]
+  // Each atom takes 3 chars, separator is 1 char, each bond takes 1 char
   const unsigned int numAtoms = mol.getNumAtoms();
   const size_t atomSectionEnd = numAtoms * 3;  // position of '|'
 
@@ -141,8 +163,8 @@ std::string getPerturbedStateKey(const std::string &baseKey, const ROMol &mol,
       continue;
     }
 
-    // Bond position in key: after atom section + separator, 2 chars per bond
-    size_t bondPos = atomSectionEnd + 1 + bond->getIdx() * 2;
+    // Bond position in key: after atom section + separator, 1 char per bond
+    size_t bondPos = atomSectionEnd + 1 + bond->getIdx();
 
     if (!transform.BondTypes.empty()) {
       // Explicit bond type from transform
@@ -980,9 +1002,24 @@ TautomerEnumeratorResult TautomerEnumeratorResult::collapsedToSmilesKeys()
       continue;
     }
     std::string smi = MolToSmiles(*kv.second.tautomer, true);
-    // Deduplicate by SMILES: keep the first occurrence.
-    if (out.d_tautomers.find(smi) == out.d_tautomers.end()) {
+    // Deduplicate by SMILES. When multiple state-key entries share the same
+    // canonical SMILES (e.g. because tautomer transforms reversed the bond
+    // directions within a tautomeric path), prefer the one that preserves
+    // more stereo information from the original molecule.
+    auto it = out.d_tautomers.find(smi);
+    if (it == out.d_tautomers.end()) {
       out.d_tautomers.emplace(std::move(smi), kv.second);
+    } else {
+      // Replace if the new tautomer has more stereo info
+      unsigned int existingStereo =
+          countBondStereo(*it->second.tautomer) +
+          countAtomStereo(*it->second.tautomer);
+      unsigned int newStereo =
+          countBondStereo(*kv.second.tautomer) +
+          countAtomStereo(*kv.second.tautomer);
+      if (newStereo > existingStereo) {
+        it->second = kv.second;
+      }
     }
   }
   out.fillTautomersItVec();
@@ -1021,6 +1058,19 @@ ROMol *TautomerEnumerator::pickCanonical(
           bestSmiles = std::move(curSmiles);
           bestSmilesInitialized = true;
           bestMol = t.second.tautomer;
+        } else if (curSmiles == bestSmiles) {
+          // Same score and same SMILES — these are chemically equivalent
+          // tautomers that differ only in which bonds along the tautomeric
+          // path are single vs double (state-key dedup can produce these).
+          // Prefer the one that preserves more stereo information, since
+          // stereo on single bonds is lost during setTautomerStereoAndIsoHs.
+          unsigned int curStereo = countBondStereo(*t.second.tautomer) +
+                                   countAtomStereo(*t.second.tautomer);
+          unsigned int bestStereo = countBondStereo(*bestMol) +
+                                    countAtomStereo(*bestMol);
+          if (curStereo > bestStereo) {
+            bestMol = t.second.tautomer;
+          }
         }
       }
     }
