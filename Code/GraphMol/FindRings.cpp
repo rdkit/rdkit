@@ -105,10 +105,10 @@ void trimBonds(unsigned int cand, const ROMol &tMol, std::queue<int> &changed,
  * SUMMARY:
  *  this again is a modified version of the BFS algorithm in Figueras paper to
  *  find the smallest ring with a specified root atom.
- *    JCICS, Vol. 30, No. 5, 1996, 986-991
+ *    JCICS, Vol. 36, No. 5, 1996, 986-991
  *  The following are changes from the original algorithm
  *   - find all smallest rings around a node not just one
- *   - once can provided a list of node IDs that should not be include in the
+ *   - one can provide a list of node IDs that should not be include in the
  *     discovered rings
  *
  * ARGUMENTS:
@@ -523,16 +523,13 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
   // We've got a degree three node. The goal of what follows is to find the
   // three rings in which it's involved, push those onto our results, and
   // then remove the node from consideration.  This will create a bunch of
-  // degree
-  // 2 nodes, which we can then chew off the next time around the loop.
+  // degree 2 nodes, which we can then chew off the next time around the loop.
 
   // this part is a bit different from the Figueras algorithm
   // here we try to find all the rings the rings that have a potential for
-  // contributing to
-  // SSSR - i.e. we try to find 3 rings for this node.
+  // contributing to SSSR - i.e. we try to find 3 rings for this node.
   // - each bond (that contributes to the degree 3 ) is allowed to participate
-  // in exactly
-  //    two of these rings.
+  // in exactly two of these rings.
   // - also any rings that are included in already found rings are ignored
 
   // ASSUME: every connection from a degree three node at this point is a
