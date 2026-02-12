@@ -27,8 +27,10 @@ RDKIT_MARVINPARSER_EXPORT bool MrvBlockIsReaction(
     const std::string &molmrvText);
 
 struct RDKIT_MARVINPARSER_EXPORT MrvParserParams {
-  bool sanitize = true; /**< sanitize the molecule after building it */
-  bool removeHs = true; /**< remove Hs after constructing the molecule */
+  bool sanitize = true;      /**< sanitize the molecule after building it */
+  bool removeHs = true;      /**< remove Hs after constructing the molecule */
+  bool flagPossible = false; /**< whether to flag possible chiral centers in the
+                                  result molecule */
 };
 
 RDKIT_MARVINPARSER_EXPORT std::unique_ptr<RWMol> MolFromMrvDataStream(

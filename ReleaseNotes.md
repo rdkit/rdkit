@@ -33,6 +33,8 @@ GitHub)
 - `RWMol::addBond()` no longer removes RingInfo from the molecule, but it does
   clear the property cache of the begin and end atoms. This does not affect the
   general rule that molecules should be sanitized after adding/removing bonds.
+- The molecule parsers no longer flag possible chiral centers by default. You
+  can change this behavior in the various parse parameter objects.
 
 ## New Features and Enhancements:
 

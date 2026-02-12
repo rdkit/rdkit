@@ -2367,6 +2367,11 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
     keepGoing = flagPossibleStereoCenters &&
                 (hasPotentialStereoAtoms || hasPotentialStereoBonds);
   }
+  if (!keepGoing && (hasPotentialStereoAtoms || hasPotentialStereoBonds)) {
+    // we need to assign ranks for later use, like writing double bonds to mol
+    // files properly
+    Chirality::assignAtomChiralCodes(mol, atomRanks, true);
+  }
   bool changedStereoAtoms, changedStereoBonds;
   while (keepGoing) {
     if (hasStereoAtoms || hasPotentialStereoAtoms) {
@@ -3023,10 +3028,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }    // end of 2 and 3 coordinated atoms only
-        }      // end of we want it or CIP code is not set
-      }        // end of double bond
-    }          // end of for loop over all bonds
+          }  // end of 2 and 3 coordinated atoms only
+        }  // end of we want it or CIP code is not set
+      }  // end of double bond
+    }  // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }

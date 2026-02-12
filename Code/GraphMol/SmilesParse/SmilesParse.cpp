@@ -63,17 +63,13 @@ namespace v2 {
 namespace SmilesParse {
 namespace {
 
-template<int(*lex_init)(void**),
-         size_t(*string_setup)(const std::string &, void *),
-         int(*lex_destroy)(void*),
-         typename T>
-int generic_parse_helper(T parser,
-                         const std::string &inp,
-                         std::vector<RDKit::RWMol *> &molVect,
-                         Atom *&atom,
-                         Bond *&bond,
-                         int start_tok,
-                         const std::string& input_type) {
+template <int (*lex_init)(void **),
+          size_t (*string_setup)(const std::string &, void *),
+          int (*lex_destroy)(void *), typename T>
+int generic_parse_helper(T parser, const std::string &inp,
+                         std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
+                         Bond *&bond, int start_tok,
+                         const std::string &input_type) {
   std::vector<std::pair<unsigned int, unsigned int>> branchPoints;
   void *scanner;
   int res = 1;  // initialize with fail code
@@ -87,9 +83,9 @@ int generic_parse_helper(T parser,
     // NOTE: This variable will be used to point to the location of the
     // offending token if we encounter a syntax error
     unsigned int current_token_position = 0;
-    res = parser(inp.c_str() + ltrim, &molVect, atom, bond,
-                         numAtomsParsed, numBondsParsed, branchPoints, scanner,
-                         start_tok, current_token_position);
+    res = parser(inp.c_str() + ltrim, &molVect, atom, bond, numAtomsParsed,
+                 numBondsParsed, branchPoints, scanner, start_tok,
+                 current_token_position);
   } catch (...) {
     lex_destroy(scanner);
     throw;
@@ -107,7 +103,8 @@ int generic_parse_helper(T parser,
   }
 
   if (res == 1 || !branchPoints.empty()) {
-    throw SmilesParseException("Failed parsing " + input_type + " '" + inp + "'");
+    throw SmilesParseException("Failed parsing " + input_type + " '" + inp +
+                               "'");
   }
 
   return res;
@@ -116,15 +113,9 @@ int generic_parse_helper(T parser,
 int smarts_parse_helper(const std::string &inp,
                         std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
                         Bond *&bond, int start_tok) {
-    return generic_parse_helper<yysmarts_lex_init,
-                                setup_smarts_string,
-                                yysmarts_lex_destroy>(yysmarts_parse,
-                                                      inp,
-                                                      molVect,
-                                                      atom,
-                                                      bond,
-                                                      start_tok,
-                                                      "SMARTS");
+  return generic_parse_helper<yysmarts_lex_init, setup_smarts_string,
+                              yysmarts_lex_destroy>(
+      yysmarts_parse, inp, molVect, atom, bond, start_tok, "SMARTS");
 }
 int smarts_bond_parse(const std::string &inp, Bond *&bond) {
   auto start_tok = static_cast<int>(START_BOND);
@@ -150,15 +141,9 @@ int smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
 int smiles_parse_helper(const std::string &inp,
                         std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
                         Bond *&bond, int start_tok) {
-    return generic_parse_helper<yysmiles_lex_init,
-                                setup_smiles_string,
-                                yysmiles_lex_destroy>(yysmiles_parse,
-                                                      inp,
-                                                      molVect,
-                                                      atom,
-                                                      bond,
-                                                      start_tok,
-                                                      "SMILES");
+  return generic_parse_helper<yysmiles_lex_init, setup_smiles_string,
+                              yysmiles_lex_destroy>(
+      yysmiles_parse, inp, molVect, atom, bond, start_tok, "SMILES");
 }
 
 int smiles_bond_parse(const std::string &inp, Bond *&bond) {
@@ -181,7 +166,11 @@ int smiles_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
   return smiles_parse_helper(inp, molVect, atom, bond, start_tok);
 }
 
-typedef enum { BASE = 0, BRANCH, RECURSE } SmaState;
+typedef enum {
+  BASE = 0,
+  BRANCH,
+  RECURSE
+} SmaState;
 
 std::string labelRecursivePatterns(const std::string &sma) {
 #ifndef NO_AUTOMATIC_SMARTS_RELABELLING
@@ -501,8 +490,8 @@ std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
     }
     res->clearProp(SmilesParseOps::detail::_needsDetectBondStereo);
     // figure out stereochemistry:
-    bool cleanIt = true, force = true, flagPossible = true;
-    MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
+    bool cleanIt = true, force = true;
+    MolOps::assignStereochemistry(*res, cleanIt, force, params.flagPossible);
   } else {
     //  we still need to do something about double bond stereochemistry
     //  (was github issue 337)

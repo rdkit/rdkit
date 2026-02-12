@@ -4350,12 +4350,14 @@ void testGithub210() {
   {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/FileParsers/test_data/";
-    RWMol *m = MolFileToMol(pathName + "github210.mol");
+    v2::FileParsers::MolFileParserParams params;
+    params.flagPossible = true;
+    auto m =
+        v2::FileParsers::MolFromMolFile(pathName + "github210.mol", params);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
     TEST_ASSERT(
         m->getAtomWithIdx(4)->hasProp(common_properties::_ChiralityPossible));
-    delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }

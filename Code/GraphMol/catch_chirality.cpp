@@ -6492,3 +6492,19 @@ M  END
     CHECK(smi == smimb);
   }
 }
+TEST_CASE("potential stereo and Hs") {
+  SECTION("basics") {
+    auto m = "FC(Cl)(Br)C([2H])CC"_smiles;
+    REQUIRE(m);
+    // m->debugMol(std::cerr);
+    // MolOps::addHs(*m);
+    CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m->getAtomWithIdx(1)));
+    CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m->getAtomWithIdx(4)));
+    CHECK(!Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m->getAtomWithIdx(6)));
+    CHECK(!Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m->getAtomWithIdx(7)));
+  }
+}

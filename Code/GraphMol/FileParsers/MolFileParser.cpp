@@ -3508,8 +3508,8 @@ void finishMolProcessing(
       MolOps::sanitizeMol(*res);
       MolOps::detectBondStereochemistry(*res);
     }
-
-    MolOps::assignStereochemistry(*res, true, true, true);
+    bool cleanIt = true, force = true;
+    MolOps::assignStereochemistry(*res, cleanIt, force, params.flagPossible);
   } else {
     MolOps::detectBondStereochemistry(*res);
   }
