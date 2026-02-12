@@ -362,15 +362,16 @@ public class WrapperTests extends GraphMolTest {
 				 + File.separator + "test_data" + File.separator +
 				 "CDXML" + File.separator + "ring-stereo1.cdx");
 	fn = testFile.getAbsolutePath();
-	params = new CDXMLParserParams(true, true, CDXMLFormat.CDX);
+	params = new CDXMLParserParams();
+    params.setFormat(CDXMLFormat.CDX);
 	prods = RWMol.MolsFromCDXMLFile(fn, params);
 	assertEquals(prods.size(), 1);
 
-	params = new CDXMLParserParams(true, true, CDXMLFormat.Auto);
+    params.setFormat(CDXMLFormat.Auto);
 	prods = RWMol.MolsFromCDXMLFile(fn, params);
 	assertEquals(prods.size(), 1);
 
-	params = new CDXMLParserParams(true, true, CDXMLFormat.CDXML);
+    params.setFormat(CDXMLFormat.CDXML);
 	boolean e = false;
 	try {
 	    prods = RWMol.MolsFromCDXMLFile(fn, params);

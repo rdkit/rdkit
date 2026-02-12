@@ -46,13 +46,11 @@ enum class CDXFormat {
 };
 
 struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {
-  bool sanitize;
-  bool removeHs;
-  CDXFormat format;
-  ChemDrawParserParams()
-      : sanitize(true), removeHs(true), format(CDXFormat::AUTO) {}
-  ChemDrawParserParams(bool sanitize, bool removeHs, CDXFormat format)
-      : sanitize(sanitize), removeHs(removeHs), format(format) {}
+  bool sanitize = true;
+  bool removeHs = true;
+  CDXFormat format = CDXFormat::AUTO;
+  bool flagPossible = false; /**< whether to flag possible chiral centers in the
+                                result molecule */
 };
 
 std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT

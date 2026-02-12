@@ -35,6 +35,10 @@ GitHub)
   general rule that molecules should be sanitized after adding/removing bonds.
 - The molecule parsers no longer flag possible chiral centers by default. You
   can change this behavior in the various parse parameter objects.
+- The non-default constructors for CDXMLParserParams and ChemDrawParserParams
+  have been removed. Please use standard struct initialization (C++) or create
+  an object an change the elements you want to have non-default values (C++ or
+  in the SWIG wrappers)
 
 ## New Features and Enhancements:
 
