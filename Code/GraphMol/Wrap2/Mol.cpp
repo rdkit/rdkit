@@ -666,12 +666,12 @@ struct mol_wrapper {
         //         for the " "atom in\n" " this molecule that matches the first
         //         atom in the " "query.\n")
 
-        //    .def("HasSubstructMatch",
-        //         (bool (*)(const ROMol &m, const MolBundle &query,
-        //                   const SubstructMatchParameters
-        //                   &))helpHasSubstructMatch,
-        //         (python::arg("self"), python::arg("query"),
-        //          python::arg("params") = true))
+           .def("HasSubstructMatch",
+                (bool (*)(const ROMol &m, const MolBundle &query,
+                          const SubstructMatchParameters
+                          &))helpHasSubstructMatch,
+                (python::arg("self"), python::arg("query"),
+                 python::arg("params") = true))
         //    .def("GetSubstructMatch",
         //         (PyObject * (*)(const ROMol &m, const MolBundle &query,
         //                         const SubstructMatchParameters &))
@@ -804,14 +804,10 @@ struct mol_wrapper {
              "of the atoms.\n",
              nb::keep_alive<0, 1>(), nb::rv_policy::reference_internal)
 #if 0
-        .def("GetAromaticAtoms", MolGetAromaticAtoms,
-             python::return_value_policy<
-                 python::manage_new_object,
-                 python::with_custodian_and_ward_postcall<0, 1>>(),
-             python::args("self"),
+        .def("GetAromaticAtoms", MolGetAromaticAtoms, nb::keep_alive<0, 1>(),
              "Returns a read-only sequence containing all of the molecule's "
              "aromatic Atoms.\n")
-        .def(
+               .def(
             "GetAtomsMatchingQuery", MolGetQueryAtoms,
             python::return_value_policy<
                 python::manage_new_object,
