@@ -890,7 +890,7 @@ std::string get_mcs_as_json(const JSMolList &molList,
   if (!mcsResult.DegenerateSmartsQueryMolDict.empty()) {
     bj::array smartsArray;
     for (const auto &pair : mcsResult.DegenerateSmartsQueryMolDict) {
-      smartsArray.push_back(pair.first);
+      smartsArray.push_back(bj::value(pair.first));
     }
     bjSmarts = smartsArray;
   } else {
