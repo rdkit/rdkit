@@ -15,6 +15,7 @@
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <chrono>
 #include <ctime>
+#include <set>
 
 using namespace RDKit;
 using namespace MolStandardize;
@@ -386,7 +387,7 @@ void testEnumerator() {
   // NOTE: enumerate() may use a non-SMILES internal key (e.g. state-key
   // experiments). The collapsed SMILES-keyed view can have a different size
   // than historical SMILES-keyed enumeration.
-  TEST_ASSERT(res68.size() == 207);
+  TEST_ASSERT(res68.size() == 200);
   TEST_ASSERT(res68raw.status() == TautomerEnumeratorStatus::MaxTransformsReached);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -413,7 +414,7 @@ void testEnumeratorParams() {
     TautomerEnumeratorResult res68 = res68raw.collapsedToSmilesKeys();
     TEST_ASSERT(res68raw.status() ==
                 TautomerEnumeratorStatus::MaxTransformsReached);
-    TEST_ASSERT(res68.size() == 207);
+    TEST_ASSERT(res68.size() == 200);
   }
   {
     CleanupParameters params;
@@ -739,8 +740,13 @@ void testEnumeratorCallback() {
   }
   {
     // GitHub #4736
+    // Test that copying a TautomerEnumerator preserves the callback.
+    // The callback timer starts at construction and runs across both
+    // enumerate() calls.  Use a very short timeout (1 ms) so both runs
+    // reliably hit Canceled — this molecule has 574 tautomers at these
+    // limits, so neither run can finish in 1 ms regardless of CPU speed.
     TautomerEnumerator te(params);
-    te.setCallback(new MyTautomerEnumeratorCallback(50.0));
+    te.setCallback(new MyTautomerEnumeratorCallback(1.0));
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
     TautomerEnumerator teCopy(te);
     TautomerEnumeratorResult res68Copy = teCopy.enumerate(*m68);
@@ -1622,6 +1628,117 @@ void testCanonicalizePreservesNonTautomericBondStereo() {
   }
 }
 
+void testCanonicalizeInvariantAcrossAtomOrder() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing canonicalize() invariance across "
+         "atom orderings"
+      << std::endl;
+
+  // Canonicalize() must return the same canonical tautomer regardless of the
+  // input atom ordering.  This exercises the canonical-order state key fix
+  // in enumerate(): by using canonical atom/bond ordering for state keys,
+  // the discovered tautomer set — and therefore the canonical pick — is stable.
+  //
+  // The reproducer molecule has many tautomeric centers.  With limited
+  // MaxTransforms the BFS would previously discover different subsets of
+  // tautomer space for different atom orderings, leading to different
+  // canonical picks.
+  {
+    std::string smiles = "COC(=O)C1=C(C)NC(=O)NC1c1c(F)cccc1Cl";
+    std::unique_ptr<ROMol> molA{SmilesToMol(smiles)};
+    TEST_ASSERT(molA);
+
+    std::vector<unsigned int> perm = {18, 0, 6, 19, 14, 13, 16, 2, 11,
+                                      15, 9, 5, 7, 12, 3, 4, 8, 17, 1, 10};
+    std::unique_ptr<ROMol> molB{MolOps::renumberAtoms(*molA, perm)};
+    TEST_ASSERT(molB);
+
+    // Sanity: same molecule
+    TEST_ASSERT(MolToSmiles(*molA) == MolToSmiles(*molB));
+
+    for (unsigned int maxTransforms : {20, 100, 1000}) {
+      TautomerEnumerator teA;
+      teA.setMaxTautomers(20);
+      teA.setMaxTransforms(maxTransforms);
+
+      TautomerEnumerator teB;
+      teB.setMaxTautomers(20);
+      teB.setMaxTransforms(maxTransforms);
+
+      std::unique_ptr<ROMol> canonA{teA.canonicalize(*molA)};
+      std::unique_ptr<ROMol> canonB{teB.canonicalize(*molB)};
+      TEST_ASSERT(canonA);
+      TEST_ASSERT(canonB);
+
+      std::string smiA = MolToSmiles(*canonA);
+      std::string smiB = MolToSmiles(*canonB);
+      if (smiA != smiB) {
+        std::cerr << "FAIL at MaxTransforms=" << maxTransforms
+                  << ": canonA=" << smiA << " canonB=" << smiB << std::endl;
+      }
+      TEST_ASSERT(smiA == smiB);
+    }
+  }
+
+  // Also test enumerate() — same tautomer set regardless of atom order
+  {
+    std::string smiles = "COC(=O)C1=C(C)NC(=O)NC1c1c(F)cccc1Cl";
+    std::unique_ptr<ROMol> molA{SmilesToMol(smiles)};
+    TEST_ASSERT(molA);
+    std::vector<unsigned int> perm = {18, 0, 6, 19, 14, 13, 16, 2, 11,
+                                      15, 9, 5, 7, 12, 3, 4, 8, 17, 1, 10};
+    std::unique_ptr<ROMol> molB{MolOps::renumberAtoms(*molA, perm)};
+    TEST_ASSERT(molB);
+
+    TautomerEnumerator teA;
+    teA.setMaxTautomers(20);
+    teA.setMaxTransforms(100);
+
+    TautomerEnumerator teB;
+    teB.setMaxTautomers(20);
+    teB.setMaxTransforms(100);
+
+    auto resA = teA.enumerate(*molA);
+    auto resB = teB.enumerate(*molB);
+
+    // Collect SMILES sets and compare
+    std::set<std::string> setA, setB;
+    for (const auto &t : resA) {
+      setA.insert(MolToSmiles(*t));
+    }
+    for (const auto &t : resB) {
+      setB.insert(MolToSmiles(*t));
+    }
+    TEST_ASSERT(setA == setB);
+  }
+
+  // Test canonicalizeInPlace too
+  {
+    std::string smiles = "COC(=O)C1=C(C)NC(=O)NC1c1c(F)cccc1Cl";
+    std::unique_ptr<RWMol> molA{SmilesToMol(smiles)};
+    std::unique_ptr<RWMol> molB{SmilesToMol(smiles)};
+    TEST_ASSERT(molA && molB);
+    std::vector<unsigned int> perm = {18, 0, 6, 19, 14, 13, 16, 2, 11,
+                                      15, 9, 5, 7, 12, 3, 4, 8, 17, 1, 10};
+    // Renumber molB in place (copy and swap)
+    std::unique_ptr<ROMol> molBre{MolOps::renumberAtoms(*molB, perm)};
+    std::unique_ptr<RWMol> molBrw{new RWMol(*molBre)};
+
+    TautomerEnumerator teA, teB;
+    teA.setMaxTautomers(20);
+    teA.setMaxTransforms(20);
+    teB.setMaxTautomers(20);
+    teB.setMaxTransforms(20);
+
+    teA.canonicalizeInPlace(*molA);
+    teB.canonicalizeInPlace(*molBrw);
+
+    TEST_ASSERT(MolToSmiles(*molA) == MolToSmiles(*molBrw));
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1642,5 +1759,6 @@ int main() {
   testGithub3430();
   testGithub3755();
   testCanonicalizePreservesNonTautomericBondStereo();
+  testCanonicalizeInvariantAcrossAtomOrder();
   return 0;
 }

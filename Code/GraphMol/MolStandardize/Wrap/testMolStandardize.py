@@ -510,7 +510,7 @@ chlorine	[Cl]
 
     enumerator = rdMolStandardize.GetV1TautomerEnumerator()
     res68 = enumerator.Enumerate(m68)
-    self.assertEqual(len(res68), 207)
+    self.assertEqual(len(res68), 200)
     self.assertEqual(len(res68.tautomers), len(res68))
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
 

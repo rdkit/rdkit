@@ -13,6 +13,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/new_canon.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
 #include <limits>
@@ -57,17 +58,90 @@ unsigned int countAtomStereo(const ROMol &mol) {
   return count;
 }
 
+// Canonical ordering for state key computation.
+// By iterating atoms and bonds in canonical rank order, the state key
+// becomes independent of the input atom numbering, making BFS traversal
+// deterministic regardless of atom order.
+struct CanonicalKeyOrder {
+  std::vector<unsigned int> atomOrder;  // atomOrder[canonPos] = atomIdx
+  std::vector<unsigned int> atomRank;   // atomRank[atomIdx] = canonPos
+  std::vector<unsigned int> bondOrder;  // bondOrder[canonPos] = bondIdx
+  std::vector<unsigned int> bondRank;   // bondRank[bondIdx] = canonPos
+};
+
+CanonicalKeyOrder computeCanonicalKeyOrder(const ROMol &mol) {
+  CanonicalKeyOrder order;
+  unsigned int numAtoms = mol.getNumAtoms();
+  unsigned int numBonds = mol.getNumBonds();
+
+  // Compute canonical atom ranks
+  order.atomRank.resize(numAtoms);
+  Canon::rankMolAtoms(mol, order.atomRank);
+
+  // Build inverse: atomOrder[rank] = atomIdx
+  order.atomOrder.resize(numAtoms);
+  for (unsigned int i = 0; i < numAtoms; ++i) {
+    order.atomOrder[order.atomRank[i]] = i;
+  }
+
+  // Compute canonical bond order: sort bonds by
+  // (min(rank[begin], rank[end]), max(rank[begin], rank[end]))
+  std::vector<std::pair<std::pair<unsigned int, unsigned int>, unsigned int>>
+      bondPairs;
+  bondPairs.reserve(numBonds);
+  for (const auto bond : mol.bonds()) {
+    unsigned int r1 = order.atomRank[bond->getBeginAtomIdx()];
+    unsigned int r2 = order.atomRank[bond->getEndAtomIdx()];
+    if (r1 > r2) {
+      std::swap(r1, r2);
+    }
+    bondPairs.push_back({{r1, r2}, bond->getIdx()});
+  }
+  std::sort(bondPairs.begin(), bondPairs.end());
+
+  order.bondOrder.resize(numBonds);
+  order.bondRank.resize(numBonds);
+  for (unsigned int pos = 0; pos < numBonds; ++pos) {
+    order.bondOrder[pos] = bondPairs[pos].second;
+    order.bondRank[bondPairs[pos].second] = pos;
+  }
+
+  return order;
+}
+
+char encodeBondType(Bond::BondType bt) {
+  switch (bt) {
+    case Bond::SINGLE:
+      return '1';
+    case Bond::DOUBLE:
+      return '2';
+    case Bond::TRIPLE:
+      return '3';
+    case Bond::AROMATIC:
+      return '4';
+    default:
+      return '0';
+  }
+}
+
 // Generate a cheap tautomer state key for deduplication.
 // Since all tautomers share the same molecular graph, we only need to
 // encode what differs: H counts, formal charges, bond orders, and aromaticity.
 // This is O(n) vs O(n log n) for canonical SMILES.
-std::string getTautomerStateKey(const ROMol &mol) {
+//
+// Atoms and bonds are iterated in canonical rank order (from `order`),
+// making the key independent of input atom numbering.
+std::string getTautomerStateKey(const ROMol &mol,
+                                const CanonicalKeyOrder &order) {
   std::string key;
+  unsigned int numAtoms = mol.getNumAtoms();
+  unsigned int numBonds = mol.getNumBonds();
   // Reserve approximate space: 3 chars per atom + 1 char per bond
-  key.reserve(mol.getNumAtoms() * 3 + mol.getNumBonds() + 1);
+  key.reserve(numAtoms * 3 + numBonds + 1);
 
   // Encode atom state: H count, formal charge, and aromaticity
-  for (const auto atom : mol.atoms()) {
+  for (unsigned int pos = 0; pos < numAtoms; ++pos) {
+    const auto atom = mol.getAtomWithIdx(order.atomOrder[pos]);
     // Total H count (0-9 should cover most cases)
     unsigned int totalH = atom->getTotalNumHs();
     key += static_cast<char>('0' + std::min(totalH, 9u));
@@ -80,28 +154,9 @@ std::string getTautomerStateKey(const ROMol &mol) {
   // Separator between atoms and bonds
   key += '|';
 
-  for (const auto bond : mol.bonds()) {
-    // Bond type as single char
-    auto bt = bond->getBondType();
-    char c;
-    switch (bt) {
-      case Bond::SINGLE:
-        c = '1';
-        break;
-      case Bond::DOUBLE:
-        c = '2';
-        break;
-      case Bond::TRIPLE:
-        c = '3';
-        break;
-      case Bond::AROMATIC:
-        c = '4';
-        break;
-      default:
-        c = '0';
-        break;
-    }
-    key += c;
+  for (unsigned int pos = 0; pos < numBonds; ++pos) {
+    const auto bond = mol.getBondWithIdx(order.bondOrder[pos]);
+    key += encodeBondType(bond->getBondType());
   }
 
   return key;
@@ -115,7 +170,8 @@ std::string getTautomerStateKey(const ROMol &mol) {
 // (kmol). The match, transform describe what would change.
 std::string getPerturbedStateKey(const std::string &baseKey, const ROMol &mol,
                                  const MatchVectType &match,
-                                 const TautomerTransform &transform) {
+                                 const TautomerTransform &transform,
+                                 const CanonicalKeyOrder &order) {
   // Key format: [H-charge-arom per atom] | [bondtype per bond]
   // Each atom takes 3 chars, separator is 1 char, each bond takes 1 char
   const unsigned int numAtoms = mol.getNumAtoms();
@@ -123,18 +179,28 @@ std::string getPerturbedStateKey(const std::string &baseKey, const ROMol &mol,
 
   std::string key = baseKey;
 
+  // The position of atom/bond `idx` in the key is determined by its
+  // canonical rank, not its raw index.
+  auto atomKeyPos = [&order](unsigned int idx) -> size_t {
+    return static_cast<size_t>(order.atomRank[idx]) * 3;
+  };
+  auto bondKeyPos = [&order, atomSectionEnd](unsigned int idx) -> size_t {
+    return atomSectionEnd + 1 +
+           static_cast<size_t>(order.bondRank[idx]);
+  };
+
   // Modify H counts for first and last atoms
   int firstIdx = match.front().second;
   int lastIdx = match.back().second;
 
-  // First atom: H count decreases by 1 (position = atomIdx * 3)
-  size_t firstHPos = static_cast<size_t>(firstIdx) * 3;
+  // First atom: H count decreases by 1
+  size_t firstHPos = atomKeyPos(firstIdx);
   if (key[firstHPos] > '0') {
     key[firstHPos] = static_cast<char>(key[firstHPos] - 1);
   }
 
   // Last atom: H count increases by 1
-  size_t lastHPos = static_cast<size_t>(lastIdx) * 3;
+  size_t lastHPos = atomKeyPos(lastIdx);
   if (key[lastHPos] < '9') {
     key[lastHPos] = static_cast<char>(key[lastHPos] + 1);
   }
@@ -145,7 +211,7 @@ std::string getPerturbedStateKey(const std::string &baseKey, const ROMol &mol,
     for (const auto &pair : match) {
       int chargeAdj = transform.Charges[ci++];
       if (chargeAdj != 0) {
-        size_t chargePos = static_cast<size_t>(pair.second) * 3 + 1;
+        size_t chargePos = atomKeyPos(pair.second) + 1;
         int newCharge = (key[chargePos] - '4') + chargeAdj;
         key[chargePos] =
             static_cast<char>('4' + std::max(-4, std::min(4, newCharge)));
@@ -163,31 +229,11 @@ std::string getPerturbedStateKey(const std::string &baseKey, const ROMol &mol,
       continue;
     }
 
-    // Bond position in key: after atom section + separator, 1 char per bond
-    size_t bondPos = atomSectionEnd + 1 + bond->getIdx();
+    // Bond position in key: uses canonical bond rank when ordering is active
+    size_t bondPos = bondKeyPos(bond->getIdx());
 
     if (!transform.BondTypes.empty()) {
-      // Explicit bond type from transform
-      Bond::BondType newType = transform.BondTypes[i];
-      char c;
-      switch (newType) {
-        case Bond::SINGLE:
-          c = '1';
-          break;
-        case Bond::DOUBLE:
-          c = '2';
-          break;
-        case Bond::TRIPLE:
-          c = '3';
-          break;
-        case Bond::AROMATIC:
-          c = '4';
-          break;
-        default:
-          c = '0';
-          break;
-      }
-      key[bondPos] = c;
+      key[bondPos] = encodeBondType(transform.BondTypes[i]);
     } else {
       // Flip SINGLE <-> DOUBLE
       if (key[bondPos] == '1') {
@@ -685,11 +731,17 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
     MolOps::symmetrizeSSSR(*taut);
   }
 
+  // Compute a canonical atom/bond ordering for state key computation.
+  // This makes the BFS traversal deterministic regardless of input atom
+  // numbering, ensuring enumerate() discovers the same tautomer set for
+  // the same molecule given in any atom order.
+  CanonicalKeyOrder canonOrder = computeCanonicalKeyOrder(*taut);
+
   // Kekulized form will be created lazily when needed for transform matching
   // NOTE: we key the internal map by a cheap "state key" rather than SMILES.
   // This is an experiment to avoid per-tautomer canonical SMILES generation
   // during enumeration. See perf/tautomer-canonicalization.md for notes.
-  std::string initKey = getTautomerStateKey(*taut);
+  std::string initKey = getTautomerStateKey(*taut, canonOrder);
   res.d_tautomers = {{initKey, Tautomer(taut, 0, 0)}};
   res.d_modifiedAtoms.resize(mol.getNumAtoms());
   res.d_modifiedBonds.resize(mol.getNumBonds());
@@ -769,7 +821,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #endif
         // Compute the base state key from kmol once, before the match loop.
         // This will be used to compute perturbed keys for each match.
-        std::string kmolKey = getTautomerStateKey(*kmol);
+        std::string kmolKey = getTautomerStateKey(*kmol, canonOrder);
 
         // loop over transform matches
         for (const auto &match : matches) {
@@ -791,7 +843,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           // WITHOUT copying the molecule. This allows us to skip duplicate
           // tautomers before the expensive molecule copy.
           std::string perturbedKey =
-              getPerturbedStateKey(kmolKey, *kmol, match, transform);
+              getPerturbedStateKey(kmolKey, *kmol, match, transform,
+                                  canonOrder);
           if (!preSanitizeStateKeys.insert(perturbedKey).second) {
 #ifdef VERBOSE_ENUMERATION
             std::cout << "Previous tautomer state seen again (pre-copy check)"
@@ -900,7 +953,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           setTautomerStereoAndIsoHs(mol, *product, res);
 
           // Quick duplicate check using cheap state key (also the map key)
-          std::string stateKey = getTautomerStateKey(*product);
+          std::string stateKey = getTautomerStateKey(*product, canonOrder);
           if (res.d_tautomers.find(stateKey) != res.d_tautomers.end()) {
 #ifdef VERBOSE_ENUMERATION
             std::cout << "Previous tautomer state seen again (cheap check)"
@@ -965,7 +1018,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
         tautStored.d_numModifiedAtoms = maxNumModifiedAtoms;
         tautStored.d_numModifiedBonds = maxNumModifiedBonds;
         auto insertRes = res.d_tautomers.insert(std::make_pair(
-            getTautomerStateKey(*tautStored.tautomer), std::move(tautStored)));
+            getTautomerStateKey(*tautStored.tautomer, canonOrder),
+            std::move(tautStored)));
         if (insertRes.second) {
           it = insertRes.first;
         }
