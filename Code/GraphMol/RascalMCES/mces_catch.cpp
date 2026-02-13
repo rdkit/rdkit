@@ -98,6 +98,22 @@ TEST_CASE("Default options", "[basics]") {
   check_smarts_ok(*m1, *m2, res.front());
 }
 
+TEST_CASE("Alanine vs Aspartate", "[basics]") {
+  auto alanine = "C(C(=O)O)N"_smiles;
+  REQUIRE(alanine);
+// this finds an MCES result
+//   auto decarboxylatedAspartate = "C(C(=O)O)N"_smiles;
+//   REQUIRE(decarboxylatedAspartate);
+// this does not find an MCES result
+  auto aspartate = "OC(=O)CC(C(=O)O)N"_smiles;
+  REQUIRE(aspartate);
+
+  auto res = rascalMCES(*alanine, *aspartate);
+
+  REQUIRE(res.size() == 1);
+  REQUIRE(res.front().getBondMatches().size() == 4);
+}
+
 TEST_CASE("Juglone vs Scopoletin test", "[basics]") {
   auto m1 = "Oc1cccc2C(=O)C=CC(=O)c12"_smiles;
   REQUIRE(m1);
