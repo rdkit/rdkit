@@ -34,7 +34,6 @@
 #include <GraphMol/Descriptors/Property.h>
 
 #include <GraphMol/PeriodicTable.h>
-#include <GraphMol/atomic_data.h>
 #include <GraphMol/Descriptors/USRDescriptor.h>
 
 #include <DataStructs/BitVects.h>
