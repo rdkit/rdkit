@@ -60,8 +60,7 @@ class MarvinCMLReader {
   ~MarvinCMLReader() {};
 
   std::unique_ptr<RWMol> parseMolecule(boost::property_tree::ptree molTree,
-                                       bool sanitize = false,
-                                       bool removeHs = false) {
+                                       const MrvParserParams &params) {
     boost::property_tree::ptree molSection;
 
     try {
@@ -85,13 +84,12 @@ class MarvinCMLReader {
 
     marvinMol->prepSgroupsForRDKit();
 
-    return parseMolecule(marvinMol.get(), sanitize, removeHs);
+    return parseMolecule(marvinMol.get(), params);
   }
 
   std::unique_ptr<ChemicalReaction> parseReaction(
       boost::property_tree::ptree rxnTree,
-      boost::property_tree::ptree documentTree, bool sanitize = false,
-      bool removeHs = false) {
+      boost::property_tree::ptree documentTree, const MrvParserParams &params) {
     std::unique_ptr<ChemicalReaction> rxn{new ChemicalReaction()};
     rxnTree = rxnTree.get_child("cml.MDocument.MChemicalStruct.reaction");
     std::unique_ptr<MarvinReaction> marvinReaction{
@@ -100,20 +98,17 @@ class MarvinCMLReader {
 
     // get each reactant
     for (auto &mol : marvinReaction->reactants) {
-      rxn->addReactantTemplate(
-          ROMOL_SPTR(parseMolecule(mol.get(), sanitize, removeHs)));
+      rxn->addReactantTemplate(ROMOL_SPTR(parseMolecule(mol.get(), params)));
     }
 
     // get each agent
     for (auto &mol : marvinReaction->agents) {
-      rxn->addAgentTemplate(
-          ROMOL_SPTR(parseMolecule(mol.get(), sanitize, removeHs)));
+      rxn->addAgentTemplate(ROMOL_SPTR(parseMolecule(mol.get(), params)));
     }
 
     // get each product
     for (auto &mol : marvinReaction->products) {
-      rxn->addProductTemplate(
-          ROMOL_SPTR(parseMolecule(mol.get(), sanitize, removeHs)));
+      rxn->addProductTemplate(ROMOL_SPTR(parseMolecule(mol.get(), params)));
     }
 
     // convert atoms to queries:
@@ -431,8 +426,7 @@ class MarvinCMLReader {
   }
 
   std::unique_ptr<RWMol> parseMolecule(MarvinMol *marvinMol,
-                                       bool sanitize = false,
-                                       bool removeHs = false) {
+                                       const MrvParserParams &params) {
     PRECONDITION(marvinMol, "no molecule");
     std::vector<MarvinStereoGroup *> stereoGroups;
     std::unique_ptr<Conformer> confPtr;
@@ -632,8 +626,8 @@ class MarvinCMLReader {
 
       ClearSingleBondDirFlags(*mol);
 
-      if (sanitize) {
-        if (removeHs) {
+      if (params.sanitize) {
+        if (params.removeHs) {
           // Bond stereo detection must happen before H removal, or
           // else we might be removing stereogenic H atoms in double
           // bonds (e.g. imines). But before we run stereo detection,
@@ -650,8 +644,9 @@ class MarvinCMLReader {
           MolOps::sanitizeMol(*mol);
           MolOps::detectBondStereochemistry(*mol);
         }
-
-        MolOps::assignStereochemistry(*mol, true, true, true);
+        bool cleanIt = true, force = true;
+        MolOps::assignStereochemistry(*mol, cleanIt, force,
+                                      params.flagPossible);
       } else {
         MolOps::detectBondStereochemistry(*mol);
       }
@@ -1004,7 +999,7 @@ std::unique_ptr<RWMol> MolFromMrvDataStream(std::istream &inStream,
   read_xml(inStream, tree);
 
   MarvinCMLReader reader;
-  return reader.parseMolecule(tree, params.sanitize, params.removeHs);
+  return reader.parseMolecule(tree, params);
 }
 //------------------------------------------------
 //
@@ -1054,8 +1049,7 @@ std::unique_ptr<ChemicalReaction> ReactionFromMrvDataStream(
   read_xml(inStream, tree);
 
   MarvinCMLReader reader;
-  return reader.parseReaction(tree, tree.get_child("cml.MDocument"),
-                              params.sanitize, params.removeHs);
+  return reader.parseReaction(tree, tree.get_child("cml.MDocument"), params);
 }
 
 //------------------------------------------------

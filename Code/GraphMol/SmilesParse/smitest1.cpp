@@ -3087,13 +3087,13 @@ TEST_CASE("Testing Github 206: Problems round-tripping P") {
 
 TEST_CASE(
     "Testing Github 210: flag possible stereocenters when calling assignStereochemistry()") {
-  RWMol *m;
   std::string smiles = "O[C@H](F)CC(F)(Cl)I";
-  m = SmilesToMol(smiles);
+  v2::SmilesParse::SmilesParserParams ps;
+  ps.flagPossible = true;
+  auto m = v2::SmilesParse::MolFromSmiles(smiles, ps);
   REQUIRE(m);
   REQUIRE(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   REQUIRE(m->getAtomWithIdx(4)->hasProp(common_properties::_ChiralityPossible));
-  delete m;
 }
 
 TEST_CASE("Testing Github 298: cannot generate smiles for ChEBI_50252") {

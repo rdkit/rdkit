@@ -34,10 +34,9 @@ struct RDKIT_FILEPARSERS_EXPORT CDXMLParserParams {
   bool sanitize = true;
   bool removeHs = true;
   CDXMLFormat format = CDXMLFormat::Auto;
+  bool flagPossible = false; /**< whether to flag possible chiral centers in the
+                                result molecule */
 
-  CDXMLParserParams() = default;
-  CDXMLParserParams(bool sanitize, bool removeHs, CDXMLFormat format)
-      : sanitize(sanitize), removeHs(removeHs), format(format) {}
 };
 
 //! \brief construct molecules from a CDXML file

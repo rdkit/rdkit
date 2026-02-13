@@ -45,10 +45,12 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   bool allowCXSMILES = true; /**< recognize and parse CXSMILES*/
   bool strictCXSMILES =
       true; /**< throw an exception if the CXSMILES parsing fails */
-  bool parseName = true;    /**< parse (and set) the molecule name as well */
-  bool removeHs = true;     /**< remove Hs after constructing the molecule */
-  bool skipCleanup = false; /**<  skip the final cleanup stage */
-  bool debugParse = false;  /**< enable debugging in the SMILES parser*/
+  bool parseName = true;     /**< parse (and set) the molecule name as well */
+  bool removeHs = true;      /**< remove Hs after constructing the molecule */
+  bool skipCleanup = false;  /**<  skip the final cleanup stage */
+  bool debugParse = false;   /**< enable debugging in the SMILES parser*/
+  bool flagPossible = false; /**< whether to flag possible chiral centers in the
+                                  result molecule */
   std::map<std::string, std::string>
       replacements; /**< allows SMILES "macros" */
 };

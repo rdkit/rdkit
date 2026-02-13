@@ -7792,11 +7792,13 @@ M  END)CTAB";
  21 19  1  0  0  0  0
  21 20  1  0  0  0  0
 M  END)CTAB";
-    REQUIRE_THROWS_AS(v2::FileParsers::MolFromMolBlock(molblock),
+    v2::FileParsers::MolFileParserParams params;
+    params.flagPossible = true;
+    REQUIRE_THROWS_AS(v2::FileParsers::MolFromMolBlock(molblock, params),
                       std::out_of_range);
     {
       UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
-      auto m = v2::FileParsers::MolFromMolBlock(molblock);
+      auto m = v2::FileParsers::MolFromMolBlock(molblock, params);
       REQUIRE(m);
     }
   }

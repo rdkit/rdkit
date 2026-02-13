@@ -525,22 +525,22 @@ std::vector<int> CanonicalRankAtomsInFragment(
 }
 
 ROMol *MolFromSmilesHelper(python::object ismiles,
-                           const SmilesParserParams &params) {
+                           const v2::SmilesParse::SmilesParserParams &params) {
   std::string smiles = pyObjectToString(ismiles);
 
   try {
-    return SmilesToMol(smiles, params);
+    return v2::SmilesParse::MolFromSmiles(smiles, params).release();
   } catch (...) {
     return nullptr;
   }
 }
 
 ROMol *MolFromSmartsHelper(python::object ismiles,
-                           const SmartsParserParams &params) {
+                           const v2::SmilesParse::SmartsParserParams &params) {
   std::string smiles = pyObjectToString(ismiles);
 
   try {
-    return SmartsToMol(smiles, params);
+    return v2::SmilesParse::MolFromSmarts(smiles, params).release();
   } catch (...) {
     return nullptr;
   }
@@ -1618,41 +1618,56 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
   //
 
-  python::class_<RDKit::SmilesParserParams, boost::noncopyable>(
-      "SmilesParserParams", "Parameters controlling SMILES Parsing")
-      .def_readwrite("debugParse", &RDKit::SmilesParserParams::debugParse,
+  python::class_<RDKit::v2::SmilesParse::SmilesParserParams,
+                 boost::noncopyable>("SmilesParserParams",
+                                     "Parameters controlling SMILES Parsing")
+      .def_readwrite("debugParse",
+                     &RDKit::v2::SmilesParse::SmilesParserParams::debugParse,
                      "controls the amount of debugging information produced")
-      .def_readwrite("parseName", &RDKit::SmilesParserParams::parseName,
+      .def_readwrite("parseName",
+                     &RDKit::v2::SmilesParse::SmilesParserParams::parseName,
                      "controls whether or not the molecule name is also parsed")
       .def_readwrite(
-          "allowCXSMILES", &RDKit::SmilesParserParams::allowCXSMILES,
+          "allowCXSMILES",
+          &RDKit::v2::SmilesParse::SmilesParserParams::allowCXSMILES,
           "controls whether or not the CXSMILES extensions are parsed")
-      .def_readwrite("strictCXSMILES",
-                     &RDKit::SmilesParserParams::strictCXSMILES,
-                     "controls whether or not problems in CXSMILES parsing "
-                     "causes molecule parsing to fail")
-      .def_readwrite("sanitize", &RDKit::SmilesParserParams::sanitize,
+      .def_readwrite(
+          "strictCXSMILES",
+          &RDKit::v2::SmilesParse::SmilesParserParams::strictCXSMILES,
+          "controls whether or not problems in CXSMILES parsing "
+          "causes molecule parsing to fail")
+      .def_readwrite("sanitize",
+                     &RDKit::v2::SmilesParse::SmilesParserParams::sanitize,
                      "controls whether or not the molecule is sanitized before "
                      "being returned")
-      .def_readwrite("removeHs", &RDKit::SmilesParserParams::removeHs,
+      .def_readwrite("removeHs",
+                     &RDKit::v2::SmilesParse::SmilesParserParams::removeHs,
                      "controls whether or not Hs are removed before the "
                      "molecule is returned")
+      .def_readwrite("flagPossible",
+                     &RDKit::v2::SmilesParse::SmilesParserParams::flagPossible,
+                     "controls whether or not to flag possible chiral centers")
       .def("__setattr__", &safeSetattr);
-  python::class_<RDKit::SmartsParserParams, boost::noncopyable>(
-      "SmartsParserParams", "Parameters controlling SMARTS Parsing")
-      .def_readwrite("debugParse", &RDKit::SmartsParserParams::debugParse,
+  python::class_<RDKit::v2::SmilesParse::SmartsParserParams,
+                 boost::noncopyable>("SmartsParserParams",
+                                     "Parameters controlling SMARTS Parsing")
+      .def_readwrite("debugParse",
+                     &RDKit::v2::SmilesParse::SmartsParserParams::debugParse,
                      "controls the amount of debugging information produced")
-      .def_readwrite("parseName", &RDKit::SmartsParserParams::parseName,
+      .def_readwrite("parseName",
+                     &RDKit::v2::SmilesParse::SmartsParserParams::parseName,
                      "controls whether or not the molecule name is also parsed")
       .def_readwrite(
-          "allowCXSMILES", &RDKit::SmartsParserParams::allowCXSMILES,
+          "allowCXSMILES",
+          &RDKit::v2::SmilesParse::SmartsParserParams::allowCXSMILES,
           "controls whether or not the CXSMILES extensions are parsed")
-      .def_readwrite("strictCXSMILES",
-                     &RDKit::SmartsParserParams::strictCXSMILES,
-                     "controls whether or not problems in CXSMILES parsing "
-                     "causes molecule parsing to fail")
       .def_readwrite(
-          "mergeHs", &RDKit::SmartsParserParams::mergeHs,
+          "strictCXSMILES",
+          &RDKit::v2::SmilesParse::SmartsParserParams::strictCXSMILES,
+          "controls whether or not problems in CXSMILES parsing "
+          "causes molecule parsing to fail")
+      .def_readwrite(
+          "mergeHs", &RDKit::v2::SmilesParse::SmartsParserParams::mergeHs,
           "toggles merging H atoms in the SMARTS into neighboring atoms")
       .def("__setattr__", &safeSetattr);
 

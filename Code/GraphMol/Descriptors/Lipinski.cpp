@@ -502,25 +502,42 @@ unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
 }
 
 namespace {
-bool hasStereoAssigned(const ROMol &mol) {
-  return mol.hasProp(common_properties::_StereochemDone);
+bool hasPossibleStereoAssigned(const ROMol &mol) {
+  if (!mol.hasProp(common_properties::_StereochemDone)) {
+    return false;
+  }
+  for (const auto &atom : mol.atoms()) {
+    if (atom->hasProp(common_properties::_ChiralityPossible)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void assignPossibleStereoIfNeeded(const ROMol &mol) {
+  if (!hasPossibleStereoAssigned(mol)) {
+    ROMol tmol(mol);
+    constexpr bool cleanIt = true;
+    constexpr bool force = true;
+    constexpr bool flagPossible = true;
+    MolOps::assignStereochemistry(tmol, cleanIt, force, flagPossible);
+    for (const auto &atom : tmol.atoms()) {
+      int chiralityPossible = 0;
+      if (atom->getPropIfPresent(common_properties::_ChiralityPossible,
+                                 chiralityPossible)) {
+        mol.getAtomWithIdx(atom->getIdx())
+            ->setProp(common_properties::_ChiralityPossible, chiralityPossible,
+                      true);
+      }
+    }
+  }
 }
 }  // namespace
 const std::string NumAtomStereoCentersVersion = "1.0.1";
 unsigned int numAtomStereoCenters(const ROMol &mol) {
-  std::unique_ptr<ROMol> tmol;
-  const ROMol *mptr = &mol;
-  if (!hasStereoAssigned(mol)) {
-    tmol.reset(new ROMol(mol));
-    constexpr bool cleanIt = true;
-    constexpr bool force = true;
-    constexpr bool flagPossible = true;
-    MolOps::assignStereochemistry(*tmol, cleanIt, force, flagPossible);
-    mptr = tmol.get();
-  }
-
+  assignPossibleStereoIfNeeded(mol);
   unsigned int res = 0;
-  for (const auto &atom : mptr->atoms()) {
+  for (const auto &atom : mol.atoms()) {
     if (atom->hasProp(common_properties::_ChiralityPossible)) {
       ++res;
     }
@@ -530,19 +547,9 @@ unsigned int numAtomStereoCenters(const ROMol &mol) {
 
 const std::string NumUnspecifiedAtomStereoCentersVersion = "1.0.1";
 unsigned int numUnspecifiedAtomStereoCenters(const ROMol &mol) {
-  std::unique_ptr<ROMol> tmol;
-  const ROMol *mptr = &mol;
-  if (!hasStereoAssigned(mol)) {
-    tmol.reset(new ROMol(mol));
-    constexpr bool cleanIt = true;
-    constexpr bool force = true;
-    constexpr bool flagPossible = true;
-    MolOps::assignStereochemistry(*tmol, cleanIt, force, flagPossible);
-    mptr = tmol.get();
-  }
-
+  assignPossibleStereoIfNeeded(mol);
   unsigned int res = 0;
-  for (const auto &atom : mptr->atoms()) {
+  for (const auto &atom : mol.atoms()) {
     if (atom->hasProp(common_properties::_ChiralityPossible) &&
         atom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
       ++res;

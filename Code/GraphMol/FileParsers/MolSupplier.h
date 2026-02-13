@@ -220,7 +220,7 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
 
  private:
   void checkForEnd() override;
-  void peekCheckForEnd(char* bufPtr, char* bufEnd, std::streampos molStartPos);
+  void peekCheckForEnd(char *bufPtr, char *bufEnd, std::streampos molStartPos);
   void buildIndexTo(unsigned int targetIdx);
   int d_len = 0;   // total number of mol blocks in the file (initialized to -1)
   int d_last = 0;  // the molecule we are ready to read
@@ -240,6 +240,7 @@ struct SmilesMolSupplierParams {
       true,   // removeHs
       false,  // skipCleanup
       false,  // debugParse
+      false,  // flagPossible
       {}      // replacements
   };
 };
@@ -332,6 +333,7 @@ struct TDTMolSupplierParams {
       true,   // removeHs
       false,  // skipCleanup
       false,  // debugParse
+      false,  // flagPossible
       {}      // replacements
   };
 };

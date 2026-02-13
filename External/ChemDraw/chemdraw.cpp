@@ -198,7 +198,9 @@ void visit_children(
           pagedata.mols.pop_back();
           continue;
         }
-        MolOps::assignStereochemistry(*res, true, true, true);
+        bool cleanIt = true, force = true;
+        MolOps::assignStereochemistry(*res, cleanIt, force,
+                                      params.flagPossible);
         // Sometimes ChemDraw just marks with R and S, so let's assign
         //  these as long as they were not already determined
         checkChemDrawTetrahedralGeometries(*res);
