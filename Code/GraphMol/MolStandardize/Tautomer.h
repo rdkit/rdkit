@@ -144,6 +144,16 @@ enum class TautomerEnumeratorStatus {
   Canceled
 };
 
+/// Holds a molecule with canonical atom+bond ordering and the
+/// permutation needed to map back to the original ordering.
+/// Used by TautomerEnumerator::normalizeAtomBondOrder() /
+/// denormalizeAtomBondOrder().
+struct RDKIT_MOLSTANDARDIZE_EXPORT NormalizedMolOrder {
+  std::unique_ptr<ROMol> mol;
+  /// normPerm[origIdx] = normalizedIdx
+  std::vector<unsigned int> normPerm;
+};
+
 class Tautomer {
   friend class TautomerEnumerator;
 
@@ -272,6 +282,19 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumeratorResult {
     return smilesVec;
   }
   const SmilesTautomerMap &smilesTautomerMap() const { return d_tautomers; }
+
+  // Returns a new result where each tautomer is denormalized back to the
+  // original molecule's atom+bond ordering.  This is the inverse of
+  // TautomerEnumerator::normalizeAtomBondOrder() applied to every tautomer
+  // in the result set.
+  //
+  // Typical usage:
+  //   auto norm = TautomerEnumerator::normalizeAtomBondOrder(mol);
+  //   auto res  = enumerator.enumerate(*norm.mol);
+  //   auto orig = res.denormalizedToOriginalOrder(mol, norm.normPerm);
+  TautomerEnumeratorResult denormalizedToOriginalOrder(
+      const ROMol &origMol,
+      const std::vector<unsigned int> &normPerm) const;
 
   // Returns a new result where the internal map is re-keyed by canonical
   // SMILES (MolToSmiles(..., true)).
@@ -440,7 +463,24 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
     the tautomer transform (these are the bonds between the "donor" and the
     "acceptor")
 
+    IMPORTANT: The set of tautomers discovered by enumerate() can depend on
+    the input atom ordering.  Two representations of the same molecule (e.g.
+    from SMILES vs. a MolBlock) may yield different tautomer ensembles.
+    canonicalize() and canonicalizeInPlace() handle this internally by
+    normalizing atom+bond order before enumeration.  If you need a
+    consistent enumerate() result across different representations, call
+    normalizeAtomBondOrder() on the input first, enumerate the normalized
+    molecule, then optionally denormalize:
+    \code
+      auto norm = TautomerEnumerator::normalizeAtomBondOrder(mol);
+      auto res  = enumerator.enumerate(*norm.mol);
+      // optionally remap back:
+      auto orig = res.denormalizedToOriginalOrder(mol, norm.normPerm);
+    \endcode
   */
+  // FIXME: consider running normalizeAtomBondOrder inside enumerate()
+  // unconditionally so that enumeration results are always atom-order-
+  // independent.  This would add a MolToSmiles + renumber overhead per call.
   TautomerEnumeratorResult enumerate(const ROMol &mol) const;
 
   //! Deprecated, please use the form returning a \c TautomerEnumeratorResult
@@ -520,6 +560,34 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
       boost::function<int(const ROMol &mol)> scoreFunc = {}) const;
   void canonicalizeInPlace(
       RWMol &mol, boost::function<int(const ROMol &mol)> scoreFunc = {}) const;
+
+  //! Normalize a molecule to canonical atom+bond ordering.
+  /*!
+    Returns a NormalizedMolOrder whose mol member has deterministic atom
+    and bond storage order.  This ensures that enumerate() discovers the
+    same tautomer set regardless of how the input molecule was constructed.
+
+    Use denormalizeAtomBondOrder() (or
+    TautomerEnumeratorResult::denormalizedToOriginalOrder()) to map results
+    back to the original atom numbering.
+  */
+  static NormalizedMolOrder normalizeAtomBondOrder(const ROMol &mol);
+
+  //! Remap a tautomer from normalized to original atom+bond ordering.
+  /*!
+    Inverse of normalizeAtomBondOrder().  Restores the original molecule's
+    bond storage order so that chirality tags (CW/CCW) retain their
+    original meaning, and recomputes CIP codes.
+
+    \param tautomer:  the tautomer in normalized atom order
+    \param origMol:   the original (un-normalized) molecule (supplies bond
+                      iteration order)
+    \param normPerm:  the permutation from NormalizedMolOrder::normPerm
+    \return caller owns the returned pointer
+  */
+  static ROMol *denormalizeAtomBondOrder(
+      const ROMol &tautomer, const ROMol &origMol,
+      const std::vector<unsigned int> &normPerm);
 
  private:
   bool setTautomerStereoAndIsoHs(const ROMol &mol, ROMol &taut,

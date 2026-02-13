@@ -1163,30 +1163,9 @@ ROMol *TautomerEnumerator::pickCanonical(
   return res;
 }
 
-namespace {
-
-/// Holds a molecule with canonical atom+bond ordering and the
-/// permutation needed to map back to the original ordering.
-struct NormalizedMolOrder {
-  std::unique_ptr<ROMol> mol;
-  /// normPerm[origIdx] = normalizedIdx
-  std::vector<unsigned int> normPerm;
-};
-
-/// Normalize a molecule to canonical atom+bond ordering so that BFS
-/// traversal through tautomer space is deterministic regardless of
-/// input representation (SMILES vs MolBlock etc.).
-///
-/// Two things must be normalized:
-///   1. Atom ordering — determines SubstructMatch traversal order
-///   2. Bond storage ordering — determines neighbor iteration order
-///
-/// Canon::rankMolAtoms alone is insufficient because it breaks ties for
-/// symmetric atoms (e.g. pyrimidine ring carbons) input-dependently.
-/// MolToSmiles resolves all such ties via its canonical DFS traversal.
-/// We use that traversal ordering, then rebuild the molecule with bonds
-/// added in sorted order to also normalize bond storage.
-NormalizedMolOrder normalizeAtomBondOrder(const ROMol &mol) {
+// static
+NormalizedMolOrder TautomerEnumerator::normalizeAtomBondOrder(
+    const ROMol &mol) {
   NormalizedMolOrder result;
 
   // Compute canonical atom output order via MolToSmiles. This resolves
@@ -1243,17 +1222,10 @@ NormalizedMolOrder normalizeAtomBondOrder(const ROMol &mol) {
   return result;
 }
 
-/// Remap a canonical tautomer (in normalized atom order) back to the
-/// original molecule's atom+bond ordering.
-///
-/// The normalization changed bond storage order (sorted bonds). After
-/// renumbering atoms back, we rebuild using the original molecule's bond
-/// iteration order so that CW/CCW chirality tags retain their original
-/// meaning. Bond PROPERTIES (type, stereo) come from the canonical
-/// tautomer; their POSITION in storage matches the original.
-/// CIP codes are recomputed since bond storage order affects them.
-ROMol *denormalizeAtomBondOrder(const ROMol &canonical, const ROMol &origMol,
-                                const std::vector<unsigned int> &normPerm) {
+// static
+ROMol *TautomerEnumerator::denormalizeAtomBondOrder(
+    const ROMol &canonical, const ROMol &origMol,
+    const std::vector<unsigned int> &normPerm) {
   // normPerm[origIdx] = normalizedIdx → use as the permutation directly:
   // renumberAtoms(mol, perm) puts old-atom perm[i] at new position i.
   std::unique_ptr<ROMol> reordered{
@@ -1286,14 +1258,41 @@ ROMol *denormalizeAtomBondOrder(const ROMol &canonical, const ROMol &origMol,
   return res;
 }
 
-}  // namespace
+TautomerEnumeratorResult
+TautomerEnumeratorResult::denormalizedToOriginalOrder(
+    const ROMol &origMol,
+    const std::vector<unsigned int> &normPerm) const {
+  TautomerEnumeratorResult out;
+  out.d_status = d_status;
+  out.d_modifiedAtoms = d_modifiedAtoms;
+  out.d_modifiedBonds = d_modifiedBonds;
+
+  for (const auto &kv : d_tautomers) {
+    if (!kv.second.tautomer) {
+      continue;
+    }
+    std::unique_ptr<ROMol> denorm{
+        TautomerEnumerator::denormalizeAtomBondOrder(
+            *kv.second.tautomer, origMol, normPerm)};
+    ROMOL_SPTR denormSptr(denorm.release());
+    // Re-key by the denormalized SMILES since the state-key is
+    // meaningless after atom reordering.
+    std::string smi = MolToSmiles(*denormSptr, true);
+    auto it = out.d_tautomers.find(smi);
+    if (it == out.d_tautomers.end()) {
+      out.d_tautomers.emplace(std::move(smi), Tautomer(denormSptr, 0, 0));
+    }
+  }
+  out.fillTautomersItVec();
+  return out;
+}
 
 ROMol *TautomerEnumerator::canonicalize(
     const ROMol &mol, boost::function<int(const ROMol &mol)> scoreFunc) const {
   auto thisCopy = TautomerEnumerator(*this);
   thisCopy.setReassignStereo(false);
 
-  auto normOrder = normalizeAtomBondOrder(mol);
+  auto normOrder = TautomerEnumerator::normalizeAtomBondOrder(mol);
   const ROMol &molForEnumeration = *normOrder.mol;
 
   auto res = thisCopy.enumerate(molForEnumeration);
@@ -1313,7 +1312,8 @@ ROMol *TautomerEnumerator::canonicalize(
   std::unique_ptr<ROMol> canonical{pickCanonical(res, scoreFunc)};
 
   // Remap canonical tautomer back to original atom order.
-  ROMol *result = denormalizeAtomBondOrder(*canonical, mol, normOrder.normPerm);
+  ROMol *result =
+      TautomerEnumerator::denormalizeAtomBondOrder(*canonical, mol, normOrder.normPerm);
 
   // quickCopy during enumeration doesn't copy molecule properties or
   // conformers.  Restore both from the original molecule so that
@@ -1332,7 +1332,7 @@ void TautomerEnumerator::canonicalizeInPlace(
   auto thisCopy = TautomerEnumerator(*this);
   thisCopy.setReassignStereo(false);
 
-  auto normOrder = normalizeAtomBondOrder(mol);
+  auto normOrder = TautomerEnumerator::normalizeAtomBondOrder(mol);
   const ROMol &molForEnumeration = *normOrder.mol;
 
   auto res = thisCopy.enumerate(molForEnumeration);
@@ -1350,7 +1350,7 @@ void TautomerEnumerator::canonicalizeInPlace(
 
   // Remap canonical tautomer back to original atom order.
   std::unique_ptr<ROMol> tmp{
-      denormalizeAtomBondOrder(*canonical, mol, normOrder.normPerm)};
+      TautomerEnumerator::denormalizeAtomBondOrder(*canonical, mol, normOrder.normPerm)};
 
   TEST_ASSERT(tmp->getNumAtoms() == mol.getNumAtoms());
   TEST_ASSERT(tmp->getNumBonds() == mol.getNumBonds());

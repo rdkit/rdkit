@@ -73,7 +73,7 @@ class PyTautomerEnumeratorResult {
     }
     return new RDKit::ROMol(*d_tr->at(pos));
   }
-  const MolStandardize::TautomerEnumeratorResult *get() { return d_tr.get(); }
+  const MolStandardize::TautomerEnumeratorResult *get() const { return d_tr.get(); }
 
  private:
   boost::shared_ptr<MolStandardize::TautomerEnumeratorResult> d_tr;
@@ -271,6 +271,48 @@ PyTautomerEnumeratorResult *enumerateHelper(
       self.enumerate(mol).collapsedToSmilesKeys());
 }
 
+// Python wrapper for NormalizedMolOrder — holds the normalized mol + permutation
+class PyNormalizedMolOrder {
+ public:
+  PyNormalizedMolOrder(MolStandardize::NormalizedMolOrder &&order)
+      : d_mol(order.mol.release()), d_normPerm(std::move(order.normPerm)) {}
+  ROMol *getMol() const { return new ROMol(*d_mol); }
+  python::tuple getNormPerm() const {
+    python::list lst;
+    for (auto v : d_normPerm) {
+      lst.append(v);
+    }
+    return python::tuple(lst);
+  }
+  // accessors for C++ helpers
+  const ROMol &molRef() const { return *d_mol; }
+  const std::vector<unsigned int> &normPermRef() const { return d_normPerm; }
+
+ private:
+  boost::shared_ptr<ROMol> d_mol;
+  std::vector<unsigned int> d_normPerm;
+};
+
+PyNormalizedMolOrder *normalizeAtomBondOrderHelper(const ROMol &mol) {
+  auto result = MolStandardize::TautomerEnumerator::normalizeAtomBondOrder(mol);
+  return new PyNormalizedMolOrder(std::move(result));
+}
+
+ROMol *denormalizeAtomBondOrderHelper(const ROMol &tautomer,
+                                      const ROMol &origMol,
+                                      const PyNormalizedMolOrder &normOrder) {
+  return MolStandardize::TautomerEnumerator::denormalizeAtomBondOrder(
+      tautomer, origMol, normOrder.normPermRef());
+}
+
+PyTautomerEnumeratorResult *denormalizedToOriginalOrderHelper(
+    const PyTautomerEnumeratorResult &self, const ROMol &origMol,
+    const PyNormalizedMolOrder &normOrder) {
+  return new PyTautomerEnumeratorResult(
+      self.get()->denormalizedToOriginalOrder(origMol,
+                                             normOrder.normPermRef()));
+}
+
 std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm>
 GetDefaultTautomerSubstructsHelper() {
   std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm> terms;
@@ -339,6 +381,23 @@ struct tautomer_wrapper {
         .def("values", &smilesTautomerMapValuesHelper, python::args("self"))
         .def("items", &smilesTautomerMapItemsHelper, python::args("self"));
 
+    python::class_<PyNormalizedMolOrder, boost::noncopyable>(
+        "NormalizedMolOrder",
+        "Holds a molecule with canonical atom+bond ordering and the\n"
+        "permutation needed to map back to the original ordering.\n"
+        "Created by TautomerEnumerator.NormalizeAtomBondOrder().",
+        python::no_init)
+        .add_property(
+            "mol",
+            python::make_function(
+                &PyNormalizedMolOrder::getMol,
+                python::return_value_policy<python::manage_new_object>()),
+            "the molecule with canonical atom+bond ordering")
+        .add_property(
+            "normPerm",
+            python::make_function(&PyNormalizedMolOrder::getNormPerm),
+            "permutation mapping original atom indices to normalized indices");
+
     python::class_<PyTautomerEnumeratorResult, boost::noncopyable>(
         "TautomerEnumeratorResult",
         "used to return tautomer enumeration results", python::no_init)
@@ -381,7 +440,21 @@ struct tautomer_wrapper {
              python::return_value_policy<python::manage_new_object>(),
              python::args("self", "pos"))
         .def("__len__", &PyTautomerEnumeratorResult::size,
-             python::args("self"));
+             python::args("self"))
+        .def("DenormalizedToOriginalOrder",
+             &denormalizedToOriginalOrderHelper,
+             (python::arg("self"), python::arg("origMol"),
+              python::arg("normOrder")),
+             python::return_value_policy<python::manage_new_object>(),
+             R"DOC(Returns a new result where each tautomer is remapped back to
+the original molecule's atom+bond ordering.
+
+This is the inverse of TautomerEnumerator.NormalizeAtomBondOrder()
+applied to every tautomer in the result set.
+
+  >>> norm = rdMolStandardize.TautomerEnumerator.NormalizeAtomBondOrder(mol)
+  >>> res = enumerator.Enumerate(norm.mol)
+  >>> orig = res.DenormalizedToOriginalOrder(mol, norm))DOC");
 
     python::class_<MolStandardize::TautomerEnumerator, boost::noncopyable>(
         "TautomerEnumerator", python::no_init)
@@ -505,6 +578,39 @@ struct tautomer_wrapper {
         .def("GetCallback", &getCallbackHelper, python::args("self"),
              "Get the TautomerEnumeratorCallback subclass instance,\n"
              "or None if none was set.")
+        .def("NormalizeAtomBondOrder", &normalizeAtomBondOrderHelper,
+             (python::arg("mol")),
+             python::return_value_policy<python::manage_new_object>(),
+             R"DOC(Normalize a molecule to canonical atom+bond ordering.
+
+Returns a NormalizedMolOrder whose mol attribute has deterministic atom
+and bond storage order. This ensures that Enumerate() discovers the
+same tautomer set regardless of how the input molecule was constructed.
+
+Use DenormalizeAtomBondOrder() or
+TautomerEnumeratorResult.DenormalizedToOriginalOrder() to map results
+back to the original atom numbering.
+
+  >>> norm = rdMolStandardize.TautomerEnumerator.NormalizeAtomBondOrder(mol)
+  >>> res = enumerator.Enumerate(norm.mol)
+  >>> orig = res.DenormalizedToOriginalOrder(mol, norm))DOC")
+        .staticmethod("NormalizeAtomBondOrder")
+        .def("DenormalizeAtomBondOrder", &denormalizeAtomBondOrderHelper,
+             (python::arg("tautomer"), python::arg("origMol"),
+              python::arg("normOrder")),
+             python::return_value_policy<python::manage_new_object>(),
+             R"DOC(Remap a tautomer from normalized to original atom+bond ordering.
+
+Inverse of NormalizeAtomBondOrder(). Restores the original molecule's
+bond storage order so that chirality tags (CW/CCW) retain their
+original meaning, and recomputes CIP codes.
+
+  >>> norm = rdMolStandardize.TautomerEnumerator.NormalizeAtomBondOrder(mol)
+  >>> res = enumerator.Enumerate(norm.mol)
+  >>> canonical = enumerator.PickCanonical(res)
+  >>> result = rdMolStandardize.TautomerEnumerator.DenormalizeAtomBondOrder(
+  ...     canonical, mol, norm))DOC")
+        .staticmethod("DenormalizeAtomBondOrder")
         .def_readonly(
             "tautomerScoreVersion",
             MolStandardize::TautomerScoringFunctions::tautomerScoringVersion);
