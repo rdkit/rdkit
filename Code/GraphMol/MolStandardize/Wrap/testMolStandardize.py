@@ -485,8 +485,8 @@ chlorine	[Cl]
     taut_res = enumerator.Enumerate(m)
     self.assertEqual(len(taut_res.tautomers), 2)
     self.assertEqual(taut_res.modifiedAtoms, (7, 9))
-    self.assertEqual(len(taut_res.modifiedBonds), 7)
-    self.assertEqual(taut_res.modifiedBonds, (7, 8, 9, 10, 11, 12, 14))
+    self.assertEqual(len(taut_res.modifiedBonds), 2)
+    self.assertEqual(taut_res.modifiedBonds, (7, 8))
 
     taut_res = enumerator.Enumerate(m)
     self.assertEqual(len(taut_res.tautomers), 2)
@@ -494,8 +494,8 @@ chlorine	[Cl]
 
     taut_res = enumerator.Enumerate(m)
     self.assertEqual(len(taut_res.tautomers), 2)
-    self.assertEqual(len(taut_res.modifiedBonds), 7)
-    self.assertEqual(taut_res.modifiedBonds, (7, 8, 9, 10, 11, 12, 14))
+    self.assertEqual(len(taut_res.modifiedBonds), 2)
+    self.assertEqual(taut_res.modifiedBonds, (7, 8))
 
   def test15EnumeratorParams(self):
     # Test a structure with hundreds of tautomers.

@@ -1082,13 +1082,13 @@ void testEnumerateDetails() {
     auto tautRes = te.enumerate(*mol);
     TEST_ASSERT(tautRes.size() == 2);
     TEST_ASSERT(tautRes.modifiedAtoms().count() == 2);
-    TEST_ASSERT(tautRes.modifiedBonds().count() == 7);
+    TEST_ASSERT(tautRes.modifiedBonds().count() == 2);
     TEST_ASSERT(tautRes.modifiedAtoms().test(7));
     TEST_ASSERT(tautRes.modifiedAtoms().test(9));
     TEST_ASSERT(!tautRes.modifiedBonds().test(0));
     TEST_ASSERT(tautRes.modifiedBonds().test(7));
     TEST_ASSERT(tautRes.modifiedBonds().test(8));
-    TEST_ASSERT(tautRes.modifiedBonds().test(14));
+    TEST_ASSERT(!tautRes.modifiedBonds().test(14));
   }
   {
     // test the deprecated form
@@ -1109,13 +1109,13 @@ void testEnumerateDetails() {
 #endif
     TEST_ASSERT(tauts.size() == 2);
     TEST_ASSERT(atomsModified.count() == 2);
-    TEST_ASSERT(bondsModified.count() == 7);
+    TEST_ASSERT(bondsModified.count() == 2);
     TEST_ASSERT(atomsModified[7]);
     TEST_ASSERT(atomsModified[9]);
     TEST_ASSERT(!bondsModified[0]);
     TEST_ASSERT(bondsModified[7]);
     TEST_ASSERT(bondsModified[8]);
-    TEST_ASSERT(bondsModified[14]);
+    TEST_ASSERT(!bondsModified[14]);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -1739,6 +1739,48 @@ void testCanonicalizeInvariantAcrossAtomOrder() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testCanonicalizeInvariantAcrossSmilesAndMolBlock() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing canonicalize() invariance across "
+         "alternate input orderings for tautomerperf reproducer"
+      << std::endl;
+
+  std::string smiles = "C=CC(=O)Nc1cnc(CC2CC2)nc1";
+  std::unique_ptr<ROMol> molA{SmilesToMol(smiles)};
+  TEST_ASSERT(molA);
+
+  // Fixed permutation for this 15-atom reproducer to ensure a different
+  // atom order while preserving graph identity.
+  std::vector<unsigned int> perm = {4, 10, 1, 14, 2, 8, 0, 11,
+                                    6, 13, 3, 9, 12, 5, 7};
+  std::unique_ptr<ROMol> molB{MolOps::renumberAtoms(*molA, perm)};
+  TEST_ASSERT(molB);
+
+  CleanupParameters params;
+  params.tautomerRemoveBondStereo = false;
+  params.tautomerRemoveSp3Stereo = false;
+
+  TautomerEnumerator teA(params);
+  TautomerEnumerator teB(params);
+  teA.setMaxTautomers(20);
+  teA.setMaxTransforms(20);
+  teB.setMaxTautomers(20);
+  teB.setMaxTransforms(20);
+
+  std::unique_ptr<ROMol> canonA{teA.canonicalize(*molA)};
+  std::unique_ptr<ROMol> canonB{teB.canonicalize(*molB)};
+  TEST_ASSERT(canonA);
+  TEST_ASSERT(canonB);
+
+  auto smiA = MolToSmiles(*canonA);
+  auto smiB = MolToSmiles(*canonB);
+  if (smiA != smiB) {
+    std::cerr << "FAIL canonical mismatch: " << smiA << " vs " << smiB
+              << std::endl;
+  }
+  TEST_ASSERT(smiA == smiB);
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1760,5 +1802,6 @@ int main() {
   testGithub3755();
   testCanonicalizePreservesNonTautomericBondStereo();
   testCanonicalizeInvariantAcrossAtomOrder();
+  testCanonicalizeInvariantAcrossSmilesAndMolBlock();
   return 0;
 }

@@ -16,6 +16,7 @@
 #include <GraphMol/new_canon.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <sstream>
 #include <unordered_set>
@@ -131,8 +132,15 @@ char encodeBondType(Bond::BondType bt) {
 //
 // Atoms and bonds are iterated in canonical rank order (from `order`),
 // making the key independent of input atom numbering.
+//
+// `collapseAromaticBondOrder` should be false for the normal/stateful keys
+// (the defaults used for init/product/reinserted map keys). We only set it
+// to true in the pre-sanitize, kekulized fast-path dedup checks (`kmolKey`
+// and `perturbedKey`) to avoid representation-dependent aromatic alternation
+// creating false "new" states before sanitization/aromaticity perception.
 std::string getTautomerStateKey(const ROMol &mol,
-                                const CanonicalKeyOrder &order) {
+                                const CanonicalKeyOrder &order,
+                                bool collapseAromaticBondOrder = false) {
   std::string key;
   unsigned int numAtoms = mol.getNumAtoms();
   unsigned int numBonds = mol.getNumBonds();
@@ -156,7 +164,12 @@ std::string getTautomerStateKey(const ROMol &mol,
 
   for (unsigned int pos = 0; pos < numBonds; ++pos) {
     const auto bond = mol.getBondWithIdx(order.bondOrder[pos]);
-    key += encodeBondType(bond->getBondType());
+    if (collapseAromaticBondOrder && bond->getBeginAtom()->getIsAromatic() &&
+        bond->getEndAtom()->getIsAromatic()) {
+      key += '4';
+    } else {
+      key += encodeBondType(bond->getBondType());
+    }
   }
 
   return key;
@@ -171,7 +184,8 @@ std::string getTautomerStateKey(const ROMol &mol,
 std::string getPerturbedStateKey(const std::string &baseKey, const ROMol &mol,
                                  const MatchVectType &match,
                                  const TautomerTransform &transform,
-                                 const CanonicalKeyOrder &order) {
+                                 const CanonicalKeyOrder &order,
+                                 bool collapseAromaticBondOrder = false) {
   // Key format: [H-charge-arom per atom] | [bondtype per bond]
   // Each atom takes 3 chars, separator is 1 char, each bond takes 1 char
   const unsigned int numAtoms = mol.getNumAtoms();
@@ -231,6 +245,12 @@ std::string getPerturbedStateKey(const std::string &baseKey, const ROMol &mol,
 
     // Bond position in key: uses canonical bond rank when ordering is active
     size_t bondPos = bondKeyPos(bond->getIdx());
+
+    if (collapseAromaticBondOrder && bond->getBeginAtom()->getIsAromatic() &&
+        bond->getEndAtom()->getIsAromatic()) {
+      key[bondPos] = '4';
+      continue;
+    }
 
     if (!transform.BondTypes.empty()) {
       key[bondPos] = encodeBondType(transform.BondTypes[i]);
@@ -821,7 +841,9 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #endif
         // Compute the base state key from kmol once, before the match loop.
         // This will be used to compute perturbed keys for each match.
-        std::string kmolKey = getTautomerStateKey(*kmol, canonOrder);
+        // Use aromatic-collapsed keying only in this pre-sanitize fast path
+        // to avoid representation-dependent aromatic alternation duplicates.
+        std::string kmolKey = getTautomerStateKey(*kmol, canonOrder, true);
 
         // loop over transform matches
         for (const auto &match : matches) {
@@ -843,9 +865,12 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           // WITHOUT copying the molecule. This allows us to skip duplicate
           // tautomers before the expensive molecule copy.
           std::string perturbedKey =
+              // Keep aromatic collapsing aligned with kmolKey in this
+              // pre-sanitize duplicate check path only.
               getPerturbedStateKey(kmolKey, *kmol, match, transform,
-                                  canonOrder);
-          if (!preSanitizeStateKeys.insert(perturbedKey).second) {
+                        canonOrder, true);
+          bool isNewPerturbed = preSanitizeStateKeys.insert(perturbedKey).second;
+          if (!isNewPerturbed) {
 #ifdef VERBOSE_ENUMERATION
             std::cout << "Previous tautomer state seen again (pre-copy check)"
                       << std::endl;
@@ -954,7 +979,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 
           // Quick duplicate check using cheap state key (also the map key)
           std::string stateKey = getTautomerStateKey(*product, canonOrder);
-          if (res.d_tautomers.find(stateKey) != res.d_tautomers.end()) {
+          bool stateExists = res.d_tautomers.find(stateKey) != res.d_tautomers.end();
+          if (stateExists) {
 #ifdef VERBOSE_ENUMERATION
             std::cout << "Previous tautomer state seen again (cheap check)"
                       << std::endl;
@@ -1137,11 +1163,140 @@ ROMol *TautomerEnumerator::pickCanonical(
   return res;
 }
 
+namespace {
+
+/// Holds a molecule with canonical atom+bond ordering and the
+/// permutation needed to map back to the original ordering.
+struct NormalizedMolOrder {
+  std::unique_ptr<ROMol> mol;
+  /// normPerm[origIdx] = normalizedIdx
+  std::vector<unsigned int> normPerm;
+};
+
+/// Normalize a molecule to canonical atom+bond ordering so that BFS
+/// traversal through tautomer space is deterministic regardless of
+/// input representation (SMILES vs MolBlock etc.).
+///
+/// Two things must be normalized:
+///   1. Atom ordering — determines SubstructMatch traversal order
+///   2. Bond storage ordering — determines neighbor iteration order
+///
+/// Canon::rankMolAtoms alone is insufficient because it breaks ties for
+/// symmetric atoms (e.g. pyrimidine ring carbons) input-dependently.
+/// MolToSmiles resolves all such ties via its canonical DFS traversal.
+/// We use that traversal ordering, then rebuild the molecule with bonds
+/// added in sorted order to also normalize bond storage.
+NormalizedMolOrder normalizeAtomBondOrder(const ROMol &mol) {
+  NormalizedMolOrder result;
+
+  // Compute canonical atom output order via MolToSmiles. This resolves
+  // symmetric-atom tie-breaking deterministically via canonical DFS.
+  // The SMILES string itself is discarded — we only need the ordering.
+  SmilesWriteParams smiPs;
+  MolToSmiles(mol, smiPs);
+  std::vector<unsigned int> smilesOrder;
+  mol.getProp(common_properties::_smilesAtomOutputOrder, smilesOrder);
+  CHECK_INVARIANT(smilesOrder.size() == mol.getNumAtoms(),
+                  "MolToSmiles _smilesAtomOutputOrder size mismatch");
+
+  // renumberAtoms(mol, order): newMol.atom[i] = mol.atom[order[i]]
+  std::unique_ptr<ROMol> renumbered(MolOps::renumberAtoms(mol, smilesOrder));
+
+  // Rebuild the molecule with bonds in sorted order so that neighbor
+  // traversal (which depends on bond storage order) is deterministic.
+  RWMol sortedMol;
+  for (unsigned int i = 0; i < renumbered->getNumAtoms(); ++i) {
+    sortedMol.addAtom(new Atom(*renumbered->getAtomWithIdx(i)), true, true);
+  }
+  // Sort bonds by (min_endpoint, max_endpoint) to determine addition
+  // order. Preserve original begin/end atom indices on each bond to
+  // maintain double-bond stereo semantics.
+  std::vector<std::pair<std::pair<unsigned int, unsigned int>, unsigned int>>
+      bondKeys;
+  bondKeys.reserve(renumbered->getNumBonds());
+  for (const auto bond : renumbered->bonds()) {
+    unsigned int b = bond->getBeginAtomIdx();
+    unsigned int e = bond->getEndAtomIdx();
+    unsigned int lo = std::min(b, e);
+    unsigned int hi = std::max(b, e);
+    bondKeys.push_back({{lo, hi}, bond->getIdx()});
+  }
+  std::sort(bondKeys.begin(), bondKeys.end());
+  for (const auto &bk : bondKeys) {
+    const Bond *origBond = renumbered->getBondWithIdx(bk.second);
+    Bond *newBond = new Bond(*origBond);
+    // Keep original begin/end — do NOT normalize to (min, max)
+    sortedMol.addBond(newBond, true);
+  }
+  // Note: chirality tags (CW/CCW) are NOT adjusted here even though
+  // bond sorting changes neighbor iteration order. The enumeration
+  // does not depend on chirality, and denormalization restores the
+  // original bond storage order so chirality tags retain their meaning.
+
+  // Build normPerm: smilesOrder[newIdx] = origIdx, so
+  // normPerm[origIdx] = newIdx
+  result.normPerm.resize(mol.getNumAtoms());
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    result.normPerm[smilesOrder[i]] = i;
+  }
+  result.mol.reset(new ROMol(sortedMol));
+  return result;
+}
+
+/// Remap a canonical tautomer (in normalized atom order) back to the
+/// original molecule's atom+bond ordering.
+///
+/// The normalization changed bond storage order (sorted bonds). After
+/// renumbering atoms back, we rebuild using the original molecule's bond
+/// iteration order so that CW/CCW chirality tags retain their original
+/// meaning. Bond PROPERTIES (type, stereo) come from the canonical
+/// tautomer; their POSITION in storage matches the original.
+/// CIP codes are recomputed since bond storage order affects them.
+ROMol *denormalizeAtomBondOrder(const ROMol &canonical, const ROMol &origMol,
+                                const std::vector<unsigned int> &normPerm) {
+  // normPerm[origIdx] = normalizedIdx → use as the permutation directly:
+  // renumberAtoms(mol, perm) puts old-atom perm[i] at new position i.
+  std::unique_ptr<ROMol> reordered{
+      MolOps::renumberAtoms(canonical, normPerm)};
+
+  RWMol fixedMol;
+  for (unsigned int i = 0; i < reordered->getNumAtoms(); ++i) {
+    fixedMol.addAtom(new Atom(*reordered->getAtomWithIdx(i)), true, true);
+  }
+  for (const auto origBond : origMol.bonds()) {
+    unsigned int b = origBond->getBeginAtomIdx();
+    unsigned int e = origBond->getEndAtomIdx();
+    const Bond *canBond = reordered->getBondBetweenAtoms(b, e);
+    if (canBond) {
+      Bond *newBond = new Bond(*canBond);
+      // Use original begin/end to preserve neighbor iteration order
+      newBond->setBeginAtomIdx(b);
+      newBond->setEndAtomIdx(e);
+      fixedMol.addBond(newBond, true);
+    }
+  }
+  auto *res = new ROMol(fixedMol);
+
+  // Recompute CIP codes: bond storage order changed, which affects
+  // neighbor iteration order around chiral atoms.
+  static const bool cleanIt = true;
+  static const bool force = true;
+  MolOps::assignStereochemistry(*res, cleanIt, force);
+
+  return res;
+}
+
+}  // namespace
+
 ROMol *TautomerEnumerator::canonicalize(
     const ROMol &mol, boost::function<int(const ROMol &mol)> scoreFunc) const {
   auto thisCopy = TautomerEnumerator(*this);
   thisCopy.setReassignStereo(false);
-  auto res = thisCopy.enumerate(mol);
+
+  auto normOrder = normalizeAtomBondOrder(mol);
+  const ROMol &molForEnumeration = *normOrder.mol;
+
+  auto res = thisCopy.enumerate(molForEnumeration);
   if (res.empty()) {
     BOOST_LOG(rdWarningLog)
         << "no tautomers found, returning input molecule" << std::endl;
@@ -1153,26 +1308,34 @@ ROMol *TautomerEnumerator::canonicalize(
   // tautomerization only moves H and changes bond orders, never creates or
   // destroys heavy-atom bonds.
   if (!scoreFunc) {
-    scoreFunc = TautomerScoringFunctions::makeOptimizedScorer(mol);
+    scoreFunc = TautomerScoringFunctions::makeOptimizedScorer(molForEnumeration);
   }
-  ROMol *canonical = pickCanonical(res, scoreFunc);
+  std::unique_ptr<ROMol> canonical{pickCanonical(res, scoreFunc)};
+
+  // Remap canonical tautomer back to original atom order.
+  ROMol *result = denormalizeAtomBondOrder(*canonical, mol, normOrder.normPerm);
+
   // quickCopy during enumeration doesn't copy molecule properties or
   // conformers.  Restore both from the original molecule so that
   // downstream code (e.g. InChI generation) that relies on 2D/3D
   // coordinates or mol-level properties works correctly.
-  canonical->updateProps(mol);
+  result->updateProps(mol);
   for (auto confIt = mol.beginConformers(); confIt != mol.endConformers();
        ++confIt) {
-    canonical->addConformer(new Conformer(**confIt), true);
+    result->addConformer(new Conformer(**confIt), true);
   }
-  return canonical;
+  return result;
 }
 
 void TautomerEnumerator::canonicalizeInPlace(
     RWMol &mol, boost::function<int(const ROMol &mol)> scoreFunc) const {
   auto thisCopy = TautomerEnumerator(*this);
   thisCopy.setReassignStereo(false);
-  auto res = thisCopy.enumerate(mol);
+
+  auto normOrder = normalizeAtomBondOrder(mol);
+  const ROMol &molForEnumeration = *normOrder.mol;
+
+  auto res = thisCopy.enumerate(molForEnumeration);
   if (res.empty()) {
     BOOST_LOG(rdWarningLog)
         << "no tautomers found, molecule unchanged" << std::endl;
@@ -1181,9 +1344,13 @@ void TautomerEnumerator::canonicalizeInPlace(
   // When no custom scorer provided, use optimized scoring that pre-filters
   // SubstructTerm patterns once for the input molecule.
   if (!scoreFunc) {
-    scoreFunc = TautomerScoringFunctions::makeOptimizedScorer(mol);
+    scoreFunc = TautomerScoringFunctions::makeOptimizedScorer(molForEnumeration);
   }
-  std::unique_ptr<ROMol> tmp{pickCanonical(res, scoreFunc)};
+  std::unique_ptr<ROMol> canonical{pickCanonical(res, scoreFunc)};
+
+  // Remap canonical tautomer back to original atom order.
+  std::unique_ptr<ROMol> tmp{
+      denormalizeAtomBondOrder(*canonical, mol, normOrder.normPerm)};
 
   TEST_ASSERT(tmp->getNumAtoms() == mol.getNumAtoms());
   TEST_ASSERT(tmp->getNumBonds() == mol.getNumBonds());
