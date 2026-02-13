@@ -501,7 +501,7 @@ inline bool streamWriteProps(
 
   const Dict &dict = props.getDict();
   COUNT_TYPE count = 0;
-  for (const auto &elem : dict.getData()) {
+  for (const auto &elem : dict) {
     if (propnames.find(elem.key) != propnames.end()) {
       if (isSerializable(elem, handlers)) {
         count++;
@@ -514,7 +514,7 @@ inline bool streamWriteProps(
   }
 
   COUNT_TYPE writtenCount = 0;
-  for (const auto &elem : dict.getData()) {
+  for (const auto &elem : dict) {
     if (propnames.find(elem.key) != propnames.end()) {
       if (isSerializable(elem, handlers)) {
         // note - not all properties are serializable, this may be
@@ -638,12 +638,14 @@ inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
   if (reset) {
     dict.reset();  // Clear data before repopulating
   }
-  auto startSz = dict.getData().size();
-  dict.getData().resize(startSz + count);
   for (unsigned index = 0; index < count; ++index) {
-    CHECK_INVARIANT(streamReadProp(ss, dict.getData()[startSz + index],
-                                   dict.getNonPODStatus(), handlers),
+    bool isNonPod = false;
+    auto &pair = dict.appendPair();
+    CHECK_INVARIANT(streamReadProp(ss, pair, isNonPod, handlers),
                     "Corrupted property serialization detected");
+    if (isNonPod) {
+      dict.markNonPOD();
+    }
   }
 
   return static_cast<unsigned int>(count);

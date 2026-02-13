@@ -136,14 +136,37 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   }
 
   //----------------------------------------------------------
-  //! \brief Access to the underlying non-POD containment flag
-  //! This is meant to be used only in bulk updates of _data.
-  bool &getNonPODStatus() { return _hasNonPodData; }
+  //! \brief Returns the number of entries in the dictionary
+  std::size_t size() const { return _data.size(); }
 
-  //----------------------------------------------------------
-  //! \brief Access to the underlying data.
-  const DataType &getData() const { return _data; }
-  DataType &getData() { return _data; }
+  //! \brief Returns whether the dictionary is empty
+  bool empty() const { return _data.empty(); }
+
+  using const_iterator = DataType::const_iterator;
+  const_iterator begin() const { return _data.begin(); }
+  const_iterator end() const { return _data.end(); }
+
+  //! \brief Appends an uninitialized Pair and returns a mutable reference.
+  //! The caller must populate the returned Pair.
+  Pair &appendPair() {
+    _data.emplace_back();
+    return _data.back();
+  }
+
+  //! \brief Marks the dictionary as containing non-POD data.
+  //! Must be called after inserting a non-POD value (string, vector, any).
+  void markNonPOD() { _hasNonPodData = true; }
+
+  //! \brief Returns a const reference to the raw RDValue for a key.
+  //! Throws KeyErrorException if the key is not found.
+  const RDValue &getRawVal(const std::string_view what) const {
+    for (const auto &data : _data) {
+      if (data.key == what) {
+        return data.val;
+      }
+    }
+    throw KeyErrorException(what);
+  }
 
   //----------------------------------------------------------
 

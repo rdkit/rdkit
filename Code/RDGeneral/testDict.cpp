@@ -633,7 +633,7 @@ TEST_CASE("testCustomProps") {
   Foo f(1, 2.f);
   Dict d;
   d.setVal<Foo>("foo", f);
-  RDValue &value = d.getData()[0].val;
+  const RDValue &value = d.getRawVal("foo");
   FooHandler foo_handler;
   std::vector<CustomPropHandler *> handlers = {&foo_handler,
                                                foo_handler.clone()};
