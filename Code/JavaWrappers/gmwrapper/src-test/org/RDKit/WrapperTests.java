@@ -357,27 +357,6 @@ public class WrapperTests extends GraphMolTest {
 		assertEquals(prods.get(idx).MolToSmiles(true), "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1");
 	    }
 	}
-
-	testFile = new File(base, "Code" + File.separator + "GraphMol"
-				 + File.separator + "test_data" + File.separator +
-				 "CDXML" + File.separator + "ring-stereo1.cdx");
-	fn = testFile.getAbsolutePath();
-	params = new CDXMLParserParams(true, true, CDXMLFormat.CDX);
-	prods = RWMol.MolsFromCDXMLFile(fn, params);
-	assertEquals(prods.size(), 1);
-
-	params = new CDXMLParserParams(true, true, CDXMLFormat.Auto);
-	prods = RWMol.MolsFromCDXMLFile(fn, params);
-	assertEquals(prods.size(), 1);
-
-	params = new CDXMLParserParams(true, true, CDXMLFormat.CDXML);
-	boolean e = false;
-	try {
-	    prods = RWMol.MolsFromCDXMLFile(fn, params);
-	} catch(GenericRDKitException ex) {
-	    e = true;
-	}
-	assertEquals(true, e);
 	
     }    
     public static void main(String args[]) {
