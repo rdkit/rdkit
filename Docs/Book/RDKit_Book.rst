@@ -1136,8 +1136,8 @@ This also works with multiple implicit Hs: ``C[Pt@SP1H2]Cl`` and ``C[Pt@SP1]([H]
 Missing ligands
 ^^^^^^^^^^^^^^^
 
-Coordination environments with missing ligands are treated as if the missing ligands were at the end of the ligand ordering.
-For example, this invented complex can be presented with the SMILES ``O[Mn@OH1](Cl)(C)(N)F``.
+Internally coordination environments with missing ligands are treated as if the missing ligands were at the end of the ligand ordering.
+However in SMILES they are treated the same as implicit hydrogens. For example, this invented square pyramidal complex can be presented with the SMILES ``O[Mn@OH28](Cl)(C)(N)F`` which is interpreted as: ``O[Mn@OH28](*)(Cl)(C)(N)F``.
 
 .. |nts_missing1| image:: images/nontetstereo_missing1.png
    :align: middle
