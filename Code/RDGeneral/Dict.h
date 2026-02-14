@@ -146,16 +146,13 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   const_iterator begin() const { return _data.begin(); }
   const_iterator end() const { return _data.end(); }
 
-  //! \brief Appends an uninitialized Pair and returns a mutable reference.
-  //! The caller must populate the returned Pair.
-  Pair &appendPair() {
-    _data.emplace_back();
-    return _data.back();
+  //! \brief Appends a populated Pair to the dictionary.
+  void appendPair(Pair &&pair) {
+    if (pair.val.needsCleanup()) {
+      _hasNonPodData = true;
+    }
+    _data.push_back(std::move(pair));
   }
-
-  //! \brief Marks the dictionary as containing non-POD data.
-  //! Must be called after inserting a non-POD value (string, vector, any).
-  void markNonPOD() { _hasNonPodData = true; }
 
   //! \brief Returns a const reference to the raw RDValue for a key.
   //! Throws KeyErrorException if the key is not found.

@@ -639,13 +639,11 @@ inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
     dict.reset();  // Clear data before repopulating
   }
   for (unsigned index = 0; index < count; ++index) {
-    bool isNonPod = false;
-    auto &pair = dict.appendPair();
-    CHECK_INVARIANT(streamReadProp(ss, pair, isNonPod, handlers),
+    Dict::Pair pair;
+    bool ignored = false;
+    CHECK_INVARIANT(streamReadProp(ss, pair, ignored, handlers),
                     "Corrupted property serialization detected");
-    if (isNonPod) {
-      dict.markNonPOD();
-    }
+    dict.appendPair(std::move(pair));
   }
 
   return static_cast<unsigned int>(count);
