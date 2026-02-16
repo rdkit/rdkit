@@ -347,9 +347,6 @@ void ShapeInput::calcNormalization(const ROMol &mol, int confId) {
       MolTransforms::computeCanonicalTransform(mol.getConformer(confId),
                                                nullptr, false, true,
                                                d_eigenValues->data()));
-  // We need them in descending order.  They are returned ascending.
-  std::sort(d_eigenValues->begin(), d_eigenValues->end(),
-            std::greater<double>());
   d_canonRot.reset(
       new std::array<double, 9>{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0});
   for (unsigned int i = 0, k = 0; i < 3; ++i) {

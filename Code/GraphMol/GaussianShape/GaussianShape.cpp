@@ -81,7 +81,6 @@ RDGeom::Transform3D computeFinalTransform(const ShapeInput &refShape,
 std::array<double, 4> getInitialRotationPlain(
     int index, const ShapeInput &refShape, const ShapeInput &fitShape,
     const RDGeom::Point3D &refDisp, const ShapeOverlayOptions &overlayOpts,
-    std::vector<double> &workingRef, std::vector<double> &workingFit,
     double &score) {
   static const double sinpi_4 = std::sin(std::atan(1.0));
   const static std::vector<std::array<double, 4>> quats{
@@ -93,28 +92,21 @@ std::array<double, 4> getInitialRotationPlain(
       {sinpi_4, 0.0, 0.0, sinpi_4},  {0.0, -sinpi_4, sinpi_4, 0.0},
       {sinpi_4, 0.0, sinpi_4, 0.0},  {0.0, sinpi_4, 0.0, sinpi_4},
       {0.0, -sinpi_4, 0.0, sinpi_4}, {sinpi_4, 0.0, -sinpi_4, 0.0}};
-  auto refCoords = refShape.getCoords();
-  translateShape(refCoords, refDisp);
   bool useColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
-  auto fitCoords = fitShape.getCoords();
-  RDGeom::Transform3D xform;
-  xform.setToIdentity();
-  xform.SetRotationFromQuaternion(quats[index].data());
-  applyTransformToShape(fitCoords, xform);
+  std::array<double, 7> quatTrans{
+      quats[index][0], quats[index][1], quats[index][2], quats[index][3],
+      refDisp[0],      refDisp[1],      refDisp[2]};
   SingleConformerAlignment sca(
-      refCoords.data(), workingRef.data(), refShape.getTypes().data(),
+      refShape.getCoords(), refShape.getTypes().data(),
       &refShape.getCarbonRadii(), refShape.getNumAtoms(),
       refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitCoords.data(), workingFit.data(),
+      refShape.getColorVolume(), fitShape.getCoords(),
       fitShape.getTypes().data(), &fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
-      fitShape.getShapeVolume(), fitShape.getColorVolume(),
+      fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
       overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
       overlayOpts.distCutoff, overlayOpts.nSteps);
-  auto scores = sca.calcScores(refCoords.data(), fitCoords.data(), useColor);
-  std::cout << "     index " << index << " : " << scores[0] << ", " << scores[1]
-            << ", " << scores[2] << ", " << scores[3] << ", " << scores[4]
-            << std::endl;
+  auto scores = sca.calcScores(useColor);
   score = scores[0];
   return quats[index];
 }
@@ -126,7 +118,6 @@ std::array<double, 4> getInitialRotationPlain(
 std::array<double, 4> getInitialRotationWiggle(
     int index, const ShapeInput &refShape, const ShapeInput &fitShape,
     const RDGeom::Point3D &refDisp, const ShapeOverlayOptions &overlayOpts,
-    std::vector<double> &workingRef, std::vector<double> &workingFit,
     double &score) {
   const static double qrot1 = 0.977659114061,
                       qrot = 0.210196709523;  // 0.215 (un-normalized)
@@ -147,29 +138,28 @@ std::array<double, 4> getInitialRotationWiggle(
       {qrot, 0.0, qrot1, 0.0}, {qrot, 0.0, -qrot1, 0.0},
       {0.0, qrot, qrot1, 0.0}, {0.0, -qrot, qrot1, 0.0},
       {0.0, 0.0, qrot1, qrot}, {0.0, 0.0, qrot1, -qrot}};
-  auto refCoords = refShape.getCoords();
-  translateShape(refCoords, refDisp);
   unsigned int start_quat = index * 7;
   unsigned int bestQuat = 0;
   double bestScore = 0.0;
   bool useColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
+  std::array<double, 7> tmpQuatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  SingleConformerAlignment sca(
+      refShape.getCoords(), refShape.getTypes().data(),
+      &refShape.getCarbonRadii(), refShape.getNumAtoms(),
+      refShape.getNumFeatures(), refShape.getShapeVolume(),
+      refShape.getColorVolume(), fitShape.getCoords(),
+      fitShape.getTypes().data(), &fitShape.getCarbonRadii(),
+      fitShape.getNumAtoms(), fitShape.getNumFeatures(),
+      fitShape.getShapeVolume(), fitShape.getColorVolume(), tmpQuatTrans,
+      overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
+      overlayOpts.distCutoff, overlayOpts.nSteps);
 
   for (unsigned int i = start_quat; i < start_quat + 7; ++i) {
-    auto fitCoords = fitShape.getCoords();
-    RDGeom::Transform3D xForm;
-    xForm.SetRotationFromQuaternion(quats[i].data());
-    applyTransformToShape(fitCoords, xForm);
-    SingleConformerAlignment sca(
-        refCoords.data(), workingRef.data(), refShape.getTypes().data(),
-        &refShape.getCarbonRadii(), refShape.getNumAtoms(),
-        refShape.getNumFeatures(), refShape.getShapeVolume(),
-        refShape.getColorVolume(), fitCoords.data(), workingFit.data(),
-        fitShape.getTypes().data(), &fitShape.getCarbonRadii(),
-        fitShape.getNumAtoms(), fitShape.getNumFeatures(),
-        fitShape.getShapeVolume(), fitShape.getColorVolume(),
-        overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-        overlayOpts.distCutoff, overlayOpts.nSteps);
-    auto scores = sca.calcScores(refCoords.data(), fitCoords.data(), useColor);
+    std::array<double, 7> quatTrans{quats[i][0], quats[i][1], quats[i][2],
+                                    quats[i][3], refDisp[0],  refDisp[1],
+                                    refDisp[2]};
+    sca.setQuatTrans(quatTrans);
+    auto scores = sca.calcScores(useColor);
     if (scores[0] > bestScore) {
       bestScore = scores[0];
       bestQuat = i;
@@ -229,12 +219,14 @@ RDGeom::Point3D getInitialTranslation(int index, const ShapeInput &refShape,
 // This is how the PubChem code decides between ROTATE_180_WIGGLE and
 // ROTATE_45.  I have no clue.
 unsigned int calculateQrat(const std::array<double, 3> &eigenValues) {
-  const static double qrat_threshold = 0.7225;  // 0.85*0.85;
-  unsigned int qrat = 1000;
-  unsigned int u_rqyx, u_rqzy;
   double double_ev_oe[3]{eigenValues[1] + eigenValues[2] - eigenValues[0],
                          eigenValues[0] + eigenValues[2] - eigenValues[1],
                          eigenValues[0] + eigenValues[1] - eigenValues[2]};
+  std::sort(double_ev_oe, double_ev_oe + 3, std::greater<double>());
+
+  const static double qrat_threshold = 0.7225;  // 0.85*0.85;
+  unsigned int qrat = 1000;
+  unsigned int u_rqyx, u_rqzy;
   if (double_ev_oe[1] > 0) {
     if (qrat_threshold < (double_ev_oe[1] / double_ev_oe[0])) {
       u_rqyx = 1;
@@ -271,6 +263,7 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
   if (startMode == StartMode::A_LA_PUBCHEM) {
     startMode = decideStartModeFromEigenValues(refShape, fitShape);
   }
+
   switch (startMode) {
     case StartMode::ROTATE_0:
     case StartMode::ROTATE_0_FRAGMENT:
@@ -297,14 +290,10 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
 
   std::array<double, 3> bestScore;
   double bestTotal = -1.0;
-  // For working values of the coordinates.
-  std::vector<double> workingRef(refShape.getCoords());
-  std::vector<double> workingFit(fitShape.getCoords());
 
   // Get together the start transformations.
-  std::vector<std::array<double, 7>> initialQuats;
+  std::vector<std::unique_ptr<SingleConformerAlignment>> aligners;
   std::vector<std::pair<double, unsigned int>> bestScoreForStart;
-  initialQuats.reserve(finalTransIndex * finalRotIndex);
   bestScoreForStart.reserve(finalTransIndex * finalRotIndex);
   unsigned int k = 0;
   for (unsigned int j = 0; j < finalTransIndex; j++) {
@@ -314,15 +303,24 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
       double score = 0.0;
       if (startMode == StartMode::ROTATE_180_WIGGLE) {
         quat = getInitialRotationWiggle(i, refShape, fitShape, refDisp,
-                                        overlayOpts, workingRef, workingFit,
-                                        score);
+                                        overlayOpts, score);
       } else {
-        quat =
-            getInitialRotationPlain(i, refShape, fitShape, refDisp, overlayOpts,
-                                    workingRef, workingFit, score);
+        quat = getInitialRotationPlain(i, refShape, fitShape, refDisp,
+                                       overlayOpts, score);
       }
-      initialQuats.push_back({quat[0], quat[1], quat[2], quat[3], refDisp.x,
-                              refDisp.y, refDisp.z});
+      std::array<double, 7> initQuat{quat[0],   quat[1],   quat[2],  quat[3],
+                                     refDisp.x, refDisp.y, refDisp.z};
+      aligners.emplace_back(std::make_unique<SingleConformerAlignment>(
+          refShape.getCoords(), refShape.getTypes().data(),
+          &refShape.getCarbonRadii(), refShape.getNumAtoms(),
+          refShape.getNumFeatures(), refShape.getShapeVolume(),
+          refShape.getColorVolume(), fitShape.getCoords(),
+          fitShape.getTypes().data(), &fitShape.getCarbonRadii(),
+          fitShape.getNumAtoms(), fitShape.getNumFeatures(),
+          fitShape.getShapeVolume(), fitShape.getColorVolume(), initQuat,
+          overlayOpts.optimMode, overlayOpts.optParam,
+          overlayOpts.useDistCutoff, overlayOpts.distCutoff,
+          overlayOpts.nSteps));
       bestScoreForStart.push_back({score, k});
     }
   }
@@ -330,7 +328,6 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
   // Do it in 2 cycles, a quick optimisation first, followed by an additional
   // longer one for those that look like they're going to win.
   for (unsigned int cycle = 0; cycle < 2; cycle++) {
-    std::cout << "__--------------------------  " << cycle << std::endl;
     std::ranges::sort(bestScoreForStart,
                       [](const auto &p1, const auto &p2) -> bool {
                         return p1.first > p2.first;
@@ -338,50 +335,23 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
     std::vector<std::pair<double, unsigned int>> nextBestScoreForStart;
     nextBestScoreForStart.reserve(finalTransIndex * finalRotIndex);
     for (const auto &[bssf, k] : bestScoreForStart) {
-      std::cout << "case " << k << " with bssf: " << bssf << std::endl;
-      RDGeom::Point3D refDisp{initialQuats[k][4], initialQuats[k][5],
-                              initialQuats[k][6]};
       if (cycle == 1) {
         if (bssf < 0.7 * bestScore[0]) {
-          std::cout << "skipping because " << bssf << " for " << k << " vs "
-                    << 0.7 * bestScore[0] << " from " << bestScore[0]
-                    << std::endl;
+          // std::cout << "skipping because " << bssf << " for " << k << " vs "
+          //           << 0.7 * bestScore[0] << " from " << bestScore[0]
+          //           << std::endl;
           continue;
         }
       }
-      std::vector<double> startFit(fitShape.getCoords());
-      std::vector<double> startRef(refShape.getCoords());
-      // // Move the reference by initialTrans, leaving fit at the origin where
-      // // the rotations work properly.
-      // translateShape(startRef, refDisp);
       std::array<double, 20> outScores;
-      SingleConformerAlignment sca(
-          startRef.data(), workingRef.data(), refShape.getTypes().data(),
-          &refShape.getCarbonRadii(), refShape.getNumAtoms(),
-          refShape.getNumFeatures(), refShape.getShapeVolume(),
-          refShape.getColorVolume(), startFit.data(), workingFit.data(),
-          fitShape.getTypes().data(), &fitShape.getCarbonRadii(),
-          fitShape.getNumAtoms(), fitShape.getNumFeatures(),
-          fitShape.getShapeVolume(), fitShape.getColorVolume(),
-          overlayOpts.optimMode, overlayOpts.optParam,
-          overlayOpts.useDistCutoff, overlayOpts.distCutoff,
-          overlayOpts.nSteps);
-      sca.doOverlay(outScores, initialQuats[k], cycle);
-      std::cout << cycle << " : " << k << " : " << outScores[0] << std::endl;
+      aligners[k]->doOverlay(outScores, cycle);
       nextBestScoreForStart.emplace_back(outScores[0], k);
       if (outScores[0] > bestTotal) {
         bestTotal = outScores[0];
         bestScore =
             std::array<double, 3>{outScores[0], outScores[1], outScores[2]};
-        RDGeom::Transform3D tmp;
-        tmp.SetRotationFromQuaternion(outScores.data() + 9);
-        tmp.SetTranslation(
-            RDGeom::Point3D{outScores[13], outScores[14], outScores[15]});
-        copyTransform(tmp, bestXform);
+        aligners[k]->getFinalQuatTrans(bestXform);
       }
-      initialQuats[k] = std::array<double, 7>{
-          outScores[9],  outScores[10], outScores[11], outScores[12],
-          outScores[13], outScores[14], outScores[15]};
     }
     bestScoreForStart = nextBestScoreForStart;
   }
@@ -474,15 +444,15 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
                                  const ShapeOverlayOptions &overlayOpts) {
   auto refWorking = refShape.getCoords();
   auto fitWorking = fitShape.getCoords();
+  std::array<double, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   SingleConformerAlignment sca(
-      refShape.getCoords().data(), refWorking.data(),
-      refShape.getTypes().data(), &refShape.getCarbonRadii(),
-      refShape.getNumAtoms(), refShape.getNumFeatures(),
-      refShape.getShapeVolume(), refShape.getColorVolume(),
-      fitShape.getCoords().data(), fitWorking.data(),
+      refShape.getCoords(), refShape.getTypes().data(),
+      &refShape.getCarbonRadii(), refShape.getNumAtoms(),
+      refShape.getNumFeatures(), refShape.getShapeVolume(),
+      refShape.getColorVolume(), fitShape.getCoords(),
       fitShape.getTypes().data(), &fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
-      fitShape.getShapeVolume(), fitShape.getColorVolume(),
+      fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
       overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
       overlayOpts.distCutoff, overlayOpts.nSteps);
   bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;

@@ -71,7 +71,6 @@ TEST_CASE("basic alignment") {
                Catch::Matchers::WithinAbs(42.530, 0.005));
   }
   SECTION("shape only") {
-    std::cout << "shape only" << std::endl;
     ROMol cp(*probe);
     overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_ONLY;
     overlayOpts.startMode = GaussianShape::StartMode::ROTATE_180;
@@ -80,8 +79,8 @@ TEST_CASE("basic alignment") {
     tShapeOpts.useColors = false;
     const auto scores = GaussianShape::AlignMolecule(
         *ref, cp, tShapeOpts, tShapeOpts, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.746, 0.005));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.746, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.760, 0.005));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.760, 0.005));
     CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.0, 0.005));
     // Check that a re-score gives the same answer.
     auto rescores = GaussianShape::ScoreMolecule(*ref, cp, shapeOpts, shapeOpts,
@@ -91,7 +90,6 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
   }
   SECTION("shape plus color score") {
-    std::cout << "shape plus color score" << std::endl;
     overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE;
     overlayOpts.startMode = GaussianShape::StartMode::ROTATE_180;
     ROMol cp(*probe);
@@ -107,7 +105,6 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
     CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
   }
-#if 1
   SECTION("shape and color") {
     overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR;
     overlayOpts.startMode = GaussianShape::StartMode::ROTATE_180;
@@ -144,7 +141,6 @@ TEST_CASE("basic alignment") {
                Catch::Matchers::WithinAbs(1.0, 0.005));
   }
   SECTION("shape plus color score a la pubchem") {
-    std::cout << "a la pubchem" << std::endl;
     overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE;
     overlayOpts.startMode = GaussianShape::StartMode::A_LA_PUBCHEM;
     GaussianShape::ShapeInputOptions shapeOpts2;
@@ -153,29 +149,23 @@ TEST_CASE("basic alignment") {
       ROMol cp(*probe);
       const auto scores = GaussianShape::AlignMolecule(
           *ref, cp, shapeOpts2, shapeOpts2, nullptr, overlayOpts);
-      std::cout << "final scores : " << scores[0] << ", " << scores[1] << ", "
-                << scores[2] << std::endl;
       if (acr) {
         CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.498, 0.005));
         CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.758, 0.005));
-        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.236, 0.005));
+        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.227, 0.005));
       } else {
-        CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.488, 0.005));
+        CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.497, 0.005));
         CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.761, 0.005));
-        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.224, 0.005));
+        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.229, 0.005));
       }
       // Check that a re-score gives the same answer.
       const auto rescores = GaussianShape::ScoreMolecule(
           *ref, cp, shapeOpts2, shapeOpts2, overlayOpts);
-      std::cout << "rescores : " << rescores[0] << ", " << rescores[1] << ", "
-                << rescores[2] << std::endl;
       CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
       CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
       CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
     }
-    std::cout << "finished a la pubchem" << std::endl;
   }
-#endif
 }
 
 TEST_CASE("bulk") {
@@ -196,12 +186,10 @@ TEST_CASE("bulk") {
     REQUIRE(probe);
     auto scores = GaussianShape::AlignMolecule(*ref, *probe, shapeOpts,
                                                shapeOpts, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.533, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.534, 0.005));
     CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.818, 0.005));
     CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.249, 0.005));
     const auto rescores = GaussianShape::ScoreMolecule(*ref, *probe);
-    std::cout << "rescores : " << rescores[0] << ", " << rescores[1] << ", "
-              << rescores[2] << std::endl;
     CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
     CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
     CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
@@ -437,8 +425,7 @@ TEST_CASE("Iressa onto Tagrisso") {
   REQUIRE(iressa);
   GaussianShape::ShapeOverlayOptions opts;
   opts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE;
-  opts.startMode = GaussianShape::StartMode::ROTATE_180_WIGGLE;
-  opts.startMode = GaussianShape::StartMode::ROTATE_45;
+  opts.startMode = GaussianShape::StartMode::A_LA_PUBCHEM;
   opts.nSteps = 100;
   GaussianShape::ShapeInputOptions shapeOpts;
   shapeOpts.allCarbonRadii = false;
@@ -453,6 +440,11 @@ TEST_CASE("Iressa onto Tagrisso") {
   CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(rescores[0], 0.005));
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(rescores[1], 0.005));
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(rescores[2], 0.005));
+
+  auto aligned_iressa =
+      "COc1cc2ncnc(Nc3ccc(F)c(Cl)c3)c2cc1OCCCN1CCOCC1 |(2.95666,-4.86065,0.224285;2.16817,-4.33331,-0.840658;1.0456,-3.64209,-0.496206;-0.165194,-4.32698,-0.356249;-1.34027,-3.66628,-0.00610508;-2.49556,-4.34184,0.123688;-3.58348,-3.62212,0.465763;-3.64212,-2.29966,0.691252;-2.46858,-1.65426,0.552527;-2.48033,-0.255576,0.780826;-3.47134,0.723816,0.60931;-4.4401,0.577127,-0.388189;-5.42523,1.54991,-0.558787;-5.44596,2.67416,0.266708;-6.39874,3.60066,0.0897471;-4.48157,2.82535,1.26331;-4.50208,4.21055,2.28533;-3.49677,1.85231,1.43417;-1.27441,-2.27918,0.204412;-0.0607709,-1.58325,0.0654992;1.08997,-2.27354,-0.284292;2.26959,-1.58848,-0.41926;2.56676,-1.07133,-1.70896;3.38643,0.202193,-1.55181;2.62079,1.26827,-0.774572;1.37205,1.59629,-1.45917;0.58242,2.55475,-0.673475;-0.709419,2.89034,-1.41327;-0.418062,3.42549,-2.70483;0.322021,2.48778,-3.48758;1.63845,2.14122,-2.79782)|"_smiles;
+  REQUIRE(aligned_iressa);
+  checkMolsHaveRoughlySameCoords(*iressa, *aligned_iressa);
 }
 
 TEST_CASE("Optimise in place") {
@@ -546,8 +538,8 @@ TEST_CASE("Fragment Mode") {
   auto scores = GaussianShape::AlignShape(refShape, probeShape, &xform, opts);
   // These are close to the values above for starting from the xtal structures.
   CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.285, 0.001));
-  CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.403, 0.001));
-  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.168, 0.001));
+  CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.406, 0.001));
+  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.164, 0.001));
 }
 
 TEST_CASE("custom feature points") {

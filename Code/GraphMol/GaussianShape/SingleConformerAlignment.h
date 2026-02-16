@@ -36,7 +36,6 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// that moves fit to optimise its score with ref.
   /// @param ref - the query molecule as 1D array of 4 * N entries. Each
   /// block of 4 is the coords and atom radius
-  /// @param refTemp - the working copy of ref
   /// @param refTypes - the feature types for molecule ref
   /// @param refCarbonRadii - whether each atom has a carbon radius
   /// @param nRefShape - the number of atoms in ref
@@ -45,8 +44,6 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// @param refColorVol - color overlap of ref with itself
   /// @param fit - the fit molecule as 1D array of 4 * N entries. Each
   /// block of 4 is the coords and atom radius.
-  /// @param fitTemp - the working copy of fit - the final overlaid coordinates
-  /// will be left here
   /// @param fitTypes - the feature types for fit molecule
   /// @param fitCarbonRadii - whether each atom has a carbon radius
   /// @param nFitShape - the number of atoms in fit
@@ -61,17 +58,18 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// carbon.  This makes it faster but less correct.
   /// @param maxIts - maximum number of iterations for optimiser
   /// of optimiser
-  SingleConformerAlignment(const double *ref, double *refTemp,
-                           const int *refTypes,
+  SingleConformerAlignment(const std::vector<double> &ref, const int *refTypes,
                            const boost::dynamic_bitset<> *refCarbonRadii,
                            int nRefShape, int nRefColor, double refShapeVol,
-                           double refColorVol, const double *fit,
-                           double *fitTemp, const int *fitTypes,
+                           double refColorVol, const std::vector<double> &fit,
+                           const int *fitTypes,
                            const boost::dynamic_bitset<> *fitCarbonRadii,
                            int nFitShape, int nFitColor, double fitShapeVol,
-                           double fitColorVol, OptimMode optimMode,
-                           double mixingParam, bool useCutoff,
-                           double distCutoff, unsigned int maxIts);
+                           double fitColorVol,
+                           const std::array<double, 7> &initQuatTrans,
+                           OptimMode optimMode, double mixingParam,
+                           bool useCutoff, double distCutoff,
+                           unsigned int maxIts);
 
   SingleConformerAlignment(const SingleConformerAlignment &other) = delete;
   SingleConformerAlignment(SingleConformerAlignment &&other) = delete;
@@ -81,6 +79,14 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
       delete;
   ~SingleConformerAlignment() = default;
 
+  void setQuatTrans(const std::array<double, 7> &quatTrans) {
+    d_quatTrans = quatTrans;
+  }
+
+  // Get the final transformation by adding the initial transformation
+  // and the optimised final answer.
+  void getFinalQuatTrans(RDGeom::Transform3D &xform) const;
+
   // Calculate the combined, shape, and color tanimotos as appropriate,
   // plus the volume of the shape and color overlaps, in that order.
   // Assumes that ref and fit are already in the correct configurations.
@@ -89,17 +95,25 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   // score even if doing SHAPE_ONLY optimisation, for example.
   std::array<double, 5> calcScores(const double *ref, const double *fit,
                                    bool includeColor = false) const;
+  // This one applies the current quatTrans to the coords and then calculates
+  // the score.
+  std::array<double, 5> calcScores(bool includeColor = false);
   // This one computes the scores from the given overlap volumes.  Color score
   // only calculated if the color volumes are non-zero.
   std::array<double, 5> calcScores(const double shapeOvVol,
                                    const double colorOvVol,
                                    bool includeColor = true) const;
 
+  // Apply the quatTrans to the ref and fit shapes and put the results
+  // into their tmp equivalents.  Ref is translated by the -ve of the
+  // translation, fit is rotated by the rotation bit.
+  void applyQuatTrans(const std::array<double, 7> &quatTrans);
+
   // Calculate the overlap volume between A and B after the given "quaternion"
   // has been applied.  The "quaternion" is 7 elements, the first 4 the
   // quaternion the last 3 the translation that currently form the
   // transformation that overlays B onto A.
-  void calcVolumeAndGradients(const std::array<double, 7> &quat,
+  void calcVolumeAndGradients(const std::array<double, 7> &quatTrans,
                               double &shapeOvlpVol, double &colorOvlpVol,
                               std::array<double, 7> &gradients);
 
@@ -120,39 +134,49 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// 16-19 - not used at present, returned as zeros.
   /// Returns false if it didn't finish with the allowed maximum number of
   /// iterations.
-  bool doOverlay(std::array<double, 20> &scores,
-                 const std::array<double, 7> &initQuatTrans,
-                 unsigned int cycle);
+  bool doOverlay(std::array<double, 20> &scores, unsigned int cycle);
 
   // Find the quaternion and translation that maximises the volume
-  // overlap appropriate to d_optimMode.  Assume it is set to 1,0,0,0,0,0,0
-  // on input. Returns false if it didn't finish with the allowed maximum
-  // number of iterations.
-  bool optimise(std::array<double, 7> &quatTrans, unsigned int maxIters);
+  // overlap appropriate to d_optimMode.  Returns false if it didn't finish with
+  // the allowed maximum number of iterations.
+  bool optimise(unsigned int maxIters);
 
-  const double *d_ref;
-  double *d_refTemp;
+  std::vector<double> d_ref;
+  std::vector<double> d_refTemp;
   const int *d_refTypes;
   const boost::dynamic_bitset<> *d_refCarbonRadii;
   const int d_nRefShape;
   const int d_nRefColor;
   const double d_refShapeVol;
   const double d_refColorVol;
-  const double *d_fit;
-  double *d_fitTemp;
+  std::vector<double> d_fit;
+  std::vector<double> d_fitTemp;
   const int *d_fitTypes;
   const boost::dynamic_bitset<> *d_fitCarbonRadii;
   const int d_nFitShape;
   const int d_nFitColor;
   double d_fitShapeVol;
   double d_fitColorVol;
+  std::array<double, 7> d_initQuatTrans;
   const OptimMode d_optimMode;
   const double d_mixingParam;
   const bool d_useCutoff;
   const double d_distCutoff2;
   const unsigned int d_maxIts;
+  // The quaternion/translation as the optimisation proceeds
+  std::array<double, 7> d_quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  // The step sizes of the quaternion and translation during the
+  // optimisiation.
+  double d_qStepSize{-0.001};
+  double d_tStepSize{-0.01};
 };
 
+// Compute the volume overlap and optionally "quaternion" gradients for the
+// overlap volume of ref and fit, wrt fit.  fit is the original coords of
+// the fit molecule, fitTemp is those subject to any transformation applied
+// by the quaternion we're using to optimise the overlap volume.  If
+// gradients is null, they won't be calculated.  They are assumed to be
+// initialised correctly.
 // This is for the atoms/shape features.
 double calcVolAndGrads(const double *ref, int numRefPts,
                        const boost::dynamic_bitset<> &refCarbonRadii,
