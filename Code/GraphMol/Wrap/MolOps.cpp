@@ -1316,9 +1316,23 @@ struct molops_wrapper {
 \n";
     python::def("FastFindRings", MolOps::fastFindRings, docString.c_str(),
                 python::args("mol"));
+
 #ifdef RDK_USE_URF
+    docString =
+        "Generate Unique Ring Families.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use.\n\
+    - includeDativeBonds: whether or not dative bonds should be included in the ring families finding.\n\
+    - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring families .\n\
+\n\
+  RETURNS: Nothing\n\
+\n";
     python::def("FindRingFamilies", MolOps::findRingFamilies,
-                python::args("mol"), "generate Unique Ring Families");
+                (python::args("mol"), python::arg("includeDativeBonds") = false,
+                 python::arg("includeHydrogenBonds") = false),
+                docString.c_str());
 #endif
 
     // ------------------------------------------------------------------------
