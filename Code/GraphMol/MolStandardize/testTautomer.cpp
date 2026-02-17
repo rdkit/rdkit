@@ -9,6 +9,7 @@
 //
 #include "Tautomer.h"
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/StereoGroup.h>
 #include <GraphMol/test_fixtures.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -1628,6 +1629,70 @@ void testCanonicalizePreservesNonTautomericBondStereo() {
   }
 }
 
+void testCanonicalizePreservesEnhancedStereoGroups() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n "
+         "testCanonicalizePreservesEnhancedStereoGroups"
+      << std::endl;
+
+  {
+    std::unique_ptr<RWMol> mol(
+        SmilesToMol("C[C@H](F)CC(=O)C(C)C[C@H](Cl)C"));
+    TEST_ASSERT(mol);
+
+    std::vector<Atom *> chiral;
+    for (const auto atom : mol->atoms()) {
+      if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+        chiral.push_back(atom);
+      }
+    }
+    std::vector<Atom *> groupAtoms{chiral[0], chiral[1]};
+    std::vector<Bond *> groupBonds;
+    StereoGroup sg(StereoGroupType::STEREO_AND, groupAtoms, groupBonds, 1);
+    sg.setWriteId(1);
+    mol->setStereoGroups({sg});
+
+    std::vector<unsigned int> expectedIdx{groupAtoms[0]->getIdx(),
+                                          groupAtoms[1]->getIdx()};
+    std::sort(expectedIdx.begin(), expectedIdx.end());
+
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = false;
+    params.tautomerRemoveSp3Stereo = false;
+    TautomerEnumerator te(params);
+
+    // canonicalize()
+    {
+      ROMOL_SPTR canon(te.canonicalize(*mol));
+      TEST_ASSERT(canon);
+      const auto &sgs = canon->getStereoGroups();
+      TEST_ASSERT(sgs.size() == 1);
+      TEST_ASSERT(sgs[0].getGroupType() == StereoGroupType::STEREO_AND);
+      std::vector<unsigned int> gotIdx;
+      for (auto a : sgs[0].getAtoms()) {
+        gotIdx.push_back(a->getIdx());
+      }
+      std::sort(gotIdx.begin(), gotIdx.end());
+      TEST_ASSERT(gotIdx == expectedIdx);
+    }
+
+    // canonicalizeInPlace()
+    {
+      RWMol molCopy(*mol);
+      te.canonicalizeInPlace(molCopy);
+      const auto &sgs = molCopy.getStereoGroups();
+      TEST_ASSERT(sgs.size() == 1);
+      TEST_ASSERT(sgs[0].getGroupType() == StereoGroupType::STEREO_AND);
+      std::vector<unsigned int> gotIdx;
+      for (auto a : sgs[0].getAtoms()) {
+        gotIdx.push_back(a->getIdx());
+      }
+      std::sort(gotIdx.begin(), gotIdx.end());
+      TEST_ASSERT(gotIdx == expectedIdx);
+    }
+  }
+}
+
 void testCanonicalizeInvariantAcrossAtomOrder() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing canonicalize() invariance across "
@@ -1801,6 +1866,7 @@ int main() {
   testGithub3430();
   testGithub3755();
   testCanonicalizePreservesNonTautomericBondStereo();
+  testCanonicalizePreservesEnhancedStereoGroups();
   testCanonicalizeInvariantAcrossAtomOrder();
   testCanonicalizeInvariantAcrossSmilesAndMolBlock();
   return 0;

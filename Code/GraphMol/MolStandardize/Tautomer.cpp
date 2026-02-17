@@ -12,10 +12,12 @@
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogUtils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/StereoGroup.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/new_canon.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -57,6 +59,80 @@ unsigned int countAtomStereo(const ROMol &mol) {
     }
   }
   return count;
+}
+
+inline std::uint64_t bondKey(unsigned int b, unsigned int e) {
+  const auto lo = std::min(b, e);
+  const auto hi = std::max(b, e);
+  return (static_cast<std::uint64_t>(lo) << 32) | static_cast<std::uint64_t>(hi);
+}
+
+void copyStereoGroupsByIndices(const ROMol &src, RWMol &dst,
+                               bool preferBondIdxLookup) {
+  // Copy StereoGroups from src to dst, assuming src and dst represent the same
+  // molecular graph and that atom indices refer to the same atoms.
+  //
+  // Bonds in StereoGroups are stored as Bond* pointers. To translate src-group
+  // bonds to dst-group bonds we have two options:
+  // - If dst was constructed with the same bond insertion order as src, then
+  //   bond indices match and we can do O(1) lookup via getBondWithIdx().
+  // - Otherwise we must find the dst bond by its endpoints. We avoid repeated
+  //   getBondBetweenAtoms() searches by building a one-time (minIdx,maxIdx)
+  //   -> Bond* map for dst.
+  //
+  // preferBondIdxLookup selects the first fast-path. Even when true, we still
+  // fall back to endpoint lookup if the index-based lookup fails.
+  //
+  // Why this helper lives here (and not in GraphMol/StereoGroup.*):
+  // this relies on a tautomer-canonicalization-specific invariant --
+  // (identical // atom indices between src/dst)
+  const auto &srcGroups = src.getStereoGroups();
+  if (srcGroups.empty()) {
+    return;
+  }
+
+  // Precompute a fast bond lookup by (minAtomIdx,maxAtomIdx) once.
+  // This avoids repeated adjacency-list searches in getBondBetweenAtoms().
+  std::unordered_map<std::uint64_t, Bond *> bondMap;
+  bondMap.reserve(dst.getNumBonds());
+  for (auto *b : dst.bonds()) {
+    bondMap.emplace(bondKey(b->getBeginAtomIdx(), b->getEndAtomIdx()), b);
+  }
+
+  std::vector<StereoGroup> newGroups;
+  newGroups.reserve(srcGroups.size());
+  for (const auto &group : srcGroups) {
+    std::vector<Atom *> atoms;
+    atoms.reserve(group.getAtoms().size());
+    for (const auto atom : group.getAtoms()) {
+      atoms.push_back(dst.getAtomWithIdx(atom->getIdx()));
+    }
+
+    std::vector<Bond *> bonds;
+    bonds.reserve(group.getBonds().size());
+    for (const auto bond : group.getBonds()) {
+      Bond *dstBond = nullptr;
+      if (preferBondIdxLookup && bond->getIdx() < dst.getNumBonds()) {
+        dstBond = dst.getBondWithIdx(bond->getIdx());
+      }
+      if (!dstBond) {
+        const auto it = bondMap.find(
+            bondKey(bond->getBeginAtomIdx(), bond->getEndAtomIdx()));
+        if (it != bondMap.end()) {
+          dstBond = it->second;
+        }
+      }
+      if (dstBond) {
+        bonds.push_back(dstBond);
+      }
+    }
+
+    StereoGroup newGroup(group.getGroupType(), std::move(atoms), std::move(bonds),
+                         group.getReadId());
+    newGroup.setWriteId(group.getWriteId());
+    newGroups.push_back(std::move(newGroup));
+  }
+  dst.setStereoGroups(std::move(newGroups));
 }
 
 // Canonical ordering for state key computation.
@@ -1207,6 +1283,11 @@ NormalizedMolOrder TautomerEnumerator::normalizeAtomBondOrder(
     // Keep original begin/end — do NOT normalize to (min, max)
     sortedMol.addBond(newBond, true);
   }
+
+  // StereoGroups are not molecule properties and are not copied by default.
+  // Atom indices are preserved by the rebuild, but bond indices are likely NOT
+  // preserved because we add bonds in sorted order.
+  copyStereoGroupsByIndices(*renumbered, sortedMol, false);
   // Note: chirality tags (CW/CCW) are NOT adjusted here even though
   // bond sorting changes neighbor iteration order. The enumeration
   // does not depend on chirality, and denormalization restores the
@@ -1247,6 +1328,10 @@ ROMol *TautomerEnumerator::denormalizeAtomBondOrder(
       fixedMol.addBond(newBond, true);
     }
   }
+
+  // Here we add bonds in origMol order, so bond indices match and we can
+  // (usually) do O(1) bond lookup by index.
+  copyStereoGroupsByIndices(origMol, fixedMol, true);
   auto *res = new ROMol(fixedMol);
 
   // Recompute CIP codes: bond storage order changed, which affects
