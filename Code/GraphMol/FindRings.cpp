@@ -783,207 +783,62 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
     mol.getRingInfo()->reset();
   }
   mol.getRingInfo()->initialize(FIND_RING_TYPE_SSSR);
-
-  // Zero-order bonds are not candidates for rings, and dative bonds and
-  // hydrogen bonds may also be out
-  const int nbnds = mol.getNumBonds();
-  boost::dynamic_bitset<> activeBonds(nbnds);
-  activeBonds.set();
-  for (auto bond : mol.bonds()) {
-    if (auto bt = bond->getBondType();
-        bt == Bond::ZERO || (!includeDativeBonds && isDative(bt)) ||
-        (!includeHydrogenBonds && bt == Bond::HYDROGEN)) {
-      activeBonds[bond->getIdx()] = 0;
-    }
-  }
-
-  const unsigned int nats = mol.getNumAtoms();
-  INT_VECT atomDegrees(nats);
-  INT_VECT atomDegreesWithZeroOrderBonds(nats);
-  for (unsigned int i = 0; i < nats; ++i) {
-    const Atom *atom = mol.getAtomWithIdx(i);
-    int deg = atom->getDegree();
-    atomDegrees[i] = deg;
-    atomDegreesWithZeroOrderBonds[i] = deg;
-    for (const auto bond : mol.atomBonds(atom)) {
-      auto bt = bond->getBondType();
-      if (bt == Bond::ZERO || (!includeHydrogenBonds && bt == Bond::HYDROGEN) ||
-          (!includeDativeBonds && isDative(bt))) {
-        atomDegrees[i]--;
-      }
-    }
-  }
   mol.clearProp(common_properties::extraRings);
 
-  // find the number of fragments in the molecule - we will loop over them
-  RINGINVAR_SET invars;
-  INT_VECT curFrag;
-  boost::dynamic_bitset<> ringAtoms(nats);
-  boost::dynamic_bitset<> ringBonds(nbnds);
-
-  VECT_INT_VECT frags;
-  getMolFrags(mol, frags);
-  // loop over the fragments in a molecule
-  for (const auto &curFrag : frags) {
-    if (curFrag.size() < 3) {
+  RDL_graph *graph = RDL_initNewGraph(mol.getNumAtoms());
+  for (auto cbi : mol.bonds()) {
+    if (auto bt = cbi->getBondType();
+        bt == Bond::ZERO || (!includeDativeBonds && isDative(bt)) ||
+        (!includeHydrogenBonds && bt == Bond::HYDROGEN)) {
       continue;
     }
 
-    // the following is the list of atoms that are useful in the next round of
-    // trimming basically atoms that become degree 0 or 1 because of bond
-    // removals initialized with atoms of degrees 0 and 1
-    std::queue<int> changed;
-    int bndcnt_with_zero_order_bonds = 0;
-    unsigned int nbnds = 0;
-    for (auto atom_idx : curFrag) {
-      bndcnt_with_zero_order_bonds += atomDegreesWithZeroOrderBonds[atom_idx];
+    RDL_addUEdge(graph, cbi->getBeginAtomIdx(), cbi->getEndAtomIdx());
+  }
 
-      int deg = atomDegrees[atom_idx];
+  RDL_data *urfdata = RDL_calculate(graph);
+  if (urfdata == nullptr) {
+    RDL_deleteGraph(graph);
+    mol.getRingInfo()->dp_urfData.reset();
+    throw ValueErrorException("Cannot get URFs");
+  }
 
-      nbnds += deg;
-      if (deg < 2) {
-        changed.push(atom_idx);
-      }
+  RDL_cycle **sssr = nullptr;
+  auto nexpt = RDL_getSSSR(urfdata, &sssr);
+  // std::cerr << "SSSR (" << nexpt << "):" << std::endl;
+  // for (unsigned int i = 0; i < nexpt; ++i) {
+  //   auto ring = sssr[i];
+  //   for (unsigned int j = 0; j < ring->weight; ++j) {
+  //     std::cerr << ring->edges[j][0] << '-' << ring->edges[j][1] << ' ';
+  //   }
+  //   std::cerr << std::endl;
+  // }
+  RDL_deleteCycles(sssr, nexpt);
+
+  auto num_rings = RDL_getNofRCF(urfdata);
+  res.resize(num_rings);
+
+  // std::cerr << "RCF (" << num_rings << "):" << std::endl;
+  for (unsigned int i = 0; i < num_rings; ++i) {
+    RDL_node *nodes = nullptr;
+    unsigned nNodes = RDL_getNodesForRCF(urfdata, i, &nodes);
+    if (nNodes == RDL_INVALID_RESULT) {
+      free(nodes);
+      throw ValueErrorException("Cannot get URF nodes");
     }
 
-    // check to see if this fragment can even have a possible ring
-    CHECK_INVARIANT(bndcnt_with_zero_order_bonds % 2 == 0,
-                    "fragment graph has a dangling degree");
-    bndcnt_with_zero_order_bonds = bndcnt_with_zero_order_bonds / 2;
-    int num_possible_rings = bndcnt_with_zero_order_bonds - curFrag.size() + 1;
-    if (num_possible_rings < 1) {
-      continue;
-    }
+    auto &ring = res.emplace_back(nodes, nodes + nNodes);
+    // for (auto idx : ring) {
+    //   std::cerr << idx << ' ';
+    // }
+    // std::cerr << std::endl;
+    free(nodes);
+  }
+  RDL_deleteGraph(graph);
 
-    CHECK_INVARIANT(nbnds % 2 == 0,
-                    "fragment graph problem when including zero-order bonds");
-    nbnds = nbnds / 2;
-
-    boost::dynamic_bitset<> doneAts(nats);
-    unsigned int nAtomsDone = 0;
-    VECT_INT_VECT fragRes;
-    while (nAtomsDone <= curFrag.size() - 3) {
-      // We can skip the 2 last atoms: if they were in a ring,
-      // we'd have already seen it.
-
-      // trim all bonds that connect to degree 0 and 1 atoms
-      while (!changed.empty()) {
-        auto cand = changed.front();
-        changed.pop();
-        if (!doneAts[cand]) {
-          doneAts.set(cand);
-          ++nAtomsDone;
-          FindRings::trimBonds(cand, mol, changed, atomDegrees, activeBonds);
-        }
-      }
-
-      // all atoms left in the fragment should at least have a degree >= 2
-      // collect all the degree two nodes;
-      INT_VECT d2nodes;
-      FindRings::pickD2Nodes(mol, d2nodes, curFrag, atomDegrees, activeBonds);
-      if (d2nodes.size() > 0) {  // deal with the current degree two nodes
-        // place to record any duplicate rings discovered from the current d2
-        // nodes
-        FindRings::findRingsD2nodes(mol, fragRes, invars, d2nodes, atomDegrees,
-                                    activeBonds, ringBonds, ringAtoms);
-
-        // trim after we have dealt with all the current d2 nodes,
-        for (auto d2i : d2nodes) {
-          doneAts.set(d2i);
-          ++nAtomsDone;
-          FindRings::trimBonds(d2i, mol, changed, atomDegrees, activeBonds);
-        }
-        // end of degree two nodes
-      } else if (nAtomsDone <= curFrag.size() - 3) {
-        // now deal with higher degree nodes
-
-        // this is brutal - we have no degree 2 nodes - find the first
-        // possible degree 3 node
-        int cand = -1;
-        for (auto aidi : curFrag) {
-          unsigned int deg = atomDegrees[aidi];
-          if (deg == 3) {
-            cand = (aidi);
-            break;
-          }
-        }
-
-        // if we did not find a degree 3 node we are done
-        // REVIEW:
-        if (cand == -1) {
-          break;
-        }
-        FindRings::findRingsD3Node(mol, fragRes, invars, cand, atomDegrees,
-                                   activeBonds);
-        doneAts.set(cand);
-        ++nAtomsDone;
-        FindRings::trimBonds(cand, mol, changed, atomDegrees, activeBonds);
-      }  // done with degree 3 node
-    }    // done finding rings in this fragment
-
-    // calculate the cyclomatic number for the fragment:
-    int nexpt = rdcast<int>((nbnds - curFrag.size() + 1));
-    int ssiz = rdcast<int>(fragRes.size());
-
-    // first check that we got at least the number of expected rings
-    if (ssiz < nexpt) {
-      // Issue 3514824: in certain highly fused ring systems, the algorithm
-      // above would miss rings.
-      // for this fix to apply we have to have at least one non-ring bond
-      // that terminates in ring atoms. Find those bonds:
-      std::vector<const Bond *> possibleBonds;
-      for (unsigned int i = 0; i < nbnds; ++i) {
-        if (!ringBonds[i]) {
-          const Bond *bnd = mol.getBondWithIdx(i);
-          if (ringAtoms[bnd->getBeginAtomIdx()] &&
-              ringAtoms[bnd->getEndAtomIdx()]) {
-            possibleBonds.push_back(bnd);
-            break;
-          }
-        }
-      }
-      boost::dynamic_bitset<> deadBonds(mol.getNumBonds());
-      while (possibleBonds.size()) {
-        bool ringFound = FindRings::findRingConnectingAtoms(
-            mol, possibleBonds[0], fragRes, invars, ringBonds, ringAtoms);
-        if (!ringFound) {
-          deadBonds.set(possibleBonds[0]->getIdx(), 1);
-        }
-        possibleBonds.clear();
-        // check if we need to repeat the process:
-        for (unsigned int i = 0; i < nbnds; ++i) {
-          if (!ringBonds[i]) {
-            const Bond *bnd = mol.getBondWithIdx(i);
-            if (!deadBonds[bnd->getIdx()] &&
-                ringAtoms[bnd->getBeginAtomIdx()] &&
-                ringAtoms[bnd->getEndAtomIdx()]) {
-              possibleBonds.push_back(bnd);
-              break;
-            }
-          }
-        }
-      }
-      ssiz = rdcast<int>(fragRes.size());
-      if (ssiz < nexpt) {
-        BOOST_LOG(rdWarningLog)
-            << "WARNING: could not find number of expected rings. Switching to "
-               "an approximate ring finding algorithm."
-            << std::endl;
-        mol.getRingInfo()->reset();
-        fastFindRings(mol);
-        res.clear();
-        res = mol.getRingInfo()->atomRings();
-        return rdcast<int>(res.size());
-      }
-    }
-    // if we have more than expected we need to do some cleanup
-    // otherwise do som clean up work
-    if (ssiz > nexpt) {
-      FindRings::removeExtraRings(fragRes, nexpt, mol);
-    }
-
-    res.insert(res.end(), fragRes.begin(), fragRes.end());
-  }  // done with all fragments
+  if (num_rings > nexpt) {
+    FindRings::removeExtraRings(res, nexpt, mol);
+  }
 
   FindRings::storeRingsInfo(mol, res);
 
