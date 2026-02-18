@@ -4220,6 +4220,7 @@ TEST_CASE("Try not to set wedged bonds as double in the kekulization") {
           Bond::BondType::SINGLE);
     CHECK(m->getBondBetweenAtoms(7, 13)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m->getBondBetweenAtoms(7, 13)->getBondDir() == Bond::BondDir::NONE);
   }
   SECTION("preserve wedged bonds from ctab input") {
     // consider two equivalent structures, with the same numbering
@@ -4273,12 +4274,14 @@ M  END
     REQUIRE(m1);
     Chirality::reapplyMolBlockWedging(*m1);
     MolOps::Kekulize(*m1);
+
     CHECK(m1->getBondBetweenAtoms(0, 6)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m1->getBondBetweenAtoms(0, 6)->getBondDir() ==
           Bond::BondDir::BEGINWEDGE);
     CHECK(m1->getBondBetweenAtoms(4, 6)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m1->getBondBetweenAtoms(4, 6)->getBondDir() == Bond::BondDir::NONE);
 
     auto mblock2 = R"(
   Mrv2311 05242408162D
@@ -4326,12 +4329,14 @@ M  END
     REQUIRE(m2);
     Chirality::reapplyMolBlockWedging(*m2);
     MolOps::Kekulize(*m2);
-    CHECK(m2->getBondBetweenAtoms(0, 6)->getBondType() ==
-          Bond::BondType::DOUBLE);
+
     CHECK(m2->getBondBetweenAtoms(4, 6)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m2->getBondBetweenAtoms(4, 6)->getBondDir() ==
           Bond::BondDir::BEGINDASH);
+    CHECK(m2->getBondBetweenAtoms(0, 6)->getBondType() ==
+          Bond::BondType::DOUBLE);
+    CHECK(m2->getBondBetweenAtoms(0, 6)->getBondDir() == Bond::BondDir::NONE);
   }
   SECTION("preserve wedged bonds from ctab input - fused rings") {
     // consider two equivalent structures, with the same numbering
@@ -4395,12 +4400,14 @@ M  END
     REQUIRE(m1);
     Chirality::reapplyMolBlockWedging(*m1);
     MolOps::Kekulize(*m1);
+
     CHECK(m1->getBondBetweenAtoms(6, 12)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m1->getBondBetweenAtoms(6, 12)->getBondDir() ==
           Bond::BondDir::BEGINWEDGE);
     CHECK(m1->getBondBetweenAtoms(6, 8)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m1->getBondBetweenAtoms(6, 8)->getBondDir() == Bond::BondDir::NONE);
 
     auto mblock2 = R"(
   Mrv2311 05282412342D
@@ -4455,8 +4462,10 @@ M  END
     REQUIRE(m2);
     Chirality::reapplyMolBlockWedging(*m2);
     MolOps::Kekulize(*m2);
+
     CHECK(m2->getBondBetweenAtoms(6, 12)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m2->getBondBetweenAtoms(6, 12)->getBondDir() == Bond::BondDir::NONE);
     CHECK(m2->getBondBetweenAtoms(6, 8)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m2->getBondBetweenAtoms(6, 8)->getBondDir() ==
