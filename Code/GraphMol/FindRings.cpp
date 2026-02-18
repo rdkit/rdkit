@@ -807,48 +807,54 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
 
   RDL_cycle **sssr = nullptr;
   auto nexpt = RDL_getSSSR(urfdata, &sssr);
-  std::cerr << "SSSR (" << nexpt << "):" << std::endl;
-  for (unsigned int i = 0; i < nexpt; ++i) {
-    auto ring = sssr[i];
-    for (unsigned int j = 0; j < ring->weight; ++j) {
-      std::cerr << ring->edges[j][0] << '-' << ring->edges[j][1] << ' ';
-    }
-    std::cerr << std::endl;
-  }
   RDL_deleteCycles(sssr, nexpt);
-
-  std::unordered_map<unsigned int, unsigned int> connection_table;
-  connection_table.reserve(mol.getNumAtoms());
 
   for (unsigned int i = 0; i < RDL_getNofURF(urfdata); ++i) {
     auto it = RDL_getRCyclesForURFIterator(urfdata, i);
     while (!RDL_cycleIteratorAtEnd(it)) {
       auto *cycle = RDL_cycleIteratorGetCycle(it);
 
-      auto minIndex = std::numeric_limits<unsigned int>::max();
-      for (auto edge = cycle->edges; edge != cycle->edges + cycle->weight;
-           ++edge) {
-        connection_table[(*edge)[0]] = (*edge)[1];
-        connection_table[(*edge)[1]] = (*edge)[0];
-        minIndex = std::min(minIndex, std::min((*edge)[0], (*edge)[1]));
-      }
-
       auto &ring = res.emplace_back();
       ring.reserve(cycle->weight);
-      auto idx = minIndex;
-      do {
-        ring.push_back(idx);
-        idx = connection_table[idx];
-      } while (idx != minIndex);
 
-      connection_table.clear();
+      // Edges in a cycle are not returned in iteration order.
+      // so we need to take care of that while we convert them
+      // into an atom ring.
+      boost::dynamic_bitset<> unseen_edges(cycle->weight);
+      unseen_edges.set();
+
+      ring.push_back(cycle->edges[0][0]);
+      ring.push_back(cycle->edges[0][1]);
+      unseen_edges.set(0, false);
+
+      while (ring.size() < cycle->weight) {
+        // Note we don't want to close the cycle: that would
+        // add the initial atom at the end too.
+        for (auto edgeIdx = unseen_edges.find_first();
+             edgeIdx != boost::dynamic_bitset<>::npos;
+             edgeIdx = unseen_edges.find_next(edgeIdx)) {
+          auto edge = cycle->edges[edgeIdx];
+          for (auto j = 0; j < 2; ++j) {
+            if (static_cast<unsigned int>(ring.back()) == edge[j]) {
+              ring.push_back(edge[1 - j]);
+              if (ring.size() == cycle->weight) {
+                unseen_edges.reset();
+              } else {
+                unseen_edges.set(edgeIdx, false);
+              }
+              break;
+            }
+          }
+        }
+      }
+
       RDL_deleteCycle(cycle);
       RDL_cycleIteratorNext(it);
     }
     RDL_deleteCycleIterator(it);
   }
 
-  RDL_deleteGraph(graph);
+  RDL_deleteData(urfdata);
 
   if (res.size() > nexpt) {
     FindRings::removeExtraRings(res, nexpt, mol);
