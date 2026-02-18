@@ -2,7 +2,6 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include <iostream>
-#include <random>
 #include <sstream>
 #include <stdexcept>
 
@@ -45,7 +44,6 @@ TEST_CASE("basic alignment") {
             cp.getConformer().getAtomPos(i).x);
     }
   }
-#if 0
   SECTION("from shape") {
     auto ref_shape = PrepareConformer(*ref);
     std::vector<float> matrix(12, 0.0);
@@ -66,7 +64,6 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.231, 0.005));
   }
   SECTION("no colors") {
-    std::cout << "no oclors" << std::endl;
     std::vector<float> matrix(12, 0.0);
     int refConfId = -1;
     int prbConfId = -1;
@@ -101,7 +98,6 @@ TEST_CASE("basic alignment") {
           Catch::Matchers::WithinAbs(cp2.getConformer().getAtomPos(i).z, 0.05));
     }
   }
-#endif
 }
 
 TEST_CASE("bulk") {
@@ -651,7 +647,7 @@ TEST_CASE("Score No Overlay") {
   }
 }
 
-TEST_CASE("PCIressa onto Tagrisso") {
+TEST_CASE("Iressa onto Tagrisso") {
   // Conformations from PubChem produced by Omega. Iressa rotated and translated
   // by a random amount.  PubChem puts them both in their inertial frame which
   // makes things too easy.
@@ -666,42 +662,4 @@ TEST_CASE("PCIressa onto Tagrisso") {
       AlignMolecule(*tagrisso, *iressa, matrix, -1, -1, true, 0.5, 10, 30);
   CHECK_THAT(sims.first, Catch::Matchers::WithinAbs(0.582, 0.005));
   CHECK_THAT(sims.second, Catch::Matchers::WithinAbs(0.092, 0.005));
-  std::cout << "Aligned iressa : " << MolToCXSmiles(*iressa) << std::endl;
-}
-
-TEST_CASE("PCLOBSTER") {
-  // std::string lobster_file =
-  // "/home/dave/Projects/Lobster/LOBSTER_112024/all_ligands.sdf";
-  std::string lobster_file =
-      "/Users/david/Projects/Lobster/LOBSTER_112024/all_ligands.sdf";
-  auto suppl = SDMolSupplier(lobster_file);
-  std::vector<std::shared_ptr<ROMol>> mols;
-  while (!suppl.atEnd()) {
-    auto mol = suppl.next();
-    mols.emplace_back(mol);
-  }
-  std::cout << "Number of mols " << mols.size() << std::endl;
-  double sum_st = 0.0, sum_ct = 0.0, sum_comb = 0.0;
-  int num = 0;
-  std::mt19937 e2(1);
-  std::uniform_real_distribution<double> unif(0, 1);
-  std::vector<float> matrix(12, 0.0);
-  for (size_t i = 1; i < mols.size(); i++) {
-    for (size_t j = 0; j < i; j++) {
-      if (unif(e2) > 0.001) {
-        continue;
-      }
-      auto [st, ct] = AlignMolecule(*mols[i], *mols[j], matrix);
-      sum_st += st;
-      sum_ct += ct;
-      sum_comb += 0.5 * (st + ct);
-      ++num;
-      if (!(num % 1000)) {
-        std::cout << num << "  " << i << "  " << j << std::endl;
-      }
-    }
-  }
-  std::cout << "Mean combo of " << num << " : " << sum_comb / num << std::endl;
-  std::cout << "Mean st of " << num << " : " << sum_st / num << std::endl;
-  std::cout << "Mean ct of " << num << " : " << sum_ct / num << std::endl;
 }
