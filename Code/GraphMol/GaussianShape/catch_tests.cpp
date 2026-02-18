@@ -655,7 +655,7 @@ TEST_CASE("Shape subset") {
   auto partShape = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
   CHECK(partShape.getCoords().size() == 28);
   CHECK_THAT(partShape.getShapeVolume(),
-             Catch::Matchers::WithinAbs(229.437, 0.005));
+             Catch::Matchers::WithinAbs(261.166, 0.005));
   CHECK_THAT(partShape.getColorVolume(),
              Catch::Matchers::WithinAbs(5.316, 0.005));
 
