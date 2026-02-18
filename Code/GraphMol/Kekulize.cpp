@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/Rings.h>
 #include <GraphMol/SanitException.h>
 #include <RDGeneral/RDLog.h>
@@ -223,11 +224,34 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
 bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
                     boost::dynamic_bitset<> dBndCands,
                     boost::dynamic_bitset<> dBndAdds, INT_VECT done,
-                    unsigned int maxBackTracks) {
+                    const UINT_VECT &atomRanks, unsigned int maxBackTracks) {
   INT_DEQUE astack;
   INT_INT_DEQ_MAP options;
   int lastOpt = -1;
   boost::dynamic_bitset<> localBondsAdded(mol.getNumBonds());
+  boost::dynamic_bitset<> inAllAtms(mol.getNumAtoms());
+  for (int allAtm : allAtms) {
+    inAllAtms.set(allAtm);
+  }
+
+  auto lessByRank = [&atomRanks](int a, int b) {
+    const auto ra = atomRanks.at(static_cast<unsigned int>(a));
+    const auto rb = atomRanks.at(static_cast<unsigned int>(b));
+    return (ra < rb) || (ra == rb && a < b);
+  };
+
+  // Prefer starting traversal at atoms which are the *end* of wedged/dashed
+  // bonds. This heuristic helps avoid assigning double bonds to wedged bonds.
+  boost::dynamic_bitset<> wedgeEndAtoms(mol.getNumAtoms());
+  for (const auto bond : mol.bonds()) {
+    if (bond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
+        bond->getBondDir() == Bond::BondDir::BEGINDASH) {
+      const auto endIdx = bond->getEndAtomIdx();
+      if (endIdx < wedgeEndAtoms.size() && inAllAtms.test(endIdx)) {
+        wedgeEndAtoms.set(endIdx);
+      }
+    }
+  }
 
   // ok the algorithm goes something like this
   // - start with an atom that has been marked aromatic before
@@ -254,10 +278,17 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
       curr = astack.front();
       astack.pop_front();
     } else {
+      curr = -1;
+      bool currIsWedgeEnd = false;
       for (int allAtm : allAtms) {
-        if (std::find(done.begin(), done.end(), allAtm) == done.end()) {
+        if (std::find(done.begin(), done.end(), allAtm) != done.end()) {
+          continue;
+        }
+        const bool isWedgeEnd = wedgeEndAtoms.test(allAtm);
+        if (curr < 0 || (isWedgeEnd && !currIsWedgeEnd) ||
+            (isWedgeEnd == currIsWedgeEnd && lessByRank(allAtm, curr))) {
           curr = allAtm;
-          break;
+          currIsWedgeEnd = isWedgeEnd;
         }
       }
     }
@@ -278,7 +309,9 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
       CHECK_INVARIANT(opts.size() > 0, "");
     } else {
       INT_DEQUE lstack;
-      INT_DEQUE wedgedOpts;
+      std::vector<int> optsV;
+      std::vector<int> wedgedOptsV;
+      std::vector<int> nbrs;
       for (const auto &nbrIdx : boost::make_iterator_range(
                mol.getAtomNeighbors(mol.getAtomWithIdx(curr)))) {
         // ignore if the neighbor has already been dealt with before
@@ -286,10 +319,15 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
           continue;
         }
         // ignore if the neighbor is not part of the fused system
-        if (std::find(allAtms.begin(), allAtms.end(), nbrIdx) ==
-            allAtms.end()) {
+        if (!inAllAtms.test(nbrIdx)) {
           continue;
         }
+        nbrs.push_back(nbrIdx);
+      }
+
+      std::sort(nbrs.begin(), nbrs.end(), lessByRank);
+
+      for (int nbrIdx : nbrs) {
         auto nbrBond = mol.getBondBetweenAtoms(curr, nbrIdx);
 
         // if the neighbor is not on the stack add it
@@ -315,15 +353,23 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
           // bond is wedged. otherwise we append it to the options directly
           if (nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
               nbrBond->getBondDir() == Bond::BondDir::BEGINDASH) {
-            wedgedOpts.push_back(nbrIdx);
+            wedgedOptsV.push_back(nbrIdx);
           } else {
-            opts.push_back(nbrIdx);
+            optsV.push_back(nbrIdx);
           }
         }  // end of curr atoms can have a double bond
       }  // end of looping over neighbors
-      // now append to opts the neighbors connected via wedged bonds,
-      // if any were found
-      opts.insert(opts.end(), wedgedOpts.begin(), wedgedOpts.end());
+
+      // Deterministic option ordering: prefer lower-ranked neighbors,
+      // but keep wedged/dashed bonds at the end.
+      std::sort(optsV.begin(), optsV.end(), lessByRank);
+      std::sort(wedgedOptsV.begin(), wedgedOptsV.end(), lessByRank);
+      for (int v : optsV) {
+        opts.push_back(v);
+      }
+      for (int v : wedgedOptsV) {
+        opts.push_back(v);
+      }
       astack.insert(astack.end(), lstack.begin(), lstack.end());
     }
     // now add a double bond from current to one of the neighbors if we can
@@ -333,6 +379,9 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
         opts.pop_front();
         auto bnd = mol.getBondBetweenAtoms(curr, ncnd);
         bnd->setBondType(Bond::DOUBLE);
+        if (bnd->getBondDir() != Bond::BondDir::NONE) {
+          bnd->setBondDir(Bond::BondDir::NONE);
+        }
 
         // remove current and the neighbor from the dBndCands list
         dBndCands[curr] = 0;
@@ -423,6 +472,7 @@ class QuestionEnumerator {
 bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
                                boost::dynamic_bitset<> dBndCands,
                                INT_VECT &questions,
+                               const UINT_VECT &atomRanks,
                                unsigned int maxBackTracks) {
   boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
   for (int allAtm : allAtms) {
@@ -452,13 +502,14 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
     }
     // try kekulizing again:
     kekulized =
-        kekulizeWorker(mol, allAtms, tCands, dBndAdds, done, maxBackTracks);
+        kekulizeWorker(mol, allAtms, tCands, dBndAdds, done, atomRanks,
+                       maxBackTracks);
   }
   return kekulized;
 }
 
 void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
-                   unsigned int maxBackTracks) {
+                   const UINT_VECT &atomRanks, unsigned int maxBackTracks) {
   // get all the atoms in the ring system
   INT_VECT allAtms;
   Union(arings, allAtms);
@@ -475,11 +526,12 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
   markDbondCands(mol, allAtms, dBndCands, questions, done);
 
   auto kekulized =
-      kekulizeWorker(mol, allAtms, dBndCands, dBndAdds, done, maxBackTracks);
+      kekulizeWorker(mol, allAtms, dBndCands, dBndAdds, done, atomRanks,
+                     maxBackTracks);
   if (!kekulized && questions.size()) {
     // we failed, but there are some dummy atoms we can try permuting.
     kekulized = permuteDummiesAndKekulize(mol, allAtms, dBndCands, questions,
-                                          maxBackTracks);
+                                          atomRanks, maxBackTracks);
   }
   if (!kekulized) {
     // we exhausted all option (or crossed the allowed
@@ -553,6 +605,9 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   if (!foundAromatic) {
     return;
   }
+  UINT_VECT atomRanks;
+  atomRanks.reserve(mol.getNumAtoms());
+  Canon::rankFragmentAtoms(mol, atomRanks, atomsToUse, bondsToUse);
   // if any bonds to kekulize then give it a try:
   if (bondsToUse.any()) {
     // mark atoms at the beginning of wedged bonds
@@ -659,7 +714,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
       VECT_INT_VECT frings(fused.size());
       std::transform(fused.begin(), fused.end(), frings.begin(),
                      [&arings](const int ri) { return arings[ri]; });
-      kekulizeFused(mol, frings, maxBackTracks);
+      kekulizeFused(mol, frings, atomRanks, maxBackTracks);
       int rix;
       for (rix = 0; rix < cnrs; ++rix) {
         if (!fusDone[rix]) {
