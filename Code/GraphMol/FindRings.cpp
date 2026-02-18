@@ -26,7 +26,6 @@ using RINGINVAR = boost::dynamic_bitset<>;
 using RINGINVAR_SET = std::set<RINGINVAR>;
 using RINGINVAR_INT_VECT_MAP = std::map<RINGINVAR, std::vector<int>>;
 
-#ifdef RDK_USE_URF
 namespace {
 using namespace RDKit;
 
@@ -112,7 +111,6 @@ void initRingFamilies(const ROMol &mol, bool includeDativeBonds,
 }
 
 }  // namespace
-#endif
 
 namespace RingUtils {
 constexpr size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
@@ -1080,8 +1078,6 @@ void fastFindRings(const ROMol &mol) {
   FindRings::storeRingsInfo(mol, res);
 }
 
-#ifdef RDK_USE_URF
-
 void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
                       bool includeHydrogenBonds) {
   if (!mol.getRingInfo()->isInitialized()) {
@@ -1120,13 +1116,6 @@ void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
     free(edges);
   }
 }
-#else
-void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
-                      bool includeHydrogenBonds) {
-  BOOST_LOG(rdErrorLog)
-      << "This version of the RDKit was built without URF support" << std::endl;
-}
-#endif
 }  // namespace MolOps
 
 }  // namespace RDKit

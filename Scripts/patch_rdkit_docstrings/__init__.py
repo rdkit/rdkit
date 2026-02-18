@@ -1435,6 +1435,7 @@ class FixSignatures:
         python_include_path = f"-I{self.python_include_path}" if self.python_include_path else ""
         rdkit_code = os.path.join(self.cpp_source_path, "Code")
         rdkit_external = os.path.join(self.cpp_source_path, "External")
+        ringdecomposerlib_include_path = os.path.join(rdkit_external, "RingFamilies/RingDecomposerLib/src/RingDecomposerLib")
         user_clang_flags = " " + self.user_clang_flags if self.user_clang_flags else ""
         rdk_build_defs = self.get_rdk_build_flags()
         qt_include_dirs = self.get_include_flags_from_include_path(os.environ.get("QT_INCLUDE_DIRS", None))
@@ -1442,8 +1443,9 @@ class FixSignatures:
         avalon_include_dir = os.path.abspath(str(max(rdkit_external_path.rglob("AvalonTools/ava-formake-AvalonToolkit_*/src/main/C/include"))))
 
         clang_flags = (
-            f"-I{self.include_path} {python_include_path} -I{rdkit_code} "
-            f"-I{rdkit_external} -I{avalon_include_dir} -I. -I..{qt_include_dirs}"
+            f"-I{ringdecomposerlib_include_path} -I{self.include_path} "
+            f"{python_include_path} -I{rdkit_code} -I{rdkit_external} "
+            f"-I{avalon_include_dir} -I. -I..{qt_include_dirs}"
             f" {rdk_build_defs} {self.clang_flags}{user_clang_flags}"
         ).strip().split()
         self.clang_worker_data = ClangWorkerData(clang_flags)

@@ -267,7 +267,6 @@ void RingInfo::initFusedRings() {
   }
 }
 
-#ifdef RDK_USE_URF
 unsigned int RingInfo::numRingFamilies() const {
   PRECONDITION(df_init, "RingInfo not initialized");
   return d_atomRingFamilies.size();
@@ -295,8 +294,6 @@ void RingInfo::resetRingFamilies() {
   dp_urfData.reset();
 }
 
-#endif
-
 void RingInfo::initialize(RDKit::FIND_RING_TYPE ringType) {
   df_init = true;
   df_find_type_type = ringType;
@@ -311,9 +308,8 @@ void RingInfo::reset() {
   d_bondMembers.clear();
   d_atomRings.clear();
   d_bondRings.clear();
-#ifdef RDK_USE_URF
+
   resetRingFamilies();
-#endif
 }
 void RingInfo::preallocate(unsigned int numAtoms, unsigned int numBonds) {
   d_atomMembers.resize(numAtoms);
