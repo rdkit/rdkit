@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Chem.MolStandardize import rdMolStandardize
-from rdkit.Chem import rdCIPLabeler
+from rdkit.Chem import inchi, rdCIPLabeler
 from rdkit.Chem.rdchem import Atom
 from rdkit.Geometry import rdGeometry as geom
 
@@ -1872,11 +1872,8 @@ M  END
       ctaut = enumerator.Canonicalize(m2, score_func2)
       self.assertEqual(Chem.MolToSmiles(ctaut), Chem.CanonSmiles("C1(=CCCCC1)O"))
 
+  @unittest.skipUnless(inchi.INCHI_AVAILABLE, 'Inchi required')
   def testTautomerCanonicalizeNoInchiBondStereoFrom2DCoords(self):
-    try:
-      from rdkit.Chem import inchi
-    except ImportError:
-      raise unittest.SkipTest("InChI support not available")
 
     molblock = """
   ChemDraw02102613032D
