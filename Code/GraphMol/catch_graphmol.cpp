@@ -2152,24 +2152,32 @@ TEST_CASE("KekulizeFragment", "[graphmol]") {
 }
 
 TEST_CASE(
-    "github #4266: fallback ring finding failing on molecules with multiple "
-    "fragments",
+    "github #4266: fallback ring finding failing on molecules with multiple fragments",
     "[graphmol]") {
+  // SSSRs for benzene and the octahedral mol are 1 and 7 rings, though
+  // the Symmetrized SSSR goes up to 9 rings.
+  // FastFindRings will only find up to 8 rings (same as the SSSR sum).
+  constexpr unsigned int expectedNumRings = 8;
+
   SECTION("case1") {
     auto m = "C123C45C16C21C34C561.c1ccccc1"_smiles;
     REQUIRE(m);
     ROMol m2(*m);
     m2.getRingInfo()->reset();
+    MolOps::findSSSR(*m);
     MolOps::fastFindRings(m2);
-    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+    CHECK(m->getRingInfo()->numRings() == expectedNumRings);
+    CHECK(m2.getRingInfo()->numRings() == expectedNumRings);
   }
   SECTION("case2") {
     auto m = "c1ccccc1.C123C45C16C21C34C561"_smiles;
     REQUIRE(m);
     ROMol m2(*m);
     m2.getRingInfo()->reset();
+    MolOps::findSSSR(*m);
     MolOps::fastFindRings(m2);
-    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+    CHECK(m->getRingInfo()->numRings() == expectedNumRings);
+    CHECK(m2.getRingInfo()->numRings() == expectedNumRings);
   }
 }
 

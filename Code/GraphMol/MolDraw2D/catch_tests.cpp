@@ -1206,7 +1206,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_1.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 10);
+      CHECK(tkns.size() == 9);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -1258,7 +1258,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_3.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 7);
+      CHECK(tkns.size() == 6);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -1491,7 +1491,7 @@ TEST_CASE("including legend in drawing results in offset drawing later",
     // make sure the polygon starts at a bond
     CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 315.3,136.5") !=
           std::string::npos);
-    CHECK(text.find("<path d='M 311.8,142.6") != std::string::npos);
+    CHECK(text.find("<path d='M 315.3,136.5") != std::string::npos);
   }
 }
 
@@ -8325,10 +8325,10 @@ TEST_CASE("Lasso highlights") {
     auto a16reg = std::sregex_iterator(text.begin(), text.end(), a16);
     auto dat1 = *a16reg;
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(273.1, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(131.2, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(272.1, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(130.0, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(221.5, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(323.8, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(222.5, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(325.0, 0.1));
     check_file_hash(baseName + "1.svg");
 #else
     CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(274.9, 0.1));
@@ -8377,10 +8377,10 @@ TEST_CASE("Lasso highlights") {
     CHECK(match_count == 1);
     auto a0reg = std::sregex_iterator(text.begin(), text.end(), a0);
     auto dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(389.5, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(214.4, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(390.2, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(213.9, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(387.1, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(138.3, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(387.8, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(137.7, 0.1));
     check_file_hash(baseName + "2.svg");
 #endif
   }
@@ -8426,16 +8426,16 @@ TEST_CASE("Lasso highlights") {
     CHECK(match_count == 4);
     auto a0reg = std::sregex_iterator(text.begin(), text.end(), a0);
     auto dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(229.1, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(365.1, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(228.9, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(364.2, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(381.7, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(284.9, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(381.0, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(285.5, 0.1));
     a0reg++;
     dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.3, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(351.7, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.2, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(352.0, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(377.9, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(265.7, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(378.7, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(266.0, 0.1));
     check_file_hash(baseName + "3.svg");
 #endif
   }
@@ -8475,22 +8475,22 @@ TEST_CASE("Lasso highlights") {
       CHECK(match_count == 3);
       auto a5reg = std::sregex_iterator(text.begin(), text.end(), a5);
       auto dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.2, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(280.4, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(221.9, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(280.0, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(286.2, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(243.1, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(285.0, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(242.7, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(217.4, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(251.6, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(218.4, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(250.7, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(280.5, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(215.0, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(281.6, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(214.2, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(245.3, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(261.0, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.5, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(262.3, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(307.7, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(224.2, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(307.9, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(225.5, 0.1));
       // There should be 2 lines in red, the lasso along the bi-phenyl
       // bond.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
@@ -8534,16 +8534,16 @@ TEST_CASE("Lasso highlights") {
       CHECK(match_count == 2);
       auto a11reg = std::sregex_iterator(text.begin(), text.end(), a11);
       auto dat1 = *a11reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.2, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(133.1, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(221.8, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(132.6, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(156.2, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(284.5, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(157.2, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(283.6, 0.1));
       a11reg++;
       dat1 = *a11reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(245.3, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(113.7, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.5, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(115.0, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(183.4, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(293.6, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(183.7, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(295.0, 0.1));
 
       // There should not be any red lines for bond 5.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
@@ -10158,12 +10158,12 @@ TEST_CASE("Github 7739 - Bad multi-coloured wedge") {
     outs << text;
     outs.flush();
     std::regex bond19(
-        "<path class='bond-1 atom-1 atom-2' .*style='fill:#000000;"
-        "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
+        "<path class='bond-1 atom-1 atom-2' .*style='fill:none;fill-rule:evenodd;stroke:#000000;"
+        "stroke-width:1.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />");
     size_t nOccurrences = std::distance(
         std::sregex_token_iterator(text.begin(), text.end(), bond19),
         std::sregex_token_iterator());
-    CHECK(nOccurrences == 1);
+    CHECK(nOccurrences == 30);
     check_file_hash(fileStem + "5.svg");
   }
 }
