@@ -24,6 +24,10 @@ class Sp2Bond : public Configuration {
 
   void setPrimaryLabel(Descriptor desc) override;
 
+  bool hasPrimaryLabel() const override;
+
+  void resetPrimaryLabel() const override;
+
   Descriptor label(const Rules &comp) override;
 
   Descriptor label(Node *root1, Digraph &digraph, const Rules &comp) override;
@@ -35,7 +39,8 @@ class Sp2Bond : public Configuration {
   // so we cache CIS/TRANS we found.
   Bond::BondStereo d_cfg;
 
-};  // namespace CIPLabeler
+  std::vector<unsigned int> d_ranked_anchors;
+};
 
 }  // namespace CIPLabeler
 }  // namespace RDKit

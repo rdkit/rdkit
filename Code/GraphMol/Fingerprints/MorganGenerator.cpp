@@ -9,10 +9,12 @@
 //
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <RDGeneral/BoostStartInclude.h>
@@ -23,6 +25,11 @@
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace MorganFingerprint {
@@ -45,6 +52,16 @@ std::string MorganAtomInvGenerator::infoString() const {
   return "MorganInvariantGenerator includeRingMembership=" +
          std::to_string(df_includeRingMembership);
 }
+void MorganAtomInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "MorganAtomInvGenerator");
+  pt.put("includeRingMembership", df_includeRingMembership);
+  AtomInvariantsGenerator::toJSON(pt);
+}
+void MorganAtomInvGenerator::fromJSON(const boost::property_tree::ptree &pt) {
+  df_includeRingMembership =
+      pt.get<bool>("includeRingMembership", df_includeRingMembership);
+  AtomInvariantsGenerator::fromJSON(pt);
+}
 
 MorganAtomInvGenerator *MorganAtomInvGenerator::clone() const {
   return new MorganAtomInvGenerator(df_includeRingMembership);
@@ -57,6 +74,36 @@ MorganFeatureAtomInvGenerator::MorganFeatureAtomInvGenerator(
 
 std::string MorganFeatureAtomInvGenerator::infoString() const {
   return "MorganFeatureInvariantGenerator";
+}
+void MorganFeatureAtomInvGenerator::toJSON(
+    boost::property_tree::ptree &pt) const {
+  pt.put("type", "MorganFeatureAtomInvGenerator");
+  if (dp_patterns) {
+    boost::property_tree::ptree patternsNode;
+    for (const auto &pattern : *dp_patterns) {
+      boost::property_tree::ptree patternNode;
+      std::string smarts = MolToSmarts(*pattern);
+      patternNode.put("", smarts);
+      patternsNode.push_back(std::make_pair("", patternNode));
+    }
+    pt.add_child("patternSMARTS", patternsNode);
+  }
+  AtomInvariantsGenerator::toJSON(pt);
+}
+void MorganFeatureAtomInvGenerator::fromJSON(
+    const boost::property_tree::ptree &pt) {
+  if (pt.get_child_optional("patternSMARTS")) {
+    const auto &patternsNode = pt.get_child("patternSMARTS");
+    dp_patterns = new std::vector<const ROMol *>();
+    for (const auto &patternNode : patternsNode) {
+      std::string smarts = patternNode.second.get_value<std::string>();
+      ROMol *patternMol = SmartsToMol(smarts);
+      if (patternMol) {
+        dp_patterns->push_back(patternMol);
+      }
+    }
+  }
+  AtomInvariantsGenerator::fromJSON(pt);
 }
 
 MorganFeatureAtomInvGenerator *MorganFeatureAtomInvGenerator::clone() const {
@@ -90,13 +137,14 @@ std::vector<std::uint32_t> *MorganBondInvGenerator::getBondInvariants(
       } else {
         auto bondStereo = static_cast<int32_t>(bond->getStereo());
         if (!Chirality::getUseLegacyStereoPerception()) {
-          // if we aren't using legacy stereo, we need to compute the CIP codes
+          // if we aren't using legacy stereo, we need to compute the CIP
+          // codes
           if (!mol.hasProp(common_properties::_CIPComputed)) {
             CIPLabeler::assignCIPLabels(const_cast<ROMol &>(mol));
           }
 
-          // for backwards compatibility, if we are E or Z, set those, otherwise
-          // just use whatever the bondStereo is set to.
+          // for backwards compatibility, if we are E or Z, set those,
+          // otherwise just use whatever the bondStereo is set to.
           std::string cipCode;
           if (bond->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
             if (cipCode == "E") {
@@ -124,6 +172,17 @@ std::string MorganBondInvGenerator::infoString() const {
          std::to_string(df_useBondTypes) +
          " useChirality=" + std::to_string(df_useChirality);
 }
+void MorganBondInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "MorganBondInvGenerator");
+  pt.put("useBondTypes", df_useBondTypes);
+  pt.put("useChirality", df_useChirality);
+  BondInvariantsGenerator::toJSON(pt);
+}
+void MorganBondInvGenerator::fromJSON(const boost::property_tree::ptree &pt) {
+  df_useBondTypes = pt.get<bool>("useBondTypes", df_useBondTypes);
+  df_useChirality = pt.get<bool>("useChirality", df_useChirality);
+  BondInvariantsGenerator::fromJSON(pt);
+}
 
 MorganBondInvGenerator *MorganBondInvGenerator::clone() const {
   return new MorganBondInvGenerator(df_useBondTypes, df_useChirality);
@@ -139,11 +198,24 @@ std::string MorganArguments::infoString() const {
          std::to_string(df_onlyNonzeroInvariants) +
          " radius=" + std::to_string(d_radius);
 }
+void MorganArguments::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "MorganArguments");
+  pt.put("onlyNonzeroInvariants", df_onlyNonzeroInvariants);
+  pt.put("radius", d_radius);
+  FingerprintArguments::toJSON(pt);
+}
+void MorganArguments::fromJSON(const boost::property_tree::ptree &pt) {
+  d_radius = pt.get<std::uint32_t>("radius", d_radius);
+  df_onlyNonzeroInvariants =
+      pt.get<bool>("onlyNonzeroInvariants", df_onlyNonzeroInvariants);
+  FingerprintArguments::fromJSON(pt);
+}
 
 template <typename OutputType>
 void MorganAtomEnv<OutputType>::updateAdditionalOutput(
     AdditionalOutput *additionalOutput, size_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
+  PRECONDITION(d_mol, "bad mol pointer");
   if (additionalOutput->bitInfoMap) {
     (*additionalOutput->bitInfoMap)[bitId].emplace_back(d_atomId, d_layer);
   }
@@ -152,6 +224,21 @@ void MorganAtomEnv<OutputType>::updateAdditionalOutput(
   }
   if (additionalOutput->atomToBits) {
     (*additionalOutput->atomToBits)[d_atomId].push_back(bitId);
+  }
+  if (additionalOutput->atomsPerBit) {
+    std::vector<int> atomsInvolved;
+    atomsInvolved.push_back(d_atomId);
+    if (d_layer > 0) {
+      const auto dm = MolOps::getDistanceMat(*d_mol);
+      for (unsigned int i = 0; i < d_mol->getNumAtoms(); ++i) {
+        if (static_cast<unsigned int>(dm[d_atomId * d_mol->getNumAtoms() + i] +
+                                      .1) <= d_layer &&
+            i != d_atomId) {
+          atomsInvolved.push_back(i);
+        }
+      }
+    }
+    (*additionalOutput->atomsPerBit)[bitId].push_back(std::move(atomsInvolved));
   }
 }
 
@@ -166,12 +253,6 @@ OutputType MorganAtomEnv<OutputType>::getBitId(
 ) const {
   return d_code;
 }  // namespace MorganFingerprint
-
-template <typename OutputType>
-MorganAtomEnv<OutputType>::MorganAtomEnv(const std::uint32_t code,
-                                         const unsigned int atomId,
-                                         const unsigned int layer)
-    : d_code(code), d_atomId(atomId), d_layer(layer) {}
 
 template <typename OutputType>
 std::vector<AtomEnvironment<OutputType> *>
@@ -273,7 +354,7 @@ MorganEnvGenerator<OutputType>::getEnvironments(
     if (includeAtoms[i]) {
       if (!morganArguments->df_onlyNonzeroInvariants || currentInvariants[i]) {
         result.push_back(
-            new MorganAtomEnv<OutputType>(currentInvariants[i], i, 0));
+            new MorganAtomEnv<OutputType>(currentInvariants[i], i, 0, &mol));
       }
     }
   }
@@ -377,7 +458,7 @@ MorganEnvGenerator<OutputType>::getEnvironments(
             (*atomInvariants)[std::get<2>(*iter)]) {
           if (includeAtoms[std::get<2>(*iter)]) {
             result.push_back(new MorganAtomEnv<OutputType>(
-                std::get<1>(*iter), std::get<2>(*iter), layer + 1));
+                std::get<1>(*iter), std::get<2>(*iter), layer + 1, &mol));
             neighborhoods.insert(std::get<0>(*iter));
           }
         }
@@ -403,6 +484,18 @@ MorganEnvGenerator<OutputType>::getEnvironments(
 template <typename OutputType>
 std::string MorganEnvGenerator<OutputType>::infoString() const {
   return "MorganEnvironmentGenerator";
+}
+template <typename OutputType>
+void MorganEnvGenerator<OutputType>::toJSON(
+    boost::property_tree::ptree &pt) const {
+  pt.put("type", "MorganEnvGenerator");
+  AtomEnvironmentGenerator<OutputType>::toJSON(pt);
+}
+
+template <typename OutputType>
+void MorganEnvGenerator<OutputType>::fromJSON(
+    const boost::property_tree::ptree &pt) {
+  AtomEnvironmentGenerator<OutputType>::fromJSON(pt);
 }
 
 template <typename OutputType>
@@ -451,6 +544,9 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
 }
 
 template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
+getMorganGenerator(const MorganArguments &, AtomInvariantsGenerator *,
+                   BondInvariantsGenerator *, bool, bool);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *
 getMorganGenerator(const MorganArguments &, AtomInvariantsGenerator *,
                    BondInvariantsGenerator *, bool, bool);
 

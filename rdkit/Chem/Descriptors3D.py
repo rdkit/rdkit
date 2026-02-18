@@ -210,10 +210,11 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
 
     """
 
-
-
 from rdkit.Chem.Descriptors import _isCallable
+
 descList = []
+
+
 def _setupDescriptors(namespace):
   global descList
   descList.clear()
@@ -225,8 +226,9 @@ def _setupDescriptors(namespace):
 
 _setupDescriptors(locals())
 
-def CalcMolDescriptors3D(mol, confId=None):
-    """
+
+def CalcMolDescriptors3D(mol, confId=-1):
+  """
     Compute all 3D descriptors of a molecule
     
     Arguments:
@@ -241,10 +243,10 @@ def CalcMolDescriptors3D(mol, confId=None):
     raises a ValueError 
         If the molecule does not have conformers
     """
-    if mol.GetNumConformers() == 0:
-        raise ValueError('Computing 3D Descriptors requires a structure with at least 1 conformer')
-    else:
-        vals_3D = {}
-        for nm,fn in descList:
-           vals_3D[nm] = fn(mol)
-        return vals_3D
+  if mol.GetNumConformers() == 0:
+    raise ValueError('Computing 3D Descriptors requires a structure with at least 1 conformer')
+  else:
+    vals_3D = {}
+    for nm, fn in descList:
+      vals_3D[nm] = fn(mol, confId=confId)
+    return vals_3D

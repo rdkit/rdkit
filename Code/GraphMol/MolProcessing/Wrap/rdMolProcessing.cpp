@@ -76,7 +76,8 @@ BOOST_PYTHON_MODULE(rdMolProcessing) {
       .def_readwrite("confId2D", &GeneralMolSupplier::SupplierOptions::confId2D,
                      "used for TDT files")
       .def_readwrite("confId3D", &GeneralMolSupplier::SupplierOptions::confId3D,
-                     "used for TDT files");
+                     "used for TDT files")
+      .def("__setattr__", &safeSetattr);
 
   python::def(
       "GetFingerprintsForMolsInFile",

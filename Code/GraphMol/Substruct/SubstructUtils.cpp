@@ -130,6 +130,10 @@ bool atomCompat(const Atom *a1, const Atom *a2,
   PRECONDITION(a2, "bad atom");
   // std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 <<
   // " " << a2->getIdx() << std::endl;
+
+  if (ps.extraAtomCheckOverridesDefaultCheck && ps.extraAtomCheck) {
+    return ps.extraAtomCheck(*a1, *a2);
+  }
   bool res;
   if (ps.useQueryQueryMatches && a1->hasQuery() && a2->hasQuery()) {
     res = static_cast<const QueryAtom *>(a1)->QueryMatch(
@@ -137,8 +141,16 @@ bool atomCompat(const Atom *a1, const Atom *a2,
   } else {
     res = a1->Match(a2);
   }
-  if (res && !ps.atomProperties.empty()) {
-    res = propertyCompat(a1, a2, ps.atomProperties);
+  if (!res) {
+    return false;
+  }
+  if (!ps.atomProperties.empty()) {
+    if (!propertyCompat(a1, a2, ps.atomProperties)) {
+      return false;
+    }
+  }
+  if (ps.extraAtomCheck && !ps.extraAtomCheck(*a1, *a2)) {
+    return false;
   }
 
   return res;
@@ -167,6 +179,11 @@ bool bondCompat(const Bond *b1, const Bond *b2,
                 const SubstructMatchParameters &ps) {
   PRECONDITION(b1, "bad bond");
   PRECONDITION(b2, "bad bond");
+
+  if (ps.extraBondCheckOverridesDefaultCheck && ps.extraBondCheck) {
+    return ps.extraBondCheck(*b1, *b2);
+  }
+
   bool res;
 
   auto isConjugatedSingleOrDoubleBond([](const Bond *bond) {
@@ -202,20 +219,25 @@ bool bondCompat(const Bond *b1, const Bond *b2,
   } else {
     res = b1->Match(b2);
   }
-  if (res && b1->getBondType() == Bond::DATIVE &&
-      b2->getBondType() == Bond::DATIVE) {
+  if (!res) {
+    return false;
+  }
+  if (b1->getBondType() == Bond::DATIVE && b2->getBondType() == Bond::DATIVE) {
     // for dative bonds we need to make sure that the direction also matches:
     if (!b1->getBeginAtom()->Match(b2->getBeginAtom()) ||
         !b1->getEndAtom()->Match(b2->getEndAtom())) {
-      res = false;
+      return false;
     }
   }
-  if (res && !ps.bondProperties.empty()) {
-    res = propertyCompat(b1, b2, ps.bondProperties);
+  if (!ps.bondProperties.empty()) {
+    if (!propertyCompat(b1, b2, ps.bondProperties)) {
+      return false;
+    }
   }
-  // std::cerr << "\t\tbondCompat: " << b1->getIdx() << "-" << b2->getIdx() <<
-  // ":"
-  //           << res << std::endl;
+  if (ps.extraBondCheck && !ps.extraBondCheck(*b1, *b2)) {
+    return false;
+  }
+
   return res;
 }
 

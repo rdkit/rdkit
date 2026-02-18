@@ -12,7 +12,6 @@
 
 #include <string>
 #include <exception>
-#include <iostream>
 #include <fstream>
 #include <vector>
 #include <algorithm>
@@ -338,6 +337,10 @@ class MarvinCMLWriter {
 
       case Bond::DATIVE:
         convention = "cxn:coord";
+        break;
+
+      case Bond::HYDROGEN:
+        convention = "cxn:hydrogen";
         break;
 
       default:

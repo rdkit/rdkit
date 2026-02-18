@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/types.h>
 
 #include "Tetrahedral.h"
 #include "../rules/Rules.h"
@@ -37,7 +38,7 @@ Tetrahedral::Tetrahedral(const CIPMol &mol, Atom *focus)
     // than the implicit H.
     carriers.push_back(nullptr);
   }
-  POSTCONDITION(carriers.size() == 4, "configurtion must have 4 carriers");
+  POSTCONDITION(carriers.size() == 4, "configuration must have 4 carriers");
 
   setCarriers(std::move(carriers));
 };
@@ -47,9 +48,13 @@ void Tetrahedral::setPrimaryLabel(Descriptor desc) {
     case Descriptor::R:
     case Descriptor::S:
     case Descriptor::r:
-    case Descriptor::s:
-      getFocus()->setProp(common_properties::_CIPCode, to_string(desc));
+    case Descriptor::s: {
+      auto chiralAtom = getFocus();
+      chiralAtom->setProp(common_properties::_CIPCode, to_string(desc));
+      chiralAtom->setProp(common_properties::_CIPNeighborOrder,
+                          d_ranked_anchors, true);
       return;
+    }
     case Descriptor::seqTrans:
     case Descriptor::seqCis:
     case Descriptor::E:
@@ -68,6 +73,14 @@ void Tetrahedral::setPrimaryLabel(Descriptor desc) {
   }
 }
 
+bool Tetrahedral::hasPrimaryLabel() const {
+  return getFocus()->hasProp(common_properties::_CIPCode);
+}
+
+void Tetrahedral::resetPrimaryLabel() const {
+  getFocus()->clearProp(common_properties::_CIPCode);
+}
+
 Descriptor Tetrahedral::label(const Rules &comp) {
   auto &digraph = getDigraph();
 
@@ -84,9 +97,11 @@ Descriptor Tetrahedral::label(Node *node, Digraph &digraph, const Rules &comp) {
   return label(node, comp);
 }
 
-Descriptor Tetrahedral::label(Node *node, const Rules &comp) const {
+Descriptor Tetrahedral::label(Node *node, const Rules &comp) {
   auto focus = getFocus();
   auto edges = node->getEdges();
+
+  d_ranked_anchors.clear();
 
   // something not right!?! bad creation
   if (edges.size() < 3) {
@@ -127,20 +142,32 @@ Descriptor Tetrahedral::label(Node *node, const Rules &comp) const {
     return Descriptor::UNKNOWN;
   }
 
-  // if we are resolving a trigonal pyramid with an implicit H,
-  // the 4th carrier will be a nullptr: we need to add a phantom
-  // atom, which will always have the lowest priority, so that
-  // it must be different than the representation of the implicit H.
   auto ordered = std::vector<Atom *>(4, nullptr);
   int idx = 0;
+  d_ranked_anchors.reserve(4);
   for (const auto &edge : edges) {
     if (edge->getEnd()->isSet(Node::BOND_DUPLICATE) ||
         edge->getEnd()->isSet(Node::IMPL_HYDROGEN)) {
       continue;
     }
-    ordered[idx] = edge->getEnd()->getAtom();
+
+    auto atom = edge->getEnd()->getAtom();
+    ordered[idx] = atom;
+
+    // In this case we don't worry about implicit H (see Sp2Bond
+    // and Atropisomer): chirality is positional, and we don't
+    // know where the implicit H may be ("before" or "after" a
+    // potential 1H with lower priority?), so we just ignore it
+    // in the ranked neighbors list
+    d_ranked_anchors.push_back(atom->getIdx());
+
     ++idx;
   }
+
+  // if we are resolving a trigonal pyramid with an implicit H,
+  // the 4th carrier will be a nullptr: we need to add a phantom
+  // atom, which will always have the lowest priority, so that
+  // it must be different than the representation of the implicit H.
   if (idx < 4) {
     ordered[idx] = focus;
   }

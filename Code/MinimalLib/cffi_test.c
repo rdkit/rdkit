@@ -197,9 +197,11 @@ double angle_deg_between_vectors(double *v1, double *v2) {
 
 void test_io() {
   char *pkl;
+  char *pkl2;
+  char *pkl3;
   size_t pkl_size;
   size_t pkl2_size;
-  char *pkl2;
+  size_t pkl3_size;
 
   printf("--------------------------\n");
   printf("  test_io\n");
@@ -369,6 +371,68 @@ M  END",
   assert(strstr(molblock, "M  V30 1 4 1 2"));
   free(molblock);
   molblock = NULL;
+
+  molblock = get_molblock(pkl, pkl_size, "{\"forceMDLVersion\":\"V3000\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_molblock(pkl, pkl_size, "{\"forceMDLVersion\":\"v3000\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_molblock(pkl, pkl_size, "{\"forceMDLVersion\":\"v3k\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_molblock(pkl, pkl_size, "{\"forceMDLVersion\":\"3\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_molblock(pkl, pkl_size, "{\"forceMDLVersion\":\"30\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_v3kmolblock(pkl, pkl_size, "{\"forceMDLVersion\":\"V2000\"}");
+  assert(strstr(molblock, "V3000"));
+  free(molblock);
+  molblock = NULL;
+
+  pkl3 = get_mol("N->[Pt+2](Cl)(Cl)<-N", &pkl3_size, "");
+  assert(pkl3);
+  assert(pkl3_size > 0);
+
+  molblock = get_molblock(pkl3, pkl3_size, NULL);
+  assert(strstr(molblock, "V3000"));
+  assert(strstr(molblock, "M  V30 4 9 5 2"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock = get_molblock(pkl3, pkl3_size, "{\"forceMDLVersion\":\"V2000\"}");
+  assert(strstr(molblock, "V2000"));
+  assert(strstr(molblock, "  5  2  9  0"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock =
+      get_v3kmolblock(pkl3, pkl3_size, "{\"forceMDLVersion\":\"V2000\"}");
+  assert(strstr(molblock, "V3000"));
+  assert(strstr(molblock, "M  V30 4 9 5 2"));
+  free(molblock);
+  molblock = NULL;
+
+  molblock =
+      get_v2kmolblock(pkl3, pkl3_size, "{\"forceMDLVersion\":\"V3000\"}");
+  assert(strstr(molblock, "V2000"));
+  assert(strstr(molblock, "  5  2  9  0"));
+  free(molblock);
+  molblock = NULL;
+  free(pkl3);
+  pkl3 = NULL;
 
 #ifdef RDK_BUILD_INCHI_SUPPORT
   //---------
@@ -2507,7 +2571,7 @@ void test_relabel_mapped_dummies() {
   smiles = get_cxsmiles(mpkl, mpkl_size, NULL);
   assert(!strcmp(
       smiles,
-      "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.molAtomMapNumber.2:3.dummyLabel.*:5.molAtomMapNumber.1:5.dummyLabel.*|"));
+      "c1cc([4*:2])c([3*:1])cn1"));
   free(smiles);
   free(mpkl);
   mpkl = get_mol("c1cc([4*:2])c([3*:1])cn1", &mpkl_size,
@@ -3898,6 +3962,157 @@ M  END\n";
   free(png_no_metadata_blob2);
 }
 
+void test_drawing_extents_include() {
+  const char *mb =
+      "\n\
+     RDKit          2D\n\
+\n\
+  3  3  0  0  0  0  0  0  0  0999 V2000\n\
+    0.0000    0.8930    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0\n\
+  2  3  1  0\n\
+  1  3  1  0\n\
+M  END\n";
+  char *pkl;
+  char *svg;
+  size_t pkl_size;
+  size_t i;
+  unsigned int above_tol;
+  double reference[12];
+  double highlight[12];
+
+  printf("--------------------------\n");
+  printf("  test_drawing_extents_include\n");
+
+  pkl = get_mol(mb, &pkl_size, "");
+  assert(pkl && pkl_size);
+  svg =
+      get_svg(pkl, pkl_size, "{\"width\":300,\"height\":200,\"padding\":0.2}");
+  assert(svg);
+  assert(extract_bond_coords(svg, "bond-0 atom-0 atom-1", &reference[0],
+                             &reference[2]));
+  assert(extract_bond_coords(svg, "bond-1 atom-1 atom-2", &reference[4],
+                             &reference[6]));
+  assert(extract_bond_coords(svg, "bond-2 atom-0 atom-2", &reference[8],
+                             &reference[10]));
+  free(svg);
+  svg = get_svg(pkl, pkl_size,
+                "{\"width\":300,\"height\":200,\"padding\":0.2,\"atoms\":[0]}");
+  assert(svg);
+  assert(extract_bond_coords(svg, "bond-0 atom-0 atom-1", &highlight[0],
+                             &highlight[2]));
+  assert(extract_bond_coords(svg, "bond-1 atom-1 atom-2", &highlight[4],
+                             &highlight[6]));
+  assert(extract_bond_coords(svg, "bond-2 atom-0 atom-2", &highlight[8],
+                             &highlight[10]));
+  free(svg);
+  above_tol = 0;
+  for (i = 0; !above_tol && i < 12; ++i) {
+    above_tol = (fabs(reference[i] - highlight[i]) > 0.1);
+  }
+  assert(above_tol);
+
+  svg =
+      get_svg(pkl, pkl_size, "{\"width\":300,\"height\":200,\"padding\":0.2}");
+  assert(svg);
+  assert(extract_bond_coords(svg, "bond-0 atom-0 atom-1", &reference[0],
+                             &reference[2]));
+  assert(extract_bond_coords(svg, "bond-1 atom-1 atom-2", &reference[4],
+                             &reference[6]));
+  assert(extract_bond_coords(svg, "bond-2 atom-0 atom-2", &reference[8],
+                             &reference[10]));
+  free(svg);
+  svg = get_svg(
+      pkl, pkl_size,
+      "{\"width\":300,\"height\":200,\"padding\":0.2,\"atoms\":[0],\"drawingExtentsInclude\":{\"ALL\":true,\"HIGHLIGHTS\":false}}");
+  assert(svg);
+  assert(extract_bond_coords(svg, "bond-0 atom-0 atom-1", &highlight[0],
+                             &highlight[2]));
+  assert(extract_bond_coords(svg, "bond-1 atom-1 atom-2", &highlight[4],
+                             &highlight[6]));
+  assert(extract_bond_coords(svg, "bond-2 atom-0 atom-2", &highlight[8],
+                             &highlight[10]));
+  free(svg);
+  above_tol = 0;
+  for (i = 0; !above_tol && i < 12; ++i) {
+    above_tol = (fabs(reference[i] - highlight[i]) > 0.1);
+  }
+  assert(!above_tol);
+
+  free(pkl);
+}
+
+void test_return_draw_coords() {
+  const char *mb =
+      "\n\
+     RDKit          2D\n\
+\n\
+  3  3  0  0  0  0  0  0  0  0999 V2000\n\
+    0.0000    0.8930    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.7734   -0.4465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0\n\
+  2  3  1  0\n\
+  1  3  1  0\n\
+M  END\n";
+  char *pkl;
+  char *res;
+  size_t pkl_size;
+  size_t i;
+  unsigned int above_tol;
+  double reference[6];
+  double highlight[6];
+
+  printf("--------------------------\n");
+  printf("  test_return_draw_coords\n");
+
+  pkl = get_mol(mb, &pkl_size, "");
+  assert(pkl && pkl_size);
+  res = get_svg(
+      pkl, pkl_size,
+      "{\"width\":300,\"height\":200,\"padding\":0.2,\"returnDrawCoords\":true}");
+  assert(res);
+  assert(strstr(res, "\"drawCoords\":"));
+  assert(strstr(res, "\"svg\":"));
+  sscanf(res, "{\"drawCoords\":[[%lf,%lf],[%lf,%lf],[%lf,%lf]]", &reference[0],
+         &reference[1], &reference[2], &reference[3], &reference[4],
+         &reference[5]);
+  free(res);
+  res = get_svg(
+      pkl, pkl_size,
+      "{\"width\":300,\"height\":200,\"padding\":0.2,\"atoms\":[0],\"returnDrawCoords\":true}");
+  assert(res);
+  assert(strstr(res, "\"drawCoords\":"));
+  assert(strstr(res, "\"svg\":"));
+  sscanf(res, "{\"drawCoords\":[[%lf,%lf],[%lf,%lf],[%lf,%lf]]", &highlight[0],
+         &highlight[1], &highlight[2], &highlight[3], &highlight[4],
+         &highlight[5]);
+  above_tol = 0;
+  for (i = 0; !above_tol && i < 6; ++i) {
+    above_tol = (fabs(reference[i] - highlight[i]) > 0.1);
+  }
+  assert(above_tol);
+  free(res);
+  res = get_svg(
+      pkl, pkl_size,
+      "{\"width\":300,\"height\":200,\"padding\":0.2,\"atoms\":[0],\"returnDrawCoords\":true,\"drawingExtentsInclude\":{\"ALL\":true,\"HIGHLIGHTS\":false}}");
+  assert(res);
+  assert(strstr(res, "\"drawCoords\":"));
+  assert(strstr(res, "\"svg\":"));
+  sscanf(res, "{\"drawCoords\":[[%lf,%lf],[%lf,%lf],[%lf,%lf]]", &highlight[0],
+         &highlight[1], &highlight[2], &highlight[3], &highlight[4],
+         &highlight[5]);
+  above_tol = 0;
+  for (i = 0; !above_tol && i < 6; ++i) {
+    above_tol = (fabs(reference[i] - highlight[i]) > 0.1);
+  }
+  assert(!above_tol);
+  free(res);
+  free(pkl);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -3938,5 +4153,7 @@ int main() {
   test_props();
   test_get_mol_remove_hs();
   test_png_metadata();
+  test_drawing_extents_include();
+  test_return_draw_coords();
   return 0;
 }

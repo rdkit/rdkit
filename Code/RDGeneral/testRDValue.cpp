@@ -276,3 +276,13 @@ TEST_CASE("testIntConversions") {
   REQUIRE_THROWS_AS(p.getProp<std::uint16_t>("foo"),
                     boost::numeric::negative_overflow);
 }
+
+TEST_CASE("testStringToDouble") {
+  RDProps p;
+  p.setProp<std::string>("foo", "123.0 ");
+  p.setProp<std::string>("bar", " 123.0 ");
+  REQUIRE(p.getProp<double>("foo") == 123.0);
+  REQUIRE(p.getProp<float>("foo") == 123.0f);
+  REQUIRE_THROWS_AS(p.getProp<double>("bar"),
+		    std::bad_any_cast);
+}

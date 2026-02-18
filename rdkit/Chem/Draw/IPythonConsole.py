@@ -34,17 +34,17 @@ from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
 molSize = (450, 150)
-highlightSubstructs = True      # highlight substructure matches when drawing 2D structures
-kekulizeStructures = True       # try to kekulize structures before drawing
-highlightByReactant = False     # highlight reactions by reactant
-ipython_useSVG = False          # use the SVG renderer for 2D depictions (otherwise PNG is used)
-ipython_showProperties = True   # display molecule properties when rendering them in 2D
-ipython_maxProperties = 10      # maximum number of properties to display
-ipython_3d = False              # try to use 3D rendering for molecules with a 3D conformer
-molSize_3d = (400, 400)         # default size of 3D structures
-drawing_type_3d = 'stick'       # default drawing type for 3d structures
-bgcolor_3d = '0xeeeeee'         # default background color for 3d structures
-drawOptions = rdMolDraw2D.MolDrawOptions()   # drawing options for 2D structures
+highlightSubstructs = True  # highlight substructure matches when drawing 2D structures
+kekulizeStructures = True  # try to kekulize structures before drawing
+highlightByReactant = False  # highlight reactions by reactant
+ipython_useSVG = False  # use the SVG renderer for 2D depictions (otherwise PNG is used)
+ipython_showProperties = True  # display molecule properties when rendering them in 2D
+ipython_maxProperties = 10  # maximum number of properties to display
+ipython_3d = False  # try to use 3D rendering for molecules with a 3D conformer
+molSize_3d = (400, 400)  # default size of 3D structures
+drawing_type_3d = 'stick'  # default drawing type for 3d structures
+bgcolor_3d = '0xeeeeee'  # default background color for 3d structures
+drawOptions = rdMolDraw2D.MolDrawOptions()  # drawing options for 2D structures
 InteractiveRenderer._defaultDrawOptions = drawOptions
 
 
@@ -119,8 +119,10 @@ the py3Dmol.view object containing the drawing'''
   view.zoomTo()
   return view.show()
 
+
 def drawMols3D(mols, view=None, confIds=None, drawAs=None, bgColor=None, size=None, removeHs=False,
-               colors=('cyanCarbon','redCarbon','blueCarbon','magentaCarbon','yellowCarbon','cornflowerblueCarbon')):
+               colors=('cyanCarbon', 'redCarbon', 'blueCarbon', 'magentaCarbon', 'yellowCarbon',
+                       'cornflowerblueCarbon')):
   ''' draws a list/tuple of molecules in 3D using py3Dmol
 
 Parameters
@@ -153,16 +155,20 @@ the py3Dmol.view object containing the drawing'''
     view = py3Dmol.view(width=size[0], height=size[1])
 
   if drawAs is None:
-    drawAs = ['stick']*len(mols)
+    drawAs = ['stick'] * len(mols)
   if confIds is None:
     confIds = [-1] * len(mols)
 
-  for m,confId in zip(mols, confIds):
+  for m, confId in zip(mols, confIds):
     if removeHs:
       m = Chem.RemoveHs(m)
     addMolToView(m, view, confId)
   for i in range(len(mols)):
-    view.setStyle({'model': i,}, {drawAs[i]: {'colorscheme': colors[i % len(colors)]}})
+    view.setStyle({
+      'model': i,
+    }, {drawAs[i]: {
+          'colorscheme': colors[i % len(colors)]
+        }})
 
   view.setBackgroundColor(bgColor)
   view.zoomTo()
@@ -234,9 +240,19 @@ def _toHTML(mol):
   return res
 
 
+def listToLists(lst):
+  if not lst or not isinstance(lst, (list, tuple)):
+    return []
+  if isinstance(lst[0], (list, tuple)):
+    return lst
+  return [lst]
+
+
 def _toPNG(mol):
   if hasattr(mol, '__sssAtoms'):
-    highlightAtoms = mol.__sssAtoms
+    highlightAtoms = listToLists(mol.__sssAtoms)
+    return Draw.DrawMolWithMatches(mol, highlightAtoms, molSize=molSize, qry=mol.__sssQry, label='',
+                                   options=drawOptions, doPNG=True, kekulize=kekulizeStructures)
   else:
     highlightAtoms = []
   kekulize = kekulizeStructures
@@ -248,7 +264,9 @@ def _toSVG(mol):
   if not ipython_useSVG:
     return None
   if hasattr(mol, '__sssAtoms'):
-    highlightAtoms = mol.__sssAtoms
+    highlightAtoms = listToLists(mol.__sssAtoms)
+    return Draw.DrawMolWithMatches(mol, highlightAtoms, molSize=molSize, qry=mol.__sssQry, label='',
+                                   options=drawOptions, doPNG=False, kekulize=kekulizeStructures)
   else:
     highlightAtoms = []
   kekulize = kekulizeStructures
@@ -292,8 +310,10 @@ def _GetSubstructMatch(mol, query, *args, **kwargs):
   res = mol.__GetSubstructMatch(query, *args, **kwargs)
   if highlightSubstructs:
     mol.__sssAtoms = list(res)
+    mol.__sssQry = query
   else:
     mol.__sssAtoms = []
+    mol.__sssQry = None
   return res
 
 
@@ -304,8 +324,10 @@ def _GetSubstructMatches(mol, query, *args, **kwargs):
   res = mol.__GetSubstructMatches(query, *args, **kwargs)
   mol.__sssAtoms = []
   if highlightSubstructs:
-    for entry in res:
-      mol.__sssAtoms.extend(list(entry))
+    mol.__sssQry = query
+    mol.__sssAtoms = res
+  else:
+    mol.__sssQry = None
   return res
 
 
@@ -359,6 +381,7 @@ def ShowMols(mols, maxMols=50, **kwargs):
     return display.Image(data=res, format='png')
   return res
 
+
 def _DrawBit(fn, *args, **kwargs):
   if 'useSVG' not in kwargs:
     kwargs['useSVG'] = ipython_useSVG
@@ -380,12 +403,14 @@ def _DrawBits(fn, *args, **kwargs):
   sio = BytesIO(res)
   return Image.open(sio)
 
+
 def DrawMorganBit(mol, bitId, bitInfo, drawOptions=drawOptions, **kwargs):
   if Draw._DrawMorganBitSaved is not None:
     fn = Draw._DrawMorganBitSaved
   else:
     fn = Draw.DrawMorganBit
   return _DrawBit(fn, mol, bitId, bitInfo, drawOptions=drawOptions, **kwargs)
+
 
 def DrawMorganBits(*args, drawOptions=drawOptions, **kwargs):
   if Draw._DrawMorganBitsSaved is not None:
@@ -394,12 +419,14 @@ def DrawMorganBits(*args, drawOptions=drawOptions, **kwargs):
     fn = Draw.DrawMorganBits
   return _DrawBit(fn, *args, drawOptions=drawOptions, **kwargs)
 
+
 def DrawRDKitBit(mol, bitId, bitInfo, drawOptions=drawOptions, **kwargs):
   if Draw._DrawRDKitBitSaved is not None:
     fn = Draw._DrawRDKitBitSaved
   else:
     fn = Draw.DrawRDKitBit
   return _DrawBit(fn, mol, bitId, bitInfo, drawOptions=drawOptions, **kwargs)
+
 
 def DrawRDKitBits(*args, drawOptions=drawOptions, **kwargs):
   if Draw._DrawRDKitBitsSaved is not None:
@@ -420,6 +447,7 @@ def EnableSubstructMatchRendering():
 
 _methodsToDelete = []
 _rendererInstalled = False
+
 
 def InstallIPythonRenderer():
   global _rendererInstalled
@@ -469,8 +497,9 @@ def InstallIPythonRenderer():
   if not hasattr(rdchem.Mol, '__DebugMol'):
     rdchem.Mol.__DebugMol = rdchem.Mol.Debug
     rdchem.Mol.Debug = lambda self, useStdout=False: self.__DebugMol(useStdout=useStdout)
-        
+
   _rendererInstalled = True
+
 
 def DisableSubstructMatchRendering():
   if hasattr(rdchem.Mol, '__GetSubstructMatch'):
@@ -485,34 +514,34 @@ def UninstallIPythonRenderer():
   global _rendererInstalled, _methodsToDelete
 
   for cls, attr in _methodsToDelete:
-    if hasattr(cls,attr):
+    if hasattr(cls, attr):
       delattr(cls, attr)
 
   _methodsToDelete = []
 
   DisableSubstructMatchRendering()
 
-  if hasattr(Draw,'_MolsToGridImageSaved') and Draw._MolsToGridImageSaved is not None:
+  if hasattr(Draw, '_MolsToGridImageSaved') and Draw._MolsToGridImageSaved is not None:
     Draw.MolsToGridImage = Draw._MolsToGridImageSaved
     del Draw._MolsToGridImageSaved
-  if hasattr(Draw,'_DrawRDKitBitSaved') and Draw._DrawRDKitBitSaved is not None:
+  if hasattr(Draw, '_DrawRDKitBitSaved') and Draw._DrawRDKitBitSaved is not None:
     Draw.DrawRDKitBit = Draw._DrawRDKitBitSaved
     del Draw._DrawRDKitBitSaved
-  if hasattr(Draw,'_DrawRDKitBitsSaved') and Draw._DrawRDKitBitsSaved is not None:
+  if hasattr(Draw, '_DrawRDKitBitsSaved') and Draw._DrawRDKitBitsSaved is not None:
     Draw.DrawRDKitBits = Draw._DrawRDKitBitsSaved
     del Draw._DrawRDKitBitsSaved
-  if hasattr(Draw,'_DrawMorganBitSaved') and Draw._DrawMorganBitSaved is not None:
+  if hasattr(Draw, '_DrawMorganBitSaved') and Draw._DrawMorganBitSaved is not None:
     Draw.DrawMorganBit = Draw._DrawMorganBitSaved
     del Draw._DrawMorganBitSaved
-  if hasattr(Draw,'_DrawMorganBitsSaved') and Draw._DrawMorganBitsSaved is not None:
+  if hasattr(Draw, '_DrawMorganBitsSaved') and Draw._DrawMorganBitsSaved is not None:
     Draw.DrawMorganBits = Draw._DrawMorganBitsSaved
     del Draw._DrawMorganBitsSaved
 
   if hasattr(rdchem.Mol, '__DebugMol'):
     rdchem.Mol.Debug = rdchem.Mol.__DebugMol
     del rdchem.Mol.__DebugMol
-    
+
   _rendererInstalled = False
 
-InstallIPythonRenderer()
 
+InstallIPythonRenderer()

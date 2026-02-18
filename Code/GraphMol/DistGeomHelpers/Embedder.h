@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -204,6 +204,10 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
 //! update parameters from a JSON string
 RDKIT_DISTGEOMHELPERS_EXPORT void updateEmbedParametersFromJSON(
     EmbedParameters &params, const std::string &json);
+
+//! export parameters to JSON string
+RDKIT_DISTGEOMHELPERS_EXPORT std::string embedParametersToJSON(
+    const EmbedParameters &params);
 
 //! Embed multiple conformations for a molecule
 RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(ROMol &mol, INT_VECT &res,

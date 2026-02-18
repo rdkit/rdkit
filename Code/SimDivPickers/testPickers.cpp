@@ -9,7 +9,6 @@
 //
 #include <catch2/catch_all.hpp>
 #include "MaxMinPicker.h"
-#include <iostream>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 

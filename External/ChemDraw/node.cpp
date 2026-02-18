@@ -28,7 +28,7 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//#include "node.h"
+// #include "node.h"
 #include "fragment.h"
 #include "utils.h"
 
@@ -45,10 +45,11 @@ bool parseNode(
       node.m_numHydrogens == kNumHydrogenUnspecified ? 0 : node.m_numHydrogens;
   bool explicitHs = node.m_numHydrogens != kNumHydrogenUnspecified;
   int charge = 0;
-  if ((node.m_charge & 0x00FFFFFF) == 0)
+  if ((node.m_charge & 0x00FFFFFF) == 0) {
     charge = node.m_charge >> 24;
-  else
+  } else {
     charge = node.m_charge;
+  }
   int atommap = 0;
   int rgroup_num = -1;
   int isotope = node.m_isotope;
@@ -144,20 +145,23 @@ bool parseNode(
       const std::string &text = ((CDXText *)child.second)->GetText().str();
       if (text.size() > 0 && text[0] == 'R') {
         try {
-          if (checkForRGroup)
+          if (checkForRGroup) {
             rgroup_num = text.size() > 1 ? stoi(text.substr(1)) : 0;
-          else
+          } else {
             isotope = text.size() > 1 ? stoi(text.substr(1)) : 0;
+          }
         } catch (const std::invalid_argument &e) {
-          if (rgroup_num)
+          if (rgroup_num) {
             BOOST_LOG(rdWarningLog)
                 << "RGroupError: Invalid argument - Cannot convert '" << text
                 << "' to an integer." << std::endl;
+          }
         } catch (const std::out_of_range &e) {
-          if (rgroup_num)
+          if (rgroup_num) {
             BOOST_LOG(rdWarningLog)
                 << "RGroupError: Out of range - The number '" << text
                 << "' is too large or too small." << std::endl;
+          }
         }
       }
     }
@@ -199,7 +203,7 @@ bool parseNode(
       rd_atom->setProp<char>(CDX_IMPLICIT_HYDROGEN_STEREO, 'h');
       break;
   }
-  
+
   if (node.m_bondOrdering) {
     // This node may be completely replaced by the fragment
     // i.e. [*:1]C[*:1].C[*:1]C => CCC
@@ -319,5 +323,5 @@ bool parseNode(
   }
   return true;
 }
-}
+}  // namespace ChemDraw
 }  // namespace RDKit

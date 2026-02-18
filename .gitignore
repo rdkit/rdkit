@@ -76,7 +76,7 @@ __pycache__/
 /External/RingFamilies/RingDecomposerLib/
 /External/YAeHMOP/yaehmop/
 /External/catch/catch/
-/External/rapidjson*/
+/External/rapidjson/rapidjson-*/
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
@@ -131,6 +131,8 @@ __pycache__/
 /Code/GraphMol/test_data/bilastine_trajectory.sdf
 /Code/GraphMol/test_data/prop.pkl
 
+/Data/eht_parms.dat
+
 /Projects/DbCLI/testData/bzr/
 
 /rdkit/sping/tests/testallps.ps
@@ -144,9 +146,19 @@ __pycache__/
 /rdkit/hetero_atom_mutations.csv
 /rdkit/not_changed.csv
 /rdkit/similarityMap1_out.svg
-/rdkit/similarityMap1_out2.svg
+/rdkit/similarityMap1_out*.svg
+/rdkit/github4763.svg
+
+/Testing/
 
 # JS distribution or temp files
 Code/MinimalLib/dist
 MAIN_RDKIT_README*
 node_modules
+
+/.cache
+/Code/GraphMol/MolInteractionFields/Wrap/testData/test4.cube
+/Code/GraphMol/MolInteractionFields/test_data/test3.cube
+/compile_commands.json
+/External/ChemDraw/chemdraw
+/External/AvalonTools/ava-formake-AvalonToolkit*

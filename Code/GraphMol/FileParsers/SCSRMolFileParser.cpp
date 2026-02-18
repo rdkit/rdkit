@@ -49,13 +49,141 @@ class SCSRMol {
 
   const ROMol *getMol() const { return p_mol.get(); }
 
-  ROMol *getMol() { return p_mol.get(); }
-
   void setMol(std::unique_ptr<ROMol> mol) {
     PRECONDITION(mol, "bad molecule");
     p_mol = std::move(mol);
-  }
+  };
 };
+
+void skipSpaces(const char *&linePtr) {
+  while (*linePtr == ' ') {
+    ++linePtr;  // skip spaces
+  }
+}
+
+std::string getToken(const char *&linePtr, char delim) {
+  skipSpaces(linePtr);
+  unsigned int charCount = 0;
+  while (linePtr[charCount] && linePtr[charCount] != delim) {
+    ++charCount;
+  }
+  std::string res(linePtr, charCount);
+  linePtr += charCount;
+  if (*linePtr == delim) {
+    ++linePtr;  // skip delim
+  }
+  return res;
+}
+
+std::string getQuotedToken(const char *&linePtr) {
+  skipSpaces(linePtr);
+  std::string res;
+  if (*linePtr != '"') {
+    return res;
+  }
+  ++linePtr;  // skip opening quote
+  while (*linePtr && *linePtr != '"') {
+    if (*linePtr == '\\') {
+      // escaped char
+      ++linePtr;
+      if (*linePtr == '\0') {
+        break;
+      }
+    }
+
+    res += *linePtr++;
+  }
+  if (*linePtr != '"') {
+    res = "";  // error: no closing quote
+  } else {
+    ++linePtr;  // skip closing quote
+  }
+
+  return res;
+}
+
+void parseTemplateLine(RWMol *templateMol, std::string lineStr,
+                       unsigned int &line) {
+  PRECONDITION(templateMol, "bad template molecule");
+
+  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment
+  // FULLNAME=fullname CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx,
+  // COLLABORATOR=col, PROTECTION=prot
+
+  // other attributes are allowed.  We capture them and ignore them, except
+  // for writing them back out
+
+  if (lineStr.substr(0, 9) != "TEMPLATE ") {
+    std::ostringstream errout;
+    errout << "Expected \"TEMPLATE\" at line  " << line;
+    throw FileParseException(errout.str());
+  }
+
+  const char *linePtr = lineStr.c_str() + 9;
+  std::string token = getToken(linePtr, ' ');  // Template ID
+  if (token.empty()) {
+    std::ostringstream errout;
+    errout << "Expected a Template ID at line  " << line;
+    throw FileParseException(errout.str());
+  }
+  // get the class and template names
+
+  token = getToken(linePtr, ' ');  // Template ID
+  if (token.empty()) {
+    std::ostringstream errout;
+    errout
+        << "Type/Name(s) string of the form \"AA/Gly/G/\" was not found at line  "
+        << line;
+    throw FileParseException(errout.str());
+  }
+
+  // get the class and template names from the token
+  std::vector<std::string> subTokens;
+  boost::algorithm::split(subTokens, token, boost::algorithm::is_any_of("/"));
+  if (subTokens.size() < 3) {
+    std::ostringstream errout;
+    errout << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line  "
+           << line;
+    throw FileParseException(errout.str());
+  }
+
+  templateMol->setProp(common_properties::molAtomClass, subTokens[0]);
+
+  std::vector<std::string> templateNames;
+  std::copy_if(subTokens.begin() + 1, subTokens.end(),
+               std::back_inserter(templateNames),
+               [](const std::string &s) { return !s.empty(); });
+
+  templateMol->setProp(common_properties::templateNames, templateNames);
+
+  // now parse attrs of the form ATTRNAME=VALUE or ATTRNAME="VALUE WITH
+  // SPACES"
+
+  while (true) {
+    std::string attrName = getToken(linePtr, '=');
+    if (attrName.empty()) {
+      break;
+    }
+    std::string attrValue;
+    if (*linePtr == '"') {
+      attrValue = getQuotedToken(linePtr);
+    } else {
+      attrValue = getToken(linePtr, ' ');
+    }
+
+    templateMol->setProp(attrName, attrValue);
+  }
+
+  if (*linePtr != '\0') {
+    std::ostringstream errout;
+    errout
+        << "extra characters at the end of a TEMPLATE definition line at line  "
+        << line;
+    throw FileParseException(errout.str());
+  }
+
+  return;
+}
 
 //------------------------------------------------
 //
@@ -86,47 +214,19 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
   }
   tempStr = FileParserUtils::getV3000Line(&inStream, line);
 
-  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A
+  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment
+  // FULLNAME=fullname CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx,
+  // COLLABORATOR=col, PROTECTION=prot
+
+  // other attributes are allowed.  We capture them and ignore them, except
+  // for writing them back out
+
   while (tempStr.substr(0, 8) == "TEMPLATE") {
-    std::vector<std::string> tokens;
-    boost::algorithm::split(tokens, tempStr, boost::algorithm::is_space());
-
-    std::string natReplace = "";
-    if (tokens.size() == 4) {
-      if (tokens[3].size() < 12 || tokens[3].substr(0, 11) != "NATREPLACE=") {
-        std::ostringstream errout;
-        errout << "Bad NATREPLACE entry at line  " << line;
-        throw FileParseException(errout.str());
-      }
-      natReplace = tokens[3].substr(12);
-    } else if (tokens.size() != 3) {
-      std::ostringstream errout;
-      errout << "Bad TEMPLATE at line  " << line;
-      throw FileParseException(errout.str());
-    }
-    boost::algorithm::split(tokens, tokens[2],
-                            boost::algorithm::is_any_of("/"));
-    if (tokens.size() < 3) {
-      std::ostringstream errout;
-      errout << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line  "
-             << line;
-      throw FileParseException(errout.str());
-    }
-
     res->addTemplate(std::unique_ptr<ROMol>(new ROMol()));
     auto templateMol = (RWMol *)res->getTemplate(res->getTemplateCount() - 1);
 
-    templateMol->setProp(common_properties::natReplace, natReplace);
-    templateMol->setProp(common_properties::molAtomClass, tokens[0]);
+    parseTemplateLine(templateMol, tempStr.c_str(), line);
 
-    std::vector<std::string> templateNames;
-    for (unsigned int i = 1; i < tokens.size(); ++i) {
-      if (tokens[i] != "") {
-        templateNames.push_back(tokens[i]);
-      }
-    }
-
-    templateMol->setProp(common_properties::templateNames, templateNames);
     auto molComplete = false;
     Conformer *conf = nullptr;
     try {
@@ -172,13 +272,11 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
       throw FileParseException(errout.str());
     }
 
-    if (templateMol) {
-      auto tempParams = params;
-      tempParams.sanitize = false;
-      tempParams.removeHs = false;
-      FileParserUtils::finishMolProcessing(templateMol, chiralityPossible,
-                                           tempParams);
-    }
+    auto tempParams = params;
+    tempParams.sanitize = false;
+    tempParams.removeHs = false;
+    FileParserUtils::finishMolProcessing(templateMol, chiralityPossible,
+                                         tempParams);
 
     tempStr = FileParserUtils::getV3000Line(&inStream, line);
   }
@@ -250,13 +348,13 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
             }
 
             if (mainSUP == nullptr) {
-              break;  // breaks out of the loop over template names - continues
-                      // to next template
+              break;  // breaks out of the loop over template names -
+                      // continues to next template
             }
 
             // now check the ATTCHORD entries
-            templateFound = true;  // tentative - until some attachment point in
-                                   // the atom is not found in the template
+            templateFound = true;  // tentative - until some attachment point
+                                   // in the atom is not found in the template
             for (const auto &attachOrd : attchOrds) {
               auto supAttachPoints = mainSUP->getAttachPoints();
               if (std::find_if(supAttachPoints.begin(), supAttachPoints.end(),
@@ -439,9 +537,9 @@ class MolFromSCSRMolConverter {
     }
 
     // if here , it is a template atom
-    // there could be more than one atom in the template that matches the atom
-    // for instance, the hydrogen bonds to the template can result in multiple
-    // hydrogen bonds in the expanded molecule
+    // there could be more than one atom in the template that matches the
+    // atom for instance, the hydrogen bonds to the template can result in
+    // multiple hydrogen bonds in the expanded molecule
 
     std::vector<std::pair<unsigned int, std::string>> attchOrds;
     atom->getProp(common_properties::molAttachOrderTemplate, attchOrds);
@@ -476,9 +574,9 @@ class MolFromSCSRMolConverter {
       std::vector<std::unique_ptr<SubstanceGroup>> &newSgroups,
       RDKit::Conformer *newConf, const RDGeom::Point3D &coordOffset) {
     // add a superatom sgroup to mark the atoms from this macro atom
-    // expansion. These new superatom sgroups are not put into the output mol
-    // yet, because the bonds have not be added to the mol nor to the sgroup.
-    // They are saved in an array to be added later
+    // expansion. These new superatom sgroups are not put into the output
+    // mol yet, because the bonds have not be added to the mol nor to the
+    // sgroup. They are saved in an array to be added later
 
     const std::string typ = "SUP";
     newSgroups.emplace_back(new SubstanceGroup((ROMol *)resMol.get(), typ));
@@ -588,13 +686,13 @@ class MolFromSCSRMolConverter {
 
     // For pairs that have I or something like it, the configuration must be
     // DA, so the two atoms form the two H bonds. The other side (C,U or A)
-    // has confiuration of AAD (C), ADA (U), or DAD (A). For C-type bases and
-    // A type bases, the second and third atoms are used (AD), and for U
+    // has confiuration of AAD (C), ADA (U), or DAD (A). For C-type bases
+    // and A type bases, the second and third atoms are used (AD), and for U
     // types, the first two atoms are used (AD).
 
     // for the GU pair, both sides have 3 atoms, but they are not
-    // complimentary.  The second and third sites on the G side are used (DA),
-    // and the first two sites on the U side are used (AD).
+    // complimentary.  The second and third sites on the G side are used
+    // (DA), and the first two sites on the U side are used (AD).
 
     // in any other case, we punt and add just one bond,  between the first
     // atom on both sides even if they are NOT complemenary.  This just
@@ -836,8 +934,8 @@ class MolFromSCSRMolConverter {
       }
     }
 
-    // if we are perceiving the H-bonding locations for base templates, do that
-    // here
+    // if we are perceiving the H-bonding locations for base templates, do
+    // that here
 
     if (molFromSCSRParams.scsrBaseHbondOptions == SCSRBaseHbondOptions::Auto) {
       static const std::vector<HbondQueryData> hbondQueries = {
@@ -864,7 +962,7 @@ class MolFromSCSRMolConverter {
       for (unsigned int templateIdx = 0;
            templateIdx < scsrMol->getTemplateCount(); ++templateIdx) {
         auto templateMol = scsrMol->getTemplate(templateIdx);
-        templateMol->updatePropertyCache();
+        templateMol->updatePropertyCache(false);
 
         if (templateMol->getProp<std::string>(
                 common_properties::molAtomClass) != "BASE") {
@@ -923,7 +1021,9 @@ class MolFromSCSRMolConverter {
       } else {  // it is a macro atom - expand it
 
         unsigned int seqId = 0;
+        std::string seqName = "";
         atom->getPropIfPresent(common_properties::molAtomSeqId, seqId);
+        atom->getPropIfPresent(common_properties::molAtomSeqName, seqName);
 
         //  find the template that matches the class and label
 
@@ -999,6 +1099,9 @@ class MolFromSCSRMolConverter {
         if (seqId != 0) {
           sgroupName += "_" + std::to_string(seqId);
         }
+        if (seqName != "") {
+          sgroupName += "_" + seqName;
+        }
 
         auto coordOffset = (conf->getAtomPos(atomIdx) * maxSize) -
                            templateCentroids[templateIdx];
@@ -1048,6 +1151,9 @@ class MolFromSCSRMolConverter {
                     std::string sgroupName = dummyLabel;
                     if (seqId != 0) {
                       sgroupName += "_" + std::to_string(seqId);
+                    }
+                    if (seqName != "") {
+                      sgroupName += "_" + seqName;
                     }
                     sgroupName += "_" + attachPoint.id;
                     foundLgSgroup = true;

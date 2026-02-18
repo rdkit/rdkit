@@ -11,7 +11,6 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <random>
 #include <regex>
 #include <set>
@@ -120,6 +119,16 @@ SearchResults SynthonSpace::substructureSearch(
   return ssss.search(ThreadMode::ThreadReactions);
 }
 
+void SynthonSpace::substructureSearch(
+    const ROMol &query, const SearchResultCallback &cb,
+    const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  ControlCHandler::reset();
+  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
+  ssss.search(cb, ThreadMode::ThreadReactions);
+}
+
 SearchResults SynthonSpace::substructureSearch(
     const GeneralizedSubstruct::ExtendedQueryMol &query,
     const SubstructMatchParameters &matchParams,
@@ -165,7 +174,16 @@ SearchResults SynthonSpace::fingerprintSearch(
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
 
   SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
-  return ssss.search();
+  return ssss.search(ThreadMode::ThreadFragments);
+}
+
+void SynthonSpace::fingerprintSearch(
+    const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
+    const SearchResultCallback &cb, const SynthonSpaceSearchParams &params) {
+  ControlCHandler::reset();
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
+  ssss.search(cb, ThreadMode::ThreadFragments);
 }
 
 SearchResults SynthonSpace::rascalSearch(
@@ -173,7 +191,16 @@ SearchResults SynthonSpace::rascalSearch(
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceRascalSearcher ssrs(query, rascalOptions, params, *this);
-  return ssrs.search();
+  return ssrs.search(ThreadMode::ThreadFragments);
+}
+
+void SynthonSpace::rascalSearch(const ROMol &query,
+                                const RascalMCES::RascalOptions &rascalOptions,
+                                const SearchResultCallback &cb,
+                                const SynthonSpaceSearchParams &params) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  SynthonSpaceRascalSearcher ssss(query, rascalOptions, params, *this);
+  ssss.search(cb, ThreadMode::ThreadFragments);
 }
 
 SearchResults SynthonSpace::shapeSearch(
@@ -181,7 +208,7 @@ SearchResults SynthonSpace::shapeSearch(
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   if (!params.enumerateUnspecifiedStereo) {
     SynthonSpaceShapeSearcher ssss(query, params, *this);
-    return ssss.search();
+    return ssss.search(ThreadMode::ThreadFragments);
   }
   // Otherwise, we need to enumerate any isomers, search each one
   // and accumulate the results.
@@ -196,7 +223,7 @@ SearchResults SynthonSpace::shapeSearch(
   SearchResults allResults;
   for (auto &isomer : isomers) {
     SynthonSpaceShapeSearcher ssss(*isomer, paramsCp, *this);
-    auto results = ssss.search();
+    auto results = ssss.search(ThreadMode::ThreadFragments);
     allResults.mergeResults(results);
     if (params.maxHits > 0) {
       if (allResults.getHitMolecules().size() >
@@ -353,6 +380,10 @@ void SynthonSpace::readStream(std::istream &is, bool &cancelled) {
     reaction->makeSynthonSearchMols();
     reaction->buildConnectorRegions();
     reaction->assignConnectorsUsed();
+    reaction->assessRingFormers();
+    if (reaction->getNumRingFormers()) {
+      d_hasRingFormer = true;
+    }
     d_numProducts += reaction->getNumProducts();
     if (reaction->getSynthons().size() > d_maxNumSynthons) {
       d_maxNumSynthons = reaction->getSynthons().size();
@@ -593,6 +624,10 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
                   -> bool { return p1.first < p2.first; });
   }
   for (const auto &[id, reaction] : d_reactions) {
+    reaction->assessRingFormers();
+    if (reaction->getNumRingFormers()) {
+      d_hasRingFormer = true;
+    }
     if (reaction->getSynthons().size() > d_maxNumSynthons) {
       d_maxNumSynthons = reaction->getSynthons().size();
     }
@@ -641,6 +676,16 @@ void SynthonSpace::enumerateToStream(std::ostream &os) const {
   for (const auto &[fst, snd] : d_reactions) {
     snd->enumerateToStream(os);
   }
+}
+
+unsigned int SynthonSpace::getMaxNumConnectors() const {
+  unsigned int maxNumConns = 0;
+  for (const auto &[id, synSet] : d_reactions) {
+    maxNumConns =
+        std::max(maxNumConns,
+                 static_cast<unsigned int>(synSet->getConnectors().count()));
+  }
+  return maxNumConns;
 }
 
 bool SynthonSpace::hasFingerprints() const { return !d_fpType.empty(); }

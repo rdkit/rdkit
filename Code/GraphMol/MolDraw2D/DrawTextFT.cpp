@@ -12,7 +12,6 @@
 //
 
 #include <cstdio>
-#include <iostream>
 
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/DrawTextFT.h>

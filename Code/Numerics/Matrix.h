@@ -13,7 +13,6 @@
 
 #include <RDGeneral/Invariant.h>
 #include "Vector.h"
-#include <iostream>
 #include <iomanip>
 #include <cstring>
 #include <boost/smart_ptr.hpp>

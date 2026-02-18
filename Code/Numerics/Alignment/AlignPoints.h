@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_ALIGN_POINTS_H__
-#define __RD_ALIGN_POINTS_H__
+#ifndef RD_ALIGN_POINTS_H
+#define RD_ALIGN_POINTS_H
 
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
@@ -20,8 +20,7 @@ namespace RDNumeric {
 namespace Alignments {
 
 //! \brief Compute an optimal alignment (minimum sum of squared distance)
-/// between
-//! two sets of points in 3D
+/// between two sets of points in 3D using the quaternion method
 /*!
   \param refPoints      A vector of pointers to the reference points
   \param probePoints    A vector of pointers to the points to be aligned to the
@@ -30,13 +29,13 @@ namespace Alignments {
   transformation
   \param weights        A vector of weights for each of the points
   \param reflect        Add reflection is true
-  \param maxIterations  Maximum number of iterations
+  \param maxIterations  Maximum number of iterations in the eigen solver
 
   \return The sum of squared distances between the points
 
   <b>Note</b>
-  This function returns the sum of squared distance (SSR) not the RMSD
-  RMSD = sqrt(SSR/numPoints)
+  This function returns the sum of squared distances (SSD) not the RMSD
+  RMSD = sqrt(SSD/numPoints)
 */
 double RDKIT_ALIGNMENT_EXPORT
 AlignPoints(const RDGeom::Point3DConstPtrVect &refPoints,

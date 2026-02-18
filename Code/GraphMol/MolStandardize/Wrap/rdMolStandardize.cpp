@@ -179,7 +179,7 @@ void mtinPlaceHelper(python::object pymols, int numThreads,
   if (params) {
     ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
   }
-  unsigned int nmols = python::extract<unsigned int>(pymols.attr("__len__")());
+  unsigned int nmols = python::len(pymols);
   std::vector<RDKit::RWMol *> mols(nmols);
   for (auto i = 0u; i < nmols; ++i) {
     auto mol = static_cast<RDKit::RWMol *>(
@@ -199,7 +199,7 @@ void mtinPlaceHelper2(python::object pymols, int numThreads,
   if (params) {
     ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
   }
-  unsigned int nmols = python::extract<unsigned int>(pymols.attr("__len__")());
+  unsigned int nmols = python::len(pymols);
   std::vector<RDKit::RWMol *> mols(nmols);
   for (auto i = 0u; i < nmols; ++i) {
     auto mol = static_cast<RDKit::RWMol *>(
@@ -460,7 +460,8 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
                      &RDKit::MolStandardize::CleanupParameters::
                          largestFragmentChooserCountHeavyAtomsOnly,
                      "whether LargestFragmentChooser should only count "
-                     "heavy atoms (defaults to False)");
+                     "heavy atoms (defaults to False)")
+      .def("__setattr__", &safeSetattr);
 
   python::def("UpdateParamsFromJSON",
               &RDKit::MolStandardize::updateCleanupParamsFromJSON,

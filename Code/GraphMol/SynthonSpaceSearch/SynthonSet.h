@@ -91,6 +91,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   std::uint64_t getNumProducts() const;
   bool hasFingerprints() const;
   bool hasAddAndSubtractFPs() const;
+  unsigned int getNumRingFormers() const { return d_numRingFormers; }
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
@@ -153,6 +154,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // Make a molecule from the given synthonNums, which index into d_synthons.
   std::unique_ptr<ROMol> buildMolecule(
       const std::vector<size_t> &synthonNums) const;
+
+  void assessRingFormers();
 
  private:
   std::string d_id;
@@ -219,6 +222,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
       const std::vector<std::vector<std::unique_ptr<RWMol>>> &synthonMols,
       size_t longVecNum) const;
+  // The number of rings that may be formed by the synthons.  If there
+  // are a pair of synthons A([1*])[2*] and B([1*])[2*] 1 ring can be
+  // formed.
+  unsigned int d_numRingFormers{0};
 };
 
 }  // namespace SynthonSpaceSearch

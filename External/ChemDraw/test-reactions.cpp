@@ -41,7 +41,6 @@
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
-
 #include <filesystem>
 using namespace RDKit;
 using namespace RDKit::v2;
@@ -161,4 +160,3 @@ M  END
           ChemicalReactionToRxnSmarts(*rxn_mb));
   }
 }
-

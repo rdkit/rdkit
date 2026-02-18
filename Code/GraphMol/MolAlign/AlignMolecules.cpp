@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2023 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,6 +19,8 @@
 #include <Numerics/Alignment/AlignPoints.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <RDGeneral/RDThreads.h>
+#include <algorithm>
+#include <boost/format.hpp>
 
 namespace RDKit {
 namespace MolAlign {
@@ -69,7 +71,8 @@ double alignConfsOnAtomMap(const Conformer &prbCnf, const Conformer &refCnf,
 
 void getAllMatchesPrbRef(const ROMol &prbMol, const ROMol &refMol,
                          std::vector<MatchVectType> &matches, int maxMatches,
-                         bool symmetrizeConjugatedTerminalGroups) {
+                         bool symmetrizeConjugatedTerminalGroups,
+                         bool ignoreHs = false) {
   bool uniquify = false;
   bool recursionPossible = true;
   bool useChirality = false;
@@ -91,9 +94,18 @@ void getAllMatchesPrbRef(const ROMol &prbMol, const ROMol &refMol,
   if (matches.size() > 1e6) {
     std::string name;
     prbMol.getPropIfPresent(common_properties::_Name, name);
-    std::cerr << "Warning in " << __FUNCTION__ << ": " << matches.size()
-              << " matches detected for molecule " << name << ", this may "
-              << "lead to a performance slowdown.\n";
+    BOOST_LOG(rdWarningLog)
+        << "Warning in " << __FUNCTION__ << ": " << matches.size()
+        << " matches detected for molecule " << name << ", this may "
+        << "lead to a performance slowdown." << std::endl;
+  }
+  if (ignoreHs) {
+    // filter Hs out of the matches
+    for (auto &match : matches) {
+      std::erase_if(match, [&prbMolForMatch](const auto &mi) {
+        return prbMolForMatch.getAtomWithIdx(mi.first)->getAtomicNum() == 1;
+      });
+    }
   }
 }
 
@@ -195,6 +207,7 @@ double getBestRMSInternal(const ROMol &prbMol, const ROMol &refMol, int prbCid,
   if (bestMatch) {
     *bestMatch = *bestMatchPtr;
   }
+
   return sqrt(msdBest);
 }
 }  // namespace
@@ -238,58 +251,70 @@ double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
   return res;
 }
 
-double getBestAlignmentTransform(
-    const ROMol &prbMol, const ROMol &refMol, RDGeom::Transform3D &bestTrans,
-    MatchVectType &bestMatch, int prbCid, int refCid,
-    const std::vector<MatchVectType> &map, int maxMatches,
-    bool symmetrizeConjugatedTerminalGroups,
-    const RDNumeric::DoubleVector *weights, bool reflect, unsigned int maxIters,
-    int numThreads) {
+double getBestAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
+                                 RDGeom::Transform3D &bestTrans,
+                                 MatchVectType &bestMatch,
+                                 const BestAlignmentParams &params, int prbCid,
+                                 int refCid, bool reflect,
+                                 unsigned int maxIters) {
   std::vector<MatchVectType> allMatches;
-  if (map.empty()) {
-    getAllMatchesPrbRef(prbMol, refMol, allMatches, maxMatches,
-                        symmetrizeConjugatedTerminalGroups);
+  if (params.map.empty()) {
+    getAllMatchesPrbRef(prbMol, refMol, allMatches, params.maxMatches,
+                        params.symmetrizeConjugatedTerminalGroups,
+                        params.ignoreHs);
   }
-  const auto &matches = map.empty() ? allMatches : map;
-  auto bestRMS = getBestRMSInternal(prbMol, refMol, prbCid, refCid, matches,
-                                    &bestTrans, &bestMatch, weights, reflect,
-                                    maxIters, getNumThreadsToUse(numThreads));
+  const auto &matches = params.map.empty() ? allMatches : params.map;
+  auto bestRMS = getBestRMSInternal(
+      prbMol, refMol, prbCid, refCid, matches, &bestTrans, &bestMatch,
+      params.weights, reflect, maxIters, getNumThreadsToUse(params.numThreads));
   return bestRMS;
 }
 
-double getBestRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
-                  const std::vector<MatchVectType> &map, int maxMatches,
-                  bool symmetrizeConjugatedTerminalGroups,
-                  const RDNumeric::DoubleVector *weights, int numThreads) {
+double getBestRMS(ROMol &prbMol, const ROMol &refMol,
+                  const BestAlignmentParams &params, int prbCid, int refCid) {
   std::vector<MatchVectType> allMatches;
-  if (map.empty()) {
-    getAllMatchesPrbRef(prbMol, refMol, allMatches, maxMatches,
-                        symmetrizeConjugatedTerminalGroups);
+  if (params.map.empty()) {
+    getAllMatchesPrbRef(prbMol, refMol, allMatches, params.maxMatches,
+                        params.symmetrizeConjugatedTerminalGroups,
+                        params.ignoreHs);
   }
-  const auto &matches = map.empty() ? allMatches : map;
+  const auto &matches = params.map.empty() ? allMatches : params.map;
+
+  // TODO: check mismatch between weights size and match size.
+  if (!params.map.empty() && params.weights) {
+    auto nAtms = params.map[0].size();
+    if (params.weights->size() != nAtms) {
+      throw ValueErrorException(
+          (boost::format(
+               "Mismatch between number of weights (%d) and number of atoms in the alignment map (%d).") %
+           params.weights->size() % nAtms)
+              .str());
+    }
+  }
+
   RDGeom::Transform3D trans;
   bool reflect = false;
   unsigned int maxIters = 50;
-  auto bestRMS = getBestRMSInternal(prbMol, refMol, prbCid, refCid, matches,
-                                    &trans, nullptr, weights, reflect, maxIters,
-                                    getNumThreadsToUse(numThreads));
+  auto bestRMS = getBestRMSInternal(
+      prbMol, refMol, prbCid, refCid, matches, &trans, nullptr, params.weights,
+      reflect, maxIters, getNumThreadsToUse(params.numThreads));
 
   // Perform a final alignment to the best alignment...
   MolTransforms::transformConformer(prbMol.getConformer(prbCid), trans);
   return bestRMS;
 }
 
-std::vector<double> getAllConformerBestRMS(
-    const ROMol &mol, int numThreads, const std::vector<MatchVectType> &map,
-    int maxMatches, bool symmetrizeConjugatedTerminalGroups,
-    const RDNumeric::DoubleVector *weights) {
-  numThreads = getNumThreadsToUse(numThreads);
+std::vector<double> getAllConformerBestRMS(const ROMol &mol,
+                                           const BestAlignmentParams &params) {
+  auto numThreads = getNumThreadsToUse(params.numThreads);
   std::vector<MatchVectType> allMatches;
-  if (map.empty()) {
-    getAllMatchesPrbRef(mol, mol, allMatches, maxMatches,
-                        symmetrizeConjugatedTerminalGroups);
+  if (params.map.empty()) {
+    getAllMatchesPrbRef(mol, mol, allMatches, params.maxMatches,
+                        params.symmetrizeConjugatedTerminalGroups,
+                        params.ignoreHs);
   }
-  const auto &matches = map.empty() ? allMatches : map;
+  const auto &matches = params.map.empty() ? allMatches : params.map;
+
   std::vector<double> res;
   RDGeom::Transform3D trans;
   bool reflect = false;
@@ -302,8 +327,8 @@ std::vector<double> getAllConformerBestRMS(
     for (auto ci = 0u; ci < mol.getNumConformers(); ++ci) {
       for (auto cj = 0u; cj < ci; ++cj) {
         res.push_back(getBestRMSInternal(mol, mol, cids[ci], cids[cj], matches,
-                                         &trans, nullptr, weights, reflect,
-                                         maxIters, 1));
+                                         &trans, nullptr, params.weights,
+                                         reflect, maxIters, 1));
       }
     }
   }
@@ -322,13 +347,13 @@ std::vector<double> getAllConformerBestRMS(
       unsigned int maxIters = 50;
       for (auto i = tidx; i < pairs.size(); i += numThreads) {
         auto rms = getBestRMSInternal(mol, mol, pairs[i].first, pairs[i].second,
-                                      matches, &trans, nullptr, weights,
+                                      matches, &trans, nullptr, params.weights,
                                       reflect, maxIters, 1);
         rmsds[tidx].emplace_back(i, rms);
       }
     };
     std::vector<std::thread> tg;
-    for (auto ti = 0; ti < numThreads; ++ti) {
+    for (auto ti = 0u; ti < numThreads; ++ti) {
       tg.emplace_back(std::thread(func, ti));
     }
     for (auto &thread : tg) {

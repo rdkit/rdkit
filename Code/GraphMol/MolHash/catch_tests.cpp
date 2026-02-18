@@ -15,7 +15,6 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include "MolHash.h"
 
-#include <iostream>
 #include <fstream>
 
 using namespace RDKit;

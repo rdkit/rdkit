@@ -9,7 +9,6 @@
 //  of the RDKit source tree.
 //
 #include <fstream>
-#include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <string>

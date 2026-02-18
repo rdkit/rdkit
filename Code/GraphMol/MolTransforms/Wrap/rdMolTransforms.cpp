@@ -51,7 +51,7 @@ PyObject *computePrincAxesMomentsHelper(
   std::vector<double> weightsVec;
   size_t i;
   if (weights != python::object()) {
-    size_t numElements = python::extract<int>(weights.attr("__len__")());
+    size_t numElements = python::len(weights);
     if (numElements != conf.getNumAtoms()) {
       throw ValueErrorException(
           "The Python container must have length equal to conf.GetNumAtoms()");

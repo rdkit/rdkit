@@ -10,7 +10,6 @@
 #include <cctype>
 #include <memory.h>
 #include <cerrno>
-#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <boost/property_tree/json_parser.hpp>
@@ -26,7 +25,9 @@ namespace RDKit {
 namespace StructureCheck {
 
 bool parseOptionsJSON(const std::string &json, StructCheckerOptions &op) {
-  if (json.empty()) return false;
+  if (json.empty()) {
+    return false;
+  }
   try {
     std::istringstream ss;
     ss.str(json);
@@ -72,14 +73,21 @@ bool loadOptionsFromFiles(
     const std::string &stereoPatternFile,  // file with stereo patterns
     const std::string &tautomerFile) {
   bool res = true;
-  if (!augmentedAtomTranslationsFile.empty())
+  if (!augmentedAtomTranslationsFile.empty()) {
     res &= op.loadAugmentedAtomTranslations(augmentedAtomTranslationsFile);
-  if (!patternFile.empty()) res &= op.loadPatterns(patternFile);
-  if (!rotatePatternFile.empty())
+  }
+  if (!patternFile.empty()) {
+    res &= op.loadPatterns(patternFile);
+  }
+  if (!rotatePatternFile.empty()) {
     res &= op.loadRotatePatterns(rotatePatternFile);
-  if (!stereoPatternFile.empty())
+  }
+  if (!stereoPatternFile.empty()) {
     res &= op.loadStereoPatterns(stereoPatternFile);
-  if (!tautomerFile.empty()) res &= op.loadTautomerData(tautomerFile);
+  }
+  if (!tautomerFile.empty()) {
+    res &= op.loadTautomerData(tautomerFile);
+  }
   return res;
 }
 
@@ -122,7 +130,9 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
     return false;
   }
   i = 0;
-  while (isalnum(str[i]) || str[i] == ',' || str[i] == '#') i++;
+  while (isalnum(str[i]) || str[i] == ',' || str[i] == '#') {
+    i++;
+  }
   aa.AtomSymbol = std::string(str, i);
   str += i;
 
@@ -140,8 +150,9 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
       BOOST_LOG(rdErrorLog) << "syntax error '" << str - 1 << "'\n";
       return false;
     }
-  } else
+  } else {
     aa.Charge = 0;  // NONE; default
+  }
 
   // radical definition
   if (str == strpbrk(str, "|.:") &&
@@ -162,8 +173,9 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
       default:
         return false;  // never
     };
-  } else
+  } else {
     aa.Radical = RT_NONE;
+  }
 
   // read ligand descriptions
   while (*str == '(') {
@@ -191,7 +203,9 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
     }
 
     i = 0; /* fetch atom symbol */
-    while (isalnum(str[i]) || str[i] == ',' || str[i] == '#') i++;
+    while (isalnum(str[i]) || str[i] == ',' || str[i] == '#') {
+      i++;
+    }
     aa.Ligands.back().AtomSymbol = std::string(str, i);
     str += i;
 
@@ -209,8 +223,9 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
         BOOST_LOG(rdErrorLog) << "syntax error '" << str - 1 << "'\n";
         return false;
       }
-    } else
+    } else {
       aa.Ligands.back().Charge = 0;  // NONE; default
+    }
 
     // radical definition
     if (str == strpbrk(str, "|.:") &&
@@ -231,19 +246,21 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
         default:
           return false;  // never
       };
-    } else
+    } else {
       aa.Ligands.back().Radical = RT_NONE;
+    }
 
     // substitution count descriptor
     if (str[0] == ':' && isdigit(str[1])) {
       aa.Ligands.back().SubstitutionCount = str[1] - '0';
       str += 2;
-    } else
+    } else {
       aa.Ligands.back().SubstitutionCount = 0;
+    }
 
-    if (*str == ')')  // check for close ')'
+    if (*str == ')') {  // check for close ')'
       str++;
-    else {
+    } else {
       BOOST_LOG(rdErrorLog) << "unclosed ( '" << str << "'\n";
       return false;
     }
@@ -274,7 +291,9 @@ static bool ReadAugmentedAtoms(const std::string &path,
 
   char str[1024];
   while (fgets(str, sizeof(str), fp)) {  // comment block in '*.aci' file
-    if (*str != '#') break;
+    if (*str != '#') {
+      break;
+    }
   }
   sscanf(str, "%d", &n);
 
@@ -301,11 +320,15 @@ static bool ReadAugmentedAtoms(const std::string &path,
     str[0] = '\0';
     if (fgets(str, sizeof(str), fp)) {
       char *s = str;
-      while (*s >= ' ' && *s != '"') s++;
+      while (*s >= ' ' && *s != '"') {
+        s++;
+      }
       if (*s == '"') {
         s++;
         size_t len = 0;
-        while (s[len] >= ' ' && s[len] != '"') len++;
+        while (s[len] >= ' ' && s[len] != '"') {
+          len++;
+        }
         s[len] = '\0';  // == atom_string
         if (!StringToAugmentedAtom(s, atoms[i])) {
           BOOST_LOG(rdErrorLog)
@@ -381,11 +404,15 @@ static bool ReadAAPairs(
     str[0] = '\0';
     if (fgets(str, sizeof(str), fp)) {
       char *s = str;
-      while (*s >= ' ' && *s != '"') s++;
+      while (*s >= ' ' && *s != '"') {
+        s++;
+      }
       if (*s == '"') {
         s++;
         size_t len = 0;
-        while (s[len] >= ' ' && s[len] != '"') len++;
+        while (s[len] >= ' ' && s[len] != '"') {
+          len++;
+        }
         s[len] = '\0';  // == atom_string
 
         if (!StringToAugmentedAtom(s, trans_pairs[i].first)) {
@@ -398,11 +425,15 @@ static bool ReadAAPairs(
         s += len;
         s++;
         // second atom quoted string
-        while (*s >= ' ' && *s != '"') s++;
+        while (*s >= ' ' && *s != '"') {
+          s++;
+        }
         if (*s == '"') {
           s++;
           len = 0;
-          while (s[len] >= ' ' && s[len] != '"') len++;
+          while (s[len] >= ' ' && s[len] != '"') {
+            len++;
+          }
           s[len] = '\0';  // == atom_string
 
           if (!StringToAugmentedAtom(s, trans_pairs[i].second)) {
@@ -471,7 +502,9 @@ static void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
 bool StructCheckerOptions::loadAugmentedAtomTranslations(
     const std::string &path) {
   AugmentedAtomPairs.clear();
-  if (path.empty()) return false;
+  if (path.empty()) {
+    return false;
+  }
   return ReadAAPairs(path, AugmentedAtomPairs);
 }
 
@@ -482,7 +515,9 @@ void StructCheckerOptions::setAugmentedAtomTranslations(
 
 bool StructCheckerOptions::loadAcidicAugmentedAtoms(const std::string &path) {
   AcidicAtoms.clear();
-  if (path.empty()) return false;
+  if (path.empty()) {
+    return false;
+  }
   return ReadAugmentedAtoms(path, AcidicAtoms);
 }
 
@@ -493,7 +528,9 @@ void StructCheckerOptions::setAcidicAugmentedAtoms(
 
 bool StructCheckerOptions::loadGoodAugmentedAtoms(const std::string &path) {
   GoodAtoms.clear();
-  if (path.empty()) return false;
+  if (path.empty()) {
+    return false;
+  }
   return ReadAugmentedAtoms(path, GoodAtoms);
 }
 void StructCheckerOptions::setGoodAugmentedAtoms(
@@ -521,7 +558,9 @@ static bool loadSDF(const std::string &path, std::vector<ROMOL_SPTR> &mols) {
 
 bool StructCheckerOptions::loadPatterns(const std::string &path) {
   Patterns.clear();
-  if (path.empty()) return false;
+  if (path.empty()) {
+    return false;
+  }
   return loadSDF(path, Patterns);
 }
 
@@ -531,7 +570,9 @@ void StructCheckerOptions::setPatterns(const std::vector<ROMOL_SPTR> &p) {
 
 bool StructCheckerOptions::loadRotatePatterns(const std::string &path) {
   RotatePatterns.clear();
-  if (path.empty()) return false;
+  if (path.empty()) {
+    return false;
+  }
   return loadSDF(path, RotatePatterns);
 }
 
@@ -541,7 +582,9 @@ void StructCheckerOptions::setRotatePatterns(const std::vector<ROMOL_SPTR> &p) {
 
 bool StructCheckerOptions::loadStereoPatterns(const std::string &path) {
   StereoPatterns.clear();
-  if (path.empty()) return false;
+  if (path.empty()) {
+    return false;
+  }
   return loadSDF(path, StereoPatterns);
 }
 
@@ -552,14 +595,18 @@ void StructCheckerOptions::setStereoPatterns(const std::vector<ROMOL_SPTR> &p) {
 bool StructCheckerOptions::loadTautomerData(const std::string &path) {
   ToTautomer.clear();
   FromTautomer.clear();
-  if (path.empty()) return false;
+  if (path.empty()) {
+    return false;
+  }
   try {
     std::string ext = path.substr(path.find_last_of(".") + 1);
     if (ext == "sdf" || ext == "SDF") {
       SDMolSupplier suppler(path);
       while (!suppler.atEnd()) {
         ROMol *m1 = suppler.next();
-        if (suppler.atEnd()) break;
+        if (suppler.atEnd()) {
+          break;
+        }
         ROMol *m2 = suppler.next();
         if (m1 && m2) {
           // ?? MakeHydrogensImplicit()
@@ -634,7 +681,9 @@ static void parseSMARTS(std::vector<ROMOL_SPTR> &mols,
   mols.clear();
   for (const auto &patt : smarts) {
     ROMol *m = SmartsToMol(patt);
-    if (m) mols.push_back(ROMOL_SPTR(m));
+    if (m) {
+      mols.push_back(ROMOL_SPTR(m));
+    }
   }
 }
 

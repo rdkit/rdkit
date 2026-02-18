@@ -8,9 +8,6 @@
 //  of the RDKit source tree.
 //
 
-// std bits
-#include <iostream>
-
 // RD bits
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/Atom.h>

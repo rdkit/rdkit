@@ -127,7 +127,7 @@ double PyForceField::calcEnergyWithPos(const python::object &pos) {
   PRECONDITION(this->field, "no force field");
   if (pos != python::object()) {
     size_t s = this->field->dimension() * this->field->numPoints();
-    size_t numElements = python::extract<size_t>(pos.attr("__len__")());
+    unsigned int numElements = python::len(pos);
     if (s != numElements) {
       throw ValueErrorException(
           "The Python container must have length equal to Dimension() * "
@@ -165,7 +165,7 @@ PyObject *PyForceField::calcGradWithPos(const python::object &pos) {
   std::vector<double> g(s, 0.0);
   PyObject *gradTuple = PyTuple_New(s);
   if (pos != python::object()) {
-    size_t numElements = python::extract<size_t>(pos.attr("__len__")());
+    unsigned int numElements = python::len(pos);
     if (s != numElements) {
       throw ValueErrorException(
           "The Python container must have length equal to Dimension() * "
@@ -309,7 +309,7 @@ BOOST_PYTHON_MODULE(rdForceField) {
 
   python::class_<PyForceField>("ForceField", "A force field", python::no_init)
       .def("CalcEnergy",
-           (double(PyForceField::*)(const python::object &) const) &
+           (double (PyForceField::*)(const python::object &) const) &
                PyForceField::calcEnergyWithPos,
            ((python::arg("self"), python::arg("pos") = python::object())),
            "Returns the energy (in kcal/mol) of the current arrangement\n"

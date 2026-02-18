@@ -873,22 +873,18 @@ M  END
   allDifferentCore->removeConformer(0);
   allDifferentCore->getAtomWithIdx(3)->setIsotope(6);
   allDifferentCore->getAtomWithIdx(5)->setIsotope(5);
-  CHECK(
-      MolToCXSmiles(*allDifferentCore, p) ==
-      "c1cc([6*:4])c([5*:3])cn1 |atomProp:3.dummyLabel.R2:3.molAtomMapNumber.4:5.dummyLabel.R1:5.molAtomMapNumber.3|");
+  CHECK(MolToCXSmiles(*allDifferentCore, p) ==
+        "c1cc([6*:4])c([5*:3])cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|");
   SECTION("AtomMap in, MDLRGroup out") {
     auto core = "c1cc([*:2])c([*:1])cn1"_smiles;
-    CHECK(
-        MolToCXSmiles(*core, p) ==
-        "c1cc([*:2])c([*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|");
+    CHECK(MolToCXSmiles(*core, p) == "c1cc([*:2])c([*:1])cn1");
     relabelMappedDummies(*core);
     CHECK(MolToCXSmiles(*core, p) ==
           "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|");
   }
   SECTION("Isotope in, MDLRGroup out") {
     auto core = "c1cc([2*])c([1*])cn1"_smiles;
-    CHECK(MolToCXSmiles(*core, p) ==
-          "c1cc([2*])c([1*])cn1 |atomProp:3.dummyLabel.*:5.dummyLabel.*|");
+    CHECK(MolToCXSmiles(*core, p) == "c1cc([2*])c([1*])cn1");
     relabelMappedDummies(*core);
     CHECK(MolToCXSmiles(*core, p) ==
           "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|");
@@ -926,18 +922,14 @@ M  END
   }
   SECTION("AtomMap and Isotope in, MDLRGroup out - AtomMap has priority") {
     auto core = "c1cc([4*:2])c([3*:1])cn1"_smiles;
-    CHECK(
-        MolToCXSmiles(*core, p) ==
-        "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|");
+    CHECK(MolToCXSmiles(*core, p) == "c1cc([4*:2])c([3*:1])cn1");
     relabelMappedDummies(*core);
     CHECK(MolToCXSmiles(*core, p) ==
           "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|");
   }
   SECTION("AtomMap and Isotope in, MDLRGroup out - force Isotope priority") {
     auto core = "c1cc([4*:2])c([3*:1])cn1"_smiles;
-    CHECK(
-        MolToCXSmiles(*core, p) ==
-        "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|");
+    CHECK(MolToCXSmiles(*core, p) == "c1cc([4*:2])c([3*:1])cn1");
     relabelMappedDummies(*core, Isotope);
     CHECK(MolToCXSmiles(*core, p) ==
           "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R4:5.dummyLabel.R3|");
@@ -967,9 +959,7 @@ M  END
       "AtomMap, Isotope and MDLRGroup in, AtomMap out - AtomMap has priority") {
     ROMol core(*allDifferentCore);
     relabelMappedDummies(core, AtomMap | Isotope | MDLRGroup, AtomMap);
-    CHECK(
-        MolToCXSmiles(core, p) ==
-        "c1cc([*:4])c([*:3])cn1 |atomProp:3.molAtomMapNumber.4:5.molAtomMapNumber.3|");
+    CHECK(MolToCXSmiles(core, p) == "c1cc([*:4])c([*:3])cn1");
   }
   SECTION(
       "AtomMap, Isotope and MDLRGroup in, Isotope out - AtomMap has priority") {
@@ -981,9 +971,7 @@ M  END
       "AtomMap, Isotope and MDLRGroup in, AtomMap out - Isotope has priority") {
     ROMol core(*allDifferentCore);
     relabelMappedDummies(core, Isotope | MDLRGroup, AtomMap);
-    CHECK(
-        MolToCXSmiles(core, p) ==
-        "c1cc([*:6])c([*:5])cn1 |atomProp:3.molAtomMapNumber.6:5.molAtomMapNumber.5|");
+    CHECK(MolToCXSmiles(core, p) == "c1cc([*:6])c([*:5])cn1");
   }
   SECTION(
       "AtomMap, Isotope and MDLRGroup in, Isotope out - Isotope has priority") {
@@ -995,9 +983,7 @@ M  END
       "AtomMap, Isotope and MDLRGroup in, AtomMap out - MDLRGroup has priority") {
     ROMol core(*allDifferentCore);
     relabelMappedDummies(core, MDLRGroup, AtomMap);
-    CHECK(
-        MolToCXSmiles(core, p) ==
-        "c1cc([*:2])c([*:1])cn1 |atomProp:3.molAtomMapNumber.2:5.molAtomMapNumber.1|");
+    CHECK(MolToCXSmiles(core, p) == "c1cc([*:2])c([*:1])cn1");
   }
   SECTION(
       "AtomMap, Isotope and MDLRGroup in, Isotope out - MDLRGroup has priority") {
@@ -1139,5 +1125,87 @@ TEST_CASE("includeTargetMolInResults") {
     for (const auto &row : rows) {
       checkRow(row);
     }
+  }
+}
+
+TEST_CASE("Multiple Core Hits") {
+  {
+    std::vector<ROMOL_SPTR> cores{
+        "c1([*:9])c([*:8])c([*:7])c2c(c1([*:10]))c(c([*:5])n2([*:6]))[CH2]C([*:3])([*:4])[N,n]([*:1])([*:2])"_smarts};
+    REQUIRE(cores.front());
+    std::vector<ROMOL_SPTR> mols{
+        "CC1(C)N2[C@@H](Cc3c1[nH]c4ccccc34)C(=O)N(CCc5c[nH]c6ccccc56)CC2=O"_smiles};
+    REQUIRE(mols.front());
+    RGroupRows rows;
+    RGroupDecompositionParameters ps;
+    ps.allowMultipleCoresInSameMol = true;
+    auto n = RGroupDecompose(cores, mols, rows, nullptr, ps);
+    CHECK(n == 1);
+    CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+[
+  {
+    "Core":"c1ccc2c(C[C@H](N([*:1])[*:2])[*:3])c([*:5])[nH]c2c1",
+    "R1":"O=C(CN(CCc1c[nH]c2ccccc12)C(=O)[*:3])[*:1]",
+    "R2":"CC(C)([*:2])[*:5]",
+    "R3":"O=C(CN(CCc1c[nH]c2ccccc12)C(=O)[*:3])[*:1]",
+    "R5":"CC(C)([*:2])[*:5]"
+  },
+  {
+    "Core":"c1ccc2c(CC(N([*:1])[*:2])[*:3])c([*:5])[nH]c2c1",
+    "R1":"CC1(C)c2[nH]c3ccccc3c2C[C@@H](C(=O)[*:2])N1C(=O)C[*:1]",
+    "R2":"CC1(C)c2[nH]c3ccccc3c2C[C@@H](C(=O)[*:2])N1C(=O)C[*:1]",
+    "R3":"[H][*:3]",
+    "R5":"[H][*:5]"
+  }
+])JSON"));
+  }
+  {
+    std::vector<ROMOL_SPTR> cores{"c1ccccc1"_smarts};
+    std::vector<ROMOL_SPTR> mols{"Fc1ccccc1Nc2ccc(Cl)cc2"_smiles,
+                                 "c1cc(O)cc(Oc2cccc(Br)c2)c1"_smiles,
+                                 "Ic1ccccc1"_smiles};
+    RGroupRows rows;
+    RGroupDecompositionParameters ps;
+    ps.allowMultipleCoresInSameMol = true;
+    auto n = RGroupDecompose(cores, mols, rows, nullptr, ps);
+    CHECK(n == 3);
+    CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+[
+  {
+    "Core":"c1cc([*:4])c([*:3])c([*:2])c1[*:1]",
+    "R1":"[H][*:1]",
+    "R2":"[H][*:2]",
+    "R3":"F[*:3]",
+    "R4":"Clc1ccc(N[*:4])cc1"
+  },
+  {
+    "Core":"c1cc([*:4])c([*:3])c([*:2])c1[*:1]",
+    "R1":"Fc1ccccc1N[*:1]",
+    "R2":"[H][*:2]",
+    "R3":"[H][*:3]",
+    "R4":"Cl[*:4]"
+  },
+  {
+    "Core":"c1cc([*:4])c([*:3])c([*:2])c1[*:1]",
+    "R1":"[H][*:1]",
+    "R2":"O[*:2]",
+    "R3":"[H][*:3]",
+    "R4":"Brc1cccc(O[*:4])c1"
+  },
+  {
+    "Core":"c1cc([*:4])c([*:3])c([*:2])c1[*:1]",
+    "R1":"[H][*:1]",
+    "R2":"Oc1cccc(O[*:2])c1",
+    "R3":"[H][*:3]",
+    "R4":"Br[*:4]"
+  },
+  {
+    "Core":"c1cc([*:4])c([*:3])c([*:2])c1[*:1]",
+    "R1":"[H][*:1]",
+    "R2":"[H][*:2]",
+    "R3":"[H][*:3]",
+    "R4":"I[*:4]"
+  }
+])JSON"));
   }
 }

@@ -222,7 +222,7 @@ def shouldKekulize(mol, kekulize):
   return kekulize
 
 
-def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **kwargs):
+def _prepareMol(mol, drawOptions, **kwargs):
   if mol.NeedsUpdatePropertyCache():
     mol.UpdatePropertyCache(False)
 
@@ -235,6 +235,11 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
         mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
     except ValueError:  # <- can happen on a kekulization failure
       mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
+  return mol
+
+
+def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **kwargs):
+  mol = _prepareMol(mol, drawOptions=drawOptions, **kwargs)
   d2d = rdMolDraw2D.MolDraw2DCairo(sz[0], sz[1])
   if drawOptions is not None:
     d2d.SetDrawOptions(drawOptions)
@@ -937,3 +942,76 @@ def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, useSVG=True,
 def SetComicMode(opts):
   opts.fontFile = os.path.join(RDConfig.RDDataDir, "Fonts", "ComicNeue-Regular.ttf")
   opts.comicMode = True
+
+
+def _getMatchAtomsAndBonds(mol, qry, match):
+  alist = match
+  blist = []
+  if qry is not None:
+    for bnd in qry.GetBonds():
+      b = mol.GetBondBetweenAtoms(alist[bnd.GetBeginAtomIdx()], alist[bnd.GetEndAtomIdx()])
+      blist.append(b.GetIdx())
+  return alist, blist
+
+
+def _addColorsToMap(els, cols, color):
+  for el in els:
+    if el not in cols:
+      cols[el] = []
+    if color not in cols[el]:
+      cols[el].append(color)
+
+
+def DrawMolWithMatches(mol, matches, molSize=(350, 300), qry=None, label='',
+                       options=MolDrawOptions(), colors=None, doPNG=True, kekulize=True, confId=-1):
+  ''' Draws a molecule with a set of substructure matches highlighted
+
+      ARGUMENTS:
+
+        - mol: The molecule to draw
+
+        - matches: A list/tuple of lists/tuples of atom indices, each inner tuple representing a substructure match
+
+        - molSize: The size of the image to produce (default (350, 300))
+
+        - qry: The query molecule used to generate the matches (default None)
+                If supplied, bonds between matched atoms will also be highlighted
+
+        - label: A string to place under the molecule (default '')
+
+        - options: A MolDrawOptions object to control the drawing style (default MolDrawOptions())
+
+        - colors: A list/tuple of colors to use for highlighting the different matches
+                  (default None, in which case the default highlight color is used for all matches)
+
+        - doPNG: Whether to return PNG (if true) or SVG (if false) (default true)
+
+        - kekulize: Whether to kekulize the molecule before drawing (default true)
+
+        - confId: The conformer ID to use when drawing (default -1, the default conformer)
+
+      RETURNS:
+        A string containing the image in the requested format (PNG or SVG)
+'''
+  mol = _prepareMol(mol, options, kekulize=kekulize)
+
+  acols = {}
+  bcols = {}
+  h_rads = {}
+  h_lw_mult = {}
+  for i, match in enumerate(matches):
+    alist, blist = _getMatchAtomsAndBonds(mol, qry, match)
+    for ai in alist:
+      h_rads[ai] = options.highlightRadius
+    for bi in blist:
+      h_lw_mult[bi] = options.highlightBondWidthMultiplier
+    _addColorsToMap(alist, acols,
+                    colors[i % len(colors)] if colors is not None else options.getHighlightColour())
+    _addColorsToMap(blist, bcols,
+                    colors[i % len(colors)] if colors is not None else options.getHighlightColour())
+  d = MolDraw2DCairo(molSize[0], molSize[1]) if doPNG else MolDraw2DSVG(molSize[0], molSize[1])
+  d.SetDrawOptions(options)
+  d.drawOptions().prepareMolsBeforeDrawing = False
+  d.DrawMoleculeWithHighlights(mol, label, acols, bcols, h_rads, h_lw_mult, confId=confId)
+  d.FinishDrawing()
+  return d.GetDrawingText()

@@ -19,7 +19,6 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <sstream>
-#include <iostream>
 
 using namespace std;
 using namespace RDKit;

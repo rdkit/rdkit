@@ -8,7 +8,7 @@ PAPER         =
 BUILDDIR      = _build
 
 # Created by running doxygen in the $RDBASE/Code directory as follows:
-#  doxygen doxygen.config
+#  doxygen doxygen/doxygen.config
 CPPAPIDOCSHOME   = $(RDBASE)/Code/docs
 
 # Internal variables.

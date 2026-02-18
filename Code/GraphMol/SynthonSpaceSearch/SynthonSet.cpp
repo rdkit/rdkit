@@ -7,6 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+// The algorithm allows the substructure searching of a very large library
+// of structures that is described in synthon format (such as Enamine REAL)
+// without enumerating the individual structures during the search process.
+//
+// It is not a direct implementation of the published algorithm, as,
+// for example, it uses a different fingerprint for the initial synthon
+// screening.
 
 #include <cmath>
 #include <numeric>
@@ -763,6 +770,17 @@ std::unique_ptr<ROMol> SynthonSet::buildMolecule(
     msg += "\n" + std::string(e.what()) + "\n";
     BOOST_LOG(rdErrorLog) << msg;
     throw(e);
+  }
+}
+
+void SynthonSet::assessRingFormers() {
+  d_numRingFormers = 0;
+  for (size_t i = 1; i < d_synthons.size(); ++i) {
+    for (size_t j = 0; j < i; ++j) {
+      if ((d_synthConnPatts[i] & d_synthConnPatts[j]).count() > 1) {
+        ++d_numRingFormers;
+      }
+    }
   }
 }
 

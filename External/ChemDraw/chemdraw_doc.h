@@ -46,6 +46,6 @@ ChemDrawToDocument(std::istream &inStream, v2::CDXFormat format);
 std::unique_ptr<CDXDocument> RDKIT_RDCHEMDRAWLIB_EXPORT
 ChemDrawToDocument(const std::string &filename);
 
-}
+}  // namespace ChemDraw
 }  // namespace RDKit
 #endif

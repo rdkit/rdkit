@@ -46,7 +46,8 @@ class SynthonSpaceSearcher {
 
   virtual ~SynthonSpaceSearcher() = default;
 
-  SearchResults search(ThreadMode threadMode = ThreadMode::ThreadFragments);
+  SearchResults search(ThreadMode threadMode);
+  void search(const SearchResultCallback &cb, ThreadMode threadMode);
 
   SynthonSpace &getSpace() const { return d_space; }
   const ROMol &getQuery() const { return d_query; }
@@ -110,6 +111,10 @@ class SynthonSpaceSearcher {
   std::unique_ptr<ROMol> d_bestHitFound;
   double d_bestSimilarity{0.0};
 
+  // Generally, the search needs the query fragmented into no more than
+  // the largest number synthon sets in any reaction.  Substructure search
+  // needs more than that, sometimes.
+  virtual unsigned int getNumQueryFragmentsRequired();
   // Some of the search methods might need extra setup of the fragment
   // sets.  The FingerprintSearcher, for example, needs fingerprints
   // for all the fragments.  The SubstructureSearcher needs connector
@@ -118,6 +123,10 @@ class SynthonSpaceSearcher {
       std::vector<std::vector<std::unique_ptr<ROMol>>> &, const TimePoint *) {
     return true;
   }
+
+  std::vector<std::unique_ptr<SynthonSpaceHitSet>> assembleHitSets(
+      const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits,
+      ThreadMode threadMode);
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> doTheSearch(
       std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,

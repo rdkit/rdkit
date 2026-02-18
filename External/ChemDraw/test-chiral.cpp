@@ -54,7 +54,7 @@ TEST_CASE("Geometry") {
       std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
   SECTION("R/S Tetrahedral") {
     //_sleep(10 * 1000);
-    
+
     {
       auto fname = path + "geometry-tetrahedral.cdxml";
       auto mols = MolsFromChemDrawFile(fname);
@@ -71,11 +71,11 @@ TEST_CASE("Geometry") {
       auto smi = MolToSmiles(*mol);
       REQUIRE(smi == MolToSmiles(*mols[0]));
     }
-    
+
     {
       auto fname = path + "geometry-tetrahedral-3.cdxml";
       auto mols = MolsFromChemDrawFile(fname);
-      REQUIRE(mols.size()); 
+      REQUIRE(mols.size());
       auto mol = "C1CC[C@H]2CCCC[C@@H]2C1"_smiles;
       auto smi = MolToSmiles(*mol);
       REQUIRE(smi == MolToSmiles(*mols[0]));
@@ -86,7 +86,8 @@ TEST_CASE("Geometry") {
       auto fname = path + "geometry-tetrahedral-4.cdxml";
       auto mols = MolsFromChemDrawFile(fname);
       REQUIRE(mols.size());
-      auto mol = "CC(S[C@@H]1CC2=C([H])C(CC[C@]2(C)[C@@]3([H])CC([H])([H])[C@]4(C)[C@](OC5=O)(CC5([H])[H])CC[C@@]4([H])[C@]13[H])=O)=O"_smiles;
+      auto mol =
+    "CC(S[C@@H]1CC2=C([H])C(CC[C@]2(C)[C@@]3([H])CC([H])([H])[C@]4(C)[C@](OC5=O)(CC5([H])[H])CC[C@@]4([H])[C@]13[H])=O)=O"_smiles;
       auto smi = MolToSmiles(*mol);
       std::cerr << "** " << smi << std::endl;
       REQUIRE(smi == MolToSmiles(*mols[0]));

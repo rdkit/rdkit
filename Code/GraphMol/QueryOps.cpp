@@ -877,6 +877,13 @@ bool isAtomListQuery(const Atom *a) {
     // this was github #5930: negated list queries containing a single atom were
     // being lost on output
     return true;
+  } else if (a->getQuery()->getDescription() == "AtomAtomicNum" &&
+             static_cast<ATOM_EQUALS_QUERY *>(a->getQuery())->getVal() !=
+                 a->getAtomicNum()) {
+    // when reading single-member atom lists from CTABs we end up with simple
+    // AtomAtomicNum queries where the atomic number of the atom itself is zero.
+    // Recognize this case.
+    return true;
   }
   return false;
 }

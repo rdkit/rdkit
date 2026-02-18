@@ -12,8 +12,8 @@
 #define _RD_CHEMTRANSFORMS_H__
 
 #include <boost/smart_ptr.hpp>
+#include <string_view>
 #include <vector>
-#include <iostream>
 
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include "MolFragmenter.h"
@@ -229,7 +229,7 @@ RDKIT_CHEMTRANSFORMS_EXPORT ROMol *combineMols(
 */
 RDKIT_CHEMTRANSFORMS_EXPORT void addRecursiveQueries(
     ROMol &mol, const std::map<std::string, ROMOL_SPTR> &queries,
-    const std::string &propName,
+    const std::string_view &propName,
     std::vector<std::pair<unsigned int, std::string>> *reactantLabels =
         nullptr);
 

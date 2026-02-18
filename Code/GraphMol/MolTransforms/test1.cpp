@@ -18,7 +18,6 @@
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <Geometry/point.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
-#include <iostream>
 #include <algorithm>
 
 using namespace RDKit;

@@ -242,7 +242,7 @@ TEST_CASE("S Complex query") {
   CHECK(results.getHitMolecules().size() == 7649);
   // The screenout is poor for a complex query, so a lot of things
   // will be identified as possible that aren't.
-  CHECK(results.getMaxNumResults() == 33294);
+  CHECK(results.getMaxNumResults() == 32814);
   tidy5567Binary();
 }
 

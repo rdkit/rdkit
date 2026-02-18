@@ -101,7 +101,7 @@ void Transform3D::SetRotation(double angle, const Point3D &axis) {
   this->SetRotation(c, s, axis);
 }
 
-void Transform3D::SetRotationFromQuaternion(double quaternion[4]) {
+void Transform3D::SetRotationFromQuaternion(const double quaternion[4]) {
   double q00 = quaternion[0] * quaternion[0];
   double q11 = quaternion[1] * quaternion[1];
   double q22 = quaternion[2] * quaternion[2];

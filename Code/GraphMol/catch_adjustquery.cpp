@@ -439,7 +439,7 @@ TEST_CASE("MDL five-rings") {
     // clang-format off
     std::vector<extuple> examples = {
     // no queries, no change
-    extuple{"adjustqueryprops_MDLfivering_1.mol","[#7H]1:[#6]:[#6]:[#6]:[#6]:1",""},
+    extuple{"adjustqueryprops_MDLfivering_1.mol","[#7]1:[#6]:[#6]:[#6]:[#6]:1",""},
     // Q atom, no change
     extuple{"adjustqueryprops_MDLfivering_2.mol","[!#6&!#1]1:[#6]:[#6]:[#6]:[#6]:1",""},
     // A atom, this one changes
@@ -531,14 +531,14 @@ TEST_CASE("conjugated five-rings") {
     // clang-format off
     std::vector<matchCase> examples = {
     // 1,3 cyclopentadiene
-    matchCase{"C1=CCC=C1","adjustqueryprops_fivering_1.mol",true,true},
+    matchCase{"C1=CCC=C1","adjustqueryprops_fivering_1.mol",false,true},
     matchCase{"C1=CCC=C1","adjustqueryprops_fivering_2.mol",false,true},
     matchCase{"C1=CCC=C1","adjustqueryprops_fivering_3.mol",true,true},
     matchCase{"C1=CCC=C1","adjustqueryprops_fivering_4.mol",false,false},
     matchCase{"C1=CCC=C1","adjustqueryprops_fivering_5.mol",false,false},
     matchCase{"C1=CCC=C1","adjustqueryprops_fivering_6.mol",false,false},
     // pyrrole
-    matchCase{"C1=CNC=C1","adjustqueryprops_fivering_1.mol",false,true},
+    matchCase{"C1=CNC=C1","adjustqueryprops_fivering_1.mol",true,true},
     matchCase{"C1=CNC=C1","adjustqueryprops_fivering_2.mol",true,true},
     matchCase{"C1=CNC=C1","adjustqueryprops_fivering_3.mol",false,false},
     matchCase{"C1=CNC=C1","adjustqueryprops_fivering_4.mol",false,false},
@@ -559,7 +559,7 @@ TEST_CASE("conjugated five-rings") {
     matchCase{"C1=CS(=O)C=C1","adjustqueryprops_fivering_5.mol",false,false},
     matchCase{"C1=CS(=O)C=C1","adjustqueryprops_fivering_6.mol",true,true},
     // furan
-    matchCase{"C1=COC=C1","adjustqueryprops_fivering_1.mol",false,true},
+    matchCase{"C1=COC=C1","adjustqueryprops_fivering_1.mol",true,true},
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_2.mol",true,true},
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_3.mol",false,false},
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_4.mol",false,false},
@@ -792,7 +792,7 @@ TEST_CASE("makeAtomsGeneric") {
     auto m = "C[CH3:1]"_smiles;
     REQUIRE(m);
     MolOps::adjustQueryProperties(*m, &ps);
-    CHECK(MolToSmarts(*m) == "*-[#6H3:1]");
+    CHECK(MolToSmarts(*m) == "*-[#6:1]");
   }
 }
 

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <cstdint>
+#include <boost/property_tree/ptree_fwd.hpp>
 
 namespace RDKit {
 class ROMol;
@@ -30,6 +31,8 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
                std::vector<std::pair<std::uint32_t, std::uint32_t>>>;
   using bitPathsType = std::map<std::uint64_t, std::vector<std::vector<int>>>;
   using atomCountsType = std::vector<unsigned int>;
+  using atomsPerBitType =
+      std::map<std::uint64_t, std::vector<std::vector<int>>>;
 
   // numAtoms long
   atomToBitsType *atomToBits = nullptr;
@@ -45,6 +48,9 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
   // number of paths that set bits for each atom, must have the same size as
   // atom count for molecule.
   atomCountsType *atomCounts = nullptr;
+
+  // maps bitId -> vector of atoms involved in setting that bit
+  atomsPerBitType *atomsPerBit = nullptr;
 
   void allocateAtomToBits() {
     atomToBitsHolder.reset(new atomToBitsType);
@@ -62,12 +68,17 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
     atomCountsHolder.reset(new atomCountsType);
     atomCounts = atomCountsHolder.get();
   }
+  void allocateAtomsPerBit() {
+    atomsPerBitHolder.reset(new atomsPerBitType);
+    atomsPerBit = atomsPerBitHolder.get();
+  }
 
  private:
   std::unique_ptr<atomToBitsType> atomToBitsHolder;
   std::unique_ptr<bitInfoMapType> bitInfoMapHolder;
   std::unique_ptr<bitPathsType> bitPathsHolder;
   std::unique_ptr<atomCountsType> atomCountsHolder;
+  std::unique_ptr<atomsPerBitType> atomsPerBitHolder;
 };
 
 /*!
@@ -96,6 +107,8 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments {
    \return std::string information string
    */
   virtual std::string infoString() const = 0;
+  virtual void toJSON(boost::property_tree::ptree &pt) const;
+  virtual void fromJSON(const boost::property_tree::ptree &pt);
 
   /**
    \brief method that returns information string about common fingerprinting
@@ -191,6 +204,9 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironmentGenerator
    \return std::string information string
    */
   virtual std::string infoString() const = 0;
+  virtual void toJSON(boost::property_tree::ptree &) const {};
+  virtual void fromJSON(const boost::property_tree::ptree &) {};
+
   /*!
     \brief Returns the size of the fingerprint based on arguments
 
@@ -228,6 +244,8 @@ class RDKIT_FINGERPRINTS_EXPORT AtomInvariantsGenerator
    \return std::string information string
    */
   virtual std::string infoString() const = 0;
+  virtual void toJSON(boost::property_tree::ptree &) const {};
+  virtual void fromJSON(const boost::property_tree::ptree &) {};
 
   virtual ~AtomInvariantsGenerator() {}
   virtual AtomInvariantsGenerator *clone() const = 0;
@@ -258,6 +276,8 @@ class RDKIT_FINGERPRINTS_EXPORT BondInvariantsGenerator
  \return std::string information string
  */
   virtual std::string infoString() const = 0;
+  virtual void toJSON(boost::property_tree::ptree &) const {};
+  virtual void fromJSON(const boost::property_tree::ptree &) {};
 
   virtual ~BondInvariantsGenerator() {}
   virtual BondInvariantsGenerator *clone() const = 0;
@@ -400,7 +420,18 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
   };
 
   std::string infoString() const;
+  void toJSON(boost::property_tree::ptree &pt) const;
+  void fromJSON(const boost::property_tree::ptree &pt);
 };
+//! generate JSON representation of a FingerprintGenerator
+template <typename OutputType>
+RDKIT_FINGERPRINTS_EXPORT std::string generatorToJSON(
+    const FingerprintGenerator<OutputType> &generator);
+
+//! create a FingerprintGenerator from its JSON representation
+///  note that the returned generator always uses std::uint64_t as OutputType.
+RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<FingerprintGenerator<std::uint64_t>>
+generatorFromJSON(const std::string &jsonStr);
 
 template RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
 FingerprintGenerator<std::uint32_t>::getFingerprint(
@@ -451,7 +482,12 @@ FingerprintGenerator<std::uint64_t>::getSparseCountFingerprint(
     const std::vector<std::uint32_t> *,
     const std::vector<std::uint32_t> *) const;
 
-enum class FPType { AtomPairFP, MorganFP, RDKitFP, TopologicalTorsionFP };
+enum class FPType {
+  AtomPairFP,
+  MorganFP,
+  RDKitFP,
+  TopologicalTorsionFP
+};
 
 //! used to indicate errors for unimplemented fp types in convenience
 //! functions

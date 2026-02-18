@@ -24,7 +24,6 @@ https://github.com/mcs07/CommonChem
 */
 
 #include <string>
-#include <iostream>
 #include <vector>
 
 #include <boost/shared_ptr.hpp>

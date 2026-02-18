@@ -538,6 +538,13 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
     }
   }
 
+  if (bondsToTry.empty()) {
+    return;
+  }
+
+  // First, do a simple check with TotalDegree to see if any bonds might be
+  // candidates before doing the expensive hybridization calculation.
+  bool anyBondPassesDegreeCheck = false;
   for (auto bondToTry : bondsToTry) {
     if (bondToTry->getBeginAtom()->needsUpdatePropertyCache()) {
       bondToTry->getBeginAtom()->updatePropertyCache(false);
@@ -545,12 +552,48 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
     if (bondToTry->getEndAtom()->needsUpdatePropertyCache()) {
       bondToTry->getEndAtom()->updatePropertyCache(false);
     }
+
+    if (bondToTry->getBondType() == Bond::SINGLE &&
+        bondToTry->getStereo() != Bond::BondStereo::STEREOANY &&
+        bondToTry->getBeginAtom()->getTotalDegree() >= 2 &&
+        bondToTry->getBeginAtom()->getTotalDegree() <= 3 &&
+        bondToTry->getEndAtom()->getTotalDegree() >= 2 &&
+        bondToTry->getEndAtom()->getTotalDegree() <= 3) {
+      anyBondPassesDegreeCheck = true;
+      break;
+    }
+  }
+
+  if (!anyBondPassesDegreeCheck) {
+    return;
+  }
+
+  // defer cache update on the whole mol unless we actually have bonds to try
+  // we need to do an update on the whole mol and not just incident atoms
+  // because we need to calculate hybridization, which is non-local
+  bool needsUpdate =
+      mol.needsUpdatePropertyCache() ||
+      std::any_of(mol.atoms().begin(), mol.atoms().end(), [](const auto atom) {
+        return atom->getAtomicNum() != 0 &&
+               atom->getHybridization() == Atom::HybridizationType::UNSPECIFIED;
+      });
+  if (needsUpdate) {
+    mol.updatePropertyCache(false);
+    MolOps::setConjugation(mol);
+    MolOps::setHybridization(mol);
+  }
+
+  for (auto bondToTry : bondsToTry) {
     if (bondToTry->getBondType() != Bond::SINGLE ||
         bondToTry->getStereo() == Bond::BondStereo::STEREOANY ||
-        bondToTry->getBeginAtom()->getTotalDegree() < 2 ||
-        bondToTry->getEndAtom()->getTotalDegree() < 2 ||
-        bondToTry->getBeginAtom()->getTotalDegree() > 3 ||
-        bondToTry->getEndAtom()->getTotalDegree() > 3) {
+        // before, we checked only on totalDegree = 2 or 3,
+        // but this causes false positives for something like a chiral sulfoxide
+        // since the S is tetrahedral (sp3) but has only 3 substituents.
+        // the hybridization code relies on totalDegree,
+        // but modified to include and making sure to include conjugation
+        // so while this is more expensive per molecule, it is closer to intent
+        bondToTry->getBeginAtom()->getHybridization() != Atom::SP2 ||
+        bondToTry->getEndAtom()->getHybridization() != Atom::SP2) {
       continue;
     }
 

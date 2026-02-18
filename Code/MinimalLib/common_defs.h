@@ -11,8 +11,11 @@
 #include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Chirality.h>
+#include <boost/json.hpp>
 #include <string>
 #include <vector>
+
+namespace bj = boost::json;
 
 namespace RDKit {
 namespace MinimalLib {
@@ -31,6 +34,7 @@ struct DrawingDetails {
   bool forceCoords = false;
   bool wavyBonds = false;
   bool useMolBlockWedging = false;
+  bool returnDrawCoords = false;
   std::string legend;
   std::vector<int> atomIds;
   std::vector<int> bondIds;
@@ -125,6 +129,13 @@ class DrawerFromDetails {
           molDrawingDetails.bondMultiMap, molDrawingDetails.radiiMap,
           molDrawingDetails.lineWidthMultiplierMap);
     }
+    if (molDrawingDetails.returnDrawCoords) {
+      d_drawCoords.reset(new std::vector<RDGeom::Point2D>());
+      d_drawCoords->reserve(molPtr->getNumAtoms());
+      for (size_t i = 0; i < molPtr->getNumAtoms(); ++i) {
+        d_drawCoords->push_back(drawer().getDrawCoords(i));
+      }
+    }
     return finalizeDrawing();
   }
   std::string draw_rxn(const ChemicalReaction &rxn) {
@@ -162,15 +173,41 @@ class DrawerFromDetails {
       MolDraw2DUtils::updateDrawerParamsFromJSON(drawer(), d_details);
     }
   }
+  std::string createDrawingResult(const std::string &res) {
+    if (!d_drawCoords) {
+      return res;
+    }
+    bj::object doc;
+    bj::array bjDrawCoords;
+    for (const auto &drawXY : *d_drawCoords) {
+      bj::array bjXY;
+      bjXY.push_back(drawXY.x);
+      bjXY.push_back(drawXY.y);
+      bjDrawCoords.push_back(std::move(bjXY));
+    }
+    doc["drawCoords"] = bjDrawCoords;
+    const auto drawingResultKey = getDrawingResultKey();
+    if (drawingResultKey) {
+      doc[drawingResultKey] = res;
+    }
+    return bj::serialize(doc);
+  }
 
  private:
   virtual MolDraw2D &drawer() const = 0;
   virtual void initDrawer(const DrawingDetails &drawingDetails) = 0;
   virtual std::string finalizeDrawing() = 0;
+  virtual const char *getDrawingResultKey() { return nullptr; };
   int d_width;
   int d_height;
   std::string d_details;
+  std::unique_ptr<std::vector<RDGeom::Point2D>> d_drawCoords;
 };
 
+enum class MDLVersion {
+  AUTO,
+  V2000,
+  V3000
+};
 }  // namespace MinimalLib
 }  // namespace RDKit

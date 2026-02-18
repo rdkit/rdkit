@@ -46,8 +46,6 @@
 #ifndef _PBFRDKit_h
 #define _PBFRDKit_h
 
-#include <iostream>
-
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Conformer.h>
@@ -55,6 +53,6 @@
 
 using namespace RDKit;
 
-double PBFRD(ROMol&, int confId = -1);
+double PBFRD(ROMol &, int confId = -1);
 
 #endif

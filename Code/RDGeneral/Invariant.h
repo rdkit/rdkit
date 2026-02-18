@@ -15,7 +15,6 @@
 
 #include <cassert>
 #include <string>
-#include <iostream>
 #include <stdexcept>
 
 #include "BoostStartInclude.h"

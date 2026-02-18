@@ -14,7 +14,6 @@
 #include "point.h"
 #include <DataStructs/DiscreteValueVect.h>
 #include "Grid3D.h"
-#include <iostream>
 
 namespace RDGeom {
 class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D

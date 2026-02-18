@@ -11,7 +11,6 @@
 #include "Matrix.h"
 #include "SquareMatrix.h"
 #include "SymmMatrix.h"
-#include <iostream>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <cmath>

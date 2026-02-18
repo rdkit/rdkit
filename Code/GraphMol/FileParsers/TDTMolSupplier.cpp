@@ -22,7 +22,6 @@
 #include <RDGeneral/LocaleSwitcher.h>
 
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <string>
 

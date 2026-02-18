@@ -86,6 +86,66 @@ SearchResults SynthonSpaceSearcher::search(ThreadMode threadMode) {
                        timedOut, ControlCHandler::getGotSignal()};
 }
 
+void SynthonSpaceSearcher::search(const SearchResultCallback &cb,
+                                  ThreadMode threadMode) {
+  bool timedOut = false;
+  const TimePoint *endTime = nullptr;
+  std::uint64_t totHits = 0;
+  auto allHits = assembleHitSets(endTime, timedOut, totHits, threadMode);
+  std::sort(allHits.begin(), allHits.end(),
+            [](const auto &hs1, const auto &hs2) -> bool {
+              if (hs1->d_reaction->getId() == hs2->d_reaction->getId()) {
+                return hs1->numHits < hs2->numHits;
+              }
+              return hs1->d_reaction->getId() < hs2->d_reaction->getId();
+            });
+
+  // from buildAllhits
+  std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> toTry;
+  std::int64_t hitCount = 0;
+  bool stop = false;  // set by callback
+
+  // Each hitset contains possible hits from a single SynthonSet.
+  for (const auto &hitset : allHits) {
+    // Set up the stepper to move through the synthons.
+    std::vector<size_t> numSynthons;
+    numSynthons.reserve(hitset->synthonsToUse.size());
+    for (auto &stu : hitset->synthonsToUse) {
+      numSynthons.push_back(stu.size());
+    }
+    details::Stepper stepper(numSynthons);
+
+    const auto &reaction = getSpace().getReaction(hitset->d_reaction->getId());
+    std::vector<size_t> theseSynthNums(reaction->getSynthons().size(), 0);
+    // process the synthons
+    while (stepper.d_currState[0] != numSynthons[0]) {
+      toTry.emplace_back(hitset.get(), stepper.d_currState);
+      if (toTry.size() == static_cast<size_t>(d_params.toTryChunkSize)) {
+        std::vector<std::unique_ptr<ROMol>> partResults;
+        processToTrySet(toTry, endTime, partResults);
+        hitCount += partResults.size();
+        stop = cb(partResults);
+        toTry.clear();
+        if (stop || (d_params.maxHits != -1 && hitCount >= d_params.maxHits)) {
+          break;
+        }
+      }
+      stepper.step();
+    }
+    if (stop || (d_params.maxHits != -1 && hitCount >= d_params.maxHits)) {
+      break;
+    }
+  }
+
+  // Do any remaining.
+  if ((d_params.maxHits == -1 || hitCount < d_params.maxHits) && !stop &&
+      !toTry.empty()) {
+    std::vector<std::unique_ptr<ROMol>> partResults;
+    processToTrySet(toTry, endTime, partResults);
+    cb(partResults);
+  }
+}
+
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
     const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums) {
   std::vector<const ROMol *> synths(synthNums.size());
@@ -212,6 +272,28 @@ void processReactions(
   }
 }
 }  // namespace
+
+unsigned int SynthonSpaceSearcher::getNumQueryFragmentsRequired() {
+  return getSpace().getMaxNumSynthons();
+}
+
+std::vector<std::unique_ptr<SynthonSpaceHitSet>>
+SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
+                                      std::uint64_t &totHits,
+                                      ThreadMode threadMode) {
+  auto fragments = details::splitMolecule(
+      d_query, getNumQueryFragmentsRequired(), d_params.maxNumFragSets, endTime,
+      d_params.numThreads, timedOut);
+  if (timedOut || ControlCHandler::getGotSignal()) {
+    return {};
+  }
+  extraSearchSetup(fragments, endTime);
+  if (ControlCHandler::getGotSignal()) {
+    return {};
+  }
+
+  return doTheSearch(fragments, endTime, timedOut, totHits, threadMode);
+}
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSearcher::doTheSearch(

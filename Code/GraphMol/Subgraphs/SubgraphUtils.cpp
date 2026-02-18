@@ -12,10 +12,11 @@
 #include "Subgraphs.h"
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Subset.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 #include <map>
 #include <RDGeneral/hash/hash.hpp>
 
@@ -28,84 +29,20 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery) {
 
 ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
                     INT_MAP_INT &atomIdxMap) {
-  auto *subMol = new RWMol();
-  // path needs to be in sorted order to preserve chirality
-  PATH_TYPE sorted_path(path);
-  std::sort(sorted_path.begin(), sorted_path.end());
+  SubsetOptions options;
+  options.copyAsQuery = useQuery;
+  options.copyCoordinates = true;
+  options.method = SubsetMethod::BONDS;
 
+  std::vector<unsigned int> upath{path.begin(), path.end()};
+  SubsetInfo subsetInfo;
+  auto res = copyMolSubset(mol, upath, subsetInfo, options);
   atomIdxMap.clear();
-
-  if (useQuery) {
-    // have to do this in two different blocks because of issues with variable
-    // scopes.
-    for (auto bondidx : sorted_path) {
-      auto *bond = new QueryBond(*(mol.getBondWithIdx(bondidx)));
-
-      int begIdx = bond->getBeginAtomIdx();
-      int endIdx = bond->getEndAtomIdx();
-
-      if (atomIdxMap.find(begIdx) == atomIdxMap.end()) {
-        auto *atom = new QueryAtom(*(mol.getAtomWithIdx(begIdx)));
-        int newAtomIdx = subMol->addAtom(atom, false, true);
-        atomIdxMap[begIdx] = newAtomIdx;
-      }
-      begIdx = atomIdxMap.find(begIdx)->second;
-      if (atomIdxMap.find(endIdx) == atomIdxMap.end()) {
-        auto *atom = new QueryAtom(*(mol.getAtomWithIdx(endIdx)));
-        int newAtomIdx = subMol->addAtom(atom, false, true);
-        atomIdxMap[endIdx] = newAtomIdx;
-      }
-      endIdx = atomIdxMap.find(endIdx)->second;
-
-      bond->setOwningMol(subMol);
-      bond->setBeginAtomIdx(begIdx);
-      bond->setEndAtomIdx(endIdx);
-      subMol->addBond(bond, true);
-    }
-  } else {
-    for (auto bondidx : sorted_path) {
-      Bond *bond = mol.getBondWithIdx(bondidx)->copy();
-
-      int begIdx = bond->getBeginAtomIdx();
-      int endIdx = bond->getEndAtomIdx();
-
-      if (atomIdxMap.find(begIdx) == atomIdxMap.end()) {
-        Atom *atom = mol.getAtomWithIdx(begIdx)->copy();
-        int newAtomIdx = subMol->addAtom(atom, false, true);
-        atomIdxMap[begIdx] = newAtomIdx;
-      }
-      begIdx = atomIdxMap.find(begIdx)->second;
-      if (atomIdxMap.find(endIdx) == atomIdxMap.end()) {
-        Atom *atom = mol.getAtomWithIdx(endIdx)->copy();
-        int newAtomIdx = subMol->addAtom(atom, false, true);
-        atomIdxMap[endIdx] = newAtomIdx;
-      }
-      endIdx = atomIdxMap.find(endIdx)->second;
-
-      bond->setOwningMol(subMol);
-      bond->setBeginAtomIdx(begIdx);
-      bond->setEndAtomIdx(endIdx);
-      subMol->addBond(bond, true);
-    }
+  for (auto mapping : subsetInfo.atomMapping) {
+    atomIdxMap[mapping.first] = mapping.second;
   }
-  if (mol.getNumConformers()) {
-    // copy coordinates over:
-    for (auto confIt = mol.beginConformers(); confIt != mol.endConformers();
-         ++confIt) {
-      auto *conf = new Conformer(subMol->getNumAtoms());
-      conf->set3D((*confIt)->is3D());
-      for (INT_MAP_INT::const_iterator mapIt = atomIdxMap.begin();
-           mapIt != atomIdxMap.end(); ++mapIt) {
-        conf->setAtomPos(mapIt->second, (*confIt)->getAtomPos(mapIt->first));
-      }
-      conf->setId((*confIt)->getId());
-      subMol->addConformer(conf, false);
-    }
-  }
-  // clear computed properties
-  subMol->clearComputedProps(true);
 
-  return subMol;
+  return res.release();
 }
 
 PATH_TYPE bondListFromAtomList(const ROMol &mol, const PATH_TYPE &atomIds) {

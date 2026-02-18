@@ -663,6 +663,7 @@ void finaliseHit(const std::unique_ptr<RWMol> &queryConfs,
                  double shape_tan, double color_tan, const std::string &rxnId,
                  const std::vector<const std::string *> &synthNames,
                  ROMol &hit) {
+#if 0
   hit.setProp<double>("Similarity", shape_tan + color_tan);
   hit.setProp<double>("ShapeTanimoto", shape_tan);
   hit.setProp<double>("ColorTanimoto", color_tan);
@@ -680,6 +681,7 @@ void finaliseHit(const std::unique_ptr<RWMol> &queryConfs,
   TransformConformer(queryShapes->shift, matrix, hitShape, *hitConf);
   hit.addConformer(hitConf, true);
   MolOps::assignStereochemistryFrom3D(hit);
+#endif
 }
 }  // namespace
 

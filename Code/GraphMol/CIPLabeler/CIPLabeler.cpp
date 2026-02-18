@@ -178,7 +178,7 @@ void label(std::vector<std::unique_ptr<Configuration>> &configs,
   // resolved.
   for (auto &conf : configs) {
     // Make sure this stereo center has no label
-    conf->getFocus()->clearProp(common_properties::_CIPCode);
+    conf->resetPrimaryLabel();
 
     remainingCallCount = constitutionalRuleTimeout;
     try {
@@ -200,7 +200,7 @@ void label(std::vector<std::unique_ptr<Configuration>> &configs,
 
   // try again on everything that hasn't been resolved yet
   for (const auto &conf : configs) {
-    if (conf->getFocus()->hasProp(common_properties::_CIPCode)) {
+    if (conf->hasPrimaryLabel()) {
       // already resolved!
       continue;
     }

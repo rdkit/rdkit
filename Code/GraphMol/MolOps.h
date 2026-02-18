@@ -332,7 +332,7 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeNonimplicit = true; /**< DEPRECATED equivalent of !implicitOnly */
   bool updateExplicitCount =
       false; /**< DEPRECATED equivalent of updateExplicitCount */
-  bool removeHydrides = true; /**< Removing Hydrides */
+  bool removeHydrides = false; /**< Removing Hydrides */
   bool removeNontetrahedralNeighbors =
       false; /**<  remove Hs which are bonded to atoms with specified
                 non-tetrahedral stereochemistry */
@@ -1203,7 +1203,7 @@ RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromMolParity(
 
 //! returns the number of atoms which have a particular property set
 RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(
-    const ROMol &mol, std::string prop);
+    const ROMol &mol, const std::string_view &prop);
 
 //! returns whether or not a molecule needs to have Hs added to it.
 RDKIT_GRAPHMOL_EXPORT bool needsHs(const ROMol &mol);

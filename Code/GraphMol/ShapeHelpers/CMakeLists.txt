@@ -6,7 +6,7 @@ target_compile_definitions(ShapeHelpers PRIVATE RDKIT_SHAPEHELPERS_BUILD)
 rdkit_headers(ShapeEncoder.h
               ShapeUtils.h DEST GraphMol/ShapeHelpers)
 
-rdkit_test(testShapeHelpers testShapeHelpers.cpp
+rdkit_catch_test(testShapeHelpers testShapeHelpers.cpp
            LINK_LIBRARIES ShapeHelpers FileParsers MolAlign
 SmilesParse FileParsers SubstructMatch )
 

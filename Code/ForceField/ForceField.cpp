@@ -123,8 +123,8 @@ class calcGradient {
     for (unsigned int i = 0;
          i < mp_ffHolder->numPoints() * mp_ffHolder->dimension(); i++) {
       grad[i] *= gradScale;
-      if (grad[i] > maxGrad) {
-        maxGrad = grad[i];
+      if (fabs(grad[i]) > maxGrad) {
+        maxGrad = fabs(grad[i]);
       }
     }
     // this is a continuation of the same hack to avoid

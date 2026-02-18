@@ -68,6 +68,7 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
   bool extraSearchSetup(
       std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
       const TimePoint *endTime) override;
+  unsigned int getNumQueryFragmentsRequired() override;
 
   void getConnectorRegions(
       const std::vector<std::unique_ptr<ROMol>> &molFrags,

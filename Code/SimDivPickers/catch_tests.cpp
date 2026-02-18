@@ -16,7 +16,6 @@
 #include <DataStructs/BitOps.h>
 #include <SimDivPickers/LeaderPicker.h>
 
-#include <iostream>
 #include <fstream>
 
 template <typename T>

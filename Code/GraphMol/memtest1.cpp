@@ -18,7 +18,6 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Dict.h>
 
-#include <iostream>
 using namespace std;
 using namespace RDKit;
 

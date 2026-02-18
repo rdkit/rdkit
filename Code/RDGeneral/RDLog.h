@@ -17,7 +17,6 @@
 #include <boost/iostreams/tee.hpp>
 #include <boost/iostreams/stream.hpp>
 #include "BoostEndInclude.h"
-#include <iostream>
 #include <fstream>
 #include <vector>
 #include <cstdint>

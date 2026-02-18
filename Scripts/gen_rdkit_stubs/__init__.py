@@ -1,5 +1,6 @@
 import sys
 import os
+import glob
 import builtins
 import importlib
 import re
@@ -14,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 WORKER_SCRIPT = "worker.py"
+PATCH_DIR = "patch"
+PATCH_EXT = ".diff"
 IMPORT_MODULES = re.compile(r"^\s*import\s+(.*)$")
 FROM_IMPORT_MODULES = re.compile(r"^\s*from\s+(\S+)\s+import\s+(.*)$")
 PYI_TO_PY = re.compile(r"\.pyi$")
@@ -66,6 +69,26 @@ def find_rdkit_include_path():
         if not os.path.isdir(os.path.join(rdkit_include_path, RDKIT_MODULE_NAME)):
             rdkit_include_path = None
     return rdkit_include_path
+
+def apply_patch(tempdir, patch_file):
+    """Apply a patch file to the corresponding stub file."""
+    cmd = ["git", "--git-dir=", "apply", patch_file]
+    proc = subprocess.run(cmd, cwd=tempdir, capture_output=True)
+    if proc.returncode:
+        msg = proc.stderr.decode("utf-8") or "(no error message)"
+        cmd_as_str = " ".join(cmd)
+        logger.critical(f"Failed to apply patch {patch_file};\n\"{cmd_as_str}\" failed with:\n{msg}")
+
+def patch_stubs(tempdir, src_entry):
+    """Patch the stubs in src_entry if a diff fail is available."""
+    patch_dir = os.path.join(os.path.dirname(__file__), PATCH_DIR)
+    if not os.path.isdir(patch_dir):
+        return
+    for pyi in glob.glob(os.path.join(src_entry, "**/*.pyi")):
+        pyi_rel = os.path.relpath(pyi, tempdir)
+        patch_file = os.path.join(patch_dir, pyi_rel + PATCH_EXT)
+        if os.path.exists(patch_file):
+            apply_patch(tempdir, patch_file)
 
 def copy_stubs(src_entry, outer_dirs):
     """Copy src_entry to each directory in outer_dirs.
@@ -183,6 +206,7 @@ def generate_stubs_internal(modules, outer_dirs, args):
         if concat_out and args.verbose:
             logger.warning(concat_out)
         if os.path.isdir(src_dir):
+            patch_stubs(tempdir, src_dir)
             for f in os.listdir(src_dir):
                 src_entry = os.path.join(src_dir, f)
                 if os.path.exists(src_entry):

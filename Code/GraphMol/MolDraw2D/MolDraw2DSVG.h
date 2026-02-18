@@ -16,7 +16,6 @@
 #ifndef MOLDRAW2DSVG_H
 #define MOLDRAW2DSVG_H
 
-#include <iostream>
 #include <sstream>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 

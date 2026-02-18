@@ -586,7 +586,7 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
                           AtomComparator atomComp, BondComparator bondComp,
                           RingComparator ringComp, std::string seedSmarts) {
   std::vector<ROMOL_SPTR> ms;
-  unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
+  unsigned int nElems = python::len(mols);
   ms.resize(nElems);
   for (unsigned int i = 0; i < nElems; ++i) {
     if (!mols[i]) {
@@ -621,7 +621,7 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
 
 MCSResult *FindMCSWrapper2(python::object mols, PyMCSParameters &pyMcsParams) {
   std::vector<ROMOL_SPTR> ms;
-  unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
+  unsigned int nElems = python::len(mols);
   ms.resize(nElems);
   for (unsigned int i = 0; i < nElems; ++i) {
     if (!mols[i]) {
@@ -762,7 +762,9 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                     "SMILES string to be used as the seed of the MCS")
       .add_property("StoreAll", &RDKit::PyMCSParameters::getStoreAll,
                     &RDKit::PyMCSParameters::setStoreAll,
-                    "toggles storage of degenerate MCSs");
+                    "toggles storage of degenerate MCSs")
+      .def("__setattr__", &safeSetattr);
+      
 
   python::class_<RDKit::MCSAtomCompareParameters, boost::noncopyable>(
       "MCSAtomCompareParameters",
@@ -787,7 +789,8 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                      "results cannot include lone ring atoms")
       .def_readwrite("MatchIsotope",
                      &RDKit::MCSAtomCompareParameters::MatchIsotope,
-                     "use isotope atom queries in MCSResults");
+                     "use isotope atom queries in MCSResults")
+      .def("__setattr__", &safeSetattr);
 
   python::class_<RDKit::MCSBondCompareParameters, boost::noncopyable>(
       "MCSBondCompareParameters",
@@ -811,7 +814,8 @@ BOOST_PYTHON_MODULE(rdFMCS) {
           "won't match cyclodecane")
       .def_readwrite("MatchStereo",
                      &RDKit::MCSBondCompareParameters::MatchStereo,
-                     "include bond stereo in the comparison");
+                     "include bond stereo in the comparison")
+      .def("__setattr__", &safeSetattr);
 
   python::class_<RDKit::PyMCSProgress, boost::noncopyable>(
       "MCSProgress",

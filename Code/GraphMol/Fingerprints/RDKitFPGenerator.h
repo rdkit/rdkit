@@ -26,6 +26,8 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPArguments : public FingerprintArguments {
   bool df_useBondOrder = true;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
 
   /**
    \brief Construct a new RDKitFPArguments object
@@ -62,6 +64,9 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomInvGenerator
       const ROMol &mol) const override;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
+
   RDKitFPAtomInvGenerator *clone() const override;
 };
 
@@ -113,6 +118,9 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPEnvGenerator
       bool hashResults = false) const override;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
+
   OutputType getResultSize() const override;
 
 };  // namespace RDKitFP

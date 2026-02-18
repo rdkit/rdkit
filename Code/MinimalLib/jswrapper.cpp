@@ -59,7 +59,7 @@ class JSDrawerFromDetails : public MinimalLib::DrawerFromDetails {
                                    drawingDetails.noFreetype));
     updateDrawerParamsFromJSON();
   }
-  std::string finalizeDrawing() { return ""; }
+  std::string finalizeDrawing() { return createDrawingResult(""); }
   std::unique_ptr<MolDraw2DJS> d_drawer;
   emscripten::val d_ctx;
 };
@@ -452,8 +452,8 @@ emscripten::val get_mmpa_frags_helper(const JSMolBase &self,
                                       unsigned int maxCutBonds) {
   auto obj = emscripten::val::object();
   auto pairs = self.get_mmpa_frags(minCuts, maxCuts, maxCutBonds);
-  obj.set("cores", pairs.first);
-  obj.set("sidechains", pairs.second);
+  obj.set("cores", emscripten::val(pairs.first, emscripten::allow_raw_pointers()));
+  obj.set("sidechains", emscripten::val(pairs.second, emscripten::allow_raw_pointers()));
   return obj;
 }
 #endif
@@ -561,6 +561,11 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_v3Kmolblock",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_v3Kmolblock))
+      .function("get_v2Kmolblock", select_overload<std::string() const>(
+                                       &JSMolBase::get_v2Kmolblock))
+      .function("get_v2Kmolblock",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMolBase::get_v2Kmolblock))
       .function("get_as_uint8array", &get_as_uint8array)
       .function("get_as_uint8array", &get_as_uint8array_no_details)
 #ifdef RDK_BUILD_INCHI_SUPPORT

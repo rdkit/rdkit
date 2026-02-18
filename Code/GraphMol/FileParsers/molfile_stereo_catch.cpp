@@ -639,3 +639,152 @@ M  END
     CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
   }
 }
+
+TEST_CASE("github #9020: implicit/explicit H labels depend on 3D conformers") {
+  SECTION("as reported") {
+    auto mb3 = R"CTAB(
+     RDKit          3D
+
+  6  5  0  0  0  0  0  0  0  0999 V2000
+   -0.3698    0.0026    0.0028 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8980   -0.5748   -0.1191 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6741   -0.1194    1.0508 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3142    1.0665   -0.3155 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0830   -0.5246   -0.6430 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5432    0.1497    0.0240 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+  1  4  1  0
+  1  5  1  0
+  2  6  1  0
+M  END)CTAB";
+    {
+      auto mol3 = v2::FileParsers::MolFromMolBlock(mb3);
+      REQUIRE(mol3);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 3);
+    }
+    {
+      v2::FileParsers::MolFileParserParams params;
+      params.removeHs = false;
+      auto mol3 = v2::FileParsers::MolFromMolBlock(mb3, params);
+      REQUIRE(mol3);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 0);
+      MolOps::removeHs(*mol3);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 3);
+    }
+  }
+  SECTION("With a quaternary N") {
+    auto mb3 = R"CTAB(
+     RDKit          3D
+
+  6  5  0  0  0  0  0  0  0  0999 V2000
+   -0.3698    0.0026    0.0028 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8980   -0.5748   -0.1191 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6741   -0.1194    1.0508 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3142    1.0665   -0.3155 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0830   -0.5246   -0.6430 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5432    0.1497    0.0240 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+  1  4  1  0
+  1  5  1  0
+  2  6  1  0
+M  CHG  1   1   1
+M  END)CTAB";
+    {
+      auto mol3 = v2::FileParsers::MolFromMolBlock(mb3);
+      REQUIRE(mol3);
+      // mol3->debugMol(std::cerr);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 3);
+      CHECK(mol3->getAtomWithIdx(1)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(1)->getNumImplicitHs() == 1);
+    }
+    {
+      v2::FileParsers::MolFileParserParams params;
+      params.removeHs = false;
+      auto mol3 = v2::FileParsers::MolFromMolBlock(mb3, params);
+      REQUIRE(mol3);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 0);
+      MolOps::removeHs(*mol3);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 3);
+      CHECK(mol3->getAtomWithIdx(1)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(1)->getNumImplicitHs() == 1);
+    }
+  }
+  SECTION("actually chiral") {
+    auto mb3 = R"CTAB(
+     RDKit          3D
+
+  6  5  0  0  0  0  0  0  0  0999 V2000
+   -0.3698    0.0026    0.0028 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8980   -0.5748   -0.1191 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6741   -0.1194    1.0508 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3142    1.0665   -0.3155 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0830   -0.5246   -0.6430 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    1.5432    0.1497    0.0240 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+  1  4  1  0
+  1  5  1  0
+  2  6  1  0
+M  END)CTAB";
+    {
+      auto mol3 = v2::FileParsers::MolFromMolBlock(mb3);
+      REQUIRE(mol3);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 1);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 0);
+    }
+    {
+      v2::FileParsers::MolFileParserParams params;
+      params.removeHs = false;
+      auto mol3 = v2::FileParsers::MolFromMolBlock(mb3, params);
+      REQUIRE(mol3);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 0);
+      MolOps::removeHs(*mol3);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 1);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 0);
+    }
+  }
+  SECTION("not chiral, one H") {
+    auto mb3 = R"CTAB(
+     RDKit          3D
+
+  6  5  0  0  0  0  0  0  0  0999 V2000
+   -0.3698    0.0026    0.0028 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8980   -0.5748   -0.1191 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6741   -0.1194    1.0508 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3142    1.0665   -0.3155 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0830   -0.5246   -0.6430 F   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5432    0.1497    0.0240 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+  1  4  1  0
+  1  5  1  0
+  2  6  1  0
+M  END)CTAB";
+    {
+      auto mol3 = v2::FileParsers::MolFromMolBlock(mb3);
+      REQUIRE(mol3);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 1);
+    }
+    {
+      v2::FileParsers::MolFileParserParams params;
+      params.removeHs = false;
+      auto mol3 = v2::FileParsers::MolFromMolBlock(mb3, params);
+      REQUIRE(mol3);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 0);
+      MolOps::removeHs(*mol3);
+      CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+      CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 1);
+    }
+  }
+}

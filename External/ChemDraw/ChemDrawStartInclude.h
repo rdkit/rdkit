@@ -34,7 +34,7 @@
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-//#pragma GCC diagnostic ignored "-Wmacro-redefined"
+// #pragma GCC diagnostic ignored "-Wmacro-redefined"
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #pragma GCC diagnostic ignored "-Wextra"

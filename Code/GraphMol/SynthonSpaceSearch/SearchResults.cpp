@@ -36,8 +36,12 @@ SearchResults::SearchResults(const SearchResults &other)
 
 void SearchResults::mergeResults(SearchResults &other) {
   d_maxNumResults += other.d_maxNumResults;
-  if (other.d_timedOut) d_timedOut = true;
-  if (other.d_cancelled) d_cancelled = true;
+  if (other.d_timedOut) {
+    d_timedOut = true;
+  }
+  if (other.d_cancelled) {
+    d_cancelled = true;
+  }
   if (d_molNames.empty()) {
     for (size_t i = 0; i < d_hitMolecules.size(); i++) {
       d_molNames.insert(std::make_pair(

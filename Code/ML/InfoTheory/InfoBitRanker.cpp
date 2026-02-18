@@ -11,7 +11,6 @@
 #include "InfoBitRanker.h"
 #include "InfoGainFuncs.h"
 #include <RDGeneral/Invariant.h>
-#include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <RDGeneral/FileParseException.h>

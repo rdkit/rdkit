@@ -69,7 +69,7 @@ fr_SH	"Number of thiol groups"	[SH]	[SH]
 fr_C=S	"Number of thiocarbonyl"	C=[SX1]	C=S	"Includes thioamides, thioureas, etc."
 fr_sulfone	"Number of sulfone groups"	S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])(-[#6])-[#6]	"S(=O)(=O)(-[#6])-[#6] or S(-[O-])(-[O-])(-[#6])-[#6]"	"Or charged form.  Excludes sulfonamides, sulfonyl Cl, etc.."
 fr_sulfonamd	"Number of sulfonamides"	N-S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])-[#6]	"N-S(=O)(=O)-[#6] or N-S(-[O-])(-[O-])-[#6]"	"Any sulfonamide"
-fr_prisulfonamd	"Number of primary sulfonamides"	[NH2]-S(=,-[OX1;+0;-1])(=,-[OX1;+0;-1])-[#6]	"[NH2]-S(=O)(=O)-[#6] or [NH2]-S(-[O-])(-[O-])-[#6]"	
+fr_prisulfonamd	"Number of primary sulfonamides"	[NH2]-S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])-[#6]	"[NH2]-S(=O)(=O)-[#6] or [NH2]-S(-[O-])(-[O-])-[#6]"	
 
 ##################################
 # Miscellaneous Functional Groups

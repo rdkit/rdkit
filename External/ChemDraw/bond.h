@@ -48,5 +48,5 @@ namespace ChemDraw {
 bool parseBond(RWMol &mol, unsigned int fragmentId, CDXBond &bond,
                PageData &pagedata);
 }
-}
+}  // namespace RDKit
 #endif

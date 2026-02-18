@@ -50,5 +50,5 @@ bool parseNode(
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
     int &missingFragId, int externalAttachment);
 }
-}
+}  // namespace RDKit
 #endif

@@ -31,7 +31,6 @@
 #include <GraphMol/Chirality.h>
 #include "EmbeddedFrag.h"
 #include "DepictUtils.h"
-#include <iostream>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
 

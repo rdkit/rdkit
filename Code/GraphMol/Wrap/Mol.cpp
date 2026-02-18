@@ -153,23 +153,21 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
 }
 
 namespace {
-class pyobjFunctor {
- public:
-  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() = default;
-  bool operator()(const ROMol &m, std::span<const unsigned int> match) {
-    // boost::python doesn't handle std::span, so we need to convert the span to
-    // a vector before calling into python:
-    std::vector<unsigned int> matchVec(match.begin(), match.end());
-    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(matchVec)));
-  }
-
- private:
-  python::object dp_obj;
-};
 void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
                                  python::object func) {
-  ps.extraFinalCheck = pyobjFunctor(func);
+  ps.extraFinalCheck = pyFinalMatchFunctor(func);
+}
+
+void setExtraAtomCheckFunc(SubstructMatchParameters &ps, python::object func) {
+  ps.extraAtomCheck = pyMatchFunctor<Atom>(func);
+}
+void setExtraAtomCheckFunc2(SubstructMatchParameters &ps,
+                            const AtomCoordsMatchFunctor &ftor) {
+  ps.extraAtomCheck = std::bind(&AtomCoordsMatchFunctor::operator(), &ftor,
+                                std::placeholders::_1, std::placeholders::_2);
+}
+void setExtraBondCheckFunc(SubstructMatchParameters &ps, python::object func) {
+  ps.extraBondCheck = pyMatchFunctor<Bond>(func);
 }
 
 }  // namespace
@@ -297,7 +295,23 @@ struct mol_wrapper {
                 MolPickler::setDefaultPickleProperties, python::args("arg1"),
                 "Set the current global mol pickler options.");
 
-    // REVIEW: There's probably a better place for this definition
+    // REVIEW: There's probably a better place for the next few definitions
+    python::class_<RDKit::AtomCoordsMatchFunctor, boost::noncopyable>(
+        "AtomCoordsMatcher",
+        "Allows using atom coordinates as part of substructure matching",
+        python::init<>(python::args("self")))
+        .def(python::init<int, int, double>(
+            (python::arg("self"), python::arg("refConfId") = -1,
+             python::arg("queryConfId") = -1, python::arg("tol") = 1e-4),
+            "constructor taking reference and query conformer IDs and a distance tolerance"))
+        .def("__call__", &RDKit::AtomCoordsMatchFunctor::operator())
+        .def_readwrite("refConfId", &RDKit::AtomCoordsMatchFunctor::d_refConfId,
+                       "reference conformer ID")
+        .def_readwrite("queryConfId",
+                       &RDKit::AtomCoordsMatchFunctor::d_queryConfId,
+                       "query conformer ID")
+        .def_readwrite("tol2", &RDKit::AtomCoordsMatchFunctor::d_tol2,
+                       "squared distance tolerance");
     python::class_<RDKit::SubstructMatchParameters, boost::noncopyable>(
         "SubstructMatchParameters",
         "Parameters controlling substructure matching")
@@ -360,7 +374,41 @@ struct mol_wrapper {
                with the molecule
            and a vector of atom IDs containing a potential match.
            The function should return true or false indicating whether or not
-           that match should be accepted.)DOC");
+           that match should be accepted.)DOC")
+        .def("setExtraAtomCheckFunc", setExtraAtomCheckFunc,
+             python::with_custodian_and_ward<1, 2>(),
+             python::args("self", "func"),
+             R"DOC(allows you to provide a function that will be called
+           for each atom pair that matches during substructure searching,
+           after all other comparisons have passed.
+           The function should return true or false indicating whether or not
+           that atom-match should be accepted.)DOC")
+        .def(
+            "setExtraAtomCheckFunc", setExtraAtomCheckFunc2,
+            python::with_custodian_and_ward<1, 2>(),
+            python::args("self", "atomCoordsMatcher"),
+            R"DOC(allows you to provide an AtomCoordsMatcher that will be called
+           for each atom pair that matches during substructure searching,
+           after all other comparisons have passed.)DOC")
+        .def_readwrite(
+            "extraAtomCheckOverridesDefaultCheck",
+            &RDKit::SubstructMatchParameters::
+                extraAtomCheckOverridesDefaultCheck,
+            "if set, only the extraAtomCheck will be used to determine whether or not atoms match")
+        .def("setExtraBondCheckFunc", setExtraBondCheckFunc,
+             python::with_custodian_and_ward<1, 2>(),
+             python::args("self", "func"),
+             R"DOC(allows you to provide a function that will be called
+           for each bond pair that matches during substructure searching,
+           after all other comparisons have passed.
+           The function should return true or false indicating whether or not
+           that bond-match should be accepted.)DOC")
+        .def_readwrite(
+            "extraBondCheckOverridesDefaultCheck",
+            &RDKit::SubstructMatchParameters::
+                extraBondCheckOverridesDefaultCheck,
+            "if set, only the extraBondCheck will be used to determine whether or not bonds match")
+        .def("__setattr__", &safeSetattr);
 
     python::class_<ROMol, ROMOL_SPTR, boost::noncopyable>(
         "Mol", molClassDoc.c_str(),
@@ -797,17 +845,7 @@ struct mol_wrapper {
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false,
               python::arg("autoConvertStrings") = true),
-             "Returns a dictionary populated with the molecules properties.\n"
-             " n.b. Some properties are not able to be converted to python "
-             "types.\n\n"
-             "  ARGUMENTS:\n"
-             "    - includePrivate: (optional) toggles inclusion of private "
-             "properties in the result set.\n"
-             "                      Defaults to False.\n"
-             "    - includeComputed: (optional) toggles inclusion of computed "
-             "properties in the result set.\n"
-             "                      Defaults to False.\n\n"
-             "  RETURNS: a dictionary\n")
+             getPropsAsDictDocString.c_str())
 
         .def("GetAromaticAtoms", MolGetAromaticAtoms,
              python::return_value_policy<

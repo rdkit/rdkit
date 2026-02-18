@@ -248,6 +248,8 @@ PyObject *getUFFVdWParams(const RDKit::ROMol &mol, const unsigned int idx1,
 }  // namespace ForceFields
 
 BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
+   boost::python::import("rdkit.ForceField.rdForceField");
+
   python::scope().attr("__doc__") =
       "Module containing functions to handle force fields";
 

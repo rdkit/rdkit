@@ -114,6 +114,36 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper2(
   return results;
 }
 
+struct CallbackAdapter {
+  python::object py_callable;
+
+  bool operator()(std::vector<std::unique_ptr<ROMol>> &results) const {
+    python::list pyres;
+    for (auto &mol : results) {
+      pyres.append(boost::shared_ptr<ROMol>(mol.release()));
+    }
+    return bool(py_callable(pyres));
+  }
+};
+
+static void substructureSearch_helper3(SynthonSpaceSearch::SynthonSpace &self,
+                                       const ROMol &query,
+                                       python::object py_callable,
+                                       const python::object &py_smParams,
+                                       const python::object &py_params) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  SubstructMatchParameters smParams;
+  if (!py_smParams.is_none()) {
+    smParams = python::extract<SubstructMatchParameters>(py_smParams);
+  }
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  CallbackAdapter callback{py_callable};
+  self.substructureSearch(query, callback, smParams, params);
+}
+
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &fingerprintGenerator,
@@ -136,6 +166,23 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     python::throw_error_already_set();
   }
   return results;
+}
+
+static void fingerprintSearch_helper_2(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const python::object &fingerprintGenerator, python::object py_callable,
+    const python::object &py_params) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  const FingerprintGenerator<std::uint64_t> *fpGen =
+      python::extract<FingerprintGenerator<std::uint64_t> *>(
+          fingerprintGenerator);
+
+  CallbackAdapter callback{py_callable};
+  self.fingerprintSearch(query, *fpGen, callback, params);
 }
 
 SynthonSpaceSearch::SearchResults rascalSearch_helper(
@@ -180,7 +227,23 @@ SynthonSpaceSearch::SearchResults shapeSearch_helper(
   return results;
 }
 
-void summarise_helper(SynthonSpaceSearch::SynthonSpace &self) {
+static void rascalSearch_helper_2(SynthonSpaceSearch::SynthonSpace &self,
+                                  const ROMol &query,
+                                  const python::object &py_rascalOptions,
+                                  python::object py_callable,
+                                  const python::object &py_params) {
+  RascalMCES::RascalOptions rascalOptions;
+  rascalOptions = python::extract<RascalMCES::RascalOptions>(py_rascalOptions);
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  CallbackAdapter callback{py_callable};
+  self.rascalSearch(query, rascalOptions, callback, params);
+}
+
+void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
   self.summarise(std::cout);
 }
 
@@ -366,6 +429,10 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           "Time limit for search, in seconds.  Default is 600s, 0 means no"
           " timeout.  Requires an integer")
       .def_readwrite(
+          "toTryChunkSize",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::toTryChunkSize,
+          "Process possible hits using the given chunk size")
+      .def_readwrite(
           "numThreads",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::numThreads,
           "The number of threads to use for search.  If > 0, will use that"
@@ -466,7 +533,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       .def("GetNumSynthons", &SynthonSpaceSearch::SynthonSpace::getNumSynthons,
            python::arg("self"),
            "Returns number of synthons in the SynthonSpace.")
-      .def("Summarise", &summarise_helper, python::arg("self"),
+      .def("Summarise", &summariseHelper, python::arg("self"),
            "Writes a summary of the SynthonSpace to stdout.")
       .def(
           "ReportSynthonUsage", &reportSynthonUsage_helper, python::arg("self"),
@@ -487,12 +554,24 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
             python::arg("params") = python::object()),
            "Does a substructure search in the SynthonSpace using an"
            " extended query.")
+      .def(
+          "SubstructureSearchIncremental", &substructureSearch_helper3,
+          (python::arg("self"), python::arg("query"), python::arg("callback"),
+           python::arg("substructMatchParams") = python::object(),
+           python::arg("params") = python::object()),
+          "Does a substructure search in the SynthonSpace returning results in the callback.")
       .def("FingerprintSearch", &fingerprintSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("fingerprintGenerator"),
             python::arg("params") = python::object()),
            "Does a fingerprint search in the SynthonSpace using the"
            " FingerprintGenerator passed in.")
+      .def("FingerprintSearchIncremental", &fingerprintSearch_helper_2,
+           (python::arg("self"), python::arg("query"),
+            python::arg("fingerprintGenerator"), python::arg("callback"),
+            python::arg("params") = python::object()),
+           "Does a fingerprint search in the SynthonSpace using the"
+           " FingerprintGenerator passed in, returning results the callback.")
       .def("RascalSearch", &rascalSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("rascalOptions"),
@@ -500,6 +579,13 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            "Does a search using the Rascal similarity score.  The similarity"
            " threshold used is provided by rascalOptions, and the one in"
            " params is ignored.")
+      .def("RascalSearchIncremental", &rascalSearch_helper_2,
+           (python::arg("self"), python::arg("query"),
+            python::arg("rascalOptions"), python::arg("callback"),
+            python::arg("params") = python::object()),
+           "Does a search using the Rascal similarity score.  The similarity"
+           " threshold used is provided by rascalOptions, and the one in"
+           " params is ignored.  Returns results iteratively in the callback.")
       .def("ShapeSearch", &shapeSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("params") = python::object()),

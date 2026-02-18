@@ -41,7 +41,7 @@ class PySequenceHolder {
   unsigned int size() const {
     unsigned int res = 0;
     try {
-      res = python::extract<int>(d_seq.attr("__len__")());
+      res = boost::python::len(d_seq);
     } catch (...) {
       throw_value_error("sequence does not support length query");
     }

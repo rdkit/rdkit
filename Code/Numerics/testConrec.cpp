@@ -10,7 +10,6 @@
 #include <catch2/catch_all.hpp>
 
 #include <RDGeneral/test.h>
-#include <iostream>
 #include <fstream>
 #include "Conrec.h"
 #include <RDGeneral/Invariant.h>

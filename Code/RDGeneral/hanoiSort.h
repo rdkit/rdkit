@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2014 Greg Landrum
+//  Copyright (C) 2014-2025 Greg Landrum and other RDKit contributors
 //  Adapted from pseudo-code from Roger Sayle
 //
 //   @@ All Rights Reserved @@
@@ -10,19 +10,21 @@
 //
 
 #include <RDGeneral/export.h>
-#ifndef HANOISORT_H_
-#define HANOISORT_H_
+#ifndef HANOISORT_H
+#define HANOISORT_H
 
 #include <cstring>
-#include <iostream>
 #include <cassert>
 #include <cstdlib>
+#include <vector>
+#include <span>
 
 #if defined(_MSC_VER)
 #pragma warning(push, 1)
 #pragma warning(disable : 4800)
 #endif
 namespace RDKit {
+namespace detail {
 template <typename CompareFunc>
 bool hanoi(int *base, int nel, int *temp, int *count, int *changed,
            CompareFunc compar) {
@@ -146,17 +148,25 @@ bool hanoi(int *base, int nel, int *temp, int *count, int *changed,
     }
   }
 }
-
+}  // namespace detail
 template <typename CompareFunc>
+[[deprecated("Use the overload that takes std::span and std::vector instead")]]
 void hanoisort(int *base, int nel, int *count, int *changed,
                CompareFunc compar) {
   assert(base);
-  int *temp = (int *)malloc(nel * sizeof(int));
-  assert(temp);
-  if (hanoi(base, nel, temp, count, changed, compar)) {
-    memmove(base, temp, nel * sizeof(int));
+  std::vector<int> tempVec(nel);
+  if (detail::hanoi(base, nel, tempVec.data(), count, changed, compar)) {
+    memmove(base, tempVec.data(), nel * sizeof(int));
   }
-  free(temp);
+}
+template <typename CompareFunc>
+void hanoisort(std::span<int> &base, std::vector<int> &count,
+               std::vector<int> &changed, CompareFunc compar) {
+  std::vector<int> tempVec(base.size());
+  if (detail::hanoi(base.data(), base.size(), tempVec.data(), count.data(),
+                    changed.data(), compar)) {
+    std::copy(tempVec.begin(), tempVec.end(), base.begin());
+  }
 }
 }  // namespace RDKit
 

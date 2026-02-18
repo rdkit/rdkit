@@ -23,12 +23,18 @@ class Tetrahedral : public Configuration {
 
   void setPrimaryLabel(Descriptor desc) override;
 
+  bool hasPrimaryLabel() const override;
+
+  void resetPrimaryLabel() const override;
+
   Descriptor label(const Rules &comp) override;
 
   Descriptor label(Node *node, Digraph &digraph, const Rules &comp) override;
 
  private:
-  Descriptor label(Node *node, const Rules &comp) const;
+  Descriptor label(Node *node, const Rules &comp);
+
+  std::vector<unsigned int> d_ranked_anchors;
 };
 
 }  // namespace CIPLabeler

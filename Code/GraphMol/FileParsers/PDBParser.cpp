@@ -10,7 +10,6 @@
 #include <cstring>
 #include <cstdio>
 #include <string>
-#include <iostream>
 #include <fstream>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>

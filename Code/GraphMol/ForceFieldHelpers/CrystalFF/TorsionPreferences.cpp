@@ -17,7 +17,6 @@
 #include <RDGeneral/Exceptions.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
-#include <iostream>
 #include <sstream>
 #include <RDGeneral/StreamOps.h>
 

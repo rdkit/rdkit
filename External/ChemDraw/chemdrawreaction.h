@@ -37,27 +37,31 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <string>
 
-namespace RDKit
-{
+namespace RDKit {
 namespace v2 {
 //---------------------------------------------------------------------------
 //! \name Chemdraw rxn Support
 ///@{
 
 //! Parse text in ChemDraw rxn format into a vector of ChemicalReactions
-RDKIT_RDCHEMDRAWREACTIONLIB_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
-ChemDrawToChemicalReactions(const std::string &rxnBlock, bool sanitize = false,
-			    bool removeHs = false);
+RDKIT_RDCHEMDRAWREACTIONLIB_EXPORT
+    std::vector<std::unique_ptr<ChemicalReaction>>
+    ChemDrawToChemicalReactions(const std::string &rxnBlock,
+                                bool sanitize = false, bool removeHs = false);
 //! Parse a file in ChemDraw rxn format into a vector of ChemicalReactions
-RDKIT_RDCHEMDRAWREACTIONLIB_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
-ChemDrawFileToChemicalReactions(const std::string &fileName, bool sanitize = false,
-				bool removeHs = false);
-//! Parse a text stream in ChemDraw rxn format into a vector of ChemicalReactions
-RDKIT_RDCHEMDRAWREACTIONLIB_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
-ChemDrawDataStreamToChemicalReactions(std::istream &rxnStream,
-				      bool sanitize = false,
-				      bool removeHs = false);
+RDKIT_RDCHEMDRAWREACTIONLIB_EXPORT
+    std::vector<std::unique_ptr<ChemicalReaction>>
+    ChemDrawFileToChemicalReactions(const std::string &fileName,
+                                    bool sanitize = false,
+                                    bool removeHs = false);
+//! Parse a text stream in ChemDraw rxn format into a vector of
+//! ChemicalReactions
+RDKIT_RDCHEMDRAWREACTIONLIB_EXPORT
+    std::vector<std::unique_ptr<ChemicalReaction>>
+    ChemDrawDataStreamToChemicalReactions(std::istream &rxnStream,
+                                          bool sanitize = false,
+                                          bool removeHs = false);
 
-}
+}  // namespace v2
 }  // namespace RDKit
 #endif

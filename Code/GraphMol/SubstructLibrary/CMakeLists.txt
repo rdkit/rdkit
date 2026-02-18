@@ -18,7 +18,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
 
-rdkit_test(substructLibraryTest substructLibraryTest.cpp
+rdkit_catch_test(substructLibraryTest substructLibraryTest.cpp
            LINK_LIBRARIES TautomerQuery MolStandardize SubstructLibrary FileParsers )
 
 rdkit_catch_test(substructLibraryCatchTest catch_tests.cpp LINK_LIBRARIES SubstructLibrary FileParsers )
