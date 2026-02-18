@@ -100,14 +100,16 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   }
   calcNormalization(mol, confId);
   calcExtremes();
+  std::vector<std::array<double, 12>> gradConverters(d_numAtoms + d_numFeats);
   d_selfOverlapVol = calcVolAndGrads(
       d_coords.data(), d_numAtoms, d_carbonRadii, d_coords.data(), d_numAtoms,
-      d_carbonRadii, shapeOpts.useDistCutoff,
+      d_carbonRadii, gradConverters, shapeOpts.useDistCutoff,
       shapeOpts.distCutoff * shapeOpts.distCutoff);
   d_selfOverlapColor = calcVolAndGrads(
       d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
       d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
-      nullptr, nullptr);
+      d_numAtoms, gradConverters, shapeOpts.useDistCutoff,
+      shapeOpts.distCutoff * shapeOpts.distCutoff, nullptr, nullptr);
 }
 
 ShapeInput::ShapeInput(const ShapeInput &other)
@@ -118,10 +120,22 @@ ShapeInput::ShapeInput(const ShapeInput &other)
       d_selfOverlapVol(other.d_selfOverlapVol),
       d_selfOverlapColor(other.d_selfOverlapColor),
       d_extremePoints(other.d_extremePoints),
-      d_carbonRadii(other.d_carbonRadii),
       d_normalized(other.d_normalized),
       d_canonRot(new std::array<double, 9>(*other.d_canonRot)),
-      d_centroid(new std::array<double, 3>(*other.d_centroid)) {}
+      d_centroid(new std::array<double, 3>(*other.d_centroid)) {
+  if (other.d_canonRot) {
+    d_canonRot.reset(new std::array<double, 9>(*other.d_canonRot));
+  }
+  if (other.d_centroid) {
+    d_centroid.reset(new std::array<double, 3>(*other.d_centroid));
+  }
+  if (other.d_eigenValues) {
+    d_eigenValues.reset(new std::array<double, 3>(*other.d_eigenValues));
+  }
+  if (other.d_carbonRadii) {
+    d_carbonRadii.reset(new boost::dynamic_bitset<>(*other.d_carbonRadii));
+  }
+}
 
 ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   if (this == &other) {
@@ -134,7 +148,26 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   d_selfOverlapVol = other.d_selfOverlapVol;
   d_selfOverlapColor = other.d_selfOverlapColor;
   d_extremePoints = other.d_extremePoints;
-  d_carbonRadii = other.d_carbonRadii;
+  if (other.d_canonRot) {
+    d_canonRot.reset(new std::array<double, 9>(*other.d_canonRot));
+  } else {
+    d_canonRot.reset();
+  }
+  if (other.d_centroid) {
+    d_centroid.reset(new std::array<double, 3>(*other.d_centroid));
+  } else {
+    d_centroid.reset();
+  }
+  if (other.d_eigenValues) {
+    d_eigenValues.reset(new std::array<double, 3>(*other.d_eigenValues));
+  } else {
+    d_eigenValues.reset();
+  }
+  if (other.d_carbonRadii) {
+    d_carbonRadii.reset(new boost::dynamic_bitset<>(*other.d_carbonRadii));
+  } else {
+    d_carbonRadii.reset();
+  }
   d_normalized = other.d_normalized;
   d_canonRot.reset(new std::array<double, 9>(*other.d_canonRot));
   d_centroid.reset(new std::array<double, 3>(*other.d_centroid));
@@ -177,7 +210,9 @@ void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
 void ShapeInput::extractAtoms(const ROMol &mol, int confId,
                               const ShapeInputOptions &opts) {
   d_coords.reserve(mol.getNumAtoms() * 4);
-  d_carbonRadii = boost::dynamic_bitset<>(mol.getNumAtoms());
+  if (!opts.allCarbonRadii) {
+    d_carbonRadii.reset(new boost::dynamic_bitset<>(mol.getNumAtoms()));
+  }
   auto conf = mol.getConformer(confId);
   for (const auto atom : mol.atoms()) {
     if (atom->getAtomicNum() > 1) {
@@ -188,11 +223,10 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
       d_coords.push_back(pos.z);
       if (opts.allCarbonRadii) {
         d_coords.push_back(KAPPA / (1.7 * 1.7));
-        d_carbonRadii[idx] = true;
       } else {
         if (atom->getAtomicNum() == 6) {
           d_coords.push_back(KAPPA / (1.7 * 1.7));
-          d_carbonRadii[idx] = true;
+          (*d_carbonRadii)[idx] = true;
         } else {
           if (auto rad = vdw_radii.find(
                   static_cast<unsigned int>(atom->getAtomicNum()));

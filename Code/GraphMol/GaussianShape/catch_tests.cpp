@@ -33,6 +33,8 @@ bool checkMolsHaveRoughlySameCoords(const ROMol &m1, const ROMol &m2,
     auto pos2 = m2.getConformer().getAtomPos(i);
     if ((pos1 - pos2).length() > margin) {
       // So the error is printed in a relevant place.
+      std::cout << i << " : " << m1.getAtomWithIdx(i)->getAtomicNum()
+                << " :: " << (pos1 - pos2).length() << std::endl;
       CHECK_THAT((pos1 - pos2).length(),
                  Catch::Matchers::WithinAbs(0.0, margin));
       return false;
@@ -111,9 +113,9 @@ TEST_CASE("basic alignment") {
     ROMol cp(*probe);
     const auto scores = GaussianShape::AlignMolecule(
         *ref, cp, shapeOpts, shapeOpts, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.399, 0.005));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.686, 0.005));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.111, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.502, 0.005));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.731, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.273, 0.005));
     const auto rescores = GaussianShape::ScoreMolecule(*ref, cp, shapeOpts,
                                                        shapeOpts, overlayOpts);
     CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
@@ -152,11 +154,11 @@ TEST_CASE("basic alignment") {
       if (acr) {
         CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.498, 0.005));
         CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.758, 0.005));
-        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.227, 0.005));
+        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.237, 0.005));
       } else {
         CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.497, 0.005));
         CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.761, 0.005));
-        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.229, 0.005));
+        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.234, 0.005));
       }
       // Check that a re-score gives the same answer.
       const auto rescores = GaussianShape::ScoreMolecule(
@@ -213,12 +215,12 @@ TEST_CASE("shape alignment") {
   auto probeShape = GaussianShape::ShapeInput(*probe, -1);
 
   const auto ovProbe =
-      "FC1(F)C[C@H](C(O)=O)N(Cc2ocnc2)C1 |(-13.7751,-5.72705,4.42607;-13.5139,-6.57336,3.4031;-12.4427,-7.31262,3.74501;-13.2753,-5.79909,2.12476;-14.6561,-5.72979,1.47003;-15.1758,-4.32852,1.43478;-14.8326,-3.71975,0.273487;-15.8245,-3.79789,2.32413;-15.5552,-6.49782,2.34045;-16.6155,-7.17947,1.6112;-17.7293,-6.23972,1.23299;-18.3498,-5.57012,2.24383;-19.2859,-4.81926,1.60121;-19.3144,-4.95061,0.294183;-18.3174,-5.86081,0.0518152;-14.7227,-7.42743,3.1071),wU:4.4|"_smiles;
+      "FC1(F)C[C@H](C(O)=O)N(Cc2ocnc2)C1 |(-13.8851,-5.77603,4.50901;-13.6126,-6.61984,3.48692;-12.5692,-7.38618,3.85415;-13.3182,-5.84097,2.22308;-14.6769,-5.73477,1.52809;-15.1634,-4.32173,1.4896;-14.7717,-3.71164,0.344426;-15.8263,-3.78355,2.36382;-15.6188,-6.489,2.36457;-16.6719,-7.14028,1.5981;-17.7523,-6.17224,1.19507;-18.3875,-5.49676,2.19276;-19.2867,-4.7195,1.5291;-19.2789,-4.83963,0.2207;-18.2959,-5.77046,0.000232054;-14.831,-7.44357,3.14755),wU:4.4|"_smiles;
   RDGeom::Transform3D xform;
   auto scores = GaussianShape::AlignShape(refShape, probeShape, &xform);
   CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.494, 0.005));
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.760, 0.005));
-  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.227, 0.005));
+  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.237, 0.005));
   SmilesWriteParams params;
   params.canonical = false;
   // The input structure being from an SDF doesn't have the atoms in an order
@@ -226,7 +228,6 @@ TEST_CASE("shape alignment") {
   auto probeCp1 = v2::SmilesParse::MolFromSmiles(MolToCXSmiles(*probe, params));
   MolTransforms::transformConformer(probeCp1->getConformer(), xform);
   CHECK(checkMolsHaveRoughlySameCoords(*ovProbe, *probeCp1));
-
   // And pre-normalizing the shapes
   refShape.normalizeCoords();
   probeShape.normalizeCoords();
@@ -234,7 +235,7 @@ TEST_CASE("shape alignment") {
   auto scores1 = GaussianShape::AlignShape(refShape, probeShape, &xform1);
   CHECK_THAT(scores1[0], Catch::Matchers::WithinAbs(0.498, 0.005));
   CHECK_THAT(scores1[1], Catch::Matchers::WithinAbs(0.760, 0.005));
-  CHECK_THAT(scores1[2], Catch::Matchers::WithinAbs(0.227, 0.005));
+  CHECK_THAT(scores1[2], Catch::Matchers::WithinAbs(0.237, 0.005));
 }
 
 TEST_CASE("Overlay onto shape bug (Github8462)") {
@@ -285,9 +286,9 @@ TEST_CASE("handling molecules with Hs") {
     RWMol cp(*probe);
     RDGeom::Transform3D xform;
     auto scores = GaussianShape::AlignMolecule(*ref, cp);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.713, 0.005));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.838, 0.005));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.588, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.707, 0.005));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.834, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.581, 0.005));
     for (auto i = 0u; i < cp.getNumAtoms(); ++i) {
       // the failure mode here was that Hs had HUGE coordinates
       auto pos = cp.getConformer().getAtomPos(i);
@@ -431,18 +432,17 @@ TEST_CASE("Iressa onto Tagrisso") {
   shapeOpts.allCarbonRadii = false;
   auto scores = GaussianShape::AlignMolecule(*tagrisso, *iressa, shapeOpts,
                                              shapeOpts, nullptr, opts);
-  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.328, 0.005));
-  CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.568, 0.005));
-  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.088, 0.005));
+  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.332, 0.005));
+  CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.569, 0.005));
+  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.095, 0.005));
 
   auto rescores = GaussianShape::ScoreMolecule(*tagrisso, *iressa, shapeOpts,
                                                shapeOpts, opts);
   CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(rescores[0], 0.005));
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(rescores[1], 0.005));
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(rescores[2], 0.005));
-
   auto aligned_iressa =
-      "COc1cc2ncnc(Nc3ccc(F)c(Cl)c3)c2cc1OCCCN1CCOCC1 |(2.95666,-4.86065,0.224285;2.16817,-4.33331,-0.840658;1.0456,-3.64209,-0.496206;-0.165194,-4.32698,-0.356249;-1.34027,-3.66628,-0.00610508;-2.49556,-4.34184,0.123688;-3.58348,-3.62212,0.465763;-3.64212,-2.29966,0.691252;-2.46858,-1.65426,0.552527;-2.48033,-0.255576,0.780826;-3.47134,0.723816,0.60931;-4.4401,0.577127,-0.388189;-5.42523,1.54991,-0.558787;-5.44596,2.67416,0.266708;-6.39874,3.60066,0.0897471;-4.48157,2.82535,1.26331;-4.50208,4.21055,2.28533;-3.49677,1.85231,1.43417;-1.27441,-2.27918,0.204412;-0.0607709,-1.58325,0.0654992;1.08997,-2.27354,-0.284292;2.26959,-1.58848,-0.41926;2.56676,-1.07133,-1.70896;3.38643,0.202193,-1.55181;2.62079,1.26827,-0.774572;1.37205,1.59629,-1.45917;0.58242,2.55475,-0.673475;-0.709419,2.89034,-1.41327;-0.418062,3.42549,-2.70483;0.322021,2.48778,-3.48758;1.63845,2.14122,-2.79782)|"_smiles;
+      "COc1cc2ncnc(Nc3ccc(F)c(Cl)c3)c2cc1OCCCN1CCOCC1 |(3.32561,-4.49721,0.300927;2.53581,-4.01343,-0.78355;1.35773,-3.4056,-0.468489;0.193742,-4.17423,-0.373537;-1.03475,-3.60055,-0.0547434;-2.14373,-4.35592,0.0319024;-3.28917,-3.71723,0.345957;-3.44662,-2.4047,0.581874;-2.31707,-1.67806,0.486599;-2.43316,-0.286277,0.72753;-3.48408,0.624088,0.533795;-4.40883,0.422247,-0.495334;-5.45345,1.32641,-0.688028;-5.57796,2.43691,0.146911;-6.58691,3.29722,-0.0515475;-4.65785,2.64294,1.17504;-4.80639,4.01148,2.20886;-3.61355,1.73849,1.36799;-1.07209,-2.21475,0.170776;0.0939354,-1.43492,0.0770612;1.30021,-2.03981,-0.242431;2.43295,-1.27322,-0.333386;2.73336,-0.721848,-1.60808;3.45719,0.603454,-1.41299;2.59548,1.60491,-0.650515;1.34882,1.8536,-1.37136;0.470419,2.74595,-0.602204;-0.818024,2.99985,-1.37951;-0.524608,3.5688,-2.65607;0.30286,2.69369,-3.42367;1.61814,2.43113,-2.69569)|"_smiles;
   REQUIRE(aligned_iressa);
   checkMolsHaveRoughlySameCoords(*iressa, *aligned_iressa);
 }
@@ -462,7 +462,7 @@ TEST_CASE("Optimise in place") {
   // This is the overlay produced by the first test below, to make sure we
   // haven't broken anything.
   auto ov_pdb_0zn_1tmn =
-      R"(CC(C)C[C@H](N[C@@H](CCc1ccccc1)C(=O)O)C(=O)N[C@@H](Cc1c[nH]c2ccccc12)C(=O)O |(40.5521,43.72,-0.746874;40.0384,42.2953,-0.549432;40.0829,41.8665,0.910797;38.5976,42.1804,-1.01038;38.5383,42.5664,-2.48952;37.1219,42.7205,-2.90384;36.933,42.9365,-4.39053;35.4849,43.003,-4.90879;35.0852,41.5943,-5.36622;33.6558,41.386,-5.91292;33.3655,41.6501,-7.24569;32.0874,41.3865,-7.7757;31.0954,40.8507,-6.9489;31.419,40.559,-5.60859;32.7047,40.8178,-5.10226;37.5885,44.1562,-4.99372;38.2456,44.0743,-6.05325;37.3749,45.2651,-4.49588;39.3721,41.5414,-3.27026;40.5805,41.7639,-3.56673;38.7005,40.4263,-3.53415;39.2846,39.2857,-4.25965;40.1309,38.3648,-3.33226;39.1952,37.5797,-2.41683;38.1346,38.0131,-1.73866;37.3677,36.9077,-1.31694;37.9812,35.8478,-1.66911;37.6102,34.5289,-1.46137;38.6133,33.5682,-1.72497;39.9037,33.9291,-2.18705;40.2306,35.2679,-2.47011;39.2316,36.2047,-2.21003;38.3104,38.4987,-5.12827;37.1399,38.9749,-5.27008;38.7621,37.6433,-5.97169),wU:4.3,6.6,21.22|)"_smiles;
+      R"(CC(C)C[C@H](N[C@@H](CCc1ccccc1)C(=O)O)C(=O)N[C@@H](Cc1c[nH]c2ccccc12)C(=O)O |(38.4182,43.8068,-0.910588;38.2709,42.2972,-0.731075;38.1304,41.9045,0.733229;37.0364,41.7932,-1.45451;37.1781,42.1406,-2.93763;35.8859,41.9023,-3.62687;35.9519,42.0509,-5.13225;34.6741,41.7191,-5.92414;34.7628,40.2524,-6.36478;33.5811,39.6611,-7.16439;33.5076,39.8293,-8.54156;32.4798,39.2259,-9.29221;31.5187,38.4455,-8.64246;31.6293,38.2599,-7.2498;32.6704,38.8605,-6.52059;36.3695,43.3994,-5.66929;37.2254,43.4931,-6.57465;35.7737,44.4114,-5.28982;38.3937,41.376,-3.47909;39.5342,41.9164,-3.54877;38.1091,40.1191,-3.80052;39.1087,39.1759,-4.32928;39.9624,38.5242,-3.20191;39.1024,37.5196,-2.43949;37.8503,37.6527,-2.00683;37.3343,36.383,-1.67591;38.2646,35.5274,-1.83827;38.2218,34.1585,-1.6274;39.4752,33.5046,-1.63354;40.6899,34.1995,-1.85784;40.7011,35.5753,-2.15222;39.4587,36.2072,-2.14728;38.5746,38.1494,-5.32118;37.3737,38.2894,-5.71533;39.3977,37.4441,-6.00821),wD:6.6,wU:4.3,21.22|)"_smiles;
   auto initScores = GaussianShape::ScoreMolecule(*pdb_trp_3tmn, *pdb_0zn_1tmn);
   CHECK_THAT(initScores[0], Catch::Matchers::WithinAbs(0.307, 0.001));
   CHECK_THAT(initScores[1], Catch::Matchers::WithinAbs(0.349, 0.001));
@@ -481,9 +481,9 @@ TEST_CASE("Optimise in place") {
     RDGeom::Transform3D xform;
     auto scores = GaussianShape::AlignMolecule(*pdb_trp_3tmn, cp, shapeOpts,
                                                shapeOpts, &xform, opts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.325, 0.001));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.414, 0.001));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.236, 0.001));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.322, 0.001));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.396, 0.001));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.247, 0.001));
     CHECK(checkMolsHaveRoughlySameCoords(cp, *ov_pdb_0zn_1tmn));
   }
   {
@@ -508,9 +508,9 @@ TEST_CASE("Optimise in place") {
     RDGeom::Transform3D xform;
     auto scores =
         GaussianShape::AlignMolecule(refShape, cp, shapeOpts, &xform, opts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.325, 0.001));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.414, 0.001));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.236, 0.001));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.322, 0.001));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.396, 0.001));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.247, 0.001));
     CHECK(checkMolsHaveRoughlySameCoords(cp, *ov_pdb_0zn_1tmn));
     MolTransforms::transformConformer(cp.getConformer(), xform);
     ROMol cp1(*canon_probe);
@@ -620,7 +620,7 @@ TEST_CASE("custom feature points") {
   }
 }
 
-#if 0
+#if 1
 // Using this for benchmarking at the moment.  It should probably come out
 // later.
 TEST_CASE("LOBSTER") {
@@ -633,14 +633,14 @@ TEST_CASE("LOBSTER") {
     mols.emplace_back(mol);
   }
   std::cout << "Number of mols " << mols.size() << std::endl;
-  double sum_st = 0.0, sum_ct = 0.0;
+  double sum_st = 0.0, sum_ct = 0.0, sum_comb = 0.0;
   int num = 0;
   std::mt19937 e2(1);
   std::uniform_real_distribution<double> unif(0, 1);
   GaussianShape::ShapeInputOptions opts;
   GaussianShape::ShapeOverlayOptions overlayOpts;
   overlayOpts.startMode = GaussianShape::StartMode::A_LA_PUBCHEM;
-  for (const auto acr : std::vector<bool>{false}) {
+  for (const auto acr : std::vector<bool>{true}) {
     opts.allCarbonRadii = acr;
     for (size_t i = 1; i < mols.size(); i++) {
       for (size_t j = 0; j < i; j++) {
@@ -649,6 +649,7 @@ TEST_CASE("LOBSTER") {
         }
         auto scores = GaussianShape::AlignMolecule(*mols[i], *mols[j], opts,
                                                    opts, nullptr, overlayOpts);
+        sum_comb += scores[0];
         sum_st += scores[1];
         sum_ct += scores[2];
         ++num;
@@ -657,14 +658,16 @@ TEST_CASE("LOBSTER") {
         }
       }
     }
+    std::cout << "Mean combo of " << num << " : " << sum_comb / num
+              << std::endl;
     std::cout << "Mean st of " << num << " : " << sum_st / num << std::endl;
     std::cout << "Mean ct of " << num << " : " << sum_ct / num << std::endl;
     if (acr) {
-      CHECK_THAT(sum_st / num, Catch::Matchers::WithinAbs(0.558, 0.005));
-      CHECK_THAT(sum_ct / num, Catch::Matchers::WithinAbs(0.089, 0.005));
+      CHECK_THAT(sum_st / num, Catch::Matchers::WithinAbs(0.554, 0.005));
+      CHECK_THAT(sum_ct / num, Catch::Matchers::WithinAbs(0.094, 0.005));
     } else {
-      CHECK_THAT(sum_st / num, Catch::Matchers::WithinAbs(0.553, 0.005));
-      CHECK_THAT(sum_ct / num, Catch::Matchers::WithinAbs(0.089, 0.005));
+      CHECK_THAT(sum_st / num, Catch::Matchers::WithinAbs(0.540, 0.005));
+      CHECK_THAT(sum_ct / num, Catch::Matchers::WithinAbs(0.098, 0.005));
     }
   }
 }

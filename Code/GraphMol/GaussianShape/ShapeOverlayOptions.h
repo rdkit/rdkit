@@ -48,22 +48,31 @@ enum class RDKIT_GAUSSIANSHAPE_EXPORT OptimMode {
 };
 
 struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
-  // Different modes for starting the optimisation.  Default is as used by the
-  // PubChem code - 180 rotations about the x, y and z axes, then a small
-  // rotation about each axis from that point, using the best scoring one of
-  // those. The molecules are normalized so the principal axes are along the
-  // cartesian axes rather than the shape quadrupole axes as Grant et al. did.
-  StartMode startMode{StartMode::ROTATE_180_WIGGLE};
-  OptimMode optimMode{OptimMode::SHAPE_PLUS_COLOR_SCORE};  // Optimisation mode.
-  double optParam{
-      0.5};  // If using colors, the relative weights of shape and color scores.
-  int nSteps{100};  // Maximum number of steps for optimiser to take.
-  // Whether to normalise the shapes by putting them into
-  // their canonical conformations (centred at the origin,
-  // aligned along its principal axes) before starting.
-  bool normalize{true};
-  bool useDistCutoff{true};
-  double distCutoff{4.5};
+  //! Different modes for starting the optimisation.  Default is as used by the
+  //! PubChem code.  The molecules are normalized so the principal axes are
+  //! along the cartesian axes rather than the shape quadrupole axes as Grant et
+  //! al. did.
+  StartMode startMode{StartMode::A_LA_PUBCHEM};
+  OptimMode optimMode{
+      OptimMode::SHAPE_PLUS_COLOR_SCORE};  //! Optimisation mode.
+  double optParam{0.5};  //! If using colors, the relative weights of shape and
+                         //! color scores.
+  int nSteps{100};       //! Maximum number of steps for optimiser to take.
+
+  bool normalize{
+      true};  //! Whether to normalise the shapes by putting them into their
+              //! canonical conformations (centred at the origin, aligned along
+              //! its principal axes) before starting.
+  bool useDistCutoff{
+      true};  //! Whether to use a distance cutoff fo the volume calculation.
+  double distCutoff{4.5};  //! The distance cutoff.  If 2 atoms are more than
+                           //! this distance apart, they are not included in the
+                           //! volume calculation. A smaller value is faster but
+                           //! less precise.
+  double shapeConvergenceCriterion{
+      0.001};  //! Optimisation stops when the shape tanimoto changes by less
+               //! than this amount.  A larger number is faster but less
+               //! precise.
 };
 }  // namespace GaussianShape
 }  // namespace RDKit

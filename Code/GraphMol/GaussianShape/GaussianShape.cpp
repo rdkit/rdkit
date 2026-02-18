@@ -98,14 +98,15 @@ std::array<double, 4> getInitialRotationPlain(
       refDisp[0],      refDisp[1],      refDisp[2]};
   SingleConformerAlignment sca(
       refShape.getCoords(), refShape.getTypes().data(),
-      &refShape.getCarbonRadii(), refShape.getNumAtoms(),
+      refShape.getCarbonRadii(), refShape.getNumAtoms(),
       refShape.getNumFeatures(), refShape.getShapeVolume(),
       refShape.getColorVolume(), fitShape.getCoords(),
-      fitShape.getTypes().data(), &fitShape.getCarbonRadii(),
+      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
       overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, overlayOpts.nSteps);
+      overlayOpts.distCutoff, overlayOpts.shapeConvergenceCriterion,
+      overlayOpts.nSteps);
   auto scores = sca.calcScores(useColor);
   score = scores[0];
   return quats[index];
@@ -145,14 +146,15 @@ std::array<double, 4> getInitialRotationWiggle(
   std::array<double, 7> tmpQuatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   SingleConformerAlignment sca(
       refShape.getCoords(), refShape.getTypes().data(),
-      &refShape.getCarbonRadii(), refShape.getNumAtoms(),
+      refShape.getCarbonRadii(), refShape.getNumAtoms(),
       refShape.getNumFeatures(), refShape.getShapeVolume(),
       refShape.getColorVolume(), fitShape.getCoords(),
-      fitShape.getTypes().data(), &fitShape.getCarbonRadii(),
+      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), tmpQuatTrans,
       overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, overlayOpts.nSteps);
+      overlayOpts.distCutoff, overlayOpts.shapeConvergenceCriterion,
+      overlayOpts.nSteps);
 
   for (unsigned int i = start_quat; i < start_quat + 7; ++i) {
     std::array<double, 7> quatTrans{quats[i][0], quats[i][1], quats[i][2],
@@ -246,8 +248,8 @@ unsigned int calculateQrat(const std::array<double, 3> &eigenValues) {
 
 StartMode decideStartModeFromEigenValues(const ShapeInput &refShape,
                                          const ShapeInput &fitShape) {
-  auto rqrat = calculateQrat(refShape.getEigenValues());
-  auto fqrat = calculateQrat(fitShape.getEigenValues());
+  auto rqrat = calculateQrat(*refShape.getEigenValues());
+  auto fqrat = calculateQrat(*fitShape.getEigenValues());
   if (rqrat > 0 || fqrat > 0) {
     return StartMode::ROTATE_45;
   }
@@ -312,15 +314,15 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
                                      refDisp.x, refDisp.y, refDisp.z};
       aligners.emplace_back(std::make_unique<SingleConformerAlignment>(
           refShape.getCoords(), refShape.getTypes().data(),
-          &refShape.getCarbonRadii(), refShape.getNumAtoms(),
+          refShape.getCarbonRadii(), refShape.getNumAtoms(),
           refShape.getNumFeatures(), refShape.getShapeVolume(),
           refShape.getColorVolume(), fitShape.getCoords(),
-          fitShape.getTypes().data(), &fitShape.getCarbonRadii(),
+          fitShape.getTypes().data(), fitShape.getCarbonRadii(),
           fitShape.getNumAtoms(), fitShape.getNumFeatures(),
           fitShape.getShapeVolume(), fitShape.getColorVolume(), initQuat,
           overlayOpts.optimMode, overlayOpts.optParam,
           overlayOpts.useDistCutoff, overlayOpts.distCutoff,
-          overlayOpts.nSteps));
+          overlayOpts.shapeConvergenceCriterion, overlayOpts.nSteps));
       bestScoreForStart.push_back({score, k});
     }
   }
@@ -447,14 +449,15 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
   std::array<double, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   SingleConformerAlignment sca(
       refShape.getCoords(), refShape.getTypes().data(),
-      &refShape.getCarbonRadii(), refShape.getNumAtoms(),
+      refShape.getCarbonRadii(), refShape.getNumAtoms(),
       refShape.getNumFeatures(), refShape.getShapeVolume(),
       refShape.getColorVolume(), fitShape.getCoords(),
-      fitShape.getTypes().data(), &fitShape.getCarbonRadii(),
+      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
       overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, overlayOpts.nSteps);
+      overlayOpts.distCutoff, overlayOpts.shapeConvergenceCriterion,
+      overlayOpts.nSteps);
   bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   auto scores = sca.calcScores(refShape.getCoords().data(),
                                fitShape.getCoords().data(), includeColor);

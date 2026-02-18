@@ -58,18 +58,16 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// carbon.  This makes it faster but less correct.
   /// @param maxIts - maximum number of iterations for optimiser
   /// of optimiser
-  SingleConformerAlignment(const std::vector<double> &ref, const int *refTypes,
-                           const boost::dynamic_bitset<> *refCarbonRadii,
-                           int nRefShape, int nRefColor, double refShapeVol,
-                           double refColorVol, const std::vector<double> &fit,
-                           const int *fitTypes,
-                           const boost::dynamic_bitset<> *fitCarbonRadii,
-                           int nFitShape, int nFitColor, double fitShapeVol,
-                           double fitColorVol,
-                           const std::array<double, 7> &initQuatTrans,
-                           OptimMode optimMode, double mixingParam,
-                           bool useCutoff, double distCutoff,
-                           unsigned int maxIts);
+  SingleConformerAlignment(
+      const std::vector<double> &ref, const int *refTypes,
+      const std::unique_ptr<boost::dynamic_bitset<>> &refCarbonRadii,
+      int nRefShape, int nRefColor, double refShapeVol, double refColorVol,
+      const std::vector<double> &fit, const int *fitTypes,
+      const std::unique_ptr<boost::dynamic_bitset<>> &fitCarbonRadii,
+      int nFitShape, int nFitColor, double fitShapeVol, double fitColorVol,
+      const std::array<double, 7> &initQuatTrans, OptimMode optimMode,
+      double mixingParam, bool useCutoff, double distCutoff,
+      double shapeConvergenceCriterion, unsigned int maxIts);
 
   SingleConformerAlignment(const SingleConformerAlignment &other) = delete;
   SingleConformerAlignment(SingleConformerAlignment &&other) = delete;
@@ -144,7 +142,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   std::vector<double> d_ref;
   std::vector<double> d_refTemp;
   const int *d_refTypes;
-  const boost::dynamic_bitset<> *d_refCarbonRadii;
+  const std::unique_ptr<boost::dynamic_bitset<>> &d_refCarbonRadii;
   const int d_nRefShape;
   const int d_nRefColor;
   const double d_refShapeVol;
@@ -152,7 +150,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   std::vector<double> d_fit;
   std::vector<double> d_fitTemp;
   const int *d_fitTypes;
-  const boost::dynamic_bitset<> *d_fitCarbonRadii;
+  const std::unique_ptr<boost::dynamic_bitset<>> &d_fitCarbonRadii;
   const int d_nFitShape;
   const int d_nFitColor;
   double d_fitShapeVol;
@@ -162,13 +160,16 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   const double d_mixingParam;
   const bool d_useCutoff;
   const double d_distCutoff2;
+  const double d_shapeConvergenceCriterion;
   const unsigned int d_maxIts;
   // The quaternion/translation as the optimisation proceeds
   std::array<double, 7> d_quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   // The step sizes of the quaternion and translation during the
-  // optimisiation.
+  // optimisition.  Taken from the PubChem code.
   double d_qStepSize{-0.001};
   double d_tStepSize{-0.01};
+  // Scratch space for the gradients dr/dQ of the fit molecule.
+  mutable std::vector<std::array<double, 12>> d_gradConverters;
 };
 
 // Compute the volume overlap and optionally "quaternion" gradients for the
@@ -178,17 +179,21 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
 // gradients is null, they won't be calculated.  They are assumed to be
 // initialised correctly.
 // This is for the atoms/shape features.
-double calcVolAndGrads(const double *ref, int numRefPts,
-                       const boost::dynamic_bitset<> &refCarbonRadii,
-                       const double *fit, int numFitPts,
-                       const boost::dynamic_bitset<> &fitCarbonRadii,
-                       const bool useCutoff, const double distCutoff2,
-                       const double *quat = nullptr,
-                       double *gradients = nullptr);
+double calcVolAndGrads(
+    const double *ref, int numRefPts,
+    const std::unique_ptr<boost::dynamic_bitset<>> &refCarbonRadii,
+    const double *fit, int numFitPts,
+    const std::unique_ptr<boost::dynamic_bitset<>> &fitCarbonRadii,
+    std::vector<std::array<double, 12>> &gradConverters, const bool useCutoff,
+    const double distCutoff2, const double *quat = nullptr,
+    double *gradients = nullptr);
 // This one is for the features, and only calculates values if the types
 // of 2 features match.
 double calcVolAndGrads(const double *ref, int numRefPts, const int *refTypes,
                        const double *fit, int numFitPts, const int *fitTypes,
+                       int numFitShape,
+                       std::vector<std::array<double, 12>> &gradConverters,
+                       const bool useCutoff, const double distCutoff2,
                        const double *quat, double *gradients);
 
 }  // namespace GaussianShape

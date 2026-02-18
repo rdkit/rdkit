@@ -79,7 +79,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   unsigned int getNumFeatures() const { return d_numFeats; }
   double getShapeVolume() const { return d_selfOverlapVol; }
   double getColorVolume() const { return d_selfOverlapColor; }
-  const boost::dynamic_bitset<> &getCarbonRadii() const {
+  const std::unique_ptr<boost::dynamic_bitset<>> &getCarbonRadii() const {
     return d_carbonRadii;
   }
   const std::array<double, 9> &getCanonicalRotation() const {
@@ -88,7 +88,9 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   const std::array<double, 3> &getCanonicalTranslation() const {
     return *d_centroid;
   }
-  const std::array<double, 3> &getEigenValues() const { return *d_eigenValues; }
+  const std::unique_ptr<std::array<double, 3>> &getEigenValues() const {
+    return d_eigenValues;
+  }
   const std::array<size_t, 6> &getExtremes() const { return d_extremePoints; }
 
   // Align the principal axes to the cartesian axes and centre on the origin.
@@ -125,7 +127,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // These are the points at the extremes of the x, y and z axes.
   // they are min_x, min_y, min_z and max_x, max_y, max_z.
   std::array<size_t, 6> d_extremePoints;
-  boost::dynamic_bitset<>
+  std::unique_ptr<boost::dynamic_bitset<>>
       d_carbonRadii;  // Flags those atoms with a carbon radius, for faster
   // calculation later.
 
