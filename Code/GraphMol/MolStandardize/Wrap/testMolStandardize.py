@@ -479,6 +479,38 @@ chlorine	[Cl]
     with self.assertRaises(TypeError):
       ctaut = enumerator.PickCanonical(set(res()), lambda x: 'fail')
 
+  def test13bTautomerOrderIndependence(self):
+    # Regression: tautomer enumeration/canonicalization should be independent of
+    # atom/bond storage order (e.g. after atom renumbering).
+    import random
+
+    smi = "OC1=Nc2ccccc2C1=Cc1ccc[nH]1"
+    mol = Chem.MolFromSmiles(smi)
+    self.assertIsNotNone(mol)
+
+    enumerator = rdMolStandardize.TautomerEnumerator()
+    enumerator.SetMaxTautomers(2000)
+    enumerator.SetMaxTransforms(2000)
+
+    def enumerate_smiles_set(m):
+      return {Chem.MolToSmiles(t, isomericSmiles=True) for t in enumerator.Enumerate(m)}
+
+    base_set = enumerate_smiles_set(mol)
+    base_canon = Chem.MolToSmiles(enumerator.Canonicalize(Chem.Mol(mol)), isomericSmiles=True)
+
+    # Seeds chosen from a prior repro where many permutations differed.
+    for seed in (0, 2, 4, 7, 11, 13, 14, 20, 23, 27, 28, 29, 31, 37, 39, 42, 44, 48):
+      rng = random.Random(seed)
+      order = list(range(mol.GetNumAtoms()))
+      rng.shuffle(order)
+      renum = Chem.RenumberAtoms(mol, order)
+
+      renum_set = enumerate_smiles_set(renum)
+      self.assertEqual(renum_set, base_set, f"seed {seed} changed Enumerate() results")
+
+      renum_canon = Chem.MolToSmiles(enumerator.Canonicalize(Chem.Mol(renum)), isomericSmiles=True)
+      self.assertEqual(renum_canon, base_canon, f"seed {seed} changed Canonicalize() result")
+
   def test14TautomerDetails(self):
     enumerator = rdMolStandardize.TautomerEnumerator()
     m = Chem.MolFromSmiles("c1ccccc1CN=c1[nH]cccc1")
@@ -510,7 +542,7 @@ chlorine	[Cl]
 
     enumerator = rdMolStandardize.GetV1TautomerEnumerator()
     res68 = enumerator.Enumerate(m68)
-    self.assertEqual(len(res68), 292)
+    self.assertEqual(len(res68), 295)
     self.assertEqual(len(res68.tautomers), len(res68))
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
 
