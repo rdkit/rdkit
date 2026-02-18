@@ -26,6 +26,65 @@ using RINGINVAR = boost::dynamic_bitset<>;
 using RINGINVAR_SET = std::set<RINGINVAR>;
 using RINGINVAR_INT_VECT_MAP = std::map<RINGINVAR, std::vector<int>>;
 
+#ifdef RDK_USE_URF
+namespace {
+
+// normalizes a ring by rotating/reversing it so that
+// it starts with the smallest element, and the 2nd element
+// is the smallest of the 2 neighboring elements
+void normalize_ring(std::vector<int> &ring) {
+  auto newStart = std::ranges::min_element(ring);
+  std::ranges::rotate(ring, newStart);
+
+  if (ring.back() < ring[1]) {
+    // we don't need to move the central element!
+    auto numPairsToMove = (ring.size() - 1) / 2;
+    auto front = ring.begin() + 1;
+    std::swap_ranges(front, front + numPairsToMove, ring.rbegin());
+  }
+}
+
+std::vector<int> rdl_cycle_to_atom_ring(RDL_cycle *cycle) {
+  std::vector<int> ring;
+  ring.reserve(cycle->weight);
+
+  // Edges in a cycle are not returned in iteration order.
+  // so we need to take care of that while we convert them
+  // into an atom ring.
+  boost::dynamic_bitset<> unseen_edges(cycle->weight);
+  unseen_edges.set();
+
+  ring.push_back(cycle->edges[0][0]);
+  ring.push_back(cycle->edges[0][1]);
+  unseen_edges.set(0, false);
+
+  while (ring.size() < cycle->weight) {
+    // Note we don't want to close the cycle: that would
+    // add the initial atom at the end too.
+    for (auto edgeIdx = unseen_edges.find_first();
+         edgeIdx != boost::dynamic_bitset<>::npos;
+         edgeIdx = unseen_edges.find_next(edgeIdx)) {
+      auto edge = cycle->edges[edgeIdx];
+      for (auto j = 0; j < 2; ++j) {
+        if (static_cast<unsigned int>(ring.back()) == edge[j]) {
+          ring.push_back(edge[1 - j]);
+          if (ring.size() == cycle->weight) {
+            unseen_edges.reset();
+          } else {
+            unseen_edges.set(edgeIdx, false);
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  return ring;
+}
+
+}  // namespace
+#endif
+
 namespace RingUtils {
 constexpr size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
 
@@ -814,39 +873,12 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
     while (!RDL_cycleIteratorAtEnd(it)) {
       auto *cycle = RDL_cycleIteratorGetCycle(it);
 
-      auto &ring = res.emplace_back();
-      ring.reserve(cycle->weight);
+      auto ring = rdl_cycle_to_atom_ring(cycle);
 
-      // Edges in a cycle are not returned in iteration order.
-      // so we need to take care of that while we convert them
-      // into an atom ring.
-      boost::dynamic_bitset<> unseen_edges(cycle->weight);
-      unseen_edges.set();
+      // For consistency, normalize the ring
+      normalize_ring(ring);
 
-      ring.push_back(cycle->edges[0][0]);
-      ring.push_back(cycle->edges[0][1]);
-      unseen_edges.set(0, false);
-
-      while (ring.size() < cycle->weight) {
-        // Note we don't want to close the cycle: that would
-        // add the initial atom at the end too.
-        for (auto edgeIdx = unseen_edges.find_first();
-             edgeIdx != boost::dynamic_bitset<>::npos;
-             edgeIdx = unseen_edges.find_next(edgeIdx)) {
-          auto edge = cycle->edges[edgeIdx];
-          for (auto j = 0; j < 2; ++j) {
-            if (static_cast<unsigned int>(ring.back()) == edge[j]) {
-              ring.push_back(edge[1 - j]);
-              if (ring.size() == cycle->weight) {
-                unseen_edges.reset();
-              } else {
-                unseen_edges.set(edgeIdx, false);
-              }
-              break;
-            }
-          }
-        }
-      }
+      res.push_back(std::move(ring));
 
       RDL_deleteCycle(cycle);
       RDL_cycleIteratorNext(it);
