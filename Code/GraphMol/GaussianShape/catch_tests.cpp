@@ -620,12 +620,12 @@ TEST_CASE("custom feature points") {
   }
 }
 
-#if 1
+#if 0
 // Using this for benchmarking at the moment.  It should probably come out
 // later.
 TEST_CASE("LOBSTER") {
   std::string lobster_file =
-      "/Users/david/Projects/Lobster/LOBSTER_112024/all_ligands.sdf";
+      "/home/dave/Projects/Lobster/LOBSTER_112024/all_ligands.sdf";
   auto suppl = SDMolSupplier(lobster_file);
   std::vector<std::shared_ptr<ROMol>> mols;
   while (!suppl.atEnd()) {
@@ -640,7 +640,7 @@ TEST_CASE("LOBSTER") {
   GaussianShape::ShapeInputOptions opts;
   GaussianShape::ShapeOverlayOptions overlayOpts;
   overlayOpts.startMode = GaussianShape::StartMode::A_LA_PUBCHEM;
-  for (const auto acr : std::vector<bool>{true}) {
+  for (const auto acr : std::vector<bool>{false}) {
     opts.allCarbonRadii = acr;
     for (size_t i = 1; i < mols.size(); i++) {
       for (size_t j = 0; j < i; j++) {
