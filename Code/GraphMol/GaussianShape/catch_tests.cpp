@@ -668,7 +668,7 @@ TEST_CASE("Shape subset") {
              Catch::Matchers::WithinAbs(10.631, 0.005));
 }
 
-#if 1
+#if 0
 // Using this for benchmarking at the moment.  It should probably come out
 // later.
 TEST_CASE("LOBSTER") {

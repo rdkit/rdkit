@@ -203,7 +203,8 @@ double calcVolAndGrads(
            (*fitCarbonRadii)[j_idx])) {
         vij = kij * CARBON_BIT;
       } else {
-        vij = 8 * kij * pow((PI / (ai + aj)), 1.5);
+        auto pi_ai_aj = PI / (ai + aj);
+        vij = 8 * kij * pi_ai_aj * std::sqrt(pi_ai_aj);
       }
       vol += vij;
       if (gradients) {
