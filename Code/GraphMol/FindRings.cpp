@@ -9,16 +9,18 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Rings.h>
-#include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
-
+#include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>
-#include <vector>
-#include <set>
-#include <algorithm>
+
 #include <boost/dynamic_bitset.hpp>
+
+#include <algorithm>
 #include <cstdint>
 #include <queue>
+#include <set>
+#include <unordered_map>
+#include <vector>
 
 using RINGINVAR = boost::dynamic_bitset<>;
 using RINGINVAR_SET = std::set<RINGINVAR>;
@@ -805,38 +807,50 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
 
   RDL_cycle **sssr = nullptr;
   auto nexpt = RDL_getSSSR(urfdata, &sssr);
-  // std::cerr << "SSSR (" << nexpt << "):" << std::endl;
-  // for (unsigned int i = 0; i < nexpt; ++i) {
-  //   auto ring = sssr[i];
-  //   for (unsigned int j = 0; j < ring->weight; ++j) {
-  //     std::cerr << ring->edges[j][0] << '-' << ring->edges[j][1] << ' ';
-  //   }
-  //   std::cerr << std::endl;
-  // }
+  std::cerr << "SSSR (" << nexpt << "):" << std::endl;
+  for (unsigned int i = 0; i < nexpt; ++i) {
+    auto ring = sssr[i];
+    for (unsigned int j = 0; j < ring->weight; ++j) {
+      std::cerr << ring->edges[j][0] << '-' << ring->edges[j][1] << ' ';
+    }
+    std::cerr << std::endl;
+  }
   RDL_deleteCycles(sssr, nexpt);
 
-  auto num_rings = RDL_getNofRCF(urfdata);
-  res.resize(num_rings);
+  std::unordered_map<unsigned int, unsigned int> connection_table;
+  connection_table.reserve(mol.getNumAtoms());
 
-  // std::cerr << "RCF (" << num_rings << "):" << std::endl;
-  for (unsigned int i = 0; i < num_rings; ++i) {
-    RDL_node *nodes = nullptr;
-    unsigned nNodes = RDL_getNodesForRCF(urfdata, i, &nodes);
-    if (nNodes == RDL_INVALID_RESULT) {
-      free(nodes);
-      throw ValueErrorException("Cannot get URF nodes");
+  for (unsigned int i = 0; i < RDL_getNofURF(urfdata); ++i) {
+    auto it = RDL_getRCyclesForURFIterator(urfdata, i);
+    while (!RDL_cycleIteratorAtEnd(it)) {
+      auto *cycle = RDL_cycleIteratorGetCycle(it);
+
+      auto minIndex = std::numeric_limits<unsigned int>::max();
+      for (auto edge = cycle->edges; edge != cycle->edges + cycle->weight;
+           ++edge) {
+        connection_table[(*edge)[0]] = (*edge)[1];
+        connection_table[(*edge)[1]] = (*edge)[0];
+        minIndex = std::min(minIndex, std::min((*edge)[0], (*edge)[1]));
+      }
+
+      auto &ring = res.emplace_back();
+      ring.reserve(cycle->weight);
+      auto idx = minIndex;
+      do {
+        ring.push_back(idx);
+        idx = connection_table[idx];
+      } while (idx != minIndex);
+
+      connection_table.clear();
+      RDL_deleteCycle(cycle);
+      RDL_cycleIteratorNext(it);
     }
-
-    auto &ring = res.emplace_back(nodes, nodes + nNodes);
-    // for (auto idx : ring) {
-    //   std::cerr << idx << ' ';
-    // }
-    // std::cerr << std::endl;
-    free(nodes);
+    RDL_deleteCycleIterator(it);
   }
+
   RDL_deleteGraph(graph);
 
-  if (num_rings > nexpt) {
+  if (res.size() > nexpt) {
     FindRings::removeExtraRings(res, nexpt, mol);
   }
 
