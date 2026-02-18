@@ -208,11 +208,11 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
       bool isRingBond = false;
       if (tautBond->getBondType() == Bond::DOUBLE) {
         auto ringInfo = taut.getRingInfo();
-        // RingInfo may be missing, uninitialized, or not be SymmSSSR (and may
-        // be stale after bond order changes). Ensure SymmSSSR ring information
-        // is available before asking whether a particular bond is in a ring.
-        if (!ringInfo || !ringInfo->isSymmSssr()) {
-          MolOps::symmetrizeSSSR(taut);
+        // We only need to know whether the bond is in a ring; avoid forcing
+        // SymmSSSR here since that has a performance cost.
+        // this might be not precise enough for large rings like 9-or-more macrocycles
+        if (!ringInfo || !ringInfo->isFindFastOrBetter()) {
+          MolOps::fastFindRings(taut);
           ringInfo = taut.getRingInfo();
         }
         if (ringInfo) {
@@ -263,8 +263,9 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     // re-apply our contract to the bonds involved in tautomerism.
     if (d_removeBondStereo) {
       auto ringInfo = taut.getRingInfo();
-      if (!ringInfo || !ringInfo->isSymmSssr()) {
-        MolOps::symmetrizeSSSR(taut);
+      if (!ringInfo || !ringInfo->isFindFastOrBetter()) {
+        // might prefer more expensive calc here to better support 9-or-more macrocycles
+        MolOps::fastFindRings(taut);
         ringInfo = taut.getRingInfo();
       }
       for (auto bond : taut.bonds()) {
