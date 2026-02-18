@@ -28,6 +28,7 @@ using RINGINVAR_INT_VECT_MAP = std::map<RINGINVAR, std::vector<int>>;
 
 #ifdef RDK_USE_URF
 namespace {
+using namespace RDKit;
 
 // normalizes a ring by rotating/reversing it so that
 // it starts with the smallest element, and the 2nd element
@@ -82,13 +83,39 @@ std::vector<int> rdl_cycle_to_atom_ring(RDL_cycle *cycle) {
   return ring;
 }
 
+void initRingFamilies(const ROMol &mol, bool includeDativeBonds,
+                      bool includeHydrogenBonds) {
+  // RDL_calculate fails and returns null if the graph is empty,
+  // just trick it into not freaking out by giving it a fake atom
+  auto numAtoms = mol.getNumAtoms();
+  if (numAtoms == 0) {
+    numAtoms = 1;
+  }
+
+  RDL_graph *graph = RDL_initNewGraph(numAtoms);
+  for (auto cbi : mol.bonds()) {
+    if (auto bt = cbi->getBondType();
+        bt == Bond::ZERO || (!includeDativeBonds && isDative(bt)) ||
+        (!includeHydrogenBonds && bt == Bond::HYDROGEN)) {
+      continue;
+    }
+
+    RDL_addUEdge(graph, cbi->getBeginAtomIdx(), cbi->getEndAtomIdx());
+  }
+  RDL_data *urfdata = RDL_calculate(graph);
+  if (urfdata == nullptr) {
+    RDL_deleteGraph(graph);
+    mol.getRingInfo()->dp_urfData.reset();
+    throw ValueErrorException("Cannot get URFs");
+  }
+  mol.getRingInfo()->dp_urfData.reset(urfdata, &RDL_deleteData);
+}
+
 }  // namespace
 #endif
 
 namespace RingUtils {
 constexpr size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
-
-using namespace RDKit;
 
 RINGINVAR computeRingInvariant(const INT_VECT &ring, unsigned int numAtoms) {
   boost::dynamic_bitset<> res(numAtoms);
@@ -846,24 +873,15 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
   mol.getRingInfo()->initialize(FIND_RING_TYPE_SSSR);
   mol.clearProp(common_properties::extraRings);
 
-  RDL_graph *graph = RDL_initNewGraph(mol.getNumAtoms());
-  for (auto cbi : mol.bonds()) {
-    if (auto bt = cbi->getBondType();
-        bt == Bond::ZERO || (!includeDativeBonds && isDative(bt)) ||
-        (!includeHydrogenBonds && bt == Bond::HYDROGEN)) {
-      continue;
-    }
+  initRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
+  auto urfdata = mol.getRingInfo()->dp_urfData.get();
 
-    RDL_addUEdge(graph, cbi->getBeginAtomIdx(), cbi->getEndAtomIdx());
-  }
-
-  RDL_data *urfdata = RDL_calculate(graph);
-  if (urfdata == nullptr) {
-    RDL_deleteGraph(graph);
-    mol.getRingInfo()->dp_urfData.reset();
-    throw ValueErrorException("Cannot get URFs");
-  }
-
+  // Since we run findRingFamilies() on the whole mol,
+  // and we might have disconnected fragments, we can't
+  // use the (numBonds - numAtoms + 1) formula to calculate
+  // the expected number of rings. And I don't know
+  // any better way than extracting the SSSR to calculate
+  // it (we need it to split rings between SSSR and extra rings)
   RDL_cycle **sssr = nullptr;
   auto nexpt = RDL_getSSSR(urfdata, &sssr);
   RDL_deleteCycles(sssr, nexpt);
@@ -885,8 +903,6 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
     }
     RDL_deleteCycleIterator(it);
   }
-
-  RDL_deleteData(urfdata);
 
   if (res.size() > nexpt) {
     FindRings::removeExtraRings(res, nexpt, mol);
@@ -1065,34 +1081,17 @@ void fastFindRings(const ROMol &mol) {
 }
 
 #ifdef RDK_USE_URF
+
 void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
                       bool includeHydrogenBonds) {
-  if (mol.getRingInfo()->isInitialized()) {
-    // return if we've done this before
-    if (mol.getRingInfo()->areRingFamiliesInitialized()) {
-      return;
-    }
-  } else {
+  if (!mol.getRingInfo()->isInitialized()) {
     mol.getRingInfo()->initialize();
   }
-
-  RDL_graph *graph = RDL_initNewGraph(mol.getNumAtoms());
-  for (auto cbi : mol.bonds()) {
-    if (auto bt = cbi->getBondType();
-        bt == Bond::ZERO || (!includeDativeBonds && isDative(bt)) ||
-        (!includeHydrogenBonds && bt == Bond::HYDROGEN)) {
-      continue;
-    }
-
-    RDL_addUEdge(graph, cbi->getBeginAtomIdx(), cbi->getEndAtomIdx());
+  if (!mol.getRingInfo()->areRingFamiliesInitialized()) {
+    initRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
   }
-  RDL_data *urfdata = RDL_calculate(graph);
-  if (urfdata == nullptr) {
-    RDL_deleteGraph(graph);
-    mol.getRingInfo()->dp_urfData.reset();
-    throw ValueErrorException("Cannot get URFs");
-  }
-  mol.getRingInfo()->dp_urfData.reset(urfdata, &RDL_deleteData);
+
+  auto urfdata = mol.getRingInfo()->dp_urfData.get();
   for (unsigned int i = 0; i < RDL_getNofURF(urfdata); ++i) {
     RDL_node *nodes = nullptr;
     unsigned nNodes = RDL_getNodesForURF(urfdata, i, &nodes);
