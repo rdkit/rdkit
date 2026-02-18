@@ -21,9 +21,46 @@
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/array.hpp>
+#include <boost/serialization/unique_ptr.hpp>
+#endif
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
+
+// The code below was provided by Claude (Sonnet 4.6).
+// If first tried to get me to use boost/serialization/dynamic_bitset.hpp
+// and then admitted that it had made that up.
+namespace boost {
+namespace serialization {
+
+template <class Archive, typename Block, typename Allocator>
+void serialize(Archive &ar, boost::dynamic_bitset<Block, Allocator> &bs,
+               const unsigned int /*version*/) {
+  size_t num_bits = bs.size();
+  ar & num_bits;
+
+  std::vector<Block> blocks;
+
+  if (Archive::is_saving::value) {
+    to_block_range(bs, std::back_inserter(blocks));
+  }
+
+  ar & blocks;
+
+  if (Archive::is_loading::value) {
+    bs.resize(num_bits);
+    from_block_range(blocks.begin(), blocks.end(), bs);
+    bs.resize(num_bits);  // trim any excess bits
+  }
+}
+
+}  // namespace serialization
+}  // namespace boost
 
 namespace RDKit {
 class ROMol;
@@ -77,11 +114,31 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   ShapeInput(const ROMol &mol, int confId = -1,
              const ShapeInputOptions &opts = ShapeInputOptions(),
              const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
+  ShapeInput(const std::string &str) {
+#ifndef RDK_USE_BOOST_SERIALIZATION
+    PRECONDITION(0, "Boost SERIALIZATION is not enabled")
+#else
+    std::stringstream ss(str);
+    boost::archive::text_iarchive ia(ss);
+    ia &*this;
+#endif
+  }
   ShapeInput(const ShapeInput &other);
   ShapeInput(ShapeInput &&other) = default;
   ShapeInput &operator=(const ShapeInput &other);
   ShapeInput &operator=(ShapeInput &&other) = default;
   ~ShapeInput() = default;
+
+  std::string toString() const {
+#ifndef RDK_USE_BOOST_SERIALIZATION
+    PRECONDITION(0, "Boost SERIALIZATION is not enabled")
+#else
+    std::stringstream ss;
+    boost::archive::text_oarchive oa(ss);
+    oa &*this;
+    return ss.str();
+#endif
+  }
 
   const std::vector<double> &getCoords() const { return d_coords; }
   bool getNormalized() const { return d_normalized; }
@@ -110,6 +167,24 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   void normalizeCoords();
 
   void transformCoords(RDGeom::Transform3D &xform);
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int) {
+    ar & d_coords;
+    ar & d_types;
+    ar & d_numAtoms;
+    ar & d_numFeats;
+    ar & d_selfOverlapVol;
+    ar & d_selfOverlapColor;
+    ar & d_extremePoints;
+    ar & d_carbonRadii;
+    ar & d_normalized;
+    ar & d_canonRot;
+    ar & d_centroid;
+    ar & d_eigenValues;
+  }
+#endif
 
  private:
   void extractAtoms(const ROMol &mol, int confId,
