@@ -19,9 +19,9 @@ class TestCase(unittest.TestCase):
 
   def test1_Defaults(self):
     tpl = rdGaussianShape.AlignMol(self.ref, self.probe)
-    self.assertAlmostEqual(tpl[0], 0.494, places=3)
-    self.assertAlmostEqual(tpl[1], 0.760, places=3)
-    self.assertAlmostEqual(tpl[2], 0.227, places=3)
+    self.assertAlmostEqual(tpl[0], 0.497, places=3)
+    self.assertAlmostEqual(tpl[1], 0.759, places=3)
+    self.assertAlmostEqual(tpl[2], 0.235, places=3)
     
 
   def test2_NoColor(self):
@@ -42,9 +42,9 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(shp.ColorVolume, 31.935, places=3)
     self.assertTrue(type(shp) == rdGaussianShape.ShapeInput)
     tpl = rdGaussianShape.AlignMol(shp, self.probe)
-    self.assertAlmostEqual(tpl[0], 0.494, places=3)
-    self.assertAlmostEqual(tpl[1], 0.760, places=3)
-    self.assertAlmostEqual(tpl[2], 0.227, places=3)
+    self.assertAlmostEqual(tpl[0], 0.497, places=3)
+    self.assertAlmostEqual(tpl[1], 0.759, places=3)
+    self.assertAlmostEqual(tpl[2], 0.235, places=3)
 
   def test4_customFeatures(self):
     m1 = Chem.MolFromSmiles(

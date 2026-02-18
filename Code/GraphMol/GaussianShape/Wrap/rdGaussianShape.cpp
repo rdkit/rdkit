@@ -177,12 +177,12 @@ void wrap_rdGaussianShape() {
       .value("ROTATE_180", RDKit::GaussianShape::StartMode::ROTATE_180)
       .value("ROTATE_180_WIGGLE",
              RDKit::GaussianShape::StartMode::ROTATE_180_WIGGLE)
-      .value("ROTATE_90", RDKit::GaussianShape::StartMode::ROTATE_45)
+      .value("ROTATE_45", RDKit::GaussianShape::StartMode::ROTATE_45)
       .value("ROTATE_0_FRAGMENT",
              RDKit::GaussianShape::StartMode::ROTATE_0_FRAGMENT)
       .value("ROTATE_180_FRAGMENT",
              RDKit::GaussianShape::StartMode::ROTATE_180_FRAGMENT)
-      .value("ROTATE_90_FRAGMENT",
+      .value("ROTATE_45_FRAGMENT",
              RDKit::GaussianShape::StartMode::ROTATE_45_FRAGMENT)
       .value("A_LA_PUBCHEM", GaussianShape::StartMode::A_LA_PUBCHEM)
       .export_values();
@@ -216,13 +216,15 @@ void wrap_rdGaussianShape() {
       "ShapeOverlayOptions - options for controlling the shape overlay process.")
       .def_readwrite(
           "startMode", &RDKit::GaussianShape::ShapeOverlayOptions::startMode,
-          "Start modes for optimisation.  Default is ROTATE_180_WIGGLE - is as used by the"
-          " PubChem code - 180 rotations about the x, y and z axes, then a small"
+          "Start modes for optimisation.  Default is A_LA_PUBCHEM - as used by the"
+          " PubChem code - either ROTATE_180_WIGGLE or ROTATE_45 depending on the shape"
+          " of the two molecules.  ROTATE_180_WIGGLE means 180 rotations about"
+          " the x, y and z axes, then a small"
           " rotation about each axis from that point, using the best scoring one of"
           " those. ROTATE_180 uses 180 degree rotations for 4 start points,"
-          " ROTATE_90 uses 90 degree rotations for 9 start points and ROTATE_0"
+          " ROTATE_45 uses 45 degree rotations for 9 start points and ROTATE_0"
           " leaves the relative orientations of the 2 molecules as passed in before"
-          " optimisation.  There are also ROTATE_0_FRAGMENT, ROTATE_90_FRAGMENT"
+          " optimisation.  There are also ROTATE_0_FRAGMENT, ROTATE_45_FRAGMENT"
           " and ROTATE_180_FRAGMENT that as well as the above move the fit"
           " molecule to the ends of each of the principal axes and then does"
           " the appropriate rotations.  This is useful when the fit molecule is"
@@ -257,6 +259,12 @@ void wrap_rdGaussianShape() {
           "distCutoff", &GaussianShape::ShapeOverlayOptions::distCutoff,
           "If using a distance cutoff, this is the value used.  Default=4.5 of whatever"
           " units the coordinates are in.")
+      .def_readwrite(
+          "shapeConvergenceCriterion",
+          &GaussianShape::ShapeOverlayOptions::shapeConvergenceCriterion,
+          "Optimisation stops when the shape tanimoto changes by less than this"
+          " amount after an optimisation step.  A larger number is faster but gives"
+          " less precise overlays.  Default=0.001.")
       .def("__setattr__", &safeSetattr);
 
   std::string docString("ShapeInput object");
