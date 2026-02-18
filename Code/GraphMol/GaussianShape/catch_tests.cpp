@@ -620,6 +620,54 @@ TEST_CASE("custom feature points") {
   }
 }
 
+TEST_CASE("Non-standard radii") {
+  auto m1 =
+      "[Xe]c1ccccc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
+  GaussianShape::ShapeInputOptions shapeOpts;
+  shapeOpts.useColors = false;
+  shapeOpts.allCarbonRadii = false;
+  auto shape1 = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
+
+  CHECK(shape1.getCoords().size() == 28);
+  CHECK_THAT(shape1.getShapeVolume(),
+             Catch::Matchers::WithinAbs(387.396, 0.005));
+  // mol1 with atom 4 with an N radius and a bigger Xe.
+  shapeOpts.atomRadii =
+      std::vector<std::pair<unsigned int, double>>{{0, 2.5}, {4, 1.55}};
+  shapeOpts.allCarbonRadii = false;
+  auto shape2 = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
+  CHECK_THAT(shape2.getShapeVolume(),
+             Catch::Matchers::WithinAbs(425.051, 0.005));
+
+  // Corresponding pyridine derivative.
+  auto m2 =
+      "[Xe]c1ccncc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
+  auto shape3 = GaussianShape::ShapeInput(*m2, -1, shapeOpts);
+  CHECK(shape3.getShapeVolume() == shape2.getShapeVolume());
+}
+
+TEST_CASE("Shape subset") {
+  auto m1 =
+      "c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|"_smiles;
+  REQUIRE(m1);
+  GaussianShape::ShapeInputOptions shapeOpts;
+  shapeOpts.atomSubset = std::vector<unsigned int>{0, 1, 2, 3, 10, 11};
+  auto partShape = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
+  CHECK(partShape.getCoords().size() == 28);
+  CHECK_THAT(partShape.getShapeVolume(),
+             Catch::Matchers::WithinAbs(229.437, 0.005));
+  CHECK_THAT(partShape.getColorVolume(),
+             Catch::Matchers::WithinAbs(5.316, 0.005));
+
+  shapeOpts.atomSubset.clear();
+  auto wholeShape = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
+  CHECK(wholeShape.getCoords().size() == 56);
+  CHECK_THAT(wholeShape.getShapeVolume(),
+             Catch::Matchers::WithinAbs(556.266, 0.005));
+  CHECK_THAT(wholeShape.getColorVolume(),
+             Catch::Matchers::WithinAbs(10.631, 0.005));
+}
+
 #if 1
 // Using this for benchmarking at the moment.  It should probably come out
 // later.

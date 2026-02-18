@@ -93,7 +93,13 @@ constexpr double radius_color =
 
 ShapeInput::ShapeInput(const ROMol &mol, int confId,
                        const ShapeInputOptions &opts,
-                       const ShapeOverlayOptions &shapeOpts) {
+                       const ShapeOverlayOptions &overlayOpts) {
+  if (opts.allCarbonRadii && !opts.atomRadii.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "Specifying allCarbonRadii and providing custom atom radii doesn't"
+           " make sense.  Ignoring the radii."
+        << std::endl;
+  }
   extractAtoms(mol, confId, opts);
   if (opts.useColors) {
     extractFeatures(mol, confId, opts);
@@ -103,13 +109,13 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   std::vector<std::array<double, 12>> gradConverters(d_numAtoms + d_numFeats);
   d_selfOverlapVol = calcVolAndGrads(
       d_coords.data(), d_numAtoms, d_carbonRadii, d_coords.data(), d_numAtoms,
-      d_carbonRadii, gradConverters, shapeOpts.useDistCutoff,
-      shapeOpts.distCutoff * shapeOpts.distCutoff);
+      d_carbonRadii, gradConverters, overlayOpts.useDistCutoff,
+      overlayOpts.distCutoff * overlayOpts.distCutoff);
   d_selfOverlapColor = calcVolAndGrads(
       d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
       d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
-      d_numAtoms, gradConverters, shapeOpts.useDistCutoff,
-      shapeOpts.distCutoff * shapeOpts.distCutoff, nullptr, nullptr);
+      d_numAtoms, gradConverters, overlayOpts.useDistCutoff,
+      overlayOpts.distCutoff * overlayOpts.distCutoff, nullptr, nullptr);
 }
 
 ShapeInput::ShapeInput(const ShapeInput &other)
@@ -207,38 +213,68 @@ void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
   applyTransformToShape(d_coords, xform);
 }
 
+namespace {
+double getStandardAtomRadius(unsigned int atomicNum) {
+  if (auto rad = vdw_radii.find(static_cast<unsigned int>(atomicNum));
+      rad != vdw_radii.end()) {
+    return rad->second;
+  }
+  throw ValueErrorException("No VdW radius for atom with Z=" +
+                            std::to_string(atomicNum));
+}
+
+}  // namespace
 void ShapeInput::extractAtoms(const ROMol &mol, int confId,
                               const ShapeInputOptions &opts) {
   d_coords.reserve(mol.getNumAtoms() * 4);
   if (!opts.allCarbonRadii) {
-    d_carbonRadii.reset(new boost::dynamic_bitset<>(mol.getNumAtoms()));
+    d_carbonRadii.reset(new boost::dynamic_bitset<>(
+        !opts.atomSubset.empty() ? opts.atomSubset.size() : mol.getNumAtoms()));
   }
   auto conf = mol.getConformer(confId);
+  // Index of atoms that have been added to the shape.
+  unsigned int idx = 0;
   for (const auto atom : mol.atoms()) {
+    if (!opts.atomSubset.empty()) {
+      const auto atomIdx = atom->getIdx();
+      if (auto it = std::ranges::find_if(
+              opts.atomSubset,
+              [atomIdx](const auto &p) -> bool { return p == atomIdx; });
+          it == opts.atomSubset.end()) {
+        continue;
+      }
+    }
     if (atom->getAtomicNum() > 1) {
-      unsigned int idx = atom->getIdx();
-      auto &pos = conf.getAtomPos(idx);
+      auto atIdx = atom->getIdx();
+      auto &pos = conf.getAtomPos(atIdx);
       d_coords.push_back(pos.x);
       d_coords.push_back(pos.y);
       d_coords.push_back(pos.z);
       if (opts.allCarbonRadii) {
         d_coords.push_back(KAPPA / (1.7 * 1.7));
       } else {
-        if (atom->getAtomicNum() == 6) {
-          d_coords.push_back(KAPPA / (1.7 * 1.7));
-          (*d_carbonRadii)[idx] = true;
-        } else {
-          if (auto rad = vdw_radii.find(
-                  static_cast<unsigned int>(atom->getAtomicNum()));
-              rad != vdw_radii.end()) {
-            d_coords.push_back(KAPPA / (rad->second * rad->second));
+        double rad = 0.0;
+        if (opts.atomRadii.empty()) {
+          if (atom->getAtomicNum() == 6) {
+            rad = 1.7;
+            (*d_carbonRadii)[idx] = true;
           } else {
-            throw ValueErrorException("No VdW radius for atom with Z=" +
-                                      std::to_string(atom->getAtomicNum()));
+            rad = getStandardAtomRadius(atom->getAtomicNum());
+          }
+        } else {
+          auto it = std::ranges::find_if(
+              opts.atomRadii,
+              [atIdx](const auto &p) -> bool { return p.first == atIdx; });
+          if (it == opts.atomRadii.end()) {
+            rad = getStandardAtomRadius(atom->getAtomicNum());
+          } else {
+            rad = it->second;
           }
         }
+        d_coords.push_back(KAPPA / (rad * rad));
       }
     }
+    ++idx;
   }
   d_numAtoms = d_coords.size() / 4;
   d_types.resize(d_numAtoms);
@@ -347,8 +383,24 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
         }
         for (auto match : matches) {
           std::vector<unsigned int> ats;
+          bool featOk = true;
           for (const auto &pr : match) {
+            // make sure all the atoms are in the subset, if there is one
+            if (!opts.atomSubset.empty()) {
+              if (auto it = std::ranges::find_if(
+                      opts.atomSubset,
+                      [pr](const auto &p) -> bool {
+                        return p == static_cast<unsigned int>(pr.second);
+                      });
+                  it == opts.atomSubset.end()) {
+                featOk = false;
+                break;
+              }
+            }
             ats.push_back(pr.second);
+          }
+          if (!featOk) {
+            continue;
           }
           auto featPos = computeFeaturePos(mol, confId, ats);
           d_types.push_back(pattIdx);

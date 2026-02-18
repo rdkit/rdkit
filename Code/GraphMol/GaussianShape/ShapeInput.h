@@ -47,13 +47,24 @@ struct ShapeInputOptions {
 
   // By default, it will create features using the RDKit pharmacophore
   // definitions.
-  bool useColors{true};
-  // Custom color features used verbatim.  A vector of
-  // tuples of integer type, Point3D coords, double radius.
-  CustomFeatures customFeatures;
-  // Whether to use carbon radii for all atoms (which is quicker) or
-  // vdw radii appropriate for the elements.
-  bool allCarbonRadii{true};
+  bool useColors{
+      true};  //! Whether to build the color features.  By default, it will
+              //! create features using the RDKit pharmacophore definitions.
+
+  CustomFeatures customFeatures;  //! Custom color features used verbatim.  A
+                                  //! vector of tuples of integer type, Point3D
+                                  //! coords, double radius.
+  std::vector<unsigned int>
+      atomSubset;  //! If not empty, use just these atoms in the molecule to
+                   //! form the ShapeInput object.
+  std::vector<std::pair<unsigned int, double>>
+      atomRadii;  //! Use these non-standard radii for these atoms. The int is
+                  //! for the atom index in the molecule, not the atomic number.
+                  //! Not all atoms need be specified, just some radii can be
+                  //! over-ridden, with the rest left as standard.
+  bool allCarbonRadii{
+      true};  //! Whether to use carbon radii for all atoms (which is quicker
+              //! but less accurate) or vdw radii appropriate for the elements.
 };
 
 // Data for shape alignment code
@@ -65,7 +76,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   //! @param opts: Options for setting up the shape
   ShapeInput(const ROMol &mol, int confId = -1,
              const ShapeInputOptions &opts = ShapeInputOptions(),
-             const ShapeOverlayOptions &shapeOpts = ShapeOverlayOptions());
+             const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
   ShapeInput(const ShapeInput &other);
   ShapeInput(ShapeInput &&other) = default;
   ShapeInput &operator=(const ShapeInput &other);

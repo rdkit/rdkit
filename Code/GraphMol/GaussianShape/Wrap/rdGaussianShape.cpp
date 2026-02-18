@@ -163,6 +163,38 @@ python::tuple scoreShape(const GaussianShape::ShapeInput &refShape,
   return python::make_tuple(results[0], results[1], results[2]);
 }
 
+void set_atomSubset(GaussianShape::ShapeInputOptions &opts,
+                    const python::object &as) {
+  pythonObjectToVect<unsigned int>(as, opts.atomSubset);
+}
+
+python::tuple get_atomSubset(const GaussianShape::ShapeInputOptions &opts) {
+  python::list py_list;
+  for (const auto &val : opts.atomSubset) {
+    py_list.append(val);
+  }
+  return python::tuple(py_list);
+}
+
+void set_atomRadii(GaussianShape::ShapeInputOptions &opts,
+                   const python::object &ar) {
+  int len = python::len(ar);
+  opts.atomRadii.resize(len);
+  for (int i = 0; i < len; i++) {
+    unsigned int atomIdx = python::extract<unsigned int>(ar[i][0]);
+    double radius = python::extract<double>(ar[i][1]);
+    opts.atomRadii[i] = std::make_pair(atomIdx, radius);
+  }
+}
+
+python::tuple get_atomRadii(const GaussianShape::ShapeInputOptions &opts) {
+  python::list py_list;
+  for (const auto &val : opts.atomRadii) {
+    py_list.append(python::make_tuple(static_cast<int>(val.first), val.second));
+  }
+  return python::tuple(py_list);
+}
+
 }  // namespace helpers
 
 void wrap_rdGaussianShape() {
@@ -205,10 +237,18 @@ void wrap_rdGaussianShape() {
           "Whether to use the same radius, appropriate for Carbon, for all atoms.  There is a"
           " slight accuracy penalty but significant speed gain if used.  Default=True.")
       .add_property(
+          "atomSubset", &helpers::get_atomSubset, &helpers::set_atomSubset,
+          "If not empty, use just these atoms in the molecule to form the ShapeInput object.")
+      .add_property(
           "customFeatures", &helpers::get_customFeatures,
           &helpers::set_customFeatures,
           "Custom features for the shape.  Requires a list of tuples of"
           " int (the feature type), Point3D (the coordinates) and float (the radius).")
+      .add_property(
+          "atomRadii", &helpers::get_atomRadii, &helpers::set_atomRadii,
+          "Non-standard radii to use for the atoms specified by their indices"
+          " in the molecule.  Not all atoms need have a radius specified."
+          "  A list of tuples of [int, float].")
       .def("__setattr__", &safeSetattr);
 
   python::class_<GaussianShape::ShapeOverlayOptions, boost::noncopyable>(

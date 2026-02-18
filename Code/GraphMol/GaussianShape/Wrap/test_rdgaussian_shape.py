@@ -117,6 +117,26 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(tpl[1], 1.0, places=3)
     self.assertAlmostEqual(tpl[2], 1.0, places=3)
 
+  def test7_customAtomRadii(self):
+    ovOpts = rdGaussianShape.ShapeOverlayOptions()
+    opts = rdGaussianShape.ShapeInputOptions()
+    opts.allCarbonRadii = False
+    opts.atomRadii = [(4, 1.9)]
+    shp = rdGaussianShape.ShapeInput(self.ref, -1, opts, ovOpts)
+    self.assertAlmostEqual(shp.ShapeVolume, 559.361, places=3)
+
+  def test8_atomSubset(self):
+    ovOpts = rdGaussianShape.ShapeOverlayOptions()
+    opts = rdGaussianShape.ShapeInputOptions()
+    opts.atomSubset = [4, 5, 6, 7, 8, 9]
+    opts.useColors = False
+    opts.allCarbonRadii = False
+    shp = rdGaussianShape.ShapeInput(self.ref, -1, opts, ovOpts)
+    self.assertAlmostEqual(shp.ShapeVolume, 259.144, places=3)
+    self.assertEqual(shp.ColorVolume, 0.0)
+
     
 if __name__ == '__main__':
   unittest.main()
+
+  
