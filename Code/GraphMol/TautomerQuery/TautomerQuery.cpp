@@ -146,7 +146,8 @@ TautomerQuery *TautomerQuery::fromMol(
       new MolStandardize::TautomerCatalogParams(tautomerTransformFile));
   MolStandardize::TautomerEnumerator tautomerEnumerator(
       new MolStandardize::TautomerCatalog(tautomerParams.get()));
-  const auto res = tautomerEnumerator.enumerate(query);
+  // Collapse to SMILES keys to deduplicate symmetry-equivalent tautomers
+  const auto res = tautomerEnumerator.enumerate(query).collapsedToSmilesKeys();
 
   std::vector<size_t> modifiedAtoms;
   modifiedAtoms.reserve(res.modifiedAtoms().count());
@@ -187,7 +188,16 @@ TautomerQuery *TautomerQuery::fromMol(
     delete queryBond;
   }
 
-  return new TautomerQuery(res.tautomers(),
+  // Copy molecule properties from the original query to all tautomers.
+  // Tautomer enumeration uses quickCopy for performance, which doesn't copy
+  // molecule properties. We need to preserve them here for proper CXSMILES
+  // output (e.g. link nodes).
+  auto tautomers = res.tautomers();
+  for (auto &tautomer : tautomers) {
+    tautomer->updateProps(query);
+  }
+
+  return new TautomerQuery(std::move(tautomers),
                            static_cast<ROMol *>(templateMolecule),
                            modifiedAtoms, modifiedBonds);
 }

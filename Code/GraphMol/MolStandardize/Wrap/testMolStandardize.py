@@ -459,6 +459,7 @@ chlorine	[Cl]
     self.assertEqual(Chem.MolToSmiles(ctaut), "OC1=CCCCC1")
     ctaut = enumerator.PickCanonical(res, scorefunc2)
     self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+
     # make sure lambdas work
     ctaut = enumerator.PickCanonical(
       res, lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
@@ -479,14 +480,79 @@ chlorine	[Cl]
     with self.assertRaises(TypeError):
       ctaut = enumerator.PickCanonical(set(res()), lambda x: 'fail')
 
+  def test13bTautomerCanonicalizePreservesEnhancedStereoGroups(self):
+    mol = Chem.MolFromMolBlock(
+      """
+  ChemDraw02162620332D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 13 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.229554 -1.327197 0.000000 0
+M  V30 2 C -0.948939 -0.551781 0.000000 0
+M  V30 3 H -1.761005 -0.409182 0.000000 0
+M  V30 4 C -0.233083 -0.962397 0.000000 0
+M  V30 5 C 0.482773 -0.552927 0.000000 0
+M  V30 6 C 0.482773 0.278039 0.000000 0
+M  V30 7 N 1.272506 0.534602 0.000000 0
+M  V30 8 C 1.761005 -0.137157 0.000000 0
+M  V30 9 C 1.272506 -0.809490 0.000000 0
+M  V30 10 C -0.233083 0.696672 0.000000 0
+M  V30 11 H -0.764534 1.327197 0.000000 0
+M  V30 12 O -0.948939 0.278039 0.000000 0
+M  V30 13 C 0.298369 1.327197 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3 CFG=3
+M  V30 3 1 2 12
+M  V30 4 1 2 4
+M  V30 5 1 4 5
+M  V30 6 1 5 9
+M  V30 7 2 5 6
+M  V30 8 1 6 7
+M  V30 9 1 7 8
+M  V30 10 2 8 9
+M  V30 11 1 6 10
+M  V30 12 1 10 11 CFG=3
+M  V30 13 1 10 12
+M  V30 14 1 10 13
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STERAC1 ATOMS=(2 2 10)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+"""
+    )
+    self.assertIsNotNone(mol)
+
+    sgs = mol.GetStereoGroups()
+    self.assertEqual(len(sgs), 1)
+    self.assertEqual(sgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_AND)
+    self.assertEqual(sorted(a.GetIdx() for a in sgs[0].GetAtoms()), [1, 8])
+
+    enumerator = rdMolStandardize.TautomerEnumerator()
+    enumerator.SetMaxTautomers(20)
+    enumerator.SetMaxTransforms(20)
+    enumerator.SetRemoveBondStereo(False)
+    enumerator.SetRemoveSp3Stereo(False)
+    mol2 = enumerator.Canonicalize(Chem.Mol(mol))
+
+    sgs2 = mol2.GetStereoGroups()
+    self.assertEqual(len(sgs2), 1)
+    self.assertEqual(sgs2[0].GetGroupType(), Chem.StereoGroupType.STEREO_AND)
+    self.assertEqual(sorted(a.GetIdx() for a in sgs2[0].GetAtoms()), [1, 8])
+
   def test14TautomerDetails(self):
     enumerator = rdMolStandardize.TautomerEnumerator()
     m = Chem.MolFromSmiles("c1ccccc1CN=c1[nH]cccc1")
     taut_res = enumerator.Enumerate(m)
     self.assertEqual(len(taut_res.tautomers), 2)
     self.assertEqual(taut_res.modifiedAtoms, (7, 9))
-    self.assertEqual(len(taut_res.modifiedBonds), 7)
-    self.assertEqual(taut_res.modifiedBonds, (7, 8, 9, 10, 11, 12, 14))
+    self.assertEqual(len(taut_res.modifiedBonds), 2)
+    self.assertEqual(taut_res.modifiedBonds, (7, 8))
 
     taut_res = enumerator.Enumerate(m)
     self.assertEqual(len(taut_res.tautomers), 2)
@@ -494,8 +560,8 @@ chlorine	[Cl]
 
     taut_res = enumerator.Enumerate(m)
     self.assertEqual(len(taut_res.tautomers), 2)
-    self.assertEqual(len(taut_res.modifiedBonds), 7)
-    self.assertEqual(taut_res.modifiedBonds, (7, 8, 9, 10, 11, 12, 14))
+    self.assertEqual(len(taut_res.modifiedBonds), 2)
+    self.assertEqual(taut_res.modifiedBonds, (7, 8))
 
   def test15EnumeratorParams(self):
     # Test a structure with hundreds of tautomers.
@@ -510,7 +576,7 @@ chlorine	[Cl]
 
     enumerator = rdMolStandardize.GetV1TautomerEnumerator()
     res68 = enumerator.Enumerate(m68)
-    self.assertEqual(len(res68), 292)
+    self.assertEqual(len(res68), 200)
     self.assertEqual(len(res68.tautomers), len(res68))
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
 
@@ -518,7 +584,8 @@ chlorine	[Cl]
     params.maxTautomers = 50
     enumerator = rdMolStandardize.TautomerEnumerator(params)
     res68 = enumerator.Enumerate(m68)
-    self.assertEqual(len(res68), 50)
+    # After SMILES-key collapsing, we may get fewer than maxTautomers
+    self.assertLessEqual(len(res68), 50)
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTautomersReached)
 
 

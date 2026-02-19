@@ -22,6 +22,7 @@
 #include <GraphMol/MolStandardize/Validate.h>
 
 #include <fstream>
+#include <set>
 
 using namespace RDKit;
 
@@ -842,8 +843,12 @@ TEST_CASE("provide tautomer parameters as JSON") {
     REQUIRE(m);
     auto tauts = te.enumerate(*m);
     CHECK(tauts.size() == 2);
-    CHECK(MolToSmiles(*tauts[0]) == "CC=CO");
-    CHECK(MolToSmiles(*tauts[1]) == "CCC=O");
+    std::set<std::string> tautSmiles;
+    for (const auto &t : tauts) {
+      tautSmiles.insert(MolToSmiles(*t));
+    }
+    CHECK(tautSmiles.count("CC=CO") == 1);
+    CHECK(tautSmiles.count("CCC=O") == 1);
   }
   SECTION("example 2") {
     std::string json = R"JSON({"tautomerTransformData":[
@@ -858,8 +863,8 @@ TEST_CASE("provide tautomer parameters as JSON") {
     REQUIRE(m);
     auto tauts = te.enumerate(*m);
     CHECK(tauts.size() == 2);
-    CHECK(MolToSmiles(*tauts[0]) == "C#N");
-    CHECK(MolToSmiles(*tauts[1]) == "[C-]#[NH+]");
+    CHECK(MolToSmiles(*tauts[0]) == "[C-]#[NH+]");
+    CHECK(MolToSmiles(*tauts[1]) == "C#N");
   }
   SECTION("example3") {
     std::string json = R"JSON({"tautomerTransformData":[
@@ -1754,3 +1759,311 @@ TEST_CASE("Custom Scoring Functions") {
                 *mol, terms) == 1000);
   }
 }
+
+TEST_CASE("tautomer canonicalize preserves conformers") {
+  // Regression test: quickCopy during tautomer enumeration drops
+  // conformers.  canonicalize() must restore them from the original
+  // molecule so that downstream code (e.g. InChI generation) that
+  // relies on 2D/3D coordinates works correctly.
+  std::string molblock = R"CTAB(
+  ChemDraw02102613032D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 17 18 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.382449 2.541459 0.000000 0
+M  V30 2 N -1.391616 1.716459 0.000000 0
+M  V30 3 C -2.139845 1.368125 0.000000 0
+M  V30 4 C -2.333490 0.560313 0.000000 0
+M  V30 5 C -1.822449 -0.093386 0.000000 0
+M  V30 6 C -0.992865 -0.099688 0.000000 0
+M  V30 7 C -0.468073 0.540833 0.000000 0
+M  V30 8 C -0.646824 1.348646 0.000000 0
+M  V30 9 O 0.002291 1.857397 0.000000 0
+M  V30 10 N 0.334583 0.349479 0.000000 0
+M  V30 11 C 0.570052 -0.441719 0.000000 0
+M  V30 12 O 0.003437 -1.040990 0.000000 0
+M  V30 13 C 1.372708 -0.633073 0.000000 0
+M  V30 14 C 1.608177 -1.423699 0.000000 0
+M  V30 15 C 2.333490 -1.816147 0.000000 0
+M  V30 16 C 1.941043 -2.541459 0.000000 0
+M  V30 17 C 1.215730 -2.149012 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 8
+M  V30 3 1 2 3
+M  V30 4 1 3 4
+M  V30 5 1 4 5
+M  V30 6 1 5 6
+M  V30 7 1 6 7
+M  V30 8 1 7 8
+M  V30 9 2 8 9
+M  V30 10 1 7 10
+M  V30 11 1 10 11
+M  V30 12 2 11 12
+M  V30 13 1 11 13
+M  V30 14 2 13 14
+M  V30 15 1 14 17
+M  V30 16 1 14 15
+M  V30 17 1 15 16
+M  V30 18 1 16 17
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+  REQUIRE(mol);
+  REQUIRE(mol->getNumConformers() == 1);
+
+  MolStandardize::CleanupParameters params;
+  params.tautomerRemoveBondStereo = false;
+  params.tautomerRemoveSp3Stereo = false;
+  MolStandardize::TautomerEnumerator te(params);
+  std::unique_ptr<ROMol> canon{te.canonicalize(*mol)};
+  REQUIRE(canon);
+
+  // Conformer must be preserved (quickCopy regression)
+  CHECK(canon->getNumConformers() == 1);
+  if (canon->getNumConformers() > 0) {
+    const auto &origConf = mol->getConformer(0);
+    const auto &canonConf = canon->getConformer(0);
+    CHECK(origConf.getNumAtoms() == canonConf.getNumAtoms());
+    for (unsigned int i = 0; i < origConf.getNumAtoms(); ++i) {
+      auto origPos = origConf.getAtomPos(i);
+      auto canonPos = canonConf.getAtomPos(i);
+      CHECK(origPos.x == Catch::Approx(canonPos.x).epsilon(1e-4));
+      CHECK(origPos.y == Catch::Approx(canonPos.y).epsilon(1e-4));
+    }
+  }
+}
+
+TEST_CASE(
+    "STEREOANY preserved after tautomer canonicalization",
+    "[tautomers]") {
+  // Diaryl hydrazone with N=N double bonds marked STEREOANY (CFG=2).
+  // A tautomer transform ("1,5 aromatic heteroatom H shift") reverses bond
+  // types along the path N-N=C-N=N → N=N-C=N-N, producing a second tautomer
+  // with the same SMILES but different state key. The reversed-bond tautomer
+  // has bonds 1,3 as SINGLE so its stereo is correctly cleared. The fix
+  // ensures that when deduplicating same-SMILES entries, the tautomer
+  // preserving more stereo is selected.
+  auto molblock = R"CTAB(
+  MM V3K  01017000002D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 23 25 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 282.47 -378.02 0 0
+M  V30 2 N 269.98 -385.18 0 0
+M  V30 3 C 257.53 -377.95 0 0
+M  V30 4 N 257.57 -363.55 0 0
+M  V30 5 N 270.06 -356.38 0 0
+M  V30 6 C 270.1 -341.98 0 0
+M  V30 7 C 257.57 -334.75 0 0
+M  V30 8 C 257.61 -320.35 0 0
+M  V30 9 C 270.06 -313.11 0 0
+M  V30 10 C 282.59 -320.35 0 0
+M  V30 11 C 282.68 -334.82 0 0
+M  V30 12 C 245.04 -385.11 0 0
+M  V30 13 C 245.04 -399.58 0 0
+M  V30 14 C 232.55 -406.75 0 0
+M  V30 15 C 220.06 -399.58 0 0
+M  V30 16 C 220.06 -385.11 0 0
+M  V30 17 C 232.55 -377.8 0 0
+M  V30 18 C 294.92 -385.25 0 0
+M  V30 19 C 307.45 -378.02 0 0
+M  V30 20 C 319.9 -385.25 0 0
+M  V30 21 C 319.94 -399.65 0 0
+M  V30 22 C 307.41 -406.89 0 0
+M  V30 23 C 294.83 -399.72 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3 CFG=2
+M  V30 3 1 3 4
+M  V30 4 2 4 5 CFG=2
+M  V30 5 1 5 6
+M  V30 6 2 6 11
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 8 9
+M  V30 10 2 9 10
+M  V30 11 1 10 11
+M  V30 12 1 3 12
+M  V30 13 2 12 17
+M  V30 14 1 12 13
+M  V30 15 2 13 14
+M  V30 16 1 14 15
+M  V30 17 2 15 16
+M  V30 18 1 16 17
+M  V30 19 1 1 18
+M  V30 20 2 18 23
+M  V30 21 1 18 19
+M  V30 22 2 19 20
+M  V30 23 1 20 21
+M  V30 24 2 21 22
+M  V30 25 1 22 23
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+  REQUIRE(mol);
+
+  // Verify input has STEREOANY on the N=N bonds
+  unsigned int inputStereoAny = 0;
+  for (const auto bond : mol->bonds()) {
+    if (bond->getStereo() == Bond::STEREOANY) {
+      ++inputStereoAny;
+    }
+  }
+  REQUIRE(inputStereoAny == 2);
+
+  MolStandardize::CleanupParameters params;
+  params.tautomerRemoveBondStereo = false;
+  params.tautomerRemoveSp3Stereo = false;
+  MolStandardize::TautomerEnumerator te(params);
+
+  SECTION("canonicalize preserves STEREOANY") {
+    std::unique_ptr<ROMol> canon{te.canonicalize(*mol)};
+    REQUIRE(canon);
+    unsigned int stereoAnyCount = 0;
+    for (const auto bond : canon->bonds()) {
+      if (bond->getStereo() == Bond::STEREOANY) {
+        ++stereoAnyCount;
+      }
+    }
+    CHECK(stereoAnyCount == 2);
+  }
+
+  SECTION("enumerate preserves STEREOANY") {
+    auto tautomers = te.enumerate(*mol);
+    REQUIRE(!tautomers.empty());
+    // Each tautomer where the N=N bonds remain DOUBLE should have STEREOANY
+    for (const auto &taut : tautomers) {
+      unsigned int stereoAnyCount = 0;
+      for (const auto bond : taut->bonds()) {
+        if (bond->getBondType() == Bond::DOUBLE &&
+            bond->getStereo() == Bond::STEREOANY) {
+          ++stereoAnyCount;
+        }
+      }
+      // The canonical SMILES is the same for all tautomers in this case,
+      // so the N=N STEREOANY bonds should be preserved on at least the
+      // tautomer whose N=N bonds are still DOUBLE.
+      if (stereoAnyCount > 0) {
+        CHECK(stereoAnyCount == 2);
+      }
+    }
+  }
+
+  SECTION("canonicalize preserves STEREOANY on C=N imine") {
+    // Acridine derivative with a single C=N STEREOANY bond (CFG=2).
+    // The C=N bond participates in tautomerism and its bond type may be
+    // flipped by transforms.  The fix ensures that the tautomer preserving
+    // more stereo information wins the dedup tie-break.
+    auto imineBlock = R"CTAB(
+  ChemDraw01112421422D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 31 34 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -3.925054 -2.990340 0.000000 0
+M  V30 2 C -3.213491 -2.577840 0.000000 0
+M  V30 3 N -3.214636 -1.755131 0.000000 0
+M  V30 4 C -2.503074 -1.342631 0.000000 0
+M  V30 5 C -1.788646 -1.752266 0.000000 0
+M  V30 6 C -1.073646 -1.342631 0.000000 0
+M  V30 7 C -1.074792 -0.515339 0.000000 0
+M  V30 8 C -1.788646 -0.097683 0.000000 0
+M  V30 9 C -2.503074 -0.515339 0.000000 0
+M  V30 10 C -3.216356 -0.106276 0.000000 0
+M  V30 11 C -0.362656 -0.098828 0.000000 0
+M  V30 12 C 0.354635 -0.513620 0.000000 0
+M  V30 13 C 1.069063 -0.096537 0.000000 0
+M  V30 14 C 1.788074 -0.513048 0.000000 0
+M  V30 15 C 1.788074 -1.342631 0.000000 0
+M  V30 16 N 2.500210 -1.754558 0.000000 0
+M  V30 17 C 3.212918 -1.343777 0.000000 0
+M  V30 18 C 3.925054 -1.756277 0.000000 0
+M  V30 19 C 1.069636 -1.755131 0.000000 0
+M  V30 20 C 0.355209 -1.343204 0.000000 0
+M  V30 21 O -0.360937 -1.753412 0.000000 0
+M  V30 22 C 2.500782 -0.102265 0.000000 0
+M  V30 23 C -0.366667 1.340912 0.000000 0
+M  V30 24 C -1.079376 1.751694 0.000000 0
+M  V30 25 C -1.085104 2.574402 0.000000 0
+M  V30 26 C -0.370677 2.990340 0.000000 0
+M  V30 27 C 0.349479 2.584142 0.000000 0
+M  V30 28 C 0.347761 1.757422 0.000000 0
+M  V30 29 C 1.060469 1.347214 0.000000 0
+M  V30 30 O 1.061615 0.524505 0.000000 0
+M  V30 31 O 1.772605 1.759141 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 9
+M  V30 5 1 4 5
+M  V30 6 2 5 6
+M  V30 7 1 6 21
+M  V30 8 1 6 7
+M  V30 9 2 7 8
+M  V30 10 1 8 9
+M  V30 11 1 9 10
+M  V30 12 1 7 11
+M  V30 13 2 11 12
+M  V30 14 1 12 20
+M  V30 15 1 12 13
+M  V30 16 2 13 14
+M  V30 17 1 14 15
+M  V30 18 2 15 16 CFG=2
+M  V30 19 1 16 17
+M  V30 20 1 17 18
+M  V30 21 1 15 19
+M  V30 22 2 19 20
+M  V30 23 1 20 21
+M  V30 24 1 14 22
+M  V30 25 1 11 23
+M  V30 26 2 23 28
+M  V30 27 1 23 24
+M  V30 28 2 24 25
+M  V30 29 1 25 26
+M  V30 30 2 26 27
+M  V30 31 1 27 28
+M  V30 32 1 28 29
+M  V30 33 2 29 30
+M  V30 34 1 29 31
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<RWMol> imineMol(MolBlockToMol(imineBlock));
+    REQUIRE(imineMol);
+
+    // Verify input has exactly 1 STEREOANY bond (the C=N)
+    unsigned int imineInputStereoAny = 0;
+    for (const auto bond : imineMol->bonds()) {
+      if (bond->getStereo() == Bond::STEREOANY) {
+        ++imineInputStereoAny;
+      }
+    }
+    REQUIRE(imineInputStereoAny == 1);
+
+    std::unique_ptr<ROMol> canon{te.canonicalize(*imineMol)};
+    REQUIRE(canon);
+    unsigned int stereoAnyCount = 0;
+    for (const auto bond : canon->bonds()) {
+      if (bond->getStereo() == Bond::STEREOANY) {
+        ++stereoAnyCount;
+      }
+    }
+    CHECK(stereoAnyCount == 1);
+  }
+}
+

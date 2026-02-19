@@ -48,7 +48,15 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
   int score;
   RWMol matcher;  // requires assignment
 
-  SubstructTerm(std::string aname, std::string asmarts, int ascore);
+  // Pre-screening support: elements that must be present (empty = no filter)
+  std::vector<int> requiredElements;
+  // Bond-order-agnostic connectivity pattern for pre-screening (may be empty)
+  std::string connectivitySmarts;
+  RWMol connectivityMatcher;
+
+  SubstructTerm(std::string aname, std::string asmarts, int ascore,
+                std::vector<int> reqElements = {},
+                std::string connSmarts = "");
   SubstructTerm(const SubstructTerm &rhs) = default;
 
   bool operator==(const SubstructTerm &rhs) const {
@@ -78,6 +86,25 @@ RDKIT_MOLSTANDARDIZE_EXPORT int scoreRings(const ROMol &mol);
 RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(
     const ROMol &mol, const std::vector<SubstructTerm> &terms =
                           getDefaultTautomerScoreSubstructs());
+
+//! Determine which SubstructTerms are potentially relevant for a molecule.
+/// This pre-filters terms in two stages:
+///   1. Element check: skip terms requiring elements not in the molecule
+///   2. Connectivity check: skip terms whose bond-order-agnostic pattern
+///      doesn't match (since tautomerization doesn't create/destroy bonds)
+/// Returns indices into the terms vector for relevant terms.
+RDKIT_MOLSTANDARDIZE_EXPORT std::vector<size_t> getRelevantSubstructTermIndices(
+    const ROMol &mol,
+    const std::vector<SubstructTerm> &terms = getDefaultTautomerScoreSubstructs());
+
+//! Score substructures using only the terms at the specified indices.
+/// Uses specialized matchers for simple patterns (C=O, N=O, P=O, methyl, etc.)
+/// and falls back to VF2 for complex patterns. Use with
+/// getRelevantSubstructTermIndices for efficient scoring of many tautomers
+/// from the same parent molecule.
+RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructsFiltered(
+    const ROMol &mol, const std::vector<SubstructTerm> &terms,
+    const std::vector<size_t> &relevantIndices);
 //! scoreHeteroHs score the molecules hydrogens
 /// This gives a negative penalty to hydrogens attached to S,P, Se and Te
 /*!
@@ -89,6 +116,25 @@ RDKIT_MOLSTANDARDIZE_EXPORT int scoreHeteroHs(const ROMol &mol);
 inline int scoreTautomer(const ROMol &mol) {
   return scoreRings(mol) + scoreSubstructs(mol) + scoreHeteroHs(mol);
 }
+
+//! Create an optimized scoring function for tautomers of a specific molecule.
+/// This pre-filters SubstructTerms based on elements and connectivity present
+/// in the input molecule, avoiding unnecessary substructure searches for
+/// patterns that can never match any tautomer of this molecule.
+/// The returned function captures the filtered term indices and can be passed
+/// to pickCanonical or canonicalize.
+inline boost::function<int(const ROMol &)> makeOptimizedScorer(
+    const ROMol &mol) {
+  auto relevantIndices = getRelevantSubstructTermIndices(mol);
+  // Capture by value since the indices are small and we want the lambda to
+  // outlive this function.
+  return [relevantIndices](const ROMol &taut) {
+    const auto &terms = getDefaultTautomerScoreSubstructs();
+    return scoreRings(taut) +
+           scoreSubstructsFiltered(taut, terms, relevantIndices) +
+           scoreHeteroHs(taut);
+  };
+}
 }  // namespace TautomerScoringFunctions
 
 enum class TautomerEnumeratorStatus {
@@ -98,11 +144,28 @@ enum class TautomerEnumeratorStatus {
   Canceled
 };
 
+/// Holds a molecule with canonical atom+bond ordering and the
+/// permutation needed to map back to the original ordering.
+/// Used by TautomerEnumerator::normalizeAtomBondOrder() /
+/// denormalizeAtomBondOrder().
+struct RDKIT_MOLSTANDARDIZE_EXPORT NormalizedMolOrder {
+  std::unique_ptr<ROMol> mol;
+  /// normPerm[origIdx] = normalizedIdx
+  std::vector<unsigned int> normPerm;
+};
+
 class Tautomer {
   friend class TautomerEnumerator;
 
  public:
   Tautomer() : d_numModifiedAtoms(0), d_numModifiedBonds(0), d_done(false) {}
+  // Constructor with just the tautomer - kekulized form will be created lazily
+  Tautomer(ROMOL_SPTR t, size_t a = 0, size_t b = 0)
+      : tautomer(std::move(t)),
+        d_numModifiedAtoms(a),
+        d_numModifiedBonds(b),
+        d_done(false) {}
+  // Legacy constructor for compatibility
   Tautomer(ROMOL_SPTR t, ROMOL_SPTR k, size_t a = 0, size_t b = 0)
       : tautomer(std::move(t)),
         kekulized(std::move(k)),
@@ -110,7 +173,16 @@ class Tautomer {
         d_numModifiedBonds(b),
         d_done(false) {}
   ROMOL_SPTR tautomer;
-  ROMOL_SPTR kekulized;
+  mutable ROMOL_SPTR kekulized;  // Lazily initialized
+
+  // Get the kekulized form, creating it lazily if needed
+  const ROMOL_SPTR &getKekulized() const {
+    if (!kekulized && tautomer) {
+      kekulized.reset(new RWMol(*tautomer));
+      MolOps::Kekulize(static_cast<RWMol &>(*kekulized), false);
+    }
+    return kekulized;
+  }
 
  private:
   size_t d_numModifiedAtoms;
@@ -210,6 +282,30 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumeratorResult {
     return smilesVec;
   }
   const SmilesTautomerMap &smilesTautomerMap() const { return d_tautomers; }
+
+  // Returns a new result where each tautomer is denormalized back to the
+  // original molecule's atom+bond ordering.  This is the inverse of
+  // TautomerEnumerator::normalizeAtomBondOrder() applied to every tautomer
+  // in the result set.
+  //
+  // Typical usage:
+  //   auto norm = TautomerEnumerator::normalizeAtomBondOrder(mol);
+  //   auto res  = enumerator.enumerate(*norm.mol);
+  //   auto orig = res.denormalizedToOriginalOrder(mol, norm.normPerm);
+  TautomerEnumeratorResult denormalizedToOriginalOrder(
+      const ROMol &origMol,
+      const std::vector<unsigned int> &normPerm) const;
+
+  // Returns a new result where the internal map is re-keyed by canonical
+  // SMILES (MolToSmiles(..., true)).
+  //
+  // This is intended for callers/tests that expect a SMILES-keyed, SMILES-
+  // ordered, de-duplicated view of the enumerated tautomers.
+  //
+  // NOTE: this computes canonical SMILES for each enumerated tautomer and
+  // therefore can be expensive; callers should only use it when they need
+  // SMILES-keyed semantics.
+  TautomerEnumeratorResult collapsedToSmilesKeys() const;
 
  private:
   void fillTautomersItVec() {
@@ -367,7 +463,24 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
     the tautomer transform (these are the bonds between the "donor" and the
     "acceptor")
 
+    IMPORTANT: The set of tautomers discovered by enumerate() can depend on
+    the input atom ordering.  Two representations of the same molecule (e.g.
+    from SMILES vs. a MolBlock) may yield different tautomer ensembles.
+    canonicalize() and canonicalizeInPlace() handle this internally by
+    normalizing atom+bond order before enumeration.  If you need a
+    consistent enumerate() result across different representations, call
+    normalizeAtomBondOrder() on the input first, enumerate the normalized
+    molecule, then optionally denormalize:
+    \code
+      auto norm = TautomerEnumerator::normalizeAtomBondOrder(mol);
+      auto res  = enumerator.enumerate(*norm.mol);
+      // optionally remap back:
+      auto orig = res.denormalizedToOriginalOrder(mol, norm.normPerm);
+    \endcode
   */
+  // FIXME: consider running normalizeAtomBondOrder inside enumerate()
+  // unconditionally so that enumeration results are always atom-order-
+  // independent.  This would add a MolToSmiles + renumber overhead per call.
   TautomerEnumeratorResult enumerate(const ROMol &mol) const;
 
   //! Deprecated, please use the form returning a \c TautomerEnumeratorResult
@@ -440,12 +553,41 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
     https://doi.org/10.1007/s10822-010-9346-4
 
   */
-  ROMol *canonicalize(const ROMol &mol,
-                      boost::function<int(const ROMol &mol)> scoreFunc =
-                          TautomerScoringFunctions::scoreTautomer) const;
-  void canonicalizeInPlace(RWMol &mol,
-                           boost::function<int(const ROMol &mol)> scoreFunc =
-                               TautomerScoringFunctions::scoreTautomer) const;
+  /// When \p scoreFunc is empty (default), an optimized scorer is created
+  /// that pre-filters substructure patterns once for the input molecule.
+  ROMol *canonicalize(
+      const ROMol &mol,
+      boost::function<int(const ROMol &mol)> scoreFunc = {}) const;
+  void canonicalizeInPlace(
+      RWMol &mol, boost::function<int(const ROMol &mol)> scoreFunc = {}) const;
+
+  //! Normalize a molecule to canonical atom+bond ordering.
+  /*!
+    Returns a NormalizedMolOrder whose mol member has deterministic atom
+    and bond storage order.  This ensures that enumerate() discovers the
+    same tautomer set regardless of how the input molecule was constructed.
+
+    Use denormalizeAtomBondOrder() (or
+    TautomerEnumeratorResult::denormalizedToOriginalOrder()) to map results
+    back to the original atom numbering.
+  */
+  static NormalizedMolOrder normalizeAtomBondOrder(const ROMol &mol);
+
+  //! Remap a tautomer from normalized to original atom+bond ordering.
+  /*!
+    Inverse of normalizeAtomBondOrder().  Restores the original molecule's
+    bond storage order so that chirality tags (CW/CCW) retain their
+    original meaning, and recomputes CIP codes.
+
+    \param tautomer:  the tautomer in normalized atom order
+    \param origMol:   the original (un-normalized) molecule (supplies bond
+                      iteration order)
+    \param normPerm:  the permutation from NormalizedMolOrder::normPerm
+    \return caller owns the returned pointer
+  */
+  static ROMol *denormalizeAtomBondOrder(
+      const ROMol &tautomer, const ROMol &origMol,
+      const std::vector<unsigned int> &normPerm);
 
  private:
   bool setTautomerStereoAndIsoHs(const ROMol &mol, ROMol &taut,

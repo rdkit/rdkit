@@ -473,6 +473,24 @@ struct RecursiveLocker {
     }
   }
 };
+
+// A minimal container which satisfies the vf2_all() output-sequence interface
+// but only counts matches instead of storing them.
+struct MatchCounter {
+  using value_type = ssPairType;
+
+  void clear() { d_count = 0; }
+  void resize(size_t) { d_count = 0; }
+  void reserve(size_t) {}
+
+  bool empty() const { return d_count == 0; }
+  size_t size() const { return d_count; }
+
+  void push_back(const value_type &) { ++d_count; }
+
+ private:
+  size_t d_count = 0;
+};
 }  // namespace detail
 
 // ----------------------------------------------
@@ -520,6 +538,34 @@ std::vector<MatchVectType> SubstructMatch(
     }
   }
   return matches;
+}
+
+unsigned int SubstructMatchCount(const ROMol &mol, const ROMol &query,
+                                 const SubstructMatchParameters &params) {
+  if (!mol.getNumAtoms() || !query.getNumAtoms()) {
+    return 0;
+  }
+
+  detail::RecursiveLocker locker(query, params.recursionPossible);
+
+  if (params.recursionPossible) {
+    detail::SUBQUERY_MAP subqueryMap;
+    for (const auto atom : query.atoms()) {
+      if (atom->hasQuery()) {
+        detail::MatchSubqueries(mol, atom->getQuery(), params, subqueryMap,
+                                locker.locked);
+      }
+    }
+  }
+
+  detail::AtomLabelFunctor atomLabeler(query, mol, params);
+  detail::BondLabelFunctor bondLabeler(query, mol, params);
+  MolMatchFinalCheckFunctor matchChecker(query, mol, params);
+
+  detail::MatchCounter counter;
+  boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
+                 bondLabeler, matchChecker, counter, params.maxMatches);
+  return static_cast<unsigned int>(counter.size());
 }
 
 std::vector<MatchVectType> SubstructMatch(
