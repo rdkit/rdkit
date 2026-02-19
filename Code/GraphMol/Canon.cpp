@@ -36,10 +36,10 @@ static constexpr Bond::BondDir flipStereoBondDir(Bond::BondDir bondDir) {
   }
 }
 
-void setDirectionFromNeighboringBond(Bond *sourceBond, bool isSourceBondFlipped,
-                                     Bond *targetBond,
+void setDirectionFromNeighboringBond(Bond &sourceBond, bool isSourceBondFlipped,
+                                     Bond &targetBond,
                                      bool isTargetBondFlipped) {
-  auto dir = sourceBond->getBondDir();
+  auto dir = sourceBond.getBondDir();
 
   // By default, both bonds on the same side of the double bond
   // should have opposite directions, but this can change if
@@ -49,38 +49,38 @@ void setDirectionFromNeighboringBond(Bond *sourceBond, bool isSourceBondFlipped,
     dir = flipStereoBondDir(dir);
   }
 
-  targetBond->setBondDir(dir);
+  targetBond.setBondDir(dir);
 }
 
-Bond::BondDir getReferenceDirection(const Bond *dblBond, const Atom *refAtom,
-                                    const Atom *targetAtom,
-                                    const Bond *refControllingBond,
-                                    bool refIsFlipped, const Bond *targetBond,
+Bond::BondDir getReferenceDirection(const Bond &dblBond, const Atom &refAtom,
+                                    const Atom &targetAtom,
+                                    const Bond &refControllingBond,
+                                    bool refIsFlipped, const Bond &targetBond,
                                     bool targetIsFlipped) {
   Bond::BondDir dir = Bond::NONE;
-  if (dblBond->getStereo() == Bond::STEREOE ||
-      dblBond->getStereo() == Bond::STEREOTRANS) {
-    dir = refControllingBond->getBondDir();
-  } else if (dblBond->getStereo() == Bond::STEREOZ ||
-             dblBond->getStereo() == Bond::STEREOCIS) {
-    dir = flipStereoBondDir(refControllingBond->getBondDir());
+  if (dblBond.getStereo() == Bond::STEREOE ||
+      dblBond.getStereo() == Bond::STEREOTRANS) {
+    dir = refControllingBond.getBondDir();
+  } else if (dblBond.getStereo() == Bond::STEREOZ ||
+             dblBond.getStereo() == Bond::STEREOCIS) {
+    dir = flipStereoBondDir(refControllingBond.getBondDir());
   }
   CHECK_INVARIANT(dir != Bond::NONE, "stereo not set");
 
   // If we're not looking at the bonds used to determine the
   // stereochemistry, we need to flip the setting on the other bond:
-  const INT_VECT &stereoAtoms = dblBond->getStereoAtoms();
+  const INT_VECT &stereoAtoms = dblBond.getStereoAtoms();
 
-  if (refAtom->getDegree() == 3 &&
+  if (refAtom.getDegree() == 3 &&
       std::ranges::find(stereoAtoms,
-                        static_cast<int>(refControllingBond->getOtherAtomIdx(
-                            refAtom->getIdx()))) == stereoAtoms.end()) {
+                        static_cast<int>(refControllingBond.getOtherAtomIdx(
+                            refAtom.getIdx()))) == stereoAtoms.end()) {
     dir = flipStereoBondDir(dir);
   }
-  if (targetAtom->getDegree() == 3 &&
+  if (targetAtom.getDegree() == 3 &&
       std::ranges::find(stereoAtoms,
-                        static_cast<int>(targetBond->getOtherAtomIdx(
-                            targetAtom->getIdx()))) == stereoAtoms.end()) {
+                        static_cast<int>(targetBond.getOtherAtomIdx(
+                            targetAtom.getIdx()))) == stereoAtoms.end()) {
     dir = flipStereoBondDir(dir);
   }
 
@@ -309,12 +309,12 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     if (secondFromAtom1) {
       if (!bondDirCounts[firstFromAtom1->getIdx()]) {
         setDirectionFromNeighboringBond(
-            secondFromAtom1, isSecondFromAtom1Flipped, firstFromAtom1,
+            *secondFromAtom1, isSecondFromAtom1Flipped, *firstFromAtom1,
             isFirstFromAtom1Flipped);
       } else if (!bondDirCounts[secondFromAtom1->getIdx()]) {
-        setDirectionFromNeighboringBond(firstFromAtom1, isFirstFromAtom1Flipped,
-                                        secondFromAtom1,
-                                        isSecondFromAtom1Flipped);
+        setDirectionFromNeighboringBond(
+            *firstFromAtom1, isFirstFromAtom1Flipped, *secondFromAtom1,
+            isSecondFromAtom1Flipped);
       }
 
       bondDirCounts[secondFromAtom1->getIdx()] += 1;
@@ -324,12 +324,12 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     if (secondFromAtom2) {
       if (!bondDirCounts[firstFromAtom2->getIdx()]) {
         setDirectionFromNeighboringBond(
-            secondFromAtom2, isSecondFromAtom2Flipped, firstFromAtom2,
+            *secondFromAtom2, isSecondFromAtom2Flipped, *firstFromAtom2,
             isFirstFromAtom2Flipped);
       } else if (!bondDirCounts[secondFromAtom2->getIdx()]) {
-        setDirectionFromNeighboringBond(firstFromAtom2, isFirstFromAtom2Flipped,
-                                        secondFromAtom2,
-                                        isSecondFromAtom2Flipped);
+        setDirectionFromNeighboringBond(
+            *firstFromAtom2, isFirstFromAtom2Flipped, *secondFromAtom2,
+            isSecondFromAtom2Flipped);
       }
 
       bondDirCounts[secondFromAtom2->getIdx()] += 1;
@@ -377,8 +377,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       CHECK_INVARIANT(bondDirCounts[secondFromAtom1->getIdx()] > 0,
                       "inconsistent state");
 
-      setDirectionFromNeighboringBond(secondFromAtom1, isSecondFromAtom1Flipped,
-                                      firstFromAtom1, isFirstFromAtom1Flipped);
+      setDirectionFromNeighboringBond(*secondFromAtom1,
+                                      isSecondFromAtom1Flipped, *firstFromAtom1,
+                                      isFirstFromAtom1Flipped);
 
       // acknowledge that secondFromAtom1 is relevant for this bond,
       // and prevent removeRedundantBondDirSpecs from removing this
@@ -404,8 +405,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       CHECK_INVARIANT(bondDirCounts[secondFromAtom2->getIdx()] > 0,
                       "inconsistent state");
 
-      setDirectionFromNeighboringBond(secondFromAtom2, isSecondFromAtom2Flipped,
-                                      firstFromAtom2, isFirstFromAtom2Flipped);
+      setDirectionFromNeighboringBond(*secondFromAtom2,
+                                      isSecondFromAtom2Flipped, *firstFromAtom2,
+                                      isFirstFromAtom2Flipped);
 
       // acknowledge that secondFromAtom2 is relevant for this bond,
       // and prevent removeRedundantBondDirSpecs from removing this
@@ -425,8 +427,8 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
                                                 : isSecondFromAtom1Flipped);
 
     auto atom2Dir = getReferenceDirection(
-        dblBond, atom1, atom2, atom1ControllingBond, isControllingAtomFlipped,
-        firstFromAtom2, isFirstFromAtom2Flipped);
+        *dblBond, *atom1, *atom2, *atom1ControllingBond,
+        isControllingAtomFlipped, *firstFromAtom2, isFirstFromAtom2Flipped);
 
     firstFromAtom2->setBondDir(atom2Dir);
 
@@ -437,8 +439,8 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
         (atom2ControllingBond == firstFromAtom2 ? isFirstFromAtom2Flipped
                                                 : isSecondFromAtom2Flipped);
     auto atom1Dir = getReferenceDirection(
-        dblBond, atom2, atom1, atom2ControllingBond, isControllingAtomFlipped,
-        firstFromAtom1, isFirstFromAtom1Flipped);
+        *dblBond, *atom2, *atom1, *atom2ControllingBond,
+        isControllingAtomFlipped, *firstFromAtom1, isFirstFromAtom1Flipped);
 
     firstFromAtom1->setBondDir(atom1Dir);
 
@@ -453,8 +455,8 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
   ///
   if (atom1->getDegree() == 3 && secondFromAtom1) {
     if (!bondDirCounts[secondFromAtom1->getIdx()]) {
-      setDirectionFromNeighboringBond(firstFromAtom1, isFirstFromAtom1Flipped,
-                                      secondFromAtom1,
+      setDirectionFromNeighboringBond(*firstFromAtom1, isFirstFromAtom1Flipped,
+                                      *secondFromAtom1,
                                       isSecondFromAtom1Flipped);
     }
     bondDirCounts[secondFromAtom1->getIdx()] += 1;
@@ -463,8 +465,8 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
 
   if (atom2->getDegree() == 3 && secondFromAtom2) {
     if (!bondDirCounts[secondFromAtom2->getIdx()]) {
-      setDirectionFromNeighboringBond(firstFromAtom2, isFirstFromAtom2Flipped,
-                                      secondFromAtom2,
+      setDirectionFromNeighboringBond(*firstFromAtom2, isFirstFromAtom2Flipped,
+                                      *secondFromAtom2,
                                       isSecondFromAtom2Flipped);
     }
     bondDirCounts[secondFromAtom2->getIdx()] += 1;
@@ -532,7 +534,7 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
     if (bond->getBondType() != Bond::DOUBLE ||
         bond->getStereo() <= Bond::STEREOANY ||
         bond->getStereoAtoms().size() < 2) {
-      // not a bond that can have stereo nor needs canonicalization
+      // not a bond that can have stereo or that needs canonicalization
       bond->setStereo(Bond::STEREONONE);
       continue;
     }
