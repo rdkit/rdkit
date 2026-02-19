@@ -214,7 +214,6 @@ class TestOsmordred(unittest.TestCase):
       mol = Chem.MolFromSmiles(smi)
       assert mol is not None
       actuals = _descriptor_map(mol)
-      print(list(actuals))
       for name, desired in desireds.items():
         assert name in actuals, f"Missing descriptor {name} for {smi}"
         assert_almost_equal(actuals[name], desired, decimal=2, err_msg=f"{name} of {smi}")
