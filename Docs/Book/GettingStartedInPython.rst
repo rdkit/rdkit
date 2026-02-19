@@ -3666,12 +3666,12 @@ will give results that are unappealing.  For example, the SSSR for
 cubane only contains 5 rings, even though there are
 “obviously” 6. This problem can be fixed by implementing a *small*
 (instead of *smallest*) set of smallest rings algorithm that returns
-symmetric results.  This is the approach that we took with the RDKit.
+symmetric results. This is the approach that we took with the RDKit
+in :py:func:`rdkit.Chem.GetSymmSSSR`.
 
-Because it is sometimes useful to be able to count how many SSSR rings
-are present in the molecule, there is a
-:py:func:`rdkit.Chem.rdmolops.GetSSSR` function, but this only returns the
-SSSR count, not the potentially non-unique set of rings.
+Because it is sometimes useful to know the "true" SSSR rings, there
+is a :py:func:`rdkit.Chem.GetSSSR` function which returns this
+potentially non-unique set of rings.
 
 
 List of Available Descriptors
