@@ -567,7 +567,6 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   if (timedOut || ControlCHandler::getGotSignal()) {
     return fragments;
   }
-
   // Keep unique SMILES only
   std::sort(tmpFrags.begin(), tmpFrags.end(),
             [](const auto &lhs, const auto &rhs) -> bool {

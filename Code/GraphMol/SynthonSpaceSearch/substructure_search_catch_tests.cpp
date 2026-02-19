@@ -891,10 +891,8 @@ TEST_CASE("Github 9007") {
 
     auto res1 = space.substructureSearch(*q1);
     CHECK(res1.getHitMolecules().size() == 2);
-
     auto res2 = space.substructureSearch(*q2);
     CHECK(res2.getHitMolecules().size() == 1);
-
     // Simpler case of just 1 dangling substituent
     auto q6 = "O=c1ncncc1c"_smarts;
     REQUIRE(q6);

@@ -65,20 +65,11 @@ SearchResults SynthonSpaceSearcher::search(ThreadMode threadMode) {
     endTime = &endTimePt;
   }
   bool timedOut = false;
+  std::uint64_t totHits = 0;
   auto fragments = details::splitMolecule(
       d_query, getSpace().getMaxNumSynthons(), d_params.maxNumFragSets, endTime,
       d_params.numThreads, timedOut);
-  if (timedOut || ControlCHandler::getGotSignal()) {
-    return SearchResults{std::move(results), std::move(d_bestHitFound), 0ULL,
-                         timedOut, ControlCHandler::getGotSignal()};
-  }
-  if (!extraSearchSetup(fragments, endTime) ||
-      ControlCHandler::getGotSignal()) {
-    return SearchResults{std::move(results), std::move(d_bestHitFound), 0ULL,
-                         timedOut, true};
-  }
-  std::uint64_t totHits = 0;
-  auto allHits = doTheSearch(fragments, endTime, timedOut, totHits, threadMode);
+  auto allHits = assembleHitSets(endTime, timedOut, totHits, threadMode);
   if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
     buildHits(allHits, endTime, timedOut, results);
   }
@@ -281,17 +272,17 @@ std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
                                       std::uint64_t &totHits,
                                       ThreadMode threadMode) {
+  std::vector<std::unique_ptr<ROMol>> results;
   auto fragments = details::splitMolecule(
       d_query, getNumQueryFragmentsRequired(), d_params.maxNumFragSets, endTime,
       d_params.numThreads, timedOut);
   if (timedOut || ControlCHandler::getGotSignal()) {
     return {};
   }
-  extraSearchSetup(fragments, endTime);
-  if (ControlCHandler::getGotSignal()) {
+  if (!extraSearchSetup(fragments, endTime) ||
+      ControlCHandler::getGotSignal()) {
     return {};
   }
-
   return doTheSearch(fragments, endTime, timedOut, totHits, threadMode);
 }
 
