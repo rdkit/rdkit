@@ -170,7 +170,7 @@ void solveLinearSystem(const ROMol &mol, std::vector<double> &A,
       } else {
         // All solvers failed - this is a true error
         std::string outputSmiles = MolToSmiles(mol);
-        std::cerr
+        BOOST_LOG(rdErrorLog)
             << "ERROR: All LAPACK solvers failed (dposv, dgesv, dgelss): info="
             << info << ", Smiles:" << outputSmiles << "\n";
       }
@@ -218,7 +218,7 @@ static const std::vector<std::shared_ptr<RWMol>> &GetAcidicSmarts() {
       if (mol) {
         res.emplace_back(std::shared_ptr<RWMol>(mol));
       } else {
-        std::cerr << "Invalid SMARTS: " << smarts << std::endl;
+        BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << smarts << std::endl;
       }
     }
     return res;
@@ -241,7 +241,7 @@ static const std::vector<std::shared_ptr<RWMol>> &GetBasicSmarts() {
       if (mol) {
         res.emplace_back(std::shared_ptr<RWMol>(mol));
       } else {
-        std::cerr << "Invalid SMARTS: " << smarts << std::endl;
+        BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << smarts << std::endl;
       }
     }
     return res;
@@ -280,7 +280,7 @@ static const std::vector<std::shared_ptr<RWMol>> &GetAlcoholSmarts() {
       if (mol) {
         res.emplace_back(std::shared_ptr<RWMol>(mol));
       } else {
-        std::cerr << "Invalid SMARTS: " << smarts << std::endl;
+        BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << smarts << std::endl;
       }
     }
     return res;
@@ -317,7 +317,7 @@ static const std::vector<std::shared_ptr<RWMol>> &GetSmarts() {
       if (mol) {
         res.emplace_back(std::shared_ptr<RWMol>(mol));
       } else {
-        std::cerr << "Invalid SMARTS: " << smarts << std::endl;
+        BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << smarts << std::endl;
       }
     }
     return res;
@@ -1600,7 +1600,7 @@ GetSmartsLogs() {
           if (mol) {
             res.emplace_back(std::shared_ptr<RWMol>(mol), pair.second);
           } else {
-            std::cerr << "Invalid SMARTS: " << pair.first << std::endl;
+            BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << pair.first << std::endl;
           }
         }
         return res;
@@ -1739,7 +1739,7 @@ static const std::vector<std::shared_ptr<RWMol>> &GetCompiledPolFrags() {
       if (mol) {
         res.emplace_back(std::shared_ptr<RWMol>(mol));
       } else {
-        std::cerr << "Invalid SMARTS: " << smarts << std::endl;
+        BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << smarts << std::endl;
         res.emplace_back(nullptr);  // Placeholder for invalid SMARTS
       }
     }

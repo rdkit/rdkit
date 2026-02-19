@@ -845,7 +845,7 @@ GetHsQueries() {
           if (mol) {
             addToQueries(queries, entry.first, std::shared_ptr<RWMol>(mol));
           } else {
-            std::cerr << "Invalid SMARTS: " << entry.second << std::endl;
+            BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << entry.second << std::endl;
           }
         }
         return queries;
@@ -864,7 +864,7 @@ GetesQueries() {
           if (mol) {
             addToQueries(queries, entry.first, std::shared_ptr<RWMol>(mol));
           } else {
-            std::cerr << "Invalid SMARTS: " << entry.second << std::endl;
+            BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << entry.second << std::endl;
           }
         }
         return queries;
@@ -883,7 +883,7 @@ GetesExtQueries() {
           if (mol) {
             addToQueries(queries, entry.first, std::shared_ptr<RWMol>(mol));
           } else {
-            std::cerr << "Invalid SMARTS: " << entry.second << std::endl;
+            BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << entry.second << std::endl;
           }
         }
         return queries;
@@ -2502,7 +2502,7 @@ std::vector<double> calcBEStateDescs(const ROMol &mol) {
         minBES[posidx] = std::min(minBES[posidx], minBES_i[i]);
         maxBES[posidx] = std::max(maxBES[posidx], maxBES_i[i]);
       } else {
-        std::cerr << "Out-of-bounds access detected for posIdx: " << posidx
+        BOOST_LOG(rdWarningLog) << "Out-of-bounds access detected for posIdx: " << posidx
                   << " : " << sumsBES.size() << "\n";
       }
 
@@ -2683,7 +2683,7 @@ static const std::vector<std::shared_ptr<RWMol>> &GetQueriesA() {
       if (mol) {
         res.emplace_back(std::move(mol));
       } else {
-        std::cerr << "Invalid SMARTS: " << smi << std::endl;
+        BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << smi << std::endl;
       }
     }
     return res;
@@ -2699,7 +2699,7 @@ static const std::vector<std::shared_ptr<RWMol>> &GetQueriesB() {
       if (mol) {
         res.emplace_back(std::move(mol));
       } else {
-        std::cerr << "Invalid SMARTS: " << smi << std::endl;
+        BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << smi << std::endl;
       }
     }
     return res;
@@ -2821,7 +2821,7 @@ std::vector<double> calcAbrahams(const ROMol &mol) {
     }
 
   } catch (const std::exception &e) {
-    std::cerr << "Error in SMARTS matching: " << e.what() << std::endl;
+    BOOST_LOG(rdWarningLog) << "Error in SMARTS matching: " << e.what() << std::endl;
     throw std::runtime_error("Error in SMARTSQueryTool");
   }
 
@@ -2930,7 +2930,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
   int nAtoms = rdcast<int>(mol.getNumAtoms());
 
   if (nAtoms == 0) {
-    std::cerr << "Error: Molecule has no atoms." << std::endl;
+    BOOST_LOG(rdWarningLog) << "Error: Molecule has no atoms." << std::endl;
     return {};
   }
 
@@ -2939,27 +2939,27 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
   bool debug = false;  // (smi=="FP(F)F" || smi=="BrBr");
 
   if (debug) {
-    std::cerr << "Debugging enabled for molecule: " << smi
+    BOOST_LOG(rdWarningLog) << "Debugging enabled for molecule: " << smi
               << "n & NumAtoms: " << nAtoms << std::endl;
   }
 
   auto [M, SP] = initializeMatrixAndSP(nAtoms, maxRadius);
 
   if (debug) {
-    std::cerr << "Initial M matrix:\n";
+    BOOST_LOG(rdDebugLog) << "Initial M matrix:\n";
     for (const auto &row : M) {
       for (int val : row) {
-        std::cerr << val << " ";
+        BOOST_LOG(rdWarningLog) << val << " ";
       }
-      std::cerr << "\n";
+      BOOST_LOG(rdWarningLog) << "\n";
     }
 
-    std::cerr << "Initial SP matrix:\n";
+    BOOST_LOG(rdDebugLog) << "Initial SP matrix:\n";
     for (const auto &row : SP) {
       for (int val : row) {
-        std::cerr << val << " ";
+        BOOST_LOG(rdDebugLog) << val << " ";
       }
-      std::cerr << "\n";
+      BOOST_LOG(rdDebugLog) << "\n";
     }
   }
 
@@ -2983,7 +2983,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
     CN[0][0].push_back(static_cast<int>(cluster.size()));  // Cluster size
     int atomIdx = cluster.back();
     if (atomIdx < 0 || atomIdx >= nAtoms) {
-      std::cerr << "Error: Invalid atom index: " << atomIdx << std::endl;
+      BOOST_LOG(rdWarningLog) << "Error: Invalid atom index: " << atomIdx << std::endl;
       continue;
     }
     CN[0][1].push_back(
@@ -2991,20 +2991,20 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
   }
 
   if (debug) {
-    std::cerr << "\nM matrix before radius 1:\n";
+    BOOST_LOG(rdDebugLog) << "\nM matrix before radius 1:\n";
     for (const auto &row : M) {
       for (int val : row) {
-        std::cerr << val << " ";
+        BOOST_LOG(rdDebugLog) << val << " ";
       }
-      std::cerr << "\n";
+      BOOST_LOG(rdDebugLog) << "\n";
     }
 
-    std::cerr << "\nSP matrix before radius 1:\n";
+    BOOST_LOG(rdDebugLog) << "\nSP matrix before radius 1:\n";
     for (const auto &row : SP) {
       for (int val : row) {
-        std::cerr << val << " ";
+        BOOST_LOG(rdDebugLog) << val << " ";
       }
-      std::cerr << "\n";
+      BOOST_LOG(rdDebugLog) << "\n";
     }
   }
 
@@ -3035,7 +3035,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
         std::vector<int> neighbors;
 
         if (debug) {
-          std::cerr << "Radius " << r << ", Atom " << atomIdx
+          BOOST_LOG(rdDebugLog) << "Radius " << r << ", Atom " << atomIdx
                     << " .Symbol: " << mol.getAtomWithIdx(atomIdx)->getSymbol()
                     << ", Start " << start << ", Stop " << stop << std::endl;
         }
@@ -3116,20 +3116,20 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
     clusters = newClusters;
 
     if (debug) {
-      std::cerr << "M Matrix after radius " << r << ":\n";
+      BOOST_LOG(rdDebugLog) << "M Matrix after radius " << r << ":\n";
       for (const auto &row : M) {
         for (int val : row) {
-          std::cerr << val << " ";
+          BOOST_LOG(rdDebugLog) << val << " ";
         }
-        std::cerr << std::endl;
+        BOOST_LOG(rdDebugLog) << std::endl;
       }
 
-      std::cerr << "SP Matrix after radius " << r << ":\n";
+      BOOST_LOG(rdDebugLog) << "SP Matrix after radius " << r << ":\n";
       for (const auto &row : SP) {
         for (int val : row) {
-          std::cerr << val << " ";
+          BOOST_LOG(rdDebugLog) << val << " ";
         }
-        std::cerr << std::endl;
+        BOOST_LOG(rdDebugLog) << std::endl;
       }
     }
 
@@ -3154,7 +3154,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
     if (stopExpansion || std::all_of(clusters.begin(), clusters.end(),
                                      [](auto &c) { return c.size() == 1; })) {
       if (debug) {
-        std::cerr << "Stopping expansion at radius " << r << " - Reason: "
+        BOOST_LOG(rdDebugLog) << "Stopping expansion at radius " << r << " - Reason: "
                   << (stopExpansion ? "No new neighbors"
                                     : "All clusters are singletons")
                   << std::endl;
@@ -3174,13 +3174,13 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
   }
 
   if (debug) {
-    std::cerr << "Final CN values for " << smi << ":\n";
+    BOOST_LOG(rdDebugLog) << "Final CN values for " << smi << ":\n";
     for (const auto &[r, values] : CN) {
-      std::cerr << "Radius " << r << ": ";
+      BOOST_LOG(rdDebugLog) << "Radius " << r << ": ";
       for (const auto &val : values[0]) {
-        std::cerr << val << " ";
+        BOOST_LOG(rdDebugLog) << val << " ";
       }
-      std::cerr << std::endl;
+      BOOST_LOG(rdDebugLog) << std::endl;
     }
   }
 
@@ -3239,7 +3239,7 @@ std::vector<double> calcInformationContent(const ROMol &mol, int maxradius) {
   int nAtoms = hmol->getNumAtoms();
 
   if (nAtoms == 0) {
-    std::cerr << "Error: Molecule has no atoms after adding hydrogens."
+    BOOST_LOG(rdWarningLog) << "Error: Molecule has no atoms after adding hydrogens."
               << std::endl;
     return {};
   }
@@ -3255,7 +3255,7 @@ std::vector<double> calcInformationContent(const ROMol &mol, int maxradius) {
   auto CN = computePipeline(*hmol, maxradius);
 
   if (CN.empty()) {
-    std::cerr << "Error: ComputePipeline returned empty CN." << std::endl;
+    BOOST_LOG(rdWarningLog) << "Error: ComputePipeline returned empty CN." << std::endl;
     return {};
   }
 
@@ -3273,7 +3273,7 @@ std::vector<double> calcInformationContent_(const ROMol &mol) {
 
     int nAtoms = hmol->getNumAtoms();
     if (nAtoms == 0) {
-      std::cerr << "Error: Molecule has no atoms after adding hydrogens."
+      BOOST_LOG(rdWarningLog) << "Error: Molecule has no atoms after adding hydrogens."
                 << std::endl;
       delete hmol;  // Clean up memory
       return {};
@@ -3290,7 +3290,7 @@ std::vector<double> calcInformationContent_(const ROMol &mol) {
 
     auto CN = computePipeline(*hmol, maxradius);
     if (CN.empty()) {
-      std::cerr << "Error: ComputePipeline returned empty CN." << std::endl;
+      BOOST_LOG(rdWarningLog) << "Error: ComputePipeline returned empty CN." << std::endl;
       delete hmol;  // Clean up memory
       return {};
     }
@@ -3303,7 +3303,7 @@ std::vector<double> calcInformationContent_(const ROMol &mol) {
     return icvalues;
 
   } catch (const std::exception &e) {
-    std::cerr << "Error: " << e.what() << std::endl;
+    BOOST_LOG(rdWarningLog) << "Error: " << e.what() << std::endl;
     delete hmol;  // Clean up memory
     return {};
   }
@@ -4709,7 +4709,7 @@ static const std::vector<std::shared_ptr<RWMol>> GetQueriesFrags() {
       if (mol) {
         res.emplace_back(std::move(mol));
       } else {
-        std::cerr << "Invalid SMARTS: " << smi << std::endl;
+        BOOST_LOG(rdWarningLog) << "Invalid SMARTS: " << smi << std::endl;
       }
     }
     return res;
@@ -4730,7 +4730,7 @@ std::vector<double> calcFrags(const ROMol &mol) {
     }
 
   } catch (const std::exception &e) {
-    std::cerr << "Error in SMARTS matching: " << e.what() << std::endl;
+    BOOST_LOG(rdWarningLog) << "Error in SMARTS matching: " << e.what() << std::endl;
     throw std::runtime_error("Error in SMARTSQueryTool");
   }
 
