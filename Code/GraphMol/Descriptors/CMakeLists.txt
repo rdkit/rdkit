@@ -13,7 +13,12 @@ if(RDK_BUILD_OSMORDRED)
  if(NOT LAPACKE_FOUND)
    message(fatal_error "-- LAPACKE not found")
  endif(NOT LAPACKE_FOUND)
- 
+
+ set(OSMORDRED_SOURCES OsmordredHelpers.cpp
+              OsmordredBasicPhyschemCountsRules.cpp
+ 	      OsmordredTopologicalConnectivityShape.cpp
+	      OsmordredMatrixAutocorrEStateFragments.cpp)
+
  include_directories(Descriptors LAPACK::LAPACK ${LAPACK_INCLUDE_DIRS})
 endif(RDK_BUILD_OSMORDRED)
 
@@ -26,7 +31,7 @@ rdkit_library(Descriptors
               USRDescriptor.cpp AtomFeat.cpp
               OxidationNumbers.cpp
               DCLV.cpp
-	      Osmordred.cpp
+	      ${OSMORDRED_SOURCES}
               ${DESC3D_SOURCES}
               LINK_LIBRARIES DataStructs Fingerprints PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
                  EigenSolvers RDGeneral)
