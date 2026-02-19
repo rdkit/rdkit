@@ -94,6 +94,11 @@ constexpr double radius_color =
 ShapeInput::ShapeInput(const ROMol &mol, int confId,
                        const ShapeInputOptions &opts,
                        const ShapeOverlayOptions &overlayOpts) {
+  PRECONDITION(
+  mol.getNumConformers() > 0,
+  "ShapeInput object needs the molecule to have conformers.  " +
+      mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
+
   if (opts.allCarbonRadii && !opts.atomRadii.empty()) {
     BOOST_LOG(rdWarningLog)
         << "Specifying allCarbonRadii and providing custom atom radii doesn't"
