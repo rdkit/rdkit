@@ -151,14 +151,12 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
     return d_carbonRadii;
   }
   const std::array<double, 9> &getCanonicalRotation() const {
-    return *d_canonRot;
+    return d_canonRot;
   }
   const std::array<double, 3> &getCanonicalTranslation() const {
-    return *d_centroid;
+    return d_centroid;
   }
-  const std::unique_ptr<std::array<double, 3>> &getEigenValues() const {
-    return d_eigenValues;
-  }
+  const std::array<double, 3> &getEigenValues() const { return d_eigenValues; }
   const std::array<size_t, 6> &getExtremes() const { return d_extremePoints; }
 
   // Align the principal axes to the cartesian axes and centre on the origin.
@@ -221,10 +219,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // shape with cartesian axes.  If d_normalized is true, it has been applied
   // to the coordinates.
   bool d_normalized{false};
-  std::unique_ptr<std::array<double, 9>> d_canonRot;
-  std::unique_ptr<std::array<double, 3>> d_centroid;
+  std::array<double, 9> d_canonRot;
+  std::array<double, 3> d_centroid;
   // The sorted eigenvalues of the principal axes.
-  std::unique_ptr<std::array<double, 3>> d_eigenValues;
+  std::array<double, 3> d_eigenValues;
 };
 
 // Calculate the mean position of the given atoms.

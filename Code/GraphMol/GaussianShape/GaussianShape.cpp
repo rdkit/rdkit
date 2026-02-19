@@ -248,8 +248,8 @@ unsigned int calculateQrat(const std::array<double, 3> &eigenValues) {
 
 StartMode decideStartModeFromEigenValues(const ShapeInput &refShape,
                                          const ShapeInput &fitShape) {
-  auto rqrat = calculateQrat(*refShape.getEigenValues());
-  auto fqrat = calculateQrat(*fitShape.getEigenValues());
+  auto rqrat = calculateQrat(refShape.getEigenValues());
+  auto fqrat = calculateQrat(fitShape.getEigenValues());
   if (rqrat > 0 || fqrat > 0) {
     return StartMode::ROTATE_45;
   }
