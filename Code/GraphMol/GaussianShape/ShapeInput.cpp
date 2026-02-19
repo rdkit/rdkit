@@ -94,6 +94,10 @@ constexpr double radius_color =
 ShapeInput::ShapeInput(const ROMol &mol, int confId,
                        const ShapeInputOptions &opts,
                        const ShapeOverlayOptions &overlayOpts) {
+  PRECONDITION(mol.getNumConformers() > 0,
+               "ShapeInput object needs the molecule to have conformers.  " +
+                   mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
+
   if (opts.allCarbonRadii && !opts.atomRadii.empty()) {
     BOOST_LOG(rdWarningLog)
         << "Specifying allCarbonRadii and providing custom atom radii doesn't"
@@ -160,6 +164,19 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   return *this;
 }
 
+void ShapeInput::setCoords(const std::vector<double> &coords) {
+  if (coords.size() != d_coords.size()) {
+    throw std::runtime_error("coords vector size mismatch");
+  }
+  d_coords = coords;
+}
+
+void ShapeInput::setTypes(const std::vector<int> &types) {
+  if (types.size() != d_types.size()) {
+    throw std::runtime_error("types vector size mismatch");
+  }
+  d_types = types;
+}
 void ShapeInput::normalizeCoords() {
   // For consistency, create a dummy molecule and use the same code
   // as for shapes created from a molecule.

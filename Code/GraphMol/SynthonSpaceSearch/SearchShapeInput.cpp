@@ -8,12 +8,17 @@
 //  of the RDKit source tree.
 //
 
+#include <GraphMol/ROMol.h>
+#include <GraphMol/RWMol.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
+#include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SearchShapeInput.h>
 #include <SimDivPickers/LeaderPicker.h>
 
-SearchShapeInput::SearchShapeInput(const std::string &str) {
+namespace RDKit {
+namespace GaussianShape {
+SearchShapeInput::SearchShapeInput(const std::string &str) : ShapeInput(str) {
 #ifndef RDK_USE_BOOST_SERIALIZATION
   PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
@@ -23,98 +28,133 @@ SearchShapeInput::SearchShapeInput(const std::string &str) {
 #endif
 }
 
-SearchShapeInput::SearchShapeInput(const ShapeInput &other)
-    : ShapeInput(other) {
-  confCoords = std::vector<std::vector<float>>(1, coord);
-  // We don't actually know what conformer it came from
-  molConfs = std::vector<unsigned int>(1, 0);
-  // Keep the dummyVols in synch with the other data, but
-  // clearly flag it as not calculated.
-  dummyVols = std::vector<double>(1, -1);
-  sovs = std::vector<double>(1, sov);
-  sofs = std::vector<double>(1, sof);
-  shifts = std::vector<std::vector<double>>(1, shift);
+SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
+                                   const ShapeInputOptions &opts,
+                                   const ShapeOverlayOptions &overlayOpts)
+    : ShapeInput(mol, 0, opts, overlayOpts) {
+  // The ShapeInput c'tor puts a PRECONDITION on conformers being available.
+  initializeFromBase();
+
+  // build the shapes for conformations 1 onwards.
+  d_confCoords.reserve(mol.getNumConformers());
+  d_molConfs.reserve(mol.getNumConformers());
+  d_dummyVols.reserve(mol.getNumConformers());
+  d_shapeVolumes.reserve(mol.getNumConformers());
+  d_colorVolumes.reserve(mol.getNumConformers());
+  d_extremePointss.reserve(mol.getNumConformers());
+  d_canonRots.reserve(mol.getNumConformers());
+  d_centroids.reserve(mol.getNumConformers());
+  d_eigenValuess.reserve(mol.getNumConformers());
+  for (unsigned int cn = 0; cn < mol.getNumConformers(); ++cn) {
+    auto shape = ShapeInput(mol, cn, opts, overlayOpts);
+    const auto &cdsAndRads = shape.getCoords();
+    std::vector<double> cdsCoords(3 * (getNumAtoms() + getNumShapes()));
+    for (unsigned int i = 0; i < getNumAtoms() + getNumShapes(); ++i) {
+      cdsCoords[3 * i] = cdsAndRads[4 * i];
+      cdsCoords[3 * i + 1] = cdsAndRads[4 * i + 1];
+      cdsCoords[3 * i + 1] = cdsAndRads[4 * i + 1];
+    }
+    d_confCoords.emplace_back(std::move(cdsCoords));
+    d_molConfs.push_back(cn);
+    d_dummyVols.push_back(-1);
+    d_shapeVolumes.push_back(shape.getShapeVolume());
+    d_colorVolumes.push_back(shape.getColorVolume());
+    d_extremePointss.push_back(shape.getExtremes());
+    d_canonRots.push_back(shape.getCanonicalRotation());
+    d_centroids.push_back(shape.getCanonicalTranslation());
+    d_eigenValuess.push_back(shape.getEigenValues());
+  }
+  pruneShapes(pruneThreshold);
+  sortShapesByScore();
+}
+
+SearchShapeInput::SearchShapeInput(const ShapeInput &si) : ShapeInput(si) {
+  initializeFromBase();
 }
 
 void SearchShapeInput::merge(SearchShapeInput &other) {
-  if (!confCoords.empty() &&
-      confCoords.front().size() != other.confCoords.front().size()) {
+  if (!d_confCoords.empty() &&
+      d_confCoords.front().size() != other.d_confCoords.front().size()) {
     BOOST_LOG(rdWarningLog) << "Can't merge shapes as different sizes.\n";
     return;
   }
-  if (confCoords.empty()) {
-    coord = other.coord;
-    alpha_vector = other.alpha_vector;
-    atom_type_vector = other.atom_type_vector;
-    volumeAtomIndexVector = other.volumeAtomIndexVector;
-    colorAtomType2IndexVectorMap = other.colorAtomType2IndexVectorMap;
-    shift = other.shift;
-    sov = other.sov;
-    sof = other.sof;
-    numDummies = other.numDummies;
-    dummyVol = other.dummyVol;
-    actConf = other.actConf;
-    confCoords = std::move(other.confCoords);
-    molConfs = std::move(other.molConfs);
-    dummyVols = std::move(other.dummyVols);
-    sovs = std::move(other.sovs);
-    sofs = std::move(other.sofs);
-    shifts = std::move(other.shifts);
-  } else {
-    confCoords.reserve(confCoords.size() + other.confCoords.size());
-    confCoords.insert(confCoords.end(),
-                      std::make_move_iterator(other.confCoords.begin()),
-                      std::make_move_iterator(other.confCoords.end()));
-    molConfs.reserve(molConfs.size() + other.molConfs.size());
-    molConfs.insert(molConfs.end(),
-                    std::make_move_iterator(other.molConfs.begin()),
-                    std::make_move_iterator(other.molConfs.end()));
-    dummyVols.reserve(dummyVols.size() + other.dummyVols.size());
-    dummyVols.insert(dummyVols.end(),
-                     std::make_move_iterator(other.dummyVols.begin()),
-                     std::make_move_iterator(other.dummyVols.end()));
-    sovs.reserve(sovs.size() + other.sovs.size());
-    sovs.insert(sovs.end(), std::make_move_iterator(other.sovs.begin()),
-                std::make_move_iterator(other.sovs.end()));
-    sofs.reserve(sofs.size() + other.sofs.size());
-    sofs.insert(sofs.end(), std::make_move_iterator(other.sofs.begin()),
-                std::make_move_iterator(other.sofs.end()));
-    shifts.reserve(shifts.size() + other.shifts.size());
-    shifts.insert(shifts.end(), std::make_move_iterator(other.shifts.begin()),
-                  std::make_move_iterator(other.shifts.end()));
+  if (other.d_confCoords.empty()) {
+    return;
   }
-  other.confCoords.clear();
-  other.molConfs.clear();
-  other.dummyVols.clear();
-  other.sovs.clear();
-  other.sofs.clear();
-  other.shifts.clear();
+  d_confCoords.reserve(d_confCoords.size() + other.d_confCoords.size());
+  d_confCoords.insert(d_confCoords.end(),
+                      std::make_move_iterator(other.d_confCoords.begin()),
+                      std::make_move_iterator(other.d_confCoords.end()));
+  d_molConfs.reserve(d_molConfs.size() + other.d_molConfs.size());
+  d_molConfs.insert(d_molConfs.end(),
+                    std::make_move_iterator(other.d_molConfs.begin()),
+                    std::make_move_iterator(other.d_molConfs.end()));
+  d_dummyVols.reserve(d_dummyVols.size() + other.d_dummyVols.size());
+  d_dummyVols.insert(d_dummyVols.end(),
+                     std::make_move_iterator(other.d_dummyVols.begin()),
+                     std::make_move_iterator(other.d_dummyVols.end()));
+  d_shapeVolumes.reserve(d_shapeVolumes.size() + other.d_shapeVolumes.size());
+  d_shapeVolumes.insert(d_shapeVolumes.end(),
+                        std::make_move_iterator(other.d_shapeVolumes.begin()),
+                        std::make_move_iterator(other.d_shapeVolumes.end()));
+  d_colorVolumes.reserve(d_colorVolumes.size() + other.d_colorVolumes.size());
+  d_colorVolumes.insert(d_colorVolumes.end(),
+                        std::make_move_iterator(other.d_colorVolumes.begin()),
+                        std::make_move_iterator(other.d_colorVolumes.end()));
+  d_extremePointss.reserve(d_extremePointss.size() +
+                           other.d_extremePointss.size());
+  d_extremePointss.insert(
+      d_extremePointss.end(),
+      std::make_move_iterator(other.d_extremePointss.begin()),
+      std::make_move_iterator(other.d_extremePointss.end()));
+  d_canonRots.reserve(d_canonRots.size() + other.d_canonRots.size());
+  d_canonRots.insert(d_canonRots.end(),
+                     std::make_move_iterator(other.d_canonRots.begin()),
+                     std::make_move_iterator(other.d_canonRots.end()));
+  d_centroids.reserve(d_centroids.size() + other.d_centroids.size());
+  d_centroids.insert(d_centroids.end(),
+                     std::make_move_iterator(other.d_centroids.begin()),
+                     std::make_move_iterator(other.d_centroids.end()));
+  d_eigenValuess.reserve(d_eigenValuess.size() + other.d_eigenValuess.size());
+  d_eigenValuess.insert(d_eigenValuess.end(),
+                        std::make_move_iterator(other.d_eigenValuess.begin()),
+                        std::make_move_iterator(other.d_eigenValuess.end()));
+
+  other.d_confCoords.clear();
+  other.d_molConfs.clear();
+  other.d_dummyVols.clear();
+  other.d_shapeVolumes.clear();
+  other.d_colorVolumes.clear();
+  other.d_extremePointss.clear();
+  other.d_canonRots.clear();
+  other.d_centroids.clear();
+  other.d_eigenValuess.clear();
 }
 
 ShapeInput SearchShapeInput::makeSingleShape(unsigned int shapeNum) const {
-  if (shapeNum >= confCoords.size()) {
+  if (shapeNum >= d_confCoords.size()) {
     shapeNum = 0;
   }
-  ShapeInput shape;
-  shape.coord = confCoords[shapeNum];
-  shape.alpha_vector = alpha_vector;
-  shape.atom_type_vector = atom_type_vector;
-  shape.volumeAtomIndexVector = volumeAtomIndexVector;
-  shape.colorAtomType2IndexVectorMap = colorAtomType2IndexVectorMap;
-  shape.shift = shifts[shapeNum];
-  shape.sov = sov;
-  shape.sof = sof;
+  SearchShapeInput cp(*this);
+  cp.setActiveShape(shapeNum);
+  auto baseString = cp.ShapeInput::toString();
+  ShapeInput shape(baseString);
   return shape;
 }
 
 void SearchShapeInput::setActiveShape(unsigned int shapeNum) {
-  PRECONDITION(shapeNum < confCoords.size(), "confNum is out of bounds");
-  actConf = shapeNum;
-  coord = confCoords[shapeNum];
-  dummyVol = dummyVols[shapeNum];
-  sov = sovs[shapeNum];
-  sof = sofs[shapeNum];
-  shift = shifts[shapeNum];
+  PRECONDITION(shapeNum < d_confCoords.size(), "confNum is out of bounds");
+  d_actConf = shapeNum;
+  std::vector<double> coords(getCoords().size());
+  confCoordsToShapeCoords(d_actConf, coords);
+  setCoords(coords);
+  d_dummyVol = d_dummyVols[shapeNum];
+  setShapeVolume(d_shapeVolumes[shapeNum]);
+  setColorVolume(d_colorVolumes[shapeNum]);
+  setExtremes(d_extremePointss[shapeNum]);
+  setCanonicalRotation(d_canonRots[shapeNum]);
+  setCanonicalTranslation(d_centroids[shapeNum]);
+  setEigenValues(d_eigenValuess[shapeNum]);
 }
 
 std::string SearchShapeInput::toString() const {
@@ -128,24 +168,8 @@ std::string SearchShapeInput::toString() const {
 #endif
 }
 
-#ifdef RDK_USE_BOOST_SERIALIZATION
-template <class Archive>
-void SearchShapeInput::serialize(Archive &ar, const unsigned int) {
-  ar &boost::serialization::base_object<ShapeInput>(*this);
-  ar & numDummies;
-  ar & dummyVol;
-  ar & actConf;
-  ar & confCoords;
-  ar & molConfs;
-  ar & dummyVols;
-  ar & sovs;
-  ar & sofs;
-  ar & shifts;
-}
-#endif
-
-void pruneShapes(SearchShapeInput &shapes, double simThreshold) {
-  if (shapes.confCoords.size() < 2) {
+void SearchShapeInput::pruneShapes(double simThreshold) {
+  if (d_confCoords.size() < 2) {
     return;
   }
   class DistFunctor {
@@ -157,10 +181,10 @@ void pruneShapes(SearchShapeInput &shapes, double simThreshold) {
     }
     ~DistFunctor() = default;
     double operator()(unsigned int i, unsigned int j) {
-      d_shapei.coord = d_shapes.confCoords[i];
-      d_shapej.coord = d_shapes.confCoords[j];
-      auto [st, ct] = AlignShape(d_shapei, d_shapej, d_matrix);
-      double res = 2.0 - (st + ct);
+      d_shapei.setCoords(d_shapes.d_confCoords[i]);
+      d_shapej.setCoords(d_shapes.d_confCoords[j]);
+      auto scores = GaussianShape::AlignShape(d_shapei, d_shapej);
+      double res = scores[0];
       return res;
     }
     const SearchShapeInput &d_shapes;
@@ -168,131 +192,43 @@ void pruneShapes(SearchShapeInput &shapes, double simThreshold) {
     std::vector<float> d_matrix;
   };
   RDPickers::LeaderPicker leaderPicker;
-  DistFunctor distFunctor(shapes);
-  auto picks = leaderPicker.lazyPick(distFunctor, shapes.confCoords.size(), 0,
+  DistFunctor distFunctor(*this);
+  auto picks = leaderPicker.lazyPick(distFunctor, d_confCoords.size(), 0,
                                      2.0 - simThreshold);
   // Allow for mysterious LeaderPicker behaviour where it returns a full vector
   // of 0s when it should only pick 1 shape.
-  if (picks.size() == shapes.confCoords.size()) {
+  if (picks.size() == d_confCoords.size()) {
     std::ranges::sort(picks);
     auto [first, last] = std::ranges::unique(picks);
     picks.erase(first, last);
   }
-  std::vector<std::vector<float>> newCoords;
-  newCoords.reserve(picks.size());
-  std::vector<unsigned int> newMolConfs;
-  newMolConfs.reserve(picks.size());
-  std::vector<double> newDummyVols;
-  newDummyVols.reserve(picks.size());
-  std::vector<double> newSovs;
-  newSovs.reserve(picks.size());
-  std::vector<double> newSofs;
-  newSofs.reserve(picks.size());
-  std::vector<std::vector<double>> newShifts;
-  newShifts.reserve(picks.size());
-  for (auto p : picks) {
-    newCoords.push_back(std::move(shapes.confCoords[p]));
-    newMolConfs.push_back(shapes.molConfs[p]);
-    newDummyVols.push_back(shapes.dummyVols[p]);
-    newSovs.push_back(shapes.sovs[p]);
-    newSofs.push_back(shapes.sofs[p]);
-    newShifts.push_back(shapes.shifts[p]);
-  }
-  shapes.confCoords = std::move(newCoords);
-  shapes.molConfs = std::move(newMolConfs);
-  shapes.dummyVols = std::move(newDummyVols);
-  shapes.sovs = std::move(newSovs);
-  shapes.sofs = std::move(newSofs);
-  shapes.shifts = std::move(newShifts);
+  selectConformations(picks);
 }
 
-namespace {
-// Sort the shapes in descending order of sov + sof;
-void sortShapes(SearchShapeInput &shapes) {
+void SearchShapeInput::sortShapesByScore() {
   std::vector<std::pair<double, size_t>> vals;
-  vals.reserve(shapes.confCoords.size());
-  for (size_t i = 0; i < shapes.confCoords.size(); i++) {
-    vals.push_back(std::make_pair(shapes.sofs[i] + shapes.sovs[i], i));
+  vals.reserve(d_confCoords.size());
+  for (size_t i = 0; i < d_confCoords.size(); i++) {
+    vals.push_back(std::make_pair(d_shapeVolumes[i] + d_colorVolumes[i], i));
   }
   std::ranges::sort(vals,
                     [](const std::pair<double, size_t> &a,
                        const std::pair<double, size_t> &b) -> bool {
                       return a.first > b.first;
                     });
-  std::vector<std::vector<float>> newCoords;
-  newCoords.reserve(vals.size());
-  std::vector<unsigned int> newMolConfs;
-  newMolConfs.reserve(vals.size());
-  std::vector<double> newDummyVols;
-  newDummyVols.reserve(vals.size());
-  std::vector<double> newSovs;
-  newSovs.reserve(vals.size());
-  std::vector<double> newSofs;
-  newSofs.reserve(vals.size());
-  std::vector<std::vector<double>> newShifts;
-  newShifts.reserve(vals.size());
-  for (auto v : vals) {
-    newCoords.push_back(std::move(shapes.confCoords[v.second]));
-    newMolConfs.push_back(shapes.molConfs[v.second]);
-    newDummyVols.push_back(shapes.dummyVols[v.second]);
-    newSovs.push_back(shapes.sovs[v.second]);
-    newSofs.push_back(shapes.sofs[v.second]);
-    newShifts.push_back(shapes.shifts[v.second]);
-  }
-  shapes.confCoords = std::move(newCoords);
-  shapes.molConfs = std::move(newMolConfs);
-  shapes.dummyVols = std::move(newDummyVols);
-  shapes.sovs = std::move(newSovs);
-  shapes.sofs = std::move(newSofs);
-  shapes.shifts = std::move(newShifts);
-}
-}  // namespace
 
-std::unique_ptr<SearchShapeInput> PrepareConformers(
-    const RDKit::ROMol &mol, const ShapeInputOptions &shapeOpts,
-    double pruneThreshold) {
-  PRECONDITION(
-      mol.getNumConformers() > 0,
-      "SearchShapeInput object needs the molecule to have conformers.  " +
-          mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
-  auto first = PrepareConformer(mol, 0, shapeOpts);
-  auto result = std::make_unique<SearchShapeInput>(first);
-
-  result->numDummies = shapeOpts.atomRadii.size();
-  result->confCoords.reserve(mol.getNumConformers());
-  result->molConfs.reserve(mol.getNumConformers());
-  result->dummyVols.reserve(mol.getNumConformers());
-  result->sovs.reserve(mol.getNumConformers());
-  result->sofs.reserve(mol.getNumConformers());
-  result->shifts.reserve(mol.getNumConformers());
-
-  ShapeInputOptions noDummyOpts(shapeOpts);
-  noDummyOpts.includeDummies = false;
-  noDummyOpts.atomRadii.clear();
-  auto otherFirst = PrepareConformer(mol, 0, noDummyOpts);
-  // A value of -1.0 will have been placed in dummyVols[0] as a placekeeper.
-  result->dummyVols[0] = first.sov - otherFirst.sov;
-
-  for (unsigned int i = 1; i < mol.getNumConformers(); i++) {
-    auto shape = PrepareConformer(mol, i, shapeOpts);
-    result->confCoords.push_back(shape.coord);
-    result->molConfs.push_back(i);
-    result->sovs.push_back(shape.sov);
-    result->sofs.push_back(shape.sof);
-    auto otherShape = PrepareConformer(mol, i, noDummyOpts);
-    result->dummyVols.push_back(shape.sov - otherShape.sov);
-    result->shifts.push_back(shape.shift);
-  }
-  pruneShapes(*result, pruneThreshold);
-  sortShapes(*result);
-  return result;
+  std::vector<int> picks(vals.size());
+  std::ranges::transform(vals, begin(picks),
+                         [](const std::pair<double, size_t> &a) -> int {
+                           return static_cast<int>(a.second);
+                         });
+  selectConformations(picks);
 }
 
-std::pair<double, double> bestSimilarity(
-    SearchShapeInput &refShape, SearchShapeInput &fitShape,
-    std::vector<float> &matrix, unsigned int &bestRefConf,
-    unsigned int &bestFitConf, double threshold, double opt_param,
-    unsigned int max_preiters, unsigned int max_postiters) {
+double SearchShapeInput::bestSimilarity(
+    SearchShapeInput &fitShape, RDGeom::Transform3D &xform,
+    unsigned int &bestRefConf, unsigned int &bestFitConf, double threshold,
+    const ShapeOverlayOptions &overlayOpts) {
   // The best score achievable is when the smaller volume is entirely inside
   // the larger volume.  The Shape tanimoto is the fraction of volume in
   // common.  The scores for the different conformations are sorted in
@@ -303,65 +239,150 @@ std::pair<double, double> bestSimilarity(
     double maxCt = std::min(f1, f2) / std::max(f1, f2);
     return maxSt + maxCt;
   };
-  if (maxScore(fitShape.sovs.front(), refShape.sovs.back(),
-               fitShape.sofs.front(), refShape.sofs.back()) < threshold &&
-      maxScore(fitShape.sovs.back(), refShape.sovs.front(),
-               fitShape.sofs.back(), refShape.sofs.front()) < threshold) {
-    return std::make_pair(-1.0, -1.0);
+  if (maxScore(fitShape.d_shapeVolumes.front(), d_shapeVolumes.back(),
+               fitShape.d_colorVolumes.front(),
+               d_colorVolumes.back()) < threshold &&
+      maxScore(fitShape.d_shapeVolumes.back(), d_shapeVolumes.front(),
+               fitShape.d_colorVolumes.back(),
+               d_colorVolumes.front()) < threshold) {
+    return -1.0;
   }
   double best_st = -1.0;
   double best_ct = -1.0;
   double best_combo_t = -1.0;
 
-  for (size_t i = 0; i < refShape.confCoords.size(); i++) {
-    refShape.setActiveShape(i);
-    for (size_t j = 0; j < fitShape.confCoords.size(); j++) {
-      auto maxSim = maxScore(refShape.sovs[i], fitShape.sovs[j],
-                             refShape.sofs[i], fitShape.sofs[j]);
+  for (size_t i = 0; i < getNumAtoms() + getNumShapes(); i++) {
+    setActiveShape(i);
+    for (size_t j = 0; j < fitShape.getNumAtoms() + fitShape.getNumFeatures();
+         j++) {
+      auto maxSim = maxScore(d_shapeVolumes[i], fitShape.d_shapeVolumes[j],
+                             d_colorVolumes[i], fitShape.d_colorVolumes[j]);
       if (maxSim > threshold) {
         fitShape.setActiveShape(j);
-        auto [st, ct] = AlignShape(refShape, fitShape, matrix, opt_param,
-                                   max_preiters, max_postiters);
-        double combo_t = st + ct;
-        if (combo_t > best_combo_t) {
-          best_combo_t = combo_t;
-          best_st = st;
-          best_ct = ct;
+        auto scores = AlignShape(*this, fitShape, &xform, overlayOpts);
+        if (scores[0] > best_combo_t) {
+          best_combo_t = scores[0];
           bestRefConf = i;
           bestFitConf = j;
         }
       }
     }
   }
-  return std::make_pair(best_st, best_ct);
+  return best_combo_t;
 }
 
-std::unique_ptr<RDKit::RWMol> shapeToMol(const ShapeInput &shape) {
-  auto mol = std::make_unique<RDKit::RWMol>();
-  unsigned int numAtoms = shape.coord.size() / 3;
-  for (unsigned int i = 0; i < numAtoms; i++) {
-    RDKit::Atom *atom = nullptr;
-    if (shape.atom_type_vector[i]) {
-      atom = new RDKit::Atom(7);
-    } else {
-      atom = new RDKit::Atom(6);
-    }
+#ifdef RDK_USE_BOOST_SERIALIZATION
+template <class Archive>
+void SearchShapeInput::serialize(Archive &ar, const unsigned int) {
+  ar &boost::serialization::base_object<ShapeInput>(*this);
+  ar & d_numDummies;
+  ar & d_dummyVol;
+  ar & d_actConf;
+  ar & d_confCoords;
+  ar & d_molConfs;
+  ar & d_dummyVols;
+  ar & d_shapeVolumes;
+  ar & d_colorVolumes;
+  ar & d_extremePointss;
+  ar & d_canonRots;
+  ar & d_centroids;
+  ar & d_eigenValuess;
+}
+#endif
+
+std::unique_ptr<RWMol> shapeToMol(const ShapeInput &shape) {
+  auto mol = std::make_unique<RWMol>();
+  for (unsigned int i = 0; i < shape.getNumAtoms(); i++) {
+    RDKit::Atom *atom = new RDKit::Atom(6);
     mol->addAtom(atom, true, true);
   }
-  RDKit::Conformer *conf = new RDKit::Conformer(numAtoms);
-  RDGeom::Point3D ave;
-  unsigned int nAves = 0;
-  for (unsigned int i = 0; i < numAtoms; i++) {
-    auto &pos = conf->getAtomPos(i);
-    pos.x = shape.coord[3 * i];
-    pos.y = shape.coord[3 * i + 1];
-    pos.z = shape.coord[3 * i + 2];
-    if (!shape.atom_type_vector[i]) {
-      ave += pos;
-      ++nAves;
-    }
+  for (unsigned int i = 0; i < shape.getNumFeatures(); i++) {
+    RDKit::Atom *atom = new RDKit::Atom(7);
+    mol->addAtom(atom, true, true);
   }
-  ave /= nAves;
+  RDKit::Conformer *conf =
+      new RDKit::Conformer(shape.getNumAtoms() + shape.getNumFeatures());
+  const auto &shapeCds = shape.getCoords();
+  for (unsigned int i = 0; i < shape.getNumAtoms() + shape.getNumFeatures();
+       i++) {
+    auto &pos = conf->getAtomPos(i);
+    pos.x = shapeCds[4 * i];
+    pos.y = shapeCds[4 * i + 1];
+    pos.z = shapeCds[4 * i + 2];
+  }
   mol->addConformer(conf, true);
   return mol;
 }
+
+void SearchShapeInput::initializeFromBase() {
+  d_confCoords = std::vector<std::vector<double>>(
+      1, std::vector<double>(3 * (getNumAtoms() + getNumShapes())));
+  const auto &cdsAndRads = getCoords();
+  for (unsigned int i = 0; i < getNumAtoms() + getNumShapes(); ++i) {
+    d_confCoords[0][3 * i] = cdsAndRads[4 * i];
+    d_confCoords[0][3 * i + 1] = cdsAndRads[4 * i + 1];
+    d_confCoords[0][3 * i + 1] = cdsAndRads[4 * i + 1];
+  }
+  // We don't actually know what conformer it came from
+  d_molConfs = std::vector<unsigned int>(1, 0);
+  // Keep the dummyVols in synch with the other data, but
+  // clearly flag it as not calculated.
+  d_dummyVols = std::vector<double>(1, -1);
+  d_shapeVolumes = std::vector<double>(1, getShapeVolume());
+  d_colorVolumes = std::vector<double>(1, getColorVolume());
+  d_extremePointss = std::vector<std::array<size_t, 6>>(1, getExtremes());
+  d_canonRots = std::vector<std::array<double, 9>>(1, getCanonicalRotation());
+  d_eigenValuess = std::vector<std::array<double, 3>>(1, getEigenValues());
+}
+
+void SearchShapeInput::confCoordsToShapeCoords(
+    unsigned int shapeNum, std::vector<double> &coords) const {
+  coords.resize(getCoords().size());
+  for (unsigned int i = 0; i < getNumAtoms() + getNumShapes(); i++) {
+    coords[4 * i] = d_confCoords[shapeNum][3 * i];
+    coords[4 * i + 1] = d_confCoords[shapeNum][3 * i + 1];
+    coords[4 * i + 2] = d_confCoords[shapeNum][3 * i + 2];
+    coords[4 * i + 3] = getCoords()[4 * i + 3];
+  }
+}
+
+void SearchShapeInput::selectConformations(const std::vector<int> &picks) {
+  std::vector<std::vector<double>> newCoords;
+  newCoords.reserve(picks.size());
+  std::vector<unsigned int> newMolConfs;
+  newMolConfs.reserve(picks.size());
+  std::vector<double> newDummyVols;
+  newDummyVols.reserve(picks.size());
+  std::vector<double> newShapeVolumes;
+  newShapeVolumes.reserve(picks.size());
+  std::vector<double> newColorVolumes;
+  newColorVolumes.reserve(picks.size());
+  std::vector<std::array<size_t, 6>> newExtremePointss;
+  newExtremePointss.reserve(picks.size());
+  std::vector<std::array<double, 9>> newCanRots;
+  newCanRots.reserve(picks.size());
+  std::vector<std::array<double, 3>> newCentroids;
+  newCentroids.reserve(picks.size());
+  std::vector<std::array<double, 3>> newEigenValuess;
+  newEigenValuess.reserve(picks.size());
+  for (auto p : picks) {
+    newCoords.push_back(std::move(d_confCoords[p]));
+    newMolConfs.push_back(d_molConfs[p]);
+    newDummyVols.push_back(d_dummyVols[p]);
+    newShapeVolumes.push_back(d_shapeVolumes[p]);
+    newColorVolumes.push_back(d_colorVolumes[p]);
+    newExtremePointss.push_back(d_extremePointss[p]);
+    newCanRots.push_back(d_canonRots[p]);
+    newCentroids.push_back(d_centroids[p]);
+    newEigenValuess.push_back(d_eigenValuess[p]);
+  }
+  d_confCoords = std::move(newCoords);
+  d_molConfs = std::move(newMolConfs);
+  d_dummyVols = std::move(newDummyVols);
+  d_shapeVolumes = std::move(newShapeVolumes);
+  d_colorVolumes = std::move(newColorVolumes);
+  d_extremePointss = std::move(newExtremePointss);
+  d_eigenValuess = std::move(newEigenValuess);
+}
+}  // namespace GaussianShape
+}  // namespace RDKit

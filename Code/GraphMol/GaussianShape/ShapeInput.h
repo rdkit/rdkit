@@ -18,6 +18,7 @@
 
 #include <RDGeneral/export.h>
 #include <Geometry/Transform3D.h>
+#include <Geometry/point.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
@@ -111,6 +112,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   //! @param mol: The molecule of interest
   //! @param confId: The conformer to use
   //! @param opts: Options for setting up the shape
+  ShapeInput() = default;
   ShapeInput(const ROMol &mol, int confId = -1,
              const ShapeInputOptions &opts = ShapeInputOptions(),
              const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
@@ -158,6 +160,26 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   }
   const std::array<double, 3> &getEigenValues() const { return d_eigenValues; }
   const std::array<size_t, 6> &getExtremes() const { return d_extremePoints; }
+
+  void setNormalized(bool normalized) { d_normalized = normalized; }
+  void setShapeVolume(double volume) { d_selfOverlapVol = volume; }
+  void setColorVolume(double volume) { d_selfOverlapColor = volume; }
+  void setCanonicalRotation(const std::array<double, 9> &canonicalRot) {
+    d_canonRot = canonicalRot;
+  }
+  void setCanonicalTranslation(const std::array<double, 3> &canonicalTrans) {
+    d_centroid = canonicalTrans;
+  }
+  void setEigenValues(const std::array<double, 3> &eigenValues) {
+    d_eigenValues = eigenValues;
+  }
+  void setExtremes(const std::array<size_t, 6> &extremes) {
+    d_extremePoints = extremes;
+  }
+  // These setters throw a runtime_error if the incoming vectors
+  // aren't the same size as the existing ones.
+  void setCoords(const std::vector<double> &coords);
+  void setTypes(const std::vector<int> &types);
 
   // Align the principal axes to the cartesian axes and centre on the origin.
   // Doesn't require that the shape was created from a molecule.  Creates
