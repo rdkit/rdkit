@@ -16,6 +16,7 @@ if(RDK_BUILD_OSMORDRED)
 
  set(OSMORDRED_HDRS Osmordred.h)
  set(OSMORDRED_SOURCES OsmordredHelpers.cpp
+              Osmordred.cpp
               OsmordredBasicPhyschemCountsRules.cpp
  	      OsmordredTopologicalConnectivityShape.cpp
 	      OsmordredMatrixAutocorrEStateFragments.cpp)
