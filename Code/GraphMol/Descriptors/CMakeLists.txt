@@ -91,9 +91,9 @@ endif(RDK_BUILD_DESCRIPTORS3D)
 
 rdkit_catch_test(descriptorsTestCatch catch_tests.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
 
-if(RDK_BUILD_OSMORDERED)
+if(RDK_BUILD_OSMORDRED)
  rdkit_catch_test(testOsmordred test_osmordred.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
-endif(RDK_BUILD_OSMORDERED)
+endif(RDK_BUILD_OSMORDRED)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
