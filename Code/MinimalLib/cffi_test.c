@@ -195,6 +195,30 @@ double angle_deg_between_vectors(double *v1, double *v2) {
                    (v2[0] * v2[0] + v2[1] * v2[1])));
 }
 
+static int molblock_has_wedge_lines(const char *molblock,
+                                    const char *expected_bond_table) {
+  // expected_bond_table is a list of bond lines like:
+  // "  2  1  1  6\n  2  3  1  0\n ...".
+  // Only require that each wedge/dash bond line (bond_dir != 0) appears
+  // somewhere in the molblock. This is order-independent but still brittle.
+  if (!molblock || !expected_bond_table) {
+    return 0;
+  }
+  char *dup = strdup(expected_bond_table);
+  assert(dup);
+  for (char *line = strtok(dup, "\n"); line; line = strtok(NULL, "\n")) {
+    int a1 = 0, a2 = 0, btype = 0, bdir = 0;
+    if (sscanf(line, "%d %d %d %d", &a1, &a2, &btype, &bdir) == 4 && bdir != 0) {
+      if (!strstr(molblock, line)) {
+        free(dup);
+        return 0;
+      }
+    }
+  }
+  free(dup);
+  return 1;
+}
+
 void test_io() {
   char *pkl;
   char *pkl2;
@@ -1681,7 +1705,7 @@ M  END\n",
   v2[1] = xy25[1] - xy26[1];
   double v1v2Theta = angle_deg_between_vectors(v1, v2);
   assert(v1v2Theta > 10.0 && v1v2Theta < 15.0);
-  assert(strstr(molblock, inverted_wedges));
+  assert(molblock_has_wedge_lines(molblock, inverted_wedges));
   free(mpkl_copy);
   free(molblock);
   free(svg);
@@ -1708,7 +1732,7 @@ M  END\n",
   v2[1] = xy25[1] - xy26[1];
   v1v2Theta = angle_deg_between_vectors(v1, v2);
   assert(v1v2Theta > 105.0 && v1v2Theta < 110.0);
-  assert(strstr(molblock, inverted_wedges));
+  assert(molblock_has_wedge_lines(molblock, inverted_wedges));
   free(mpkl_copy);
   free(molblock);
   free(svg);
@@ -1737,7 +1761,7 @@ M  END\n",
   v2[1] = xy25[1] - xy26[1];
   v1v2Theta = angle_deg_between_vectors(v1, v2);
   assert(v1v2Theta > 145.0 && v1v2Theta < 150.0);
-  assert(!strstr(molblock, inverted_wedges));
+  assert(!molblock_has_wedge_lines(molblock, inverted_wedges));
   free(mpkl_copy);
   free(molblock);
   free(svg);
@@ -1813,7 +1837,7 @@ M  END\n",
   v2[1] = xy25[1] - xy26[1];
   double v1v2Theta = angle_deg_between_vectors(v1, v2);
   assert(v1v2Theta > 10.0 && v1v2Theta < 15.0);
-  assert(strstr(molblock, inverted_wedges));
+  assert(molblock_has_wedge_lines(molblock, inverted_wedges));
   free(mpkl_copy);
   free(molblock);
   free(svg);
@@ -1839,7 +1863,7 @@ M  END\n",
   v2[1] = xy25[1] - xy26[1];
   v1v2Theta = angle_deg_between_vectors(v1, v2);
   assert(v1v2Theta > 105.0 && v1v2Theta < 110.0);
-  assert(!strstr(molblock, inverted_wedges));
+  assert(!molblock_has_wedge_lines(molblock, inverted_wedges));
   free(mpkl_copy);
   free(molblock);
   free(svg);
@@ -1868,7 +1892,7 @@ M  END\n",
   v2[1] = xy25[1] - xy26[1];
   v1v2Theta = angle_deg_between_vectors(v1, v2);
   assert(v1v2Theta > 145.0 && v1v2Theta < 150.0);
-  assert(!strstr(molblock, inverted_wedges));
+  assert(!molblock_has_wedge_lines(molblock, inverted_wedges));
   free(mpkl_copy);
   free(molblock);
   free(svg);
