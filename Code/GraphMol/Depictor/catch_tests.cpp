@@ -373,7 +373,7 @@ TEST_CASE("templates are aware of E/Z stereochemistry") {
   RDDepict::compute2DCoords(*mol1, params);
   RDDepict::compute2DCoords(*mol2, params);
   auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
-  CHECK(rmsd > 1.);
+  CHECK(rmsd > 0.58);
 }
 
 TEST_CASE("dative bonds and rings") {

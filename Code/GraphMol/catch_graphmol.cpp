@@ -2152,24 +2152,32 @@ TEST_CASE("KekulizeFragment", "[graphmol]") {
 }
 
 TEST_CASE(
-    "github #4266: fallback ring finding failing on molecules with multiple "
-    "fragments",
+    "github #4266: fallback ring finding failing on molecules with multiple fragments",
     "[graphmol]") {
+  // SSSRs for benzene and the octahedral mol are 1 and 7 rings, though
+  // the Symmetrized SSSR goes up to 9 rings.
+  // FastFindRings will only find up to 8 rings (same as the SSSR sum).
+  constexpr unsigned int expectedNumRings = 8;
+
   SECTION("case1") {
     auto m = "C123C45C16C21C34C561.c1ccccc1"_smiles;
     REQUIRE(m);
     ROMol m2(*m);
     m2.getRingInfo()->reset();
+    MolOps::findSSSR(*m);
     MolOps::fastFindRings(m2);
-    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+    CHECK(m->getRingInfo()->numRings() == expectedNumRings);
+    CHECK(m2.getRingInfo()->numRings() == expectedNumRings);
   }
   SECTION("case2") {
     auto m = "c1ccccc1.C123C45C16C21C34C561"_smiles;
     REQUIRE(m);
     ROMol m2(*m);
     m2.getRingInfo()->reset();
+    MolOps::findSSSR(*m);
     MolOps::fastFindRings(m2);
-    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+    CHECK(m->getRingInfo()->numRings() == expectedNumRings);
+    CHECK(m2.getRingInfo()->numRings() == expectedNumRings);
   }
 }
 
@@ -2371,7 +2379,6 @@ namespace details {
 bool atomHasFourthValence(const Atom *atom);
 bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q);
 }  // namespace details
-void switchBondDir(Bond *bond);
 }  // namespace Canon
 }  // namespace RDKit
 TEST_CASE("canon details") {
@@ -2393,17 +2400,6 @@ TEST_CASE("canon details") {
       CHECK(RDKit::Canon::details::atomHasFourthValence(m->getAtomWithIdx(1)));
     }
   }
-}
-TEST_CASE("switchBondDir") {
-  auto m = "C/C=C/C"_smiles;
-  REQUIRE(m);
-  auto bond = m->getBondWithIdx(0);
-  CHECK(bond->getBondDir() == Bond::BondDir::ENDUPRIGHT);
-  Canon::switchBondDir(bond);
-  CHECK(bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT);
-  bond->setBondDir(Bond::BondDir::UNKNOWN);
-  Canon::switchBondDir(bond);
-  CHECK(bond->getBondDir() == Bond::BondDir::UNKNOWN);
 }
 #endif
 

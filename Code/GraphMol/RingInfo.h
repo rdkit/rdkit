@@ -15,13 +15,9 @@
 #include <vector>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
-#ifdef RDK_USE_URF
 #include <boost/shared_ptr.hpp>
-#endif
 #include <RDGeneral/BoostEndInclude.h>
-#ifdef RDK_USE_URF
 #include <RingDecomposerLib.h>
-#endif
 
 namespace RDKit {
 //! A class to store information about a molecule's rings
@@ -270,7 +266,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   std::vector<unsigned int> fusedRingNeighbors(unsigned int ringIdx);
 
-#ifdef RDK_USE_URF
   //! adds a ring family to our data
   /*!
     \param atomIndices the integer indices of the atoms involved in the
@@ -317,7 +312,9 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
 
   //! check if the ring families have been initialized
   bool areRingFamiliesInitialized() const { return dp_urfData != nullptr; }
-#endif
+
+  //! reset ring family information
+  void resetRingFamilies();
 
   //! @}
 
@@ -333,10 +330,8 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   std::vector<boost::dynamic_bitset<>> d_fusedRings;
   std::vector<unsigned int> d_numFusedBonds;
 
-#ifdef RDK_USE_URF
  public:
   boost::shared_ptr<RDL_data> dp_urfData;
-#endif
 };
 }  // namespace RDKit
 

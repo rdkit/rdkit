@@ -1,9 +1,5 @@
 add_custom_target(ringdecomposerlib_support ALL)
 
-if(NOT RDK_USE_URF)
-  return()
-endif(NOT RDK_USE_URF)
-
 if(NOT DEFINED URFLIB_DIR)
     set(URFLIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/RingDecomposerLib/src/RingDecomposerLib")
 endif()

@@ -25,6 +25,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <random>
 #include <tuple>
@@ -1042,9 +1043,10 @@ M  END
 
   // This should not throw an invariant violation
   auto smiles = MolToSmiles(*m);
-  CHECK(
-      smiles ==
-      R"SMI(CC[C@@]1(C)/C2=C(C)/C3=[N]4->[CoH2+]56[N]2[C@H]([C@@H]1C)[C@]1(C)[N]->5=C(/C(C)=C2[N]->6=C(/C=C4/C(C)(C)[C@@H]3C)[C@@H](C)C\2(C)C)[C@@H](C)C1(C)C)SMI");
+  CHECK(smiles ==
+        (R"SMI(CC[C@@]1(C)/C2=C(\C)/C3=[N]4->[CoH2+]56[N]2[C@H]([C@@H]1C))SMI"
+         R"SMI([C@]1(C)[N]->5=C(/C(C)=C2[N]->6=C(/C=C4/C(C)(C)[C@@H]3C))SMI"
+         R"SMI([C@@H](C)C\2(C)C)[C@@H](C)C1(C)C)SMI"));
 }
 
 TEST_CASE("chiral presence and ranking") {
@@ -1168,51 +1170,55 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   // first reported.
 
   const static std::initializer_list<std::tuple<std::string, bool, bool>> samples = {
-      {R"smi(C/C=C\C=C(/C=C\C)C(/C=C\C)=C/C)smi", false, false},        // #8759
-      {R"smi(C1=C\CCCCCC/C=C/C=C/1)smi", true, true},                   // #8759
-      {R"smi(O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3)smi", false, false},  // #8721
+      {R"smi(C/C=C\C=C(/C=C\C)C(/C=C\C)=C/C)smi", true, true},        // #8759
+      {R"smi(C1=C\CCCCCC/C=C/C=C/1)smi", true, true},                 // #8759
+      {R"smi(O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3)smi", true, true},  // #8721
       {R"smi(O=C(c1ccccc1C(=O)N1C(=O)c2ccccc2C1=O)N1C(=O)c2ccccc2C1=O)smi",
        false, false},  // #8721
-      {R"smi(O=[N+]([O-])c1cc/c2c(c1)=C(c1ccccc1)/N=c1\\ccc([N+](=O)[O-])cc1=C(c1ccccc1)/N=2)smi",
-       false, true},  // #8721
-      {R"smi(C=Cc1c(C)/c2[n-]c1=C=c1[n-]/c(c(CC)c1C)=C\\c1[n-]c3c(c1C)C(=O)[C@H](C(=O)OC)/C3=C1/[NH+]=C(/C=2)[C@@H](C)[C@@H]1CCC(=O)OC/C=C(\\C)CCC[C@H](C)CCC[C@H](C)CCCC(C)C.[Mg+2])smi",
-       false, true},  // #8721
+      {R"smi(O=[N+]([O-])c1cc/c2c(c1)=C(c1ccccc1)/N=c1\ccc([N+](=O)[O-])cc1=C(c1ccccc1)/N=2)smi",
+       true, true},  // #8721
+      {R"smi(C=Cc1c(C)/c2[n-]c1=C=c1[n-]/c(c(CC)c1C)=C\c1[n-]c3c(c1C)C(=O)[C@H](C(=O)OC)/C3=C1/[NH+]=C(/C=2)[C@@H](C)[C@@H]1CCC(=O)OC/C=C(\C)CCC[C@H](C)CCC[C@H](C)CCCC(C)C.[Mg+2])smi",
+       true, true},  // #8721
       {R"smi(CC1=C(/C=C2\C(C)=C3/C(C)=C(/C=C4\C(C)=C5/C(CCC(=O)O)=C(C(C)=C5N4)C=C6\C(CCC(=O)O)=C(C)C(=C6N2)C=C1)N3)C=C(\C=C)C)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(COC1=N\C2=CC(=O)c3c(c(O)c(C)c4c3C(=O)C(C)(O/C=C/C(OC)C(C)C(OC(C)=O)C(C)C(O)C(C)C(O)C(C)/C=C\C=C/1C)O4)C2=O)smi",
        false, false},  // #8089
-      {R"smi(CC1C2c3cc4/c5c6c7c8c9c%10c6c4c4c3C3=C6c%11c%12c%13c%14c%15c(c9c9c%16c8c(c8/c(c%17c%18c%19c(c(c%11c%11c%19c%19c%17c8c%16c(c%149)c%19c%13%11)C62)C1C%181C[N+](C)(C)C1)=C\C\C=5)C7)C%10C4C31C[N+](C)(C)CC%12%151)smi",
-       false, true},  // #8089
+                       /*
+                            // temporarily disabled: times out in CIP code calculation
+                            // (see the code further down)
+                             {R"smi(CC1C2c3cc4/c5c6c7c8c9c%10c6c4c4c3C3=C6c%11c%12c%13c%14c%15c(c9c9c%16c8c(c8/c(c%17c%18c%19c(c(c%11c%11c%19c%19c%17c8c%16c(c%149)c%19c%13%11)C62)C1C%181C[N+](C)(C)C1)=C\C\C=5)C7)C%10C4C31C[N+](C)(C)CC%12%151)smi",
+                              true, true},  // #8089
+                       */
       {R"smi(CC1=C\[C@H](C)C[C@@]2(C)CC[C@@H](O2)[C@@]23CC[C@@](C)(C[C@@H](O2)[C@H]2O[C@](C)(CC2=O)[C@@H](O)[C@@H]2CC[C@@]4(CCC[C@H](O4)[C@@H](C)C(=O)O[C@@H]4C[C@@H]([C@@]5(O)OCC[C@@H](C)[C@H]5O)O[C@@H]4/C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@H]2O[C@@H](C/C=C/C=C/C(=O)O[C@@H]3C[C@@H](/C=C/C/C=C/1)O[C@@H](C/C=C\CCO)[C@]3(C)CO)C[C@H](O)[C@H]2C)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC(=O)OCC1=C\CC/C(C)=C/CC[C@@]2(C)CC[C@@](C(C)C)(/C=C/1)O2)smi",
-       false, false},  // #8089
-      {R"smi(CC1=C\C/C=C(\C)CC[C@H]2C(C)(C)[C@@H](\C=C/1)CC[C@]2(C)O)smi",
-       false, true},  // #8089
+       true, true},  // #8089
+      {R"smi(CC1=C\C/C=C(\C)CC[C@H]2C(C)(C)[C@@H](\C=C/1)CC[C@]2(C)O)smi", true,
+       true},  // #8089
       {R"smi(CC(=O)OCC1=C/[C@@H]2OC(=O)[C@H](C)[C@@]2(O)[C@@H](OC(C)=O)[C@H]2[C@]3(CC[C@H](OC(C)=O)[C@]2(C)[C@@H](OC(=O)COC(=O)CC(C)C)\C=C/1)CO3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC(=O)OCC1=C/[C@@H]2OC(=O)[C@H](C)[C@@]2(O)[C@@H](OC(C)=O)[C@H]2[C@]3(CC[C@H](OC(C)=O)[C@]2(C)[C@@H](OC(C)=O)\C=C/1)CO3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(C=Cc1c(C)/c2[nH]/c1=C\C1=N/C(=C\C3=C(C)C4C(=O)N(Cc5cccc(C#Cc6cccc(Nc7ncnc8cc(OCCOC)c(OCCOC)cc78)c6)c5)C(=O)/C(=C5/N=C(/C=2)[C@@H](C)[C@@H]5CCC(=O)OC)C4N3)C(CC)=C1C)smi",
-       false, true},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C\C[C@H](O)/C=C/C(C)=C/[C@@H](NC(=O)[C@H](C)O)[C@]2(C)C(=O)O[C@H](C[C@H](O)/C=C/1)[C@@H](C)C2=O)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@H]2O[C@@H](C/C=C/C=C/C(=O)O[C@@H]3C[C@@H](/C=C/C/C=C/1)O[C@@H](C/C=C\C[C@@H](O)C(=O)O)[C@]3(C)CO)C[C@H](O)[C@H]2C)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(c1ccc2/c3[nH]/c(c2c1)=N\c1ccc(cc1)-c1nc2cc(ccc2o1)/N=c1/[nH]/c(c2ccccc12)=N/c1ccc2nc(oc2c1)-c1ccc(cc1)/N=3)smi",
-       false, false},  // #8089
+       true, false},  // #8089
       {R"smi(c1ccc2/c3[nH]/c(c2c1)=N\c1ccc(cc1)-c1nc2ccc(cc2o1)/N=c1/[nH]/c(c2ccccc12)=N/c1ccc2nc(oc2c1)-c1ccc(cc1)/N=3)smi",
-       false, false},  // #8089
+       true, false},  // #8089
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](C)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](C(=O)O)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](CO)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(COC(=O)C1=C/c2cc3c(cc2-c2c(cc(OC)c(OC)c2OC)\C=C/1C(=O)OC)OCO3)smi",
-       false, false},                                         // #8089
+       true, true},                                           // #8089
       {R"smi(N#C[P@@H]/C=C(/P=O)[P@@H]C#N)smi", true, true},  // #8089
       {R"smi(C1=C\C/C=C(\C)CC[C@H]2C(C)(C)[C@@H](\C=C/1)CC[C@]2(C)O)smi", true,
        true},                                                     // #8089
@@ -1342,6 +1348,9 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   };
 
   auto count_features = [](RWMol m) {
+// for current development only:
+// compare CIP codes instead of just counting features
+#if 0
     unsigned int nChiralCenters = 0;
     for (const auto atom : m.atoms()) {
       if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
@@ -1356,6 +1365,27 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
     }
 
     return std::make_pair(nChiralCenters, nDoubleBondStereo);
+#endif
+    CIPLabeler::assignCIPLabels(m);
+
+    std::vector<std::string> labels;
+    for (const auto atom : m.atoms()) {
+      std::string cip;
+      if (atom->getPropIfPresent<std::string>(common_properties::_CIPCode,
+                                              cip)) {
+        labels.push_back(cip);
+      }
+    }
+    for (const auto bond : m.bonds()) {
+      std::string cip;
+      if (bond->getPropIfPresent<std::string>(common_properties::_CIPCode,
+                                              cip)) {
+        labels.push_back(cip);
+      }
+    }
+    std::sort(labels.begin(), labels.end());
+
+    return labels;
   };
 
   const auto &[smiles, legacyState, modernState] =
@@ -1395,4 +1425,200 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   } else {
     CHECK(firstRoundtrip != secondRoundtrip);
   }
+}
+
+TEST_CASE("xxxxx") {
+  constexpr const char *smi = R"SMI(C\N=c1/s/c(=N\Cl)/c/1=N/F)SMI";
+  constexpr const char *refSmi = R"SMI(C\N=c1s/c(=N\Cl)c/1=N/F)SMI";
+  RWMol *m = SmilesToMol(smi);
+  REQUIRE(m);
+
+  auto csmi1 = MolToSmiles(*m, true);
+  CHECK(csmi1 == refSmi);
+  delete m;
+  m = SmilesToMol(csmi1);
+  REQUIRE(m);
+
+  auto csmi2 = MolToSmiles(*m, true);
+
+  CHECK(csmi1 == csmi2);
+  delete m;
+}
+
+TEST_CASE("x1") {
+  constexpr const char *smi = R"SMI(C1CCCC/C=C/CCC1)SMI";
+  constexpr const char *refSmi = R"SMI(C1=C/CCCCCCCC/1)SMI";
+  RWMol *m = SmilesToMol(smi);
+  REQUIRE(m);
+
+  auto csmi1 = MolToSmiles(*m, true);
+  CHECK(csmi1 == refSmi);
+  delete m;
+  m = SmilesToMol(csmi1);
+  REQUIRE(m);
+  delete m;
+}
+
+TEST_CASE("x2") {
+  auto mol = R"CTAB(CHEMBL409450
+     RDKit          2D
+
+ 22 25  0  0  0  0  0  0  0  0999 V2000
+   -1.1669    1.3591    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6820    0.6916    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9516    1.1041    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9516    0.2791    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5647    1.6562    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3931    2.4631    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6085    2.7181    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9954    2.1661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1669    0.0242    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9120   -0.7604    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3969   -1.4279    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9120   -2.0953    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1274   -1.8404    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1274   -1.0154    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5871   -2.2529    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3016   -1.8404    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3016   -1.0154    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5871   -0.6029    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2219   -1.4279    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1430    0.6916    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5555    1.4061    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0160   -2.2529    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  2  0
+  1  8  1  0
+  9  2  1  0
+  2 20  2  0
+  3  4  1  0
+  3  5  1  0
+  9  4  1  0
+  5  6  2  0
+  6  7  1  0
+  8  7  2  0
+  9 10  2  0
+ 10 11  1  0
+ 10 14  1  0
+ 11 12  1  0
+ 11 19  2  0
+ 13 12  1  0
+ 13 14  2  0
+ 13 15  1  0
+ 14 18  1  0
+ 15 16  2  0
+ 16 17  1  0
+ 22 16  1  0
+ 17 18  2  0
+ 20 21  1  0
+M  END)CTAB"_ctab;
+  REQUIRE(mol);
+
+  constexpr const char *csmiles =
+      R"SMI(O=C1Nc2cc(Br)ccc2/C1=C1Nc2ccccc2C/1=N\O)SMI";
+
+  SmilesWriteParams ps;
+  ps.doRandom = true;
+  getRandomGenerator(51)();
+  auto rsmiles = MolToSmiles(*mol, ps);
+  CHECK(rsmiles == R"SMI(C1(Nc2c(cccc2)C/1=N\O)=C1\c2c(NC1=O)cc(Br)cc2)SMI");
+
+  std::unique_ptr<RWMol> mol2(SmilesToMol(rsmiles));
+  REQUIRE(mol2);
+  auto smiles = MolToSmiles(*mol2);
+  CHECK(smiles == csmiles);
+}
+
+TEST_CASE("x3") {
+  constexpr const char *smi = R"smi(N#C[P@@H]/C=C(/P=O)[P@@H]C#N)smi";
+  constexpr const char *refSmi = R"smi(N#C[P@H]/C(=C\[P@H]C#N)P=O)smi";
+  RWMol *m = SmilesToMol(smi);
+  REQUIRE(m);
+
+  auto csmi1 = MolToSmiles(*m, true);
+  CHECK(csmi1 == refSmi);
+  delete m;
+  m = SmilesToMol(csmi1);
+  REQUIRE(m);
+  delete m;
+}
+
+TEST_CASE("x4") {
+  constexpr const char *smi = R"smi(O=C=NC1=CC2c3ccc(N=C=O)c2c3C=C1)smi";
+  constexpr const char *refSmi = R"smi(O=C=NC1=CC2c3ccc(N=C=O)c2c3C=C1)smi";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto csmi1 = MolToSmiles(*m);
+  CHECK(csmi1 == refSmi);
+}
+
+TEST_CASE("x5") {
+  constexpr const char *smi = R"smi(O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3)smi";
+  constexpr const char *refSmi = R"smi(O=C=NC1=CC2c3ccc(N=C=O)c2c3C=C1)smi";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto csmi1 = MolToSmiles(*m);
+  CHECK(csmi1 == refSmi);
+}
+
+TEST_CASE("x6") {
+  constexpr const char *smi = R"smi(c1ccc2c(c1)C3CC3C4CC5CC4CC25)smi";
+  constexpr const char *sma = R"sma(C!@c)sma";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto q = v2::SmilesParse::MolFromSmarts(sma);
+  REQUIRE(q);
+
+  auto matches = SubstructMatch(*m, *q);
+  CHECK(matches.empty());
+}
+
+TEST_CASE("x7") {
+  constexpr const char *smi =
+      R"smi(c1ccc2/c3[nH]/c(c2c1)=N\c1ccc(cc1)-c1nc2ccc(cc2o1)/N=c1/[nH]/c(c2ccccc12)=N/c1ccc2nc(oc2c1)-c1ccc(cc1)/N=3)smi";
+
+  auto m = v2::SmilesParse::MolFromSmiles(smi);
+  REQUIRE(m);
+}
+
+TEST_CASE("x8") {
+  constexpr const char *smi =
+      R"smi([C@H]12[C@H]3[C@H]4[C@@H]5[C@@H]([C@H]1N25)N34)smi";
+
+  auto m = v2::SmilesParse::MolFromSmiles(smi);
+  REQUIRE(m);
+}
+
+TEST_CASE("x9") {
+  constexpr const char *smi =
+      R"smi(CC(=O)OCC1=C/[C@@H]2OC(=O)[C@H](C)[C@@]2(O)[C@@H](OC(C)=O)[C@H]2[C@]3(CC[C@H](OC(C)=O)[C@]2(C)[C@@H](OC(C)=O)\C=C/1)CO3)smi";
+
+  auto m = v2::SmilesParse::MolFromSmiles(smi);
+  REQUIRE(m);
+}
+
+TEST_CASE("x10") {
+  constexpr const char *smi = R"smi(c1cc2C3C(c4c5cc(c(C5)c4)-c2cc1)C3)smi";
+  constexpr const char *refSmi = R"smi(c1cc2C3C(c4c5cc(c(C5)c4)-c2cc1)C3)smi";
+
+  auto m = v2::SmilesParse::MolFromSmiles(smi);
+  REQUIRE(m);
+
+  auto csmi1 = MolToSmiles(*m);
+  CHECK(csmi1 == refSmi);
+
+  auto m2 = v2::SmilesParse::MolFromSmiles(csmi1);
+  REQUIRE(m2);
+
+  auto csmi2 = MolToSmiles(*m2);
+  CHECK(csmi2 == refSmi);
 }

@@ -318,9 +318,10 @@ ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
   return addHs2(orig, params, onlyOnAtoms);
 }
 
-VECT_INT_VECT getSSSR(ROMol &mol, bool includeDativeBonds) {
+VECT_INT_VECT getSSSR(ROMol &mol, bool includeDativeBonds,
+                      bool includeHydrogenBonds) {
   VECT_INT_VECT rings;
-  MolOps::findSSSR(mol, rings, includeDativeBonds);
+  MolOps::findSSSR(mol, rings, includeDativeBonds, includeHydrogenBonds);
   return rings;
 }
 
@@ -493,9 +494,10 @@ void cleanupAtropisomersMol(ROMol &mol) {
   MolOps::cleanupAtropisomers(rwmol);
 }
 
-VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds) {
+VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds,
+                          bool includeHydrogenBonds) {
   VECT_INT_VECT rings;
-  MolOps::symmetrizeSSSR(mol, rings, includeDativeBonds);
+  MolOps::symmetrizeSSSR(mol, rings, includeDativeBonds, includeHydrogenBonds);
   return rings;
 }
 PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
@@ -1252,12 +1254,14 @@ struct molops_wrapper {
 \n\
     - mol: the molecule to use.\n\
     - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
+    - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring finding.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
          The length of this will be equal to NumBonds-NumAtoms+1 for single-fragment molecules.\n\
 \n";
     python::def("GetSSSR", getSSSR,
-                (python::arg("mol"), python::arg("includeDativeBonds") = false),
+                (python::arg("mol"), python::arg("includeDativeBonds") = false,
+                 python::arg("includeHydrogenBonds") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -1272,11 +1276,13 @@ struct molops_wrapper {
 \n\
     - mol: the molecule to use.\n\
     - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
+    - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring finding.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
     python::def("GetSymmSSSR", getSymmSSSR,
-                (python::arg("mol"), python::arg("includeDativeBonds") = false),
+                (python::arg("mol"), python::arg("includeDativeBonds") = false,
+                 python::arg("includeHydrogenBonds") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -1310,10 +1316,22 @@ struct molops_wrapper {
 \n";
     python::def("FastFindRings", MolOps::fastFindRings, docString.c_str(),
                 python::args("mol"));
-#ifdef RDK_USE_URF
+
+    docString =
+        "Generate Unique Ring Families.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use.\n\
+    - includeDativeBonds: whether or not dative bonds should be included in the ring families finding.\n\
+    - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring families .\n\
+\n\
+  RETURNS: Nothing\n\
+\n";
     python::def("FindRingFamilies", MolOps::findRingFamilies,
-                python::args("mol"), "generate Unique Ring Families");
-#endif
+                (python::args("mol"), python::arg("includeDativeBonds") = false,
+                 python::arg("includeHydrogenBonds") = false),
+                docString.c_str());
 
     // ------------------------------------------------------------------------
     docString = R"DOC(Parameters controlling H addition.)DOC";

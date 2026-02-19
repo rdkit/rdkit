@@ -340,14 +340,10 @@ TEST_CASE("test3") {
   REQUIRE(bfs == 2);
   delete m;
 
-  // Counterexamples in ring perception figure 4:
-  //  * The native Figueras algorithm cannot work on this molecule, it will
-  //    fail after finding one ring. Naive modified Figueras finds a 6 membered
-  //    ring, which is wrong.
   smi = "C123C4C5C6(C3)C7C1C8C2C4C5C6C78";
   m = SmilesToMol(smi, 0, 0);
   bfs = MolOps::findSSSR(*m);
-  REQUIRE(bfs == 7);
+  REQUIRE(bfs == 8);
   bfrs.resize(0);
   bfs = MolOps::symmetrizeSSSR(*m, bfrs);
   REQUIRE(bfs == 8);
@@ -372,8 +368,8 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 3);
-  REQUIRE(sssr[0].size() == 6);
-  REQUIRE(sssr[1].size() == 5);
+  REQUIRE(sssr[0].size() == 5);
+  REQUIRE(sssr[1].size() == 6);
   REQUIRE(sssr[2].size() == 6);
   BOOST_LOG(rdInfoLog) << smi << "\n";
   delete m;
@@ -413,9 +409,9 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 4);
-  REQUIRE(sssr[0].size() == 6);
+  REQUIRE(sssr[0].size() == 5);
   REQUIRE(sssr[1].size() == 5);
-  REQUIRE(sssr[2].size() == 5);
+  REQUIRE(sssr[2].size() == 6);
   REQUIRE(sssr[3].size() == 6);
   delete m;
 
@@ -424,8 +420,8 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 2);
-  REQUIRE(sssr[0].size() == 4);
-  REQUIRE(sssr[1].size() == 3);
+  REQUIRE(sssr[0].size() == 3);
+  REQUIRE(sssr[1].size() == 4);
 
   REQUIRE(m->getRingInfo()->numAtomRings(0) == 1);
   REQUIRE(m->getRingInfo()->isAtomInRingOfSize(0, 4));
@@ -1570,12 +1566,11 @@ TEST_CASE("Testing Issue 183") {
   REQUIRE(m2->getBondWithIdx(10)->getStereo() == Bond::STEREOZ);
 
   refSmi = MolToSmiles(*m2, 1);
-  BOOST_LOG(rdInfoLog) << "ref: " << refSmi << std::endl;
+  CHECK(refSmi == R"SMI(C/C(F)=C(\C)C(=C(/C)Cl)/C(F)=C(/C)F)SMI");
   m = SmilesToMol(refSmi);
   REQUIRE(m);
   smi = MolToSmiles(*m, 1);
-  BOOST_LOG(rdInfoLog) << "smi: " << smi << std::endl;
-  REQUIRE(refSmi == smi);
+  CHECK(refSmi == smi);
 
   int nEs = 0, nZs = 0, nDbl = 0;
   for (RWMol::BondIterator bondIt = m->beginBonds(); bondIt != m->endBonds();
@@ -3430,7 +3425,8 @@ TEST_CASE("Testing sf.net issue 2316677 : canonicalization error") {
   REQUIRE(m);
   std::string smi = MolToSmiles(*m, true);
   std::cerr << "smi: " << smi << std::endl;
-  REQUIRE(smi == "Cc1ccc(S(=O)(=O)/N=C2\\CC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)cc1");
+  REQUIRE(smi ==
+          R"SMI(Cc1ccc(S(=O)(=O)\N=C2C/C(=N\C(C)(C)C)C/2=N\C(C)(C)C)cc1)SMI");
   delete m;
 }
 
@@ -7754,19 +7750,26 @@ M  END)CTAB";
   REQUIRE(v86.dotProduct(v16) < -1e-4);
 }
 
-#ifdef RDK_USE_URF
 TEST_CASE("Testing ring family calculation") {
   {
     constexpr const char *smiles = "C(C1C2C3C41)(C2C35)C45";  // cubane
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 8);
-    REQUIRE(!m->getRingInfo()->areRingFamiliesInitialized());
-    MolOps::findRingFamilies(*m);
-    REQUIRE(m->getRingInfo()->isInitialized());
+
+    // This is initialized during ring finding
     REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
     int numRC = RDL_getNofRC(m->getRingInfo()->dp_urfData.get());
+    REQUIRE(numRC == 6);
+    REQUIRE(numURF == 6);
+
+    MolOps::findRingFamilies(*m);
+    REQUIRE(m->getRingInfo()->isInitialized());
+    REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
+
+    numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
+    numRC = RDL_getNofRC(m->getRingInfo()->dp_urfData.get());
     REQUIRE(numRC == 6);
     REQUIRE(numURF == 6);
 
@@ -7783,23 +7786,29 @@ TEST_CASE("Testing ring family calculation") {
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 28);
-    REQUIRE(!m->getRingInfo()->areRingFamiliesInitialized());
-    MolOps::findRingFamilies(*m);
-    REQUIRE(m->getRingInfo()->isInitialized());
+
     REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
     int numRC = RDL_getNofRC(m->getRingInfo()->dp_urfData.get());
 
     REQUIRE(numURF == 5);
     REQUIRE(numRC == 20);
-    int numRings = m->getRingInfo()->numRings();
 
-    REQUIRE(numRings == 14);
+    MolOps::findRingFamilies(*m);
+    REQUIRE(m->getRingInfo()->isInitialized());
+    REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
+    numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
+    numRC = RDL_getNofRC(m->getRingInfo()->dp_urfData.get());
+
+    REQUIRE(numURF == 5);
+    REQUIRE(numRC == 20);
+
+    int numRings = m->getRingInfo()->numRings();
+    REQUIRE(numRings == 20);
     REQUIRE(m->getRingInfo()->numRingFamilies() == 5);
     delete m;
   }
 }
-#endif
 
 TEST_CASE("Testing adding coordinates to a terminal atom") {
   auto mol = R"CTAB(

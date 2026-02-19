@@ -1636,6 +1636,7 @@ TEST_CASE("Github #4582: double bonds and ring closures") {
   const auto useLegacy = GENERATE(true, false);
   CAPTURE(useLegacy);
   UseLegacyStereoPerceptionFixture fxn(useLegacy);
+
   auto mol = R"CTAB(CHEMBL409450
      RDKit          2D
 
@@ -1689,18 +1690,21 @@ TEST_CASE("Github #4582: double bonds and ring closures") {
  20 21  1  0
 M  END)CTAB"_ctab;
   REQUIRE(mol);
-  auto dbond = mol->getBondBetweenAtoms(1, 19);
-  REQUIRE(dbond);
-  CHECK(dbond->getBondType() == Bond::BondType::DOUBLE);
-  if (useLegacy) {
-    CHECK(dbond->getStereo() == Bond::BondStereo::STEREOE);
-    CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
-  } else {
-    CHECK(dbond->getStereo() == Bond::BondStereo::STEREOCIS);
-    CHECK(dbond->getStereoAtoms() == std::vector<int>{0, 20});
+
+  SECTION("basic test") {
+    auto dbond = mol->getBondBetweenAtoms(1, 19);
+    REQUIRE(dbond);
+    CHECK(dbond->getBondType() == Bond::BondType::DOUBLE);
+    if (useLegacy) {
+      CHECK(dbond->getStereo() == Bond::BondStereo::STEREOE);
+      CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
+    } else {
+      CHECK(dbond->getStereo() == Bond::BondStereo::STEREOCIS);
+      CHECK(dbond->getStereoAtoms() == std::vector<int>{0, 20});
+    }
+    auto csmiles = MolToSmiles(*mol);
+    CHECK(csmiles == R"SMI(O=C1Nc2cc(Br)ccc2/C1=C1Nc2ccccc2C/1=N\O)SMI");
   }
-  auto csmiles = MolToSmiles(*mol);
-  CHECK(csmiles == R"SMI(O=C1Nc2cc(Br)ccc2/C1=C1Nc2ccccc2C/1=N\O)SMI");
 
   SECTION("bulk random output order") {
     auto csmiles = MolToSmiles(*mol);
@@ -1708,11 +1712,6 @@ M  END)CTAB"_ctab;
     SmilesWriteParams ps;
     ps.doRandom = true;
     for (auto i = 0u; i < 100; ++i) {
-      if (i == 13 || i == 25 || i == 38 || i == 50) {
-        // we know these fail; we hope to address them
-        // together with issue #8965
-        continue;
-      }
       INFO("i = " + std::to_string(i));
       getRandomGenerator(i + 1)();
       auto rsmiles = MolToSmiles(*mol, ps);
@@ -1769,7 +1768,7 @@ M  END)CTAB"_ctab;
     auto mol = R"SMI(C1=CC/C=C2C3=C/CC=CC=CC\3C\2C=C1)SMI"_smiles;
     REQUIRE(mol);
     auto smi = MolToSmiles(*mol);
-    CHECK(smi == R"SMI(C1=CC/C=C2C3=C\CC=CC=CC/3C\2C=C1)SMI");
+    CHECK(smi == R"SMI(C1=CC/C=C2\C3=C\CC=CC=CC3C2C=C1)SMI");
   }
   SECTION("CHEMBL3623347") {
     auto mol = R"CTAB(CHEMBL3623347
