@@ -127,7 +127,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   ShapeInput(ShapeInput &&other) = default;
   ShapeInput &operator=(const ShapeInput &other);
   ShapeInput &operator=(ShapeInput &&other) = default;
-  ~ShapeInput() = default;
+  virtual ~ShapeInput() = default;
 
   std::string toString() const {
 #ifndef RDK_USE_BOOST_SERIALIZATION
