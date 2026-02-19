@@ -37,6 +37,11 @@
 #include <GraphMol/Descriptors/MolDescriptors3D.h>
 #endif
 
+#ifdef RDK_BUILD_OSMORDRED
+bool hasOsmordredSupport() { return true; }
+#else
+bool hasOsmordredSupport() { return false; }
+#endif
 #include <vector>
 
 namespace python = boost::python;
@@ -2220,7 +2225,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
         "Get descriptor names in the same order as CalcOsmordred returns values.\n"
         "Returns a list of strings where multi-value descriptors have suffixes like '_1', '_2', etc.\n");
 
-    python::def("HasOsmordredSupport", RDKit::Descriptors::Osmordred::hasOsmordredSupport,
+    python::def("HasOsmordredSupport", hasOsmordredSupport,
 	"Returns True if the RDKit is compiled with osmordred support, False otherwise.\n"
 	"If false, all osmordred functions return zero or empty vectors.");
 #endif // osmordred

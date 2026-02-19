@@ -14,6 +14,7 @@ if(RDK_BUILD_OSMORDRED)
    message(fatal_error "-- LAPACKE not found")
  endif(NOT LAPACKE_FOUND)
 
+ set(OSMORDRED_HDRS Osmordred.h)
  set(OSMORDRED_SOURCES OsmordredHelpers.cpp
               OsmordredBasicPhyschemCountsRules.cpp
  	      OsmordredTopologicalConnectivityShape.cpp
@@ -47,7 +48,7 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               USRDescriptor.h AtomFeat.h
               OxidationNumbers.h
               DCLV.h
-	      Osmordred.h
+	      ${OSMORDRED_HDRS}
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
 
