@@ -1442,7 +1442,11 @@ double computeAtomicId(const Graph &graph, int atomIdx, double epsilon,
 
   visited.insert(atomIdx);
 
-  for (const auto &[nextAtom, edgeWeight] : graph.at(atomIdx)) {
+  // Graphs can have single atoms
+  auto res = graph.find(atomIdx);
+  if ( res == graph.end() ) return id;
+  
+  for (const auto &[nextAtom, edgeWeight] : res->second) {
     if (visited.count(nextAtom)) continue;
 
     double combinedWeight = currentWeight * edgeWeight;
