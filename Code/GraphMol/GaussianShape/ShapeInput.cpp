@@ -127,17 +127,9 @@ ShapeInput::ShapeInput(const ShapeInput &other)
       d_selfOverlapColor(other.d_selfOverlapColor),
       d_extremePoints(other.d_extremePoints),
       d_normalized(other.d_normalized),
-      d_canonRot(new std::array<double, 9>(*other.d_canonRot)),
-      d_centroid(new std::array<double, 3>(*other.d_centroid)) {
-  if (other.d_canonRot) {
-    d_canonRot.reset(new std::array<double, 9>(*other.d_canonRot));
-  }
-  if (other.d_centroid) {
-    d_centroid.reset(new std::array<double, 3>(*other.d_centroid));
-  }
-  if (other.d_eigenValues) {
-    d_eigenValues.reset(new std::array<double, 3>(*other.d_eigenValues));
-  }
+      d_canonRot(other.d_canonRot),
+      d_centroid(other.d_centroid),
+      d_eigenValues(other.d_eigenValues) {
   if (other.d_carbonRadii) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(*other.d_carbonRadii));
   }
@@ -154,29 +146,17 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   d_selfOverlapVol = other.d_selfOverlapVol;
   d_selfOverlapColor = other.d_selfOverlapColor;
   d_extremePoints = other.d_extremePoints;
-  if (other.d_canonRot) {
-    d_canonRot.reset(new std::array<double, 9>(*other.d_canonRot));
-  } else {
-    d_canonRot.reset();
-  }
-  if (other.d_centroid) {
-    d_centroid.reset(new std::array<double, 3>(*other.d_centroid));
-  } else {
-    d_centroid.reset();
-  }
-  if (other.d_eigenValues) {
-    d_eigenValues.reset(new std::array<double, 3>(*other.d_eigenValues));
-  } else {
-    d_eigenValues.reset();
-  }
+  d_canonRot = other.d_canonRot;
+  d_centroid = other.d_centroid;
+  d_eigenValues = other.d_eigenValues;
   if (other.d_carbonRadii) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(*other.d_carbonRadii));
   } else {
     d_carbonRadii.reset();
   }
   d_normalized = other.d_normalized;
-  d_canonRot.reset(new std::array<double, 9>(*other.d_canonRot));
-  d_centroid.reset(new std::array<double, 3>(*other.d_centroid));
+  d_canonRot = other.d_canonRot;
+  d_centroid = other.d_centroid;
   return *this;
 }
 
@@ -196,10 +176,10 @@ void ShapeInput::normalizeCoords() {
   RDGeom::Transform3D canonRot;
   for (unsigned int i = 0, k = 0; i < 3; ++i) {
     for (unsigned int j = 0; j < 3; ++j, ++k) {
-      canonRot.setValUnchecked(i, j, (*d_canonRot)[k]);
+      canonRot.setValUnchecked(i, j, d_canonRot[k]);
     }
   }
-  RDGeom::Point3D trans{(*d_centroid)[0], (*d_centroid)[1], (*d_centroid)[2]};
+  RDGeom::Point3D trans{d_centroid[0], d_centroid[1], d_centroid[2]};
   canonRot.TransformPoint(trans);
   canonRot.SetTranslation(trans);
 
@@ -428,27 +408,27 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
 }
 
 void ShapeInput::calcNormalization(const ROMol &mol, int confId) {
-  d_eigenValues.reset(new std::array<double, 3>{0.0, 0.0, 0.0});
+  d_eigenValues = std::array<double, 3>{0.0, 0.0, 0.0};
   std::unique_ptr<RDGeom::Transform3D> canonXform(
       MolTransforms::computeCanonicalTransform(mol.getConformer(confId),
                                                nullptr, false, true,
-                                               d_eigenValues->data()));
-  d_canonRot.reset(
-      new std::array<double, 9>{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0});
+                                               d_eigenValues.data()));
+  d_canonRot =
+      std::array<double, 9>{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
   for (unsigned int i = 0, k = 0; i < 3; ++i) {
     for (unsigned int j = 0; j < 3; ++j, ++k) {
-      (*d_canonRot)[k] = canonXform->getValUnchecked(i, j);
+      d_canonRot[k] = canonXform->getValUnchecked(i, j);
     }
   }
-  d_centroid.reset(new std::array<double, 3>{0.0, 0.0, 0.0});
+  d_centroid = std::array<double, 3>{0.0, 0.0, 0.0};
   for (int i = 0; i < 4 * d_numAtoms; i += 4) {
-    (*d_centroid)[0] -= d_coords[i];
-    (*d_centroid)[1] -= d_coords[i + 1];
-    (*d_centroid)[2] -= d_coords[i + 2];
+    d_centroid[0] -= d_coords[i];
+    d_centroid[1] -= d_coords[i + 1];
+    d_centroid[2] -= d_coords[i + 2];
   }
-  (*d_centroid)[0] /= d_numAtoms;
-  (*d_centroid)[1] /= d_numAtoms;
-  (*d_centroid)[2] /= d_numAtoms;
+  d_centroid[0] /= d_numAtoms;
+  d_centroid[1] /= d_numAtoms;
+  d_centroid[2] /= d_numAtoms;
 }
 
 void ShapeInput::calcExtremes() {
