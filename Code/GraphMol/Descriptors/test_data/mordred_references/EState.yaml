@@ -1,0 +1,8 @@
+- names: [NdO, NsOH, NsNH2, NaaN, NaaNH, NaaCH, NaasC, NsssCH, NdssC, NsCH3]
+  results:
+    Histidine: [1, 1, 1, 1, 1, 2, 1, 1, 1, 0]
+
+- names: [SdO, SsOH, SsNH2, SaaN, SaaNH, SaaCH, SaasC, SsssCH, SdssC, SsCH3]
+  digit: 0
+  results:
+    Histidine: [10.263, 8.418, 5.257, 3.840, 2.714, skip, 0.666, -0.863, -1.006, 0]

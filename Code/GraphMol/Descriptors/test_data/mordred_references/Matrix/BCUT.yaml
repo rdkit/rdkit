@@ -1,0 +1,17 @@
+# PaDEL-descriptor
+- names: [BCUTm-1l, BCUTm-1h]
+  digit: 0
+  results:
+    Hexane: [11.89, 12.11007471]
+    Benzene: [11.85, 12.1500544]
+    Caffeine: [11.99347887, 15.99592273]
+    Cyanidin: [11.85, 15.99993732]
+    Lycopene: [11.89, 12.11102666]
+    Epicatechin: [11.85, 15.99993732]
+    Limonene: [11.9, 12.10017173]
+    Allicin: [11.79, 31.97307173]
+    Glutathione: [11.99846101, 31.97267783]
+    Digoxin: [11.89, 16.00805947]
+    Capsaicin: [11.89, 15.99692975]
+    EllagicAcid: [11.85, 16.00194285]
+    Astaxanthin: [11.89, 15.99795509]

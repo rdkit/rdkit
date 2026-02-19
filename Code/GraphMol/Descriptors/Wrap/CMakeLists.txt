@@ -10,4 +10,5 @@ add_pytest(pyMolDescriptors3D ${CMAKE_CURRENT_SOURCE_DIR}/test3D.py)
 
 if(RDK_BUILD_OSMORDRED)
   add_pytest(pyMolDescriptorsOsmordred ${CMAKE_CURRENT_SOURCE_DIR}/test_osmordred_basic.py)
+  add_pytest(pyMolDescriptorsOsmordredPorted ${CMAKE_CURRENT_SOURCE_DIR}/test_osmordred_ported_mordred.py)
 endif(RDK_BUILD_OSMORDRED)

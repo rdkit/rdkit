@@ -1,0 +1,16 @@
+# e-dragon
+- names: [nHBAcc, nHBDon]
+  results:
+    Hexane: [0, 0]
+    Benzene: [0, 0]
+    Caffeine: [skip, 0]
+    Cyanidin: [skip, 5]
+    Lycopene: [0, 0]
+    Epicatechin: [6, 5]
+    Limonene: [0, 0]
+    Allicin: [skip, 0]
+    Glutathione: [skip, 6]
+    Digoxin: [14, 6]
+    Capsaicin: [skip, 2]
+    EllagicAcid: [8, 4]
+    Astaxanthin: [4, 2]

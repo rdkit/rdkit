@@ -1,0 +1,16 @@
+# chemaxon cxcalc
+- names: [nAromAtom, nAromBond]
+  results:
+    Hexane: [0, 0]
+    Benzene: [6, 6]
+    Caffeine: [9, 10]
+    Cyanidin: [16, 17]
+    Lycopene: [0, 0]
+    Epicatechin: [12, 12]
+    Limonene: [0, 0]
+    Allicin: [0, 0]
+    Glutathione: [0, 0]
+    Digoxin: [0, 0]
+    Capsaicin: [6, 6]
+    EllagicAcid: [16, 19]
+    Astaxanthin: [0, 0]
