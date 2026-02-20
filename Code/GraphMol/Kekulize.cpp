@@ -324,12 +324,12 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
       std::vector<int> nbrs;
       for (auto nbrAtom : mol.atomNeighbors(mol.getAtomWithIdx(curr))) {
         const auto nbrIdx = static_cast<int>(nbrAtom->getIdx());
-        // ignore if the neighbor has already been dealt with before
-        if (std::find(done.begin(), done.end(), nbrIdx) != done.end()) {
-          continue;
-        }
         // ignore if the neighbor is not part of the fused system
         if (!inAllAtms.test(nbrIdx)) {
+          continue;
+        }
+        // ignore if the neighbor has already been dealt with before
+        if (std::find(done.begin(), done.end(), nbrIdx) != done.end()) {
           continue;
         }
         nbrs.push_back(nbrIdx);
