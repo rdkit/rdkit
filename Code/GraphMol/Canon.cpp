@@ -357,16 +357,19 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       // The first bond's direction has been set at some earlier point:
       bondDirCounts[firstFromAtom1->getIdx()] += 1;
       atomDirCounts[atom1->getIdx()] += 1;
-      if (secondFromAtom1) {
-        // both bonds have their directionalities set, make sure
-        // they are compatible:
-        if (firstFromAtom1->getBondDir() == secondFromAtom1->getBondDir() &&
-            bondDirCounts[firstFromAtom2->getIdx()]) {
-          CHECK_INVARIANT(
-              ((firstFromAtom1->getBeginAtomIdx() == atom1->getIdx()) ^
-               (secondFromAtom1->getBeginAtomIdx() == atom1->getIdx())),
-              "inconsistent state");
-        }
+
+      if (secondFromAtom1 && bondDirCounts[secondFromAtom1->getIdx()]) {
+        // both bonds have their directionalities set, check if
+        // they are compatible.
+        auto dirsShouldMatch =
+            isFirstFromAtom1Flipped != isSecondFromAtom1Flipped;
+        auto dirsMatch =
+            firstFromAtom1->getBondDir() == secondFromAtom1->getBondDir();
+
+        CHECK_INVARIANT(dirsMatch == dirsShouldMatch, "inconsistent state");
+
+        bondDirCounts[secondFromAtom1->getIdx()] += 1;
+        atomDirCounts[atom1->getIdx()] += 1;
       }
     } else {
       // the second bond must be present and setting the direction:
@@ -396,6 +399,21 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       // The second bond's direction has been set at some earlier point:
       bondDirCounts[firstFromAtom2->getIdx()] += 1;
       atomDirCounts[atom2->getIdx()] += 1;
+
+      if (secondFromAtom2 && bondDirCounts[secondFromAtom2->getIdx()]) {
+        // both bonds have their directionalities set, check if
+        // they are compatible.
+        auto dirsShouldMatch =
+            isFirstFromAtom2Flipped != isSecondFromAtom2Flipped;
+        auto dirsMatch =
+            firstFromAtom2->getBondDir() == secondFromAtom2->getBondDir();
+
+        CHECK_INVARIANT(dirsMatch == dirsShouldMatch, "inconsistent state");
+
+        bondDirCounts[secondFromAtom2->getIdx()] += 1;
+        atomDirCounts[atom2->getIdx()] += 1;
+      }
+
     } else {
       // the second bond must be present and setting the direction:
       CHECK_INVARIANT(secondFromAtom2, "inconsistent state");
