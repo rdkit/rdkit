@@ -3871,10 +3871,9 @@ DrawColour getHighlightBondColour(
     const Bond *bond, const MolDrawOptions &drawOptions,
     const std::vector<int> &highlightBonds,
     const std::map<int, DrawColour> &highlightBondMap,
-    const std::vector<int> &highlightAtoms,
+    [[maybe_unused]] const std::vector<int> &highlightAtoms,
     const std::map<int, DrawColour> &highlightAtomMap) {
   PRECONDITION(bond, "no bond provided");
-  RDUNUSED_PARAM(highlightAtoms);
 
   DrawColour col(0.0, 0.0, 0.0);
   if (std::find(highlightBonds.begin(), highlightBonds.end(), bond->getIdx()) !=
