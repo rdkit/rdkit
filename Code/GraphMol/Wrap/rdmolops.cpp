@@ -17,17 +17,27 @@
 #include <RDBoost/import_array.h>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/SanitException.h>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <mutex>
+#endif
 
 namespace python = boost::python;
 using namespace RDKit;
 
-static bool s_rdmolops_numpy_initialized = false;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+static std::once_flag s_rdmolops_numpy_init_flag;
+#endif
 
 void rdkit_rdmolops_ensure_numpy() {
-  if (!s_rdmolops_numpy_initialized) {
-    s_rdmolops_numpy_initialized = true;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::call_once(s_rdmolops_numpy_init_flag, rdkit_import_array);
+#else
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
     rdkit_import_array();
   }
+#endif
 }
 
 void wrap_molops();
