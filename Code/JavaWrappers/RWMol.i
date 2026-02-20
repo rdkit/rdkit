@@ -244,8 +244,8 @@ void markUnspecifiedStereoAsUnknown(int confId) {
 }
 
 /* From Kekulize.cpp, MolOps.h */
-void Kekulize(bool markAtomsBonds=true, unsigned int maxBackTracks=100) {
-  RDKit::MolOps::Kekulize(*($self), markAtomsBonds, maxBackTracks);
+void Kekulize(bool markAtomsBonds=true, bool canonical=true, unsigned int maxBackTracks=100) {
+  RDKit::MolOps::Kekulize(*($self), markAtomsBonds, canonical, maxBackTracks);
 }
 
 /* MolOps.h */

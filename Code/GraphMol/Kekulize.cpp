@@ -14,6 +14,7 @@
 #include <GraphMol/SanitException.h>
 #include <RDGeneral/RDLog.h>
 #include <boost/dynamic_bitset.hpp>
+#include <numeric>
 #include <utility>
 
 namespace RDKit {
@@ -565,7 +566,7 @@ namespace MolOps {
 namespace details {
 void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
                       boost::dynamic_bitset<> bondsToUse, bool markAtomsBonds,
-                      unsigned int maxBackTracks) {
+                      bool canonical, unsigned int maxBackTracks) {
   PRECONDITION(atomsToUse.size() == mol.getNumAtoms(),
                "atomsToUse is wrong size");
   PRECONDITION(bondsToUse.size() == mol.getNumBonds(),
@@ -612,9 +613,19 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   if (!foundAromatic) {
     return;
   }
-  UINT_VECT atomRanks;
-  atomRanks.reserve(mol.getNumAtoms());
-  Canon::rankFragmentAtoms(mol, atomRanks, atomsToUse, bondsToUse);
+  UINT_VECT atomRanks(mol.getNumAtoms());
+  if (canonical) {
+    Canon::rankFragmentAtoms(mol, atomRanks, atomsToUse, bondsToUse);
+  } else {
+    // When canonical=false (e.g. during sanitization), we skip the
+    // expensive ranking step and use atom indices directly.  This is
+    // appropriate because sanitization runs *before* stereo perception:
+    // canonical ranking would be based on incomplete chemistry and the
+    // "deterministic" result would be meaningless.  Callers who need a
+    // canonical Kekulé form should call Kekulize() with canonical=true
+    // after the molecule is fully sanitized and stereo has been assigned.
+    std::iota(atomRanks.begin(), atomRanks.end(), 0u);
+  }
   // if any bonds to kekulize then give it a try:
   if (bondsToUse.any()) {
     // mark atoms at the beginning of wedged bonds
@@ -789,15 +800,16 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   }
 }
 }  // namespace details
-void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
+void Kekulize(RWMol &mol, bool markAtomsBonds, bool canonical,
+              unsigned int maxBackTracks) {
   boost::dynamic_bitset<> atomsToUse(mol.getNumAtoms());
   atomsToUse.set();
   boost::dynamic_bitset<> bondsToUse(mol.getNumBonds());
   bondsToUse.set();
   details::KekulizeFragment(mol, atomsToUse, bondsToUse, markAtomsBonds,
-                            maxBackTracks);
+                            canonical, maxBackTracks);
 }
-bool KekulizeIfPossible(RWMol &mol, bool markAtomsBonds,
+bool KekulizeIfPossible(RWMol &mol, bool markAtomsBonds, bool canonical,
                         unsigned int maxBackTracks) {
   boost::dynamic_bitset<> aromaticBonds(mol.getNumBonds());
   for (const auto bond : mol.bonds()) {
@@ -813,7 +825,7 @@ bool KekulizeIfPossible(RWMol &mol, bool markAtomsBonds,
   }
   bool res = true;
   try {
-    Kekulize(mol, markAtomsBonds, maxBackTracks);
+    Kekulize(mol, markAtomsBonds, canonical, maxBackTracks);
   } catch (const MolSanitizeException &) {
     res = false;
     for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {

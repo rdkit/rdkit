@@ -598,7 +598,7 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   // kekulizations
   operationThatFailed = SANITIZE_KEKULIZE;
   if (sanitizeOps & operationThatFailed) {
-    Kekulize(mol);
+    Kekulize(mol, true, false);
   }
 
   // look for radicals:
@@ -692,7 +692,7 @@ std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
   operation = SANITIZE_KEKULIZE;
   if (sanitizeOps & operation) {
     try {
-      Kekulize(mol);
+      Kekulize(mol, true, false);
     } catch (const MolSanitizeException &e) {
       res.emplace_back(e.copy());
     }
