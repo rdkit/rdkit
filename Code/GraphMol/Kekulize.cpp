@@ -322,8 +322,8 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
       std::vector<int> optsV;
       std::vector<int> wedgedOptsV;
       std::vector<int> nbrs;
-      for (const auto &nbrIdx : boost::make_iterator_range(
-               mol.getAtomNeighbors(mol.getAtomWithIdx(curr)))) {
+      for (auto nbrAtom : mol.atomNeighbors(mol.getAtomWithIdx(curr))) {
+        const auto nbrIdx = static_cast<int>(nbrAtom->getIdx());
         // ignore if the neighbor has already been dealt with before
         if (std::find(done.begin(), done.end(), nbrIdx) != done.end()) {
           continue;
