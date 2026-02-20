@@ -9,7 +9,6 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
-#include <GraphMol/Canon.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/Rings.h>
 #include <GraphMol/SanitException.h>
