@@ -830,6 +830,29 @@ M  END
 )CTAB";
   (void)originalWedges;
   (void)invertedWedges;
+  const std::vector<std::pair<unsigned int, unsigned int>> wedgePairs = {
+      {1, 0}, {4, 3}, {8, 7}, {9, 10}, {5, 11}, {1, 12}};
+
+  auto invertBondDir = [](Bond::BondDir dir) {
+    switch (dir) {
+      case Bond::BEGINWEDGE:
+        return Bond::BEGINDASH;
+      case Bond::BEGINDASH:
+        return Bond::BEGINWEDGE;
+      default:
+        return dir;
+    }
+  };
+
+  ROMol baseMol(*wedgedMol);
+  Chirality::reapplyMolBlockWedging(baseMol);
+
+  auto getBondDirBetween = [](const ROMol &mol, unsigned int a1,
+                              unsigned int a2) {
+    const auto bond = mol.getBondBetweenAtoms(a1, a2);
+    REQUIRE(bond);
+    return bond->getBondDir();
+  };
   SECTION("wedging all within scaffold") {
     auto scaffold = R"CTAB(
      RDKit          2D
@@ -865,29 +888,6 @@ M  END
 M  END
 )CTAB"_ctab;
     REQUIRE(scaffold);
-    const std::vector<std::pair<unsigned int, unsigned int>> wedgePairs = {
-        {1, 0}, {4, 3}, {8, 7}, {9, 10}, {5, 11}, {1, 12}};
-
-    auto invertBondDir = [](Bond::BondDir dir) {
-      switch (dir) {
-        case Bond::BEGINWEDGE:
-          return Bond::BEGINDASH;
-        case Bond::BEGINDASH:
-          return Bond::BEGINWEDGE;
-        default:
-          return dir;
-      }
-    };
-
-    ROMol baseMol(*wedgedMol);
-    Chirality::reapplyMolBlockWedging(baseMol);
-
-    auto getBondDirBetween = [](const ROMol &mol, unsigned int a1,
-                                unsigned int a2) {
-      const auto bond = mol.getBondBetweenAtoms(a1, a2);
-      REQUIRE(bond);
-      return bond->getBondDir();
-    };
     // the "alignOnly" alignment should succeed and preserve molblock wedging
     // (inverted with respect to the original molecule)
     // it should feature a narrow angle between the bridge bonds
@@ -1036,29 +1036,6 @@ M  END
 M  END
 )CTAB"_ctab;
     REQUIRE(scaffold);
-    const std::vector<std::pair<unsigned int, unsigned int>> wedgePairs = {
-        {1, 0}, {4, 3}, {8, 7}, {9, 10}, {5, 11}, {1, 12}};
-
-    auto invertBondDir = [](Bond::BondDir dir) {
-      switch (dir) {
-        case Bond::BEGINWEDGE:
-          return Bond::BEGINDASH;
-        case Bond::BEGINDASH:
-          return Bond::BEGINWEDGE;
-        default:
-          return dir;
-      }
-    };
-
-    ROMol baseMol(*wedgedMol);
-    Chirality::reapplyMolBlockWedging(baseMol);
-
-    auto getBondDirBetween = [](const ROMol &mol, unsigned int a1,
-                                unsigned int a2) {
-      const auto bond = mol.getBondBetweenAtoms(a1, a2);
-      REQUIRE(bond);
-      return bond->getBondDir();
-    };
     // the "alignOnly" alignment should succeed and preserve molblock wedging
     // (inverted with respect to the original molecule)
     // it should feature a narrow angle between the bridge bonds
