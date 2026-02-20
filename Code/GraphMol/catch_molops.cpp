@@ -626,37 +626,36 @@ TEST_CASE("test_manual_atom_bond_subset", "[copyMolSubset]") {
     std::vector<unsigned int> atoms = {};
     std::vector<unsigned int> bonds = {0};
     // this should throw a ValueErrorException
-    REQUIRE_THROWS_AS(copyMolSubset(*m, atoms, bonds),
-		      ValueErrorException);
+    REQUIRE_THROWS_AS(copyMolSubset(*m, atoms, bonds), ValueErrorException);
   }
   {
-    std::vector<unsigned int> atoms = {0,1,2};
+    std::vector<unsigned int> atoms = {0, 1, 2};
     std::vector<unsigned int> bonds = {0};
     auto m2 = copyMolSubset(*m, atoms, bonds);
     CHECK(m2->getNumAtoms() == 3);
     CHECK(m2->getNumBonds() == 1);
   }
   {
-    std::vector<unsigned int> atoms = {0,1,2};
-    std::vector<unsigned int> bonds = {0,1};
+    std::vector<unsigned int> atoms = {0, 1, 2};
+    std::vector<unsigned int> bonds = {0, 1};
     auto m2 = copyMolSubset(*m, atoms, bonds);
     CHECK(m2->getNumAtoms() == 3);
     CHECK(m2->getNumBonds() == 2);
   }
   {
-    std::vector<unsigned int> atoms = {0,1,2};
+    std::vector<unsigned int> atoms = {0, 1, 2};
     std::vector<unsigned int> bonds = {};
     auto m2 = copyMolSubset(*m, atoms, bonds);
     CHECK(m2->getNumAtoms() == 3);
     CHECK(m2->getNumBonds() == 0);
   }
   {
-    std::vector<unsigned int> atoms = {0,1,2,3};
-    std::vector<unsigned int> bonds = {0,1};
+    std::vector<unsigned int> atoms = {0, 1, 2, 3};
+    std::vector<unsigned int> bonds = {0, 1};
     REQUIRE_THROWS_AS(copyMolSubset(*m, atoms, bonds), IndexErrorException);
   }
   {
-    std::vector<unsigned int> atoms = {0,1,2};
+    std::vector<unsigned int> atoms = {0, 1, 2};
     std::vector<unsigned int> bonds = {2};
     REQUIRE_THROWS_AS(copyMolSubset(*m, atoms, bonds), IndexErrorException);
   }
@@ -681,3 +680,94 @@ TEST_CASE("Github #8945") {
     CHECK(MolToSmiles(*m1) == MolToSmiles(*m2));
   }
 }
+
+#ifdef RDK_USE_URF
+TEST_CASE("Test findRingFamilies") {
+  SECTION("basic check") {
+    auto m = R"SMI(c1ccc2c(c1)C3CC3C4CC5CC4CC25)SMI"_smiles;
+    REQUIRE(m);
+
+    MolOps::findRingFamilies(*m);
+
+    auto r = m->getRingInfo();
+    REQUIRE(r);
+
+    REQUIRE(r->areRingFamiliesInitialized());
+
+    auto &atomRingFamilies = r->atomRingFamilies();
+    REQUIRE(atomRingFamilies.size() == 5);
+    CHECK(atomRingFamilies[0] == std::vector<int>{6, 7, 8});
+    CHECK(atomRingFamilies[1] == std::vector<int>{9, 10, 11, 12, 13});
+    CHECK(atomRingFamilies[2] == std::vector<int>{11, 12, 13, 14, 15});
+    CHECK(atomRingFamilies[3] == std::vector<int>{0, 1, 2, 3, 4, 5});
+    CHECK(atomRingFamilies[4] ==
+          std::vector<int>{3, 4, 6, 8, 9, 10, 11, 13, 14, 15});
+
+    auto &bondRingFamilies = r->bondRingFamilies();
+    REQUIRE(bondRingFamilies.size() == 5);
+    CHECK(bondRingFamilies[0] == std::vector<int>{6, 7, 17});
+    CHECK(bondRingFamilies[1] == std::vector<int>{9, 10, 11, 12, 18});
+    CHECK(bondRingFamilies[2] == std::vector<int>{11, 12, 13, 14, 19});
+    CHECK(bondRingFamilies[3] == std::vector<int>{0, 1, 2, 3, 4, 15});
+    CHECK(bondRingFamilies[4] ==
+          std::vector<int>{3, 5, 8, 9, 10, 13, 14, 16, 17, 18, 19});
+  }
+
+  SECTION("With Zero Order Bonds") {
+    // ZOBs should never be considered in rings
+    auto m = R"SMI(C1CCCCC1)SMI"_smiles;
+    REQUIRE(m);
+
+    // Make one bond a ZOB; this breaks the cyclohexane ring
+    m->getBondWithIdx(0)->setBondType(Bond::ZERO);
+
+    MolOps::findRingFamilies(*m);
+
+    auto r = m->getRingInfo();
+    REQUIRE(r);
+
+    REQUIRE(r->areRingFamiliesInitialized());
+    CHECK(r->atomRingFamilies().empty() == true);
+    CHECK(r->bondRingFamilies().empty() == true);
+  }
+
+  SECTION("toggle includeDativeBonds") {
+    auto includeDativeBonds = GENERATE(true, false);
+    CAPTURE(includeDativeBonds);
+
+    auto m = R"SMI(N->1CCN->[Pt]1)SMI"_smiles;
+    REQUIRE(m);
+
+    MolOps::findRingFamilies(*m, includeDativeBonds);
+
+    auto r = m->getRingInfo();
+    REQUIRE(r);
+
+    REQUIRE(r->areRingFamiliesInitialized());
+
+    unsigned int numRings = (includeDativeBonds ? 1 : 0);
+    CHECK(r->atomRingFamilies().size() == numRings);
+    CHECK(r->bondRingFamilies().size() == numRings);
+  }
+
+  SECTION("toggle includeHydrogenBonds") {
+    auto includeHydrogenBonds = GENERATE(true, false);
+    CAPTURE(includeHydrogenBonds);
+
+    auto m = "CC1O[H]O=C(C)C1 |H:4.3|"_smiles;
+    REQUIRE(m);
+
+    constexpr bool includeDativeBonds = false;
+    MolOps::findRingFamilies(*m, includeDativeBonds, includeHydrogenBonds);
+
+    auto r = m->getRingInfo();
+    REQUIRE(r);
+
+    REQUIRE(r->areRingFamiliesInitialized());
+
+    unsigned int numRings = (includeHydrogenBonds ? 1 : 0);
+    CHECK(r->atomRingFamilies().size() == numRings);
+    CHECK(r->bondRingFamilies().size() == numRings);
+  }
+}
+#endif

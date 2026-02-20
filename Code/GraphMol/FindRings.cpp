@@ -1158,7 +1158,8 @@ void fastFindRings(const ROMol &mol) {
 }
 
 #ifdef RDK_USE_URF
-void findRingFamilies(const ROMol &mol) {
+void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
+                      bool includeHydrogenBonds) {
   if (mol.getRingInfo()->isInitialized()) {
     // return if we've done this before
     if (mol.getRingInfo()->areRingFamiliesInitialized()) {
@@ -1170,6 +1171,12 @@ void findRingFamilies(const ROMol &mol) {
 
   RDL_graph *graph = RDL_initNewGraph(mol.getNumAtoms());
   for (auto cbi : mol.bonds()) {
+    if (auto bt = cbi->getBondType();
+        bt == Bond::ZERO || (!includeDativeBonds && isDative(bt)) ||
+        (!includeHydrogenBonds && bt == Bond::HYDROGEN)) {
+      continue;
+    }
+
     RDL_addUEdge(graph, cbi->getBeginAtomIdx(), cbi->getEndAtomIdx());
   }
   RDL_data *urfdata = RDL_calculate(graph);
@@ -1208,7 +1215,8 @@ void findRingFamilies(const ROMol &mol) {
   }
 }
 #else
-void findRingFamilies(const ROMol &mol) {
+void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
+                      bool includeHydrogenBonds) {
   BOOST_LOG(rdErrorLog)
       << "This version of the RDKit was built without URF support" << std::endl;
 }
