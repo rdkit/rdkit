@@ -10,10 +10,6 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rddatastructs_array_API
 
-#ifdef RDK_BUILD_THREADSAFE_SSS
-#include <mutex>
-#endif
-
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <DataStructs/BitVects.h>
@@ -36,20 +32,12 @@ void wrap_realValVect();
 void wrap_sparseIntVect();
 void wrap_FPB();
 
-#ifdef RDK_BUILD_THREADSAFE_SSS
-static std::once_flag s_ds_numpy_init_flag;
-#endif
+struct ds_numpy_init {
+  ds_numpy_init() { rdkit_import_array(); }
+};
 
 static void ds_ensure_numpy() {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-  std::call_once(s_ds_numpy_init_flag, rdkit_import_array);
-#else
-  static bool initialized = false;
-  if (!initialized) {
-    initialized = true;
-    rdkit_import_array();
-  }
-#endif
+  static ds_numpy_init init;
 }
 
 namespace {
