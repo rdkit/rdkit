@@ -757,42 +757,6 @@ TEST_CASE("generate aligned coords and wedging") {
 M  END
 )CTAB"_ctab;
   REQUIRE(wedgedMol);
-  auto originalWedges = R"CTAB(  2  1  1  1
-  2  3  1  0
-  3  4  1  0
-  5  4  1  6
-  5  6  1  0
-  6  7  1  0
-  7  8  1  0
-  9  8  1  1
-  5  9  1  0
-  9 10  1  0
- 10 11  1  1
- 10 12  1  0
-  6 12  1  1
-  2 13  1  0
- 13 14  2  0
- 14 15  1  0
- 15 16  2  0
- 16 17  1  0
- 17 18  2  0
- 13 18  1  0
- 17 19  1  0
- 19 20  1  0
- 20 21  1  0
- 21 22  1  0
- 16 22  1  0
- 23 24  1  0
- 23 25  1  0
- 25 26  1  0
- 24 27  1  0
- 27 26  1  0
- 26 28  1  0
- 24 29  1  0
- 28 29  1  0
- 21 27  1  0
-M  END
-)CTAB";
   auto invertedWedges = R"CTAB(  2  1  1  6
   2  3  1  0
   3  4  1  0
@@ -828,8 +792,6 @@ M  END
  28 29  1  0
  21 27  1  0
 )CTAB";
-  (void)originalWedges;
-  (void)invertedWedges;
   const std::vector<std::pair<unsigned int, unsigned int>> wedgePairs = {
       {1, 0}, {4, 3}, {8, 7}, {9, 10}, {5, 11}, {1, 12}};
 
