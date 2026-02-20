@@ -1,9 +1,5 @@
 add_custom_target(ringdecomposerlib_support ALL)
 
-if(NOT RDK_USE_URF)
-  return()
-endif(NOT RDK_USE_URF)
-
 if(NOT DEFINED URFLIB_DIR)
     set(URFLIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/RingDecomposerLib/src/RingDecomposerLib")
 endif()
@@ -25,7 +21,6 @@ set(urflib_INCLUDE_DIRS ${URFLIB_DIR}
     CACHE STRING "RingDecomposerLib Include Dir" FORCE)
 file(GLOB URFSOURCES "${URFLIB_DIR}/*.c")
 
-#if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32 AND (NOT RDK_INSTALL_STATIC_LIBS)))
 if(WIN32)
     set (ringdecomposerlib_h ${URFLIB_DIR}/RingDecomposerLib.h)
     file(READ ${ringdecomposerlib_h} ringdecomposerlib_h_data)
@@ -35,6 +30,7 @@ if(WIN32)
         file(WRITE ${ringdecomposerlib_h} "${ringdecomposerlib_h_data}")
     endif()
 endif()
+
 rdkit_library(RingDecomposerLib ${URFSOURCES} SHARED)
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32 AND (NOT RDK_INSTALL_STATIC_LIBS)))
     target_compile_definitions(RingDecomposerLib PRIVATE RDKIT_URFLIB_BUILD)

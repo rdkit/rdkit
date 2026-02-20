@@ -7754,7 +7754,6 @@ M  END)CTAB";
   REQUIRE(v86.dotProduct(v16) < -1e-4);
 }
 
-#ifdef RDK_USE_URF
 TEST_CASE("Testing ring family calculation") {
   {
     constexpr const char *smiles = "C(C1C2C3C41)(C2C35)C45";  // cubane
@@ -7799,7 +7798,6 @@ TEST_CASE("Testing ring family calculation") {
     delete m;
   }
 }
-#endif
 
 TEST_CASE("Testing adding coordinates to a terminal atom") {
   auto mol = R"CTAB(

@@ -1157,7 +1157,6 @@ void fastFindRings(const ROMol &mol) {
   FindRings::storeRingsInfo(mol, res);
 }
 
-#ifdef RDK_USE_URF
 void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
                       bool includeHydrogenBonds) {
   if (mol.getRingInfo()->isInitialized()) {
@@ -1214,13 +1213,6 @@ void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
     free(edges);
   }
 }
-#else
-void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
-                      bool includeHydrogenBonds) {
-  BOOST_LOG(rdErrorLog)
-      << "This version of the RDKit was built without URF support" << std::endl;
-}
-#endif
 }  // namespace MolOps
 
 }  // namespace RDKit
