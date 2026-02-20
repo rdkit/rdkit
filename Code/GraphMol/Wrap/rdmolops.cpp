@@ -21,13 +21,21 @@
 namespace python = boost::python;
 using namespace RDKit;
 
+static bool s_rdmolops_numpy_initialized = false;
+
+void rdkit_rdmolops_ensure_numpy() {
+  if (!s_rdmolops_numpy_initialized) {
+    s_rdmolops_numpy_initialized = true;
+    rdkit_import_array();
+  }
+}
+
 void wrap_molops();
 void wrap_chiralityops();
 
 BOOST_PYTHON_MODULE(rdmolops) {
   python::scope().attr("__doc__") =
       "Module containing RDKit functionality for manipulating molecules.";
-  rdkit_import_array();
 
   // ******************************
   // Functions from MolOps

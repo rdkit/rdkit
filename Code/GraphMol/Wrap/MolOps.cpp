@@ -501,6 +501,7 @@ VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds) {
 PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
                             bool useAtomWts = false, bool force = false,
                             const char *prefix = nullptr) {
+  rdkit_rdmolops_ensure_numpy();
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -519,6 +520,7 @@ PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
 PyObject *get3DDistanceMatrix(ROMol &mol, int confId = -1,
                               bool useAtomWts = false, bool force = false,
                               const char *prefix = nullptr) {
+  rdkit_rdmolops_ensure_numpy();
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -540,6 +542,7 @@ PyObject *get3DDistanceMatrix(ROMol &mol, int confId = -1,
 
 PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
                              bool force = false, const char *prefix = nullptr) {
+  rdkit_rdmolops_ensure_numpy();
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;

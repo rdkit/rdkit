@@ -26,6 +26,17 @@
 namespace python = boost::python;
 using namespace RDKit;
 
+static bool s_rdchem_numpy_initialized = false;
+
+void rdkit_rdchem_ensure_numpy() {
+  if (!s_rdchem_numpy_initialized) {
+    s_rdchem_numpy_initialized = true;
+    const bool register_scalar_converters = false;
+    boost::python::numpy::initialize(register_scalar_converters);
+    rdkit_import_array();
+  }
+}
+
 namespace RDKit {
 void tossit() { throw IndexErrorException(1); }
 }  // namespace RDKit
@@ -102,12 +113,9 @@ T *next_ptr(O &self) {
 BOOST_PYTHON_MODULE(rdchem) {
   python::scope().attr("__doc__") =
       "Module containing the core chemistry functionality of the RDKit";
-  const bool register_scalar_converters = false;
-  boost::python::numpy::initialize(register_scalar_converters);
   RegisterListConverter<RDKit::Atom *>();
   RegisterListConverter<RDKit::Bond *>();
   RegisterListConverter<RDKit::CONFORMER_SPTR>();
-  rdkit_import_array();
 
   // this is one of those parts where I think I wish that I knew how to do
   // template meta-programming

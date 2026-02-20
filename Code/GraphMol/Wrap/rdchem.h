@@ -18,4 +18,6 @@ class ConformerException;
 }
 void rdExceptionTranslator(RDKit::ConformerException const &x);
 
+void rdkit_rdchem_ensure_numpy();
+
 #endif

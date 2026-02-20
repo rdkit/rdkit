@@ -32,9 +32,19 @@ void wrap_realValVect();
 void wrap_sparseIntVect();
 void wrap_FPB();
 
+static bool s_ds_numpy_initialized = false;
+
+static void ds_ensure_numpy() {
+  if (!s_ds_numpy_initialized) {
+    s_ds_numpy_initialized = true;
+    rdkit_import_array();
+  }
+}
+
 namespace {
 template <typename T, typename U>
 void converter(const T &v, python::object destArray, U func) {
+  ds_ensure_numpy();
   if (!PyArray_Check(destArray.ptr())) {
     throw_value_error("Expecting a Numeric array object");
   }
@@ -64,7 +74,6 @@ void convertToDoubleNumpyArray(const T &v, python::object destArray) {
 }
 
 BOOST_PYTHON_MODULE(cDataStructs) {
-  rdkit_import_array();
   python::scope().attr("__doc__") =
       "Module containing an assortment of functionality for basic data "
       "structures.\n"
