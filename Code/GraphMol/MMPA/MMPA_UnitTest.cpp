@@ -730,7 +730,7 @@ void testGithub8569() {
       });
   std::vector<std::pair<std::string, std::string>> expected = {
       {"null", "C/C=C/C=C/[*:1].C[*:1]"},
-      {"C(=C/[*:2])\\[*:1]", "C/C=C/[*:1].C[*:2]"},
+      {"C(=C\\[*:2])/[*:1]", "C/C=C/[*:1].C[*:2]"},
       {"C(/C=C/[*:2])=C\\[*:1]", "C[*:1].C[*:2]"},
       {"null", "C/C=C/[*:1].C/C=C/[*:1]"},
   };
