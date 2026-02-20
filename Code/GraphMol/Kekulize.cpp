@@ -241,13 +241,16 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
   };
 
   // Prefer starting traversal at atoms which are the *end* of wedged/dashed
-  // bonds. This heuristic helps avoid assigning double bonds to wedged bonds.
+  // bonds. Wedged bonds encode stereo and must remain single bonds; by starting
+  // the kekulization walk at wedge-end atoms we assign their double bond to a
+  // *different* neighbor first, giving the algorithm more freedom to keep the
+  // wedged bond single.
   boost::dynamic_bitset<> wedgeEndAtoms(mol.getNumAtoms());
   for (const auto bond : mol.bonds()) {
     if (bond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
         bond->getBondDir() == Bond::BondDir::BEGINDASH) {
       const auto endIdx = bond->getEndAtomIdx();
-      if (endIdx < wedgeEndAtoms.size() && inAllAtms.test(endIdx)) {
+      if (inAllAtms.test(endIdx)) {
         wedgeEndAtoms.set(endIdx);
       }
     }
