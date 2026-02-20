@@ -1871,7 +1871,7 @@ Kekule SMILES
 
 .. testoutput::
 
-   CN1C=CC=C1NC1=NC=CC=C1
+   CN1C=CC=C1NC1=CC=CC=N1
 
 Isomeric SMILES without isotopes
 =================================

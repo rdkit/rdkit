@@ -579,9 +579,9 @@ This can be changed with the :py:func:`rdkit.Chem.rdmolops.Kekulize` function:
   rdkit.Chem.rdchem.BondType.AROMATIC
   >>> Chem.Kekulize(m)
   >>> m.GetBondWithIdx(0).GetBondType()
-  rdkit.Chem.rdchem.BondType.DOUBLE
-  >>> m.GetBondWithIdx(1).GetBondType()
   rdkit.Chem.rdchem.BondType.SINGLE
+  >>> m.GetBondWithIdx(1).GetBondType()
+  rdkit.Chem.rdchem.BondType.DOUBLE
 
 By default, the bonds are still marked as being aromatic:
 
