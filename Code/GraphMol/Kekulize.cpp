@@ -256,6 +256,19 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
     }
   }
 
+  // Pre-sort allAtms: wedge-end atoms first, then by canonical rank.
+  // This way the first not-yet-done atom is always the best starting point.
+  INT_VECT sortedAtms(allAtms);
+  std::sort(sortedAtms.begin(), sortedAtms.end(),
+            [&wedgeEndAtoms, &lessByRank](int a, int b) {
+              const bool wa = wedgeEndAtoms.test(a);
+              const bool wb = wedgeEndAtoms.test(b);
+              if (wa != wb) {
+                return wa;  // wedge-end atoms come first
+              }
+              return lessByRank(a, b);
+            });
+
   // ok the algorithm goes something like this
   // - start with an atom that has been marked aromatic before
   // - check if it can have a double bond
@@ -275,23 +288,17 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
   int curr = -1;
   INT_DEQUE btmoves;
   unsigned int numBT = 0;  // number of back tracks so far
-  while ((done.size() < allAtms.size()) || !astack.empty()) {
+  while ((done.size() < sortedAtms.size()) || !astack.empty()) {
     // pick a curr atom to work with
     if (astack.size() > 0) {
       curr = astack.front();
       astack.pop_front();
     } else {
       curr = -1;
-      bool currIsWedgeEnd = false;
-      for (int allAtm : allAtms) {
-        if (std::find(done.begin(), done.end(), allAtm) != done.end()) {
-          continue;
-        }
-        const bool isWedgeEnd = wedgeEndAtoms.test(allAtm);
-        if (curr < 0 || (isWedgeEnd && !currIsWedgeEnd) ||
-            (isWedgeEnd == currIsWedgeEnd && lessByRank(allAtm, curr))) {
+      for (int allAtm : sortedAtms) {
+        if (std::find(done.begin(), done.end(), allAtm) == done.end()) {
           curr = allAtm;
-          currIsWedgeEnd = isWedgeEnd;
+          break;
         }
       }
     }
