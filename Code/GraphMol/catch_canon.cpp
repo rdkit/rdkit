@@ -1213,7 +1213,7 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](CO)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
        true, true},  // #8089
       {R"smi(COC(=O)C1=C/c2cc3c(cc2-c2c(cc(OC)c(OC)c2OC)\C=C/1C(=O)OC)OCO3)smi",
-       true, true},                                         // #8089
+       true, true},                                           // #8089
       {R"smi(N#C[P@@H]/C=C(/P=O)[P@@H]C#N)smi", true, true},  // #8089
       {R"smi(C1=C\C/C=C(\C)CC[C@H]2C(C)(C)[C@@H](\C=C/1)CC[C@]2(C)O)smi", true,
        true},                                                     // #8089
@@ -1340,8 +1340,8 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(O[C@H]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},  // #7759
       {R"smi(N[C@]1(C(=O)O)[C@@H]2C[C@H]3C[C@@H](C2)C[C@H]1C3)smi", false,
        true},  // #8862
-      {R"smi(C/C=C1/C(=C\Cl)/C(=C\F)/C(=C\N)/C/1=C\O)smi", true,
-       true},  // #8965
+      {R"smi(C/C=C1/C(=C\Cl)/C(=C\F)/C(=C\N)/C/1=C\O)smi", false,
+       false},  // #8965
   };
 
   auto count_features = [](RWMol m) {
