@@ -16,6 +16,8 @@
 #include <algorithm>
 #include <cstring>
 #include <cassert>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 // #define VERBOSE_CANON 1
 
@@ -152,10 +154,12 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
   PRECONDITION(atoms, "bad pointer");
   RingInfo *ringInfo = mol.getRingInfo();
 
-  std::vector<char> visited(nAtoms);
-  std::vector<char> lastLevelNbrs(nAtoms);
-  std::vector<char> currentLevelNbrs(nAtoms);
-  std::vector<int> revisitedNeighbors(nAtoms);
+  // Use hash containers to avoid O(nAtoms) scans and clears
+  std::unordered_set<int> visited;
+  std::unordered_set<int> lastLevelNbrs;
+  std::unordered_set<int> currentLevelNbrs;
+  std::unordered_map<int, int> revisitedNeighbors;
+
   for (unsigned idx = 0; idx < nAtoms; ++idx) {
     const Canon::canon_atom &a = atoms[idx];
     if (!ringInfo->isInitialized() ||
@@ -168,14 +172,14 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
     atoms[idx].neighborNum.reserve(1000);
     atoms[idx].revistedNeighbors.assign(1000, 0);
 
-    std::fill(visited.begin(), visited.end(), 0);
-    std::fill(lastLevelNbrs.begin(), lastLevelNbrs.end(), 0);
-    std::fill(currentLevelNbrs.begin(), currentLevelNbrs.end(), 0);
-    std::fill(revisitedNeighbors.begin(), revisitedNeighbors.end(), 0);
+    visited.clear();
+    lastLevelNbrs.clear();
+
     std::vector<int> nextLevelNbrs;
     while (!neighbors.empty()) {
       unsigned int numLevelNbrs = 0;
       nextLevelNbrs.resize(0);
+      currentLevelNbrs.clear();
       while (!neighbors.empty()) {
         int nidx = neighbors.front();
         neighbors.pop_front();
@@ -184,42 +188,34 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
             ringInfo->numAtomRings(atom.atom->getIdx()) < 1) {
           continue;
         }
-        lastLevelNbrs[nidx] = 1;
-        visited[nidx] = 1;
+        lastLevelNbrs.insert(nidx);
+        visited.insert(nidx);
         for (unsigned int j = 0; j < atom.degree; j++) {
           int iidx = atom.nbrIds[j];
-          if (!visited[iidx]) {
-            currentLevelNbrs[iidx] = 1;
+          if (visited.find(iidx) == visited.end()) {
+            currentLevelNbrs.insert(iidx);
             numLevelNbrs++;
-            visited[iidx] = 1;
+            visited.insert(iidx);
             nextLevelNbrs.push_back(iidx);
           }
         }
       }
-      for (unsigned i = 0; i < nAtoms; ++i) {
-        if (currentLevelNbrs[i]) {
-          const Canon::canon_atom &natom = atoms[i];
-          for (unsigned int k = 0; k < natom.degree; k++) {
-            int jidx = natom.nbrIds[k];
-            if (currentLevelNbrs[jidx] || lastLevelNbrs[jidx]) {
-              revisitedNeighbors[jidx] += 1;
-            }
+      revisitedNeighbors.clear();
+      for (int i : currentLevelNbrs) {
+        const Canon::canon_atom &natom = atoms[i];
+        for (unsigned int k = 0; k < natom.degree; k++) {
+          int jidx = natom.nbrIds[k];
+          if (currentLevelNbrs.count(jidx) || lastLevelNbrs.count(jidx)) {
+            revisitedNeighbors[jidx] += 1;
           }
         }
       }
-      std::fill(lastLevelNbrs.begin(), lastLevelNbrs.end(), 0);
-      for (unsigned i = 0; i < nAtoms; ++i) {
-        if (currentLevelNbrs[i]) {
-          lastLevelNbrs[i] = 1;
-        }
-      }
-      std::fill(currentLevelNbrs.begin(), currentLevelNbrs.end(), 0);
+      lastLevelNbrs = currentLevelNbrs;
+
       std::vector<int> tmp;
       tmp.reserve(30);
-      for (unsigned i = 0; i < nAtoms; ++i) {
-        if (revisitedNeighbors[i] > 0) {
-          tmp.push_back(revisitedNeighbors[i]);
-        }
+      for (const auto &pair : revisitedNeighbors) {
+        tmp.push_back(pair.second);
       }
       std::sort(tmp.begin(), tmp.end());
       tmp.push_back(-1);
@@ -231,7 +227,6 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
         atoms[idx].revistedNeighbors[currentRNIdx] = i;
         currentRNIdx++;
       }
-      std::fill(revisitedNeighbors.begin(), revisitedNeighbors.end(), 0);
 
       atoms[idx].neighborNum.push_back(numLevelNbrs);
       atoms[idx].neighborNum.push_back(-1);
