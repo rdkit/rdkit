@@ -58,6 +58,7 @@ class TestLazyNumpy(unittest.TestCase):
     result = _run_snippet("""\
       import sys
       from rdkit import Chem
+      from rdkit.Chem import inchi
 
       mol = Chem.MolFromSmiles("CCO")
       assert mol is not None
@@ -76,9 +77,10 @@ class TestLazyNumpy(unittest.TestCase):
       mb = Chem.MolToMolBlock(mol)
       assert "V2000" in mb
 
-      # InChI round-trip
-      inchi = Chem.MolToInchi(mol)
-      assert inchi.startswith("InChI=")
+      if inchi.INCHI_AVAILABLE:
+        # InChI round-trip
+        inchi_str = inchi.MolToInchi(mol)
+        assert inchi_str.startswith("InChI=")
 
       assert "numpy" not in sys.modules, "numpy crept in during mol ops"
     """)
