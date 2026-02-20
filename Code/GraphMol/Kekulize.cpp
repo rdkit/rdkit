@@ -370,10 +370,8 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
         }  // end of curr atoms can have a double bond
       }  // end of looping over neighbors
 
-      // Deterministic option ordering: prefer lower-ranked neighbors,
-      // but keep wedged/dashed bonds at the end.
-      std::sort(optsV.begin(), optsV.end(), lessByRank);
-      std::sort(wedgedOptsV.begin(), wedgedOptsV.end(), lessByRank);
+      // Non-wedged options first, then wedged — both already in rank order
+      // because nbrs was pre-sorted by lessByRank above.
       for (int v : optsV) {
         opts.push_back(v);
       }
