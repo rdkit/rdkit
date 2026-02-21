@@ -308,7 +308,7 @@ class TestOsmordred(unittest.TestCase):
 
     actuals_by_mol: Dict[str, Dict[str, float]] = {}
     dropped = []
-    for mol in Chem.SDMolSupplier(str(sdf_path), removeHs=False):
+    for mol in Chem.SDMolSupplier(str(sdf_path), removeHs=True):
       if mol is None:
         continue
       name = mol.GetProp("_Name")
@@ -326,10 +326,14 @@ class TestOsmordred(unittest.TestCase):
 
     yaml_paths = sorted(data_dir.rglob("*.yaml"))
     assert yaml_paths, f"No YAML files found under {data_dir}"
-
+    from collections import defaultdict
+    
     checked = 0
     skipped_missing = 0
     failed = []
+    passes = defaultdict(int)
+    failures = defaultdict(int)
+    
     for yaml_path in yaml_paths:
       with yaml_path.open("r", encoding="utf-8") as handle:
         tests = yaml.safe_load(handle) or []
@@ -369,10 +373,15 @@ class TestOsmordred(unittest.TestCase):
             else:
               if abs(desired-actual) > 0.05:
                 failed.append(f"FAILED: {dname} of {mname} {actual=} {desired=} ({yaml_path})")
+                failures[dname] += 1
                 continue
               print(f"PASSED: {dname} of {mname} {actual=} {desired=} ({yaml_path})")
+              passes[dname] += 1
               #assert_almost_equal(actual, desired, decimal=digit, err_msg=f"{dname} of {mname} ({yaml_path})")
 
+    for name in sorted(set(list(passes) + list(failures))):
+      print(f"{name} passes: {passes[name]} failures: {failures[name]}")
+      
     assert not failed, "\n".join(failed)
     assert checked > 0, "No YAML reference entries overlapped with Osmordred descriptor names"
     assert checked >= skipped_missing, (
