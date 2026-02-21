@@ -10,10 +10,10 @@
 
 #include <ranges>
 
-#include <../External/pubchem_shape/PubChemShape.hpp>
 #include <Geometry/Transform3D.h>
 #include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
+#include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h>
@@ -35,10 +35,10 @@ SynthonSpaceShapeSearcher::SynthonSpaceShapeSearcher(
 
 bool SynthonSpaceShapeSearcher::fragMatchedSynthon(
     const void *frag, const void *synthon,
-    std::tuple<float, float, unsigned int> &sim) const {
+    std::pair<double, unsigned int> &sim) const {
   auto it = d_fragSynthonSims.find(std::make_pair(frag, synthon));
   if (it == d_fragSynthonSims.end()) {
-    sim = std::make_tuple(-1.0, -1.0, 0);
+    sim = std::make_pair(-1.0, 0);
     return false;
   }
   sim = it->second;
@@ -50,7 +50,7 @@ namespace {
 // Take the fragged mol ShapeSets and flag all those synthons that have a
 // fragment as a similarity match.
 std::vector<std::vector<size_t>> getHitSynthons(
-    const std::vector<SearchShapeInput *> &fragShapes,
+    const std::vector<GaussianShape::SearchShapeInput *> &fragShapes,
     const double similarityCutoff, const SynthonSet &reaction,
     const std::vector<unsigned int> &synthonSetOrder,
     const SynthonSpaceShapeSearcher &shapeSearcher) {
@@ -77,8 +77,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
   for (const auto &synthonSet : reaction.getSynthons()) {
     synthonsToUse.emplace_back(synthonSet.size());
   }
-  std::vector<float> matrix(12, 0.0);
-  std::tuple<float, float, unsigned int> sim;
+  std::pair<double, unsigned int> sim;
   for (size_t i = 0; i < synthonSetOrder.size(); i++) {
     const auto fragNum = fragOrders[i].first;
     const auto &synthons = reaction.getSynthons()[synthonSetOrder[fragNum]];
@@ -89,8 +88,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
     // search space as is done with fingerprints and Rascal similarity.
     // We just need to plough through them in order.
     for (size_t j = 0; j < synthons.size(); j++) {
-      if (!synthons[j].second->getShapes() ||
-          synthons[j].second->getShapes()->hasNoShapes()) {
+      if (!synthons[j].second->getShapes()) {
         continue;
       }
       if (shapeSearcher.hasPrecomputedSims()) {
@@ -103,13 +101,12 @@ std::vector<std::vector<size_t>> getHitSynthons(
         }
       } else {
         unsigned int bestRefConf, bestFitConf;
-        if (auto csim = bestSimilarity(
-                *fragShapes[fragNum], *synthons[j].second->getShapes(), matrix,
-                bestRefConf, bestFitConf, similarityCutoff);
-            csim.first + csim.second >= similarityCutoff) {
+        if (auto csim = fragShapes[fragNum]->bestSimilarity(
+                *synthons[j].second->getShapes(), bestRefConf, bestFitConf,
+                similarityCutoff);
+            csim >= similarityCutoff) {
           synthonsToUse[synthonSetOrder[fragNum]][j] = true;
-          fragSims[synthonSetOrder[fragNum]].emplace_back(
-              j, csim.first + csim.second);
+          fragSims[synthonSetOrder[fragNum]].emplace_back(j, csim);
           fragMatched = true;
         }
       }
@@ -161,7 +158,7 @@ SynthonSpaceShapeSearcher::searchFragSet(
   }
 
   // Collect the ShapeSets for the fragSet
-  std::vector<SearchShapeInput *> fragShapes;
+  std::vector<GaussianShape::SearchShapeInput *> fragShapes;
   fragShapes.reserve(fragSet.size());
   for (auto &frag : fragSet) {
     auto shape = getFragShape(frag.get());
@@ -217,9 +214,8 @@ SynthonSpaceShapeSearcher::searchFragSet(
 }
 
 namespace {
-std::unique_ptr<SearchShapeInput> generateShapes(const ROMol &queryConfs,
-                                                 const ROMol &frag,
-                                                 double pruneThreshold) {
+std::unique_ptr<GaussianShape::SearchShapeInput> generateShapes(
+    const ROMol &queryConfs, const ROMol &frag, double pruneThreshold) {
   // The fragSets molecules will have their atoms labelled with
   // ORIG_IDX apart from the dummy atoms, but we need coords
   // for them, too.  They are normally copied from the atom at
@@ -262,11 +258,12 @@ std::unique_ptr<SearchShapeInput> generateShapes(const ROMol &queryConfs,
 
   // Build shapes with and without dummies to get a value for the dummy
   // atom volume in each conformation.
-  ShapeInputOptions opts;
+  GaussianShape::ShapeInputOptions opts;
   opts.atomSubset = fragAtoms;
   opts.atomRadii = dummyRadii;
-  opts.notColorAtoms = notColorAtoms;
-  auto shapes = PrepareConformers(queryConfs, opts, pruneThreshold);
+  // opts.notColorAtoms = notColorAtoms;
+  auto shapes = std::make_unique<GaussianShape::SearchShapeInput>(
+      queryConfs, pruneThreshold, opts);
   return shapes;
 }
 
@@ -274,7 +271,7 @@ void generateSomeShapes(
     const std::vector<ROMol *> &fragsForShape, unsigned int beginFrag,
     unsigned int endFrag, const ROMol &queryMolHs, double pruneThreshold,
     const TimePoint *endTime,
-    std::vector<std::unique_ptr<SearchShapeInput>> &fragShapes) {
+    std::vector<std::unique_ptr<GaussianShape::SearchShapeInput>> &fragShapes) {
   if (beginFrag >= fragsForShape.size()) {
     return;
   }
@@ -330,8 +327,9 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
   BOOST_LOG(rdInfoLog) << "Generating query shapes for "
                        << dp_queryConfs->getNumConformers() << " conformers of "
                        << MolToSmiles(*dp_queryConfs) << std::endl;
-  ShapeInputOptions opts;
-  dp_queryShapes = PrepareConformers(*dp_queryConfs, opts, 1.9);
+  GaussianShape::ShapeInputOptions opts;
+  dp_queryShapes = std::make_unique<GaussianShape::SearchShapeInput>(
+      *dp_queryConfs, 1.9, opts);
   dp_queryShapes->setActiveShape(0);
 
   // Make a map of the unique SMILES strings for the fragments, keeping
@@ -419,11 +417,12 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
 namespace {
 // Process a chunk of the shape->synthon similarity calculations.
 void computeSomeFragSynthonSims(
-    const std::vector<std::pair<SearchShapeInput *, Synthon *>> &toDo,
+    const std::vector<std::pair<GaussianShape::SearchShapeInput *, Synthon *>>
+        &toDo,
     std::atomic<std::int64_t> &nextToDo, float threshold, std::mutex &mtx,
     const TimePoint *endTime, FragSynthonSims &fragSynthonSims,
     std::unique_ptr<ProgressBar> &pbar) {
-  SearchShapeInput *fragShape;
+  GaussianShape::SearchShapeInput *fragShape;
   Synthon *synthon;
   std::vector<float> matrix(12, 0.0);
   int numProgs = 1000;
@@ -445,16 +444,15 @@ void computeSomeFragSynthonSims(
     }
     fragShape = toDo[thisPair].first;
     synthon = toDo[thisPair].second;
-    if (synthon->getShapes() && !synthon->getShapes()->hasNoShapes()) {
+    if (synthon->getShapes()) {
       unsigned int bestRefConf, bestFitConf;
-      const auto sim =
-          bestSimilarity(*fragShape, *synthon->getShapes().get(), matrix,
-                         bestFitConf, bestRefConf, threshold);
-      if (sim.first + sim.second >= threshold) {
+      const auto sim = fragShape->bestSimilarity(
+          *synthon->getShapes().get(), bestFitConf, bestRefConf, threshold);
+      if (sim >= threshold) {
         std::pair<const void *, const void *> p{fragShape, synthon};
         std::unique_lock lock1{mtx};
-        fragSynthonSims.insert(std::make_pair(
-            p, std::make_tuple(sim.first, sim.second, bestRefConf)));
+        fragSynthonSims.insert(
+            std::make_pair(p, std::make_pair(sim, bestRefConf)));
       }
       if (pbar) {
         --numProgs;
@@ -470,7 +468,8 @@ void computeSomeFragSynthonSims(
 // Calculate shape->synthon similarities for this block of the full search
 // space, in parallel if required.
 void processShapeSynthonList(
-    const std::vector<std::pair<SearchShapeInput *, Synthon *>> &toDo,
+    const std::vector<std::pair<GaussianShape::SearchShapeInput *, Synthon *>>
+        &toDo,
     float threshold, const TimePoint *endTime, FragSynthonSims &fragSynthonSims,
     std::unique_ptr<ProgressBar> &pbar, unsigned int numThreadsToUse) {
   std::atomic<std::int64_t> nextToDo = -1;
@@ -518,7 +517,7 @@ bool SynthonSpaceShapeSearcher::computeFragSynthonSims(
               << std::endl;
   }
   const auto numThreadsToUse = getNumThreadsToUse(getParams().numThreads);
-  std::vector<std::pair<SearchShapeInput *, Synthon *>> toDo;
+  std::vector<std::pair<GaussianShape::SearchShapeInput *, Synthon *>> toDo;
   toDo.reserve(2500000);
   for (size_t i = 0U; i < d_fragShapesPool.size(); ++i) {
     for (size_t j = 0U; j < getSpace().d_synthonPool.size(); ++j) {
@@ -563,7 +562,7 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
     // the shape and colour tanimotos already calculated and use them to
     // calculate an approximation of the total similarities.
     const auto hs = dynamic_cast<const SynthonSpaceShapeHitSet *>(hitset);
-    std::tuple<float, float, unsigned int> sim;
+    std::pair<double, unsigned int> sim;
     double totShapeOv = 0.0;
     double totColourOv = 0.0;
     double totSynthVol = 0.0;
@@ -587,15 +586,15 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
 
       // Get the volume of the synthon for the shape conformer that gave
       // the similarity values.
-      double synthVol =
-          shapes->sovs[std::get<2>(sim)] - shapes->dummyVols[std::get<2>(sim)];
-      double synthColourVol = shapes->sofs[std::get<2>(sim)];
+      double synthVol = shapes->getShapeVolume(sim.second) -
+                        shapes->getDummyVolume(sim.second);
+      double synthColourVol = shapes->getColorVolume(sim.second);
       totSynthVol += synthVol;
       totSynthColourVol += synthColourVol;
 
       // There will be only shape for the fragment.
-      auto fragVol = fragShape->sovs.front() - fragShape->dummyVols.front();
-      auto fragColourVol = fragShape->sofs.front();
+      auto fragVol = fragShape->getShapeVolume() - fragShape->getDummyVolume(0);
+      auto fragColourVol = fragShape->getColorVolume();
       totFragVol += fragVol;
       totFragColourVol += fragColourVol;
       double shapeOv =
@@ -615,10 +614,10 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
       const auto &synth =
           hs->synthonsToUse[hs->synthonSetOrder[i]][synthNums[i]].second;
       const auto &shapes = synth->getShapes();
-      double synthVol =
-          shapes->sovs[std::get<2>(sim)] - shapes->dummyVols[std::get<2>(sim)];
+      double synthVol = shapes->getShapeVolume(sim.second) -
+                        shapes->getDummyVolume(sim.second);
       totSynthVol += synthVol;
-      double synthColourVol = shapes->sofs.front();
+      double synthColourVol = shapes->getColorVolume();
       totSynthColourVol += synthColourVol;
     }
     double st = totShapeOv / (totSynthVol + totFragVol - totShapeOv);
@@ -636,16 +635,16 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
     for (size_t i = 0; i < synthNums.size(); i++) {
       const auto &synth = hitset->synthonsToUse[i][synthNums[i]].second;
       const auto &shapes = synth->getShapes();
-      if (!shapes || shapes->hasNoShapes()) {
+      if (!shapes) {
         return false;
       }
-      maxVol += shapes->sovs.front() - shapes->dummyVols.front();
-      featureVol += shapes->sofs.front();
+      maxVol += shapes->getShapeVolume(0) - shapes->getDummyVolume(0);
+      featureVol += shapes->getColorVolume(0);
     }
-    double maxSt = std::min(maxVol, dp_queryShapes->sovs.front()) /
-                   std::max(maxVol, dp_queryShapes->sovs.front());
-    double maxCt = std::min(featureVol, dp_queryShapes->sofs.front()) /
-                   std::max(featureVol, dp_queryShapes->sofs.front());
+    double maxSt = std::min(maxVol, dp_queryShapes->getShapeVolume(0)) /
+                   std::max(maxVol, dp_queryShapes->getShapeVolume(0));
+    double maxCt = std::min(featureVol, dp_queryShapes->getColorVolume(0)) /
+                   std::max(featureVol, dp_queryShapes->getColorVolume(0));
     approxSim = maxSt + maxCt;
   }
   return approxSim;
@@ -654,15 +653,14 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
 namespace {
 // Update the hit molecule to the overlay and score represented by
 // matrix and sim.
-void finaliseHit(const std::unique_ptr<RWMol> &queryConfs,
-                 const std::unique_ptr<SearchShapeInput> &queryShapes,
-                 unsigned int queryConfNum,
-                 const std::unique_ptr<RWMol> &allHitConfs,
-                 const std::unique_ptr<SearchShapeInput> &allHitShapes,
-                 unsigned int hitConfNum, const std::vector<float> &matrix,
-                 double shape_tan, double color_tan, const std::string &rxnId,
-                 const std::vector<const std::string *> &synthNames,
-                 ROMol &hit) {
+void finaliseHit(
+    const std::unique_ptr<RWMol> &queryConfs,
+    const std::unique_ptr<GaussianShape::SearchShapeInput> &queryShapes,
+    unsigned int queryConfNum, const std::unique_ptr<RWMol> &allHitConfs,
+    const std::unique_ptr<GaussianShape::SearchShapeInput> &allHitShapes,
+    unsigned int hitConfNum, const std::vector<float> &matrix, double shape_tan,
+    double color_tan, const std::string &rxnId,
+    const std::vector<const std::string *> &synthNames, ROMol &hit) {
 #if 0
   hit.setProp<double>("Similarity", shape_tan + color_tan);
   hit.setProp<double>("ShapeTanimoto", shape_tan);
@@ -701,28 +699,29 @@ bool SynthonSpaceShapeSearcher::verifyHit(
                                         getParams().stereoEnumOpts, dgParams);
   bool foundHit = false;
   double bestSim = getParams().similarityCutoff;
-  ShapeInputOptions opts;
+  GaussianShape::ShapeInputOptions opts;
 
   std::vector<float> matrix(12, 0.0);
   for (auto &isomer : hitConfs) {
-    auto hitShapes = PrepareConformers(*isomer, opts, 1.9);
+    auto hitShapes =
+        std::make_unique<GaussianShape::SearchShapeInput>(*isomer, 1.9, opts);
     for (size_t i = 0U; i < dp_queryShapes->getNumShapes(); ++i) {
       dp_queryShapes->setActiveShape(i);
       for (unsigned int j = 0u; j < hitShapes->getNumShapes(); ++j) {
         hitShapes->setActiveShape(j);
-        auto [st, ct] = AlignShape(*dp_queryShapes, *hitShapes, matrix);
-        double sim = st + ct;
+        auto scores = GaussianShape::AlignShape(*dp_queryShapes, *hitShapes);
+        double sim = scores[0];
         bool finalisedHit = false;
         if (sim > getBestSimilaritySoFar()) {
           finaliseHit(dp_queryConfs, dp_queryShapes, i, isomer, hitShapes, j,
-                      matrix, st, ct, rxnId, synthNames, hit);
+                      matrix, scores[1], scores[2], rxnId, synthNames, hit);
           finalisedHit = true;
           updateBestHitSoFar(hit, sim);
         }
         if (sim >= bestSim) {
           if (!finalisedHit) {
             finaliseHit(dp_queryConfs, dp_queryShapes, i, isomer, hitShapes, j,
-                        matrix, st, ct, rxnId, synthNames, hit);
+                        matrix, scores[1], scores[2], rxnId, synthNames, hit);
           }
           // If we're only interested in whether there's a shape match, and
           // not in finding the best shape, we're done.
@@ -730,7 +729,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
             return true;
           }
           foundHit = true;
-          bestSim = st + ct;
+          bestSim = scores[0];
         }
       }
     }
@@ -775,7 +774,7 @@ void SynthonSpaceShapeSearcher::processToTrySet(
   makeHitsFromToTry(toTry, endTime, results);
 }
 
-SearchShapeInput *SynthonSpaceShapeSearcher::getFragShape(
+GaussianShape::SearchShapeInput *SynthonSpaceShapeSearcher::getFragShape(
     const void *frag) const {
   std::pair<const void *, ShapeSet *> tmp{frag, nullptr};
   const auto it = std::ranges::lower_bound(

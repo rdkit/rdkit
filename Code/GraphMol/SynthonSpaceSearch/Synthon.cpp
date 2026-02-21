@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include <../External/pubchem_shape/PubChemShape.hpp>
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
@@ -127,7 +126,8 @@ void Synthon::setFP(std::unique_ptr<ExplicitBitVect> fp) {
   dp_FP = std::move(fp);
 }
 
-void Synthon::setShapes(std::unique_ptr<SearchShapeInput> shape) {
+void Synthon::setShapes(
+    std::unique_ptr<GaussianShape::SearchShapeInput> shape) {
   dp_shapes = std::move(shape);
 }
 
@@ -139,7 +139,8 @@ void Synthon::updateMaxSynthonSetSize(unsigned int newVal) {
 
 void Synthon::clearShapes() { dp_shapes.reset(); }
 
-const std::unique_ptr<SearchShapeInput> &Synthon::getShapes() const {
+const std::unique_ptr<GaussianShape::SearchShapeInput> &Synthon::getShapes()
+    const {
   return dp_shapes;
 }
 
@@ -166,8 +167,10 @@ void Synthon::writeToDBStream(std::ostream &os) const {
   if (dp_shapes) {
     streamWrite(os, true);
     auto pickle = dp_shapes->toString();
+    std::cout << "writing shapes : " << pickle << std::endl;
     streamWrite(os, pickle);
   } else {
+    std::cout << "no shapes to write" << std::endl;
     streamWrite(os, false);
   }
 }
@@ -191,9 +194,9 @@ void Synthon::readFromDBStream(std::istream &is, const std::uint32_t version) {
   bool haveFP = false;
   streamRead(is, haveFP);
   if (haveFP) {
-    std::string pickle;
-    streamRead(is, pickle, 0);
-    dp_FP = std::make_unique<ExplicitBitVect>(pickle);
+    std::string fppickle;
+    streamRead(is, fppickle, 0);
+    dp_FP = std::make_unique<ExplicitBitVect>(fppickle);
   }
   if (version > 3000) {
     streamRead(is, d_numDummies);
@@ -203,13 +206,15 @@ void Synthon::readFromDBStream(std::istream &is, const std::uint32_t version) {
   } else {
     calcProperties();
   }
+  std::cout << "properties" << std::endl;
   if (version > 3010) {
     bool haveShapes = false;
     streamRead(is, haveShapes);
     if (haveShapes) {
-      std::string pickle;
-      streamRead(is, pickle, 0);
-      dp_shapes = std::make_unique<SearchShapeInput>(pickle);
+      std::string shppickle;
+      streamRead(is, shppickle, 0);
+      std::cout << "reading shapes : " << shppickle << std::endl;
+      dp_shapes = std::make_unique<GaussianShape::SearchShapeInput>(shppickle);
     }
   }
 }

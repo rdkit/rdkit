@@ -21,7 +21,6 @@
 #include <regex>
 #include <unordered_map>
 
-#include <../External/pubchem_shape/PubChemShape.hpp>
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/CIPLabeler/Descriptor.h>
@@ -751,7 +750,6 @@ std::unique_ptr<ROMol> SynthonSet::buildMolecule(
     std::string sep = i ? ";" : "";
     molName += sep + d_synthons[i][synthonNums[i]].first;
   }
-
   MolzipParams mzparams;
   mzparams.label = MolzipLabel::Isotope;
   combMol->setProp<std::string>(common_properties::_Name, molName);

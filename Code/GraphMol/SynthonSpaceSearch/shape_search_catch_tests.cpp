@@ -165,9 +165,10 @@ TEST_CASE("Shape DB Writer") {
   synthonspace.readTextFile(libName, cancelled);
   CHECK(synthonspace.getNumReactions() == 1);
   synthonspace.buildSynthonShapes(cancelled);
+  synthonspace.summarise(std::cout);
 
   auto spaceName = std::tmpnam(nullptr);
-
+  std::cout << "\n" << spaceName << std::endl;
   synthonspace.writeDBFile(spaceName);
 
   SynthonSpace newsynthonspace;
@@ -180,15 +181,15 @@ TEST_CASE("Shape DB Writer") {
   for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
     REQUIRE(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
     for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {
-      REQUIRE(
-          irxn->getSynthons()[i][j].second->getShapes()->confCoords.size() ==
-          orxn->getSynthons()[i][j].second->getShapes()->confCoords.size());
+      REQUIRE(irxn->getSynthons()[i][j].second->getShapes()->getNumShapes() ==
+              orxn->getSynthons()[i][j].second->getShapes()->getNumShapes());
       for (size_t k = 0;
-           k < irxn->getSynthons()[i][j].second->getShapes()->confCoords.size();
+           k < irxn->getSynthons()[i][j].second->getShapes()->getNumShapes();
            ++k) {
         const auto ishape = irxn->getSynthons()[i][j].second->getShapes().get();
         const auto oshape = orxn->getSynthons()[i][j].second->getShapes().get();
-        CHECK(ishape->sovs[k] == Catch::Approx(oshape->sovs[k]));
+        CHECK_THAT(fabs(ishape->getShapeVolume(k) - oshape->getShapeVolume(k)),
+                   Catch::Matchers::WithinAbs(0.0, 1.0e-6));
       }
     }
   }

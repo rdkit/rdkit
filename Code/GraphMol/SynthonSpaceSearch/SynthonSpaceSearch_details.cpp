@@ -21,7 +21,6 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <../External/pubchem_shape/PubChemShape.hpp>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
@@ -923,46 +922,6 @@ bool hasUnspecifiedStereo(ROMol &mol) {
   return false;
 }
 
-void pruneShapes(ShapeSet &shapeSet, double simThreshold) {
-  if (shapeSet.empty()) {
-    return;
-  }
-
-  class DistFunctor {
-   public:
-    DistFunctor(const ShapeSet &shapes) : d_shapes(shapes) {
-      d_matrix = std::vector<float>(12, 0.0);
-    }
-    ~DistFunctor() = default;
-    double operator()(unsigned int i, unsigned int j) {
-      auto keepCoord = d_shapes[j]->coord;
-      auto [st, ct] = AlignShape(*d_shapes[i], *d_shapes[j], d_matrix);
-      d_shapes[j]->coord = keepCoord;
-      double res = 2.0 - (st + ct);
-      return res;
-    }
-    const ShapeSet &d_shapes;
-    std::vector<float> d_matrix;
-  };
-
-  RDPickers::LeaderPicker leaderPicker;
-  DistFunctor distFunctor(shapeSet);
-  auto picks = leaderPicker.lazyPick(distFunctor, shapeSet.size(), 0,
-                                     2.0 - simThreshold);
-  // Allow for mysterious LeaderPicker behaviour where it returns a full vector
-  // of 0s when it should only pick 1 shape.
-  if (picks.size() == shapeSet.size()) {
-    std::ranges::sort(picks);
-    auto [first, last] = std::ranges::unique(picks);
-    picks.erase(first, last);
-  }
-  ShapeSet newShapes;
-  for (auto p : picks) {
-    newShapes.push_back(std::move(shapeSet[p]));
-  }
-  shapeSet = std::move(newShapes);
-}
-
 std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
     const ROMol &mol, unsigned int numConformers, bool enumerateStereo,
     const EnumerateStereoisomers::StereoEnumerationOptions &enumOpts,
@@ -1009,11 +968,7 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
                        DGeomHelpers::EmbedParameters &dgParams,
                        const ShapeBuildParams &shapeParams,
                        std::unique_ptr<ProgressBar> &pbar) {
-  ShapeInputOptions shapeOpts;
-  shapeOpts.includeDummies = true;
-  shapeOpts.dummyRadius = 2.16;
-  ShapeInputOptions noDummyOpts;
-  noDummyOpts.includeDummies = false;
+  GaussianShape::ShapeInputOptions shapeOpts;
 
   while (!ControlCHandler::getGotSignal()) {
     size_t molNum = ++mostRecentMol;
@@ -1025,7 +980,8 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     if (!sampleMols[molNum]->d_mol) {
       continue;
     }
-
+    std::cout << "\nBuilding shapes for "
+              << MolToSmiles(*sampleMols[molNum]->d_mol) << std::endl;
     auto isomerConfs = details::generateIsomerConformers(
         *sampleMols[molNum]->d_mol, shapeParams.numConfs, true,
         shapeParams.stereoEnumOpts, dgParams);
@@ -1039,11 +995,10 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
           << sampleMols[molNum]->d_synthon->getSmiles() << std::endl;
       continue;
     }
-    auto allShapes = std::make_unique<SearchShapeInput>();
+    std::unique_ptr<GaussianShape::SearchShapeInput> allShapes;
     for (auto &isomer : isomerConfs) {
       std::vector<unsigned int> splitBonds;
       std::vector<unsigned int> fragAtoms;
-      std::vector<unsigned int> dummies;
       std::vector<std::pair<unsigned int, double>> dummyRadii;
       for (const auto &bond : isomer->bonds()) {
         if (!bond->hasProp("molNum")) {
@@ -1055,14 +1010,14 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
               endMolNum != sampleMols[molNum]->d_synthonSetNum) {
             fragAtoms.push_back(bond->getBeginAtomIdx());
             fragAtoms.push_back(bond->getEndAtomIdx());
-            dummies.push_back(bond->getEndAtomIdx());
-            dummyRadii.emplace_back(bond->getEndAtomIdx(), 2.16);
+            dummyRadii.emplace_back(bond->getEndAtomIdx(),
+                                    GaussianShape::DUMMY_RAD);
           } else if (begMolNum != sampleMols[molNum]->d_synthonSetNum &&
                      endMolNum == sampleMols[molNum]->d_synthonSetNum) {
             fragAtoms.push_back(bond->getBeginAtomIdx());
             fragAtoms.push_back(bond->getEndAtomIdx());
-            dummies.push_back(bond->getBeginAtomIdx());
-            dummyRadii.emplace_back(bond->getBeginAtomIdx(), 2.16);
+            dummyRadii.emplace_back(bond->getBeginAtomIdx(),
+                                    GaussianShape::DUMMY_RAD);
           }
         } else {
           if (bond->getProp<unsigned int>("molNum") ==
@@ -1075,28 +1030,32 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
       std::ranges::sort(fragAtoms);
       fragAtoms.erase(std::unique(fragAtoms.begin(), fragAtoms.end()),
                       fragAtoms.end());
-      std::ranges::sort(dummies);
-      dummies.erase(std::unique(dummies.begin(), dummies.end()), dummies.end());
       shapeOpts.atomRadii = dummyRadii;
-      shapeOpts.notColorAtoms = dummies;
       shapeOpts.atomSubset = fragAtoms;
-      noDummyOpts.atomSubset = fragAtoms;
 
       try {
-        auto shapes = PrepareConformers(*isomer, shapeOpts,
-                                        shapeParams.shapeSimThreshold);
-        // Because stereoisomers should all have the same number of atoms and
-        // bonds, we can just combine the shapes into one set.  We don't need
-        // to keep track of which stereoisomer they came from.
-        allShapes->merge(*shapes);
+        if (!allShapes) {
+          allShapes = std::make_unique<GaussianShape::SearchShapeInput>(
+              *isomer, shapeParams.shapeSimThreshold, shapeOpts);
+        } else {
+          auto shapes = std::make_unique<GaussianShape::SearchShapeInput>(
+              *isomer, shapeParams.shapeSimThreshold, shapeOpts);
+          // Because stereoisomers should all have the same number of atoms and
+          // bonds, we can just combine the shapes into one set.  We don't need
+          // to keep track of which stereoisomer they came from.
+          allShapes->merge(*shapes);
+        }
       } catch (ValueErrorException &e) {
         // It throws an exception if it doesn't have a radius for an atom
         // in the molecule.
         BOOST_LOG(rdWarningLog) << e.what() << std::endl;
       }
     }
-    pruneShapes(*allShapes, shapeParams.shapeSimThreshold);
-    sampleMols[molNum]->d_synthon->setShapes(std::move(allShapes));
+    if (allShapes) {
+      std::cout << "number of shapes : " << allShapes->getNumShapes()
+                << std::endl;
+      sampleMols[molNum]->d_synthon->setShapes(std::move(allShapes));
+    }
     if (pbar) {
       pbar->increment();
     }

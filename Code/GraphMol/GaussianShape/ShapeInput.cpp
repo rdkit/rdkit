@@ -38,54 +38,52 @@ namespace GaussianShape {
 // Bondi radii
 // You can find more of these in Table 12 of this publication:
 // https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3658832/
-// The dummy atom radius (atomic number 0) is set to
-// 2.16.
 const std::map<unsigned int, double> vdw_radii = {
-    {0, 2.16},   // Dummy, same as Xe.
-    {1, 1.10},   // H
-    {2, 1.40},   // He
-    {3, 1.81},   // Li
-    {4, 1.53},   // Be
-    {5, 1.92},   // B
-    {6, 1.70},   // C
-    {7, 1.55},   // N
-    {8, 1.52},   // O
-    {9, 1.47},   // F
-    {10, 1.54},  // Ne
-    {11, 2.27},  // Na
-    {12, 1.73},  // Mg
-    {13, 1.84},  // Al
-    {14, 2.10},  // Si
-    {15, 1.80},  // P
-    {16, 1.80},  // S
-    {17, 1.75},  // Cl
-    {18, 1.88},  // Ar
-    {19, 2.75},  // K
-    {20, 2.31},  // Ca
-    {31, 1.87},  // Ga
-    {32, 2.11},  // Ge
-    {33, 1.85},  // As
-    {34, 1.90},  // Se
-    {35, 1.83},  // Br
-    {36, 2.02},  // Kr
-    {37, 3.03},  // Rb
-    {38, 2.49},  // Sr
-    {49, 1.93},  // In
-    {50, 2.17},  // Sn
-    {51, 2.06},  // Sb
-    {52, 2.06},  // Te
-    {53, 1.98},  // I
-    {54, 2.16},  // Xe
-    {55, 3.43},  // Cs
-    {56, 2.68},  // Ba
-    {81, 1.96},  // Tl
-    {82, 2.02},  // Pb
-    {83, 2.07},  // Bi
-    {84, 1.97},  // Po
-    {85, 2.02},  // At
-    {86, 2.20},  // Rn
-    {87, 3.48},  // Fr
-    {88, 2.83},  // Ra
+    {0, DUMMY_RAD},   // Dummy
+    {1, 1.10},        // H
+    {2, 1.40},        // He
+    {3, 1.81},        // Li
+    {4, 1.53},        // Be
+    {5, 1.92},        // B
+    {6, CARBON_RAD},  // C
+    {7, 1.55},        // N
+    {8, 1.52},        // O
+    {9, 1.47},        // F
+    {10, 1.54},       // Ne
+    {11, 2.27},       // Na
+    {12, 1.73},       // Mg
+    {13, 1.84},       // Al
+    {14, 2.10},       // Si
+    {15, 1.80},       // P
+    {16, 1.80},       // S
+    {17, 1.75},       // Cl
+    {18, 1.88},       // Ar
+    {19, 2.75},       // K
+    {20, 2.31},       // Ca
+    {31, 1.87},       // Ga
+    {32, 2.11},       // Ge
+    {33, 1.85},       // As
+    {34, 1.90},       // Se
+    {35, 1.83},       // Br
+    {36, 2.02},       // Kr
+    {37, 3.03},       // Rb
+    {38, 2.49},       // Sr
+    {49, 1.93},       // In
+    {50, 2.17},       // Sn
+    {51, 2.06},       // Sb
+    {52, 2.06},       // Te
+    {53, 1.98},       // I
+    {54, 2.16},       // Xe
+    {55, 3.43},       // Cs
+    {56, 2.68},       // Ba
+    {81, 1.96},       // Tl
+    {82, 2.02},       // Pb
+    {83, 2.07},       // Bi
+    {84, 1.97},       // Po
+    {85, 2.02},       // At
+    {86, 2.20},       // Rn
+    {87, 3.48},       // Fr
+    {88, 2.83},       // Ra
 };
 constexpr double radius_color =
     1.08265;  // same radius for all feature/color "atoms", as used by the
@@ -97,14 +95,25 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   PRECONDITION(mol.getNumConformers() > 0,
                "ShapeInput object needs the molecule to have conformers.  " +
                    mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
-
+  bool radsAreDummies{true};
   if (opts.allCarbonRadii && !opts.atomRadii.empty()) {
-    BOOST_LOG(rdWarningLog)
-        << "Specifying allCarbonRadii and providing custom atom radii doesn't"
-           " make sense.  Ignoring the radii."
-        << std::endl;
+    // The one case where allCarbonRadii and custom radii does make sense is
+    // for dummy atoms or atoms that we are pretending are dummy atoms in a
+    // subset.
+    for (const auto &[atIdx, rad] : opts.atomRadii) {
+      if (rad != DUMMY_RAD) {
+        radsAreDummies = false;
+        break;
+      }
+    }
+    if (!radsAreDummies) {
+      BOOST_LOG(rdWarningLog)
+          << "Specifying allCarbonRadii and providing custom atom radii doesn't"
+             " make sense.  Ignoring the radii."
+          << std::endl;
+    }
   }
-  extractAtoms(mol, confId, opts);
+  extractAtoms(mol, confId, opts, radsAreDummies);
   if (opts.useColors) {
     extractFeatures(mol, confId, opts);
   }
@@ -120,6 +129,17 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
       d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
       d_numAtoms, gradConverters, overlayOpts.useDistCutoff,
       overlayOpts.distCutoff * overlayOpts.distCutoff, nullptr, nullptr);
+}
+
+ShapeInput::ShapeInput(const std::string &str) {
+  std::cout << "ShapeInput::ShapeInput(str) : " << str << std::endl;
+#ifndef RDK_USE_BOOST_SERIALIZATION
+  PRECONDITION(0, "Boost SERIALIZATION is not enabled")
+#else
+  std::stringstream ss(str);
+  boost::archive::text_iarchive ia(ss);
+  ia &*this;
+#endif
 }
 
 ShapeInput::ShapeInput(const ShapeInput &other)
@@ -164,11 +184,33 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   return *this;
 }
 
+std::string ShapeInput::toString() const {
+#ifndef RDK_USE_BOOST_SERIALIZATION
+  PRECONDITION(0, "Boost SERIALIZATION is not enabled")
+#else
+  std::stringstream ss;
+  boost::archive::text_oarchive oa(ss);
+  oa &*this;
+  return ss.str();
+#endif
+}
+
 void ShapeInput::setCoords(const std::vector<double> &coords) {
-  if (coords.size() != d_coords.size()) {
-    throw std::runtime_error("coords vector size mismatch");
+  if (coords.size() != d_coords.size() &&
+      coords.size() != 3 * d_coords.size() / 4) {
+    throw std::runtime_error(
+        "coords vector size mismatch :: " + std::to_string(coords.size()) +
+        " vs " + std::to_string(d_coords.size()) + ".");
   }
-  d_coords = coords;
+  if (coords.size() == 3 * d_coords.size() / 4) {
+    for (size_t i = 0; i < coords.size() / 3; i++) {
+      d_coords[4 * i] = coords[3 * i];
+      d_coords[4 * i + 1] = coords[3 * i + 1];
+      d_coords[4 * i + 2] = coords[3 * i + 2];
+    }
+  } else {
+    d_coords = coords;
+  }
 }
 
 void ShapeInput::setTypes(const std::vector<int> &types) {
@@ -212,6 +254,10 @@ void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
 
 namespace {
 double getStandardAtomRadius(unsigned int atomicNum) {
+  // Mostly they will be carbons, so just return that without lookup.
+  if (atomicNum == 6) {
+    return CARBON_RAD;
+  }
   if (auto rad = vdw_radii.find(static_cast<unsigned int>(atomicNum));
       rad != vdw_radii.end()) {
     return rad->second;
@@ -219,12 +265,42 @@ double getStandardAtomRadius(unsigned int atomicNum) {
   throw ValueErrorException("No VdW radius for atom with Z=" +
                             std::to_string(atomicNum));
 }
-
+bool includeAtom(const std::vector<unsigned int> &atomSubset,
+                 const Atom *atom) {
+  if (atomSubset.empty()) {
+    return true;
+  }
+  const auto atomIdx = atom->getIdx();
+  if (auto it = std::ranges::find_if(
+          atomSubset,
+          [atomIdx](const auto &p) -> bool { return p == atomIdx; });
+      it == atomSubset.end()) {
+    return false;
+  }
+  return true;
+}
 }  // namespace
+
 void ShapeInput::extractAtoms(const ROMol &mol, int confId,
-                              const ShapeInputOptions &opts) {
+                              const ShapeInputOptions &opts,
+                              bool radsAreDummies) {
+  bool hasDummies{false};
+  for (const auto atom : mol.atoms()) {
+    if (!includeAtom(opts.atomSubset, atom)) {
+      continue;
+    }
+    if (!atom->getAtomicNum()) {
+      hasDummies = true;
+      break;
+    }
+  }
+
   d_coords.reserve(mol.getNumAtoms() * 4);
-  if (!opts.allCarbonRadii) {
+  // If we're using dummies, we will want them to be their own radius so we
+  // can't use the really fast all-carbon radius optimisation later, so we
+  // need to know which are carbon atoms.
+  if (((hasDummies || radsAreDummies) && opts.includeDummies) ||
+      !opts.allCarbonRadii) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(
         !opts.atomSubset.empty() ? opts.atomSubset.size() : mol.getNumAtoms()));
   }
@@ -232,41 +308,46 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
   // Index of atoms that have been added to the shape.
   unsigned int idx = 0;
   for (const auto atom : mol.atoms()) {
-    if (!opts.atomSubset.empty()) {
-      const auto atomIdx = atom->getIdx();
-      if (auto it = std::ranges::find_if(
-              opts.atomSubset,
-              [atomIdx](const auto &p) -> bool { return p == atomIdx; });
-          it == opts.atomSubset.end()) {
+    if (!includeAtom(opts.atomSubset, atom)) {
+      continue;
+    }
+    // Ignore H atoms but do use dummies if requested.
+    if (atom->getAtomicNum() != 1) {
+      if (!opts.includeDummies && !atom->getAtomicNum()) {
         continue;
       }
-    }
-    if (atom->getAtomicNum() > 1) {
       auto atIdx = atom->getIdx();
       auto &pos = conf.getAtomPos(atIdx);
       d_coords.push_back(pos.x);
       d_coords.push_back(pos.y);
       d_coords.push_back(pos.z);
-      if (opts.allCarbonRadii) {
-        d_coords.push_back(KAPPA / (1.7 * 1.7));
+      if (opts.allCarbonRadii && !d_carbonRadii) {
+        d_coords.push_back(KAPPA / (CARBON_RAD * CARBON_RAD));
       } else {
         double rad = 0.0;
         if (opts.atomRadii.empty()) {
           if (atom->getAtomicNum() == 6) {
-            rad = 1.7;
             (*d_carbonRadii)[idx] = true;
-          } else {
-            rad = getStandardAtomRadius(atom->getAtomicNum());
           }
+          rad = getStandardAtomRadius(atom->getAtomicNum());
         } else {
           auto it = std::ranges::find_if(
               opts.atomRadii,
               [atIdx](const auto &p) -> bool { return p.first == atIdx; });
           if (it == opts.atomRadii.end()) {
             rad = getStandardAtomRadius(atom->getAtomicNum());
+            if (atom->getAtomicNum() == 6) {
+              (*d_carbonRadii)[idx] = true;
+            }
           } else {
             rad = it->second;
           }
+        }
+        // TODO: For now, check there hasn't been a logic error leaving a rad of
+        // 0.0.  Take it out later when it's been tried enough we can be
+        // confident it's ok.
+        if (rad == 0.0) {
+          throw ValueErrorException("Atom has radius 0.0.");
         }
         d_coords.push_back(KAPPA / (rad * rad));
       }

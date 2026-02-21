@@ -67,10 +67,12 @@ namespace RDKit {
 class ROMol;
 namespace GaussianShape {
 
+constexpr double CARBON_RAD = 1.70;
+constexpr double DUMMY_RAD = 2.16;  // same as Xe
 const double PI = 4 * std::atan(1.0);
 // From Grant et al.
-const double P = 2.7;
-const double KAPPA = 2.41798793102;
+constexpr double P = 2.7;
+constexpr double KAPPA = 2.41798793102;
 using CustomFeatures =
     std::vector<std::tuple<unsigned int, RDGeom::Point3D, double>>;
 
@@ -103,6 +105,7 @@ struct ShapeInputOptions {
   bool allCarbonRadii{
       true};  //! Whether to use carbon radii for all atoms (which is quicker
               //! but less accurate) or vdw radii appropriate for the elements.
+  bool includeDummies{true};  //! Whether to ignore dummy atoms or not.
 };
 
 // Data for shape alignment code
@@ -112,35 +115,17 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   //! @param mol: The molecule of interest
   //! @param confId: The conformer to use
   //! @param opts: Options for setting up the shape
-  ShapeInput() = default;
   ShapeInput(const ROMol &mol, int confId = -1,
              const ShapeInputOptions &opts = ShapeInputOptions(),
              const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
-  ShapeInput(const std::string &str) {
-#ifndef RDK_USE_BOOST_SERIALIZATION
-    PRECONDITION(0, "Boost SERIALIZATION is not enabled")
-#else
-    std::stringstream ss(str);
-    boost::archive::text_iarchive ia(ss);
-    ia &*this;
-#endif
-  }
+  ShapeInput(const std::string &str);
   ShapeInput(const ShapeInput &other);
   ShapeInput(ShapeInput &&other) = default;
   ShapeInput &operator=(const ShapeInput &other);
   ShapeInput &operator=(ShapeInput &&other) = default;
   virtual ~ShapeInput() = default;
 
-  std::string toString() const {
-#ifndef RDK_USE_BOOST_SERIALIZATION
-    PRECONDITION(0, "Boost SERIALIZATION is not enabled")
-#else
-    std::stringstream ss;
-    boost::archive::text_oarchive oa(ss);
-    oa &*this;
-    return ss.str();
-#endif
-  }
+  std::string toString() const;
 
   const std::vector<double> &getCoords() const { return d_coords; }
   bool getNormalized() const { return d_normalized; }
@@ -177,7 +162,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
     d_extremePoints = extremes;
   }
   // These setters throw a runtime_error if the incoming vectors
-  // aren't the same size as the existing ones.
+  // aren't the same size as the existing ones except that setCoords
+  // allows for the special case where the incoming coords are 3/4 of the
+  // size the existing coords, in which case it assumes that they are
+  // just the coords and not the radii which are left as is.
   void setCoords(const std::vector<double> &coords);
   void setTypes(const std::vector<int> &types);
 
@@ -190,25 +178,12 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int) {
-    ar & d_coords;
-    ar & d_types;
-    ar & d_numAtoms;
-    ar & d_numFeats;
-    ar & d_selfOverlapVol;
-    ar & d_selfOverlapColor;
-    ar & d_extremePoints;
-    ar & d_carbonRadii;
-    ar & d_normalized;
-    ar & d_canonRot;
-    ar & d_centroid;
-    ar & d_eigenValues;
-  }
+  void serialize(Archive &ar, const unsigned int);
 #endif
 
  private:
-  void extractAtoms(const ROMol &mol, int confId,
-                    const ShapeInputOptions &opts);
+  void extractAtoms(const ROMol &mol, int confId, const ShapeInputOptions &opts,
+                    bool radsAreDummies);
   // Extract the features for the color scores, using RDKit pphore features
   // for now.  Other options to be added later.
   void extractFeatures(const ROMol &mol, int confId,
@@ -277,6 +252,31 @@ RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
 RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
     const double *inShape, double *outShape, size_t numPoints,
     const RDGeom::Point3D &translation);
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+template <class Archive>
+void ShapeInput::serialize(Archive &ar, const unsigned int) {
+  std::cout << "ShapeInput::serialize " << std::endl;
+  ar & d_coords;
+  std::cout << "coords : " << d_coords.size() << std::endl;
+  ar & d_types;
+  std::cout << "types : " << d_types.back() << std::endl;
+  ar & d_numAtoms;
+  std::cout << "numAtoms : " << d_numAtoms << std::endl;
+  ar & d_numFeats;
+  std::cout << "d_numAtoms : " << d_numAtoms << std::endl;
+  ar & d_selfOverlapVol;
+  ar & d_selfOverlapColor;
+  ar & d_extremePoints;
+  std::cout << "extremePoints : " << d_extremePoints.back() << std::endl;
+  ar & d_carbonRadii;
+  ar & d_normalized;
+  ar & d_canonRot;
+  ar & d_centroid;
+  ar & d_eigenValues;
+  std::cout << "eigenValues : " << d_eigenValues.back() << std::endl;
+}
+#endif
 
 }  // namespace GaussianShape
 }  // namespace RDKit

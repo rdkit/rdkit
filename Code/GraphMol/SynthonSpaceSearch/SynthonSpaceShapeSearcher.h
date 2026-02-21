@@ -9,8 +9,8 @@
 //
 
 // This file declares a concrete class derived from SynthonSpaceSearcher
-// that does shape similarity searching of the SynthonSpace using the
-// PubChem code.
+// that does shape similarity searching of the SynthonSpace using
+// the GaussianShape module.
 
 #ifndef SYNTHONSPACESHAPESEARCHER_H
 #define SYNTHONSPACESHAPESEARCHER_H
@@ -38,17 +38,16 @@ struct hash_address_pair {
   }
 };
 
-// Used for storing the pre-computed simlarities between fragments and
+// Used for storing the pre-computed similarities between fragments and
 // synthons.  The actual type of the first address in the pair will vary,
 // the second should always be Synthon *.  There's an entry only if
 // the fragment->synthon similarity exceeded the threshold.  Keeps the
 // shape and colour tanimotos separately.
 using FragSynthonSims =
     std::unordered_map<std::pair<const void *, const void *>,
-                       std::tuple<float, float, unsigned int>,
-                       hash_address_pair>;
+                       std::pair<double, unsigned int>, hash_address_pair>;
 
-// Concrete class that does the search by fingerprint similarity.
+// Concrete class that does the search by Gaussian shape similarity.
 class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
  public:
   SynthonSpaceShapeSearcher() = delete;
@@ -63,7 +62,7 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
   // Use d_fragSynthonSims to decide if the fragment matched the
   // Synthon.
   bool fragMatchedSynthon(const void *frag, const void *synthon,
-                          std::tuple<float, float, unsigned int> &sim) const;
+                          std::pair<double, unsigned int> &sim) const;
   bool hasPrecomputedSims() const { return !d_fragSynthonSims.empty(); }
 
  protected:
@@ -76,7 +75,7 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
 
  private:
   // Shapes for all the conformers of the query.
-  std::unique_ptr<SearchShapeInput> dp_queryShapes;
+  std::unique_ptr<GaussianShape::SearchShapeInput> dp_queryShapes;
   // If a conformational expansion was done, keep it here, otherwise
   // just copy the query.
   std::unique_ptr<RWMol> dp_queryConfs;
@@ -85,8 +84,10 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
   // of the corresponding fragment.  d_fragShapesPool is never read,
   // it is just used a repository of the shapes for the duration of
   // the search.
-  std::vector<std::unique_ptr<SearchShapeInput>> d_fragShapesPool;
-  std::vector<std::pair<void *, SearchShapeInput *>> d_fragShapes;
+  std::vector<std::unique_ptr<GaussianShape::SearchShapeInput>>
+      d_fragShapesPool;
+  std::vector<std::pair<void *, GaussianShape::SearchShapeInput *>>
+      d_fragShapes;
 
   // Precomputed similarities between fragments and synthons.  This
   // speeds things up because synthons are re-used and for the shape
@@ -115,7 +116,7 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
 
   // Given the frag, return the corresponding frag shape.  Returns nullptr
   // if not found.
-  SearchShapeInput *getFragShape(const void *frag) const;
+  GaussianShape::SearchShapeInput *getFragShape(const void *frag) const;
 };
 }  // namespace RDKit::SynthonSpaceSearch
 #endif  // SYNTHONSPACESHAPESEARCHER_H
