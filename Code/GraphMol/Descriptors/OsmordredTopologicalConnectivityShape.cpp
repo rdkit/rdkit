@@ -2472,7 +2472,7 @@ void computeVEMContributions(
 }
 
 // Main function to compute ETA descriptors
-std::vector<double> calculateETADescriptors(const ROMol &mol) {
+std::vector<double> calcETADescriptors(const ROMol &mol) {
   int numAtoms = mol.getNumAtoms();
 
   std::unique_ptr<RWMol> kekulizedMol(new RWMol(mol));

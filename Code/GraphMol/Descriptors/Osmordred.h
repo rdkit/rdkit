@@ -116,7 +116,7 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcMolecularId(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcFramework(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcExtendedTopochemicalAtom(
     const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calculateETADescriptors(
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcETADescriptors(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcChipath(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcChichain(const ROMol &mol);
