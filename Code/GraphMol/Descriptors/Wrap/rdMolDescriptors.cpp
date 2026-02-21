@@ -2080,8 +2080,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
         "CalcFramework function\n");
     python::def("CalcExtendedTopochemicalAtom", RDKit::Descriptors::Osmordred::calcExtendedTopochemicalAtom,
         "CalcExtendedTopochemicalAtom function\n");
-    python::def("CalcExtendedTopochemicalAtom2", RDKit::Descriptors::Osmordred::calcETADescriptors,
-        "CalculateETADescriptors function\n");
     python::def("CalcChipath", RDKit::Descriptors::Osmordred::calcChipath,
         "CalcChipath function\n");
     python::def("CalcChichain", RDKit::Descriptors::Osmordred::calcChichain,

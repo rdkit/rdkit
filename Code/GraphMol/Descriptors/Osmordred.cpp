@@ -163,7 +163,6 @@ std::vector<double> calcOsmordred(const ROMol &mol) {
   append(calcDN2Mat(mol));			       //addNames("DN2Mat", 20);                               
   append(calcFrags(mol));			       //addNames("Frags", 215);                               
   append(calcAddFeatures(mol));			       //addNames("AddFeatures", 7);                           
-  append(calcETADescriptors(mol));
   return out;
 }
 
@@ -361,7 +360,58 @@ std::vector<std::string> getOsmordredDescriptorNames() {
   addNames("DistanceMatrix", 12);
   addNames("EState", 404);
   addNames("EccentricConnectivityIndex", 1);
-  addNames("ExtendedTopochemicalAtom", 45);
+
+  const std::vector etaNames {
+    "ETA_alpha",
+    "AETA_alpha",
+    "ETA_shape_p",
+    "ETA_shape_y",
+    "ETA_shape_x",
+    "ETA_beta",
+    "AETA_beta",
+    "ETA_beta_s",
+    "AETA_beta_s",
+    "ETA_beta_ns",
+    "AETA_beta_ns",
+    "ETA_beta_ns_d",
+    "ATEA_beta_ns_d",
+    "ETA_eta",
+    "AETA_eta",
+    "ETA_eta_L",
+    "AETA_eta_L",
+    "ETA_eta_R",
+    "AETA_eta_R",
+    "ETA_eta_RL",
+    "AETA_eta_RL",
+    "ETA_eta_F",
+    "AETA_eta_F",
+    "ETA_eta_FL",
+    "AETA_eta_FL",
+    "ETA_eta_B",
+    "AETA_eta_B",
+    "ETA_eta_BR",
+    "AETA_eta_BR",
+    "ETA_dAlpha_A",
+    "ETA_dAlpha_B",
+    "ETA_epsilon_1",
+    "ETA_epsilon_2",
+    "ETA_epsilon_3",
+    "ETA_epsilon_4",
+    "ETA_epsilon_5",
+    "ETA_dEpsilon_A",
+    "ETA+dEpsilon_B",
+    "ETA_dEpsilon_C",
+    "ETA_dEpsilon_D",
+    "EtaDeltaBeta_1",
+    "EtaDeltaBeta_2",
+    "ETA_psi_1",
+    "ETA_dPsi_A",
+    "ETA_dPsi_B"
+  };
+  
+  names.insert(names.end(), etaNames.begin(), etaNames.end());
+
+  //addNames("ExtendedTopochemicalAtom", 45);
   addNames("FragmentComplexity", 1);
   addNames("Framework", 1);
   addNames("HydrogenBond", 2);
@@ -402,17 +452,6 @@ std::vector<std::string> getOsmordredDescriptorNames() {
   addNames("DN2Mat", 20);
   addNames("Frags", 215);
   addNames("AddFeatures", 7);
-  std::vector etaNames {"ETA_alpha", "ETA_AlphaP", "ETA_shape_p", "ETA_shape_y",
-    "ETA_shape_x", "ETA_Beta", "ETA_BetaP", "ETA_Beta_s", "ETA_BetaP_s",
-    "ETA_Beta_ns", "ETA_BetaP_ns", "ETA_Beta_ns_d", "ETA_BetaP_ns_d", "ETA_eta",
-    "ETA_EtaP", "ETA_eta_L", "ETA_EtaP_L", "ETA_eta_R", "ETA_EtaP_R", "ETA_Eta_R_L",
-    "ETA_EtaP_R_L", "ETA_Eta_F", "ETA_EtaP_F", "ETA_Eta_F_L", "ETA_EtaP_F_L",
-    "ETA_Eta_B", "ETA_EtaP_B", "ETA_Eta_B_RC", "ETA_EtaP_B_RC", "ETA_dAlpha_A",
-    "ETA_dAlpha_B", "ETA_epsilon_1", "ETA_epsilon_2", "ETA_epsilon_3", "ETA_epsilon_4",
-    "ETA_epsilon_5", "ETA_dEpsilon_A", "ETA_dEpsilon_B", "ETA_dEpsilon_C",
-    "ETA_dEpsilon_D", "ETA_dBeta", "ETA_dBetaP", "ETA_psi_1", "ETA_dPsi_A", "ETA_dPsi_B"};
-      
-  names.insert(names.end(), etaNames.begin(), etaNames.end());
   
   return names;
 }
