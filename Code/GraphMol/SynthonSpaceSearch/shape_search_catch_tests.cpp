@@ -165,10 +165,8 @@ TEST_CASE("Shape DB Writer") {
   synthonspace.readTextFile(libName, cancelled);
   CHECK(synthonspace.getNumReactions() == 1);
   synthonspace.buildSynthonShapes(cancelled);
-  synthonspace.summarise(std::cout);
 
   auto spaceName = std::tmpnam(nullptr);
-  std::cout << "\n" << spaceName << std::endl;
   synthonspace.writeDBFile(spaceName);
 
   SynthonSpace newsynthonspace;
@@ -180,7 +178,7 @@ TEST_CASE("Shape DB Writer") {
   const auto &orxn = synthonspace.getReaction("doebner-miller-quinoline");
   for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
     REQUIRE(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
-    for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {
+    for (size_t j = 0; j < irxn->getSynthons()[i].size(); ++j) {
       REQUIRE(irxn->getSynthons()[i][j].second->getShapes()->getNumShapes() ==
               orxn->getSynthons()[i][j].second->getShapes()->getNumShapes());
       for (size_t k = 0;

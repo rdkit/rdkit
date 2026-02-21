@@ -58,7 +58,7 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
   sortShapesByScore();
 }
 
-SearchShapeInput::SearchShapeInput(const std::string &str) : ShapeInput(str) {
+SearchShapeInput::SearchShapeInput(const std::string &str) {
 #ifndef RDK_USE_BOOST_SERIALIZATION
   PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
@@ -73,17 +73,17 @@ SearchShapeInput::SearchShapeInput(const ShapeInput &si) : ShapeInput(si) {
 }
 
 double SearchShapeInput::getShapeVolume(unsigned int shapeNum) const {
-  PRECONDITION(shapeNum >= 0 && shapeNum < d_confCoords.size(), "Bad shapeNum");
+  PRECONDITION(shapeNum < d_confCoords.size(), "Bad shapeNum");
   return d_shapeVolumes[shapeNum];
 }
 
 double SearchShapeInput::getColorVolume(unsigned int shapeNum) const {
-  PRECONDITION(shapeNum >= 0 && shapeNum < d_confCoords.size(), "Bad shapeNum");
+  PRECONDITION(shapeNum < d_confCoords.size(), "Bad shapeNum");
   return d_colorVolumes[shapeNum];
 }
 
 double SearchShapeInput::getDummyVolume(unsigned int shapeNum) const {
-  PRECONDITION(shapeNum >= 0 && shapeNum < d_confCoords.size(), "Bad shapeNum");
+  PRECONDITION(shapeNum < d_confCoords.size(), "Bad shapeNum");
   return d_dummyVolumes[shapeNum];
 }
 

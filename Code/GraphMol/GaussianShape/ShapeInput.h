@@ -34,7 +34,7 @@
 #include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
 
 // The code below was provided by Claude (Sonnet 4.6).
-// If first tried to get me to use boost/serialization/dynamic_bitset.hpp
+// It first tried to get me to use boost/serialization/dynamic_bitset.hpp
 // and then admitted that it had made that up.
 namespace boost {
 namespace serialization {
@@ -111,6 +111,7 @@ struct ShapeInputOptions {
 // Data for shape alignment code
 class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
  public:
+  ShapeInput() = default;
   //! Create the ShapeInput object.
   //! @param mol: The molecule of interest
   //! @param confId: The conformer to use
@@ -256,25 +257,18 @@ RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
 #ifdef RDK_USE_BOOST_SERIALIZATION
 template <class Archive>
 void ShapeInput::serialize(Archive &ar, const unsigned int) {
-  std::cout << "ShapeInput::serialize " << std::endl;
   ar & d_coords;
-  std::cout << "coords : " << d_coords.size() << std::endl;
   ar & d_types;
-  std::cout << "types : " << d_types.back() << std::endl;
   ar & d_numAtoms;
-  std::cout << "numAtoms : " << d_numAtoms << std::endl;
   ar & d_numFeats;
-  std::cout << "d_numAtoms : " << d_numAtoms << std::endl;
   ar & d_selfOverlapVol;
   ar & d_selfOverlapColor;
   ar & d_extremePoints;
-  std::cout << "extremePoints : " << d_extremePoints.back() << std::endl;
   ar & d_carbonRadii;
   ar & d_normalized;
   ar & d_canonRot;
   ar & d_centroid;
   ar & d_eigenValues;
-  std::cout << "eigenValues : " << d_eigenValues.back() << std::endl;
 }
 #endif
 

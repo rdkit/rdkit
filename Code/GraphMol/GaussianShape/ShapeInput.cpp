@@ -132,7 +132,6 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
 }
 
 ShapeInput::ShapeInput(const std::string &str) {
-  std::cout << "ShapeInput::ShapeInput(str) : " << str << std::endl;
 #ifndef RDK_USE_BOOST_SERIALIZATION
   PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else

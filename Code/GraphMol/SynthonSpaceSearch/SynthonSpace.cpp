@@ -449,12 +449,10 @@ void readSynthons(
     const size_t startNum, size_t endNum, const char *fileMap,
     const std::vector<std::uint64_t> &synthonPos, std::uint32_t version,
     std::vector<std::pair<std::string, std::unique_ptr<Synthon>>> &synthons) {
-  std::cout << "reading synthons " << startNum << " -> " << endNum << std::endl;
   if (endNum > synthons.size()) {
     endNum = synthons.size();
   }
   for (size_t i = startNum; i < endNum; i++) {
-    std::cout << "reading " << i << " synth " << synthonPos[i] << std::endl;
     std::string view(fileMap + synthonPos[i],
                      synthonPos[i + 1] - synthonPos[i]);
     std::istringstream is(view, std::ios::binary);
@@ -463,7 +461,6 @@ void readSynthons(
     tmp.second->readFromDBStream(is, version);
     tmp.first = tmp.second->getSmiles();
     synthons[i] = std::move(tmp);
-    std::cout << "read " << i << " synth " << synthons[i].first << std::endl;
   }
 }
 
@@ -526,7 +523,6 @@ void threadedReadReactions(
 
 void SynthonSpace::readDBFile(const std::string &inFilename,
                               [[maybe_unused]] int numThreads) {
-  std::cout << "reading " << inFilename << "..." << std::endl;
   d_fileName = inFilename;
   std::ifstream is(inFilename, std::fstream::binary);
   if (!is.is_open() || is.bad()) {
@@ -573,7 +569,6 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
   streamRead(is, numSynthons);
   streamRead(is, numReactions);
   streamRead(is, d_numProducts);
-  std::cout << "num products : " << d_numProducts << std::endl;
 
   std::vector<std::uint64_t> synthonPos(numSynthons, std::uint64_t(0));
   for (std::uint64_t i = 0; i < numSynthons; i++) {
@@ -584,7 +579,6 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
     streamRead(is, reactionPos[i]);
   }
   is.close();
-  std::cout << "read poses" << std::endl;
 
   details::MemoryMappedFileReader fileMap(d_fileName);
   // put the end of the last synthon and reaction into their respective arrays,
@@ -599,7 +593,6 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
     readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos,
                  d_fileMajorVersion, d_synthonPool);
   }
-  std::cout << "read synthons" << std::endl;
   if (!std::is_sorted(
           d_synthonPool.begin(), d_synthonPool.end(),
           [](const std::pair<std::string, std::unique_ptr<Synthon>> &p1,
@@ -620,7 +613,6 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
     readReactions(0, numReactions, fileMap.d_mappedMemory, reactionPos, *this,
                   d_fileMajorVersion, d_reactions);
   }
-  std::cout << "read reactions" << std::endl;
   if (!std::is_sorted(
           d_reactions.begin(), d_reactions.end(),
           [](const std::pair<std::string, std::shared_ptr<SynthonSet>> &p1,

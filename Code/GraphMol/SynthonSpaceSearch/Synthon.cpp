@@ -167,10 +167,8 @@ void Synthon::writeToDBStream(std::ostream &os) const {
   if (dp_shapes) {
     streamWrite(os, true);
     auto pickle = dp_shapes->toString();
-    std::cout << "writing shapes : " << pickle << std::endl;
     streamWrite(os, pickle);
   } else {
-    std::cout << "no shapes to write" << std::endl;
     streamWrite(os, false);
   }
 }
@@ -206,14 +204,12 @@ void Synthon::readFromDBStream(std::istream &is, const std::uint32_t version) {
   } else {
     calcProperties();
   }
-  std::cout << "properties" << std::endl;
   if (version > 3010) {
     bool haveShapes = false;
     streamRead(is, haveShapes);
     if (haveShapes) {
       std::string shppickle;
       streamRead(is, shppickle, 0);
-      std::cout << "reading shapes : " << shppickle << std::endl;
       dp_shapes = std::make_unique<GaussianShape::SearchShapeInput>(shppickle);
     }
   }

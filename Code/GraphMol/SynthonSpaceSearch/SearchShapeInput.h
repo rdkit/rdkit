@@ -22,6 +22,7 @@ namespace GaussianShape {
 // GaussianShape namespace, so it's easier if this is too.
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
  public:
+  SearchShapeInput() = default;
   // Creates the shapes for all conformations in the molecule.  Prunes them
   // so that they are all at least pruneThreshold comboScore apart and
   // sorts them into descending order of total volume.

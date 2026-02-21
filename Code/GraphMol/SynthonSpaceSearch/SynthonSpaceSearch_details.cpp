@@ -980,8 +980,6 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     if (!sampleMols[molNum]->d_mol) {
       continue;
     }
-    std::cout << "\nBuilding shapes for "
-              << MolToSmiles(*sampleMols[molNum]->d_mol) << std::endl;
     auto isomerConfs = details::generateIsomerConformers(
         *sampleMols[molNum]->d_mol, shapeParams.numConfs, true,
         shapeParams.stereoEnumOpts, dgParams);
@@ -1052,8 +1050,6 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
       }
     }
     if (allShapes) {
-      std::cout << "number of shapes : " << allShapes->getNumShapes()
-                << std::endl;
       sampleMols[molNum]->d_synthon->setShapes(std::move(allShapes));
     }
     if (pbar) {
