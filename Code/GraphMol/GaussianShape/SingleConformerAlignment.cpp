@@ -187,6 +187,10 @@ double calcVolAndGrads(
   double vij;
   for (int i = 0, i_idx = 0; i < numRefPts * 4; i += 4, i_idx++) {
     const auto ai = ref[i + 3];
+    // Atoms that should be skipped are given a negative radius bit.
+    if (ai < 0.0) {
+      continue;
+    }
     for (int j = 0, j_idx = 0; j < numFitPts * 4; j += 4, j_idx++) {
       auto dx = ref[i] - fit[j];
       auto dy = ref[i + 1] - fit[j + 1];
@@ -196,6 +200,9 @@ double calcVolAndGrads(
         continue;
       }
       const auto aj = fit[j + 3];
+      if (aj < 0.0) {
+        continue;
+      }
       auto mult = -(ai * aj) / (ai + aj);
       auto kij = exp(mult * d2);
       if ((!refCarbonRadii && !fitCarbonRadii) ||

@@ -16,6 +16,7 @@
 #include <GraphMol/GaussianShape/ShapeInput.h>
 
 namespace RDKit {
+class RWMol;
 namespace GaussianShape {
 // Make a subclass of ShapeInput with some extra info, including allowing
 // for multiple conformations of the same atoms.  ShapeInput is in the
@@ -45,6 +46,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
   double getShapeVolume(unsigned int shapeNum) const;
   double getColorVolume(unsigned int shapenum) const;
   double getDummyVolume(unsigned int shapeNum) const;
+  const boost::dynamic_bitset<> &getDummyAtoms() const { return d_dummyAtoms; }
 
   // Merge the other ShapeInputSet, assuming it has the correct number
   // of atoms etc.  Empties the multiple conformation parts of other,
@@ -90,7 +92,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
 #endif
 
  private:
-  unsigned int d_numDummies{0};
+  boost::dynamic_bitset<> d_dummyAtoms;
   double d_dummyVol{0.0};
   unsigned int d_actConf{0};
   // The base class has 4 floats per atom for the coords, the 4th
@@ -119,28 +121,22 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
                                std::vector<double> &coords) const;
 
   void selectConformations(const std::vector<int> &picks);
+  // The dummy volumes are calculated by subtracting the shape volume
+  // the shape without the dummy atoms included from the full shape volume.
+  // It varies a bit from conformation to conformation.
+  void calculateDummyVolumes(const ShapeOverlayOptions &overlayOpts);
 };
-
-// Make a SearchShapeInput from all conformations of a molecule and then
-// prune them at the given threshold. so that all selected shapes have
-// a similarity score with each other that's less than the threshold.
-// Assumes that shapeOpts.atomRadii only includes the dummy atoms, and
-// doesn't use non-standard radii for other atoms.
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<SearchShapeInput>
-PrepareConformers(const RDKit::ROMol &mol,
-                  const ShapeInputOptions &shapeOpts = ShapeInputOptions(),
-                  double pruneThreshold = 1.9);
 
 // Mock a molecule up from the shape for visual inspection.  No bonds.
 // Atoms are C, features are N.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<RDKit::RWMol> shapeToMol(
-    const ShapeInput &shape);
+    const SearchShapeInput &shape, bool includeColors = true);
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 template <class Archive>
 void SearchShapeInput::serialize(Archive &ar, const unsigned int) {
   ar &boost::serialization::base_object<ShapeInput>(*this);
-  ar & d_numDummies;
+  ar & d_dummyAtoms;
   ar & d_dummyVol;
   ar & d_actConf;
   ar & d_confCoords;

@@ -12,9 +12,12 @@
 #include <GraphMol/RWMol.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
 #include <GraphMol/GaussianShape/GaussianShape.h>
+#include <GraphMol/GaussianShape/SingleConformerAlignment.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SearchShapeInput.h>
+
 #include <SimDivPickers/LeaderPicker.h>
+#include <boost/locale/date_time.hpp>
 
 namespace RDKit {
 namespace GaussianShape {
@@ -24,6 +27,25 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
     : ShapeInput(mol, 0, opts, overlayOpts) {
   // The ShapeInput c'tor puts a PRECONDITION on conformers being available.
   initializeFromBase();
+
+  // Flag the dummy atoms
+  d_dummyAtoms = boost::dynamic_bitset<>(getNumAtoms() + getNumFeatures());
+  unsigned int currIdx = 0;
+  for (const auto atom : mol.atoms()) {
+    if (includeAtom(opts.atomSubset, atom)) {
+      if (!atom->getAtomicNum()) {
+        d_dummyAtoms[currIdx] = true;
+      }
+      auto atIdx = atom->getIdx();
+      auto it = std::ranges::find_if(
+          opts.atomRadii,
+          [atIdx](const auto &p) -> bool { return p.first == atIdx; });
+      if (it != opts.atomRadii.end() && it->second == DUMMY_RAD) {
+        d_dummyAtoms[currIdx] = true;
+      }
+      ++currIdx;
+    }
+  }
 
   // build the shapes for conformations 1 onwards.
   d_confCoords.reserve(mol.getNumConformers());
@@ -35,14 +57,14 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
   d_canonRots.reserve(mol.getNumConformers());
   d_centroids.reserve(mol.getNumConformers());
   d_eigenValuess.reserve(mol.getNumConformers());
-  for (unsigned int cn = 0; cn < mol.getNumConformers(); ++cn) {
+  for (unsigned int cn = 1; cn < mol.getNumConformers(); ++cn) {
     auto shape = ShapeInput(mol, cn, opts, overlayOpts);
     const auto &cdsAndRads = shape.getCoords();
     std::vector<double> cdsCoords(3 * (getNumAtoms() + getNumFeatures()));
     for (unsigned int i = 0; i < getNumAtoms() + getNumFeatures(); ++i) {
       cdsCoords[3 * i] = cdsAndRads[4 * i];
       cdsCoords[3 * i + 1] = cdsAndRads[4 * i + 1];
-      cdsCoords[3 * i + 1] = cdsAndRads[4 * i + 1];
+      cdsCoords[3 * i + 2] = cdsAndRads[4 * i + 2];
     }
     d_confCoords.emplace_back(std::move(cdsCoords));
     d_molConfs.push_back(cn);
@@ -56,6 +78,7 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
   }
   pruneShapes(pruneThreshold);
   sortShapesByScore();
+  calculateDummyVolumes(overlayOpts);
 }
 
 SearchShapeInput::SearchShapeInput(const std::string &str) {
@@ -282,30 +305,6 @@ double SearchShapeInput::bestSimilarity(
   return best_combo_t;
 }
 
-std::unique_ptr<RWMol> shapeToMol(const ShapeInput &shape) {
-  auto mol = std::make_unique<RWMol>();
-  for (unsigned int i = 0; i < shape.getNumAtoms(); i++) {
-    RDKit::Atom *atom = new RDKit::Atom(6);
-    mol->addAtom(atom, true, true);
-  }
-  for (unsigned int i = 0; i < shape.getNumFeatures(); i++) {
-    RDKit::Atom *atom = new RDKit::Atom(7);
-    mol->addAtom(atom, true, true);
-  }
-  RDKit::Conformer *conf =
-      new RDKit::Conformer(shape.getNumAtoms() + shape.getNumFeatures());
-  const auto &shapeCds = shape.getCoords();
-  for (unsigned int i = 0; i < shape.getNumAtoms() + shape.getNumFeatures();
-       i++) {
-    auto &pos = conf->getAtomPos(i);
-    pos.x = shapeCds[4 * i];
-    pos.y = shapeCds[4 * i + 1];
-    pos.z = shapeCds[4 * i + 2];
-  }
-  mol->addConformer(conf, true);
-  return mol;
-}
-
 void SearchShapeInput::initializeFromBase() {
   d_confCoords = std::vector<std::vector<double>>(
       1, std::vector<double>(3 * (getNumAtoms() + getNumFeatures())));
@@ -313,12 +312,13 @@ void SearchShapeInput::initializeFromBase() {
   for (unsigned int i = 0; i < getNumAtoms() + getNumFeatures(); ++i) {
     d_confCoords[0][3 * i] = cdsAndRads[4 * i];
     d_confCoords[0][3 * i + 1] = cdsAndRads[4 * i + 1];
-    d_confCoords[0][3 * i + 1] = cdsAndRads[4 * i + 1];
+    d_confCoords[0][3 * i + 2] = cdsAndRads[4 * i + 2];
   }
   // We don't actually know what conformer it came from
   d_molConfs = std::vector<unsigned int>(1, 0);
   // Keep the dummyVols in synch with the other data, but
   // clearly flag it as not calculated.
+  d_dummyVol = -1.0;
   d_dummyVolumes = std::vector<double>(1, -1);
   d_shapeVolumes = std::vector<double>(1, getShapeVolume());
   d_colorVolumes = std::vector<double>(1, getColorVolume());
@@ -378,5 +378,67 @@ void SearchShapeInput::selectConformations(const std::vector<int> &picks) {
   d_extremePointss = std::move(newExtremePointss);
   d_eigenValuess = std::move(newEigenValuess);
 }
+
+void SearchShapeInput::calculateDummyVolumes(
+    const ShapeOverlayOptions &overlayOpts) {
+  std::cout << "calculateDummyVolumes" << std::endl;
+  // Set the rad value of the coords to -ve for the dummy atoms, to
+  // flag them as to be skipped.
+  auto tmpCoords = getCoords();
+  for (unsigned int i = 0; i < getNumShapes(); ++i) {
+    confCoordsToShapeCoords(i, tmpCoords);
+    // We need to do this every time, as the radius part is taken from
+    // the base shape each time.
+    for (unsigned int i = 0; i < getNumAtoms(); i++) {
+      if (d_dummyAtoms[i]) {
+        tmpCoords[4 * i + 3] *= -1;
+      }
+    }
+    std::vector<std::array<double, 12>> gradConverters(getNumAtoms() +
+                                                       getNumFeatures());
+
+    auto vol =
+        calcVolAndGrads(tmpCoords.data(), getNumAtoms(), getCarbonRadii(),
+                        tmpCoords.data(), getNumAtoms(), getCarbonRadii(),
+                        gradConverters, overlayOpts.useDistCutoff,
+                        overlayOpts.distCutoff * overlayOpts.distCutoff);
+    d_dummyVolumes[i] = d_shapeVolumes[i] - vol;
+  }
+}
+
+std::unique_ptr<RWMol> shapeToMol(const SearchShapeInput &shape,
+                                  bool includeColors) {
+  auto mol = std::make_unique<RWMol>();
+  for (unsigned int i = 0; i < shape.getNumAtoms(); i++) {
+    RDKit::Atom *atom = nullptr;
+    if (shape.getDummyAtoms()[i]) {
+      atom = new RDKit::Atom(8);
+    } else {
+      atom = new RDKit::Atom(6);
+    }
+    mol->addAtom(atom, true, true);
+  }
+  if (includeColors) {
+    for (unsigned int i = 0; i < shape.getNumFeatures(); i++) {
+      RDKit::Atom *atom = new RDKit::Atom(7);
+      mol->addAtom(atom, true, true);
+    }
+  }
+  unsigned int num = shape.getNumAtoms();
+  if (includeColors) {
+    num += shape.getNumFeatures();
+  }
+  RDKit::Conformer *conf = new RDKit::Conformer(num);
+  const auto &shapeCds = shape.getCoords();
+  for (unsigned int i = 0; i < num; i++) {
+    auto &pos = conf->getAtomPos(i);
+    pos.x = shapeCds[4 * i];
+    pos.y = shapeCds[4 * i + 1];
+    pos.z = shapeCds[4 * i + 2];
+  }
+  mol->addConformer(conf, true);
+  return mol;
+}
+
 }  // namespace GaussianShape
 }  // namespace RDKit

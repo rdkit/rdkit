@@ -65,6 +65,8 @@ void serialize(Archive &ar, boost::dynamic_bitset<Block, Allocator> &bs,
 
 namespace RDKit {
 class ROMol;
+class Atom;
+
 namespace GaussianShape {
 
 constexpr double CARBON_RAD = 1.70;
@@ -253,6 +255,9 @@ RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
 RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
     const double *inShape, double *outShape, size_t numPoints,
     const RDGeom::Point3D &translation);
+
+// Whether to use this atom in the shape.
+bool includeAtom(const std::vector<unsigned int> &atomSubset, const Atom *atom);
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 template <class Archive>

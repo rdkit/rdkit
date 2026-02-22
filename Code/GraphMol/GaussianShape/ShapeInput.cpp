@@ -264,20 +264,6 @@ double getStandardAtomRadius(unsigned int atomicNum) {
   throw ValueErrorException("No VdW radius for atom with Z=" +
                             std::to_string(atomicNum));
 }
-bool includeAtom(const std::vector<unsigned int> &atomSubset,
-                 const Atom *atom) {
-  if (atomSubset.empty()) {
-    return true;
-  }
-  const auto atomIdx = atom->getIdx();
-  if (auto it = std::ranges::find_if(
-          atomSubset,
-          [atomIdx](const auto &p) -> bool { return p == atomIdx; });
-      it == atomSubset.end()) {
-    return false;
-  }
-  return true;
-}
 }  // namespace
 
 void ShapeInput::extractAtoms(const ROMol &mol, int confId,
@@ -295,7 +281,7 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
   }
 
   d_coords.reserve(mol.getNumAtoms() * 4);
-  // If we're using dummies, we will want them to be their own radius so we
+  // If we're using dummies, we will want them to have their own radius so we
   // can't use the really fast all-carbon radius optimisation later, so we
   // need to know which are carbon atoms.
   if (((hasDummies || radsAreDummies) && opts.includeDummies) ||
@@ -637,6 +623,21 @@ void translateShape(const double *inShape, double *outShape, size_t numPoints,
     outShape[i + 2] = inShape[i + 2] + translation.z;
     outShape[i + 3] = inShape[i + 3];
   }
+}
+
+bool includeAtom(const std::vector<unsigned int> &atomSubset,
+                 const Atom *atom) {
+  if (atomSubset.empty()) {
+    return true;
+  }
+  const auto atomIdx = atom->getIdx();
+  if (auto it = std::ranges::find_if(
+          atomSubset,
+          [atomIdx](const auto &p) -> bool { return p == atomIdx; });
+      it == atomSubset.end()) {
+    return false;
+  }
+  return true;
 }
 
 }  // namespace GaussianShape
