@@ -21,21 +21,34 @@
 
 #include <sstream>
 #include <utility>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <mutex>
+#endif
 
 #include "seqs.hpp"
 namespace python = boost::python;
 using namespace RDKit;
 
-struct rdchem_numpy_init {
-  rdchem_numpy_init() {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+static std::once_flag s_rdchem_numpy_init_flag;
+#endif
+
+void rdkit_rdchem_ensure_numpy() {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::call_once(s_rdchem_numpy_init_flag, []() {
+    const bool register_scalar_converters = false;
+    boost::python::numpy::initialize(register_scalar_converters);
+    rdkit_import_array();
+  });
+#else
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
     const bool register_scalar_converters = false;
     boost::python::numpy::initialize(register_scalar_converters);
     rdkit_import_array();
   }
-};
-
-void rdkit_rdchem_ensure_numpy() {
-  static rdchem_numpy_init init;
+#endif
 }
 
 namespace RDKit {
