@@ -181,7 +181,9 @@ ShapeInput SearchShapeInput::makeSingleShape(unsigned int shapeNum) const {
 }
 
 void SearchShapeInput::setActiveShape(unsigned int shapeNum) {
-  PRECONDITION(shapeNum < d_confCoords.size(), "confNum is out of bounds");
+  PRECONDITION(shapeNum < d_confCoords.size(),
+               "confNum " + std::to_string(shapeNum) + " is out of bounds vs " +
+                   std::to_string(d_confCoords.size()) + ".");
   d_actConf = shapeNum;
   std::vector<double> coords(getCoords().size());
   confCoordsToShapeCoords(d_actConf, coords);
@@ -285,10 +287,9 @@ double SearchShapeInput::bestSimilarity(
   }
 
   double best_combo_t = -1.0;
-  for (size_t i = 0; i < getNumAtoms() + getNumFeatures(); i++) {
+  for (size_t i = 0; i < getNumShapes(); i++) {
     setActiveShape(i);
-    for (size_t j = 0; j < fitShape.getNumAtoms() + fitShape.getNumFeatures();
-         j++) {
+    for (size_t j = 0; j < fitShape.getNumShapes(); j++) {
       auto maxSim = maxScore(d_shapeVolumes[i], fitShape.d_shapeVolumes[j],
                              d_colorVolumes[i], fitShape.d_colorVolumes[j]);
       if (maxSim > threshold) {
@@ -381,7 +382,6 @@ void SearchShapeInput::selectConformations(const std::vector<int> &picks) {
 
 void SearchShapeInput::calculateDummyVolumes(
     const ShapeOverlayOptions &overlayOpts) {
-  std::cout << "calculateDummyVolumes" << std::endl;
   // Set the rad value of the coords to -ve for the dummy atoms, to
   // flag them as to be skipped.
   auto tmpCoords = getCoords();

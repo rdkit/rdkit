@@ -96,7 +96,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
                                              synthons[j].second, sim)) {
           synthonsToUse[synthonSetOrder[fragNum]][j] = true;
           fragSims[synthonSetOrder[fragNum]].emplace_back(
-              j, std::get<0>(sim) + std::get<1>(sim));
+              j, sim.first + sim.second);
           fragMatched = true;
         }
       } else {
@@ -204,6 +204,7 @@ SynthonSpaceShapeSearcher::searchFragSet(
       if (!theseSynthons.empty()) {
         std::unique_ptr<SynthonSpaceHitSet> hs(new SynthonSpaceShapeHitSet(
             reaction, theseSynthons, fragSet, fragShapes, synthonOrder));
+        std::cout << "hits : " << hs->numHits << std::endl;
         if (hs->numHits) {
           results.push_back(std::move(hs));
         }
@@ -448,6 +449,10 @@ void computeSomeFragSynthonSims(
       unsigned int bestRefConf, bestFitConf;
       const auto sim = fragShape->bestSimilarity(
           *synthon->getShapes().get(), bestFitConf, bestRefConf, threshold);
+      // std::cout << fragShape->getNumAtoms() << " vs " << synthon->getSmiles()
+      //           << " : " << synthon->getShapes()->getNumAtoms() << " : " <<
+      //           sim
+      //           << " vs " << threshold << std::endl;
       if (sim >= threshold) {
         std::pair<const void *, const void *> p{fragShape, synthon};
         std::unique_lock lock1{mtx};
@@ -658,13 +663,12 @@ void finaliseHit(
     const std::unique_ptr<GaussianShape::SearchShapeInput> &queryShapes,
     unsigned int queryConfNum, const std::unique_ptr<RWMol> &allHitConfs,
     const std::unique_ptr<GaussianShape::SearchShapeInput> &allHitShapes,
-    unsigned int hitConfNum, const std::vector<float> &matrix, double shape_tan,
-    double color_tan, const std::string &rxnId,
+    unsigned int hitConfNum, const RDGeom::Transform3D &xform,
+    std::array<double, 3> &scores, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames, ROMol &hit) {
-#if 0
-  hit.setProp<double>("Similarity", shape_tan + color_tan);
-  hit.setProp<double>("ShapeTanimoto", shape_tan);
-  hit.setProp<double>("ColorTanimoto", color_tan);
+  hit.setProp<double>("Similarity", scores[0]);
+  hit.setProp<double>("ShapeTanimoto", scores[1]);
+  hit.setProp<double>("ColorTanimoto", scores[2]);
   hit.setProp<unsigned int>("Query_Conformer", queryConfNum);
   // Make a molecule of this query conformer, and add it to the hit.
   ROMol thisConf(*queryConfs, false, queryConfNum);
@@ -675,11 +679,9 @@ void finaliseHit(
   // Copy the conformer into the hit.
   hit.clearConformers();
   auto hitConf = new Conformer(allHitConfs->getConformer(hitConfNum));
-  auto hitShape = allHitShapes->makeSingleShape(hitConfNum);
-  TransformConformer(queryShapes->shift, matrix, hitShape, *hitConf);
+  MolTransforms::transformConformer(*hitConf, xform);
   hit.addConformer(hitConf, true);
   MolOps::assignStereochemistryFrom3D(hit);
-#endif
 }
 }  // namespace
 
@@ -700,28 +702,33 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   bool foundHit = false;
   double bestSim = getParams().similarityCutoff;
   GaussianShape::ShapeInputOptions opts;
-
-  std::vector<float> matrix(12, 0.0);
+  RDGeom::Transform3D xform;
   for (auto &isomer : hitConfs) {
     auto hitShapes =
         std::make_unique<GaussianShape::SearchShapeInput>(*isomer, 1.9, opts);
     for (size_t i = 0U; i < dp_queryShapes->getNumShapes(); ++i) {
+      std::cout << "query conf " << i << " of "
+                << dp_queryShapes->getNumShapes() << std::endl;
       dp_queryShapes->setActiveShape(i);
       for (unsigned int j = 0u; j < hitShapes->getNumShapes(); ++j) {
         hitShapes->setActiveShape(j);
-        auto scores = GaussianShape::AlignShape(*dp_queryShapes, *hitShapes);
+        auto scores =
+            GaussianShape::AlignShape(*dp_queryShapes, *hitShapes, &xform);
+        std::cout << "hit shape conf " << j << " of "
+                  << hitShapes->getNumShapes() << " : " << scores[0] << ", "
+                  << scores[1] << ", " << scores[2] << std::endl;
         double sim = scores[0];
         bool finalisedHit = false;
         if (sim > getBestSimilaritySoFar()) {
           finaliseHit(dp_queryConfs, dp_queryShapes, i, isomer, hitShapes, j,
-                      matrix, scores[1], scores[2], rxnId, synthNames, hit);
+                      xform, scores, rxnId, synthNames, hit);
           finalisedHit = true;
           updateBestHitSoFar(hit, sim);
         }
         if (sim >= bestSim) {
           if (!finalisedHit) {
             finaliseHit(dp_queryConfs, dp_queryShapes, i, isomer, hitShapes, j,
-                        matrix, scores[1], scores[2], rxnId, synthNames, hit);
+                        xform, scores, rxnId, synthNames, hit);
           }
           // If we're only interested in whether there's a shape match, and
           // not in finding the best shape, we're done.
