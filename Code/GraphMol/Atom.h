@@ -16,6 +16,8 @@
 #ifndef _RD_ATOM_H
 #define _RD_ATOM_H
 
+#include <limits>
+
 // ours
 #include <RDGeneral/Invariant.h>
 #include <Query/QueryObjects.h>
@@ -78,6 +80,11 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   friend int calculateImplicitValence(const Atom &, bool, bool);
 
  public:
+  // used to mark missing atoms, e.g. in Chirality::StereoInfo
+  // and the _CIPNeighborOrder in CIP labeler
+  inline static constexpr unsigned int NOATOM =
+      std::numeric_limits<unsigned int>::max();
+
   // FIX: grn...
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
 

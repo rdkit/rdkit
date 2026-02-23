@@ -31,30 +31,38 @@ namespace RDKit {
   QueryAtom *_funcname_##EqualsQueryAtom(_typ_ val, bool negate) {         \
     QueryAtom *res = new QueryAtom();                                      \
     res->setQuery(_func_(val));                                            \
-    if (negate) res->getQuery()->setNegation(true);                        \
+    if (negate) {                                                          \
+      res->getQuery()->setNegation(true);                                  \
+    }                                                                      \
     return res;                                                            \
   }                                                                        \
   QueryAtom *_funcname_##LessQueryAtom(_typ_ val, bool negate) {           \
     QueryAtom *res = new QueryAtom();                                      \
     res->setQuery(                                                         \
         _func_<ATOM_GREATER_QUERY>(val, std::string(#_funcname_ "Less"))); \
-    if (negate) res->getQuery()->setNegation(true);                        \
+    if (negate) {                                                          \
+      res->getQuery()->setNegation(true);                                  \
+    }                                                                      \
     return res;                                                            \
   }                                                                        \
   QueryAtom *_funcname_##GreaterQueryAtom(_typ_ val, bool negate) {        \
     QueryAtom *res = new QueryAtom();                                      \
     res->setQuery(                                                         \
         _func_<ATOM_LESS_QUERY>(val, std::string(#_funcname_ "Greater"))); \
-    if (negate) res->getQuery()->setNegation(true);                        \
+    if (negate) {                                                          \
+      res->getQuery()->setNegation(true);                                  \
+    }                                                                      \
     return res;                                                            \
   }
 
-#define QAFUNC2(_funcname_, _func_, _typ_)          \
-  QueryAtom *_funcname_(bool negate) {              \
-    QueryAtom *res = new QueryAtom();               \
-    res->setQuery(_func_());                        \
-    if (negate) res->getQuery()->setNegation(true); \
-    return res;                                     \
+#define QAFUNC2(_funcname_, _func_, _typ_) \
+  QueryAtom *_funcname_(bool negate) {     \
+    QueryAtom *res = new QueryAtom();      \
+    res->setQuery(_func_());               \
+    if (negate) {                          \
+      res->getQuery()->setNegation(true);  \
+    }                                      \
+    return res;                            \
   }
 QAFUNC1(AtomNum, makeAtomNumQuery, int);
 QAFUNC1(ExplicitValence, makeAtomExplicitValenceQuery, int);

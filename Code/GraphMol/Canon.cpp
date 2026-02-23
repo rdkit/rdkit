@@ -287,6 +287,11 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       auto atom1Dir = secondFromAtom1->getBondDir();
       firstFromAtom1->setBondDir(atom1Dir);
 
+      // acknowledge that secondFromAtom1 is relevant for this bond,
+      // and prevent removeRedundantBondDirSpecs from removing this
+      // direction.
+      bondDirCounts[secondFromAtom1->getIdx()] += 1;
+
       bondDirCounts[firstFromAtom1->getIdx()] += 1;
       atomDirCounts[atom1->getIdx()] += 2;
       atom1ControllingBond = secondFromAtom1;
@@ -321,6 +326,11 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       //
       auto atom2Dir = secondFromAtom2->getBondDir();
       firstFromAtom2->setBondDir(atom2Dir);
+
+      // acknowledge that secondFromAtom2 is relevant for this bond,
+      // and prevent removeRedundantBondDirSpecs from removing this
+      // direction.
+      bondDirCounts[secondFromAtom2->getIdx()] += 1;
 
       bondDirCounts[firstFromAtom2->getIdx()] += 1;
       atomDirCounts[atom2->getIdx()] += 2;
@@ -1010,11 +1020,9 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
           continue;
         }
 
-        // Check if the atom can be chiral, and if chirality needs inversion
-        const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
-
         // Extra check needed if/when @AL1/@AL2 supported
-        if (trueOrder.size() >= 3 || Chirality::hasNonTetrahedralStereo(atom)) {
+        if (Chirality::detail::isAtomPotentialTetrahedralCenter(atom) ||
+            Chirality::hasNonTetrahedralStereo(atom)) {
           int nSwaps = 0;
           int perm = 0;
           if (Chirality::hasNonTetrahedralStereo(atom)) {
@@ -1023,6 +1031,9 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
           const unsigned int firstIdx = molStack.begin()->obj.atom->getIdx();
           const bool firstInPart = atom->getIdx() == firstIdx;
+
+          // Check if the atom can be chiral, and if chirality needs inversion
+          const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
 
           // We have to make sure that trueOrder contains all the
           // bonds, even if they won't be written to the SMILES

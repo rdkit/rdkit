@@ -179,6 +179,9 @@ struct atom_wrapper {
         .def(python::init<unsigned int>(python::args("self", "num"),
                                         "Constructor, takes the atomic number"))
 
+        .def_readonly("NOATOM", &Atom::NOATOM,
+                      "marker for unspecified int values")
+
         .def("__copy__", &Atom::copy,
              python::return_value_policy<
                  python::manage_new_object,
@@ -287,7 +290,7 @@ struct atom_wrapper {
         .def("GetBonds", AtomGetBonds, python::args("self"),
              "Returns a read-only sequence of the atom's bonds\n")
 
-        .def("Match", (bool (Atom::*)(const Atom *) const) & Atom::Match,
+        .def("Match", (bool(Atom::*)(const Atom *) const) & Atom::Match,
              python::args("self", "what"),
              "Returns whether or not this atom matches another Atom.\n\n"
              "  Each Atom (or query Atom) has a query function which is\n"

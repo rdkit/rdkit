@@ -19,7 +19,9 @@ namespace {
 inline void copyComputedProps(const ROMol &src, ROMol &dst) {
   dst.updateProps(src);
   for (auto &v : dst.getPropList(true, false)) {
-    if (v != RDKit::detail::computedPropName) dst.clearProp(v);
+    if (v != RDKit::detail::computedPropName) {
+      dst.clearProp(v);
+    }
   }
 }
 
@@ -48,7 +50,11 @@ static void copySelectedAtomsAndBonds(RWMol &extracted_mol,
     if (!selectedBonds[ref_bond->getIdx()]) {
       continue;
     }
-
+    if (atomMapping.find(ref_bond->getBeginAtomIdx()) == atomMapping.end() ||
+	atomMapping.find(ref_bond->getEndAtomIdx()) == atomMapping.end()) {
+      throw ValueErrorException("copyMolSubset: subset bonds contain atoms not contained in subset atoms");
+    }
+	
     std::unique_ptr<Bond> extracted_bond{
         options.copyAsQuery ? new QueryBond(*ref_bond) : ref_bond->copy()};
 
@@ -294,11 +300,7 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(
     const SubsetOptions &options) {
   const auto natoms = mol.getNumAtoms();
   const auto nbonds = mol.getNumBonds();
-
-  if ((atoms.size() == natoms &&
-       options.method == SubsetMethod::BONDS_BETWEEN_ATOMS) ||
-      (bonds.size() == nbonds && options.method == SubsetMethod::BONDS) ||
-      (atoms.size() == natoms && bonds.size() == nbonds)) {
+  if ((atoms.size() == natoms && bonds.size() == nbonds)) {
     // optimization to copy the entire thing
     return std::make_unique<RDKit::RWMol>(mol);
   }
@@ -311,10 +313,18 @@ std::unique_ptr<RDKit::RWMol> copyMolSubset(
   selection_info.bondMapping.clear();
 
   for (auto v : atoms) {
-    selection_info.selectedAtoms.set(v);
+    if (v < natoms) {
+      selection_info.selectedAtoms.set(v);
+    } else {
+      throw IndexErrorException(static_cast<int>(v));
+    }
   }
   for (auto v : bonds) {
-    selection_info.selectedBonds.set(v);
+    if (v < nbonds) {
+      selection_info.selectedBonds.set(v);
+    } else {
+      throw IndexErrorException(static_cast<int>(v));
+    }
   }
 
   auto res = copyMolSubset(mol, selection_info, options);

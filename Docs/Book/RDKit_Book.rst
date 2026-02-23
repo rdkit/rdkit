@@ -690,9 +690,9 @@ Ring Finding and SSSR
 As others have ranted about with more energy and eloquence than I intend to, the definition of a molecule's smallest set of smallest rings is not unique.
 In some high symmetry molecules, a “true” SSSR will give results that are unappealing.
 For example, the SSSR for cubane only contains 5 rings, even though there are “obviously” 6. This problem can be fixed by implementing a *small* (instead of *smallest*) set of smallest rings algorithm that returns symmetric results.
-This is the approach that we took with the RDKit.
+This is the approach that we took with the RDKit in :py:func:`rdkit.Chem.GetSymmSSSR`.
 
-Because it is sometimes useful to be able to count how many SSSR rings are present in the molecule, there is a GetSSSR function, but this only returns the SSSR count, not the potentially non-unique set of rings.
+Because it is sometimes useful to know the "true" SSSR rings, there is a :py:func:`rdkit.Chem.GetSSSR` function which returns this potentially non-unique set of rings.
 
 For situations where you just care about knowing whether or not atoms/bonds are in rings, the RDKit provides the function
 :py:func:`rdkit.Chem.rdmolops.FastFindRings`. This does a depth-first traversal of the molecule graph and identifies atoms and bonds that

@@ -19,33 +19,33 @@ class TestCase(unittest.TestCase):
     pass
 
   def test0GainFuns(self):
-    arr = numpy.array([9, 5])
+    arr = numpy.array([9, 5],float)
     self.assertTrue(feq(rdit.InfoEntropy(arr), 0.9403))
-    arr = numpy.array([9, 9])
+    arr = numpy.array([9, 9],float)
     self.assertTrue(feq(rdit.InfoEntropy(arr), 1.0000))
-    arr = numpy.array([5, 5])
+    arr = numpy.array([5, 5],float)
     self.assertTrue(feq(rdit.InfoEntropy(arr), 1.0000))
-    arr = numpy.array([5, 0])
+    arr = numpy.array([5, 0],float)
     self.assertTrue(feq(rdit.InfoEntropy(arr), 0.0000))
-    arr = numpy.array([5, 5, 5])
+    arr = numpy.array([5, 5, 5],float)
     self.assertTrue(feq(rdit.InfoEntropy(arr), 1.5850))
-    arr = numpy.array([2, 5, 5])
+    arr = numpy.array([2, 5, 5],float)
     self.assertTrue(feq(rdit.InfoEntropy(arr), 1.4834))
 
-    mat2 = numpy.array([[6, 2], [3, 3]])
+    mat2 = numpy.array([[6, 2], [3, 3]],float)
     self.assertTrue(feq(rdit.InfoGain(mat2), 0.0481))
     self.assertTrue(feq(rdit.ChiSquare(mat2), 0.9333))
 
-    mat3 = numpy.array([[1, 1], [2, 1]])
+    mat3 = numpy.array([[1, 1], [2, 1]],float)
     self.assertTrue(feq(rdit.InfoGain(mat3), 0.0200))
 
-    mat4 = numpy.array([[2, 0], [1, 2]])
+    mat4 = numpy.array([[2, 0], [1, 2]],float)
     self.assertTrue(feq(rdit.InfoGain(mat4), 0.4200))
 
-    mat5 = numpy.array([[0, 0], [0, 0]])
+    mat5 = numpy.array([[0, 0], [0, 0]],float)
     self.assertTrue(feq(rdit.InfoGain(mat5), 0.0000))
 
-    mat6 = numpy.array([[1, 0], [1, 0]])
+    mat6 = numpy.array([[1, 0], [1, 0]],float)
     self.assertTrue(feq(rdit.InfoGain(mat6), 0.0000))
 
   def test1ranker(self):

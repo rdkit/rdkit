@@ -21,10 +21,35 @@
 
 #include <sstream>
 #include <utility>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <mutex>
+#endif
 
 #include "seqs.hpp"
 namespace python = boost::python;
 using namespace RDKit;
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+static std::once_flag s_rdchem_numpy_init_flag;
+#endif
+
+void rdkit_rdchem_ensure_numpy() {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::call_once(s_rdchem_numpy_init_flag, []() {
+    const bool register_scalar_converters = false;
+    boost::python::numpy::initialize(register_scalar_converters);
+    rdkit_import_array();
+  });
+#else
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    const bool register_scalar_converters = false;
+    boost::python::numpy::initialize(register_scalar_converters);
+    rdkit_import_array();
+  }
+#endif
+}
 
 namespace RDKit {
 void tossit() { throw IndexErrorException(1); }
@@ -102,12 +127,9 @@ T *next_ptr(O &self) {
 BOOST_PYTHON_MODULE(rdchem) {
   python::scope().attr("__doc__") =
       "Module containing the core chemistry functionality of the RDKit";
-  const bool register_scalar_converters = false;
-  boost::python::numpy::initialize(register_scalar_converters);
   RegisterListConverter<RDKit::Atom *>();
   RegisterListConverter<RDKit::Bond *>();
   RegisterListConverter<RDKit::CONFORMER_SPTR>();
-  rdkit_import_array();
 
   // this is one of those parts where I think I wish that I knew how to do
   // template meta-programming

@@ -99,7 +99,7 @@ LazyCartesianProduct<unsigned int> getValenceCombinations(
   auto numAtoms = mol.getNumAtoms();
   const std::unordered_map<int, std::vector<unsigned int>> atomicValence = {
       {1, {1}},  {5, {3, 4}}, {6, {4}},     {7, {3, 4}},     {8, {2, 1, 3}},
-      {9, {1}},  {14, {4}},   {15, {5, 3}}, {16, {6, 3, 2}}, {17, {1}},
+      {9, {1}},  {14, {4}},   {15, {5, 3}}, {16, {6, 3, 2, 1}}, {17, {1}},
       {32, {4}}, {35, {1}},   {53, {1}}};
 
   std::vector<std::vector<unsigned int>> curPossible(numAtoms);

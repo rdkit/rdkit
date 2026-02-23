@@ -93,3 +93,6 @@ add_pytest(pyCDXMLTest
 
 add_pytest(pySubsetTest
          ${CMAKE_CURRENT_SOURCE_DIR}/test_subset.py)
+
+add_pytest(pyTestLazyNumpy
+         ${CMAKE_CURRENT_SOURCE_DIR}/test_lazy_numpy.py)
