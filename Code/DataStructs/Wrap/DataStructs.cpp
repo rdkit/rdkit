@@ -10,6 +10,10 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rddatastructs_array_API
 
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <mutex>
+#endif
+
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <DataStructs/BitVects.h>
@@ -32,9 +36,26 @@ void wrap_realValVect();
 void wrap_sparseIntVect();
 void wrap_FPB();
 
+#ifdef RDK_BUILD_THREADSAFE_SSS
+static std::once_flag s_ds_numpy_init_flag;
+#endif
+
+static void ds_ensure_numpy() {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::call_once(s_ds_numpy_init_flag, rdkit_import_array);
+#else
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    rdkit_import_array();
+  }
+#endif
+}
+
 namespace {
 template <typename T, typename U>
 void converter(const T &v, python::object destArray, U func) {
+  ds_ensure_numpy();
   if (!PyArray_Check(destArray.ptr())) {
     throw_value_error("Expecting a Numeric array object");
   }
@@ -64,7 +85,6 @@ void convertToDoubleNumpyArray(const T &v, python::object destArray) {
 }
 
 BOOST_PYTHON_MODULE(cDataStructs) {
-  rdkit_import_array();
   python::scope().attr("__doc__") =
       "Module containing an assortment of functionality for basic data "
       "structures.\n"
