@@ -12,6 +12,7 @@
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
@@ -58,7 +59,7 @@ TEST_CASE("Shape Small tests") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
-#if 0
+#if 1
   // These are the source files for the shape databases.  Useful to keep
   // around in case the databases ever need updating.
   std::vector<std::string> libNames{
@@ -95,17 +96,21 @@ TEST_CASE("Shape Small tests") {
   // acceptors don't align.  In the full molecule overlay, that is
   // compensated for by other things.
   std::vector<size_t> expNumHits{3, 8, 1};
+  std::vector<std::vector<double>> expScores{
+      {1.0, 0.825, 0.813},
+      {0.928, 0.873, 0.846, 0.844, 0.825, 0.820, 0.804, 0.804},
+      {0.997}};
   ShapeBuildParams shapeBuildOptions;
   shapeBuildOptions.numConfs = 100;
   shapeBuildOptions.rmsThreshold = 0.5;
   shapeBuildOptions.numThreads = 1;
 
   for (size_t i = 0; i < dbNames.size(); i++) {
-    if (i != 1) {
+    if (i != 0) {
       continue;
     }
     SynthonSpace synthonspace;
-#if 0
+#if 1
     // In case the databases ever need updating.
     bool cancelled = false;
     synthonspace.readTextFile(libNames[i], cancelled);
@@ -114,7 +119,7 @@ TEST_CASE("Shape Small tests") {
 #endif
     synthonspace.readDBFile(dbNames[i]);
     SynthonSpaceSearchParams params;
-    params.similarityCutoff = 1.6;
+    params.similarityCutoff = 0.8;
     params.numConformers = shapeBuildOptions.numConfs;
     params.numThreads = shapeBuildOptions.numThreads;
     params.confRMSThreshold = shapeBuildOptions.rmsThreshold;
@@ -122,6 +127,23 @@ TEST_CASE("Shape Small tests") {
     params.randomSeed = 1;
     auto queryMol = v2::SmilesParse::MolFromSmiles(querySmis[i]);
     auto results = synthonspace.shapeSearch(*queryMol, params);
+    unsigned int j = 0;
+    for (const auto &mol : results.getHitMolecules()) {
+      std::cout << "Hit : " << MolToCXSmiles(*mol)
+                << " sim = " << mol->getProp<double>("Similarity") << "  "
+                << mol->getProp<std::string>("_Name") << std::endl;
+      CHECK_THAT(mol->getProp<double>("Similarity"),
+                 Catch::Matchers::WithinAbs(expScores[i][j++], 0.001));
+      auto hitQuery = v2::SmilesParse::MolFromSmiles(
+          mol->getProp<std::string>("Query_CXSmiles"));
+      auto scores = GaussianShape::ScoreMolecule(*hitQuery, *mol);
+      std::cout << "After score : " << scores[0] << ", " << scores[1] << ", "
+                << scores[2] << std::endl;
+      CHECK_THAT(mol->getProp<double>("Similarity"),
+                 Catch::Matchers::WithinAbs(scores[0], 0.001));
+      std::cout << "Query Conf : "
+                << mol->getProp<std::string>("Query_CXSmiles") << std::endl;
+    }
     CHECK(expNumHits[i] == results.getHitMolecules().size());
 #if 0
     // Leave this in for now, in case we need to check brute force search

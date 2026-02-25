@@ -69,6 +69,7 @@ SearchResults SynthonSpaceSearcher::search(ThreadMode threadMode) {
   auto fragments = details::splitMolecule(
       d_query, getSpace().getMaxNumSynthons(), d_params.maxNumFragSets, endTime,
       d_params.numThreads, timedOut);
+  std::cout << "Number of fragment sets : " << fragments.size() << std::endl;
   auto allHits = assembleHitSets(endTime, timedOut, totHits, threadMode);
   if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
     buildHits(allHits, endTime, timedOut, results);

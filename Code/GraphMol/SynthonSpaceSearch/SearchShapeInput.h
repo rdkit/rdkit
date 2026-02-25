@@ -26,7 +26,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
   SearchShapeInput() = default;
   // Creates the shapes for all conformations in the molecule.  Prunes them
   // so that they are all at least pruneThreshold comboScore apart and
-  // sorts them into descending order of total volume.
+  // sorts them into descending order of total volume.  If pruneThreshold
+  // <= 0.0 doesn't prune.
   SearchShapeInput(
       const ROMol &mol, double pruneThreshold,
       const ShapeInputOptions &opts = ShapeInputOptions(),
@@ -43,6 +44,12 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
 
   using ShapeInput::getColorVolume;
   using ShapeInput::getShapeVolume;
+  unsigned int getMolConf(
+      unsigned int
+          shapeNum);  //! Get the molecule conformation corresponding ! to the
+                      //! given shape.  The shapes are sorted and pruned so may
+                      //! be in a different order from the input conformations
+                      //! and fewer in number.
   double getShapeVolume(unsigned int shapeNum) const;
   double getColorVolume(unsigned int shapenum) const;
   double getDummyVolume(unsigned int shapeNum) const;

@@ -76,7 +76,9 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
     d_centroids.push_back(shape.getCanonicalTranslation());
     d_eigenValuess.push_back(shape.getEigenValues());
   }
-  pruneShapes(pruneThreshold);
+  if (pruneThreshold > 0.0) {
+    pruneShapes(pruneThreshold);
+  }
   sortShapesByScore();
   calculateDummyVolumes(overlayOpts);
 }
@@ -93,6 +95,11 @@ SearchShapeInput::SearchShapeInput(const std::string &str) {
 
 SearchShapeInput::SearchShapeInput(const ShapeInput &si) : ShapeInput(si) {
   initializeFromBase();
+}
+
+unsigned int SearchShapeInput::getMolConf(unsigned int shapeNum) {
+  PRECONDITION(shapeNum < d_confCoords.size(), "Bad shapeNum");
+  return d_molConfs[shapeNum];
 }
 
 double SearchShapeInput::getShapeVolume(unsigned int shapeNum) const {

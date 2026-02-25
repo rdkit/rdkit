@@ -661,24 +661,26 @@ namespace {
 void finaliseHit(
     const std::unique_ptr<RWMol> &queryConfs,
     const std::unique_ptr<GaussianShape::SearchShapeInput> &queryShapes,
-    unsigned int queryConfNum, const std::unique_ptr<RWMol> &allHitConfs,
-    const std::unique_ptr<GaussianShape::SearchShapeInput> &allHitShapes,
-    unsigned int hitConfNum, const RDGeom::Transform3D &xform,
+    unsigned int queryShapeNum, const std::unique_ptr<RWMol> &allHitConfs,
+    const std::unique_ptr<GaussianShape::SearchShapeInput> &hitShapes,
+    unsigned int hitShapeNum, const RDGeom::Transform3D &xform,
     std::array<double, 3> &scores, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames, ROMol &hit) {
   hit.setProp<double>("Similarity", scores[0]);
   hit.setProp<double>("ShapeTanimoto", scores[1]);
   hit.setProp<double>("ColorTanimoto", scores[2]);
-  hit.setProp<unsigned int>("Query_Conformer", queryConfNum);
+  hit.setProp<unsigned int>("Query_Conformer",
+                            queryShapes->getMolConf(queryShapeNum));
   // Make a molecule of this query conformer, and add it to the hit.
-  ROMol thisConf(*queryConfs, false, queryConfNum);
+  ROMol thisConf(*queryConfs, false, queryShapes->getMolConf(queryShapeNum));
   hit.setProp<std::string>("Query_CXSmiles", MolToCXSmiles(thisConf));
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
 
   // Copy the conformer into the hit.
   hit.clearConformers();
-  auto hitConf = new Conformer(allHitConfs->getConformer(hitConfNum));
+  auto hitConf = new Conformer(
+      allHitConfs->getConformer(hitShapes->getMolConf(hitShapeNum)));
   MolTransforms::transformConformer(*hitConf, xform);
   hit.addConformer(hitConf, true);
   MolOps::assignStereochemistryFrom3D(hit);
@@ -704,8 +706,9 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   GaussianShape::ShapeInputOptions opts;
   RDGeom::Transform3D xform;
   for (auto &isomer : hitConfs) {
+    // Don't prune the hit shapes, it just wastes time.
     auto hitShapes =
-        std::make_unique<GaussianShape::SearchShapeInput>(*isomer, 1.9, opts);
+        std::make_unique<GaussianShape::SearchShapeInput>(*isomer, -1.0, opts);
     for (size_t i = 0U; i < dp_queryShapes->getNumShapes(); ++i) {
       std::cout << "query conf " << i << " of "
                 << dp_queryShapes->getNumShapes() << std::endl;
