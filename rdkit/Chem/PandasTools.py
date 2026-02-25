@@ -67,7 +67,7 @@ because the ">=" operator has been modified to work as a substructure check.
 Such the antibiotics containing the beta-lactam ring "C1C(=O)NC1" can be obtained by
 
 >>> beta_lactam = Chem.MolFromSmiles('C1C(=O)NC1')
->>> beta_lactam_antibiotics = antibiotics[antibiotics['Molecule'] >= beta_lactam] 
+>>> beta_lactam_antibiotics = antibiotics[antibiotics['Molecule'] >= beta_lactam]
 >>> print(beta_lactam_antibiotics[['Name','Smiles']])
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
@@ -136,6 +136,7 @@ import rdkit
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem, Draw, SDWriter, rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
+from rdkit.Chem.Draw import rdMolDraw2D
 
 InteractiveRenderer = None
 drawOptions = None
@@ -244,8 +245,8 @@ else:
       If embedProps=True all properties also get embedded in Mol objects in the molecule column.
       If molColName=None molecules would not be present in resulting DataFrame (only properties
       would be read).
-      
-      Sanitize boolean is passed on to Chem.ForwardSDMolSupplier sanitize. 
+
+      Sanitize boolean is passed on to Chem.ForwardSDMolSupplier sanitize.
       If neither molColName nor smilesName are set, sanitize=false.
       '''
     if isinstance(filename, str):
@@ -672,7 +673,10 @@ import unittest
 
 class TestCase(unittest.TestCase):
 
-  @unittest.skipIf(xlsxwriter is None or pd is None, 'pandas/xlsxwriter not installed')
+  # SaveXlsxFromFrame creates PNG images using MolToImage, which requires
+  # MolDraw2DCairo to be available
+  @unittest.skipIf(xlsxwriter is None or pd is None or
+    not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'pandas/xlsxwriter not installed')
   def testGithub1507(self):
     import os
     from rdkit import RDConfig
@@ -706,7 +710,10 @@ if __name__ == '__main__':  # pragma: nocover
 
   class TestCase(unittest.TestCase):
 
-    @unittest.skipIf(xlsxwriter is None or pd is None, 'pandas/xlsxwriter not installed')
+    # SaveXlsxFromFrame creates PNG images using MolToImage, which requires
+    # MolDraw2DCairo to be available
+    @unittest.skipIf(xlsxwriter is None or pd is None or
+      not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'pandas/xlsxwriter not installed')
     def testGithub1507(self):
       import os
 
