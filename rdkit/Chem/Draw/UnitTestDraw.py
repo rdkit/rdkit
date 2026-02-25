@@ -87,7 +87,8 @@ class TestCase(unittest.TestCase):
     # We avoid checking in the code with development flag set
     self.assertFalse(self.showAllImages)
 
-  def _testMolToFile(self):
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Skipping cairo test')
+  def testMolToFile(self):
     try:
       fhdl, fn = tempfile.mkstemp(suffix='.png')
       # mkstemp returns a file handle that we don't need; close it
@@ -103,7 +104,8 @@ class TestCase(unittest.TestCase):
   def testCairoFile(self):
     self._testMolToFile()
 
-  def _testMolToImage(self, mol=None, kekulize=True, options=None, showImage=False, **kwargs):
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Skipping cairo test')
+  def testMolToImage(self, mol=None, kekulize=True, options=None, showImage=False, **kwargs):
     mol = mol or self.mol
     img = Draw.MolToImage(mol, size=(300, 300), kekulize=kekulize, options=options, **kwargs)
     self.assertTrue(img)
