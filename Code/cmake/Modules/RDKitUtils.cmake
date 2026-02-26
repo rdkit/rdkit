@@ -187,6 +187,46 @@ macro(rdkit_python_extension)
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 endmacro(rdkit_python_extension)
 
+macro(rdkit_nanobind_extension)
+  PARSE_ARGUMENTS(RDKPY
+    "LINK_LIBRARIES;DEPENDS;DEST"
+    ""
+    ${ARGN})
+  CAR(RDKPY_NAME ${RDKPY_DEFAULT_ARGS})
+  CDR(RDKPY_SOURCES ${RDKPY_DEFAULT_ARGS})
+  if(RDK_BUILD_NANOBIND_WRAPPERS)
+    nanobind_add_module(${RDKPY_NAME} NB_SHARED ${RDKPY_SOURCES})
+    set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
+
+#    if(WIN32)
+#      set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd"
+#                           LIBRARY_OUTPUT_DIRECTORY
+#                           ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
+#    else(WIN32)
+#        set_target_properties(${RDKPY_NAME} PROPERTIES
+#                              LIBRARY_OUTPUT_DIRECTORY
+#                              ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
+#    endif(WIN32)
+
+    target_link_libraries(${RDKPY_NAME} PUBLIC ${RDKPY_LINK_LIBRARIES}
+                            rdkit_py_base rdkit_base )
+#    if("${PYTHON_LDSHARED}" STREQUAL "")
+#    else()
+#      set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
+#    endif()
+
+    INSTALL(TARGETS ${RDKPY_NAME}
+            LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST} COMPONENT python)
+    set_target_properties(nanobind
+      PROPERTIES
+      LIBRARY_OUTPUT_DIRECTORY  ${RDK_LIBRARY_OUTPUT_DIRECTORY} )
+    INSTALL(TARGETS nanobind 
+            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+            COMPONENT ${sharedLibComponent})
+  endif(RDK_BUILD_NANOBIND_WRAPPERS)
+endmacro(rdkit_nanobind_extension)
+
+
 macro(rdkit_test)
   PARSE_ARGUMENTS(RDKTEST
     "LINK_LIBRARIES;DEPENDS;DEST"
@@ -222,16 +262,16 @@ macro(add_pytest)
     ${ARGN})
   CAR(PYTEST_NAME ${PYTEST_DEFAULT_ARGS})
   CDR(PYTEST_SOURCES ${PYTEST_DEFAULT_ARGS})
-  if(RDK_BUILD_PYTHON_WRAPPERS)
-    add_test(${PYTEST_NAME}  ${Python3_EXECUTABLE}
+  if(RDK_BUILD_PYTHON_WRAPPERS OR RDK_BUILD_NANOBIND_WRAPPERS)
+    add_test(${PYTEST_NAME}  ${Python_EXECUTABLE}
              ${PYTEST_SOURCES})
     SET(RDKIT_PYTEST_CACHE "${PYTEST_NAME};${RDKIT_PYTEST_CACHE}" CACHE INTERNAL "Global list of python tests")
-  endif(RDK_BUILD_PYTHON_WRAPPERS)
+  endif(RDK_BUILD_PYTHON_WRAPPERS OR RDK_BUILD_NANOBIND_WRAPPERS)
 endmacro(add_pytest)
 
 function(add_jupytertest testname workingdir notebook)
-  if(RDK_BUILD_PYTHON_WRAPPERS AND RDK_NBVAL_AVAILABLE)
-    add_test(NAME ${testname}  COMMAND ${Python3_EXECUTABLE} -m pytest --nbval ${notebook}
+  if((RDK_BUILD_PYTHON_WRAPPERS OR RDK_BUILD_NANOBIND_WRAPPERS) AND RDK_NBVAL_AVAILABLE)
+    add_test(NAME ${testname}  COMMAND ${Python_EXECUTABLE} -m pytest --nbval ${notebook}
        WORKING_DIRECTORY ${workingdir} )
     SET(RDKIT_JUPYTERTEST_CACHE "${testname};${RDKIT_JUPYTERTEST_CACHE}" CACHE INTERNAL "Global list of jupyter tests")
   endif()
@@ -239,7 +279,7 @@ endfunction(add_jupytertest)
 
 function(add_pythonpytest testname workingdir)
   if(RDK_BUILD_PYTHON_WRAPPERS)
-    add_test(NAME ${testname}  COMMAND ${Python3_EXECUTABLE} -m pytest 
+    add_test(NAME ${testname}  COMMAND ${Python_EXECUTABLE} -m pytest 
        WORKING_DIRECTORY ${workingdir} )
     SET(RDKIT_PYTHONTEST_CACHE "${testname};${RDKIT_PYTHONTEST_CACHE}" CACHE INTERNAL "Global list of pytest tests")
   endif()

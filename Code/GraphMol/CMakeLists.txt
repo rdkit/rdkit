@@ -121,6 +121,10 @@ if (RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
 endif ()
 
+if (RDK_BUILD_NANOBIND_WRAPPERS)
+    add_subdirectory(Wrap2)
+endif ()
+
 add_subdirectory(MolStandardize)
 add_subdirectory(ScaffoldNetwork)
 add_subdirectory(MolEnumerator)

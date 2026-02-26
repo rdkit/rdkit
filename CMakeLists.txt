@@ -16,13 +16,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+if (CMAKE_VERSION VERSION_LESS 3.18)
+  set(DEV_MODULE Development)
+else()
+  set(DEV_MODULE Development.Module)
+endif()
+
+
+
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
 add_library(rdkit_base INTERFACE)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
-option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
+option(RDK_BUILD_PYTHON_WRAPPERS "build the python wrappers using boost.python" OFF )
+option(RDK_BUILD_NANOBIND_WRAPPERS "build the python wrappers using nanobind" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
@@ -303,6 +312,27 @@ endif(MSVC)
 if(RDK_BUILD_INCHI_SUPPORT)
   find_package(Inchi)
 endif(RDK_BUILD_INCHI_SUPPORT)
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_library(rdkit_py_base INTERFACE)
+  if(RDK_BUILD_PYTHON_WRAPPERS)
+    message(FATAL_ERROR "RDK_BUILD_PYTHON_WRAPPERS and RDK_BUILD_NANOBIND_WRAPPERS are mutually exclusive.")
+  endif()
+
+find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} NumPy REQUIRED)
+target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
+
+# Detect the installed nanobind package and import it into CMake
+execute_process(
+  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
+find_package(nanobind CONFIG REQUIRED)
+set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
+
+
+
+endif(RDK_BUILD_NANOBIND_WRAPPERS)
+
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
   add_library(rdkit_py_base INTERFACE)
