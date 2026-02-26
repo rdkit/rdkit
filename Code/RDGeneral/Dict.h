@@ -154,9 +154,22 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     _data.push_back(std::move(pair));
   }
 
-  //! \brief Returns a const reference to the raw RDValue for a key.
+  //! \brief Bulk-appends a vector of Pairs, moving them into the dictionary.
+  void append(std::vector<Pair> &&pairs) {
+    for (auto &p : pairs) {
+      if (p.val.needsCleanup()) {
+        _hasNonPodData = true;
+      }
+    }
+    _data.reserve(_data.size() + pairs.size());
+    for (auto &p : pairs) {
+      _data.push_back(std::move(p));
+    }
+  }
+
+  //! \brief Returns a const reference to the RDValue for a key.
   //! Throws KeyErrorException if the key is not found.
-  const RDValue &getRawVal(const std::string_view what) const {
+  const RDValue &getRDValue(const std::string_view what) const {
     for (const auto &data : _data) {
       if (data.key == what) {
         return data.val;

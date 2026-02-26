@@ -1374,7 +1374,7 @@ TEST_CASE("test16BitVectProps") {
 
   Dict d;
   d.setVal<ExplicitBitVect>("exp", bv);
-  const RDValue &value = d.getRawVal("exp");
+  const RDValue &value = d.getRDValue("exp");
 
   DataStructsExplicitBitVecPropHandler bv_handler;
   std::vector<CustomPropHandler *> handlers = {&bv_handler, bv_handler.clone()};

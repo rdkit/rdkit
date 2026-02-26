@@ -633,7 +633,7 @@ TEST_CASE("testCustomProps") {
   Foo f(1, 2.f);
   Dict d;
   d.setVal<Foo>("foo", f);
-  const RDValue &value = d.getRawVal("foo");
+  const RDValue &value = d.getRDValue("foo");
   FooHandler foo_handler;
   std::vector<CustomPropHandler *> handlers = {&foo_handler,
                                                foo_handler.clone()};
@@ -650,6 +650,38 @@ TEST_CASE("testCustomProps") {
     newValue.destroy();
   }
   delete handlers[1];
+}
+
+static int g_barDestructorCount = 0;
+
+struct Bar {
+  int x{0};
+  Bar() = default;
+  explicit Bar(int x) : x(x) {}
+  Bar(const Bar &o) : x(o.x) {}
+  Bar &operator=(const Bar &) = default;
+  ~Bar() { ++g_barDestructorCount; }
+};
+
+TEST_CASE("custom AnyTag data is destroyed through Dict lifecycle") {
+  g_barDestructorCount = 0;
+  {
+    Dict d;
+    Bar b(42);
+    d.setVal<Bar>("mybar", b);
+    REQUIRE(d.getVal<Bar>("mybar").x == 42);
+  }
+  REQUIRE(g_barDestructorCount > 0);
+
+  int prev = g_barDestructorCount;
+  {
+    Dict d;
+    Bar b(7);
+    d.setVal<Bar>("mybar", b);
+    Dict d2(d);
+    REQUIRE(d2.getVal<Bar>("mybar").x == 7);
+  }
+  REQUIRE(g_barDestructorCount > prev);
 }
 
 TEST_CASE("testGithub2910") {

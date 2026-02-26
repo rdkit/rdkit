@@ -630,12 +630,12 @@ inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
   if (reset) {
     dict.reset();  // Clear data before repopulating
   }
+  std::vector<Dict::Pair> pairs(count);
   for (unsigned index = 0; index < count; ++index) {
-    Dict::Pair pair;
-    CHECK_INVARIANT(streamReadProp(ss, pair, handlers),
+    CHECK_INVARIANT(streamReadProp(ss, pairs[index], handlers),
                     "Corrupted property serialization detected");
-    dict.appendPair(std::move(pair));
   }
+  dict.append(std::move(pairs));
 
   return static_cast<unsigned int>(count);
 }
