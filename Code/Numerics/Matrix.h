@@ -71,8 +71,16 @@ class Matrix {
            d_dataSize * sizeof(TYPE));
     d_data.reset(data);
   }
-
+  Matrix(Matrix<TYPE> &&other) = default;
   virtual ~Matrix() {}
+
+  Matrix<TYPE> &operator=(const Matrix<TYPE> &other) {
+    if (this == &other) {
+      return *this;
+    }
+    return assign(other);
+  }
+  Matrix<TYPE> &operator=(Matrix<TYPE> &&other) = default;
 
   //! returns the number of rows
   inline unsigned int numRows() const { return d_nRows; }
@@ -159,7 +167,7 @@ class Matrix {
   }
 
   //! Matrix addition.
-  /*! Perform a element by element addition of other Matrix to this Matrix
+  /*! Perform an element by element addition of other Matrix to this Matrix
    */
   virtual Matrix<TYPE> &operator+=(const Matrix<TYPE> &other) {
     PRECONDITION(d_nRows == other.numRows(),
@@ -246,9 +254,6 @@ class Matrix {
   unsigned int d_nCols{0};
   unsigned int d_dataSize{0};
   DATA_SPTR d_data;
-
- private:
-  Matrix<TYPE> &operator=(const Matrix<TYPE> &other);
 };
 
 //! Matrix multiplication
@@ -276,7 +281,7 @@ Matrix<TYPE> &multiply(const Matrix<TYPE> &A, const Matrix<TYPE> &B,
   CHECK_INVARIANT(aRows == cRows, "Size mismatch during multiplication");
   CHECK_INVARIANT(bCols == cCols, "Size mismatch during multiplication");
 
-  // we have the sizes check do do the multiplication
+  // we have the sizes check so do the multiplication
   TYPE *cData = C.getData();
   const TYPE *bData = B.getData();
   const TYPE *aData = A.getData();
