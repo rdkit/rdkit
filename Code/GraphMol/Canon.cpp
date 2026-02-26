@@ -934,15 +934,12 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
   PRECONDITION(fromAtom, "bad atom");
   PRECONDITION(&fromAtom->getOwningMol() == &mol, "bad bond");
 
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomBonds(fromAtom);
-  bool nbrPossible = false, adjusted = false;
-  while (beg != end) {
-    Bond *oBond = mol[*beg];
+  bool nbrPossible = false;
+  bool adjusted = false;
+  for (auto oBond : mol.atomBonds(fromAtom)) {
     if (oBond != refBond && canHaveDirection(*oBond)) {
       nbrPossible = true;
-      if ((bondDirCounts[oBond->getIdx()] >=
-           bondDirCounts[refBond->getIdx()]) &&
+      if (bondDirCounts[oBond->getIdx()] >= bondDirCounts[refBond->getIdx()] &&
           atomDirCounts[oBond->getBeginAtomIdx()] != 1 &&
           atomDirCounts[oBond->getEndAtomIdx()] != 1) {
         adjusted = true;
@@ -952,11 +949,9 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
           oBond->setBondDir(Bond::NONE);
           atomDirCounts[oBond->getBeginAtomIdx()] -= 1;
           atomDirCounts[oBond->getEndAtomIdx()] -= 1;
-          // std::cerr<<"ob:"<<oBond->getIdx()<<" ";
         }
       }
     }
-    beg++;
   }
   if (nbrPossible && !adjusted &&
       atomDirCounts[refBond->getBeginAtomIdx()] != 1 &&
@@ -978,49 +973,35 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
                                  UINT_VECT &atomDirCounts,
                                  const UINT_VECT &bondVisitOrders) {
   PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
+
+  auto clearBondDirsFromAtom = [&mol, &bondDirCounts, &atomDirCounts,
+                                &bondVisitOrders](Bond *tBond,
+                                                  const Atom *atom) {
+    for (auto bond : mol.atomBonds(atom)) {
+      if (bond != tBond && bond->getBondType() == Bond::DOUBLE &&
+          bond->getStereo() > Bond::STEREOANY) {
+        clearBondDirs(mol, tBond, atom, bondDirCounts, atomDirCounts,
+                      bondVisitOrders);
+        return;
+      }
+    }
+  };
+
   // find bonds that have directions indicated that are redundant:
   for (auto &msI : molStack) {
-    if (msI.type == MOL_STACK_BOND) {
-      Bond *tBond = msI.obj.bond;
-      const Atom *canonBeginAtom = mol.getAtomWithIdx(msI.number);
-      const Atom *canonEndAtom =
-          mol.getAtomWithIdx(tBond->getOtherAtomIdx(msI.number));
-      if (canHaveDirection(*tBond) && bondDirCounts[tBond->getIdx()] >= 1) {
-        // start by finding the double bond that sets tBond's direction:
-        const Atom *dblBondAtom = nullptr;
-        ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = mol.getAtomBonds(canonBeginAtom);
-        while (beg != end) {
-          if (mol[*beg] != tBond && mol[*beg]->getBondType() == Bond::DOUBLE &&
-              mol[*beg]->getStereo() > Bond::STEREOANY) {
-            dblBondAtom =
-                canonBeginAtom;  // tBond->getOtherAtom(canonBeginAtom);
-            break;
-          }
-          beg++;
-        }
-        if (dblBondAtom != nullptr) {
-          clearBondDirs(mol, tBond, dblBondAtom, bondDirCounts, atomDirCounts,
-                        bondVisitOrders);
-        }
-        dblBondAtom = nullptr;
-        boost::tie(beg, end) = mol.getAtomBonds(canonEndAtom);
-        while (beg != end) {
-          if (mol[*beg] != tBond && mol[*beg]->getBondType() == Bond::DOUBLE &&
-              mol[*beg]->getStereo() > Bond::STEREOANY) {
-            dblBondAtom = canonEndAtom;  // tBond->getOtherAtom(canonEndAtom);
-            break;
-          }
-          beg++;
-        }
-        if (dblBondAtom != nullptr) {
-          clearBondDirs(mol, tBond, dblBondAtom, bondDirCounts, atomDirCounts,
-                        bondVisitOrders);
-        }
-      } else if (tBond->getBondDir() != Bond::NONE) {
-        // we aren't supposed to have a direction set, but we do:
-        tBond->setBondDir(Bond::NONE);
-      }
+    if (msI.type != MOL_STACK_BOND) {
+      continue;
+    }
+    Bond *tBond = msI.obj.bond;
+    const Atom *canonBeginAtom = mol.getAtomWithIdx(msI.number);
+    const Atom *canonEndAtom =
+        mol.getAtomWithIdx(tBond->getOtherAtomIdx(msI.number));
+    if (canHaveDirection(*tBond) && bondDirCounts[tBond->getIdx()] >= 1) {
+      clearBondDirsFromAtom(tBond, canonBeginAtom);
+      clearBondDirsFromAtom(tBond, canonEndAtom);
+    } else if (tBond->getBondDir() != Bond::NONE) {
+      // we aren't supposed to have a direction set, but we do:
+      tBond->setBondDir(Bond::NONE);
     }
   }
 }
