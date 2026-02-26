@@ -991,6 +991,115 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
   }
 }
 
+// CanonicalizeDoubleBonds tries to add as many directions as possible
+// to stereo double bonds, but some of these may coerce STEREONONE or
+// STEREOANY into stereo just because they are "in the wrong place",
+// in the middle of direction bonds of neighboring stereo bonds. Here
+// we try to fix some of them (we probably can't fix all) before
+// removing redundant ones in removeRedundantBondDirSpecs.
+void removeUnwantedBondDirSpecs(ROMol &mol, MolStack &molStack,
+                                std::vector<int8_t> &bondDirCounts,
+                                std::vector<int8_t> &atomDirCounts,
+                                std::vector<unsigned int> &bondVisitOrders) {
+  PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
+
+  for (auto &msI : molStack) {
+    if (msI.type != MOL_STACK_BOND) {
+      continue;
+    }
+
+    if (msI.obj.bond->getBondType() != Bond::DOUBLE ||
+        msI.obj.bond->getStereo() > Bond::STEREOANY) {
+      continue;
+    }
+
+    auto firstAtom = msI.obj.bond->getBeginAtom();
+    auto secondAtom = msI.obj.bond->getEndAtom();
+    if (firstAtom->getDegree() == 1 || secondAtom->getDegree() == 1) {
+      // One side of the bond does not have any neighbors. There's no way for
+      // this double bond to have stereo!
+      continue;
+    }
+
+    std::vector<Bond *> removalCandidates;
+
+    // Look at the first side of the non-stereo double bond
+
+    for (auto bond : mol.atomBonds(firstAtom)) {
+      if (bondDirCounts[bond->getIdx()]) {
+        removalCandidates.push_back(bond);
+      }
+    }
+    if (removalCandidates.empty()) {
+      // No bonds with direction on this side, so this non-stereo
+      // bond won't be coerced into stereo.
+      continue;
+    }
+
+    if (atomDirCounts[firstAtom->getIdx()]) {
+      // We only keep atomDirCounts for atoms at the end of a stereo double
+      // bond. This means that if an end of this non-stereo double bond has
+      // a dir count, then both bonds have this atom in common (like the
+      // two bonds in S=P(=N\C)/C have P in common), and we can't remove
+      // the direction from that side, as it will remove stereo from the
+      // stereo bond too.
+      removalCandidates.clear();
+    }
+
+    // Now look at the other side
+
+    uint8_t candidatesOnSecondEnd = 0;
+    for (auto bond : mol.atomBonds(secondAtom)) {
+      if (bondDirCounts[bond->getIdx()]) {
+        removalCandidates.push_back(bond);
+        ++candidatesOnSecondEnd;
+      }
+    }
+
+    if (candidatesOnSecondEnd == 0) {
+      // No bonds with direction on this side, so this non-stereo
+      // bond won't be coerced into stereo.
+      continue;
+    }
+
+    if (atomDirCounts[secondAtom->getIdx()]) {
+      // If we got here, and can't remove bonds on this side, this probably
+      // means there's nothing we can do, and this bond will be coerced
+      // into stereo.
+      continue;
+    }
+
+    // Sort by position in the molStack, prefer the bond closest to the start
+    std::ranges::sort(
+        removalCandidates, [&bondVisitOrders](const auto &a, const auto &b) {
+          return bondVisitOrders[a->getIdx()] < bondVisitOrders[b->getIdx()];
+        });
+
+    for (auto candidateBond : removalCandidates) {
+      Atom *otherAtom = nullptr;
+      if (candidateBond->getBeginAtom() == firstAtom ||
+          candidateBond->getEndAtom() == firstAtom) {
+        otherAtom = candidateBond->getOtherAtom(firstAtom);
+      } else if (candidateBond->getBeginAtom() == secondAtom ||
+                 candidateBond->getEndAtom() == secondAtom) {
+        otherAtom = candidateBond->getOtherAtom(secondAtom);
+      } else {
+        CHECK_INVARIANT(false, "inconsistent bond ends");
+      }
+
+      // to be able to remove the bond, the "other end", the atom that
+      // is part of a stereo double bond, must have 2 directions, so that
+      // that bond keeps stereo even if we remove one of the directions.
+      if (atomDirCounts[otherAtom->getIdx()] == 2) {
+        bondDirCounts[candidateBond->getIdx()] = 0;
+        candidateBond->setBondDir(Bond::NONE);
+        atomDirCounts[otherAtom->getIdx()] -= 1;
+        break;
+      }
+    }
+  }
+}
+
 void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
                                  std::vector<int8_t> &bondDirCounts,
                                  std::vector<int8_t> &atomDirCounts) {
@@ -1296,6 +1405,9 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
       }
     }
   }
+  Canon::removeUnwantedBondDirSpecs(mol, molStack, bondDirCounts, atomDirCounts,
+                                    bondVisitOrders);
+
   Canon::removeRedundantBondDirSpecs(mol, molStack, bondDirCounts,
                                      atomDirCounts);
 }
