@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2011 Rational Discovery LLC
+//  Copyright (C) 2001-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,9 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#pragma once
+
 #include <RDGeneral/export.h>
-#ifndef _RD_PERIODIC_TABLE_H
-#define _RD_PERIODIC_TABLE_H
+#ifndef RD_PERIODIC_TABLE_H
+#define RD_PERIODIC_TABLE_H
 
 #include <map>
 #include <vector>
@@ -17,6 +19,11 @@
 #include "atomic_data.h"
 
 namespace RDKit {
+
+namespace constants {
+constexpr double electronMass =
+    0.00054857991;  // value from http://physics.nist.gov/cgi-bin/cuu/Value?me
+}
 
 //! singleton class for retrieving information about atoms
 /*!
@@ -344,6 +351,6 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
   std::vector<atomicData> byanum;
   STR_UINT_MAP byname;
 };
-};  // namespace RDKit
+}  // namespace RDKit
 
 #endif
