@@ -154,7 +154,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
     return d_canonRot;
   }
   const std::array<double, 3> &getCanonicalTranslation() const {
-    return d_centroid;
+    return d_canonTrans;
   }
   const std::array<double, 3> &getEigenValues() const { return d_eigenValues; }
   const std::array<size_t, 6> &getExtremes() const { return d_extremePoints; }
@@ -179,7 +179,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
     ar & d_carbonRadii;
     ar & d_normalized;
     ar & d_canonRot;
-    ar & d_centroid;
+    ar & d_canonTrans;
     ar & d_eigenValues;
   }
 #endif
@@ -220,7 +220,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // to the coordinates.
   bool d_normalized{false};
   std::array<double, 9> d_canonRot;
-  std::array<double, 3> d_centroid;
+  std::array<double, 3> d_canonTrans;
   // The sorted eigenvalues of the principal axes.
   std::array<double, 3> d_eigenValues;
 };

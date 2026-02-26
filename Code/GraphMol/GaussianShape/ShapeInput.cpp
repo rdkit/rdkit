@@ -94,10 +94,9 @@ constexpr double radius_color =
 ShapeInput::ShapeInput(const ROMol &mol, int confId,
                        const ShapeInputOptions &opts,
                        const ShapeOverlayOptions &overlayOpts) {
-  PRECONDITION(
-  mol.getNumConformers() > 0,
-  "ShapeInput object needs the molecule to have conformers.  " +
-      mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
+  PRECONDITION(mol.getNumConformers() > 0,
+               "ShapeInput object needs the molecule to have conformers.  " +
+                   mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
 
   if (opts.allCarbonRadii && !opts.atomRadii.empty()) {
     BOOST_LOG(rdWarningLog)
@@ -133,7 +132,7 @@ ShapeInput::ShapeInput(const ShapeInput &other)
       d_extremePoints(other.d_extremePoints),
       d_normalized(other.d_normalized),
       d_canonRot(other.d_canonRot),
-      d_centroid(other.d_centroid),
+      d_canonTrans(other.d_canonTrans),
       d_eigenValues(other.d_eigenValues) {
   if (other.d_carbonRadii) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(*other.d_carbonRadii));
@@ -152,7 +151,7 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   d_selfOverlapColor = other.d_selfOverlapColor;
   d_extremePoints = other.d_extremePoints;
   d_canonRot = other.d_canonRot;
-  d_centroid = other.d_centroid;
+  d_canonTrans = other.d_canonTrans;
   d_eigenValues = other.d_eigenValues;
   if (other.d_carbonRadii) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(*other.d_carbonRadii));
@@ -161,7 +160,7 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   }
   d_normalized = other.d_normalized;
   d_canonRot = other.d_canonRot;
-  d_centroid = other.d_centroid;
+  d_canonTrans = other.d_canonTrans;
   return *this;
 }
 
@@ -184,7 +183,7 @@ void ShapeInput::normalizeCoords() {
       canonRot.setValUnchecked(i, j, d_canonRot[k]);
     }
   }
-  RDGeom::Point3D trans{d_centroid[0], d_centroid[1], d_centroid[2]};
+  RDGeom::Point3D trans{d_canonTrans[0], d_canonTrans[1], d_canonTrans[2]};
   canonRot.TransformPoint(trans);
   canonRot.SetTranslation(trans);
 
@@ -425,15 +424,15 @@ void ShapeInput::calcNormalization(const ROMol &mol, int confId) {
       d_canonRot[k] = canonXform->getValUnchecked(i, j);
     }
   }
-  d_centroid = std::array<double, 3>{0.0, 0.0, 0.0};
+  d_canonTrans = std::array<double, 3>{0.0, 0.0, 0.0};
   for (int i = 0; i < 4 * d_numAtoms; i += 4) {
-    d_centroid[0] -= d_coords[i];
-    d_centroid[1] -= d_coords[i + 1];
-    d_centroid[2] -= d_coords[i + 2];
+    d_canonTrans[0] -= d_coords[i];
+    d_canonTrans[1] -= d_coords[i + 1];
+    d_canonTrans[2] -= d_coords[i + 2];
   }
-  d_centroid[0] /= d_numAtoms;
-  d_centroid[1] /= d_numAtoms;
-  d_centroid[2] /= d_numAtoms;
+  d_canonTrans[0] /= d_numAtoms;
+  d_canonTrans[1] /= d_numAtoms;
+  d_canonTrans[2] /= d_numAtoms;
 }
 
 void ShapeInput::calcExtremes() {
