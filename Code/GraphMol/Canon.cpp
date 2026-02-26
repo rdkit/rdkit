@@ -91,6 +91,18 @@ Bond::BondDir getReferenceDirection(const Bond &dblBond, const Atom &refAtom,
 
   return dir;
 }
+
+void checkSameSideDirsAreCompatible(const Bond &firstBond,
+                                    const Bond &secondBond,
+                                    bool isFirstBondFlipped,
+                                    bool isSecondBondFlipped) {
+  auto dirsShouldMatch = isFirstBondFlipped != isSecondBondFlipped;
+  auto dirsMatch = firstBond.getBondDir() == secondBond.getBondDir();
+
+  CHECK_INVARIANT(dirsMatch == dirsShouldMatch,
+                  "inconsistent bond direction state");
+}
+
 }  // namespace
 
 namespace details {
@@ -298,7 +310,6 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
   // and check if both directions on each side are set.
   // We hit this in cases with cycles like CO/C1=C/C=C\C=C/C=N\1.
   if (dir1Set && dir2Set) {
-    // To do: check that the existing directions are consistent.
     if (secondFromAtom1) {
       if (!bondDirCounts[firstFromAtom1->getIdx()]) {
         setDirectionFromNeighboringBond(
@@ -308,6 +319,10 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
         setDirectionFromNeighboringBond(
             *firstFromAtom1, isFirstFromAtom1Flipped, *secondFromAtom1,
             isSecondFromAtom1Flipped);
+      } else {
+        checkSameSideDirsAreCompatible(*firstFromAtom1, *secondFromAtom1,
+                                       isFirstFromAtom1Flipped,
+                                       isSecondFromAtom1Flipped);
       }
 
       bondDirCounts[secondFromAtom1->getIdx()] += 1;
@@ -325,6 +340,10 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
         setDirectionFromNeighboringBond(
             *firstFromAtom2, isFirstFromAtom2Flipped, *secondFromAtom2,
             isSecondFromAtom2Flipped);
+      } else {
+        checkSameSideDirsAreCompatible(*firstFromAtom2, *secondFromAtom2,
+                                       isFirstFromAtom2Flipped,
+                                       isSecondFromAtom2Flipped);
       }
 
       bondDirCounts[secondFromAtom2->getIdx()] += 1;
@@ -361,12 +380,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       if (secondFromAtom1 && bondDirCounts[secondFromAtom1->getIdx()]) {
         // both bonds have their directionalities set, check if
         // they are compatible.
-        auto dirsShouldMatch =
-            isFirstFromAtom1Flipped != isSecondFromAtom1Flipped;
-        auto dirsMatch =
-            firstFromAtom1->getBondDir() == secondFromAtom1->getBondDir();
-
-        CHECK_INVARIANT(dirsMatch == dirsShouldMatch, "inconsistent state");
+        checkSameSideDirsAreCompatible(*firstFromAtom1, *secondFromAtom1,
+                                       isFirstFromAtom1Flipped,
+                                       isSecondFromAtom1Flipped);
 
         bondDirCounts[secondFromAtom1->getIdx()] += 1;
         atomDirCounts[atom1->getIdx()] += 1;
@@ -403,12 +419,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       if (secondFromAtom2 && bondDirCounts[secondFromAtom2->getIdx()]) {
         // both bonds have their directionalities set, check if
         // they are compatible.
-        auto dirsShouldMatch =
-            isFirstFromAtom2Flipped != isSecondFromAtom2Flipped;
-        auto dirsMatch =
-            firstFromAtom2->getBondDir() == secondFromAtom2->getBondDir();
-
-        CHECK_INVARIANT(dirsMatch == dirsShouldMatch, "inconsistent state");
+        checkSameSideDirsAreCompatible(*firstFromAtom2, *secondFromAtom2,
+                                       isFirstFromAtom2Flipped,
+                                       isSecondFromAtom2Flipped);
 
         bondDirCounts[secondFromAtom2->getIdx()] += 1;
         atomDirCounts[atom2->getIdx()] += 1;
