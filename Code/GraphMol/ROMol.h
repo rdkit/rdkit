@@ -54,6 +54,7 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
                               Atom *, Bond *>
     MolGraph;
 class MolPickler;
+class MonomerMol;
 class RWMol;
 class QueryAtom;
 class QueryBond;
@@ -200,6 +201,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
  public:
   friend class MolPickler;
   friend class RWMol;
+  friend class MonomerMol;
 
   //! \cond TYPEDEFS
 
