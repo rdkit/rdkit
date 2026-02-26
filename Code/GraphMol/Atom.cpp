@@ -39,17 +39,18 @@ bool isAromaticAtom(const Atom &atom) {
 }
 
 unsigned int getEffectiveAtomicNum(const Atom &atom, bool checkValue) {
+  const auto *periodicTable = PeriodicTable::getTable();
   auto effectiveAtomicNum = atom.getAtomicNum() - atom.getFormalCharge();
   if (checkValue &&
       (effectiveAtomicNum < 0 ||
        effectiveAtomicNum >
-           static_cast<int>(PeriodicTable::getTable()->getMaxAtomicNumber()))) {
+           static_cast<int>(periodicTable->getMaxAtomicNumber()))) {
     throw AtomValenceException("Effective atomic number out of range",
                                atom.getIdx());
   }
   effectiveAtomicNum = std::clamp(
       effectiveAtomicNum, 0,
-      static_cast<int>(PeriodicTable::getTable()->getMaxAtomicNumber()));
+      static_cast<int>(periodicTable->getMaxAtomicNumber()));
   return static_cast<unsigned int>(effectiveAtomicNum);
 }
 
@@ -345,6 +346,7 @@ bool canBeHypervalent(const Atom &atom, unsigned int effectiveAtomicNum) {
 }
 
 int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
+  const auto *periodicTable = PeriodicTable::getTable();
   // FIX: contributions of bonds to valence are being done at best
   // approximately
   double accum = 0;
@@ -353,18 +355,15 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   }
   accum += atom.getNumExplicitHs();
 
-  const auto &ovalens =
-      PeriodicTable::getTable()->getValenceList(atom.getAtomicNum());
+  const auto &ovalens = periodicTable->getValenceList(atom.getAtomicNum());
   // if we start with an atom that doesn't have specified valences, we stick
   // with that. otherwise we will use the effective valence
   unsigned int effectiveAtomicNum = atom.getAtomicNum();
   if (ovalens.size() > 1 || ovalens[0] != -1) {
     effectiveAtomicNum = getEffectiveAtomicNum(atom, checkIt);
   }
-  unsigned int dv =
-      PeriodicTable::getTable()->getDefaultValence(effectiveAtomicNum);
-  const auto &valens =
-      PeriodicTable::getTable()->getValenceList(effectiveAtomicNum);
+  unsigned int dv = periodicTable->getDefaultValence(effectiveAtomicNum);
+  const auto &valens = periodicTable->getValenceList(effectiveAtomicNum);
   if (accum > dv && isAromaticAtom(atom)) {
     // this needs some explanation : if the atom is aromatic and
     // accum > dv we assume that no hydrogen can be added
@@ -438,8 +437,7 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
         // raise an error
         std::ostringstream errout;
         errout << "Explicit valence for atom # " << atom.getIdx() << " "
-               << PeriodicTable::getTable()->getElementSymbol(
-                      atom.getAtomicNum())
+               << periodicTable->getElementSymbol(atom.getAtomicNum())
                << ", " << res << ", is greater than permitted";
         std::string msg = errout.str();
         BOOST_LOG(rdErrorLog) << msg << std::endl;
@@ -459,6 +457,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   if (atom.df_noImplicit) {
     return 0;
   }
+  const auto *periodicTable = PeriodicTable::getTable();
   auto explicitValence = atom.d_explicitValence;
   if (explicitValence == -1) {
     explicitValence = calculateExplicitValence(atom, strict, checkIt);
@@ -498,8 +497,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   }
   int explicitPlusRadV = atom.d_explicitValence + atom.d_numRadicalElectrons;
 
-  const auto &ovalens =
-      PeriodicTable::getTable()->getValenceList(atom.d_atomicNum);
+  const auto &ovalens = periodicTable->getValenceList(atom.d_atomicNum);
   // if we start with an atom that doesn't have specified valences, we stick
   // with that. otherwise we will use the effective valence for the rest of
   // this.
@@ -518,7 +516,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
 
   // The d-block and f-block of the periodic table (i.e. transition metals,
   // lanthanoids and actinoids) have no default valence.
-  int dv = PeriodicTable::getTable()->getDefaultValence(effectiveAtomicNum);
+  int dv = periodicTable->getDefaultValence(effectiveAtomicNum);
   if (dv == -1) {
     return 0;
   }
@@ -542,8 +540,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
     effectiveAtomicNum = atomicNum;
     explicitPlusRadV -= atom.d_formalCharge;
   }
-  const auto &valens =
-      PeriodicTable::getTable()->getValenceList(effectiveAtomicNum);
+  const auto &valens = periodicTable->getValenceList(effectiveAtomicNum);
 
   int res = 0;
   // if we have an aromatic case treat it differently
