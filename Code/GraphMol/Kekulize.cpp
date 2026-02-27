@@ -342,7 +342,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
 
         // if the neighbor is not on the stack add it
         if (std::find(astack.begin(), astack.end(), nbrIdx) == astack.end()) {
-          lstack.push_front(nbrIdx);
+          lstack.push_back(nbrIdx);
         }
 
         // check if the neighbor is also a candidate for a double bond
