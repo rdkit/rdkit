@@ -6761,14 +6761,15 @@ M  END
     outs.flush();
     outs.close();
 
-    auto check_bond = [](const std::string &text, const std::regex &r) {
-      // there should be 4 matches for each regex, and all the x coords should
-      // be > 0.0. The bug manifested itself by some of them being < 0.0 and
-      // thus off the side of the picture.
+    auto check_bond = [](const std::string &text, const std::regex &r,
+                         std::ptrdiff_t expected_match_count) {
+      // There should be expected_match_count matches for each regex, and all
+      // the x coords should be > 0.0. The bug manifested itself by some of them
+      // being < 0.0 and thus off the side of the picture.
       std::ptrdiff_t const match_count(
           std::distance(std::sregex_iterator(text.begin(), text.end(), r),
                         std::sregex_iterator()));
-      CHECK(match_count == 4);
+      CHECK(match_count == expected_match_count);
       auto match_begin = std::sregex_iterator(text.begin(), text.end(), r);
       auto match_end = std::sregex_iterator();
       for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
@@ -6783,8 +6784,8 @@ M  END
     std::regex bond16(
         "'bond-16 atom-17 atom-14' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
         " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
-    check_bond(text, bond9);
-    check_bond(text, bond16);
+    check_bond(text, bond9, 4);
+    check_bond(text, bond16, 2);
     check_file_hash(nameBase + ".svg");
   }
 }
@@ -8534,16 +8535,16 @@ TEST_CASE("Lasso highlights") {
       CHECK(match_count == 2);
       auto a11reg = std::sregex_iterator(text.begin(), text.end(), a11);
       auto dat1 = *a11reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.2, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(133.1, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(221.8, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(132.6, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.5, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(131.9, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(222.2, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(131.4, 0.1));
       a11reg++;
       dat1 = *a11reg;
       CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(245.3, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(113.7, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(112.6, 0.1));
       CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.5, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(115.0, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(114.0, 0.1));
 
       // There should not be any red lines for bond 5.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");

@@ -9,11 +9,12 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
-#include <GraphMol/Canon.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/Rings.h>
 #include <GraphMol/SanitException.h>
 #include <RDGeneral/RDLog.h>
 #include <boost/dynamic_bitset.hpp>
+#include <numeric>
 #include <utility>
 
 namespace RDKit {
@@ -223,11 +224,50 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
 bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
                     boost::dynamic_bitset<> dBndCands,
                     boost::dynamic_bitset<> dBndAdds, INT_VECT done,
-                    unsigned int maxBackTracks) {
+                    const UINT_VECT &atomRanks, unsigned int maxBackTracks) {
   INT_DEQUE astack;
   INT_INT_DEQ_MAP options;
   int lastOpt = -1;
   boost::dynamic_bitset<> localBondsAdded(mol.getNumBonds());
+  boost::dynamic_bitset<> inAllAtms(mol.getNumAtoms());
+  for (int allAtm : allAtms) {
+    inAllAtms.set(allAtm);
+  }
+
+  auto lessByRank = [&atomRanks](int a, int b) {
+    const auto ra = atomRanks.at(static_cast<unsigned int>(a));
+    const auto rb = atomRanks.at(static_cast<unsigned int>(b));
+    return (ra < rb) || (ra == rb && a < b);
+  };
+
+  // Prefer starting traversal at atoms which are the *end* of wedged/dashed
+  // bonds. Wedged bonds encode stereo and must remain single bonds; by starting
+  // the kekulization walk at wedge-end atoms we assign their double bond to a
+  // *different* neighbor first, giving the algorithm more freedom to keep the
+  // wedged bond single.
+  boost::dynamic_bitset<> wedgeEndAtoms(mol.getNumAtoms());
+  for (const auto bond : mol.bonds()) {
+    if (bond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
+        bond->getBondDir() == Bond::BondDir::BEGINDASH) {
+      const auto endIdx = bond->getEndAtomIdx();
+      if (inAllAtms.test(endIdx)) {
+        wedgeEndAtoms.set(endIdx);
+      }
+    }
+  }
+
+  // Pre-sort allAtms: wedge-end atoms first, then by canonical rank.
+  // This way the first not-yet-done atom is always the best starting point.
+  INT_VECT sortedAtms(allAtms);
+  std::sort(sortedAtms.begin(), sortedAtms.end(),
+            [&wedgeEndAtoms, &lessByRank](int a, int b) {
+              const bool wa = wedgeEndAtoms.test(a);
+              const bool wb = wedgeEndAtoms.test(b);
+              if (wa != wb) {
+                return wa;  // wedge-end atoms come first
+              }
+              return lessByRank(a, b);
+            });
 
   // ok the algorithm goes something like this
   // - start with an atom that has been marked aromatic before
@@ -248,13 +288,14 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
   int curr = -1;
   INT_DEQUE btmoves;
   unsigned int numBT = 0;  // number of back tracks so far
-  while ((done.size() < allAtms.size()) || !astack.empty()) {
+  while ((done.size() < sortedAtms.size()) || !astack.empty()) {
     // pick a curr atom to work with
     if (astack.size() > 0) {
       curr = astack.front();
       astack.pop_front();
     } else {
-      for (int allAtm : allAtms) {
+      curr = -1;
+      for (int allAtm : sortedAtms) {
         if (std::find(done.begin(), done.end(), allAtm) == done.end()) {
           curr = allAtm;
           break;
@@ -278,18 +319,25 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
       CHECK_INVARIANT(opts.size() > 0, "");
     } else {
       INT_DEQUE lstack;
-      INT_DEQUE wedgedOpts;
-      for (const auto &nbrIdx : boost::make_iterator_range(
-               mol.getAtomNeighbors(mol.getAtomWithIdx(curr)))) {
+      std::vector<int> optsV;
+      std::vector<int> wedgedOptsV;
+      std::vector<int> nbrs;
+      for (auto nbrAtom : mol.atomNeighbors(mol.getAtomWithIdx(curr))) {
+        const auto nbrIdx = static_cast<int>(nbrAtom->getIdx());
+        // ignore if the neighbor is not part of the fused system
+        if (!inAllAtms.test(nbrIdx)) {
+          continue;
+        }
         // ignore if the neighbor has already been dealt with before
         if (std::find(done.begin(), done.end(), nbrIdx) != done.end()) {
           continue;
         }
-        // ignore if the neighbor is not part of the fused system
-        if (std::find(allAtms.begin(), allAtms.end(), nbrIdx) ==
-            allAtms.end()) {
-          continue;
-        }
+        nbrs.push_back(nbrIdx);
+      }
+
+      std::sort(nbrs.begin(), nbrs.end(), lessByRank);
+
+      for (int nbrIdx : nbrs) {
         auto nbrBond = mol.getBondBetweenAtoms(curr, nbrIdx);
 
         // if the neighbor is not on the stack add it
@@ -315,15 +363,21 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
           // bond is wedged. otherwise we append it to the options directly
           if (nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
               nbrBond->getBondDir() == Bond::BondDir::BEGINDASH) {
-            wedgedOpts.push_back(nbrIdx);
+            wedgedOptsV.push_back(nbrIdx);
           } else {
-            opts.push_back(nbrIdx);
+            optsV.push_back(nbrIdx);
           }
         }  // end of curr atoms can have a double bond
       }  // end of looping over neighbors
-      // now append to opts the neighbors connected via wedged bonds,
-      // if any were found
-      opts.insert(opts.end(), wedgedOpts.begin(), wedgedOpts.end());
+
+      // Non-wedged options first, then wedged — both already in rank order
+      // because nbrs was pre-sorted by lessByRank above.
+      for (int v : optsV) {
+        opts.push_back(v);
+      }
+      for (int v : wedgedOptsV) {
+        opts.push_back(v);
+      }
       astack.insert(astack.end(), lstack.begin(), lstack.end());
     }
     // now add a double bond from current to one of the neighbors if we can
@@ -333,6 +387,9 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
         opts.pop_front();
         auto bnd = mol.getBondBetweenAtoms(curr, ncnd);
         bnd->setBondType(Bond::DOUBLE);
+        if (bnd->getBondDir() != Bond::BondDir::NONE) {
+          bnd->setBondDir(Bond::BondDir::NONE);
+        }
 
         // remove current and the neighbor from the dBndCands list
         dBndCands[curr] = 0;
@@ -423,6 +480,7 @@ class QuestionEnumerator {
 bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
                                boost::dynamic_bitset<> dBndCands,
                                INT_VECT &questions,
+                               const UINT_VECT &atomRanks,
                                unsigned int maxBackTracks) {
   boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
   for (int allAtm : allAtms) {
@@ -452,13 +510,14 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
     }
     // try kekulizing again:
     kekulized =
-        kekulizeWorker(mol, allAtms, tCands, dBndAdds, done, maxBackTracks);
+        kekulizeWorker(mol, allAtms, tCands, dBndAdds, done, atomRanks,
+                       maxBackTracks);
   }
   return kekulized;
 }
 
 void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
-                   unsigned int maxBackTracks) {
+                   const UINT_VECT &atomRanks, unsigned int maxBackTracks) {
   // get all the atoms in the ring system
   INT_VECT allAtms;
   Union(arings, allAtms);
@@ -475,11 +534,12 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
   markDbondCands(mol, allAtms, dBndCands, questions, done);
 
   auto kekulized =
-      kekulizeWorker(mol, allAtms, dBndCands, dBndAdds, done, maxBackTracks);
+      kekulizeWorker(mol, allAtms, dBndCands, dBndAdds, done, atomRanks,
+                     maxBackTracks);
   if (!kekulized && questions.size()) {
     // we failed, but there are some dummy atoms we can try permuting.
     kekulized = permuteDummiesAndKekulize(mol, allAtms, dBndCands, questions,
-                                          maxBackTracks);
+                                          atomRanks, maxBackTracks);
   }
   if (!kekulized) {
     // we exhausted all option (or crossed the allowed
@@ -506,7 +566,7 @@ namespace MolOps {
 namespace details {
 void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
                       boost::dynamic_bitset<> bondsToUse, bool markAtomsBonds,
-                      unsigned int maxBackTracks) {
+                      bool canonical, unsigned int maxBackTracks) {
   PRECONDITION(atomsToUse.size() == mol.getNumAtoms(),
                "atomsToUse is wrong size");
   PRECONDITION(bondsToUse.size() == mol.getNumBonds(),
@@ -552,6 +612,19 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   }
   if (!foundAromatic) {
     return;
+  }
+  UINT_VECT atomRanks(mol.getNumAtoms());
+  if (canonical) {
+    Canon::rankFragmentAtoms(mol, atomRanks, atomsToUse, bondsToUse);
+  } else {
+    // When canonical=false (e.g. during sanitization), we skip the
+    // expensive ranking step and use atom indices directly.  This is
+    // appropriate because sanitization runs *before* stereo perception:
+    // canonical ranking would be based on incomplete chemistry and the
+    // "deterministic" result would be meaningless.  Callers who need a
+    // canonical Kekulé form should call Kekulize() with canonical=true
+    // after the molecule is fully sanitized and stereo has been assigned.
+    std::iota(atomRanks.begin(), atomRanks.end(), 0u);
   }
   // if any bonds to kekulize then give it a try:
   if (bondsToUse.any()) {
@@ -659,7 +732,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
       VECT_INT_VECT frings(fused.size());
       std::transform(fused.begin(), fused.end(), frings.begin(),
                      [&arings](const int ri) { return arings[ri]; });
-      kekulizeFused(mol, frings, maxBackTracks);
+      kekulizeFused(mol, frings, atomRanks, maxBackTracks);
       int rix;
       for (rix = 0; rix < cnrs; ++rix) {
         if (!fusDone[rix]) {
@@ -727,15 +800,16 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   }
 }
 }  // namespace details
-void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
+void Kekulize(RWMol &mol, bool markAtomsBonds, bool canonical,
+              unsigned int maxBackTracks) {
   boost::dynamic_bitset<> atomsToUse(mol.getNumAtoms());
   atomsToUse.set();
   boost::dynamic_bitset<> bondsToUse(mol.getNumBonds());
   bondsToUse.set();
   details::KekulizeFragment(mol, atomsToUse, bondsToUse, markAtomsBonds,
-                            maxBackTracks);
+                            canonical, maxBackTracks);
 }
-bool KekulizeIfPossible(RWMol &mol, bool markAtomsBonds,
+bool KekulizeIfPossible(RWMol &mol, bool markAtomsBonds, bool canonical,
                         unsigned int maxBackTracks) {
   boost::dynamic_bitset<> aromaticBonds(mol.getNumBonds());
   for (const auto bond : mol.bonds()) {
@@ -751,7 +825,7 @@ bool KekulizeIfPossible(RWMol &mol, bool markAtomsBonds,
   }
   bool res = true;
   try {
-    Kekulize(mol, markAtomsBonds, maxBackTracks);
+    Kekulize(mol, markAtomsBonds, canonical, maxBackTracks);
   } catch (const MolSanitizeException &) {
     res = false;
     for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
