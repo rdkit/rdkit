@@ -299,12 +299,6 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
   // and check if both directions on each side are set.
   // We hit this in cases with cycles like CO/C1=C/C=C\C=C/C=N\1.
   if (dir1Set && dir2Set) {
-    // these are guaranteed to exist
-    bondDirCounts[firstFromAtom1->getIdx()] += 1;
-    bondDirCounts[firstFromAtom2->getIdx()] += 1;
-    atomDirCounts[atom1->getIdx()] += 1;
-    atomDirCounts[atom2->getIdx()] += 1;
-
     // To do: check that the existing directions are consistent.
     if (secondFromAtom1) {
       if (!bondDirCounts[firstFromAtom1->getIdx()]) {
@@ -320,6 +314,8 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       bondDirCounts[secondFromAtom1->getIdx()] += 1;
       atomDirCounts[atom1->getIdx()] += 1;
     }
+    bondDirCounts[firstFromAtom1->getIdx()] += 1;
+    atomDirCounts[atom1->getIdx()] += 1;
 
     if (secondFromAtom2) {
       if (!bondDirCounts[firstFromAtom2->getIdx()]) {
@@ -335,6 +331,8 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       bondDirCounts[secondFromAtom2->getIdx()] += 1;
       atomDirCounts[atom2->getIdx()] += 1;
     }
+    bondDirCounts[firstFromAtom2->getIdx()] += 1;
+    atomDirCounts[atom2->getIdx()] += 1;
 
     return;
   }
