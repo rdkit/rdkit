@@ -9,6 +9,7 @@
 //
 #include <catch2/catch_all.hpp>
 #include <Geometry/point.h>
+#include <Geometry/Transform3D.h>
 #include <Geometry/UniformGrid3D.h>
 
 TEST_CASE("construct Point2D from Point3D", "[point]") {
@@ -141,5 +142,38 @@ TEST_CASE("compareParams") {
                                RDKit::DiscreteValueVect::TWOBITVALUE, &offset);
     CHECK(!grd.compareParams(grd2));
     CHECK(!grd2.compareParams(grd));
+  }
+}
+
+TEST_CASE("Test copy c'tor and operator=") {
+  RDGeom::Transform3D t1;
+  for (unsigned int i = 0; i < 4; ++i) {
+    for (unsigned int j = 0; j < 4; ++j) {
+      t1.setValUnchecked(i, j, i * j);
+    }
+  }
+
+  RDGeom::Transform3D t2(t1);
+  for (unsigned int i = 0; i < 4; ++i) {
+    for (unsigned int j = 0; j < 4; ++j) {
+      CHECK(t1.getValUnchecked(i, j) == t2.getValUnchecked(i, j));
+    }
+  }
+
+  RDGeom::Transform3D t3;
+  for (unsigned int i = 0; i < 4; ++i) {
+    for (unsigned int j = 0; j < 4; ++j) {
+      if (i == j) {
+        CHECK(t3.getValUnchecked(i, j) == 1.0);
+      } else {
+        CHECK(t3.getValUnchecked(i, j) == 0.0);
+      }
+    }
+  }
+  t3 = t2;
+  for (unsigned int i = 0; i < 4; ++i) {
+    for (unsigned int j = 0; j < 4; ++j) {
+      CHECK(t3.getValUnchecked(i, j) == t2.getValUnchecked(i, j));
+    }
   }
 }
