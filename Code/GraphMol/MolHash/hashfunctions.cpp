@@ -461,7 +461,7 @@ bool isPossibleTautomericBond(const Bond *bptr,
          isCandidateAtom(bptr->getEndAtom(), atomFlags);
 }
 
-// a bond is a possible starting bond if it involves a candidate hetereoatom
+// a bond is a possible starting bond if it involves a candidate heteroatom
 // (definition above) and an unsaturated atom
 bool isPossibleStartingBond(const Bond *bptr,
                             const std::vector<std::uint64_t> &atomFlags,
@@ -510,11 +510,82 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
                       const boost::dynamic_bitset<> &startBonds,
                       const std::vector<std::uint64_t> &atomFlags,
                       const std::vector<std::uint64_t> &bondFlags) {
-  return (bondFlags[nbrBond->getIdx()] ||
-          ((!isCandidateAtom(otherAtom, atomFlags) &&
-            !hasStartBond(otherAtom, startBonds)) ||
-           (!isUnsaturatedBond(nbrBond) && !nbrBond->getIsConjugated() &&
-            !hasStartBond(atom, startBonds))));
+  if (bondFlags[nbrBond->getIdx()]) {
+    return true;
+  }
+
+  // Special case: prevent extending between aromatic rings without H-bearing
+  // heteroatoms and exocyclic C=C systems. This handles cases like
+  // stilbene-pyridyl (c1ccccc1/C=C/c1ncccc1) where the pyridine N has no H but
+  // the algorithm would otherwise extend to the exocyclic C=C.
+  // Check BOTH directions: either the aromatic atom extending to vinyl,
+  // or the vinyl atom being connected from aromatic.
+  if (!nbrBond->getIsAromatic()) {
+    const Atom *aromaticAtom = nullptr;
+    const Atom *nonAromaticAtom = nullptr;
+    
+    if (atom->getIsAromatic() && !otherAtom->getIsAromatic()) {
+      aromaticAtom = atom;
+      nonAromaticAtom = otherAtom;
+    } else if (!atom->getIsAromatic() && otherAtom->getIsAromatic()) {
+      aromaticAtom = otherAtom;
+      nonAromaticAtom = atom;
+    }
+    
+    // If we have an aromatic->non-aromatic transition
+    if (aromaticAtom && nonAromaticAtom) {
+      // Aromatic atom must have no H and be carbon
+      if (aromaticAtom->getTotalNumHs() == 0 &&
+          aromaticAtom->getAtomicNum() == 6 &&
+          nonAromaticAtom->getAtomicNum() == 6) {
+        // Check if nonAromaticAtom is part of a C=C system
+        for (const auto &bnd : atom->getOwningMol().atomBonds(nonAromaticAtom)) {
+          if (bnd->getBondType() == Bond::BondType::DOUBLE &&
+              !bnd->getIsAromatic()) {
+            auto otherEnd = bnd->getOtherAtom(nonAromaticAtom);
+            if (otherEnd->getAtomicNum() == 6) {
+              // This is a C=C double bond - skip extending
+              return true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return ((!isCandidateAtom(otherAtom, atomFlags) &&
+           !hasStartBond(otherAtom, startBonds)) ||
+          (!isUnsaturatedBond(nbrBond) && !nbrBond->getIsConjugated() &&
+           !hasStartBond(atom, startBonds)));
+}
+
+// Check if we're extending from an aromatic system to an exocyclic C=C bond
+// where the aromatic system doesn't have any atoms with mobile H that could
+// participate in tautomerism with the exocyclic bond. This prevents cases
+// like stilbene-pyridyl (c1ccccc1/C=C/c1ncccc1) from incorrectly losing E/Z
+// stereo on the exocyclic C=C.
+// Only blocks when:
+// 1. The neighbor bond is a C=C double bond (not aromatic, not single)
+// 2. The current atom is aromatic carbon without H
+// 3. Both atoms of the C=C bond are carbon (pure hydrocarbon C=C)
+bool checkForAromaticOverreach(const Atom *atom, const Atom *otherAtom,
+                               const Bond *nbrBond) {
+  // Only check non-aromatic double bonds
+  if (nbrBond->getIsAromatic() ||
+      nbrBond->getBondType() != Bond::BondType::DOUBLE) {
+    return false;
+  }
+  // Current atom must be aromatic carbon without H
+  if (!atom->getIsAromatic() || atom->getAtomicNum() != 6 ||
+      atom->getTotalNumHs() > 0) {
+    return false;
+  }
+  // The other atom must also be carbon (blocking C=C but not C=N etc)
+  if (otherAtom->getAtomicNum() != 6) {
+    return false;
+  }
+  // Block extension: aromatic C (no H) → exocyclic C=C
+  return true;
 }
 
 // counts the number of neighboring atoms that have conjugated bonds.
@@ -630,6 +701,10 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                               numConjugatedNeighbors)) {
           continue;
         }
+        // Check if we're extending from aromatic C without H to exocyclic C=C
+        if (checkForAromaticOverreach(atm, oatom, nbrBond)) {
+          continue;
+        }
 
         // if the bond is not eligible, then we can skip this neighbor
         if (skipNeighborBond(atm, oatom, nbrBond, startBonds, atomFlags,
@@ -709,6 +784,10 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
 #endif
           if (checkForOverreach(atm, oatom, bnd, nbrBnd, startBonds,
                                 numConjugatedNeighbors)) {
+            continue;
+          }
+          // Check if we're extending from aromatic C without H to exocyclic C=C
+          if (checkForAromaticOverreach(atm, oatom, nbrBnd)) {
             continue;
           }
           if ((skipNeighborBond(atm, oatom, nbrBnd, startBonds, atomFlags,
@@ -804,6 +883,13 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         }
         const auto oatom = nbrBond->getOtherAtom(atm);
         if (!oatom->getTotalNumHs()) {
+          continue;
+        }
+        // don't extend through a flagged bond (e.g. amide, carboxyl) to reach
+        // a stereocenter — doing so would incorrectly pull the stereocenter
+        // into the tautomeric system and destroy its chirality
+        if (bondFlags[nbrBond->getIdx()] &&
+            oatom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
           continue;
         }
         unsigned int numModifiedNeighbors = 0;
