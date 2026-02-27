@@ -938,7 +938,8 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
   for (auto oBond : mol.atomBonds(fromAtom)) {
     if (oBond != refBond && canHaveDirection(*oBond)) {
       nbrPossible = true;
-      if (bondDirCounts[oBond->getIdx()] >= bondDirCounts[refBond->getIdx()] &&
+      if ((bondDirCounts[oBond->getIdx()] >=
+           bondDirCounts[refBond->getIdx()]) &&
           atomDirCounts[oBond->getBeginAtomIdx()] != 1 &&
           atomDirCounts[oBond->getEndAtomIdx()] != 1) {
         adjusted = true;
@@ -992,7 +993,7 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
     const Atom *canonBeginAtom = mol.getAtomWithIdx(msI.number);
     const Atom *canonEndAtom =
         mol.getAtomWithIdx(tBond->getOtherAtomIdx(msI.number));
-    if (canHaveDirection(*tBond) && bondDirCounts[tBond->getIdx()] >= 1) {
+    if (canHaveDirection(*tBond) && bondDirCounts[tBond->getIdx()]) {
       clearBondDirsFromAtom(tBond, canonBeginAtom);
       clearBondDirsFromAtom(tBond, canonEndAtom);
     } else if (tBond->getBondDir() != Bond::NONE) {
