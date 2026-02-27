@@ -22,6 +22,10 @@
 #include <queue>
 #include <algorithm>
 
+// Useful for development and debugging of double bond stereo.
+// Please make sure it is disabled before merging.
+#define ENABLE_EXTRA_CHECKS 0
+
 namespace RDKit {
 namespace Canon {
 namespace {
@@ -35,6 +39,44 @@ static constexpr Bond::BondDir flipStereoBondDir(Bond::BondDir bondDir) {
       return bondDir;
   }
 }
+
+#if ENABLE_EXTRA_CHECKS
+static void checkDirCounts(const ROMol &mol,
+                           const std::vector<int8_t> &bondDirCounts,
+                           const std::vector<int8_t> &atomDirCounts) {
+  // atoms at the end of double bonds can only have 2 bons with directions
+  for (auto atomCount : atomDirCounts) {
+    if (atomCount < 0 || atomCount > 2) {
+      throw ValueErrorException(
+          "inconsistent stereochemistry: atom with more than 2 direction bonds");
+    }
+  }
+
+  std::vector<int8_t> numDblBondsPerAtom(mol.getNumAtoms(), 0);
+  for (auto bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::DOUBLE &&
+        bond->getStereo() > Bond::STEREOANY) {
+      for (auto atomIdx : {bond->getBeginAtomIdx(), bond->getEndAtomIdx()}) {
+        if (atomDirCounts[atomIdx]) {
+          ++numDblBondsPerAtom[atomIdx];
+        }
+      }
+    }
+  }
+
+  for (auto bond : mol.bonds()) {
+    // typical value is 2; can be higher in rare cases with directly
+    // adjacent stereo bonds.
+    auto maxBondCount = numDblBondsPerAtom[bond->getBeginAtomIdx()] +
+                        numDblBondsPerAtom[bond->getEndAtomIdx()];
+    auto bondCount = bondDirCounts[bond->getIdx()];
+    if (bondCount < 0 || bondCount > maxBondCount) {
+      throw ValueErrorException(
+          "inconsistent stereochemistry: bond with more than 2 direction bonds");
+    }
+  }
+}
+#endif
 
 void setDirectionFromNeighboringBond(Bond &sourceBond, bool isSourceBondFlipped,
                                      Bond &targetBond,
@@ -495,9 +537,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       setDirectionFromNeighboringBond(*firstFromAtom1, isFirstFromAtom1Flipped,
                                       *secondFromAtom1,
                                       isSecondFromAtom1Flipped);
+      bondDirCounts[secondFromAtom1->getIdx()] += 1;
+      atomDirCounts[atom1->getIdx()] += 1;
     }
-    bondDirCounts[secondFromAtom1->getIdx()] += 1;
-    atomDirCounts[atom1->getIdx()] += 1;
   }
 
   if (atom2->getDegree() == 3 && secondFromAtom2) {
@@ -505,9 +547,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       setDirectionFromNeighboringBond(*firstFromAtom2, isFirstFromAtom2Flipped,
                                       *secondFromAtom2,
                                       isSecondFromAtom2Flipped);
+      bondDirCounts[secondFromAtom2->getIdx()] += 1;
+      atomDirCounts[atom2->getIdx()] += 1;
     }
-    bondDirCounts[secondFromAtom2->getIdx()] += 1;
-    atomDirCounts[atom2->getIdx()] += 1;
   }
 }
 
@@ -635,6 +677,10 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
       }
     }
   }
+
+#if ENABLE_EXTRA_CHECKS
+  checkDirCounts(mol, bondDirCounts, atomDirCounts);
+#endif
 }
 
 // finds cycles
@@ -963,12 +1009,16 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
   PRECONDITION(fromAtom, "bad atom");
   PRECONDITION(&fromAtom->getOwningMol() == &mol, "bad bond");
 
-  auto clearDirection = [&atomDirCounts, &bondDirCounts](Bond *bond) {
+  auto clearDirection = [&atomDirCounts, &bondDirCounts](Bond *bond,
+                                                         const Atom *fromAtom) {
     --bondDirCounts[bond->getIdx()];
     if (!bondDirCounts[bond->getIdx()]) {
       bond->setBondDir(Bond::NONE);
-      --atomDirCounts[bond->getBeginAtomIdx()];
-      --atomDirCounts[bond->getEndAtomIdx()];
+      --atomDirCounts[fromAtom->getIdx()];
+      if (auto otherAtom = bond->getOtherAtom(fromAtom);
+          atomDirCounts[otherAtom->getIdx()]) {
+        --atomDirCounts[otherAtom->getIdx()];
+      }
     }
   };
 
@@ -978,13 +1028,13 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
            bondDirCounts[refBond->getIdx()]) &&
           atomDirCounts[oBond->getBeginAtomIdx()] != 1 &&
           atomDirCounts[oBond->getEndAtomIdx()] != 1) {
-        clearDirection(oBond);
+        clearDirection(oBond, fromAtom);
       } else if (atomDirCounts[refBond->getBeginAtomIdx()] != 1 &&
                  atomDirCounts[refBond->getEndAtomIdx()] != 1) {
         // we found a neighbor that could have directionality set,
         // but it had a lower bondDirCount than us, so we must
         // need to be adjusted:
-        clearDirection(refBond);
+        clearDirection(refBond, fromAtom);
       }
       break;
     }
@@ -1107,6 +1157,13 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
 
   auto clearBondDirsFromAtom = [&mol, &bondDirCounts, &atomDirCounts](
                                    Bond *tBond, const Atom *atom) {
+    if (atomDirCounts[atom->getIdx()] < 2) {
+      // if atom doesn't have 2 directional bonds, even if is a double
+      // bond end, it won't have a redundant bond direction we can remove
+      // so no point in checking further.
+      return;
+    }
+
     for (auto bond : mol.atomBonds(atom)) {
       if (bond != tBond && bond->getBondType() == Bond::DOUBLE &&
           bond->getStereo() > Bond::STEREOANY) {
@@ -1410,6 +1467,10 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
 
   Canon::removeRedundantBondDirSpecs(mol, molStack, bondDirCounts,
                                      atomDirCounts);
+
+#if ENABLE_EXTRA_CHECKS
+  checkDirCounts(mol, bondDirCounts, atomDirCounts);
+#endif
 }
 
 void canonicalizeEnhancedStereo(ROMol &mol,
