@@ -933,37 +933,30 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
   PRECONDITION(fromAtom, "bad atom");
   PRECONDITION(&fromAtom->getOwningMol() == &mol, "bad bond");
 
-  bool nbrPossible = false;
-  bool adjusted = false;
+  auto clearDirection = [&atomDirCounts, &bondDirCounts](Bond *bond) {
+    --bondDirCounts[bond->getIdx()];
+    if (!bondDirCounts[bond->getIdx()]) {
+      bond->setBondDir(Bond::NONE);
+      --atomDirCounts[bond->getBeginAtomIdx()];
+      --atomDirCounts[bond->getEndAtomIdx()];
+    }
+  };
+
   for (auto oBond : mol.atomBonds(fromAtom)) {
     if (oBond != refBond && canHaveDirection(*oBond)) {
-      nbrPossible = true;
       if ((bondDirCounts[oBond->getIdx()] >=
            bondDirCounts[refBond->getIdx()]) &&
           atomDirCounts[oBond->getBeginAtomIdx()] != 1 &&
           atomDirCounts[oBond->getEndAtomIdx()] != 1) {
-        adjusted = true;
-        bondDirCounts[oBond->getIdx()] -= 1;
-        if (!bondDirCounts[oBond->getIdx()]) {
-          // no one is setting the direction here:
-          oBond->setBondDir(Bond::NONE);
-          atomDirCounts[oBond->getBeginAtomIdx()] -= 1;
-          atomDirCounts[oBond->getEndAtomIdx()] -= 1;
-        }
+        clearDirection(oBond);
+      } else if (atomDirCounts[refBond->getBeginAtomIdx()] != 1 &&
+                 atomDirCounts[refBond->getEndAtomIdx()] != 1) {
+        // we found a neighbor that could have directionality set,
+        // but it had a lower bondDirCount than us, so we must
+        // need to be adjusted:
+        clearDirection(refBond);
       }
-    }
-  }
-  if (nbrPossible && !adjusted &&
-      atomDirCounts[refBond->getBeginAtomIdx()] != 1 &&
-      atomDirCounts[refBond->getEndAtomIdx()] != 1) {
-    // we found a neighbor that could have directionality set,
-    // but it had a lower bondDirCount than us, so we must
-    // need to be adjusted:
-    bondDirCounts[refBond->getIdx()] -= 1;
-    if (!bondDirCounts[refBond->getIdx()]) {
-      refBond->setBondDir(Bond::NONE);
-      atomDirCounts[refBond->getBeginAtomIdx()] -= 1;
-      atomDirCounts[refBond->getEndAtomIdx()] -= 1;
+      break;
     }
   }
 }
