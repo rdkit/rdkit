@@ -16,7 +16,6 @@
 #ifndef RD_DICT_H_012020
 #define RD_DICT_H_012020
 
-#include <map>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -136,14 +135,43 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   }
 
   //----------------------------------------------------------
-  //! \brief Access to the underlying non-POD containment flag
-  //! This is meant to be used only in bulk updates of _data.
-  bool &getNonPODStatus() { return _hasNonPodData; }
+  //! \brief Returns the number of entries in the dictionary
+  std::size_t size() const { return _data.size(); }
 
-  //----------------------------------------------------------
-  //! \brief Access to the underlying data.
-  const DataType &getData() const { return _data; }
-  DataType &getData() { return _data; }
+  //! \brief Returns whether the dictionary is empty
+  bool empty() const { return _data.empty(); }
+
+  using const_iterator = DataType::const_iterator;
+  const_iterator begin() const { return _data.begin(); }
+  const_iterator end() const { return _data.end(); }
+
+  //! \brief Appends a populated Pair to the dictionary.
+  void insert(Pair &&pair) {
+    _hasNonPodData |= pair.val.needsCleanup();
+    _data.push_back(std::move(pair));
+  }
+
+  //! \brief Bulk-appends a vector of Pairs, moving them into the dictionary.
+  void extend(std::vector<Pair> &&pairs) {
+    for (auto &p : pairs) {
+      _hasNonPodData |= p.val.needsCleanup();
+    }
+    _data.reserve(_data.size() + pairs.size());
+    for (auto &p : pairs) {
+      _data.push_back(std::move(p));
+    }
+  }
+
+  //! \brief Returns a const reference to the RDValue for a key.
+  //! Throws KeyErrorException if the key is not found.
+  const RDValue &getRDValue(const std::string_view what) const {
+    for (const auto &data : _data) {
+      if (data.key == what) {
+        return data.val;
+      }
+    }
+    throw KeyErrorException(what);
+  }
 
   //----------------------------------------------------------
 
@@ -349,7 +377,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 
   */
   void clearVal(const std::string_view what) {
-    for (DataType::iterator it = _data.begin(); it < _data.end(); ++it) {
+    for (auto it = _data.begin(); it < _data.end(); ++it) {
       if (it->key == what) {
         if (_hasNonPodData) {
           RDValue::cleanup_rdvalue(it->val);

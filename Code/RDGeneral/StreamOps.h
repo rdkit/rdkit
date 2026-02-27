@@ -501,7 +501,7 @@ inline bool streamWriteProps(
 
   const Dict &dict = props.getDict();
   COUNT_TYPE count = 0;
-  for (const auto &elem : dict.getData()) {
+  for (const auto &elem : dict) {
     if (propnames.find(elem.key) != propnames.end()) {
       if (isSerializable(elem, handlers)) {
         count++;
@@ -514,7 +514,7 @@ inline bool streamWriteProps(
   }
 
   COUNT_TYPE writtenCount = 0;
-  for (const auto &elem : dict.getData()) {
+  for (const auto &elem : dict) {
     if (propnames.find(elem.key) != propnames.end()) {
       if (isSerializable(elem, handlers)) {
         // note - not all properties are serializable, this may be
@@ -559,7 +559,6 @@ inline void readRDStringVecValue(std::istream &ss, RDValue &value) {
 }
 
 inline bool streamReadProp(std::istream &ss, Dict::Pair &pair,
-                           bool &dictHasNonPOD,
                            const CustomPropHandlerVec &handlers = {}) {
   int version = 0;
   streamRead(ss, pair.key, version);
@@ -585,27 +584,21 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair,
 
     case DTags::StringTag:
       readRDValueString(ss, pair.val);
-      dictHasNonPOD = true;
       break;
     case DTags::VecStringTag:
       readRDStringVecValue(ss, pair.val);
-      dictHasNonPOD = true;
       break;
     case DTags::VecIntTag:
       readRDVecValue<int>(ss, pair.val);
-      dictHasNonPOD = true;
       break;
     case DTags::VecUIntTag:
       readRDVecValue<unsigned int>(ss, pair.val);
-      dictHasNonPOD = true;
       break;
     case DTags::VecFloatTag:
       readRDVecValue<float>(ss, pair.val);
-      dictHasNonPOD = true;
       break;
     case DTags::VecDoubleTag:
       readRDVecValue<double>(ss, pair.val);
-      dictHasNonPOD = true;
       break;
     case DTags::CustomTag: {
       std::string propType;
@@ -614,7 +607,6 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair,
       for (auto &handler : handlers) {
         if (propType == handler->getPropName()) {
           handler->read(ss, pair.val);
-          dictHasNonPOD = true;
           return true;
         }
       }
@@ -638,13 +630,12 @@ inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
   if (reset) {
     dict.reset();  // Clear data before repopulating
   }
-  auto startSz = dict.getData().size();
-  dict.getData().resize(startSz + count);
+  std::vector<Dict::Pair> pairs(count);
   for (unsigned index = 0; index < count; ++index) {
-    CHECK_INVARIANT(streamReadProp(ss, dict.getData()[startSz + index],
-                                   dict.getNonPODStatus(), handlers),
+    CHECK_INVARIANT(streamReadProp(ss, pairs[index], handlers),
                     "Corrupted property serialization detected");
   }
+  dict.extend(std::move(pairs));
 
   return static_cast<unsigned int>(count);
 }
