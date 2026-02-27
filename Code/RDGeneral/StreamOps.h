@@ -294,13 +294,12 @@ void streamRead(std::istream &ss, T &loc) {
 
 //! special case for string
 template <class T>
-void streamRead(std::istream &ss, T &obj, int version) {
-  RDUNUSED_PARAM(version);
+void streamRead(std::istream &ss, T &obj, [[maybe_unused]] int version) {
   streamRead(ss, obj);
 }
 
-inline void streamRead(std::istream &ss, std::string &what, int version) {
-  RDUNUSED_PARAM(version);
+inline void streamRead(std::istream &ss, std::string &what,
+                       [[maybe_unused]] int version) {
   unsigned int l;
   streamRead(ss, l);
   auto buff = std::make_unique<char[]>(l);

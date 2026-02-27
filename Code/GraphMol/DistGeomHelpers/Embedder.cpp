@@ -485,9 +485,8 @@ bool generateInitialCoords(RDGeom::PointPtrVect *positions,
                            RDKit::double_source_type *rng) {
   bool gotCoords = false;
   if (!embedParams.useRandomCoords) {
-    double largestDistance =
+    [[maybe_unused]] double largestDistance =
         DistGeom::pickRandomDistMat(*eargs.mmat, distMat, *rng);
-    RDUNUSED_PARAM(largestDistance);
     gotCoords = DistGeom::computeInitialCoords(distMat, *positions, *rng,
                                                embedParams.randNegEig,
                                                embedParams.numZeroFail);

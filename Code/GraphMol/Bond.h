@@ -367,7 +367,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     <b>Notes:</b>
       - requires an owning molecule
   */
-  void updatePropertyCache(bool strict = true) { (void)strict; }
+  void updatePropertyCache([[maybe_unused]] bool strict = true) {}
 
   //! Flags that can be used by to store information on bonds.
   //!   These are not serialized and should be treated as temporary values.
