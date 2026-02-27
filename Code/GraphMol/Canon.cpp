@@ -926,8 +926,7 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
 }
 
 void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
-                   UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts,
-                   const UINT_VECT &) {
+                   UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts) {
   PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
   PRECONDITION(refBond, "bad bond");
   PRECONDITION(&refBond->getOwningMol() == &mol, "bad bond");
@@ -970,18 +969,15 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
 
 void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
                                  UINT_VECT &bondDirCounts,
-                                 UINT_VECT &atomDirCounts,
-                                 const UINT_VECT &bondVisitOrders) {
+                                 UINT_VECT &atomDirCounts) {
   PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
 
-  auto clearBondDirsFromAtom = [&mol, &bondDirCounts, &atomDirCounts,
-                                &bondVisitOrders](Bond *tBond,
-                                                  const Atom *atom) {
+  auto clearBondDirsFromAtom = [&mol, &bondDirCounts, &atomDirCounts](
+                                   Bond *tBond, const Atom *atom) {
     for (auto bond : mol.atomBonds(atom)) {
       if (bond != tBond && bond->getBondType() == Bond::DOUBLE &&
           bond->getStereo() > Bond::STEREOANY) {
-        clearBondDirs(mol, tBond, atom, bondDirCounts, atomDirCounts,
-                      bondVisitOrders);
+        clearBondDirs(mol, tBond, atom, bondDirCounts, atomDirCounts);
         return;
       }
     }
@@ -1254,7 +1250,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     }
   }
   Canon::removeRedundantBondDirSpecs(mol, molStack, bondDirCounts,
-                                     atomDirCounts, bondVisitOrders);
+                                     atomDirCounts);
 }
 
 void canonicalizeEnhancedStereo(ROMol &mol,
