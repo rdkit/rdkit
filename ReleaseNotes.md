@@ -1,3 +1,57 @@
+# Release_2025.09.6
+(Changes relative to Release_2025.09.5)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Jessica Braun, Jackson Burns, Sergey Fedorov, Lauriane Jacot-Descombes, Eisuke
+Kawashima, Brian Kelley, Joos Kiener, Yakov Pechersky, Paul Pillot, Ricardo
+Rodriguez, Matt Swain
+
+## New Features and Enhancements:
+  - Exclude Zero order bonds  from FindRingFamilies() and add arguments for includeDativeBonds, includeHydrogenBonds
+ (github pull #9118 from ricrogz)
+
+## Bug Fixes:
+  - Get things working with numpy 2.4 and pandas 3.0
+ (github pull #9072 from greglandrum)
+  - Chemdraw build fails on Big-endian: `cs_swapBytes.h: error: parse error in template argument list`
+ (github issue #9077 from barracuda156)
+  - Another canonicalization fix
+ (github pull #9082 from ricrogz)
+  - CopyMolSubset silently rewires bonds when bondIndices reference atoms not in atomIndices
+ (github issue #9084 from mcs07)
+  - CopyMolSubset ignores bondIndices when all atoms are included
+ (github issue #9088 from mcs07)
+  - Fix SMARTS for the strict definition of rotatable bonds
+ (github pull #9096 from brje01)
+  - Cannot build JS bindings with MCS option enabled.
+ (github pull #9110 from papillot)
+  - DetermineBonds fails for thiolate
+ (github issue #9114 from LaurianeJD)
+  - when shifting double bonds in tautomerization, set double bond stereo to STEREOANY
+ (github pull #9119 from pechersky)
+
+## Cleanup work:
+  - style: apply readability-braces-around-statements
+ (github pull #8136 from e-kwsm)
+  - The precondition in Bond::getOtherAtomIdx() is redundant
+ (github pull #9092 from ricrogz)
+  - Modernize loops and clean up ring finding
+ (github pull #9098 from ricrogz)
+  - Further refactoring in SSSR finding
+ (github pull #9104 from ricrogz)
+
+## Documentation:
+  - fix the python docs for CanonicalRankAtomsInFragment
+ (github pull #9087 from greglandrum)
+ - Confusing Deprecation Warning regarding GetImplicitValence
+ (github pull #9117 from kienerj)
+  - Update The SSSR Problem `GetSSSR` Documentation
+ (github pull #9121 from JacksonBurns)
+
 # Release_2025.09.5
 (Changes relative to Release_2025.09.4)
 
