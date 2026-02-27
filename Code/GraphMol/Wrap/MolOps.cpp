@@ -434,13 +434,15 @@ ROMol *getNormal(const RWMol &mol) {
   return res;
 }
 
-void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false) {
+void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false,
+                 bool canonical = false) {
   auto &wmol = static_cast<RWMol &>(mol);
-  MolOps::Kekulize(wmol, clearAromaticFlags);
+  MolOps::Kekulize(wmol, clearAromaticFlags, canonical);
 }
-void kekulizeMolIfPossible(ROMol &mol, bool clearAromaticFlags = false) {
+void kekulizeMolIfPossible(ROMol &mol, bool clearAromaticFlags = false,
+                           bool canonical = false) {
   auto &wmol = static_cast<RWMol &>(mol);
-  MolOps::KekulizeIfPossible(wmol, clearAromaticFlags);
+  MolOps::KekulizeIfPossible(wmol, clearAromaticFlags, canonical);
 }
 
 void cleanupMol(ROMol &mol) {
@@ -1796,6 +1798,14 @@ to the terminal dummy atoms.\n\
       molecule will be marked non-aromatic following the kekulization.
       Default value is False.
 
+    - canonical: (optional) if True, uses canonical atom ranking so that the
+      kekulization result is independent of the atom ordering in the molecule.
+      This is slower; use only when deterministic output is required (e.g. when
+      writing SDF or after tautomer enumeration). Note that canonical mode only
+      makes sense when the molecule's chemistry is sane (after sanitization);
+      if stereochemistry hasn't been perceived, the results are order-dependent
+      regardless. Default value is False.
+
   NOTES:
 
     - The molecule is modified in place.
@@ -1809,7 +1819,8 @@ to the terminal dummy atoms.\n\
 
 )DOC";
     python::def("Kekulize", kekulizeMol,
-                (python::arg("mol"), python::arg("clearAromaticFlags") = false),
+                (python::arg("mol"), python::arg("clearAromaticFlags") = false,
+                 python::arg("canonical") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -1824,12 +1835,17 @@ to the terminal dummy atoms.\n\
       molecule will be marked non-aromatic if the kekulization succeds.\n\
       Default value is False.\n\
 \n\
+    - canonical: (optional) if True, uses canonical atom ranking so that the\n\
+      kekulization result is independent of the atom ordering in the molecule.\n\
+      Default value is False.\n\
+\n\
   NOTES:\n\
 \n\
     - The molecule is modified in place.\n\
 \n";
     python::def("KekulizeIfPossible", kekulizeMolIfPossible,
-                (python::arg("mol"), python::arg("clearAromaticFlags") = false),
+                (python::arg("mol"), python::arg("clearAromaticFlags") = false,
+                 python::arg("canonical") = false),
                 docString.c_str());
     // ------------------------------------------------------------------------
     docString =
