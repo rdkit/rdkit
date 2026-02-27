@@ -310,6 +310,7 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
   // and check if both directions on each side are set.
   // We hit this in cases with cycles like CO/C1=C/C=C\C=C/C=N\1.
   if (dir1Set && dir2Set) {
+    // Check that directions on atom1 side are present and consistent
     if (secondFromAtom1) {
       if (!bondDirCounts[firstFromAtom1->getIdx()]) {
         setDirectionFromNeighboringBond(
@@ -331,6 +332,7 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     bondDirCounts[firstFromAtom1->getIdx()] += 1;
     atomDirCounts[atom1->getIdx()] += 1;
 
+    // Check that directions on atom2 side are present and consistent
     if (secondFromAtom2) {
       if (!bondDirCounts[firstFromAtom2->getIdx()]) {
         setDirectionFromNeighboringBond(
@@ -351,6 +353,13 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     }
     bondDirCounts[firstFromAtom2->getIdx()] += 1;
     atomDirCounts[atom2->getIdx()] += 1;
+
+    // Finally, check that directions across the double bond are consistent
+    auto expectedFirstFromAtom2Dir = getReferenceDirection(
+        *dblBond, *atom1, *atom2, *firstFromAtom1, isFirstFromAtom1Flipped,
+        *firstFromAtom2, isFirstFromAtom2Flipped);
+    CHECK_INVARIANT(expectedFirstFromAtom2Dir == firstFromAtom2->getBondDir(),
+                    "inconsistent bond direction state");
 
     return;
   }
