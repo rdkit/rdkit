@@ -6,6 +6,8 @@ import tempfile
 import unittest
 from io import BytesIO, StringIO
 
+from contextlib import contextmanager
+
 import numpy
 
 from rdkit import Chem, RDConfig, rdBase
@@ -20,6 +22,25 @@ except ImportError:
 # We make sure that we don't mess up the Mol methods for the rest of the tests
 PandasTools.UninstallPandasTools()
 
+
+@contextmanager
+def UsePythonRenderer():
+    """
+    Ensures that IPythonConsole is available and the renderer installed,
+    and then cleans them up when leaving the context
+    """
+
+    from rdkit.Chem.Draw import IPythonConsole
+
+    _useSVGState = IPythonConsole.ipython_useSVG
+    IPythonConsole.ipython_useSVG = True
+
+    IPythonConsole.InstallIPythonRenderer()
+
+    yield
+
+    IPythonConsole.UninstallIPythonRenderer()
+    IPythonConsole.ipython_useSVG = _useSVGState
 
 @unittest.skipIf((not hasattr(PandasTools, 'pd')) or PandasTools.pd is None,
                  'Pandas not installed, skipping')
@@ -184,10 +205,9 @@ class TestPandasTools(unittest.TestCase):
 
   @unittest.skipIf(IPython is None, 'Package IPython required for testing')
   def test_github2380(self):
-    from rdkit.Chem.Draw import IPythonConsole
-    IPythonConsole.ipython_useSVG = True
-    df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))
-    _ = PandasTools.FrameToGridImage(df)
+    with UsePythonRenderer():
+      df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))
+      _ = PandasTools.FrameToGridImage(df)
 
   def test_RGD(self):
     from rdkit.Chem import rdRGroupDecomposition
