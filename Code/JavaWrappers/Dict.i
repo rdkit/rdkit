@@ -40,8 +40,7 @@
 
 %ignore RDKit::Dict::Pair;
 %ignore RDKit::PairHolder;
-%ignore RDKit::Dict::appendPair;
-%ignore RDKit::Dict::append;
+%ignore RDKit::Dict::extend;
 %ignore RDKit::Dict::getRDValue;
 %ignore RDKit::Dict::begin;
 %ignore RDKit::Dict::end;

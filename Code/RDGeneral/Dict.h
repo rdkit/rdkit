@@ -16,7 +16,6 @@
 #ifndef RD_DICT_H_012020
 #define RD_DICT_H_012020
 
-#include <map>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -147,19 +146,15 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   const_iterator end() const { return _data.end(); }
 
   //! \brief Appends a populated Pair to the dictionary.
-  void appendPair(Pair &&pair) {
-    if (pair.val.needsCleanup()) {
-      _hasNonPodData = true;
-    }
+  void insert(Pair &&pair) {
+    _hasNonPodData |= pair.val.needsCleanup();
     _data.push_back(std::move(pair));
   }
 
   //! \brief Bulk-appends a vector of Pairs, moving them into the dictionary.
-  void append(std::vector<Pair> &&pairs) {
+  void extend(std::vector<Pair> &&pairs) {
     for (auto &p : pairs) {
-      if (p.val.needsCleanup()) {
-        _hasNonPodData = true;
-      }
+      _hasNonPodData |= p.val.needsCleanup();
     }
     _data.reserve(_data.size() + pairs.size());
     for (auto &p : pairs) {
@@ -382,7 +377,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 
   */
   void clearVal(const std::string_view what) {
-    for (DataType::iterator it = _data.begin(); it < _data.end(); ++it) {
+    for (auto it = _data.begin(); it < _data.end(); ++it) {
       if (it->key == what) {
         if (_hasNonPodData) {
           RDValue::cleanup_rdvalue(it->val);

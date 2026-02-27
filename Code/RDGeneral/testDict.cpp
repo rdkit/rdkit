@@ -652,36 +652,39 @@ TEST_CASE("testCustomProps") {
   delete handlers[1];
 }
 
-static int g_barDestructorCount = 0;
-
 struct Bar {
   int x{0};
+  int *dtor_count{nullptr};
   Bar() = default;
-  explicit Bar(int x) : x(x) {}
-  Bar(const Bar &o) : x(o.x) {}
+  Bar(int x, int *count) : x(x), dtor_count(count) {}
+  Bar(const Bar &o) = default;
   Bar &operator=(const Bar &) = default;
-  ~Bar() { ++g_barDestructorCount; }
+  ~Bar() {
+    if (dtor_count) {
+      ++(*dtor_count);
+    }
+  }
 };
 
 TEST_CASE("custom AnyTag data is destroyed through Dict lifecycle") {
-  g_barDestructorCount = 0;
+  int count = 0;
   {
     Dict d;
-    Bar b(42);
+    Bar b(42, &count);
     d.setVal<Bar>("mybar", b);
     REQUIRE(d.getVal<Bar>("mybar").x == 42);
   }
-  REQUIRE(g_barDestructorCount > 0);
+  REQUIRE(count > 0);
 
-  int prev = g_barDestructorCount;
+  int prev = count;
   {
     Dict d;
-    Bar b(7);
+    Bar b(7, &count);
     d.setVal<Bar>("mybar", b);
     Dict d2(d);
     REQUIRE(d2.getVal<Bar>("mybar").x == 7);
   }
-  REQUIRE(g_barDestructorCount > prev);
+  REQUIRE(count > prev);
 }
 
 TEST_CASE("testGithub2910") {
