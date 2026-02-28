@@ -110,10 +110,13 @@ computePrincipalAxesAndMomentsFromGyrationMatrix(
   \param normalizeCovar      Normalize the covariance matrix with the number of
   atoms
   \param ignoreHs            Optionally ignore hydrogens
+  \param retEigenValues      Optionally return the values for the eigenvalues,
+  sorted in ascending order.  If given, must be big enough to hold 3 values.
 */
 RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Transform3D *computeCanonicalTransform(
     const RDKit::Conformer &conf, const RDGeom::Point3D *center = nullptr,
-    bool normalizeCovar = false, bool ignoreHs = true);
+    bool normalizeCovar = false, bool ignoreHs = true,
+    double *eigVals = nullptr);
 
 //! Transform the conformation using the specified transformation
 RDKIT_MOLTRANSFORMS_EXPORT void transformConformer(
