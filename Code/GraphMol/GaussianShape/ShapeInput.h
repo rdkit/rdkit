@@ -64,6 +64,7 @@ void serialize(Archive &ar, boost::dynamic_bitset<Block, Allocator> &bs,
 
 namespace RDKit {
 class ROMol;
+class RWMol;
 namespace GaussianShape {
 
 const double PI = 4 * std::atan(1.0);
@@ -140,7 +141,11 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #endif
   }
 
+  // Note that the coords returned is a vector size 4*getNumAtoms()
+  // with the 4th value per atom being the alpha paramter.
   const std::vector<double> &getCoords() const { return d_coords; }
+  //! Fetch the coordinates of the atoms and optionally features.
+  std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors=false) const;
   bool getNormalized() const { return d_normalized; }
   const std::vector<int> &getTypes() const { return d_types; }
   unsigned int getNumAtoms() const { return d_numAtoms; }
@@ -150,14 +155,12 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   const std::unique_ptr<boost::dynamic_bitset<>> &getCarbonRadii() const {
     return d_carbonRadii;
   }
-  const std::array<double, 9> &getCanonicalRotation() const {
-    return d_canonRot;
-  }
-  const std::array<double, 3> &getCanonicalTranslation() const {
-    return d_canonTrans;
-  }
-  const std::array<double, 3> &getEigenValues() const { return d_eigenValues; }
-  const std::array<size_t, 6> &getExtremes() const { return d_extremePoints; }
+  // These may re-normalize the molecule if d_normalizeOK is false which
+  // means that the shape has moved since it was last normalized.
+  const std::array<double, 9> &getCanonicalRotation();
+  const std::array<double, 3> &getCanonicalTranslation();
+  const std::array<double, 3> &getEigenValues();
+  const std::array<size_t, 6> &getExtremes();
 
   // Align the principal axes to the cartesian axes and centre on the origin.
   // Doesn't require that the shape was created from a molecule.  Creates
@@ -165,6 +168,11 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   void normalizeCoords();
 
   void transformCoords(RDGeom::Transform3D &xform);
+
+  // Mock a molecule up from the shape for visual inspection and sometimes
+  // calculation of the normalization matrices.  No bonds.
+  // Atoms are C, features are N.
+  virtual std::unique_ptr<RWMol> shapeToMol(bool includeColors = true) const;
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
@@ -192,8 +200,8 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   void extractFeatures(const ROMol &mol, int confId,
                        const ShapeInputOptions &shapeOpts);
   // Calculate the rotation and translation that will align the principal axes
-  // to the cartesian axes and centre on the origin, using the conformer.
-  void calcNormalization(const ROMol &mol, int confId);
+  // to the cartesian axes and centre on the origin.
+  void calcNormalization();
 
   void calcExtremes();
 
@@ -204,8 +212,8 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   std::vector<int> d_types;  // The feature types.  The size is the same
   // as the number of coordinates, padded with 0
   // for the atoms.
-  int d_numAtoms;                  // The number of atoms
-  int d_numFeats;                  // The number of features
+  unsigned int d_numAtoms;         // The number of atoms
+  unsigned  d_numFeats;            // The number of features
   double d_selfOverlapVol{0.0};    // Shape volume
   double d_selfOverlapColor{0.0};  // Color volume
   // These are the points at the extremes of the x, y and z axes.
@@ -219,6 +227,9 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // shape with cartesian axes.  If d_normalized is true, it has been applied
   // to the coordinates.
   bool d_normalized{false};
+  // If the shape has been moved, the normalization matrices become invalid
+  // and must be re-calculated before use. This keeps track of that.
+  bool d_normalizationOK{false};
   std::array<double, 9> d_canonRot;
   std::array<double, 3> d_canonTrans;
   // The sorted eigenvalues of the principal axes.

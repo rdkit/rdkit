@@ -108,7 +108,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   if (opts.useColors) {
     extractFeatures(mol, confId, opts);
   }
-  calcNormalization(mol, confId);
+  calcNormalization();
   calcExtremes();
   std::vector<std::array<double, 12>> gradConverters(d_numAtoms + d_numFeats);
   d_selfOverlapVol = calcVolAndGrads(
@@ -131,6 +131,7 @@ ShapeInput::ShapeInput(const ShapeInput &other)
       d_selfOverlapColor(other.d_selfOverlapColor),
       d_extremePoints(other.d_extremePoints),
       d_normalized(other.d_normalized),
+      d_normalizationOK(other.d_normalizationOK),
       d_canonRot(other.d_canonRot),
       d_canonTrans(other.d_canonTrans),
       d_eigenValues(other.d_eigenValues) {
@@ -150,6 +151,8 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   d_selfOverlapVol = other.d_selfOverlapVol;
   d_selfOverlapColor = other.d_selfOverlapColor;
   d_extremePoints = other.d_extremePoints;
+  d_normalized = other.d_normalized;
+  d_normalizationOK = other.d_normalizationOK;
   d_canonRot = other.d_canonRot;
   d_canonTrans = other.d_canonTrans;
   d_eigenValues = other.d_eigenValues;
@@ -158,25 +161,58 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   } else {
     d_carbonRadii.reset();
   }
-  d_normalized = other.d_normalized;
   d_canonRot = other.d_canonRot;
   d_canonTrans = other.d_canonTrans;
   return *this;
 }
 
-void ShapeInput::normalizeCoords() {
-  // For consistency, create a dummy molecule and use the same code
-  // as for shapes created from a molecule.
-  RWMol mol;
-  Conformer *conf = new Conformer(d_coords.size() / 4);
-  for (size_t i = 0, j = 0; i < d_coords.size(); i += 4, ++j) {
-    Atom *atom = new Atom(6);
-    mol.addAtom(atom, true, true);
-    RDGeom::Point3D pos{d_coords[i], d_coords[i + 1], d_coords[i + 2]};
-    conf->setAtomPos(j, pos);
+std::vector<RDGeom::Point3D> ShapeInput::getAtomPoints(
+    bool includeColors) const {
+  std::vector<RDGeom::Point3D> atomPoints;
+  unsigned int numPoints = getNumAtoms();
+  if (includeColors) {
+    numPoints += getNumFeatures();
   }
-  auto confId = mol.addConformer(conf);
-  calcNormalization(mol, confId);
+  atomPoints.reserve(numPoints);
+  for (unsigned int i = 0; i < 4 * numPoints; i += 4) {
+    atomPoints.emplace_back(
+        RDGeom::Point3D(d_coords[i], d_coords[i + 1], d_coords[i + 2]));
+  }
+  return atomPoints;
+}
+
+const std::array<double, 9> &ShapeInput::getCanonicalRotation() {
+  if (!d_normalizationOK) {
+    calcNormalization();
+  }
+  return d_canonRot;
+}
+
+const std::array<double, 3> &ShapeInput::getCanonicalTranslation() {
+  if (!d_normalizationOK) {
+    calcNormalization();
+  }
+  return d_canonTrans;
+}
+
+const std::array<double, 3> &ShapeInput::getEigenValues() {
+  if (!d_normalizationOK) {
+    calcNormalization();
+  }
+  return d_eigenValues;
+}
+
+const std::array<size_t, 6> &ShapeInput::getExtremes() {
+  if (!d_normalizationOK) {
+    calcNormalization();
+  }
+  return d_extremePoints;
+}
+
+void ShapeInput::normalizeCoords() {
+  if (!d_normalizationOK) {
+    calcNormalization();
+  }
   RDGeom::Transform3D canonRot;
   for (unsigned int i = 0, k = 0; i < 3; ++i) {
     for (unsigned int j = 0; j < 3; ++j, ++k) {
@@ -187,7 +223,7 @@ void ShapeInput::normalizeCoords() {
   canonRot.TransformPoint(trans);
   canonRot.SetTranslation(trans);
 
-  applyTransformToShape(d_coords, canonRot);
+  transformCoords(canonRot);
   d_normalized = true;
   // Recalculate the extremes now we've changed the coordinates.
   calcExtremes();
@@ -195,6 +231,35 @@ void ShapeInput::normalizeCoords() {
 
 void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
   applyTransformToShape(d_coords, xform);
+  d_normalizationOK = false;
+}
+
+std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors) const {
+  auto mol = std::make_unique<RWMol>();
+  for (unsigned int i = 0; i < getNumAtoms(); i++) {
+    Atom *atom = new Atom(6);
+    mol->addAtom(atom, true, true);
+  }
+  if (includeColors) {
+    for (unsigned int i = 0; i < getNumFeatures(); i++) {
+      Atom *atom = new Atom(7);
+      mol->addAtom(atom, true, true);
+    }
+  }
+  unsigned int num = getNumAtoms();
+  if (includeColors) {
+    num += getNumFeatures();
+  }
+  Conformer *conf = new Conformer(num);
+  const auto &shapeCds = getCoords();
+  for (unsigned int i = 0; i < num; i++) {
+    auto &pos = conf->getAtomPos(i);
+    pos.x = shapeCds[4 * i];
+    pos.y = shapeCds[4 * i + 1];
+    pos.z = shapeCds[4 * i + 2];
+  }
+  mol->addConformer(conf, true);
+  return mol;
 }
 
 namespace {
@@ -411,12 +476,17 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
   }
 }
 
-void ShapeInput::calcNormalization(const ROMol &mol, int confId) {
+void ShapeInput::calcNormalization() {
   d_eigenValues = std::array<double, 3>{0.0, 0.0, 0.0};
+  // Build a "molecule" just of the shape points, not the color features
+  // with which to calculate the canonical transformation.  Doesn't ever
+  // use the input molecule in case the shape was built from a subset of
+  // atoms in that molecule.
+  auto tmpMol = shapeToMol(false);
   std::unique_ptr<RDGeom::Transform3D> canonXform(
-      MolTransforms::computeCanonicalTransform(mol.getConformer(confId),
-                                               nullptr, false, true,
-                                               d_eigenValues.data()));
+      MolTransforms::computeCanonicalTransform(
+          tmpMol->getConformer(), nullptr, false, true, d_eigenValues.data()));
+
   d_canonRot =
       std::array<double, 9>{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
   for (unsigned int i = 0, k = 0; i < 3; ++i) {
@@ -425,7 +495,7 @@ void ShapeInput::calcNormalization(const ROMol &mol, int confId) {
     }
   }
   d_canonTrans = std::array<double, 3>{0.0, 0.0, 0.0};
-  for (int i = 0; i < 4 * d_numAtoms; i += 4) {
+  for (unsigned int i = 0; i < 4 * d_numAtoms; i += 4) {
     d_canonTrans[0] -= d_coords[i];
     d_canonTrans[1] -= d_coords[i + 1];
     d_canonTrans[2] -= d_coords[i + 2];
@@ -433,6 +503,7 @@ void ShapeInput::calcNormalization(const ROMol &mol, int confId) {
   d_canonTrans[0] /= d_numAtoms;
   d_canonTrans[1] /= d_numAtoms;
   d_canonTrans[2] /= d_numAtoms;
+  d_normalizationOK = true;
 }
 
 void ShapeInput::calcExtremes() {

@@ -11,6 +11,7 @@
 //
 // Tests for the Roshambo2-based shape alignment code.
 
+#include <chrono>
 #include <random>
 
 #include <catch2/catch_test_macros.hpp>
@@ -23,6 +24,8 @@
 #include <GraphMol/GaussianShape/ShapeInput.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+
+#include "../External/pubchem_shape/PubChemShape.hpp"
 
 using namespace RDKit;
 
@@ -113,9 +116,9 @@ TEST_CASE("basic alignment") {
     ROMol cp(*probe);
     const auto scores = GaussianShape::AlignMolecule(
         *ref, cp, shapeOpts, shapeOpts, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.502, 0.005));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.731, 0.005));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.273, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.477, 0.005));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.747, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.207, 0.005));
     const auto rescores = GaussianShape::ScoreMolecule(*ref, cp, shapeOpts,
                                                        shapeOpts, overlayOpts);
     CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
@@ -134,11 +137,11 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.236, 0.005));
     // Check a few values from the transform, just to be sure
     CHECK_THAT(xform.getValUnchecked(0, 0),
-               Catch::Matchers::WithinAbs(-0.879, 0.005));
+               Catch::Matchers::WithinAbs(-0.886, 0.005));
     CHECK_THAT(xform.getValUnchecked(1, 1),
-               Catch::Matchers::WithinAbs(-0.818, 0.005));
+               Catch::Matchers::WithinAbs(-0.828, 0.005));
     CHECK_THAT(xform.getValUnchecked(2, 2),
-               Catch::Matchers::WithinAbs(0.811, 0.005));
+               Catch::Matchers::WithinAbs(0.816, 0.005));
     CHECK_THAT(xform.getValUnchecked(3, 3),
                Catch::Matchers::WithinAbs(1.0, 0.005));
   }
@@ -156,9 +159,9 @@ TEST_CASE("basic alignment") {
         CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.758, 0.005));
         CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.237, 0.005));
       } else {
-        CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.497, 0.005));
+        CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.503, 0.005));
         CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.761, 0.005));
-        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.234, 0.005));
+        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.245, 0.005));
       }
       // Check that a re-score gives the same answer.
       const auto rescores = GaussianShape::ScoreMolecule(
@@ -188,9 +191,9 @@ TEST_CASE("bulk") {
     REQUIRE(probe);
     auto scores = GaussianShape::AlignMolecule(*ref, *probe, shapeOpts,
                                                shapeOpts, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.534, 0.005));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.818, 0.005));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.249, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.560, 0.005));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.824, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.295, 0.005));
     const auto rescores = GaussianShape::ScoreMolecule(*ref, *probe);
     CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
     CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
@@ -213,14 +216,19 @@ TEST_CASE("shape alignment") {
   REQUIRE(probe);
   auto refShape = GaussianShape::ShapeInput(*ref, -1);
   auto probeShape = GaussianShape::ShapeInput(*probe, -1);
-
   const auto ovProbe =
-      "FC1(F)C[C@H](C(O)=O)N(Cc2ocnc2)C1 |(-13.8851,-5.77603,4.50901;-13.6126,-6.61984,3.48692;-12.5692,-7.38618,3.85415;-13.3182,-5.84097,2.22308;-14.6769,-5.73477,1.52809;-15.1634,-4.32173,1.4896;-14.7717,-3.71164,0.344426;-15.8263,-3.78355,2.36382;-15.6188,-6.489,2.36457;-16.6719,-7.14028,1.5981;-17.7523,-6.17224,1.19507;-18.3875,-5.49676,2.19276;-19.2867,-4.7195,1.5291;-19.2789,-4.83963,0.2207;-18.2959,-5.77046,0.000232054;-14.831,-7.44357,3.14755),wU:4.4|"_smiles;
+      "FC1(F)C[C@H](C(O)=O)N(Cc2ocnc2)C1 |(-13.7799,-5.76066,4.42449;-13.5271,-6.62223,3.41219;-12.4707,-7.37583,3.76844;-13.2679,-5.8659,2.12715;-14.6435,-5.78022,1.46335;-15.139,-4.37081,1.41003;-14.7786,-3.78046,0.244433;-15.7838,-3.81972,2.28974;-15.5606,-6.52351,2.33643;-16.628,-7.19488,1.60806;-17.7234,-6.24049,1.21312;-18.3383,-5.54964,2.21298;-19.2578,-4.78996,1.55674;-19.2808,-4.93485,0.251035;-18.298,-5.86438,0.0244256;-14.7486,-7.4588,3.11797),wU:4.4|"_smiles;
   RDGeom::Transform3D xform;
   auto scores = GaussianShape::AlignShape(refShape, probeShape, &xform);
-  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.494, 0.005));
+  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.498, 0.005));
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.760, 0.005));
-  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.237, 0.005));
+  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.235, 0.005));
+  // This effectively checks that xform is correct.
+  auto rescores = GaussianShape::ScoreShape(refShape, probeShape);
+  CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.001));
+  CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.001));
+  CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.001));
+
   SmilesWriteParams params;
   params.canonical = false;
   // The input structure being from an SDF doesn't have the atoms in an order
@@ -235,7 +243,7 @@ TEST_CASE("shape alignment") {
   auto scores1 = GaussianShape::AlignShape(refShape, probeShape, &xform1);
   CHECK_THAT(scores1[0], Catch::Matchers::WithinAbs(0.498, 0.005));
   CHECK_THAT(scores1[1], Catch::Matchers::WithinAbs(0.760, 0.005));
-  CHECK_THAT(scores1[2], Catch::Matchers::WithinAbs(0.237, 0.005));
+  CHECK_THAT(scores1[2], Catch::Matchers::WithinAbs(0.235, 0.005));
 }
 
 TEST_CASE("Overlay onto shape bug (Github8462)") {
@@ -286,9 +294,9 @@ TEST_CASE("handling molecules with Hs") {
     RWMol cp(*probe);
     RDGeom::Transform3D xform;
     auto scores = GaussianShape::AlignMolecule(*ref, cp);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.707, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.700, 0.005));
     CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.834, 0.005));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.581, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.566, 0.005));
     for (auto i = 0u; i < cp.getNumAtoms(); ++i) {
       // the failure mode here was that Hs had HUGE coordinates
       auto pos = cp.getConformer().getAtomPos(i);
@@ -442,7 +450,7 @@ TEST_CASE("Iressa onto Tagrisso") {
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(rescores[1], 0.005));
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(rescores[2], 0.005));
   auto aligned_iressa =
-      "COc1cc2ncnc(Nc3ccc(F)c(Cl)c3)c2cc1OCCCN1CCOCC1 |(3.32561,-4.49721,0.300927;2.53581,-4.01343,-0.78355;1.35773,-3.4056,-0.468489;0.193742,-4.17423,-0.373537;-1.03475,-3.60055,-0.0547434;-2.14373,-4.35592,0.0319024;-3.28917,-3.71723,0.345957;-3.44662,-2.4047,0.581874;-2.31707,-1.67806,0.486599;-2.43316,-0.286277,0.72753;-3.48408,0.624088,0.533795;-4.40883,0.422247,-0.495334;-5.45345,1.32641,-0.688028;-5.57796,2.43691,0.146911;-6.58691,3.29722,-0.0515475;-4.65785,2.64294,1.17504;-4.80639,4.01148,2.20886;-3.61355,1.73849,1.36799;-1.07209,-2.21475,0.170776;0.0939354,-1.43492,0.0770612;1.30021,-2.03981,-0.242431;2.43295,-1.27322,-0.333386;2.73336,-0.721848,-1.60808;3.45719,0.603454,-1.41299;2.59548,1.60491,-0.650515;1.34882,1.8536,-1.37136;0.470419,2.74595,-0.602204;-0.818024,2.99985,-1.37951;-0.524608,3.5688,-2.65607;0.30286,2.69369,-3.42367;1.61814,2.43113,-2.69569)|"_smiles;
+      "COc1cc2ncnc(Nc3ccc(F)c(Cl)c3)c2cc1OCCCN1CCOCC1 |(3.34206,-4.82098,0.224565;2.562,-4.29938,-0.849374;1.40029,-3.66768,-0.520786;0.217637,-4.40844,-0.435429;-0.995315,-3.80966,-0.103538;-2.12266,-4.53841,-0.026421;-3.25097,-3.87666,0.301586;-3.3749,-2.56477,0.559961;-2.22774,-1.8651,0.473675;-2.30832,-0.475114,0.738276;-3.33657,0.464391,0.56286;-4.2686,0.303124,-0.466868;-5.2907,1.23626,-0.641364;-5.38531,2.33529,0.212458;-6.37287,3.22379,0.031359;-4.45782,2.50088,1.24127;-4.5695,3.85508,2.29834;-3.43604,1.56746,1.41601;-0.997368,-2.42737,0.145328;0.187601,-1.67548,0.061391;1.37756,-2.30488,-0.27166;2.52893,-1.56544,-0.352965;2.83995,-1.00034,-1.61907;3.59724,0.302963,-1.40382;2.76275,1.31266,-0.622178;1.52096,1.60458,-1.33518;0.667075,2.50553,-0.54864;-0.616491,2.80465,-1.31789;-0.312021,3.38752,-2.58555;0.491386,2.50505,-3.3701;1.80144,2.19743,-2.65039)|"_smiles;
   REQUIRE(aligned_iressa);
   checkMolsHaveRoughlySameCoords(*iressa, *aligned_iressa);
 }
@@ -493,8 +501,8 @@ TEST_CASE("Optimise in place") {
     ROMol cp(*canon_probe);
     auto scores = GaussianShape::AlignMolecule(*pdb_trp_3tmn, cp, shapeOpts,
                                                shapeOpts, nullptr, opts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.199, 0.001));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.365, 0.001));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.197, 0.001));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.361, 0.001));
     CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.033, 0.001));
   }
   {
@@ -537,9 +545,9 @@ TEST_CASE("Fragment Mode") {
   // Use the smaller molecule as the probe
   auto scores = GaussianShape::AlignShape(refShape, probeShape, &xform, opts);
   // These are close to the values above for starting from the xtal structures.
-  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.285, 0.001));
-  CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.406, 0.001));
-  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.164, 0.001));
+  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.311, 0.001));
+  CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.408, 0.001));
+  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.215, 0.001));
 }
 
 TEST_CASE("custom feature points") {
@@ -666,6 +674,79 @@ TEST_CASE("Shape subset") {
              Catch::Matchers::WithinAbs(556.266, 0.005));
   CHECK_THAT(wholeShape.getColorVolume(),
              Catch::Matchers::WithinAbs(10.631, 0.005));
+}
+
+TEST_CASE("Normalization and not normalization") {
+  // A weird case where pre-normalizing the structure and running with
+  // normalization=false is significantly slower than using default
+  // parameters.
+  // These are 2 LOBSTER structures: PEP_B_503 and 4NG_A_501.
+  // LOBSTER is published https://doi.org/10.1007/s10822-024-00581-1 from
+  // the Rarey and BioSolveIT group.
+  auto lob1 =
+      "C=C(OP(=O)(O)O)C(=O)O |(75.9845,113.253,-91.6085;75.9606,112.363,-92.6299;74.7567,111.999,-93.2095;73.9986,110.666,-92.7967;74.9478,109.542,-93.1431;73.7944,110.739,-91.317;72.853,110.735,-93.7762;77.2207,111.895,-93.3189;78.3152,112.331,-92.8486;77.1511,111.109,-94.3199)|"_smiles;
+  REQUIRE(lob1);
+  auto lob2 =
+      "O=C1[C@@H](P(=O)(O)O)C[C@H](O)N1O |(77.078,110.972,-94.395;76.496,111.788,-93.681;75.112,111.952,-93.676;74.344,110.621,-92.694;72.879,110.771,-92.548;75.132,110.621,-91.28;74.777,109.244,-93.426;74.885,113.284,-92.989;76.126,113.446,-92.14;76.55,114.811,-92.171;77.124,112.603,-92.834;78.529,112.655,-92.631),wD:8.8,wU:2.2|"_smiles;
+  REQUIRE(lob2);
+  std::chrono::steady_clock::time_point begin, end;
+#if 1
+  auto norm_lob1 = std::make_unique<ROMol>(*lob1);
+  auto norm_lob2 = std::make_unique<ROMol>(*lob2);
+  begin = std::chrono::steady_clock::now();
+  auto norm_scores = GaussianShape::AlignMolecule(*norm_lob1, *norm_lob2);
+  end = std::chrono::steady_clock::now();
+  std::cout << "\ndefault scores : " << norm_scores[0] << ", " << norm_scores[1]
+            << ", " << norm_scores[2] << std::endl;
+  std::cout << "Time default = "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << "[microseconds]" << std::endl;
+#endif
+#if 1
+  auto prenorm_lob1 = std::make_unique<ROMol>(*lob1);
+  MolTransforms::canonicalizeConformer(prenorm_lob1->getConformer());
+  auto prenorm_lob2 = std::make_unique<ROMol>(*lob2);
+  MolTransforms::canonicalizeConformer(prenorm_lob2->getConformer());
+  GaussianShape::ShapeOverlayOptions ovlyOpts;
+  ovlyOpts.normalize = false;
+  GaussianShape::ShapeInputOptions shapeOpts;
+  begin = std::chrono::steady_clock::now();
+  auto nonorm_scores = GaussianShape::AlignMolecule(
+      *prenorm_lob1, *prenorm_lob2, shapeOpts, shapeOpts, nullptr, ovlyOpts);
+  end = std::chrono::steady_clock::now();
+  std::cout << "\nnonorm scores : " << nonorm_scores[0] << ", "
+            << nonorm_scores[1] << ", " << nonorm_scores[2] << std::endl;
+  std::cout << "Time nonorm = "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << "[microseconds]" << std::endl;
+#endif
+#if 1
+  CHECK_THAT(nonorm_scores[0],
+             Catch::Matchers::WithinAbs(norm_scores[0], 0.001));
+  CHECK_THAT(nonorm_scores[1],
+             Catch::Matchers::WithinAbs(norm_scores[1], 0.001));
+  CHECK_THAT(nonorm_scores[2],
+             Catch::Matchers::WithinAbs(norm_scores[2], 0.001));
+#endif
+#if 1
+  auto pc_lob1 = std::make_unique<ROMol>(*lob1);
+  auto pc_lob2 = std::make_unique<ROMol>(*lob2);
+  std::vector<float> matrix(12);
+  begin = std::chrono::steady_clock::now();
+  auto pc_scores = AlignMolecule(*pc_lob1, *pc_lob2, matrix);
+  end = std::chrono::steady_clock::now();
+  std::cout << "\npc_scores : " << 0.5 * (pc_scores.first + pc_scores.second)
+            << ", " << pc_scores.first << ", " << pc_scores.second << std::endl;
+  std::cout << "Time pubchem = "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << "[microseconds]" << std::endl;
+#endif
 }
 
 #ifdef RDK_USE_BOOST_SERIALIZATION

@@ -6,7 +6,7 @@ target_compile_definitions(GaussianShape PRIVATE RDKIT_GAUSSIANSHAPE_BUILD)
 rdkit_headers(GaussianShape.h ShapeInput.h ShapeOverlayOptions.h SingleConformerAlignment.h)
 
 rdkit_catch_test(testGaussianShape catch_tests.cpp LINK_LIBRARIES GaussianShape
-        FileParsers MolAlign MolTransforms)
+        FileParsers MolAlign MolTransforms PubChemShape)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)

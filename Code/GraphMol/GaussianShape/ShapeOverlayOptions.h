@@ -74,6 +74,36 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
                //! than this amount.  A larger number is faster but less
                //! precise.
 };
+
+inline std::ostream &operator<<(std::ostream &os, const StartMode &sm) {
+  switch (sm) {
+    case StartMode::ROTATE_0:
+      os << "ROTATE_0";
+      break;
+    case StartMode::ROTATE_0_FRAGMENT:
+      os << "ROTATE_0_FRAGMENT";
+      break;
+    case StartMode::ROTATE_180:
+      os << "ROTATE_180";
+      break;
+    case StartMode::ROTATE_180_FRAGMENT:
+      os << "ROTATE_180_FRAGMENT";
+      break;
+    case StartMode::ROTATE_180_WIGGLE:
+      os << "ROTATE_180_WIGGLE";
+      break;
+    case StartMode::ROTATE_45:
+      os << "ROTATE_45";
+      break;
+    case StartMode::ROTATE_45_FRAGMENT:
+      os << "ROTATE_45_FRAGMENT";
+      break;
+    case StartMode::A_LA_PUBCHEM:
+      os << "A_LA_PUBCHEM";
+      break;
+  }
+  return os;
+}
 }  // namespace GaussianShape
 }  // namespace RDKit
 
