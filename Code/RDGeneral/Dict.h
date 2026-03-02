@@ -156,10 +156,8 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     for (auto &p : pairs) {
       _hasNonPodData |= p.val.needsCleanup();
     }
-    _data.reserve(_data.size() + pairs.size());
-    for (auto &p : pairs) {
-      _data.push_back(std::move(p));
-    }
+    _data.insert(_data.end(), std::make_move_iterator(pairs.begin()),
+                 std::make_move_iterator(pairs.end()));
   }
 
   //! \brief Returns a const reference to the RDValue for a key.
