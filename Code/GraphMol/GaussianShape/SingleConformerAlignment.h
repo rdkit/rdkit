@@ -169,7 +169,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   double d_qStepSize{-0.001};
   double d_tStepSize{-0.01};
   // Scratch space for the gradients dr/dQ of the fit molecule.
-  mutable std::vector<std::array<double, 12>> d_gradConverters;
+  mutable std::vector<double> d_gradConverters;
 };
 
 // Compute the volume overlap and optionally "quaternion" gradients for the
@@ -184,15 +184,14 @@ double calcVolAndGrads(
     const std::unique_ptr<boost::dynamic_bitset<>> &refCarbonRadii,
     const double *fit, int numFitPts,
     const std::unique_ptr<boost::dynamic_bitset<>> &fitCarbonRadii,
-    std::vector<std::array<double, 12>> &gradConverters, const bool useCutoff,
+    std::vector<double> &gradConverters, const bool useCutoff,
     const double distCutoff2, const double *quat = nullptr,
     double *gradients = nullptr);
 // This one is for the features, and only calculates values if the types
 // of 2 features match.
 double calcVolAndGrads(const double *ref, int numRefPts, const int *refTypes,
                        const double *fit, int numFitPts, const int *fitTypes,
-                       int numFitShape,
-                       std::vector<std::array<double, 12>> &gradConverters,
+                       int numFitShape, std::vector<double> &gradConverters,
                        const bool useCutoff, const double distCutoff2,
                        const double *quat, double *gradients);
 

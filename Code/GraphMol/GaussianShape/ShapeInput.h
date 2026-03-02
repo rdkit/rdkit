@@ -189,6 +189,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
     ar & d_extremePoints;
     ar & d_carbonRadii;
     ar & d_normalized;
+    ar & d_normalizationOK;
     ar & d_canonRot;
     ar & d_canonTrans;
     ar & d_eigenValues;

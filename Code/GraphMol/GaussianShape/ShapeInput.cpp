@@ -114,7 +114,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   }
   calcNormalization();
   calcExtremes();
-  std::vector<std::array<double, 12>> gradConverters(d_numAtoms + d_numFeats);
+  std::vector<double> gradConverters(12 * (d_numAtoms + d_numFeats));
   d_selfOverlapVol = calcVolAndGrads(
       d_coords.data(), d_numAtoms, d_carbonRadii, d_coords.data(), d_numAtoms,
       d_carbonRadii, gradConverters, overlayOpts.useDistCutoff,
