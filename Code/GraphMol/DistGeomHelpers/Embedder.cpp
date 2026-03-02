@@ -97,72 +97,55 @@ std::mutex &GetFailMutex() {
 namespace RDKit {
 namespace DGeomHelpers {
 
-const EmbedParameters DG;
-//! Parameters corresponding to Sereina Riniker's KDG approach
-const EmbedParameters KDG(true,   // useBasicKnowledge
-                          false,  // useExpTorsionAnglePrefs
-                          0,      // ETversion
-                          false,  // useSmallRingTorsions
-                          false,  // useMacrocycleTorsions
-                          false   // useMacrocycle14config
-);
+const EmbedParameters KDG{.useBasicKnowledge = true,
+                          .useExpTorsionAnglePrefs = false,
+                          .ETversion = 1,
+                          .useSmallRingTorsions = false,
+                          .useMacrocycleTorsions = false,
+                          .useMacrocycle14config = false};
 
-//! Parameters corresponding to Sereina Riniker's ETDG approach
-const EmbedParameters ETDG(false,  // useBasicKnowledge
-                           true,   // useExpTorsionAnglePrefs
-                           1,      // ETversion
-                           false,  // useSmallRingTorsions
-                           false,  // useMacrocycleTorsions
-                           false   // useMacrocycle14config
-);
+const EmbedParameters ETDG{.useBasicKnowledge = false,
+                           .useExpTorsionAnglePrefs = true,
+                           .ETversion = 1,
+                           .useSmallRingTorsions = false,
+                           .useMacrocycleTorsions = false,
+                           .useMacrocycle14config = false};
 
-//! Parameters corresponding to Sereina Riniker's ETDG approach with v2 of the
-//! torsion parameters
-const EmbedParameters ETDGv2(false,  // useBasicKnowledge
-                             true,   // useExpTorsionAnglePrefs
-                             2,      // ETversion
-                             false,  // useSmallRingTorsions
-                             false,  // useMacrocycleTorsions
-                             false   // useMacrocycle14config
-);
+const EmbedParameters ETDGv2{.useBasicKnowledge = false,
+                             .useExpTorsionAnglePrefs = true,
+                             .ETversion = 2,
+                             .useSmallRingTorsions = false,
+                             .useMacrocycleTorsions = false,
+                             .useMacrocycle14config = false};
 
-//! Parameters corresponding to Sereina Riniker's ETKDG approach
-const EmbedParameters ETKDG(true,   // useBasicKnowledge
-                            true,   // useExpTorsionAnglePrefs
-                            1,      // ETversion
-                            false,  // useSmallRingTorsions
-                            false,  // useMacrocycleTorsions
-                            false   // useMacrocycle14config
-);
+const EmbedParameters ETKDG{.useBasicKnowledge = true,
+                            .useExpTorsionAnglePrefs = true,
+                            .ETversion = 1,
+                            .useSmallRingTorsions = false,
+                            .useMacrocycleTorsions = false,
+                            .useMacrocycle14config = false};
 
-//! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
-const EmbedParameters ETKDGv2(true,   // useBasicKnowledge
-                              true,   // useExpTorsionAnglePrefs
-                              2,      // ETversion
-                              false,  // useSmallRingTorsions
-                              false,  // useMacrocycleTorsions
-                              false   // useMacrocycle14config
-);
+const EmbedParameters ETKDGv2{.useBasicKnowledge = true,
+                              .useExpTorsionAnglePrefs = true,
+                              .ETversion = 2,
+                              .useSmallRingTorsions = false,
+                              .useMacrocycleTorsions = false,
+                              .useMacrocycle14config = false};
 
-//! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
-//! (10.1021/acs.jcim.0c00025) - the macrocycle part
-const EmbedParameters ETKDGv3(true,   // useBasicKnowledge
-                              true,   // useExpTorsionAnglePrefs
-                              2,      // ETversion
-                              false,  // useSmallRingTorsions
-                              true,   // useMacrocycleTorsions
-                              true    // useMacrocycle14config
-);
+const EmbedParameters ETKDGv3{.useBasicKnowledge = true,
+                              .useExpTorsionAnglePrefs = true,
+                              .ETversion = 2,
+                              .useSmallRingTorsions = false,
+                              .useMacrocycleTorsions = true,
+                              .useMacrocycle14config = true};
 
-//! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
-//! (10.1021/acs.jcim.0c00025) - the small ring part
-const EmbedParameters srETKDGv3(true,   // useBasicKnowledge
-                                true,   // useExpTorsionAnglePrefs
-                                2,      // ETversion
-                                true,   // useSmallRingTorsions
-                                false,  // useMacrocycleTorsions
-                                false   // useMacrocycle14config
-);
+const EmbedParameters srETKDGv3{.useBasicKnowledge = true,
+                              .useExpTorsionAnglePrefs = true,
+                              .ETversion = 2,
+                              .useSmallRingTorsions = true,
+                              .useMacrocycleTorsions = false,
+                              .useMacrocycle14config = false};
+
 
 namespace detail {
 struct EmbedArgs {

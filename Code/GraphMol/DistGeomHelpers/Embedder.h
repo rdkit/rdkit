@@ -159,15 +159,6 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
 
   EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
-  EmbedParameters(bool useBasicKnowledge, bool useExpTorsionAnglePrefs,
-                  unsigned int ETversion, bool useSmallRingTorsions,
-                  bool useMacrocycleTorsions, bool useMacrocycle14config)
-      : useExpTorsionAnglePrefs(useExpTorsionAnglePrefs),
-        useBasicKnowledge(useBasicKnowledge),
-        ETversion(ETversion),
-        useSmallRingTorsions(useSmallRingTorsions),
-        useMacrocycleTorsions(useMacrocycleTorsions),
-        useMacrocycle14config(useMacrocycle14config){};
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,
       bool clearConfs, bool useRandomCoords, double boxSizeMult,
