@@ -210,26 +210,57 @@ class BlockLogs : public boost::noncopyable {
 
 class CaptureLog : public boost::noncopyable {
  public:
-  CaptureLog() : m_capturer{new RDLog::CaptureLog} {}
+  CaptureLog() {
+    if (!rdErrorLog) {
+      RDLog::InitLogs();
+    }
+    m_errorCap = std::make_unique<RDLog::CaptureLog>(rdErrorLog);
+    m_warningCap = std::make_unique<RDLog::CaptureLog>(rdWarningLog);
+    m_infoCap = std::make_unique<RDLog::CaptureLog>(rdInfoLog);
+    m_debugCap = std::make_unique<RDLog::CaptureLog>(rdDebugLog);
+  }
   ~CaptureLog() = default;
 
   CaptureLog *enter() { return this; }
 
   void exit(python::object /*exc_type*/, python::object /*exc_val*/,
             python::object /*traceback*/) {
-    if (m_capturer) {
-      m_messages = m_capturer->messages();
-      m_capturer.reset();
-    }
+    saveAndReset(m_errorCap, m_errorMessages);
+    saveAndReset(m_warningCap, m_warningMessages);
+    saveAndReset(m_infoCap, m_infoMessages);
+    saveAndReset(m_debugCap, m_debugMessages);
   }
 
+  std::string errorMessages() const {
+    return m_errorCap ? m_errorCap->messages() : m_errorMessages;
+  }
+  std::string warningMessages() const {
+    return m_warningCap ? m_warningCap->messages() : m_warningMessages;
+  }
+  std::string infoMessages() const {
+    return m_infoCap ? m_infoCap->messages() : m_infoMessages;
+  }
+  std::string debugMessages() const {
+    return m_debugCap ? m_debugCap->messages() : m_debugMessages;
+  }
   std::string messages() const {
-    return m_capturer ? m_capturer->messages() : m_messages;
+    return errorMessages() + warningMessages() + infoMessages() +
+           debugMessages();
   }
 
  private:
-  std::unique_ptr<RDLog::CaptureLog> m_capturer;
-  std::string m_messages;
+  static void saveAndReset(std::unique_ptr<RDLog::CaptureLog> &cap,
+                           std::string &saved) {
+    if (cap) {
+      saved = cap->messages();
+      cap.reset();
+    }
+  }
+
+  std::unique_ptr<RDLog::CaptureLog> m_errorCap, m_warningCap, m_infoCap,
+      m_debugCap;
+  std::string m_errorMessages, m_warningMessages, m_infoMessages,
+      m_debugMessages;
 };
 
 namespace {
@@ -455,18 +486,27 @@ BOOST_PYTHON_MODULE(rdBase) {
 
   python::class_<CaptureLog, boost::noncopyable>(
       "CaptureLog",
-      "Captures messages from rdErrorLog while this instance is in scope.\n\n"
-      "Can be used as a context manager. The ``messages`` property returns all\n"
-      "text captured since construction and remains accessible after the\n"
-      "context exits. Nesting is supported: inner captures shadow outer ones.\n\n"
+      "Captures messages from all RDKit loggers while this instance is in\n"
+      "scope. Can be used as a context manager. Per-level properties\n"
+      "(``error_messages``, ``warning_messages``, ``info_messages``,\n"
+      "``debug_messages``) and a combined ``messages`` property are accessible\n"
+      "both inside the context and after it exits. Nesting is supported.\n\n"
       "Example::\n\n"
       "  with rdBase.CaptureLog() as capture:\n"
       "      rdkit_function_that_may_warn()\n"
-      "  print(capture.messages)\n",
+      "  print(capture.error_messages)\n",
       python::init<>(python::args("self")))
       .def("__enter__", &CaptureLog::enter,
            python::return_internal_reference<>())
       .def("__exit__", &CaptureLog::exit)
+      .add_property("error_messages", &CaptureLog::errorMessages,
+                    "Messages captured from rdErrorLog.")
+      .add_property("warning_messages", &CaptureLog::warningMessages,
+                    "Messages captured from rdWarningLog.")
+      .add_property("info_messages", &CaptureLog::infoMessages,
+                    "Messages captured from rdInfoLog.")
+      .add_property("debug_messages", &CaptureLog::debugMessages,
+                    "Messages captured from rdDebugLog.")
       .add_property("messages", &CaptureLog::messages,
-                    "All messages captured since construction.");
+                    "All captured messages from all log levels combined.");
 }
