@@ -208,9 +208,7 @@ class BlockLogs : public boost::noncopyable {
   std::unique_ptr<RDLog::LogStateSetter> m_log_setter;
 };
 
-template <typename T>
 struct PyCaptureLog : boost::noncopyable {
-  PyCaptureLog() : m_capturer{new T} {}
   PyCaptureLog *enter() { return this; }
   void exit(python::object /*exc_type*/, python::object /*exc_val*/,
             python::object /*traceback*/) {
@@ -224,7 +222,7 @@ struct PyCaptureLog : boost::noncopyable {
   }
 
  private:
-  std::unique_ptr<T> m_capturer;
+  std::unique_ptr<RDLog::CaptureLog> m_capturer{new RDLog::CaptureLog};
   std::string m_messages;
 };
 
@@ -449,75 +447,20 @@ BOOST_PYTHON_MODULE(rdBase) {
            python::return_internal_reference<>())
       .def("__exit__", &BlockLogs::exit);
 
-  using PyCaptureErrorLog = PyCaptureLog<RDLog::CaptureErrorLog>;
-  python::class_<PyCaptureErrorLog, boost::noncopyable>(
-      "CaptureErrorLog",
+  python::class_<PyCaptureLog, boost::noncopyable>(
+      "CaptureLog",
       "Captures messages from rdErrorLog while this instance is in scope.\n"
       "Can be used as a context manager. The ``messages`` property is\n"
       "accessible both inside the context and after it exits.\n"
       "Nesting is supported: inner captures shadow outer ones.\n\n"
       "Example::\n\n"
-      "  with rdBase.CaptureErrorLog() as capture:\n"
+      "  with rdBase.CaptureLog() as capture:\n"
       "      rdkit_function_that_may_fail()\n"
       "  print(capture.messages)\n",
       python::init<>(python::args("self")))
-      .def("__enter__", &PyCaptureErrorLog::enter,
+      .def("__enter__", &PyCaptureLog::enter,
            python::return_internal_reference<>())
-      .def("__exit__", &PyCaptureErrorLog::exit)
-      .add_property("messages", &PyCaptureErrorLog::messages,
+      .def("__exit__", &PyCaptureLog::exit)
+      .add_property("messages", &PyCaptureLog::messages,
                     "Messages captured from rdErrorLog.");
-
-  using PyCaptureWarningLog = PyCaptureLog<RDLog::CaptureWarningLog>;
-  python::class_<PyCaptureWarningLog, boost::noncopyable>(
-      "CaptureWarningLog",
-      "Captures messages from rdWarningLog while this instance is in scope.\n"
-      "Can be used as a context manager. The ``messages`` property is\n"
-      "accessible both inside the context and after it exits.\n"
-      "Nesting is supported: inner captures shadow outer ones.\n\n"
-      "Example::\n\n"
-      "  with rdBase.CaptureWarningLog() as capture:\n"
-      "      rdkit_function_that_may_warn()\n"
-      "  print(capture.messages)\n",
-      python::init<>(python::args("self")))
-      .def("__enter__", &PyCaptureWarningLog::enter,
-           python::return_internal_reference<>())
-      .def("__exit__", &PyCaptureWarningLog::exit)
-      .add_property("messages", &PyCaptureWarningLog::messages,
-                    "Messages captured from rdWarningLog.");
-
-  using PyCaptureInfoLog = PyCaptureLog<RDLog::CaptureInfoLog>;
-  python::class_<PyCaptureInfoLog, boost::noncopyable>(
-      "CaptureInfoLog",
-      "Captures messages from rdInfoLog while this instance is in scope.\n"
-      "Can be used as a context manager. The ``messages`` property is\n"
-      "accessible both inside the context and after it exits.\n"
-      "Nesting is supported: inner captures shadow outer ones.\n\n"
-      "Example::\n\n"
-      "  with rdBase.CaptureInfoLog() as capture:\n"
-      "      rdkit_function_that_outputs_info()\n"
-      "  print(capture.messages)\n",
-      python::init<>(python::args("self")))
-      .def("__enter__", &PyCaptureInfoLog::enter,
-           python::return_internal_reference<>())
-      .def("__exit__", &PyCaptureInfoLog::exit)
-      .add_property("messages", &PyCaptureInfoLog::messages,
-                    "Messages captured from rdInfoLog.");
-
-  using PyCaptureDebugLog = PyCaptureLog<RDLog::CaptureDebugLog>;
-  python::class_<PyCaptureDebugLog, boost::noncopyable>(
-      "CaptureDebugLog",
-      "Captures messages from rdDebugLog while this instance is in scope.\n"
-      "Can be used as a context manager. The ``messages`` property is\n"
-      "accessible both inside the context and after it exits.\n"
-      "Nesting is supported: inner captures shadow outer ones.\n\n"
-      "Example::\n\n"
-      "  with rdBase.CaptureDebugLog() as capture:\n"
-      "      rdkit_function_with_debug_output()\n"
-      "  print(capture.messages)\n",
-      python::init<>(python::args("self")))
-      .def("__enter__", &PyCaptureDebugLog::enter,
-           python::return_internal_reference<>())
-      .def("__exit__", &PyCaptureDebugLog::exit)
-      .add_property("messages", &PyCaptureDebugLog::messages,
-                    "Messages captured from rdDebugLog.");
 }

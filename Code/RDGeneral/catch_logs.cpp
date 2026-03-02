@@ -154,40 +154,19 @@ TEST_CASE("CaptureLog") {
     CHECK(ss.str().find("after restore") != std::string::npos);
   }
 
-  SECTION("explicit logger") {
-    RDLog::CaptureWarningLog capture;
+  SECTION("does not capture other logs") {
+    RDLog::CaptureLog capture;
     BOOST_LOG(rdWarningLog) << "test warning" << std::endl;
     BOOST_LOG(rdErrorLog) << "test error" << std::endl;
-    CHECK(capture.messages().find("test warning") != std::string::npos);
-    CHECK(capture.messages().find("test error") == std::string::npos);
-  }
-
-  SECTION("named subclasses") {
-    {
-      RDLog::CaptureErrorLog cap;
-      BOOST_LOG(rdErrorLog) << "error message" << std::endl;
-      BOOST_LOG(rdWarningLog) << "warning message" << std::endl;
-      CHECK(cap.messages().find("error message") != std::string::npos);
-      CHECK(cap.messages().find("warning message") == std::string::npos);
-    }
-    {
-      RDLog::CaptureInfoLog cap;
-      BOOST_LOG(rdInfoLog) << "info message" << std::endl;
-      CHECK(cap.messages().find("info message") != std::string::npos);
-    }
-    {
-      RDLog::CaptureDebugLog cap;
-      rdDebugLog->df_enabled = true;
-      BOOST_LOG(rdDebugLog) << "debug message" << std::endl;
-      CHECK(cap.messages().find("debug message") != std::string::npos);
-    }
+    CHECK(capture.messages().find("test error") != std::string::npos);
+    CHECK(capture.messages().find("test warning") == std::string::npos);
   }
 
   SECTION("nested captures") {
-    RDLog::CaptureErrorLog outer;
+    RDLog::CaptureLog outer;
     BOOST_LOG(rdErrorLog) << "outer message" << std::endl;
     {
-      RDLog::CaptureErrorLog inner;
+      RDLog::CaptureLog inner;
       BOOST_LOG(rdErrorLog) << "inner message" << std::endl;
       CHECK(inner.messages().find("inner message") != std::string::npos);
       CHECK(inner.messages().find("outer message") == std::string::npos);

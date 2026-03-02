@@ -153,51 +153,19 @@ CaptureLog::CaptureLog() : d_savedDest(&d_messages), d_savedTeestream(nullptr) {
   if (!rdErrorLog) {
     InitLogs();
   }
-  d_logger = rdErrorLog;
-  d_logWasEnabled = d_logger->df_enabled;
-  d_logger->df_enabled = true;
-  std::swap(d_logger->dp_dest, d_savedDest);
-  std::swap(d_logger->teestream, d_savedTeestream);
-}
-
-CaptureLog::CaptureLog(RDLogger logger)
-    : d_logger(std::move(logger)),
-      d_savedDest(&d_messages),
-      d_savedTeestream(nullptr) {
-  if (!d_logger) {
-    InitLogs();
-    d_logger = rdErrorLog;
-  }
-  d_logWasEnabled = d_logger->df_enabled;
-  d_logger->df_enabled = true;
-  std::swap(d_logger->dp_dest, d_savedDest);
-  std::swap(d_logger->teestream, d_savedTeestream);
+  d_logWasEnabled = rdErrorLog->df_enabled;
+  rdErrorLog->df_enabled = true;
+  std::swap(rdErrorLog->dp_dest, d_savedDest);
+  std::swap(rdErrorLog->teestream, d_savedTeestream);
 }
 
 CaptureLog::~CaptureLog() {
-  std::swap(d_logger->dp_dest, d_savedDest);
-  std::swap(d_logger->teestream, d_savedTeestream);
-  d_logger->df_enabled = d_logWasEnabled;
+  std::swap(rdErrorLog->dp_dest, d_savedDest);
+  std::swap(rdErrorLog->teestream, d_savedTeestream);
+  rdErrorLog->df_enabled = d_logWasEnabled;
 }
 
 std::string CaptureLog::messages() const { return d_messages.str(); }
-
-namespace {
-RDLogger ensureInitialized(RDLogger &logger) {
-  if (!logger) {
-    InitLogs();
-  }
-  return logger;
-}
-}  // namespace
-
-CaptureErrorLog::CaptureErrorLog()
-    : CaptureLog(ensureInitialized(rdErrorLog)) {}
-CaptureWarningLog::CaptureWarningLog()
-    : CaptureLog(ensureInitialized(rdWarningLog)) {}
-CaptureInfoLog::CaptureInfoLog() : CaptureLog(ensureInitialized(rdInfoLog)) {}
-CaptureDebugLog::CaptureDebugLog()
-    : CaptureLog(ensureInitialized(rdDebugLog)) {}
 
 std::ostream &toStream(std::ostream &logstrm) {
   char buffer[16];

@@ -413,59 +413,41 @@ class TestCaptureLog(unittest.TestCase):
   def setUpClass(cls):
     rdBase.LogToCppStreams()
     rdBase.EnableLog('rdApp.error')
-    rdBase.EnableLog('rdApp.warning')
-    rdBase.EnableLog('rdApp.info')
-    rdBase.EnableLog('rdApp.debug')
 
-  def testCaptureErrorLog(self):
-    with rdBase.CaptureErrorLog() as capture:
+  def testBasicCapture(self):
+    with rdBase.CaptureLog() as capture:
       rdBase.LogErrorMsg("captured error")
     self.assertIn("captured error", capture.messages)
 
-  def testCaptureWarningLog(self):
-    with rdBase.CaptureWarningLog() as capture:
-      rdBase.LogWarningMsg("captured warning")
-    self.assertIn("captured warning", capture.messages)
-
-  def testCaptureInfoLog(self):
-    with rdBase.CaptureInfoLog() as capture:
-      rdBase.LogInfoMsg("captured info")
-    self.assertIn("captured info", capture.messages)
-
-  def testCaptureDebugLog(self):
-    with rdBase.CaptureDebugLog() as capture:
-      rdBase.LogDebugMsg("captured debug")
-    self.assertIn("captured debug", capture.messages)
-
-  def testOnlyCapturesTargetLevel(self):
-    with rdBase.CaptureErrorLog() as capture:
+  def testOnlyCapturesErrorLog(self):
+    with rdBase.CaptureLog() as capture:
       rdBase.LogErrorMsg("an error")
       rdBase.LogWarningMsg("a warning")
     self.assertIn("an error", capture.messages)
     self.assertNotIn("a warning", capture.messages)
 
   def testEmptyWhenNothingLogged(self):
-    with rdBase.CaptureErrorLog() as capture:
+    with rdBase.CaptureLog() as capture:
       pass
     self.assertEqual(capture.messages, "")
 
   def testMessagesAccessibleAfterContextExit(self):
-    with rdBase.CaptureErrorLog() as capture:
+    with rdBase.CaptureLog() as capture:
       rdBase.LogErrorMsg("persistent error")
     self.assertIn("persistent error", capture.messages)
 
   def testLoggingRestoredAfterContextExit(self):
-    with rdBase.CaptureErrorLog() as capture:
+    with rdBase.CaptureLog() as capture:
       rdBase.LogErrorMsg("inside")
-    with rdBase.CaptureErrorLog() as capture2:
+    with rdBase.CaptureLog() as capture2:
       rdBase.LogErrorMsg("outside")
     self.assertNotIn("inside", capture2.messages)
     self.assertIn("outside", capture2.messages)
 
   def testNestedCaptures(self):
-    with rdBase.CaptureErrorLog() as outer:
+    with rdBase.CaptureLog() as outer:
       rdBase.LogErrorMsg("outer message")
-      with rdBase.CaptureErrorLog() as inner:
+      with rdBase.CaptureLog() as inner:
         rdBase.LogErrorMsg("inner message")
       self.assertIn("inner message", inner.messages)
       self.assertNotIn("outer message", inner.messages)
@@ -473,12 +455,9 @@ class TestCaptureLog(unittest.TestCase):
     self.assertNotIn("inner message", outer.messages)
 
   def testMessagesReadableInsideContext(self):
-    with rdBase.CaptureErrorLog() as capture:
+    with rdBase.CaptureLog() as capture:
       rdBase.LogErrorMsg("first")
       self.assertIn("first", capture.messages)
-    with rdBase.CaptureWarningLog() as capture:
-      rdBase.LogWarningMsg("second")
-      self.assertIn("second", capture.messages)
 
 
 if __name__ == '__main__':  # pragma: nocover
