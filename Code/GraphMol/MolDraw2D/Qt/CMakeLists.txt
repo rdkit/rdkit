@@ -20,6 +20,17 @@ else(RDK_USE_QT6)
   endif()
 endif(RDK_USE_QT6)
 
+# Workaround for Qt 6.5.8 AGL framework issue on modern macOS.
+# AGL (Apple Graphics Layer) was removed from macOS 14+ SDKs, but Qt 6.5.8
+# still injects it into WrapOpenGL::WrapOpenGL, causing link failures.
+if(APPLE AND TARGET WrapOpenGL::WrapOpenGL)
+    get_target_property(_qt_opengl_libs WrapOpenGL::WrapOpenGL INTERFACE_LINK_LIBRARIES)
+    if(_qt_opengl_libs)
+        list(FILTER _qt_opengl_libs EXCLUDE REGEX "AGL")
+        set_target_properties(WrapOpenGL::WrapOpenGL PROPERTIES INTERFACE_LINK_LIBRARIES "${_qt_opengl_libs}")
+    endif()
+endif()
+
 message(STATUS "Building with Qt version ${RDK_QT_VERSION_STRING}")
 
 target_link_libraries(MolDraw2DQt PUBLIC QtDependencies)
