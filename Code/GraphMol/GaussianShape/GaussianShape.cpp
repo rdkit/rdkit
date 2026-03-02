@@ -232,6 +232,7 @@ unsigned int calculateQrat(const std::array<double, 3> &eigenValues) {
   const static double qrat_threshold = 0.7225;  // 0.85*0.85;
   unsigned int qrat = 1000;
   unsigned int u_rqyx, u_rqzy;
+
   if (double_ev_oe[1] > 0) {
     if (qrat_threshold < (double_ev_oe[1] / double_ev_oe[0])) {
       u_rqyx = 1;
@@ -251,17 +252,15 @@ unsigned int calculateQrat(const std::array<double, 3> &eigenValues) {
 
 StartMode decideStartModeFromEigenValues(ShapeInput &refShape,
                                          ShapeInput &fitShape) {
-  auto rqrat = calculateQrat(refShape.getEigenValues());
-  auto fqrat = calculateQrat(fitShape.getEigenValues());
-  // std::cout << "rats : " << rqrat << " and " << fqrat << std::endl;
-  if (rqrat > 0 || fqrat > 0) {
-    // std::cout << "one of rats above zero so " << StartMode::ROTATE_45
-    //           << std::endl;
-    return StartMode::ROTATE_45;
+  // The PubChem code uses the moments of inertia for this, rather than the
+  // canonical transformation.
+  auto rqratwf = calculateQrat(refShape.getMomentsOfInertia());
+  auto fqratwf = calculateQrat(fitShape.getMomentsOfInertia());
+  StartMode startModeWF{StartMode::ROTATE_180_WIGGLE};
+  if (rqratwf > 0 || fqratwf > 0) {
+    startModeWF = StartMode::ROTATE_45;
   }
-  // std::cout << "neither rat above zero so " << StartMode::ROTATE_180_WIGGLE
-  //           << std::endl;
-  return StartMode::ROTATE_180_WIGGLE;
+  return startModeWF;
 }
 
 std::array<double, 3> alignShape(ShapeInput &refShape, ShapeInput &fitShape,
@@ -289,8 +288,6 @@ std::array<double, 3> alignShape(ShapeInput &refShape, ShapeInput &fitShape,
     default:
       break;
   }
-  // std::cout << "startMode : " << startMode << " : " << finalRotIndex
-  //           << std::endl;
 
   unsigned int finalTransIndex = 1;
   if (startMode == StartMode::ROTATE_0_FRAGMENT ||

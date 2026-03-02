@@ -678,74 +678,85 @@ TEST_CASE("Shape subset") {
 
 TEST_CASE("Normalization and not normalization") {
   // A weird case where pre-normalizing the structure and running with
-  // normalization=false is significantly slower than using default
+  // normalization=false was significantly slower than using default
   // parameters.
-  // These are 2 LOBSTER structures: PEP_B_503 and 4NG_A_501.
-  // LOBSTER is published https://doi.org/10.1007/s10822-024-00581-1 from
-  // the Rarey and BioSolveIT group.
-  auto lob1 =
-      "C=C(OP(=O)(O)O)C(=O)O |(75.9845,113.253,-91.6085;75.9606,112.363,-92.6299;74.7567,111.999,-93.2095;73.9986,110.666,-92.7967;74.9478,109.542,-93.1431;73.7944,110.739,-91.317;72.853,110.735,-93.7762;77.2207,111.895,-93.3189;78.3152,112.331,-92.8486;77.1511,111.109,-94.3199)|"_smiles;
-  REQUIRE(lob1);
-  auto lob2 =
-      "O=C1[C@@H](P(=O)(O)O)C[C@H](O)N1O |(77.078,110.972,-94.395;76.496,111.788,-93.681;75.112,111.952,-93.676;74.344,110.621,-92.694;72.879,110.771,-92.548;75.132,110.621,-91.28;74.777,109.244,-93.426;74.885,113.284,-92.989;76.126,113.446,-92.14;76.55,114.811,-92.171;77.124,112.603,-92.834;78.529,112.655,-92.631),wD:8.8,wU:2.2|"_smiles;
-  REQUIRE(lob2);
+  // These are LOBSTER structures 437_A_355, YIW_A_1353, LSA_A_503, SU0_A_263,
+  // VHC_A_1, 40Z_A_301, 0J8_A_1401, 5QQ_A_1401 respectively.
+  // LOBSTER is published
+  // https://doi.org/10.1007/s10822-024-00581-1 from the Rarey and BioSolveIT
+  // group.
+  std::vector<std::shared_ptr<RWMol>> lobsters = {"CC(C)(C)c1cc(NC(=O)Nc2cccc3ccccc23)n(-c2ccc(CO)cc2)n1 |(4.1858,1.2187,12.6749;3.4917,2.128,11.6409;4.5532,3.0576,11.0244;2.9098,1.2685,10.5255;2.3016,2.8612,12.2277;1.3306,2.2548,13.0356;0.4334,3.2937,13.302;-0.7316,3.3518,14.0275;-0.978,2.5581,15.0932;-0.147,1.7378,15.4901;-2.1645,2.6924,15.6938;-2.626,2.0319,16.8298;-1.8457,2.1016,18.0083;-2.2654,1.5179,19.2117;-3.4858,0.8316,19.2546;-4.2646,0.7339,18.1056;-5.4724,0.0393,18.1895;-6.2813,-0.103,17.0695;-5.8756,0.4693,15.8666;-4.6776,1.1996,15.7839;-3.8502,1.3304,16.8984;0.8824,4.3943,12.6425;0.3828,5.6491,12.5902;-0.1458,6.3636,13.6677;-0.6231,7.6713,13.5508;-0.5802,8.3258,12.3036;-1.1083,9.738,12.1288;-0.2929,10.4745,11.2057;-0.0699,7.6584,11.21;0.4028,6.3542,11.3691;2.0606,4.1572,11.9546)|"_smiles,
+                                                  "CC(C)c1nnc2ccc(Sc3ccccc3CNC(=O)Nc3cc(C(C)(C)C)nn3-c3ccccc3)cn12 |(-2.677,-1.147,25.057;-1.383,-1.713,24.501;-0.937,-2.645,25.64;-1.654,-2.496,23.218;-1.533,-3.804,23.035;-1.814,-4.126,21.82;-2.125,-3.054,21.15;-2.484,-2.842,19.8;-2.737,-1.521,19.397;-2.633,-0.45,20.292;-2.934,1.2,19.817;-4.086,0.989,18.473;-5.306,0.233,18.595;-6.145,0.057,17.523;-5.802,0.63,16.3;-4.651,1.427,16.155;-3.805,1.585,17.237;-2.532,2.33,17.092;-2.317,3.124,15.849;-1.208,2.896,15.139;-0.293,2.051,15.461;-0.934,3.704,14.164;0.194,3.633,13.319;1.093,2.626,13.06;2.064,3.138,12.153;3.254,2.438,11.547;2.765,1.497,10.446;4.297,3.407,10.979;3.923,1.592,12.556;1.755,4.357,11.974;0.557,4.674,12.592;0.026,5.998,12.604;-0.011,6.769,11.405;-0.52,8.07,11.439;-0.946,8.61,12.635;-0.914,7.879,13.819;-0.396,6.572,13.782;-2.292,-0.677,21.581;-2.025,-1.986,22.016)|"_smiles,
+                                                  "O=S1(=O)N=C(O)c2ccccc21 |(-5.7089,1.0252,18.4004;-6.3943,1.0779,17.1227;-7.8251,0.8757,17.0645;-5.6185,0.1418,15.9961;-4.8784,0.7874,15.1629;-4.3563,0.192,14.2273;-5.1972,2.2654,15.1438;-4.6774,3.2806,14.3416;-5.0543,4.5982,14.6171;-5.8378,4.8973,15.7426;-6.3084,3.8774,16.5767;-5.9587,2.5637,16.2652)|"_smiles,
+                                                  "COc1ccc2c(CC(=O)Nc3ccc(S(N)(=O)=O)cc3)cc(=O)oc2c1 |(-2.8164,14.7062,11.3592;-3.6624,13.537,11.2643;-3.2822,12.2442,11.6717;-3.8543,11.0312,10.9854;-3.454,9.7632,11.3397;-2.4737,9.5893,12.4478;-2.0245,8.2354,12.8485;-2.4284,7.0271,12.0534;-3.4577,6.2276,12.8381;-4.6459,6.5341,12.9744;-2.9341,5.1799,13.652;-3.8043,4.2751,14.3593;-3.0353,3.1465,14.8909;-3.6696,2.1888,15.6247;-5.1279,2.3197,15.867;-5.8526,1.0165,16.8148;-5.1597,-0.2684,16.1766;-7.2644,1.0484,16.6895;-5.3596,1.2234,18.1529;-5.863,3.3573,15.3579;-5.1676,4.4008,14.5479;-1.2733,8.1678,14.0258;-0.8262,9.3446,14.6451;-0.1397,9.3025,15.6623;-1.0563,10.6342,14.1829;-1.9446,10.7231,13.0793;-2.3948,12.0761,12.7036)|"_smiles,
+                                                  "Cc1cc(C)c2cc1C(=O)NCCCOc1cccc(c1)Sc1cc-2nc(N)n1 |(73.8435,34.0723,26.5156;72.3815,34.1628,26.0388;71.6766,32.9652,25.9327;70.3451,32.9485,25.4823;69.6347,31.5936,25.3834;69.7284,34.1492,25.0935;70.4497,35.3542,25.1896;71.7747,35.3826,25.6823;72.4585,36.7442,25.8391;73.1172,37.0066,26.8611;72.1633,37.6292,24.8945;72.7135,39.0047,24.8716;71.7025,40.047,24.3677;71.3796,39.8568,22.8758;70.4153,38.7939,22.9499;69.8006,38.3095,21.8404;70.2406,38.4827,20.5148;69.5441,37.8479,19.489;68.407,37.0853,19.7393;68.0155,36.8722,21.0628;68.6923,37.5061,22.0951;66.5592,35.8914,21.365;66.9463,35.055,22.8617;68.2573,34.8374,23.3077;68.4281,34.247,24.558;67.3421,33.831,25.243;66.0874,33.9792,24.7404;65.0509,33.4765,25.428;65.8935,34.6016,23.5436)|"_smiles,
+                                                  "Cc1c2c(n3c1CCN(Cc1ccco1)c1cc(C(N)=O)c(Cl)cc1-3)CC(C)(C)CC2=O |(74.8244,36.0896,26.0638;73.6879,35.186,25.6743;73.8428,33.8098,25.2429;72.5848,33.3216,24.9555;71.6743,34.332,25.2034;72.3429,35.4561,25.6334;71.7112,36.7663,26.0021;70.9895,37.4573,24.8514;70.1361,36.585,24.0367;69.7698,37.0101,22.6942;70.4319,38.0048,21.8175;70.8144,39.2778,21.9818;71.3289,39.7044,20.7598;71.23,38.6778,19.9306;70.6882,37.6078,20.5486;69.5068,35.3697,24.5106;68.1241,35.239,24.3599;67.4459,34.0963,24.7908;65.9689,34.0392,24.5456;65.1976,33.5111,25.4835;65.5111,34.4884,23.4842;68.1905,33.0839,25.4012;67.4671,31.5959,25.9018;69.5536,33.1987,25.5786;70.2398,34.3166,25.103;72.2711,31.9512,24.4312;73.4524,31.2236,23.7805;73.1395,29.7332,23.6933;73.6857,31.7544,22.3618;74.7055,31.4432,24.6434;74.982,32.872,25.0594;76.1434,33.2319,25.2012)|"_smiles,
+                                                  "O=[N+]([O-])c1cccc(CNc2nc(C(F)(F)F)nc3ncc(-c4cnn(C5CCNCC5)c4)cc23)c1 |(-1.438,-13.226,20.761;-2.668,-13.702,20.695;-3.225,-14.278,21.715;-3.449,-13.606,19.5;-4.865,-13.703,19.611;-5.66,-13.615,18.465;-5.057,-13.44,17.21;-3.642,-13.329,17.113;-2.985,-13.176,15.754;-3.208,-14.453,15.102;-2.183,-15.47,15.231;-1.174,-15.247,16.105;-0.207,-16.166,16.24;0.913,-15.872,17.233;1.607,-16.968,17.501;1.653,-14.932,16.679;0.431,-15.434,18.382;-0.155,-17.307,15.532;-1.134,-17.587,14.626;-1.051,-18.759,13.937;-2.004,-19.081,13.034;-3.067,-18.213,12.807;-4.134,-18.597,11.829;-4.958,-17.727,11.105;-5.807,-18.503,10.373;-5.518,-19.836,10.648;-6.22,-21.008,10.059;-7.613,-21.132,10.635;-8.385,-22.302,9.993;-8.344,-22.271,8.528;-7.465,-21.299,7.857;-6.163,-20.922,8.548;-4.513,-19.902,11.543;-3.18,-16.987,13.52;-2.183,-16.667,14.458;-2.84,-13.422,18.253)|"_smiles,
+                                                  "Fc1ccc(-c2cnc3nnc(C(F)(F)c4ccc5ncccc5c4)n3n2)cc1 |(-8.9341,-13.5345,15.2941;-7.8624,-13.6169,16.1019;-8.0323,-13.604,17.4747;-6.927,-13.6949,18.3088;-5.6563,-13.7867,17.7687;-4.5363,-13.8655,18.5962;-4.6798,-14.0273,19.9861;-3.5769,-14.1,20.7695;-2.3321,-14.0007,20.1927;-1.0691,-14.049,20.7489;-0.1759,-13.9183,19.7353;-0.8597,-13.8052,18.581;-0.2877,-13.6262,17.1957;1.0077,-13.3321,17.3153;-0.932,-12.6293,16.5758;-0.3953,-14.89,16.3793;0.3679,-16.0044,16.7321;0.2944,-17.1762,15.9833;-0.5658,-17.2197,14.8472;-0.6484,-18.3768,14.1035;-1.4592,-18.4618,13.0237;-2.2424,-17.3707,12.6345;-2.1971,-16.184,13.3658;-1.3263,-16.1253,14.5037;-1.2424,-14.9308,15.2731;-2.1994,-13.8502,18.8681;-3.3091,-13.7741,18.0449;-5.4848,-13.7974,16.3944;-6.5897,-13.7169,15.5608)|"_smiles};
   std::chrono::steady_clock::time_point begin, end;
+  for (unsigned int i = 0; i < 8; i += 2) {
+    unsigned int l1 = i;
+    unsigned int l2 = i + 1;
 #if 1
-  auto norm_lob1 = std::make_unique<ROMol>(*lob1);
-  auto norm_lob2 = std::make_unique<ROMol>(*lob2);
-  begin = std::chrono::steady_clock::now();
-  auto norm_scores = GaussianShape::AlignMolecule(*norm_lob1, *norm_lob2);
-  end = std::chrono::steady_clock::now();
-  std::cout << "\ndefault scores : " << norm_scores[0] << ", " << norm_scores[1]
-            << ", " << norm_scores[2] << std::endl;
-  std::cout << "Time default = "
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << "[microseconds]" << std::endl;
+    auto norm_lob1 = std::make_unique<ROMol>(*lobsters[l1]);
+    auto norm_lob2 = std::make_unique<ROMol>(*lobsters[l2]);
+    begin = std::chrono::steady_clock::now();
+    auto norm_scores = GaussianShape::AlignMolecule(*norm_lob1, *norm_lob2);
+    end = std::chrono::steady_clock::now();
+    std::cout << "\ndefault scores : " << norm_scores[0] << ", "
+              << norm_scores[1] << ", " << norm_scores[2] << std::endl;
+    std::cout << "Time default = "
+              << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                       begin)
+                     .count()
+              << "[microseconds]" << std::endl;
+    std::cout << "GS ovly : " << MolToCXSmiles(*norm_lob2) << std::endl;
 #endif
 #if 1
-  auto prenorm_lob1 = std::make_unique<ROMol>(*lob1);
-  MolTransforms::canonicalizeConformer(prenorm_lob1->getConformer());
-  auto prenorm_lob2 = std::make_unique<ROMol>(*lob2);
-  MolTransforms::canonicalizeConformer(prenorm_lob2->getConformer());
-  GaussianShape::ShapeOverlayOptions ovlyOpts;
-  ovlyOpts.normalize = false;
-  GaussianShape::ShapeInputOptions shapeOpts;
-  begin = std::chrono::steady_clock::now();
-  auto nonorm_scores = GaussianShape::AlignMolecule(
-      *prenorm_lob1, *prenorm_lob2, shapeOpts, shapeOpts, nullptr, ovlyOpts);
-  end = std::chrono::steady_clock::now();
-  std::cout << "\nnonorm scores : " << nonorm_scores[0] << ", "
-            << nonorm_scores[1] << ", " << nonorm_scores[2] << std::endl;
-  std::cout << "Time nonorm = "
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << "[microseconds]" << std::endl;
+    auto prenorm_lob1 = std::make_unique<ROMol>(*lobsters[l1]);
+    MolTransforms::canonicalizeConformer(prenorm_lob1->getConformer());
+    auto prenorm_lob2 = std::make_unique<ROMol>(*lobsters[l2]);
+    MolTransforms::canonicalizeConformer(prenorm_lob2->getConformer());
+    GaussianShape::ShapeOverlayOptions ovlyOpts;
+    ovlyOpts.normalize = false;
+    GaussianShape::ShapeInputOptions shapeOpts;
+    begin = std::chrono::steady_clock::now();
+    auto nonorm_scores = GaussianShape::AlignMolecule(
+        *prenorm_lob1, *prenorm_lob2, shapeOpts, shapeOpts, nullptr, ovlyOpts);
+    end = std::chrono::steady_clock::now();
+    std::cout << "\nnonorm scores : " << nonorm_scores[0] << ", "
+              << nonorm_scores[1] << ", " << nonorm_scores[2] << std::endl;
+    std::cout << "Time nonorm = "
+              << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                       begin)
+                     .count()
+              << "[microseconds]" << std::endl;
 #endif
 #if 1
-  CHECK_THAT(nonorm_scores[0],
-             Catch::Matchers::WithinAbs(norm_scores[0], 0.001));
-  CHECK_THAT(nonorm_scores[1],
-             Catch::Matchers::WithinAbs(norm_scores[1], 0.001));
-  CHECK_THAT(nonorm_scores[2],
-             Catch::Matchers::WithinAbs(norm_scores[2], 0.001));
+    CHECK_THAT(nonorm_scores[0],
+               Catch::Matchers::WithinAbs(norm_scores[0], 0.001));
+    CHECK_THAT(nonorm_scores[1],
+               Catch::Matchers::WithinAbs(norm_scores[1], 0.001));
+    CHECK_THAT(nonorm_scores[2],
+               Catch::Matchers::WithinAbs(norm_scores[2], 0.001));
 #endif
 #if 1
-  auto pc_lob1 = std::make_unique<ROMol>(*lob1);
-  auto pc_lob2 = std::make_unique<ROMol>(*lob2);
-  std::vector<float> matrix(12);
-  begin = std::chrono::steady_clock::now();
-  auto pc_scores = AlignMolecule(*pc_lob1, *pc_lob2, matrix);
-  end = std::chrono::steady_clock::now();
-  std::cout << "\npc_scores : " << 0.5 * (pc_scores.first + pc_scores.second)
-            << ", " << pc_scores.first << ", " << pc_scores.second << std::endl;
-  std::cout << "Time pubchem = "
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << "[microseconds]" << std::endl;
+    auto pc_lob1 = std::make_unique<ROMol>(*lobsters[l1]);
+    auto pc_lob2 = std::make_unique<ROMol>(*lobsters[l2]);
+    std::vector<float> matrix(12);
+    begin = std::chrono::steady_clock::now();
+    auto pc_scores = AlignMolecule(*pc_lob1, *pc_lob2, matrix);
+    end = std::chrono::steady_clock::now();
+    std::cout << "\npc_scores : " << 0.5 * (pc_scores.first + pc_scores.second)
+              << ", " << pc_scores.first << ", " << pc_scores.second
+              << std::endl;
+    std::cout << "Time pubchem = "
+              << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                       begin)
+                     .count()
+              << "[microseconds]" << std::endl;
+    std::cout << "PC ovly : " << MolToCXSmiles(*pc_lob2) << std::endl;
+  }
 #endif
 }
 

@@ -30,6 +30,10 @@
 #include <boost/flyweight/no_tracking.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#ifdef RDK_HAS_EIGEN3
+#include <Eigen/Dense>
+#endif
+
 std::mutex mtx;
 
 namespace RDKit {
@@ -207,6 +211,26 @@ const std::array<size_t, 6> &ShapeInput::getExtremes() {
     calcNormalization();
   }
   return d_extremePoints;
+}
+
+std::array<double, 3> ShapeInput::getMomentsOfInertia(
+    bool includeColors) const {
+  auto tmpMol = shapeToMol(includeColors);
+  std::array<double, 3> eVals;
+#if RDK_HAS_EIGEN3
+  Eigen::Matrix3d axes;
+  Eigen::Vector3d moments;
+  MolTransforms::computePrincipalAxesAndMoments(tmpMol->getConformer(), axes,
+                                                moments);
+  eVals[0] = moments[0];
+  eVals[1] = moments[1];
+  eVals[2] = moments[2];
+#else
+  std::unique_ptr<RDGeom::Transform3D> canonXform(
+      MolTransforms::computeCanonicalTransform(tmpMol->getConformer(), nullptr,
+                                               false, true, eVals.data()));
+#endif
+  return eVals;
 }
 
 void ShapeInput::normalizeCoords() {
@@ -486,7 +510,6 @@ void ShapeInput::calcNormalization() {
   std::unique_ptr<RDGeom::Transform3D> canonXform(
       MolTransforms::computeCanonicalTransform(
           tmpMol->getConformer(), nullptr, false, true, d_eigenValues.data()));
-
   d_canonRot =
       std::array<double, 9>{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
   for (unsigned int i = 0, k = 0; i < 3; ++i) {

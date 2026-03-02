@@ -249,6 +249,18 @@ bool computePrincipalAxesAndMomentsFromGyrationMatrix(
   auto origin = computeCentroid(conf, ignoreHs, weights);
   bool res = getEigenValEigenVectFromCovMat(conf, axes, moments, origin,
                                             ignoreHs, true, weights);
+
+  // Make sure it's a right-handed axis system (see below).
+  double test =
+      axes(0, 2) * (axes(1, 0) * axes(2, 1) - axes(2, 0) * axes(1, 1)) +
+      axes(1, 2) * (axes(2, 0) * axes(0, 1) - axes(2, 1) * axes(0, 0)) +
+      axes(2, 2) * (axes(0, 0) * axes(1, 1) - axes(1, 0) * axes(0, 1));
+  if (test < 0.0) {
+    for (auto i = 0; i < 3; ++i) {
+      axes(2, i) *= -1.0;
+    }
+  }
+
   if (res && !weights) {
     conf.getOwningMol().setProp(axesPropName, axes, true);
     conf.getOwningMol().setProp(momentsPropName, moments, true);
@@ -272,8 +284,8 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
   auto *trans = new RDGeom::Transform3D;
   trans->setToIdentity();
 
-  // if we have a single atom system we don't need to do anyhting setting
-  // translation is sufficient
+  // If we have a single atom system we don't need to do anything setting
+  // translation is sufficient.
   if (nAtms > 1) {
     Eigen::Matrix3d eigVecs;
     Eigen::Vector3d eigVals;

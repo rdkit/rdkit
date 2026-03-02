@@ -145,7 +145,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // with the 4th value per atom being the alpha paramter.
   const std::vector<double> &getCoords() const { return d_coords; }
   //! Fetch the coordinates of the atoms and optionally features.
-  std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors=false) const;
+  std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors = false) const;
   bool getNormalized() const { return d_normalized; }
   const std::vector<int> &getTypes() const { return d_types; }
   unsigned int getNumAtoms() const { return d_numAtoms; }
@@ -161,6 +161,9 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   const std::array<double, 3> &getCanonicalTranslation();
   const std::array<double, 3> &getEigenValues();
   const std::array<size_t, 6> &getExtremes();
+  // Return the principal moments of inertia, if Eigen3 is available, and the
+  // eigenvalues of the canonical transformation if not.
+  std::array<double, 3> getMomentsOfInertia(bool includeColors = false) const;
 
   // Align the principal axes to the cartesian axes and centre on the origin.
   // Doesn't require that the shape was created from a molecule.  Creates
@@ -213,7 +216,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // as the number of coordinates, padded with 0
   // for the atoms.
   unsigned int d_numAtoms;         // The number of atoms
-  unsigned  d_numFeats;            // The number of features
+  unsigned d_numFeats;             // The number of features
   double d_selfOverlapVol{0.0};    // Shape volume
   double d_selfOverlapColor{0.0};  // Color volume
   // These are the points at the extremes of the x, y and z axes.
