@@ -181,6 +181,30 @@ class RDKIT_RDGENERAL_EXPORT CaptureLog : public boost::noncopyable {
   bool d_logWasEnabled = true;
 };
 
+//! Convenience subclass that captures messages from \c rdErrorLog.
+class RDKIT_RDGENERAL_EXPORT CaptureErrorLog : public CaptureLog {
+ public:
+  CaptureErrorLog();
+};
+
+//! Convenience subclass that captures messages from \c rdWarningLog.
+class RDKIT_RDGENERAL_EXPORT CaptureWarningLog : public CaptureLog {
+ public:
+  CaptureWarningLog();
+};
+
+//! Convenience subclass that captures messages from \c rdInfoLog.
+class RDKIT_RDGENERAL_EXPORT CaptureInfoLog : public CaptureLog {
+ public:
+  CaptureInfoLog();
+};
+
+//! Convenience subclass that captures messages from \c rdDebugLog.
+class RDKIT_RDGENERAL_EXPORT CaptureDebugLog : public CaptureLog {
+ public:
+  CaptureDebugLog();
+};
+
 inline void deprecationWarning(const std::string &message) {
   BOOST_LOG(rdWarningLog) << "DEPRECATION WARNING: " << message << std::endl;
 }
