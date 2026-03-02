@@ -20,9 +20,9 @@ else(RDK_USE_QT6)
   endif()
 endif(RDK_USE_QT6)
 
-# Workaround for Qt 6.5.8 AGL framework issue on modern macOS.
-# AGL (Apple Graphics Layer) was removed from macOS 14+ SDKs, but Qt 6.5.8
-# still injects it into WrapOpenGL::WrapOpenGL, causing link failures.
+# Workaround for an AGL framework issue on modern macOS.
+# AGL (Apple Graphics Layer) was removed from macOS 14+ SDKs, but certain Qt
+# versions still inject it into WrapOpenGL::WrapOpenGL, causing link failures.
 if(APPLE AND TARGET WrapOpenGL::WrapOpenGL)
     get_target_property(_qt_opengl_libs WrapOpenGL::WrapOpenGL INTERFACE_LINK_LIBRARIES)
     if(_qt_opengl_libs)
