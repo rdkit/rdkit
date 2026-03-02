@@ -18,6 +18,7 @@
 #include <boost/iostreams/stream.hpp>
 #include "BoostEndInclude.h"
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <cstdint>
 
@@ -146,6 +147,38 @@ class RDKIT_RDGENERAL_EXPORT LogStateSetter : public boost::noncopyable {
 
  private:
   std::uint64_t d_origState = 0;
+};
+
+//! RAII class to capture messages from an RDKit logger.
+//!
+//! The specified logger is enabled when this object is constructed and its
+//! original enabled state is restored when this object is destroyed.
+//! The stream destination is also restored on destruction.
+//! Nesting is supported: inner captures shadow outer ones.
+//!
+//! \b Example:
+//! \code
+//!   RDLog::CaptureLog capture;  // captures rdErrorLog
+//!   functionThatMayFail();
+//!   std::string errs = capture.messages();
+//! \endcode
+class RDKIT_RDGENERAL_EXPORT CaptureLog : public boost::noncopyable {
+ public:
+  //! Captures messages from \c rdErrorLog, enabling it if necessary.
+  CaptureLog();
+  //! Captures messages from the specified logger, enabling it if necessary.
+  explicit CaptureLog(RDLogger logger);
+  ~CaptureLog();
+
+  //! Returns all messages captured since construction.
+  std::string messages() const;
+
+ private:
+  RDLogger d_logger;
+  std::stringstream d_messages;
+  std::ostream *d_savedDest;
+  boost::logging::RDTeeStream *d_savedTeestream;
+  bool d_logWasEnabled = true;
 };
 
 inline void deprecationWarning(const std::string &message) {

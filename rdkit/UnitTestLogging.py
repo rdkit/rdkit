@@ -407,5 +407,55 @@ class TestWrapLogs(unittest.TestCase):
     self.assertEqual(captured, {'sys.stderr': expect, 'std::cerr': expect})
 
 
+class TestCaptureLog(unittest.TestCase):
+
+  @classmethod
+  def setUpClass(cls):
+    rdBase.LogToCppStreams()
+    rdBase.EnableLog('rdApp.error')
+
+  def testBasicCapture(self):
+    with rdBase.CaptureLog() as capture:
+      rdBase.LogErrorMsg("captured error")
+    self.assertIn("captured error", capture.messages)
+
+  def testEmptyWhenNothingLogged(self):
+    with rdBase.CaptureLog() as capture:
+      pass
+    self.assertEqual(capture.messages, "")
+
+  def testMessagesAccessibleAfterContextExit(self):
+    with rdBase.CaptureLog() as capture:
+      rdBase.LogErrorMsg("persistent")
+    # messages must still be readable after the with block ends
+    self.assertIn("persistent", capture.messages)
+
+  def testLoggingRestoredAfterContextExit(self):
+    with rdBase.CaptureLog() as capture:
+      rdBase.LogErrorMsg("inside")
+    # a second capture should start fresh and not contain "inside"
+    with rdBase.CaptureLog() as capture2:
+      rdBase.LogErrorMsg("outside")
+    self.assertNotIn("inside", capture2.messages)
+    self.assertIn("outside", capture2.messages)
+
+  def testNestedCaptures(self):
+    with rdBase.CaptureLog() as outer:
+      rdBase.LogErrorMsg("outer message")
+      with rdBase.CaptureLog() as inner:
+        rdBase.LogErrorMsg("inner message")
+      self.assertIn("inner message", inner.messages)
+      self.assertNotIn("outer message", inner.messages)
+    self.assertIn("outer message", outer.messages)
+    self.assertNotIn("inner message", outer.messages)
+
+  def testMessagesReadableInsideContext(self):
+    with rdBase.CaptureLog() as capture:
+      rdBase.LogErrorMsg("first")
+      self.assertIn("first", capture.messages)
+      rdBase.LogErrorMsg("second")
+      self.assertIn("second", capture.messages)
+
+
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

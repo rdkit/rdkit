@@ -149,6 +149,40 @@ void InitLogs() {
   rdErrorLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
 }
 
+CaptureLog::CaptureLog()
+    : d_savedDest(&d_messages), d_savedTeestream(nullptr) {
+  if (!rdErrorLog) {
+    InitLogs();
+  }
+  d_logger = rdErrorLog;
+  d_logWasEnabled = d_logger->df_enabled;
+  d_logger->df_enabled = true;
+  std::swap(d_logger->dp_dest, d_savedDest);
+  std::swap(d_logger->teestream, d_savedTeestream);
+}
+
+CaptureLog::CaptureLog(RDLogger logger)
+    : d_logger(std::move(logger)),
+      d_savedDest(&d_messages),
+      d_savedTeestream(nullptr) {
+  if (!d_logger) {
+    InitLogs();
+    d_logger = rdErrorLog;
+  }
+  d_logWasEnabled = d_logger->df_enabled;
+  d_logger->df_enabled = true;
+  std::swap(d_logger->dp_dest, d_savedDest);
+  std::swap(d_logger->teestream, d_savedTeestream);
+}
+
+CaptureLog::~CaptureLog() {
+  std::swap(d_logger->dp_dest, d_savedDest);
+  std::swap(d_logger->teestream, d_savedTeestream);
+  d_logger->df_enabled = d_logWasEnabled;
+}
+
+std::string CaptureLog::messages() const { return d_messages.str(); }
+
 std::ostream &toStream(std::ostream &logstrm) {
   char buffer[16];
   time_t t = time(nullptr);

@@ -113,6 +113,69 @@ TEST_CASE("GitHub Issue #5172", "[bug][logging]") {
   rdWarningLog->ClearTee();
 }
 
+TEST_CASE("CaptureLog") {
+  RDLog::InitLogs();
+
+  SECTION("basic capture") {
+    RDLog::CaptureLog capture;
+    BOOST_LOG(rdErrorLog) << "test error" << std::endl;
+    CHECK(capture.messages().find("test error") != std::string::npos);
+  }
+
+  SECTION("empty when nothing logged") {
+    RDLog::CaptureLog capture;
+    CHECK(capture.messages().empty());
+  }
+
+  SECTION("enables a disabled log and restores its state") {
+    rdErrorLog->df_enabled = false;
+    {
+      RDLog::CaptureLog capture;
+      CHECK(rdErrorLog->df_enabled);
+      BOOST_LOG(rdErrorLog) << "captured despite disabled" << std::endl;
+      CHECK(capture.messages().find("captured despite disabled") !=
+            std::string::npos);
+    }
+    // enabled state restored to false
+    CHECK(!rdErrorLog->df_enabled);
+    rdErrorLog->df_enabled = true;
+  }
+
+  SECTION("restores original stream destination") {
+    {
+      RDLog::CaptureLog capture;
+      BOOST_LOG(rdErrorLog) << "captured" << std::endl;
+    }
+    // After capture, logs go to the original destination again
+    std::stringstream ss;
+    rdErrorLog->SetTee(ss);
+    BOOST_LOG(rdErrorLog) << "after restore" << std::endl;
+    rdErrorLog->ClearTee();
+    CHECK(ss.str().find("after restore") != std::string::npos);
+  }
+
+  SECTION("explicit logger") {
+    RDLog::CaptureLog capture(rdWarningLog);
+    BOOST_LOG(rdWarningLog) << "test warning" << std::endl;
+    BOOST_LOG(rdErrorLog) << "test error" << std::endl;
+    CHECK(capture.messages().find("test warning") != std::string::npos);
+    CHECK(capture.messages().find("test error") == std::string::npos);
+  }
+
+  SECTION("nested captures") {
+    RDLog::CaptureLog outer;
+    BOOST_LOG(rdErrorLog) << "outer message" << std::endl;
+    {
+      RDLog::CaptureLog inner;
+      BOOST_LOG(rdErrorLog) << "inner message" << std::endl;
+      CHECK(inner.messages().find("inner message") != std::string::npos);
+      CHECK(inner.messages().find("outer message") == std::string::npos);
+    }
+    CHECK(outer.messages().find("outer message") != std::string::npos);
+    CHECK(outer.messages().find("inner message") == std::string::npos);
+  }
+}
+
 TEST_CASE("Tee to file") {
   const std::string filename = "error_log.txt";
   rdErrorLog->SetTee(filename);
