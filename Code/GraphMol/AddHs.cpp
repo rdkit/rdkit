@@ -1061,6 +1061,34 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   //  This can screw up derived properties (such as ring members), so
   //  do some checks:
   //
+
+  // Resolve V3000 _MolFileHCount as structural hydrogen counts on aromatic
+  // atoms.  This must happen before sanitize (kekulization) so that the
+  // kekulizer can tell e.g. pyrrole N from pyridine N.  We use
+  // isAromaticAtom() which checks bond aromatic flags — the same helper
+  // used in molRemoveH above — because the V3000 parser only sets flags
+  // on bonds, not atoms.
+  for (auto atom : mol.atoms()) {
+    int hcount;
+    if (atom->getPropIfPresent("_MolFileHCount", hcount)) {
+      if (isAromaticAtom(*atom)) {
+        unsigned int explicitHNbrs = 0;
+        for (const auto nbr : mol.atomNeighbors(atom)) {
+          if (nbr->getAtomicNum() == 1) {
+            ++explicitHNbrs;
+          }
+        }
+        unsigned int numH =
+            hcount > static_cast<int>(explicitHNbrs)
+                ? static_cast<unsigned int>(hcount) - explicitHNbrs
+                : 0;
+        atom->setNumExplicitHs(numH);
+        atom->setNoImplicit(true);
+      }
+      atom->clearProp("_MolFileHCount");
+    }
+  }
+
   if (!atomsToRemove.empty() && ps.removeNonimplicit && sanitize) {
     sanitizeMol(mol);
   }
