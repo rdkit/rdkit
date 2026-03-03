@@ -158,14 +158,14 @@ class RDKIT_RDGENERAL_EXPORT LogStateSetter : public boost::noncopyable {
 //!
 //! \b Example:
 //! \code
-//!   RDLog::CaptureLog capture;
+//!   RDLog::CaptureErrorLog capture;
 //!   functionThatMayFail();
 //!   std::string errs = capture.messages();
 //! \endcode
-class RDKIT_RDGENERAL_EXPORT CaptureLog : public boost::noncopyable {
+class RDKIT_RDGENERAL_EXPORT CaptureErrorLog : public boost::noncopyable {
  public:
-  CaptureLog();
-  ~CaptureLog();
+  CaptureErrorLog();
+  ~CaptureErrorLog();
 
   //! Returns all messages captured since construction.
   std::string messages() const;

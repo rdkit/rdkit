@@ -407,7 +407,7 @@ class TestWrapLogs(unittest.TestCase):
     self.assertEqual(captured, {'sys.stderr': expect, 'std::cerr': expect})
 
 
-class TestCaptureLog(unittest.TestCase):
+class TestCaptureErrorLog(unittest.TestCase):
 
   @classmethod
   def setUpClass(cls):
@@ -415,39 +415,39 @@ class TestCaptureLog(unittest.TestCase):
     rdBase.EnableLog('rdApp.error')
 
   def testBasicCapture(self):
-    with rdBase.CaptureLog() as capture:
+    with rdBase.CaptureErrorLog() as capture:
       rdBase.LogErrorMsg("captured error")
     self.assertIn("captured error", capture.messages)
 
   def testOnlyCapturesErrorLog(self):
-    with rdBase.CaptureLog() as capture:
+    with rdBase.CaptureErrorLog() as capture:
       rdBase.LogErrorMsg("an error")
       rdBase.LogWarningMsg("a warning")
     self.assertIn("an error", capture.messages)
     self.assertNotIn("a warning", capture.messages)
 
   def testEmptyWhenNothingLogged(self):
-    with rdBase.CaptureLog() as capture:
+    with rdBase.CaptureErrorLog() as capture:
       pass
     self.assertEqual(capture.messages, "")
 
   def testMessagesAccessibleAfterContextExit(self):
-    with rdBase.CaptureLog() as capture:
+    with rdBase.CaptureErrorLog() as capture:
       rdBase.LogErrorMsg("persistent error")
     self.assertIn("persistent error", capture.messages)
 
   def testLoggingRestoredAfterContextExit(self):
-    with rdBase.CaptureLog() as capture:
+    with rdBase.CaptureErrorLog() as capture:
       rdBase.LogErrorMsg("inside")
-    with rdBase.CaptureLog() as capture2:
+    with rdBase.CaptureErrorLog() as capture2:
       rdBase.LogErrorMsg("outside")
     self.assertNotIn("inside", capture2.messages)
     self.assertIn("outside", capture2.messages)
 
   def testNestedCaptures(self):
-    with rdBase.CaptureLog() as outer:
+    with rdBase.CaptureErrorLog() as outer:
       rdBase.LogErrorMsg("outer message")
-      with rdBase.CaptureLog() as inner:
+      with rdBase.CaptureErrorLog() as inner:
         rdBase.LogErrorMsg("inner message")
       self.assertIn("inner message", inner.messages)
       self.assertNotIn("outer message", inner.messages)
@@ -455,7 +455,7 @@ class TestCaptureLog(unittest.TestCase):
     self.assertNotIn("inner message", outer.messages)
 
   def testMessagesReadableInsideContext(self):
-    with rdBase.CaptureLog() as capture:
+    with rdBase.CaptureErrorLog() as capture:
       rdBase.LogErrorMsg("first")
       self.assertIn("first", capture.messages)
 
