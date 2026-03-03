@@ -32,16 +32,6 @@ struct RDKIT_FORCEFIELDHELPERS_EXPORT ExpTorsionAngle {
   unsigned int idx[4];
 };
 
-struct AIOForceConstants {
-  double distanceFC = 2.5;
-  double kAngleFC = 0.01;
-  double kPlanarFC = 0.00025;
-  double kTorsionFC = 0.75;
-  double chiralFC = 1.0;
-  double fourdFC = 2.15;
-  double etTermScaling = 0.02;
-};
-
 struct CrystalFFDetails {
   std::vector<std::vector<int>> expTorsionAtoms;
   std::vector<std::pair<std::vector<int>, std::vector<double>>>
@@ -52,7 +42,7 @@ struct CrystalFFDetails {
   std::vector<int> atomNums;
   double boundsMatForceScaling;
   boost::dynamic_bitset<> constrainedAtoms;
-  AIOForceConstants aioForceConstants;
+  double *distMat;
 };
 
 //! Get the experimental torsional angles in a molecule

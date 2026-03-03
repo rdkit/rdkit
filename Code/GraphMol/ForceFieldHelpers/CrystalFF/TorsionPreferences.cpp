@@ -32,7 +32,8 @@ namespace CrystalFF {
 using namespace RDKit;
 
 // the "macrocycle" patterns for ETKDGv3 use a minimum ring size of 9
-const unsigned int MIN_MACROCYCLE_SIZE = 9;
+constexpr unsigned int MIN_MACROCYCLE_SIZE = 9;
+constexpr double AIO_PLANAR_TORSION_FC = 0.75;
 
 /* SMARTS patterns for experimental torsion angle preferences
  * Version 1 taken from J. Med. Chem. 56, 1026-2028 (2013)
@@ -146,7 +147,7 @@ void getExperimentalTorsions(
                            const ExpTorsionAngle *>> &torsionBonds,
     bool useExpTorsions, bool useSmallRingTorsions, bool useMacrocycleTorsions,
     bool useBasicKnowledge, unsigned int version, bool verbose,
-    const bool scale) {
+    const bool useLegacyImplementation) {
   torsionBonds.clear();
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -247,14 +248,8 @@ void getExperimentalTorsions(
           atoms[1] = aid2;
           atoms[2] = aid3;
           atoms[3] = aid4;
-          std::vector<double> vals(param.V);
-          if (scale) {
-            for (auto &v : vals) {
-              v *= details.aioForceConstants.etTermScaling;
-            }
-          }
           details.expTorsionAtoms.push_back(atoms);
-          details.expTorsionAngles.emplace_back(param.signs, vals);
+          details.expTorsionAngles.emplace_back(param.signs, param.V);
           if (verbose) {
             // using the stringstream seems redundant, but we don't want the
             // extra formatting provided by the logger after every entry;
@@ -356,12 +351,7 @@ void getExperimentalTorsions(
           std::vector<int> signs(6, 1);
           signs[1] = -1;  // MMFF sign for m = 2
           std::vector<double> fconsts(6, 0.0);
-          if (scale) {
-            fconsts[1] = details.aioForceConstants.kTorsionFC;
-          } else {
-            fconsts[1] =
-                100.0;  // 7.0 is MMFF force constants for aromatic rings
-          }
+          fconsts[1] = useLegacyImplementation ? 100.0 : AIO_PLANAR_TORSION_FC;
           details.expTorsionAngles.emplace_back(signs, fconsts);
           /*if (verbose) {
             std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 <<

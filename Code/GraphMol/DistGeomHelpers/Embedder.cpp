@@ -1090,6 +1090,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     if (ControlCHandler::getGotSignal()) {
       return false;
     }
+    return true;
   }
 
   return false;
@@ -1661,6 +1662,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
     ForceFields::CrystalFF::CrystalFFDetails etkdgDetails;
     etkdgDetails.constrainedAtoms = constrainedAtoms;
+    etkdgDetails.distMat = MolOps::getDistanceMat(*piece.get());
     EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
 
     DistGeom::BoundsMatPtr mmat;

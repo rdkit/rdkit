@@ -220,7 +220,9 @@ inline ForceFields::ForceField *construct3DImproperForceField(
   \param positions A vector of pointers to Points to place in the field
   \param etkdgDetails Contains information about the ETKDG force field
   \param csets The vector of chiral points (type: ChiralSet)
-  
+  \param extraWeights mapping from atom pair indices to double to overwrite the
+  force constants for the distance terms
+
   \return a pointer to a ForceField for the All in One optimization
     <b>NOTE:</b> the caller is responsible for deleting this force field.
 
@@ -228,7 +230,9 @@ inline ForceFields::ForceField *construct3DImproperForceField(
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
     const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
-    const VECT_CHIRALSET *csets);
+    const VECT_CHIRALSET *csets,
+    const std::map<std::pair<unsigned int, unsigned int>, double>
+        *extraWeights = nullptr);
 
 }  // namespace DistGeom
 
