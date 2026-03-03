@@ -728,7 +728,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
 
 void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
                    std::vector<AtomColors> &colors, const UINT_VECT &ranks,
-                   UINT_VECT &cyclesAvailable, MolStack &molStack,
+                   std::vector<char> &cyclesAvailable, MolStack &molStack,
                    VECT_INT_VECT &atomRingClosures,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
@@ -896,8 +896,8 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
 
 void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
                            std::vector<AtomColors> &colors,
-                           const UINT_VECT &ranks, UINT_VECT &cyclesAvailable,
-                           MolStack &molStack, VECT_INT_VECT &atomRingClosures,
+                           const UINT_VECT &ranks, MolStack &molStack,
+                           VECT_INT_VECT &atomRingClosures,
                            std::vector<INT_LIST> &atomTraversalBondOrder,
                            const boost::dynamic_bitset<> *bondsInPlay,
                            const std::vector<std::string> *bondSymbols,
@@ -918,6 +918,8 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
   std::copy(colors.begin(), colors.end(), tcolors.begin());
   dfsFindCycles(mol, atomIdx, inBondIdx, tcolors, ranks, atomRingClosures,
                 bondsInPlay, bondSymbols, doRandom);
+
+  std::vector<char> cyclesAvailable(MAX_CYCLES, 1);
   dfsBuildStack(mol, atomIdx, inBondIdx, colors, ranks, cyclesAvailable,
                 molStack, atomRingClosures, atomTraversalBondOrder, bondsInPlay,
                 bondSymbols, doRandom);
@@ -1024,8 +1026,6 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
                "bondSymbols too small");
   unsigned int nAtoms = mol.getNumAtoms();
 
-  UINT_VECT cyclesAvailable(MAX_CYCLES, 1);
-
   // make sure that we've done the stereo perception:
   if (!mol.hasProp(common_properties::_StereochemDone)) {
     MolOps::assignStereochemistry(mol, false);
@@ -1043,10 +1043,9 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
   VECT_INT_VECT atomRingClosures(nAtoms);
   std::vector<INT_LIST> atomTraversalBondOrder(nAtoms);
-  Canon::canonicalDFSTraversal(mol, atomIdx, -1, colors, ranks, cyclesAvailable,
-                               molStack, atomRingClosures,
-                               atomTraversalBondOrder, bondsInPlay, bondSymbols,
-                               doRandom);
+  Canon::canonicalDFSTraversal(mol, atomIdx, -1, colors, ranks, molStack,
+                               atomRingClosures, atomTraversalBondOrder,
+                               bondsInPlay, bondSymbols, doRandom);
 
   CHECK_INVARIANT(!molStack.empty(), "Empty stack.");
   CHECK_INVARIANT(molStack.begin()->type == MOL_STACK_ATOM,
