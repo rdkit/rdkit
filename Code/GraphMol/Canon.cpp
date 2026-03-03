@@ -95,11 +95,10 @@ Bond::BondDir getReferenceDirection(const Bond &dblBond, const Atom &refAtom,
 
 namespace details {
 bool isUnsaturated(const Atom *atom, const ROMol &mol) {
-  for (const auto &bndItr :
-       boost::make_iterator_range(mol.getAtomBonds(atom))) {
+  for (auto bond : mol.atomBonds(atom)) {
     // can't just check for single bonds, because dative bonds also have an
     // order of 1
-    if (mol[bndItr]->getBondTypeAsDouble() > 1) {
+    if (bond->getBondTypeAsDouble() > 1) {
       return true;
     }
   }
@@ -110,10 +109,10 @@ bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
   // list queries are series of nested ors of AtomAtomicNum queries
   PRECONDITION(q, "bad query");
   bool res = false;
-  std::string descr = q->getDescription();
+  const auto &descr = q->getDescription();
   if (descr == "AtomAnd") {
     for (auto cIt = q->beginChildren(); cIt != q->endChildren(); ++cIt) {
-      auto cDescr = (*cIt)->getDescription();
+      const auto &cDescr = (*cIt)->getDescription();
       if (cDescr == "AtomHCount") {
         return !(*cIt)->getNegation() &&
                ((ATOM_EQUALS_QUERY *)(*cIt).get())->getVal() == 1;
@@ -614,20 +613,19 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
   //
   // ---------------------
   std::vector<PossibleType> possibles;
-  possibles.resize(0);
-  ROMol::OBOND_ITER_PAIR bondsPair = mol.getAtomBonds(atom);
+  auto bondsPair = mol.getAtomBonds(atom);
   possibles.reserve(bondsPair.second - bondsPair.first);
 
   while (bondsPair.first != bondsPair.second) {
     Bond *theBond = mol[*(bondsPair.first)];
-    bondsPair.first++;
+    ++bondsPair.first;
     if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) {
       continue;
     }
     if (inBondIdx < 0 ||
         theBond->getIdx() != static_cast<unsigned int>(inBondIdx)) {
       int otherIdx = theBond->getOtherAtomIdx(atomIdx);
-      long rank = ranks[otherIdx];
+      auto rank = ranks[otherIdx];
       // ---------------------
       //
       // things are a bit more complicated if we are sitting on a
@@ -793,13 +791,8 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   //
   // ---------------------
   std::vector<PossibleType> possibles;
-  possibles.resize(0);
-  ROMol::OBOND_ITER_PAIR bondsPair = mol.getAtomBonds(atom);
-  possibles.reserve(bondsPair.second - bondsPair.first);
-
-  while (bondsPair.first != bondsPair.second) {
-    Bond *theBond = mol[*(bondsPair.first)];
-    bondsPair.first++;
+  possibles.reserve(atom->getDegree());
+  for (auto theBond : mol.atomBonds(atom)) {
     if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) {
       continue;
     }
@@ -820,7 +813,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
         // ring closure or finished atom... skip it.
         continue;
       }
-      unsigned long rank = ranks[otherIdx];
+      auto rank = ranks[otherIdx];
       if (!doRandom) {
         if (theBond->getOwningMol().getRingInfo()->numBondRings(
                 theBond->getIdx())) {
@@ -859,7 +852,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   //
   // ---------------------
   for (auto possiblesIt = possibles.begin(); possiblesIt != possibles.end();
-       possiblesIt++) {
+       ++possiblesIt) {
     int possibleIdx = std::get<1>(*possiblesIt);
     if (colors[possibleIdx] != WHITE_NODE) {
       // we're either done or it's a ring-closure, which we already processed...
@@ -1366,6 +1359,6 @@ void clearStereoGroups(ROMol &mol) {
   mol.setStereoGroups(sgs);
 }
 
-};  // namespace Canon
+}  // namespace Canon
 
 }  // namespace RDKit
