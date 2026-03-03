@@ -1231,8 +1231,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }  // if block - heavy atom check
-  }  // for loop over atoms
+    }    // if block - heavy atom check
+  }      // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1317,7 +1317,7 @@ void initETKDG(ROMol *mol, const EmbedParameters &params,
         *mol, etkdgDetails, params.useExpTorsionAnglePrefs,
         params.useSmallRingTorsions, params.useMacrocycleTorsions,
         params.useBasicKnowledge, params.ETversion, params.verbose,
-        params.useAllInOne);
+        params.useLegacyImplementation);
     etkdgDetails.atomNums.resize(nAtoms);
     for (unsigned int i = 0; i < nAtoms; ++i) {
       etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
@@ -1499,8 +1499,9 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     CHECK_INVARIANT(new_seed >= -1,
                     "Something went wrong calculating a new seed");
 
-    const auto embedFunc = params->useAllInOne ? EmbeddingOps::embedPointsAIO
-                                               : EmbeddingOps::embedPoints;
+    const auto embedFunc = params->useLegacyImplementation
+                               ? EmbeddingOps::embedPoints
+                               : EmbeddingOps::embedPointsAIO;
     const bool gotCoords =
         embedFunc(&positions, *eargs, *params, new_seed, end_time);
 

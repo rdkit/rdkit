@@ -41,7 +41,7 @@ namespace DGeomHelpers {
   X(symmetrizeConjugatedTerminalGroupsForPruning) \
   X(timeout)                                      \
   X(checkForClashes)                              \
-  X(useAllInOne)                                  \
+  X(useLegacyImplementation)                      \
   X(trackFailures)                                \
   X(useBasicKnowledge)                            \
   X(useExpTorsionAnglePrefs)                      \

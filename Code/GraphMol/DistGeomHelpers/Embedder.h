@@ -146,8 +146,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useMacrocycleTorsions{false};
   bool useMacrocycle14config{false};
   unsigned int timeout{0};
-  bool checkForClashes{false};
-  bool useAllInOne{false};
+  bool checkForClashes{true};
+  bool useLegacyImplementation{false};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI{
       nullptr};
   void (*callback)(unsigned int){nullptr};
