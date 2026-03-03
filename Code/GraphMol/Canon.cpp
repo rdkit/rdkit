@@ -1026,8 +1026,6 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
   UINT_VECT cyclesAvailable(MAX_CYCLES, 1);
 
-  boost::dynamic_bitset<> ringStereoChemAdjusted(nAtoms);
-
   // make sure that we've done the stereo perception:
   if (!mol.hasProp(common_properties::_StereochemDone)) {
     MolOps::assignStereochemistry(mol, false);
@@ -1162,6 +1160,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
   // traverse the stack and canonicalize atoms with (ring) stereochemistry
   if (doIsomericSmiles) {
+    boost::dynamic_bitset<> ringStereoChemAdjusted(nAtoms);
     for (auto &msI : molStack) {
       if (msI.type == MOL_STACK_ATOM &&
           msI.obj.atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
