@@ -1069,7 +1069,6 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
         // Extra check needed if/when @AL1/@AL2 supported
         if (Chirality::detail::isAtomPotentialTetrahedralCenter(atom) ||
             Chirality::hasNonTetrahedralStereo(atom)) {
-          int nSwaps = 0;
           int perm = 0;
           if (Chirality::hasNonTetrahedralStereo(atom)) {
             atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
@@ -1083,6 +1082,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
           // We have to make sure that trueOrder contains all the
           // bonds, even if they won't be written to the SMILES
+          int nSwaps = 0;
           if (trueOrder.size() < atom->getDegree()) {
             INT_LIST tOrder = trueOrder;
             for (const auto bnd : mol.atomBonds(atom)) {
