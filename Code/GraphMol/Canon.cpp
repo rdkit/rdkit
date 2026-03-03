@@ -164,8 +164,8 @@ auto _possibleCompare = [](const PossibleType &arg1, const PossibleType &arg2) {
 //
 void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
                             const UINT_VECT &atomVisitOrders,
-                            UINT_VECT &bondDirCounts,
-                            UINT_VECT &atomDirCounts) {
+                            std::vector<char> &bondDirCounts,
+                            std::vector<char> &atomDirCounts) {
   PRECONDITION(dblBond, "bad bond");
   PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "bad bond order");
   PRECONDITION(dblBond->getStereo() > Bond::STEREOANY, "bad bond stereo");
@@ -474,7 +474,8 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
 
 void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
                              const UINT_VECT &atomVisitOrders,
-                             UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts,
+                             std::vector<char> &bondDirCounts,
+                             std::vector<char> &atomDirCounts,
                              const MolStack &molStack) {
   // start by removing the current directions on single bonds
   // around double bonds. At the same time, we build a prioritized
@@ -924,7 +925,8 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
 }
 
 void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
-                   UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts) {
+                   std::vector<char> &bondDirCounts,
+                   std::vector<char> &atomDirCounts) {
   PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
   PRECONDITION(refBond, "bad bond");
   PRECONDITION(&refBond->getOwningMol() == &mol, "bad bond");
@@ -960,8 +962,8 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
 }
 
 void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
-                                 UINT_VECT &bondDirCounts,
-                                 UINT_VECT &atomDirCounts) {
+                                 std::vector<char> &bondDirCounts,
+                                 std::vector<char> &atomDirCounts) {
   PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
 
   auto clearBondDirsFromAtom = [&mol, &bondDirCounts, &atomDirCounts](
@@ -1023,8 +1025,6 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
                "bondSymbols too small");
   unsigned int nAtoms = mol.getNumAtoms();
 
-  UINT_VECT bondDirCounts(mol.getNumBonds(), 0);
-  UINT_VECT atomDirCounts(nAtoms, 0);
   UINT_VECT cyclesAvailable(MAX_CYCLES, 1);
   VECT_INT_VECT cycles(nAtoms);
 
@@ -1157,6 +1157,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     ++pos;
   }
 
+  std::vector<char> bondDirCounts(mol.getNumBonds(), 0);
+  std::vector<char> atomDirCounts(nAtoms, 0);
   canonicalizeDoubleBonds(mol, bondVisitOrders, atomVisitOrders, bondDirCounts,
                           atomDirCounts, molStack);
 
