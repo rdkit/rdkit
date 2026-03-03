@@ -9,6 +9,7 @@ rdkit_library(GraphMol
         new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
         NontetrahedralStereo.cpp Atropisomers.cpp
         WedgeBonds.cpp MolProps.cpp Subset.cpp
+        DummyAtom.cpp
         SHARED
         LINK_LIBRARIES RDGeometryLib RDGeneral)
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
@@ -29,6 +30,7 @@ rdkit_headers(Atom.h
         Chirality.h
         Conformer.h
         details.h
+        DummyAtom.h
         GraphMol.h
         MolOps.h
         MolPickler.h
@@ -204,4 +206,7 @@ rdkit_catch_test(tableTestsCatch catch_periodictable.cpp
 
 rdkit_catch_test(molopsTestsCatch catch_molops.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
+
+rdkit_catch_test(dummyAtomTestsCatch catch_dummyatom.cpp
+        LINK_LIBRARIES GraphMol)
 
