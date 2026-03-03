@@ -727,9 +727,9 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
 }  // namespace Canon
 
 void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
-                   std::vector<AtomColors> &colors, VECT_INT_VECT &cycles,
-                   const UINT_VECT &ranks, UINT_VECT &cyclesAvailable,
-                   MolStack &molStack, VECT_INT_VECT &atomRingClosures,
+                   std::vector<AtomColors> &colors, const UINT_VECT &ranks,
+                   UINT_VECT &cyclesAvailable, MolStack &molStack,
+                   VECT_INT_VECT &atomRingClosures,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
                    const std::vector<std::string> *bondSymbols, bool doRandom) {
@@ -881,7 +881,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
           MolStackElem("(", rdcast<int>(possiblesIt - possibles.begin())));
     }
     molStack.push_back(MolStackElem(bond, atomIdx));
-    dfsBuildStack(mol, possibleIdx, bond->getIdx(), colors, cycles, ranks,
+    dfsBuildStack(mol, possibleIdx, bond->getIdx(), colors, ranks,
                   cyclesAvailable, molStack, atomRingClosures,
                   atomTraversalBondOrder, bondsInPlay, bondSymbols, doRandom);
     if (possiblesIt + 1 != possibles.end()) {
@@ -896,9 +896,8 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
 
 void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
                            std::vector<AtomColors> &colors,
-                           VECT_INT_VECT &cycles, const UINT_VECT &ranks,
-                           UINT_VECT &cyclesAvailable, MolStack &molStack,
-                           VECT_INT_VECT &atomRingClosures,
+                           const UINT_VECT &ranks, UINT_VECT &cyclesAvailable,
+                           MolStack &molStack, VECT_INT_VECT &atomRingClosures,
                            std::vector<INT_LIST> &atomTraversalBondOrder,
                            const boost::dynamic_bitset<> *bondsInPlay,
                            const std::vector<std::string> *bondSymbols,
@@ -919,7 +918,7 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
   std::copy(colors.begin(), colors.end(), tcolors.begin());
   dfsFindCycles(mol, atomIdx, inBondIdx, tcolors, ranks, atomRingClosures,
                 bondsInPlay, bondSymbols, doRandom);
-  dfsBuildStack(mol, atomIdx, inBondIdx, colors, cycles, ranks, cyclesAvailable,
+  dfsBuildStack(mol, atomIdx, inBondIdx, colors, ranks, cyclesAvailable,
                 molStack, atomRingClosures, atomTraversalBondOrder, bondsInPlay,
                 bondSymbols, doRandom);
 }
@@ -1026,7 +1025,6 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
   unsigned int nAtoms = mol.getNumAtoms();
 
   UINT_VECT cyclesAvailable(MAX_CYCLES, 1);
-  VECT_INT_VECT cycles(nAtoms);
 
   boost::dynamic_bitset<> ringStereoChemAdjusted(nAtoms);
 
@@ -1047,8 +1045,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
   VECT_INT_VECT atomRingClosures(nAtoms);
   std::vector<INT_LIST> atomTraversalBondOrder(nAtoms);
-  Canon::canonicalDFSTraversal(mol, atomIdx, -1, colors, cycles, ranks,
-                               cyclesAvailable, molStack, atomRingClosures,
+  Canon::canonicalDFSTraversal(mol, atomIdx, -1, colors, ranks, cyclesAvailable,
+                               molStack, atomRingClosures,
                                atomTraversalBondOrder, bondsInPlay, bondSymbols,
                                doRandom);
 
