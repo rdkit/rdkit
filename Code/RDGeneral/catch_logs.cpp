@@ -162,6 +162,33 @@ TEST_CASE("CaptureLog") {
     CHECK(capture.messages().find("test warning") == std::string::npos);
   }
 
+  SECTION("restores dp_dest to original stream") {
+    auto *original_dest = rdErrorLog->dp_dest;
+    {
+      RDLog::CaptureLog capture;
+      CHECK(rdErrorLog->dp_dest != original_dest);
+    }
+    CHECK(rdErrorLog->dp_dest == original_dest);
+  }
+
+  SECTION("re-enables log even when silenced by LogStateSetter") {
+    RDLog::CaptureLog outer;
+    RDLog::LogStateSetter silence;
+
+    BOOST_LOG(rdErrorLog) << "silenced" << std::endl;
+    CHECK(outer.messages().empty());
+
+    {
+      RDLog::CaptureLog inner;
+      BOOST_LOG(rdErrorLog) << "captured despite silence" << std::endl;
+      CHECK(inner.messages().find("captured despite silence") !=
+            std::string::npos);
+    }
+
+    BOOST_LOG(rdErrorLog) << "silenced again" << std::endl;
+    CHECK(outer.messages().empty());
+  }
+
   SECTION("nested captures") {
     RDLog::CaptureLog outer;
     BOOST_LOG(rdErrorLog) << "outer message" << std::endl;
