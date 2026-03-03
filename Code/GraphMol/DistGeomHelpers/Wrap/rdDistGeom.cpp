@@ -125,17 +125,25 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
     pMapPtr = &pMap;
   }
 
-  bool verbose = printExpTorsionAngles;
-  int numThreads = 1;
-  double pruneRmsThresh = -1.;
-  const double basinThresh = DGeomHelpers::EmbedParameters().basinThresh;
-  bool onlyHeavyAtomsForRMS = false;
-  DGeomHelpers::EmbedParameters params(
-      maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
-      randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
-      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS, ETversion, nullptr,
-      true, useSmallRingTorsions, useMacrocycleTorsions, useMacrocycle14config);
+  DGeomHelpers::EmbedParameters params{
+      .maxIterations = maxAttempts,
+      .randomSeed = seed,
+      .clearConfs = clearConfs,
+      .useRandomCoords = useRandomCoords,
+      .boxSizeMult = boxSizeMult,
+      .randNegEig = randNegEig,
+      .numZeroFail = numZeroFail,
+      .coordMap = pMapPtr,
+      .optimizerForceTol = forceTol,
+      .ignoreSmoothingFailures = ignoreSmoothingFailures,
+      .enforceChirality = enforceChirality,
+      .useExpTorsionAnglePrefs = useExpTorsionAnglePrefs,
+      .useBasicKnowledge = useBasicKnowledge,
+      .verbose = printExpTorsionAngles,
+      .ETversion = ETversion,
+      .useSmallRingTorsions = useSmallRingTorsions,
+      .useMacrocycleTorsions = useMacrocycleTorsions,
+      .useMacrocycle14config = useMacrocycle14config};
 
   int res;
   {
@@ -182,15 +190,29 @@ INT_VECT EmbedMultipleConfs(
   if (nKeys) {
     pMapPtr = &pMap;
   }
-  bool verbose = printExpTorsionAngles;
-  const double basinThresh = DGeomHelpers::EmbedParameters().basinThresh;
   bool onlyHeavyAtomsForRMS = false;
-  DGeomHelpers::EmbedParameters params(
-      maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
-      randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
-      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS, ETversion, nullptr,
-      true, useSmallRingTorsions, useMacrocycleTorsions, useMacrocycle14config);
+  DGeomHelpers::EmbedParameters params{
+      .maxIterations = maxAttempts,
+      .numThreads = numThreads,
+      .randomSeed = seed,
+      .clearConfs = clearConfs,
+      .useRandomCoords = useRandomCoords,
+      .boxSizeMult = boxSizeMult,
+      .randNegEig = randNegEig,
+      .numZeroFail = numZeroFail,
+      .coordMap = pMapPtr,
+      .optimizerForceTol = forceTol,
+      .ignoreSmoothingFailures = ignoreSmoothingFailures,
+      .enforceChirality = enforceChirality,
+      .useExpTorsionAnglePrefs = useExpTorsionAnglePrefs,
+      .useBasicKnowledge = useBasicKnowledge,
+      .verbose = printExpTorsionAngles,
+      .pruneRmsThresh = pruneRmsThresh,
+      .onlyHeavyAtomsForRMS = onlyHeavyAtomsForRMS,
+      .ETversion = ETversion,
+      .useSmallRingTorsions = useSmallRingTorsions,
+      .useMacrocycleTorsions = useMacrocycleTorsions,
+      .useMacrocycle14config = useMacrocycle14config};
 
   INT_VECT res;
   {

@@ -97,55 +97,56 @@ std::mutex &GetFailMutex() {
 namespace RDKit {
 namespace DGeomHelpers {
 
-const EmbedParameters KDG{.useBasicKnowledge = true,
-                          .useExpTorsionAnglePrefs = false,
+const EmbedParameters DG{};
+
+const EmbedParameters KDG{.useExpTorsionAnglePrefs = false,
+                          .useBasicKnowledge = true,
                           .ETversion = 1,
                           .useSmallRingTorsions = false,
                           .useMacrocycleTorsions = false,
                           .useMacrocycle14config = false};
 
-const EmbedParameters ETDG{.useBasicKnowledge = false,
-                           .useExpTorsionAnglePrefs = true,
+const EmbedParameters ETDG{.useExpTorsionAnglePrefs = true,
+                           .useBasicKnowledge = false,
                            .ETversion = 1,
                            .useSmallRingTorsions = false,
                            .useMacrocycleTorsions = false,
                            .useMacrocycle14config = false};
 
-const EmbedParameters ETDGv2{.useBasicKnowledge = false,
-                             .useExpTorsionAnglePrefs = true,
+const EmbedParameters ETDGv2{.useExpTorsionAnglePrefs = true,
+                             .useBasicKnowledge = false,
                              .ETversion = 2,
                              .useSmallRingTorsions = false,
                              .useMacrocycleTorsions = false,
                              .useMacrocycle14config = false};
 
-const EmbedParameters ETKDG{.useBasicKnowledge = true,
-                            .useExpTorsionAnglePrefs = true,
+const EmbedParameters ETKDG{.useExpTorsionAnglePrefs = true,
+                            .useBasicKnowledge = true,
                             .ETversion = 1,
                             .useSmallRingTorsions = false,
                             .useMacrocycleTorsions = false,
                             .useMacrocycle14config = false};
 
-const EmbedParameters ETKDGv2{.useBasicKnowledge = true,
-                              .useExpTorsionAnglePrefs = true,
+const EmbedParameters ETKDGv2{.useExpTorsionAnglePrefs = true,
+                              .useBasicKnowledge = true,
                               .ETversion = 2,
                               .useSmallRingTorsions = false,
                               .useMacrocycleTorsions = false,
                               .useMacrocycle14config = false};
 
-const EmbedParameters ETKDGv3{.useBasicKnowledge = true,
-                              .useExpTorsionAnglePrefs = true,
+const EmbedParameters ETKDGv3{.useExpTorsionAnglePrefs = true,
+                              .useBasicKnowledge = true,
                               .ETversion = 2,
                               .useSmallRingTorsions = false,
                               .useMacrocycleTorsions = true,
                               .useMacrocycle14config = true};
 
-const EmbedParameters srETKDGv3{.useBasicKnowledge = true,
-                              .useExpTorsionAnglePrefs = true,
-                              .ETversion = 2,
-                              .useSmallRingTorsions = true,
-                              .useMacrocycleTorsions = false,
-                              .useMacrocycle14config = false};
-
+const EmbedParameters srETKDGv3{.useExpTorsionAnglePrefs = true,
+                                .useBasicKnowledge = true,
+                                .ETversion = 2,
+                                .useSmallRingTorsions = true,
+                                .useMacrocycleTorsions = false,
+                                .useMacrocycle14config = false};
 
 namespace detail {
 struct EmbedArgs {
@@ -1229,8 +1230,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
