@@ -33,7 +33,8 @@ using namespace RDKit;
 
 // the "macrocycle" patterns for ETKDGv3 use a minimum ring size of 9
 constexpr unsigned int MIN_MACROCYCLE_SIZE = 9;
-constexpr double AIO_PLANAR_TORSION_FC = 1500.0;
+constexpr double LEGACY_AROMATIC_TORSION_FC = 1500.0;
+constexpr double AIO_AROMATIC_TORSION_FC = 1500.0;
 
 /* SMARTS patterns for experimental torsion angle preferences
  * Version 1 taken from J. Med. Chem. 56, 1026-2028 (2013)
@@ -351,7 +352,7 @@ void getExperimentalTorsions(
           std::vector<int> signs(6, 1);
           signs[1] = -1;  // MMFF sign for m = 2
           std::vector<double> fconsts(6, 0.0);
-          fconsts[1] = useLegacyImplementation ? 100.0 : AIO_PLANAR_TORSION_FC;
+          fconsts[1] = useLegacyImplementation ? LEGACY_AROMATIC_TORSION_FC : AIO_AROMATIC_TORSION_FC;
           details.expTorsionAngles.emplace_back(signs, fconsts);
           /*if (verbose) {
             std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 <<
