@@ -728,7 +728,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
 
 void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
                    std::vector<AtomColors> &colors, const UINT_VECT &ranks,
-                   std::vector<char> &cyclesAvailable, MolStack &molStack,
+                   boost::dynamic_bitset<> &cyclesAvailable, MolStack &molStack,
                    VECT_INT_VECT &atomRingClosures,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
@@ -750,13 +750,13 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   //  Add any ring closures
   //
   // ---------------------
-  if (atomRingClosures[atomIdx].size()) {
+  if (!atomRingClosures[atomIdx].empty()) {
     std::vector<unsigned int> ringsClosed;
     for (auto bIdx : atomRingClosures[atomIdx]) {
       travList.push_back(bIdx);
       Bond *bond = mol.getBondWithIdx(bIdx);
       seenFromHere.set(bond->getOtherAtomIdx(atomIdx));
-      unsigned int ringIdx;
+      unsigned int ringIdx = std::numeric_limits<unsigned int>::max();
       if (bond->getPropIfPresent(common_properties::_TraversalRingClosureBond,
                                  ringIdx)) {
         // this is end of the ring closure
@@ -770,22 +770,20 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
       } else {
         // this is the beginning of the ring closure, we need to come up with a
         // ring index:
-        auto cAIt =
-            std::find(cyclesAvailable.begin(), cyclesAvailable.end(), 1);
-        if (cAIt == cyclesAvailable.end()) {
+        auto lowestRingIdx = cyclesAvailable.find_first();
+        if (lowestRingIdx == boost::dynamic_bitset<>::npos) {
           throw ValueErrorException(
               "Too many rings open at once. SMILES cannot be generated.");
         }
-        unsigned int lowestRingIdx = cAIt - cyclesAvailable.begin();
-        cyclesAvailable[lowestRingIdx] = 0;
+        cyclesAvailable.set(lowestRingIdx, false);
         ++lowestRingIdx;
         bond->setProp(common_properties::_TraversalRingClosureBond,
-                      lowestRingIdx);
+                      static_cast<unsigned int>(lowestRingIdx));
         molStack.push_back(MolStackElem(lowestRingIdx));
       }
     }
     for (auto ringIdx : ringsClosed) {
-      cyclesAvailable[ringIdx] = 1;
+      cyclesAvailable.set(ringIdx);
     }
   }
 
@@ -916,7 +914,8 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
   dfsFindCycles(mol, atomIdx, inBondIdx, tcolors, ranks, atomRingClosures,
                 bondsInPlay, bondSymbols, doRandom);
 
-  std::vector<char> cyclesAvailable(MAX_CYCLES, 1);
+  boost::dynamic_bitset<> cyclesAvailable(MAX_CYCLES);
+  cyclesAvailable.set();
   dfsBuildStack(mol, atomIdx, inBondIdx, colors, ranks, cyclesAvailable,
                 molStack, atomRingClosures, atomTraversalBondOrder, bondsInPlay,
                 bondSymbols, doRandom);
