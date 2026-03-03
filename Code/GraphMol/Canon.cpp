@@ -913,9 +913,7 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
   PRECONDITION(!bondSymbols || bondSymbols->size() >= mol.getNumBonds(),
                "bondSymbols too small");
 
-  std::vector<AtomColors> tcolors;
-  tcolors.resize(colors.size());
-  std::copy(colors.begin(), colors.end(), tcolors.begin());
+  std::vector<AtomColors> tcolors(colors.begin(), colors.end());
   dfsFindCycles(mol, atomIdx, inBondIdx, tcolors, ranks, atomRingClosures,
                 bondsInPlay, bondSymbols, doRandom);
 
