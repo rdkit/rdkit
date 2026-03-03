@@ -140,7 +140,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   double pruneRmsThresh{-1.0};
   bool onlyHeavyAtomsForRMS{true};
   unsigned int ETversion{2};
-  boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat;
+  boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat{nullptr};
   bool embedFragmentsSeparately{true};
   bool useSmallRingTorsions{false};
   bool useMacrocycleTorsions{false};
@@ -148,63 +148,16 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int timeout{0};
   bool checkForClashes{false};
   bool useAllInOne{false};
-  std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
-  void (*callback)(unsigned int);
+  std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI{
+      nullptr};
+  void (*callback)(unsigned int){nullptr};
   bool forceTransAmides{true};
   bool useSymmetryForPruning{true};
   double boundsMatForceScaling{1.0};
   bool trackFailures{false};
-  std::vector<unsigned int> failures;
+  std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
-
-  EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
-  EmbedParameters(
-      unsigned int maxIterations, int numThreads, int randomSeed,
-      bool clearConfs, bool useRandomCoords, double boxSizeMult,
-      bool randNegEig, unsigned int numZeroFail,
-      const std::map<int, RDGeom::Point3D> *coordMap, double optimizerForceTol,
-      bool ignoreSmoothingFailures, bool enforceChirality,
-      bool useExpTorsionAnglePrefs, bool useBasicKnowledge, bool verbose,
-      double basinThresh, double pruneRmsThresh, bool onlyHeavyAtomsForRMS,
-      unsigned int ETversion = 2,
-      const DistGeom::BoundsMatrix *boundsMat = nullptr,
-      bool embedFragmentsSeparately = true, bool useSmallRingTorsions = false,
-      bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
-      unsigned int timeout = 0, bool checkForClashes = false,
-      bool useAllInOne = false,
-      std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>>
-          CPCI = nullptr,
-      void (*callback)(unsigned int) = nullptr)
-      : maxIterations(maxIterations),
-        numThreads(numThreads),
-        randomSeed(randomSeed),
-        clearConfs(clearConfs),
-        useRandomCoords(useRandomCoords),
-        boxSizeMult(boxSizeMult),
-        randNegEig(randNegEig),
-        numZeroFail(numZeroFail),
-        coordMap(coordMap),
-        optimizerForceTol(optimizerForceTol),
-        ignoreSmoothingFailures(ignoreSmoothingFailures),
-        enforceChirality(enforceChirality),
-        useExpTorsionAnglePrefs(useExpTorsionAnglePrefs),
-        useBasicKnowledge(useBasicKnowledge),
-        verbose(verbose),
-        basinThresh(basinThresh),
-        pruneRmsThresh(pruneRmsThresh),
-        onlyHeavyAtomsForRMS(onlyHeavyAtomsForRMS),
-        ETversion(ETversion),
-        boundsMat(boundsMat),
-        embedFragmentsSeparately(embedFragmentsSeparately),
-        useSmallRingTorsions(useSmallRingTorsions),
-        useMacrocycleTorsions(useMacrocycleTorsions),
-        useMacrocycle14config(useMacrocycle14config),
-        timeout(timeout),
-        checkForClashes(checkForClashes),
-        useAllInOne(useAllInOne),
-        CPCI(std::move(CPCI)),
-        callback(callback) {}
 };
 
 //! update parameters from a JSON string
@@ -323,13 +276,27 @@ inline int EmbedMolecule(
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
     unsigned int ETversion = 2, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = true, bool useMacrocycle14config = true) {
-  EmbedParameters params(
-      maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
-      randNegEig, numZeroFail, coordMap, optimizerForceTol,
-      ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
-      useBasicKnowledge, verbose, basinThresh, -1.0, onlyHeavyAtomsForRMS,
-      ETversion, nullptr, true, useSmallRingTorsions, useMacrocycleTorsions,
-      useMacrocycle14config);
+  EmbedParameters params{.maxIterations = maxIterations,
+                         .randomSeed = seed,
+                         .clearConfs = clearConfs,
+                         .useRandomCoords = useRandomCoords,
+                         .boxSizeMult = boxSizeMult,
+                         .randNegEig = randNegEig,
+                         .numZeroFail = numZeroFail,
+                         .coordMap = coordMap,
+                         .optimizerForceTol = optimizerForceTol,
+                         .ignoreSmoothingFailures = ignoreSmoothingFailures,
+                         .enforceChirality = enforceChirality,
+                         .useExpTorsionAnglePrefs = useExpTorsionAnglePrefs,
+                         .useBasicKnowledge = useBasicKnowledge,
+                         .verbose = verbose,
+                         .basinThresh = basinThresh,
+                         .onlyHeavyAtomsForRMS = onlyHeavyAtomsForRMS,
+                         .ETversion = ETversion,
+                         .useSmallRingTorsions = useSmallRingTorsions,
+                         .useMacrocycleTorsions = useMacrocycleTorsions,
+                         .useMacrocycle14config = useMacrocycle14config};
+
   return EmbedMolecule(mol, params);
 };
 
@@ -423,13 +390,29 @@ inline void EmbedMultipleConfs(
     unsigned int ETversion = 2, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = true, bool useMacrocycle14config = true,
     unsigned int timeout = 0) {
-  EmbedParameters params(
-      maxIterations, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
-      randNegEig, numZeroFail, coordMap, optimizerForceTol,
-      ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
-      useBasicKnowledge, verbose, basinThresh, pruneRmsThresh,
-      onlyHeavyAtomsForRMS, ETversion, nullptr, true, useSmallRingTorsions,
-      useMacrocycleTorsions, useMacrocycle14config, timeout);
+  EmbedParameters params{.maxIterations = maxIterations,
+                         .numThreads = numThreads,
+                         .randomSeed = seed,
+                         .clearConfs = clearConfs,
+                         .useRandomCoords = useRandomCoords,
+                         .boxSizeMult = boxSizeMult,
+                         .randNegEig = randNegEig,
+                         .numZeroFail = numZeroFail,
+                         .coordMap = coordMap,
+                         .optimizerForceTol = optimizerForceTol,
+                         .ignoreSmoothingFailures = ignoreSmoothingFailures,
+                         .enforceChirality = enforceChirality,
+                         .useExpTorsionAnglePrefs = useExpTorsionAnglePrefs,
+                         .useBasicKnowledge = useBasicKnowledge,
+                         .verbose = verbose,
+                         .basinThresh = basinThresh,
+                         .pruneRmsThresh = pruneRmsThresh,
+                         .onlyHeavyAtomsForRMS = onlyHeavyAtomsForRMS,
+                         .ETversion = ETversion,
+                         .useSmallRingTorsions = useSmallRingTorsions,
+                         .useMacrocycleTorsions = useMacrocycleTorsions,
+                         .useMacrocycle14config = useMacrocycle14config,
+                         .timeout = timeout};
   EmbedMultipleConfs(mol, res, numConfs, params);
 };
 //! \overload
@@ -446,13 +429,29 @@ inline INT_VECT EmbedMultipleConfs(
     unsigned int ETversion = 2, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
     unsigned int timeout = 0) {
-  EmbedParameters params(
-      maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
-      randNegEig, numZeroFail, coordMap, optimizerForceTol,
-      ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
-      useBasicKnowledge, verbose, basinThresh, pruneRmsThresh,
-      onlyHeavyAtomsForRMS, ETversion, nullptr, true, useSmallRingTorsions,
-      useMacrocycleTorsions, useMacrocycle14config, timeout);
+  EmbedParameters params{.maxIterations = maxIterations,
+                         .numThreads = 1,
+                         .randomSeed = seed,
+                         .clearConfs = clearConfs,
+                         .useRandomCoords = useRandomCoords,
+                         .boxSizeMult = boxSizeMult,
+                         .randNegEig = randNegEig,
+                         .numZeroFail = numZeroFail,
+                         .coordMap = coordMap,
+                         .optimizerForceTol = optimizerForceTol,
+                         .ignoreSmoothingFailures = ignoreSmoothingFailures,
+                         .enforceChirality = enforceChirality,
+                         .useExpTorsionAnglePrefs = useExpTorsionAnglePrefs,
+                         .useBasicKnowledge = useBasicKnowledge,
+                         .verbose = verbose,
+                         .basinThresh = basinThresh,
+                         .pruneRmsThresh = pruneRmsThresh,
+                         .onlyHeavyAtomsForRMS = onlyHeavyAtomsForRMS,
+                         .ETversion = ETversion,
+                         .useSmallRingTorsions = useSmallRingTorsions,
+                         .useMacrocycleTorsions = useMacrocycleTorsions,
+                         .useMacrocycle14config = useMacrocycle14config,
+                         .timeout = timeout};
   INT_VECT res;
   EmbedMultipleConfs(mol, res, numConfs, params);
   return res;

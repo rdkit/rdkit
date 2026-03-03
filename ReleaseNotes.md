@@ -33,6 +33,10 @@ GitHub)
 - `RWMol::addBond()` no longer removes RingInfo from the molecule, but it does
   clear the property cache of the begin and end atoms. This does not affect the
   general rule that molecules should be sanitized after adding/removing bonds.
+- The `DistGeomHelpers::EmbedParameters` struct no longer has a constructor that
+  takes arguments in C++. If you want to initialize data members to non-default
+  values, use the designated initialization syntax. This change does not affect
+  Python.
 
 ## New Features and Enhancements:
 
