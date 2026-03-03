@@ -959,12 +959,12 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   bool gotCoords = false;
   unsigned int iter = 0;
 
-  while (!gotCoords && iter < embedParams.maxIterations) {
+  while (iter < embedParams.maxIterations) {
+    ++iter;
     if (end_time != nullptr && Clock::now() > *end_time) {
       break;
     }
     // Clear trajectories in cases we write the minimization positions
-    ++iter;
     if (embedParams.callback != nullptr) {
       embedParams.callback(iter);
     }

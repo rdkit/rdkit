@@ -740,10 +740,10 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
                               FC::ETTermScaling);
   addPlanarityTerms(field, etkdgDetails.improperAtoms);
   addAngleTerms(field, etkdgDetails.angles);
-  addDistanceTerms(field, mmat, N, extraWeights, etkdgDetails.distMat);
   if (field->dimension() == 4) {
     addChiralityTerms(field, csets, N);
   }
+  addDistanceTerms(field, mmat, N, extraWeights, etkdgDetails.distMat);
   return field;
 }
 

@@ -33,7 +33,7 @@ using namespace RDKit;
 
 // the "macrocycle" patterns for ETKDGv3 use a minimum ring size of 9
 constexpr unsigned int MIN_MACROCYCLE_SIZE = 9;
-constexpr double AIO_PLANAR_TORSION_FC = 0.75;
+constexpr double AIO_PLANAR_TORSION_FC = 1500.0;
 
 /* SMARTS patterns for experimental torsion angle preferences
  * Version 1 taken from J. Med. Chem. 56, 1026-2028 (2013)
