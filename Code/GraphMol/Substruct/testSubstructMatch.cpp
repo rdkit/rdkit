@@ -1704,3 +1704,53 @@ M  END
     CHECK(!isAtomTerminalRGroupOrQueryHydrogen(rAtom));
   }
 }
+
+TEST_CASE("SubstructMatchCount regression", "[substruct]") {
+  {
+    auto mol = "c1ccccc1"_smiles;
+    REQUIRE(mol);
+    std::unique_ptr<ROMol> query{SmartsToMol("c:c")};
+    REQUIRE(query);
+
+    SubstructMatchParameters params;
+    const auto matches = SubstructMatch(*mol, *query, params);
+    const auto count = SubstructMatchCount(*mol, *query, params);
+    CHECK(count == matches.size());
+
+    params.maxMatches = 1;
+    const auto matchesCapped = SubstructMatch(*mol, *query, params);
+    const auto countCapped = SubstructMatchCount(*mol, *query, params);
+    CHECK(matchesCapped.size() == 1);
+    CHECK(countCapped == 1);
+  }
+
+  {
+    // Uniquify=false should still match counts with the full match materializer.
+    // (We don't assert an exact number here because it depends on automorphisms.)
+    auto mol = "c1ccccc1"_smiles;
+    REQUIRE(mol);
+    std::unique_ptr<ROMol> query{SmartsToMol("c:c")};
+    REQUIRE(query);
+
+    SubstructMatchParameters params;
+    params.uniquify = false;
+    const auto matches = SubstructMatch(*mol, *query, params);
+    const auto count = SubstructMatchCount(*mol, *query, params);
+    CHECK(count == matches.size());
+  }
+
+  {
+    // Simple stereochem case to make sure chirality-related final checking is
+    // consistent.
+    auto mol = "C[C@H](F)Cl"_smiles;
+    REQUIRE(mol);
+    std::unique_ptr<ROMol> query{SmartsToMol("[C@H](F)Cl")};
+    REQUIRE(query);
+
+    SubstructMatchParameters params;
+    params.useChirality = true;
+    const auto matches = SubstructMatch(*mol, *query, params);
+    const auto count = SubstructMatchCount(*mol, *query, params);
+    CHECK(count == matches.size());
+  }
+}
