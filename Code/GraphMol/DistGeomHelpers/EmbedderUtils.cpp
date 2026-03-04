@@ -23,6 +23,7 @@ namespace DGeomHelpers {
   X(basinThresh)                                  \
   X(boundsMatForceScaling)                        \
   X(boxSizeMult)                                  \
+  X(checkForClashes)                              \
   X(clearConfs)                                   \
   X(embedFragmentsSeparately)                     \
   X(enableSequentialRandomSeeds)                  \
@@ -40,11 +41,10 @@ namespace DGeomHelpers {
   X(randomSeed)                                   \
   X(symmetrizeConjugatedTerminalGroupsForPruning) \
   X(timeout)                                      \
-  X(checkForClashes)                              \
-  X(useLegacyImplementation)                      \
   X(trackFailures)                                \
   X(useBasicKnowledge)                            \
   X(useExpTorsionAnglePrefs)                      \
+  X(useLegacyImplementation)                      \
   X(useMacrocycle14config)                        \
   X(useMacrocycleTorsions)                        \
   X(useRandomCoords)                              \
