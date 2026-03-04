@@ -924,11 +924,9 @@ void testMissingParams() {
     UFF::AtomicParamVect types;
     bool foundAll;
 
-    ROMol *mol = SmilesToMol("[Cu](C)(C)(C)(C)C");
+    std::unique_ptr<ROMol> mol(SmilesToMol("[Cu](C)(C)(C)(C)C"));
     TEST_ASSERT(mol);
-
-    ROMol *mol2 = MolOps::addHs(*mol);
-    delete mol;
+    std::unique_ptr<ROMol> mol2(MolOps::addHs(*mol));
 
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol2) >= 0);
 
@@ -938,7 +936,8 @@ void testMissingParams() {
     TEST_ASSERT(!types[0]);
 
     // make sure we can optimize anyway:
-    ForceFields::ForceField *field = UFF::constructForceField(*mol2, types);
+    std::unique_ptr<ForceFields::ForceField> field(
+        UFF::constructForceField(*mol2, types));
     TEST_ASSERT(field);
     field->initialize();
     double e1 = field->calcEnergy();
@@ -947,8 +946,6 @@ void testMissingParams() {
     double e2 = field->calcEnergy();
     TEST_ASSERT(e2 < e1);
     // std::cerr<<" DE: "<<e1<<" -> "<<e2<<std::endl;
-    delete mol2;
-    delete field;
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
