@@ -279,6 +279,17 @@ void wrap_rdGaussianShape() {
           " are SHAPE_ONLY and SHAPE_AND_COLOR with the latter using"
           " the overlap of color features as well. ")
       .def_readwrite(
+          "simAlpha", &GaussianShape::ShapeOverlayOptions::simAlpha,
+          "When doing a Tversky similarity, the alpha value.  If alpha and"
+          "beta are both the default 1.0, it's a Tanimoto similarity.  A"
+          " high alpha and low beta emphasize the fit volume in the"
+          " similarity and vice versa. Tversky is O / (A * (R - O) + B * (F"
+          " - O) + O) where O is the overlap volume, R is the reference's"
+          " volume and F is the fit's volume.  This is different from that"
+          "  used by OpenEye (O / (A * R + B * F)).")
+      .def_readwrite("simBeta", &GaussianShape::ShapeOverlayOptions::simBeta,
+                     "When doing a Tversky similarity, the beta value.")
+      .def_readwrite(
           "optParam", &GaussianShape::ShapeOverlayOptions::optParam,
           "If using colors, the relative weights of the shape and color scores,"
           " as a fraction of 1.  Default=0.5.")

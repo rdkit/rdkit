@@ -107,9 +107,9 @@ std::array<double, 4> getInitialRotationPlain(
       fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
-      overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, overlayOpts.shapeConvergenceCriterion,
-      overlayOpts.nSteps);
+      overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
+      overlayOpts.optParam, overlayOpts.useDistCutoff, overlayOpts.distCutoff,
+      overlayOpts.shapeConvergenceCriterion, overlayOpts.nSteps);
   auto scores = sca.calcScores(useColor);
   score = scores[0];
   return quats[index];
@@ -155,9 +155,9 @@ std::array<double, 4> getInitialRotationWiggle(
       fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), tmpQuatTrans,
-      overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, overlayOpts.shapeConvergenceCriterion,
-      overlayOpts.nSteps);
+      overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
+      overlayOpts.optParam, overlayOpts.useDistCutoff, overlayOpts.distCutoff,
+      overlayOpts.shapeConvergenceCriterion, overlayOpts.nSteps);
 
   for (unsigned int i = start_quat; i < start_quat + 7; ++i) {
     std::array<double, 7> quatTrans{quats[i][0], quats[i][1], quats[i][2],
@@ -224,13 +224,9 @@ RDGeom::Point3D getInitialTranslation(int index, ShapeInput &refShape,
 // This is how the PubChem code decides between ROTATE_180_WIGGLE and
 // ROTATE_45.  I have no clue.
 unsigned int calculateQrat(const std::array<double, 3> &eigenValues) {
-  // std::cout << "eigenvalues : " << eigenValues[0] << " " << eigenValues[1]
-  //           << ", " << eigenValues[2] << std::endl;
   double double_ev_oe[3]{eigenValues[1] + eigenValues[2] - eigenValues[0],
                          eigenValues[0] + eigenValues[2] - eigenValues[1],
                          eigenValues[0] + eigenValues[1] - eigenValues[2]};
-  // std::cout << "evoe : " << double_ev_oe[0] << " " << double_ev_oe[1] << " "
-  //           << double_ev_oe[2] << std::endl;
   std::sort(double_ev_oe, double_ev_oe + 3, std::greater<double>());
 
   const static double qrat_threshold = 0.7225;  // 0.85*0.85;
@@ -292,7 +288,6 @@ std::array<double, 3> alignShape(ShapeInput &refShape, ShapeInput &fitShape,
     default:
       break;
   }
-  // std::cout << "startMode = " << startMode << std::endl;
   unsigned int finalTransIndex = 1;
   if (startMode == StartMode::ROTATE_0_FRAGMENT ||
       startMode == StartMode::ROTATE_45_FRAGMENT ||
@@ -330,9 +325,10 @@ std::array<double, 3> alignShape(ShapeInput &refShape, ShapeInput &fitShape,
           fitShape.getTypes().data(), fitShape.getCarbonRadii(),
           fitShape.getNumAtoms(), fitShape.getNumFeatures(),
           fitShape.getShapeVolume(), fitShape.getColorVolume(), initQuat,
-          overlayOpts.optimMode, overlayOpts.optParam,
-          overlayOpts.useDistCutoff, overlayOpts.distCutoff,
-          overlayOpts.shapeConvergenceCriterion, overlayOpts.nSteps));
+          overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
+          overlayOpts.optParam, overlayOpts.useDistCutoff,
+          overlayOpts.distCutoff, overlayOpts.shapeConvergenceCriterion,
+          overlayOpts.nSteps));
       bestScoreForStart.push_back({score, k});
     }
   }
@@ -465,9 +461,9 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
       fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
-      overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, overlayOpts.shapeConvergenceCriterion,
-      overlayOpts.nSteps);
+      overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
+      overlayOpts.optParam, overlayOpts.useDistCutoff, overlayOpts.distCutoff,
+      overlayOpts.shapeConvergenceCriterion, overlayOpts.nSteps);
   bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   auto scores = sca.calcScores(refShape.getCoords().data(),
                                fitShape.getCoords().data(), includeColor);

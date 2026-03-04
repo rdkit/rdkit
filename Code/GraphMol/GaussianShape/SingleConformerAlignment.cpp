@@ -34,8 +34,8 @@ SingleConformerAlignment::SingleConformerAlignment(
     const std::unique_ptr<boost::dynamic_bitset<>> &fitCarbonRadii,
     int nFitShape, int nFitColor, double fitShapeVol, double fitColorVol,
     const std::array<double, 7> &initQuatTrans, OptimMode optimMode,
-    double mixingParam, bool useCutoff, double distCutoff,
-    double shapeConvergenceCriterion, unsigned int maxIts)
+    double simAlpha, double simBeta, double mixingParam, bool useCutoff,
+    double distCutoff, double shapeConvergenceCriterion, unsigned int maxIts)
     : d_ref(ref),
       d_refTypes(refTypes),
       d_refCarbonRadii(refCarbonRadii),
@@ -52,6 +52,8 @@ SingleConformerAlignment::SingleConformerAlignment(
       d_fitColorVol(fitColorVol),
       d_initQuatTrans(initQuatTrans),
       d_optimMode(optimMode),
+      d_simAlpha(simAlpha),
+      d_simBeta(simBeta),
       d_mixingParam(mixingParam),
       d_useCutoff(useCutoff),
       d_distCutoff2(distCutoff * distCutoff),
@@ -112,10 +114,14 @@ std::array<double, 5> SingleConformerAlignment::calcScores(
   std::array<double, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
   scores[3] = shapeOvVol;
   scores[4] = colorOvVol;
-  scores[1] = scores[3] / (d_refShapeVol + d_fitShapeVol - scores[3]);
+  scores[1] =
+      shapeOvVol / (d_simAlpha * (d_refShapeVol - shapeOvVol) +
+                    d_simBeta * (d_fitShapeVol - shapeOvVol) + shapeOvVol);
   if (d_nRefColor && d_nFitColor && d_refColorVol > 0.0 &&
       d_fitColorVol > 0.0 && includeColor) {
-    scores[2] = scores[4] / (d_refColorVol + d_fitColorVol - scores[4]);
+    scores[2] =
+        colorOvVol / (d_simAlpha * (d_refColorVol - colorOvVol) +
+                      d_simBeta * (d_fitColorVol - colorOvVol) + colorOvVol);
     scores[0] = scores[1] * (1 - d_mixingParam) + scores[2] * d_mixingParam;
   } else {
     scores[0] = scores[1];

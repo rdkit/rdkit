@@ -55,6 +55,15 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
   StartMode startMode{StartMode::A_LA_PUBCHEM};
   OptimMode optimMode{
       OptimMode::SHAPE_PLUS_COLOR_SCORE};  //! Optimisation mode.
+  double simAlpha{
+      1.0};  //! When doing a Tversky similarity, the alpha value.  If alpha and
+             //! beta are both the default 1.0, it's a Tanimoto similarity.  A
+             //! high alpha and low beta emphasize the fit volume in the
+             //! similarity and vice versa. Tversky is O / (A * (R - O) + B * (F
+             //! - O) + O) where O is the overlap volume, R is the reference's
+             //! volume and F is the fit's volume.  This is different from that
+             //! used by OpenEye (O / (A * R + B * F)).
+  double simBeta{1.0};   //! When doing a Tversky similarity, the beta value.
   double optParam{0.5};  //! If using colors, the relative weights of shape and
                          //! color scores.
   int nSteps{100};       //! Maximum number of steps for optimiser to take.
@@ -64,7 +73,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
               //! canonical conformations (centred at the origin, aligned along
               //! its principal axes) before starting.
   bool useDistCutoff{
-      true};  //! Whether to use a distance cutoff fo the volume calculation.
+      true};  //! Whether to use a distance cutoff for the volume calculation.
   double distCutoff{4.5};  //! The distance cutoff.  If 2 atoms are more than
                            //! this distance apart, they are not included in the
                            //! volume calculation. A smaller value is faster but

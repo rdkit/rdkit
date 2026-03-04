@@ -25,8 +25,6 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
-#include "../External/pubchem_shape/PubChemShape.hpp"
-
 using namespace RDKit;
 
 bool checkMolsHaveRoughlySameCoords(const ROMol &m1, const ROMol &m2,
@@ -506,7 +504,7 @@ TEST_CASE("Optimise in place") {
     CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.033, 0.001));
   }
   {
-    // And with reference shape the same
+    // And with reference as a shape the same
     GaussianShape::ShapeOverlayOptions opts;
     opts.startMode = GaussianShape::StartMode::ROTATE_0;
     opts.normalize = false;
@@ -548,6 +546,8 @@ TEST_CASE("Fragment Mode") {
   CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.311, 0.001));
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.408, 0.001));
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.215, 0.001));
+  MolTransforms::transformConformer(pdb_trp_3tmn->getConformer(), xform);
+  std::cout << MolToCXSmiles(*pdb_trp_3tmn) << std::endl;
 }
 
 TEST_CASE("custom feature points") {
@@ -699,22 +699,15 @@ TEST_CASE("Normalization and not normalization") {
   for (unsigned int i = 0; i < 10; i += 2) {
     unsigned int l1 = i;
     unsigned int l2 = i + 1;
-#if 1
     auto norm_lob1 = std::make_unique<ROMol>(*lobsters[l1]);
     auto norm_lob2 = std::make_unique<ROMol>(*lobsters[l2]);
     begin = std::chrono::steady_clock::now();
     auto norm_scores = GaussianShape::AlignMolecule(*norm_lob1, *norm_lob2);
     end = std::chrono::steady_clock::now();
-    std::cout << "\ndefault scores : " << norm_scores[0] << ", "
-              << norm_scores[1] << ", " << norm_scores[2] << std::endl;
-    std::cout << "Time default = "
-              << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                       begin)
-                     .count()
-              << "[microseconds]" << std::endl;
-    std::cout << "GS ovly : " << MolToCXSmiles(*norm_lob2) << std::endl;
-#endif
-#if 1
+    auto def_time =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+            .count();
+
     auto prenorm_lob1 = std::make_unique<ROMol>(*lobsters[l1]);
     MolTransforms::canonicalizeConformer(prenorm_lob1->getConformer());
     auto prenorm_lob2 = std::make_unique<ROMol>(*lobsters[l2]);
@@ -726,40 +719,51 @@ TEST_CASE("Normalization and not normalization") {
     auto nonorm_scores = GaussianShape::AlignMolecule(
         *prenorm_lob1, *prenorm_lob2, shapeOpts, shapeOpts, nullptr, ovlyOpts);
     end = std::chrono::steady_clock::now();
-    std::cout << "\nnonorm scores : " << nonorm_scores[0] << ", "
-              << nonorm_scores[1] << ", " << nonorm_scores[2] << std::endl;
-    std::cout << "Time nonorm = "
-              << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                       begin)
-                     .count()
-              << "[microseconds]" << std::endl;
-#endif
-#if 1
+    auto nonorm_time =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+            .count();
     CHECK_THAT(nonorm_scores[0],
                Catch::Matchers::WithinAbs(norm_scores[0], 0.001));
     CHECK_THAT(nonorm_scores[1],
                Catch::Matchers::WithinAbs(norm_scores[1], 0.001));
     CHECK_THAT(nonorm_scores[2],
                Catch::Matchers::WithinAbs(norm_scores[2], 0.001));
-#endif
-#if 0
-    auto pc_lob1 = std::make_unique<ROMol>(*lobsters[l1]);
-    auto pc_lob2 = std::make_unique<ROMol>(*lobsters[l2]);
-    std::vector<float> matrix(12);
-    begin = std::chrono::steady_clock::now();
-    auto pc_scores = AlignMolecule(*pc_lob1, *pc_lob2, matrix);
-    end = std::chrono::steady_clock::now();
-    std::cout << "\npc_scores : " << 0.5 * (pc_scores.first + pc_scores.second)
-              << ", " << pc_scores.first << ", " << pc_scores.second
-              << std::endl;
-    std::cout << "Time pubchem = "
-              << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                       begin)
-                     .count()
-              << "[microseconds]" << std::endl;
-    std::cout << "PC ovly : " << MolToCXSmiles(*pc_lob2) << std::endl;
-#endif
+    // Check that there's not a huge difference between the two.
+    double diff = fabs(def_time - nonorm_time) / def_time;
+    CHECK(diff < 0.25);
   }
+}
+
+TEST_CASE("Tversky") {
+  // Score the PDB overlay.
+  auto pdb_trp_3tmn =
+      R"(N[C@H](C(=O)O)Cc1c[nH]c2c1cccc2 |(37.935,40.394,-3.825;39.119,39.593,-4.13;38.758,38.486,-5.101;37.526,38.337,-5.395;39.716,37.852,-5.605;39.883,39.108,-2.906;39.086,38.098,-2.209;38.093,38.363,-1.34;37.565,37.179,-0.881;38.201,36.136,-1.471;39.193,36.684,-2.308;40.015,35.812,-3.036;39.846,34.441,-2.913;38.844,33.933,-2.075;38.015,34.752,-1.333),wU:1.0|)"_smiles;
+  REQUIRE(pdb_trp_3tmn);
+  auto pdb_0zn_1tmn =
+      R"([C@H](CCc1ccccc1)(C(=O)O)N[C@H](C(=O)N[C@H](C(=O)O)Cc1c[nH]c2c1cccc2)CC(C)C |(35.672,41.482,-5.722;34.516,40.842,-6.512;34.843,39.355,-6.7;33.819,38.475,-7.45;33.825,38.414,-8.838;32.951,37.553,-9.53;32.064,36.747,-8.81;32.096,36.799,-7.402;32.985,37.656,-6.73;35.934,42.778,-6.452;36.833,42.858,-7.316;35.175,43.735,-6.275;35.516,41.561,-4.218;36.707,42.096,-3.513;38.055,41.449,-3.859;39.11,42.138,-3.959;37.975,40.129,-3.983;39.134,39.277,-4.298;38.825,38.04,-5.133;37.649,37.934,-5.605;39.788,37.369,-5.652;39.985,38.945,-3.037;39.221,37.953,-2.164;37.934,37.961,-1.823;37.579,36.695,-1.314;38.63,35.975,-1.286;39.736,36.771,-1.642;41.052,36.341,-1.48;41.213,35.042,-0.964;40.095,34.215,-0.69;38.765,34.665,-0.855;36.506,41.966,-2.002;37.6,42.757,-1.31;37.546,44.225,-1.728;37.408,42.58,0.19),wD:0.0,wU:17.21,13.33|)"_smiles;
+  REQUIRE(pdb_0zn_1tmn);
+  GaussianShape::ShapeOverlayOptions ovlyOpts;
+  GaussianShape::ShapeInputOptions inOpts;
+  auto tan_scores = GaussianShape::ScoreMolecule(*pdb_0zn_1tmn, *pdb_trp_3tmn);
+  CHECK_THAT(tan_scores[0], Catch::Matchers::WithinAbs(0.307, 0.001));
+  CHECK_THAT(tan_scores[1], Catch::Matchers::WithinAbs(0.349, 0.001));
+  CHECK_THAT(tan_scores[2], Catch::Matchers::WithinAbs(0.265, 0.001));
+
+  ovlyOpts.simAlpha = 0.95;
+  ovlyOpts.simBeta = 0.05;
+  auto ref_tversky = GaussianShape::ScoreMolecule(*pdb_0zn_1tmn, *pdb_trp_3tmn,
+                                                  inOpts, inOpts, ovlyOpts);
+  CHECK_THAT(ref_tversky[0], Catch::Matchers::WithinAbs(0.362, 0.001));
+  CHECK_THAT(ref_tversky[1], Catch::Matchers::WithinAbs(0.383, 0.001));
+  CHECK_THAT(ref_tversky[2], Catch::Matchers::WithinAbs(0.342, 0.001));
+
+  ovlyOpts.simAlpha = 0.05;
+  ovlyOpts.simBeta = 0.95;
+  auto fit_tversky = GaussianShape::ScoreMolecule(*pdb_0zn_1tmn, *pdb_trp_3tmn,
+                                                  inOpts, inOpts, ovlyOpts);
+  CHECK_THAT(fit_tversky[0], Catch::Matchers::WithinAbs(0.668, 0.001));
+  CHECK_THAT(fit_tversky[1], Catch::Matchers::WithinAbs(0.795, 0.001));
+  CHECK_THAT(fit_tversky[2], Catch::Matchers::WithinAbs(0.540, 0.001));
 }
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
@@ -792,58 +796,5 @@ TEST_CASE("Serialization") {
   auto istr2 = shape3.toString();
   GaussianShape::ShapeInput shape4(istr2);
   CHECK(!shape4.getCarbonRadii());
-}
-#endif
-
-#if 1
-// Using this for benchmarking at the moment.  It should probably come out
-// later.
-TEST_CASE("LOBSTER") {
-  std::string lobster_file =
-      "/Users/david/Projects/Lobster/LOBSTER_112024/all_ligands.sdf";
-  auto suppl = SDMolSupplier(lobster_file);
-  std::vector<std::shared_ptr<ROMol>> mols;
-  while (!suppl.atEnd()) {
-    auto mol = suppl.next();
-    mols.emplace_back(mol);
-  }
-  std::cout << "Number of mols " << mols.size() << std::endl;
-  double sum_st = 0.0, sum_ct = 0.0, sum_comb = 0.0;
-  int num = 0;
-  std::mt19937 e2(1);
-  std::uniform_real_distribution<double> unif(0, 1);
-  GaussianShape::ShapeInputOptions opts;
-  GaussianShape::ShapeOverlayOptions overlayOpts;
-  overlayOpts.startMode = GaussianShape::StartMode::A_LA_PUBCHEM;
-  for (const auto acr : std::vector<bool>{true}) {
-    opts.allCarbonRadii = acr;
-    for (size_t i = 1; i < mols.size(); i++) {
-      for (size_t j = 0; j < i; j++) {
-        if (unif(e2) > 0.001) {
-          continue;
-        }
-        auto scores = GaussianShape::AlignMolecule(*mols[i], *mols[j], opts,
-                                                   opts, nullptr, overlayOpts);
-        sum_comb += scores[0];
-        sum_st += scores[1];
-        sum_ct += scores[2];
-        ++num;
-        if (!(num % 1000)) {
-          std::cout << num << "  " << i << "  " << j << std::endl;
-        }
-      }
-    }
-    std::cout << "Mean combo of " << num << " : " << sum_comb / num
-              << std::endl;
-    std::cout << "Mean st of " << num << " : " << sum_st / num << std::endl;
-    std::cout << "Mean ct of " << num << " : " << sum_ct / num << std::endl;
-    if (acr) {
-      CHECK_THAT(sum_st / num, Catch::Matchers::WithinAbs(0.554, 0.005));
-      CHECK_THAT(sum_ct / num, Catch::Matchers::WithinAbs(0.094, 0.005));
-    } else {
-      CHECK_THAT(sum_st / num, Catch::Matchers::WithinAbs(0.540, 0.005));
-      CHECK_THAT(sum_ct / num, Catch::Matchers::WithinAbs(0.098, 0.005));
-    }
-  }
 }
 #endif
