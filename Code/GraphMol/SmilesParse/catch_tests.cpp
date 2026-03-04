@@ -3372,3 +3372,20 @@ $$$$)CTAB";
   CHECK(SmilesWrite::getCXExtensions(
             *m, RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) == "");
 }
+
+TEST_CASE("github #9144: PR #9082 breaks MolFragmentToSmarts()") {
+  SECTION("as reported") {
+    auto m = "C[C@H](C=O)NCc1ccccc1"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto sma = MolFragmentToSmarts(*m, ps, {5, 6, 7, 8, 9, 10, 11});
+    CHECK(sma == "[#6]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1");
+  }
+  SECTION("another example") {
+    auto m = "C[C@H](F)CCCN"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto sma = MolFragmentToSmarts(*m, ps, {3, 4, 5});
+    CHECK(sma == "[#6]-[#6]-[#6]");
+  }
+}
