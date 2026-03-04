@@ -1120,15 +1120,12 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
           // We have to make sure that trueOrder contains all the
           // bonds, even if they won't be written to the SMILES
           if (trueOrder.size() < atom->getDegree()) {
-            std::cerr << "WOT " << atom->getIdx() << " " << trueOrder.size()
-                      << " " << atom->getDegree() << std::endl;
             INT_LIST tOrder = trueOrder;
             for (const auto bnd : mol.atomBonds(atom)) {
               int bndIdx = bnd->getIdx();
               if (std::find(trueOrder.begin(), trueOrder.end(), bndIdx) ==
                   trueOrder.end()) {
                 tOrder.push_back(bndIdx);
-                break;
               }
             }
             if (!perm) {

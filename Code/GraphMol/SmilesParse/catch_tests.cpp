@@ -3385,7 +3385,19 @@ TEST_CASE("github #9144: PR #9082 breaks MolFragmentToSmarts()") {
     auto m = "C[C@H](F)CCCN"_smiles;
     REQUIRE(m);
     SmilesWriteParams ps;
-    auto sma = MolFragmentToSmarts(*m, ps, {3, 4, 5});
-    CHECK(sma == "[#6]-[#6]-[#6]");
+    {
+      auto sma = MolFragmentToSmarts(*m, ps, {3, 4, 5});
+      CHECK(sma == "[#6]-[#6]-[#6]");
+    }
+    {
+      auto smi = MolFragmentToSmiles(*m, ps, {1, 3, 4, 5});
+      CHECK(smi == "CCCC");
+    }
+    {
+      // one can argue about what should happen here, but this is consistent
+      // with what the code did before
+      auto sma = MolFragmentToSmarts(*m, ps, {1, 3, 4, 5});
+      CHECK(sma == "[#6](-[#6@H])-[#6]-[#6]");
+    }
   }
 }
