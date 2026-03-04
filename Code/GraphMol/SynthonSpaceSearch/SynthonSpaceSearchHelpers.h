@@ -92,6 +92,9 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
   double confRMSThreshold{0.5};  // When doing a shape search, the RMS threshold
                                  // to use when pruning conformers.  Passed
                                  // directly EmbedMultipleConfs.
+  double shapePruneThreshold{
+      0.95};  //! When doing shape searching, the shapes will be pruned so that
+              //! no 2 shapes are more similar than this threshold.
   bool bestHit{false};  // If true, when doing a shape search it will return the
                         // hit conformer with the best shape match to a query
                         // conformer.  If false it will just return the first
@@ -128,9 +131,9 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT ShapeBuildParams {
   // The relevant ones are passed directly into EmbedMultipleConfs.
   unsigned int numConfs{10};  // Max number of conformations per synthon
   double rmsThreshold{0.5};   // RMS threshold used when pruning conformations
-  double shapeSimThreshold{1.9};  // This is passed to pruneShapes(). For each
-                                  // synthon, no 2 shapes will be more similar
-                                  // to each other than the threshold.
+  double shapeSimThreshold{0.95};  // This is passed to pruneShapes(). For each
+                                   // synthon, no 2 shapes will be more similar
+                                   // to each other than the threshold.
   int numThreads{1};  // The number of threads to use.  If > 0, will use that
                       // number.  If <= 0, will use the number of hardware
                       // threads plus this number.

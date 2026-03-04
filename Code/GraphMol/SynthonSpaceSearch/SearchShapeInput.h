@@ -81,17 +81,32 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
   // Sort the shapes in descending order of shape and color volume.
   void sortShapesByScore();
 
-  // Find the best similarity score between all shapes this shape and the
+  // Find the best similarity score between all shapes in this shape and the
   // other one. Stops as soon as it gets something above the threshold.
   // The threshold is applied to the combo score. The similarity is between 0.0
   // and 1.0 so the default threshold of 2.0 effectively means no threshold.
-  // Fills in the conformations of the two that were responsible if there is
+  // Fills in the shape numbers of the two that were responsible if there is
   // something above the threshold.  Returns -1.0 for
   // the similarity if there was nothing above the threshold.
   double bestSimilarity(
-      SearchShapeInput &fitShape, unsigned int &bestThisConf,
-      unsigned int &bestFitConf, double threshold = 2.0,
+      SearchShapeInput &fitShape, unsigned int &bestThisShape,
+      unsigned int &bestFitShape, double threshold = 2.0,
       const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
+
+  // The best score achievable is when the smaller volume is entirely inside
+  // the larger volume.  The Shape tanimoto is the fraction of volume in
+  // common.  The scores for the different shapes are sorted in
+  // descending order.  So try the smallest this volumes against the
+  // largest fitShape volumes and vice versa.
+  double maxSimilarity(const SearchShapeInput &fitShape) const;
+
+  // return the coordinates of the given dummy atom.
+  const double *getDummyCoords(unsigned int dummyNumber) const;
+
+  // Mock a molecule up from the shape for visual inspection and sometimes
+  // calculation of the normalization matrices.  No bonds.
+  // Atoms are C, features are N, dummies are O.
+  std::unique_ptr<RWMol> shapeToMol(bool includeColors = true) const override;
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
@@ -118,7 +133,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
   std::vector<double> d_colorVolumes;
   std::vector<std::array<size_t, 6>> d_extremePointss;
   std::vector<std::array<double, 9>> d_canonRots;
-  std::vector<std::array<double, 3>> d_centroids;
+  std::vector<std::array<double, 3>> d_canonTranss;
   std::vector<std::array<double, 3>> d_eigenValuess;
 
   void initializeFromBase();
@@ -134,11 +149,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
   void calculateDummyVolumes(const ShapeOverlayOptions &overlayOpts);
 };
 
-// Mock a molecule up from the shape for visual inspection.  No bonds.
-// Atoms are C, features are N.
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<RDKit::RWMol> shapeToMol(
-    const SearchShapeInput &shape, bool includeColors = true);
-
 #ifdef RDK_USE_BOOST_SERIALIZATION
 template <class Archive>
 void SearchShapeInput::serialize(Archive &ar, const unsigned int) {
@@ -153,7 +163,7 @@ void SearchShapeInput::serialize(Archive &ar, const unsigned int) {
   ar & d_colorVolumes;
   ar & d_extremePointss;
   ar & d_canonRots;
-  ar & d_centroids;
+  ar & d_canonTranss;
   ar & d_eigenValuess;
 }
 #endif

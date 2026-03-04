@@ -164,11 +164,14 @@ the py3Dmol.view object containing the drawing'''
       m = Chem.RemoveHs(m)
     addMolToView(m, view, confId)
   for i in range(len(mols)):
+    style = {
+          'colorscheme': colors[i % len(colors)]
+        }
+    if drawAs[i] == "sphere":
+      style["radius"] = 0.5
     view.setStyle({
       'model': i,
-    }, {drawAs[i]: {
-          'colorscheme': colors[i % len(colors)]
-        }})
+    }, {drawAs[i]: style})
 
   view.setBackgroundColor(bgColor)
   view.zoomTo()

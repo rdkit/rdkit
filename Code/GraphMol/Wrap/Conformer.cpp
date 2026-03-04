@@ -36,6 +36,7 @@ RDGeom::Point3D GetAtomPos(const Conformer *conf, unsigned int aid) {
 }
 
 PyObject *GetPos(const Conformer *conf) {
+  rdkit_rdchem_ensure_numpy();
   const RDGeom::POINT3D_VECT &pos = conf->getPositions();
 
   // define a 2D array with the following size
@@ -58,7 +59,9 @@ PyObject *GetPos(const Conformer *conf) {
   return PyArray_Return(res);
 }
 
-void SetPos(Conformer *conf, np::ndarray const &array) {
+void SetPos(Conformer *conf, python::object const &arrayObj) {
+  rdkit_rdchem_ensure_numpy();
+  np::ndarray array = python::extract<np::ndarray>(arrayObj);
   if (array.get_dtype() != np::dtype::get_builtin<double>()) {
     PyErr_SetString(PyExc_TypeError, "Incorrect array data type");
     python::throw_error_already_set();

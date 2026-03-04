@@ -247,8 +247,10 @@ bool computePrincipalAxesAndMomentsFromGyrationMatrix(
     return true;
   }
   auto origin = computeCentroid(conf, ignoreHs, weights);
+  // Note that this may not return a right-handed axis.
   bool res = getEigenValEigenVectFromCovMat(conf, axes, moments, origin,
                                             ignoreHs, true, weights);
+
   if (res && !weights) {
     conf.getOwningMol().setProp(axesPropName, axes, true);
     conf.getOwningMol().setProp(momentsPropName, moments, true);
@@ -272,8 +274,8 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
   auto *trans = new RDGeom::Transform3D;
   trans->setToIdentity();
 
-  // if we have a single atom system we don't need to do anyhting setting
-  // translation is sufficient
+  // If we have a single atom system we don't need to do anything setting
+  // translation is sufficient.
   if (nAtms > 1) {
     Eigen::Matrix3d eigVecs;
     Eigen::Vector3d eigVals;

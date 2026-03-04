@@ -34,8 +34,8 @@ SingleConformerAlignment::SingleConformerAlignment(
     const std::unique_ptr<boost::dynamic_bitset<>> &fitCarbonRadii,
     int nFitShape, int nFitColor, double fitShapeVol, double fitColorVol,
     const std::array<double, 7> &initQuatTrans, OptimMode optimMode,
-    double mixingParam, bool useCutoff, double distCutoff,
-    double shapeConvergenceCriterion, unsigned int maxIts)
+    double simAlpha, double simBeta, double mixingParam, bool useCutoff,
+    double distCutoff, double shapeConvergenceCriterion, unsigned int maxIts)
     : d_ref(ref),
       d_refTypes(refTypes),
       d_refCarbonRadii(refCarbonRadii),
@@ -52,6 +52,8 @@ SingleConformerAlignment::SingleConformerAlignment(
       d_fitColorVol(fitColorVol),
       d_initQuatTrans(initQuatTrans),
       d_optimMode(optimMode),
+      d_simAlpha(simAlpha),
+      d_simBeta(simBeta),
       d_mixingParam(mixingParam),
       d_useCutoff(useCutoff),
       d_distCutoff2(distCutoff * distCutoff),
@@ -66,7 +68,7 @@ SingleConformerAlignment::SingleConformerAlignment(
   applyTransformToShape(d_fit, xform);
   d_refTemp.resize(d_ref.size());
   d_fitTemp.resize(d_fit.size());
-  d_gradConverters.resize(d_nFitShape + d_nFitColor);
+  d_gradConverters.resize(12 * (d_nFitShape + d_nFitColor));
 }
 
 void SingleConformerAlignment::getFinalQuatTrans(
@@ -112,10 +114,14 @@ std::array<double, 5> SingleConformerAlignment::calcScores(
   std::array<double, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
   scores[3] = shapeOvVol;
   scores[4] = colorOvVol;
-  scores[1] = scores[3] / (d_refShapeVol + d_fitShapeVol - scores[3]);
+  scores[1] =
+      shapeOvVol / (d_simAlpha * (d_refShapeVol - shapeOvVol) +
+                    d_simBeta * (d_fitShapeVol - shapeOvVol) + shapeOvVol);
   if (d_nRefColor && d_nFitColor && d_refColorVol > 0.0 &&
       d_fitColorVol > 0.0 && includeColor) {
-    scores[2] = scores[4] / (d_refColorVol + d_fitColorVol - scores[4]);
+    scores[2] =
+        colorOvVol / (d_simAlpha * (d_refColorVol - colorOvVol) +
+                      d_simBeta * (d_fitColorVol - colorOvVol) + colorOvVol);
     scores[0] = scores[1] * (1 - d_mixingParam) + scores[2] * d_mixingParam;
   } else {
     scores[0] = scores[1];
@@ -129,15 +135,15 @@ namespace {
 // volume overlap and r is the Cartesian space.  Assumes gradConverters
 // is already the correct size.
 void cartToQuatGrads(const double *quat, const double *mol, int numBPts,
-                     std::vector<std::array<double, 12>> &gradConverters,
-                     int gradConvOffset) {
+                     std::vector<double> &gradConverters, int gradConvOffset) {
   // for ease of ref
   auto q = quat[0];
   auto r = quat[1];
   auto s = quat[2];
   auto u = quat[3];
   auto coef = 1.0 / (q * q + r * r + s * s + u * u);
-  for (int i = 0, j = gradConvOffset; i < 4 * numBPts; i += 4, ++j) {
+  for (int i = 0, j = gradConvOffset, k = 12 * gradConvOffset; i < 4 * numBPts;
+       i += 4, ++j, k += 12) {
     auto x = mol[i];
     auto y = mol[i + 1];
     auto z = mol[i + 2];
@@ -153,18 +159,18 @@ void cartToQuatGrads(const double *quat, const double *mol, int numBPts,
     auto dz_dq = dy_dr;
     auto dy_dq = dx_du;
     auto dz_dr = -dx_du;
-    gradConverters[j][0] = dx_dq;
-    gradConverters[j][1] = dy_dq;
-    gradConverters[j][2] = dz_dq;
-    gradConverters[j][3] = dx_dr;
-    gradConverters[j][4] = dy_dr;
-    gradConverters[j][5] = dz_dr;
-    gradConverters[j][6] = dx_ds;
-    gradConverters[j][7] = dy_ds;
-    gradConverters[j][8] = dz_ds;
-    gradConverters[j][9] = dx_du;
-    gradConverters[j][10] = dy_du;
-    gradConverters[j][11] = dz_du;
+    gradConverters[k] = dx_dq;
+    gradConverters[k + 1] = dy_dq;
+    gradConverters[k + 2] = dz_dq;
+    gradConverters[k + 3] = dx_dr;
+    gradConverters[k + 4] = dy_dr;
+    gradConverters[k + 5] = dz_dr;
+    gradConverters[k + 6] = dx_ds;
+    gradConverters[k + 7] = dy_ds;
+    gradConverters[k + 8] = dz_ds;
+    gradConverters[k + 9] = dx_du;
+    gradConverters[k + 10] = dy_du;
+    gradConverters[k + 11] = dz_du;
   }
 }
 }  // namespace
@@ -175,8 +181,8 @@ double calcVolAndGrads(
     const std::unique_ptr<boost::dynamic_bitset<>> &refCarbonRadii,
     const double *fit, int numFitPts,
     const std::unique_ptr<boost::dynamic_bitset<>> &fitCarbonRadii,
-    std::vector<std::array<double, 12>> &gradConverters, bool useCutoff,
-    double distCutoff2, const double *quat, double *gradients) {
+    std::vector<double> &gradConverters, bool useCutoff, double distCutoff2,
+    const double *quat, double *gradients) {
   if (gradients) {
     cartToQuatGrads(quat, fit, numFitPts, gradConverters, 0);
   }
@@ -185,13 +191,15 @@ double calcVolAndGrads(
   static const double CARBON_BIT = 8.0 * pow(PI / (2 * CARBON_A), 1.5);
   double vol = 0.0;
   double vij;
+  bool allCarbon = !refCarbonRadii && !fitCarbonRadii;
   for (int i = 0, i_idx = 0; i < numRefPts * 4; i += 4, i_idx++) {
     const auto ai = ref[i + 3];
     // Atoms that should be skipped are given a negative radius bit.
     if (ai < 0.0) {
       continue;
     }
-    for (int j = 0, j_idx = 0; j < numFitPts * 4; j += 4, j_idx++) {
+    for (int j = 0, j_idx = 0, k = 0; j < numFitPts * 4;
+         j += 4, j_idx++, k += 12) {
       auto dx = ref[i] - fit[j];
       auto dy = ref[i + 1] - fit[j + 1];
       auto dz = ref[i + 2] - fit[j + 2];
@@ -205,9 +213,8 @@ double calcVolAndGrads(
       }
       auto mult = -(ai * aj) / (ai + aj);
       auto kij = exp(mult * d2);
-      if ((!refCarbonRadii && !fitCarbonRadii) ||
-          (refCarbonRadii && fitCarbonRadii && (*refCarbonRadii)[i_idx] &&
-           (*fitCarbonRadii)[j_idx])) {
+      if (allCarbon || (!allCarbon && (*refCarbonRadii)[i_idx] &&
+                        (*fitCarbonRadii)[j_idx])) {
         vij = kij * CARBON_BIT;
       } else {
         auto pi_ai_aj = PI / (ai + aj);
@@ -221,18 +228,18 @@ double calcVolAndGrads(
         // The zeroth gradient is never used, so don't waste time calculating
         // it but leave the code here for completeness and possible future use.
         // gradients[0] +=
-        //     r * (dx * gradConverters[j_idx][0] + dy *
-        //     gradConverters[j_idx][1] +
-        //          dz * gradConverters[j_idx][2]);
+        //     r * (dx * gradConverters[k] + dy *
+        //     gradConverters[k + 1] +
+        //          dz * gradConverters[k + 2]);
         gradients[1] +=
-            r * (dx * gradConverters[j_idx][3] + dy * gradConverters[j_idx][4] +
-                 dz * gradConverters[j_idx][5]);
+            r * (dx * gradConverters[k + 3] + dy * gradConverters[k + 4] +
+                 dz * gradConverters[k + 5]);
         gradients[2] +=
-            r * (dx * gradConverters[j_idx][6] + dy * gradConverters[j_idx][7] +
-                 dz * gradConverters[j_idx][8]);
-        gradients[3] += r * (dx * gradConverters[j_idx][9] +
-                             dy * gradConverters[j_idx][10] +
-                             dz * gradConverters[j_idx][11]);
+            r * (dx * gradConverters[k + 6] + dy * gradConverters[k + 7] +
+                 dz * gradConverters[k + 8]);
+        gradients[3] +=
+            r * (dx * gradConverters[k + 9] + dy * gradConverters[k + 10] +
+                 dz * gradConverters[k + 11]);
         gradients[4] += r * dx;
         gradients[5] += r * dy;
         gradients[6] += r * dz;
@@ -245,8 +252,7 @@ double calcVolAndGrads(
 // color features
 double calcVolAndGrads(const double *ref, int numRefPts, const int *refTypes,
                        const double *fit, int numFitPts, const int *fitTypes,
-                       int numFitShape,
-                       std::vector<std::array<double, 12>> &gradConverters,
+                       int numFitShape, std::vector<double> &gradConverters,
                        const bool useCutoff, const double distCutoff2,
                        const double *quat, double *gradients) {
   double vol = 0.0;
@@ -257,7 +263,8 @@ double calcVolAndGrads(const double *ref, int numRefPts, const int *refTypes,
   for (int i = 0, i_idx = 0; i < numRefPts * 4; i += 4, i_idx++) {
     const auto ai = ref[i + 3];
     const auto aType = refTypes[i_idx];
-    for (int j = 0, j_idx = 0; j < numFitPts * 4; j += 4, j_idx++) {
+    for (int j = 0, j_idx = 0, k = 0; j < numFitPts * 4;
+         j += 4, j_idx++, k += 12) {
       const auto bType = fitTypes[j_idx];
       if (aType != bType) {
         continue;
@@ -282,18 +289,18 @@ double calcVolAndGrads(const double *ref, int numRefPts, const int *refTypes,
         // The zeroth gradient is never used, so don't waste time calculating
         // it but leave the code here for completeness and possible future use.
         // gradients[0] +=
-        //     r * (dx * gradConverters[j_idx][0] + dy *
-        //     gradConverters[j_idx][1] +
-        //          dz * gradConverters[j_idx][2]);
+        //     r * (dx * gradConverters[k + 0] + dy *
+        //     gradConverters[k + 1] +
+        //          dz * gradConverters[k + 2]);
         gradients[1] +=
-            r * (dx * gradConverters[j_idx][3] + dy * gradConverters[j_idx][4] +
-                 dz * gradConverters[j_idx][5]);
+            r * (dx * gradConverters[k + 3] + dy * gradConverters[k + 4] +
+                 dz * gradConverters[k + 5]);
         gradients[2] +=
-            r * (dx * gradConverters[j_idx][6] + dy * gradConverters[j_idx][7] +
-                 dz * gradConverters[j_idx][8]);
-        gradients[3] += r * (dx * gradConverters[j_idx][9] +
-                             dy * gradConverters[j_idx][10] +
-                             dz * gradConverters[j_idx][11]);
+            r * (dx * gradConverters[k + 6] + dy * gradConverters[k + 7] +
+                 dz * gradConverters[k + 8]);
+        gradients[3] +=
+            r * (dx * gradConverters[k + 9] + dy * gradConverters[k + 10] +
+                 dz * gradConverters[k + 11]);
         gradients[4] += r * dx;
         gradients[5] += r * dy;
         gradients[6] += r * dz;

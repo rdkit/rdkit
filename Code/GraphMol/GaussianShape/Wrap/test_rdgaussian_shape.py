@@ -20,8 +20,8 @@ class TestCase(unittest.TestCase):
   def test1_Defaults(self):
     tpl = rdGaussianShape.AlignMol(self.ref, self.probe)
     self.assertAlmostEqual(tpl[0], 0.497, places=3)
-    self.assertAlmostEqual(tpl[1], 0.759, places=3)
-    self.assertAlmostEqual(tpl[2], 0.235, places=3)
+    self.assertAlmostEqual(tpl[1], 0.760, places=3)
+    self.assertAlmostEqual(tpl[2], 0.233, places=3)
     
 
   def test2_NoColor(self):
@@ -43,8 +43,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(type(shp) == rdGaussianShape.ShapeInput)
     tpl = rdGaussianShape.AlignMol(shp, self.probe)
     self.assertAlmostEqual(tpl[0], 0.497, places=3)
-    self.assertAlmostEqual(tpl[1], 0.759, places=3)
-    self.assertAlmostEqual(tpl[2], 0.235, places=3)
+    self.assertAlmostEqual(tpl[1], 0.760, places=3)
+    self.assertAlmostEqual(tpl[2], 0.233, places=3)
 
   def test4_customFeatures(self):
     m1 = Chem.MolFromSmiles(
@@ -135,8 +135,27 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(shp.ShapeVolume, 259.144, places=3)
     self.assertEqual(shp.ColorVolume, 0.0)
 
-    
+  def test9_tversky(self):
+    scores = rdGaussianShape.AlignMol(self.ref, self.probe)
+    self.assertAlmostEqual(scores[0], 0.497, places=3)
+    self.assertAlmostEqual(scores[1], 0.760, places=3)
+    self.assertAlmostEqual(scores[2], 0.233, places=3)
+
+    ovOpts = rdGaussianShape.ShapeOverlayOptions()
+    ovOpts.simAlpha = 0.95
+    ovOpts.simBeta = 0.05
+    ref_tversky = rdGaussianShape.AlignMol(self.ref, self.probe, overlayOpts=ovOpts)
+    self.assertAlmostEqual(ref_tversky[0], 0.700, places=3)
+    self.assertAlmostEqual(ref_tversky[1], 0.968, places=3)
+    self.assertAlmostEqual(ref_tversky[2], 0.433, places=3)
+
+    ovOpts.simAlpha = 0.05
+    ovOpts.simBeta = 0.95
+    fit_tversky = rdGaussianShape.AlignMol(self.ref, self.probe, overlayOpts=ovOpts)
+    self.assertAlmostEqual(fit_tversky[0], 0.557, places=3)
+    self.assertAlmostEqual(fit_tversky[1], 0.780, places=3)
+    self.assertAlmostEqual(fit_tversky[2], 0.335, places=3)
+   
+
 if __name__ == '__main__':
   unittest.main()
-
-  

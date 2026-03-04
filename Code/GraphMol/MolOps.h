@@ -178,15 +178,6 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
     std::map<T, std::unique_ptr<ROMol>> &molFrags, bool sanitizeFrags = true,
     const std::vector<T> *whiteList = nullptr, bool negateList = false);
 
-#if 0
-    //! finds a molecule's minimum spanning tree (MST)
-    /*!
-      \param mol  the molecule of interest
-      \param mst  used to return the MST as a vector of bond indices
-    */
-    RDKIT_GRAPHMOL_EXPORT void findSpanningTree(const ROMol &mol,std::vector<int> &mst);
-#endif
-
 //! \name Dealing with hydrogens
 //{@
 
@@ -297,16 +288,17 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
 */
-[[deprecated("Please use the version with RemoveHsParameters")]]
-RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol, bool implicitOnly,
-                                      bool updateExplicitCount = false,
-                                      bool sanitize = true);
+[[deprecated(
+    "Please use the version with RemoveHsParameters")]] RDKIT_GRAPHMOL_EXPORT
+    ROMol *
+    removeHs(const ROMol &mol, bool implicitOnly,
+             bool updateExplicitCount = false, bool sanitize = true);
 //! \overload
 /// modifies the molecule in place
-[[deprecated("Please use the version with RemoveHsParameters")]]
-RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly,
-                                    bool updateExplicitCount = false,
-                                    bool sanitize = true);
+[[deprecated(
+    "Please use the version with RemoveHsParameters")]] RDKIT_GRAPHMOL_EXPORT void
+removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount = false,
+         bool sanitize = true);
 struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeDegreeZero = false;    /**< hydrogens that have no bonds */
   bool removeHigherDegrees = false; /**< hydrogens with two (or more) bonds */
@@ -673,7 +665,7 @@ RDKIT_GRAPHMOL_EXPORT int setAromaticity(
      - modifies nitro groups, so that the nitrogen does not have an
    unreasonable valence of 5, as follows:
          - the nitrogen gets a positive charge
-         - one of the oxygens gets a negative chage and the double bond to
+         - one of the oxygens gets a negative charge and the double bond to
    this oxygen is changed to a single bond The net result is that nitro groups
    can be counted on to be: \c "[N+](=O)[O-]"
      - modifies halogen-oxygen containing species as follows:
@@ -795,6 +787,8 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
       RingInfo structure, so this argument is optional (see overload)
   \param includeDativeBonds - determines whether or not dative bonds are used
   in the ring finding.
+  \param includeHydrogenBonds - determines whether or not hydrogen bonds are
+  used in the ring finding.
 
   \return number of smallest rings found
 
@@ -848,11 +842,13 @@ RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
 */
 RDKIT_GRAPHMOL_EXPORT void fastFindRings(const ROMol &mol);
 
-RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol,
+                                            bool includeDativeBonds = false,
+                                            bool includeHydrogenBonds = false);
 
 //! symmetrize the molecule's Smallest Set of Smallest Rings
 /*!
-   SSSR rings obatined from "findSSSR" can be non-unique in some case.
+   SSSR rings obtained from "findSSSR" can be non-unique in some case.
    For example, cubane has five SSSR rings, not six as one would hope.
 
    This function adds additional rings to the SSSR list if necessary
@@ -869,6 +865,8 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
       RingInfo structure, so this argument is optional (see overload)
   \param includeDativeBonds - determines whether or not dative bonds are used
   in the ring finding.
+  \param includeHydrogenBonds - determines whether or not hydrogen bonds are
+  used in the ring finding.
 
   \return the total number of rings = (new rings + old SSSRs)
 
@@ -1177,7 +1175,7 @@ RDKIT_GRAPHMOL_EXPORT void removeStereochemistry(ROMol &mol);
 
   This function is useful in the following situations:
     - when parsing a mol file; for the bonds marked here, coordinate
-      information on the neighbors can be used to indentify cis or trans
+      information on the neighbors can be used to identify cis or trans
   states
     - when writing a mol file; bonds that can be cis/trans but not marked as
       either need to be specially marked in the mol file

@@ -51,11 +51,12 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// @param fitShapeVol - overlap volume of fit with itself
   /// @param fitColorVol - color overlap of fit with itself
   /// @param optimMode - optimisation mode
+  /// @param simAlpha - for the Tversky similarity, the alpha value
+  /// @param simBeta - for the Tversky similarity, the beta value
   /// @param mixingParam - how to mix the 2 tanimoto values
   /// @param useCutoff - whether to use a distance cutoff in the volume
   /// calculation
   /// @param distCutoff - the cutoff to use if we're doing it.
-  /// carbon.  This makes it faster but less correct.
   /// @param maxIts - maximum number of iterations for optimiser
   /// of optimiser
   SingleConformerAlignment(
@@ -66,8 +67,8 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
       const std::unique_ptr<boost::dynamic_bitset<>> &fitCarbonRadii,
       int nFitShape, int nFitColor, double fitShapeVol, double fitColorVol,
       const std::array<double, 7> &initQuatTrans, OptimMode optimMode,
-      double mixingParam, bool useCutoff, double distCutoff,
-      double shapeConvergenceCriterion, unsigned int maxIts);
+      double simAlpha, double simBeta, double mixingParam, bool useCutoff,
+      double distCutoff, double shapeConvergenceCriterion, unsigned int maxIts);
 
   SingleConformerAlignment(const SingleConformerAlignment &other) = delete;
   SingleConformerAlignment(SingleConformerAlignment &&other) = delete;
@@ -157,6 +158,8 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   double d_fitColorVol;
   std::array<double, 7> d_initQuatTrans;
   const OptimMode d_optimMode;
+  const double d_simAlpha;
+  const double d_simBeta;
   const double d_mixingParam;
   const bool d_useCutoff;
   const double d_distCutoff2;
@@ -165,11 +168,11 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   // The quaternion/translation as the optimisation proceeds
   std::array<double, 7> d_quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   // The step sizes of the quaternion and translation during the
-  // optimisition.  Taken from the PubChem code.
+  // optimisation.  Taken from the PubChem code.
   double d_qStepSize{-0.001};
   double d_tStepSize{-0.01};
   // Scratch space for the gradients dr/dQ of the fit molecule.
-  mutable std::vector<std::array<double, 12>> d_gradConverters;
+  mutable std::vector<double> d_gradConverters;
 };
 
 // Compute the volume overlap and optionally "quaternion" gradients for the
@@ -184,15 +187,14 @@ double calcVolAndGrads(
     const std::unique_ptr<boost::dynamic_bitset<>> &refCarbonRadii,
     const double *fit, int numFitPts,
     const std::unique_ptr<boost::dynamic_bitset<>> &fitCarbonRadii,
-    std::vector<std::array<double, 12>> &gradConverters, const bool useCutoff,
+    std::vector<double> &gradConverters, const bool useCutoff,
     const double distCutoff2, const double *quat = nullptr,
     double *gradients = nullptr);
 // This one is for the features, and only calculates values if the types
 // of 2 features match.
 double calcVolAndGrads(const double *ref, int numRefPts, const int *refTypes,
                        const double *fit, int numFitPts, const int *fitTypes,
-                       int numFitShape,
-                       std::vector<std::array<double, 12>> &gradConverters,
+                       int numFitShape, std::vector<double> &gradConverters,
                        const bool useCutoff, const double distCutoff2,
                        const double *quat, double *gradients);
 

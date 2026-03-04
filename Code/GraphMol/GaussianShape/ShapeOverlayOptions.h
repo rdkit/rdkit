@@ -55,6 +55,15 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
   StartMode startMode{StartMode::A_LA_PUBCHEM};
   OptimMode optimMode{
       OptimMode::SHAPE_PLUS_COLOR_SCORE};  //! Optimisation mode.
+  double simAlpha{
+      1.0};  //! When doing a Tversky similarity, the alpha value.  If alpha and
+             //! beta are both the default 1.0, it's a Tanimoto similarity.  A
+             //! high alpha and low beta emphasize the fit volume in the
+             //! similarity and vice versa. Tversky is O / (A * (R - O) + B * (F
+             //! - O) + O) where O is the overlap volume, R is the reference's
+             //! volume and F is the fit's volume.  This is different from that
+             //! used by OpenEye (O / (A * R + B * F)).
+  double simBeta{1.0};   //! When doing a Tversky similarity, the beta value.
   double optParam{0.5};  //! If using colors, the relative weights of shape and
                          //! color scores.
   int nSteps{100};       //! Maximum number of steps for optimiser to take.
@@ -64,7 +73,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
               //! canonical conformations (centred at the origin, aligned along
               //! its principal axes) before starting.
   bool useDistCutoff{
-      true};  //! Whether to use a distance cutoff fo the volume calculation.
+      true};  //! Whether to use a distance cutoff for the volume calculation.
   double distCutoff{4.5};  //! The distance cutoff.  If 2 atoms are more than
                            //! this distance apart, they are not included in the
                            //! volume calculation. A smaller value is faster but
@@ -74,6 +83,36 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
                //! than this amount.  A larger number is faster but less
                //! precise.
 };
+
+inline std::ostream &operator<<(std::ostream &os, const StartMode &sm) {
+  switch (sm) {
+    case StartMode::ROTATE_0:
+      os << "ROTATE_0";
+      break;
+    case StartMode::ROTATE_0_FRAGMENT:
+      os << "ROTATE_0_FRAGMENT";
+      break;
+    case StartMode::ROTATE_180:
+      os << "ROTATE_180";
+      break;
+    case StartMode::ROTATE_180_FRAGMENT:
+      os << "ROTATE_180_FRAGMENT";
+      break;
+    case StartMode::ROTATE_180_WIGGLE:
+      os << "ROTATE_180_WIGGLE";
+      break;
+    case StartMode::ROTATE_45:
+      os << "ROTATE_45";
+      break;
+    case StartMode::ROTATE_45_FRAGMENT:
+      os << "ROTATE_45_FRAGMENT";
+      break;
+    case StartMode::A_LA_PUBCHEM:
+      os << "A_LA_PUBCHEM";
+      break;
+  }
+  return os;
+}
 }  // namespace GaussianShape
 }  // namespace RDKit
 

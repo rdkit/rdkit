@@ -221,6 +221,11 @@ std::unique_ptr<GaussianShape::SearchShapeInput> generateShapes(
   // ORIG_IDX apart from the dummy atoms, but we need coords
   // for them, too.  They are normally copied from the atom at
   // the other end of the broken bond so find that atom too.
+  if (MolToSmiles(frag) != "[1*]C(=O)c1ccccc1" &&
+      MolToSmiles(frag) != "[1*]N1CCCC1") {
+    return std::unique_ptr<GaussianShape::SearchShapeInput>();
+  }
+  std::cout << "Making shape for " << MolToSmiles(frag) << std::endl;
   std::vector<unsigned int> fragAtoms;
   fragAtoms.reserve(frag.getNumAtoms());
   boost::dynamic_bitset<> inFrag(queryConfs.getNumAtoms());
@@ -262,7 +267,6 @@ std::unique_ptr<GaussianShape::SearchShapeInput> generateShapes(
   GaussianShape::ShapeInputOptions opts;
   opts.atomSubset = fragAtoms;
   opts.atomRadii = dummyRadii;
-  // opts.notColorAtoms = notColorAtoms;
   auto shapes = std::make_unique<GaussianShape::SearchShapeInput>(
       queryConfs, pruneThreshold, opts);
   return shapes;
@@ -330,7 +334,7 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
                        << MolToSmiles(*dp_queryConfs) << std::endl;
   GaussianShape::ShapeInputOptions opts;
   dp_queryShapes = std::make_unique<GaussianShape::SearchShapeInput>(
-      *dp_queryConfs, 1.9, opts);
+      *dp_queryConfs, getParams().shapePruneThreshold, opts);
   dp_queryShapes->setActiveShape(0);
 
   // Make a map of the unique SMILES strings for the fragments, keeping
@@ -357,7 +361,8 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
     for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
       threads.push_back(std::thread(generateSomeShapes, std::ref(fragsForShape),
                                     start, start + eachThread,
-                                    std::ref(*dp_queryConfs), 1.9, endTime,
+                                    std::ref(*dp_queryConfs),
+                                    getParams().shapePruneThreshold, endTime,
                                     std::ref(d_fragShapesPool)));
     }
     for (auto &t : threads) {
@@ -365,7 +370,8 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
     }
   } else {
     generateSomeShapes(fragsForShape, 0, fragsForShape.size(), *dp_queryConfs,
-                       1.9, endTime, d_fragShapesPool);
+                       getParams().shapePruneThreshold, endTime,
+                       d_fragShapesPool);
   }
   // Keep track of the minimum fragSet size that each frag is in, which will
   // be used in computeFragSynthonSims.
@@ -416,6 +422,143 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
 }
 
 namespace {
+// Align the dummies and centroids and return the transformation that
+// did it.
+void alignDummies(const double *fragDummy, const double *fragCentroid,
+                  const double *synthDummy, const double *synthCentroid,
+                  RDGeom::Transform3D &xform) {
+  RDGeom::Point3D fCentroid{fragCentroid[0] - fragDummy[0],
+                            fragCentroid[1] - fragDummy[1],
+                            fragCentroid[2] - fragDummy[2]};
+  RDGeom::Point3D sCentroid{synthCentroid[0] - synthDummy[0],
+                            synthCentroid[1] - synthDummy[1],
+                            synthCentroid[2] - synthDummy[2]};
+  std::cout << "fragCentroid : " << fragCentroid[0] << ", " << fragCentroid[1]
+            << ", " << fragCentroid[2] << std::endl;
+  std::cout << "fragDummy : " << fragDummy[0] << ", " << fragDummy[1] << ", "
+            << fragDummy[2] << std::endl;
+  std::cout << "fCentroid : " << fCentroid << std::endl;
+  std::cout << "frag dists : "
+            << (RDGeom::Point3D(
+                    {fragCentroid[0], fragCentroid[1], fragCentroid[2]}) -
+                RDGeom::Point3D({fragDummy[0], fragDummy[1], fragDummy[2]}))
+                   .length()
+            << " and " << fCentroid.length() << std::endl;
+  std::cout << "synthCentroid : " << synthCentroid[0] << ", "
+            << synthCentroid[1] << ", " << synthCentroid[2] << std::endl;
+  std::cout << "synthDummy : " << synthDummy[0] << ", " << synthDummy[1] << ", "
+            << synthDummy[2] << std::endl;
+  std::cout << "sCentroid : " << sCentroid << std::endl;
+  std::cout << "synth dists : "
+            << (RDGeom::Point3D(
+                    {synthCentroid[0], synthCentroid[1], synthCentroid[2]}) -
+                RDGeom::Point3D({synthDummy[0], synthDummy[1], synthDummy[2]}))
+                   .length()
+            << " and " << sCentroid.length() << std::endl;
+
+  auto axis = sCentroid.crossProduct(fCentroid);
+  axis.normalize();
+  auto angle = sCentroid.angleTo(fCentroid);
+  std::cout << "angle : " << angle * 180 / M_PI << std::endl;
+  // rotate SCentroid by angle around axis.
+  auto cosA = std::cos(angle);
+  auto sinA = std::sin(angle);
+  RDGeom::Transform3D rot;
+  rot.SetRotation(cosA, sinA, axis);
+  rot.TransformPoint(sCentroid);
+  std::cout << "transformed centroid : " << sCentroid << " : "
+            << sCentroid.length() << std::endl;
+  auto nangle = sCentroid.angleTo(fCentroid);
+  std::cout << "nangle : " << nangle * 180 / M_PI << std::endl;
+  RDGeom::Transform3D t1, t2;
+  t1.SetTranslation(
+      RDGeom::Point3D{-synthDummy[0], -synthDummy[1], -synthDummy[2]});
+  t2.SetTranslation(RDGeom::Point3D{fragDummy[0], fragDummy[1], fragDummy[2]});
+  GaussianShape::copyTransform(t2 * rot * t1, xform);
+  RDGeom::Point3D sc{synthCentroid[0], synthCentroid[1], synthCentroid[2]};
+  RDGeom::Point3D sd{synthDummy[0], synthDummy[1], synthDummy[2]};
+  xform.TransformPoint(sd);
+  std::cout << "sd : " << sd << std::endl;
+  xform.TransformPoint(sc);
+  std::cout << "sc : " << sc << std::endl;
+  auto shapeDir = sd.directionVector(sc);
+  auto fragDir = RDGeom::Point3D({fragDummy[0], fragDummy[1], fragDummy[2]})
+                     .directionVector(RDGeom::Point3D(
+                         {fragCentroid[0], fragCentroid[1], fragCentroid[2]}));
+  std::cout << "Final angle : " << shapeDir.angleTo(fragDir) << std::endl;
+}
+
+// Find the best similarity of a fragment shape with a synthon shape, within
+// the threshold, making sure that they start with dummy atoms aligned
+// and the synthon's dummy atom doesn't move too far from the fragment's
+// in the final overlay.  Assumes the fragment shape hasn't been
+// normalised, so is in its original position as it was in the input
+// molecule conformation.  Keeps track of the transformation of the
+// best synthon shape onto the fragment for later use.
+double bestSimSynthonOntoFragment(GaussianShape::SearchShapeInput &fragShape,
+                                  Synthon *synthon, double threshold,
+                                  RDGeom::Transform3D &xform) {
+  auto synthShapes = synthon->getShapes().get();
+  if (fragShape.maxSimilarity(*synthShapes) < threshold) {
+    return -1;
+  }
+  std::cout << "\nfragShape numShapes = " << fragShape.getNumShapes()
+            << " numDummies = " << fragShape.getDummyAtoms().count()
+            << " numAtoms : " << fragShape.getNumAtoms() << " : "
+            << fragShape.getNormalized() << std::endl;
+  auto fmol = fragShape.shapeToMol();
+  std::cout << "frag : " << MolToCXSmiles(*fmol) << std::endl;
+
+  std::cout << synthon->getSmiles()
+            << " : Synthon numShapes = " << synthShapes->getNumShapes()
+            << "  numDummies = " << synthShapes->getDummyAtoms().count()
+            << "  numAtoms : " << synthShapes->getNumAtoms() << " : "
+            << synthShapes->getNormalized() << std::endl;
+  auto smol = synthShapes->shapeToMol();
+  std::cout << "shape : " << MolToCXSmiles(*smol) << std::endl;
+
+  GaussianShape::ShapeOverlayOptions opts;
+  opts.startMode = GaussianShape::StartMode::ROTATE_0;
+  opts.normalize = false;
+  auto singleSynthShape = synthShapes->makeSingleShape(0);
+
+  for (unsigned int fsn = 0; fsn < fragShape.getNumShapes(); ++fsn) {
+    fragShape.setActiveShape(fsn);
+    double fragCentroid[3]{-fragShape.getCanonicalTranslation()[0],
+                           -fragShape.getCanonicalTranslation()[1],
+                           -fragShape.getCanonicalTranslation()[2]};
+    for (unsigned int i = 0; i < fragShape.getDummyAtoms().count(); ++i) {
+      auto fragDummy = fragShape.getDummyCoords(i);
+      for (unsigned int ssn = 0; ssn < synthShapes->getNumShapes(); ++ssn) {
+        synthShapes->setActiveShape(ssn);
+        double synthCentroid[3]{-synthShapes->getCanonicalTranslation()[0],
+                                -synthShapes->getCanonicalTranslation()[1],
+                                -synthShapes->getCanonicalTranslation()[2]};
+        for (unsigned int j = 0; j < synthShapes->getDummyAtoms().count();
+             ++j) {
+          std::cout << "Frag shape " << fsn << " dummy " << i
+                    << " vs synth shape " << ssn << " dummy " << j << std::endl;
+          // Align the synthon shape so that its dummy j is on top of
+          // fragShape's dummy i and the vector from the dummy to its centroid
+          // is aligned with the vector from the frag's dummy to centroid.
+          auto synthDummy = synthShapes->getDummyCoords(j);
+          alignDummies(fragDummy, fragCentroid, synthDummy, synthCentroid,
+                       xform);
+          // Work on a copy to leave the synthon where it started so the xform
+          // will be relevant in future.
+          singleSynthShape.setCoords(synthShapes->getCoords());
+          synthShapes->transformCoords(xform);
+          auto scores =
+              GaussianShape::AlignShape(fragShape, *synthShapes, &xform, opts);
+          std::cout << "Score : " << scores[0] << " " << scores[1] << " "
+                    << scores[2] << std::endl;
+        }
+      }
+    }
+  }
+  return -1;
+}
+
 // Process a chunk of the shape->synthon similarity calculations.
 void computeSomeFragSynthonSims(
     const std::vector<std::pair<GaussianShape::SearchShapeInput *, Synthon *>>
@@ -444,21 +587,26 @@ void computeSomeFragSynthonSims(
       }
     }
     fragShape = toDo[thisPair].first;
+    if (!fragShape) {
+      continue;
+    }
     synthon = toDo[thisPair].second;
     if (synthon->getShapes()) {
+      RDGeom::Transform3D xform;
+      auto sim =
+          bestSimSynthonOntoFragment(*fragShape, synthon, threshold, xform);
+      std::cout << "Similarity : " << sim << std::endl;
+#if 0
       unsigned int bestRefConf, bestFitConf;
       const auto sim = fragShape->bestSimilarity(
           *synthon->getShapes().get(), bestFitConf, bestRefConf, threshold);
-      // std::cout << fragShape->getNumAtoms() << " vs " << synthon->getSmiles()
-      //           << " : " << synthon->getShapes()->getNumAtoms() << " : " <<
-      //           sim
-      //           << " vs " << threshold << std::endl;
       if (sim >= threshold) {
         std::pair<const void *, const void *> p{fragShape, synthon};
         std::unique_lock lock1{mtx};
         fragSynthonSims.insert(
             std::make_pair(p, std::make_pair(sim, bestRefConf)));
       }
+#endif
       if (pbar) {
         --numProgs;
         if (!numProgs) {

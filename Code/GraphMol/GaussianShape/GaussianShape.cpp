@@ -21,6 +21,9 @@
 #include <Geometry/Transform3D.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/GaussianShape/GaussianShape.h>
+
+#include "GraphMol/SmilesParse/SmilesWrite.h"
+
 #include <GraphMol/GaussianShape/ShapeInput.h>
 #include <GraphMol/GaussianShape/SingleConformerAlignment.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
@@ -31,44 +34,44 @@ namespace GaussianShape {
 
 namespace {
 // Compute final overlay transform, which applies fitShape's
-// canonical transformation, followed by the overlay transform and
-// finally the inverse of refShape's canonical transformation.
-RDGeom::Transform3D computeFinalTransform(const ShapeInput &refShape,
-                                          const ShapeInput &fitShape,
-                                          RDGeom::Transform3D &ovXform) {
-  // Move fitConf to fitShape's initial centroid and principal axes
+// initial canonical transformation, followed by the overlay transform and
+// finally the inverse of refShape's initial canonical transformation.
+RDGeom::Transform3D computeFinalTransform(
+    const std::array<double, 3> &inRefTrans,
+    const std::array<double, 9> &inRefRot,
+    const std::array<double, 3> &inFitTrans,
+    const std::array<double, 9> &inFitRot, RDGeom::Transform3D &ovXform) {
+  // Move to fitShape's initial centroid and principal axes
   RDGeom::Transform3D transform0;
   transform0.SetTranslation(
-      RDGeom::Point3D{fitShape.getCanonicalTranslation()[0],
-                      fitShape.getCanonicalTranslation()[1],
-                      fitShape.getCanonicalTranslation()[2]});
+      RDGeom::Point3D{inFitTrans[0], inFitTrans[1], inFitTrans[2]});
 
   RDGeom::Transform3D transform1;
-  transform1.setValUnchecked(0, 0, fitShape.getCanonicalRotation()[0]);
-  transform1.setValUnchecked(0, 1, fitShape.getCanonicalRotation()[1]);
-  transform1.setValUnchecked(0, 2, fitShape.getCanonicalRotation()[2]);
-  transform1.setValUnchecked(1, 0, fitShape.getCanonicalRotation()[3]);
-  transform1.setValUnchecked(1, 1, fitShape.getCanonicalRotation()[4]);
-  transform1.setValUnchecked(1, 2, fitShape.getCanonicalRotation()[5]);
-  transform1.setValUnchecked(2, 0, fitShape.getCanonicalRotation()[6]);
-  transform1.setValUnchecked(2, 1, fitShape.getCanonicalRotation()[7]);
-  transform1.setValUnchecked(2, 2, fitShape.getCanonicalRotation()[8]);
+  transform1.setValUnchecked(0, 0, inFitRot[0]);
+  transform1.setValUnchecked(0, 1, inFitRot[1]);
+  transform1.setValUnchecked(0, 2, inFitRot[2]);
+  transform1.setValUnchecked(1, 0, inFitRot[3]);
+  transform1.setValUnchecked(1, 1, inFitRot[4]);
+  transform1.setValUnchecked(1, 2, inFitRot[5]);
+  transform1.setValUnchecked(2, 0, inFitRot[6]);
+  transform1.setValUnchecked(2, 1, inFitRot[7]);
+  transform1.setValUnchecked(2, 2, inFitRot[8]);
 
   RDGeom::Transform3D toRefRefFrame;
   // Rotate by the inverse of the ref shape's canonical rotation and
   // translate by the negative of its canonical translation.
-  toRefRefFrame.setValUnchecked(0, 0, refShape.getCanonicalRotation()[0]);
-  toRefRefFrame.setValUnchecked(0, 1, refShape.getCanonicalRotation()[3]);
-  toRefRefFrame.setValUnchecked(0, 2, refShape.getCanonicalRotation()[6]);
-  toRefRefFrame.setValUnchecked(0, 3, -refShape.getCanonicalTranslation()[0]);
-  toRefRefFrame.setValUnchecked(1, 0, refShape.getCanonicalRotation()[1]);
-  toRefRefFrame.setValUnchecked(1, 1, refShape.getCanonicalRotation()[4]);
-  toRefRefFrame.setValUnchecked(1, 2, refShape.getCanonicalRotation()[7]);
-  toRefRefFrame.setValUnchecked(1, 3, -refShape.getCanonicalTranslation()[1]);
-  toRefRefFrame.setValUnchecked(2, 0, refShape.getCanonicalRotation()[2]);
-  toRefRefFrame.setValUnchecked(2, 1, refShape.getCanonicalRotation()[5]);
-  toRefRefFrame.setValUnchecked(2, 2, refShape.getCanonicalRotation()[8]);
-  toRefRefFrame.setValUnchecked(2, 3, -refShape.getCanonicalTranslation()[2]);
+  toRefRefFrame.setValUnchecked(0, 0, inRefRot[0]);
+  toRefRefFrame.setValUnchecked(0, 1, inRefRot[3]);
+  toRefRefFrame.setValUnchecked(0, 2, inRefRot[6]);
+  toRefRefFrame.setValUnchecked(0, 3, -inRefTrans[0]);
+  toRefRefFrame.setValUnchecked(1, 0, inRefRot[1]);
+  toRefRefFrame.setValUnchecked(1, 1, inRefRot[4]);
+  toRefRefFrame.setValUnchecked(1, 2, inRefRot[7]);
+  toRefRefFrame.setValUnchecked(1, 3, -inRefTrans[1]);
+  toRefRefFrame.setValUnchecked(2, 0, inRefRot[2]);
+  toRefRefFrame.setValUnchecked(2, 1, inRefRot[5]);
+  toRefRefFrame.setValUnchecked(2, 2, inRefRot[8]);
+  toRefRefFrame.setValUnchecked(2, 3, -inRefTrans[2]);
 
   auto finalTransform = toRefRefFrame * ovXform * transform1 * transform0;
   return finalTransform;
@@ -104,9 +107,9 @@ std::array<double, 4> getInitialRotationPlain(
       fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
-      overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, overlayOpts.shapeConvergenceCriterion,
-      overlayOpts.nSteps);
+      overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
+      overlayOpts.optParam, overlayOpts.useDistCutoff, overlayOpts.distCutoff,
+      overlayOpts.shapeConvergenceCriterion, overlayOpts.nSteps);
   auto scores = sca.calcScores(useColor);
   score = scores[0];
   return quats[index];
@@ -152,9 +155,9 @@ std::array<double, 4> getInitialRotationWiggle(
       fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), tmpQuatTrans,
-      overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, overlayOpts.shapeConvergenceCriterion,
-      overlayOpts.nSteps);
+      overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
+      overlayOpts.optParam, overlayOpts.useDistCutoff, overlayOpts.distCutoff,
+      overlayOpts.shapeConvergenceCriterion, overlayOpts.nSteps);
 
   for (unsigned int i = start_quat; i < start_quat + 7; ++i) {
     std::array<double, 7> quatTrans{quats[i][0], quats[i][1], quats[i][2],
@@ -173,9 +176,9 @@ std::array<double, 4> getInitialRotationWiggle(
 
 // Return the translation that puts the extreme of refShape at the
 // extreme of the fitShape along the appropriate axis.
-RDGeom::Point3D getInitialTranslation(int index, const ShapeInput &refShape,
-                                      const ShapeInput fitShape) {
-  auto getDisp = [](const ShapeInput &shape, size_t i) -> RDGeom::Point3D {
+RDGeom::Point3D getInitialTranslation(int index, ShapeInput &refShape,
+                                      ShapeInput fitShape) {
+  auto getDisp = [](ShapeInput &shape, size_t i) -> RDGeom::Point3D {
     const double *coord = shape.getCoords().data() + shape.getExtremes()[i] * 4;
     return RDGeom::Point3D(coord[0], coord[1], coord[2]);
   };
@@ -229,6 +232,7 @@ unsigned int calculateQrat(const std::array<double, 3> &eigenValues) {
   const static double qrat_threshold = 0.7225;  // 0.85*0.85;
   unsigned int qrat = 1000;
   unsigned int u_rqyx, u_rqzy;
+
   if (double_ev_oe[1] > 0) {
     if (qrat_threshold < (double_ev_oe[1] / double_ev_oe[0])) {
       u_rqyx = 1;
@@ -246,18 +250,20 @@ unsigned int calculateQrat(const std::array<double, 3> &eigenValues) {
   return qrat;
 }
 
-StartMode decideStartModeFromEigenValues(const ShapeInput &refShape,
-                                         const ShapeInput &fitShape) {
-  auto rqrat = calculateQrat(refShape.getEigenValues());
-  auto fqrat = calculateQrat(fitShape.getEigenValues());
-  if (rqrat > 0 || fqrat > 0) {
-    return StartMode::ROTATE_45;
+StartMode decideStartModeFromEigenValues(ShapeInput &refShape,
+                                         ShapeInput &fitShape) {
+  // The PubChem code uses the moments of inertia for this, rather than the
+  // canonical transformation.
+  auto rqratwf = calculateQrat(refShape.getMomentsOfInertia(true));
+  auto fqratwf = calculateQrat(fitShape.getMomentsOfInertia(true));
+  StartMode startModeWF{StartMode::ROTATE_180_WIGGLE};
+  if (rqratwf > 0 || fqratwf > 0) {
+    startModeWF = StartMode::ROTATE_45;
   }
-  return StartMode::ROTATE_180_WIGGLE;
+  return startModeWF;
 }
 
-std::array<double, 3> alignShape(const ShapeInput &refShape,
-                                 const ShapeInput &fitShape,
+std::array<double, 3> alignShape(ShapeInput &refShape, ShapeInput &fitShape,
                                  RDGeom::Transform3D &bestXform,
                                  const ShapeOverlayOptions &overlayOpts) {
   unsigned int finalRotIndex = 1;
@@ -282,7 +288,6 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
     default:
       break;
   }
-
   unsigned int finalTransIndex = 1;
   if (startMode == StartMode::ROTATE_0_FRAGMENT ||
       startMode == StartMode::ROTATE_45_FRAGMENT ||
@@ -320,9 +325,10 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
           fitShape.getTypes().data(), fitShape.getCarbonRadii(),
           fitShape.getNumAtoms(), fitShape.getNumFeatures(),
           fitShape.getShapeVolume(), fitShape.getColorVolume(), initQuat,
-          overlayOpts.optimMode, overlayOpts.optParam,
-          overlayOpts.useDistCutoff, overlayOpts.distCutoff,
-          overlayOpts.shapeConvergenceCriterion, overlayOpts.nSteps));
+          overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
+          overlayOpts.optParam, overlayOpts.useDistCutoff,
+          overlayOpts.distCutoff, overlayOpts.shapeConvergenceCriterion,
+          overlayOpts.nSteps));
       bestScoreForStart.push_back({score, k});
     }
   }
@@ -339,9 +345,6 @@ std::array<double, 3> alignShape(const ShapeInput &refShape,
     for (const auto &[bssf, k] : bestScoreForStart) {
       if (cycle == 1) {
         if (bssf < 0.7 * bestScore[0]) {
-          // std::cout << "skipping because " << bssf << " for " << k << " vs "
-          //           << 0.7 * bestScore[0] << " from " << bestScore[0]
-          //           << std::endl;
           continue;
         }
       }
@@ -369,6 +372,10 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
   // example) but they might need to be.
   auto workingRefShape = std::make_unique<ShapeInput>(refShape);
   auto workingFitShape = std::make_unique<ShapeInput>(fitShape);
+  auto inRefTrans = workingRefShape->getCanonicalTranslation();
+  auto inRefRot = workingRefShape->getCanonicalRotation();
+  auto inFitTrans = workingFitShape->getCanonicalTranslation();
+  auto inFitRot = workingFitShape->getCanonicalRotation();
   // If we're not normalizing, translate both shapes so that the fit
   // is at the origin, so the rotations work.
   RDGeom::Transform3D moveToOrigin;
@@ -386,9 +393,9 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
                         workingFitShape->getCanonicalTranslation()[1],
                         workingFitShape->getCanonicalTranslation()[2]});
     moveFromOrigin.SetTranslation(
-        RDGeom::Point3D{-fitShape.getCanonicalTranslation()[0],
-                        -fitShape.getCanonicalTranslation()[1],
-                        -fitShape.getCanonicalTranslation()[2]});
+        RDGeom::Point3D{-workingFitShape->getCanonicalTranslation()[0],
+                        -workingFitShape->getCanonicalTranslation()[1],
+                        -workingFitShape->getCanonicalTranslation()[2]});
     workingFitShape->transformCoords(moveToOrigin);
     workingRefShape->transformCoords(moveToOrigin);
   }
@@ -401,8 +408,8 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
     auto finalXform = moveFromOrigin * bestXform * moveToOrigin;
     copyTransform(finalXform, bestXform);
   } else {
-    auto finalXform =
-        computeFinalTransform(*workingRefShape, *workingFitShape, bestXform);
+    auto finalXform = computeFinalTransform(inRefTrans, inRefRot, inFitTrans,
+                                            inFitRot, bestXform);
     copyTransform(finalXform, bestXform);
     fitShape.transformCoords(bestXform);
   }
@@ -435,7 +442,6 @@ std::array<double, 3> AlignMolecule(const ROMol &ref, ROMol &fit,
                                     const ShapeOverlayOptions &overlayOpts,
                                     int refConfId, int fitConfId) {
   auto refShape = ShapeInput(ref, refConfId, refOpts, overlayOpts);
-  RDGeom::Transform3D tmpXform;
   auto scores =
       AlignMolecule(refShape, fit, fitOpts, xform, overlayOpts, fitConfId);
   return scores;
@@ -455,9 +461,9 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
       fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
-      overlayOpts.optimMode, overlayOpts.optParam, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff, overlayOpts.shapeConvergenceCriterion,
-      overlayOpts.nSteps);
+      overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
+      overlayOpts.optParam, overlayOpts.useDistCutoff, overlayOpts.distCutoff,
+      overlayOpts.shapeConvergenceCriterion, overlayOpts.nSteps);
   bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   auto scores = sca.calcScores(refShape.getCoords().data(),
                                fitShape.getCoords().data(), includeColor);

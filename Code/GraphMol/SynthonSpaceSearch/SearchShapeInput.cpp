@@ -25,6 +25,11 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
                                    const ShapeInputOptions &opts,
                                    const ShapeOverlayOptions &overlayOpts)
     : ShapeInput(mol, 0, opts, overlayOpts) {
+  std::cout << "Making shape from " << MolToSmiles(mol) << std::endl;
+  std::cout << "subset atoms : " << opts.atomSubset.size()
+            << "  confs = " << mol.getNumConformers() << std::endl;
+  PRECONDITION(pruneThreshold <= 1.0,
+               "Shape prune threshold can't be above 1.0");
   // The ShapeInput c'tor puts a PRECONDITION on conformers being available.
   initializeFromBase();
 
@@ -55,7 +60,7 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
   d_colorVolumes.reserve(mol.getNumConformers());
   d_extremePointss.reserve(mol.getNumConformers());
   d_canonRots.reserve(mol.getNumConformers());
-  d_centroids.reserve(mol.getNumConformers());
+  d_canonTranss.reserve(mol.getNumConformers());
   d_eigenValuess.reserve(mol.getNumConformers());
   for (unsigned int cn = 1; cn < mol.getNumConformers(); ++cn) {
     auto shape = ShapeInput(mol, cn, opts, overlayOpts);
@@ -73,14 +78,34 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
     d_colorVolumes.push_back(shape.getColorVolume());
     d_extremePointss.push_back(shape.getExtremes());
     d_canonRots.push_back(shape.getCanonicalRotation());
-    d_centroids.push_back(shape.getCanonicalTranslation());
+    d_canonTranss.push_back(shape.getCanonicalTranslation());
     d_eigenValuess.push_back(shape.getEigenValues());
+  }
+  std::cout << "All centroids : " << std::endl;
+  for (unsigned int i = 0; i < d_canonTranss.size(); ++i) {
+    std::cout << i << " : " << d_canonTranss[i][0] << ", "
+              << d_canonTranss[i][1] << ", " << d_canonTranss[i][2]
+              << std::endl;
   }
   if (pruneThreshold > 0.0) {
     pruneShapes(pruneThreshold);
   }
+  std::cout << "Pruned centroids : " << pruneThreshold << std::endl;
+  for (unsigned int i = 0; i < d_canonTranss.size(); ++i) {
+    std::cout << i << " : " << d_canonTranss[i][0] << ", "
+              << d_canonTranss[i][1] << ", " << d_canonTranss[i][2]
+              << std::endl;
+  }
   sortShapesByScore();
+  std::cout << "Sorted centroids : " << std::endl;
+  for (unsigned int i = 0; i < d_canonTranss.size(); ++i) {
+    std::cout << i << " : " << d_canonTranss[i][0] << ", "
+              << d_canonTranss[i][1] << ", " << d_canonTranss[i][2]
+              << std::endl;
+  }
+
   calculateDummyVolumes(overlayOpts);
+  std::cout << "Number of shapes : " << getNumShapes() << std::endl;
 }
 
 SearchShapeInput::SearchShapeInput(const std::string &str) {
@@ -156,10 +181,10 @@ void SearchShapeInput::merge(SearchShapeInput &other) {
   d_canonRots.insert(d_canonRots.end(),
                      std::make_move_iterator(other.d_canonRots.begin()),
                      std::make_move_iterator(other.d_canonRots.end()));
-  d_centroids.reserve(d_centroids.size() + other.d_centroids.size());
-  d_centroids.insert(d_centroids.end(),
-                     std::make_move_iterator(other.d_centroids.begin()),
-                     std::make_move_iterator(other.d_centroids.end()));
+  d_canonTranss.reserve(d_canonTranss.size() + other.d_canonTranss.size());
+  d_canonTranss.insert(d_canonTranss.end(),
+                       std::make_move_iterator(other.d_canonTranss.begin()),
+                       std::make_move_iterator(other.d_canonTranss.end()));
   d_eigenValuess.reserve(d_eigenValuess.size() + other.d_eigenValuess.size());
   d_eigenValuess.insert(d_eigenValuess.end(),
                         std::make_move_iterator(other.d_eigenValuess.begin()),
@@ -172,7 +197,7 @@ void SearchShapeInput::merge(SearchShapeInput &other) {
   other.d_colorVolumes.clear();
   other.d_extremePointss.clear();
   other.d_canonRots.clear();
-  other.d_centroids.clear();
+  other.d_canonTranss.clear();
   other.d_eigenValuess.clear();
 }
 
@@ -200,7 +225,7 @@ void SearchShapeInput::setActiveShape(unsigned int shapeNum) {
   setColorVolume(d_colorVolumes[shapeNum]);
   setExtremes(d_extremePointss[shapeNum]);
   setCanonicalRotation(d_canonRots[shapeNum]);
-  setCanonicalTranslation(d_centroids[shapeNum]);
+  setCanonicalTranslation(d_canonTranss[shapeNum]);
   setEigenValues(d_eigenValuess[shapeNum]);
 }
 
@@ -270,26 +295,20 @@ void SearchShapeInput::sortShapesByScore() {
   selectConformations(picks);
 }
 
+namespace {
+// Maximum possible score of the 2 shape (v[12]) and color (c[12]) volumes
+double maxScore(double v1, double v2, double c1, double c2) {
+  double maxSt = std::min(v1, v2) / std::max(v1, v2);
+  double maxCt = std::min(c1, c2) / std::max(c1, c2);
+  return maxSt + maxCt;
+};
+
+}  // namespace
 double SearchShapeInput::bestSimilarity(
-    SearchShapeInput &fitShape, unsigned int &bestRefConf,
-    unsigned int &bestFitConf, double threshold,
+    SearchShapeInput &fitShape, unsigned int &bestThisShape,
+    unsigned int &bestFitShape, double threshold,
     const ShapeOverlayOptions &overlayOpts) {
-  // The best score achievable is when the smaller volume is entirely inside
-  // the larger volume.  The Shape tanimoto is the fraction of volume in
-  // common.  The scores for the different conformations are sorted in
-  // descending order.  So try the smallest refShape score against the
-  // largest fitShape score and vice versa.
-  auto maxScore = [](double v1, double v2, double f1, double f2) -> double {
-    double maxSt = std::min(v1, v2) / std::max(v1, v2);
-    double maxCt = std::min(f1, f2) / std::max(f1, f2);
-    return maxSt + maxCt;
-  };
-  if (maxScore(fitShape.d_shapeVolumes.front(), d_shapeVolumes.back(),
-               fitShape.d_colorVolumes.front(),
-               d_colorVolumes.back()) < threshold &&
-      maxScore(fitShape.d_shapeVolumes.back(), d_shapeVolumes.front(),
-               fitShape.d_colorVolumes.back(),
-               d_colorVolumes.front()) < threshold) {
+  if (maxSimilarity(fitShape) < threshold) {
     return -1.0;
   }
 
@@ -304,13 +323,57 @@ double SearchShapeInput::bestSimilarity(
         auto scores = AlignShape(*this, fitShape, nullptr, overlayOpts);
         if (scores[0] > best_combo_t) {
           best_combo_t = scores[0];
-          bestRefConf = i;
-          bestFitConf = j;
+          bestThisShape = i;
+          bestFitShape = j;
         }
       }
     }
   }
   return best_combo_t;
+}
+
+double SearchShapeInput::maxSimilarity(const SearchShapeInput &fitShape) const {
+  return std::max(
+      maxScore(fitShape.d_shapeVolumes.front(), d_shapeVolumes.back(),
+               fitShape.d_colorVolumes.front(), d_colorVolumes.back()),
+      maxScore(fitShape.d_shapeVolumes.back(), d_shapeVolumes.front(),
+               fitShape.d_colorVolumes.back(), d_colorVolumes.front()));
+}
+
+const double *SearchShapeInput::getDummyCoords(unsigned int dummyNumber) const {
+  PRECONDITION(dummyNumber < d_dummyAtoms.count(), "Bad dummy atom number.");
+  for (unsigned int i = 0, j = 0; i < d_dummyAtoms.size(); i++) {
+    if (d_dummyAtoms[i]) {
+      if (j == dummyNumber) {
+        return getCoords().data() + 4 * i;
+      }
+      ++j;
+    }
+  }
+  // To keep the compiler happy.  It should never get here because dummyNumber
+  // should always be valid.
+  return nullptr;
+}
+
+std::unique_ptr<RWMol> SearchShapeInput::shapeToMol(bool includeColors) const {
+  std::cout << "SearchShapeInput::shapeToMol() : " << std::endl;
+  auto res = ShapeInput::shapeToMol(includeColors);
+  std::cout << "SearchShapeInput::shapeToMol() : " << res->getNumConformers()
+            << std::endl;
+  const auto &shapeCds = getCoords();
+  for (unsigned int i = 0; i < getNumAtoms(); i++) {
+    if (d_dummyAtoms[i]) {
+      Atom *atom = new Atom(8);
+      res->addAtom(atom, true, true);
+    }
+    Conformer conf = res->getConformer();
+    auto &pos = conf.getAtomPos(i);
+    pos.x = shapeCds[4 * i];
+    pos.y = shapeCds[4 * i + 1];
+    pos.z = shapeCds[4 * i + 2];
+  }
+
+  return res;
 }
 
 void SearchShapeInput::initializeFromBase() {
@@ -332,7 +395,7 @@ void SearchShapeInput::initializeFromBase() {
   d_colorVolumes = std::vector<double>(1, getColorVolume());
   d_extremePointss = std::vector<std::array<size_t, 6>>(1, getExtremes());
   d_canonRots = std::vector<std::array<double, 9>>(1, getCanonicalRotation());
-  d_centroids =
+  d_canonTranss =
       std::vector<std::array<double, 3>>(1, getCanonicalTranslation());
   d_eigenValuess = std::vector<std::array<double, 3>>(1, getEigenValues());
 }
@@ -349,6 +412,7 @@ void SearchShapeInput::confCoordsToShapeCoords(
 }
 
 void SearchShapeInput::selectConformations(const std::vector<int> &picks) {
+  std::cout << "Number of picks : " << picks.size() << std::endl;
   std::vector<std::vector<double>> newCoords;
   newCoords.reserve(picks.size());
   std::vector<unsigned int> newMolConfs;
@@ -375,7 +439,7 @@ void SearchShapeInput::selectConformations(const std::vector<int> &picks) {
     newColorVolumes.push_back(d_colorVolumes[p]);
     newExtremePointss.push_back(std::move(d_extremePointss[p]));
     newCanRots.push_back(std::move(d_canonRots[p]));
-    newCentroids.push_back(std::move(d_centroids[p]));
+    newCentroids.push_back(std::move(d_canonTranss[p]));
     newEigenValuess.push_back(std::move(d_eigenValuess[p]));
   }
   d_confCoords = std::move(newCoords);
@@ -384,6 +448,8 @@ void SearchShapeInput::selectConformations(const std::vector<int> &picks) {
   d_shapeVolumes = std::move(newShapeVolumes);
   d_colorVolumes = std::move(newColorVolumes);
   d_extremePointss = std::move(newExtremePointss);
+  d_canonRots = std::move(newCanRots);
+  d_canonTranss = std::move(newCentroids);
   d_eigenValuess = std::move(newEigenValuess);
 }
 
@@ -401,8 +467,7 @@ void SearchShapeInput::calculateDummyVolumes(
         tmpCoords[4 * i + 3] *= -1;
       }
     }
-    std::vector<std::array<double, 12>> gradConverters(getNumAtoms() +
-                                                       getNumFeatures());
+    std::vector<double> gradConverters(12 * (getNumAtoms() + getNumFeatures()));
 
     auto vol =
         calcVolAndGrads(tmpCoords.data(), getNumAtoms(), getCarbonRadii(),
@@ -411,40 +476,6 @@ void SearchShapeInput::calculateDummyVolumes(
                         overlayOpts.distCutoff * overlayOpts.distCutoff);
     d_dummyVolumes[i] = d_shapeVolumes[i] - vol;
   }
-}
-
-std::unique_ptr<RWMol> shapeToMol(const SearchShapeInput &shape,
-                                  bool includeColors) {
-  auto mol = std::make_unique<RWMol>();
-  for (unsigned int i = 0; i < shape.getNumAtoms(); i++) {
-    RDKit::Atom *atom = nullptr;
-    if (shape.getDummyAtoms()[i]) {
-      atom = new RDKit::Atom(8);
-    } else {
-      atom = new RDKit::Atom(6);
-    }
-    mol->addAtom(atom, true, true);
-  }
-  if (includeColors) {
-    for (unsigned int i = 0; i < shape.getNumFeatures(); i++) {
-      RDKit::Atom *atom = new RDKit::Atom(7);
-      mol->addAtom(atom, true, true);
-    }
-  }
-  unsigned int num = shape.getNumAtoms();
-  if (includeColors) {
-    num += shape.getNumFeatures();
-  }
-  RDKit::Conformer *conf = new RDKit::Conformer(num);
-  const auto &shapeCds = shape.getCoords();
-  for (unsigned int i = 0; i < num; i++) {
-    auto &pos = conf->getAtomPos(i);
-    pos.x = shapeCds[4 * i];
-    pos.y = shapeCds[4 * i + 1];
-    pos.z = shapeCds[4 * i + 2];
-  }
-  mol->addConformer(conf, true);
-  return mol;
 }
 
 }  // namespace GaussianShape

@@ -14,6 +14,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <chrono>
+#include <cstdlib>
 #include <ctime>
 
 using namespace RDKit;
@@ -458,19 +459,63 @@ void testEnumeratorParams() {
 
     std::string eEnolSmi = "C/C=C/O";
     ROMOL_SPTR eEnol(SmilesToMol(eEnolSmi));
-    if (useLegacy) {
-      TEST_ASSERT(eEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-    } else {
-      TEST_ASSERT(eEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+    unsigned int stereoBondA1 = 0;
+    unsigned int stereoBondA2 = 0;
+    {
+      unsigned int numStereoBonds = 0;
+      const Bond *stereoBond = nullptr;
+      for (const auto b : eEnol->bonds()) {
+        // Enum-order check: defined double-bond stereo (E/Z or cis/trans)
+        // compares > STEREOANY, so this finds the one explicitly-stereo bond.
+        if (b->getStereo() > Bond::STEREOANY) {
+          ++numStereoBonds;
+          stereoBond = b;
+        }
+      }
+      TEST_ASSERT(numStereoBonds == 1);
+      TEST_ASSERT(stereoBond);
+      TEST_ASSERT(stereoBond->getBondType() == Bond::DOUBLE);
+      TEST_ASSERT(stereoBond->getStereo() ==
+                  (useLegacy ? Bond::STEREOE : Bond::STEREOTRANS));
+      stereoBondA1 = stereoBond->getBeginAtomIdx();
+      stereoBondA2 = stereoBond->getEndAtomIdx();
     }
     {
       // test remove enol E stereochemistry
       CleanupParameters params;
       params.tautomerRemoveBondStereo = true;
+      params.tautomerReassignStereo = false;
       TautomerEnumerator te(params);
       TautomerEnumeratorResult res = te.enumerate(*eEnol);
+      const auto &modifiedBonds = res.modifiedBonds();
       for (const auto &taut : res) {
-        TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+        // Avoid fixed bond indices: tautomerization can shift bond orders.
+        const auto bond = taut->getBondBetweenAtoms(stereoBondA1, stereoBondA2);
+        TEST_ASSERT(bond);
+        TEST_ASSERT((bond->getBondType() == Bond::DOUBLE &&
+                     bond->getStereo() == Bond::STEREOANY) ||
+                    (bond->getBondType() != Bond::DOUBLE &&
+                     bond->getStereo() == Bond::STEREONONE));
+
+        // STEREOANY should only appear on non-ring DOUBLE bonds.
+        // (Ring DOUBLE bonds can appear due to kekulization.)
+        const auto ringInfo = taut->getRingInfo();
+        for (const auto b : taut->bonds()) {
+          // Enum-order check: require no defined bond stereo remains anywhere
+          // (i.e. nothing that compares > STEREOANY).
+          TEST_ASSERT(b->getStereo() <= Bond::STEREOANY);
+          const bool inRing = ringInfo && ringInfo->numBondRings(b->getIdx());
+
+          // tautomerism-involved non-ring double bonds must be explicitly undefined (STEREOANY).
+          if (b->getBondType() == Bond::DOUBLE && !inRing &&
+              modifiedBonds.test(b->getIdx())) {
+            TEST_ASSERT(b->getStereo() == Bond::STEREOANY);
+          }
+          if (b->getStereo() == Bond::STEREOANY) {
+            TEST_ASSERT(b->getBondType() == Bond::DOUBLE);
+            TEST_ASSERT(!inRing);
+          }
+        }
       }
     }
     {
@@ -480,30 +525,71 @@ void testEnumeratorParams() {
       TautomerEnumerator te(params);
       TautomerEnumeratorResult res = te.enumerate(*eEnol);
       for (const auto &taut : res) {
-        if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
+        const auto bond = taut->getBondBetweenAtoms(stereoBondA1, stereoBondA2);
+        TEST_ASSERT(bond);
+        if (bond->getBondType() == Bond::DOUBLE) {
           if (useLegacy) {
-            TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+            TEST_ASSERT(bond->getStereo() == Bond::STEREOE);
           } else {
-            TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() ==
-                        Bond::STEREOTRANS);
+            TEST_ASSERT(bond->getStereo() == Bond::STEREOTRANS);
           }
         }
       }
     }
+
     ROMOL_SPTR zEnol = "C/C=C\\O"_smiles;
-    if (useLegacy) {
-      TEST_ASSERT(zEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
-    } else {
-      TEST_ASSERT(zEnol->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+    unsigned int zStereoBondA1 = 0;
+    unsigned int zStereoBondA2 = 0;
+    {
+      unsigned int numStereoBonds = 0;
+      const Bond *stereoBond = nullptr;
+      for (const auto b : zEnol->bonds()) {
+        // Enum-order check: defined double-bond stereo compares > STEREOANY.
+        if (b->getStereo() > Bond::STEREOANY) {
+          ++numStereoBonds;
+          stereoBond = b;
+        }
+      }
+      TEST_ASSERT(numStereoBonds == 1);
+      TEST_ASSERT(stereoBond);
+      TEST_ASSERT(stereoBond->getBondType() == Bond::DOUBLE);
+      TEST_ASSERT(stereoBond->getStereo() ==
+                  (useLegacy ? Bond::STEREOZ : Bond::STEREOCIS));
+      zStereoBondA1 = stereoBond->getBeginAtomIdx();
+      zStereoBondA2 = stereoBond->getEndAtomIdx();
     }
     {
       // test remove enol Z stereochemistry
       CleanupParameters params;
       params.tautomerRemoveBondStereo = true;
+      params.tautomerReassignStereo = false;
       TautomerEnumerator te(params);
       TautomerEnumeratorResult res = te.enumerate(*zEnol);
+      const auto &modifiedBonds = res.modifiedBonds();
       for (const auto &taut : res) {
-        TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+        const auto bond = taut->getBondBetweenAtoms(zStereoBondA1, zStereoBondA2);
+        TEST_ASSERT(bond);
+        TEST_ASSERT((bond->getBondType() == Bond::DOUBLE &&
+                     bond->getStereo() == Bond::STEREOANY) ||
+                    (bond->getBondType() != Bond::DOUBLE &&
+                     bond->getStereo() == Bond::STEREONONE));
+
+        const auto ringInfo = taut->getRingInfo();
+        for (const auto b : taut->bonds()) {
+          // Enum-order check: ensure we didn't leave any defined bond stereo.
+          TEST_ASSERT(b->getStereo() <= Bond::STEREOANY);
+          const bool inRing = ringInfo && ringInfo->numBondRings(b->getIdx());
+
+          // tautomerism-involved non-ring double bonds must be explicitly undefined (STEREOANY).
+          if (b->getBondType() == Bond::DOUBLE && !inRing &&
+              modifiedBonds.test(b->getIdx())) {
+            TEST_ASSERT(b->getStereo() == Bond::STEREOANY);
+          }
+          if (b->getStereo() == Bond::STEREOANY) {
+            TEST_ASSERT(b->getBondType() == Bond::DOUBLE);
+            TEST_ASSERT(!inRing);
+          }
+        }
       }
     }
     {
@@ -513,22 +599,35 @@ void testEnumeratorParams() {
       TautomerEnumerator te(params);
       TautomerEnumeratorResult res = te.enumerate(*zEnol);
       for (const auto &taut : res) {
-        if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
+        const auto bond = taut->getBondBetweenAtoms(zStereoBondA1, zStereoBondA2);
+        TEST_ASSERT(bond);
+        if (bond->getBondType() == Bond::DOUBLE) {
           if (useLegacy) {
-            TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+            TEST_ASSERT(bond->getStereo() == Bond::STEREOZ);
           } else {
-            TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() ==
-                        Bond::STEREOCIS);
+            TEST_ASSERT(bond->getStereo() == Bond::STEREOCIS);
           }
         }
       }
     }
+
     std::string eOximeSmi = "c1ccnc(c1)/C=N/O";
     ROMOL_SPTR eOxime(SmilesToMol(eOximeSmi));
-    if (useLegacy) {
-      TEST_ASSERT(eOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOE);
-    } else {
-      TEST_ASSERT(eOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOTRANS);
+    {
+      unsigned int numStereoBonds = 0;
+      const Bond *stereoBond = nullptr;
+      for (const auto b : eOxime->bonds()) {
+        // Enum-order check: defined double-bond stereo compares > STEREOANY.
+        if (b->getStereo() > Bond::STEREOANY) {
+          ++numStereoBonds;
+          stereoBond = b;
+        }
+      }
+      TEST_ASSERT(numStereoBonds == 1);
+      TEST_ASSERT(stereoBond);
+      TEST_ASSERT(stereoBond->getBondType() == Bond::DOUBLE);
+      TEST_ASSERT(stereoBond->getStereo() ==
+                  (useLegacy ? Bond::STEREOE : Bond::STEREOTRANS));
     }
     {
       // test remove oxime E stereochemistry
@@ -536,59 +635,120 @@ void testEnumeratorParams() {
       params.tautomerRemoveBondStereo = true;
       TautomerEnumerator te(params);
       TautomerEnumeratorResult res = te.enumerate(*eOxime);
+      const auto &modifiedBonds = res.modifiedBonds();
       for (const auto &taut : res) {
-        TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+        // Avoid fixed bond indices here: tautomerization can move the relevant
+        // oxime double bond (e.g. C=N vs N=O) and therefore its bond index.
+        const auto ringInfo = taut->getRingInfo();
+        for (const auto b : taut->bonds()) {
+          TEST_ASSERT(b->getStereo() == Bond::STEREONONE ||
+                      b->getStereo() == Bond::STEREOANY);
+          const bool inRing = ringInfo && ringInfo->numBondRings(b->getIdx());
+
+          // Forward-direction check (scoped): tautomerism-involved non-ring
+          // DOUBLE bonds must be explicitly undefined (STEREOANY).
+          if (b->getBondType() == Bond::DOUBLE && !inRing &&
+              modifiedBonds.test(b->getIdx())) {
+            TEST_ASSERT(b->getStereo() == Bond::STEREOANY);
+          }
+          if (b->getStereo() == Bond::STEREOANY) {
+            TEST_ASSERT(b->getBondType() == Bond::DOUBLE);
+            TEST_ASSERT(!inRing);
+          }
+        }
       }
     }
     {
-      // test retain enol E stereochemistry
+      // test retain oxime E stereochemistry
       CleanupParameters params;
       params.tautomerRemoveBondStereo = false;
       TautomerEnumerator te(params);
       TautomerEnumeratorResult res = te.enumerate(*eOxime);
       for (const auto &taut : res) {
-        if (taut->getBondWithIdx(6)->getBondType() == Bond::DOUBLE) {
-          if (useLegacy) {
-            TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREOE);
-          } else {
-            TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() ==
-                        Bond::STEREOTRANS);
+        unsigned int numStereoBonds = 0;
+        const Bond *stereoBond = nullptr;
+        for (const auto b : taut->bonds()) {
+          // Enum-order check: count only *defined* bond stereo assignments.
+          if (b->getStereo() > Bond::STEREOANY) {
+            ++numStereoBonds;
+            stereoBond = b;
           }
         }
+        TEST_ASSERT(numStereoBonds <= 1);
+        const auto expectedStereo = useLegacy ? Bond::STEREOE : Bond::STEREOTRANS;
+        TEST_ASSERT(numStereoBonds == 0 ||
+                    (stereoBond && stereoBond->getBondType() == Bond::DOUBLE &&
+                     stereoBond->getStereo() == expectedStereo));
       }
     }
+
     ROMOL_SPTR zOxime = "c1ccnc(c1)/C=N\\O"_smiles;
-    // zOxime->debugMol(std::cerr);
-    if (useLegacy) {
-      TEST_ASSERT(zOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
-    } else {
-      TEST_ASSERT(zOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOCIS);
+    {
+      unsigned int numStereoBonds = 0;
+      const Bond *stereoBond = nullptr;
+      for (const auto b : zOxime->bonds()) {
+        // Enum-order check: defined double-bond stereo compares > STEREOANY.
+        if (b->getStereo() > Bond::STEREOANY) {
+          ++numStereoBonds;
+          stereoBond = b;
+        }
+      }
+      TEST_ASSERT(numStereoBonds == 1);
+      TEST_ASSERT(stereoBond);
+      TEST_ASSERT(stereoBond->getBondType() == Bond::DOUBLE);
+      TEST_ASSERT(stereoBond->getStereo() ==
+                  (useLegacy ? Bond::STEREOZ : Bond::STEREOCIS));
     }
     {
-      // test remove enol Z stereochemistry
+      // test remove oxime Z stereochemistry
       CleanupParameters params;
       params.tautomerRemoveBondStereo = true;
       TautomerEnumerator te(params);
       TautomerEnumeratorResult res = te.enumerate(*zOxime);
+      const auto &modifiedBonds = res.modifiedBonds();
       for (const auto &taut : res) {
-        TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+        // Avoid fixed bond indices here: tautomerization can move the relevant
+        // oxime double bond (e.g. C=N vs N=O) and therefore its bond index.
+        const auto ringInfo = taut->getRingInfo();
+        for (const auto b : taut->bonds()) {
+          TEST_ASSERT(b->getStereo() == Bond::STEREONONE ||
+                      b->getStereo() == Bond::STEREOANY);
+          const bool inRing = ringInfo && ringInfo->numBondRings(b->getIdx());
+
+          // Forward-direction check (scoped): tautomerism-involved non-ring
+          // DOUBLE bonds must be explicitly undefined (STEREOANY).
+          if (b->getBondType() == Bond::DOUBLE && !inRing &&
+              modifiedBonds.test(b->getIdx())) {
+            TEST_ASSERT(b->getStereo() == Bond::STEREOANY);
+          }
+          if (b->getStereo() == Bond::STEREOANY) {
+            TEST_ASSERT(b->getBondType() == Bond::DOUBLE);
+            TEST_ASSERT(!inRing);
+          }
+        }
       }
     }
     {
-      // test retain enol Z stereochemistry
+      // test retain oxime Z stereochemistry
       CleanupParameters params;
       params.tautomerRemoveBondStereo = false;
       TautomerEnumerator te(params);
       TautomerEnumeratorResult res = te.enumerate(*zOxime);
       for (const auto &taut : res) {
-        if (taut->getBondWithIdx(6)->getBondType() == Bond::DOUBLE) {
-          if (useLegacy) {
-            TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
-          } else {
-            TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() ==
-                        Bond::STEREOCIS);
+        unsigned int numStereoBonds = 0;
+        const Bond *stereoBond = nullptr;
+        for (const auto b : taut->bonds()) {
+          // Enum-order check: count only *defined* bond stereo assignments.
+          if (b->getStereo() > Bond::STEREOANY) {
+            ++numStereoBonds;
+            stereoBond = b;
           }
         }
+        TEST_ASSERT(numStereoBonds <= 1);
+        const auto expectedStereo = useLegacy ? Bond::STEREOZ : Bond::STEREOCIS;
+        TEST_ASSERT(numStereoBonds == 0 ||
+                    (stereoBond && stereoBond->getBondType() == Bond::DOUBLE &&
+                     stereoBond->getStereo() == expectedStereo));
       }
     }
   }
@@ -1091,6 +1251,7 @@ void testGithub2990() {
                 Bond::BondDir::NONE);
     TEST_ASSERT(mol->getBondBetweenAtoms(5, 6)->getBondDir() !=
                 Bond::BondDir::NONE);
+    // Enum-order check: bonds with defined E/Z stereo compare > STEREOANY.
     TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereo() >
                 Bond::BondStereo::STEREOANY);
     TEST_ASSERT(mol->getBondBetweenAtoms(4, 5)->getStereo() >
@@ -1108,8 +1269,11 @@ void testGithub2990() {
                   Bond::BondDir::NONE);
       TEST_ASSERT(taut->getBondBetweenAtoms(1, 2)->getStereo() >
                   Bond::BondStereo::STEREOANY);
-      TEST_ASSERT(taut->getBondBetweenAtoms(4, 5)->getStereo() ==
-                  Bond::BondStereo::STEREONONE);
+      const auto bond45 = taut->getBondBetweenAtoms(4, 5);
+      TEST_ASSERT((bond45->getBondType() == Bond::DOUBLE &&
+                   bond45->getStereo() == Bond::BondStereo::STEREOANY) ||
+                  (bond45->getBondType() != Bond::DOUBLE &&
+                   bond45->getStereo() == Bond::BondStereo::STEREONONE));
     }
   }
 

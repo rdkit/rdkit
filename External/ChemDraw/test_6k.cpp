@@ -356,7 +356,7 @@ TEST_CASE("Round TRIP") {
       }
     }
     std::cerr << "Total:" << total << std::endl;
-    std::cerr << "Parseable (has chemscript output):" << total << std::endl;
+    std::cerr << "Parseable (has chemscript output):" << parseable << std::endl;
     std::cerr << "Success:" << success + smimatches << std::endl;
     std::cerr << "skipped (non supported features):" << nonSupported
               << std::endl;
