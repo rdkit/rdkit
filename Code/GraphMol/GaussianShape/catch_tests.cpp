@@ -547,7 +547,6 @@ TEST_CASE("Fragment Mode") {
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.408, 0.001));
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.215, 0.001));
   MolTransforms::transformConformer(pdb_trp_3tmn->getConformer(), xform);
-  std::cout << MolToCXSmiles(*pdb_trp_3tmn) << std::endl;
 }
 
 TEST_CASE("custom feature points") {
