@@ -1042,10 +1042,10 @@ M  END
 
   // This should not throw an invariant violation
   auto smiles = MolToSmiles(*m);
-  CHECK(smiles ==
-        (R"SMI(CC[C@@]1(C)/C2=C(\C)/C3=[N]4->[CoH2+]56[N]2[C@H]([C@@H]1C))SMI"
-         R"SMI([C@]1(C)[N]->5=C(/C(C)=C2[N]->6=C(/C=C4/C(C)(C)[C@@H]3C))SMI"
-         R"SMI([C@@H](C)C\2(C)C)[C@@H](C)C1(C)C)SMI"));
+  CHECK(
+      smiles ==
+      (R"SMI(CC[C@@]1(C)/C2=C(C)/C3=[N]4->[CoH2+]56[N]2[C@H]([C@@H]1C)[C@]1(C)[N]->5=C(/C)SMI"
+       R"SMI((C)=C2[N]->6=C(/C=C4/C(C)(C)[C@@H]3C)[C@@H](C)C\2(C)C)[C@@H](C)C1(C)C)SMI"));
 }
 
 TEST_CASE("chiral presence and ranking") {
@@ -1567,7 +1567,7 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(CC1=C(/C=C2\C(C)=C3/C(C)=C(/C=C4\C(C)=C5/C(CCC(=O)O)=C(C(C)=C5N4)C=C6\C(CCC(=O)O)=C(C)C(=C6N2)C=C1)N3)C=C(\C=C)C)smi",
        false, false},  // #8089
       {R"smi(COC1=N\C2=CC(=O)c3c(c(O)c(C)c4c3C(=O)C(C)(O/C=C/C(OC)C(C)C(OC(C)=O)C(C)C(O)C(C)C(O)C(C)/C=C\C=C/1C)O4)C2=O)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1C2c3cc4/c5c6c7c8c9c%10c6c4c4c3C3=C6c%11c%12c%13c%14c%15c(c9c9c%16c8c(c8/c(c%17c%18c%19c(c(c%11c%11c%19c%19c%17c8c%16c(c%149)c%19c%13%11)C62)C1C%181C[N+](C)(C)C1)=C\C\C=5)C7)C%10C4C31C[N+](C)(C)CC%12%151)smi",
        true, true},  // #8089
       {R"smi(CC1=C\[C@H](C)C[C@@]2(C)CC[C@@H](O2)[C@@]23CC[C@@](C)(C[C@@H](O2)[C@H]2O[C@](C)(CC2=O)[C@@H](O)[C@@H]2CC[C@@]4(CCC[C@H](O4)[C@@H](C)C(=O)O[C@@H]4C[C@@H]([C@@]5(O)OCC[C@@H](C)[C@H]5O)O[C@@H]4/C=C/1)O2)O3)smi",
@@ -1730,6 +1730,30 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
        true},  // #8965
       {R"smi(C1(=C/O)\C(=C/N)\C(=C/C)\C(=C/O)\C(=C/N)\C\1=C/C)smi", true,
        false},  // #8965
+      {R"smi(C1(=C/O)\C(=C/N)\C(=C/C)\C(=C/F)\C(=C/N)\C(=C/O)\C(=C/C)\C\1=C/F)smi",
+       true, false},  // #8965
+      {R"smi(C/C/1=C/CC\2CCO/C2=C/C=C1/C=O)smi", true,
+       true},  // pubchem 101176040
+      {R"smi(CCCSNC1=C(C(=C(C=C1)F)C(=O)/C/2=C/NCN/C=C(\C=C2/C)/C3=CC=C(C=C3)C=O)F)smi",
+       true, true},  // pubchem 144212312
+      {R"smi(CC(=O)/N=C1\\C=C(N)C=CC1=N/N=c1\\ccccn1O)smi", true,
+       true},  // pubchem 9561953
+      {R"smi(C/C=P(=C/O)/P(=C\O)=C/C)smi", true, true},
+
+      {R"smi(C=C/C(N)=N\C(\C(C)=C/C=C(C)\C=C/C)=C(/C)CCC)smi", true,
+       true},                                            // pubchem 163248361
+      {R"smi([H]/N=I/P(=N/[H])=N/[H])smi", true, true},  // pubchem 58298200
+      {R"smi([H]/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/P()smi"
+       R"smi(=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N)=N\N=N)smi"
+       R"smi(\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N)smi",
+       true, true},  // pubchem 59092755
+      {R"smi(C/C=C(C(\C(C)=N\C=C\CC)=C(\C)N1CCN(C(=O)OC2(C)CC2)C(C)C1)/C(F)F)smi",
+       true, true},  // pubchem 168185575
+      {R"smi(C=NC(=C(\F)Cc1nc(N)cc2ccccc12)/C(=C\C(=C)Cl)C(=N\CO)/N1CCNCC1)smi",
+       true, true},  // pubchem 153584538
+      {R"smi(C=C1C(=C/C)/C(=C\C)C(=C)C1C)smi", true,
+       true},  // pubchem 144493365
+
   };
 
   const auto &[smiles, legacyState, modernState] =

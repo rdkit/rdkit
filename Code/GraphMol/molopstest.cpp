@@ -1570,7 +1570,7 @@ TEST_CASE("Testing Issue 183") {
   REQUIRE(m2->getBondWithIdx(10)->getStereo() == Bond::STEREOZ);
 
   refSmi = MolToSmiles(*m2, 1);
-  CHECK(refSmi == R"SMI(C/C(F)=C(\C)C(=C(/C)Cl)/C(F)=C(/C)F)SMI");
+  CHECK(refSmi == R"SMI(C/C(F)=C(C)/C(=C(/C)Cl)C(/F)=C(/C)F)SMI");
   m = SmilesToMol(refSmi);
   REQUIRE(m);
   smi = MolToSmiles(*m, 1);
@@ -3430,7 +3430,7 @@ TEST_CASE("Testing sf.net issue 2316677 : canonicalization error") {
   std::string smi = MolToSmiles(*m, true);
   std::cerr << "smi: " << smi << std::endl;
   REQUIRE(smi ==
-          R"SMI(Cc1ccc(S(=O)(=O)\N=C2C/C(=N\C(C)(C)C)C/2=N\C(C)(C)C)cc1)SMI");
+          R"SMI(Cc1ccc(S(=O)(=O)\N=C2/CC(=N\C(C)(C)C)/C2=N\C(C)(C)C)cc1)SMI");
   delete m;
 }
 
@@ -6384,7 +6384,7 @@ TEST_CASE("Testing github #805 : Pre-condition Violation: bad bond type") {
     REQUIRE(m->getBondBetweenAtoms(3, 10)->getBondType() == Bond::DOUBLE);
     REQUIRE(m->getBondBetweenAtoms(3, 10)->getStereo() != Bond::STEREONONE);
     std::string smi = MolToSmiles(*m, true);
-    REQUIRE(smi == R"SMI(CCO/[P+]([O-])=C1CSC(c2cccs2)C\1=[P+](\[O-])OCC)SMI");
+    REQUIRE(smi == R"SMI(CCO/[P+]([O-])=C1\CSC(c2cccs2)\C1=[P+](\[O-])OCC)SMI");
     delete m;
   }
   {

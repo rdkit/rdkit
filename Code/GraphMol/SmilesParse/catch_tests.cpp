@@ -1690,22 +1690,28 @@ TEST_CASE("Github #4582: double bonds and ring closures") {
  20 21  1  0
 M  END)CTAB"_ctab;
   REQUIRE(mol);
-  auto dbond = mol->getBondBetweenAtoms(1, 19);
-  REQUIRE(dbond);
-  CHECK(dbond->getBondType() == Bond::BondType::DOUBLE);
-  if (useLegacy) {
-    CHECK(dbond->getStereo() == Bond::BondStereo::STEREOE);
-    CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
-  } else {
-    CHECK(dbond->getStereo() == Bond::BondStereo::STEREOCIS);
-    CHECK(dbond->getStereoAtoms() == std::vector<int>{0, 20});
+
+  constexpr auto smiles_reference =
+      R"SMI(O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\O)SMI";
+
+  SECTION("basic test") {
+    auto dbond = mol->getBondBetweenAtoms(1, 19);
+    REQUIRE(dbond);
+    CHECK(dbond->getBondType() == Bond::BondType::DOUBLE);
+    if (useLegacy) {
+      CHECK(dbond->getStereo() == Bond::BondStereo::STEREOE);
+      CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
+    } else {
+      CHECK(dbond->getStereo() == Bond::BondStereo::STEREOCIS);
+      CHECK(dbond->getStereoAtoms() == std::vector<int>{0, 20});
+    }
+    auto csmiles = MolToSmiles(*mol);
+    CHECK(csmiles == smiles_reference);
   }
-  auto csmiles = MolToSmiles(*mol);
-  CHECK(csmiles == R"SMI(O=C1Nc2cc(Br)ccc2/C1=C1Nc2ccccc2C/1=N\O)SMI");
 
   SECTION("bulk random output order") {
     auto csmiles = MolToSmiles(*mol);
-    CHECK(csmiles == R"SMI(O=C1Nc2cc(Br)ccc2/C1=C1Nc2ccccc2C/1=N\O)SMI");
+    CHECK(csmiles == smiles_reference);
     SmilesWriteParams ps;
     ps.doRandom = true;
     for (auto i = 0u; i < 100; ++i) {

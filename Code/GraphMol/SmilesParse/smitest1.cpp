@@ -1701,7 +1701,7 @@ TEST_CASE("Testing SF.net bug 1842174: bad bond dirs in branches") {
   mol = SmilesToMol(smi);
   REQUIRE(mol);
   smi = MolToSmiles(*mol, true, false, -1);
-  CHECK(smi == R"SMI(O/N=C1COCC\1=N\O)SMI");
+  CHECK(smi == R"SMI(O/N=C1\COC\C1=N\O)SMI");
 
   // this time the algorithm is forced to set
   // the directionality on the ring closure bond:
@@ -1710,7 +1710,7 @@ TEST_CASE("Testing SF.net bug 1842174: bad bond dirs in branches") {
   mol = SmilesToMol(smi);
   REQUIRE(mol);
   smi = MolToSmiles(*mol, true, false, -1);
-  CHECK(smi == R"SMI(O/N=C1COC[N+]\1=N\O)SMI");
+  CHECK(smi == R"SMI(O/N=C1\COC\[N+]1=N\O)SMI");
   // ^^^^^^^^^^^^^^^^^^^^^^
   // end of the pair
   // ----------------------
