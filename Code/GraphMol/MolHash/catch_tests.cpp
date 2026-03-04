@@ -471,15 +471,29 @@ TEST_CASE("tautomer v2") {
                  "C1C=CC=C2C=C(O)NC=12",
              }},
             // ---------------------------
-            // some areas for potential improvement
+            // E/Z isomers with heteroaromatic rings
             // ---------------------------
-            // these two are tautomers, but the current algorithm does not catch
-            // them
-            // problematic because pyridine is recognized as tautomeric
-            {{"c1ccccc1/C=C/c1ncccc1", "c1ccccc1/C=C\\c1ncccc1",
-              "c1ccccc1C=Cc1ncccc1"},
-             {}},
-        };
+            // Stilbene with pyridyl: E and Z are NOT tautomers and should have
+            // different hashes. Previously the algorithm incorrectly treated
+            // aromatic heteroatoms like pyridine N as tautomeric candidates,
+            // causing stereo to be stripped.
+            {{"c1ccccc1/C=C/c1ncccc1"}, // in ChEMBL (CHEMBL1877619)
+             {"c1ccccc1/C=C\\c1ncccc1", "c1ccccc1C=Cc1ncccc1"}},
+            // 5-benzylidenerhodanine: E/Z isomers are NOT tautomers and should
+            // have different hashes. The exocyclic C=C to phenyl should
+            // preserve stereochemistry.
+            {{"O=C1NC(=S)S/C1=C/c2ccccc2"}, // in ChEMBL (CHEMBL4796170)
+             {"O=C1NC(=S)S/C1=C\\c2ccccc2", "O=C1NC(=S)SC1=Cc2ccccc2"}},
+            // ---------------------------
+            // stereocenters near amide bonds should not be destroyed
+            // by extension through flagged bonds
+            // ---------------------------
+            // proline-like stereocenter between two amide C=O groups
+            {{"NC(=O)[C@H]1CCCN1C=O"},
+            {"NC(=O)[C@@H]1CCCN1C=O"}}, // in SureChEMBL (8959051)
+            // stereocenters near amide bonds on pyrrolidine ring
+            {{"CC(=O)N[C@H]1CCNC1"}, {"CC(=O)N[C@@H]1CCNC1", "CC(=O)NC1CCNC1"}}, // in SureChEMBL (39850)
+            };
     for (const auto &[same, diff] : data) {
       std::unique_ptr<RWMol> m{SmilesToMol(same[0])};
       REQUIRE(m);
