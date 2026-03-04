@@ -1042,9 +1042,10 @@ M  END
 
   // This should not throw an invariant violation
   auto smiles = MolToSmiles(*m);
-  CHECK(
-      smiles ==
-      R"SMI(CC[C@@]1(C)/C2=C(C)/C3=[N]4->[CoH2+]56[N]2[C@H]([C@@H]1C)[C@]1(C)[N]->5=C(/C(C)=C2[N]->6=C(/C=C4/C(C)(C)[C@@H]3C)[C@@H](C)C\2(C)C)[C@@H](C)C1(C)C)SMI");
+  CHECK(smiles ==
+        (R"SMI(CC[C@@]1(C)/C2=C(\C)/C3=[N]4->[CoH2+]56[N]2[C@H]([C@@H]1C))SMI"
+         R"SMI([C@]1(C)[N]->5=C(/C(C)=C2[N]->6=C(/C=C4/C(C)(C)[C@@H]3C))SMI"
+         R"SMI([C@@H](C)C\2(C)C)[C@@H](C)C1(C)C)SMI"));
 }
 
 TEST_CASE("chiral presence and ranking") {
@@ -1159,6 +1160,114 @@ TEST_CASE("allow disabling ring stereo in ranking") {
   CHECK(res1[6] == res1[7]);
 }
 
+static void checkSmilesRoundtrip(const std::string &smiles,
+                                 bool shouldMatch = true) {
+  auto getFeatures = [](ROMol &m) {
+// enable this for development only (it's SLOW): make the test stricter
+// by comparing CIP codes instead of just counting features
+#if 0
+    CIPLabeler::assignCIPLabels(m);
+
+    std::vector<std::string> labels;
+    for (const auto atom : m.atoms()) {
+      std::string tag;
+      std::string cip;
+      if (atom->getPropIfPresent<std::string>(common_properties::_CIPCode,
+                                              cip)) {
+        atom->getPropIfPresent(common_properties::atomLabel, tag);
+
+        labels.push_back(cip + "_" + tag);
+      }
+    }
+    for (const auto bond : m.bonds()) {
+      std::string cip;
+      if (bond->getPropIfPresent<std::string>(common_properties::_CIPCode,
+                                              cip)) {
+        auto atom1 = bond->getBeginAtom();
+        unsigned int idx1 = std::numeric_limits<unsigned int>::max();
+        atom1->getPropIfPresent(common_properties::atomLabel, idx1);
+
+        auto atom2 = bond->getEndAtom();
+        unsigned int idx2 = std::numeric_limits<unsigned int>::max();
+        atom2->getPropIfPresent(common_properties::atomLabel, idx2);
+
+        if (idx1 > idx2) {
+          std::swap(idx1, idx2);
+        }
+
+        labels.push_back(cip + "_" + std::to_string(idx1) + "_" +
+                         std::to_string(idx2));
+      }
+    }
+    std::sort(labels.begin(), labels.end());
+
+    return labels;
+#else
+    unsigned int nChiralCenters = 0;
+    for (const auto atom : m.atoms()) {
+      if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
+        ++nChiralCenters;
+      }
+    }
+    unsigned int nDoubleBondStereo = 0;
+    for (const auto bond : m.bonds()) {
+      if (bond->getStereo() > Bond::STEREOANY) {
+        ++nDoubleBondStereo;
+      }
+    }
+
+    return std::make_pair(nChiralCenters, nDoubleBondStereo);
+#endif
+  };
+
+  SmilesWriteParams ps;
+  auto fields = SmilesWrite::CXSmilesFields::CX_ATOM_LABELS;
+
+  auto getStrings = [&ps, &fields](const ROMol &m) {
+    const auto cxsmiles = MolToCXSmiles(m, ps, fields);
+    auto pos = cxsmiles.find(" ");
+    const std::string smiles(cxsmiles.data(), pos);
+
+    return std::make_pair(smiles, cxsmiles);
+  };
+
+  // pre-canonicalize SMILES: the inputs get outdated when
+  // we make changes to the canonicalization algorithm
+  auto m1 = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(m1);
+
+  for (auto atom : m1->atoms()) {
+    atom->setProp(common_properties::atomLabel, atom->getIdx());
+  }
+
+  const auto [firstSmiles, firstCxsmiles] = getStrings(*m1);
+
+  // Get the stereo features after the SMILES roundtrip,
+  // so that assigning labels can't have any influence
+  // on the SMILES
+  const auto refFeatures = getFeatures(*m1);
+
+  auto m2 = v2::SmilesParse::MolFromSmiles(firstCxsmiles);
+  REQUIRE(m2);
+
+  const auto [secondSmiles, secondCxsmiles] = getStrings(*m2);
+
+  if (shouldMatch) {
+    CHECK(firstSmiles == secondSmiles);
+
+    // If the stereo labels don't match after round-tripping, something is wrong
+    CHECK(refFeatures == getFeatures(*m2));
+
+    // Check the second roundtrip too
+    auto m3 = v2::SmilesParse::MolFromSmiles(secondCxsmiles);
+    REQUIRE(m3);
+    CHECK(refFeatures == getFeatures(*m3));
+
+  } else {
+    CHECK(firstSmiles != secondSmiles);
+  }
+}
+
 TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   // This is a check about the state of things with canonicalization.
   // The "samples" below initially come from the list compiled in GitHub
@@ -1168,52 +1277,52 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   // first reported.
 
   const static std::initializer_list<std::tuple<std::string, bool, bool>> samples = {
-      {R"smi(C/C=C\C=C(/C=C\C)C(/C=C\C)=C/C)smi", false, false},        // #8759
+      {R"smi(C/C=C\C=C(/C=C\C)C(/C=C\C)=C/C)smi", true, true},          // #8759
       {R"smi(C1=C\CCCCCC/C=C/C=C/1)smi", true, true},                   // #8759
       {R"smi(O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3)smi", false, false},  // #8721
       {R"smi(O=C(c1ccccc1C(=O)N1C(=O)c2ccccc2C1=O)N1C(=O)c2ccccc2C1=O)smi",
        false, false},  // #8721
-      {R"smi(O=[N+]([O-])c1cc/c2c(c1)=C(c1ccccc1)/N=c1\\ccc([N+](=O)[O-])cc1=C(c1ccccc1)/N=2)smi",
-       false, true},  // #8721
-      {R"smi(C=Cc1c(C)/c2[n-]c1=C=c1[n-]/c(c(CC)c1C)=C\\c1[n-]c3c(c1C)C(=O)[C@H](C(=O)OC)/C3=C1/[NH+]=C(/C=2)[C@@H](C)[C@@H]1CCC(=O)OC/C=C(\\C)CCC[C@H](C)CCC[C@H](C)CCCC(C)C.[Mg+2])smi",
-       false, true},  // #8721
+      {R"smi(O=[N+]([O-])c1cc/c2c(c1)=C(c1ccccc1)/N=c1\ccc([N+](=O)[O-])cc1=C(c1ccccc1)/N=2)smi",
+       true, true},  // #8721
+      {R"smi(C=Cc1c(C)/c2[n-]c1=C=c1[n-]/c(c(CC)c1C)=C\c1[n-]c3c(c1C)C(=O)[C@H](C(=O)OC)/C3=C1/[NH+]=C(/C=2)[C@@H](C)[C@@H]1CCC(=O)OC/C=C(\C)CCC[C@H](C)CCC[C@H](C)CCCC(C)C.[Mg+2])smi",
+       true, true},  // #8721
       {R"smi(CC1=C(/C=C2\C(C)=C3/C(C)=C(/C=C4\C(C)=C5/C(CCC(=O)O)=C(C(C)=C5N4)C=C6\C(CCC(=O)O)=C(C)C(=C6N2)C=C1)N3)C=C(\C=C)C)smi",
        false, false},  // #8089
       {R"smi(COC1=N\C2=CC(=O)c3c(c(O)c(C)c4c3C(=O)C(C)(O/C=C/C(OC)C(C)C(OC(C)=O)C(C)C(O)C(C)C(O)C(C)/C=C\C=C/1C)O4)C2=O)smi",
        false, false},  // #8089
       {R"smi(CC1C2c3cc4/c5c6c7c8c9c%10c6c4c4c3C3=C6c%11c%12c%13c%14c%15c(c9c9c%16c8c(c8/c(c%17c%18c%19c(c(c%11c%11c%19c%19c%17c8c%16c(c%149)c%19c%13%11)C62)C1C%181C[N+](C)(C)C1)=C\C\C=5)C7)C%10C4C31C[N+](C)(C)CC%12%151)smi",
-       false, true},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C\[C@H](C)C[C@@]2(C)CC[C@@H](O2)[C@@]23CC[C@@](C)(C[C@@H](O2)[C@H]2O[C@](C)(CC2=O)[C@@H](O)[C@@H]2CC[C@@]4(CCC[C@H](O4)[C@@H](C)C(=O)O[C@@H]4C[C@@H]([C@@]5(O)OCC[C@@H](C)[C@H]5O)O[C@@H]4/C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@H]2O[C@@H](C/C=C/C=C/C(=O)O[C@@H]3C[C@@H](/C=C/C/C=C/1)O[C@@H](C/C=C\CCO)[C@]3(C)CO)C[C@H](O)[C@H]2C)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC(=O)OCC1=C\CC/C(C)=C/CC[C@@]2(C)CC[C@@](C(C)C)(/C=C/1)O2)smi",
-       false, false},  // #8089
-      {R"smi(CC1=C\C/C=C(\C)CC[C@H]2C(C)(C)[C@@H](\C=C/1)CC[C@]2(C)O)smi",
-       false, true},  // #8089
+       true, true},  // #8089
+      {R"smi(CC1=C\C/C=C(\C)CC[C@H]2C(C)(C)[C@@H](\C=C/1)CC[C@]2(C)O)smi", true,
+       true},  // #8089
       {R"smi(CC(=O)OCC1=C/[C@@H]2OC(=O)[C@H](C)[C@@]2(O)[C@@H](OC(C)=O)[C@H]2[C@]3(CC[C@H](OC(C)=O)[C@]2(C)[C@@H](OC(=O)COC(=O)CC(C)C)\C=C/1)CO3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC(=O)OCC1=C/[C@@H]2OC(=O)[C@H](C)[C@@]2(O)[C@@H](OC(C)=O)[C@H]2[C@]3(CC[C@H](OC(C)=O)[C@]2(C)[C@@H](OC(C)=O)\C=C/1)CO3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(C=Cc1c(C)/c2[nH]/c1=C\C1=N/C(=C\C3=C(C)C4C(=O)N(Cc5cccc(C#Cc6cccc(Nc7ncnc8cc(OCCOC)c(OCCOC)cc78)c6)c5)C(=O)/C(=C5/N=C(/C=2)[C@@H](C)[C@@H]5CCC(=O)OC)C4N3)C(CC)=C1C)smi",
-       false, true},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C\C[C@H](O)/C=C/C(C)=C/[C@@H](NC(=O)[C@H](C)O)[C@]2(C)C(=O)O[C@H](C[C@H](O)/C=C/1)[C@@H](C)C2=O)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@H]2O[C@@H](C/C=C/C=C/C(=O)O[C@@H]3C[C@@H](/C=C/C/C=C/1)O[C@@H](C/C=C\C[C@@H](O)C(=O)O)[C@]3(C)CO)C[C@H](O)[C@H]2C)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(c1ccc2/c3[nH]/c(c2c1)=N\c1ccc(cc1)-c1nc2cc(ccc2o1)/N=c1/[nH]/c(c2ccccc12)=N/c1ccc2nc(oc2c1)-c1ccc(cc1)/N=3)smi",
-       false, false},  // #8089
+       true, false},  // #8089
       {R"smi(c1ccc2/c3[nH]/c(c2c1)=N\c1ccc(cc1)-c1nc2ccc(cc2o1)/N=c1/[nH]/c(c2ccccc12)=N/c1ccc2nc(oc2c1)-c1ccc(cc1)/N=3)smi",
-       false, false},  // #8089
+       true, false},  // #8089
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](C)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](C(=O)O)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](CO)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(COC(=O)C1=C/c2cc3c(cc2-c2c(cc(OC)c(OC)c2OC)\C=C/1C(=O)OC)OCO3)smi",
-       false, false},                                           // #8089
-      {R"smi(N#C[P@@H]/C=C(/P=O)[P@@H]C#N)smi", false, false},  // #8089
+       true, true},                                           // #8089
+      {R"smi(N#C[P@@H]/C=C(/P=O)[P@@H]C#N)smi", true, true},  // #8089
       {R"smi(C1=C\C/C=C(\C)CC[C@H]2C(C)(C)[C@@H](\C=C/1)CC[C@]2(C)O)smi", true,
        true},                                                     // #8089
       {R"smi([H]/N=C(C=C)\C(/N=C\[O-])=N\[H])smi", false, true},  // #7759
@@ -1339,23 +1448,8 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(O[C@H]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},  // #7759
       {R"smi(N[C@]1(C(=O)O)[C@@H]2C[C@H]3C[C@@H](C2)C[C@H]1C3)smi", false,
        true},  // #8862
-  };
-
-  auto count_features = [](RWMol m) {
-    unsigned int nChiralCenters = 0;
-    for (const auto atom : m.atoms()) {
-      if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
-        ++nChiralCenters;
-      }
-    }
-    unsigned int nDoubleBondStereo = 0;
-    for (const auto bond : m.bonds()) {
-      if (bond->getStereo() > Bond::STEREOANY) {
-        ++nDoubleBondStereo;
-      }
-    }
-
-    return std::make_pair(nChiralCenters, nDoubleBondStereo);
+      {R"smi(C/C=C1/C(=C\Cl)/C(=C\F)/C(=C\N)/C/1=C\O)smi", false,
+       false},  // #8965
   };
 
   const auto &[smiles, legacyState, modernState] =
@@ -1365,34 +1459,7 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
 
   UseLegacyStereoPerceptionFixture useLegacy(usingLegacyStereo);
 
-  // pre-canonicalize SMILES: the inputs get outdated when
-  // we make changes to the canonicalization algorithm
-  auto m1 = v2::SmilesParse::MolFromSmiles(smiles);
-  REQUIRE(m1);
-  const auto firstRoundtrip = MolToSmiles(*m1);
-
-  // Get the stereo features after the SMILES roundtrip,
-  // so that assigning labels can't have any influence
-  // on the SMILES
-  const auto refFeatures = count_features(*m1);
-
-  auto m2 = v2::SmilesParse::MolFromSmiles(firstRoundtrip);
-  REQUIRE(m2);
-  const auto secondRoundtrip = MolToSmiles(*m2);
-
   auto shouldMatch = usingLegacyStereo ? legacyState : modernState;
-  if (shouldMatch) {
-    CHECK(firstRoundtrip == secondRoundtrip);
 
-    // If the stereo labels don't match after round-tripping, something is wrong
-    CHECK(refFeatures == count_features(*m2));
-
-    // Check the second roundtrip too
-    auto m3 = v2::SmilesParse::MolFromSmiles(secondRoundtrip);
-    REQUIRE(m3);
-    CHECK(refFeatures == count_features(*m3));
-
-  } else {
-    CHECK(firstRoundtrip != secondRoundtrip);
-  }
+  checkSmilesRoundtrip(smiles, shouldMatch);
 }

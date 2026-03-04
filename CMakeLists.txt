@@ -75,6 +75,7 @@ option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" O
 option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
+option(RDK_BUILD_MINIMAL_LIB_MMPA "build support for MMPA into MinimalLib" OFF )
 option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
 
 set(RDK_BOOST_VERSION "1.81.0")

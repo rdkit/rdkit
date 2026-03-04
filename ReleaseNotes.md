@@ -33,6 +33,10 @@ GitHub)
 - `RWMol::addBond()` no longer removes RingInfo from the molecule, but it does
   clear the property cache of the begin and end atoms. This does not affect the
   general rule that molecules should be sanitized after adding/removing bonds.
+- The algorithm to canonicalize double bonds in SMILES output has changed to
+  address a potential issue that could alter stereo. As a result, SMILES of
+  mols contaning stereo bonds may have changed.
+
 
 ## New Features and Enhancements:
 
