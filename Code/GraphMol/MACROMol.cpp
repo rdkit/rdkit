@@ -6,12 +6,87 @@
 #include "MACROMol.h"
 #include "Atom.h"
 
+namespace RDKit {
+
+void RDKit::MACROMolTemplate::init(std::unique_ptr<RDKit::ROMol> &mol,
+                                   std::string className,
+                                   std::vector<std::string> templateNames,
+                                   std::vector<std::string> templateAttrs) {
+  PRECONDITION(mol, "no mol for template");
+  PRECONDITION(className.empty() == false, "no className for template");
+  PRECONDITION(templateNames.size() > 0, "no template names for template");
+
+  p_mol.reset(mol.release());  // now owned by this class
+  p_mol->setProp(RDKit::common_properties::molAtomClass, className);
+  p_mol->setProp(RDKit::common_properties::templateNames, templateNames);
+
+  for (auto templateAttr : templateAttrs) {
+    std::vector<std::string> subTokens;
+    boost::algorithm::split(subTokens, templateAttr,
+                            boost::algorithm::is_any_of("="));
+    if (subTokens.size() != 2) {
+      std::ostringstream errout;
+      errout << "Attribute string is not of the form \"AttrName=value\": "
+             << templateAttr;
+      throw RDKit::FileParseException(errout.str());
+    }
+    p_mol->setProp(subTokens[0], subTokens[1]);
+  }
+}
+
+MACROMolTemplate::MACROMolTemplate(std::unique_ptr<ROMol> &mol,
+                                   std::string className,
+                                   std::vector<std::string> templateNames,
+                                   std::vector<std::string> templateAttrs) {
+  init(mol, className, templateNames, templateAttrs);
+}
+
+MACROMolTemplate::MACROMolTemplate(std::unique_ptr<ROMol> &mol,
+                                   std::string className,
+                                   std::string templateName,
+                                   std::vector<std::string> templateAttrs) {
+  PRECONDITION(!templateName.empty(), "no name for template");
+
+  std::vector<std::string> templateNames(1, templateName);
+  MACROMolTemplate::init(mol, className, templateNames, templateAttrs);
+}
+
+unsigned int RDKit::MACROMol::addMacroAtom(std::string className,
+                                           std::string templateName) {
+  auto atom = new Atom(0);
+  atom->setAtomicNum(0);
+
+  atom->setProp(common_properties::dummyLabel, templateName);
+  atom->setProp(common_properties::molAtomClass, className);
+  p_atomIdxToTemplateIdxIsStale = true;
+  return this->addAtom(atom, false, true);
+}
+
+void RDKit::MACROMol::addMacroBond(unsigned int fromAtomIdx,
+                                   unsigned int toAtomIdx,
+                                   Bond::BondType bondType,
+                                   std::string fromConnectionPoint,
+                                   std::string toConnectionPoint) {
+  auto bondIdx = this->addBond(fromAtomIdx, toAtomIdx, bondType);
+  auto bond = this->getBondWithIdx(bondIdx);
+  this->setBondBookmark(bond, bondIdx);
+
+  if (!toConnectionPoint.empty()) {
+    bond->setProp(common_properties::_MolFileBondAttachPt2, toConnectionPoint);
+  }
+
+  if (!fromConnectionPoint.empty()) {
+    bond->setProp(common_properties::_MolFileBondAttachPt1,
+                  fromConnectionPoint);
+  }
+}
+
 unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) {
   if (p_atomIdxToTemplateIdxIsStale) {
     // rebuild the map
     p_atomIdxToTemplateIdx.clear();
 
-    for (auto atom : p_mol->atoms()) {
+    for (auto atom : this->atoms()) {
       std::string atomClass;
       std::string dummyLabel = "";
 
@@ -48,3 +123,9 @@ unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) {
   }
   return p_atomIdxToTemplateIdx[atomIdx];
 }
+
+ROMol *RDKit::MACROMol::atomIdxToTemplateMol(unsigned int atomIdx) {
+  return this->getTemplate(this->atomIdxToTemplateIdx(atomIdx));
+}
+
+}  // namespace RDKit

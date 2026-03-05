@@ -84,6 +84,10 @@ inline constexpr std::string_view _MolFileAtomQuery = "_MolFileAtomQuery";
 inline constexpr std::string_view _MolFileBondQuery = "_MolFileBondQuery";
 inline constexpr std::string_view _MolFileBondEndPts = "_MolFileBondEndPts";
 inline constexpr std::string_view _MolFileBondAttach = "_MolFileBondAttach";
+inline constexpr std::string_view _MolFileBondAttachPt1 =
+    "_MolFileBondAttachPt1";
+inline constexpr std::string_view _MolFileBondAttachPt2 =
+    "_MolFileBondAttachPt2";
 inline constexpr std::string_view _MolFileBondType = "_MolFileBondType";
 inline constexpr std::string_view _MolFileBondStereo = "_MolFileBondStereo";
 inline constexpr std::string_view _MolFileBondCfg = "_MolFileBondCfg";

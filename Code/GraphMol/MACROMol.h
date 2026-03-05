@@ -18,26 +18,42 @@
 
 namespace RDKit {
 
-enum class MACROTemplateNames {
-  AsEntered,      //<! use the name of the temlate as entered in the MACRO Mol
-  UseFirstName,   //<!Use the first name in the template
-                  // def (For AA, the 3 letter code
-  UseSecondName,  //<!use the second name in the tempate def (
-                  // For AA, the 1 letter code)
-  All             //<! use all names in the template def
-};
-
-struct RDKIT_FILEPARSERS_EXPORT MolFromMACROMolParams {
-  bool includeLeavingGroups =
-      true; /**< when true, leaving groups on atoms that are not exo-bonded
-               are retained.  When false, no leaving groups are retained */
-  MACROTemplateNames macroTemplateNames = MACROTemplateNames::All;
-};
-
-class RDKIT_GRAPHMOL_EXPORT MACROMol {
+class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate {
  private:
-  std::unique_ptr<RWMol> p_mol;
-  std::vector<std::unique_ptr<ROMol>> p_templates;
+  void init(std::unique_ptr<RDKit::ROMol> &mol, std::string className,
+            std::vector<std::string> templateNames,
+            std::vector<std::string> templateAttrs);
+
+ public:
+  MACROMolTemplate(std::unique_ptr<ROMol> &mol, std::string className,
+                   std::vector<std::string> templateNames,
+                   std::vector<std::string> templateAttrs);
+  MACROMolTemplate(std::unique_ptr<ROMol> &mol, std::string className,
+                   std::string templateName,
+                   std::vector<std::string> templateAttrs);
+  MACROMolTemplate() = delete;
+  MACROMolTemplate(const MACROMolTemplate &other) = delete;
+  MACROMolTemplate(MACROMolTemplate &&other) noexcept = delete;
+  MACROMolTemplate &operator=(MACROMolTemplate &&other) noexcept = delete;
+  MACROMolTemplate &operator=(const MACROMolTemplate &) =
+      delete;  // disable assignment
+  ~MACROMolTemplate() {}
+
+  RDKit::ROMol *getMol() { return p_mol.get(); }
+
+ private:
+  std::unique_ptr<RDKit::ROMol> p_mol;
+};
+
+class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
+ private:
+  // for libraries owned by this macromol
+  std::vector<std::unique_ptr<MACROMolTemplate>> p_templateLibrary;
+
+  // used for library access.  Could be a pointer to the internal library or
+  // an external one that is shared across multiple macromols
+
+  std::vector<std::unique_ptr<MACROMolTemplate>> *p_templateLibraryPtr;
   bool p_atomIdxToTemplateIdxIsStale;
   std::map<unsigned int, unsigned int> p_atomIdxToTemplateIdx;
 
@@ -50,38 +66,43 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol {
   MACROMol &operator=(const MACROMol &) = delete;  // disable assignment
   ~MACROMol() {}
 
-  void addTemplate(std::unique_ptr<ROMol> templateMol) {
-    PRECONDITION(templateMol, "bad template molecule");
-    p_templates.push_back(std::move(templateMol));
+  void setTemplateLibrary(std::vector<std::unique_ptr<MACROMolTemplate>> &lib,
+                          bool takeOwnership = true) {
+    if (takeOwnership) {
+      for (auto &libTemplate : lib) {
+        p_templateLibrary.push_back(std::move(libTemplate));
+      }
+      p_templateLibraryPtr = &p_templateLibrary;
+    }
+
+    else {
+      p_templateLibraryPtr = &lib;
+    }
   }
 
-  unsigned int getTemplateCount() const { return p_templates.size(); }
+  void addTemplate(std::unique_ptr<MACROMolTemplate> templateMol) {
+    PRECONDITION(templateMol, "bad template molecule");
+    p_templateLibrary.push_back(std::move(templateMol));
+    p_templateLibraryPtr = &p_templateLibrary;
+  }
 
-  ROMol *getTemplate(unsigned int index) { return p_templates[index].get(); };
-  const ROMol *getTemplate(unsigned int index) const {
-    return p_templates[index].get();
+  unsigned int getTemplateCount() const { return p_templateLibraryPtr->size(); }
+
+  ROMol *getTemplate(unsigned int index) {
+    return (*p_templateLibraryPtr)[index]->getMol();
   };
 
-  const ROMol *getMol() const { return p_mol.get(); }
+  unsigned int addMacroAtom(std::string className, std::string templateName);
 
-  RWMol *getMol() { return p_mol.get(); }
-
-  void setMol(std::unique_ptr<RWMol> mol) {
-    PRECONDITION(mol, "bad molecule");
-    p_mol = std::move(mol);
-    p_atomIdxToTemplateIdxIsStale = true;
-  }
-
-  static std::unique_ptr<RDKit::RWMol> MolFromMacroMol(
-      MACROMol *scsrMol,
-      const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams,
-      const MolFromMACROMolParams &molFromMACROMolParams);
+  void addMacroBond(unsigned int fromAtomIdx, unsigned int toAtomIdx,
+                    Bond::BondType bondType, std::string fromConnectionPoint,
+                    std::string toConnectionPoint);
 
   unsigned int atomIdxToTemplateIdx(unsigned int atomIdx);
+  ROMol *atomIdxToTemplateMol(unsigned int atomIdx);
 };
-
 typedef boost::shared_ptr<MACROMol> MACROMol_SPTR;
-
+typedef boost::shared_ptr<MACROMolTemplate> MACROMolTemplate_SPTR;
 }  // namespace RDKit
 
 #endif
