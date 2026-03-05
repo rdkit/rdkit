@@ -61,7 +61,7 @@ constexpr double ERROR_TOL = 0.00001;
 // delicate balance between sensitive enough to detect obviously bad
 // conformations but not so sensitive that a bunch of ok conformations get
 // filtered out, which slows down the whole conformation generation process
-constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.1;
+constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.06;
 constexpr double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
 constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
 inline bool haveOppositeSign(double a, double b) {
