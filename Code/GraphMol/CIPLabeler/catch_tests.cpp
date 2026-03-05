@@ -1535,3 +1535,22 @@ $$$$
     CHECK(ranked_anchors == std::vector<unsigned int>{0, Atom::NOATOM});
   }
 }
+
+TEST_CASE(
+    "GitHub #9153: Incorrect double bond CIP label for bond with adjacent double bond") {
+  // Both SMILES are the same mol, a modification of
+  // https://pubchem.ncbi.nlm.nih.gov/compound/16129835 (imported as a mol
+  // block, then converted to SMILES, then replace the rings with "C")
+  for (const auto &smiles : {R"(S=P(=N\C)/C)", R"(C/N=P(/C)=S)"}) {
+    auto m = v2::SmilesParse::MolFromSmiles(smiles);
+    REQUIRE(m);
+    auto b = m->getBondWithIdx(1);
+    REQUIRE(b->getBondType() == Bond::DOUBLE);
+    REQUIRE(b->getStereo() == Bond::STEREOZ);
+
+    CIPLabeler::assignCIPLabels(*m);
+    std::string code;
+    REQUIRE(b->getPropIfPresent(common_properties::_CIPCode, code) == true);
+    CHECK(code == "Z");
+  }
+}

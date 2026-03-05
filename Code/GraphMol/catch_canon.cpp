@@ -1449,7 +1449,8 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(N[C@]1(C(=O)O)[C@@H]2C[C@H]3C[C@@H](C2)C[C@H]1C3)smi", false,
        true},  // #8862
       {R"smi(C/C=C1/C(=C\Cl)/C(=C\F)/C(=C\N)/C/1=C\O)smi", false,
-       false},  // #8965
+       false},                               // #8965
+      {R"smi(S=P(=N\C)/C)smi", true, true},  // #9153
   };
 
   const auto &[smiles, legacyState, modernState] =
