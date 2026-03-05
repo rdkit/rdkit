@@ -61,7 +61,7 @@ constexpr double ERROR_TOL = 0.00001;
 // delicate balance between sensitive enough to detect obviously bad
 // conformations but not so sensitive that a bunch of ok conformations get
 // filtered out, which slows down the whole conformation generation process
-constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.05;
+constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.06;
 constexpr double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
 constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
 inline bool haveOppositeSign(double a, double b) {
@@ -612,6 +612,38 @@ bool doubleBondGeometryChecks(const RDGeom::PointPtrVect &positions,
       }
     }
   }
+  if (!eargs.etkdgDetails->improperAtoms.empty()) {
+    // this is the arrangement:
+    //     a0
+    //       \       [ilb]
+    //        a1 = a2
+    //       /       [ilb]
+    //     a3
+    // we want to be sure it's not actually:
+    //   ao - a1 = a2
+    //         |     [ilb]
+    //        a3
+    constexpr std::array<std::array<std::size_t, 3>, 3> triples{
+        {{{0, 1, 2}}, {{0, 1, 3}}, {{2, 1, 3}}}};
+    for (const auto &itm : eargs.etkdgDetails->improperAtoms) {
+      for (const auto [a, b, c] : triples) {
+        const auto &i = *positions[itm[a]];
+        const auto &j = *positions[itm[b]];
+        const auto &k = *positions[itm[c]];
+        const RDGeom::Point3D p1(i[0], i[1], i[2]);
+        const RDGeom::Point3D p2(j[0], j[1], j[2]);
+        const RDGeom::Point3D p3(k[0], k[1], k[2]);
+        RDGeom::Point3D p12 = p2 - p1;
+        RDGeom::Point3D p32 = p2 - p3;
+        p12.normalize();
+        p32.normalize();
+        if (p12.dotProduct(p32) + 1.0 < linearTol) {
+          return false;
+        }
+      }
+    }
+  }
+
   return true;
 }
 
@@ -629,7 +661,6 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
     RDGeom::Point3D p1(a1[0], a1[1], a1[2]);
     RDGeom::Point3D p2(a2[0], a2[1], a2[2]);
     RDGeom::Point3D p3(a3[0], a3[1], a3[2]);
-
     // check the dihedral and be super permissive. Here's the logic of the
     // check:
     // The second element of the dihedralBond item contains 1 for trans
@@ -684,25 +715,9 @@ bool distMatrixChiralityTest(RDGeom::PointPtrVect *positions,
   return true;
 }
 
-bool finalChiralChecks(RDGeom::PointPtrVect *positions,
-                       const detail::EmbedArgs &eargs,
-                       EmbedParameters &embedParams) {
-  // confirm chiral volumes
-  if (!checkChiralCenters(positions, eargs, embedParams)) {
-    if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-      std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-      embedParams.failures[EmbedFailureCauses::CHECK_CHIRAL_CENTERS2]++;
-    }
-    return false;
-  }
-
-  if (!distMatrixChiralityTest(positions, eargs, embedParams)) {
-    return false;
-  }
-
-  // "center in volume" chirality test
+bool _checkFinalCenterInVolume(RDGeom::PointPtrVect *positions,
+                               const detail::EmbedArgs &eargs,
+                               EmbedParameters &embedParams) {
   for (const auto &chiralSet : *eargs.chiralCenters) {
     // it could happen that the centroid is outside the volume defined
     // by the other four points. That is also a fail.
@@ -726,6 +741,28 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
   return true;
 }
 
+bool finalChiralChecks(RDGeom::PointPtrVect *positions,
+                       const detail::EmbedArgs &eargs,
+                       EmbedParameters &embedParams) {
+  // confirm chiral volumes
+  if (!checkChiralCenters(positions, eargs, embedParams)) {
+    if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+      std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+      embedParams.failures[EmbedFailureCauses::CHECK_CHIRAL_CENTERS2]++;
+    }
+    return false;
+  }
+
+  if (!distMatrixChiralityTest(positions, eargs, embedParams)) {
+    return false;
+  }
+
+  // "center in volume" chirality test
+  return _checkFinalCenterInVolume(positions, eargs, embedParams);
+}
+
 bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
                       const detail::EmbedArgs &eargs,
                       const EmbedParameters &embedParams, TimePoint *end_time) {
@@ -734,11 +771,13 @@ bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
           *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters));
   field->initialize();
   int needMore = 1;
-  while (needMore) {
-    if (end_time != nullptr && Clock::now() > *end_time) {
-      return false;
+  if (field->calcEnergy() > ERROR_TOL) {
+    while (needMore) {
+      if (end_time != nullptr && Clock::now() > *end_time) {
+        return false;
+      }
+      needMore = field->minimize(100u, embedParams.optimizerForceTol);
     }
-    needMore = field->minimize(100u, embedParams.optimizerForceTol);
   }
   if (embedParams.useBasicKnowledge) {
     RDGeom::Point3DPtrVect positions3D;
@@ -753,7 +792,12 @@ bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
       return false;
     }
   }
-  return field->calcEnergy() / positions->size() < MAX_MINIMIZED_E_PER_ATOM;
+  const double energyPerAtom = field->calcEnergy() / positions->size();
+#ifdef DEBUG_EMBEDDING
+  std::cerr << "Minimized Energy per Atom after AIO: " << energyPerAtom
+            << std::endl;
+#endif
+  return energyPerAtom < MAX_MINIMIZED_E_PER_ATOM;
 }
 
 bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
@@ -1054,9 +1098,14 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 #endif
             embedParams.failures[EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO]++;
           }
+          continue;
         }
-        continue;
       }
+    }
+
+    gotCoords = _checkFinalCenterInVolume(positions, eargs, embedParams);
+    if (!gotCoords){
+      continue;
     }
 
     // Check for clashing atoms
