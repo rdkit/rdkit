@@ -91,7 +91,7 @@ void DistanceConstraintContribs::getGrad(double *pos, double *grad) const {
     preFactor /= std::max(1.0e-8, distance);
     const double *atom1Coords = &(pos[dim * contrib.idx1]);
     const double *atom2Coords = &(pos[dim * contrib.idx2]);
-    for (unsigned int i = 0; i < 3; i++) {
+    for (unsigned int i = 0; i < dim; i++) {
       const double dGrad = preFactor * (atom1Coords[i] - atom2Coords[i]);
       grad[dim * contrib.idx1 + i] += dGrad;
       grad[dim * contrib.idx2 + i] -= dGrad;
