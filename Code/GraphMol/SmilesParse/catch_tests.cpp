@@ -109,9 +109,9 @@ TEST_CASE("Github #2029", "[SMILES][bug]") {
     CHECK("" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
                                            allBondsExplicit));
     allBondsExplicit = true;
-    CHECK("=" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(0), -1, doKekule,
+    CHECK("-" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(0), -1, doKekule,
                                             allBondsExplicit));
-    CHECK("-" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
+    CHECK("=" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
                                             allBondsExplicit));
   }
 }
