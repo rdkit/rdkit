@@ -1631,6 +1631,48 @@ void testGithub3430() {
   }
 }
 
+void testEnumeratePreservesUnmodifiedSp3Stereo() {
+  // Canonicalize and Enumerate must agree on stereo for sp3 centres that are
+  // not part of the tautomeric path.  Previously, assignStereochemistry called
+  // inside setTautomerStereoAndIsoHs could clear the CHI tag on such a centre
+  // when an intermediate tautomer made the two ring paths look symmetric,
+  // causing the stereo-bearing tautomer to be deduplicated away.  The result
+  // was that Canonicalize returned a stereo SMILES absent from Enumerate.
+  //
+  // Minimal repro: 1-(trans-4-methylcyclohexyl)naphthalene-1,4-dione enol.
+  // The trans-4-methylcyclohexyl stereocentre is never touched by any
+  // tautomeric transform, but an exo-methylene intermediate temporarily makes
+  // it look non-chiral.
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n testEnumeratePreservesUnmodifiedSp3Stereo"
+      << std::endl;
+
+  CleanupParameters params;
+  params.tautomerRemoveSp3Stereo = false;
+  TautomerEnumerator te(params);
+
+  auto mol = "O=C1C(O)=C([C@H]2CC[C@H](C)CC2)C(=O)c2ccccc21"_smiles;
+  TEST_ASSERT(mol.get());
+
+  ROMOL_SPTR canonical(te.canonicalize(*mol));
+  TEST_ASSERT(canonical.get());
+  const std::string canonSmi = MolToSmiles(*canonical);
+
+  // Canonical SMILES must carry a stereo annotation (not stripped)
+  TEST_ASSERT(canonSmi.find('@') != std::string::npos);
+
+  // Canonical SMILES must appear in the Enumerate result set
+  const auto res = te.enumerate(*mol);
+  bool found = false;
+  for (const auto &taut : res) {
+    if (MolToSmiles(*taut) == canonSmi) {
+      found = true;
+      break;
+    }
+  }
+  TEST_ASSERT(found);
+}
+
 void testGithub3755() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n testGithub3755"
                        << std::endl;
@@ -1669,5 +1711,6 @@ int main() {
   testTautomerEnumeratorResult_const_iterator();
   testGithub3430();
   testGithub3755();
+  testEnumeratePreservesUnmodifiedSp3Stereo();
   return 0;
 }
