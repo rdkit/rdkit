@@ -751,4 +751,27 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
   return field;
 }
 
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
+    const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
+    const VECT_CHIRALSET *csets,
+    const std::map<std::pair<unsigned int, unsigned int>, double> &CPCI,
+    const std::map<std::pair<unsigned int, unsigned int>, double> *extraWeights,
+    boost::dynamic_bitset<> *fixedPts) {
+  auto *field = constructAllInOneForceField(mmat, positions, etkdgDetails,
+                                            csets, extraWeights, fixedPts);
+
+  bool is1_4 = false;
+  // double dielConst = 1.0;
+  boost::uint8_t dielModel = 1;
+  auto *contrib = new ForceFields::MMFF::EleContrib(field);
+  field->contribs().emplace_back(contrib);
+  for (const auto &charge : CPCI) {
+    contrib->addTerm(charge.first.first, charge.first.second, charge.second / 500,
+                     dielModel, is1_4);
+  }
+
+  return field;
+}
+
 }  // namespace DistGeom

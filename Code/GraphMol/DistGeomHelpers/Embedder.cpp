@@ -772,10 +772,18 @@ bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
       fixedPts.set(v.first);
     }
   }
-  auto field = std::unique_ptr<ForceFields::ForceField>(
-      DistGeom::constructAllInOneForceField(
-          *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters,
-          nullptr, &fixedPts));
+  std::unique_ptr<ForceFields::ForceField> field;
+  if (embedParams.CPCI) {
+    field.reset(
+        DistGeom::constructAllInOneForceField(
+            *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters,
+            *embedParams.CPCI, nullptr, &fixedPts));
+  } else {
+    field.reset(
+        DistGeom::constructAllInOneForceField(
+            *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters,
+            nullptr, &fixedPts));
+  }
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
     for (const auto &v : *embedParams.coordMap) {
       field->fixedPoints().push_back(v.first);
@@ -1116,7 +1124,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     }
 
     gotCoords = _checkFinalCenterInVolume(positions, eargs, embedParams);
-    if (!gotCoords){
+    if (!gotCoords) {
       continue;
     }
 

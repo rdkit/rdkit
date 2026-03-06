@@ -201,6 +201,7 @@ void EleContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
 
+  const unsigned int dim = dp_forceField->dimension();
   const int numPairs = d_at1Idxs.size();
   for (int pairIdx = 0; pairIdx < numPairs; ++pairIdx) {
     const int d_at1Idx = d_at1Idxs[pairIdx];
@@ -210,10 +211,10 @@ void EleContrib::getGrad(double *pos, double *grad) const {
     const bool d_is1_4 = d_is_1_4s[pairIdx];
 
     double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
-    double *at1Coords = &(pos[3 * d_at1Idx]);
-    double *at2Coords = &(pos[3 * d_at2Idx]);
-    double *g1 = &(grad[3 * d_at1Idx]);
-    double *g2 = &(grad[3 * d_at2Idx]);
+    double *at1Coords = &(pos[dim * d_at1Idx]);
+    double *at2Coords = &(pos[dim * d_at2Idx]);
+    double *g1 = &(grad[dim * d_at1Idx]);
+    double *g2 = &(grad[dim * d_at2Idx]);
     double corr_dist = dist + 0.05;
     corr_dist *= ((d_dielModel == RDKit::MMFF::DISTANCE) ? corr_dist * corr_dist
                                                          : corr_dist);
