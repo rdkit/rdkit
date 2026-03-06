@@ -3372,3 +3372,32 @@ $$$$)CTAB";
   CHECK(SmilesWrite::getCXExtensions(
             *m, RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) == "");
 }
+
+TEST_CASE("github #9144: PR #9082 breaks MolFragmentToSmarts()") {
+  SECTION("as reported") {
+    auto m = "C[C@H](C=O)NCc1ccccc1"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto sma = MolFragmentToSmarts(*m, ps, {5, 6, 7, 8, 9, 10, 11});
+    CHECK(sma == "[#6]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1");
+  }
+  SECTION("another example") {
+    auto m = "C[C@H](F)CCCN"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    {
+      auto sma = MolFragmentToSmarts(*m, ps, {3, 4, 5});
+      CHECK(sma == "[#6]-[#6]-[#6]");
+    }
+    {
+      auto smi = MolFragmentToSmiles(*m, ps, {1, 3, 4, 5});
+      CHECK(smi == "CCCC");
+    }
+    {
+      // one can argue about what should happen here, but this is consistent
+      // with what the code did before
+      auto sma = MolFragmentToSmarts(*m, ps, {1, 3, 4, 5});
+      CHECK(sma == "[#6](-[#6@H])-[#6]-[#6]");
+    }
+  }
+}
