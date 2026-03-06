@@ -40,7 +40,7 @@ constexpr double chiral = 1.0;
 constexpr double fourD = 2.15;
 constexpr double KAngle = 0.01;
 constexpr double KPlanar = 0.0005;
-constexpr double ETTermScaling = 0.005;
+constexpr double ETTermScaling = 0.0075;
 }  // namespace FC
 
 double pickRandomDistMat(const BoundsMatrix &mmat,
