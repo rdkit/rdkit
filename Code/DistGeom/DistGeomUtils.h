@@ -232,7 +232,8 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     const VECT_CHIRALSET *csets,
     const std::map<std::pair<unsigned int, unsigned int>, double>
-        *extraWeights = nullptr);
+        *extraWeights = nullptr,
+    boost::dynamic_bitset<> *fixedPts = nullptr);
 
 }  // namespace DistGeom
 

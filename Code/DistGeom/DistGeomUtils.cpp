@@ -647,13 +647,16 @@ void addDistanceTerms(
     ForceFields::ForceField *ff, const BoundsMatrix &mmat,
     const std::size_t numAtoms,
     const std::map<std::pair<unsigned int, unsigned int>, double> *extraWeights,
-    double *distMat) {
+    double *distMat, boost::dynamic_bitset<> *fixedPts) {
   PRECONDITION(ff, "bad force field");
   auto distContribs = std::make_unique<DistViolationContribs>(ff);
   auto harmonicDistContribs =
       std::make_unique<ForceFields::DistanceConstraintContribs>(ff);
   for (std::size_t i = 1; i < numAtoms; ++i) {
     for (std::size_t j = 0; j < i; ++j) {
+      if (fixedPts != nullptr && (*fixedPts)[i] && (*fixedPts)[j]) {
+        continue;
+      }
       const double l = mmat.getLowerBound(i, j);
       const double u = mmat.getUpperBound(i, j);
       const auto dist = distMat[i * numAtoms + j];
@@ -723,8 +726,8 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
     const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     const VECT_CHIRALSET *csets,
-    const std::map<std::pair<unsigned int, unsigned int>, double>
-        *extraWeights) {
+    const std::map<std::pair<unsigned int, unsigned int>, double> *extraWeights,
+    boost::dynamic_bitset<> *fixedPts) {
   const std::size_t N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
   CHECK_INVARIANT(etkdgDetails.expTorsionAtoms.size() ==
@@ -743,7 +746,8 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
   if (field->dimension() == 4) {
     addChiralityTerms(field, csets, N);
   }
-  addDistanceTerms(field, mmat, N, extraWeights, etkdgDetails.distMat);
+  addDistanceTerms(field, mmat, N, extraWeights, etkdgDetails.distMat,
+                   fixedPts);
   return field;
 }
 

@@ -766,9 +766,21 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
 bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
                       const detail::EmbedArgs &eargs,
                       const EmbedParameters &embedParams, TimePoint *end_time) {
+  boost::dynamic_bitset<> fixedPts(positions->size());
+  if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+    for (const auto &v : *embedParams.coordMap) {
+      fixedPts.set(v.first);
+    }
+  }
   auto field = std::unique_ptr<ForceFields::ForceField>(
       DistGeom::constructAllInOneForceField(
-          *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters));
+          *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters,
+          nullptr, &fixedPts));
+  if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+    for (const auto &v : *embedParams.coordMap) {
+      field->fixedPoints().push_back(v.first);
+    }
+  }
   field->initialize();
   int needMore = 1;
   if (field->calcEnergy() > ERROR_TOL) {
