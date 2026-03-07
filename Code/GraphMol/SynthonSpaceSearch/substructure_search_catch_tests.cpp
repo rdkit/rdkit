@@ -84,7 +84,7 @@ TEST_CASE("Test splits 1") {
       const auto numFragSets = std::accumulate(
           fragments.begin(), fragments.end(), static_cast<size_t>(0),
           [&](size_t prevRes,
-              const std::vector<std::unique_ptr<ROMol>> &frags) {
+              const std::vector<std::shared_ptr<ROMol>> &frags) {
             if (frags.size() == j + 1) {
               return prevRes + 1;
             }

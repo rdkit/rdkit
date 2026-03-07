@@ -46,7 +46,7 @@ permMFromN(unsigned int m, unsigned int n);
 // the search space as there's no point making more fragments than that.
 // Any complex query atoms will be stripped out of the fragments and replaced
 // by a simple atom query.
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::shared_ptr<ROMol>>>
 splitMolecule(const ROMol &query, unsigned int maxNumFrags,
               const std::uint64_t maxNumFragSets, const TimePoint *endTime,
               const int numThreads, bool &timedOut);
@@ -55,12 +55,12 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &mol);
 
 // Return a bitset for each fragment giving the connector patterns
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<boost::dynamic_bitset<>>
-getConnectorPatterns(const std::vector<std::unique_ptr<ROMol>> &fragSet);
+getConnectorPatterns(const std::vector<std::shared_ptr<ROMol>> &fragSet);
 
 // Return a bitset giving the different connector types in this
 // molecule.
 RDKIT_SYNTHONSPACESEARCH_EXPORT boost::dynamic_bitset<> getConnectorPattern(
-    const std::vector<std::unique_ptr<ROMol>> &fragSet);
+    const std::vector<std::shared_ptr<ROMol>> &fragSet);
 
 // Gets the permutations of connector numbers and the atoms they should
 // be applied to in the molFrags.
@@ -163,7 +163,7 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(
 // Make a map that has all the fragments with the same SMILES
 // in a vector keyed by that SMILES.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::map<std::string, std::vector<ROMol *>>
-mapFragsBySmiles(std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
+mapFragsBySmiles(std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
                  bool &cancelled);
 
 // Count the number of chiral atoms, both specified and unspecified i.e. any

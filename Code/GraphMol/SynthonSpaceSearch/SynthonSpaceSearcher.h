@@ -57,7 +57,7 @@ class SynthonSpaceSearcher {
   // appropriate way, for example by substructure or fingerprint
   // similarity.
   virtual std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      const std::vector<std::unique_ptr<ROMol>> &fragSet,
+      const std::vector<std::shared_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const = 0;
 
   // Make the hit, constructed from a specific combination of
@@ -69,6 +69,12 @@ class SynthonSpaceSearcher {
       const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums);
 
  protected:
+  // Build the hit, as used by buildAndVerifyHit.  Fills in the synthon
+  // names, assuming the vector is already the correct size.
+  virtual std::unique_ptr<ROMol> buildHit(
+      const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
+      std::vector<const std::string *> &synthNames) const;
+
   // Checks that the given molecule is definitely a hit according to
   // the derived class' criteria.  This function checks the chiralAtomCount
   // if appropriate, which required a non-const ROMol.  Some derived classes
@@ -120,7 +126,7 @@ class SynthonSpaceSearcher {
   // for all the fragments.  The SubstructureSearcher needs connector
   // regions and information about them.
   virtual bool extraSearchSetup(
-      std::vector<std::vector<std::unique_ptr<ROMol>>> &, const TimePoint *) {
+      std::vector<std::vector<std::shared_ptr<ROMol>>> &, const TimePoint *) {
     return true;
   }
 
@@ -129,7 +135,7 @@ class SynthonSpaceSearcher {
       ThreadMode threadMode);
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> doTheSearch(
-      std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
+      std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
       const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits,
       ThreadMode threadMode);
 

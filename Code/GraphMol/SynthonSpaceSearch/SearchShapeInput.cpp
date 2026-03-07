@@ -25,11 +25,20 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
                                    const ShapeInputOptions &opts,
                                    const ShapeOverlayOptions &overlayOpts)
     : ShapeInput(mol, 0, opts, overlayOpts) {
-  std::cout << "Making shape from " << MolToSmiles(mol) << std::endl;
-  std::cout << "subset atoms : " << opts.atomSubset.size()
-            << "  confs = " << mol.getNumConformers() << std::endl;
   PRECONDITION(pruneThreshold <= 1.0,
                "Shape prune threshold can't be above 1.0");
+
+  std::cout << "Making shape from " << MolToCXSmiles(mol) << std::endl;
+  if (!opts.atomSubset.empty()) {
+    for (const auto ai : opts.atomSubset) {
+      const auto atom = mol.getAtomWithIdx(ai);
+      if (atom->hasProp("molNum")) {
+        std::cout << atom->getIdx() << " : "
+                  << atom->getProp<std::string>("molNum") << " : "
+                  << atom->getProp<std::string>("idx") << std::endl;
+      }
+    }
+  }
   // The ShapeInput c'tor puts a PRECONDITION on conformers being available.
   initializeFromBase();
 
@@ -51,7 +60,6 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
       ++currIdx;
     }
   }
-
   // build the shapes for conformations 1 onwards.
   d_confCoords.reserve(mol.getNumConformers());
   d_molConfs.reserve(mol.getNumConformers());
@@ -81,31 +89,12 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
     d_canonTranss.push_back(shape.getCanonicalTranslation());
     d_eigenValuess.push_back(shape.getEigenValues());
   }
-  std::cout << "All centroids : " << std::endl;
-  for (unsigned int i = 0; i < d_canonTranss.size(); ++i) {
-    std::cout << i << " : " << d_canonTranss[i][0] << ", "
-              << d_canonTranss[i][1] << ", " << d_canonTranss[i][2]
-              << std::endl;
-  }
   if (pruneThreshold > 0.0) {
     pruneShapes(pruneThreshold);
   }
-  std::cout << "Pruned centroids : " << pruneThreshold << std::endl;
-  for (unsigned int i = 0; i < d_canonTranss.size(); ++i) {
-    std::cout << i << " : " << d_canonTranss[i][0] << ", "
-              << d_canonTranss[i][1] << ", " << d_canonTranss[i][2]
-              << std::endl;
-  }
   sortShapesByScore();
-  std::cout << "Sorted centroids : " << std::endl;
-  for (unsigned int i = 0; i < d_canonTranss.size(); ++i) {
-    std::cout << i << " : " << d_canonTranss[i][0] << ", "
-              << d_canonTranss[i][1] << ", " << d_canonTranss[i][2]
-              << std::endl;
-  }
-
   calculateDummyVolumes(overlayOpts);
-  std::cout << "Number of shapes : " << getNumShapes() << std::endl;
+  std::cout << MolToSmiles(*shapeToMol(), true, false, -1, false) << std::endl;
 }
 
 SearchShapeInput::SearchShapeInput(const std::string &str) {
@@ -355,27 +344,6 @@ const double *SearchShapeInput::getDummyCoords(unsigned int dummyNumber) const {
   return nullptr;
 }
 
-std::unique_ptr<RWMol> SearchShapeInput::shapeToMol(bool includeColors) const {
-  std::cout << "SearchShapeInput::shapeToMol() : " << std::endl;
-  auto res = ShapeInput::shapeToMol(includeColors);
-  std::cout << "SearchShapeInput::shapeToMol() : " << res->getNumConformers()
-            << std::endl;
-  const auto &shapeCds = getCoords();
-  for (unsigned int i = 0; i < getNumAtoms(); i++) {
-    if (d_dummyAtoms[i]) {
-      Atom *atom = new Atom(8);
-      res->addAtom(atom, true, true);
-    }
-    Conformer conf = res->getConformer();
-    auto &pos = conf.getAtomPos(i);
-    pos.x = shapeCds[4 * i];
-    pos.y = shapeCds[4 * i + 1];
-    pos.z = shapeCds[4 * i + 2];
-  }
-
-  return res;
-}
-
 void SearchShapeInput::initializeFromBase() {
   d_confCoords = std::vector<std::vector<double>>(
       1, std::vector<double>(3 * (getNumAtoms() + getNumFeatures())));
@@ -412,7 +380,6 @@ void SearchShapeInput::confCoordsToShapeCoords(
 }
 
 void SearchShapeInput::selectConformations(const std::vector<int> &picks) {
-  std::cout << "Number of picks : " << picks.size() << std::endl;
   std::vector<std::vector<double>> newCoords;
   newCoords.reserve(picks.size());
   std::vector<unsigned int> newMolConfs;

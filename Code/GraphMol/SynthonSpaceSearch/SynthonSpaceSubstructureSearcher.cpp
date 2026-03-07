@@ -28,7 +28,7 @@ namespace {
 // synthon set since smaller, less complex fragments are more likely
 // to match something, so screen with that first.
 void reorderFragments(
-    std::vector<std::unique_ptr<ROMol>> &molFrags,
+    std::vector<std::shared_ptr<ROMol>> &molFrags,
     const std::vector<std::pair<void *, ExplicitBitVect *>> &allPattFPs) {
   std::vector<ExplicitBitVect *> pattFPs;
   pattFPs.reserve(molFrags.size());
@@ -53,16 +53,16 @@ void reorderFragments(
             });
 
   // Now put orderedFrags in the same order.
-  std::vector<std::unique_ptr<ROMol>> newFrags(molFrags.size());
+  std::vector<std::shared_ptr<ROMol>> newFrags(molFrags.size());
   for (size_t i = 0; i < fps.size(); ++i) {
-    newFrags[i] = std::move(molFrags[fps[i].first]);
+    newFrags[i] = molFrags[fps[i].first];
   }
-  molFrags = std::move(newFrags);
+  molFrags = newFrags;
 }
 
 // Collect the pattern fps for the fragments.
 std::vector<ExplicitBitVect *> gatherPatternFPs(
-    const std::vector<std::unique_ptr<ROMol>> &molFrags,
+    const std::vector<std::shared_ptr<ROMol>> &molFrags,
     const std::vector<std::pair<void *, ExplicitBitVect *>> &allPattFPs) {
   std::vector<ExplicitBitVect *> pattFPs;
   pattFPs.reserve(molFrags.size());
@@ -262,25 +262,25 @@ std::vector<std::vector<size_t>> getHitSynthons(
   return retSynthons;
 }
 
-std::vector<std::unique_ptr<ROMol>> mergeFragments(
+std::vector<std::shared_ptr<ROMol>> mergeFragments(
     size_t i, size_t one, size_t two, const std::vector<size_t> &others,
-    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
-  std::vector<std::unique_ptr<ROMol>> retFrags;
-  retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[i]));
+    const std::vector<std::shared_ptr<ROMol>> &fragSet) {
+  std::vector<std::shared_ptr<ROMol>> retFrags;
+  retFrags.emplace_back(std::make_shared<ROMol>(*fragSet[i]));
   retFrags.emplace_back(
       std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
   for (auto o : others) {
     if (o != one && o != two) {
-      retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[o]));
+      retFrags.emplace_back(std::make_shared<ROMol>(*fragSet[o]));
     }
   }
   return retFrags;
 }
-std::vector<std::unique_ptr<ROMol>> mergeFragments(
+std::vector<std::shared_ptr<ROMol>> mergeFragments(
     size_t i, size_t one, size_t two, size_t three, size_t four,
-    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
-  std::vector<std::unique_ptr<ROMol>> retFrags;
-  retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[i]));
+    const std::vector<std::shared_ptr<ROMol>> &fragSet) {
+  std::vector<std::shared_ptr<ROMol>> retFrags;
+  retFrags.emplace_back(std::make_shared<ROMol>(*fragSet[i]));
   retFrags.emplace_back(
       std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
   retFrags.emplace_back(
@@ -291,9 +291,9 @@ std::vector<std::unique_ptr<ROMol>> mergeFragments(
 // If there is a ring-forming reaction, we will need to merge all possible
 // pairs of fragments creating multiple possible fragment sets.  Do that for
 // all fragSets of size more than 2.
-std::vector<std::vector<std::unique_ptr<ROMol>>> mergeRingFormingFrags(
-    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
-  std::vector<std::vector<std::unique_ptr<ROMol>>> fragSetCps;
+std::vector<std::vector<std::shared_ptr<ROMol>>> mergeRingFormingFrags(
+    const std::vector<std::shared_ptr<ROMol>> &fragSet) {
+  std::vector<std::vector<std::shared_ptr<ROMol>>> fragSetCps;
 
   // There can be 1 or 2 ring closures in a reaction, so
   // either 2 of the synthons will be bidentate (1 ring closure), or
@@ -348,12 +348,12 @@ unsigned int SynthonSpaceSubstructureSearcher::getNumQueryFragmentsRequired() {
 }
 
 bool SynthonSpaceSubstructureSearcher::extraSearchSetup(
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
     const TimePoint *endTime) {
   if (getSpace().getHasRingFormer()) {
     // If there is a reaction that has a pair of synthons that form a ring,
     // extra merged fragments are required.
-    std::vector<std::vector<std::unique_ptr<ROMol>>> extraFragSets;
+    std::vector<std::vector<std::shared_ptr<ROMol>>> extraFragSets;
     for (const auto &fragSet : fragSets) {
       // There's no need to do this for a fragSet of size 2, because if there
       // is a ring-forming reaction both fragments will be bi-dentate so might
@@ -362,12 +362,12 @@ bool SynthonSpaceSubstructureSearcher::extraSearchSetup(
       if (fragSet.size() > 2) {
         auto fragSetCps = mergeRingFormingFrags(fragSet);
         for (auto &fs : fragSetCps) {
-          extraFragSets.emplace_back(std::move(fs));
+          extraFragSets.emplace_back(fs);
         }
       }
     }
     for (auto &fs : extraFragSets) {
-      fragSets.emplace_back(std::move(fs));
+      fragSets.emplace_back(fs);
     }
   }
   bool cancelled = false;
@@ -475,7 +475,7 @@ bool SynthonSpaceSubstructureSearcher::extraSearchSetup(
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSubstructureSearcher::searchFragSet(
-    const std::vector<std::unique_ptr<ROMol>> &fragSet,
+    const std::vector<std::shared_ptr<ROMol>> &fragSet,
     const SynthonSet &reaction) const {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
   const auto pattFPs = gatherPatternFPs(fragSet, d_pattFPs);
@@ -587,7 +587,7 @@ bool SynthonSpaceSubstructureSearcher::verifyHit(
 }
 
 void SynthonSpaceSubstructureSearcher::getConnectorRegions(
-    const std::vector<std::unique_ptr<ROMol>> &molFrags,
+    const std::vector<std::shared_ptr<ROMol>> &molFrags,
     std::vector<std::vector<ROMol *>> &connRegs,
     std::vector<std::vector<const std::string *>> &connRegSmis,
     std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const {

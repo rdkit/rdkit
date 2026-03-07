@@ -136,6 +136,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   const std::vector<double> &getCoords() const { return d_coords; }
   //! Fetch the coordinates of the atoms and optionally features.
   std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors = false) const;
+  std::string getSmiles() const { return d_smiles; }
   bool getNormalized() const { return d_normalized; }
   const std::vector<int> &getTypes() const { return d_types; }
   unsigned int getNumAtoms() const { return d_numAtoms; }
@@ -185,10 +186,9 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
   void transformCoords(RDGeom::Transform3D &xform);
 
-  // Mock a molecule up from the shape for visual inspection and sometimes
-  // calculation of the normalization matrices.  No bonds.
-  // Atoms are C, features are N.
-  virtual std::unique_ptr<RWMol> shapeToMol(bool includeColors = true) const;
+  // Make a molecule from the shape.  If required, features are added
+  // as xenon atoms.
+  virtual std::unique_ptr<RWMol> shapeToMol(bool includeColors = false) const;
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
@@ -201,6 +201,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
     ar & d_selfOverlapColor;
     ar & d_extremePoints;
     ar & d_carbonRadii;
+    ar & d_smiles;
     ar & d_normalized;
     ar & d_normalizationOK;
     ar & d_canonRot;
@@ -210,7 +211,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #endif
 
  private:
-  void extractAtoms(const ROMol &mol, int confId, const ShapeInputOptions &opts,
+  void extractAtoms(ROMol &mol, int confId, const ShapeInputOptions &opts,
                     bool radsAreDummies);
   // Extract the features for the color scores, using RDKit pphore features
   // for now.  Other options to be added later.
@@ -239,6 +240,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   std::unique_ptr<boost::dynamic_bitset<>>
       d_carbonRadii;  // Flags those atoms with a carbon radius, for faster
   // calculation later.
+  std::string d_smiles;  // The SMILES string of the input molecule
 
   // This is the rotation and translation to align the principal axes of the
   // shape with cartesian axes.  If d_normalized is true, it has been applied

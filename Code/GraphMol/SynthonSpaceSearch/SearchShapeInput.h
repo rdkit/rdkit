@@ -100,13 +100,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
   // largest fitShape volumes and vice versa.
   double maxSimilarity(const SearchShapeInput &fitShape) const;
 
-  // return the coordinates of the given dummy atom.
+  // return the coordinates of the given dummy atom (0->number of dummies)
+  // dummyNumber isn't the position of a dummy atom in the d_coords.
   const double *getDummyCoords(unsigned int dummyNumber) const;
-
-  // Mock a molecule up from the shape for visual inspection and sometimes
-  // calculation of the normalization matrices.  No bonds.
-  // Atoms are C, features are N, dummies are O.
-  std::unique_ptr<RWMol> shapeToMol(bool includeColors = true) const override;
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>

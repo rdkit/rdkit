@@ -41,11 +41,14 @@ struct hash_address_pair {
 // Used for storing the pre-computed similarities between fragments and
 // synthons.  The actual type of the first address in the pair will vary,
 // the second should always be Synthon *.  There's an entry only if
-// the fragment->synthon similarity exceeded the threshold.  Keeps the
-// shape and colour tanimotos separately.
+// the fragment->synthon similarity exceeded the threshold.  Stores the
+// combination score, the number of the shape and the transformation
+// to apply to the shape to get the overlay that gave the score.
+using SynthonOverlay =
+    std::tuple<double, unsigned int, std::shared_ptr<RDGeom::Transform3D>>;
 using FragSynthonSims =
-    std::unordered_map<std::pair<const void *, const void *>,
-                       std::pair<double, unsigned int>, hash_address_pair>;
+    std::unordered_map<std::pair<const void *, const void *>, SynthonOverlay,
+                       hash_address_pair>;
 
 // Concrete class that does the search by Gaussian shape similarity.
 class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
@@ -56,13 +59,13 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
                             SynthonSpace &space);
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      const std::vector<std::unique_ptr<ROMol>> &fragSet,
+      const std::vector<std::shared_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const override;
 
   // Use d_fragSynthonSims to decide if the fragment matched the
   // Synthon.
   bool fragMatchedSynthon(const void *frag, const void *synthon,
-                          std::pair<double, unsigned int> &sim) const;
+                          SynthonOverlay &sim) const;
   bool hasPrecomputedSims() const { return !d_fragSynthonSims.empty(); }
 
  protected:
@@ -70,6 +73,10 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
                    const std::vector<size_t> &synthNums) const override;
   double approxSimilarity(const SynthonSpaceHitSet *hitset,
                           const std::vector<size_t> &synthNums) const override;
+  std::unique_ptr<ROMol> buildHit(
+      const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
+      std::vector<const std::string *> &synthNames) const override;
+
   bool verifyHit(ROMol &hit, const std::string &rxnId,
                  const std::vector<const std::string *> &synthNames) override;
 
@@ -100,7 +107,7 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
   FragSynthonSims d_fragSynthonSims;
 
   bool extraSearchSetup(
-      std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
+      std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
       const TimePoint *endTime) override;
 
   // Fill in the d_fragSynthonSims map.

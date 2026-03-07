@@ -66,10 +66,6 @@ SearchResults SynthonSpaceSearcher::search(ThreadMode threadMode) {
   }
   bool timedOut = false;
   std::uint64_t totHits = 0;
-  auto fragments = details::splitMolecule(
-      d_query, getSpace().getMaxNumSynthons(), d_params.maxNumFragSets, endTime,
-      d_params.numThreads, timedOut);
-  std::cout << "Number of fragment sets : " << fragments.size() << std::endl;
   auto allHits = assembleHitSets(endTime, timedOut, totHits, threadMode);
   if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
     buildHits(allHits, endTime, timedOut, results);
@@ -138,22 +134,30 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb,
   }
 }
 
-std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
-    const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums) {
+std::unique_ptr<ROMol> SynthonSpaceSearcher::buildHit(
+    const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
+    std::vector<const std::string *> &synthNames) const {
   std::vector<const ROMol *> synths(synthNums.size());
-  std::vector<const std::string *> synthNames(synthNums.size());
-
-  std::unique_ptr<ROMol> prod;
-  if (!quickVerify(hitset, synthNums)) {
-    return prod;
-  }
-
   for (size_t i = 0; i < synthNums.size(); i++) {
     synths[i] =
         hitset->synthonsToUse[i][synthNums[i]].second->getOrigMol().get();
     synthNames[i] = &(hitset->synthonsToUse[i][synthNums[i]].first);
   }
-  prod = details::buildProduct(synths);
+  return details::buildProduct(synths);
+}
+
+std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
+    const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums) {
+  std::unique_ptr<ROMol> prod;
+  if (!quickVerify(hitset, synthNums)) {
+    return prod;
+  }
+  std::vector<const std::string *> synthNames(synthNums.size());
+  prod = buildHit(hitset, synthNums, synthNames);
+  if (!prod) {
+    return prod;
+  }
+
   // Do a final check of the whole thing.  It can happen that the
   // fragments match synthons but the final product doesn't match.
   // A key example is when the 2 synthons come together to form an
@@ -174,7 +178,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 namespace {
 
 void searchReactionPart(
-    const std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments,
+    const std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
     const TimePoint *endTime, std::atomic<std::int64_t> &mostRecentFrag,
     SynthonSpaceSearcher *searcher, const SynthonSet &reaction,
     std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> &allSetHits,
@@ -207,7 +211,7 @@ void searchReactionPart(
 std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
     SynthonSpaceSearcher *searcher, const SynthonSet &reaction,
     const TimePoint *endTime, unsigned numThreads,
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments,
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
     std::unique_ptr<ProgressBar> &pbar) {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> hits;
   std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> allSetHits(
@@ -240,7 +244,7 @@ std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
 void processReactions(
     SynthonSpaceSearcher *searcher,
     const std::vector<std::string> &reactionNames,
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments,
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
     const TimePoint *endTime, std::atomic<std::int64_t> &mostRecentReaction,
     std::int64_t lastReaction,
     std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> &reactionHits,
@@ -277,6 +281,7 @@ SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
   auto fragments = details::splitMolecule(
       d_query, getNumQueryFragmentsRequired(), d_params.maxNumFragSets, endTime,
       d_params.numThreads, timedOut);
+  std::cout << "Number of fragment sets : " << fragments.size() << std::endl;
   if (timedOut || ControlCHandler::getGotSignal()) {
     return {};
   }
@@ -289,7 +294,7 @@ SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSearcher::doTheSearch(
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
     const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits,
     ThreadMode threadMode) {
   auto reactionNames = getSpace().getReactionNames();

@@ -13,7 +13,7 @@
 namespace RDKit::SynthonSpaceSearch {
 SynthonSpaceHitSet::SynthonSpaceHitSet(
     const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
-    const std::vector<std::unique_ptr<ROMol>> &fragSet)
+    const std::vector<std::shared_ptr<ROMol>> &fragSet)
     : d_reaction(&reaction) {
   synthonsToUse.reserve(stu.size());
   const auto &synthons = reaction.getSynthons();
@@ -25,11 +25,7 @@ SynthonSpaceHitSet::SynthonSpaceHitSet(
     }
   }
 
-  frags.reserve(fragSet.size());
-  std::transform(
-      fragSet.begin(), fragSet.end(), std::back_inserter(frags),
-      [](const std::unique_ptr<ROMol> &f) -> ROMol * { return f.get(); });
-
+  frags = fragSet;
   numHits = std::accumulate(
       stu.begin(), stu.end(), size_t(1),
       [](const int prevRes, const std::vector<size_t> &s2) -> size_t {
@@ -39,7 +35,7 @@ SynthonSpaceHitSet::SynthonSpaceHitSet(
 
 SynthonSpaceFPHitSet::SynthonSpaceFPHitSet(
     const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
-    const std::vector<std::unique_ptr<ROMol>> &fragSet)
+    const std::vector<std::shared_ptr<ROMol>> &fragSet)
     : SynthonSpaceHitSet(reaction, stu, fragSet) {
   synthonFPs.reserve(stu.size());
   for (size_t i = 0; i < stu.size(); ++i) {
@@ -56,7 +52,7 @@ SynthonSpaceFPHitSet::SynthonSpaceFPHitSet(
 
 SynthonSpaceShapeHitSet::SynthonSpaceShapeHitSet(
     const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
-    const std::vector<std::unique_ptr<ROMol>> &fragSet,
+    const std::vector<std::shared_ptr<ROMol>> &fragSet,
     const std::vector<GaussianShape::SearchShapeInput *> &fShapes,
     const std::vector<unsigned int> &sSetOrder)
     : SynthonSpaceHitSet(reaction, stu, fragSet),
