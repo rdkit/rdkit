@@ -63,10 +63,10 @@ void CoordinateTemplates::loadTemplatesFromPath(
   // templates
   std::string line;
   while (std::getline(cxsmiles, line)) {
-    RDKit::ROMol *mol_ptr = RDKit::SmilesToMol(line);
+    RDKit::ROMol *mol_ptr = RDKit::SmartsToMol(line);
     if (!mol_ptr) {
       std::string msg =
-          "Could not load templates from " + templatePath + ": Invalid smiles";
+          "Could not load templates from " + templatePath + ": Invalid smarts";
       cxsmiles.close();
       throw RDDepict::DepictException(msg);
     }

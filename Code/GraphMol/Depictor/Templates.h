@@ -68,7 +68,7 @@ class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
     clearTemplates();
     // load default templates into m_templates map by atom count
     for (const auto &smiles : TEMPLATE_SMILES) {
-      std::shared_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol(smiles));
+      std::shared_ptr<RDKit::ROMol> mol(RDKit::SmartsToMol(smiles));
       m_templates[mol->getNumAtoms()].push_back(mol);
     }
   }
