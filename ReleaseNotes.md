@@ -37,6 +37,7 @@ GitHub)
   takes arguments in C++. If you want to initialize data members to non-default
   values, use the designated initialization syntax. This change does not affect
   Python.
+- The minimization procedure for ETKDG has been updated. Conformations may differ for the same settings. If you wish to use the old minimization procedure set `EmbedParameters.useLegacyImplementation` to true.
 
 ## New Features and Enhancements:
 
