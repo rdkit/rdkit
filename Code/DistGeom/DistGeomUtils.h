@@ -233,7 +233,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
     const VECT_CHIRALSET *csets,
     const std::map<std::pair<unsigned int, unsigned int>, double>
         *extraWeights = nullptr,
-    boost::dynamic_bitset<> *fixedPts = nullptr);
+    const boost::dynamic_bitset<> *fixedPts = nullptr);
 
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
     const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
@@ -242,7 +242,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
     const std::map<std::pair<unsigned int, unsigned int>, double> &CPCI,
     const std::map<std::pair<unsigned int, unsigned int>, double>
         *extraWeights = nullptr,
-    boost::dynamic_bitset<> *fixedPts = nullptr);
+    const boost::dynamic_bitset<> *fixedPts = nullptr);
 
 }  // namespace DistGeom
 

@@ -647,7 +647,7 @@ void addDistanceTerms(
     ForceFields::ForceField *ff, const BoundsMatrix &mmat,
     const std::size_t numAtoms, double boundsMatForceScaling,
     const std::map<std::pair<unsigned int, unsigned int>, double> *extraWeights,
-    double *distMat, boost::dynamic_bitset<> *fixedPts) {
+    const double *distMat, boost::dynamic_bitset<> *fixedPts) {
   PRECONDITION(ff, "bad force field");
   auto distContribs = std::make_unique<DistViolationContribs>(ff);
   auto harmonicDistContribs =
@@ -728,7 +728,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     const VECT_CHIRALSET *csets,
     const std::map<std::pair<unsigned int, unsigned int>, double> *extraWeights,
-    boost::dynamic_bitset<> *fixedPts) {
+    const boost::dynamic_bitset<> *fixedPts) {
   const std::size_t N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
   CHECK_INVARIANT(etkdgDetails.expTorsionAtoms.size() ==
@@ -758,7 +758,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
     const VECT_CHIRALSET *csets,
     const std::map<std::pair<unsigned int, unsigned int>, double> &CPCI,
     const std::map<std::pair<unsigned int, unsigned int>, double> *extraWeights,
-    boost::dynamic_bitset<> *fixedPts) {
+    const boost::dynamic_bitset<> *fixedPts) {
   auto *field = constructAllInOneForceField(mmat, positions, etkdgDetails,
                                             csets, extraWeights, fixedPts);
 
