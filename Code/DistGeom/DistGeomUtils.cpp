@@ -40,7 +40,7 @@ constexpr double chiral = 1.0;
 constexpr double fourD = 2.15;
 constexpr double KAngle = 0.01;
 constexpr double KPlanar = 0.0005;
-constexpr double ETTermScaling = 0.008;
+constexpr double ETTermScaling = 0.005;
 }  // namespace FC
 
 double pickRandomDistMat(const BoundsMatrix &mmat,
@@ -645,7 +645,7 @@ void addAngleTerms(ForceFields::ForceField *ff,
 
 void addDistanceTerms(
     ForceFields::ForceField *ff, const BoundsMatrix &mmat,
-    const std::size_t numAtoms,
+    const std::size_t numAtoms, double boundsMatForceScaling,
     const std::map<std::pair<unsigned int, unsigned int>, double> *extraWeights,
     double *distMat, boost::dynamic_bitset<> *fixedPts) {
   PRECONDITION(ff, "bad force field");
@@ -662,6 +662,7 @@ void addDistanceTerms(
       const auto dist = distMat[i * numAtoms + j];
       const bool is1213 = (dist == 1.0 || dist == 2.0);
       double w = is1213 ? FC::dist1213 : FC::distance;
+      w *= boundsMatForceScaling;
       if (extraWeights) {
         const auto mapIt = extraWeights->find(std::make_pair(i, j));
         if (mapIt != extraWeights->end()) {
@@ -746,8 +747,8 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
   if (field->dimension() == 4) {
     addChiralityTerms(field, csets, N);
   }
-  addDistanceTerms(field, mmat, N, extraWeights, etkdgDetails.distMat,
-                   fixedPts);
+  addDistanceTerms(field, mmat, N, etkdgDetails.boundsMatForceScaling,
+                   extraWeights, etkdgDetails.distMat, fixedPts);
   return field;
 }
 
@@ -767,8 +768,8 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
   auto *contrib = new ForceFields::MMFF::EleContrib(field);
   field->contribs().emplace_back(contrib);
   for (const auto &charge : CPCI) {
-    contrib->addTerm(charge.first.first, charge.first.second, charge.second / 500,
-                     dielModel, is1_4);
+    contrib->addTerm(charge.first.first, charge.first.second,
+                     charge.second / 500, dielModel, is1_4);
   }
 
   return field;
