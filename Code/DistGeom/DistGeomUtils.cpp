@@ -647,7 +647,7 @@ void addDistanceTerms(
     ForceFields::ForceField *ff, const BoundsMatrix &mmat,
     const std::size_t numAtoms, double boundsMatForceScaling,
     const std::map<std::pair<unsigned int, unsigned int>, double> *extraWeights,
-    const double *distMat, boost::dynamic_bitset<> *fixedPts) {
+    const double *distMat, const boost::dynamic_bitset<> *fixedPts) {
   PRECONDITION(ff, "bad force field");
   auto distContribs = std::make_unique<DistViolationContribs>(ff);
   auto harmonicDistContribs =
