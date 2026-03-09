@@ -1144,7 +1144,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 
     // Check Double Bond Geometry
     gotCoords =
-        EmbeddingOps::doubleBondGeometryChecks(*positions, eargs, embedParams);
+        EmbeddingOps::doubleBondGeometryChecks(*positions, eargs, embedParams, 3e-3);
     if (!gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
