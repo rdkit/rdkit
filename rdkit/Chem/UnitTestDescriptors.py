@@ -206,22 +206,24 @@ class TestCase(unittest.TestCase):
     # check ValueError raised when no 3D coordinates supplied
     with self.assertRaises(ValueError):
       Descriptors3D.CalcMolDescriptors3D(mol)
-
     # test function returns expected outputs
-    AllChem.EmbedMolecule(mol, randomSeed=0xf00d)
+    ps = AllChem.ETKDGv3()
+    ps.randomSeed = 0xf00d
+    AllChem.EmbedMolecule(mol, ps)
     descs = Descriptors3D.CalcMolDescriptors3D(mol)
     self.assertTrue('InertialShapeFactor' in descs)
-    self.assertAlmostEqual(descs['PMI1'], 20.9582649071385, delta=1e-4)
+    self.assertAlmostEqual(descs['PMI1'], 21.67973, delta=1e-4)
 
     # test function returns expected outputs
-    AllChem.EmbedMultipleConfs(mol, 10, randomSeed=0xf00d)
+    ps = AllChem.ETKDGv3()
+    ps.randomSeed = 0xf00d
+    AllChem.EmbedMultipleConfs(mol, 10, ps)
     descs = Descriptors3D.CalcMolDescriptors3D(mol)
     self.assertTrue('InertialShapeFactor' in descs)
-    self.assertAlmostEqual(descs['PMI1'], 20.9582649071385, delta=1e-4)
+    self.assertAlmostEqual(descs['PMI1'], 21.67973, delta=1e-4)
     descs2 = Descriptors3D.CalcMolDescriptors3D(mol, confId=2)
     for key in descs:
       self.assertNotEqual(descs2[key], descs[key])
-
 
 if __name__ == '__main__':
   unittest.main()
