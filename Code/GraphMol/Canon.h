@@ -113,6 +113,14 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
     const std::vector<std::string> *bondSymbols = nullptr,
     bool doIsomericSmiles = false, bool doRandom = false,
     bool doChiralInversions = true);
+RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
+    ROMol &mol, int atomIdx, std::vector<AtomColors> &colors,
+    const std::vector<unsigned int> &ranks, MolStack &molStack,
+    const boost::dynamic_bitset<> *atomsInPlay,
+    const boost::dynamic_bitset<> *bondsInPlay,
+    const std::vector<std::string> *bondSymbols = nullptr,
+    bool doIsomericSmiles = false, bool doRandom = false,
+    bool doChiralInversions = true);
 
 //! Check if a chiral atom needs to have its tag flipped after reading or before
 //! writing SMILES

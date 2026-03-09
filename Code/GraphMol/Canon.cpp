@@ -1015,8 +1015,34 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
                           const std::vector<std::string> *bondSymbols,
                           bool doIsomericSmiles, bool doRandom,
                           bool doChiralInversions) {
+  boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
+  if (!bondsInPlay) {
+    // if we weren't given a bondsInPlay, then all bonds are in play, so we need
+    // to set both those and the atomsInPlay here:
+    atomsInPlay.set();
+  } else {
+    for (const auto bnd : mol.bonds()) {
+      if ((*bondsInPlay)[bnd->getIdx()]) {
+        atomsInPlay.set(bnd->getBeginAtomIdx());
+        atomsInPlay.set(bnd->getEndAtomIdx());
+      }
+    }
+  }
+  canonicalizeFragment(mol, atomIdx, colors, ranks, molStack, &atomsInPlay,
+                       bondsInPlay, bondSymbols, doIsomericSmiles, doRandom,
+                       doChiralInversions);
+}
+RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
+    ROMol &mol, int atomIdx, std::vector<AtomColors> &colors,
+    const std::vector<unsigned int> &ranks, MolStack &molStack,
+    const boost::dynamic_bitset<> *atomsInPlay,
+    const boost::dynamic_bitset<> *bondsInPlay,
+    const std::vector<std::string> *bondSymbols, bool doIsomericSmiles,
+    bool doRandom, bool doChiralInversions) {
   PRECONDITION(colors.size() >= mol.getNumAtoms(), "vector too small");
   PRECONDITION(ranks.size() >= mol.getNumAtoms(), "vector too small");
+  PRECONDITION(!atomsInPlay || atomsInPlay->size() >= mol.getNumAtoms(),
+               "atomsInPlay too small");
   PRECONDITION(!bondsInPlay || bondsInPlay->size() >= mol.getNumBonds(),
                "bondsInPlay too small");
   PRECONDITION(!bondSymbols || bondSymbols->size() >= mol.getNumBonds(),
@@ -1061,6 +1087,9 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
   std::vector<int> atomPermutationIndices(nAtoms, 0);
   if (doIsomericSmiles) {
     for (const auto atom : mol.atoms()) {
+      if (atomsInPlay && !(*atomsInPlay)[atom->getIdx()]) {
+        continue;
+      }
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
         // check if all of this atom's bonds are in play
         for (const auto bnd : mol.atomBonds(atom)) {
@@ -1097,7 +1126,6 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
               if (std::find(trueOrder.begin(), trueOrder.end(), bndIdx) ==
                   trueOrder.end()) {
                 tOrder.push_back(bndIdx);
-                break;
               }
             }
             if (!perm) {
