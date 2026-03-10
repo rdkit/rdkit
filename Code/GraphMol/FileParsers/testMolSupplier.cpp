@@ -2705,3 +2705,15 @@ TEST_CASE("Read SD properties till last '>'") {
   REQUIRE(m2);
   CHECK(m2->hasProp(prop_name));
 }
+
+TEST_CASE("github9101 - $$$$ at buffer end") {
+  std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/rdkit_chunk_boundary_bug.sdf.txt";
+  SDMolSupplier reader(infile);
+  CHECK(reader.length() == 2); // this causes the issue as we pre-index
+  auto *mol = reader[0];
+  CHECK(mol->getProp<std::string>("comment").size() == 65369);
+  delete mol;
+  mol = reader[1];
+  REQUIRE(mol);
+  delete mol;
+}

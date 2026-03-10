@@ -8685,6 +8685,14 @@ M  END
                     if b.GetBondDir() in (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH))
     self.assertEqual(numWedges, 1)
 
+  def testGithub9101(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'rdkit_chunk_boundary_bug.sdf.txt')
+    sdSup = Chem.SDMolSupplier(fileN)
+    mols = list(sdSup)
+    self.assertEqual(len(mols[0].GetPropsAsDict()["comment"]), 65369)
+    self.assertTrue(mols[1]!=None)
+    
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
