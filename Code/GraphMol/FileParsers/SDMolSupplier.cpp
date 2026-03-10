@@ -125,7 +125,6 @@ void SDMolSupplier::peekCheckForEnd(char *bufPtr, char *bufEnd,
   int emptyLines = 0;
   char *p = bufPtr;
   while (p < bufEnd) {
-
     if (!std::isspace(*p)) {
       return;
     }
@@ -291,7 +290,7 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
   std::fill(buffer.begin(), buffer.begin() + OVERLAP, '\n');  // safe init
   std::streampos currentStreamPos = dp_inStream->tellg();
   bool foundTarget = false;
-  
+
   while (dp_inStream->good() && !foundTarget) {
     std::streampos chunkStartPos = currentStreamPos;
     dp_inStream->read(&buffer[OVERLAP], CHUNK_SIZE);
@@ -312,27 +311,28 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
     while (true) {
       constexpr char dollarSigns[]{"$$$$"};
       auto match = std::search(ptr, bufEnd, dollarSigns, dollarSigns + 4);
-       if (match == bufEnd) {
+      if (match == bufEnd) {
         break;
       }
       if (*(match - 1) == '\n') {  // ensure $$$$ is at start of line
         char *nlPos = match + 4;
-	if(nlPos == bufEnd) {
-	  // corner case, $$$$ is EXACTLY at the end of the buffer
-	  //  we need the next char in the stream to be a "\n", this is resolved
-	  //  below.
-	  needEOL = true;
-	} else {
-         while (nlPos < bufEnd && *nlPos != '\n') {
-           ++nlPos;
-         }
-         if (nlPos < bufEnd) {
-           ++nlPos;
-         }
-	}
+        if (nlPos == bufEnd) {
+          // corner case, $$$$ is EXACTLY at the end of the buffer
+          //  we need the next char in the stream to be a "\n", this is resolved
+          //  below.
+          needEOL = true;
+        } else {
+          while (nlPos < bufEnd && *nlPos != '\n') {
+            ++nlPos;
+          }
+          if (nlPos < bufEnd) {
+            ++nlPos;
+          }
+        }
 
         std::streampos posHold;
-        if (isBinaryLike && !needEOL) {  // fast path, math checks out, no need to seek
+        if (isBinaryLike &&
+            !needEOL) {  // fast path, math checks out, no need to seek
           posHold = chunkStartPos + std::streamoff(nlPos - bufStart - OVERLAP);
         } else {  // slow path, there is byte translation going on, need to seek
                   // and use the std translation magic to find the actual byte
@@ -352,18 +352,17 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
             (bytesRead < static_cast<std::streamsize>(CHUNK_SIZE)) &&
             (nlPos >= bufEnd);
         if (!atTrueEOF) {
-	  if(needEOL) {
-	    char c = dp_inStream->peek();
-	    if(c == '\n') {
-	      posHold = posHold + std::streamoff(1);
-	      needEOL = false;
-	    }
-	    this->checkForEnd();
-	  }
-	  else {
-	    this->peekCheckForEnd(nlPos, bufEnd,
-				  posHold);  // the optimized peek version
-	  }
+          if (needEOL) {
+            char c = dp_inStream->peek();
+            if (c == '\n') {
+              posHold = posHold + std::streamoff(1);
+              needEOL = false;
+            }
+            this->checkForEnd();
+          } else {
+            this->peekCheckForEnd(nlPos, bufEnd,
+                                  posHold);  // the optimized peek version
+          }
           if (!this->df_end) {
             d_molpos.push_back(posHold);
             ++d_last;
