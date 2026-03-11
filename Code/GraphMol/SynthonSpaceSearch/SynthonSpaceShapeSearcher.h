@@ -73,6 +73,13 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
                    const std::vector<size_t> &synthNums) const override;
   double approxSimilarity(const SynthonSpaceHitSet *hitset,
                           const std::vector<size_t> &synthNums) const override;
+  // Build the hit, doing its best to line the synthons up correctly.
+  // It may not do a great job, however for at least 2 reasons.
+  // The synthon may not match a fragment, in which case there is no
+  // good way of lining it up on the query.  Also, molzip lines the
+  // fragments up using the bond vectors to the dummy atoms, but this
+  // fails if it's building a ring.  The product geometry should be
+  // checked for bad bond lengths.
   std::unique_ptr<ROMol> buildHit(
       const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
       std::vector<const std::string *> &synthNames) const override;

@@ -96,6 +96,11 @@ std::vector<std::vector<size_t>> getHitSynthons(
       if (shapeSearcher.hasPrecomputedSims()) {
         if (shapeSearcher.fragMatchedSynthon(fragShapes[fragNum],
                                              synthons[j].second, sim)) {
+          std::cout << fragShapes[fragNum]->getSmiles() << " vs "
+                    << synthons[j].first << " : "
+                    << synthons[j].second->getSmiles() << std::endl;
+          std::cout << "sim = " << std::get<0>(sim) << " for shape "
+                    << std::get<1>(sim) << std::endl;
           synthonsToUse[synthonSetOrder[fragNum]][j] = true;
           fragSims[synthonSetOrder[fragNum]].emplace_back(j, std::get<0>(sim));
           fragMatched = true;
@@ -113,6 +118,8 @@ std::vector<std::vector<size_t>> getHitSynthons(
       }
     }
     if (!fragMatched) {
+      std::cout << "Nothing matched " << fragShapes[fragNum]->getSmiles()
+                << std::endl;
       // No synthons matched this fragment, so the whole fragment set is a
       // bust.
       return retSynthons;
@@ -205,10 +212,16 @@ SynthonSpaceShapeSearcher::searchFragSet(
       if (!theseSynthons.empty()) {
         std::unique_ptr<SynthonSpaceHitSet> hs(new SynthonSpaceShapeHitSet(
             reaction, theseSynthons, fragSet, fragShapes, synthonOrder));
-        std::cout << "hits : " << hs->numHits << std::endl;
-        std::cout << "synthon order : ";
+        std::cout << "\nhits : " << hs->numHits << " from rxn with "
+                  << reaction.getSynthons().size() << " synthons" << std::endl;
+        std::cout << "input synthon order : ";
         for (auto so : synthonOrder) {
           std::cout << so << " ";
+        }
+        auto hst = dynamic_cast<SynthonSpaceShapeHitSet *>(hs.get());
+        std::cout << "final synth order : ";
+        for (size_t i = 0; i < hst->synthonSetOrder.size(); ++i) {
+          std::cout << hst->synthonSetOrder[i] << " ";
         }
         std::cout << std::endl;
         std::cout << "frags : ";
@@ -248,7 +261,7 @@ std::unique_ptr<GaussianShape::SearchShapeInput> generateShapes(
   fragAtoms.erase(std::unique(fragAtoms.begin(), fragAtoms.end()),
                   fragAtoms.end());
   std::vector<std::pair<unsigned int, double>> dummyRadii;
-  std::vector<unsigned int> notColorAtoms;
+  // std::vector<unsigned int> notColorAtoms;
   for (auto atom : frag.atoms()) {
     if (atom->getAtomicNum() == 0 && atom->getIsotope() >= 1 &&
         atom->getIsotope() <= MAX_CONNECTOR_NUM) {
@@ -258,22 +271,24 @@ std::unique_ptr<GaussianShape::SearchShapeInput> generateShapes(
       for (auto nbrNbr : queryCp.atomNeighbors(origNbr)) {
         if (!inFrag[nbrNbr->getIdx()]) {
           dummyRadii.emplace_back(nbrNbr->getIdx(), 2.16);
-          notColorAtoms.emplace_back(nbrNbr->getIdx());
+          // notColorAtoms.emplace_back(nbrNbr->getIdx());
           // Make it a dummy atom in the copy so it's correct in the Shape.
           nbrNbr->setAtomicNum(0);
         }
       }
     }
   }
+  // Put the dummy atoms into the fragAtoms as we want them in the shape, too.
+  // If the fragment was formed by taking a single atom out of a ring, the
+  // dummy atom will appear twice in the list, so fix that.  It will mean that
+  // in the shape, there will be a dummy in a ring.  A synthon would have 2, but
+  // in the same place.
   std::ranges::sort(dummyRadii);
   dummyRadii.erase(std::unique(dummyRadii.begin(), dummyRadii.end()),
                    dummyRadii.end());
-  std::transform(dummyRadii.begin(), dummyRadii.end(),
-                 std::back_inserter(fragAtoms),
-                 [](const auto &p) -> unsigned int { return p.first; });
+  std::ranges::transform(dummyRadii, std::back_inserter(fragAtoms),
+                         [](const auto &p) -> unsigned int { return p.first; });
 
-  // Build shapes with and without dummies to get a value for the dummy
-  // atom volume in each conformation.
   GaussianShape::ShapeInputOptions opts;
   opts.atomSubset = fragAtoms;
   opts.atomRadii = dummyRadii;
@@ -418,6 +433,19 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
   if (!computeFragSynthonSims(endTime, minShapeSetSize)) {
     return false;
   }
+#if 0
+  std::cout << "Number of fragment/synthon sims : " << d_fragSynthonSims.size()
+            << std::endl;
+  for (const auto &fss : d_fragSynthonSims) {
+    const GaussianShape::SearchShapeInput *shape =
+        static_cast<const GaussianShape::SearchShapeInput *>(fss.first.first);
+    const Synthon *synthon = static_cast<const Synthon *>(fss.first.second);
+    std::cout << fss.first.first << " : " << shape->getSmiles()
+              << " :: " << shape->getNumAtoms() << " -> " << fss.first.second
+              << " : " << synthon->getSmiles()
+              << " :: " << std::get<0>(fss.second) << std::endl;
+  }
+#endif
   return true;
 }
 
@@ -451,6 +479,14 @@ void alignDummies(const double *fragDummy, const double *fragCentroid,
   xform = fromOrigin * rot * toOrigin;
 }
 
+bool checkDummies(GaussianShape::ShapeInput &fragShape,
+                  unsigned int fragDummyNum,
+                  GaussianShape::ShapeInput &synthShape,
+                  unsigned int synthDummyNum, double distThresold,
+                  double angleThreshold) {
+  return true;
+}
+
 // Find the best similarity of a fragment shape with a synthon shape, within
 // the threshold, making sure that they start with dummy atoms aligned
 // and the synthon's dummy atom doesn't move too far from the fragment's
@@ -470,9 +506,6 @@ SynthonOverlay bestSimSynthonOntoFragment(
   opts.normalize = false;
   GaussianShape::SearchShapeInput synthShapeCp(*synthShapes);
 
-  double fragCentroid[3]{-fragShape.getCanonicalTranslation()[0],
-                         -fragShape.getCanonicalTranslation()[1],
-                         -fragShape.getCanonicalTranslation()[2]};
   // Rotations of 0, 90, 180, 270 degrees.
   static const std::array<double, 4> sinT{0, sin(GaussianShape::PI / 2.0),
                                           sin(GaussianShape::PI),
@@ -485,35 +518,44 @@ SynthonOverlay bestSimSynthonOntoFragment(
   unsigned int bestSynthShape = 0;
   std::shared_ptr<RDGeom::Transform3D> bestXform{new RDGeom::Transform3D()};
 
+  std::cout << "fragShape : " << MolToCXSmiles(*fragShape.shapeToMol())
+            << std::endl;
   for (unsigned int i = 0; i < fragShape.getDummyAtoms().count(); ++i) {
-    auto fragDummy = fragShape.getDummyCoords(i);
+    unsigned int fragDummyIdx, fragDummyNbrIdx;
+    fragShape.getDummyAndNbr(i, fragDummyIdx, fragDummyNbrIdx);
+    auto fragDummy = fragShape.getCoords().data() + 4 * fragDummyIdx;
+    auto fragDummyNbr = fragShape.getCoords().data() + 4 * fragDummyNbrIdx;
     for (unsigned int ssn = 0; ssn < synthShapes->getNumShapes(); ++ssn) {
-      synthShapes->setActiveShape(ssn);
-      double synthCentroid[3]{-synthShapes->getCanonicalTranslation()[0],
-                              -synthShapes->getCanonicalTranslation()[1],
-                              -synthShapes->getCanonicalTranslation()[2]};
       for (unsigned int j = 0; j < synthShapes->getDummyAtoms().count(); ++j) {
         // Align the synthon shape so that its dummy j is on top of
         // fragShape's dummy i and the vector from the dummy to its centroid
         // is aligned with the vector from the frag's dummy to centroid.
-        auto synthDummy = synthShapes->getDummyCoords(j);
-        alignDummies(fragDummy, fragCentroid, synthDummy, synthCentroid, xform);
+        unsigned int synthDummyIdx, synthDummyNbrIdx;
+        synthShapes->getDummyAndNbr(j, synthDummyIdx, synthDummyNbrIdx);
+        auto synthDummy = synthShapes->getCoords().data() + 4 * synthDummyIdx;
+        auto synthDummyNbr =
+            synthShapes->getCoords().data() + 4 * synthDummyNbrIdx;
+        alignDummies(fragDummy, fragDummyNbr, synthDummy, synthDummyNbr, xform);
         synthShapeCp.setCoords(synthShapes->getCoords());
         synthShapeCp.transformCoords(xform);
-        synthDummy = synthShapeCp.getDummyCoords(j);
-        auto synthCpCentroid = synthShapeCp.getCanonicalTranslation();
-
+        auto synthCpDummy = synthShapeCp.getCoords().data() + 4 * synthDummyIdx;
+        auto synthCpDummyNbr =
+            synthShapeCp.getCoords().data() + 4 * synthDummyNbrIdx;
+#if 0
+        std::cout << "synth dummy " << j << " : " << synthDummy[0] << ", "
+                  << synthDummy[1] << ", " << synthDummy[2] << std::endl;
+#endif
         RDGeom::Point3D rotAxis =
-            RDGeom::Point3D({synthDummy[0], synthDummy[1], synthDummy[2]})
-                .directionVector(RDGeom::Point3D(-synthCpCentroid[0],
-                                                 -synthCpCentroid[1],
-                                                 -synthCpCentroid[2]));
+            RDGeom::Point3D({synthCpDummy[0], synthCpDummy[1], synthCpDummy[2]})
+                .directionVector(RDGeom::Point3D(-synthCpDummyNbr[0],
+                                                 -synthCpDummyNbr[1],
+                                                 -synthCpDummyNbr[2]));
         RDGeom::Transform3D toOrigin;
-        toOrigin.SetTranslation(
-            RDGeom::Point3D(-synthDummy[0], -synthDummy[1], -synthDummy[2]));
+        toOrigin.SetTranslation(RDGeom::Point3D(
+            -synthCpDummy[0], -synthCpDummy[1], -synthCpDummy[2]));
         RDGeom::Transform3D fromOrigin;
         fromOrigin.SetTranslation(
-            RDGeom::Point3D(synthDummy[0], synthDummy[1], synthDummy[2]));
+            RDGeom::Point3D(synthCpDummy[0], synthCpDummy[1], synthCpDummy[2]));
         // Rotate 4 times around the axis
         for (unsigned int k = 0; k < 4; ++k) {
           // Work on a copy to leave the synthon where it started so the final
@@ -524,13 +566,20 @@ SynthonOverlay bestSimSynthonOntoFragment(
           RDGeom::Transform3D fullXform = fromOrigin * rot * toOrigin * xform;
           synthShapeCp.transformCoords(fullXform);
           RDGeom::Transform3D ovlyXform;
+#if 1
+          std::cout << "input singleSynthShape : "
+                    << MolToCXSmiles(*synthShapeCp.shapeToMol(true))
+                    << std::endl;
+#endif
           auto scores = GaussianShape::AlignShape(fragShape, synthShapeCp,
                                                   &ovlyXform, opts);
-#if 0
+#if 1
           std::cout << "Score : " << scores[0] << " " << scores[1] << " "
                     << scores[2] << std::endl;
           std::cout << "overlaid singleSynthShape : "
                     << MolToCXSmiles(*synthShapeCp.shapeToMol()) << std::endl;
+          std::cout << "fragShape : " << MolToCXSmiles(*fragShape.shapeToMol())
+                    << std::endl;
 #endif
           if (scores[0] > bestScore) {
             bestScore = scores[0];
@@ -582,6 +631,11 @@ void computeSomeFragSynthonSims(
       auto sim =
           bestSimSynthonOntoFragment(*fragShape, synthon, threshold, xform);
       if (std::get<0>(sim) >= threshold) {
+        std::cout << fragShape->getSmiles() << " -> " << synthon->getSmiles()
+                  << " : " << std::get<0>(sim)
+                  << " :: " << MolToCXSmiles(*fragShape->shapeToMol()) << " :: "
+                  << MolToCXSmiles(*synthon->getShapes()->shapeToMol())
+                  << std::endl;
         std::pair<const void *, const void *> p{fragShape, synthon};
         std::unique_lock lock1{mtx};
         fragSynthonSims.insert(std::make_pair(p, sim));
@@ -694,7 +748,6 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
     // the shape and colour tanimotos already calculated and use them to
     // calculate an approximation of the total similarities.
     const auto hs = dynamic_cast<const SynthonSpaceShapeHitSet *>(hitset);
-    SynthonOverlay sim;
     double totShapeOv = 0.0;
     double totColourOv = 0.0;
     double totSynthVol = 0.0;
@@ -714,6 +767,7 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
 
       // Look up the similarity for this shape/synthon combination.  If it
       // isn't there, something has gone catastrophically wrong somewhere.
+      SynthonOverlay sim;
       fragMatchedSynthon(fragShape, synth, sim);
 
       // Get the volume of the synthon for the shape conformer that gave
@@ -746,8 +800,8 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
       const auto &synth =
           hs->synthonsToUse[hs->synthonSetOrder[i]][synthNums[i]].second;
       const auto &shapes = synth->getShapes();
-      double synthVol = shapes->getShapeVolume(std::get<1>(sim)) -
-                        shapes->getDummyVolume(std::get<1>(sim));
+      // Use the first shape, which should have the largest volume.
+      double synthVol = shapes->getShapeVolume(0) - shapes->getDummyVolume(0);
       totSynthVol += synthVol;
       double synthColourVol = shapes->getColorVolume();
       totSynthColourVol += synthColourVol;
@@ -824,114 +878,110 @@ void finaliseHit(const std::unique_ptr<RWMol> &queryConfs, ROMol &hit,
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
 }
+
+// Transform synthon into place
+std::unique_ptr<RWMol> getShapeMol(const Synthon *synthon,
+                                   unsigned int shapeNum,
+                                   RDGeom::Transform3D *xform) {
+  // We need to build a copy of the synthon and give it the coords
+  // of the associated shape that is similar to the fragment, and
+  // transform it to the overlaid coords.
+  const auto &synthShape = synthon->getShapes();
+  GaussianShape::SearchShapeInput synthShapeCp(*synthShape);
+  synthShapeCp.setActiveShape(shapeNum);
+  auto shapeMol = synthShapeCp.shapeToMol(false);
+  std::cout << "shape mol : " << MolToSmiles(*shapeMol, true, false, -1, false)
+            << std::endl;
+  std::cout << "orig mol : " << synthon->getSmiles() << std::endl;
+  if (xform) {
+    MolTransforms::transformConformer(shapeMol->getConformer(), *xform);
+  }
+  return shapeMol;
+}
 }  // namespace
 
 std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
     const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
     std::vector<const std::string *> &synthNames) const {
   std::cout << "\nBUILD HIT" << std::endl;
-  // If this doesn't work, there's something so wrong a crash is acceptable!
+  // If this doesn't work, there's something so wrong an abort is necessary.
   auto hs = dynamic_cast<const SynthonSpaceShapeHitSet *>(hitset);
-#if 0
-  std::cout << "Number of fragment/synthon sims : " << d_fragSynthonSims.size()
-            << std::endl;
-  for (const auto &fss : d_fragSynthonSims) {
-    const GaussianShape::SearchShapeInput *shape =
-        static_cast<const GaussianShape::SearchShapeInput *>(fss.first.first);
-    const Synthon *synthon = static_cast<const Synthon *>(fss.first.second);
-    std::cout << fss.first.first << " : " << shape->getNumAtoms() << " -> "
-              << fss.first.second << " : " << synthon->getSmiles()
-              << " :: " << std::get<0>(fss.second) << std::endl;
-  }
-#endif
+  PRECONDITION(hs, "Couldn't cast the hitset to shape hitset in buildHit");
   std::vector<const ROMol *> synths(synthNums.size());
   std::vector<std::shared_ptr<ROMol>> tmpSynths(synthNums.size());
-  std::cout << "Synthons in order : ";
-  for (size_t i = 0; i < synthNums.size(); i++) {
-    const auto &synthon =
-        hs->synthonsToUse[hs->synthonSetOrder[i]][synthNums[i]].second;
-    std::cout << synthon << " : " << hs->synthonsToUse[i][synthNums[i]].first
-              << " : "
-              << MolToSmiles(*synthon->getOrigMol(), true, false, -1, false)
-              << " :: ";
-  }
-  std::cout << std::endl;
-  std::cout << "building fragments that matched : " << hs->frags.size()
-            << " :: ";
-  for (const auto &f : hs->frags) {
-    std::cout << f << " : " << MolToSmiles(*f) << " :: ";
-  }
-  std::cout << std::endl;
-  std::cout << "shapes : ";
-  for (size_t i = 0; i < hs->fragShapes.size(); i++) {
-    const auto fs = hs->fragShapes[i];
-    std::cout << fs << " : " << fs->getNumAtoms() << " : "
-              << fs->getNumFeatures() << " :: ";
-  }
-  std::cout << std::endl;
-  for (size_t i = 0; i < synthNums.size(); i++) {
-    // frag/shape i is similar to synthon synthNums[i].  The synthons
-    // match the fragments in the order given in hs->synthonSetOrder.
-    const auto &synthon =
-        hs->synthonsToUse[hs->synthonSetOrder[i]][synthNums[i]].second;
-    std::cout << "Sub-match " << i << std::endl
-              << hs->synthonsToUse[i][synthNums[i]].first << " : "
-              << synthon->getSmiles() << std::endl;
-    const auto &shape = hs->fragShapes[i];
-    // Fetch the overlay for this fragment, synthon combination
-    auto it = d_fragSynthonSims.find(std::make_pair(shape, synthon));
-    if (it == d_fragSynthonSims.end()) {
-      std::cout << "AWOOGA - haven't found this fragment/synthon combination."
-                << std::endl;
-      return nullptr;
-    }
-    std::cout << "sim : " << std::get<0>(it->second)
-              << "  shapeNum : " << std::get<1>(it->second)
-              << " transform : " << std::get<2>(it->second) << std::endl;
-    // We need to build a copy of the synthon and give it the coords
-    // of the associated shape that is similar to the fragment, and
-    // transform it to the overlaid coords.
-    const auto &synthShape = synthon->getShapes();
-    GaussianShape::SearchShapeInput synthShapeCp(*synthShape);
-    synthShapeCp.setActiveShape(get<1>(it->second));
-    auto shapeMol = synthShapeCp.shapeToMol(false);
-    std::cout << "shape mol : "
-              << MolToSmiles(*shapeMol, true, false, -1, false) << std::endl;
-    std::cout << "orig mol : " << synthon->getSmiles() << std::endl;
-    // The shapeMol needs the mapping numbers on the dummy atoms for the
-    // molzip to work.  Get them from the synthon's original mol, bearing
-    // in mind that the atoms may be in a different order.  Since the shape
-    // was built from the synthon, it's not likely that there won't be a match.
-    // If there's more than 1 match because of symmetry, that doesn't matter
-    // so take the first match.
-    auto match = SubstructMatch(*shapeMol, *synthon->getOrigMol());
-    std::cout << "number of matches : " << match.size() << std::endl;
-    for (const auto &[synthIdx, shapeIdx] : match.front()) {
-      auto synthAt = synthon->getOrigMol()->getAtomWithIdx(synthIdx);
-      auto shapeAt = shapeMol->getAtomWithIdx(shapeIdx);
-      std::cout << shapeIdx << " :: " << synthIdx
-                << " ::: " << synthAt->getIsotope() << " : "
-                << synthAt->getAtomicNum() << " and " << shapeAt->getIsotope()
-                << " : " << shapeAt->getAtomicNum() << std::endl;
-      if (!synthAt->getAtomicNum() && synthAt->getIsotope()) {
-        std::cout << "MACK : " << shapeIdx << " :: " << synthIdx
-                  << " ::: " << synthAt->getIsotope() << " : "
-                  << synthAt->getAtomicNum() << " and " << shapeAt->getIsotope()
-                  << " : " << shapeAt->getAtomicNum() << std::endl;
-        shapeAt->setIsotope(synthAt->getIsotope());
+  // We need to build all the synthons into a molecule, with them put into
+  // the position the fragment->shape alignment gave.  Not all fragments
+  // will match a synthon, such as when the reaction had 3 synthon sets
+  // and there were only 2 fragments, and both those fragments had a
+  // synthon that matched.  The third synthon will have been filled in from
+  // all possibilities.
+  boost::dynamic_bitset<> synthsMatched(synthNums.size());
+  for (size_t i = 0; i < synthNums.size(); ++i) {
+    const auto &synthon = hs->synthonsToUse[i][synthNums[i]].second;
+    for (size_t j = 0; j < hs->fragShapes.size(); ++j) {
+      const auto &shape = hs->fragShapes[j];
+      // Fetch the overlay for this fragment, synthon combination
+      auto it = d_fragSynthonSims.find(std::make_pair(shape, synthon));
+      // This frag matched this synthon, so get the shape number and
+      // transformation, and set it up.
+      if (it != d_fragSynthonSims.end()) {
+        unsigned int shapeNumToUse = std::get<1>(it->second);
+        RDGeom::Transform3D *transToUse = std::get<2>(it->second).get();
+        std::cout << "sim : " << std::get<0>(it->second)
+                  << "  shapeNum : " << std::get<1>(it->second)
+                  << " transform : " << std::get<2>(it->second) << std::endl;
+        // We need to build a copy of the synthon and give it the coords
+        // of the associated shape that is similar to the fragment, and
+        // transform it to the overlaid coords.
+        auto shapeMol = getShapeMol(synthon, shapeNumToUse, transToUse);
+        tmpSynths[i].reset(shapeMol.release());
+        std::cout << "transformed synth : " << MolToCXSmiles(*tmpSynths[i])
+                  << std::endl;
+        synths[i] = tmpSynths[i].get();
+        synthNames[i] = &(hs->synthonsToUse[i][synthNums[i]].first);
+        synthsMatched[i] = true;
       }
     }
-    std::cout << "labelled shape mol : " << MolToSmiles(*shapeMol) << std::endl;
-    MolTransforms::transformConformer(shapeMol->getConformer(),
-                                      *std::get<2>(it->second));
-    tmpSynths[i].reset(shapeMol.release());
-    std::cout << "transformed synth : " << MolToCXSmiles(*tmpSynths[i])
-              << std::endl;
-    synths[i] = tmpSynths[i].get();
-    synthNames[i] = &(hs->synthonsToUse[i][synthNums[i]].first);
+  }
+  if (synthsMatched.count() < synthNums.size()) {
+    for (size_t i = 0; i < synthNums.size(); ++i) {
+      if (!synthsMatched[i]) {
+        std::cout << "dangling synth " << i << " : " << synthNums[i]
+                  << std::endl;
+        const auto &synthon = hs->synthonsToUse[i][synthNums[i]].second;
+        auto shapeMol = getShapeMol(synthon, 0, nullptr);
+        tmpSynths[i].reset(shapeMol.release());
+        synths[i] = tmpSynths[i].get();
+        synthNames[i] = &(hs->synthonsToUse[i][synthNums[i]].first);
+      }
+    }
   }
   return details::buildProduct(synths);
 }
+
+namespace {
+bool checkBondLengths(const ROMol &mol) {
+  // DetermineBonds::connectivityVdw uses a covalent factor of 1.3.
+  static constexpr double radFactor = 1.3;
+  const auto conf = mol.getConformer();
+  for (const auto bond : mol.bonds()) {
+    if (!bond->getBeginAtom()->getAtomicNum() ||
+        !bond->getEndAtom()->getAtomicNum()) {
+      continue;
+    }
+    auto bondlen = MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
+                                                bond->getEndAtomIdx());
+    auto rad1 = PeriodicTable::getTable()->getRcovalent(
+        bond->getBeginAtom()->getAtomicNum());
+    auto rad2 = PeriodicTable::getTable()->getRcovalent(
+        bond->getEndAtom()->getAtomicNum());
+    if (bondlen > radFactor * (rad1 + rad2)) {
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace
 
 bool SynthonSpaceShapeSearcher::verifyHit(
     ROMol &hit, const std::string &rxnId,
@@ -941,7 +991,8 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   std::cout << "hit scores : " << hitScores[0] << ", " << hitScores[1] << ", "
             << hitScores[2] << std::endl;
   std::cout << "Overlaid built hit : " << MolToCXSmiles(hit) << std::endl;
-  if (!getParams().bestHit && hitScores[0] >= getParams().similarityCutoff) {
+  if (checkBondLengths(hit) && !getParams().bestHit &&
+      hitScores[0] >= getParams().similarityCutoff) {
     finaliseHit(dp_queryConfs, hit, hitScores, rxnId, synthNames);
     std::cout << "Initial hit is ok" << std::endl;
     return true;

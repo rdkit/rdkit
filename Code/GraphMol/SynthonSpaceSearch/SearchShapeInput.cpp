@@ -13,51 +13,63 @@
 #include <GraphMol/Abbreviations/Abbreviations.h>
 #include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/GaussianShape/SingleConformerAlignment.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SearchShapeInput.h>
+
+#include <GraphMol/PeriodicTable.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include <SimDivPickers/LeaderPicker.h>
 #include <boost/locale/date_time.hpp>
 
 namespace RDKit {
 namespace GaussianShape {
+
+namespace {
+bool checkBondLengths(const ROMol &mol) {
+  // DetermineBonds::connectivityVdw uses a covalent factor of 1.3.
+  static constexpr double radFactor = 1.3;
+  const auto conf = mol.getConformer();
+  for (const auto bond : mol.bonds()) {
+    auto bondlen = MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
+                                                bond->getEndAtomIdx());
+    if (!bond->getBeginAtom()->getAtomicNum() ||
+        !bond->getEndAtom()->getAtomicNum()) {
+      continue;
+    }
+    auto rad1 = PeriodicTable::getTable()->getRcovalent(
+        bond->getBeginAtom()->getAtomicNum());
+    auto rad2 = PeriodicTable::getTable()->getRcovalent(
+        bond->getEndAtom()->getAtomicNum());
+    if (bondlen > radFactor * (rad1 + rad2)) {
+      std::cout << bondlen << " for " << bond->getBeginAtom()->getAtomicNum()
+                << " to " << bond->getEndAtom()->getAtomicNum() << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace
+
 SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
                                    const ShapeInputOptions &opts,
                                    const ShapeOverlayOptions &overlayOpts)
     : ShapeInput(mol, 0, opts, overlayOpts) {
   PRECONDITION(pruneThreshold <= 1.0,
                "Shape prune threshold can't be above 1.0");
-
-  std::cout << "Making shape from " << MolToCXSmiles(mol) << std::endl;
-  if (!opts.atomSubset.empty()) {
-    for (const auto ai : opts.atomSubset) {
-      const auto atom = mol.getAtomWithIdx(ai);
-      if (atom->hasProp("molNum")) {
-        std::cout << atom->getIdx() << " : "
-                  << atom->getProp<std::string>("molNum") << " : "
-                  << atom->getProp<std::string>("idx") << std::endl;
-      }
-    }
-  }
   // The ShapeInput c'tor puts a PRECONDITION on conformers being available.
   initializeFromBase();
 
-  // Flag the dummy atoms
+  // Flag the dummy atoms.  The coords are in smilesAtomOutputOrder of
+  // the molecule built from getSmiles() so the indices should be correct.
+  v2::SmilesParse::SmilesParserParams smilesParams;
+  smilesParams.sanitize = false;
+  auto bitMol = v2::SmilesParse::MolFromSmiles(getSmiles(), smilesParams);
   d_dummyAtoms = boost::dynamic_bitset<>(getNumAtoms() + getNumFeatures());
-  unsigned int currIdx = 0;
-  for (const auto atom : mol.atoms()) {
-    if (includeAtom(opts.atomSubset, atom)) {
-      if (!atom->getAtomicNum()) {
-        d_dummyAtoms[currIdx] = true;
-      }
-      auto atIdx = atom->getIdx();
-      auto it = std::ranges::find_if(
-          opts.atomRadii,
-          [atIdx](const auto &p) -> bool { return p.first == atIdx; });
-      if (it != opts.atomRadii.end() && it->second == DUMMY_RAD) {
-        d_dummyAtoms[currIdx] = true;
-      }
-      ++currIdx;
+  for (auto atom : bitMol->atoms()) {
+    if (atom->getAtomicNum() == 0) {
+      d_dummyAtoms[atom->getIdx()] = true;
     }
   }
   // build the shapes for conformations 1 onwards.
@@ -90,11 +102,22 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
     d_eigenValuess.push_back(shape.getEigenValues());
   }
   if (pruneThreshold > 0.0) {
+    std::cout << "Number of confs : " << mol.getNumConformers()
+              << "  number of shapes : " << getNumShapes() << " : "
+              << pruneThreshold << std::endl;
     pruneShapes(pruneThreshold);
+    std::cout << "Number of confs : " << mol.getNumConformers()
+              << "  number of shapes : " << getNumShapes() << " : "
+              << pruneThreshold << std::endl;
   }
   sortShapesByScore();
   calculateDummyVolumes(overlayOpts);
-  std::cout << MolToSmiles(*shapeToMol(), true, false, -1, false) << std::endl;
+  auto tmpMol = shapeToMol();
+  if (!checkBondLengths(*tmpMol)) {
+    std::cout << "Bond lengths check failed" << std::endl;
+    std::cout << MolToCXSmiles(*tmpMol) << std::endl;
+    exit(1);
+  }
 }
 
 SearchShapeInput::SearchShapeInput(const std::string &str) {
@@ -112,22 +135,30 @@ SearchShapeInput::SearchShapeInput(const ShapeInput &si) : ShapeInput(si) {
 }
 
 unsigned int SearchShapeInput::getMolConf(unsigned int shapeNum) {
-  PRECONDITION(shapeNum < d_confCoords.size(), "Bad shapeNum");
+  PRECONDITION(shapeNum < d_confCoords.size(),
+               "Bad shapeNum in getMolConf : " + std::to_string(shapeNum) +
+                   " vs " + std::to_string(d_confCoords.size()));
   return d_molConfs[shapeNum];
 }
 
 double SearchShapeInput::getShapeVolume(unsigned int shapeNum) const {
-  PRECONDITION(shapeNum < d_confCoords.size(), "Bad shapeNum");
+  PRECONDITION(shapeNum < d_confCoords.size(),
+               "Bad shapeNum in getShapeVolume : " + std::to_string(shapeNum) +
+                   " vs " + std::to_string(d_confCoords.size()));
   return d_shapeVolumes[shapeNum];
 }
 
 double SearchShapeInput::getColorVolume(unsigned int shapeNum) const {
-  PRECONDITION(shapeNum < d_confCoords.size(), "Bad shapeNum");
+  PRECONDITION(shapeNum < d_confCoords.size(),
+               "Bad shapeNum in getColorVolume : " + std::to_string(shapeNum) +
+                   " vs " + std::to_string(d_confCoords.size()));
   return d_colorVolumes[shapeNum];
 }
 
 double SearchShapeInput::getDummyVolume(unsigned int shapeNum) const {
-  PRECONDITION(shapeNum < d_confCoords.size(), "Bad shapeNum");
+  PRECONDITION(shapeNum < d_confCoords.size(),
+               "Bad shapeNum in getDummyVolume : " + std::to_string(shapeNum) +
+                   " vs " + std::to_string(d_confCoords.size()));
   return d_dummyVolumes[shapeNum];
 }
 
@@ -244,16 +275,17 @@ void SearchShapeInput::pruneShapes(double simThreshold) {
       d_shapei->setCoords(d_shapes.d_confCoords[i]);
       d_shapej->setCoords(d_shapes.d_confCoords[j]);
       auto scores = AlignShape(*d_shapei, *d_shapej);
-      double res = scores[0];
-      return res;
+      // The picker works on distances.
+      return 1.0 - scores[0];
     }
     const SearchShapeInput &d_shapes;
     std::unique_ptr<ShapeInput> d_shapei, d_shapej;
   };
   RDPickers::LeaderPicker leaderPicker;
   DistFunctor distFunctor(*this);
+  // The picker works on distances.
   auto picks = leaderPicker.lazyPick(distFunctor, d_confCoords.size(), 0,
-                                     2.0 - simThreshold);
+                                     1.0 - simThreshold);
   // Allow for mysterious LeaderPicker behaviour where it returns a full vector
   // of 0s when it should only pick 1 shape.
   if (picks.size() == d_confCoords.size()) {
@@ -342,6 +374,34 @@ const double *SearchShapeInput::getDummyCoords(unsigned int dummyNumber) const {
   // To keep the compiler happy.  It should never get here because dummyNumber
   // should always be valid.
   return nullptr;
+}
+
+void SearchShapeInput::getDummyAndNbr(unsigned int dummyNumber,
+                                      unsigned int &dummyIdx,
+                                      unsigned int &nbrIdx) const {
+  PRECONDITION(dummyNumber < d_dummyAtoms.count(), "Bad dummy atom number.");
+  // The coords are in smilesAtomOutputOrder of the molecule built from
+  // getSmiles() so the indices should be correct.
+  dummyIdx = -1;
+  nbrIdx = -1;
+  for (unsigned int i = 0, j = 0; i < d_dummyAtoms.size(); i++) {
+    if (d_dummyAtoms[i]) {
+      if (j == dummyNumber) {
+        dummyIdx = i;
+        v2::SmilesParse::SmilesParserParams smilesParams;
+        smilesParams.sanitize = false;
+        auto bitMol = v2::SmilesParse::MolFromSmiles(getSmiles(), smilesParams);
+        auto dummy = bitMol->getAtomWithIdx(dummyIdx);
+        PRECONDITION(!dummy->getAtomicNum(), "Bad dummy atom number.");
+        for (auto nbr : bitMol->atomNeighbors(dummy)) {
+          // There should only be 1 neighbour.
+          nbrIdx = nbr->getIdx();
+          return;
+        }
+      }
+      ++j;
+    }
+  }
 }
 
 void SearchShapeInput::initializeFromBase() {

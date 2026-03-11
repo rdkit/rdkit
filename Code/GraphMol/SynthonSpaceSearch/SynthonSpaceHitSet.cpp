@@ -57,6 +57,16 @@ SynthonSpaceShapeHitSet::SynthonSpaceShapeHitSet(
     const std::vector<unsigned int> &sSetOrder)
     : SynthonSpaceHitSet(reaction, stu, fragSet),
       fragShapes(fShapes),
-      synthonSetOrder(sSetOrder) {}
+      synthonSetOrder(sSetOrder) {
+  // it may be that there are fewer entries in synthonSetOrder than
+  // there are synthon sets in the SynthonSet.  That occurs if the
+  // fragment set was smaller than the SynthonSet.  Pad it out if so.
+  for (size_t i = 0; i < reaction.getSynthons().size(); ++i) {
+    if (auto it = std::ranges::find(synthonSetOrder, i);
+        it == synthonSetOrder.end()) {
+      synthonSetOrder.emplace_back(i);
+    }
+  }
+}
 
 }  // namespace RDKit::SynthonSpaceSearch

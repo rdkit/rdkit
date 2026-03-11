@@ -97,16 +97,17 @@ TEST_CASE("Shape Small tests") {
   // compensated for by other things.
   std::vector<size_t> expNumHits{3, 8, 1};
   std::vector<std::vector<double>> expScores{
-      {1.0, 0.825, 0.813},
+      {0.929, 0.923, 0.854},
       {0.928, 0.873, 0.846, 0.844, 0.825, 0.820, 0.804, 0.804},
       {0.997}};
   ShapeBuildParams shapeBuildOptions;
   shapeBuildOptions.numConfs = 100;
   shapeBuildOptions.rmsThreshold = 0.5;
   shapeBuildOptions.numThreads = 1;
+  shapeBuildOptions.shapeSimThreshold = 0.95;
 
   for (size_t i = 0; i < dbNames.size(); i++) {
-    if (i != 0) {
+    if (i != 1) {
       continue;
     }
     SynthonSpace synthonspace;
@@ -125,6 +126,7 @@ TEST_CASE("Shape Small tests") {
     params.confRMSThreshold = shapeBuildOptions.rmsThreshold;
     params.timeOut = 0;
     params.randomSeed = 1;
+    params.shapePruneThreshold = shapeBuildOptions.shapeSimThreshold;
     // params.bestHit = true;
     auto queryMol = v2::SmilesParse::MolFromSmiles(querySmis[i]);
     auto results = synthonspace.shapeSearch(*queryMol, params);
@@ -142,8 +144,6 @@ TEST_CASE("Shape Small tests") {
                 << scores[2] << std::endl;
       CHECK_THAT(mol->getProp<double>("Similarity"),
                  Catch::Matchers::WithinAbs(scores[0], 0.001));
-      std::cout << "Query Conf : "
-                << mol->getProp<std::string>("Query_CXSmiles") << std::endl;
     }
     CHECK(expNumHits[i] == results.getHitMolecules().size());
 #if 0

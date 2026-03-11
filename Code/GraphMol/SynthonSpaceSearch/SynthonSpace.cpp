@@ -820,7 +820,7 @@ void SynthonSpace::buildSynthonShapes(bool &cancelled,
     std::ranges::sort(sampleMols, [](const auto &a, const auto &b) -> bool {
       return a->d_numAtoms > b->d_numAtoms;
     });
-    auto dgParams = DGeomHelpers::KDG;
+    auto dgParams = DGeomHelpers::ETKDGv3;
     dgParams.numThreads = 1;
     dgParams.pruneRmsThresh = shapeParams.rmsThreshold;
     dgParams.randomSeed = shapeParams.randomSeed;

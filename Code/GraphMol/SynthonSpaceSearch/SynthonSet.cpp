@@ -740,12 +740,33 @@ std::unique_ptr<SampleMolRec> SynthonSet::makeSampleMolecule(
   return sampleMol;
 }
 
+namespace {
+void addJoinInfo(Atom *atom, unsigned int isotopeNum) {
+  if (!atom->hasProp("HoldsJoin")) {
+    atom->setProp<std::string>("HoldsJoin", std::to_string(isotopeNum));
+  } else {
+    std::string joins = atom->getProp<std::string>("HoldsJoin");
+    joins += "," + std::to_string(isotopeNum);
+    atom->setProp<std::string>("HoldsJoin", joins);
+  }
+}
+
+}  // namespace
+
 std::unique_ptr<ROMol> SynthonSet::buildMolecule(
     const std::vector<size_t> &synthonNums) const {
   auto combMol = std::make_unique<ROMol>();
   std::string molName = "";
   for (size_t i = 0; i < synthonNums.size(); ++i) {
     auto synthMol = copySynthon(i, synthonNums[i]);
+    for (auto atom : synthMol->atoms()) {
+      if (!atom->getAtomicNum() && atom->getIsotope()) {
+        for (auto nbr : synthMol->atomNeighbors(atom)) {
+          addJoinInfo(nbr, atom->getIsotope());
+          addJoinInfo(atom, atom->getIsotope());
+        }
+      }
+    }
     combMol.reset(combineMols(*combMol, *synthMol));
     std::string sep = i ? ";" : "";
     molName += sep + d_synthons[i][synthonNums[i]].first;

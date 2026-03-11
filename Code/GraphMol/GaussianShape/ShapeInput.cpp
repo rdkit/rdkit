@@ -94,41 +94,20 @@ constexpr double radius_color =
     1.08265;  // same radius for all feature/color "atoms", as used by the
               // PubChem code.
 
-namespace {
-// Throw out any atoms we don't want.  copySubsetMol does more work than
-// is necessary for this and seemed to leave the molecule in an odd state
-// that didn't play well with extractAtoms.
-std::unique_ptr<RWMol> extractSubset(
-    const RWMol &mol, const std::vector<unsigned int> &atomsToKeep) {
-  std::cout << "subset from " << MolToSmiles(mol, true, false, -1, false);
-  std::cout << "  atomsToKeep : ";
-  for (auto atk : atomsToKeep) {
-    std::cout << atk << " ";
-  }
-  std::cout << std::endl;
-  auto retMol = std::make_unique<RWMol>(mol);
-  boost::dynamic_bitset<> keepAtoms(mol.getNumAtoms());
-  for (const auto atk : atomsToKeep) {
-    keepAtoms[atk] = true;
-  }
-  retMol->beginBatchEdit();
-  for (auto atom : retMol->atoms()) {
-    if (!keepAtoms[atom->getIdx()]) {
-      retMol->removeAtom(atom->getIdx());
-    }
-  }
-  retMol->commitBatchEdit();
-  std::cout << "subset mol : " << MolToSmiles(*retMol) << std::endl;
-  return retMol;
-}
-
-}  // namespace
 ShapeInput::ShapeInput(const ROMol &mol, int confId,
                        const ShapeInputOptions &opts,
                        const ShapeOverlayOptions &overlayOpts) {
   PRECONDITION(mol.getNumConformers() > 0,
                "ShapeInput object needs the molecule to have conformers.  " +
                    mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
+  std::cout << "\nShapeInput Shapes from " << mol.getNumAtoms()
+            << " :: " << MolToCXSmiles(mol, true, false, -1, false) << " : ";
+  std::cout << opts.atomSubset.size() << " : ";
+  for (auto as : opts.atomSubset) {
+    std::cout << as << " ";
+  }
+  std::cout << std::endl;
+
   std::unique_ptr<RWMol> tmpMol;
   // Subsetting the molecule makes any bespoke atom radii, identified
   // by atom index, incorrect so stash them as atom properties.
@@ -147,6 +126,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
     // over-written later.
     d_smiles = MolToSmiles(*tmpMol);
   }
+  std::cout << "tmpMol smiles : " << MolToSmiles(*tmpMol) << std::endl;
   if (!tmpMol->getRingInfo()->isInitialized()) {
     // Query molecules don't seem to have the ring info generated on creation.
     MolOps::findSSSR(*tmpMol);
@@ -176,9 +156,10 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   }
   extractAtoms(*tmpMol, confId, opts, radsAreDummies);
   d_smiles = MolToSmiles(*tmpMol);
-  std::cout << "shape mol : " << d_smiles << std::endl;
-  std::cout << MolToCXSmiles(*shapeToMol()) << std::endl;
   if (opts.useColors) {
+    // The input molecule may have been in Kekule form, so fix that so
+    // aromatic features are found.
+    MolOps::setAromaticity(*tmpMol);
     extractFeatures(*tmpMol, confId, opts);
   }
   calcNormalization();
@@ -427,7 +408,6 @@ double getStandardAtomRadius(unsigned int atomicNum) {
 void ShapeInput::extractAtoms(ROMol &mol, int confId,
                               const ShapeInputOptions &opts,
                               bool radsAreDummies) {
-  // std::cout << "Extracting from " << MolToSmiles(mol) << std::endl;
   bool hasDummies{false};
   for (const auto atom : mol.atoms()) {
     if (!atom->getAtomicNum()) {
@@ -436,13 +416,6 @@ void ShapeInput::extractAtoms(ROMol &mol, int confId,
     }
   }
 
-  std::vector<unsigned int> atOrder;
-  mol.getProp(common_properties::_smilesAtomOutputOrder, atOrder);
-  std::cout << "atom output order : ";
-  for (auto ao : atOrder) {
-    std::cout << ao << " ";
-  }
-  std::cout << std::endl;
   d_coords.reserve(mol.getNumAtoms() * 4);
   // If we're using dummies, we will want them to have their own radius so we
   // can't use the really fast all-carbon radius optimisation later, so we
@@ -453,6 +426,8 @@ void ShapeInput::extractAtoms(ROMol &mol, int confId,
         !opts.atomSubset.empty() ? opts.atomSubset.size() : mol.getNumAtoms()));
   }
   auto conf = mol.getConformer(confId);
+  std::vector<unsigned int> atOrder;
+  mol.getProp(common_properties::_smilesAtomOutputOrder, atOrder);
   for (auto atIdx : atOrder) {
     Atom *atom = mol.getAtomWithIdx(atIdx);
     // Ignore H atoms but do use dummies if requested.
@@ -601,24 +576,8 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
         }
         for (auto match : matches) {
           std::vector<unsigned int> ats;
-          bool featOk = true;
           for (const auto &pr : match) {
-            // make sure all the atoms are in the subset, if there is one
-            if (!opts.atomSubset.empty()) {
-              if (auto it = std::ranges::find_if(
-                      opts.atomSubset,
-                      [pr](const auto &p) -> bool {
-                        return p == static_cast<unsigned int>(pr.second);
-                      });
-                  it == opts.atomSubset.end()) {
-                featOk = false;
-                break;
-              }
-            }
             ats.push_back(pr.second);
-          }
-          if (!featOk) {
-            continue;
           }
           auto featPos = computeFeaturePos(mol, confId, ats);
           d_types.push_back(pattIdx);
@@ -783,6 +742,23 @@ void translateShape(const double *inShape, double *outShape, size_t numPoints,
     outShape[i + 2] = inShape[i + 2] + translation.z;
     outShape[i + 3] = inShape[i + 3];
   }
+}
+
+std::unique_ptr<RWMol> extractSubset(
+    const RWMol &mol, const std::vector<unsigned int> &atomsToKeep) {
+  auto retMol = std::make_unique<RWMol>(mol);
+  boost::dynamic_bitset<> keepAtoms(mol.getNumAtoms());
+  for (const auto atk : atomsToKeep) {
+    keepAtoms[atk] = true;
+  }
+  retMol->beginBatchEdit();
+  for (auto atom : retMol->atoms()) {
+    if (!keepAtoms[atom->getIdx()]) {
+      retMol->removeAtom(atom->getIdx());
+    }
+  }
+  retMol->commitBatchEdit();
+  return retMol;
 }
 
 bool includeAtom(const std::vector<unsigned int> &atomSubset,

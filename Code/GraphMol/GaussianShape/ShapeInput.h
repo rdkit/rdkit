@@ -132,7 +132,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   std::string toString() const;
 
   // Note that the coords returned is a vector size 4*getNumAtoms()
-  // with the 4th value per atom being the alpha paramter.
+  // with the 4th value per atom being the alpha parameter.
   const std::vector<double> &getCoords() const { return d_coords; }
   //! Fetch the coordinates of the atoms and optionally features.
   std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors = false) const;
@@ -285,6 +285,12 @@ RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
 RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
     const double *inShape, double *outShape, size_t numPoints,
     const RDGeom::Point3D &translation);
+
+// Throw out any atoms we don't want.  copySubsetMol does more work than
+// is necessary for this and seemed to leave the molecule in an odd state
+// that didn't play well with extractAtoms.
+RDKIT_GAUSSIANSHAPE_EXPORT std::unique_ptr<RWMol> extractSubset(
+    const RWMol &mol, const std::vector<unsigned int> &atomsToKeep);
 
 // Whether to use this atom in the shape.
 bool includeAtom(const std::vector<unsigned int> &atomSubset, const Atom *atom);

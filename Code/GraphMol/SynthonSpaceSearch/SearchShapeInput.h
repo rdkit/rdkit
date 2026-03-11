@@ -103,6 +103,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
   // return the coordinates of the given dummy atom (0->number of dummies)
   // dummyNumber isn't the position of a dummy atom in the d_coords.
   const double *getDummyCoords(unsigned int dummyNumber) const;
+  // Return the atom number of the given dummy and the atom number of its
+  // neighbour.
+  void getDummyAndNbr(unsigned int dummyNumber, unsigned int &dummyIdx,
+                      unsigned int &nbrIdx) const;
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>

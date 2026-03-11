@@ -839,6 +839,7 @@ std::unique_ptr<ROMol> buildProduct(
     const std::vector<const ROMol *> &synthons) {
   MolzipParams mzparams;
   mzparams.label = MolzipLabel::Isotope;
+  mzparams.alignCoordinates = true;
   auto prodMol = std::make_unique<ROMol>(*synthons.front());
   for (size_t i = 1; i < synthons.size(); ++i) {
     prodMol.reset(combineMols(*prodMol, *synthons[i]));
@@ -967,6 +968,73 @@ std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
   return confMols;
 }
 
+namespace {
+// For deciphering the contents of the HoldsJoin property on 2 atoms.
+// Used to decide the isotope number a dummy atom must be set to.
+unsigned int joinInCommon(const std::string &joins1,
+                          const std::string &joins2) {
+  // Each of the join strings will be a comma-separated list of ints, with
+  // no more than 3 ints per string.  The ints will be between 1 and 4.
+  // So we don't need to do anything sophisticated.  We want the single
+  // number in common to both lists.
+  std::string j(" ");
+  for (auto c1 : joins1) {
+    if (c1 == ',') {
+      continue;
+    }
+    for (auto c2 : joins2) {
+      if (c1 == c2) {
+        j[0] = c1;
+        return std::stoi(std::string(j));
+      }
+    }
+  }
+  return 0;
+}
+
+// Look through the atoms in the tmpMol for the HoldsJoin entries for that
+// molNum. If it says e.g. 1, look for 1 in the HoldsJoin for an atom not in
+// this molNum, and set it to dummy with the isotope 1 in this case. Repeat.
+// There may be more than 1 entry in a HoldsJoin for either atom, so need to
+// take care of this.  For example, the molNum atom might say 1,3 so look for
+// both 1 and 3 in not molNum atoms.
+void setDummyIsotopes(const ROMol &mol, unsigned int molNum) {
+  std::string sMolNum(std::to_string(molNum));
+  for (const auto atom : mol.atoms()) {
+    if (atom->hasProp("HoldsJoin")) {
+      if (atom->getProp<std::string>("molNum") == sMolNum) {
+        for (const auto oatom : mol.atoms()) {
+          if (oatom->hasProp("HoldsJoin") &&
+              oatom->getProp<std::string>("molNum") != sMolNum) {
+            auto joinInComm =
+                joinInCommon(atom->getProp<std::string>("HoldsJoin"),
+                             oatom->getProp<std::string>("HoldsJoin"));
+            if (joinInComm) {
+              oatom->setAtomicNum(0);
+              oatom->setIsotope(joinInComm);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void splitDummyDummyBonds(RWMol &mol) {
+  // Sometimes the atom subsetting leaves bonds between atoms not
+  // in molNum.  Once setDummyIsotopes has been called, they will
+  // be between dummy atoms and so can safely be removed.
+  mol.beginBatchEdit();
+  for (auto bond : mol.bonds()) {
+    if (!bond->getBeginAtom()->getAtomicNum() &&
+        !bond->getEndAtom()->getAtomicNum()) {
+      mol.removeBond(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
+    }
+  }
+  mol.commitBatchEdit();
+}
+}  // namespace
+
 void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
                        std::atomic<std::int64_t> &mostRecentMol,
                        DGeomHelpers::EmbedParameters &dgParams,
@@ -999,6 +1067,9 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     }
     std::unique_ptr<GaussianShape::SearchShapeInput> allShapes;
     for (auto &isomer : isomerConfs) {
+      // If chopping up aromatic rings, use the Kekule form so that bond
+      // types are usable in the fragments.
+      MolOps::Kekulize(*isomer);
       std::vector<unsigned int> splitBonds;
       std::vector<unsigned int> fragAtoms;
       std::vector<std::pair<unsigned int, double>> dummyRadii;
@@ -1016,6 +1087,10 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
                                     GaussianShape::DUMMY_RAD);
             // Set the atom as a dummy, so it shows up in the shape.
             bond->getEndAtom()->setAtomicNum(0);
+            auto joinIsotope = joinInCommon(
+                bond->getEndAtom()->getProp<std::string>("HoldsJoin"),
+                bond->getBeginAtom()->getProp<std::string>("HoldsJoin"));
+            bond->getEndAtom()->setIsotope(joinIsotope);
           } else if (begMolNum != sampleMols[molNum]->d_synthonSetNum &&
                      endMolNum == sampleMols[molNum]->d_synthonSetNum) {
             fragAtoms.push_back(bond->getBeginAtomIdx());
@@ -1024,6 +1099,10 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
                                     GaussianShape::DUMMY_RAD);
             // Set the atom as a dummy, so it shows up in the shape.
             bond->getBeginAtom()->setAtomicNum(0);
+            auto joinIsotope = joinInCommon(
+                bond->getEndAtom()->getProp<std::string>("HoldsJoin"),
+                bond->getBeginAtom()->getProp<std::string>("HoldsJoin"));
+            bond->getBeginAtom()->setIsotope(joinIsotope);
           }
         } else {
           if (bond->getProp<unsigned int>("molNum") ==
@@ -1038,14 +1117,15 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
                       fragAtoms.end());
       shapeOpts.atomRadii = dummyRadii;
       shapeOpts.atomSubset = fragAtoms;
-
+      splitDummyDummyBonds(*isomer);
       try {
+        GaussianShape::ShapeOverlayOptions ovlyOpts;
         if (!allShapes) {
           allShapes = std::make_unique<GaussianShape::SearchShapeInput>(
-              *isomer, shapeParams.shapeSimThreshold, shapeOpts);
+              *isomer, shapeParams.shapeSimThreshold, shapeOpts, ovlyOpts);
         } else {
           auto shapes = std::make_unique<GaussianShape::SearchShapeInput>(
-              *isomer, shapeParams.shapeSimThreshold, shapeOpts);
+              *isomer, shapeParams.shapeSimThreshold, shapeOpts, ovlyOpts);
           // Because stereoisomers should all have the same number of atoms and
           // bonds, we can just combine the shapes into one set.  We don't need
           // to keep track of which stereoisomer they came from.
