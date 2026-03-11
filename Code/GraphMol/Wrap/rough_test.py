@@ -8687,7 +8687,7 @@ M  END
 
   def testGithub9101(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-                         'rdkit_chunk_boundary_bug.sdf.txt')
+                         'rdkit_chunk_boundary_bug.sdf')
     sdSup = Chem.SDMolSupplier(fileN)
     mols = list(sdSup)
     self.assertEqual(len(mols[0].GetPropsAsDict()["comment"]), 65369)
