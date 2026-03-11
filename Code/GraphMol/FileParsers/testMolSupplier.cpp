@@ -2707,7 +2707,7 @@ TEST_CASE("Read SD properties till last '>'") {
 }
 
 TEST_CASE("github9101 - $$$$ at buffer end") {
-  std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/rdkit_chunk_boundary_bug.sdf.txt";
+  std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/rdkit_chunk_boundary_bug.sdf";
   SDMolSupplier reader(infile);
   CHECK(reader.length() == 2); // this causes the issue as we pre-index
   auto *mol = reader[0];
