@@ -95,11 +95,10 @@ Bond::BondDir getReferenceDirection(const Bond &dblBond, const Atom &refAtom,
 
 namespace details {
 bool isUnsaturated(const Atom *atom, const ROMol &mol) {
-  for (const auto &bndItr :
-       boost::make_iterator_range(mol.getAtomBonds(atom))) {
+  for (auto bond : mol.atomBonds(atom)) {
     // can't just check for single bonds, because dative bonds also have an
     // order of 1
-    if (mol[bndItr]->getBondTypeAsDouble() > 1) {
+    if (bond->getBondTypeAsDouble() > 1) {
       return true;
     }
   }
@@ -110,10 +109,10 @@ bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
   // list queries are series of nested ors of AtomAtomicNum queries
   PRECONDITION(q, "bad query");
   bool res = false;
-  std::string descr = q->getDescription();
+  const auto &descr = q->getDescription();
   if (descr == "AtomAnd") {
     for (auto cIt = q->beginChildren(); cIt != q->endChildren(); ++cIt) {
-      auto cDescr = (*cIt)->getDescription();
+      const auto &cDescr = (*cIt)->getDescription();
       if (cDescr == "AtomHCount") {
         return !(*cIt)->getNegation() &&
                ((ATOM_EQUALS_QUERY *)(*cIt).get())->getVal() == 1;
@@ -164,8 +163,8 @@ auto _possibleCompare = [](const PossibleType &arg1, const PossibleType &arg2) {
 //
 void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
                             const UINT_VECT &atomVisitOrders,
-                            UINT_VECT &bondDirCounts,
-                            UINT_VECT &atomDirCounts) {
+                            std::vector<int8_t> &bondDirCounts,
+                            std::vector<int8_t> &atomDirCounts) {
   PRECONDITION(dblBond, "bad bond");
   PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "bad bond order");
   PRECONDITION(dblBond->getStereo() > Bond::STEREOANY, "bad bond stereo");
@@ -474,7 +473,8 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
 
 void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
                              const UINT_VECT &atomVisitOrders,
-                             UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts,
+                             std::vector<int8_t> &bondDirCounts,
+                             std::vector<int8_t> &atomDirCounts,
                              const MolStack &molStack) {
   // start by removing the current directions on single bonds
   // around double bonds. At the same time, we build a prioritized
@@ -613,20 +613,19 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
   //
   // ---------------------
   std::vector<PossibleType> possibles;
-  possibles.resize(0);
-  ROMol::OBOND_ITER_PAIR bondsPair = mol.getAtomBonds(atom);
+  auto bondsPair = mol.getAtomBonds(atom);
   possibles.reserve(bondsPair.second - bondsPair.first);
 
   while (bondsPair.first != bondsPair.second) {
     Bond *theBond = mol[*(bondsPair.first)];
-    bondsPair.first++;
+    ++bondsPair.first;
     if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) {
       continue;
     }
     if (inBondIdx < 0 ||
         theBond->getIdx() != static_cast<unsigned int>(inBondIdx)) {
       int otherIdx = theBond->getOtherAtomIdx(atomIdx);
-      long rank = ranks[otherIdx];
+      auto rank = ranks[otherIdx];
       // ---------------------
       //
       // things are a bit more complicated if we are sitting on a
@@ -726,14 +725,13 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
 }  // namespace Canon
 
 void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
-                   std::vector<AtomColors> &colors, VECT_INT_VECT &cycles,
-                   const UINT_VECT &ranks, UINT_VECT &cyclesAvailable,
-                   MolStack &molStack, VECT_INT_VECT &atomRingClosures,
+                   std::vector<AtomColors> &colors, const UINT_VECT &ranks,
+                   boost::dynamic_bitset<> &cyclesAvailable, MolStack &molStack,
+                   VECT_INT_VECT &atomRingClosures,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
                    const std::vector<std::string> *bondSymbols, bool doRandom) {
   Atom *atom = mol.getAtomWithIdx(atomIdx);
-  INT_LIST directTravList, cycleEndList;
   boost::dynamic_bitset<> seenFromHere(mol.getNumAtoms());
 
   seenFromHere.set(atomIdx);
@@ -750,13 +748,13 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   //  Add any ring closures
   //
   // ---------------------
-  if (atomRingClosures[atomIdx].size()) {
+  if (!atomRingClosures[atomIdx].empty()) {
     std::vector<unsigned int> ringsClosed;
     for (auto bIdx : atomRingClosures[atomIdx]) {
       travList.push_back(bIdx);
       Bond *bond = mol.getBondWithIdx(bIdx);
       seenFromHere.set(bond->getOtherAtomIdx(atomIdx));
-      unsigned int ringIdx;
+      unsigned int ringIdx = std::numeric_limits<unsigned int>::max();
       if (bond->getPropIfPresent(common_properties::_TraversalRingClosureBond,
                                  ringIdx)) {
         // this is end of the ring closure
@@ -770,22 +768,20 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
       } else {
         // this is the beginning of the ring closure, we need to come up with a
         // ring index:
-        auto cAIt =
-            std::find(cyclesAvailable.begin(), cyclesAvailable.end(), 1);
-        if (cAIt == cyclesAvailable.end()) {
+        auto lowestRingIdx = cyclesAvailable.find_first();
+        if (lowestRingIdx == boost::dynamic_bitset<>::npos) {
           throw ValueErrorException(
               "Too many rings open at once. SMILES cannot be generated.");
         }
-        unsigned int lowestRingIdx = cAIt - cyclesAvailable.begin();
-        cyclesAvailable[lowestRingIdx] = 0;
+        cyclesAvailable.set(lowestRingIdx, false);
         ++lowestRingIdx;
         bond->setProp(common_properties::_TraversalRingClosureBond,
-                      lowestRingIdx);
+                      static_cast<unsigned int>(lowestRingIdx));
         molStack.push_back(MolStackElem(lowestRingIdx));
       }
     }
     for (auto ringIdx : ringsClosed) {
-      cyclesAvailable[ringIdx] = 1;
+      cyclesAvailable.set(ringIdx);
     }
   }
 
@@ -795,13 +791,8 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   //
   // ---------------------
   std::vector<PossibleType> possibles;
-  possibles.resize(0);
-  ROMol::OBOND_ITER_PAIR bondsPair = mol.getAtomBonds(atom);
-  possibles.reserve(bondsPair.second - bondsPair.first);
-
-  while (bondsPair.first != bondsPair.second) {
-    Bond *theBond = mol[*(bondsPair.first)];
-    bondsPair.first++;
+  possibles.reserve(atom->getDegree());
+  for (auto theBond : mol.atomBonds(atom)) {
     if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) {
       continue;
     }
@@ -822,7 +813,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
         // ring closure or finished atom... skip it.
         continue;
       }
-      unsigned long rank = ranks[otherIdx];
+      auto rank = ranks[otherIdx];
       if (!doRandom) {
         if (theBond->getOwningMol().getRingInfo()->numBondRings(
                 theBond->getIdx())) {
@@ -861,7 +852,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   //
   // ---------------------
   for (auto possiblesIt = possibles.begin(); possiblesIt != possibles.end();
-       possiblesIt++) {
+       ++possiblesIt) {
     int possibleIdx = std::get<1>(*possiblesIt);
     if (colors[possibleIdx] != WHITE_NODE) {
       // we're either done or it's a ring-closure, which we already processed...
@@ -880,7 +871,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
           MolStackElem("(", rdcast<int>(possiblesIt - possibles.begin())));
     }
     molStack.push_back(MolStackElem(bond, atomIdx));
-    dfsBuildStack(mol, possibleIdx, bond->getIdx(), colors, cycles, ranks,
+    dfsBuildStack(mol, possibleIdx, bond->getIdx(), colors, ranks,
                   cyclesAvailable, molStack, atomRingClosures,
                   atomTraversalBondOrder, bondsInPlay, bondSymbols, doRandom);
     if (possiblesIt + 1 != possibles.end()) {
@@ -895,8 +886,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
 
 void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
                            std::vector<AtomColors> &colors,
-                           VECT_INT_VECT &cycles, const UINT_VECT &ranks,
-                           UINT_VECT &cyclesAvailable, MolStack &molStack,
+                           const UINT_VECT &ranks, MolStack &molStack,
                            VECT_INT_VECT &atomRingClosures,
                            std::vector<INT_LIST> &atomTraversalBondOrder,
                            const boost::dynamic_bitset<> *bondsInPlay,
@@ -913,18 +903,20 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
   PRECONDITION(!bondSymbols || bondSymbols->size() >= mol.getNumBonds(),
                "bondSymbols too small");
 
-  std::vector<AtomColors> tcolors;
-  tcolors.resize(colors.size());
-  std::copy(colors.begin(), colors.end(), tcolors.begin());
+  std::vector<AtomColors> tcolors(colors.begin(), colors.end());
   dfsFindCycles(mol, atomIdx, inBondIdx, tcolors, ranks, atomRingClosures,
                 bondsInPlay, bondSymbols, doRandom);
-  dfsBuildStack(mol, atomIdx, inBondIdx, colors, cycles, ranks, cyclesAvailable,
+
+  boost::dynamic_bitset<> cyclesAvailable(MAX_CYCLES);
+  cyclesAvailable.set();
+  dfsBuildStack(mol, atomIdx, inBondIdx, colors, ranks, cyclesAvailable,
                 molStack, atomRingClosures, atomTraversalBondOrder, bondsInPlay,
                 bondSymbols, doRandom);
 }
 
 void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
-                   UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts) {
+                   std::vector<int8_t> &bondDirCounts,
+                   std::vector<int8_t> &atomDirCounts) {
   PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
   PRECONDITION(refBond, "bad bond");
   PRECONDITION(&refBond->getOwningMol() == &mol, "bad bond");
@@ -960,8 +952,8 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
 }
 
 void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
-                                 UINT_VECT &bondDirCounts,
-                                 UINT_VECT &atomDirCounts) {
+                                 std::vector<int8_t> &bondDirCounts,
+                                 std::vector<int8_t> &atomDirCounts) {
   PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
 
   auto clearBondDirsFromAtom = [&mol, &bondDirCounts, &atomDirCounts](
@@ -1049,13 +1041,6 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
                "bondSymbols too small");
   unsigned int nAtoms = mol.getNumAtoms();
 
-  UINT_VECT bondDirCounts(mol.getNumBonds(), 0);
-  UINT_VECT atomDirCounts(nAtoms, 0);
-  UINT_VECT cyclesAvailable(MAX_CYCLES, 1);
-  VECT_INT_VECT cycles(nAtoms);
-
-  boost::dynamic_bitset<> ringStereoChemAdjusted(nAtoms);
-
   // make sure that we've done the stereo perception:
   if (!mol.hasProp(common_properties::_StereochemDone)) {
     MolOps::assignStereochemistry(mol, false);
@@ -1073,10 +1058,9 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
 
   VECT_INT_VECT atomRingClosures(nAtoms);
   std::vector<INT_LIST> atomTraversalBondOrder(nAtoms);
-  Canon::canonicalDFSTraversal(mol, atomIdx, -1, colors, cycles, ranks,
-                               cyclesAvailable, molStack, atomRingClosures,
-                               atomTraversalBondOrder, bondsInPlay, bondSymbols,
-                               doRandom);
+  Canon::canonicalDFSTraversal(mol, atomIdx, -1, colors, ranks, molStack,
+                               atomRingClosures, atomTraversalBondOrder,
+                               bondsInPlay, bondSymbols, doRandom);
 
   CHECK_INVARIANT(!molStack.empty(), "Empty stack.");
   CHECK_INVARIANT(molStack.begin()->type == MOL_STACK_ATOM,
@@ -1105,7 +1089,6 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
         // Extra check needed if/when @AL1/@AL2 supported
         if (Chirality::detail::isAtomPotentialTetrahedralCenter(atom) ||
             Chirality::hasNonTetrahedralStereo(atom)) {
-          int nSwaps = 0;
           int perm = 0;
           if (Chirality::hasNonTetrahedralStereo(atom)) {
             atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
@@ -1119,6 +1102,7 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
 
           // We have to make sure that trueOrder contains all the
           // bonds, even if they won't be written to the SMILES
+          int nSwaps = 0;
           if (trueOrder.size() < atom->getDegree()) {
             INT_LIST tOrder = trueOrder;
             for (const auto bnd : mol.atomBonds(atom)) {
@@ -1185,11 +1169,14 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
     ++pos;
   }
 
+  std::vector<int8_t> bondDirCounts(mol.getNumBonds(), 0);
+  std::vector<int8_t> atomDirCounts(nAtoms, 0);
   canonicalizeDoubleBonds(mol, bondVisitOrders, atomVisitOrders, bondDirCounts,
                           atomDirCounts, molStack);
 
   // traverse the stack and canonicalize atoms with (ring) stereochemistry
   if (doIsomericSmiles) {
+    boost::dynamic_bitset<> ringStereoChemAdjusted(nAtoms);
     for (auto &msI : molStack) {
       if (msI.type == MOL_STACK_ATOM &&
           msI.obj.atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
@@ -1400,6 +1387,6 @@ void clearStereoGroups(ROMol &mol) {
   mol.setStereoGroups(sgs);
 }
 
-};  // namespace Canon
+}  // namespace Canon
 
 }  // namespace RDKit
