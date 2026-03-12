@@ -149,24 +149,28 @@ void InitLogs() {
   rdErrorLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
 }
 
-CaptureErrorLog::CaptureErrorLog()
-    : d_savedDest(&d_messages), d_savedTeestream(nullptr) {
-  if (!rdErrorLog) {
-    InitLogs();
+CaptureLog::CaptureLog(RDLogger log) : d_log(std::move(log)) {
+  if (!d_log) {
+    return;
   }
-  d_logWasEnabled = rdErrorLog->df_enabled;
-  rdErrorLog->df_enabled = true;
-  std::swap(rdErrorLog->dp_dest, d_savedDest);
-  std::swap(rdErrorLog->teestream, d_savedTeestream);
+  d_logWasEnabled = d_log->df_enabled;
+  d_log->df_enabled = true;
+  d_savedDest = d_log->dp_dest;
+  d_log->dp_dest = &d_messages;
+  d_savedTeestream = d_log->teestream;
+  d_log->teestream = nullptr;
 }
 
-CaptureErrorLog::~CaptureErrorLog() {
-  std::swap(rdErrorLog->dp_dest, d_savedDest);
-  std::swap(rdErrorLog->teestream, d_savedTeestream);
-  rdErrorLog->df_enabled = d_logWasEnabled;
+CaptureLog::~CaptureLog() {
+  if (!d_log) {
+    return;
+  }
+  d_log->dp_dest = d_savedDest;
+  d_log->teestream = d_savedTeestream;
+  d_log->df_enabled = d_logWasEnabled;
 }
 
-std::string CaptureErrorLog::messages() const { return d_messages.str(); }
+std::string CaptureLog::messages() const { return d_messages.str(); }
 
 std::ostream &toStream(std::ostream &logstrm) {
   char buffer[16];

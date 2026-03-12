@@ -113,24 +113,30 @@ TEST_CASE("GitHub Issue #5172", "[bug][logging]") {
   rdWarningLog->ClearTee();
 }
 
-TEST_CASE("CaptureErrorLog") {
+TEST_CASE("CaptureLog") {
   RDLog::InitLogs();
 
-  SECTION("basic capture") {
-    RDLog::CaptureErrorLog capture;
+  SECTION("basic capture of rdErrorLog") {
+    RDLog::CaptureLog capture{rdErrorLog};
     BOOST_LOG(rdErrorLog) << "test error" << std::endl;
     CHECK(capture.messages().find("test error") != std::string::npos);
   }
 
+  SECTION("basic capture of rdWarningLog") {
+    RDLog::CaptureLog capture{rdWarningLog};
+    BOOST_LOG(rdWarningLog) << "test warning" << std::endl;
+    CHECK(capture.messages().find("test warning") != std::string::npos);
+  }
+
   SECTION("empty when nothing logged") {
-    RDLog::CaptureErrorLog capture;
+    RDLog::CaptureLog capture{rdErrorLog};
     CHECK(capture.messages().empty());
   }
 
   SECTION("enables a disabled log and restores its state") {
     rdErrorLog->df_enabled = false;
     {
-      RDLog::CaptureErrorLog capture;
+      RDLog::CaptureLog capture{rdErrorLog};
       CHECK(rdErrorLog->df_enabled);
       BOOST_LOG(rdErrorLog) << "captured despite disabled" << std::endl;
       CHECK(capture.messages().find("captured despite disabled") !=
@@ -143,7 +149,7 @@ TEST_CASE("CaptureErrorLog") {
 
   SECTION("restores original stream destination") {
     {
-      RDLog::CaptureErrorLog capture;
+      RDLog::CaptureLog capture{rdErrorLog};
       BOOST_LOG(rdErrorLog) << "captured" << std::endl;
     }
     // After capture, logs go to the original destination again
@@ -154,8 +160,8 @@ TEST_CASE("CaptureErrorLog") {
     CHECK(ss.str().find("after restore") != std::string::npos);
   }
 
-  SECTION("does not capture other logs") {
-    RDLog::CaptureErrorLog capture;
+  SECTION("only captures the specified log") {
+    RDLog::CaptureLog capture{rdErrorLog};
     BOOST_LOG(rdWarningLog) << "test warning" << std::endl;
     BOOST_LOG(rdErrorLog) << "test error" << std::endl;
     CHECK(capture.messages().find("test error") != std::string::npos);
@@ -165,21 +171,21 @@ TEST_CASE("CaptureErrorLog") {
   SECTION("restores dp_dest to original stream") {
     auto *original_dest = rdErrorLog->dp_dest;
     {
-      RDLog::CaptureErrorLog capture;
+      RDLog::CaptureLog capture{rdErrorLog};
       CHECK(rdErrorLog->dp_dest != original_dest);
     }
     CHECK(rdErrorLog->dp_dest == original_dest);
   }
 
   SECTION("re-enables log even when silenced by LogStateSetter") {
-    RDLog::CaptureErrorLog outer;
+    RDLog::CaptureLog outer{rdErrorLog};
     RDLog::LogStateSetter silence;
 
     BOOST_LOG(rdErrorLog) << "silenced" << std::endl;
     CHECK(outer.messages().empty());
 
     {
-      RDLog::CaptureErrorLog inner;
+      RDLog::CaptureLog inner{rdErrorLog};
       BOOST_LOG(rdErrorLog) << "captured despite silence" << std::endl;
       CHECK(inner.messages().find("captured despite silence") !=
             std::string::npos);
@@ -190,10 +196,10 @@ TEST_CASE("CaptureErrorLog") {
   }
 
   SECTION("nested captures") {
-    RDLog::CaptureErrorLog outer;
+    RDLog::CaptureLog outer{rdErrorLog};
     BOOST_LOG(rdErrorLog) << "outer message" << std::endl;
     {
-      RDLog::CaptureErrorLog inner;
+      RDLog::CaptureLog inner{rdErrorLog};
       BOOST_LOG(rdErrorLog) << "inner message" << std::endl;
       CHECK(inner.messages().find("inner message") != std::string::npos);
       CHECK(inner.messages().find("outer message") == std::string::npos);

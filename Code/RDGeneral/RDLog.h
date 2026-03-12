@@ -149,7 +149,7 @@ class RDKIT_RDGENERAL_EXPORT LogStateSetter : public boost::noncopyable {
   std::uint64_t d_origState = 0;
 };
 
-//! RAII class to capture messages from \c rdErrorLog.
+//! RAII class to capture messages from a given \c RDLogger.
 //!
 //! The log is enabled when this object is constructed and its original enabled
 //! state is restored when this object is destroyed. The stream destination is
@@ -158,23 +158,30 @@ class RDKIT_RDGENERAL_EXPORT LogStateSetter : public boost::noncopyable {
 //!
 //! \b Example:
 //! \code
-//!   RDLog::CaptureErrorLog capture;
+//!   RDLog::CaptureLog capture{rdErrorLog};
 //!   functionThatMayFail();
 //!   std::string errs = capture.messages();
 //! \endcode
-class RDKIT_RDGENERAL_EXPORT CaptureErrorLog : public boost::noncopyable {
+class RDKIT_RDGENERAL_EXPORT CaptureLog : public boost::noncopyable {
  public:
-  CaptureErrorLog();
-  ~CaptureErrorLog();
+  explicit CaptureLog(RDLogger log);
+  ~CaptureLog();
 
   //! Returns all messages captured since construction.
   std::string messages() const;
 
  private:
+  RDLogger d_log;
   std::stringstream d_messages;
-  std::ostream *d_savedDest;
-  boost::logging::RDTeeStream *d_savedTeestream;
+  std::ostream *d_savedDest = nullptr;
+  boost::logging::RDTeeStream *d_savedTeestream = nullptr;
   bool d_logWasEnabled = true;
+};
+
+//! Convenience subclass of \c CaptureLog that captures \c rdErrorLog.
+class RDKIT_RDGENERAL_EXPORT CaptureErrorLog : public CaptureLog {
+ public:
+  CaptureErrorLog() : CaptureLog(rdErrorLog) {}
 };
 
 inline void deprecationWarning(const std::string &message) {
