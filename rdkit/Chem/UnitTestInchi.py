@@ -465,8 +465,7 @@ M  END"""
 M  END"""
     mol = MolFromMolBlock(mb)
     self.assertIsNotNone(mol)
-    orig_data = [(a.GetSymbol(), list(mol.GetConformer().GetAtomPosition(i)))
-                 for i, a in enumerate(mol.GetAtoms())]
+    orig_data = list(zip([a.GetSymbol() for a in mol.GetAtoms()], mol.GetConformer().GetPositions()))
     inchi, aux = MolToInchiAndAuxInfo(mol)
     mol2 = MolFromInchiAndAuxInfo(inchi, aux)
     self.assertIsNotNone(mol2)
