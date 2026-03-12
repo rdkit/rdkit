@@ -444,11 +444,31 @@ void alignDummies(const double *fragDummy, const double *fragCentroid,
   xform = fromOrigin * rot * toOrigin;
 }
 
-bool checkDummies(GaussianShape::ShapeInput &fragShape,
-                  unsigned int fragDummyNum,
-                  GaussianShape::ShapeInput &synthShape,
-                  unsigned int synthDummyNum, double distThresold,
-                  double angleThreshold) {
+// Make sure the synthon dummy atom hasn't moved too far from the fragment
+// one or the directions haven't diverged too much.
+bool checkDummies(const double *fragDummyPos, const double *fragDummyNbrPos,
+                  const GaussianShape::ShapeInput &synthShape,
+                  unsigned int synthDummyIdx, unsigned int synthDummyNbrIdx,
+                  double distThresholdSq, double angleThreshold) {
+  auto synthShapeDummy = synthShape.getCoords().data() + 4 * synthDummyIdx;
+  auto synthShapeDummyNbr =
+      synthShape.getCoords().data() + 4 * synthDummyNbrIdx;
+
+  RDGeom::Point3D fd{fragDummyPos[0], fragDummyPos[1], fragDummyPos[2]};
+  RDGeom::Point3D sd{synthShapeDummy[0], synthShapeDummy[1],
+                     synthShapeDummy[2]};
+  if ((fd - sd).lengthSq() > distThresholdSq) {
+    return false;
+  }
+  RDGeom::Point3D fdn{fragDummyNbrPos[0], fragDummyNbrPos[1],
+                      fragDummyNbrPos[2]};
+  RDGeom::Point3D sdn{synthShapeDummyNbr[0], synthShapeDummyNbr[1],
+                      synthShapeDummyNbr[2]};
+  auto v1 = fd.directionVector(fdn);
+  auto v2 = sd.directionVector(sdn);
+  if (v1.angleTo(v2) > angleThreshold) {
+    return false;
+  }
   return true;
 }
 
@@ -476,7 +496,12 @@ SynthonOverlay bestSimSynthonOntoFragment(
   static const std::array<double, 4> cosT{1.0, cos(GaussianShape::PI / 2.0),
                                           cos(GaussianShape::PI),
                                           cos(GaussianShape::PI * 1.5)};
-
+  // Tolerances for how far the synthon shape moves when overlaid onto the
+  // fragment.
+  static constexpr double distTolSq = 4.0;  // Slightly over a bond's length
+  static const double angleTol =
+      GaussianShape::PI / 4.0;  // There's a big lever, potentially, so make the
+                                // tolerance quite shallow.
   double bestScore = 0.0;
   unsigned int bestSynthShape = 0;
   std::shared_ptr<RDGeom::Transform3D> bestXform{new RDGeom::Transform3D()};
@@ -536,10 +561,16 @@ SynthonOverlay bestSimSynthonOntoFragment(
           auto scores = GaussianShape::AlignShape(fragShape, singleShapeCp,
                                                   &ovlyXform, opts);
           if (scores[0] > bestScore) {
-            bestScore = scores[0];
-            // The total transform that the synthon undergoes to get this score.
-            *bestXform = ovlyXform * fullXform * xform;
-            bestSynthShape = ssn;
+            // Reject anything where the synthon dummies have gone too far.
+            if (checkDummies(fragDummy, fragDummyNbr, singleShapeCp,
+                             synthDummyIdx, synthDummyNbrIdx, distTolSq,
+                             angleTol)) {
+              bestScore = scores[0];
+              // The total transform that the synthon undergoes to get this
+              // score.
+              *bestXform = ovlyXform * fullXform * xform;
+              bestSynthShape = ssn;
+            }
           }
         }
       }
