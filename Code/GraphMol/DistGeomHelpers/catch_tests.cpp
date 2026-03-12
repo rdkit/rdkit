@@ -10,30 +10,30 @@
 #include <RDGeneral/test.h>
 #include <catch2/catch_all.hpp>
 
-#include <RDGeneral/RDLog.h>
+#include "BoundsMatrixBuilder.h"
+#include "Embedder.h"
 #include <Geometry/Utils.h>
-#include <GraphMol/test_fixtures.h>
-#include <GraphMol/RDKitBase.h>
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
-#include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
+#include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
-#include "Embedder.h"
-#include "BoundsMatrixBuilder.h"
-#include <tuple>
-#include <map>
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/test_fixtures.h>
+#include <RDGeneral/RDLog.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <map>
+#include <tuple>
 
 #ifdef RDK_TEST_MULTITHREADED
+#include <chrono>
 #include <csignal>
 #include <thread>
-#include <chrono>
 #endif
 
 using namespace RDKit;
@@ -1237,7 +1237,6 @@ TEST_CASE("allenes and cumulenes") {
   }
 }
 
-
 TEST_CASE("Torsion of non-sulfide *S-S*") {
   SECTION("bounds matrix 1-4 distance") {
     {
@@ -1248,31 +1247,38 @@ TEST_CASE("Torsion of non-sulfide *S-S*") {
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
       DGeomHelpers::setTopolBounds(*m, bm);
-      
+
       // check that torsion not fixed on 90 degree
       double bl1 = (bm->getUpperBound(0, 2) + bm->getLowerBound(0, 2)) / 2;
       double bl2 = (bm->getUpperBound(2, 3) + bm->getLowerBound(2, 3)) / 2;
       double bl3 = (bm->getUpperBound(3, 5) + bm->getLowerBound(3, 5)) / 2;
 
       // 1-3 to angle
-      // double distAngl12 = (bm->getUpperBound(0, 3) + bm->getLowerBound(0, 3)) / 2;
-      // double distAngl23 = (bm->getUpperBound(2, 5) + bm->getLowerBound(2, 5)) / 2;
+      // double distAngl12 = (bm->getUpperBound(0, 3) + bm->getLowerBound(0, 3))
+      // / 2; double distAngl23 = (bm->getUpperBound(2, 5) +
+      // bm->getLowerBound(2, 5)) / 2;
 
-      // std::cout << std::pow(bl1, 2) + std::pow(bl2, 2) - std::pow(distAngl12, 2) << "; " << 2*bl1*bl2 << std::endl;
+      // std::cout << std::pow(bl1, 2) + std::pow(bl2, 2) - std::pow(distAngl12,
+      // 2) << "; " << 2*bl1*bl2 << std::endl;
 
       // TODO change this
-      double ba12 = 109.5 * M_PI / 180; // std::acos((std::pow(bl1, 2) + std::pow(bl2, 2) - std::pow(distAngl12, 2))/2*bl1*bl2);
-      double ba23 = 109.5 * M_PI / 180; // std::acos((std::pow(bl2, 2) + std::pow(bl3, 2) - std::pow(distAngl23, 2))/2*bl2*bl3);
+      double ba12 =
+          109.5 * M_PI / 180;  // std::acos((std::pow(bl1, 2) + std::pow(bl2, 2)
+                               // - std::pow(distAngl12, 2))/2*bl1*bl2);
+      double ba23 =
+          109.5 * M_PI / 180;  // std::acos((std::pow(bl2, 2) + std::pow(bl3, 2)
+                               // - std::pow(distAngl23, 2))/2*bl2*bl3);
 
       double opt_14_cis = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-      double opt_14_trans = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+      double opt_14_trans =
+          RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
 
       CHECK(bm->getLowerBound(0, 5) <= opt_14_cis);
       CHECK(bm->getUpperBound(0, 5) >= opt_14_trans);
     }
   }
 
-    SECTION("bounds matrix 1-4 distance (sanity)") {
+  SECTION("bounds matrix 1-4 distance (sanity)") {
     {
       auto m = "CSSC"_smiles;
       REQUIRE(m);
@@ -1281,24 +1287,31 @@ TEST_CASE("Torsion of non-sulfide *S-S*") {
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
       DGeomHelpers::setTopolBounds(*m, bm);
-      
+
       // check that torsion not fixed on 90 degree
       double bl1 = (bm->getUpperBound(0, 1) + bm->getLowerBound(0, 1)) / 2;
       double bl2 = (bm->getUpperBound(1, 2) + bm->getLowerBound(1, 2)) / 2;
       double bl3 = (bm->getUpperBound(2, 3) + bm->getLowerBound(2, 3)) / 2;
 
       // 1-3 to angle
-      // double distAngl12 = (bm->getUpperBound(0, 3) + bm->getLowerBound(0, 3)) / 2;
-      // double distAngl23 = (bm->getUpperBound(2, 5) + bm->getLowerBound(2, 5)) / 2;
+      // double distAngl12 = (bm->getUpperBound(0, 3) + bm->getLowerBound(0, 3))
+      // / 2; double distAngl23 = (bm->getUpperBound(2, 5) +
+      // bm->getLowerBound(2, 5)) / 2;
 
-      // std::cout << std::pow(bl1, 2) + std::pow(bl2, 2) - std::pow(distAngl12, 2) << "; " << 2*bl1*bl2 << std::endl;
+      // std::cout << std::pow(bl1, 2) + std::pow(bl2, 2) - std::pow(distAngl12,
+      // 2) << "; " << 2*bl1*bl2 << std::endl;
 
       // TODO change this
-      double ba12 = 109.5 * M_PI / 180; // std::acos((std::pow(bl1, 2) + std::pow(bl2, 2) - std::pow(distAngl12, 2))/2*bl1*bl2);
-      double ba23 = 109.5 * M_PI / 180; // std::acos((std::pow(bl2, 2) + std::pow(bl3, 2) - std::pow(distAngl23, 2))/2*bl2*bl3);
+      double ba12 =
+          109.5 * M_PI / 180;  // std::acos((std::pow(bl1, 2) + std::pow(bl2, 2)
+                               // - std::pow(distAngl12, 2))/2*bl1*bl2);
+      double ba23 =
+          109.5 * M_PI / 180;  // std::acos((std::pow(bl2, 2) + std::pow(bl3, 2)
+                               // - std::pow(distAngl23, 2))/2*bl2*bl3);
 
       double opt_14_cis = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-      double opt_14_trans = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+      double opt_14_trans =
+          RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
 
       CHECK(bm->getLowerBound(0, 3) > opt_14_cis);
       CHECK(bm->getUpperBound(0, 3) < opt_14_trans);
@@ -1307,7 +1320,7 @@ TEST_CASE("Torsion of non-sulfide *S-S*") {
 }
 
 TEST_CASE("Overwritten bounds") {
-  SECTION("bounds matrix 1-3 distance") {
+  SECTION("Overwriten 1-2 by 1-3 distance") {
     {
       auto m = "C1CC1"_smiles;
       auto m2 = "CCC"_smiles;
@@ -1334,7 +1347,7 @@ TEST_CASE("Overwritten bounds") {
       CHECK(bm->getUpperBound(0, 2) == bm2->getUpperBound(0, 1));
     }
   }
-  SECTION("bounds matrix 1-4 distance") {
+  SECTION("Overwriten 1-2 by 1-4 distance") {
     {
       auto m = "C1CCC1"_smiles;
       auto m2 = "CCCC"_smiles;
@@ -1354,11 +1367,94 @@ TEST_CASE("Overwritten bounds") {
       // 1-2 distances should be the same
       CHECK(bm->getLowerBound(0, 1) == bm2->getLowerBound(0, 1));
       CHECK(bm->getUpperBound(0, 1) == bm2->getUpperBound(0, 1));
-      CHECK(bm->getLowerBound(1, 2) == bm2->getLowerBound(1, 2));
-      CHECK(bm->getUpperBound(1, 2) == bm2->getUpperBound(1, 2));
+    }
+  }
+  SECTION("Overwriten 1-3 by 1-4 distance") {
+    {
+      auto m = "C1CCCC1"_smiles;
+      auto m2 = "CCCCC"_smiles;
+      REQUIRE(m);
+      REQUIRE(m2);
+      MolOps::addHs(*m);
+      MolOps::addHs(*m2);
 
-      CHECK(bm->getLowerBound(0, 3) == bm2->getLowerBound(0, 1));
-      CHECK(bm->getUpperBound(0, 3) == bm2->getUpperBound(0, 1));
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m2->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m2, bm2);
+
+      // 1-3 distances should be the same
+      CHECK(bm->getLowerBound(0, 2) >= bm2->getLowerBound(0, 2));
+      CHECK(bm->getUpperBound(0, 2) <= bm2->getUpperBound(0, 2));
+    }
+  }
+  SECTION("Overwriten 1-2 by 1-5 distance") {
+    {
+      auto m = "C1CCCCCC1"_smiles;
+      auto m2 = "CCCCCCC"_smiles;
+      REQUIRE(m);
+      REQUIRE(m2);
+      MolOps::addHs(*m);
+      MolOps::addHs(*m2);
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m2->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m2, bm2);
+
+      // 1-4 distances should be the same
+      CHECK(bm->getLowerBound(0, 1) >= bm2->getLowerBound(0, 1));
+      CHECK(bm->getUpperBound(0, 1) <= bm2->getUpperBound(0, 1));
+    }
+  }
+  SECTION("Overwriten 1-3 by 1-5 distance") {
+    {
+      auto m = "C1CCCCC1"_smiles;
+      auto m2 = "CCCCCC"_smiles;
+      REQUIRE(m);
+      REQUIRE(m2);
+      MolOps::addHs(*m);
+      MolOps::addHs(*m2);
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m2->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m2, bm2);
+
+      // 1-4 distances should be the same
+      CHECK(bm->getLowerBound(0, 2) >= bm2->getLowerBound(0, 2));
+      CHECK(bm->getUpperBound(0, 2) <= bm2->getUpperBound(0, 2));
+    }
+  }
+  SECTION("Overwriten 1-4 by 1-5 distance") {
+    {
+      auto m = "C1CCCC1"_smiles;
+      auto m2 = "CCCCC"_smiles;
+      REQUIRE(m);
+      REQUIRE(m2);
+      MolOps::addHs(*m);
+      MolOps::addHs(*m2);
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m2->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m2, bm2);
+
+      // 1-4 distances should be the same
+      CHECK(bm->getLowerBound(0, 3) >= bm2->getLowerBound(0, 3));
+      CHECK(bm->getUpperBound(0, 3) <= bm2->getUpperBound(0, 3));
     }
   }
 }
