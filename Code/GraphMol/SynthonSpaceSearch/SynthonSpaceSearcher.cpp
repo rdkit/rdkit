@@ -281,25 +281,6 @@ SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
   auto fragments = details::splitMolecule(
       d_query, getNumQueryFragmentsRequired(), d_params.maxNumFragSets, endTime,
       d_params.numThreads, timedOut);
-  std::cout << "Number of fragment sets : " << fragments.size() << std::endl;
-  for (const auto &fs : fragments) {
-    if (fs.size() == 3) {
-      bool output = true;
-      for (const auto &f : fs) {
-        if (f->getNumAtoms() > 12 || f->getNumAtoms() < 7) {
-          output = false;
-          break;
-        }
-      }
-      if (output) {
-        std::cout << "[";
-        for (const auto &f : fs) {
-          std::cout << "\"" << MolToSmiles(*f) << "\",";
-        }
-        std::cout << "]," << std::endl;
-      }
-    }
-  }
   if (timedOut || ControlCHandler::getGotSignal()) {
     return {};
   }

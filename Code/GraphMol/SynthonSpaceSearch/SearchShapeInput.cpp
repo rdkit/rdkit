@@ -26,32 +26,6 @@
 namespace RDKit {
 namespace GaussianShape {
 
-namespace {
-bool checkBondLengths(const ROMol &mol) {
-  // DetermineBonds::connectivityVdw uses a covalent factor of 1.3.
-  static constexpr double radFactor = 1.3;
-  const auto conf = mol.getConformer();
-  for (const auto bond : mol.bonds()) {
-    auto bondlen = MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
-                                                bond->getEndAtomIdx());
-    if (!bond->getBeginAtom()->getAtomicNum() ||
-        !bond->getEndAtom()->getAtomicNum()) {
-      continue;
-    }
-    auto rad1 = PeriodicTable::getTable()->getRcovalent(
-        bond->getBeginAtom()->getAtomicNum());
-    auto rad2 = PeriodicTable::getTable()->getRcovalent(
-        bond->getEndAtom()->getAtomicNum());
-    if (bondlen > radFactor * (rad1 + rad2)) {
-      std::cout << bondlen << " for " << bond->getBeginAtom()->getAtomicNum()
-                << " to " << bond->getEndAtom()->getAtomicNum() << std::endl;
-      return false;
-    }
-  }
-  return true;
-}
-}  // namespace
-
 SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
                                    const ShapeInputOptions &opts,
                                    const ShapeOverlayOptions &overlayOpts)
@@ -102,33 +76,13 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
     d_eigenValuess.push_back(shape.getEigenValues());
   }
   if (pruneThreshold > 0.0 && mol.getNumConformers() > 1) {
-    std::cout << "Number of confs : " << mol.getNumConformers()
-              << "  number of shapes : " << getNumShapes() << " : "
-              << pruneThreshold << std::endl;
     pruneShapes(pruneThreshold);
-    std::cout << "Number of confs : " << mol.getNumConformers()
-              << "  number of shapes : " << getNumShapes() << " : "
-              << pruneThreshold << std::endl;
   }
   sortShapesByScore();
   calculateDummyVolumes(overlayOpts);
-#if 1
-  if (getSmiles() == "[1*]C(CO)=NN=[2*]") {
-    std::cout << "WAHEY - number of shapes : " << getNumShapes() << std::endl;
-    for (unsigned int i = 0; i < getNumShapes(); ++i) {
-      setActiveShape(i);
-      std::cout << MolToCXSmiles(*shapeToMol()) << std::endl;
-    }
+  for (unsigned int i = 0; i < getNumShapes(); ++i) {
+    setActiveShape(i);
   }
-#endif
-#if 0
-  auto tmpMol = shapeToMol();
-  if (!checkBondLengths(*tmpMol)) {
-    std::cout << "Bond lengths check failed" << std::endl;
-    std::cout << MolToCXSmiles(*tmpMol) << std::endl;
-    exit(1);
-  }
-#endif
 }
 
 SearchShapeInput::SearchShapeInput(const std::string &str) {
@@ -297,13 +251,11 @@ void SearchShapeInput::pruneShapes(double simThreshold) {
   // The picker works on distances.
   auto picks = leaderPicker.lazyPick(distFunctor, d_confCoords.size(), 0,
                                      1.0 - simThreshold);
-  // Allow for mysterious LeaderPicker behaviour where it returns a full
+  // Allow for mysterious LeaderPicker behaviour where it returns a
   // vector of 0s when it should only pick 1 shape.
-  if (picks.size() == d_confCoords.size()) {
-    std::ranges::sort(picks);
-    auto [first, last] = std::ranges::unique(picks);
-    picks.erase(first, last);
-  }
+  std::ranges::sort(picks);
+  auto [first, last] = std::ranges::unique(picks);
+  picks.erase(first, last);
   selectConformations(picks);
 }
 

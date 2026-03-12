@@ -59,7 +59,7 @@ TEST_CASE("Shape Small tests") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
-#if 1
+#if 0
   // These are the source files for the shape databases.  Useful to keep
   // around in case the databases ever need updating.
   std::vector<std::string> libNames{
@@ -97,9 +97,9 @@ TEST_CASE("Shape Small tests") {
   // compensated for by other things.
   std::vector<size_t> expNumHits{3, 8, 1};
   std::vector<std::vector<double>> expScores{
-      {0.929, 0.923, 0.854},
-      {0.928, 0.873, 0.846, 0.844, 0.825, 0.820, 0.804, 0.804},
-      {0.997}};
+      {0.989, 0.905, 0.901},
+      {0.864, 0.855, 0.819, 0.816, 0.812, 0.809, 0.801, 0.800},
+      {0.802}};
   ShapeBuildParams shapeBuildOptions;
   shapeBuildOptions.numConfs = 100;
   shapeBuildOptions.rmsThreshold = 0.5;
@@ -107,11 +107,8 @@ TEST_CASE("Shape Small tests") {
   shapeBuildOptions.shapeSimThreshold = 0.95;
 
   for (size_t i = 0; i < dbNames.size(); i++) {
-    if (i != 1) {
-      continue;
-    }
     SynthonSpace synthonspace;
-#if 1
+#if 0
     // In case the databases ever need updating.
     bool cancelled = false;
     synthonspace.readTextFile(libNames[i], cancelled);
@@ -132,16 +129,11 @@ TEST_CASE("Shape Small tests") {
     auto results = synthonspace.shapeSearch(*queryMol, params);
     unsigned int j = 0;
     for (const auto &mol : results.getHitMolecules()) {
-      std::cout << "Hit : " << MolToCXSmiles(*mol)
-                << " sim = " << mol->getProp<double>("Similarity") << "  "
-                << mol->getProp<std::string>("_Name") << std::endl;
       CHECK_THAT(mol->getProp<double>("Similarity"),
                  Catch::Matchers::WithinAbs(expScores[i][j++], 0.001));
       auto hitQuery = v2::SmilesParse::MolFromSmiles(
           mol->getProp<std::string>("Query_CXSmiles"));
       auto scores = GaussianShape::ScoreMolecule(*hitQuery, *mol);
-      std::cout << "After score : " << scores[0] << ", " << scores[1] << ", "
-                << scores[2] << std::endl;
       CHECK_THAT(mol->getProp<double>("Similarity"),
                  Catch::Matchers::WithinAbs(scores[0], 0.001));
     }

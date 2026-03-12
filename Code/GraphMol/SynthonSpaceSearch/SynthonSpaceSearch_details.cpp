@@ -844,7 +844,6 @@ std::unique_ptr<ROMol> buildProduct(
   for (size_t i = 1; i < synthons.size(); ++i) {
     prodMol.reset(combineMols(*prodMol, *synthons[i]));
   }
-  std::cout << "prezip : " << MolToCXSmiles(*prodMol) << std::endl;
   prodMol = molzip(*prodMol, mzparams);
   MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
   return prodMol;
@@ -1041,7 +1040,6 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
                        const ShapeBuildParams &shapeParams,
                        std::unique_ptr<ProgressBar> &pbar) {
   GaussianShape::ShapeInputOptions shapeOpts;
-
   while (!ControlCHandler::getGotSignal()) {
     size_t molNum = ++mostRecentMol;
     if (molNum >= sampleMols.size()) {
