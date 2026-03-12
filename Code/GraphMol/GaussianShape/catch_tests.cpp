@@ -837,7 +837,6 @@ bool checkBondLengths(const ROMol &mol) {
 TEST_CASE("Different atom orders for ShapeInput") {
   // Make sure that different atom orders always produce a ShapeInput that gives
   // a correct molecule from shapeToMol.  This wasn't always the case.
-#if 0
   auto fullMol =
       "C[C@@H]1C[C@H](NC(=O)NC2COC2)CN(C(=O)c2nccnc2F)C1 |(-0.346914,-0.986206,-4.28744;-0.686863,-0.0357247,-3.13265;0.429505,-0.1946,-2.14134;0.21099,0.659676,-0.907145;1.06526,0.0812473,0.104663;2.29297,0.75201,0.373712;2.5837,1.80373,-0.246936;3.23325,0.27478,1.33777;4.47647,0.99197,1.57602;4.94347,1.01294,2.99117;5.59284,-0.21541,2.82613;5.71049,0.107583,1.47157;-1.19052,0.721766,-0.417623;-2.14086,-0.0964663,-1.12904;-3.25312,-0.745252,-0.540367;-3.95877,-1.43507,-1.38825;-3.7227,-0.763533,0.803759;-4.9481,-0.204581,1.05395;-5.52492,-0.18107,2.24654;-4.86554,-0.748644,3.30451;-3.63585,-1.32731,3.13734;-3.08234,-1.32608,1.89052;-1.84839,-1.9059,1.69441;-2.02702,-0.329978,-2.57998),wD:1.0,wU:3.3|"_smiles;
   REQUIRE(fullMol);
@@ -879,17 +878,4 @@ TEST_CASE("Different atom orders for ShapeInput") {
     CHECK(MolToSmiles(*outMol) == "C[C@@H]1C[C@H](NC(=O)NC2COC2)CN(C=O)C1");
     CHECK(checkBondLengths(*outMol));
   }
-#endif
-  // This one failed in earnest
-  auto badMol =
-      "C[C@H]1CCN(c2nnc(CO)n2C2*CCC2)*1 |(3.88187,-1.9608,1.02401;3.40947,-0.556473,0.685633;3.49763,-0.278493,-0.787477;2.18424,0.313597,-1.21035;1.39217,0.480256,0.0110759;0.36454,1.42337,0.278193;0.656593,2.66561,0.766052;-0.477075,3.33073,0.923413;-1.48168,2.52297,0.540741;-2.93641,2.8664,0.551747;-3.33354,3.43671,-0.657732;-0.965924,1.32594,0.134935;-1.71735,0.224133,-0.333621;-1.11549,-0.643316,-1.37025;-2.26431,-1.65079,-1.54776;-2.58926,-1.96617,-0.0975393;-2.00229,-0.836476,0.740437;1.90383,-0.551243,0.906815),atomProp:0.ORIG_IDX.0:1.ORIG_IDX.1:2.ORIG_IDX.2:3.ORIG_IDX.3:4.ORIG_IDX.4:5.ORIG_IDX.5:6.ORIG_IDX.6:7.ORIG_IDX.7:8.ORIG_IDX.8:9.ORIG_IDX.9:10.ORIG_IDX.10:11.ORIG_IDX.11:12.ORIG_IDX.12:13.ORIG_IDX.13:14.ORIG_IDX.14:15.ORIG_IDX.15:16.ORIG_IDX.16:17.ORIG_IDX.17,wD:1.0| : 0 1 2 3 4 5 6 7 8 9 10 11 12 14 15 16 13 17"_smiles;
-  badMol->setProp<std::string>("_Name", "badMol");
-  GaussianShape::ShapeInputOptions shapeOptions;
-  shapeOptions.atomSubset = std::vector<unsigned int>{
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 13, 17};
-  GaussianShape::ShapeInput shape(*badMol, -1, shapeOptions);
-  auto outMol = shape.shapeToMol(false);
-  std::cout << MolToCXSmiles(*outMol) << std::endl;
-  // CHECK(MolToSmiles(*outMol) == "C[C@@H]1*N(c2nnc(CO)n2C2*CCC2)CC1");
-  CHECK(checkBondLengths(*outMol));
 }

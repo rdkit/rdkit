@@ -100,14 +100,6 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   PRECONDITION(mol.getNumConformers() > 0,
                "ShapeInput object needs the molecule to have conformers.  " +
                    mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
-  std::cout << "\nShapeInput Shapes from " << mol.getNumAtoms()
-            << " :: " << MolToCXSmiles(mol, true, false, -1, false) << " : ";
-  std::cout << opts.atomSubset.size() << " : ";
-  for (auto as : opts.atomSubset) {
-    std::cout << as << " ";
-  }
-  std::cout << std::endl;
-
   std::unique_ptr<RWMol> tmpMol;
   // Subsetting the molecule makes any bespoke atom radii, identified
   // by atom index, incorrect so stash them as atom properties.
@@ -121,12 +113,17 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   } else {
     tmpMol.reset(new RWMol(mol));
   }
-  if (!tmpMol->hasProp(common_properties::_smilesAtomOutputOrder)) {
-    // This is just to force the creation of the order.  It will be
-    // over-written later.
-    d_smiles = MolToSmiles(*tmpMol);
-  }
-  std::cout << "tmpMol smiles : " << MolToSmiles(*tmpMol) << std::endl;
+  // This is just to force the creation of the correct atom output order.  The
+  // SMILES will be over-written later.  It would be nice not to have to rely
+  // on a side-effect of a function call for this.  There was a weird edge case
+  // where the subset was the same size as the input molecule, so no atoms
+  // were deleted but the _smilesAtomOutputOrder property was different
+  // afterwards.  I think it was due to chirality - the original molecule
+  // had the _smilesAtomOutputOrder set, but during the preparation for a
+  // shape, 2 of its atoms were changed to dummy atoms which reversed the
+  // chirality at one of the atoms, thus changing the output order, but
+  // the _smilesAtomOutputOrder wasn't updated.
+  d_smiles = MolToSmiles(*tmpMol);
   if (!tmpMol->getRingInfo()->isInitialized()) {
     // Query molecules don't seem to have the ring info generated on creation.
     MolOps::findSSSR(*tmpMol);

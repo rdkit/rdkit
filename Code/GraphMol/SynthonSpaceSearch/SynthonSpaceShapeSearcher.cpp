@@ -119,7 +119,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
     }
     if (!fragMatched) {
       std::cout << "Nothing matched " << fragShapes[fragNum]->getSmiles()
-                << std::endl;
+                << " : " << fragShapes[fragNum]->getNumAtoms() << std::endl;
       // No synthons matched this fragment, so the whole fragment set is a
       // bust.
       return retSynthons;
@@ -246,7 +246,7 @@ std::unique_ptr<GaussianShape::SearchShapeInput> generateShapes(
   // for them, too.  They are normally copied from the atom at
   // the other end of the broken bond so find that atom too.
   // Work on a copy the query.
-  ROMol queryCp(queryConfs);
+  RWMol queryCp(queryConfs);
   std::vector<unsigned int> fragAtoms;
   fragAtoms.reserve(frag.getNumAtoms());
   boost::dynamic_bitset<> inFrag(queryCp.getNumAtoms());
@@ -292,6 +292,15 @@ std::unique_ptr<GaussianShape::SearchShapeInput> generateShapes(
   GaussianShape::ShapeInputOptions opts;
   opts.atomSubset = fragAtoms;
   opts.atomRadii = dummyRadii;
+  // Break any dummy-dummy bonds
+  queryCp.beginBatchEdit();
+  for (auto bond : queryCp.bonds()) {
+    if (!bond->getBeginAtom()->getAtomicNum() &&
+        !bond->getEndAtom()->getAtomicNum()) {
+      queryCp.removeBond(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
+    }
+  }
+  queryCp.commitBatchEdit();
   auto shapes = std::make_unique<GaussianShape::SearchShapeInput>(
       queryCp, pruneThreshold, opts);
   return shapes;
@@ -518,18 +527,23 @@ SynthonOverlay bestSimSynthonOntoFragment(
   unsigned int bestSynthShape = 0;
   std::shared_ptr<RDGeom::Transform3D> bestXform{new RDGeom::Transform3D()};
 
-  std::cout << "fragShape : " << MolToCXSmiles(*fragShape.shapeToMol())
-            << std::endl;
+  if (synthon->getSmiles() == "OCC([1*])=NN=[2*]" &&
+      fragShape.getSmiles() == "*nnc(*)CO") {
+    std::cout << "WAHEY" << std::endl;
+    std::cout << "fragShape : " << MolToCXSmiles(*fragShape.shapeToMol())
+              << std::endl;
+  }
   for (unsigned int i = 0; i < fragShape.getDummyAtoms().count(); ++i) {
     unsigned int fragDummyIdx, fragDummyNbrIdx;
     fragShape.getDummyAndNbr(i, fragDummyIdx, fragDummyNbrIdx);
     auto fragDummy = fragShape.getCoords().data() + 4 * fragDummyIdx;
     auto fragDummyNbr = fragShape.getCoords().data() + 4 * fragDummyNbrIdx;
     for (unsigned int ssn = 0; ssn < synthShapes->getNumShapes(); ++ssn) {
+      synthShapeCp.setActiveShape(ssn);
       for (unsigned int j = 0; j < synthShapes->getDummyAtoms().count(); ++j) {
         // Align the synthon shape so that its dummy j is on top of
-        // fragShape's dummy i and the vector from the dummy to its centroid
-        // is aligned with the vector from the frag's dummy to centroid.
+        // fragShape's dummy i and the vector from the dummy to its neighbour
+        // is aligned with the vector from the frag's dummy to neighbour.
         unsigned int synthDummyIdx, synthDummyNbrIdx;
         synthShapes->getDummyAndNbr(j, synthDummyIdx, synthDummyNbrIdx);
         auto synthDummy = synthShapes->getCoords().data() + 4 * synthDummyIdx;
@@ -547,9 +561,9 @@ SynthonOverlay bestSimSynthonOntoFragment(
 #endif
         RDGeom::Point3D rotAxis =
             RDGeom::Point3D({synthCpDummy[0], synthCpDummy[1], synthCpDummy[2]})
-                .directionVector(RDGeom::Point3D(-synthCpDummyNbr[0],
-                                                 -synthCpDummyNbr[1],
-                                                 -synthCpDummyNbr[2]));
+                .directionVector(RDGeom::Point3D(synthCpDummyNbr[0],
+                                                 synthCpDummyNbr[1],
+                                                 synthCpDummyNbr[2]));
         RDGeom::Transform3D toOrigin;
         toOrigin.SetTranslation(RDGeom::Point3D(
             -synthCpDummy[0], -synthCpDummy[1], -synthCpDummy[2]));
@@ -567,19 +581,23 @@ SynthonOverlay bestSimSynthonOntoFragment(
           synthShapeCp.transformCoords(fullXform);
           RDGeom::Transform3D ovlyXform;
 #if 1
-          std::cout << "input singleSynthShape : "
-                    << MolToCXSmiles(*synthShapeCp.shapeToMol(true))
-                    << std::endl;
+          if (synthon->getSmiles() == "OCC([1*])=NN=[2*]" &&
+              fragShape.getSmiles() == "*nnc(*)CO") {
+            std::cout << "\ninput singleSynthShape : " << i << " : " << ssn
+                      << " : " << j << " : " << k << " : "
+                      << MolToCXSmiles(*synthShapeCp.shapeToMol()) << std::endl;
+          }
 #endif
           auto scores = GaussianShape::AlignShape(fragShape, synthShapeCp,
                                                   &ovlyXform, opts);
 #if 1
-          std::cout << "Score : " << scores[0] << " " << scores[1] << " "
-                    << scores[2] << std::endl;
-          std::cout << "overlaid singleSynthShape : "
-                    << MolToCXSmiles(*synthShapeCp.shapeToMol()) << std::endl;
-          std::cout << "fragShape : " << MolToCXSmiles(*fragShape.shapeToMol())
-                    << std::endl;
+          if (synthon->getSmiles() == "OCC([1*])=NN=[2*]" &&
+              fragShape.getSmiles() == "*nnc(*)CO") {
+            std::cout << "Score : " << scores[0] << " " << scores[1] << " "
+                      << scores[2] << std::endl;
+            std::cout << "overlaid singleSynthShape : "
+                      << MolToCXSmiles(*synthShapeCp.shapeToMol()) << std::endl;
+          }
 #endif
           if (scores[0] > bestScore) {
             bestScore = scores[0];
@@ -630,12 +648,27 @@ void computeSomeFragSynthonSims(
       RDGeom::Transform3D xform;
       auto sim =
           bestSimSynthonOntoFragment(*fragShape, synthon, threshold, xform);
+      if (fragShape->getNumAtoms() > 6 && fragShape->getNumAtoms() < 8 &&
+          synthon->getSmiles() == "OCC([1*])=NN=[2*]") {
+        if (fragShape->getSmiles().find("O") != std::string::npos) {
+          std::cout << fragShape->getSmiles() << " : "
+                    << fragShape->getNumAtoms() << " -> "
+                    << synthon->getSmiles() << " : " << std::get<0>(sim)
+                    << std::endl;
+        }
+      }
       if (std::get<0>(sim) >= threshold) {
-        std::cout << fragShape->getSmiles() << " -> " << synthon->getSmiles()
-                  << " : " << std::get<0>(sim)
-                  << " :: " << MolToCXSmiles(*fragShape->shapeToMol()) << " :: "
-                  << MolToCXSmiles(*synthon->getShapes()->shapeToMol())
-                  << std::endl;
+        // if (fragShape->getNumAtoms() > 6 && fragShape->getNumAtoms() < 10) {
+        // std::cout << fragShape->getSmiles() << " -> " <<
+        // synthon->getSmiles()
+        //           << " : " << std::get<0>(sim)
+        //           << " :: " << MolToCXSmiles(*fragShape->shapeToMol())
+        //           << " :: "
+        //           << MolToCXSmiles(*synthon->getShapes()->shapeToMol())
+        //           << std::endl;
+        // std::cout << fragShape->getSmiles() << " -> " << synthon->getSmiles()
+        // << " : " << std::get<0>(sim) << std::endl;
+        // }
         std::pair<const void *, const void *> p{fragShape, synthon};
         std::unique_lock lock1{mtx};
         fragSynthonSims.insert(std::make_pair(p, sim));

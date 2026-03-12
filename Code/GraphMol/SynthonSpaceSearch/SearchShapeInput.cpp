@@ -101,7 +101,7 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
     d_canonTranss.push_back(shape.getCanonicalTranslation());
     d_eigenValuess.push_back(shape.getEigenValues());
   }
-  if (pruneThreshold > 0.0) {
+  if (pruneThreshold > 0.0 && mol.getNumConformers() > 1) {
     std::cout << "Number of confs : " << mol.getNumConformers()
               << "  number of shapes : " << getNumShapes() << " : "
               << pruneThreshold << std::endl;
@@ -112,12 +112,23 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
   }
   sortShapesByScore();
   calculateDummyVolumes(overlayOpts);
+#if 1
+  if (getSmiles() == "[1*]C(CO)=NN=[2*]") {
+    std::cout << "WAHEY - number of shapes : " << getNumShapes() << std::endl;
+    for (unsigned int i = 0; i < getNumShapes(); ++i) {
+      setActiveShape(i);
+      std::cout << MolToCXSmiles(*shapeToMol()) << std::endl;
+    }
+  }
+#endif
+#if 0
   auto tmpMol = shapeToMol();
   if (!checkBondLengths(*tmpMol)) {
     std::cout << "Bond lengths check failed" << std::endl;
     std::cout << MolToCXSmiles(*tmpMol) << std::endl;
     exit(1);
   }
+#endif
 }
 
 SearchShapeInput::SearchShapeInput(const std::string &str) {
@@ -286,8 +297,8 @@ void SearchShapeInput::pruneShapes(double simThreshold) {
   // The picker works on distances.
   auto picks = leaderPicker.lazyPick(distFunctor, d_confCoords.size(), 0,
                                      1.0 - simThreshold);
-  // Allow for mysterious LeaderPicker behaviour where it returns a full vector
-  // of 0s when it should only pick 1 shape.
+  // Allow for mysterious LeaderPicker behaviour where it returns a full
+  // vector of 0s when it should only pick 1 shape.
   if (picks.size() == d_confCoords.size()) {
     std::ranges::sort(picks);
     auto [first, last] = std::ranges::unique(picks);

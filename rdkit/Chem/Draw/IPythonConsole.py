@@ -73,7 +73,15 @@ None'''
   else:
     # py3Dmol does not currently support v3k mol files, so
     # we can only provide those with "smaller" molecules
-    mb = Chem.MolToMolBlock(mol, confId=confId)
+    try:
+      mb = Chem.MolToMolBlock(mol, confId=confId)
+    except Chem.AtomKekulizeException:
+      # The bonding is likely to be wrong, but it would be good
+      # to see something.
+      p = Chem.rdmolfiles.MolWriterParams()
+      p.kekulize = False
+      mb = Chem.MolToMolBlock(mol, confId=confId, params=p)
+
     view.addModel(mb, 'sdf')
   if drawAs is None:
     drawAs = drawing_type_3d
@@ -164,14 +172,11 @@ the py3Dmol.view object containing the drawing'''
       m = Chem.RemoveHs(m)
     addMolToView(m, view, confId)
   for i in range(len(mols)):
-    style = {
-          'colorscheme': colors[i % len(colors)]
-        }
-    if drawAs[i] == "sphere":
-      style["radius"] = 0.5
     view.setStyle({
       'model': i,
-    }, {drawAs[i]: style})
+    }, {drawAs[i]: {
+          'colorscheme': colors[i % len(colors)]
+        }})
 
   view.setBackgroundColor(bgColor)
   view.zoomTo()
@@ -548,3 +553,4 @@ def UninstallIPythonRenderer():
 
 
 InstallIPythonRenderer()
+
