@@ -1056,7 +1056,8 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       }
       break;
     case Bond::SINGLE:
-      if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16)) {
+      if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16) 
+        && (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
         // this is *S-S* situation
         // FIX: this cannot be right is sulfur has more than two coordinated
         // the torsion angle is 90 deg
@@ -1426,7 +1427,8 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
       }
       break;
     case Bond::SINGLE:
-      if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16)) {
+      if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16) &&
+          (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
         // this is *S-S* situation
         // FIX: this cannot be right is sulfur has more than two coordinated
         // the torsion angle is 90 deg
