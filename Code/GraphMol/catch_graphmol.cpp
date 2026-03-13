@@ -365,8 +365,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
     for (auto pr : smiles) {
       CHECK_THROWS_AS(SmilesToMol(pr.first), AtomValenceException);
       try {
-        auto m = SmilesToMol(pr.first);
-        RDUNUSED_PARAM(m);
+        [[maybe_unused]] auto m = SmilesToMol(pr.first);
       } catch (const AtomValenceException &e) {
         CHECK(e.getType() == "AtomValenceException");
         CHECK(e.getAtomIdx() == pr.second);
@@ -380,8 +379,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
     for (auto pr : smiles) {
       CHECK_THROWS_AS(SmilesToMol(pr.first), AtomKekulizeException);
       try {
-        auto m = SmilesToMol(pr.first);
-        RDUNUSED_PARAM(m);
+        [[maybe_unused]] auto m = SmilesToMol(pr.first);
       } catch (const AtomKekulizeException &e) {
         CHECK(e.getType() == "AtomKekulizeException");
         CHECK(e.getAtomIdx() == pr.second);
@@ -396,8 +394,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
     for (auto pr : smiles) {
       CHECK_THROWS_AS(SmilesToMol(pr.first), KekulizeException);
       try {
-        auto m = SmilesToMol(pr.first);
-        RDUNUSED_PARAM(m);
+        [[maybe_unused]] auto m = SmilesToMol(pr.first);
       } catch (const KekulizeException &e) {
         CHECK(e.getType() == "KekulizeException");
         CHECK(e.getAtomIndices() == pr.second);
@@ -4700,8 +4697,7 @@ TEST_CASE("Valences on Al, Si, P, As, Sb, Bi") {
       INFO(smi);
       CHECK_THROWS_AS(SmilesToMol(smi), AtomValenceException);
       try {
-        ROMOL_SPTR m(SmilesToMol(smi));
-        RDUNUSED_PARAM(m);
+        [[maybe_unused]] ROMOL_SPTR m(SmilesToMol(smi));
       } catch (const AtomValenceException &e) {
         CHECK(e.getType() == "AtomValenceException");
         CHECK(e.getAtomIdx() == idx);
