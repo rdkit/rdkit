@@ -22,6 +22,10 @@
 #include <queue>
 #include <algorithm>
 
+// Useful for development and debugging of double bond stereo.
+// Please make sure it is disabled before merging.
+#define ENABLE_EXTRA_CHECKS 0
+
 namespace RDKit {
 namespace Canon {
 namespace {
@@ -36,9 +40,60 @@ static constexpr Bond::BondDir flipStereoBondDir(Bond::BondDir bondDir) {
   }
 }
 
-void setDirectionFromNeighboringBond(Bond &sourceBond, bool isSourceBondFlipped,
-                                     Bond &targetBond,
-                                     bool isTargetBondFlipped) {
+#if ENABLE_EXTRA_CHECKS
+static void checkDirCounts(const ROMol &mol,
+                           const std::vector<int8_t> &bondDirCounts,
+                           const std::vector<int8_t> &atomDirCounts) {
+  // atoms at the end of double bonds can only have 2 bons with directions
+  for (auto atomCount : atomDirCounts) {
+    if (atomCount < 0 || atomCount > 2) {
+      throw ValueErrorException(
+          "inconsistent stereochemistry: atom with more than 2 direction bonds");
+    }
+  }
+
+  std::vector<int8_t> numDblBondsPerAtom(mol.getNumAtoms(), 0);
+  for (auto bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::DOUBLE &&
+        bond->getStereo() > Bond::STEREOANY) {
+      for (auto atomIdx : {bond->getBeginAtomIdx(), bond->getEndAtomIdx()}) {
+        if (atomDirCounts[atomIdx]) {
+          ++numDblBondsPerAtom[atomIdx];
+        }
+      }
+    }
+  }
+
+  for (auto bond : mol.bonds()) {
+    // typical value is 2; can be higher in rare cases with directly
+    // adjacent stereo bonds.
+    auto maxBondCount = numDblBondsPerAtom[bond->getBeginAtomIdx()] +
+                        numDblBondsPerAtom[bond->getEndAtomIdx()];
+    auto bondCount = bondDirCounts[bond->getIdx()];
+    if (bondCount < 0 || bondCount > maxBondCount) {
+      throw ValueErrorException(
+          "inconsistent stereochemistry: bond with more than 2 direction bonds");
+    }
+  }
+}
+#endif
+
+static void logInconsistentBondDirsWarning(unsigned int idx) {
+  auto msg =
+      std::string(
+          "Conflicting single bond directions around double bond at index ") +
+      std::to_string(idx) + ".\n  Stereochemistry may be incorrect.";
+  BOOST_LOG(rdWarningLog) << msg << std::endl;
+
+#if ENABLE_EXTRA_CHECKS
+  CHECK_INVARIANT(false, msg);
+#endif
+}
+
+static void setDirectionFromNeighboringBond(Bond &sourceBond,
+                                            bool isSourceBondFlipped,
+                                            Bond &targetBond,
+                                            bool isTargetBondFlipped) {
   auto dir = sourceBond.getBondDir();
 
   // By default, both bonds on the same side of the double bond
@@ -52,11 +107,10 @@ void setDirectionFromNeighboringBond(Bond &sourceBond, bool isSourceBondFlipped,
   targetBond.setBondDir(dir);
 }
 
-Bond::BondDir getReferenceDirection(const Bond &dblBond, const Atom &refAtom,
-                                    const Atom &targetAtom,
-                                    const Bond &refControllingBond,
-                                    bool refIsFlipped, const Bond &targetBond,
-                                    bool targetIsFlipped) {
+static Bond::BondDir getReferenceDirection(
+    const Bond &dblBond, const Atom &refAtom, const Atom &targetAtom,
+    const Bond &refControllingBond, bool refIsFlipped, const Bond &targetBond,
+    bool targetIsFlipped) {
   Bond::BondDir dir = Bond::NONE;
   if (dblBond.getStereo() == Bond::STEREOE ||
       dblBond.getStereo() == Bond::STEREOTRANS) {
@@ -91,6 +145,144 @@ Bond::BondDir getReferenceDirection(const Bond &dblBond, const Atom &refAtom,
 
   return dir;
 }
+
+static bool fixConflictAcrossDoubleBond(
+    const Bond &dblBond, const Atom &atom, const Bond &firstBond,
+    bool firstIsFlipped, const Bond &secondBond, bool secondIsFlipped,
+    const Atom &refAtom, const Bond &refBond, bool refIsFlipped,
+    std::vector<int8_t> &bondDirCounts, std::vector<int8_t> &atomDirCounts) {
+  for (const auto &[bond, isFlipped] :
+       {std::make_pair(firstBond, firstIsFlipped),
+        std::make_pair(secondBond, secondIsFlipped)}) {
+    auto otherBond = (&bond == &firstBond ? secondBond : firstBond);
+    auto otherIdx = otherBond.getOtherAtomIdx(atom.getIdx());
+    auto canOtherDirBeRemoved = atomDirCounts[otherIdx] == 2;
+
+    if (!canOtherDirBeRemoved) {
+      continue;
+    }
+
+    auto expectedAtom2Dir = getReferenceDirection(
+        dblBond, refAtom, atom, refBond, refIsFlipped, bond, isFlipped);
+    if (expectedAtom2Dir == bond.getBondDir()) {
+      bondDirCounts[otherBond.getIdx()] = 0;
+      --atomDirCounts[atom.getIdx()];
+      --atomDirCounts[otherIdx];
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool handleDirConflictsAcrossDoubleBond(
+    const Bond &dblBond, const Atom &atom1, bool atom1DirsAreConsistent,
+    const Bond &firstFromAtom1, bool isFirstFromAtom1Flipped,
+    const Bond &secondFromAtom1, bool isSecondFromAtom1Flipped,
+    const Atom &atom2, bool atom2DirsAreConsistent, const Bond &firstFromAtom2,
+    bool isFirstFromAtom2Flipped, const Bond &secondFromAtom2,
+    bool isSecondFromAtom2Flipped, std::vector<int8_t> &bondDirCounts,
+    std::vector<int8_t> &atomDirCounts
+
+) {
+  if (atom1DirsAreConsistent && atom2DirsAreConsistent) {
+    // The directions on each side are consistent, so if they are also
+    // consistent across the double bond, then all is good. But if they
+    // are incompatible with the double bond's stereo label there's
+    // nothing we can do to fix the situation.
+    auto expectedFirstFromAtom2Dir = getReferenceDirection(
+        dblBond, atom1, atom2, firstFromAtom1, isFirstFromAtom1Flipped,
+        firstFromAtom2, isFirstFromAtom2Flipped);
+    return expectedFirstFromAtom2Dir == firstFromAtom2.getBondDir();
+
+  } else if (!atom2DirsAreConsistent) {
+    // atom2 has conflicting directions, which means we must have a
+    // secondFromAtom2. We don't know anything about secondFromAtom1:
+    // it might be present or not, but we don't care about it, since
+    // we know it is not problematic.
+    return fixConflictAcrossDoubleBond(
+        dblBond, atom2, firstFromAtom2, isFirstFromAtom2Flipped,
+        secondFromAtom2, isSecondFromAtom2Flipped, atom1, firstFromAtom1,
+        isFirstFromAtom1Flipped, bondDirCounts, atomDirCounts);
+
+  } else if (!atom1DirsAreConsistent) {
+    // atom1 has conflicting directions, which means we must have a
+    // secondFromAtom1. We don't know anything about secondFromAtom2:
+    // it might be present or not, but we don't care about it, since
+    // we know it is not problematic.
+    return fixConflictAcrossDoubleBond(
+        dblBond, atom1, firstFromAtom1, isFirstFromAtom1Flipped,
+        secondFromAtom1, isSecondFromAtom1Flipped, atom2, firstFromAtom2,
+        isFirstFromAtom2Flipped, bondDirCounts, atomDirCounts);
+
+  } else {
+    // This is the tricky one. We have conflicts on both sides,
+    // which means we must have both secondFromAtom1 and secondFromAtom2.
+    // We need to check which directions can be removed, and which need
+    // to be removed to end up with a valid across-double-bond configuration.
+
+    for (const auto &[atom1Bond, atom1BondisFlipped] :
+         {std::make_pair(firstFromAtom1, isFirstFromAtom1Flipped),
+          std::make_pair(secondFromAtom1, isSecondFromAtom1Flipped)}) {
+      for (const auto &[atom2Bond, atom2BondisFlipped] :
+           {std::make_pair(firstFromAtom2, isFirstFromAtom2Flipped),
+            std::make_pair(secondFromAtom2, isSecondFromAtom2Flipped)}) {
+        auto expectedAtom2Dir = getReferenceDirection(
+            dblBond, atom1, atom2, atom1Bond, atom1BondisFlipped, atom2Bond,
+            atom2BondisFlipped);
+        if (expectedAtom2Dir == atom2Bond.getBondDir()) {
+          // We have found a combination of directions that are consistent with
+          // the double bond's stereo label. Now we need to check if we can
+          // remove the other two directions to fix the conflict.
+
+          auto atom1OtherBond =
+              (&atom1Bond == &firstFromAtom1 ? secondFromAtom1
+                                             : firstFromAtom1);
+          auto atom1OtherIdx = atom1OtherBond.getOtherAtomIdx(atom1.getIdx());
+          auto canAtom1OtherDirBeRemoved = atomDirCounts[atom1OtherIdx] == 2;
+          if (!canAtom1OtherDirBeRemoved) {
+            continue;
+          }
+
+          auto atom2OtherBond =
+              (&atom2Bond == &firstFromAtom2 ? secondFromAtom2
+                                             : firstFromAtom2);
+          auto atom2OtherIdx = atom2OtherBond.getOtherAtomIdx(atom2.getIdx());
+          if (atom1OtherIdx == atom2OtherIdx) {
+            // unlikely, but not impossible, so just in case...
+            continue;
+          }
+
+          auto canAtom2OtherDirBeRemoved = atomDirCounts[atom2OtherIdx] == 2;
+          if (!canAtom2OtherDirBeRemoved) {
+            continue;
+          }
+
+          bondDirCounts[atom1OtherBond.getIdx()] = 0;
+          --atomDirCounts[atom1.getIdx()];
+          --atomDirCounts[atom1OtherIdx];
+
+          bondDirCounts[atom2OtherBond.getIdx()] = 0;
+          --atomDirCounts[atom2.getIdx()];
+          --atomDirCounts[atom2OtherIdx];
+
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+bool sameSideDirsAreCompatible(const Bond &firstBond, const Bond &secondBond,
+                               bool isFirstBondFlipped,
+                               bool isSecondBondFlipped) {
+  auto dirsShouldMatch = isFirstBondFlipped != isSecondBondFlipped;
+  auto dirsMatch = firstBond.getBondDir() == secondBond.getBondDir();
+
+  return dirsMatch == dirsShouldMatch;
+}
+
 }  // namespace
 
 namespace details {
@@ -298,7 +490,8 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
   // and check if both directions on each side are set.
   // We hit this in cases with cycles like CO/C1=C/C=C\C=C/C=N\1.
   if (dir1Set && dir2Set) {
-    // To do: check that the existing directions are consistent.
+    // Check that directions on atom1 side are present and consistent
+    auto atom1DirsAreConsistent = true;
     if (secondFromAtom1) {
       if (!bondDirCounts[firstFromAtom1->getIdx()]) {
         setDirectionFromNeighboringBond(
@@ -308,6 +501,10 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
         setDirectionFromNeighboringBond(
             *firstFromAtom1, isFirstFromAtom1Flipped, *secondFromAtom1,
             isSecondFromAtom1Flipped);
+      } else {
+        atom1DirsAreConsistent = sameSideDirsAreCompatible(
+            *firstFromAtom1, *secondFromAtom1, isFirstFromAtom1Flipped,
+            isSecondFromAtom1Flipped);
       }
 
       bondDirCounts[secondFromAtom1->getIdx()] += 1;
@@ -316,6 +513,8 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     bondDirCounts[firstFromAtom1->getIdx()] += 1;
     atomDirCounts[atom1->getIdx()] += 1;
 
+    // Check that directions on atom2 side are present and consistent
+    auto atom2DirsAreConsistent = true;
     if (secondFromAtom2) {
       if (!bondDirCounts[firstFromAtom2->getIdx()]) {
         setDirectionFromNeighboringBond(
@@ -325,6 +524,10 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
         setDirectionFromNeighboringBond(
             *firstFromAtom2, isFirstFromAtom2Flipped, *secondFromAtom2,
             isSecondFromAtom2Flipped);
+      } else {
+        atom2DirsAreConsistent = sameSideDirsAreCompatible(
+            *firstFromAtom2, *secondFromAtom2, isFirstFromAtom2Flipped,
+            isSecondFromAtom2Flipped);
       }
 
       bondDirCounts[secondFromAtom2->getIdx()] += 1;
@@ -332,6 +535,17 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
     }
     bondDirCounts[firstFromAtom2->getIdx()] += 1;
     atomDirCounts[atom2->getIdx()] += 1;
+
+    // Finally, check that directions across the double bond are consistent
+    // with what we see on each end of the double bond
+    if (!handleDirConflictsAcrossDoubleBond(
+            *dblBond, *atom1, atom1DirsAreConsistent, *firstFromAtom1,
+            isFirstFromAtom1Flipped, *secondFromAtom1, isSecondFromAtom1Flipped,
+            *atom2, atom2DirsAreConsistent, *firstFromAtom2,
+            isFirstFromAtom2Flipped, *secondFromAtom2, isSecondFromAtom2Flipped,
+            bondDirCounts, atomDirCounts)) {
+      logInconsistentBondDirsWarning(dblBond->getIdx());
+    }
 
     return;
   }
@@ -357,16 +571,21 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       // The first bond's direction has been set at some earlier point:
       bondDirCounts[firstFromAtom1->getIdx()] += 1;
       atomDirCounts[atom1->getIdx()] += 1;
-      if (secondFromAtom1) {
-        // both bonds have their directionalities set, make sure
-        // they are compatible:
-        if (firstFromAtom1->getBondDir() == secondFromAtom1->getBondDir() &&
-            bondDirCounts[firstFromAtom2->getIdx()]) {
-          CHECK_INVARIANT(
-              ((firstFromAtom1->getBeginAtomIdx() == atom1->getIdx()) ^
-               (secondFromAtom1->getBeginAtomIdx() == atom1->getIdx())),
-              "inconsistent state");
+
+      if (secondFromAtom1 && bondDirCounts[secondFromAtom1->getIdx()]) {
+        // both bonds have their directionalities set, check if
+        // they are compatible.
+        if (!sameSideDirsAreCompatible(*firstFromAtom1, *secondFromAtom1,
+                                       isFirstFromAtom1Flipped,
+                                       isSecondFromAtom1Flipped)) {
+          // If the directions are incompatible, there's nothing we can do here,
+          // as we don't have a reference on the other side of the bond to help
+          // us figure out which one is wrong. Just log a warning and move on.
+          logInconsistentBondDirsWarning(dblBond->getIdx());
         }
+
+        bondDirCounts[secondFromAtom1->getIdx()] += 1;
+        atomDirCounts[atom1->getIdx()] += 1;
       }
     } else {
       // the second bond must be present and setting the direction:
@@ -396,6 +615,23 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       // The second bond's direction has been set at some earlier point:
       bondDirCounts[firstFromAtom2->getIdx()] += 1;
       atomDirCounts[atom2->getIdx()] += 1;
+
+      if (secondFromAtom2 && bondDirCounts[secondFromAtom2->getIdx()]) {
+        // both bonds have their directionalities set, check if
+        // they are compatible.
+        if (!sameSideDirsAreCompatible(*firstFromAtom2, *secondFromAtom2,
+                                       isFirstFromAtom2Flipped,
+                                       isSecondFromAtom2Flipped)) {
+          // If the directions are incompatible, there's nothing we can do here,
+          // as we don't have a reference on the other side of the bond to help
+          // us figure out which one is wrong. Just log a warning and move on.
+          logInconsistentBondDirsWarning(dblBond->getIdx());
+        }
+
+        bondDirCounts[secondFromAtom2->getIdx()] += 1;
+        atomDirCounts[atom2->getIdx()] += 1;
+      }
+
     } else {
       // the second bond must be present and setting the direction:
       CHECK_INVARIANT(secondFromAtom2, "inconsistent state");
@@ -455,9 +691,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       setDirectionFromNeighboringBond(*firstFromAtom1, isFirstFromAtom1Flipped,
                                       *secondFromAtom1,
                                       isSecondFromAtom1Flipped);
+      bondDirCounts[secondFromAtom1->getIdx()] += 1;
+      atomDirCounts[atom1->getIdx()] += 1;
     }
-    bondDirCounts[secondFromAtom1->getIdx()] += 1;
-    atomDirCounts[atom1->getIdx()] += 1;
   }
 
   if (atom2->getDegree() == 3 && secondFromAtom2) {
@@ -465,9 +701,9 @@ void canonicalizeDoubleBond(Bond *dblBond, const UINT_VECT &bondVisitOrders,
       setDirectionFromNeighboringBond(*firstFromAtom2, isFirstFromAtom2Flipped,
                                       *secondFromAtom2,
                                       isSecondFromAtom2Flipped);
+      bondDirCounts[secondFromAtom2->getIdx()] += 1;
+      atomDirCounts[atom2->getIdx()] += 1;
     }
-    bondDirCounts[secondFromAtom2->getIdx()] += 1;
-    atomDirCounts[atom2->getIdx()] += 1;
   }
 }
 
@@ -595,6 +831,10 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
       }
     }
   }
+
+#if ENABLE_EXTRA_CHECKS
+  checkDirCounts(mol, bondDirCounts, atomDirCounts);
+#endif
 }
 
 // finds cycles
@@ -923,12 +1163,16 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
   PRECONDITION(fromAtom, "bad atom");
   PRECONDITION(&fromAtom->getOwningMol() == &mol, "bad bond");
 
-  auto clearDirection = [&atomDirCounts, &bondDirCounts](Bond *bond) {
+  auto clearDirection = [&atomDirCounts, &bondDirCounts](Bond *bond,
+                                                         const Atom *fromAtom) {
     --bondDirCounts[bond->getIdx()];
     if (!bondDirCounts[bond->getIdx()]) {
       bond->setBondDir(Bond::NONE);
-      --atomDirCounts[bond->getBeginAtomIdx()];
-      --atomDirCounts[bond->getEndAtomIdx()];
+      --atomDirCounts[fromAtom->getIdx()];
+      if (auto otherAtom = bond->getOtherAtom(fromAtom);
+          atomDirCounts[otherAtom->getIdx()]) {
+        --atomDirCounts[otherAtom->getIdx()];
+      }
     }
   };
 
@@ -938,15 +1182,124 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
            bondDirCounts[refBond->getIdx()]) &&
           atomDirCounts[oBond->getBeginAtomIdx()] != 1 &&
           atomDirCounts[oBond->getEndAtomIdx()] != 1) {
-        clearDirection(oBond);
+        clearDirection(oBond, fromAtom);
       } else if (atomDirCounts[refBond->getBeginAtomIdx()] != 1 &&
                  atomDirCounts[refBond->getEndAtomIdx()] != 1) {
         // we found a neighbor that could have directionality set,
         // but it had a lower bondDirCount than us, so we must
         // need to be adjusted:
-        clearDirection(refBond);
+        clearDirection(refBond, fromAtom);
       }
       break;
+    }
+  }
+}
+
+// CanonicalizeDoubleBonds tries to add as many directions as possible
+// to stereo double bonds, but some of these may coerce STEREONONE or
+// STEREOANY into stereo just because they are "in the wrong place",
+// in the middle of direction bonds of neighboring stereo bonds. Here
+// we try to fix some of them (we probably can't fix all) before
+// removing redundant ones in removeRedundantBondDirSpecs.
+void removeUnwantedBondDirSpecs(ROMol &mol, MolStack &molStack,
+                                std::vector<int8_t> &bondDirCounts,
+                                std::vector<int8_t> &atomDirCounts,
+                                std::vector<unsigned int> &bondVisitOrders) {
+  PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
+
+  for (auto &msI : molStack) {
+    if (msI.type != MOL_STACK_BOND) {
+      continue;
+    }
+
+    if (msI.obj.bond->getBondType() != Bond::DOUBLE ||
+        msI.obj.bond->getStereo() > Bond::STEREOANY) {
+      continue;
+    }
+
+    auto firstAtom = msI.obj.bond->getBeginAtom();
+    auto secondAtom = msI.obj.bond->getEndAtom();
+    if (firstAtom->getDegree() == 1 || secondAtom->getDegree() == 1) {
+      // One side of the bond does not have any neighbors. There's no way for
+      // this double bond to have stereo!
+      continue;
+    }
+
+    std::vector<Bond *> removalCandidates;
+
+    // Look at the first side of the non-stereo double bond
+
+    for (auto bond : mol.atomBonds(firstAtom)) {
+      if (bondDirCounts[bond->getIdx()]) {
+        removalCandidates.push_back(bond);
+      }
+    }
+    if (removalCandidates.empty()) {
+      // No bonds with direction on this side, so this non-stereo
+      // bond won't be coerced into stereo.
+      continue;
+    }
+
+    if (atomDirCounts[firstAtom->getIdx()]) {
+      // We only keep atomDirCounts for atoms at the end of a stereo double
+      // bond. This means that if an end of this non-stereo double bond has
+      // a dir count, then both bonds have this atom in common (like the
+      // two bonds in S=P(=N\C)/C have P in common), and we can't remove
+      // the direction from that side, as it will remove stereo from the
+      // stereo bond too.
+      removalCandidates.clear();
+    }
+
+    // Now look at the other side
+
+    uint8_t candidatesOnSecondEnd = 0;
+    for (auto bond : mol.atomBonds(secondAtom)) {
+      if (bondDirCounts[bond->getIdx()]) {
+        removalCandidates.push_back(bond);
+        ++candidatesOnSecondEnd;
+      }
+    }
+
+    if (candidatesOnSecondEnd == 0) {
+      // No bonds with direction on this side, so this non-stereo
+      // bond won't be coerced into stereo.
+      continue;
+    }
+
+    if (atomDirCounts[secondAtom->getIdx()]) {
+      // If we got here, and can't remove bonds on this side, this probably
+      // means there's nothing we can do, and this bond will be coerced
+      // into stereo.
+      continue;
+    }
+
+    // Sort by position in the molStack, prefer the bond closest to the start
+    std::ranges::sort(
+        removalCandidates, [&bondVisitOrders](const auto &a, const auto &b) {
+          return bondVisitOrders[a->getIdx()] < bondVisitOrders[b->getIdx()];
+        });
+
+    for (auto candidateBond : removalCandidates) {
+      Atom *otherAtom = nullptr;
+      if (candidateBond->getBeginAtom() == firstAtom ||
+          candidateBond->getEndAtom() == firstAtom) {
+        otherAtom = candidateBond->getOtherAtom(firstAtom);
+      } else if (candidateBond->getBeginAtom() == secondAtom ||
+                 candidateBond->getEndAtom() == secondAtom) {
+        otherAtom = candidateBond->getOtherAtom(secondAtom);
+      } else {
+        CHECK_INVARIANT(false, "inconsistent bond ends");
+      }
+
+      // to be able to remove the bond, the "other end", the atom that
+      // is part of a stereo double bond, must have 2 directions, so that
+      // that bond keeps stereo even if we remove one of the directions.
+      if (atomDirCounts[otherAtom->getIdx()] == 2) {
+        bondDirCounts[candidateBond->getIdx()] = 0;
+        candidateBond->setBondDir(Bond::NONE);
+        atomDirCounts[otherAtom->getIdx()] -= 1;
+        break;
+      }
     }
   }
 }
@@ -958,6 +1311,13 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
 
   auto clearBondDirsFromAtom = [&mol, &bondDirCounts, &atomDirCounts](
                                    Bond *tBond, const Atom *atom) {
+    if (atomDirCounts[atom->getIdx()] < 2) {
+      // if atom doesn't have 2 directional bonds, even if is a double
+      // bond end, it won't have a redundant bond direction we can remove
+      // so no point in checking further.
+      return;
+    }
+
     for (auto bond : mol.atomBonds(atom)) {
       if (bond != tBond && bond->getBondType() == Bond::DOUBLE &&
           bond->getStereo() > Bond::STEREOANY) {
@@ -1256,8 +1616,15 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
       }
     }
   }
+  Canon::removeUnwantedBondDirSpecs(mol, molStack, bondDirCounts, atomDirCounts,
+                                    bondVisitOrders);
+
   Canon::removeRedundantBondDirSpecs(mol, molStack, bondDirCounts,
                                      atomDirCounts);
+
+#if ENABLE_EXTRA_CHECKS
+  checkDirCounts(mol, bondDirCounts, atomDirCounts);
+#endif
 }
 
 void canonicalizeEnhancedStereo(ROMol &mol,
