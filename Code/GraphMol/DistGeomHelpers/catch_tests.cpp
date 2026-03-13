@@ -1345,6 +1345,10 @@ TEST_CASE("Overwritten bounds") {
 
       CHECK(bm->getLowerBound(0, 2) == bm2->getLowerBound(0, 1));
       CHECK(bm->getUpperBound(0, 2) == bm2->getUpperBound(0, 1));
+
+      // make sure that 1-3 are still set
+      CHECK(bm->getLowerBound(0, 2) > 0.0);
+      CHECK(bm->getUpperBound(0, 2) < 1000.0);
     }
   }
   SECTION("Overwriten 1-2 by 1-4 distance") {
