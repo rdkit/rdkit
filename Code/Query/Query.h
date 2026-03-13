@@ -159,7 +159,6 @@ class RDKIT_QUERY_EXPORT Query {
   CHILD_VECT d_children;
   bool df_negate{false};
   std::function<bool(MatchFuncArgType)> d_matchFunc;
-  // bool (*d_matchFunc)(MatchFuncArgType);
 
   // MSVC complains at compile time when TypeConvert(MatchFuncArgType what,
   // Int2Type<false>) attempts to pass what (which is of type MatchFuncArgType)
@@ -169,8 +168,6 @@ class RDKIT_QUERY_EXPORT Query {
   union {
     std::function<MatchFuncArgType(DataFuncArgType)> d_dataFunc;
     std::function<MatchFuncArgType(MatchFuncArgType)> d_dataFuncSameType;
-    // MatchFuncArgType (*d_dataFunc)(DataFuncArgType);
-    // MatchFuncArgType (*d_dataFuncSameType)(MatchFuncArgType);
   };
   //! \brief calls our \c dataFunc (if it's set) on \c what and returns
   //! the result, otherwise returns \c what
