@@ -95,67 +95,24 @@ ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what) {
 };
 
 ATOM_EQUALS_QUERY *makeAtomInRingOfSizeQuery(int tgt) {
-  RANGE_CHECK(3, tgt, 20);
   auto *res = new ATOM_EQUALS_QUERY;
   res->setVal(tgt);
-  switch (tgt) {
-    case 3:
-      res->setDataFunc(queryAtomIsInRingOfSize<3>);
-      break;
-    case 4:
-      res->setDataFunc(queryAtomIsInRingOfSize<4>);
-      break;
-    case 5:
-      res->setDataFunc(queryAtomIsInRingOfSize<5>);
-      break;
-    case 6:
-      res->setDataFunc(queryAtomIsInRingOfSize<6>);
-      break;
-    case 7:
-      res->setDataFunc(queryAtomIsInRingOfSize<7>);
-      break;
-    case 8:
-      res->setDataFunc(queryAtomIsInRingOfSize<8>);
-      break;
-    case 9:
-      res->setDataFunc(queryAtomIsInRingOfSize<9>);
-      break;
-    case 10:
-      res->setDataFunc(queryAtomIsInRingOfSize<10>);
-      break;
-    case 11:
-      res->setDataFunc(queryAtomIsInRingOfSize<11>);
-      break;
-    case 12:
-      res->setDataFunc(queryAtomIsInRingOfSize<12>);
-      break;
-    case 13:
-      res->setDataFunc(queryAtomIsInRingOfSize<13>);
-      break;
-    case 14:
-      res->setDataFunc(queryAtomIsInRingOfSize<14>);
-      break;
-    case 15:
-      res->setDataFunc(queryAtomIsInRingOfSize<15>);
-      break;
-    case 16:
-      res->setDataFunc(queryAtomIsInRingOfSize<16>);
-      break;
-    case 17:
-      res->setDataFunc(queryAtomIsInRingOfSize<17>);
-      break;
-    case 18:
-      res->setDataFunc(queryAtomIsInRingOfSize<18>);
-      break;
-    case 19:
-      res->setDataFunc(queryAtomIsInRingOfSize<19>);
-      break;
-    case 20:
-      res->setDataFunc(queryAtomIsInRingOfSize<20>);
-      break;
-  }
-
+  res->setDataFunc(
+      [tgt](Atom const *at) { return queryAtomIsInRingOfSize(at, tgt); });
   res->setDescription("AtomRingSize");
+  return res;
+}
+
+ATOM_RANGE_QUERY *makeAtomInRingOfSizeQuery(int lower, int upper,
+                                            bool lowerOpen, bool upperOpen) {
+  auto *res = new ATOM_RANGE_QUERY;
+  res->setLower(lower);
+  res->setUpper(upper);
+  res->setEndsOpen(lowerOpen, upperOpen);
+  res->setDataFunc([lower, upper, lowerOpen, upperOpen](Atom const *at) {
+    return queryAtomIsInRingOfSize(at, lower, upper, lowerOpen, upperOpen);
+  });
+  res->setDescription("range_AtomRingSize");
   return res;
 }
 
@@ -1046,28 +1003,61 @@ Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
   return mol->getAtomWithIdx(idx);
 }
 
+void finalizeAtomRingSizeQuery(Queries::Query<int, Atom const *, true> *query,
+                               const std::string &prefix) {
+  if (prefix.empty()) {
+    auto tgt = static_cast<ATOM_EQUALS_QUERY *>(query)->getVal();
+    query->setDataFunc(
+        [tgt](Atom const *at) { return queryAtomIsInRingOfSize(at, tgt); });
+
+  } else if (prefix == "range") {
+    auto rq = static_cast<ATOM_RANGE_QUERY *>(query);
+    auto uv = rq->getUpper();
+    auto lv = rq->getLower();
+    auto [lo, uo] = rq->getEndsOpen();
+    query->setDataFunc([lv, uv, lo, uo](Atom const *at) {
+      return queryAtomIsInRingOfSize(at, lv, uv, lo, uo);
+    });
+  } else if (prefix == "less") {
+    auto lv = static_cast<ATOM_LESSEQUAL_QUERY *>(query)->getVal();
+    auto uv = -1;
+    query->setDataFunc([lv, uv](Atom const *at) {
+      return queryAtomIsInRingOfSize(at, lv, uv);
+    });
+  } else if (prefix == "greater") {
+    auto lv = -1;
+    auto uv = static_cast<ATOM_GREATEREQUAL_QUERY *>(query)->getVal();
+    query->setDataFunc([lv, uv](Atom const *at) {
+      return queryAtomIsInRingOfSize(at, lv, uv);
+    });
+  } else {
+    throw ValueErrorException("Do not know how to handle prefix: '" + prefix +
+                              "'");
+  }
+}
+
 void finalizeQueryFromDescription(
     Queries::Query<int, Atom const *, true> *query, Atom const *) {
   std::string descr = query->getDescription();
 
+  std::string prefix;
   if (boost::starts_with(descr, "range_")) {
     descr = descr.substr(6);
+    prefix = "range";
   } else if (boost::starts_with(descr, "less_")) {
     descr = descr.substr(5);
+    prefix = "less";
   } else if (boost::starts_with(descr, "greater_")) {
     descr = descr.substr(8);
+    prefix = "greater";
   }
 
-  Queries::Query<int, Atom const *, true> *tmpQuery;
   if (descr == "AtomRingBondCount") {
     query->setDataFunc(queryAtomRingBondCount);
   } else if (descr == "AtomHasRingBond") {
     query->setDataFunc(queryAtomHasRingBond);
   } else if (descr == "AtomRingSize") {
-    tmpQuery = makeAtomInRingOfSizeQuery(
-        static_cast<ATOM_EQUALS_QUERY *>(query)->getVal());
-    query->setDataFunc(tmpQuery->getDataFunc());
-    delete tmpQuery;
+    finalizeAtomRingSizeQuery(query, prefix);
   } else if (descr == "AtomMinRingSize") {
     query->setDataFunc(queryAtomMinRingSize);
   } else if (descr == "AtomImplicitValence") {

@@ -22,7 +22,9 @@
 #include <Query/Query.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
+
 #include <functional>
+#include <limits>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
@@ -322,6 +324,38 @@ static inline int queryAtomRingBondCount(Atom const *at) {
   return res;
 }
 
+static inline int queryAtomIsInRingOfSize(Atom const *at, int tgt) {
+  if (at->getOwningMol().getRingInfo()->isAtomInRingOfSize(at->getIdx(), tgt)) {
+    return tgt;
+  } else {
+    return 0;
+  }
+};
+//! returns the size of an SSSR ring the atom is in that's within the specified
+//! range, or a value outside the range if there are no rings with a size in the
+//!   range. passing -1 for a bound leaves the range without a limit in that
+//!   direction
+//! always returns a value outside the range for atoms that are not in a ring
+static inline int queryAtomIsInRingOfSize(Atom const *at, int lower, int upper,
+                                          bool lowerOpen = false,
+                                          bool upperOpen = false) {
+  const auto ri = at->getOwningMol().getRingInfo();
+  for (const auto ringSize : ri->atomRingSizes(at->getIdx())) {
+    if ((ringSize > lower || (ringSize == lower && !lowerOpen)) &&
+        (upper < 0 ||
+         (ringSize < upper || (ringSize == upper && !upperOpen)))) {
+      return ringSize;
+    }
+  }
+  // we didn't find it, return a result that's not in the acceptable range:
+  if (lower > -1) {
+    return -1;
+  } else if (upper > -1) {
+    return std::numeric_limits<int>::max();
+  } else {
+    return 0;
+  }
+};
 template <int tgt>
 int queryAtomIsInRingOfSize(Atom const *at) {
   if (at->getOwningMol().getRingInfo()->isAtomInRingOfSize(at->getIdx(), tgt)) {
@@ -562,7 +596,13 @@ T *makeAtomInNRingsQuery(int what, const std::string &descr) {
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what);
 
 //! returns a Query for matching atoms in rings of a particular size
+template <class T>
+T *makeAtomInRingOfSizeQuery(int tgt, const std::string &descr);
+//! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomInRingOfSizeQuery(int tgt);
+//! \overload
+RDKIT_GRAPHMOL_EXPORT ATOM_RANGE_QUERY *makeAtomInRingOfSizeQuery(
+    int lower, int upper, bool lowerOpen = false, bool upperOpen = false);
 
 //! returns a Query for matching an atom's minimum ring size
 template <class T>
