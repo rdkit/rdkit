@@ -7,21 +7,21 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/Chirality.h>
-#include <DistGeom/BoundsMatrix.h>
 #include "BoundsMatrixBuilder.h"
-#include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
+#include <DistGeom/BoundsMatrix.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <Geometry/Utils.h>
+#include <GraphMol/Chirality.h>
+#include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
+#include <GraphMol/RDKitBase.h>
 
-#include <RDGeneral/utils.h>
-#include <RDGeneral/RDLog.h>
-#include <RDGeneral/Exceptions.h>
-#include <Numerics/SymmMatrix.h>
 #include <DistGeom/TriangleSmooth.h>
-#include <boost/dynamic_bitset.hpp>
+#include <Numerics/SymmMatrix.h>
+#include <RDGeneral/Exceptions.h>
+#include <RDGeneral/RDLog.h>
+#include <RDGeneral/utils.h>
 #include <algorithm>
+#include <boost/dynamic_bitset.hpp>
 #include <unordered_set>
 
 const double DIST12_DELTA = 0.01;
@@ -75,6 +75,7 @@ class ComputedData {
     auto *bAngles = new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
     bondAngles.reset(bAngles);
     set15Atoms.resize(nAtoms * nAtoms);
+    visitedBounds.resize(nAtoms * nAtoms);
   }
 
   ~ComputedData() = default;
@@ -86,6 +87,7 @@ class ComputedData {
   std::unordered_set<std::uint64_t> cisPaths;
   std::unordered_set<std::uint64_t> transPaths;
   BIT_SET set15Atoms;
+  BIT_SET visitedBounds;
 };
 
 //! Set 1-2 distance bounds for between atoms in a molecule
@@ -251,6 +253,8 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       mmat->setUpperBound(begId, endId, 1.5 * bl);
       mmat->setLowerBound(begId, endId, .5 * bl);
     }
+    unsigned int pid = begId * mol.getNumAtoms() + endId;
+    accumData.visitedBounds.set(pid);
   }
 }
 
@@ -409,7 +413,20 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         // atom.
         _setRingAngle(mol.getAtomWithIdx(aid2)->getHybridization(), rSize,
                       angle);
-        _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+                      // TODO something wrong
+        unsigned int pid1 = aid1 * mol.getNumAtoms() + aid3;
+        unsigned int pid2 = aid3 * mol.getNumAtoms() + aid1;
+        if ((!accumData.visitedBounds[pid1] && !accumData.visitedBounds[pid2])) {
+          std::cout << "setting" << aid1 << mol.getAtomWithIdx(aid1)->getSymbol() << "; " << aid2 << mol.getAtomWithIdx(aid2)->getSymbol() << "; " << aid3 << mol.getAtomWithIdx(aid3)->getSymbol() << std::endl;
+          _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+          accumData.visitedBounds.set(pid1);
+        } else {
+          
+          std::cout << "skipped" << aid1 << "; " << aid2 << "; " << aid3 << std::endl;
+          std::cout << "was: " << mmat->getLowerBound(aid1, aid3) << "; " << mmat->getUpperBound(aid1, aid3) << std::endl;
+          _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+          std::cout << "Would be: " << mmat->getLowerBound(aid1, aid3) << "; " << mmat->getUpperBound(aid1, aid3) << std::endl;
+        }
         accumData.bondAngles->setVal(bid1, bid2, angle);
         accumData.bondAdj->setVal(bid1, bid2, aid2);
         visited[aid2] += 1;
@@ -487,7 +504,16 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                                              // not the best we can do here
               }
             }
-            _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+
+            unsigned int pid1 = aid1 * mol.getNumAtoms() + aid3;
+            unsigned int pid2 = aid3 * mol.getNumAtoms() + aid1;
+
+            if (!accumData.visitedBounds[pid1] && !accumData.visitedBounds[pid2]) {
+              _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+              accumData.visitedBounds.set(pid1);
+            } else {
+              std::cout << "skipped" << aid1 << "; " << aid3 << std::endl;
+            }
             accumData.bondAngles->setVal(bid1, bid2, angle);
             accumData.bondAdj->setVal(bid1, bid2, aid2);
             angleTaken[aid2] += angle;
@@ -538,17 +564,25 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               angle = 120.0 * M_PI / 180;
             }
           }
-          if (atom->getDegree() <= 4 ||
-              (Chirality::hasNonTetrahedralStereo(atom) &&
-               atom->hasProp(common_properties::_chiralPermutation))) {
-            _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+          unsigned int pid1 = aid1 * mol.getNumAtoms() + aid3;
+          unsigned int pid2 = aid3 * mol.getNumAtoms() + aid1;
+
+          if (!accumData.visitedBounds[pid1] && !accumData.visitedBounds[pid2]) {
+            if (atom->getDegree() <= 4 ||
+                (Chirality::hasNonTetrahedralStereo(atom) &&
+                 atom->hasProp(common_properties::_chiralPermutation))) {
+              _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+            } else {
+              // just use 180 as the max angle and an arbitrary min angle
+              auto dmax =
+                  accumData.bondLengths[bid1] + accumData.bondLengths[bid2];
+              auto dl = 1.0;
+              auto du = dmax * 1.2;
+              _checkAndSetBounds(aid1, aid3, dl, du, mmat);
+            }
+            accumData.visitedBounds.set(pid1);
           } else {
-            // just use 180 as the max angle and an arbitrary min angle
-            auto dmax =
-                accumData.bondLengths[bid1] + accumData.bondLengths[bid2];
-            auto dl = 1.0;
-            auto du = dmax * 1.2;
-            _checkAndSetBounds(aid1, aid3, dl, du, mmat);
+            std::cout << "skipped " << aid1 << "; " << aid3 << std::endl;
           }
           accumData.bondAngles->setVal(bid1, bid2, angle);
           accumData.bondAdj->setVal(bid1, bid2, aid2);
@@ -1056,8 +1090,8 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       }
       break;
     case Bond::SINGLE:
-      if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16) 
-        && (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
+      if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16) &&
+          (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
         // this is *S-S* situation
         // FIX: this cannot be right is sulfur has more than two coordinated
         // the torsion angle is 90 deg
@@ -1090,9 +1124,9 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
         //   allow the distance to roam from cis to trans and hope that the
         //   force field planarizes things later.
         //
-        //   What we'd really like to be able to do is specify multiple possible
-        //   ranges for the distances, but a single bounds matrix doesn't
-        //   support this kind of fanciness.
+        //   What we'd really like to be able to do is specify multiple
+        //   possible ranges for the distances, but a single bounds matrix
+        //   doesn't support this kind of fanciness.
         //
         if (forceTransAmides) {
           if ((atm1->getAtomicNum() == 1 && atm2->getAtomicNum() == 7 &&
@@ -1220,10 +1254,10 @@ void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
 // (a2Num == 7).
 // This is necessary as the original function does not detect attached
 // hydrogen even when is present (possibly due to explict/implicit H-count?),
-// a new function is used (currently only for macrocycle treatment with ETKDGv3)
-// in order to not break backward compatibility (also allow recognising
-// methylated amide) here we look for something like this: It's an amide or
-// ester:
+// a new function is used (currently only for macrocycle treatment with
+// ETKDGv3) in order to not break backward compatibility (also allow
+// recognising methylated amide) here we look for something like this: It's an
+// amide or ester:
 //
 //        4    <- 4 is the O
 //        |    <- That's the double bond
@@ -1442,11 +1476,11 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
                      mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                  (_checkMacrocycleAllInSameRingAmideEster14(
                      mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
-        dl =
-            RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) +
-            0.1;  // we saw that the currently defined max distance for trans is
-                  // still a bit too short, thus we add an additional 0.1, which
-                  // is the max that works without triangular smoothing error
+        dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) +
+             0.1;  // we saw that the currently defined max distance for trans
+                   // is still a bit too short, thus we add an additional 0.1,
+                   // which is the max that works without triangular smoothing
+                   // error
         path14.type = Path14Configuration::TRANS;
         accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
                                     bid2 * nb + bid3);
@@ -1521,8 +1555,8 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  bool useMacrocycle14config, bool forceTransAmides) {
   unsigned int npt = mmat->numRows();
   CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
-  // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but we
-  // might as well check:
+  // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but
+  // we might as well check:
   const size_t MAX_NUM_BONDS = static_cast<size_t>(
       std::pow(std::numeric_limits<std::uint64_t>::max(), 1. / 3));
   if (mol.getNumBonds() >= MAX_NUM_BONDS) {
@@ -1669,8 +1703,8 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   if (!na) {
     throw ValueErrorException("molecule has no atoms");
   }
-  // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but we
-  // might as well check:
+  // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but
+  // we might as well check:
   const size_t MAX_NUM_BONDS = static_cast<size_t>(
       std::pow(std::numeric_limits<std::uint64_t>::max(), 1. / 3));
   if (mol.getNumBonds() >= MAX_NUM_BONDS) {
