@@ -79,6 +79,9 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
   numBonds = 0;
   // std::cerr<<"    init from other: "<<this<<" "<<&other<<std::endl;
   // copy over the atoms
+  // Avoid repeated reallocations when copying: for MolGraph's vecS vertex
+  // container, reserving upfront can reduce allocation churn.
+  d_graph.m_vertices.reserve(other.getNumAtoms());
   for (const auto oatom : other.atoms()) {
     constexpr bool updateLabel = false;
     constexpr bool takeOwnership = true;
@@ -100,6 +103,7 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
 
   // enhanced stereochemical information
   d_stereo_groups.clear();
+  d_stereo_groups.reserve(other.d_stereo_groups.size());
   for (auto &otherGroup : other.d_stereo_groups) {
     std::vector<Atom *> atoms;
     for (auto &otherAtom : otherGroup.getAtoms()) {

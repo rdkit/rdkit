@@ -1939,5 +1939,53 @@ M  END
     self.assertNotIn("/b", before_inchi)
     self.assertNotIn("/b", after_inchi)
 
+  def testCanonicalizeExocyclicDoubleBondRegression(self):
+    """Regression: canonicalize() picks the wrong canonical tautomer for a
+    molecule whose exocyclic C=C stereo was set via the API (SetStereo +
+    SetStereoAtoms) without corresponding bond directions.
+
+    assignStereochemistry(force=true) inside enumerate() clears stereo
+    that lacks bond directions, so the resulting tautomer set differs
+    from what you get with SMILES-encoded E/Z (which carries bond
+    directions that survive re-perception).  Among the no-stereo
+    tautomers the enumerator incorrectly chooses the endocyclic form
+    over the exocyclic one."""
+    mol = Chem.MolFromSmiles("O=C(CC1=CC2=CC=COC2)NC1=O")
+    mol = Chem.RemoveHs(mol)
+
+    # Pin unspecified exocyclic C=C bonds to STEREOTRANS via API
+    # (no bond directions set — stereo will be cleared by
+    # assignStereochemistry(force=true) during enumeration)
+    ranks = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
+    for bond in mol.GetBonds():
+      if (bond.GetBondType() != Chem.rdchem.BondType.DOUBLE
+          or bond.GetStereo() != Chem.rdchem.BondStereo.STEREONONE
+          or bond.IsInRing()
+          or bond.GetBeginAtom().GetAtomicNum() != 6
+          or bond.GetEndAtom().GetAtomicNum() != 6):
+        continue
+      bgn, end = bond.GetBeginAtom(), bond.GetEndAtom()
+      bgnNbrs = [n.GetIdx() for n in bgn.GetNeighbors() if n.GetIdx() != end.GetIdx()]
+      endNbrs = [n.GetIdx() for n in end.GetNeighbors() if n.GetIdx() != bgn.GetIdx()]
+      if not bgnNbrs or not endNbrs:
+        continue
+      if (len(set(ranks[i] for i in bgnNbrs)) + bgn.GetNumImplicitHs() < 2
+          or len(set(ranks[i] for i in endNbrs)) + end.GetNumImplicitHs() < 2):
+        continue
+      bond.SetStereoAtoms(
+        min(bgnNbrs, key=lambda i: ranks[i]),
+        min(endNbrs, key=lambda i: ranks[i]),
+      )
+      bond.SetStereo(Chem.rdchem.BondStereo.STEREOTRANS)
+
+    params = rdMolStandardize.CleanupParameters()
+    params.tautomerRemoveBondStereo = False
+    params.tautomerRemoveSp3Stereo = False
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    canon = enumerator.Canonicalize(mol)
+    smi = Chem.MolToSmiles(canon)
+    self.assertEqual(smi, "O=C1CC(=CC2=CC=COC2)C(=O)N1",
+                     f"Expected exocyclic form, got: {smi}")
+
 if __name__ == "__main__":
   unittest.main()
