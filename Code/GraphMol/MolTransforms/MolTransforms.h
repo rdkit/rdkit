@@ -116,7 +116,7 @@ computePrincipalAxesAndMomentsFromGyrationMatrix(
 RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Transform3D *computeCanonicalTransform(
     const RDKit::Conformer &conf, const RDGeom::Point3D *center = nullptr,
     bool normalizeCovar = false, bool ignoreHs = true,
-    double *eigVals = nullptr);
+    double *eigenVals = nullptr);
 
 //! Transform the conformation using the specified transformation
 RDKIT_MOLTRANSFORMS_EXPORT void transformConformer(

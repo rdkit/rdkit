@@ -33,7 +33,7 @@ enum class RDKIT_GAUSSIANSHAPE_EXPORT StartMode {
   ROTATE_180_FRAGMENT,  //! Translate probe to each end of ref and then
                         //! ROTATE_180
   ROTATE_45_FRAGMENT,  //! Translate probe to each end of ref and then ROTATE_90
-  A_LA_PUBCHEM,  //! Uses the eigenvalues of the principal vectors do decide
+  A_LA_PUBCHEM,  //! Uses the eigenvalues of the principal vectors to decide
                  //! whether to do ROTATE_180_WIGGLE or ROTATE_45
 };
 
@@ -79,7 +79,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT ShapeOverlayOptions {
                            //! volume calculation. A smaller value is faster but
                            //! less precise.
   double shapeConvergenceCriterion{
-      0.001};  //! Optimisation stops when the shape tanimoto changes by less
+      0.001};  //! Optimisation stops when the shape score changes by less
                //! than this amount.  A larger number is faster but less
                //! precise.
 };

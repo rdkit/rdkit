@@ -10,8 +10,6 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
-#include "pubchem_shape/PubChemShape.hpp"
-
 #include <string>
 
 #include <boost/python.hpp>

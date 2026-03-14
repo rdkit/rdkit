@@ -162,10 +162,11 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   calcNormalization();
   calcExtremes();
   std::vector<double> gradConverters(12 * (d_numAtoms + d_numFeats));
-  d_selfOverlapVol = calcVolAndGrads(
-      d_coords.data(), d_numAtoms, d_carbonRadii, d_coords.data(), d_numAtoms,
-      d_carbonRadii, gradConverters, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff * overlayOpts.distCutoff);
+  d_selfOverlapVol =
+      calcVolAndGrads(d_coords.data(), d_numAtoms, d_carbonRadii.get(),
+                      d_coords.data(), d_numAtoms, d_carbonRadii.get(),
+                      gradConverters, overlayOpts.useDistCutoff,
+                      overlayOpts.distCutoff * overlayOpts.distCutoff);
   d_selfOverlapColor = calcVolAndGrads(
       d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
       d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
@@ -201,7 +202,6 @@ ShapeInput::ShapeInput(const ShapeInput &other)
       d_extremePoints(other.d_extremePoints),
       d_smiles(other.d_smiles),
       d_normalized(other.d_normalized),
-      d_normalizationOK(other.d_normalizationOK),
       d_canonRot(other.d_canonRot),
       d_canonTrans(other.d_canonTrans),
       d_eigenValues(other.d_eigenValues) {
@@ -223,7 +223,6 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   d_extremePoints = other.d_extremePoints;
   d_smiles = other.d_smiles;
   d_normalized = other.d_normalized;
-  d_normalizationOK = other.d_normalizationOK;
   d_canonRot = other.d_canonRot;
   d_canonTrans = other.d_canonTrans;
   d_eigenValues = other.d_eigenValues;
@@ -286,31 +285,19 @@ std::vector<RDGeom::Point3D> ShapeInput::getAtomPoints(
   return atomPoints;
 }
 
-const std::array<double, 9> &ShapeInput::getCanonicalRotation() {
-  if (!d_normalizationOK) {
-    calcNormalization();
-  }
+const std::array<double, 9> &ShapeInput::getCanonicalRotation() const {
   return d_canonRot;
 }
 
-const std::array<double, 3> &ShapeInput::getCanonicalTranslation() {
-  if (!d_normalizationOK) {
-    calcNormalization();
-  }
+const std::array<double, 3> &ShapeInput::getCanonicalTranslation() const {
   return d_canonTrans;
 }
 
-const std::array<double, 3> &ShapeInput::getEigenValues() {
-  if (!d_normalizationOK) {
-    calcNormalization();
-  }
+const std::array<double, 3> &ShapeInput::getEigenValues() const {
   return d_eigenValues;
 }
 
-const std::array<size_t, 6> &ShapeInput::getExtremes() {
-  if (!d_normalizationOK) {
-    calcNormalization();
-  }
+const std::array<size_t, 6> &ShapeInput::getExtremes() const {
   return d_extremePoints;
 }
 
@@ -335,9 +322,6 @@ std::array<double, 3> ShapeInput::getMomentsOfInertia(
 }
 
 void ShapeInput::normalizeCoords() {
-  if (!d_normalizationOK) {
-    calcNormalization();
-  }
   RDGeom::Transform3D canonRot;
   for (unsigned int i = 0, k = 0; i < 3; ++i) {
     for (unsigned int j = 0; j < 3; ++j, ++k) {
@@ -356,7 +340,8 @@ void ShapeInput::normalizeCoords() {
 
 void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
   applyTransformToShape(d_coords, xform);
-  d_normalizationOK = false;
+  d_normalized = false;
+  calcNormalization();
 }
 
 std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors) const {
@@ -627,7 +612,6 @@ void ShapeInput::calcNormalization() {
   d_canonTrans[0] /= d_numAtoms;
   d_canonTrans[1] /= d_numAtoms;
   d_canonTrans[2] /= d_numAtoms;
-  d_normalizationOK = true;
 }
 
 void ShapeInput::calcExtremes() {
