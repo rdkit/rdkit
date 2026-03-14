@@ -191,7 +191,10 @@ double calcVolAndGrads(const double *ref, int numRefPts,
   static const double CARBON_BIT = 8.0 * pow(PI / (2 * CARBON_A), 1.5);
   double vol = 0.0;
   double vij;
-  bool allCarbon = !refCarbonRadii && !fitCarbonRadii;
+  // If either of the carbon radii flags aren't supplied, treat them
+  // both as being all carbon.  There isn't enough information to do
+  // otherwise.
+  bool allCarbon = !refCarbonRadii || !fitCarbonRadii;
   for (int i = 0, i_idx = 0; i < numRefPts * 4; i += 4, i_idx++) {
     const auto ai = ref[i + 3];
     for (int j = 0, j_idx = 0, k = 0; j < numFitPts * 4;
