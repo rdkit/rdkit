@@ -492,6 +492,22 @@ TEST_CASE("para-stereochemistry", "[accurateCIP]") {
                                                    chirality));
     CHECK(chirality == "S");
   }
+  SECTION("auxiliary stereochem beyond initial expansion") {
+    // The label on atom 12 depends on the chirality at
+    // atom 2. The label on atom 9 depends on the label of
+    // atom 12. Atom 2 is not reached in the initial
+    // expansion to score atom 9
+    auto mol = "CC[C@H](C)CCCCC[C@H]1CC[C@@H](C)CC1"_smiles;
+    CIPLabeler::assignCIPLabels(*mol);
+
+    std::string chirality;
+    CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::_CIPCode) == "S");
+    CHECK(mol->getAtomWithIdx(9)->getProp<std::string>(
+              common_properties::_CIPCode) == "s");
+    CHECK(mol->getAtomWithIdx(12)->getProp<std::string>(
+              common_properties::_CIPCode) == "S");
+  }
 }
 TEST_CASE("para-stereochemistry2", "[accurateCIP]") {
   SECTION("example 1") {
@@ -631,7 +647,7 @@ TEST_CASE("GitHub Issue #5142", "[bug][accurateCIP]") {
 
 TEST_CASE("Test early termination of CIP calculation", "[accurateCIP]") {
   constexpr const char *molBlock = R"(
-  Mrv2117 11112217353D          
+  Mrv2117 11112217353D
 
  40 50  0  0  0  0            999 V2000
     7.5483   -7.7451   -3.3419 H   0  0  0  0  0  0  0  0  0  0  0  0
