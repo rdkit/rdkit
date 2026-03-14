@@ -730,16 +730,16 @@ BOND_EQUALS_QUERY *makeBondInNRingsQuery(int what) {
 
 BOND_NULL_QUERY *makeBondNullQuery() {
   auto *res = new BOND_NULL_QUERY;
-  res->setDataFunc(nullDataFun);
-  res->setMatchFunc(nullQueryFun);
+  res->setDataFunc(nullDataFun<const RDKit::Bond *>);
+  res->setMatchFunc(nullQueryFun<int>);
   res->setDescription("BondNull");
   return res;
 }
 
 ATOM_NULL_QUERY *makeAtomNullQuery() {
   auto *res = new ATOM_NULL_QUERY;
-  res->setDataFunc(nullDataFun);
-  res->setMatchFunc(nullQueryFun);
+  res->setDataFunc(nullDataFun<const RDKit::Atom *>);
+  res->setMatchFunc(nullQueryFun<int>);
   res->setDescription("AtomNull");
   return res;
 }
@@ -1119,8 +1119,8 @@ void finalizeQueryFromDescription(
   } else if (descr == "AtomNumAliphaticHeteroatomNeighbors") {
     query->setDataFunc(queryAtomNumAliphaticHeteroatomNbrs);
   } else if (descr == "AtomNull") {
-    query->setDataFunc(nullDataFun);
-    query->setMatchFunc(nullQueryFun);
+    query->setDataFunc(nullDataFun<const RDKit::Atom *>);
+    query->setMatchFunc(nullQueryFun<int>);
   } else if (descr == "AtomType") {
     query->setDataFunc(queryAtomType);
   } else if (descr == "AtomNumRadicalElectrons") {
@@ -1166,8 +1166,8 @@ void finalizeQueryFromDescription(
   } else if (descr == "SingleOrDoubleOrAromaticBond") {
     query->setDataFunc(queryBondIsSingleOrDoubleOrAromatic);
   } else if (descr == "BondNull") {
-    query->setDataFunc(nullDataFun);
-    query->setMatchFunc(nullQueryFun);
+    query->setDataFunc(nullDataFun<const RDKit::Bond *>);
+    query->setMatchFunc(nullQueryFun<int>);
   } else if (descr == "BondAnd" || descr == "BondOr" || descr == "BondXor" ||
              descr == "HasProp" || descr == "HasPropWithValue") {
     // don't need to do anything here because the classes
