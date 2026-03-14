@@ -6204,7 +6204,7 @@ void check_roundtripped_properties(RDProps &original, RDProps &roundtrip) {
   REQUIRE(std::includes(roundtripPropNames.begin(), roundtripPropNames.end(),
                         originalPropNames.begin(), originalPropNames.end()));
 
-  for (const auto &o : original.getDict().getData()) {
+  for (const auto &o : original.getDict()) {
     if (o.key == detail::computedPropName) {
       continue;
     }
