@@ -250,6 +250,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../SubstructLibrary.i"
 %include "../ScaffoldNetwork.i"
 %include "../TautomerQuery.i"
+%include "../Tautomer.i"
 %include "../MolEnumerator.i"
 %include "../SubstanceGroup.i"
 %include "../MolHash.i"
@@ -300,6 +301,7 @@ typedef unsigned long long int	uintmax_t;
 %template(UInt_Pair_Vect) std::vector<std::pair<uint32_t,int> >;
 %template(Match_Vect) std::vector<std::pair<int32_t,int> >;
 %template(Long_Pair_Vect) std::vector<std::pair<boost::int64_t,int> >;
+%template(String_String_Pair_Vect) std::vector<std::pair<std::string,std::string> >;
 
 /* vector vector */
 %template(Int_Vect_Vect) std::vector<std::vector<int> >;
