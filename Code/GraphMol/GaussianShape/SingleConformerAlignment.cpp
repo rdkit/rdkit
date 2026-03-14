@@ -28,10 +28,9 @@ namespace GaussianShape {
 
 SingleConformerAlignment::SingleConformerAlignment(
     const std::vector<double> &ref, const int *refTypes,
-    const std::unique_ptr<boost::dynamic_bitset<>> &refCarbonRadii,
-    int nRefShape, int nRefColor, double refShapeVol, double refColorVol,
-    const std::vector<double> &fit, const int *fitTypes,
-    const std::unique_ptr<boost::dynamic_bitset<>> &fitCarbonRadii,
+    const boost::dynamic_bitset<> *refCarbonRadii, int nRefShape, int nRefColor,
+    double refShapeVol, double refColorVol, const std::vector<double> &fit,
+    const int *fitTypes, const boost::dynamic_bitset<> *fitCarbonRadii,
     int nFitShape, int nFitColor, double fitShapeVol, double fitColorVol,
     const std::array<double, 7> &initQuatTrans, OptimMode optimMode,
     double simAlpha, double simBeta, double mixingParam, bool useCutoff,
@@ -86,8 +85,9 @@ void SingleConformerAlignment::getFinalQuatTrans(
   copyTransform(tt, xform);
 }
 
-std::array<double, 5> SingleConformerAlignment::calcScores(
-    const double *ref, const double *fit, bool includeColor) const {
+std::array<double, 5> SingleConformerAlignment::calcScores(const double *ref,
+                                                           const double *fit,
+                                                           bool includeColor) {
   std::array<double, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
   scores[3] = calcVolAndGrads(ref, d_nRefShape, d_refCarbonRadii, fit,
                               d_nFitShape, d_fitCarbonRadii, d_gradConverters,
@@ -176,13 +176,13 @@ void cartToQuatGrads(const double *quat, const double *mol, int numBPts,
 }  // namespace
 
 // atoms/shape features
-double calcVolAndGrads(
-    const double *ref, int numRefPts,
-    const std::unique_ptr<boost::dynamic_bitset<>> &refCarbonRadii,
-    const double *fit, int numFitPts,
-    const std::unique_ptr<boost::dynamic_bitset<>> &fitCarbonRadii,
-    std::vector<double> &gradConverters, bool useCutoff, double distCutoff2,
-    const double *quat, double *gradients) {
+double calcVolAndGrads(const double *ref, int numRefPts,
+                       const boost::dynamic_bitset<> *refCarbonRadii,
+                       const double *fit, int numFitPts,
+                       const boost::dynamic_bitset<> *fitCarbonRadii,
+                       std::vector<double> &gradConverters, bool useCutoff,
+                       double distCutoff2, const double *quat,
+                       double *gradients) {
   if (gradients) {
     cartToQuatGrads(quat, fit, numFitPts, gradConverters, 0);
   }
@@ -568,7 +568,7 @@ bool SingleConformerAlignment::optimise(unsigned int maxIters) {
     calcVolumeAndGradients(d_quatTrans, shapeOvlpVol, colorOvlpVol, grad);
 
     // Note that the combo score will have a zero color score so will be half
-    // the shape score unless we're optimising on with color gradients.
+    // the shape score unless we're optimising with color gradients.
     auto scores = calcScores(shapeOvlpVol, colorOvlpVol);
     comboScore = scores[0];
     calcStep(grad, d_qStepSize, d_tStepSize, oldGrad, d_quatTrans, oldQuatTrans,
