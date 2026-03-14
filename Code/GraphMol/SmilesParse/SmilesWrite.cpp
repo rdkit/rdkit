@@ -401,8 +401,8 @@ std::string FragmentSmilesConstruct(
     Canon::canonicalizeEnhancedStereo(mol, &ranks);
   }
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
-                              bondsInPlay, bondSymbols, params.doIsomericSmiles,
-                              params.doRandom);
+                              atomsInPlay, bondsInPlay, bondSymbols,
+                              params.doIsomericSmiles, params.doRandom);
   Bond *bond = nullptr;
   for (auto &mSE : molStack) {
     switch (mSE.type) {

@@ -1636,6 +1636,7 @@ TEST_CASE("Github #4582: double bonds and ring closures") {
   const auto useLegacy = GENERATE(true, false);
   CAPTURE(useLegacy);
   UseLegacyStereoPerceptionFixture fxn(useLegacy);
+
   auto mol = R"CTAB(CHEMBL409450
      RDKit          2D
 
@@ -1708,11 +1709,6 @@ M  END)CTAB"_ctab;
     SmilesWriteParams ps;
     ps.doRandom = true;
     for (auto i = 0u; i < 100; ++i) {
-      if (i == 13 || i == 25 || i == 38 || i == 50) {
-        // we know these fail; we hope to address them
-        // together with issue #8965
-        continue;
-      }
       INFO("i = " + std::to_string(i));
       getRandomGenerator(i + 1)();
       auto rsmiles = MolToSmiles(*mol, ps);
@@ -1769,7 +1765,7 @@ M  END)CTAB"_ctab;
     auto mol = R"SMI(C1=CC/C=C2C3=C/CC=CC=CC\3C\2C=C1)SMI"_smiles;
     REQUIRE(mol);
     auto smi = MolToSmiles(*mol);
-    CHECK(smi == R"SMI(C1=CC/C=C2C3=C\CC=CC=CC/3C\2C=C1)SMI");
+    CHECK(smi == R"SMI(C1=CC/C=C2\C3=C\CC=CC=CC3C2C=C1)SMI");
   }
   SECTION("CHEMBL3623347") {
     auto mol = R"CTAB(CHEMBL3623347
@@ -3375,4 +3371,33 @@ $$$$)CTAB";
 
   CHECK(SmilesWrite::getCXExtensions(
             *m, RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) == "");
+}
+
+TEST_CASE("github #9144: PR #9082 breaks MolFragmentToSmarts()") {
+  SECTION("as reported") {
+    auto m = "C[C@H](C=O)NCc1ccccc1"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto sma = MolFragmentToSmarts(*m, ps, {5, 6, 7, 8, 9, 10, 11});
+    CHECK(sma == "[#6]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1");
+  }
+  SECTION("another example") {
+    auto m = "C[C@H](F)CCCN"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    {
+      auto sma = MolFragmentToSmarts(*m, ps, {3, 4, 5});
+      CHECK(sma == "[#6]-[#6]-[#6]");
+    }
+    {
+      auto smi = MolFragmentToSmiles(*m, ps, {1, 3, 4, 5});
+      CHECK(smi == "CCCC");
+    }
+    {
+      // one can argue about what should happen here, but this is consistent
+      // with what the code did before
+      auto sma = MolFragmentToSmarts(*m, ps, {1, 3, 4, 5});
+      CHECK(sma == "[#6](-[#6@H])-[#6]-[#6]");
+    }
+  }
 }
