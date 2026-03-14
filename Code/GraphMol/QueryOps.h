@@ -22,6 +22,7 @@
 #include <Query/Query.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
+#include <functional>
 
 #include <functional>
 #include <limits>
