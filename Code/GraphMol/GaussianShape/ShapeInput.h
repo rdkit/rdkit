@@ -67,10 +67,9 @@ class ROMol;
 class RWMol;
 namespace GaussianShape {
 
-const double PI = 4 * std::atan(1.0);
 // From Grant et al.
-const double P = 2.7;
-const double KAPPA = 2.41798793102;
+constexpr double P = 2.7;
+constexpr double KAPPA = 2.41798793102;
 using CustomFeatures =
     std::vector<std::tuple<unsigned int, RDGeom::Point3D, double>>;
 

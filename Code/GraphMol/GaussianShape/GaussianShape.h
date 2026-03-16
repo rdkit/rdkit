@@ -34,8 +34,8 @@ namespace GaussianShape {
                        transformation matrix that aligns fit onto ref.
   \param overlayOpts   options for the overlay
 
-\return an array of the combination score of the shape Tanimoto value and the
-  color Tanimoto value (zero if not colors used) and the individual values.  If
+\return an array of the combination score of the shape Tversky value and the
+  color Tversky value (zero if colors not used) and the individual values.  If
   using color features, defaults to RDKit pharmacophore types for the features.
 */
 RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignShape(
@@ -54,8 +54,8 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignShape(
   \param fitConfId     (optional) the conformer to use for the fit
                        molecule
 
-\return an array of the combination score of the shape Tanimoto value and the
-  color Tanimoto value (zero if not colors used) and the individual values.  If
+\return an array of the combination score of the shape Tversky value and the
+  color Tversky value (zero if colors not used) and the individual values.  If
   using color features, defaults to RDKit pharmacophore types for the features.
 */
 RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignMolecule(
@@ -79,8 +79,8 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignMolecule(
   \param fitConfId     (optional) the conformer to use for the fit
                        molecule
 
-  \return an array of the combination score of the shape Tanimoto value and the
-  color Tanimoto value (zero if not colors used) and the individual values.  If
+  \return an array of the combination score of the shape Tversky value and the
+  color Tversky value (zero if colors not used) and the individual values.  If
   using color features, defaults to RDKit pharmacophore types for the features.
 */
 RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignMolecule(
@@ -92,22 +92,14 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignMolecule(
     int refConfId = -1, int fitConfId = -1);
 
 //! Score the overlap of a shape to a reference shape without moving
-//  either.  Note that if you take the output from one of the Align...
-//  functions and feed it into a Score... function you won't get
-//  exactly the same answer.  This is because the formula for the
-//  tanimoto uses the fit volume and that is calculated once at the
-//  start before the rotations and translations that form the
-//  optimisation.  Floating point cruft moves the atoms by small
-//  amounts relative to each other which means that the final
-//  calculated volume differs slightly from the one calculated at
-//  the start.  The fixed scoring obviously doesn't have this effect.
+//  either.
 /*!
   \param refShape      the reference shape
   \param fitShape      the shape to score
   \param overlayOpts   options for controlling the volume calculation
 
-\return an array of the combination score of the shape Tanimoto value and the
-  color Tanimoto value (zero if not colors used) and the individual values.  If
+\return an array of the combination score of the shape Tversky value and the
+  color Tversky value (zero if colors not used) and the individual values.  If
   using color features, defaults to RDKit pharmacophore types for the features.
 */
 RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreShape(
@@ -124,8 +116,8 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreShape(
   \param fitConfId     (optional) the conformer to use for the fit
                        molecule
 
-\return an array of the combination score of the shape Tanimoto value and the
-  color Tanimoto value (zero if not colors used) and the individual values.  If
+\return an array of the combination score of the shape Tversky value and the
+  color Tversky value (zero if colors not used) and the individual values.  If
   using color features, defaults to RDKit pharmacophore types for the features.
 */
 RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreMolecule(
@@ -147,8 +139,8 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreMolecule(
   \param fitConfId     (optional) the conformer to use for the fit
                        molecule
 
-\return an array of the combination score of the shape Tanimoto value and the
-  color Tanimoto value (zero if not colors used) and the individual values.  If
+\return an array of the combination score of the shape Tverksy value and the
+  color Tversky value (zero if colors not used) and the individual values.  If
   using color features, defaults to RDKit pharmacophore types for the features.
 */
 RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreMolecule(

@@ -53,7 +53,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// @param optimMode - optimisation mode
   /// @param simAlpha - for the Tversky similarity, the alpha value
   /// @param simBeta - for the Tversky similarity, the beta value
-  /// @param mixingParam - how to mix the 2 tanimoto values
+  /// @param mixingParam - how to mix the 2 Tversky values
   /// @param useCutoff - whether to use a distance cutoff in the volume
   /// calculation
   /// @param distCutoff - the cutoff to use if we're doing it.
@@ -86,7 +86,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   // and the optimised final answer.
   void getFinalQuatTrans(RDGeom::Transform3D &xform) const;
 
-  // Calculate the combined, shape, and color tanimotos as appropriate,
+  // Calculate the combined, shape, and color Tversky scores as appropriate,
   // plus the volume of the shape and color overlaps, in that order.
   // Assumes that ref and fit are already in the correct configurations.
   // If includeColor is passed in true, it will compute the color score
@@ -120,8 +120,8 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// @return scores - the output scores and transformation to reproduce the
   /// overlay - an array of size 20. Only the first 16 are used here. They are:
   /// 0 - the combo score
-  /// 1 - the shape tanimoto
-  /// 2 - the color tanimoto
+  /// 1 - the shape Tversky score
+  /// 2 - the color Tversky score
   /// 3 - the shape overlap volume
   /// 4 - the color overlap volume
   /// 5 - the shape volume of fit

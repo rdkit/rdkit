@@ -10,9 +10,6 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
-#include <mutex>
-#include <cmath>
-
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
 #include <GraphMol/ROMol.h>
@@ -436,21 +433,18 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
         std::vector<MatchVectType> matches;
         {
           // recursive queries aren't thread safe.
-          std::unique_lock<std::mutex> lock(mtx);
           matches = SubstructMatch(mol, *patt);
         }
-        for (auto match : matches) {
+        for (const auto &match : matches) {
           std::vector<unsigned int> ats;
           bool featOk = true;
           for (const auto &pr : match) {
             // make sure all the atoms are in the subset, if there is one
             if (!opts.atomSubset.empty()) {
-              if (auto it = std::ranges::find_if(
-                      opts.atomSubset,
-                      [pr](const auto &p) -> bool {
+              if (std::ranges::find_if(
+                      opts.atomSubset, [pr](const auto &p) -> bool {
                         return p == static_cast<unsigned int>(pr.second);
-                      });
-                  it == opts.atomSubset.end()) {
+                      }) == opts.atomSubset.end()) {
                 featOk = false;
                 break;
               }
