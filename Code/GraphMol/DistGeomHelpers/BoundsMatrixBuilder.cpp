@@ -253,7 +253,9 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       mmat->setUpperBound(begId, endId, 1.5 * bl);
       mmat->setLowerBound(begId, endId, .5 * bl);
     }
-    unsigned int pid = begId * mol.getNumAtoms() + endId;
+    unsigned int pid =
+        std::min(begId, endId) * mol.getNumAtoms() + std::max(begId, endId);
+
     accumData.visitedBounds.set(pid);
   }
 }
@@ -405,6 +407,9 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       auto id1 = nb * bid1 + bid2;
       auto id2 = nb * bid2 + bid1;
 
+      auto pid =
+          std::min(aid1, aid3) * mol.getNumAtoms() + std::max(aid1, aid3);
+
       if ((!donePaths[id1]) && (!donePaths[id2])) {
         // this invar stuff is to deal with bridged systems (Issue 215). In
         // bridged
@@ -413,20 +418,12 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         // atom.
         _setRingAngle(mol.getAtomWithIdx(aid2)->getHybridization(), rSize,
                       angle);
-                      // TODO something wrong
-        unsigned int pid1 = aid1 * mol.getNumAtoms() + aid3;
-        unsigned int pid2 = aid3 * mol.getNumAtoms() + aid1;
-        if ((!accumData.visitedBounds[pid1] && !accumData.visitedBounds[pid2])) {
-          std::cout << "setting" << aid1 << mol.getAtomWithIdx(aid1)->getSymbol() << "; " << aid2 << mol.getAtomWithIdx(aid2)->getSymbol() << "; " << aid3 << mol.getAtomWithIdx(aid3)->getSymbol() << std::endl;
+
+        if (!accumData.visitedBounds[pid]) {
           _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
-          accumData.visitedBounds.set(pid1);
-        } else {
-          
-          std::cout << "skipped" << aid1 << "; " << aid2 << "; " << aid3 << std::endl;
-          std::cout << "was: " << mmat->getLowerBound(aid1, aid3) << "; " << mmat->getUpperBound(aid1, aid3) << std::endl;
-          _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
-          std::cout << "Would be: " << mmat->getLowerBound(aid1, aid3) << "; " << mmat->getUpperBound(aid1, aid3) << std::endl;
+          accumData.visitedBounds.set(pid);
         }
+
         accumData.bondAngles->setVal(bid1, bid2, angle);
         accumData.bondAdj->setVal(bid1, bid2, aid2);
         visited[aid2] += 1;
@@ -505,15 +502,14 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               }
             }
 
-            unsigned int pid1 = aid1 * mol.getNumAtoms() + aid3;
-            unsigned int pid2 = aid3 * mol.getNumAtoms() + aid1;
+            unsigned int pid =
+                std::min(aid1, aid3) * mol.getNumAtoms() + std::max(aid1, aid3);
 
-            if (!accumData.visitedBounds[pid1] && !accumData.visitedBounds[pid2]) {
+            if (!accumData.visitedBounds[pid]) {
               _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
-              accumData.visitedBounds.set(pid1);
-            } else {
-              std::cout << "skipped" << aid1 << "; " << aid3 << std::endl;
+              accumData.visitedBounds.set(pid);
             }
+
             accumData.bondAngles->setVal(bid1, bid2, angle);
             accumData.bondAdj->setVal(bid1, bid2, aid2);
             angleTaken[aid2] += angle;
@@ -564,10 +560,10 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               angle = 120.0 * M_PI / 180;
             }
           }
-          unsigned int pid1 = aid1 * mol.getNumAtoms() + aid3;
-          unsigned int pid2 = aid3 * mol.getNumAtoms() + aid1;
+          unsigned int pid =
+              std::min(aid1, aid3) * mol.getNumAtoms() + std::max(aid1, aid3);
 
-          if (!accumData.visitedBounds[pid1] && !accumData.visitedBounds[pid2]) {
+          if (!accumData.visitedBounds[pid]) {
             if (atom->getDegree() <= 4 ||
                 (Chirality::hasNonTetrahedralStereo(atom) &&
                  atom->hasProp(common_properties::_chiralPermutation))) {
@@ -580,10 +576,9 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               auto du = dmax * 1.2;
               _checkAndSetBounds(aid1, aid3, dl, du, mmat);
             }
-            accumData.visitedBounds.set(pid1);
-          } else {
-            std::cout << "skipped " << aid1 << "; " << aid3 << std::endl;
+            accumData.visitedBounds.set(pid);
           }
+
           accumData.bondAngles->setVal(bid1, bid2, angle);
           accumData.bondAdj->setVal(bid1, bid2, aid2);
           angleTaken[aid2] += angle;
@@ -645,6 +640,14 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
   unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
 
+  unsigned int pid =
+      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
+
+  if (accumData.visitedBounds[pid]) {
+    // if this is already a 1-3 or 1-2 distance; do not overwrite
+    return;
+  }
+
   // check that this actually is a 1-4 contact:
   if (dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
       2.9) {
@@ -699,6 +702,25 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
     preferTrans = true;
   }
+
+  if (preferCis) {
+    path14.type = Path14Configuration::CIS;
+    accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                              bid2 * nb + bid3);
+    accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                              bid2 * nb + bid1);
+  } else if (preferTrans) {
+    path14.type = Path14Configuration::TRANS;
+    accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                bid2 * nb + bid3);
+    accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                bid2 * nb + bid1);
+  } else {
+    path14.type = Path14Configuration::OTHER;
+  }
+
+  accumData.paths14.push_back(path14);
+
   // std::cerr << "  torsion: " << aid1 << " " << aid4 << ": " << preferCis
   // << "
   // "
@@ -706,20 +728,9 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   if (preferCis) {
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
     du = dl + 2 * GEN_DIST_TOL;
-    path14.type = Path14Configuration::CIS;
-    accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                              bid2 * nb + bid3);
-    accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                              bid2 * nb + bid1);
   } else if (preferTrans) {
     dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
     du = dl + 2 * GEN_DIST_TOL;
-    path14.type = Path14Configuration::TRANS;
-    accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                bid2 * nb + bid3);
-    accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                bid2 * nb + bid1);
-
   } else {
     // basically we will assume 0 to 180 allowed
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
@@ -731,12 +742,14 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       dl -= GEN_DIST_TOL;
       du += GEN_DIST_TOL;
     }
-    path14.type = Path14Configuration::OTHER;
   }
-
   // std::cerr << "7: " << aid1 << "-" << aid4 << std::endl;
-  _checkAndSetBounds(aid1, aid4, dl, du, mmat);
-  accumData.paths14.push_back(path14);
+
+  // Note: we do not set visitedBounds here since 1-4 can be overwritten by
+  // other 1-4s or 1-5s if they are more specific
+  mmat->setLowerBoundIfBetter(aid1, aid4, dl);
+  mmat->setUpperBoundIfBetter(aid1, aid4, du);
+  // _checkAndSetBounds(aid1, aid4, dl, du, mmat);
 }
 
 void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
@@ -757,6 +770,14 @@ void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
 
   unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
   unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
+
+  unsigned int pid =
+      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
+
+  if (accumData.visitedBounds[pid]) {
+    // if this is already a 1-3 or 1-2 distance; do not overwrite
+    return;
+  }
 
   // check that this actually is a 1-4 contact:
   if (dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
@@ -821,10 +842,19 @@ void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
       du += GEN_DIST_TOL;
     }
     path14.type = Path14Configuration::OTHER;
+
+    if (accumData.visitedBounds[pid]) {
+      return;
+    }
   }
+
   // std::cerr << "1: " << aid1 << "-" << aid4 << ": " << dl << " -> " << du
   //           << std::endl;
-  _checkAndSetBounds(aid1, aid4, dl, du, mmat);
+  // _checkAndSetBounds(aid1, aid4, dl, du, mmat);
+  // Note: we do not set visitedBounds here since 1-4 can be overwritten by
+  // other 1-4s or 1-5s if they are more specific
+  mmat->setLowerBoundIfBetter(aid1, aid4, dl);
+  mmat->setUpperBoundIfBetter(aid1, aid4, du);
   accumData.paths14.push_back(path14);
 }
 
@@ -1299,6 +1329,14 @@ void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
   const Atom *atm1 = mol.getAtomWithIdx(aid1);
   const Atom *atm4 = mol.getAtomWithIdx(aid4);
 
+  unsigned int pid =
+      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
+
+  if (accumData.visitedBounds[pid]) {
+    // if this is already a 1-3 or 1-2 distance; do not overwrite
+    return;
+  }
+
   // check that this actually is a 1-4 contact:
   if (dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
       2.9) {
@@ -1362,7 +1400,9 @@ void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
   }
   // std::cerr << "1: " << aid1 << "-" << aid4 << ": " << dl << " -> " << du
   //           << std::endl;
-  _checkAndSetBounds(aid1, aid4, dl, du, mmat);
+  // _checkAndSetBounds(aid1, aid4, dl, du, mmat);
+  mmat->setLowerBoundIfBetter(aid1, aid4, dl);
+  mmat->setUpperBoundIfBetter(aid1, aid4, du);
   accumData.paths14.push_back(path14);
 }
 
@@ -1387,6 +1427,14 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
 
   unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
   unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
+
+  unsigned int pid =
+      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
+
+  if (accumData.visitedBounds[pid]) {
+    // if this is already a 1-3 or 1-2 distance; do not overwrite
+    return;
+  }
 
   const Atom *atm1 = mol.getAtomWithIdx(aid1);
   const Atom *atm4 = mol.getAtomWithIdx(aid4);
@@ -1539,13 +1587,18 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
 
       path14.type = Path14Configuration::OTHER;
   }
+
   if (setTheBound) {
     if (fabs(du - dl) < DIST12_DELTA) {
       dl -= GEN_DIST_TOL;
       du += GEN_DIST_TOL;
     }
     // std::cerr<<"2: "<<aid1<<"-"<<aid4<<std::endl;
-    _checkAndSetBounds(aid1, aid4, dl, du, mmat);
+
+    // we only overwrite bounds if they are not 1-2 nor 1-3 distances
+    mmat->setUpperBoundIfBetter(aid1, aid4, du);
+    mmat->setLowerBoundIfBetter(aid1, aid4, dl);
+    //_checkAndSetBounds(aid1, aid4, dl, du, mmat);
     accumData.paths14.push_back(path14);
   }
 }
@@ -1696,7 +1749,7 @@ void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin,
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     bool set15bounds, bool scaleVDW, bool useMacrocycle14config,
-                    bool forceTransAmides) {
+                    bool forceTransAmides, bool set14bounds, bool set13bounds) {
   PRECONDITION(mmat.get(), "bad pointer");
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -1717,10 +1770,14 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   distMatrix = MolOps::getDistanceMat(mol);
 
   set12Bounds(mol, mmat, accumData);
-  set13Bounds(mol, mmat, accumData);
+  if (set13bounds) {
+    set13Bounds(mol, mmat, accumData);
+  }
 
-  set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
-              forceTransAmides);
+  if (set14bounds) {
+    set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
+                forceTransAmides);
+  }
 
   if (set15bounds) {
     set15Bounds(mol, mmat, accumData, distMatrix);
@@ -1789,7 +1846,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::pair<int, int>> &bonds,
                     std::vector<std::vector<int>> &angles, bool set15bounds,
                     bool scaleVDW, bool useMacrocycle14config,
-                    bool forceTransAmides) {
+                    bool forceTransAmides, bool set14bounds, bool set13bounds) {
   PRECONDITION(mmat.get(), "bad pointer");
   bonds.clear();
   angles.clear();
@@ -1803,9 +1860,15 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   distMatrix = MolOps::getDistanceMat(mol);
 
   set12Bounds(mol, mmat, accumData);
-  set13Bounds(mol, mmat, accumData);
-  set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
-              forceTransAmides);
+
+  if (set13bounds) {
+    set13Bounds(mol, mmat, accumData);
+  }
+
+  if (set14bounds) {
+    set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
+                forceTransAmides);
+  }
 
   if (set15bounds) {
     set15Bounds(mol, mmat, accumData, distMatrix);
@@ -2017,6 +2080,14 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
         // d="<<dmat[std::max(aid1,aid5)*mmat->numRows()+std::min(aid1,aid5)]<<std::endl;
         continue;
       }
+
+      // unsigned int pid =
+      //     std::min(aid1, aid5) * mol.getNumAtoms() + std::max(aid1, aid5);
+
+      // if (accumData.visitedBounds[pid]) {
+      //   // if this is already a 1-3 or 1-2 distance; do not overwrite
+      //   return;
+      // }
 
       if (aid1 != aid5) {  // FIX: do we need this
         unsigned int pid1 = aid1 * na + aid5;

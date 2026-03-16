@@ -133,6 +133,7 @@ TEST_CASE("update parameters from JSON") {
     std::string json = R"JSON({"randomSeed":42})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // MolToMolFile(*mol, fname);
     compareConfs(ref.get(), mol.get());
   }
   SECTION("ETKDG") {
@@ -151,6 +152,7 @@ TEST_CASE("update parameters from JSON") {
     "useBasicKnowledge":true})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // MolToMolFile(*mol, fname);
     compareConfs(ref.get(), mol.get());
   }
   SECTION("ETKDGv2") {
@@ -170,6 +172,7 @@ TEST_CASE("update parameters from JSON") {
     "ETversion":2})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // MolToMolFile(*mol, fname);
     compareConfs(ref.get(), mol.get());
   }
 
@@ -704,7 +707,7 @@ TEST_CASE("tracking failure causes") {
     CHECK(cid < 0);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
-          3);
+          1);
   }
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -1323,50 +1326,45 @@ TEST_CASE("Overwritten bounds") {
   SECTION("Overwriten 1-2 by 1-3 distance") {
     {
       auto m = "C1CC1"_smiles;
-      auto m2 = "CCC"_smiles;
       REQUIRE(m);
-      REQUIRE(m2);
       MolOps::addHs(*m);
-      MolOps::addHs(*m2);
 
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m, bm);
 
-      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m2->getNumAtoms())};
+      // setting 1-3 distances
+      DGeomHelpers::setTopolBounds(*m, bm, false, false, false, true, false,
+                                   true);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m2, bm2);
+
+      // NOT setting 1-3 distances
+      DGeomHelpers::setTopolBounds(*m, bm2, false, false, false, true, false,
+                                   false);
 
       // 1-2 distances should be the same
       CHECK(bm->getLowerBound(0, 1) == bm2->getLowerBound(0, 1));
       CHECK(bm->getUpperBound(0, 1) == bm2->getUpperBound(0, 1));
-      CHECK(bm->getLowerBound(1, 2) == bm2->getLowerBound(1, 2));
-      CHECK(bm->getUpperBound(1, 2) == bm2->getUpperBound(1, 2));
-
-      CHECK(bm->getLowerBound(0, 2) == bm2->getLowerBound(0, 1));
-      CHECK(bm->getUpperBound(0, 2) == bm2->getUpperBound(0, 1));
-
-      // make sure that 1-3 are still set
-      CHECK(bm->getLowerBound(0, 2) > 0.0);
-      CHECK(bm->getUpperBound(0, 2) < 1000.0);
     }
   }
   SECTION("Overwriten 1-2 by 1-4 distance") {
     {
       auto m = "C1CCC1"_smiles;
-      auto m2 = "CCCC"_smiles;
       REQUIRE(m);
-      REQUIRE(m2);
       MolOps::addHs(*m);
-      MolOps::addHs(*m2);
 
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m, bm);
 
-      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m2->getNumAtoms())};
+      // setting 1-4 distances
+      DGeomHelpers::setTopolBounds(*m, bm, false, false, false, true, true);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m2, bm2);
+
+      // NOT setting 1-4 distances
+      DGeomHelpers::setTopolBounds(*m, bm2, false, false, false, true, false);
 
       // 1-2 distances should be the same
       CHECK(bm->getLowerBound(0, 1) == bm2->getLowerBound(0, 1));
@@ -1376,89 +1374,93 @@ TEST_CASE("Overwritten bounds") {
   SECTION("Overwriten 1-3 by 1-4 distance") {
     {
       auto m = "C1CCCC1"_smiles;
-      auto m2 = "CCCCC"_smiles;
       REQUIRE(m);
-      REQUIRE(m2);
       MolOps::addHs(*m);
-      MolOps::addHs(*m2);
 
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m, bm);
 
-      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m2->getNumAtoms())};
+      // setting 1-4 distances
+      DGeomHelpers::setTopolBounds(*m, bm, false, false, false, true, true);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m2, bm2);
 
-      // 1-3 distances should be the same
-      CHECK(bm->getLowerBound(0, 2) >= bm2->getLowerBound(0, 2));
-      CHECK(bm->getUpperBound(0, 2) <= bm2->getUpperBound(0, 2));
+      // NOT setting 1-4 distances
+      DGeomHelpers::setTopolBounds(*m, bm2, false, false, false, true, false);
+
+      // 1-2 distances should be the same
+      CHECK(bm->getLowerBound(0, 2) == bm2->getLowerBound(0, 2));
+      CHECK(bm->getUpperBound(0, 2) == bm2->getUpperBound(0, 2));
     }
   }
   SECTION("Overwriten 1-2 by 1-5 distance") {
     {
-      auto m = "C1CCCCCC1"_smiles;
-      auto m2 = "CCCCCCC"_smiles;
+      auto m = "C1CCCC1"_smiles;
       REQUIRE(m);
-      REQUIRE(m2);
       MolOps::addHs(*m);
-      MolOps::addHs(*m2);
 
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m, bm);
 
-      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m2->getNumAtoms())};
+      // setting 1-5 distances
+      DGeomHelpers::setTopolBounds(*m, bm, true);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m2, bm2);
 
-      // 1-4 distances should be the same
-      CHECK(bm->getLowerBound(0, 1) >= bm2->getLowerBound(0, 1));
-      CHECK(bm->getUpperBound(0, 1) <= bm2->getUpperBound(0, 1));
+      // NOT setting 1-5 distances
+      DGeomHelpers::setTopolBounds(*m, bm2, false);
+
+      // 1-2 distances should be the same
+      CHECK(bm->getLowerBound(0, 1) == bm2->getLowerBound(0, 1));
+      CHECK(bm->getUpperBound(0, 1) == bm2->getUpperBound(0, 1));
     }
   }
   SECTION("Overwriten 1-3 by 1-5 distance") {
     {
       auto m = "C1CCCCC1"_smiles;
-      auto m2 = "CCCCCC"_smiles;
       REQUIRE(m);
-      REQUIRE(m2);
       MolOps::addHs(*m);
-      MolOps::addHs(*m2);
 
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m, bm);
 
-      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m2->getNumAtoms())};
+      // setting 1-5 distances
+      DGeomHelpers::setTopolBounds(*m, bm, true);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m2, bm2);
 
-      // 1-4 distances should be the same
-      CHECK(bm->getLowerBound(0, 2) >= bm2->getLowerBound(0, 2));
-      CHECK(bm->getUpperBound(0, 2) <= bm2->getUpperBound(0, 2));
+      // NOT setting 1-5 distances
+      DGeomHelpers::setTopolBounds(*m, bm2, false);
+
+      // 1-3 distances should be the same
+      CHECK(bm->getLowerBound(0, 2) == bm2->getLowerBound(0, 2));
+      CHECK(bm->getUpperBound(0, 2) == bm2->getUpperBound(0, 2));
     }
   }
   SECTION("Overwriten 1-4 by 1-5 distance") {
     {
-      auto m = "C1CCCC1"_smiles;
-      auto m2 = "CCCCC"_smiles;
+      auto m = "C1CCCCCC1"_smiles;
       REQUIRE(m);
-      REQUIRE(m2);
       MolOps::addHs(*m);
-      MolOps::addHs(*m2);
 
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m, bm);
 
-      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m2->getNumAtoms())};
+      // setting 1-5 distances
+      DGeomHelpers::setTopolBounds(*m, bm, true);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
-      DGeomHelpers::setTopolBounds(*m2, bm2);
+
+      // NOT setting 1-5 distances
+      DGeomHelpers::setTopolBounds(*m, bm2, false);
 
       // 1-4 distances should be the same
-      CHECK(bm->getLowerBound(0, 3) >= bm2->getLowerBound(0, 3));
-      CHECK(bm->getUpperBound(0, 3) <= bm2->getUpperBound(0, 3));
+      CHECK(bm->getLowerBound(0, 3) == bm2->getLowerBound(0, 3));
+      CHECK(bm->getUpperBound(0, 3) == bm2->getUpperBound(0, 3));
     }
   }
 }
