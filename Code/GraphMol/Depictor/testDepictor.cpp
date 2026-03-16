@@ -36,7 +36,7 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
 
-constexpr double defaultRDKitBondLen = 1.5;
+auto defaultRDKitBondLen = RDDepict::BOND_LEN;
 
 void _compareCoords(const ROMol *mol1, unsigned int cid1, const ROMol *mol2,
                     unsigned int cid2, double tol = 0.01) {
