@@ -585,7 +585,7 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
 
 bool doubleBondGeometryChecks(const RDGeom::PointPtrVect &positions,
                               const detail::EmbedArgs &eargs, EmbedParameters &,
-                              double linearTol = 1e-3) {
+                              double linearTol = 3e-3) {
   if (eargs.doubleBondEnds) {
     for (const auto &itm : *eargs.doubleBondEnds) {
       const auto &a0 = *positions[std::get<0>(itm)];
@@ -774,15 +774,13 @@ bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
   }
   std::unique_ptr<ForceFields::ForceField> field;
   if (embedParams.CPCI) {
-    field.reset(
-        DistGeom::constructAllInOneForceField(
-            *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters,
-            *embedParams.CPCI, nullptr, &fixedPts));
+    field.reset(DistGeom::constructAllInOneForceField(
+        *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters,
+        *embedParams.CPCI, nullptr, &fixedPts));
   } else {
-    field.reset(
-        DistGeom::constructAllInOneForceField(
-            *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters,
-            nullptr, &fixedPts));
+    field.reset(DistGeom::constructAllInOneForceField(
+        *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters,
+        nullptr, &fixedPts));
   }
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
     for (const auto &v : *embedParams.coordMap) {
@@ -790,13 +788,15 @@ bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
     }
   }
   field->initialize();
+  std::size_t iter = 0;
   int needMore = 1;
   if (field->calcEnergy() > ERROR_TOL) {
-    while (needMore) {
+    while (needMore && iter < 8) {
       if (end_time != nullptr && Clock::now() > *end_time) {
         return false;
       }
       needMore = field->minimize(100u, embedParams.optimizerForceTol);
+      ++iter;
     }
   }
   if (embedParams.useBasicKnowledge) {
@@ -1300,8 +1300,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
