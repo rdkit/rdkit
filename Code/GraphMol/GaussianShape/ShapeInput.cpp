@@ -341,7 +341,6 @@ void ShapeInput::normalizeCoords() {
 void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
   applyTransformToShape(d_coords, xform);
   d_normalized = false;
-  calcNormalization();
 }
 
 std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors) const {
@@ -412,8 +411,11 @@ void ShapeInput::extractAtoms(ROMol &mol, int confId,
   mol.getProp(common_properties::_smilesAtomOutputOrder, atOrder);
   for (auto atIdx : atOrder) {
     Atom *atom = mol.getAtomWithIdx(atIdx);
-    // Ignore H atoms but do use dummies if requested.
-    if (atom->getAtomicNum() != 1) {
+    // Ignore H atoms except deuterium and tritium which are treated elsewhere
+    // as explicit atoms, and do use dummies if requested.  Dummy atoms
+    // can also have isotope number 1.
+    if (atom->getAtomicNum() != 1 ||
+        (atom->getAtomicNum() == 1 && atom->getIsotope() > 1)) {
       if (!opts.includeDummies && !atom->getAtomicNum()) {
         continue;
       }

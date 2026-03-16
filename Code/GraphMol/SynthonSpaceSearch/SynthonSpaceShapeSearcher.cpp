@@ -102,9 +102,10 @@ std::vector<std::vector<size_t>> getHitSynthons(
         }
       } else {
         unsigned int bestRefConf, bestFitConf;
+        RDGeom::Transform3D xform;
         if (auto csim = fragShapes[fragNum]->bestSimilarity(
                 *synthons[j].second->getShapes(), bestRefConf, bestFitConf,
-                similarityCutoff);
+                xform, similarityCutoff);
             csim >= similarityCutoff) {
           synthonsToUse[synthonSetOrder[fragNum]][j] = true;
           fragSims[synthonSetOrder[fragNum]].emplace_back(j, csim);
@@ -502,12 +503,19 @@ SynthonOverlay bestSimSynthonOntoFragment(
   static const double angleTol =
       GaussianShape::PI / 4.0;  // There's a big lever, potentially, so make the
                                 // tolerance quite shallow.
-  double bestScore = 0.0;
   unsigned int bestSynthShape = 0;
   std::shared_ptr<RDGeom::Transform3D> bestXform{new RDGeom::Transform3D()};
 
   // The fragShape will only have one shape, since the query is only allowed
   // to have 1 conformation.
+  // If the fragShape doesn't have any dummies, just do a normal alignment.
+  if (!fragShape.getDummyAtoms().count()) {
+    GaussianShape::SearchShapeInput synthShapeCp(*synthShapes);
+    unsigned int bestFragShape = 0;
+    auto sim = fragShape.bestSimilarity(synthShapeCp, bestFragShape,
+                                        bestSynthShape, *bestXform, threshold);
+    return SynthonOverlay{sim, bestSynthShape, bestXform};
+  }
   // For every dummy atom in the fragShape
   //    For every shape in the synthon:
   //       For every dummy atom in the synthon shape
@@ -515,6 +523,7 @@ SynthonOverlay bestSimSynthonOntoFragment(
   //          Rotate the synthon shape by 0, 90, 190 and 270 degrees
   //          Do the alignment from that start point
   //          Keep the best score and the transformation that caused it.
+  double bestScore = 0.0;
   for (unsigned int i = 0; i < fragShape.getDummyAtoms().count(); ++i) {
     unsigned int fragDummyIdx, fragDummyNbrIdx;
     fragShape.getDummyAndNbr(i, fragDummyIdx, fragDummyNbrIdx);

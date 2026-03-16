@@ -290,13 +290,14 @@ double maxScore(double v1, double v2, double c1, double c2) {
 }  // namespace
 double SearchShapeInput::bestSimilarity(
     SearchShapeInput &fitShape, unsigned int &bestThisShape,
-    unsigned int &bestFitShape, double threshold,
-    const ShapeOverlayOptions &overlayOpts) {
+    unsigned int &bestFitShape, RDGeom::Transform3D &bestXform,
+    double threshold, const ShapeOverlayOptions &overlayOpts) {
   if (maxSimilarity(fitShape) < threshold) {
     return -1.0;
   }
 
   double best_combo_t = -1.0;
+  RDGeom::Transform3D xform;
   for (size_t i = 0; i < getNumShapes(); i++) {
     setActiveShape(i);
     for (size_t j = 0; j < fitShape.getNumShapes(); j++) {
@@ -304,11 +305,12 @@ double SearchShapeInput::bestSimilarity(
                              d_colorVolumes[i], fitShape.d_colorVolumes[j]);
       if (maxSim > threshold) {
         fitShape.setActiveShape(j);
-        auto scores = AlignShape(*this, fitShape, nullptr, overlayOpts);
+        auto scores = AlignShape(*this, fitShape, &xform, overlayOpts);
         if (scores[0] > best_combo_t) {
           best_combo_t = scores[0];
           bestThisShape = i;
           bestFitShape = j;
+          bestXform = xform;
         }
       }
     }

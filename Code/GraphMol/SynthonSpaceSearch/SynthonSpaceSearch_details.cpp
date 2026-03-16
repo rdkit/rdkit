@@ -931,8 +931,8 @@ std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
     const EnumerateStereoisomers::StereoEnumerationOptions &enumOpts,
     DGeomHelpers::EmbedParameters &dgParams) {
   std::vector<std::unique_ptr<RWMol>> confMols;
-  EnumerateStereoisomers::StereoisomerEnumerator enu(mol, enumOpts);
   if (enumerateStereo) {
+    EnumerateStereoisomers::StereoisomerEnumerator enu(mol, enumOpts);
     while (auto isomer = enu.next()) {
       confMols.emplace_back(static_cast<RWMol *>(isomer.release()));
     }
@@ -1054,14 +1054,21 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
         *sampleMols[molNum]->d_mol, shapeParams.numConfs, true,
         shapeParams.stereoEnumOpts, dgParams);
     if (isomerConfs.empty()) {
-      BOOST_LOG(rdWarningLog)
-          << "No conformers generated for sample molecule "
-          << sampleMols[molNum]->d_mol->getProp<std::string>(
-                 common_properties::_Name)
-          << " : " << MolToSmiles(*sampleMols[molNum]->d_mol)
-          << " when generating conformers for synthon "
-          << sampleMols[molNum]->d_synthon->getSmiles() << std::endl;
-      continue;
+      // Sometimes we can get something from the un-enumerated isomers which
+      // will be better than nothing.
+      isomerConfs = details::generateIsomerConformers(
+          *sampleMols[molNum]->d_mol, shapeParams.numConfs, true,
+          shapeParams.stereoEnumOpts, dgParams);
+      if (isomerConfs.empty()) {
+        BOOST_LOG(rdWarningLog)
+            << "No conformers generated for sample molecule "
+            << sampleMols[molNum]->d_mol->getProp<std::string>(
+                   common_properties::_Name)
+            << " : " << MolToSmiles(*sampleMols[molNum]->d_mol)
+            << " when generating conformers for synthon "
+            << sampleMols[molNum]->d_synthon->getSmiles() << std::endl;
+        continue;
+      }
     }
     std::unique_ptr<GaussianShape::SearchShapeInput> allShapes;
     for (auto &isomer : isomerConfs) {
@@ -1133,6 +1140,17 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
         // It throws an exception if it doesn't have a radius for an atom
         // in the molecule.
         BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+      } catch (Invar::Invariant &e) {
+        BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "No conformers generated for sample molecule "
+            << sampleMols[molNum]->d_mol->getProp<std::string>(
+                   common_properties::_Name)
+            << " : " << MolToSmiles(*sampleMols[molNum]->d_mol)
+            << " when generating conformers for synthon "
+            << sampleMols[molNum]->d_synthon->getSmiles()
+            << " with isomer : " << MolToSmiles(*isomer) << std::endl;
+        exit(1);
       }
     }
     if (allShapes) {

@@ -299,3 +299,27 @@ TEST_CASE("Shape Best Hit Found") {
   CHECK(bestHit->getProp<double>("Similarity") < 1.0);
   CHECK(bestHit->getConformer().is3D());
 }
+
+TEST_CASE("Small REAL test") {
+  std::string dbFile =
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_0_confs.spc";
+  SynthonSpace space;
+  space.readDBFile(dbFile, 13);
+  std::cout << space.getNumReactions() << " reactions for "
+            << space.getNumSynthons() << " giving " << space.getNumProducts()
+            << " products." << std::endl;
+  SynthonSpaceSearchParams params;
+  params.similarityCutoff = 0.75;
+  params.numThreads = 13;
+  params.timeOut = 0;
+  params.randomSeed = 1;
+  params.useProgressBar = 60;
+  auto queryMol = v2::FileParsers::MolFromMolFile(
+      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/esomeprazole.sdf");
+  auto results = space.shapeSearch(*queryMol, params);
+  std::cout << "Number of hits : " << results.getHitMolecules().size()
+            << std::endl;
+  for (const auto &mol : results.getHitMolecules()) {
+    std::cout << MolToCXSmiles(*mol) << std::endl;
+  }
+}

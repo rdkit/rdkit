@@ -117,6 +117,10 @@ std::array<double, 5> SingleConformerAlignment::calcScores(
   scores[1] =
       shapeOvVol / (d_simAlpha * (d_refShapeVol - shapeOvVol) +
                     d_simBeta * (d_fitShapeVol - shapeOvVol) + shapeOvVol);
+  if (scores[1] > 1.0) {
+    std::cout << "Big score : " << scores[1] << " : " << shapeOvVol << " vs "
+              << d_refShapeVol << " and " << d_fitShapeVol << std::endl;
+  }
   if (d_nRefColor && d_nFitColor && d_refColorVol > 0.0 &&
       d_fitColorVol > 0.0 && includeColor) {
     scores[2] =
@@ -191,10 +195,13 @@ double calcVolAndGrads(const double *ref, int numRefPts,
   static const double CARBON_BIT = 8.0 * pow(PI / (2 * CARBON_A), 1.5);
   double vol = 0.0;
   double vij;
-  bool allCarbon = !refCarbonRadii && !fitCarbonRadii;
+  // If either of the carbon radii flags aren't supplied, treat them
+  // both as being all carbon.  There isn't enough information to do
+  // otherwise.
+  bool allCarbon = !refCarbonRadii || !fitCarbonRadii;
   for (int i = 0, i_idx = 0; i < numRefPts * 4; i += 4, i_idx++) {
     const auto ai = ref[i + 3];
-    // Atoms that should be skipped are given a negative radius bit.
+    // Atoms that should be skipped are given a negative alpha.
     if (ai < 0.0) {
       continue;
     }

@@ -86,11 +86,12 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchShapeInput : public ShapeInput {
   // The threshold is applied to the combo score. The similarity is between 0.0
   // and 1.0 so the default threshold of 2.0 effectively means no threshold.
   // Fills in the shape numbers of the two that were responsible if there is
-  // something above the threshold.  Returns -1.0 for
-  // the similarity if there was nothing above the threshold.
+  // something above the threshold, and the transformation that did it.
+  // Returns -1.0 for the similarity if there was nothing above the threshold.
   double bestSimilarity(
       SearchShapeInput &fitShape, unsigned int &bestThisShape,
-      unsigned int &bestFitShape, double threshold = 2.0,
+      unsigned int &bestFitShape, RDGeom::Transform3D &bestXform,
+      double threshold = 2.0,
       const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
 
   // The best score achievable is when the smaller volume is entirely inside
