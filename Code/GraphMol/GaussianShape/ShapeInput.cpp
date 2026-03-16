@@ -237,7 +237,6 @@ void ShapeInput::normalizeCoords() {
 void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
   applyTransformToShape(d_coords, xform);
   d_normalized = false;
-  calcNormalization();
 }
 
 std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors) const {
