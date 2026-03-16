@@ -795,9 +795,9 @@ TEST_CASE("Serialization") {
   CHECK(shape2.getNumAtoms() == shape.getNumAtoms());
   CHECK(shape2.getNumFeatures() == shape.getNumFeatures());
   CHECK(shape2.getNormalized() == shape.getNormalized());
-  CHECK(shape2.getExtremes() == shape.getExtremes());
-  CHECK(shape2.getCanonicalRotation() == shape.getCanonicalRotation());
-  CHECK(shape2.getCanonicalTranslation() == shape.getCanonicalTranslation());
+  CHECK(shape2.calcExtremes() == shape.calcExtremes());
+  CHECK(shape2.calcCanonicalRotation() == shape.calcCanonicalRotation());
+  CHECK(shape2.calcCanonicalTranslation() == shape.calcCanonicalTranslation());
   CHECK(*shape2.getCarbonRadii() == *shape.getCarbonRadii());
   CHECK_THAT(shape2.getShapeVolume(),
              Catch::Matchers::WithinAbs(261.0145, 0.005));
@@ -880,7 +880,6 @@ TEST_CASE("multithreaded") {
   std::cerr << " parallel time: " << test_time << "ms" << std::endl;
   CHECK(test == ref);
 }
-
 #endif
 
 namespace {

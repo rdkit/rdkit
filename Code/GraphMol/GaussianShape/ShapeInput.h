@@ -146,13 +146,14 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   const boost::dynamic_bitset<> *getCarbonRadii() const {
     return d_carbonRadii.get();
   }
-  const std::array<double, 9> &getCanonicalRotation() const;
-  const std::array<double, 3> &getCanonicalTranslation() const;
-  const std::array<double, 3> &getEigenValues() const;
-  const std::array<size_t, 6> &getExtremes() const;
+  // These functions use cached values if available.
+  const std::array<double, 9> &calcCanonicalRotation();
+  const std::array<double, 3> &calcCanonicalTranslation();
+  const std::array<double, 3> &calcEigenValues();
+  const std::array<size_t, 6> &calcExtremes();
   // Return the principal moments of inertia, if Eigen3 is available, and the
   // eigenvalues of the canonical transformation if not.
-  std::array<double, 3> getMomentsOfInertia(bool includeColors = false) const;
+  std::array<double, 3> calcMomentsOfInertia(bool includeColors = false) const;
 
   void setNormalized(bool normalized) { d_normalized = normalized; }
   void setShapeVolume(double volume) { d_selfOverlapVol = volume; }
@@ -201,6 +202,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
     ar & d_carbonRadii;
     ar & d_smiles;
     ar & d_normalized;
+    ar & d_normalizationOK;
     ar & d_canonRot;
     ar & d_canonTrans;
     ar & d_eigenValues;
@@ -218,7 +220,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // to the cartesian axes and centre on the origin.
   void calcNormalization();
 
-  void calcExtremes();
+  void calculateExtremes();
 
   std::vector<double> d_coords;  // The coordinates and alpha parameter for the
   // atoms and features, packed as 4 floats per
@@ -243,6 +245,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // shape with cartesian axes.  If d_normalized is true, it has been applied
   // to the coordinates.
   bool d_normalized{false};
+  // If the shape is moved, the normalization matrices are no longer valid.
+  // This flags that so it is re-computed as required.
+  bool d_normalizationOK{false};
+
   std::array<double, 9> d_canonRot;
   std::array<double, 3> d_canonTrans;
   // The sorted eigenvalues of the principal axes.

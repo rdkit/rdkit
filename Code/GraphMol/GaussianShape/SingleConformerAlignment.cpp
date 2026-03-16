@@ -118,10 +118,6 @@ std::array<double, 5> SingleConformerAlignment::calcScores(
   scores[1] =
       shapeOvVol / (d_simAlpha * (d_refShapeVol - shapeOvVol) +
                     d_simBeta * (d_fitShapeVol - shapeOvVol) + shapeOvVol);
-  if (scores[1] > 1.0) {
-    std::cout << "Big score : " << scores[1] << " : " << shapeOvVol << " vs "
-              << d_refShapeVol << " and " << d_fitShapeVol << std::endl;
-  }
   if (d_nRefColor && d_nFitColor && d_refColorVol > 0.0 &&
       d_fitColorVol > 0.0 && includeColor) {
     scores[2] =

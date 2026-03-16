@@ -569,6 +569,12 @@ SynthonOverlay bestSimSynthonOntoFragment(
           RDGeom::Transform3D ovlyXform;
           auto scores = GaussianShape::AlignShape(fragShape, singleShapeCp,
                                                   &ovlyXform, opts);
+          if (scores[0] > 1.0) {
+            std::cout << "Big score : " << scores[0] << " for "
+                      << MolToCXSmiles(*fragShape.shapeToMol(false)) << " vs "
+                      << MolToCXSmiles(*singleShapeCp.shapeToMol(false))
+                      << std::endl;
+          }
           if (scores[0] > bestScore) {
             // Reject anything where the synthon dummies have gone too far.
             if (checkDummies(fragDummy, fragDummyNbr, singleShapeCp,
