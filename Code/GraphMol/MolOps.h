@@ -762,7 +762,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 
 */
 RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
-                                    bool canonical = false,
+                                    bool canonical = true,
                                     unsigned int maxBackTracks = 100);
 //! Kekulizes the molecule if possible. If the kekulization fails the molecule
 //! will not be modified
@@ -793,7 +793,7 @@ RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
 */
 RDKIT_GRAPHMOL_EXPORT bool KekulizeIfPossible(RWMol &mol,
                                               bool markAtomsBonds = true,
-                                              bool canonical = false,
+                                              bool canonical = true,
                                               unsigned int maxBackTracks = 100);
 
 //! flags the molecule's conjugated bonds
@@ -1314,7 +1314,7 @@ namespace details {
 RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
     RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     boost::dynamic_bitset<> bondsToUse, bool markAtomsBonds = true,
-    bool canonical = false, unsigned int maxBackTracks = 100);
+    bool canonical = true, unsigned int maxBackTracks = 100);
 
 // If the bond is dative, and it has a common_properties::MolFileBondEndPts
 // prop, returns a vector of the indices of the atoms mentioned in the prop.
