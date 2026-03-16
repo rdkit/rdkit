@@ -1879,6 +1879,19 @@ inline bool isAtomDummy(ConstRDMolAtom a) {
           !a.mol().getAtomQuery(a.index())->getNegation() &&
           a.mol().getAtomQuery(a.index())->getDescription() == "AtomNull");
 }
+//! Checks if an atom is dummy or not.
+//! 1. A dummy non-query atom (e.g., "*" in SMILES) is defined by its zero
+//! atomic
+//!    number. This rule breaks for query atoms because a COMPOSITE_OR query
+//!    atom also has a zero atomic number (#6349).
+//! 2. A dummy query atom (e.g., "*" in SMARTS) is defined by its explicit
+//!    description: "AtomNull".
+inline bool isAtomDummy(RDMolAtom a) {
+  return (!a.mol().hasAtomQuery(a.index()) && a.data().getAtomicNum() == 0) ||
+    (a.mol().hasAtomQuery(a.index()) &&
+     !a.mol().getAtomQuery(a.index())->getNegation() &&
+     a.mol().getAtomQuery(a.index())->getDescription() == "AtomNull");
+}
 //! \overload
 inline bool isAtomDummy(const Atom *a) {
   return (!a->hasQuery() && a->getAtomicNum() == 0) ||

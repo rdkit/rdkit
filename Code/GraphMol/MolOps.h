@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "GraphMol/RDMol.h"
 #include <RDGeneral/export.h>
 #ifndef RD_MOL_OPS_H
 #define RD_MOL_OPS_H
@@ -60,8 +61,7 @@ namespace MolOps {
    \return the number of electrons
 */
 RDKIT_GRAPHMOL_EXPORT int countAtomElec(const Atom *at);
-RDKIT_GRAPHMOL_EXPORT int countAtomElec(const RDMol &mol,
-                                        const atomindex_t atomIndex);
+RDKIT_GRAPHMOL_EXPORT int countAtomElec(const ConstRDMolAtom &mol);
 
 //! sums up all atomic formal charges and returns the result
 RDKIT_GRAPHMOL_EXPORT int getFormalCharge(const ROMol &mol);
@@ -687,6 +687,9 @@ typedef enum {
 //! sets the aromaticity model for a molecule to MMFF94
 RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);
 
+//! sets the aromaticity model for a molecule to MMFF94
+RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RDMol &mol);
+
 //! Sets up the aromaticity for a molecule
 /*!
 
@@ -718,6 +721,9 @@ RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);
 RDKIT_GRAPHMOL_EXPORT int setAromaticity(
     RWMol &mol, AromaticityModel model = AROMATICITY_DEFAULT,
     int (*func)(RWMol &) = nullptr);
+//! \overload for custom aromaticity functions written against RDMol
+RDKIT_GRAPHMOL_EXPORT int setAromaticity(RWMol &mol, AromaticityModel model,
+                                         int (*func)(RDMol &));
 
 //! Designed to be called by the sanitizer to handle special cases before
 /// anything is done.
