@@ -36,7 +36,7 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
 
-auto defaultRDKitBondLen = RDDepict::BOND_LEN;
+constexpr double defaultRDKitBondLen = 1.5;
 
 void _compareCoords(const ROMol *mol1, unsigned int cid1, const ROMol *mol2,
                     unsigned int cid2, double tol = 0.01) {
@@ -1781,9 +1781,12 @@ void testValidRingSystemTemplates() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Test that ring system templates are valid "
       << std::endl;
-  for (auto &smiles : TEMPLATE_SMILES) {
-    std::unique_ptr<ROMol> mol{SmilesToMol(smiles)};
-    RDDepict::CoordinateTemplates::assertValidTemplate(*mol, smiles);
+  for (auto &smarts : TEMPLATE_SMILES) {
+    std::unique_ptr<ROMol> mol{SmartsToMol(smarts)};
+    // Initialize ring info using symmetrizeSSSR to match depictor ring counting
+    RDKit::VECT_INT_VECT arings;
+    RDKit::MolOps::symmetrizeSSSR(*mol, arings);
+    RDDepict::CoordinateTemplates::assertValidTemplate(*mol, smarts);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }

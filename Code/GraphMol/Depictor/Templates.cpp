@@ -71,6 +71,9 @@ void CoordinateTemplates::loadTemplatesFromPath(
       throw RDDepict::DepictException(msg);
     }
     std::shared_ptr<RDKit::ROMol> mol(mol_ptr);
+    // Initialize ring info using symmetrizeSSSR to match depictor ring counting
+    RDKit::VECT_INT_VECT arings;
+    RDKit::MolOps::symmetrizeSSSR(*mol, arings);
     try {
       assertValidTemplate(*mol, line);
     } catch (RDDepict::DepictException &e) {
