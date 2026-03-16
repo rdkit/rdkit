@@ -154,10 +154,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   const boost::dynamic_bitset<> *getCarbonRadii() const {
     return d_carbonRadii.get();
   }
-  const std::array<double, 9> &getCanonicalRotation() const;
-  const std::array<double, 3> &getCanonicalTranslation() const;
-  const std::array<double, 3> &getEigenValues() const;
-  const std::array<size_t, 6> &getExtremes() const;
+  const std::array<double, 9> &getCanonicalRotation();
+  const std::array<double, 3> &getCanonicalTranslation();
+  const std::array<double, 3> &getEigenValues();
+  const std::array<size_t, 6> &getExtremes();
   // Return the principal moments of inertia, if Eigen3 is available, and the
   // eigenvalues of the canonical transformation if not.
   std::array<double, 3> getMomentsOfInertia(bool includeColors = false) const;
@@ -186,6 +186,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
     ar & d_extremePoints;
     ar & d_carbonRadii;
     ar & d_normalized;
+    ar & d_normalizationOK;
     ar & d_canonRot;
     ar & d_canonTrans;
     ar & d_eigenValues;
@@ -227,6 +228,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // shape with cartesian axes.  If d_normalized is true, it has been applied
   // to the coordinates.
   bool d_normalized{false};
+  // If the shape is moved, the normalization matrices are no longer valid.
+  // This flags that so it is re-computed as required.
+  bool d_normalizationOK{false};
+
   std::array<double, 9> d_canonRot;
   std::array<double, 3> d_canonTrans;
   // The sorted eigenvalues of the principal axes.
