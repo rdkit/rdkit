@@ -22,6 +22,7 @@
 #include <Query/Query.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
+#include <functional>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
@@ -340,7 +341,7 @@ int queryBondIsInRingOfSize(Bond const *bond) {
 };
 
 template <class T>
-T *makeAtomSimpleQuery(int what, int func(Atom const *),
+T *makeAtomSimpleQuery(int what, std::function<int(Atom const *)> func,
                        const std::string &description = "Atom Simple") {
   T *res = new T;
   res->setVal(what);
@@ -351,7 +352,8 @@ T *makeAtomSimpleQuery(int what, int func(Atom const *),
 
 static inline ATOM_RANGE_QUERY *makeAtomRangeQuery(
     int lower, int upper, bool lowerOpen, bool upperOpen,
-    int func(Atom const *), const std::string &description = "Atom Range") {
+    std::function<int(Atom const *)> func,
+    const std::string &description = "Atom Range") {
   ATOM_RANGE_QUERY *res = new ATOM_RANGE_QUERY(lower, upper);
   res->setDataFunc(func);
   res->setDescription(description);

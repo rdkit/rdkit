@@ -36,6 +36,8 @@ GitHub)
 - The algorithm to canonicalize double bonds in SMILES output has changed to
   address a potential issue that could alter stereo. As a result, SMILES of
   mols contaning stereo bonds may have changed.
+- The Query infrastructure now uses std::function instead of function pointers
+  for the DataFunc and MatchFunc. This does not affect Python.
 
 
 ## New Features and Enhancements:
