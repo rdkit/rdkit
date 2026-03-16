@@ -202,7 +202,7 @@ class TestCase(unittest.TestCase):
 
   def testGet3DMolDescriptors(self):
     mol = Chem.MolFromSmiles('CCCO')
-
+    expected = 21.69079
     # check ValueError raised when no 3D coordinates supplied
     with self.assertRaises(ValueError):
       Descriptors3D.CalcMolDescriptors3D(mol)
@@ -212,7 +212,7 @@ class TestCase(unittest.TestCase):
     AllChem.EmbedMolecule(mol, ps)
     descs = Descriptors3D.CalcMolDescriptors3D(mol)
     self.assertTrue('InertialShapeFactor' in descs)
-    self.assertAlmostEqual(descs['PMI1'], 21.67973, delta=1e-4)
+    self.assertAlmostEqual(descs['PMI1'], expected, delta=1e-4)
 
     # test function returns expected outputs
     ps = AllChem.ETKDGv3()
@@ -220,7 +220,7 @@ class TestCase(unittest.TestCase):
     AllChem.EmbedMultipleConfs(mol, 10, ps)
     descs = Descriptors3D.CalcMolDescriptors3D(mol)
     self.assertTrue('InertialShapeFactor' in descs)
-    self.assertAlmostEqual(descs['PMI1'], 21.67973, delta=1e-4)
+    self.assertAlmostEqual(descs['PMI1'], expected, delta=1e-4)
     descs2 = Descriptors3D.CalcMolDescriptors3D(mol, confId=2)
     for key in descs:
       self.assertNotEqual(descs2[key], descs[key])

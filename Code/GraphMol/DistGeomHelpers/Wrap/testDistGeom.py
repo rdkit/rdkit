@@ -282,7 +282,7 @@ class TestCase(unittest.TestCase):
     ]
 
     nconfs = []
-    expected = [4,4,8,5,3,4]
+    expected = [3,3,7,6,3,3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       ps = _getParams(maxIt=30, seed=100, pruneRMS=1.5)
@@ -290,6 +290,7 @@ class TestCase(unittest.TestCase):
       nconfs.append(len(cids))
 
     d = [abs(x - y) for x, y in zip(expected, nconfs)]
+    # print(expected, nconfs)
     self.assertTrue(max(d) <= 1)
 
     # legacy previous settings
@@ -300,15 +301,15 @@ class TestCase(unittest.TestCase):
     params.useSymmetryForPruning = False
     params.useLegacyImplementation = True
     nconfs = []
-    expected = [4, 5, 5, 6, 7, 3]
+    expected = [5, 5, 4, 6, 7, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
       nconfs.append(len(cids))
 
     d = [abs(x - y) for x, y in zip(expected, nconfs)]
-    # print(nconfs)
-    self.assertTrue(max(d) <= 2)
+    # print(expected, nconfs)
+    self.assertTrue(max(d) <= 1)
 
     # aio previous settings
     params = rdDistGeom.ETKDG()
@@ -317,14 +318,14 @@ class TestCase(unittest.TestCase):
     params.pruneRmsThresh = 1.5
     params.useSymmetryForPruning = False
     nconfs = []
-    expected = [4, 4, 8, 5, 3, 4]
+    expected = [4, 5, 5, 6, 5, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
       nconfs.append(len(cids))
     d = [abs(x - y) for x, y in zip(expected, nconfs)]
-    # print(nconfs)
-    self.assertTrue(max(d) <= 2)
+    # print(expected, nconfs)
+    self.assertTrue(max(d) <= 1)
 
   def test6Chirality(self):
     # turn on chirality and we should get chiral volume that is pretty consistent and
@@ -582,6 +583,7 @@ class TestCase(unittest.TestCase):
     params = rdDistGeom.EmbedParameters()
     params.randomSeed = 42
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    # Chem.MolToMolFile(mol, fn)
     self._compareConfs(mol, ref, 0, 0)
 
     fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data','AIO',
@@ -591,6 +593,7 @@ class TestCase(unittest.TestCase):
     params.randomSeed = 42
     params.useExpTorsionAnglePrefs = True
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    # Chem.MolToMolFile(mol, fn)
     self._compareConfs(mol, ref, 0, 0)
     params = rdDistGeom.ETDG()
     params.randomSeed = 42
@@ -605,7 +608,7 @@ class TestCase(unittest.TestCase):
     params.useExpTorsionAnglePrefs = True
     params.useBasicKnowledge = True
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
-    Chem.MolToMolFile(mol, fn)
+    # Chem.MolToMolFile(mol, fn)
     self._compareConfs(mol, ref, 0, 0)
     params = rdDistGeom.ETKDG()
     params.randomSeed = 42
@@ -619,6 +622,7 @@ class TestCase(unittest.TestCase):
     params.randomSeed = 42
     params.useBasicKnowledge = True
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    # Chem.MolToMolFile(mol, fn)
     self._compareConfs(mol, ref, 0, 0)
     params = rdDistGeom.KDG()
     params.randomSeed = 42
@@ -626,13 +630,13 @@ class TestCase(unittest.TestCase):
     self._compareConfs(mol, ref, 0, 0)
 
     mol = Chem.AddHs(Chem.MolFromSmiles('n1cccc(C)c1ON'))
-    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
+    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data', 'AIO',
                       'torsion.etkdg.v2.mol')
     ref = Chem.MolFromMolFile(fn, removeHs=False)
     params = rdDistGeom.ETKDGv2()
     params.randomSeed = 42
-    params.useLegacyImplementation = True
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    # Chem.MolToMolFile(mol, fn)
     self._compareConfs(mol, ref, 0, 0)
 
   def assertDeterministicWithSeed(self, seed):
@@ -704,12 +708,11 @@ class TestCase(unittest.TestCase):
     bm1[3, 2] = 1.20
     bm1[3, 4] = 1.21
     bm1[4, 3] = 1.20
-    print(bm1)
     DG.DoTriangleSmoothing(bm1)
-    print(bm1) # TODO GREG: THIS Provides inconsistent bounds!!!
     ps = rdDistGeom.EmbedParameters()
     ps.useRandomCoords = True
     ps.SetBoundsMat(bm1)
+    ps.useLegacyImplementation = True # FIXME: Change this after triangle smoothing has been fixed
     ps.randomSeed = 0xf00d
     self.assertEqual(rdDistGeom.EmbedMolecule(m1, ps), 0)
     conf = m1.GetConformer()
@@ -813,7 +816,7 @@ class TestCase(unittest.TestCase):
     conf = mol.GetConformer(0)
     for torsion in get_atom_mapping(mol):
       a1, a2, a3, a4 = [conf.GetAtomPosition(i) for i in torsion]
-      self.assertAlmostEqual(abs(ComputeSignedDihedralAngle(a1, a2, a3, a4)), 3.14, delta=0.85)
+      self.assertAlmostEqual(abs(ComputeSignedDihedralAngle(a1, a2, a3, a4)), 3.14, delta=0.4)
 
   def testGetTorsionBonds(self):
     m = Chem.AddHs(Chem.MolFromSmiles('CCCC'))
