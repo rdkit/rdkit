@@ -9,8 +9,9 @@
 //
 // Original author: David Cosgrove (CozChemIx Limited)
 //
-// This is the interface for the functions for using the Roshambo2 backend
-// to perform shape-based molecule alignments and scoring.
+// This is the interface for the functions to perform shape-based molecule
+// alignments and scoring.  It is experimental code and the API and/or
+// results may change in future releases.
 
 #ifndef RDKIT_GAUSSIANSHAPE_GUARD
 #define RDKIT_GAUSSIANSHAPE_GUARD

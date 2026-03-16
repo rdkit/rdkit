@@ -154,13 +154,14 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   const boost::dynamic_bitset<> *getCarbonRadii() const {
     return d_carbonRadii.get();
   }
-  const std::array<double, 9> &getCanonicalRotation();
-  const std::array<double, 3> &getCanonicalTranslation();
-  const std::array<double, 3> &getEigenValues();
-  const std::array<size_t, 6> &getExtremes();
+  // These functions use cached values if available.
+  const std::array<double, 9> &calcCanonicalRotation();
+  const std::array<double, 3> &calcCanonicalTranslation();
+  const std::array<double, 3> &calcEigenValues();
+  const std::array<size_t, 6> &calcExtremes();
   // Return the principal moments of inertia, if Eigen3 is available, and the
   // eigenvalues of the canonical transformation if not.
-  std::array<double, 3> getMomentsOfInertia(bool includeColors = false) const;
+  std::array<double, 3> calcMomentsOfInertia(bool includeColors = false) const;
 
   // Align the principal axes to the cartesian axes and centre on the origin.
   // Doesn't require that the shape was created from a molecule.  Creates
@@ -204,7 +205,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // to the cartesian axes and centre on the origin.
   void calcNormalization();
 
-  void calcExtremes();
+  void calculateExtremes();
 
   std::vector<double> d_coords;  // The coordinates and alpha parameter for the
   // atoms and features, packed as 4 floats per

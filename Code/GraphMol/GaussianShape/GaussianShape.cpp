@@ -179,7 +179,8 @@ std::array<double, 4> getInitialRotationWiggle(
 RDGeom::Point3D getInitialTranslation(int index, ShapeInput &refShape,
                                       ShapeInput fitShape) {
   auto getDisp = [](ShapeInput &shape, size_t i) -> RDGeom::Point3D {
-    const double *coord = shape.getCoords().data() + shape.getExtremes()[i] * 4;
+    const double *coord =
+        shape.getCoords().data() + shape.calcExtremes()[i] * 4;
     return RDGeom::Point3D(coord[0], coord[1], coord[2]);
   };
   RDGeom::Point3D disp;
@@ -254,8 +255,8 @@ StartMode decideStartModeFromEigenValues(ShapeInput &refShape,
                                          ShapeInput &fitShape) {
   // The PubChem code uses the moments of inertia for this, rather than the
   // canonical transformation.
-  auto rqratwf = calculateQrat(refShape.getMomentsOfInertia(true));
-  auto fqratwf = calculateQrat(fitShape.getMomentsOfInertia(true));
+  auto rqratwf = calculateQrat(refShape.calcMomentsOfInertia(true));
+  auto fqratwf = calculateQrat(fitShape.calcMomentsOfInertia(true));
   StartMode startModeWF{StartMode::ROTATE_180_WIGGLE};
   if (rqratwf > 0 || fqratwf > 0) {
     startModeWF = StartMode::ROTATE_45;
@@ -372,10 +373,10 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
   // example) but they might need to be.
   auto workingRefShape = std::make_unique<ShapeInput>(refShape);
   auto workingFitShape = std::make_unique<ShapeInput>(fitShape);
-  auto inRefTrans = workingRefShape->getCanonicalTranslation();
-  auto inRefRot = workingRefShape->getCanonicalRotation();
-  auto inFitTrans = workingFitShape->getCanonicalTranslation();
-  auto inFitRot = workingFitShape->getCanonicalRotation();
+  auto inRefTrans = workingRefShape->calcCanonicalTranslation();
+  auto inRefRot = workingRefShape->calcCanonicalRotation();
+  auto inFitTrans = workingFitShape->calcCanonicalTranslation();
+  auto inFitRot = workingFitShape->calcCanonicalRotation();
   // If we're not normalizing, translate both shapes so that the fit
   // is at the origin, so the rotations work.
   RDGeom::Transform3D moveToOrigin;
@@ -389,13 +390,13 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
     }
   } else {
     moveToOrigin.SetTranslation(
-        RDGeom::Point3D{workingFitShape->getCanonicalTranslation()[0],
-                        workingFitShape->getCanonicalTranslation()[1],
-                        workingFitShape->getCanonicalTranslation()[2]});
+        RDGeom::Point3D{workingFitShape->calcCanonicalTranslation()[0],
+                        workingFitShape->calcCanonicalTranslation()[1],
+                        workingFitShape->calcCanonicalTranslation()[2]});
     moveFromOrigin.SetTranslation(
-        RDGeom::Point3D{-workingFitShape->getCanonicalTranslation()[0],
-                        -workingFitShape->getCanonicalTranslation()[1],
-                        -workingFitShape->getCanonicalTranslation()[2]});
+        RDGeom::Point3D{-workingFitShape->calcCanonicalTranslation()[0],
+                        -workingFitShape->calcCanonicalTranslation()[1],
+                        -workingFitShape->calcCanonicalTranslation()[2]});
     workingFitShape->transformCoords(moveToOrigin);
     workingRefShape->transformCoords(moveToOrigin);
   }
