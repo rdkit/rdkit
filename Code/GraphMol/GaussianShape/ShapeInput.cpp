@@ -10,9 +10,6 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
-#include <mutex>
-#include <cmath>
-
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
 #include <GraphMol/MolOps.h>
@@ -555,10 +552,9 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
         std::vector<MatchVectType> matches;
         {
           // recursive queries aren't thread safe.
-          std::unique_lock<std::mutex> lock(mtx);
           matches = SubstructMatch(mol, *patt);
         }
-        for (auto match : matches) {
+        for (const auto &match : matches) {
           std::vector<unsigned int> ats;
           for (const auto &pr : match) {
             ats.push_back(pr.second);

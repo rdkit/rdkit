@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <numbers>
 #include <numeric>
 
 #include <Geometry/point.h>
@@ -190,9 +191,9 @@ double calcVolAndGrads(const double *ref, int numRefPts,
   if (gradients) {
     cartToQuatGrads(quat, fit, numFitPts, gradConverters, 0);
   }
-  static constexpr double KAPPA = 2.41798793102;
   static const double CARBON_A = KAPPA / (1.7 * 1.7);
-  static const double CARBON_BIT = 8.0 * pow(PI / (2 * CARBON_A), 1.5);
+  static const double CARBON_BIT =
+      8.0 * pow(std::numbers::pi / (2 * CARBON_A), 1.5);
   double vol = 0.0;
   double vij;
   // If either of the carbon radii flags aren't supplied, treat them
@@ -224,7 +225,7 @@ double calcVolAndGrads(const double *ref, int numRefPts,
                         (*fitCarbonRadii)[j_idx])) {
         vij = kij * CARBON_BIT;
       } else {
-        auto pi_ai_aj = PI / (ai + aj);
+        auto pi_ai_aj = std::numbers::pi / (ai + aj);
         vij = 8 * kij * pi_ai_aj * std::sqrt(pi_ai_aj);
       }
       vol += vij;
@@ -287,7 +288,7 @@ double calcVolAndGrads(const double *ref, int numRefPts, const int *refTypes,
       auto mult = -(ai * aj) / (ai + aj);
       auto kij = exp(mult * d2);
 
-      auto pi_ai_aj = PI / (ai + aj);
+      auto pi_ai_aj = std::numbers::pi / (ai + aj);
       auto vij = 8 * kij * pi_ai_aj * std::sqrt(pi_ai_aj);
       vol += vij;
       if (gradients) {

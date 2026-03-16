@@ -279,12 +279,12 @@ void wrap_rdGaussianShape() {
       .def_readwrite(
           "simAlpha", &GaussianShape::ShapeOverlayOptions::simAlpha,
           "When doing a Tversky similarity, the alpha value.  If alpha and"
-          "beta are both the default 1.0, it's a Tanimoto similarity.  A"
+          " beta are both the default 1.0, it's a Tanimoto similarity.  A"
           " high alpha and low beta emphasize the fit volume in the"
           " similarity and vice versa. Tversky is O / (A * (R - O) + B * (F"
           " - O) + O) where O is the overlap volume, R is the reference's"
           " volume and F is the fit's volume.  This is different from that"
-          "  used by OpenEye (O / (A * R + B * F)).")
+          " used by OpenEye (O / (A * R + B * F)).")
       .def_readwrite("simBeta", &GaussianShape::ShapeOverlayOptions::simBeta,
                      "When doing a Tversky similarity, the beta value.")
       .def_readwrite(
@@ -302,7 +302,7 @@ void wrap_rdGaussianShape() {
       .def_readwrite(
           "useDistCutoff", &GaussianShape::ShapeOverlayOptions::useDistCutoff,
           "Whether to use distance cutoff when calculating the shape volumes.  If used,"
-          "there will be a small penalty in accuracy but a significant increase in speed."
+          " there will be a small penalty in accuracy but a significant increase in speed."
           "  Default=True.")
       .def_readwrite(
           "distCutoff", &GaussianShape::ShapeOverlayOptions::distCutoff,
@@ -311,9 +311,9 @@ void wrap_rdGaussianShape() {
       .def_readwrite(
           "shapeConvergenceCriterion",
           &GaussianShape::ShapeOverlayOptions::shapeConvergenceCriterion,
-          "Optimisation stops when the shape tanimoto changes by less than this"
-          " amount after an optimisation step.  A larger number is faster but gives"
-          " less precise overlays.  Default=0.001.")
+          "Optimisation stops when the shape Tversky score changes by less"
+          " than this amount after an optimisation step.  A larger number is"
+          " faster but gives less precise overlays.  Default=0.001.")
       .def("__setattr__", &safeSetattr);
 
   std::string docString("ShapeInput object");
@@ -362,7 +362,7 @@ Returns
 -------
 3-tuple of floats
     The results are (combo_score, shape_score, color_score).  The color_score is
-    0.0 if color features not used, in which case combo_score and shape_score should
+    0.0 if color features not used, in which case combo_score and shape_score will
     be the same.
 )DOC");
 
@@ -391,7 +391,7 @@ Returns
 -------
 3-tuple of floats
     The results are (combo_score, shape_score, color_score).  The color_score is
-    0.0 if color features not used, in which case combo_score and shape_score should
+    0.0 if color features not used, in which case combo_score and shape_score will
     be the same.)DOC");
 
   python::def(
@@ -447,7 +447,7 @@ Returns
 -------
 3-tuple of floats
     The results are (combo_score, shape_score, color_score).  The color_score is
-    0.0 if color features not used, in which case combo_score and shape_score should
+    0.0 if color features not used, in which case combo_score and shape_score will
     be the same.
 )DOC");
 
@@ -477,7 +477,7 @@ Returns
 -------
 3-tuple of floats
     The results are (combo_score, shape_score, color_score).  The color_score is
-    0.0 if color features not used, in which case combo_score and shape_score should
+    0.0 if color features not used, in which case combo_score and shape_score will
     be the same.
 )DOC");
 
@@ -503,7 +503,7 @@ Returns
 -------
 3-tuple of floats
     The results are (combo_score, shape_score, color_score).  The color_score is
-    0.0 if color features not used, in which case combo_score and shape_score should
+    0.0 if color features not used, in which case combo_score and shape_score will
     be the same.
 )DOC");
 }
