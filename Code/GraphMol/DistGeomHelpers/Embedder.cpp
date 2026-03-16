@@ -585,7 +585,7 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
 
 bool doubleBondGeometryChecks(const RDGeom::PointPtrVect &positions,
                               const detail::EmbedArgs &eargs, EmbedParameters &,
-                              double linearTol = 3e-3) {
+                              double linearTol = 1e-3) {
   if (eargs.doubleBondEnds) {
     for (const auto &itm : *eargs.doubleBondEnds) {
       const auto &a0 = *positions[std::get<0>(itm)];
