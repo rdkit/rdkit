@@ -25,6 +25,21 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   message("-- Looking for endianess")
   test_big_endian(WORDS_BIGENDIAN)
 
+  include(CheckCXXCompilerFlag)
+
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+     include(CheckCXXCompilerFlag)
+     # This is a pretty heavy hammer for AppleClang automatically
+     #  adding -Wundef-prefix=TARGET_OS_ ...
+   
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder-ctor -Wno-unused-parameter -Wno-comment -Wno-parentheses -Wno-logical-op-parentheses -Wno-pointer-bool-conversion -Wno-unused-value -Wno-unsequenced -Wno-constant-logical-operand")
+     # turn off EVERYTHING
+     check_cxx_compiler_flag("-Wno-undef-prefix" HAVE_UNDEF_PREFIX)
+     if(HAVE_UNDEF_PREFIX)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-undef-prefix")
+     endif(HAVE_UNDEF_PREFIX)
+  endif()
+
   # /* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
   if(WORDS_BIGENDIAN)
     message("--   CHEDRAW BIGENDIAN PLATFORM")
@@ -61,6 +76,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
 
   # On Linux/macOS, hide all symbols by default and expose only our API
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
+    CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR
     CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
     CMAKE_CXX_COMPILER_ID STREQUAL "Emscripten")
     # Require -fvisibility=hidden
@@ -118,7 +134,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     install(TARGETS expat EXPORT ${RDKit_EXPORTED_TARGETS} DESTINATION ${RDKit_LibDir} COMPONENT dev)
   endif()
 
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-comment -Wno-parentheses -Wno-logical-op-parentheses -Wno-pointer-bool-conversion -Wno-unused-value -Wno-unsequenced -Wno-constant-logical-operand")
   endif()
 

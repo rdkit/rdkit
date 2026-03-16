@@ -201,8 +201,39 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     }
     auto tautBond = taut.getBondWithIdx(bondIdx);
     if (tautBond->getBondType() != Bond::DOUBLE || d_removeBondStereo) {
-      modified |= (tautBond->getStereo() != Bond::STEREONONE);
-      tautBond->setStereo(Bond::STEREONONE);
+      // When bond stereo is being removed for bonds involved in tautomerism,
+      // use STEREOANY (for *non-ring* double bonds) instead of STEREONONE.
+      // This prevents downstream tools (notably InChI) from inferring a specific E/Z
+      // assignment from 2D coordinates after bond orders have been changed.
+      bool isRingBond = false;
+      if (tautBond->getBondType() == Bond::DOUBLE) {
+        auto ringInfo = taut.getRingInfo();
+        // We only need to know whether the bond is in a ring; avoid forcing
+        // SymmSSSR here since that has a performance cost.
+        // this might be not precise enough for large rings like 9-or-more macrocycles
+        if (!ringInfo || !ringInfo->isFindFastOrBetter()) {
+          MolOps::fastFindRings(taut);
+          ringInfo = taut.getRingInfo();
+        }
+        if (ringInfo) {
+          const auto tbidx = tautBond->getIdx();
+          const bool bondInRing = ringInfo->numBondRings(tbidx) != 0;
+          const bool beginInRing =
+              ringInfo->numAtomRings(tautBond->getBeginAtomIdx()) != 0;
+          const bool endInRing =
+              ringInfo->numAtomRings(tautBond->getEndAtomIdx()) != 0;
+          // Only set STEREOANY on clearly non-ring bonds. Using atom-in-ring as
+          // a fallback avoids any edge cases where bond indices or ring data
+          // aren't aligned during enumeration.
+          isRingBond = bondInRing || (beginInRing && endInRing);
+        }
+      }
+      const auto targetStereo = (tautBond->getBondType() == Bond::DOUBLE &&
+                                 !isRingBond)
+                                    ? Bond::STEREOANY
+                                    : Bond::STEREONONE;
+      modified |= (tautBond->getStereo() != targetStereo);
+      tautBond->setStereo(targetStereo);
       tautBond->getStereoAtoms().clear();
       for (auto bi : bondsToClearDirs) {
         taut.getBondWithIdx(bi)->setBondDir(Bond::NONE);
@@ -225,6 +256,40 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     static const bool cleanIt = true;
     static const bool force = true;
     MolOps::assignStereochemistry(taut, cleanIt, force);
+
+    // assignStereochemistry() can overwrite the explicit "undefined" bond
+    // stereo (STEREOANY) that we set above in order to prevent downstream
+    // coordinate-based E/Z inference. If bond stereo removal is enabled,
+    // re-apply our contract to the bonds involved in tautomerism.
+    if (d_removeBondStereo) {
+      auto ringInfo = taut.getRingInfo();
+      if (!ringInfo || !ringInfo->isFindFastOrBetter()) {
+        // might prefer more expensive calc here to better support 9-or-more macrocycles
+        MolOps::fastFindRings(taut);
+        ringInfo = taut.getRingInfo();
+      }
+      for (auto bond : taut.bonds()) {
+        const auto bondIdx = bond->getIdx();
+        if (!res.d_modifiedBonds.test(bondIdx)) {
+          continue;
+        }
+        if (bond->getBondType() != Bond::DOUBLE) {
+          bond->setStereo(Bond::STEREONONE);
+          bond->getStereoAtoms().clear();
+          continue;
+        }
+
+        const bool bondInRing = ringInfo && ringInfo->numBondRings(bondIdx);
+        const bool beginInRing =
+            ringInfo && ringInfo->numAtomRings(bond->getBeginAtomIdx());
+        const bool endInRing =
+            ringInfo && ringInfo->numAtomRings(bond->getEndAtomIdx());
+        const bool isRingBond = bondInRing || (beginInRing && endInRing);
+
+        bond->setStereo(isRingBond ? Bond::STEREONONE : Bond::STEREOANY);
+        bond->getStereoAtoms().clear();
+      }
+    }
   } else {
     taut.setProp(common_properties::_StereochemDone, 1);
   }

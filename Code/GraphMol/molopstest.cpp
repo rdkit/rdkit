@@ -1570,12 +1570,11 @@ TEST_CASE("Testing Issue 183") {
   REQUIRE(m2->getBondWithIdx(10)->getStereo() == Bond::STEREOZ);
 
   refSmi = MolToSmiles(*m2, 1);
-  BOOST_LOG(rdInfoLog) << "ref: " << refSmi << std::endl;
+  CHECK(refSmi == R"SMI(C/C(F)=C(\C)C(=C(/C)Cl)/C(F)=C(/C)F)SMI");
   m = SmilesToMol(refSmi);
   REQUIRE(m);
   smi = MolToSmiles(*m, 1);
-  BOOST_LOG(rdInfoLog) << "smi: " << smi << std::endl;
-  REQUIRE(refSmi == smi);
+  CHECK(refSmi == smi);
 
   int nEs = 0, nZs = 0, nDbl = 0;
   for (RWMol::BondIterator bondIt = m->beginBonds(); bondIt != m->endBonds();
@@ -3430,7 +3429,8 @@ TEST_CASE("Testing sf.net issue 2316677 : canonicalization error") {
   REQUIRE(m);
   std::string smi = MolToSmiles(*m, true);
   std::cerr << "smi: " << smi << std::endl;
-  REQUIRE(smi == "Cc1ccc(S(=O)(=O)/N=C2\\CC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)cc1");
+  REQUIRE(smi ==
+          R"SMI(Cc1ccc(S(=O)(=O)\N=C2C/C(=N\C(C)(C)C)C/2=N\C(C)(C)C)cc1)SMI");
   delete m;
 }
 

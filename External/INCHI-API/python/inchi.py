@@ -32,7 +32,9 @@
 INCHI_AVAILABLE = True
 
 import logging
+import re
 
+from rdkit import Chem, Geometry
 from rdkit import RDLogger
 from rdkit.Chem import rdinchi
 
@@ -49,6 +51,159 @@ logLevelToLogFunctionLookup = {
 
 class InchiReadWriteError(Exception):
   pass
+
+
+def _parse_auxinfo_coordinates(auxinfo):
+  """Parse the rC: (coordinate) layer from an InChI AuxInfo string.
+
+  Returns (coords_list, is_3d) where coords_list is a list of (x, y, z) tuples
+  in original input atom order, or (None, None) if parsing fails or coords are empty.
+  """
+  if not auxinfo:
+    return None, None
+  match = re.search(r'/rC:([^/]+)', auxinfo)
+  if not match:
+    return None, None
+  entries = match.group(1).split(';')
+  # Remove trailing empty entries from trailing semicolons
+  while entries and not entries[-1].strip():
+    entries.pop()
+  coords = []
+  for entry in entries:
+    entry = entry.strip()
+    if not entry:
+      return None, None
+    parts = entry.split(',')
+    try:
+      x = float(parts[0]) if parts[0] else 0.0
+      y = float(parts[1]) if len(parts) > 1 and parts[1] else 0.0
+      z = float(parts[2]) if len(parts) > 2 and parts[2] else 0.0
+    except (ValueError, IndexError):
+      return None, None
+    coords.append((x, y, z))
+  if not coords:
+    return None, None
+  # All-zero coordinates means no real coords were present
+  if all(x == 0.0 and y == 0.0 and z == 0.0 for x, y, z in coords):
+    return None, None
+  is_3d = any(z != 0.0 for _, _, z in coords)
+  return coords, is_3d
+
+
+def _parse_auxinfo_atom_order(auxinfo):
+  """Parse the N: (atom numbering) layer from an InChI AuxInfo string.
+
+  Returns a list of 0-based original atom indices, or None if parsing fails.
+  The returned list maps from InChI canonical order to original atom order:
+  result[i] is the original atom index for InChI canonical atom i.
+  """
+  if not auxinfo:
+    return None
+  match = re.search(r'/N:([^/]+)', auxinfo)
+  if not match:
+    return None
+  # The N: layer contains comma-separated 1-based atom indices
+  # possibly with semicolons separating disconnected fragments
+  tokens = match.group(1).replace(';', ',').split(',')
+  try:
+    return [int(t) - 1 for t in tokens]
+  except (ValueError, IndexError):
+    return None
+
+
+def _attach_conformer(mol, coords, is_3d):
+  """Attach parsed /rC: coordinates to a molecule as a conformer."""
+  if coords is not None and len(coords) == mol.GetNumAtoms():
+    conf = Chem.Conformer(mol.GetNumAtoms())
+    conf.Set3D(is_3d)
+    for i, (x, y, z) in enumerate(coords):
+      conf.SetAtomPosition(i, Geometry.Point3D(x, y, z))
+    mol.AddConformer(conf, assignId=True)
+  return mol
+
+
+def _build_inverse_permutation(atom_order, size):
+  """Build the inverse permutation for RenumberAtoms.
+
+  atom_order[inchi_idx] = original_idx. Returns new_order where
+  new_order[original_idx] = inchi_idx, or None if any index is out of range.
+  """
+  new_order = [0] * size
+  for inchi_idx, orig_idx in enumerate(atom_order):
+    if orig_idx >= size:
+      return None
+    new_order[orig_idx] = inchi_idx
+  return new_order
+
+
+def MolFromInchiAndAuxInfo(inchi, auxinfo, sanitize=True, removeHs=True, logLevel=None,
+                           treatWarningAsError=False):
+  """Construct a molecule from an InChI string and its AuxInfo, restoring the
+  original atom ordering.
+
+    Keyword arguments:
+    sanitize -- set to True to enable sanitization of the molecule. Default is
+    True
+    removeHs -- set to True to remove Hydrogens from a molecule. This only
+    makes sense when sanitization is enabled
+    logLevel -- the log level used for logging logs and messages from InChI
+    API. set to None to diable the logging completely
+    treatWarningAsError -- set to True to raise an exception in case of a
+    molecule that generates warning in calling InChI API. The resultant
+    molecule and error message are part of the excpetion
+
+    Returns:
+    a rdkit.Chem.rdchem.Mol instance with atoms reordered to match the
+    original atom ordering encoded in the AuxInfo
+    """
+  mol = MolFromInchi(inchi, sanitize=sanitize, removeHs=removeHs, logLevel=logLevel,
+                     treatWarningAsError=treatWarningAsError)
+  if mol is None:
+    return None
+
+  # /rC: coordinates are in original input order; attach after reordering.
+  coords, is_3d = _parse_auxinfo_coordinates(auxinfo)
+
+  atom_order = _parse_auxinfo_atom_order(auxinfo)
+  if atom_order is None:
+    return _attach_conformer(mol, coords, is_3d)
+
+  from rdkit.Chem import RenumberAtoms
+  num_mol_atoms = mol.GetNumAtoms()
+
+  if removeHs:
+    # N: layer lists heavy atoms only; must match molecule size after H removal
+    if len(atom_order) != num_mol_atoms:
+      return mol
+    new_order = _build_inverse_permutation(atom_order, num_mol_atoms)
+    if new_order is None:
+      return mol
+    return _attach_conformer(RenumberAtoms(mol, new_order), coords, is_3d)
+
+  if len(atom_order) > num_mol_atoms:
+    return mol
+
+  if len(atom_order) == num_mol_atoms:
+    new_order = _build_inverse_permutation(atom_order, num_mol_atoms)
+    if new_order is None:
+      return mol
+    return _attach_conformer(RenumberAtoms(mol, new_order), coords, is_3d)
+
+  # More atoms in molecule than in atom_order (explicit Hs added by InChI).
+  # Place heavy atoms in original order, then append Hs.
+  num_heavy = len(atom_order)
+  new_order = _build_inverse_permutation(atom_order, num_heavy)
+  if new_order is None:
+    return mol
+  new_order.extend([0] * (num_mol_atoms - num_heavy))
+  h_slot = num_heavy
+  for i in range(num_mol_atoms):
+    if i not in atom_order:
+      if h_slot >= num_mol_atoms:
+        return mol
+      new_order[h_slot] = i
+      h_slot += 1
+  return _attach_conformer(RenumberAtoms(mol, new_order), coords, is_3d)
 
 
 def MolFromInchi(inchi, sanitize=True, removeHs=True, logLevel=None, treatWarningAsError=False):
@@ -237,6 +392,6 @@ GetInchiVersion = rdinchi.GetInchiVersion
 
 __all__ = [
   'MolToInchiAndAuxInfo', 'MolToInchi', 'MolBlockToInchiAndAuxInfo', 'MolBlockToInchi',
-  'MolFromInchi', 'InchiReadWriteError', 'InchiToInchiKey', 'MolToInchiKey', 'GetInchiVersion',
-  'INCHI_AVAILABLE'
+  'MolFromInchi', 'MolFromInchiAndAuxInfo', 'InchiReadWriteError', 'InchiToInchiKey',
+  'MolToInchiKey', 'GetInchiVersion', 'INCHI_AVAILABLE'
 ]

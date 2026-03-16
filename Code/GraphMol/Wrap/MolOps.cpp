@@ -318,9 +318,10 @@ ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
   return addHs2(orig, params, onlyOnAtoms);
 }
 
-VECT_INT_VECT getSSSR(ROMol &mol, bool includeDativeBonds) {
+VECT_INT_VECT getSSSR(ROMol &mol, bool includeDativeBonds,
+                      bool includeHydrogenBonds) {
   VECT_INT_VECT rings;
-  MolOps::findSSSR(mol, rings, includeDativeBonds);
+  MolOps::findSSSR(mol, rings, includeDativeBonds, includeHydrogenBonds);
   return rings;
 }
 
@@ -435,12 +436,12 @@ ROMol *getNormal(const RWMol &mol) {
 }
 
 void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false,
-                 bool canonical = false) {
+                 bool canonical = true) {
   auto &wmol = static_cast<RWMol &>(mol);
   MolOps::Kekulize(wmol, clearAromaticFlags, canonical);
 }
 void kekulizeMolIfPossible(ROMol &mol, bool clearAromaticFlags = false,
-                           bool canonical = false) {
+                           bool canonical = true) {
   auto &wmol = static_cast<RWMol &>(mol);
   MolOps::KekulizeIfPossible(wmol, clearAromaticFlags, canonical);
 }
@@ -495,14 +496,16 @@ void cleanupAtropisomersMol(ROMol &mol) {
   MolOps::cleanupAtropisomers(rwmol);
 }
 
-VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds) {
+VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds,
+                          bool includeHydrogenBonds) {
   VECT_INT_VECT rings;
-  MolOps::symmetrizeSSSR(mol, rings, includeDativeBonds);
+  MolOps::symmetrizeSSSR(mol, rings, includeDativeBonds, includeHydrogenBonds);
   return rings;
 }
 PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
                             bool useAtomWts = false, bool force = false,
                             const char *prefix = nullptr) {
+  rdkit_rdmolops_ensure_numpy();
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -521,6 +524,7 @@ PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
 PyObject *get3DDistanceMatrix(ROMol &mol, int confId = -1,
                               bool useAtomWts = false, bool force = false,
                               const char *prefix = nullptr) {
+  rdkit_rdmolops_ensure_numpy();
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -542,6 +546,7 @@ PyObject *get3DDistanceMatrix(ROMol &mol, int confId = -1,
 
 PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
                              bool force = false, const char *prefix = nullptr) {
+  rdkit_rdmolops_ensure_numpy();
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -1254,12 +1259,14 @@ struct molops_wrapper {
 \n\
     - mol: the molecule to use.\n\
     - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
+    - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring finding.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
          The length of this will be equal to NumBonds-NumAtoms+1 for single-fragment molecules.\n\
 \n";
     python::def("GetSSSR", getSSSR,
-                (python::arg("mol"), python::arg("includeDativeBonds") = false),
+                (python::arg("mol"), python::arg("includeDativeBonds") = false,
+                 python::arg("includeHydrogenBonds") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -1274,11 +1281,13 @@ struct molops_wrapper {
 \n\
     - mol: the molecule to use.\n\
     - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
+    - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring finding.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
     python::def("GetSymmSSSR", getSymmSSSR,
-                (python::arg("mol"), python::arg("includeDativeBonds") = false),
+                (python::arg("mol"), python::arg("includeDativeBonds") = false,
+                 python::arg("includeHydrogenBonds") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -1312,9 +1321,23 @@ struct molops_wrapper {
 \n";
     python::def("FastFindRings", MolOps::fastFindRings, docString.c_str(),
                 python::args("mol"));
+
 #ifdef RDK_USE_URF
+    docString =
+        "Generate Unique Ring Families.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use.\n\
+    - includeDativeBonds: whether or not dative bonds should be included in the ring families finding.\n\
+    - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring families .\n\
+\n\
+  RETURNS: Nothing\n\
+\n";
     python::def("FindRingFamilies", MolOps::findRingFamilies,
-                python::args("mol"), "generate Unique Ring Families");
+                (python::args("mol"), python::arg("includeDativeBonds") = false,
+                 python::arg("includeHydrogenBonds") = false),
+                docString.c_str());
 #endif
 
     // ------------------------------------------------------------------------
@@ -1798,13 +1821,14 @@ to the terminal dummy atoms.\n\
       molecule will be marked non-aromatic following the kekulization.
       Default value is False.
 
-    - canonical: (optional) if True, uses canonical atom ranking so that the
-      kekulization result is independent of the atom ordering in the molecule.
-      This is slower; use only when deterministic output is required (e.g. when
-      writing SDF or after tautomer enumeration). Note that canonical mode only
-      makes sense when the molecule's chemistry is sane (after sanitization);
-      if stereochemistry hasn't been perceived, the results are order-dependent
-      regardless. Default value is False.
+    - canonical: (optional) if true, uses canonical atom ranking so
+      that the kekulization result is independent of the atom ordering in the
+      molecule.  Set to false to skip the ranking step for better performance
+      when deterministic output is not required (e.g. during sanitization).
+      Note, this "canonical" order only really makes sense when the molecule's
+      chemistry is sane, like after sanitization. If stereochemistry hasn't been
+      perceived, the chemistry of the molecule is inconsistent, and
+      "canonical" atom ranks are only a technical artifact.
 
   NOTES:
 
@@ -1820,20 +1844,30 @@ to the terminal dummy atoms.\n\
 )DOC";
     python::def("Kekulize", kekulizeMol,
                 (python::arg("mol"), python::arg("clearAromaticFlags") = false,
-                 python::arg("canonical") = false),
+                 python::arg("canonical") = true),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
-        "Kekulizes the molecule if possible. Otherwise the molecule is not modified\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-\n\
-    - clearAromaticFlags: (optional) if this toggle is set, all atoms and bonds in the \n\
-      molecule will be marked non-aromatic if the kekulization succeds.\n\
-      Default value is False.\n\
+        R"DOC(Kekulizes the molecule if possible. Otherwise the molecule is not modified
+
+  ARGUMENTS:
+
+    - mol: the molecule to use
+
+    - clearAromaticFlags: (optional) if this toggle is set, all atoms and bonds in the 
+      molecule will be marked non-aromatic if the kekulization succeds.
+      Default value is False.
+
+    - canonical: (optional) if true  uses canonical atom ranking so
+      that the kekulization result is independent of the atom ordering in the
+      molecule.  Set to false to skip the ranking step for better performance
+      when deterministic output is not required (e.g. during sanitization).
+      Note, this "canonical" order only really makes sense when the molecule's
+      chemistry is sane, like after sanitization. If stereochemistry hasn't been
+      perceived, the chemistry of the molecule is inconsistent, and
+      "canonical" atom ranks are only a technical artifact.
+
 \n\
     - canonical: (optional) if True, uses canonical atom ranking so that the\n\
       kekulization result is independent of the atom ordering in the molecule.\n\
@@ -1842,10 +1876,9 @@ to the terminal dummy atoms.\n\
   NOTES:\n\
 \n\
     - The molecule is modified in place.\n\
-\n";
+    )DOC";
     python::def("KekulizeIfPossible", kekulizeMolIfPossible,
-                (python::arg("mol"), python::arg("clearAromaticFlags") = false,
-                 python::arg("canonical") = false),
+                (python::arg("mol"), python::arg("clearAromaticFlags") = false, python::arg("canonical")=true),
                 docString.c_str());
     // ------------------------------------------------------------------------
     docString =
