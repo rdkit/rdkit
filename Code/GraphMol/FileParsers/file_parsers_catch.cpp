@@ -8002,3 +8002,61 @@ $$$$
                       FileParseException);
   }
 }
+
+TEST_CASE(
+    "V3000 aromatic bonds with explicit H: kekulization after H removal") {
+  // The V3000 parser sets aromatic flags on bonds but not atoms.
+  // When removeHs strips an explicit H from aromatic N, molRemoveH must
+  // still recognise the atom as aromatic (via its bond flags) so that
+  // numExplicitHs is incremented.  Without that, the kekuliser cannot
+  // distinguish pyrrole N from pyridine N and kekulization fails.
+  auto molblock = R"MOL(
+  ChemDraw03022611582D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.452059 0.404789 0.000000 0
+M  V30 2 C 0.667439 0.149850 0.000000 0
+M  V30 3 N 0.412500 -0.634772 0.000000 0
+M  V30 4 C -0.412500 -0.634772 0.000000 0
+M  V30 5 N -0.667438 0.149850 0.000000 0
+M  V30 6 C -0.000000 0.634772 0.000000 0
+M  V30 7 H -1.452059 0.404790 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 4 5 6
+M  V30 6 4 2 6
+M  V30 7 1 5 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)MOL";
+
+  SECTION("default sanitize + removeHs") {
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(MolToSmiles(*mol) == "Cc1c[nH]cn1");
+  }
+
+  SECTION("pyrrole N has correct explicit H count after H removal") {
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    // Atom 4 in the original block is the [nH] nitrogen (index 4 after
+    // H removal and reindexing — find it by checking for aromatic N with H).
+    bool foundPyrroleN = false;
+    for (const auto atom : mol->atoms()) {
+      if (atom->getAtomicNum() == 7 && atom->getIsAromatic() &&
+          atom->getTotalNumHs() == 1) {
+        CHECK(atom->getNumExplicitHs() == 1);
+        foundPyrroleN = true;
+      }
+    }
+    CHECK(foundPyrroleN);
+  }
+}
