@@ -1781,7 +1781,7 @@ void testValidRingSystemTemplates() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Test that ring system templates are valid "
       << std::endl;
-  for (auto &smarts : TEMPLATE_SMILES) {
+  for (auto &smarts : TEMPLATE_SMARTS) {
     std::unique_ptr<ROMol> mol{SmartsToMol(smarts)};
     // Initialize ring info using symmetrizeSSSR to match depictor ring counting
     RDKit::VECT_INT_VECT arings;
