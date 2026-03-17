@@ -6,7 +6,7 @@
 #
 # Extract wheel:
 #   docker create --name tmp rdkit-pyodide
-#   docker cp tmp:/out/. ./pyodide-build/
+#   docker cp tmp:/out/rdkit_pyodide-*.whl ./pyodide-build/
 #   docker rm tmp
 #
 # Test (requires node and npm):
@@ -17,14 +17,14 @@
 
 FROM python:3.13-bookworm
 
-# Pyodide 0.28: Emscripten 4.0.9, Python 3.13, wasm-exceptions
+# Pyodide 0.29.3: Emscripten 4.0.9, Python 3.13, wasm-exceptions
 ARG EMSDK_VERSION="4.0.9"
 ARG BOOST_VERSION="1.85.0"
 ARG BOOST_VERSION_U="1_85_0"
 ARG ZLIB_VERSION="1.3.2"
 ARG PYODIDE_BUILD_VERSION="0.29.3"
 ARG PYTHON_VERSION="3.13"
-# Pyodide 0.28+ uses native WASM exceptions
+# Pyodide 0.29+ uses native WASM exceptions
 ARG EXCEPTION_HANDLING="-fwasm-exceptions"
 
 ENV DEBIAN_FRONTEND=noninteractive
