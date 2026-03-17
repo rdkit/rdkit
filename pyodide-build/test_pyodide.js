@@ -342,7 +342,7 @@ feat_types = set(f.GetFamily() for f in feats)
 print(f"[PASS] ChemicalFeatures: {len(feats)} features, families={feat_types}")
 
 import rdkit as _rdkit
-print(f"\\n=== ALL 35 TESTS PASSED === RDKit {_rdkit.__version__} works in Pyodide!")
+print(f"\\n=== ALL 31 TESTS PASSED === RDKit {_rdkit.__version__} works in Pyodide!")
 `);
     } catch (e) {
         console.error("FAILED:", e.message);
