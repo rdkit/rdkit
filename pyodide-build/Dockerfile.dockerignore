@@ -1,7 +1,7 @@
 .git
 build
-pyodide-build/
 *.o
 *.so
 *.pyc
 __pycache__
+pyodide-build

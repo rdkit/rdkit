@@ -293,19 +293,87 @@ RUN mkdir -p /out/rdkit && \
         'RDProjDir = os.path.join(_share, "Projects")' \
         'RDContribDir = os.path.join(_share, "Contrib")' \
         > /out/rdkit/RDPaths.py && \
+    echo "=== Renaming .so to .so.wasm to prevent micropip auto-loading ===" && \
+    find /out/rdkit -name "*.so" -exec sh -c 'mv "$1" "$1.wasm"' _ {} \; && \
     echo "=== __init__.py will be patched in next step ===" && \
     echo "=== Build complete ===" && \
-    find /out/rdkit -name "*.so" | sort && \
+    find /out/rdkit -name "*.so.wasm" | sort && \
     echo "---" && \
     du -sh /out/rdkit
 
 # ========================
 # 8. Package as Pyodide wheel
 # ========================
-COPY pyodide-build/patch_init.py /tmp/patch_init.py
+RUN cat > /tmp/patch_init.py << 'PYEOF'
+import sys
+init = open('/out/rdkit/__init__.py').read()
+loader = '''import sys as _sys
+
+if _sys.platform == 'emscripten':
+    import os as _os
+    import importlib.abc
+    import importlib.machinery
+
+    from pyodide_js._module import loadDynamicLibrary as _ldl
+    import js as _js
+    _core = _os.path.join(_os.path.dirname(__file__), 'librdkit_core.so.wasm')
+    _ldl(_core, _js.JSON.parse('{"global": true}'))
+    del _ldl, _js, _core
+
+    class _RDKitExtensionFinder(importlib.abc.MetaPathFinder):
+        def find_spec(self, fullname, path, target=None):
+            parts = fullname.split('.')
+            if parts[0] != 'rdkit':
+                return None
+            modname = parts[-1]
+            if path:
+                for d in path:
+                    candidate = _os.path.join(d, modname + '.so.wasm')
+                    if _os.path.exists(candidate):
+                        loader = importlib.machinery.ExtensionFileLoader(
+                            fullname, candidate
+                        )
+                        return importlib.util.spec_from_file_location(
+                            fullname, candidate, loader=loader,
+                        )
+            return None
+
+    import importlib.util
+    _sys.meta_path.insert(0, _RDKitExtensionFinder())
+
+'''
+open('/out/rdkit/__init__.py', 'w').write(loader + init)
+print('Patched __init__.py')
+PYEOF
 RUN python3 /tmp/patch_init.py
 
-COPY pyodide-build/build_wheel.py /tmp/build_wheel.py
+RUN cat > /tmp/build_wheel.py << 'PYEOF'
+import os, re, zipfile
+with open("/src/rdkit/CMakeLists.txt") as f:
+    txt = f.read()
+m = re.search(r'set\(RDKit_Year "(\d+)"\).*set\(RDKit_Month "(\d+)"\).*set\(RDKit_Revision "(\d+)"\)', txt, re.S)
+if not m:
+    raise RuntimeError("Could not parse RDKit version")
+version = f"{m.group(1)}.{m.group(2)}.{m.group(3)}"
+print(f"RDKit version: {version}")
+whl_tag = "cp313-cp313-pyodide_2025_0_wasm32"
+whl_name = f"rdkit_pyodide-{version}-{whl_tag}"
+dist_info = f"/out/{whl_name}.dist-info"
+os.makedirs(dist_info, exist_ok=True)
+open(f"{dist_info}/METADATA", "w").write(f"Metadata-Version: 2.1\nName: rdkit-pyodide\nVersion: {version}\nSummary: RDKit cheminformatics library for Pyodide\n")
+open(f"{dist_info}/WHEEL", "w").write(f"Wheel-Version: 1.0\nGenerator: rdkit-pyodide-build\nRoot-Is-Purelib: false\nTag: {whl_tag}\n")
+open(f"{dist_info}/top_level.txt", "w").write("rdkit\n")
+open(f"{dist_info}/RECORD", "w").close()
+whl_path = f"/out/{whl_name}.whl"
+with zipfile.ZipFile(whl_path, "w", zipfile.ZIP_DEFLATED) as zf:
+    for top_dir in ["rdkit", f"{whl_name}.dist-info"]:
+        base = f"/out/{top_dir}"
+        for root, _, files in os.walk(base):
+            for fname in files:
+                full = os.path.join(root, fname)
+                zf.write(full, os.path.relpath(full, "/out"))
+print(f"Wheel: {whl_path} ({os.path.getsize(whl_path)/1024/1024:.1f} MB)")
+PYEOF
 RUN python3 /tmp/build_wheel.py && ls -lh /out/*.whl
 
 CMD ["echo", "RDKit Pyodide build complete. Use docker cp to extract /out/*.whl"]

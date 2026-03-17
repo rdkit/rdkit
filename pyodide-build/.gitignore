@@ -1,3 +1,5 @@
 node_modules/
 rdkit-wasm/
+rdkit/
+*.dist-info/
 *.whl

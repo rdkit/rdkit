@@ -23,20 +23,13 @@ async function main() {
     await pyodide.loadPackage("numpy");
 
     console.log("Installing RDKit from wheel...");
-    // Copy wheel into Pyodide virtual filesystem, then extract manually
-    // (micropip auto-loads .so files which fails before core lib is ready)
-    const whlData = fs.readFileSync(whlPath);
-    pyodide.FS.writeFile("/" + whlFile, whlData);
-
+    await pyodide.loadPackage("micropip");
     try {
         await pyodide.runPythonAsync(`
-import zipfile, sys
-site_dir = '/lib/python3.13/site-packages'
-with zipfile.ZipFile('/${whlFile}', 'r') as zf:
-    zf.extractall(site_dir)
-print("Wheel extracted to", site_dir)
+import micropip
+await micropip.install('file://${whlPath}')
+print("RDKit wheel installed via micropip!")
 
-# import rdkit triggers __init__.py which auto-loads librdkit_core.so
 from rdkit import Chem
 print("Chem imported!")
 
