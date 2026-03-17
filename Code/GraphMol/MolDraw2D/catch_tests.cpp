@@ -4798,6 +4798,18 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
     auto text = drawer.getDrawingText();
     CHECK(text.find("class='legend'") != std::string::npos);
   }
+  SECTION("Long vertical side legend fits panel height") {
+    const std::string longName(48, 'M');
+    MolDraw2DSVG drawer(160, 90, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendVerticalText = true;
+    drawer.drawOptions().legendFraction = 0.22f;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, longName);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+  }
 }
 
 TEST_CASE("legend options from JSON", "[drawing]") {
