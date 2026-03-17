@@ -1003,36 +1003,45 @@ Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
   return mol->getAtomWithIdx(idx);
 }
 
+enum class RangeQueryType : char {
+  EQUAL,
+  LESS,
+  GREATER,
+  RANGE
+};
 void finalizeAtomRingSizeQuery(Queries::Query<int, Atom const *, true> *query,
-                               const std::string &prefix) {
-  if (prefix.empty()) {
-    auto tgt = static_cast<ATOM_EQUALS_QUERY *>(query)->getVal();
-    query->setDataFunc(
-        [tgt](Atom const *at) { return queryAtomIsInRingOfSize(at, tgt); });
-
-  } else if (prefix == "range") {
-    auto rq = static_cast<ATOM_RANGE_QUERY *>(query);
-    auto uv = rq->getUpper();
-    auto lv = rq->getLower();
-    auto [lo, uo] = rq->getEndsOpen();
-    query->setDataFunc([lv, uv, lo, uo](Atom const *at) {
-      return queryAtomIsInRingOfSize(at, lv, uv, lo, uo);
-    });
-  } else if (prefix == "less") {
-    auto lv = static_cast<ATOM_LESSEQUAL_QUERY *>(query)->getVal();
-    auto uv = -1;
-    query->setDataFunc([lv, uv](Atom const *at) {
-      return queryAtomIsInRingOfSize(at, lv, uv);
-    });
-  } else if (prefix == "greater") {
-    auto lv = -1;
-    auto uv = static_cast<ATOM_GREATEREQUAL_QUERY *>(query)->getVal();
-    query->setDataFunc([lv, uv](Atom const *at) {
-      return queryAtomIsInRingOfSize(at, lv, uv);
-    });
-  } else {
-    throw ValueErrorException("Do not know how to handle prefix: '" + prefix +
-                              "'");
+                               RangeQueryType qtype) {
+  switch (qtype) {
+    case RangeQueryType::EQUAL: {
+      auto tgt = static_cast<ATOM_EQUALS_QUERY *>(query)->getVal();
+      query->setDataFunc(
+          [tgt](Atom const *at) { return queryAtomIsInRingOfSize(at, tgt); });
+    } break;
+    case RangeQueryType::RANGE: {
+      auto rq = static_cast<ATOM_RANGE_QUERY *>(query);
+      auto uv = rq->getUpper();
+      auto lv = rq->getLower();
+      auto [lo, uo] = rq->getEndsOpen();
+      query->setDataFunc([lv, uv, lo, uo](Atom const *at) {
+        return queryAtomIsInRingOfSize(at, lv, uv, lo, uo);
+      });
+    } break;
+    case RangeQueryType::LESS: {
+      auto lv = static_cast<ATOM_LESSEQUAL_QUERY *>(query)->getVal();
+      auto uv = -1;
+      query->setDataFunc([lv, uv](Atom const *at) {
+        return queryAtomIsInRingOfSize(at, lv, uv);
+      });
+    } break;
+    case RangeQueryType::GREATER: {
+      auto lv = -1;
+      auto uv = static_cast<ATOM_GREATEREQUAL_QUERY *>(query)->getVal();
+      query->setDataFunc([lv, uv](Atom const *at) {
+        return queryAtomIsInRingOfSize(at, lv, uv);
+      });
+    } break;
+    default:
+      throw ValueErrorException("bad range query type");
   }
 }
 
@@ -1040,16 +1049,16 @@ void finalizeQueryFromDescription(
     Queries::Query<int, Atom const *, true> *query, Atom const *) {
   std::string descr = query->getDescription();
 
-  std::string prefix;
+  RangeQueryType qtype = RangeQueryType::EQUAL;
   if (boost::starts_with(descr, "range_")) {
     descr = descr.substr(6);
-    prefix = "range";
+    qtype = RangeQueryType::RANGE;
   } else if (boost::starts_with(descr, "less_")) {
     descr = descr.substr(5);
-    prefix = "less";
+    qtype = RangeQueryType::LESS;
   } else if (boost::starts_with(descr, "greater_")) {
     descr = descr.substr(8);
-    prefix = "greater";
+    qtype = RangeQueryType::GREATER;
   }
 
   if (descr == "AtomRingBondCount") {
@@ -1057,7 +1066,7 @@ void finalizeQueryFromDescription(
   } else if (descr == "AtomHasRingBond") {
     query->setDataFunc(queryAtomHasRingBond);
   } else if (descr == "AtomRingSize") {
-    finalizeAtomRingSizeQuery(query, prefix);
+    finalizeAtomRingSizeQuery(query, qtype);
   } else if (descr == "AtomMinRingSize") {
     query->setDataFunc(queryAtomMinRingSize);
   } else if (descr == "AtomImplicitValence") {
