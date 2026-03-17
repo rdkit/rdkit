@@ -65,6 +65,8 @@ void testPass() {
       "C%(1000)CC.C%(1000)",   // github #2909
       "[C;d2]",                // non-hydrogen degree
       "C$C",                   // quadruple bonds
+      "[k]",                   // ring size query extensions
+      "[k4]",
       // extended chirality
       "C[Fe@TH](O)(Cl)F", "C[Fe@TH1](O)(Cl)F", "C[Fe@SP](O)(Cl)F",
       "C[Fe@SP1](O)(Cl)F", "C[Fe@TB](O)(Cl)(Br)F", "C[Fe@TB20](O)(Cl)(Br)F",
