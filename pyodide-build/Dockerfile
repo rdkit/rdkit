@@ -4,10 +4,10 @@
 # Build (from rdkit repo root):
 #   docker build -t rdkit-pyodide -f pyodide-build/Dockerfile .
 #
-# Extract output:
-#   docker create --name rdkit-pyodide-out rdkit-pyodide
-#   docker cp rdkit-pyodide-out:/out/rdkit ./pyodide-build/rdkit-wasm
-#   docker rm rdkit-pyodide-out
+# Extract wheel:
+#   docker create --name tmp rdkit-pyodide
+#   docker cp tmp:/out/. ./pyodide-build/
+#   docker rm tmp
 #
 # Test (requires node and npm):
 #   cd pyodide-build
@@ -293,9 +293,19 @@ RUN mkdir -p /out/rdkit && \
         'RDProjDir = os.path.join(_share, "Projects")' \
         'RDContribDir = os.path.join(_share, "Contrib")' \
         > /out/rdkit/RDPaths.py && \
+    echo "=== __init__.py will be patched in next step ===" && \
     echo "=== Build complete ===" && \
     find /out/rdkit -name "*.so" | sort && \
     echo "---" && \
     du -sh /out/rdkit
 
-CMD ["echo", "RDKit Pyodide build complete. Use docker cp to extract /out/rdkit"]
+# ========================
+# 8. Package as Pyodide wheel
+# ========================
+COPY pyodide-build/patch_init.py /tmp/patch_init.py
+RUN python3 /tmp/patch_init.py
+
+COPY pyodide-build/build_wheel.py /tmp/build_wheel.py
+RUN python3 /tmp/build_wheel.py && ls -lh /out/*.whl
+
+CMD ["echo", "RDKit Pyodide build complete. Use docker cp to extract /out/*.whl"]

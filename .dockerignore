@@ -1,0 +1,9 @@
+.git
+build
+*.o
+*.so
+*.pyc
+__pycache__
+pyodide-build
+!pyodide-build/patch_init.py
+!pyodide-build/build_wheel.py

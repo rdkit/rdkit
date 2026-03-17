@@ -7,53 +7,36 @@ async function main() {
     console.log("Loading Pyodide...");
     const pyodide = await loadPyodide();
 
-    const rdkitWasmDir = path.resolve(__dirname, "rdkit-wasm");
-
-    // Copy rdkit package into Pyodide's filesystem
-    function copyDirToFS(srcDir, destDir) {
-        const entries = fs.readdirSync(srcDir, { withFileTypes: true });
-        for (const entry of entries) {
-            const srcPath = path.join(srcDir, entry.name);
-            const destPath = destDir + "/" + entry.name;
-            if (entry.isDirectory()) {
-                try { pyodide.FS.mkdirTree(destPath); } catch(e) {}
-                copyDirToFS(srcPath, destPath);
-            } else if (entry.name.endsWith(".py") || entry.name.endsWith(".so") ||
-                       entry.name.endsWith(".txt") || entry.name.endsWith(".fdef")) {
-                const data = fs.readFileSync(srcPath);
-                pyodide.FS.writeFile(destPath, data);
-            }
-        }
+    // Find the wheel file
+    const files = fs.readdirSync(__dirname);
+    const whlFile = files.find(f => f.endsWith(".whl") && f.includes("rdkit"));
+    if (!whlFile) {
+        console.error("No rdkit .whl file found in", __dirname);
+        console.error("Run: docker cp <container>:/out/. ./pyodide-build/");
+        process.exit(1);
     }
+    console.log(`Found wheel: ${whlFile}`);
 
-    console.log("Copying RDKit files to Pyodide filesystem...");
-    const sitePackages = "/lib/python3.13/site-packages";
-    pyodide.FS.mkdirTree(sitePackages + "/rdkit");
-    copyDirToFS(rdkitWasmDir, sitePackages + "/rdkit");
+    const whlPath = path.resolve(__dirname, whlFile);
 
     console.log("Installing numpy...");
     await pyodide.loadPackage("numpy");
 
-    console.log("Loading librdkit_core.so...");
+    console.log("Installing RDKit from wheel...");
+    // Copy wheel into Pyodide virtual filesystem, then extract manually
+    // (micropip auto-loads .so files which fails before core lib is ready)
+    const whlData = fs.readFileSync(whlPath);
+    pyodide.FS.writeFile("/" + whlFile, whlData);
+
     try {
         await pyodide.runPythonAsync(`
-import sys
-sys.path.insert(0, '/lib/python3.13/site-packages')
+import zipfile, sys
+site_dir = '/lib/python3.13/site-packages'
+with zipfile.ZipFile('/${whlFile}', 'r') as zf:
+    zf.extractall(site_dir)
+print("Wheel extracted to", site_dir)
 
-from pyodide_js._module import loadDynamicLibrary
-import js
-
-# Load core library with global symbols (must be loaded before any wrapper)
-core_path = "/lib/python3.13/site-packages/rdkit/librdkit_core.so"
-result = loadDynamicLibrary(core_path, js.JSON.parse('{"global": true, "loadAsync": true}'))
-if hasattr(result, 'then'):
-    await result
-print("Core library loaded!")
-
-# Basic imports
-import rdkit
-print(f"RDKit version: {rdkit.__version__}")
-
+# import rdkit triggers __init__.py which auto-loads librdkit_core.so
 from rdkit import Chem
 print("Chem imported!")
 
@@ -365,7 +348,8 @@ assert len(feats) > 0
 feat_types = set(f.GetFamily() for f in feats)
 print(f"[PASS] ChemicalFeatures: {len(feats)} features, families={feat_types}")
 
-print(f"\\n=== ALL 31 TESTS PASSED === RDKit {rdkit.__version__} works in Pyodide!")
+import rdkit as _rdkit
+print(f"\\n=== ALL 35 TESTS PASSED === RDKit {_rdkit.__version__} works in Pyodide!")
 `);
     } catch (e) {
         console.error("FAILED:", e.message);
