@@ -162,6 +162,35 @@ class TestCase(unittest.TestCase):
     nbds = [x.GetBondDir() for x in mol.GetBonds()]
     self.assertEqual(obds, nbds)
 
+  def testLegendPosition(self):
+    """Test legend position options (Top, Left, Right) and vertical text."""
+    mol = Chem.MolFromSmiles('CCO')
+    legend = 'Ethanol'
+    # Bottom (default) - just ensure it still works
+    opts = rdMolDraw2D.MolDrawOptions()
+    self.assertEqual(opts.legendPosition, rdMolDraw2D.LegendPosition.Bottom)
+    svg = Draw.MolToSVG(mol, legend=legend, drawOptions=opts)
+    self.assertIn("class='legend'", svg)
+    # Top
+    opts.legendPosition = rdMolDraw2D.LegendPosition.Top
+    svg = Draw.MolToSVG(mol, legend=legend, drawOptions=opts)
+    self.assertIn("class='legend'", svg)
+    # Left with vertical text
+    opts.legendPosition = rdMolDraw2D.LegendPosition.Left
+    opts.legendVerticalText = True
+    svg = Draw.MolToSVG(mol, legend=legend, drawOptions=opts)
+    self.assertIn("class='legend'", svg)
+    # Right with horizontal text (verticalText False)
+    opts.legendPosition = rdMolDraw2D.LegendPosition.Right
+    opts.legendVerticalText = False
+    svg = Draw.MolToSVG(mol, legend=legend, drawOptions=opts)
+    self.assertIn("class='legend'", svg)
+    # If Cairo is available, also test MolToImage
+    if hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+      opts.legendPosition = rdMolDraw2D.LegendPosition.Bottom
+      img = Draw.MolToImage(mol, legend=legend, drawOptions=opts)
+      self.assertTrue(img is not None)
+
   def testGridSVG(self):
     mols = [Chem.MolFromSmiles('NC(C)C(=O)' * x) for x in range(10)]
     legends = ['mol-%d' % x for x in range(len(mols))]

@@ -74,9 +74,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDativeBonds_2c.svg", 1745138239U},
     {"testDativeBonds_2d.svg", 3279423301U},
     {"testZeroOrderBonds_1.svg", 3733430366U},
-    {"testFoundations_1.svg", 2350247048U},
-    {"testFoundations_2.svg", 15997352U},
-    {"testTest_1.svg", 15997352U},
+    {"testFoundations_1.svg", 2283802316U},
+    {"testFoundations_2.svg", 2468031318U},
+    {"testTest_1.svg", 2468031318U},
     {"testKekulizationProblems_1.svg", 2284161107U},
     {"testAtomBondIndices_1.svg", 2702803018U},
     {"testAtomBondIndices_2.svg", 1564350363U},
@@ -219,9 +219,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4764.sz3.svg", 2712214121U},
     {"testDrawArc1.svg", 3279637525U},
     {"testMetalWedges.svg", 2896721486U},
-    {"testVariableLegend_1.svg", 1817838365U},
-    {"testVariableLegend_2.svg", 1038247753U},
-    {"testVariableLegend_3.svg", 2073034956U},
+    {"testVariableLegend_1.svg", 1208675629U},
+    {"testVariableLegend_2.svg", 799897710U},
+    {"testVariableLegend_3.svg", 2599269417U},
     {"testGithub_5061.svg", 2050932431U},
     {"testGithub_5185.svg", 3800073130U},
     {"testGithub_5269_1.svg", 4160868253U},
@@ -4754,6 +4754,78 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
                       "style='font-size:11px;") != std::string::npos);
       check_file_hash("testVariableLegend_3.svg");
     }
+  }
+}
+
+TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
+  auto m1 = "CCO"_smiles;
+  REQUIRE(m1);
+  const std::string legend("Ethanol");
+  SECTION("Top") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Top;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+  }
+  SECTION("Left with vertical text") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendVerticalText = true;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+  }
+  SECTION("Right") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Right;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+  }
+  SECTION("Bottom unchanged default") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    CHECK(drawer.drawOptions().legendPosition ==
+          MolDrawOptions::LegendPosition::Bottom);
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+  }
+}
+
+TEST_CASE("legend options from JSON", "[drawing]") {
+  auto m1 = "CCO"_smiles;
+  REQUIRE(m1);
+  SECTION("legendPosition and legendVerticalText parsed from JSON") {
+    const char *json =
+        R"({"legendPosition": "Top", "legendVerticalText": true})";
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
+    CHECK(opts.legendPosition == MolDrawOptions::LegendPosition::Top);
+    CHECK(opts.legendVerticalText == true);
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions() = opts;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "Ethanol");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+  }
+  SECTION("legendPosition Left and legendFraction for side legend") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendFraction = 0.25f;
+    drawer.drawOptions().legendVerticalText = true;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "CCO");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
   }
 }
 

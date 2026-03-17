@@ -306,8 +306,11 @@ class DrawMol {
   double meanBondLength_ = 0.0;
   // if there's a legend, we reserve a bit for it.  molHeight_ is the
   // bit for drawing the molecule, legendHeight_ the bit under that
-  // for the legend.  In pixels.
+  // for the legend.  For Left/Right, legendWidth_ is the side strip.
+  // molWidth_ is the width available for the molecule (drawWidth_ for
+  // Bottom/Top, drawWidth_ - legendWidth_ for Left/Right).  In pixels.
   int molHeight_, legendHeight_ = 0;
+  int molWidth_ = 0, legendWidth_ = 0;
   bool drawingInitialised_ = false;
   // when drawing the atoms and bonds in an SVG, they are given a class
   // via MolDraw2D's activeAtmIdx[12]_ and activeBndIdx.  We don't always want

@@ -788,6 +788,13 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .value("Lasso", RDKit::MultiColourHighlightStyle::LASSO)
       .export_values();
 
+  python::enum_<RDKit::MolDrawOptions::LegendPosition>("LegendPosition")
+      .value("Bottom", RDKit::MolDrawOptions::LegendPosition::Bottom)
+      .value("Top", RDKit::MolDrawOptions::LegendPosition::Top)
+      .value("Left", RDKit::MolDrawOptions::LegendPosition::Left)
+      .value("Right", RDKit::MolDrawOptions::LegendPosition::Right)
+      .export_values();
+
   {
     python::enum_<RDKit::DrawElement::_enumerated> drawElementEnum(
         "DrawElement");
@@ -919,6 +926,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "legendFraction", &RDKit::MolDrawOptions::legendFraction,
           "fraction of the draw panel to be used for the legend if present")
+      .def_readwrite(
+          "legendPosition", &RDKit::MolDrawOptions::legendPosition,
+          "legend position: 0=Bottom, 1=Top, 2=Left, 3=Right")
+      .def_readwrite(
+          "legendVerticalText", &RDKit::MolDrawOptions::legendVerticalText,
+          "when legend is Left or Right, draw text vertically (one char per line)")
       .def_readwrite("maxFontSize", &RDKit::MolDrawOptions::maxFontSize,
                      "maximum font size in pixels. default=40, -1 means no"
                      " maximum.")

@@ -41,6 +41,7 @@ GitHub)
 
 
 ## New Features and Enhancements:
+- **MolDraw2D / Drawing (GitHub #9023)**: Legend position is now configurable (Top, Left, Right, Bottom). For Left/Right, text can be drawn vertically (one character per line) via `legendVerticalText`. Options: `legendPosition`, `legendVerticalText` on MolDrawOptions; JSON keys `"legendPosition"` (string: "Top", "Left", "Right", "Bottom") and `"legendVerticalText"` (boolean). Applies to single-molecule drawing (e.g. MolToSVG, MolToImage); grid drawing can pass the same drawOptions so the position applies to each cell's legend.
 
 ## Bug Fixes:
 
