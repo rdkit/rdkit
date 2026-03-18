@@ -105,40 +105,45 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
            " make sense.  Ignoring the radii."
         << std::endl;
   }
-  extractAtoms(mol, confId, opts);
+  bool fillAlphas = d_alphas.empty();
+  extractAtoms(mol, confId, opts, fillAlphas);
   if (opts.useColors) {
-    extractFeatures(mol, confId, opts);
+    extractFeatures(mol, confId, opts, fillAlphas);
   }
   calcNormalization();
   calcExtremes();
   std::vector<double> gradConverters(12 * (d_numAtoms + d_numFeats));
-  d_selfOverlapVol = calcVolAndGrads(
-      d_coords.data(), d_alphas.data(), d_numAtoms, d_carbonRadii.get(),
-      d_coords.data(), d_alphas.data(), d_numAtoms, d_carbonRadii.get(),
-      gradConverters, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff * overlayOpts.distCutoff);
-  d_selfOverlapColor = calcVolAndGrads(
-      d_coords.data() + 3 * d_numAtoms, d_alphas.data() + d_numAtoms,
-      d_numFeats, d_types.data() + d_numAtoms, d_coords.data() + 3 * d_numAtoms,
+  d_selfOverlapShapeVols.push_back(calcVolAndGrads(
+      d_coords[d_currentConf].data(), d_alphas.data(), d_numAtoms,
+      d_carbonRadii.get(), d_coords[d_currentConf].data(), d_alphas.data(),
+      d_numAtoms, d_carbonRadii.get(), gradConverters,
+      overlayOpts.useDistCutoff,
+      overlayOpts.distCutoff * overlayOpts.distCutoff));
+  d_selfOverlapColorVols.push_back(calcVolAndGrads(
+      d_coords[d_currentConf].data() + 3 * d_numAtoms,
+      d_alphas.data() + d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
+      d_coords[d_currentConf].data() + 3 * d_numAtoms,
       d_alphas.data() + d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
       d_numAtoms, gradConverters, overlayOpts.useDistCutoff,
-      overlayOpts.distCutoff * overlayOpts.distCutoff, nullptr, nullptr);
+      overlayOpts.distCutoff * overlayOpts.distCutoff, nullptr, nullptr));
+  d_currentConf = 0;
 }
 
 ShapeInput::ShapeInput(const ShapeInput &other)
-    : d_coords(other.d_coords),
+    : d_currentConf(other.d_currentConf),
+      d_coords(other.d_coords),
       d_alphas(other.d_alphas),
       d_types(other.d_types),
       d_numAtoms(other.d_numAtoms),
       d_numFeats(other.d_numFeats),
-      d_selfOverlapVol(other.d_selfOverlapVol),
-      d_selfOverlapColor(other.d_selfOverlapColor),
-      d_extremePoints(other.d_extremePoints),
+      d_selfOverlapShapeVols(other.d_selfOverlapShapeVols),
+      d_selfOverlapColorVols(other.d_selfOverlapColorVols),
+      d_extremePointss(other.d_extremePointss),
       d_normalized(other.d_normalized),
       d_normalizationOK(other.d_normalizationOK),
-      d_canonRot(other.d_canonRot),
-      d_canonTrans(other.d_canonTrans),
-      d_eigenValues(other.d_eigenValues) {
+      d_canonRots(other.d_canonRots),
+      d_canonTranss(other.d_canonTranss),
+      d_eigenValuess(other.d_eigenValuess) {
   if (other.d_carbonRadii) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(*other.d_carbonRadii));
   }
@@ -148,25 +153,36 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   if (this == &other) {
     return *this;
   }
+  d_currentConf = other.d_currentConf;
   d_coords = other.d_coords;
   d_alphas = other.d_alphas;
   d_types = other.d_types;
   d_numAtoms = other.d_numAtoms;
   d_numFeats = other.d_numFeats;
-  d_selfOverlapVol = other.d_selfOverlapVol;
-  d_selfOverlapColor = other.d_selfOverlapColor;
-  d_extremePoints = other.d_extremePoints;
+  d_selfOverlapShapeVols = other.d_selfOverlapShapeVols;
+  d_selfOverlapColorVols = other.d_selfOverlapColorVols;
+  d_extremePointss = other.d_extremePointss;
   d_normalized = other.d_normalized;
   d_normalizationOK = other.d_normalizationOK;
-  d_canonRot = other.d_canonRot;
-  d_canonTrans = other.d_canonTrans;
-  d_eigenValues = other.d_eigenValues;
+  d_canonRots = other.d_canonRots;
+  d_canonTranss = other.d_canonTranss;
+  d_eigenValuess = other.d_eigenValuess;
   if (other.d_carbonRadii) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(*other.d_carbonRadii));
   } else {
     d_carbonRadii.reset();
   }
   return *this;
+}
+
+void ShapeInput::setCurrentConf(unsigned int newConf) {
+  PRECONDITION(newConf < d_coords.size(),
+               "Invalid conformation number (" + std::to_string(newConf) +
+                   " vs " + std::to_string(d_coords.size()) + ".");
+  if (d_currentConf != newConf) {
+    d_currentConf = newConf;
+    d_normalizationOK = false;
+  }
 }
 
 std::vector<RDGeom::Point3D> ShapeInput::getAtomPoints(
@@ -178,8 +194,9 @@ std::vector<RDGeom::Point3D> ShapeInput::getAtomPoints(
   }
   atomPoints.reserve(numPoints);
   for (unsigned int i = 0; i < 3 * numPoints; i += 3) {
-    atomPoints.emplace_back(
-        RDGeom::Point3D(d_coords[i], d_coords[i + 1], d_coords[i + 2]));
+    atomPoints.emplace_back(RDGeom::Point3D(d_coords[d_currentConf][i],
+                                            d_coords[d_currentConf][i + 1],
+                                            d_coords[d_currentConf][i + 2]));
   }
   return atomPoints;
 }
@@ -188,28 +205,28 @@ const std::array<double, 9> &ShapeInput::calcCanonicalRotation() {
   if (!d_normalizationOK) {
     calcNormalization();
   }
-  return d_canonRot;
+  return d_canonRots[d_currentConf];
 }
 
 const std::array<double, 3> &ShapeInput::calcCanonicalTranslation() {
   if (!d_normalizationOK) {
     calcNormalization();
   }
-  return d_canonTrans;
+  return d_canonTranss[d_currentConf];
 }
 
 const std::array<double, 3> &ShapeInput::calcEigenValues() {
   if (!d_normalizationOK) {
     calcNormalization();
   }
-  return d_eigenValues;
+  return d_eigenValuess[d_currentConf];
 }
 
 const std::array<size_t, 6> &ShapeInput::calcExtremes() {
   if (!d_normalizationOK) {
     calculateExtremes();
   }
-  return d_extremePoints;
+  return d_extremePointss[d_currentConf];
 }
 
 std::array<double, 3> ShapeInput::calcMomentsOfInertia(
@@ -242,10 +259,12 @@ void ShapeInput::normalizeCoords() {
   RDGeom::Transform3D canonRot;
   for (unsigned int i = 0, k = 0; i < 3; ++i) {
     for (unsigned int j = 0; j < 3; ++j, ++k) {
-      canonRot.setValUnchecked(i, j, d_canonRot[k]);
+      canonRot.setValUnchecked(i, j, d_canonRots[d_currentConf][k]);
     }
   }
-  RDGeom::Point3D trans{d_canonTrans[0], d_canonTrans[1], d_canonTrans[2]};
+  RDGeom::Point3D trans{d_canonTranss[d_currentConf][0],
+                        d_canonTranss[d_currentConf][1],
+                        d_canonTranss[d_currentConf][2]};
   canonRot.TransformPoint(trans);
   canonRot.SetTranslation(trans);
 
@@ -256,7 +275,7 @@ void ShapeInput::normalizeCoords() {
 }
 
 void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
-  applyTransformToShape(d_coords, xform);
+  applyTransformToShape(d_coords[d_currentConf], xform);
   d_normalized = false;
   d_normalizationOK = false;
 }
@@ -301,19 +320,17 @@ double getStandardAtomRadius(unsigned int atomicNum) {
 
 }  // namespace
 void ShapeInput::extractAtoms(const ROMol &mol, int confId,
-                              const ShapeInputOptions &opts) {
-  d_coords.reserve(mol.getNumAtoms() * 3);
-  d_alphas.reserve(mol.getNumAtoms());
+                              const ShapeInputOptions &opts, bool fillAlphas) {
   if (!opts.allCarbonRadii) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(
         !opts.atomSubset.empty() ? opts.atomSubset.size() : mol.getNumAtoms()));
   }
   auto conf = mol.getConformer(confId);
-  // Index of atoms that have been added to the shape.
-  unsigned int idx = 0;
+  std::vector<double> theseCoords;
+  theseCoords.reserve(mol.getNumAtoms() * 3);
   for (const auto atom : mol.atoms()) {
+    const auto atomIdx = atom->getIdx();
     if (!opts.atomSubset.empty()) {
-      const auto atomIdx = atom->getIdx();
       if (auto it = std::ranges::find_if(
               opts.atomSubset,
               [atomIdx](const auto &p) -> bool { return p == atomIdx; });
@@ -324,38 +341,43 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
     if (atom->getAtomicNum() > 1) {
       auto atIdx = atom->getIdx();
       auto &pos = conf.getAtomPos(atIdx);
-      d_coords.push_back(pos.x);
-      d_coords.push_back(pos.y);
-      d_coords.push_back(pos.z);
-      if (opts.allCarbonRadii) {
-        d_alphas.push_back(KAPPA / (1.7 * 1.7));
-      } else {
-        double rad = 0.0;
-        if (opts.atomRadii.empty()) {
-          if (atom->getAtomicNum() == 6) {
-            rad = 1.7;
-            (*d_carbonRadii)[idx] = true;
-          } else {
-            rad = getStandardAtomRadius(atom->getAtomicNum());
-          }
+      theseCoords.push_back(pos.x);
+      theseCoords.push_back(pos.y);
+      theseCoords.push_back(pos.z);
+      if (fillAlphas) {
+        if (opts.allCarbonRadii) {
+          d_alphas.push_back(KAPPA / (1.7 * 1.7));
         } else {
-          auto it = std::ranges::find_if(
-              opts.atomRadii,
-              [atIdx](const auto &p) -> bool { return p.first == atIdx; });
-          if (it == opts.atomRadii.end()) {
-            rad = getStandardAtomRadius(atom->getAtomicNum());
+          double rad = 0.0;
+          if (opts.atomRadii.empty()) {
+            if (atom->getAtomicNum() == 6) {
+              rad = 1.7;
+              (*d_carbonRadii)[atomIdx] = true;
+            } else {
+              rad = getStandardAtomRadius(atom->getAtomicNum());
+            }
           } else {
-            rad = it->second;
+            auto it = std::ranges::find_if(
+                opts.atomRadii,
+                [atIdx](const auto &p) -> bool { return p.first == atIdx; });
+            if (it == opts.atomRadii.end()) {
+              rad = getStandardAtomRadius(atom->getAtomicNum());
+            } else {
+              rad = it->second;
+            }
           }
+          d_alphas.push_back(KAPPA / (rad * rad));
         }
-        d_alphas.push_back(KAPPA / (rad * rad));
       }
     }
-    ++idx;
   }
-  d_numAtoms = d_coords.size() / 3;
-  d_types.resize(d_numAtoms);
-  d_numFeats = 0;
+  d_currentConf = d_coords.size();
+  d_coords.push_back(theseCoords);
+  if (fillAlphas) {
+    d_numAtoms = d_coords.front().size() / 3;
+    d_types.resize(d_numAtoms);
+    d_numFeats = 0;
+  }
 }
 
 namespace {
@@ -363,33 +385,18 @@ class ss_matcher {
  public:
   ss_matcher(const std::string &pattern) : m_pattern(pattern) {
     m_needCopies = (pattern.find_first_of("$") != std::string::npos);
-    RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
+    RWMol *p = SmartsToMol(pattern);
     m_matcher = p;
     POSTCONDITION(m_matcher, "no matcher");
   };
-  const RDKit::ROMol *getMatcher() const { return m_matcher; };
-  unsigned int countMatches(const RDKit::ROMol &mol) const {
-    PRECONDITION(m_matcher, "no matcher");
-    std::vector<RDKit::MatchVectType> matches;
-    // This is an ugly one. Recursive queries aren't thread safe.
-    // Unfortunately we have to take a performance hit here in order
-    // to guarantee thread safety
-    if (m_needCopies) {
-      const RDKit::ROMol nm(*(m_matcher), true);
-      RDKit::SubstructMatch(mol, nm, matches);
-    } else {
-      const RDKit::ROMol &nm = *m_matcher;
-      RDKit::SubstructMatch(mol, nm, matches);
-    }
-    return matches.size();
-  }
+  const ROMol *getMatcher() const { return m_matcher; };
   ~ss_matcher() { delete m_matcher; };
 
  private:
   ss_matcher() : m_pattern("") {};
   std::string m_pattern;
   bool m_needCopies{false};
-  const RDKit::ROMol *m_matcher{nullptr};
+  const ROMol *m_matcher{nullptr};
 };
 }  // namespace
 
@@ -446,7 +453,8 @@ std::vector<std::vector<const ROMol *>> *getPh4Patterns() {
 // Extract the features for the color scores, using RDKit pphore features
 // for now.  Other options to be added later.
 void ShapeInput::extractFeatures(const ROMol &mol, int confId,
-                                 const ShapeInputOptions &opts) {
+                                 const ShapeInputOptions &opts,
+                                 bool fillAlphas) {
   if (opts.customFeatures.empty()) {
     unsigned pattIdx = 1;
     const auto pattVects = getPh4Patterns();
@@ -454,7 +462,8 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
       for (const auto &patt : patts) {
         std::vector<MatchVectType> matches;
         {
-          // recursive queries aren't thread safe.
+          // Once, recursive queries weren't thread safe but Greg assures
+          // me that they now are.
           matches = SubstructMatch(mol, *patt);
         }
         for (const auto &match : matches) {
@@ -478,10 +487,12 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
           }
           auto featPos = computeFeaturePos(mol, confId, ats);
           d_types.push_back(pattIdx);
-          d_coords.push_back(featPos.x);
-          d_coords.push_back(featPos.y);
-          d_coords.push_back(featPos.z);
-          d_alphas.push_back(KAPPA / (radius_color * radius_color));
+          d_coords[d_currentConf].push_back(featPos.x);
+          d_coords[d_currentConf].push_back(featPos.y);
+          d_coords[d_currentConf].push_back(featPos.z);
+          if (fillAlphas) {
+            d_alphas.push_back(KAPPA / (radius_color * radius_color));
+          }
           d_numFeats++;
         }
       }
@@ -494,17 +505,26 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
       d_types.push_back(std::get<0>(f));
       d_numFeats++;
       const auto &pos = std::get<1>(f);
-      d_coords.push_back(pos.x);
-      d_coords.push_back(pos.y);
-      d_coords.push_back(pos.z);
-      auto rad = std::get<2>(f);
-      d_alphas.push_back(KAPPA / (rad * rad));
+      d_coords[d_currentConf].push_back(pos.x);
+      d_coords[d_currentConf].push_back(pos.y);
+      d_coords[d_currentConf].push_back(pos.z);
+      if (fillAlphas) {
+        auto rad = std::get<2>(f);
+        d_alphas.push_back(KAPPA / (rad * rad));
+      }
     }
   }
 }
 
 void ShapeInput::calcNormalization() {
-  d_eigenValues = std::array<double, 3>{0.0, 0.0, 0.0};
+  if (d_eigenValuess.size() < d_coords.size()) {
+    d_eigenValuess.resize(d_coords.size());
+    d_canonRots.resize(d_coords.size());
+    d_canonTranss.resize(d_coords.size());
+    d_eigenValuess.resize(d_coords.size());
+    d_extremePointss.resize(d_coords.size());
+  }
+  d_eigenValuess[d_currentConf] = std::array<double, 3>{0.0, 0.0, 0.0};
   // Build a "molecule" just of the shape points, not the color features
   // with which to calculate the canonical transformation.  Doesn't ever
   // use the input molecule in case the shape was built from a subset of
@@ -512,48 +532,57 @@ void ShapeInput::calcNormalization() {
   auto tmpMol = shapeToMol(false);
   std::unique_ptr<RDGeom::Transform3D> canonXform(
       MolTransforms::computeCanonicalTransform(
-          tmpMol->getConformer(), nullptr, false, true, d_eigenValues.data()));
-  d_canonRot =
+          tmpMol->getConformer(), nullptr, false, true,
+          d_eigenValuess[d_currentConf].data()));
+  d_canonRots[d_currentConf] =
       std::array<double, 9>{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
   for (unsigned int i = 0, k = 0; i < 3; ++i) {
     for (unsigned int j = 0; j < 3; ++j, ++k) {
-      d_canonRot[k] = canonXform->getValUnchecked(i, j);
+      d_canonRots[d_currentConf][k] = canonXform->getValUnchecked(i, j);
     }
   }
-  d_canonTrans = std::array<double, 3>{0.0, 0.0, 0.0};
+  d_canonTranss[d_currentConf] = std::array<double, 3>{0.0, 0.0, 0.0};
   for (unsigned int i = 0; i < 3 * d_numAtoms; i += 3) {
-    d_canonTrans[0] -= d_coords[i];
-    d_canonTrans[1] -= d_coords[i + 1];
-    d_canonTrans[2] -= d_coords[i + 2];
+    d_canonTranss[d_currentConf][0] -= d_coords[d_currentConf][i];
+    d_canonTranss[d_currentConf][1] -= d_coords[d_currentConf][i + 1];
+    d_canonTranss[d_currentConf][2] -= d_coords[d_currentConf][i + 2];
   }
-  d_canonTrans[0] /= d_numAtoms;
-  d_canonTrans[1] /= d_numAtoms;
-  d_canonTrans[2] /= d_numAtoms;
+  d_canonTranss[d_currentConf][0] /= d_numAtoms;
+  d_canonTranss[d_currentConf][1] /= d_numAtoms;
+  d_canonTranss[d_currentConf][2] /= d_numAtoms;
   d_normalizationOK = true;
 }
 
 void ShapeInput::calculateExtremes() {
-  d_extremePoints = std::array<size_t, 6>{0, 0, 0, 0, 0, 0};
-  for (size_t i = 0, j = 0; i < d_coords.size(); i += 3, ++j) {
-    if (d_coords[i] < d_coords[3 * d_extremePoints[0]]) {
-      d_extremePoints[0] = j;
+  if (d_extremePointss.size() < d_coords.size()) {
+    d_extremePointss.resize(d_coords.size());
+  }
+  d_extremePointss[d_currentConf] = std::array<size_t, 6>{0, 0, 0, 0, 0, 0};
+  const std::vector<double> &theseCoords = d_coords[d_currentConf];
+  for (size_t i = 0, j = 0; i < theseCoords.size(); i += 3, ++j) {
+    if (theseCoords[i] < theseCoords[3 * d_extremePointss[d_currentConf][0]]) {
+      d_extremePointss[d_currentConf][0] = j;
     }
-    if (d_coords[i] > d_coords[3 * d_extremePoints[3]]) {
-      d_extremePoints[3] = j;
-    }
-
-    if (d_coords[i + 1] < d_coords[3 * d_extremePoints[1] + 1]) {
-      d_extremePoints[1] = j;
-    }
-    if (d_coords[i + 1] > d_coords[3 * d_extremePoints[4] + 1]) {
-      d_extremePoints[4] = j;
+    if (theseCoords[i] > theseCoords[3 * d_extremePointss[d_currentConf][3]]) {
+      d_extremePointss[d_currentConf][3] = j;
     }
 
-    if (d_coords[i + 2] < d_coords[3 * d_extremePoints[2] + 2]) {
-      d_extremePoints[2] = j;
+    if (theseCoords[i + 1] <
+        theseCoords[3 * d_extremePointss[d_currentConf][1] + 1]) {
+      d_extremePointss[d_currentConf][1] = j;
     }
-    if (d_coords[i + 2] > d_coords[3 * d_extremePoints[5] + 2]) {
-      d_extremePoints[5] = j;
+    if (theseCoords[i + 1] >
+        theseCoords[3 * d_extremePointss[d_currentConf][4] + 1]) {
+      d_extremePointss[d_currentConf][4] = j;
+    }
+
+    if (theseCoords[i + 2] <
+        theseCoords[3 * d_extremePointss[d_currentConf][2] + 2]) {
+      d_extremePointss[d_currentConf][2] = j;
+    }
+    if (theseCoords[i + 2] >
+        theseCoords[3 * d_extremePointss[d_currentConf][5] + 2]) {
+      d_extremePointss[d_currentConf][5] = j;
     }
   }
 }

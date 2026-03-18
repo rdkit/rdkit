@@ -390,14 +390,11 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
       workingFitShape->normalizeCoords();
     }
   } else {
+    const auto &canonTrans = workingFitShape->calcCanonicalTranslation();
     moveToOrigin.SetTranslation(
-        RDGeom::Point3D{workingFitShape->calcCanonicalTranslation()[0],
-                        workingFitShape->calcCanonicalTranslation()[1],
-                        workingFitShape->calcCanonicalTranslation()[2]});
+        RDGeom::Point3D{canonTrans[0], canonTrans[1], canonTrans[2]});
     moveFromOrigin.SetTranslation(
-        RDGeom::Point3D{-workingFitShape->calcCanonicalTranslation()[0],
-                        -workingFitShape->calcCanonicalTranslation()[1],
-                        -workingFitShape->calcCanonicalTranslation()[2]});
+        RDGeom::Point3D{-canonTrans[0], -canonTrans[1], -canonTrans[2]});
     workingFitShape->transformCoords(moveToOrigin);
     workingRefShape->transformCoords(moveToOrigin);
   }

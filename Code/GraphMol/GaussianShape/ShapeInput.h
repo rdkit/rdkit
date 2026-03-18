@@ -140,8 +140,17 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #endif
   }
 
+  unsigned int getCurrentConf() const { return d_currentConf; }
+  //! Set the currently active conformation to the new value.
+  //! @param newConf: the number of the conformation to be used
+  //!                 for future calculations.  Counts from 0,
+  //!                 obviously.  If invalid, throws a runtime
+  //!                 error.
+  void setCurrentConf(unsigned int newConf);
   // Note that the coords returned is a vector size 3*getNumAtoms()
-  const std::vector<double> &getCoords() const { return d_coords; }
+  const std::vector<double> &getCoords() const {
+    return d_coords[d_currentConf];
+  }
   const std::vector<double> &getAlphas() const { return d_alphas; }
   //! Fetch the coordinates of the atoms and optionally features.
   std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors = false) const;
@@ -149,8 +158,12 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   const std::vector<int> &getTypes() const { return d_types; }
   unsigned int getNumAtoms() const { return d_numAtoms; }
   unsigned int getNumFeatures() const { return d_numFeats; }
-  double getShapeVolume() const { return d_selfOverlapVol; }
-  double getColorVolume() const { return d_selfOverlapColor; }
+  double getShapeVolume() const {
+    return d_selfOverlapShapeVols[d_currentConf];
+  }
+  double getColorVolume() const {
+    return d_selfOverlapColorVols[d_currentConf];
+  }
   const boost::dynamic_bitset<> *getCarbonRadii() const {
     return d_carbonRadii.get();
   }
@@ -178,37 +191,41 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
   void serialize(Archive &ar, const unsigned int) {
+    ar & d_currentConf;
     ar & d_coords;
     ar & d_alphas;
     ar & d_types;
     ar & d_numAtoms;
     ar & d_numFeats;
-    ar & d_selfOverlapVol;
-    ar & d_selfOverlapColor;
-    ar & d_extremePoints;
+    ar & d_selfOverlapShapeVols;
+    ar & d_selfOverlapColorVols;
+    ar & d_extremePointss;
     ar & d_carbonRadii;
     ar & d_normalized;
     ar & d_normalizationOK;
-    ar & d_canonRot;
-    ar & d_canonTrans;
-    ar & d_eigenValues;
+    ar & d_canonRots;
+    ar & d_canonTranss;
+    ar & d_eigenValuess;
   }
 #endif
 
  private:
-  void extractAtoms(const ROMol &mol, int confId,
-                    const ShapeInputOptions &opts);
+  void extractAtoms(const ROMol &mol, int confId, const ShapeInputOptions &opts,
+                    bool fillAlphas);
   // Extract the features for the color scores, using RDKit pphore features
   // for now.  Other options to be added later.
   void extractFeatures(const ROMol &mol, int confId,
-                       const ShapeInputOptions &shapeOpts);
+                       const ShapeInputOptions &shapeOpts, bool fillAlphas);
   // Calculate the rotation and translation that will align the principal axes
   // to the cartesian axes and centre on the origin.
   void calcNormalization();
 
   void calculateExtremes();
 
-  std::vector<double> d_coords;  // The coordinates for the atoms and features,
+  unsigned int d_currentConf;
+
+  std::vector<std::vector<double>>
+      d_coords;  // The coordinates for the atoms and features,
   // packed as 3 floats per item - x, y, z
   std::vector<double> d_alphas;  // The alpha values for the atoms and features.
   // alpha is KAPPA / (r * r) where r is the radius
@@ -216,13 +233,13 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   std::vector<int> d_types;  // The feature types.  The size is the same
   // as the number of coordinates, padded with 0
   // for the atoms.
-  unsigned int d_numAtoms;         // The number of atoms
-  unsigned int d_numFeats;         // The number of features
-  double d_selfOverlapVol{0.0};    // Shape volume
-  double d_selfOverlapColor{0.0};  // Color volume
+  unsigned int d_numAtoms;                     // The number of atoms
+  unsigned int d_numFeats;                     // The number of features
+  std::vector<double> d_selfOverlapShapeVols;  // Shape volume
+  std::vector<double> d_selfOverlapColorVols;  // Color volume
   // These are the points at the extremes of the x, y and z axes.
   // they are min_x, min_y, min_z and max_x, max_y, max_z.
-  std::array<size_t, 6> d_extremePoints;
+  std::vector<std::array<size_t, 6>> d_extremePointss;
   std::unique_ptr<boost::dynamic_bitset<>>
       d_carbonRadii;  // Flags those atoms with a carbon radius, for faster
   // calculation later.
@@ -235,10 +252,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // This flags that so it is re-computed as required.
   bool d_normalizationOK{false};
 
-  std::array<double, 9> d_canonRot;
-  std::array<double, 3> d_canonTrans;
+  std::vector<std::array<double, 9>> d_canonRots;
+  std::vector<std::array<double, 3>> d_canonTranss;
   // The sorted eigenvalues of the principal axes.
-  std::array<double, 3> d_eigenValues;
+  std::vector<std::array<double, 3>> d_eigenValuess;
 };
 
 // Calculate the mean position of the given atoms.
