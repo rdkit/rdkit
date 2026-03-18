@@ -217,16 +217,8 @@ void _checkAndSetBounds(unsigned int i, unsigned int j, double lb, double ub,
   // currently this is not the case, therefore, for now, we are persimistic on
   // the bounds
   if (setIfBetter) {
-    if (clb > DIST12_DELTA) {
-      std::cout << i << "; " << j << "; " << lb << "; " << ub << std::endl;
-    }
-
     double nlb = std::max(clb, lb);
     double nub = std::min(cub, ub);
-
-    if (clb > DIST12_DELTA) {
-      std::cout << i << "; " << j << "; " << nlb << "; " << nub << std::endl;
-    }
 
     if (nub <= nlb) {
       // if not overlapping ranges -> be conservative
