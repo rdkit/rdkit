@@ -322,4 +322,40 @@ TEST_CASE("Small REAL test") {
   for (const auto &mol : results.getHitMolecules()) {
     std::cout << MolToCXSmiles(*mol) << std::endl;
   }
+  auto &bestHit = results.getBestHit();
+  CHECK(bestHit);
+  std::cout << "Best hit : " << MolToCXSmiles(*bestHit) << std::endl;
+  std::cout << bestHit->getProp<std::string>(common_properties::_Name);
+}
+
+TEST_CASE("Small m_1458bbb test") {
+  std::string dbFile =
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/m_1458bbb_confs.spc";
+  SynthonSpace space;
+  space.readDBFile(dbFile, 13);
+  std::cout << space.getNumReactions() << " reactions for "
+            << space.getNumSynthons() << " giving " << space.getNumProducts()
+            << " products." << std::endl;
+  SynthonSpaceSearchParams params;
+  params.similarityCutoff = 0.75;
+  params.numThreads = 13;
+  params.timeOut = 0;
+  params.randomSeed = 1;
+  params.useProgressBar = 60;
+  params.confRMSThreshold = 0.5;
+  params.numConformers = 100;
+  auto queryMol =
+      "C[C@H](OC(=O)[C@H]1CC[C@@H](CN(C)C)O1)c1ccc(S(=O)(=O)F)cc1 |(2.56475,-3.10298,0.955074;2.28607,-1.62018,0.834903;0.929836,-1.35524,0.537459;0.117132,-0.687892,1.44187;0.639023,-0.335941,2.52603;-1.28757,-0.397477,1.16468;-2.1698,-1.60577,1.00963;-3.55218,-0.939503,1.06929;-3.20651,0.442004,1.62104;-4.12741,0.889789,2.71027;-5.47952,1.12966,2.32503;-6.24538,-0.0137629,1.94604;-6.13257,1.76958,3.47883;-1.92681,0.272412,2.203;3.21863,-0.957246,-0.102791;4.30426,-1.59526,-0.643779;5.12411,-0.893658,-1.51723;4.85003,0.417886,-1.8326;5.89923,1.29707,-2.9417;6.59479,0.266104,-3.80483;5.14827,2.28511,-3.74963;7.08009,2.05388,-2.03558;3.75958,1.07193,-1.29428;2.96242,0.354879,-0.431309),wD:1.0,wU:5.4,8.8|"_smiles;
+  REQUIRE(queryMol);
+  auto results = space.shapeSearch(*queryMol, params);
+  std::cout << "Number of hits : " << results.getHitMolecules().size()
+            << std::endl;
+  for (const auto &mol : results.getHitMolecules()) {
+    std::cout << MolToCXSmiles(*mol) << std::endl;
+  }
+  auto &bestHit = results.getBestHit();
+  REQUIRE(bestHit);
+  std::cout << "Best hit : " << MolToCXSmiles(*bestHit) << std::endl;
+  std::cout << bestHit->getProp<std::string>(common_properties::_Name) << " : "
+            << bestHit->getProp<double>("Similarity") << std::endl;
 }

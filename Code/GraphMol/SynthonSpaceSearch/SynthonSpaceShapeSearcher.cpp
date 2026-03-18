@@ -630,6 +630,12 @@ void computeSomeFragSynthonSims(
       RDGeom::Transform3D xform;
       auto sim =
           bestSimSynthonOntoFragment(*fragShape, synthon, threshold, xform);
+      if (synthon->getShapes()->getNumAtoms() == 13 &&
+          fragShape->getNumAtoms() > 12 && fragShape->getNumAtoms() < 14) {
+        std::cout << fragShape->getSmiles() << " vs " << synthon->getSmiles()
+                  << " : " << std::get<0>(sim) << " : "
+                  << fragShape->getNumAtoms() << std::endl;
+      }
       if (std::get<0>(sim) >= threshold) {
         std::pair<const void *, const void *> p{fragShape, synthon};
         std::unique_lock lock1{mtx};
@@ -940,6 +946,11 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
       }
     }
   }
+  std::cout << "Synth names for poss hit : ";
+  for (auto sn : synthNames) {
+    std::cout << *sn << " ";
+  }
+  std::cout << std::endl;
   return details::buildProduct(synths);
 }
 
@@ -971,9 +982,12 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     ROMol &hit, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames) {
   auto hitScores = GaussianShape::AlignMolecule(*dp_queryShapes, hit);
+  std::cout << "Initial hit scores : " << hitScores[0] << ", " << hitScores[1]
+            << ", " << hitScores[2] << std::endl;
+  std::cout << "Initial hit : " << MolToCXSmiles(hit) << std::endl;
+  finaliseHit(dp_queryConfs, hit, hitScores, rxnId, synthNames);
   if (checkBondLengths(hit) && !getParams().bestHit &&
       hitScores[0] >= getParams().similarityCutoff) {
-    finaliseHit(dp_queryConfs, hit, hitScores, rxnId, synthNames);
     return true;
   }
   // If the run is multi-threaded, this will already be running
@@ -988,19 +1002,30 @@ bool SynthonSpaceShapeSearcher::verifyHit(
       details::generateIsomerConformers(hit, getParams().numConformers, true,
                                         getParams().stereoEnumOpts, dgParams);
   bool foundHit = false;
-  double bestSim = getParams().similarityCutoff;
+  double bestSim = hitScores[0];
   GaussianShape::ShapeInputOptions opts;
   RDGeom::Transform3D xform;
   for (auto &isomer : hitConfs) {
     // Don't prune the hit shapes, it just wastes time.
     auto hitShapes =
         std::make_unique<GaussianShape::SearchShapeInput>(*isomer, -1.0, opts);
-    dp_queryShapes->setActiveShape(0);
+    std::cout << "Number of hit shapes for confirmation : "
+              << hitShapes->getNumShapes() << std::endl;
     for (unsigned int j = 0u; j < hitShapes->getNumShapes(); ++j) {
+      std::cout << "HIT SHAPE " << j << std::endl;
       hitShapes->setActiveShape(j);
+      std::cout << hitShapes->getCoords()[0] << ", "
+                << hitShapes->getCoords()[1] << ", "
+                << hitShapes->getCoords()[2] << ", "
+                << hitShapes->getCoords()[3] << std::endl;
       auto scores =
           GaussianShape::AlignShape(*dp_queryShapes, *hitShapes, &xform);
+      std::cout << MolToCXSmiles(*hitShapes->shapeToMol()) << std::endl;
+      std::cout << scores[0] << ", " << scores[1] << ", " << scores[2]
+                << std::endl;
       double sim = scores[0];
+      std::cout << "sim for " << j << " : " << sim << " vs " << bestSim
+                << std::endl;
       bool finalisedHit = false;
       if (sim > getBestSimilaritySoFar()) {
         finaliseHit(dp_queryConfs, isomer, hitShapes, j, xform, scores, rxnId,
@@ -1008,7 +1033,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
         finalisedHit = true;
         updateBestHitSoFar(hit, sim);
       }
-      if (sim >= bestSim) {
+      if (sim >= bestSim && sim > getParams().similarityCutoff) {
         if (!finalisedHit) {
           finaliseHit(dp_queryConfs, isomer, hitShapes, j, xform, scores, rxnId,
                       synthNames, hit);
@@ -1016,6 +1041,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
         // If we're only interested in whether there's a shape match, and
         // not in finding the best shape, we're done.
         if (!getParams().bestHit) {
+          std::cout << "returning bestHit" << std::endl;
           return true;
         }
         foundHit = true;
@@ -1023,6 +1049,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
       }
     }
   }
+  std::cout << "returning foundHit : " << foundHit << std::endl;
   return foundHit;
 }
 

@@ -621,7 +621,8 @@ void SynthonSpaceSearcher::makeHitsFromToTry(
   std::atomic<std::int64_t> mostRecentTry = -1;
   std::unique_ptr<ProgressBar> pbar;
   if (getParams().useProgressBar) {
-    std::cout << "\nBuilding and checking hits." << std::endl;
+    std::cout << "\nBuilding and checking " << toTry.size() << " hits."
+              << std::endl;
     pbar.reset(new ProgressBar(getParams().useProgressBar, toTry.size()));
   }
   // This assumes that each chunk of the toTry list will take roughly the

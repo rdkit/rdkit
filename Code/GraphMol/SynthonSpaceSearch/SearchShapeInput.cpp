@@ -70,10 +70,10 @@ SearchShapeInput::SearchShapeInput(const ROMol &mol, double pruneThreshold,
     d_dummyVolumes.push_back(-1);
     d_shapeVolumes.push_back(shape.getShapeVolume());
     d_colorVolumes.push_back(shape.getColorVolume());
-    d_extremePointss.push_back(shape.getExtremes());
-    d_canonRots.push_back(shape.getCanonicalRotation());
-    d_canonTranss.push_back(shape.getCanonicalTranslation());
-    d_eigenValuess.push_back(shape.getEigenValues());
+    d_extremePointss.push_back(shape.calcExtremes());
+    d_canonRots.push_back(shape.calcCanonicalRotation());
+    d_canonTranss.push_back(shape.calcCanonicalTranslation());
+    d_eigenValuess.push_back(shape.calcEigenValues());
   }
   if (pruneThreshold > 0.0 && mol.getNumConformers() > 1) {
     pruneShapes(pruneThreshold);
@@ -238,7 +238,11 @@ void SearchShapeInput::pruneShapes(double simThreshold) {
     ~DistFunctor() = default;
     double operator()(unsigned int i, unsigned int j) {
       d_shapei->setCoords(d_shapes.d_confCoords[i]);
+      d_shapei->setShapeVolume(d_shapes.d_shapeVolumes[i]);
+      d_shapei->setColorVolume(d_shapes.d_colorVolumes[i]);
       d_shapej->setCoords(d_shapes.d_confCoords[j]);
+      d_shapej->setShapeVolume(d_shapes.d_shapeVolumes[j]);
+      d_shapej->setColorVolume(d_shapes.d_colorVolumes[j]);
       auto scores = AlignShape(*d_shapei, *d_shapej);
       // The picker works on distances.
       return 1.0 - scores[0];
@@ -386,11 +390,11 @@ void SearchShapeInput::initializeFromBase() {
   d_dummyVolumes = std::vector<double>(1, -1);
   d_shapeVolumes = std::vector<double>(1, getShapeVolume());
   d_colorVolumes = std::vector<double>(1, getColorVolume());
-  d_extremePointss = std::vector<std::array<size_t, 6>>(1, getExtremes());
-  d_canonRots = std::vector<std::array<double, 9>>(1, getCanonicalRotation());
+  d_extremePointss = std::vector<std::array<size_t, 6>>(1, calcExtremes());
+  d_canonRots = std::vector<std::array<double, 9>>(1, calcCanonicalRotation());
   d_canonTranss =
-      std::vector<std::array<double, 3>>(1, getCanonicalTranslation());
-  d_eigenValuess = std::vector<std::array<double, 3>>(1, getEigenValues());
+      std::vector<std::array<double, 3>>(1, calcCanonicalTranslation());
+  d_eigenValuess = std::vector<std::array<double, 3>>(1, calcEigenValues());
 }
 
 void SearchShapeInput::confCoordsToShapeCoords(

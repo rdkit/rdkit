@@ -110,17 +110,12 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   } else {
     tmpMol.reset(new RWMol(mol));
   }
-  // This is just to force the creation of the correct atom output order.  The
-  // SMILES will be over-written later.  It would be nice not to have to rely
-  // on a side-effect of a function call for this.  There was a weird edge case
-  // where the subset was the same size as the input molecule, so no atoms
-  // were deleted but the _smilesAtomOutputOrder property was different
-  // afterwards.  I think it was due to chirality - the original molecule
-  // had the _smilesAtomOutputOrder set, but during the preparation for a
-  // shape, 2 of its atoms were changed to dummy atoms which reversed the
-  // chirality at one of the atoms, thus changing the output order, but
-  // the _smilesAtomOutputOrder wasn't updated.
+  // This is just to force the creation of the correct atom output order.
   d_smiles = MolToSmiles(*tmpMol);
+  std::vector<unsigned int> atOrder;
+  tmpMol->getProp(common_properties::_smilesAtomOutputOrder, atOrder);
+  tmpMol.reset(dynamic_cast<RWMol *>(MolOps::renumberAtoms(*tmpMol, atOrder)));
+
   if (!tmpMol->getRingInfo()->isInitialized()) {
     // Query molecules don't seem to have the ring info generated on creation.
     MolOps::findSSSR(*tmpMol);
@@ -420,14 +415,11 @@ void ShapeInput::extractAtoms(ROMol &mol, int confId,
   // need to know which are carbon atoms.
   if (((hasDummies || radsAreDummies) && opts.includeDummies) ||
       !opts.allCarbonRadii) {
-    d_carbonRadii.reset(new boost::dynamic_bitset<>(
-        !opts.atomSubset.empty() ? opts.atomSubset.size() : mol.getNumAtoms()));
+    d_carbonRadii.reset(new boost::dynamic_bitset<>(mol.getNumAtoms()));
   }
   auto conf = mol.getConformer(confId);
-  std::vector<unsigned int> atOrder;
-  mol.getProp(common_properties::_smilesAtomOutputOrder, atOrder);
-  for (auto atIdx : atOrder) {
-    Atom *atom = mol.getAtomWithIdx(atIdx);
+  for (auto atom : mol.atoms()) {
+    auto atIdx = atom->getIdx();
     // Ignore H atoms except deuterium and tritium which are treated elsewhere
     // as explicit atoms, and do use dummies if requested.  Dummy atoms
     // can also have isotope number 1.
@@ -445,7 +437,8 @@ void ShapeInput::extractAtoms(ROMol &mol, int confId,
       } else {
         double rad = 0.0;
         if (opts.atomRadii.empty()) {
-          if (atom->getAtomicNum() == 6) {
+          if ((opts.allCarbonRadii && atom->getAtomicNum()) ||
+              atom->getAtomicNum() == 6) {
             (*d_carbonRadii)[atIdx] = true;
           }
           rad = getStandardAtomRadius(atom->getAtomicNum());
@@ -454,7 +447,8 @@ void ShapeInput::extractAtoms(ROMol &mol, int confId,
             rad = atom->getProp<double>("BespokeRadius");
           } else {
             rad = getStandardAtomRadius(atom->getAtomicNum());
-            if (atom->getAtomicNum() == 6) {
+            if ((opts.allCarbonRadii && atom->getAtomicNum()) ||
+                atom->getAtomicNum() == 6) {
               (*d_carbonRadii)[atIdx] = true;
             }
           }
