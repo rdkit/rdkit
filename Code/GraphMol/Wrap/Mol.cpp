@@ -241,7 +241,7 @@ class ReadWriteMol : public RWMol {
   }
 
  private:
-  boost::shared_ptr<RWMol> dp_mol;
+  std::shared_ptr<RWMol> dp_mol;
 };
 
 std::string molClassDoc =
