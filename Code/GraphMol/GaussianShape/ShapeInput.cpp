@@ -112,20 +112,22 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   calcNormalization();
   calcExtremes();
   std::vector<double> gradConverters(12 * (d_numAtoms + d_numFeats));
-  d_selfOverlapVol =
-      calcVolAndGrads(d_coords.data(), d_numAtoms, d_carbonRadii.get(),
-                      d_coords.data(), d_numAtoms, d_carbonRadii.get(),
-                      gradConverters, overlayOpts.useDistCutoff,
-                      overlayOpts.distCutoff * overlayOpts.distCutoff);
+  d_selfOverlapVol = calcVolAndGrads(
+      d_coords.data(), d_alphas.data(), d_numAtoms, d_carbonRadii.get(),
+      d_coords.data(), d_alphas.data(), d_numAtoms, d_carbonRadii.get(),
+      gradConverters, overlayOpts.useDistCutoff,
+      overlayOpts.distCutoff * overlayOpts.distCutoff);
   d_selfOverlapColor = calcVolAndGrads(
-      d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
-      d_coords.data() + 4 * d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
+      d_coords.data() + 3 * d_numAtoms, d_alphas.data() + d_numAtoms,
+      d_numFeats, d_types.data() + d_numAtoms, d_coords.data() + 3 * d_numAtoms,
+      d_alphas.data() + d_numAtoms, d_numFeats, d_types.data() + d_numAtoms,
       d_numAtoms, gradConverters, overlayOpts.useDistCutoff,
       overlayOpts.distCutoff * overlayOpts.distCutoff, nullptr, nullptr);
 }
 
 ShapeInput::ShapeInput(const ShapeInput &other)
     : d_coords(other.d_coords),
+      d_alphas(other.d_alphas),
       d_types(other.d_types),
       d_numAtoms(other.d_numAtoms),
       d_numFeats(other.d_numFeats),
@@ -147,6 +149,7 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
     return *this;
   }
   d_coords = other.d_coords;
+  d_alphas = other.d_alphas;
   d_types = other.d_types;
   d_numAtoms = other.d_numAtoms;
   d_numFeats = other.d_numFeats;
@@ -174,7 +177,7 @@ std::vector<RDGeom::Point3D> ShapeInput::getAtomPoints(
     numPoints += getNumFeatures();
   }
   atomPoints.reserve(numPoints);
-  for (unsigned int i = 0; i < 4 * numPoints; i += 4) {
+  for (unsigned int i = 0; i < 3 * numPoints; i += 3) {
     atomPoints.emplace_back(
         RDGeom::Point3D(d_coords[i], d_coords[i + 1], d_coords[i + 2]));
   }
@@ -276,11 +279,11 @@ std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors) const {
   }
   Conformer *conf = new Conformer(num);
   const auto &shapeCds = getCoords();
-  for (unsigned int i = 0; i < num; i++) {
-    auto &pos = conf->getAtomPos(i);
-    pos.x = shapeCds[4 * i];
-    pos.y = shapeCds[4 * i + 1];
-    pos.z = shapeCds[4 * i + 2];
+  for (unsigned int i = 0, j = 0; i < 3 * num; i += 3, ++j) {
+    auto &pos = conf->getAtomPos(j);
+    pos.x = shapeCds[i];
+    pos.y = shapeCds[i + 1];
+    pos.z = shapeCds[i + 2];
   }
   mol->addConformer(conf, true);
   return mol;
@@ -299,7 +302,8 @@ double getStandardAtomRadius(unsigned int atomicNum) {
 }  // namespace
 void ShapeInput::extractAtoms(const ROMol &mol, int confId,
                               const ShapeInputOptions &opts) {
-  d_coords.reserve(mol.getNumAtoms() * 4);
+  d_coords.reserve(mol.getNumAtoms() * 3);
+  d_alphas.reserve(mol.getNumAtoms());
   if (!opts.allCarbonRadii) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(
         !opts.atomSubset.empty() ? opts.atomSubset.size() : mol.getNumAtoms()));
@@ -324,7 +328,7 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
       d_coords.push_back(pos.y);
       d_coords.push_back(pos.z);
       if (opts.allCarbonRadii) {
-        d_coords.push_back(KAPPA / (1.7 * 1.7));
+        d_alphas.push_back(KAPPA / (1.7 * 1.7));
       } else {
         double rad = 0.0;
         if (opts.atomRadii.empty()) {
@@ -344,12 +348,12 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
             rad = it->second;
           }
         }
-        d_coords.push_back(KAPPA / (rad * rad));
+        d_alphas.push_back(KAPPA / (rad * rad));
       }
     }
     ++idx;
   }
-  d_numAtoms = d_coords.size() / 4;
+  d_numAtoms = d_coords.size() / 3;
   d_types.resize(d_numAtoms);
   d_numFeats = 0;
 }
@@ -477,14 +481,15 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
           d_coords.push_back(featPos.x);
           d_coords.push_back(featPos.y);
           d_coords.push_back(featPos.z);
-          d_coords.push_back(KAPPA / (radius_color * radius_color));
+          d_alphas.push_back(KAPPA / (radius_color * radius_color));
           d_numFeats++;
         }
       }
       ++pattIdx;
     }
   } else {
-    // Just copy them directly
+    // Just copy them directly except that the last is a radius, so convert
+    // to alpha.
     for (const auto &f : opts.customFeatures) {
       d_types.push_back(std::get<0>(f));
       d_numFeats++;
@@ -492,7 +497,8 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
       d_coords.push_back(pos.x);
       d_coords.push_back(pos.y);
       d_coords.push_back(pos.z);
-      d_coords.push_back(std::get<2>(f));
+      auto rad = std::get<2>(f);
+      d_alphas.push_back(KAPPA / (rad * rad));
     }
   }
 }
@@ -515,7 +521,7 @@ void ShapeInput::calcNormalization() {
     }
   }
   d_canonTrans = std::array<double, 3>{0.0, 0.0, 0.0};
-  for (unsigned int i = 0; i < 4 * d_numAtoms; i += 4) {
+  for (unsigned int i = 0; i < 3 * d_numAtoms; i += 3) {
     d_canonTrans[0] -= d_coords[i];
     d_canonTrans[1] -= d_coords[i + 1];
     d_canonTrans[2] -= d_coords[i + 2];
@@ -528,25 +534,25 @@ void ShapeInput::calcNormalization() {
 
 void ShapeInput::calculateExtremes() {
   d_extremePoints = std::array<size_t, 6>{0, 0, 0, 0, 0, 0};
-  for (size_t i = 0, j = 0; i < d_coords.size(); i += 4, ++j) {
-    if (d_coords[i] < d_coords[4 * d_extremePoints[0]]) {
+  for (size_t i = 0, j = 0; i < d_coords.size(); i += 3, ++j) {
+    if (d_coords[i] < d_coords[3 * d_extremePoints[0]]) {
       d_extremePoints[0] = j;
     }
-    if (d_coords[i] > d_coords[4 * d_extremePoints[3]]) {
+    if (d_coords[i] > d_coords[3 * d_extremePoints[3]]) {
       d_extremePoints[3] = j;
     }
 
-    if (d_coords[i + 1] < d_coords[4 * d_extremePoints[1] + 1]) {
+    if (d_coords[i + 1] < d_coords[3 * d_extremePoints[1] + 1]) {
       d_extremePoints[1] = j;
     }
-    if (d_coords[i + 1] > d_coords[4 * d_extremePoints[4] + 1]) {
+    if (d_coords[i + 1] > d_coords[3 * d_extremePoints[4] + 1]) {
       d_extremePoints[4] = j;
     }
 
-    if (d_coords[i + 2] < d_coords[4 * d_extremePoints[2] + 2]) {
+    if (d_coords[i + 2] < d_coords[3 * d_extremePoints[2] + 2]) {
       d_extremePoints[2] = j;
     }
-    if (d_coords[i + 2] > d_coords[4 * d_extremePoints[5] + 2]) {
+    if (d_coords[i + 2] > d_coords[3 * d_extremePoints[5] + 2]) {
       d_extremePoints[5] = j;
     }
   }
@@ -569,7 +575,7 @@ void writeCoords(const std::vector<double> &shape, const std::string &label,
   if (lineEnd == '\n') {
     std::cout << lineEnd;
   }
-  for (size_t i = 0; i < shape.size(); i += 4) {
+  for (size_t i = 0; i < shape.size(); i += 3) {
     std::cout << shape[i] << "," << shape[i + 1] << "," << shape[i + 2]
               << lineEnd;
   }
@@ -581,7 +587,7 @@ void writeCoords(const double *shape, unsigned int numPts,
   if (lineEnd == '\n') {
     std::cout << lineEnd;
   }
-  for (unsigned int i = 0; i < numPts * 4; i += 4) {
+  for (unsigned int i = 0; i < numPts * 3; i += 3) {
     std::cout << shape[i] << "," << shape[i + 1] << "," << shape[i + 2]
               << lineEnd;
   }
@@ -597,7 +603,7 @@ void copyTransform(const RDGeom::Transform3D &src, RDGeom::Transform3D &dest) {
 
 void applyTransformToShape(std::vector<double> &shape,
                            RDGeom::Transform3D &xform) {
-  for (size_t i = 0; i < shape.size(); i += 4) {
+  for (size_t i = 0; i < shape.size(); i += 3) {
     RDGeom::Point3D pos{shape[i], shape[i + 1], shape[i + 2]};
     xform.TransformPoint(pos);
     shape[i] = pos.x;
@@ -608,19 +614,18 @@ void applyTransformToShape(std::vector<double> &shape,
 
 void applyTransformToShape(const double *inShape, double *outShape,
                            size_t numPoints, RDGeom::Transform3D &xform) {
-  for (size_t i = 0; i < 4 * numPoints; i += 4) {
+  for (size_t i = 0; i < 3 * numPoints; i += 3) {
     RDGeom::Point3D pos{inShape[i], inShape[i + 1], inShape[i + 2]};
     xform.TransformPoint(pos);
     outShape[i] = pos.x;
     outShape[i + 1] = pos.y;
     outShape[i + 2] = pos.z;
-    outShape[i + 3] = inShape[i + 3];
   }
 }
 
 void translateShape(std::vector<double> &shape,
                     const RDGeom::Point3D &translation) {
-  for (size_t i = 0; i < shape.size(); i += 4) {
+  for (size_t i = 0; i < shape.size(); i += 3) {
     shape[i] += translation.x;
     shape[i + 1] += translation.y;
     shape[i + 2] += translation.z;
@@ -629,11 +634,10 @@ void translateShape(std::vector<double> &shape,
 
 void translateShape(const double *inShape, double *outShape, size_t numPoints,
                     const RDGeom::Point3D &translation) {
-  for (size_t i = 0; i < 4 * numPoints; i += 4) {
+  for (size_t i = 0; i < 3 * numPoints; i += 3) {
     outShape[i] = inShape[i] + translation.x;
     outShape[i + 1] = inShape[i + 1] + translation.y;
     outShape[i + 2] = inShape[i + 2] + translation.z;
-    outShape[i + 3] = inShape[i + 3];
   }
 }
 

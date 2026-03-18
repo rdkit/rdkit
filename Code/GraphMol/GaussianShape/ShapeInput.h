@@ -140,9 +140,9 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #endif
   }
 
-  // Note that the coords returned is a vector size 4*getNumAtoms()
-  // with the 4th value per atom being the alpha paramter.
+  // Note that the coords returned is a vector size 3*getNumAtoms()
   const std::vector<double> &getCoords() const { return d_coords; }
+  const std::vector<double> &getAlphas() const { return d_alphas; }
   //! Fetch the coordinates of the atoms and optionally features.
   std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors = false) const;
   bool getNormalized() const { return d_normalized; }
@@ -179,6 +179,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   template <class Archive>
   void serialize(Archive &ar, const unsigned int) {
     ar & d_coords;
+    ar & d_alphas;
     ar & d_types;
     ar & d_numAtoms;
     ar & d_numFeats;
@@ -207,9 +208,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
   void calculateExtremes();
 
-  std::vector<double> d_coords;  // The coordinates and alpha parameter for the
-  // atoms and features, packed as 4 floats per
-  // item - x, y, z and alpha. alpha is KAPPA / (r * r) where r is the radius
+  std::vector<double> d_coords;  // The coordinates for the atoms and features,
+  // packed as 3 floats per item - x, y, z
+  std::vector<double> d_alphas;  // The alpha values for the atoms and features.
+  // alpha is KAPPA / (r * r) where r is the radius
   // of the atom.  This is not used if using all_atoms_carbon mode.
   std::vector<int> d_types;  // The feature types.  The size is the same
   // as the number of coordinates, padded with 0

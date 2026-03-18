@@ -48,7 +48,7 @@ bool checkMolsHaveRoughlySameCoords(const ROMol &m1, const ROMol &m2,
 
 TEST_CASE("basic alignment") {
   std::string dirName = getenv("RDBASE");
-  dirName += "/External/pubchem_shape/test_data";
+  dirName += "/Code/GraphMol/GaussianShape/test_data";
 
   auto suppl = v2::FileParsers::SDMolSupplier(dirName + "/test1.sdf");
   auto refT = suppl[0];
@@ -271,8 +271,8 @@ TEST_CASE("Overlay onto shape bug (Github8462)") {
   CHECK_THAT(scores1[1], Catch::Matchers::WithinAbs(1.0, 0.005));
   CHECK_THAT(scores1[2], Catch::Matchers::WithinAbs(1.0, 0.005));
   for (unsigned int i = 0; i < m3.getNumAtoms(); ++i) {
-    RDGeom::Point3D pos1(s1.getCoords()[4 * i], s1.getCoords()[4 * i + 1],
-                         s1.getCoords()[4 * i + 2]);
+    RDGeom::Point3D pos1(s1.getCoords()[3 * i], s1.getCoords()[3 * i + 1],
+                         s1.getCoords()[3 * i + 2]);
     auto pos2 = m3.getConformer().getAtomPos(i);
     CHECK_THAT((pos1 - pos2).length(), Catch::Matchers::WithinAbs(0.0, 0.01));
   }
@@ -557,13 +557,13 @@ TEST_CASE("custom feature points") {
   SECTION("using shapes") {
     auto shape1 = GaussianShape::ShapeInput(*m1, -1);
     // each carbonyl O gets one feature:
-    CHECK(shape1.getCoords().size() == 24);
+    CHECK(shape1.getCoords().size() == 18);
     GaussianShape::ShapeInputOptions opts2;
     opts2.customFeatures = GaussianShape::CustomFeatures{
         {1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
         {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
     auto shape2 = GaussianShape::ShapeInput(*m1, -1, opts2);
-    CHECK(shape2.getCoords().size() == 24);
+    CHECK(shape2.getCoords().size() == 18);
 
     {
       // confirm that we don't add the features if not requested.
@@ -573,7 +573,7 @@ TEST_CASE("custom feature points") {
           {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
       topts.useColors = false;
       auto tshape = GaussianShape::ShapeInput(*m1, -1, topts);
-      CHECK(tshape.getCoords().size() == 16);
+      CHECK(tshape.getCoords().size() == 12);
     }
 
     // we'll swap the features on the second shape so that the alignment has to
@@ -585,17 +585,17 @@ TEST_CASE("custom feature points") {
 
     auto m2 = ROMol(*m1);
     auto shape3 = GaussianShape::ShapeInput(m2, -1, opts3);
-    CHECK(shape3.getCoords().size() == 24);
+    CHECK(shape3.getCoords().size() == 18);
     GaussianShape::ShapeOverlayOptions overlayOpts;
     overlayOpts.optParam = 0.5;
     RDGeom::Transform3D xform;
     auto scores = AlignShape(shape2, shape3, &xform, overlayOpts);
 
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(1.000, 0.001));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(1.000, 0.001));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.999, 0.001));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.999, 0.005));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(1.000, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.998, 0.005));
     CHECK(shape3.getCoords()[0] > 0);      // x coord of first atom
-    CHECK(shape3.getCoords()[3 * 4] < 0);  // x coord of fourth atom
+    CHECK(shape3.getCoords()[3 * 3] < 0);  // x coord of fourth atom
 
     auto conf = m2.getConformer(-1);
     MolTransforms::transformConformer(conf, xform);
@@ -620,9 +620,9 @@ TEST_CASE("custom feature points") {
     overlayOpts.optParam = 0.5;
     std::vector<float> matrix(12, 0.0);
     auto scores = AlignMolecule(*m1, m2, opts2, opts3, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(1.000, 0.001));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(1.000, 0.001));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.999, 0.001));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.999, 0.005));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(1.000, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.998, 0.005));
     auto conf = m2.getConformer(-1);
     CHECK(conf.getAtomPos(0).x > 0);
     CHECK(conf.getAtomPos(3).x < 0);
@@ -637,7 +637,7 @@ TEST_CASE("Non-standard radii") {
   shapeOpts.allCarbonRadii = false;
   auto shape1 = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
 
-  CHECK(shape1.getCoords().size() == 28);
+  CHECK(shape1.getCoords().size() == 21);
   CHECK_THAT(shape1.getShapeVolume(),
              Catch::Matchers::WithinAbs(387.396, 0.005));
   // mol1 with atom 4 with an N radius and a bigger Xe.
@@ -662,7 +662,7 @@ TEST_CASE("Shape subset") {
   GaussianShape::ShapeInputOptions shapeOpts;
   shapeOpts.atomSubset = std::vector<unsigned int>{0, 1, 2, 3, 10, 11};
   auto partShape = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
-  CHECK(partShape.getCoords().size() == 28);
+  CHECK(partShape.getCoords().size() == 21);
   CHECK_THAT(partShape.getShapeVolume(),
              Catch::Matchers::WithinAbs(261.166, 0.005));
   CHECK_THAT(partShape.getColorVolume(),
@@ -670,7 +670,7 @@ TEST_CASE("Shape subset") {
 
   shapeOpts.atomSubset.clear();
   auto wholeShape = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
-  CHECK(wholeShape.getCoords().size() == 56);
+  CHECK(wholeShape.getCoords().size() == 42);
   CHECK_THAT(wholeShape.getShapeVolume(),
              Catch::Matchers::WithinAbs(556.266, 0.005));
   CHECK_THAT(wholeShape.getColorVolume(),
