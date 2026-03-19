@@ -89,8 +89,8 @@ void logInconsistentBondDirsWarning(unsigned int idx) {
 #endif
 }
 
-void setDirectionFromNeighboringBond(Bond &sourceBond, bool isSourceBondFlipped,
-                                     Bond &targetBond,
+void setDirectionFromNeighboringBond(const Bond &sourceBond,
+                                     bool isSourceBondFlipped, Bond &targetBond,
                                      bool isTargetBondFlipped) {
   auto dir = sourceBond.getBondDir();
 
