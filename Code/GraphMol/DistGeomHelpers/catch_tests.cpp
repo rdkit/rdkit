@@ -6,34 +6,33 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-
 #include <RDGeneral/test.h>
 #include <catch2/catch_all.hpp>
 
-#include "BoundsMatrixBuilder.h"
-#include "Embedder.h"
-#include <Geometry/Utils.h>
+#include <RDGeneral/RDLog.h>
+#include <GraphMol/test_fixtures.h>
+#include <GraphMol/RDKitBase.h>
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
-#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
-#include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
-#include <GraphMol/MolAlign/AlignMolecules.h>
-#include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
-#include <GraphMol/test_fixtures.h>
-#include <RDGeneral/RDLog.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
+#include <Geometry/Utils.h>
+#include "Embedder.h"
+#include "BoundsMatrixBuilder.h"
+#include <tuple>
+#include <map>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
-#include <map>
-#include <tuple>
 
 #ifdef RDK_TEST_MULTITHREADED
-#include <chrono>
 #include <csignal>
 #include <thread>
+#include <chrono>
 #endif
 
 using namespace RDKit;
