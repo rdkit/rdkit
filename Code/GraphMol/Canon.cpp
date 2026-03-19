@@ -29,7 +29,7 @@
 namespace RDKit {
 namespace Canon {
 namespace {
-static constexpr Bond::BondDir flipStereoBondDir(Bond::BondDir bondDir) {
+constexpr Bond::BondDir flipStereoBondDir(Bond::BondDir bondDir) {
   switch (bondDir) {
     case Bond::ENDUPRIGHT:
       return Bond::ENDDOWNRIGHT;
@@ -41,9 +41,8 @@ static constexpr Bond::BondDir flipStereoBondDir(Bond::BondDir bondDir) {
 }
 
 #if ENABLE_EXTRA_CHECKS
-static void checkDirCounts(const ROMol &mol,
-                           const std::vector<int8_t> &bondDirCounts,
-                           const std::vector<int8_t> &atomDirCounts) {
+void checkDirCounts(const ROMol &mol, const std::vector<int8_t> &bondDirCounts,
+                    const std::vector<int8_t> &atomDirCounts) {
   // atoms at the end of double bonds can only have 2 bons with directions
   for (auto atomCount : atomDirCounts) {
     if (atomCount < 0 || atomCount > 2) {
@@ -78,7 +77,7 @@ static void checkDirCounts(const ROMol &mol,
 }
 #endif
 
-static void logInconsistentBondDirsWarning(unsigned int idx) {
+void logInconsistentBondDirsWarning(unsigned int idx) {
   auto msg =
       std::string(
           "Conflicting single bond directions around double bond at index ") +
@@ -90,10 +89,9 @@ static void logInconsistentBondDirsWarning(unsigned int idx) {
 #endif
 }
 
-static void setDirectionFromNeighboringBond(Bond &sourceBond,
-                                            bool isSourceBondFlipped,
-                                            Bond &targetBond,
-                                            bool isTargetBondFlipped) {
+void setDirectionFromNeighboringBond(Bond &sourceBond, bool isSourceBondFlipped,
+                                     Bond &targetBond,
+                                     bool isTargetBondFlipped) {
   auto dir = sourceBond.getBondDir();
 
   // By default, both bonds on the same side of the double bond
@@ -107,10 +105,11 @@ static void setDirectionFromNeighboringBond(Bond &sourceBond,
   targetBond.setBondDir(dir);
 }
 
-static Bond::BondDir getReferenceDirection(
-    const Bond &dblBond, const Atom &refAtom, const Atom &targetAtom,
-    const Bond &refControllingBond, bool refIsFlipped, const Bond &targetBond,
-    bool targetIsFlipped) {
+Bond::BondDir getReferenceDirection(const Bond &dblBond, const Atom &refAtom,
+                                    const Atom &targetAtom,
+                                    const Bond &refControllingBond,
+                                    bool refIsFlipped, const Bond &targetBond,
+                                    bool targetIsFlipped) {
   Bond::BondDir dir = Bond::NONE;
   if (dblBond.getStereo() == Bond::STEREOE ||
       dblBond.getStereo() == Bond::STEREOTRANS) {
@@ -146,11 +145,13 @@ static Bond::BondDir getReferenceDirection(
   return dir;
 }
 
-static bool fixConflictAcrossDoubleBond(
-    const Bond &dblBond, const Atom &atom, const Bond &firstBond,
-    bool firstIsFlipped, const Bond &secondBond, bool secondIsFlipped,
-    const Atom &refAtom, const Bond &refBond, bool refIsFlipped,
-    std::vector<int8_t> &bondDirCounts, std::vector<int8_t> &atomDirCounts) {
+bool fixConflictAcrossDoubleBond(const Bond &dblBond, const Atom &atom,
+                                 const Bond &firstBond, bool firstIsFlipped,
+                                 const Bond &secondBond, bool secondIsFlipped,
+                                 const Atom &refAtom, const Bond &refBond,
+                                 bool refIsFlipped,
+                                 std::vector<int8_t> &bondDirCounts,
+                                 std::vector<int8_t> &atomDirCounts) {
   for (const auto &[bond, isFlipped] :
        {std::make_pair(firstBond, firstIsFlipped),
         std::make_pair(secondBond, secondIsFlipped)}) {
@@ -174,7 +175,7 @@ static bool fixConflictAcrossDoubleBond(
   return false;
 }
 
-static bool handleDirConflictsAcrossDoubleBond(
+bool handleDirConflictsAcrossDoubleBond(
     const Bond &dblBond, const Atom &atom1, bool atom1DirsAreConsistent,
     const Bond &firstFromAtom1, bool isFirstFromAtom1Flipped,
     const Bond &secondFromAtom1, bool isSecondFromAtom1Flipped,
@@ -282,7 +283,6 @@ bool sameSideDirsAreCompatible(const Bond &firstBond, const Bond &secondBond,
 
   return dirsMatch == dirsShouldMatch;
 }
-
 }  // namespace
 
 namespace details {
