@@ -8691,8 +8691,17 @@ M  END
     sdSup = Chem.SDMolSupplier(fileN)
     mols = list(sdSup)
     self.assertEqual(len(mols[0].GetPropsAsDict()["comment"]), 65369)
-    self.assertTrue(mols[1]!=None)
-    
+    self.assertTrue(mols[1] != None)
+
+  def testGithub9125(self):
+    m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
+    Chem.Kekulize(m1)
+    self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.DOUBLE)
+
+    m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
+    Chem.Kekulize(m1, canonical=False)
+    self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.SINGLE)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

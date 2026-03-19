@@ -924,8 +924,8 @@ void testSDWriterOptions() {
     writer.close();
 
     std::string txt = ss.str();
-    TEST_ASSERT(txt.find("  1  2  2") != std::string::npos);
-    TEST_ASSERT(txt.find("  1  2  4") == std::string::npos);
+    TEST_ASSERT(txt.find("  2  3  2") != std::string::npos);
+    TEST_ASSERT(txt.find("  2  3  4") == std::string::npos);
   }
   {
     // kekulization
@@ -940,8 +940,8 @@ void testSDWriterOptions() {
     writer.close();
 
     std::string txt = ss.str();
-    TEST_ASSERT(txt.find("  1  2  2") == std::string::npos);
-    TEST_ASSERT(txt.find("  1  2  4") != std::string::npos);
+    TEST_ASSERT(txt.find("  2  3  2") == std::string::npos);
+    TEST_ASSERT(txt.find("  2  3  4") != std::string::npos);
   }
   {
     // kekulization
@@ -957,9 +957,9 @@ void testSDWriterOptions() {
     writer.close();
 
     std::string txt = ss.str();
-    TEST_ASSERT(txt.find("  1  2  2") != std::string::npos);
-    TEST_ASSERT(txt.find("  1  2  4") != std::string::npos);
-    TEST_ASSERT(txt.find("  1  2  2") < txt.find("  1  2  4"));
+    TEST_ASSERT(txt.find("  2  3  2") != std::string::npos);
+    TEST_ASSERT(txt.find("  2  3  4") != std::string::npos);
+    TEST_ASSERT(txt.find("  2  3  2") < txt.find("  2  3  4"));
   }
   {
     // kekulization
@@ -976,9 +976,9 @@ void testSDWriterOptions() {
     writer.close();
 
     std::string txt = ss.str();
-    TEST_ASSERT(txt.find("  1  2  2") != std::string::npos);
-    TEST_ASSERT(txt.find("  1  2  4") != std::string::npos);
-    TEST_ASSERT(txt.find("  1  2  2") > txt.find("  1  2  4"));
+    TEST_ASSERT(txt.find("  2  3  2") != std::string::npos);
+    TEST_ASSERT(txt.find("  2  3  4") != std::string::npos);
+    TEST_ASSERT(txt.find("  2  3  2") > txt.find("  2  3  4"));
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
