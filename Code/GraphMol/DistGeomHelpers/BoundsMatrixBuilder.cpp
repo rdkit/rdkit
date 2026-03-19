@@ -32,7 +32,7 @@ const double DIST13_TOL = 0.04;
 const double GEN_DIST_TOL = 0.06;  //  a general distance tolerance
 const double DIST15_TOL = 0.08;
 const double VDW_SCALE_15 = 0.7;
-constexpr double H_BOND_LENGHT = 1.8;
+constexpr double H_BOND_LENGTH = 1.8;
 const double MAX_UPPER = 1000.0;
 static const double minMacrocycleRingSize = 9;
 #include <map>
@@ -255,23 +255,22 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 }
 
-bool isHBondAcceptor(const unsigned int atom_idx, const ROMol &mol) {
-  const Atom *atom = mol.getAtomWithIdx(atom_idx);
+bool isHBondAcceptor(const Atom *atom) {
   return (atom->getAtomicNum() == 7 || atom->getAtomicNum() == 8);
 }
 
-bool isHBondDonor(const unsigned int atom_idx, const ROMol &mol) {
-  const Atom *atom = mol.getAtomWithIdx(atom_idx);
-  return isHBondAcceptor(atom_idx, mol) && atom->getTotalNumHs() > 0;
+bool isHBondDonor(const Atom *atom) {
+  return isHBondAcceptor(atom) && atom->getTotalNumHs() > 0;
 }
 
-bool isHinHBondDonor(const unsigned int atom_idx, const ROMol &mol) {
-  const Atom *atom = mol.getAtomWithIdx(atom_idx);
-  auto nbrs = mol.atomNeighbors(atom); 
-  return atom->getAtomicNum() == 1 &&
-         std::any_of(nbrs.begin(), nbrs.end(), [](const Atom *nbr) {
-           return nbr->getAtomicNum() == 7 || nbr->getAtomicNum() == 8;
-         });
+bool isHinHBondDonor(const Atom *atom, const ROMol &mol) {
+  if (atom->getAtomicNum() != 1) {
+    return false;
+  }
+  auto nbrs = mol.atomNeighbors(atom);
+  return std::any_of(nbrs.begin(), nbrs.end(), [](const Atom *nbr) {
+    return nbr->getAtomicNum() == 7 || nbr->getAtomicNum() == 8;
+  });
 }
 
 void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
@@ -279,12 +278,21 @@ void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
   unsigned int npt = mmat->numRows();
   PRECONDITION(npt == mol.getNumAtoms(), "Wrong size metric matrix");
 
+  boost::dynamic_bitset<> hinHBondDonors(mol.getNumAtoms());
+  boost::dynamic_bitset<> hBondAcceptors(mol.getNumAtoms());
   for (unsigned int i = 1; i < npt; i++) {
-    auto vw1 = PeriodicTable::getTable()->getRvdw(
-        mol.getAtomWithIdx(i)->getAtomicNum());
+    const auto atomI = mol.getAtomWithIdx(i);
+    auto vw1 = PeriodicTable::getTable()->getRvdw(atomI->getAtomicNum());
+    if (isHinHBondDonor(atomI, mol)) {
+      hinHBondDonors.set(i);
+    }
+    if (isHBondAcceptor(atomI)) {
+      hBondAcceptors.set(i);
+    }
+
     for (unsigned int j = 0; j < i; j++) {
-      auto vw2 = PeriodicTable::getTable()->getRvdw(
-          mol.getAtomWithIdx(j)->getAtomicNum());
+      const auto atomJ = mol.getAtomWithIdx(j);
+      auto vw2 = PeriodicTable::getTable()->getRvdw(atomJ->getAtomicNum());
       if (mmat->getLowerBound(i, j) < DIST12_DELTA) {
         // ok this is what we are going to do
         // - for atoms that are 4 or 5 bonds apart (15 or 16 distances), we
@@ -295,11 +303,11 @@ void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
         // - for all other pairs of atoms more than 5 bonds apart we use the
         // sum of the VDW radii
         //    as the lower bound
-        // - if one of the atoms is a H of a H-bond donor and the other is 
+        // - if one of the atoms is a H of a H-bond donor and the other is
         //    an acceptor we will lower the bound to 1.8A
-        if ((isHinHBondDonor(i, mol) && isHBondAcceptor(j, mol)) 
-            || (isHBondAcceptor(i, mol) && isHinHBondDonor(j, mol))) {
-          mmat->setLowerBound(i, j, H_BOND_LENGHT);
+        if ((hinHBondDonors[i] && hBondAcceptors[j]) ||
+            (hBondAcceptors[i] && hinHBondDonors[j])) {
+          mmat->setLowerBound(i, j, H_BOND_LENGTH);
         } else if (dmat[i * npt + j] == 4.0) {
           mmat->setLowerBound(i, j, VDW_SCALE_15 * (vw1 + vw2));
         } else if (dmat[i * npt + j] == 5.0) {
