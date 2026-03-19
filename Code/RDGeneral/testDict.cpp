@@ -674,9 +674,9 @@ TEST_CASE("custom AnyTag data is destroyed through Dict lifecycle") {
     d.setVal<Bar>("mybar", b);
     REQUIRE(d.getVal<Bar>("mybar").x == 42);
   }
-  REQUIRE(count > 0);
+  REQUIRE(count == 3);
 
-  int prev = count;
+  count = 0;
   {
     Dict d;
     Bar b(7, &count);
@@ -684,7 +684,7 @@ TEST_CASE("custom AnyTag data is destroyed through Dict lifecycle") {
     Dict d2(d);
     REQUIRE(d2.getVal<Bar>("mybar").x == 7);
   }
-  REQUIRE(count > prev);
+  REQUIRE(count == 4);
 }
 
 TEST_CASE("testGithub2910") {
