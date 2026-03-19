@@ -43,7 +43,7 @@ constexpr Bond::BondDir flipStereoBondDir(Bond::BondDir bondDir) {
 #if ENABLE_EXTRA_CHECKS
 void checkDirCounts(const ROMol &mol, const std::vector<int8_t> &bondDirCounts,
                     const std::vector<int8_t> &atomDirCounts) {
-  // atoms at the end of double bonds can only have 2 bons with directions
+  // atoms at the end of double bonds can only have 2 bonds with directions
   for (auto atomCount : atomDirCounts) {
     if (atomCount < 0 || atomCount > 2) {
       throw ValueErrorException(
