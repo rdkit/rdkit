@@ -7,22 +7,21 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "BoundsMatrixBuilder.h"
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/Chirality.h>
 #include <DistGeom/BoundsMatrix.h>
+#include "BoundsMatrixBuilder.h"
+#include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <Geometry/Utils.h>
-#include <GraphMol/Chirality.h>
-#include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
-#include <GraphMol/RDKitBase.h>
-#include <bitset>
 
-#include <DistGeom/TriangleSmooth.h>
-#include <Numerics/SymmMatrix.h>
-#include <RDGeneral/Exceptions.h>
-#include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>
-#include <algorithm>
+#include <RDGeneral/RDLog.h>
+#include <RDGeneral/Exceptions.h>
+#include <Numerics/SymmMatrix.h>
+#include <DistGeom/TriangleSmooth.h>
 #include <boost/dynamic_bitset.hpp>
+#include <algorithm>
 #include <unordered_set>
 
 const double DIST12_DELTA = 0.01;
@@ -90,17 +89,6 @@ class ComputedData {
   ~ComputedData() = default;
 
   bool visitedBound(unsigned int pid, DistType maxDistType) {
-    // switch (maxDistType) {
-    //   case DistType::DIST12:
-    //     return visited12Bounds[pid];
-    //   case DistType::DIST13:
-    //     return visited12Bounds[pid] || visited13Bounds[pid];
-    //   case DistType::DIST14:
-    //     return visited12Bounds[pid] || visited13Bounds[pid] ||
-    //            visited14Bounds[pid];
-    //   default:
-    //     return false;
-    // }
     return ((maxDistType >= DistType::DIST12 && visited12Bounds[pid]) ||
             (maxDistType >= DistType::DIST13 && visited13Bounds[pid]) ||
             (maxDistType >= DistType::DIST14 && visited14Bounds[pid]));
@@ -792,10 +780,6 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   }
   // std::cerr << "7: " << aid1 << "-" << aid4 << std::endl;
 
-  // Note: we do not set visitedBounds here since 1-4 can be overwritten by
-  // other 1-4s or 1-5s if they are more specific
-  // mmat->setLowerBoundIfBetter(aid1, aid4, dl);
-  // mmat->setUpperBoundIfBetter(aid1, aid4, du);
   accumData.visited14Bounds.set(pid);
   _checkAndSetBounds(aid1, aid4, dl, du, mmat);
 }
@@ -1175,8 +1159,6 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16) &&
           (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
         // this is *S-S* situation
-        // FIX: this cannot be right is sulfur has more than two coordinated
-        // the torsion angle is 90 deg
         dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, M_PI / 2) -
              GEN_DIST_TOL;
         du = dl + 2 * GEN_DIST_TOL;
@@ -1301,8 +1283,6 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       dl -= GEN_DIST_TOL;
       du += GEN_DIST_TOL;
     }
-    // mmat->setLowerBoundIfBetter(aid1, aid4, dl);
-    // mmat->setUpperBoundIfBetter(aid1, aid4, du);
     _checkAndSetBounds(aid1, aid4, dl, du, mmat);
     accumData.paths14.push_back(path14);
     accumData.visited14Bounds.set(pid);
@@ -1456,8 +1436,6 @@ void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
   // std::cerr << "1: " << aid1 << "-" << aid4 << ": " << dl << " -> " << du
   //           << std::endl;
   _checkAndSetBounds(aid1, aid4, dl, du, mmat);
-  // mmat->setLowerBoundIfBetter(aid1, aid4, dl);
-  // mmat->setUpperBoundIfBetter(aid1, aid4, du);
   accumData.paths14.push_back(path14);
   accumData.visited14Bounds.set(pid);
 }
@@ -1568,8 +1546,6 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
       if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16) &&
           (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
         // this is *S-S* situation
-        // FIX: this cannot be right is sulfur has more than two coordinated
-        // the torsion angle is 90 deg
         dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, M_PI / 2) -
              GEN_DIST_TOL;
         du = dl + 2 * GEN_DIST_TOL;
@@ -1652,8 +1628,6 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
     // std::cerr<<"2: "<<aid1<<"-"<<aid4<<std::endl;
 
     // we only overwrite bounds if they are not 1-2 nor 1-3 distances
-    // mmat->setUpperBoundIfBetter(aid1, aid4, du);
-    // mmat->setLowerBoundIfBetter(aid1, aid4, dl);
     _checkAndSetBounds(aid1, aid4, dl, du, mmat);
     accumData.paths14.push_back(path14);
     accumData.visited14Bounds.set(pid);
@@ -2143,14 +2117,6 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
         // d="<<dmat[std::max(aid1,aid5)*mmat->numRows()+std::min(aid1,aid5)]<<std::endl;
         continue;
       }
-
-      // unsigned int pid =
-      //     std::min(aid1, aid5) * mol.getNumAtoms() + std::max(aid1, aid5);
-
-      // if (accumData.visitedBounds[pid]) {
-      //   // if this is already a 1-3 or 1-2 distance; do not overwrite
-      //   return;
-      // }
 
       if (aid1 != aid5) {  // FIX: do we need this
         unsigned int pid1 = aid1 * na + aid5;

@@ -222,7 +222,11 @@ TEST_CASE("EmbedParameters to JSON") {
     MolOps::addHs(*mol);
     DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(3));
     DGeomHelpers::initBoundsMat(mat);
-    DGeomHelpers::setTopolBounds(*mol, mat, true, false, false);
+    bool set15bounds = true;
+    bool scaleVDW = false;
+    bool useMacrocycle14config = false;
+    DGeomHelpers::setTopolBounds(*mol, mat, set15bounds, scaleVDW,
+                                 useMacrocycle14config);
     ps.boundsMat = mat;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
@@ -815,7 +819,12 @@ TEST_CASE("Macrocycle bounds matrix") {
 
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-    DGeomHelpers::setTopolBounds(*mol, bm, true, false, true);
+
+    bool set15bounds = true;
+    bool scaleVDW = false;
+    bool useMacrocycle14config = true;
+    DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                 useMacrocycle14config);
     CHECK(bm->getLowerBound(1, 18) > 2.6);
     CHECK(bm->getLowerBound(1, 18) < 2.7);
     CHECK(bm->getLowerBound(4, 17) > 2.6);
@@ -1083,7 +1092,12 @@ TEST_CASE("No overlapping atoms") {
   MolOps::addHs(*mol);
   DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
   DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-  DGeomHelpers::setTopolBounds(*mol, bm, true, false, true);
+
+  bool set15bounds = true;
+  bool scaleVDW = false;
+  bool useMacrocycle14config = true;
+  DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                               useMacrocycle14config);
   auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
   CHECK(cids.size() == 10);
   for (const auto &cid : cids) {
@@ -1256,21 +1270,8 @@ TEST_CASE("Torsion of non-sulfide *S-S*") {
       double bl2 = (bm->getUpperBound(2, 3) + bm->getLowerBound(2, 3)) / 2;
       double bl3 = (bm->getUpperBound(3, 5) + bm->getLowerBound(3, 5)) / 2;
 
-      // 1-3 to angle
-      // double distAngl12 = (bm->getUpperBound(0, 3) + bm->getLowerBound(0, 3))
-      // / 2; double distAngl23 = (bm->getUpperBound(2, 5) +
-      // bm->getLowerBound(2, 5)) / 2;
-
-      // std::cout << std::pow(bl1, 2) + std::pow(bl2, 2) - std::pow(distAngl12,
-      // 2) << "; " << 2*bl1*bl2 << std::endl;
-
-      // TODO change this
-      double ba12 =
-          109.5 * M_PI / 180;  // std::acos((std::pow(bl1, 2) + std::pow(bl2, 2)
-                               // - std::pow(distAngl12, 2))/2*bl1*bl2);
-      double ba23 =
-          109.5 * M_PI / 180;  // std::acos((std::pow(bl2, 2) + std::pow(bl3, 2)
-                               // - std::pow(distAngl23, 2))/2*bl2*bl3);
+      double ba12 = 109.5 * M_PI / 180;
+      double ba23 = 109.5 * M_PI / 180;
 
       double opt_14_cis = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
       double opt_14_trans =
@@ -1332,16 +1333,26 @@ TEST_CASE("Overwritten bounds") {
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
 
+      bool set15bounds = false;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = false;
+      bool set13bounds = true;
+
       // setting 1-3 distances
-      DGeomHelpers::setTopolBounds(*m, bm, false, false, false, true, false,
-                                   true);
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
 
       DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
 
       // NOT setting 1-3 distances
-      DGeomHelpers::setTopolBounds(*m, bm2, false, false, false, true, false,
-                                   false);
+      set13bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
 
       // 1-2 distances should be the same
       CHECK(bm->getLowerBound(0, 1) == bm2->getLowerBound(0, 1));
@@ -1357,14 +1368,26 @@ TEST_CASE("Overwritten bounds") {
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
 
+      bool set15bounds = false;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = true;
+
       // setting 1-4 distances
-      DGeomHelpers::setTopolBounds(*m, bm, false, false, false, true, true);
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
 
       DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
 
       // NOT setting 1-4 distances
-      DGeomHelpers::setTopolBounds(*m, bm2, false, false, false, true, false);
+      set14bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
 
       // 1-2 distances should be the same
       CHECK(bm->getLowerBound(0, 1) == bm2->getLowerBound(0, 1));
@@ -1380,14 +1403,26 @@ TEST_CASE("Overwritten bounds") {
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
 
+      bool set15bounds = false;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = true;
+
       // setting 1-4 distances
-      DGeomHelpers::setTopolBounds(*m, bm, false, false, false, true, true);
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
 
       DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
 
       // NOT setting 1-4 distances
-      DGeomHelpers::setTopolBounds(*m, bm2, false, false, false, true, false);
+      set14bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
 
       // 1-2 distances should be the same
       CHECK(bm->getLowerBound(0, 2) == bm2->getLowerBound(0, 2));
@@ -1403,14 +1438,17 @@ TEST_CASE("Overwritten bounds") {
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
 
+      bool set15bounds = true;
+
       // setting 1-5 distances
-      DGeomHelpers::setTopolBounds(*m, bm, true);
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds);
 
       DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
 
       // NOT setting 1-5 distances
-      DGeomHelpers::setTopolBounds(*m, bm2, false);
+      set15bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds);
 
       // 1-2 distances should be the same
       CHECK(bm->getLowerBound(0, 1) == bm2->getLowerBound(0, 1));
@@ -1426,14 +1464,17 @@ TEST_CASE("Overwritten bounds") {
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
 
+      bool set15bounds = true;
+
       // setting 1-5 distances
-      DGeomHelpers::setTopolBounds(*m, bm, true);
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds);
 
       DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
 
       // NOT setting 1-5 distances
-      DGeomHelpers::setTopolBounds(*m, bm2, false);
+      set15bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds);
 
       // 1-3 distances should be the same
       CHECK(bm->getLowerBound(0, 2) == bm2->getLowerBound(0, 2));
@@ -1449,14 +1490,17 @@ TEST_CASE("Overwritten bounds") {
       DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
 
+      bool set15bounds = true;
+
       // setting 1-5 distances
-      DGeomHelpers::setTopolBounds(*m, bm, true);
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds);
 
       DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
       DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
 
       // NOT setting 1-5 distances
-      DGeomHelpers::setTopolBounds(*m, bm2, false);
+      set15bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds);
 
       // 1-4 distances should be the same
       CHECK(bm->getLowerBound(0, 3) == bm2->getLowerBound(0, 3));
