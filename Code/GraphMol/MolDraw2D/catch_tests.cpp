@@ -4761,6 +4761,47 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   auto m1 = "CCO"_smiles;
   REQUIRE(m1);
   const std::string legend("Ethanol");
+  auto get_legend_xy = [](const std::string &text, double &x, double &y) {
+    std::smatch match;
+    std::regex textRgx(
+        "<text x='(-?[0-9]+\\.?[0-9]*)' y='(-?[0-9]+\\.?[0-9]*)' class='legend'");
+    if (std::regex_search(text, match, textRgx) && match.size() == 3) {
+      x = std::stod(match[1].str());
+      y = std::stod(match[2].str());
+      return true;
+    }
+    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+                       "(-?[0-9]+\\.?[0-9]*)");
+    if (std::regex_search(text, match, pathRgx) && match.size() == 3) {
+      x = std::stod(match[1].str());
+      y = std::stod(match[2].str());
+      return true;
+    }
+    return false;
+  };
+  auto get_all_legend_xy = [](const std::string &text) {
+    std::vector<std::pair<double, double>> coords;
+    std::regex textRgx(
+        "<text x='(-?[0-9]+\\.?[0-9]*)' y='(-?[0-9]+\\.?[0-9]*)' class='legend'");
+    for (auto it = std::sregex_iterator(text.begin(), text.end(), textRgx);
+         it != std::sregex_iterator(); ++it) {
+      coords.emplace_back(std::stod((*it)[1].str()), std::stod((*it)[2].str()));
+    }
+    if (!coords.empty()) {
+      return coords;
+    }
+    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+                       "(-?[0-9]+\\.?[0-9]*)");
+    for (auto it = std::sregex_iterator(text.begin(), text.end(), pathRgx);
+         it != std::sregex_iterator(); ++it) {
+      coords.emplace_back(std::stod((*it)[1].str()), std::stod((*it)[2].str()));
+    }
+    return coords;
+  };
+  double top_x = 0.0, top_y = 0.0;
+  double bottom_x = 0.0, bottom_y = 0.0;
+  double left_x = 0.0, left_y = 0.0;
+  double right_x = 0.0, right_y = 0.0;
   SECTION("Top") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
     drawer.drawOptions().legendPosition =
@@ -4769,6 +4810,10 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
     CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, top_x, top_y));
+    std::ofstream outs("testLegendPosition_top.svg");
+    outs << text;
+    outs.flush();
   }
   SECTION("Left with vertical text") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
@@ -4779,15 +4824,42 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
     CHECK(text.find("class='legend'") != std::string::npos);
+    auto coords = get_all_legend_xy(text);
+    REQUIRE(coords.size() > 1);
+    for (size_t i = 1; i < coords.size(); ++i) {
+      CHECK(coords[i].second > coords[i - 1].second);
+    }
+    std::ofstream outs("testLegendPosition_left_vertical.svg");
+    outs << text;
+    outs.flush();
   }
-  SECTION("Right") {
+  SECTION("Left horizontal") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
     drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Right;
+        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendVerticalText = false;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
     CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, left_x, left_y));
+    std::ofstream outs("testLegendPosition_left_horizontal.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Right horizontal") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Right;
+    drawer.drawOptions().legendVerticalText = false;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, right_x, right_y));
+    std::ofstream outs("testLegendPosition_right_horizontal.svg");
+    outs << text;
+    outs.flush();
   }
   SECTION("Bottom unchanged default") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
@@ -4797,6 +4869,46 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
     CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, bottom_x, bottom_y));
+    std::ofstream outs("testLegendPosition_bottom.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Top appears above Bottom") {
+    MolDraw2DSVG drawerTop(200, 200, -1, -1, NO_FREETYPE);
+    drawerTop.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Top;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawerTop, *m1, legend);
+    drawerTop.finishDrawing();
+    auto topText = drawerTop.getDrawingText();
+    CHECK(get_legend_xy(topText, top_x, top_y));
+
+    MolDraw2DSVG drawerBottom(200, 200, -1, -1, NO_FREETYPE);
+    drawerBottom.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Bottom;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawerBottom, *m1, legend);
+    drawerBottom.finishDrawing();
+    auto bottomText = drawerBottom.getDrawingText();
+    CHECK(get_legend_xy(bottomText, bottom_x, bottom_y));
+    CHECK(top_y < bottom_y);
+  }
+  SECTION("Left appears left of Right for horizontal side legends") {
+    MolDraw2DSVG drawerLeft(200, 200, -1, -1, NO_FREETYPE);
+    drawerLeft.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
+    drawerLeft.drawOptions().legendVerticalText = false;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawerLeft, *m1, legend);
+    drawerLeft.finishDrawing();
+    auto leftText = drawerLeft.getDrawingText();
+    CHECK(get_legend_xy(leftText, left_x, left_y));
+
+    MolDraw2DSVG drawerRight(200, 200, -1, -1, NO_FREETYPE);
+    drawerRight.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Right;
+    drawerRight.drawOptions().legendVerticalText = false;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawerRight, *m1, legend);
+    drawerRight.finishDrawing();
+    auto rightText = drawerRight.getDrawingText();
+    CHECK(get_legend_xy(rightText, right_x, right_y));
+    CHECK(left_x < right_x);
   }
   SECTION("Long vertical side legend fits panel height") {
     const std::string longName(48, 'M');
@@ -4808,7 +4920,12 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, longName);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
+    // At this size the fitted legend can be very small but should still be
+    // present in the SVG and within the panel.
     CHECK(text.find("class='legend'") != std::string::npos);
+    std::ofstream outs("testLegendPosition_long_vertical.svg");
+    outs << text;
+    outs.flush();
   }
 }
 

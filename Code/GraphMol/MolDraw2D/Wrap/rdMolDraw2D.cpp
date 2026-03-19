@@ -928,7 +928,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "fraction of the draw panel to be used for the legend if present")
       .def_readwrite(
           "legendPosition", &RDKit::MolDrawOptions::legendPosition,
-          "legend position: 0=Bottom, 1=Top, 2=Left, 3=Right")
+          "legend position enum. Default=Bottom. "
+          "Values: LegendPosition.Bottom, LegendPosition.Top, "
+          "LegendPosition.Left, LegendPosition.Right.")
       .def_readwrite(
           "legendVerticalText", &RDKit::MolDrawOptions::legendVerticalText,
           "when legend is Left or Right, draw text vertically (one char per line)")

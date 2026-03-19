@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <boost/algorithm/string.hpp>
 
 #include <Geometry/Transform2D.h>
 #include <Geometry/Transform3D.h>
@@ -1835,6 +1836,209 @@ void DrawMol::partitionForLegend() {
   }
 }
 
+namespace {
+
+void calc_legend_dims(const std::vector<std::string> &legend_bits,
+                      double relFontScale, const DrawColour &legendColour,
+                      DrawText &textDrawer, double &total_width,
+                      double &total_height) {
+  total_width = total_height = 0.0;
+  for (const auto &bit : legend_bits) {
+    double height, width;
+    DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
+                      Point2D(0.0, 0.0), legendColour, textDrawer);
+    da.getDimensions(width, height);
+    total_height += height;
+    total_width = std::max(total_width, width);
+  }
+}
+
+double calc_line_gap(const DrawText &textDrawer, bool vertText,
+                     double relFontScale) {
+  const double font_px = textDrawer.fontSize() * relFontScale;
+  if (vertText) {
+    return std::max(1.0, font_px * 0.35);
+  }
+  return std::max(2.0, font_px * 0.15);
+}
+
+std::vector<std::string> split_legend_bits(const std::string &legend,
+                                           bool vertText) {
+  std::vector<std::string> legend_bits;
+  if (vertText) {
+    legend_bits.reserve(legend.size());
+    for (char c : legend) {
+      if (c != '\n') {
+        legend_bits.emplace_back(1, c);
+      }
+    }
+    return legend_bits;
+  }
+  boost::split(legend_bits, legend, boost::is_any_of("\n"));
+  legend_bits.erase(std::remove_if(legend_bits.begin(), legend_bits.end(),
+                                   [](const std::string &s) {
+                                     return s.empty();
+                                   }),
+                    legend_bits.end());
+  return legend_bits;
+}
+
+void place_bottom_legend(const std::vector<std::string> &legend_bits,
+                         double relFontScale, const DrawColour &legendColour,
+                         DrawText &textDrawer, double baseX, double baseY,
+                         double drawWidth, double drawHeight,
+                         std::vector<std::unique_ptr<DrawAnnotation>> &legends) {
+  Point2D loc(baseX + drawWidth / 2.0, baseY + drawHeight);
+  for (const auto &bit : legend_bits) {
+    legends.emplace_back(new DrawAnnotation(bit, TextAlignType::MIDDLE, "legend",
+                                            relFontScale, loc, legendColour,
+                                            textDrawer));
+  }
+  double xmin, xmax, ymin, ymax;
+  double lastAbove = 0.0;
+  for (int i = static_cast<int>(legends.size()) - 1; i >= 0; --i) {
+    xmin = ymin = std::numeric_limits<double>::max();
+    xmax = ymax = std::numeric_limits<double>::lowest();
+    legends[i]->findExtremes(xmin, xmax, ymin, ymax);
+    double thisBelow = legends[i]->pos_.y - ymax;
+    double thisAbove = legends[i]->pos_.y - ymin;
+    if (i == static_cast<int>(legends.size()) - 1) {
+      legends[i]->pos_.y += thisBelow;
+    } else {
+      legends[i]->pos_.y = legends[i + 1]->pos_.y + thisBelow - lastAbove;
+    }
+    lastAbove = thisAbove;
+  }
+}
+
+void place_top_legend(const std::vector<std::string> &legend_bits,
+                      double relFontScale, const DrawColour &legendColour,
+                      DrawText &textDrawer, double baseX, double baseY,
+                      double drawWidth, double drawHeight, int legendHeight,
+                      std::vector<std::unique_ptr<DrawAnnotation>> &legends) {
+  const double gap = calc_line_gap(textDrawer, false, relFontScale);
+  double total_h = 0.0;
+  for (size_t i = 0; i < legend_bits.size(); ++i) {
+    double height, width;
+    DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                      relFontScale, Point2D(0.0, 0.0), legendColour, textDrawer);
+    da.getDimensions(width, height);
+    total_h += height;
+    if (i + 1 < legend_bits.size()) {
+      total_h += gap;
+    }
+  }
+  const double band_h = legendHeight > 0 ? double(legendHeight) : drawHeight;
+  double y = baseY + (band_h - total_h) / 2.0;
+  for (size_t i = 0; i < legend_bits.size(); ++i) {
+    double height, width;
+    DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                      relFontScale, Point2D(0.0, 0.0), legendColour, textDrawer);
+    da.getDimensions(width, height);
+    y += height / 2.0;
+    Point2D loc(baseX + drawWidth / 2.0, y);
+    legends.emplace_back(new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE,
+                                            "legend", relFontScale, loc,
+                                            legendColour, textDrawer));
+    y += height / 2.0;
+    if (i + 1 < legend_bits.size()) {
+      y += gap;
+    }
+  }
+}
+
+void place_side_legend(const std::vector<std::string> &legend_bits,
+                       double relFontScale, const DrawColour &legendColour,
+                       DrawText &textDrawer, bool vertText, bool is_left,
+                       double baseX, double baseY, int legendWidth, int molWidth,
+                       double drawWidth, double drawHeight, double marginPadding,
+                       std::vector<std::unique_ptr<DrawAnnotation>> &legends) {
+  double stripCentreX = 0.0;
+  if (vertText) {
+    stripCentreX = is_left ? baseX + legendWidth / 2.0
+                           : baseX + drawWidth - legendWidth / 2.0;
+  }
+  const double stripCentreY = baseY + drawHeight / 2.0;
+  const double gap = calc_line_gap(textDrawer, vertText, relFontScale);
+  if (!vertText) {
+    double maxLineW = 0.0;
+    for (const auto &bit : legend_bits) {
+      double h = 0.0, w = 0.0;
+      DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
+                        Point2D(0.0, 0.0), legendColour, textDrawer);
+      da.getDimensions(w, h);
+      maxLineW = std::max(maxLineW, w);
+    }
+    const double pad = std::max(8.0, marginPadding * drawWidth);
+    if (is_left) {
+      const double molPanelLeft = baseX + static_cast<double>(legendWidth);
+      stripCentreX = molPanelLeft - pad - maxLineW / 2.0;
+      stripCentreX = std::max(stripCentreX, baseX + maxLineW / 2.0 + 2.0);
+    } else {
+      const double molPanelRight = baseX + static_cast<double>(molWidth);
+      stripCentreX = molPanelRight + pad + maxLineW / 2.0;
+      stripCentreX =
+          std::min(stripCentreX, baseX + drawWidth - maxLineW / 2.0 - 2.0);
+    }
+  }
+  if (vertText) {
+    double max_h = 0.0;
+    for (const auto &bit : legend_bits) {
+      double height, width;
+      DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
+                        Point2D(0.0, 0.0), legendColour, textDrawer);
+      da.getDimensions(width, height);
+      max_h = std::max(max_h, height);
+    }
+    const double total_h =
+        legend_bits.size() * max_h + (legend_bits.size() - 1) * gap;
+    double y = stripCentreY - total_h / 2.0;
+    for (size_t i = 0; i < legend_bits.size(); ++i) {
+      y += max_h / 2.0;
+      Point2D loc(stripCentreX, y);
+      legends.emplace_back(new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE,
+                                              "legend", relFontScale, loc,
+                                              legendColour, textDrawer));
+      y += max_h / 2.0;
+      if (i + 1 < legend_bits.size()) {
+        y += gap;
+      }
+    }
+  } else {
+    double total_h = 0.0;
+    for (size_t i = 0; i < legend_bits.size(); ++i) {
+      double height, width;
+      DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                        relFontScale, Point2D(0.0, 0.0), legendColour,
+                        textDrawer);
+      da.getDimensions(width, height);
+      total_h += height;
+      if (i + 1 < legend_bits.size()) {
+        total_h += gap;
+      }
+    }
+    double y = stripCentreY - total_h / 2.0;
+    for (size_t i = 0; i < legend_bits.size(); ++i) {
+      double height, width;
+      DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                        relFontScale, Point2D(0.0, 0.0), legendColour,
+                        textDrawer);
+      da.getDimensions(width, height);
+      y += height / 2.0;
+      Point2D loc(stripCentreX, y);
+      legends.emplace_back(new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE,
+                                              "legend", relFontScale, loc,
+                                              legendColour, textDrawer));
+      y += height / 2.0;
+      if (i + 1 < legend_bits.size()) {
+        y += gap;
+      }
+    }
+  }
+}
+
+}  // namespace
+
 // ****************************************************************************
 // This must be called after calculateScale() because it needs the final
 // font size to work out the legend font size which is given in
@@ -1848,60 +2052,13 @@ void DrawMol::extractLegend() {
       (drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Left ||
        drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Right) &&
       drawOptions_.legendVerticalText;
-
-  auto calc_legend_dims = [&](const std::vector<std::string> &legend_bits,
-                              double relFontScale, double &total_width,
-                              double &total_height) {
-    total_width = total_height = 0;
-    for (auto &bit : legend_bits) {
-      double height, width;
-      DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
-                        Point2D(0.0, 0.0), drawOptions_.legendColour,
-                        textDrawer_);
-      da.getDimensions(width, height);
-      total_height += height;
-      total_width = std::max(total_width, width);
-    }
-  };
-
-  auto calc_line_gap = [&](double relFontScale) -> double {
-    // Breathing room between legend lines/characters.
-    const double font_px = textDrawer_.fontSize() * relFontScale;
-    if (vertText) {
-      // Vertical legends: keep characters separated without large gaps.
-      return std::max(1.0, font_px * 0.35);
-    }
-    return std::max(2.0, font_px * 0.15);
-  };
-
-  std::vector<std::string> legend_bits;
-  if (vertText) {
-    for (unsigned int i = 0; i < legend_.size(); ++i) {
-      if (legend_[i] != '\n') {
-        legend_bits.push_back(std::string(1, legend_[i]));
-      }
-    }
-  } else {
-    std::string next_piece;
-    for (auto c : legend_) {
-      if (c == '\n') {
-        if (!next_piece.empty()) {
-          legend_bits.push_back(next_piece);
-        }
-        next_piece = "";
-      } else {
-        next_piece += c;
-      }
-    }
-    if (!next_piece.empty()) {
-      legend_bits.push_back(next_piece);
-    }
-  }
+  std::vector<std::string> legend_bits = split_legend_bits(legend_, vertText);
 
   double fsize = textDrawer_.fontSize();
   double relFontScale = drawOptions_.legendFontSize / fsize;
   double total_width, total_height;
-  calc_legend_dims(legend_bits, relFontScale, total_width, total_height);
+  calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                   textDrawer_, total_width, total_height);
 
   double maxWidth = double(drawWidth_);
   double maxHeight = double(drawHeight_);
@@ -1920,12 +2077,14 @@ void DrawMol::extractLegend() {
       !vertText;
   if (total_width > maxWidth && maxWidth > 0 && !flexiCanvasX_ && !sideHorizontal) {
     relFontScale *= maxWidth / total_width;
-    calc_legend_dims(legend_bits, relFontScale, total_width, total_height);
+    calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                     textDrawer_, total_width, total_height);
   }
   if (total_height > maxHeight && maxHeight > 0) {
     if (!flexiCanvasY_) {
       relFontScale *= maxHeight / total_height;
-      calc_legend_dims(legend_bits, relFontScale, total_width, total_height);
+      calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                       textDrawer_, total_width, total_height);
     } else if (drawOptions_.legendPosition ==
                    MolDrawOptions::LegendPosition::Bottom ||
                drawOptions_.legendPosition ==
@@ -1938,7 +2097,8 @@ void DrawMol::extractLegend() {
       if (drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Top) {
         molHeight_ = drawHeight_ - legendHeight_;
       }
-      calc_legend_dims(legend_bits, relFontScale, total_width, total_height);
+      calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                       textDrawer_, total_width, total_height);
     }
   }
 
@@ -1947,7 +2107,8 @@ void DrawMol::extractLegend() {
   const double initialFontScale = drawOptions_.legendFontSize / fsize;
   if (sideHorizontal && relFontScale < initialFontScale) {
     relFontScale = initialFontScale;
-    calc_legend_dims(legend_bits, relFontScale, total_width, total_height);
+    calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                     textDrawer_, total_width, total_height);
   }
 
   // Vertical side legends use uniform line height + gaps; scale so the stack
@@ -1969,7 +2130,7 @@ void DrawMol::extractLegend() {
         da.getDimensions(w, h);
         max_h = std::max(max_h, h);
       }
-      const double gap = calc_line_gap(relFontScale);
+      const double gap = calc_line_gap(textDrawer_, vertText, relFontScale);
       const size_t n = legend_bits.size();
       const double span =
           static_cast<double>(n) * max_h +
@@ -1978,192 +2139,36 @@ void DrawMol::extractLegend() {
         break;
       }
       relFontScale *= avail / span;
-      calc_legend_dims(legend_bits, relFontScale, total_width, total_height);
+      calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                       textDrawer_, total_width, total_height);
     }
   }
 
   const double baseX = xOffset_ + width_ * marginPadding_;
   const double baseY = marginPadding_ * height_ + yOffset_;
 
-  auto place_bottom = [&]() {
-    Point2D loc(baseX + drawWidth_ / 2, baseY + drawHeight_);
-    for (auto bit : legend_bits) {
-      DrawAnnotation *da =
-          new DrawAnnotation(bit, TextAlignType::MIDDLE, "legend", relFontScale,
-                             loc, drawOptions_.legendColour, textDrawer_);
-      legends_.emplace_back(da);
-    }
-    double xmin, xmax, ymin, ymax;
-    double lastAbove = 0;
-    for (int i = static_cast<int>(legends_.size()) - 1; i >= 0; --i) {
-      xmin = ymin = std::numeric_limits<double>::max();
-      xmax = ymax = std::numeric_limits<double>::lowest();
-      legends_[i]->findExtremes(xmin, xmax, ymin, ymax);
-      double thisBelow = legends_[i]->pos_.y - ymax;
-      double thisAbove = legends_[i]->pos_.y - ymin;
-      if (i == static_cast<int>(legends_.size()) - 1) {
-        legends_[i]->pos_.y += thisBelow;
-      } else {
-        legends_[i]->pos_.y =
-            legends_[i + 1]->pos_.y + thisBelow - lastAbove;
-      }
-      lastAbove = thisAbove;
-    }
-  };
-
-  auto place_top = [&]() {
-    const double gap = calc_line_gap(relFontScale);
-    double total_h = 0.0;
-    for (size_t i = 0; i < legend_bits.size(); ++i) {
-      double height, width;
-      DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
-                        relFontScale, Point2D(0.0, 0.0), drawOptions_.legendColour,
-                        textDrawer_);
-      da.getDimensions(width, height);
-      total_h += height;
-      if (i + 1 < legend_bits.size()) {
-        total_h += gap;
-      }
-    }
-    const double band_h =
-        legendHeight_ > 0 ? double(legendHeight_) : double(drawHeight_);
-    double y = baseY + (band_h - total_h) / 2.0;
-    for (size_t i = 0; i < legend_bits.size(); ++i) {
-      double height, width;
-      DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
-                        relFontScale, Point2D(0.0, 0.0), drawOptions_.legendColour,
-                        textDrawer_);
-      da.getDimensions(width, height);
-      y += height / 2.0;
-      Point2D loc(baseX + drawWidth_ / 2, y);
-      legends_.emplace_back(new DrawAnnotation(legend_bits[i],
-                                               TextAlignType::MIDDLE, "legend",
-                                               relFontScale, loc,
-                                               drawOptions_.legendColour,
-                                               textDrawer_));
-      y += height / 2.0;
-      if (i + 1 < legend_bits.size()) {
-        y += gap;
-      }
-    }
-  };
-
-  auto place_side = [&](bool is_left) {
-    double stripCentreX = 0.0;
-    if (vertText) {
-      stripCentreX = is_left ? baseX + legendWidth_ / 2.0
-                             : baseX + drawWidth_ - legendWidth_ / 2.0;
-    }
-    const double stripCentreY = baseY + drawHeight_ / 2.0;
-    if (legend_bits.empty()) {
-      return;
-    }
-    const double gap = calc_line_gap(relFontScale);
-    // Horizontal side: anchor by measured line width so the inner text edge
-    // (facing the molecule) stays past the mol/legend partition, not strip-centre
-    // (which left the first glyph flush with the molecule).
-    if (!vertText) {
-      double maxLineW = 0.0;
-      for (const auto &bit : legend_bits) {
-        double h = 0.0, w = 0.0;
-        DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
-                          Point2D(0.0, 0.0), drawOptions_.legendColour,
-                          textDrawer_);
-        da.getDimensions(w, h);
-        maxLineW = std::max(maxLineW, w);
-      }
-      const double pad =
-          std::max(8.0, marginPadding_ * static_cast<double>(drawWidth_));
-      if (is_left) {
-        const double molPanelLeft = baseX + static_cast<double>(legendWidth_);
-        stripCentreX = molPanelLeft - pad - maxLineW / 2.0;
-        stripCentreX =
-            std::max(stripCentreX, baseX + maxLineW / 2.0 + 2.0);
-      } else {
-        const double molPanelRight = baseX + static_cast<double>(molWidth_);
-        stripCentreX = molPanelRight + pad + maxLineW / 2.0;
-        stripCentreX = std::min(stripCentreX, baseX +
-                                           static_cast<double>(drawWidth_) -
-                                           maxLineW / 2.0 - 2.0);
-      }
-    }
-    // For vertical side legends (one character per line), glyph bounding boxes
-    // vary widely (e.g. 'i' vs 'W'), which can make spacing look inconsistent.
-    // Use a constant line height based on the maximum glyph height.
-    if (vertText) {
-      double max_h = 0.0;
-      for (auto &bit : legend_bits) {
-        double height, width;
-        DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
-                          Point2D(0.0, 0.0), drawOptions_.legendColour,
-                          textDrawer_);
-        da.getDimensions(width, height);
-        max_h = std::max(max_h, height);
-      }
-      const double total_h =
-          legend_bits.size() * max_h + (legend_bits.size() - 1) * gap;
-      double y = stripCentreY - total_h / 2.0;
-      for (size_t i = 0; i < legend_bits.size(); ++i) {
-        y += max_h / 2.0;
-        Point2D loc(stripCentreX, y);
-        legends_.emplace_back(new DrawAnnotation(legend_bits[i],
-                                                 TextAlignType::MIDDLE, "legend",
-                                                 relFontScale, loc,
-                                                 drawOptions_.legendColour,
-                                                 textDrawer_));
-        y += max_h / 2.0;
-        if (i + 1 < legend_bits.size()) {
-          y += gap;
-        }
-      }
-    } else {
-      double total_h = 0;
-      for (size_t i = 0; i < legend_bits.size(); ++i) {
-        auto &bit = legend_bits[i];
-        double height, width;
-        DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
-                          Point2D(0.0, 0.0), drawOptions_.legendColour,
-                          textDrawer_);
-        da.getDimensions(width, height);
-        total_h += height;
-        if (i + 1 < legend_bits.size()) {
-          total_h += gap;
-        }
-      }
-      double y = stripCentreY - total_h / 2.0;
-      for (size_t i = 0; i < legend_bits.size(); ++i) {
-        auto &bit = legend_bits[i];
-        double height, width;
-        DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
-                          Point2D(0.0, 0.0), drawOptions_.legendColour,
-                          textDrawer_);
-        da.getDimensions(width, height);
-        y += height / 2.0;
-        Point2D loc(stripCentreX, y);
-        legends_.emplace_back(new DrawAnnotation(bit, TextAlignType::MIDDLE,
-                                                 "legend", relFontScale, loc,
-                                                 drawOptions_.legendColour,
-                                                 textDrawer_));
-        y += height / 2.0;
-        if (i + 1 < legend_bits.size()) {
-          y += gap;
-        }
-      }
-    }
-  };
-
   switch (drawOptions_.legendPosition) {
     case MolDrawOptions::LegendPosition::Bottom:
-      place_bottom();
+      place_bottom_legend(legend_bits, relFontScale, drawOptions_.legendColour,
+                          textDrawer_, baseX, baseY, drawWidth_, drawHeight_,
+                          legends_);
       break;
     case MolDrawOptions::LegendPosition::Top:
-      place_top();
+      place_top_legend(legend_bits, relFontScale, drawOptions_.legendColour,
+                       textDrawer_, baseX, baseY, drawWidth_, drawHeight_,
+                       legendHeight_, legends_);
       break;
     case MolDrawOptions::LegendPosition::Left:
-      place_side(true);
+      place_side_legend(legend_bits, relFontScale, drawOptions_.legendColour,
+                        textDrawer_, vertText, true, baseX, baseY, legendWidth_,
+                        molWidth_, drawWidth_, drawHeight_, marginPadding_,
+                        legends_);
       break;
     case MolDrawOptions::LegendPosition::Right:
-      place_side(false);
+      place_side_legend(legend_bits, relFontScale, drawOptions_.legendColour,
+                        textDrawer_, vertText, false, baseX, baseY, legendWidth_,
+                        molWidth_, drawWidth_, drawHeight_, marginPadding_,
+                        legends_);
       break;
   }
 }
