@@ -354,8 +354,6 @@ void _set13BoundsHelper(unsigned int aid1, unsigned int aid, unsigned int aid3,
   }
   auto du = dl + distTol;
   dl -= distTol;
-  // mmat->setLowerBoundIfBetter(aid1, aid3, dl);
-  // mmat->setUpperBoundIfBetter(aid1, aid3, du);
   _checkAndSetBounds(aid1, aid3, dl, du, mmat);
 }
 
@@ -879,10 +877,6 @@ void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
   // std::cerr << "1: " << aid1 << "-" << aid4 << ": " << dl << " -> " << du
   //           << std::endl;
   _checkAndSetBounds(aid1, aid4, dl, du, mmat);
-  // Note: we do not set visitedBounds here since 1-4 can be overwritten by
-  // other 1-4s or 1-5s if they are more specific
-  // mmat->setLowerBoundIfBetter(aid1, aid4, dl);
-  // mmat->setUpperBoundIfBetter(aid1, aid4, du);
   accumData.paths14.push_back(path14);
   accumData.visited14Bounds.set(pid);
 }
