@@ -213,7 +213,7 @@ void _checkAndSetBounds(unsigned int i, unsigned int j, double lb, double ub,
   CHECK_INVARIANT(lb > DIST12_DELTA || clb > DIST12_DELTA, "bad lower bound");
 
   // Note: setIfBetter should ONLY be set if the distances are consistent;
-  // currently this is not the case, therefore, for now, we are persimistic on
+  // currently this is not the case, therefore, for now, we are pessimistic on
   // the bounds
   if (setIfBetter) {
     double nlb = std::max(clb, lb);
