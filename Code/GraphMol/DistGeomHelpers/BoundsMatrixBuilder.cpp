@@ -32,6 +32,7 @@ const double DIST13_TOL = 0.04;
 const double GEN_DIST_TOL = 0.06;  //  a general distance tolerance
 const double DIST15_TOL = 0.08;
 const double VDW_SCALE_15 = 0.7;
+constexpr double H_BOND_LENGHT = 1.8;
 const double MAX_UPPER = 1000.0;
 static const double minMacrocycleRingSize = 9;
 #include <map>
@@ -254,6 +255,25 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 }
 
+bool isHBondAcceptor(const unsigned int atom_idx, const ROMol &mol) {
+  const Atom *atom = mol.getAtomWithIdx(atom_idx);
+  return (atom->getAtomicNum() == 7 || atom->getAtomicNum() == 8);
+}
+
+bool isHBondDonor(const unsigned int atom_idx, const ROMol &mol) {
+  const Atom *atom = mol.getAtomWithIdx(atom_idx);
+  return isHBondAcceptor(atom_idx, mol) && atom->getTotalNumHs() > 0;
+}
+
+bool isHinHBondDonor(const unsigned int atom_idx, const ROMol &mol) {
+  const Atom *atom = mol.getAtomWithIdx(atom_idx);
+  auto nbrs = mol.atomNeighbors(atom); 
+  return atom->getAtomicNum() == 1 &&
+         std::any_of(nbrs.begin(), nbrs.end(), [](const Atom *nbr) {
+           return nbr->getAtomicNum() == 7 || nbr->getAtomicNum() == 8;
+         });
+}
+
 void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
                       double *dmat) {
   unsigned int npt = mmat->numRows();
@@ -275,7 +295,12 @@ void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
         // - for all other pairs of atoms more than 5 bonds apart we use the
         // sum of the VDW radii
         //    as the lower bound
-        if (dmat[i * npt + j] == 4.0) {
+        // - if one of the atoms is a H of a H-bond donor and the other is 
+        //    an acceptor we will lower the bound to 1.8A
+        if ((isHinHBondDonor(i, mol) && isHBondAcceptor(j, mol)) 
+            || (isHBondAcceptor(i, mol) && isHinHBondDonor(j, mol))) {
+          mmat->setLowerBound(i, j, H_BOND_LENGHT);
+        } else if (dmat[i * npt + j] == 4.0) {
           mmat->setLowerBound(i, j, VDW_SCALE_15 * (vw1 + vw2));
         } else if (dmat[i * npt + j] == 5.0) {
           mmat->setLowerBound(
