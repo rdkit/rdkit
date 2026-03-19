@@ -1089,7 +1089,7 @@ TEST_CASE("No overlapping atoms") {
       for (unsigned int j = 0; j < i; ++j) {
         const auto minDist = bm->getLowerBound(i, j);
         const auto length = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
-        CHECK((minDist - length) < .395);
+        CHECK((minDist - length) < .407);
       }
     }
   }
@@ -1107,6 +1107,18 @@ TEST_CASE("github #8001: RMS pruning misses conformers") {
   ps.pruneRmsThresh = 1.0;
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
   CHECK(cids.size() == 4);
+}
+
+TEST_CASE("Lower bound for H-bond atoms") {
+  auto mol = "c12ccccc1OC(=O)C(C(=O)Nc1ccccc1)=C2"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+  DGeomHelpers::setTopolBounds(*mol, bm);
+  CHECK(bm->getLowerBound(8, 24) <= 1.8);
+  CHECK(bm->getLowerBound(30, 11) > 1.8);
+  CHECK(bm->getLowerBound(24, 0) > 1.8);
 }
 
 #ifdef RDK_TEST_MULTITHREADED
