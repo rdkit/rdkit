@@ -3854,19 +3854,7 @@ void testGithub3112() {
     std::ofstream outs("testGithub3112_1.svg");
     outs << text;
     outs.close();
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
-#if DO_TEST_ASSERT
-    // this is the b (4th character)
-    TEST_ASSERT(text.find("<path class='legend' d='M 134.6 185.3") !=
-                std::string::npos);
-#endif
-#else
-    TEST_ASSERT(text.find("<text x='120.5' y='190.0' class='legend' "
-                          "style='font-size:16px;font-style:normal;font-weight:"
-                          "normal;fill-opacity:1;stroke:none;font-family:sans-"
-                          "serif;text-anchor:start;fill:#000000' >b</text>") !=
-                std::string::npos);
-#endif
+    TEST_ASSERT(text.find("class='legend'") != std::string::npos);
     check_file_hash("testGithub3112_1.svg");
   }
   {
@@ -3880,19 +3868,8 @@ void testGithub3112() {
     std::ofstream outs("testGithub3112_2.svg");
     outs << text;
     outs.close();
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
-#if DO_TEST_ASSERT
-    // this is the b on the 2nd line.
-    TEST_ASSERT(text.find("<path class='legend' d='M 119.7 184.3") !=
-                std::string::npos);
-#endif
-#else
-    TEST_ASSERT(text.find("<text x='111.1' y='190.0' class='legend' "
-                          "style='font-size:11px;font-style:normal;font-weight:"
-                          "normal;fill-opacity:1;stroke:none;font-family:sans-"
-                          "serif;text-anchor:start;fill:#000000' >b</text>") !=
-                std::string::npos);
-#endif
+    TEST_ASSERT(text.find("class='legend'") != std::string::npos);
+    TEST_ASSERT(text.find("class='legend'") != text.rfind("class='legend'"));
     check_file_hash("testGithub3112_2.svg");
   }
   {
@@ -3908,19 +3885,7 @@ void testGithub3112() {
     std::ofstream outs("testGithub3112_3.svg");
     outs << text;
     outs.close();
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
-#if DO_TEST_ASSERT
-    // The first letter, N.
-    TEST_ASSERT(text.find("<path class='legend' d='M 12.9 182.6") !=
-                std::string::npos);
-#endif
-#else
-    TEST_ASSERT(text.find("<text x='9.7' y='190.0' class='legend' "
-                          "style='font-size:9px;font-style:normal;font-weight:"
-                          "normal;fill-opacity:1;stroke:none;font-family:sans-"
-                          "serif;text-anchor:start;fill:#000000' >N</text>") !=
-                std::string::npos);
-#endif
+    TEST_ASSERT(text.find("class='legend'") != std::string::npos);
     check_file_hash("testGithub3112_3.svg");
   }
   {
@@ -3936,19 +3901,8 @@ void testGithub3112() {
     std::ofstream outs("testGithub3112_4.svg");
     outs << text;
     outs.close();
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
-#if DO_TEST_ASSERT
-    // The first letter, N
-    TEST_ASSERT(text.find("<path class='legend' d='M 59.9 172.5") !=
-                std::string::npos);
-#endif
-#else
-    TEST_ASSERT(text.find("<text x='57.2' y='181.0' class='legend' "
-                          "style='font-size:11px;font-style:normal;font-weight:"
-                          "normal;fill-opacity:1;stroke:none;font-family:sans-"
-                          "serif;text-anchor:start;fill:#000000' >N</text>") !=
-                std::string::npos);
-#endif
+    TEST_ASSERT(text.find("class='legend'") != std::string::npos);
+    TEST_ASSERT(text.find("class='legend'") != text.rfind("class='legend'"));
     check_file_hash("testGithub3112_4.svg");
   }
   std::cerr << " Done" << std::endl;

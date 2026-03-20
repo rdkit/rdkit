@@ -1953,6 +1953,9 @@ void place_side_legend(const std::vector<std::string> &legend_bits,
                        double baseX, double baseY, int legendWidth, int molWidth,
                        double drawWidth, double drawHeight, double marginPadding,
                        std::vector<std::unique_ptr<DrawAnnotation>> &legends) {
+  if (legend_bits.empty()) {
+    return;
+  }
   double stripCentreX = 0.0;
   if (vertText) {
     stripCentreX = is_left ? baseX + legendWidth / 2.0
@@ -2053,6 +2056,9 @@ void DrawMol::extractLegend() {
        drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Right) &&
       drawOptions_.legendVerticalText;
   std::vector<std::string> legend_bits = split_legend_bits(legend_, vertText);
+  if (legend_bits.empty()) {
+    return;
+  }
 
   double fsize = textDrawer_.fontSize();
   double relFontScale = drawOptions_.legendFontSize / fsize;
