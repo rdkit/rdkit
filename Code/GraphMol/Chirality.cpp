@@ -2510,6 +2510,10 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
       Atropisomers::cleanupAtropisomerStereoGroups(mol);
     }
     Chirality::cleanupStereoGroups(mol);
+  } else if (!Atropisomers::doesMolHaveAtropisomers(mol)) {
+    const Conformer *conf =
+        mol.getNumConformers() ? &mol.getConformer() : nullptr;
+    Atropisomers::detectAtropisomerChirality(mol, conf);
   }
 }
 
@@ -2611,6 +2615,10 @@ void stereoPerception(ROMol &mol, bool cleanIt,
     }
     Atropisomers::cleanupAtropisomerStereoGroups(mol);
     Chirality::cleanupStereoGroups(mol);
+  } else if (!Atropisomers::doesMolHaveAtropisomers(mol)) {
+    const Conformer *conf =
+        mol.getNumConformers() ? &mol.getConformer() : nullptr;
+    Atropisomers::detectAtropisomerChirality(mol, conf);
   }
 }
 

@@ -533,6 +533,11 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
         if (nbrBond == bond) {
           continue;  // a bond is NOT its own neighbor
         }
+        // Ring bonds cannot be atropisomers (no free rotation)
+        if (mol.getRingInfo()->isInitialized() &&
+            mol.getRingInfo()->numBondRings(nbrBond->getIdx()) > 0) {
+          continue;
+        }
         bondsToTry.insert(nbrBond);
       }
     }
@@ -594,11 +599,6 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
         // so while this is more expensive per molecule, it is closer to intent
         bondToTry->getBeginAtom()->getHybridization() != Atom::SP2 ||
         bondToTry->getEndAtom()->getHybridization() != Atom::SP2) {
-      continue;
-    }
-    // Ring bonds cannot be atropisomers (no free rotation)
-    if (mol.getRingInfo()->isInitialized() &&
-        mol.getRingInfo()->numBondRings(bondToTry->getIdx()) > 0) {
       continue;
     }
 
