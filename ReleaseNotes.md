@@ -38,6 +38,11 @@ GitHub)
   mols contaning stereo bonds may have changed.
 - The Query infrastructure now uses std::function instead of function pointers
   for the DataFunc and MatchFunc. This does not affect Python.
+- The results of the `Kekulize()` function are now, by default, no longer
+  dependent on atom/bond ordering in the molecule. Additionally, the C++ API for
+  `MolOps::Kekulize()`, `MolOps::KekulizeIfPossible()` and
+  `MolOps::KekulizeFragment()` has been changed: these all now accept an
+  optional argument toggling the canonical Kekulization.
 
 
 ## New Features and Enhancements:
