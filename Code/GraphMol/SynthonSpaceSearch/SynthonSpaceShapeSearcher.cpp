@@ -978,9 +978,6 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     ROMol &hit, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames) {
   auto initScores = GaussianShape::AlignMolecule(*dp_queryShapes, hit);
-  std::cout << "Initial hit scores : " << initScores[0] << ", " << initScores[1]
-            << ", " << initScores[2] << std::endl;
-  std::cout << "Initial hit : " << MolToCXSmiles(hit) << std::endl;
   finaliseHit(dp_queryConfs, hit, initScores, rxnId, synthNames);
   if (checkBondLengths(hit) && !getParams().bestHit &&
       initScores[0] >= getParams().similarityCutoff) {
@@ -1010,20 +1007,10 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     std::cout << "Number of hit shapes for confirmation : "
               << hitShapes->getNumShapes() << std::endl;
     for (unsigned int j = 0u; j < hitShapes->getNumShapes(); ++j) {
-      std::cout << "HIT SHAPE " << j << std::endl;
       hitShapes->setActiveShape(j);
-      std::cout << hitShapes->getCoords()[0] << ", "
-                << hitShapes->getCoords()[1] << ", "
-                << hitShapes->getCoords()[2] << ", "
-                << hitShapes->getCoords()[3] << std::endl;
       auto scores =
           GaussianShape::AlignShape(*dp_queryShapes, *hitShapes, &xform);
-      std::cout << MolToCXSmiles(*hitShapes->shapeToMol()) << std::endl;
-      std::cout << scores[0] << ", " << scores[1] << ", " << scores[2]
-                << std::endl;
       double sim = scores[0];
-      std::cout << "sim for " << j << " : " << sim << " vs " << bestSim
-                << std::endl;
       bool finalisedHit = false;
       if (sim > getBestSimilaritySoFar()) {
         finaliseHit(dp_queryConfs, isomer, hitShapes, j, xform, scores, rxnId,
@@ -1040,7 +1027,6 @@ bool SynthonSpaceShapeSearcher::verifyHit(
         // If we're only interested in whether there's a shape match, and
         // not in finding the best shape, we're done.
         if (!getParams().bestHit) {
-          std::cout << "returning bestHit" << std::endl;
           return true;
         }
         foundHit = true;
@@ -1052,7 +1038,6 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     // Stick with what we found at the start, which should still be in hit.
     foundHit = true;
   }
-  std::cout << "returning foundHit : " << foundHit << std::endl;
   return foundHit;
 }
 

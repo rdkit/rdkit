@@ -355,12 +355,22 @@ void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
   d_normalizationOK = false;
 }
 
-std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors) const {
+std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors,
+                                              bool withBonds) const {
   // The SMILES string and the atom coordinates should be in the same
   // order.
   v2::SmilesParse::SmilesParserParams params;
   params.sanitize = false;
-  auto mol = v2::SmilesParse::MolFromSmiles(d_smiles, params);
+  std::unique_ptr<RWMol> mol;
+  if (withBonds) {
+    mol = v2::SmilesParse::MolFromSmiles(d_smiles, params);
+  } else {
+    mol.reset(new RWMol());
+    for (unsigned int i = 0; i < getNumAtoms(); i++) {
+      Atom *atom = new Atom(6);
+      mol->addAtom(atom, true, true);
+    }
+  }
   if (includeColors) {
     for (unsigned int i = 0; i < getNumFeatures(); i++) {
       Atom *atom = new Atom(54);
@@ -604,7 +614,7 @@ void ShapeInput::calcNormalization() {
   // with which to calculate the canonical transformation.  Doesn't ever
   // use the input molecule in case the shape was built from a subset of
   // atoms in that molecule.
-  auto tmpMol = shapeToMol(false);
+  auto tmpMol = shapeToMol(false, false);
   std::unique_ptr<RDGeom::Transform3D> canonXform(
       MolTransforms::computeCanonicalTransform(
           tmpMol->getConformer(), nullptr, false, true, d_eigenValues.data()));

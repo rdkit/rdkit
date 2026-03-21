@@ -374,14 +374,16 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
   auto workingRefShape = std::make_unique<ShapeInput>(refShape);
   auto workingFitShape = std::make_unique<ShapeInput>(fitShape);
   auto inRefTrans = workingRefShape->calcCanonicalTranslation();
-  auto inRefRot = workingRefShape->calcCanonicalRotation();
   auto inFitTrans = workingFitShape->calcCanonicalTranslation();
-  auto inFitRot = workingFitShape->calcCanonicalRotation();
+  std::array<double, 9> inRefRot;
+  std::array<double, 9> inFitRot;
   // If we're not normalizing, translate both shapes so that the fit
   // is at the origin, so the rotations work.
   RDGeom::Transform3D moveToOrigin;
   RDGeom::Transform3D moveFromOrigin;
   if (overlayOpts.normalize) {
+    inRefRot = workingRefShape->calcCanonicalRotation();
+    inFitRot = workingFitShape->calcCanonicalRotation();
     if (!workingRefShape->getNormalized()) {
       workingRefShape->normalizeCoords();
     }

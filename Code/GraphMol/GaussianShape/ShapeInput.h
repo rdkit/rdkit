@@ -186,8 +186,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   void transformCoords(RDGeom::Transform3D &xform);
 
   // Make a molecule from the shape.  If required, features are added
-  // as xenon atoms.
-  virtual std::unique_ptr<RWMol> shapeToMol(bool includeColors = false) const;
+  // as xenon atoms.  If withBonds is false, just makes a molecule from
+  // the atoms, otherwise builds a full molecule.
+  virtual std::unique_ptr<RWMol> shapeToMol(bool includeColors = false,
+                                            bool withBonds = true) const;
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
