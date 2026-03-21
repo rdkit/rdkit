@@ -407,15 +407,15 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
   if (!overlayOpts.normalize) {
     // Shove it back again.
     auto finalXform = moveFromOrigin * bestXform * moveToOrigin;
-    copyTransform(finalXform, bestXform);
+    bestXform = finalXform;
   } else {
     auto finalXform = computeFinalTransform(inRefTrans, inRefRot, inFitTrans,
                                             inFitRot, bestXform);
-    copyTransform(finalXform, bestXform);
+    bestXform = finalXform;
     fitShape.transformCoords(bestXform);
   }
   if (xform) {
-    copyTransform(bestXform, *xform);
+    *xform = bestXform;
   }
 
   return scores;
@@ -431,7 +431,7 @@ std::array<double, 3> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
   auto scores = AlignShape(refShape, fitShape, &tmpXform, overlayOpts);
   MolTransforms::transformConformer(fit.getConformer(fitConfId), tmpXform);
   if (xform) {
-    copyTransform(tmpXform, *xform);
+    *xform = tmpXform;
   }
   return scores;
 }

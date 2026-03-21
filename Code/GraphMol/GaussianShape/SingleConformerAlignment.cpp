@@ -83,7 +83,7 @@ void SingleConformerAlignment::getFinalQuatTrans(
   RDGeom::Transform3D initialRot;
   initialRot.SetRotationFromQuaternion(d_initQuatTrans.data());
   auto tt = reverseInitialTrans * tmp * initialRot;
-  copyTransform(tt, xform);
+  xform = tt;
 }
 
 std::array<double, 5> SingleConformerAlignment::calcScores(const double *ref,

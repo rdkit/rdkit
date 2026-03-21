@@ -243,19 +243,8 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Point3D computeFeaturePos(
     const ROMol &mol, int confId, const std::vector<unsigned int> &ats);
 
-RDKIT_GAUSSIANSHAPE_EXPORT void writeCoords(const std::vector<double> &shape,
-                                            const std::string &label,
-                                            char lineEnd = '\n');
-RDKIT_GAUSSIANSHAPE_EXPORT void writeCoords(const double *shape,
-                                            unsigned int numPts,
-                                            const std::string &label,
-                                            char lineEnd = '\n');
-
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Transform3D quatTransToTransform(
     const double *quat, const double *trans);
-
-RDKIT_GAUSSIANSHAPE_EXPORT void copyTransform(const RDGeom::Transform3D &src,
-                                              RDGeom::Transform3D &dest);
 
 // Apply the transformation to the coordinates assumed to be in
 // ShapeInput.d_coords form.

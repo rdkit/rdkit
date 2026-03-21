@@ -563,38 +563,6 @@ RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,
   return featPos;
 }
 
-void writeCoords(const std::vector<double> &shape, const std::string &label,
-                 char lineEnd) {
-  std::cout << label << " :: ";
-  if (lineEnd == '\n') {
-    std::cout << lineEnd;
-  }
-  for (size_t i = 0; i < shape.size(); i += 4) {
-    std::cout << shape[i] << "," << shape[i + 1] << "," << shape[i + 2]
-              << lineEnd;
-  }
-}
-
-void writeCoords(const double *shape, unsigned int numPts,
-                 const std::string &label, char lineEnd) {
-  std::cout << label << " :: ";
-  if (lineEnd == '\n') {
-    std::cout << lineEnd;
-  }
-  for (unsigned int i = 0; i < numPts * 4; i += 4) {
-    std::cout << shape[i] << "," << shape[i + 1] << "," << shape[i + 2]
-              << lineEnd;
-  }
-}
-
-void copyTransform(const RDGeom::Transform3D &src, RDGeom::Transform3D &dest) {
-  for (int i = 0; i < 4; ++i) {
-    for (int j = 0; j < 4; ++j) {
-      dest.setValUnchecked(i, j, src.getValUnchecked(i, j));
-    }
-  }
-}
-
 void applyTransformToShape(std::vector<double> &shape,
                            RDGeom::Transform3D &xform) {
   for (size_t i = 0; i < shape.size(); i += 4) {
