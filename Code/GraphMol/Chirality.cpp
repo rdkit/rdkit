@@ -2264,10 +2264,22 @@ std::ostream &operator<<(std::ostream &oss, const StereoSpecified &s) {
       3) if there are still unresolved atoms or bonds
          repeat the above steps as necessary
  */
+// Runs atropisomer detection only if no atropisomer stereo has been set yet.
+// Existing stereo (from SDF/SMILES parsing or programmatic assignment) is
+// always preserved — the caller is responsible for clearing stale stereo
+// before calling assignStereochemistry if correction is needed.
+void detectAtropisomersIfNeeded(ROMol &mol) {
+  if (Atropisomers::doesMolHaveAtropisomers(mol)) {
+    return;
+  }
+  const Conformer *conf =
+      mol.getNumConformers() ? &mol.getConformer() : nullptr;
+  Atropisomers::detectAtropisomerChirality(mol, conf);
+}
+
 void legacyStereoPerception(ROMol &mol, bool cleanIt,
                             bool flagPossibleStereoCenters) {
   mol.clearProp("_needsDetectBondStereo");
-  bool hadAtropisomers = cleanIt && Atropisomers::doesMolHaveAtropisomers(mol);
 
   // later we're going to need ring information, get it now if we don't
   // have it already:
@@ -2427,11 +2439,9 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
         }
       }
     }
-    if (!hadAtropisomers) {
-      const Conformer *conf =
-          mol.getNumConformers() ? &mol.getConformer() : nullptr;
-      Atropisomers::detectAtropisomerChirality(mol, conf);
-    }
+  }
+  detectAtropisomersIfNeeded(mol);
+  if (cleanIt) {
     bool foundAtropisomer = false;
     for (auto bond : mol.bonds()) {
       // wedged bonds to atoms that have no stereochem
@@ -2510,10 +2520,6 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
       Atropisomers::cleanupAtropisomerStereoGroups(mol);
     }
     Chirality::cleanupStereoGroups(mol);
-  } else if (!Atropisomers::doesMolHaveAtropisomers(mol)) {
-    const Conformer *conf =
-        mol.getNumConformers() ? &mol.getConformer() : nullptr;
-    Atropisomers::detectAtropisomerChirality(mol, conf);
   }
 }
 
@@ -2572,7 +2578,6 @@ void updateDoubleBondStereo(ROMol &mol, const std::vector<StereoInfo> &sinfo,
 }
 void stereoPerception(ROMol &mol, bool cleanIt,
                       bool flagPossibleStereoCenters) {
-  bool hadAtropisomers = cleanIt && Atropisomers::doesMolHaveAtropisomers(mol);
   if (cleanIt) {
     for (auto atom : mol.atoms()) {
       atom->clearProp(common_properties::_CIPCode);
@@ -2607,18 +2612,10 @@ void stereoPerception(ROMol &mol, bool cleanIt,
   }
   // populate double bond stereo info:
   updateDoubleBondStereo(mol, sinfo, cleanIt);
+  detectAtropisomersIfNeeded(mol);
   if (cleanIt) {
-    if (!hadAtropisomers) {
-      const Conformer *conf =
-          mol.getNumConformers() ? &mol.getConformer() : nullptr;
-      Atropisomers::detectAtropisomerChirality(mol, conf);
-    }
     Atropisomers::cleanupAtropisomerStereoGroups(mol);
     Chirality::cleanupStereoGroups(mol);
-  } else if (!Atropisomers::doesMolHaveAtropisomers(mol)) {
-    const Conformer *conf =
-        mol.getNumConformers() ? &mol.getConformer() : nullptr;
-    Atropisomers::detectAtropisomerChirality(mol, conf);
   }
 }
 

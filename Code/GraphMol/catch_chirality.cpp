@@ -6573,6 +6573,10 @@ TEST_CASE("Github #8108: assignStereochemistry should handle atropisomers",
       "OC1=C(C)C(N2C3=C(C(C(=O)N)=C2N)C=C(C)C(C)=N3)=C(C)C=C1 |wD:4.3|";
 
   SECTION("atropisomer stereo preserved by assignStereochemistry (SDF)") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+
     std::string rdbase = getenv("RDBASE");
     std::string fName =
         rdbase +
@@ -6582,6 +6586,8 @@ TEST_CASE("Github #8108: assignStereochemistry should handle atropisomers",
     auto *atropBond = m->getBondWithIdx(3);
     REQUIRE(atropBond->getStereo() == Bond::BondStereo::STEREOATROPCW);
 
+    // Stereo detected at parse time should be preserved (not overwritten or
+    // cleared) when assignStereochemistry is called on the parsed molecule.
     MolOps::assignStereochemistry(*m, true, true);
     CHECK(atropBond->getStereo() == Bond::BondStereo::STEREOATROPCW);
   }
@@ -6606,7 +6612,8 @@ TEST_CASE("Github #8108: assignStereochemistry should handle atropisomers",
     REQUIRE(atropBond);
     auto correctStereo = atropBond->getStereo();
 
-    // Clear stereo: assignStereochemistry should re-detect it with cleanIt=false
+    // Clear stereo: assignStereochemistry should re-detect it with
+    // cleanIt=false
     atropBond->setStereo(Bond::BondStereo::STEREONONE);
     MolOps::assignStereochemistry(*m, false, true);
     CHECK(atropBond->getStereo() == correctStereo);
@@ -6653,8 +6660,9 @@ TEST_CASE("Github #8108: assignStereochemistry should handle atropisomers",
     CAPTURE(useLegacy);
     UseLegacyStereoPerceptionFixture fx(useLegacy);
 
-    auto m = v2::SmilesParse::MolFromSmiles(cxsmilesWithCoords);
+    auto m = v2::SmilesParse::MolFromSmiles(cxsmilesWithoutCoords);
     REQUIRE(m);
+    REQUIRE(m->getNumConformers() == 0);
 
     Bond *atropBond = nullptr;
     for (auto *bond : m->bonds()) {
@@ -6665,10 +6673,14 @@ TEST_CASE("Github #8108: assignStereochemistry should handle atropisomers",
       }
     }
     REQUIRE(atropBond);
-    auto existingStereo = atropBond->getStereo();
+    auto correctStereo = atropBond->getStereo();
+    auto wrongStereo = (correctStereo == Bond::BondStereo::STEREOATROPCW)
+                           ? Bond::BondStereo::STEREOATROPCCW
+                           : Bond::BondStereo::STEREOATROPCW;
 
-    // cleanIt=false: existing atropisomer stereo is preserved as-is
+    // Set wrong stereo; cleanIt=false should NOT re-detect, leaving it wrong
+    atropBond->setStereo(wrongStereo);
     MolOps::assignStereochemistry(*m, false, true);
-    CHECK(atropBond->getStereo() == existingStereo);
+    CHECK(atropBond->getStereo() == wrongStereo);
   }
 }
