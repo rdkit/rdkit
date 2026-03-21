@@ -102,6 +102,11 @@ struct ShapeInputOptions {
   bool allCarbonRadii{
       true};  //! Whether to use carbon radii for all atoms (which is quicker
               //! but less accurate) or vdw radii appropriate for the elements.
+  double shapePruneThreshold{-1.0};  //! If there is more than 1 conformer for
+                                     //! the input molecule, prune the shapes so
+                                     //! that none of them are more similar to
+                                     //! each other than the threshold.  Default
+                                     //! -1.0 means no pruning.
 };
 
 // Data for shape alignment code
@@ -109,7 +114,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
  public:
   //! Create the ShapeInput object.
   //! @param mol: The molecule of interest
-  //! @param confId: The conformer to use
+  //! @param confId: The conformer to use.  If -1, uses all conformers.
   //! @param opts: Options for setting up the shape
   ShapeInput(const ROMol &mol, int confId = -1,
              const ShapeInputOptions &opts = ShapeInputOptions(),
@@ -127,7 +132,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   ShapeInput(ShapeInput &&other) = default;
   ShapeInput &operator=(const ShapeInput &other);
   ShapeInput &operator=(ShapeInput &&other) = default;
-  virtual ~ShapeInput() = default;
+  ~ShapeInput() = default;
 
   std::string toString() const {
 #ifndef RDK_USE_BOOST_SERIALIZATION
@@ -158,6 +163,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   const std::vector<int> &getTypes() const { return d_types; }
   unsigned int getNumAtoms() const { return d_numAtoms; }
   unsigned int getNumFeatures() const { return d_numFeats; }
+  unsigned int getNumShapes() const { return d_coords.size(); }
   double getShapeVolume() const {
     return d_selfOverlapShapeVols[d_currentConf];
   }
@@ -187,6 +193,24 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // calculation of the normalization matrices.  No bonds.
   // Atoms are C, features are N.
   virtual std::unique_ptr<RWMol> shapeToMol(bool includeColors = true) const;
+
+  // Find the best similarity score between all shapes in this shape and the
+  // other one. Stops as soon as it gets something above the threshold.
+  // The score runs between 0.0 and 1.0, so the default threshold of -1.0
+  // means no threshold.
+  // Fills in the shape numbers of the two that were responsible if there is
+  // something above the threshold, and the transformation that did it.
+  // Returns -1.0 for the similarity if there was nothing above the threshold.
+  double bestSimilarity(
+      ShapeInput &fitShape, unsigned int &bestThisShape,
+      unsigned int &bestFitShape, RDGeom::Transform3D &bestXform,
+      double threshold = -1.0,
+      const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
+
+  // Return the maximum similarity achievable between the 2 shapes.
+  double maxSimilarity(
+      const ShapeInput &fitShape,
+      const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions()) const;
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
@@ -256,6 +280,15 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   std::vector<std::array<double, 3>> d_canonTranss;
   // The sorted eigenvalues of the principal axes.
   std::vector<std::array<double, 3>> d_eigenValuess;
+
+  // Prune the shapes so none a more similar to each other than
+  // the threshold.
+  void pruneShapes(double simThreshold);
+  void selectConformations(const std::vector<int> &picks);
+  void calculateSelfOverlaps(const ShapeOverlayOptions &overlayOpts);
+  // Sort the shapes in descending order of the sume of the shape
+  // and color volumes.
+  void sortShapesByVolumes();
 };
 
 // Calculate the mean position of the given atoms.

@@ -20,12 +20,14 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include <GraphMol/MolOps.h>
+#include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/GaussianShape/ShapeInput.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <RDGeneral/RDLog.h>
 
 using namespace RDKit;
 
@@ -548,7 +550,6 @@ TEST_CASE("Fragment Mode") {
   CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.311, 0.005));
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.408, 0.005));
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.215, 0.005));
-  MolTransforms::transformConformer(pdb_trp_3tmn->getConformer(), xform);
 }
 
 TEST_CASE("custom feature points") {
@@ -873,3 +874,70 @@ TEST_CASE("multithreaded") {
   CHECK(test == ref);
 }
 #endif
+
+TEST_CASE("Multiple Conformers") {
+  auto omeprazole = "CC1=CN=C(C(=C1OC)C)CS(=O)C2=NC3=C(N2)C=C(C=C3)OC"_smiles;
+  MolOps::addHs(*omeprazole);
+  // Generate some conformers
+  DGeomHelpers::EmbedParameters dgParams;
+  dgParams.randomSeed = 0xdac;
+  DGeomHelpers::EmbedMultipleConfs(*omeprazole, 10, dgParams);
+  std::cout << "Num confs : " << omeprazole->getNumConformers() << std::endl;
+  CHECK(omeprazole->getNumConformers() == 10);
+  MolOps::removeHs(*omeprazole);
+
+  {
+    GaussianShape::ShapeInput shape1(*omeprazole);
+    CHECK(shape1.getNumShapes() == 10);
+    shape1.setCurrentConf(0);
+    auto firstVol = shape1.getShapeVolume() + shape1.getColorVolume();
+    shape1.setCurrentConf(9);
+    auto lastVol = shape1.getShapeVolume() + shape1.getColorVolume();
+    CHECK(firstVol > lastVol);
+
+    GaussianShape::ShapeInputOptions shapeOptions;
+    shapeOptions.shapePruneThreshold = 0.5;
+    GaussianShape::ShapeInput shape2(*omeprazole, -1, shapeOptions);
+    std::cout << "Number of pruned shapes : " << shape2.getNumShapes()
+              << std::endl;
+    CHECK(shape2.getNumShapes() == 4);
+    shape2.setCurrentConf(0);
+    firstVol = shape2.getShapeVolume() + shape2.getColorVolume();
+    shape2.setCurrentConf(3);
+    lastVol = shape2.getShapeVolume() + shape2.getColorVolume();
+    CHECK(firstVol > lastVol);
+
+    RDLog::InitLogs();
+    {
+      RDLog::CaptureLog capture{rdErrorLog};
+      CHECK_THROWS(shape2.setCurrentConf(8));
+    }
+
+    // The shapes in 2 are a subset of 1, so the maximum similarity
+    // should be 1.0.
+    auto maxSim = shape1.maxSimilarity(shape2);
+    std::cout << "maxSim : " << maxSim << std::endl;
+    CHECK_THAT(maxSim, Catch::Matchers::WithinAbs(1.0, 0.001));
+    unsigned int bestFitShape, bestRefShape;
+    RDGeom::Transform3D bestXform;
+    auto maxSimBF =
+        shape1.bestSimilarity(shape2, bestRefShape, bestFitShape, bestXform);
+    CHECK_THAT(maxSimBF, Catch::Matchers::WithinAbs(1.0, 0.001));
+    CHECK(bestRefShape == 3);
+    CHECK(bestFitShape == 0);
+  }
+
+  {
+    // Single conformations
+    GaussianShape::ShapeInput shape1(*omeprazole, 1);
+    CHECK(shape1.getNumShapes() == 1);
+    GaussianShape::ShapeInput shape2(*omeprazole, 9);
+    CHECK(shape2.getNumShapes() == 1);
+    // Demonstrate that the shapes are different:
+    auto scores = GaussianShape::AlignShape(shape1, shape2);
+    CHECK(scores[0] < 0.5);
+    std::cout << scores[0] << ", " << scores[1] << ", " << scores[2]
+              << std::endl;
+    std::cout << shape1.maxSimilarity(shape2) << std::endl;
+  }
+}
