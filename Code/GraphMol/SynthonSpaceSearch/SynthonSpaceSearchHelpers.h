@@ -129,8 +129,8 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
 // Options to be passed to buildSynthonShapes.
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT ShapeBuildParams {
   // The relevant ones are passed directly into EmbedMultipleConfs.
-  unsigned int numConfs{10};  // Max number of conformations per synthon
-  double rmsThreshold{0.5};   // RMS threshold used when pruning conformations
+  unsigned int numConfs{100};  // Max number of conformations per synthon
+  double rmsThreshold{0.5};    // RMS threshold used when pruning conformations
   double shapeSimThreshold{0.95};  // This is passed to pruneShapes(). For each
                                    // synthon, no 2 shapes will be more similar
                                    // to each other than the threshold.
