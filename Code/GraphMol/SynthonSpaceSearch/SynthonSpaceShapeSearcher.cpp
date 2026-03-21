@@ -22,6 +22,8 @@
 #include <RDGeneral/RDThreads.h>
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 
+std::mutex myMutex;
+
 namespace RDKit::SynthonSpaceSearch {
 
 SynthonSpaceShapeSearcher::SynthonSpaceShapeSearcher(
@@ -630,12 +632,6 @@ void computeSomeFragSynthonSims(
       RDGeom::Transform3D xform;
       auto sim =
           bestSimSynthonOntoFragment(*fragShape, synthon, threshold, xform);
-      if (synthon->getShapes()->getNumAtoms() == 13 &&
-          fragShape->getNumAtoms() > 12 && fragShape->getNumAtoms() < 14) {
-        std::cout << fragShape->getSmiles() << " vs " << synthon->getSmiles()
-                  << " : " << std::get<0>(sim) << " : "
-                  << fragShape->getNumAtoms() << std::endl;
-      }
       if (std::get<0>(sim) >= threshold) {
         std::pair<const void *, const void *> p{fragShape, synthon};
         std::unique_lock lock1{mtx};
@@ -981,13 +977,13 @@ bool checkBondLengths(const ROMol &mol) {
 bool SynthonSpaceShapeSearcher::verifyHit(
     ROMol &hit, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames) {
-  auto hitScores = GaussianShape::AlignMolecule(*dp_queryShapes, hit);
-  std::cout << "Initial hit scores : " << hitScores[0] << ", " << hitScores[1]
-            << ", " << hitScores[2] << std::endl;
+  auto initScores = GaussianShape::AlignMolecule(*dp_queryShapes, hit);
+  std::cout << "Initial hit scores : " << initScores[0] << ", " << initScores[1]
+            << ", " << initScores[2] << std::endl;
   std::cout << "Initial hit : " << MolToCXSmiles(hit) << std::endl;
-  finaliseHit(dp_queryConfs, hit, hitScores, rxnId, synthNames);
+  finaliseHit(dp_queryConfs, hit, initScores, rxnId, synthNames);
   if (checkBondLengths(hit) && !getParams().bestHit &&
-      hitScores[0] >= getParams().similarityCutoff) {
+      initScores[0] >= getParams().similarityCutoff) {
     return true;
   }
   // If the run is multi-threaded, this will already be running
@@ -1002,7 +998,9 @@ bool SynthonSpaceShapeSearcher::verifyHit(
       details::generateIsomerConformers(hit, getParams().numConformers, true,
                                         getParams().stereoEnumOpts, dgParams);
   bool foundHit = false;
-  double bestSim = hitScores[0];
+  // Prefer a hit from a generated conf rather than the initial hit
+  // which might have iffy bond lengths because it's the output from molzip.
+  double bestSim = getParams().similarityCutoff;
   GaussianShape::ShapeInputOptions opts;
   RDGeom::Transform3D xform;
   for (auto &isomer : hitConfs) {
@@ -1031,6 +1029,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
         finaliseHit(dp_queryConfs, isomer, hitShapes, j, xform, scores, rxnId,
                     synthNames, hit);
         finalisedHit = true;
+        std::unique_lock lock1{myMutex};
         updateBestHitSoFar(hit, sim);
       }
       if (sim >= bestSim && sim > getParams().similarityCutoff) {
@@ -1048,6 +1047,10 @@ bool SynthonSpaceShapeSearcher::verifyHit(
         bestSim = scores[0];
       }
     }
+  }
+  if (!foundHit && initScores[0] > getParams().similarityCutoff) {
+    // Stick with what we found at the start, which should still be in hit.
+    foundHit = true;
   }
   std::cout << "returning foundHit : " << foundHit << std::endl;
   return foundHit;
