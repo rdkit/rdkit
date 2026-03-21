@@ -17,9 +17,9 @@ class Atom;
 class Bond;
 
 namespace Canon {
-const int MAX_NATOMS = 5000;  //!< used in the canonical traversal code
-const int MAX_CYCLES = 1000;  //!< used in the canonical traversal code
-const int MAX_BONDTYPE = 32;  //!< used in the canonical traversal code
+constexpr int MAX_NATOMS = 5000;  //!< used in the canonical traversal code
+constexpr int MAX_CYCLES = 1024;  //!< used in the canonical traversal code
+constexpr int MAX_BONDTYPE = 32;  //!< used in the canonical traversal code
 
 //! used in traversals of the molecule
 typedef enum {
@@ -110,6 +110,14 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
     ROMol &mol, int atomIdx, std::vector<AtomColors> &colors,
     const std::vector<unsigned int> &ranks, MolStack &molStack,
     const boost::dynamic_bitset<> *bondsInPlay = nullptr,
+    const std::vector<std::string> *bondSymbols = nullptr,
+    bool doIsomericSmiles = false, bool doRandom = false,
+    bool doChiralInversions = true);
+RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
+    ROMol &mol, int atomIdx, std::vector<AtomColors> &colors,
+    const std::vector<unsigned int> &ranks, MolStack &molStack,
+    const boost::dynamic_bitset<> *atomsInPlay,
+    const boost::dynamic_bitset<> *bondsInPlay,
     const std::vector<std::string> *bondSymbols = nullptr,
     bool doIsomericSmiles = false, bool doRandom = false,
     bool doChiralInversions = true);
