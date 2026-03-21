@@ -97,9 +97,9 @@ TEST_CASE("Shape Small tests") {
   // compensated for by other things.
   std::vector<size_t> expNumHits{3, 8, 1};
   std::vector<std::vector<double>> expScores{
-      {0.989, 0.905, 0.901},
-      {0.864, 0.855, 0.819, 0.816, 0.812, 0.809, 0.801, 0.800},
-      {0.802}};
+      {0.956, 0.943, 0.911},
+      {0.965, 0.906, 0.903, 0.891, 0.864, 0.851, 0.827, 0.822},
+      {0.751}};
   ShapeBuildParams shapeBuildOptions;
   shapeBuildOptions.numConfs = 100;
   shapeBuildOptions.rmsThreshold = 0.5;
@@ -124,7 +124,7 @@ TEST_CASE("Shape Small tests") {
     params.timeOut = 0;
     params.randomSeed = 1;
     params.shapePruneThreshold = shapeBuildOptions.shapeSimThreshold;
-    // params.bestHit = true;
+    params.bestHit = true;
     auto queryMol = v2::SmilesParse::MolFromSmiles(querySmis[i]);
     auto results = synthonspace.shapeSearch(*queryMol, params);
     unsigned int j = 0;
