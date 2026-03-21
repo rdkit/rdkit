@@ -632,8 +632,7 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
       double tolerance{0.0};
       streamRead(ss, tolerance, version);
       PairHolder pair;
-      bool hasNonPod = false;
-      streamReadProp(ss, pair, hasNonPod, MolPickler::getCustomPropHandlers());
+      streamReadProp(ss, pair, MolPickler::getCustomPropHandlers());
       switch (pair.val.getTag()) {
         case RDTypeTag::IntTag:
           res = makePropQuery<T, int>(pair.key, rdvalue_cast<int>(pair.val),
