@@ -566,23 +566,18 @@ RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,
 void applyTransformToShape(std::vector<double> &shape,
                            RDGeom::Transform3D &xform) {
   for (size_t i = 0; i < shape.size(); i += 4) {
-    RDGeom::Point3D pos{shape[i], shape[i + 1], shape[i + 2]};
-    xform.TransformPoint(pos);
-    shape[i] = pos.x;
-    shape[i + 1] = pos.y;
-    shape[i + 2] = pos.z;
+    xform.TransformPoint(shape.data() + i);
   }
 }
 
 void applyTransformToShape(const double *inShape, double *outShape,
                            size_t numPoints, RDGeom::Transform3D &xform) {
   for (size_t i = 0; i < 4 * numPoints; i += 4) {
-    RDGeom::Point3D pos{inShape[i], inShape[i + 1], inShape[i + 2]};
-    xform.TransformPoint(pos);
-    outShape[i] = pos.x;
-    outShape[i + 1] = pos.y;
-    outShape[i + 2] = pos.z;
+    outShape[i] = inShape[i];
+    outShape[i + 1] = inShape[i + 1];
+    outShape[i + 2] = inShape[i + 2];
     outShape[i + 3] = inShape[i + 3];
+    xform.TransformPoint(outShape + i);
   }
 }
 
