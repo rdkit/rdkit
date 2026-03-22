@@ -22,6 +22,7 @@
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <Geometry/Utils.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include <tuple>
@@ -1573,5 +1574,86 @@ TEST_CASE("Github #8559: seg fault in setTopolBounds") {
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
     DGeomHelpers::setTopolBounds(*mol, bm);
+  }
+}
+
+TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
+  SECTION("as reported") {
+    auto mol =
+        "O=C1NCC=CC[C@@H](NC(=O)c2c[nH]cc2Br)CC(=O)N2CCCC2C2CCN(C2)C(=O)c2csc1n2"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    {
+      ForceFields::CrystalFF::CrystalFFDetails details;
+      bool useExpTorsions = true;
+      bool useSmallRingTorsions = false;
+      bool useMacrocycleTorsions = true;
+      bool useBasicKnowledge = true;
+      unsigned int version = 2;
+      bool verbose = false;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          *mol, details, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      std::vector<std::vector<int>> expectedTorsions{
+          {17, 18, 20, 24}, {31, 30, 28, 27}, {0, 1, 2, 3}};
+      for (const auto &et : expectedTorsions) {
+        INFO(et[0] << " " << et[1] << " " << et[2] << " " << et[3]);
+        CHECK(std::find_if(details.expTorsionAtoms.begin(),
+                           details.expTorsionAtoms.end(), [&et](const auto &t) {
+                             return t == et;
+                           }) != details.expTorsionAtoms.end());
+      }
+    }
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid >= 0);
+    auto conf = mol->getConformer(cid);
+
+    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 27),
+               Catch::Matchers::WithinAbs(-180, 10));
+    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29),
+               Catch::Matchers::WithinAbs(0, 10));
+    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21),
+               Catch::Matchers::WithinAbs(-180, 20));
+    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 24),
+               Catch::Matchers::WithinAbs(0, 20));
+  }
+  SECTION("specific tests") {
+    std::vector<std::pair<std::string, std::vector<std::vector<int>>>> testCases{
+        {"O=C1NCC=CC[C@@H](NC(=O)c2c[nH]cc2Br)CC(=O)N2CCCC2C2CCN(C2)C(=O)c2csc1n2",
+         {{17, 18, 20, 24}, {31, 30, 28, 27}, {0, 1, 2, 3}}},
+        {"CC(=O)N[C@H]1Cc2cn(c3ccccc23)C(=O)c2ccccc2NC(=O)[C@@H]2CCCN2C1=O",
+         {{4, 31, 30, 26}, {25, 24, 23, 22}, {16, 15, 8, 7}}},
+        {"O=C1OCCOCCOCCOC(=O)n2nc(sc2=O)SCCSc2nn1c(=O)s2",
+         {{0, 1, 26, 25}, {13, 12, 14, 15}}},
+        {"CC(=O)N[C@H]1Cc2cn(c3ccccc23)C(=O)c2ccccc2NC(=O)[C@@H]2CCCN2C1=O",
+         {{4, 31, 30, 26}, {25, 24, 23, 22}, {16, 15, 8, 7}}},
+        {"S=C1NCCOCCNC(=S)N2CCOCCOCCN1CCOCCOCC2",
+         {{2, 1, 20, 19}, {8, 9, 11, 12}, {11, 9, 8, 7}, {20, 1, 2, 3}}},
+
+    };
+    ForceFields::CrystalFF::CrystalFFDetails details;
+    bool useExpTorsions = true;
+    bool useSmallRingTorsions = false;
+    bool useMacrocycleTorsions = true;
+    bool useBasicKnowledge = true;
+    unsigned int version = 2;
+    bool verbose = false;
+    for (const auto &tc : testCases) {
+      auto mol = v2::SmilesParse::MolFromSmiles(tc.first);
+      REQUIRE(mol);
+      MolOps::addHs(*mol);
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          *mol, details, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      for (const auto &et : tc.second) {
+        INFO(et[0] << " " << et[1] << " " << et[2] << " " << et[3]);
+        CHECK(std::find_if(details.expTorsionAtoms.begin(),
+                           details.expTorsionAtoms.end(), [&et](const auto &t) {
+                             return t == et;
+                           }) != details.expTorsionAtoms.end());
+      }
+    }
   }
 }
