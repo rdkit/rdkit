@@ -1804,13 +1804,6 @@ void DrawMol::partitionForLegend() {
   }
   switch (drawOptions_.legendPosition) {
     case MolDrawOptions::LegendPosition::Bottom:
-      if (!flexiCanvasY_) {
-        legendHeight_ = int(drawOptions_.legendFraction * float(drawHeight_));
-        molHeight_ = drawHeight_ - legendHeight_;
-      } else {
-        molHeight_ = drawHeight_;
-      }
-      break;
     case MolDrawOptions::LegendPosition::Top:
       if (!flexiCanvasY_) {
         legendHeight_ = int(drawOptions_.legendFraction * float(drawHeight_));
