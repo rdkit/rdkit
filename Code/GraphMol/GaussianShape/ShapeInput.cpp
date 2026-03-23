@@ -12,8 +12,7 @@
 
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
-#include <GraphMol/ROMol.h>
-#include <GraphMol/RWMol.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/GaussianShape/ShapeInput.h>
 #include <GraphMol/GaussianShape/SingleConformerAlignment.h>
@@ -41,58 +40,78 @@ namespace GaussianShape {
 // Bondi radii
 // You can find more of these in Table 12 of this publication:
 // https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3658832/
-// The dummy atom radius (atomic number 0) is set to
-// 2.16.
 const std::map<unsigned int, double> vdw_radii = {
-    {0, 2.16},   // Dummy, same as Xe.
-    {1, 1.10},   // H
-    {2, 1.40},   // He
-    {3, 1.81},   // Li
-    {4, 1.53},   // Be
-    {5, 1.92},   // B
-    {6, 1.70},   // C
-    {7, 1.55},   // N
-    {8, 1.52},   // O
-    {9, 1.47},   // F
-    {10, 1.54},  // Ne
-    {11, 2.27},  // Na
-    {12, 1.73},  // Mg
-    {13, 1.84},  // Al
-    {14, 2.10},  // Si
-    {15, 1.80},  // P
-    {16, 1.80},  // S
-    {17, 1.75},  // Cl
-    {18, 1.88},  // Ar
-    {19, 2.75},  // K
-    {20, 2.31},  // Ca
-    {31, 1.87},  // Ga
-    {32, 2.11},  // Ge
-    {33, 1.85},  // As
-    {34, 1.90},  // Se
-    {35, 1.83},  // Br
-    {36, 2.02},  // Kr
-    {37, 3.03},  // Rb
-    {38, 2.49},  // Sr
-    {49, 1.93},  // In
-    {50, 2.17},  // Sn
-    {51, 2.06},  // Sb
-    {52, 2.06},  // Te
-    {53, 1.98},  // I
-    {54, 2.16},  // Xe
-    {55, 3.43},  // Cs
-    {56, 2.68},  // Ba
-    {81, 1.96},  // Tl
-    {82, 2.02},  // Pb
-    {83, 2.07},  // Bi
-    {84, 1.97},  // Po
-    {85, 2.02},  // At
-    {86, 2.20},  // Rn
-    {87, 3.48},  // Fr
-    {88, 2.83},  // Ra
+    {0, DUMMY_RAD},   // Dummy, same as Xe.
+    {1, 1.10},        // H
+    {2, 1.40},        // He
+    {3, 1.81},        // Li
+    {4, 1.53},        // Be
+    {5, 1.92},        // B
+    {6, CARBON_RAD},  // C
+    {7, 1.55},        // N
+    {8, 1.52},        // O
+    {9, 1.47},        // F
+    {10, 1.54},       // Ne
+    {11, 2.27},       // Na
+    {12, 1.73},       // Mg
+    {13, 1.84},       // Al
+    {14, 2.10},       // Si
+    {15, 1.80},       // P
+    {16, 1.80},       // S
+    {17, 1.75},       // Cl
+    {18, 1.88},       // Ar
+    {19, 2.75},       // K
+    {20, 2.31},       // Ca
+    {31, 1.87},       // Ga
+    {32, 2.11},       // Ge
+    {33, 1.85},       // As
+    {34, 1.90},       // Se
+    {35, 1.83},       // Br
+    {36, 2.02},       // Kr
+    {37, 3.03},       // Rb
+    {38, 2.49},       // Sr
+    {49, 1.93},       // In
+    {50, 2.17},       // Sn
+    {51, 2.06},       // Sb
+    {52, 2.06},       // Te
+    {53, 1.98},       // I
+    {54, 2.16},       // Xe
+    {55, 3.43},       // Cs
+    {56, 2.68},       // Ba
+    {81, 1.96},       // Tl
+    {82, 2.02},       // Pb
+    {83, 2.07},       // Bi
+    {84, 1.97},       // Po
+    {85, 2.02},       // At
+    {86, 2.20},       // Rn
+    {87, 3.48},       // Fr
+    {88, 2.83},       // Ra
 };
 constexpr double radius_color =
     1.08265;  // same radius for all feature/color "atoms", as used by the
               // PubChem code.
+
+namespace {
+// Throw out any atoms we don't want.  copySubsetMol does more work than
+// is necessary for this and seemed to leave the molecule in an odd state
+// that didn't play well with extractAtoms.
+std::unique_ptr<RWMol> extractSubset(
+    const RWMol &mol, const std::vector<unsigned int> &atomsToKeep) {
+  auto retMol = std::make_unique<RWMol>(mol);
+  boost::dynamic_bitset<> keepAtoms(mol.getNumAtoms());
+  for (const auto atk : atomsToKeep) {
+    keepAtoms[atk] = true;
+  }
+  retMol->beginBatchEdit();
+  for (auto atom : retMol->atoms()) {
+    if (!keepAtoms[atom->getIdx()]) {
+      retMol->removeAtom(atom->getIdx());
+    }
+  }
+  retMol->commitBatchEdit();
+  return retMol;
+}
+}  // namespace
 
 ShapeInput::ShapeInput(const ROMol &mol, int confId,
                        const ShapeInputOptions &opts,
@@ -101,25 +120,47 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
                "ShapeInput object needs the molecule to have conformers.  " +
                    mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
 
-  if (opts.allCarbonRadii && !opts.atomRadii.empty()) {
-    BOOST_LOG(rdWarningLog)
-        << "Specifying allCarbonRadii and providing custom atom radii doesn't"
-           " make sense.  Ignoring the radii."
-        << std::endl;
+  std::unique_ptr<RWMol> tmpMol;
+  // Subsetting the molecule makes any bespoke atom radii, identified
+  // by atom index, incorrect so stash them as atom properties.
+  for (const auto &[idx, radius] : opts.atomRadii) {
+    auto atom = mol.getAtomWithIdx(idx);
+    atom->setProp<double>("BespokeRadius", radius);
   }
-  if (confId >= 0) {
-    extractAtoms(mol, confId, opts, true);
+
+  if (!opts.atomSubset.empty()) {
+    tmpMol = extractSubset(mol, opts.atomSubset);
+  } else {
+    tmpMol.reset(new RWMol(mol));
+  }
+  // The input molecule may have been in Kekule form, so fix that so
+  // aromatic features are found.
+  MolOps::setAromaticity(*tmpMol);
+  d_smiles = MolToSmiles(*tmpMol);
+  std::vector<unsigned int> atOrder;
+  tmpMol->getProp(common_properties::_smilesAtomOutputOrder, atOrder);
+  tmpMol.reset(dynamic_cast<RWMol *>(MolOps::renumberAtoms(*tmpMol, atOrder)));
+
+  if (!tmpMol->getRingInfo()->isInitialized()) {
+    // Query molecules don't seem to have the ring info generated on creation.
+    MolOps::findSSSR(*tmpMol);
+  }
+
+  auto processConf = [&](RWMol &m, unsigned int ci, bool fa) {
+    extractAtoms(m, ci, opts, fa);
     if (opts.useColors) {
-      extractFeatures(mol, confId, opts, true);
+      extractFeatures(m, ci, opts, fa);
     }
+  };
+
+  if (confId >= 0) {
+    processConf(*tmpMol, confId, true);
   } else {
     for (unsigned int i = 0; i < mol.getNumConformers(); ++i) {
-      extractAtoms(mol, i, opts, i == 0);
-      if (opts.useColors) {
-        extractFeatures(mol, i, opts, i == 0);
-      }
+      processConf(*tmpMol, i, i == 0);
     }
   }
+  d_activeShape = 0;
   calcNormalization();
   calcExtremes();
   calculateSelfOverlaps(overlayOpts);
@@ -127,7 +168,6 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
     pruneShapes(opts.shapePruneThreshold);
   }
   sortShapesByVolumes();
-  d_activeShape = 0;
 }
 
 ShapeInput::ShapeInput(const ShapeInput &other)
@@ -140,6 +180,7 @@ ShapeInput::ShapeInput(const ShapeInput &other)
       d_selfOverlapShapeVols(other.d_selfOverlapShapeVols),
       d_selfOverlapColorVols(other.d_selfOverlapColorVols),
       d_extremePointss(other.d_extremePointss),
+      d_smiles(other.d_smiles),
       d_normalized(other.d_normalized),
       d_normalizationOK(other.d_normalizationOK),
       d_canonRots(other.d_canonRots),
@@ -163,6 +204,7 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   d_selfOverlapShapeVols = other.d_selfOverlapShapeVols;
   d_selfOverlapColorVols = other.d_selfOverlapColorVols;
   d_extremePointss = other.d_extremePointss;
+  d_smiles = other.d_smiles;
   d_normalized = other.d_normalized;
   d_normalizationOK = other.d_normalizationOK;
   d_canonRots = other.d_canonRots;
@@ -282,14 +324,14 @@ void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
 }
 
 std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors) const {
-  auto mol = std::make_unique<RWMol>();
-  for (unsigned int i = 0; i < getNumAtoms(); i++) {
-    Atom *atom = new Atom(6);
-    mol->addAtom(atom, true, true);
-  }
+  // The SMILES string and the atom coordinates should be in the same
+  // order.
+  v2::SmilesParse::SmilesParserParams params;
+  params.sanitize = false;
+  auto mol = v2::SmilesParse::MolFromSmiles(d_smiles, params);
   if (includeColors) {
     for (unsigned int i = 0; i < getNumFeatures(); i++) {
-      Atom *atom = new Atom(7);
+      Atom *atom = new Atom(54);
       mol->addAtom(atom, true, true);
     }
   }
@@ -299,11 +341,11 @@ std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors) const {
   }
   Conformer *conf = new Conformer(num);
   const auto &shapeCds = getCoords();
-  for (unsigned int i = 0, j = 0; i < 3 * num; i += 3, ++j) {
-    auto &pos = conf->getAtomPos(j);
-    pos.x = shapeCds[i];
-    pos.y = shapeCds[i + 1];
-    pos.z = shapeCds[i + 2];
+  for (unsigned int i = 0; i < num; i++) {
+    auto &pos = conf->getAtomPos(i);
+    pos.x = shapeCds[3 * i];
+    pos.y = shapeCds[3 * i + 1];
+    pos.z = shapeCds[3 * i + 2];
   }
   mol->addConformer(conf, true);
   return mol;
@@ -338,7 +380,7 @@ double ShapeInput::bestSimilarity(ShapeInput &fitShape,
                                   const ShapeOverlayOptions &overlayOpts) {
   bestThisShape = -1;
   bestFitShape = -1;
-  if (maxSimilarity(fitShape) < threshold) {
+  if (maxPossibleSimilarity(fitShape) < threshold) {
     return -1.0;
   }
 
@@ -353,8 +395,6 @@ double ShapeInput::bestSimilarity(ShapeInput &fitShape,
                    getColorVolume(), fitShape.getColorVolume(), overlayOpts);
       if (maxSim > threshold) {
         auto scores = AlignShape(*this, fitShape, &xform, overlayOpts);
-        std::cout << i << " -> " << j << " = " << scores[0] << ", " << scores[1]
-                  << ", " << scores[2] << std::endl;
         if (scores[0] > bestSim) {
           bestSim = scores[0];
           bestThisShape = i;
@@ -373,17 +413,19 @@ double ShapeInput::bestSimilarity(ShapeInput &fitShape,
   return bestSim;
 }
 
-double ShapeInput::maxSimilarity(const ShapeInput &fitShape,
-                                 const ShapeOverlayOptions &overlayOpts) const {
+double ShapeInput::maxPossibleSimilarity(
+    const ShapeInput &fitShape, const ShapeOverlayOptions &overlayOpts) const {
   // The best score achievable is when the smaller volume is entirely inside
-  // the larger volume.
+  // the larger volume.  The color volumes are probably pretty constant
+  // such that we might only need to look at the first shape in each (they
+  // are sorted in descending order), but play it safe for now.
   double maxSim = 0.0;
   for (unsigned int i = 0; i < getNumShapes(); i++) {
     for (unsigned int j = 0; j < fitShape.getNumShapes(); j++) {
-      auto sim = maxScore(fitShape.d_selfOverlapShapeVols[i],
-                          d_selfOverlapShapeVols[j],
-                          fitShape.d_selfOverlapColorVols[i],
-                          d_selfOverlapColorVols[j], overlayOpts);
+      auto sim = maxScore(fitShape.d_selfOverlapShapeVols[j],
+                          d_selfOverlapShapeVols[i],
+                          fitShape.d_selfOverlapColorVols[j],
+                          d_selfOverlapColorVols[i], overlayOpts);
       if (sim > maxSim) {
         maxSim = sim;
       }
@@ -394,6 +436,10 @@ double ShapeInput::maxSimilarity(const ShapeInput &fitShape,
 
 namespace {
 double getStandardAtomRadius(unsigned int atomicNum) {
+  // Mostly they will be carbons, so just return that without lookup.
+  if (atomicNum == 6) {
+    return CARBON_RAD;
+  }
   if (auto rad = vdw_radii.find(static_cast<unsigned int>(atomicNum));
       rad != vdw_radii.end()) {
     return rad->second;
@@ -413,42 +459,39 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
   std::vector<double> theseCoords;
   theseCoords.reserve(mol.getNumAtoms() * 3);
   for (const auto atom : mol.atoms()) {
-    const auto atomIdx = atom->getIdx();
-    if (!opts.atomSubset.empty()) {
-      if (auto it = std::ranges::find_if(
-              opts.atomSubset,
-              [atomIdx](const auto &p) -> bool { return p == atomIdx; });
-          it == opts.atomSubset.end()) {
-        continue;
-      }
-    }
     if (atom->getAtomicNum() > 1) {
-      auto atIdx = atom->getIdx();
+      const auto atIdx = atom->getIdx();
       auto &pos = conf.getAtomPos(atIdx);
       theseCoords.push_back(pos.x);
       theseCoords.push_back(pos.y);
       theseCoords.push_back(pos.z);
       if (fillAlphas) {
-        if (opts.allCarbonRadii) {
-          d_alphas.push_back(KAPPA / (1.7 * 1.7));
+        if (opts.allCarbonRadii && !d_carbonRadii) {
+          d_alphas.push_back(KAPPA / (CARBON_RAD * CARBON_RAD));
         } else {
           double rad = 0.0;
           if (opts.atomRadii.empty()) {
-            if (atom->getAtomicNum() == 6) {
-              rad = 1.7;
-              (*d_carbonRadii)[atomIdx] = true;
-            } else {
-              rad = getStandardAtomRadius(atom->getAtomicNum());
+            if ((opts.allCarbonRadii && atom->getAtomicNum()) ||
+                atom->getAtomicNum() == 6) {
+              (*d_carbonRadii)[atIdx] = true;
             }
+            rad = getStandardAtomRadius(atom->getAtomicNum());
           } else {
-            auto it = std::ranges::find_if(
-                opts.atomRadii,
-                [atIdx](const auto &p) -> bool { return p.first == atIdx; });
-            if (it == opts.atomRadii.end()) {
-              rad = getStandardAtomRadius(atom->getAtomicNum());
+            if (atom->hasProp("BespokeRadius")) {
+              rad = atom->getProp<double>("BespokeRadius");
             } else {
-              rad = it->second;
+              rad = getStandardAtomRadius(atom->getAtomicNum());
+              if ((opts.allCarbonRadii && atom->getAtomicNum()) ||
+                  atom->getAtomicNum() == 6) {
+                (*d_carbonRadii)[atIdx] = true;
+              }
             }
+          }
+          // TODO: For now, check there hasn't been a logic error leaving a rad
+          // of 0.0.  Take it out later when it's been tried enough we can be
+          // confident it's ok.
+          if (rad == 0.0) {
+            throw ValueErrorException("Atom has radius 0.0.");
           }
           d_alphas.push_back(KAPPA / (rad * rad));
         }
@@ -552,22 +595,8 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
         }
         for (const auto &match : matches) {
           std::vector<unsigned int> ats;
-          bool featOk = true;
           for (const auto &pr : match) {
-            // make sure all the atoms are in the subset, if there is one
-            if (!opts.atomSubset.empty()) {
-              if (std::ranges::find_if(
-                      opts.atomSubset, [pr](const auto &p) -> bool {
-                        return p == static_cast<unsigned int>(pr.second);
-                      }) == opts.atomSubset.end()) {
-                featOk = false;
-                break;
-              }
-            }
             ats.push_back(pr.second);
-          }
-          if (!featOk) {
-            continue;
           }
           auto featPos = computeFeaturePos(mol, confId, ats);
           d_types.push_back(pattIdx);
@@ -595,6 +624,7 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
       if (fillAlphas) {
         auto rad = std::get<2>(f);
         d_alphas.push_back(KAPPA / (rad * rad));
+        d_numFeats++;
       }
     }
   }
@@ -680,30 +710,6 @@ RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,
   }
   featPos /= ats.size();
   return featPos;
-}
-
-void writeCoords(const std::vector<double> &shape, const std::string &label,
-                 char lineEnd) {
-  std::cout << label << " :: ";
-  if (lineEnd == '\n') {
-    std::cout << lineEnd;
-  }
-  for (size_t i = 0; i < shape.size(); i += 3) {
-    std::cout << shape[i] << "," << shape[i + 1] << "," << shape[i + 2]
-              << lineEnd;
-  }
-}
-
-void writeCoords(const double *shape, unsigned int numPts,
-                 const std::string &label, char lineEnd) {
-  std::cout << label << " :: ";
-  if (lineEnd == '\n') {
-    std::cout << lineEnd;
-  }
-  for (unsigned int i = 0; i < numPts * 3; i += 3) {
-    std::cout << shape[i] << "," << shape[i + 1] << "," << shape[i + 2]
-              << lineEnd;
-  }
 }
 
 void copyTransform(const RDGeom::Transform3D &src, RDGeom::Transform3D &dest) {

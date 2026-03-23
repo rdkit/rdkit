@@ -28,6 +28,7 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/RDLog.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 using namespace RDKit;
 
@@ -662,7 +663,10 @@ TEST_CASE("Shape subset") {
   REQUIRE(m1);
   GaussianShape::ShapeInputOptions shapeOpts;
   shapeOpts.atomSubset = std::vector<unsigned int>{0, 1, 2, 3, 10, 11};
-  auto partShape = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
+  GaussianShape::ShapeInput partShape(*m1, -1, shapeOpts);
+  CHECK(partShape.getSmiles() == "c1ccccc1");
+  CHECK(partShape.getNumAtoms() == 6);
+  CHECK(partShape.getNumFeatures() == 1);
   CHECK(partShape.getCoords().size() == 21);
   CHECK_THAT(partShape.getShapeVolume(),
              Catch::Matchers::WithinAbs(261.166, 0.005));
@@ -670,7 +674,10 @@ TEST_CASE("Shape subset") {
              Catch::Matchers::WithinAbs(5.316, 0.005));
 
   shapeOpts.atomSubset.clear();
-  auto wholeShape = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
+  GaussianShape::ShapeInput wholeShape(*m1, -1, shapeOpts);
+  CHECK(wholeShape.getSmiles() == "c1ccc(-c2ccccc2)cc1");
+  CHECK(wholeShape.getNumAtoms() == 12);
+  CHECK(wholeShape.getNumFeatures() == 2);
   CHECK(wholeShape.getCoords().size() == 42);
   CHECK_THAT(wholeShape.getShapeVolume(),
              Catch::Matchers::WithinAbs(556.266, 0.005));
@@ -915,7 +922,7 @@ TEST_CASE("Multiple Conformers") {
 
     // The shapes in 2 are a subset of 1, so the maximum similarity
     // should be 1.0.
-    auto maxSim = shape1.maxSimilarity(shape2);
+    auto maxSim = shape1.maxPossibleSimilarity(shape2);
     std::cout << "maxSim : " << maxSim << std::endl;
     CHECK_THAT(maxSim, Catch::Matchers::WithinAbs(1.0, 0.001));
     unsigned int bestFitShape, bestRefShape;
@@ -938,6 +945,81 @@ TEST_CASE("Multiple Conformers") {
     CHECK(scores[0] < 0.5);
     std::cout << scores[0] << ", " << scores[1] << ", " << scores[2]
               << std::endl;
-    std::cout << shape1.maxSimilarity(shape2) << std::endl;
+    std::cout << shape1.maxPossibleSimilarity(shape2) << std::endl;
+  }
+}
+
+namespace {
+bool checkBondLengths(const ROMol &mol) {
+  // DetermineBonds::connectivityVdw uses a covalent factor of 1.3.
+  static constexpr double radFactor = 1.3;
+  const auto conf = mol.getConformer();
+  for (const auto bond : mol.bonds()) {
+    if (!bond->getBeginAtom()->getAtomicNum() ||
+        !bond->getEndAtom()->getAtomicNum()) {
+      continue;
+    }
+    auto bondlen = MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
+                                                bond->getEndAtomIdx());
+    auto rad1 = PeriodicTable::getTable()->getRcovalent(
+        bond->getBeginAtom()->getAtomicNum());
+    auto rad2 = PeriodicTable::getTable()->getRcovalent(
+        bond->getEndAtom()->getAtomicNum());
+    if (bondlen > radFactor * (rad1 + rad2)) {
+      std::cout << bond->getIdx() << " : " << bond->getBeginAtomIdx() << " -> "
+                << bond->getEndAtomIdx() << " len = " << bondlen << " vs "
+                << radFactor * (rad1 + rad2) << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace
+
+TEST_CASE("Different atom orders for ShapeInput") {
+  // Make sure that different atom orders always produce a ShapeInput that gives
+  // a correct molecule from shapeToMol.  This wasn't always the case.
+  auto fullMol =
+      "C[C@@H]1C[C@H](NC(=O)NC2COC2)CN(C(=O)c2nccnc2F)C1 |(-0.346914,-0.986206,-4.28744;-0.686863,-0.0357247,-3.13265;0.429505,-0.1946,-2.14134;0.21099,0.659676,-0.907145;1.06526,0.0812473,0.104663;2.29297,0.75201,0.373712;2.5837,1.80373,-0.246936;3.23325,0.27478,1.33777;4.47647,0.99197,1.57602;4.94347,1.01294,2.99117;5.59284,-0.21541,2.82613;5.71049,0.107583,1.47157;-1.19052,0.721766,-0.417623;-2.14086,-0.0964663,-1.12904;-3.25312,-0.745252,-0.540367;-3.95877,-1.43507,-1.38825;-3.7227,-0.763533,0.803759;-4.9481,-0.204581,1.05395;-5.52492,-0.18107,2.24654;-4.86554,-0.748644,3.30451;-3.63585,-1.32731,3.13734;-3.08234,-1.32608,1.89052;-1.84839,-1.9059,1.69441;-2.02702,-0.329978,-2.57998),wD:1.0,wU:3.3|"_smiles;
+  REQUIRE(fullMol);
+  CHECK(checkBondLengths(*fullMol));
+  std::vector<unsigned int> atomOrder(fullMol->getNumAtoms());
+  std::iota(atomOrder.begin(), atomOrder.end(), 0);
+  auto rng = std::default_random_engine{};
+  for (unsigned int i = 0; i < 1; ++i) {
+    std::ranges::shuffle(atomOrder, rng);
+    std::unique_ptr<ROMol> renumMol(MolOps::renumberAtoms(*fullMol, atomOrder));
+    CHECK(checkBondLengths(*renumMol));
+    GaussianShape::ShapeInput shape(*renumMol);
+    auto outMol = shape.shapeToMol(false);
+    std::cout << shape.getSmiles() << std::endl;
+    std::cout << MolToCXSmiles(*outMol, true, false, -1, false) << std::endl;
+    CHECK(checkBondLengths(*outMol));
+  }
+
+  // And the same for the shape from a subset.
+  GaussianShape::ShapeInputOptions shapeOptions;
+  auto bitToGo = "c1nccnc1F"_smarts;
+  REQUIRE(bitToGo);
+  for (unsigned int i = 0; i < 1; ++i) {
+    std::ranges::shuffle(atomOrder, rng);
+    std::unique_ptr<ROMol> renumMol(MolOps::renumberAtoms(*fullMol, atomOrder));
+    CHECK(checkBondLengths(*renumMol));
+    auto match = SubstructMatch(*renumMol, *bitToGo);
+    boost::dynamic_bitset<> toGo(fullMol->getNumAtoms());
+    for (auto mp : match.front()) {
+      toGo[mp.second] = true;
+    }
+    shapeOptions.atomSubset.clear();
+    shapeOptions.atomSubset.reserve(renumMol->getNumAtoms());
+    for (unsigned int j = 0; j < renumMol->getNumAtoms(); ++j) {
+      if (!toGo[j]) {
+        shapeOptions.atomSubset.push_back(j);
+      }
+    }
+    GaussianShape::ShapeInput shape(*renumMol, -1, shapeOptions);
+    auto outMol = shape.shapeToMol(false);
+    CHECK(MolToSmiles(*outMol) == "C[C@@H]1C[C@H](NC(=O)NC2COC2)CN(C=O)C1");
+    CHECK(checkBondLengths(*outMol));
   }
 }

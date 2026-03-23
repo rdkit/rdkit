@@ -67,6 +67,8 @@ class ROMol;
 class RWMol;
 namespace GaussianShape {
 
+constexpr double CARBON_RAD = 1.70;
+constexpr double DUMMY_RAD = 2.16;  // same as Xe
 // From Grant et al.
 constexpr double P = 2.7;
 constexpr double KAPPA = 2.41798793102;
@@ -145,6 +147,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #endif
   }
 
+  std::string getSmiles() const { return d_smiles; }
   unsigned int getActiveShape() const { return d_activeShape; }
   //! Set the currently active conformation to the new value.
   //! @param newShape: the number of the conformation to be used
@@ -207,8 +210,11 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
       double threshold = -1.0,
       const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
 
-  // Return the maximum similarity achievable between the 2 shapes.
-  double maxSimilarity(
+  // Return the maximum similarity achievable between the 2 shapes.  The
+  // maximum similarity is when one shape is entirely inside the other.  This
+  // returns the similarity in that case, which is the upper bound on what
+  // is achievable between these 2 shapes.
+  double maxPossibleSimilarity(
       const ShapeInput &fitShape,
       const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions()) const;
 
@@ -225,6 +231,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
     ar & d_selfOverlapColorVols;
     ar & d_extremePointss;
     ar & d_carbonRadii;
+    ar & d_smiles;
     ar & d_normalized;
     ar & d_normalizationOK;
     ar & d_canonRots;
@@ -267,6 +274,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   std::unique_ptr<boost::dynamic_bitset<>>
       d_carbonRadii;  // Flags those atoms with a carbon radius, for faster
   // calculation later.
+  std::string d_smiles;  // The SMILES string of the input molecule
 
   // This is the rotation and translation to align the principal axes of the
   // shape with cartesian axes.  If d_normalized is true, it has been applied
@@ -294,14 +302,6 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 // Calculate the mean position of the given atoms.
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Point3D computeFeaturePos(
     const ROMol &mol, int confId, const std::vector<unsigned int> &ats);
-
-RDKIT_GAUSSIANSHAPE_EXPORT void writeCoords(const std::vector<double> &shape,
-                                            const std::string &label,
-                                            char lineEnd = '\n');
-RDKIT_GAUSSIANSHAPE_EXPORT void writeCoords(const double *shape,
-                                            unsigned int numPts,
-                                            const std::string &label,
-                                            char lineEnd = '\n');
 
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Transform3D quatTransToTransform(
     const double *quat, const double *trans);
