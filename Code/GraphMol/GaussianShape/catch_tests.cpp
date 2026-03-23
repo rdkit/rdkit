@@ -986,14 +986,12 @@ TEST_CASE("Different atom orders for ShapeInput") {
   std::vector<unsigned int> atomOrder(fullMol->getNumAtoms());
   std::iota(atomOrder.begin(), atomOrder.end(), 0);
   auto rng = std::default_random_engine{};
-  for (unsigned int i = 0; i < 1; ++i) {
+  for (unsigned int i = 0; i < 100; ++i) {
     std::ranges::shuffle(atomOrder, rng);
     std::unique_ptr<ROMol> renumMol(MolOps::renumberAtoms(*fullMol, atomOrder));
     CHECK(checkBondLengths(*renumMol));
     GaussianShape::ShapeInput shape(*renumMol);
     auto outMol = shape.shapeToMol(false);
-    std::cout << shape.getSmiles() << std::endl;
-    std::cout << MolToCXSmiles(*outMol, true, false, -1, false) << std::endl;
     CHECK(checkBondLengths(*outMol));
   }
 
@@ -1001,7 +999,7 @@ TEST_CASE("Different atom orders for ShapeInput") {
   GaussianShape::ShapeInputOptions shapeOptions;
   auto bitToGo = "c1nccnc1F"_smarts;
   REQUIRE(bitToGo);
-  for (unsigned int i = 0; i < 1; ++i) {
+  for (unsigned int i = 0; i < 100; ++i) {
     std::ranges::shuffle(atomOrder, rng);
     std::unique_ptr<ROMol> renumMol(MolOps::renumberAtoms(*fullMol, atomOrder));
     CHECK(checkBondLengths(*renumMol));

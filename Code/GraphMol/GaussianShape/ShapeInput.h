@@ -192,18 +192,19 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
   void transformCoords(RDGeom::Transform3D &xform);
 
-  // Mock a molecule up from the shape for visual inspection and sometimes
-  // calculation of the normalization matrices.  No bonds.
-  // Atoms are C, features are N.
-  virtual std::unique_ptr<RWMol> shapeToMol(bool includeColors = true) const;
+  // Make a molecule from the shape.  If required, features are added
+  // as xenon atoms.  If withBonds is false, just makes a molecule from
+  // the atoms, otherwise builds a full molecule.
+  std::unique_ptr<RWMol> shapeToMol(bool includeColors = false,
+                                    bool withBonds = true) const;
 
   // Find the best similarity score between all shapes in this shape and the
   // other one. Stops as soon as it gets something above the threshold.
   // The score runs between 0.0 and 1.0, so the default threshold of -1.0
-  // means no threshold.
-  // Fills in the shape numbers of the two that were responsible if there is
-  // something above the threshold, and the transformation that did it.
-  // Returns -1.0 for the similarity if there was nothing above the threshold.
+  // means no threshold. Fills in the shape numbers of the two that were
+  // responsible if there is something above the threshold, and the
+  // transformation that did it. Returns -1.0 for the similarity if there was
+  // nothing above the threshold.
   double bestSimilarity(
       ShapeInput &fitShape, unsigned int &bestThisShape,
       unsigned int &bestFitShape, RDGeom::Transform3D &bestXform,

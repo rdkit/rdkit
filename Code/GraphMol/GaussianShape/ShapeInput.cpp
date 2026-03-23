@@ -323,12 +323,22 @@ void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
   d_normalizationOK = false;
 }
 
-std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors) const {
-  // The SMILES string and the atom coordinates should be in the same
-  // order.
-  v2::SmilesParse::SmilesParserParams params;
-  params.sanitize = false;
-  auto mol = v2::SmilesParse::MolFromSmiles(d_smiles, params);
+std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors,
+                                              bool withBonds) const {
+  std::unique_ptr<RWMol> mol;
+  if (withBonds) {
+    // The SMILES string and the atom coordinates should be in the same
+    // order.
+    v2::SmilesParse::SmilesParserParams params;
+    params.sanitize = false;
+    mol = v2::SmilesParse::MolFromSmiles(d_smiles, params);
+  } else {
+    mol.reset(new RWMol());
+    for (unsigned int i = 0; i < getNumAtoms(); i++) {
+      Atom *atom = new Atom(6);
+      mol->addAtom(atom, true, true);
+    }
+  }
   if (includeColors) {
     for (unsigned int i = 0; i < getNumFeatures(); i++) {
       Atom *atom = new Atom(54);
@@ -616,7 +626,6 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
     // to alpha.
     for (const auto &f : opts.customFeatures) {
       d_types.push_back(std::get<0>(f));
-      d_numFeats++;
       const auto &pos = std::get<1>(f);
       d_coords[d_activeShape].push_back(pos.x);
       d_coords[d_activeShape].push_back(pos.y);
