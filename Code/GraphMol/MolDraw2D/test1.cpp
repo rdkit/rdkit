@@ -3861,7 +3861,7 @@ void testGithub3112() {
                 std::string::npos);
 #endif
 #else
-    TEST_ASSERT(text.find("<text x='120.5' y='190.0' class='legend' "
+    TEST_ASSERT(text.find("<text x='121.0' y='190.0' class='legend' "
                           "style='font-size:16px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >b</text>") !=
@@ -3887,7 +3887,7 @@ void testGithub3112() {
                 std::string::npos);
 #endif
 #else
-    TEST_ASSERT(text.find("<text x='111.1' y='190.0' class='legend' "
+    TEST_ASSERT(text.find("<text x='111.6' y='190.0' class='legend' "
                           "style='font-size:11px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >b</text>") !=
@@ -3915,7 +3915,7 @@ void testGithub3112() {
                 std::string::npos);
 #endif
 #else
-    TEST_ASSERT(text.find("<text x='9.7' y='190.0' class='legend' "
+    TEST_ASSERT(text.find("<text x='10.2' y='190.0' class='legend' "
                           "style='font-size:9px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >N</text>") !=
@@ -3943,7 +3943,7 @@ void testGithub3112() {
                 std::string::npos);
 #endif
 #else
-    TEST_ASSERT(text.find("<text x='57.2' y='181.0' class='legend' "
+    TEST_ASSERT(text.find("<text x='57.7' y='181.0' class='legend' "
                           "style='font-size:11px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >N</text>") !=
