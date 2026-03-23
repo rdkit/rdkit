@@ -1611,11 +1611,13 @@ TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
     auto conf = mol->getConformer(cid);
 
     CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 27),
-               Catch::Matchers::WithinAbs(-180, 10));
+               Catch::Matchers::WithinAbs(-180, 10) ||
+                   Catch::Matchers::WithinAbs(180, 10));
     CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29),
                Catch::Matchers::WithinAbs(0, 10));
     CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21),
-               Catch::Matchers::WithinAbs(-180, 20));
+               Catch::Matchers::WithinAbs(-180, 20) ||
+                   Catch::Matchers::WithinAbs(180, 20));
     CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 24),
                Catch::Matchers::WithinAbs(0, 20));
   }
