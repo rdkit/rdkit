@@ -127,11 +127,11 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
     pruneShapes(opts.shapePruneThreshold);
   }
   sortShapesByVolumes();
-  d_currentConf = 0;
+  d_activeShape = 0;
 }
 
 ShapeInput::ShapeInput(const ShapeInput &other)
-    : d_currentConf(other.d_currentConf),
+    : d_activeShape(other.d_activeShape),
       d_coords(other.d_coords),
       d_alphas(other.d_alphas),
       d_types(other.d_types),
@@ -154,7 +154,7 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   if (this == &other) {
     return *this;
   }
-  d_currentConf = other.d_currentConf;
+  d_activeShape = other.d_activeShape;
   d_coords = other.d_coords;
   d_alphas = other.d_alphas;
   d_types = other.d_types;
@@ -176,12 +176,12 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   return *this;
 }
 
-void ShapeInput::setCurrentConf(unsigned int newConf) {
-  PRECONDITION(newConf < d_coords.size(),
-               "Invalid conformation number (" + std::to_string(newConf) +
+void ShapeInput::setActiveShape(unsigned int newShape) {
+  PRECONDITION(newShape < d_coords.size(),
+               "Invalid conformation number (" + std::to_string(newShape) +
                    " vs " + std::to_string(d_coords.size()) + ").");
-  if (d_currentConf != newConf) {
-    d_currentConf = newConf;
+  if (d_activeShape != newShape) {
+    d_activeShape = newShape;
     d_normalizationOK = false;
   }
 }
@@ -195,9 +195,9 @@ std::vector<RDGeom::Point3D> ShapeInput::getAtomPoints(
   }
   atomPoints.reserve(numPoints);
   for (unsigned int i = 0; i < 3 * numPoints; i += 3) {
-    atomPoints.emplace_back(RDGeom::Point3D(d_coords[d_currentConf][i],
-                                            d_coords[d_currentConf][i + 1],
-                                            d_coords[d_currentConf][i + 2]));
+    atomPoints.emplace_back(RDGeom::Point3D(d_coords[d_activeShape][i],
+                                            d_coords[d_activeShape][i + 1],
+                                            d_coords[d_activeShape][i + 2]));
   }
   return atomPoints;
 }
@@ -206,28 +206,28 @@ const std::array<double, 9> &ShapeInput::calcCanonicalRotation() {
   if (!d_normalizationOK) {
     calcNormalization();
   }
-  return d_canonRots[d_currentConf];
+  return d_canonRots[d_activeShape];
 }
 
 const std::array<double, 3> &ShapeInput::calcCanonicalTranslation() {
   if (!d_normalizationOK) {
     calcNormalization();
   }
-  return d_canonTranss[d_currentConf];
+  return d_canonTranss[d_activeShape];
 }
 
 const std::array<double, 3> &ShapeInput::calcEigenValues() {
   if (!d_normalizationOK) {
     calcNormalization();
   }
-  return d_eigenValuess[d_currentConf];
+  return d_eigenValuess[d_activeShape];
 }
 
 const std::array<size_t, 6> &ShapeInput::calcExtremes() {
   if (!d_normalizationOK) {
     calculateExtremes();
   }
-  return d_extremePointss[d_currentConf];
+  return d_extremePointss[d_activeShape];
 }
 
 std::array<double, 3> ShapeInput::calcMomentsOfInertia(
@@ -260,12 +260,12 @@ void ShapeInput::normalizeCoords() {
   RDGeom::Transform3D canonRot;
   for (unsigned int i = 0, k = 0; i < 3; ++i) {
     for (unsigned int j = 0; j < 3; ++j, ++k) {
-      canonRot.setValUnchecked(i, j, d_canonRots[d_currentConf][k]);
+      canonRot.setValUnchecked(i, j, d_canonRots[d_activeShape][k]);
     }
   }
-  RDGeom::Point3D trans{d_canonTranss[d_currentConf][0],
-                        d_canonTranss[d_currentConf][1],
-                        d_canonTranss[d_currentConf][2]};
+  RDGeom::Point3D trans{d_canonTranss[d_activeShape][0],
+                        d_canonTranss[d_activeShape][1],
+                        d_canonTranss[d_activeShape][2]};
   canonRot.TransformPoint(trans);
   canonRot.SetTranslation(trans);
 
@@ -276,7 +276,7 @@ void ShapeInput::normalizeCoords() {
 }
 
 void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
-  applyTransformToShape(d_coords[d_currentConf], xform);
+  applyTransformToShape(d_coords[d_activeShape], xform);
   d_normalized = false;
   d_normalizationOK = false;
 }
@@ -345,9 +345,9 @@ double ShapeInput::bestSimilarity(ShapeInput &fitShape,
   double bestSim = -1.0;
   RDGeom::Transform3D xform;
   for (size_t i = 0; i < getNumShapes(); i++) {
-    setCurrentConf(i);
+    setActiveShape(i);
     for (size_t j = 0; j < fitShape.getNumShapes(); j++) {
-      fitShape.setCurrentConf(j);
+      fitShape.setActiveShape(j);
       auto maxSim =
           maxScore(getShapeVolume(), fitShape.getShapeVolume(),
                    getColorVolume(), fitShape.getColorVolume(), overlayOpts);
@@ -455,7 +455,7 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
       }
     }
   }
-  d_currentConf = d_coords.size();
+  d_activeShape = d_coords.size();
   d_coords.push_back(theseCoords);
   if (fillAlphas) {
     d_numAtoms = d_coords.front().size() / 3;
@@ -571,9 +571,9 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
           }
           auto featPos = computeFeaturePos(mol, confId, ats);
           d_types.push_back(pattIdx);
-          d_coords[d_currentConf].push_back(featPos.x);
-          d_coords[d_currentConf].push_back(featPos.y);
-          d_coords[d_currentConf].push_back(featPos.z);
+          d_coords[d_activeShape].push_back(featPos.x);
+          d_coords[d_activeShape].push_back(featPos.y);
+          d_coords[d_activeShape].push_back(featPos.z);
           if (fillAlphas) {
             d_alphas.push_back(KAPPA / (radius_color * radius_color));
             d_numFeats++;
@@ -589,9 +589,9 @@ void ShapeInput::extractFeatures(const ROMol &mol, int confId,
       d_types.push_back(std::get<0>(f));
       d_numFeats++;
       const auto &pos = std::get<1>(f);
-      d_coords[d_currentConf].push_back(pos.x);
-      d_coords[d_currentConf].push_back(pos.y);
-      d_coords[d_currentConf].push_back(pos.z);
+      d_coords[d_activeShape].push_back(pos.x);
+      d_coords[d_activeShape].push_back(pos.y);
+      d_coords[d_activeShape].push_back(pos.z);
       if (fillAlphas) {
         auto rad = std::get<2>(f);
         d_alphas.push_back(KAPPA / (rad * rad));
@@ -608,7 +608,7 @@ void ShapeInput::calcNormalization() {
     d_eigenValuess.resize(d_coords.size());
     d_extremePointss.resize(d_coords.size());
   }
-  d_eigenValuess[d_currentConf] = std::array<double, 3>{0.0, 0.0, 0.0};
+  d_eigenValuess[d_activeShape] = std::array<double, 3>{0.0, 0.0, 0.0};
   // Build a "molecule" just of the shape points, not the color features
   // with which to calculate the canonical transformation.  Doesn't ever
   // use the input molecule in case the shape was built from a subset of
@@ -617,23 +617,23 @@ void ShapeInput::calcNormalization() {
   std::unique_ptr<RDGeom::Transform3D> canonXform(
       MolTransforms::computeCanonicalTransform(
           tmpMol->getConformer(), nullptr, false, true,
-          d_eigenValuess[d_currentConf].data()));
-  d_canonRots[d_currentConf] =
+          d_eigenValuess[d_activeShape].data()));
+  d_canonRots[d_activeShape] =
       std::array<double, 9>{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
   for (unsigned int i = 0, k = 0; i < 3; ++i) {
     for (unsigned int j = 0; j < 3; ++j, ++k) {
-      d_canonRots[d_currentConf][k] = canonXform->getValUnchecked(i, j);
+      d_canonRots[d_activeShape][k] = canonXform->getValUnchecked(i, j);
     }
   }
-  d_canonTranss[d_currentConf] = std::array<double, 3>{0.0, 0.0, 0.0};
+  d_canonTranss[d_activeShape] = std::array<double, 3>{0.0, 0.0, 0.0};
   for (unsigned int i = 0; i < 3 * d_numAtoms; i += 3) {
-    d_canonTranss[d_currentConf][0] -= d_coords[d_currentConf][i];
-    d_canonTranss[d_currentConf][1] -= d_coords[d_currentConf][i + 1];
-    d_canonTranss[d_currentConf][2] -= d_coords[d_currentConf][i + 2];
+    d_canonTranss[d_activeShape][0] -= d_coords[d_activeShape][i];
+    d_canonTranss[d_activeShape][1] -= d_coords[d_activeShape][i + 1];
+    d_canonTranss[d_activeShape][2] -= d_coords[d_activeShape][i + 2];
   }
-  d_canonTranss[d_currentConf][0] /= d_numAtoms;
-  d_canonTranss[d_currentConf][1] /= d_numAtoms;
-  d_canonTranss[d_currentConf][2] /= d_numAtoms;
+  d_canonTranss[d_activeShape][0] /= d_numAtoms;
+  d_canonTranss[d_activeShape][1] /= d_numAtoms;
+  d_canonTranss[d_activeShape][2] /= d_numAtoms;
   d_normalizationOK = true;
 }
 
@@ -641,32 +641,32 @@ void ShapeInput::calculateExtremes() {
   if (d_extremePointss.size() < d_coords.size()) {
     d_extremePointss.resize(d_coords.size());
   }
-  d_extremePointss[d_currentConf] = std::array<size_t, 6>{0, 0, 0, 0, 0, 0};
-  const std::vector<double> &theseCoords = d_coords[d_currentConf];
+  d_extremePointss[d_activeShape] = std::array<size_t, 6>{0, 0, 0, 0, 0, 0};
+  const std::vector<double> &theseCoords = d_coords[d_activeShape];
   for (size_t i = 0, j = 0; i < theseCoords.size(); i += 3, ++j) {
-    if (theseCoords[i] < theseCoords[3 * d_extremePointss[d_currentConf][0]]) {
-      d_extremePointss[d_currentConf][0] = j;
+    if (theseCoords[i] < theseCoords[3 * d_extremePointss[d_activeShape][0]]) {
+      d_extremePointss[d_activeShape][0] = j;
     }
-    if (theseCoords[i] > theseCoords[3 * d_extremePointss[d_currentConf][3]]) {
-      d_extremePointss[d_currentConf][3] = j;
+    if (theseCoords[i] > theseCoords[3 * d_extremePointss[d_activeShape][3]]) {
+      d_extremePointss[d_activeShape][3] = j;
     }
 
     if (theseCoords[i + 1] <
-        theseCoords[3 * d_extremePointss[d_currentConf][1] + 1]) {
-      d_extremePointss[d_currentConf][1] = j;
+        theseCoords[3 * d_extremePointss[d_activeShape][1] + 1]) {
+      d_extremePointss[d_activeShape][1] = j;
     }
     if (theseCoords[i + 1] >
-        theseCoords[3 * d_extremePointss[d_currentConf][4] + 1]) {
-      d_extremePointss[d_currentConf][4] = j;
+        theseCoords[3 * d_extremePointss[d_activeShape][4] + 1]) {
+      d_extremePointss[d_activeShape][4] = j;
     }
 
     if (theseCoords[i + 2] <
-        theseCoords[3 * d_extremePointss[d_currentConf][2] + 2]) {
-      d_extremePointss[d_currentConf][2] = j;
+        theseCoords[3 * d_extremePointss[d_activeShape][2] + 2]) {
+      d_extremePointss[d_activeShape][2] = j;
     }
     if (theseCoords[i + 2] >
-        theseCoords[3 * d_extremePointss[d_currentConf][5] + 2]) {
-      d_extremePointss[d_currentConf][5] = j;
+        theseCoords[3 * d_extremePointss[d_activeShape][5] + 2]) {
+      d_extremePointss[d_activeShape][5] = j;
     }
   }
 }
@@ -763,8 +763,8 @@ void ShapeInput::pruneShapes(double simThreshold) {
     DistFunctor(ShapeInput &shapes) : d_shapes(shapes), d_shapesCp(shapes) {}
     ~DistFunctor() = default;
     double operator()(unsigned int i, unsigned int j) {
-      d_shapes.setCurrentConf(i);
-      d_shapesCp.setCurrentConf(j);
+      d_shapes.setActiveShape(i);
+      d_shapesCp.setActiveShape(j);
       auto scores = AlignShape(d_shapes, d_shapesCp);
       // The picker works on distances.
       return 1.0 - scores[0];

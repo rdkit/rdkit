@@ -145,16 +145,16 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #endif
   }
 
-  unsigned int getCurrentConf() const { return d_currentConf; }
+  unsigned int getActiveShape() const { return d_activeShape; }
   //! Set the currently active conformation to the new value.
-  //! @param newConf: the number of the conformation to be used
+  //! @param newShape: the number of the conformation to be used
   //!                 for future calculations.  Counts from 0,
   //!                 obviously.  If invalid, throws a runtime
   //!                 error.
-  void setCurrentConf(unsigned int newConf);
+  void setActiveShape(unsigned int newShape);
   // Note that the coords returned is a vector size 3*getNumAtoms()
   const std::vector<double> &getCoords() const {
-    return d_coords[d_currentConf];
+    return d_coords[d_activeShape];
   }
   const std::vector<double> &getAlphas() const { return d_alphas; }
   //! Fetch the coordinates of the atoms and optionally features.
@@ -165,10 +165,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   unsigned int getNumFeatures() const { return d_numFeats; }
   unsigned int getNumShapes() const { return d_coords.size(); }
   double getShapeVolume() const {
-    return d_selfOverlapShapeVols[d_currentConf];
+    return d_selfOverlapShapeVols[d_activeShape];
   }
   double getColorVolume() const {
-    return d_selfOverlapColorVols[d_currentConf];
+    return d_selfOverlapColorVols[d_activeShape];
   }
   const boost::dynamic_bitset<> *getCarbonRadii() const {
     return d_carbonRadii.get();
@@ -215,7 +215,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
   void serialize(Archive &ar, const unsigned int) {
-    ar & d_currentConf;
+    ar & d_activeShape;
     ar & d_coords;
     ar & d_alphas;
     ar & d_types;
@@ -246,7 +246,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
   void calculateExtremes();
 
-  unsigned int d_currentConf;
+  unsigned int d_activeShape;
 
   std::vector<std::vector<double>>
       d_coords;  // The coordinates for the atoms and features,

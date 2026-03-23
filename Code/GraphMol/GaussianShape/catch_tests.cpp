@@ -889,9 +889,9 @@ TEST_CASE("Multiple Conformers") {
   {
     GaussianShape::ShapeInput shape1(*omeprazole);
     CHECK(shape1.getNumShapes() == 10);
-    shape1.setCurrentConf(0);
+    shape1.setActiveShape(0);
     auto firstVol = shape1.getShapeVolume() + shape1.getColorVolume();
-    shape1.setCurrentConf(9);
+    shape1.setActiveShape(9);
     auto lastVol = shape1.getShapeVolume() + shape1.getColorVolume();
     CHECK(firstVol > lastVol);
 
@@ -901,16 +901,16 @@ TEST_CASE("Multiple Conformers") {
     std::cout << "Number of pruned shapes : " << shape2.getNumShapes()
               << std::endl;
     CHECK(shape2.getNumShapes() == 4);
-    shape2.setCurrentConf(0);
+    shape2.setActiveShape(0);
     firstVol = shape2.getShapeVolume() + shape2.getColorVolume();
-    shape2.setCurrentConf(3);
+    shape2.setActiveShape(3);
     lastVol = shape2.getShapeVolume() + shape2.getColorVolume();
     CHECK(firstVol > lastVol);
 
     RDLog::InitLogs();
     {
       RDLog::CaptureLog capture{rdErrorLog};
-      CHECK_THROWS(shape2.setCurrentConf(8));
+      CHECK_THROWS(shape2.setActiveShape(8));
     }
 
     // The shapes in 2 are a subset of 1, so the maximum similarity
