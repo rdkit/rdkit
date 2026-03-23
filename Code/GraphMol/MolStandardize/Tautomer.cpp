@@ -335,9 +335,11 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
     MolOps::symmetrizeSSSR(*taut);
   }
 
-  // Create a kekulized form of the molecule to match the SMARTS against
+  // Create a kekulized form of the molecule to match the SMARTS against.
+  // canonical=true is required so that tautomer deduplication is independent
+  // of atom ordering in the molecule.
   RWMOL_SPTR kekulized(new RWMol(*taut));
-  MolOps::Kekulize(*kekulized, false);
+  MolOps::Kekulize(*kekulized, false, true);
   res.d_tautomers = {{smi, Tautomer(taut, kekulized, 0, 0)}};
   res.d_modifiedAtoms.resize(mol.getNumAtoms());
   res.d_modifiedBonds.resize(mol.getNumBonds());
@@ -527,7 +529,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
             }
           }
           RWMOL_SPTR kekulized_product(new RWMol(*product));
-          MolOps::Kekulize(*kekulized_product, false);
+          // canonical=true for order-independent tautomer deduplication
+          MolOps::Kekulize(*kekulized_product, false, true);
 #ifdef VERBOSE_ENUMERATION
           auto it = res.d_tautomers.find(tsmiles);
           if (it == res.d_tautomers.end()) {

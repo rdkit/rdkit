@@ -277,9 +277,14 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
 <IN_ATOM_STATE>r {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomInRingQuery());
-	return RINGSIZE_ATOM_QUERY_TOKEN;
+	return MIN_RINGSIZE_ATOM_QUERY_TOKEN;
 }
 
+<IN_ATOM_STATE>k {
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomInRingQuery());
+	return RINGSIZE_ATOM_QUERY_TOKEN;
+}
 H			{  return H_TOKEN;  }
 
 
