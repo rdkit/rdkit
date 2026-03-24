@@ -1342,7 +1342,7 @@ TEST_CASE("Testing Issue 185: Cis/Trans incorrect on writing branches") {
   REQUIRE(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
   REQUIRE(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
   refSmi = MolToSmiles(*mol, 1, 0, 0);
-  REQUIRE(refSmi == "C(\\C)=N\\O");
+  CHECK(refSmi == "C(/C)=N/O");
   delete mol;
   // make sure we can round-trip:
   mol = SmilesToMol(refSmi);
@@ -1367,11 +1367,11 @@ TEST_CASE("Testing Issue 185: Cis/Trans incorrect on writing branches") {
   for (RWMol::BondIterator bondIt = mol->beginBonds();
        bondIt != mol->endBonds(); bondIt++) {
     if ((*bondIt)->getBondType() == Bond::DOUBLE) {
-      REQUIRE((*bondIt)->getStereo() == Bond::STEREOE);
+      CHECK((*bondIt)->getStereo() == Bond::STEREOE);
     }
   }
   smi = MolToSmiles(*mol, 1);
-  REQUIRE(refSmi == smi);
+  CHECK(refSmi == smi);
 
   // now repeat that experiment, but this time root the SMILES so that
   // we go in a "sensible" order:
@@ -1380,47 +1380,45 @@ TEST_CASE("Testing Issue 185: Cis/Trans incorrect on writing branches") {
   mol = SmilesToMol(smi);
   REQUIRE(mol);
   refSmi = MolToSmiles(*mol, true, false, 6);
-  REQUIRE(refSmi == "N/P=C/C(C)=N/O");
+  CHECK(refSmi == "N/P=C/C(C)=N/O");
   delete mol;
   mol = SmilesToMol(refSmi);
   REQUIRE(mol);
   for (RWMol::BondIterator bondIt = mol->beginBonds();
        bondIt != mol->endBonds(); bondIt++) {
     if ((*bondIt)->getBondType() == Bond::DOUBLE) {
-      REQUIRE((*bondIt)->getStereo() == Bond::STEREOE);
+      CHECK((*bondIt)->getStereo() == Bond::STEREOE);
     }
   }
   delete mol;
 }
 
 TEST_CASE("Testing Issue 191: Bad bond directions in a branch") {
-  ROMol *mol;
-  std::string smi, refSmi;
-  int numE = 0;
-
-  smi = "C2=NNC(N=C2)=N\\N=C\\c1ccccc1";
-  mol = SmilesToMol(smi);
+  // Only 1 of the double bonds has stereo defined!
+  constexpr const char *smi = R"SMI(C2=NNC(N=C2)=N\N=C\c1ccccc1)SMI";
+  constexpr const char *refSmi = R"SMI(C(=N\N=c1nccn[nH]1)/c1ccccc1)SMI";
+  ROMol *mol = SmilesToMol(smi);
   REQUIRE(mol);
   REQUIRE(mol->getBondWithIdx(7)->getBondType() == Bond::DOUBLE);
   REQUIRE(mol->getBondWithIdx(7)->getStereo() == Bond::STEREOE);
-  refSmi = MolToSmiles(*mol, 1);
+  auto tmpSmi = MolToSmiles(*mol, 1);
+  CHECK(tmpSmi == refSmi);
   delete mol;
-  mol = SmilesToMol(refSmi);
+  mol = SmilesToMol(tmpSmi);
   REQUIRE(mol);
-  numE = 0;
-  for (RWMol::BondIterator bondIt = mol->beginBonds();
-       bondIt != mol->endBonds(); bondIt++) {
-    if ((*bondIt)->getBondType() == Bond::DOUBLE) {
-      REQUIRE((*bondIt)->getStereo() != Bond::STEREOZ);
-      if ((*bondIt)->getStereo() == Bond::STEREOE) {
-        numE++;
+
+  int numE = 0;
+  for (auto bond : mol->bonds()) {
+    if (bond->getBondType() == Bond::DOUBLE) {
+      CHECK(bond->getStereo() != Bond::STEREOZ);
+      if (bond->getStereo() == Bond::STEREOE) {
+        ++numE;
       }
     }
   }
-  REQUIRE(numE == 1);
-  smi = MolToSmiles(*mol, 1);
-  // std::cout << "ref: " << refSmi << " -> " << smi << std::endl;
-  REQUIRE(refSmi == smi);
+  CHECK(numE == 1);
+  tmpSmi = MolToSmiles(*mol, 1);
+  CHECK(tmpSmi == refSmi);
   delete mol;
 }
 
@@ -1676,7 +1674,7 @@ TEST_CASE("Testing SF.net bug 1842174: bad bond dirs in branches") {
   CHECK(smi == "F/C=N/Cl");
 
   smi = MolToSmiles(*mol, true, false, 1);
-  CHECK(smi == "C(\\F)=N/Cl");
+  CHECK(smi == R"SMI(C(/F)=N\Cl)SMI");
 
   delete mol;
   smi = "C(\\C=C\\F)=C(/Cl)Br";
@@ -2070,7 +2068,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     REQUIRE(m->getBondWithIdx(4)->getStereo() == Bond::STEREOZ);
 
     smiles = MolToSmiles(*m, true);
-    REQUIRE(smiles == "C1=C\\COCCCCC/1");
+    CHECK(smiles == "C1=C\\COCCCCC/1");
     delete m;
   }
   {
@@ -2081,7 +2079,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     REQUIRE(m->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
 
     smiles = MolToSmiles(*m, true);
-    REQUIRE(smiles == "C1=C/COCCCCC/1");
+    CHECK(smiles == "C1=C/COCCCCC/1");
 
     delete m;
   }
@@ -2091,10 +2089,10 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     m = SmilesToMol(smiles);
     REQUIRE(m);
     smiles = MolToSmiles(*m, true, false, -1, false);
-    REQUIRE(smiles == "C1CC/C=C/C=C/CCC1");
+    CHECK(smiles == "C1CC/C=C/C=C/CCC1");
 
     smiles = MolToSmiles(*m, true);
-    REQUIRE(smiles == "C1=C/CCCCCC/C=C/1");
+    CHECK(smiles == "C1=C/CCCCCC/C=C/1");
     delete m;
   }
 
@@ -2105,7 +2103,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     REQUIRE(m);
 
     smiles = MolToSmiles(*m, true);
-    REQUIRE(smiles == "C1=C\\CCCCCC/C=C/1");
+    CHECK(smiles == "C1=C\\CCCCCC/C=C/1");
     delete m;
   }
 
@@ -2117,7 +2115,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     REQUIRE(m->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
 
     smiles = MolToSmiles(*m, true);
-    REQUIRE(smiles == "C1=C/CCCOC/C=C/1");
+    CHECK(smiles == "C1=C/CCCOC/C=C/1");
 
     delete m;
   }
@@ -2127,8 +2125,8 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     std::string smiles = "C1=C/OCC/C=C\\CC\\1";
     m = SmilesToMol(smiles);
     REQUIRE(m);
-    REQUIRE(m->getBondWithIdx(0)->getStereo() == Bond::STEREOZ);
-    REQUIRE(m->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
+    CHECK(m->getBondWithIdx(0)->getStereo() == Bond::STEREOZ);
+    CHECK(m->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
     delete m;
   }
 
@@ -2139,10 +2137,10 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     REQUIRE(m);
 
     smiles = MolToSmiles(*m, true, false, 7, false);
-    REQUIRE(smiles == "C1=C/NCCCCC/1");
+    CHECK(smiles == "C1=C/NCCCCC/1");
 
     smiles = MolToSmiles(*m, true, false, 0, false);
-    REQUIRE(smiles == "C1CCCCN/C=C/1");
+    CHECK(smiles == "C1CCCCN/C=C/1");
 
     delete m;
   }
@@ -2158,7 +2156,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     REQUIRE(m->getBondWithIdx(14)->getStereo() == Bond::STEREOE);
 
     smiles = MolToSmiles(*m, true);
-    REQUIRE(smiles == R"(CCC[N+]1=C/c2ccccc2OC(=O)/C=C\1O)");
+    CHECK(smiles == R"(CCC[N+]1=C/c2ccccc2OC(=O)/C=C\1O)");
 
     delete m;
 
@@ -2170,7 +2168,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     REQUIRE(m->getBondWithIdx(14)->getStereo() == Bond::STEREOE);
 
     smiles = MolToSmiles(*m, true);
-    REQUIRE(smiles == R"(CCC[N+]1=C/c2ccccc2OC(=O)/C=C\1O)");
+    CHECK(smiles == R"(CCC[N+]1=C/c2ccccc2OC(=O)/C=C\1O)");
 
     delete m;
   }
@@ -2188,7 +2186,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     REQUIRE(m->getBondWithIdx(8)->getStereo() == Bond::STEREOZ);
 
     smiles = MolToSmiles(*m, true);
-    REQUIRE(smiles == R"(COC1=C/C=C\C=C/C=N\1)");
+    CHECK(smiles == R"(COC1=C/C=C\C=C/C=N\1)");
 
     delete m;
 
@@ -2202,7 +2200,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
     REQUIRE(m->getBondWithIdx(8)->getStereo() == Bond::STEREOZ);
 
     smiles = MolToSmiles(*m, true);
-    REQUIRE(smiles == R"(COC1=C/C=C\C=C/C=N\1)");
+    CHECK(smiles == R"(COC1=C/C=C\C=C/C=N\1)");
 
     delete m;
   }
@@ -2228,7 +2226,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
       m2 = SmilesToMol(nsmiles);
       REQUIRE(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
-      REQUIRE(ncsmiles == csmiles);
+      CHECK(ncsmiles == csmiles);
       delete m2;
     }
     delete m;
@@ -2251,7 +2249,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
       m2 = SmilesToMol(nsmiles);
       REQUIRE(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
-      REQUIRE(ncsmiles == csmiles);
+      CHECK(ncsmiles == csmiles);
       delete m2;
     }
     delete m;
@@ -2274,7 +2272,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
       m2 = SmilesToMol(nsmiles);
       REQUIRE(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
-      REQUIRE(ncsmiles == csmiles);
+      CHECK(ncsmiles == csmiles);
       delete m2;
     }
     delete m;
@@ -2297,7 +2295,7 @@ TEST_CASE("Issue 3139534: stereochemistry in larger rings") {
       m2 = SmilesToMol(nsmiles);
       REQUIRE(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
-      REQUIRE(ncsmiles == csmiles);
+      CHECK(ncsmiles == csmiles);
       delete m2;
     }
     delete m;
@@ -2313,7 +2311,7 @@ TEST_CASE("test adding atom-map information") {
 
   // changed: smiles does not need to be canonical
   smiles = MolToSmiles(*m, true, false, -1, false);
-  REQUIRE(smiles == "[*:1]CCC([C:200])C");
+  CHECK(smiles == "[*:1]CCC([C:200])C");
 
   delete m;
 }
@@ -3764,13 +3762,13 @@ TEST_CASE(
     auto mol = "C=c1s/c2n(c1=O)CCCCCCC\\N=2"_smiles;
     REQUIRE(mol);
     auto smi = MolToSmiles(*mol);
-    REQUIRE(smi == "C=c1s/c2n(c1=O)CCCCCCC\\N=2");
+    CHECK(smi == "C=c1s/c2n(c1=O)CCCCCCC\\N=2");
   }
   {
     auto mol = R"SMI(C1=C\C/C=C2C3=C/C/C=C\C=C/C\3C\2\C=C/1)SMI"_smiles;
     REQUIRE(mol);
     auto smi = MolToSmiles(*mol);
-    REQUIRE(smi == R"SMI(C1=C\C/C=C2C3=C\C/C=C\C=C/C/3C\2\C=C/1)SMI");
+    CHECK(smi == R"SMI(C1=C\C/C=C2\C3=C\C/C=C\C=C/C3C2\C=C/1)SMI");
   }
 }
 

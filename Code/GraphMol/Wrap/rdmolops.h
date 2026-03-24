@@ -13,4 +13,6 @@
 
 #define PY_ARRAY_UNIQUE_SYMBOL rdmolops_array_API
 
+void rdkit_rdmolops_ensure_numpy();
+
 #endif

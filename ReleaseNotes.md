@@ -38,6 +38,10 @@ GitHub)
   values, use the designated initialization syntax. This change does not affect
   Python.
 - The minimization procedure for ETKDG has been updated. Conformations may differ for the same settings. If you wish to use the old minimization procedure set `EmbedParameters.useLegacyImplementation` to true.
+- The algorithm to canonicalize double bonds in SMILES output has changed to
+  address a potential issue that could alter stereo. As a result, SMILES of
+  mols contaning stereo bonds may have changed.
+
 
 ## New Features and Enhancements:
 

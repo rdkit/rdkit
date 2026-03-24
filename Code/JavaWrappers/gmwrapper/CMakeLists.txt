@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 project (jGraphMolJava Java)
 
@@ -184,7 +184,7 @@ LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit
 endif()
 
 if(NOT RDK_BUILD_CHEMDRAW_SUPPORT)
-LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/ChemDrawTests.java")
+LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/ChemDrawTest.java")
 endif()
 
 if(NOT RDK_USE_BOOST_IOSTREAMS)
