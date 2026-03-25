@@ -20,8 +20,6 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Bond.h>
 #include "RDDepictor.h"
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <list>
 #include <algorithm>
 #include <boost/range/adaptor/reversed.hpp>
