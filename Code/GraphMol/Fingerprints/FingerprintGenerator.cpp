@@ -317,7 +317,7 @@ std::unique_ptr<FingerprintGenerator<std::uint64_t>> generatorFromJSON(
   return std::make_unique<FingerprintGenerator<std::uint64_t>>(
       envGen.release(), fpArgs.release(),
       atomInvGen ? atomInvGen.release() : nullptr,
-      bondInvGen ? bondInvGen.release() : nullptr);
+      bondInvGen ? bondInvGen.release() : nullptr, true, true);
 }
 
 template <typename OutputType>

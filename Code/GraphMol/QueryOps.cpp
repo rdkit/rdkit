@@ -95,67 +95,24 @@ ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what) {
 };
 
 ATOM_EQUALS_QUERY *makeAtomInRingOfSizeQuery(int tgt) {
-  RANGE_CHECK(3, tgt, 20);
   auto *res = new ATOM_EQUALS_QUERY;
   res->setVal(tgt);
-  switch (tgt) {
-    case 3:
-      res->setDataFunc(queryAtomIsInRingOfSize<3>);
-      break;
-    case 4:
-      res->setDataFunc(queryAtomIsInRingOfSize<4>);
-      break;
-    case 5:
-      res->setDataFunc(queryAtomIsInRingOfSize<5>);
-      break;
-    case 6:
-      res->setDataFunc(queryAtomIsInRingOfSize<6>);
-      break;
-    case 7:
-      res->setDataFunc(queryAtomIsInRingOfSize<7>);
-      break;
-    case 8:
-      res->setDataFunc(queryAtomIsInRingOfSize<8>);
-      break;
-    case 9:
-      res->setDataFunc(queryAtomIsInRingOfSize<9>);
-      break;
-    case 10:
-      res->setDataFunc(queryAtomIsInRingOfSize<10>);
-      break;
-    case 11:
-      res->setDataFunc(queryAtomIsInRingOfSize<11>);
-      break;
-    case 12:
-      res->setDataFunc(queryAtomIsInRingOfSize<12>);
-      break;
-    case 13:
-      res->setDataFunc(queryAtomIsInRingOfSize<13>);
-      break;
-    case 14:
-      res->setDataFunc(queryAtomIsInRingOfSize<14>);
-      break;
-    case 15:
-      res->setDataFunc(queryAtomIsInRingOfSize<15>);
-      break;
-    case 16:
-      res->setDataFunc(queryAtomIsInRingOfSize<16>);
-      break;
-    case 17:
-      res->setDataFunc(queryAtomIsInRingOfSize<17>);
-      break;
-    case 18:
-      res->setDataFunc(queryAtomIsInRingOfSize<18>);
-      break;
-    case 19:
-      res->setDataFunc(queryAtomIsInRingOfSize<19>);
-      break;
-    case 20:
-      res->setDataFunc(queryAtomIsInRingOfSize<20>);
-      break;
-  }
-
+  res->setDataFunc(
+      [tgt](Atom const *at) { return queryAtomIsInRingOfSize(at, tgt); });
   res->setDescription("AtomRingSize");
+  return res;
+}
+
+ATOM_RANGE_QUERY *makeAtomInRingOfSizeQuery(int lower, int upper,
+                                            bool lowerOpen, bool upperOpen) {
+  auto *res = new ATOM_RANGE_QUERY;
+  res->setLower(lower);
+  res->setUpper(upper);
+  res->setEndsOpen(lowerOpen, upperOpen);
+  res->setDataFunc([lower, upper, lowerOpen, upperOpen](Atom const *at) {
+    return queryAtomIsInRingOfSize(at, lower, upper, lowerOpen, upperOpen);
+  });
+  res->setDescription("range_AtomRingSize");
   return res;
 }
 
@@ -730,16 +687,16 @@ BOND_EQUALS_QUERY *makeBondInNRingsQuery(int what) {
 
 BOND_NULL_QUERY *makeBondNullQuery() {
   auto *res = new BOND_NULL_QUERY;
-  res->setDataFunc(nullDataFun);
-  res->setMatchFunc(nullQueryFun);
+  res->setDataFunc(nullDataFun<const RDKit::Bond *>);
+  res->setMatchFunc(nullQueryFun<int>);
   res->setDescription("BondNull");
   return res;
 }
 
 ATOM_NULL_QUERY *makeAtomNullQuery() {
   auto *res = new ATOM_NULL_QUERY;
-  res->setDataFunc(nullDataFun);
-  res->setMatchFunc(nullQueryFun);
+  res->setDataFunc(nullDataFun<const RDKit::Atom *>);
+  res->setMatchFunc(nullQueryFun<int>);
   res->setDescription("AtomNull");
   return res;
 }
@@ -1046,28 +1003,70 @@ Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
   return mol->getAtomWithIdx(idx);
 }
 
+enum class RangeQueryType : char {
+  EQUAL,
+  LESS,
+  GREATER,
+  RANGE
+};
+void finalizeAtomRingSizeQuery(Queries::Query<int, Atom const *, true> *query,
+                               RangeQueryType qtype) {
+  switch (qtype) {
+    case RangeQueryType::EQUAL: {
+      auto tgt = static_cast<ATOM_EQUALS_QUERY *>(query)->getVal();
+      query->setDataFunc(
+          [tgt](Atom const *at) { return queryAtomIsInRingOfSize(at, tgt); });
+    } break;
+    case RangeQueryType::RANGE: {
+      auto rq = static_cast<ATOM_RANGE_QUERY *>(query);
+      auto uv = rq->getUpper();
+      auto lv = rq->getLower();
+      auto [lo, uo] = rq->getEndsOpen();
+      query->setDataFunc([lv, uv, lo, uo](Atom const *at) {
+        return queryAtomIsInRingOfSize(at, lv, uv, lo, uo);
+      });
+    } break;
+    case RangeQueryType::LESS: {
+      auto lv = static_cast<ATOM_LESSEQUAL_QUERY *>(query)->getVal();
+      auto uv = -1;
+      query->setDataFunc([lv, uv](Atom const *at) {
+        return queryAtomIsInRingOfSize(at, lv, uv);
+      });
+    } break;
+    case RangeQueryType::GREATER: {
+      auto lv = -1;
+      auto uv = static_cast<ATOM_GREATEREQUAL_QUERY *>(query)->getVal();
+      query->setDataFunc([lv, uv](Atom const *at) {
+        return queryAtomIsInRingOfSize(at, lv, uv);
+      });
+    } break;
+    default:
+      throw ValueErrorException("bad range query type");
+  }
+}
+
 void finalizeQueryFromDescription(
     Queries::Query<int, Atom const *, true> *query, Atom const *) {
   std::string descr = query->getDescription();
 
+  RangeQueryType qtype = RangeQueryType::EQUAL;
   if (boost::starts_with(descr, "range_")) {
     descr = descr.substr(6);
+    qtype = RangeQueryType::RANGE;
   } else if (boost::starts_with(descr, "less_")) {
     descr = descr.substr(5);
+    qtype = RangeQueryType::LESS;
   } else if (boost::starts_with(descr, "greater_")) {
     descr = descr.substr(8);
+    qtype = RangeQueryType::GREATER;
   }
 
-  Queries::Query<int, Atom const *, true> *tmpQuery;
   if (descr == "AtomRingBondCount") {
     query->setDataFunc(queryAtomRingBondCount);
   } else if (descr == "AtomHasRingBond") {
     query->setDataFunc(queryAtomHasRingBond);
   } else if (descr == "AtomRingSize") {
-    tmpQuery = makeAtomInRingOfSizeQuery(
-        static_cast<ATOM_EQUALS_QUERY *>(query)->getVal());
-    query->setDataFunc(tmpQuery->getDataFunc());
-    delete tmpQuery;
+    finalizeAtomRingSizeQuery(query, qtype);
   } else if (descr == "AtomMinRingSize") {
     query->setDataFunc(queryAtomMinRingSize);
   } else if (descr == "AtomImplicitValence") {
@@ -1119,8 +1118,8 @@ void finalizeQueryFromDescription(
   } else if (descr == "AtomNumAliphaticHeteroatomNeighbors") {
     query->setDataFunc(queryAtomNumAliphaticHeteroatomNbrs);
   } else if (descr == "AtomNull") {
-    query->setDataFunc(nullDataFun);
-    query->setMatchFunc(nullQueryFun);
+    query->setDataFunc(nullDataFun<const RDKit::Atom *>);
+    query->setMatchFunc(nullQueryFun<int>);
   } else if (descr == "AtomType") {
     query->setDataFunc(queryAtomType);
   } else if (descr == "AtomNumRadicalElectrons") {
@@ -1166,8 +1165,8 @@ void finalizeQueryFromDescription(
   } else if (descr == "SingleOrDoubleOrAromaticBond") {
     query->setDataFunc(queryBondIsSingleOrDoubleOrAromatic);
   } else if (descr == "BondNull") {
-    query->setDataFunc(nullDataFun);
-    query->setMatchFunc(nullQueryFun);
+    query->setDataFunc(nullDataFun<const RDKit::Bond *>);
+    query->setMatchFunc(nullQueryFun<int>);
   } else if (descr == "BondAnd" || descr == "BondOr" || descr == "BondXor" ||
              descr == "HasProp" || descr == "HasPropWithValue") {
     // don't need to do anything here because the classes

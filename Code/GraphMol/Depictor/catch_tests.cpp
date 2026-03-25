@@ -525,12 +525,12 @@ M  END
    -3.4910    1.0942    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
     1.7051    1.0942    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -3.4910   -1.9059    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0
-  2  3  1  0
-  3  4  2  0
-  4  5  1  0
-  5  6  2  0
-  6  1  1  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
   6  8  1  0
   3  9  1  0
   2  7  1  0
@@ -757,42 +757,6 @@ TEST_CASE("generate aligned coords and wedging") {
 M  END
 )CTAB"_ctab;
   REQUIRE(wedgedMol);
-  auto originalWedges = R"CTAB(  2  1  1  1
-  2  3  1  0
-  3  4  1  0
-  5  4  1  6
-  5  6  1  0
-  6  7  1  0
-  7  8  1  0
-  9  8  1  1
-  5  9  1  0
-  9 10  1  0
- 10 11  1  1
- 10 12  1  0
-  6 12  1  1
-  2 13  1  0
- 13 14  2  0
- 14 15  1  0
- 15 16  2  0
- 16 17  1  0
- 17 18  2  0
- 13 18  1  0
- 17 19  1  0
- 19 20  1  0
- 20 21  1  0
- 21 22  1  0
- 16 22  1  0
- 23 24  1  0
- 23 25  1  0
- 25 26  1  0
- 24 27  1  0
- 27 26  1  0
- 26 28  1  0
- 24 29  1  0
- 28 29  1  0
- 21 27  1  0
-M  END
-)CTAB";
   auto invertedWedges = R"CTAB(  2  1  1  6
   2  3  1  0
   3  4  1  0
@@ -828,6 +792,29 @@ M  END
  28 29  1  0
  21 27  1  0
 )CTAB";
+  const std::vector<std::pair<unsigned int, unsigned int>> wedgePairs = {
+      {1, 0}, {4, 3}, {8, 7}, {9, 10}, {5, 11}, {1, 12}};
+
+  auto invertBondDir = [](Bond::BondDir dir) {
+    switch (dir) {
+      case Bond::BEGINWEDGE:
+        return Bond::BEGINDASH;
+      case Bond::BEGINDASH:
+        return Bond::BEGINWEDGE;
+      default:
+        return dir;
+    }
+  };
+
+  ROMol baseMol(*wedgedMol);
+  Chirality::reapplyMolBlockWedging(baseMol);
+
+  auto getBondDirBetween = [](const ROMol &mol, unsigned int a1,
+                              unsigned int a2) {
+    const auto bond = mol.getBondBetweenAtoms(a1, a2);
+    REQUIRE(bond);
+    return bond->getBondDir();
+  };
   SECTION("wedging all within scaffold") {
     auto scaffold = R"CTAB(
      RDKit          2D
@@ -878,8 +865,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(invertedWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              invertBondDir(getBondDirBetween(baseMol, p.first, p.second)));
+      }
     }
     // the "alignOnly" alignment should succeed and preserve molblock wedging
     // (same as original molecule)
@@ -897,8 +886,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
     // the "rebuild" alignment should succeed and preserve molblock wedging
     // (inverted with respect to the original molecule)
@@ -913,8 +904,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(invertedWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              invertBondDir(getBondDirBetween(baseMol, p.first, p.second)));
+      }
     }
     // the "rebuild" alignment should succeed and preserve molblock wedging
     // (same as the original molecule)
@@ -931,8 +924,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
     // the "rebuildCoordGen" alignment should succeed and clear original wedging
@@ -949,9 +944,9 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(invertedWedges) == std::string::npos);
-      CHECK(mbAlignOnly.find(originalWedges) == std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) == Bond::NONE);
+      }
     }
     // the "rebuildCoordGen" alignment should succeed and keep original wedging
     // unaltered.
@@ -968,8 +963,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
     RDDepict::preferCoordGen = false;
 #endif
@@ -1016,8 +1013,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(invertedWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              invertBondDir(getBondDirBetween(baseMol, p.first, p.second)));
+      }
     }
     // the "alignOnly" alignment should succeed and preserve molblock wedging
     // (same as original molecule)
@@ -1035,8 +1034,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 10. && angle < 15.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
     // the "rebuild" alignment should succeed and clear original wedging
     // it should feature a much wider angle between the bridge bonds as the
@@ -1050,9 +1051,9 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) == std::string::npos);
-      CHECK(mbAlignOnly.find(invertedWedges) == std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) == Bond::NONE);
+      }
     }
     // the "rebuild" alignment should succeed and preserve molblock wedging
     // (same as the original molecule)
@@ -1069,8 +1070,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
     // the "rebuildCoordGen" alignment should succeed and clear original wedging
@@ -1087,9 +1090,9 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(invertedWedges) == std::string::npos);
-      CHECK(mbAlignOnly.find(originalWedges) == std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) == Bond::NONE);
+      }
     }
     // the "rebuildCoordGen" alignment should succeed and keep original wedging
     // unaltered.
@@ -1106,8 +1109,10 @@ M  END
       auto angle =
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
-      auto mbAlignOnly = MolToMolBlock(wedgedMolCopy);
-      CHECK(mbAlignOnly.find(originalWedges) != std::string::npos);
+      for (const auto &p : wedgePairs) {
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              getBondDirBetween(baseMol, p.first, p.second));
+      }
     }
     RDDepict::preferCoordGen = false;
 #endif

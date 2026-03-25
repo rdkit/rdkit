@@ -455,6 +455,7 @@ h          "number of implicit hs"                     >0               Y
 H          "total number of Hs"                        1
 r          "size of smallest SSSR ring"                >0               Y
 R          "number of SSSR rings"                      >0               Y
+k          "size of SSSR ring"                         >0               Y       extension
 v          "total valence"                             1                Y
 x          "number of ring bonds"                      >0               Y
 X          "total degree"                              1                Y

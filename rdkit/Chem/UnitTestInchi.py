@@ -43,7 +43,8 @@ from rdkit.Chem import (INCHI_AVAILABLE, ForwardSDMolSupplier, MolFromMolBlock, 
 
 if INCHI_AVAILABLE:
   from rdkit.Chem import (InchiReadWriteError, InchiToInchiKey, MolBlockToInchi, MolFromInchi,
-                          MolToInchi, MolToInchiKey, GetInchiVersion)
+                          MolFromInchiAndAuxInfo, MolToInchi, MolToInchiAndAuxInfo, MolToInchiKey,
+                          GetInchiVersion)
 
 COLOR_RED = '\033[31m'
 COLOR_GREEN = '\033[32m'
@@ -329,6 +330,154 @@ M  END"""
     version = GetInchiVersion()
     self.assertIsInstance(version, str)
     self.assertGreaterEqual(version, "1.07.2")
+
+
+@unittest.skipUnless(INCHI_AVAILABLE, 'Inchi support not available')
+class TestMolFromInchiAndAuxInfo(unittest.TestCase):
+
+  def test0RoundTripAtomOrder(self):
+    """Verify that round-tripping through InChI+AuxInfo preserves atom ordering."""
+    from rdkit.Chem import MolFromSmiles, MolToSmiles
+    smiles_list = ['c1ccccc1O', 'CC(=O)O', 'C(=O)(N)C', 'c1cc(O)ccc1N']
+    for smi in smiles_list:
+      mol = MolFromSmiles(smi)
+      inchi, aux = MolToInchiAndAuxInfo(mol)
+      mol2 = MolFromInchiAndAuxInfo(inchi, aux)
+      self.assertIsNotNone(mol2)
+      # The atom ordering should be restored, so atom symbols in order should match
+      orig_atoms = [a.GetAtomicNum() for a in mol.GetAtoms()]
+      new_atoms = [a.GetAtomicNum() for a in mol2.GetAtoms()]
+      self.assertEqual(orig_atoms, new_atoms,
+                       f"Atom order mismatch for {smi}: {orig_atoms} vs {new_atoms}")
+
+  def test1StereoPreservation(self):
+    """Verify stereochemistry is preserved through round-trip."""
+    from rdkit.Chem import MolFromSmiles
+    smi = '[C@@H](O)(F)Cl'
+    mol = MolFromSmiles(smi)
+    inchi, aux = MolToInchiAndAuxInfo(mol)
+    mol2 = MolFromInchiAndAuxInfo(inchi, aux)
+    self.assertIsNotNone(mol2)
+    inchi2 = MolToInchi(mol2)
+    self.assertEqual(inchi, inchi2)
+
+  def test2NoneAuxInfo(self):
+    """MolFromInchiAndAuxInfo with None auxinfo should still return a molecule."""
+    inchi = 'InChI=1S/CH4/h1H4'
+    mol = MolFromInchiAndAuxInfo(inchi, None)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 1)
+
+  def test3EmptyAuxInfo(self):
+    """MolFromInchiAndAuxInfo with empty auxinfo should still return a molecule."""
+    inchi = 'InChI=1S/CH4/h1H4'
+    mol = MolFromInchiAndAuxInfo(inchi, '')
+    self.assertIsNotNone(mol)
+
+  def test4InvalidInchi(self):
+    """MolFromInchiAndAuxInfo with invalid InChI should return None."""
+    mol = MolFromInchiAndAuxInfo('not_an_inchi', 'AuxInfo=1/0/N:1/')
+    self.assertIsNone(mol)
+
+  def test5MultiFragmentAuxInfo(self):
+    """Test with a molecule that produces multi-fragment AuxInfo (semicolons)."""
+    from rdkit.Chem import MolFromSmiles
+    smi = 'CC.OO'
+    mol = MolFromSmiles(smi)
+    inchi, aux = MolToInchiAndAuxInfo(mol)
+    mol2 = MolFromInchiAndAuxInfo(inchi, aux)
+    self.assertIsNotNone(mol2)
+    self.assertEqual(mol2.GetNumAtoms(), mol.GetNumAtoms())
+
+  def test6CoordinateRestoration(self):
+    """Round-trip a mol block with 2D coords and verify conformer is restored and
+    trailing semicolons in /rC: are handled correctly."""
+    from rdkit.Chem import MolFromMolBlock
+    mb = """
+  Mrv1824 02111920092D
+
+  6  6  0  0  0  0            999 V2000
+   -5.5134    3.5259    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.2279    3.1134    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.2279    2.2884    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5134    1.8759    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7989    2.2884    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7989    3.1134    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  1  0  0  0  0
+  2  3  2  0  0  0  0
+M  END"""
+    mol = MolFromMolBlock(mb)
+    self.assertIsNotNone(mol)
+    inchi, aux = MolToInchiAndAuxInfo(mol)
+    mol2 = MolFromInchiAndAuxInfo(inchi, aux)
+    self.assertIsNotNone(mol2)
+    self.assertEqual(mol2.GetNumConformers(), 1)
+    # Verify round-trip produces populated /rC: layer
+    inchi2, aux2 = MolToInchiAndAuxInfo(mol2)
+    self.assertIn('/rC:', aux2)
+    self.assertNotIn('/rC:;', aux2)
+    # Real AuxInfo has trailing semicolons in /rC: — verify our parser handles them
+    rc_match = re.search(r'/rC:([^/]+)', aux)
+    self.assertIsNotNone(rc_match, "AuxInfo should contain /rC: layer")
+    self.assertTrue(rc_match.group(1).endswith(';'),
+                    "Real AuxInfo /rC: should end with trailing semicolon")
+
+  def test7EmptyCoordinates(self):
+    """AuxInfo with empty /rC: or no /rC: should produce no conformer, no crash."""
+    from rdkit.Chem import MolFromSmiles
+    mol = MolFromSmiles('C')
+    inchi, aux = MolToInchiAndAuxInfo(mol)
+    # Manually strip or replace /rC: to simulate empty coords
+    aux_empty = re.sub(r'/rC:[^/]*', '/rC:;', aux)
+    mol2 = MolFromInchiAndAuxInfo(inchi, aux_empty)
+    self.assertIsNotNone(mol2)
+    self.assertEqual(mol2.GetNumConformers(), 0)
+
+  def test7bAllZeroCoordinates(self):
+    """AuxInfo with all-zero /rC: entries (,,;) should produce no conformer."""
+    from rdkit.Chem import MolFromSmiles
+    mol = MolFromSmiles('CCO')
+    inchi, aux = MolToInchiAndAuxInfo(mol)
+    # Replace /rC: content with all-zero entries (,,; format from InChI spec)
+    num_atoms = mol.GetNumAtoms()
+    zero_coords = ';'.join([',,'] * num_atoms) + ';'
+    aux_zeros = re.sub(r'/rC:[^/]*', '/rC:' + zero_coords, aux)
+    mol2 = MolFromInchiAndAuxInfo(inchi, aux_zeros)
+    self.assertIsNotNone(mol2)
+    self.assertEqual(mol2.GetNumConformers(), 0)
+
+  def test8CoordinateAtomOrderMatch(self):
+    """Verify coordinates are on the correct atoms after reordering."""
+    from rdkit.Chem import MolFromMolBlock
+    mb = """
+  Mrv1824 02111920092D
+
+  3  2  0  0  0  0            999 V2000
+    1.0000    2.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0000    4.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0000    6.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END"""
+    mol = MolFromMolBlock(mb)
+    self.assertIsNotNone(mol)
+    orig_data = list(zip([a.GetSymbol() for a in mol.GetAtoms()], mol.GetConformer().GetPositions()))
+    inchi, aux = MolToInchiAndAuxInfo(mol)
+    mol2 = MolFromInchiAndAuxInfo(inchi, aux)
+    self.assertIsNotNone(mol2)
+    self.assertEqual(mol2.GetNumConformers(), 1)
+    # Each atom should have the same symbol and (approximately) same coordinates
+    for i, a in enumerate(mol2.GetAtoms()):
+      orig_sym, orig_pos = orig_data[i]
+      self.assertEqual(a.GetSymbol(), orig_sym)
+      pos = mol2.GetConformer().GetAtomPosition(i)
+      for j in range(3):
+        self.assertAlmostEqual([pos.x, pos.y, pos.z][j], orig_pos[j], places=4,
+                               msg=f"Coord mismatch for atom {i} ({a.GetSymbol()})")
 
 
 if __name__ == '__main__':  # pragma: nocover
