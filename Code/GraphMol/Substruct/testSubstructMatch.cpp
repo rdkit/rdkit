@@ -430,10 +430,10 @@ TEST_CASE("test9", "[substruct][chiral]") {
 
   auto q1 = std::make_unique<RWMol>();
   q1->addAtom(a6.get());
-  q1->addAtom(new Atom(6));
-  q1->addAtom(new Atom(7));
-  q1->addAtom(new Atom(8));
-  q1->addAtom(new Atom(9));
+  q1->addAtom(new Atom(6), updateLabel, takeOwnership);
+  q1->addAtom(new Atom(7), updateLabel, takeOwnership);
+  q1->addAtom(new Atom(8), updateLabel, takeOwnership);
+  q1->addAtom(new Atom(9), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::SINGLE);
   q1->addBond(0, 2, Bond::SINGLE);
   q1->addBond(0, 3, Bond::SINGLE);

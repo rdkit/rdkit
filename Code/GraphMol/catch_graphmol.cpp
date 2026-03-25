@@ -4990,7 +4990,7 @@ TEST_CASE("canonical re-kekulization after sanitization preserves stereo",
       "C/C=C/c1ccc2ncccc2c1");
 
   CAPTURE(smiles);
-  auto mol = SmilesToMol(smiles);
+  auto mol = v2::SmilesParse::MolFromSmiles(smiles);
   REQUIRE(mol);
   auto refSmi = MolToSmiles(*mol);
 
