@@ -619,6 +619,9 @@ bool checkForOverreach(
 std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                            unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
+  if (!mol->getRingInfo()->isFindFastOrBetter()) {
+    MolOps::fastFindRings(*mol);
+  }
   std::string result;
   unsigned int hcount = 0;
   int charge = 0;
@@ -921,10 +924,12 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         bool endInRing = queryIsAtomInRing(bptr->getEndAtom());
         isExocyclicWithStereo = (beginInRing != endInRing);
       }
-      bptr->setIsAromatic(false);
       if (!isExocyclicWithStereo) {
         bptr->setBondType(Bond::AROMATIC);
+        bptr->setIsAromatic(true);  // Must be consistent with bond type
         bptr->setStereo(Bond::BondStereo::STEREONONE);
+      } else {
+        bptr->setIsAromatic(false);
       }
       atomsToModify.set(bptr->getBeginAtomIdx());
       atomsToModify.set(bptr->getEndAtomIdx());
@@ -1307,7 +1312,7 @@ std::string RegioisomerHash(RWMol *mol, bool useCXSmiles,
   // we need a copy of the molecule so that we can loop over the bonds of
   // something while modifying something else
   RDKit::ROMol molcpy(*mol);
-  if (molcpy.getRingInfo()->isFindFastOrBetter()) {
+  if (!molcpy.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(molcpy);
   }
   for (int i = molcpy.getNumBonds() - 1; i >= 0; --i) {
