@@ -20,6 +20,8 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Bond.h>
 #include "RDDepictor.h"
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <list>
 #include <algorithm>
 #include <boost/range/adaptor/reversed.hpp>
@@ -629,7 +631,10 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
 
   RDKit::INT_VECT funion;
   // look for a template that matches the entire fused ring system
-  if (useRingTemplates && fusedRings.size() > 1) {
+  // For single rings, only use templates for macrocycles (size > 8)
+  if (useRingTemplates &&
+      (fusedRings.size() > 1 ||
+       (fusedRings.size() == 1 && fusedRings[0].size() > 8))) {
     RDKit::Union(fusedRings, funion);
     bool found_template = matchToTemplate(funion, fusedRings.size());
     if (found_template) {
