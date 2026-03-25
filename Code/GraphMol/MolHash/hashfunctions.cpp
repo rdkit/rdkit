@@ -502,6 +502,27 @@ bool hasStartBond(const Atom *aptr, const boost::dynamic_bitset<> &startBonds) {
   return false;
 }
 
+// Don't extend to a stereocenter via single non-conjugated bonds,
+// unless the source atom has a non-aromatic unsaturated bond
+// (indicating the stereocenter could become sp2 in a tautomer).
+// Aromatic atoms shouldn't pull in substituent stereocenters.
+bool shouldSkipChiralNeighbor(const Atom *sourceAtom, const Atom *targetAtom,
+                               const Bond *connectingBond) {
+  if (targetAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+    return false;
+  }
+  if (isUnsaturatedBond(connectingBond) || connectingBond->getIsConjugated()) {
+    return false;
+  }
+  // Check if source has a non-aromatic unsaturated bond
+  for (const auto &srcBnd : sourceAtom->getOwningMol().atomBonds(sourceAtom)) {
+    if (!srcBnd->getIsAromatic() && isUnsaturatedBond(srcBnd)) {
+      return false;  // Source could participate in tautomerism
+    }
+  }
+  return true;  // Skip this chiral neighbor
+}
+
 // skip the neighbor bond if otherAtom isn't a candidate and doesn't have a
 // start bond OR if the bond is neither unsaturated nor conjugated and atom
 // doesn't have a start bond
@@ -514,10 +535,10 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
     return true;
   }
 
-  // Special case: prevent extending between aromatic rings without H-bearing
-  // heteroatoms and exocyclic C=C systems. This handles cases like
-  // stilbene-pyridyl (c1ccccc1/C=C/c1ncccc1) where the pyridine N has no H but
-  // the algorithm would otherwise extend to the exocyclic C=C.
+  // Special case: prevent extending from an aromatic carbon (with no H)
+  // to an exocyclic C=C system. This handles cases like stilbene-pyridyl
+  // (c1ccccc1/C=C/c1ncccc1) where the aromatic C has no mobile H but the
+  // algorithm would otherwise extend to the exocyclic C=C and destroy E/Z.
   // Check BOTH directions: either the aromatic atom extending to vinyl,
   // or the vinyl atom being connected from aromatic.
   if (!nbrBond->getIsAromatic()) {
@@ -672,22 +693,8 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                               numConjugatedNeighbors)) {
           continue;
         }
-        // Don't extend to a stereocenter via single non-conjugated bonds,
-        // unless the source atom has a non-aromatic unsaturated bond
-        // (indicating the stereocenter could become sp2 in a tautomer).
-        // Aromatic atoms shouldn't pull in substituent stereocenters.
-        if (oatom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
-            !isUnsaturatedBond(nbrBond) && !nbrBond->getIsConjugated()) {
-          bool hasNonAromaticUnsatBond = false;
-          for (const auto &srcBnd : mol->atomBonds(atm)) {
-            if (!srcBnd->getIsAromatic() && isUnsaturatedBond(srcBnd)) {
-              hasNonAromaticUnsatBond = true;
-              break;
-            }
-          }
-          if (!hasNonAromaticUnsatBond) {
-            continue;
-          }
+        if (shouldSkipChiralNeighbor(atm, oatom, nbrBond)) {
+          continue;
         }
 
         // if the bond is not eligible, then we can skip this neighbor
@@ -770,20 +777,8 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                                 numConjugatedNeighbors)) {
             continue;
           }
-          // Don't extend to a stereocenter via single non-conjugated bonds,
-          // unless the source has a non-aromatic unsaturated bond.
-          if (oatom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
-              !isUnsaturatedBond(nbrBnd) && !nbrBnd->getIsConjugated()) {
-            bool hasNonAromaticUnsatBond = false;
-            for (const auto &srcBnd : mol->atomBonds(atm)) {
-              if (!srcBnd->getIsAromatic() && isUnsaturatedBond(srcBnd)) {
-                hasNonAromaticUnsatBond = true;
-                break;
-              }
-            }
-            if (!hasNonAromaticUnsatBond) {
-              continue;
-            }
+          if (shouldSkipChiralNeighbor(atm, oatom, nbrBnd)) {
+            continue;
           }
           if ((skipNeighborBond(atm, oatom, nbrBnd, startBonds, atomFlags,
                                 bondFlags) &&
