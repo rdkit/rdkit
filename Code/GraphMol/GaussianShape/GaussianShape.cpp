@@ -412,8 +412,8 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
     auto finalXform = computeFinalTransform(inRefTrans, inRefRot, inFitTrans,
                                             inFitRot, bestXform);
     bestXform = finalXform;
-    fitShape.transformCoords(bestXform);
   }
+  fitShape.transformCoords(bestXform);
   if (xform) {
     *xform = bestXform;
   }

@@ -525,6 +525,24 @@ TEST_CASE("Optimise in place") {
     MolTransforms::transformConformer(cp1.getConformer(), xform);
     CHECK(checkMolsHaveRoughlySameCoords(cp1, *ov_pdb_0zn_1tmn));
   }
+  {
+    // And with both as shapes
+    GaussianShape::ShapeOverlayOptions opts;
+    opts.startMode = GaussianShape::StartMode::ROTATE_0;
+    opts.normalize = false;
+    GaussianShape::ShapeInputOptions shapeOpts;
+    auto refShape = GaussianShape::ShapeInput(*pdb_trp_3tmn, -1, shapeOpts);
+    auto fitShape = GaussianShape::ShapeInput(*canon_probe, -1, shapeOpts);
+    RDGeom::Transform3D xform;
+    auto scores =
+        GaussianShape::AlignShape(refShape, fitShape, &xform, opts);
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.322, 0.001));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.396, 0.001));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.247, 0.001));
+    auto cp = fitShape.shapeToMol(false);
+    std::cout << MolToCXSmiles(*cp) << std::endl;
+    CHECK(checkMolsHaveRoughlySameCoords(*cp, *ov_pdb_0zn_1tmn));
+  }
 }
 
 TEST_CASE("Fragment Mode") {
