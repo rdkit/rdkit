@@ -724,6 +724,7 @@ void initLobsters() {
     }
   }
 }
+
 TEST_CASE("Normalization and not normalization") {
   initLobsters();
 
@@ -765,8 +766,8 @@ TEST_CASE("Normalization and not normalization") {
                Catch::Matchers::WithinAbs(norm_scores[2], 0.001));
     // Check that either nonorm is faster or there's not a huge difference
     // between the two.
-    double diff = fabs(def_time - nonorm_time) / def_time;
-    CHECK((def_time > nonorm_time || diff < 0.25));
+    double diff = static_cast<double>(nonorm_time - def_time) / static_cast<double>(def_time);
+    CHECK(diff < 0.25);
   }
 }
 
