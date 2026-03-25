@@ -484,6 +484,11 @@ TEST_CASE("tautomer v2") {
             // preserve stereochemistry.
             {{"O=C1NC(=S)S/C1=C/c2ccccc2"}, // in ChEMBL (CHEMBL4796170)
              {"O=C1NC(=S)S/C1=C\\c2ccccc2", "O=C1NC(=S)SC1=Cc2ccccc2"}},
+            // E/Z hydrazones with exocyclic C=N to a ring: E and Z isomers
+            // are NOT tautomers and should have different hashes.
+            {{"c1ccccc1N/N=C2\\CCCCC2C"}, // in SureChEMBL (11696321)
+             {"c1ccccc1N/N=C2/CCCCC2C",
+              "c1ccccc1NN=C2CCCCC2C"}},
             // ---------------------------
             // stereocenters near amide bonds should not be destroyed
             // by extension through flagged bonds
@@ -493,6 +498,13 @@ TEST_CASE("tautomer v2") {
             {"NC(=O)[C@@H]1CCCN1C=O"}}, // in SureChEMBL (8959051)
             // stereocenters near amide bonds on pyrrolidine ring
             {{"CC(=O)N[C@H]1CCNC1"}, {"CC(=O)N[C@@H]1CCNC1", "CC(=O)NC1CCNC1"}}, // in SureChEMBL (39850)
+            // stereocenter adjacent to pyrimidine/pyrazole: enantiomers should differ
+            // (stereocenter connected via single non-conjugated N-C bond)
+            {{"C[C@H](c1ccccc1)Nc2ncc(c(n2)Nc3cc([nH]n3)C4CC4)Cl"}, // in SureChEMBL (4072338)
+             {"C[C@@H](c1ccccc1)Nc2ncc(c(n2)Nc3cc([nH]n3)C4CC4)Cl"}},
+            // diastereomers on indole ring: aromatic C should not pull in stereocenters
+            {{"C[C@@H]1Cc2c3ccccc3[nH]c2[C@@H](N1CC(F)(F)F)c4cc(ccc4Cl)OCCNCCCF"},
+             {"C[C@@H]1Cc2c3ccccc3[nH]c2[C@H](N1CC(F)(F)F)c4cc(ccc4Cl)OCCNCCCF"}}, // in ChEMBL CHEMBL5972799
             };
     for (const auto &[same, diff] : data) {
       std::unique_ptr<RWMol> m{SmilesToMol(same[0])};

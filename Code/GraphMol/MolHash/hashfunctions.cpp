@@ -559,35 +559,6 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
            !hasStartBond(atom, startBonds)));
 }
 
-// Check if we're extending from an aromatic system to an exocyclic C=C bond
-// where the aromatic system doesn't have any atoms with mobile H that could
-// participate in tautomerism with the exocyclic bond. This prevents cases
-// like stilbene-pyridyl (c1ccccc1/C=C/c1ncccc1) from incorrectly losing E/Z
-// stereo on the exocyclic C=C.
-// Only blocks when:
-// 1. The neighbor bond is a C=C double bond (not aromatic, not single)
-// 2. The current atom is aromatic carbon without H
-// 3. Both atoms of the C=C bond are carbon (pure hydrocarbon C=C)
-bool checkForAromaticOverreach(const Atom *atom, const Atom *otherAtom,
-                               const Bond *nbrBond) {
-  // Only check non-aromatic double bonds
-  if (nbrBond->getIsAromatic() ||
-      nbrBond->getBondType() != Bond::BondType::DOUBLE) {
-    return false;
-  }
-  // Current atom must be aromatic carbon without H
-  if (!atom->getIsAromatic() || atom->getAtomicNum() != 6 ||
-      atom->getTotalNumHs() > 0) {
-    return false;
-  }
-  // The other atom must also be carbon (blocking C=C but not C=N etc)
-  if (otherAtom->getAtomicNum() != 6) {
-    return false;
-  }
-  // Block extension: aromatic C (no H) → exocyclic C=C
-  return true;
-}
-
 // counts the number of neighboring atoms that have conjugated bonds.
 unsigned int getNumConjugatedNeighbors(
     const Atom *atom, const boost::dynamic_bitset<> &startBonds) {
@@ -701,9 +672,22 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                               numConjugatedNeighbors)) {
           continue;
         }
-        // Check if we're extending from aromatic C without H to exocyclic C=C
-        if (checkForAromaticOverreach(atm, oatom, nbrBond)) {
-          continue;
+        // Don't extend to a stereocenter via single non-conjugated bonds,
+        // unless the source atom has a non-aromatic unsaturated bond
+        // (indicating the stereocenter could become sp2 in a tautomer).
+        // Aromatic atoms shouldn't pull in substituent stereocenters.
+        if (oatom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+            !isUnsaturatedBond(nbrBond) && !nbrBond->getIsConjugated()) {
+          bool hasNonAromaticUnsatBond = false;
+          for (const auto &srcBnd : mol->atomBonds(atm)) {
+            if (!srcBnd->getIsAromatic() && isUnsaturatedBond(srcBnd)) {
+              hasNonAromaticUnsatBond = true;
+              break;
+            }
+          }
+          if (!hasNonAromaticUnsatBond) {
+            continue;
+          }
         }
 
         // if the bond is not eligible, then we can skip this neighbor
@@ -786,9 +770,20 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                                 numConjugatedNeighbors)) {
             continue;
           }
-          // Check if we're extending from aromatic C without H to exocyclic C=C
-          if (checkForAromaticOverreach(atm, oatom, nbrBnd)) {
-            continue;
+          // Don't extend to a stereocenter via single non-conjugated bonds,
+          // unless the source has a non-aromatic unsaturated bond.
+          if (oatom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+              !isUnsaturatedBond(nbrBnd) && !nbrBnd->getIsConjugated()) {
+            bool hasNonAromaticUnsatBond = false;
+            for (const auto &srcBnd : mol->atomBonds(atm)) {
+              if (!srcBnd->getIsAromatic() && isUnsaturatedBond(srcBnd)) {
+                hasNonAromaticUnsatBond = true;
+                break;
+              }
+            }
+            if (!hasNonAromaticUnsatBond) {
+              continue;
+            }
           }
           if ((skipNeighborBond(atm, oatom, nbrBnd, startBonds, atomFlags,
                                 bondFlags) &&
@@ -885,11 +880,10 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         if (!oatom->getTotalNumHs()) {
           continue;
         }
-        // don't extend through a flagged bond (e.g. amide, carboxyl) to reach
-        // a stereocenter — doing so would incorrectly pull the stereocenter
-        // into the tautomeric system and destroy its chirality
-        if (bondFlags[nbrBond->getIdx()] &&
-            oatom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+        // don't extend to reach a stereocenter — doing so would incorrectly
+        // pull the stereocenter into the tautomeric system and destroy its
+        // chirality
+        if (oatom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
           continue;
         }
         unsigned int numModifiedNeighbors = 0;
@@ -922,9 +916,21 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
       if (!bondsToModify[bptr->getIdx()]) {
         continue;
       }
+      // Preserve E/Z stereo on exocyclic double bonds (one atom in ring, one not)
+      // to avoid merging distinct geometric isomers (e.g., E/Z hydrazones).
+      // For these bonds, keep them as DOUBLE bonds (not AROMATIC) so that
+      // E/Z stereo is preserved in the SMILES output.
+      bool isExocyclicWithStereo = false;
+      if (bptr->getStereo() != Bond::BondStereo::STEREONONE) {
+        bool beginInRing = queryIsAtomInRing(bptr->getBeginAtom());
+        bool endInRing = queryIsAtomInRing(bptr->getEndAtom());
+        isExocyclicWithStereo = (beginInRing != endInRing);
+      }
       bptr->setIsAromatic(false);
-      bptr->setBondType(Bond::AROMATIC);
-      bptr->setStereo(Bond::BondStereo::STEREONONE);
+      if (!isExocyclicWithStereo) {
+        bptr->setBondType(Bond::AROMATIC);
+        bptr->setStereo(Bond::BondStereo::STEREONONE);
+      }
       atomsToModify.set(bptr->getBeginAtomIdx());
       atomsToModify.set(bptr->getEndAtomIdx());
     }
