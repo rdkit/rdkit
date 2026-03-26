@@ -33,13 +33,8 @@ namespace TautomerScoringFunctions {
 int scoreRings(const ROMol &mol) {
   int score = 0;
   auto ringInfo = mol.getRingInfo();
-  // For aromatic ring scoring, we only need SSSR (not symmetrized SSSR).
-  // Aromatic rings are always essential to the ring system and will be in SSSR.
-  // Avoiding symmetrizeSSSR and the molecule copy saves significant time
-  // since scoreRings is called for each tautomer during canonicalization.
-  if (!ringInfo->isSssrOrBetter()) {
-    MolOps::findSSSR(mol);
-    // ringInfo pointer remains valid - just refresh from the mol
+  if (!ringInfo->isSymmSssr()) {
+    MolOps::symmetrizeSSSR(const_cast<ROMol &>(mol));
     ringInfo = mol.getRingInfo();
   }
   boost::dynamic_bitset<> isArom(mol.getNumBonds());
