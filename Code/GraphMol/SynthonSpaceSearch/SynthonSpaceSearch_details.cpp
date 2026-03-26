@@ -1039,7 +1039,6 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
                        DGeomHelpers::EmbedParameters &dgParams,
                        const ShapeBuildParams &shapeParams,
                        std::unique_ptr<ProgressBar> &pbar) {
-  GaussianShape::ShapeInputOptions shapeOpts;
   while (!ControlCHandler::getGotSignal()) {
     size_t molNum = ++mostRecentMol;
     if (molNum >= sampleMols.size()) {
@@ -1070,7 +1069,7 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
         continue;
       }
     }
-    std::unique_ptr<GaussianShape::SearchShapeInput> allShapes;
+    std::unique_ptr<SynthonShapeInput> allShapes;
     for (auto &isomer : isomerConfs) {
       // If chopping up aromatic rings, use the Kekule form so that bond
       // types are usable in the fragments.
@@ -1120,17 +1119,33 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
       std::ranges::sort(fragAtoms);
       fragAtoms.erase(std::unique(fragAtoms.begin(), fragAtoms.end()),
                       fragAtoms.end());
+      GaussianShape::ShapeInputOptions shapeOpts;
       shapeOpts.atomRadii = dummyRadii;
       shapeOpts.atomSubset = fragAtoms;
+      shapeOpts.shapePruneThreshold = shapeParams.shapeSimThreshold;
+      // Make custom features for the atom subset.  Doing it from the
+      // parent molecule means that the atom types will be correct which
+      // may not be the case after the fragment is extracted.  There might
+      // be a split aromatic ring, for example.  We need it back in aromatic
+      // form for this.
+      MolOps::setAromaticity(*isomer);
+      shapeOpts.customFeatures.reserve(isomer->getNumConformers());
+      for (unsigned int i = 0; i < isomer->getNumConformers(); ++i) {
+        std::vector<GaussianShape::CustomFeature> feats;
+        GaussianShape::findFeatures(*isomer, i, feats, fragAtoms);
+        shapeOpts.customFeatures.emplace_back(std::move(feats));
+      }
+      // And re-kekulize
+      MolOps::Kekulize(*isomer);
       splitDummyDummyBonds(*isomer);
       try {
         GaussianShape::ShapeOverlayOptions ovlyOpts;
         if (!allShapes) {
-          allShapes = std::make_unique<GaussianShape::SearchShapeInput>(
-              *isomer, shapeParams.shapeSimThreshold, shapeOpts, ovlyOpts);
+          allShapes = std::make_unique<SynthonShapeInput>(*isomer, -1,
+                                                          shapeOpts, ovlyOpts);
         } else {
-          auto shapes = std::make_unique<GaussianShape::SearchShapeInput>(
-              *isomer, shapeParams.shapeSimThreshold, shapeOpts, ovlyOpts);
+          auto shapes = std::make_unique<SynthonShapeInput>(
+              *isomer, -1, shapeOpts, ovlyOpts);
           // Because stereoisomers should all have the same number of atoms and
           // bonds, we can just combine the shapes into one set.  We don't need
           // to keep track of which stereoisomer they came from.

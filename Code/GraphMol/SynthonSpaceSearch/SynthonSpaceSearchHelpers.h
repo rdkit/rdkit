@@ -12,7 +12,7 @@
 #define SYNTHONSPACESEARCHHELPERS_H
 
 #include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
-#include <GraphMol/SynthonSpaceSearch/SearchShapeInput.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonShapeInput.h>
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <RDGeneral/BoostStartInclude.h>
@@ -165,7 +165,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT ShapeBuildParams {
               // do any writing.
 };
 
-using ShapeSet = std::vector<std::unique_ptr<GaussianShape::SearchShapeInput>>;
+using ShapeSet = std::vector<std::unique_ptr<SynthonShapeInput>>;
 
 // Experiments have shown that it's quicker to parallelise the search
 // at the SynthonSet level for substructure searches, but at the

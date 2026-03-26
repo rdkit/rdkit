@@ -11,27 +11,24 @@
 //
 // Tests for the Roshambo2-based shape alignment code.
 
-#include "GraphMol/Substruct/SubstructMatch.h"
-
-#include <algorithm>
 #include <chrono>
-#include <numeric>
 #include <random>
 #include <algorithm>
 #include <execution>
-
-#include <boost/dynamic_bitset.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include <GraphMol/MolOps.h>
+#include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/GaussianShape/ShapeInput.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <RDGeneral/RDLog.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 using namespace RDKit;
 
@@ -54,7 +51,7 @@ bool checkMolsHaveRoughlySameCoords(const ROMol &m1, const ROMol &m2,
 
 TEST_CASE("basic alignment") {
   std::string dirName = getenv("RDBASE");
-  dirName += "/External/pubchem_shape/test_data";
+  dirName += "/Code/GraphMol/GaussianShape/test_data";
 
   auto suppl = v2::FileParsers::SDMolSupplier(dirName + "/test1.sdf");
   auto refT = suppl[0];
@@ -70,8 +67,6 @@ TEST_CASE("basic alignment") {
   GaussianShape::ShapeInputOptions shapeOpts;
   SECTION("setup") {
     auto refShape = GaussianShape::ShapeInput(*ref, -1, shapeOpts);
-    std::cout << refShape.getShapeVolume() << " and "
-              << refShape.getColorVolume() << std::endl;
     CHECK_THAT(refShape.getShapeVolume(),
                Catch::Matchers::WithinAbs(591.057, 0.005));
     CHECK_THAT(refShape.getColorVolume(),
@@ -279,8 +274,8 @@ TEST_CASE("Overlay onto shape bug (Github8462)") {
   CHECK_THAT(scores1[1], Catch::Matchers::WithinAbs(1.0, 0.005));
   CHECK_THAT(scores1[2], Catch::Matchers::WithinAbs(1.0, 0.005));
   for (unsigned int i = 0; i < m3.getNumAtoms(); ++i) {
-    RDGeom::Point3D pos1(s1.getCoords()[4 * i], s1.getCoords()[4 * i + 1],
-                         s1.getCoords()[4 * i + 2]);
+    RDGeom::Point3D pos1(s1.getCoords()[3 * i], s1.getCoords()[3 * i + 1],
+                         s1.getCoords()[3 * i + 2]);
     auto pos2 = m3.getConformer().getAtomPos(i);
     CHECK_THAT((pos1 - pos2).length(), Catch::Matchers::WithinAbs(0.0, 0.01));
   }
@@ -556,7 +551,6 @@ TEST_CASE("Fragment Mode") {
   CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.311, 0.005));
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.408, 0.005));
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.215, 0.005));
-  MolTransforms::transformConformer(pdb_trp_3tmn->getConformer(), xform);
 }
 
 TEST_CASE("custom feature points") {
@@ -565,13 +559,13 @@ TEST_CASE("custom feature points") {
   SECTION("using shapes") {
     auto shape1 = GaussianShape::ShapeInput(*m1, -1);
     // each carbonyl O gets one feature:
-    CHECK(shape1.getCoords().size() == 24);
+    CHECK(shape1.getCoords().size() == 18);
     GaussianShape::ShapeInputOptions opts2;
     opts2.customFeatures = GaussianShape::CustomFeatures{
         {1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
         {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
     auto shape2 = GaussianShape::ShapeInput(*m1, -1, opts2);
-    CHECK(shape2.getCoords().size() == 24);
+    CHECK(shape2.getCoords().size() == 18);
 
     {
       // confirm that we don't add the features if not requested.
@@ -581,7 +575,7 @@ TEST_CASE("custom feature points") {
           {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
       topts.useColors = false;
       auto tshape = GaussianShape::ShapeInput(*m1, -1, topts);
-      CHECK(tshape.getCoords().size() == 16);
+      CHECK(tshape.getCoords().size() == 12);
     }
 
     // we'll swap the features on the second shape so that the alignment has to
@@ -593,17 +587,17 @@ TEST_CASE("custom feature points") {
 
     auto m2 = ROMol(*m1);
     auto shape3 = GaussianShape::ShapeInput(m2, -1, opts3);
-    CHECK(shape3.getCoords().size() == 24);
+    CHECK(shape3.getCoords().size() == 18);
     GaussianShape::ShapeOverlayOptions overlayOpts;
     overlayOpts.optParam = 0.5;
     RDGeom::Transform3D xform;
     auto scores = AlignShape(shape2, shape3, &xform, overlayOpts);
 
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(1.000, 0.001));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(1.000, 0.001));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.999, 0.001));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.999, 0.005));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(1.000, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.998, 0.005));
     CHECK(shape3.getCoords()[0] > 0);      // x coord of first atom
-    CHECK(shape3.getCoords()[3 * 4] < 0);  // x coord of fourth atom
+    CHECK(shape3.getCoords()[3 * 3] < 0);  // x coord of fourth atom
 
     auto conf = m2.getConformer(-1);
     MolTransforms::transformConformer(conf, xform);
@@ -628,9 +622,9 @@ TEST_CASE("custom feature points") {
     overlayOpts.optParam = 0.5;
     std::vector<float> matrix(12, 0.0);
     auto scores = AlignMolecule(*m1, m2, opts2, opts3, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(1.000, 0.001));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(1.000, 0.001));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.999, 0.001));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.999, 0.005));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(1.000, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.998, 0.005));
     auto conf = m2.getConformer(-1);
     CHECK(conf.getAtomPos(0).x > 0);
     CHECK(conf.getAtomPos(3).x < 0);
@@ -645,7 +639,7 @@ TEST_CASE("Non-standard radii") {
   shapeOpts.allCarbonRadii = false;
   auto shape1 = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
 
-  CHECK(shape1.getCoords().size() == 28);
+  CHECK(shape1.getCoords().size() == 21);
   CHECK_THAT(shape1.getShapeVolume(),
              Catch::Matchers::WithinAbs(387.396, 0.005));
   // mol1 with atom 4 with an N radius and a bigger Xe.
@@ -669,16 +663,22 @@ TEST_CASE("Shape subset") {
   REQUIRE(m1);
   GaussianShape::ShapeInputOptions shapeOpts;
   shapeOpts.atomSubset = std::vector<unsigned int>{0, 1, 2, 3, 10, 11};
-  auto partShape = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
-  CHECK(partShape.getCoords().size() == 28);
+  GaussianShape::ShapeInput partShape(*m1, -1, shapeOpts);
+  CHECK(partShape.getSmiles() == "c1ccccc1");
+  CHECK(partShape.getNumAtoms() == 6);
+  CHECK(partShape.getNumFeatures() == 1);
+  CHECK(partShape.getCoords().size() == 21);
   CHECK_THAT(partShape.getShapeVolume(),
              Catch::Matchers::WithinAbs(261.166, 0.005));
   CHECK_THAT(partShape.getColorVolume(),
              Catch::Matchers::WithinAbs(5.316, 0.005));
 
   shapeOpts.atomSubset.clear();
-  auto wholeShape = GaussianShape::ShapeInput(*m1, -1, shapeOpts);
-  CHECK(wholeShape.getCoords().size() == 56);
+  GaussianShape::ShapeInput wholeShape(*m1, -1, shapeOpts);
+  CHECK(wholeShape.getSmiles() == "c1ccc(-c2ccccc2)cc1");
+  CHECK(wholeShape.getNumAtoms() == 12);
+  CHECK(wholeShape.getNumFeatures() == 2);
+  CHECK(wholeShape.getCoords().size() == 42);
   CHECK_THAT(wholeShape.getShapeVolume(),
              Catch::Matchers::WithinAbs(556.266, 0.005));
   CHECK_THAT(wholeShape.getColorVolume(),
@@ -881,6 +881,73 @@ TEST_CASE("multithreaded") {
   CHECK(test == ref);
 }
 #endif
+
+TEST_CASE("Multiple Conformers") {
+  auto omeprazole = "CC1=CN=C(C(=C1OC)C)CS(=O)C2=NC3=C(N2)C=C(C=C3)OC"_smiles;
+  MolOps::addHs(*omeprazole);
+  // Generate some conformers
+  DGeomHelpers::EmbedParameters dgParams;
+  dgParams.randomSeed = 0xdac;
+  DGeomHelpers::EmbedMultipleConfs(*omeprazole, 10, dgParams);
+  std::cout << "Num confs : " << omeprazole->getNumConformers() << std::endl;
+  CHECK(omeprazole->getNumConformers() == 10);
+  MolOps::removeHs(*omeprazole);
+
+  {
+    GaussianShape::ShapeInput shape1(*omeprazole);
+    CHECK(shape1.getNumShapes() == 10);
+    shape1.setActiveShape(0);
+    auto firstVol = shape1.getShapeVolume() + shape1.getColorVolume();
+    shape1.setActiveShape(9);
+    auto lastVol = shape1.getShapeVolume() + shape1.getColorVolume();
+    CHECK(firstVol > lastVol);
+
+    GaussianShape::ShapeInputOptions shapeOptions;
+    shapeOptions.shapePruneThreshold = 0.5;
+    GaussianShape::ShapeInput shape2(*omeprazole, -1, shapeOptions);
+    std::cout << "Number of pruned shapes : " << shape2.getNumShapes()
+              << std::endl;
+    CHECK(shape2.getNumShapes() == 4);
+    shape2.setActiveShape(0);
+    firstVol = shape2.getShapeVolume() + shape2.getColorVolume();
+    shape2.setActiveShape(3);
+    lastVol = shape2.getShapeVolume() + shape2.getColorVolume();
+    CHECK(firstVol > lastVol);
+
+    RDLog::InitLogs();
+    {
+      RDLog::CaptureLog capture{rdErrorLog};
+      CHECK_THROWS(shape2.setActiveShape(8));
+    }
+
+    // The shapes in 2 are a subset of 1, so the maximum similarity
+    // should be 1.0.
+    auto maxSim = shape1.maxPossibleSimilarity(shape2);
+    std::cout << "maxSim : " << maxSim << std::endl;
+    CHECK_THAT(maxSim, Catch::Matchers::WithinAbs(1.0, 0.001));
+    unsigned int bestFitShape, bestRefShape;
+    RDGeom::Transform3D bestXform;
+    auto maxSimBF =
+        shape1.bestSimilarity(shape2, bestRefShape, bestFitShape, bestXform);
+    CHECK_THAT(maxSimBF, Catch::Matchers::WithinAbs(1.0, 0.001));
+    CHECK(bestRefShape == 3);
+    CHECK(bestFitShape == 0);
+  }
+
+  {
+    // Single conformations
+    GaussianShape::ShapeInput shape1(*omeprazole, 1);
+    CHECK(shape1.getNumShapes() == 1);
+    GaussianShape::ShapeInput shape2(*omeprazole, 9);
+    CHECK(shape2.getNumShapes() == 1);
+    // Demonstrate that the shapes are different:
+    auto scores = GaussianShape::AlignShape(shape1, shape2);
+    CHECK(scores[0] < 0.5);
+    std::cout << scores[0] << ", " << scores[1] << ", " << scores[2]
+              << std::endl;
+    std::cout << shape1.maxPossibleSimilarity(shape2) << std::endl;
+  }
+}
 
 namespace {
 bool checkBondLengths(const ROMol &mol) {

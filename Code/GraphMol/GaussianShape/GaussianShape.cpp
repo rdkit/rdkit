@@ -85,7 +85,7 @@ std::array<double, 4> getInitialRotationPlain(
     int index, const ShapeInput &refShape, const ShapeInput &fitShape,
     const RDGeom::Point3D &refDisp, const ShapeOverlayOptions &overlayOpts,
     double &score) {
-  static const double sinpi_4 = std::sin(std::atan(1.0));
+  static const double sinpi_4 = std::sin(std::numbers::pi / 4.0);
   const static std::vector<std::array<double, 4>> quats{
       {1.0, 0.0, 0.0, 0.0},          {0.0, 1.0, 0.0, 0.0},
       {0.0, 0.0, 1.0, 0.0},          {0.0, 0.0, 0.0, 1.0},
@@ -100,10 +100,10 @@ std::array<double, 4> getInitialRotationPlain(
       quats[index][0], quats[index][1], quats[index][2], quats[index][3],
       refDisp[0],      refDisp[1],      refDisp[2]};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getTypes().data(),
+      refShape.getCoords(), refShape.getAlphas(), refShape.getTypes().data(),
       refShape.getCarbonRadii(), refShape.getNumAtoms(),
       refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(),
+      refShape.getColorVolume(), fitShape.getCoords(), fitShape.getAlphas(),
       fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
@@ -148,10 +148,10 @@ std::array<double, 4> getInitialRotationWiggle(
   bool useColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   std::array<double, 7> tmpQuatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getTypes().data(),
+      refShape.getCoords(), refShape.getAlphas(), refShape.getTypes().data(),
       refShape.getCarbonRadii(), refShape.getNumAtoms(),
       refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(),
+      refShape.getColorVolume(), fitShape.getCoords(), fitShape.getAlphas(),
       fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), tmpQuatTrans,
@@ -180,7 +180,7 @@ RDGeom::Point3D getInitialTranslation(int index, ShapeInput &refShape,
                                       ShapeInput fitShape) {
   auto getDisp = [](ShapeInput &shape, size_t i) -> RDGeom::Point3D {
     const double *coord =
-        shape.getCoords().data() + shape.calcExtremes()[i] * 4;
+        shape.getCoords().data() + shape.calcExtremes()[i] * 3;
     return RDGeom::Point3D(coord[0], coord[1], coord[2]);
   };
   RDGeom::Point3D disp;
@@ -319,10 +319,11 @@ std::array<double, 3> alignShape(ShapeInput &refShape, ShapeInput &fitShape,
       std::array<double, 7> initQuat{quat[0],   quat[1],   quat[2],  quat[3],
                                      refDisp.x, refDisp.y, refDisp.z};
       aligners.emplace_back(std::make_unique<SingleConformerAlignment>(
-          refShape.getCoords(), refShape.getTypes().data(),
-          refShape.getCarbonRadii(), refShape.getNumAtoms(),
-          refShape.getNumFeatures(), refShape.getShapeVolume(),
-          refShape.getColorVolume(), fitShape.getCoords(),
+          refShape.getCoords(), refShape.getAlphas(),
+          refShape.getTypes().data(), refShape.getCarbonRadii(),
+          refShape.getNumAtoms(), refShape.getNumFeatures(),
+          refShape.getShapeVolume(), refShape.getColorVolume(),
+          fitShape.getCoords(), fitShape.getAlphas(),
           fitShape.getTypes().data(), fitShape.getCarbonRadii(),
           fitShape.getNumAtoms(), fitShape.getNumFeatures(),
           fitShape.getShapeVolume(), fitShape.getColorVolume(), initQuat,
@@ -374,16 +375,14 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
   auto workingRefShape = std::make_unique<ShapeInput>(refShape);
   auto workingFitShape = std::make_unique<ShapeInput>(fitShape);
   auto inRefTrans = workingRefShape->calcCanonicalTranslation();
+  auto inRefRot = workingRefShape->calcCanonicalRotation();
   auto inFitTrans = workingFitShape->calcCanonicalTranslation();
-  std::array<double, 9> inRefRot;
-  std::array<double, 9> inFitRot;
+  auto inFitRot = workingFitShape->calcCanonicalRotation();
   // If we're not normalizing, translate both shapes so that the fit
   // is at the origin, so the rotations work.
   RDGeom::Transform3D moveToOrigin;
   RDGeom::Transform3D moveFromOrigin;
   if (overlayOpts.normalize) {
-    inRefRot = workingRefShape->calcCanonicalRotation();
-    inFitRot = workingFitShape->calcCanonicalRotation();
     if (!workingRefShape->getNormalized()) {
       workingRefShape->normalizeCoords();
     }
@@ -391,14 +390,11 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
       workingFitShape->normalizeCoords();
     }
   } else {
+    const auto &canonTrans = workingFitShape->calcCanonicalTranslation();
     moveToOrigin.SetTranslation(
-        RDGeom::Point3D{workingFitShape->calcCanonicalTranslation()[0],
-                        workingFitShape->calcCanonicalTranslation()[1],
-                        workingFitShape->calcCanonicalTranslation()[2]});
+        RDGeom::Point3D{canonTrans[0], canonTrans[1], canonTrans[2]});
     moveFromOrigin.SetTranslation(
-        RDGeom::Point3D{-workingFitShape->calcCanonicalTranslation()[0],
-                        -workingFitShape->calcCanonicalTranslation()[1],
-                        -workingFitShape->calcCanonicalTranslation()[2]});
+        RDGeom::Point3D{-canonTrans[0], -canonTrans[1], -canonTrans[2]});
     workingFitShape->transformCoords(moveToOrigin);
     workingRefShape->transformCoords(moveToOrigin);
   }
@@ -409,15 +405,16 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
   if (!overlayOpts.normalize) {
     // Shove it back again.
     auto finalXform = moveFromOrigin * bestXform * moveToOrigin;
-    copyTransform(finalXform, bestXform);
+    bestXform = finalXform;
   } else {
     auto finalXform = computeFinalTransform(inRefTrans, inRefRot, inFitTrans,
                                             inFitRot, bestXform);
-    copyTransform(finalXform, bestXform);
+    bestXform = finalXform;
   }
   fitShape.transformCoords(bestXform);
+
   if (xform) {
-    copyTransform(bestXform, *xform);
+    *xform = bestXform;
   }
 
   return scores;
@@ -433,7 +430,7 @@ std::array<double, 3> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
   auto scores = AlignShape(refShape, fitShape, &tmpXform, overlayOpts);
   MolTransforms::transformConformer(fit.getConformer(fitConfId), tmpXform);
   if (xform) {
-    copyTransform(tmpXform, *xform);
+    *xform = tmpXform;
   }
   return scores;
 }
@@ -457,10 +454,10 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
   auto fitWorking = fitShape.getCoords();
   std::array<double, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getTypes().data(),
+      refShape.getCoords(), refShape.getAlphas(), refShape.getTypes().data(),
       refShape.getCarbonRadii(), refShape.getNumAtoms(),
       refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(),
+      refShape.getColorVolume(), fitShape.getCoords(), fitShape.getAlphas(),
       fitShape.getTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,

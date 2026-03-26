@@ -259,14 +259,15 @@ void convertTextToDBFile_helper(const std::string &inFilename,
   if (fpGen) {
     fpGenCpp = python::extract<FingerprintGenerator<std::uint64_t> *>(fpGen);
   }
-  SynthonSpaceSearch::ShapeBuildParams *shapeParams = nullptr;
+  std::unique_ptr<SynthonSpaceSearch::ShapeBuildParams> shapeParams;
   if (!py_params.is_none()) {
+    shapeParams.reset(new SynthonSpaceSearch::ShapeBuildParams());
     *shapeParams =
         python::extract<SynthonSpaceSearch::ShapeBuildParams>(py_params);
   }
   bool cancelled = false;
   SynthonSpaceSearch::convertTextToDBFile(inFilename, outFilename, cancelled,
-                                          fpGenCpp, shapeParams);
+                                          fpGenCpp, shapeParams.get());
   if (cancelled) {
     PyErr_SetString(PyExc_KeyboardInterrupt, "Database conversion cancelled");
     python::throw_error_already_set();

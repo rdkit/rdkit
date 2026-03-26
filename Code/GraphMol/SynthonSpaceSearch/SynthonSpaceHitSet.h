@@ -75,11 +75,11 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceFPHitSet
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceShapeHitSet
     : SynthonSpaceHitSet {
   SynthonSpaceShapeHitSet() = delete;
-  SynthonSpaceShapeHitSet(
-      const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
-      const std::vector<std::shared_ptr<ROMol>> &fragSet,
-      const std::vector<GaussianShape::SearchShapeInput *> &fShapes,
-      const std::vector<unsigned int> &sSetOrder);
+  SynthonSpaceShapeHitSet(const SynthonSet &reaction,
+                          const std::vector<std::vector<size_t>> &stu,
+                          const std::vector<std::shared_ptr<ROMol>> &fragSet,
+                          const std::vector<SynthonShapeInput *> &fShapes,
+                          const std::vector<unsigned int> &sSetOrder);
   SynthonSpaceShapeHitSet(const SynthonSpaceShapeHitSet &lhs) = delete;
   SynthonSpaceShapeHitSet(SynthonSpaceShapeHitSet &&lhs) = delete;
   ~SynthonSpaceShapeHitSet() override = default;
@@ -89,7 +89,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceShapeHitSet
 
   // The shapes corresponding to the frags, for the approximate similarity
   // calculation.
-  std::vector<GaussianShape::SearchShapeInput *> fragShapes;
+  std::vector<SynthonShapeInput *> fragShapes;
   // The order of the synthon sets in the SynthonSet as they matched the
   // fragments.
   std::vector<unsigned int> synthonSetOrder;

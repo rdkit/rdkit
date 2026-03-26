@@ -98,8 +98,8 @@ TEST_CASE("Shape Small tests") {
   std::vector<size_t> expNumHits{3, 8, 1};
   std::vector<std::vector<double>> expScores{
       {0.956, 0.943, 0.911},
-      {0.965, 0.906, 0.903, 0.891, 0.864, 0.851, 0.827, 0.822},
-      {0.751}};
+      {0.964, 0.921, 0.900, 0.889, 0.865, 0.845, 0.816, 0.815},
+      {0.844}};
   ShapeBuildParams shapeBuildOptions;
   shapeBuildOptions.numConfs = 100;
   shapeBuildOptions.rmsThreshold = 0.5;
@@ -128,16 +128,18 @@ TEST_CASE("Shape Small tests") {
     auto queryMol = v2::SmilesParse::MolFromSmiles(querySmis[i]);
     auto results = synthonspace.shapeSearch(*queryMol, params);
     unsigned int j = 0;
+    CHECK(expNumHits[i] == results.getHitMolecules().size());
     for (const auto &mol : results.getHitMolecules()) {
       CHECK_THAT(mol->getProp<double>("Similarity"),
                  Catch::Matchers::WithinAbs(expScores[i][j++], 0.001));
-      auto hitQuery = v2::SmilesParse::MolFromSmiles(
-          mol->getProp<std::string>("Query_CXSmiles"));
-      auto scores = GaussianShape::ScoreMolecule(*hitQuery, *mol);
+      std::cout << "hit mol : " << MolToCXSmiles(*mol) << std::endl;
+      std::cout << "hit name : "
+                << mol->getProp<std::string>(common_properties::_Name)
+                << std::endl;
+      auto scores = GaussianShape::ScoreMolecule(*queryMol, *mol);
       CHECK_THAT(mol->getProp<double>("Similarity"),
                  Catch::Matchers::WithinAbs(scores[0], 0.001));
     }
-    CHECK(expNumHits[i] == results.getHitMolecules().size());
 #if 0
     // Leave this in for now, in case we need to check brute force search
     // in future.
@@ -194,14 +196,22 @@ TEST_CASE("Shape DB Writer") {
   for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
     REQUIRE(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
     for (size_t j = 0; j < irxn->getSynthons()[i].size(); ++j) {
-      REQUIRE(irxn->getSynthons()[i][j].second->getShapes()->getNumShapes() ==
-              orxn->getSynthons()[i][j].second->getShapes()->getNumShapes());
-      for (size_t k = 0;
-           k < irxn->getSynthons()[i][j].second->getShapes()->getNumShapes();
+      REQUIRE(irxn->getSynthons()[i][j]
+                  .second->getShapes()
+                  ->getShapes()
+                  .getNumShapes() == orxn->getSynthons()[i][j]
+                                         .second->getShapes()
+                                         ->getShapes()
+                                         .getNumShapes());
+      for (size_t k = 0; k < irxn->getSynthons()[i][j]
+                                 .second->getShapes()
+                                 ->getShapes()
+                                 .getNumShapes();
            ++k) {
         const auto ishape = irxn->getSynthons()[i][j].second->getShapes().get();
         const auto oshape = orxn->getSynthons()[i][j].second->getShapes().get();
-        CHECK_THAT(fabs(ishape->getShapeVolume(k) - oshape->getShapeVolume(k)),
+        CHECK_THAT(fabs(ishape->getShapes().getShapeVolume(k) -
+                        oshape->getShapes().getShapeVolume(k)),
                    Catch::Matchers::WithinAbs(0.0, 1.0e-6));
       }
     }

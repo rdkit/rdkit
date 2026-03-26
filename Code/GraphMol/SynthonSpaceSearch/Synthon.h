@@ -14,7 +14,7 @@
 #include <string>
 
 #include <RDGeneral/export.h>
-#include <GraphMol/SynthonSpaceSearch/SearchShapeInput.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonShapeInput.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h>
 
 namespace RDKit {
@@ -56,8 +56,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   void updateMaxSynthonSetSize(unsigned int newVal);
   unsigned int getMaxSynthonSetSize() const { return d_maxSynthonSetSize; }
   void clearShapes();
-  void setShapes(std::unique_ptr<GaussianShape::SearchShapeInput> shapes);
-  const std::unique_ptr<GaussianShape::SearchShapeInput> &getShapes() const;
+  void setShapes(std::unique_ptr<SynthonShapeInput> shapes);
+  const std::unique_ptr<SynthonShapeInput> &getShapes() const;
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
   void readFromDBStream(std::istream &is, std::uint32_t version);
@@ -78,7 +78,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   // searching.  Its type is known by the SynthonSpace that holds the
   // Synthon.
   std::unique_ptr<ExplicitBitVect> dp_FP{nullptr};
-  std::unique_ptr<GaussianShape::SearchShapeInput> dp_shapes;
+  std::unique_ptr<SynthonShapeInput> dp_shapes;
 
   // SMILES strings of any connector regions.  Normally there will only
   // be 1 or 2.  These are derived from the search mol.

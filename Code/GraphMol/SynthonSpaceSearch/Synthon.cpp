@@ -126,8 +126,7 @@ void Synthon::setFP(std::unique_ptr<ExplicitBitVect> fp) {
   dp_FP = std::move(fp);
 }
 
-void Synthon::setShapes(
-    std::unique_ptr<GaussianShape::SearchShapeInput> shape) {
+void Synthon::setShapes(std::unique_ptr<SynthonShapeInput> shape) {
   dp_shapes = std::move(shape);
 }
 
@@ -139,8 +138,7 @@ void Synthon::updateMaxSynthonSetSize(unsigned int newVal) {
 
 void Synthon::clearShapes() { dp_shapes.reset(); }
 
-const std::unique_ptr<GaussianShape::SearchShapeInput> &Synthon::getShapes()
-    const {
+const std::unique_ptr<SynthonShapeInput> &Synthon::getShapes() const {
   return dp_shapes;
 }
 
@@ -210,7 +208,7 @@ void Synthon::readFromDBStream(std::istream &is, const std::uint32_t version) {
     if (haveShapes) {
       std::string shppickle;
       streamRead(is, shppickle, 0);
-      dp_shapes = std::make_unique<GaussianShape::SearchShapeInput>(shppickle);
+      dp_shapes = std::make_unique<SynthonShapeInput>(shppickle);
     }
   }
 }

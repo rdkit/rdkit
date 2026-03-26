@@ -16,7 +16,7 @@
 #define SYNTHONSPACESHAPESEARCHER_H
 
 #include <RDGeneral/export.h>
-#include <GraphMol/SynthonSpaceSearch/SearchShapeInput.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonShapeInput.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 
@@ -89,7 +89,7 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
 
  private:
   // Shapes for all the conformers of the query.
-  std::unique_ptr<GaussianShape::SearchShapeInput> dp_queryShapes;
+  std::unique_ptr<SynthonShapeInput> dp_queryShapes;
   // If a conformational expansion was done, keep it here, otherwise
   // just copy the query.
   std::unique_ptr<RWMol> dp_queryConfs;
@@ -98,10 +98,8 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
   // of the corresponding fragment.  d_fragShapesPool is never read,
   // it is just used a repository of the shapes for the duration of
   // the search.
-  std::vector<std::unique_ptr<GaussianShape::SearchShapeInput>>
-      d_fragShapesPool;
-  std::vector<std::pair<void *, GaussianShape::SearchShapeInput *>>
-      d_fragShapes;
+  std::vector<std::unique_ptr<SynthonShapeInput>> d_fragShapesPool;
+  std::vector<std::pair<void *, SynthonShapeInput *>> d_fragShapes;
 
   // Precomputed similarities between fragments and synthons.  This
   // speeds things up because synthons are re-used and for the shape
@@ -130,7 +128,7 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
 
   // Given the frag, return the corresponding frag shape.  Returns nullptr
   // if not found.
-  GaussianShape::SearchShapeInput *getFragShape(const void *frag) const;
+  SynthonShapeInput *getFragShape(const void *frag) const;
 };
 }  // namespace RDKit::SynthonSpaceSearch
 #endif  // SYNTHONSPACESHAPESEARCHER_H

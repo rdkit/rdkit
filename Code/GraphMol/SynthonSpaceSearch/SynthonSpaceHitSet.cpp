@@ -53,7 +53,7 @@ SynthonSpaceFPHitSet::SynthonSpaceFPHitSet(
 SynthonSpaceShapeHitSet::SynthonSpaceShapeHitSet(
     const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
     const std::vector<std::shared_ptr<ROMol>> &fragSet,
-    const std::vector<GaussianShape::SearchShapeInput *> &fShapes,
+    const std::vector<SynthonShapeInput *> &fShapes,
     const std::vector<unsigned int> &sSetOrder)
     : SynthonSpaceHitSet(reaction, stu, fragSet),
       fragShapes(fShapes),
