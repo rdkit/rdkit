@@ -263,19 +263,19 @@ inline unsigned int countAromaticCarbonExocyclicN(const ROMol &mol) {
 // These must match the order of patterns in that function.
 // Used for O(1) dispatch to specialized matchers.
 namespace {
-enum PatternIdx {
-  kBenzoquinone = 0,
-  kOxim = 1,
-  kCarbonylO = 2,
-  kNO = 3,
-  kPO = 4,
-  kCHetero = 5,
-  kCHeteroHetero = 6,
-  kAromaticCN = 7,
-  kMethyl = 8,
-  kGuanidineTerminal = 9,
-  kGuanidineEndocyclic = 10,
-  kAciNitro = 11
+enum class PatternIdx {
+  Benzoquinone = 0,
+  Oxim = 1,
+  CarbonylO = 2,
+  NO = 3,
+  PO = 4,
+  CHetero = 5,
+  CHeteroHetero = 6,
+  AromaticCN = 7,
+  Methyl = 8,
+  GuanidineTerminal = 9,
+  GuanidineEndocyclic = 10,
+  AciNitro = 11
 };
 }  // namespace
 
@@ -294,23 +294,23 @@ int scoreSubstructsFiltered(const ROMol &mol,
     unsigned int nMatches = 0;
 
     // Use specialized matchers for simple patterns, VF2 for complex ones
-    switch (idx) {
-      case kCarbonylO:
+    switch (static_cast<PatternIdx>(idx)) {
+      case PatternIdx::CarbonylO:
         nMatches = countDoubleOrAromaticBonds(mol, 6, 8);  // C=O
         break;
-      case kNO:
+      case PatternIdx::NO:
         nMatches = countDoubleOrAromaticBonds(mol, 7, 8);  // N=O
         break;
-      case kPO:
+      case PatternIdx::PO:
         nMatches = countDoubleOrAromaticBonds(mol, 15, 8);  // P=O
         break;
-      case kCHetero:
+      case PatternIdx::CHetero:
         nMatches = countCarbonDoubleHetero(mol);
         break;
-      case kAromaticCN:
+      case PatternIdx::AromaticCN:
         nMatches = countAromaticCarbonExocyclicN(mol);
         break;
-      case kMethyl:
+      case PatternIdx::Methyl:
         nMatches = countMethyls(mol);
         break;
       default:
