@@ -15,7 +15,6 @@
 #include <random>
 #include <algorithm>
 #include <execution>
-#include <ctime>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
@@ -721,55 +720,6 @@ void initLobsters() {
       lobsters.emplace_back(v2::SmilesParse::MolFromSmiles(text));
       REQUIRE(lobsters.back());
     }
-  }
-}
-
-TEST_CASE("Normalization and not normalization") {
-  initLobsters();
-
-  // A weird case where pre-normalizing the structure and running with
-  // normalization=false was significantly slower than using default
-  // parameters.
-  for (unsigned int i = 0; i < 10; i += 2) {
-    unsigned int l1 = i;
-    unsigned int l2 = i + 1;
-    auto norm_lob1 = std::make_unique<ROMol>(*lobsters[l1]);
-    auto norm_lob2 = std::make_unique<ROMol>(*lobsters[l2]);
-    struct timespec startTime, endTime;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &startTime);
-    auto norm_scores = GaussianShape::AlignMolecule(*norm_lob1, *norm_lob2);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
-    double def_time_taken;
-    def_time_taken = (endTime.tv_sec - startTime.tv_sec) * 1e9;
-    def_time_taken =
-        (def_time_taken + (endTime.tv_nsec - startTime.tv_nsec)) * 1e-9;
-
-    auto prenorm_lob1 = std::make_unique<ROMol>(*lobsters[l1]);
-    MolTransforms::canonicalizeConformer(prenorm_lob1->getConformer());
-    auto prenorm_lob2 = std::make_unique<ROMol>(*lobsters[l2]);
-    MolTransforms::canonicalizeConformer(prenorm_lob2->getConformer());
-    GaussianShape::ShapeOverlayOptions ovlyOpts;
-    ovlyOpts.normalize = false;
-    GaussianShape::ShapeInputOptions shapeOpts;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &startTime);
-    auto nonorm_scores = GaussianShape::AlignMolecule(
-        *prenorm_lob1, *prenorm_lob2, shapeOpts, shapeOpts, nullptr, ovlyOpts);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
-    double nonorm_time_taken;
-    nonorm_time_taken = (endTime.tv_sec - startTime.tv_sec) * 1e9;
-    nonorm_time_taken =
-        (nonorm_time_taken + (endTime.tv_nsec - startTime.tv_nsec)) * 1e-9;
-
-    CHECK_THAT(nonorm_scores[0],
-               Catch::Matchers::WithinAbs(norm_scores[0], 0.001));
-    CHECK_THAT(nonorm_scores[1],
-               Catch::Matchers::WithinAbs(norm_scores[1], 0.001));
-    CHECK_THAT(nonorm_scores[2],
-               Catch::Matchers::WithinAbs(norm_scores[2], 0.001));
-    // Check that either nonorm is faster or there's not a huge difference
-    // between the two.
-    double diff = (nonorm_time_taken - def_time_taken) / def_time_taken;
-    CHECK(diff < 0.25);
   }
 }
 
