@@ -2473,3 +2473,149 @@ TEST_CASE("canonical ordering") {
     }
   }
 }
+
+TEST_CASE("spiro center detection") {
+  SECTION("true spiro compounds") {
+    auto [smiles, spiroAtom] = GENERATE(
+        table<std::string, unsigned int>({
+            {"C1CCC2(C1)CCCCC2", 3},   // spiro[4.5]decane, atom 3
+            {"C1CCCC2(C1)CCCCC2", 4}   // spiro[5.5]undecane, atom 4
+        })
+    );
+    CAPTURE(smiles, spiroAtom);
+
+    std::unique_ptr<RWMol> m(SmilesToMol(smiles));
+    REQUIRE(m);
+    MolOps::findSSSR(*m);
+
+    // Check that the expected atom is a spiro center
+    CHECK(RDDepict::isSpiroCenter(spiroAtom, m.get()));
+
+    // Other atoms should not be spiro centers
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      if (i != spiroAtom) {
+        CHECK_FALSE(RDDepict::isSpiroCenter(i, m.get()));
+      }
+    }
+  }
+
+  SECTION("non-spiro compounds - no atoms should be spiro centers") {
+    auto smiles = GENERATE(
+        "C1CCC2CCCCC2C1",  // fused rings (decalin)
+        "C1CC2CCC1CC2",    // bridged ring (norbornane)
+        "C1CCCCC1"         // simple ring (cyclohexane)
+    );
+    CAPTURE(smiles);
+
+    std::unique_ptr<RWMol> m(SmilesToMol(smiles));
+    REQUIRE(m);
+    MolOps::findSSSR(*m);
+
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      CHECK_FALSE(RDDepict::isSpiroCenter(i, m.get()));
+    }
+  }
+
+  SECTION("spiro with substituents - should find at least one spiro center") {
+    auto m = "CC1CCC2(C1)CCCCC2(C)C"_smiles;
+    REQUIRE(m);
+    MolOps::findSSSR(*m);
+
+    bool foundSpiro = false;
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      if (RDDepict::isSpiroCenter(i, m.get())) {
+        foundSpiro = true;
+        break;
+      }
+    }
+    CHECK(foundSpiro);
+  }
+
+  SECTION("dispiro compound - should find exactly two spiro centers") {
+    auto m = "C1CCC2(C1)CCC1(CC2)CCCC1"_smiles;
+    REQUIRE(m);
+    MolOps::findSSSR(*m);
+
+    int spiroCount = 0;
+    for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      if (RDDepict::isSpiroCenter(i, m.get())) {
+        ++spiroCount;
+      }
+    }
+    CHECK(spiroCount == 2);
+  }
+}
+
+TEST_CASE("spiro flipping for collision resolution") {
+  auto smiles = GENERATE(
+      "C1CCC2(C1)CCCCC2",            // spiro[4.5]decane
+      "C1CCCC2(C1)CCCCC2",           // spiro[5.5]undecane
+      "CC1CCC2(C1)CCCC(C)C2",        // spiro with substituents
+      "CC1CCC2(C1)CCCCC2(C)C",       // complex spiro with multiple substituents
+      "C1CCC2(C1)CCC1(CC2)CCCC1"     // dispiro compound
+  );
+  CAPTURE(smiles);
+
+  std::unique_ptr<RWMol> m(SmilesToMol(smiles));
+  REQUIRE(m);
+  CHECK(RDDepict::compute2DCoords(*m) == 0);
+
+  // Verify no severe collisions (all non-bonded atoms should be reasonably separated)
+  auto &conf = m->getConformer();
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    for (unsigned int j = i + 1; j < m->getNumAtoms(); ++j) {
+      // Skip bonded atoms
+      if (m->getBondBetweenAtoms(i, j)) {
+        continue;
+      }
+      auto pos = conf.getAtomPos(i) - conf.getAtomPos(j);
+      auto dist = pos.length();
+      CHECK(dist > 0.35);  // Minimum reasonable separation
+    }
+  }
+}
+
+TEST_CASE("complex spiro structure from MOL file - reasonable bond lengths") {
+  std::string rdbase = getenv("RDBASE");
+  std::string molfile = rdbase + "/Code/GraphMol/Depictor/test_data/spiro_complex.mol";
+
+  std::unique_ptr<RWMol> m(MolFileToMol(molfile));
+  REQUIRE(m);
+
+  // Generate new 2D coordinates
+  CHECK(RDDepict::compute2DCoords(*m) == 0);
+
+  auto &conf = m->getConformer();
+
+  // Check that all bond lengths are reasonable (within ±30% of standard bond length)
+  const double expectedBondLength = RDDepict::BOND_LEN;
+  const double tolerance = 0.30;  // ±30%
+  const double minBondLength = expectedBondLength * (1.0 - tolerance);
+  const double maxBondLength = expectedBondLength * (1.0 + tolerance);
+
+  for (const auto &bond : m->bonds()) {
+    unsigned int i = bond->getBeginAtomIdx();
+    unsigned int j = bond->getEndAtomIdx();
+    auto pos = conf.getAtomPos(i) - conf.getAtomPos(j);
+    auto bondLength = pos.length();
+
+    // Bond lengths should be within ±30% of RDDepict::BOND_LEN (typically 1.5)
+    CHECK(bondLength >= minBondLength);
+    CHECK(bondLength <= maxBondLength);
+    INFO("Bond " << i << "-" << j << " length: " << bondLength
+         << " (expected: " << expectedBondLength
+         << " ±" << (tolerance * 100) << "%)");
+  }
+
+  // Also verify no severe atomic collisions
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    for (unsigned int j = i + 1; j < m->getNumAtoms(); ++j) {
+      if (m->getBondBetweenAtoms(i, j)) {
+        continue;
+      }
+      auto pos = conf.getAtomPos(i) - conf.getAtomPos(j);
+      auto dist = pos.length();
+      CHECK(dist > 0.35);
+    }
+  }
+}
