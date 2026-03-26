@@ -15,6 +15,7 @@
 #include <random>
 #include <algorithm>
 #include <execution>
+#include <sys/time.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
@@ -534,13 +535,11 @@ TEST_CASE("Optimise in place") {
     auto refShape = GaussianShape::ShapeInput(*pdb_trp_3tmn, -1, shapeOpts);
     auto fitShape = GaussianShape::ShapeInput(*canon_probe, -1, shapeOpts);
     RDGeom::Transform3D xform;
-    auto scores =
-        GaussianShape::AlignShape(refShape, fitShape, &xform, opts);
+    auto scores = GaussianShape::AlignShape(refShape, fitShape, &xform, opts);
     CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.322, 0.001));
     CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.396, 0.001));
     CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.247, 0.001));
     auto cp = fitShape.shapeToMol(false);
-    std::cout << MolToCXSmiles(*cp) << std::endl;
     CHECK(checkMolsHaveRoughlySameCoords(*cp, *ov_pdb_0zn_1tmn));
   }
 }
@@ -731,18 +730,19 @@ TEST_CASE("Normalization and not normalization") {
   // A weird case where pre-normalizing the structure and running with
   // normalization=false was significantly slower than using default
   // parameters.
-  std::chrono::steady_clock::time_point begin, end;
   for (unsigned int i = 0; i < 10; i += 2) {
     unsigned int l1 = i;
     unsigned int l2 = i + 1;
     auto norm_lob1 = std::make_unique<ROMol>(*lobsters[l1]);
     auto norm_lob2 = std::make_unique<ROMol>(*lobsters[l2]);
-    begin = std::chrono::steady_clock::now();
+    struct timespec startTime, endTime;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &startTime);
     auto norm_scores = GaussianShape::AlignMolecule(*norm_lob1, *norm_lob2);
-    end = std::chrono::steady_clock::now();
-    auto def_time =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
-            .count();
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    double def_time_taken;
+    def_time_taken = (endTime.tv_sec - startTime.tv_sec) * 1e9;
+    def_time_taken =
+        (def_time_taken + (endTime.tv_nsec - startTime.tv_nsec)) * 1e-9;
 
     auto prenorm_lob1 = std::make_unique<ROMol>(*lobsters[l1]);
     MolTransforms::canonicalizeConformer(prenorm_lob1->getConformer());
@@ -751,13 +751,15 @@ TEST_CASE("Normalization and not normalization") {
     GaussianShape::ShapeOverlayOptions ovlyOpts;
     ovlyOpts.normalize = false;
     GaussianShape::ShapeInputOptions shapeOpts;
-    begin = std::chrono::steady_clock::now();
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &startTime);
     auto nonorm_scores = GaussianShape::AlignMolecule(
         *prenorm_lob1, *prenorm_lob2, shapeOpts, shapeOpts, nullptr, ovlyOpts);
-    end = std::chrono::steady_clock::now();
-    auto nonorm_time =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
-            .count();
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    double nonorm_time_taken;
+    nonorm_time_taken = (endTime.tv_sec - startTime.tv_sec) * 1e9;
+    nonorm_time_taken =
+        (nonorm_time_taken + (endTime.tv_nsec - startTime.tv_nsec)) * 1e-9;
+
     CHECK_THAT(nonorm_scores[0],
                Catch::Matchers::WithinAbs(norm_scores[0], 0.001));
     CHECK_THAT(nonorm_scores[1],
@@ -766,7 +768,7 @@ TEST_CASE("Normalization and not normalization") {
                Catch::Matchers::WithinAbs(norm_scores[2], 0.001));
     // Check that either nonorm is faster or there's not a huge difference
     // between the two.
-    double diff = static_cast<double>(nonorm_time - def_time) / static_cast<double>(def_time);
+    double diff = (nonorm_time_taken - def_time_taken) / def_time_taken;
     CHECK(diff < 0.25);
   }
 }
