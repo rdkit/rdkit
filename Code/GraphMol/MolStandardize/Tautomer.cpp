@@ -259,23 +259,16 @@ inline unsigned int countAromaticCarbonExocyclicN(const ROMol &mol) {
   return count;
 }
 
-// Pattern indices in getDefaultTautomerScoreSubstructs().
-// These must match the order of patterns in that function.
-// Used for O(1) dispatch to specialized matchers.
+// Indices of the scoring patterns with dedicated matchers.
+// These must match the order of patterns in getDefaultTautomerScoreSubstructs().
 namespace {
 enum class PatternIdx {
-  Benzoquinone = 0,
-  Oxim = 1,
   CarbonylO = 2,
   NO = 3,
   PO = 4,
   CHetero = 5,
-  CHeteroHetero = 6,
   AromaticCN = 7,
   Methyl = 8,
-  GuanidineTerminal = 9,
-  GuanidineEndocyclic = 10,
-  AciNitro = 11
 };
 }  // namespace
 
