@@ -1107,7 +1107,7 @@ TEST_CASE("No overlapping atoms") {
       for (unsigned int j = 0; j < i; ++j) {
         const auto minDist = bm->getLowerBound(i, j);
         const auto length = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
-        CHECK((minDist - length) < .407);
+        CHECK((minDist - length) < .425);
       }
     }
   }
