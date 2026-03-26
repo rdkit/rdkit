@@ -4259,6 +4259,35 @@ M  END`;
     mol.delete();
 }
 
+function test_get_substruct_match_params() {
+    var mol = RDKitModule.get_mol('Br[C@H](F)CCC[C@@H](Br)F');
+    var query1 = RDKitModule.get_mol('Br[#6@H](C)F');
+    var query2 = RDKitModule.get_mol('Br[#6@@H](C)F');
+    assert(mol && query1 && query2);
+    var res1;
+    var res2;
+    res1 = JSON.parse(mol.get_substruct_matches(query1));
+    res2 = JSON.parse(mol.get_substruct_matches(query2));
+    assert (res1.length === 2);
+    assert (res2.length === 2);
+    res1.sort((a, b) => a.atoms - b.atoms);
+    res2.sort((a, b) => a.atoms - b.atoms);
+    assert.equal(JSON.stringify(res1), JSON.stringify(res2));
+    res1 = JSON.parse(mol.get_substruct_match(query1));
+    res2 = JSON.parse(mol.get_substruct_match(query2));
+    assert (!Array.isArray(res1) && !Array.isArray(res2));
+    assert.equal(JSON.stringify(res1), JSON.stringify(res2));
+    res1 = JSON.parse(mol.get_substruct_matches(query1, JSON.stringify({ useChirality: true })));
+    res2 = JSON.parse(mol.get_substruct_matches(query2, JSON.stringify({ useChirality: true })));
+    assert (res1.length === 1);
+    assert (res2.length === 1);
+    assert.notEqual(JSON.stringify(res1), JSON.stringify(res2));
+    res1 = JSON.parse(mol.get_substruct_match(query1, JSON.stringify({ useChirality: true })));
+    res2 = JSON.parse(mol.get_substruct_match(query2, JSON.stringify({ useChirality: true })));
+    assert (!Array.isArray(res1) && !Array.isArray(res2));
+    assert.notEqual(JSON.stringify(res1), JSON.stringify(res2));
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -4358,6 +4387,7 @@ initRDKitModule().then(function(instance) {
     test_get_coords();
     test_get_v3K_v2K_molblock();
     test_return_draw_coords();
+    test_get_substruct_match_params();
 
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")

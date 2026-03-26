@@ -390,7 +390,7 @@ extern "C" char *get_substruct_match(const char *mol_pkl, size_t mol_pkl_sz,
   std::string res = "{}";
   auto matches = SubstructMatch(mol, query, params);
   if (!matches.empty()) {
-    auto match = matches[0];
+    const auto &match = matches[0];
     bj::object doc;
     MinimalLib::get_sss_json(mol, query, match, doc);
     res = bj::serialize(doc);
