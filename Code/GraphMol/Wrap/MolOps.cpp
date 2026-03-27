@@ -1322,7 +1322,6 @@ struct molops_wrapper {
     python::def("FastFindRings", MolOps::fastFindRings, docString.c_str(),
                 python::args("mol"));
 
-#ifdef RDK_USE_URF
     docString =
         "Generate Unique Ring Families.\n\
 \n\
@@ -1338,7 +1337,6 @@ struct molops_wrapper {
                 (python::args("mol"), python::arg("includeDativeBonds") = false,
                  python::arg("includeHydrogenBonds") = false),
                 docString.c_str());
-#endif
 
     // ------------------------------------------------------------------------
     docString = R"DOC(Parameters controlling H addition.)DOC";

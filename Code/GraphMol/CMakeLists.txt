@@ -12,11 +12,10 @@ rdkit_library(GraphMol
         SHARED
         LINK_LIBRARIES RDGeometryLib RDGeneral)
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
-if (RDK_USE_URF)
-    target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
-    if (RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
+
+target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
+if (RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
         target_link_libraries(GraphMol_static PUBLIC ${RDK_URF_LIBS}_static)
-    endif ()
 endif ()
 
 rdkit_headers(Atom.h
