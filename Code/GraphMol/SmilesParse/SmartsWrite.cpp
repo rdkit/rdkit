@@ -180,6 +180,10 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     res << "r";
     hasVal = true;
     needParen = true;
+  } else if (descrip == "AtomRingSize") {
+    res << "k";
+    hasVal = true;
+    needParen = true;
   } else if (descrip == "AtomInNRings") {
     res << "R";
     if (mods == Modifiers::NONE && equery && equery->getVal() >= 0) {
@@ -664,6 +668,7 @@ std::string FragmentSmartsConstruct(
     UINT_VECT &ranks, const SmilesWriteParams &params,
     std::vector<unsigned int> &atomOrdering,
     std::vector<unsigned int> &bondOrdering,
+    const boost::dynamic_bitset<> &atomsInPlay,
     const boost::dynamic_bitset<> *bondsInPlay) {
   // this is dirty trick get around the fact that canonicalizeFragment
   // thinks we already called findSSSR - to do some atom ranking
@@ -681,9 +686,9 @@ std::string FragmentSmartsConstruct(
   bool doChiralInversions = true;
   Canon::MolStack molStack;
   molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
-  Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
-                              bondsInPlay, nullptr, params.doIsomericSmiles,
-                              doRandom, doChiralInversions);
+  Canon::canonicalizeFragment(
+      mol, atomIdx, colors, ranks, molStack, &atomsInPlay, bondsInPlay, nullptr,
+      params.doIsomericSmiles, doRandom, doChiralInversions);
 
   // now clear the "SSSR" property
   mol.getRingInfo()->reset();
@@ -826,6 +831,7 @@ std::string getNonQueryBondSmarts(const Bond *qbond, int atomToLeftIdx,
 
 std::string molToSmarts(const ROMol &inmol, const SmilesWriteParams &params,
                         std::vector<AtomColors> &&colors,
+                        const boost::dynamic_bitset<> &atomsInPlay,
                         const boost::dynamic_bitset<> *bondsInPlay) {
   PRECONDITION(params.rootedAtAtom < static_cast<int>(inmol.getNumAtoms()),
                "bad atom index");
@@ -875,7 +881,8 @@ std::string molToSmarts(const ROMol &inmol, const SmilesWriteParams &params,
     }
 
     subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks, params,
-                                     atomOrdering, bondOrdering, bondsInPlay);
+                                     atomOrdering, bondOrdering, atomsInPlay,
+                                     bondsInPlay);
     res += subSmi;
 
     colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
@@ -1008,7 +1015,9 @@ std::string MolToSmarts(const ROMol &mol, const SmilesWriteParams &ps) {
   }
 
   std::vector<AtomColors> colors(nAtoms, Canon::WHITE_NODE);
-  return molToSmarts(mol, ps, std::move(colors), nullptr);
+  boost::dynamic_bitset<> atomsInPlay(nAtoms);
+  atomsInPlay.set();  // all atoms are in play
+  return molToSmarts(mol, ps, std::move(colors), atomsInPlay, nullptr);
 }
 
 std::string MolFragmentToSmarts(const ROMol &mol,
@@ -1035,14 +1044,17 @@ std::string MolFragmentToSmarts(const ROMol &mol,
   // white: unprocessed
   // grey: partial
   // black: complete
+  boost::dynamic_bitset<> atomsInPlay(nAtoms);
   std::vector<AtomColors> colors(nAtoms, Canon::BLACK_NODE);
   for (const auto &idx : atomsToUse) {
     colors[idx] = Canon::WHITE_NODE;
+    atomsInPlay.set(idx);
   }
 
   SmilesWriteParams ps(params);
   ps.rootedAtAtom = -1;
-  return molToSmarts(mol, ps, std::move(colors), bondsInPlay.get());
+  return molToSmarts(mol, ps, std::move(colors), atomsInPlay,
+                     bondsInPlay.get());
 }
 
 std::string MolToCXSmarts(const ROMol &mol, const SmilesWriteParams &params) {

@@ -11,8 +11,8 @@ permissions:
 
 env:
   tpl_repo: 'rdkit/molecular_templates'
-  tpl_hdr: 'template_smiles.h'
-  rdk_hdr: 'Code/GraphMol/Depictor/TemplateSmiles.h'
+  tpl_hdr: 'template_smarts.h'
+  rdk_hdr: 'Code/GraphMol/Depictor/TemplateSmarts.h'
 
 jobs:
   check_header_changes_and_create_pr:

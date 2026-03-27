@@ -560,7 +560,9 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
     MolOps::symmetrizeSSSR(*taut);
   }
 
-  // Kekulized form will be created lazily when needed for transform matching
+  // Kekulized form will be created lazily when needed for transform matching.
+  // canonical=true is used on demand so that tautomer deduplication is
+  // independent of atom ordering in the molecule.
   res.d_tautomers = {{smi, Tautomer(taut, 0, 0)}};
   res.d_modifiedAtoms.resize(mol.getNumAtoms());
   res.d_modifiedBonds.resize(mol.getNumBonds());
@@ -780,7 +782,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
               }
             }
           }
-          // Kekulized form will be created lazily when needed
+          // Kekulized form will be created lazily when needed;
+          // canonical=true is used on demand for order-independent deduplication.
 #ifdef VERBOSE_ENUMERATION
           auto it = res.d_tautomers.find(tsmiles);
           if (it == res.d_tautomers.end()) {

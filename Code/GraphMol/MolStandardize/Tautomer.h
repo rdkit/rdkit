@@ -169,7 +169,7 @@ class Tautomer {
   const ROMOL_SPTR &getKekulized() const {
     if (!kekulized && tautomer) {
       kekulized.reset(new RWMol(*tautomer));
-      MolOps::Kekulize(static_cast<RWMol &>(*kekulized), false);
+      MolOps::Kekulize(static_cast<RWMol &>(*kekulized), false, true);
     }
     return kekulized;
   }

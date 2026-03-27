@@ -681,7 +681,6 @@ TEST_CASE("Github #8945") {
   }
 }
 
-#ifdef RDK_USE_URF
 TEST_CASE("Test findRingFamilies") {
   SECTION("basic check") {
     auto m = R"SMI(c1ccc2c(c1)C3CC3C4CC5CC4CC25)SMI"_smiles;
@@ -770,4 +769,3 @@ TEST_CASE("Test findRingFamilies") {
     CHECK(r->bondRingFamilies().size() == numRings);
   }
 }
-#endif
