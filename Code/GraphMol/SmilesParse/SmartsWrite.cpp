@@ -180,6 +180,10 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     res << "r";
     hasVal = true;
     needParen = true;
+  } else if (descrip == "AtomRingSize") {
+    res << "k";
+    hasVal = true;
+    needParen = true;
   } else if (descrip == "AtomInNRings") {
     res << "R";
     if (mods == Modifiers::NONE && equery && equery->getVal() >= 0) {

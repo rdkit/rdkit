@@ -543,10 +543,10 @@ void test1() {
       return count;
     };
     // this is a double bond
-    TEST_ASSERT(countSubstring(txt, "class='bond-0 atom-0'") == 2);
-    TEST_ASSERT(countSubstring(txt, "class='bond-0 atom-1'") == 2);
+    TEST_ASSERT(countSubstring(txt, "class='bond-1 atom-1'") == 2);
+    TEST_ASSERT(countSubstring(txt, "class='bond-1 atom-2'") == 2);
     // this is how it would be if splitBonds wasn't working.
-    TEST_ASSERT(countSubstring(txt, "class='bond-0 atom-0 atom-1'") == 0);
+    TEST_ASSERT(countSubstring(txt, "class='bond-1 atom-1 atom-2'") == 0);
     check_file_hash("test1_7.svg");
   }
   std::cout << " Done" << std::endl;
