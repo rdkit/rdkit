@@ -450,27 +450,6 @@ std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors,
   return mol;
 }
 
-namespace {
-// Maximum possible score of the 2 shape (v[12]) and color (c[12]) volumes
-double maxScore(double v1, double v2, double c1, double c2,
-                const ShapeOverlayOptions &overlayOpts) {
-  // We're dealing with a Tversky score
-  // s = O / (A * (R - O) + B * (F - O) + O)
-  // There are 2 cases to handle, where v1 < v2 in which case the max overlap
-  // is v1, and the opposite.
-  auto maxPart = [](double p1, double p2,
-                    const ShapeOverlayOptions &overlayOpts) -> double {
-    if (p1 < p2) {
-      return p1 / (overlayOpts.simBeta * (p2 - p1) + p1);
-    }
-    return p2 / (overlayOpts.simAlpha * (p1 - p2) + p2);
-  };
-  auto maxSt = maxPart(v1, v2, overlayOpts);
-  auto maxCt = maxPart(c1, c2, overlayOpts);
-  return maxSt * (1.0 - overlayOpts.optParam) + maxCt * overlayOpts.optParam;
-};
-}  // namespace
-
 double ShapeInput::bestSimilarity(ShapeInput &fitShape,
                                   unsigned int &bestThisShape,
                                   unsigned int &bestFitShape,
@@ -981,6 +960,25 @@ void translateShape(const double *inShape, double *outShape, size_t numPoints,
     outShape[i + 2] = inShape[i + 2] + translation.z;
   }
 }
+
+// Maximum possible score of the 2 shape (v[12]) and color (c[12]) volumes
+double maxScore(double v1, double v2, double c1, double c2,
+                const ShapeOverlayOptions &overlayOpts) {
+  // We're dealing with a Tversky score
+  // s = O / (A * (R - O) + B * (F - O) + O)
+  // There are 2 cases to handle, where v1 < v2 in which case the max overlap
+  // is v1, and the opposite.
+  auto maxPart = [](double p1, double p2,
+                    const ShapeOverlayOptions &overlayOpts) -> double {
+    if (p1 < p2) {
+      return p1 / (overlayOpts.simBeta * (p2 - p1) + p1);
+    }
+    return p2 / (overlayOpts.simAlpha * (p1 - p2) + p2);
+  };
+  auto maxSt = maxPart(v1, v2, overlayOpts);
+  auto maxCt = maxPart(c1, c2, overlayOpts);
+  return maxSt * (1.0 - overlayOpts.optParam) + maxCt * overlayOpts.optParam;
+};
 
 }  // namespace GaussianShape
 }  // namespace RDKit

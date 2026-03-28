@@ -91,10 +91,9 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                     // conformers to use for each molecule.
   double confRMSThreshold{0.5};  // When doing a shape search, the RMS threshold
                                  // to use when pruning conformers.  Passed
-                                 // directly EmbedMultipleConfs.
-  double shapePruneThreshold{
-      0.95};  //! When doing shape searching, the shapes will be pruned so that
-              //! no 2 shapes are more similar than this threshold.
+                                 // directly to EmbedMultipleConfs.
+  GaussianShape::ShapeOverlayOptions
+      shapeOverlayOptions;  // Options to use when shape searching.
   bool bestHit{false};  // If true, when doing a shape search it will return the
                         // hit conformer with the best shape match to a query
                         // conformer.  If false it will just return the first

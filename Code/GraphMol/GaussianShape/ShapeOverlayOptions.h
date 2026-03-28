@@ -14,6 +14,8 @@
 #ifndef RDKIT_SHAPEOVERLAYOPTIONS_GUARD
 #define RDKIT_SHAPEOVERLAYOPTIONS_GUARD
 
+#include <iosfwd>
+
 #include <RDGeneral/export.h>
 
 namespace RDKit {

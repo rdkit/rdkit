@@ -357,6 +357,10 @@ RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
     const double *inShape, double *outShape, size_t numPoints,
     const RDGeom::Point3D &translation);
 
+// Maximum possible score of the 2 shape (v[12]) and color (c[12]) volumes
+double maxScore(double v1, double v2, double c1, double c2,
+                const ShapeOverlayOptions &overlayOpts);
+
 }  // namespace GaussianShape
 }  // namespace RDKit
 

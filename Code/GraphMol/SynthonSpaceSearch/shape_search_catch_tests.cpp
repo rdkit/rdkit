@@ -123,7 +123,6 @@ TEST_CASE("Shape Small tests") {
     params.confRMSThreshold = shapeBuildOptions.rmsThreshold;
     params.timeOut = 0;
     params.randomSeed = 1;
-    params.shapePruneThreshold = shapeBuildOptions.shapeSimThreshold;
     params.bestHit = true;
     auto queryMol = v2::SmilesParse::MolFromSmiles(querySmis[i]);
     auto results = synthonspace.shapeSearch(*queryMol, params);
