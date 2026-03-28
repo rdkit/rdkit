@@ -6,6 +6,23 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
+## Highlights
+
+## Backwards incompatible changes:
+
+## Code removed in this release:
+
+## Deprecated code (to be removed in a future release):
+
+
+# Release_2026.03.1
+(Changes relative to Release_2025.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
 Jakub Adamczyk, Rody Arantes, Kevin Boyd, Jessica Braun, Katharina Buchthal,
 Jackson Burns, Chi Cheng, David Cosgrove, Andrew Dirksen, Sergey Fedorov, Justin
 Gullingsrud, Tad Hurst, Lauriane Jacot-Descombes, Gareth Jones, Eisuke
