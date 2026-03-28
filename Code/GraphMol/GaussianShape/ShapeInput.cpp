@@ -32,8 +32,6 @@
 #include <Eigen/Dense>
 #endif
 
-std::mutex mtx;
-
 namespace RDKit {
 namespace GaussianShape {
 
@@ -89,7 +87,7 @@ const std::map<unsigned int, double> vdw_radii = {
 };
 constexpr double radius_color =
     1.08265;  // same radius for all feature/color "atoms", as used by the
-              // PubChem code.
+// PubChem code.
 
 namespace {
 // Throw out any atoms we don't want.  copySubsetMol does more work than
@@ -119,7 +117,6 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   PRECONDITION(mol.getNumConformers() > 0,
                "ShapeInput object needs the molecule to have conformers.  " +
                    mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
-
   std::unique_ptr<RWMol> tmpMol;
   // Subsetting the molecule makes any bespoke atom radii, identified
   // by atom index, incorrect so stash them as atom properties.
@@ -146,7 +143,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
     MolOps::findSSSR(*tmpMol);
   }
 
-  auto processConf = [&](RWMol &m, unsigned int ci, bool fa) {
+  auto processConf = [&](ROMol &m, unsigned int ci, bool fa) {
     extractAtoms(m, ci, opts, fa);
     if (opts.useColors) {
       extractFeatures(m, ci, opts, fa);
@@ -156,7 +153,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   if (confId >= 0) {
     processConf(*tmpMol, confId, true);
   } else {
-    for (unsigned int i = 0; i < mol.getNumConformers(); ++i) {
+    for (unsigned int i = 0; i < tmpMol->getNumConformers(); ++i) {
       processConf(*tmpMol, i, i == 0);
     }
   }
@@ -164,10 +161,35 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   calcNormalization();
   calcExtremes();
   calculateSelfOverlaps(overlayOpts);
-  if (opts.shapePruneThreshold > 0.0 && mol.getNumConformers() > 1) {
+  if (opts.shapePruneThreshold > 0.0 && tmpMol->getNumConformers() > 1) {
     pruneShapes(opts.shapePruneThreshold);
   }
   sortShapesByVolumes();
+}
+
+ShapeInput::ShapeInput(const ShapeInput &other, unsigned int shapeNum) {
+  PRECONDITION(
+      shapeNum < other.getNumShapes(),
+      "Invalid shape number in makeSingleShape : " + std::to_string(shapeNum) +
+          " vs " + std::to_string(other.getNumShapes()) + ".");
+  d_activeShape = 0;
+  d_coords.emplace_back(other.d_coords[shapeNum]);
+  d_alphas = other.d_alphas;
+  d_types = other.d_types;
+  d_numAtoms = other.d_numAtoms;
+  d_numFeats = other.d_numFeats;
+  d_selfOverlapShapeVols.emplace_back(other.d_selfOverlapShapeVols[shapeNum]);
+  d_selfOverlapColorVols.emplace_back(other.d_selfOverlapColorVols[shapeNum]);
+  d_extremePointss.emplace_back(other.d_extremePointss[shapeNum]);
+  if (other.d_carbonRadii) {
+    d_carbonRadii.reset(new boost::dynamic_bitset<>(*other.d_carbonRadii));
+  }
+  d_smiles = other.d_smiles;
+  d_normalized = false;
+  d_normalizationOK = false;
+  d_canonRots.emplace_back(other.d_canonRots[shapeNum]);
+  d_canonTranss.emplace_back(other.d_canonTranss[shapeNum]);
+  d_eigenValuess.emplace_back(other.d_eigenValuess[shapeNum]);
 }
 
 ShapeInput::ShapeInput(const ShapeInput &other)
@@ -218,10 +240,63 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   return *this;
 }
 
+void ShapeInput::merge(ShapeInput &other) {
+  if (!d_coords.empty() &&
+      d_coords.front().size() != other.d_coords.front().size()) {
+    BOOST_LOG(rdWarningLog) << "Can't merge shapes as different sizes.\n";
+    return;
+  }
+  if (other.d_coords.empty()) {
+    return;
+  }
+  d_coords.reserve(d_coords.size() + other.d_coords.size());
+  d_coords.insert(d_coords.end(),
+                  std::make_move_iterator(other.d_coords.begin()),
+                  std::make_move_iterator(other.d_coords.end()));
+  d_selfOverlapShapeVols.reserve(d_selfOverlapShapeVols.size() +
+                                 other.d_selfOverlapShapeVols.size());
+  d_selfOverlapShapeVols.insert(
+      d_selfOverlapShapeVols.end(),
+      std::make_move_iterator(other.d_selfOverlapShapeVols.begin()),
+      std::make_move_iterator(other.d_selfOverlapShapeVols.end()));
+  d_selfOverlapColorVols.reserve(d_selfOverlapColorVols.size() +
+                                 other.d_selfOverlapColorVols.size());
+  d_selfOverlapColorVols.insert(
+      d_selfOverlapColorVols.end(),
+      std::make_move_iterator(other.d_selfOverlapColorVols.begin()),
+      std::make_move_iterator(other.d_selfOverlapColorVols.end()));
+  d_extremePointss.reserve(d_extremePointss.size() +
+                           other.d_extremePointss.size());
+  d_extremePointss.insert(
+      d_extremePointss.end(),
+      std::make_move_iterator(other.d_extremePointss.begin()),
+      std::make_move_iterator(other.d_extremePointss.end()));
+  d_canonRots.reserve(d_canonRots.size() + other.d_canonRots.size());
+  d_canonRots.insert(d_canonRots.end(),
+                     std::make_move_iterator(other.d_canonRots.begin()),
+                     std::make_move_iterator(other.d_canonRots.end()));
+  d_canonTranss.reserve(d_canonTranss.size() + other.d_canonTranss.size());
+  d_canonTranss.insert(d_canonTranss.end(),
+                       std::make_move_iterator(other.d_canonTranss.begin()),
+                       std::make_move_iterator(other.d_canonTranss.end()));
+  d_eigenValuess.reserve(d_eigenValuess.size() + other.d_eigenValuess.size());
+  d_eigenValuess.insert(d_eigenValuess.end(),
+                        std::make_move_iterator(other.d_eigenValuess.begin()),
+                        std::make_move_iterator(other.d_eigenValuess.end()));
+
+  other.d_coords.clear();
+  other.d_selfOverlapShapeVols.clear();
+  other.d_selfOverlapColorVols.clear();
+  other.d_extremePointss.clear();
+  other.d_canonRots.clear();
+  other.d_canonTranss.clear();
+  other.d_eigenValuess.clear();
+}
+
 void ShapeInput::setActiveShape(unsigned int newShape) {
   PRECONDITION(newShape < d_coords.size(),
-               "Invalid conformation number (" + std::to_string(newShape) +
-                   " vs " + std::to_string(d_coords.size()) + ").");
+               "Invalid shape number (" + std::to_string(newShape) + " vs " +
+                   std::to_string(d_coords.size()) + ").");
   if (d_activeShape != newShape) {
     d_activeShape = newShape;
     d_normalizationOK = false;
@@ -242,6 +317,20 @@ std::vector<RDGeom::Point3D> ShapeInput::getAtomPoints(
                                             d_coords[d_activeShape][i + 2]));
   }
   return atomPoints;
+}
+
+double ShapeInput::getShapeVolume(unsigned int shapeNum) const {
+  PRECONDITION(shapeNum < d_coords.size(),
+               "Invalid shape number (" + std::to_string(shapeNum) + " vs " +
+                   std::to_string(d_coords.size()) + ").");
+  return d_selfOverlapShapeVols[shapeNum];
+}
+
+double ShapeInput::getColorVolume(unsigned int shapeNum) const {
+  PRECONDITION(shapeNum < d_coords.size(),
+               "Invalid shape number (" + std::to_string(shapeNum) + " vs " +
+                   std::to_string(d_coords.size()) + ").");
+  return d_selfOverlapColorVols[shapeNum];
 }
 
 const std::array<double, 9> &ShapeInput::calcCanonicalRotation() {
@@ -361,27 +450,6 @@ std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors,
   return mol;
 }
 
-namespace {
-// Maximum possible score of the 2 shape (v[12]) and color (c[12]) volumes
-double maxScore(double v1, double v2, double c1, double c2,
-                const ShapeOverlayOptions &overlayOpts) {
-  // We're dealing with a Tversky score
-  // s = O / (A * (R - O) + B * (F - O) + O)
-  // There are 2 cases to handle, where v1 < v2 in which case the max overlap
-  // is v1, and the opposite.
-  auto maxPart = [](double p1, double p2,
-                    const ShapeOverlayOptions &overlayOpts) -> double {
-    if (p1 < p2) {
-      return p1 / (overlayOpts.simBeta * (p2 - p1) + p1);
-    }
-    return p2 / (overlayOpts.simAlpha * (p1 - p2) + p2);
-  };
-  auto maxSt = maxPart(v1, v2, overlayOpts);
-  auto maxCt = maxPart(c1, c2, overlayOpts);
-  return maxSt * (1.0 - overlayOpts.optParam) + maxCt * overlayOpts.optParam;
-};
-}  // namespace
-
 double ShapeInput::bestSimilarity(ShapeInput &fitShape,
                                   unsigned int &bestThisShape,
                                   unsigned int &bestFitShape,
@@ -410,7 +478,6 @@ double ShapeInput::bestSimilarity(ShapeInput &fitShape,
           bestThisShape = i;
           bestFitShape = j;
           bestXform = xform;
-          std::cout << fabs(bestSim - 1.0) << std::endl;
         }
       }
       // Floating point cruft means we sometimes get a similarity slightly
@@ -426,9 +493,7 @@ double ShapeInput::bestSimilarity(ShapeInput &fitShape,
 double ShapeInput::maxPossibleSimilarity(
     const ShapeInput &fitShape, const ShapeOverlayOptions &overlayOpts) const {
   // The best score achievable is when the smaller volume is entirely inside
-  // the larger volume.  The color volumes are probably pretty constant
-  // such that we might only need to look at the first shape in each (they
-  // are sorted in descending order), but play it safe for now.
+  // the larger volume.
   double maxSim = 0.0;
   for (unsigned int i = 0; i < getNumShapes(); i++) {
     for (unsigned int j = 0; j < fitShape.getNumShapes(); j++) {
@@ -469,7 +534,16 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
   std::vector<double> theseCoords;
   theseCoords.reserve(mol.getNumAtoms() * 3);
   for (const auto atom : mol.atoms()) {
-    if (atom->getAtomicNum() > 1) {
+    // Ignore H atoms except deuterium and tritium which are treated elsewhere
+    // as explicit atoms, and do use dummies if requested.  The latter two
+    // are set to be ignored in the volume calculation, however.  This is
+    // just to keep the atom numberings correct.  Dummy atoms can also have
+    // isotope number 1.
+    if (atom->getAtomicNum() != 1 ||
+        (atom->getAtomicNum() == 1 && atom->getIsotope() > 1)) {
+      if (!opts.includeDummies && !atom->getAtomicNum()) {
+        continue;
+      }
       const auto atIdx = atom->getIdx();
       auto &pos = conf.getAtomPos(atIdx);
       theseCoords.push_back(pos.x);
@@ -504,6 +578,10 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
             throw ValueErrorException("Atom has radius 0.0.");
           }
           d_alphas.push_back(KAPPA / (rad * rad));
+        }
+        if (atom->getAtomicNum() == 1) {
+          // So it's not included in the volume calcs.
+          d_alphas.back() = -1.0;
         }
       }
     }
@@ -588,53 +666,34 @@ std::vector<std::vector<const ROMol *>> *getPh4Patterns() {
 }
 
 // Extract the features for the color scores, using RDKit pphore features
-// for now.  Other options to be added later.
-void ShapeInput::extractFeatures(const ROMol &mol, int confId,
+// for now.  Other options to be added later.  This should be working on
+// the parent molecule, but only extracting features that are due to
+// atoms entirely within any atom subset.
+void ShapeInput::extractFeatures(const ROMol &mol, unsigned int confId,
                                  const ShapeInputOptions &opts,
                                  bool fillAlphas) {
+  std::vector<CustomFeature> feats;
   if (opts.customFeatures.empty()) {
-    unsigned pattIdx = 1;
-    const auto pattVects = getPh4Patterns();
-    for (const auto &patts : *pattVects) {
-      for (const auto &patt : patts) {
-        std::vector<MatchVectType> matches;
-        {
-          // Once, recursive queries weren't thread safe but Greg assures
-          // me that they now are.
-          matches = SubstructMatch(mol, *patt);
-        }
-        for (const auto &match : matches) {
-          std::vector<unsigned int> ats;
-          for (const auto &pr : match) {
-            ats.push_back(pr.second);
-          }
-          auto featPos = computeFeaturePos(mol, confId, ats);
-          d_types.push_back(pattIdx);
-          d_coords[d_activeShape].push_back(featPos.x);
-          d_coords[d_activeShape].push_back(featPos.y);
-          d_coords[d_activeShape].push_back(featPos.z);
-          if (fillAlphas) {
-            d_alphas.push_back(KAPPA / (radius_color * radius_color));
-            d_numFeats++;
-          }
-        }
-      }
-      ++pattIdx;
-    }
+    findFeatures(mol, confId, feats);
   } else {
-    // Just copy them directly except that the last is a radius, so convert
-    // to alpha.
-    for (const auto &f : opts.customFeatures) {
-      d_types.push_back(std::get<0>(f));
-      const auto &pos = std::get<1>(f);
-      d_coords[d_activeShape].push_back(pos.x);
-      d_coords[d_activeShape].push_back(pos.y);
-      d_coords[d_activeShape].push_back(pos.z);
-      if (fillAlphas) {
-        auto rad = std::get<2>(f);
-        d_alphas.push_back(KAPPA / (rad * rad));
-        d_numFeats++;
-      }
+    PRECONDITION(confId < opts.customFeatures.size(),
+                 "Conformer number " + std::to_string(confId) +
+                     " too large for custom features size " +
+                     std::to_string(opts.customFeatures.size()));
+    feats = opts.customFeatures[confId];
+  }
+  // Just copy them directly except that the last is a radius, so convert
+  // to alpha.
+  for (const auto &f : feats) {
+    const auto &pos = f.pos;
+    d_coords[d_activeShape].push_back(pos.x);
+    d_coords[d_activeShape].push_back(pos.y);
+    d_coords[d_activeShape].push_back(pos.z);
+    if (fillAlphas) {
+      auto rad = f.rad;
+      d_alphas.push_back(KAPPA / (rad * rad));
+      d_types.push_back(f.type);
+      d_numFeats++;
     }
   }
 }
@@ -652,7 +711,7 @@ void ShapeInput::calcNormalization() {
   // with which to calculate the canonical transformation.  Doesn't ever
   // use the input molecule in case the shape was built from a subset of
   // atoms in that molecule.
-  auto tmpMol = shapeToMol(false);
+  auto tmpMol = shapeToMol(false, false);
   std::unique_ptr<RDGeom::Transform3D> canonXform(
       MolTransforms::computeCanonicalTransform(
           tmpMol->getConformer(), nullptr, false, true,
@@ -707,65 +766,6 @@ void ShapeInput::calculateExtremes() {
         theseCoords[3 * d_extremePointss[d_activeShape][5] + 2]) {
       d_extremePointss[d_activeShape][5] = j;
     }
-  }
-}
-
-RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,
-                                  const std::vector<unsigned int> &ats) {
-  RDGeom::Point3D featPos;
-  auto &conf = mol.getConformer(confId);
-  for (const auto at : ats) {
-    featPos += conf.getAtomPos(at);
-  }
-  featPos /= ats.size();
-  return featPos;
-}
-
-void copyTransform(const RDGeom::Transform3D &src, RDGeom::Transform3D &dest) {
-  for (int i = 0; i < 4; ++i) {
-    for (int j = 0; j < 4; ++j) {
-      dest.setValUnchecked(i, j, src.getValUnchecked(i, j));
-    }
-  }
-}
-
-void applyTransformToShape(std::vector<double> &shape,
-                           RDGeom::Transform3D &xform) {
-  for (size_t i = 0; i < shape.size(); i += 3) {
-    RDGeom::Point3D pos{shape[i], shape[i + 1], shape[i + 2]};
-    xform.TransformPoint(pos);
-    shape[i] = pos.x;
-    shape[i + 1] = pos.y;
-    shape[i + 2] = pos.z;
-  }
-}
-
-void applyTransformToShape(const double *inShape, double *outShape,
-                           size_t numPoints, RDGeom::Transform3D &xform) {
-  for (size_t i = 0; i < 3 * numPoints; i += 3) {
-    RDGeom::Point3D pos{inShape[i], inShape[i + 1], inShape[i + 2]};
-    xform.TransformPoint(pos);
-    outShape[i] = pos.x;
-    outShape[i + 1] = pos.y;
-    outShape[i + 2] = pos.z;
-  }
-}
-
-void translateShape(std::vector<double> &shape,
-                    const RDGeom::Point3D &translation) {
-  for (size_t i = 0; i < shape.size(); i += 3) {
-    shape[i] += translation.x;
-    shape[i + 1] += translation.y;
-    shape[i + 2] += translation.z;
-  }
-}
-
-void translateShape(const double *inShape, double *outShape, size_t numPoints,
-                    const RDGeom::Point3D &translation) {
-  for (size_t i = 0; i < 3 * numPoints; i += 3) {
-    outShape[i] = inShape[i] + translation.x;
-    outShape[i + 1] = inShape[i + 1] + translation.y;
-    outShape[i + 2] = inShape[i + 2] + translation.z;
   }
 }
 
@@ -877,6 +877,114 @@ void ShapeInput::sortShapesByVolumes() {
                          });
   selectConformations(picks);
 }
+
+void findFeatures(const ROMol &mol, int confId,
+                  std::vector<CustomFeature> &features,
+                  const std::vector<unsigned int> &atomSubset) {
+  unsigned pattIdx = 1;
+  const auto pattVects = getPh4Patterns();
+  for (const auto &patts : *pattVects) {
+    for (const auto &patt : patts) {
+      std::vector<MatchVectType> matches;
+      // Once, recursive queries weren't thread safe but Greg assures
+      // me that they now are.
+      matches = SubstructMatch(mol, *patt);
+      for (const auto &match : matches) {
+        std::vector<unsigned int> ats;
+        bool featOk = true;
+        for (const auto &pr : match) {
+          // make sure all the atoms are in the subset, if there is one
+          if (!atomSubset.empty()) {
+            if (std::ranges::find_if(atomSubset, [pr](const auto &p) -> bool {
+                  return p == static_cast<unsigned int>(pr.second);
+                }) == atomSubset.end()) {
+              featOk = false;
+              break;
+            }
+          }
+          ats.push_back(pr.second);
+        }
+        if (!featOk) {
+          continue;
+        }
+        auto featPos = computeFeaturePos(mol, confId, ats);
+        features.emplace_back(
+            CustomFeature{pattIdx, featPos, radius_color, ats});
+      }
+    }
+    ++pattIdx;
+  }
+}
+
+RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,
+                                  const std::vector<unsigned int> &ats) {
+  RDGeom::Point3D featPos;
+  auto &conf = mol.getConformer(confId);
+  for (const auto at : ats) {
+    featPos += conf.getAtomPos(at);
+  }
+  featPos /= ats.size();
+  return featPos;
+}
+
+void applyTransformToShape(std::vector<double> &shape,
+                           RDGeom::Transform3D &xform) {
+  for (size_t i = 0; i < shape.size(); i += 3) {
+    RDGeom::Point3D pos{shape[i], shape[i + 1], shape[i + 2]};
+    xform.TransformPoint(pos);
+    shape[i] = pos.x;
+    shape[i + 1] = pos.y;
+    shape[i + 2] = pos.z;
+  }
+}
+
+void applyTransformToShape(const double *inShape, double *outShape,
+                           size_t numPoints, RDGeom::Transform3D &xform) {
+  for (size_t i = 0; i < 3 * numPoints; i += 3) {
+    RDGeom::Point3D pos{inShape[i], inShape[i + 1], inShape[i + 2]};
+    xform.TransformPoint(pos);
+    outShape[i] = pos.x;
+    outShape[i + 1] = pos.y;
+    outShape[i + 2] = pos.z;
+  }
+}
+
+void translateShape(std::vector<double> &shape,
+                    const RDGeom::Point3D &translation) {
+  for (size_t i = 0; i < shape.size(); i += 3) {
+    shape[i] += translation.x;
+    shape[i + 1] += translation.y;
+    shape[i + 2] += translation.z;
+  }
+}
+
+void translateShape(const double *inShape, double *outShape, size_t numPoints,
+                    const RDGeom::Point3D &translation) {
+  for (size_t i = 0; i < 3 * numPoints; i += 3) {
+    outShape[i] = inShape[i] + translation.x;
+    outShape[i + 1] = inShape[i + 1] + translation.y;
+    outShape[i + 2] = inShape[i + 2] + translation.z;
+  }
+}
+
+// Maximum possible score of the 2 shape (v[12]) and color (c[12]) volumes
+double maxScore(double v1, double v2, double c1, double c2,
+                const ShapeOverlayOptions &overlayOpts) {
+  // We're dealing with a Tversky score
+  // s = O / (A * (R - O) + B * (F - O) + O)
+  // There are 2 cases to handle, where v1 < v2 in which case the max overlap
+  // is v1, and the opposite.
+  auto maxPart = [](double p1, double p2,
+                    const ShapeOverlayOptions &overlayOpts) -> double {
+    if (p1 < p2) {
+      return p1 / (overlayOpts.simBeta * (p2 - p1) + p1);
+    }
+    return p2 / (overlayOpts.simAlpha * (p1 - p2) + p2);
+  };
+  auto maxSt = maxPart(v1, v2, overlayOpts);
+  auto maxCt = maxPart(c1, c2, overlayOpts);
+  return maxSt * (1.0 - overlayOpts.optParam) + maxCt * overlayOpts.optParam;
+};
 
 }  // namespace GaussianShape
 }  // namespace RDKit

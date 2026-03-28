@@ -25,6 +25,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/export.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
 
 namespace RDKit {
@@ -185,7 +186,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
 // by the quaternion we're using to optimise the overlap volume.  If
 // gradients is null, they won't be calculated.  They are assumed to be
 // initialised correctly.
-// This is for the atoms/shape features.
+// This is for the atoms/shape features.  Negative alphas are skipped.
 double calcVolAndGrads(const double *ref, const double *refAlphas,
                        int numRefPts,
                        const boost::dynamic_bitset<> *refCarbonRadii,
@@ -197,7 +198,7 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
                        const double *quat = nullptr,
                        double *gradients = nullptr);
 // This one is for the features, and only calculates values if the types
-// of 2 features match.
+// of 2 features match.  Negative alphas are skipped.
 double calcVolAndGrads(const double *ref, const double *refAlphas,
                        int numRefPts, const int *refTypes, const double *fit,
                        const double *fitAlphas, int numFitPts,

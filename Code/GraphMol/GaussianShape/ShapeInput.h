@@ -72,8 +72,18 @@ constexpr double DUMMY_RAD = 2.16;  // same as Xe
 // From Grant et al.
 constexpr double P = 2.7;
 constexpr double KAPPA = 2.41798793102;
-using CustomFeatures =
-    std::vector<std::tuple<unsigned int, RDGeom::Point3D, double>>;
+
+struct CustomFeature {
+  CustomFeature(
+      unsigned int t, const RDGeom::Point3D &p, double r,
+      const std::vector<unsigned int> &a = std::vector<unsigned int>())
+      : type(t), pos(p), rad(r), atoms(a) {}
+  unsigned int type;
+  RDGeom::Point3D pos;
+  double rad;
+  std::vector<unsigned int>
+      atoms;  // That the feature was derived from.  May be left empty.
+};
 
 struct ShapeInputOptions {
   ShapeInputOptions() = default;
@@ -90,9 +100,12 @@ struct ShapeInputOptions {
       true};  //! Whether to build the color features.  By default, it will
               //! create features using the RDKit pharmacophore definitions.
 
-  CustomFeatures customFeatures;  //! Custom color features used verbatim.  A
-                                  //! vector of tuples of integer type, Point3D
-                                  //! coords, double radius.
+  std::vector<std::vector<CustomFeature>>
+      customFeatures;  //! Custom color features used verbatim.  A
+                       //! vector of vectors of tuples of integer type, Point3D
+                       //! coords, double radius for each conformation in the
+                       //! input molecule.  One outer vector for each
+                       //! conformation in the molecule.
   std::vector<unsigned int>
       atomSubset;  //! If not empty, use just these atoms in the molecule to
                    //! form the ShapeInput object.
@@ -109,6 +122,7 @@ struct ShapeInputOptions {
                                      //! that none of them are more similar to
                                      //! each other than the threshold.  Default
                                      //! -1.0 means no pruning.
+  bool includeDummies{true};         //! Whether to include dummy atoms or not.
 };
 
 // Data for shape alignment code
@@ -121,6 +135,11 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   ShapeInput(const ROMol &mol, int confId = -1,
              const ShapeInputOptions &opts = ShapeInputOptions(),
              const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
+  //! Create a ShapeInput object with a single shape copied from
+  //! other.
+  //! @param other: the ShapeInput that supplies the shape
+  //! @param shapeNum: the number of the shape of interest.
+  ShapeInput(const ShapeInput &other, unsigned int shapeNum);
   ShapeInput(const std::string &str) {
 #ifndef RDK_USE_BOOST_SERIALIZATION
     PRECONDITION(0, "Boost SERIALIZATION is not enabled")
@@ -135,6 +154,11 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   ShapeInput &operator=(const ShapeInput &other);
   ShapeInput &operator=(ShapeInput &&other) = default;
   ~ShapeInput() = default;
+
+  // Merge the other ShapeInput, assuming it has the correct number
+  // of atoms etc.  Empties other, unless they can't be merged in which case
+  // it returns unscathed.
+  void merge(ShapeInput &other);
 
   std::string toString() const {
 #ifndef RDK_USE_BOOST_SERIALIZATION
@@ -170,9 +194,11 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   double getShapeVolume() const {
     return d_selfOverlapShapeVols[d_activeShape];
   }
+  double getShapeVolume(unsigned int shapeNum) const;
   double getColorVolume() const {
     return d_selfOverlapColorVols[d_activeShape];
   }
+  double getColorVolume(unsigned int shapeNum) const;
   const boost::dynamic_bitset<> *getCarbonRadii() const {
     return d_carbonRadii.get();
   }
@@ -221,24 +247,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int) {
-    ar & d_activeShape;
-    ar & d_coords;
-    ar & d_alphas;
-    ar & d_types;
-    ar & d_numAtoms;
-    ar & d_numFeats;
-    ar & d_selfOverlapShapeVols;
-    ar & d_selfOverlapColorVols;
-    ar & d_extremePointss;
-    ar & d_carbonRadii;
-    ar & d_smiles;
-    ar & d_normalized;
-    ar & d_normalizationOK;
-    ar & d_canonRots;
-    ar & d_canonTranss;
-    ar & d_eigenValuess;
-  }
+  void serialize(Archive &ar, const unsigned int);
 #endif
 
  private:
@@ -246,7 +255,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
                     bool fillAlphas);
   // Extract the features for the color scores, using RDKit pphore features
   // for now.  Other options to be added later.
-  void extractFeatures(const ROMol &mol, int confId,
+  void extractFeatures(const ROMol &mol, unsigned int confId,
                        const ShapeInputOptions &shapeOpts, bool fillAlphas);
   // Calculate the rotation and translation that will align the principal axes
   // to the cartesian axes and centre on the origin.
@@ -300,15 +309,40 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   void sortShapesByVolumes();
 };
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
+template <class Archive>
+void ShapeInput::serialize(Archive &ar, const unsigned int) {
+  ar & d_activeShape;
+  ar & d_coords;
+  ar & d_alphas;
+  ar & d_types;
+  ar & d_numAtoms;
+  ar & d_numFeats;
+  ar & d_selfOverlapShapeVols;
+  ar & d_selfOverlapColorVols;
+  ar & d_extremePointss;
+  ar & d_carbonRadii;
+  ar & d_smiles;
+  ar & d_normalized;
+  ar & d_normalizationOK;
+  ar & d_canonRots;
+  ar & d_canonTranss;
+  ar & d_eigenValuess;
+}
+#endif
+
+// Extract the features from the molecule, optionally just for the subset
+// of atoms.
+RDKIT_GAUSSIANSHAPE_EXPORT void findFeatures(
+    const ROMol &mol, int confId, std::vector<CustomFeature> &features,
+    const std::vector<unsigned int> &atomSubset = std::vector<unsigned int>());
+
 // Calculate the mean position of the given atoms.
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Point3D computeFeaturePos(
     const ROMol &mol, int confId, const std::vector<unsigned int> &ats);
 
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Transform3D quatTransToTransform(
     const double *quat, const double *trans);
-
-RDKIT_GAUSSIANSHAPE_EXPORT void copyTransform(const RDGeom::Transform3D &src,
-                                              RDGeom::Transform3D &dest);
 
 // Apply the transformation to the coordinates assumed to be in
 // ShapeInput.d_coords form.
@@ -322,6 +356,10 @@ RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
 RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
     const double *inShape, double *outShape, size_t numPoints,
     const RDGeom::Point3D &translation);
+
+// Maximum possible score of the 2 shape (v[12]) and color (c[12]) volumes
+double maxScore(double v1, double v2, double c1, double c2,
+                const ShapeOverlayOptions &overlayOpts);
 
 }  // namespace GaussianShape
 }  // namespace RDKit

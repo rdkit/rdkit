@@ -84,7 +84,7 @@ void SingleConformerAlignment::getFinalQuatTrans(
   RDGeom::Transform3D initialRot;
   initialRot.SetRotationFromQuaternion(d_initQuatTrans.data());
   auto tt = reverseInitialTrans * tmp * initialRot;
-  copyTransform(tt, xform);
+  xform = tt;
 }
 
 std::array<double, 5> SingleConformerAlignment::calcScores(const double *ref,
@@ -203,6 +203,9 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
   bool allCarbon = !refCarbonRadii || !fitCarbonRadii;
   for (int i = 0, i_idx = 0; i < numRefPts * 3; i += 3, i_idx++) {
     const auto ai = refAlphas[i_idx];
+    if (ai < 0.0) {
+      continue;
+    }
     for (int j = 0, j_idx = 0, k = 0; j < numFitPts * 3;
          j += 3, j_idx++, k += 12) {
       auto dx = ref[i] - fit[j];
@@ -213,6 +216,9 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
         continue;
       }
       const auto aj = fitAlphas[j_idx];
+      if (aj < 0.0) {
+        continue;
+      }
       auto mult = -(ai * aj) / (ai + aj);
       auto kij = exp(mult * d2);
       if (allCarbon || (!allCarbon && (*refCarbonRadii)[i_idx] &&
