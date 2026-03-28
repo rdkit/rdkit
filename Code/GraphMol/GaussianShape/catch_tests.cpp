@@ -561,18 +561,24 @@ TEST_CASE("custom feature points") {
     // each carbonyl O gets one feature:
     CHECK(shape1.getCoords().size() == 18);
     GaussianShape::ShapeInputOptions opts2;
-    opts2.customFeatures = GaussianShape::CustomFeatures{
-        {1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
-        {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
+    opts2.customFeatures =
+        std::vector<std::vector<GaussianShape::CustomFeature>>{
+            {{1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
+              std::vector<unsigned int>{}},
+             {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
+              std::vector<unsigned int>{}}}};
     auto shape2 = GaussianShape::ShapeInput(*m1, -1, opts2);
     CHECK(shape2.getCoords().size() == 18);
 
     {
       // confirm that we don't add the features if not requested.
       GaussianShape::ShapeInputOptions topts;
-      topts.customFeatures = GaussianShape::CustomFeatures{
-          {1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
-          {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
+      topts.customFeatures =
+          std::vector<std::vector<GaussianShape::CustomFeature>>{
+              {{1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
+                std::vector<unsigned int>{}},
+               {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
+                std::vector<unsigned int>{}}}};
       topts.useColors = false;
       auto tshape = GaussianShape::ShapeInput(*m1, -1, topts);
       CHECK(tshape.getCoords().size() == 12);
@@ -581,9 +587,12 @@ TEST_CASE("custom feature points") {
     // we'll swap the features on the second shape so that the alignment has to
     // be inverted
     GaussianShape::ShapeInputOptions opts3;
-    opts3.customFeatures = GaussianShape::CustomFeatures{
-        {2, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
-        {1, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
+    opts3.customFeatures =
+        std::vector<std::vector<GaussianShape::CustomFeature>>{
+            {{2, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
+              std::vector<unsigned int>{}},
+             {1, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
+              std::vector<unsigned int>{}}}};
 
     auto m2 = ROMol(*m1);
     auto shape3 = GaussianShape::ShapeInput(m2, -1, opts3);
@@ -606,17 +615,23 @@ TEST_CASE("custom feature points") {
   }
   SECTION("using molecules") {
     GaussianShape::ShapeInputOptions opts2;
-    opts2.customFeatures = GaussianShape::CustomFeatures{
-        {1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
-        {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
+    opts2.customFeatures =
+        std::vector<std::vector<GaussianShape::CustomFeature>>{
+            {{1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
+              std::vector<unsigned int>{}},
+             {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
+              std::vector<unsigned int>{}}}};
 
     auto m2 = ROMol(*m1);
     // we'll swap the features on the second shape so that the alignment has to
     // be inverted
     GaussianShape::ShapeInputOptions opts3;
-    opts3.customFeatures = GaussianShape::CustomFeatures{
-        {2, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0},
-        {1, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0}};
+    opts3.customFeatures =
+        std::vector<std::vector<GaussianShape::CustomFeature>>{
+            {{2, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
+              std::vector<unsigned int>{}},
+             {1, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
+              std::vector<unsigned int>{}}}};
 
     GaussianShape::ShapeOverlayOptions overlayOpts;
     overlayOpts.optParam = 0.5;
@@ -889,7 +904,6 @@ TEST_CASE("Multiple Conformers") {
   DGeomHelpers::EmbedParameters dgParams;
   dgParams.randomSeed = 0xdac;
   DGeomHelpers::EmbedMultipleConfs(*omeprazole, 10, dgParams);
-  std::cout << "Num confs : " << omeprazole->getNumConformers() << std::endl;
   CHECK(omeprazole->getNumConformers() == 10);
   MolOps::removeHs(*omeprazole);
 
@@ -905,8 +919,6 @@ TEST_CASE("Multiple Conformers") {
     GaussianShape::ShapeInputOptions shapeOptions;
     shapeOptions.shapePruneThreshold = 0.5;
     GaussianShape::ShapeInput shape2(*omeprazole, -1, shapeOptions);
-    std::cout << "Number of pruned shapes : " << shape2.getNumShapes()
-              << std::endl;
     CHECK(shape2.getNumShapes() == 4);
     shape2.setActiveShape(0);
     firstVol = shape2.getShapeVolume() + shape2.getColorVolume();
@@ -923,7 +935,6 @@ TEST_CASE("Multiple Conformers") {
     // The shapes in 2 are a subset of 1, so the maximum similarity
     // should be 1.0.
     auto maxSim = shape1.maxPossibleSimilarity(shape2);
-    std::cout << "maxSim : " << maxSim << std::endl;
     CHECK_THAT(maxSim, Catch::Matchers::WithinAbs(1.0, 0.001));
     unsigned int bestFitShape, bestRefShape;
     RDGeom::Transform3D bestXform;
@@ -943,9 +954,6 @@ TEST_CASE("Multiple Conformers") {
     // Demonstrate that the shapes are different:
     auto scores = GaussianShape::AlignShape(shape1, shape2);
     CHECK(scores[0] < 0.5);
-    std::cout << scores[0] << ", " << scores[1] << ", " << scores[2]
-              << std::endl;
-    std::cout << shape1.maxPossibleSimilarity(shape2) << std::endl;
   }
 }
 

@@ -87,7 +87,7 @@ const std::map<unsigned int, double> vdw_radii = {
 };
 constexpr double radius_color =
     1.08265;  // same radius for all feature/color "atoms", as used by the
-              // PubChem code.
+// PubChem code.
 
 namespace {
 // Throw out any atoms we don't want.  copySubsetMol does more work than
@@ -535,8 +535,10 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
   theseCoords.reserve(mol.getNumAtoms() * 3);
   for (const auto atom : mol.atoms()) {
     // Ignore H atoms except deuterium and tritium which are treated elsewhere
-    // as explicit atoms, and do use dummies if requested.  Dummy atoms
-    // can also have isotope number 1.
+    // as explicit atoms, and do use dummies if requested.  The latter two
+    // are set to be ignored in the volume calculation, however.  This is
+    // just to keep the atom numberings correct.  Dummy atoms can also have
+    // isotope number 1.
     if (atom->getAtomicNum() != 1 ||
         (atom->getAtomicNum() == 1 && atom->getIsotope() > 1)) {
       if (!opts.includeDummies && !atom->getAtomicNum()) {
@@ -576,6 +578,10 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
             throw ValueErrorException("Atom has radius 0.0.");
           }
           d_alphas.push_back(KAPPA / (rad * rad));
+        }
+        if (atom->getAtomicNum() == 1) {
+          // So it's not included in the volume calcs.
+          d_alphas.back() = -1.0;
         }
       }
     }
