@@ -11,6 +11,10 @@ GitHub)
 ## Backwards incompatible changes:
 
 ## Code removed in this release:
+- The version of hanoiSort() that takes raw pointers has been removed. Please use
+  the version that takes std::span and std::vector.
+- `Chirality::StereoInfo::NOATOM` (C++) and `Chem.StereoInfo.NOATOM` (Python) have
+  been removed. Please use `Atom::NOATOM` and `Chem.Atom.NOATOM`.
 
 ## Deprecated code (to be removed in a future release):
 
