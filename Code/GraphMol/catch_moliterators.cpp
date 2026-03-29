@@ -14,6 +14,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <algorithm>
+#include <ranges>
 
 using namespace RDKit;
 
@@ -36,6 +37,14 @@ TEST_CASE("mol.atoms()") {
     return atom->getAtomicNum() == 6;
   });
   CHECK(ccount == 4);
+  ccount =
+      std::count_if(std::begin(atoms), std::end(atoms),
+                    [](const auto atom) { return atom->getAtomicNum() == 6; });
+  CHECK(ccount == 4);
+  ccount =
+      std::count_if(std::ranges::begin(atoms), std::ranges::end(atoms),
+                    [](const auto atom) { return atom->getAtomicNum() == 6; });
+  CHECK(ccount == 4);
 }
 
 TEST_CASE("mol.bonds()") {
@@ -55,6 +64,14 @@ TEST_CASE("mol.bonds()") {
   CHECK(hasDoubleBond);
   doubleBondCount = std::count_if(
       bonds.begin(), bonds.end(),
+      [](const auto bond) { return bond->getBondType() == Bond::DOUBLE; });
+  CHECK(doubleBondCount == 2);
+  doubleBondCount = std::count_if(
+      std::begin(bonds), std::end(bonds),
+      [](const auto bond) { return bond->getBondType() == Bond::DOUBLE; });
+  CHECK(doubleBondCount == 2);
+  doubleBondCount = std::count_if(
+      std::ranges::begin(bonds), std::ranges::end(bonds),
       [](const auto bond) { return bond->getBondType() == Bond::DOUBLE; });
   CHECK(doubleBondCount == 2);
 }
@@ -87,4 +104,26 @@ TEST_CASE("mol.atomBonds()") {
   }
   MolOps::sanitizeMol(*m);
   CHECK(MolToSmiles(*m) == "CC(C)CO");
+}
+
+TEST_CASE("ranges") {
+  const auto m = "CC(C)CO"_smiles;
+  REQUIRE(m);
+  auto atoms = m->atoms();
+  auto bonds = m->bonds();
+  CHECK(std::ranges::distance(atoms) == 5);
+  CHECK(std::ranges::distance(bonds) == 4);
+  {
+    std::vector<unsigned int> atomDegrees;
+    std::ranges::transform(atoms, std::back_inserter(atomDegrees),
+                           [](const auto atom) { return atom->getDegree(); });
+    CHECK(atomDegrees == std::vector<unsigned int>{1, 3, 1, 2, 1});
+  }
+  {
+    std::vector<unsigned int> atomDegrees;
+    std::ranges::transform(atoms | std::views::reverse,
+                           std::back_inserter(atomDegrees),
+                           [](const auto atom) { return atom->getDegree(); });
+    CHECK(atomDegrees == std::vector<unsigned int>{1, 2, 1, 3, 1});
+  }
 }
