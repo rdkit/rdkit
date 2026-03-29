@@ -119,7 +119,7 @@ struct CXXAtomIterator {
   Iterator vstart, vend;
 
   struct CXXAtomIter {
-    using iterator_category = std::bidirectional_iterator_tag;
+    using iterator_category = std::random_access_iterator_tag;
     using difference_type = std::ptrdiff_t;
     using value_type = Vertex;
     using pointer = Vertex *;
@@ -148,10 +148,34 @@ struct CXXAtomIterator {
       --pos;
       return *this;
     }
+    CXXAtomIter operator+(difference_type n) const {
+      return CXXAtomIter(graph, pos + n);
+    }
+    CXXAtomIter operator-(difference_type n) const {
+      return CXXAtomIter(graph, pos - n);
+    }
+
     CXXAtomIter operator--(int) {
       CXXAtomIter tmp = *this;
       --(*this);
       return tmp;
+    }
+    CXXAtomIter &operator+=(difference_type n) {
+      pos += n;
+      return *this;
+    }
+    CXXAtomIter &operator-=(difference_type n) {
+      pos -= n;
+      return *this;
+    }
+    difference_type operator-(const CXXAtomIter &other) const {
+      return pos - other.pos;
+    }
+    friend CXXAtomIter operator+(difference_type n, const CXXAtomIter &it) {
+      return CXXAtomIter(it.graph, it.pos + n);
+    }
+    reference operator[](difference_type n) const {
+      return (*graph)[*(pos + n)];
     }
 
     bool operator==(const CXXAtomIter &other) const {
@@ -160,6 +184,10 @@ struct CXXAtomIterator {
     bool operator!=(const CXXAtomIter &other) const {
       return !(*this == other);
     }
+    bool operator<(const CXXAtomIter &other) const { return pos < other.pos; }
+    bool operator<=(const CXXAtomIter &other) const { return pos <= other.pos; }
+    bool operator>(const CXXAtomIter &other) const { return pos > other.pos; }
+    bool operator>=(const CXXAtomIter &other) const { return pos >= other.pos; }
   };
 
   CXXAtomIterator(Graph *graph) : graph(graph) {
@@ -171,8 +199,12 @@ struct CXXAtomIterator {
   CXXAtomIter end() { return {graph, vend}; }
   size_t size() const { return boost::num_vertices(*graph); }
 };
+// clang-format off
 static_assert(
-    std::ranges::bidirectional_range<CXXAtomIterator<MolGraph, Atom *>>);
+    std::ranges::random_access_range<CXXAtomIterator<MolGraph, Atom *>> 
+    and std::ranges::sized_range<CXXAtomIterator<MolGraph, Atom *>>
+  );
+// clang-format on
 
 template <class Graph, class Edge,
           class Iterator = typename Graph::edge_iterator>

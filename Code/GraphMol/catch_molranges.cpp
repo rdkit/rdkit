@@ -64,3 +64,32 @@ TEST_CASE("ranges") {
                                                     Bond::SINGLE});
   }
 }
+
+TEST_CASE("algorithms") {
+  std::unique_ptr<RWMol> m{new RWMol()};
+  REQUIRE(m);
+  //  = "COCF"_smiles;
+  m->addAtom(new Atom(6), true, true);
+  m->addAtom(new Atom(8), true, true);
+  m->addAtom(new Atom(6), true, true);
+  m->addAtom(new Atom(9), true, true);
+  m->addBond(0, 1, Bond::SINGLE);
+  m->addBond(1, 2, Bond::SINGLE);
+  m->addBond(2, 3, Bond::SINGLE);
+  SECTION("sort") {
+    auto atoms = m->atoms();
+    std::ranges::sort(atoms, [](const auto a1, const auto a2) {
+      return a1->getAtomicNum() < a2->getAtomicNum();
+    });
+    CHECK(std::ranges::distance(atoms) == 4);
+    std::vector<unsigned int> atomicNums;
+    std::ranges::transform(
+        atoms, std::back_inserter(atomicNums),
+        [](const auto atom) { return atom->getAtomicNum(); });
+    CHECK(atomicNums == std::vector<unsigned int>{6, 6, 8, 9});
+    std::vector<unsigned int> atomIndices;
+    std::ranges::transform(atoms, std::back_inserter(atomIndices),
+                           [](const auto atom) { return atom->getIdx(); });
+    CHECK(atomIndices == std::vector<unsigned int>{0, 2, 1, 3});
+  }
+}
