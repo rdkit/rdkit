@@ -230,7 +230,8 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // means no threshold. Fills in the shape numbers of the two that were
   // responsible if there is something above the threshold, and the
   // transformation that did it. Returns -1.0 for the similarity if there was
-  // nothing above the threshold.
+  // nothing above the threshold.  Note that the shape numbers are not
+  // necessarily the same as the original molecule conformation numbers.
   double bestSimilarity(
       ShapeInput &fitShape, unsigned int &bestThisShape,
       unsigned int &bestFitShape, RDGeom::Transform3D &bestXform,

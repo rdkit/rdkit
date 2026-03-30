@@ -955,6 +955,39 @@ TEST_CASE("Multiple Conformers") {
     auto scores = GaussianShape::AlignShape(shape1, shape2);
     CHECK(scores[0] < 0.5);
   }
+
+  {
+    // Different conformers of the same molecule
+    auto eso1 = "COc1ccc2[n-]c([S@@+]([O-])Cc3ncc(C)c(OC)c3C)nc2c1"_smiles;
+    REQUIRE(eso1);
+    MolOps::addHs(*eso1);
+    RDKit::DGeomHelpers::EmbedMultipleConfs(*eso1, 10, 30, 0xdac);
+    CHECK(eso1->getNumConformers() == 10);
+    GaussianShape::ShapeInput shapes1(*eso1);
+
+    auto eso2 = "COc1ccc2[n-]c([S@@+]([O-])Cc3ncc(C)c(OC)c3C)nc2c1"_smiles;
+    REQUIRE(eso2);
+    MolOps::addHs(*eso2);
+    RDKit::DGeomHelpers::EmbedMultipleConfs(*eso2, 10, 30, 0xcc);
+    CHECK(eso2->getNumConformers() == 10);
+    GaussianShape::ShapeInput shapes2(*eso2);
+
+    unsigned int best1, best2;
+    RDGeom::Transform3D xform;
+    auto bestSim11 = shapes1.bestSimilarity(shapes1, best1, best2, xform);
+    CHECK_THAT(bestSim11, Catch::Matchers::WithinAbs(1.0, 0.001));
+
+    auto bestSim22 = shapes2.bestSimilarity(shapes2, best1, best2, xform);
+    CHECK_THAT(bestSim22, Catch::Matchers::WithinAbs(1.0, 0.001));
+
+    auto bestSim12 = shapes1.bestSimilarity(shapes2, best1, best2, xform);
+    CHECK_THAT(bestSim12, Catch::Matchers::WithinAbs(0.691, 0.001));
+
+    // This overlay starts from where the previous one left it, so the final
+    // answer isn't identical.
+    auto bestSim21 = shapes2.bestSimilarity(shapes1, best1, best2, xform);
+    CHECK_THAT(bestSim21, Catch::Matchers::WithinAbs(0.698, 0.001));
+  }
 }
 
 namespace {

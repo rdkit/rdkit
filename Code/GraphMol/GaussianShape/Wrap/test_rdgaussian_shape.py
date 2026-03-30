@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 
 from rdkit import Chem
-from rdkit.Chem import rdGaussianShape, rdMolTransforms
+from rdkit.Chem import rdGaussianShape, rdMolTransforms, rdDistGeom
 from rdkit import RDConfig
 from rdkit.Geometry import Point3D
 
@@ -46,50 +46,63 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(tpl[1], 0.760, places=3)
     self.assertAlmostEqual(tpl[2], 0.233, places=3)
 
+    mol = shp.ShapeToMol()
+    self.assertEqual(Chem.MolToSmiles(mol), "CC(=O)Oc1ccccc1C(=O)O")
+    mol = shp.ShapeToMol(True)
+    self.assertEqual(Chem.MolToSmiles(mol), "CC(=O)Oc1ccccc1C(=O)O.[Xe].[Xe].[Xe].[Xe].[Xe].[Xe]")
+    mol = shp.ShapeToMol(False, False)
+    self.assertEqual(Chem.MolToSmiles(mol), "C.C.C.C.C.C.C.C.C.C.C.C.C")
+    mol = shp.ShapeToMol(True, False)
+    self.assertEqual(Chem.MolToSmiles(mol), "C.C.C.C.C.C.C.C.C.C.C.C.C.[Xe].[Xe].[Xe].[Xe].[Xe].[Xe]")
+    
   def test4_customFeatures(self):
     m1 = Chem.MolFromSmiles(
       "O=CC=O |(-1.75978,0.148897,0;-0.621382,-0.394324,0;0.624061,0.3656,.1;1.7571,-0.120174,.1)|")
     opts = rdGaussianShape.ShapeInputOptions()
-    opts.customFeatures = ((1, Point3D(-1.75978, 0.148897,
-                                       0), 1.0), (2, Point3D(1.7571, -0.120174, 0.1), 1.0))
+    opts.customFeatures = [[(1, Point3D(-1.75978, 0.148897, 0), 1.0),
+                            (2, Point3D(1.7571, -0.120174, 0.1), 1.0)]]
     ovOpts = rdGaussianShape.ShapeOverlayOptions()
     shp = rdGaussianShape.ShapeInput(m1, -1, opts, ovOpts)
     self.assertEqual(shp.NumAtoms, 4)
     self.assertEqual(shp.NumFeatures, 2)
     m2 = Chem.Mol(m1)
     opts2 = rdGaussianShape.ShapeInputOptions()
-    opts2.customFeatures = ((2, Point3D(-1.75978, 0.148897,
-                                        0), 1.0), (1, Point3D(1.7571, -0.120174, 0.1), 1.0))
+    opts2.customFeatures = [[(2, Point3D(-1.75978, 0.148897, 0), 1.0, [1, 2, 3]),
+                             (1, Point3D(1.7571, -0.120174, 0.1), 1.0, [4, 5, 6])]]
     shp2 = rdGaussianShape.ShapeInput(m2, -1, opts2, ovOpts)
     tpl = rdGaussianShape.AlignShapes(shp, shp2, ovOpts)
     self.assertAlmostEqual(tpl[0], 0.999, places=3)
     self.assertAlmostEqual(tpl[1], 1.000, places=3)
-    self.assertAlmostEqual(tpl[2], 0.999, places=3)
+    self.assertAlmostEqual(tpl[2], 0.998, places=3)
     tf = tpl[3]
     self.assertGreater(0.0, tf[0])
     self.assertEqual(1.0, tf[15])
 
     # check the getter:
     cfs = opts2.customFeatures
-    self.assertEqual(len(cfs), 2)
-    self.assertEqual(cfs[0][0], 2)
-    self.assertEqual(cfs[1][0], 1)
+    self.assertEqual(len(cfs), 1)
+    self.assertEqual(len(cfs[0]), 2)
+    self.assertEqual(len(cfs[0][0]), 4)
+    self.assertEqual(cfs[0][0][0], 2)
+    self.assertEqual(cfs[0][1][3][0], 4)
+    self.assertEqual(cfs[0][1][3][1], 5)
+    self.assertEqual(cfs[0][1][3][2], 6)
 
   def test5_customFeatures(self):
     m1 = Chem.MolFromSmiles(
       "O=CC=O |(-1.75978,0.148897,0;-0.621382,-0.394324,0;0.624061,0.3656,.1;1.7571,-0.120174,.1)|")
     opts = rdGaussianShape.ShapeInputOptions()
-    opts.customFeatures = ((1, Point3D(-1.75978, 0.148897,
-                                       0), 1.0), (2, Point3D(1.7571, -0.120174, 0.1), 1.0))
+    opts.customFeatures = [[(1, Point3D(-1.75978, 0.148897,
+                                       0), 1.0), (2, Point3D(1.7571, -0.120174, 0.1), 1.0)]]
     m2 = Chem.Mol(m1)
     opts2 = rdGaussianShape.ShapeInputOptions()
-    opts2.customFeatures = ((2, Point3D(-1.75978, 0.148897,
-                                        0), 1.0), (1, Point3D(1.7571, -0.120174, 0.1), 1.0))
+    opts2.customFeatures = [[(2, Point3D(-1.75978, 0.148897,
+                                        0), 1.0), (1, Point3D(1.7571, -0.120174, 0.1), 1.0)]]
     ovOpts = rdGaussianShape.ShapeOverlayOptions()
     tpl = rdGaussianShape.AlignMol(m1, m2, opts, opts2, ovOpts)
     self.assertAlmostEqual(tpl[0], 0.999, places=3)
     self.assertAlmostEqual(tpl[1], 1.000, places=3)
-    self.assertAlmostEqual(tpl[2], 0.999, places=3)
+    self.assertAlmostEqual(tpl[2], 0.998, places=3)
 
   def test6_FixedScore(self):
     ovOpts = rdGaussianShape.ShapeOverlayOptions()
@@ -155,7 +168,26 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(fit_tversky[0], 0.557, places=3)
     self.assertAlmostEqual(fit_tversky[1], 0.780, places=3)
     self.assertAlmostEqual(fit_tversky[2], 0.335, places=3)
-   
+
+  def test10_multipleConformers(self):
+    esomeprazole = Chem.AddHs(Chem.MolFromSmiles("COc1ccc2[n-]c([S@@+]([O-])Cc3ncc(C)c(OC)c3C)nc2c1"))
+    rdDistGeom.EmbedMultipleConfs(esomeprazole, 10, randomSeed=0xdac)
+    ovOpts = rdGaussianShape.ShapeOverlayOptions()
+    opts = rdGaussianShape.ShapeInputOptions()
+    shapes1 = rdGaussianShape.ShapeInput(esomeprazole, -1, opts, ovOpts)
+    self.assertEqual(shapes1.NumShapes, 10)
+
+    esomeprazole = Chem.AddHs(Chem.MolFromSmiles("COc1ccc2[n-]c([S@@+]([O-])Cc3ncc(C)c(OC)c3C)nc2c1"))
+    rdDistGeom.EmbedMultipleConfs(esomeprazole, 10, randomSeed=0xcc)
+    shapes2 = rdGaussianShape.ShapeInput(esomeprazole, -1, opts, ovOpts)
+    self.assertEqual(shapes2.NumShapes, 10)
+
+    bestSim, best1, best2, xform = shapes1.BestSimilarity(shapes2)
+    self.assertAlmostEqual(bestSim, 0.986, places=3)
+    self.assertEqual(best1, 9)
+    self.assertEqual(best2, 4)
+    self.assertEqual(len(xform), 16)
+    
 
 if __name__ == '__main__':
   unittest.main()
