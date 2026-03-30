@@ -126,7 +126,7 @@ struct CXXAtomIterator {
     using reference = Vertex &;
 
     Graph *graph = nullptr;
-    Iterator pos = std::numeric_limits<unsigned int>::max();
+    Iterator pos;
     // Atom *current = nullptr;
 
     CXXAtomIter() {};
@@ -220,7 +220,7 @@ struct CXXBondIterator {
     using reference = Edge &;
 
     Graph *graph = nullptr;
-    Iterator pos = std::numeric_limits<unsigned int>::max();
+    Iterator pos;
     // Bond *current = nullptr;
 
     CXXBondIter() {};
