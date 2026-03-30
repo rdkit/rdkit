@@ -25,7 +25,6 @@
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Substruct/SubstructMatch.h>
-
 constexpr double NEIGH_RADIUS = 2.5;
 
 namespace RDDepict {
@@ -490,7 +489,6 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
   // find template that this mol matches to, if any
   RDKit::MatchVectType match;
   std::shared_ptr<RDKit::ROMol> template_mol(nullptr);
-
   for (const auto &mol :
        coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
     // To reduce how often we have to do substructure matches, check ring info
@@ -528,7 +526,6 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     if (degreeCounts(rs_mol) != degreeCounts(*mol)) {
       continue;
     }
-
     RDKit::SubstructMatchParameters params;
     params.maxMatches = 1;
     auto matches = RDKit::SubstructMatch(rs_mol, *mol, params);
