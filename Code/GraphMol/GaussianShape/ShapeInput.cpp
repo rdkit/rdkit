@@ -289,6 +289,23 @@ void ShapeInput::merge(ShapeInput &other) {
                         std::make_move_iterator(other.d_eigenValuess.begin()),
                         std::make_move_iterator(other.d_eigenValuess.end()));
 
+  auto joinBS =
+      [](const boost::dynamic_bitset<> &bs1,
+         const boost::dynamic_bitset<> &bs2) -> boost::dynamic_bitset<> {
+    boost::dynamic_bitset<> bs1Copy(bs1);
+    boost::dynamic_bitset<> bs2Copy(bs2);
+    size_t totalSize = bs1.size() + bs2.size();
+    bs1Copy.resize(totalSize);
+    bs2Copy.resize(totalSize);
+    bs1Copy <<= bs2.size();
+    bs1Copy |= bs2Copy;
+    return bs1Copy;
+  };
+
+  d_normalizeds = joinBS(d_normalizeds, other.d_normalizeds);
+  other.d_normalizeds.clear();
+  d_normalizationOKs = joinBS(d_normalizationOKs, other.d_normalizationOKs);
+  other.d_normalizationOKs.clear();
   other.d_coords.clear();
   other.d_selfOverlapShapeVols.clear();
   other.d_selfOverlapColorVols.clear();
