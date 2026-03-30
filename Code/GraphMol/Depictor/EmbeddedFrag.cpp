@@ -25,9 +25,7 @@
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <iostream>
+
 constexpr double NEIGH_RADIUS = 2.5;
 
 namespace RDDepict {
@@ -493,9 +491,8 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
   RDKit::MatchVectType match;
   std::shared_ptr<RDKit::ROMol> template_mol(nullptr);
 
-  auto matching_templates = coordinate_templates.getMatchingTemplates(ringSystemAtoms.size());
-
-  for (const auto &mol : matching_templates) {
+  for (const auto &mol :
+       coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
     // To reduce how often we have to do substructure matches, check ring info
     // and bond count first
     if (mol->getNumBonds() != numBonds) {
@@ -528,9 +525,7 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
       }
       return degrees_count;
     };
-    auto rs_degrees = degreeCounts(rs_mol);
-    auto template_degrees = degreeCounts(*mol);
-    if (rs_degrees != template_degrees) {
+    if (degreeCounts(rs_mol) != degreeCounts(*mol)) {
       continue;
     }
 
