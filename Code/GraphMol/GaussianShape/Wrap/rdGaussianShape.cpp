@@ -16,6 +16,7 @@
 
 #include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/RWMol.h>
 #include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/GaussianShape/ShapeInput.h>
 #include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
@@ -29,26 +30,45 @@ namespace helpers {
 void set_customFeatures(GaussianShape::ShapeInputOptions &shp,
                         const python::object &s) {
   shp.customFeatures.clear();
-  auto len = python::len(s);
-  shp.customFeatures.reserve(len);
-  for (auto i = 0u; i < len; ++i) {
-    const auto elem = s[i];
-    unsigned int featType = python::extract<unsigned int>(elem[0]);
-    RDGeom::Point3D pos = python::extract<RDGeom::Point3D>(elem[1]);
-    double radius = python::extract<double>(elem[2]);
-    shp.customFeatures.emplace_back(featType, pos, radius);
+  auto numVecs = python::len(s);
+  shp.customFeatures.reserve(numVecs);
+  for (auto i = 0u; i < numVecs; ++i) {
+    const auto outVec = s[i];
+    auto numFeats = python::len(outVec);
+    std::vector<GaussianShape::CustomFeature> feats;
+    feats.reserve(numFeats);
+    for (auto j = 0u; j < numFeats; ++j) {
+      const auto feat = outVec[j];
+      unsigned int featType = python::extract<unsigned int>(feat[0]);
+      RDGeom::Point3D pos = python::extract<RDGeom::Point3D>(feat[1]);
+      double radius = python::extract<double>(feat[2]);
+      std::vector<unsigned int> atoms;
+      if (len(feat) == 4) {
+        for (unsigned int k = 0; k < len(feat[3]); ++k) {
+          atoms.push_back(python::extract<unsigned int>(feat[3][k]));
+        }
+      }
+      feats.emplace_back(featType, pos, radius, atoms);
+    }
+    shp.customFeatures.emplace_back(std::move(feats));
   }
 }
+
 python::tuple get_customFeatures(const GaussianShape::ShapeInputOptions &shp) {
-  python::list py_list;
-  for (const auto &val : shp.customFeatures) {
-    python::list elem;
-    elem.append(static_cast<int>(std::get<0>(val)));
-    elem.append(std::get<1>(val));
-    elem.append(std::get<2>(val));
-    py_list.append(python::tuple(elem));
+  python::list allFeatLists;
+  for (const auto &feats : shp.customFeatures) {
+    python::list featList;
+    for (const auto &feat : feats) {
+      python::list elem;
+      elem.append(static_cast<int>(feat.type));
+      elem.append(feat.pos);
+      elem.append(feat.rad);
+      elem.append(feat.atoms);
+      featList.append(elem);
+    }
+    allFeatLists.append(featList);
   }
-  return python::tuple(py_list);
+  return python::tuple(allFeatLists);
 }
 
 python::tuple alignMol1(const ROMol &ref, ROMol &fit,
@@ -193,6 +213,57 @@ python::tuple get_atomRadii(const GaussianShape::ShapeInputOptions &opts) {
   return python::tuple(py_list);
 }
 
+double getShapeVolume_helper(const GaussianShape::ShapeInput &shape) {
+  return shape.getShapeVolume();
+}
+
+double getColorVolume_helper(const GaussianShape::ShapeInput &shape) {
+  return shape.getColorVolume();
+}
+
+python::tuple bestSimilarity_helper(GaussianShape::ShapeInput &refShape,
+                                    GaussianShape::ShapeInput &fitShape,
+                                    double threshold,
+                                    const python::object &py_overlayOpts) {
+  GaussianShape::ShapeOverlayOptions overlayOpts;
+  if (!py_overlayOpts.is_none()) {
+    overlayOpts =
+        python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
+  }
+  unsigned int bestFitShape, bestThisShape;
+  RDGeom::Transform3D bestXform;
+  auto bestSim = refShape.bestSimilarity(fitShape, bestThisShape, bestFitShape,
+                                         bestXform, threshold, overlayOpts);
+  python::list results;
+  results.append(bestSim);
+  results.append(bestThisShape);
+  results.append(bestFitShape);
+  python::list pyMatrix;
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      pyMatrix.append(bestXform.getValUnchecked(i, j));
+    }
+  }
+  results.append(pyMatrix);
+  return python::tuple(results);
+}
+
+double maxPossibleSimilarity_helper(GaussianShape::ShapeInput &refShape,
+                                    GaussianShape::ShapeInput &fitShape,
+                                    const python::object &py_overlayOpts) {
+  GaussianShape::ShapeOverlayOptions overlayOpts;
+  if (!py_overlayOpts.is_none()) {
+    overlayOpts =
+        python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
+  }
+  return refShape.maxPossibleSimilarity(fitShape, overlayOpts);
+}
+
+ROMol *shapeToMol_helper(GaussianShape::ShapeInput &shape, bool includeColors,
+                         bool withBonds) {
+  auto mol = shape.shapeToMol(includeColors, withBonds);
+  return static_cast<ROMol *>(mol.release());
+}
 }  // namespace helpers
 
 void wrap_rdGaussianShape() {
@@ -240,8 +311,9 @@ void wrap_rdGaussianShape() {
       .add_property(
           "customFeatures", &helpers::get_customFeatures,
           &helpers::set_customFeatures,
-          "Custom features for the shape.  Requires a list of tuples of"
-          " int (the feature type), Point3D (the coordinates) and float (the radius).")
+          "Custom features for the shape.  Requires a list of lists of tuples of"
+          " int (the feature type), Point3D (the coordinates), float (the radius)"
+          " and optionally a list of indices of the atoms that the feature was derived from.")
       .add_property(
           "atomRadii", &helpers::get_atomRadii, &helpers::set_atomRadii,
           "Non-standard radii to use for the atoms specified by their indices"
@@ -322,14 +394,70 @@ void wrap_rdGaussianShape() {
       python::init<const ROMol &, int, const GaussianShape::ShapeInputOptions &,
                    const GaussianShape::ShapeOverlayOptions &>(
           python::args("self", "confId", "shapeOpt", "overlayOpts")))
+      .add_property(
+          "GetSmiles", &GaussianShape::ShapeInput::getSmiles,
+          "Get the SMILES string for the molecule that the shape relates to.")
+      .add_property(
+          "setActiveShape", &GaussianShape::ShapeInput::setActiveShape,
+          "Set the active shape, the one that will be used for overlays etc.")
+      .add_property("getActiveShape",
+                    &GaussianShape::ShapeInput::getActiveShape,
+                    "Return the number of the active shape.")
       .add_property("NumAtoms", &GaussianShape::ShapeInput::getNumAtoms,
                     "Get the number of atoms defining the shape.")
       .add_property("NumFeatures", &GaussianShape::ShapeInput::getNumFeatures,
                     "Get the number of features in the shape.")
-      .add_property("ShapeVolume", &GaussianShape::ShapeInput::getShapeVolume,
-                    "Get the shape's volume due to the atoms.")
-      .add_property("ColorVolume", &GaussianShape::ShapeInput::getColorVolume,
-                    "Get the volume of the shape's color features.")
+      .add_property(
+          "NumShapes", &GaussianShape::ShapeInput::getNumShapes,
+          "Get the number of shapes.  There will be a shape for each conformation "
+          "of the input molecule, unless shape pruning was carried out in which case"
+          " there may be fewer.")
+      .add_property("ShapeVolume", &helpers::getShapeVolume_helper,
+                    "Get the volume due to the atoms for the active shape.")
+      .add_property(
+          "ColorVolume", &helpers::getColorVolume_helper,
+          "Get the volume of the shape's color features for the active shap.")
+      .def(
+          "NormalizeCoords", &GaussianShape::ShapeInput::normalizeCoords,
+          "Align the principal axes to the cartesian axes and centre on the origin."
+          " Doesn't require that the shape was created from a molecule.  Creates"
+          " the necessary transformation if not already done.")
+      .def(
+          "ShapeToMol", &helpers::shapeToMol_helper,
+          (python::arg("self"), python::arg("includeColors") = false,
+           python::arg("withBonds") = true),
+          "Return a molecule with coordinates of the current active shape."
+          "  If includeColors is True, (default is False) the color features"
+          " will be added as xenon atoms.  If withBonds is True (the default)"
+          " a molecule with bonds will be created, if not then just atoms at the"
+          " appropriate positions will be produced.",
+          python::return_value_policy<python::manage_new_object>())
+      .def(
+          "BestSimilarity", &helpers::bestSimilarity_helper,
+          (python::arg("self"), python::arg("fitShape"),
+           python::arg("threshold") = -1.0,
+           python::arg("overlayOpts") = python::object()),
+          "Find the best similarity score between all shapes in this shape and the"
+          " other one. Stops as soon as it gets something above the threshold."
+          " The score runs between 0.0 and 1.0, so the default threshold of -1.0"
+          " means no threshold. Fills in the shape numbers of the two that were"
+          " responsible if there is something above the threshold, and the"
+          " transformation that did it. Returns a tuple of the similarity score"
+          " (-1.0 if there was nothing above the threshold), the number of the"
+          " shape for this object and the shape number of the fitShape that gave"
+          " the best similarity and the transformation matrix (as a list of 16 floats)"
+          " that will reproduce the best overlay.  The shapes won't necessarily"
+          " be left in the state that gave the best similarity.  Note that the"
+          " shape numbers are not necessarily the same as the original molecule"
+          " conformation numbers.")
+      .def("MaxPossibleSimilarity", &helpers::maxPossibleSimilarity_helper,
+           (python::arg("self"), python::arg("fitShape"),
+            python::arg("overlayOpts") = python::object()),
+           "Get the maximum possible similarity score between all shapes in"
+           " this shape and all shapes in the fitShape.  The maximum similarity"
+           " is when one shape is entirely inside the other.  This returns"
+           " the similarity in that case, which is the upper bound on what"
+           " is achievable between these 2 shapes.")
       .def("__setattr__", &safeSetattr);
 
   python::def(

@@ -1,4 +1,21 @@
-# Release_2026.03.1b1
+# Release_2026.03.1
+(Changes relative to Release_2025.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+## Highlights
+
+## Backwards incompatible changes:
+
+## Code removed in this release:
+
+## Deprecated code (to be removed in a future release):
+
+
+# Release_2026.03.1
 (Changes relative to Release_2025.09.1)
 
 ## Acknowledgements
@@ -9,14 +26,21 @@ GitHub)
 Jakub Adamczyk, Rody Arantes, Kevin Boyd, Jessica Braun, Katharina Buchthal,
 Jackson Burns, Chi Cheng, David Cosgrove, Andrew Dirksen, Sergey Fedorov, Justin
 Gullingsrud, Tad Hurst, Lauriane Jacot-Descombes, Gareth Jones, Eisuke
-Kawashima, Brian Kelley, Joos Kiener, Phong Lam, Niels Maeder, Josh A. Mitchell,
-Dan Nealschneider, Yakov Pechersky, PatrickPenner, Paul Pillot, Rachael Pirie,
-Eliot Ragueneau, Max Rietmann, Pat Riley, Ricardo Rodriguez, Lukas Sigmund,
-Anton Siomchen, Raul Sofia, Matt Swain, Paolo Tosco, Ivan Tubert-Brohman, Philip
-Ullmann, Chris Von Bargen, Rachel Walker, Nic Zonta, 空酱, Pavel, stephenting22,
-Paul, paconius, spparel, wszqkzqk, Diogo, dehaenw
+Kawashima, Brian Kelley, Joos Kiener, Jimmy Kromann, Phong Lam, Niels Maeder,
+Josh A. Mitchell, Dan Nealschneider, Yakov Pechersky, Patrick Penner, Paul
+Pillot, Rachael Pirie, Eliot Ragueneau, Max Rietmann, Pat Riley, Ricardo
+Rodriguez, Lukas Sigmund, Anton Siomchen, Raul Sofia, Matt Swain, Paolo Tosco,
+Ivan Tubert-Brohman, Philip Ullmann, Chris Von Bargen, Rachel Walker, Nic Zonta,
+空酱, dkranthi221, EvaSnow, Pavel, stephenting22, Paul, paconius, spparel,
+wszqkzqk, Diogo, dehaenw
 
 ## Highlights
+- A significant number of known SMILES canonicalization problems were resolved.
+- It's now possible to provide your own matching functions to supplement or
+  replace the defaults when doing substructure matching.
+- An experimental new implementation of shape-based alignment using Gaussians.
+- Improvements to the molecular templates for 2D depiction and handling of
+  macrocycles in the templates.
 
 ## Backwards incompatible changes:
 - The `Dict` class (and therefore all the properties interfaces) has been updated
@@ -131,7 +155,9 @@ Paul, paconius, spparel, wszqkzqk, Diogo, dehaenw
  (github pull #9051 from tadhurst-cdd)
   - Store CIP-ranked anchors after CIP labeling.
  (github pull #9056 from ricrogz)
-  - Exclude Zero order bonds  from FindRingFamilies() and add arguments for includeDativeBonds, includeHydrogenBonds
+  - Gaussian shape overlays
+ (github pull #9095 from DavidACosgrove) 
+  - Exclude Zero order bonds from FindRingFamilies() and add arguments for includeDativeBonds, includeHydrogenBonds
  (github pull #9118 from ricrogz)
   - Deterministic kekulize, independent of atom and bond order
  (github pull #9125 from pechersky)
@@ -155,6 +181,14 @@ Paul, paconius, spparel, wszqkzqk, Diogo, dehaenw
  (github pull #9188 from kabu00002)
   - [bot] Update molecular templates header file
  (github pull #9193 from github-actions[bot])
+  - useChirality support in MinimalLib (RDKit.js) on mol.get_substruct_matches
+ (github pull #9197 from ptosco)
+  - simple substructure search optimization
+ (github pull #9201 from greglandrum)
+  - Enable templating for macrocycles
+ (github pull #9203 from ZontaNicola)
+  - [bot] Update molecular templates header file
+ (github pull #9205 from github-actions[bot])
 
 ## Documentation:
   - Extra documentation for EnumerateLibraries
@@ -291,6 +325,8 @@ Paul, paconius, spparel, wszqkzqk, Diogo, dehaenw
  (github pull #9139 from cdvonbargen)
   - Pyrrole molblock with explicit H is not read due to kekulization error
  (github issue #9140 from pechersky)
+  - ETKDGv3 generating 90 degree twisted amides
+ (github issue #9143 from dkranthi221)
   - PR #9082 breaks MolFragmentToSmarts()
  (github issue #9144 from ricrogz)
   - PandasTools.SaveXlsxFromFrame is ignoring the remaining data in the dataframe when writing the .xlsx file
@@ -299,6 +335,8 @@ Paul, paconius, spparel, wszqkzqk, Diogo, dehaenw
  (github issue #9165 from kabu00002)
   - DistGeom: bounds get overwritten
  (github issue #9166 from kabu00002)
+  - Fix typo in _calculateBeta: check nb1 instead of nb2 twice
+ (github pull #9202 from evasnow1992)
 
 ## Cleanup work:
   - style: apply readability-braces-around-statements
@@ -373,6 +411,8 @@ Paul, paconius, spparel, wszqkzqk, Diogo, dehaenw
  (github pull #9155 from ricrogz)
   - switch the Query infrastructure to use std::function instead of function pointers
  (github pull #9169 from greglandrum)
+  - Leak fixes for 2026.03.1
+ (github pull #9198 from ricrogz)
 
 ## Code removed in this release:
 
@@ -381,8 +421,6 @@ Paul, paconius, spparel, wszqkzqk, Diogo, dehaenw
   the version that takes std::span and std::vector.
 - `Chirality::StereoInfo::NOATOM` (C++) and `Chem.StereoInfo.NOATOM` (Python) have
   been deprecated in favor of `Atom::NOATOM` and `Chem.Atom.NOATOM`.
-
-
 
 # Release_2025.09.1
 (Changes relative to Release_2025.03.1)

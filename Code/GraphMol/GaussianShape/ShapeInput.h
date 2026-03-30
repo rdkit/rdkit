@@ -186,7 +186,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   const std::vector<double> &getAlphas() const { return d_alphas; }
   //! Fetch the coordinates of the atoms and optionally features.
   std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors = false) const;
-  bool getNormalized() const { return d_normalized; }
+  bool getNormalized() const { return d_normalizeds[d_activeShape]; }
   const std::vector<int> &getTypes() const { return d_types; }
   unsigned int getNumAtoms() const { return d_numAtoms; }
   unsigned int getNumFeatures() const { return d_numFeats; }
@@ -230,7 +230,8 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // means no threshold. Fills in the shape numbers of the two that were
   // responsible if there is something above the threshold, and the
   // transformation that did it. Returns -1.0 for the similarity if there was
-  // nothing above the threshold.
+  // nothing above the threshold.  Note that the shape numbers are not
+  // necessarily the same as the original molecule conformation numbers.
   double bestSimilarity(
       ShapeInput &fitShape, unsigned int &bestThisShape,
       unsigned int &bestFitShape, RDGeom::Transform3D &bestXform,
@@ -286,13 +287,13 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // calculation later.
   std::string d_smiles;  // The SMILES string of the input molecule
 
-  // This is the rotation and translation to align the principal axes of the
-  // shape with cartesian axes.  If d_normalized is true, it has been applied
-  // to the coordinates.
-  bool d_normalized{false};
+  // These are the rotation and translation matrices to align the principal
+  // axes of the shape with cartesian axes.  If d_normalized is true, it has
+  // been applied to the coordinates.
+  boost::dynamic_bitset<> d_normalizeds;
   // If the shape is moved, the normalization matrices are no longer valid.
   // This flags that so it is re-computed as required.
-  bool d_normalizationOK{false};
+  boost::dynamic_bitset<> d_normalizationOKs;
 
   std::vector<std::array<double, 9>> d_canonRots;
   std::vector<std::array<double, 3>> d_canonTranss;
@@ -323,8 +324,8 @@ void ShapeInput::serialize(Archive &ar, const unsigned int) {
   ar & d_extremePointss;
   ar & d_carbonRadii;
   ar & d_smiles;
-  ar & d_normalized;
-  ar & d_normalizationOK;
+  ar & d_normalizeds;
+  ar & d_normalizationOKs;
   ar & d_canonRots;
   ar & d_canonTranss;
   ar & d_eigenValuess;
