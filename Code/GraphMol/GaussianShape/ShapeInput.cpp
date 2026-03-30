@@ -143,6 +143,9 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
     MolOps::findSSSR(*tmpMol);
   }
 
+  d_normalizeds = boost::dynamic_bitset<>(tmpMol->getNumConformers());
+  d_normalizationOKs = boost::dynamic_bitset<>(tmpMol->getNumConformers());
+
   auto processConf = [&](ROMol &m, unsigned int ci, bool fa) {
     extractAtoms(m, ci, opts, fa);
     if (opts.useColors) {
@@ -185,8 +188,10 @@ ShapeInput::ShapeInput(const ShapeInput &other, unsigned int shapeNum) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(*other.d_carbonRadii));
   }
   d_smiles = other.d_smiles;
-  d_normalized = false;
-  d_normalizationOK = false;
+  d_normalizeds = boost::dynamic_bitset<>(1);
+  d_normalizeds[0] = other.d_normalizeds[shapeNum];
+  d_normalizationOKs = boost::dynamic_bitset<>(1);
+  d_normalizationOKs[0] = other.d_normalizationOKs[shapeNum];
   d_canonRots.emplace_back(other.d_canonRots[shapeNum]);
   d_canonTranss.emplace_back(other.d_canonTranss[shapeNum]);
   d_eigenValuess.emplace_back(other.d_eigenValuess[shapeNum]);
@@ -203,8 +208,8 @@ ShapeInput::ShapeInput(const ShapeInput &other)
       d_selfOverlapColorVols(other.d_selfOverlapColorVols),
       d_extremePointss(other.d_extremePointss),
       d_smiles(other.d_smiles),
-      d_normalized(other.d_normalized),
-      d_normalizationOK(other.d_normalizationOK),
+      d_normalizeds(other.d_normalizeds),
+      d_normalizationOKs(other.d_normalizationOKs),
       d_canonRots(other.d_canonRots),
       d_canonTranss(other.d_canonTranss),
       d_eigenValuess(other.d_eigenValuess) {
@@ -227,8 +232,8 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   d_selfOverlapColorVols = other.d_selfOverlapColorVols;
   d_extremePointss = other.d_extremePointss;
   d_smiles = other.d_smiles;
-  d_normalized = other.d_normalized;
-  d_normalizationOK = other.d_normalizationOK;
+  d_normalizeds = other.d_normalizeds;
+  d_normalizationOKs = other.d_normalizationOKs;
   d_canonRots = other.d_canonRots;
   d_canonTranss = other.d_canonTranss;
   d_eigenValuess = other.d_eigenValuess;
@@ -299,7 +304,6 @@ void ShapeInput::setActiveShape(unsigned int newShape) {
                    std::to_string(d_coords.size()) + ").");
   if (d_activeShape != newShape) {
     d_activeShape = newShape;
-    d_normalizationOK = false;
   }
 }
 
@@ -334,28 +338,28 @@ double ShapeInput::getColorVolume(unsigned int shapeNum) const {
 }
 
 const std::array<double, 9> &ShapeInput::calcCanonicalRotation() {
-  if (!d_normalizationOK) {
+  if (!d_normalizationOKs[d_activeShape]) {
     calcNormalization();
   }
   return d_canonRots[d_activeShape];
 }
 
 const std::array<double, 3> &ShapeInput::calcCanonicalTranslation() {
-  if (!d_normalizationOK) {
+  if (!d_normalizationOKs[d_activeShape]) {
     calcNormalization();
   }
   return d_canonTranss[d_activeShape];
 }
 
 const std::array<double, 3> &ShapeInput::calcEigenValues() {
-  if (!d_normalizationOK) {
+  if (!d_normalizationOKs[d_activeShape]) {
     calcNormalization();
   }
   return d_eigenValuess[d_activeShape];
 }
 
 const std::array<size_t, 6> &ShapeInput::calcExtremes() {
-  if (!d_normalizationOK) {
+  if (!d_normalizationOKs[d_activeShape]) {
     calculateExtremes();
   }
   return d_extremePointss[d_activeShape];
@@ -382,10 +386,10 @@ std::array<double, 3> ShapeInput::calcMomentsOfInertia(
 }
 
 void ShapeInput::normalizeCoords() {
-  if (d_normalized) {
+  if (d_normalizeds[d_activeShape]) {
     return;
   }
-  if (!d_normalizationOK) {
+  if (!d_normalizationOKs[d_activeShape]) {
     calcNormalization();
   }
   RDGeom::Transform3D canonRot;
@@ -401,15 +405,15 @@ void ShapeInput::normalizeCoords() {
   canonRot.SetTranslation(trans);
 
   transformCoords(canonRot);
-  d_normalized = true;
+  d_normalizeds[d_activeShape] = true;
   // Recalculate the extremes now we've changed the coordinates.
   calcExtremes();
 }
 
 void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
   applyTransformToShape(d_coords[d_activeShape], xform);
-  d_normalized = false;
-  d_normalizationOK = false;
+  d_normalizeds[d_activeShape] = false;
+  d_normalizationOKs[d_activeShape] = false;
 }
 
 std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors,
@@ -471,6 +475,7 @@ double ShapeInput::bestSimilarity(ShapeInput &fitShape,
       auto maxSim =
           maxScore(getShapeVolume(), fitShape.getShapeVolume(),
                    getColorVolume(), fitShape.getColorVolume(), overlayOpts);
+
       if (maxSim > threshold) {
         auto scores = AlignShape(*this, fitShape, &xform, overlayOpts);
         if (scores[0] > bestSim) {
@@ -732,7 +737,7 @@ void ShapeInput::calcNormalization() {
   d_canonTranss[d_activeShape][0] /= d_numAtoms;
   d_canonTranss[d_activeShape][1] /= d_numAtoms;
   d_canonTranss[d_activeShape][2] /= d_numAtoms;
-  d_normalizationOK = true;
+  d_normalizationOKs[d_activeShape] = true;
 }
 
 void ShapeInput::calculateExtremes() {
@@ -813,25 +818,33 @@ void ShapeInput::selectConformations(const std::vector<int> &picks) {
   newColorVolumes.reserve(picks.size());
   std::vector<std::array<size_t, 6>> newExtremePointss;
   newExtremePointss.reserve(picks.size());
+  boost::dynamic_bitset<> newNormalizeds(picks.size());
+  boost::dynamic_bitset<> newNormalizationOKs(picks.size());
   std::vector<std::array<double, 9>> newCanRots;
   newCanRots.reserve(picks.size());
   std::vector<std::array<double, 3>> newCentroids;
   newCentroids.reserve(picks.size());
   std::vector<std::array<double, 3>> newEigenValuess;
   newEigenValuess.reserve(picks.size());
+  unsigned int i = 0;
   for (auto p : picks) {
     newCoords.push_back(std::move(d_coords[p]));
     newShapeVolumes.push_back(d_selfOverlapShapeVols[p]);
     newColorVolumes.push_back(d_selfOverlapColorVols[p]);
     newExtremePointss.push_back(std::move(d_extremePointss[p]));
+    newNormalizeds[i] = d_normalizeds[p];
+    newNormalizationOKs[i] = d_normalizationOKs[p];
     newCanRots.push_back(std::move(d_canonRots[p]));
     newCentroids.push_back(std::move(d_canonTranss[p]));
     newEigenValuess.push_back(std::move(d_eigenValuess[p]));
+    ++i;
   }
   d_coords = std::move(newCoords);
   d_selfOverlapShapeVols = std::move(newShapeVolumes);
   d_selfOverlapColorVols = std::move(newColorVolumes);
   d_extremePointss = std::move(newExtremePointss);
+  d_normalizeds = newNormalizeds;
+  d_normalizationOKs = newNormalizationOKs;
   d_canonRots = std::move(newCanRots);
   d_canonTranss = std::move(newCentroids);
   d_eigenValuess = std::move(newEigenValuess);
