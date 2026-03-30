@@ -405,9 +405,16 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   URANGE_CHECK(bond_pin->getEndAtomIdx(), getNumAtoms());
   PRECONDITION(bond_pin->getBeginAtomIdx() != bond_pin->getEndAtomIdx(),
                "attempt to add self-bond");
-  PRECONDITION(!(boost::edge(bond_pin->getBeginAtomIdx(),
-                             bond_pin->getEndAtomIdx(), d_graph)
-                     .second),
+  // macro atoms can have multiple connections, but regular atoms cannot
+
+  auto beginAtom = getAtomWithIdx(bond_pin->getBeginAtomIdx());
+  auto endAtom = getAtomWithIdx(bond_pin->getEndAtomIdx());
+
+  PRECONDITION(beginAtom->hasProp(RDKit::common_properties::molAtomClass) ||
+                   endAtom->hasProp(RDKit::common_properties::molAtomClass) ||
+                   !(boost::edge(bond_pin->getBeginAtomIdx(),
+                                 bond_pin->getEndAtomIdx(), d_graph)
+                         .second),
                "bond already exists");
 
   Bond *bond_p;

@@ -54,24 +54,12 @@ struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
   bool parsingSCSRMol = false; /**< if true, we are parsing a SCSR mol file */
 };
 
-RDKIT_FILEPARSERS_EXPORT void MolFromMolDataStream(
-    std::unique_ptr<RWMol> &res, std::istream &inStream, unsigned int &line,
-    const MolFileParserParams &params);
-
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolDataStream(
     std::istream &inStream, unsigned int &line,
     const MolFileParserParams &params = MolFileParserParams());
 
-RDKIT_FILEPARSERS_EXPORT void MolFromMolBlock(
-    std::unique_ptr<RWMol> &res, const std::string &molBlock,
-    const MolFileParserParams &params);
-
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolBlock(
     const std::string &molBlock,
-    const MolFileParserParams &params = MolFileParserParams());
-
-RDKIT_FILEPARSERS_EXPORT void MolFromMolFile(
-    std::unique_ptr<RWMol> &res, const std::string &fName,
     const MolFileParserParams &params = MolFileParserParams());
 
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolFile(

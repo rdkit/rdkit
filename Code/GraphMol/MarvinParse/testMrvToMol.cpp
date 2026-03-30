@@ -406,12 +406,13 @@ class MrvTests {
       pp.removeHs = false;
       pp.strictParsing = true;
 
-      MolFromSCSRParams molFromSCSRParams;
-      molFromSCSRParams.includeLeavingGroups = true;
-      molFromSCSRParams.scsrBaseHbondOptions = SCSRBaseHbondOptions::Auto;
+      MolFromMACROMolParams molFromMACROMolParams;
+      molFromMACROMolParams.includeLeavingGroups = true;
+      SCSRBaseHbondOptions scsrBaseHbondOptions = SCSRBaseHbondOptions::Auto;
 
       std::unique_ptr<RDKit::RWMol> mol;
-      mol = MolFromSCSRFile(fName, pp, molFromSCSRParams);
+      mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                            scsrBaseHbondOptions);
 
       TEST_ASSERT(mol != nullptr);
       TEST_ASSERT(mol->getNumAtoms() == scsrMolTest->atomCount);
@@ -430,7 +431,6 @@ class MrvTests {
       TEST_ASSERT(getSubstanceGroups(*mol).size() == scsrMolTest->sGroupCount);
 
       // test for some H-bonds
-
       for (auto hbondIndex : scsrMolTest->hbondIds) {
         TEST_ASSERT(mol->getBondWithIdx(hbondIndex)->getBondType() ==
                     RDKit::Bond::BondType::HYDROGEN);
@@ -1222,10 +1222,10 @@ M  END
 
     if (testToRun == "" || testToRun == "scsrFileTests") {
       std::list<ScsrMolTest> scsrFileTests{
-          ScsrMolTest(
-              "153944501_original_structure.mol", true, 859, 1025,
-              {66, 67, 68, 72, 73, 74} /* Some but not all hbonds in the mol */,
-              128),
+          ScsrMolTest("153944501_original_structure.mol", true, 859, 1025,
+                      {127, 128, 129, 130,
+                       131} /* Some but not all hbonds in the mol */,
+                      128),
           ScsrMolTest("rnaTest.mol", true, 22, 24, {}, 4)};
 
       for (auto &scsrFileTest : scsrFileTests) {

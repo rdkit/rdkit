@@ -504,7 +504,10 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
   auto beginAtom = getAtomWithIdx(atomIdx1);
   auto endAtom = getAtomWithIdx(atomIdx2);
   PRECONDITION(atomIdx1 != atomIdx2, "attempt to add self-bond");
-  PRECONDITION(!(boost::edge(atomIdx1, atomIdx2, d_graph).second),
+  // macro atoms can have multiple connections, but regular atoms cannot
+  PRECONDITION(beginAtom->hasProp(RDKit::common_properties::molAtomClass) ||
+                   endAtom->hasProp(RDKit::common_properties::molAtomClass) ||
+                   !(boost::edge(atomIdx1, atomIdx2, d_graph).second),
                "bond already exists");
 
   auto *b = new Bond(bondType);

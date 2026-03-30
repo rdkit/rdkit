@@ -3531,13 +3531,6 @@ std::unique_ptr<RWMol> MolFromMolDataStream(std::istream &inStream,
                                             unsigned int &line,
                                             const MolFileParserParams &params) {
   auto res = std::make_unique<RWMol>();
-
-  MolFromMolDataStream(res, inStream, line, params);
-  return res;
-}
-void MolFromMolDataStream(std::unique_ptr<RWMol> &res, std::istream &inStream,
-                          unsigned int &line,
-                          const MolFileParserParams &params) {
   std::string tempStr;
   bool fileComplete = false;
   bool chiralityPossible = false;
@@ -3547,7 +3540,7 @@ void MolFromMolDataStream(std::unique_ptr<RWMol> &res, std::istream &inStream,
   tempStr = getLine(inStream);
   if (inStream.eof()) {
     res = nullptr;
-    return;
+    return res;
   }
   // auto res = std::make_unique<RWMol>();
   res->setProp(common_properties::_Name, tempStr);
@@ -3746,8 +3739,7 @@ void MolFromMolDataStream(std::unique_ptr<RWMol> &res, std::istream &inStream,
   if (res) {
     FileParserUtils::finishMolProcessing(res.get(), chiralityPossible, params);
   }
-  // return res;
-  return;
+  return res;
 }
 
 //------------------------------------------------
@@ -3755,18 +3747,11 @@ void MolFromMolDataStream(std::unique_ptr<RWMol> &res, std::istream &inStream,
 //  Read a molecule from a string
 //
 //------------------------------------------------
-void MolFromMolBlock(std::unique_ptr<RWMol> &res, const std::string &molBlock,
-                     const MolFileParserParams &params) {
-  std::istringstream inStream(molBlock);
-  unsigned int line = 0;
-  return MolFromMolDataStream(res, inStream, line, params);
-}
 std::unique_ptr<RWMol> MolFromMolBlock(const std::string &molBlock,
                                        const MolFileParserParams &params) {
-  auto res = std::make_unique<RWMol>();
-
-  MolFromMolBlock(res, molBlock, params);
-  return res;
+  std::istringstream inStream(molBlock);
+  unsigned int line = 0;
+  return MolFromMolDataStream(inStream, line, params);
 }
 
 //------------------------------------------------
@@ -3774,8 +3759,8 @@ std::unique_ptr<RWMol> MolFromMolBlock(const std::string &molBlock,
 //  Read a molecule from a file
 //
 //------------------------------------------------
-void MolFromMolFile(std::unique_ptr<RWMol> &res, const std::string &fName,
-                    const MolFileParserParams &params) {
+std::unique_ptr<RWMol> MolFromMolFile(const std::string &fName,
+                                      const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
@@ -3784,16 +3769,8 @@ void MolFromMolFile(std::unique_ptr<RWMol> &res, const std::string &fName,
   }
   if (!inStream.eof()) {
     unsigned int line = 0;
-    MolFromMolDataStream(res, inStream, line, params);
-    return;
+    return MolFromMolDataStream(inStream, line, params);
   }
-}
-
-std::unique_ptr<RWMol> MolFromMolFile(const std::string &fName,
-                                      const MolFileParserParams &params) {
-  auto res = std::make_unique<RWMol>();
-  MolFromMolFile(res, fName, params);
-  return res;
 }
 
 }  // namespace FileParsers

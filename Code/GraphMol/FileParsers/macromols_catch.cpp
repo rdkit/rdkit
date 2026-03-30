@@ -34,8 +34,10 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/MACROMol.h>
+#include <GraphMol/FileParsers/MACROMolUtils.h>
 #include <GraphMol/FileParsers/SCSRUtils.h>
 #include <GraphMol/SCSRMol.h>
+#include <GraphMol/FileParsers/SCSRUtils.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
@@ -112,6 +114,10 @@ class ScsrMolTest {
 
   ScsrMolTest() {
     ScsrTests = {
+        ScsrMolTest::ScsrTest("DnaTest.mol", ExpectedStatus::Success,
+                              SCSRBaseHbondOptions::Ignore, 254, 282, 38, 250,
+                              278, 34),
+
         ScsrMolTest::ScsrTest("ValenceErrorScsr.mol", ExpectedStatus::Success,
                               SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
         ScsrMolTest::ScsrTest("ValenceErrorScsr2.mol", ExpectedStatus::Success,
@@ -258,15 +264,18 @@ class ScsrMolTest {
     pp.removeHs = false;
     pp.strictParsing = true;
 
-    MolFromSCSRParams molFromSCSRParams;
-    molFromSCSRParams.includeLeavingGroups = true;
-    molFromSCSRParams.scsrBaseHbondOptions = ScsrTest->scsrBaseHbondOptions;
+    MolFromMACROMolParams molFromMACROMolParams;
+    molFromMACROMolParams.includeLeavingGroups = true;
+
+    SCSRBaseHbondOptions scsrBaseHbondOptions = ScsrTest->scsrBaseHbondOptions;
 
     std::unique_ptr<RDKit::ROMol> mol;
     if (ScsrTest->expectedStatus == ExpectedStatus::Success) {
-      REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromSCSRParams));
+      REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                                            scsrBaseHbondOptions));
     } else {
-      REQUIRE_THROWS(mol = MolFromSCSRFile(fName, pp, molFromSCSRParams));
+      REQUIRE_THROWS(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                                           scsrBaseHbondOptions));
       return;
     }
 
@@ -279,24 +288,21 @@ class ScsrMolTest {
     MolWriterParams params;
     RDKit::MolToMolFile(*mol, fOutName, params, -1);
 
-    auto scsrMol = SCSRMolFromSCSRFile(fName, pp);
+    auto macroMol = MACROMolFromSCSRFile(fName, pp, scsrBaseHbondOptions);
 
-    std::unique_ptr<RDKit::SCSRMol> outScsrMol;
+    MolToMACROParams molToMACROMolParams;
+    auto outMacroMol = RDKit::MolToMACROMol(*(mol.get()), *(macroMol.get()),
+                                            molToMACROMolParams);
 
-    REQUIRE_NOTHROW(outScsrMol = MolToScsrMol(*(mol.get()), *(scsrMol.get())));
+    CHECK(outMacroMol != nullptr);
+    CHECK(outMacroMol->getNumAtoms() == macroMol->getNumAtoms());
+    CHECK(outMacroMol->getNumBonds() == macroMol->getNumBonds());
+    CHECK(outMacroMol->getTemplateCount() == macroMol->getTemplateCount());
 
-    CHECK(outScsrMol != nullptr);
-    CHECK(outScsrMol->getMol()->getNumAtoms() ==
-          scsrMol->getMol()->getNumAtoms());
-    CHECK(outScsrMol->getMol()->getNumBonds() ==
-          scsrMol->getMol()->getNumBonds());
-    CHECK(outScsrMol->getTemplateCount() == scsrMol->getTemplateCount());
+    MACROMolToSCSRMolFile(*(outMacroMol.get()), fOutName2);
 
-    SCSRMolToSCSRMolFile(*(outScsrMol.get()), fOutName2);
-
-    std::unique_ptr<RDKit::ROMol> molReadBackIn;
-    REQUIRE_NOTHROW(molReadBackIn =
-                        MolFromSCSRFile(fOutName2, pp, molFromSCSRParams));
+    std::unique_ptr<RDKit::ROMol> molReadBackIn = MolFromSCSRFile(
+        fOutName2, pp, molFromMACROMolParams, scsrBaseHbondOptions);
 
     CHECK(molReadBackIn != nullptr);
     CHECK(molReadBackIn->getNumAtoms() == mol->getNumAtoms());
@@ -305,14 +311,14 @@ class ScsrMolTest {
     // now make the expanded mol in "query" mode - not including any leaving
     // groups
 
-    molFromSCSRParams.includeLeavingGroups = false;
+    molFromMACROMolParams.includeLeavingGroups = false;
     std::unique_ptr<RDKit::RWMol> molNoLeavingGroups;
     if (ScsrTest->expectedStatus == ExpectedStatus::Success) {
-      REQUIRE_NOTHROW(molNoLeavingGroups =
-                          MolFromSCSRFile(fName, pp, molFromSCSRParams));
+      molNoLeavingGroups = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                                           scsrBaseHbondOptions);
     } else {
-      REQUIRE_THROWS(molNoLeavingGroups =
-                         MolFromSCSRFile(fName, pp, molFromSCSRParams));
+      molNoLeavingGroups = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                                           scsrBaseHbondOptions);
       return;
     }
 
@@ -339,16 +345,18 @@ class ScsrMolTest {
     pp.removeHs = false;
     pp.strictParsing = false;
 
-    MolFromSCSRParams molFromSCSRParams;
-    molFromSCSRParams.includeLeavingGroups = true;
-    molFromSCSRParams.scsrTemplateNames = SCSRTemplateNames::AsEntered;
-    molFromSCSRParams.scsrBaseHbondOptions = ScsrTest->scsrBaseHbondOptions;
+    MolFromMACROMolParams molFromMACROMolParams;
+    molFromMACROMolParams.includeLeavingGroups = true;
+    molFromMACROMolParams.macroTemplateNames = MACROTemplateNames::AsEntered;
+    SCSRBaseHbondOptions scsrBaseHbondOptions = ScsrTest->scsrBaseHbondOptions;
 
     std::unique_ptr<RDKit::RWMol> mol;
     if (ScsrTest->expectedStatus == ExpectedStatus::Success) {
-      REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromSCSRParams));
+      REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                                            scsrBaseHbondOptions));
     } else {
-      REQUIRE_THROWS(mol = MolFromSCSRFile(fName, pp, molFromSCSRParams));
+      REQUIRE_THROWS(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                                           scsrBaseHbondOptions));
       return;
     }
 
@@ -359,13 +367,15 @@ class ScsrMolTest {
     CHECK(mol->getNumBonds() == ScsrTest->totalBondCount);
     CHECK(getSubstanceGroups(*mol).size() == ScsrTest->sgroupCount);
 
-    molFromSCSRParams.includeLeavingGroups = true;
-    molFromSCSRParams.scsrTemplateNames = SCSRTemplateNames::UseFirstName;
+    molFromMACROMolParams.includeLeavingGroups = true;
+    molFromMACROMolParams.macroTemplateNames = MACROTemplateNames::UseFirstName;
     std::unique_ptr<RWMol> mol2;
     if (ScsrTest->expectedStatus == ExpectedStatus::Success) {
-      REQUIRE_NOTHROW(mol2 = MolFromSCSRFile(fName, pp, molFromSCSRParams));
+      REQUIRE_NOTHROW(mol2 = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                                             scsrBaseHbondOptions));
     } else {
-      REQUIRE_THROWS(mol2 = MolFromSCSRFile(fName, pp, molFromSCSRParams));
+      REQUIRE_THROWS(mol2 = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                                            scsrBaseHbondOptions));
     }
 
     // const std::unique_ptr<RDKit::RWMol> mol;
@@ -402,12 +412,13 @@ TEST_CASE("nestedParens", "nestedParens") {
     pp.removeHs = false;
     pp.strictParsing = true;
 
-    MolFromSCSRParams molFromSCSRParams;
-    molFromSCSRParams.includeLeavingGroups = true;
-    molFromSCSRParams.scsrBaseHbondOptions = SCSRBaseHbondOptions::Auto;
+    MolFromMACROMolParams molFromMACROMolParams;
+    molFromMACROMolParams.includeLeavingGroups = true;
+    SCSRBaseHbondOptions scsrBaseHbondOptions = SCSRBaseHbondOptions::Auto;
 
     std::unique_ptr<RDKit::RWMol> mol;
-    REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromSCSRParams));
+    REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                                          scsrBaseHbondOptions));
 
     CHECK(mol != nullptr);
     CHECK(mol->getNumAtoms() == 140);

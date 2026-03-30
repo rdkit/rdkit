@@ -8,17 +8,40 @@
 
 namespace RDKit {
 
-void RDKit::MACROMolTemplate::init(std::unique_ptr<RDKit::ROMol> &mol,
-                                   std::string className,
+void RDKit::MACROMolTemplate::findMainSgroupForTemplate(
+    std::string className, std::string templateName) const {
+  p_mainSgroupIdx = UINT_MAX;
+
+  auto sgroups = RDKit::getSubstanceGroups(*this);
+
+  for (unsigned int sgroupIdx = 0; sgroupIdx < sgroups.size(); ++sgroupIdx) {
+    auto &sgroupToTest = sgroups[sgroupIdx];
+    std::string sup;
+    std::string sgroupAtomClass;
+    if (sgroupToTest.getPropIfPresent("TYPE", sup) && sup == "SUP" &&
+        sgroupToTest.getPropIfPresent("CLASS", sgroupAtomClass) &&
+        sgroupAtomClass == className) {
+      p_mainSgroupIdx = sgroupIdx;
+      break;
+    }
+  }
+
+  if (p_mainSgroupIdx == UINT_MAX) {
+    std::ostringstream errout;
+    errout << "No main sgroup found for template: " << className << "/"
+           << templateName;
+    throw RDKit::FileParseException(errout.str());
+  }
+}
+
+void RDKit::MACROMolTemplate::init(std::string className,
                                    std::vector<std::string> templateNames,
                                    std::vector<std::string> templateAttrs) {
-  PRECONDITION(mol, "no mol for template");
   PRECONDITION(className.empty() == false, "no className for template");
   PRECONDITION(templateNames.size() > 0, "no template names for template");
 
-  p_mol.reset(mol.release());  // now owned by this class
-  p_mol->setProp(RDKit::common_properties::molAtomClass, className);
-  p_mol->setProp(RDKit::common_properties::templateNames, templateNames);
+  this->setProp(RDKit::common_properties::molAtomClass, className);
+  this->setProp(RDKit::common_properties::templateNames, templateNames);
 
   for (auto templateAttr : templateAttrs) {
     std::vector<std::string> subTokens;
@@ -30,25 +53,35 @@ void RDKit::MACROMolTemplate::init(std::unique_ptr<RDKit::ROMol> &mol,
              << templateAttr;
       throw RDKit::FileParseException(errout.str());
     }
-    p_mol->setProp(subTokens[0], subTokens[1]);
+    this->setProp(subTokens[0], subTokens[1]);
   }
+  p_mainSgroupIdx = UINT_MAX;
 }
 
-MACROMolTemplate::MACROMolTemplate(std::unique_ptr<ROMol> &mol,
+MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
                                    std::string className,
                                    std::vector<std::string> templateNames,
-                                   std::vector<std::string> templateAttrs) {
-  init(mol, className, templateNames, templateAttrs);
+                                   std::vector<std::string> templateAttrs)
+    : RWMol(std::move(*mol)) {
+  init(className, templateNames, templateAttrs);
 }
 
-MACROMolTemplate::MACROMolTemplate(std::unique_ptr<ROMol> &mol,
+MACROMolTemplate::MACROMolTemplate(const MACROMolTemplate &other)
+    : RWMol(other) {
+  // p_mol.reset(new RWMol(*other.p_mol));
+
+  p_mainSgroupIdx = UINT_MAX;
+}
+
+MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
                                    std::string className,
                                    std::string templateName,
-                                   std::vector<std::string> templateAttrs) {
+                                   std::vector<std::string> templateAttrs)
+    : RWMol(std::move(*mol)) {
   PRECONDITION(!templateName.empty(), "no name for template");
 
   std::vector<std::string> templateNames(1, templateName);
-  MACROMolTemplate::init(mol, className, templateNames, templateAttrs);
+  MACROMolTemplate::init(className, templateNames, templateAttrs);
 }
 
 unsigned int RDKit::MACROMol::addMacroAtom(std::string className,
@@ -91,16 +124,15 @@ unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) {
       std::string dummyLabel = "";
 
       if (!atom->getPropIfPresent(common_properties::dummyLabel, dummyLabel) ||
-          dummyLabel != "" ||
-          !atom->getPropIfPresent<std::string>(common_properties::molAtomClass,
-                                               atomClass) ||
+          dummyLabel == "" ||
+          !atom->getPropIfPresent(common_properties::molAtomClass, atomClass) ||
           atomClass == "") {
         p_atomIdxToTemplateIdx[atom->getIdx()] = UINT_MAX;
         continue;
       }
 
       for (unsigned int tIdx = 0; tIdx < getTemplateCount(); ++tIdx) {
-        const ROMol *templateMol = getTemplate(tIdx);
+        const MACROMolTemplate *templateMol = getTemplate(tIdx);
         std::string templateAtomClass;
         std::vector<std::string> templateNames;
         templateMol->getPropIfPresent<std::string>(
@@ -111,6 +143,7 @@ unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) {
             std::find(templateNames.begin(), templateNames.end(), dummyLabel) !=
                 templateNames.end()) {
           p_atomIdxToTemplateIdx[atom->getIdx()] = tIdx;
+          break;
         }
       }
 
@@ -124,7 +157,8 @@ unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) {
   return p_atomIdxToTemplateIdx[atomIdx];
 }
 
-ROMol *RDKit::MACROMol::atomIdxToTemplateMol(unsigned int atomIdx) {
+MACROMolTemplate *RDKit::MACROMol::atomIdxToMACROMolTemplate(
+    unsigned int atomIdx) {
   return this->getTemplate(this->atomIdxToTemplateIdx(atomIdx));
 }
 

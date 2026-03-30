@@ -33,17 +33,6 @@ struct RDKIT_FILEPARSERS_EXPORT MolWriterParams {
                                            the mol block */
 };
 
-enum class SCSRUseTemplateName {
-  UseFirstName,   //<!Use the first name in the template
-                  // def (For AA, the 3 letter code
-  UseSecondName,  //<!use the second name in the tempate def (
-                  // For AA, the 1 letter code)
-};
-
-struct RDKIT_FILEPARSERS_EXPORT MolToSCSRParams {
-  SCSRUseTemplateName scsrUseTemplateName = SCSRUseTemplateName::UseFirstName;
-};
-
 const std::vector<std::string> ScsrClasses{
     "AA",        "dAA",     "DNA",      "RNA",      "SUGAR",    "BASE",
     "PHOSPHATE", "LINKER",  "CHEM",     "MODAA",    "MODdAA",   "MODDNA",
@@ -276,23 +265,6 @@ RDKIT_FILEPARSERS_EXPORT void prepareMol(
  *   \param MolWriterParams - parameter struct with write options
  *   \param confId          - selects the conformer to be used
  */
-
-RDKIT_FILEPARSERS_EXPORT std::string SCSRMolToSCSRMolBlock(
-    RDKit::SCSRMol &scsrMol,
-    const RDKit::MolWriterParams &params = RDKit::MolWriterParams(),
-    int confId = -1);
-
-RDKIT_FILEPARSERS_EXPORT void SCSRMolToSCSRMolFile(
-    RDKit::SCSRMol &scsrMol, const std::string &fName,
-    const RDKit::MolWriterParams &params = RDKit::MolWriterParams(),
-    int confId = -1);
-
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> MolToScsrMol(
-    const ROMol &mol, RDKit::SCSRMol &templates,
-    MolToSCSRParams molToSCSRParams = MolToSCSRParams());
-
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol>
-SCSRAtributedMolToTemplates(const ROMol &mol);
 
 }  // namespace RDKit
 

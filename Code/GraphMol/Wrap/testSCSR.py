@@ -30,13 +30,14 @@ class TestCase(unittest.TestCase):
     with open(ofile) as inf:
       scsrBlock = inf.read()
 
-    molFromSCSRParams = Chem.MolFromSCSRParams()
-    molFromSCSRParams.includeLeavingGroups = True
-    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.AsEntered
-    molFromSCSRParams.scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions.Ignore
+    molFromMACROMolParams = Chem.MolFromMACROMolParams()
+    molFromMACROMolParams.includeLeavingGroups = True
+    molFromMACROMolParams.macroTemplateNames = Chem.MACROTemplateNames.AsEntered
+    scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions()
+    scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions.Ignore
 
-    for mol in (Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromSCSRParams),
-                Chem.MolFromSCSRFile(ofile, False, False, molFromSCSRParams)):
+    for mol in (Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromMACROMolParams, scsrBaseHbondOptions),
+                Chem.MolFromSCSRFile(ofile, False, False, molFromMACROMolParams, scsrBaseHbondOptions)):
 
       self.assertTrue(mol.GetNumAtoms() == 30)
       sgs = Chem.GetMolSubstanceGroups(mol)
@@ -56,20 +57,22 @@ class TestCase(unittest.TestCase):
     with open(ofile) as inf:
       scsrBlock = inf.read()
 
-    molFromSCSRParams = Chem.MolFromSCSRParams()
-    molFromSCSRParams.includeLeavingGroups = True
-    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.AsEntered
-    molFromSCSRParams.scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions.Auto
+    molFromMACROMolParams = Chem.MolFromMACROMolParams()
+    molFromMACROMolParams.includeLeavingGroups = True
+    molFromMACROMolParams.macroTemplateNames = Chem.MACROTemplateNames.AsEntered
+    scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions()
+    scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions.Auto
 
-    mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromSCSRParams)
+    mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromMACROMolParams, scsrBaseHbondOptions)
 
     self.assertTrue(mol.GetNumAtoms() == 254)
     self.assertTrue(mol.GetNumBonds() == 300)
     sgs = Chem.GetMolSubstanceGroups(mol)
     self.assertTrue(len(sgs) == 38)
 
-    molFromSCSRParams.scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions.Ignore
-    mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromSCSRParams)
+    scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions()
+    scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions.Ignore
+    mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromMACROMolParams, scsrBaseHbondOptions)
 
     self.assertTrue(mol.GetNumAtoms() == 254)
     self.assertTrue(mol.GetNumBonds() == 282)
@@ -84,11 +87,12 @@ class TestCase(unittest.TestCase):
     with open(ofile) as inf:
       scsrBlock = inf.read()
 
-    molFromSCSRParams = Chem.MolFromSCSRParams()
-    molFromSCSRParams.includeLeavingGroups = True
-    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.AsEntered
+    molFromMACROMolParams = Chem.MolFromMACROMolParams()
+    molFromMACROMolParams.includeLeavingGroups = True
+    molFromMACROMolParams.macroTemplateNames = Chem.MACROTemplateNames.AsEntered
+    scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions()
 
-    mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromSCSRParams)
+    mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromMACROMolParams,scsrBaseHbondOptions)
 
     self.assertEqual(mol.GetNumAtoms(), 26)
     self.assertEqual(mol.GetNumBonds(), 25)
@@ -97,9 +101,10 @@ class TestCase(unittest.TestCase):
     sgs[0].GetProp('LABEL')
     self.assertEqual(sgs[0].GetProp('LABEL'), 'AA_4_Ala')
 
-    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.UseFirstName
+    molFromMACROMolParams.macroTemplateNames = Chem.MACROTemplateNames.UseFirstName
+    scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions()
 
-    mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromSCSRParams)
+    mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromMACROMolParams, scsrBaseHbondOptions)
 
     self.assertEqual(mol.GetNumAtoms(), 26)
     sgs = Chem.GetMolSubstanceGroups(mol)
@@ -107,8 +112,8 @@ class TestCase(unittest.TestCase):
 
     self.assertEqual(sgs[0].GetProp('LABEL'), 'AA_4_Ala')
 
-    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.UseSecondName
-    mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromSCSRParams)
+    molFromMACROMolParams.macroTemplateNames = Chem.MACROTemplateNames.UseSecondName
+    mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromMACROMolParams, scsrBaseHbondOptions)
 
     self.assertEqual(mol.GetNumAtoms(), 26)
     sgs = Chem.GetMolSubstanceGroups(mol)

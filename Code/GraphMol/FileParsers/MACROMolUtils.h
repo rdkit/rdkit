@@ -42,10 +42,30 @@ struct RDKIT_FILEPARSERS_EXPORT MolFromMACROMolParams {
   MACROTemplateNames macroTemplateNames = MACROTemplateNames::All;
 };
 
-static std::unique_ptr<RDKit::RWMol> MolFromMACROMol(
+enum class MACROUseTemplateName {
+  UseFirstName,   //<!Use the first name in the template
+                  // def (For AA, the 3 letter code
+  UseSecondName,  //<!use the second name in the tempate def (
+                  // For AA, the 1 letter code)
+};
+
+struct RDKIT_FILEPARSERS_EXPORT MolToMACROParams {
+  MACROUseTemplateName macroUseTemplateName =
+      MACROUseTemplateName::UseFirstName;
+};
+
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromMACROMol(
     MACROMol *macroMol,
     const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams,
     const RDKit::MolFromMACROMolParams &molFromMACROMolParams);
+
+RDKIT_FILEPARSERS_EXPORT void MACROMolToSCSRMolFile(
+    RDKit::MACROMol &macroMol, const std::string &fName,
+    const RDKit::MolWriterParams &params, int confId);
+
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
+    const ROMol &mol, RDKit::MACROMol &templates,
+    MolToMACROParams molToMACROMolParams = MolToMACROParams());
 
 }  // namespace RDKit
 

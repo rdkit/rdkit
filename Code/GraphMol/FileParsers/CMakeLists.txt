@@ -10,7 +10,7 @@ endif(NOT RDK_USE_BOOST_IOSTREAMS)
 if(RDK_BUILD_MAEPARSER_SUPPORT)
     set(MAEPARSER_LIB maeparser)
     set(maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
-    if ("${RDK_MAEPARSER_LIBS}" STREQUAL "")
+    if("${RDK_MAEPARSER_LIBS}" STREQUAL "")
         # if we're not building maeparser as part of the RDKit build), then find
         # the imported package
         find_package(ZLIB QUIET)
@@ -23,24 +23,23 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
 endif()
 
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
-  add_definitions("-DRDK_BUILD_CHEMDRAW_SUPPORT")
+    add_definitions("-DRDK_BUILD_CHEMDRAW_SUPPORT")
 endif()
 
 rdkit_library(FileParsers
     CDXMLParser.cpp
-    Mol2FileParser.cpp MolFileParser.cpp 
-    SCSRMolFileWriter.cpp
+    Mol2FileParser.cpp MolFileParser.cpp
     SCSRUtils.cpp
     MACROMolUtils.cpp
     MolSGroupParsing.cpp MolSGroupWriting.cpp
     MolFileStereochem.cpp MolFileWriter.cpp
     ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
-    SmilesMolSupplier.cpp 
+    SmilesMolSupplier.cpp
     SmilesWriter.cpp
-    TDTMolSupplier.cpp 
+    TDTMolSupplier.cpp
     TDTWriter.cpp
     TplFileParser.cpp TplFileWriter.cpp
-    PDBParser.cpp PDBWriter.cpp 
+    PDBParser.cpp PDBWriter.cpp
     CMLWriter.cpp XYZFileWriter.cpp XYZFileParser.cpp
     ${maesupplier}
     ProximityBonds.cpp
@@ -61,6 +60,7 @@ rdkit_headers(CDXMLParser.h
     FileParserUtils.h
     SCSRUtils.h
     SCSRMolFileWriter.h
+    MACROMolUtils.h
     MolFileStereochem.h
     FileWriters.h
     MolSupplier.h MolSupplier.v1API.h
@@ -137,7 +137,7 @@ rdkit_catch_test(atropisomersCatch atropisomers_catch.cpp
 
 
 if(RDK_TEST_MULTITHREADED AND RDK_BUILD_THREADSAFE_SSS)
-rdkit_catch_test(multithreadedSupplierCatchTest multithreaded_supplier_catch.cpp
-    LINK_LIBRARIES FileParsers)
+    rdkit_catch_test(multithreadedSupplierCatchTest multithreaded_supplier_catch.cpp
+        LINK_LIBRARIES FileParsers)
 endif()
 

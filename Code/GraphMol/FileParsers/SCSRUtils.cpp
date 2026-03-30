@@ -19,1013 +19,192 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/FileParsers/SCSRUtils.h>
-#include <GraphMol/SCSRMol.h>
+#include <GraphMol/MACROMol.h>
+#include <GraphMol/FileParsers/MACROMolUtils.h>
 
 namespace RDKit {
 
-class MolFromSCSRMolConverter {
- private:
-  class OriginAtomDef {
-   public:
-    OriginAtomDef(unsigned int mainAtomIdx, unsigned int templateAtomIdx)
-        : mainAtomIdx(mainAtomIdx), templateAtomIdx(templateAtomIdx) {}
-
-   private:
-    unsigned int mainAtomIdx;
-    unsigned int templateAtomIdx;
-
-   public:
-    bool operator<(const OriginAtomDef &other) const {
-      if (mainAtomIdx != other.mainAtomIdx) {
-        return mainAtomIdx < other.mainAtomIdx;
-      }
-      return templateAtomIdx < other.templateAtomIdx;
-    }
-  };
-
-  class OriginAtomConnection {
-   public:
-    OriginAtomConnection(unsigned int mainAtomIdx, std::string attachLabel)
-        : mainAtomIdx(mainAtomIdx), attachLabel(attachLabel) {}
-
-   private:
-    unsigned int mainAtomIdx;
-    std::string attachLabel;
-
-   public:
-    unsigned int getMainAtomIdx() const { return mainAtomIdx; }
-    std::string getAttachLabel() const { return attachLabel; }
-
-    bool operator<(const OriginAtomConnection &other) const {
-      if (mainAtomIdx != other.getMainAtomIdx()) {
-        return mainAtomIdx < other.mainAtomIdx;
-      }
-      return attachLabel < other.attachLabel;
-    }
-  };
-
-  struct HydrogenBondConnection {
-    unsigned int d_templateAtomIdx;
-    bool df_isDonor;
-
-    HydrogenBondConnection(unsigned int templateAtomIdx, bool isDonor)
-        : d_templateAtomIdx(templateAtomIdx), df_isDonor(isDonor) {}
-  };
-
-  struct HbondQueryData {
-    std::string d_smarts;
-    std::string d_name;
-    std::vector<HydrogenBondConnection> d_hBondConnections;
-    std::shared_ptr<ROMol> dp_mol;
-    HbondQueryData(const std::string &smarts, const std::string &name,
-                   std::vector<HydrogenBondConnection> hBondConnections)
-        : d_smarts(smarts),
-          d_name(name),
-          d_hBondConnections(hBondConnections),
-          dp_mol{SmartsToMol(smarts)} {}
-  };
-
-  RDKit::SCSRMol *scsrMol;
-  std::unique_ptr<RWMol> resMol;
-  const ROMol *mol;
-  const RDKit::v2::FileParsers::MolFileParserParams molFileParserParams;
-  const RDKit::MolFromSCSRParams molFromSCSRParams;
-
-  std::map<unsigned int, std::vector<HydrogenBondConnection>>
-      hBondSitesForTemplate;
-  std::map<unsigned int, unsigned int> atomIdxToTemplateIdx;
-
-  ROMol *atomIdxToTemplateMol(unsigned int atomIdx) {
-    return scsrMol->getTemplate(atomIdxToTemplateIdx[atomIdx]);
-  }
-
-  // maps main atom# and template atom# to new atom#
-  std::map<OriginAtomDef, unsigned int> originAtomMap;
-
-  // maps main atom# and attach label to template atom#
-  std::map<OriginAtomConnection, std::vector<unsigned int>> attachMap;
-
-  unsigned int getNewAtomForBond(const Atom *atom, unsigned int otherAtomIdx) {
-    std::string atomClass = "";
-    unsigned int atomIdx = atom->getIdx();
-    if (!atom->getPropIfPresent<std::string>(common_properties::molAtomClass,
-                                             atomClass)) {
-      return originAtomMap.at(OriginAtomDef(atomIdx, UINT_MAX));
-    }
-
-    // if here , it is a template atom
-    // this routine is NOT called for H-bonds, so there is only one atom to
-    // attach
-    std::vector<std::pair<unsigned int, std::string>> attchOrds;
-    atom->getProp(common_properties::molAttachOrderTemplate, attchOrds);
-    for (const auto &[idx, lbl] : attchOrds) {
-      if (idx == otherAtomIdx) {
-        auto attachMapIt = attachMap.find(OriginAtomConnection(atomIdx, lbl));
-        if (attachMapIt == attachMap.end() || attachMapIt->second.empty()) {
-          throw FileParseException("Attachment ord not found");
-        }
-        return originAtomMap.at(OriginAtomDef(atomIdx, attachMapIt->second[0]));
-      }
-    }
-
-    // error attachment ord not found
-    throw FileParseException("Attachment ord not found");
-  }
-
-  void getNewAtomsForHydrogenBond(
-      Atom *atom, unsigned int otherAtomIdx,
-      std::vector<HydrogenBondConnection> &hydrogenBondConnections) {
-    std::string atomClass = "";
-    unsigned int atomIdx = atom->getIdx();
-    auto templateMol = atomIdxToTemplateMol(atomIdx);
-    hydrogenBondConnections.clear();
-    if (!atom->getPropIfPresent<std::string>(common_properties::molAtomClass,
-                                             atomClass)) {
-      return;  // hatoms only allowed in templates
-    }
-
-    // if here , it is a template atom
-    // there could be more than one atom in the template that matches the atom
-    // for instance, the hydrogen bonds to the template can result in multiple
-    // hydrogen bonds in the expanded molecule
-
-    std::vector<std::pair<unsigned int, std::string>> attchOrds;
-    atom->getProp(common_properties::molAttachOrderTemplate, attchOrds);
-    for (const auto &[idx, lbl] : attchOrds) {
-      if (idx == otherAtomIdx) {
-        auto attachMapIt = attachMap.find(OriginAtomConnection(atomIdx, lbl));
-        if (attachMapIt == attachMap.end()) {
-          return;  // error, attachment ord not found
-        }
-
-        for (auto templateAtomIdx : attachMapIt->second) {
-          auto templateAtom = templateMol->getAtomWithIdx(templateAtomIdx);
-          templateAtom->updatePropertyCache();
-          auto isDonor = templateAtom->getTotalNumHs() > 0;
-          hydrogenBondConnections.emplace_back(templateAtomIdx, isDonor);
-          if (molFromSCSRParams.scsrBaseHbondOptions ==
-              RDKit::SCSRBaseHbondOptions::UseSapOne) {
-            return;
-          }
-        }
-        return;
-      }
-    }
-
-    // error attachment ord not found
-    return;
-  }
-
-  void copySgroupIntoResult(
-      const unsigned int atomIdx, const RDKit::SubstanceGroup &sgroup,
-      std::string sgroupName,
-      std::vector<std::unique_ptr<SubstanceGroup>> &newSgroups,
-      RDKit::Conformer *newConf, const RDGeom::Point3D &coordOffset) {
-    // add a superatom sgroup to mark the atoms from this macro atom
-    // expansion. These new superatom sgroups are not put into the output mol
-    // yet, because the bonds have not be added to the mol nor to the sgroup.
-    // They are saved in an array to be added later
-
-    const std::string typ = "SUP";
-    newSgroups.emplace_back(new SubstanceGroup((ROMol *)resMol.get(), typ));
-    auto newSgroup = newSgroups.back().get();
-    newSgroup->setProp("LABEL", sgroupName);
-
-    // copy the atoms of the sgroup into the new molecule
-
-    if (newConf) {
-      newConf->resize(newConf->getNumAtoms() +
-                      atomIdxToTemplateMol(atomIdx)->getNumAtoms());
-    }
-
-    for (auto templateAtomIdx : sgroup.getAtoms()) {
-      auto templateAtom =
-          atomIdxToTemplateMol(atomIdx)->getAtomWithIdx(templateAtomIdx);
-      auto newAtom = new Atom(*templateAtom);
-
-      resMol->addAtom(newAtom, true, true);
-      newSgroup->addAtomWithIdx(newAtom->getIdx());
-
-      originAtomMap[OriginAtomDef(atomIdx, templateAtomIdx)] =
-          newAtom->getIdx();
-
-      // atomMap[atomIdx].push_back(newAtom->getIdx());
-      if (newConf) {
-        newConf->setAtomPos(
-            newAtom->getIdx(),
-            coordOffset +
-                atomIdxToTemplateMol(atomIdx)->getConformer().getAtomPos(
-                    templateAtomIdx));
-      }
-    }
-  }
-
-  void addBond(const Bond::BondType bondType, unsigned int beginAtom,
-               unsigned int endAtom) {
-    auto newBond = new Bond(bondType);
-    newBond->setBeginAtomIdx(beginAtom);
-    newBond->setEndAtomIdx(endAtom);
-    // newBond->updateProps(*bond, false);
-    resMol->addBond(newBond, true);
-  }
-
-  void addBonds(const Bond::BondType bondType,
-                const unsigned int mainBeginAtomIdx,
-                const unsigned int mainEndAtomIdx,
-                const std::vector<HydrogenBondConnection> &beginAtoms,
-                const std::vector<HydrogenBondConnection> &endAtoms) {
-    for (unsigned int i = 0; i < beginAtoms.size(); i++) {
-      addBond(bondType,
-              originAtomMap[OriginAtomDef(mainBeginAtomIdx,
-                                          beginAtoms[i].d_templateAtomIdx)],
-              originAtomMap[OriginAtomDef(mainEndAtomIdx,
-                                          endAtoms[i].d_templateAtomIdx)]);
-    }
-  }
-
-  void processBondInMainMol(const Bond *bond) {
-    unsigned int newBeginAtom;
-    unsigned int newEndAtom;
-
-    if (bond->getBondType() != Bond::HYDROGEN) {
-      newBeginAtom =
-          getNewAtomForBond(bond->getBeginAtom(), bond->getEndAtomIdx());
-      if (newBeginAtom == UINT_MAX) {
-        throw FileParseException("Error getting new atom for bond");
-      }
-
-      newEndAtom =
-          getNewAtomForBond(bond->getEndAtom(), bond->getBeginAtomIdx());
-      if (newEndAtom == UINT_MAX) {
-        throw FileParseException("Error getting new atom for bond");
-      }
-
-      addBond(bond->getBondType(), newBeginAtom, newEndAtom);
-      return;
-    }
-
-    // if here it is a hydrogen bond
-
-    // the processing of H-bonds is contorlled by the SCSRBaseHbondOptions
-    // member of the SCSRMolFileParserParams parameter.  The options are:
-
-    //  Ignore - if this is selected, all H-bonds are
-    //  ignored and not processed.
-
-    // UseSapAll = 1,  // if this is selected, all SAPs
-    // for the hbond are used.  They must be defined in the template in the
-    // correct order, which starts with the first atom nearest the Al
-    // connection, and continues sequentially
-
-    // If there are 3 sites on eash side and they are complimentary (the
-    // donors match acceptors and vice versa), we add the bonds. and
-    // we are done.
-
-    // If not, we check to check to see if they comply to a wobble bond
-    // configuration. There are four generally accepted wobble bonds, and we
-    // deal with these four types only.  The four known wobble bonds are:
-    // 1.  I-C
-    // 2.  I-U
-    // 3.  I-A
-    // 4.  G-U
-    // "I" stands for inosine - it has only two available hbond sites . The
-    // pair G-U has three sites on each end, but they are not complimentary.
-    // (https://en.wikipedia.org/wiki/Wobble_base_pair#:~:text=A%20wobble%20base%20pair%20is,hypoxanthine%2Dcytosine%20(I%2DC).
-
-    // For pairs that have I or something like it, the configuration must be
-    // DA, so the two atoms form the two H bonds. The other side (C,U or A)
-    // has confiuration of AAD (C), ADA (U), or DAD (A). For C-type bases and
-    // A type bases, the second and third atoms are used (AD), and for U
-    // types, the first two atoms are used (AD).
-
-    // for the GU pair, both sides have 3 atoms, but they are not
-    // complimentary.  The second and third sites on the G side are used (DA),
-    // and the first two sites on the U side are used (AD).
-
-    // in any other case, we punt and add just one bond,  between the first
-    // atom on both sides even if they are NOT complemenary.  This just
-    // indicates that the sides are h-bonded somehow and keeps the overall
-    // pairing straight.
-
-    // UseSapOne
-    // if this is selected, use only one SAP hbond per base
-    // If multiple SAPs are defined, use the first
-    // even if it is not the best
-    //(this just maintains the relationship between
-    // the to base pairs)
-
-    // Auto
-    // For bases that are C,G,A,T,U,In (and
-    // derivatives) use the standard Watson-Crick
-    // Hbonding.  No SAPs need to be defined, and if
-    // defined, they are ignored.
-    // the definitions of the binding sites are determined by substructure
-    // matching
-
-    std::vector<HydrogenBondConnection> beginHatomConnections;
-    std::vector<HydrogenBondConnection> endHatomConnections;
-
-    if (molFromSCSRParams.scsrBaseHbondOptions ==
-        RDKit::SCSRBaseHbondOptions::Ignore) {
-      return;
-    }
-    if (molFromSCSRParams.scsrBaseHbondOptions ==
-            SCSRBaseHbondOptions::UseSapAll ||
-        molFromSCSRParams.scsrBaseHbondOptions ==
-            SCSRBaseHbondOptions::UseSapOne) {
-      // get the hydrogen bond sites from the template SAPs
-      getNewAtomsForHydrogenBond(bond->getBeginAtom(), bond->getEndAtomIdx(),
-                                 beginHatomConnections);
-
-      if (beginHatomConnections.empty()) {
-        throw FileParseException("No Attach Point for bond");
-      }
-
-      getNewAtomsForHydrogenBond(bond->getEndAtom(), bond->getBeginAtomIdx(),
-                                 endHatomConnections);
-      if (endHatomConnections.empty()) {
-        throw FileParseException("No Attach Point for bond");
-      }
-    } else if (molFromSCSRParams.scsrBaseHbondOptions ==
-               SCSRBaseHbondOptions::Auto) {
-      // get the hbond sites from the map already created for each
-      // base template
-      auto templateIdx = atomIdxToTemplateIdx[bond->getBeginAtomIdx()];
-      beginHatomConnections = hBondSitesForTemplate[templateIdx];
-
-      templateIdx = atomIdxToTemplateIdx[bond->getEndAtomIdx()];
-      endHatomConnections = hBondSitesForTemplate[templateIdx];
-    }
-    unsigned int mainBeginAtomIdx = bond->getBeginAtomIdx();
-    unsigned int mainEndAtomIdx = bond->getEndAtomIdx();
-
-    if (beginHatomConnections.empty() || endHatomConnections.empty()) {
-      // no hydrogen bond sites found, so just add the bond between the
-      // first atoms on both sides
-      return;  // no hydrogen bond sites found, so skip the bond
-    }
-    if (beginHatomConnections.size() == 3 && endHatomConnections.size() == 3) {
-      // see if the two donor flag lists are
-      // complementary
-
-      bool complimentary = true;
-      for (auto index = 0; index < 3; ++index) {
-        // .second is the bool for donors
-        if (beginHatomConnections[index].df_isDonor ==
-            endHatomConnections[index].df_isDonor) {
-          complimentary = false;  // both are donors or both are
-                                  // acceptors
-          break;
-        }
-      }
-
-      if (complimentary) {
-        addBonds(bond->getBondType(), mainBeginAtomIdx, mainEndAtomIdx,
-                 beginHatomConnections, endHatomConnections);
-        return;
-      }
-
-      // Check for G-U type pairs in a wobble bond
-      // configuratio first see if one has the
-      // configuration DDA  (like G)
-
-      bool foundDDA = false;
-      if (beginHatomConnections[0].df_isDonor &&
-          beginHatomConnections[1].df_isDonor &&
-          !beginHatomConnections[2].df_isDonor) {
-        foundDDA = true;
-      } else if (endHatomConnections[0].df_isDonor &&
-                 endHatomConnections[1].df_isDonor &&
-                 !endHatomConnections[2].df_isDonor) {
-        foundDDA = true;
-        std::swap(beginHatomConnections, endHatomConnections);
-        std::swap(mainBeginAtomIdx, mainEndAtomIdx);
-      }
-
-      if (foundDDA) {
-        std::vector<HydrogenBondConnection> wobbleBeginAtoms;
-        std::vector<HydrogenBondConnection> wobbleEndAtoms;
-
-        wobbleBeginAtoms.push_back(beginHatomConnections[1]);
-        wobbleBeginAtoms.push_back(beginHatomConnections[2]);
-
-        // see if the other side has the
-        // configuration  ADA (like U)
-        if (!endHatomConnections[0].df_isDonor &&
-            endHatomConnections[1].df_isDonor &&
-            !endHatomConnections[2].df_isDonor) {
-          // ADA use the first two atoms
-          wobbleEndAtoms.push_back(endHatomConnections[0]);
-          wobbleEndAtoms.push_back(endHatomConnections[1]);
-          addBonds(bond->getBondType(), mainBeginAtomIdx, mainEndAtomIdx,
-                   wobbleBeginAtoms, wobbleEndAtoms);
-          return;
-        }
-      }
-    } else if (beginHatomConnections.size() * endHatomConnections.size() ==
-               6) /* one is 2 and one is 3*/ {
-      if (endHatomConnections.size() == 2) {
-        // make sure the first set has two atoms, and the second has 3
-        std::swap(beginHatomConnections, endHatomConnections);
-        std::swap(mainBeginAtomIdx, mainEndAtomIdx);
-      }
-
-      std::vector<HydrogenBondConnection> wobbleEndAtoms;
-      if (beginHatomConnections[0].df_isDonor &&
-          !beginHatomConnections[1].df_isDonor) {  // like I (DA)
-        if (!endHatomConnections[1].df_isDonor &&
-            endHatomConnections[2].df_isDonor) {  // 2nd and 3rd are AD
-          // like A (DAD) or C (AAD)
-          wobbleEndAtoms.push_back(endHatomConnections[1]);
-          wobbleEndAtoms.push_back(endHatomConnections[2]);
-          addBonds(bond->getBondType(), mainBeginAtomIdx, mainEndAtomIdx,
-                   beginHatomConnections, wobbleEndAtoms);
-          return;
-
-        } else if (!endHatomConnections[0].df_isDonor &&
-                   endHatomConnections[1].df_isDonor) {
-          // like U (ADA)
-          wobbleEndAtoms.push_back(endHatomConnections[0]);
-          wobbleEndAtoms.push_back(endHatomConnections[1]);
-          addBonds(bond->getBondType(), mainBeginAtomIdx, mainEndAtomIdx,
-                   beginHatomConnections, wobbleEndAtoms);
-          return;
-        }
-      }
-    }
-
-    // if here, we have no wobble bond, so just add
-    // the bond between the first atoms on both sides
-
-    addBond(bond->getBondType(),
-            originAtomMap[OriginAtomDef(
-                mainBeginAtomIdx, beginHatomConnections[0].d_templateAtomIdx)],
-            originAtomMap[OriginAtomDef(
-                mainEndAtomIdx, endHatomConnections[0].d_templateAtomIdx)]);
-    return;
-  }
-
+class SCSRHbondData {
  public:
-  std::unique_ptr<RWMol> convert() {
-    resMol.reset(new RWMol());
-    mol = scsrMol->getMol();
+  std::string oldAttachLabel;
+  std::vector<bool> donorFlags;
+  SCSRHbondData() : oldAttachLabel("") {}
+  SCSRHbondData(const std::string &oldAttachLabel)
+      : oldAttachLabel(oldAttachLabel) {}
 
-    // first get some information from the templates to be used when
-    // creating the coords for the new atoms. this is a dirty approach
-    // that simply expands the orginal macro atom coords to be big
-    // enough to hold any expanded macro atom. No attempt is made to
-    // make this look nice, or to avoid overlaps.
-    std::vector<RDGeom::Point3D> templateCentroids;
-    double maxSize = 0.0;
+  SCSRHbondData(const SCSRHbondData &oldOne)
+      : oldAttachLabel(oldOne.oldAttachLabel), donorFlags(oldOne.donorFlags) {}
 
-    const Conformer *conf = nullptr;
-    std::unique_ptr<Conformer> newConf(nullptr);
-    if (mol->getNumConformers() != 0) {
-      conf = &mol->getConformer(0);
-      newConf.reset(new Conformer(scsrMol->getMol()->getNumAtoms()));
-      newConf->set3D(conf->is3D());
-
-      for (unsigned int templateIdx = 0;
-           templateIdx < scsrMol->getTemplateCount(); ++templateIdx) {
-        auto templateMol = scsrMol->getTemplate(templateIdx);
-        RDGeom::Point3D sumOfCoords;
-        const RDKit::Conformer *templateConf = nullptr;
-        auto confCount = templateMol->getNumConformers();
-        if (confCount == 0) {
-          conf = nullptr;
-          break;
-        }
-        templateConf = &templateMol->getConformer(0);
-        RDGeom::Point3D maxCoord = templateConf->getAtomPos(0);
-        RDGeom::Point3D minCoord = maxCoord;
-        for (unsigned int atomIdx = 0; atomIdx < templateMol->getNumAtoms();
-             ++atomIdx) {
-          auto atomCoord = templateConf->getAtomPos(atomIdx);
-          sumOfCoords += atomCoord;
-
-          if (atomCoord.x > maxCoord.x) {
-            maxCoord.x = atomCoord.x;
-          }
-          if (atomCoord.y > maxCoord.y) {
-            maxCoord.y = atomCoord.y;
-          }
-          if (atomCoord.z > maxCoord.z) {
-            maxCoord.z = atomCoord.z;
-          }
-          if (atomCoord.x < minCoord.x) {
-            minCoord.x = atomCoord.x;
-          }
-          if (atomCoord.y < minCoord.y) {
-            minCoord.y = atomCoord.y;
-          }
-          if (atomCoord.z < minCoord.z) {
-            minCoord.z = atomCoord.z;
-          }
-        }
-        templateCentroids.push_back(sumOfCoords / templateMol->getNumAtoms());
-        if (maxCoord.x - minCoord.x > maxSize) {
-          maxSize = maxCoord.x - minCoord.x;
-        }
-        if (maxCoord.y - minCoord.y > maxSize) {
-          maxSize = maxCoord.y - minCoord.y;
-        }
-        if (maxCoord.z - minCoord.z > maxSize) {
-          maxSize = maxCoord.z - minCoord.z;
-        }
-      }
+  SCSRHbondData &operator=(const SCSRHbondData &other) {
+    if (this == &other) {
+      return *this;
     }
-
-    // if we are perceiving the H-bonding locations for base templates, do that
-    // here
-
-    if (molFromSCSRParams.scsrBaseHbondOptions == SCSRBaseHbondOptions::Auto) {
-      static const std::vector<HbondQueryData> hbondQueries = {
-          {"[NH]1C=NC2=C1N=C([NH2])[NH]C2=O",
-           "Guanine",
-           {HydrogenBondConnection(7, true), HydrogenBondConnection(8, true),
-            HydrogenBondConnection(10, false)}},
-          {"[NH]1C=NC2=C1N=[CH]N=C2[NH2]",
-           "Adenine",
-           {HydrogenBondConnection(6, true), HydrogenBondConnection(7, false),
-            HydrogenBondConnection(9, true)}},
-          {"[NH]1C=CC([NH2])=NC1=O",
-           "Cytosine",
-           {HydrogenBondConnection(7, false), HydrogenBondConnection(5, false),
-            HydrogenBondConnection(4, true)}},
-          {"[NH]1C=CC(=O)[NH]C1=O",
-           "Thyamine-Uracil",
-           {HydrogenBondConnection(7, false), HydrogenBondConnection(5, true),
-            HydrogenBondConnection(4, false)}},
-          {"[NH]1C=NC2=C1N=C[NH]C2=O",
-           "Inosine",
-           {HydrogenBondConnection(7, true),
-            HydrogenBondConnection(9, false)}}};
-      for (unsigned int templateIdx = 0;
-           templateIdx < scsrMol->getTemplateCount(); ++templateIdx) {
-        auto templateMol = scsrMol->getTemplate(templateIdx);
-        templateMol->updatePropertyCache(false);
-
-        if (templateMol->getProp<std::string>(
-                common_properties::molAtomClass) != "BASE") {
-          continue;
-        }
-
-        hBondSitesForTemplate[templateIdx] =
-            std::vector<HydrogenBondConnection>();
-        for (const auto &querySmi : hbondQueries) {
-          RDKit::SubstructMatchParameters params;
-          auto match = SubstructMatch(*templateMol, *querySmi.dp_mol, params);
-
-          if (match.empty()) {
-            continue;
-          }
-
-          for (const auto &hbondData : querySmi.d_hBondConnections) {
-            hBondSitesForTemplate[templateIdx].emplace_back(
-                match[0][hbondData.d_templateAtomIdx].second,
-                hbondData.df_isDonor);
-          }
-
-          break;  // only take the first match
-        }
-      }
-    }
-
-    // for each atom in the main mol, expand it to full atom form
-
-    std::vector<StereoGroup> newStereoGroups;
-    std::vector<Atom *> absoluteAtoms;
-    std::vector<Bond *> absoluteBonds;
-
-    std::vector<std::unique_ptr<SubstanceGroup>> newSgroups;
-
-    unsigned int atomCount = mol->getNumAtoms();
-    for (unsigned int atomIdx = 0; atomIdx < atomCount; ++atomIdx) {
-      auto atom = mol->getAtomWithIdx(atomIdx);
-      std::string dummyLabel = "";
-      std::string atomClass = "";
-
-      if (!atom->getPropIfPresent(common_properties::dummyLabel, dummyLabel) ||
-          !atom->getPropIfPresent(common_properties::molAtomClass, atomClass) ||
-          dummyLabel == "" || atomClass == "") {
-        // NOT a template atom - just copy it
-        auto newAtom = new Atom(*atom);
-        resMol->addAtom(newAtom, true, true);
-        // atomMap[atomIdx].push_back(newAtom->getIdx());
-
-        // templatesFound.push_back(nullptr);
-        originAtomMap[OriginAtomDef(atomIdx, UINT_MAX)] = newAtom->getIdx();
-        if (conf != nullptr) {
-          newConf->setAtomPos(newAtom->getIdx(),
-                              conf->getAtomPos(atomIdx) * maxSize);
-        }
-      } else {  // it is a macro atom - expand it
-
-        unsigned int seqId = 0;
-        std::string seqName = "";
-        atom->getPropIfPresent(common_properties::molAtomSeqId, seqId);
-        atom->getPropIfPresent(common_properties::molAtomSeqName, seqName);
-
-        //  find the template that matches the class and label
-
-        ROMol *templateMol = nullptr;
-        unsigned int templateIdx;
-        bool templateFound = false;
-        std::string templateNameToUse = "";
-        for (templateIdx = 0; templateIdx < scsrMol->getTemplateCount();
-             ++templateIdx) {
-          templateMol = scsrMol->getTemplate(templateIdx);
-          std::vector<std::string> templateNames;
-          std::string templateName;
-          std::string templateAtomClass;
-          if (templateMol->getPropIfPresent<std::string>(
-                  common_properties::molAtomClass, templateAtomClass) &&
-              templateAtomClass == atomClass &&
-              templateMol->getPropIfPresent<std::vector<std::string>>(
-                  common_properties::templateNames, templateNames) &&
-              std::find(templateNames.begin(), templateNames.end(),
-                        dummyLabel) != templateNames.end()) {
-            templateFound = true;
-            switch (molFromSCSRParams.scsrTemplateNames) {
-              case SCSRTemplateNames::UseFirstName:
-                templateNameToUse = templateNames[0];
-                break;
-              case SCSRTemplateNames::UseSecondName:
-                templateNameToUse = templateNames.back();
-                break;
-              case SCSRTemplateNames::AsEntered:
-                templateNameToUse = dummyLabel;
-                break;
-              case SCSRTemplateNames::All:
-                templateNameToUse = "";
-                for (const auto &nm : templateNames) {
-                  if (templateNameToUse != "") {
-                    templateNameToUse += "+";
-                  }
-                  templateNameToUse += nm;
-                }
-            }
-            break;
-          }
-        }
-
-        if (!templateFound) {
-          std::ostringstream errout;
-          errout << "No template found for atom " << atomIdx << " class "
-                 << atomClass << " label " << dummyLabel;
-          throw FileParseException(errout.str());
-        }
-
-        atomIdxToTemplateIdx[atomIdx] = templateIdx;
-        std::vector<std::pair<unsigned int, std::string>> attchOrds;
-
-        atom->getPropIfPresent(common_properties::molAttachOrderTemplate,
-                               attchOrds);
-
-        // first find the sgroup that is the base for this atom's
-        // template
-
-        const SubstanceGroup *sgroup = nullptr;
-        for (auto &sgroupToTest : RDKit::getSubstanceGroups(*templateMol)) {
-          std::string sup;
-          std::string sgroupAtomClass;
-          if (sgroupToTest.getPropIfPresent<std::string>("TYPE", sup) &&
-              sup == "SUP" &&
-              sgroupToTest.getPropIfPresent<std::string>("CLASS",
-                                                         sgroupAtomClass) &&
-              sgroupAtomClass == atomClass) {
-            sgroup = &sgroupToTest;
-            break;
-          }
-        }
-
-        if (sgroup == nullptr) {
-          throw FileParseException("No SUP sgroup found for atom");
-        }
-
-        // add the atoms from the main template to the new molecule
-
-        std::string sgroupName = atomClass + "_";
-        if (seqId != 0) {
-          sgroupName += std::to_string(seqId) + "_";
-        } else {
-          sgroupName += "na_";
-        }
-        if (seqName != "") {
-          sgroupName += "_" + seqName;
-        }
-
-        sgroupName += templateNameToUse;
-
-        auto coordOffset = (conf->getAtomPos(atomIdx) * maxSize) -
-                           templateCentroids[templateIdx];
-
-        copySgroupIntoResult(atomIdx, *sgroup, sgroupName, newSgroups,
-                             newConf.get(), coordOffset);
-
-        // find  the attachment points used by this atom and record them
-        // in attachMap.
-
-        for (const auto &[idx, lbl] : attchOrds) {
-          attachMap[OriginAtomConnection(atomIdx, lbl)] =
-              std::vector<unsigned int>();
-          auto &attachAtoms = attachMap[OriginAtomConnection(atomIdx, lbl)];
-          for (auto attachPoint : sgroup->getAttachPoints()) {
-            if (attachPoint.id == lbl) {
-              attachAtoms.push_back(attachPoint.aIdx);
-            }
-          }
-          if (attachAtoms.size() == 0) {
-            throw FileParseException("Attachment point not found");
-          }
-        }
-
-        // if we are including atoms from leaving groups, go through the
-        // attachment points of the main sgroup. If the attach point is
-        // not found in the attachords, then find the sgroup for that
-        // attach point and add its atoms the molecule
-
-        if (molFromSCSRParams.includeLeavingGroups) {
-          for (auto attachPoint : sgroup->getAttachPoints()) {
-            if (attachMap.find(OriginAtomConnection(atomIdx, attachPoint.id)) ==
-                attachMap.end()) {
-              bool foundLgSgroup = false;
-
-              for (auto lgSgroup : getSubstanceGroups(*templateMol)) {
-                std::string lgSup;
-                std::string lgSgroupAtomClass;
-                if (lgSgroup.getPropIfPresent<std::string>("TYPE", lgSup) &&
-                    lgSup == "SUP" &&
-                    lgSgroup.getPropIfPresent<std::string>("CLASS",
-                                                           lgSgroupAtomClass) &&
-                    lgSgroupAtomClass == "LGRP") {
-                  auto lgSgroupAtoms = lgSgroup.getAtoms();
-                  if (std::find(lgSgroupAtoms.begin(), lgSgroupAtoms.end(),
-                                attachPoint.lvIdx) != lgSgroupAtoms.end()) {
-                    std::string sgroupName = dummyLabel;
-                    if (seqId != 0) {
-                      sgroupName += "_" + std::to_string(seqId);
-                    }
-                    if (seqName != "") {
-                      sgroupName += "_" + seqName;
-                    }
-                    sgroupName += "_" + attachPoint.id;
-                    foundLgSgroup = true;
-                    copySgroupIntoResult(atomIdx, lgSgroup, sgroupName,
-                                         newSgroups, newConf.get(),
-                                         coordOffset);
-
-                    break;
-                  }
-                }
-              }
-
-              if (!foundLgSgroup) {
-                throw FileParseException("Leaving group SGroup " +
-                                         attachPoint.id + " not found");
-              }
-            }
-          }
-        }
-
-        // copy the bonds of the template into the new molecule
-        // if the bonds are between atoms in the new molecule
-        // Bonds to atoms in leaving groups that "left" are NOT copied
-
-        for (auto bond : templateMol->bonds()) {
-          if (originAtomMap.find(OriginAtomDef(
-                  atomIdx, bond->getBeginAtomIdx())) == originAtomMap.end() ||
-              originAtomMap.find(OriginAtomDef(
-                  atomIdx, bond->getEndAtomIdx())) == originAtomMap.end()) {
-            continue;  // bond not in the new molecule
-          }
-          auto newBeginAtomIdx =
-              originAtomMap[OriginAtomDef(atomIdx, bond->getBeginAtomIdx())];
-          auto newEndAtomIdx =
-              originAtomMap[OriginAtomDef(atomIdx, bond->getEndAtomIdx())];
-
-          auto newBond = new Bond(bond->getBondType());
-          newBond->setBeginAtomIdx(newBeginAtomIdx);
-          newBond->setEndAtomIdx(newEndAtomIdx);
-          newBond->updateProps(*bond, false);
-          resMol->addBond(newBond, true);
-        }
-
-        // take care of stereo groups in the template
-        // abs groups are added to the list of abs atoms and bonds, so
-        // that we can add ONE abs group later
-
-        for (auto &sg : templateMol->getStereoGroups()) {
-          std::vector<Atom *> newGroupAtoms;
-          std::vector<Bond *> newGroupBonds;
-
-          for (auto sgAtom : sg.getAtoms()) {
-            auto originAtom = OriginAtomDef(atomIdx, sgAtom->getIdx());
-
-            auto newAtomPtr = originAtomMap.find(originAtom);
-            if (newAtomPtr != originAtomMap.end()) {
-              newGroupAtoms.push_back(
-                  resMol->getAtomWithIdx(newAtomPtr->second));
-            }
-          }
-
-          for (auto sgBond : sg.getBonds()) {
-            auto originBeginAtom =
-                OriginAtomDef(atomIdx, sgBond->getBeginAtomIdx());
-            auto originEndAtom =
-                OriginAtomDef(atomIdx, sgBond->getEndAtomIdx());
-
-            auto newBeginAtomPtr = originAtomMap.find(originBeginAtom);
-            auto newEndAtomPtr = originAtomMap.find(originEndAtom);
-            if (newBeginAtomPtr != originAtomMap.end() &&
-                newEndAtomPtr != originAtomMap.end()) {
-              auto newBond = resMol->getBondBetweenAtoms(
-                  newBeginAtomPtr->second, newEndAtomPtr->second);
-              if (newBond != nullptr) {
-                newGroupBonds.push_back(newBond);
-              }
-            }
-          }
-
-          if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
-            absoluteAtoms.insert(absoluteAtoms.end(), newGroupAtoms.begin(),
-                                 newGroupAtoms.end());
-            absoluteBonds.insert(absoluteBonds.end(), newGroupBonds.begin(),
-                                 newGroupBonds.end());
-          } else {
-            // make a new group
-
-            newStereoGroups.emplace_back(sg.getGroupType(), newGroupAtoms,
-                                         newGroupBonds);
-          }
-        }
-      }
-    }
-
-    if (resMol->getNumAtoms() == 0) {
-      return std::move(resMol);
-    }
-
-    if (conf != nullptr) {
-      newConf->resize(resMol->getNumAtoms());
-      resMol->addConformer(newConf.release());
-    }
-
-    // now deal with the bonds from the original mol.
-
-    for (auto bond : scsrMol->getMol()->bonds()) {
-      processBondInMainMol(bond);
-    }
-
-    // copy any attrs from the main mol
-
-    for (auto &prop : mol->getPropList(false, false)) {
-      std::string propVal;
-      if (mol->getPropIfPresent(prop, propVal)) {
-        resMol->setProp(prop, propVal);
-      }
-    }
-
-    // copy the sgroups from the main mol for atoms not in a template
-
-    for (auto &sg : getSubstanceGroups(*mol)) {
-      if (sg.getIsValid()) {
-        auto &atoms = sg.getAtoms();
-        std::vector<unsigned int> newAtoms;
-        for (auto atom : atoms) {
-          auto originAtom = OriginAtomDef(atom, UINT_MAX);
-          auto newAtomPtr = originAtomMap.find(originAtom);
-          if (newAtomPtr != originAtomMap.end()) {
-            newAtoms.push_back(newAtomPtr->second);
-          } else {
-            // some atoms were in templates and others were not - cannot
-            // add this sgroup
-            newAtoms.clear();
-            break;
-          }
-        }
-        if (newAtoms.size() > 0) {
-          const std::string type = "SUP";
-          newSgroups.emplace_back(new SubstanceGroup(resMol.get(), type));
-          auto newSg = newSgroups.back().get();
-
-          newSg->updateProps(sg, false);
-          newSg->setAtoms(newAtoms);
-        }
-      }
-    }
-
-    // now that we have all substance groups from the template and from
-    // the non-template atoms, and we have all the bonds, find the
-    // Xbonds for each substance group and add them
-
-    for (auto bond : resMol->bonds()) {
-      for (auto &sg : newSgroups) {
-        // if one atom of the bond is found and the other is not in the
-        // sgroup, this is a Xbond
-        auto sgAtoms = sg->getAtoms();
-        if ((std::find(sgAtoms.begin(), sgAtoms.end(),
-                       bond->getBeginAtomIdx()) == sgAtoms.end()) !=
-            (std::find(sgAtoms.begin(), sgAtoms.end(), bond->getEndAtomIdx()) ==
-             sgAtoms.end())) {
-          sg->addBondWithIdx(bond->getIdx());
-        }
-      }
-    }
-
-    if (newSgroups.size() > 0) {
-      for (auto &sg : newSgroups) {
-        addSubstanceGroup(*resMol, *sg.get());
-      }
-    }
-    newSgroups.clear();  // just tidy cleanup
-
-    // take care of stereo groups in the main mol - for atoms that are
-    // NOT template refs
-
-    for (auto &sg : mol->getStereoGroups()) {
-      std::vector<Atom *> newGroupAtoms;
-      std::vector<Bond *> newGroupBonds;
-
-      for (auto sgAtom : sg.getAtoms()) {
-        auto originAtom = OriginAtomDef(sgAtom->getIdx(), UINT_MAX);
-        auto newAtomPtr = originAtomMap.find(originAtom);
-        if (newAtomPtr != originAtomMap.end()) {
-          newGroupAtoms.push_back(resMol->getAtomWithIdx(newAtomPtr->second));
-        }
-      }
-
-      for (auto sgBond : sg.getBonds()) {
-        auto originBeginAtom =
-            OriginAtomDef(sgBond->getBeginAtomIdx(), UINT_MAX);
-        auto originEndAtom = OriginAtomDef(sgBond->getEndAtomIdx(), UINT_MAX);
-        auto newBeginAtomPtr = originAtomMap.find(originBeginAtom);
-        auto newEndAtomPtr = originAtomMap.find(originEndAtom);
-
-        if (newBeginAtomPtr != originAtomMap.end() &&
-            newEndAtomPtr != originAtomMap.end()) {
-          auto newBond = resMol->getBondBetweenAtoms(newBeginAtomPtr->second,
-                                                     newEndAtomPtr->second);
-          if (newBond != nullptr) {
-            newGroupBonds.push_back(newBond);
-          }
-        }
-
-        if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
-          absoluteAtoms.insert(absoluteAtoms.end(), newGroupAtoms.begin(),
-                               newGroupAtoms.end());
-          absoluteBonds.insert(absoluteBonds.end(), newGroupBonds.begin(),
-                               newGroupBonds.end());
-        } else {
-          // make a new group
-
-          newStereoGroups.emplace_back(sg.getGroupType(), newGroupAtoms,
-                                       newGroupBonds);
-        }
-      }
-    }
-
-    // make an absolute group that contains any absolute atoms or bonds
-    // from either the main mol or the template instantiations
-
-    if (!absoluteAtoms.empty() || !absoluteBonds.empty()) {
-      newStereoGroups.emplace_back(StereoGroupType::STEREO_ABSOLUTE,
-                                   absoluteAtoms, absoluteBonds);
-    }
-
-    if (newStereoGroups.size() > 0) {
-      resMol->setStereoGroups(newStereoGroups);
-    }
-
-    bool chiralityPossible = false;
-    FileParserUtils::finishMolProcessing(resMol.get(), chiralityPossible,
-                                         molFileParserParams);
-
-    return std::move(resMol);
+    oldAttachLabel = other.oldAttachLabel;
+    donorFlags = other.donorFlags;
+    return *this;
   }
-
- public:
-  MolFromSCSRMolConverter(SCSRMol *scsrMolInit,
-                          const RDKit::v2::FileParsers::MolFileParserParams
-                              &molFileParserParamsInit,
-                          const MolFromSCSRParams &molFromSCSRParamsInit)
-      : scsrMol(scsrMolInit),
-        molFileParserParams(molFileParserParamsInit),
-        molFromSCSRParams(molFromSCSRParamsInit) {}
 };
 
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
+struct HydrogenBondConnection {
+  unsigned int d_templateAtomIdx;
+  bool d_isDonor;
+
+  HydrogenBondConnection(unsigned int templateAtomIdx, bool isDonor)
+      : d_templateAtomIdx(templateAtomIdx), d_isDonor(isDonor) {}
+};
+
+struct BondToAdd {
+  unsigned int d_beginAtomIdx;
+  unsigned int d_endAtomIdx;
+  std::string d_attachPt1;
+  std::string d_attachPt2;
+  BondToAdd(unsigned int beginAtomIdx, unsigned int endAtomIdx,
+            const std::string &attachPt1, const std::string &attachPt2)
+      : d_beginAtomIdx(beginAtomIdx),
+        d_endAtomIdx(endAtomIdx),
+        d_attachPt1(attachPt1),
+        d_attachPt2(attachPt2) {}
+  auto getBeginAtomIdx() const { return d_beginAtomIdx; }
+  auto getEndAtomIdx() const { return d_endAtomIdx; }
+  auto getAttachPt1() const { return d_attachPt1; }
+  auto getAttachPt2() const { return d_attachPt2; }
+};
+
+struct HbondQueryData {
+  std::string d_smarts;
+  std::string d_name;
+  std::vector<HydrogenBondConnection> d_hBondConnections;
+  std::shared_ptr<ROMol> dp_mol;
+  HbondQueryData(const std::string &smarts, const std::string &name,
+                 std::vector<HydrogenBondConnection> hBondConnections)
+      : d_smarts(smarts),
+        d_name(name),
+        d_hBondConnections(hBondConnections),
+        dp_mol{SmartsToMol(smarts)} {}
+};
+
+void makeHydrogenBonds(unsigned int atom1Idx, unsigned int atom2Idx,
+                       std::vector<bool> donorFlags1,
+                       std::vector<bool> donorFlags2,
+                       std::vector<BondToAdd> &hBondsToAdd) {
+  if (donorFlags1.size() == 3 && donorFlags2.size() == 3) {
+    // see if the two donor flag lists are
+    // complementary
+
+    bool complimentary = true;
+    for (auto index = 0; index < 3; ++index) {
+      // .second is the bool for donors
+      if (donorFlags1[index] == donorFlags2[index]) {
+        complimentary = false;  // both are donors or both are
+                                // acceptors
+        break;
+      }
+    }
+
+    if (complimentary) {
+      for (auto index = 0; index < 3; ++index) {
+        hBondsToAdd.emplace_back(atom1Idx, atom2Idx,
+                                 "Hb" + std::to_string(index + 1),
+                                 "Hb" + std::to_string(index + 1));
+      }
+
+      return;
+    }
+
+    // not complimentary, but could be a wobble pair - check for G-U`}
+
+    // Check for G-U type pairs in a wobble bond
+    // configuration first see if one has the
+    // configuration DDA  (like G)
+
+    bool foundDDA = false, foundADA = false;
+    if (donorFlags1[0] && donorFlags1[1] && !donorFlags1[2]) {
+      foundDDA = true;
+    } else if (donorFlags2[0] && donorFlags2[1] && !donorFlags2[2]) {
+      foundDDA = true;
+      std::swap(donorFlags1, donorFlags2);
+      std::swap(atom1Idx, atom2Idx);
+    }
+
+    if (foundDDA) {
+      // see if the other side has the
+      // configuration  ADA (like U)
+      if (!donorFlags2[0] && donorFlags2[1] && !donorFlags2[2]) {
+        foundADA = true;
+      }
+
+      if (foundDDA && foundADA) {
+        // use connection 1 and 2 from DDA and 0 and 1 from ADA
+        // add the two bonds
+
+        for (auto index1 = 1, index2 = 0; index1 < 3; ++index1, ++index2) {
+          hBondsToAdd.emplace_back(atom1Idx, atom2Idx,
+                                   "Hb" + std::to_string(index1 + 1),
+                                   "Hb" + std::to_string(index2 + 1));
+        }
+
+        return;
+      }
+    }
+  }
+
+  // check for one of the ends having only two connections
+  if (donorFlags1.size() * donorFlags2.size() == 6) /* one is 2 and one is 3*/ {
+    if (donorFlags2.size() == 2) {
+      // make sure the first set has two atoms, and the second has 3
+      std::swap(donorFlags1, donorFlags2);
+      std::swap(atom1Idx, atom2Idx);
+    }
+
+    if (donorFlags1[0] && !donorFlags1[1]) {
+      if (!donorFlags2[1] && donorFlags2[2]) {
+        // first end is DA
+        // Second end 2nd and 3rd conns are AD like A (DAD) or C (AAD)
+
+        for (auto index1 = 0, index2 = 1; index1 < 2; ++index1, ++index2) {
+          hBondsToAdd.emplace_back(atom1Idx, atom2Idx,
+                                   "Hb" + std::to_string(index1 + 1),
+                                   "Hb" + std::to_string(index2 + 1));
+        }
+
+        return;
+
+      } else if (!donorFlags2[0] && donorFlags2[1]) {
+        // like U (ADA)
+        for (auto index = 0; index < 2; ++index) {
+          hBondsToAdd.emplace_back(atom1Idx, atom2Idx,
+                                   "Hb" + std::to_string(index + 1),
+                                   "Hb" + std::to_string(index + 1));
+        }
+        return;
+      }
+    }
+  }
+
+  // if here, we have no wobble bond, so just add
+  // the bond between the first atoms on both sides
+  hBondsToAdd.emplace_back(atom1Idx, atom2Idx, "Hb1", "Hb1");
+  return;
+}
+
+std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
     std::istream &inStream, unsigned int &line,
-    const RDKit::v2::FileParsers::MolFileParserParams &params) {
+    const RDKit::v2::FileParsers::MolFileParserParams &params,
+    const SCSRBaseHbondOptions scsrBaseHbondOptions) {
   bool chiralityPossible = false;
   if (inStream.eof()) {
     return nullptr;
   }
-  auto res = std::unique_ptr<RDKit::SCSRMol>(new RDKit::SCSRMol());
+
   auto localParams = params;
   localParams.parsingSCSRMol = true;
-  res->setMol(RDKit::v2::FileParsers::MolFromMolDataStream(inStream, line,
-                                                           localParams));
+
+  // RDKit::v2::FileParsers::MolFromMolDataStream(res.get(), inStream, line,
+  //                                              localParams);
+  auto tempMol =
+      RDKit::v2::FileParsers::MolFromMolDataStream(inStream, line, localParams);
+  auto res = std::unique_ptr<RDKit::MACROMol>(new RDKit::MACROMol(tempMol));
+  res->updatePropertyCache(false);
 
   // now get all of the templates
 
@@ -1038,12 +217,12 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
   }
   tempStr = RDKit::FileParserUtils::getV3000Line(&inStream, line);
 
-  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment FULLNAME=fullname
-  // CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx, COLLABORATOR=col,
-  // PROTECTION=prot
+  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment
+  // FULLNAME=fullname CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx,
+  // COLLABORATOR=col, PROTECTION=prot
 
-  // other attributes are allowed.  We capture them and ignore them, except for
-  // writing them back out
+  // other attributes are allowed.  We capture them and ignore them, except
+  // for writing them back out
 
   while (tempStr.substr(0, 8) == "TEMPLATE") {
     std::vector<std::string> tokens;
@@ -1067,34 +246,21 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
       throw RDKit::FileParseException(errout.str());
     }
 
-    res->addTemplate(std::unique_ptr<RDKit::ROMol>(new RDKit::ROMol()));
-    auto templateMol =
-        (RDKit::RWMol *)res->getTemplate(res->getTemplateCount() - 1);
-
-    templateMol->setProp(RDKit::common_properties::molAtomClass, subTokens[0]);
-
+    auto templateClass = subTokens[0];
     std::vector<std::string> templateNames;
+    std::vector<std::string> otherTokens;
 
     for (unsigned int i = 1; i < subTokens.size(); ++i) {
       if (subTokens[i] != "") {
         templateNames.push_back(subTokens[i]);
       }
     }
-    templateMol->setProp(RDKit::common_properties::templateNames,
-                         templateNames);
 
     for (unsigned int i = 3; i < tokens.size(); ++i) {
-      boost::algorithm::split(subTokens, tokens[i],
-                              boost::algorithm::is_any_of("="));
-      if (subTokens.size() != 2) {
-        std::ostringstream errout;
-        errout
-            << "Attribute  string is not of the form \"AttrName=value\" at line  "
-            << line;
-        throw RDKit::FileParseException(errout.str());
-      }
-      templateMol->setProp(subTokens[0], subTokens[1]);
+      otherTokens.push_back(tokens[i]);
     }
+
+    auto templateMol = std::unique_ptr<RDKit::RWMol>(new RDKit::RWMol());
 
     auto molComplete = false;
     RDKit::Conformer *conf = nullptr;
@@ -1102,8 +268,8 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
       unsigned int nAtoms = 0, nBonds = 0;
       bool expectMEND = false;
       molComplete = RDKit::FileParserUtils::ParseV3000CTAB(
-          &inStream, line, templateMol, conf, chiralityPossible, nAtoms, nBonds,
-          params.strictParsing, expectMEND);
+          &inStream, line, templateMol.get(), conf, chiralityPossible, nAtoms,
+          nBonds, params.strictParsing, expectMEND);
     } catch (RDKit::MolFileUnhandledFeatureException &e) {
       // unhandled mol file feature, show an error
       res.reset();
@@ -1146,7 +312,14 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
       tempParams.sanitize = false;
       tempParams.removeHs = false;
       RDKit::FileParserUtils::finishMolProcessing(
-          templateMol, chiralityPossible, tempParams);
+          templateMol.get(), chiralityPossible, tempParams);
+
+      std::unique_ptr<MACROMolTemplate> newTemplate(new MACROMolTemplate(
+          templateMol, templateClass, templateNames, otherTokens));
+      newTemplate->updatePropertyCache(false);
+
+      res->addTemplate(newTemplate);
+      templateMol.release();
     }
 
     tempStr = RDKit::FileParserUtils::getV3000Line(&inStream, line);
@@ -1171,111 +344,356 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
   // and the ATTCHORD entries of each main atom must be consistent
   // with the template mol it matches.
 
-  unsigned int atomCount = res.get()->getMol()->getNumAtoms();
+  unsigned int atomCount = res.get()->getNumAtoms();
   for (unsigned int atomIdx = 0; atomIdx < atomCount; ++atomIdx) {
-    auto atom = res->getMol()->getAtomWithIdx(atomIdx);
+    auto atom = res->getAtomWithIdx(atomIdx);
 
-    std::string dummyLabel = "";
-    std::string atomClass = "";
+    auto templateMolIdx = res->atomIdxToTemplateIdx(atomIdx);
+    if (templateMolIdx == UINT_MAX) {
+      continue;  // no template for this atom - regular atom
+    }
+
+    auto templateMol = res->getTemplate(templateMolIdx);
+    auto mainSup = templateMol->getMainSgroup();
+
     std::vector<std::pair<unsigned int, std::string>> attchOrds;
-    if (atom->hasProp(RDKit::common_properties::dummyLabel)) {
-      dummyLabel =
-          atom->getProp<std::string>(RDKit::common_properties::dummyLabel);
-    }
-    if (atom->hasProp(RDKit::common_properties::molAtomClass)) {
-      atomClass =
-          atom->getProp<std::string>(RDKit::common_properties::molAtomClass);
-    }
     if (atom->hasProp(RDKit::common_properties::molAttachOrderTemplate)) {
       atom->getProp(RDKit::common_properties::molAttachOrderTemplate,
                     attchOrds);
-    }
-    if (dummyLabel != "" && atomClass != "") {
-      // find the template that matches the class and label
 
-      bool templateFound = false;
-      for (unsigned int templateIdx = 0;
-           !templateFound && templateIdx < res.get()->getTemplateCount();
-           ++templateIdx) {
-        auto templateMol = res->getTemplate(templateIdx);
-        if (templateMol->getProp<std::string>(
-                RDKit::common_properties::molAtomClass) == atomClass) {
-          for (auto templateName :
-               templateMol->getProp<std::vector<std::string>>(
-                   RDKit::common_properties::templateNames)) {
-            if (templateFound) {
-              break;
-            }
-            if (templateName != dummyLabel) {
-              continue;  // check next template name
-            }
-            // find the SUP group for the main connections (not leaving
-            // groups)
-
-            const RDKit::SubstanceGroup *mainSUP = nullptr;
-            for (auto &sgroup : RDKit::getSubstanceGroups(*templateMol)) {
-              if (sgroup.getProp<std::string>("TYPE") == "SUP" &&
-                  sgroup.getProp<std::string>("CLASS") == atomClass) {
-                mainSUP = &sgroup;
-                break;
-              }
-            }
-
-            if (mainSUP == nullptr) {
-              break;  // breaks out of the loop over template names - continues
-                      // to next template
-            }
-
-            // now check the ATTCHORD entries
-            templateFound = true;  // tentative - until some attachment point in
-                                   // the atom is not found in the template
-            for (const auto &attachOrd : attchOrds) {
-              auto supAttachPoints = mainSUP->getAttachPoints();
-              if (std::find_if(supAttachPoints.begin(), supAttachPoints.end(),
-                               [&attachOrd](auto a) {
-                                 return a.id == attachOrd.second;
-                               }) == supAttachPoints.end()) {
-                templateFound = false;
-                break;
-              }
-            }
-          }
+      // check the ATTCHORD entries
+      auto supAttachPoints = mainSup->getAttachPoints();
+      for (const auto &attachOrd : attchOrds) {
+        if (find_if(supAttachPoints.begin(), supAttachPoints.end(),
+                    [&attachOrd](auto a) {
+                      return a.id == attachOrd.second;
+                    }) == supAttachPoints.end()) {
+          std::ostringstream errout;
+          errout << "No attachment point found in the template for atom "
+                 << atom->getIdx() << " and attachment label "
+                 << attachOrd.second;
+          throw RDKit::FileParseException(errout.str());
         }
-      }
-
-      if (!templateFound) {
-        std::ostringstream errout;
-        errout << "No template found for atom " << atom->getIdx() << " class "
-               << atomClass << " label " << dummyLabel;
-        throw RDKit::FileParseException(errout.str());
       }
     }
   }
+
+  // now fix the bonds.   SCSR format has the connection points for macro
+  // atoms defined in the main mol atoms, while MACROMol has that
+  // information in the bonds.
+  // H-bonds are even trickier.  SCSR can have a hydrogen
+  // bond to a BASE tempate instance, but not have the connection
+  // point in the atom def nor in the template definition.
+  // It also might
+  // have connection info in the macro atom in the main mol, and have one
+  // or more SAP entries in the template with the same name.
+  //
+  // MACROMols require that every connection from or to
+  // a template atom have a single uniquely nameed connection point in the
+  // template definition (e.g. Hb1, Hb2, Hb3).
+  //
+
+  std::vector<std::pair<unsigned int, unsigned int>> bondsToRemove;
+  std::vector<BondToAdd> hBondsToAdd;
+
+  // first find the h-bond names for each template that is
+  // involved in an h-bond. fix the template to have the standard hbond
+  // attachment names (Hb1, Hb2, Hb3)
+
+  std::map<unsigned int, SCSRHbondData> baseTemplateHbondData;
+
+  for (auto bond : res->bonds()) {
+    if (bond->hasProp(common_properties::_MolFileBondAttachPt1) ||
+        bond->hasProp(common_properties::_MolFileBondAttachPt2)) {
+      std::ostringstream errout;
+      errout
+          << "MACROMol style bond connections found in an SCSR file/block for bond "
+          << bond->getIdx();
+      throw RDKit::FileParseException(errout.str());
+    }
+
+    if (bond->getBondType() != Bond::BondType::HYDROGEN) {
+      continue;
+    }
+
+    auto atom1 = bond->getBeginAtom();
+    auto atom2 = bond->getEndAtom();
+
+    for (auto atomToCheck : {atom1, atom2}) {
+      auto otherAtomId =
+          (atomToCheck == atom1) ? atom2->getIdx() : atom1->getIdx();
+
+      auto templateIdx = res->atomIdxToTemplateIdx(atomToCheck->getIdx());
+      if (templateIdx == UINT_MAX) {
+        continue;  // not a template atom
+      }
+
+      auto atomClass =
+          atomToCheck->getProp<std::string>(common_properties::molAtomClass);
+      if (atomClass != "BASE") {
+        continue;  // only process H-bonds to BASE templates
+      }
+
+      std::vector<std::pair<unsigned int, std::string>> attchOrds;
+      if (atomToCheck->hasProp(
+              RDKit::common_properties::molAttachOrderTemplate)) {
+        atomToCheck->getProp(RDKit::common_properties::molAttachOrderTemplate,
+                             attchOrds);
+      }
+
+      // look for an attachment point on the atom that matches the other
+      // atom of the bond.
+      std::string hbondAttachName = "";
+      std::vector<std::pair<unsigned int, std::string>> newAttachOrds;
+      for (auto &attchOrd : attchOrds) {
+        if (attchOrd.first == otherAtomId) {
+          if (hbondAttachName != "") {
+            std::ostringstream errout;
+            errout << "Multiple attachment points found for an h-bond to atom "
+                   << atomToCheck->getIdx();
+            throw RDKit::FileParseException(errout.str());
+          }
+
+          hbondAttachName = attchOrd.second;
+        } else {
+          newAttachOrds.push_back(attchOrd);
+        }
+      }
+
+      if (hbondAttachName != "") {
+        baseTemplateHbondData[templateIdx] =
+            SCSRHbondData(hbondAttachName);  // no donor flags yet
+        atomToCheck->setProp(RDKit::common_properties::molAttachOrderTemplate,
+                             newAttachOrds);  // remove the references to the
+                                              // h-bond attach points
+      } else {  // it is an h-bond to a template ref, but no atom attach point
+                // references it
+        baseTemplateHbondData[templateIdx] = SCSRHbondData(
+            std::string(""));  // no attach point name (nor donor flags yet)
+      }
+    }
+  }
+
+  for (auto &hbondData : baseTemplateHbondData) {
+    auto templateMol = res->getTemplate(hbondData.first);
+    auto &saps = templateMol->getMainSgroup()->getAttachPoints();
+    std::vector<RDKit::SubstanceGroup::AttachPoint> newSaps;
+    bool sapsChanged = false;
+    for (auto &sap : saps) {
+      if (sap.id == hbondData.second.oldAttachLabel) {
+        if (scsrBaseHbondOptions == SCSRBaseHbondOptions::UseSapOne ||
+            scsrBaseHbondOptions == SCSRBaseHbondOptions::UseSapAll) {
+          auto isDonor =
+              templateMol->getAtomWithIdx(sap.aIdx)->getTotalNumHs() > 0;
+
+          hbondData.second.donorFlags.push_back(isDonor);
+          RDKit::SubstanceGroup::AttachPoint newSap(sap);
+
+          newSaps.emplace_back(
+              sap.aIdx, -1,
+              "Hb" + std::to_string(hbondData.second.donorFlags.size()));
+          sapsChanged = true;
+        }
+      } else {
+        newSaps.emplace_back(sap);
+      }
+    }
+
+    // now for automatic h-bond site detection
+
+    if (scsrBaseHbondOptions == SCSRBaseHbondOptions::Auto) {
+      static const std::vector<HbondQueryData> hbondQueries = {
+          {"[NH]1C=NC2=C1N=C([NH2])[NH]C2=O",
+           "Guanine",
+           {HydrogenBondConnection(7, true), HydrogenBondConnection(8, true),
+            HydrogenBondConnection(10, false)}},
+          {"[NH]1C=NC2=C1N=[CH]N=C2[NH2]",
+           "Adenine",
+           {HydrogenBondConnection(6, true), HydrogenBondConnection(7, false),
+            HydrogenBondConnection(9, true)}},
+          {"[NH]1C=CC([NH2])=NC1=O",
+           "Cytosine",
+           {HydrogenBondConnection(7, false), HydrogenBondConnection(5, false),
+            HydrogenBondConnection(4, true)}},
+          {"[NH]1C=CC(=O)[NH]C1=O",
+           "Thyamine-Uracil",
+           {HydrogenBondConnection(7, false), HydrogenBondConnection(5, true),
+            HydrogenBondConnection(4, false)}},
+          {"[NH]1C=NC2=C1N=C[NH]C2=O",
+           "Inosine",
+           {HydrogenBondConnection(7, true),
+            HydrogenBondConnection(9, false)}}};
+
+      templateMol->updatePropertyCache(false);
+
+      for (const auto &querySmi : hbondQueries) {
+        RDKit::SubstructMatchParameters params;
+        auto match = SubstructMatch(*templateMol, *querySmi.dp_mol, params);
+
+        if (match.empty()) {
+          continue;
+        }
+
+        unsigned int hBondCount = 0;
+        hbondData.second.donorFlags.clear();
+        for (const auto &hBondConnection : querySmi.d_hBondConnections) {
+          newSaps.emplace_back(
+              match[0][hBondConnection.d_templateAtomIdx].second, -1,
+              "Hb" + std::to_string(++hBondCount));
+          hbondData.second.donorFlags.push_back(hBondConnection.d_isDonor);
+          sapsChanged = true;
+        }
+
+        break;  // only take the first match
+      }
+    }
+
+    if (sapsChanged) {
+      templateMol->getMainSgroup()->clearAttachPoints();
+      for (auto &newSap : newSaps) {
+        templateMol->getMainSgroup()->addAttachPoint(newSap.aIdx, newSap.lvIdx,
+                                                     newSap.id);
+      }
+    }
+  }
+
+  //  go back over the bonds and fix them - if either atom is a template atom,
+  //  we have to figure out which attachment point to bond
+
+  for (auto bond : res->bonds()) {
+    auto atom1 = bond->getBeginAtom();
+    auto atom2 = bond->getEndAtom();
+    auto atom1Idx = atom1->getIdx();
+    auto atom2Idx = atom2->getIdx();
+
+    auto templateIdx1 = res->atomIdxToTemplateIdx(atom1Idx);
+    auto templateIdx2 = res->atomIdxToTemplateIdx(atom2Idx);
+
+    if (bond->getBondType() == Bond::BondType::HYDROGEN &&
+        templateIdx1 != UINT_MAX && templateIdx2 != UINT_MAX &&
+        baseTemplateHbondData.contains(templateIdx1) &&
+        baseTemplateHbondData.contains(templateIdx2)) {
+      // hydrogen bond between base template atoms
+
+      if (SCSRBaseHbondOptions::Ignore != scsrBaseHbondOptions) {
+        auto donorFlags1 = baseTemplateHbondData[templateIdx1].donorFlags;
+        auto donorFlags2 = baseTemplateHbondData[templateIdx2].donorFlags;
+
+        makeHydrogenBonds(atom1Idx, atom2Idx, donorFlags1, donorFlags2,
+                          hBondsToAdd);
+      }
+
+      bondsToRemove.emplace_back(bond->getBeginAtom()->getIdx(),
+                                 bond->getEndAtom()->getIdx());
+    }
+
+    else {  // regular bonds  or an H-bond where one or both sides don't have
+            // template attach point info
+
+      for (auto atomToCheck : {atom1, atom2}) {
+        auto otherAtomId =
+            (atomToCheck == atom1) ? atom2->getIdx() : atom1->getIdx();
+
+        if (res->atomIdxToTemplateIdx(atomToCheck->getIdx()) == UINT_MAX) {
+          continue;  // not a template atom
+        }
+
+        std::vector<std::pair<unsigned int, std::string>> attchOrds;
+        if (atomToCheck->hasProp(
+                RDKit::common_properties::molAttachOrderTemplate)) {
+          atomToCheck->getProp(RDKit::common_properties::molAttachOrderTemplate,
+                               attchOrds);
+        }
+
+        // look for an attachment point on the atom that matches the
+        // other atom of the bond.
+        std::pair<unsigned int, std::string> *foundAttchOrd = nullptr;
+        for (auto &attchOrd : attchOrds) {
+          if (attchOrd.first == otherAtomId) {
+            if (foundAttchOrd != nullptr) {
+              std::ostringstream errout;
+              errout << "Multiple attachment points found for a bond to atom "
+                     << atomToCheck->getIdx();
+              throw RDKit::FileParseException(errout.str());
+            }
+
+            foundAttchOrd = &attchOrd;
+            break;
+          }
+        }
+        if (foundAttchOrd == nullptr) {
+          std::ostringstream errout;
+          errout << "Attachment point not found for bond " << bond->getIdx()
+                 << " and atom " << atom1->getIdx();
+          throw RDKit::FileParseException(errout.str());
+        }
+        // add the attachment point info to the bond
+
+        auto propToAdd = (atomToCheck == atom1)
+                             ? common_properties::_MolFileBondAttachPt1
+                             : common_properties::_MolFileBondAttachPt2;
+        bond->setProp(propToAdd, (*foundAttchOrd).second);
+
+        // remove the attachment point from the atom
+        std::erase(attchOrds, *foundAttchOrd);
+        atomToCheck->setProp(RDKit::common_properties::molAttachOrderTemplate,
+                             attchOrds);
+      }
+    }
+  }
+
+  res->beginBatchEdit();
+  for (auto &hbondToRemove : bondsToRemove) {
+    // the following call will delelte all bonds that have the same begin
+    // and end atoms.
+    res->removeBond(hbondToRemove.first, hbondToRemove.second);
+  }
+  res->commitBatchEdit();
+
+  res->beginBatchEdit();
+  for (auto &hBondToAdd : hBondsToAdd) {
+    auto newBondIdx =
+        res->addBond(hBondToAdd.d_beginAtomIdx, hBondToAdd.d_endAtomIdx,
+                     Bond::BondType::HYDROGEN);
+    auto newBond = res->getBondWithIdx(newBondIdx - 1);
+    if (!hBondToAdd.d_attachPt1.empty()) {
+      newBond->setProp(common_properties::_MolFileBondAttachPt1,
+                       hBondToAdd.d_attachPt1);
+    }
+    if (!hBondToAdd.d_attachPt2.empty()) {
+      newBond->setProp(common_properties::_MolFileBondAttachPt2,
+                       hBondToAdd.d_attachPt2);
+    }
+  }
+  res->commitBatchEdit();
 
   return res;
 }
 
 //------------------------------------------------
 //
-//  Read a molecule from a string
+//  Read an SCSR molecule from a string
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
+std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRBlock(
     const std::string &molBlock,
-    const RDKit::v2::FileParsers::MolFileParserParams &params) {
+    const RDKit::v2::FileParsers::MolFileParserParams &params,
+    const SCSRBaseHbondOptions scsrBaseHbondOptions) {
   std::istringstream inStream(molBlock);
   unsigned int line = 0;
-  return SCSRMolFromSCSRDataStream(inStream, line, params);
+  return MACROMolFromSCSRDataStream(inStream, line, params,
+                                    scsrBaseHbondOptions);
 }
 
 //------------------------------------------------
 //
-//  Read a molecule from a file
+//  Read an SCSR molecule from a file
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRFile(
+std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRFile(
     const std::string &fName,
-    const RDKit::v2::FileParsers::MolFileParserParams &params) {
+    const RDKit::v2::FileParsers::MolFileParserParams &params,
+    const SCSRBaseHbondOptions scsrBaseHbondOptions) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
@@ -1284,43 +702,324 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRFile(
   }
   if (!inStream.eof()) {
     unsigned int line = 0;
-    return SCSRMolFromSCSRDataStream(inStream, line, params);
+    return MACROMolFromSCSRDataStream(inStream, line, params,
+                                      scsrBaseHbondOptions);
   } else {
-    return std::unique_ptr<RDKit::SCSRMol>();
+    return std::unique_ptr<RDKit::MACROMol>();
   }
-}
-
-static std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
-    RDKit::SCSRMol *scsrMol,
-    const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams,
-    const RDKit::MolFromSCSRParams &molFromSCSRParams) {
-  RDKit::MolFromSCSRMolConverter converter(scsrMol, molFileParserParams,
-                                           molFromSCSRParams);
-  return converter.convert();
 }
 
 std::unique_ptr<RDKit::RWMol> MolFromSCSRDataStream(
     std::istream &inStream, unsigned int &line,
     const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams,
-    const RDKit::MolFromSCSRParams &molFromSCSRParams) {
-  auto scsr =
-      RDKit::SCSRMolFromSCSRDataStream(inStream, line, molFileParserParams);
-  return MolFromSCSRMol(scsr.get(), molFileParserParams, molFromSCSRParams);
+    const RDKit::MolFromMACROMolParams &molFromMACROMolParams,
+    const SCSRBaseHbondOptions scsrBaseHbondOptions) {
+  auto macroMol = RDKit::MACROMolFromSCSRDataStream(
+      inStream, line, molFileParserParams, scsrBaseHbondOptions);
+  return MolFromMACROMol(macroMol.get(), molFileParserParams,
+                         molFromMACROMolParams);
 }
 
 std::unique_ptr<RDKit::RWMol> MolFromSCSRBlock(
     const std::string &molBlock,
     const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams,
-    const RDKit::MolFromSCSRParams &molFromSCSRParams) {
-  auto scsr = RDKit::SCSRMolFromSCSRBlock(molBlock, molFileParserParams);
-  return MolFromSCSRMol(scsr.get(), molFileParserParams, molFromSCSRParams);
+    const RDKit::MolFromMACROMolParams &molFromMACROMolParams,
+    const SCSRBaseHbondOptions scsrBaseHbondOptions) {
+  auto macroMol = RDKit::MACROMolFromSCSRBlock(molBlock, molFileParserParams,
+                                               scsrBaseHbondOptions);
+  return MolFromMACROMol(macroMol.get(), molFileParserParams,
+                         molFromMACROMolParams);
 }
 
 std::unique_ptr<RDKit::RWMol> MolFromSCSRFile(
     const std::string &fName,
     const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams,
-    const RDKit::MolFromSCSRParams &molFromSCSRParams) {
-  auto scsr = RDKit::SCSRMolFromSCSRFile(fName, molFileParserParams);
-  return MolFromSCSRMol(scsr.get(), molFileParserParams, molFromSCSRParams);
+    const RDKit::MolFromMACROMolParams &molFromMACROMolParams,
+    const SCSRBaseHbondOptions scsrBaseHbondOptions) {
+  auto macroMol = RDKit::MACROMolFromSCSRFile(fName, molFileParserParams,
+                                              scsrBaseHbondOptions);
+  auto res = MolFromMACROMol(macroMol.get(), molFileParserParams,
+                             molFromMACROMolParams);
+  return res;
 }
+
+std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
+                                   const RDKit::MolWriterParams &params,
+                                   int confId, bool keepBaseHbondInfo) {
+  RDKit::Utils::LocaleSwitcher switcher;
+  std::string res = "";
+  auto localParams = params;
+  localParams.forceV3000 = true;
+  localParams.writeEndMolLine = false;
+
+  // make a copy of the main macromol so we can modify it for output without
+  // affecting the original
+
+  auto localMol = std::unique_ptr<RWMol>(new RWMol(macroMol));
+
+  // move the connection point info from the bonds to the atoms for the main
+  // mol for H-bond connections in templates
+  //  1) retain only one connection point in each atom named "Hb"
+  //  2) retain only one bond connecting the same two template atoms
+  //  3) change the template so that all hbond saps are called Hb
+
+  // for each BASE tempate, the list of
+  // h-bond connection point names to fix
+  std::map<unsigned int, std::vector<std::string>> templateHbondConnections;
+
+  // for each BASE tempate, the list of
+  // h-bond connection point name BASES to fix
+  // for sets of hbond connections like Hb1, Hb2, Hb3, this would be "Hb"
+  // THis allows us to change all such connections even when only one or two
+  // are used in the main mol
+  std::map<unsigned int, std::vector<std::string>> templateHbondConnectionBases;
+
+  std::vector<std::pair<unsigned int, unsigned int>>
+      hBonds;  // the bonds to keep (re-add).
+
+  // RDKit will remove all bonds with the same begin and end atoms when called
+  // to remove one, so we must keep track of the FIRST hbond between any two
+  // atoms We will remove all of the hbonds with those two atoms, then re-add
+  // one hbond back.
+
+  for (auto bond : localMol->bonds()) {
+    // see if this is an h-bond and either of the atoms are macro refs
+    if (bond->getBondType() == Bond::BondType::HYDROGEN &&
+        (bond->getBeginAtom()->hasProp(common_properties::molAtomClass) ||
+         bond->getEndAtom()->hasProp(common_properties::molAtomClass))) {
+      if (std::find_if(hBonds.begin(), hBonds.end(),
+                       [bond](std::pair<unsigned int, unsigned int> &hBond) {
+                         return (hBond.first == bond->getBeginAtomIdx() &&
+                                 hBond.second == bond->getEndAtomIdx()) ||
+                                (hBond.second == bond->getBeginAtomIdx() &&
+                                 hBond.first == bond->getEndAtomIdx());
+                       }) != hBonds.end()) {
+        continue;  // next bond
+      }
+
+      hBonds.emplace_back(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
+
+      for (auto atomToCheck : {bond->getBeginAtom(), bond->getEndAtom()}) {
+        std::string attrToCheck;
+        unsigned int otherAtomId;
+        if (atomToCheck == bond->getBeginAtom()) {
+          attrToCheck = common_properties::_MolFileBondAttachPt1;
+          otherAtomId = bond->getEndAtomIdx();
+        } else {
+          attrToCheck = common_properties::_MolFileBondAttachPt2;
+          otherAtomId = bond->getBeginAtomIdx();
+        }
+
+        if (bond->hasProp(attrToCheck)) {
+          std::vector<std::pair<unsigned int, std::string>> attachPoints;
+          atomToCheck->getProp(common_properties::molAttachOrderTemplate,
+                               attachPoints);
+
+          // make sure the atom have one and only one  "Hb" attach point.
+          if (std::find_if(attachPoints.begin(), attachPoints.end(),
+                           [](const auto &attachPoint) {
+                             return attachPoint.second == "Hb";
+                           }) == attachPoints.end()) {
+            attachPoints.emplace_back(otherAtomId, "Hb");
+            atomToCheck->setProp(common_properties::molAttachOrderTemplate,
+                                 attachPoints);
+          }
+        }
+
+        // mark which templates need to be fixed so the attach points are "Hb"
+
+        auto templateIdx = macroMol.atomIdxToTemplateIdx(atomToCheck->getIdx());
+        if (!templateHbondConnections.contains(templateIdx)) {
+          templateHbondConnections[templateIdx] = std::vector<std::string>();
+        }
+        if (!templateHbondConnectionBases.contains(templateIdx)) {
+          templateHbondConnectionBases[templateIdx] =
+              std::vector<std::string>();
+        }
+
+        auto attrName = bond->getProp<std::string>(attrToCheck);
+        templateHbondConnections[templateIdx].push_back(attrName);
+        auto attrNameBase = attrName;
+        if (isdigit(attrName[attrName.size() - 1])) {
+          // change Hb1, Hb2, etc to Hb
+          templateHbondConnectionBases[templateIdx].push_back(
+              attrName.substr(0, attrName.size() - 1));
+        }
+
+        bond->clearProp(attrToCheck);
+      }
+    } else {  // here for regular bonds - not  hbonds between templates
+
+      if (bond->hasProp(common_properties::_MolFileBondAttachPt1)) {
+        auto attachPt = bond->getProp<std::string>(
+            common_properties::_MolFileBondAttachPt1);
+
+        std::vector<std::pair<unsigned int, std::string>> attachPts;
+        bond->getBeginAtom()->getPropIfPresent(
+            RDKit::common_properties::molAttachOrderTemplate, attachPts);
+        attachPts.push_back({bond->getEndAtomIdx(), attachPt});
+        bond->getBeginAtom()->setProp(
+            RDKit::common_properties::molAttachOrderTemplate, attachPts);
+        bond->clearProp(common_properties::_MolFileBondAttachPt1);
+      }
+
+      if (bond->hasProp(common_properties::_MolFileBondAttachPt2)) {
+        auto attachPt = bond->getProp<std::string>(
+            common_properties::_MolFileBondAttachPt2);
+
+        std::vector<std::pair<unsigned int, std::string>> attachPts;
+        bond->getEndAtom()->getPropIfPresent(
+            RDKit::common_properties::molAttachOrderTemplate, attachPts);
+        attachPts.push_back({bond->getBeginAtomIdx(), attachPt});
+        bond->getEndAtom()->setProp(
+            RDKit::common_properties::molAttachOrderTemplate, attachPts);
+        bond->clearProp(common_properties::_MolFileBondAttachPt2);
+      }
+    }
+  }
+
+  // remove the duplicate h-bonds
+
+  if (!hBonds.empty()) {
+    localMol->beginBatchEdit();
+    for (auto &hbondToRemove : hBonds) {
+      // the following call will delelte all bonds that have the same begin
+      // and end atoms.
+      localMol->removeBond(hbondToRemove.first, hbondToRemove.second);
+    }
+    localMol->commitBatchEdit();
+
+    for (auto &hBond : hBonds) {
+      // the following call adds one hbond back for each set that was removed
+      localMol->addBond(hBond.first, hBond.second, Bond::BondType::HYDROGEN);
+    }
+    localMol->commitBatchEdit();
+    hBonds.clear();
+  }
+  res += RDKit::MolToMolBlock(*(localMol), localParams, confId);
+
+  // now write out all of the templates
+
+  res += "M  V30 BEGIN TEMPLATE\n";
+  for (unsigned int templateId = 0; templateId < macroMol.getTemplateCount();
+       ++templateId) {
+    auto macroMolTemplate = macroMol.getTemplate(templateId);
+    std::string templateClass;
+    std::vector<std::string> templateNames;
+    std::string natReplace = "";
+    std::string comment = "";
+    std::string fullname = "";
+    std::string category = "";
+    std::string uniqueId = "";
+    std::string casNumber = "";
+    std::string collaborator = "";
+    std::string protection = "";
+
+    macroMolTemplate->getProp(common_properties::molAtomClass, templateClass);
+
+    macroMolTemplate->getProp(common_properties::templateNames, templateNames);
+
+    res += "M  V30 TEMPLATE " + std::to_string(templateId + 1) + " " +
+           templateClass;
+    for (auto templateName : templateNames) {
+      res += "/" + templateName;
+    }
+    res += "/";
+
+    for (auto &propName : macroMolTemplate->getPropList()) {
+      if (propName != common_properties::molAtomClass &&
+          propName != common_properties::templateNames && propName[0] != '_') {
+        std::string propVal;
+        macroMolTemplate->getProp<std::string>(propName, propVal);
+        res += " " + propName + "=" + propVal;
+      }
+    }
+
+    res += "\n";
+
+    // copy template mol so we can modify it for output without affecting the
+    // original, if needed
+
+    RWMol *molToUse = macroMolTemplate;
+    std::unique_ptr<RWMol> tMol;
+
+    // check to see if the template need to be modified for hbonds
+    // connections. if we are keeping them, they are changed to "Hb" if not
+    // keeping them, they are removed from the template definition
+
+    if (templateHbondConnections.contains(templateId) ||
+        templateHbondConnectionBases.contains(templateId)) {
+      tMol.reset(new RWMol(*macroMolTemplate));
+      molToUse = tMol.get();
+
+      auto &hbondConnections = templateHbondConnections[templateId];
+      auto &hbondConnectionBases = templateHbondConnectionBases[templateId];
+      auto &sgroups = RDKit::getSubstanceGroups(*(tMol.get()));
+      auto &localMainSgroup =
+          sgroups[macroMolTemplate->getMainSgroup()->getProp<unsigned int>(
+                      "index") -
+                  1];
+      auto &attachPoints = localMainSgroup.getAttachPoints();
+
+      if (keepBaseHbondInfo) {
+        for (auto &attachPoint : attachPoints) {
+          if (std::find(hbondConnections.begin(), hbondConnections.end(),
+                        attachPoint.id) != hbondConnections.end()) {
+            attachPoint.id = "Hb";
+          } else if (isdigit(attachPoint.id[attachPoint.id.size() - 1])) {
+            auto baseId = attachPoint.id.substr(0, attachPoint.id.size() - 1);
+            if (std::find(hbondConnectionBases.begin(),
+                          hbondConnectionBases.end(),
+                          baseId) != hbondConnectionBases.end()) {
+              attachPoint.id = "Hb";
+            }
+          }
+        }
+      } else  // remove hbond connection points for this template
+      {
+        std::erase_if(attachPoints, [hbondConnections, hbondConnectionBases](
+                                        const SubstanceGroup::AttachPoint &ap) {
+          if (std::find(hbondConnections.begin(), hbondConnections.end(),
+                        ap.id) != hbondConnections.end()) {
+            return true;
+          }
+          if (isdigit(ap.id[ap.id.size() - 1])) {
+            auto baseId = ap.id.substr(0, ap.id.size() - 1);
+            if (std::find(hbondConnectionBases.begin(),
+                          hbondConnectionBases.end(),
+                          baseId) != hbondConnectionBases.end()) {
+              return true;
+            }
+          }
+          return false;
+        });
+      }
+    }
+
+    boost::dynamic_bitset<> aromaticBonds(macroMolTemplate->getNumBonds());
+    prepareMol(*molToUse, localParams, aromaticBonds);
+    res += FileParserUtils::getV3000CTAB(*molToUse, aromaticBonds, confId,
+                                         localParams.precision);
+  }
+
+  res += "M  V30 END TEMPLATE\n";
+  res += "M  END\n";
+
+  return res;
+}
+
+void MACROMolToSCSRMolFile(RDKit::MACROMol &macroMol, const std::string &fName,
+                           const RDKit::MolWriterParams &params, int confId) {
+  auto *outStream = new std::ofstream(fName.c_str());
+  if (!(*outStream) || outStream->bad()) {
+    delete outStream;
+    std::ostringstream errout;
+    errout << "Bad output file " << fName;
+    throw BadFileException(errout.str());
+  }
+  std::string outString = MACROMolToSCSRMolBlock(macroMol, params, confId);
+  *outStream << outString;
+  delete outStream;
+}
+
 }  // namespace RDKit
