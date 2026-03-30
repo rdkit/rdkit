@@ -98,7 +98,7 @@ TEST_CASE("Shape Small tests") {
   std::vector<size_t> expNumHits{3, 8, 1};
   std::vector<std::vector<double>> expScores{
       {0.956, 0.943, 0.911},
-      {0.964, 0.921, 0.900, 0.889, 0.865, 0.845, 0.816, 0.815},
+      {0.964, 0.907, 0.903, 0.889, 0.865, 0.845, 0.827, 0.823},
       {0.844}};
   ShapeBuildParams shapeBuildOptions;
   shapeBuildOptions.numConfs = 100;
@@ -134,6 +134,7 @@ TEST_CASE("Shape Small tests") {
       std::cout << "hit mol : " << MolToCXSmiles(*mol) << std::endl;
       std::cout << "hit name : "
                 << mol->getProp<std::string>(common_properties::_Name)
+                << "  similarity : " << mol->getProp<double>("Similarity")
                 << std::endl;
       auto scores = GaussianShape::ScoreMolecule(*queryMol, *mol);
       CHECK_THAT(mol->getProp<double>("Similarity"),

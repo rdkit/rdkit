@@ -45,9 +45,7 @@ GaussianShape::ShapeInput &SynthonShapeInput::getShapes() const {
 double SynthonShapeInput::getDummyVolume(unsigned int shapeNum) const {
   PRECONDITION(shapeNum < getShapes().getNumShapes(),
                "Invalid shape number (" + std::to_string(shapeNum) + " vs " +
-                   std::to_string(getShapes().getNumShapes()) +
-                   ")"
-                   ").");
+                   std::to_string(getShapes().getNumShapes()) + ").");
   return d_dummyVolumes[shapeNum];
 }
 
