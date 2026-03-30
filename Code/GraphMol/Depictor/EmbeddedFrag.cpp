@@ -25,6 +25,9 @@
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <iostream>
 constexpr double NEIGH_RADIUS = 2.5;
 
 namespace RDDepict {
@@ -489,13 +492,13 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
   // find template that this mol matches to, if any
   RDKit::MatchVectType match;
   std::shared_ptr<RDKit::ROMol> template_mol(nullptr);
-  for (const auto &mol :
-       coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
+
+  auto matching_templates = coordinate_templates.getMatchingTemplates(ringSystemAtoms.size());
+
+  for (const auto &mol : matching_templates) {
     // To reduce how often we have to do substructure matches, check ring info
     // and bond count first
     if (mol->getNumBonds() != numBonds) {
-      continue;
-    } else if (mol->getRingInfo()->numRings() != ring_count) {
       continue;
     }
     // also check if the mol atoms have the same connectivity as the template
@@ -525,9 +528,12 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
       }
       return degrees_count;
     };
-    if (degreeCounts(rs_mol) != degreeCounts(*mol)) {
+    auto rs_degrees = degreeCounts(rs_mol);
+    auto template_degrees = degreeCounts(*mol);
+    if (rs_degrees != template_degrees) {
       continue;
     }
+
     RDKit::SubstructMatchParameters params;
     params.maxMatches = 1;
     auto matches = RDKit::SubstructMatch(rs_mol, *mol, params);
