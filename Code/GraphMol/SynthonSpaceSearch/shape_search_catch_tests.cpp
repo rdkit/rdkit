@@ -371,37 +371,72 @@ TEST_CASE("Small m_1458bbb test") {
 }
 
 TEST_CASE("Two piece query") {
-  auto queryMol =
-      "C1CCNC1.c1ccccc1 |(-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;3.47088,-1.00454,0.585539;2.18964,-1.35506,0.144714;1.37975,-0.430412,-0.483603;1.85597,0.849751,-0.670531;3.1267,1.22739,-0.242406;3.93803,0.297573,0.388032)|"_smiles;
-  REQUIRE(queryMol);
-  std::string fName(rdbase);
-  std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
-  std::string dbName = fullRoot + "amide_space_shapes.spc";
-  SynthonSpace synthonspace;
-  synthonspace.readDBFile(dbName);
-  std::cout << "Number of products " << synthonspace.getNumProducts()
-            << std::endl;
-  SynthonSpaceSearchParams params;
-  params.similarityCutoff = 0.7;
-  params.numThreads = 1;
-  params.confRMSThreshold = 0.5;
-  params.timeOut = 0;
-  params.randomSeed = 1;
-  params.bestHit = true;
-  params.shapeOverlayOptions.simAlpha = 0.95;
-  params.shapeOverlayOptions.simBeta = 0.05;
-  auto results = synthonspace.shapeSearch(*queryMol, params);
-  CHECK(results.getHitMolecules().size() == 3);
-  std::vector<double> expScores{0.721, 0.714, 0.711};
-  std::cout << "Number of results : " << results.getHitMolecules().size()
-            << std::endl;
-  for (unsigned int i = 0; i < results.getHitMolecules().size(); ++i) {
-    auto &mol = results.getHitMolecules()[i];
-    std::cout << "hit mol : " << MolToCXSmiles(*mol) << std::endl;
-    std::cout << "hit name : "
-              << mol->getProp<std::string>(common_properties::_Name) << " at "
-              << mol->getProp<double>("Similarity") << std::endl;
-    CHECK_THAT(mol->getProp<double>("Similarity"),
-               Catch::Matchers::WithinAbs(expScores[i], 0.001));
+  {
+    auto queryMol =
+        "C1CCNC1.c1ccccc1 |(-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;3.47088,-1.00454,0.585539;2.18964,-1.35506,0.144714;1.37975,-0.430412,-0.483603;1.85597,0.849751,-0.670531;3.1267,1.22739,-0.242406;3.93803,0.297573,0.388032)|"_smiles;
+    REQUIRE(queryMol);
+    std::string fName(rdbase);
+    std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
+    std::string dbName = fullRoot + "amide_space_shapes.spc";
+    SynthonSpace synthonspace;
+    synthonspace.readDBFile(dbName);
+    SynthonSpaceSearchParams params;
+    params.similarityCutoff = 0.7;
+    params.numThreads = 1;
+    params.confRMSThreshold = 0.5;
+    params.timeOut = 0;
+    params.randomSeed = 1;
+    params.bestHit = true;
+    params.shapeOverlayOptions.simAlpha = 0.95;
+    params.shapeOverlayOptions.simBeta = 0.05;
+    auto results = synthonspace.shapeSearch(*queryMol, params);
+    CHECK(results.getHitMolecules().size() == 3);
+    std::vector<double> expScores{0.721, 0.714, 0.711};
+    std::cout << "Number of results : " << results.getHitMolecules().size()
+              << std::endl;
+    for (unsigned int i = 0; i < results.getHitMolecules().size(); ++i) {
+      auto &mol = results.getHitMolecules()[i];
+      std::cout << "hit mol : " << MolToCXSmiles(*mol) << std::endl;
+      std::cout << "hit name : "
+                << mol->getProp<std::string>(common_properties::_Name) << " at "
+                << mol->getProp<double>("Similarity") << std::endl;
+      CHECK_THAT(mol->getProp<double>("Similarity"),
+                 Catch::Matchers::WithinAbs(expScores[i], 0.001));
+    }
+  }
+
+  {
+    auto queryMol =
+        "C1CCCC1.C[C@H]1CCNC1 |(-1.11549,-0.643316,-1.37025;-2.26431,-1.65079,-1.54776;-2.58926,-1.96617,-0.0975393;-2.00229,-0.836476,0.740437;-1.71735,0.224133,-0.333621;3.88187,-1.9608,1.02401;3.40947,-0.556473,0.685633;3.49763,-0.278493,-0.787477;2.18424,0.313597,-1.21035;1.39217,0.480256,0.0110759;1.90383,-0.551243,0.906815),wD:6.5|"_smiles;
+    REQUIRE(queryMol);
+    std::string fName(rdbase);
+    std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
+    std::string dbName = fullRoot + "triazole_space_shapes.spc";
+    SynthonSpace synthonspace;
+    synthonspace.readDBFile(dbName);
+    SynthonSpaceSearchParams params;
+    params.similarityCutoff = 0.7;
+    params.fragSimilarityAdjuster = 0.2;
+    params.numThreads = 1;
+    params.confRMSThreshold = 0.5;
+    params.timeOut = 0;
+    params.randomSeed = 1;
+    params.bestHit = true;
+    params.shapeOverlayOptions.simAlpha = 0.95;
+    params.shapeOverlayOptions.simBeta = 0.05;
+    auto results = synthonspace.shapeSearch(*queryMol, params);
+    std::cout << "Number of results : " << results.getHitMolecules().size()
+              << std::endl;
+    CHECK(results.getHitMolecules().size() == 6);
+    std::vector<double> expScores{0.816, 0.790, 0.745, 0.735, 0.718, 0.709};
+    for (unsigned int i = 0; i < results.getHitMolecules().size(); ++i) {
+      auto &mol = results.getHitMolecules()[i];
+      std::cout << "hit mol : " << MolToCXSmiles(*mol) << std::endl;
+      std::cout << "hit name : "
+                << mol->getProp<std::string>(common_properties::_Name) << " at "
+                << mol->getProp<double>("Similarity") << std::endl;
+      CHECK_THAT(mol->getProp<double>("Similarity"),
+                 Catch::Matchers::WithinAbs(expScores[i], 0.001));
+    }
   }
 }
