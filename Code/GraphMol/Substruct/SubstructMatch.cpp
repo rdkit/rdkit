@@ -482,7 +482,9 @@ std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ROMol &query,
     const SubstructMatchParameters &params) {
   std::vector<MatchVectType> matches;
-  if (!mol.getNumAtoms() || !query.getNumAtoms()) {
+  const auto &mNumAtoms = mol.getNumAtoms();
+  const auto &qNumAtoms = query.getNumAtoms();
+  if (!mNumAtoms || !qNumAtoms || qNumAtoms > mNumAtoms) {
     return matches;
   }
 

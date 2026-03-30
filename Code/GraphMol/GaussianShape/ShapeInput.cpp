@@ -87,7 +87,7 @@ const std::map<unsigned int, double> vdw_radii = {
 };
 constexpr double radius_color =
     1.08265;  // same radius for all feature/color "atoms", as used by the
-// PubChem code.
+              // PubChem code.
 
 namespace {
 // Throw out any atoms we don't want.  copySubsetMol does more work than

@@ -54,7 +54,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(Chem.MolToSmiles(mol), "C.C.C.C.C.C.C.C.C.C.C.C.C")
     mol = shp.ShapeToMol(True, False)
     self.assertEqual(Chem.MolToSmiles(mol), "C.C.C.C.C.C.C.C.C.C.C.C.C.[Xe].[Xe].[Xe].[Xe].[Xe].[Xe]")
-    
+
   def test4_customFeatures(self):
     m1 = Chem.MolFromSmiles(
       "O=CC=O |(-1.75978,0.148897,0;-0.621382,-0.394324,0;0.624061,0.3656,.1;1.7571,-0.120174,.1)|")
@@ -187,7 +187,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(best1, 9)
     self.assertEqual(best2, 4)
     self.assertEqual(len(xform), 16)
-    
+
 
 if __name__ == '__main__':
   unittest.main()
