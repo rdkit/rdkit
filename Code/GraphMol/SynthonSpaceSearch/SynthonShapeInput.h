@@ -46,9 +46,9 @@ class SynthonShapeInput {
     ia &*this;
 #endif
   }
-  SynthonShapeInput(const SynthonShapeInput &) = default;
+  SynthonShapeInput(const SynthonShapeInput &);
   SynthonShapeInput(SynthonShapeInput &&) = default;
-  SynthonShapeInput &operator=(const SynthonShapeInput &) = default;
+  SynthonShapeInput &operator=(const SynthonShapeInput &);
   SynthonShapeInput &operator=(SynthonShapeInput &&) = default;
   ~SynthonShapeInput() = default;
 

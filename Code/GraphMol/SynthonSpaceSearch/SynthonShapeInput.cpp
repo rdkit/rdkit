@@ -22,6 +22,23 @@ SynthonShapeInput::SynthonShapeInput(
   calculateDummyVols(overlayOpts);
 }
 
+SynthonShapeInput::SynthonShapeInput(const SynthonShapeInput &other) {
+  d_shapes = std::make_unique<GaussianShape::ShapeInput>(*other.d_shapes);
+  d_dummyVolumes = other.d_dummyVolumes;
+  d_dummyAtomsAndNbrs = other.d_dummyAtomsAndNbrs;
+}
+
+SynthonShapeInput &SynthonShapeInput::operator=(
+    const SynthonShapeInput &other) {
+  if (this == &other) {
+    return *this;
+  }
+  d_shapes = std::make_unique<GaussianShape::ShapeInput>(*other.d_shapes);
+  d_dummyVolumes = other.d_dummyVolumes;
+  d_dummyAtomsAndNbrs = other.d_dummyAtomsAndNbrs;
+  return *this;
+}
+
 void SynthonShapeInput::merge(SynthonShapeInput &other) {
   d_shapes->merge(*other.d_shapes);
   d_dummyVolumes.reserve(d_dummyVolumes.size() + other.d_dummyVolumes.size());
