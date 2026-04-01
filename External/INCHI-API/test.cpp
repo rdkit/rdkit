@@ -959,46 +959,67 @@ void testGithub8239() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+namespace {
+void checkStereoAnyRoundtrip(const char *smiles, const char *desc) {
+  BOOST_LOG(rdInfoLog) << "  " << desc << ": " << smiles << std::endl;
+  auto m = SmilesToMol(smiles);
+  TEST_ASSERT(m);
+
+  // verify STEREOANY is present on input
+  bool foundStereoAny = false;
+  for (const auto bond : m->bonds()) {
+    if (bond->getStereo() == Bond::STEREOANY) {
+      foundStereoAny = true;
+      break;
+    }
+  }
+  TEST_ASSERT(foundStereoAny);
+
+  // convert to InChI with -SUU (include unknown/undefined stereo) and back
+  ExtraInchiReturnValues tmp;
+  auto inchi = MolToInchi(*m, tmp, "-SUU");
+  TEST_ASSERT(!inchi.empty());
+
+  ExtraInchiReturnValues tmp2;
+  std::unique_ptr<ROMol> m2(InchiToMol(inchi, tmp2));
+  TEST_ASSERT(m2);
+
+  // verify STEREOANY survives the roundtrip
+  bool foundStereoAny2 = false;
+  for (const auto bond : m2->bonds()) {
+    if (bond->getStereo() == Bond::STEREOANY) {
+      foundStereoAny2 = true;
+      TEST_ASSERT(bond->getStereoAtoms().size() == 2);
+      break;
+    }
+  }
+  TEST_ASSERT(foundStereoAny2);
+  delete m;
+}
+}  // namespace
+
 void testStereoAnyRoundtrip() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog)
       << "testing STEREOANY (wavy bond) InChI roundtrip" << std::endl;
 
-  {
-    // wavy bond on the C=N double bond (bond index 8)
-    auto m = "CSC1=NSC(CC=NC2=CC=CC=C2)=C1C#N |w:8.8|"_smiles;
-    TEST_ASSERT(m);
+  // Schiff base with wavy C=N (original bug report molecule)
+  checkStereoAnyRoundtrip("CSC1=NSC(CC=NC2=CC=CC=C2)=C1C#N |w:8.8|",
+                           "Schiff base C=N");
 
-    // verify STEREOANY is present on input
-    bool foundStereoAny = false;
-    for (const auto bond : m->bonds()) {
-      if (bond->getStereo() == Bond::STEREOANY) {
-        foundStereoAny = true;
-        break;
-      }
-    }
-    TEST_ASSERT(foundStereoAny);
+  // Benzaldoxime: wavy C=N (common pharma motif)
+  checkStereoAnyRoundtrip("O/N=C/c1ccccc1 |w:1.1|", "benzaldoxime C=N");
 
-    // convert to InChI with -SUU (include unknown/undefined stereo) and back
-    ExtraInchiReturnValues tmp;
-    auto inchi = MolToInchi(*m, tmp, "-SUU");
-    TEST_ASSERT(!inchi.empty());
+  // Cinnamic acid: wavy C=C in conjugated system
+  checkStereoAnyRoundtrip("OC(=O)/C=C/c1ccccc1 |w:3.3|",
+                           "cinnamic acid C=C");
 
-    ExtraInchiReturnValues tmp2;
-    std::unique_ptr<ROMol> m2(InchiToMol(inchi, tmp2));
-    TEST_ASSERT(m2);
+  // Chalcone: wavy C=C between two aryl groups
+  checkStereoAnyRoundtrip("O=C(/C=C/c1ccccc1)c1ccccc1 |w:2.2|",
+                           "chalcone C=C");
 
-    // verify STEREOANY survives the roundtrip
-    bool foundStereoAny2 = false;
-    for (const auto bond : m2->bonds()) {
-      if (bond->getStereo() == Bond::STEREOANY) {
-        foundStereoAny2 = true;
-        TEST_ASSERT(bond->getStereoAtoms().size() == 2);
-        break;
-      }
-    }
-    TEST_ASSERT(foundStereoAny2);
-  }
+  // Crotonaldehyde: simple wavy C=C
+  checkStereoAnyRoundtrip("C/C=C/C=O |w:1.1|", "crotonaldehyde C=C");
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
