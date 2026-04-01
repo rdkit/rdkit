@@ -29,67 +29,143 @@ TEST_CASE("ranges") {
   m->addBond(1, 2, Bond::DOUBLE);
   m->addBond(1, 3, Bond::SINGLE);
   m->addBond(3, 4, Bond::DOUBLE);
-  auto atoms = m->atoms();
-  auto bonds = m->bonds();
-  CHECK(std::ranges::distance(atoms) == 5);
-  CHECK(std::ranges::distance(bonds) == 4);
-  {
-    std::vector<unsigned int> atomDegrees;
-    std::ranges::transform(atoms, std::back_inserter(atomDegrees),
-                           [](const auto atom) { return atom->getDegree(); });
-    CHECK(atomDegrees == std::vector<unsigned int>{1, 3, 1, 2, 1});
+  SECTION("atoms and bonds") {
+    auto atoms = m->atoms();
+    auto bonds = m->bonds();
+    CHECK(std::ranges::distance(atoms) == 5);
+    CHECK(std::ranges::distance(bonds) == 4);
+    {
+      std::vector<unsigned int> atomDegrees;
+      std::ranges::transform(atoms, std::back_inserter(atomDegrees),
+                             [](const auto atom) { return atom->getDegree(); });
+      CHECK(atomDegrees == std::vector<unsigned int>{1, 3, 1, 2, 1});
+    }
+    {
+      std::vector<unsigned int> atomDegrees;
+      std::ranges::transform(atoms | std::views::reverse,
+                             std::back_inserter(atomDegrees),
+                             [](const auto atom) { return atom->getDegree(); });
+      CHECK(atomDegrees == std::vector<unsigned int>{1, 2, 1, 3, 1});
+    }
+    {
+      std::vector<Bond::BondType> bondOrders;
+      std::ranges::transform(
+          bonds, std::back_inserter(bondOrders),
+          [](const auto bond) { return bond->getBondType(); });
+      CHECK(bondOrders ==
+            std::vector<Bond::BondType>{Bond::SINGLE, Bond::DOUBLE,
+                                        Bond::SINGLE, Bond::DOUBLE});
+    }
+    {
+      std::vector<Bond::BondType> bondOrders;
+      std::ranges::transform(
+          bonds | std::views::reverse, std::back_inserter(bondOrders),
+          [](const auto bond) { return bond->getBondType(); });
+      CHECK(bondOrders ==
+            std::vector<Bond::BondType>{Bond::DOUBLE, Bond::SINGLE,
+                                        Bond::DOUBLE, Bond::SINGLE});
+    }
   }
-  {
-    std::vector<unsigned int> atomDegrees;
-    std::ranges::transform(atoms | std::views::reverse,
-                           std::back_inserter(atomDegrees),
-                           [](const auto atom) { return atom->getDegree(); });
-    CHECK(atomDegrees == std::vector<unsigned int>{1, 2, 1, 3, 1});
-  }
-  {
-    std::vector<Bond::BondType> bondOrders;
-    std::ranges::transform(bonds, std::back_inserter(bondOrders),
-                           [](const auto bond) { return bond->getBondType(); });
-    CHECK(bondOrders == std::vector<Bond::BondType>{Bond::SINGLE, Bond::DOUBLE,
-                                                    Bond::SINGLE,
-                                                    Bond::DOUBLE});
-  }
-  {
-    std::vector<Bond::BondType> bondOrders;
-    std::ranges::transform(bonds | std::views::reverse,
-                           std::back_inserter(bondOrders),
-                           [](const auto bond) { return bond->getBondType(); });
-    CHECK(bondOrders == std::vector<Bond::BondType>{Bond::DOUBLE, Bond::SINGLE,
-                                                    Bond::DOUBLE,
-                                                    Bond::SINGLE});
+  SECTION("Neighbors") {
+    auto neighbors = m->atomNeighbors(m->getAtomWithIdx(1));
+    CHECK(std::ranges::distance(neighbors) == 3);
+    std::vector<unsigned int> neighborIndices;
+    std::ranges::transform(neighbors, std::back_inserter(neighborIndices),
+                           [](const auto atom) { return atom->getIdx(); });
+    CHECK(neighborIndices == std::vector<unsigned int>{0, 2, 3});
+    auto abonds = m->atomBonds(m->getAtomWithIdx(1));
+    CHECK(std::ranges::distance(abonds) == 3);
+    std::vector<unsigned int> bondIndices;
+    std::ranges::transform(abonds, std::back_inserter(bondIndices),
+                           [](const auto bond) { return bond->getIdx(); });
+    CHECK(bondIndices == std::vector<unsigned int>{0, 1, 2});
   }
 }
 
 TEST_CASE("algorithms") {
   std::unique_ptr<RWMol> m{new RWMol()};
   REQUIRE(m);
-  //  = "COCF"_smiles;
+  //  = "COC(F)C=C"_smiles;
   m->addAtom(new Atom(6), true, true);
   m->addAtom(new Atom(8), true, true);
   m->addAtom(new Atom(6), true, true);
   m->addAtom(new Atom(9), true, true);
+  m->addAtom(new Atom(6), true, true);
+  m->addAtom(new Atom(6), true, true);
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
   m->addBond(2, 3, Bond::SINGLE);
-  SECTION("sort") {
+  m->addBond(4, 5, Bond::DOUBLE);
+  m->addBond(2, 4, Bond::SINGLE);
+  SECTION("atom sort") {
     auto atoms = m->atoms();
     std::ranges::sort(atoms, [](const auto a1, const auto a2) {
       return a1->getAtomicNum() < a2->getAtomicNum();
     });
-    CHECK(std::ranges::distance(atoms) == 4);
+    CHECK(std::ranges::distance(atoms) == 6);
     std::vector<unsigned int> atomicNums;
     std::ranges::transform(
         atoms, std::back_inserter(atomicNums),
         [](const auto atom) { return atom->getAtomicNum(); });
-    CHECK(atomicNums == std::vector<unsigned int>{6, 6, 8, 9});
+    CHECK(atomicNums == std::vector<unsigned int>{6, 6, 6, 6, 8, 9});
     std::vector<unsigned int> atomIndices;
     std::ranges::transform(atoms, std::back_inserter(atomIndices),
                            [](const auto atom) { return atom->getIdx(); });
-    CHECK(atomIndices == std::vector<unsigned int>{0, 2, 1, 3});
+    CHECK(atomIndices == std::vector<unsigned int>{0, 2, 4, 5, 1, 3});
+  }
+  SECTION("atom count_if, filter, and take") {
+    auto atoms = m->atoms();
+    auto numC = std::ranges::count_if(
+        atoms, [](const auto atom) { return atom->getAtomicNum() == 6; });
+    CHECK(numC == 4);
+    std::vector<unsigned int> atomIndices;
+    std::ranges::transform(atoms | std::views::filter([](const auto atom) {
+                             return atom->getAtomicNum() == 6;
+                           }),
+                           std::back_inserter(atomIndices),
+                           [](const auto atom) { return atom->getIdx(); });
+    CHECK(atomIndices == std::vector<unsigned int>{0, 2, 4, 5});
+    atomIndices.clear();
+    std::ranges::transform(atoms | std::views::filter([](const auto atom) {
+                             return atom->getAtomicNum() == 6;
+                           }) | std::views::take(2),
+                           std::back_inserter(atomIndices),
+                           [](const auto atom) { return atom->getIdx(); });
+    CHECK(atomIndices == std::vector<unsigned int>{0, 2});
+  }
+  SECTION("bond count_if, filter, and take") {
+    auto bonds = m->bonds();
+    auto numSingle = std::ranges::count_if(bonds, [](const auto bond) {
+      return bond->getBondType() == Bond::SINGLE;
+    });
+    CHECK(numSingle == 4);
+    std::vector<unsigned int> bondIndices;
+    std::ranges::transform(bonds | std::views::filter([](const auto bond) {
+                             return bond->getBondType() == Bond::SINGLE;
+                           }),
+                           std::back_inserter(bondIndices),
+                           [](const auto bond) { return bond->getIdx(); });
+    CHECK(bondIndices == std::vector<unsigned int>{0, 1, 2, 4});
+    bondIndices.clear();
+    std::ranges::transform(bonds | std::views::filter([](const auto bond) {
+                             return bond->getBondType() == Bond::SINGLE;
+                           }) | std::views::take(2),
+                           std::back_inserter(bondIndices),
+                           [](const auto bond) { return bond->getIdx(); });
+    CHECK(bondIndices == std::vector<unsigned int>{0, 1});
+  }
+  SECTION("atom partitions") {
+    auto atoms = m->atoms();
+    auto nonCarbon = std::ranges::stable_partition(
+        atoms, [](const auto atom) { return atom->getAtomicNum() == 6; });
+    std::vector<unsigned int> carbonIndices;
+    std::transform(atoms.begin(), nonCarbon.begin(),
+                   std::back_inserter(carbonIndices),
+                   [](const auto atom) { return atom->getIdx(); });
+    CHECK(carbonIndices == std::vector<unsigned int>{0, 2, 4, 5});
+    std::vector<unsigned int> nonCarbonIndices;
+    std::ranges::transform(nonCarbon, std::back_inserter(nonCarbonIndices),
+                           [](const auto atom) { return atom->getIdx(); });
+    CHECK(nonCarbonIndices == std::vector<unsigned int>{1, 3});
   }
 }

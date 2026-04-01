@@ -127,7 +127,6 @@ struct CXXAtomIterator {
 
     Graph *graph = nullptr;
     Iterator pos;
-    // Atom *current = nullptr;
 
     CXXAtomIter() {};
 
@@ -197,7 +196,7 @@ struct CXXAtomIterator {
       : graph(graph), vstart(start), vend(end) {};
   CXXAtomIter begin() { return {graph, vstart}; }
   CXXAtomIter end() { return {graph, vend}; }
-  size_t size() const { return boost::num_vertices(*graph); }
+  size_t size() const { return vend - vstart; }
 };
 // clang-format off
 static_assert(
@@ -221,7 +220,6 @@ struct CXXBondIterator {
 
     Graph *graph = nullptr;
     Iterator pos;
-    // Bond *current = nullptr;
 
     CXXBondIter() {};
 
@@ -264,8 +262,17 @@ struct CXXBondIterator {
       : graph(graph), vstart(start), vend(end) {};
   CXXBondIter begin() { return {graph, vstart}; }
   CXXBondIter end() { return {graph, vend}; }
-  size_t size() const { return boost::num_edges(*graph); }
+  size_t size() const {
+    // bond iterators aren't random access, so we can't just do vend - vstart
+    // here. Instead we have to iterate through;
+    size_t count = 0;
+    for (auto it = vstart; it != vend; ++it) {
+      ++count;
+    }
+    return count;
+  }
 };
+// we don't model sized_range because size() is O(N)
 static_assert(
     std::ranges::bidirectional_range<CXXBondIterator<MolGraph, Bond *>>);
 

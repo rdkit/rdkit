@@ -15,6 +15,8 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <algorithm>
 #include <ranges>
+#include <filesystem>
+#include <execution>
 
 using namespace RDKit;
 
@@ -126,4 +128,97 @@ TEST_CASE("ranges") {
                            [](const auto atom) { return atom->getDegree(); });
     CHECK(atomDegrees == std::vector<unsigned int>{1, 2, 1, 3, 1});
   }
+}
+
+std::filesystem::path relative_to_rdbase(
+    const std::filesystem::path &relative) {
+  char *rdbase = std::getenv("RDBASE");
+  if (!rdbase) {
+    throw std::runtime_error("RDBASE environment variable not set");
+  }
+  std::filesystem::path path(rdbase);
+  path /= relative;
+  return path;
+}
+
+TEST_CASE("benchmarking") {
+  auto *rdbase = std::getenv("RDBASE");
+  REQUIRE(rdbase);
+  auto path =
+      std::filesystem::path(rdbase) / "Regress/Data/zinc.leads.500.q.smi";
+  REQUIRE(std::filesystem::exists(path));
+  auto inf = std::ifstream(path);
+  REQUIRE(inf);
+  std::vector<std::unique_ptr<RWMol>> mols;
+  std::string line;
+  while (std::getline(inf, line)) {
+    mols.push_back(v2::SmilesParse::MolFromSmiles(line));
+    REQUIRE(mols.back());
+  }
+  double accum = 0;
+  auto start = std::chrono::high_resolution_clock::now();
+  for (unsigned int iter = 0; iter < 100000; ++iter) {
+    for (const auto &m : mols) {
+      for (const auto atom : m->atoms()) {
+        if (atom->getAtomicNum() == 6) {
+          accum += atom->getDegree();
+        }
+      }
+    }
+  }
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration =
+      std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  std::cerr << "Iterating over " << mols.size() << " molecules took "
+            << duration.count() << " ms" << std::endl;
+  CHECK(accum > 0);
+  accum = 0.0;
+  start = std::chrono::high_resolution_clock::now();
+  for (unsigned int iter = 0; iter < 100000; ++iter) {
+    for (const auto &m : mols) {
+      auto atoms = m->atoms();
+      std::ranges::for_each(
+          atoms | std::views::filter([](const auto atom) {
+            return atom->getAtomicNum() == 6;
+          }),
+          [&accum](const auto atom) { accum += atom->getDegree(); });
+    }
+  }
+  end = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  std::cerr << "Iterating with ranges over " << mols.size()
+            << " molecules took " << duration.count() << " ms" << std::endl;
+  CHECK(accum > 0);
+  accum = 0.0;
+  start = std::chrono::high_resolution_clock::now();
+  for (unsigned int iter = 0; iter < 100000; ++iter) {
+    for (const auto &m : mols) {
+      auto atoms = m->atoms();
+      std::ranges::for_each(
+          atoms | std::views::filter([](const auto atom) {
+            return atom->getAtomicNum() == 6;
+          }) | std::views::reverse,
+          [&accum](const auto atom) { accum += atom->getDegree(); });
+    }
+  }
+  end = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  std::cerr << "Iterating with ranges in reverseover " << mols.size()
+            << " molecules took " << duration.count() << " ms" << std::endl;
+  CHECK(accum > 0);
+  accum = 0.0;
+  start = std::chrono::high_resolution_clock::now();
+  for (unsigned int iter = 0; iter < 100000; ++iter) {
+    for (const auto &m : mols) {
+      auto atoms = m->atoms();
+      std::for_each(atoms.begin(), atoms.end(), [&accum](const auto atom) {
+        if (atom->getAtomicNum() == 6) accum += atom->getDegree();
+      });
+    }
+  }
+  end = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  std::cerr << "Iterating with for_each over " << mols.size()
+            << " molecules took " << duration.count() << " ms" << std::endl;
+  CHECK(accum > 0);
 }
