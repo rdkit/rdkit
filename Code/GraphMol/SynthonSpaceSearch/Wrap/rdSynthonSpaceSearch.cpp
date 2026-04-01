@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 
+#include "GraphMol/Wrap/substructmethods.h"
+
 #include <csignal>
 
 #include <RDBoost/python.h>
@@ -21,6 +23,7 @@
 namespace python = boost::python;
 
 namespace RDKit {
+namespace helpers {
 python::list hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
   python::list pyres;
   for (auto &r : res.getHitMolecules()) {
@@ -304,6 +307,29 @@ void buildShapes_helper(SynthonSpaceSearch::SynthonSpace &spc,
   }
 }
 
+class pyUserConfGenFunctor : public pyFunctor {
+ public:
+  pyUserConfGenFunctor(python::object obj) : dp_obj(std::move(obj)) {}
+  ~pyUserConfGenFunctor() = default;
+  std::unique_ptr<RWMol> operator()(const std::string &smiles,
+                                    unsigned int numConformers) {
+    // grab the GIL
+    PyGILStateHolder h;
+    auto res = dp_obj(smiles, numConformers);
+    ROMol *m = python::extract<ROMol *>(res);
+    return std::make_unique<RWMol>(*m);
+  }
+
+ private:
+  python::object dp_obj;
+};
+
+void setUserConfGen_helper(SynthonSpaceSearch::ShapeBuildParams &ps,
+                           python::object func) {
+  ps.userConformerGenerator = pyUserConfGenFunctor(func);
+}
+}  // namespace helpers
+
 BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   python::scope().attr("__doc__") =
       "Module containing implementation of SynthonSpace search of"
@@ -311,7 +337,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       "  NOTE: This functionality is experimental and the API"
       " and/or results may change in future releases.";
 
-  SearchResults_wrapper::wrap();
+  helpers::SearchResults_wrapper::wrap();
 
   std::string docString = "SynthonSpaceSearch parameters.";
   python::class_<SynthonSpaceSearch::SynthonSpaceSearchParams,
@@ -503,12 +529,19 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           "interimWrites", &SynthonSpaceSearch::ShapeBuildParams::interimWrites,
           "If an interim file has been given, every this many shapes write a"
           " new version of the file.  Default=1000.")
+      .def(
+          "setUserConformerGenerator", helpers::setUserConfGen_helper,
+          python::with_custodian_and_ward<1, 2>(), python::args("self", "func"),
+          R"DOC(Allows you to provide a function that will be called instead of the default
+ conformer generator to generate conformers for the synthons.  The function should
+ take a SMILES string and the maximmum number of conformers to generated and
+ return a molecule object.)DOC")
       .def("__setattr__", &safeSetattr);
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(
       "SynthonSpace", docString.c_str(), python::init<>())
-      .def("ReadTextFile", &readTextFile_helper,
+      .def("ReadTextFile", &helpers::readTextFile_helper,
            (python::arg("self"), python::arg("inFile")),
            "Reads text file of the sort used by ChemSpace/Enamine.")
       .def("ReadDBFile", &SynthonSpaceSearch::SynthonSpace::readDBFile,
@@ -534,60 +567,61 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       .def("GetNumSynthons", &SynthonSpaceSearch::SynthonSpace::getNumSynthons,
            python::arg("self"),
            "Returns number of synthons in the SynthonSpace.")
-      .def("Summarise", &summariseHelper, python::arg("self"),
+      .def("Summarise", &helpers::summariseHelper, python::arg("self"),
            "Writes a summary of the SynthonSpace to stdout.")
       .def(
-          "ReportSynthonUsage", &reportSynthonUsage_helper, python::arg("self"),
+          "ReportSynthonUsage", &helpers::reportSynthonUsage_helper,
+          python::arg("self"),
           "Writes a summary of the synthon usage in the SynthonSpace to stdout.")
       .def("GetSynthonFingerprintType",
            &SynthonSpaceSearch::SynthonSpace::getSynthonFingerprintType,
            python::arg("self"),
            "Returns the information string for the fingerprint generator"
            " used to create this space.")
-      .def("SubstructureSearch", &substructureSearch_helper1,
+      .def("SubstructureSearch", &helpers::substructureSearch_helper1,
            (python::arg("self"), python::arg("query"),
             python::arg("substructMatchParams") = python::object(),
             python::arg("params") = python::object()),
            "Does a substructure search in the SynthonSpace.")
-      .def("SubstructureSearch", &substructureSearch_helper2,
+      .def("SubstructureSearch", &helpers::substructureSearch_helper2,
            (python::arg("self"), python::arg("query"),
             python::arg("substructMatchParams") = python::object(),
             python::arg("params") = python::object()),
            "Does a substructure search in the SynthonSpace using an"
            " extended query.")
       .def(
-          "SubstructureSearchIncremental", &substructureSearch_helper3,
+          "SubstructureSearchIncremental", &helpers::substructureSearch_helper3,
           (python::arg("self"), python::arg("query"), python::arg("callback"),
            python::arg("substructMatchParams") = python::object(),
            python::arg("params") = python::object()),
           "Does a substructure search in the SynthonSpace returning results in the callback.")
-      .def("FingerprintSearch", &fingerprintSearch_helper,
+      .def("FingerprintSearch", &helpers::fingerprintSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("fingerprintGenerator"),
             python::arg("params") = python::object()),
            "Does a fingerprint search in the SynthonSpace using the"
            " FingerprintGenerator passed in.")
-      .def("FingerprintSearchIncremental", &fingerprintSearch_helper_2,
+      .def("FingerprintSearchIncremental", &helpers::fingerprintSearch_helper_2,
            (python::arg("self"), python::arg("query"),
             python::arg("fingerprintGenerator"), python::arg("callback"),
             python::arg("params") = python::object()),
            "Does a fingerprint search in the SynthonSpace using the"
            " FingerprintGenerator passed in, returning results the callback.")
-      .def("RascalSearch", &rascalSearch_helper,
+      .def("RascalSearch", &helpers::rascalSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("rascalOptions"),
             python::arg("params") = python::object()),
            "Does a search using the Rascal similarity score.  The similarity"
            " threshold used is provided by rascalOptions, and the one in"
            " params is ignored.")
-      .def("RascalSearchIncremental", &rascalSearch_helper_2,
+      .def("RascalSearchIncremental", &helpers::rascalSearch_helper_2,
            (python::arg("self"), python::arg("query"),
             python::arg("rascalOptions"), python::arg("callback"),
             python::arg("params") = python::object()),
            "Does a search using the Rascal similarity score.  The similarity"
            " threshold used is provided by rascalOptions, and the one in"
            " params is ignored.  Returns results iteratively in the callback.")
-      .def("ShapeSearch", &shapeSearch_helper,
+      .def("ShapeSearch", &helpers::shapeSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("params") = python::object()),
            "Does a search using the pubchem-align3d shape similarity metric.")
@@ -602,7 +636,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " explicitly.  If progressBarWidth is > 0, a progress bar of that width"
           " plus about 35 characters is displayed.")
       .def(
-          "BuildSynthonShapes", &buildShapes_helper,
+          "BuildSynthonShapes", &helpers::buildShapes_helper,
           (python::arg("self"), python::arg("py_params") = python::object()),
           "Build shapes for the synthons.  The conformations are generated, pruned"
           " with the given threshold, which is passed directly to EmbedMultipleConfs.");
@@ -615,7 +649,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       "- inFilename the name of the text file"
       "- outFilename the name of the binary file"
       "- optional fingerprint generator";
-  python::def("ConvertTextToDBFile", &RDKit::convertTextToDBFile_helper,
+  python::def("ConvertTextToDBFile", &helpers::convertTextToDBFile_helper,
               (python::arg("inFilename"), python::arg("outFilename"),
                python::arg("fpGen") = python::object(),
                python::arg("py_shapeParams") = python::object()),

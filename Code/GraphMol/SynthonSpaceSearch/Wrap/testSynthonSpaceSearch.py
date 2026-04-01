@@ -39,7 +39,8 @@ from pathlib import Path
 
 from rdkit import Chem, rdBase
 from rdkit.Chem import (rdSynthonSpaceSearch, rdFingerprintGenerator,
-                        rdRascalMCES, rdGeneralizedSubstruct, rdMolDescriptors)
+                        rdRascalMCES, rdGeneralizedSubstruct, rdMolDescriptors,
+                        rdDistGeom)
 
 
 class TestCase(unittest.TestCase):
@@ -245,6 +246,27 @@ class TestCase(unittest.TestCase):
     bestHit = results.GetBestHit()
     self.assertIsNotNone(bestHit)
     self.assertLess(float(bestHit.GetProp('Similarity')), 1.0)
+
+  def testUserConfGen(self):
+    def makeConformers(smiles, numConfs):
+      mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
+      rdDistGeom.EmbedMultipleConfs(mol, 10, randomSeed=0xdac)
+      mol = Chem.RemoveHs(mol)
+      return mol
+
+    fName = self.sssDir / "amide_space.txt"
+
+    buildParams = rdSynthonSpaceSearch.ShapeBuildParams()
+    buildParams.numThreads = 1
+    buildParams.setUserConformerGenerator(makeConformers)
+    
+    synthonspace2 = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace2.ReadTextFile(fName)
+    synthonspace2.BuildSynthonShapes(buildParams)
+    # There's not an easy test for this, but we can at least
+    # check there's there correct number of reactions and products.
+    self.assertEqual(synthonspace2.GetNumReactions(), 1)
+    self.assertEqual(synthonspace2.GetNumProducts(), 12)
 
     
 if __name__ == "__main__":
