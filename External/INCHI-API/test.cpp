@@ -1021,6 +1021,16 @@ void testStereoAnyRoundtrip() {
   // Crotonaldehyde: simple wavy C=C
   checkStereoAnyRoundtrip("C/C=C/C=O |w:1.1|", "crotonaldehyde C=C");
 
+  // Tamoxifen-like: wavy C=C in drug-like molecule
+  checkStereoAnyRoundtrip(
+      "CC/C(=C(/c1ccccc1)c1ccc(OCCN(C)C)cc1)c1ccccc1 |w:2.2|",
+      "tamoxifen-like C=C");
+
+  // Retinal-like: wavy C=C in polyene chain
+  checkStereoAnyRoundtrip(
+      "CC1=C(/C=C/C(C)=C/C=C/C(C)=C/C=O)C(C)(C)CCC1 |w:3.3|",
+      "retinal-like C=C");
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
