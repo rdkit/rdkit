@@ -141,6 +141,7 @@ std::filesystem::path relative_to_rdbase(
   return path;
 }
 
+#if 0
 TEST_CASE("benchmarking") {
   auto *rdbase = std::getenv("RDBASE");
   REQUIRE(rdbase);
@@ -203,7 +204,7 @@ TEST_CASE("benchmarking") {
   }
   end = std::chrono::high_resolution_clock::now();
   duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-  std::cerr << "Iterating with ranges in reverseover " << mols.size()
+  std::cerr << "Iterating with ranges in reverse over " << mols.size()
             << " molecules took " << duration.count() << " ms" << std::endl;
   CHECK(accum > 0);
   accum = 0.0;
@@ -222,3 +223,4 @@ TEST_CASE("benchmarking") {
             << " molecules took " << duration.count() << " ms" << std::endl;
   CHECK(accum > 0);
 }
+#endif
