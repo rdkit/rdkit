@@ -2286,9 +2286,11 @@ std::string get_bond_config_block(
         break;
       }
     }
-    // Also skip if the double bond itself came from a mol file with crossed
-    // stereo — those are handled by wU/wD markers from mol file wedging.
-    if (!alreadyHandled && bond->hasProp("_MolFileBondStereo")) {
+    // Also skip if the STEREOANY bond has no stereo atoms assigned (e.g.
+    // programmatic SetStereo) or came from a mol file with crossed stereo.
+    if (!alreadyHandled &&
+        (bond->getStereoAtoms().empty() ||
+         bond->hasProp("_MolFileBondStereo"))) {
       alreadyHandled = true;
     }
     if (!alreadyHandled) {
