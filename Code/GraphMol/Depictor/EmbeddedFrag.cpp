@@ -452,8 +452,7 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
   return true;
 }
 
-bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
-                                   unsigned int ring_count) {
+bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
   CoordinateTemplates &coordinate_templates =
       CoordinateTemplates::getRingSystemTemplates();
 
@@ -632,7 +631,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
       (fusedRings.size() > 1 ||
        (fusedRings.size() == 1 && fusedRings[0].size() > 8))) {
     RDKit::Union(fusedRings, funion);
-    bool found_template = matchToTemplate(funion, fusedRings.size());
+    bool found_template = matchToTemplate(funion);
     if (found_template) {
       // we are done
       return;
@@ -654,7 +653,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
     if (coreRings.size() > 1 && coreRings.size() < fusedRings.size()) {
       // look for a template that matches the core ring system
       RDKit::Union(coreRings, funion);
-      bool found_template = matchToTemplate(funion, coreRings.size());
+      bool found_template = matchToTemplate(funion);
       if (found_template) {
         doneRings = coreRingsIds;
       }
