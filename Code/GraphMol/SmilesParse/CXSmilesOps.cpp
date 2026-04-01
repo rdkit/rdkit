@@ -2268,19 +2268,33 @@ std::string get_bond_config_block(
         bond->getStereo() != Bond::BondStereo::STEREOANY) {
       continue;
     }
+    // Skip ring double bonds — they are handled by
+    // get_ringbond_cistrans_block() which emits |ctu:| instead.
+    if (mol.getRingInfo()->isInitialized() &&
+        mol.getRingInfo()->numBondRings(idx)) {
+      continue;
+    }
     // Check if an adjacent single bond already has BondDir::UNKNOWN
-    // (set by the CXSMILES parser). If so, skip — it's already handled
-    // by the main loop above.
+    // (set by the CXSMILES parser) or _MolFileBondCfg (set by the
+    // mol file parser). If so, skip — the wavy bond is already handled
+    // by the main loop above, or by wU/wD markers from mol file wedging.
     bool alreadyHandled = false;
     for (const auto &nbond : mol.atomBonds(bond->getBeginAtom())) {
-      if (nbond->getBondDir() == Bond::BondDir::UNKNOWN) {
+      if (nbond->getBondDir() == Bond::BondDir::UNKNOWN ||
+          nbond->hasProp("_MolFileBondCfg")) {
         alreadyHandled = true;
         break;
       }
     }
+    // Also skip if the double bond itself came from a mol file with crossed
+    // stereo — those are handled by wU/wD markers from mol file wedging.
+    if (!alreadyHandled && bond->hasProp("_MolFileBondStereo")) {
+      alreadyHandled = true;
+    }
     if (!alreadyHandled) {
       for (const auto &nbond : mol.atomBonds(bond->getEndAtom())) {
-        if (nbond->getBondDir() == Bond::BondDir::UNKNOWN) {
+        if (nbond->getBondDir() == Bond::BondDir::UNKNOWN ||
+            nbond->hasProp("_MolFileBondCfg")) {
           alreadyHandled = true;
           break;
         }

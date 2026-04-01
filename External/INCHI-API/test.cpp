@@ -1031,6 +1031,14 @@ void testStereoAnyRoundtrip() {
       "CC1=C(/C=C/C(C)=C/C=C/C(C)=C/C=O)C(C)(C)CCC1 |w:3.3|",
       "retinal-like C=C");
 
+  // Chiral center adjacent to wavy C=C
+  checkStereoAnyRoundtrip("O=C(O)[C@@H](CC=Cc1ccccc1)N |w:4.4|",
+                           "chiral + wavy C=C");
+
+  // Chiral center adjacent to wavy C=N oxime
+  checkStereoAnyRoundtrip("C[C@H](O)/C(=N/O)c1ccccc1 |w:3.3|",
+                           "chiral + wavy oxime C=N");
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
