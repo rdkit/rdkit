@@ -788,15 +788,13 @@ bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
     }
   }
   field->initialize();
-  std::size_t iter = 0;
   int needMore = 1;
   if (field->calcEnergy() > ERROR_TOL) {
-    while (needMore && iter < 8) {
+    while (needMore) {
       if (end_time != nullptr && Clock::now() > *end_time) {
         return false;
       }
       needMore = field->minimize(100u, embedParams.optimizerForceTol);
-      ++iter;
     }
   }
   if (embedParams.useBasicKnowledge) {
@@ -1051,7 +1049,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 
     // check ctrl-C
     if (ControlCHandler::getGotSignal()) {
-      return false;
+;
     }
 
     // run Minimization
