@@ -222,7 +222,7 @@ double getColorVolume_helper(const GaussianShape::ShapeInput &shape) {
 }
 
 python::tuple bestSimilarity_helper(GaussianShape::ShapeInput &refShape,
-                                    GaussianShape::ShapeInput &fitShape,
+                                    const GaussianShape::ShapeInput &fitShape,
                                     double threshold,
                                     const python::object &py_overlayOpts) {
   GaussianShape::ShapeOverlayOptions overlayOpts;
@@ -235,7 +235,7 @@ python::tuple bestSimilarity_helper(GaussianShape::ShapeInput &refShape,
   auto bestSim = refShape.bestSimilarity(fitShape, bestThisShape, bestFitShape,
                                          bestXform, threshold, overlayOpts);
   python::list results;
-  results.append(bestSim);
+  results.append(python::make_tuple(bestSim[0], bestSim[1], bestSim[2]));
   results.append(bestThisShape);
   results.append(bestFitShape);
   python::list pyMatrix;
@@ -442,8 +442,8 @@ void wrap_rdGaussianShape() {
           " The score runs between 0.0 and 1.0, so the default threshold of -1.0"
           " means no threshold. Fills in the shape numbers of the two that were"
           " responsible if there is something above the threshold, and the"
-          " transformation that did it. Returns a tuple of the similarity score"
-          " (-1.0 if there was nothing above the threshold), the number of the"
+          " transformation that did it. Returns a tuple of the similarity scores"
+          " ((-1.0, -1.0, -1.0) if there was nothing above the threshold), the number of the"
           " shape for this object and the shape number of the fitShape that gave"
           " the best similarity and the transformation matrix (as a list of 16 floats)"
           " that will reproduce the best overlay.  The shapes won't necessarily"
