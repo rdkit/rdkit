@@ -1220,7 +1220,7 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     REQUIRE(rxn);
 
     std::string expected_cxsmarts =
-        "[#6:6]-[#8:5]-[#6:3](-*)-[#8:2]-*>>[#6:6]-[#7:5]-[#6:3](-*)-[#8:2]-* |$;;;star_e;;star_e;;;;star_e;;star_e$,SgD:1,0:foo:bar::::,,SgD:7,6:foo:baz::::,,,Sg:n:4,2,1,0::ht:::,,Sg:n:10,8,7,6::ht:::,SgH:3:1.1|";
+        "[#6:6]-[#8:5]-[#6:3](-*)-[#8:2]-*>>[#6:6]-[#7:5]-[#6:3](-*)-[#8:2]-* |$;;;star_e;;star_e;;;;star_e;;star_e$,SgD:1,0:foo:bar::::,SgD:7,6:foo:baz::::,Sg:n:4,2,1,0::ht:::,Sg:n:10,8,7,6::ht:::,SgH:3:1.1|";
     SmilesWriteParams params;
     auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS;
     std::string output_cxsmarts =

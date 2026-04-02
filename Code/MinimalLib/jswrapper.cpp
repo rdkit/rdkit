@@ -452,8 +452,8 @@ emscripten::val get_mmpa_frags_helper(const JSMolBase &self,
                                       unsigned int maxCutBonds) {
   auto obj = emscripten::val::object();
   auto pairs = self.get_mmpa_frags(minCuts, maxCuts, maxCutBonds);
-  obj.set("cores", pairs.first);
-  obj.set("sidechains", pairs.second);
+  obj.set("cores", emscripten::val(pairs.first, emscripten::allow_raw_pointers()));
+  obj.set("sidechains", emscripten::val(pairs.second, emscripten::allow_raw_pointers()));
   return obj;
 }
 #endif
@@ -656,8 +656,20 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                     get_avalon_fp_as_uint8array))
 #endif
 #endif
-      .function("get_substruct_match", &JSMolBase::get_substruct_match)
-      .function("get_substruct_matches", &JSMolBase::get_substruct_matches)
+      .function("get_substruct_match",
+                select_overload<std::string(const JSMolBase &) const>(
+                    &JSMolBase::get_substruct_match))
+      .function(
+          "get_substruct_match",
+          select_overload<std::string(const JSMolBase &, const std::string &)
+                              const>(&JSMolBase::get_substruct_match))
+      .function("get_substruct_matches",
+                select_overload<std::string(const JSMolBase &) const>(
+                    &JSMolBase::get_substruct_matches))
+      .function(
+          "get_substruct_matches",
+          select_overload<std::string(const JSMolBase &, const std::string &)
+                              const>(&JSMolBase::get_substruct_matches))
       .function("get_descriptors", &JSMolBase::get_descriptors)
       .function("get_morgan_fp",
                 select_overload<std::string() const>(&JSMolBase::get_morgan_fp))

@@ -68,8 +68,28 @@ MorganAtomInvGenerator *MorganAtomInvGenerator::clone() const {
 }
 
 MorganFeatureAtomInvGenerator::MorganFeatureAtomInvGenerator(
-    std::vector<const ROMol *> *patterns) {
-  dp_patterns = patterns;
+    const std::vector<const ROMol *> *patterns) {
+  if (patterns) {
+    dp_patterns = new std::vector<const ROMol *>;
+    dp_patterns->reserve(patterns->size());
+    for (auto pattern : *patterns) {
+      dp_patterns->push_back(new ROMol(*pattern));
+    }
+  }
+}
+
+void MorganFeatureAtomInvGenerator::cleanUpPatterns() {
+  if (dp_patterns) {
+    for (auto mol : *dp_patterns) {
+      delete mol;
+    }
+    delete dp_patterns;
+    dp_patterns = nullptr;
+  }
+}
+
+MorganFeatureAtomInvGenerator::~MorganFeatureAtomInvGenerator() {
+  cleanUpPatterns();
 }
 
 std::string MorganFeatureAtomInvGenerator::infoString() const {
@@ -94,6 +114,7 @@ void MorganFeatureAtomInvGenerator::fromJSON(
     const boost::property_tree::ptree &pt) {
   if (pt.get_child_optional("patternSMARTS")) {
     const auto &patternsNode = pt.get_child("patternSMARTS");
+    cleanUpPatterns();
     dp_patterns = new std::vector<const ROMol *>();
     for (const auto &patternNode : patternsNode) {
       std::string smarts = patternNode.second.get_value<std::string>();
@@ -543,12 +564,12 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
                                         ownsBondInvGen);
 }
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
-getMorganGenerator(const MorganArguments &, AtomInvariantsGenerator *,
-                   BondInvariantsGenerator *, bool, bool);
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *
-getMorganGenerator(const MorganArguments &, AtomInvariantsGenerator *,
-                   BondInvariantsGenerator *, bool, bool);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t>
+    *getMorganGenerator(const MorganArguments &, AtomInvariantsGenerator *,
+                        BondInvariantsGenerator *, bool, bool);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t>
+    *getMorganGenerator(const MorganArguments &, AtomInvariantsGenerator *,
+                        BondInvariantsGenerator *, bool, bool);
 
 template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
 getMorganGenerator(unsigned int radius, bool countSimulation,

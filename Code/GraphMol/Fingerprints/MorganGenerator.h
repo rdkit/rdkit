@@ -14,7 +14,6 @@
 
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <cstdint>
-
 namespace RDKit {
 
 namespace MorganFingerprint {
@@ -53,7 +52,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomInvGenerator
  */
 class RDKIT_FINGERPRINTS_EXPORT MorganFeatureAtomInvGenerator
     : public AtomInvariantsGenerator {
-  std::vector<const ROMol *> *dp_patterns;
+  void cleanUpPatterns();
+  std::vector<const ROMol *> *dp_patterns = nullptr;
 
  public:
   /**
@@ -64,7 +64,9 @@ class RDKIT_FINGERPRINTS_EXPORT MorganFeatureAtomInvGenerator
    Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998) will be used for
    Donor, Acceptor, Aromatic, Halogen, Basic, Acidic.
    */
-  MorganFeatureAtomInvGenerator(std::vector<const ROMol *> *patterns = nullptr);
+  MorganFeatureAtomInvGenerator(
+      const std::vector<const ROMol *> *patterns = nullptr);
+  ~MorganFeatureAtomInvGenerator();
 
   std::vector<std::uint32_t> *getAtomInvariants(
       const ROMol &mol) const override;

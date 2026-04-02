@@ -36,6 +36,16 @@ void Transform3D::TransformPoint(Point3D &pt) const {
   pt.z = z;
 }
 
+void Transform3D::TransformPoint(double *pt) const {
+  double *data = d_data.get();
+  double x = data[0] * pt[0] + data[1] * pt[1] + data[2] * pt[2] + data[3];
+  double y = data[4] * pt[0] + data[5] * pt[1] + data[6] * pt[2] + data[7];
+  double z = data[8] * pt[0] + data[9] * pt[1] + data[10] * pt[2] + data[11];
+  pt[0] = x;
+  pt[1] = y;
+  pt[2] = z;
+}
+
 void Transform3D::SetTranslation(const Point3D &move) {
   unsigned int i = DIM_3D - 1;
   double *data = d_data.get();
@@ -101,7 +111,7 @@ void Transform3D::SetRotation(double angle, const Point3D &axis) {
   this->SetRotation(c, s, axis);
 }
 
-void Transform3D::SetRotationFromQuaternion(double quaternion[4]) {
+void Transform3D::SetRotationFromQuaternion(const double quaternion[4]) {
   double q00 = quaternion[0] * quaternion[0];
   double q11 = quaternion[1] * quaternion[1];
   double q22 = quaternion[2] * quaternion[2];

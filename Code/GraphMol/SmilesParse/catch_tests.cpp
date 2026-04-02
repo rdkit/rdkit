@@ -109,9 +109,9 @@ TEST_CASE("Github #2029", "[SMILES][bug]") {
     CHECK("" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
                                            allBondsExplicit));
     allBondsExplicit = true;
-    CHECK("=" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(0), -1, doKekule,
+    CHECK("-" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(0), -1, doKekule,
                                             allBondsExplicit));
-    CHECK("-" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
+    CHECK("=" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
                                             allBondsExplicit));
   }
 }
@@ -1205,7 +1205,7 @@ TEST_CASE("polymer SGroups") {
 
       auto smi = MolToCXSmiles(*mol);
       CHECK(smi ==
-            "*NCCO* |$star_e;;;;;star_e$,,,Sg:n:1,2::ht:::,Sg:any:3,4::hh:::|");
+            "*NCCO* |$star_e;;;;;star_e$,Sg:n:1,2::ht:::,Sg:any:3,4::hh:::|");
     }
 
     {  // multiple s groups + data
@@ -1245,7 +1245,7 @@ TEST_CASE("polymer SGroups") {
       auto smi = MolToCXSmiles(*mol);
       CHECK(smi ==
             "*OCCNCC "
-            "|$star_e;;;;;;$,SgD:5:atomdata:val::::,,,,Sg:n:4,3::ht:::,Sg:any:"
+            "|$star_e;;;;;;$,SgD:5:atomdata:val::::,Sg:n:4,3::ht:::,Sg:any:"
             "2,1::hh:::|");
     }
   }
@@ -1270,7 +1270,7 @@ TEST_CASE("SGroup hierarchy") {
     CHECK(!sgs[1].hasProp("PARENT"));
     CHECK(MolToCXSmiles(*mol) ==
           "*CNC(C*)O* "
-          "|$star_e;;;;;star_e;;star_e$,,,Sg:any:2,1::ht:::,Sg:any:4,3,2,1,0,6:"
+          "|$star_e;;;;;star_e;;star_e$,Sg:any:2,1::ht:::,Sg:any:4,3,2,1,0,6:"
           ":ht:::,SgH:1:0|");
   }
   SECTION("nested") {
@@ -1291,7 +1291,7 @@ TEST_CASE("SGroup hierarchy") {
         MolToCXSmiles(*mol) ==
         "*CNC(CC(*)C*)O* |$star_e;;;;;;star_e;;star_e;;star_e$,SgD:4:internal "
         "data:val::::,SgD:7:atom "
-        "value:value2::::,,,,,,Sg:n:7::ht:::,Sg:n:2::ht:::,Sg:any:5,7,8,4,3,2,"
+        "value:value2::::,Sg:n:7::ht:::,Sg:n:2::ht:::,Sg:any:5,7,8,4,3,2,"
         "1,0,9::ht:::,SgH:2:1,4:0.2.3|");
   }
 }
@@ -1358,9 +1358,8 @@ TEST_CASE("Github #4320: Support toggling components of CXSMILES output") {
             "*CNC(CC(*)C*)O* "
             "|$star_e;;;;;;star_e;;star_e;;star_e$,SgD:4:internal "
             "data:val::::,SgD:7:atom "
-            "value:value2::::,,,,,,Sg:n:7::ht:::,Sg:n:2::ht:::,Sg:any:5,7,8,4,"
-            "3,2,"
-            "1,0,9::ht:::,SgH:2:1,4:0.2.3|");
+            "value:value2::::,Sg:n:7::ht:::,Sg:n:2::ht:::,Sg:any:5,7,8,4,"
+            "3,2,1,0,9::ht:::,SgH:2:1,4:0.2.3|");
       CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
     }
     {
@@ -1374,11 +1373,10 @@ TEST_CASE("Github #4320: Support toggling components of CXSMILES output") {
           MolToCXSmiles(*mol, ps,
                         SmilesWrite::CXSmilesFields::CX_ALL ^
                             SmilesWrite::CXSmilesFields::CX_ATOM_LABELS);
-      CHECK(
-          cxsmi ==
-          "*CNC(CC(*)C*)O* |SgD:4:internal data:val::::,SgD:7:atom "
-          "value:value2::::,,,,,,Sg:n:7::ht:::,Sg:n:2::ht:::,Sg:any:5,7,8,4,3,"
-          "2,1,0,9::ht:::,SgH:2:1,4:0.2.3|");
+      CHECK(cxsmi ==
+            "*CNC(CC(*)C*)O* |SgD:4:internal data:val::::,SgD:7:atom "
+            "value:value2::::,Sg:n:7::ht:::,Sg:n:2::ht:::,Sg:any:5,7,8,4,3,"
+            "2,1,0,9::ht:::,SgH:2:1,4:0.2.3|");
       CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
     }
     {
@@ -1387,7 +1385,7 @@ TEST_CASE("Github #4320: Support toggling components of CXSMILES output") {
                                      SmilesWrite::CXSmilesFields::CX_SGROUPS);
       CHECK(cxsmi ==
             "*CNC(CC(*)C*)O* "
-            "|$star_e;;;;;;star_e;;star_e;;star_e$,,,Sg:n:7::ht:::,Sg:n:2::ht::"
+            "|$star_e;;;;;;star_e;;star_e;;star_e$,Sg:n:7::ht:::,Sg:n:2::ht::"
             ":,Sg:any:5,7,8,4,3,2,1,0,9::ht:::,SgH:2:0.1|");
       CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
     }
@@ -1398,7 +1396,7 @@ TEST_CASE("Github #4320: Support toggling components of CXSMILES output") {
       CHECK(cxsmi ==
             "*CNC(CC(*)C*)O* "
             "|$star_e;;;;;;star_e;;star_e;;star_e$,SgD:4:internal "
-            "data:val::::,SgD:7:atom value:value2::::,,,|");
+            "data:val::::,SgD:7:atom value:value2::::|");
       CHECK(std::unique_ptr<ROMol>(SmilesToMol(cxsmi)));
     }
   }
@@ -1638,6 +1636,7 @@ TEST_CASE("Github #4582: double bonds and ring closures") {
   const auto useLegacy = GENERATE(true, false);
   CAPTURE(useLegacy);
   UseLegacyStereoPerceptionFixture fxn(useLegacy);
+
   auto mol = R"CTAB(CHEMBL409450
      RDKit          2D
 
@@ -1691,30 +1690,31 @@ TEST_CASE("Github #4582: double bonds and ring closures") {
  20 21  1  0
 M  END)CTAB"_ctab;
   REQUIRE(mol);
-  auto dbond = mol->getBondBetweenAtoms(1, 19);
-  REQUIRE(dbond);
-  CHECK(dbond->getBondType() == Bond::BondType::DOUBLE);
-  if (useLegacy) {
-    CHECK(dbond->getStereo() == Bond::BondStereo::STEREOE);
-    CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
-  } else {
-    CHECK(dbond->getStereo() == Bond::BondStereo::STEREOCIS);
-    CHECK(dbond->getStereoAtoms() == std::vector<int>{0, 20});
+
+  constexpr auto smiles_reference =
+      R"SMI(O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\O)SMI";
+
+  SECTION("basic test") {
+    auto dbond = mol->getBondBetweenAtoms(1, 19);
+    REQUIRE(dbond);
+    CHECK(dbond->getBondType() == Bond::BondType::DOUBLE);
+    if (useLegacy) {
+      CHECK(dbond->getStereo() == Bond::BondStereo::STEREOE);
+      CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
+    } else {
+      CHECK(dbond->getStereo() == Bond::BondStereo::STEREOCIS);
+      CHECK(dbond->getStereoAtoms() == std::vector<int>{0, 20});
+    }
+    auto csmiles = MolToSmiles(*mol);
+    CHECK(csmiles == smiles_reference);
   }
-  auto csmiles = MolToSmiles(*mol);
-  CHECK(csmiles == R"SMI(O=C1Nc2cc(Br)ccc2/C1=C1Nc2ccccc2C/1=N\O)SMI");
 
   SECTION("bulk random output order") {
     auto csmiles = MolToSmiles(*mol);
-    CHECK(csmiles == R"SMI(O=C1Nc2cc(Br)ccc2/C1=C1Nc2ccccc2C/1=N\O)SMI");
+    CHECK(csmiles == smiles_reference);
     SmilesWriteParams ps;
     ps.doRandom = true;
     for (auto i = 0u; i < 100; ++i) {
-      if (i == 13 || i == 25 || i == 38 || i == 50) {
-        // we know these fail; we hope to address them
-        // together with issue #8965
-        continue;
-      }
       INFO("i = " + std::to_string(i));
       getRandomGenerator(i + 1)();
       auto rsmiles = MolToSmiles(*mol, ps);
@@ -1771,7 +1771,7 @@ M  END)CTAB"_ctab;
     auto mol = R"SMI(C1=CC/C=C2C3=C/CC=CC=CC\3C\2C=C1)SMI"_smiles;
     REQUIRE(mol);
     auto smi = MolToSmiles(*mol);
-    CHECK(smi == R"SMI(C1=CC/C=C2C3=C\CC=CC=CC/3C\2C=C1)SMI");
+    CHECK(smi == R"SMI(C1=CC/C=C2\C3=C\CC=CC=CC3C2C=C1)SMI");
   }
   SECTION("CHEMBL3623347") {
     auto mol = R"CTAB(CHEMBL3623347
@@ -3340,6 +3340,70 @@ TEST_CASE("chiral class must be nonzero") {
             Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
       CHECK(m->getAtomWithIdx(1)->getProp<int>(
                 common_properties::_chiralPermutation) == 1);
+    }
+  }
+}
+
+TEST_CASE("Non-encodeable SGroups", "[CX][CXSmiles]") {
+  constexpr const char *molblock = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.242424 -0.515152 0.000000 0
+M  V30 2 C 0.257576 -0.515152 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 1 ATOMS=(1 1)
+M  V30 2 SUP 2 ATOMS=(1 2)
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+$$$$)CTAB";
+
+  auto m = v2::FileParsers::MolFromMolBlock(molblock);
+  REQUIRE(m);
+
+  // Write to smiles to populate atom and bond output order properties
+  MolToSmiles(*m);
+
+  CHECK(SmilesWrite::getCXExtensions(*m) ==
+        "|(-1.24242,-0.515152,;0.257576,-0.515152,)|");
+
+  CHECK(SmilesWrite::getCXExtensions(
+            *m, RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) == "");
+}
+
+TEST_CASE("github #9144: PR #9082 breaks MolFragmentToSmarts()") {
+  SECTION("as reported") {
+    auto m = "C[C@H](C=O)NCc1ccccc1"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto sma = MolFragmentToSmarts(*m, ps, {5, 6, 7, 8, 9, 10, 11});
+    CHECK(sma == "[#6]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1");
+  }
+  SECTION("another example") {
+    auto m = "C[C@H](F)CCCN"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    {
+      auto sma = MolFragmentToSmarts(*m, ps, {3, 4, 5});
+      CHECK(sma == "[#6]-[#6]-[#6]");
+    }
+    {
+      auto smi = MolFragmentToSmiles(*m, ps, {1, 3, 4, 5});
+      CHECK(smi == "CCCC");
+    }
+    {
+      // one can argue about what should happen here, but this is consistent
+      // with what the code did before
+      auto sma = MolFragmentToSmarts(*m, ps, {1, 3, 4, 5});
+      CHECK(sma == "[#6](-[#6@H])-[#6]-[#6]");
     }
   }
 }

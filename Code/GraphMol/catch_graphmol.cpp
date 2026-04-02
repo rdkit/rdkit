@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <limits>
 #include <fstream>
+#include <numeric>
 #include <random>
 #include <string>
 #include <boost/format.hpp>
@@ -2371,7 +2372,6 @@ namespace details {
 bool atomHasFourthValence(const Atom *atom);
 bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q);
 }  // namespace details
-void switchBondDir(Bond *bond);
 }  // namespace Canon
 }  // namespace RDKit
 TEST_CASE("canon details") {
@@ -2393,17 +2393,6 @@ TEST_CASE("canon details") {
       CHECK(RDKit::Canon::details::atomHasFourthValence(m->getAtomWithIdx(1)));
     }
   }
-}
-TEST_CASE("switchBondDir") {
-  auto m = "C/C=C/C"_smiles;
-  REQUIRE(m);
-  auto bond = m->getBondWithIdx(0);
-  CHECK(bond->getBondDir() == Bond::BondDir::ENDUPRIGHT);
-  Canon::switchBondDir(bond);
-  CHECK(bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT);
-  bond->setBondDir(Bond::BondDir::UNKNOWN);
-  Canon::switchBondDir(bond);
-  CHECK(bond->getBondDir() == Bond::BondDir::UNKNOWN);
 }
 #endif
 
@@ -2582,6 +2571,7 @@ void check_dest(RWMol *m1, const ROMol &m2) {
   CHECK(m1->getNumAtoms() == 0);
   CHECK(m1->getNumBonds() == 0);
   CHECK(m1->getPropList().empty());
+  CHECK(m1->getDict().empty());
   CHECK(m1->getStereoGroups().empty());
   CHECK(getSubstanceGroups(*m1).empty());
   CHECK(!m1->getRingInfo()->isInitialized());
@@ -4219,6 +4209,7 @@ TEST_CASE("Try not to set wedged bonds as double in the kekulization") {
           Bond::BondType::SINGLE);
     CHECK(m->getBondBetweenAtoms(7, 13)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m->getBondBetweenAtoms(7, 13)->getBondDir() == Bond::BondDir::NONE);
   }
   SECTION("preserve wedged bonds from ctab input") {
     // consider two equivalent structures, with the same numbering
@@ -4272,12 +4263,14 @@ M  END
     REQUIRE(m1);
     Chirality::reapplyMolBlockWedging(*m1);
     MolOps::Kekulize(*m1);
+
     CHECK(m1->getBondBetweenAtoms(0, 6)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m1->getBondBetweenAtoms(0, 6)->getBondDir() ==
           Bond::BondDir::BEGINWEDGE);
     CHECK(m1->getBondBetweenAtoms(4, 6)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m1->getBondBetweenAtoms(4, 6)->getBondDir() == Bond::BondDir::NONE);
 
     auto mblock2 = R"(
   Mrv2311 05242408162D
@@ -4325,12 +4318,14 @@ M  END
     REQUIRE(m2);
     Chirality::reapplyMolBlockWedging(*m2);
     MolOps::Kekulize(*m2);
-    CHECK(m2->getBondBetweenAtoms(0, 6)->getBondType() ==
-          Bond::BondType::DOUBLE);
+
     CHECK(m2->getBondBetweenAtoms(4, 6)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m2->getBondBetweenAtoms(4, 6)->getBondDir() ==
           Bond::BondDir::BEGINDASH);
+    CHECK(m2->getBondBetweenAtoms(0, 6)->getBondType() ==
+          Bond::BondType::DOUBLE);
+    CHECK(m2->getBondBetweenAtoms(0, 6)->getBondDir() == Bond::BondDir::NONE);
   }
   SECTION("preserve wedged bonds from ctab input - fused rings") {
     // consider two equivalent structures, with the same numbering
@@ -4394,12 +4389,14 @@ M  END
     REQUIRE(m1);
     Chirality::reapplyMolBlockWedging(*m1);
     MolOps::Kekulize(*m1);
+
     CHECK(m1->getBondBetweenAtoms(6, 12)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m1->getBondBetweenAtoms(6, 12)->getBondDir() ==
           Bond::BondDir::BEGINWEDGE);
     CHECK(m1->getBondBetweenAtoms(6, 8)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m1->getBondBetweenAtoms(6, 8)->getBondDir() == Bond::BondDir::NONE);
 
     auto mblock2 = R"(
   Mrv2311 05282412342D
@@ -4454,8 +4451,10 @@ M  END
     REQUIRE(m2);
     Chirality::reapplyMolBlockWedging(*m2);
     MolOps::Kekulize(*m2);
+
     CHECK(m2->getBondBetweenAtoms(6, 12)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m2->getBondBetweenAtoms(6, 12)->getBondDir() == Bond::BondDir::NONE);
     CHECK(m2->getBondBetweenAtoms(6, 8)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m2->getBondBetweenAtoms(6, 8)->getBondDir() ==
@@ -4962,4 +4961,60 @@ TEST_CASE(
   const auto &stg = stgs.front();
   CHECK(stg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
   CHECK(stg.getAtoms().size() == 2);
+}
+
+TEST_CASE("github #9068: properties with empty names") {
+  SECTION("basics") {
+    auto m = "CCO"_smiles;
+    REQUIRE(m);
+    CHECK_THROWS_AS(m->setProp("", "some value"), ValueErrorException);
+    CHECK_THROWS_AS(m->getProp<std::string>(""), KeyErrorException);
+    CHECK(!m->hasProp(""));
+    CHECK_NOTHROW(m->clearProp(""));
+  }
+}
+
+TEST_CASE("canonical re-kekulization after sanitization preserves stereo",
+          "[kekulization]") {
+  // Sanitization kekulizes with canonical=false for performance (B1).
+  // This test verifies that different atom orderings — which produce
+  // different non-canonical kekulizations — all converge to the same
+  // canonical SMILES (with correct stereo) after a canonical re-kekulization.
+  // We use fused aromatic systems where multiple valid Kekulé forms exist.
+  auto smiles = GENERATE(
+      // chiral center at naphthalene junction
+      "[C@H](O)(F)c1ccc2ccccc2c1",
+      // two chiral centers bridging quinoline
+      "[C@@H](O)(c1ccc2ncccc2c1)[C@H](F)Cl",
+      // cis/trans bond adjacent to fused aromatics
+      "C/C=C/c1ccc2ncccc2c1");
+
+  CAPTURE(smiles);
+  auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(mol);
+  auto refSmi = MolToSmiles(*mol);
+
+  // Try several atom permutations
+  for (unsigned int seed = 0; seed < 5; ++seed) {
+    // Build a permutation from a simple shuffle seeded by 'seed'
+    std::vector<unsigned int> perm(mol->getNumAtoms());
+    std::iota(perm.begin(), perm.end(), 0u);
+    std::mt19937 rng(seed);
+    std::shuffle(perm.begin(), perm.end(), rng);
+
+    std::unique_ptr<ROMol> pmol(MolOps::renumberAtoms(*mol, perm));
+    auto *rwmol = static_cast<RWMol *>(pmol.get());
+
+    // Simulate what sanitization does: non-canonical kekulize
+    MolOps::setAromaticity(*rwmol);
+    MolOps::Kekulize(*rwmol, true, false);
+
+    // Now canonical re-kekulize (what a user would do post-sanitization)
+    MolOps::setAromaticity(*rwmol);
+    MolOps::Kekulize(*rwmol, true, true);
+    MolOps::setAromaticity(*rwmol);
+
+    auto smi = MolToSmiles(*rwmol);
+    CHECK(smi == refSmi);
+  }
 }

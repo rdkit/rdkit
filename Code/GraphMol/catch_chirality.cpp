@@ -9,6 +9,8 @@
 //
 
 #include <cstdlib>
+#include <optional>
+#include <ranges>
 
 #include <catch2/catch_all.hpp>
 
@@ -50,7 +52,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Unspecified);
@@ -64,9 +66,9 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
-      CHECK(sinfo.controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[3] == Atom::NOATOM);
     }
   }
   SECTION("stereo") {
@@ -87,7 +89,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
@@ -107,7 +109,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 4);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
@@ -126,7 +128,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
@@ -143,7 +145,7 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.centeredOn == 1);
       REQUIRE(sinfo.controllingAtoms.size() == 4);
       CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+      CHECK(sinfo.controllingAtoms[1] == Atom::NOATOM);
       CHECK(sinfo.controllingAtoms[2] == 3);
       CHECK(sinfo.controllingAtoms[3] == 5);
       CHECK(sinfo.specified == Chirality::StereoSpecified::Unknown);
@@ -484,8 +486,7 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
       CHECK(stereoInfo[0].centeredOn == 1);
-      std::vector<unsigned> catoms = {0, Chirality::StereoInfo::NOATOM, 3,
-                                      Chirality::StereoInfo::NOATOM};
+      std::vector<unsigned> catoms = {0, Atom::NOATOM, 3, Atom::NOATOM};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
     {
@@ -517,7 +518,7 @@ TEST_CASE("possible stereochemistry on bonds", "[chirality]") {
       REQUIRE(stereoInfo.size() == 1);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Bond_Double);
       CHECK(stereoInfo[0].centeredOn == 1);
-      std::vector<unsigned> catoms = {0, Chirality::StereoInfo::NOATOM, 3, 4};
+      std::vector<unsigned> catoms = {0, Atom::NOATOM, 3, 4};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
   }
@@ -3604,20 +3605,17 @@ $$$$
 TEST_CASE("ValidateStereo", "[accurateCIP]") {
   SECTION("validateStereoUniqOldCanon1") {
     testStereoValidationFromMol(validateStereoUniq1,
-                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1* |,,,|", true,
-                                true);
+                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1*", true, true);
   }
 
   SECTION("validateStereoUniqNewCanon1") {
     testStereoValidationFromMol(validateStereoUniq1,
-                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1* |,,,|", false,
-                                true);
+                                "*/C=C/C(=O)C1=C(*)N(*)C(=O)NC1*", false, true);
   }
 
   SECTION("validateStereoUniqNewNoCanon1") {
-    testStereoValidationFromMol(validateStereoUniq1,
-                                "N1C(=O)N(*)C(*)=C(C(/C=C/*)=O)C1* |,,,|",
-                                false, false);
+    testStereoValidationFromMol(
+        validateStereoUniq1, "N1C(=O)N(*)C(*)=C(C(/C=C/*)=O)C1*", false, false);
   }
 
   SECTION("SprioChiralLostOldNoCanon") {
@@ -4086,8 +4084,8 @@ M  END)CTAB";
     REQUIRE(sinfo.controllingAtoms.size() == 4);
     CHECK(sinfo.controllingAtoms[0] == 0);
     CHECK(sinfo.controllingAtoms[1] == 1);
-    CHECK(sinfo.controllingAtoms[2] == Chirality::StereoInfo::NOATOM);
-    CHECK(sinfo.controllingAtoms[3] == Chirality::StereoInfo::NOATOM);
+    CHECK(sinfo.controllingAtoms[2] == Atom::NOATOM);
+    CHECK(sinfo.controllingAtoms[3] == Atom::NOATOM);
   }
 }
 
@@ -6495,4 +6493,64 @@ M  END
     auto smimb = MolToSmiles(*mol2);
     CHECK(smi == smimb);
   }
+}
+
+TEST_CASE(
+    "GitHub Issue #8965: Stereo bond inversion in SMILES Writer canonicalization") {
+  const auto legacy_stereo = GENERATE(true, false);
+  CAPTURE(legacy_stereo);
+  UseLegacyStereoPerceptionFixture stereo_mode(legacy_stereo);
+
+  // These are all (non-canonical) iterations of mol in the issue
+  constexpr std::array<std::string_view, 4> samples = {
+      R"smi(C/C=C\C=C(/C=C\C)C(/C=C\C)=C/C)smi",  // the reported SMILES
+      R"smi(C/C=C(\C=C/C)C(/C=C\C)=C/C=C\C)smi",
+      R"smi(C/C=C\C(=C/C)C(/C=C\C)=C/C=C\C)smi",
+      R"smi(C/C=C\C(=C/C=C\C)C(/C=C\C)=C/C)smi",
+  };
+
+  // These mol are small and simple enough for CIP calculation to not
+  // be too expensive.
+  // This is not exhaustive (we should check which bond is what),
+  // but it should be enough for this test.
+  auto get_bond_stereo_labels = [](auto &m) {
+    CIPLabeler::assignCIPLabels(m);
+    std::vector<std::string> bond_labels;
+    for (auto b : m.bonds()) {
+      std::string label;
+      if (b->getPropIfPresent(common_properties::_CIPCode, label)) {
+        bond_labels.push_back(label);
+      }
+    }
+    std::ranges::sort(bond_labels);
+    return bond_labels;
+  };
+
+  std::optional<std::vector<std::string>> labels_reference;
+
+  std::set<std::string> canonicalized_smiles;
+  for (auto smiles : samples) {
+    auto m =
+        v2::SmilesParse::MolFromSmiles(static_cast<const std::string>(smiles));
+    REQUIRE(m);
+
+    auto canonical_smiles = MolToSmiles(*m);
+    canonicalized_smiles.insert(canonical_smiles);
+
+    // Do this after getting the canonical SMILES, so that
+    // it doesn't have any chances to influence the canonicalization
+    if (!labels_reference.has_value()) {
+      labels_reference = get_bond_stereo_labels(*m);
+    } else {
+      CHECK(*labels_reference == get_bond_stereo_labels(*m));
+    }
+  }
+
+  // All samples should canonicalize to the same SMILES
+  REQUIRE(canonicalized_smiles.size() == 1);
+
+  // ... and the canonical SMILES should preserve stereo labels
+  auto m = v2::SmilesParse::MolFromSmiles(*canonicalized_smiles.begin());
+  REQUIRE(m);
+  CHECK(*labels_reference == get_bond_stereo_labels(*m));
 }

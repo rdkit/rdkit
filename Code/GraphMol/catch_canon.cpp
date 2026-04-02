@@ -1044,7 +1044,8 @@ M  END
   auto smiles = MolToSmiles(*m);
   CHECK(
       smiles ==
-      R"SMI(CC[C@@]1(C)/C2=C(C)/C3=[N]4->[CoH2+]56[N]2[C@H]([C@@H]1C)[C@]1(C)[N]->5=C(/C(C)=C2[N]->6=C(/C=C4/C(C)(C)[C@@H]3C)[C@@H](C)C\2(C)C)[C@@H](C)C1(C)C)SMI");
+      (R"SMI(CC[C@@]1(C)/C2=C(C)/C3=[N]4->[CoH2+]56[N]2[C@H]([C@@H]1C)[C@]1(C)[N]->5=C(/C)SMI"
+       R"SMI((C)=C2[N]->6=C(/C=C4/C(C)(C)[C@@H]3C)[C@@H](C)C\2(C)C)[C@@H](C)C1(C)C)SMI"));
 }
 
 TEST_CASE("chiral presence and ranking") {
@@ -1159,6 +1160,392 @@ TEST_CASE("allow disabling ring stereo in ranking") {
   CHECK(res1[6] == res1[7]);
 }
 
+TEST_CASE(
+    "attempt to fix incompatible directions in double bond canonicalization") {
+  // This doesn't always work, but I have found these cases to be interesting
+
+  // pubchem 145302638
+  constexpr const char *mb1 = R"ctab(145302638
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 53 60 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 8.658800 1.073800 0.000000 0
+M  V30 2 N 5.658800 1.085400 0.000000 0
+M  V30 3 N 2.000000 4.557700 0.000000 0
+M  V30 4 C 11.731300 2.816000 0.000000 0
+M  V30 5 C 12.231300 1.950000 0.000000 0
+M  V30 6 C 12.231300 3.682000 0.000000 0
+M  V30 7 C 13.231300 1.950000 0.000000 0
+M  V30 8 C 13.231300 3.682000 0.000000 0
+M  V30 9 C 13.731300 2.816000 0.000000 0
+M  V30 10 C 10.689800 2.832100 0.000000 0
+M  V30 11 C 10.162100 1.934000 0.000000 0
+M  V30 12 C 11.724500 1.040000 0.000000 0
+M  V30 13 C 11.696700 4.576000 0.000000 0
+M  V30 14 C 13.738200 1.040000 0.000000 0
+M  V30 15 C 13.766000 4.576000 0.000000 0
+M  V30 16 C 14.772900 2.832100 0.000000 0
+M  V30 17 C 10.682900 1.032000 0.000000 0
+M  V30 18 C 9.162100 1.937900 0.000000 0
+M  V30 19 C 12.210500 5.482000 0.000000 0
+M  V30 20 C 14.779800 1.032000 0.000000 0
+M  V30 21 C 13.252200 5.482000 0.000000 0
+M  V30 22 C 15.300600 1.934000 0.000000 0
+M  V30 23 C 7.658800 1.077700 0.000000 0
+M  V30 24 C 7.155400 0.213600 0.000000 0
+M  V30 25 C 7.148800 -1.518500 0.000000 0
+M  V30 26 C 7.645400 -2.386400 0.000000 0
+M  V30 27 C 7.652100 -0.654400 0.000000 0
+M  V30 28 C 7.638700 -4.118500 0.000000 0
+M  V30 29 C 6.155400 0.217400 0.000000 0
+M  V30 30 C 7.142100 -3.250500 0.000000 0
+M  V30 31 C 8.638700 -4.122300 0.000000 0
+M  V30 32 C 7.162100 1.945600 0.000000 0
+M  V30 33 C 6.148800 -1.514600 0.000000 0
+M  V30 34 C 8.645400 -2.390300 0.000000 0
+M  V30 35 C 5.652100 -0.646700 0.000000 0
+M  V30 36 C 9.142100 -3.258200 0.000000 0
+M  V30 37 C 7.100600 -5.010300 0.000000 0
+M  V30 38 C 9.169900 -5.018300 0.000000 0
+M  V30 39 C 6.162100 1.949500 0.000000 0
+M  V30 40 C 7.611000 -5.918400 0.000000 0
+M  V30 41 C 8.652600 -5.922400 0.000000 0
+M  V30 42 C 5.665500 2.817400 0.000000 0
+M  V30 43 C 6.277300 3.608400 0.000000 0
+M  V30 44 C 4.673500 2.690700 0.000000 0
+M  V30 45 C 5.898200 4.533800 0.000000 0
+M  V30 46 C 3.882500 3.302500 0.000000 0
+M  V30 47 C 4.790800 0.588700 0.000000 0
+M  V30 48 C 4.907200 4.668100 0.000000 0
+M  V30 49 C 2.957200 2.923400 0.000000 0
+M  V30 50 C 3.981900 4.289000 0.000000 0
+M  V30 51 C 2.166200 3.535200 0.000000 0
+M  V30 52 C 3.602800 5.214300 0.000000 0
+M  V30 53 C 2.611800 5.348700 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 18
+M  V30 2 2 1 23
+M  V30 3 1 2 39
+M  V30 4 2 2 47
+M  V30 5 2 3 51
+M  V30 6 1 3 53
+M  V30 7 1 4 5
+M  V30 8 1 4 6
+M  V30 9 2 4 10
+M  V30 10 1 5 7
+M  V30 11 2 5 12
+M  V30 12 2 6 8
+M  V30 13 1 6 13
+M  V30 14 2 7 9
+M  V30 15 1 7 14
+M  V30 16 1 8 9
+M  V30 17 1 8 15
+M  V30 18 1 9 16
+M  V30 19 1 10 11
+M  V30 20 2 11 17
+M  V30 21 1 11 18
+M  V30 22 1 12 17
+M  V30 23 2 13 19
+M  V30 24 2 14 20
+M  V30 25 2 15 21
+M  V30 26 2 16 22
+M  V30 27 1 19 21
+M  V30 28 1 20 22
+M  V30 29 1 23 24
+M  V30 30 1 23 32
+M  V30 31 2 24 27
+M  V30 32 1 24 29
+M  V30 33 1 25 26
+M  V30 34 1 25 27
+M  V30 35 2 25 33
+M  V30 36 2 26 30
+M  V30 37 1 26 34
+M  V30 38 1 28 30
+M  V30 39 2 28 31
+M  V30 40 1 28 37
+M  V30 41 2 29 35
+M  V30 42 1 31 36
+M  V30 43 1 31 38
+M  V30 44 2 32 39
+M  V30 45 1 33 35
+M  V30 46 2 34 36
+M  V30 47 2 37 40
+M  V30 48 2 38 41
+M  V30 49 1 39 42
+M  V30 50 1 40 41
+M  V30 51 1 42 43
+M  V30 52 2 42 44
+M  V30 53 2 43 45
+M  V30 54 1 44 46
+M  V30 55 1 45 48
+M  V30 56 2 46 49
+M  V30 57 2 48 50
+M  V30 58 1 49 51
+M  V30 59 1 50 52
+M  V30 60 2 52 53
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)ctab";
+
+  // pubchem 145302645
+  constexpr const char *mb2 = R"ctab(145302645
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 45 50 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 10.607800 1.273000 0.000000 0
+M  V30 2 N 4.002900 0.307100 0.000000 0
+M  V30 3 N 9.107800 2.139100 0.000000 0
+M  V30 4 C 2.742200 0.988000 0.000000 0
+M  V30 5 C 2.000000 1.718800 0.000000 0
+M  V30 6 C 3.744100 1.273000 0.000000 0
+M  V30 7 C 4.002900 2.239000 0.000000 0
+M  V30 8 C 12.107800 2.139100 0.000000 0
+M  V30 9 C 2.269600 2.724900 0.000000 0
+M  V30 10 C 13.607800 3.005100 0.000000 0
+M  V30 11 C 3.277800 2.986800 0.000000 0
+M  V30 12 C 13.107800 3.871100 0.000000 0
+M  V30 13 C 11.607800 1.273000 0.000000 0
+M  V30 14 C 13.107800 2.139100 0.000000 0
+M  V30 15 C 11.607800 3.005100 0.000000 0
+M  V30 16 C 10.607800 -0.459000 0.000000 0
+M  V30 17 C 10.107800 0.407000 0.000000 0
+M  V30 18 C 12.107800 3.871100 0.000000 0
+M  V30 19 C 4.710000 2.946100 0.000000 0
+M  V30 20 C 14.649300 2.989000 0.000000 0
+M  V30 21 C 11.607800 -2.191100 0.000000 0
+M  V30 22 C 13.614600 4.781100 0.000000 0
+M  V30 23 C 10.107800 -1.325000 0.000000 0
+M  V30 24 C 11.607800 -0.459000 0.000000 0
+M  V30 25 C 9.107800 0.407000 0.000000 0
+M  V30 26 C 10.607800 -2.191100 0.000000 0
+M  V30 27 C 12.107800 -1.325000 0.000000 0
+M  V30 28 C 12.107800 -3.057100 0.000000 0
+M  V30 29 C 15.177000 3.887100 0.000000 0
+M  V30 30 C 14.656200 4.789100 0.000000 0
+M  V30 31 C 8.607800 1.273000 0.000000 0
+M  V30 32 C 5.675900 3.204900 0.000000 0
+M  V30 33 C 7.607800 1.273000 0.000000 0
+M  V30 34 C 4.710000 -0.400000 0.000000 0
+M  V30 35 C 6.641800 2.946100 0.000000 0
+M  V30 36 C 7.349000 2.239000 0.000000 0
+M  V30 37 C 13.107800 -3.057100 0.000000 0
+M  V30 38 C 11.607800 -3.923100 0.000000 0
+M  V30 39 C 7.349000 0.307100 0.000000 0
+M  V30 40 C 5.675900 -0.658800 0.000000 0
+M  V30 41 C 6.641800 -0.400000 0.000000 0
+M  V30 42 C 13.607800 -3.923100 0.000000 0
+M  V30 43 C 12.107800 -4.789100 0.000000 0
+M  V30 44 C 13.107800 -4.789100 0.000000 0
+M  V30 45 C 9.107800 3.139100 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 13
+M  V30 2 2 1 17
+M  V30 3 2 2 6
+M  V30 4 1 2 34
+M  V30 5 1 3 31
+M  V30 6 2 3 45
+M  V30 7 1 4 5
+M  V30 8 1 4 6
+M  V30 9 1 5 9
+M  V30 10 1 6 7
+M  V30 11 1 7 11
+M  V30 12 2 7 19
+M  V30 13 1 8 13
+M  V30 14 2 8 14
+M  V30 15 1 8 15
+M  V30 16 2 9 11
+M  V30 17 2 10 12
+M  V30 18 1 10 14
+M  V30 19 1 10 20
+M  V30 20 1 12 18
+M  V30 21 1 12 22
+M  V30 22 2 15 18
+M  V30 23 1 16 17
+M  V30 24 2 16 23
+M  V30 25 1 16 24
+M  V30 26 1 17 25
+M  V30 27 1 19 32
+M  V30 28 2 20 29
+M  V30 29 2 21 26
+M  V30 30 1 21 27
+M  V30 31 1 21 28
+M  V30 32 2 22 30
+M  V30 33 1 23 26
+M  V30 34 2 24 27
+M  V30 35 2 25 31
+M  V30 36 2 28 37
+M  V30 37 1 28 38
+M  V30 38 1 29 30
+M  V30 39 1 31 33
+M  V30 40 2 32 35
+M  V30 41 2 33 36
+M  V30 42 1 33 39
+M  V30 43 2 34 40
+M  V30 44 1 35 36
+M  V30 45 1 37 42
+M  V30 46 2 38 43
+M  V30 47 2 39 41
+M  V30 48 1 40 41
+M  V30 49 2 42 44
+M  V30 50 1 43 44
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)ctab";
+
+  auto getBondLabels = [](ROMol &m) {
+    CIPLabeler::assignCIPLabels(m);
+
+    std::vector<std::string> labels;
+
+    for (const auto bond : m.bonds()) {
+      std::string cip;
+      if (bond->getPropIfPresent<std::string>(common_properties::_CIPCode,
+                                              cip)) {
+        labels.push_back(cip);
+      }
+    }
+    std::sort(labels.begin(), labels.end());
+
+    return labels;
+  };
+
+  auto usingLegacyStereo = GENERATE(false, true);
+
+  for (auto mb : {mb1, mb2}) {
+    auto m = v2::FileParsers::MolFromMolBlock(mb);
+    REQUIRE(m);
+
+    CAPTURE(m->getProp<std::string>("_Name"), usingLegacyStereo);
+
+    auto refLabels = getBondLabels(*m);
+    CHECK(refLabels.size() == 8);
+    auto smi = MolToSmiles(*m);
+
+    auto m2 = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m2);
+    auto newLabels = getBondLabels(*m2);
+    CHECK(refLabels == newLabels);
+  }
+}
+
+static void checkSmilesRoundtrip(const std::string &smiles,
+                                 bool shouldMatch = true) {
+  auto getFeatures = [](ROMol &m) {
+// enable this for development only (it's SLOW): make the test stricter
+// by comparing CIP codes instead of just counting features
+#if 0
+    CIPLabeler::assignCIPLabels(m);
+
+    std::vector<std::string> labels;
+    for (const auto atom : m.atoms()) {
+      std::string tag;
+      std::string cip;
+      if (atom->getPropIfPresent<std::string>(common_properties::_CIPCode,
+                                              cip)) {
+        atom->getPropIfPresent(common_properties::atomLabel, tag);
+
+        labels.push_back(cip + "_" + tag);
+      }
+    }
+    for (const auto bond : m.bonds()) {
+      std::string cip;
+      if (bond->getPropIfPresent<std::string>(common_properties::_CIPCode,
+                                              cip)) {
+        auto atom1 = bond->getBeginAtom();
+        unsigned int idx1 = std::numeric_limits<unsigned int>::max();
+        atom1->getPropIfPresent(common_properties::atomLabel, idx1);
+
+        auto atom2 = bond->getEndAtom();
+        unsigned int idx2 = std::numeric_limits<unsigned int>::max();
+        atom2->getPropIfPresent(common_properties::atomLabel, idx2);
+
+        if (idx1 > idx2) {
+          std::swap(idx1, idx2);
+        }
+
+        labels.push_back(cip + "_" + std::to_string(idx1) + "_" +
+                         std::to_string(idx2));
+      }
+    }
+    std::sort(labels.begin(), labels.end());
+
+    return labels;
+#else
+    unsigned int nChiralCenters = 0;
+    for (const auto atom : m.atoms()) {
+      if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
+        ++nChiralCenters;
+      }
+    }
+    unsigned int nDoubleBondStereo = 0;
+    for (const auto bond : m.bonds()) {
+      if (bond->getStereo() > Bond::STEREOANY) {
+        ++nDoubleBondStereo;
+      }
+    }
+
+    return std::make_pair(nChiralCenters, nDoubleBondStereo);
+#endif
+  };
+
+  SmilesWriteParams ps;
+  auto fields = SmilesWrite::CXSmilesFields::CX_ATOM_LABELS;
+
+  auto getStrings = [&ps, &fields](const ROMol &m) {
+    const auto cxsmiles = MolToCXSmiles(m, ps, fields);
+    auto pos = cxsmiles.find(" ");
+    const std::string smiles(cxsmiles.data(), pos);
+
+    return std::make_pair(smiles, cxsmiles);
+  };
+
+  // pre-canonicalize SMILES: the inputs get outdated when
+  // we make changes to the canonicalization algorithm
+  auto m1 = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(m1);
+
+  for (auto atom : m1->atoms()) {
+    atom->setProp(common_properties::atomLabel, atom->getIdx());
+  }
+
+  const auto [firstSmiles, firstCxsmiles] = getStrings(*m1);
+
+  // Get the stereo features after the SMILES roundtrip,
+  // so that assigning labels can't have any influence
+  // on the SMILES
+  const auto refFeatures = getFeatures(*m1);
+
+  auto m2 = v2::SmilesParse::MolFromSmiles(firstCxsmiles);
+  REQUIRE(m2);
+
+  const auto [secondSmiles, secondCxsmiles] = getStrings(*m2);
+
+  if (shouldMatch) {
+    CHECK(firstSmiles == secondSmiles);
+
+    // If the stereo labels don't match after round-tripping, something is wrong
+    CHECK(refFeatures == getFeatures(*m2));
+
+    // Check the second roundtrip too
+    auto m3 = v2::SmilesParse::MolFromSmiles(secondCxsmiles);
+    REQUIRE(m3);
+    CHECK(refFeatures == getFeatures(*m3));
+
+  } else {
+    CHECK(firstSmiles != secondSmiles);
+  }
+}
+
 TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   // This is a check about the state of things with canonicalization.
   // The "samples" below initially come from the list compiled in GitHub
@@ -1168,52 +1555,52 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   // first reported.
 
   const static std::initializer_list<std::tuple<std::string, bool, bool>> samples = {
-      {R"smi(C/C=C\C=C(/C=C\C)C(/C=C\C)=C/C)smi", false, false},        // #8759
+      {R"smi(C/C=C\C=C(/C=C\C)C(/C=C\C)=C/C)smi", true, true},          // #8759
       {R"smi(C1=C\CCCCCC/C=C/C=C/1)smi", true, true},                   // #8759
       {R"smi(O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3)smi", false, false},  // #8721
       {R"smi(O=C(c1ccccc1C(=O)N1C(=O)c2ccccc2C1=O)N1C(=O)c2ccccc2C1=O)smi",
        false, false},  // #8721
-      {R"smi(O=[N+]([O-])c1cc/c2c(c1)=C(c1ccccc1)/N=c1\\ccc([N+](=O)[O-])cc1=C(c1ccccc1)/N=2)smi",
-       false, true},  // #8721
-      {R"smi(C=Cc1c(C)/c2[n-]c1=C=c1[n-]/c(c(CC)c1C)=C\\c1[n-]c3c(c1C)C(=O)[C@H](C(=O)OC)/C3=C1/[NH+]=C(/C=2)[C@@H](C)[C@@H]1CCC(=O)OC/C=C(\\C)CCC[C@H](C)CCC[C@H](C)CCCC(C)C.[Mg+2])smi",
-       false, true},  // #8721
+      {R"smi(O=[N+]([O-])c1cc/c2c(c1)=C(c1ccccc1)/N=c1\ccc([N+](=O)[O-])cc1=C(c1ccccc1)/N=2)smi",
+       true, true},  // #8721
+      {R"smi(C=Cc1c(C)/c2[n-]c1=C=c1[n-]/c(c(CC)c1C)=C\c1[n-]c3c(c1C)C(=O)[C@H](C(=O)OC)/C3=C1/[NH+]=C(/C=2)[C@@H](C)[C@@H]1CCC(=O)OC/C=C(\C)CCC[C@H](C)CCC[C@H](C)CCCC(C)C.[Mg+2])smi",
+       true, true},  // #8721
       {R"smi(CC1=C(/C=C2\C(C)=C3/C(C)=C(/C=C4\C(C)=C5/C(CCC(=O)O)=C(C(C)=C5N4)C=C6\C(CCC(=O)O)=C(C)C(=C6N2)C=C1)N3)C=C(\C=C)C)smi",
        false, false},  // #8089
       {R"smi(COC1=N\C2=CC(=O)c3c(c(O)c(C)c4c3C(=O)C(C)(O/C=C/C(OC)C(C)C(OC(C)=O)C(C)C(O)C(C)C(O)C(C)/C=C\C=C/1C)O4)C2=O)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1C2c3cc4/c5c6c7c8c9c%10c6c4c4c3C3=C6c%11c%12c%13c%14c%15c(c9c9c%16c8c(c8/c(c%17c%18c%19c(c(c%11c%11c%19c%19c%17c8c%16c(c%149)c%19c%13%11)C62)C1C%181C[N+](C)(C)C1)=C\C\C=5)C7)C%10C4C31C[N+](C)(C)CC%12%151)smi",
-       false, true},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C\[C@H](C)C[C@@]2(C)CC[C@@H](O2)[C@@]23CC[C@@](C)(C[C@@H](O2)[C@H]2O[C@](C)(CC2=O)[C@@H](O)[C@@H]2CC[C@@]4(CCC[C@H](O4)[C@@H](C)C(=O)O[C@@H]4C[C@@H]([C@@]5(O)OCC[C@@H](C)[C@H]5O)O[C@@H]4/C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@H]2O[C@@H](C/C=C/C=C/C(=O)O[C@@H]3C[C@@H](/C=C/C/C=C/1)O[C@@H](C/C=C\CCO)[C@]3(C)CO)C[C@H](O)[C@H]2C)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC(=O)OCC1=C\CC/C(C)=C/CC[C@@]2(C)CC[C@@](C(C)C)(/C=C/1)O2)smi",
-       false, false},  // #8089
-      {R"smi(CC1=C\C/C=C(\C)CC[C@H]2C(C)(C)[C@@H](\C=C/1)CC[C@]2(C)O)smi",
-       false, true},  // #8089
+       true, true},  // #8089
+      {R"smi(CC1=C\C/C=C(\C)CC[C@H]2C(C)(C)[C@@H](\C=C/1)CC[C@]2(C)O)smi", true,
+       true},  // #8089
       {R"smi(CC(=O)OCC1=C/[C@@H]2OC(=O)[C@H](C)[C@@]2(O)[C@@H](OC(C)=O)[C@H]2[C@]3(CC[C@H](OC(C)=O)[C@]2(C)[C@@H](OC(=O)COC(=O)CC(C)C)\C=C/1)CO3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC(=O)OCC1=C/[C@@H]2OC(=O)[C@H](C)[C@@]2(O)[C@@H](OC(C)=O)[C@H]2[C@]3(CC[C@H](OC(C)=O)[C@]2(C)[C@@H](OC(C)=O)\C=C/1)CO3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(C=Cc1c(C)/c2[nH]/c1=C\C1=N/C(=C\C3=C(C)C4C(=O)N(Cc5cccc(C#Cc6cccc(Nc7ncnc8cc(OCCOC)c(OCCOC)cc78)c6)c5)C(=O)/C(=C5/N=C(/C=2)[C@@H](C)[C@@H]5CCC(=O)OC)C4N3)C(CC)=C1C)smi",
-       false, true},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C\C[C@H](O)/C=C/C(C)=C/[C@@H](NC(=O)[C@H](C)O)[C@]2(C)C(=O)O[C@H](C[C@H](O)/C=C/1)[C@@H](C)C2=O)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@H]2O[C@@H](C/C=C/C=C/C(=O)O[C@@H]3C[C@@H](/C=C/C/C=C/1)O[C@@H](C/C=C\C[C@@H](O)C(=O)O)[C@]3(C)CO)C[C@H](O)[C@H]2C)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(c1ccc2/c3[nH]/c(c2c1)=N\c1ccc(cc1)-c1nc2cc(ccc2o1)/N=c1/[nH]/c(c2ccccc12)=N/c1ccc2nc(oc2c1)-c1ccc(cc1)/N=3)smi",
-       false, false},  // #8089
+       true, false},  // #8089
       {R"smi(c1ccc2/c3[nH]/c(c2c1)=N\c1ccc(cc1)-c1nc2ccc(cc2o1)/N=c1/[nH]/c(c2ccccc12)=N/c1ccc2nc(oc2c1)-c1ccc(cc1)/N=3)smi",
-       false, false},  // #8089
+       true, false},  // #8089
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](C)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](C(=O)O)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](CO)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
-       false, false},  // #8089
+       true, true},  // #8089
       {R"smi(COC(=O)C1=C/c2cc3c(cc2-c2c(cc(OC)c(OC)c2OC)\C=C/1C(=O)OC)OCO3)smi",
-       false, false},                                           // #8089
-      {R"smi(N#C[P@@H]/C=C(/P=O)[P@@H]C#N)smi", false, false},  // #8089
+       true, true},                                           // #8089
+      {R"smi(N#C[P@@H]/C=C(/P=O)[P@@H]C#N)smi", true, true},  // #8089
       {R"smi(C1=C\C/C=C(\C)CC[C@H]2C(C)(C)[C@@H](\C=C/1)CC[C@]2(C)O)smi", true,
        true},                                                     // #8089
       {R"smi([H]/N=C(C=C)\C(/N=C\[O-])=N\[H])smi", false, true},  // #7759
@@ -1339,23 +1726,34 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(O[C@H]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},  // #7759
       {R"smi(N[C@]1(C(=O)O)[C@@H]2C[C@H]3C[C@@H](C2)C[C@H]1C3)smi", false,
        true},  // #8862
-  };
+      {R"smi(C/C=C1/C(=C\Cl)/C(=C\F)/C(=C\N)/C/1=C\O)smi", true,
+       true},  // #8965
+      {R"smi(C1(=C/O)\C(=C/N)\C(=C/C)\C(=C/O)\C(=C/N)\C\1=C/C)smi", true,
+       false},  // #8965
+      {R"smi(C1(=C/O)\C(=C/N)\C(=C/C)\C(=C/F)\C(=C/N)\C(=C/O)\C(=C/C)\C\1=C/F)smi",
+       true, false},  // #8965
+      {R"smi(C/C/1=C/CC\2CCO/C2=C/C=C1/C=O)smi", true,
+       true},  // pubchem 101176040
+      {R"smi(CCCSNC1=C(C(=C(C=C1)F)C(=O)/C/2=C/NCN/C=C(\C=C2/C)/C3=CC=C(C=C3)C=O)F)smi",
+       true, true},  // pubchem 144212312
+      {R"smi(CC(=O)/N=C1\\C=C(N)C=CC1=N/N=c1\\ccccn1O)smi", true,
+       true},  // pubchem 9561953
+      {R"smi(C/C=P(=C/O)/P(=C\O)=C/C)smi", true, true},
 
-  auto count_features = [](RWMol m) {
-    unsigned int nChiralCenters = 0;
-    for (const auto atom : m.atoms()) {
-      if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
-        ++nChiralCenters;
-      }
-    }
-    unsigned int nDoubleBondStereo = 0;
-    for (const auto bond : m.bonds()) {
-      if (bond->getStereo() > Bond::STEREOANY) {
-        ++nDoubleBondStereo;
-      }
-    }
+      {R"smi(C=C/C(N)=N\C(\C(C)=C/C=C(C)\C=C/C)=C(/C)CCC)smi", true,
+       true},                                            // pubchem 163248361
+      {R"smi([H]/N=I/P(=N/[H])=N/[H])smi", true, true},  // pubchem 58298200
+      {R"smi([H]/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/N=N/P()smi"
+       R"smi(=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N)=N\N=N)smi"
+       R"smi(\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N=N\N)smi",
+       true, true},  // pubchem 59092755
+      {R"smi(C/C=C(C(\C(C)=N\C=C\CC)=C(\C)N1CCN(C(=O)OC2(C)CC2)C(C)C1)/C(F)F)smi",
+       true, true},  // pubchem 168185575
+      {R"smi(C=NC(=C(\F)Cc1nc(N)cc2ccccc12)/C(=C\C(=C)Cl)C(=N\CO)/N1CCNCC1)smi",
+       true, true},  // pubchem 153584538
+      {R"smi(C=C1C(=C/C)/C(=C\C)C(=C)C1C)smi", true,
+       true},  // pubchem 144493365
 
-    return std::make_pair(nChiralCenters, nDoubleBondStereo);
   };
 
   const auto &[smiles, legacyState, modernState] =
@@ -1365,34 +1763,7 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
 
   UseLegacyStereoPerceptionFixture useLegacy(usingLegacyStereo);
 
-  // pre-canonicalize SMILES: the inputs get outdated when
-  // we make changes to the canonicalization algorithm
-  auto m1 = v2::SmilesParse::MolFromSmiles(smiles);
-  REQUIRE(m1);
-  const auto firstRoundtrip = MolToSmiles(*m1);
-
-  // Get the stereo features after the SMILES roundtrip,
-  // so that assigning labels can't have any influence
-  // on the SMILES
-  const auto refFeatures = count_features(*m1);
-
-  auto m2 = v2::SmilesParse::MolFromSmiles(firstRoundtrip);
-  REQUIRE(m2);
-  const auto secondRoundtrip = MolToSmiles(*m2);
-
   auto shouldMatch = usingLegacyStereo ? legacyState : modernState;
-  if (shouldMatch) {
-    CHECK(firstRoundtrip == secondRoundtrip);
 
-    // If the stereo labels don't match after round-tripping, something is wrong
-    CHECK(refFeatures == count_features(*m2));
-
-    // Check the second roundtrip too
-    auto m3 = v2::SmilesParse::MolFromSmiles(secondRoundtrip);
-    REQUIRE(m3);
-    CHECK(refFeatures == count_features(*m3));
-
-  } else {
-    CHECK(firstRoundtrip != secondRoundtrip);
-  }
+  checkSmilesRoundtrip(smiles, shouldMatch);
 }

@@ -86,11 +86,12 @@ class RDKIT_QUERY_EXPORT CompatQuery : public Query<int, CompatType, true> {
     return res;
   }
 
-  void setMatchFunc([[maybe_unused]] bool (*what)(MatchFuncArgType)) override {
+  void setMatchFunc(
+      [[maybe_unused]] std::function<bool(MatchFuncArgType)> what) {
     raiseNonImplementedFunction("CompatQuery::setMatchFunc");
   }
   void setDataFunc(
-      [[maybe_unused]] MatchFuncArgType (*what)(DataFuncArgType)) override {
+      [[maybe_unused]] std::function<MatchFuncArgType(DataFuncArgType)> what) {
     raiseNonImplementedFunction("CompatQuery::setDataFunc");
   }
   void setNegation(bool what) override { inner->setNegation(what); }
@@ -153,11 +154,12 @@ class RDKIT_QUERY_EXPORT NonCompatQuery
     return res;
   }
 
-  void setMatchFunc([[maybe_unused]] bool (*what)(MatchFuncArgType)) override {
+  void setMatchFunc(
+      [[maybe_unused]] std::function<bool(MatchFuncArgType)> what) {
     raiseNonImplementedFunction("NonCompatQuery::setMatchFunc");
   }
   void setDataFunc(
-      [[maybe_unused]] MatchFuncArgType (*what)(DataFuncArgType)) override {
+      [[maybe_unused]] std::function<MatchFuncArgType(DataFuncArgType)> what) {
     raiseNonImplementedFunction("NonCompatQuery::setDataFunc");
   }
   void setNegation(bool what) override { inner->setNegation(what); }

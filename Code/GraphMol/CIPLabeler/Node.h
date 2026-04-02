@@ -73,6 +73,8 @@ class Node {
 
   Atom *getAtom() const;
 
+  unsigned int getAtomIdx() const;
+
   int getDistance() const;
 
   boost::rational<int> getAtomicNumFraction() const;
