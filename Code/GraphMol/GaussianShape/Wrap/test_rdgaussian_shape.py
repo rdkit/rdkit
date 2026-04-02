@@ -183,7 +183,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(shapes2.NumShapes, 10)
 
     bestSim, best1, best2, xform = shapes1.BestSimilarity(shapes2)
-    self.assertAlmostEqual(bestSim, 0.986, places=3)
+    self.assertAlmostEqual(bestSim[0], 0.986, places=3)
     self.assertEqual(best1, 9)
     self.assertEqual(best2, 4)
     self.assertEqual(len(xform), 16)
