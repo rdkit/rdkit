@@ -471,32 +471,30 @@ std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors,
   return mol;
 }
 
-double ShapeInput::bestSimilarity(ShapeInput &fitShape,
-                                  unsigned int &bestThisShape,
-                                  unsigned int &bestFitShape,
-                                  RDGeom::Transform3D &bestXform,
-                                  double threshold,
-                                  const ShapeOverlayOptions &overlayOpts) {
+std::array<double, 3> ShapeInput::bestSimilarity(
+    const ShapeInput &fitShape, unsigned int &bestThisShape,
+    unsigned int &bestFitShape, RDGeom::Transform3D &bestXform,
+    double threshold, const ShapeOverlayOptions &overlayOpts) {
   bestThisShape = -1;
   bestFitShape = -1;
+  std::array<double, 3> bestSim{-1.0, -1.0, -1.0};
   if (maxPossibleSimilarity(fitShape) < threshold) {
-    return -1.0;
+    return bestSim;
   }
 
-  double bestSim = -1.0;
   RDGeom::Transform3D xform;
   for (size_t i = 0; i < getNumShapes(); i++) {
     setActiveShape(i);
     for (size_t j = 0; j < fitShape.getNumShapes(); j++) {
-      fitShape.setActiveShape(j);
       auto maxSim =
-          maxScore(getShapeVolume(), fitShape.getShapeVolume(),
-                   getColorVolume(), fitShape.getColorVolume(), overlayOpts);
+          maxScore(getShapeVolume(), fitShape.getShapeVolume(j),
+                   getColorVolume(), fitShape.getColorVolume(j), overlayOpts);
 
       if (maxSim > threshold) {
-        auto scores = AlignShape(*this, fitShape, &xform, overlayOpts);
-        if (scores[0] > bestSim) {
-          bestSim = scores[0];
+        ShapeInput singleFitShape(fitShape, j);
+        auto scores = AlignShape(*this, singleFitShape, &xform, overlayOpts);
+        if (scores[0] > bestSim[0]) {
+          bestSim = scores;
           bestThisShape = i;
           bestFitShape = j;
           bestXform = xform;
@@ -504,7 +502,7 @@ double ShapeInput::bestSimilarity(ShapeInput &fitShape,
       }
       // Floating point cruft means we sometimes get a similarity slightly
       // above 1.0.  1.0 is the maximum possible, so stop if we hit it.
-      if (bestSim > 1.0 || fabs(bestSim - 1.0) < 1.0e-6) {
+      if (bestSim[0] > 1.0 || fabs(bestSim[0] - 1.0) < 1.0e-6) {
         return bestSim;
       }
     }

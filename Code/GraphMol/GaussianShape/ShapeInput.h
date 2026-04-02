@@ -232,8 +232,8 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // transformation that did it. Returns -1.0 for the similarity if there was
   // nothing above the threshold.  Note that the shape numbers are not
   // necessarily the same as the original molecule conformation numbers.
-  double bestSimilarity(
-      ShapeInput &fitShape, unsigned int &bestThisShape,
+  std::array<double, 3> bestSimilarity(
+      const ShapeInput &fitShape, unsigned int &bestThisShape,
       unsigned int &bestFitShape, RDGeom::Transform3D &bestXform,
       double threshold = -1.0,
       const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
