@@ -83,15 +83,10 @@ TEST_CASE("ForwardSDMolSupplier iteration") {
   std::ifstream strm(infile);
   bool takeOwnership = false;
   v2::FileParsers::ForwardSDMolSupplier reader(&strm, takeOwnership);
-  SECTION("basics") {
-    // unsigned int i = 0;
-    // for (auto mol : reader) {
-    //   std::cerr << i << " " << (mol ? mol->getNumAtoms() : 1234) << " "
-    //             << reader.atEnd() << std::endl;
-    //   CHECK(mol);
-    //   ++i;
-    // }
-    forwardIterTest(reader, 16);
+  SECTION("basics") { forwardIterTest(reader, 16); }
+  SECTION("error handling") {
+    reader.next();
+    CHECK_THROWS_AS(reader.begin(), ValueErrorException);
   }
   SECTION("pre-increment") {
     unsigned int i = 0;

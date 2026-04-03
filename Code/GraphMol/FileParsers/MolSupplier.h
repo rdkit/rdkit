@@ -185,6 +185,11 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   bool getEOFHitOnRead() const { return df_eofHitOnRead; }
 
   ForwardSupplierIter<ForwardSDMolSupplier> begin() {
+    if (d_line) {
+      throw ValueErrorException(
+          "Cannot create an iterator for a ForwardSDMolSupplier that has already "
+          "been read from.");
+    }
     return ForwardSupplierIter(this);
   }
   ForwardSupplierIter<ForwardSDMolSupplier> end() {
