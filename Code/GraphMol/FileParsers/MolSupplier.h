@@ -127,7 +127,7 @@ struct ForwardSupplierIter {
   Supplier *supplier = nullptr;
   std::optional<value_type> current;
   ForwardSupplierIter() = default;
-  ForwardSupplierIter(Supplier *supplier)
+  explicit ForwardSupplierIter(Supplier *supplier)
       : supplier(supplier), current(supplier->nextShared()) {}
   value_type operator*() const { return current.value(); }
   ForwardSupplierIter &operator++() {
@@ -221,7 +221,7 @@ struct RandomAccessSupplierIter {
   Supplier *supplier = nullptr;
   size_t current_idx = 0;
   RandomAccessSupplierIter() = default;
-  RandomAccessSupplierIter(Supplier *supplier)
+  explicit RandomAccessSupplierIter(Supplier *supplier)
       : supplier(supplier), current_idx(0) {}
   RandomAccessSupplierIter(Supplier *supplier, size_t idx)
       : supplier(supplier), current_idx(idx) {}
@@ -270,23 +270,12 @@ struct RandomAccessSupplierIter {
       difference_type n, const RandomAccessSupplierIter &it) {
     return RandomAccessSupplierIter(it.supplier, it.current_idx + n);
   }
+  auto operator<=>(const RandomAccessSupplierIter &other) const {
+    return current_idx <=> other.current_idx;
+  }
   bool operator==(const RandomAccessSupplierIter &other) const {
-    return supplier == other.supplier && current_idx == other.current_idx;
-  }
-  bool operator!=(const RandomAccessSupplierIter &other) const {
-    return !(*this == other);
-  }
-  bool operator<(const RandomAccessSupplierIter &other) const {
-    return current_idx < other.current_idx;
-  }
-  bool operator>(const RandomAccessSupplierIter &other) const {
-    return current_idx > other.current_idx;
-  }
-  bool operator<=(const RandomAccessSupplierIter &other) const {
-    return current_idx <= other.current_idx;
-  }
-  bool operator>=(const RandomAccessSupplierIter &other) const {
-    return current_idx >= other.current_idx;
+    return this->supplier == other.supplier &&
+           this->current_idx == other.current_idx;
   }
 };
 
