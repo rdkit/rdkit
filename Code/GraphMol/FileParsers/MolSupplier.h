@@ -118,6 +118,37 @@ class RDKIT_FILEPARSERS_EXPORT MolSupplier {
   }
 };
 
+// template <typename Supplier>
+// struct ForwardSupplierIter {
+//   using iterator_category = std::input_iterator_tag;
+//   using difference_type = std::ptrdiff_t;
+//   using value_type = std::unique_ptr<ROMol>;
+
+//   Supplier *supplier = nullptr;
+//   std::optional<value_type> current;
+//   ForwardSupplierIter() = default;
+//   ForwardSupplierIter(Supplier *supplier)
+//       : supplier(supplier), current(supplier->next()) {}
+//   ForwardSupplierIter(Supplier *supplier, value_type current)
+//       : supplier(supplier), current(std::move(current)) {}
+//   value_type operator*() const {
+//     value_type res{*current};
+//     return std::move(res);
+//   }
+//   ForwardSupplierIter &operator++() {
+//     current.swap(supplier->next());
+//     return *this;
+//   }
+//   ForwardSupplierIter operator++(int) {
+//     ForwardSupplierIter tmp(this->supplier, std::move(current));
+//     ++(*this);
+//     return tmp;
+//   }
+//   bool operator==(const ForwardSupplierIter &other) const {
+//     return !current.has_value() && !other.current.has_value();
+//   }
+// };
+
 // \brief a supplier from an SD file that only reads forward:
 class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   /*************************************************************************
@@ -144,6 +175,13 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
 
   bool getEOFHitOnRead() const { return df_eofHitOnRead; }
 
+  // ForwardSupplierIter<ForwardSDMolSupplier> begin() {
+  //   return ForwardSupplierIter(this);
+  // }
+  // ForwardSupplierIter<ForwardSDMolSupplier> end() {
+  //   return ForwardSupplierIter<ForwardSDMolSupplier>();
+  // }
+
  protected:
   virtual void checkForEnd();
   std::unique_ptr<RWMol> _next();
@@ -154,6 +192,90 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   bool df_processPropertyLists = true;
   bool df_eofHitOnRead = false;
 };
+// // clang-format off
+// static_assert(
+//     std::ranges::input_range<ForwardSDMolSupplier>
+//   );
+// // clang-format on
+
+template <typename Supplier>
+struct RandomAccessSupplierIter {
+  using iterator_category = std::random_access_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type = std::shared_ptr<RWMol>;
+
+  Supplier *supplier = nullptr;
+  size_t current_idx = 0;
+  RandomAccessSupplierIter() = default;
+  RandomAccessSupplierIter(Supplier *supplier)
+      : supplier(supplier), current_idx(0) {}
+  RandomAccessSupplierIter(Supplier *supplier, size_t idx)
+      : supplier(supplier), current_idx(idx) {}
+  value_type operator*() const {
+    // FIX: catch a failure and return nullptr?
+    return supplier->getShared(current_idx);
+  }
+  value_type operator[](size_t idx) const { return supplier->getShared(idx); }
+  RandomAccessSupplierIter &operator++() {
+    ++current_idx;
+    return *this;
+  }
+  RandomAccessSupplierIter operator++(int) {
+    RandomAccessSupplierIter tmp(this->supplier, current_idx);
+    ++(*this);
+    return tmp;
+  }
+  RandomAccessSupplierIter &operator--() {
+    --current_idx;
+    return *this;
+  }
+  RandomAccessSupplierIter operator--(int) {
+    RandomAccessSupplierIter tmp(this->supplier, current_idx);
+    --(*this);
+    return tmp;
+  }
+  RandomAccessSupplierIter &operator+=(difference_type n) {
+    current_idx += n;
+    return *this;
+  }
+  RandomAccessSupplierIter &operator-=(difference_type n) {
+    current_idx -= n;
+    return *this;
+  }
+  RandomAccessSupplierIter operator+(difference_type n) const {
+    return RandomAccessSupplierIter(this->supplier, current_idx + n);
+  }
+  RandomAccessSupplierIter operator-(difference_type n) const {
+    return RandomAccessSupplierIter(this->supplier, current_idx - n);
+  }
+  difference_type operator-(const RandomAccessSupplierIter &other) const {
+    return static_cast<difference_type>(current_idx) -
+           static_cast<difference_type>(other.current_idx);
+  }
+  friend RandomAccessSupplierIter operator+(
+      difference_type n, const RandomAccessSupplierIter &it) {
+    return RandomAccessSupplierIter(it.supplier, it.current_idx + n);
+  }
+  bool operator==(const RandomAccessSupplierIter &other) const {
+    return supplier == other.supplier && current_idx == other.current_idx;
+  }
+  bool operator!=(const RandomAccessSupplierIter &other) const {
+    return !(*this == other);
+  }
+  bool operator<(const RandomAccessSupplierIter &other) const {
+    return current_idx < other.current_idx;
+  }
+  bool operator>(const RandomAccessSupplierIter &other) const {
+    return current_idx > other.current_idx;
+  }
+  bool operator<=(const RandomAccessSupplierIter &other) const {
+    return current_idx <= other.current_idx;
+  }
+  bool operator>=(const RandomAccessSupplierIter &other) const {
+    return current_idx >= other.current_idx;
+  }
+};
+
 // \brief a lazy supplier from an SD file
 class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   /*************************************************************************
@@ -195,6 +317,8 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   bool atEnd() override;
   void moveTo(unsigned int idx);
   std::unique_ptr<RWMol> operator[](unsigned int idx);
+  ///! \brief returns a shared pointer to the molecule at the given index.
+  std::shared_ptr<RWMol> getShared(unsigned int idx);
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
@@ -218,14 +342,31 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
    */
   void setStreamIndices(const std::vector<std::streampos> &locs);
 
+  RandomAccessSupplierIter<SDMolSupplier> begin() {
+    return RandomAccessSupplierIter(this);
+  }
+  RandomAccessSupplierIter<SDMolSupplier> end() {
+    return RandomAccessSupplierIter(this, length());
+  }
+
+  void setCaching(bool val) { d_cacheMolecules = val; }
+  bool getCaching() const { return d_cacheMolecules; }
+
  private:
   void checkForEnd() override;
-  void peekCheckForEnd(char* bufPtr, char* bufEnd, std::streampos molStartPos);
+  void peekCheckForEnd(char *bufPtr, char *bufEnd, std::streampos molStartPos);
   void buildIndexTo(unsigned int targetIdx);
   int d_len = 0;   // total number of mol blocks in the file (initialized to -1)
   int d_last = 0;  // the molecule we are ready to read
   std::vector<std::streampos> d_molpos;
+  bool d_cacheMolecules = false;
+  std::vector<std::optional<std::shared_ptr<RWMol>>> d_molCache;
 };
+// clang-format off
+static_assert(
+    std::ranges::random_access_range<SDMolSupplier>
+  );
+// clang-format on
 
 struct SmilesMolSupplierParams {
   std::string delimiter = " \t";

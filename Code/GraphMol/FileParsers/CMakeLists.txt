@@ -130,6 +130,9 @@ rdkit_catch_test(v2FileParsersCatchTest v2_file_parsers_catch.cpp
 rdkit_catch_test(atropisomersCatch atropisomers_catch.cpp
     LINK_LIBRARIES FileParsers)
 
+rdkit_catch_test(fileParsersIterators fileParsersIterTest.cpp
+    LINK_LIBRARIES FileParsers)
+
 
 
 if(RDK_TEST_MULTITHREADED AND RDK_BUILD_THREADSAFE_SSS)
