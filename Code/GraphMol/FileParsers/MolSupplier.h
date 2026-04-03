@@ -436,12 +436,23 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   bool atEnd() override;
   void moveTo(unsigned int idx);
   std::unique_ptr<RWMol> operator[](unsigned int idx);
+  std::shared_ptr<RWMol> getShared(unsigned int idx);
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
    */
   std::string getItemText(unsigned int idx);
   unsigned int length();
+
+  RandomAccessSupplierIter<SmilesMolSupplier> begin() {
+    return RandomAccessSupplierIter(this);
+  }
+  RandomAccessSupplierIter<SmilesMolSupplier> end() {
+    return RandomAccessSupplierIter(this, length());
+  }
+
+  void setCaching(bool val) { d_cacheMolecules = val; }
+  bool getCaching() const { return d_cacheMolecules; }
 
  private:
   std::unique_ptr<RWMol> processLine(std::string inLine);
@@ -459,6 +470,8 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
       d_molpos;  // vector of positions in the file for molecules
   std::vector<int> d_lineNums;
   STR_VECT d_props;  // vector of property names
+  bool d_cacheMolecules = false;
+  std::vector<std::optional<std::shared_ptr<RWMol>>> d_molCache;
 };
 
 struct TDTMolSupplierParams {

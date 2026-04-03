@@ -175,7 +175,7 @@ std::unique_ptr<RWMol> SmilesMolSupplier::processLine(std::string inLine) {
       if (d_props.size() > col) {
         pname = d_props[col];
       }
-      if(pname.empty()){
+      if (pname.empty()) {
         pname = "Column_";
         pname += std::to_string(col);
       }
@@ -464,6 +464,24 @@ std::unique_ptr<RWMol> SmilesMolSupplier::operator[](unsigned int idx) {
   // ---------
   auto res = next();
 
+  return res;
+}
+std::shared_ptr<RWMol> SmilesMolSupplier::getShared(unsigned int idx) {
+  PRECONDITION(dp_inStream, "no stream");
+  if (d_cacheMolecules && d_molCache.size() > idx && d_molCache[idx]) {
+    return d_molCache[idx].value();
+  }
+  // get the molecule with index idx
+  moveTo(idx);
+  auto res = std::shared_ptr<RWMol>(next().release());
+  if (d_cacheMolecules) {
+    auto len = length();
+    if (d_molCache.size() != len) {
+      d_molCache.clear();
+      d_molCache.resize(len);
+    }
+    d_molCache[idx] = res;
+  }
   return res;
 }
 
