@@ -118,36 +118,42 @@ class RDKIT_FILEPARSERS_EXPORT MolSupplier {
   }
 };
 
-// template <typename Supplier>
-// struct ForwardSupplierIter {
-//   using iterator_category = std::input_iterator_tag;
-//   using difference_type = std::ptrdiff_t;
-//   using value_type = std::unique_ptr<ROMol>;
+template <typename Supplier>
+struct ForwardSupplierIter {
+  using iterator_category = std::input_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type = std::shared_ptr<RWMol>;
 
-//   Supplier *supplier = nullptr;
-//   std::optional<value_type> current;
-//   ForwardSupplierIter() = default;
-//   ForwardSupplierIter(Supplier *supplier)
-//       : supplier(supplier), current(supplier->next()) {}
-//   ForwardSupplierIter(Supplier *supplier, value_type current)
-//       : supplier(supplier), current(std::move(current)) {}
-//   value_type operator*() const {
-//     value_type res{*current};
-//     return std::move(res);
-//   }
-//   ForwardSupplierIter &operator++() {
-//     current.swap(supplier->next());
-//     return *this;
-//   }
-//   ForwardSupplierIter operator++(int) {
-//     ForwardSupplierIter tmp(this->supplier, std::move(current));
-//     ++(*this);
-//     return tmp;
-//   }
-//   bool operator==(const ForwardSupplierIter &other) const {
-//     return !current.has_value() && !other.current.has_value();
-//   }
-// };
+  Supplier *supplier = nullptr;
+  std::optional<value_type> current;
+  ForwardSupplierIter() = default;
+  ForwardSupplierIter(Supplier *supplier)
+      : supplier(supplier), current(supplier->nextShared()) {}
+  value_type operator*() const { return current.value(); }
+  ForwardSupplierIter &operator++() {
+    if (supplier->atEnd()) {
+      current.reset();
+      return *this;
+    }
+    current = supplier->nextShared();
+    if (!current.value() && supplier->atEnd()) {
+      current.reset();
+    }
+    return *this;
+  }
+  ForwardSupplierIter operator++(int) {
+    if (supplier->atEnd()) {
+      current.reset();
+      return *this;
+    }
+    ForwardSupplierIter tmp = *this;
+    ++(*this);
+    return tmp;
+  }
+  bool operator==(const ForwardSupplierIter &other) const {
+    return !current.has_value() && !other.current.has_value();
+  }
+};
 
 // \brief a supplier from an SD file that only reads forward:
 class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
@@ -168,6 +174,9 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   void init() override;
   void reset() override;
   std::unique_ptr<RWMol> next() override;
+  std::shared_ptr<RWMol> nextShared() {
+    return std::shared_ptr<RWMol>(this->next());
+  };
   bool atEnd() override;
 
   void setProcessPropertyLists(bool val) { df_processPropertyLists = val; }
@@ -175,12 +184,12 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
 
   bool getEOFHitOnRead() const { return df_eofHitOnRead; }
 
-  // ForwardSupplierIter<ForwardSDMolSupplier> begin() {
-  //   return ForwardSupplierIter(this);
-  // }
-  // ForwardSupplierIter<ForwardSDMolSupplier> end() {
-  //   return ForwardSupplierIter<ForwardSDMolSupplier>();
-  // }
+  ForwardSupplierIter<ForwardSDMolSupplier> begin() {
+    return ForwardSupplierIter(this);
+  }
+  ForwardSupplierIter<ForwardSDMolSupplier> end() {
+    return ForwardSupplierIter<ForwardSDMolSupplier>();
+  }
 
  protected:
   virtual void checkForEnd();
@@ -192,11 +201,11 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   bool df_processPropertyLists = true;
   bool df_eofHitOnRead = false;
 };
-// // clang-format off
-// static_assert(
-//     std::ranges::input_range<ForwardSDMolSupplier>
-//   );
-// // clang-format on
+// clang-format off
+static_assert(
+    std::ranges::input_range<ForwardSDMolSupplier>
+  );
+// clang-format on
 
 template <typename Supplier>
 struct RandomAccessSupplierIter {

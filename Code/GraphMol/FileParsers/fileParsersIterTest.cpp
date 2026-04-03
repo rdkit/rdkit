@@ -12,6 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include <ranges>
+#include <iostream>
 
 #include <GraphMol/RDKitBase.h>
 #include "MolSupplier.h"
@@ -36,6 +37,17 @@ void iterTest(Supplier &reader, size_t len) {
 }
 
 template <typename Supplier>
+void forwardIterTest(Supplier &reader, size_t len) {
+  std::vector<unsigned int> actual;
+  std::ranges::transform(reader, std::back_inserter(actual),
+                         [](const auto &mol) {
+                           REQUIRE(mol);
+                           return (size_t)mol->getNumAtoms();
+                         });
+  CHECK(actual.size() == len);
+}
+
+template <typename Supplier>
 void cacheTest(Supplier &reader, size_t len) {
   reader.setCaching(true);
   CHECK(reader.length() == len);
@@ -44,10 +56,16 @@ void cacheTest(Supplier &reader, size_t len) {
   REQUIRE(mols.size() == reader.length());
   std::vector<size_t> expected;
   std::ranges::transform(mols, std::back_inserter(expected),
-                         [](const auto &mol) { return (size_t)mol.get(); });
+                         [](const auto &mol) {
+                           REQUIRE(mol);
+                           return (size_t)mol.get();
+                         });
   std::vector<size_t> actual;
   std::ranges::transform(reader, std::back_inserter(actual),
-                         [](const auto &mol) { return (size_t)mol.get(); });
+                         [](const auto &mol) {
+                           REQUIRE(mol);
+                           return (size_t)mol.get();
+                         });
   CHECK(actual == expected);
 }
 
@@ -57,6 +75,48 @@ TEST_CASE("basic SDMolSupplier iteration") {
   v2::FileParsers::SDMolSupplier reader(infile);
   SECTION("basics") { iterTest(reader, 16); }
   SECTION("with caching") { cacheTest(reader, 16); }
+}
+
+TEST_CASE("ForwardSDMolSupplier iteration") {
+  std::string infile =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+  std::ifstream strm(infile);
+  bool takeOwnership = false;
+  v2::FileParsers::ForwardSDMolSupplier reader(&strm, takeOwnership);
+  SECTION("basics") {
+    // unsigned int i = 0;
+    // for (auto mol : reader) {
+    //   std::cerr << i << " " << (mol ? mol->getNumAtoms() : 1234) << " "
+    //             << reader.atEnd() << std::endl;
+    //   CHECK(mol);
+    //   ++i;
+    // }
+    forwardIterTest(reader, 16);
+  }
+  SECTION("pre-increment") {
+    unsigned int i = 0;
+    auto it = reader.begin();
+    auto end = reader.end();
+    while (it != end) {
+      auto mol = *it;
+      REQUIRE(mol);
+      ++it;
+      ++i;
+    }
+    CHECK(i == 16);
+  }
+  SECTION("post-increment") {
+    unsigned int i = 0;
+    auto it = reader.begin();
+    auto end = reader.end();
+    while (it != end) {
+      auto mol = *it;
+      REQUIRE(mol);
+      it++;
+      ++i;
+    }
+    CHECK(i == 16);
+  }
 }
 
 TEST_CASE("cached SDMolSupplier error handling") {
