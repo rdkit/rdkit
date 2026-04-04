@@ -455,6 +455,9 @@ std::unique_ptr<RWMol> SmilesMolSupplier::next() {
 std::unique_ptr<RWMol> SmilesMolSupplier::operator[](unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
 
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
   // ---------
   // move to the appropriate location in the file:
   // ---------
@@ -469,13 +472,27 @@ std::unique_ptr<RWMol> SmilesMolSupplier::operator[](unsigned int idx) {
 }
 std::shared_ptr<RWMol> SmilesMolSupplier::getShared(unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
-  if (d_cacheMolecules && d_molCache.size() > idx && d_molCache[idx]) {
-    return d_molCache[idx].value();
+  if (d_cacheMolecules) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
+    if (d_molCache.size() > idx && d_molCache[idx]) {
+      return d_molCache[idx].value();
+    }
   }
   // get the molecule with index idx
-  moveTo(idx);
-  auto res = std::shared_ptr<RWMol>(next().release());
+  std::shared_ptr<RWMol> res;
+  {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
+    moveTo(idx);
+    res.reset(next().release());
+  }
   if (d_cacheMolecules) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
     auto len = length();
     if (d_molCache.size() != len) {
       d_molCache.clear();

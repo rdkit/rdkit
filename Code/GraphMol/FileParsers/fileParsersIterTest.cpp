@@ -11,8 +11,10 @@
 
 #include <vector>
 #include <algorithm>
+#include <execution>
 #include <ranges>
 #include <iostream>
+#include <filesystem>
 
 #include <GraphMol/RDKitBase.h>
 #include "MolSupplier.h"
@@ -205,3 +207,97 @@ c1cc,0
     CHECK(actual == expected);
   }
 }
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+TEST_CASE("parallel reads") {
+  auto *rdbase = std::getenv("RDBASE");
+  REQUIRE(rdbase);
+  SECTION("sdf") {
+    auto path = std::filesystem::path(rdbase) /
+                "Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
+    REQUIRE(std::filesystem::exists(path));
+    v2::FileParsers::SDMolSupplier reader1(path.string());
+    std::vector<unsigned int> nAts1(reader1.length());
+    std::transform(reader1.begin(), reader1.end(), nAts1.begin(),
+                   [](const auto mol) { return mol->getNumAtoms(); });
+    // std::sort(nAts1.begin(), nAts1.end());
+    auto start = std::chrono::high_resolution_clock::now();
+    constexpr unsigned int numIters = 100;
+    for (unsigned int iter = 0; iter < numIters; ++iter) {
+      v2::FileParsers::SDMolSupplier reader2(path.string());
+      reader2.setCaching(true);
+      std::vector<unsigned int> nAts2(reader1.length());
+      std::transform(std::execution::par, reader2.begin(), reader2.end(),
+                     nAts2.begin(),
+                     [](const auto mol) { return mol->getNumAtoms(); });
+      REQUIRE(nAts1.size() == nAts2.size());
+      REQUIRE(nAts1 == nAts2);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cerr << "Read of " << reader1.length() << "x" << numIters
+              << " molecules took " << duration.count() << " ms" << std::endl;
+  }
+  SECTION("smiles") {
+    auto path =
+        std::filesystem::path(rdbase) / "Regress/Data/zinc.leads.500.q.smi";
+    REQUIRE(std::filesystem::exists(path));
+    v2::FileParsers::SmilesMolSupplierParams params;
+    params.delimiter = '\t';
+    params.smilesColumn = 0;
+    params.nameColumn = 1;
+    params.titleLine = false;
+
+    v2::FileParsers::SmilesMolSupplier reader1(path.string(), params);
+    std::vector<unsigned int> nAts1(reader1.length());
+    std::transform(reader1.begin(), reader1.end(), nAts1.begin(),
+                   [](const auto mol) { return mol->getNumAtoms(); });
+
+    auto start = std::chrono::high_resolution_clock::now();
+    constexpr unsigned int numIters = 100;
+    for (unsigned int iter = 0; iter < numIters; ++iter) {
+      v2::FileParsers::SmilesMolSupplier reader2(path.string(), params);
+      reader2.setCaching(true);
+      std::vector<unsigned int> nAts2(reader1.length());
+      std::transform(std::execution::par, reader2.begin(), reader2.end(),
+                     nAts2.begin(),
+                     [](const auto mol) { return mol->getNumAtoms(); });
+      REQUIRE(nAts1 == nAts2);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cerr << "Read of " << reader1.length() << "x" << numIters
+              << " molecules took " << duration.count() << " ms" << std::endl;
+  }
+}
+#endif
++= nAts.size();
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cerr << "Base transform of " << reader.length() << " molecules took "
+              << duration.count() << " ms" << std::endl;
+    CHECK(accum > 0);
+#if 1
+    accum = 0.0;
+    start = std::chrono::high_resolution_clock::now();
+    for (unsigned int iter = 0; iter < 1000; ++iter) {
+      std::vector<unsigned int> nAts(reader.length());
+      std::transform(std::execution::par, reader.begin(), reader.end(),
+                     nAts.begin(),
+                     [](const auto mol) { return MolToSmiles(*mol).size(); });
+      accum += nAts.size();
+    }
+    end = std::chrono::high_resolution_clock::now();
+    duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cerr << "Parallel transform of " << reader.length()
+              << " molecules took " << duration.count() << " ms" << std::endl;
+    CHECK(accum > 0);
+#endif
+  }
+}
+#endif

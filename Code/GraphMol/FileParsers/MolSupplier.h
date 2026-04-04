@@ -23,6 +23,9 @@
 #include <RDGeneral/BadFileException.h>
 #include "FileParsers.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <mutex>
+#endif
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 namespace schrodinger {
@@ -225,10 +228,7 @@ struct RandomAccessSupplierIter {
       : supplier(supplier), current_idx(0) {}
   RandomAccessSupplierIter(Supplier *supplier, size_t idx)
       : supplier(supplier), current_idx(idx) {}
-  value_type operator*() const {
-    // FIX: catch a failure and return nullptr?
-    return supplier->getShared(current_idx);
-  }
+  value_type operator*() const { return supplier->getShared(current_idx); }
   value_type operator[](size_t idx) const { return supplier->getShared(idx); }
   RandomAccessSupplierIter &operator++() {
     ++current_idx;
@@ -364,6 +364,10 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   std::vector<std::streampos> d_molpos;
   bool d_cacheMolecules = false;
   std::vector<std::optional<std::shared_ptr<RWMol>>> d_molCache;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::mutex d_readMutex;
+  std::mutex d_cacheMutex;
+#endif
 };
 // clang-format off
 static_assert(
@@ -475,6 +479,10 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   STR_VECT d_props;  // vector of property names
   bool d_cacheMolecules = false;
   std::vector<std::optional<std::shared_ptr<RWMol>>> d_molCache;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::mutex d_readMutex;
+  std::mutex d_cacheMutex;
+#endif
 };
 
 struct TDTMolSupplierParams {

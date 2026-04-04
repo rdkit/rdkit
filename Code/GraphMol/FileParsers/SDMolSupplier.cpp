@@ -196,6 +196,9 @@ std::unique_ptr<RWMol> SDMolSupplier::next() {
 
 std::string SDMolSupplier::getItemText(unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
   unsigned int holder = d_last;
   moveTo(idx);
   std::streampos begP = d_molpos[idx];
@@ -219,7 +222,6 @@ std::string SDMolSupplier::getItemText(unsigned int idx) {
 
 void SDMolSupplier::moveTo(unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
-
   // dp_inStream->seekg() is called for all idx values
   // and earlier calls to next() may have put the stream into a bad state
   dp_inStream->clear();
@@ -257,6 +259,10 @@ void SDMolSupplier::moveTo(unsigned int idx) {
 
 std::unique_ptr<RWMol> SDMolSupplier::operator[](unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
+  // std::cerr << "get molecule with index " << idx << std::endl;
   // get the molecule with index idx
   moveTo(idx);
   auto res = next();
@@ -265,13 +271,27 @@ std::unique_ptr<RWMol> SDMolSupplier::operator[](unsigned int idx) {
 
 std::shared_ptr<RWMol> SDMolSupplier::getShared(unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
-  if (d_cacheMolecules && d_molCache.size() > idx && d_molCache[idx]) {
-    return d_molCache[idx].value();
-  }
-  // get the molecule with index idx
-  moveTo(idx);
-  auto res = std::shared_ptr<RWMol>(next().release());
   if (d_cacheMolecules) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
+    if (d_molCache.size() > idx && d_molCache[idx]) {
+      return d_molCache[idx].value();
+    }
+  }
+  std::shared_ptr<RWMol> res;
+  {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
+    // get the molecule with index idx
+    moveTo(idx);
+    res.reset(next().release());
+  }
+  if (d_cacheMolecules) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
     auto len = length();
     if (d_molCache.size() != len) {
       d_molCache.clear();
