@@ -86,8 +86,6 @@ std::vector<std::vector<size_t>> getHitSynthons(
     const auto &synthons = reaction.getSynthons()[synthonSetOrder[fragNum]];
     // Get the smallest fragment volume.
     bool fragMatched = false;
-    // TODO : fix this as it's no longer true.  We only store the
-    // the combination similarity.
     // Because the combination score is the sum of 2 tanimotos, it's not
     // possible to use the threshold to set upper and lower bounds on the
     // search space as is done with fingerprints and Rascal similarity.
@@ -109,9 +107,9 @@ std::vector<std::vector<size_t>> getHitSynthons(
         if (auto csim = fragShapes[fragNum]->getShapes().bestSimilarity(
                 synthons[j].second->getShapes()->getShapes(), bestRefConf,
                 bestFitConf, xform, similarityCutoff);
-            csim >= similarityCutoff) {
+            csim[0] >= similarityCutoff) {
           synthonsToUse[synthonSetOrder[fragNum]][j] = true;
-          fragSims[synthonSetOrder[fragNum]].emplace_back(j, csim);
+          fragSims[synthonSetOrder[fragNum]].emplace_back(j, csim[0]);
           fragMatched = true;
         }
       }
@@ -521,6 +519,7 @@ bool checkDummies(const double *fragDummyPos, const double *fragDummyNbrPos,
 SynthonOverlay bestSimSynthonOntoFragment(
     SynthonShapeInput &fragShape, const Synthon *synthon, double threshold,
     const GaussianShape::ShapeOverlayOptions &shapeOverlayOpts) {
+  // This should only be called if the synthon has shapes.
   auto synthShapes = synthon->getShapes().get();
   if (fragShape.getShapes().maxPossibleSimilarity(synthShapes->getShapes()) <
       threshold) {
@@ -553,7 +552,7 @@ SynthonOverlay bestSimSynthonOntoFragment(
     unsigned int bestFragShape = 0;
     auto sim = fragShape.getShapes().bestSimilarity(
         synthShapeCp, bestFragShape, bestSynthShape, *bestXform, threshold);
-    return SynthonOverlay{sim, bestSynthShape, bestXform};
+    return SynthonOverlay{sim[0], bestSynthShape, bestXform};
   }
   // For every dummy atom in the fragShape
   //    For every shape in the synthon:
@@ -780,50 +779,63 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
     // frag->synthon similarities weighted by the synthon volumes.
     const auto hs = dynamic_cast<const SynthonSpaceShapeHitSet *>(hitset);
     double totVol = 0.0;
-    std::vector<double> synthVols(hs->synthonSetOrder.size(), 0.0);
-    std::vector<double> scores(hs->synthonSetOrder.size(), 0.0);
+    std::vector<double> synthVols(synthNums.size(), 0.0);
+    std::vector<double> scores(synthNums.size(), 0.0);
     auto &m = getParams().shapeOverlayOptions.optParam;
 
     // Not all fragShapes will have a matching synthon.  For example,
     // if a 2 fragment split matched 2 synthons from a 3 synthon SynthonSet.
     // All synthons of the 3rd set will have been included as potential hits.
     // Do the overlap vol calcs with the fragments to matching synthon.
-    for (size_t i = 0; i < hs->fragShapes.size(); i++) {
-      const auto &synth = hs->synthonsToUse[hs->synthonSetOrder[i]]
-                                           [synthNums[hs->synthonSetOrder[i]]]
-                                               .second;
-      const auto &shapes = synth->getShapes();
-      auto fragShape = hs->fragShapes[i];
+    boost::dynamic_bitset<> synthsMatched(synthNums.size());
+    for (size_t i = 0; i < synthNums.size(); ++i) {
+      const auto &synthon = hs->synthonsToUse[i][synthNums[i]].second;
+      for (size_t j = 0; j < hs->fragShapes.size(); ++j) {
+        const auto &fragShape = hs->fragShapes[j];
+        const auto &shapes = synthon->getShapes();
+        if (!shapes) {
+          // If one of the synthons doesn't have a shape, the hit is clearly
+          // a bust.
+          return 0.0;
+        }
+        // Look up the similarity for this shape/synthon combination.  If it
+        // isn't there, something has gone catastrophically wrong somewhere.
+        SynthonOverlay sim;
+        if (fragMatchedSynthon(fragShape, synthon, sim)) {
+          // Get the volume of the synthon for the shape conformer that gave
+          // the similarity values.
+          double synthVol =
+              shapes->getShapes().getShapeVolume(std::get<1>(sim)) -
+              shapes->getDummyVolume(std::get<1>(sim));
+          double synthColourVol =
+              shapes->getShapes().getColorVolume(std::get<1>(sim));
 
-      // Look up the similarity for this shape/synthon combination.  If it
-      // isn't there, something has gone catastrophically wrong somewhere.
-      SynthonOverlay sim;
-      fragMatchedSynthon(fragShape, synth, sim);
-      // Get the volume of the synthon for the shape conformer that gave
-      // the similarity values.
-      double synthVol = shapes->getShapes().getShapeVolume(std::get<1>(sim)) -
-                        shapes->getDummyVolume(std::get<1>(sim));
-      double synthColourVol =
-          shapes->getShapes().getColorVolume(std::get<1>(sim));
-
-      synthVols[i] = (1.0 - m) * synthVol + m * synthColourVol;
-      scores[i] = std::get<0>(sim);
-      totVol += synthVols[i];
+          synthVols[i] = (1.0 - m) * synthVol + m * synthColourVol;
+          scores[i] = std::get<0>(sim);
+          totVol += synthVols[i];
+          synthsMatched[i] = true;
+        }
+      }
     }
-    // Add in the volumes of un-matched Synthons
-    for (size_t i = hs->fragShapes.size(); i < hs->synthonSetOrder.size();
-         i++) {
-      const auto &synth =
-          hs->synthonsToUse[hs->synthonSetOrder[i]][synthNums[i]].second;
-      const auto &shapes = synth->getShapes();
-      // Use the first shape, which should have the largest volume.
-      double synthVol =
-          shapes->getShapes().getShapeVolume(0) - shapes->getDummyVolume(0);
-      double synthColourVol = shapes->getShapes().getColorVolume(0);
-      synthVols[i] = (1.0 - m) * synthVol + m * synthColourVol;
-      totVol += synthVols[i];
+    if (synthsMatched.count() < synthNums.size()) {
+      for (size_t i = 0; i < synthNums.size(); ++i) {
+        if (!synthsMatched[i]) {
+          const auto &synthon = hs->synthonsToUse[i][synthNums[i]].second;
+          // Use the first shape, which should have the largest volume.
+          const auto &shapes = synthon->getShapes();
+          if (!shapes) {
+            return 0.0;
+          }
+          double synthVol =
+              shapes->getShapes().getShapeVolume(0) - shapes->getDummyVolume(0);
+          double synthColourVol = shapes->getShapes().getColorVolume(0);
+          synthVols[i] = (1.0 - m) * synthVol + m * synthColourVol;
+          totVol += synthVols[i];
+        }
+      }
     }
-    for (unsigned int i = 0; i < hs->synthonSetOrder.size(); i++) {
+    // scores[i] will be zero for un-matched synthons.
+    for (unsigned int i = 0; i < synthNums.size(); i++) {
       approxSim += scores[i] * (synthVols[i]) / (totVol);
     }
   } else {
@@ -838,7 +850,7 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
       const auto &synth = hitset->synthonsToUse[i][synthNums[i]].second;
       const auto &shapes = synth->getShapes();
       if (!shapes) {
-        return false;
+        return 0.0;
       }
       maxVol +=
           shapes->getShapes().getShapeVolume(0) - shapes->getDummyVolume(0);
@@ -855,20 +867,20 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
 namespace {
 // Update the hit molecule to the overlay and score represented by
 // xform and sim.
-void finaliseHit(const ROMol &hitMol, unsigned int hitConfId,
-                 std::array<double, 3> &scores, const std::string &rxnId,
+void finaliseHit(GaussianShape::ShapeInput &hitShapes, unsigned int hitShapeNum,
+                 const RDGeom::Transform3D &xform,
+                 const std::array<double, 3> &scores, const std::string &rxnId,
                  const std::vector<const std::string *> &synthNames,
                  ROMol &hit) {
   // Copy the conformer into the hit.
-  auto hitConf = new Conformer(hitMol.getConformer(hitConfId));
-  hit.clearConformers();
-  hit.addConformer(hitConf, true);
+  hitShapes.setActiveShape(hitShapeNum);
+  hit = static_cast<ROMol>(*hitShapes.shapeToMol(false, true));
+  MolTransforms::transformConformer(hit.getConformer(), xform);
   hit.setProp<double>("Similarity", scores[0]);
-  hit.setProp<double>("ShapeTanimoto", scores[1]);
-  hit.setProp<double>("ColorTanimoto", scores[2]);
+  hit.setProp<double>("ShapeScore", scores[1]);
+  hit.setProp<double>("ColorScore", scores[2]);
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
-
   MolOps::assignStereochemistryFrom3D(hit);
 }
 
@@ -917,15 +929,18 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
   boost::dynamic_bitset<> synthsMatched(synthNums.size());
   for (size_t i = 0; i < synthNums.size(); ++i) {
     const auto &synthon = hs->synthonsToUse[i][synthNums[i]].second;
+    // At this point it's unlikely to be the case that a synthon doesn't have
+    // a shape, but why tempt fate?
+    if (!synthon->getShapes()) {
+      return std::unique_ptr<ROMol>();
+    }
     for (size_t j = 0; j < hs->fragShapes.size(); ++j) {
       const auto &shape = hs->fragShapes[j];
       // Fetch the overlay for this fragment, synthon combination
-      auto it = d_fragSynthonSims.find(std::make_pair(shape, synthon));
-      // This frag matched this synthon, so get the shape number and
-      // transformation, and set it up.
-      if (it != d_fragSynthonSims.end()) {
-        unsigned int shapeNumToUse = std::get<1>(it->second);
-        RDGeom::Transform3D *transToUse = std::get<2>(it->second).get();
+      SynthonOverlay sim;
+      if (fragMatchedSynthon(shape, synthon, sim)) {
+        unsigned int shapeNumToUse = std::get<1>(sim);
+        RDGeom::Transform3D *transToUse = std::get<2>(sim).get();
         // We need to build a copy of the synthon and give it the coords
         // of the associated shape that is similar to the fragment, and
         // transform it to the overlaid coords.
@@ -981,7 +996,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   auto initScores =
       GaussianShape::AlignMolecule(dp_queryShapes->getShapes(), hit);
   finaliseHit(hit, initScores, rxnId, synthNames);
-  if (checkBondLengths(hit) && !getParams().bestHit &&
+  if (!getParams().bestHit && checkBondLengths(hit) &&
       initScores[0] >= getParams().similarityCutoff) {
     return true;
   }
@@ -993,9 +1008,10 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   dgParams.pruneRmsThresh = getParams().confRMSThreshold;
   dgParams.randomSeed = getParams().randomSeed;
   dgParams.timeout = getParams().timeOut;
-  auto hitConfs =
-      details::generateIsomerConformers(hit, getParams().numConformers, true,
-                                        getParams().stereoEnumOpts, dgParams);
+  UserConfGenerator userConf = getParams().userConformerGenerator;
+  auto hitConfs = details::generateIsomerConformers(
+      hit, getParams().numConformers, true, getParams().stereoEnumOpts,
+      dgParams, userConf);
   bool foundHit = false;
   // Prefer a hit from a generated conf rather than the initial hit
   // which might have iffy bond lengths because it's the output from molzip.
@@ -1007,30 +1023,33 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   opts.shapePruneThreshold = -1.0;
   RDGeom::Transform3D xform;
   for (auto &isomer : hitConfs) {
-    for (unsigned int j = 0u; j < isomer->getNumConformers(); ++j) {
-      auto scores =
-          GaussianShape::AlignMolecule(dp_queryShapes->getShapes(), *isomer,
-                                       opts, &xform, overlayOptions, j);
-      double sim = scores[0];
-      bool finalisedHit = false;
-      if (sim > getBestSimilaritySoFar()) {
-        finaliseHit(*isomer, j, scores, rxnId, synthNames, hit);
-        finalisedHit = true;
-        std::unique_lock lock1{myMutex};
-        updateBestHitSoFar(hit, sim);
+    GaussianShape::ShapeInput isomerShapes(*isomer, -1, opts, overlayOptions);
+    unsigned int bestQueryShape, bestFitShape;
+    RDGeom::Transform3D bestXform;
+    double thresh = getParams().bestHit ? -1 : getParams().similarityCutoff;
+    auto thisBest = dp_queryShapes->getShapes().bestSimilarity(
+        isomerShapes, bestQueryShape, bestFitShape, bestXform, thresh,
+        overlayOptions);
+    bool finalisedHit = false;
+    if (thisBest[0] > getBestSimilaritySoFar()) {
+      finaliseHit(isomerShapes, bestFitShape, bestXform, thisBest, rxnId,
+                  synthNames, hit);
+      finalisedHit = true;
+      std::unique_lock lock1{myMutex};
+      updateBestHitSoFar(hit, thisBest[0]);
+    }
+    if (thisBest[0] >= bestSim && thisBest[0] > getParams().similarityCutoff) {
+      if (!finalisedHit) {
+        finaliseHit(isomerShapes, bestFitShape, bestXform, thisBest, rxnId,
+                    synthNames, hit);
       }
-      if (sim >= bestSim && sim > getParams().similarityCutoff) {
-        if (!finalisedHit) {
-          finaliseHit(*isomer, j, scores, rxnId, synthNames, hit);
-        }
-        // If we're only interested in whether there's a shape match, and
-        // not in finding the best shape, we're done.
-        if (!getParams().bestHit) {
-          return true;
-        }
-        foundHit = true;
-        bestSim = scores[0];
+      // If we're only interested in whether there's a shape match, and
+      // not in finding the best shape, we're done.
+      if (!getParams().bestHit) {
+        return true;
       }
+      foundHit = true;
+      bestSim = thisBest[0];
     }
   }
   if (!foundHit && initScores[0] > getParams().similarityCutoff) {
@@ -1050,7 +1069,7 @@ void SynthonSpaceShapeSearcher::processToTrySet(
   // with the full query so it doesn't matter which entry in the hit set
   // is used.  If we uniquify on reaction/synthons straight away, we
   // may end up with a reaction/synthon pair that doesn't hit the threshold
-  // even though one of the other hitsets might have the smae reaction/synthon
+  // even though one of the other hitsets might have the same reaction/synthon
   // pair coupled with a different fragSet that does go over the threshold.
   // First calculate the approximate similarities and discard any that
   // don't meet the threshold.
@@ -1064,18 +1083,19 @@ void SynthonSpaceShapeSearcher::processToTrySet(
       approxSims.push_back(std::make_pair(i, sim));
     }
   }
-
   if (approxSims.empty()) {
     return;
   }
+  std::sort(approxSims.begin(), approxSims.end(),
+            [](const auto &p1, const auto &p2) -> bool {
+              return p1.second > p2.second;
+            });
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
       newToTry;
   newToTry.reserve(approxSims.size());
-  newToTry.push_back(toTry[approxSims[0].first]);
   for (size_t i = 0; i < approxSims.size(); i++) {
     newToTry.push_back(toTry[approxSims[i].first]);
   }
-  toTry = std::move(newToTry);
   details::sortAndUniquifyToTry(toTry);
   makeHitsFromToTry(toTry, endTime, results);
 }

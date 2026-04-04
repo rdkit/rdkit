@@ -250,34 +250,8 @@ SearchResults SynthonSpace::shapeSearch(
     queryCp.reset(new RWMol(query));
   }
 
-  if (!params.enumerateUnspecifiedStereo) {
-    SynthonSpaceShapeSearcher ssss(*queryCp, params, *this);
-    return ssss.search(ThreadMode::ThreadFragments);
-  }
-  // Otherwise, we need to enumerate any isomers, search each one
-  // and accumulate the results.
-  auto paramsCp = params;
-  auto dgParams = DGeomHelpers::ETKDGv3;
-  dgParams.numThreads = params.numThreads;
-  dgParams.pruneRmsThresh = params.confRMSThreshold;
-  dgParams.randomSeed = params.randomSeed;
-  auto isomers = details::generateIsomerConformers(
-      query, params.numConformers, params.enumerateUnspecifiedStereo,
-      params.stereoEnumOpts, dgParams);
-  SearchResults allResults;
-  for (auto &isomer : isomers) {
-    SynthonSpaceShapeSearcher ssss(*isomer, paramsCp, *this);
-    auto results = ssss.search(ThreadMode::ThreadFragments);
-    allResults.mergeResults(results);
-    if (params.maxHits > 0) {
-      if (allResults.getHitMolecules().size() >
-          static_cast<std::uint64_t>(params.maxHits)) {
-        return allResults;
-      }
-      paramsCp.maxHits = params.maxHits - allResults.getHitMolecules().size();
-    }
-  }
-  return allResults;
+  SynthonSpaceShapeSearcher ssss(*queryCp, params, *this);
+  return ssss.search(ThreadMode::ThreadFragments);
 }
 
 namespace {
@@ -788,8 +762,8 @@ void writeInterimFile(const SynthonSpace &space, const std::string &filename) {
 }  // namespace
 
 void SynthonSpace::buildSynthonShapes(bool &cancelled,
-                                      const ShapeBuildParams &shapeParams) {
-  if (d_numConformers == shapeParams.numConfs) {
+                                      ShapeBuildParams &shapeBuildParams) {
+  if (d_numConformers == shapeBuildParams.numConfs) {
     bool missingShapes = false;
     for (const auto &[id, synthon] : d_synthonPool) {
       if (!synthon->getShapes()) {
@@ -802,8 +776,8 @@ void SynthonSpace::buildSynthonShapes(bool &cancelled,
           << "Resuming building SynthonSpace shapes." << std::endl;
     } else {
       BOOST_LOG(rdWarningLog)
-          << "SynthonSpace has already been built with " << shapeParams.numConfs
-          << " conformers." << std::endl;
+          << "SynthonSpace has already been built with "
+          << shapeBuildParams.numConfs << " conformers." << std::endl;
       return;
     }
   }
@@ -814,11 +788,11 @@ void SynthonSpace::buildSynthonShapes(bool &cancelled,
     fillSynthonReactions();
   }
 
-  d_numConformers = shapeParams.numConfs;
+  d_numConformers = shapeBuildParams.numConfs;
   std::vector<unsigned int> doneRxns(d_synthonPool.size(), 0u);
   cancelled = false;
   std::vector<std::vector<std::unique_ptr<SampleMolRec>>> allSampleMols;
-  buildSynthonSampleMolecules(shapeParams.maxSynthonAtoms, allSampleMols);
+  buildSynthonSampleMolecules(shapeBuildParams.maxSynthonAtoms, allSampleMols);
   // Do the big molecules first so there is less chance of sitting at the
   // end waiting for 1 big embedding to finish.
   std::ranges::sort(allSampleMols,
@@ -827,13 +801,14 @@ void SynthonSpace::buildSynthonShapes(bool &cancelled,
                     });
 
   bool interimWrite = true;
-  if (shapeParams.interimWrites == 0 || shapeParams.interimFile.empty()) {
+  if (shapeBuildParams.interimWrites == 0 ||
+      shapeBuildParams.interimFile.empty()) {
     interimWrite = false;
   }
   std::unique_ptr<ProgressBar> pbar;
-  if (shapeParams.useProgressBar) {
+  if (shapeBuildParams.useProgressBar) {
     pbar.reset(
-        new ProgressBar(shapeParams.useProgressBar, allSampleMols.size()));
+        new ProgressBar(shapeBuildParams.useProgressBar, allSampleMols.size()));
   }
 
   while (!cancelled) {
@@ -854,7 +829,7 @@ void SynthonSpace::buildSynthonShapes(bool &cancelled,
           allSampleMol.pop_back();
         }
       }
-      if (interimWrite && shapeParams.interimWrites == sampleMols.size()) {
+      if (interimWrite && shapeBuildParams.interimWrites == sampleMols.size()) {
         break;
       }
     }
@@ -866,18 +841,18 @@ void SynthonSpace::buildSynthonShapes(bool &cancelled,
     });
     auto dgParams = DGeomHelpers::ETKDGv3;
     dgParams.numThreads = 1;
-    dgParams.pruneRmsThresh = shapeParams.rmsThreshold;
-    dgParams.randomSeed = shapeParams.randomSeed;
-    dgParams.maxIterations = shapeParams.maxEmbedAttempts;
-    dgParams.timeout = shapeParams.timeOut;
+    dgParams.pruneRmsThresh = shapeBuildParams.rmsThreshold;
+    dgParams.randomSeed = shapeBuildParams.randomSeed;
+    dgParams.maxIterations = shapeBuildParams.maxEmbedAttempts;
+    dgParams.timeout = shapeBuildParams.timeOut;
     auto numWithShapesB4 = getNumSynthonsWithShapes();
-    details::makeShapesFromMols(sampleMols, dgParams, shapeParams, pbar);
+    details::makeShapesFromMols(sampleMols, dgParams, shapeBuildParams, pbar);
     auto numWithShapes = getNumSynthonsWithShapes();
     if (interimWrite && numWithShapes > numWithShapesB4) {
-      BOOST_LOG(rdInfoLog) << "Writing interim file " << shapeParams.interimFile
-                           << " with " << numWithShapes << " shapes."
-                           << std::endl;
-      writeInterimFile(*this, shapeParams.interimFile);
+      BOOST_LOG(rdInfoLog) << "Writing interim file "
+                           << shapeBuildParams.interimFile << " with "
+                           << numWithShapes << " shapes." << std::endl;
+      writeInterimFile(*this, shapeBuildParams.interimFile);
     }
     if (ControlCHandler::getGotSignal()) {
       cancelled = true;
@@ -887,11 +862,14 @@ void SynthonSpace::buildSynthonShapes(bool &cancelled,
 
 std::uint64_t SynthonSpace::getNumSynthonsWithShapes() const {
   size_t numShapes = 0;
+  size_t totShapes = 0;
   for (const auto &[smiles, synthon] : d_synthonPool) {
     if (synthon->getShapes()) {
       numShapes++;
+      totShapes += synthon->getShapes()->getShapes().getNumShapes();
     }
   }
+  std::cout << "Total number of shapes : " << totShapes << std::endl;
   return numShapes;
 }
 
@@ -1068,7 +1046,7 @@ void SynthonSpace::buildSynthonSampleMolecules(
 void convertTextToDBFile(const std::string &inFilename,
                          const std::string &outFilename, bool &cancelled,
                          const FingerprintGenerator<std::uint64_t> *fpGen,
-                         const ShapeBuildParams *options) {
+                         ShapeBuildParams *options) {
   SynthonSpace synthSpace;
   cancelled = false;
   synthSpace.readTextFile(inFilename, cancelled);

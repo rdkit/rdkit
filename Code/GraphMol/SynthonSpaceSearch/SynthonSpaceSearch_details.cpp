@@ -30,6 +30,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
@@ -926,10 +927,86 @@ bool hasUnspecifiedStereo(ROMol &mol) {
   return false;
 }
 
+namespace {
+void useUserConfGen(std::unique_ptr<RWMol> &mol, unsigned int numConformers,
+                    UserConfGenerator &userConfGenerator) {
+  auto newMol = userConfGenerator(MolToSmiles(*mol), numConformers);
+  // The mol has information that won't have survived, and it's not safe to
+  // assume the atom orders have survived.
+  MatchVectType res;
+  if (SubstructMatch(*newMol, *mol, res)) {
+    std::map<unsigned int, unsigned int> query2Mol;
+    std::ranges::copy(res, std::inserter(query2Mol, query2Mol.end()));
+    for (const auto &p : res) {
+      auto currAt = mol->getAtomWithIdx(p.first);
+      auto newAt = newMol->getAtomWithIdx(p.second);
+      if (currAt->hasProp("molNum")) {
+        newAt->setProp<unsigned int>("molNum",
+                                     currAt->getProp<unsigned int>("molNum"));
+      }
+      if (currAt->hasProp("idx")) {
+        newAt->setProp<unsigned int>("idx",
+                                     currAt->getProp<unsigned int>("idx"));
+      }
+      if (currAt->hasProp("HoldsJoin")) {
+        newAt->setProp<std::string>("HoldsJoin",
+                                    currAt->getProp<std::string>("HoldsJoin"));
+      }
+      for (const auto &nbr : mol->atomNeighbors(currAt)) {
+        if (auto it = query2Mol.find(nbr->getIdx()); it != query2Mol.end()) {
+          auto oldBond = mol->getBondBetweenAtoms(p.first, nbr->getIdx());
+          auto newBond = newMol->getBondBetweenAtoms(p.second, it->second);
+          if (oldBond->hasProp("molNum")) {
+            newBond->setProp<unsigned int>(
+                "molNum", oldBond->getProp<unsigned int>("molNum"));
+          }
+          if (oldBond->hasProp("idx")) {
+            newBond->setProp<unsigned int>(
+                "idx", oldBond->getProp<unsigned int>("idx"));
+          }
+          if (oldBond->hasProp("HoldsJoin")) {
+            newBond->setProp<std::string>(
+                "HoldsJoin", oldBond->getProp<std::string>("HoldsJoin"));
+          }
+        }
+      }
+    }
+  } else {
+    // Bit weird!
+    BOOST_LOG(rdErrorLog) << "Couldn't generate conformers for isomer "
+                          << MolToCXSmiles(*mol) << " of molecule."
+                          << std::endl;
+    mol.reset();
+    return;
+  }
+  if (mol->hasProp(common_properties::_Name)) {
+    newMol->setProp<std::string>(
+        common_properties::_Name,
+        mol->getProp<std::string>(common_properties::_Name));
+  }
+  mol.reset(newMol.release());
+}
+
+void useDefaultConfGen(std::unique_ptr<RWMol> &mol, unsigned int numConformers,
+                       DGeomHelpers::EmbedParameters &dgParams) {
+  MolOps::addHs(*mol);
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, numConformers, dgParams);
+  if (cids.empty() || !mol->getNumConformers()) {
+    BOOST_LOG(rdErrorLog) << "Couldn't generate conformers for isomer "
+                          << MolToCXSmiles(*mol) << " of molecule."
+                          << std::endl;
+    mol.reset();
+  } else {
+    MolOps::removeHs(*mol);
+  }
+}
+
+}  // namespace
 std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
     const ROMol &mol, unsigned int numConformers, bool enumerateStereo,
     const EnumerateStereoisomers::StereoEnumerationOptions &enumOpts,
-    DGeomHelpers::EmbedParameters &dgParams) {
+    DGeomHelpers::EmbedParameters &dgParams,
+    UserConfGenerator &userConfGenerator) {
   std::vector<std::unique_ptr<RWMol>> confMols;
   if (enumerateStereo) {
     EnumerateStereoisomers::StereoisomerEnumerator enu(mol, enumOpts);
@@ -940,24 +1017,19 @@ std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
     confMols.push_back(std::make_unique<RWMol>(mol));
   }
   for (auto &cm : confMols) {
-    MolOps::addHs(*cm);
     if (ControlCHandler::getGotSignal()) {
       confMols.clear();
       break;
     }
-    auto cids = DGeomHelpers::EmbedMultipleConfs(*cm, numConformers, dgParams);
+    if (userConfGenerator) {
+      useUserConfGen(cm, numConformers, userConfGenerator);
+    } else {
+      useDefaultConfGen(cm, numConformers, dgParams);
+    }
     if (ControlCHandler::getGotSignal()) {
       confMols.clear();
       return confMols;
     }
-    if (cids.empty() || !cm->getNumConformers()) {
-      BOOST_LOG(rdErrorLog)
-          << "Couldn't generate conformers for isomer " << MolToCXSmiles(*cm)
-          << " of molecule." << std::endl;
-      cm.reset();
-      continue;
-    }
-    MolOps::removeHs(*cm);
   }
   confMols.erase(std::remove_if(confMols.begin(), confMols.end(),
                                 [](const std::unique_ptr<RWMol> &m) -> bool {
@@ -1037,7 +1109,7 @@ void splitDummyDummyBonds(RWMol &mol) {
 void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
                        std::atomic<std::int64_t> &mostRecentMol,
                        DGeomHelpers::EmbedParameters &dgParams,
-                       const ShapeBuildParams &shapeParams,
+                       ShapeBuildParams &shapeBuildParams,
                        std::unique_ptr<ProgressBar> &pbar) {
   while (!ControlCHandler::getGotSignal()) {
     size_t molNum = ++mostRecentMol;
@@ -1049,15 +1121,17 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     if (!sampleMols[molNum]->d_mol) {
       continue;
     }
-    auto isomerConfs = details::generateIsomerConformers(
-        *sampleMols[molNum]->d_mol, shapeParams.numConfs, true,
-        shapeParams.stereoEnumOpts, dgParams);
+    auto isomerConfs = generateIsomerConformers(
+        *sampleMols[molNum]->d_mol, shapeBuildParams.numConfs, true,
+        shapeBuildParams.stereoEnumOpts, dgParams,
+        shapeBuildParams.userConformerGenerator);
     if (isomerConfs.empty()) {
       // Sometimes we can get something from the un-enumerated isomers which
       // will be better than nothing.
       isomerConfs = details::generateIsomerConformers(
-          *sampleMols[molNum]->d_mol, shapeParams.numConfs, true,
-          shapeParams.stereoEnumOpts, dgParams);
+          *sampleMols[molNum]->d_mol, shapeBuildParams.numConfs, true,
+          shapeBuildParams.stereoEnumOpts, dgParams,
+          shapeBuildParams.userConformerGenerator);
       if (isomerConfs.empty()) {
         BOOST_LOG(rdWarningLog)
             << "No conformers generated for sample molecule "
@@ -1122,7 +1196,7 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
       GaussianShape::ShapeInputOptions shapeOpts;
       shapeOpts.atomRadii = dummyRadii;
       shapeOpts.atomSubset = fragAtoms;
-      shapeOpts.shapePruneThreshold = shapeParams.shapeSimThreshold;
+      shapeOpts.shapePruneThreshold = shapeBuildParams.shapeSimThreshold;
       // Make custom features for the atom subset.  Doing it from the
       // parent molecule means that the atom types will be correct which
       // may not be the case after the fragment is extracted.  There might
@@ -1179,10 +1253,11 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
 
 void makeShapesFromMols(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
                         DGeomHelpers::EmbedParameters &dgParams,
-                        const ShapeBuildParams &shapeParams,
+                        ShapeBuildParams &shapeBuildParams,
                         std::unique_ptr<ProgressBar> &pbar) {
   std::atomic<std::int64_t> mostRecentMol = -1;
-  if (const auto numThreadsToUse = getNumThreadsToUse(shapeParams.numThreads);
+  if (const auto numThreadsToUse =
+          getNumThreadsToUse(shapeBuildParams.numThreads);
       numThreadsToUse > 1) {
     std::vector<std::thread> threads;
     for (unsigned int i = 0u;
@@ -1190,13 +1265,14 @@ void makeShapesFromMols(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
          ++i) {
       threads.emplace_back(makeShapesFromMol, std::ref(sampleMols),
                            std::ref(mostRecentMol), std::ref(dgParams),
-                           shapeParams, std::ref(pbar));
+                           std::ref(shapeBuildParams), std::ref(pbar));
     }
     for (auto &t : threads) {
       t.join();
     }
   } else {
-    makeShapesFromMol(sampleMols, mostRecentMol, dgParams, shapeParams, pbar);
+    makeShapesFromMol(sampleMols, mostRecentMol, dgParams,
+                      std::ref(shapeBuildParams), pbar);
   }
 }
 

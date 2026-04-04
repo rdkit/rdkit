@@ -192,7 +192,8 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::unique_ptr<RWMol>>
 generateIsomerConformers(
     const ROMol &mol, unsigned int numConformers, bool enumerateStereo,
     const EnumerateStereoisomers::StereoEnumerationOptions &enumOpts,
-    DGeomHelpers::EmbedParameters &dgParams);
+    DGeomHelpers::EmbedParameters &dgParams,
+    UserConfGenerator &userConfGenerator);
 
 // Make the synthon shapes for the given molecules based on the passed in
 // synthons.  The synthon of interest in each molecule is from the
@@ -200,8 +201,8 @@ generateIsomerConformers(
 // threads given in shapeParams.
 RDKIT_SYNTHONSPACESEARCH_EXPORT void makeShapesFromMols(
     std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
-    DGeomHelpers::EmbedParameters &dgParams,
-    const ShapeBuildParams &shapeParams, std::unique_ptr<ProgressBar> &pbar);
+    DGeomHelpers::EmbedParameters &dgParams, ShapeBuildParams &shapeBuildParams,
+    std::unique_ptr<ProgressBar> &pbar);
 
 RDKIT_SYNTHONSPACESEARCH_EXPORT void sortAndUniquifyToTry(
     std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>

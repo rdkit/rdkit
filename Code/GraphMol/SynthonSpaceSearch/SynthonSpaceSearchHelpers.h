@@ -11,6 +11,8 @@
 #ifndef SYNTHONSPACESEARCHHELPERS_H
 #define SYNTHONSPACESEARCHHELPERS_H
 
+#include <functional>
+
 #include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonShapeInput.h>
 
@@ -22,6 +24,9 @@
 #endif
 
 namespace RDKit::SynthonSpaceSearch {
+
+using UserConfGenerator = std::function<std::unique_ptr<RWMol>(
+    const std::string &smiles, unsigned int numConformers)>;
 
 // This the maximum number of connectors that we can deal with at the moment.
 // In reality, there may be fewer than this.  However, the key limit is in
@@ -123,6 +128,11 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                    // about another 35 characters or so
                                    // depending on the size of the job.  0
                                    // means no bar.
+  // User-supplied function that takes a SMILES string and a maximum number
+  // of conformers to be generated and returns a multi-conformer molecule.  // Returns nullptr if it fails. Use something different from the RDKit
+  // conformer generator if preferred.  Used for creating conformers of
+  // potential hits to compare against the query.
+  UserConfGenerator userConformerGenerator;
 };
 
 // Options to be passed to buildSynthonShapes.
@@ -162,6 +172,11 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT ShapeBuildParams {
       1000};  // If an interim file has been given, every this
               // many shapes write a new version of the file.  If 0, don't
               // do any writing.
+  // User-supplied function that takes a SMILES string and a maximum number
+  // of conformers to be generated and returns a multi-conformer molecule.
+  // Returns nullptr if it fails. Use something different from the RDKit
+  // conformer generator if preferred.
+  UserConfGenerator userConformerGenerator;
 };
 
 using ShapeSet = std::vector<std::unique_ptr<SynthonShapeInput>>;

@@ -214,7 +214,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
   /*! Perform a shape similarity search with the given query molecule
    * across the synthonspace library.  Duplicate SMILES strings produced by
-   * different reactions will be returned.
+   * different reactions will be returned.  Require a molecule with at least
+   * 1 3D conformer.  Only the first conformer will be used in the search.
    *
    * @param query : query molecule
    * @param params : (optional) settings for the search
@@ -330,10 +331,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * has unspecified stereochemistry, all possibilities will be enumerated and
    * shapes generated for each.
    *
-   * @param shapeParams: controls the shape generation for each synthon
+   * @param shapeBuildParams: controls the shape generation for each synthon
    */
-  void buildSynthonShapes(bool &cancelled, const ShapeBuildParams &shapeParams =
-                                               ShapeBuildParams());
+  void buildSynthonShapes(bool &cancelled, ShapeBuildParams &shapeBuildParams);
 
   void reportSynthonUsage(std::ostream &os) const;
   std::uint64_t getNumSynthonsWithShapes() const;
@@ -441,7 +441,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 RDKIT_SYNTHONSPACESEARCH_EXPORT void convertTextToDBFile(
     const std::string &inFilename, const std::string &outFilename,
     bool &cancelled, const FingerprintGenerator<std::uint64_t> *fpGen = nullptr,
-    const ShapeBuildParams *shapeParams = nullptr);
+    ShapeBuildParams *shapeParams = nullptr);
 
 /*!
  * Format an integer with spaces every 3 digits for ease
