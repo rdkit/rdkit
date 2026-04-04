@@ -66,6 +66,7 @@ void SmilesMolSupplier::init() {
   d_line = -1;
   d_molpos.clear();
   d_lineNums.clear();
+  d_molCache.clear();
 }
 
 void SmilesMolSupplier::setData(const std::string &text,

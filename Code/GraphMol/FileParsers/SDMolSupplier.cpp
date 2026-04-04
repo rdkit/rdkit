@@ -62,6 +62,7 @@ void SDMolSupplier::init() {
   ForwardSDMolSupplier::init();
   d_len = -1;
   d_last = 0;
+  d_molCache.clear();
 }
 
 void SDMolSupplier::setData(const std::string &text) {
