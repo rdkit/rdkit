@@ -18,6 +18,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include "MolSupplier.h"
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 static const std::string rdbase = getenv("RDBASE");
 
@@ -273,7 +274,35 @@ TEST_CASE("parallel reads") {
   }
 }
 #endif
-+= nAts.size();
+#if 1
+TEST_CASE("benchmarking") {
+  auto *rdbase = std::getenv("RDBASE");
+  REQUIRE(rdbase);
+  auto path =
+      std::filesystem::path(rdbase) / "Regress/Data/zinc.leads.500.q.smi";
+  REQUIRE(std::filesystem::exists(path));
+  v2::FileParsers::SmilesMolSupplierParams params;
+  params.delimiter = '\t';
+  params.smilesColumn = 0;
+  params.nameColumn = 1;
+  params.titleLine = false;
+  v2::FileParsers::SmilesMolSupplier reader(path.string(), params);
+  reader.setCaching(true);
+
+  SECTION("transform") {
+    auto start = std::chrono::high_resolution_clock::now();
+    // prime the cache:
+    std::vector<unsigned int> nAts1;
+    std::transform(reader.begin(), reader.end(), std::back_inserter(nAts1),
+                   [](const auto mol) { return mol->getNumAtoms(); });
+
+    double accum = 0.0;
+    for (unsigned int iter = 0; iter < 1000; ++iter) {
+      std::vector<unsigned int> nAts(reader.length());
+      std::transform(std::execution::seq, reader.begin(), reader.end(),
+                     nAts.begin(),
+                     [](const auto mol) { return MolToSmiles(*mol).size(); });
+      accum += nAts.size();
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration =
