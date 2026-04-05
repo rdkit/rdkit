@@ -210,12 +210,15 @@ c1cc,0
 }
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
+// NOTE: will only run in parallel on linux if TBB is installed
 TEST_CASE("parallel reads") {
+  // there's likely no benefit from the parallelization here,
+  // but we want to be sure that the mutexes are working correctly
   auto *rdbase = std::getenv("RDBASE");
   REQUIRE(rdbase);
   SECTION("sdf") {
     auto path = std::filesystem::path(rdbase) /
-                "Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
+                "Code/GraphMol/FileParsers/test_data/zinc.leads.500.q.sdf";
     REQUIRE(std::filesystem::exists(path));
     v2::FileParsers::SDMolSupplier reader1(path.string());
     std::vector<unsigned int> nAts1(reader1.length());
@@ -223,7 +226,7 @@ TEST_CASE("parallel reads") {
                    [](const auto mol) { return mol->getNumAtoms(); });
     // std::sort(nAts1.begin(), nAts1.end());
     auto start = std::chrono::high_resolution_clock::now();
-    constexpr unsigned int numIters = 100;
+    constexpr unsigned int numIters = 20;
     for (unsigned int iter = 0; iter < numIters; ++iter) {
       v2::FileParsers::SDMolSupplier reader2(path.string());
       reader2.setCaching(true);
@@ -241,8 +244,8 @@ TEST_CASE("parallel reads") {
               << " molecules took " << duration.count() << " ms" << std::endl;
   }
   SECTION("smiles") {
-    auto path =
-        std::filesystem::path(rdbase) / "Regress/Data/zinc.leads.500.q.smi";
+    auto path = std::filesystem::path(rdbase) /
+                "Code/GraphMol/FileParsers/test_data/zinc.leads.500.q.smi";
     REQUIRE(std::filesystem::exists(path));
     v2::FileParsers::SmilesMolSupplierParams params;
     params.delimiter = '\t';
@@ -256,9 +259,36 @@ TEST_CASE("parallel reads") {
                    [](const auto mol) { return mol->getNumAtoms(); });
 
     auto start = std::chrono::high_resolution_clock::now();
-    constexpr unsigned int numIters = 100;
+    constexpr unsigned int numIters = 20;
     for (unsigned int iter = 0; iter < numIters; ++iter) {
       v2::FileParsers::SmilesMolSupplier reader2(path.string(), params);
+      reader2.setCaching(true);
+      std::vector<unsigned int> nAts2(reader1.length());
+      std::transform(std::execution::par, reader2.begin(), reader2.end(),
+                     nAts2.begin(),
+                     [](const auto mol) { return mol->getNumAtoms(); });
+      REQUIRE(nAts1 == nAts2);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cerr << "Read of " << reader1.length() << "x" << numIters
+              << " molecules took " << duration.count() << " ms" << std::endl;
+  }
+  SECTION("TDT") {
+    auto path = std::filesystem::path(rdbase) /
+                "Code/GraphMol/FileParsers/test_data/zinc.leads.500.q.tdt";
+    REQUIRE(std::filesystem::exists(path));
+
+    v2::FileParsers::TDTMolSupplier reader1(path.string());
+    std::vector<unsigned int> nAts1(reader1.length());
+    std::transform(reader1.begin(), reader1.end(), nAts1.begin(),
+                   [](const auto mol) { return mol->getNumAtoms(); });
+
+    auto start = std::chrono::high_resolution_clock::now();
+    constexpr unsigned int numIters = 20;
+    for (unsigned int iter = 0; iter < numIters; ++iter) {
+      v2::FileParsers::TDTMolSupplier reader2(path.string());
       reader2.setCaching(true);
       std::vector<unsigned int> nAts2(reader1.length());
       std::transform(std::execution::par, reader2.begin(), reader2.end(),
@@ -278,8 +308,8 @@ TEST_CASE("parallel reads") {
 TEST_CASE("benchmarking") {
   auto *rdbase = std::getenv("RDBASE");
   REQUIRE(rdbase);
-  auto path =
-      std::filesystem::path(rdbase) / "Regress/Data/zinc.leads.500.q.smi";
+  auto path = std::filesystem::path(rdbase) /
+              "Code/GraphMol/FileParsers/test_data/zinc.leads.500.q.smi";
   REQUIRE(std::filesystem::exists(path));
   v2::FileParsers::SmilesMolSupplierParams params;
   params.delimiter = '\t';
@@ -297,7 +327,8 @@ TEST_CASE("benchmarking") {
                    [](const auto mol) { return mol->getNumAtoms(); });
 
     double accum = 0.0;
-    for (unsigned int iter = 0; iter < 1000; ++iter) {
+    constexpr unsigned int numIters = 200;
+    for (unsigned int iter = 0; iter < numIters; ++iter) {
       std::vector<unsigned int> nAts(reader.length());
       std::transform(std::execution::seq, reader.begin(), reader.end(),
                      nAts.begin(),
@@ -307,13 +338,13 @@ TEST_CASE("benchmarking") {
     auto end = std::chrono::high_resolution_clock::now();
     auto duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    std::cerr << "Base transform of " << reader.length() << " molecules took "
-              << duration.count() << " ms" << std::endl;
+    std::cerr << "Base transform of " << reader.length() << "x" << numIters
+              << " molecules took " << duration.count() << " ms" << std::endl;
     CHECK(accum > 0);
 #if 1
     accum = 0.0;
     start = std::chrono::high_resolution_clock::now();
-    for (unsigned int iter = 0; iter < 1000; ++iter) {
+    for (unsigned int iter = 0; iter < numIters; ++iter) {
       std::vector<unsigned int> nAts(reader.length());
       std::transform(std::execution::par, reader.begin(), reader.end(),
                      nAts.begin(),
@@ -323,7 +354,7 @@ TEST_CASE("benchmarking") {
     end = std::chrono::high_resolution_clock::now();
     duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    std::cerr << "Parallel transform of " << reader.length()
+    std::cerr << "Parallel transform of " << reader.length() << "x" << numIters
               << " molecules took " << duration.count() << " ms" << std::endl;
     CHECK(accum > 0);
 #endif

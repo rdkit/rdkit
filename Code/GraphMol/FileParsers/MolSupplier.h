@@ -543,12 +543,24 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   bool atEnd() override;
   void moveTo(unsigned int idx);
   std::unique_ptr<RWMol> operator[](unsigned int idx);
+  std::shared_ptr<RWMol> getShared(unsigned int idx);
+
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
    */
   std::string getItemText(unsigned int idx);
   unsigned int length();
+
+  RandomAccessSupplierIter<TDTMolSupplier> begin() {
+    return RandomAccessSupplierIter(this);
+  }
+  RandomAccessSupplierIter<TDTMolSupplier> end() {
+    return RandomAccessSupplierIter(this, length());
+  }
+
+  void setCaching(bool val) { d_cacheMolecules = val; }
+  bool getCaching() const { return d_cacheMolecules; }
 
  private:
   bool advanceToNextRecord();
@@ -562,6 +574,12 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   std::vector<std::streampos>
       d_molpos;  // vector of positions in the file for molecules
   TDTMolSupplierParams d_params;
+  bool d_cacheMolecules = false;
+  std::vector<std::optional<std::shared_ptr<RWMol>>> d_molCache;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::mutex d_readMutex;
+  std::mutex d_cacheMutex;
+#endif
 };
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
@@ -600,6 +618,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   bool atEnd() override;
   void moveTo(unsigned int idx);
   std::unique_ptr<RWMol> operator[](unsigned int idx);
+
   unsigned int length();
 
   void close() override { dp_sInStream.reset(); }
