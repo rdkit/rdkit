@@ -1,5 +1,5 @@
-# Release_2026.03.1
-(Changes relative to Release_2025.09.1)
+# Release_2026.09.1
+(Changes relative to Release_2026.03.1)
 
 ## Acknowledgements
 (Note: I'm no longer attempting to manually curate names. If you would like to
@@ -9,6 +9,9 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes:
+- Since #9208, atom rings are "normalized" so that the first atom in the ring
+definition is the one with the lowest index, and the second one is the neighbor
+to the first which also has the lowest index.
 
 ## Code removed in this release:
 
