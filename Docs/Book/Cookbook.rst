@@ -796,7 +796,7 @@ Identify Aromatic Rings
 
 .. testoutput::
 
-   ((0, 5, 4, 3, 2, 1), (6, 7, 8, 9, 4, 5))
+   ((0, 1, 2, 3, 4, 5), (4, 5, 6, 7, 8, 9))
 
 .. testcode::
 
@@ -805,7 +805,7 @@ Identify Aromatic Rings
 
 .. testoutput::
 
-   ((9, 4, 3, 2, 1, 0), (6, 7, 8, 10, 4, 5))
+   ((0, 1, 2, 3, 4, 9), (4, 5, 6, 7, 8, 10))
 
 .. testcode::
 

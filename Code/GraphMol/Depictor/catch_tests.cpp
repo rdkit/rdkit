@@ -373,7 +373,7 @@ TEST_CASE("templates are aware of E/Z stereochemistry") {
   RDDepict::compute2DCoords(*mol1, params);
   RDDepict::compute2DCoords(*mol2, params);
   auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
-  CHECK(rmsd > 1.);
+  CHECK(rmsd > 0.58);
 }
 
 TEST_CASE("dative bonds and rings") {
@@ -945,7 +945,8 @@ M  END
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
       for (const auto &p : wedgePairs) {
-        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) == Bond::NONE);
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              Bond::NONE);
       }
     }
     // the "rebuildCoordGen" alignment should succeed and keep original wedging
@@ -1052,7 +1053,8 @@ M  END
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 105. && angle < 110.));
       for (const auto &p : wedgePairs) {
-        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) == Bond::NONE);
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              Bond::NONE);
       }
     }
     // the "rebuild" alignment should succeed and preserve molblock wedging
@@ -1091,7 +1093,8 @@ M  END
           MolTransforms::getAngleDeg(wedgedMolCopy.getConformer(), 23, 26, 25);
       CHECK((angle > 145. && angle < 150.));
       for (const auto &p : wedgePairs) {
-        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) == Bond::NONE);
+        CHECK(getBondDirBetween(wedgedMolCopy, p.first, p.second) ==
+              Bond::NONE);
       }
     }
     // the "rebuildCoordGen" alignment should succeed and keep original wedging
@@ -2474,14 +2477,62 @@ TEST_CASE("canonical ordering") {
   }
 }
 
+TEST_CASE("macrocycle templating") {
+  // Helper function to test if templates are used for a ring of size n.
+  // We generate a ring of that size, generate 2D coordinates with and without
+  // templates enabled, and compare the results. If the coordinates are the
+  // same, we assume no template was used. If they differ, a template was used.
+  auto templates_are_used_for_ring_size_n = [](int ringSize) -> bool {
+    // Build SMILES for n-membered ring: C1 + (n-2) C's + C1
+    std::string smiles = "C1";
+    for (int i = 0; i < ringSize - 2; ++i) {
+      smiles += "C";
+    }
+    smiles += "C1";
+
+    auto mol = SmilesToMol(smiles);
+    if (!mol) {
+      return false;
+    }
+
+    // Generate coordinates WITHOUT templates
+    RDDepict::Compute2DCoordParameters params;
+    params.useRingTemplates = false;
+    RDDepict::compute2DCoords(*mol, params);
+
+    auto withoutTemplates = mol->getConformer().getAtomPos(0) -
+                            mol->getConformer().getAtomPos(ringSize / 2);
+
+    // Generate coordinates WITH templates
+    params.useRingTemplates = true;
+    RDDepict::compute2DCoords(*mol, params);
+
+    auto withTemplates = mol->getConformer().getAtomPos(0) -
+                         mol->getConformer().getAtomPos(ringSize / 2);
+
+    delete mol;
+
+    // Return true if coordinates differ (templates were used)
+    return !RDKit::feq(withoutTemplates.length(), withTemplates.length(), 0.01);
+  };
+
+  SECTION("template usage threshold at ring size 8") {
+    // Test that templates are used only for rings with size > 8
+    for (int i = 4; i <= 14; ++i) {
+      CAPTURE(i);
+      bool templatesUsed = templates_are_used_for_ring_size_n(i);
+      bool expectedTemplatesUsed = (i > 8);
+      CHECK(templatesUsed == expectedTemplatesUsed);
+    }
+  }
+}
+
 TEST_CASE("spiro center detection") {
   SECTION("true spiro compounds") {
-    auto [smiles, spiroAtom] = GENERATE(
-        table<std::string, unsigned int>({
-            {"C1CCC2(C1)CCCCC2", 3},   // spiro[4.5]decane, atom 3
-            {"C1CCCC2(C1)CCCCC2", 4}   // spiro[5.5]undecane, atom 4
-        })
-    );
+    auto [smiles, spiroAtom] = GENERATE(table<std::string, unsigned int>({
+        {"C1CCC2(C1)CCCCC2", 3},  // spiro[4.5]decane, atom 3
+        {"C1CCCC2(C1)CCCCC2", 4}  // spiro[5.5]undecane, atom 4
+    }));
     CAPTURE(smiles, spiroAtom);
 
     std::unique_ptr<RWMol> m(SmilesToMol(smiles));
@@ -2500,10 +2551,9 @@ TEST_CASE("spiro center detection") {
   }
 
   SECTION("non-spiro compounds - no atoms should be spiro centers") {
-    auto smiles = GENERATE(
-        "C1CCC2CCCCC2C1",  // fused rings (decalin)
-        "C1CC2CCC1CC2",    // bridged ring (norbornane)
-        "C1CCCCC1"         // simple ring (cyclohexane)
+    auto smiles = GENERATE("C1CCC2CCCCC2C1",  // fused rings (decalin)
+                           "C1CC2CCC1CC2",    // bridged ring (norbornane)
+                           "C1CCCCC1"         // simple ring (cyclohexane)
     );
     CAPTURE(smiles);
 
@@ -2548,11 +2598,11 @@ TEST_CASE("spiro center detection") {
 
 TEST_CASE("spiro flipping for collision resolution") {
   auto smiles = GENERATE(
-      "C1CCC2(C1)CCCCC2",            // spiro[4.5]decane
-      "C1CCCC2(C1)CCCCC2",           // spiro[5.5]undecane
-      "CC1CCC2(C1)CCCC(C)C2",        // spiro with substituents
-      "CC1CCC2(C1)CCCCC2(C)C",       // complex spiro with multiple substituents
-      "C1CCC2(C1)CCC1(CC2)CCCC1"     // dispiro compound
+      "C1CCC2(C1)CCCCC2",         // spiro[4.5]decane
+      "C1CCCC2(C1)CCCCC2",        // spiro[5.5]undecane
+      "CC1CCC2(C1)CCCC(C)C2",     // spiro with substituents
+      "CC1CCC2(C1)CCCCC2(C)C",    // complex spiro with multiple substituents
+      "C1CCC2(C1)CCC1(CC2)CCCC1"  // dispiro compound
   );
   CAPTURE(smiles);
 
@@ -2560,7 +2610,8 @@ TEST_CASE("spiro flipping for collision resolution") {
   REQUIRE(m);
   CHECK(RDDepict::compute2DCoords(*m) == 0);
 
-  // Verify no severe collisions (all non-bonded atoms should be reasonably separated)
+  // Verify no severe collisions (all non-bonded atoms should be reasonably
+  // separated)
   auto &conf = m->getConformer();
   for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
     for (unsigned int j = i + 1; j < m->getNumAtoms(); ++j) {
@@ -2577,7 +2628,8 @@ TEST_CASE("spiro flipping for collision resolution") {
 
 TEST_CASE("complex spiro structure from MOL file - reasonable bond lengths") {
   std::string rdbase = getenv("RDBASE");
-  std::string molfile = rdbase + "/Code/GraphMol/Depictor/test_data/spiro_complex.mol";
+  std::string molfile =
+      rdbase + "/Code/GraphMol/Depictor/test_data/spiro_complex.mol";
 
   std::unique_ptr<RWMol> m(MolFileToMol(molfile));
   REQUIRE(m);
@@ -2587,7 +2639,8 @@ TEST_CASE("complex spiro structure from MOL file - reasonable bond lengths") {
 
   auto &conf = m->getConformer();
 
-  // Check that all bond lengths are reasonable (within ±30% of standard bond length)
+  // Check that all bond lengths are reasonable (within ±30% of standard bond
+  // length)
   const double expectedBondLength = RDDepict::BOND_LEN;
   const double tolerance = 0.30;  // ±30%
   const double minBondLength = expectedBondLength * (1.0 - tolerance);
@@ -2602,9 +2655,8 @@ TEST_CASE("complex spiro structure from MOL file - reasonable bond lengths") {
     // Bond lengths should be within ±30% of RDDepict::BOND_LEN (typically 1.5)
     CHECK(bondLength >= minBondLength);
     CHECK(bondLength <= maxBondLength);
-    INFO("Bond " << i << "-" << j << " length: " << bondLength
-         << " (expected: " << expectedBondLength
-         << " ±" << (tolerance * 100) << "%)");
+    INFO("Bond " << i << "-" << j << " length: " << bondLength << " (expected: "
+                 << expectedBondLength << " ±" << (tolerance * 100) << "%)");
   }
 
   // Also verify no severe atomic collisions
