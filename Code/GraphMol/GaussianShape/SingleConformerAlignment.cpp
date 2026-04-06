@@ -403,8 +403,8 @@ double oneStep(const double grad, const double stepSize, const double quatTrans,
                const double oldGrad, const double oldQuatTrans) {
   double step = 0.0;
   if (std::signbit(grad) != std::signbit(oldGrad)) {
-    step = (((quatTrans * fabs(oldGrad)) + (oldQuatTrans * fabs(grad))) /
-            (fabs(oldGrad) + fabs(grad) + fabs(grad))) -
+    step = (quatTrans * fabs(oldGrad) + oldQuatTrans * fabs(grad)) /
+               (fabs(oldGrad) + fabs(grad) + fabs(grad)) -
            quatTrans;
     if (const double newStep = stepSize * grad; fabs(step) > fabs(newStep)) {
       // This is definitely what the PubChem code says!  I read it as keeping
@@ -495,8 +495,8 @@ double oneReduceStep(const double grad, const double oldGrad,
                      const double quatTrans, const double oldQuatTrans,
                      const double stepSize, double step) {
   if (std::signbit(grad) != std::signbit(oldGrad)) {
-    step = (((quatTrans * fabs(oldGrad)) + (oldQuatTrans * fabs(grad))) /
-            (fabs(oldGrad + fabs(grad)))) -
+    step = (quatTrans * fabs(oldGrad) + oldQuatTrans * fabs(grad)) /
+               (fabs(oldGrad) + fabs(grad)) -
            quatTrans;
     if (const double newStep = stepSize * grad; fabs(step) > fabs(newStep)) {
       step *= fabs(newStep / step);
