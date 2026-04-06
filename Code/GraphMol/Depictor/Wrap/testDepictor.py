@@ -158,14 +158,14 @@ class TestCase(unittest.TestCase):
     AlignDepict.AlignDepict(m2, t)
     expected = [
       Geometry.Point3D(1.5, 0.0, 0.0),
-      Geometry.Point3D(0.75, -1.299, 0.0),
-      Geometry.Point3D(-0.75, -1.299, 0.0),
-      Geometry.Point3D(-1.5, -2.5981, 0.0),
-      Geometry.Point3D(-3.0, -2.5981, 0.0),
-      Geometry.Point3D(-3.75, -3.8971, 0.0),
+      Geometry.Point3D(0.75, 1.299, 0.0),
+      Geometry.Point3D(-0.75, 1.299, 0.0),
+      Geometry.Point3D(-1.5, 2.5981, 0.0),
+      Geometry.Point3D(-0.75, 3.8971, 0.0),
+      Geometry.Point3D(-1.5, 5.1962, 0.0),
       Geometry.Point3D(-1.5, 0.0, 0.0),
-      Geometry.Point3D(-0.75, 1.2990, 0.0),
-      Geometry.Point3D(0.75, 1.2990, 0.0)
+      Geometry.Point3D(-0.75, -1.2990, 0.0),
+      Geometry.Point3D(0.75, -1.2990, 0.0)
     ]
 
     nat = m2.GetNumAtoms()
