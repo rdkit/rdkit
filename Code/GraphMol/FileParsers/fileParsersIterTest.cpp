@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2025 Greg Landrum and other RDKit contributors
+//   Copyright (C) 2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -78,6 +78,18 @@ TEST_CASE("basic SDMolSupplier iteration") {
   v2::FileParsers::SDMolSupplier reader(infile);
   SECTION("basics") { iterTest(reader, 16); }
   SECTION("with caching") { cacheTest(reader, 16); }
+  SECTION("reverse iteration") {
+    std::vector<unsigned int> expected;
+    std::ranges::transform(
+        std::begin(reader), std::end(reader), std::back_inserter(expected),
+        [](const auto &mol) { return (size_t)mol->getNumAtoms(); });
+    std::vector<unsigned int> actual;
+    std::ranges::transform(
+        std::rbegin(reader), std::rend(reader), std::back_inserter(actual),
+        [](const auto &mol) { return (size_t)mol->getNumAtoms(); });
+    std::ranges::reverse(actual);
+    CHECK(actual == expected);
+  }
 }
 
 TEST_CASE("ForwardSDMolSupplier iteration") {
@@ -161,6 +173,18 @@ TEST_CASE("basic SmilesMolSupplier iteration") {
   v2::FileParsers::SmilesMolSupplier reader(infile, params);
   SECTION("basics") { iterTest(reader, 200); }
   SECTION("with caching") { cacheTest(reader, 200); }
+  SECTION("reverse iteration") {
+    std::vector<unsigned int> expected;
+    std::ranges::transform(
+        std::begin(reader), std::end(reader), std::back_inserter(expected),
+        [](const auto &mol) { return (size_t)mol->getNumAtoms(); });
+    std::vector<unsigned int> actual;
+    std::ranges::transform(
+        std::rbegin(reader), std::rend(reader), std::back_inserter(actual),
+        [](const auto &mol) { return (size_t)mol->getNumAtoms(); });
+    std::ranges::reverse(actual);
+    CHECK(actual == expected);
+  }
 }
 
 TEST_CASE("cached SmilesMolSupplier error handling") {

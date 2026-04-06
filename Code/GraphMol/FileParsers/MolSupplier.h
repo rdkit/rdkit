@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <fstream>
+#include <iterator>
 #include <GraphMol/ROMol.h>
 #include <RDGeneral/BadFileException.h>
 #include "FileParsers.h"
@@ -126,13 +127,14 @@ struct ForwardSupplierIter {
   using iterator_category = std::input_iterator_tag;
   using difference_type = std::ptrdiff_t;
   using value_type = std::shared_ptr<RWMol>;
+  using const_value_type = const std::shared_ptr<RWMol>;
 
   Supplier *supplier = nullptr;
   std::optional<value_type> current;
   ForwardSupplierIter() = default;
   explicit ForwardSupplierIter(Supplier *supplier)
       : supplier(supplier), current(supplier->nextShared()) {}
-  value_type operator*() const { return current.value(); }
+  const_value_type operator*() const { return current.value(); }
   ForwardSupplierIter &operator++() {
     if (supplier->atEnd()) {
       current.reset();
@@ -220,6 +222,7 @@ struct RandomAccessSupplierIter {
   using iterator_category = std::random_access_iterator_tag;
   using difference_type = std::ptrdiff_t;
   using value_type = std::shared_ptr<RWMol>;
+  using const_value_type = const std::shared_ptr<RWMol>;
 
   Supplier *supplier = nullptr;
   size_t current_idx = 0;
@@ -228,8 +231,12 @@ struct RandomAccessSupplierIter {
       : supplier(supplier), current_idx(0) {}
   RandomAccessSupplierIter(Supplier *supplier, size_t idx)
       : supplier(supplier), current_idx(idx) {}
-  value_type operator*() const { return supplier->getShared(current_idx); }
-  value_type operator[](size_t idx) const { return supplier->getShared(idx); }
+  const_value_type operator*() const {
+    return supplier->getShared(current_idx);
+  }
+  const_value_type operator[](size_t idx) const {
+    return supplier->getShared(idx);
+  }
   RandomAccessSupplierIter &operator++() {
     ++current_idx;
     return *this;
@@ -294,6 +301,9 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
    ***********************************************************************************/
 
  public:
+  using iterator = RandomAccessSupplierIter<SDMolSupplier>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+
   SDMolSupplier() { init(); }
 
   /*!
@@ -345,12 +355,10 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
    */
   void setStreamIndices(const std::vector<std::streampos> &locs);
 
-  RandomAccessSupplierIter<SDMolSupplier> begin() {
-    return RandomAccessSupplierIter(this);
-  }
-  RandomAccessSupplierIter<SDMolSupplier> end() {
-    return RandomAccessSupplierIter(this, length());
-  }
+  iterator begin() { return RandomAccessSupplierIter(this); }
+  iterator end() { return RandomAccessSupplierIter(this, length()); }
+  reverse_iterator rbegin() { return reverse_iterator(end()); }
+  reverse_iterator rend() { return reverse_iterator(begin()); }
 
   void setCaching(bool val) { d_cacheMolecules = val; }
   bool getCaching() const { return d_cacheMolecules; }
@@ -406,6 +414,8 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
    *    "idx"
    ***************************************************************************/
  public:
+  using iterator = RandomAccessSupplierIter<SmilesMolSupplier>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
   /*!
    *   \param fileName - the name of smiles table file
    *   \param delimiter - delimiting characters between records on a each
@@ -451,12 +461,10 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   std::string getItemText(unsigned int idx);
   unsigned int length();
 
-  RandomAccessSupplierIter<SmilesMolSupplier> begin() {
-    return RandomAccessSupplierIter(this);
-  }
-  RandomAccessSupplierIter<SmilesMolSupplier> end() {
-    return RandomAccessSupplierIter(this, length());
-  }
+  iterator begin() { return iterator(this); }
+  iterator end() { return iterator(this, length()); }
+  reverse_iterator rbegin() { return reverse_iterator(end()); }
+  reverse_iterator rend() { return reverse_iterator(begin()); }
 
   void setCaching(bool val) { d_cacheMolecules = val; }
   bool getCaching() const { return d_cacheMolecules; }
