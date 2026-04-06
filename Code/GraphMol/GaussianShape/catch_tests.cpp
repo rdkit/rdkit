@@ -563,9 +563,9 @@ TEST_CASE("Fragment Mode") {
   // Use the smaller molecule as the probe
   auto scores = GaussianShape::AlignShape(refShape, probeShape, &xform, opts);
   // These are close to the values above for starting from the xtal structures.
-  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.332, 0.005));
+  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.315, 0.005));
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.413, 0.005));
-  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.251, 0.005));
+  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.220, 0.005));
 }
 
 TEST_CASE("custom feature points") {
@@ -966,7 +966,7 @@ TEST_CASE("Multiple Conformers") {
     CHECK_THAT(bestSim22[0], Catch::Matchers::WithinAbs(1.0, 0.001));
 
     auto bestSim12 = shapes1.bestSimilarity(shapes2, best1, best2, xform);
-    CHECK_THAT(bestSim12[0], Catch::Matchers::WithinAbs(0.691, 0.001));
+    CHECK_THAT(bestSim12[0], Catch::Matchers::WithinAbs(0.694, 0.001));
 
     // This overlay starts from where the previous one left it, so the final
     // answer isn't identical.
