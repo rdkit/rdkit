@@ -124,6 +124,7 @@ struct CXXAtomIterator {
     using value_type = Vertex;
     using pointer = Vertex *;
     using reference = Vertex &;
+    using const_reference = Vertex const &;
 
     Graph *graph = nullptr;
     Iterator pos;
@@ -132,8 +133,15 @@ struct CXXAtomIterator {
 
     CXXAtomIter(Graph *graph, Iterator pos) : graph(graph), pos(pos) {}
 
-    reference operator*() { return (*graph)[*pos]; }
-    reference operator*() const { return (*graph)[*pos]; }
+    // we only return const references since we don't want clients modifying the
+    // graph itself through these iterators
+    const_reference operator*() const { return (*graph)[*pos]; }
+    // we only return const references since we don't want clients modifying the
+    // graph itself through these iterators
+    const_reference operator[](difference_type n) const {
+      return (*graph)[*(pos + n)];
+    }
+
     CXXAtomIter &operator++() {
       ++pos;
       return *this;
@@ -172,9 +180,6 @@ struct CXXAtomIterator {
     }
     friend CXXAtomIter operator+(difference_type n, const CXXAtomIter &it) {
       return CXXAtomIter(it.graph, it.pos + n);
-    }
-    reference operator[](difference_type n) const {
-      return (*graph)[*(pos + n)];
     }
 
     bool operator==(const CXXAtomIter &other) const {
@@ -217,6 +222,7 @@ struct CXXBondIterator {
     using value_type = Edge;
     using pointer = Edge *;
     using reference = Edge &;
+    using const_reference = Edge const &;
 
     Graph *graph = nullptr;
     Iterator pos;
@@ -224,9 +230,9 @@ struct CXXBondIterator {
     CXXBondIter() {};
 
     CXXBondIter(Graph *graph, Iterator pos) : graph(graph), pos(pos) {}
-
-    reference operator*() { return (*graph)[*pos]; }
-    reference operator*() const { return (*graph)[*pos]; }
+    // we only return const references since we don't want clients modifying the
+    // graph itself through these iterators
+    const_reference operator*() const { return (*graph)[*pos]; }
     CXXBondIter &operator++() {
       ++pos;
       return *this;

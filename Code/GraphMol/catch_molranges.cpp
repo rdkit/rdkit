@@ -97,22 +97,6 @@ TEST_CASE("algorithms") {
   m->addBond(2, 3, Bond::SINGLE);
   m->addBond(4, 5, Bond::DOUBLE);
   m->addBond(2, 4, Bond::SINGLE);
-  SECTION("atom sort") {
-    auto atoms = m->atoms();
-    std::ranges::sort(atoms, [](const auto a1, const auto a2) {
-      return a1->getAtomicNum() < a2->getAtomicNum();
-    });
-    CHECK(std::ranges::distance(atoms) == 6);
-    std::vector<unsigned int> atomicNums;
-    std::ranges::transform(
-        atoms, std::back_inserter(atomicNums),
-        [](const auto atom) { return atom->getAtomicNum(); });
-    CHECK(atomicNums == std::vector<unsigned int>{6, 6, 6, 6, 8, 9});
-    std::vector<unsigned int> atomIndices;
-    std::ranges::transform(atoms, std::back_inserter(atomIndices),
-                           [](const auto atom) { return atom->getIdx(); });
-    CHECK(atomIndices == std::vector<unsigned int>{0, 2, 4, 5, 1, 3});
-  }
   SECTION("atom count_if, filter, and take") {
     auto atoms = m->atoms();
     auto numC = std::ranges::count_if(
@@ -153,19 +137,5 @@ TEST_CASE("algorithms") {
                            std::back_inserter(bondIndices),
                            [](const auto bond) { return bond->getIdx(); });
     CHECK(bondIndices == std::vector<unsigned int>{0, 1});
-  }
-  SECTION("atom partitions") {
-    auto atoms = m->atoms();
-    auto nonCarbon = std::ranges::stable_partition(
-        atoms, [](const auto atom) { return atom->getAtomicNum() == 6; });
-    std::vector<unsigned int> carbonIndices;
-    std::transform(atoms.begin(), nonCarbon.begin(),
-                   std::back_inserter(carbonIndices),
-                   [](const auto atom) { return atom->getIdx(); });
-    CHECK(carbonIndices == std::vector<unsigned int>{0, 2, 4, 5});
-    std::vector<unsigned int> nonCarbonIndices;
-    std::ranges::transform(nonCarbon, std::back_inserter(nonCarbonIndices),
-                           [](const auto atom) { return atom->getIdx(); });
-    CHECK(nonCarbonIndices == std::vector<unsigned int>{1, 3});
   }
 }
