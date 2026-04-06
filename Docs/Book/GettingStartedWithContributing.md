@@ -8,6 +8,14 @@ This guide aims to serve a couple of purposes:
 - To act as a reminder for more established contributors, especially those who submit irregularly
 - Provide another weapon in the arsenal against Greg's "hit by a bus" problem, and hopefully make the maintainers lives easier by producing better first time submissions!
 
+## Acknowledging the usage of AI tools
+
+If you make significant use of AI tools beyond auto-complete when creating your
+contribution, please acknowledge that, and mention which tool you used, in the
+description of your PR. We encourage everyone to use the tools that make them
+maximally productive, but we also want to be completely transparent about the
+source of contributions.
+
 ## What and How to Contribute
 
 ### If You Are Not a Developer
