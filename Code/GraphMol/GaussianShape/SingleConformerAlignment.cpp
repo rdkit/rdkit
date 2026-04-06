@@ -450,13 +450,13 @@ double constrainStep(double maxStep, double *step, bool checkSize) {
   double mStep = std::max({fabs(step[0]), fabs(step[1]), fabs(step[2])});
   if (mStep > maxStep) {
     double scaleFactor = maxStep / mStep;
-    if (fabs(step[0] > maxStep)) {
+    if (fabs(step[0]) > maxStep) {
       step[0] *= scaleFactor;
     }
-    if (fabs(step[1] > maxStep)) {
+    if (fabs(step[1]) > maxStep) {
       step[1] *= scaleFactor;
     }
-    if (fabs(step[2] > maxStep)) {
+    if (fabs(step[2]) > maxStep) {
       step[2] *= scaleFactor;
     }
   }
