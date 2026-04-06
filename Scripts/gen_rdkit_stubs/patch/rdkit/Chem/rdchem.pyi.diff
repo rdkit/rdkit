@@ -1,0 +1,20 @@
+--- a/rdkit/Chem/rdchem.pyi
++++ b/rdkit/Chem/rdchem.pyi
+@@ -1988,7 +1988,7 @@
+             C++ signature :
+                 RDKit::Atom* GetAtomWithIdx(RDKit::ROMol {lvalue},unsigned int)
+         """
+-    def GetAtoms(self):
++    def GetAtoms(self) -> typing.Iterable[Atom]:
+         """
+         returns an iterator over the atoms in the molecule
+         """
+@@ -2030,7 +2030,7 @@
+             C++ signature :
+                 RDKit::Bond* GetBondWithIdx(RDKit::ROMol {lvalue},unsigned int)
+         """
+-    def GetBonds(self):
++    def GetBonds(self) -> typing.Iterable[Bond]:
+         """
+         returns an iterator over the bonds in the molecule
+         """
