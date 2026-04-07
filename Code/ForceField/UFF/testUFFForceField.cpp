@@ -14,6 +14,7 @@
 #include <RDGeneral/utils.h>
 #include <Geometry/point.h>
 
+#include <ForceField/FiniteDifference.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/UFF/Params.h>
 #include <ForceField/UFF/BondStretch.h>
@@ -26,9 +27,11 @@
 #include <ForceField/UFF/PositionConstraint.h>
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 using namespace RDKit;
 
@@ -1656,6 +1659,28 @@ M  END
   std::cerr << "  done" << std::endl;
 }
 
+void testFiniteDifference() {
+  std::cerr << "-------------------------------------" << std::endl;
+  std::cerr << "    Test finite difference gradient check (P(F)(F)F)."
+            << std::endl;
+
+  std::unique_ptr<ROMol> mol(SmilesToMol("P(F)(F)F"));
+  TEST_ASSERT(mol);
+  std::unique_ptr<ROMol> molH(MolOps::addHs(*mol));
+  TEST_ASSERT(DGeomHelpers::EmbedMolecule(*molH) >= 0);
+
+  std::unique_ptr<ForceFields::ForceField> ff(
+      UFF::constructForceField(*molH));
+  TEST_ASSERT(ff);
+  ff->initialize();
+
+  double delta = ForceFields::calcFiniteDifference(*ff);
+  std::cout << "delta: " << delta << std::endl;
+  TEST_ASSERT(delta < 1e-6);
+
+  std::cerr << "  done" << std::endl;
+}
+
 int main() {
   test1();
   testUFF1();
@@ -1673,4 +1698,5 @@ int main() {
   testUFFAllConstraints();
   testUFFCopy();
   testUFFButaneScan();
+  testFiniteDifference();
 }
