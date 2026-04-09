@@ -414,6 +414,12 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
       }
     }
 
+    // If either of the double bond atoms is not in the match, skip this bond.
+    // This is the case for side chain E/Z bonds outside the matched ring.
+    if (template_atom1 == -1 || template_atom2 == -1) {
+      continue;  // Skip this bond, check the next one
+    }
+
     // there's a chance that the atoms controlling the double bond stereochem in
     // the molecule are not the atoms that matched to the template, handle that
     // here by swapping to the other atom
@@ -427,12 +433,10 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
       swapStereo = !swapStereo;
     }
 
-    // If the stereo bond atoms are not in the match (e.g., side chain atoms),
-    // skip this bond - we only check stereochemistry for bonds within the
-    // matched ring
-    if (template_atom1 == -1 || template_atom2 == -1 ||
-        template_atom1_neighbor1 == -1 || template_atom2_neighbor1 == -1) {
-      continue;  // Skip this bond, check the next one
+    // Both bond atoms are in the match. If we failed to detect the neighbors
+    // controlling the stereochemistry, fail the match.
+    if (template_atom1_neighbor1 == -1 || template_atom2_neighbor1 == -1) {
+      return false;
     }
 
     const auto &conf = template_mol.getConformer();
