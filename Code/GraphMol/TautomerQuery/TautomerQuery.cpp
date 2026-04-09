@@ -194,6 +194,10 @@ TautomerQuery *TautomerQuery::fromMol(
   auto tautomers = res.tautomers();
   for (auto &tautomer : tautomers) {
     tautomer->updateProps(query);
+    // Also copy atom properties (quickCopy skips these too).
+    for (unsigned int i = 0; i < query.getNumAtoms(); ++i) {
+      tautomer->getAtomWithIdx(i)->updateProps(*query.getAtomWithIdx(i));
+    }
   }
 
   return new TautomerQuery(std::move(tautomers),

@@ -982,6 +982,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol {
   template <typename T>
   void setProp(const std::string_view &key, T val,
                bool computed = false) const {
+    if (key.empty()) {
+      throw ValueErrorException("Cannot set property with empty key");
+    }
     dp_mol->setMolProp(PropToken(key), val, computed);
   }
   //! allows retrieval of a particular property value

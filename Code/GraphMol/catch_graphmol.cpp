@@ -2571,7 +2571,7 @@ void check_dest(RWMol *m1, const ROMol &m2) {
   CHECK(m1->getNumAtoms() == 0);
   CHECK(m1->getNumBonds() == 0);
   CHECK(m1->getPropList().empty());
-  CHECK(m1->getDict().empty());
+  // CHECK(m1->getDict().empty()); // getDict has been deprecated with the RDMol backend
   CHECK(m1->getStereoGroups().empty());
   CHECK(getSubstanceGroups(*m1).empty());
   CHECK(!m1->getRingInfo()->isInitialized());

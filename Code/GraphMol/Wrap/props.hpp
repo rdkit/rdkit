@@ -385,74 +385,79 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
       return nullptr;
     }
   } else {
-    const auto &rd_dict = obj->getDict();
-    for (const auto &rdvalue : rd_dict) {
-      if (rdvalue.key == key) {
-        try {
-          const auto tag = rdvalue.val.getTag();
-          switch (tag) {
-            case RDTypeTag::IntTag:
-              return rawPy(from_rdvalue<int>(rdvalue.val));
+    // Try getDict() path first (old Dict-based backend).
+    // Fall through to getPropIfPresent fallback for backends that don't
+    // implement getDict() (e.g. RDMol / minimal_rdmol).
+    try {
+      const auto &rd_dict = obj->getDict();
+      for (const auto &rdvalue : rd_dict) {
+        if (rdvalue.key == key) {
+          try {
+            const auto tag = rdvalue.val.getTag();
+            switch (tag) {
+              case RDTypeTag::IntTag:
+                return rawPy(from_rdvalue<int>(rdvalue.val));
 
-            case RDTypeTag::DoubleTag:
-              return rawPy(from_rdvalue<double>(rdvalue.val));
+              case RDTypeTag::DoubleTag:
+                return rawPy(from_rdvalue<double>(rdvalue.val));
 
-            case RDTypeTag::StringTag:
-              return rawPy(autoConvertString(obj, rdvalue.key));
-            case RDTypeTag::FloatTag:
-              return rawPy(from_rdvalue<float>(rdvalue.val));
-              break;
-            case RDTypeTag::BoolTag:
-              return rawPy(from_rdvalue<bool>(rdvalue.val));
-              break;
-            case RDTypeTag::UnsignedIntTag:
-              return rawPy(from_rdvalue<unsigned int>(rdvalue.val));
-              break;
-            case RDTypeTag::AnyTag:
-              // we skip these for now
-              break;
-            case RDTypeTag::VecDoubleTag:
-              return rawPy(from_rdvalue<std::vector<double>>(rdvalue.val));
-              break;
-            case RDTypeTag::VecFloatTag:
-              return rawPy(from_rdvalue<std::vector<float>>(rdvalue.val));
-              break;
-            case RDTypeTag::VecIntTag:
-              return rawPy(from_rdvalue<std::vector<int>>(rdvalue.val));
-              break;
-            case RDTypeTag::VecUnsignedIntTag:
-              return rawPy(
-                  from_rdvalue<std::vector<unsigned int>>(rdvalue.val));
-              break;
-            case RDTypeTag::VecStringTag:
-              return rawPy(from_rdvalue<std::vector<std::string>>(rdvalue.val));
-              break;
-            case RDTypeTag::EmptyTag:
-              return Py_None;
-              break;
-            default:
-              std::string message =
-                  std::string(
-                      "Unhandled property type encountered for property: ") +
-                  rdvalue.key;
-              UNDER_CONSTRUCTION(message.c_str());
-              return Py_None;
+              case RDTypeTag::StringTag:
+                return rawPy(autoConvertString(obj, rdvalue.key));
+              case RDTypeTag::FloatTag:
+                return rawPy(from_rdvalue<float>(rdvalue.val));
+                break;
+              case RDTypeTag::BoolTag:
+                return rawPy(from_rdvalue<bool>(rdvalue.val));
+                break;
+              case RDTypeTag::UnsignedIntTag:
+                return rawPy(from_rdvalue<unsigned int>(rdvalue.val));
+                break;
+              case RDTypeTag::AnyTag:
+                // we skip these for now
+                break;
+              case RDTypeTag::VecDoubleTag:
+                return rawPy(from_rdvalue<std::vector<double>>(rdvalue.val));
+                break;
+              case RDTypeTag::VecFloatTag:
+                return rawPy(from_rdvalue<std::vector<float>>(rdvalue.val));
+                break;
+              case RDTypeTag::VecIntTag:
+                return rawPy(from_rdvalue<std::vector<int>>(rdvalue.val));
+                break;
+              case RDTypeTag::VecUnsignedIntTag:
+                return rawPy(
+                    from_rdvalue<std::vector<unsigned int>>(rdvalue.val));
+                break;
+              case RDTypeTag::VecStringTag:
+                return rawPy(
+                    from_rdvalue<std::vector<std::string>>(rdvalue.val));
+                break;
+              case RDTypeTag::EmptyTag:
+                return Py_None;
+                break;
+              default:
+                std::string message =
+                    std::string(
+                        "Unhandled property type encountered for property: ") +
+                    rdvalue.key;
+                UNDER_CONSTRUCTION(message.c_str());
+                return Py_None;
+            }
+          } catch (std::bad_any_cast &) {
+            std::string message =
+                std::string("Unhandled type conversion occured for property: ") +
+                rdvalue.key;
+            UNDER_CONSTRUCTION(message.c_str());
+            return Py_None;
           }
-        } catch (std::bad_any_cast &) {
-          // C++ datatypes can really be anything, this just captures
-          // mislabelled data, it really shouldn't happen
-          std::string message =
-              std::string("Unhandled type conversion occured for property: ") +
-              rdvalue.key;
-          UNDER_CONSTRUCTION(message.c_str());
-          return Py_None;
         }
       }
+      // Property not found via getDict
+      PyErr_SetString(PyExc_KeyError, key.c_str());
+      return nullptr;
+    } catch (...) {
+      // getDict() not available; fall through to getPropIfPresent fallback
     }
-
-    // Property not found
-    PyErr_SetString(PyExc_KeyError, key.c_str());
-    return nullptr;
   }
 
   // When autoConvert=True, try native types first

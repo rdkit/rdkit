@@ -382,10 +382,21 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
             atom->getProp<std::string>(common_properties::_CIPCode));
       }
     }
-    // remove isotopic Hs if present (and if d_removeIsotopicHs is true)
-    if (tautAtom->hasProp(common_properties::_isotopicHs) &&
-        (d_removeIsotopicHs || !tautAtom->getTotalNumHs())) {
-      tautAtom->clearProp(common_properties::_isotopicHs);
+    // handle isotopic Hs: quickCopy strips atom props so use the original mol
+    // atom as source; copy the property only if we're not removing it and the
+    // tautomer atom still has Hs.
+    {
+      std::vector<unsigned int> isoHs;
+      bool srcHasIsoHs =
+          tautAtom->getPropIfPresent(common_properties::_isotopicHs, isoHs) ||
+          atom->getPropIfPresent(common_properties::_isotopicHs, isoHs);
+      if (srcHasIsoHs) {
+        if (!d_removeIsotopicHs && tautAtom->getTotalNumHs()) {
+          tautAtom->setProp(common_properties::_isotopicHs, isoHs);
+        } else {
+          tautAtom->clearProp(common_properties::_isotopicHs);
+        }
+      }
     }
   }
   // remove stereochemistry on bonds that are part of a tautomeric path
@@ -516,6 +527,21 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
       }
     }
   } else {
+    // When stereo is not being reassigned, copy _CIPCode from the original
+    // molecule for all atoms that still have a chiral tag. quickCopy strips
+    // all atom properties, so without this, atoms outside the tautomeric
+    // path lose their _CIPCode even though their chirality is unchanged.
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      auto tautAtom = taut.getAtomWithIdx(i);
+      if (tautAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+        continue;
+      }
+      const auto molAtom = mol.getAtomWithIdx(i);
+      std::string cipCode;
+      if (molAtom->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
+        tautAtom->setProp(common_properties::_CIPCode, cipCode);
+      }
+    }
     taut.setProp(common_properties::_StereochemDone, 1);
   }
   return modified;
@@ -659,6 +685,15 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           // Use kekule form so bonds are explicitly single/double instead of
           // aromatic
           RWMOL_SPTR product(new RWMol(*kmol, true));
+          // quickCopy strips atom properties; restore atom map numbers so that
+          // SMILES-based tautomer deduplication works correctly when the input
+          // molecule has atom map numbers.
+          for (unsigned int i = 0; i < kmol->getNumAtoms(); ++i) {
+            const int mapNum = kmol->getAtomWithIdx(i)->getAtomMapNum();
+            if (mapNum) {
+              product->getAtomWithIdx(i)->setAtomMapNum(mapNum);
+            }
+          }
           // Remove a hydrogen from the first matched atom and add one to the
           // last
           int firstIdx = match.front().second;
@@ -910,6 +945,12 @@ ROMol *TautomerEnumerator::canonicalize(
   for (auto confIt = mol.beginConformers(); confIt != mol.endConformers();
        ++confIt) {
     canonical->addConformer(new Conformer(**confIt), true);
+  }
+  // Enumeration ran with reassignStereo=false for performance. Now reassign
+  // stereo on the final canonical tautomer; it may have different connectivity
+  // than the input (e.g. enol→keto changes CIP priority order).
+  if (d_reassignStereo) {
+    MolOps::assignStereochemistry(*canonical, true, true);
   }
   return canonical;
 }
