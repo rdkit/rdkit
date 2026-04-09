@@ -610,7 +610,7 @@ static const CachedTemplateInfo &getCachedTemplateInfo(
   auto atoms_begin = std::sregex_iterator(tmpl_smarts.begin(),
                                           tmpl_smarts.end(), atom_pattern);
   auto atoms_end = std::sregex_iterator();
-  int atom_idx = 0;
+  unsigned int atom_idx = 0;
 
   for (std::sregex_iterator i = atoms_begin;
        i != atoms_end && atom_idx < tmpl->getNumAtoms(); ++i, ++atom_idx) {
@@ -745,7 +745,7 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
       double internal_penalty = 0.0;
       for (const auto &[template_aidx, mol_aidx] : match) {
         // If this template position has a degree constraint, it's internal
-        if (template_aidx < cached_info.is_internal.size() &&
+        if (static_cast<size_t>(template_aidx) < cached_info.is_internal.size() &&
             cached_info.is_internal[template_aidx]) {
           auto mol_atom = dp_mol->getAtomWithIdx(mol_aidx);
           for (auto nbr : dp_mol->atomNeighbors(mol_atom)) {
