@@ -851,10 +851,8 @@ std::unique_ptr<ROMol> buildProduct(
   }
   {
     std::unique_lock<std::mutex> lock(myMutex);
-    std::cout << "zipping " << MolToCXSmiles(*prodMol) << std::endl;
     prodMol = molzip(*prodMol, mzparams);
     MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
-    std::cout << "it zipped to " << MolToCXSmiles(*prodMol) << std::endl;
   }
   return prodMol;
 }
@@ -1088,9 +1086,7 @@ void splitDummyDummyBonds(RWMol &mol) {
 }  // namespace
 
 std::unique_ptr<RWMol> trimSampleMol(const ROMol &mol, size_t molNum) {
-  std::cout << "trimming " << MolToCXSmiles(mol) << std::endl;
   auto ts = MolToCXSmiles(mol);
-  std::cout << "molNum is " << molNum << std::endl;
   boost::dynamic_bitset<> molNumAtoms(mol.getNumAtoms());
   unsigned int molNumProp;
   for (auto atom : mol.atoms()) {
@@ -1195,25 +1191,13 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     if (molNum >= sampleMols.size()) {
       return;
     }
-    std::cout << "building sample mol for "
-              << sampleMols[molNum]->d_synthon->getSmiles() << " of "
-              << sampleMols[molNum]->d_synthonSet->getId() << "  "
-              << sampleMols[molNum]->d_synthonSetNum << " : "
-              << dgParams.randomSeed << " : "
-              << shapeBuildParams.stereoEnumOpts.randomSeed << std::endl;
     sampleMols[molNum]->d_mol = sampleMols[molNum]->d_synthonSet->buildMolecule(
         sampleMols[molNum]->d_synthonNums);
     if (!sampleMols[molNum]->d_mol) {
       continue;
     }
-    std::cout << "it was "
-              << MolToSmiles(*sampleMols[molNum]->d_mol, true, false, -1, false)
-              << std::endl;
     sampleMols[molNum]->d_mol = trimSampleMol(
         *sampleMols[molNum]->d_mol, sampleMols[molNum]->d_synthonSetNum);
-    std::cout << "trimmed to "
-              << MolToSmiles(*sampleMols[molNum]->d_mol, true, false, -1, false)
-              << std::endl;
     auto isomerConfs = generateIsomerConformers(
         *sampleMols[molNum]->d_mol, shapeBuildParams.numConfs, true,
         shapeBuildParams.stereoEnumOpts, dgParams,
@@ -1238,7 +1222,6 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     }
     std::unique_ptr<SynthonShapeInput> allShapes;
     for (auto &isomer : isomerConfs) {
-      std::cout << "doing isomer : " << MolToSmiles(*isomer) << std::endl;
       // If chopping up aromatic rings, use the Kekule form so that bond
       // types are usable in the fragments.
       MolOps::Kekulize(*isomer);

@@ -82,11 +82,6 @@ std::vector<std::vector<size_t>> getHitSynthons(
     synthonsToUse.emplace_back(synthonSet.size());
   }
   SynthonOverlay sim;
-  std::cout << "sso size : " << synthonSetOrder.size() << " :: ";
-  for (auto s : synthonSetOrder) {
-    std::cout << s << " ";
-  }
-  std::cout << std::endl;
   for (size_t i = 0; i < synthonSetOrder.size(); i++) {
     const auto fragNum = fragOrders[i].first;
     const auto &synthons = reaction.getSynthons()[synthonSetOrder[fragNum]];
@@ -101,16 +96,10 @@ std::vector<std::vector<size_t>> getHitSynthons(
         continue;
       }
       if (shapeSearcher.hasPrecomputedSims()) {
-        std::cout << "checking shapes "
-                  << fragShapes[fragNum]->getShapes().getSmiles() << " vs "
-                  << synthons[j].second->getShapes()->getShapes().getSmiles()
-                  << std::endl;
         if (shapeSearcher.fragMatchedSynthon(fragShapes[fragNum],
                                              synthons[j].second, sim)) {
           synthonsToUse[synthonSetOrder[fragNum]][j] = true;
           fragSims[synthonSetOrder[fragNum]].emplace_back(j, std::get<0>(sim));
-          std::cout << "sim = " << std::get<0>(sim) << " for " << i << " vs "
-                    << j << "\n";
           fragMatched = true;
         }
       } else {
@@ -127,7 +116,6 @@ std::vector<std::vector<size_t>> getHitSynthons(
       }
     }
     if (!fragMatched) {
-      std::cout << "no frag match" << std::endl;
       // No synthons matched this fragment, so the whole fragment set is a
       // bust.
       return retSynthons;
@@ -196,10 +184,6 @@ SynthonSpaceShapeSearcher::searchFragSet(
       details::permMFromN(fragSet.size(), reaction.getSynthons().size());
 
   for (const auto &synthonOrder : synthonOrders) {
-    for (const auto &o : synthonOrder) {
-      std::cout << o << " ";
-    }
-    std::cout << std::endl;
     auto theseSynthons = getHitSynthons(
         fragShapes,
         getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
@@ -797,34 +781,8 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
   // If this doesn't work, there's something so wrong an abort is necessary.
   auto hs = dynamic_cast<const SynthonSpaceShapeHitSet *>(hitset);
   PRECONDITION(hs, "Couldn't cast the hitset to shape hitset in buildHit");
-  std::cout << "\napproxSimilarity" << std::endl;
-  const auto &sso = hs->synthonSetOrder;
-  if (hs->fragShapes.size() == 2 &&
-      hs->fragShapes[0]->getShapes().getNumAtoms() == 7 &&
-      hs->fragShapes[1]->getShapes().getNumAtoms() == 7) {
-    std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTWO : "
-              << hs->fragShapes[0]->getShapes().getNumAtoms() << " and "
-              << hs->fragShapes[1]->getShapes().getNumAtoms() << std::endl;
-  }
-  std::cout << "synthon set order : ";
-  for (auto s : sso) {
-    std::cout << s << " : ";
-  }
-  std::cout << std::endl;
-  std::cout << "frags : ";
-  for (size_t j = 0; j < hs->fragShapes.size(); ++j) {
-    std::cout << hs->fragShapes[j]->getShapes().getSmiles() << " : ";
-  }
-  std::cout << std::endl;
-  std::cout << "synthons : " << hs->d_reaction->getId() << " : ";
-  for (size_t i = 0; i < synthNums.size(); ++i) {
-    std::cout
-        << hs->synthonsToUse[sso[i]][synthNums[sso[i]]].first << " : "
-        << hs->synthonsToUse[sso[i]][synthNums[sso[i]]].second->getSmiles()
-        << " :: ";
-  }
-  std::cout << std::endl;
 
+  const auto &sso = hs->synthonSetOrder;
   double approxSim = 0.0;
   if (hasPrecomputedSims()) {
     // Take the approximate similarity as the mean of the individual
@@ -886,8 +844,6 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
     }
     // scores[i] will be zero for un-matched synthons.
     for (unsigned int i = 0; i < synthNums.size(); i++) {
-      std::cout << i << " : " << scores[i] << " and " << synthVols[i] << " and "
-                << totVol << std::endl;
       approxSim += scores[i] * (synthVols[i]) / (totVol);
     }
   } else {
@@ -913,7 +869,6 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
         dp_queryShapes->getShapes().getColorVolume(0),
         getParams().shapeOverlayOptions);
   }
-  std::cout << "Returning approxSim = " << approxSim << std::endl;
   return approxSim;
 }
 
@@ -968,7 +923,6 @@ std::unique_ptr<RWMol> getShapeMol(const Synthon *synthon,
 std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
     const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
     std::vector<const std::string *> &synthNames) const {
-  std::cout << "BUILD HIT" << std::endl;
   // If this doesn't work, there's something so wrong an abort is necessary.
   auto hs = dynamic_cast<const SynthonSpaceShapeHitSet *>(hitset);
   PRECONDITION(hs, "Couldn't cast the hitset to shape hitset in buildHit");
@@ -982,24 +936,6 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
   // all possibilities.
   boost::dynamic_bitset<> synthsMatched(synthNums.size());
   const auto &sso = hs->synthonSetOrder;
-  std::cout << "synthon set order : ";
-  for (auto s : sso) {
-    std::cout << s << " : ";
-  }
-  std::cout << std::endl;
-  std::cout << "frags : ";
-  for (size_t j = 0; j < hs->fragShapes.size(); ++j) {
-    std::cout << hs->fragShapes[j]->getShapes().getSmiles() << " : ";
-  }
-  std::cout << std::endl;
-  std::cout << "synthons : " << hs->d_reaction->getId() << " : ";
-  for (size_t i = 0; i < synthNums.size(); ++i) {
-    std::cout
-        << hs->synthonsToUse[sso[i]][synthNums[sso[i]]].first << " : "
-        << hs->synthonsToUse[sso[i]][synthNums[sso[i]]].second->getSmiles()
-        << " :: ";
-  }
-  std::cout << std::endl;
   for (size_t i = 0; i < hs->fragShapes.size(); ++i) {
     const auto &synthon = hs->synthonsToUse[sso[i]][synthNums[sso[i]]].second;
     const auto &shapes = synthon->getShapes();
@@ -1009,9 +945,6 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
       return std::unique_ptr<ROMol>();
     }
     const auto &fragShape = hs->fragShapes[i];
-    std::cout << "frag " << i << " : "
-              << MolToCXSmiles(*fragShape->getShapes().shapeToMol())
-              << std::endl;
     // Look up the similarity for this shape/synthon combination.  If it
     // isn't there, something has gone catastrophically wrong somewhere.
     SynthonOverlay sim;
@@ -1026,52 +959,9 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
       synths[sso[i]] = tmpSynths[sso[i]].get();
       synthNames[sso[i]] =
           &(hs->synthonsToUse[sso[i]][synthNums[sso[i]]].first);
-      std::cout << i << " : " << sso[i] << " : " << *synthNames[sso[i]] << " : "
-                << std::get<0>(sim) << std::endl;
-      for (unsigned int ii = 0; ii < 4; ++ii) {
-        for (unsigned jj = 0; jj < 4; ++jj) {
-          std::cout << transToUse->getValUnchecked(ii, jj) << " ";
-        }
-        std::cout << std::endl;
-      }
       synthsMatched[sso[i]] = true;
     }
   }
-#if 0
-  for (size_t i = 0; i < synthNums.size(); ++i) {
-    const auto &synthon = hs->synthonsToUse[i][synthNums[i]].second;
-    // At this point it's unlikely to be the case that a synthon doesn't have
-    // a shape, but why tempt fate?
-    if (!synthon->getShapes()) {
-      return std::unique_ptr<ROMol>();
-    }
-    for (size_t j = 0; j < hs->fragShapes.size(); ++j) {
-      const auto &shape = hs->fragShapes[j];
-      // Fetch the overlay for this fragment, synthon combination
-      SynthonOverlay sim;
-      if (fragMatchedSynthon(shape, synthon, sim)) {
-        unsigned int shapeNumToUse = std::get<1>(sim);
-        RDGeom::Transform3D *transToUse = std::get<2>(sim).get();
-        // We need to build a copy of the synthon and give it the coords
-        // of the associated shape that is similar to the fragment, and
-        // transform it to the overlaid coords.
-        auto shapeMol = getShapeMol(synthon, shapeNumToUse, transToUse);
-        tmpSynths[i].reset(shapeMol.release());
-        synths[i] = tmpSynths[i].get();
-        synthNames[i] = &(hs->synthonsToUse[i][synthNums[i]].first);
-        std::cout << i << " and " << j << " : " << *synthNames[i] << " : "
-                  << std::get<0>(sim) << std::endl;
-        for (unsigned int ii = 0; ii < 4; ++ii) {
-          for (unsigned jj = 0; jj < 4; ++jj) {
-            std::cout << transToUse->getValUnchecked(ii, jj) << " ";
-          }
-          std::cout << std::endl;
-        }
-        synthsMatched[i] = true;
-      }
-    }
-  }
-#endif
   if (synthsMatched.count() < synthNums.size()) {
     for (size_t i = 0; i < synthNums.size(); ++i) {
       if (!synthsMatched[i]) {
@@ -1080,15 +970,9 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
         tmpSynths[i].reset(shapeMol.release());
         synths[i] = tmpSynths[i].get();
         synthNames[i] = &(hs->synthonsToUse[i][synthNums[i]].first);
-        std::cout << *synthNames[i] << " : no transform" << std::endl;
       }
     }
   }
-  std::cout << "building hit: ";
-  for (const auto f : synths) {
-    std::cout << MolToSmiles(*f) << ".";
-  }
-  std::cout << std::endl;
   return details::buildProduct(synths);
 }
 
@@ -1119,18 +1003,17 @@ bool checkBondLengths(const ROMol &mol) {
 bool SynthonSpaceShapeSearcher::verifyHit(
     ROMol &hit, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames) {
-  std::cout << "Verifying hit " << MolToCXSmiles(hit) << std::endl;
+  // std::cout << "Verifying hit " << MolToCXSmiles(hit) << std::endl;
   auto initScores =
       GaussianShape::AlignMolecule(dp_queryShapes->getShapes(), hit);
-  std::cout << "initScores : " << initScores[0] << ", " << initScores[1] << ", "
-            << initScores[2] << std::endl;
+  // std::cout << "initScores : " << initScores[0] << ", " << initScores[1] <<
+  // ", "
+  // << initScores[2] << std::endl;
   finaliseHit(hit, initScores, rxnId, synthNames);
-  std::cout << "finalised" << std::endl;
   if (!getParams().bestHit && checkBondLengths(hit) &&
       initScores[0] >= getParams().similarityCutoff) {
     return true;
   }
-  std::cout << "checked bond length" << std::endl;
   // If the run is multi-threaded, this will already be running
   // on the maximum number of threads, so do the embedding on
   // a single thread.
@@ -1154,19 +1037,13 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   opts.shapePruneThreshold = -1.0;
   RDGeom::Transform3D xform;
   for (auto &isomer : hitConfs) {
-    std::cout << "\nnext isomer num confs = " << isomer->getNumConformers()
-              << " : " << isomer->getNumAtoms() << std::endl;
-    std::cout << MolToCXSmiles(*isomer) << std::endl;
     GaussianShape::ShapeInput isomerShapes(*isomer, -1, opts, overlayOptions);
-    std::cout << "get num shapes : " << isomerShapes.getNumShapes()
-              << std::endl;
     unsigned int bestQueryShape, bestFitShape;
     RDGeom::Transform3D bestXform;
     double thresh = getParams().bestHit ? -1 : getParams().similarityCutoff;
     auto thisBest = dp_queryShapes->getShapes().bestSimilarity(
         isomerShapes, bestQueryShape, bestFitShape, bestXform, thresh,
         overlayOptions);
-    std::cout << "thisBest : " << thisBest[0] << std::endl;
     bool finalisedHit = false;
     if (thisBest[0] > getBestSimilaritySoFar()) {
       finaliseHit(isomerShapes, bestFitShape, bestXform, thisBest, rxnId,
@@ -1218,11 +1095,6 @@ void SynthonSpaceShapeSearcher::processToTrySet(
     if (sim >=
         getParams().similarityCutoff - getParams().approxSimilarityAdjuster) {
       approxSims.push_back(std::make_pair(i, sim));
-      std::cout << tt.first->d_reaction->getId() << " : ";
-      for (auto t : tt.second) {
-        std::cout << t << " ";
-      }
-      std::cout << " : " << sim << std::endl;
     }
   }
   if (approxSims.empty()) {
@@ -1235,38 +1107,12 @@ void SynthonSpaceShapeSearcher::processToTrySet(
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
       newToTry;
   newToTry.reserve(approxSims.size());
-  std::cout << "\nprocessToTrySet : " << std::endl;
 
   for (const auto &as : approxSims) {
     newToTry.push_back(toTry[as.first]);
-    const auto &tt = toTry[as.first];
-    auto hs = dynamic_cast<const SynthonSpaceShapeHitSet *>(tt.first);
-    std::cout << tt.first->d_reaction->getId() << " : ";
-    for (auto t : tt.second) {
-      std::cout << t << " ";
-    }
-    std::cout << ": " << hs->fragShapes.size() << " :: ";
-    for (const auto &fs : hs->fragShapes) {
-      std::cout << fs->getShapes().getSmiles() << " : ";
-    }
-    std::cout << " : " << as.second << std::endl;
   }
   toTry = std::move(newToTry);
   details::sortAndUniquifyToTry(toTry);
-  std::cout << "Final toTry" << std::endl;
-  for (const auto &tt : toTry) {
-    std::cout << tt.first->d_reaction->getId() << " : ";
-    auto hs = dynamic_cast<const SynthonSpaceShapeHitSet *>(tt.first);
-    std::cout << tt.first->d_reaction->getId() << " : ";
-    for (auto t : tt.second) {
-      std::cout << t << " ";
-    }
-    std::cout << ": " << hs->fragShapes.size() << " :: ";
-    for (const auto &fs : hs->fragShapes) {
-      std::cout << fs->getShapes().getSmiles() << " : ";
-    }
-    std::cout << std::endl;
-  }
   makeHitsFromToTry(toTry, endTime, results);
 }
 

@@ -155,7 +155,6 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   }
   std::vector<const std::string *> synthNames(synthNums.size());
   prod = buildHit(hitset, synthNums, synthNames);
-  std::cout << "got a prod : " << MolToSmiles(*prod) << std::endl;
   if (!prod) {
     return prod;
   }
