@@ -28,7 +28,11 @@ typedef boost::shared_array<double> DOUBLE_SMART_PTR;
 //! Class that contains the data for an atoms that has already been embedded
 class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
  public:
-  typedef enum { UNSPECIFIED = 0, CISTRANS, RING } EAtomType;
+  typedef enum {
+    UNSPECIFIED = 0,
+    CISTRANS,
+    RING
+  } EAtomType;
 
   EmbeddedAtom() { neighs.clear(); }
 
@@ -376,10 +380,10 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
                        unsigned int ring_count);
 
   // returns true if macrocycle found a template
-  // Uses scoring to pick best match: prefers symmetric templates and
-  // minimizes internal substituents (wildcards with degree 2)
+  // this uses a more relaxed matching that allows for small substituents to be
+  // put on internal positions, pointing towards the center of the macrocycle
   bool matchToTemplateMacrocycle(const RDKit::INT_VECT &ringSystemAtoms,
-                                  const RDKit::INT_VECT &macrocycleRing);
+                                 const RDKit::INT_VECT &macrocycleRing);
 
   //! Copy coordinates from a template match into embedded atoms
   /*!
