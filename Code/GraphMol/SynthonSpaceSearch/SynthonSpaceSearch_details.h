@@ -195,6 +195,11 @@ generateIsomerConformers(
     DGeomHelpers::EmbedParameters &dgParams,
     UserConfGenerator &userConfGenerator);
 
+// Trim the molecule down to the minimum needed to do a sensible conformation
+// expansion for the atoms with property molNum=molNum.
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<RWMol> trimSampleMol(
+    const ROMol &mol, size_t molNum);
+
 // Make the synthon shapes for the given molecules based on the passed in
 // synthons.  The synthon of interest in each molecule is from the
 // synthSetNum vector of the synthons.  Works in parallel on the number of

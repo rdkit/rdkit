@@ -80,6 +80,7 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb,
   const TimePoint *endTime = nullptr;
   std::uint64_t totHits = 0;
   auto allHits = assembleHitSets(endTime, timedOut, totHits, threadMode);
+  std::cout << "allHits" << std::endl;
   std::sort(allHits.begin(), allHits.end(),
             [](const auto &hs1, const auto &hs2) -> bool {
               if (hs1->d_reaction->getId() == hs2->d_reaction->getId()) {
@@ -154,6 +155,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   }
   std::vector<const std::string *> synthNames(synthNums.size());
   prod = buildHit(hitset, synthNums, synthNames);
+  std::cout << "got a prod : " << MolToSmiles(*prod) << std::endl;
   if (!prod) {
     return prod;
   }

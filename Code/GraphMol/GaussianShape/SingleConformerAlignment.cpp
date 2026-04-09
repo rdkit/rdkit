@@ -222,8 +222,7 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
       }
       const auto mult = -(ai * aj) / (ai + aj);
       const auto kij = exp(mult * d2);
-      if (allCarbon || ((*refCarbonRadii)[i_idx] &&
-                        (*fitCarbonRadii)[j_idx])) {
+      if (allCarbon || ((*refCarbonRadii)[i_idx] && (*fitCarbonRadii)[j_idx])) {
         vij = kij * CARBON_BIT;
       } else {
         const auto pi_ai_aj = std::numbers::pi / (ai + aj);
@@ -260,9 +259,10 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
 
 // color features
 double calcVolAndGrads(const double *ref, const double *refAlphas,
-                       const int numRefPts, const int *refTypes, const double *fit,
-                       const double *fitAlphas, const int numFitPts,
-                       const int *fitTypes, const int numFitShape,
+                       const int numRefPts, const int *refTypes,
+                       const double *fit, const double *fitAlphas,
+                       const int numFitPts, const int *fitTypes,
+                       const int numFitShape,
                        std::vector<double> &gradConverters,
                        const bool useCutoff, const double distCutoff2,
                        const double *quat, double *gradients) {
@@ -276,7 +276,7 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
     const auto aType = refTypes[i_idx];
     for (int j = 0, j_idx = 0, k = 0; j < numFitPts * 3;
          j += 3, j_idx++, k += 12) {
-      if (const auto bType = fitTypes[j_idx];aType != bType) {
+      if (const auto bType = fitTypes[j_idx]; aType != bType) {
         continue;
       }
       const auto dx = ref[i] - fit[j];
@@ -570,7 +570,7 @@ void reduceStep(const std::array<double, 7> &grad,
 // code from
 // https://github.com/ncbi/pubchem-align3d/blob/main/shape_neighbor.cpp
 // Original Authors:  Evan Bolton, Leonid Zaslavsky, Paul Thiessen
-bool SingleConformerAlignment::optimise(unsigned int maxIters) {
+bool SingleConformerAlignment::optimise(const unsigned int maxIters) {
   const double maxQuaternionStep = 0.075;   // Maximum step size for quaternion
   const double maxTranslationStep = 0.500;  // Maximum step size for translation
   const double minQuaternionStep =

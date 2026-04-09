@@ -746,7 +746,7 @@ void addJoinInfo(Atom *atom, unsigned int isotopeNum) {
     atom->setProp<std::string>("HoldsJoin", std::to_string(isotopeNum));
   } else {
     std::string joins = atom->getProp<std::string>("HoldsJoin");
-    joins += "," + std::to_string(isotopeNum);
+    joins += "_" + std::to_string(isotopeNum);
     atom->setProp<std::string>("HoldsJoin", joins);
   }
 }

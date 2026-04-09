@@ -107,6 +107,15 @@ std::unique_ptr<RWMol> extractSubset(
     }
   }
   retMol->commitBatchEdit();
+
+  // Fix the aromatic flags on anything that is no longer in a ring.
+  MolOps::findSSSR(*retMol);
+  auto rings = retMol->getRingInfo();
+  for (auto a : retMol->atoms()) {
+    if (a->getIsAromatic() && !rings->numAtomRings(a->getIdx())) {
+      a->setIsAromatic(false);
+    }
+  }
   return retMol;
 }
 }  // namespace
@@ -117,6 +126,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   PRECONDITION(mol.getNumConformers() > 0,
                "ShapeInput object needs the molecule to have conformers.  " +
                    mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
+  // std::cout << "making shape from " << MolToSmiles(mol) << std::endl;
   std::unique_ptr<RWMol> tmpMol;
   // Subsetting the molecule makes any bespoke atom radii, identified
   // by atom index, incorrect so stash them as atom properties.
@@ -131,9 +141,22 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
     tmpMol.reset(new RWMol(mol));
   }
   // The input molecule may have been in Kekule form, so fix that so
-  // aromatic features are found.
+  // aromatic features are found. Do the addHs dance so that things like
+  // pyrrole nitrogens get their H at the end.  Make sure not to add
+  // Hs to dummy atoms.
+  std::vector<unsigned int> atomsForHs;
+  atomsForHs.reserve(tmpMol->getNumAtoms());
+  for (auto atom : tmpMol->atoms()) {
+    if (atom->getAtomicNum()) {
+      atomsForHs.push_back(atom->getIdx());
+    }
+  }
+  MolOps::AddHsParameters addHParams;
+  MolOps::addHs(*tmpMol, addHParams, &atomsForHs);
   MolOps::setAromaticity(*tmpMol);
+  MolOps::removeHs(*tmpMol);
   d_smiles = MolToSmiles(*tmpMol);
+  // std::cout << "shape smiles : " << d_smiles << std::endl;
   std::vector<unsigned int> atOrder;
   tmpMol->getProp(common_properties::_smilesAtomOutputOrder, atOrder);
   tmpMol.reset(dynamic_cast<RWMol *>(MolOps::renumberAtoms(*tmpMol, atOrder)));
@@ -322,6 +345,11 @@ void ShapeInput::setActiveShape(unsigned int newShape) {
   if (d_activeShape != newShape) {
     d_activeShape = newShape;
   }
+}
+
+void ShapeInput::negateAlpha(unsigned int alphaNum) {
+  PRECONDITION(alphaNum < d_alphas.size(), "Bad number for alpha negation");
+  d_alphas[alphaNum] *= -1.0;
 }
 
 std::vector<RDGeom::Point3D> ShapeInput::getAtomPoints(
@@ -527,6 +555,37 @@ double ShapeInput::maxPossibleSimilarity(
     }
   }
   return maxSim;
+}
+
+void ShapeInput::pruneShapes(double simThreshold) {
+  if (d_coords.size() < 2) {
+    return;
+  }
+  class DistFunctor {
+   public:
+    DistFunctor(ShapeInput &shapes) : d_shapes(shapes), d_shapesCp(shapes) {}
+    ~DistFunctor() = default;
+    double operator()(unsigned int i, unsigned int j) {
+      d_shapes.setActiveShape(i);
+      d_shapesCp.setActiveShape(j);
+      auto scores = AlignShape(d_shapes, d_shapesCp);
+      // The picker works on distances.
+      return 1.0 - scores[0];
+    }
+    ShapeInput d_shapes;
+    ShapeInput d_shapesCp;
+  };
+  RDPickers::LeaderPicker leaderPicker;
+  DistFunctor distFunctor(*this);
+  // The picker works on distances.
+  auto picks = leaderPicker.lazyPick(distFunctor, d_coords.size(), 0,
+                                     1.0 - simThreshold);
+  // Allow for mysterious LeaderPicker behaviour where it returns a
+  // vector of 0s when it should only pick 1 shape.
+  std::ranges::sort(picks);
+  auto [first, last] = std::ranges::unique(picks);
+  picks.erase(first, last);
+  selectConformations(picks);
 }
 
 namespace {
@@ -787,37 +846,6 @@ void ShapeInput::calculateExtremes() {
       d_extremePointss[d_activeShape][5] = j;
     }
   }
-}
-
-void ShapeInput::pruneShapes(double simThreshold) {
-  if (d_coords.size() < 2) {
-    return;
-  }
-  class DistFunctor {
-   public:
-    DistFunctor(ShapeInput &shapes) : d_shapes(shapes), d_shapesCp(shapes) {}
-    ~DistFunctor() = default;
-    double operator()(unsigned int i, unsigned int j) {
-      d_shapes.setActiveShape(i);
-      d_shapesCp.setActiveShape(j);
-      auto scores = AlignShape(d_shapes, d_shapesCp);
-      // The picker works on distances.
-      return 1.0 - scores[0];
-    }
-    ShapeInput d_shapes;
-    ShapeInput d_shapesCp;
-  };
-  RDPickers::LeaderPicker leaderPicker;
-  DistFunctor distFunctor(*this);
-  // The picker works on distances.
-  auto picks = leaderPicker.lazyPick(distFunctor, d_coords.size(), 0,
-                                     1.0 - simThreshold);
-  // Allow for mysterious LeaderPicker behaviour where it returns a
-  // vector of 0s when it should only pick 1 shape.
-  std::ranges::sort(picks);
-  auto [first, last] = std::ranges::unique(picks);
-  picks.erase(first, last);
-  selectConformations(picks);
 }
 
 void ShapeInput::selectConformations(const std::vector<int> &picks) {

@@ -184,6 +184,11 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
     return d_coords[d_activeShape];
   }
   const std::vector<double> &getAlphas() const { return d_alphas; }
+  // Multiply the alpha value for the given atom/feature by -1.0
+  // which will toggle whether the atom/feature is used in the volume
+  // calculation or not.  For temporarily "turning off" an atom or feature.
+  void negateAlpha(unsigned int alphaNum);
+
   //! Fetch the coordinates of the atoms and optionally features.
   std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors = false) const;
   bool getNormalized() const { return d_normalizeds[d_activeShape]; }
@@ -246,6 +251,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
       const ShapeInput &fitShape,
       const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions()) const;
 
+  // Prune the shapes so none a more similar to each other than
+  // the threshold.
+  void pruneShapes(double simThreshold);
+
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
   void serialize(Archive &ar, const unsigned int);
@@ -300,9 +309,6 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // The sorted eigenvalues of the principal axes.
   std::vector<std::array<double, 3>> d_eigenValuess;
 
-  // Prune the shapes so none a more similar to each other than
-  // the threshold.
-  void pruneShapes(double simThreshold);
   void selectConformations(const std::vector<int> &picks);
   void calculateSelfOverlaps(const ShapeOverlayOptions &overlayOpts);
   // Sort the shapes in descending order of the sume of the shape

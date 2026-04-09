@@ -129,7 +129,8 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                    // depending on the size of the job.  0
                                    // means no bar.
   // User-supplied function that takes a SMILES string and a maximum number
-  // of conformers to be generated and returns a multi-conformer molecule.  // Returns nullptr if it fails. Use something different from the RDKit
+  // of conformers to be generated and returns a multi-conformer molecule.
+  // Returns nullptr if it fails. Use something different from the RDKit
   // conformer generator if preferred.  Used for creating conformers of
   // potential hits to compare against the query.
   UserConfGenerator userConformerGenerator;
@@ -151,8 +152,9 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT ShapeBuildParams {
                // so the same synthon conformers are produced each time.
   EnumerateStereoisomers::StereoEnumerationOptions stereoEnumOpts{
       true, true, false, true,
-      0,    -1};  // Options for stereoisomer enumeration.  Over-ride default
-                  // tryEmbedding of false.
+      0,    0xdac};  // Options for stereoisomer enumeration.  Over-ride default
+  // tryEmbedding of false and use fixed randomSeed for
+  // consistency of results from run to run.
   unsigned int useProgressBar{0};   // Makes a progress bar of given width.  The
                                     // number given is the number of '*'
                                     // characters in a full bar.  There will be

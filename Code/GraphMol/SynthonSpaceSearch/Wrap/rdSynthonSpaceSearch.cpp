@@ -328,6 +328,11 @@ void setUserConfGen_helper(SynthonSpaceSearch::ShapeBuildParams &ps,
                            python::object func) {
   ps.userConformerGenerator = pyUserConfGenFunctor(func);
 }
+
+void setUserConfGen_helper2(SynthonSpaceSearch::SynthonSpaceSearchParams &ps,
+                            python::object func) {
+  ps.userConformerGenerator = pyUserConfGenFunctor(func);
+}
 }  // namespace helpers
 
 BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
@@ -474,6 +479,13 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " number of '*' characters in a full bar.  There will"
           " be about another 35 characters or so depending on the size of the"
           " job.  Default=0 means no bar.")
+      .def(
+          "setUserConformerGenerator", helpers::setUserConfGen_helper2,
+          python::with_custodian_and_ward<1, 2>(), python::args("self", "func"),
+          R"DOC(Allows you to provide a function that will be called instead of the default
+ conformer generator to generate conformers for the synthons.  The function should
+ take a SMILES string and the maximum number of conformers to generated and
+ return a molecule object.)DOC")
       .def("__setattr__", &safeSetattr);
 
   docString = "Parameters for building shape objects for SynthonSpaceSearch.";
@@ -534,7 +546,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           python::with_custodian_and_ward<1, 2>(), python::args("self", "func"),
           R"DOC(Allows you to provide a function that will be called instead of the default
  conformer generator to generate conformers for the synthons.  The function should
- take a SMILES string and the maximmum number of conformers to generated and
+ take a SMILES string and the maximum number of conformers to generated and
  return a molecule object.)DOC")
       .def("__setattr__", &safeSetattr);
 

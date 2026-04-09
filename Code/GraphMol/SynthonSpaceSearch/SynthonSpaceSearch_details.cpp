@@ -34,6 +34,9 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
+
+#include "GraphMol/SmilesParse/SmilesParse.h"
+
 #include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
 #include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/RDThreads.h>
@@ -836,6 +839,7 @@ std::string buildProductName(
   return prodName;
 }
 
+std::mutex myMutex;
 std::unique_ptr<ROMol> buildProduct(
     const std::vector<const ROMol *> &synthons) {
   MolzipParams mzparams;
@@ -845,8 +849,13 @@ std::unique_ptr<ROMol> buildProduct(
   for (size_t i = 1; i < synthons.size(); ++i) {
     prodMol.reset(combineMols(*prodMol, *synthons[i]));
   }
-  prodMol = molzip(*prodMol, mzparams);
-  MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
+  {
+    std::unique_lock<std::mutex> lock(myMutex);
+    std::cout << "zipping " << MolToCXSmiles(*prodMol) << std::endl;
+    prodMol = molzip(*prodMol, mzparams);
+    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
+    std::cout << "it zipped to " << MolToCXSmiles(*prodMol) << std::endl;
+  }
   return prodMol;
 }
 
@@ -1044,13 +1053,13 @@ namespace {
 // Used to decide the isotope number a dummy atom must be set to.
 unsigned int joinInCommon(const std::string &joins1,
                           const std::string &joins2) {
-  // Each of the join strings will be a comma-separated list of ints, with
+  // Each of the join strings will be a underscore-separated list of ints, with
   // no more than 3 ints per string.  The ints will be between 1 and 4.
   // So we don't need to do anything sophisticated.  We want the single
   // number in common to both lists.
   std::string j(" ");
   for (auto c1 : joins1) {
-    if (c1 == ',') {
+    if (c1 == '_') {
       continue;
     }
     for (auto c2 : joins2) {
@@ -1061,34 +1070,6 @@ unsigned int joinInCommon(const std::string &joins1,
     }
   }
   return 0;
-}
-
-// Look through the atoms in the tmpMol for the HoldsJoin entries for that
-// molNum. If it says e.g. 1, look for 1 in the HoldsJoin for an atom not in
-// this molNum, and set it to dummy with the isotope 1 in this case. Repeat.
-// There may be more than 1 entry in a HoldsJoin for either atom, so need to
-// take care of this.  For example, the molNum atom might say 1,3 so look for
-// both 1 and 3 in not molNum atoms.
-void setDummyIsotopes(const ROMol &mol, unsigned int molNum) {
-  std::string sMolNum(std::to_string(molNum));
-  for (const auto atom : mol.atoms()) {
-    if (atom->hasProp("HoldsJoin")) {
-      if (atom->getProp<std::string>("molNum") == sMolNum) {
-        for (const auto oatom : mol.atoms()) {
-          if (oatom->hasProp("HoldsJoin") &&
-              oatom->getProp<std::string>("molNum") != sMolNum) {
-            auto joinInComm =
-                joinInCommon(atom->getProp<std::string>("HoldsJoin"),
-                             oatom->getProp<std::string>("HoldsJoin"));
-            if (joinInComm) {
-              oatom->setAtomicNum(0);
-              oatom->setIsotope(joinInComm);
-            }
-          }
-        }
-      }
-    }
-  }
 }
 
 void splitDummyDummyBonds(RWMol &mol) {
@@ -1106,6 +1087,104 @@ void splitDummyDummyBonds(RWMol &mol) {
 }
 }  // namespace
 
+std::unique_ptr<RWMol> trimSampleMol(const ROMol &mol, size_t molNum) {
+  std::cout << "trimming " << MolToCXSmiles(mol) << std::endl;
+  auto ts = MolToCXSmiles(mol);
+  std::cout << "molNum is " << molNum << std::endl;
+  boost::dynamic_bitset<> molNumAtoms(mol.getNumAtoms());
+  unsigned int molNumProp;
+  for (auto atom : mol.atoms()) {
+    if (atom->getPropIfPresent<unsigned int>("molNum", molNumProp) &&
+        molNumProp == molNum) {
+      molNumAtoms[atom->getIdx()] = true;
+    }
+  }
+
+  auto ringInfo = mol.getRingInfo();
+  if (!ringInfo->isInitialized()) {
+    MolOps::findSSSR(mol);
+  }
+  for (const auto &atomRing : ringInfo->atomRings()) {
+    for (auto a : atomRing) {
+      if (molNumAtoms[a]) {
+        for (auto ap : atomRing) {
+          molNumAtoms[ap] = true;
+        }
+        break;
+      }
+    }
+  }
+
+  std::vector<unsigned int> bondsToGo;
+  for (auto bond : mol.bonds()) {
+    // Remove single non-cyclic bonds that aren't in molNumAtoms at either
+    // end.
+    if (bond->getBondType() == Bond::SINGLE &&
+        !ringInfo->numBondRings(bond->getIdx())) {
+      bool bondToGo = true;
+      auto begAtom = bond->getBeginAtom();
+      auto endAtom = bond->getEndAtom();
+      if (molNumAtoms[begAtom->getIdx()] || molNumAtoms[endAtom->getIdx()]) {
+        bondToGo = false;
+      }
+      // Deal with some special cases.  Don't break a S(=O)-[C,N] bond
+      // as that gives an odd-looking [SH](=O) product.
+      Atom *sAtom = nullptr;
+      Atom *otherAtom = nullptr;
+      if (bondToGo && begAtom->getAtomicNum() == 16) {
+        sAtom = begAtom;
+        otherAtom = endAtom;
+      }
+      if (bondToGo && endAtom->getAtomicNum() == 16) {
+        sAtom = endAtom;
+        otherAtom = begAtom;
+      }
+      if (sAtom &&
+          (otherAtom->getAtomicNum() == 6 || otherAtom->getAtomicNum() == 7)) {
+        unsigned int numOxy = 0;
+        for (const auto nbr : mol.atomNeighbors(sAtom)) {
+          if (nbr->getAtomicNum() == 8) {
+            auto bond = mol.getBondBetweenAtoms(sAtom->getIdx(), nbr->getIdx());
+            if (bond) {
+              numOxy++;
+            }
+          }
+        }
+        if (numOxy) {
+          bondToGo = false;
+        }
+      }
+      if (bondToGo) {
+        bondsToGo.push_back(bond->getIdx());
+      }
+    }
+  }
+  std::unique_ptr<RWMol> newMol(static_cast<RWMol *>(
+      MolFragmenter::fragmentOnBonds(mol, bondsToGo, false)));
+  std::vector<std::vector<int>> molFrags;
+  auto numFrags = MolOps::getMolFrags(*newMol, molFrags);
+  newMol->beginBatchEdit();
+  for (unsigned int i = 0; i < numFrags; i++) {
+    bool hoseFrag = true;
+    for (auto fa : molFrags[i]) {
+      auto a = newMol->getAtomWithIdx(fa);
+      if (a->hasProp("molNum") &&
+          a->getProp<unsigned int>("molNum") == molNum) {
+        hoseFrag = false;
+        break;
+      }
+    }
+    if (hoseFrag) {
+      for (auto fa : molFrags[i]) {
+        newMol->removeAtom(fa);
+      }
+    }
+  }
+  newMol->commitBatchEdit();
+
+  return newMol;
+}
+
 void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
                        std::atomic<std::int64_t> &mostRecentMol,
                        DGeomHelpers::EmbedParameters &dgParams,
@@ -1116,11 +1195,25 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     if (molNum >= sampleMols.size()) {
       return;
     }
+    std::cout << "building sample mol for "
+              << sampleMols[molNum]->d_synthon->getSmiles() << " of "
+              << sampleMols[molNum]->d_synthonSet->getId() << "  "
+              << sampleMols[molNum]->d_synthonSetNum << " : "
+              << dgParams.randomSeed << " : "
+              << shapeBuildParams.stereoEnumOpts.randomSeed << std::endl;
     sampleMols[molNum]->d_mol = sampleMols[molNum]->d_synthonSet->buildMolecule(
         sampleMols[molNum]->d_synthonNums);
     if (!sampleMols[molNum]->d_mol) {
       continue;
     }
+    std::cout << "it was "
+              << MolToSmiles(*sampleMols[molNum]->d_mol, true, false, -1, false)
+              << std::endl;
+    sampleMols[molNum]->d_mol = trimSampleMol(
+        *sampleMols[molNum]->d_mol, sampleMols[molNum]->d_synthonSetNum);
+    std::cout << "trimmed to "
+              << MolToSmiles(*sampleMols[molNum]->d_mol, true, false, -1, false)
+              << std::endl;
     auto isomerConfs = generateIsomerConformers(
         *sampleMols[molNum]->d_mol, shapeBuildParams.numConfs, true,
         shapeBuildParams.stereoEnumOpts, dgParams,
@@ -1128,7 +1221,7 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     if (isomerConfs.empty()) {
       // Sometimes we can get something from the un-enumerated isomers which
       // will be better than nothing.
-      isomerConfs = details::generateIsomerConformers(
+      isomerConfs = generateIsomerConformers(
           *sampleMols[molNum]->d_mol, shapeBuildParams.numConfs, true,
           shapeBuildParams.stereoEnumOpts, dgParams,
           shapeBuildParams.userConformerGenerator);
@@ -1145,6 +1238,7 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     }
     std::unique_ptr<SynthonShapeInput> allShapes;
     for (auto &isomer : isomerConfs) {
+      std::cout << "doing isomer : " << MolToSmiles(*isomer) << std::endl;
       // If chopping up aromatic rings, use the Kekule form so that bond
       // types are usable in the fragments.
       MolOps::Kekulize(*isomer);
@@ -1154,6 +1248,11 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
       for (const auto &bond : isomer->bonds()) {
         if (!bond->hasProp("molNum")) {
           splitBonds.push_back(bond->getIdx());
+          if (!bond->getBeginAtom()->hasProp("molNum") ||
+              !bond->getEndAtom()->hasProp("molNum")) {
+            // Probably an explicit H added by the stereoisomer enumerator.
+            continue;
+          }
           auto begMolNum =
               bond->getBeginAtom()->getProp<unsigned int>("molNum");
           auto endMolNum = bond->getEndAtom()->getProp<unsigned int>("molNum");
@@ -1243,6 +1342,9 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
       }
     }
     if (allShapes) {
+      if (isomerConfs.size() > 1) {
+        allShapes->getShapes().pruneShapes(shapeBuildParams.shapeSimThreshold);
+      }
       sampleMols[molNum]->d_synthon->setShapes(std::move(allShapes));
     }
     if (pbar) {
