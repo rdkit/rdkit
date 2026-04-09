@@ -25,6 +25,9 @@
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <regex>
 constexpr double NEIGH_RADIUS = 2.5;
 
 namespace RDDepict {
@@ -349,7 +352,7 @@ void EmbeddedFrag::setupAttachmentPoints() {
 // the molecule
 static bool checkStereoChemistry(const RDKit::ROMol &mol,
                                  const RDKit::ROMol &template_mol,
-                                 RDKit::MatchVectType match) {
+                                 const RDKit::MatchVectType &match) {
   for (auto bond : mol.bonds()) {
     if (bond->getBondType() != RDKit::Bond::DOUBLE ||
         bond->getStereo() == RDKit::Bond::STEREOANY ||
@@ -411,6 +414,12 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
       }
     }
 
+    // If either of the double bond atoms is not in the match, skip this bond.
+    // This is the case for side chain E/Z bonds outside the matched ring.
+    if (template_atom1 == -1 || template_atom2 == -1) {
+      continue;  // Skip this bond, check the next one
+    }
+
     // there's a chance that the atoms controlling the double bond stereochem in
     // the molecule are not the atoms that matched to the template, handle that
     // here by swapping to the other atom
@@ -424,8 +433,9 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
       swapStereo = !swapStereo;
     }
 
-    if (template_atom1 == -1 || template_atom2 == -1 ||
-        template_atom1_neighbor1 == -1 || template_atom2_neighbor1 == -1) {
+    // Both bond atoms are in the match. If we failed to detect the neighbors
+    // controlling the stereochemistry, fail the match.
+    if (template_atom1_neighbor1 == -1 || template_atom2_neighbor1 == -1) {
       return false;
     }
 
@@ -444,11 +454,30 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
     if (swapStereo) {
       is_cis = !is_cis;
     }
-    if (is_cis != (bond->getStereo() == RDKit::Bond::STEREOZ ||
-                   bond->getStereo() == RDKit::Bond::STEREOCIS)) {
+    bool expected_cis = (bond->getStereo() == RDKit::Bond::STEREOZ ||
+                         bond->getStereo() == RDKit::Bond::STEREOCIS);
+    if (is_cis != expected_cis) {
       return false;
     }
   }
+  return true;
+}
+
+bool EmbeddedFrag::applyTemplateCoordinates(
+    const std::shared_ptr<RDKit::ROMol> &template_mol,
+    const RDKit::MatchVectType &match) {
+  // Copy coordinates from template to embedded atoms
+  const auto &conf = template_mol->getConformer();
+  for (const auto &[template_aidx, mol_aidx] : match) {
+    EmbeddedAtom new_at(mol_aidx, conf.getAtomPos(template_aidx));
+    new_at.df_fixed = true;
+    d_eatoms.emplace(mol_aidx, new_at);
+  }
+
+  // Setup neighbors and attachment points
+  this->setupNewNeighs();
+  this->setupAttachmentPoints();
+
   return true;
 }
 
@@ -543,16 +572,219 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     return false;
   }
 
-  // copy over new coordinates
-  const auto &conf = template_mol->getConformer();
-  for (auto &[template_aidx, rs_aidx] : match) {
-    EmbeddedAtom new_at(rs_aidx, conf.getAtomPos(template_aidx));
-    new_at.df_fixed = true;
-    d_eatoms.emplace(rs_aidx, new_at);
+  return applyTemplateCoordinates(template_mol, match);
+}
+
+// Cached template information for macrocycle matching
+struct CachedTemplateInfo {
+  std::shared_ptr<RDKit::ROMol>
+      relaxed_query;              // Query without degree constraints
+  std::vector<bool> is_internal;  // Which atoms have degree constraints
+};
+
+// Get cached template info (build cache on first access)
+// Cache is keyed by template pointer for identity-based lookup
+static const CachedTemplateInfo &getCachedTemplateInfo(
+    const std::shared_ptr<RDKit::ROMol> &tmpl) {
+  static std::map<const RDKit::ROMol *, CachedTemplateInfo> cache;
+
+  auto it = cache.find(tmpl.get());
+  if (it != cache.end()) {
+    return it->second;
   }
-  this->setupNewNeighs();
-  this->setupAttachmentPoints();
-  return true;
+
+  // Build cached info for this template
+  CachedTemplateInfo info;
+
+  // Convert template to SMARTS and remove degree constraints
+  std::string tmpl_smarts = RDKit::MolToSmarts(*tmpl);
+  std::regex degree_pattern("&D[0-9]");
+  std::string relaxed_smarts =
+      std::regex_replace(tmpl_smarts, degree_pattern, "");
+  info.relaxed_query.reset(RDKit::SmartsToMol(relaxed_smarts));
+
+  // Parse SMARTS to identify internal atoms (those with degree constraints)
+  std::regex atom_pattern("\\[!#200(?:&D[0-9])?\\]");
+  info.is_internal.resize(tmpl->getNumAtoms(), false);
+
+  auto atoms_begin = std::sregex_iterator(tmpl_smarts.begin(),
+                                          tmpl_smarts.end(), atom_pattern);
+  auto atoms_end = std::sregex_iterator();
+  unsigned int atom_idx = 0;
+
+  for (std::sregex_iterator i = atoms_begin;
+       i != atoms_end && atom_idx < tmpl->getNumAtoms(); ++i, ++atom_idx) {
+    std::smatch match_smarts = *i;
+    std::string atom_smarts = match_smarts.str();
+    // If it contains &D, it's internal (has degree constraint)
+    info.is_internal[atom_idx] = (atom_smarts.find("&D") != std::string::npos);
+  }
+
+  cache[tmpl.get()] = std::move(info);
+  return cache[tmpl.get()];
+}
+
+// Helper function: build a molecule with ring atoms preserved and non-ring
+// atoms replaced with dummy atoms (for template matching)
+static RDKit::RWMol buildRingMol(const RDKit::ROMol *mol,
+                                 const boost::dynamic_bitset<> &ring_atoms) {
+  constexpr int DUMMY_ATOMIC_NUM = 200;
+  RDKit::RWMol ring_mol(*mol, true);
+  for (auto &at : ring_mol.atoms()) {
+    if (!ring_atoms.test(at->getIdx())) {
+      at->setAtomicNum(DUMMY_ATOMIC_NUM);  // Non-ring atoms become dummy
+    }
+    // Ring atoms keep their original atom types for wildcard matching
+  }
+  return ring_mol;
+}
+
+// Helper function: compute the size of a substituent attached to a ring atom
+// Uses BFS traversal starting from substituent_root, avoiding ring atoms
+static int computeSubstituentSize(const RDKit::ROMol *mol,
+                                  unsigned int substituent_root,
+                                  unsigned int ring_attachment_point,
+                                  const boost::dynamic_bitset<> &ring_atoms) {
+  std::vector<unsigned int> to_visit = {substituent_root};
+  boost::dynamic_bitset<> visited(mol->getNumAtoms());
+  visited.set(ring_attachment_point);  // Don't traverse back into ring
+  int size = 0;
+
+  while (!to_visit.empty()) {
+    auto current = to_visit.back();
+    to_visit.pop_back();
+    if (visited.test(current) || ring_atoms.test(current)) {
+      continue;
+    }
+    visited.set(current);
+    size++;
+    auto current_atom = mol->getAtomWithIdx(current);
+    for (auto neighbor : mol->atomNeighbors(current_atom)) {
+      to_visit.push_back(neighbor->getIdx());
+    }
+  }
+
+  return size;
+}
+
+bool EmbeddedFrag::matchToTemplateMacrocycle(
+    const RDKit::INT_VECT &ringSystemAtoms,
+    const RDKit::INT_VECT &macrocycleRing) {
+  CoordinateTemplates &coordinate_templates =
+      CoordinateTemplates::getRingSystemTemplates();
+
+  // Only look for templates matching the macrocycle ring size
+  if (!coordinate_templates.hasTemplateOfSize(macrocycleRing.size())) {
+    return false;
+  }
+
+  // Build set of ring atoms for quick lookup
+  boost::dynamic_bitset<> ring_atoms(dp_mol->getNumAtoms());
+  for (auto aidx : macrocycleRing) {
+    ring_atoms.set(aidx);
+  }
+
+  // Create a mol with just the macrocycle ring for matching
+  // Templates are SMARTS patterns with [!#200] wildcards that match any
+  // non-dummy atom
+  RDKit::RWMol ring_mol = buildRingMol(dp_mol, ring_atoms);
+
+  // Pre-compute substituent sizes for all substituents attached to ring atoms
+  int smallest_substituent_size = -1;
+  std::unordered_map<unsigned int, int> substituent_sizes;
+  for (auto ring_atom_idx : macrocycleRing) {
+    auto atom = dp_mol->getAtomWithIdx(ring_atom_idx);
+    for (auto nbr : dp_mol->atomNeighbors(atom)) {
+      unsigned int nbr_idx = nbr->getIdx();
+      if (!ring_atoms.test(nbr_idx) && substituent_sizes.count(nbr_idx) == 0) {
+        int size =
+            computeSubstituentSize(dp_mol, nbr_idx, ring_atom_idx, ring_atoms);
+        substituent_sizes[nbr_idx] = size;
+        if (smallest_substituent_size == -1 ||
+            size < smallest_substituent_size) {
+          smallest_substituent_size = size;
+        }
+      }
+    }
+  }
+
+  // Try all templates and score them
+  struct TemplateMatch {
+    std::shared_ptr<RDKit::ROMol> template_mol;
+    RDKit::MatchVectType match;
+    double score;
+  };
+  std::vector<TemplateMatch> valid_matches;
+
+  for (const auto &tmpl :
+       coordinate_templates.getMatchingTemplates(macrocycleRing.size())) {
+    // Get cached template info (relaxed query and internal atom flags)
+    const auto &cached_info = getCachedTemplateInfo(tmpl);
+    if (!cached_info.relaxed_query) {
+      continue;
+    }
+
+    RDKit::SubstructMatchParameters params;
+    // Limit matches to 100 - sufficient for most templates while preventing
+    // worst-case slowdown on big rings. Early exit on best match found
+    params.maxMatches = 100;
+    params.uniquify = false;  // Don't uniquify - we want ALL rotations
+    auto matches =
+        RDKit::SubstructMatch(ring_mol, *cached_info.relaxed_query, params);
+
+    for (const auto &match : matches) {
+      if (!checkStereoChemistry(ring_mol, *tmpl, match)) {
+        continue;
+      }
+
+      // Score this match
+      double score = 0.0;
+      const double PENALTY_PER_ATOM = 10.0;
+
+      // Internal substituent penalty
+      double internal_penalty = 0.0;
+      for (const auto &[template_aidx, mol_aidx] : match) {
+        // If this template position has a degree constraint, it's internal
+        if (static_cast<size_t>(template_aidx) < cached_info.is_internal.size() &&
+            cached_info.is_internal[template_aidx]) {
+          auto mol_atom = dp_mol->getAtomWithIdx(mol_aidx);
+          for (auto nbr : dp_mol->atomNeighbors(mol_atom)) {
+            unsigned int nbr_idx = nbr->getIdx();
+            if (!ring_atoms.test(nbr_idx)) {
+              int sub_size = substituent_sizes.at(nbr_idx);
+              internal_penalty += sub_size * PENALTY_PER_ATOM;
+            }
+          }
+        }
+      }
+
+      score -= internal_penalty;
+
+      // Store this match
+      valid_matches.push_back({tmpl, match, score});
+
+      // Early exit: this algorithm runs after strict template matching, so a
+      // perfect match with no internal substituents is not possible. The best
+      // we can do is have the smallest substituent on an internal position,
+      // if that happens, return early.
+      if (internal_penalty <= PENALTY_PER_ATOM * smallest_substituent_size) {
+        return applyTemplateCoordinates(tmpl, match);
+      }
+    }
+  }
+
+  // Check if we found any valid match
+  if (valid_matches.empty()) {
+    return false;
+  }
+
+  // Find and apply the best scoring match
+  auto best_match =
+      std::max_element(valid_matches.begin(), valid_matches.end(),
+                       [](const TemplateMatch &a, const TemplateMatch &b) {
+                         return a.score < b.score;
+                       });
+  return applyTemplateCoordinates(best_match->template_mol, best_match->match);
 }
 
 // find any atoms in the ring that are in trans double bonds
@@ -628,13 +860,19 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
   // start from a single ring. Then add rings one by one
 
   RDKit::INT_VECT funion;
-  // look for a template that matches the entire fused ring system
-  // For single rings, only use templates for macrocycles (size > 8)
-  if (useRingTemplates &&
-      (fusedRings.size() > 1 ||
-       (fusedRings.size() == 1 && fusedRings[0].size() > 8))) {
+  // look for a template that matches the entire fused ring system or macrocycle
+  if (useRingTemplates) {
     RDKit::Union(fusedRings, funion);
+
+    // First try regular template matching (strict, exact match)
     bool found_template = matchToTemplate(funion, fusedRings.size());
+
+    // If regular matching failed and this is a macrocycle (single ring > 8),
+    // try the permissive scoring-based macrocycle matching
+    if (!found_template && fusedRings.size() == 1 && fusedRings[0].size() > 8) {
+      found_template = matchToTemplateMacrocycle(funion, fusedRings[0]);
+    }
+
     if (found_template) {
       // we are done
       return;

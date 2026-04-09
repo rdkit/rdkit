@@ -28,7 +28,11 @@ typedef boost::shared_array<double> DOUBLE_SMART_PTR;
 //! Class that contains the data for an atoms that has already been embedded
 class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
  public:
-  typedef enum { UNSPECIFIED = 0, CISTRANS, RING } EAtomType;
+  typedef enum {
+    UNSPECIFIED = 0,
+    CISTRANS,
+    RING
+  } EAtomType;
 
   EmbeddedAtom() { neighs.clear(); }
 
@@ -374,6 +378,22 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // returns true if fused rings found a template
   bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
                        unsigned int ring_count);
+
+  // returns true if macrocycle found a template
+  // this uses a more relaxed matching that allows for small substituents to be
+  // put on internal positions, pointing towards the center of the macrocycle
+  bool matchToTemplateMacrocycle(const RDKit::INT_VECT &ringSystemAtoms,
+                                 const RDKit::INT_VECT &macrocycleRing);
+
+  //! Copy coordinates from a template match into embedded atoms
+  /*!
+    \param template_mol the template molecule with conformer coordinates
+    \param match the mapping from template atom indices to molecule atom indices
+    \return true after successfully copying coordinates and setting up neighbors
+  */
+  bool applyTemplateCoordinates(
+      const std::shared_ptr<RDKit::ROMol> &template_mol,
+      const RDKit::MatchVectType &match);
 
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                        bool useRingTemplates);
