@@ -2180,6 +2180,9 @@ void EmbeddedFrag::removeCollisionsBondAndSpiroFlip() {
         resolved = tryResolvingCollisionWithSpiroFlip(
             cAids, ncols, prevDensity, doneSpiros, spiroCenters, dmat);
       }
+
+      // Re-check collisions after flipping
+      colls = this->findCollisions(dmat);
     }
     ++iter;
   }
