@@ -235,7 +235,6 @@ c1cc,0
 
 
 #if defined(RDK_BUILD_THREADSAFE_SSS) && defined(__cpp_lib_execution)
-blah
 // NOTE: will only run in parallel on linux if TBB is installed
 TEST_CASE("parallel reads") {
   // there's likely no benefit from the parallelization here,
