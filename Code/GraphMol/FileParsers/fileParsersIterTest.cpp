@@ -233,7 +233,9 @@ c1cc,0
   }
 }
 
-#ifdef RDK_BUILD_THREADSAFE_SSS
+
+#if defined(RDK_BUILD_THREADSAFE_SSS) && defined(__cpp_lib_execution)
+blah
 // NOTE: will only run in parallel on linux if TBB is installed
 TEST_CASE("parallel reads") {
   // there's likely no benefit from the parallelization here,
@@ -327,13 +329,11 @@ TEST_CASE("parallel reads") {
               << " molecules took " << duration.count() << " ms" << std::endl;
   }
 }
-#endif
-#if 1
 TEST_CASE("benchmarking") {
   auto *rdbase = std::getenv("RDBASE");
   REQUIRE(rdbase);
   auto path = std::filesystem::path(rdbase) /
-              "Code/GraphMol/FileParsers/test_data/zinc.leads.500.q.smi";
+  "Code/GraphMol/FileParsers/test_data/zinc.leads.500.q.smi";
   REQUIRE(std::filesystem::exists(path));
   v2::FileParsers::SmilesMolSupplierParams params;
   params.delimiter = '\t';
@@ -342,46 +342,44 @@ TEST_CASE("benchmarking") {
   params.titleLine = false;
   v2::FileParsers::SmilesMolSupplier reader(path.string(), params);
   reader.setCaching(true);
-
+  
   SECTION("transform") {
     auto start = std::chrono::high_resolution_clock::now();
     // prime the cache:
     std::vector<unsigned int> nAts1;
     std::transform(reader.begin(), reader.end(), std::back_inserter(nAts1),
-                   [](const auto mol) { return mol->getNumAtoms(); });
-
+    [](const auto mol) { return mol->getNumAtoms(); });
+    
     double accum = 0.0;
     constexpr unsigned int numIters = 200;
     for (unsigned int iter = 0; iter < numIters; ++iter) {
       std::vector<unsigned int> nAts(reader.length());
       std::transform(std::execution::seq, reader.begin(), reader.end(),
-                     nAts.begin(),
-                     [](const auto mol) { return MolToSmiles(*mol).size(); });
+      nAts.begin(),
+      [](const auto mol) { return MolToSmiles(*mol).size(); });
       accum += nAts.size();
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     std::cerr << "Base transform of " << reader.length() << "x" << numIters
-              << " molecules took " << duration.count() << " ms" << std::endl;
+    << " molecules took " << duration.count() << " ms" << std::endl;
     CHECK(accum > 0);
-#if 1
     accum = 0.0;
     start = std::chrono::high_resolution_clock::now();
     for (unsigned int iter = 0; iter < numIters; ++iter) {
       std::vector<unsigned int> nAts(reader.length());
       std::transform(std::execution::par, reader.begin(), reader.end(),
-                     nAts.begin(),
-                     [](const auto mol) { return MolToSmiles(*mol).size(); });
+      nAts.begin(),
+      [](const auto mol) { return MolToSmiles(*mol).size(); });
       accum += nAts.size();
     }
     end = std::chrono::high_resolution_clock::now();
     duration =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     std::cerr << "Parallel transform of " << reader.length() << "x" << numIters
-              << " molecules took " << duration.count() << " ms" << std::endl;
+    << " molecules took " << duration.count() << " ms" << std::endl;
     CHECK(accum > 0);
-#endif
   }
 }
 #endif
