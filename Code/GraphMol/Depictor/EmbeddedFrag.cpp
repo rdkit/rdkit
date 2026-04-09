@@ -427,9 +427,12 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
       swapStereo = !swapStereo;
     }
 
+    // If the stereo bond atoms are not in the match (e.g., side chain atoms),
+    // skip this bond - we only check stereochemistry for bonds within the
+    // matched ring
     if (template_atom1 == -1 || template_atom2 == -1 ||
         template_atom1_neighbor1 == -1 || template_atom2_neighbor1 == -1) {
-      return false;
+      continue;  // Skip this bond, check the next one
     }
 
     const auto &conf = template_mol.getConformer();
@@ -683,7 +686,7 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
   RDKit::RWMol ring_mol = buildRingMol(dp_mol, ring_atoms);
 
   // Pre-compute substituent sizes for all substituents attached to ring atoms
-  // This avoids redundant BFS traversals during scoring (major optimization)
+  int smallest_substituent_size = -1;
   std::unordered_map<unsigned int, int> substituent_sizes;
   for (auto ring_atom_idx : macrocycleRing) {
     auto atom = dp_mol->getAtomWithIdx(ring_atom_idx);
@@ -693,6 +696,10 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
         int size =
             computeSubstituentSize(dp_mol, nbr_idx, ring_atom_idx, ring_atoms);
         substituent_sizes[nbr_idx] = size;
+        if (smallest_substituent_size == -1 ||
+            size < smallest_substituent_size) {
+          smallest_substituent_size = size;
+        }
       }
     }
   }
@@ -715,8 +722,7 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
 
     RDKit::SubstructMatchParameters params;
     // Limit matches to 100 - sufficient for most templates while preventing
-    // worst-case slowdown on highly symmetric rings. Early exit on perfect
-    // match (penalty=0) ensures we don't miss optimal solutions.
+    // worst-case slowdown on big rings. Early exit on best match found
     params.maxMatches = 100;
     params.uniquify = false;  // Don't uniquify - we want ALL rotations
     auto matches =
@@ -755,9 +761,9 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
 
       // Early exit: this algorithm runs after strict template matching, so a
       // perfect match with no internal substituents is not possible. The best
-      // we can do is have a single substituent of size 1 on an internal
-      // position, if that happens, return early.
-      if (internal_penalty <= PENALTY_PER_ATOM) {
+      // we can do is have the smallest substituent on an internal position,
+      // if that happens, return early.
+      if (internal_penalty <= PENALTY_PER_ATOM * smallest_substituent_size) {
         return applyTemplateCoordinates(tmpl, match);
       }
     }
