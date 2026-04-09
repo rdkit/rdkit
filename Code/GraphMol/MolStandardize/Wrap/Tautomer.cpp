@@ -116,7 +116,7 @@ ROMol *getTautomerHelper(const TAUT_SPTR &self) {
 }
 
 ROMol *getKekulizedHelper(const TAUT_SPTR &self) {
-  return new ROMol(*self->kekulized);
+  return new ROMol(*self->getKekulized());
 }
 
 python::tuple smilesTautomerMapKeysHelper(
