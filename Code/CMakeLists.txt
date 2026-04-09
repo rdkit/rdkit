@@ -1,4 +1,7 @@
 createExportTestHeaders()
+
+target_precompile_headers(rdkit_base INTERFACE stdafx.h)
+
 add_subdirectory(RDGeneral)
 if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(RDBoost)
