@@ -285,18 +285,6 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
       }
       if (anyRestored) {
         MolOps::assignStereochemistry(taut, cleanIt, force);
-        for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
-          if (res.d_modifiedAtoms.test(idx)) continue;
-          auto *tautAtom = taut.getAtomWithIdx(idx);
-          if (tautAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) continue;
-          // If assignStereochemistry did not assign a CIP code and did not
-          // mark this as a ring stereoatom, the atom is not truly chiral
-          // in this tautomer — clear the tag.
-          if (!tautAtom->hasProp(common_properties::_CIPCode) &&
-              !tautAtom->hasProp(common_properties::_ringStereoAtoms)) {
-            tautAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
-          }
-        }
       }
     }
 
