@@ -27,6 +27,7 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include <atomic>
+#include <cstdint>
 #include <limits>
 #include <mutex>
 #include <stdint.h>
@@ -269,6 +270,11 @@ class BondData {
     return getTwiceBondType(BondType(bondType));
   }
 
+  double getValenceContrib(const atomindex_t atomIndex) const {
+    return getTwiceValenceContrib(atomIndex) / 2;
+  }
+
+
   void clearStereoAtoms() {
     stereoAtoms[0] = atomindex_t(-1);
     stereoAtoms[1] = atomindex_t(-1);
@@ -376,6 +382,11 @@ class RingInfoCache {
 
   uint32_t numRings() const {
     return (ringBegins.size() == 0) ? 0 : (ringBegins.size() - 1);
+  }
+
+  uint32_t ringSize(uint32_t ringIndex) const {
+    URANGE_CHECK(ringIndex, numRings());
+    return ringBegins[ringIndex + 1] - ringBegins[ringIndex];
   }
 
   uint32_t numAtomRings(atomindex_t atomIndex) const {
@@ -2353,7 +2364,9 @@ class IndexRange {
   IndexRange(const IndexRange<ISBOND, ISCONST> &) = default;
   IndexRange &operator=(const IndexRange<ISBOND, ISCONST> &) = default;
   Iter begin() const { return Iter(d_mol, 0); }
-  Iter end() const { return Iter(d_mol, d_mol->getNumAtoms()); }
+  Iter end() const {
+    return Iter(d_mol, ISBOND ? d_mol->getNumBonds() : d_mol->getNumAtoms());
+  }
 };
 
 //! This class is only intended to be used by IndirectRange

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "GraphMol/RDMol.h"
 #include "ROMol.h"
 #include "RWMol.h"
 #include "Atom.h"
@@ -39,7 +40,7 @@ bool isAtomConjugCand(const RDMol &mol, std::uint32_t atomIdx,
   int nouter = PeriodicTable::getTable()->getNouterElecs(at.getAtomicNum());
   auto res = ((at.getAtomicNum() <= 10) || (nouter != 5 && nouter != 6) ||
               (nouter == 6 && mol.getAtomTotalDegree(atomIdx) < 2u)) &&
-             MolOps::countAtomElec(mol, atomIdx) > 0;
+    MolOps::countAtomElec(ConstRDMolAtom(&mol, atomIdx)) > 0;
 
   return res;
 }

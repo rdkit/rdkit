@@ -9,6 +9,7 @@
 //
 #include "Bond.h"
 #include "Atom.h"
+#include "GraphMol/RDMol.h"
 #include "ROMol.h"
 #include <RDGeneral/Invariant.h>
 #include "Atropisomers.h"
