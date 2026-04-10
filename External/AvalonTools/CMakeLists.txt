@@ -75,17 +75,11 @@ set(avalon_clib_srcs ${AVALON_COMMON_PATH}/layout.c
 	${AVALON_COMMON_PATH}/hashcode.c
   )
 
-rdkit_library(avalon_clib ${avalon_clib_srcs})
+rdkit_library(avalon_clib ${avalon_clib_srcs} NO_PCH)
 target_compile_definitions(avalon_clib PRIVATE RDKIT_AVALONLIB_BUILD)
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
   set_target_properties(avalon_clib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
-if(RDK_USE_PRECOMPILED_HEADERS)
-set_target_properties(avalon_clib PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
-if(RDK_INSTALL_STATIC_LIBS)
-set_target_properties(avalon_clib_static PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
-endif(RDK_INSTALL_STATIC_LIBS)
-endif(RDK_USE_PRECOMPILED_HEADERS)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${AVALON_INCLUDE_PATH})
