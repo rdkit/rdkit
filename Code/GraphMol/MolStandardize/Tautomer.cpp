@@ -274,12 +274,20 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     if (!d_removeSp3Stereo) {
       bool anyRestored = false;
       for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
-        if (res.d_modifiedAtoms.test(idx)) continue;
+        if (res.d_modifiedAtoms.test(idx)) {
+          continue;
+        }
         const auto *molAtom = mol.getAtomWithIdx(idx);
         auto *tautAtom = taut.getAtomWithIdx(idx);
-        if (molAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) continue;
-        if (tautAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) continue;
-        if (tautAtom->getHybridization() != Atom::SP3) continue;
+        if (molAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+          continue;
+        }
+        if (tautAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+          continue;
+        }
+        if (tautAtom->getHybridization() != Atom::SP3) {
+          continue;
+        }
         tautAtom->setChiralTag(molAtom->getChiralTag());
         anyRestored = true;
       }
