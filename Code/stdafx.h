@@ -13,3 +13,4 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/utils.h>
+#include <GraphMol/RDKitBase.h>

@@ -8,12 +8,28 @@
 //  of the RDKit source tree.
 //
 
-#pragma once
-
 #ifdef USE_BETTER_ENUMS
+#ifdef BETTER_ENUM
+#undef BETTER_ENUM
+#endif
+#ifdef BETTER_ENUM_CLASS
+#undef BETTER_ENUM_CLASS
+#endif
 #include "enum.h"
 #define BETTER_ENUM_CLASS BETTER_ENUM
 #else
-#define BETTER_ENUM(Enum, Underlying, ...) enum Enum : Underlying { __VA_ARGS__ }
-#define BETTER_ENUM_CLASS(Enum, Underlying, ...) enum class Enum : Underlying { __VA_ARGS__ }
+#ifndef BETTER_ENUM
+#define BETTER_ENUM(Enum, Underlying, ...) \
+  enum Enum : Underlying {                 \
+    __VA_ARGS__                            \
+  }
+#endif
+
+#ifndef BETTER_ENUM_CLASS
+#define BETTER_ENUM_CLASS(Enum, Underlying, ...) \
+  enum class Enum : Underlying {                 \
+    __VA_ARGS__                                  \
+  }
+#endif
+
 #endif
