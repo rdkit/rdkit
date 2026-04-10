@@ -818,7 +818,8 @@ TEST_CASE("toJSON") {
     CHECK(!jsonStr.empty());
     CHECK(jsonStr.find("\"type\":\"MorganArguments\"") != std::string::npos);
 
-    auto fpGenerator2 = generatorFromJSON(jsonStr);
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator2 =
+        generatorFromJSON(jsonStr);
     REQUIRE(fpGenerator2);
     std::unique_ptr<ExplicitBitVect> fp2{fpGenerator2->getFingerprint(*m1)};
     REQUIRE(fp2);

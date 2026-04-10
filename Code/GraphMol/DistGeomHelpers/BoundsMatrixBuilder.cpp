@@ -32,6 +32,7 @@ const double DIST13_TOL = 0.04;
 const double GEN_DIST_TOL = 0.06;  //  a general distance tolerance
 const double DIST15_TOL = 0.08;
 const double VDW_SCALE_15 = 0.7;
+constexpr double H_BOND_LENGTH = 1.8;
 const double MAX_UPPER = 1000.0;
 static const double minMacrocycleRingSize = 9;
 #include <map>
@@ -62,6 +63,12 @@ struct Path14Configuration {
   Path14Type type;
 };
 
+typedef enum {
+  DIST12,
+  DIST13,
+  DIST14
+} DistType;
+
 typedef std::vector<Path14Configuration> PATH14_VECT;
 typedef PATH14_VECT::iterator PATH14_VECT_I;
 typedef PATH14_VECT::const_iterator PATH14_VECT_CI;
@@ -75,9 +82,18 @@ class ComputedData {
     auto *bAngles = new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
     bondAngles.reset(bAngles);
     set15Atoms.resize(nAtoms * nAtoms);
+    visited12Bounds.resize(nAtoms * nAtoms);
+    visited13Bounds.resize(nAtoms * nAtoms);
+    visited14Bounds.resize(nAtoms * nAtoms);
   }
 
   ~ComputedData() = default;
+
+  bool visitedBound(unsigned int pid, DistType maxDistType) {
+    return ((maxDistType >= DistType::DIST12 && visited12Bounds[pid]) ||
+            (maxDistType >= DistType::DIST13 && visited13Bounds[pid]) ||
+            (maxDistType >= DistType::DIST14 && visited14Bounds[pid]));
+  }
 
   DOUBLE_VECT bondLengths;
   SymmIntMatPtr bondAdj;  // bond adjacency matrix
@@ -86,6 +102,9 @@ class ComputedData {
   std::unordered_set<std::uint64_t> cisPaths;
   std::unordered_set<std::uint64_t> transPaths;
   BIT_SET set15Atoms;
+  BIT_SET visited12Bounds;
+  BIT_SET visited13Bounds;
+  BIT_SET visited14Bounds;
 };
 
 //! Set 1-2 distance bounds for between atoms in a molecule
@@ -174,7 +193,7 @@ void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 namespace RDKit {
 namespace DGeomHelpers {
 void _checkAndSetBounds(unsigned int i, unsigned int j, double lb, double ub,
-                        DistGeom::BoundsMatPtr mmat) {
+                        DistGeom::BoundsMatPtr mmat, bool setIfBetter = false) {
   // get the existing bounds
   double clb = mmat->getLowerBound(i, j);
   double cub = mmat->getUpperBound(i, j);
@@ -182,19 +201,36 @@ void _checkAndSetBounds(unsigned int i, unsigned int j, double lb, double ub,
   CHECK_INVARIANT(ub > lb, "upper bound not greater than lower bound");
   CHECK_INVARIANT(lb > DIST12_DELTA || clb > DIST12_DELTA, "bad lower bound");
 
-  if (clb <= DIST12_DELTA) {
-    mmat->setLowerBound(i, j, lb);
-  } else {
-    if ((lb < clb) && (lb > DIST12_DELTA)) {
-      mmat->setLowerBound(i, j, lb);  // conservative bound setting
-    }
-  }
+  // Note: setIfBetter should ONLY be set if the distances are consistent;
+  // currently this is not the case, therefore, for now, we are pessimistic on
+  // the bounds
+  if (setIfBetter) {
+    double nlb = std::max(clb, lb);
+    double nub = std::min(cub, ub);
 
-  if (cub >= MAX_UPPER) {  // FIX this
-    mmat->setUpperBound(i, j, ub);
+    if (nub <= nlb) {
+      // if not overlapping ranges -> be conservative
+      nlb = std::min(clb, lb);
+      nub = std::max(cub, ub);
+    }
+
+    mmat->setLowerBound(i, j, nlb);
+    mmat->setUpperBound(i, j, nub);
   } else {
-    if ((ub > cub) && (ub < MAX_UPPER)) {
+    if (clb <= DIST12_DELTA) {
+      mmat->setLowerBound(i, j, lb);
+    } else {
+      if ((lb < clb) && (lb > DIST12_DELTA)) {
+        mmat->setLowerBound(i, j, lb);  // conservative bound setting
+      }
+    }
+
+    if (cub >= MAX_UPPER) {  // FIX this
       mmat->setUpperBound(i, j, ub);
+    } else {
+      if ((ub > cub) && (ub < MAX_UPPER)) {
+        mmat->setUpperBound(i, j, ub);
+      }
     }
   }
 }
@@ -251,7 +287,29 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       mmat->setUpperBound(begId, endId, 1.5 * bl);
       mmat->setLowerBound(begId, endId, .5 * bl);
     }
+    unsigned int pid =
+        std::min(begId, endId) * mol.getNumAtoms() + std::max(begId, endId);
+
+    accumData.visited12Bounds.set(pid);
   }
+}
+
+bool isHBondAcceptor(const Atom *atom) {
+  return (atom->getAtomicNum() == 7 || atom->getAtomicNum() == 8);
+}
+
+bool isHBondDonor(const Atom *atom) {
+  return isHBondAcceptor(atom) && atom->getTotalNumHs() > 0;
+}
+
+bool isHinHBondDonor(const Atom *atom, const ROMol &mol) {
+  if (atom->getAtomicNum() != 1) {
+    return false;
+  }
+  auto nbrs = mol.atomNeighbors(atom);
+  return std::any_of(nbrs.begin(), nbrs.end(), [](const Atom *nbr) {
+    return nbr->getAtomicNum() == 7 || nbr->getAtomicNum() == 8;
+  });
 }
 
 void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
@@ -259,12 +317,21 @@ void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
   unsigned int npt = mmat->numRows();
   PRECONDITION(npt == mol.getNumAtoms(), "Wrong size metric matrix");
 
+  boost::dynamic_bitset<> hinHBondDonors(mol.getNumAtoms());
+  boost::dynamic_bitset<> hBondAcceptors(mol.getNumAtoms());
   for (unsigned int i = 1; i < npt; i++) {
-    auto vw1 = PeriodicTable::getTable()->getRvdw(
-        mol.getAtomWithIdx(i)->getAtomicNum());
+    const auto atomI = mol.getAtomWithIdx(i);
+    auto vw1 = PeriodicTable::getTable()->getRvdw(atomI->getAtomicNum());
+    if (isHinHBondDonor(atomI, mol)) {
+      hinHBondDonors.set(i);
+    }
+    if (isHBondAcceptor(atomI)) {
+      hBondAcceptors.set(i);
+    }
+
     for (unsigned int j = 0; j < i; j++) {
-      auto vw2 = PeriodicTable::getTable()->getRvdw(
-          mol.getAtomWithIdx(j)->getAtomicNum());
+      const auto atomJ = mol.getAtomWithIdx(j);
+      auto vw2 = PeriodicTable::getTable()->getRvdw(atomJ->getAtomicNum());
       if (mmat->getLowerBound(i, j) < DIST12_DELTA) {
         // ok this is what we are going to do
         // - for atoms that are 4 or 5 bonds apart (15 or 16 distances), we
@@ -275,7 +342,12 @@ void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
         // - for all other pairs of atoms more than 5 bonds apart we use the
         // sum of the VDW radii
         //    as the lower bound
-        if (dmat[i * npt + j] == 4.0) {
+        // - if one of the atoms is a H of a H-bond donor and the other is
+        //    an acceptor we will lower the bound to 1.8A
+        if ((hinHBondDonors[i] && hBondAcceptors[j]) ||
+            (hBondAcceptors[i] && hinHBondDonors[j])) {
+          mmat->setLowerBound(i, j, H_BOND_LENGTH);
+        } else if (dmat[i * npt + j] == 4.0) {
           mmat->setLowerBound(i, j, VDW_SCALE_15 * (vw1 + vw2));
         } else if (dmat[i * npt + j] == 5.0) {
           mmat->setLowerBound(
@@ -401,6 +473,9 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       auto id1 = nb * bid1 + bid2;
       auto id2 = nb * bid2 + bid1;
 
+      const auto pid =
+          std::min(aid1, aid3) * mol.getNumAtoms() + std::max(aid1, aid3);
+
       if ((!donePaths[id1]) && (!donePaths[id2])) {
         // this invar stuff is to deal with bridged systems (Issue 215). In
         // bridged
@@ -409,7 +484,12 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         // atom.
         _setRingAngle(mol.getAtomWithIdx(aid2)->getHybridization(), rSize,
                       angle);
-        _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+
+        if (!accumData.visitedBound(pid, DistType::DIST12)) {
+          _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+          accumData.visited13Bounds.set(pid);
+        }
+
         accumData.bondAngles->setVal(bid1, bid2, angle);
         accumData.bondAdj->setVal(bid1, bid2, aid2);
         visited[aid2] += 1;
@@ -487,7 +567,15 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                                              // not the best we can do here
               }
             }
-            _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+
+            const unsigned int pid =
+                std::min(aid1, aid3) * mol.getNumAtoms() + std::max(aid1, aid3);
+
+            if (!accumData.visitedBound(pid, DistType::DIST12)) {
+              _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+              accumData.visited13Bounds.set(pid);
+            }
+
             accumData.bondAngles->setVal(bid1, bid2, angle);
             accumData.bondAdj->setVal(bid1, bid2, aid2);
             angleTaken[aid2] += angle;
@@ -538,18 +626,25 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               angle = 120.0 * M_PI / 180;
             }
           }
-          if (atom->getDegree() <= 4 ||
-              (Chirality::hasNonTetrahedralStereo(atom) &&
-               atom->hasProp(common_properties::_chiralPermutation))) {
-            _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
-          } else {
-            // just use 180 as the max angle and an arbitrary min angle
-            auto dmax =
-                accumData.bondLengths[bid1] + accumData.bondLengths[bid2];
-            auto dl = 1.0;
-            auto du = dmax * 1.2;
-            _checkAndSetBounds(aid1, aid3, dl, du, mmat);
+          const unsigned int pid =
+              std::min(aid1, aid3) * mol.getNumAtoms() + std::max(aid1, aid3);
+
+          if (!accumData.visitedBound(pid, DistType::DIST12)) {
+            if (atom->getDegree() <= 4 ||
+                (Chirality::hasNonTetrahedralStereo(atom) &&
+                 atom->hasProp(common_properties::_chiralPermutation))) {
+              _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+            } else {
+              // just use 180 as the max angle and an arbitrary min angle
+              auto dmax =
+                  accumData.bondLengths[bid1] + accumData.bondLengths[bid2];
+              auto dl = 1.0;
+              auto du = dmax * 1.2;
+              _checkAndSetBounds(aid1, aid3, dl, du, mmat);
+            }
+            accumData.visited13Bounds.set(pid);
           }
+
           accumData.bondAngles->setVal(bid1, bid2, angle);
           accumData.bondAdj->setVal(bid1, bid2, aid2);
           angleTaken[aid2] += angle;
@@ -611,6 +706,14 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
   unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
 
+  const unsigned int pid =
+      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
+
+  if (accumData.visitedBound(pid, DistType::DIST13)) {
+    // if this is already a 1-3 or 1-2 distance; do not overwrite
+    return;
+  }
+
   // check that this actually is a 1-4 contact:
   if (dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
       2.9) {
@@ -665,6 +768,25 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
     preferTrans = true;
   }
+
+  if (preferCis) {
+    path14.type = Path14Configuration::CIS;
+    accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                              bid2 * nb + bid3);
+    accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                              bid2 * nb + bid1);
+  } else if (preferTrans) {
+    path14.type = Path14Configuration::TRANS;
+    accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                bid2 * nb + bid3);
+    accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                bid2 * nb + bid1);
+  } else {
+    path14.type = Path14Configuration::OTHER;
+  }
+
+  accumData.paths14.push_back(path14);
+
   // std::cerr << "  torsion: " << aid1 << " " << aid4 << ": " << preferCis
   // << "
   // "
@@ -672,20 +794,9 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   if (preferCis) {
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
     du = dl + 2 * GEN_DIST_TOL;
-    path14.type = Path14Configuration::CIS;
-    accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                              bid2 * nb + bid3);
-    accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                              bid2 * nb + bid1);
   } else if (preferTrans) {
     dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
     du = dl + 2 * GEN_DIST_TOL;
-    path14.type = Path14Configuration::TRANS;
-    accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                bid2 * nb + bid3);
-    accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                bid2 * nb + bid1);
-
   } else {
     // basically we will assume 0 to 180 allowed
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
@@ -697,12 +808,11 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       dl -= GEN_DIST_TOL;
       du += GEN_DIST_TOL;
     }
-    path14.type = Path14Configuration::OTHER;
   }
-
   // std::cerr << "7: " << aid1 << "-" << aid4 << std::endl;
+
+  accumData.visited14Bounds.set(pid);
   _checkAndSetBounds(aid1, aid4, dl, du, mmat);
-  accumData.paths14.push_back(path14);
 }
 
 void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
@@ -723,6 +833,14 @@ void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
 
   unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
   unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
+
+  const unsigned int pid =
+      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
+
+  if (accumData.visitedBound(pid, DistType::DIST13)) {
+    // if this is already a 1-3 or 1-2 distance; do not overwrite
+    return;
+  }
 
   // check that this actually is a 1-4 contact:
   if (dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
@@ -788,10 +906,12 @@ void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
     }
     path14.type = Path14Configuration::OTHER;
   }
+
   // std::cerr << "1: " << aid1 << "-" << aid4 << ": " << dl << " -> " << du
   //           << std::endl;
   _checkAndSetBounds(aid1, aid4, dl, du, mmat);
   accumData.paths14.push_back(path14);
+  accumData.visited14Bounds.set(pid);
 }
 
 void _setTwoInDiffRing14Bounds(const ROMol &mol, const Bond *bnd1,
@@ -985,6 +1105,13 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   const Atom *atm1 = mol.getAtomWithIdx(aid1);
   const Atom *atm4 = mol.getAtomWithIdx(aid4);
 
+  const unsigned int pid =
+      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
+
+  if (accumData.visitedBound(pid, DistType::DIST13)) {
+    return;
+  }
+
   double bl1 = accumData.bondLengths[bid1];
   double bl2 = accumData.bondLengths[bid2];
   double bl3 = accumData.bondLengths[bid3];
@@ -1056,10 +1183,9 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       }
       break;
     case Bond::SINGLE:
-      if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16)) {
+      if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16) &&
+          (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
         // this is *S-S* situation
-        // FIX: this cannot be right is sulfur has more than two coordinated
-        // the torsion angle is 90 deg
         dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, M_PI / 2) -
              GEN_DIST_TOL;
         du = dl + 2 * GEN_DIST_TOL;
@@ -1089,9 +1215,9 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
         //   allow the distance to roam from cis to trans and hope that the
         //   force field planarizes things later.
         //
-        //   What we'd really like to be able to do is specify multiple possible
-        //   ranges for the distances, but a single bounds matrix doesn't
-        //   support this kind of fanciness.
+        //   What we'd really like to be able to do is specify multiple
+        //   possible ranges for the distances, but a single bounds matrix
+        //   doesn't support this kind of fanciness.
         //
         if (forceTransAmides) {
           if ((atm1->getAtomicNum() == 1 && atm2->getAtomicNum() == 7 &&
@@ -1186,6 +1312,7 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
     }
     _checkAndSetBounds(aid1, aid4, dl, du, mmat);
     accumData.paths14.push_back(path14);
+    accumData.visited14Bounds.set(pid);
   }
 }
 
@@ -1219,10 +1346,10 @@ void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
 // (a2Num == 7).
 // This is necessary as the original function does not detect attached
 // hydrogen even when is present (possibly due to explict/implicit H-count?),
-// a new function is used (currently only for macrocycle treatment with ETKDGv3)
-// in order to not break backward compatibility (also allow recognising
-// methylated amide) here we look for something like this: It's an amide or
-// ester:
+// a new function is used (currently only for macrocycle treatment with
+// ETKDGv3) in order to not break backward compatibility (also allow
+// recognising methylated amide) here we look for something like this: It's an
+// amide or ester:
 //
 //        4    <- 4 is the O
 //        |    <- That's the double bond
@@ -1263,6 +1390,14 @@ void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
   unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
   const Atom *atm1 = mol.getAtomWithIdx(aid1);
   const Atom *atm4 = mol.getAtomWithIdx(aid4);
+
+  const unsigned int pid =
+      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
+
+  if (accumData.visitedBound(pid, DistType::DIST13)) {
+    // if this is already a 1-3 or 1-2 distance; do not overwrite
+    return;
+  }
 
   // check that this actually is a 1-4 contact:
   if (dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
@@ -1329,6 +1464,7 @@ void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
   //           << std::endl;
   _checkAndSetBounds(aid1, aid4, dl, du, mmat);
   accumData.paths14.push_back(path14);
+  accumData.visited14Bounds.set(pid);
 }
 
 void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
@@ -1352,6 +1488,14 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
 
   unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
   unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
+
+  const unsigned int pid =
+      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
+
+  if (accumData.visitedBound(pid, DistType::DIST13)) {
+    // if this is already a 1-3 or 1-2 distance; do not overwrite
+    return;
+  }
 
   const Atom *atm1 = mol.getAtomWithIdx(aid1);
   const Atom *atm4 = mol.getAtomWithIdx(aid4);
@@ -1426,10 +1570,9 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
       }
       break;
     case Bond::SINGLE:
-      if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16)) {
+      if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16) &&
+          (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
         // this is *S-S* situation
-        // FIX: this cannot be right is sulfur has more than two coordinated
-        // the torsion angle is 90 deg
         dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, M_PI / 2) -
              GEN_DIST_TOL;
         du = dl + 2 * GEN_DIST_TOL;
@@ -1440,11 +1583,11 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
                      mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                  (_checkMacrocycleAllInSameRingAmideEster14(
                      mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
-        dl =
-            RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) +
-            0.1;  // we saw that the currently defined max distance for trans is
-                  // still a bit too short, thus we add an additional 0.1, which
-                  // is the max that works without triangular smoothing error
+        dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) +
+             0.1;  // we saw that the currently defined max distance for trans
+                   // is still a bit too short, thus we add an additional 0.1,
+                   // which is the max that works without triangular smoothing
+                   // error
         path14.type = Path14Configuration::TRANS;
         accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
                                     bid2 * nb + bid3);
@@ -1503,14 +1646,18 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
 
       path14.type = Path14Configuration::OTHER;
   }
+
   if (setTheBound) {
     if (fabs(du - dl) < DIST12_DELTA) {
       dl -= GEN_DIST_TOL;
       du += GEN_DIST_TOL;
     }
     // std::cerr<<"2: "<<aid1<<"-"<<aid4<<std::endl;
+
+    // we only overwrite bounds if they are not 1-2 nor 1-3 distances
     _checkAndSetBounds(aid1, aid4, dl, du, mmat);
     accumData.paths14.push_back(path14);
+    accumData.visited14Bounds.set(pid);
   }
 }
 
@@ -1519,8 +1666,8 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  bool useMacrocycle14config, bool forceTransAmides) {
   unsigned int npt = mmat->numRows();
   CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
-  // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but we
-  // might as well check:
+  // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but
+  // we might as well check:
   const size_t MAX_NUM_BONDS = static_cast<size_t>(
       std::pow(std::numeric_limits<std::uint64_t>::max(), 1. / 3));
   if (mol.getNumBonds() >= MAX_NUM_BONDS) {
@@ -1660,15 +1807,15 @@ void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin,
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     bool set15bounds, bool scaleVDW, bool useMacrocycle14config,
-                    bool forceTransAmides) {
+                    bool forceTransAmides, bool set14bounds, bool set13bounds) {
   PRECONDITION(mmat.get(), "bad pointer");
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
   if (!na) {
     throw ValueErrorException("molecule has no atoms");
   }
-  // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but we
-  // might as well check:
+  // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but
+  // we might as well check:
   const size_t MAX_NUM_BONDS = static_cast<size_t>(
       std::pow(std::numeric_limits<std::uint64_t>::max(), 1. / 3));
   if (mol.getNumBonds() >= MAX_NUM_BONDS) {
@@ -1681,10 +1828,14 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   distMatrix = MolOps::getDistanceMat(mol);
 
   set12Bounds(mol, mmat, accumData);
-  set13Bounds(mol, mmat, accumData);
+  if (set13bounds) {
+    set13Bounds(mol, mmat, accumData);
+  }
 
-  set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
-              forceTransAmides);
+  if (set14bounds) {
+    set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
+                forceTransAmides);
+  }
 
   if (set15bounds) {
     set15Bounds(mol, mmat, accumData, distMatrix);
@@ -1753,7 +1904,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::pair<int, int>> &bonds,
                     std::vector<std::vector<int>> &angles, bool set15bounds,
                     bool scaleVDW, bool useMacrocycle14config,
-                    bool forceTransAmides) {
+                    bool forceTransAmides, bool set14bounds, bool set13bounds) {
   PRECONDITION(mmat.get(), "bad pointer");
   bonds.clear();
   angles.clear();
@@ -1767,9 +1918,15 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   distMatrix = MolOps::getDistanceMat(mol);
 
   set12Bounds(mol, mmat, accumData);
-  set13Bounds(mol, mmat, accumData);
-  set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
-              forceTransAmides);
+
+  if (set13bounds) {
+    set13Bounds(mol, mmat, accumData);
+  }
+
+  if (set14bounds) {
+    set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
+                forceTransAmides);
+  }
 
   if (set15bounds) {
     set15Bounds(mol, mmat, accumData, distMatrix);
@@ -1973,6 +2130,12 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
       // possible
       // with 4 membered rings
       // this is a fix for Issue 244
+
+      const unsigned int pid = std::min(aid1, aid5) * na + std::max(aid1, aid5);
+
+      if (accumData.visitedBound(pid, DistType::DIST14)) {
+        return;
+      }
 
       // check that this actually is a 1-5 contact:
       if (dmat[std::max(aid1, aid5) * mmat->numRows() + std::min(aid1, aid5)] <

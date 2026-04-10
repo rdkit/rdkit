@@ -796,7 +796,7 @@ Identify Aromatic Rings
 
 .. testoutput::
 
-   ((0, 5, 4, 3, 2, 1), (6, 7, 8, 9, 4, 5))
+   ((0, 1, 2, 3, 4, 5), (4, 5, 6, 7, 8, 9))
 
 .. testcode::
 
@@ -805,7 +805,7 @@ Identify Aromatic Rings
 
 .. testoutput::
 
-   ((9, 4, 3, 2, 1, 0), (6, 7, 8, 10, 4, 5))
+   ((0, 1, 2, 3, 4, 9), (4, 5, 6, 7, 8, 10))
 
 .. testcode::
 
@@ -949,7 +949,7 @@ Identifying Stereochemistry
 
    # Identifying Double Bond Stereochemistry
    IPythonConsole.molSize = 250,250
-   mol = Chem.MolFromSmiles("C\C=C(/F)\C(=C\F)\C=C")
+   mol = Chem.MolFromSmiles(r"C\C=C(/F)\C(=C\F)\C=C")
    mol
 
 .. image:: images/RDKitCB_30_im1.png
@@ -1871,7 +1871,7 @@ Kekule SMILES
 
 .. testoutput::
 
-   CN1C=CC=C1NC1=NC=CC=C1
+   CN1C=CC=C1NC1=CC=CC=N1
 
 Isomeric SMILES without isotopes
 =================================

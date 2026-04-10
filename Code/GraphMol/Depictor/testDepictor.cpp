@@ -1724,12 +1724,12 @@ M  END)RES"_ctab;
     0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0
-  2  3  1  0
-  3  4  2  0
-  4  5  1  0
-  5  6  2  0
-  6  1  1  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
 M  END
 )RES";
     std::unique_ptr<RWMol> zeroCoordBenzene(MolBlockToMol(zeroCoordCTab));
@@ -1781,9 +1781,12 @@ void testValidRingSystemTemplates() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Test that ring system templates are valid "
       << std::endl;
-  for (auto &smiles : TEMPLATE_SMILES) {
-    std::unique_ptr<ROMol> mol{SmilesToMol(smiles)};
-    RDDepict::CoordinateTemplates::assertValidTemplate(*mol, smiles);
+  for (auto &smarts : TEMPLATE_SMARTS) {
+    std::unique_ptr<ROMol> mol{SmartsToMol(smarts)};
+    // Initialize ring info using symmetrizeSSSR to match depictor ring counting
+    RDKit::VECT_INT_VECT arings;
+    RDKit::MolOps::symmetrizeSSSR(*mol, arings);
+    RDDepict::CoordinateTemplates::assertValidTemplate(*mol, smarts);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
