@@ -539,6 +539,7 @@ SynthonOverlay bestSimSynthonOntoFragment(
     unsigned int bestFragShape = 0;
     auto sim = fragShapeCp.getShapes().bestSimilarity(
         synthShapeCp, bestFragShape, bestSynthShape, *bestXform, threshold);
+
     return SynthonOverlay{sim[0], bestSynthShape, bestXform};
   }
   // For every dummy atom in the fragShape
@@ -973,6 +974,11 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
       }
     }
   }
+  std::cout << "Building " << std::endl;
+  for (const auto &s : synthNames) {
+    std::cout << *s << " ";
+  }
+  std::cout << std::endl;
   return details::buildProduct(synths);
 }
 
@@ -1070,6 +1076,9 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     // Stick with what we found at the start, which should still be in hit.
     foundHit = true;
   }
+  std::cout << "Hit : " << MolToCXSmiles(hit) << std::endl;
+  std::cout << "Hit similarity : " << hit.getProp<double>("Similarity") << " : "
+            << hit.getProp<std::string>(common_properties::_Name) << std::endl;
   return foundHit;
 }
 

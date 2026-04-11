@@ -568,7 +568,7 @@ CSc1cc(C(O)=O)nc([2*])n1	821136904-635555130	2	urea-3
   SynthonSpaceSearchParams params;
   params.similarityCutoff = 0.6;
   params.numConformers = 100;
-  params.numThreads = 1;
+  params.numThreads = -1;
   params.confRMSThreshold = 1.0;
   params.timeOut = 0;
   params.randomSeed = 0xdac;
@@ -587,6 +587,10 @@ CSc1cc(C(O)=O)nc([2*])n1	821136904-635555130	2	urea-3
                Catch::Matchers::WithinAbs(scores[0], 0.001));
     std::cout << "check scores : " << scores[0] << ", " << scores[1] << ", "
               << scores[2] << std::endl;
+  }
+  SDWriter sdw2("another_test_hits.sdf");
+  for (const auto &mol : results.getHitMolecules()) {
+    sdw2.write(*mol);
   }
 }
 
@@ -662,4 +666,45 @@ TEST_CASE("Trim sample molecules") {
     std::cout << "got : " << MolToSmiles(*newMol) << std::endl;
     CHECK(MolToSmiles(*newMol) == expSmi);
   }
+}
+
+TEST_CASE("Zero-length vector") {
+  std::string dbName(
+      "/home/dave/Projects/SynthonSpaceTests/REAL/random_real_0_conforge.spc");
+  SynthonSpace synthonspace;
+  synthonspace.readDBFile(dbName);
+
+  auto queryMol =
+      "CC(OC(=O)[C@H]1CC[C@@H](CN(C)C)O1)c1ccc(S(=O)(=O)F)cc1 |(2.90369,-2.16344,2.44104;2.07287,-1.7564,1.24069;1.06154,-0.810496,1.59795;-0.274374,-1.06478,1.34641;-0.643259,-2.13112,0.797722;-1.25553,-0.0302441,1.74923;-0.900332,1.25268,1.05924;-1.90239,1.25072,-0.0924938;-3.06709,0.550454,0.566467;-3.81933,-0.177119,-0.498406;-4.40849,0.666278,-1.51173;-5.08574,-0.25176,-2.4403;-5.41599,1.54263,-1.00978;-2.55682,-0.356408,1.46659;2.9964,-1.00911,0.319988;3.45629,-1.57333,-0.854797;4.29829,-0.834768,-1.65047;4.67403,0.452586,-1.27287;5.75692,1.33001,-2.35179;5.52648,2.79645,-2.25924;5.53034,0.850543,-3.74582;7.33965,0.982198,-1.87731;4.21515,1.02107,-0.096445;3.35774,0.270642,0.71504),wD:5.4,8.8| bA2k2xlIb7clbAeeDnjr3Q;quHGZvNovRYxJzoZJbdcSQ;m_1458cgb"_smiles;
+  SynthonSpaceSearchParams params;
+  params.similarityCutoff = 0.7;
+  params.fragSimilarityAdjuster = 0.2;
+  params.approxSimilarityAdjuster = 0.2;
+  params.numConformers = 100;
+  params.numThreads = 1;
+  params.confRMSThreshold = 1.0;
+  params.timeOut = 0;
+  params.randomSeed = 0xdac;
+  params.bestHit = true;
+
+  auto hits = synthonspace.shapeSearch(*queryMol, params);
+}
+
+TEST_CASE("Bad Shape Mol") {
+  std::string spaceText(
+      R"(SMILES	synton_id	synton#	reaction_id	release
+Fc1ccc(C2(C(N=[1*])=NO[2*])CC2)cc1	4RFh0fOYsX5pYFeRfm3hxw	1	m_265764cbb	3
+Cn1nc(S(C)(=O)=O)cc1C(=[1*])[2*]	kxWX6dr7Fa59vLm4rVNo0g	2	m_265764cbb	3
+)");
+  std::istringstream iss(spaceText);
+  ShapeBuildParams shapeBuildParams;
+  shapeBuildParams.numThreads = 1;
+  shapeBuildParams.numConfs = 10;
+  shapeBuildParams.userConformerGenerator = generateConfs;
+  shapeBuildParams.shapeSimThreshold = -1.0;
+  shapeBuildParams.randomSeed = 0xdac;
+  bool cancelled = false;
+  SynthonSpace synthonSpace;
+  synthonSpace.readStream(iss, cancelled);
+  synthonSpace.buildSynthonShapes(cancelled, shapeBuildParams);
 }

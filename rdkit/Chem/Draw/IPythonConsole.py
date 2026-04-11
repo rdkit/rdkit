@@ -176,7 +176,7 @@ the py3Dmol.view object containing the drawing'''
       'model': i,
     }, {drawAs[i]: {
           'colorscheme': colors[i % len(colors)],
-      'radius': 0.5
+      'radius': 0.25
         }})
 
   view.setBackgroundColor(bgColor)

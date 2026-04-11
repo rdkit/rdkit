@@ -851,8 +851,10 @@ std::unique_ptr<ROMol> buildProduct(
   }
   {
     std::unique_lock<std::mutex> lock(myMutex);
+    std::cout << "zipping " << MolToCXSmiles(*prodMol) << std::endl;
     prodMol = molzip(*prodMol, mzparams);
     MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
+    std::cout << "zipped " << MolToCXSmiles(*prodMol) << std::endl;
   }
   return prodMol;
 }
@@ -1037,6 +1039,9 @@ std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
       confMols.clear();
       return confMols;
     }
+    if (!cm->getNumConformers()) {
+      cm.reset();
+    }
   }
   confMols.erase(std::remove_if(confMols.begin(), confMols.end(),
                                 [](const std::unique_ptr<RWMol> &m) -> bool {
@@ -1181,6 +1186,46 @@ std::unique_ptr<RWMol> trimSampleMol(const ROMol &mol, size_t molNum) {
   return newMol;
 }
 
+namespace {
+void setJoinIsotope(
+    RWMol &mol,
+    const std::vector<std::tuple<Atom *, Atom *, unsigned int>> &atomIsotopes,
+    std::vector<std::pair<unsigned int, double>> &dummyRadii,
+    std::vector<unsigned int> &fragAtoms) {
+  for (auto &[atom, otherAtom, isotopeNum] : atomIsotopes) {
+    if (!atom->getAtomicNum()) {
+      // Something of an edge case.  The synthon was most likely a single atom
+      // that finished a ring, so had 2 connection points e.g.
+      // R1-[14C]([1*])[2*] and R2C([1*])CCC[2*] to give R1[14C]1C(R2)CCCC2. The
+      // shape needs to have 2 dummy atoms, so not R1[*]1C(R2)CCCC2 but
+      // R1[*]CCC[*]R2 with the 2 dummy atoms at the same coordinates.
+      Atom dummyAtom(0);
+      auto newAtomIdx = mol.addAtom(&dummyAtom);
+      auto newAtom = mol.getAtomWithIdx(newAtomIdx);
+      newAtom->setIsotope(isotopeNum);
+      // Remove the bond between this atom and otherAtom and make a bond
+      // between new atom and otherAtom.
+      auto bond = mol.getBondBetweenAtoms(atom->getIdx(), otherAtom->getIdx());
+      auto bt = bond->getBondType();
+      mol.removeBond(atom->getIdx(), otherAtom->getIdx());
+      mol.addBond(otherAtom->getIdx(), newAtomIdx, bt);
+      for (unsigned int i = 0; i < mol.getNumConformers(); i++) {
+        auto &conf = mol.getConformer(i);
+        auto atomPos = conf.getAtomPos(atom->getIdx());
+        conf.setAtomPos(newAtomIdx, atomPos);
+      }
+      fragAtoms.push_back(newAtomIdx);
+      dummyRadii.emplace_back(newAtomIdx, GaussianShape::DUMMY_RAD);
+    } else {
+      atom->setAtomicNum(0);
+      atom->setIsotope(isotopeNum);
+      dummyRadii.emplace_back(atom->getIdx(), GaussianShape::DUMMY_RAD);
+    }
+  }
+  MolOps::sanitizeMol(mol);
+}
+}  // namespace
+
 void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
                        std::atomic<std::int64_t> &mostRecentMol,
                        DGeomHelpers::EmbedParameters &dgParams,
@@ -1222,12 +1267,16 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     }
     std::unique_ptr<SynthonShapeInput> allShapes;
     for (auto &isomer : isomerConfs) {
+      if (isomer->getNumConformers() == 0) {
+        continue;
+      }
       // If chopping up aromatic rings, use the Kekule form so that bond
       // types are usable in the fragments.
       MolOps::Kekulize(*isomer);
       std::vector<unsigned int> splitBonds;
       std::vector<unsigned int> fragAtoms;
       std::vector<std::pair<unsigned int, double>> dummyRadii;
+      std::vector<std::tuple<Atom *, Atom *, unsigned int>> atomIsotopes;
       for (const auto &bond : isomer->bonds()) {
         if (!bond->hasProp("molNum")) {
           splitBonds.push_back(bond->getIdx());
@@ -1243,26 +1292,24 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
               endMolNum != sampleMols[molNum]->d_synthonSetNum) {
             fragAtoms.push_back(bond->getBeginAtomIdx());
             fragAtoms.push_back(bond->getEndAtomIdx());
-            dummyRadii.emplace_back(bond->getEndAtomIdx(),
-                                    GaussianShape::DUMMY_RAD);
+            // dummyRadii.emplace_back(bond->getEndAtomIdx(),
+            //                         GaussianShape::DUMMY_RAD);
             // Set the atom as a dummy, so it shows up in the shape.
-            bond->getEndAtom()->setAtomicNum(0);
             auto joinIsotope = joinInCommon(
                 bond->getEndAtom()->getProp<std::string>("HoldsJoin"),
                 bond->getBeginAtom()->getProp<std::string>("HoldsJoin"));
-            bond->getEndAtom()->setIsotope(joinIsotope);
+            atomIsotopes.emplace_back(bond->getEndAtom(), bond->getBeginAtom(),
+                                      joinIsotope);
           } else if (begMolNum != sampleMols[molNum]->d_synthonSetNum &&
                      endMolNum == sampleMols[molNum]->d_synthonSetNum) {
             fragAtoms.push_back(bond->getBeginAtomIdx());
             fragAtoms.push_back(bond->getEndAtomIdx());
-            dummyRadii.emplace_back(bond->getBeginAtomIdx(),
-                                    GaussianShape::DUMMY_RAD);
             // Set the atom as a dummy, so it shows up in the shape.
-            bond->getBeginAtom()->setAtomicNum(0);
             auto joinIsotope = joinInCommon(
                 bond->getEndAtom()->getProp<std::string>("HoldsJoin"),
                 bond->getBeginAtom()->getProp<std::string>("HoldsJoin"));
-            bond->getBeginAtom()->setIsotope(joinIsotope);
+            atomIsotopes.emplace_back(bond->getBeginAtom(), bond->getEndAtom(),
+                                      joinIsotope);
           }
         } else {
           if (bond->getProp<unsigned int>("molNum") ==
@@ -1272,6 +1319,7 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
           }
         }
       }
+      setJoinIsotope(*isomer, atomIsotopes, dummyRadii, fragAtoms);
       std::ranges::sort(fragAtoms);
       fragAtoms.erase(std::unique(fragAtoms.begin(), fragAtoms.end()),
                       fragAtoms.end());
@@ -1326,6 +1374,7 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     }
     if (allShapes) {
       if (isomerConfs.size() > 1) {
+        // allShapes will be the product of at least 1 merge, so prune.
         allShapes->getShapes().pruneShapes(shapeBuildParams.shapeSimThreshold);
       }
       sampleMols[molNum]->d_synthon->setShapes(std::move(allShapes));

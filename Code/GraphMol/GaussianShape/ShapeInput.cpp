@@ -126,7 +126,8 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   PRECONDITION(mol.getNumConformers() > 0,
                "ShapeInput object needs the molecule to have conformers.  " +
                    mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
-  // std::cout << "making shape from " << MolToSmiles(mol) << std::endl;
+  // std::cout << "making shape from " << MolToSmiles(mol) << " with "
+  // << mol.getNumConformers() << " confs" << std::endl;
   std::unique_ptr<RWMol> tmpMol;
   // Subsetting the molecule makes any bespoke atom radii, identified
   // by atom index, incorrect so stash them as atom properties.
@@ -191,6 +192,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
     pruneShapes(opts.shapePruneThreshold);
   }
   sortShapesByVolumes();
+  d_activeShape = 0;
 }
 
 ShapeInput::ShapeInput(const ShapeInput &other, unsigned int shapeNum) {
@@ -325,9 +327,9 @@ void ShapeInput::merge(ShapeInput &other) {
     return bs1Copy;
   };
 
-  d_normalizeds = joinBS(d_normalizeds, other.d_normalizeds);
+  d_normalizeds = joinBS(other.d_normalizeds, d_normalizeds);
   other.d_normalizeds.clear();
-  d_normalizationOKs = joinBS(d_normalizationOKs, other.d_normalizationOKs);
+  d_normalizationOKs = joinBS(other.d_normalizationOKs, d_normalizationOKs);
   other.d_normalizationOKs.clear();
   other.d_coords.clear();
   other.d_selfOverlapShapeVols.clear();
@@ -511,6 +513,7 @@ std::array<double, 3> ShapeInput::bestSimilarity(
   }
 
   RDGeom::Transform3D xform;
+  auto currActiveShape = getActiveShape();
   for (size_t i = 0; i < getNumShapes(); i++) {
     setActiveShape(i);
     for (size_t j = 0; j < fitShape.getNumShapes(); j++) {
@@ -521,6 +524,7 @@ std::array<double, 3> ShapeInput::bestSimilarity(
       if (maxSim > threshold) {
         ShapeInput singleFitShape(fitShape, j);
         auto scores = AlignShape(*this, singleFitShape, &xform, overlayOpts);
+
         if (scores[0] > bestSim[0]) {
           bestSim = scores;
           bestThisShape = i;
@@ -531,10 +535,12 @@ std::array<double, 3> ShapeInput::bestSimilarity(
       // Floating point cruft means we sometimes get a similarity slightly
       // above 1.0.  1.0 is the maximum possible, so stop if we hit it.
       if (bestSim[0] > 1.0 || fabs(bestSim[0] - 1.0) < 1.0e-6) {
+        setActiveShape(currActiveShape);
         return bestSim;
       }
     }
   }
+  setActiveShape(currActiveShape);
   return bestSim;
 }
 
@@ -586,6 +592,7 @@ void ShapeInput::pruneShapes(double simThreshold) {
   auto [first, last] = std::ranges::unique(picks);
   picks.erase(first, last);
   selectConformations(picks);
+  d_activeShape = 0;
 }
 
 namespace {
