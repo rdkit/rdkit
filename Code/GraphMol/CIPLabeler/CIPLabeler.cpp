@@ -113,7 +113,10 @@ bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
     }
     // FIXME: specific to each descriptor
     const auto &foci = config->getFoci();
-    if (!digraph.seenAtom(foci[0])) {
+
+    // Skip if none of the foci atoms were reached during expansion
+    if (std::none_of(foci.begin(), foci.end(),
+                     [&](auto f) { return digraph.seenAtom(f); })) {
       continue;
     }
     for (const auto &node : digraph.getNodes(foci[0])) {
