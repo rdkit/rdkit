@@ -8,10 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include "GraphMol/Wrap/substructmethods.h"
-
-#include <csignal>
-
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 
@@ -24,6 +20,7 @@ namespace python = boost::python;
 
 namespace RDKit {
 namespace helpers {
+
 python::list hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
   python::list pyres;
   for (auto &r : res.getHitMolecules()) {
@@ -307,7 +304,7 @@ void buildShapes_helper(SynthonSpaceSearch::SynthonSpace &spc,
   }
 }
 
-class pyUserConfGenFunctor : public pyFunctor {
+class pyUserConfGenFunctor {
  public:
   pyUserConfGenFunctor(python::object obj) : dp_obj(std::move(obj)) {}
   ~pyUserConfGenFunctor() = default;
