@@ -853,8 +853,8 @@ std::unique_ptr<ROMol> buildProduct(
       prodMol = molzip(*prodMol, mzparams);
       MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
     } catch (std::exception &e) {
-      std::cout << "Failed to zip " << MolToSmiles(*prodMol) << " because "
-                << std::endl
+      std::cout << "AWOOGA :: Failed to zip " << MolToSmiles(*prodMol)
+                << " because " << std::endl
                 << e.what() << std::endl;
     }
   }
@@ -1190,10 +1190,8 @@ std::unique_ptr<RWMol> trimSampleMol(const ROMol &mol, size_t molNum) {
 
 namespace {
 void setJoinIsotope(
-    RWMol &mol,
     const std::vector<std::tuple<Atom *, Atom *, unsigned int>> &atomIsotopes,
-    std::vector<std::pair<unsigned int, double>> &dummyRadii,
-    std::vector<unsigned int> &fragAtoms) {
+    std::vector<std::pair<unsigned int, double>> &dummyRadii) {
   for (auto &[atom, otherAtom, isotopeNum] : atomIsotopes) {
     atom->setAtomicNum(0);
     atom->setIsotope(isotopeNum);
@@ -1329,7 +1327,7 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
           }
         }
       }
-      setJoinIsotope(*isomer, atomIsotopes, dummyRadii, fragAtoms);
+      setJoinIsotope(atomIsotopes, dummyRadii);
       std::ranges::sort(fragAtoms);
       fragAtoms.erase(std::unique(fragAtoms.begin(), fragAtoms.end()),
                       fragAtoms.end());
