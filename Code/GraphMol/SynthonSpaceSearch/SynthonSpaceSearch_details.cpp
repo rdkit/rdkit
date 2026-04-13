@@ -27,15 +27,12 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
-#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
-
-#include "GraphMol/SmilesParse/SmilesParse.h"
 
 #include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
 #include <RDGeneral/ControlCHandler.h>
@@ -1044,7 +1041,7 @@ std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
       confMols.clear();
       return confMols;
     }
-    if (!cm->getNumConformers()) {
+    if (cm && !cm->getNumConformers()) {
       cm.reset();
     }
   }
@@ -1198,12 +1195,29 @@ void setJoinIsotope(
     std::vector<std::pair<unsigned int, double>> &dummyRadii,
     std::vector<unsigned int> &fragAtoms) {
   for (auto &[atom, otherAtom, isotopeNum] : atomIsotopes) {
+    atom->setAtomicNum(0);
+    atom->setIsotope(isotopeNum);
+    dummyRadii.emplace_back(atom->getIdx(), GaussianShape::DUMMY_RAD);
+  }
+}
+
+void duplicateJoinIsotope(
+    RWMol &mol,
+    const std::vector<std::tuple<Atom *, Atom *, unsigned int>> &atomIsotopes,
+    std::vector<std::pair<unsigned int, double>> &dummyRadii,
+    std::vector<unsigned int> &fragAtoms) {
+  // Deal with something of an edge case.  The synthon was most likely a single
+  // atom that finished a ring, so had 2 connection points e.g.
+  // R1-[14C]([1*])[2*] and R2C([1*])CCC[2*] to give R1[14C]1C(R2)CCCC2. The
+  // shape needs to have 2 dummy atoms, so not R1[*]1C(R2)CCCC2 but
+  // R1[*]CCC[*]R2 with the 2 dummy atoms at the same coordinates.
+  // This needs to be done last thing before the shapes are created as
+  // it might break an aromatic system that will cause problems.
+  for (auto &[atom, otherAtom, isotopeNum] : atomIsotopes) {
     if (!atom->getAtomicNum()) {
-      // Something of an edge case.  The synthon was most likely a single atom
-      // that finished a ring, so had 2 connection points e.g.
-      // R1-[14C]([1*])[2*] and R2C([1*])CCC[2*] to give R1[14C]1C(R2)CCCC2. The
-      // shape needs to have 2 dummy atoms, so not R1[*]1C(R2)CCCC2 but
-      // R1[*]CCC[*]R2 with the 2 dummy atoms at the same coordinates.
+      if (atom->getIsotope() == isotopeNum) {
+        continue;
+      }
       Atom dummyAtom(0);
       auto newAtomIdx = mol.addAtom(&dummyAtom);
       auto newAtom = mol.getAtomWithIdx(newAtomIdx);
@@ -1221,14 +1235,10 @@ void setJoinIsotope(
       }
       fragAtoms.push_back(newAtomIdx);
       dummyRadii.emplace_back(newAtomIdx, GaussianShape::DUMMY_RAD);
-    } else {
-      atom->setAtomicNum(0);
-      atom->setIsotope(isotopeNum);
-      dummyRadii.emplace_back(atom->getIdx(), GaussianShape::DUMMY_RAD);
     }
   }
-  MolOps::sanitizeMol(mol);
 }
+
 }  // namespace
 
 void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
@@ -1275,11 +1285,6 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
       if (isomer->getNumConformers() == 0) {
         continue;
       }
-#if 0
-      // If chopping up aromatic rings, use the Kekule form so that bond
-      // types are usable in the fragments.
-      MolOps::Kekulize(*isomer);
-#endif
       std::vector<unsigned int> splitBonds;
       std::vector<unsigned int> fragAtoms;
       std::vector<std::pair<unsigned int, double>> dummyRadii;
@@ -1299,8 +1304,6 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
               endMolNum != sampleMols[molNum]->d_synthonSetNum) {
             fragAtoms.push_back(bond->getBeginAtomIdx());
             fragAtoms.push_back(bond->getEndAtomIdx());
-            // dummyRadii.emplace_back(bond->getEndAtomIdx(),
-            //                         GaussianShape::DUMMY_RAD);
             // Set the atom as a dummy, so it shows up in the shape.
             auto joinIsotope = joinInCommon(
                 bond->getEndAtom()->getProp<std::string>("HoldsJoin"),
@@ -1331,27 +1334,20 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
       fragAtoms.erase(std::unique(fragAtoms.begin(), fragAtoms.end()),
                       fragAtoms.end());
       GaussianShape::ShapeInputOptions shapeOpts;
-      shapeOpts.atomRadii = dummyRadii;
-      shapeOpts.atomSubset = fragAtoms;
       shapeOpts.shapePruneThreshold = shapeBuildParams.shapeSimThreshold;
       // Make custom features for the atom subset.  Doing it from the
       // parent molecule means that the atom types will be correct which
       // may not be the case after the fragment is extracted.  There might
-      // be a split aromatic ring, for example.  We need it back in aromatic
-      // form for this.
-#if 0
-      MolOps::setAromaticity(*isomer);
-#endif
+      // be a split aromatic ring, for example.
       shapeOpts.customFeatures.reserve(isomer->getNumConformers());
       for (unsigned int i = 0; i < isomer->getNumConformers(); ++i) {
         std::vector<GaussianShape::CustomFeature> feats;
         GaussianShape::findFeatures(*isomer, i, feats, fragAtoms);
         shapeOpts.customFeatures.emplace_back(std::move(feats));
       }
-#if 0
-      // And re-kekulize
-      MolOps::Kekulize(*isomer);
-#endif
+      duplicateJoinIsotope(*isomer, atomIsotopes, dummyRadii, fragAtoms);
+      shapeOpts.atomRadii = dummyRadii;
+      shapeOpts.atomSubset = fragAtoms;
       splitDummyDummyBonds(*isomer);
       try {
         GaussianShape::ShapeOverlayOptions ovlyOpts;
