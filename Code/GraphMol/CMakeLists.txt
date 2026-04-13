@@ -133,6 +133,8 @@ add_subdirectory(MolInteractionFields)
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol
         SubstructMatch ForceFieldHelpers ForceField)
 
+rdkit_test(graphmolNewTest new_test.cpp LINK_LIBRARIES GraphMol)
+
 rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES SmilesParse GraphMol)
 
 rdkit_test(graphmolqueryTest querytest.cpp LINK_LIBRARIES SubstructMatch SmilesParse GraphMol)
