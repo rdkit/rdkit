@@ -115,7 +115,7 @@ TEST_CASE("Shape Small tests") {
   shapeBuildOptions.randomSeed = 0xdac;
 
   for (size_t i = 0; i < dbNames.size(); i++) {
-    // if (i != 2) {
+    // if (i != 0) {
     // continue;
     // }
     std::cout << i << " : " << dbNames[i] << std::endl;
@@ -661,9 +661,7 @@ TEST_CASE("Trim sample molecules") {
   for (auto &[smi, molNum, expSmi] : smiles) {
     auto mol = v2::SmilesParse::MolFromSmiles(smi);
     REQUIRE(mol);
-    std::cout << "tttrimming " << smi << std::endl;
     auto newMol = SynthonSpaceSearch::details::trimSampleMol(*mol, molNum);
-    std::cout << "got : " << MolToSmiles(*newMol) << std::endl;
     CHECK(MolToSmiles(*newMol) == expSmi);
   }
 }

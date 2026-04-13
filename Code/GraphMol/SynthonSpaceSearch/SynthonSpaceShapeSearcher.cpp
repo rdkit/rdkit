@@ -1024,7 +1024,6 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   // on the maximum number of threads, so do the embedding on
   // a single thread.
   auto dgParams = DGeomHelpers::ETKDGv3;
-  dgParams.numThreads = 1;
   dgParams.pruneRmsThresh = getParams().confRMSThreshold;
   dgParams.randomSeed = getParams().randomSeed;
   dgParams.timeout = getParams().timeOut;

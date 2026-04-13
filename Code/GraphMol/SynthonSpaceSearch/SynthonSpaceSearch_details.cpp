@@ -852,9 +852,14 @@ std::unique_ptr<ROMol> buildProduct(
   {
     std::unique_lock<std::mutex> lock(myMutex);
     std::cout << "zipping " << MolToCXSmiles(*prodMol) << std::endl;
-    prodMol = molzip(*prodMol, mzparams);
-    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
-    std::cout << "zipped " << MolToCXSmiles(*prodMol) << std::endl;
+    try {
+      prodMol = molzip(*prodMol, mzparams);
+      MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
+    } catch (std::exception &e) {
+      std::cout << "Failed to zip " << MolToSmiles(*prodMol) << " because "
+                << std::endl
+                << e.what() << std::endl;
+    }
   }
   return prodMol;
 }
@@ -1270,9 +1275,11 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
       if (isomer->getNumConformers() == 0) {
         continue;
       }
+#if 0
       // If chopping up aromatic rings, use the Kekule form so that bond
       // types are usable in the fragments.
       MolOps::Kekulize(*isomer);
+#endif
       std::vector<unsigned int> splitBonds;
       std::vector<unsigned int> fragAtoms;
       std::vector<std::pair<unsigned int, double>> dummyRadii;
@@ -1332,15 +1339,19 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
       // may not be the case after the fragment is extracted.  There might
       // be a split aromatic ring, for example.  We need it back in aromatic
       // form for this.
+#if 0
       MolOps::setAromaticity(*isomer);
+#endif
       shapeOpts.customFeatures.reserve(isomer->getNumConformers());
       for (unsigned int i = 0; i < isomer->getNumConformers(); ++i) {
         std::vector<GaussianShape::CustomFeature> feats;
         GaussianShape::findFeatures(*isomer, i, feats, fragAtoms);
         shapeOpts.customFeatures.emplace_back(std::move(feats));
       }
+#if 0
       // And re-kekulize
       MolOps::Kekulize(*isomer);
+#endif
       splitDummyDummyBonds(*isomer);
       try {
         GaussianShape::ShapeOverlayOptions ovlyOpts;

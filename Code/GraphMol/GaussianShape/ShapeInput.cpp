@@ -145,6 +145,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   // aromatic features are found. Do the addHs dance so that things like
   // pyrrole nitrogens get their H at the end.  Make sure not to add
   // Hs to dummy atoms.
+#if 0
   std::vector<unsigned int> atomsForHs;
   atomsForHs.reserve(tmpMol->getNumAtoms());
   for (auto atom : tmpMol->atoms()) {
@@ -156,6 +157,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   MolOps::addHs(*tmpMol, addHParams, &atomsForHs);
   MolOps::setAromaticity(*tmpMol);
   MolOps::removeHs(*tmpMol);
+#endif
   d_smiles = MolToSmiles(*tmpMol);
   // std::cout << "shape smiles : " << d_smiles << std::endl;
   std::vector<unsigned int> atOrder;
