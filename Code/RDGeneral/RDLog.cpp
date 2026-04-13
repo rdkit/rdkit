@@ -150,6 +150,29 @@ void InitLogs() {
   rdErrorLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
 }
 
+CaptureLog::CaptureLog(RDLogger log) : d_log(std::move(log)) {
+  if (!d_log) {
+    return;
+  }
+  d_logWasEnabled = d_log->df_enabled;
+  d_log->df_enabled = true;
+  d_savedDest = d_log->dp_dest;
+  d_log->dp_dest = &d_messages;
+  d_savedTeestream = d_log->teestream;
+  d_log->teestream = nullptr;
+}
+
+CaptureLog::~CaptureLog() {
+  if (!d_log) {
+    return;
+  }
+  d_log->dp_dest = d_savedDest;
+  d_log->teestream = d_savedTeestream;
+  d_log->df_enabled = d_logWasEnabled;
+}
+
+std::string CaptureLog::messages() const { return d_messages.str(); }
+
 std::ostream &toStream(std::ostream &logstrm) {
   char buffer[16];
   time_t t = time(nullptr);

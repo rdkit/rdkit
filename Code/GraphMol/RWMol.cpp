@@ -408,10 +408,14 @@ void RWMol::batchRemoveAtoms() {
 
   auto &delAtoms = *dp_delAtoms;
   for (unsigned int i = rdcast<unsigned int>(delAtoms.size()); i > 0; --i) {
-    if (!delAtoms[i - 1]) continue;
+    if (!delAtoms[i - 1]) {
+      continue;
+    }
     unsigned int idx = i - 1;
     Atom *atom = getAtomWithIdx(idx);
-    if (!atom) continue;
+    if (!atom) {
+      continue;
+    }
 
     // remove any bookmarks which point to this atom:
     ATOM_BOOKMARK_MAP *marks = getAtomBookmarks();

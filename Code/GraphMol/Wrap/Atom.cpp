@@ -147,11 +147,13 @@ AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom) {
 
 namespace {
 int getExplicitValenceHelper(const Atom *atom) {
-  RDLog::deprecationWarning("please use GetValence(which=)");
+  RDLog::deprecationWarning(
+      "please use GetValence(Chem.ValenceType.EXPLICIT) instead");
   return atom->getValence(Atom::ValenceType::EXPLICIT);
 };
 int getImplicitValenceHelper(const Atom *atom) {
-  RDLog::deprecationWarning("please use GetValence(getExplicit=False)");
+  RDLog::deprecationWarning(
+      "please use GetValence(Chem.ValenceType.IMPLICIT) instead");
   return atom->getValence(Atom::ValenceType::IMPLICIT);
 };
 }  // namespace
@@ -178,6 +180,9 @@ struct atom_wrapper {
         .def(python::init<const Atom &>(python::args("self", "other")))
         .def(python::init<unsigned int>(python::args("self", "num"),
                                         "Constructor, takes the atomic number"))
+
+        .def_readonly("NOATOM", &Atom::NOATOM,
+                      "marker for unspecified int values")
 
         .def("__copy__", &Atom::copy,
              python::return_value_policy<
@@ -227,10 +232,11 @@ struct atom_wrapper {
         .def(
             "GetImplicitValence", &getImplicitValenceHelper,
             python::args("self"),
-            "DEPRECATED, please use getValence(Chem.ValenceType.IMPLICIT) instead.\nReturns the number of implicit Hs on the atom.\n")
-        .def("GetValence", &Atom::getValence,
-             (python::args("self"), python::args("which")),
-             "Returns the valence (explicit or implicit) of the atom.\n")
+            "DEPRECATED, please use GetValence(Chem.ValenceType.IMPLICIT) instead.\nReturns the number of implicit Hs on the atom.\n")
+        .def(
+            "GetValence", &Atom::getValence,
+            (python::args("self"), python::args("which")),
+            "Returns the valence (Chem.ValenceType.EXPLICIT or Chem.ValenceType.IMPLICIT) of the atom.\n")
         .def("GetTotalValence", &Atom::getTotalValence, python::args("self"),
              "Returns the total valence (explicit + implicit) of the atom.\n\n")
         .def("HasValenceViolation", &Atom::hasValenceViolation,
@@ -287,7 +293,7 @@ struct atom_wrapper {
         .def("GetBonds", AtomGetBonds, python::args("self"),
              "Returns a read-only sequence of the atom's bonds\n")
 
-        .def("Match", (bool (Atom::*)(const Atom *) const) & Atom::Match,
+        .def("Match", (bool(Atom::*)(const Atom *) const) & Atom::Match,
              python::args("self", "what"),
              "Returns whether or not this atom matches another Atom.\n\n"
              "  Each Atom (or query Atom) has a query function which is\n"

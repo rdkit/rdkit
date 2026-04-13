@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2020 Greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,7 +17,7 @@
 
 #include <vector>
 #include <string>
-#include <type_traits>
+#include <functional>
 #include <RDGeneral/Invariant.h>
 
 namespace RDKit {
@@ -32,7 +32,9 @@ namespace Queries {
 //! class to allow integer values to pick templates
 template <int v>
 class Int2Type {
-  enum { value = v };
+  enum {
+    value = v
+  };
 };
 
 //! Base class for all queries
@@ -106,17 +108,19 @@ class RDKIT_QUERY_EXPORT Query {
   const std::string &getTypeLabel() const { return this->d_queryType; }
 
   //! sets our match function
-  virtual void setMatchFunc(bool (*what)(MatchFuncArgType)) {
+  void setMatchFunc(std::function<bool(MatchFuncArgType)> what) {
     this->d_matchFunc = what;
   }
   //! returns our match function:
-  bool (*getMatchFunc() const)(MatchFuncArgType) { return this->d_matchFunc; }
+  std::function<bool(MatchFuncArgType)> getMatchFunc() const {
+    return this->d_matchFunc;
+  }
   //! sets our data function
-  virtual void setDataFunc(MatchFuncArgType (*what)(DataFuncArgType)) {
+  void setDataFunc(std::function<MatchFuncArgType(DataFuncArgType)> what) {
     this->d_dataFunc = what;
   }
   //! returns our data function:
-  MatchFuncArgType (*getDataFunc() const)(DataFuncArgType) {
+  std::function<MatchFuncArgType(DataFuncArgType)> getDataFunc() const {
     return this->d_dataFunc;
   }
 
@@ -176,7 +180,7 @@ class RDKIT_QUERY_EXPORT Query {
   std::string d_queryType = "";
   CHILD_VECT d_children;
   bool df_negate{false};
-  bool (*d_matchFunc)(MatchFuncArgType);
+  std::function<bool(MatchFuncArgType)> d_matchFunc;
 
   // MSVC complains at compile time when TypeConvert(MatchFuncArgType what,
   // Int2Type<false>) attempts to pass what (which is of type MatchFuncArgType)
@@ -184,8 +188,8 @@ class RDKIT_QUERY_EXPORT Query {
   // union is but a trick to avoid silly casts and keep MSVC happy when building
   // DLLs
   union {
-    MatchFuncArgType (*d_dataFunc)(DataFuncArgType);
-    MatchFuncArgType (*d_dataFuncSameType)(MatchFuncArgType);
+    std::function<MatchFuncArgType(DataFuncArgType)> d_dataFunc;
+    std::function<MatchFuncArgType(MatchFuncArgType)> d_dataFuncSameType;
   };
   //! \brief calls our \c dataFunc (if it's set) on \c what and returns
   //! the result, otherwise returns \c what

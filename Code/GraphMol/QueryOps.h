@@ -23,6 +23,10 @@
 #include <Query/Query.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
+#include <functional>
+
+#include <functional>
+#include <limits>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
@@ -581,6 +585,38 @@ static inline int queryAtomRingBondCount(Atom const *at) {
   return res;
 }
 
+static inline int queryAtomIsInRingOfSize(Atom const *at, int tgt) {
+  if (at->getOwningMol().getRingInfo()->isAtomInRingOfSize(at->getIdx(), tgt)) {
+    return tgt;
+  } else {
+    return 0;
+  }
+};
+//! returns the size of an SSSR ring the atom is in that's within the specified
+//! range, or a value outside the range if there are no rings with a size in the
+//!   range. passing -1 for a bound leaves the range without a limit in that
+//!   direction
+//! always returns a value outside the range for atoms that are not in a ring
+static inline int queryAtomIsInRingOfSize(Atom const *at, int lower, int upper,
+                                          bool lowerOpen = false,
+                                          bool upperOpen = false) {
+  const auto ri = at->getOwningMol().getRingInfo();
+  for (const auto ringSize : ri->atomRingSizes(at->getIdx())) {
+    if ((ringSize > lower || (ringSize == lower && !lowerOpen)) &&
+        (upper < 0 ||
+         (ringSize < upper || (ringSize == upper && !upperOpen)))) {
+      return ringSize;
+    }
+  }
+  // we didn't find it, return a result that's not in the acceptable range:
+  if (lower > -1) {
+    return -1;
+  } else if (upper > -1) {
+    return std::numeric_limits<int>::max();
+  } else {
+    return 0;
+  }
+};
 template <int tgt>
 int queryAtomIsInRingOfSize2(ConstRDMolAtom at) {
   if (at.mol().getRingInfo().isAtomInRingOfSize(at.index(), tgt)) {
@@ -616,7 +652,7 @@ int queryBondIsInRingOfSize(Bond const *bond) {
 };
 
 template <class T>
-T *makeAtomSimpleQuery2(int what, int func(ConstRDMolAtom),
+T *makeAtomSimpleQuery2(int what, std::function<int(ConstRDMolAtom)> func,
                         const std::string &description = "Atom Simple") {
   T *res = new T;
   res->setVal(what);
@@ -625,7 +661,7 @@ T *makeAtomSimpleQuery2(int what, int func(ConstRDMolAtom),
   return res;
 }
 template <class T>
-T *makeAtomSimpleQuery(int what, int func(Atom const *),
+T *makeAtomSimpleQuery(int what, std::function<int(Atom const *)> func,
                        const std::string &description = "Atom Simple") {
   T *res = new T;
   res->setVal(what);
@@ -645,7 +681,8 @@ static inline ATOM_RANGE_QUERY2 *makeAtomRangeQuery2(
 }
 static inline ATOM_RANGE_QUERY *makeAtomRangeQuery(
     int lower, int upper, bool lowerOpen, bool upperOpen,
-    int func(Atom const *), const std::string &description = "Atom Range") {
+    std::function<int(Atom const *)> func,
+    const std::string &description = "Atom Range") {
   ATOM_RANGE_QUERY *res = new ATOM_RANGE_QUERY(lower, upper);
   res->setDataFunc(func);
   res->setDescription(description);
@@ -1034,10 +1071,20 @@ RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomInNRingsQuery2(int what);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what);
 
+
 //! returns a Query for matching atoms in rings of a particular size
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomInRingOfSizeQuery2(int tgt);
+template <class T>
+T *makeAtomInRingOfSizeQuery2(int tgt, const std::string &descr);
+//! \overload
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY2 *makeAtomInRingOfSizeQuery2(int tgt, const std::string &descr);
 //! returns a Query for matching atoms in rings of a particular size
+template <class T>
+T *makeAtomInRingOfSizeQuery(int tgt, const std::string &descr);
+//! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomInRingOfSizeQuery(int tgt);
+//! \overload
+RDKIT_GRAPHMOL_EXPORT ATOM_RANGE_QUERY *makeAtomInRingOfSizeQuery(
+    int lower, int upper, bool lowerOpen = false, bool upperOpen = false);
 
 //! returns a Query for matching an atom's minimum ring size
 template <class T>
@@ -1878,6 +1925,19 @@ inline bool isAtomDummy(ConstRDMolAtom a) {
          (a.mol().hasAtomQuery(a.index()) &&
           !a.mol().getAtomQuery(a.index())->getNegation() &&
           a.mol().getAtomQuery(a.index())->getDescription() == "AtomNull");
+}
+//! Checks if an atom is dummy or not.
+//! 1. A dummy non-query atom (e.g., "*" in SMILES) is defined by its zero
+//! atomic
+//!    number. This rule breaks for query atoms because a COMPOSITE_OR query
+//!    atom also has a zero atomic number (#6349).
+//! 2. A dummy query atom (e.g., "*" in SMARTS) is defined by its explicit
+//!    description: "AtomNull".
+inline bool isAtomDummy(RDMolAtom a) {
+  return (!a.mol().hasAtomQuery(a.index()) && a.data().getAtomicNum() == 0) ||
+    (a.mol().hasAtomQuery(a.index()) &&
+     !a.mol().getAtomQuery(a.index())->getNegation() &&
+     a.mol().getAtomQuery(a.index())->getDescription() == "AtomNull");
 }
 //! \overload
 inline bool isAtomDummy(const Atom *a) {

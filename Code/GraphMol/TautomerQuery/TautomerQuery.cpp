@@ -187,7 +187,20 @@ TautomerQuery *TautomerQuery::fromMol(
     delete queryBond;
   }
 
-  return new TautomerQuery(res.tautomers(),
+  // Copy molecule properties from the original query to all tautomers.
+  // Tautomer enumeration uses quickCopy for performance, which doesn't copy
+  // molecule properties. We need to preserve them here for proper CXSMILES
+  // output (e.g. link nodes).
+  auto tautomers = res.tautomers();
+  for (auto &tautomer : tautomers) {
+    tautomer->updateProps(query);
+    // Also copy atom properties (quickCopy skips these too).
+    for (unsigned int i = 0; i < query.getNumAtoms(); ++i) {
+      tautomer->getAtomWithIdx(i)->updateProps(*query.getAtomWithIdx(i));
+    }
+  }
+
+  return new TautomerQuery(std::move(tautomers),
                            static_cast<ROMol *>(templateMolecule),
                            modifiedAtoms, modifiedBonds);
 }

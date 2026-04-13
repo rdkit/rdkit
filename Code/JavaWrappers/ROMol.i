@@ -35,7 +35,7 @@
 %include "std_string.i"
 %include "std_vector.i"
 
-#ifdef SWIGCSHARP
+#if SWIG_VERSION >= 0x040101                 
 %include <std_unique_ptr.i>
 %unique_ptr(RDKit::RWMol)
 #endif

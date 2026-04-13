@@ -167,11 +167,17 @@ std::string JSMolBase::get_pickle(const std::string &details) const {
   return pickle;
 }
 
-std::string JSMolBase::get_substruct_match(const JSMolBase &q) const {
+std::string JSMolBase::get_substruct_match(const JSMolBase &q,
+                                           const std::string &details) const {
   std::string res = "{}";
-
   MatchVectType match;
-  if (SubstructMatch(get(), q.get(), match)) {
+  SubstructMatchParameters params;
+  updateSubstructMatchParamsFromJSON(params, details);
+  params.maxMatches = 1;
+
+  auto matches = SubstructMatch(get(), q.get(), params);
+  if (!matches.empty()) {
+    const auto &match = matches[0];
     bj::object doc;
     MinimalLib::get_sss_json(get(), q.get(), match, doc);
     res = bj::serialize(doc);
@@ -180,10 +186,13 @@ std::string JSMolBase::get_substruct_match(const JSMolBase &q) const {
   return res;
 }
 
-std::string JSMolBase::get_substruct_matches(const JSMolBase &q) const {
+std::string JSMolBase::get_substruct_matches(const JSMolBase &q,
+                                             const std::string &details) const {
   std::string res = "{}";
+  SubstructMatchParameters params;
+  updateSubstructMatchParamsFromJSON(params, details);
 
-  auto matches = SubstructMatch(get(), q.get());
+  auto matches = SubstructMatch(get(), q.get(), params);
   if (!matches.empty()) {
     bj::array doc;
 
@@ -890,7 +899,7 @@ std::string get_mcs_as_json(const JSMolList &molList,
   if (!mcsResult.DegenerateSmartsQueryMolDict.empty()) {
     bj::array smartsArray;
     for (const auto &pair : mcsResult.DegenerateSmartsQueryMolDict) {
-      smartsArray.push_back(pair.first);
+      smartsArray.emplace_back(pair.first);
     }
     bjSmarts = smartsArray;
   } else {

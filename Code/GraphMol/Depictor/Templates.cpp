@@ -63,14 +63,17 @@ void CoordinateTemplates::loadTemplatesFromPath(
   // templates
   std::string line;
   while (std::getline(cxsmiles, line)) {
-    RDKit::ROMol *mol_ptr = RDKit::SmilesToMol(line);
+    RDKit::ROMol *mol_ptr = RDKit::SmartsToMol(line);
     if (!mol_ptr) {
       std::string msg =
-          "Could not load templates from " + templatePath + ": Invalid smiles";
+          "Could not load templates from " + templatePath + ": Invalid smarts";
       cxsmiles.close();
       throw RDDepict::DepictException(msg);
     }
     std::shared_ptr<RDKit::ROMol> mol(mol_ptr);
+    // Initialize ring info using symmetrizeSSSR to match depictor ring counting
+    RDKit::VECT_INT_VECT arings;
+    RDKit::MolOps::symmetrizeSSSR(*mol, arings);
     try {
       assertValidTemplate(*mol, line);
     } catch (RDDepict::DepictException &e) {

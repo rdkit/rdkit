@@ -493,12 +493,12 @@ M  END
     0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
    -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0
-  2  3  1  0
-  3  4  2  0
-  4  5  1  0
-  5  6  2  0
-  6  1  1  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
   6  8  1  0
   7  8  1  0
   8  9  1  0
@@ -592,12 +592,12 @@ M  END
     0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
    -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0
-  2  3  1  0
-  3  4  2  0
-  4  5  1  0
-  5  6  2  0
-  6  1  1  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
   6  8  1  0
   7  8  1  0
   8  9  1  0
@@ -6321,7 +6321,7 @@ void check_roundtripped_properties(RDProps &original, RDProps &roundtrip) {
   REQUIRE(std::includes(roundtripPropNames.begin(), roundtripPropNames.end(),
                         originalPropNames.begin(), originalPropNames.end()));
 
-  for (const auto &o : original.getDict().getData()) {
+  for (const auto &o : original.getDict()) {
     if (o.key == detail::computedPropName) {
       continue;
     }
@@ -7464,34 +7464,18 @@ TEST_CASE(
   }
 }
 
-class FragTest {
- public:
-  std::string fileName;
-  bool expectedResult;
-  bool reapplyMolBlockWedging;
-  unsigned int origSgroupCount;
-  unsigned int newSgroupCount;
-
-  FragTest(std::string fileNameInit, bool expectedResultInit,
-           bool reapplyMolBlockWedgingInit, unsigned int origSgroupCountInit,
-           unsigned int newSgroupCountInit)
-      : fileName(fileNameInit),
-        expectedResult(expectedResultInit),
-        reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
-        origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit) {};
-};
-
-void testFragmentation(const FragTest &fragTest) {
-  INFO(fragTest.fileName);
+void testFragmentation(const std::string &fileName,
+                       unsigned int origSgroupCount,
+                       unsigned int newSgroupCount) {
+  INFO(fileName);
   std::string rdbase = getenv("RDBASE");
 
   std::string fName = rdbase +
                       "/Code/GraphMol/FileParsers/test_data/sgroupFragments/" +
-                      fragTest.fileName;
+                      fileName;
   std::unique_ptr<RWMol> mol(MolFileToMol(fName, false));  // don't sanitize yet
   REQUIRE(mol);
-  CHECK(getSubstanceGroups(*mol).size() == fragTest.origSgroupCount);
+  CHECK(getSubstanceGroups(*mol).size() == origSgroupCount);
 
   auto frags = MolOps::getMolFrags(*mol, true);
   CHECK(frags.size() > 1);
@@ -7508,9 +7492,9 @@ void testFragmentation(const FragTest &fragTest) {
   }
 
   CHECK(largestFrag);
-  CHECK(getSubstanceGroups(*largestFrag).size() == fragTest.newSgroupCount);
+  CHECK(getSubstanceGroups(*largestFrag).size() == newSgroupCount);
 
-  if (fragTest.origSgroupCount == fragTest.newSgroupCount) {
+  if (origSgroupCount == newSgroupCount) {
     // if the number of sgroups is the same, then the sgroups should be the
     // same
     for (unsigned int sgIndex = 0;
@@ -7523,37 +7507,86 @@ void testFragmentation(const FragTest &fragTest) {
 }
 
 TEST_CASE("FragmentSgroupTest", "[bug][reader]") {
-  std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
-    std::vector<FragTest> tests = {
-        FragTest("polymerSalt.mol", true, true, 1, 1),
-        FragTest("copolymer_sgroup.sdf", true, true, 1,
-                 0),  // fragmntation does not keep the sgroup for this one
-        FragTest("DataSgroup.sdf", true, true, 2, 2),
-        FragTest("DataSgroupMissingUnitsDisplayed.sdf", true, true, 1, 1),
-        FragTest("EmbeddedSGroupSUP_MUL.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupCOP_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupDAT_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupMUL_MUL.sdf", true, true, 3, 3),
-        FragTest("EmbeddedSgroupMUL_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupSRU_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupSUPEXP_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupSUPEXP_SUP2.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupSUP_SUP.sdf", true, true, 2, 2),
-        FragTest("EmbeddedSgroupSUP_SUP2.sdf", true, true, 2, 2),
-        FragTest("GenericSgroup.sdf", true, true, 1, 1),
-        FragTest("MarvinOldSuperGroupTest.sdf", true, true, 9, 5),
-        FragTest("MonomerSgroup.sdf", true, true, 1, 1),
-        FragTest("MultipleSgroup.sdf", true, true, 1, 1),
-        FragTest("MultipleSgroupParentInMiddleOfAtomBlock.sdf", true, true, 1,
-                 1),
-        FragTest("SgroupExpanded.sdf", true, true, 1, 1),
-        FragTest("SgroupMultAttach.sdf", true, true, 4, 4),
-        FragTest("Sgroup_MUL_ParentInMiddle.sdf", true, true, 1, 1),
-        FragTest("modification_sgroup.sdf", true, true, 2, 1),
+    std::vector<std::tuple<std::string, unsigned int, unsigned int>> tests = {
+        {"polymerSalt.mol", 1, 1},
+        {"copolymer_sgroup.sdf", 1,
+         0},  // fragmntation does not keep the sgroup for this one
+        {"DataSgroup.sdf", 2, 2},
+        {"DataSgroupMissingUnitsDisplayed.sdf", 1, 1},
+        {"EmbeddedSGroupSUP_MUL.sdf", 2, 2},
+        {"EmbeddedSgroupCOP_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupDAT_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupMUL_MUL.sdf", 3, 3},
+        {"EmbeddedSgroupMUL_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupSRU_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupSUPEXP_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupSUPEXP_SUP2.sdf", 2, 2},
+        {"EmbeddedSgroupSUP_SUP.sdf", 2, 2},
+        {"EmbeddedSgroupSUP_SUP2.sdf", 2, 2},
+        {"GenericSgroup.sdf", 1, 1},
+        {"MarvinOldSuperGroupTest.sdf", 9, 5},
+        {"MonomerSgroup.sdf", 1, 1},
+        {"MultipleSgroup.sdf", 1, 1},
+        {"MultipleSgroupParentInMiddleOfAtomBlock.sdf", 1, 1},
+        {"SgroupExpanded.sdf", 1, 1},
+        {"SgroupMultAttach.sdf", 4, 4},
+        {"Sgroup_MUL_ParentInMiddle.sdf", 1, 1},
+        {"modification_sgroup.sdf", 2, 1},
     };
-    for (auto test : tests) {
-      testFragmentation(test);
+    for (const auto &[fileName, origSgroupCount, newSgroupCount] : tests) {
+      testFragmentation(fileName, origSgroupCount, newSgroupCount);
+    }
+  };
+}
+
+void testWedges(const std::string &fileName, unsigned int origWedgeCount,
+                unsigned int newWedgeCount) {
+  INFO(fileName);
+
+  UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+
+  std::string rdbase = getenv("RDBASE");
+
+  std::string fName =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/wedgeTests/" + fileName;
+  std::unique_ptr<RWMol> mol(MolFileToMol(fName, true));  //
+  REQUIRE(mol);
+
+  RDKit::Chirality::reapplyMolBlockWedging(*mol, true, false);
+
+  unsigned int wedgeCount = 0;
+  for (const auto bond : mol->bonds()) {
+    if (bond->getBondDir() == Bond::BEGINWEDGE ||
+        bond->getBondDir() == Bond::BEGINDASH) {
+      ++wedgeCount;
+    }
+  }
+
+  CHECK(wedgeCount == origWedgeCount);
+
+  RDKit::Chirality::reapplyMolBlockWedging(*mol, true, true);
+
+  wedgeCount = 0;
+  for (const auto bond : mol->bonds()) {
+    if (bond->getBondDir() == Bond::BEGINWEDGE ||
+        bond->getBondDir() == Bond::BEGINDASH) {
+      ++wedgeCount;
+    }
+  }
+
+  CHECK(wedgeCount == newWedgeCount);
+}
+
+TEST_CASE("WedgeTest", "[bug][reader]") {
+  SECTION("basics") {
+    std::vector<std::tuple<std::string, unsigned int, unsigned int>> tests = {
+        {"JDQ443_atropBad1.sdf", 2, 0},
+        {"badWedgeError.sdf", 1, 0},
+        {"StereoGroupError.mol", 2, 1},
+    };
+    for (const auto &[fileName, origWedgeCount, newWedgeCount] : tests) {
+      testWedges(fileName, origWedgeCount, newWedgeCount);
     }
   };
 }
@@ -8084,5 +8117,63 @@ $$$$
     bool strictParsing = true;
     REQUIRE_THROWS_AS(MolBlockToMol(mb, sanitize, removeHs, strictParsing),
                       FileParseException);
+  }
+}
+
+TEST_CASE(
+    "V3000 aromatic bonds with explicit H: kekulization after H removal") {
+  // The V3000 parser sets aromatic flags on bonds but not atoms.
+  // When removeHs strips an explicit H from aromatic N, molRemoveH must
+  // still recognise the atom as aromatic (via its bond flags) so that
+  // numExplicitHs is incremented.  Without that, the kekuliser cannot
+  // distinguish pyrrole N from pyridine N and kekulization fails.
+  auto molblock = R"MOL(
+  ChemDraw03022611582D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.452059 0.404789 0.000000 0
+M  V30 2 C 0.667439 0.149850 0.000000 0
+M  V30 3 N 0.412500 -0.634772 0.000000 0
+M  V30 4 C -0.412500 -0.634772 0.000000 0
+M  V30 5 N -0.667438 0.149850 0.000000 0
+M  V30 6 C -0.000000 0.634772 0.000000 0
+M  V30 7 H -1.452059 0.404790 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 4 5 6
+M  V30 6 4 2 6
+M  V30 7 1 5 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)MOL";
+
+  SECTION("default sanitize + removeHs") {
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(MolToSmiles(*mol) == "Cc1c[nH]cn1");
+  }
+
+  SECTION("pyrrole N has correct explicit H count after H removal") {
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    // Atom 4 in the original block is the [nH] nitrogen (index 4 after
+    // H removal and reindexing — find it by checking for aromatic N with H).
+    bool foundPyrroleN = false;
+    for (const auto atom : mol->atoms()) {
+      if (atom->getAtomicNum() == 7 && atom->getIsAromatic() &&
+          atom->getTotalNumHs() == 1) {
+        CHECK(atom->getNumExplicitHs() == 1);
+        foundPyrroleN = true;
+      }
+    }
+    CHECK(foundPyrroleN);
   }
 }

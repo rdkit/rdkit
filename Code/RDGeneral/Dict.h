@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+// Copyright (C) 2003-2026 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,7 +16,6 @@
 #ifndef RD_DICT_H_012020
 #define RD_DICT_H_012020
 
-#include <map>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -136,14 +135,41 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   }
 
   //----------------------------------------------------------
-  //! \brief Access to the underlying non-POD containment flag
-  //! This is meant to be used only in bulk updates of _data.
-  bool &getNonPODStatus() { return _hasNonPodData; }
+  //! \brief Returns the number of entries in the dictionary
+  std::size_t size() const { return _data.size(); }
 
-  //----------------------------------------------------------
-  //! \brief Access to the underlying data.
-  const DataType &getData() const { return _data; }
-  DataType &getData() { return _data; }
+  //! \brief Returns whether the dictionary is empty
+  bool empty() const { return _data.empty(); }
+
+  using const_iterator = DataType::const_iterator;
+  const_iterator begin() const { return _data.begin(); }
+  const_iterator end() const { return _data.end(); }
+
+  //! \brief Appends a populated Pair to the dictionary.
+  void insert(Pair &&pair) {
+    _hasNonPodData |= pair.val.needsCleanup();
+    _data.push_back(std::move(pair));
+  }
+
+  //! \brief Bulk-appends a vector of Pairs, moving them into the dictionary.
+  void extend(std::vector<Pair> &&pairs) {
+    for (auto &p : pairs) {
+      _hasNonPodData |= p.val.needsCleanup();
+    }
+    _data.insert(_data.end(), std::make_move_iterator(pairs.begin()),
+                 std::make_move_iterator(pairs.end()));
+  }
+
+  //! \brief Returns a const reference to the RDValue for a key.
+  //! Throws KeyErrorException if the key is not found.
+  const RDValue &getRDValue(const std::string_view what) const {
+    for (const auto &data : _data) {
+      if (data.key == what) {
+        return data.val;
+      }
+    }
+    throw KeyErrorException(what);
+  }
 
   //----------------------------------------------------------
 
@@ -212,15 +238,6 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     throw KeyErrorException(what);
   }
 
-  const RDValue &getRDValue(const std::string_view &what) const {
-    for (auto &data : _data) {
-      if (data.key == what) {
-        return data.val;
-      }
-    }
-    throw KeyErrorException(what);
-  }
-
   //----------------------------------------------------------
   //! \brief Potentially gets the value associated with a particular key
   //!        returns true on success/false on failure.
@@ -274,6 +291,9 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   void setVal(const std::string_view what, T &val) {
     static_assert(!std::is_same_v<T, std::string_view>,
                   "T cannot be string_view");
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
     _hasNonPodData = true;
     for (auto &&data : _data) {
       if (data.key == what) {
@@ -289,6 +309,9 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   void setPODVal(const std::string_view what, T val) {
     static_assert(!std::is_same_v<T, std::string_view>,
                   "T cannot be string_view");
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
     // don't change the hasNonPodData status
     for (auto &&data : _data) {
       if (data.key == what) {
@@ -300,20 +323,45 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     _data.push_back(Pair(what, val));
   }
 
-  void setVal(const std::string_view what, bool val) { setPODVal(what, val); }
+  void setVal(const std::string_view what, bool val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
+    setPODVal(what, val);
+  }
 
-  void setVal(const std::string_view what, double val) { setPODVal(what, val); }
+  void setVal(const std::string_view what, double val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
+    setPODVal(what, val);
+  }
 
-  void setVal(const std::string_view what, float val) { setPODVal(what, val); }
-
-  void setVal(const std::string_view what, int val) { setPODVal(what, val); }
+  void setVal(const std::string_view what, float val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
+    setPODVal(what, val);
+  }
+  void setVal(const std::string_view what, int val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
+    setPODVal(what, val);
+  }
 
   void setVal(const std::string_view what, unsigned int val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
     setPODVal(what, val);
   }
 
   //! \overload
   void setVal(const std::string_view what, const char *val) {
+    if (what.empty()) {
+      throw ValueErrorException("Cannot set value with empty key");
+    }
     std::string h(val);
     setVal(what, h);
   }
@@ -327,7 +375,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 
   */
   void clearVal(const std::string_view what) {
-    for (DataType::iterator it = _data.begin(); it < _data.end(); ++it) {
+    for (auto it = _data.begin(); it < _data.end(); ++it) {
       if (it->key == what) {
         if (_hasNonPodData) {
           RDValue::cleanup_rdvalue(it->val);

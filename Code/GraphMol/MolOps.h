@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "GraphMol/RDMol.h"
 #include <RDGeneral/export.h>
 #ifndef RD_MOL_OPS_H
 #define RD_MOL_OPS_H
@@ -60,8 +61,7 @@ namespace MolOps {
    \return the number of electrons
 */
 RDKIT_GRAPHMOL_EXPORT int countAtomElec(const Atom *at);
-RDKIT_GRAPHMOL_EXPORT int countAtomElec(const RDMol &mol,
-                                        const atomindex_t atomIndex);
+RDKIT_GRAPHMOL_EXPORT int countAtomElec(const ConstRDMolAtom &mol);
 
 //! sums up all atomic formal charges and returns the result
 RDKIT_GRAPHMOL_EXPORT int getFormalCharge(const ROMol &mol);
@@ -220,15 +220,6 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
     std::map<T, std::unique_ptr<ROMol>> &molFrags, bool sanitizeFrags = true,
     const std::vector<T> *whiteList = nullptr, bool negateList = false);
 
-#if 0
-    //! finds a molecule's minimum spanning tree (MST)
-    /*!
-      \param mol  the molecule of interest
-      \param mst  used to return the MST as a vector of bond indices
-    */
-    RDKIT_GRAPHMOL_EXPORT void findSpanningTree(const ROMol &mol,std::vector<int> &mst);
-#endif
-
 //! \name Dealing with hydrogens
 //{@
 
@@ -344,10 +335,11 @@ struct RDKIT_GRAPHMOL_EXPORT SanitizeTemp {
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
 */
-[[deprecated("Please use the version with RemoveHsParameters")]]
-RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol, bool implicitOnly,
-                                      bool updateExplicitCount = false,
-                                      bool sanitize = true);
+[[deprecated(
+    "Please use the version with RemoveHsParameters")]] RDKIT_GRAPHMOL_EXPORT
+    ROMol *
+    removeHs(const ROMol &mol, bool implicitOnly,
+             bool updateExplicitCount = false, bool sanitize = true);
 //! \overload
 /// modifies the molecule in place
 [[deprecated("Please use the version with RemoveHsParameters")]]
@@ -687,6 +679,9 @@ typedef enum {
 //! sets the aromaticity model for a molecule to MMFF94
 RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);
 
+//! sets the aromaticity model for a molecule to MMFF94
+RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RDMol &mol);
+
 //! Sets up the aromaticity for a molecule
 /*!
 
@@ -718,6 +713,9 @@ RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);
 RDKIT_GRAPHMOL_EXPORT int setAromaticity(
     RWMol &mol, AromaticityModel model = AROMATICITY_DEFAULT,
     int (*func)(RWMol &) = nullptr);
+//! \overload for custom aromaticity functions written against RDMol
+RDKIT_GRAPHMOL_EXPORT int setAromaticity(RWMol &mol, AromaticityModel model,
+                                         int (*func)(RDMol &));
 
 //! Designed to be called by the sanitizer to handle special cases before
 /// anything is done.
@@ -727,7 +725,7 @@ RDKIT_GRAPHMOL_EXPORT int setAromaticity(
      - modifies nitro groups, so that the nitrogen does not have an
    unreasonable valence of 5, as follows:
          - the nitrogen gets a positive charge
-         - one of the oxygens gets a negative chage and the double bond to
+         - one of the oxygens gets a negative charge and the double bond to
    this oxygen is changed to a single bond The net result is that nitro groups
    can be counted on to be: \c "[N+](=O)[O-]"
      - modifies halogen-oxygen containing species as follows:
@@ -787,6 +785,30 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
    settings on both the Bonds and Atoms are turned to false following the
    Kekulization, otherwise they are left alone in their original state.
 
+   \param canonical  controls atom traversal order during kekulization:
+   - \c false (the default): traverses atoms in atom-index order
+     (std::iota). Fast, but the resulting Kekulé bond assignment depends on
+     the order atoms appear in the molecule.
+   - \c true: uses canonical atom ranking (Canon::rankFragmentAtoms with a
+     wedge-end heuristic) so that the Kekulé bond assignment is independent
+     of atom ordering.  Use this in output writers and any code that requires
+     a reproducible, chemistry-based Kekulé form.
+
+   \note <b>Behavioural difference from releases prior to 2026.03.1:</b>
+   Before the \c canonical parameter was added (i.e. in 2025.09.1 and
+   earlier), Kekulize traversed atoms in an order determined by the SSSR
+   ring-membership and adjacency-list iteration order — neither pure
+   atom-index order (\c canonical=false) nor rank-based order
+   (\c canonical=true).  Tests and expected outputs written against those
+   releases may differ from both new modes; \c canonical=true is the closest
+   match for output-writer use cases, while \c canonical=false gives a
+   deterministic but potentially different Kekulé form from the old default.
+
+   Note that the canonical mode only really makes sense when the molecule's
+   chemistry is sane, like after sanitization. If stereochemistry hasn't
+   been perceived, the chemistry of the molecule is inconsistent, and
+   "canonical" atom ranks are only a technical artifact.
+
    \param maxBackTracks   the maximum number of attempts at back-tracking. The
    algorithm uses a back-tracking procedure to revisit a previous setting of
    double bond if we hit a wall in the kekulization process
@@ -800,6 +822,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 
 */
 RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
+                                    bool canonical = true,
                                     unsigned int maxBackTracks = 100);
 //! Kekulizes the molecule if possible. If the kekulization fails the molecule
 //! will not be modified
@@ -810,6 +833,11 @@ RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
    \param markAtomsBonds  if this is set to true, \c isAromatic boolean
    settings on both the Bonds and Atoms are turned to false following the
    Kekulization, otherwise they are left alone in their original state.
+
+   \param canonical  controls atom traversal order; see the full description
+   on \c Kekulize() for the three-way distinction between \c canonical=false
+   (atom-index order, default), \c canonical=true (rank-based, order-
+   independent), and the pre-PR master behaviour.
 
    \param maxBackTracks   the maximum number of attempts at back-tracking. The
    algorithm uses a back-tracking procedure to revisit a previous setting of
@@ -825,6 +853,7 @@ RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
 */
 RDKIT_GRAPHMOL_EXPORT bool KekulizeIfPossible(RWMol &mol,
                                               bool markAtomsBonds = true,
+                                              bool canonical = true,
                                               unsigned int maxBackTracks = 100);
 
 //! flags the molecule's conjugated bonds
@@ -849,6 +878,8 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
       RingInfo structure, so this argument is optional (see overload)
   \param includeDativeBonds - determines whether or not dative bonds are used
   in the ring finding.
+  \param includeHydrogenBonds - determines whether or not hydrogen bonds are
+  used in the ring finding.
 
   \return number of smallest rings found
 
@@ -911,11 +942,13 @@ RDKIT_GRAPHMOL_EXPORT void fastFindRings(const ROMol &mol);
 RDKIT_GRAPHMOL_EXPORT void fastFindRings(const RDMol &mol,
                                          RingInfoCache &rings);
 
-RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol,
+                                            bool includeDativeBonds = false,
+                                            bool includeHydrogenBonds = false);
 
 //! symmetrize the molecule's Smallest Set of Smallest Rings
 /*!
-   SSSR rings obatined from "findSSSR" can be non-unique in some case.
+   SSSR rings obtained from "findSSSR" can be non-unique in some case.
    For example, cubane has five SSSR rings, not six as one would hope.
 
    This function adds additional rings to the SSSR list if necessary
@@ -932,6 +965,8 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
       RingInfo structure, so this argument is optional (see overload)
   \param includeDativeBonds - determines whether or not dative bonds are used
   in the ring finding.
+  \param includeHydrogenBonds - determines whether or not hydrogen bonds are
+  used in the ring finding.
 
   \return the total number of rings = (new rings + old SSSRs)
 
@@ -1248,7 +1283,7 @@ RDKIT_GRAPHMOL_EXPORT void removeStereochemistry(ROMol &mol);
 
   This function is useful in the following situations:
     - when parsing a mol file; for the bonds marked here, coordinate
-      information on the neighbors can be used to indentify cis or trans
+      information on the neighbors can be used to identify cis or trans
   states
     - when writing a mol file; bonds that can be cis/trans but not marked as
       either need to be specially marked in the mol file
@@ -1356,7 +1391,7 @@ namespace details {
 RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
     RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     boost::dynamic_bitset<> bondsToUse, bool markAtomsBonds = true,
-    unsigned int maxBackTracks = 100);
+    bool canonical = true, unsigned int maxBackTracks = 100);
 
 // If the bond is dative, and it has a common_properties::MolFileBondEndPts
 // prop, returns a vector of the indices of the atoms mentioned in the prop.
