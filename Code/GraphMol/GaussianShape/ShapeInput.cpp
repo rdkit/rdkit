@@ -141,23 +141,6 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   } else {
     tmpMol.reset(new RWMol(mol));
   }
-  // The input molecule may have been in Kekule form, so fix that so
-  // aromatic features are found. Do the addHs dance so that things like
-  // pyrrole nitrogens get their H at the end.  Make sure not to add
-  // Hs to dummy atoms.
-#if 0
-  std::vector<unsigned int> atomsForHs;
-  atomsForHs.reserve(tmpMol->getNumAtoms());
-  for (auto atom : tmpMol->atoms()) {
-    if (atom->getAtomicNum()) {
-      atomsForHs.push_back(atom->getIdx());
-    }
-  }
-  MolOps::AddHsParameters addHParams;
-  MolOps::addHs(*tmpMol, addHParams, &atomsForHs);
-  MolOps::setAromaticity(*tmpMol);
-  MolOps::removeHs(*tmpMol);
-#endif
   d_smiles = MolToSmiles(*tmpMol);
   // std::cout << "shape smiles : " << d_smiles << std::endl;
   std::vector<unsigned int> atOrder;
