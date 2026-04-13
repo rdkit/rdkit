@@ -34,6 +34,8 @@
 %include "std_pair.i"
 %include "std_string.i"
 %include "std_vector.i"
+%include <carrays.i>
+%array_class(double, DoubleArray);
 
 #if SWIG_VERSION >= 0x040101                 
 %include <std_unique_ptr.i>
@@ -77,6 +79,7 @@
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
 %template(Atom_Vect) std::vector<RDKit::Atom*>;
+%template(Bond_Vect) std::vector<RDKit::Bond*>;
 %template(StereoGroup_Vect) std::vector<RDKit::StereoGroup>;
 %template(UChar_Vect) std::vector<unsigned char>;
 
@@ -210,6 +213,8 @@
 %newobject getBonds;
 %newobject getAtomNeighbors;
 %newobject getAtomBonds;
+%newobject getDistanceMat;
+%newobject getAdjacencyMatrix;
 
 %{
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
