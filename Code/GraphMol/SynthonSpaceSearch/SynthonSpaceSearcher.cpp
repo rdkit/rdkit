@@ -633,7 +633,6 @@ void SynthonSpaceSearcher::makeHitsFromToTry(
   // check in verifyHit won't be needed, so the chunks won't take exactly
   // equal time. It can always be re-visited if the threads run for very
   // different lengths of time in an average search.
-  d_params.numThreads = 1;
   if (const auto numThreads = getNumThreadsToUse(d_params.numThreads);
       numThreads > 1) {
     const size_t eachThread = 1 + toTry.size() / numThreads;
