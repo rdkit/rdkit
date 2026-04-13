@@ -27,15 +27,12 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
-#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
-
-#include "GraphMol/SmilesParse/SmilesParse.h"
 
 #include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
 #include <RDGeneral/ControlCHandler.h>
@@ -1202,7 +1199,6 @@ void setJoinIsotope(
     atom->setIsotope(isotopeNum);
     dummyRadii.emplace_back(atom->getIdx(), GaussianShape::DUMMY_RAD);
   }
-  MolOps::sanitizeMol(mol);
 }
 
 void duplicateJoinIsotope(
