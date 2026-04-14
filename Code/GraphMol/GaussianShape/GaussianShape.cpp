@@ -17,6 +17,7 @@
 // https://github.com/ncbi/pubchem-align3d/blob/main/shape_neighbor.cpp.
 
 #include <cmath>
+#include <numbers>
 
 #include <Geometry/Transform3D.h>
 #include <GraphMol/ROMol.h>

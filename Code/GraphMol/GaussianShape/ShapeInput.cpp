@@ -107,6 +107,15 @@ std::unique_ptr<RWMol> extractSubset(
     }
   }
   retMol->commitBatchEdit();
+
+  // Fix the aromatic flags on anything that is no longer in a ring.
+  MolOps::findSSSR(*retMol);
+  auto rings = retMol->getRingInfo();
+  for (auto a : retMol->atoms()) {
+    if (a->getIsAromatic() && !rings->numAtomRings(a->getIdx())) {
+      a->setIsAromatic(false);
+    }
+  }
   return retMol;
 }
 }  // namespace
@@ -117,6 +126,8 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   PRECONDITION(mol.getNumConformers() > 0,
                "ShapeInput object needs the molecule to have conformers.  " +
                    mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
+  // std::cout << "making shape from " << MolToSmiles(mol) << " with "
+  // << mol.getNumConformers() << " confs" << std::endl;
   std::unique_ptr<RWMol> tmpMol;
   // Subsetting the molecule makes any bespoke atom radii, identified
   // by atom index, incorrect so stash them as atom properties.
@@ -130,10 +141,8 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   } else {
     tmpMol.reset(new RWMol(mol));
   }
-  // The input molecule may have been in Kekule form, so fix that so
-  // aromatic features are found.
-  MolOps::setAromaticity(*tmpMol);
   d_smiles = MolToSmiles(*tmpMol);
+  // std::cout << "shape smiles : " << d_smiles << std::endl;
   std::vector<unsigned int> atOrder;
   tmpMol->getProp(common_properties::_smilesAtomOutputOrder, atOrder);
   tmpMol.reset(dynamic_cast<RWMol *>(MolOps::renumberAtoms(*tmpMol, atOrder)));
@@ -168,6 +177,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
     pruneShapes(opts.shapePruneThreshold);
   }
   sortShapesByVolumes();
+  d_activeShape = 0;
 }
 
 ShapeInput::ShapeInput(const ShapeInput &other, unsigned int shapeNum) {
@@ -302,9 +312,9 @@ void ShapeInput::merge(ShapeInput &other) {
     return bs1Copy;
   };
 
-  d_normalizeds = joinBS(d_normalizeds, other.d_normalizeds);
+  d_normalizeds = joinBS(other.d_normalizeds, d_normalizeds);
   other.d_normalizeds.clear();
-  d_normalizationOKs = joinBS(d_normalizationOKs, other.d_normalizationOKs);
+  d_normalizationOKs = joinBS(other.d_normalizationOKs, d_normalizationOKs);
   other.d_normalizationOKs.clear();
   other.d_coords.clear();
   other.d_selfOverlapShapeVols.clear();
@@ -322,6 +332,11 @@ void ShapeInput::setActiveShape(unsigned int newShape) {
   if (d_activeShape != newShape) {
     d_activeShape = newShape;
   }
+}
+
+void ShapeInput::negateAlpha(unsigned int alphaNum) {
+  PRECONDITION(alphaNum < d_alphas.size(), "Bad number for alpha negation");
+  d_alphas[alphaNum] *= -1.0;
 }
 
 std::vector<RDGeom::Point3D> ShapeInput::getAtomPoints(
@@ -483,6 +498,7 @@ std::array<double, 3> ShapeInput::bestSimilarity(
   }
 
   RDGeom::Transform3D xform;
+  auto currActiveShape = getActiveShape();
   for (size_t i = 0; i < getNumShapes(); i++) {
     setActiveShape(i);
     for (size_t j = 0; j < fitShape.getNumShapes(); j++) {
@@ -503,10 +519,12 @@ std::array<double, 3> ShapeInput::bestSimilarity(
       // Floating point cruft means we sometimes get a similarity slightly
       // above 1.0.  1.0 is the maximum possible, so stop if we hit it.
       if (bestSim[0] > 1.0 || fabs(bestSim[0] - 1.0) < 1.0e-6) {
+        setActiveShape(currActiveShape);
         return bestSim;
       }
     }
   }
+  setActiveShape(currActiveShape);
   return bestSim;
 }
 
@@ -527,6 +545,38 @@ double ShapeInput::maxPossibleSimilarity(
     }
   }
   return maxSim;
+}
+
+void ShapeInput::pruneShapes(double simThreshold) {
+  if (d_coords.size() < 2) {
+    return;
+  }
+  class DistFunctor {
+   public:
+    DistFunctor(ShapeInput &shapes) : d_shapes(shapes), d_shapesCp(shapes) {}
+    ~DistFunctor() = default;
+    double operator()(unsigned int i, unsigned int j) {
+      d_shapes.setActiveShape(i);
+      d_shapesCp.setActiveShape(j);
+      auto scores = AlignShape(d_shapes, d_shapesCp);
+      // The picker works on distances.
+      return 1.0 - scores[0];
+    }
+    ShapeInput d_shapes;
+    ShapeInput d_shapesCp;
+  };
+  RDPickers::LeaderPicker leaderPicker;
+  DistFunctor distFunctor(*this);
+  // The picker works on distances.
+  auto picks = leaderPicker.lazyPick(distFunctor, d_coords.size(), 0,
+                                     1.0 - simThreshold);
+  // Allow for mysterious LeaderPicker behaviour where it returns a
+  // vector of 0s when it should only pick 1 shape.
+  std::ranges::sort(picks);
+  auto [first, last] = std::ranges::unique(picks);
+  picks.erase(first, last);
+  selectConformations(picks);
+  d_activeShape = 0;
 }
 
 namespace {
@@ -787,37 +837,6 @@ void ShapeInput::calculateExtremes() {
       d_extremePointss[d_activeShape][5] = j;
     }
   }
-}
-
-void ShapeInput::pruneShapes(double simThreshold) {
-  if (d_coords.size() < 2) {
-    return;
-  }
-  class DistFunctor {
-   public:
-    DistFunctor(ShapeInput &shapes) : d_shapes(shapes), d_shapesCp(shapes) {}
-    ~DistFunctor() = default;
-    double operator()(unsigned int i, unsigned int j) {
-      d_shapes.setActiveShape(i);
-      d_shapesCp.setActiveShape(j);
-      auto scores = AlignShape(d_shapes, d_shapesCp);
-      // The picker works on distances.
-      return 1.0 - scores[0];
-    }
-    ShapeInput d_shapes;
-    ShapeInput d_shapesCp;
-  };
-  RDPickers::LeaderPicker leaderPicker;
-  DistFunctor distFunctor(*this);
-  // The picker works on distances.
-  auto picks = leaderPicker.lazyPick(distFunctor, d_coords.size(), 0,
-                                     1.0 - simThreshold);
-  // Allow for mysterious LeaderPicker behaviour where it returns a
-  // vector of 0s when it should only pick 1 shape.
-  std::ranges::sort(picks);
-  auto [first, last] = std::ranges::unique(picks);
-  picks.erase(first, last);
-  selectConformations(picks);
 }
 
 void ShapeInput::selectConformations(const std::vector<int> &picks) {
