@@ -886,8 +886,8 @@ void finaliseHit(GaussianShape::ShapeInput &hitShapes, unsigned int hitShapeNum,
   hit = static_cast<ROMol>(*hitShapes.shapeToMol(false, true));
   MolTransforms::transformConformer(hit.getConformer(), xform);
   hit.setProp<double>("Similarity", scores[0]);
-  hit.setProp<double>("ShapeScore", scores[1]);
-  hit.setProp<double>("ColorScore", scores[2]);
+  hit.setProp<double>("ShapeTanimoto", scores[1]);
+  hit.setProp<double>("ColorTanimoto", scores[2]);
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
   MolOps::assignStereochemistryFrom3D(hit);
@@ -955,6 +955,10 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
       // We need to build a copy of the synthon and give it the coords
       // of the associated shape that is similar to the fragment, and
       // transform it to the overlaid coords.
+      std::cout << "Getting shape mol for "
+                << hs->synthonsToUse[sso[i]][synthNums[sso[i]]].first << " : "
+                << synthon->getSmiles() << " : "
+                << synthon->getShapes()->getShapes().getSmiles() << std::endl;
       auto shapeMol = getShapeMol(synthon, shapeNumToUse, transToUse);
       tmpSynths[sso[i]].reset(shapeMol.release());
       synths[sso[i]] = tmpSynths[sso[i]].get();
