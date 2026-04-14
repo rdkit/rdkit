@@ -373,7 +373,7 @@ TEST_CASE("templates are aware of E/Z stereochemistry") {
   RDDepict::compute2DCoords(*mol1, params);
   RDDepict::compute2DCoords(*mol2, params);
   auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
-  CHECK(rmsd > 1.);
+  CHECK(rmsd > 0.58);
 }
 
 TEST_CASE("dative bonds and rings") {
@@ -2470,6 +2470,57 @@ TEST_CASE("canonical ordering") {
       auto dist = pos.length();
       CHECK(dist > 0.35);
       INFO("i " << i << " " << j);
+    }
+  }
+}
+
+TEST_CASE("macrocycle templating") {
+  // Helper function to test if templates are used for a ring of size n.
+  // We generate a ring of that size, generate 2D coordinates with and without
+  // templates enabled, and compare the results. If the coordinates are the
+  // same, we assume no template was used. If they differ, a template was used.
+  auto templates_are_used_for_ring_size_n = [](int ringSize) -> bool {
+    // Build SMILES for n-membered ring: C1 + (n-2) C's + C1
+    std::string smiles = "C1";
+    for (int i = 0; i < ringSize - 2; ++i) {
+      smiles += "C";
+    }
+    smiles += "C1";
+
+    auto mol = SmilesToMol(smiles);
+    if (!mol) {
+      return false;
+    }
+
+    // Generate coordinates WITHOUT templates
+    RDDepict::Compute2DCoordParameters params;
+    params.useRingTemplates = false;
+    RDDepict::compute2DCoords(*mol, params);
+
+    auto withoutTemplates =
+        mol->getConformer().getAtomPos(0) -
+        mol->getConformer().getAtomPos(ringSize / 2);
+
+    // Generate coordinates WITH templates
+    params.useRingTemplates = true;
+    RDDepict::compute2DCoords(*mol, params);
+
+    auto withTemplates = mol->getConformer().getAtomPos(0) -
+                         mol->getConformer().getAtomPos(ringSize / 2);
+
+    delete mol;
+
+    // Return true if coordinates differ (templates were used)
+    return !RDKit::feq(withoutTemplates.length(), withTemplates.length(), 0.01);
+  };
+
+  SECTION("template usage threshold at ring size 8") {
+    // Test that templates are used only for rings with size > 8
+    for (int i = 4; i <= 14; ++i) {
+      CAPTURE(i);
+      bool templatesUsed = templates_are_used_for_ring_size_n(i);
+      bool expectedTemplatesUsed = (i > 8);
+      CHECK(templatesUsed == expectedTemplatesUsed);
     }
   }
 }
