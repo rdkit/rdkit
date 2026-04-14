@@ -1197,8 +1197,11 @@ void DrawMol::calculateScale() {
          drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Right) &&
         !drawOptions_.legendVerticalText;
     if (sideLegendHoriz && molWidth_ > 0) {
+      // Keep a minimum absolute side gap of 8 px so labels do not crowd the
+      // horizontal side legend on small canvases.
       const double g =
           std::max(8.0, marginPadding_ * static_cast<double>(drawWidth_));
+      // Require at least ~24 px of drawable molecule width after the gap.
       if (double(molWidth_) > g + 24.0) {
         widthForScale = double(molWidth_) - g;
       }
@@ -1850,8 +1853,12 @@ double calc_line_gap(const DrawText &textDrawer, bool vertText,
                      double relFontScale) {
   const double font_px = textDrawer.fontSize() * relFontScale;
   if (vertText) {
+    // Vertical legend text needs more inter-glyph breathing room.
+    // 0.35*font_px was tuned to avoid glyph overlap across common fonts.
     return std::max(1.0, font_px * 0.35);
   }
+  // Horizontal legend lines can be tighter; keep a 2 px minimum so short
+  // legends remain readable on small canvases.
   return std::max(2.0, font_px * 0.15);
 }
 
@@ -2089,7 +2096,7 @@ void DrawMol::extractLegend() {
                drawOptions_.legendPosition ==
                    MolDrawOptions::LegendPosition::Top) {
       double extra_padding = total_height * marginPadding_;
-      extra_padding = extra_padding < 2.0 ? 2.0 : extra_padding;
+      extra_padding = std::max(extra_padding, 2.0);
       legendHeight_ = int(total_height + extra_padding);
       drawHeight_ += legendHeight_;
       height_ += legendHeight_;
@@ -3165,6 +3172,8 @@ void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
     case MolDrawOptions::LegendPosition::Left:
       if (!legend_.empty() && !drawOptions_.legendVerticalText &&
           molWidth_ > 0) {
+        // Same minimum side gap used in initDrawMolecule() so scaling and final
+        // placement stay consistent for horizontal side legends.
         const double g =
             std::max(8.0, marginPadding_ * static_cast<double>(drawWidth_));
         // Drawn x spans [toCentre.x, toCentre.x + scaledRanges.x]; leave g past
@@ -3177,6 +3186,7 @@ void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
     case MolDrawOptions::LegendPosition::Right:
       if (!legend_.empty() && !drawOptions_.legendVerticalText &&
           molWidth_ > 0) {
+        // Same minimum side gap used on the left side for symmetry.
         const double g =
             std::max(8.0, marginPadding_ * static_cast<double>(drawWidth_));
         xCentre = basePanelX + double(molWidth_) - g - scaledRanges.x;
