@@ -161,7 +161,7 @@ TEST_CASE("basic alignment") {
       } else {
         CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.503, 0.005));
         CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.761, 0.005));
-        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.245, 0.005));
+        CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.233, 0.005));
       }
       // Check that a re-score gives the same answer.
       const auto rescores = GaussianShape::ScoreMolecule(
@@ -294,9 +294,9 @@ TEST_CASE("handling molecules with Hs") {
     RWMol cp(*probe);
     RDGeom::Transform3D xform;
     auto scores = GaussianShape::AlignMolecule(*ref, cp);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.700, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.736, 0.005));
     CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.834, 0.005));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.566, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.635, 0.005));
     for (auto i = 0u; i < cp.getNumAtoms(); ++i) {
       // the failure mode here was that Hs had HUGE coordinates
       auto pos = cp.getConformer().getAtomPos(i);
@@ -440,19 +440,18 @@ TEST_CASE("Iressa onto Tagrisso") {
   shapeOpts.allCarbonRadii = false;
   auto scores = GaussianShape::AlignMolecule(*tagrisso, *iressa, shapeOpts,
                                              shapeOpts, nullptr, opts);
-  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.332, 0.005));
-  CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.569, 0.005));
-  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.095, 0.005));
-
+  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.331, 0.005));
+  CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.572, 0.005));
+  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.090, 0.005));
   auto rescores = GaussianShape::ScoreMolecule(*tagrisso, *iressa, shapeOpts,
                                                shapeOpts, opts);
   CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(rescores[0], 0.005));
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(rescores[1], 0.005));
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(rescores[2], 0.005));
   auto aligned_iressa =
-      "COc1cc2ncnc(Nc3ccc(F)c(Cl)c3)c2cc1OCCCN1CCOCC1 |(3.34206,-4.82098,0.224565;2.562,-4.29938,-0.849374;1.40029,-3.66768,-0.520786;0.217637,-4.40844,-0.435429;-0.995315,-3.80966,-0.103538;-2.12266,-4.53841,-0.026421;-3.25097,-3.87666,0.301586;-3.3749,-2.56477,0.559961;-2.22774,-1.8651,0.473675;-2.30832,-0.475114,0.738276;-3.33657,0.464391,0.56286;-4.2686,0.303124,-0.466868;-5.2907,1.23626,-0.641364;-5.38531,2.33529,0.212458;-6.37287,3.22379,0.031359;-4.45782,2.50088,1.24127;-4.5695,3.85508,2.29834;-3.43604,1.56746,1.41601;-0.997368,-2.42737,0.145328;0.187601,-1.67548,0.061391;1.37756,-2.30488,-0.27166;2.52893,-1.56544,-0.352965;2.83995,-1.00034,-1.61907;3.59724,0.302963,-1.40382;2.76275,1.31266,-0.622178;1.52096,1.60458,-1.33518;0.667075,2.50553,-0.54864;-0.616491,2.80465,-1.31789;-0.312021,3.38752,-2.58555;0.491386,2.50505,-3.3701;1.80144,2.19743,-2.65039)|"_smiles;
+      "COc1cc2ncnc(Nc3ccc(F)c(Cl)c3)c2cc1OCCCN1CCOCC1 |(3.08453,-4.88523,0.170077;2.29914,-4.34091,-0.888589;1.15638,-3.68668,-0.538328;-0.040292,-4.40272,-0.438557;-1.23492,-3.78034,-0.0843727;-2.37618,-4.48548,0.00635958;-3.48492,-3.80191,0.355683;-3.57688,-2.48924,0.623248;-2.41657,-1.81353,0.522875;-2.46344,-0.42373,0.79642;-3.47407,0.538362,0.642364;-4.42522,0.402938,-0.373507;-5.42983,1.35852,-0.526776;-5.48774,2.45427,0.334513;-6.45888,3.36454,0.173853;-4.54106,2.59412,1.34956;-4.60745,3.94414,2.41576;-3.53677,1.63825,1.50308;-1.2037,-2.3998,0.172165;-0.00444866,-1.6727,0.0738388;1.16652,-2.3252,-0.281314;2.33196,-1.60985,-0.376552;2.6352,-1.04403,-1.64422;3.4233,0.241654,-1.43364;2.62275,1.26418,-0.633414;1.37651,1.58654,-1.32523;0.554317,2.50073,-0.520411;-0.734405,2.83149,-1.26777;-0.437359,3.41523,-2.53679;0.334793,2.52057,-3.33873;1.64904,2.18104,-2.64136)|"_smiles;
   REQUIRE(aligned_iressa);
-  checkMolsHaveRoughlySameCoords(*iressa, *aligned_iressa);
+  CHECK(checkMolsHaveRoughlySameCoords(*iressa, *aligned_iressa));
 }
 
 TEST_CASE("Optimise in place") {
@@ -501,9 +500,9 @@ TEST_CASE("Optimise in place") {
     ROMol cp(*canon_probe);
     auto scores = GaussianShape::AlignMolecule(*pdb_trp_3tmn, cp, shapeOpts,
                                                shapeOpts, nullptr, opts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.197, 0.001));
-    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.361, 0.001));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.033, 0.001));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.201, 0.001));
+    CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.364, 0.001));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.039, 0.001));
   }
   {
     // And with reference as a shape the same
@@ -561,10 +560,9 @@ TEST_CASE("Fragment Mode") {
   // Use the smaller molecule as the probe
   auto scores = GaussianShape::AlignShape(refShape, probeShape, &xform, opts);
   // These are close to the values above for starting from the xtal structures.
-  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.311, 0.005));
-  CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.408, 0.005));
-  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.215, 0.005));
-  MolTransforms::transformConformer(pdb_trp_3tmn->getConformer(), xform);
+  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.332, 0.005));
+  CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.413, 0.005));
+  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.251, 0.005));
 }
 
 TEST_CASE("custom feature points") {
