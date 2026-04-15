@@ -235,7 +235,7 @@ c1cc,0
   }
 }
 
-#ifdef RDK_BUILD_THREADSAFE_SSS
+#if defined(RDK_BUILD_THREADSAFE_SSS) && defined(__cpp_lib_execution)
 // NOTE: will only run in parallel on linux if TBB is installed
 TEST_CASE("parallel reads") {
   // there's likely no benefit from the parallelization here,
@@ -329,8 +329,6 @@ TEST_CASE("parallel reads") {
               << " molecules took " << duration.count() << " ms" << std::endl;
   }
 }
-#endif
-#if 1
 TEST_CASE("benchmarking") {
   auto *rdbase = std::getenv("RDBASE");
   REQUIRE(rdbase);
@@ -367,7 +365,6 @@ TEST_CASE("benchmarking") {
     std::cerr << "Base transform of " << reader.length() << "x" << numIters
               << " molecules took " << duration.count() << " ms" << std::endl;
     CHECK(accum > 0);
-#if 1
     accum = 0.0;
     start = std::chrono::high_resolution_clock::now();
     for (unsigned int iter = 0; iter < numIters; ++iter) {
@@ -383,7 +380,6 @@ TEST_CASE("benchmarking") {
     std::cerr << "Parallel transform of " << reader.length() << "x" << numIters
               << " molecules took " << duration.count() << " ms" << std::endl;
     CHECK(accum > 0);
-#endif
   }
 }
 #endif
