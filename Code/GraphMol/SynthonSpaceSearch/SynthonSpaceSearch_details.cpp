@@ -836,7 +836,6 @@ std::string buildProductName(
   return prodName;
 }
 
-std::mutex myMutex;
 std::unique_ptr<ROMol> buildProduct(
     const std::vector<const ROMol *> &synthons) {
   MolzipParams mzparams;
@@ -853,6 +852,7 @@ std::unique_ptr<ROMol> buildProduct(
     std::cout << "AWOOGA :: Failed to zip " << MolToSmiles(*prodMol)
               << " because " << std::endl
               << e.what() << std::endl;
+    prodMol.reset();
   }
   return prodMol;
 }

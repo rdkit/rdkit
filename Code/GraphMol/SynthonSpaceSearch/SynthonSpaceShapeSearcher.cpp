@@ -927,7 +927,13 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
   // If this doesn't work, there's something so wrong an abort is necessary.
   auto hs = dynamic_cast<const SynthonSpaceShapeHitSet *>(hitset);
   PRECONDITION(hs, "Couldn't cast the hitset to shape hitset in buildHit");
-  std::vector<const ROMol *> synths(synthNums.size());
+  // shapeSynths is a molecule produced by shapeFromMol, with coords.
+  std::vector<const ROMol *> shapeSynths(synthNums.size());
+  // plainSynths is the original synthon input mol, to be used if the
+  // shapeSynths molecules can't be zipped.  The commonest reason for that
+  // is the shape was built from a sampleMol that didn't have exactly the
+  // same chemistry.
+  std::vector<const ROMol *> plainSynths(synthNums.size());
   std::vector<std::shared_ptr<ROMol>> tmpSynths(synthNums.size());
   // We need to build all the synthons into a molecule, with them put into
   // the position the fragment->shape alignment gave.  Not all fragments
@@ -955,9 +961,16 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
       // We need to build a copy of the synthon and give it the coords
       // of the associated shape that is similar to the fragment, and
       // transform it to the overlaid coords.
+      // std::cout << "Getting shape mol for "
+      //           << hs->synthonsToUse[sso[i]][synthNums[sso[i]]].first << " :
+      //           "
+      //           << synthon->getSmiles() << " : "
+      //           << synthon->getShapes()->getShapes().getSmiles() <<
+      //           std::endl;
       auto shapeMol = getShapeMol(synthon, shapeNumToUse, transToUse);
       tmpSynths[sso[i]].reset(shapeMol.release());
-      synths[sso[i]] = tmpSynths[sso[i]].get();
+      shapeSynths[sso[i]] = tmpSynths[sso[i]].get();
+      plainSynths[sso[i]] = synthon->getOrigMol().get();
       synthNames[sso[i]] =
           &(hs->synthonsToUse[sso[i]][synthNums[sso[i]]].first);
       synthsMatched[sso[i]] = true;
@@ -969,12 +982,26 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
         const auto &synthon = hs->synthonsToUse[i][synthNums[i]].second;
         auto shapeMol = getShapeMol(synthon, 0, nullptr);
         tmpSynths[i].reset(shapeMol.release());
-        synths[i] = tmpSynths[i].get();
+        shapeSynths[i] = tmpSynths[i].get();
         synthNames[i] = &(hs->synthonsToUse[i][synthNums[i]].first);
+        plainSynths[i] = synthon->getOrigMol().get();
       }
     }
   }
-  return details::buildProduct(synths);
+  auto prod = details::buildProduct(shapeSynths);
+  if (!prod) {
+    // Try it with the plain synthons, which will obviously need coordinates
+    // creating later on.
+    prod = details::buildProduct(plainSynths);
+    if (!prod) {
+      std::cout << "Failed building " << std::endl;
+      for (const auto &s : synthNames) {
+        std::cout << *s << " ";
+      }
+      std::cout << " for reaction " << hs->d_reaction->getId() << std::endl;
+    }
+  }
+  return prod;
 }
 
 namespace {
@@ -1005,15 +1032,17 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     ROMol &hit, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames) {
   // std::cout << "Verifying hit " << MolToCXSmiles(hit) << std::endl;
-  auto initScores =
-      GaussianShape::AlignMolecule(dp_queryShapes->getShapes(), hit);
-  // std::cout << "initScores : " << initScores[0] << ", " << initScores[1] <<
-  // ", "
-  // << initScores[2] << std::endl;
-  finaliseHit(hit, initScores, rxnId, synthNames);
-  if (!getParams().bestHit && checkBondLengths(hit) &&
-      initScores[0] >= getParams().similarityCutoff) {
-    return true;
+  std::array<double, 3> initScores{-1.0, -1.0, -1.0};
+  if (hit.getNumConformers()) {
+    initScores = GaussianShape::AlignMolecule(dp_queryShapes->getShapes(), hit);
+    // std::cout << "initScores : " << initScores[0] << ", " << initScores[1] <<
+    // ", "
+    // << initScores[2] << std::endl;
+    finaliseHit(hit, initScores, rxnId, synthNames);
+    if (!getParams().bestHit && checkBondLengths(hit) &&
+        initScores[0] >= getParams().similarityCutoff) {
+      return true;
+    }
   }
   // If the run is multi-threaded, this will already be running
   // on the maximum number of threads, so do the embedding on
