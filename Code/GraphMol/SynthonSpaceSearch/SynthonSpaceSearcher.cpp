@@ -47,15 +47,15 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
   }
   // For the fragmentation, it is often useful to be able to keep track of the
   // original indices.
-  for (auto atom : getQuery().atoms()) {
+  for (const auto atom : getQuery().atoms()) {
     atom->setProp<unsigned int>("ORIG_IDX", atom->getIdx());
   }
-  for (auto bond : getQuery().bonds()) {
+  for (const auto bond : getQuery().bonds()) {
     bond->setProp<unsigned int>("ORIG_IDX", bond->getIdx());
   }
 }
 
-SearchResults SynthonSpaceSearcher::search(ThreadMode threadMode) {
+SearchResults SynthonSpaceSearcher::search(const ThreadMode threadMode) {
   ControlCHandler::reset();
   std::vector<std::unique_ptr<ROMol>> results;
   const TimePoint *endTime = nullptr;
@@ -75,7 +75,7 @@ SearchResults SynthonSpaceSearcher::search(ThreadMode threadMode) {
 }
 
 void SynthonSpaceSearcher::search(const SearchResultCallback &cb,
-                                  ThreadMode threadMode) {
+                                  const ThreadMode threadMode) {
   bool timedOut = false;
   const TimePoint *endTime = nullptr;
   std::uint64_t totHits = 0;
@@ -142,7 +142,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildHit(
   for (size_t i = 0; i < synthNums.size(); i++) {
     synths[i] =
         hitset->synthonsToUse[i][synthNums[i]].second->getOrigMol().get();
-    synthNames[i] = &(hitset->synthonsToUse[i][synthNums[i]].first);
+    synthNames[i] = &hitset->synthonsToUse[i][synthNums[i]].first;
   }
   return details::buildProduct(synths);
 }
@@ -181,15 +181,15 @@ namespace {
 void searchReactionPart(
     const std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
     const TimePoint *endTime, std::atomic<std::int64_t> &mostRecentFrag,
-    SynthonSpaceSearcher *searcher, const SynthonSet &reaction,
+    const SynthonSpaceSearcher *searcher, const SynthonSet &reaction,
     std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> &allSetHits,
     std::unique_ptr<ProgressBar> &pbar) {
   bool timedOut = false;
   int numTries = 1;
 
-  std::int64_t lastFrag = fragments.size();
+  const std::int64_t lastFrag = fragments.size();
   while (true) {
-    std::int64_t nextFrag = ++mostRecentFrag;
+    const std::int64_t nextFrag = ++mostRecentFrag;
     if (nextFrag >= lastFrag) {
       break;
     }
@@ -211,7 +211,7 @@ void searchReactionPart(
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
     SynthonSpaceSearcher *searcher, const SynthonSet &reaction,
-    const TimePoint *endTime, unsigned numThreads,
+    const TimePoint *endTime, const unsigned numThreads,
     std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
     std::unique_ptr<ProgressBar> &pbar) {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> hits;
@@ -247,13 +247,13 @@ void processReactions(
     const std::vector<std::string> &reactionNames,
     std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
     const TimePoint *endTime, std::atomic<std::int64_t> &mostRecentReaction,
-    std::int64_t lastReaction,
+    const std::int64_t lastReaction,
     std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> &reactionHits,
     std::unique_ptr<ProgressBar> &pbar) {
   bool timedOut = false;
 
   while (true) {
-    std::int64_t thisR = ++mostRecentReaction;
+    const std::int64_t thisR = ++mostRecentReaction;
     if (thisR > lastReaction) {
       break;
     }
@@ -277,7 +277,7 @@ unsigned int SynthonSpaceSearcher::getNumQueryFragmentsRequired() {
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
                                       std::uint64_t &totHits,
-                                      ThreadMode threadMode) {
+                                      const ThreadMode threadMode) {
   std::vector<std::unique_ptr<ROMol>> results;
   auto fragments = details::splitMolecule(
       d_query, getNumQueryFragmentsRequired(), d_params.maxNumFragSets, endTime,
@@ -296,7 +296,7 @@ std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSearcher::doTheSearch(
     std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
     const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits,
-    ThreadMode threadMode) {
+    const ThreadMode threadMode) {
   auto reactionNames = getSpace().getReactionNames();
   std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> reactionHits;
   if (threadMode == ThreadMode::ThreadFragments) {
@@ -407,7 +407,7 @@ bool SynthonSpaceSearcher::quickVerify(
 }
 
 void SynthonSpaceSearcher::updateBestHitSoFar(const ROMol &possBest,
-                                              double sim) {
+                                              const double sim) {
   if (sim > d_bestSimilarity) {
     d_bestSimilarity = sim;
     d_bestHitFound.reset(new ROMol(possBest));
@@ -516,7 +516,6 @@ void SynthonSpaceSearcher::buildAllHits(
     }
     details::Stepper stepper(numSynthons);
 
-    const auto &reaction = getSpace().getReaction(hitset->d_reaction->getId());
     // process the synthons
     while (stepper.d_currState[0] != numSynthons[0]) {
       toTry.emplace_back(hitset.get(), stepper.d_currState);
@@ -580,10 +579,10 @@ void processPartHitsFromDetails(
         std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> &toTry,
     const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results,
     SynthonSpaceSearcher *searcher, std::atomic<std::int64_t> &mostRecentTry,
-    std::int64_t lastTry, std::unique_ptr<ProgressBar> &pbar) {
+    const std::int64_t lastTry, std::unique_ptr<ProgressBar> &pbar) {
   std::uint64_t numTries = 1;
   while (true) {
-    std::int64_t thisTry = ++mostRecentTry;
+    const std::int64_t thisTry = ++mostRecentTry;
     if (thisTry > lastTry) {
       break;
     }
