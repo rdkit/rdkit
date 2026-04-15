@@ -73,6 +73,9 @@ std::vector<int> rdl_cycle_to_atom_ring(RDL_cycle *cycle) {
     }
   }
 
+  // For consistency, normalize the ring
+  normalize_ring(ring);
+
   return ring;
 }
 }  // namespace
@@ -109,6 +112,12 @@ void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
   }
 }
 
+auto ringComparer = [](const auto &v1, const auto &v2) {
+  if (v1.size() == v2.size()) {
+    return v1 < v2;
+  }
+  return v1.size() < v2.size();
+};
 }  // end of namespace RingUtils
 
 namespace FindRings {
@@ -121,110 +130,11 @@ void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
 }
 
 void storeRingsInfo(const ROMol &mol, const VECT_INT_VECT &rings) {
+  mol.getRingInfo()->preallocate(rings.size(), rings.size());
   for (const auto &ring : rings) {
     storeRingInfo(mol, ring);
   }
 }
-
-auto compRingSize = [](const auto &v1, const auto &v2) {
-  return v1.size() < v2.size();
-};
-
-void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
-  // sort on size
-  std::sort(res.begin(), res.end(), compRingSize);
-
-  // change the rings from atom IDs to bondIds
-  VECT_INT_VECT brings;
-  RingUtils::convertToBonds(res, brings, mol);
-  std::vector<boost::dynamic_bitset<>> bitBrings;
-  bitBrings.reserve(brings.size());
-  for (const auto &vivi : brings) {
-    boost::dynamic_bitset<> lring(mol.getNumBonds());
-    for (int ivi : vivi) {
-      lring.set(ivi);
-    }
-    bitBrings.push_back(lring);
-  }
-
-  boost::dynamic_bitset<> availRings(res.size());
-  availRings.set();
-  boost::dynamic_bitset<> keepRings(res.size());
-  boost::dynamic_bitset<> munion(mol.getNumBonds());
-
-  // optimization - don't reallocate a new one each loop
-  boost::dynamic_bitset<> workspace(mol.getNumBonds());
-
-  for (unsigned int i = 0; i < res.size(); ++i) {
-    // skip this ring if we've already seen all of its bonds
-    if (bitBrings[i].is_subset_of(munion)) {
-      availRings.set(i, 0);
-    }
-    if (!availRings[i]) {
-      continue;
-    }
-
-    munion |= bitBrings[i];
-    keepRings.set(i);
-
-    // from this ring we consider all others that are still available and the
-    // same size
-    boost::dynamic_bitset<> consider(res.size());
-    for (unsigned int j = i + 1; j < res.size(); ++j) {
-      if (availRings[j] && (brings[j].size() == brings[i].size())) {
-        consider.set(j);
-      }
-    }
-
-    while (consider.any()) {
-      unsigned int bestJ = i + 1;
-      int bestOverlap = -1;
-      // loop over the available other rings in consideration and pick the one
-      // that has the most overlapping bonds with what we've done so far.
-      // this is the fix to github #526
-      for (unsigned int j = i + 1;
-           j < res.size() && brings[j].size() == brings[i].size(); ++j) {
-        if (!consider[j] || !availRings[j]) {
-          continue;
-        }
-        workspace = bitBrings[j];
-        workspace &= munion;
-        int overlap = rdcast<int>(workspace.count());
-        if (overlap > bestOverlap) {
-          bestOverlap = overlap;
-          bestJ = j;
-        }
-      }
-      consider.set(bestJ, 0);
-      if (bitBrings[bestJ].is_subset_of(munion)) {
-        availRings.set(bestJ, 0);
-      } else {
-        keepRings.set(bestJ);
-        availRings.set(bestJ, 0);
-        munion |= bitBrings[bestJ];
-      }
-    }
-  }
-  // remove the extra rings from res and store them on the molecule in case we
-  // wish symmetrize the SSSRs later
-  VECT_INT_VECT extras;
-  VECT_INT_VECT temp = res;
-  res.resize(0);
-  for (unsigned int i = 0; i < temp.size(); i++) {
-    if (keepRings[i]) {
-      res.push_back(temp[i]);
-    } else {
-      extras.push_back(temp[i]);
-    }
-  }
-  // add extra rings to the molecule (there could already be some from previous
-  // fragments)
-  VECT_INT_VECT molExtras;
-  mol.getPropIfPresent(common_properties::extraRings, molExtras);
-  molExtras.insert(molExtras.end(), extras.begin(), extras.end());
-  mol.setProp(common_properties::extraRings, molExtras, true);
-}
-
 }  // namespace FindRings
 
 namespace RDKit {
@@ -241,47 +151,31 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT *res, bool includeDativeBonds,
 
 int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
              bool includeHydrogenBonds) {
-  res.resize(0);
-  if (mol.getRingInfo()->isInitialized()) {
-    mol.getRingInfo()->reset();
+  res.clear();
+  auto ringInfo = mol.getRingInfo();
+  if (ringInfo->isInitialized()) {
+    ringInfo->reset();
   }
-  mol.getRingInfo()->initialize(FIND_RING_TYPE_SSSR);
-  mol.clearProp(common_properties::extraRings);
+  ringInfo->initialize(FIND_RING_TYPE_SSSR);
+  ringInfo->preallocate(mol.getNumAtoms(), mol.getNumBonds());
 
   findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
   auto urfdata = mol.getRingInfo()->dp_urfData.get();
 
-  // Since we run findRingFamilies() on the whole mol,
-  // and we might have disconnected fragments, we can't
-  // use the (numBonds - numAtoms + 1) formula to calculate
-  // the expected number of rings. And I don't know
-  // any better way than extracting the SSSR to calculate
-  // it (we need it to split rings between SSSR and extra rings)
   RDL_cycle **sssr = nullptr;
-  auto nexpt = RDL_getSSSR(urfdata, &sssr);
-  RDL_deleteCycles(sssr, nexpt);
-
-  for (unsigned int i = 0; i < RDL_getNofURF(urfdata); ++i) {
-    auto it = RDL_getRCyclesForURFIterator(urfdata, i);
-    while (!RDL_cycleIteratorAtEnd(it)) {
-      auto *cycle = RDL_cycleIteratorGetCycle(it);
-
-      auto ring = rdl_cycle_to_atom_ring(cycle);
-
-      // For consistency, normalize the ring
-      normalize_ring(ring);
-
-      res.push_back(std::move(ring));
-
-      RDL_deleteCycle(cycle);
-      RDL_cycleIteratorNext(it);
-    }
-    RDL_deleteCycleIterator(it);
+  auto sssrSize = RDL_getSSSR(urfdata, &sssr);
+  if (sssrSize == RDL_INVALID_RESULT) {
+    throw ValueErrorException("Failed finding a SSSR for the mol.");
   }
 
-  if (res.size() > nexpt) {
-    FindRings::removeExtraRings(res, nexpt, mol);
+  res.reserve(sssrSize);
+  for (unsigned int i = 0; i < sssrSize; ++i) {
+    auto ring = rdl_cycle_to_atom_ring(sssr[i]);
+    res.push_back(std::move(ring));
   }
+  RDL_deleteCycles(sssr, sssrSize);
+
+  std::ranges::sort(res, RingUtils::ringComparer);
 
   FindRings::storeRingsInfo(mol, res);
 
@@ -299,35 +193,20 @@ int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds,
 
 int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
                    bool includeHydrogenBonds) {
-  res.clear();
-  VECT_INT_VECT sssrs;
-
   // FIX: need to set flag here the symmetrization has been done in order to
   // avoid repeating this work
-  findSSSR(mol, sssrs, includeDativeBonds, includeHydrogenBonds);
+  findSSSR(mol, res, includeDativeBonds, includeHydrogenBonds);
 
   // reinit as SYMM_SSSR
-  mol.getRingInfo()->initialize(FIND_RING_TYPE_SYMM_SSSR);
+  auto ringInfo = mol.getRingInfo();
+  ringInfo->initialize(FIND_RING_TYPE_SYMM_SSSR);
 
-  res.reserve(sssrs.size());
-  for (const auto &r : sssrs) {
-    res.emplace_back(r);
-  }
-
-  // now check if there are any extra rings on the molecule
-  if (!mol.hasProp(common_properties::extraRings)) {
-    // no extra rings nothing to be done
-    return rdcast<int>(res.size());
-  }
-  const VECT_INT_VECT &extras =
-      mol.getProp<VECT_INT_VECT>(common_properties::extraRings);
-
-  // convert the rings to bond ids
-  VECT_INT_VECT bondsssrs;
-  RingUtils::convertToBonds(sssrs, bondsssrs, mol);
+  // get the bond rings (we just calculated them when getting the SSSR.
+  // copy is intentional, as we'll probably be adding more rings
+  auto bondsssrs = ringInfo->bondRings();
 
   //
-  // For each "extra" ring, figure out if it could replace a single
+  // For each ring in the URFs, figure out if it could replace a single
   // ring in the SSSR. A ring could be swapped out if:
   //
   // * They are the same size
@@ -349,44 +228,64 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
     }
   }
 
+  // This was also initialized when we got the SSSR.
+  auto urfdata = mol.getRingInfo()->dp_urfData.get();
+
   INT_VECT extraRing;
-  for (auto &extraAtomRing : extras) {
-    RingUtils::convertToBonds(extraAtomRing, extraRing, mol);
-    for (auto &ring : bondsssrs) {
-      if (ring.size() != extraRing.size()) {
+  for (unsigned int i = 0; i < RDL_getNofURF(urfdata); ++i) {
+    auto it = RDL_getRCyclesForURFIterator(urfdata, i);
+    while (!RDL_cycleIteratorAtEnd(it)) {
+      auto *cycle = RDL_cycleIteratorGetCycle(it);
+      auto extraAtomRing = rdl_cycle_to_atom_ring(cycle);
+      RingUtils::convertToBonds(extraAtomRing, extraRing, mol);
+
+      if (std::ranges::find(bondsssrs, extraRing) !=
+          bondsssrs.end()) {
+        // already in the SSSR, skip
+        RDL_deleteCycle(cycle);
+        RDL_cycleIteratorNext(it);
         continue;
       }
 
-      // If `ring` is the only provider of some bond, extraRing must also
-      // provide that bond.
-      bool shareBond = false;
-      bool replacesAllUniqueBonds = true;
-      for (auto &bondID : ring) {
-        const int bondCount = bondCounts[bondID];
-        if (bondCount == 1 || !shareBond) {
-          auto position = find(extraRing.begin(), extraRing.end(), bondID);
-          if (position != extraRing.end()) {
-            shareBond = true;
-          } else if (bondCount == 1) {
-            // 1 means `ring` is the only ring in the SSSR to provide this
-            // bond, and extraRing did not provide it (so extraRing is not an
-            // acceptable substitution in the SSSR for ring)
-            replacesAllUniqueBonds = false;
+      for (const auto &ring : bondsssrs) {
+        if (ring.size() != cycle->weight) {
+          continue;
+        }
+
+        // If `ring` is the only provider of some bond, extraRing must also
+        // provide that bond.
+        bool shareBond = false;
+        bool replacesAllUniqueBonds = true;
+        for (auto &bondID : ring) {
+          const int bondCount = bondCounts[bondID];
+          if (bondCount == 1 || !shareBond) {
+            auto position = std::ranges::find(extraRing, bondID);
+            if (position != extraRing.end()) {
+              shareBond = true;
+            } else if (bondCount == 1) {
+              // 1 means `ring` is the only ring in the SSSR to provide this
+              // bond, and extraRing did not provide it (so extraRing is not an
+              // acceptable substitution in the SSSR for ring)
+              replacesAllUniqueBonds = false;
+            }
           }
+        }
+
+        if (shareBond && replacesAllUniqueBonds) {
+          // small optimization: only convert the RDL cycle into
+          // an atom ring if we are going to use it.
+          res.push_back(extraAtomRing);
+          FindRings::storeRingInfo(mol, extraAtomRing);
+          break;
         }
       }
 
-      if (shareBond && replacesAllUniqueBonds) {
-        res.push_back(extraAtomRing);
-        FindRings::storeRingInfo(mol, extraAtomRing);
-        break;
-      }
+      RDL_deleteCycle(cycle);
+      RDL_cycleIteratorNext(it);
     }
+    RDL_deleteCycleIterator(it);
   }
 
-  if (mol.hasProp(common_properties::extraRings)) {
-    mol.clearProp(common_properties::extraRings);
-  }
   return rdcast<int>(res.size());
 }
 
