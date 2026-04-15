@@ -4934,7 +4934,9 @@ TEST_CASE("Testing github issue 418: removeHs not updating H count") {
     REQUIRE(m->getAtomWithIdx(0)->getNumExplicitHs() == 4);
     delete m;
   }
-  { REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException); }
+  {
+    REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException);
+  }
 }
 
 TEST_CASE(
@@ -6936,7 +6938,9 @@ TEST_CASE(
       REQUIRE(m->getNumBonds() == 244);
       REQUIRE_THROWS_AS(MolOps::findSSSR(*m), ValueErrorException);
     }
-    { REQUIRE_THROWS_AS(SmilesToMol(smiles), ValueErrorException); }
+    {
+      REQUIRE_THROWS_AS(SmilesToMol(smiles), ValueErrorException);
+    }
   }
 }
 
