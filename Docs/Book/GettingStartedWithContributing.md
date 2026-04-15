@@ -14,7 +14,10 @@ If you make significant use of AI tools beyond auto-complete when creating your
 contribution, please acknowledge that, and mention which tool you used, in the
 description of your PR. We encourage everyone to use the tools that make them
 maximally productive, but we also want to be completely transparent about the
-source of contributions.
+source of contributions. Your name will be associated with the code change, so 
+please review any generated code before posting it and make sure that you 
+understand what it is doing. Please do not submit any code that has not been 
+reviewed by a human first.
 
 ## What and How to Contribute
 
