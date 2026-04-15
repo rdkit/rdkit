@@ -8005,3 +8005,20 @@ TEST_CASE("Testing isRingFused") {
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 3);
   }
 }
+
+TEST_CASE("GitHub Issue #9064: Incorrect SMARTS matching") {
+  constexpr const char *smi = R"smi(c1ccc2c(c1)C3CC3C4CC5CC4CC25)smi";
+  constexpr const char *sma = R"sma(C!@c)sma";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto q = v2::SmilesParse::MolFromSmarts(sma);
+  REQUIRE(q);
+
+  CHECK(m->getRingInfo()->numRings() == 6);
+
+  auto matches = SubstructMatch(*m, *q);
+  CHECK(matches.empty());
+}
