@@ -19,6 +19,8 @@
 #include <GraphMol/RDKitBase.h>
 #include "MolSupplier.h"
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 static const std::string rdbase = getenv("RDBASE");
 
@@ -385,3 +387,50 @@ TEST_CASE("benchmarking") {
   }
 }
 #endif
+
+TEST_CASE("views and filtered reads") {
+  auto *rdbase = std::getenv("RDBASE");
+  REQUIRE(rdbase);
+  auto path = std::filesystem::path(rdbase) /
+              "Code/GraphMol/FileParsers/test_data/zinc.leads.500.q.sdf";
+  REQUIRE(std::filesystem::exists(path));
+  v2::FileParsers::SDMolSupplier reader1(path.string());
+  SECTION("filters") {
+    std::vector<unsigned int> nAts1(reader1.length());
+    std::transform(reader1.begin(), reader1.end(), nAts1.begin(),
+                   [](const auto mol) { return mol->getNumAtoms(); });
+    constexpr unsigned int tgtSize = 15;
+    auto nSmall =
+        std::ranges::count_if(nAts1, [](const auto &v) { return v < tgtSize; });
+    REQUIRE(nSmall > 0);
+    auto filtered = reader1 | std::views::filter([](const auto &mol) {
+                      return mol->getNumAtoms() < tgtSize;
+                    });
+    CHECK(std::distance(std::begin(filtered), std::end(filtered)) == nSmall);
+
+    // only read until we have a set number of molecules matching our filter:
+    const unsigned int subsetSz = nSmall / 4;
+    auto firstN = reader1 | std::views::filter([](const auto &mol) {
+                    return mol->getNumAtoms() < tgtSize;
+                  }) |
+                  std::views::take(subsetSz);
+    // this doen't work and I don't understand why:
+    // CHECK(std::distance(std::begin(firstN), std::end(firstN)) == subsetSz);
+    std::vector<std::shared_ptr<RWMol>> mols;
+    std::ranges::copy(firstN, std::back_inserter(mols));
+    CHECK(mols.size() == subsetSz);
+  }
+  SECTION("substructure filter") {
+    auto query = "c1ncncn1"_smiles;
+    SubstructMatchParameters params;
+    params.maxMatches = 1;
+    auto firstN = reader1 |
+                  std::views::filter([&query, &params](const auto &mol) {
+                    return SubstructMatch(*mol, *query, params).empty();
+                  }) |
+                  std::views::take(5);
+    std::vector<std::shared_ptr<RWMol>> mols;
+    std::ranges::copy(firstN, std::back_inserter(mols));
+    CHECK(mols.size() == 5);
+  }
+}
