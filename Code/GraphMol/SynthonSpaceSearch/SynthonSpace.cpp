@@ -1036,8 +1036,12 @@ void SynthonSpace::buildSynthonSampleMolecules(
         theseSamples.pop_back();
       }
     }
+    // Sort in descending order of SynthonSet size, so that if a synthon is used
+    // more than once, the sample is most representative of the type of
+    // chemistry it's involved with.
     std::ranges::sort(theseSamples, [](const auto &a, const auto &b) -> bool {
-      return a->d_numAtoms > b->d_numAtoms;
+      return a->d_synthonSet->getNumProducts() >
+             b->d_synthonSet->getNumProducts();
     });
     sampleMols.push_back(std::move(theseSamples));
   }

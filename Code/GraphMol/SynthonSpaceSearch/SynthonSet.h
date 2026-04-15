@@ -112,7 +112,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // The bonds in the synthons may not be the same as in the products, and
   // this is a problem for aromatic ring creation in particular.  Such as:
   // [1*]=CC=C[2*] and [1*]Nc1c([2*])cccc1 giving c1ccc2ncccc2c1.  So
-  // make versions of the synthons that reflect this, storead as searchMol
+  // make versions of the synthons that reflect this, stored as searchMol
   // in each synthon.
   void makeSynthonSearchMols();
 
