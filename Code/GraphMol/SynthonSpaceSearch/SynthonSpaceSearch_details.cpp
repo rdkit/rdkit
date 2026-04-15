@@ -846,17 +846,13 @@ std::unique_ptr<ROMol> buildProduct(
   for (size_t i = 1; i < synthons.size(); ++i) {
     prodMol.reset(combineMols(*prodMol, *synthons[i]));
   }
-  {
-    std::unique_lock<std::mutex> lock(myMutex);
-    std::cout << "zipping " << MolToCXSmiles(*prodMol) << std::endl;
-    try {
-      prodMol = molzip(*prodMol, mzparams);
-      MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
-    } catch (std::exception &e) {
-      std::cout << "AWOOGA :: Failed to zip " << MolToSmiles(*prodMol)
-                << " because " << std::endl
-                << e.what() << std::endl;
-    }
+  try {
+    prodMol = molzip(*prodMol, mzparams);
+    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
+  } catch (std::exception &e) {
+    std::cout << "AWOOGA :: Failed to zip " << MolToSmiles(*prodMol)
+              << " because " << std::endl
+              << e.what() << std::endl;
   }
   return prodMol;
 }
@@ -1195,6 +1191,7 @@ void setJoinIsotope(
   for (auto &[atom, otherAtom, isotopeNum] : atomIsotopes) {
     atom->setAtomicNum(0);
     atom->setIsotope(isotopeNum);
+    atom->setNumExplicitHs(0);
     dummyRadii.emplace_back(atom->getIdx(), GaussianShape::DUMMY_RAD);
   }
 }

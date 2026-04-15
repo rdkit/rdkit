@@ -955,10 +955,6 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
       // We need to build a copy of the synthon and give it the coords
       // of the associated shape that is similar to the fragment, and
       // transform it to the overlaid coords.
-      std::cout << "Getting shape mol for "
-                << hs->synthonsToUse[sso[i]][synthNums[sso[i]]].first << " : "
-                << synthon->getSmiles() << " : "
-                << synthon->getShapes()->getShapes().getSmiles() << std::endl;
       auto shapeMol = getShapeMol(synthon, shapeNumToUse, transToUse);
       tmpSynths[sso[i]].reset(shapeMol.release());
       synths[sso[i]] = tmpSynths[sso[i]].get();
@@ -978,11 +974,6 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
       }
     }
   }
-  std::cout << "Building " << std::endl;
-  for (const auto &s : synthNames) {
-    std::cout << *s << " ";
-  }
-  std::cout << std::endl;
   return details::buildProduct(synths);
 }
 
@@ -1079,9 +1070,11 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     // Stick with what we found at the start, which should still be in hit.
     foundHit = true;
   }
-  std::cout << "Hit : " << MolToCXSmiles(hit) << std::endl;
-  std::cout << "Hit similarity : " << hit.getProp<double>("Similarity") << " : "
-            << hit.getProp<std::string>(common_properties::_Name) << std::endl;
+  // std::cout << "Hit : " << MolToCXSmiles(hit) << std::endl;
+  // std::cout << "Hit similarity : " << hit.getProp<double>("Similarity") << "
+  // : "
+  //           << hit.getProp<std::string>(common_properties::_Name) <<
+  //           std::endl;
   return foundHit;
 }
 
