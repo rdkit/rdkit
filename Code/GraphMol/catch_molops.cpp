@@ -720,10 +720,14 @@ TEST_CASE("Test findRingFamilies") {
     // Make one bond a ZOB; this breaks the cyclohexane ring
     m->getBondWithIdx(0)->setBondType(Bond::ZERO);
 
-    MolOps::findRingFamilies(*m);
-
     auto r = m->getRingInfo();
     REQUIRE(r);
+
+    // This was already initialized by sanitization.
+    // We need to reset it to acknowledge the new ZOB
+    r->resetRingFamilies();
+
+    MolOps::findRingFamilies(*m);
 
     REQUIRE(r->areRingFamiliesInitialized());
     CHECK(r->atomRingFamilies().empty() == true);
@@ -737,10 +741,14 @@ TEST_CASE("Test findRingFamilies") {
     auto m = R"SMI(N->1CCN->[Pt]1)SMI"_smiles;
     REQUIRE(m);
 
-    MolOps::findRingFamilies(*m, includeDativeBonds);
-
     auto r = m->getRingInfo();
     REQUIRE(r);
+
+    // This was already initialized by sanitization.
+    // We need to reset it to acknowledge the new ZOB
+    r->resetRingFamilies();
+
+    MolOps::findRingFamilies(*m, includeDativeBonds);
 
     REQUIRE(r->areRingFamiliesInitialized());
 
@@ -756,11 +764,15 @@ TEST_CASE("Test findRingFamilies") {
     auto m = "CC1O[H]O=C(C)C1 |H:4.3|"_smiles;
     REQUIRE(m);
 
-    constexpr bool includeDativeBonds = false;
-    MolOps::findRingFamilies(*m, includeDativeBonds, includeHydrogenBonds);
-
     auto r = m->getRingInfo();
     REQUIRE(r);
+
+    // This was already initialized by sanitization.
+    // We need to reset it to acknowledge the new ZOB
+    r->resetRingFamilies();
+
+    constexpr bool includeDativeBonds = false;
+    MolOps::findRingFamilies(*m, includeDativeBonds, includeHydrogenBonds);
 
     REQUIRE(r->areRingFamiliesInitialized());
 

@@ -8700,16 +8700,16 @@ TEST_CASE("Lasso highlights") {
     CHECK(match_count == 4);
     auto a0reg = std::sregex_iterator(text.begin(), text.end(), a0);
     auto dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(228.9, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(94.6, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(228.8, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(93.6, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(381.7, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(284.9, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(381.0, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(285.5, 0.1));
     a0reg++;
     dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.1, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(81.1, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.1, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(81.5, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(377.9, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(265.7, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(378.7, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(266.0, 0.1));
     check_file_hash(baseName + "3.svg");
 #endif
   }
@@ -8749,22 +8749,22 @@ TEST_CASE("Lasso highlights") {
       CHECK(match_count == 3);
       auto a5reg = std::sregex_iterator(text.begin(), text.end(), a5);
       auto dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(221.0, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(206.7, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(219.7, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(206.2, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(286.2, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(243.1, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(285.0, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(242.7, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(215.1, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(177.9, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(216.2, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(177.0, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(280.5, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(215.0, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(281.6, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(214.2, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(243.0, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(187.2, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(243.3, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(188.6, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(307.7, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(224.2, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(307.9, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(225.5, 0.1));
       // There should be 2 lines in red, the lasso along the bi-phenyl
       // bond.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
@@ -8808,16 +8808,16 @@ TEST_CASE("Lasso highlights") {
       CHECK(match_count == 2);
       auto a11reg = std::sregex_iterator(text.begin(), text.end(), a11);
       auto dat1 = *a11reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(346.2, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(279.1, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(345.0, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(278.7, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(156.2, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(286.8, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(157.2, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(285.9, 0.1));
       a11reg++;
       dat1 = *a11reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(340.5, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(250.9, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(341.6, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(250.0, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(183.4, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(295.9, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(183.7, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(297.3, 0.1));
 
       // There should not be any red lines for bond 5.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
