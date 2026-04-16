@@ -40,6 +40,15 @@
 
 namespace RDKit {
 
+inline python::object &getPropSentinel() {
+  static python::object sentinel;
+  return sentinel;
+}
+inline void initPropSentinel() {
+  getPropSentinel() = python::object(python::handle<>(
+      PyObject_CallObject((PyObject *)&PyBaseObject_Type, nullptr)));
+}
+
 template <class T>
 inline const char *GetTypeName() {
   // PRECONDITION(0, "Unregistered c++ type");
@@ -231,15 +240,17 @@ python::object autoConvertString(const RDOb *ob, const std::string &key) {
 
 template <class RDOb>
 PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert,
-                    python::object defaultVal = python::object()) {
+                    python::object default_val = python::object()) {
   python::object pobj;
   if (!autoConvert) {
     std::string res;
     if (obj->getPropIfPresent(key, res)) {
       return rawPy(res);
+    } else if (default_val.ptr() != getPropSentinel().ptr()) {
+      return rawPy(default_val);
     } else {
-      Py_INCREF(defaultVal.ptr());
-      return defaultVal.ptr();
+      PyErr_SetString(PyExc_KeyError, key.c_str());
+      return nullptr;
     }
   } else {
     const auto &rd_dict = obj->getDict();
@@ -310,8 +321,11 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert,
       }
     }
   }
-  Py_INCREF(defaultVal.ptr());
-  return defaultVal.ptr();
+  if (default_val.ptr() != getPropSentinel().ptr() && !obj->hasProp(key)) {
+    return rawPy(default_val);
+  }
+  PyErr_SetString(PyExc_KeyError, key.c_str());
+  return nullptr;
 }
 
 // Return policy for functions that directly return a PyObject* and

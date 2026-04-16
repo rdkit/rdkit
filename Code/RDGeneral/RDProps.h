@@ -120,18 +120,6 @@ class RDProps {
     return d_props.getVal<T>(key);
   }
 
-  //! \overload
-  //! Returns \c defaultVal if the property is not present instead of throwing
-  //! a \c KeyErrorException.
-  template <typename T>
-  T getProp(const std::string_view key, const T &defaultVal) const {
-    T res;
-    if (getPropIfPresent(key, res)) {
-      return res;
-    }
-    return defaultVal;
-  }
-
   //! returns whether or not we have a \c property with name \c key
   //!  and assigns the value if we do
   //! \overload
