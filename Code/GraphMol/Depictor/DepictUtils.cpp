@@ -402,6 +402,92 @@ RDKit::INT_VECT getRotatableBonds(const RDKit::ROMol &mol, unsigned int aid1,
   return res;
 }
 
+bool isSpiroCenter(unsigned int aid, const RDKit::ROMol *mol) {
+  PRECONDITION(mol, "");
+  PRECONDITION(aid < mol->getNumAtoms(), "");
+
+  // Spiro atom must belong to exactly 2 rings
+  unsigned int numRings = mol->getRingInfo()->numAtomRings(aid);
+  if (numRings != 2) {
+    return false;
+  }
+
+  // Get the two rings containing this atom
+  const auto &atomRings = mol->getRingInfo()->atomRings();
+  std::vector<RDKit::INT_VECT> rings;
+  for (const auto &ring : atomRings) {
+    if (std::find(ring.begin(), ring.end(), static_cast<int>(aid)) != ring.end()) {
+      rings.push_back(ring);
+    }
+  }
+
+  if (rings.size() != 2) {
+    return false;
+  }
+
+  // Check that the two rings share ONLY this atom (spiro)
+  std::set<int> ring1(rings[0].begin(), rings[0].end());
+  std::set<int> ring2(rings[1].begin(), rings[1].end());
+
+  std::vector<int> shared;
+  std::set_intersection(ring1.begin(), ring1.end(),
+                       ring2.begin(), ring2.end(),
+                       std::back_inserter(shared));
+
+  if (shared.size() != 1 || shared[0] != static_cast<int>(aid)) {
+    // Rings share more than just this atom - not a spiro
+    return false;
+  }
+
+  // Spiro center should have exactly 4 neighbors (typical for carbon)
+  unsigned int degree = mol->getAtomWithIdx(aid)->getDegree();
+  if (degree != 4) {
+    return false;
+  }
+
+  // Verify that each ring has exactly 2 neighbors of the spiro atom
+  int ring1_neighbors = 0;
+  int ring2_neighbors = 0;
+
+  for (auto nbr : mol->atomNeighbors(mol->getAtomWithIdx(aid))) {
+    unsigned int nbrIdx = nbr->getIdx();
+    bool in_ring1 = ring1.find(nbrIdx) != ring1.end();
+    bool in_ring2 = ring2.find(nbrIdx) != ring2.end();
+
+    if (in_ring1 && !in_ring2) {
+      ring1_neighbors++;
+    } else if (in_ring2 && !in_ring1) {
+      ring2_neighbors++;
+    } else {
+      // Neighbor is in both rings or neither - not a spiro
+      return false;
+    }
+  }
+
+  if (ring1_neighbors != 2 || ring2_neighbors != 2) {
+    return false;
+  }
+
+  return true;
+}
+
+RDKit::INT_VECT getSpiroCenters(const RDKit::ROMol &mol, unsigned int aid1,
+                                unsigned int aid2) {
+  PRECONDITION(aid1 < mol.getNumAtoms(), "");
+  PRECONDITION(aid2 < mol.getNumAtoms(), "");
+
+  RDKit::INT_LIST path = RDKit::MolOps::getShortestPath(mol, aid1, aid2);
+  RDKit::INT_VECT res;
+
+  for (auto aid : path) {
+    if (isSpiroCenter(aid, &mol)) {
+      res.push_back(aid);
+    }
+  }
+
+  return res;
+}
+
 void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,
                           RDKit::INT_VECT &aids, RDKit::INT_VECT &bids) {
   CHECK_INVARIANT(mol, "");
