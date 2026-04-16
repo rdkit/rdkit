@@ -19,10 +19,14 @@
 #include <memory>
 #include <vector>
 #include <fstream>
+#include <iterator>
 #include <GraphMol/ROMol.h>
 #include <RDGeneral/BadFileException.h>
 #include "FileParsers.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <mutex>
+#endif
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 namespace schrodinger {
@@ -38,27 +42,67 @@ RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
 
 namespace v2 {
 namespace FileParsers {
+// clang-format off
 /*!
-//
-//  Here are a couple of ways one can interact with MolSuppliers:
-//
-//  1) Lazy (ForwardIterator):
-//     while(!supplier.atEnd()){
-//       ROMol *mol = supplier.next();
-//       if(mol){
-//           do something;
-//       }
-//     }
-//  2) Random Access:
-//     for(int i=0;i<supplier.length();i++){
-//       ROMol *mol = supplier[i];
-//       if(mol){
-//           do something;
-//       }
-//     }
-//
-//
+
+  Here are some of the ways one can interact with MolSuppliers:
+
+  1) Lazy (works with forward and random access suppliers):
+     while(!supplier.atEnd()){
+       auto mol = supplier.next(); // mol is a std::unique_ptr<RWMol>
+       if(mol){
+           do something;
+       }
+     }
+
+  2) Range based for loops (works with forward and random access suppliers):
+     for(auto mol : supplier){
+        if(mol) {
+          do something;  // mol is a shared_ptr<RWMol>
+        }
+     }
+
+  3) Random Access:
+     for(int i=0;i<supplier.length();i++){
+       auto mol = supplier[i]; // mol is a std::unique_ptr<RWMol>
+       if(mol){
+           do something;
+       }
+     }
+
+  4) Random access supplier also support caching:
+       supplier.setCaching(true);
+       for(auto mol : supplier){
+         if(mol) {
+          do something;  // mol is a shared_ptr<RWMol>
+         }
+       }
+     Subsequent iterations will be much faster as the molecules are cached
+     after the first read.
+
+     It's also possible to access the cached molecules directly using the getShared method:
+       supplier.setCaching(true);
+       for(int i=0;i<supplier.length();i++){
+         auto mol = supplier.getShared(i); // mol is a std::shared_ptr<RWMol>;
+         if(mol){
+             do something;
+         }
+       }
+
+  5) Random access suppliers can also be used with parallel algorithms:
+        supplier.setCaching(true); 
+        std::for_each(std::execution::par, supplier.begin(), supplier.end(),
+                      [](auto mol) {
+                        if (mol) {
+                          do something;
+                        }
+                      });
+                      
+     Caching is not required here, but if you are planning on working with the
+     molecules multiple times, it can speed things up significantly. 
+
 */
+// clang-format on
 class RDKIT_FILEPARSERS_EXPORT MolSupplier {
   // this is an abstract base class to supply molecules one at a time
  public:
@@ -118,6 +162,45 @@ class RDKIT_FILEPARSERS_EXPORT MolSupplier {
   }
 };
 
+// \brief an input iterator for suppliers that only support forward reading
+template <typename Supplier>
+struct ForwardSupplierIter {
+  using iterator_category = std::input_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type = std::shared_ptr<RWMol>;
+  using const_value_type = const std::shared_ptr<RWMol>;
+
+  Supplier *supplier = nullptr;
+  std::optional<value_type> current;
+  ForwardSupplierIter() = default;
+  explicit ForwardSupplierIter(Supplier *supplier)
+      : supplier(supplier), current(supplier->nextShared()) {}
+  const_value_type operator*() const { return current.value(); }
+  ForwardSupplierIter &operator++() {
+    if (supplier->atEnd()) {
+      current.reset();
+      return *this;
+    }
+    current = supplier->nextShared();
+    if (!current.value() && supplier->atEnd()) {
+      current.reset();
+    }
+    return *this;
+  }
+  ForwardSupplierIter operator++(int) {
+    if (supplier->atEnd()) {
+      current.reset();
+      return *this;
+    }
+    ForwardSupplierIter tmp = *this;
+    ++(*this);
+    return tmp;
+  }
+  bool operator==(const ForwardSupplierIter &other) const {
+    return !current.has_value() && !other.current.has_value();
+  }
+};
+
 // \brief a supplier from an SD file that only reads forward:
 class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   /*************************************************************************
@@ -126,6 +209,7 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
    *noted.
    ***********************************************************************************/
  public:
+  using iterator = ForwardSupplierIter<ForwardSDMolSupplier>;
   ForwardSDMolSupplier() { init(); }
 
   explicit ForwardSDMolSupplier(
@@ -137,12 +221,25 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   void init() override;
   void reset() override;
   std::unique_ptr<RWMol> next() override;
+  std::shared_ptr<RWMol> nextShared() {
+    return std::shared_ptr<RWMol>(this->next());
+  };
   bool atEnd() override;
 
   void setProcessPropertyLists(bool val) { df_processPropertyLists = val; }
   bool getProcessPropertyLists() const { return df_processPropertyLists; }
 
   bool getEOFHitOnRead() const { return df_eofHitOnRead; }
+
+  iterator begin() {
+    if (d_line) {
+      throw ValueErrorException(
+          "Cannot create an iterator for a ForwardSDMolSupplier that has already "
+          "been read from.");
+    }
+    return iterator(this);
+  }
+  iterator end() { return iterator(); }
 
  protected:
   virtual void checkForEnd();
@@ -154,21 +251,97 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   bool df_processPropertyLists = true;
   bool df_eofHitOnRead = false;
 };
+// clang-format off
+static_assert(
+    std::ranges::input_range<ForwardSDMolSupplier>
+  );
+// clang-format on
+
+// \brief a random access iterator for suppliers that support random access
+template <typename Supplier>
+struct RandomAccessSupplierIter {
+  using iterator_category = std::random_access_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type = std::shared_ptr<RWMol>;
+  using const_value_type = const std::shared_ptr<RWMol>;
+
+  Supplier *supplier = nullptr;
+  size_t current_idx = 0;
+  RandomAccessSupplierIter() = default;
+  explicit RandomAccessSupplierIter(Supplier *supplier)
+      : supplier(supplier), current_idx(0) {}
+  RandomAccessSupplierIter(Supplier *supplier, size_t idx)
+      : supplier(supplier), current_idx(idx) {}
+  const_value_type operator*() const {
+    return supplier->getShared(current_idx);
+  }
+  const_value_type operator[](size_t idx) const {
+    return supplier->getShared(idx);
+  }
+  RandomAccessSupplierIter &operator++() {
+    ++current_idx;
+    return *this;
+  }
+  RandomAccessSupplierIter operator++(int) {
+    RandomAccessSupplierIter tmp(this->supplier, current_idx);
+    ++(*this);
+    return tmp;
+  }
+  RandomAccessSupplierIter &operator--() {
+    --current_idx;
+    return *this;
+  }
+  RandomAccessSupplierIter operator--(int) {
+    RandomAccessSupplierIter tmp(this->supplier, current_idx);
+    --(*this);
+    return tmp;
+  }
+  RandomAccessSupplierIter &operator+=(difference_type n) {
+    current_idx += n;
+    return *this;
+  }
+  RandomAccessSupplierIter &operator-=(difference_type n) {
+    current_idx -= n;
+    return *this;
+  }
+  RandomAccessSupplierIter operator+(difference_type n) const {
+    return RandomAccessSupplierIter(this->supplier, current_idx + n);
+  }
+  RandomAccessSupplierIter operator-(difference_type n) const {
+    return RandomAccessSupplierIter(this->supplier, current_idx - n);
+  }
+  difference_type operator-(const RandomAccessSupplierIter &other) const {
+    return static_cast<difference_type>(current_idx) -
+           static_cast<difference_type>(other.current_idx);
+  }
+  friend RandomAccessSupplierIter operator+(
+      difference_type n, const RandomAccessSupplierIter &it) {
+    return RandomAccessSupplierIter(it.supplier, it.current_idx + n);
+  }
+  auto operator<=>(const RandomAccessSupplierIter &other) const {
+    return current_idx <=> other.current_idx;
+  }
+  bool operator==(const RandomAccessSupplierIter &other) const {
+    return this->supplier == other.supplier &&
+           this->current_idx == other.current_idx;
+  }
+};
+
 // \brief a lazy supplier from an SD file
 class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   /*************************************************************************
    * A lazy mol supplier from a SD file.
-   *  - When new molecules are read using "next" their positions in the file are
-   *noted.
-   *  - A call to the "length" will automatically parse the entire file and
-   *cache all the mol
-   *    block positions
-   *  - [] operator is used to access a molecule at "idx", calling next
-   *following this will result
-   *    in the next molecule after "idx"
+   *  - When new molecules are read using "next()" their positions in the file
+   * are stored.
+   *  - A call to the "length()" will automatically parse the entire file and
+   *    store all the mol block positions
+   *  - [] operator is used to access a molecule at "idx", calling next()
+   *    after this will result in the next molecule after "idx"
    ***********************************************************************************/
-
  public:
+  using iterator = RandomAccessSupplierIter<SDMolSupplier>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+
   SDMolSupplier() { init(); }
 
   /*!
@@ -195,6 +368,8 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   bool atEnd() override;
   void moveTo(unsigned int idx);
   std::unique_ptr<RWMol> operator[](unsigned int idx);
+  ///! \brief returns a shared pointer to the molecule at the given index.
+  std::shared_ptr<RWMol> getShared(unsigned int idx);
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
@@ -218,14 +393,33 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
    */
   void setStreamIndices(const std::vector<std::streampos> &locs);
 
+  iterator begin() { return RandomAccessSupplierIter(this); }
+  iterator end() { return RandomAccessSupplierIter(this, length()); }
+  reverse_iterator rbegin() { return reverse_iterator(end()); }
+  reverse_iterator rend() { return reverse_iterator(begin()); }
+
+  void setCaching(bool val) { d_cacheMolecules = val; }
+  bool getCaching() const { return d_cacheMolecules; }
+
  private:
   void checkForEnd() override;
-  void peekCheckForEnd(char* bufPtr, char* bufEnd, std::streampos molStartPos);
+  void peekCheckForEnd(char *bufPtr, char *bufEnd, std::streampos molStartPos);
   void buildIndexTo(unsigned int targetIdx);
   int d_len = 0;   // total number of mol blocks in the file (initialized to -1)
   int d_last = 0;  // the molecule we are ready to read
   std::vector<std::streampos> d_molpos;
+  bool d_cacheMolecules = false;
+  std::vector<std::optional<std::shared_ptr<RWMol>>> d_molCache;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::mutex d_readMutex;
+  std::mutex d_cacheMutex;
+#endif
 };
+// clang-format off
+static_assert(
+    std::ranges::random_access_range<SDMolSupplier>
+  );
+// clang-format on
 
 struct SmilesMolSupplierParams {
   std::string delimiter = " \t";
@@ -249,34 +443,21 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   /**************************************************************************
    * Lazy file parser for Smiles table file, similar to the lazy SD
    * file parser above
-   * - As an when new molecules are read using "next" their
-   *    positions in the file are noted.
-   *  - A call to the "length" will automatically parse the entire
-   *    file and cache all the mol block positions
+   * - When new molecules are read using "next()" their
+   *    positions in the file are stored.
+   *  - A call to "length()" will automatically parse the entire
+   *    file and store all the mol block positions
    *  - [] operator is used to access a molecule at "idx", calling
-   *    next following this will result in the next molecule after
+   *    next() following this will result in the next molecule after
    *    "idx"
    ***************************************************************************/
  public:
+  using iterator = RandomAccessSupplierIter<SmilesMolSupplier>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
   /*!
    *   \param fileName - the name of smiles table file
-   *   \param delimiter - delimiting characters between records on a each
-   *     line NOTE that this is not a string, the tokenizer looks for
-   *     the individual characters in delimiter, not the full string
-   *     itself.  So the default delimiter: " \t", means " " or "\t".
-   *   \param smilesColumn - column number for the SMILES string (defaults
-   *     to the first column)
-   *   \param nameColumn - column number for the molecule name (defaults to
-   *     the second column) If set to -1 we assume that no name is
-   *     available for the molecule and the name is defaulted to the
-   *     smiles string
-   *   \param titleLine - if true, the first line is assumed to list the
-   *     names of properties in order separated by 'delimiter'. It is
-   *     also assume that the 'SMILES' column and the 'name' column
-   *     are not specified here if false - no title line is assumed
-   *     and the properties are recorded as the "columnX" where "X" is
-   *     the column number
-   *   \param sanitize - if true sanitize the molecule before returning it
+   *   \param params - SmilesMolSupplierParams object controlling how
+   *     the file itself and the individual SMILES are parsed.
    */
   explicit SmilesMolSupplier(
       const std::string &fileName,
@@ -295,12 +476,21 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   bool atEnd() override;
   void moveTo(unsigned int idx);
   std::unique_ptr<RWMol> operator[](unsigned int idx);
+  std::shared_ptr<RWMol> getShared(unsigned int idx);
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
    */
   std::string getItemText(unsigned int idx);
   unsigned int length();
+
+  iterator begin() { return iterator(this); }
+  iterator end() { return iterator(this, length()); }
+  reverse_iterator rbegin() { return reverse_iterator(end()); }
+  reverse_iterator rend() { return reverse_iterator(begin()); }
+
+  void setCaching(bool val) { d_cacheMolecules = val; }
+  bool getCaching() const { return d_cacheMolecules; }
 
  private:
   std::unique_ptr<RWMol> processLine(std::string inLine);
@@ -318,6 +508,12 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
       d_molpos;  // vector of positions in the file for molecules
   std::vector<int> d_lineNums;
   STR_VECT d_props;  // vector of property names
+  bool d_cacheMolecules = false;
+  std::vector<std::optional<std::shared_ptr<RWMol>>> d_molCache;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::mutex d_readMutex;
+  std::mutex d_cacheMutex;
+#endif
 };
 
 struct TDTMolSupplierParams {
@@ -341,26 +537,22 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   /**************************************************************************
    * Lazy file parser for TDT files, similar to the lazy SD
    * file parser above
-   * - As an when new molecules are read using "next" their
+   * - When new molecules are read using "next()" their
    *    positions in the file are noted.
-   *  - A call to the "length" will automatically parse the entire
+   *  - A call to "length()" will automatically parse the entire
    *    file and cache all the mol block positions
    *  - [] operator is used to access a molecule at "idx", calling
-   *    next following this will result in the next molecule after
+   *    next() following this will result in the next molecule after
    *    "idx"
    ***************************************************************************/
  public:
+  using iterator = RandomAccessSupplierIter<TDTMolSupplier>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+
   /*!
    *   \param fileName - the name of the TDT file
-   *   \param nameRecord - property name for the molecule name.
-   *     If empty (the default), the name defaults to be empty
-   *   \param confId2D - if >=0 and 2D coordinates are provided, the 2D
-   *                   structure (depiction) in the input will be read into the
-   *                   corresponding conformer id.
-   *   \param confId3D - if >=0 and 3D coordinates are provided, the 3D
-   *                   structure (depiction) in the input will be read into the
-   *                   corresponding conformer id.
-   *   \param sanitize - if true sanitize the molecule before returning it
+   *   \param params - TDTMolSupplierParams object controlling how the file itself 
+   *                   and the individual records are parsed.
    */
   explicit TDTMolSupplier(
       const std::string &fileName,
@@ -378,12 +570,22 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   bool atEnd() override;
   void moveTo(unsigned int idx);
   std::unique_ptr<RWMol> operator[](unsigned int idx);
+  std::shared_ptr<RWMol> getShared(unsigned int idx);
+
   /*! \brief returns the text block for a particular item
    *
    *  \param idx - which item to return
    */
   std::string getItemText(unsigned int idx);
   unsigned int length();
+
+  iterator begin() { return iterator(this); }
+  iterator end() { return iterator(this, length()); }
+  reverse_iterator rbegin() { return reverse_iterator(end()); }
+  reverse_iterator rend() { return reverse_iterator(begin()); }
+
+  void setCaching(bool val) { d_cacheMolecules = val; }
+  bool getCaching() const { return d_cacheMolecules; }
 
  private:
   bool advanceToNextRecord();
@@ -397,6 +599,12 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   std::vector<std::streampos>
       d_molpos;  // vector of positions in the file for molecules
   TDTMolSupplierParams d_params;
+  bool d_cacheMolecules = false;
+  std::vector<std::optional<std::shared_ptr<RWMol>>> d_molCache;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::mutex d_readMutex;
+  std::mutex d_cacheMutex;
+#endif
 };
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
@@ -435,6 +643,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   bool atEnd() override;
   void moveTo(unsigned int idx);
   std::unique_ptr<RWMol> operator[](unsigned int idx);
+
   unsigned int length();
 
   void close() override { dp_sInStream.reset(); }

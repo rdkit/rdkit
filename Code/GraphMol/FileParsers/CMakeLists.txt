@@ -130,6 +130,14 @@ rdkit_catch_test(v2FileParsersCatchTest v2_file_parsers_catch.cpp
 rdkit_catch_test(atropisomersCatch atropisomers_catch.cpp
     LINK_LIBRARIES FileParsers)
 
+find_package(TBB )
+if(TBB_FOUND)
+rdkit_catch_test(fileParsersIterators fileParsersIterTest.cpp
+    LINK_LIBRARIES SmilesParse FileParsers SubstructMatch TBB::tbb)
+else()
+rdkit_catch_test(fileParsersIterators fileParsersIterTest.cpp
+    LINK_LIBRARIES SmilesParse FileParsers SubstructMatch)
+endif()
 
 
 if(RDK_TEST_MULTITHREADED AND RDK_BUILD_THREADSAFE_SSS)
