@@ -603,95 +603,21 @@ void DrawMol::extractSGroupData() {
   if (!includeAnnotations_) {
     return;
   }
-  const auto &sgs = getSubstanceGroups(*drawMol_);
-  if (sgs.empty()) {
-    return;
-  }
-
-  // details of this transformation are in extractAtomCoords
-  double rot = drawOptions_.rotate * M_PI / 180.0;
-  RDGeom::Transform2D tform;
-  tform.SetTransform(Point2D(0.0, 0.0), rot);
-
-  for (const auto &sg : sgs) {
-    std::string typ;
-    if (sg.getPropIfPresent("TYPE", typ) && typ == "DAT") {
-      std::string text;
-      // it seems like we should be rendering FIELDNAME, but
-      // Marvin Sketch, Biovia Draw, and ChemDraw don't do it
-      // if (sg.getPropIfPresent("FIELDNAME", text)) {
-      //   text += "=";
-      // };
-      if (sg.hasProp("DATAFIELDS")) {
-        STR_VECT dfs = sg.getProp<STR_VECT>("DATAFIELDS");
-        for (const auto &df : dfs) {
-          text += df + "|";
-        }
-        text.pop_back();
-      }
-      if (text.empty()) {
-        continue;
-      }
-      int atomIdx = -1;
-      if (!sg.getAtoms().empty()) {
-        atomIdx = sg.getAtoms()[0];
-      };
-      bool located = false;
-      std::string fieldDisp;
-      Point2D origLoc(0.0, 0.0);
-      if (sg.getPropIfPresent("FIELDDISP", fieldDisp)) {
-        double xp = FileParserUtils::stripSpacesAndCast<double>(
-            fieldDisp.substr(0, 10));
-        double yp = FileParserUtils::stripSpacesAndCast<double>(
-            fieldDisp.substr(10, 10));
-        // we always invert y for the molecule coords
-        origLoc = Point2D{xp, -yp};
-
-        if (fieldDisp[25] == 'R') {
-          if (atomIdx < 0) {
-            // we will warn about this below
-            text = "";
-          } else if (fabs(xp) > 1e-3 || fabs(yp) > 1e-3) {
-            // opposite sign for y
-            origLoc.x += drawMol_->getConformer().getAtomPos(atomIdx).x;
-            origLoc.y -= drawMol_->getConformer().getAtomPos(atomIdx).y;
-            located = true;
-          }
-        } else {
-          if (drawMol_->hasProp("_centroidx")) {
-            Point2D centroid;
-            drawMol_->getProp("_centroidx", centroid.x);
-            drawMol_->getProp("_centroidy", centroid.y);
-            // opposite sign for y
-            origLoc.x += centroid.x;
-            origLoc.y -= centroid.y;
-          }
-          located = true;
-        }
-        tform.TransformPoint(origLoc);
-      }
-
-      if (!text.empty()) {
-        // looks like everybody renders these left justified
-        DrawAnnotation *annot = new DrawAnnotation(
-            text, TextAlignType::START, "note",
-            drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
-        if (!located) {
-          if (atomIdx >= 0 && !text.empty()) {
-            calcAnnotationPosition(drawMol_->getAtomWithIdx(atomIdx), *annot);
-          }
-        } else {
-          annot->pos_ = origLoc;
-        }
-        annotations_.emplace_back(annot);
-      } else {
-        BOOST_LOG(rdWarningLog)
-            << "FIELDDISP info not found for DAT SGroup which isn't "
-               "associated with an atom. SGroup will not be rendered."
-            << std::endl;
-      }
+  // it seems like we should be rendering FIELDNAME, but
+  // Marvin Sketch, Biovia Draw, and ChemDraw don't do it
+  for (const auto &lbl :
+       MolDraw2D_detail::getSGroupDataLabels(*drawMol_, drawOptions_.rotate)) {
+    // looks like everybody renders these left justified
+    DrawAnnotation *annot =
+        new DrawAnnotation(lbl.text, TextAlignType::START, "note",
+                           drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+                           drawOptions_.annotationColour, textDrawer_);
+    if (lbl.positioned) {
+      annot->pos_ = lbl.pos;
+    } else {
+      calcAnnotationPosition(drawMol_->getAtomWithIdx(lbl.atomIdx), *annot);
     }
+    annotations_.emplace_back(annot);
   }
 }
 

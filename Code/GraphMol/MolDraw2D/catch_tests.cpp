@@ -2368,6 +2368,104 @@ M  END)CTAB"_ctab;
   }
 }
 
+TEST_CASE("getSGroupDataLabels", "[extras]") {
+  SECTION("ABS position") {
+    // FIELDDISP with absolute ('A') position
+    auto m = R"CTAB(
+  Mrv2014 12072015352D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 9 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.5833 4.3317 0 0
+M  V30 2 C -7.917 3.5617 0 0
+M  V30 3 C -7.917 2.0216 0 0
+M  V30 4 C -6.5833 1.2516 0 0
+M  V30 5 C -5.2497 2.0216 0 0
+M  V30 6 C -5.2497 3.5617 0 0
+M  V30 7 C -3.916 4.3317 0 0
+M  V30 8 O -3.916 5.8717 0 0
+M  V30 9 O -2.5823 3.5617 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 7 9
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 9) FIELDNAME=pKa -
+M  V30 FIELDDISP="   -2.2073    2.3950    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=4.2
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto lbls = MolDraw2D_detail::getSGroupDataLabels(*m);
+    REQUIRE(lbls.size() == 1);
+    CHECK(lbls[0].text == "4.2");
+    CHECK(lbls[0].positioned);
+    CHECK(lbls[0].atomIdx == 8);
+    // ABS position: (-2.2073, -2.3950) — y is negated in molecule coords
+    CHECK_THAT(lbls[0].pos.x, Catch::Matchers::WithinAbs(-2.2073, 0.001));
+    CHECK_THAT(lbls[0].pos.y, Catch::Matchers::WithinAbs(-2.3950, 0.001));
+  }
+  SECTION("no FIELDDISP falls back to atom position") {
+    auto m = R"CTAB(
+  Mrv2014 12072015352D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 9 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.5833 4.3317 0 0
+M  V30 2 C -7.917 3.5617 0 0
+M  V30 3 C -7.917 2.0216 0 0
+M  V30 4 C -6.5833 1.2516 0 0
+M  V30 5 C -5.2497 2.0216 0 0
+M  V30 6 C -5.2497 3.5617 0 0
+M  V30 7 C -3.916 4.3317 0 0
+M  V30 8 O -3.916 5.8717 0 0
+M  V30 9 O -2.5823 3.5617 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 7 9
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(5 2 4 5 3 1) FIELDNAME="Lambda Max" FIELDINFO=nm -
+M  V30 FIELDDATA="2222"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto lbls = MolDraw2D_detail::getSGroupDataLabels(*m);
+    REQUIRE(lbls.size() == 1);
+    CHECK(lbls[0].text == "2222");
+    // no FIELDDISP -> positioned=false, pos is first atom's conformer position
+    CHECK(!lbls[0].positioned);
+    CHECK(lbls[0].atomIdx == 1);  // first atom in ATOMS list is atom 2 (idx 1)
+    // falls back to atom 2 (idx 1) position: (-7.917, 3.5617)
+    CHECK_THAT(lbls[0].pos.x, Catch::Matchers::WithinAbs(-7.917, 0.001));
+    CHECK_THAT(lbls[0].pos.y, Catch::Matchers::WithinAbs(3.5617, 0.001));
+  }
+}
+
 TEST_CASE("position variation bonds", "[extras]") {
   SECTION("simple") {
     auto m = R"CTAB(
