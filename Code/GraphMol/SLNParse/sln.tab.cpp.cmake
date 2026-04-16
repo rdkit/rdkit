@@ -122,11 +122,10 @@ int yysln_lex(YYSTYPE *, void *);
 
 namespace SLNParse = RDKit::SLNParse;
 
-void yysln_error(const char *input, std::vector<RDKit::RWMol *> *ms, bool doQ,
-                 void *scanner, const char *msg) {
-  RDUNUSED_PARAM(ms);
-  RDUNUSED_PARAM(doQ);
-  RDUNUSED_PARAM(scanner);
+void yysln_error(const char *input,
+                 [[maybe_unused]] std::vector<RDKit::RWMol *> *ms,
+                 [[maybe_unused]] bool doQ, [[maybe_unused]] void *scanner,
+                 const char *msg) {
   BOOST_LOG(rdErrorLog) << "SLN Parse Error: " << msg
                         << " while parsing: " << input << std::endl;
 
@@ -331,13 +330,6 @@ typedef short yytype_int16;
 #else
 #define _Noreturn YY_ATTRIBUTE((__noreturn__))
 #endif
-#endif
-
-/* Suppress unused-variable warnings by "using" E.  */
-#if !defined lint || defined __GNUC__
-#define YYUSE(E) ((void)(E))
-#else
-#define YYUSE(E) /* empty */
 #endif
 
 #if defined __GNUC__ && !defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
@@ -761,22 +753,16 @@ static const yytype_uint8 yyr2[] = {
 | Print this symbol's value on YYOUTPUT.  |
 `----------------------------------------*/
 
-static void yy_symbol_value_print(FILE *yyoutput, int yytype,
-                                  YYSTYPE const *const yyvaluep,
-                                  const char *input,
-                                  std::vector<RDKit::RWMol *> *molList,
-                                  bool doQueries, void *scanner) {
-  FILE *yyo = yyoutput;
-  YYUSE(yyo);
-  YYUSE(input);
-  YYUSE(molList);
-  YYUSE(doQueries);
-  YYUSE(scanner);
+static void yy_symbol_value_print(
+    FILE *yyoutput, [[maybe_unused]] int yytype, YYSTYPE const *const yyvaluep,
+    [[maybe_unused]] const char *input,
+    [[maybe_unused]] std::vector<RDKit::RWMol *> *molList,
+    [[maybe_unused]] bool doQueries, [[maybe_unused]] void *scanner) {
+  [[maybe_unused]] FILE *yyo = yyoutput;
   if (!yyvaluep) return;
 #ifdef YYPRINT
   if (yytype < YYNTOKENS) YYPRINT(yyoutput, yytoknum[yytype], *yyvaluep);
 #endif
-  YYUSE(yytype);
 }
 
 /*--------------------------------.
@@ -1069,14 +1055,12 @@ static int yysyntax_error(YYSIZE_T *yymsg_alloc, char **yymsg,
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
-static void yydestruct(const char *yymsg, int yytype, YYSTYPE *yyvaluep,
-                       const char *input, std::vector<RDKit::RWMol *> *molList,
-                       bool doQueries, void *scanner) {
-  YYUSE(yyvaluep);
-  YYUSE(input);
-  YYUSE(molList);
-  YYUSE(doQueries);
-  YYUSE(scanner);
+static void yydestruct(const char *yymsg, int yytype,
+                       [[maybe_unused]] YYSTYPE *yyvaluep,
+                       [[maybe_unused]] const char *input,
+                       [[maybe_unused]] std::vector<RDKit::RWMol *> *molList,
+                       [[maybe_unused]] bool doQueries,
+                       [[maybe_unused]] void *scanner) {
   if (!yymsg) yymsg = "Deleting";
   YY_SYMBOL_PRINT(yymsg, yytype, yyvaluep, yylocationp);
 

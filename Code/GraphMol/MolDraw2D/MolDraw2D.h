@@ -414,7 +414,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   //! adds additional information about the atoms to the output. Does not make
   //! sense for all renderers.
-  virtual void tagAtoms(const ROMol &mol) { RDUNUSED_PARAM(mol); }
+  virtual void tagAtoms([[maybe_unused]] const ROMol &mol) {}
   //! set whether or not polygons are being filled
   virtual bool fillPolys() const { return fill_polys_; }
   //! returns either or not polygons should be filled
@@ -537,13 +537,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void drawTheMolecule(MolDraw2D_detail::DrawMol &drawMol);
   void setupTextDrawer();
 
-  virtual void updateMetadata(const ROMol &mol, int confId) {
-    RDUNUSED_PARAM(mol);
-    RDUNUSED_PARAM(confId);
-  }
-  virtual void updateMetadata(const ChemicalReaction &rxn) {
-    RDUNUSED_PARAM(rxn);
-  }
+  virtual void updateMetadata([[maybe_unused]] const ROMol &mol,
+                              [[maybe_unused]] int confId) {}
+  virtual void updateMetadata([[maybe_unused]] const ChemicalReaction &rxn) {}
 };
 
 inline void setDarkMode(MolDrawOptions &opts) {
