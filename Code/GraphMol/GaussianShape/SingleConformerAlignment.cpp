@@ -147,8 +147,8 @@ void cartToQuatGrads(const double *quat, const double *mol, const int numBPts,
   const auto s = quat[2];
   const auto u = quat[3];
   const auto coef = 1.0 / (q * q + r * r + s * s + u * u);
-  for (int i = 0, j = gradConvOffset, k = 12 * gradConvOffset; i < 4 * numBPts;
-       i += 4, ++j, k += 12) {
+  for (int i = 0, j = gradConvOffset, k = 12 * gradConvOffset; i < 3 * numBPts;
+       i += 3, ++j, k += 12) {
     const auto x = mol[i];
     const auto y = mol[i + 1];
     const auto z = mol[i + 2];
@@ -222,8 +222,7 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
       }
       const auto mult = -(ai * aj) / (ai + aj);
       const auto kij = exp(mult * d2);
-      if (allCarbon || ((*refCarbonRadii)[i_idx] &&
-                        (*fitCarbonRadii)[j_idx])) {
+      if (allCarbon || ((*refCarbonRadii)[i_idx] && (*fitCarbonRadii)[j_idx])) {
         vij = kij * CARBON_BIT;
       } else {
         const auto pi_ai_aj = std::numbers::pi / (ai + aj);
@@ -260,9 +259,10 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
 
 // color features
 double calcVolAndGrads(const double *ref, const double *refAlphas,
-                       const int numRefPts, const int *refTypes, const double *fit,
-                       const double *fitAlphas, const int numFitPts,
-                       const int *fitTypes, const int numFitShape,
+                       const int numRefPts, const int *refTypes,
+                       const double *fit, const double *fitAlphas,
+                       const int numFitPts, const int *fitTypes,
+                       const int numFitShape,
                        std::vector<double> &gradConverters,
                        const bool useCutoff, const double distCutoff2,
                        const double *quat, double *gradients) {

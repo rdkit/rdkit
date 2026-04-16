@@ -96,6 +96,8 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
     CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
     CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
+    std::cout << MolToCXSmiles(*ref) << std::endl;
+    std::cout << MolToCXSmiles(cp) << std::endl;
   }
   SECTION("shape plus color score") {
     overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE;
@@ -201,7 +203,9 @@ TEST_CASE("bulk") {
     CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
     CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
     CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
-
+    if (i == 1) {
+      std::cout << MolToCXSmiles(*probe) << std::endl;
+    }
     writer.write(*probe);
     break;
   }
