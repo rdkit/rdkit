@@ -2314,6 +2314,9 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         if (hcount == -1) {
           hcount = 0;
         }
+        // Also stash the value so that removeHs (AddHs.cpp) can set
+        // structural numExplicitHs on aromatic atoms before kekulization.
+        atom->setProp("_MolFileHCount", hcount);
         if (hcount > 0) {
           ATOM_EQUALS_QUERY *oq = makeAtomImplicitHCountQuery(hcount);
           auto nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>(

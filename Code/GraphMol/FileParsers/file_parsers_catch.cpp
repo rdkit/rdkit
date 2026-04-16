@@ -8060,3 +8060,57 @@ M  END
     CHECK(foundPyrroleN);
   }
 }
+
+TEST_CASE("V3000 HCOUNT treated as structural hydrogen count") {
+  // ChemDraw emit HCOUNT in V3000 mol blocks to convey
+  // the total number of attached hydrogens, rather than as a query property.
+  // The parser should convert HCOUNT to numExplicitHs so that kekulization
+  // and other structural operations work correctly.
+  auto molblock = R"MOL(
+  ChemDraw03022616522D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.059750 0.404789 0.000000 0
+M  V30 2 C 0.275129 0.149850 0.000000 0
+M  V30 3 N 0.020190 -0.634773 0.000000 0
+M  V30 4 C -0.804811 -0.634773 0.000000 0
+M  V30 5 N -1.059750 0.149850 0.000000 0 HCOUNT=1
+M  V30 6 C -0.392311 0.634773 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 4 5 6
+M  V30 6 4 2 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)MOL";
+
+  SECTION("kekulization succeeds and gives correct SMILES") {
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(MolToSmiles(*mol) == "Cc1c[nH]cn1");
+  }
+
+  SECTION("pyrrole N has numExplicitHs 1, noImplicit, and is a query atom") {
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    bool foundPyrroleN = false;
+    for (const auto atom : mol->atoms()) {
+      if (atom->getAtomicNum() == 7 && atom->getIsAromatic() &&
+          atom->getTotalNumHs() == 1) {
+        CHECK(atom->getNumExplicitHs() == 1);
+        CHECK(atom->getNoImplicit());
+        CHECK(atom->hasQuery());
+        foundPyrroleN = true;
+      }
+    }
+    CHECK(foundPyrroleN);
+  }
+}
