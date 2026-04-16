@@ -122,7 +122,9 @@ struct ShapeInputOptions {
                                      //! that none of them are more similar to
                                      //! each other than the threshold.  Default
                                      //! -1.0 means no pruning.
-  bool includeDummies{true};         //! Whether to include dummy atoms or not.
+  bool sortShapes{true};  //! If true, the shapes are sorted in descending order
+                          //! of total volume.
+  bool includeDummies{true};  //! Whether to include dummy atoms or not.
 };
 
 // Data for shape alignment code

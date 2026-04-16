@@ -175,7 +175,9 @@ ShapeInput::ShapeInput(const ROMol &mol, const int confId,
   if (opts.shapePruneThreshold > 0.0 && tmpMol->getNumConformers() > 1) {
     pruneShapes(opts.shapePruneThreshold);
   }
-  sortShapesByVolumes();
+  if (opts.sortShapes) {
+    sortShapesByVolumes();
+  }
   d_activeShape = 0;
 }
 

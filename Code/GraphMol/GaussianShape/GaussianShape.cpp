@@ -443,6 +443,45 @@ std::array<double, 3> AlignMolecule(const ROMol &ref, ROMol &fit,
   return scores;
 }
 
+void AlignMoleculesAllConformers(const ROMol &ref, const ROMol &fit,
+                                 int &refConfId, int &fitConfId,
+                                 std::vector<std::vector<double>> &combScores,
+                                 const ShapeInputOptions &refOpts,
+                                 const ShapeInputOptions &fitOpts,
+                                 const ShapeOverlayOptions &overlayOpts,
+                                 RDGeom::Transform3D *xform) {
+  // Pruning the shapes wastes time and obviously removes the correspondence
+  // between conformers and shapes.
+  auto refOptsCp = refOpts;
+  refOptsCp.shapePruneThreshold = -1;
+  refOptsCp.sortShapes = false;
+  auto fitOptsCp = fitOpts;
+  fitOptsCp.shapePruneThreshold = -1;
+  fitOptsCp.sortShapes = false;
+  auto refShape = ShapeInput(ref, -1, refOptsCp, overlayOpts);
+  auto fitShape = ShapeInput(fit, -1, fitOptsCp, overlayOpts);
+  combScores = std::vector<std::vector<double>>(
+      refShape.getNumShapes(), std::vector<double>(fitShape.getNumShapes()));
+  double bestScore = -1.0;
+  for (unsigned int i = 0; i < refShape.getNumShapes(); i++) {
+    refShape.setActiveShape(i);
+    for (unsigned int j = 0; j < fitShape.getNumShapes(); j++) {
+      fitShape.setActiveShape(j);
+      RDGeom::Transform3D thisXform;
+      auto scores = AlignShape(refShape, fitShape, &thisXform, overlayOpts);
+      combScores[i][j] = scores[0];
+      if (scores[0] > bestScore) {
+        bestScore = scores[0];
+        refConfId = i;
+        fitConfId = j;
+        if (xform) {
+          *xform = thisXform;
+        }
+      }
+    }
+  }
+}
+
 std::array<double, 3> ScoreShape(const ShapeInput &refShape,
                                  const ShapeInput &fitShape,
                                  const ShapeOverlayOptions &overlayOpts) {
