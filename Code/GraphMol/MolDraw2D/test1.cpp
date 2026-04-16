@@ -3329,7 +3329,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 38.9 163.0") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 74.1 170.0") !=
                   std::string::npos);
 #endif
 #else
@@ -3350,7 +3350,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 87.4 151.4") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 104.0 156.8") !=
                   std::string::npos);
 #endif
 #else
@@ -3370,7 +3370,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 38.9 163.0") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 74.1 170.0") !=
                   std::string::npos);
 #endif
 #else
@@ -3394,7 +3394,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 26.0 155.8") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 71.9 167.7") !=
                   std::string::npos);
 #endif
 #else
@@ -3416,7 +3416,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 45.3 166.6") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 75.0 171.0") !=
                   std::string::npos);
 #endif
 #else
@@ -4345,9 +4345,8 @@ void testGithub3305() {
       // This seems to work for Freetype and non-Freetype builds.
       std::regex regex(
           R"(class='bond-6 atom-6 atom-7' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) Z' style='fill:#FF7F7F;)");
-      std::vector<Point2D> expected{
-          Point2D(149.8, 121.1), Point2D(153.1, 122.1), Point2D(141.5, 132.6),
-          Point2D(140.8, 129.2)};
+      std::vector<Point2D> expected{Point2D(127.2, 82.6), Point2D(135.2, 96.3),
+                                    Point2D(131.7, 96.3), Point2D(125.5, 85.6)};
       check_corners(text, regex, expected);
       check_file_hash(nameBase + "4.svg");
 #endif
@@ -4365,7 +4364,7 @@ void testGithub3305() {
 #endif
     {
       // This picture has very wide bond highlights as a test - it
-      // looks pretty unsavoury.  I mention it so that when you flick
+      // looks pretty unsavory.  I mention it so that when you flick
       // through the test images you don't panic and start searching
       // for the bug.  Been there, done that!
       MolDraw2DSVG drawer(200, 200);
@@ -4381,8 +4380,8 @@ void testGithub3305() {
 #if DO_TEST_ASSERT
       std::regex regex(
           R"(class='bond-6 atom-6 atom-7' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) Z' style='fill:#FF7F7F;)");
-      std::vector<Point2D> expected{Point2D(139.6, 122), Point2D(157.2, 127.7),
-                                    Point2D(140, 143.1), Point2D(136.2, 125.1)};
+      std::vector<Point2D> expected{Point2D(133.8, 79.5), Point2D(145.5, 99.8),
+                                    Point2D(127.0, 99.8), Point2D(124.6, 95.5)};
       check_corners(text, regex, expected);
 #endif
       check_file_hash(nameBase + "5.svg");
@@ -4411,7 +4410,7 @@ void testGithub3305() {
       outs.flush();
       outs.close();
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.8") !=
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px") ==
                   std::string::npos);

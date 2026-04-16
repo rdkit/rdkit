@@ -297,7 +297,7 @@ TEST_CASE("test3") {
   delete m;
 
   smi = "C(C1C2C3C41)(C2C35)C45";  // cubane
-  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figureras paper
+  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figueras paper
   // smi = "C17C5C4C3C2C1C6C2C3C4C5C67";
   // we cannot use the sanitization code, because that finds *symmetric*
   // rings, which will break this case:

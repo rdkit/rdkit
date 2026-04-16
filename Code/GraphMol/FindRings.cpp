@@ -232,59 +232,56 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
   auto urfdata = mol.getRingInfo()->dp_urfData.get();
 
   INT_VECT extraRing;
-  for (unsigned int i = 0; i < RDL_getNofURF(urfdata); ++i) {
-    auto it = RDL_getRCyclesForURFIterator(urfdata, i);
-    while (!RDL_cycleIteratorAtEnd(it)) {
-      auto *cycle = RDL_cycleIteratorGetCycle(it);
-      auto extraAtomRing = rdl_cycle_to_atom_ring(cycle);
-      RingUtils::convertToBonds(extraAtomRing, extraRing, mol);
+  RDL_cycle **cycles = nullptr;
+  auto numRCs = RDL_getRCycles(urfdata, &cycles);
 
-      if (std::ranges::find(bondsssrs, extraRing) !=
-          bondsssrs.end()) {
-        // already in the SSSR, skip
-        RDL_deleteCycle(cycle);
-        RDL_cycleIteratorNext(it);
+  if (numRCs == RDL_INVALID_RESULT) {
+    throw ValueErrorException("Failed getting Relevant Cycles for the mol.");
+  }
+
+  for (unsigned int i = 0; i < numRCs; ++i) {
+    auto extraAtomRing = rdl_cycle_to_atom_ring(cycles[i]);
+    RingUtils::convertToBonds(extraAtomRing, extraRing, mol);
+
+    if (std::ranges::find(bondsssrs, extraRing) != bondsssrs.end()) {
+      // already in the SSSR, skip
+      continue;
+    }
+
+    for (const auto &ring : bondsssrs) {
+      if (ring.size() != extraRing.size()) {
         continue;
       }
 
-      for (const auto &ring : bondsssrs) {
-        if (ring.size() != cycle->weight) {
-          continue;
-        }
-
-        // If `ring` is the only provider of some bond, extraRing must also
-        // provide that bond.
-        bool shareBond = false;
-        bool replacesAllUniqueBonds = true;
-        for (auto &bondID : ring) {
-          const int bondCount = bondCounts[bondID];
-          if (bondCount == 1 || !shareBond) {
-            auto position = std::ranges::find(extraRing, bondID);
-            if (position != extraRing.end()) {
-              shareBond = true;
-            } else if (bondCount == 1) {
-              // 1 means `ring` is the only ring in the SSSR to provide this
-              // bond, and extraRing did not provide it (so extraRing is not an
-              // acceptable substitution in the SSSR for ring)
-              replacesAllUniqueBonds = false;
-            }
+      // If `ring` is the only provider of some bond, extraRing must also
+      // provide that bond.
+      bool shareBond = false;
+      bool replacesAllUniqueBonds = true;
+      for (auto &bondID : ring) {
+        const int bondCount = bondCounts[bondID];
+        if (bondCount == 1 || !shareBond) {
+          auto position = std::ranges::find(extraRing, bondID);
+          if (position != extraRing.end()) {
+            shareBond = true;
+          } else if (bondCount == 1) {
+            // 1 means `ring` is the only ring in the SSSR to provide this
+            // bond, and extraRing did not provide it (so extraRing is not an
+            // acceptable substitution in the SSSR for ring)
+            replacesAllUniqueBonds = false;
           }
-        }
-
-        if (shareBond && replacesAllUniqueBonds) {
-          // small optimization: only convert the RDL cycle into
-          // an atom ring if we are going to use it.
-          res.push_back(extraAtomRing);
-          FindRings::storeRingInfo(mol, extraAtomRing);
-          break;
         }
       }
 
-      RDL_deleteCycle(cycle);
-      RDL_cycleIteratorNext(it);
+      if (shareBond && replacesAllUniqueBonds) {
+        // small optimization: only convert the RDL cycle into
+        // an atom ring if we are going to use it.
+        res.push_back(extraAtomRing);
+        FindRings::storeRingInfo(mol, extraAtomRing);
+        break;
+      }
     }
-    RDL_deleteCycleIterator(it);
   }
+  RDL_deleteCycles(cycles, numRCs);
 
   return rdcast<int>(res.size());
 }
