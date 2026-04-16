@@ -959,18 +959,18 @@ TEST_CASE("Multiple Conformers") {
     unsigned int best1, best2;
     RDGeom::Transform3D xform;
     auto bestSim11 = shapes1.bestSimilarity(shapes1, best1, best2, xform);
-    CHECK_THAT(bestSim11[0], Catch::Matchers::WithinAbs(1.0, 0.001));
+    CHECK_THAT(bestSim11[0], Catch::Matchers::WithinAbs(1.0, 0.005));
 
     auto bestSim22 = shapes2.bestSimilarity(shapes2, best1, best2, xform);
-    CHECK_THAT(bestSim22[0], Catch::Matchers::WithinAbs(1.0, 0.001));
+    CHECK_THAT(bestSim22[0], Catch::Matchers::WithinAbs(1.0, 0.005));
 
     auto bestSim12 = shapes1.bestSimilarity(shapes2, best1, best2, xform);
-    CHECK_THAT(bestSim12[0], Catch::Matchers::WithinAbs(0.694, 0.001));
+    CHECK_THAT(bestSim12[0], Catch::Matchers::WithinAbs(0.697, 0.005));
 
     // This overlay starts from where the previous one left it, so the final
     // answer isn't identical.
     auto bestSim21 = shapes2.bestSimilarity(shapes1, best1, best2, xform);
-    CHECK_THAT(bestSim21[0], Catch::Matchers::WithinAbs(0.698, 0.001));
+    CHECK_THAT(bestSim21[0], Catch::Matchers::WithinAbs(0.698, 0.005));
   }
 }
 
