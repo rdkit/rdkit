@@ -110,7 +110,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreShape(
 //! Score the overlap of a molecule to a reference shape without moving
 //  either.
 /*!
-  \param ref           the reference shape
+  \param refShape      the reference shape
   \param fit           the molecule to score
   \param fitOpts       the options for creating the fit shape
   \param overlayOpts   options for controlling the volume calculation
