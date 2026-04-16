@@ -46,7 +46,6 @@ python::object bondRingSizes(const RingInfo *self, unsigned int idx) {
   return python::tuple(self->bondRingSizes(idx));
 }
 
-#ifdef RDK_USE_URF
 python::object atomRingFamilies(const RingInfo *self) {
   python::list res;
   for (const auto &ring : self->atomRingFamilies()) {
@@ -61,7 +60,6 @@ python::object bondRingFamilies(const RingInfo *self) {
   }
   return python::tuple(res);
 }
-#endif
 
 void addRing(RingInfo *self, python::object atomRing, python::object bondRing) {
   unsigned int nAts = boost::python::len(atomRing);
@@ -121,7 +119,6 @@ struct ringinfo_wrapper {
         .def("BondMembers", bondMembers, python::args("self", "idx"))
         .def("AtomRingSizes", atomRingSizes, python::args("self", "idx"))
         .def("BondRingSizes", bondRingSizes, python::args("self", "idx"))
-#ifdef RDK_USE_URF
         .def("NumRingFamilies", &RingInfo::numRingFamilies,
              python::args("self"))
         .def("NumRelevantCycles", &RingInfo::numRelevantCycles,
@@ -130,7 +127,6 @@ struct ringinfo_wrapper {
         .def("BondRingFamilies", bondRingFamilies, python::args("self"))
         .def("AreRingFamiliesInitialized",
              &RingInfo::areRingFamiliesInitialized, python::args("self"))
-#endif
         .def("AddRing", addRing,
              (python::arg("self"), python::arg("atomIds"),
               python::arg("bondIds")),

@@ -229,7 +229,7 @@ def Chi0(mol):
   deltas = [x.GetDegree() for x in mol.GetAtoms()]
   while 0 in deltas:
     deltas.remove(0)
-  deltas = numpy.array(deltas, 'd')
+  deltas = numpy.array(deltas, float)
   res = sum(numpy.sqrt(1. / deltas))
   return res
 
@@ -244,7 +244,7 @@ def Chi1(mol):
   c1s = [x.GetBeginAtom().GetDegree() * x.GetEndAtom().GetDegree() for x in mol.GetBonds()]
   while 0 in c1s:
     c1s.remove(0)
-  c1s = numpy.array(c1s, 'd')
+  c1s = numpy.array(c1s, float)
   res = sum(numpy.sqrt(1. / c1s))
   return res
 
@@ -320,7 +320,7 @@ def _pyChiNv_(mol, order=2):
                         for hkd in _hkDeltas(mol, skipHs=0)])
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
-    accum += numpy.prod(deltas[numpy.array(path)])
+    accum += numpy.prod(deltas[numpy.array(path)],float)
   return accum
 
 
@@ -358,7 +358,7 @@ def _pyChi0n(mol):
   deltas = [_nVal(x) for x in mol.GetAtoms()]
   while deltas.count(0):
     deltas.remove(0)
-  deltas = numpy.array(deltas, 'd')
+  deltas = numpy.array(deltas, float)
   res = sum(numpy.sqrt(1. / deltas))
   return res
 
@@ -367,7 +367,7 @@ def _pyChi1n(mol):
   """  Similar to Hall Kier Chi1v, but uses nVal instead of valence
 
   """
-  delts = numpy.array([_nVal(x) for x in mol.GetAtoms()], 'd')
+  delts = numpy.array([_nVal(x) for x in mol.GetAtoms()], float)
   res = 0.0
   for bond in mol.GetBonds():
     v = delts[bond.GetBeginAtomIdx()] * delts[bond.GetEndAtomIdx()]
@@ -391,7 +391,7 @@ def _pyChiNn_(mol, order=2):
   deltas = numpy.array([(1. / numpy.sqrt(x) if x else 0.0) for x in nval])
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
-    accum += numpy.prod(deltas[numpy.array(path)])
+    accum += numpy.prod(deltas[numpy.array(path)],float)
   return accum
 
 
@@ -578,10 +578,10 @@ def _CalculateEntropies(connectionDict, atomTypeDict, numAtoms):
   """
   connectionList = list(connectionDict.values())
   totConnections = sum(connectionList)
-  connectionIE = totConnections * (entropy.InfoEntropy(numpy.array(connectionList)) +
+  connectionIE = totConnections * (entropy.InfoEntropy(numpy.array(connectionList, float)) +
                                    math.log(totConnections) / _log2val)
   atomTypeList = list(atomTypeDict.values())
-  atomTypeIE = numAtoms * entropy.InfoEntropy(numpy.array(atomTypeList))
+  atomTypeIE = numAtoms * entropy.InfoEntropy(numpy.array(atomTypeList, float))
   return atomTypeIE + connectionIE
 
 

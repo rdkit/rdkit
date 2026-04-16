@@ -1,6 +1,8 @@
 #ifndef RDKIT_PUBCHEMSHAPE_GUARD
 #define RDKIT_PUBCHEMSHAPE_GUARD
 
+#include "Geometry/Transform3D.h"
+
 #include <GraphMol/ROMol.h>
 #include <map>
 #include <vector>
@@ -54,6 +56,7 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
     ar & shift;
     ar & sov;
     ar & sof;
+    ar & inertialRot;
   }
 #endif
 
@@ -64,6 +67,10 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
   std::map<unsigned int, std::vector<unsigned int>>
       colorAtomType2IndexVectorMap;
   std::vector<double> shift;
+  // If the conformer the shape was created from was rotated into the
+  // inertial reference frame at the start, this is the rotation that
+  // did that, assuming it was already centred on the origin.
+  std::vector<double> inertialRot{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
   double sov{0.0};
   double sof{0.0};
 };
@@ -98,7 +105,8 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInputOptions {
   \param confId     (optional) the conformer to use
   \param shapeOpts  (optional) Change the default behaviour.
 
-  \return a ShapeInput object, translated to the origin
+  \return a ShapeInput object, translated to the origin and aligned along its
+          principal axes.
 */
 RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput
 PrepareConformer(const RDKit::ROMol &mol, int confId = -1,
@@ -123,18 +131,20 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignShape(
     unsigned int max_preiters = 10u, unsigned int max_postiters = 30u);
 
 //! Assuming that fitShape has been overlaid onto a reference shape to give
-//! the ! transformation matrix, apply the same transformation to the given
+//! the transformation matrix, apply the same transformation to the given
 //! conformer.
 /*!
   \param finalTrans    the final translation to apply to the fitConf coords.
+  \param finalRot      the final rotation to apply to the fitConf coords.
   \param matrix        the transformation matrix produced from alignment
   \param fitShape      the shape that was aligned. The coord vector of this is
                        modified
   \param fitConf       the conformation to be transformed
 */
 RDKIT_PUBCHEMSHAPE_EXPORT void TransformConformer(
-    const std::vector<double> &finalTrans, const std::vector<float> &matrix,
-    ShapeInput &fitShape, RDKit::Conformer &fitConf);
+    const std::vector<double> &finalTrans, const std::vector<double> &finalRot,
+    const std::vector<float> &matrix, const ShapeInput &fitShape,
+    RDKit::Conformer &fitConf);
 
 //! Align a molecule to a reference shape
 /*!
@@ -202,7 +212,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const RDKit::ROMol &ref, RDKit::ROMol &fit, std::vector<float> &matrix,
     const ShapeInputOptions &refShapeOpts,
-    const ShapeInputOptions &probeShapeOpts, int refConfId = -1,
+    const ShapeInputOptions &fitShapeOpts, int refConfId = -1,
     int fitConfId = -1, double opt_param = 1.0, unsigned int max_preiters = 10u,
     unsigned int max_postiters = 30u);
 

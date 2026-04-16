@@ -57,8 +57,16 @@ class JSMolBase {
     return get_svg(d_defaultWidth, d_defaultHeight);
   }
   std::string get_svg_with_highlights(const std::string &details) const;
-  std::string get_substruct_match(const JSMolBase &q) const;
-  std::string get_substruct_matches(const JSMolBase &q) const;
+  std::string get_substruct_match(const JSMolBase &q,
+                                  const std::string &details) const;
+  std::string get_substruct_match(const JSMolBase &q) const {
+    return get_substruct_match(q, "");
+  };
+  std::string get_substruct_matches(const JSMolBase &q,
+                                    const std::string &details) const;
+  std::string get_substruct_matches(const JSMolBase &q) const {
+    return get_substruct_matches(q, "");
+  };
   std::string get_descriptors() const;
   std::string get_morgan_fp(const std::string &details) const;
   std::string get_morgan_fp() const { return get_morgan_fp("{}"); }

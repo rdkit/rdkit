@@ -261,6 +261,12 @@ TEST_CASE("test23D") {
   Point3D tpt9(0.0, 0.0, 1.0);
   transz.TransformPoint(pt9);
   REQUIRE(ptEq(tpt9, pt9));
+
+  double pt10[3]{0.0, 0.0, 1.0};
+  transz.TransformPoint(pt10);
+  CHECK_THAT(tpt9.x, Catch::Matchers::WithinAbs(pt10[0], 0.001));
+  CHECK_THAT(tpt9.y, Catch::Matchers::WithinAbs(pt10[1], 0.001));
+  CHECK_THAT(tpt9.z, Catch::Matchers::WithinAbs(pt10[2], 0.001));
 }
 
 TEST_CASE("test3MatMultiply") {

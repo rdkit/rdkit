@@ -29,7 +29,9 @@
 
 #include <RDGeneral/BoostStartInclude.h>
 #define BOOST_JSON_NO_LIB
+#ifndef BOOST_CONTAINER_NO_LIB
 #define BOOST_CONTAINER_NO_LIB
+#endif
 #include <boost/json.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
@@ -243,9 +245,9 @@ void addBond(const Bond &bond, bj::object &bjBond, const bj::object &bjDefaults,
 template <typename T>
 void addProperties(const T &obj, const std::vector<std::string> &propNames,
                    bj::object &properties) {
-  const auto &data = obj.getDict().getData();
+  const auto &rd_dict = obj.getDict();
 
-  for (auto &rdvalue : data) {
+  for (const auto &rdvalue : rd_dict) {
     if (std::find(propNames.begin(), propNames.end(), rdvalue.key) ==
         propNames.end()) {
       continue;

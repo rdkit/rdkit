@@ -2215,6 +2215,26 @@ void testGithub2948() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub8997() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test Github #8997: incorrect numHBA in N-heterocycles"
+      << std::endl;
+
+  {
+    auto m = "c1cccn1C"_smiles;
+    TEST_ASSERT(m);
+    TEST_ASSERT(calcNumHBA(*m) == 0);
+  }
+  {
+    auto m = "c1cccc(=O)n1C"_smiles;
+    TEST_ASSERT(m);
+    TEST_ASSERT(calcNumHBA(*m) == 1);
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -2258,4 +2278,5 @@ int main() {
 #endif
   testGithub1973();
   testGithub2948();
+  testGithub8997();
 }

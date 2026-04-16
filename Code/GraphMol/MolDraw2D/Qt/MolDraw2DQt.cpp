@@ -86,7 +86,9 @@ namespace {
 void setDashes(QPen &pen, const DashPattern &dashes) {
   if (dashes.size()) {
     QVector<qreal> dd;
-    for (unsigned int di = 0; di < dashes.size(); ++di) dd << dashes[di];
+    for (unsigned int di = 0; di < dashes.size(); ++di) {
+      dd << dashes[di];
+    }
     pen.setDashPattern(dd);
   } else {
     pen.setStyle(Qt::SolidLine);

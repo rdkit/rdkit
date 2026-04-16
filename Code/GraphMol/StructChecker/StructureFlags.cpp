@@ -37,7 +37,9 @@ std::string StructChecker::StructureFlagsToString(unsigned f) {
   std::string s;
   for (unsigned bit = 0; bit < 16; bit++) {
     if (0 != (f & (1 << bit))) {
-      if (!s.empty()) s += ",";
+      if (!s.empty()) {
+        s += ",";
+      }
       s += flags[bit];
     }
   }
@@ -48,8 +50,11 @@ std::string StructChecker::StructureFlagsToString(unsigned f) {
 class FMap : public std::map<std::string, unsigned> {
  public:
   FMap() {
-    for (unsigned bit = 0; bit < 16; bit++)
-      if (*flags[bit]) (*this)[std::string(flags[bit])] = (1 << bit);
+    for (unsigned bit = 0; bit < 16; bit++) {
+      if (*flags[bit]) {
+        (*this)[std::string(flags[bit])] = (1 << bit);
+      }
+    }
   }
 };
 
@@ -58,17 +63,25 @@ unsigned StructChecker::StringToStructureFlags(const std::string &str) {
   unsigned int f = 0;
   const char *token = str.c_str();
   while (*token) {
-    while (*token && *token <= ' ')  // skip whitespaces (<tab>|<space>...)
+    while (*token && *token <= ' ') {  // skip whitespaces (<tab>|<space>...)
       token++;
+    }
     unsigned len = 0;
-    while (token[len] && !(token[len] == ',' || token[len] <= ' ')) len++;
-    if (0 == len) continue;
+    while (token[len] && !(token[len] == ',' || token[len] <= ' ')) {
+      len++;
+    }
+    if (0 == len) {
+      continue;
+    }
     std::string name(token, len);
     auto it = fmap.find(name);
-    if (fmap.end() != it) f |= it->second;
+    if (fmap.end() != it) {
+      f |= it->second;
+    }
     while (token[len] &&
-           (token[len] == ',' || token[len] <= ' '))  // skip delimeter
+           (token[len] == ',' || token[len] <= ' ')) {  // skip delimeter
       len++;
+    }
     token += len;
   }
   return f;

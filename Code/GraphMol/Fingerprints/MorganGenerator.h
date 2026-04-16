@@ -14,7 +14,6 @@
 
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <cstdint>
-
 namespace RDKit {
 
 namespace MorganFingerprint {
@@ -26,7 +25,7 @@ namespace MorganFingerprint {
  */
 class RDKIT_FINGERPRINTS_EXPORT MorganAtomInvGenerator
     : public AtomInvariantsGenerator {
-  const bool df_includeRingMembership;
+  bool df_includeRingMembership;
 
  public:
   /**
@@ -41,6 +40,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomInvGenerator
       const ROMol &mol) const override;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &) override;
   MorganAtomInvGenerator *clone() const override;
 };
 
@@ -51,7 +52,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomInvGenerator
  */
 class RDKIT_FINGERPRINTS_EXPORT MorganFeatureAtomInvGenerator
     : public AtomInvariantsGenerator {
-  std::vector<const ROMol *> *dp_patterns;
+  void cleanUpPatterns();
+  std::vector<const ROMol *> *dp_patterns = nullptr;
 
  public:
   /**
@@ -62,12 +64,16 @@ class RDKIT_FINGERPRINTS_EXPORT MorganFeatureAtomInvGenerator
    Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998) will be used for
    Donor, Acceptor, Aromatic, Halogen, Basic, Acidic.
    */
-  MorganFeatureAtomInvGenerator(std::vector<const ROMol *> *patterns = nullptr);
+  MorganFeatureAtomInvGenerator(
+      const std::vector<const ROMol *> *patterns = nullptr);
+  ~MorganFeatureAtomInvGenerator();
 
   std::vector<std::uint32_t> *getAtomInvariants(
       const ROMol &mol) const override;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &) override;
   MorganFeatureAtomInvGenerator *clone() const override;
 };
 
@@ -77,8 +83,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganFeatureAtomInvGenerator
  */
 class RDKIT_FINGERPRINTS_EXPORT MorganBondInvGenerator
     : public BondInvariantsGenerator {
-  const bool df_useBondTypes;
-  const bool df_useChirality;
+  bool df_useBondTypes;
+  bool df_useChirality;
 
  public:
   /**
@@ -96,6 +102,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganBondInvGenerator
       const ROMol &mol) const override;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
   MorganBondInvGenerator *clone() const override;
   ~MorganBondInvGenerator() override = default;
 };
@@ -112,6 +120,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments : public FingerprintArguments {
   bool df_useBondTypes = true;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
 
   /**
    \brief Construct a new MorganArguments object
@@ -201,6 +211,9 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
+  void toJSON(boost::property_tree::ptree &pt) const override;
+  void fromJSON(const boost::property_tree::ptree &pt) override;
+
   OutputType getResultSize() const override;
 };
 

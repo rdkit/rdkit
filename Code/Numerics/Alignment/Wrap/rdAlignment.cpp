@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -180,7 +179,7 @@ BOOST_PYTHON_MODULE(rdAlignment) {
       "Module containing functions to align pairs of points in 3D";
 
   std::string docString =
-      "Compute the optimal alignment (minimum RMSD) between two set of points \n\n\
+      "Compute the optimal alignment (minimum RMSD) between two set of points using the quaternion algorithm \n\n\
  \n\
  ARGUMENTS:\n\n\
     - refPoints : reference points specified as a N by 3 Numeric array or \n\
@@ -189,7 +188,7 @@ BOOST_PYTHON_MODULE(rdAlignment) {
                   restrictions as reference points apply here \n\
     - weights : optional numeric vector or list of weights to associate to each pair of points\n\
     - reflect : reflect the probe points before attempting alignment\n\
-    - maxIteration : maximum number of iterations to try to minimize RMSD \n\
+    - maxIteration : maximum number of iterations for the eigen solver \n\
                   \n\
  RETURNS:\n\n\
     a 2-tuple:\n\

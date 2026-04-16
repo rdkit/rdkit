@@ -85,7 +85,7 @@ void testStandardizeSm() {
   {
     std::string smi = "C=Cc1ccc2c(c1)[nH]c(=O)/c/2=C\\c1ccc[nH]1";
     std::string ss = MolStandardize::standardizeSmiles(smi);
-    TEST_ASSERT(ss == "C=Cc1ccc2c(c1)NC(=O)/C2=C\\c1ccc[nH]1");
+    TEST_ASSERT(ss == R"SMI(C=Cc1ccc2c(c1)NC(=O)/C2=C\c1ccc[nH]1)SMI");
   }
 
   // check stereochemistry is correctly perceived

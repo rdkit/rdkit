@@ -12,7 +12,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/MolOps.h>
 
-#include "TemplateSmiles.h"
+#include "TemplateSmarts.h"
 
 #include <fstream>
 #include <unordered_map>
@@ -67,8 +67,14 @@ class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
   void loadDefaultTemplates() {
     clearTemplates();
     // load default templates into m_templates map by atom count
-    for (const auto &smiles : TEMPLATE_SMILES) {
-      std::shared_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol(smiles));
+    for (const auto &smarts : TEMPLATE_SMARTS) {
+      std::shared_ptr<RDKit::ROMol> mol(RDKit::SmartsToMol(smarts));
+      if (!mol) {
+        continue;
+      }
+      // Initialize ring info using symmetrizeSSSR to match depictor ring counting
+      RDKit::VECT_INT_VECT arings;
+      RDKit::MolOps::symmetrizeSSSR(*mol, arings);
       m_templates[mol->getNumAtoms()].push_back(mol);
     }
   }

@@ -65,7 +65,9 @@ class AtomSymbolMapper {
 
  public:
   AtomSymbolMapper() {
-    for (unsigned n = 0; n < 110; n++) SymbolMap[AtomSymbol[n]] = n;
+    for (unsigned n = 0; n < 110; n++) {
+      SymbolMap[AtomSymbol[n]] = n;
+    }
   }
   inline unsigned getAtomicNumber(const std::string symbol) const {
     return SymbolMap.find(symbol)->second;
@@ -237,8 +239,11 @@ static const char *amino_acids[] = /* pseudosymbol "Ami" or "ami"*/
 static bool IsInStringTable(const char *symbol, const char *table[]) {
   // Checks if the string symbol is listed in table[]
   const char **stringp;
-  for (stringp = table; *stringp; stringp++)
-    if (0 == strcmp(*stringp, symbol)) return true;
+  for (stringp = table; *stringp; stringp++) {
+    if (0 == strcmp(*stringp, symbol)) {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -263,68 +268,113 @@ bool AtomSymbolMatch(const std::string symbol, const std::string pattern) {
        tokp = strtok_r((char *)nullptr, ",", &context)) {
     if (islower(*tokp)) {
       if (0 == strcmp("alk", tokp)) {
-        if (IsInStringTable(atsym, alkali_metals)) return true;
+        if (IsInStringTable(atsym, alkali_metals)) {
+          return true;
+        }
       } else if (0 == strcmp("gr2", tokp)) {
-        if (IsInStringTable(atsym, gr2)) return true;
+        if (IsInStringTable(atsym, gr2)) {
+          return true;
+        }
       } else if (0 == strcmp("gr3", tokp)) {
-        if (IsInStringTable(atsym, gr3)) return true;
+        if (IsInStringTable(atsym, gr3)) {
+          return true;
+        }
       } else if (0 == strcmp("gr4", tokp)) {
-        if (IsInStringTable(atsym, gr4)) return true;
+        if (IsInStringTable(atsym, gr4)) {
+          return true;
+        }
       } else if (0 == strcmp("ons", tokp)) {
-        if (IsInStringTable(atsym, ONS_table)) return true;
+        if (IsInStringTable(atsym, ONS_table)) {
+          return true;
+        }
       } else if (0 == strcmp("on2", tokp)) {
-        if (IsInStringTable(atsym, on2)) return true;
+        if (IsInStringTable(atsym, on2)) {
+          return true;
+        }
       } else if (0 == strcmp("hal", tokp)) {
-        if (IsInStringTable(atsym, halogenes)) return true;
+        if (IsInStringTable(atsym, halogenes)) {
+          return true;
+        }
       } else if (0 == strcmp("ha2", tokp)) {
-        if (IsInStringTable(atsym, ha2)) return true;
+        if (IsInStringTable(atsym, ha2)) {
+          return true;
+        }
       } else if (0 == strcmp("trn", tokp)) {
-        if (IsInStringTable(atsym, transition_metals)) return true;
+        if (IsInStringTable(atsym, transition_metals)) {
+          return true;
+        }
       } else if (0 == strcmp("tra", tokp)) {
-        if (IsInStringTable(atsym, tra)) return true;
+        if (IsInStringTable(atsym, tra)) {
+          return true;
+        }
       } else if (0 == strcmp("trb", tokp)) {
-        if (IsInStringTable(atsym, trb)) return true;
+        if (IsInStringTable(atsym, trb)) {
+          return true;
+        }
       } else if (0 == strcmp("tm1", tokp)) {
-        if (IsInStringTable(atsym, tm1)) return true;
+        if (IsInStringTable(atsym, tm1)) {
+          return true;
+        }
       } else if (0 == strcmp("tm2", tokp)) {
-        if (IsInStringTable(atsym, tm2)) return true;
+        if (IsInStringTable(atsym, tm2)) {
+          return true;
+        }
       } else if (0 == strcmp("tm3", tokp)) {
-        if (IsInStringTable(atsym, tm3)) return true;
+        if (IsInStringTable(atsym, tm3)) {
+          return true;
+        }
       } else if (0 == strcmp("tm4", tokp)) {
-        if (IsInStringTable(atsym, tm4)) return true;
+        if (IsInStringTable(atsym, tm4)) {
+          return true;
+        }
       } else if (0 == strcmp("tm5", tokp)) {
-        if (IsInStringTable(atsym, tm5)) return true;
+        if (IsInStringTable(atsym, tm5)) {
+          return true;
+        }
       } else if (0 == strcmp("tm6", tokp)) {
-        if (IsInStringTable(atsym, tm6)) return true;
+        if (IsInStringTable(atsym, tm6)) {
+          return true;
+        }
       } else if (0 == strcmp("tm7", tokp)) {
-        if (IsInStringTable(atsym, tm7)) return true;
+        if (IsInStringTable(atsym, tm7)) {
+          return true;
+        }
       } else if (0 == strcmp("tm8", tokp)) {
-        if (IsInStringTable(atsym, tm8)) return true;
+        if (IsInStringTable(atsym, tm8)) {
+          return true;
+        }
       } else if (0 == strcmp("lan", tokp)) {
-        if (IsInStringTable(atsym, lanthanoids)) return true;
+        if (IsInStringTable(atsym, lanthanoids)) {
+          return true;
+        }
       } else if (0 == strcmp("ami", tokp)) {
-        if (IsInStringTable(atsym, amino_acids)) return true;
+        if (IsInStringTable(atsym, amino_acids)) {
+          return true;
+        }
       }
     }
-    if (0 == strcmp(atsym, tokp)) return true;
+    if (0 == strcmp(atsym, tokp)) {
+      return true;
+    }
   }
 
-  if (0 == strcmp("A", pattern.c_str()))
+  if (0 == strcmp("A", pattern.c_str())) {
     return (0 != strcmp("H", atsym));
-  else if (0 == strcmp("Qs", pattern.c_str()))
+  } else if (0 == strcmp("Qs", pattern.c_str())) {
     return (IsInStringTable(atsym, non_metal_small_solution));
-  else if (0 == strcmp("G", pattern.c_str()))
+  } else if (0 == strcmp("G", pattern.c_str())) {
     return (IsInStringTable(atsym, HC_table));
-  else if (0 == strcmp("ONS", pattern.c_str()))
+  } else if (0 == strcmp("ONS", pattern.c_str())) {
     return (IsInStringTable(atsym, ONS_table));
-  else if (0 == strcmp("X", pattern.c_str()))
+  } else if (0 == strcmp("X", pattern.c_str())) {
     return (IsInStringTable(atsym, halogenes));
-  else if (0 == strcmp("Q", pattern.c_str()))
+  } else if (0 == strcmp("Q", pattern.c_str())) {
     return (IsInStringTable(atsym, non_metal_hetero_elements));
-  else if (0 == strcmp("M", pattern.c_str()))
+  } else if (0 == strcmp("M", pattern.c_str())) {
     return (IsInStringTable(atsym, metals));
-  else if (0 == strcmp("Ami", pattern.c_str()))
+  } else if (0 == strcmp("Ami", pattern.c_str())) {
     return (IsInStringTable(atsym, amino_acids));
+  }
   return false;
 }
 

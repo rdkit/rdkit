@@ -74,6 +74,18 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
               //!< will match atoms and bonds with unspecified stereochemistry
   bool aromaticMatchesSingleOrDouble = false;  //!< Aromatic bonds match single
                                                //!< or double bonds
+  std::function<bool(const Atom &queryAtom, const Atom &molAtom)>
+      extraAtomCheck;  //!< a function to be called after other atom comparisons
+                       //!< have passed
+  bool extraAtomCheckOverridesDefaultCheck =
+      false;  //!< if set, only the extraAtomCheck will be used to determine
+              //!< whether or not atoms match
+  std::function<bool(const Bond &queryBond, const Bond &molBond)>
+      extraBondCheck;  //!< a function to be called after other bond comparisons
+                       //!< have passed
+  bool extraBondCheckOverridesDefaultCheck =
+      false;  //!< if set, only the extraBondCheck will be used to determine
+              //!< whether or not bonds match
   SubstructMatchParameters() {}
 };
 
@@ -94,6 +106,23 @@ RDKIT_SUBSTRUCTMATCH_EXPORT std::string substructMatchParamsToJSON(
 RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ROMol &query,
     const SubstructMatchParameters &params = SubstructMatchParameters());
+
+//! Count substructure matches for a query in a molecule without materializing
+//! the full match vectors.
+/*!
+    
+    
+    
+  \param mol         The ROMol to be searched
+  \param query       The query ROMol
+  \param matchParams Parameters controlling the matching
+
+  \return The number of matches found (capped by params.maxMatches)
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT unsigned int SubstructMatchCount(
+  const ROMol &mol, const ROMol &query,
+  const SubstructMatchParameters &params = SubstructMatchParameters());
 
 //! Find all substructure matches for a query in a ResonanceMolSupplier object
 /*!
@@ -255,6 +284,19 @@ class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
   using HashedStorageType = std::string;
 #endif
   std::unordered_set<HashedStorageType> matchesSeen;
+};
+
+struct RDKIT_SUBSTRUCTMATCH_EXPORT AtomCoordsMatchFunctor {
+  int d_refConfId = -1;
+  int d_queryConfId = -1;
+  double d_tol2 = 1e-8;  //< squared distance tolerance
+  AtomCoordsMatchFunctor(int refConfId = -1, int queryConfId = -1,
+                         double tol = 1e-4)
+      : d_refConfId(refConfId),
+        d_queryConfId(queryConfId),
+        d_tol2(tol * tol) {};
+
+  bool operator()(const Atom &queryAtom, const Atom &targetAtom) const;
 };
 
 }  // namespace RDKit

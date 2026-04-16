@@ -70,6 +70,19 @@ public class ChemTransformsTests extends GraphMolTest {
 
 	}
 
+        @Test
+	public void testSubset() {
+	    ROMol mol = RWMol.MolFromSmiles("c1ccccc1CCN");
+	    UInt_Vect vect = new UInt_Vect(mol.getNumAtoms());
+	    for(int i=0;i<6;++i) {
+		  vect.add(i);
+	    }
+	    // atom copy
+	    ROMol sub = RDKFuncs.copyMolSubset(mol, vect);
+	    assertEquals("c1ccccc1", sub.MolToSmiles());
+
+	}
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.ChemTransformsTests");
 	}

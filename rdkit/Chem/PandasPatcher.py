@@ -88,12 +88,13 @@ except ImportError:
   log.warning("Failed to import pandas")
   raise
 
-dataframe_applymap = pd.DataFrame.applymap
 try:
-  if tuple(map(int, (pd.__version__.split(".")))) >= (2, 1, 0):
+  if tuple(map(int, (pd.__version__.split(".")))) < (2, 1, 0):
+    dataframe_applymap = pd.DataFrame.applymap
+  else:
     dataframe_applymap = pd.DataFrame.map
 except:
-  pass
+  log.warning("Failed to find a suitable map function for data frames")
 
 orig_to_html = getattr(to_html_class, "to_html")
 pprint_thing = pandas_formats.printing.pprint_thing
@@ -138,7 +139,7 @@ class MolFormatter:
   @classmethod
   def get_formatters(cls, df, orig_formatters):
     """Return an instance of MolFormatter for each column that contains Chem.Mol objects"""
-    df_subset = df.select_dtypes("object")
+    df_subset = df.select_dtypes(["object", "string"])
     return {
       col: cls(orig_formatters.get(col, None))
       for col in df_subset.columns[dataframe_applymap(df_subset, MolFormatter.is_mol).any()]

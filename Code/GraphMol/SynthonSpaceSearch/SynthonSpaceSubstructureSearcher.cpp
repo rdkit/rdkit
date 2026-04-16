@@ -10,11 +10,10 @@
 
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/MolOps.h>
-#include <GraphMol/QueryAtom.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
 #include <RDGeneral/ControlCHandler.h>
@@ -169,11 +168,6 @@ std::vector<std::vector<size_t>> getHitSynthons(
     synthonsToUse.emplace_back(synthonSet.size());
   }
 
-  // The tests must be applied for all permutations of synthon list against
-  // fragment.
-  auto synthonOrders =
-      details::permMFromN(molFrags.size(), reaction.getSynthons().size());
-
   // Match the fragment to the synthon set in this order.
   for (size_t i = 0; i < synthonOrder.size(); ++i) {
     const auto &synthonsSet = reaction.getSynthons()[synthonOrder[i]];
@@ -211,10 +205,114 @@ std::vector<std::vector<size_t>> getHitSynthons(
   return retSynthons;
 }
 
+std::vector<std::unique_ptr<ROMol>> mergeFragments(
+    size_t i, size_t one, size_t two, const std::vector<size_t> &others,
+    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
+  std::vector<std::unique_ptr<ROMol>> retFrags;
+  retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[i]));
+  retFrags.emplace_back(
+      std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
+  for (auto o : others) {
+    if (o != one && o != two) {
+      retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[o]));
+    }
+  }
+  return retFrags;
+}
+std::vector<std::unique_ptr<ROMol>> mergeFragments(
+    size_t i, size_t one, size_t two, size_t three, size_t four,
+    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
+  std::vector<std::unique_ptr<ROMol>> retFrags;
+  retFrags.emplace_back(std::make_unique<ROMol>(*fragSet[i]));
+  retFrags.emplace_back(
+      std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
+  retFrags.emplace_back(
+      std::unique_ptr<ROMol>(combineMols(*fragSet[three], *fragSet[four])));
+  return retFrags;
+}
+
+// If there is a ring-forming reaction, we will need to merge all possible
+// pairs of fragments creating multiple possible fragment sets.  Do that for
+// all fragSets of size more than 2.
+std::vector<std::vector<std::unique_ptr<ROMol>>> mergeRingFormingFrags(
+    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
+  std::vector<std::vector<std::unique_ptr<ROMol>>> fragSetCps;
+
+  // There can be 1 or 2 ring closures in a reaction, so
+  // either 2 of the synthons will be bidentate (1 ring closure), or
+  // 1 synthon will be 4-dentate.
+  // We need to allow for a query that only has a part-ring trying to match
+  // it. O=c1ncnc([c])c1[c] was ground zero for this. For a 1 ring-former,
+  // take each bi-dentate fragment and make all combinations of 1 pair from
+  // the rest and then the rest. Within the current constraint of only 4
+  // connectors being allowed, 2 ring forming reactions must mean a single
+  // 4-connector fragment and 4 1-connector fragments
+  const auto &connPatts = details::getConnectorPatterns(fragSet);
+  for (size_t i = 0; i < connPatts.size(); ++i) {
+    if (connPatts[i].count() > 1) {
+      std::vector<size_t> others;
+      for (size_t j = 0; j < connPatts.size(); ++j) {
+        if (i != j) {
+          others.push_back(j);
+        }
+      }
+      // If there are only 2 other fragments, it's easy
+      if (others.size() == 2) {
+        fragSetCps.push_back(
+            mergeFragments(i, others[0], others[1], others, fragSet));
+      } else if (others.size() == 3) {
+        // Merge each possible pair, leaving the other one
+        fragSetCps.push_back(
+            mergeFragments(i, others[0], others[1], others, fragSet));
+        fragSetCps.push_back(
+            mergeFragments(i, others[0], others[2], others, fragSet));
+        fragSetCps.push_back(
+            mergeFragments(i, others[1], others[2], others, fragSet));
+      } else if (others.size() == 4) {
+        // merge all combinations of pairs - it's the 4-dentate fragment
+        fragSetCps.push_back(mergeFragments(i, others[0], others[1], others[2],
+                                            others[3], fragSet));
+        fragSetCps.push_back(mergeFragments(i, others[0], others[2], others[1],
+                                            others[3], fragSet));
+        fragSetCps.push_back(mergeFragments(i, others[1], others[2], others[0],
+                                            others[3], fragSet));
+      }
+    }
+  }
+  return fragSetCps;
+}
+
 }  // namespace
+
+unsigned int SynthonSpaceSubstructureSearcher::getNumQueryFragmentsRequired() {
+  auto maxNumSynthons = getSpace().getMaxNumSynthons();
+  auto maxNumConns = getSpace().getMaxNumConnectors();
+  return std::max(maxNumSynthons, maxNumConns + 1);
+}
 
 void SynthonSpaceSubstructureSearcher::extraSearchSetup(
     std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) {
+  if (getSpace().getHasRingFormer()) {
+    // If there is a reaction that has a pair of synthons that form a ring,
+    // extra merged fragments are required.
+    std::vector<std::vector<std::unique_ptr<ROMol>>> extraFragSets;
+    for (const auto &fragSet : fragSets) {
+      // There's no need to do this for a fragSet of size 2, because if there
+      // is a ring-forming reaction both fragments will be bi-dentate so might
+      // match, or at least one of them isn't, in which case there can't be a
+      // match.
+      if (fragSet.size() > 2) {
+        auto fragSetCps = mergeRingFormingFrags(fragSet);
+        for (auto &fs : fragSetCps) {
+          extraFragSets.emplace_back(std::move(fs));
+        }
+      }
+    }
+    for (auto &fs : extraFragSets) {
+      fragSets.emplace_back(std::move(fs));
+    }
+  }
+
   bool cancelled = false;
   auto fragSmiToFrag = details::mapFragsBySmiles(fragSets, cancelled);
   if (cancelled) {
@@ -240,8 +338,9 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
       sanitizeMol(*static_cast<RWMol *>(frag), otf, MolOps::SANITIZE_SYMMRINGS);
 
       // Query atoms may define the environment of the fragment (via recursive
-      // SMARTS, for example) that a potentially matching synthon may not have,
-      // so they need to be made more generic.  For example, if the query is
+      // SMARTS, for example) that a potentially matching synthon may not
+      // have, so they need to be made more generic.  For example, if the
+      // query is
       // [$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1
       // and it's split into [$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)[1*]
       // that won't match the synthon [1*]c([*3])C(=O)[2*] even though the
@@ -313,21 +412,18 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
     const std::vector<std::unique_ptr<ROMol>> &fragSet,
     const SynthonSet &reaction) const {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
-
   const auto pattFPs = gatherPatternFPs(fragSet, d_pattFPs);
   std::vector<int> numFragConns;
   numFragConns.reserve(fragSet.size());
   for (const auto &frag : fragSet) {
     numFragConns.push_back(details::countConnections(*frag));
   }
-
   const auto conns = details::getConnectorPattern(fragSet);
-  // It can't be a hit if the number of fragments is more than the number
-  // of synthon sets because some of the molecule won't be matched in any
-  // of the potential products.  It can be less, in which case the unused
-  // synthon set will be used completely, possibly resulting in a large
-  // number of hits.
-  if (fragSet.size() > reaction.getSynthons().size()) {
+  // It can't be a hit if the number of fragments is more than 1 plus the
+  // number of bonds being formed in the reaction.  It can be less, in which
+  // case the unused synthon set will be used completely, possibly resulting
+  // in a large number of hits.
+  if (fragSet.size() > reaction.getConnectors().count() + 1) {
     return results;
   }
 
@@ -341,18 +437,19 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
     return results;
   }
 
+  // Need to copy fragSet into a working set, then apply the results to
+  // the working copy below.
+  std::vector<std::unique_ptr<ROMol>> fragSetCp(fragSet.size());
+  for (unsigned int i = 0; i < fragSet.size(); ++i) {
+    fragSetCp[i] = std::make_unique<ROMol>(*fragSet[i]);
+  }
+
   // Get all the possible permutations of connector numbers compatible with
   // the number of synthon sets in this reaction.  So if the
   // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
   // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
   // that might be how they're labelled in the reaction database.
 
-  // Need to copy orderedFrags into a working set, then apply the results to
-  // the working copy below.
-  std::vector<std::unique_ptr<ROMol>> fragSetCp(fragSet.size());
-  for (unsigned int i = 0; i < fragSet.size(); ++i) {
-    fragSetCp[i] = std::make_unique<ROMol>(*fragSet[i]);
-  }
   const auto connCombs = details::getConnectorPermutations(
       fragSetCp, conns, reaction.getConnectors());
 
@@ -360,7 +457,7 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
   // of the fragment fingerprints.
   // Need to try all combinations of synthon orders.
   const auto synthonOrders =
-      details::permMFromN(pattFPs.size(), reaction.getSynthons().size());
+      details::permMFromN(fragSetCp.size(), reaction.getSynthons().size());
   for (const auto &so : synthonOrders) {
     auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, so);
     // If none of the synthons passed the screens, move right along, nothing
@@ -395,7 +492,6 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
       }
     }
   }
-
   return results;
 }
 

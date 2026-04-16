@@ -65,6 +65,14 @@ Digraph *Node::getDigraph() const { return dp_g; }
 
 Atom *Node::getAtom() const { return dp_atom; }
 
+unsigned int Node::getAtomIdx() const {
+  if (isSet(IMPL_HYDROGEN)) {
+    return Atom::NOATOM;
+  }
+
+  return dp_atom->getIdx();
+}
+
 int Node::getDistance() const { return d_dist; }
 
 boost::rational<int> Node::getAtomicNumFraction() const { return d_atomic_num; }

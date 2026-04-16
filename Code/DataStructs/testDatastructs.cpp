@@ -1374,7 +1374,7 @@ TEST_CASE("test16BitVectProps") {
 
   Dict d;
   d.setVal<ExplicitBitVect>("exp", bv);
-  RDValue &value = d.getData()[0].val;
+  const RDValue &value = d.getRDValue("exp");
 
   DataStructsExplicitBitVecPropHandler bv_handler;
   std::vector<CustomPropHandler *> handlers = {&bv_handler, bv_handler.clone()};
@@ -1390,6 +1390,30 @@ TEST_CASE("test16BitVectProps") {
     newValue.destroy();
   }
   delete handlers[1];
+}
+
+TEST_CASE("ExplicitBitVect round-trips through streamWriteProps/streamReadProps") {
+  ExplicitBitVect bv(64);
+  for (unsigned int i = 0; i < 64; i += 3) {
+    bv.setBit(i);
+  }
+
+  CustomPropHandlerVec handlers;
+  handlers.push_back(std::shared_ptr<const CustomPropHandler>(
+      new DataStructsExplicitBitVecPropHandler));
+
+  RDProps src;
+  src.setProp<ExplicitBitVect>("bv", bv);
+  src.setProp<int>("num", 42);
+
+  std::stringstream ss;
+  streamWriteProps(ss, src, false, false, handlers);
+
+  RDProps dst;
+  streamReadProps(ss, dst, handlers);
+
+  REQUIRE(dst.getProp<int>("num") == 42);
+  REQUIRE(dst.getProp<ExplicitBitVect>("bv") == bv);
 }
 
 TEST_CASE("test17Github3994") {

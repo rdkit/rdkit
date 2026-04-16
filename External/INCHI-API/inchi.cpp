@@ -1753,7 +1753,7 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
     m->updatePropertyCache(false);
   }
   // kekulize
-  MolOps::Kekulize(*m, false);
+  MolOps::Kekulize(*m, false, false);
 
   // "reverse" cleanup: undo some clean up done by RDKit
   rCleanUp(*m);

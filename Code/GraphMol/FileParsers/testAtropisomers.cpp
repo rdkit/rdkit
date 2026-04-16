@@ -27,6 +27,8 @@
 
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <vector>
 #include <boost/lexical_cast.hpp>
 #include <filesystem>
 using namespace RDKit;
@@ -483,7 +485,7 @@ class MolAtropTest {
                      17),
           KekuleTest(
               "CC1C=CC(O)=C(C)C=1N1C2C(=NC=CC=2OC2C=NC=CC=2)C(C(=O)N)=C1N |wD:8.7|",
-              "CC1=C(O)C=CC(C)=C1N1C(N)=C(C(N)=O)C2=NC=CC(OC3=CN=CC=C3)=C21 |wD:9.10|",
+              "CC1=C(O)C=CC(C)=C1N1C(N)=C(C(N)=O)C2=NC=CC(OC3=CC=CN=C3)=C21 |wD:9.10|",
               true, 29, 32),
       };
 
@@ -567,6 +569,30 @@ void testLookForAtropisomersInSDdfFiles(std::string fileName,
   TEST_ASSERT(notFoundCount == expectedMisses);
 }
 
+void testSulfinamideExamplesHaveNoAtropisomers() {
+  const std::vector<std::string> controlFiles = {
+      "sulfinamide-double-bond-O-R.mol",
+      "sulfinamide-single-bond-O-R.mol",
+      "sulfinamide-single-bond-O-S.mol",
+  };
+  std::string rdbase = getenv("RDBASE");
+  std::stringstream warningCapture;
+  rdWarningLog->SetTee(warningCapture);
+  for (const auto &file : controlFiles) {
+    auto fName = rdbase +
+                 "/Code/GraphMol/FileParsers/test_data/atropisomers/" +
+                 file;
+    BOOST_LOG(rdInfoLog) << "Validating absence of atropisomers in " << file
+                         << std::endl;
+    auto mol = std::unique_ptr<RWMol>(MolFileToMol(fName, true, false, false));
+    TEST_ASSERT(mol);
+    Atropisomers::detectAtropisomerChirality(*mol, &mol->getConformer());
+    TEST_ASSERT(!Atropisomers::doesMolHaveAtropisomers(*mol));
+  }
+  rdWarningLog->ClearTee();
+  TEST_ASSERT(warningCapture.str().empty());
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -589,6 +615,7 @@ int main(int argc, char *argv[]) {
 
   molAtropTest.RunTests();
   testLookForAtropisomersInSDdfFiles("TestMultInSDF.sdf", 1, 4);
+  testSulfinamideExamplesHaveNoAtropisomers();
 
   return 0;
 }

@@ -82,7 +82,7 @@ rdkit_test(testAtropisomers testAtropisomers.cpp
 rdkit_catch_test(testSquiggleDoubleBonds testSquiggleDoubleBonds.cpp
     LINK_LIBRARIES FileParsers SubstructMatch)
 
-rdkit_test(testMolSupplier testMolSupplier.cpp
+rdkit_catch_test(testMolSupplier testMolSupplier.cpp
     LINK_LIBRARIES FileParsers RDStreams)
 
 rdkit_test(testGeneralFileReader testGeneralFileReader.cpp

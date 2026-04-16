@@ -77,9 +77,11 @@ yysln_error( const char *input,
 static void
 yyprint (FILE *file, int type, YYSTYPE value)
 {
-  if (type == TEXT_BLOCK)
+  if (type == TEXT_BLOCK) {
     fprintf (file, " %s", value.text_T->c_str());
-  else fprintf (file, " %d", type);
+  } else {
+    fprintf (file, " %d", type);
+  }
 }
 
 %}

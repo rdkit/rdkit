@@ -208,6 +208,25 @@ class BlockLogs : public boost::noncopyable {
   std::unique_ptr<RDLog::LogStateSetter> m_log_setter;
 };
 
+struct PyCaptureErrorLog : boost::noncopyable {
+  PyCaptureErrorLog *enter() { return this; }
+  void exit(python::object /*exc_type*/, python::object /*exc_val*/,
+            python::object /*traceback*/) {
+    if (m_capturer) {
+      m_messages = m_capturer->messages();
+      m_capturer.reset();
+    }
+  }
+  std::string messages() const {
+    return m_capturer ? m_capturer->messages() : m_messages;
+  }
+
+ private:
+  std::unique_ptr<RDLog::CaptureErrorLog> m_capturer{
+      new RDLog::CaptureErrorLog};
+  std::string m_messages;
+};
+
 namespace {
 struct python_streambuf_wrapper {
   typedef boost_adaptbx::python::streambuf wt;
@@ -428,4 +447,21 @@ BOOST_PYTHON_MODULE(rdBase) {
       .def("__enter__", &BlockLogs::enter,
            python::return_internal_reference<>())
       .def("__exit__", &BlockLogs::exit);
+
+  python::class_<PyCaptureErrorLog, boost::noncopyable>(
+      "CaptureErrorLog",
+      "Captures messages from rdErrorLog while this instance is in scope.\n"
+      "Can be used as a context manager. The ``messages`` property is\n"
+      "accessible both inside the context and after it exits.\n"
+      "Nesting is supported: inner captures shadow outer ones.\n\n"
+      "Example::\n\n"
+      "  with rdBase.CaptureErrorLog() as capture:\n"
+      "      rdkit_function_that_may_fail()\n"
+      "  print(capture.messages)\n",
+      python::init<>(python::args("self")))
+      .def("__enter__", &PyCaptureErrorLog::enter,
+           python::return_internal_reference<>())
+      .def("__exit__", &PyCaptureErrorLog::exit)
+      .add_property("messages", &PyCaptureErrorLog::messages,
+                    "Messages captured from rdErrorLog.");
 }

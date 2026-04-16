@@ -405,6 +405,15 @@ class TestCase(unittest.TestCase):
     _ = fpg.GetFingerprint(m,additionalOutput=ao)
     self.assertIsNone(ao.GetAtomsPerBit())
 
+  def testJSONSerialization(self):
+    m = Chem.MolFromSmiles('CCC')
+    g1 = rdFingerprintGenerator.GetAtomPairGenerator()
+    fp1 = g1.GetFingerprint(m)
+    jsonStr = g1.ToJSON()
+    g2 = rdFingerprintGenerator.FingerprintGeneratorFromJSON(jsonStr)
+    fp2 = g2.GetFingerprint(m)
+    self.assertEqual(fp1, fp2)
+
 
 
 if __name__ == '__main__':

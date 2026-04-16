@@ -99,13 +99,13 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
                                    bool includeComputed,
                                    bool autoConvertStrings = true) {
   boost::python::dict dict;
-  auto &rd_dict = obj.getDict();
-  auto &data = rd_dict.getData();
+  const auto &rd_dict = obj.getDict();
 
   STR_VECT keys = obj.getPropList(includePrivate, includeComputed);
-  for (auto &rdvalue : data) {
-    if (std::find(keys.begin(), keys.end(), rdvalue.key) == keys.end())
+  for (const auto &rdvalue : rd_dict) {
+    if (std::find(keys.begin(), keys.end(), rdvalue.key) == keys.end()) {
       continue;
+    }
     try {
       const auto tag = rdvalue.val.getTag();
       switch (tag) {
@@ -218,12 +218,13 @@ python::object autoConvertString(const RDOb *ob, const std::string &key) {
   double dvalue;
   std::string svalue;
 
-  if (ob->getPropIfPresent(key, ivalue))
+  if (ob->getPropIfPresent(key, ivalue)) {
     return python::object(ivalue);
-  else if (ob->getPropIfPresent(key, dvalue))
+  } else if (ob->getPropIfPresent(key, dvalue)) {
     return python::object(dvalue);
-  else if (ob->getPropIfPresent(key, svalue))
+  } else if (ob->getPropIfPresent(key, svalue)) {
     return python::object(svalue);
+  }
 
   return python::object();
 }
@@ -240,8 +241,8 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
       return nullptr;
     }
   } else {
-    const auto &data = obj->getDict().getData();
-    for (auto &rdvalue : data) {
+    const auto &rd_dict = obj->getDict();
+    for (const auto &rdvalue : rd_dict) {
       if (rdvalue.key == key) {
         try {
           const auto tag = rdvalue.val.getTag();

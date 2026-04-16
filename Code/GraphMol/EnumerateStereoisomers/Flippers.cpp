@@ -34,8 +34,8 @@ BondFlipper::BondFlipper(RWMol &mol, const Chirality::StereoInfo &si)
   dp_bond = mol.getBondWithIdx((si.centeredOn));
   auto stereoAtoms = dp_bond->getStereoAtoms();
   if (stereoAtoms.empty()) {
-    if (si.controllingAtoms[0] != Chirality::StereoInfo::NOATOM &&
-        si.controllingAtoms[2] != Chirality::StereoInfo::NOATOM) {
+    if (si.controllingAtoms[0] != Atom::NOATOM &&
+        si.controllingAtoms[2] != Atom::NOATOM) {
       dp_bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
     } else {
       dp_bond = nullptr;

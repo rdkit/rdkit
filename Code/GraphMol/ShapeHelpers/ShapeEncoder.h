@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2005-2006 Rational Discovery LLC
+//   Copyright (C) 2005-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,9 +7,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#pragma once
 #include <RDGeneral/export.h>
-#ifndef _RD_SHAPE_ENCODER_H_20050125_0800_
-#define _RD_SHAPE_ENCODER_H_20050125_0800_
+#ifndef RD_SHAPE_ENCODER_H_20050125_0800
+#define RD_SHAPE_ENCODER_H_20050125_0800
 
 namespace RDGeom {
 class UniformGrid3D;

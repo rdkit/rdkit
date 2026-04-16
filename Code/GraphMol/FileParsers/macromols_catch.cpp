@@ -29,6 +29,7 @@
 #include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/Atom.h>
 
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
@@ -65,24 +66,32 @@ class ScsrMolTest {
     unsigned int totalQueryAtomCount;
     unsigned int totalQueryBondCount;
     unsigned int querySgroupCount;
-    ExpectedStatus expectedStatus;
-    RDKit::SCSRBaseHbondOptions scsrBaseHbondOptions;
-    ScsrTest(std::string fileNameInit, ExpectedStatus expectedStatusInit,
+    bool scsrExpandResult;
+    SCSRBaseHbondOptions scsrBaseHbondOptions;
+    std::vector<std::pair<unsigned int, Atom::ChiralType>> chiralChecks;
+    std::vector<std::pair<unsigned int, Atom::ChiralType>> chiralChecksQuery;
+
+    ScsiTest(std::string fileNameInit, bool scsrExpandResult,
              SCSRBaseHbondOptions scsrBaseHbondOptions,
              unsigned int totalAtomCountInit, unsigned int totalBondCountInit,
              unsigned int sgroupCountInit, unsigned int totalQueryAtomCountInit,
              unsigned int totalQueryBondCountInit,
-             unsigned int querySgroupCountInit = 0)
+             unsigned int querySgroupCountInit,
+             std::vector<std::pair<unsigned int, Atom::ChiralType>>
+                 chiralChecksInit = {},
+             std::vector<std::pair<unsigned int, Atom::ChiralType>>
+                 chiralChecksQueryInit = {})
         : fileName(fileNameInit),
-
           totalAtomCount(totalAtomCountInit),
           totalBondCount(totalBondCountInit),
           sgroupCount(sgroupCountInit),
           totalQueryAtomCount(totalQueryAtomCountInit),
           totalQueryBondCount(totalQueryBondCountInit),
           querySgroupCount(querySgroupCountInit),
-          expectedStatus(expectedStatusInit),
-          scsrBaseHbondOptions(scsrBaseHbondOptions) {};
+          scsrExpandResult(scsrExpandResult),
+          scsrBaseHbondOptions(scsrBaseHbondOptions),
+          chiralChecks(chiralChecksInit),
+          chiralChecksQuery(chiralChecksQueryInit) {};
   };
 
   class ScsrMakeTest {
@@ -114,6 +123,32 @@ class ScsrMolTest {
         ScsrMolTest::ScsrTest("DnaTest.mol", ExpectedStatus::Success,
                               SCSRBaseHbondOptions::Ignore, 254, 282, 38, 250,
                               278, 34),
+        ScsiMolTest::ScsiTest("DNASlurpErrorImport.mol", true,
+                              SCSRBaseHbondOptions::Auto, 81, 90, 13, 79, 88,
+                              11,
+                              {{0, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {22, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {41, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {61, Atom::ChiralType::CHI_TETRAHEDRAL_CW}},
+                              {{0, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {22, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {41, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
+                               {61, Atom::ChiralType::CHI_TETRAHEDRAL_CW}}),
+        ScsiMolTest::ScsiTest("DNASlurpErrorSketch.mol", true,
+                              SCSRBaseHbondOptions::Auto, 84, 93, 14, 82, 91,
+                              12,
+                              {{51, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {60, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {68, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {76, Atom::ChiralType::CHI_TETRAHEDRAL_CCW}},
+                              {{51, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {60, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {68, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
+                               {76, Atom::ChiralType::CHI_TETRAHEDRAL_CCW}}),
+        ScsiMolTest::ScsiTest("ValenceErrorScsr.mol", true,
+                              SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
+        ScsiMolTest::ScsiTest("ValenceErrorScsr2.mol", true,
+                              SCSRBaseHbondOptions::Auto, 28, 28, 6, 25, 25, 3),
 
         ScsrMolTest::ScsrTest("ValenceErrorScsr.mol", ExpectedStatus::Success,
                               SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
@@ -305,6 +340,11 @@ class ScsrMolTest {
     CHECK(molReadBackIn->getNumAtoms() == mol->getNumAtoms());
     CHECK(molReadBackIn->getNumBonds() == mol->getNumBonds());
 
+    for (auto chiralCheck : scsiTest->chiralChecks) {
+      CHECK(mol->getAtomWithIdx(chiralCheck.first)->getChiralTag() ==
+            chiralCheck.second);
+    }
+
     // now make the expanded mol in "query" mode - not including any leaving
     // groups
 
@@ -323,9 +363,12 @@ class ScsrMolTest {
     CHECK(molNoLeavingGroups->getNumAtoms() == ScsrTest->totalQueryAtomCount);
     CHECK(molNoLeavingGroups->getNumBonds() == ScsrTest->totalQueryBondCount);
     CHECK(getSubstanceGroups(*molNoLeavingGroups).size() ==
-          ScsrTest->querySgroupCount);
+          ScsiTest->querySgroupCount);
 
-    return;
+    for (auto chiralCheck : ScsiTest->chiralChecksQuery) {
+      CHECK(mol->getAtomWithIdx(chiralCheck.first)->getChiralTag() ==
+            chiralCheck.second);
+    }
   }
 
   void threeLetterCodeTest(const ScsrTest *ScsrTest) {

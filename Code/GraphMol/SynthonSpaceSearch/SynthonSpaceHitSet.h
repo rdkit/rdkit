@@ -36,6 +36,11 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   SynthonSpaceHitSet &operator=(SynthonSpaceHitSet &&rhs) = delete;
 
   const SynthonSet *d_reaction{nullptr};
+  // The outer vector of synthonsToUse is the size of the synthon lists
+  // in the reaction.  So synthonsToUse[0] is all the synthons selected
+  // from reaction->synthons[0], likewise for synthonsToUse[1] etc.
+  // There should be at least one entry in each outer vector, but there
+  // may be different numbers in each.
   std::vector<std::vector<std::pair<std::string, const Synthon *>>>
       synthonsToUse;
   size_t numHits{0};

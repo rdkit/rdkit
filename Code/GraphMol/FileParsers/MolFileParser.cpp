@@ -1669,7 +1669,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
              << line;
       throw FileParseException(errout.str());
     }
-    res->setProp("molExactChangeFlag", exactChangeFlag);
+    res->setProp(common_properties::molRxnExactChange, exactChangeFlag);
   }
   return res.release();
 }
@@ -3298,24 +3298,25 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
           throw FileParseException(errout.str());
         } else {
           BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+          // Prepare to read a lot of sgroups
+          nSgroups = std::numeric_limits<unsigned int>::max();
+        }
+      }
+      sgroupFound = true;
+      tempStr =
+          ParseV3000SGroupsBlock(inStream, line, nSgroups, mol, strictParsing);
+      boost::to_upper(tempStr);
+      if (tempStr.length() < 10 || tempStr.substr(0, 10) != "END SGROUP") {
+        std::ostringstream errout;
+        errout << "END SGROUP line not found on line " << line;
+        if (strictParsing) {
+          throw FileParseException(errout.str());
+        } else {
+          BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
         }
       } else {
-        sgroupFound = true;
-        tempStr = ParseV3000SGroupsBlock(inStream, line, nSgroups, mol,
-                                         strictParsing);
+        tempStr = getV3000Line(inStream, line);
         boost::to_upper(tempStr);
-        if (tempStr.length() < 10 || tempStr.substr(0, 10) != "END SGROUP") {
-          std::ostringstream errout;
-          errout << "END SGROUP line not found on line " << line;
-          if (strictParsing) {
-            throw FileParseException(errout.str());
-          } else {
-            BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
-          }
-        } else {
-          tempStr = getV3000Line(inStream, line);
-          boost::to_upper(tempStr);
-        }
       }
 
     } else if (tempStr.length() >= 15 &&
