@@ -185,9 +185,7 @@ std::string MolToSequence(const ROMol &mol) {
   std::string result;
   std::string chain;
 
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    const Atom *atom = *atomIt;
+  for (const auto atom : mol.atoms()) {
     auto *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
     if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
       if (info->getName() == " CA ") {
@@ -550,9 +548,7 @@ std::string MolToHELM(const ROMol &mol) {
   int id = 1;
 
   /* First pass: Monomers */
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    const Atom *atom = *atomIt;
+  for (const auto atom : mol.atoms()) {
     auto *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
     // We can only write HELM if all atoms have PDB residue information
     if (!info || info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
