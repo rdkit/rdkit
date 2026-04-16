@@ -989,6 +989,15 @@ M  END
     highlightCoords = extractCoords(text)
     self.assertTrue(checkCoords(referenceCoords, highlightCoords))
 
+  def testLegendPosition(self):
+    mol = Chem.MolFromSmiles('CCO')
+    self.assertIsNotNone(mol)
+    opts = rdMolDraw2D.MolDrawOptions()
+    self.assertEqual(opts.legendPosition, rdMolDraw2D.LegendPosition.Bottom)
+    opts.legendPosition = rdMolDraw2D.LegendPosition.Top
+    svg = Draw.MolToSVG(mol, legend='Ethanol', drawOptions=opts)
+    self.assertIn("class='legend'", svg)
+
 
 if __name__ == "__main__":
   unittest.main()
