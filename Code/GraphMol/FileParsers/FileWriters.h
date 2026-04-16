@@ -13,7 +13,6 @@
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/SCSRMol.h>
 #include <string>
 
 namespace RDKit {

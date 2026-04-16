@@ -27,7 +27,6 @@
 #include <GraphMol/SubstanceGroup.h>
 
 #include <GraphMol/FileParsers/FileWriters.h>
-#include <GraphMol/FileParsers/SCSRUtils.h>
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
@@ -35,8 +34,6 @@
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/MACROMol.h>
 #include <GraphMol/FileParsers/MACROMolUtils.h>
-#include <GraphMol/FileParsers/SCSRUtils.h>
-#include <GraphMol/SCSRMol.h>
 #include <GraphMol/FileParsers/SCSRUtils.h>
 
 #include <RDGeneral/BoostStartInclude.h>

@@ -18,7 +18,6 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include "MarvinParser.h"
-#include <GraphMol/SCSRMol.h>
 #include <GraphMol/FileParsers/SCSRUtils.h>
 
 #include <GraphMol/ChemReactions/Reaction.h>
