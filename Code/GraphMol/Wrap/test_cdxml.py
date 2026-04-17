@@ -433,6 +433,8 @@ class TestCase(unittest.TestCase):
        '[#6]-[#6]-[#6&x0]'),
       ('ring-bond-count', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_ringbond_simple.cdxml'),
        '[#6]-[#6]-[#6&x2]'),
+      ('not-list', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qatom_notlist.cdxml'),
+       '[#6]-[#6]-[!#6&!#7&!#8]'),
       ('substituents-exactly', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_sub_exact_2.cdxml'),
        '[#6]-[#6]-[#6&D2]'),
       ('substituents-up-to', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_sub_upto_2.cdxml'),
@@ -476,6 +478,16 @@ class TestCase(unittest.TestCase):
     self.assertEqual(bond.GetProp('_MolFileBondAttach'), 'ANY')
     self.assertTrue(bond.HasProp('_MolFileBondEndPts'))
     self.assertEqual(bond.GetProp('_MolFileBondEndPts'), '(2 1 3)')
+
+    mols = Chem.MolsFromCDXMLFileAsQueries(
+      os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qecp_rgroup.cdxml'),
+      Chem.CDXMLParserParams())
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmarts(mols[0]), '[#6]-[*:1]')
+    atom = mols[0].GetAtomWithIdx(1)
+    self.assertEqual(atom.GetAtomMapNum(), 1)
+    self.assertTrue(atom.HasProp('atomLabel'))
+    self.assertEqual(atom.GetProp('atomLabel'), 'R')
           
 
         

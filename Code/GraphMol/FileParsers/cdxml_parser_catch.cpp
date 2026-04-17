@@ -479,6 +479,8 @@ TEST_CASE("CDXML") {
            "[#6]-[#6]-[#6&h0]"},
           {generatedBase + "qrestrict_ringbond_simple.cdxml",
            "[#6]-[#6]-[#6&x2]"},
+           {generatedBase + "qatom_notlist.cdxml",
+            "[#6]-[#6]-[!#6&!#7&!#8]"},
         {generatedBase + "qrestrict_sub_exact_2.cdxml",
          "[#6]-[#6]-[#6&D2]"},
         {generatedBase + "qrestrict_sub_upto_2.cdxml",
@@ -527,6 +529,15 @@ TEST_CASE("CDXML") {
       CHECK(bond->hasProp(common_properties::_MolFileBondEndPts));
       CHECK(bond->getProp<std::string>(common_properties::_MolFileBondEndPts) ==
         "(2 1 3)");
+
+        auto rgroupMols =
+          MolsFromCDXMLFileAsQueries(generatedBase + "qecp_rgroup.cdxml");
+        REQUIRE(rgroupMols.size() == 1);
+        CHECK(MolToSmarts(*rgroupMols[0]) == "[#6]-[*:1]");
+        auto atom = rgroupMols[0]->getAtomWithIdx(1);
+        CHECK(atom->getAtomMapNum() == 1);
+        CHECK(atom->hasProp(common_properties::atomLabel));
+        CHECK(atom->getProp<std::string>(common_properties::atomLabel) == "R");
     }
   }
   SECTION("ElementList") {
