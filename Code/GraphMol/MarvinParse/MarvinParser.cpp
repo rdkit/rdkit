@@ -25,7 +25,6 @@
 #include "MarvinDefs.h"
 #include <GraphMol/Conformer.h>
 #include <GraphMol/MolOps.h>
-#include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
 
 #include <GraphMol/RDKitQueries.h>
@@ -620,14 +619,6 @@ class MarvinCMLReader {
       } else if (conf3d != nullptr) {
         mol->updatePropertyCache(false);
         MolOps::assignChiralTypesFrom3D(*mol, conf3d->getId(), true);
-      }
-
-      if (conf) {
-        Atropisomers::detectAtropisomerChirality(*mol, conf);
-      } else if (conf3d) {
-        Atropisomers::detectAtropisomerChirality(*mol, conf3d);
-      } else {
-        Atropisomers::detectAtropisomerChirality(*mol, nullptr);
       }
 
       ClearSingleBondDirFlags(*mol);
