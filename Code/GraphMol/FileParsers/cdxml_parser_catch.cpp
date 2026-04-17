@@ -468,24 +468,24 @@ TEST_CASE("CDXML") {
 
     }
     {
-      const auto generatedBase = std::string(getenv("RDBASE")) +
-                                 "/Code/GraphMol/test_data/CDXML/queries/";
+      const auto queryBase = std::string(getenv("RDBASE")) +
+                             "/Code/GraphMol/test_data/CDXML/queries/";
       const std::vector<std::pair<std::string, std::string>> cases = {
-          {generatedBase + "qrestrict_ringbond_asdrawn.cdxml",
+          {queryBase + "qrestrict_ringbond_asdrawn.cdxml",
            "[#6]-[#6]-[#6&x0]"},
-          {generatedBase + "qrestrict_freesites_1.cdxml",
+          {queryBase + "qrestrict_freesites_1.cdxml",
            "[#6]-[#6]-[#6&D{1-2}]"},
-          {generatedBase + "qrestrict_implicit_hs.cdxml",
+          {queryBase + "qrestrict_implicit_hs.cdxml",
            "[#6]-[#6]-[#6&h0]"},
-          {generatedBase + "qrestrict_ringbond_simple.cdxml",
+          {queryBase + "qrestrict_ringbond_simple.cdxml",
            "[#6]-[#6]-[#6&x2]"},
-           {generatedBase + "qatom_notlist.cdxml",
+          {queryBase + "qatom_notlist.cdxml",
             "[#6]-[#6]-[!#6&!#7&!#8]"},
-        {generatedBase + "qrestrict_sub_exact_2.cdxml",
-         "[#6]-[#6]-[#6&D2]"},
-        {generatedBase + "qrestrict_sub_upto_2.cdxml",
-         "[#6]-[#6]-[#6&D{0-2}]"},
-          {generatedBase + "qrestrict_unsat_present.cdxml",
+          {queryBase + "qrestrict_sub_exact_2.cdxml",
+           "[#6]-[#6]-[#6&D2]"},
+          {queryBase + "qrestrict_sub_upto_2.cdxml",
+           "[#6]-[#6]-[#6&D{0-2}]"},
+          {queryBase + "qrestrict_unsat_present.cdxml",
            "[#6]-[#6]-[#6&$(*=,:,#*)]"},
       };
 
@@ -496,9 +496,9 @@ TEST_CASE("CDXML") {
       }
 
       const std::vector<std::tuple<std::string, std::string, int>> propCases = {
-          {generatedBase + "qrestrict_rxnchange_yes.cdxml",
+          {queryBase + "qrestrict_rxnchange_yes.cdxml",
            std::string(common_properties::molRxnExactChange), 1},
-          {generatedBase + "qrestrict_rxnstereo_inversion.cdxml",
+          {queryBase + "qrestrict_rxnstereo_inversion.cdxml",
            std::string(common_properties::molInversionFlag), 1},
       };
 
@@ -511,14 +511,14 @@ TEST_CASE("CDXML") {
       }
 
       auto linkNodeMols =
-          MolsFromCDXMLFileAsQueries(generatedBase + "qlinknode_1_3.cdxml");
+          MolsFromCDXMLFileAsQueries(queryBase + "qlinknode_1_3.cdxml");
       REQUIRE(linkNodeMols.size() == 1);
       CHECK(linkNodeMols[0]->hasProp(common_properties::molFileLinkNodes));
       CHECK(linkNodeMols[0]->getProp<std::string>(
                 common_properties::molFileLinkNodes) == "1 3 2 2 1 2 3");
 
       auto variableAttachmentMols =
-          MolsFromCDXMLFileAsQueries(generatedBase + "qvarattach.cdxml");
+          MolsFromCDXMLFileAsQueries(queryBase + "qvarattach.cdxml");
       REQUIRE(variableAttachmentMols.size() == 1);
       CHECK(variableAttachmentMols[0]->getAtomWithIdx(3)->getAtomicNum() == 0);
       auto bond = variableAttachmentMols[0]->getBondBetweenAtoms(1, 3);
@@ -528,16 +528,16 @@ TEST_CASE("CDXML") {
         "ANY");
       CHECK(bond->hasProp(common_properties::_MolFileBondEndPts));
       CHECK(bond->getProp<std::string>(common_properties::_MolFileBondEndPts) ==
-        "(2 1 3)");
+            "(2 1 3)");
 
-        auto rgroupMols =
-          MolsFromCDXMLFileAsQueries(generatedBase + "qecp_rgroup.cdxml");
-        REQUIRE(rgroupMols.size() == 1);
-        CHECK(MolToSmarts(*rgroupMols[0]) == "[#6]-[*:1]");
-        auto atom = rgroupMols[0]->getAtomWithIdx(1);
-        CHECK(atom->getAtomMapNum() == 1);
-        CHECK(atom->hasProp(common_properties::atomLabel));
-        CHECK(atom->getProp<std::string>(common_properties::atomLabel) == "R");
+      auto rgroupMols =
+          MolsFromCDXMLFileAsQueries(queryBase + "qecp_rgroup.cdxml");
+      REQUIRE(rgroupMols.size() == 1);
+      CHECK(MolToSmarts(*rgroupMols[0]) == "[#6]-[*:1]");
+      auto atom = rgroupMols[0]->getAtomWithIdx(1);
+      CHECK(atom->getAtomMapNum() == 1);
+      CHECK(atom->hasProp(common_properties::atomLabel));
+      CHECK(atom->getProp<std::string>(common_properties::atomLabel) == "R");
     }
   }
   SECTION("ElementList") {

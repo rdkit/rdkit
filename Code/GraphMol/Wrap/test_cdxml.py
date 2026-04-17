@@ -397,18 +397,19 @@ class TestCase(unittest.TestCase):
 
   def test_cdxml_bond_queries(self):
     rdbase = os.environ['RDBASE']
+    query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')
     cases = [
       ('anybond', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/anybond.cdxml'),
        'file', '[#6]1~[#6]-[#6]-[#6]-[#6]-[#6]-1'),
-      ('single-or-double', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/furan_sd.cdxml'),
+      ('single-or-double', os.path.join(query_base, 'furan_sd.cdxml'),
        'file', '[#8]1:[#6]-,=[#6]:[#6]-,=[#6]:1'),
-      ('single-or-aromatic', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/furan_sa.cdxml'),
+      ('single-or-aromatic', os.path.join(query_base, 'furan_sa.cdxml'),
        'file', '[#8]1:[#6][#6]:[#6][#6]:1'),
-      ('double-or-aromatic', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/furan_da.cdxml'),
+      ('double-or-aromatic', os.path.join(query_base, 'furan_da.cdxml'),
        'file', '[#8]1:[#6]=,:[#6]:[#6]=,:[#6]:1'),
-      ('ring-topology', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/CCOC_Rng.cdxml'),
+      ('ring-topology', os.path.join(query_base, 'CCOC_Rng.cdxml'),
        'file', '[#8](-[#6]-&@[#6])-[#6]'),
-      ('chain-topology', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/CCOC_Chn.cdxml'),
+      ('chain-topology', os.path.join(query_base, 'CCOC_Chn.cdxml'),
        'file', '[#8](-[#6]-&!@[#6])-[#6]'),
     ]
 
@@ -424,30 +425,31 @@ class TestCase(unittest.TestCase):
 
   def test_cdxml_atom_restriction_queries(self):
     rdbase = os.environ['RDBASE']
+    query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')
     smarts_cases = [
-      ('free-sites', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_freesites_1.cdxml'),
+      ('free-sites', os.path.join(query_base, 'qrestrict_freesites_1.cdxml'),
        '[#6]-[#6]-[#6&D{1-2}]'),
-      ('implicit-hydrogens', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_implicit_hs.cdxml'),
+      ('implicit-hydrogens', os.path.join(query_base, 'qrestrict_implicit_hs.cdxml'),
        '[#6]-[#6]-[#6&h0]'),
-      ('ring-bond-count-as-drawn', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_ringbond_asdrawn.cdxml'),
+      ('ring-bond-count-as-drawn', os.path.join(query_base, 'qrestrict_ringbond_asdrawn.cdxml'),
        '[#6]-[#6]-[#6&x0]'),
-      ('ring-bond-count', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_ringbond_simple.cdxml'),
+      ('ring-bond-count', os.path.join(query_base, 'qrestrict_ringbond_simple.cdxml'),
        '[#6]-[#6]-[#6&x2]'),
-      ('not-list', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qatom_notlist.cdxml'),
+      ('not-list', os.path.join(query_base, 'qatom_notlist.cdxml'),
        '[#6]-[#6]-[!#6&!#7&!#8]'),
-      ('substituents-exactly', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_sub_exact_2.cdxml'),
+      ('substituents-exactly', os.path.join(query_base, 'qrestrict_sub_exact_2.cdxml'),
        '[#6]-[#6]-[#6&D2]'),
-      ('substituents-up-to', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_sub_upto_2.cdxml'),
+      ('substituents-up-to', os.path.join(query_base, 'qrestrict_sub_upto_2.cdxml'),
        '[#6]-[#6]-[#6&D{0-2}]'),
-      ('unsaturated-bonds', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_unsat_present.cdxml'),
+      ('unsaturated-bonds', os.path.join(query_base, 'qrestrict_unsat_present.cdxml'),
        '[#6]-[#6]-[#6&$(*=,:,#*)]'),
     ]
     prop_cases = [
-      ('link-node', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qlinknode_1_3.cdxml'),
+      ('link-node', os.path.join(query_base, 'qlinknode_1_3.cdxml'),
        '_molLinkNodes', '1 3 2 2 1 2 3'),
-      ('reaction-change', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_rxnchange_yes.cdxml'),
+      ('reaction-change', os.path.join(query_base, 'qrestrict_rxnchange_yes.cdxml'),
        'molRxnExachg', 1),
-      ('reaction-stereo', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_rxnstereo_inversion.cdxml'),
+      ('reaction-stereo', os.path.join(query_base, 'qrestrict_rxnstereo_inversion.cdxml'),
        'molInversionFlag', 1),
     ]
 
@@ -468,7 +470,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(atom.GetIntProp(prop_name), expected_value)
 
     mols = Chem.MolsFromCDXMLFileAsQueries(
-      os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qvarattach.cdxml'),
+      os.path.join(query_base, 'qvarattach.cdxml'),
       Chem.CDXMLParserParams())
     self.assertEqual(len(mols), 1)
     self.assertEqual(mols[0].GetAtomWithIdx(3).GetAtomicNum(), 0)
@@ -480,7 +482,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(bond.GetProp('_MolFileBondEndPts'), '(2 1 3)')
 
     mols = Chem.MolsFromCDXMLFileAsQueries(
-      os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qecp_rgroup.cdxml'),
+      os.path.join(query_base, 'qecp_rgroup.cdxml'),
       Chem.CDXMLParserParams())
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmarts(mols[0]), '[#6]-[*:1]')
