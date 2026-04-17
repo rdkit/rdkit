@@ -8776,7 +8776,7 @@ TEST_CASE("Lasso highlights") {
 #endif
     }
     // Set up the bond highlights for everything but the bi-phenyl bond,
-    // colouring the bonds green although the colour will be ignored.
+    // coloring the bonds green although the colour will be ignored.
     for (int i = 0; i < 13; ++i) {
       if (i != 5) {
         hb_map.insert(std::pair{
