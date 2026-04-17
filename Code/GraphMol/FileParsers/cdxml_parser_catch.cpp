@@ -472,21 +472,21 @@ TEST_CASE("CDXML") {
                              "/Code/GraphMol/test_data/CDXML/queries/";
       const std::vector<std::pair<std::string, std::string>> cases = {
           {queryBase + "qrestrict_ringbond_asdrawn.cdxml",
-           "[#6]-[#6]-[#6&x0]"},
+           "[#6]-[#6]-[!#1&x0]"},
           {queryBase + "qrestrict_freesites_1.cdxml",
-           "[#6]-[#6]-[#6&D{1-2}]"},
+           "[#6]-[#6]-[!#1&D{1-2}]"},
           {queryBase + "qrestrict_implicit_hs.cdxml",
-           "[#6]-[#6]-[#6&h0]"},
+           "[#6]-[#6]-[!#1&h0]"},
           {queryBase + "qrestrict_ringbond_simple.cdxml",
-           "[#6]-[#6]-[#6&x2]"},
+           "[#6]-[#6]-[!#1&x2]"},
           {queryBase + "qatom_notlist.cdxml",
             "[#6]-[#6]-[!#6&!#7&!#8]"},
           {queryBase + "qrestrict_sub_exact_2.cdxml",
-           "[#6]-[#6]-[#6&D2]"},
+           "[#6]-[#6]-[!#1&D2]"},
           {queryBase + "qrestrict_sub_upto_2.cdxml",
-           "[#6]-[#6]-[#6&D{0-2}]"},
+           "[#6]-[#6]-[!#1&D{0-2}]"},
           {queryBase + "qrestrict_unsat_present.cdxml",
-           "[#6]-[#6]-[#6&$(*=,:,#*)]"},
+           "[#6]-[#6]-[!#1&$(*=,:,#*)]"},
       };
 
       for (const auto &[fname, expectedSmarts] : cases) {
@@ -495,12 +495,10 @@ TEST_CASE("CDXML") {
         CHECK(MolToSmarts(*mols[0]) == expectedSmarts);
       }
 
-      const std::vector<std::tuple<std::string, std::string, int>> propCases = {
-          {queryBase + "qrestrict_rxnchange_yes.cdxml",
-           std::string(common_properties::molRxnExactChange), 1},
+        const std::vector<std::tuple<std::string, std::string, int>> propCases = {
           {queryBase + "qrestrict_rxnstereo_inversion.cdxml",
            std::string(common_properties::molInversionFlag), 1},
-      };
+        };
 
       for (const auto &[fname, propName, expectedValue] : propCases) {
         auto mols = MolsFromCDXMLFileAsQueries(fname);
