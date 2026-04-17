@@ -40,15 +40,6 @@
 
 namespace RDKit {
 
-inline python::object &getPropSentinel() {
-  static python::object sentinel;
-  return sentinel;
-}
-inline void initPropSentinel() {
-  getPropSentinel() = python::object(python::handle<>(
-      PyObject_CallObject((PyObject *)&PyBaseObject_Type, nullptr)));
-}
-
 template <class T>
 inline const char *GetTypeName() {
   // PRECONDITION(0, "Unregistered c++ type");
@@ -223,31 +214,44 @@ PyObject *GetProp(const RDOb *ob, const std::string &key) {
 
 template <class RDOb>
 python::object autoConvertString(const RDOb *ob, const std::string &key) {
-  int ivalue;
-  double dvalue;
   std::string svalue;
-
-  if (ob->getPropIfPresent(key, ivalue)) {
-    return python::object(ivalue);
-  } else if (ob->getPropIfPresent(key, dvalue)) {
-    return python::object(dvalue);
-  } else if (ob->getPropIfPresent(key, svalue)) {
-    return python::object(svalue);
+  if (!ob->getPropIfPresent(key, svalue)) {
+    return python::object();
   }
-
-  return python::object();
+  auto trimVal = svalue;
+  boost::trim(trimVal);
+  int ivalue;
+  if (boost::conversion::try_lexical_convert(trimVal, ivalue)) {
+    return python::object(ivalue);
+  }
+  double dvalue;
+  if (boost::conversion::try_lexical_convert(trimVal, dvalue)) {
+    return python::object(dvalue);
+  }
+  return python::object(svalue);
 }
 
 template <class RDOb>
-PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert,
-                    python::object default_val = python::object()) {
+PyObject *GetPyPropIfPresent(const RDOb *obj, const std::string &key,
+                             python::object default_val) {
   python::object pobj;
+  if (obj->hasProp(key)) {
+    return GetPyProp<RDOb>(obj, key, true);
+  } else {
+    if (default_val.is_none()) {
+      return Py_None;
+    } else {
+      return rawPy(default_val);
+    }
+  }
+}
+
+template <class RDOb>
+PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
   if (!autoConvert) {
     std::string res;
     if (obj->getPropIfPresent(key, res)) {
       return rawPy(res);
-    } else if (default_val.ptr() != getPropSentinel().ptr()) {
-      return rawPy(default_val);
     } else {
       PyErr_SetString(PyExc_KeyError, key.c_str());
       return nullptr;
@@ -266,10 +270,7 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert,
               return rawPy(from_rdvalue<double>(rdvalue.val));
 
             case RDTypeTag::StringTag:
-              if (autoConvert) {
-                pobj = autoConvertString(obj, rdvalue.key);
-              }
-              return rawPy(from_rdvalue<std::string>(rdvalue.val));
+              return rawPy(autoConvertString(obj, rdvalue.key));
             case RDTypeTag::FloatTag:
               return rawPy(from_rdvalue<float>(rdvalue.val));
               break;
@@ -320,9 +321,6 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert,
         }
       }
     }
-  }
-  if (default_val.ptr() != getPropSentinel().ptr() && !obj->hasProp(key)) {
-    return rawPy(default_val);
   }
   PyErr_SetString(PyExc_KeyError, key.c_str());
   return nullptr;
