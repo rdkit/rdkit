@@ -187,6 +187,140 @@ void makeHydrogenBonds(unsigned int atom1Idx, unsigned int atom2Idx,
   return;
 }
 
+void skipSpaces(const char *&linePtr) {
+  while (*linePtr == ' ') {
+    ++linePtr;  // skip spaces
+  }
+}
+
+std::string getToken(const char *&linePtr, char delim) {
+  skipSpaces(linePtr);
+  unsigned int charCount = 0;
+  while (linePtr[charCount] && linePtr[charCount] != delim) {
+    ++charCount;
+  }
+  std::string res(linePtr, charCount);
+  linePtr += charCount;
+  if (*linePtr == delim) {
+    ++linePtr;  // skip delim
+  }
+  return res;
+}
+
+std::string getQuotedToken(const char *&linePtr) {
+  skipSpaces(linePtr);
+  std::string res;
+  if (*linePtr != '"') {
+    return res;
+  }
+  ++linePtr;  // skip opening quote
+  while (*linePtr && *linePtr != '"') {
+    if (*linePtr == '\\') {
+      // escaped char
+      ++linePtr;
+      if (*linePtr == '\0') {
+        break;
+      }
+    }
+
+    res += *linePtr++;
+  }
+  if (*linePtr != '"') {
+    res = "";  // error: no closing quote
+  } else {
+    ++linePtr;  // skip closing quote
+  }
+
+  return res;
+}
+
+void parseTemplateLine(std::string lineStr,
+                       unsigned int &line,  std::string &templateClass, std::vector<std::string> &templateNames, std::vector<std::pair<std::string,std::string>> &otherTokens) {
+
+  // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment
+  // FULLNAME=fullname CATEGORY=cat UNIQUEID=uniqueid CASNUMBER=xxxx,
+  // COLLABORATOR=col, PROTECTION=prot
+
+  // other attributes are allowed.  We capture them and ignore them, except
+  // for writing them back out
+
+  if (lineStr.substr(0, 9) != "TEMPLATE ") {
+    std::ostringstream errout;
+    errout << "Expected \"TEMPLATE\" at line  " << line;
+    throw FileParseException(errout.str());
+  }
+
+  const char *linePtr = lineStr.c_str() + 9;
+  std::string token = getToken(linePtr, ' ');  // Template ID
+  if (token.empty()) {
+    std::ostringstream errout;
+    errout << "Expected a Template ID at line  " << line;
+    throw FileParseException(errout.str());
+  }
+  // get the class and template names
+
+  token = getToken(linePtr, ' ');  // Template ID
+  if (token.empty()) {
+    std::ostringstream errout;
+    errout
+        << "Type/Name(s) string of the form \"AA/Gly/G/\" was not found at line  "
+        << line;
+    throw FileParseException(errout.str());
+  }
+
+  // get the class and template names from the token
+  std::vector<std::string> subTokens;
+  boost::algorithm::split(subTokens, token, boost::algorithm::is_any_of("/"));
+  if (subTokens.size() < 3) {
+    std::ostringstream errout;
+    errout << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line  "
+           << line;
+    throw FileParseException(errout.str());
+  }
+
+  templateClass = subTokens[0];
+  //templateMol->setProp(common_properties::molAtomClass, subTokens[0]);
+
+  templateNames.clear();
+  std::copy_if(subTokens.begin() + 1, subTokens.end(),
+               std::back_inserter(templateNames),
+               [](const std::string &s) { return !s.empty(); });
+
+  //templateMol->setProp(common_properties::templateNames, templateNames);
+
+  // now parse attrs of the form ATTRNAME=VALUE or ATTRNAME="VALUE WITH
+  // SPACES"
+
+  otherTokens.clear();
+  while (true) {
+    std::string attrName = getToken(linePtr, '=');
+    if (attrName.empty()) {
+      break;
+    }
+    std::string attrValue;
+    if (*linePtr == '"') {
+      attrValue = getQuotedToken(linePtr);
+    } else {
+      attrValue = getToken(linePtr, ' ');
+    }
+
+    otherTokens.push_back(std::pair(attrName, attrValue));
+    //templateMol->setProp(attrName, attrValue);
+  }
+
+  if (*linePtr != '\0') {
+    std::ostringstream errout;
+    errout
+        << "extra characters at the end of a TEMPLATE definition line at line  "
+        << line;
+    throw FileParseException(errout.str());
+  }
+
+  return;
+}
+
+
+
 std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
     std::istream &inStream, unsigned int &line,
     const RDKit::v2::FileParsers::MolFileParserParams &params,
@@ -199,8 +333,6 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
   auto localParams = params;
   localParams.parsingSCSRMol = true;
 
-  // RDKit::v2::FileParsers::MolFromMolDataStream(res.get(), inStream, line,
-  //                                              localParams);
   auto tempMol =
       RDKit::v2::FileParsers::MolFromMolDataStream(inStream, line, localParams);
   auto res = std::unique_ptr<RDKit::MACROMol>(new RDKit::MACROMol(tempMol));
@@ -225,42 +357,12 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
   // for writing them back out
 
   while (tempStr.substr(0, 8) == "TEMPLATE") {
-    std::vector<std::string> tokens;
-    std::vector<std::string> subTokens;
-    boost::algorithm::split(tokens, tempStr, boost::algorithm::is_space());
-
-    if (tokens.size() < 3) {
-      std::ostringstream errout;
-      errout << "Bad Template entry at line  " << line;
-      throw RDKit::FileParseException(errout.str());
-    }
-
-    // get the class and template names
-
-    boost::algorithm::split(subTokens, tokens[2],
-                            boost::algorithm::is_any_of("/"));
-    if (subTokens.size() < 3) {
-      std::ostringstream errout;
-      errout << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line  "
-             << line;
-      throw RDKit::FileParseException(errout.str());
-    }
-
-    auto templateClass = subTokens[0];
-    std::vector<std::string> templateNames;
-    std::vector<std::string> otherTokens;
-
-    for (unsigned int i = 1; i < subTokens.size(); ++i) {
-      if (subTokens[i] != "") {
-        templateNames.push_back(subTokens[i]);
-      }
-    }
-
-    for (unsigned int i = 3; i < tokens.size(); ++i) {
-      otherTokens.push_back(tokens[i]);
-    }
-
     auto templateMol = std::unique_ptr<RDKit::RWMol>(new RDKit::RWMol());
+    std::string templateClass;
+    std::vector<std::string> templateNames;
+    std::vector<std::pair<std::string,std::string>> otherTokens;
+
+    parseTemplateLine( tempStr.c_str(), line, templateClass, templateNames, otherTokens);
 
     auto molComplete = false;
     RDKit::Conformer *conf = nullptr;

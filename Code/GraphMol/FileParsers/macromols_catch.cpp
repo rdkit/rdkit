@@ -44,8 +44,6 @@
 using namespace RDKit;
 using namespace v2::FileParsers;
 
-//using namespace RDKit;
-
 class ScsrMolTest {
  public:
  public:

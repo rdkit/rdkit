@@ -20,8 +20,9 @@ namespace RDKit {
 
 class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
  private:
-  void init(std::string className, std::vector<std::string> templateNames,
-            std::vector<std::string> templateAttrs);
+  void init(std::string className,
+            std::vector<std::string> templateNames,
+            std::vector<std::pair<std::string,std::string>> templateAttrs);
 
   void findMainSgroupForTemplate(std::string className,
                                  std::string templateName) const;
@@ -29,10 +30,11 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
  public:
   MACROMolTemplate(std::unique_ptr<RWMol> &mol, std::string className,
                    std::vector<std::string> templateNames,
-                   std::vector<std::string> templateAttrs);
+                   std::vector<std::pair<std::string,std::string>> templateAttrs);
+
   MACROMolTemplate(std::unique_ptr<RWMol> &mol, std::string className,
                    std::string templateName,
-                   std::vector<std::string> templateAttrs);
+                   std::vector<std::pair<std::string,std::string>> templateAttrs);
 
   MACROMolTemplate() = delete;
   MACROMolTemplate(const MACROMolTemplate &other);

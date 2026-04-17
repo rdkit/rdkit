@@ -36,7 +36,7 @@ void RDKit::MACROMolTemplate::findMainSgroupForTemplate(
 
 void RDKit::MACROMolTemplate::init(std::string className,
                                    std::vector<std::string> templateNames,
-                                   std::vector<std::string> templateAttrs) {
+                                   std::vector<std::pair<std::string,std::string>> templateAttrs) {
   PRECONDITION(className.empty() == false, "no className for template");
   PRECONDITION(templateNames.size() > 0, "no template names for template");
 
@@ -44,16 +44,8 @@ void RDKit::MACROMolTemplate::init(std::string className,
   this->setProp(RDKit::common_properties::templateNames, templateNames);
 
   for (auto templateAttr : templateAttrs) {
-    std::vector<std::string> subTokens;
-    boost::algorithm::split(subTokens, templateAttr,
-                            boost::algorithm::is_any_of("="));
-    if (subTokens.size() != 2) {
-      std::ostringstream errout;
-      errout << "Attribute string is not of the form \"AttrName=value\": "
-             << templateAttr;
-      throw RDKit::FileParseException(errout.str());
-    }
-    this->setProp(subTokens[0], subTokens[1]);
+    this->setProp(templateAttr.first, templateAttr.second);
+
   }
   p_mainSgroupIdx = UINT_MAX;
 }
@@ -61,7 +53,7 @@ void RDKit::MACROMolTemplate::init(std::string className,
 MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
                                    std::string className,
                                    std::vector<std::string> templateNames,
-                                   std::vector<std::string> templateAttrs)
+                                   std::vector<std::pair<std::string,std::string>> templateAttrs)
     : RWMol(std::move(*mol)) {
   init(className, templateNames, templateAttrs);
 }
@@ -76,7 +68,7 @@ MACROMolTemplate::MACROMolTemplate(const MACROMolTemplate &other)
 MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
                                    std::string className,
                                    std::string templateName,
-                                   std::vector<std::string> templateAttrs)
+                                   std::vector<std::pair<std::string,std::string>> templateAttrs)
     : RWMol(std::move(*mol)) {
   PRECONDITION(!templateName.empty(), "no name for template");
 
