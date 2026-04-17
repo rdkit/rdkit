@@ -372,6 +372,29 @@ class TestCase(unittest.TestCase):
           else:
             mols = Chem.MolsFromCDXMLFile(filename, Chem.CDXMLParserParams(True, True, format))
             if res: assert mols
+
+  def test_cdxml_query_api(self):
+    rdbase = os.environ['RDBASE']
+    filename = os.path.join(rdbase, 'rdkit/Chem/test_data/benzene.cdxml')
+
+    params = Chem.CDXMLParserParams()
+    self.assertFalse(params.parseQueries)
+    self.assertFalse(params.strictQueryParsing)
+
+    params.parseQueries = True
+    params.strictQueryParsing = True
+
+    file_mols = Chem.MolsFromCDXMLFileAsQueries(filename, params)
+    self.assertEqual(len(file_mols), 1)
+    self.assertEqual(Chem.MolToSmiles(file_mols[0]), 'c1ccccc1')
+
+    with open(filename) as inf:
+      block = inf.read()
+
+    block_mols = Chem.MolsFromCDXMLAsQueries(block, params)
+    self.assertEqual(len(block_mols), 1)
+    self.assertEqual(Chem.MolToSmiles(block_mols[0]), 'c1ccccc1')
+
           
 
         

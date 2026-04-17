@@ -908,3 +908,33 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 }
 }
 #endif
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFileAsQueries(
+    const std::string &fileName, const CDXMLParserParams &params) {
+  auto queryParams = params;
+  queryParams.parseQueries = true;
+  return MolsFromCDXMLFile(fileName, queryParams);
+}
+
+
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLAsQueries(
+    const std::string &cdxml, const CDXMLParserParams &params) {
+  auto queryParams = params;
+  queryParams.parseQueries = true;
+  return MolsFromCDXML(cdxml, queryParams);
+}
+  chemdraw_params.parseQueries = params.parseQueries;
+  chemdraw_params.strictQueryParsing = params.strictQueryParsing;
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFileAsQueries(
+    const std::string &fileName, const CDXMLParserParams &params) {
+  auto queryParams = params;
+  queryParams.parseQueries = true;
+  return MolsFromCDXMLFile(fileName, queryParams);
+}
+
+
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLAsQueries(
+    const std::string &cdxml, const CDXMLParserParams &params) {
+  auto queryParams = params;
+  queryParams.parseQueries = true;
+  return MolsFromCDXML(cdxml, queryParams);
+}

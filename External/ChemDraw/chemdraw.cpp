@@ -314,6 +314,8 @@ std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
     return std::vector<std::unique_ptr<RWMol>>();
   }
   PageData pagedata;
+  pagedata.parseQueries = params.parseQueries;
+  pagedata.strictQueryParsing = params.strictQueryParsing;
   auto bondLength = document->m_bondLength;
 
   int missing_frag_id = -1;

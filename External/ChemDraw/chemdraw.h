@@ -49,10 +49,27 @@ struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {
   bool sanitize;
   bool removeHs;
   CDXFormat format;
+    bool parseQueries;
+    bool strictQueryParsing;
   ChemDrawParserParams()
-      : sanitize(true), removeHs(true), format(CDXFormat::AUTO) {}
+            : sanitize(true),
+                removeHs(true),
+                format(CDXFormat::AUTO),
+                parseQueries(false),
+                strictQueryParsing(false) {}
   ChemDrawParserParams(bool sanitize, bool removeHs, CDXFormat format)
-      : sanitize(sanitize), removeHs(removeHs), format(format) {}
+            : sanitize(sanitize),
+                removeHs(removeHs),
+                format(format),
+                parseQueries(false),
+                strictQueryParsing(false) {}
+    ChemDrawParserParams(bool sanitize, bool removeHs, CDXFormat format,
+                                             bool parseQueries, bool strictQueryParsing)
+            : sanitize(sanitize),
+                removeHs(removeHs),
+                format(format),
+                parseQueries(parseQueries),
+                strictQueryParsing(strictQueryParsing) {}
 };
 
 std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
