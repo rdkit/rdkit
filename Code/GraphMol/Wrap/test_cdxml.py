@@ -395,6 +395,32 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(block_mols), 1)
     self.assertEqual(Chem.MolToSmiles(block_mols[0]), 'c1ccccc1')
 
+  def test_cdxml_bond_queries(self):
+    rdbase = os.environ['RDBASE']
+    cases = [
+      ('anybond', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/anybond.cdxml'),
+       'file', '[#6]1~[#6]-[#6]-[#6]-[#6]-[#6]-1'),
+      ('single-or-double', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/furan_sd.cdxml'),
+       'file', '[#8]1:[#6]-,=[#6]:[#6]-,=[#6]:1'),
+      ('single-or-aromatic', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/furan_sa.cdxml'),
+       'file', '[#8]1:[#6][#6]:[#6][#6]:1'),
+      ('double-or-aromatic', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/furan_da.cdxml'),
+       'file', '[#8]1:[#6]=,:[#6]:[#6]=,:[#6]:1'),
+      ('ring-topology', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/CCOC_Rng.cdxml'),
+       'file', '[#8](-[#6]-&@[#6])-[#6]'),
+      ('chain-topology', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/CCOC_Chn.cdxml'),
+       'file', '[#8](-[#6]-&!@[#6])-[#6]'),
+    ]
+
+    for _, filename, mode, expected_smarts in cases:
+      if mode == 'file':
+        mols = Chem.MolsFromCDXMLFileAsQueries(filename, Chem.CDXMLParserParams())
+      else:
+        with open(filename) as inf:
+          mols = Chem.MolsFromCDXMLAsQueries(inf.read(), Chem.CDXMLParserParams())
+
+      self.assertEqual(len(mols), 1)
+      self.assertEqual(Chem.MolToSmarts(mols[0]), expected_smarts)
           
 
         

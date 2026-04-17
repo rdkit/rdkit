@@ -450,6 +450,22 @@ TEST_CASE("CDXML") {
       CHECK(MolToSmiles(*mols[0]) == "C1CCC~CC1");
       CHECK(MolToSmarts(*mols[0]) == "[#6]1~[#6]-[#6]-[#6]-[#6]-[#6]-1");
     }
+    {
+      const auto queryBase = cdxmlbase + "queries/";
+      const std::vector<std::pair<std::string, std::string>> cases = {
+          {queryBase + "furan_sd.cdxml", "[#8]1:[#6]-,=[#6]:[#6]-,=[#6]:1"},
+          {queryBase + "furan_sa.cdxml", "[#8]1:[#6][#6]:[#6][#6]:1"},
+          {queryBase + "furan_da.cdxml", "[#8]1:[#6]=,:[#6]:[#6]=,:[#6]:1"},
+          {queryBase + "CCOC_Rng.cdxml", "[#8](-[#6]-&@[#6])-[#6]"},
+          {queryBase + "CCOC_Chn.cdxml", "[#8](-[#6]-&!@[#6])-[#6]"},
+      };
+
+      for (const auto &[fname, expectedSmarts] : cases) {
+        auto mols = MolsFromCDXMLFileAsQueries(fname);
+        CHECK(mols.size() == 1);
+        CHECK(MolToSmarts(*mols[0]) == expectedSmarts);
+      }
+    }
   }
   SECTION("ElementList") {
     auto fname = cdxmlbase + "element-list.cdxml";

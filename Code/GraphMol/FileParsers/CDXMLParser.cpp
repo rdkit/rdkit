@@ -46,11 +46,22 @@ const std::string CDX_BOND_ID("_CDX_BOND_ID");
 constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
 
 struct BondInfo {
+  enum class QueryType {
+    None,
+    Any,
+    SingleOrDouble,
+    SingleOrAromatic,
+    DoubleOrAromatic,
+  };
+  enum class TopologyType { None, Ring, Chain };
+
   int bond_id = -1;
   int start = -1;
   int end = -1;
   Bond::BondType order;
   std::string display;
+  QueryType queryType = QueryType::None;
+  TopologyType topology = TopologyType::None;
   Bond::BondType getBondType() { return order; }
   bool validate(const std::map<unsigned int, Atom *> &ids,
                 unsigned int num_atoms) const {
@@ -367,14 +378,17 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           } else if (attr.first == "E") {
             end_atom = stoi(attr.second.data());
           } else if (attr.first == "Order") {
-            if (attr.second.data() == "1.5") {
+            const auto orderText = attr.second.data();
+            const auto orderTokens = to_vec<std::string>(orderText);
+            if (orderTokens.size() == 1 && orderText == "1.5") {
               order = Bond::BondType::AROMATIC;
-            } else if (attr.second.data() == "any") {
+            } else if (orderTokens.size() == 1 && orderText == "any") {
               order = Bond::BondType::UNSPECIFIED;
-            } else if (attr.second.data() == "dative") {
+              queryType = BondInfo::QueryType::Any;
+            } else if (orderTokens.size() == 1 && orderText == "dative") {
               order = Bond::BondType::DATIVE;
             } else {
-              int bond_order = stoi(attr.second.data());
+              int bond_order = stoi(orderText);
 
               switch (bond_order) {
                 case 1:
@@ -400,6 +414,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         } catch (...) {
           BOOST_LOG(rdErrorLog)
               << "Failed to parse XML fragment " << frag_id
+      BondInfo::QueryType queryType = BondInfo::QueryType::None;
+      BondInfo::TopologyType topology = BondInfo::TopologyType::None;
               << " node: " << node.first << " attribute: " << attr.first << ": "
               << attr.second.data() << std::endl;
           return false;
@@ -407,7 +423,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       }
       // CHECK_INVARIANT(start_atom>=0 && end_atom>=0 && start_atom != end_atom,
       // "Bad bond in CDXML");
-      BondInfo bond{bond_id, start_atom, end_atom, order, display};
+      BondInfo bond{bond_id, start_atom, end_atom, order, display, queryType,
+                    topology};
       if (!bond.validate(ids, mol.getNumAtoms())) {
         BOOST_LOG(rdErrorLog) << "Bad bond in CDXML skipping fragment "
                               << frag_id << "..." << std::endl;
@@ -415,6 +432,28 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         skip_fragment =
             true;  // ChemDraw doesn't skip, it just ignores bad bonds...
         break;
+            } else if (
+                orderTokens.size() == 2 &&
+                ((orderTokens[0] == "1" && orderTokens[1] == "2") ||
+                 (orderTokens[0] == "2" && orderTokens[1] == "1"))) {
+              order = Bond::BondType::SINGLE;
+              queryType = BondInfo::QueryType::SingleOrDouble;
+            } else if (
+                orderTokens.size() == 2 &&
+                ((orderTokens[0] == "1" &&
+                  (orderTokens[1] == "1.5" || orderTokens[1] == "4")) ||
+                 (orderTokens[1] == "1" &&
+                  (orderTokens[0] == "1.5" || orderTokens[0] == "4")))) {
+              order = Bond::BondType::SINGLE;
+              queryType = BondInfo::QueryType::SingleOrAromatic;
+            } else if (
+                orderTokens.size() == 2 &&
+                ((orderTokens[0] == "2" &&
+                  (orderTokens[1] == "1.5" || orderTokens[1] == "4")) ||
+                 (orderTokens[1] == "2" &&
+                  (orderTokens[0] == "1.5" || orderTokens[0] == "4")))) {
+              order = Bond::BondType::DOUBLE;
+              queryType = BondInfo::QueryType::DoubleOrAromatic;
       } else {
         bonds.push_back(bond);
       }
@@ -435,18 +474,57 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         bond.display = "WedgedHashBegin";
       }
 
+          } else if (attr.first == "Topology") {
+            if (attr.second.data() == "Ring") {
+              topology = BondInfo::TopologyType::Ring;
+            } else if (attr.second.data() == "Chain") {
+              topology = BondInfo::TopologyType::Chain;
+            } else if (attr.second.data() != "RingOrChain" &&
+                       attr.second.data() != "Unspecified") {
+              throw std::invalid_argument("Unhandled bond topology");
+            }
       auto startIdx = ids[bond.start]->getIdx();
       auto endIdx = ids[bond.end]->getIdx();
       if (swap) {
         std::swap(startIdx, endIdx);
       }
       unsigned bondIdx = 0;
-      if (bond.order == Bond::BondType::UNSPECIFIED) {
-        auto qb = new QueryBond();
-        qb->setQuery(makeBondNullQuery());
+      std::unique_ptr<QueryBond> qb;
+      switch (bond.queryType) {
+        case BondInfo::QueryType::Any:
+          qb = std::make_unique<QueryBond>(bond.getBondType());
+          qb->setQuery(makeBondNullQuery());
+          break;
+        case BondInfo::QueryType::SingleOrDouble:
+          qb = std::make_unique<QueryBond>(bond.getBondType());
+          qb->setQuery(makeSingleOrDoubleBondQuery());
+          break;
+        case BondInfo::QueryType::SingleOrAromatic:
+          qb = std::make_unique<QueryBond>(bond.getBondType());
+          qb->setQuery(makeSingleOrAromaticBondQuery());
+          break;
+        case BondInfo::QueryType::DoubleOrAromatic:
+          qb = std::make_unique<QueryBond>(bond.getBondType());
+          qb->setQuery(makeDoubleOrAromaticBondQuery());
+          break;
+        case BondInfo::QueryType::None:
+          break;
+      }
+      if (bond.topology != BondInfo::TopologyType::None) {
+        if (!qb) {
+          qb = std::make_unique<QueryBond>(bond.getBondType());
+        }
+        auto *topologyQuery = makeBondIsInRingQuery();
+        if (bond.topology == BondInfo::TopologyType::Chain) {
+          topologyQuery->setNegation(true);
+        }
+        qb->expandQuery(topologyQuery);
+      }
+
+      if (qb) {
         qb->setBeginAtomIdx(startIdx);
         qb->setEndAtomIdx(endIdx);
-        bondIdx = mol.addBond(qb, true) - 1;
+        bondIdx = mol.addBond(qb.release(), true) - 1;
       } else {
         bondIdx = mol.addBond(startIdx, endIdx, bond.getBondType()) - 1;
       }

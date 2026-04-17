@@ -128,6 +128,26 @@ bool parseBond(RWMol &mol, unsigned int fragmentId, CDXBond &bond,
       return false;
   };
 
+  switch (bond.m_topology) {
+    case kCDXBondTopology_Unspecified:
+    case kCDXBondTopology_RingOrChain:
+      break;
+    case kCDXBondTopology_Ring:
+    case kCDXBondTopology_Chain: {
+      if (!qb) {
+        qb = std::make_unique<QueryBond>(order);
+      }
+      auto *topologyQuery = makeBondIsInRingQuery();
+      if (bond.m_topology == kCDXBondTopology_Chain) {
+        topologyQuery->setNegation(true);
+      }
+      qb->expandQuery(topologyQuery);
+      break;
+    }
+    default:
+      break;
+  }
+
   // The RDKit only supports one direction for wedges so
   //  normalize it
   bool swap_bond_ends = false;
