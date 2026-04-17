@@ -14,6 +14,7 @@
 #ifndef RDK_BUILD_CHEMDRAW_SUPPORT
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <algorithm>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
@@ -42,6 +43,7 @@ const std::string CDX_AGENT_ID("CDX_AGENT_ID");
 const std::string CDX_ATOM_POS("CDX_ATOM_POS");
 const std::string CDX_ATOM_ID("_CDX_ATOM_ID");
 const std::string CDX_BOND_ID("_CDX_BOND_ID");
+const std::string CDX_BOND_ORDERING("CDX_BOND_ORDERING");
 
 constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
 
@@ -345,6 +347,104 @@ void applyDeferredVariableAttachmentProperties(RWMol &mol) {
   }
 }
 
+struct FragmentReplacement {
+  int label = -1;
+  Atom *replacement_atom = nullptr;
+  std::vector<Atom *> fragment_atoms;
+
+  bool replace(RWMol &mol) {
+    if (!replacement_atom) {
+      return true;
+    }
+
+    auto bond_ordering =
+        replacement_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
+    std::vector<Bond *> replacement_bonds(mol.atomBonds(replacement_atom).begin(),
+                                          mol.atomBonds(replacement_atom).end());
+
+    std::vector<Bond *> xbonds;
+    for (auto bond : replacement_bonds) {
+      unsigned bond_id = 0;
+      if (!bond->getPropIfPresent<unsigned>(CDX_BOND_ID, bond_id)) {
+        BOOST_LOG(rdWarningLog)
+            << "bond missing internal CDX BOND id, can't attach fragment at "
+               "bond"
+            << std::endl;
+        return false;
+      }
+      auto it = std::find(bond_ordering.begin(), bond_ordering.end(), bond_id);
+      if (it == bond_ordering.end()) {
+        return false;
+      }
+
+      auto pos = std::distance(bond_ordering.begin(), it);
+      if (pos < 0 || static_cast<size_t>(pos) >= fragment_atoms.size()) {
+        BOOST_LOG(rdWarningLog) << "bond ordering and number of atoms in "
+                                   "fragment mismatch, can't attach fragment at "
+                                   "bond:"
+                                << bond_id << std::endl;
+        return false;
+      }
+
+      auto &xatom = fragment_atoms[pos];
+      xbonds.assign(mol.atomBonds(xatom).begin(), mol.atomBonds(xatom).end());
+      for (auto xbond : xbonds) {
+        if (bond->getBeginAtom() == replacement_atom) {
+          mol.addBond(xbond->getOtherAtom(xatom), bond->getEndAtom(),
+                      bond->getBondType());
+        } else {
+          mol.addBond(bond->getBeginAtom(), xbond->getOtherAtom(xatom),
+                      bond->getBondType());
+        }
+      }
+    }
+
+    mol.removeAtom(replacement_atom);
+    for (auto atom : fragment_atoms) {
+      mol.removeAtom(atom);
+    }
+    return true;
+  }
+};
+
+bool replaceFragments(RWMol &mol) {
+  std::map<int, FragmentReplacement> replacements;
+
+  for (auto atom : mol.atoms()) {
+    auto label = static_cast<int>(get_fuse_label(atom));
+    if (!label) {
+      continue;
+    }
+    if (atom->hasProp(CDX_BOND_ORDERING)) {
+      auto &frag = replacements[label];
+      frag.label = label;
+      frag.replacement_atom = atom;
+    } else {
+      auto &frag = replacements[label];
+      frag.fragment_atoms.push_back(atom);
+    }
+  }
+
+  mol.beginBatchEdit();
+  for (auto &replacement : replacements) {
+    replacement.second.replace(mol);
+  }
+  mol.commitBatchEdit();
+  return true;
+}
+
+void clearInternalCDXProps(std::vector<std::unique_ptr<RWMol>> &mols) {
+  for (auto &mol : mols) {
+    for (auto atom : mol->atoms()) {
+      atom->clearProp(CDX_ATOM_ID);
+      atom->clearProp(CDX_BOND_ORDERING);
+    }
+    for (auto bond : mol->bonds()) {
+      bond->clearProp(CDX_BOND_ID);
+    }
+  }
+}
+
 template <class T>
 std::vector<T> to_vec(const std::string &s) {
   std::vector<T> n;
@@ -483,7 +583,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                             rgroup_num = stoi(s.substr(1));
                           }
                           elemno = 0;
-                          query_label = s;
+                          query_label =
+                              generic_nickname.empty() ? "R" : generic_nickname;
                         } else if (s == "A") {
                           query_label = s;
                           elemno = 0;
@@ -528,6 +629,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                       nodetype == "MultiAttachment") &&
                      params.parseQueries) {
             variable_attachment_ids = to_vec<unsigned int>(attr.second.data());
+          } else if (attr.first == "BondOrdering") {
+            bond_ordering = to_vec<int>(attr.second.data());
           } else if (attr.first == "ElementList") {
             auto elementListText = attr.second.data();
             if (elementListText.rfind("NOT ", 0) == 0) {
@@ -650,6 +753,11 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         rd_atom->setAtomMapNum(rgroup_num);
       }
       set_fuse_label(rd_atom, atommap);
+      if (!bond_ordering.empty()) {
+        // This node may be completely replaced by the fragment
+        // i.e. [*:1]C[*:1].C[*:1]C => CCC
+        rd_atom->setProp<std::vector<int>>(CDX_BOND_ORDERING, bond_ordering);
+      }
       if (mergeparent > 0) {
         rd_atom->setProp<int>("MergeParent", mergeparent);
       }
@@ -1045,6 +1153,7 @@ void visit_children(
         mol->clearProp(NEEDS_FUSE);
         std::unique_ptr<ROMol> fused;
         try {
+          replaceFragments(*mol);
           fused = molzip(*mol, molzip_params);
         } catch (Invar::Invariant &) {
           BOOST_LOG(rdWarningLog) << "Failed fusion of fragment skipping... "
@@ -1282,6 +1391,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   }
 
   // what do we do with the reaction schemes here???
+  clearInternalCDXProps(mols);
   return mols;
 }
 

@@ -457,6 +457,14 @@ class TestCase(unittest.TestCase):
 
     self.assertEqual(sorted(endpoint_sets), ['(5 1 2 3 4 5)', '(5 6 7 8 9 10)'])
 
+  def test_cdxml_external_connection_fragment_query(self):
+    rdbase = os.environ['RDBASE']
+    mols = Chem.MolsFromCDXMLFileAsQueries(
+      os.path.join(rdbase, 'External/ChemDraw/test_data/atom-to-fragment.cdxml'),
+      Chem.CDXMLParserParams())
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmarts(mols[0]), '[#6]-[#6]=[#6]=[#6](-[#6])-[#6]')
+
   def test_cdxml_atom_restriction_queries(self):
     rdbase = os.environ['RDBASE']
     query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')

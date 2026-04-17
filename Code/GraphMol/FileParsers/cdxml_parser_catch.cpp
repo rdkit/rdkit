@@ -1091,6 +1091,14 @@ TEST_CASE("CDXML multiattachment queries") {
   CHECK(endPointSets[1] == "(5 6 7 8 9 10)");
 }
 
+TEST_CASE("CDXML external connection fragment queries") {
+  const auto fname = std::string(getenv("RDBASE")) +
+                     "/External/ChemDraw/test_data/atom-to-fragment.cdxml";
+  auto mols = MolsFromCDXMLFileAsQueries(fname);
+  REQUIRE(mols.size() == 1);
+  CHECK(MolToSmarts(*mols[0]) == "[#6]-[#6]=[#6]=[#6](-[#6])-[#6]");
+}
+
 TEST_CASE("atropisomers") {
   std::string cdxmlbase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
