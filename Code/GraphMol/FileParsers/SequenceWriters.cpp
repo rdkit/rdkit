@@ -702,9 +702,7 @@ std::string MolToHELM(const ROMol &mol) {
   result += "}$";
 
   first = true;
-  for (ROMol::ConstBondIterator bondIt = mol.beginBonds();
-       bondIt != mol.endBonds(); ++bondIt) {
-    const Bond *bond = *bondIt;
+  for (const auto bond : mol.bonds()) {
     Atom *beg = bond->getBeginAtom();
     Atom *end = bond->getEndAtom();
     if (!beg || !end) {

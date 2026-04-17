@@ -328,19 +328,18 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
   std::stringstream ss;
   unsigned int nEntries = 0;
   boost::dynamic_bitset<> atomsAffected(mol.getNumAtoms(), 0);
-  for (ROMol::ConstBondIterator bondIt = mol.beginBonds();
-       bondIt != mol.endBonds(); ++bondIt) {
-    if ((*bondIt)->getBondType() == Bond::ZERO) {
+  for (const auto bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::ZERO) {
       ++nEntries;
-      ss << " " << std::setw(3) << (*bondIt)->getIdx() + 1 << " "
-         << std::setw(3) << 0;
+      ss << " " << std::setw(3) << bond->getIdx() + 1 << " " << std::setw(3)
+         << 0;
       if (nEntries == 8) {
         res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << "\n";
         nEntries = 0;
         ss.str("");
       }
-      atomsAffected[(*bondIt)->getBeginAtomIdx()] = 1;
-      atomsAffected[(*bondIt)->getEndAtomIdx()] = 1;
+      atomsAffected[bond->getBeginAtomIdx()] = 1;
+      atomsAffected[bond->getEndAtomIdx()] = 1;
     }
   }
   if (nEntries) {
