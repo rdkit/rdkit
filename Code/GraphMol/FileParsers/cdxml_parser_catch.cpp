@@ -465,6 +465,7 @@ TEST_CASE("CDXML") {
         CHECK(mols.size() == 1);
         CHECK(MolToSmarts(*mols[0]) == expectedSmarts);
       }
+
     }
     {
       const auto generatedBase = std::string(getenv("RDBASE")) +
@@ -490,6 +491,21 @@ TEST_CASE("CDXML") {
         auto mols = MolsFromCDXMLFileAsQueries(fname);
         CHECK(mols.size() == 1);
         CHECK(MolToSmarts(*mols[0]) == expectedSmarts);
+      }
+
+      const std::vector<std::tuple<std::string, std::string, int>> propCases = {
+          {generatedBase + "qrestrict_rxnchange_yes.cdxml",
+           std::string(common_properties::molRxnExactChange), 1},
+          {generatedBase + "qrestrict_rxnstereo_inversion.cdxml",
+           std::string(common_properties::molInversionFlag), 1},
+      };
+
+      for (const auto &[fname, propName, expectedValue] : propCases) {
+        auto mols = MolsFromCDXMLFileAsQueries(fname);
+        REQUIRE(mols.size() == 1);
+        auto atom = mols[0]->getAtomWithIdx(2);
+        CHECK(atom->hasProp(propName));
+        CHECK(atom->getProp<int>(propName) == expectedValue);
       }
     }
   }

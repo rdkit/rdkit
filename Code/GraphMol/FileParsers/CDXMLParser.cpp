@@ -321,6 +321,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       int substituent_count = -1;
       int max_substituent_count = -1;
         int free_sites = -1;
+        bool restrict_rxn_change = false;
+        int rxn_stereo = 0;
       AtomUnsaturationConstraint unsaturation =
           AtomUnsaturationConstraint::None;
       for (auto &attr : node.second.get_child("<xmlattr>")) {
@@ -451,6 +453,23 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           } else if (attr.first == "FreeSites") {
             free_sites = stoi(attr.second.data());
 
+          } else if (attr.first == "RxnChange") {
+            auto value = attr.second.data();
+            restrict_rxn_change =
+                value == "yes" || value == "true" || value == "1";
+
+          } else if (attr.first == "RxnStereo") {
+            auto value = attr.second.data();
+            if (value == "Inversion") {
+              rxn_stereo = 1;
+            } else if (value == "Retention") {
+              rxn_stereo = 2;
+            } else if (value != "Unspecified") {
+              BOOST_LOG(rdWarningLog)
+                  << "Unhandled RxnStereo query value " << value
+                  << " ignoring" << std::endl;
+            }
+
           } else if (attr.first == "p") {
             atom_coords = to_vec<double>(attr.second.data());
           } else if (attr.first == "EnhancedStereoGroupNum") {
@@ -555,6 +574,12 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       }
       if (free_sites >= 0) {
         rd_atom->setProp(CDXML_FREE_SITES_PROP, free_sites);
+      }
+      if (params.parseQueries && restrict_rxn_change) {
+        rd_atom->setProp(common_properties::molRxnExactChange, 1);
+      }
+      if (params.parseQueries && rxn_stereo) {
+        rd_atom->setProp(common_properties::molInversionFlag, rxn_stereo);
       }
       if (sgroup != -1) {
         auto key = std::make_pair(sgroup, grouptype);

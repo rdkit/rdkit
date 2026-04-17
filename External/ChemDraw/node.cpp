@@ -115,6 +115,8 @@ bool parseNode(
   int substituent_count = -1;
   int max_substituent_count = -1;
   int free_sites = -1;
+  bool restrict_rxn_change = node.m_restrictRxnChange;
+  int rxn_stereo = 0;
   AtomUnsaturationConstraint unsaturation = AtomUnsaturationConstraint::None;
 
   switch (node.m_ringBondCount) {
@@ -143,6 +145,17 @@ bool parseNode(
       break;
     case kCDXUnsaturation_MustBePresent:
       unsaturation = AtomUnsaturationConstraint::MustBePresent;
+      break;
+    default:
+      break;
+  }
+
+  switch (node.m_rxnStereo) {
+    case kCDXReactionStereo_Inversion:
+      rxn_stereo = 1;
+      break;
+    case kCDXReactionStereo_Retention:
+      rxn_stereo = 2;
       break;
     default:
       break;
@@ -394,6 +407,12 @@ bool parseNode(
   }
   if (free_sites >= 0) {
     rd_atom->setProp(CDXML_FREE_SITES_PROP, free_sites);
+  }
+  if (pagedata.parseQueries && restrict_rxn_change) {
+    rd_atom->setProp(common_properties::molRxnExactChange, 1);
+  }
+  if (pagedata.parseQueries && rxn_stereo) {
+    rd_atom->setProp(common_properties::molInversionFlag, rxn_stereo);
   }
 
   switch (node.m_radical) {

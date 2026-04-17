@@ -424,7 +424,7 @@ class TestCase(unittest.TestCase):
 
   def test_cdxml_atom_restriction_queries(self):
     rdbase = os.environ['RDBASE']
-    cases = [
+    smarts_cases = [
       ('free-sites', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_freesites_1.cdxml'),
        '[#6]-[#6]-[#6&D{1-2}]'),
       ('implicit-hydrogens', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_implicit_hs.cdxml'),
@@ -440,11 +440,24 @@ class TestCase(unittest.TestCase):
       ('unsaturated-bonds', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_unsat_present.cdxml'),
        '[#6]-[#6]-[#6&$(*=,:,#*)]'),
     ]
+    prop_cases = [
+      ('reaction-change', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_rxnchange_yes.cdxml'),
+       'molRxnExachg', 1),
+      ('reaction-stereo', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_rxnstereo_inversion.cdxml'),
+       'molInversionFlag', 1),
+    ]
 
-    for _, filename, expected_smarts in cases:
+    for _, filename, expected_smarts in smarts_cases:
       mols = Chem.MolsFromCDXMLFileAsQueries(filename, Chem.CDXMLParserParams())
       self.assertEqual(len(mols), 1)
       self.assertEqual(Chem.MolToSmarts(mols[0]), expected_smarts)
+
+    for _, filename, prop_name, expected_value in prop_cases:
+      mols = Chem.MolsFromCDXMLFileAsQueries(filename, Chem.CDXMLParserParams())
+      self.assertEqual(len(mols), 1)
+      atom = mols[0].GetAtomWithIdx(2)
+      self.assertTrue(atom.HasProp(prop_name))
+      self.assertEqual(atom.GetIntProp(prop_name), expected_value)
           
 
         
