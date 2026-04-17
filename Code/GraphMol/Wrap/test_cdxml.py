@@ -435,6 +435,28 @@ class TestCase(unittest.TestCase):
     self.assertEqual(bond.GetBondType(), Chem.BondType.HYDROGEN)
     self.assertIn('H:0.0', Chem.MolToCXSmarts(mols[0]))
 
+  def test_cdxml_multiattachment_query(self):
+    rdbase = os.environ['RDBASE']
+    params = Chem.CDXMLParserParams()
+    params.sanitize = False
+    mols = Chem.MolsFromCDXMLFileAsQueries(
+      os.path.join(rdbase, 'rdkit/Chem/test_data/ferrocene.cdxml'),
+      params)
+    self.assertEqual(len(mols), 1)
+
+    dummy_atoms = [atom for atom in mols[0].GetAtoms() if atom.GetAtomicNum() == 0]
+    self.assertEqual(len(dummy_atoms), 2)
+
+    endpoint_sets = []
+    for bond in mols[0].GetBonds():
+      if not bond.HasProp('_MolFileBondEndPts'):
+        continue
+      self.assertTrue(bond.HasProp('_MolFileBondAttach'))
+      self.assertEqual(bond.GetProp('_MolFileBondAttach'), 'ANY')
+      endpoint_sets.append(bond.GetProp('_MolFileBondEndPts'))
+
+    self.assertEqual(sorted(endpoint_sets), ['(5 1 2 3 4 5)', '(5 6 7 8 9 10)'])
+
   def test_cdxml_atom_restriction_queries(self):
     rdbase = os.environ['RDBASE']
     query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')

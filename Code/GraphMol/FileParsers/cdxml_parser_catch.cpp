@@ -16,6 +16,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <RDGeneral/FileParseException.h>
+#include <algorithm>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
@@ -1055,6 +1056,39 @@ TEST_CASE("CDXML hydrogen bond queries") {
   CHECK(hydrogenBond->getBondType() == Bond::BondType::HYDROGEN);
   CHECK(MolToCXSmarts(*hydrogenBondMols[0]).find("H:0.0") !=
         std::string::npos);
+}
+
+TEST_CASE("CDXML multiattachment queries") {
+  const auto fname =
+      std::string(getenv("RDBASE")) + "/rdkit/Chem/test_data/ferrocene.cdxml";
+  CDXMLParserParams params;
+  params.sanitize = false;
+  auto mols = MolsFromCDXMLFileAsQueries(fname, params);
+  REQUIRE(mols.size() == 1);
+
+  size_t numDummyAtoms = 0;
+  for (const auto atom : mols[0]->atoms()) {
+    if (atom->getAtomicNum() == 0) {
+      ++numDummyAtoms;
+    }
+  }
+  CHECK(numDummyAtoms == 2);
+
+  std::vector<std::string> endPointSets;
+  for (const auto bond : mols[0]->bonds()) {
+    if (!bond->hasProp(common_properties::_MolFileBondEndPts)) {
+      continue;
+    }
+    CHECK(bond->hasProp(common_properties::_MolFileBondAttach));
+    CHECK(bond->getProp<std::string>(common_properties::_MolFileBondAttach) ==
+          "ANY");
+    endPointSets.push_back(
+        bond->getProp<std::string>(common_properties::_MolFileBondEndPts));
+  }
+  std::sort(endPointSets.begin(), endPointSets.end());
+  REQUIRE(endPointSets.size() == 2);
+  CHECK(endPointSets[0] == "(5 1 2 3 4 5)");
+  CHECK(endPointSets[1] == "(5 6 7 8 9 10)");
 }
 
 TEST_CASE("atropisomers") {

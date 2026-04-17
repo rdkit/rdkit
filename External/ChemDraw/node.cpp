@@ -255,6 +255,13 @@ bool parseNode(
     case kCDXNodeType_NamedAlternativeGroup:
       break;
     case kCDXNodeType_MultiAttachment:
+      if (pagedata.parseQueries) {
+        elemno = 0;
+      }
+      if (node.m_attachments) {
+        variable_attachment_ids.assign(node.m_attachments->begin(),
+                                       node.m_attachments->end());
+      }
       break;
     case kCDXNodeType_VariableAttachment:
       if (pagedata.parseQueries) {

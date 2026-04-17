@@ -316,9 +316,9 @@ void applyDeferredVariableAttachmentProperties(RWMol &mol) {
       continue;
     }
     if (atom->getDegree() != 1) {
-      BOOST_LOG(rdWarningLog) << "Only VariableAttachment nodes with a single "
+      BOOST_LOG(rdWarningLog) << "Only attachment-point nodes with a single "
                                  "substituent bond are supported on atom "
-                              << atom->getIdx() << std::endl;
+                             << atom->getIdx() << std::endl;
       continue;
     }
 
@@ -329,7 +329,7 @@ void applyDeferredVariableAttachmentProperties(RWMol &mol) {
       auto mappedIdx = atomIdToIdx.find(attachmentId);
       if (mappedIdx == atomIdToIdx.end()) {
         BOOST_LOG(rdWarningLog)
-            << "VariableAttachment endpoint " << attachmentId
+            << "Attachment endpoint " << attachmentId
             << " not found in molecule" << std::endl;
         missingAttachment = true;
         break;
@@ -512,7 +512,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
             } else if (nodetype == "LinkNode") {
               link_count_low = 1;
               link_count_high = 1;
-            } else if (nodetype == "VariableAttachment" &&
+            } else if ((nodetype == "VariableAttachment" ||
+                        nodetype == "MultiAttachment") &&
                        params.parseQueries) {
               elemno = 0;
             }
@@ -523,7 +524,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           } else if (attr.first == "LinkCountHigh") {
             link_count_high = stoi(attr.second.data());
           } else if (attr.first == "Attachments" &&
-                     nodetype == "VariableAttachment" && params.parseQueries) {
+                     (nodetype == "VariableAttachment" ||
+                      nodetype == "MultiAttachment") &&
+                     params.parseQueries) {
             variable_attachment_ids = to_vec<unsigned int>(attr.second.data());
           } else if (attr.first == "ElementList") {
             auto elementListText = attr.second.data();
