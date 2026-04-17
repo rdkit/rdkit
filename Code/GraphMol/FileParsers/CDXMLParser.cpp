@@ -125,6 +125,59 @@ Atom *addquery(Q *qry, std::string symbol, RWMol &mol, unsigned int idx) {
   return res;
 }
 
+enum class AtomUnsaturationConstraint { None, MustBeAbsent, MustBePresent };
+
+void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
+                                const v2::CDXMLParser::CDXMLParserParams &params,
+                                bool restrictImplicitHydrogens,
+                                int ringBondCount,
+                                bool ringBondCountAtLeast,
+                                int substituentCount,
+                                int maxSubstituentCount,
+                                AtomUnsaturationConstraint unsaturation) {
+  if (!params.parseQueries) {
+    return;
+  }
+  if (!restrictImplicitHydrogens && ringBondCount < 0 &&
+      !ringBondCountAtLeast && substituentCount < 0 &&
+      maxSubstituentCount < 0 &&
+      unsaturation == AtomUnsaturationConstraint::None) {
+    return;
+  }
+
+    auto *queryAtom = static_cast<QueryAtom *>(
+      QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+  queryAtom->setNoImplicit(true);
+
+  if (restrictImplicitHydrogens) {
+    queryAtom->expandQuery(makeAtomImplicitHCountQuery(0));
+  }
+  if (ringBondCount >= 0) {
+    queryAtom->expandQuery(makeAtomRingBondCountQuery(ringBondCount));
+  } else if (ringBondCountAtLeast) {
+    queryAtom->expandQuery(makeAtomRangeQuery(
+        4, -1, false, false, queryAtomRingBondCount,
+        "range_AtomRingBondCount"));
+  }
+  if (substituentCount >= 0) {
+    queryAtom->expandQuery(makeAtomExplicitDegreeQuery(substituentCount));
+  }
+  if (maxSubstituentCount >= 0) {
+    queryAtom->expandQuery(makeAtomRangeQuery(
+        0, maxSubstituentCount, false, false, queryAtomExplicitDegree,
+      "range_AtomExplicitDegree"));
+  }
+  if (unsaturation != AtomUnsaturationConstraint::None) {
+    auto *unsaturationQuery = makeAtomUnsaturatedQuery();
+    if (unsaturation == AtomUnsaturationConstraint::MustBeAbsent) {
+      unsaturationQuery->setNegation(true);
+    }
+    queryAtom->expandQuery(unsaturationQuery);
+  }
+
+  atom = queryAtom;
+}
+
 template <class T>
 std::vector<T> to_vec(const std::string &s) {
   std::vector<T> n;
@@ -202,6 +255,13 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       std::string nodetype = "";
       std::string generic_nickname;
       bool negative_elementlist = false;
+      bool restrict_implicit_hydrogens = false;
+      int ring_bond_count = -1;
+      bool ring_bond_count_at_least = false;
+      int substituent_count = -1;
+      int max_substituent_count = -1;
+      AtomUnsaturationConstraint unsaturation =
+          AtomUnsaturationConstraint::None;
       for (auto &attr : node.second.get_child("<xmlattr>")) {
         try {
           if (attr.first == "id") {
@@ -285,6 +345,45 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               elementListText = elementListText.substr(4);
             }
             elementlist = to_vec<int>(elementListText);
+
+          } else if (attr.first == "ImplicitHydrogens") {
+            auto value = attr.second.data();
+            restrict_implicit_hydrogens =
+                value == "yes" || value == "true";
+
+          } else if (attr.first == "RingBondCount") {
+            auto value = attr.second.data();
+            if (value == "NoRingBonds") {
+              ring_bond_count = 0;
+            } else if (value == "SimpleRing") {
+              ring_bond_count = 2;
+            } else if (value == "Fusion") {
+              ring_bond_count = 3;
+            } else if (value == "SpiroOrHigher") {
+              ring_bond_count_at_least = true;
+            } else if (value != "AsDrawn" && value != "Unspecified") {
+              BOOST_LOG(rdWarningLog)
+                  << "Unhandled RingBondCount query value " << value
+                  << " ignoring" << std::endl;
+            }
+
+          } else if (attr.first == "UnsaturatedBonds") {
+            auto value = attr.second.data();
+            if (value == "MustBePresent") {
+              unsaturation = AtomUnsaturationConstraint::MustBePresent;
+            } else if (value == "MustBeAbsent") {
+              unsaturation = AtomUnsaturationConstraint::MustBeAbsent;
+            } else if (value != "Unspecified") {
+              BOOST_LOG(rdWarningLog)
+                  << "Unhandled UnsaturatedBonds query value " << value
+                  << " ignoring" << std::endl;
+            }
+
+          } else if (attr.first == "SubstituentsExactly") {
+            substituent_count = stoi(attr.second.data());
+
+          } else if (attr.first == "SubstituentsUpTo") {
+            max_substituent_count = stoi(attr.second.data());
 
           } else if (attr.first == "p") {
             atom_coords = to_vec<double>(attr.second.data());
@@ -381,6 +480,10 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           rd_atom->setProp(common_properties::atomLabel, query_label);
         }
       }
+      applyAtomQueryRestrictions(mol, rd_atom, params,
+                                 restrict_implicit_hydrogens, ring_bond_count,
+                                 ring_bond_count_at_least, substituent_count,
+                                 max_substituent_count, unsaturation);
       if (sgroup != -1) {
         auto key = std::make_pair(sgroup, grouptype);
         auto &stereo = sgroups[key];

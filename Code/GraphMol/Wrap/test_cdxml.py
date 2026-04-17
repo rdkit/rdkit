@@ -421,6 +421,26 @@ class TestCase(unittest.TestCase):
 
       self.assertEqual(len(mols), 1)
       self.assertEqual(Chem.MolToSmarts(mols[0]), expected_smarts)
+
+  def test_cdxml_atom_restriction_queries(self):
+    rdbase = os.environ['RDBASE']
+    cases = [
+      ('implicit-hydrogens', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_implicit_hs.cdxml'),
+       '[#6]-[#6]-[#6&h0]'),
+      ('ring-bond-count', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_ringbond_simple.cdxml'),
+       '[#6]-[#6]-[#6&x2]'),
+      ('substituents-exactly', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_sub_exact_2.cdxml'),
+       '[#6]-[#6]-[#6&D2]'),
+      ('substituents-up-to', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_sub_upto_2.cdxml'),
+       '[#6]-[#6]-[#6&D{0-2}]'),
+      ('unsaturated-bonds', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_unsat_present.cdxml'),
+       '[#6]-[#6]-[#6&$(*=,:,#*)]'),
+    ]
+
+    for _, filename, expected_smarts in cases:
+      mols = Chem.MolsFromCDXMLFileAsQueries(filename, Chem.CDXMLParserParams())
+      self.assertEqual(len(mols), 1)
+      self.assertEqual(Chem.MolToSmarts(mols[0]), expected_smarts)
           
 
         

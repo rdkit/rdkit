@@ -466,6 +466,28 @@ TEST_CASE("CDXML") {
         CHECK(MolToSmarts(*mols[0]) == expectedSmarts);
       }
     }
+    {
+      const auto generatedBase = std::string(getenv("RDBASE")) +
+                                 "/Code/GraphMol/test_data/CDXML/queries/";
+      const std::vector<std::pair<std::string, std::string>> cases = {
+          {generatedBase + "qrestrict_implicit_hs.cdxml",
+           "[#6]-[#6]-[#6&h0]"},
+          {generatedBase + "qrestrict_ringbond_simple.cdxml",
+           "[#6]-[#6]-[#6&x2]"},
+        {generatedBase + "qrestrict_sub_exact_2.cdxml",
+         "[#6]-[#6]-[#6&D2]"},
+        {generatedBase + "qrestrict_sub_upto_2.cdxml",
+         "[#6]-[#6]-[#6&D{0-2}]"},
+          {generatedBase + "qrestrict_unsat_present.cdxml",
+           "[#6]-[#6]-[#6&$(*=,:,#*)]"},
+      };
+
+      for (const auto &[fname, expectedSmarts] : cases) {
+        auto mols = MolsFromCDXMLFileAsQueries(fname);
+        CHECK(mols.size() == 1);
+        CHECK(MolToSmarts(*mols[0]) == expectedSmarts);
+      }
+    }
   }
   SECTION("ElementList") {
     auto fname = cdxmlbase + "element-list.cdxml";
