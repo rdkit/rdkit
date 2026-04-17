@@ -429,6 +429,8 @@ class TestCase(unittest.TestCase):
        '[#6]-[#6]-[#6&D{1-2}]'),
       ('implicit-hydrogens', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_implicit_hs.cdxml'),
        '[#6]-[#6]-[#6&h0]'),
+      ('ring-bond-count-as-drawn', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_ringbond_asdrawn.cdxml'),
+       '[#6]-[#6]-[#6&x0]'),
       ('ring-bond-count', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_ringbond_simple.cdxml'),
        '[#6]-[#6]-[#6&x2]'),
       ('substituents-exactly', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_sub_exact_2.cdxml'),

@@ -36,6 +36,43 @@
 namespace RDKit {
 namespace ChemDraw {
 namespace {
+void applyDeferredRingBondCountAsDrawnQueryRestrictions(
+    RWMol &mol, const PageData &pagedata) {
+  if (!pagedata.parseQueries) {
+    return;
+  }
+
+  bool hasDeferredRingBondCount = false;
+  for (auto atom : mol.atoms()) {
+    if (atom->hasProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP)) {
+      hasDeferredRingBondCount = true;
+      break;
+    }
+  }
+  if (!hasDeferredRingBondCount) {
+    return;
+  }
+
+  MolOps::fastFindRings(mol);
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP)) {
+      continue;
+    }
+
+    auto ringBondCount = 0;
+    for (const auto bond : mol.atomBonds(atom)) {
+      if (bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())) {
+        ++ringBondCount;
+      }
+    }
+    auto *queryAtom = static_cast<QueryAtom *>(
+        QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+    queryAtom->setNoImplicit(true);
+    queryAtom->expandQuery(makeAtomRingBondCountQuery(ringBondCount));
+    queryAtom->clearProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP);
+  }
+}
+
 void applyDeferredFreeSitesQueryRestrictions(RWMol &mol) {
   for (auto atom : mol.atoms()) {
     if (!atom->hasProp(CDXML_FREE_SITES_PROP)) {
@@ -1035,6 +1072,7 @@ bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
     }
   }
 
+  applyDeferredRingBondCountAsDrawnQueryRestrictions(mol, pagedata);
   applyDeferredFreeSitesQueryRestrictions(mol);
 
   // Add the stereo groups

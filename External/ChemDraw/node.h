@@ -46,6 +46,8 @@
 namespace RDKit {
 namespace ChemDraw {
 inline constexpr auto CDXML_FREE_SITES_PROP = "_cdxmlFreeSites";
+inline constexpr auto CDXML_RING_BOND_COUNT_AS_DRAWN_PROP =
+    "_cdxmlRingBondCountAsDrawn";
 
 bool parseNode(
     RWMol &mol, unsigned int fragmentId, CDXNode &node, PageData &pagedata,

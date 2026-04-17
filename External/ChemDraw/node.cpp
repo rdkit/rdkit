@@ -111,6 +111,7 @@ bool parseNode(
   bool restrict_implicit_hydrogens = node.m_implicitHydrogens;
   int ring_bond_count = -1;
   bool ring_bond_count_at_least = false;
+  bool ring_bond_count_as_drawn = false;
   int substituent_count = -1;
   int max_substituent_count = -1;
   int free_sites = -1;
@@ -128,6 +129,9 @@ bool parseNode(
       break;
     case kCDXRingBondCount_SpiroOrHigher:
       ring_bond_count_at_least = true;
+      break;
+    case kCDXRingBondCount_AsDrawn:
+      ring_bond_count_as_drawn = true;
       break;
     default:
       break;
@@ -385,6 +389,9 @@ bool parseNode(
                              restrict_implicit_hydrogens, ring_bond_count,
                              ring_bond_count_at_least, substituent_count,
                              max_substituent_count, unsaturation);
+  if (ring_bond_count_as_drawn) {
+    rd_atom->setProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP, 1);
+  }
   if (free_sites >= 0) {
     rd_atom->setProp(CDXML_FREE_SITES_PROP, free_sites);
   }

@@ -128,6 +128,7 @@ Atom *addquery(Q *qry, std::string symbol, RWMol &mol, unsigned int idx) {
 enum class AtomUnsaturationConstraint { None, MustBeAbsent, MustBePresent };
 
 constexpr auto CDXML_FREE_SITES_PROP = "_cdxmlFreeSites";
+constexpr auto CDXML_RING_BOND_COUNT_AS_DRAWN_PROP = "_cdxmlRingBondCountAsDrawn";
 
 void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
                                 const v2::CDXMLParser::CDXMLParserParams &params,
@@ -196,6 +197,43 @@ void applyDeferredFreeSitesQueryRestrictions(RWMol &mol) {
         minDegree, minDegree + freeSites, false, false,
         queryAtomExplicitDegree, "range_AtomExplicitDegree"));
     queryAtom->clearProp(CDXML_FREE_SITES_PROP);
+  }
+}
+
+void applyDeferredRingBondCountAsDrawnQueryRestrictions(
+    RWMol &mol, const v2::CDXMLParser::CDXMLParserParams &params) {
+  if (!params.parseQueries) {
+    return;
+  }
+
+  bool hasDeferredRingBondCount = false;
+  for (auto atom : mol.atoms()) {
+    if (atom->hasProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP)) {
+      hasDeferredRingBondCount = true;
+      break;
+    }
+  }
+  if (!hasDeferredRingBondCount) {
+    return;
+  }
+
+  MolOps::fastFindRings(mol);
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP)) {
+      continue;
+    }
+
+    auto ringBondCount = 0;
+    for (const auto bond : mol.atomBonds(atom)) {
+      if (bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())) {
+        ++ringBondCount;
+      }
+    }
+    auto *queryAtom = static_cast<QueryAtom *>(
+        QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+    queryAtom->setNoImplicit(true);
+    queryAtom->expandQuery(makeAtomRingBondCountQuery(ringBondCount));
+    queryAtom->clearProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP);
   }
 }
 
@@ -279,6 +317,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       bool restrict_implicit_hydrogens = false;
       int ring_bond_count = -1;
       bool ring_bond_count_at_least = false;
+      bool ring_bond_count_as_drawn = false;
       int substituent_count = -1;
       int max_substituent_count = -1;
         int free_sites = -1;
@@ -383,7 +422,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               ring_bond_count = 3;
             } else if (value == "SpiroOrHigher") {
               ring_bond_count_at_least = true;
-            } else if (value != "AsDrawn" && value != "Unspecified") {
+            } else if (value == "AsDrawn") {
+              ring_bond_count_as_drawn = true;
+            } else if (value != "Unspecified") {
               BOOST_LOG(rdWarningLog)
                   << "Unhandled RingBondCount query value " << value
                   << " ignoring" << std::endl;
@@ -509,6 +550,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                                  restrict_implicit_hydrogens, ring_bond_count,
                                  ring_bond_count_at_least, substituent_count,
                                  max_substituent_count, unsaturation);
+      if (ring_bond_count_as_drawn) {
+        rd_atom->setProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP, 1);
+      }
       if (free_sites >= 0) {
         rd_atom->setProp(CDXML_FREE_SITES_PROP, free_sites);
       }
@@ -732,6 +776,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       }
     }
 
+    applyDeferredRingBondCountAsDrawnQueryRestrictions(mol, params);
     applyDeferredFreeSitesQueryRestrictions(mol);
   }
 
