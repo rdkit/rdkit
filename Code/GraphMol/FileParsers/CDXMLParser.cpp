@@ -127,6 +127,8 @@ Atom *addquery(Q *qry, std::string symbol, RWMol &mol, unsigned int idx) {
 
 enum class AtomUnsaturationConstraint { None, MustBeAbsent, MustBePresent };
 
+constexpr auto CDXML_FREE_SITES_PROP = "_cdxmlFreeSites";
+
 void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
                                 const v2::CDXMLParser::CDXMLParserParams &params,
                                 bool restrictImplicitHydrogens,
@@ -145,7 +147,7 @@ void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
     return;
   }
 
-    auto *queryAtom = static_cast<QueryAtom *>(
+  auto *queryAtom = static_cast<QueryAtom *>(
       QueryOps::replaceAtomWithQueryAtom(&mol, atom));
   queryAtom->setNoImplicit(true);
 
@@ -165,7 +167,7 @@ void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
   if (maxSubstituentCount >= 0) {
     queryAtom->expandQuery(makeAtomRangeQuery(
         0, maxSubstituentCount, false, false, queryAtomExplicitDegree,
-      "range_AtomExplicitDegree"));
+        "range_AtomExplicitDegree"));
   }
   if (unsaturation != AtomUnsaturationConstraint::None) {
     auto *unsaturationQuery = makeAtomUnsaturatedQuery();
@@ -176,6 +178,25 @@ void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
   }
 
   atom = queryAtom;
+}
+
+void applyDeferredFreeSitesQueryRestrictions(RWMol &mol) {
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_FREE_SITES_PROP)) {
+      continue;
+    }
+
+    int freeSites = 0;
+    atom->getProp(CDXML_FREE_SITES_PROP, freeSites);
+    const auto minDegree = static_cast<int>(atom->getDegree());
+    auto *queryAtom = static_cast<QueryAtom *>(
+        QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+    queryAtom->setNoImplicit(true);
+    queryAtom->expandQuery(makeAtomRangeQuery(
+        minDegree, minDegree + freeSites, false, false,
+        queryAtomExplicitDegree, "range_AtomExplicitDegree"));
+    queryAtom->clearProp(CDXML_FREE_SITES_PROP);
+  }
 }
 
 template <class T>
@@ -260,6 +281,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       bool ring_bond_count_at_least = false;
       int substituent_count = -1;
       int max_substituent_count = -1;
+        int free_sites = -1;
       AtomUnsaturationConstraint unsaturation =
           AtomUnsaturationConstraint::None;
       for (auto &attr : node.second.get_child("<xmlattr>")) {
@@ -385,6 +407,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           } else if (attr.first == "SubstituentsUpTo") {
             max_substituent_count = stoi(attr.second.data());
 
+          } else if (attr.first == "FreeSites") {
+            free_sites = stoi(attr.second.data());
+
           } else if (attr.first == "p") {
             atom_coords = to_vec<double>(attr.second.data());
           } else if (attr.first == "EnhancedStereoGroupNum") {
@@ -484,6 +509,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                                  restrict_implicit_hydrogens, ring_bond_count,
                                  ring_bond_count_at_least, substituent_count,
                                  max_substituent_count, unsaturation);
+      if (free_sites >= 0) {
+        rd_atom->setProp(CDXML_FREE_SITES_PROP, free_sites);
+      }
       if (sgroup != -1) {
         auto key = std::make_pair(sgroup, grouptype);
         auto &stereo = sgroups[key];
@@ -703,6 +731,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         }
       }
     }
+
+    applyDeferredFreeSitesQueryRestrictions(mol);
   }
 
   // Add the stereo groups

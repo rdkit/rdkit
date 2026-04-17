@@ -36,6 +36,25 @@
 namespace RDKit {
 namespace ChemDraw {
 namespace {
+void applyDeferredFreeSitesQueryRestrictions(RWMol &mol) {
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_FREE_SITES_PROP)) {
+      continue;
+    }
+
+    int freeSites = 0;
+    atom->getProp(CDXML_FREE_SITES_PROP, freeSites);
+    const auto minDegree = static_cast<int>(atom->getDegree());
+    auto *queryAtom = static_cast<QueryAtom *>(
+        QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+    queryAtom->setNoImplicit(true);
+    queryAtom->expandQuery(makeAtomRangeQuery(
+        minDegree, minDegree + freeSites, false, false,
+        queryAtomExplicitDegree, "range_AtomExplicitDegree"));
+    queryAtom->clearProp(CDXML_FREE_SITES_PROP);
+  }
+}
+
 const char *sequenceTypeToName(CDXSeqType seqtype) {
   switch (seqtype) {
     case kCDXSeqType_Unknown:
@@ -1015,6 +1034,8 @@ bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
         break;
     }
   }
+
+  applyDeferredFreeSitesQueryRestrictions(mol);
 
   // Add the stereo groups
   if (!sgroups.empty()) {

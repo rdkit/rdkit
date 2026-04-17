@@ -45,6 +45,8 @@
 
 namespace RDKit {
 namespace ChemDraw {
+inline constexpr auto CDXML_FREE_SITES_PROP = "_cdxmlFreeSites";
+
 bool parseNode(
     RWMol &mol, unsigned int fragmentId, CDXNode &node, PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,

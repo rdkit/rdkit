@@ -28,7 +28,7 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// #include "node.h"
+#include "node.h"
 #include "fragment.h"
 #include "utils.h"
 
@@ -55,7 +55,7 @@ void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
     return;
   }
 
-    auto *queryAtom = static_cast<QueryAtom *>(
+  auto *queryAtom = static_cast<QueryAtom *>(
       QueryOps::replaceAtomWithQueryAtom(&mol, atom));
   queryAtom->setNoImplicit(true);
 
@@ -75,7 +75,7 @@ void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
   if (maxSubstituentCount >= 0) {
     queryAtom->expandQuery(makeAtomRangeQuery(
         0, maxSubstituentCount, false, false, queryAtomExplicitDegree,
-      "range_AtomExplicitDegree"));
+        "range_AtomExplicitDegree"));
   }
   if (unsaturation != AtomUnsaturationConstraint::None) {
     auto *unsaturationQuery = makeAtomUnsaturatedQuery();
@@ -113,6 +113,7 @@ bool parseNode(
   bool ring_bond_count_at_least = false;
   int substituent_count = -1;
   int max_substituent_count = -1;
+  int free_sites = -1;
   AtomUnsaturationConstraint unsaturation = AtomUnsaturationConstraint::None;
 
   switch (node.m_ringBondCount) {
@@ -144,6 +145,9 @@ bool parseNode(
   }
 
   switch (node.m_substituentCode) {
+    case kCDXProp_Atom_RestrictFreeSites:
+      free_sites = node.m_substituentCount;
+      break;
     case kCDXProp_Atom_RestrictSubstituentsExactly:
       substituent_count = node.m_substituentCount;
       break;
@@ -381,6 +385,9 @@ bool parseNode(
                              restrict_implicit_hydrogens, ring_bond_count,
                              ring_bond_count_at_least, substituent_count,
                              max_substituent_count, unsaturation);
+  if (free_sites >= 0) {
+    rd_atom->setProp(CDXML_FREE_SITES_PROP, free_sites);
+  }
 
   switch (node.m_radical) {
     case kCDXRadical_None:

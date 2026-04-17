@@ -470,6 +470,8 @@ TEST_CASE("CDXML") {
       const auto generatedBase = std::string(getenv("RDBASE")) +
                                  "/Code/GraphMol/test_data/CDXML/queries/";
       const std::vector<std::pair<std::string, std::string>> cases = {
+          {generatedBase + "qrestrict_freesites_1.cdxml",
+           "[#6]-[#6]-[#6&D{1-2}]"},
           {generatedBase + "qrestrict_implicit_hs.cdxml",
            "[#6]-[#6]-[#6&h0]"},
           {generatedBase + "qrestrict_ringbond_simple.cdxml",

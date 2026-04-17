@@ -425,6 +425,8 @@ class TestCase(unittest.TestCase):
   def test_cdxml_atom_restriction_queries(self):
     rdbase = os.environ['RDBASE']
     cases = [
+      ('free-sites', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_freesites_1.cdxml'),
+       '[#6]-[#6]-[#6&D{1-2}]'),
       ('implicit-hydrogens', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_implicit_hs.cdxml'),
        '[#6]-[#6]-[#6&h0]'),
       ('ring-bond-count', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_ringbond_simple.cdxml'),
