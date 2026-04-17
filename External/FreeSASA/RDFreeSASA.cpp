@@ -184,7 +184,7 @@ double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
   if (query) {
     result = 0.0f;
     for (const auto atom : mol.atoms()) {
-      if (query->match(atom)) {
+      if (query->Match(atom)) {
         result += atom->getProp<double>("SASA");
       }
     }
