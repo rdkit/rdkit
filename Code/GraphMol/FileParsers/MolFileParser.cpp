@@ -23,7 +23,6 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/SubstanceGroup.h>
-#include <GraphMol/Atropisomers.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/GenericGroups/GenericGroups.h>
@@ -3482,8 +3481,6 @@ void finishMolProcessing(
       MolOps::assignChiralTypesFrom3D(*res, conf.getId(), true);
     }
   }
-
-  Atropisomers::detectAtropisomerChirality(*res, &conf);
 
   // now that atom stereochem has been perceived, the wedging
   // information is no longer needed, so we clear

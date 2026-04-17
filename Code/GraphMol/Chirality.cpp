@@ -2264,10 +2264,10 @@ std::ostream &operator<<(std::ostream &oss, const StereoSpecified &s) {
       3) if there are still unresolved atoms or bonds
          repeat the above steps as necessary
  */
-// Runs atropisomer detection only if no atropisomer stereo has been set yet.
-// Existing stereo (from SDF/SMILES parsing or programmatic assignment) is
-// always preserved — the caller is responsible for clearing stale stereo
-// before calling assignStereochemistry if correction is needed.
+// Runs atropisomer detection for molecules that did not go through
+// assignChiralTypesFromBondDirs or assignChiralTypesFrom3D (e.g. molecules
+// built programmatically). Skips detection if atropisomer stereo is already
+// set, which covers the normal parser path where detection already ran.
 void detectAtropisomersIfNeeded(ROMol &mol) {
   if (Atropisomers::doesMolHaveAtropisomers(mol)) {
     return;
@@ -3514,6 +3514,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
       atom->setProp<int>(common_properties::_NonExplicit3DChirality, 1);
     }
   }
+  Atropisomers::detectAtropisomerChirality(mol, &conf);
 }
 
 void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
@@ -3782,6 +3783,7 @@ void assignStereochemistryFrom3D(ROMol &mol, int confId,
 void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
                                    const bool replaceExistingTags) {
   if (!mol.getNumConformers()) {
+    Atropisomers::detectAtropisomerChirality(mol, nullptr);
     return;
   }
   auto conf = mol.getConformer(confId);
@@ -3826,6 +3828,7 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
       }
     }
   }
+  Atropisomers::detectAtropisomerChirality(mol, &mol.getConformer(confId));
 }
 
 void removeStereochemistry(ROMol &mol) {
