@@ -514,6 +514,19 @@ TEST_CASE("CDXML") {
       CHECK(linkNodeMols[0]->hasProp(common_properties::molFileLinkNodes));
       CHECK(linkNodeMols[0]->getProp<std::string>(
                 common_properties::molFileLinkNodes) == "1 3 2 2 1 2 3");
+
+      auto variableAttachmentMols =
+          MolsFromCDXMLFileAsQueries(generatedBase + "qvarattach.cdxml");
+      REQUIRE(variableAttachmentMols.size() == 1);
+      CHECK(variableAttachmentMols[0]->getAtomWithIdx(3)->getAtomicNum() == 0);
+      auto bond = variableAttachmentMols[0]->getBondBetweenAtoms(1, 3);
+      REQUIRE(bond);
+      CHECK(bond->hasProp(common_properties::_MolFileBondAttach));
+      CHECK(bond->getProp<std::string>(common_properties::_MolFileBondAttach) ==
+        "ANY");
+      CHECK(bond->hasProp(common_properties::_MolFileBondEndPts));
+      CHECK(bond->getProp<std::string>(common_properties::_MolFileBondEndPts) ==
+        "(2 1 3)");
     }
   }
   SECTION("ElementList") {

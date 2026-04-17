@@ -146,6 +146,56 @@ void applyDeferredLinkNodeProperties(RWMol &mol) {
   }
 }
 
+void applyDeferredVariableAttachmentProperties(RWMol &mol) {
+  std::map<unsigned int, unsigned int> atomIdToIdx;
+  for (auto atom : mol.atoms()) {
+    unsigned int atomId = 0;
+    if (atom->getPropIfPresent(CDX_ATOM_ID, atomId)) {
+      atomIdToIdx[atomId] = atom->getIdx();
+    }
+  }
+
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP)) {
+      continue;
+    }
+
+    std::vector<unsigned int> attachmentIds;
+    atom->getProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP, attachmentIds);
+    atom->clearProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP);
+    if (attachmentIds.empty()) {
+      continue;
+    }
+    if (atom->getDegree() != 1) {
+      BOOST_LOG(rdWarningLog) << "Only VariableAttachment nodes with a single "
+                                 "substituent bond are supported on atom "
+                              << atom->getIdx() << std::endl;
+      continue;
+    }
+
+    auto bond = *mol.atomBonds(atom).begin();
+    std::string endPoints = "(" + std::to_string(attachmentIds.size());
+    bool missingAttachment = false;
+    for (auto attachmentId : attachmentIds) {
+      auto mappedIdx = atomIdToIdx.find(attachmentId);
+      if (mappedIdx == atomIdToIdx.end()) {
+        BOOST_LOG(rdWarningLog)
+            << "VariableAttachment endpoint " << attachmentId
+            << " not found in molecule" << std::endl;
+        missingAttachment = true;
+        break;
+      }
+      endPoints += " " + std::to_string(mappedIdx->second + 1);
+    }
+    if (missingAttachment) {
+      continue;
+    }
+    endPoints += ")";
+    bond->setProp(common_properties::_MolFileBondEndPts, endPoints);
+    bond->setProp(common_properties::_MolFileBondAttach, "ANY");
+  }
+}
+
 const char *sequenceTypeToName(CDXSeqType seqtype) {
   switch (seqtype) {
     case kCDXSeqType_Unknown:
@@ -1129,6 +1179,7 @@ bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
   applyDeferredRingBondCountAsDrawnQueryRestrictions(mol, pagedata);
   applyDeferredFreeSitesQueryRestrictions(mol);
   applyDeferredLinkNodeProperties(mol);
+  applyDeferredVariableAttachmentProperties(mol);
 
   // Add the stereo groups
   if (!sgroups.empty()) {

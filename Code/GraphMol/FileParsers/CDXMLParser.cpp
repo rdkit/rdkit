@@ -131,6 +131,8 @@ constexpr auto CDXML_FREE_SITES_PROP = "_cdxmlFreeSites";
 constexpr auto CDXML_RING_BOND_COUNT_AS_DRAWN_PROP = "_cdxmlRingBondCountAsDrawn";
 constexpr auto CDXML_LINK_NODE_MIN_REP_PROP = "_cdxmlLinkNodeMinRep";
 constexpr auto CDXML_LINK_NODE_MAX_REP_PROP = "_cdxmlLinkNodeMaxRep";
+constexpr auto CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP =
+  "_cdxmlVariableAttachmentEndpoints";
 
 void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
                                 const v2::CDXMLParser::CDXMLParserParams &params,
@@ -293,6 +295,56 @@ void applyDeferredLinkNodeProperties(RWMol &mol) {
   }
 }
 
+void applyDeferredVariableAttachmentProperties(RWMol &mol) {
+  std::map<unsigned int, unsigned int> atomIdToIdx;
+  for (auto atom : mol.atoms()) {
+    unsigned int atomId = 0;
+    if (atom->getPropIfPresent(CDX_ATOM_ID, atomId)) {
+      atomIdToIdx[atomId] = atom->getIdx();
+    }
+  }
+
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP)) {
+      continue;
+    }
+
+    std::vector<unsigned int> attachmentIds;
+    atom->getProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP, attachmentIds);
+    atom->clearProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP);
+    if (attachmentIds.empty()) {
+      continue;
+    }
+    if (atom->getDegree() != 1) {
+      BOOST_LOG(rdWarningLog) << "Only VariableAttachment nodes with a single "
+                                 "substituent bond are supported on atom "
+                              << atom->getIdx() << std::endl;
+      continue;
+    }
+
+    auto bond = *mol.atomBonds(atom).begin();
+    std::string endPoints = "(" + std::to_string(attachmentIds.size());
+    bool missingAttachment = false;
+    for (auto attachmentId : attachmentIds) {
+      auto mappedIdx = atomIdToIdx.find(attachmentId);
+      if (mappedIdx == atomIdToIdx.end()) {
+        BOOST_LOG(rdWarningLog)
+            << "VariableAttachment endpoint " << attachmentId
+            << " not found in molecule" << std::endl;
+        missingAttachment = true;
+        break;
+      }
+      endPoints += " " + std::to_string(mappedIdx->second + 1);
+    }
+    if (missingAttachment) {
+      continue;
+    }
+    endPoints += ")";
+    bond->setProp(common_properties::_MolFileBondEndPts, endPoints);
+    bond->setProp(common_properties::_MolFileBondAttach, "ANY");
+  }
+}
+
 template <class T>
 std::vector<T> to_vec(const std::string &s) {
   std::vector<T> n;
@@ -379,6 +431,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         int free_sites = -1;
       int link_count_low = -1;
       int link_count_high = -1;
+      std::vector<unsigned int> variable_attachment_ids;
         bool restrict_rxn_change = false;
         int rxn_stereo = 0;
       AtomUnsaturationConstraint unsaturation =
@@ -459,6 +512,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
             } else if (nodetype == "LinkNode") {
               link_count_low = 1;
               link_count_high = 1;
+            } else if (nodetype == "VariableAttachment" &&
+                       params.parseQueries) {
+              elemno = 0;
             }
           } else if (attr.first == "GenericNickname") {
             generic_nickname = attr.second.data();
@@ -466,6 +522,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
             link_count_low = stoi(attr.second.data());
           } else if (attr.first == "LinkCountHigh") {
             link_count_high = stoi(attr.second.data());
+          } else if (attr.first == "Attachments" &&
+                     nodetype == "VariableAttachment" && params.parseQueries) {
+            variable_attachment_ids = to_vec<unsigned int>(attr.second.data());
           } else if (attr.first == "ElementList") {
             auto elementListText = attr.second.data();
             if (elementListText.rfind("NOT ", 0) == 0) {
@@ -643,6 +702,10 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       if (link_count_low > 0 && link_count_high >= link_count_low) {
         rd_atom->setProp(CDXML_LINK_NODE_MIN_REP_PROP, link_count_low);
         rd_atom->setProp(CDXML_LINK_NODE_MAX_REP_PROP, link_count_high);
+      }
+      if (!variable_attachment_ids.empty()) {
+        rd_atom->setProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP,
+                         variable_attachment_ids);
       }
       if (params.parseQueries && restrict_rxn_change) {
         rd_atom->setProp(common_properties::molRxnExactChange, 1);
@@ -873,6 +936,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
     applyDeferredRingBondCountAsDrawnQueryRestrictions(mol, params);
     applyDeferredFreeSitesQueryRestrictions(mol);
     applyDeferredLinkNodeProperties(mol);
+    applyDeferredVariableAttachmentProperties(mol);
   }
 
   // Add the stereo groups

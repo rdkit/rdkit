@@ -117,6 +117,7 @@ bool parseNode(
   int free_sites = -1;
   int link_count_low = -1;
   int link_count_high = -1;
+  std::vector<unsigned int> variable_attachment_ids;
   bool restrict_rxn_change = node.m_restrictRxnChange;
   int rxn_stereo = 0;
   AtomUnsaturationConstraint unsaturation = AtomUnsaturationConstraint::None;
@@ -256,6 +257,13 @@ bool parseNode(
     case kCDXNodeType_MultiAttachment:
       break;
     case kCDXNodeType_VariableAttachment:
+      if (pagedata.parseQueries) {
+        elemno = 0;
+      }
+      if (node.m_attachments) {
+        variable_attachment_ids.assign(node.m_attachments->begin(),
+                                       node.m_attachments->end());
+      }
       break;
     case kCDXNodeType_LinkNode:
       link_count_low = node.m_linkCountLow;
@@ -415,6 +423,10 @@ bool parseNode(
   if (link_count_low > 0 && link_count_high >= link_count_low) {
     rd_atom->setProp(CDXML_LINK_NODE_MIN_REP_PROP, link_count_low);
     rd_atom->setProp(CDXML_LINK_NODE_MAX_REP_PROP, link_count_high);
+  }
+  if (pagedata.parseQueries && !variable_attachment_ids.empty()) {
+    rd_atom->setProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP,
+                     variable_attachment_ids);
   }
   if (pagedata.parseQueries && restrict_rxn_change) {
     rd_atom->setProp(common_properties::molRxnExactChange, 1);

@@ -464,6 +464,18 @@ class TestCase(unittest.TestCase):
         atom = mols[0].GetAtomWithIdx(2)
         self.assertTrue(atom.HasProp(prop_name))
         self.assertEqual(atom.GetIntProp(prop_name), expected_value)
+
+    mols = Chem.MolsFromCDXMLFileAsQueries(
+      os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qvarattach.cdxml'),
+      Chem.CDXMLParserParams())
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(mols[0].GetAtomWithIdx(3).GetAtomicNum(), 0)
+    bond = mols[0].GetBondBetweenAtoms(1, 3)
+    self.assertIsNotNone(bond)
+    self.assertTrue(bond.HasProp('_MolFileBondAttach'))
+    self.assertEqual(bond.GetProp('_MolFileBondAttach'), 'ANY')
+    self.assertTrue(bond.HasProp('_MolFileBondEndPts'))
+    self.assertEqual(bond.GetProp('_MolFileBondEndPts'), '(2 1 3)')
           
 
         
