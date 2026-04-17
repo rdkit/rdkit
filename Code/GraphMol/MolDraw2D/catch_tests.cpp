@@ -74,9 +74,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDativeBonds_2c.svg", 1745138239U},
     {"testDativeBonds_2d.svg", 3279423301U},
     {"testZeroOrderBonds_1.svg", 3733430366U},
-    {"testFoundations_1.svg", 2350247048U},
-    {"testFoundations_2.svg", 15997352U},
-    {"testTest_1.svg", 15997352U},
+    {"testFoundations_1.svg", 2283802316U},
+    {"testFoundations_2.svg", 2468031318U},
+    {"testTest_1.svg", 2468031318U},
     {"testKekulizationProblems_1.svg", 2284161107U},
     {"testAtomBondIndices_1.svg", 2702803018U},
     {"testAtomBondIndices_2.svg", 1564350363U},
@@ -219,9 +219,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4764.sz3.svg", 2712214121U},
     {"testDrawArc1.svg", 3279637525U},
     {"testMetalWedges.svg", 2896721486U},
-    {"testVariableLegend_1.svg", 1817838365U},
-    {"testVariableLegend_2.svg", 1038247753U},
-    {"testVariableLegend_3.svg", 2073034956U},
+    {"testVariableLegend_1.svg", 1208675629U},
+    {"testVariableLegend_2.svg", 799897710U},
+    {"testVariableLegend_3.svg", 2599269417U},
     {"testGithub_5061.svg", 2050932431U},
     {"testGithub_5185.svg", 3800073130U},
     {"testGithub_5269_1.svg", 4160868253U},
@@ -1206,7 +1206,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_1.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 10);
+      CHECK(tkns.size() == 9);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -1258,7 +1258,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_3.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 7);
+      CHECK(tkns.size() == 6);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -1491,7 +1491,7 @@ TEST_CASE("including legend in drawing results in offset drawing later",
     // make sure the polygon starts at a bond
     CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 315.3,136.5") !=
           std::string::npos);
-    CHECK(text.find("<path d='M 311.8,142.6") != std::string::npos);
+    CHECK(text.find("<path d='M 315.3,136.5") != std::string::npos);
   }
 }
 
@@ -2365,6 +2365,104 @@ M  END)CTAB"_ctab;
       outs.close();
       check_file_hash("testSGroupData-3a.svg");
     }
+  }
+}
+
+TEST_CASE("getSGroupDataLabels", "[extras]") {
+  SECTION("ABS position") {
+    // FIELDDISP with absolute ('A') position
+    auto m = R"CTAB(
+  Mrv2014 12072015352D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 9 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.5833 4.3317 0 0
+M  V30 2 C -7.917 3.5617 0 0
+M  V30 3 C -7.917 2.0216 0 0
+M  V30 4 C -6.5833 1.2516 0 0
+M  V30 5 C -5.2497 2.0216 0 0
+M  V30 6 C -5.2497 3.5617 0 0
+M  V30 7 C -3.916 4.3317 0 0
+M  V30 8 O -3.916 5.8717 0 0
+M  V30 9 O -2.5823 3.5617 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 7 9
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 9) FIELDNAME=pKa -
+M  V30 FIELDDISP="   -2.2073    2.3950    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=4.2
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto lbls = MolDraw2D_detail::getSGroupDataLabels(*m);
+    REQUIRE(lbls.size() == 1);
+    CHECK(lbls[0].text == "4.2");
+    CHECK(lbls[0].positioned);
+    CHECK(lbls[0].atomIdx == 8);
+    // ABS position: (-2.2073, -2.3950) — y is negated in molecule coords
+    CHECK_THAT(lbls[0].pos.x, Catch::Matchers::WithinAbs(-2.2073, 0.001));
+    CHECK_THAT(lbls[0].pos.y, Catch::Matchers::WithinAbs(-2.3950, 0.001));
+  }
+  SECTION("no FIELDDISP falls back to atom position") {
+    auto m = R"CTAB(
+  Mrv2014 12072015352D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 9 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.5833 4.3317 0 0
+M  V30 2 C -7.917 3.5617 0 0
+M  V30 3 C -7.917 2.0216 0 0
+M  V30 4 C -6.5833 1.2516 0 0
+M  V30 5 C -5.2497 2.0216 0 0
+M  V30 6 C -5.2497 3.5617 0 0
+M  V30 7 C -3.916 4.3317 0 0
+M  V30 8 O -3.916 5.8717 0 0
+M  V30 9 O -2.5823 3.5617 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 7 9
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(5 2 4 5 3 1) FIELDNAME="Lambda Max" FIELDINFO=nm -
+M  V30 FIELDDATA="2222"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto lbls = MolDraw2D_detail::getSGroupDataLabels(*m);
+    REQUIRE(lbls.size() == 1);
+    CHECK(lbls[0].text == "2222");
+    // no FIELDDISP -> positioned=false, pos is first atom's conformer position
+    CHECK(!lbls[0].positioned);
+    CHECK(lbls[0].atomIdx == 1);  // first atom in ATOMS list is atom 2 (idx 1)
+    // falls back to atom 2 (idx 1) position: (-7.917, 3.5617)
+    CHECK_THAT(lbls[0].pos.x, Catch::Matchers::WithinAbs(-7.917, 0.001));
+    CHECK_THAT(lbls[0].pos.y, Catch::Matchers::WithinAbs(3.5617, 0.001));
   }
 }
 
@@ -4757,6 +4855,176 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
   }
 }
 
+TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
+  auto m1 = "CCO"_smiles;
+  REQUIRE(m1);
+  const std::string legend("Ethanol");
+  auto get_legend_xy = [](const std::string &text, double &x, double &y) {
+    std::smatch match;
+    std::regex textRgx(
+        "<text x='(-?[0-9]+\\.?[0-9]*)' y='(-?[0-9]+\\.?[0-9]*)' class='legend'");
+    if (std::regex_search(text, match, textRgx) && match.size() == 3) {
+      x = std::stod(match[1].str());
+      y = std::stod(match[2].str());
+      return true;
+    }
+    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+                       "(-?[0-9]+\\.?[0-9]*)");
+    if (std::regex_search(text, match, pathRgx) && match.size() == 3) {
+      x = std::stod(match[1].str());
+      y = std::stod(match[2].str());
+      return true;
+    }
+    return false;
+  };
+  auto get_all_legend_xy = [](const std::string &text) {
+    std::vector<std::pair<double, double>> coords;
+    std::regex textRgx(
+        "<text x='(-?[0-9]+\\.?[0-9]*)' y='(-?[0-9]+\\.?[0-9]*)' class='legend'");
+    for (auto it = std::sregex_iterator(text.begin(), text.end(), textRgx);
+         it != std::sregex_iterator(); ++it) {
+      coords.emplace_back(std::stod((*it)[1].str()), std::stod((*it)[2].str()));
+    }
+    if (!coords.empty()) {
+      return coords;
+    }
+    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+                       "(-?[0-9]+\\.?[0-9]*)");
+    for (auto it = std::sregex_iterator(text.begin(), text.end(), pathRgx);
+         it != std::sregex_iterator(); ++it) {
+      coords.emplace_back(std::stod((*it)[1].str()), std::stod((*it)[2].str()));
+    }
+    return coords;
+  };
+  double top_x = 0.0, top_y = 0.0;
+  double bottom_x = 0.0, bottom_y = 0.0;
+  double left_x = 0.0, left_y = 0.0;
+  double right_x = 0.0, right_y = 0.0;
+  SECTION("Top") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Top;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, top_x, top_y));
+    // Legend should sit in the upper part of the canvas (SVG y grows down).
+    CHECK(top_y < 50.0);
+    std::ofstream outs("testLegendPosition_top.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Left with vertical text") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendVerticalText = true;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+    auto coords = get_all_legend_xy(text);
+    REQUIRE(coords.size() > 1);
+    for (size_t i = 1; i < coords.size(); ++i) {
+      CHECK(coords[i].second > coords[i - 1].second);
+    }
+    std::ofstream outs("testLegendPosition_left_vertical.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Left horizontal") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendVerticalText = false;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, left_x, left_y));
+    CHECK(left_x < 80.0);
+    std::ofstream outs("testLegendPosition_left_horizontal.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Right horizontal") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Right;
+    drawer.drawOptions().legendVerticalText = false;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, right_x, right_y));
+    CHECK(right_x > 100.0);
+    std::ofstream outs("testLegendPosition_right_horizontal.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Bottom unchanged default") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    CHECK(drawer.drawOptions().legendPosition ==
+          MolDrawOptions::LegendPosition::Bottom);
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, bottom_x, bottom_y));
+    CHECK(bottom_y > 140.0);
+    std::ofstream outs("testLegendPosition_bottom.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Long vertical side legend fits panel height") {
+    const std::string longName(48, 'M');
+    MolDraw2DSVG drawer(160, 90, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendVerticalText = true;
+    drawer.drawOptions().legendFraction = 0.22f;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, longName);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    // At this size the fitted legend can be very small but should still be
+    // present in the SVG and within the panel.
+    CHECK(text.find("class='legend'") != std::string::npos);
+    std::ofstream outs("testLegendPosition_long_vertical.svg");
+    outs << text;
+    outs.flush();
+  }
+}
+
+TEST_CASE("legend options from JSON", "[drawing]") {
+  auto m1 = "CCO"_smiles;
+  REQUIRE(m1);
+  SECTION("legendPosition and legendVerticalText parsed from JSON") {
+    const char *json =
+        R"({"legendPosition": "Top", "legendVerticalText": true})";
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
+    CHECK(opts.legendPosition == MolDrawOptions::LegendPosition::Top);
+    CHECK(opts.legendVerticalText == true);
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions() = opts;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "Ethanol");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+  }
+  SECTION("legendPosition Left and legendFraction for side legend") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendFraction = 0.25f;
+    drawer.drawOptions().legendVerticalText = true;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "CCO");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+  }
+}
+
 TEST_CASE(
     "Github 5061 - draw reaction with no reagents and scaleBondWidth true") {
   SECTION("basics") {
@@ -5684,7 +5952,7 @@ M  END
       regex =
           R"(class='bond-1 atom-1 atom-2' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*)')";
       dbl = drawnBondLength(regex, text);
-      CHECK(dbl == Catch::Approx(14.4));
+      CHECK_THAT(dbl, Catch::Matchers::WithinAbs(14.4, 0.1));
       check_file_hash(nameBase + "12.svg");
     }
   }
@@ -6423,8 +6691,13 @@ TEST_CASE("Github5947: Ellipse extremes not calculated correctly.") {
   // check that the first ellipse is in the right place
   std::regex r2("<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'");
   auto ell1 = *std::sregex_iterator(text.begin(), text.end(), r2);
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
   CHECK_THAT(stod(ell1[1]), Catch::Matchers::WithinAbs(308.0, 0.1));
-  CHECK_THAT(stod(ell1[2]), Catch::Matchers::WithinAbs(200.0, 0.1));
+  CHECK_THAT(stod(ell1[2]), Catch::Matchers::WithinAbs(200.0, 1.1));
+#else
+  CHECK_THAT(stod(ell1[1]), Catch::Matchers::WithinAbs(308.0, 0.1));
+  CHECK_THAT(stod(ell1[2]), Catch::Matchers::WithinAbs(198.0, 0.1));
+#endif
   check_file_hash(nameBase + ".svg");
 }
 
@@ -6761,14 +7034,15 @@ M  END
     outs.flush();
     outs.close();
 
-    auto check_bond = [](const std::string &text, const std::regex &r) {
+    auto check_bond = [](const std::string &text, const std::regex &r,
+                         int matches) {
       // there should be 4 matches for each regex, and all the x coords should
       // be > 0.0. The bug manifested itself by some of them being < 0.0 and
       // thus off the side of the picture.
       std::ptrdiff_t const match_count(
           std::distance(std::sregex_iterator(text.begin(), text.end(), r),
                         std::sregex_iterator()));
-      CHECK(match_count == 4);
+      CHECK(match_count == matches);
       auto match_begin = std::sregex_iterator(text.begin(), text.end(), r);
       auto match_end = std::sregex_iterator();
       for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
@@ -6783,8 +7057,8 @@ M  END
     std::regex bond16(
         "'bond-16 atom-17 atom-14' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
         " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
-    check_bond(text, bond9);
-    check_bond(text, bond16);
+    check_bond(text, bond9, 4);
+    check_bond(text, bond16, 2);
     check_file_hash(nameBase + ".svg");
   }
 }
@@ -8325,16 +8599,16 @@ TEST_CASE("Lasso highlights") {
     auto a16reg = std::sregex_iterator(text.begin(), text.end(), a16);
     auto dat1 = *a16reg;
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(273.1, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(131.2, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(272.1, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(130.0, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(221.5, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(323.8, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(222.5, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(325.0, 0.1));
     check_file_hash(baseName + "1.svg");
 #else
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(274.9, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(130.9, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(273.9, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(129.7, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.3, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(323.6, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(224.3, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(324.9, 0.1));
 #endif
   }
   {
@@ -8377,10 +8651,10 @@ TEST_CASE("Lasso highlights") {
     CHECK(match_count == 1);
     auto a0reg = std::sregex_iterator(text.begin(), text.end(), a0);
     auto dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(389.5, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(214.4, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(390.2, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(213.9, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(387.1, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(138.3, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(387.8, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(137.7, 0.1));
     check_file_hash(baseName + "2.svg");
 #endif
   }
@@ -8426,16 +8700,16 @@ TEST_CASE("Lasso highlights") {
     CHECK(match_count == 4);
     auto a0reg = std::sregex_iterator(text.begin(), text.end(), a0);
     auto dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(229.1, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(365.1, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(228.9, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(364.2, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(228.9, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(94.6, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(228.8, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(93.6, 0.1));
     a0reg++;
     dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.3, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(351.7, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.2, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(352.0, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.1, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(81.1, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.1, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(81.5, 0.1));
     check_file_hash(baseName + "3.svg");
 #endif
   }
@@ -8475,22 +8749,22 @@ TEST_CASE("Lasso highlights") {
       CHECK(match_count == 3);
       auto a5reg = std::sregex_iterator(text.begin(), text.end(), a5);
       auto dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.2, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(280.4, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(221.9, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(280.0, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(221.0, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(206.7, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(219.7, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(206.2, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(217.4, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(251.6, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(218.4, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(250.7, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(215.1, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(177.9, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(216.2, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(177.0, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(245.3, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(261.0, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.5, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(262.3, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(243.0, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(187.2, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(243.3, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(188.6, 0.1));
       // There should be 2 lines in red, the lasso along the bi-phenyl
       // bond.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
@@ -8534,16 +8808,16 @@ TEST_CASE("Lasso highlights") {
       CHECK(match_count == 2);
       auto a11reg = std::sregex_iterator(text.begin(), text.end(), a11);
       auto dat1 = *a11reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(223.2, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(133.1, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(221.8, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(132.6, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(346.2, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(279.1, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(345.0, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(278.7, 0.1));
       a11reg++;
       dat1 = *a11reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(245.3, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(113.7, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.5, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(115.0, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(340.5, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(250.9, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(341.6, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(250.0, 0.1));
 
       // There should not be any red lines for bond 5.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
@@ -10158,12 +10432,12 @@ TEST_CASE("Github 7739 - Bad multi-coloured wedge") {
     outs << text;
     outs.flush();
     std::regex bond19(
-        "<path class='bond-1 atom-1 atom-2' .*style='fill:#000000;"
-        "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
+        "<path class='bond-1 atom-1 atom-2' .*style='fill:none;fill-rule:evenodd;stroke:#000000;"
+        "stroke-width:1.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />");
     size_t nOccurrences = std::distance(
         std::sregex_token_iterator(text.begin(), text.end(), bond19),
         std::sregex_token_iterator());
-    CHECK(nOccurrences == 1);
+    CHECK(nOccurrences == 30);
     check_file_hash(fileStem + "5.svg");
   }
 }

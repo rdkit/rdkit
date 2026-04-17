@@ -147,11 +147,13 @@ AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom) {
 
 namespace {
 int getExplicitValenceHelper(const Atom *atom) {
-  RDLog::deprecationWarning("please use GetValence(which=)");
+  RDLog::deprecationWarning(
+      "please use GetValence(Chem.ValenceType.EXPLICIT) instead");
   return atom->getValence(Atom::ValenceType::EXPLICIT);
 };
 int getImplicitValenceHelper(const Atom *atom) {
-  RDLog::deprecationWarning("please use GetValence(getExplicit=False)");
+  RDLog::deprecationWarning(
+      "please use GetValence(Chem.ValenceType.IMPLICIT) instead");
   return atom->getValence(Atom::ValenceType::IMPLICIT);
 };
 }  // namespace
@@ -230,10 +232,11 @@ struct atom_wrapper {
         .def(
             "GetImplicitValence", &getImplicitValenceHelper,
             python::args("self"),
-            "DEPRECATED, please use getValence(Chem.ValenceType.IMPLICIT) instead.\nReturns the number of implicit Hs on the atom.\n")
-        .def("GetValence", &Atom::getValence,
-             (python::args("self"), python::args("which")),
-             "Returns the valence (explicit or implicit) of the atom.\n")
+            "DEPRECATED, please use GetValence(Chem.ValenceType.IMPLICIT) instead.\nReturns the number of implicit Hs on the atom.\n")
+        .def(
+            "GetValence", &Atom::getValence,
+            (python::args("self"), python::args("which")),
+            "Returns the valence (Chem.ValenceType.EXPLICIT or Chem.ValenceType.IMPLICIT) of the atom.\n")
         .def("GetTotalValence", &Atom::getTotalValence, python::args("self"),
              "Returns the total valence (explicit + implicit) of the atom.\n\n")
         .def("HasValenceViolation", &Atom::hasValenceViolation,

@@ -719,12 +719,12 @@ M  END
    -3.4910    1.0942    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
     1.7051    1.0942    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -3.4910   -1.9059    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0
-  2  3  1  0
-  3  4  2  0
-  4  5  1  0
-  5  6  2  0
-  6  1  1  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
   6  8  1  0
   3  9  1  0
   2  7  1  0
@@ -1556,12 +1556,12 @@ M  END
  10 12  1  0
   6 12  1  6
   2 13  1  0
- 13 14  2  0
- 14 15  1  0
- 15 16  2  0
- 16 17  1  0
- 17 18  2  0
- 13 18  1  0
+ 13 14  1  0
+ 14 15  2  0
+ 15 16  1  0
+ 16 17  2  0
+ 17 18  1  0
+ 13 18  2  0
  17 19  1  0
  19 20  1  0
  20 21  1  0
@@ -4259,6 +4259,35 @@ M  END`;
     mol.delete();
 }
 
+function test_get_substruct_match_params() {
+    var mol = RDKitModule.get_mol('Br[C@H](F)CCC[C@@H](Br)F');
+    var query1 = RDKitModule.get_mol('Br[#6@H](C)F');
+    var query2 = RDKitModule.get_mol('Br[#6@@H](C)F');
+    assert(mol && query1 && query2);
+    var res1;
+    var res2;
+    res1 = JSON.parse(mol.get_substruct_matches(query1));
+    res2 = JSON.parse(mol.get_substruct_matches(query2));
+    assert (res1.length === 2);
+    assert (res2.length === 2);
+    res1.sort((a, b) => a.atoms - b.atoms);
+    res2.sort((a, b) => a.atoms - b.atoms);
+    assert.equal(JSON.stringify(res1), JSON.stringify(res2));
+    res1 = JSON.parse(mol.get_substruct_match(query1));
+    res2 = JSON.parse(mol.get_substruct_match(query2));
+    assert (!Array.isArray(res1) && !Array.isArray(res2));
+    assert.equal(JSON.stringify(res1), JSON.stringify(res2));
+    res1 = JSON.parse(mol.get_substruct_matches(query1, JSON.stringify({ useChirality: true })));
+    res2 = JSON.parse(mol.get_substruct_matches(query2, JSON.stringify({ useChirality: true })));
+    assert (res1.length === 1);
+    assert (res2.length === 1);
+    assert.notEqual(JSON.stringify(res1), JSON.stringify(res2));
+    res1 = JSON.parse(mol.get_substruct_match(query1, JSON.stringify({ useChirality: true })));
+    res2 = JSON.parse(mol.get_substruct_match(query2, JSON.stringify({ useChirality: true })));
+    assert (!Array.isArray(res1) && !Array.isArray(res2));
+    assert.notEqual(JSON.stringify(res1), JSON.stringify(res2));
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -4358,6 +4387,7 @@ initRDKitModule().then(function(instance) {
     test_get_coords();
     test_get_v3K_v2K_molblock();
     test_return_draw_coords();
+    test_get_substruct_match_params();
 
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")

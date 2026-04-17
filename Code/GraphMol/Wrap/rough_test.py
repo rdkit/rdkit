@@ -2235,8 +2235,8 @@ CAS<~>
     self.assertTrue(ri.IsAtomInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 4))
-    self.assertEqual(ri.AtomRings(), ((0, 3, 2, 1), (4, 3, 2)))
-    self.assertEqual(ri.BondRings(), ((4, 2, 1, 0), (3, 2, 5)))
+    self.assertEqual(ri.AtomRings(), ((0, 1, 2, 3), (2, 3, 4)))
+    self.assertEqual(ri.BondRings(), ((0, 1, 2, 4), (2, 3, 5)))
     self.assertEqual(len(ri.AtomMembers(2)), 2)
     self.assertEqual(ri.AtomRingSizes(2), (4, 3))
     self.assertEqual(ri.AtomRingSizes(99), ())
@@ -6268,6 +6268,15 @@ H      0.635000    0.635000    0.635000
           self.assertEqual(order1, order3)
           self.assertEqual(order2, order4)
 
+  def testRankAtomsInFragmentsWithoutBonds(self):
+    mol = Chem.MolFromSmiles('ONCO')
+    order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False))
+    order2 = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
+    self.assertNotEqual(order1[:4], order2[4:])
+    order3 = list(
+      Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), bondsToUse=(0, 1, 2),
+                                        breakTies=False))
+
   def testSetBondStereoFromDirections(self):
     m1 = Chem.MolFromMolBlock(
       '''
@@ -8675,6 +8684,23 @@ M  END
     numWedges = sum(1 for b in m.GetBonds()
                     if b.GetBondDir() in (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH))
     self.assertEqual(numWedges, 1)
+
+  def testGithub9101(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'rdkit_chunk_boundary_bug.sdf')
+    sdSup = Chem.SDMolSupplier(fileN)
+    mols = list(sdSup)
+    self.assertEqual(len(mols[0].GetPropsAsDict()["comment"]), 65369)
+    self.assertTrue(mols[1] != None)
+
+  def testGithub9125(self):
+    m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
+    Chem.Kekulize(m1)
+    self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.DOUBLE)
+
+    m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
+    Chem.Kekulize(m1, canonical=False)
+    self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.SINGLE)
 
 
 if __name__ == '__main__':

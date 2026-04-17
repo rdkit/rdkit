@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum
+//  Copyright (C) 2021-2026 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #include <catch2/catch_all.hpp>
 #include "Dict.h"
 #include "RDProps.h"
+#include "Exceptions.h"
 using namespace std::string_literals;
 
 TEST_CASE("Dict move semantics") {
@@ -69,4 +70,26 @@ TEST_CASE("RDProps move semantics") {
     CHECK(!d1.hasProp("foo"s));
     CHECK(!d1.hasProp("bar"s));
   }
+}
+TEST_CASE("github #9068: properties with empty names") {
+  RDKit::RDProps props;
+  SECTION("setProp with empty key") {
+    CHECK_THROWS_AS(props.setProp("", 1), ValueErrorException);
+  }
+  SECTION("getProp with empty key") {
+    CHECK_THROWS_AS(props.getProp<int>(""), KeyErrorException);
+  }
+  SECTION("hasProp with empty key") { CHECK(!props.hasProp("")); }
+  SECTION("clearProp with empty key") { CHECK_NOTHROW(props.clearProp("")); }
+}
+TEST_CASE("github #9068: dicts with empty keys") {
+  RDKit::Dict dict;
+  SECTION("setVal with empty key") {
+    CHECK_THROWS_AS(dict.setVal("", 1), ValueErrorException);
+  }
+  SECTION("getVal with empty key") {
+    CHECK_THROWS_AS(dict.getVal<int>(""), KeyErrorException);
+  }
+  SECTION("hasVal with empty key") { CHECK(!dict.hasVal("")); }
+  SECTION("clearVal with empty key") { CHECK_NOTHROW(dict.clearVal("")); }
 }
