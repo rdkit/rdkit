@@ -44,7 +44,7 @@
 using namespace RDKit;
 using namespace v2::FileParsers;
 
-using namespace RDKit;
+//using namespace RDKit;
 
 class ScsrMolTest {
  public:
@@ -66,12 +66,12 @@ class ScsrMolTest {
     unsigned int totalQueryAtomCount;
     unsigned int totalQueryBondCount;
     unsigned int querySgroupCount;
-    bool scsrExpandResult;
-    SCSRBaseHbondOptions scsrBaseHbondOptions;
+    ExpectedStatus expectedStatus;
+    RDKit::SCSRBaseHbondOptions scsrBaseHbondOptions;
     std::vector<std::pair<unsigned int, Atom::ChiralType>> chiralChecks;
     std::vector<std::pair<unsigned int, Atom::ChiralType>> chiralChecksQuery;
 
-    ScsiTest(std::string fileNameInit, bool scsrExpandResult,
+    ScsrTest(std::string fileNameInit, ExpectedStatus expectedStatusInit,
              SCSRBaseHbondOptions scsrBaseHbondOptions,
              unsigned int totalAtomCountInit, unsigned int totalBondCountInit,
              unsigned int sgroupCountInit, unsigned int totalQueryAtomCountInit,
@@ -88,7 +88,7 @@ class ScsrMolTest {
           totalQueryAtomCount(totalQueryAtomCountInit),
           totalQueryBondCount(totalQueryBondCountInit),
           querySgroupCount(querySgroupCountInit),
-          scsrExpandResult(scsrExpandResult),
+          expectedStatus(expectedStatusInit),
           scsrBaseHbondOptions(scsrBaseHbondOptions),
           chiralChecks(chiralChecksInit),
           chiralChecksQuery(chiralChecksQueryInit) {};
@@ -120,10 +120,14 @@ class ScsrMolTest {
 
   ScsrMolTest() {
     ScsrTests = {
+        ScsrMolTest::ScsrTest("RiboseFullname.mol", ExpectedStatus::Success,
+                              SCSRBaseHbondOptions::Auto, 45, 49, 8, 43, 47, 6),
+
         ScsrMolTest::ScsrTest("DnaTest.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Ignore, 254, 282, 38, 250,
+                              RDKit::SCSRBaseHbondOptions::Ignore, 254, 282, 38, 250,
                               278, 34),
-        ScsiMolTest::ScsiTest("DNASlurpErrorImport.mol", true,
+
+        ScsrMolTest::ScsrTest("DNASlurpErrorImport.mol", ExpectedStatus::Success,
                               SCSRBaseHbondOptions::Auto, 81, 90, 13, 79, 88,
                               11,
                               {{0, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
@@ -134,7 +138,7 @@ class ScsrMolTest {
                                {22, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
                                {41, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
                                {61, Atom::ChiralType::CHI_TETRAHEDRAL_CW}}),
-        ScsiMolTest::ScsiTest("DNASlurpErrorSketch.mol", true,
+        ScsrMolTest::ScsrTest("DNASlurpErrorSketch.mol", ExpectedStatus::Success,
                               SCSRBaseHbondOptions::Auto, 84, 93, 14, 82, 91,
                               12,
                               {{51, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
@@ -145,10 +149,8 @@ class ScsrMolTest {
                                {60, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
                                {68, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
                                {76, Atom::ChiralType::CHI_TETRAHEDRAL_CCW}}),
-        ScsiMolTest::ScsiTest("ValenceErrorScsr.mol", true,
+        ScsrMolTest::ScsrTest("ValenceErrorScsr.mol", ExpectedStatus::Success,
                               SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
-        ScsiMolTest::ScsiTest("ValenceErrorScsr2.mol", true,
-                              SCSRBaseHbondOptions::Auto, 28, 28, 6, 25, 25, 3),
 
         ScsrMolTest::ScsrTest("ValenceErrorScsr.mol", ExpectedStatus::Success,
                               SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
@@ -340,7 +342,7 @@ class ScsrMolTest {
     CHECK(molReadBackIn->getNumAtoms() == mol->getNumAtoms());
     CHECK(molReadBackIn->getNumBonds() == mol->getNumBonds());
 
-    for (auto chiralCheck : scsiTest->chiralChecks) {
+    for (auto chiralCheck : ScsrTest->chiralChecks) {
       CHECK(mol->getAtomWithIdx(chiralCheck.first)->getChiralTag() ==
             chiralCheck.second);
     }
@@ -363,9 +365,9 @@ class ScsrMolTest {
     CHECK(molNoLeavingGroups->getNumAtoms() == ScsrTest->totalQueryAtomCount);
     CHECK(molNoLeavingGroups->getNumBonds() == ScsrTest->totalQueryBondCount);
     CHECK(getSubstanceGroups(*molNoLeavingGroups).size() ==
-          ScsiTest->querySgroupCount);
+          ScsrTest->querySgroupCount);
 
-    for (auto chiralCheck : ScsiTest->chiralChecksQuery) {
+    for (auto chiralCheck : ScsrTest->chiralChecksQuery) {
       CHECK(mol->getAtomWithIdx(chiralCheck.first)->getChiralTag() ==
             chiralCheck.second);
     }
