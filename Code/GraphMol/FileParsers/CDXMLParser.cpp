@@ -159,6 +159,7 @@ void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength,
 }
 bool parse_fragment(RWMol &mol, ptree &frag,
                     std::map<unsigned int, Atom *> &ids, int &missing_frag_id,
+                    const v2::CDXMLParser::CDXMLParserParams &params,
                     int external_attachment = -1) {
   // XXX Need to put the fragid on the molecule so we can properly make
   // reactions
@@ -199,6 +200,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       std::vector<int> elementlist;
       std::vector<double> atom_coords;
       std::string nodetype = "";
+      std::string generic_nickname;
+      bool negative_elementlist = false;
       for (auto &attr : node.second.get_child("<xmlattr>")) {
         try {
           if (attr.first == "id") {
@@ -253,6 +256,15 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                         } else if (s == "Q") {
                           query_label = s;
                           elemno = 0;
+                        } else if (s == "X") {
+                          query_label = s;
+                          elemno = 0;
+                        } else if (s == "M") {
+                          query_label = s;
+                          elemno = 0;
+                        } else if (s == "MH") {
+                          query_label = s;
+                          elemno = 0;
                         }
                       }
                       break;
@@ -264,8 +276,15 @@ bool parse_fragment(RWMol &mol, ptree &frag,
             } else if (nodetype == "ElementList") {
               query_label = "ElementList";
             }
+          } else if (attr.first == "GenericNickname") {
+            generic_nickname = attr.second.data();
           } else if (attr.first == "ElementList") {
-            elementlist = to_vec<int>(attr.second.data());
+            auto elementListText = attr.second.data();
+            if (elementListText.rfind("NOT ", 0) == 0) {
+              negative_elementlist = true;
+              elementListText = elementListText.substr(4);
+            }
+            elementlist = to_vec<int>(elementListText);
 
           } else if (attr.first == "p") {
             atom_coords = to_vec<double>(attr.second.data());
@@ -291,6 +310,21 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               << " node: " << node.first << " attribute: " << attr.first << ": "
               << attr.second.data() << std::endl;
           return false;
+        }
+      }
+      if (nodetype == "GenericNickname" && query_label.empty() &&
+          generic_nickname.size()) {
+        if (generic_nickname[0] == 'R') {
+          if (generic_nickname.size() > 1) {
+            rgroup_num = stoi(generic_nickname.substr(1));
+          }
+          query_label = generic_nickname;
+          elemno = 0;
+        } else if (generic_nickname == "A" || generic_nickname == "Q" ||
+                   generic_nickname == "X" || generic_nickname == "M" ||
+                   generic_nickname == "MH") {
+          query_label = generic_nickname;
+          elemno = 0;
         }
       }
       // add the atom
@@ -322,6 +356,12 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           rd_atom = addquery(makeAAtomQuery(), query_label, mol, idx);
         } else if (query_label == "Q") {
           rd_atom = addquery(makeQAtomQuery(), query_label, mol, idx);
+        } else if (query_label == "X") {
+          rd_atom = addquery(makeXAtomQuery(), query_label, mol, idx);
+        } else if (query_label == "M") {
+          rd_atom = addquery(makeMAtomQuery(), query_label, mol, idx);
+        } else if (query_label == "MH") {
+          rd_atom = addquery(makeMHAtomQuery(), query_label, mol, idx);
         } else if (query_label == "ElementList") {
           if (!elementlist.size()) {
             BOOST_LOG(rdWarningLog)
@@ -333,6 +373,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(
                   makeAtomNumQuery(atNum)));
             }
+            q->setNegation(negative_elementlist);
             rd_atom = addquery(q, query_label, mol, idx);
             rd_atom->setAtomicNum(elementlist.front());
           }
@@ -352,6 +393,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         for (auto &fragment : node.second) {
           if (fragment.first == "fragment") {
             if (!parse_fragment(mol, fragment.second, ids, missing_frag_id,
+                                params,
                                 atom_id)) {
               skip_fragment = true;
               break;
@@ -369,6 +411,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       int end_atom = -1;
       Bond::BondType order = Bond::SINGLE;
       std::string display;
+      BondInfo::QueryType queryType = BondInfo::QueryType::None;
+      BondInfo::TopologyType topology = BondInfo::TopologyType::None;
       for (auto &attr : node.second.get_child("<xmlattr>")) {
         try {
           if (attr.first == "id") {
@@ -387,51 +431,6 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               queryType = BondInfo::QueryType::Any;
             } else if (orderTokens.size() == 1 && orderText == "dative") {
               order = Bond::BondType::DATIVE;
-            } else {
-              int bond_order = stoi(orderText);
-
-              switch (bond_order) {
-                case 1:
-                  order = Bond::BondType::SINGLE;
-                  break;
-                case 2:
-                  order = Bond::BondType::DOUBLE;
-                  break;
-                case 3:
-                  order = Bond::BondType::TRIPLE;
-                  break;
-                case 4:
-                  order = Bond::BondType::QUADRUPLE;
-                  break;
-                default:
-                  throw std::invalid_argument("Unhandled bond order");
-              }
-            }
-          } else if (attr.first ==
-                     "Display") {  // gets wedge/hash stuff and probably more
-            display = attr.second.data();
-          }
-        } catch (...) {
-          BOOST_LOG(rdErrorLog)
-              << "Failed to parse XML fragment " << frag_id
-      BondInfo::QueryType queryType = BondInfo::QueryType::None;
-      BondInfo::TopologyType topology = BondInfo::TopologyType::None;
-              << " node: " << node.first << " attribute: " << attr.first << ": "
-              << attr.second.data() << std::endl;
-          return false;
-        }
-      }
-      // CHECK_INVARIANT(start_atom>=0 && end_atom>=0 && start_atom != end_atom,
-      // "Bad bond in CDXML");
-      BondInfo bond{bond_id, start_atom, end_atom, order, display, queryType,
-                    topology};
-      if (!bond.validate(ids, mol.getNumAtoms())) {
-        BOOST_LOG(rdErrorLog) << "Bad bond in CDXML skipping fragment "
-                              << frag_id << "..." << std::endl;
-        ;
-        skip_fragment =
-            true;  // ChemDraw doesn't skip, it just ignores bad bonds...
-        break;
             } else if (
                 orderTokens.size() == 2 &&
                 ((orderTokens[0] == "1" && orderTokens[1] == "2") ||
@@ -454,6 +453,58 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                   (orderTokens[0] == "1.5" || orderTokens[0] == "4")))) {
               order = Bond::BondType::DOUBLE;
               queryType = BondInfo::QueryType::DoubleOrAromatic;
+            } else {
+              int bond_order = stoi(orderText);
+
+              switch (bond_order) {
+                case 1:
+                  order = Bond::BondType::SINGLE;
+                  break;
+                case 2:
+                  order = Bond::BondType::DOUBLE;
+                  break;
+                case 3:
+                  order = Bond::BondType::TRIPLE;
+                  break;
+                case 4:
+                  order = Bond::BondType::QUADRUPLE;
+                  break;
+                default:
+                  throw std::invalid_argument("Unhandled bond order");
+              }
+            }
+          } else if (attr.first == "Topology") {
+            if (attr.second.data() == "Ring") {
+              topology = BondInfo::TopologyType::Ring;
+            } else if (attr.second.data() == "Chain") {
+              topology = BondInfo::TopologyType::Chain;
+            } else if (attr.second.data() != "RingOrChain" &&
+                       attr.second.data() != "Unspecified") {
+              throw std::invalid_argument("Unhandled bond topology");
+            }
+          } else if (attr.first ==
+                     "Display") {  // gets wedge/hash stuff and probably more
+            display = attr.second.data();
+          }
+        } catch (...) {
+          BOOST_LOG(rdErrorLog)
+              << "Failed to parse XML fragment " << frag_id
+              << " node: " << node.first << " attribute: " << attr.first << ": "
+              << attr.second.data() << std::endl;
+          return false;
+        }
+      }
+      // CHECK_INVARIANT(start_atom>=0 && end_atom>=0 && start_atom != end_atom,
+      // "Bad bond in CDXML");
+      BondInfo bond{bond_id, start_atom, end_atom, order, display, queryType,
+                    topology};
+      if (!bond.validate(ids, mol.getNumAtoms())) {
+        BOOST_LOG(rdErrorLog) << "Bad bond in CDXML skipping fragment "
+                              << frag_id << "..." << std::endl;
+        ;
+        skip_fragment =
+            true;  // ChemDraw doesn't skip, it just ignores bad bonds...
+        break;
       } else {
         bonds.push_back(bond);
       }
@@ -474,15 +525,6 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         bond.display = "WedgedHashBegin";
       }
 
-          } else if (attr.first == "Topology") {
-            if (attr.second.data() == "Ring") {
-              topology = BondInfo::TopologyType::Ring;
-            } else if (attr.second.data() == "Chain") {
-              topology = BondInfo::TopologyType::Chain;
-            } else if (attr.second.data() != "RingOrChain" &&
-                       attr.second.data() != "Unspecified") {
-              throw std::invalid_argument("Unhandled bond topology");
-            }
       auto startIdx = ids[bond.start]->getIdx();
       auto endIdx = ids[bond.end]->getIdx();
       if (swap) {
@@ -646,7 +688,7 @@ void visit_children(
   for (auto &frag : node.second) {
     if (frag.first == "fragment") {  // chemical matter
       std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
-      if (!parse_fragment(*mol, frag.second, ids, missing_frag_id)) {
+      if (!parse_fragment(*mol, frag.second, ids, missing_frag_id, params)) {
         continue;
       }
       unsigned int frag_id = mol->getProp<int>(CDXML_FRAG_ID);
@@ -911,12 +953,26 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
   return MolsFromCDXMLDataStream(ifs, params);
 }
 
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFileAsQueries(
+    const std::string &fileName, const CDXMLParserParams &params) {
+  auto queryParams = params;
+  queryParams.parseQueries = true;
+  return MolsFromCDXMLFile(fileName, queryParams);
+}
+
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 
 						  const std::string &cdxml, const CDXMLParserParams &params) {
  
   std::stringstream iss(cdxml);
   return MolsFromCDXMLDataStream(iss, params);
+}
+
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLAsQueries(
+    const std::string &cdxml, const CDXMLParserParams &params) {
+  auto queryParams = params;
+  queryParams.parseQueries = true;
+  return MolsFromCDXML(cdxml, queryParams);
 }
 }  // namespace CDXMLParser
 }  // namespace v2
@@ -941,6 +997,8 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   ChemDrawParserParams chemdraw_params;
   chemdraw_params.sanitize = params.sanitize;
   chemdraw_params.removeHs = params.removeHs;
+  chemdraw_params.parseQueries = params.parseQueries;
+  chemdraw_params.strictQueryParsing = params.strictQueryParsing;
   switch(params.format) {
   case CDXMLFormat::CDX: {
     chemdraw_params.format = CDXFormat::CDX;
@@ -977,42 +1035,26 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
   }
 }
 
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFileAsQueries(
+    const std::string &fileName, const CDXMLParserParams &params) {
+  auto queryParams = params;
+  queryParams.parseQueries = true;
+  return MolsFromCDXMLFile(fileName, queryParams);
+}
+
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
     const std::string &cdxml, const CDXMLParserParams &params) {
   std::stringstream iss(cdxml);
   return MolsFromCDXMLDataStream(iss, params);
 }
+
+std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLAsQueries(
+    const std::string &cdxml, const CDXMLParserParams &params) {
+  auto queryParams = params;
+  queryParams.parseQueries = true;
+  return MolsFromCDXML(cdxml, queryParams);
+}
 }
 }
 }
 #endif
-std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFileAsQueries(
-    const std::string &fileName, const CDXMLParserParams &params) {
-  auto queryParams = params;
-  queryParams.parseQueries = true;
-  return MolsFromCDXMLFile(fileName, queryParams);
-}
-
-
-std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLAsQueries(
-    const std::string &cdxml, const CDXMLParserParams &params) {
-  auto queryParams = params;
-  queryParams.parseQueries = true;
-  return MolsFromCDXML(cdxml, queryParams);
-}
-  chemdraw_params.parseQueries = params.parseQueries;
-  chemdraw_params.strictQueryParsing = params.strictQueryParsing;
-std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFileAsQueries(
-    const std::string &fileName, const CDXMLParserParams &params) {
-  auto queryParams = params;
-  queryParams.parseQueries = true;
-  return MolsFromCDXMLFile(fileName, queryParams);
-}
-
-
-std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLAsQueries(
-    const std::string &cdxml, const CDXMLParserParams &params) {
-  auto queryParams = params;
-  queryParams.parseQueries = true;
-  return MolsFromCDXML(cdxml, queryParams);
-}

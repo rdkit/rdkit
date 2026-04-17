@@ -267,6 +267,7 @@ bool parseNode(
           q->addChild(
               QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(atNum)));
         }
+        q->setNegation(node.m_negativeList);
         rd_atom = addquery(q, query_label, mol, idx);
         rd_atom->setAtomicNum(elementlist.front());
       }
