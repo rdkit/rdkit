@@ -507,6 +507,13 @@ TEST_CASE("CDXML") {
         CHECK(atom->hasProp(propName));
         CHECK(atom->getProp<int>(propName) == expectedValue);
       }
+
+      auto linkNodeMols =
+          MolsFromCDXMLFileAsQueries(generatedBase + "qlinknode_1_3.cdxml");
+      REQUIRE(linkNodeMols.size() == 1);
+      CHECK(linkNodeMols[0]->hasProp(common_properties::molFileLinkNodes));
+      CHECK(linkNodeMols[0]->getProp<std::string>(
+                common_properties::molFileLinkNodes) == "1 3 2 2 1 2 3");
     }
   }
   SECTION("ElementList") {

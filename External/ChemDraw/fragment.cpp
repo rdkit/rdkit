@@ -92,6 +92,60 @@ void applyDeferredFreeSitesQueryRestrictions(RWMol &mol) {
   }
 }
 
+void applyDeferredLinkNodeProperties(RWMol &mol) {
+  std::string linkNodes;
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_LINK_NODE_MIN_REP_PROP) ||
+        !atom->hasProp(CDXML_LINK_NODE_MAX_REP_PROP)) {
+      continue;
+    }
+
+    int minRep = 0;
+    int maxRep = 0;
+    atom->getProp(CDXML_LINK_NODE_MIN_REP_PROP, minRep);
+    atom->getProp(CDXML_LINK_NODE_MAX_REP_PROP, maxRep);
+    atom->clearProp(CDXML_LINK_NODE_MIN_REP_PROP);
+    atom->clearProp(CDXML_LINK_NODE_MAX_REP_PROP);
+    if (minRep <= 0 || maxRep < minRep) {
+      BOOST_LOG(rdWarningLog) << "Invalid LinkNode repeat range on atom "
+                              << atom->getIdx() << std::endl;
+      continue;
+    }
+
+    std::vector<unsigned int> neighborIdxs;
+    neighborIdxs.reserve(atom->getDegree());
+    for (const auto neighbor : mol.atomNeighbors(atom)) {
+      neighborIdxs.push_back(neighbor->getIdx());
+    }
+    if (neighborIdxs.size() != 2) {
+      BOOST_LOG(rdWarningLog)
+          << "Only LinkNodes with exactly two neighbors are supported on atom "
+          << atom->getIdx() << std::endl;
+      continue;
+    }
+    if (neighborIdxs[0] > neighborIdxs[1]) {
+      std::swap(neighborIdxs[0], neighborIdxs[1]);
+    }
+
+    if (!linkNodes.empty()) {
+      linkNodes += "|";
+    }
+    linkNodes += std::to_string(minRep) + " " + std::to_string(maxRep) +
+                 " 2 " + std::to_string(atom->getIdx() + 1) + " " +
+                 std::to_string(neighborIdxs[0] + 1) + " " +
+                 std::to_string(atom->getIdx() + 1) + " " +
+                 std::to_string(neighborIdxs[1] + 1);
+  }
+  if (!linkNodes.empty()) {
+    std::string existing;
+    if (mol.getPropIfPresent(common_properties::molFileLinkNodes, existing) &&
+        !existing.empty()) {
+      linkNodes = existing + "|" + linkNodes;
+    }
+    mol.setProp(common_properties::molFileLinkNodes, linkNodes);
+  }
+}
+
 const char *sequenceTypeToName(CDXSeqType seqtype) {
   switch (seqtype) {
     case kCDXSeqType_Unknown:
@@ -1074,6 +1128,7 @@ bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
 
   applyDeferredRingBondCountAsDrawnQueryRestrictions(mol, pagedata);
   applyDeferredFreeSitesQueryRestrictions(mol);
+  applyDeferredLinkNodeProperties(mol);
 
   // Add the stereo groups
   if (!sgroups.empty()) {

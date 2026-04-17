@@ -441,6 +441,8 @@ class TestCase(unittest.TestCase):
        '[#6]-[#6]-[#6&$(*=,:,#*)]'),
     ]
     prop_cases = [
+      ('link-node', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qlinknode_1_3.cdxml'),
+       '_molLinkNodes', '1 3 2 2 1 2 3'),
       ('reaction-change', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_rxnchange_yes.cdxml'),
        'molRxnExachg', 1),
       ('reaction-stereo', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries/qrestrict_rxnstereo_inversion.cdxml'),
@@ -455,9 +457,13 @@ class TestCase(unittest.TestCase):
     for _, filename, prop_name, expected_value in prop_cases:
       mols = Chem.MolsFromCDXMLFileAsQueries(filename, Chem.CDXMLParserParams())
       self.assertEqual(len(mols), 1)
-      atom = mols[0].GetAtomWithIdx(2)
-      self.assertTrue(atom.HasProp(prop_name))
-      self.assertEqual(atom.GetIntProp(prop_name), expected_value)
+      if prop_name == '_molLinkNodes':
+        self.assertTrue(mols[0].HasProp(prop_name))
+        self.assertEqual(mols[0].GetProp(prop_name), expected_value)
+      else:
+        atom = mols[0].GetAtomWithIdx(2)
+        self.assertTrue(atom.HasProp(prop_name))
+        self.assertEqual(atom.GetIntProp(prop_name), expected_value)
           
 
         

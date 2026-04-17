@@ -129,6 +129,8 @@ enum class AtomUnsaturationConstraint { None, MustBeAbsent, MustBePresent };
 
 constexpr auto CDXML_FREE_SITES_PROP = "_cdxmlFreeSites";
 constexpr auto CDXML_RING_BOND_COUNT_AS_DRAWN_PROP = "_cdxmlRingBondCountAsDrawn";
+constexpr auto CDXML_LINK_NODE_MIN_REP_PROP = "_cdxmlLinkNodeMinRep";
+constexpr auto CDXML_LINK_NODE_MAX_REP_PROP = "_cdxmlLinkNodeMaxRep";
 
 void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
                                 const v2::CDXMLParser::CDXMLParserParams &params,
@@ -237,6 +239,60 @@ void applyDeferredRingBondCountAsDrawnQueryRestrictions(
   }
 }
 
+void applyDeferredLinkNodeProperties(RWMol &mol) {
+  std::string linkNodes;
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_LINK_NODE_MIN_REP_PROP) ||
+        !atom->hasProp(CDXML_LINK_NODE_MAX_REP_PROP)) {
+      continue;
+    }
+
+    int minRep = 0;
+    int maxRep = 0;
+    atom->getProp(CDXML_LINK_NODE_MIN_REP_PROP, minRep);
+    atom->getProp(CDXML_LINK_NODE_MAX_REP_PROP, maxRep);
+    atom->clearProp(CDXML_LINK_NODE_MIN_REP_PROP);
+    atom->clearProp(CDXML_LINK_NODE_MAX_REP_PROP);
+    if (minRep <= 0 || maxRep < minRep) {
+      BOOST_LOG(rdWarningLog) << "Invalid LinkNode repeat range on atom "
+                              << atom->getIdx() << std::endl;
+      continue;
+    }
+
+    std::vector<unsigned int> neighborIdxs;
+    neighborIdxs.reserve(atom->getDegree());
+    for (const auto neighbor : mol.atomNeighbors(atom)) {
+      neighborIdxs.push_back(neighbor->getIdx());
+    }
+    if (neighborIdxs.size() != 2) {
+      BOOST_LOG(rdWarningLog)
+          << "Only LinkNodes with exactly two neighbors are supported on atom "
+          << atom->getIdx() << std::endl;
+      continue;
+    }
+    if (neighborIdxs[0] > neighborIdxs[1]) {
+      std::swap(neighborIdxs[0], neighborIdxs[1]);
+    }
+
+    if (!linkNodes.empty()) {
+      linkNodes += "|";
+    }
+    linkNodes += std::to_string(minRep) + " " + std::to_string(maxRep) +
+                 " 2 " + std::to_string(atom->getIdx() + 1) + " " +
+                 std::to_string(neighborIdxs[0] + 1) + " " +
+                 std::to_string(atom->getIdx() + 1) + " " +
+                 std::to_string(neighborIdxs[1] + 1);
+  }
+  if (!linkNodes.empty()) {
+    std::string existing;
+    if (mol.getPropIfPresent(common_properties::molFileLinkNodes, existing) &&
+        !existing.empty()) {
+      linkNodes = existing + "|" + linkNodes;
+    }
+    mol.setProp(common_properties::molFileLinkNodes, linkNodes);
+  }
+}
+
 template <class T>
 std::vector<T> to_vec(const std::string &s) {
   std::vector<T> n;
@@ -321,6 +377,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       int substituent_count = -1;
       int max_substituent_count = -1;
         int free_sites = -1;
+      int link_count_low = -1;
+      int link_count_high = -1;
         bool restrict_rxn_change = false;
         int rxn_stereo = 0;
       AtomUnsaturationConstraint unsaturation =
@@ -398,9 +456,16 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               }
             } else if (nodetype == "ElementList") {
               query_label = "ElementList";
+            } else if (nodetype == "LinkNode") {
+              link_count_low = 1;
+              link_count_high = 1;
             }
           } else if (attr.first == "GenericNickname") {
             generic_nickname = attr.second.data();
+          } else if (attr.first == "LinkCountLow") {
+            link_count_low = stoi(attr.second.data());
+          } else if (attr.first == "LinkCountHigh") {
+            link_count_high = stoi(attr.second.data());
           } else if (attr.first == "ElementList") {
             auto elementListText = attr.second.data();
             if (elementListText.rfind("NOT ", 0) == 0) {
@@ -574,6 +639,10 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       }
       if (free_sites >= 0) {
         rd_atom->setProp(CDXML_FREE_SITES_PROP, free_sites);
+      }
+      if (link_count_low > 0 && link_count_high >= link_count_low) {
+        rd_atom->setProp(CDXML_LINK_NODE_MIN_REP_PROP, link_count_low);
+        rd_atom->setProp(CDXML_LINK_NODE_MAX_REP_PROP, link_count_high);
       }
       if (params.parseQueries && restrict_rxn_change) {
         rd_atom->setProp(common_properties::molRxnExactChange, 1);
@@ -803,6 +872,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
 
     applyDeferredRingBondCountAsDrawnQueryRestrictions(mol, params);
     applyDeferredFreeSitesQueryRestrictions(mol);
+    applyDeferredLinkNodeProperties(mol);
   }
 
   // Add the stereo groups

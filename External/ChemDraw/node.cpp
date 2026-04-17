@@ -115,6 +115,8 @@ bool parseNode(
   int substituent_count = -1;
   int max_substituent_count = -1;
   int free_sites = -1;
+  int link_count_low = -1;
+  int link_count_high = -1;
   bool restrict_rxn_change = node.m_restrictRxnChange;
   int rxn_stereo = 0;
   AtomUnsaturationConstraint unsaturation = AtomUnsaturationConstraint::None;
@@ -256,6 +258,8 @@ bool parseNode(
     case kCDXNodeType_VariableAttachment:
       break;
     case kCDXNodeType_LinkNode:
+      link_count_low = node.m_linkCountLow;
+      link_count_high = node.m_linkCountHigh;
       break;
     case kCDXNodeType_Monomer:
       break;
@@ -407,6 +411,10 @@ bool parseNode(
   }
   if (free_sites >= 0) {
     rd_atom->setProp(CDXML_FREE_SITES_PROP, free_sites);
+  }
+  if (link_count_low > 0 && link_count_high >= link_count_low) {
+    rd_atom->setProp(CDXML_LINK_NODE_MIN_REP_PROP, link_count_low);
+    rd_atom->setProp(CDXML_LINK_NODE_MAX_REP_PROP, link_count_high);
   }
   if (pagedata.parseQueries && restrict_rxn_change) {
     rd_atom->setProp(common_properties::molRxnExactChange, 1);
