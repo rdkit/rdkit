@@ -423,6 +423,18 @@ class TestCase(unittest.TestCase):
       self.assertEqual(len(mols), 1)
       self.assertEqual(Chem.MolToSmarts(mols[0]), expected_smarts)
 
+  def test_cdxml_hydrogen_bond_query(self):
+    rdbase = os.environ['RDBASE']
+    query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')
+    mols = Chem.MolsFromCDXMLFileAsQueries(
+      os.path.join(query_base, 'qbond_hydrogen.cdxml'),
+      Chem.CDXMLParserParams())
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmarts(mols[0]), '[#8][#8]')
+    bond = mols[0].GetBondWithIdx(0)
+    self.assertEqual(bond.GetBondType(), Chem.BondType.HYDROGEN)
+    self.assertIn('H:0.0', Chem.MolToCXSmarts(mols[0]))
+
   def test_cdxml_atom_restriction_queries(self):
     rdbase = os.environ['RDBASE']
     query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')

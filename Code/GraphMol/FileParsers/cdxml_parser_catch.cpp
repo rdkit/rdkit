@@ -465,7 +465,6 @@ TEST_CASE("CDXML") {
         CHECK(mols.size() == 1);
         CHECK(MolToSmarts(*mols[0]) == expectedSmarts);
       }
-
     }
     {
       const auto queryBase = std::string(getenv("RDBASE")) +
@@ -1042,6 +1041,20 @@ TEST_CASE("CDXML") {
       CHECK(mols.size() == 0);
     }
   }
+}
+
+TEST_CASE("CDXML hydrogen bond queries") {
+  const auto queryBase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/queries/";
+  auto hydrogenBondMols =
+      MolsFromCDXMLFileAsQueries(queryBase + "qbond_hydrogen.cdxml");
+  REQUIRE(hydrogenBondMols.size() == 1);
+  CHECK(MolToSmarts(*hydrogenBondMols[0]) == "[#8][#8]");
+  auto hydrogenBond = hydrogenBondMols[0]->getBondWithIdx(0);
+  REQUIRE(hydrogenBond);
+  CHECK(hydrogenBond->getBondType() == Bond::BondType::HYDROGEN);
+  CHECK(MolToCXSmarts(*hydrogenBondMols[0]).find("H:0.0") !=
+        std::string::npos);
 }
 
 TEST_CASE("atropisomers") {

@@ -112,9 +112,8 @@ bool parseBond(RWMol &mol, unsigned int fragmentId, CDXBond &bond,
       break;
     }
     case kCDXBondOrder_Hydrogen:
-      BOOST_LOG(rdErrorLog)
-          << "Unhandled bond order Hydrogen, skipping fragment" << std::endl;
-      return false;
+      order = Bond::BondType::HYDROGEN;
+      break;
     case kCDXBondOrder_ThreeCenter:
       BOOST_LOG(rdErrorLog)
           << "Unhandled bond order ThreeCenter, skipping fragment" << std::endl;

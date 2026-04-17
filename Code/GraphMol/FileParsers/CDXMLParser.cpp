@@ -763,6 +763,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               queryType = BondInfo::QueryType::Any;
             } else if (orderTokens.size() == 1 && orderText == "dative") {
               order = Bond::BondType::DATIVE;
+            } else if (orderTokens.size() == 1 &&
+                       (orderText == "hydrogen" || orderText == "Hydrogen")) {
+              order = Bond::BondType::HYDROGEN;
             } else if (
                 orderTokens.size() == 2 &&
                 ((orderTokens[0] == "1" && orderTokens[1] == "2") ||
