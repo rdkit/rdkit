@@ -1,6 +1,7 @@
 
 rdkit_library(ForceField
-              ForceField.cpp AngleConstraint.cpp AngleConstraints.cpp 
+              ForceField.cpp FiniteDifference.cpp
+              AngleConstraint.cpp AngleConstraints.cpp 
               DistanceConstraint.cpp DistanceConstraints.cpp
               PositionConstraint.cpp TorsionConstraint.cpp
               UFF/AngleBend.cpp UFF/BondStretch.cpp UFF/Nonbonded.cpp
@@ -14,6 +15,7 @@ target_compile_definitions(ForceField PRIVATE RDKIT_FORCEFIELD_BUILD)
 
 rdkit_headers(Contrib.h
               ForceField.h
+              FiniteDifference.h
               AngleConstraint.h
               AngleConstraints.h
               DistanceConstraint.h
