@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2007-2024, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2026, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
 //
 //  All rights reserved.
