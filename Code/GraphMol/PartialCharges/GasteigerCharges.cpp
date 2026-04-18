@@ -18,66 +18,48 @@
 namespace Gasteiger {
 using namespace RDKit;
 /*! \brief split the formal charge across atoms of same type if we have a
- *conjugated system
+ * conjugated system
  *
- *  This function is called before the charge equivalization iteration is
- *started for the
- *  Gasteiger charges. If any of the atom involved in conjugated system have
- *formal charges
- *  set on them, this charges is equally distributed across atoms of the same
- *type in that
- *  conjugated system. So for example the two nitrogens in the benzamidine
- *system start the iteration
- * with equal charges of 0.5
+ * This function is called before the charge equivalization iteration is
+ * started for the Gasteiger charges. If any of the atom involved in conjugated
+ * system have formal charges set on them, this charges is equally distributed
+ * across atoms of the same type in that conjugated system. So for example the
+ * two nitrogens in the benzamidine system start the iteration with equal
+ * charges of 0.5
  */
 void splitChargeConjugated(const ROMol &mol, DOUBLE_VECT &charges) {
-  int aix;
-  int natms = mol.getNumAtoms();
   INT_VECT marker;
-  INT_VECT_CI mci;
-  int aax, yax;
-  double formal;
-  const Atom *at, *aat, *yat;
-  for (aix = 0; aix < natms; aix++) {
-    at = mol.getAtomWithIdx(aix);
-    formal = at->getFormalCharge();
+  for (const auto at : mol.atoms()) {
+    auto aix = at->getIdx();
+    double formal = at->getFormalCharge();
     // std::cout << aix << " formal charges:" << formal << "\n";
     marker.resize(0);
     if ((fabs(formal) > EPS_DOUBLE) && (fabs(charges[aix]) < EPS_DOUBLE)) {
       marker.push_back(aix);
-      ROMol::OEDGE_ITER bnd1, end1, bnd2, end2;
-      boost::tie(bnd1, end1) = mol.getAtomBonds(at);
-      while (bnd1 != end1) {
-        if (mol[*bnd1]->getIsConjugated()) {
-          aax = mol[*bnd1]->getOtherAtomIdx(aix);
-          aat = mol.getAtomWithIdx(aax);
-          boost::tie(bnd2, end2) = mol.getAtomBonds(aat);
-          while (bnd2 != end2) {
-            if ((*bnd1) != (*bnd2)) {
-              if (mol[*bnd2]->getIsConjugated()) {
-                yax = mol[*bnd2]->getOtherAtomIdx(aax);
-                yat = mol.getAtomWithIdx(yax);
+      for (const auto bnd1 : mol.atomBonds(at)) {
+        if (bnd1->getIsConjugated()) {
+          auto aax = bnd1->getOtherAtomIdx(aix);
+          auto aat = mol.getAtomWithIdx(aax);
+          for (const auto bnd2 : mol.atomBonds(aat)) {
+            if (bnd1 != bnd2) {
+              if (bnd2->getIsConjugated()) {
+                auto yax = bnd2->getOtherAtomIdx(aax);
+                auto yat = mol.getAtomWithIdx(yax);
                 if (at->getAtomicNum() == yat->getAtomicNum()) {
                   formal += yat->getFormalCharge();
                   marker.push_back(yax);
                 }
               }
             }
-            bnd2++;
           }
         }
-        bnd1++;
       }
 
-      for (mci = marker.begin(); mci != marker.end(); mci++) {
-        charges[*mci] = (formal / marker.size());
+      for (const auto mci : marker) {
+        charges[mci] = (formal / marker.size());
       }
     }
   }
-  /*
-  for (aix = 0; aix < natms; aix++) {
-    std::cout << "In splitter: " << " charges:" << charges[aix] << "\n";
-    }*/
 }
 }  // end of namespace Gasteiger
 
@@ -104,42 +86,32 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
                              int nIter, bool throwOnParamFailure) {
   PRECONDITION(charges.size() >= mol.getNumAtoms(), "bad array size");
 
-  PeriodicTable *table = PeriodicTable::getTable();
+  const PeriodicTable *table = PeriodicTable::getTable();
   const GasteigerParams *params = GasteigerParams::getParams();
 
-  double damp = DAMP;
-  int natms = mol.getNumAtoms();
+  const auto natms = mol.getNumAtoms();
   // space for parameters for each atom in the molecule
   std::vector<DOUBLE_VECT> atmPs;
   atmPs.reserve(natms);
 
   std::fill(charges.begin(), charges.end(), 0.0);
 
-  DOUBLE_VECT
-  hChrg;  // total charge on the implicit hydrogen on each heavy atom
-  hChrg.resize(natms, 0.0);
+  DOUBLE_VECT hChrg(
+      natms,
+      0.0);  // total charge for the implicit hydrogens on each heavy atom
 
-  DOUBLE_VECT ionX;
-  ionX.resize(natms, 0.0);
-
-  DOUBLE_VECT energ;
-  energ.resize(natms, 0.0);
-
-  ROMol::ADJ_ITER nbrIdx, endIdx;
+  DOUBLE_VECT ionX(natms, 0.0);
+  DOUBLE_VECT energ(natms, 0.0);
 
   // deal with the conjugated system - distribute the formal charges on atoms of
-  // same type in each
-  // conjugated system
+  // same type in each conjugated system
   Gasteiger::splitChargeConjugated(mol, charges);
 
-  // now read in the parameters
-  ROMol::ConstAtomIterator ai;
-
-  for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
-    std::string elem = table->getElementSymbol((*ai)->getAtomicNum());
+  for (const auto atom : mol.atoms()) {
+    const std::string elem = table->getElementSymbol(atom->getAtomicNum());
     std::string mode;
 
-    switch ((*ai)->getHybridization()) {
+    switch (atom->getHybridization()) {
       case Atom::SP3:
         mode = "sp3";
         break;
@@ -150,19 +122,17 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
         mode = "sp";
         break;
       default:
-        if ((*ai)->getAtomicNum() == 1) {
+        if (atom->getAtomicNum() == 1) {
           // if it is hydrogen
           mode = "*";
-        } else if ((*ai)->getAtomicNum() == 16) {
+        } else if (atom->getAtomicNum() == 16) {
           // we have a sulfur atom with no hybridization information
           // check how many oxygens we have on the sulfur
-          boost::tie(nbrIdx, endIdx) = mol.getAtomNeighbors(*ai);
           int no = 0;
-          while (nbrIdx != endIdx) {
-            if (mol.getAtomWithIdx(*nbrIdx)->getAtomicNum() == 8) {
+          for (const auto nbrAt : mol.atomNeighbors(atom)) {
+            if (nbrAt->getAtomicNum() == 8) {
               no++;
             }
-            nbrIdx++;
           }
           if (no == 2) {
             mode = "so2";
@@ -175,77 +145,66 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
         }
     }
 
-    // if we get a unknown mode or element type the
-    // following will will throw an exception
+    // if we get a unknown mode or element type the following will will throw an
+    // exception
     atmPs.push_back(params->getParams(elem, mode, throwOnParamFailure));
 
     // set ionX parameters
     // if Hydrogen treat differently
-    int idx = (*ai)->getIdx();
-    if ((*ai)->getAtomicNum() == 1) {
+    const auto idx = atom->getIdx();
+    if (atom->getAtomicNum() == 1) {
       ionX[idx] = IONXH;
     } else {
       ionX[idx] = atmPs[idx][0] + atmPs[idx][1] + atmPs[idx][2];
     }
   }
 
-  // do the iteration here
-  int itx, aix, sgn, niHs;
-  double enr, dq, dx, qHs, dqH;
-  // parameters for hydrogen atoms (for case where the hydrogen are not in the
+  // parameters for hydrogen atoms for case where the hydrogen are not in the
   // graph (implicit hydrogens)
-  DOUBLE_VECT hParams;
-  hParams = params->getParams("H", "*", throwOnParamFailure);
+  DOUBLE_VECT hParams = params->getParams("H", "*", throwOnParamFailure);
 
-  /*
-  int itmp;
-  for (itmp = 0; itmp < 5; itmp++) {
-    std::cout << " aq:" << charges[itmp] << "\n";
-    }*/
-
-  for (itx = 0; itx < nIter; itx++) {
-    for (aix = 0; aix < natms; aix++) {
-      // enr = p0 + charge*(p1 + p2*charge)
-      enr = atmPs[aix][0] +
-            charges[aix] * (atmPs[aix][1] + atmPs[aix][2] * charges[aix]);
+  double damp = DAMP;
+  for (auto itx = 0u; itx < static_cast<unsigned int>(nIter); itx++) {
+    for (auto aix = 0u; aix < natms; aix++) {
+      auto enr = atmPs[aix][0] +
+                 charges[aix] * (atmPs[aix][1] + atmPs[aix][2] * charges[aix]);
       energ[aix] = enr;
     }
 
-    for (aix = 0; aix < natms; aix++) {
-      dq = 0.0;
-      boost::tie(nbrIdx, endIdx) =
-          mol.getAtomNeighbors(mol.getAtomWithIdx(aix));
-      while (nbrIdx != endIdx) {
-        dx = energ[*nbrIdx] - energ[aix];
+    for (const auto atom : mol.atoms()) {
+      const auto aix = atom->getIdx();
+      double dq = 0.0;
+      for (const auto nbrAt : mol.atomNeighbors(atom)) {
+        const auto nbr = nbrAt->getIdx();
+        const auto dx = energ[nbr] - energ[aix];
+        int sgn;
         if (dx < 0.0) {
           sgn = 0;
         } else {
           sgn = 1;
         }
-        dq += dx / ((sgn * (ionX[aix] - ionX[*nbrIdx])) + ionX[*nbrIdx]);
-        nbrIdx++;
+        dq += dx / ((sgn * (ionX[aix] - ionX[nbr])) + ionX[nbr]);
       }
       // now loop over the implicit hydrogens and get their contributions
       // since hydrogens don't connect to anything else, update their charges at
       // the same time
-      niHs = mol.getAtomWithIdx(aix)->getTotalNumHs();
+      const auto niHs = atom->getTotalNumHs();
       if (niHs > 0) {
-        qHs = hChrg[aix] / niHs;
-        enr = hParams[0] + qHs * (hParams[1] + hParams[2] * qHs);
-        dx = enr - energ[aix];
+        const auto qHs = hChrg[aix] / niHs;
+        const auto enr = hParams[0] + qHs * (hParams[1] + hParams[2] * qHs);
+        const auto dx = enr - energ[aix];
+        int sgn;
         if (dx < 0.0) {
           sgn = 0;
         } else {
           sgn = 1;
         }
 
-        dqH = dx / ((sgn * (ionX[aix] - IONXH)) + IONXH);
-
+        const auto dqH = dx / ((sgn * (ionX[aix] - IONXH)) + IONXH);
         dq += (niHs * dqH);
 
         // adjust the charges on the hydrogens simultaneously (possible because
-        // each of the
-        // hydrogens have no other neighbors)
+        // each of the hydrogens have no other neighbors)
         hChrg[aix] -= (niHs * dqH * damp);
       }
       charges[aix] += (damp * dq);
@@ -254,12 +213,12 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
     damp *= DAMP_SCALE;
   }
 
-  for (aix = 0; aix < natms; aix++) {
-    mol.getAtomWithIdx(aix)->setProp(common_properties::_GasteigerCharge,
-                                     charges[aix], true);
+  for (auto atom : mol.atoms()) {
+    const auto aix = atom->getIdx();
+    // set the charge on the heavy atom
+    atom->setProp(common_properties::_GasteigerCharge, charges[aix], true);
     // set the implicit hydrogen charges
-    mol.getAtomWithIdx(aix)->setProp(common_properties::_GasteigerHCharge,
-                                     hChrg[aix], true);
+    atom->setProp(common_properties::_GasteigerHCharge, hChrg[aix], true);
   }
 }
 }  // namespace RDKit
