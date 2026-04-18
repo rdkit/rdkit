@@ -272,10 +272,9 @@ void buildDefaultRDKitFingerprintAtomInvariants(
     const ROMol &mol, std::vector<std::uint32_t> &lAtomInvariants) {
   lAtomInvariants.clear();
   lAtomInvariants.reserve(mol.getNumAtoms());
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    unsigned int aHash = ((*atomIt)->getAtomicNum() % 128) << 1 |
-                         static_cast<unsigned int>((*atomIt)->getIsAromatic());
+  for (const auto atom : mol.atoms()) {
+    unsigned int aHash = (atom->getAtomicNum() % 128) << 1 |
+                         static_cast<unsigned int>(atom->getIsAromatic());
     lAtomInvariants.push_back(aHash);
   }
 }
