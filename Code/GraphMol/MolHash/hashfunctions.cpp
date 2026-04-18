@@ -508,7 +508,8 @@ bool hasStartBond(const Atom *aptr, const boost::dynamic_bitset<> &startBonds) {
 // Aromatic atoms shouldn't pull in substituent stereocenters.
 bool shouldSkipChiralNeighbor(const Atom *sourceAtom, const Atom *targetAtom,
                                const Bond *connectingBond) {
-  if (targetAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+  if (targetAtom->getHybridization() != Atom::SP3 ||
+      targetAtom->getTotalNumHs() != 1) {
     return false;
   }
   if (isUnsaturatedBond(connectingBond) || connectingBond->getIsConjugated()) {
@@ -878,10 +879,17 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         if (!oatom->getTotalNumHs()) {
           continue;
         }
-        // don't extend to reach a stereocenter — doing so would incorrectly
-        // pull the stereocenter into the tautomeric system and destroy its
-        // chirality
-        if (oatom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+        // don't extend to reach a potential stereocenter — doing so would
+        // incorrectly pull the stereocenter into the tautomeric system and
+        // destroy its chirality. Use structural criteria (SP3 + 1H) for
+        // chain atoms so behavior is consistent regardless of annotation.
+        // For ring atoms, only skip if chirality is actually annotated,
+        // since ring SP3+1H atoms often genuinely participate in ring
+        // tautomerism (e.g. purine NH, glutarimide).
+        if (oatom->getHybridization() == Atom::SP3 &&
+            oatom->getTotalNumHs() == 1 &&
+            (!queryIsAtomInRing(oatom) ||
+             oatom->getChiralTag() != Atom::CHI_UNSPECIFIED)) {
           continue;
         }
         unsigned int numModifiedNeighbors = 0;
