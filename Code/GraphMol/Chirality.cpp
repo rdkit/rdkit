@@ -2924,12 +2924,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
     ranks.resize(mol.getNumAtoms());
     bool cipDone = false;
 
-    ROMol::BondIterator bondIt;
-    for (bondIt = mol.beginBonds(); bondIt != mol.endBonds(); ++bondIt) {
-      if ((*bondIt)->getBondType() == Bond::DOUBLE &&
-          !(mol.getRingInfo()->numBondRings((*bondIt)->getIdx()))) {
+    for (auto dblBond : mol.bonds()) {
+      if (dblBond->getBondType() == Bond::DOUBLE &&
+          !(mol.getRingInfo()->numBondRings(dblBond->getIdx()))) {
         // we are ignoring ring bonds here - read the FIX above
-        Bond *dblBond = *bondIt;
         // proceed only if we either want to clean the stereocode on this bond,
         // if none is set on it yet, or it is STEREOANY and we need to find
         // stereoatoms
@@ -3024,10 +3022,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }    // end of 2 and 3 coordinated atoms only
-        }      // end of we want it or CIP code is not set
-      }        // end of double bond
-    }          // end of for loop over all bonds
+          }  // end of 2 and 3 coordinated atoms only
+        }  // end of we want it or CIP code is not set
+      }  // end of double bond
+    }  // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
@@ -3661,7 +3659,7 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
 
   // oof, now loop over the double bonds in that order and
   // update their neighbor directionalities:
-  for (const auto& pairIter : orderedBondsInPlay) {
+  for (const auto &pairIter : orderedBondsInPlay) {
     updateDoubleBondNeighbors(mol, pairIter.second, conf, needsDir,
                               singleBondCounts, singleBondNbrs);
   }

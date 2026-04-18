@@ -57,16 +57,15 @@ bool StructCheckTautomer::applyTautomer(unsigned it) {
   }
   // scan for completely mapped bonds and replace bond order with mapped bond
   // from to_tautomer
-  for (RDKit::BondIterator_ bond = Mol.beginBonds(); bond != Mol.endBonds();
-       ++bond) {
-    unsigned ti = atomIdxMap[(*bond)->getBeginAtomIdx()];
-    unsigned tj = atomIdxMap[(*bond)->getEndAtomIdx()];
+  for (auto bond : Mol.bonds()) {
+    unsigned ti = atomIdxMap[bond->getBeginAtomIdx()];
+    unsigned tj = atomIdxMap[bond->getEndAtomIdx()];
     if (invalid_idx == ti || invalid_idx == tj) {
       continue;
     }
     const Bond *tb = toTautomer.getBondBetweenAtoms(ti, tj);
-    if (tb && (*bond)->getBondType() != tb->getBondType()) {
-      (*bond)->setBondType(tb->getBondType());
+    if (tb && bond->getBondType() != tb->getBondType()) {
+      bond->setBondType(tb->getBondType());
     }
   }
   // apply charge/radical fixes if any

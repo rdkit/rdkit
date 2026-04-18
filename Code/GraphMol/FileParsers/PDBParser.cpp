@@ -510,9 +510,7 @@ bool StandardPDBChiralAtom(const char *resnam, const char *atmnam) {
 }
 
 void StandardPDBResidueChirality(RWMol *mol) {
-  for (ROMol::AtomIterator atomIt = mol->beginAtoms();
-       atomIt != mol->endAtoms(); ++atomIt) {
-    Atom *atom = *atomIt;
+  for (auto atom : mol->atoms()) {
     if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
       auto *info = (AtomPDBResidueInfo *)atom->getMonomerInfo();
       if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE &&
@@ -529,10 +527,7 @@ void StandardPDBResidueChirality(RWMol *mol) {
 }
 
 void BasicPDBCleanup(RWMol &mol) {
-  ROMol::VERTEX_ITER atBegin, atEnd;
-  boost::tie(atBegin, atEnd) = mol.getVertices();
-  while (atBegin != atEnd) {
-    Atom *atom = mol[*atBegin];
+  for (auto atom : mol.atoms()) {
     atom->calcExplicitValence(false);
 
     // correct four-valent neutral N -> N+
@@ -541,7 +536,6 @@ void BasicPDBCleanup(RWMol &mol) {
         atom->getValence(Atom::ValenceType::EXPLICIT) == 4) {
       atom->setFormalCharge(1);
     }
-    ++atBegin;
   }
 }
 
