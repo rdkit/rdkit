@@ -3,6 +3,7 @@
 #include "FileParsers/FileParsers.h"
 #include "FileParsers/FileParserUtils.h"
 
+
 #include "MACROMol.h"
 #include "Atom.h"
 
@@ -60,8 +61,6 @@ MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
 
 MACROMolTemplate::MACROMolTemplate(const MACROMolTemplate &other)
     : RWMol(other) {
-  // p_mol.reset(new RWMol(*other.p_mol));
-
   p_mainSgroupIdx = UINT_MAX;
 }
 
@@ -75,6 +74,30 @@ MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
   std::vector<std::string> templateNames(1, templateName);
   MACROMolTemplate::init(className, templateNames, templateAttrs);
 }
+
+RDKit::SubstanceGroup *MACROMolTemplate::getMainSgroup() {
+    
+    std::call_once(p_mainSgroupIdxOnceFlag, [this]() {
+      std::string className = "";
+      std::vector<std::string> templateNames;
+      if (!getPropIfPresent(RDKit::common_properties::molAtomClass,
+                                  className) ||
+          !getPropIfPresent(RDKit::common_properties::templateNames,
+                                  templateNames)) {
+        std::ostringstream errout;
+        errout << "Template molecule is missing required properties: "
+               << RDKit::common_properties::molAtomClass << " and/or "
+               << RDKit::common_properties::templateNames;
+        throw RDKit::FileParseException(errout.str());
+      }
+   
+
+      findMainSgroupForTemplate(className, templateNames[0]);
+    });
+    return &RDKit::getSubstanceGroups(*this)[p_mainSgroupIdx];
+  }
+
+
 
 unsigned int RDKit::MACROMol::addMacroAtom(std::string className,
                                            std::string templateName) {
@@ -123,25 +146,8 @@ unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) {
         continue;
       }
 
-      for (unsigned int tIdx = 0; tIdx < getTemplateCount(); ++tIdx) {
-        const MACROMolTemplate *templateMol = getTemplate(tIdx);
-        std::string templateAtomClass;
-        std::vector<std::string> templateNames;
-        templateMol->getPropIfPresent<std::string>(
-            common_properties::molAtomClass, templateAtomClass);
-        templateMol->getPropIfPresent<std::vector<std::string>>(
-            common_properties::templateNames, templateNames);
-        if (templateAtomClass == atomClass &&
-            std::find(templateNames.begin(), templateNames.end(), dummyLabel) !=
-                templateNames.end()) {
-          p_atomIdxToTemplateIdx[atom->getIdx()] = tIdx;
-          break;
-        }
-      }
-
-      if (p_atomIdxToTemplateIdx.contains(atom->getIdx()) == false) {
-        throw FileParseException("Template for macro atom not found");
-      }
+      p_atomIdxToTemplateIdx[atom->getIdx()]  = this->p_templateLibraryPtr->getMACROMolTemplateIndex(atomClass, dummyLabel);
+  
     }
 
     p_atomIdxToTemplateIdxIsStale = false;
@@ -153,5 +159,25 @@ MACROMolTemplate *RDKit::MACROMol::atomIdxToMACROMolTemplate(
     unsigned int atomIdx) {
   return this->getTemplate(this->atomIdxToTemplateIdx(atomIdx));
 }
+
+ void MACROMolTemplateLib::addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol) {
+      PRECONDITION(templateMol, "bad template molecule");
+      this->emplace_back(std::move(templateMol));
+
+      auto &newTemplate = this->back();
+
+      std::string templateClass;
+      std::vector<std::string> templateNames;
+      newTemplate->getPropIfPresent<std::string>(
+          common_properties::molAtomClass, templateClass);
+      newTemplate->getPropIfPresent<std::vector<std::string>>(
+          common_properties::templateNames, templateNames);
+ 
+      for (auto templateName : templateNames){
+        MACROMolTemplateKey key(std::pair(templateClass, templateName));
+
+        d_keyToIndex[key] = this->size() - 1;
+      }
+    }
 
 }  // namespace RDKit
