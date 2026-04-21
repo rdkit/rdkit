@@ -160,24 +160,49 @@ MACROMolTemplate *RDKit::MACROMol::atomIdxToMACROMolTemplate(
   return this->getTemplate(this->atomIdxToTemplateIdx(atomIdx));
 }
 
- void MACROMolTemplateLib::addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol) {
-      PRECONDITION(templateMol, "bad template molecule");
-      this->emplace_back(std::move(templateMol));
+ void MACROMolTemplateLib::addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol, bool takeOwnership) {
+    PRECONDITION(templateMol, "bad template molecule");
 
-      auto &newTemplate = this->back();
+    addTemplate(templateMol.get());
 
-      std::string templateClass;
-      std::vector<std::string> templateNames;
-      newTemplate->getPropIfPresent<std::string>(
-          common_properties::molAtomClass, templateClass);
-      newTemplate->getPropIfPresent<std::vector<std::string>>(
-          common_properties::templateNames, templateNames);
- 
-      for (auto templateName : templateNames){
-        MACROMolTemplateKey key(std::pair(templateClass, templateName));
+    if (takeOwnership) {
+      this->ownedTemplates.emplace_back(std::move(templateMol));
+    }
+ }
 
-        d_keyToIndex[key] = this->size() - 1;
+
+  void MACROMolTemplateLib::addTemplate(MACROMolTemplate *templateMol) {
+    PRECONDITION(templateMol, "bad template molecule");
+
+    this->push_back(templateMol);
+
+
+    std::string templateClass;
+    std::vector<std::string> templateNames;
+    templateMol->getPropIfPresent<std::string>(
+        common_properties::molAtomClass, templateClass);
+    templateMol->getPropIfPresent<std::vector<std::string>>(
+        common_properties::templateNames, templateNames);
+
+    for (auto templateName : templateNames){
+      MACROMolTemplateKey key(std::pair(templateClass, templateName));
+
+      d_keyToIndex[key] = this->size() - 1;
+    }
+  }
+
+  void MACROMolTemplateLib::addTemplateLib(MACROMolTemplateLib &libToAdd, bool takeOwnership) {
+    for (auto libTemplate : libToAdd) {
+      addTemplate(libTemplate);
+    }
+
+    if (takeOwnership) {
+      for (auto &libTemplate : libToAdd.ownedTemplates) {
+        ownedTemplates.emplace_back(std::move(libTemplate));
       }
     }
+   
+    
+  }
 
 }  // namespace RDKit

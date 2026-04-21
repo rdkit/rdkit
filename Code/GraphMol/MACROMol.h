@@ -51,7 +51,7 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
 
  private:
   mutable unsigned int p_mainSgroupIdx;
-  std::once_flag p_mainSgroupIdxOnceFlag;
+  mutable std::once_flag p_mainSgroupIdxOnceFlag;
 };
 
 
@@ -59,7 +59,7 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
 class MACROMolTemplateKey: public std::pair<std::string, std::string>{};
 
 
-class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<std::unique_ptr<MACROMolTemplate>> {
+class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTemplate *> {
   
     private:
 
@@ -74,14 +74,27 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<std::unique
 
     std::unordered_map<MACROMolTemplateKey, unsigned int, MACROMolTemplateKeyHash> d_keyToIndex;
 
+    // all templates USED are references.  Some may be owned by this lib, and some may be owned by
+    // an external lib.  The ones owned by this lib are destroyed when this template is destroyed.
+    // this allows one or more global libraries to be added, but the member template are owned by
+    // externally. 
+    //
+    // Also, if the templates are owned externally, one or more local templates can be added.
+    // THis allows, an an example, for "immediate" templates such the the MonomerMol smiles-type, which 
+    // are defined as a smiles string in the template instantiation.
+
+    std::vector<std::unique_ptr<MACROMolTemplate>> ownedTemplates;   
 
     public:
-    void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol);
+    void addTemplate(MACROMolTemplate *templateMol);    // does NOT take ownership
+    void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol, bool takeOwnership=true);
+    void addTemplateLib(MACROMolTemplateLib &libToAdd, bool takeOwnership=false);
+
 
     unsigned int getTemplateCount() const { return this->size(); }
 
     RDKit::MACROMolTemplate *getTemplate(unsigned int index) {
-      return this->at(index).get();
+      return this->at(index);
     }
     
     unsigned int getMACROMolTemplateIndex(std::string templateClass, std::string templateName) {
@@ -142,7 +155,6 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
   void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol) {
     PRECONDITION(templateMol, "bad template molecule");
     p_templateLibrary.addTemplate(templateMol);
-    // p_templateLibrary.emplace_back(std::move(templateMol));
     p_templateLibraryPtr = &p_templateLibrary;
   }
 
@@ -150,7 +162,6 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
 
   RDKit::MACROMolTemplate *getTemplate(unsigned int index) {
     return p_templateLibraryPtr->getTemplate(index);
-    //return (*p_templateLibraryPtr)[index].get();
   };
 
   unsigned int addMacroAtom(std::string className, std::string templateName);
@@ -161,7 +172,6 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
 
   unsigned int atomIdxToTemplateIdx(unsigned int atomIdx);
   MACROMolTemplate *atomIdxToMACROMolTemplate(unsigned int atomIdx);
-  //RWMol *atomIdxToTemplateMol(unsigned int atomIdx);
 };
 typedef boost::shared_ptr<MACROMol> MACROMol_SPTR;
 typedef boost::shared_ptr<MACROMolTemplate> MACROMolTemplate_SPTR;
