@@ -89,6 +89,15 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTem
     void addTemplate(MACROMolTemplate *templateMol);    // does NOT take ownership
     void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol, bool takeOwnership=true);
     void addTemplateLib(MACROMolTemplateLib &libToAdd, bool takeOwnership=false);
+    void clearTempateLib(){
+        this->clear();
+        ownedTemplates.clear();
+        d_keyToIndex.clear();
+    }
+    void setTemplateLib(MACROMolTemplateLib &libToSet, bool takeOwnership=false) {
+      clearTemplateLib();
+      addTemplateLib(libToSet, takeOwnership);
+    }
 
 
     unsigned int getTemplateCount() const { return this->size(); }

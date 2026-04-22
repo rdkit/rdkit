@@ -3763,15 +3763,14 @@ std::unique_ptr<RWMol> MolFromMolBlock(const std::string &molBlock,
 std::unique_ptr<RWMol> MolFromMolFile(const std::string &fName,
                                       const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
-  if (!inStream || (inStream.bad())) {
+  if (!inStream || (inStream.bad()) || inStream.eof()) {
     std::ostringstream errout;
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  if (!inStream.eof()) {
-    unsigned int line = 0;
-    return MolFromMolDataStream(inStream, line, params);
-  }
+  
+  unsigned int line = 0;
+  return MolFromMolDataStream(inStream, line, params);
 }
 
 }  // namespace FileParsers
