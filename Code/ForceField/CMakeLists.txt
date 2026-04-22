@@ -15,7 +15,6 @@ target_compile_definitions(ForceField PRIVATE RDKIT_FORCEFIELD_BUILD)
 
 rdkit_headers(Contrib.h
               ForceField.h
-              FiniteDifference.h
               AngleConstraint.h
               AngleConstraints.h
               DistanceConstraint.h
