@@ -867,7 +867,7 @@ std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
         // add the template to the MACROMol
         std::unique_ptr<MACROMolTemplate> tempTemplate(
             new MACROMolTemplate(*templateMol));
-        res->addTemplate(tempTemplate);
+        res->addTemplate(tempTemplate, true /* take ownershp  */);
         templateCopied = true;
       }
 

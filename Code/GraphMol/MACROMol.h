@@ -89,7 +89,7 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTem
     void addTemplate(MACROMolTemplate *templateMol);    // does NOT take ownership
     void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol, bool takeOwnership=true);
     void addTemplateLib(MACROMolTemplateLib &libToAdd, bool takeOwnership=false);
-    void clearTempateLib(){
+    void clearTemplateLib(){
         this->clear();
         ownedTemplates.clear();
         d_keyToIndex.clear();
@@ -118,13 +118,11 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTem
 
 class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
  private:
-  // for libraries owned by this macromol
+  // elements (MACROMolTemplate items) of the library are either owned by the library or owned externally.
+  // Externally owned items support global libraies
+
   MACROMolTemplateLib p_templateLibrary;
 
-  // used for library access.  Could be a pointer to the internal library or
-  // an external one that is shared across multiple macromols
-
-  MACROMolTemplateLib *p_templateLibraryPtr;
   bool p_atomIdxToTemplateIdxIsStale;
   std::map<unsigned int, unsigned int> p_atomIdxToTemplateIdx;
 
@@ -144,33 +142,33 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
   ~MACROMol() {}
 
   MACROMolTemplateLib *getTemplateLibrary() {
-    return p_templateLibraryPtr;
+    return &p_templateLibrary;
   }
+
+  void clearTemplateLibrary() {
+    p_templateLibrary.clear();
+  }
+
+  void addTemplateLibrary(MACROMolTemplateLib &lib,
+                          bool takeOwnership = true) {
+    p_templateLibrary.addTemplateLib(lib, takeOwnership);
+  }
+
 
   void setTemplateLibrary(MACROMolTemplateLib &lib,
                           bool takeOwnership = true) {
-    if (takeOwnership) {
-      for (auto &libTemplate : lib) {
-        p_templateLibrary.push_back(std::move(libTemplate));
-      }
-      p_templateLibraryPtr = &p_templateLibrary;
-    }
-
-    else {
-      p_templateLibraryPtr = &lib;
-    }
+    p_templateLibrary.setTemplateLib(lib, takeOwnership);
   }
 
-  void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol) {
+  void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol, bool takeOwnership=true) {
     PRECONDITION(templateMol, "bad template molecule");
-    p_templateLibrary.addTemplate(templateMol);
-    p_templateLibraryPtr = &p_templateLibrary;
+    p_templateLibrary.addTemplate(templateMol, takeOwnership);
   }
 
-  unsigned int getTemplateCount() const { return p_templateLibraryPtr->getTemplateCount(); }
+  unsigned int getTemplateCount() const { return p_templateLibrary.getTemplateCount(); }
 
   RDKit::MACROMolTemplate *getTemplate(unsigned int index) {
-    return p_templateLibraryPtr->getTemplate(index);
+    return p_templateLibrary.getTemplate(index);
   };
 
   unsigned int addMacroAtom(std::string className, std::string templateName);

@@ -146,7 +146,7 @@ unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) {
         continue;
       }
 
-      p_atomIdxToTemplateIdx[atom->getIdx()]  = this->p_templateLibraryPtr->getMACROMolTemplateIndex(atomClass, dummyLabel);
+      p_atomIdxToTemplateIdx[atom->getIdx()]  = this->p_templateLibrary.getMACROMolTemplateIndex(atomClass, dummyLabel);
   
     }
 
