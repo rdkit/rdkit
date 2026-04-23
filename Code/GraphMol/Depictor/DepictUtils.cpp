@@ -164,8 +164,22 @@ RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
 
 int pickFirstRingToEmbed(const RDKit::ROMol &mol,
                          const RDKit::VECT_INT_VECT &fusedRings) {
-  // ok this is what we will do here
-  // we will pick the ring with the smallest number of substituents
+  // If there are any macrocycles, pick the largest one
+  int macrocycle_idx = -1;
+  unsigned int max_macrocycle_size = 0;
+  for (int i = 0; i < static_cast<int>(fusedRings.size()); ++i) {
+    if (fusedRings[i].size() > 8) {
+      if (fusedRings[i].size() > max_macrocycle_size) {
+        macrocycle_idx = i;
+        max_macrocycle_size = fusedRings[i].size();
+      }
+    }
+  }
+  if (macrocycle_idx >= 0) {
+    return macrocycle_idx;
+  }
+
+  // Otherwise  pick the ring with the smallest number of substituents
   int res = -1;
   unsigned int maxSize = 0;
   int subs, minsubs = static_cast<int>(1e8);
@@ -196,10 +210,10 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
                                    RDKit::INT_VECT &coreRingsIds,
                                    const RDKit::ROMol &mol) {
   // simplify the fused rings to a set of core rings by iteratively removing
-  // rings that share only one or two consecutive atoms. These
-  // are trivial to embed after the core rings have been embedded and will make
-  // template matching more powerful since it will not be affected by the side
-  // rings
+  // rings that share only one or two consecutive atoms with non-macrocycle
+  // rings. These are trivial to embed after the core rings have been embedded
+  // and will make template matching more powerful since it will not be affected
+  // by the side rings
 
   boost::dynamic_bitset<> removedRings(fusedRings.size());
   bool removedARing = false;
@@ -210,6 +224,9 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
       if (removedRings[currRingId] || removedARing) {
         continue;
       }
+      if (fusedRings[currRingId].size() > 8) {
+        continue;
+      }
       auto nIntersectingAtoms = 0u;
       int aid1 = -1;
       int aid2 = -1;
@@ -218,6 +235,9 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
         if (currRingId == otherRingId || removedRings[otherRingId]) {
           continue;
         }
+        // Don't skip macrocycles - we need to count all intersections to avoid
+        // removing rings that have significant fusion (3+ atoms) with a
+        // macrocycle
         RDKit::INT_VECT commmonAtoms;
         RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
                          commmonAtoms);
@@ -229,19 +249,36 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
             } else {
               aid2 = rii;
             }
-            if (nIntersectingAtoms == 2) {
+          }
+        }
+      }
+      // Check if this ring should be removed
+      bool shouldRemove = (nIntersectingAtoms == 1 ||
+                           (nIntersectingAtoms == 2 &&
+                            mol.getBondBetweenAtoms(aid1, aid2) != nullptr));
+
+      // Don't remove if the ring is fused to a macrocycle
+      if (shouldRemove) {
+        for (unsigned int otherRingId = 0; otherRingId < fusedRings.size();
+             otherRingId++) {
+          if (currRingId == otherRingId || removedRings[otherRingId]) {
+            continue;
+          }
+          if (fusedRings[otherRingId].size() > 8) {
+            // This is a macrocycle - check if currRing shares atoms with it
+            RDKit::INT_VECT commmonAtoms;
+            RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
+                             commmonAtoms);
+            if (!commmonAtoms.empty()) {
+              // Ring is fused to a macrocycle - don't remove it
+              shouldRemove = false;
               break;
             }
           }
         }
       }
-      // note that the set of rings is not SSSR because we use symmetrizeSSSR,
-      // so we cannot force a check for only one fused ring. Instead we make
-      // sure that this ring shares only one atom or one bond (two consecutive
-      // atoms)
-      if (nIntersectingAtoms == 1 ||
-          (nIntersectingAtoms == 2 &&
-           mol.getBondBetweenAtoms(aid1, aid2) != nullptr)) {
+
+      if (shouldRemove) {
         removedRings[currRingId] = true;
         removedARing = true;
       }
