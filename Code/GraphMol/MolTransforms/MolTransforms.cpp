@@ -37,9 +37,8 @@ void transformAtom(Atom *atom, RDGeom::Transform3D &tform) {
 void transformMolsAtoms(ROMol *mol, RDGeom::Transform3D &tform) {
   PRECONDITION(mol, "no molecule");
 
-  ROMol::AtomIterator atomIt;
-  for (atomIt = mol->beginAtoms(); atomIt != mol->endAtoms(); atomIt++) {
-    transformAtom(*atomIt, tform);
+  for (auto atom : mol->atoms()) {
+    transformAtom(atom, tform);
   }
 }
 
@@ -74,16 +73,15 @@ void computeCovarianceTerms(const Conformer &conf,
   xx = xy = xz = yy = yz = zz = 0.0;
   const ROMol &mol = conf.getOwningMol();
   double wSum = 0.0;
-  for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
-       cai++) {
-    if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
+  for (const auto atom : mol.atoms()) {
+    if ((atom->getAtomicNum() == 1) && (ignoreHs)) {
       continue;
     }
-    RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
+    RDGeom::Point3D loc = conf.getAtomPos(atom->getIdx());
     loc -= center;
     double w = 1.0;
     if (weights) {
-      w = (*weights)[(*cai)->getIdx()];
+      w = (*weights)[atom->getIdx()];
     }
     wSum += w;
     xx += w * loc.x * loc.x;
@@ -130,16 +128,15 @@ void computeInertiaTerms(const Conformer &conf, const RDGeom::Point3D &center,
 
   xx = xy = xz = yy = yz = zz = 0.0;
   const ROMol &mol = conf.getOwningMol();
-  for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
-       cai++) {
-    if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
+  for (const auto atom : mol.atoms()) {
+    if ((atom->getAtomicNum() == 1) && (ignoreHs)) {
       continue;
     }
-    RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
+    RDGeom::Point3D loc = conf.getAtomPos(atom->getIdx());
     loc -= center;
     double w = 1.0;
     if (weights) {
-      w = (*weights)[(*cai)->getIdx()];
+      w = (*weights)[atom->getIdx()];
     }
     xx += w * (loc.y * loc.y + loc.z * loc.z);
     yy += w * (loc.x * loc.x + loc.z * loc.z);
