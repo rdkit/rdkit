@@ -85,7 +85,7 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper1(
   }
   if (results.getCancelled()) {
     PyErr_SetString(PyExc_KeyboardInterrupt, "SubstructureSearch cancelled");
-    boost::python::throw_error_already_set();
+    python::throw_error_already_set();
   }
   return results;
 }
@@ -110,7 +110,7 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper2(
   }
   if (results.getCancelled()) {
     PyErr_SetString(PyExc_KeyboardInterrupt, "SubstructureSearch cancelled");
-    boost::python::throw_error_already_set();
+    python::throw_error_already_set();
   }
   return results;
 }
@@ -123,7 +123,7 @@ struct CallbackAdapter {
     for (auto &mol : results) {
       pyres.append(boost::shared_ptr<ROMol>(mol.release()));
     }
-    return bool(py_callable(pyres));
+    return static_cast<bool>(py_callable(pyres));
   }
 };
 
@@ -203,7 +203,7 @@ SynthonSpaceSearch::SearchResults rascalSearch_helper(
   }
   if (results.getCancelled()) {
     PyErr_SetString(PyExc_KeyboardInterrupt, "RascalSearch cancelled");
-    boost::python::throw_error_already_set();
+    python::throw_error_already_set();
   }
   return results;
 }
@@ -248,7 +248,7 @@ void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
   self.summarise(std::cout);
 }
 
-void reportSynthonUsage_helper(SynthonSpaceSearch::SynthonSpace &self) {
+void reportSynthonUsage_helper(const SynthonSpaceSearch::SynthonSpace &self) {
   self.reportSynthonUsage(std::cout);
 }
 
@@ -481,6 +481,24 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " number of '*' characters in a full bar.  There will"
           " be about another 35 characters or so depending on the size of the"
           " job.  Default=0 means no bar.")
+      .def_readwrite(
+          "excludedVolume",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::excludedVolume,
+          "  An excluded volume to use in the shape search.  The volume"
+          " overlap and mean overlap over clashing atoms will be reported.")
+      .def_readwrite(
+          "maxExcludedVolume",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxExcludedVolume,
+          "Maximum allowed excluded volume for a hit to be accepted."
+          "  Default -1.0 means no maximum.")
+      .def_readwrite(
+          "maxMeanExcludedVolume",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxMeanExcludedVolume,
+          "Maximum mean excluded volume for a hit to be accepted.  The"
+          " mean is the total excluded volume divided by the number"
+          " of clashing atoms (within 2 CARBON_RAD of an excluded volume"
+          " atom).  To try and distinguish between a mild clash"
+          " over the whole hit and a few atoms having a really bad clash.")
       .def(
           "setUserConformerGenerator", helpers::setUserConfGen_helper2,
           python::with_custodian_and_ward<1, 2>(), python::args("self", "func"),
@@ -672,8 +690,8 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   docString =
       "Format an integer with spaces every 3 digits for ease of reading";
   python::def("FormattedIntegerString",
-              &RDKit::SynthonSpaceSearch::formattedIntegerString,
-              python::arg("value"), docString.c_str());
+              &SynthonSpaceSearch::formattedIntegerString, python::arg("value"),
+              docString.c_str());
 }
 
 }  // namespace RDKit

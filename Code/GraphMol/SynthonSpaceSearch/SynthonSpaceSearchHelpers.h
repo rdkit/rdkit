@@ -134,6 +134,20 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
   // conformer generator if preferred.  Used for creating conformers of
   // potential hits to compare against the query.
   UserConfGenerator userConformerGenerator;
+  // An excluded volume to use in a shape search.  The volume overlap and
+  // mean overlap over clashing atoms  will be reported.
+  GaussianShape::ShapeInput *excludedVolume{nullptr};
+  double maxExcludedVolume{-1.0};  // Maximum allowed excluded volume for a hit
+                                   // to be accepted.  Default -1.0 means no
+                                   // maximum.
+  double maxMeanExcludedVolume{-1.0};  // Maximum mean excluded volume for a hit
+                                       // to be accepted.  The mean is the total
+                                       // excluded volume divided by the number
+                                       // of clashing atoms (within 2 CARBON_RAD
+                                       // of an excluded volume atom).  To try
+                                       // and distinguish between a mild clash
+                                       // over the whole hit and a few atoms
+                                       // having a really bad clash.
 };
 
 // Options to be passed to buildSynthonShapes.
