@@ -12,6 +12,7 @@
 #define RDKIT_SYNTHONSPACESEARCHDETAILS_H
 
 #include <chrono>
+#include <limits>
 #include <vector>
 
 #include <GraphMol/DistGeomHelpers/Embedder.h>
@@ -193,7 +194,8 @@ generateIsomerConformers(
     const ROMol &mol, unsigned int numConformers, bool enumerateStereo,
     const EnumerateStereoisomers::StereoEnumerationOptions &enumOpts,
     DGeomHelpers::EmbedParameters &dgParams,
-    UserConfGenerator &userConfGenerator);
+    UserConfGenerator &userConfGenerator,
+    unsigned int maxStereoCenters = std::numeric_limits<unsigned int>::max());
 
 // Trim the molecule down to the minimum needed to do a sensible conformation
 // expansion for the atoms with property molNum=molNum.

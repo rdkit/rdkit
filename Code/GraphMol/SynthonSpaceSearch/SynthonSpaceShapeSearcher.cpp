@@ -22,6 +22,7 @@
 #include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/RDThreads.h>
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
+#include <boost/math/tools/numeric_limits.hpp>
 
 std::mutex myMutex;
 
@@ -880,8 +881,8 @@ void finaliseHit(GaussianShape::ShapeInput &hitShapes,
   hit = static_cast<ROMol>(*hitShapes.shapeToMol(false, true));
   MolTransforms::transformConformer(hit.getConformer(), xform);
   hit.setProp<double>("Similarity", scores[0]);
-  hit.setProp<double>("ShapeTanimoto", scores[1]);
-  hit.setProp<double>("ColorTanimoto", scores[2]);
+  hit.setProp<double>("ShapeScore", scores[1]);
+  hit.setProp<double>("ColorScore", scores[2]);
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
   MolOps::assignStereochemistryFrom3D(hit);
@@ -893,8 +894,8 @@ void finaliseHit(const ROMol &hit, const std::array<double, 3> &scores,
                  const std::string &rxnId,
                  const std::vector<const std::string *> &synthNames) {
   hit.setProp<double>("Similarity", scores[0]);
-  hit.setProp<double>("ShapeTanimoto", scores[1]);
-  hit.setProp<double>("ColorTanimoto", scores[2]);
+  hit.setProp<double>("ShapeScore", scores[1]);
+  hit.setProp<double>("ColorScore", scores[2]);
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
 }

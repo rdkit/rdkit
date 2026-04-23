@@ -39,6 +39,7 @@
 #include <RDGeneral/RDThreads.h>
 #include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/LeaderPicker.h>
+#include <boost/math/tools/numeric_limits.hpp>
 
 namespace RDKit::SynthonSpaceSearch::details {
 
@@ -1013,12 +1014,16 @@ std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
     const ROMol &mol, unsigned int numConformers, bool enumerateStereo,
     const EnumerateStereoisomers::StereoEnumerationOptions &enumOpts,
     DGeomHelpers::EmbedParameters &dgParams,
-    UserConfGenerator &userConfGenerator) {
+    UserConfGenerator &userConfGenerator, unsigned int maxStereoCenters) {
   std::vector<std::unique_ptr<RWMol>> confMols;
   if (enumerateStereo) {
     EnumerateStereoisomers::StereoisomerEnumerator enu(mol, enumOpts);
+    unsigned int i = 0;
     while (auto isomer = enu.next()) {
       confMols.emplace_back(static_cast<RWMol *>(isomer.release()));
+      if (++i == maxStereoCenters) {
+        break;
+      }
     }
   } else {
     confMols.push_back(std::make_unique<RWMol>(mol));
@@ -1251,19 +1256,26 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     if (!sampleMols[molNum]->d_mol) {
       continue;
     }
+    std::cout << "\nBuilding sample mol "
+              << sampleMols[molNum]->d_mol->getProp<std::string>(
+                     common_properties::_Name)
+              << " of " << sampleMols[molNum]->d_synthonSet->getId()
+              << std::endl;
     sampleMols[molNum]->d_mol = trimSampleMol(
         *sampleMols[molNum]->d_mol, sampleMols[molNum]->d_synthonSetNum);
+    constexpr unsigned int maxStereoCentresToDo =
+        3;  // Don't enumerate more than 3 stereo centres
     auto isomerConfs = generateIsomerConformers(
         *sampleMols[molNum]->d_mol, shapeBuildParams.numConfs, true,
         shapeBuildParams.stereoEnumOpts, dgParams,
-        shapeBuildParams.userConformerGenerator);
+        shapeBuildParams.userConformerGenerator, maxStereoCentresToDo);
     if (isomerConfs.empty()) {
       // Sometimes we can get something from the un-enumerated isomers which
       // will be better than nothing.
       isomerConfs = generateIsomerConformers(
-          *sampleMols[molNum]->d_mol, shapeBuildParams.numConfs, true,
+          *sampleMols[molNum]->d_mol, shapeBuildParams.numConfs, false,
           shapeBuildParams.stereoEnumOpts, dgParams,
-          shapeBuildParams.userConformerGenerator);
+          shapeBuildParams.userConformerGenerator, maxStereoCentresToDo);
       if (isomerConfs.empty()) {
         BOOST_LOG(rdWarningLog)
             << "No conformers generated for sample molecule "
