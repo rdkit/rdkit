@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <utility>
@@ -3649,16 +3650,19 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
     }
     orderedBondsInPlay.push_back(std::make_pair(countHere, dblBond));
   }
-  std::sort(orderedBondsInPlay.begin(), orderedBondsInPlay.end());
+  std::ranges::sort(orderedBondsInPlay, [](const auto &a, const auto &b) {
+    // sort in decreasing order of priority
+    if (a.first != b.first) {
+      return a.first > b.first;
+    }
+    // in case of ties, use the bond index to decide the order
+    return a.second->getIdx() < b.second->getIdx();
+  });
 
   // oof, now loop over the double bonds in that order and
   // update their neighbor directionalities:
-  std::vector<std::pair<unsigned int, Bond *>>::reverse_iterator pairIter;
-  for (pairIter = orderedBondsInPlay.rbegin();
-       pairIter != orderedBondsInPlay.rend(); ++pairIter) {
-    // std::cerr << "RESET?: " << pairIter->second->getIdx() << " "
-    //           << pairIter->second->getStereo() << std::endl;
-    updateDoubleBondNeighbors(mol, pairIter->second, conf, needsDir,
+  for (const auto& pairIter : orderedBondsInPlay) {
+    updateDoubleBondNeighbors(mol, pairIter.second, conf, needsDir,
                               singleBondCounts, singleBondNbrs);
   }
 }

@@ -16,7 +16,6 @@
 #include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/GaussianShape/ShapeInput.h>
 #include <GraphMol/GaussianShape/SingleConformerAlignment.h>
-#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -101,7 +100,7 @@ std::unique_ptr<RWMol> extractSubset(
     keepAtoms[atk] = true;
   }
   retMol->beginBatchEdit();
-  for (auto atom : retMol->atoms()) {
+  for (const auto atom : retMol->atoms()) {
     if (!keepAtoms[atom->getIdx()]) {
       retMol->removeAtom(atom->getIdx());
     }
@@ -110,8 +109,8 @@ std::unique_ptr<RWMol> extractSubset(
 
   // Fix the aromatic flags on anything that is no longer in a ring.
   MolOps::findSSSR(*retMol);
-  auto rings = retMol->getRingInfo();
-  for (auto a : retMol->atoms()) {
+  const auto rings = retMol->getRingInfo();
+  for (const auto a : retMol->atoms()) {
     if (a->getIsAromatic() && !rings->numAtomRings(a->getIdx())) {
       a->setIsAromatic(false);
     }
@@ -120,19 +119,17 @@ std::unique_ptr<RWMol> extractSubset(
 }
 }  // namespace
 
-ShapeInput::ShapeInput(const ROMol &mol, int confId,
+ShapeInput::ShapeInput(const ROMol &mol, const int confId,
                        const ShapeInputOptions &opts,
                        const ShapeOverlayOptions &overlayOpts) {
   PRECONDITION(mol.getNumConformers() > 0,
                "ShapeInput object needs the molecule to have conformers.  " +
                    mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
-  // std::cout << "making shape from " << MolToSmiles(mol) << " with "
-  // << mol.getNumConformers() << " confs" << std::endl;
   std::unique_ptr<RWMol> tmpMol;
   // Subsetting the molecule makes any bespoke atom radii, identified
   // by atom index, incorrect so stash them as atom properties.
   for (const auto &[idx, radius] : opts.atomRadii) {
-    auto atom = mol.getAtomWithIdx(idx);
+    const auto atom = mol.getAtomWithIdx(idx);
     atom->setProp<double>("BespokeRadius", radius);
   }
 
@@ -142,7 +139,6 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
     tmpMol.reset(new RWMol(mol));
   }
   d_smiles = MolToSmiles(*tmpMol);
-  // std::cout << "shape smiles : " << d_smiles << std::endl;
   std::vector<unsigned int> atOrder;
   tmpMol->getProp(common_properties::_smilesAtomOutputOrder, atOrder);
   tmpMol.reset(dynamic_cast<RWMol *>(MolOps::renumberAtoms(*tmpMol, atOrder)));
@@ -155,7 +151,7 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   d_normalizeds = boost::dynamic_bitset<>(tmpMol->getNumConformers());
   d_normalizationOKs = boost::dynamic_bitset<>(tmpMol->getNumConformers());
 
-  auto processConf = [&](ROMol &m, unsigned int ci, bool fa) {
+  auto processConf = [&](const ROMol &m, const unsigned int ci, const bool fa) {
     extractAtoms(m, ci, opts, fa);
     if (opts.useColors) {
       extractFeatures(m, ci, opts, fa);
@@ -176,11 +172,13 @@ ShapeInput::ShapeInput(const ROMol &mol, int confId,
   if (opts.shapePruneThreshold > 0.0 && tmpMol->getNumConformers() > 1) {
     pruneShapes(opts.shapePruneThreshold);
   }
-  sortShapesByVolumes();
+  if (opts.sortShapes) {
+    sortShapesByVolumes();
+  }
   d_activeShape = 0;
 }
 
-ShapeInput::ShapeInput(const ShapeInput &other, unsigned int shapeNum) {
+ShapeInput::ShapeInput(const ShapeInput &other, const unsigned int shapeNum) {
   PRECONDITION(
       shapeNum < other.getNumShapes(),
       "Invalid shape number in makeSingleShape : " + std::to_string(shapeNum) +
@@ -304,7 +302,7 @@ void ShapeInput::merge(ShapeInput &other) {
          const boost::dynamic_bitset<> &bs2) -> boost::dynamic_bitset<> {
     boost::dynamic_bitset<> bs1Copy(bs1);
     boost::dynamic_bitset<> bs2Copy(bs2);
-    size_t totalSize = bs1.size() + bs2.size();
+    const size_t totalSize = bs1.size() + bs2.size();
     bs1Copy.resize(totalSize);
     bs2Copy.resize(totalSize);
     bs1Copy <<= bs2.size();
@@ -325,7 +323,7 @@ void ShapeInput::merge(ShapeInput &other) {
   other.d_eigenValuess.clear();
 }
 
-void ShapeInput::setActiveShape(unsigned int newShape) {
+void ShapeInput::setActiveShape(const unsigned int newShape) {
   PRECONDITION(newShape < d_coords.size(),
                "Invalid shape number (" + std::to_string(newShape) + " vs " +
                    std::to_string(d_coords.size()) + ").");
@@ -334,13 +332,13 @@ void ShapeInput::setActiveShape(unsigned int newShape) {
   }
 }
 
-void ShapeInput::negateAlpha(unsigned int alphaNum) {
+void ShapeInput::negateAlpha(const unsigned int alphaNum) {
   PRECONDITION(alphaNum < d_alphas.size(), "Bad number for alpha negation");
   d_alphas[alphaNum] *= -1.0;
 }
 
 std::vector<RDGeom::Point3D> ShapeInput::getAtomPoints(
-    bool includeColors) const {
+    const bool includeColors) const {
   std::vector<RDGeom::Point3D> atomPoints;
   unsigned int numPoints = getNumAtoms();
   if (includeColors) {
@@ -355,14 +353,14 @@ std::vector<RDGeom::Point3D> ShapeInput::getAtomPoints(
   return atomPoints;
 }
 
-double ShapeInput::getShapeVolume(unsigned int shapeNum) const {
+double ShapeInput::getShapeVolume(const unsigned int shapeNum) const {
   PRECONDITION(shapeNum < d_coords.size(),
                "Invalid shape number (" + std::to_string(shapeNum) + " vs " +
                    std::to_string(d_coords.size()) + ").");
   return d_selfOverlapShapeVols[shapeNum];
 }
 
-double ShapeInput::getColorVolume(unsigned int shapeNum) const {
+double ShapeInput::getColorVolume(const unsigned int shapeNum) const {
   PRECONDITION(shapeNum < d_coords.size(),
                "Invalid shape number (" + std::to_string(shapeNum) + " vs " +
                    std::to_string(d_coords.size()) + ").");
@@ -398,8 +396,8 @@ const std::array<size_t, 6> &ShapeInput::calcExtremes() {
 }
 
 std::array<double, 3> ShapeInput::calcMomentsOfInertia(
-    bool includeColors) const {
-  auto tmpMol = shapeToMol(includeColors);
+    const bool includeColors) const {
+  const auto tmpMol = shapeToMol(includeColors);
   std::array<double, 3> eVals;
 #if RDK_HAS_EIGEN3
   Eigen::Matrix3d axes;
@@ -448,8 +446,8 @@ void ShapeInput::transformCoords(RDGeom::Transform3D &xform) {
   d_normalizationOKs[d_activeShape] = false;
 }
 
-std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors,
-                                              bool withBonds) const {
+std::unique_ptr<RWMol> ShapeInput::shapeToMol(const bool includeColors,
+                                              const bool withBonds) const {
   std::unique_ptr<RWMol> mol;
   if (withBonds) {
     // The SMILES string and the atom coordinates should be in the same
@@ -460,13 +458,13 @@ std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors,
   } else {
     mol.reset(new RWMol());
     for (unsigned int i = 0; i < getNumAtoms(); i++) {
-      Atom *atom = new Atom(6);
+      const auto atom = new Atom(6);
       mol->addAtom(atom, true, true);
     }
   }
   if (includeColors) {
     for (unsigned int i = 0; i < getNumFeatures(); i++) {
-      Atom *atom = new Atom(54);
+      const auto atom = new Atom(54);
       mol->addAtom(atom, true, true);
     }
   }
@@ -474,7 +472,7 @@ std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors,
   if (includeColors) {
     num += getNumFeatures();
   }
-  Conformer *conf = new Conformer(num);
+  const auto conf = new Conformer(num);
   const auto &shapeCds = getCoords();
   for (unsigned int i = 0; i < num; i++) {
     auto &pos = conf->getAtomPos(i);
@@ -489,7 +487,7 @@ std::unique_ptr<RWMol> ShapeInput::shapeToMol(bool includeColors,
 std::array<double, 3> ShapeInput::bestSimilarity(
     const ShapeInput &fitShape, unsigned int &bestThisShape,
     unsigned int &bestFitShape, RDGeom::Transform3D &bestXform,
-    double threshold, const ShapeOverlayOptions &overlayOpts) {
+    const double threshold, const ShapeOverlayOptions &overlayOpts) {
   bestThisShape = -1;
   bestFitShape = -1;
   std::array<double, 3> bestSim{-1.0, -1.0, -1.0};
@@ -498,18 +496,17 @@ std::array<double, 3> ShapeInput::bestSimilarity(
   }
 
   RDGeom::Transform3D xform;
-  auto currActiveShape = getActiveShape();
+  const auto currActiveShape = getActiveShape();
   for (size_t i = 0; i < getNumShapes(); i++) {
     setActiveShape(i);
     for (size_t j = 0; j < fitShape.getNumShapes(); j++) {
-      auto maxSim =
+      const auto maxSim =
           maxScore(getShapeVolume(), fitShape.getShapeVolume(j),
                    getColorVolume(), fitShape.getColorVolume(j), overlayOpts);
 
       if (maxSim > threshold) {
         ShapeInput singleFitShape(fitShape, j);
         auto scores = AlignShape(*this, singleFitShape, &xform, overlayOpts);
-
         if (scores[0] > bestSim[0]) {
           bestSim = scores;
           bestThisShape = i;
@@ -536,10 +533,10 @@ double ShapeInput::maxPossibleSimilarity(
   double maxSim = 0.0;
   for (unsigned int i = 0; i < getNumShapes(); i++) {
     for (unsigned int j = 0; j < fitShape.getNumShapes(); j++) {
-      auto sim = maxScore(fitShape.d_selfOverlapShapeVols[j],
-                          d_selfOverlapShapeVols[i],
-                          fitShape.d_selfOverlapColorVols[j],
-                          d_selfOverlapColorVols[i], overlayOpts);
+      const auto sim = maxScore(fitShape.d_selfOverlapShapeVols[j],
+                                d_selfOverlapShapeVols[i],
+                                fitShape.d_selfOverlapColorVols[j],
+                                d_selfOverlapColorVols[i], overlayOpts);
       if (sim > maxSim) {
         maxSim = sim;
       }
@@ -548,25 +545,26 @@ double ShapeInput::maxPossibleSimilarity(
   return maxSim;
 }
 
-void ShapeInput::pruneShapes(double simThreshold) {
+void ShapeInput::pruneShapes(const double simThreshold) {
   if (d_coords.size() < 2) {
     return;
   }
   class DistFunctor {
    public:
-    DistFunctor(ShapeInput &shapes) : d_shapes(shapes), d_shapesCp(shapes) {}
+    explicit DistFunctor(const ShapeInput &shapes)
+        : d_shapes(shapes), d_shapesCp(shapes) {}
     ~DistFunctor() = default;
-    double operator()(unsigned int i, unsigned int j) {
+    double operator()(const unsigned int i, const unsigned int j) {
       d_shapes.setActiveShape(i);
       d_shapesCp.setActiveShape(j);
-      auto scores = AlignShape(d_shapes, d_shapesCp);
+      const auto scores = AlignShape(d_shapes, d_shapesCp);
       // The picker works on distances.
       return 1.0 - scores[0];
     }
     ShapeInput d_shapes;
     ShapeInput d_shapesCp;
   };
-  RDPickers::LeaderPicker leaderPicker;
+  const RDPickers::LeaderPicker leaderPicker;
   DistFunctor distFunctor(*this);
   // The picker works on distances.
   auto picks = leaderPicker.lazyPick(distFunctor, d_coords.size(), 0,
@@ -581,12 +579,12 @@ void ShapeInput::pruneShapes(double simThreshold) {
 }
 
 namespace {
-double getStandardAtomRadius(unsigned int atomicNum) {
+double getStandardAtomRadius(const unsigned int atomicNum) {
   // Mostly they will be carbons, so just return that without lookup.
   if (atomicNum == 6) {
     return CARBON_RAD;
   }
-  if (auto rad = vdw_radii.find(static_cast<unsigned int>(atomicNum));
+  if (const auto rad = vdw_radii.find(static_cast<unsigned int>(atomicNum));
       rad != vdw_radii.end()) {
     return rad->second;
   }
@@ -595,11 +593,13 @@ double getStandardAtomRadius(unsigned int atomicNum) {
 }
 
 }  // namespace
-void ShapeInput::extractAtoms(const ROMol &mol, int confId,
-                              const ShapeInputOptions &opts, bool fillAlphas) {
-  if (!opts.allCarbonRadii) {
+void ShapeInput::extractAtoms(const ROMol &mol, const int confId,
+                              const ShapeInputOptions &shapeOpts,
+                              const bool fillAlphas) {
+  if (!shapeOpts.allCarbonRadii) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(
-        !opts.atomSubset.empty() ? opts.atomSubset.size() : mol.getNumAtoms()));
+        !shapeOpts.atomSubset.empty() ? shapeOpts.atomSubset.size()
+                                      : mol.getNumAtoms()));
   }
   auto conf = mol.getConformer(confId);
   std::vector<double> theseCoords;
@@ -612,7 +612,7 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
     // isotope number 1.
     if (atom->getAtomicNum() != 1 ||
         (atom->getAtomicNum() == 1 && atom->getIsotope() > 1)) {
-      if (!opts.includeDummies && !atom->getAtomicNum()) {
+      if (!shapeOpts.includeDummies && !atom->getAtomicNum()) {
         continue;
       }
       const auto atIdx = atom->getIdx();
@@ -621,12 +621,12 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
       theseCoords.push_back(pos.y);
       theseCoords.push_back(pos.z);
       if (fillAlphas) {
-        if (opts.allCarbonRadii && !d_carbonRadii) {
+        if (shapeOpts.allCarbonRadii && !d_carbonRadii) {
           d_alphas.push_back(KAPPA / (CARBON_RAD * CARBON_RAD));
         } else {
           double rad = 0.0;
-          if (opts.atomRadii.empty()) {
-            if ((opts.allCarbonRadii && atom->getAtomicNum()) ||
+          if (shapeOpts.atomRadii.empty()) {
+            if ((shapeOpts.allCarbonRadii && atom->getAtomicNum()) ||
                 atom->getAtomicNum() == 6) {
               (*d_carbonRadii)[atIdx] = true;
             }
@@ -636,7 +636,7 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
               rad = atom->getProp<double>("BespokeRadius");
             } else {
               rad = getStandardAtomRadius(atom->getAtomicNum());
-              if ((opts.allCarbonRadii && atom->getAtomicNum()) ||
+              if ((shapeOpts.allCarbonRadii && atom->getAtomicNum()) ||
                   atom->getAtomicNum() == 6) {
                 (*d_carbonRadii)[atIdx] = true;
               }
@@ -669,17 +669,16 @@ void ShapeInput::extractAtoms(const ROMol &mol, int confId,
 namespace {
 class ss_matcher {
  public:
-  ss_matcher(const std::string &pattern) : m_pattern(pattern) {
-    m_needCopies = (pattern.find_first_of("$") != std::string::npos);
-    RWMol *p = SmartsToMol(pattern);
-    m_matcher = p;
+  explicit ss_matcher(const std::string &pattern) : m_pattern(pattern) {
+    m_needCopies = pattern.find_first_of("$") != std::string::npos;
+    m_matcher = SmartsToMol(pattern);
     POSTCONDITION(m_matcher, "no matcher");
   };
   const ROMol *getMatcher() const { return m_matcher; };
   ~ss_matcher() { delete m_matcher; };
 
  private:
-  ss_matcher() : m_pattern("") {};
+  ss_matcher() = default;
   std::string m_pattern;
   bool m_needCopies{false};
   const ROMol *m_matcher{nullptr};
@@ -740,18 +739,18 @@ std::vector<std::vector<const ROMol *>> *getPh4Patterns() {
 // for now.  Other options to be added later.  This should be working on
 // the parent molecule, but only extracting features that are due to
 // atoms entirely within any atom subset.
-void ShapeInput::extractFeatures(const ROMol &mol, unsigned int confId,
-                                 const ShapeInputOptions &opts,
-                                 bool fillAlphas) {
+void ShapeInput::extractFeatures(const ROMol &mol, const unsigned int confId,
+                                 const ShapeInputOptions &shapeOpts,
+                                 const bool fillAlphas) {
   std::vector<CustomFeature> feats;
-  if (opts.customFeatures.empty()) {
+  if (shapeOpts.customFeatures.empty()) {
     findFeatures(mol, confId, feats);
   } else {
-    PRECONDITION(confId < opts.customFeatures.size(),
+    PRECONDITION(confId < shapeOpts.customFeatures.size(),
                  "Conformer number " + std::to_string(confId) +
                      " too large for custom features size " +
-                     std::to_string(opts.customFeatures.size()));
-    feats = opts.customFeatures[confId];
+                     std::to_string(shapeOpts.customFeatures.size()));
+    feats = shapeOpts.customFeatures[confId];
   }
   // Just copy them directly except that the last is a radius, so convert
   // to alpha.
@@ -761,7 +760,7 @@ void ShapeInput::extractFeatures(const ROMol &mol, unsigned int confId,
     d_coords[d_activeShape].push_back(pos.y);
     d_coords[d_activeShape].push_back(pos.z);
     if (fillAlphas) {
-      auto rad = f.rad;
+      const auto rad = f.rad;
       d_alphas.push_back(KAPPA / (rad * rad));
       d_types.push_back(f.type);
       d_numFeats++;
@@ -782,7 +781,7 @@ void ShapeInput::calcNormalization() {
   // with which to calculate the canonical transformation.  Doesn't ever
   // use the input molecule in case the shape was built from a subset of
   // atoms in that molecule.
-  auto tmpMol = shapeToMol(false, false);
+  const auto tmpMol = shapeToMol(false, false);
   std::unique_ptr<RDGeom::Transform3D> canonXform(
       MolTransforms::computeCanonicalTransform(
           tmpMol->getConformer(), nullptr, false, true,
@@ -862,7 +861,7 @@ void ShapeInput::selectConformations(const std::vector<int> &picks) {
   std::vector<std::array<double, 3>> newEigenValuess;
   newEigenValuess.reserve(picks.size());
   unsigned int i = 0;
-  for (auto p : picks) {
+  for (const auto p : picks) {
     newCoords.push_back(std::move(d_coords[p]));
     newShapeVolumes.push_back(d_selfOverlapShapeVols[p]);
     newColorVolumes.push_back(d_selfOverlapColorVols[p]);
@@ -926,12 +925,11 @@ void ShapeInput::sortShapesByVolumes() {
   selectConformations(picks);
 }
 
-void findFeatures(const ROMol &mol, int confId,
+void findFeatures(const ROMol &mol, const int confId,
                   std::vector<CustomFeature> &features,
                   const std::vector<unsigned int> &atomSubset) {
   unsigned pattIdx = 1;
-  const auto pattVects = getPh4Patterns();
-  for (const auto &patts : *pattVects) {
+  for (const auto &patts : *getPh4Patterns()) {
     for (const auto &patt : patts) {
       std::vector<MatchVectType> matches;
       // Once, recursive queries weren't thread safe but Greg assures
@@ -964,7 +962,7 @@ void findFeatures(const ROMol &mol, int confId,
   }
 }
 
-RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,
+RDGeom::Point3D computeFeaturePos(const ROMol &mol, const int confId,
                                   const std::vector<unsigned int> &ats) {
   RDGeom::Point3D featPos;
   auto &conf = mol.getConformer(confId);
@@ -976,7 +974,7 @@ RDGeom::Point3D computeFeaturePos(const ROMol &mol, int confId,
 }
 
 void applyTransformToShape(std::vector<double> &shape,
-                           RDGeom::Transform3D &xform) {
+                           const RDGeom::Transform3D &xform) {
   for (size_t i = 0; i < shape.size(); i += 3) {
     RDGeom::Point3D pos{shape[i], shape[i + 1], shape[i + 2]};
     xform.TransformPoint(pos);
@@ -987,7 +985,8 @@ void applyTransformToShape(std::vector<double> &shape,
 }
 
 void applyTransformToShape(const double *inShape, double *outShape,
-                           size_t numPoints, RDGeom::Transform3D &xform) {
+                           const size_t numPoints,
+                           const RDGeom::Transform3D &xform) {
   for (size_t i = 0; i < 3 * numPoints; i += 3) {
     RDGeom::Point3D pos{inShape[i], inShape[i + 1], inShape[i + 2]};
     xform.TransformPoint(pos);
@@ -1006,7 +1005,8 @@ void translateShape(std::vector<double> &shape,
   }
 }
 
-void translateShape(const double *inShape, double *outShape, size_t numPoints,
+void translateShape(const double *inShape, double *outShape,
+                    const size_t numPoints,
                     const RDGeom::Point3D &translation) {
   for (size_t i = 0; i < 3 * numPoints; i += 3) {
     outShape[i] = inShape[i] + translation.x;
@@ -1016,23 +1016,23 @@ void translateShape(const double *inShape, double *outShape, size_t numPoints,
 }
 
 // Maximum possible score of the 2 shape (v[12]) and color (c[12]) volumes
-double maxScore(double v1, double v2, double c1, double c2,
-                const ShapeOverlayOptions &overlayOpts) {
+double maxScore(const double v1, const double v2, const double c1,
+                const double c2, const ShapeOverlayOptions &overlayOpts) {
   // We're dealing with a Tversky score
   // s = O / (A * (R - O) + B * (F - O) + O)
   // There are 2 cases to handle, where v1 < v2 in which case the max overlap
   // is v1, and the opposite.
-  auto maxPart = [](double p1, double p2,
-                    const ShapeOverlayOptions &overlayOpts) -> double {
+  auto maxPart = [](const double p1, const double p2,
+                    const ShapeOverlayOptions &ovlyOpts) -> double {
     if (p1 < p2) {
-      return p1 / (overlayOpts.simBeta * (p2 - p1) + p1);
+      return p1 / (ovlyOpts.simBeta * (p2 - p1) + p1);
     }
-    return p2 / (overlayOpts.simAlpha * (p1 - p2) + p2);
+    return p2 / (ovlyOpts.simAlpha * (p1 - p2) + p2);
   };
-  auto maxSt = maxPart(v1, v2, overlayOpts);
-  auto maxCt = maxPart(c1, c2, overlayOpts);
+  const auto maxSt = maxPart(v1, v2, overlayOpts);
+  const auto maxCt = maxPart(c1, c2, overlayOpts);
   return maxSt * (1.0 - overlayOpts.optParam) + maxCt * overlayOpts.optParam;
-};
+}
 
 }  // namespace GaussianShape
 }  // namespace RDKit
