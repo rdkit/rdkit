@@ -76,13 +76,13 @@ TEST_CASE("ForceField gradient validation: MMFF suite", "[ffvalidation]") {
   SDMolSupplier suppl(path + sdfName, false, false);
 
   for (unsigned int i = 0; i < suppl.length(); ++i) {
-    std::unique_ptr<ROMol> mol(suppl[i]);
+    std::unique_ptr<RWMol> mol(dynamic_cast<RWMol *>(suppl[i]));
     if (!mol) {
       continue;
     }
     CAPTURE(ffName, sdfName, i);
 
-    auto ff = buildFF(ffName, static_cast<RWMol &>(*mol));
+    auto ff = buildFF(ffName, *mol);
     if (!ff) {
       continue;
     }
