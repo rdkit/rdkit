@@ -1693,5 +1693,42 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   }
 }
 
+std::unique_ptr<ForceFields::ForceField> getETKDGForceField(
+    ROMol &mol, const EmbedParameters &params, int confId) {
+  auto &conf = mol.getConformer(confId);
+  unsigned int nAtoms = mol.getNumAtoms();
+
+  ForceFields::CrystalFF::CrystalFFDetails etkdgDetails;
+  EmbeddingOps::initETKDG(&mol, params, etkdgDetails);
+
+  DistGeom::BoundsMatPtr mmat(new DistGeom::BoundsMatrix(nAtoms));
+  initBoundsMat(mmat);
+  if (!EmbeddingOps::setupInitialBoundsMatrix(&mol, mmat, nullptr, params,
+                                              etkdgDetails)) {
+    return nullptr;
+  }
+
+  RDGeom::Point3DPtrVect positions3D(nAtoms);
+  for (unsigned int i = 0; i < nAtoms; ++i) {
+    positions3D[i] = &conf.getAtomPos(i);
+  }
+
+  std::unique_ptr<ForceFields::ForceField> field;
+  if (params.useBasicKnowledge) {
+    if (params.CPCI != nullptr) {
+      field.reset(DistGeom::construct3DForceField(*mmat, positions3D,
+                                                  etkdgDetails, *params.CPCI));
+    } else {
+      field.reset(
+          DistGeom::construct3DForceField(*mmat, positions3D, etkdgDetails));
+    }
+  } else {
+    field.reset(
+        DistGeom::constructPlain3DForceField(*mmat, positions3D, etkdgDetails));
+  }
+
+  return field;
+}
+
 }  // end of namespace DGeomHelpers
 }  // end of namespace RDKit

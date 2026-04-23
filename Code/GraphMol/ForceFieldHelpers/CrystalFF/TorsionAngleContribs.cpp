@@ -113,7 +113,7 @@ void TorsionAngleContribs::getGrad(double *pos, double *grad) const {
     RDGeom::Point3D t[2] = {r[0].crossProduct(r[1]), r[2].crossProduct(r[3])};
     double d[2] = {t[0].length(), t[1].length()};
     if (MMFF::isDoubleZero(d[0]) || MMFF::isDoubleZero(d[1])) {
-      return;
+      continue;
     }
     t[0] /= d[0];
     t[1] /= d[1];
@@ -136,9 +136,9 @@ void TorsionAngleContribs::getGrad(double *pos, double *grad) const {
              (8.0 * cosPhi3 * sinPhi - 4.0 * cosPhi * sinPhi) -
          5.0 * contrib.forceConstants[4] * contrib.signs[4] *
              (16.0 * cosPhi4 * sinPhi - 12.0 * cosPhi2 * sinPhi + sinPhi) -
-         6.0 * contrib.forceConstants[4] * contrib.signs[4] *
+         6.0 * contrib.forceConstants[5] * contrib.signs[5] *
              (32.0 * cosPhi5 * sinPhi - 32.0 * cosPhi3 * sinPhi +
-              6.0 * sinPhi));
+              6.0 * cosPhi * sinPhi));
 
     // FIX: use a tolerance here
     // this is hacky, but it's per the
