@@ -66,6 +66,47 @@ RDKIT_RDBOOST_EXPORT void throw_runtime_error(
 RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 #endif
 
+//! NOTE: this returns a nullptr if obj is None or empty
+template <typename T>
+std::unique_ptr<std::vector<T>> pythonObjectToVect(const nb::object &obj,
+                                                   T maxV) {
+  std::unique_ptr<std::vector<T>> res;
+  if (obj) {
+    res.reset(new std::vector<T>);
+
+    auto check_max = [&maxV](const T &v) {
+      if (v >= maxV) {
+        throw_value_error("list element larger than allowed value");
+      }
+      return true;
+    };
+    std::copy_if(obj.begin(), obj.end(), std::back_inserter(*res), check_max);
+  }
+  return res;
+}
+//! NOTE: this returns a nullptr if obj is None or empty
+template <typename T>
+std::unique_ptr<std::vector<T>> pythonObjectToVect(const nb::object &obj) {
+  std::unique_ptr<std::vector<T>> res;
+  if (obj) {
+    res.reset(new std::vector<T>());
+    std::transform(obj.begin(), obj.end(), std::back_inserter(*res),
+                   [](const auto &v) { return nb::cast<T>(v); });
+  }
+  return res;
+}
+//! NOTE: \c res will be cleared if obj is None or empty
+template <typename T>
+void pythonObjectToVect(const nb::object &obj, std::vector<T> &res) {
+  if (obj) {
+    res.clear();
+    std::transform(obj.begin(), obj.end(), std::back_inserter(res),
+                   [](const auto &v) { return nb::cast<T>(v); });
+  } else {
+    res.clear();
+  }
+}
+
 #if 0
 
 //! \brief Checks whether there is already a registered Python converter for a
@@ -129,46 +170,6 @@ void RegisterListConverter(bool noproxy = false) {
   }
 }
 
-//! NOTE: this returns a nullptr if obj is None or empty
-template <typename T>
-std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj,
-                                                   T maxV) {
-  std::unique_ptr<std::vector<T>> res;
-  if (obj) {
-    res.reset(new std::vector<T>);
-
-    auto check_max = [&maxV](const T &v) {
-      if (v >= maxV) {
-        throw_value_error("list element larger than allowed value");
-      }
-      return true;
-    };
-    std::copy_if(python::stl_input_iterator<T>(obj),
-                 python::stl_input_iterator<T>(), std::back_inserter(*res),
-                 check_max);
-  }
-  return res;
-}
-//! NOTE: this returns a nullptr if obj is None or empty
-template <typename T>
-std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj) {
-  std::unique_ptr<std::vector<T>> res;
-  if (obj) {
-    res.reset(new std::vector<T>(python::stl_input_iterator<T>(obj),
-                                 python::stl_input_iterator<T>()));
-  }
-  return res;
-}
-//! NOTE: \c res will be cleared if obj is None or empty
-template <typename T>
-void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
-  if (obj) {
-    res.assign(python::stl_input_iterator<T>(obj),
-               python::stl_input_iterator<T>());
-  } else {
-    res.clear();
-  }
-}
 
 RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(
     const python::object &obj, boost::dynamic_bitset<>::size_type maxV);
