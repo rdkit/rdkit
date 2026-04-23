@@ -34,18 +34,17 @@ void addBonds(const ROMol &mol, const AtomicParamVect &params,
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
   PRECONDITION(field, "bad forcefield");
 
-  for (ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
-       bi++) {
-    int idx1 = (*bi)->getBeginAtomIdx();
-    int idx2 = (*bi)->getEndAtomIdx();
+  for (const auto bond : mol.bonds()) {
+    int idx1 = bond->getBeginAtomIdx();
+    int idx2 = bond->getEndAtomIdx();
 
     // FIX: recognize amide bonds here.
 
     if (params[idx1] && params[idx2]) {
       BondStretchContrib *contrib;
-      contrib = new BondStretchContrib(field, idx1, idx2,
-                                       (*bi)->getBondTypeAsDouble(),
-                                       params[idx1], params[idx2]);
+      contrib =
+          new BondStretchContrib(field, idx1, idx2, bond->getBondTypeAsDouble(),
+                                 params[idx1], params[idx2]);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
@@ -96,19 +95,21 @@ boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
   unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
   boost::shared_array<std::uint8_t> res(new std::uint8_t[nTwoBitCells]);
   std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
-  for (ROMol::ConstBondIterator bondi = mol.beginBonds();
-       bondi != mol.endBonds(); ++bondi) {
-    setTwoBitCell(res,
-                  twoBitCellPos(nAtoms, (*bondi)->getBeginAtomIdx(),
-                                (*bondi)->getEndAtomIdx()),
-                  RELATION_1_2);
-    unsigned int bondiBeginAtomIdx = (*bondi)->getBeginAtomIdx();
-    unsigned int bondiEndAtomIdx = (*bondi)->getEndAtomIdx();
-    for (ROMol::ConstBondIterator bondj = bondi; ++bondj != mol.endBonds();) {
+  for (const auto bondi : mol.bonds()) {
+    setTwoBitCell(
+        res,
+        twoBitCellPos(nAtoms, bondi->getBeginAtomIdx(), bondi->getEndAtomIdx()),
+        RELATION_1_2);
+    unsigned int bondiBeginAtomIdx = bondi->getBeginAtomIdx();
+    unsigned int bondiEndAtomIdx = bondi->getEndAtomIdx();
+    for (const auto bondj : mol.bonds()) {
+      if (bondj == bondi) {
+        continue;
+      }
       int idx1 = -1;
       int idx3 = -1;
-      unsigned int bondjBeginAtomIdx = (*bondj)->getBeginAtomIdx();
-      unsigned int bondjEndAtomIdx = (*bondj)->getEndAtomIdx();
+      unsigned int bondjBeginAtomIdx = bondj->getBeginAtomIdx();
+      unsigned int bondjEndAtomIdx = bondj->getEndAtomIdx();
       if (bondiBeginAtomIdx == bondjBeginAtomIdx) {
         idx1 = bondiEndAtomIdx;
         idx3 = bondjEndAtomIdx;
