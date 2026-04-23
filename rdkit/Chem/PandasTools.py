@@ -240,7 +240,7 @@ else:
 
   def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
               isomericSmiles=True, smilesName=None, embedProps=False, removeHs=True,
-              strictParsing=True, sanitize=True):
+              strictParsing=True, sanitize=True, autoConvertStrings=False):
     '''Read file in SDF format and return as Pandas data frame.
       If embedProps=True all properties also get embedded in Mol objects in the molecule column.
       If molColName=None molecules would not be present in resulting DataFrame (only properties
@@ -268,7 +268,7 @@ else:
                                   strictParsing=strictParsing)):
       if mol is None:
         continue
-      row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
+      row = mol.GetPropsAsDict(autoConvertStrings=autoConvertStrings)
       if molColName is not None and not embedProps:
         for prop in mol.GetPropNames():
           mol.ClearProp(prop)
