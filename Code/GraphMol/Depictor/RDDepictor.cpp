@@ -421,7 +421,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
 
   // first find all the rings
   bool includeDativeBonds = true;
-  RDKit::MolOps::symmetrizeSSSR(mol, arings, includeDativeBonds);
+  RDKit::MolOps::findSSSR(mol, arings, includeDativeBonds);
 
   // do stereochemistry
   RDKit::MolOps::assignStereochemistry(mol, false);
