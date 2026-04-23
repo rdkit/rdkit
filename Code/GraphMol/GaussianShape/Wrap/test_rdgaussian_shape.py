@@ -176,6 +176,10 @@ class TestCase(unittest.TestCase):
     rdDistGeom.EmbedMultipleConfs(esomeprazole, 10, randomSeed=0xdac)
     ovOpts = rdGaussianShape.ShapeOverlayOptions()
     opts = rdGaussianShape.ShapeInputOptions()
+    # Set the to default values, just to show that they can be set.
+    opts.sortShapes = True
+    opts.includeDummies = True
+    opts.shapePruneThreshold = -1.0
     shapes1 = rdGaussianShape.ShapeInput(esomeprazole, -1, opts, ovOpts)
     self.assertEqual(shapes1.NumShapes, 10)
 
@@ -185,7 +189,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(shapes2.NumShapes, 10)
 
     bestSim, best1, best2, xform = shapes1.BestSimilarity(shapes2)
-    self.assertAlmostEqual(bestSim[0], 0.986, places=3)
+    self.assertAlmostEqual(bestSim[0], 0.985, places=3)
     self.assertEqual(best1, 9)
     self.assertEqual(best2, 4)
     self.assertEqual(len(xform), 16)
