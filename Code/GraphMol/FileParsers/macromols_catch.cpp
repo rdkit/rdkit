@@ -323,7 +323,7 @@ class ScsrMolTest {
     auto macroMol = MACROMolFromSCSRFile(fName, pp, scsrBaseHbondOptions);
 
     MolToMACROParams molToMACROMolParams;
-    auto outMacroMol = RDKit::MolToMACROMol(*(mol.get()), *(macroMol.get()),
+    auto outMacroMol = RDKit::MolToMACROMol(*(mol.get()), *(macroMol->getTemplateLibrary()),
                                             molToMACROMolParams);
 
     CHECK(outMacroMol != nullptr);

@@ -778,7 +778,7 @@ bool isTemplateMatchAHit(
 }
 
 std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
-    const ROMol &mol, RDKit::MACROMol &templates,
+    const ROMol &mol, RDKit::MACROMolTemplateLib &templates,
     MolToMACROParams molToMACROMolParams) {
   auto res = std::unique_ptr<MACROMol>(new MACROMol());
   // auto mol = std::unique_ptr<RWMol>(new RWMol());

@@ -102,16 +102,21 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTem
 
     unsigned int getTemplateCount() const { return this->size(); }
 
-    RDKit::MACROMolTemplate *getTemplate(unsigned int index) {
+    RDKit::MACROMolTemplate *getTemplate(unsigned int index) const {
       return this->at(index);
     }
     
-    unsigned int getMACROMolTemplateIndex(std::string templateClass, std::string templateName) {
+    unsigned int getMACROMolTemplateIndex(std::string templateClass, std::string templateName) const {
       MACROMolTemplateKey key(std::pair(templateClass, templateName));
       if ( ! d_keyToIndex.contains(key)) {
          throw FileParseException("Template for macro atom not found");
       }
-      return d_keyToIndex[key];
+      return d_keyToIndex.at(key);
+    }
+
+    bool libContains(std::string templateClass, std::string templateName) const {
+      MACROMolTemplateKey key(std::pair(templateClass, templateName));
+      return d_keyToIndex.contains(key);
     }
   };
 
@@ -167,7 +172,7 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
 
   unsigned int getTemplateCount() const { return p_templateLibrary.getTemplateCount(); }
 
-  RDKit::MACROMolTemplate *getTemplate(unsigned int index) {
+  RDKit::MACROMolTemplate *getTemplate(unsigned int index) const{
     return p_templateLibrary.getTemplate(index);
   };
 
