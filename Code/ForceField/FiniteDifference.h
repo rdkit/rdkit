@@ -24,19 +24,6 @@ class ForceField;
 RDKIT_FORCEFIELD_EXPORT double calcFiniteDifference(ForceField &ff,
                                                     double stepSize = 1e-5);
 
-class ForceFieldContrib;
-
-/// \brief Per-contribution finite-difference check.
-///
-/// \param contrib   a single force field contribution
-/// \param ff        the owning ForceField (must be initialized)
-/// \param stepSize  the displacement used for the central difference
-///
-/// \return the maximum absolute deviation for this contribution
-RDKIT_FORCEFIELD_EXPORT double calcContribFiniteDifference(
-    const ForceFieldContrib &contrib, ForceField &ff,
-    double stepSize = 1e-5);
-
 }  // namespace ForceFields
 
 #endif

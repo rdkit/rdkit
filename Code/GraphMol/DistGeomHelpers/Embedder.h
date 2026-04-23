@@ -474,6 +474,10 @@ RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv3;
 //! (10.1021/acs.jcim.0c00025) - the small ring part
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srETKDGv3;
 
+/// Exposed for testing only. ETKDG is not a standalone force field — it is
+/// an internal optimization stage of the distance geometry embedding pipeline.
+namespace testing {
+
 //! Constructs the ETKDG 3D force field for a molecule with an existing
 //! conformer, using the same pipeline as EmbedMolecule's minimization stage.
 /*!
@@ -486,6 +490,8 @@ RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srETKDGv3;
 RDKIT_DISTGEOMHELPERS_EXPORT std::unique_ptr<ForceFields::ForceField>
 getETKDGForceField(ROMol &mol, const EmbedParameters &params = ETKDGv3,
                    int confId = -1);
+
+}  // namespace testing
 
 }  // namespace DGeomHelpers
 }  // namespace RDKit

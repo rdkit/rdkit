@@ -1693,6 +1693,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   }
 }
 
+namespace testing {
 std::unique_ptr<ForceFields::ForceField> getETKDGForceField(
     ROMol &mol, const EmbedParameters &params, int confId) {
   auto &conf = mol.getConformer(confId);
@@ -1729,6 +1730,7 @@ std::unique_ptr<ForceFields::ForceField> getETKDGForceField(
 
   return field;
 }
+}  // namespace testing
 
 }  // end of namespace DGeomHelpers
 }  // end of namespace RDKit

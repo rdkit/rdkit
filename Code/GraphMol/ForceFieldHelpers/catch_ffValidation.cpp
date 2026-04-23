@@ -27,7 +27,7 @@ using namespace RDKit;
 
 namespace {
 
-constexpr double FD_TOLERANCE = 1e-3;
+constexpr double FD_TOLERANCE = 1e-4;
 
 std::unique_ptr<ForceFields::ForceField> buildFF(const std::string &ffName,
                                                  RWMol &mol) {
@@ -51,7 +51,8 @@ std::unique_ptr<ForceFields::ForceField> buildFF(const std::string &ffName,
   }
   if (ffName == "ETKDG") {
     MolOps::sanitizeMol(mol);
-    return DGeomHelpers::getETKDGForceField(mol, DGeomHelpers::ETKDGv3);
+    return DGeomHelpers::testing::getETKDGForceField(mol,
+                                                     DGeomHelpers::ETKDGv3);
   }
   return nullptr;
 }
@@ -59,20 +60,19 @@ std::unique_ptr<ForceFields::ForceField> buildFF(const std::string &ffName,
 }  // namespace
 
 TEST_CASE("ForceField gradient validation: MMFF suite", "[ffvalidation]") {
-  auto [ffName, sdfName] = GENERATE(table<std::string, std::string>(
-      {{"UFF", "MMFF94_dative.sdf"},
-       {"UFF", "MMFF94_hypervalent.sdf"},
-       {"MMFF94", "MMFF94_dative.sdf"},
-       {"MMFF94", "MMFF94_hypervalent.sdf"},
-       {"MMFF94s", "MMFF94s_dative.sdf"},
-       {"MMFF94s", "MMFF94s_hypervalent.sdf"},
-       {"ETKDG", "MMFF94_dative.sdf"},
-       {"ETKDG", "MMFF94_hypervalent.sdf"}}));
+  auto [ffName, sdfName] = GENERATE(
+      table<std::string, std::string>({{"UFF", "MMFF94_dative.sdf"},
+                                       {"UFF", "MMFF94_hypervalent.sdf"},
+                                       {"MMFF94", "MMFF94_dative.sdf"},
+                                       {"MMFF94", "MMFF94_hypervalent.sdf"},
+                                       {"MMFF94s", "MMFF94s_dative.sdf"},
+                                       {"MMFF94s", "MMFF94s_hypervalent.sdf"},
+                                       {"ETKDG", "MMFF94_dative.sdf"},
+                                       {"ETKDG", "MMFF94_hypervalent.sdf"}}));
 
   const char *rdbase = getenv("RDBASE");
   REQUIRE(rdbase);
-  std::string path =
-      std::string(rdbase) + "/Code/ForceField/MMFF/test_data/";
+  std::string path = std::string(rdbase) + "/Code/ForceField/MMFF/test_data/";
   SDMolSupplier suppl(path + sdfName, false, false);
 
   for (unsigned int i = 0; i < suppl.length(); ++i) {

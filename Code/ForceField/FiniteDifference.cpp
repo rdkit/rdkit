@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include "FiniteDifference.h"
-#include "Contrib.h"
 #include "ForceField.h"
 
 #include <algorithm>
@@ -17,28 +16,20 @@
 
 namespace ForceFields {
 
-namespace {
-void scatterPositions(const ForceField &ff, std::vector<double> &pos) {
+double calcFiniteDifference(ForceField &ff, double stepSize) {
   const unsigned int dim = ff.dimension();
   const unsigned int nPoints = ff.numPoints();
-  pos.resize(dim * nPoints);
+  const unsigned int nCoords = dim * nPoints;
+
+  std::vector<double> analyticGrad(nCoords, 0.0);
+  ff.calcGrad(analyticGrad.data());
+
+  std::vector<double> pos(nCoords);
   for (unsigned int i = 0; i < nPoints; ++i) {
     for (unsigned int d = 0; d < dim; ++d) {
       pos[i * dim + d] = (*ff.positions()[i])[d];
     }
   }
-}
-}  // namespace
-
-double calcFiniteDifference(ForceField &ff, double stepSize) {
-  const unsigned int dim = ff.dimension();
-  const unsigned int nCoords = dim * ff.numPoints();
-
-  std::vector<double> analyticGrad(nCoords, 0.0);
-  ff.calcGrad(analyticGrad.data());
-
-  std::vector<double> pos;
-  scatterPositions(ff, pos);
 
   double maxDelta = 0.0;
   for (unsigned int i = 0; i < nCoords; ++i) {
@@ -49,38 +40,6 @@ double calcFiniteDifference(ForceField &ff, double stepSize) {
 
     pos[i] = orig - stepSize;
     double eMinus = ff.calcEnergy(pos.data());
-
-    pos[i] = orig;
-
-    double fdGrad = (ePlus - eMinus) / (2.0 * stepSize);
-    maxDelta = std::max(maxDelta, std::abs(fdGrad - analyticGrad[i]));
-  }
-
-  return maxDelta;
-}
-
-double calcContribFiniteDifference(const ForceFieldContrib &contrib,
-                                   ForceField &ff, double stepSize) {
-  const unsigned int dim = ff.dimension();
-  const unsigned int nCoords = dim * ff.numPoints();
-
-  std::vector<double> pos;
-  scatterPositions(ff, pos);
-
-  std::vector<double> analyticGrad(nCoords, 0.0);
-  contrib.getGrad(pos.data(), analyticGrad.data());
-
-  double maxDelta = 0.0;
-  for (unsigned int i = 0; i < nCoords; ++i) {
-    double orig = pos[i];
-
-    pos[i] = orig + stepSize;
-    ff.calcEnergy(pos.data());
-    double ePlus = contrib.getEnergy(pos.data());
-
-    pos[i] = orig - stepSize;
-    ff.calcEnergy(pos.data());
-    double eMinus = contrib.getEnergy(pos.data());
 
     pos[i] = orig;
 
