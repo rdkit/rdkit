@@ -230,7 +230,7 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
       }
       vol += vij;
       if (gradients) {
-        auto r = 2.0 * vij * mult;
+        const auto r = 2.0 * vij * mult;
         // Use the gradient converters to calculate the gradients in quaternion
         // space.
         // The zeroth gradient is never used, so don't waste time calculating
@@ -276,7 +276,8 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
     const auto aType = refTypes[i_idx];
     for (int j = 0, j_idx = 0, k = 0; j < numFitPts * 3;
          j += 3, j_idx++, k += 12) {
-      if (const auto bType = fitTypes[j_idx]; aType != bType) {
+      const auto bType = fitTypes[j_idx];
+      if (aType != bType) {
         continue;
       }
       const auto dx = ref[i] - fit[j];
@@ -420,7 +421,8 @@ double oneStep(const double grad, const double stepSize, const double quatTrans,
     step = (quatTrans * fabs(oldGrad) + oldQuatTrans * fabs(grad)) /
                (fabs(oldGrad) + fabs(grad) + fabs(grad)) -
            quatTrans;
-    if (const double newStep = stepSize * grad; fabs(step) > fabs(newStep)) {
+    const double newStep = stepSize * grad;
+    if (fabs(step) > fabs(newStep)) {
       // This is definitely what the PubChem code says!  I read it as keeping
       // the sign of step, but the value of newStep.
       step *= fabs(newStep / step);
@@ -512,7 +514,8 @@ double oneReduceStep(const double grad, const double oldGrad,
     step = (quatTrans * fabs(oldGrad) + oldQuatTrans * fabs(grad)) /
                (fabs(oldGrad) + fabs(grad)) -
            quatTrans;
-    if (const double newStep = stepSize * grad; fabs(step) > fabs(newStep)) {
+    const double newStep = stepSize * grad;
+    if (fabs(step) > fabs(newStep)) {
       step *= fabs(newStep / step);
     }
   } else if (fabs(grad) <= 1.0) {

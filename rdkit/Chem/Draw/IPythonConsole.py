@@ -75,7 +75,7 @@ None'''
     # we can only provide those with "smaller" molecules
     try:
       mb = Chem.MolToMolBlock(mol, confId=confId)
-    except Chem.AtomKekulizeException:
+    except (Chem.AtomKekulizeException, Chem.KekulizeException):
       # The bonding is likely to be wrong, but it would be good
       # to see something.
       p = Chem.rdmolfiles.MolWriterParams()

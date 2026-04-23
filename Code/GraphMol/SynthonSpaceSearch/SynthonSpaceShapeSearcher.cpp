@@ -15,6 +15,8 @@
 #include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/GaussianShape/GaussianShape.h>
+#include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
+#include <GraphMol/GaussianShape/SingleConformerAlignment.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h>
@@ -868,36 +870,104 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
 }
 
 namespace {
-// Update the hit molecule to the overlay and score represented by
-// xform and sim.
-void finaliseHit(GaussianShape::ShapeInput &hitShapes,
+double calcExcludedVolume(const ROMol &mol,
+                          const GaussianShape::ShapeInput &excVol,
+                          const GaussianShape::ShapeOverlayOptions &ovlyOpts) {
+  GaussianShape::ShapeInput hitShape(
+      mol, -1, GaussianShape::ShapeInputOptions(), ovlyOpts);
+  std::array<double, 2> excVols;
+  GaussianShape::ScoreShape(hitShape, excVol, ovlyOpts, &excVols);
+  return excVols[0] + excVols[1];
+}
+
+unsigned int calcNumClashes(const ROMol &mol,
+                            const GaussianShape::ShapeInput &excVol) {
+  static constexpr double doubleCsq =
+      4 * GaussianShape::CARBON_RAD * GaussianShape::CARBON_RAD;
+  const auto shpCoords = excVol.getCoords();
+  boost::dynamic_bitset<> clashAtoms(mol.getNumAtoms());
+  for (const auto atom : mol.atoms()) {
+    auto aPos = mol.getConformer().getAtomPos(atom->getIdx());
+    for (unsigned int i = 0; i < shpCoords.size(); i += 3) {
+      const RDGeom::Point3D sPos{shpCoords[i], shpCoords[i + 1],
+                                 shpCoords[i + 2]};
+      if ((aPos - sPos).lengthSq() < doubleCsq) {
+        clashAtoms[atom->getIdx()] = true;
+        break;
+      }
+    }
+  }
+  return clashAtoms.count();
+}
+
+bool checkExcludedVols(const ROMol &mol, const SynthonSpaceSearchParams &params,
+                       double &excludedVol, double &meanExcludedVol) {
+  if (params.excludedVolume) {
+    excludedVol = calcExcludedVolume(mol, *params.excludedVolume,
+                                     params.shapeOverlayOptions);
+    auto numClashes = calcNumClashes(mol, *params.excludedVolume);
+    meanExcludedVol = excludedVol / static_cast<double>(numClashes);
+    if (params.maxExcludedVolume > -0.5 &&
+        excludedVol > params.maxExcludedVolume) {
+      return false;
+    }
+    if (params.maxMeanExcludedVolume > -0.5) {
+      if (meanExcludedVol > params.maxMeanExcludedVolume) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// Assuming the hitShape is aligned onto the query, extract that conformation
+// into hit and add the scores to it as properties..  Return false if it
+// fails one of the excluded volume checks, true otherwise.
+bool finaliseHit(GaussianShape::ShapeInput &hitShapes,
                  const unsigned int hitShapeNum,
-                 const RDGeom::Transform3D &xform,
                  const std::array<double, 3> &scores, const std::string &rxnId,
-                 const std::vector<const std::string *> &synthNames,
-                 ROMol &hit) {
+                 const std::vector<const std::string *> &synthNames, ROMol &hit,
+                 const SynthonSpaceSearchParams &params, double &excludedVol,
+                 double &meanExcludedVol) {
   // Copy the conformer into the hit.
   hitShapes.setActiveShape(hitShapeNum);
   hit = static_cast<ROMol>(*hitShapes.shapeToMol(false, true));
-  MolTransforms::transformConformer(hit.getConformer(), xform);
+  if (!checkExcludedVols(hit, params, excludedVol, meanExcludedVol)) {
+    return false;
+  }
   hit.setProp<double>("Similarity", scores[0]);
   hit.setProp<double>("ShapeScore", scores[1]);
   hit.setProp<double>("ColorScore", scores[2]);
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
   MolOps::assignStereochemistryFrom3D(hit);
+  if (excludedVol > -0.5) {
+    hit.setProp<double>("ExcludedVolume", excludedVol);
+  }
+  if (meanExcludedVol > -0.5) {
+    hit.setProp<double>("MeanExcludedVolume", meanExcludedVol);
+  }
+  return true;
 }
 
 // This is for when the hit was built from the hit information without
-// conformation expansion, so there's less to do.  It is already overlaid.
+// conformation expansion, so there's less to do.  It is already overlaid,
+// so just add the scores as properties.
 void finaliseHit(const ROMol &hit, const std::array<double, 3> &scores,
                  const std::string &rxnId,
-                 const std::vector<const std::string *> &synthNames) {
+                 const std::vector<const std::string *> &synthNames,
+                 const double excludedVol, const double meanExcludedVol) {
   hit.setProp<double>("Similarity", scores[0]);
   hit.setProp<double>("ShapeScore", scores[1]);
   hit.setProp<double>("ColorScore", scores[2]);
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
+  if (excludedVol > -0.5) {
+    hit.setProp<double>("ExcludedVolume", excludedVol);
+  }
+  if (meanExcludedVol > -0.5) {
+    hit.setProp<double>("MeanExcludedVolume", meanExcludedVol);
+  }
 }
 
 // Transform synthon into place
@@ -956,12 +1026,6 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
       // We need to build a copy of the synthon and give it the coords
       // of the associated shape that is similar to the fragment, and
       // transform it to the overlaid coords.
-      // std::cout << "Getting shape mol for "
-      //           << hs->synthonsToUse[sso[i]][synthNums[sso[i]]].first << " :
-      //           "
-      //           << synthon->getSmiles() << " : "
-      //           << synthon->getShapes()->getShapes().getSmiles() <<
-      //           std::endl;
       auto shapeMol = getShapeMol(synthon, shapeNumToUse, transToUse);
       tmpSynths[sso[i]].reset(shapeMol.release());
       shapeSynths[sso[i]] = tmpSynths[sso[i]].get();
@@ -1028,14 +1092,19 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   // std::cout << "Verifying hit " << MolToCXSmiles(hit) << std::endl;
   std::array<double, 3> initScores{-1.0, -1.0, -1.0};
   if (hit.getNumConformers()) {
-    initScores = GaussianShape::AlignMolecule(dp_queryShapes->getShapes(), hit);
-    // std::cout << "initScores : " << initScores[0] << ", " << initScores[1] <<
-    // ", "
-    // << initScores[2] << std::endl;
-    finaliseHit(hit, initScores, rxnId, synthNames);
-    if (!getParams().bestHit && checkBondLengths(hit) &&
-        initScores[0] >= getParams().similarityCutoff) {
-      return true;
+    initScores = GaussianShape::AlignMolecule(
+        dp_queryShapes->getShapes(), hit, GaussianShape::ShapeInputOptions(),
+        nullptr, getParams().shapeOverlayOptions);
+    double excludedVol{-1.0}, meanExcludedVol{-1.0};
+    if (checkExcludedVols(hit, getParams(), excludedVol, meanExcludedVol)) {
+      // If the excluded vol is also ok, take this hit.  Otherwise, pass it
+      // through to conformation expansion to see if it wins there.
+      finaliseHit(hit, initScores, rxnId, synthNames, excludedVol,
+                  meanExcludedVol);
+      if (!getParams().bestHit && checkBondLengths(hit) &&
+          initScores[0] >= getParams().similarityCutoff) {
+        return true;
+      }
     }
   }
   // If the run is multi-threaded, this will already be running
@@ -1061,41 +1130,53 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   RDGeom::Transform3D xform;
   for (auto &isomer : hitConfs) {
     GaussianShape::ShapeInput isomerShapes(*isomer, -1, opts, overlayOptions);
-    unsigned int bestQueryShape, bestFitShape;
     RDGeom::Transform3D bestXform;
-    double thresh = getParams().bestHit ? -1 : getParams().similarityCutoff;
-    auto thisBest = dp_queryShapes->getShapes().bestSimilarity(
-        isomerShapes, bestQueryShape, bestFitShape, bestXform, thresh,
-        overlayOptions);
-    bool finalisedHit = false;
-    if (thisBest[0] > getBestSimilaritySoFar()) {
-      finaliseHit(isomerShapes, bestFitShape, bestXform, thisBest, rxnId,
-                  synthNames, hit);
-      finalisedHit = true;
-      std::unique_lock lock1{myMutex};
-      updateBestHitSoFar(hit, thisBest[0]);
-    }
-    if (thisBest[0] >= bestSim && thisBest[0] > getParams().similarityCutoff) {
-      if (!finalisedHit) {
-        finaliseHit(isomerShapes, bestFitShape, bestXform, thisBest, rxnId,
-                    synthNames, hit);
+    // Do all the shapes one by one rather than via bestSimilarity because
+    // excluded volumes might be too high for the best scoring overlay, but
+    // there might be an acceptable one with a lower score.
+    for (unsigned int shapeNum = 0; shapeNum < isomerShapes.getNumShapes();
+         shapeNum++) {
+      double excludedVol{-1.0}, meanExcludedVol{-1.0};
+      bool finalisedHit = false;
+      isomerShapes.setActiveShape(shapeNum);
+      auto thisScore =
+          GaussianShape::AlignShape(dp_queryShapes->getShapes(), isomerShapes,
+                                    &bestXform, overlayOptions);
+      if (thisScore[0] > getBestSimilaritySoFar()) {
+        if (!finaliseHit(isomerShapes, shapeNum, thisScore, rxnId, synthNames,
+                         hit, getParams(), excludedVol, meanExcludedVol)) {
+          // It failed excluded vols so don't use it.
+          continue;
+        }
+        finalisedHit = true;
+        std::unique_lock lock1{myMutex};
+        updateBestHitSoFar(hit, thisScore[0]);
       }
-      // If we're only interested in whether there's a shape match, and
-      // not in finding the best shape, we're done.
-      if (!getParams().bestHit) {
-        return true;
+      if (thisScore[0] >= bestSim &&
+          thisScore[0] > getParams().similarityCutoff) {
+        if (!finalisedHit) {
+          if (!finaliseHit(isomerShapes, shapeNum, thisScore, rxnId, synthNames,
+                           hit, getParams(), excludedVol, meanExcludedVol)) {
+            continue;
+          }
+        }
+        // If we're only interested in whether there's a shape match, and
+        // not in finding the best shape, we're done.
+        if (!getParams().bestHit) {
+          return true;
+        }
+        foundHit = true;
+        bestSim = thisScore[0];
       }
-      foundHit = true;
-      bestSim = thisBest[0];
+      if (!foundHit && initScores[0] > getParams().similarityCutoff) {
+        // Stick with what we found at the start, which should still be in hit.
+        foundHit = true;
+      }
     }
-  }
-  if (!foundHit && initScores[0] > getParams().similarityCutoff) {
-    // Stick with what we found at the start, which should still be in hit.
-    foundHit = true;
   }
   // std::cout << "Hit : " << MolToCXSmiles(hit) << std::endl;
-  // std::cout << "Hit similarity : " << hit.getProp<double>("Similarity") << "
-  // : "
+  // std::cout << "Hit similarity : " << hit.getProp<double>("Similarity") <<
+  // " : "
   //           << hit.getProp<std::string>(common_properties::_Name) <<
   //           std::endl;
   return foundHit;

@@ -39,7 +39,7 @@ namespace boost {
 namespace serialization {
 
 template <class Archive, typename Block, typename Allocator>
-void serialize(Archive &ar, boost::dynamic_bitset<Block, Allocator> &bs,
+void serialize(Archive &ar, dynamic_bitset<Block, Allocator> &bs,
                const unsigned int /*version*/) {
   size_t num_bits = bs.size();
   ar & num_bits;
@@ -75,7 +75,7 @@ constexpr double KAPPA = 2.41798793102;
 
 struct CustomFeature {
   CustomFeature(
-      unsigned int t, const RDGeom::Point3D &p, double r,
+      const unsigned int t, const RDGeom::Point3D &p, const double r,
       const std::vector<unsigned int> &a = std::vector<unsigned int>())
       : type(t), pos(p), rad(r), atoms(a) {}
   unsigned int type;
@@ -101,19 +101,19 @@ struct ShapeInputOptions {
               //! create features using the RDKit pharmacophore definitions.
 
   std::vector<std::vector<CustomFeature>>
-      customFeatures;  //! Custom color features used verbatim.  A
-                       //! vector of vectors of tuples of integer type, Point3D
-                       //! coords, double radius for each conformation in the
-                       //! input molecule.  One outer vector for each
-                       //! conformation in the molecule.
+      customFeatures{};  //! Custom color features used verbatim.  A
+                         //! vector of vectors of tuples of integer type,
+                         //! Point3D coords, double radius for each conformation
+                         //! in the input molecule.  One outer vector for each
+                         //! conformation in the molecule.
   std::vector<unsigned int>
-      atomSubset;  //! If not empty, use just these atoms in the molecule to
-                   //! form the ShapeInput object.
+      atomSubset{};  //! If not empty, use just these atoms in the molecule to
+                     //! form the ShapeInput object.
   std::vector<std::pair<unsigned int, double>>
-      atomRadii;  //! Use these non-standard radii for these atoms. The int is
-                  //! for the atom index in the molecule, not the atomic number.
-                  //! Not all atoms need be specified, just some radii can be
-                  //! over-ridden, with the rest left as standard.
+      atomRadii{};  //! Use these non-standard radii for these atoms. The int is
+                    //! for the atom index in the molecule, not the atomic
+                    //! number. Not all atoms need be specified, just some radii
+                    //! can be over-ridden, with the rest left as standard.
   bool allCarbonRadii{
       true};  //! Whether to use carbon radii for all atoms (which is quicker
               //! but less accurate) or vdw radii appropriate for the elements.
@@ -122,7 +122,10 @@ struct ShapeInputOptions {
                                      //! that none of them are more similar to
                                      //! each other than the threshold.  Default
                                      //! -1.0 means no pruning.
-  bool includeDummies{true};         //! Whether to include dummy atoms or not.
+  bool sortShapes{true};  //! If true, the shapes are sorted in descending order
+                          //! of total volume.
+  bool includeDummies{true};  //! Whether to include dummy atoms in the shape
+                              //! or not.
 };
 
 // Data for shape alignment code
@@ -132,15 +135,18 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   //! @param mol: The molecule of interest
   //! @param confId: The conformer to use.  If -1, uses all conformers.
   //! @param opts: Options for setting up the shape
-  ShapeInput(const ROMol &mol, int confId = -1,
-             const ShapeInputOptions &opts = ShapeInputOptions(),
-             const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
+  //! @param overlayOpts: Options for controlling overlays. The distance cutoff
+  //! elements are used in the self-overlap calculations.
+  explicit ShapeInput(
+      const ROMol &mol, int confId = -1,
+      const ShapeInputOptions &opts = ShapeInputOptions(),
+      const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
   //! Create a ShapeInput object with a single shape copied from
   //! other.
   //! @param other: the ShapeInput that supplies the shape
   //! @param shapeNum: the number of the shape of interest.
   ShapeInput(const ShapeInput &other, unsigned int shapeNum);
-  ShapeInput(const std::string &str) {
+  explicit ShapeInput(const std::string &str) {
 #ifndef RDK_USE_BOOST_SERIALIZATION
     PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
@@ -257,12 +263,12 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int);
+  void serialize(Archive &ar, unsigned int);
 #endif
 
  private:
-  void extractAtoms(const ROMol &mol, int confId, const ShapeInputOptions &opts,
-                    bool fillAlphas);
+  void extractAtoms(const ROMol &mol, int confId,
+                    const ShapeInputOptions &shapeOpts, bool fillAlphas);
   // Extract the features for the color scores, using RDKit pphore features
   // for now.  Other options to be added later.
   void extractFeatures(const ROMol &mol, unsigned int confId,
@@ -354,10 +360,10 @@ RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Transform3D quatTransToTransform(
 // Apply the transformation to the coordinates assumed to be in
 // ShapeInput.d_coords form.
 RDKIT_GAUSSIANSHAPE_EXPORT void applyTransformToShape(
-    std::vector<double> &shape, RDGeom::Transform3D &xform);
+    std::vector<double> &shape, const RDGeom::Transform3D &xform);
 RDKIT_GAUSSIANSHAPE_EXPORT void applyTransformToShape(
     const double *inShape, double *outShape, size_t numPoints,
-    RDGeom::Transform3D &xform);
+    const RDGeom::Transform3D &xform);
 RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(
     std::vector<double> &shape, const RDGeom::Point3D &translation);
 RDKIT_GAUSSIANSHAPE_EXPORT void translateShape(

@@ -104,6 +104,26 @@ void get_highlight_style_option(const boost::property_tree::ptree &pt,
   }
 }
 
+void get_legend_position_option(const boost::property_tree::ptree &pt,
+                                const char *pnm,
+                                MolDrawOptions::LegendPosition &pos) {
+  PRECONDITION(pnm && strlen(pnm), "bad property name");
+  if (pt.find(pnm) == pt.not_found()) {
+    return;
+  }
+  const auto &node = pt.get_child(pnm);
+  auto str = node.get_value<std::string>();
+  if (str == "Top") {
+    pos = MolDrawOptions::LegendPosition::Top;
+  } else if (str == "Left") {
+    pos = MolDrawOptions::LegendPosition::Left;
+  } else if (str == "Right") {
+    pos = MolDrawOptions::LegendPosition::Right;
+  } else {
+    pos = MolDrawOptions::LegendPosition::Bottom;
+  }
+}
+
 void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
                                   const std::string &json) {
   if (json.empty()) {
@@ -188,6 +208,8 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   }
   get_highlight_style_option(pt, "multiColourHighlightStyle",
                              opts.multiColourHighlightStyle);
+  get_legend_position_option(pt, "legendPosition", opts.legendPosition);
+  PT_OPT_GET(legendVerticalText);
   const auto drawingExtentsIncludeIt = pt.find("drawingExtentsInclude");
   if (drawingExtentsIncludeIt != pt.not_found()) {
     bool haveDrawElementFlags = false;

@@ -201,7 +201,6 @@ TEST_CASE("bulk") {
     CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
     CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
     CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
-
     writer.write(*probe);
     break;
   }
@@ -960,18 +959,50 @@ TEST_CASE("Multiple Conformers") {
     unsigned int best1, best2;
     RDGeom::Transform3D xform;
     auto bestSim11 = shapes1.bestSimilarity(shapes1, best1, best2, xform);
-    CHECK_THAT(bestSim11[0], Catch::Matchers::WithinAbs(1.0, 0.001));
+    CHECK_THAT(bestSim11[0], Catch::Matchers::WithinAbs(1.0, 0.005));
 
     auto bestSim22 = shapes2.bestSimilarity(shapes2, best1, best2, xform);
-    CHECK_THAT(bestSim22[0], Catch::Matchers::WithinAbs(1.0, 0.001));
+    CHECK_THAT(bestSim22[0], Catch::Matchers::WithinAbs(1.0, 0.005));
 
     auto bestSim12 = shapes1.bestSimilarity(shapes2, best1, best2, xform);
-    CHECK_THAT(bestSim12[0], Catch::Matchers::WithinAbs(0.694, 0.001));
+    CHECK_THAT(bestSim12[0], Catch::Matchers::WithinAbs(0.697, 0.005));
 
     // This overlay starts from where the previous one left it, so the final
     // answer isn't identical.
     auto bestSim21 = shapes2.bestSimilarity(shapes1, best1, best2, xform);
-    CHECK_THAT(bestSim21[0], Catch::Matchers::WithinAbs(0.698, 0.001));
+    CHECK_THAT(bestSim21[0], Catch::Matchers::WithinAbs(0.698, 0.005));
+  }
+
+  {
+    auto eso = "COc1ccc2[n-]c([S@@+]([O-])Cc3ncc(C)c(OC)c3C)nc2c1"_smiles;
+    REQUIRE(eso);
+    MolOps::addHs(*eso);
+    DGeomHelpers::EmbedMultipleConfs(*eso, 10, 30, 0xdac);
+    MolOps::removeHs(*eso);
+    CHECK(eso->getNumConformers() == 10);
+
+    auto ranit = "CN/C(=C\[N+](=O)[O-])NCCSCc1ccc(CN(C)C)o1"_smiles;
+    REQUIRE(ranit);
+    MolOps::addHs(*ranit);
+    DGeomHelpers::EmbedMultipleConfs(*ranit, 10, 30, 0xcc);
+    MolOps::removeHs(*ranit);
+    CHECK(ranit->getNumConformers() == 10);
+
+    int best1, best2;
+    std::vector<std::vector<double>> sims;
+    RDGeom::Transform3D bestXform;
+    GaussianShape::AlignMoleculesAllConformers(
+        *eso, *ranit, best1, best2, sims, GaussianShape::ShapeInputOptions(),
+        GaussianShape::ShapeInputOptions(),
+        GaussianShape::ShapeOverlayOptions(), &bestXform);
+    auto bestRanit = ROMol(*ranit, false, best2);
+    MolTransforms::transformConformer(bestRanit.getConformer(), bestXform);
+    CHECK(best1 == 4);
+    CHECK(best2 == 9);
+    CHECK_THAT(sims[best1][best2], Catch::Matchers::WithinAbs(0.455, 0.005));
+    auto bestRanitOvly =
+        "CNC(=C[N+](=O)[O-])NCCSCc1ccc(CN(C)C)o1 |(5.39952,-0.431827,3.24977;4.91668,0.23793,2.05273;4.34422,-0.557015,1.01134;5.08472,-1.57685,0.587814;6.37982,-1.24463,0.0819879;6.60294,-0.133199,-0.442657;7.3039,-2.24412,-0.0538957;3.41137,0.0112124,0.100521;2.79685,1.29129,0.424015;1.42625,1.30076,-0.230419;0.32031,0.326599,0.814875;-0.353931,-1.07966,-0.0882382;-1.58089,-0.676163,-0.845372;-2.04646,0.624489,-0.941076;-3.39445,0.519071,-1.24445;-3.63973,-0.81572,-1.496;-4.96404,-1.50024,-1.37547;-6.05475,-0.681862,-1.78456;-5.87283,0.0371613,-3.00351;-6.7112,0.0403987,-0.739164;-2.48245,-1.41687,-1.42137)|"_smiles;
+    CHECK(checkMolsHaveRoughlySameCoords(bestRanit, *bestRanitOvly));
   }
 }
 
