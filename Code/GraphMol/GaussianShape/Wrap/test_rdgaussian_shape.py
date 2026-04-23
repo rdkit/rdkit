@@ -129,6 +129,8 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(tpl[0], 1.0, places=3)
     self.assertAlmostEqual(tpl[1], 1.0, places=3)
     self.assertAlmostEqual(tpl[2], 1.0, places=3)
+    self.assertAlmostEqual(tpl[3], 751.0, places=1)
+    self.assertAlmostEqual(tpl[4], 42.5, places=1)
 
   def test7_customAtomRadii(self):
     ovOpts = rdGaussianShape.ShapeOverlayOptions()
