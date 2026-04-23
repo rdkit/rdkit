@@ -79,10 +79,9 @@ nb::dict GetPropsAsDict(const T &obj, bool includePrivate, bool includeComputed,
                         bool autoConvertStrings = true) {
   nb::dict dict;
   auto &rd_dict = obj.getDict();
-  auto &data = rd_dict.getData();
 
   STR_VECT keys = obj.getPropList(includePrivate, includeComputed);
-  for (auto &rdvalue : data) {
+  for (auto &rdvalue : rd_dict) {
     if (std::find(keys.begin(), keys.end(), rdvalue.key) == keys.end())
       continue;
     try {
@@ -210,8 +209,7 @@ nb::object GetPyProp(const RDOb *obj, const std::string &key,
       throw nb::key_error(key.c_str());
     }
   } else {
-    const auto &data = obj->getDict().getData();
-    for (auto &rdvalue : data) {
+    for (auto &rdvalue : obj->getDict()) {
       if (rdvalue.key == key) {
         try {
           const auto tag = rdvalue.val.getTag();
