@@ -326,6 +326,19 @@ void wrap_rdGaussianShape() {
           "Non-standard radii to use for the atoms specified by their indices"
           " in the molecule.  Not all atoms need have a radius specified."
           "  A list of tuples of [int, float].")
+      .def_readwrite(
+          "shapePruneThreshold",
+          &GaussianShape::ShapeInputOptions::shapePruneThreshold,
+          "If there is more than 1 conformer for the input molecule, prune the"
+          " shapes so that none of them are more similar to each other than the"
+          " threshold.  Default -1.0 means no pruning.")
+      .def_readwrite(
+          "sortShapes", &GaussianShape::ShapeInputOptions::sortShapes,
+          "If True (the default), the shapes are sorted into descending order"
+          " of total volume.")
+      .def_readwrite(
+          "includeDummies", &GaussianShape::ShapeInputOptions::includeDummies,
+          "Whether to include dummy atoms in the shape or not.  Default=True.")
       .def("__setattr__", &safeSetattr);
 
   python::class_<GaussianShape::ShapeOverlayOptions, boost::noncopyable>(
