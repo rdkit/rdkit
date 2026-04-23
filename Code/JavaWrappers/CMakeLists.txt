@@ -37,9 +37,7 @@ set(swigRDKitLibList "${swigRDKitLibList}"
   "ForceFieldHelpers;ForceField;EigenSolvers;Optimizer;MolAlign;O3AAlign;"
   "Alignment;SimDivPickers;RDGeometryLib;RDStreams;RDGeneral;"
 )
-if(RDK_USE_URF)
-  set(swigRDKitLibList "${swigRDKitLibList};${RDK_URF_LIBS};")
-endif(RDK_USE_URF)
+set(swigRDKitLibList "${swigRDKitLibList};${RDK_URF_LIBS};")
 set(swigRDKitLibs "")
 foreach(swigRDKitLib ${swigRDKitLibList})
   set(swigRDKitLibs "${swigRDKitLibs}${swigRDKitLib}${swigRDKitLibSuffix};")

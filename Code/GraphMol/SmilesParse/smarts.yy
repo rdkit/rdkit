@@ -153,7 +153,7 @@ yysmarts_error( const char *input,
 %token <ival> AROMATIC_ATOM_TOKEN ORGANIC_ATOM_TOKEN
 %token <atom> ATOM_TOKEN
 %token <atom> SIMPLE_ATOM_QUERY_TOKEN COMPLEX_ATOM_QUERY_TOKEN
-%token <atom> RINGSIZE_ATOM_QUERY_TOKEN RINGBOND_ATOM_QUERY_TOKEN IMPLICIT_H_ATOM_QUERY_TOKEN
+%token <atom> MIN_RINGSIZE_ATOM_QUERY_TOKEN RINGSIZE_ATOM_QUERY_TOKEN RINGBOND_ATOM_QUERY_TOKEN IMPLICIT_H_ATOM_QUERY_TOKEN
 %token <atom> HYB_TOKEN HETERONEIGHBOR_ATOM_QUERY_TOKEN ALIPHATIC ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN
 %token <ival> ZERO_TOKEN NONZERO_DIGIT_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN
@@ -487,14 +487,14 @@ hydrogen_atom:	ATOM_OPEN_TOKEN H_TOKEN ATOM_CLOSE_TOKEN
 /* --------------------------------------------------------------- */
 atom_expr: atom_expr AND_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
+  if ($1->getChiralTag()==Atom::CHI_UNSPECIFIED) { $1->setChiralTag($3->getChiralTag()); }
   SmilesParseOps::ClearAtomChemicalProps($1);
   delete $3;
   $$ = $1;
 }
 | atom_expr OR_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_OR,true);
-  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
+  if ($1->getChiralTag()==Atom::CHI_UNSPECIFIED) { $1->setChiralTag($3->getChiralTag()); }
   SmilesParseOps::ClearAtomChemicalProps($1);
   $1->setAtomicNum(0);
   delete $3;
@@ -502,7 +502,7 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
 }
 | atom_expr SEMI_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
+  if ($1->getChiralTag()==Atom::CHI_UNSPECIFIED) { $1->setChiralTag($3->getChiralTag()); }
   SmilesParseOps::ClearAtomChemicalProps($1);
   delete $3;
   $$ = $1;
@@ -593,6 +593,7 @@ atom_query:	simple_atom
 | COMPLEX_ATOM_QUERY_TOKEN
 | HETERONEIGHBOR_ATOM_QUERY_TOKEN
 | ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN
+| MIN_RINGSIZE_ATOM_QUERY_TOKEN
 | RINGSIZE_ATOM_QUERY_TOKEN
 | RINGBOND_ATOM_QUERY_TOKEN
 | IMPLICIT_H_ATOM_QUERY_TOKEN
@@ -608,8 +609,12 @@ atom_query:	simple_atom
   $1->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery($2));
   $$ = $1;
 }
-| RINGSIZE_ATOM_QUERY_TOKEN number {
+| MIN_RINGSIZE_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomMinRingSizeQuery($2));
+  $$ = $1;
+}
+| RINGSIZE_ATOM_QUERY_TOKEN number {
+  $1->setQuery(makeAtomInRingOfSizeQuery($2));
   $$ = $1;
 }
 | RINGBOND_ATOM_QUERY_TOKEN number {
@@ -642,6 +647,35 @@ atom_query:	simple_atom
   $1->setQuery(nq);
   $$ = $1;
 }
+/* "k" queries have to be handled differently */
+| RINGSIZE_ATOM_QUERY_TOKEN RANGE_OPEN_TOKEN MINUS_TOKEN number RANGE_CLOSE_TOKEN {
+  int lv = -1;
+  int uv = $4;
+  ATOM_GREATEREQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_GREATEREQUAL_QUERY>(uv,[lv,uv](Atom const *at) {
+            return queryAtomIsInRingOfSize(at, lv, uv);
+          },std::string("greater_AtomRingSize"));
+  $1->setQuery(nq);
+  $$ = $1;
+}
+| RINGSIZE_ATOM_QUERY_TOKEN RANGE_OPEN_TOKEN number MINUS_TOKEN RANGE_CLOSE_TOKEN {
+  int lv = $3;
+  int uv = -1;
+  ATOM_LESSEQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>(lv,[lv,uv](Atom const *at) {
+            return queryAtomIsInRingOfSize(at, lv, uv);
+          },std::string("less_AtomRingSize"));
+  $1->setQuery(nq);
+  $$ = $1;
+}
+| RINGSIZE_ATOM_QUERY_TOKEN RANGE_OPEN_TOKEN number MINUS_TOKEN number RANGE_CLOSE_TOKEN {
+  int lv = $3;
+  int uv = $5;
+  ATOM_RANGE_QUERY *nq = makeAtomRangeQuery(lv,uv,false,false,[lv,uv](Atom const *at) {
+            return queryAtomIsInRingOfSize(at, lv, uv);
+          },std::string("range_AtomRingSize"));
+  $1->setQuery(nq);
+  $$ = $1;
+}
+
 | number H_TOKEN {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomIsotopeQuery($1));
@@ -736,7 +770,7 @@ possible_range_query : COMPLEX_ATOM_QUERY_TOKEN
   $1->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery(0));
   $$ = $1;
 }
-| RINGSIZE_ATOM_QUERY_TOKEN {
+| MIN_RINGSIZE_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomMinRingSizeQuery(5)); // this is going to be ignored anyway
   $$ = $1;
 }

@@ -14,7 +14,6 @@
 #include "../SmilesParse/SmilesWrite.h"
 #include "../FileParsers/MolFileStereochem.h"
 
-
 // define snprintf for msvc
 #if _MSC_VER
 #if _MSC_VER < 1900
@@ -30,7 +29,9 @@ void AddMWMF(RWMol &mol,
   double mass = 0.0;
   mass = RDKit::MolOps::getExactMolWt(mol);
   std::string formula = RDKit::MolOps::getMolFormula(mol);
-  if (!formula.empty()) mol.setProp((pre ? "MF_PRE" : "MF_POST"), formula);
+  if (!formula.empty()) {
+    mol.setProp((pre ? "MF_PRE" : "MF_POST"), formula);
+  }
   char propertyValue[64];
   snprintf(propertyValue, sizeof(propertyValue), "%g", mass);
   mol.setProp((pre ? "MW_PRE" : "MW_POST"), mass);
@@ -40,7 +41,9 @@ bool StripSmallFragments(RWMol &mol, bool verbose) {
   const bool sanitize = false;
   std::vector<boost::shared_ptr<ROMol>> frags =
       MolOps::getMolFrags(mol, sanitize);
-  if (frags.size() <= 1) return false;
+  if (frags.size() <= 1) {
+    return false;
+  }
 
   size_t maxFragSize = 0;
   size_t maxFragIdx = 0;
@@ -88,9 +91,8 @@ bool StripSmallFragments(RWMol &mol, bool verbose) {
       MolOps::clearSingleBondDirFlags(copy);
       MolOps::detectBondStereochemistry(copy);
       MolOps::assignStereochemistry(copy, true, true, true);
-      for (ROMol::AtomIterator atIt = copy.beginAtoms();
-           atIt != copy.endAtoms(); ++atIt) {
-        if ((*atIt)->hasProp(common_properties::_ChiralityPossible)) {
+      for (const auto atom : copy.atoms()) {
+        if (atom->hasProp(common_properties::_ChiralityPossible)) {
           ischiral = true;
           checkChiral = false;
           break;
@@ -101,19 +103,17 @@ bool StripSmallFragments(RWMol &mol, bool verbose) {
 
     // are chiral tags set
     if (checkChiral) {
-      for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-           ++atIt) {
-        if ((*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
-            (*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
+      for (const auto atom : mol.atoms()) {
+        if (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+            atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
           ischiral = true;
           break;
         }
       }
 
-      for (ROMol::BondIterator bondIt = mol.beginBonds();
-           bondIt != mol.endBonds(); ++bondIt) {
-        if ((*bondIt)->getBondDir() == Bond::BEGINDASH ||
-            (*bondIt)->getBondDir() == Bond::BEGINWEDGE) {
+      for (const auto bond : mol.bonds()) {
+        if (bond->getBondDir() == Bond::BEGINDASH ||
+            bond->getBondDir() == Bond::BEGINWEDGE) {
           ischiral = true;
           break;
         }

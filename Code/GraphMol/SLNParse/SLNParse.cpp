@@ -81,12 +81,10 @@ void finalizeQueryMol(ROMol *mol, bool mergeHs) {
 
   // do we need to remove the Hs from the molecule?
   if (mergeHs) {
-    for (ROMol::AtomIterator atomIt = mol->beginAtoms();
-         atomIt != mol->endAtoms(); ++atomIt) {
+    for (auto atom : mol->atoms()) {
       // set a query for the H count:
-      if ((*atomIt)->getNumExplicitHs()) {
-        (*atomIt)->expandQuery(
-            makeAtomHCountQuery((*atomIt)->getNumExplicitHs()));
+      if (atom->getNumExplicitHs()) {
+        atom->expandQuery(makeAtomHCountQuery(atom->getNumExplicitHs()));
       }
     }
   }
@@ -96,16 +94,15 @@ void finalizeQueryMol(ROMol *mol, bool mergeHs) {
   VECT_INT_VECT sssr;
   MolOps::symmetrizeSSSR(*mol, sssr);
   int rootIdx = -1;
-  for (ROMol::AtomIterator atomIt = mol->beginAtoms();
-       atomIt != mol->endAtoms(); ++atomIt) {
-    SLNParse::parseFinalAtomAttribs(*atomIt, true);
-    if ((*atomIt)->hasProp(common_properties::_starred)) {
+  for (auto atom : mol->atoms()) {
+    SLNParse::parseFinalAtomAttribs(atom, true);
+    if (atom->hasProp(common_properties::_starred)) {
       if (rootIdx > -1) {
         BOOST_LOG(rdErrorLog) << "SLN Error: multiple starred atoms in a "
                                  "recursive query. Extra stars ignored"
                               << std::endl;
       } else {
-        rootIdx = (*atomIt)->getIdx();
+        rootIdx = atom->getIdx();
       }
     }
   }
@@ -162,13 +159,10 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
     if (molVect.size() > 0) {
       res = molVect[0];
 
-      for (ROMol::BOND_BOOKMARK_MAP::const_iterator bmIt =
-               res->getBondBookmarks()->begin();
-           bmIt != res->getBondBookmarks()->end(); ++bmIt) {
-        if (bmIt->first > 0 &&
-            bmIt->first < static_cast<int>(res->getNumAtoms())) {
+      for (auto [first, _] : *res->getBondBookmarks()) {
+        if (first > 0 && first < static_cast<int>(res->getNumAtoms())) {
           std::stringstream err;
-          err << "SLN Parser error: Ring closure " << bmIt->first
+          err << "SLN Parser error: Ring closure " << first
               << " does not have a corresponding opener.";
           throw SLNParseException(err.str());
         }
@@ -210,9 +204,8 @@ RWMol *SLNToMol(const std::string &sln, bool sanitize, int debugParse) {
 
   RWMol *res = SLNParse::toMol(sln, false, debugParse);
   if (res) {
-    for (ROMol::AtomIterator atomIt = res->beginAtoms();
-         atomIt != res->endAtoms(); ++atomIt) {
-      SLNParse::parseFinalAtomAttribs(*atomIt, false);
+    for (auto atom : res->atoms()) {
+      SLNParse::parseFinalAtomAttribs(atom, false);
     }
     if (sanitize) {
       // we're going to remove explicit Hs from the graph,

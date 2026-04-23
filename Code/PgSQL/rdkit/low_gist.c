@@ -84,10 +84,13 @@ static void adjustKey(IntRange *s, IntRange *k) {
 
   for (j = 0; j < NUMRANGE; j++) {
     /* set minimal non-zero value */
-    if (k[j].low > 0 && (s[j].low == 0 || k[j].low < s[j].low))
+    if (k[j].low > 0 && (s[j].low == 0 || k[j].low < s[j].low)) {
       s[j].low = k[j].low;
+    }
     /* set maximum value */
-    if (k[j].high > s[j].high) s[j].high = k[j].high;
+    if (k[j].high > s[j].high) {
+      s[j].high = k[j].high;
+    }
   }
 }
 
@@ -140,18 +143,21 @@ static uint32 distance(bytea *a, bytea *b) {
   uint32 dist = 0;
   IntRange *as = (IntRange *)VARDATA(a), *bs = (IntRange *)VARDATA(b);
 
-  if (VARSIZE(a) != VARSIZE(b))
+  if (VARSIZE(a) != VARSIZE(b)) {
     elog(ERROR, "All fingerprints should be the same length");
+  }
   for (i = 0; i < NUMRANGE; i++) {
-    if (as[i].low > bs[i].low)
+    if (as[i].low > bs[i].low) {
       dist += as[i].low - bs[i].low;
-    else if (as[i].low < bs[i].low)
+    } else if (as[i].low < bs[i].low) {
       dist += bs[i].low - as[i].low;
+    }
 
-    if (as[i].high > bs[i].high)
+    if (as[i].high > bs[i].high) {
       dist += as[i].high - bs[i].high;
-    else if (as[i].high < bs[i].high)
+    } else if (as[i].high < bs[i].high) {
       dist += bs[i].high - as[i].high;
+    }
   }
   return dist;
 }
@@ -162,18 +168,22 @@ static uint32 penalty(bytea *origval, bytea *newval) {
   IntRange *as = (IntRange *)VARDATA(origval),
            *bs = (IntRange *)VARDATA(newval);
 
-  if (VARSIZE(origval) != VARSIZE(newval))
+  if (VARSIZE(origval) != VARSIZE(newval)) {
     elog(ERROR, "All fingerprints should be the same length");
+  }
 
   for (i = 0; i < NUMRANGE; i++) {
     if (bs[i].low > 0) {
-      if (as[i].low == 0)
+      if (as[i].low == 0) {
         dist += bs[i].low;
-      else if (bs[i].low < as[i].low)
+      } else if (bs[i].low < as[i].low) {
         dist += as[i].low - bs[i].low;
+      }
     }
 
-    if (bs[i].high > as[i].high) dist += bs[i].high - as[i].high;
+    if (bs[i].high > as[i].high) {
+      dist += bs[i].high - as[i].high;
+    }
   }
 
   return dist;
@@ -210,10 +220,11 @@ static int comparecost(const void *va, const void *vb) {
   SPLITCOST *a = (SPLITCOST *)va;
   SPLITCOST *b = (SPLITCOST *)vb;
 
-  if (a->cost == b->cost)
+  if (a->cost == b->cost) {
     return 0;
-  else
+  } else {
     return (a->cost > b->cost) ? 1 : -1;
+  }
 }
 
 PGDLLEXPORT Datum gslfp_picksplit(PG_FUNCTION_ARGS);

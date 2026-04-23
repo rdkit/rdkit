@@ -12,11 +12,10 @@ rdkit_library(GraphMol
         SHARED
         LINK_LIBRARIES RDGeometryLib RDGeneral)
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
-if (RDK_USE_URF)
-    target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
-    if (RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
+
+target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
+if (RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
         target_link_libraries(GraphMol_static PUBLIC ${RDK_URF_LIBS}_static)
-    endif ()
 endif ()
 
 rdkit_headers(Atom.h
@@ -78,6 +77,7 @@ add_subdirectory(MolAlign)
 add_subdirectory(MolChemicalFeatures)
 add_subdirectory(ShapeHelpers)
 add_subdirectory(MolCatalog)
+add_subdirectory(GaussianShape)
 
 add_subdirectory(MolDraw2D)
 
@@ -193,6 +193,9 @@ rdkit_catch_test(canonTestsCatch catch_canon.cpp
 
 rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp
         LINK_LIBRARIES SubstructMatch SmilesParse GraphMol)
+
+rdkit_catch_test(molrangesTestsCatch catch_molranges.cpp
+        LINK_LIBRARIES GraphMol)
 
 rdkit_catch_test(queryTestsCatch catch_queries.cpp
         LINK_LIBRARIES SmilesParse GraphMol)
