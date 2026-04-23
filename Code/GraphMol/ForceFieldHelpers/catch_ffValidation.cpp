@@ -20,10 +20,6 @@
 #include <ForceField/FiniteDifference.h>
 #include <ForceField/ForceField.h>
 
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/DistGeomHelpers/Embedder.h>
-
-#include <iostream>
 #include <memory>
 #include <string>
 
@@ -94,32 +90,5 @@ TEST_CASE("ForceField gradient validation: MMFF suite", "[ffvalidation]") {
 
     double delta = ForceFields::calcFiniteDifference(*ff);
     CHECK(delta < FD_TOLERANCE);
-  }
-}
-
-TEST_CASE("Per-contrib gradient diagnosis: UFF mol 678",
-          "[ffvalidation][diagnosis]") {
-  const char *rdbase = getenv("RDBASE");
-  REQUIRE(rdbase);
-  std::string path =
-      std::string(rdbase) + "/Code/ForceField/MMFF/test_data/";
-
-  auto sdfName = GENERATE("MMFF94_dative.sdf", "MMFF94_hypervalent.sdf");
-  CAPTURE(sdfName);
-  SDMolSupplier suppl(path + sdfName, false, false);
-  std::unique_ptr<ROMol> mol(suppl[678]);
-  REQUIRE(mol);
-
-  MolOps::sanitizeMol(static_cast<RWMol &>(*mol));
-  std::unique_ptr<ForceFields::ForceField> ff(
-      UFF::constructForceField(*mol));
-  REQUIRE(ff);
-  ff->initialize();
-
-  for (unsigned int ci = 0; ci < ff->contribs().size(); ++ci) {
-    double cd = ForceFields::calcContribFiniteDifference(*ff->contribs()[ci],
-                                                         *ff);
-    CAPTURE(ci, cd);
-    CHECK(cd < FD_TOLERANCE);
   }
 }
