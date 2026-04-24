@@ -1910,7 +1910,7 @@ void EmbeddedFrag::flipAboutSpiroCenter(unsigned int spiroAid) {
 
   for (auto nbr : dp_mol->atomNeighbors(dp_mol->getAtomWithIdx(spiroAid))) {
     unsigned int nbrIdx = nbr->getIdx();
-    if (targetRingSet.find(nbrIdx) != targetRingSet.end()) {
+    if (targetRingSet.contains(nbrIdx)) {
       ringNeighbors.push_back(nbrIdx);
     }
   }
