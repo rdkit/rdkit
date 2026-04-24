@@ -11,23 +11,24 @@ rdkit_nanobind_extension(rdchem
 #                       MonomerInfo.cpp
 #                       ResonanceMolSupplier.cpp 
 #                       MolBundle.cpp 
-#                       StereoGroup.cpp 
-#                       SubstanceGroup.cpp
-#                       Chirality.cpp
+                       StereoGroup.cpp 
+                       SubstanceGroup.cpp
+                       Chirality.cpp
                        DEST Chem
                        LINK_LIBRARIES
                        SmilesParse ChemTransforms SubstructMatch GraphMol
                        MarvinParser)
 
-#rdkit_python_extension(rdmolops
-#                       rdmolops.cpp MolOps.cpp
-#                       ChiralityOps.cpp
-#                       DEST Chem
-#                       LINK_LIBRARIES
-#                       ChemReactions Depictor
-#                       FileParsers SubstructMatch Fingerprints ChemTransforms
-#                       Subgraphs SmilesParse MolTransforms GraphMol)
-#
+rdkit_nanobind_extension(rdmolops
+                       rdmolops.cpp 
+                       MolOps.cpp
+                       ChiralityOps.cpp
+                       DEST Chem
+                       LINK_LIBRARIES
+                       ChemReactions Depictor
+                       FileParsers SubstructMatch Fingerprints ChemTransforms
+                       Subgraphs SmilesParse MolTransforms GraphMol)
+
 #rdkit_python_extension(rdqueries
 #                       rdqueries.cpp Queries.cpp
 #                       DEST Chem

@@ -30,14 +30,14 @@ void wrap_mol(nb::module_ &);
 void wrap_atom(nb::module_ &);
 void wrap_bond(nb::module_ &);
 void wrap_conformer(nb::module_ &);
-// void wrap_stereogroup(nb::module_ &);
+void wrap_stereogroup(nb::module_ &);
 // void wrap_ringinfo(nb::module_ &);
 // void wrap_EditableMol(nb::module_ &);
 // void wrap_monomerinfo(nb::module_ &);
 // void wrap_resmolsupplier(nb::module_ &);
 // void wrap_molbundle(nb::module_ &);
-// void wrap_sgroup(nb::module_ &);
-// void wrap_chirality(nb::module_ &);
+void wrap_sgroup(nb::module_ &);
+void wrap_chirality(nb::module_ &);
 #if 0
 python::tuple getAtomIndicesHelper(const KekulizeException &self) {
   python::list res;
@@ -212,14 +212,14 @@ NB_MODULE(rdchem, m) {
   wrap_atom(m);
   wrap_bond(m);
   wrap_conformer(m);
-  // wrap_stereogroup();
+  wrap_stereogroup(m);
   // wrap_EditableMol();
   // wrap_ringinfo();
   // wrap_monomerinfo();
   // wrap_resmolsupplier();
   // wrap_molbundle();
-  // wrap_sgroup();
-  // wrap_chirality();
+  wrap_sgroup(m);
+  wrap_chirality(m);
 
   //*********************************************
   //
