@@ -34,30 +34,36 @@ rdkit_nanobind_extension(rdchem
 #                       LINK_LIBRARIES
 #                       GraphMol)
 #
-#if(RDK_BUILD_MAEPARSER_SUPPORT)
-#    set (maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
-#    include_directories(${maeparser_INCLUDE_DIRS})
-#endif()
+if(RDK_BUILD_MAEPARSER_SUPPORT)
+    set (maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
+    include_directories(${maeparser_INCLUDE_DIRS})
+endif()
 #
-#if(RDK_BUILD_COMPRESSED_SUPPLIERS)
-#    set(compressedsupplier CompressedSDMolSupplier.cpp)
-#endif()
-#set(rdmolfiles_sources rdmolfiles.cpp
-#                       ForwardSDMolSupplier.cpp ${maesupplier}
-#                       SDMolSupplier.cpp TDTMolSupplier.cpp ${compressedsupplier}
-#                       SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
+if(RDK_BUILD_COMPRESSED_SUPPLIERS)
+    set(compressedsupplier CompressedSDMolSupplier.cpp)
+endif()
+set(rdmolfiles_sources rdmolfiles.cpp
+#                       ForwardSDMolSupplier.cpp 
+#                       ${maesupplier}
+#                       SDMolSupplier.cpp 
+#                       TDTMolSupplier.cpp 
+#                       ${compressedsupplier}
+#                       SmilesMolSupplier.cpp 
+#                       SmilesWriter.cpp 
+#                       SDWriter.cpp
 #                       TDTWriter.cpp
 #                       PDBWriter.cpp
 #                       MultithreadedSmilesMolSupplier.cpp
-#                       MultithreadedSDMolSupplier.cpp)
+#                       MultithreadedSDMolSupplier.cpp
+)
 #
-#rdkit_python_extension(rdmolfiles
-#                       ${rdmolfiles_sources}
-#                       DEST Chem
-#                       LINK_LIBRARIES  SubstructMatch
-#                       SmilesParse FileParsers GraphMol
-#                       MarvinParser
-#                       RDGeometryLib RDGeneral RDBoost)
+rdkit_nanobind_extension(rdmolfiles
+                       ${rdmolfiles_sources}
+                       DEST Chem
+                       LINK_LIBRARIES  SubstructMatch
+                       SmilesParse FileParsers GraphMol
+                       MarvinParser
+                       RDGeometryLib RDGeneral)
 #
 #rdkit_python_extension(rdtrajectory
 #                       Trajectory.cpp rdTrajectory.cpp

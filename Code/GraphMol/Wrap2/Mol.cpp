@@ -231,10 +231,10 @@ class ReadWriteMol : public RWMol {
     for (const auto &group : groups) {
       for (const auto atom : group.getAtoms()) {
         if (!atom) {
-          throw_value_error("NULL atom in StereoGroup");
+          throw ValueErrorException("NULL atom in StereoGroup");
         }
         if (&atom->getOwningMol() != this) {
-          throw_value_error(
+          throw ValueErrorException(
               "atom in StereoGroup does not belong to this molecule.");
         }
       }
