@@ -268,7 +268,7 @@ else:
       If neither molColName nor smilesName are set, sanitize=false.
       '''
     if isinstance(filename, str):
-      if filename.lower()[-3:] == ".gz":
+      if filename.lower()[-2:] == "gz":
         import gzip
         f = gzip.open(filename, "rb")
       else:
@@ -434,7 +434,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
     '''
   close = None
   if isinstance(out, str):
-    if out.lower()[-3:] == ".gz":
+    if out.lower()[-2:] == "gz":
       import gzip
       out = gzip.open(out, "wt")
       close = out.close
