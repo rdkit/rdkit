@@ -89,66 +89,89 @@ class PyMMFFMolProperties {
       : mmffMolProperties(mp) {}
   ~PyMMFFMolProperties() = default;
 
-  unsigned int getMMFFAtomType(unsigned int idx) {
+  unsigned int getMMFFAtomType(unsigned int idx) const {
     return (unsigned int)(mmffMolProperties->getMMFFAtomType(idx));
   }
-  double getMMFFFormalCharge(unsigned int idx) {
+  double getMMFFFormalCharge(unsigned int idx) const {
     return mmffMolProperties->getMMFFFormalCharge(idx);
   }
-  double getMMFFPartialCharge(unsigned int idx) {
+  double getMMFFPartialCharge(unsigned int idx) const {
     return mmffMolProperties->getMMFFPartialCharge(idx);
   }
   PyObject *getMMFFBondStretchParams(const RDKit::ROMol &mol,
                                      const unsigned int idx1,
-                                     const unsigned int idx2);
+                                     const unsigned int idx2) const;
   PyObject *getMMFFAngleBendParams(const RDKit::ROMol &mol,
                                    const unsigned int idx1,
                                    const unsigned int idx2,
-                                   const unsigned int idx3);
+                                   const unsigned int idx3) const;
   PyObject *getMMFFStretchBendParams(const RDKit::ROMol &mol,
                                      const unsigned int idx1,
                                      const unsigned int idx2,
-                                     const unsigned int idx3);
+                                     const unsigned int idx3) const;
   PyObject *getMMFFTorsionParams(const RDKit::ROMol &mol,
                                  const unsigned int idx1,
                                  const unsigned int idx2,
                                  const unsigned int idx3,
-                                 const unsigned int idx4);
+                                 const unsigned int idx4) const;
   PyObject *getMMFFOopBendParams(const RDKit::ROMol &mol,
                                  const unsigned int idx1,
                                  const unsigned int idx2,
                                  const unsigned int idx3,
-                                 const unsigned int idx4);
-  PyObject *getMMFFVdWParams(const unsigned int idx1, const unsigned int idx2);
+                                 const unsigned int idx4) const;
+  PyObject *getMMFFVdWParams(const unsigned int idx1,
+                             const unsigned int idx2) const;
   void setMMFFDielectricModel(std::uint8_t dielModel) {
     mmffMolProperties->setMMFFDielectricModel(dielModel);
+  }
+  std::uint8_t getMMFFDielectricModel() const {
+    return mmffMolProperties->getMMFFDielectricModel();
   }
   void setMMFFDielectricConstant(double dielConst) {
     mmffMolProperties->setMMFFDielectricConstant(dielConst);
   }
+  double getMMFFDielectricConstant() const {
+    return mmffMolProperties->getMMFFDielectricConstant();
+  }
   void setMMFFBondTerm(bool state) {
     mmffMolProperties->setMMFFBondTerm(state);
   }
+  bool getMMFFBondTerm() const { return mmffMolProperties->getMMFFBondTerm(); }
   void setMMFFAngleTerm(const bool state) {
     mmffMolProperties->setMMFFAngleTerm(state);
+  }
+  bool getMMFFAngleTerm() const {
+    return mmffMolProperties->getMMFFAngleTerm();
   }
   void setMMFFStretchBendTerm(const bool state) {
     mmffMolProperties->setMMFFStretchBendTerm(state);
   }
+  bool getMMFFStretchBendTerm() const {
+    return mmffMolProperties->getMMFFStretchBendTerm();
+  }
   void setMMFFOopTerm(const bool state) {
     mmffMolProperties->setMMFFOopTerm(state);
   }
+  bool getMMFFOopTerm() const { return mmffMolProperties->getMMFFOopTerm(); }
   void setMMFFTorsionTerm(const bool state) {
     mmffMolProperties->setMMFFTorsionTerm(state);
+  }
+  bool getMMFFTorsionTerm() const {
+    return mmffMolProperties->getMMFFTorsionTerm();
   }
   void setMMFFVdWTerm(const bool state) {
     mmffMolProperties->setMMFFVdWTerm(state);
   }
+  bool getMMFFVdWTerm() const { return mmffMolProperties->getMMFFVdWTerm(); }
   void setMMFFEleTerm(const bool state) {
     mmffMolProperties->setMMFFEleTerm(state);
   }
+  bool getMMFFEleTerm() const { return mmffMolProperties->getMMFFEleTerm(); }
   void setMMFFVariant(const std::string &mmffVariant) {
     mmffMolProperties->setMMFFVariant(mmffVariant);
+  }
+  std::string getMMFFVariant() const {
+    return mmffMolProperties->getMMFFVariant();
   }
   void setMMFFVerbosity(unsigned int verbosity) {
     mmffMolProperties->setMMFFVerbosity(verbosity);
