@@ -2106,7 +2106,7 @@ bool EmbeddedFrag::tryResolvingCollisionWithSpiroFlip(
       RDKit::MolOps::getShortestPath(*dp_mol, cAids.first, cAids.second);
   std::vector<unsigned int> spiros;
   for (auto aid : path) {
-    if (spiroCenters.find(aid) != spiroCenters.end()) {
+    if (spiroCenters.contains(aid)) {
       spiros.push_back(aid);
     }
   }
