@@ -504,7 +504,7 @@ std::vector<int> CanonicalRankAtomsInFragment(
 
   std::vector<unsigned int> ranks(mol.getNumAtoms());
   Canon::rankFragmentAtoms(mol, ranks, atoms, bonds, asymbols.get(), breakTies,
-                           includeChirality, includeIsotopes,
+                           includeChirality, includeIsotopes, includeAtomMaps,
                            includeChiralPresence);
 
   std::vector<int> resRanks(mol.getNumAtoms());
@@ -897,9 +897,9 @@ NB_MODULE(rdmolfiles, m) {
       a Mol object, None on failure.
 
 )DOC";
-  m.def("MolFromTPLFile", RDKit::MolFromTPLFile, nb::arg("fileName"),
-        nb::arg("sanitize") = true, nb::arg("skipFirstConf") = false,
-        docString.c_str(), nb::rv_policy::take_ownership);
+  m.def("MolFromTPLFile", RDKit::MolFromTPLFile, "fileName"_a,
+        "sanitize"_a = true, "skipFirstConf"_a = false, docString.c_str(),
+        nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a TPL block.
@@ -921,9 +921,9 @@ NB_MODULE(rdmolfiles, m) {
       a Mol object, None on failure.
 
 )DOC";
-  m.def("MolFromTPLBlock", RDKit::MolFromTPLBlock, nb::arg("tplBlock"),
-        nb::arg("sanitize") = true, nb::arg("skipFirstConf") = false,
-        docString.c_str(), nb::rv_policy::take_ownership);
+  m.def("MolFromTPLBlock", RDKit::MolFromTPLBlock, "tplBlock"_a,
+        "sanitize"_a = true, "skipFirstConf"_a = false, docString.c_str(),
+        nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a Mol file.
@@ -948,10 +948,9 @@ NB_MODULE(rdmolfiles, m) {
  a Mol object, None on failure.
 
  )DOC";
-  m.def("MolFromMolFile", RDKit::MolFromMolFileHelper, nb::arg("molFileName"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        nb::arg("strictParsing") = true, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def("MolFromMolFile", RDKit::MolFromMolFileHelper, "molFileName"_a,
+        "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true,
+        docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a Mol block.
@@ -977,10 +976,9 @@ NB_MODULE(rdmolfiles, m) {
           .
 
  )DOC";
-  m.def("MolFromMolBlock", RDKit::MolFromMolBlock, nb::arg("molBlock"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        nb::arg("strictParsing") = true, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def("MolFromMolBlock", RDKit::MolFromMolBlock, "molBlock"_a,
+        "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true,
+        docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a Marvin (Mrv) file.
@@ -1001,9 +999,9 @@ NB_MODULE(rdmolfiles, m) {
       a Mol object, None on failure.
 
 )DOC";
-  m.def("MolFromMrvFile", RDKit::MolFromMrvFile, nb::arg("molFileName"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        docString.c_str(), nb::rv_policy::take_ownership);
+  m.def("MolFromMrvFile", RDKit::MolFromMrvFile, "molFileName"_a,
+        "sanitize"_a = true, "removeHs"_a = true, docString.c_str(),
+        nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a Marvin (mrv) block.
@@ -1024,9 +1022,9 @@ NB_MODULE(rdmolfiles, m) {
       a Mol object, None on failure.
 
 )DOC";
-  m.def("MolFromMrvBlock", RDKit::MolFromMrvBlock, nb::arg("mrvBlock"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        docString.c_str(), nb::rv_policy::take_ownership);
+  m.def("MolFromMrvBlock", RDKit::MolFromMrvBlock, "mrvBlock"_a,
+        "sanitize"_a = true, "removeHs"_a = true, docString.c_str(),
+        nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from an XYZ file.
@@ -1038,7 +1036,7 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromXYZFile", RDKit::MolFromXYZFile, nb::arg("xyzFileName"),
+  m.def("MolFromXYZFile", RDKit::MolFromXYZFile, "xyzFileName"_a,
         docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
@@ -1051,7 +1049,7 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromXYZBlock", RDKit::MolFromXYZBlock, nb::arg("xyzBlock"),
+  m.def("MolFromXYZBlock", RDKit::MolFromXYZBlock, "xyzBlock"_a,
         docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
@@ -1074,9 +1072,8 @@ NB_MODULE(rdmolfiles, m) {
   
     NOTE: this functionality should be considered beta.
   )DOC";
-  m.def("MolFromRDKitSVG", RDKit::MolFromSVG, nb::arg("svg"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        docString.c_str(), nb::rv_policy::take_ownership);
+  m.def("MolFromRDKitSVG", RDKit::MolFromSVG, "svg"_a, "sanitize"_a = true,
+        "removeHs"_a = true, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a Tripos Mol2 file.
@@ -1104,9 +1101,9 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromMol2File", RDKit::MolFromMol2File, nb::arg("mol2FileName"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        nb::arg("cleanupSubstructures") = true, docString.c_str(),
+  m.def("MolFromMol2File", RDKit::MolFromMol2File, "mol2FileName"_a,
+        "sanitize"_a = true, "removeHs"_a = true,
+        "cleanupSubstructures"_a = true, docString.c_str(),
         nb::rv_policy::take_ownership);
 
   docString =
@@ -1135,9 +1132,9 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromMol2Block", RDKit::MolFromMol2Block, nb::arg("mol2Block"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        nb::arg("cleanupSubstructures") = true, docString.c_str(),
+  m.def("MolFromMol2Block", RDKit::MolFromMol2Block, "mol2Block"_a,
+        "sanitize"_a = true, "removeHs"_a = true,
+        "cleanupSubstructures"_a = true, docString.c_str(),
         nb::rv_policy::take_ownership);
 
   docString =
@@ -1162,10 +1159,9 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromMolFile", RDKit::MolFromMolFile, nb::arg("molFileName"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        nb::arg("strictParsing") = true, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def("MolFromMolFile", RDKit::MolFromMolFile, "molFileName"_a,
+        "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true,
+        docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a Mol block.
@@ -1189,10 +1185,9 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromMolBlock", RDKit::MolFromMolBlock, nb::arg("molBlock"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        nb::arg("strictParsing") = true, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def("MolFromMolBlock", RDKit::MolFromMolBlock, "molBlock"_a,
+        "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true,
+        docString.c_str(), nb::rv_policy::take_ownership);
 
   nb::class_<RDKit::MolWriterParams>(m, "MolWriterParams",
                                      "Parameters controlling Mol writing")
@@ -1244,9 +1239,9 @@ NB_MODULE(rdmolfiles, m) {
   //      RETURNS :
   //      a Mol object, None on failure.
   //      )DOC";
-  // m.def("MolFromSCSRBlock", RDKit::MolFromSCSRBlock, nb::arg("molBlock"),
-  //       nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-  //       nb::arg("molFromSCSRParams") = nb::none(), docString.c_str(),
+  // m.def("MolFromSCSRBlock", RDKit::MolFromSCSRBlock, "molBlock"_a,
+  //       "sanitize"_a = true, "removeHs"_a = true,
+  //       "molFromSCSRParams"_a = nb::none(), docString.c_str(),
   //       nb::rv_policy::take_ownership);
 
   // docString =
@@ -1267,9 +1262,9 @@ NB_MODULE(rdmolfiles, m) {
   //      RETURNS :
   //      a Mol object, None on failure.
   //      )DOC";
-  // m.def("MolFromSCSRFile", RDKit::MolFromSCSRFile, nb::arg("filename"),
-  //       nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-  //       nb::arg("molFromSCSRParams") = nb::none(), docString.c_str(),
+  // m.def("MolFromSCSRFile", RDKit::MolFromSCSRFile, "filename"_a,
+  //       "sanitize"_a = true, "removeHs"_a = true,
+  //       "molFromSCSRParams"_a = nb::none(), docString.c_str(),
   //       nb::rv_policy::take_ownership);
 
   docString =
@@ -1287,8 +1282,7 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToMolBlock",
         (std::string (*)(const ROMol &, const MolWriterParams &,
                          int))RDKit::MolToMolBlock,
-        nb::arg("mol"), nb::arg("params"), nb::arg("confId") = -1,
-        docString.c_str());
+        "mol"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Returns a Mol block for a molecule
@@ -1313,9 +1307,8 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToMolBlock",
         (std::string (*)(const ROMol &, bool, int, bool,
                          bool))RDKit::MolToMolBlock,
-        nb::arg("mol"), nb::arg("includeStereo") = true, nb::arg("confId") = -1,
-        nb::arg("kekulize") = true, nb::arg("forceV3000") = false,
-        docString.c_str());
+        "mol"_a, "includeStereo"_a = true, "confId"_a = -1, "kekulize"_a = true,
+        "forceV3000"_a = false, docString.c_str());
 
   docString =
       R"DOC(Returns a V3000 Mol block for a molecule
@@ -1333,8 +1326,7 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToV3KMolBlock",
         (std::string (*)(const ROMol &, const MolWriterParams &,
                          int))RDKit::MolToV3KMolBlock,
-        nb::arg("mol"), nb::arg("params"), nb::arg("confId") = -1,
-        docString.c_str());
+        "mol"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Returns a V3000 Mol block for a molecule
@@ -1356,8 +1348,8 @@ NB_MODULE(rdmolfiles, m) {
   m.def(
       "MolToV3KMolBlock",
       (std::string (*)(const ROMol &, bool, int, bool))RDKit::MolToV3KMolBlock,
-      nb::arg("mol"), nb::arg("includeStereo") = true, nb::arg("confId") = -1,
-      nb::arg("kekulize") = true, docString.c_str());
+      "mol"_a, "includeStereo"_a = true, "confId"_a = -1, "kekulize"_a = true,
+      docString.c_str());
 
   docString =
       R"DOC(Returns a V2000 Mol block for a molecule
@@ -1375,9 +1367,8 @@ NB_MODULE(rdmolfiles, m) {
      NOTE: this function throws a ValueError if the molecule has more than
      999 atoms, bonds, or SGroups
   )DOC";
-  m.def("MolToV2KMolBlock", MolToV2KMolBlockHelper, nb::arg("mol"),
-        nb::arg("params") = nb::none(), nb::arg("confId") = -1,
-        docString.c_str());
+  m.def("MolToV2KMolBlock", MolToV2KMolBlockHelper, "mol"_a,
+        "params"_a = nb::none(), "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Writes a Mol file for a molecule
@@ -1392,8 +1383,7 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToMolFile",
         (void (*)(const ROMol &, const std::string &, const MolWriterParams &,
                   int))RDKit::MolToMolFile,
-        nb::arg("mol"), nb::arg("filename"), nb::arg("params"),
-        nb::arg("confId") = -1, docString.c_str());
+        "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Writes a Mol file for a molecule
@@ -1415,9 +1405,8 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToMolFile",
         (void (*)(const ROMol &, const std::string &, bool, int, bool,
                   bool))RDKit::MolToMolFile,
-        nb::arg("mol"), nb::arg("filename"), nb::arg("includeStereo") = true,
-        nb::arg("confId") = -1, nb::arg("kekulize") = true,
-        nb::arg("forceV3000") = false, docString.c_str());
+        "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
+        "kekulize"_a = true, "forceV3000"_a = false, docString.c_str());
 
   docString =
       R"DOC(Writes a V3000 Mol file for a molecule
@@ -1432,8 +1421,8 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToV3KMolFile",
         (void (*)(const ROMol &, const std::string &, const MolWriterParams &,
                   int))RDKit::MolToV3KMolFile,
-        nb::arg("mol"), nb::arg("filename"), nb::arg("params") = true,
-        nb::arg("confId") = -1, docString.c_str());
+        "mol"_a, "filename"_a, "params"_a = true, "confId"_a = -1,
+        docString.c_str());
 
   docString =
       R"DOC(Writes a V3000 Mol file for a molecule
@@ -1452,8 +1441,8 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToV3KMolFile",
         (void (*)(const ROMol &, const std::string &, bool, int,
                   bool))RDKit::MolToV3KMolFile,
-        nb::arg("mol"), nb::arg("filename"), nb::arg("includeStereo") = true,
-        nb::arg("confId") = -1, nb::arg("kekulize") = true, docString.c_str());
+        "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
+        "kekulize"_a = true, docString.c_str());
   //
 
   docString =
@@ -1476,9 +1465,8 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToMrvBlock",
         (std::string (*)(const ROMol &, bool, int, bool,
                          bool))RDKit::MolToMrvBlock,
-        nb::arg("mol"), nb::arg("includeStereo") = true, nb::arg("confId") = -1,
-        nb::arg("kekulize") = true, nb::arg("prettyPrint") = false,
-        docString.c_str());
+        "mol"_a, "includeStereo"_a = true, "confId"_a = -1, "kekulize"_a = true,
+        "prettyPrint"_a = false, docString.c_str());
 
   docString =
       R"DOC(Returns a Marvin (Mrv) Mol block for a molecule
@@ -1496,8 +1484,7 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToMrvBlock",
         (std::string (*)(const ROMol &, const MrvWriterParams &,
                          int))RDKit::MolToMrvBlock,
-        nb::arg("mol"), nb::arg("params"), nb::arg("confId") = -1,
-        docString.c_str());
+        "mol"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Writes a Marvin (MRV) file for a molecule
@@ -1516,9 +1503,8 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToMrvFile",
         (void (*)(const ROMol &, const std::string &, bool, int, bool,
                   bool))RDKit::MolToMrvFile,
-        nb::arg("mol"), nb::arg("filename"), nb::arg("includeStereo") = true,
-        nb::arg("confId") = -1, nb::arg("kekulize") = true,
-        nb::arg("prettyPrint") = false, docString.c_str());
+        "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
+        "kekulize"_a = true, "prettyPrint"_a = false, docString.c_str());
 
   docString =
       R"DOC(Writes a Marvin (MRV) file for a molecule
@@ -1533,8 +1519,7 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToMrvFile",
         (void (*)(const ROMol &, const std::string &, const MrvWriterParams &,
                   int))RDKit::MolToMrvFile,
-        nb::arg("mol"), nb::arg("filename"), nb::arg("params"),
-        nb::arg("confId") = -1, docString.c_str());
+        "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Writes a CML block for a molecule
@@ -1545,8 +1530,8 @@ NB_MODULE(rdmolfiles, m) {
       - kekulize: (optional) triggers kekulization of the molecule before
       it's written
   )DOC";
-  m.def("MolToCMLBlock", RDKit::MolToCMLBlock, nb::arg("mol"),
-        nb::arg("confId") = -1, nb::arg("kekulize") = true, docString.c_str());
+  m.def("MolToCMLBlock", RDKit::MolToCMLBlock, "mol"_a, "confId"_a = -1,
+        "kekulize"_a = true, docString.c_str());
 
   docString =
       R"DOC(Writes a CML file for a molecule
@@ -1558,9 +1543,8 @@ NB_MODULE(rdmolfiles, m) {
       - kekulize: (optional) triggers kekulization of the molecule before
       it's written
   )DOC";
-  m.def("MolToCMLFile", RDKit::MolToCMLFile, nb::arg("mol"),
-        nb::arg("filename"), nb::arg("confId") = -1, nb::arg("kekulize") = true,
-        docString.c_str());
+  m.def("MolToCMLFile", RDKit::MolToCMLFile, "mol"_a, "filename"_a,
+        "confId"_a = -1, "kekulize"_a = true, docString.c_str());
 
   docString =
       R"DOC(Returns a XYZ block for a molecule
@@ -1575,8 +1559,8 @@ NB_MODULE(rdmolfiles, m) {
   
       a string
   )DOC";
-  m.def("MolToXYZBlock", RDKit::MolToXYZBlock, nb::arg("mol"),
-        nb::arg("confId") = -1, nb::arg("precision") = 6, docString.c_str());
+  m.def("MolToXYZBlock", RDKit::MolToXYZBlock, "mol"_a, "confId"_a = -1,
+        "precision"_a = 6, docString.c_str());
 
   docString =
       R"DOC(Writes a XYZ file for a molecule
@@ -1588,9 +1572,8 @@ NB_MODULE(rdmolfiles, m) {
       default)
       - precision: precision of the coordinates
   )DOC";
-  m.def("MolToXYZFile", RDKit::MolToXYZFile, nb::arg("mol"),
-        nb::arg("filename"), nb::arg("confId") = -1, nb::arg("precision") = 6,
-        docString.c_str());
+  m.def("MolToXYZFile", RDKit::MolToXYZFile, "mol"_a, "filename"_a,
+        "confId"_a = -1, "precision"_a = 6, docString.c_str());
 
   nb::class_<RDKit::SmilesParserParams>(m, "SmilesParserParams",
                                         "Parameters controlling SMILES parsing")
@@ -1638,8 +1621,8 @@ NB_MODULE(rdmolfiles, m) {
   
          a Mol object, None on failure.
   )DOC";
-  m.def("MolFromSmiles", MolFromSmilesHelper, nb::arg("SMILES"),
-        nb::arg("params"), docString.c_str(), nb::rv_policy::take_ownership);
+  m.def("MolFromSmiles", MolFromSmilesHelper, "SMILES"_a, "params"_a,
+        docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a SMILES string.
@@ -1671,16 +1654,16 @@ NB_MODULE(rdmolfiles, m) {
        C{A}C{Q}C with {'{Q}':'{X}CC{X}', '{A}':'C1CC1', '{X}':'N'} ->
        CC1CC1CNCCNC
   )DOC";
-  m.def("MolFromSmiles", RDKit::MolFromSmiles, nb::arg("SMILES"),
-        nb::arg("sanitize") = true, nb::arg("replacements") = nb::dict(),
-        docString.c_str(), nb::rv_policy::take_ownership);
+  m.def("MolFromSmiles", RDKit::MolFromSmiles, "SMILES"_a, "sanitize"_a = true,
+        "replacements"_a = nb::dict(), docString.c_str(),
+        nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct an atom from a SMILES string)DOC";
-  m.def("AtomFromSmiles", SmilesToAtom, nb::arg("SMILES"), docString.c_str(),
+  m.def("AtomFromSmiles", SmilesToAtom, "SMILES"_a, docString.c_str(),
         nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct a bond from a SMILES string)DOC";
-  m.def("BondFromSmiles", SmilesToBond, nb::arg("SMILES"), docString.c_str(),
+  m.def("BondFromSmiles", SmilesToBond, "SMILES"_a, docString.c_str(),
         nb::rv_policy::take_ownership);
 
   docString =
@@ -1703,16 +1686,16 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromSmarts", RDKit::MolFromSmarts, nb::arg("SMARTS"),
-        nb::arg("mergeHs") = false, nb::arg("replacements") = nb::dict(),
-        docString.c_str(), nb::rv_policy::take_ownership);
+  m.def("MolFromSmarts", RDKit::MolFromSmarts, "SMARTS"_a, "mergeHs"_a = false,
+        "replacements"_a = nb::dict(), docString.c_str(),
+        nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct an atom from a SMARTS string)DOC";
-  m.def("AtomFromSmarts", SmartsToAtom, nb::arg("SMARTS"), docString.c_str(),
+  m.def("AtomFromSmarts", SmartsToAtom, "SMARTS"_a, docString.c_str(),
         nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct a bond from a SMARTS string)DOC";
-  m.def("BondFromSmarts", SmartsToBond, nb::arg("SMARTS"), docString.c_str(),
+  m.def("BondFromSmarts", SmartsToBond, "SMARTS"_a, docString.c_str(),
         nb::rv_policy::take_ownership);
 
   docString =
@@ -1728,8 +1711,8 @@ NB_MODULE(rdmolfiles, m) {
   
          a Mol object, None on failure.
   )DOC";
-  m.def("MolFromSmarts", MolFromSmartsHelper, nb::arg("SMARTS"),
-        nb::arg("params"), docString.c_str(), nb::rv_policy::take_ownership);
+  m.def("MolFromSmarts", MolFromSmartsHelper, "SMARTS"_a, "params"_a,
+        docString.c_str(), nb::rv_policy::take_ownership);
 
   nb::class_<RDKit::SmilesWriteParams>(m, "SmilesWriteParams",
                                        "Parameters controlling SMILES writing")
@@ -1768,7 +1751,7 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToSmiles",
         (std::string (*)(const ROMol &,
                          const SmilesWriteParams &))RDKit::MolToSmiles,
-        nb::arg("mol"), nb::arg("params"),
+        "mol"_a, "params"_a,
         "Returns the canonical SMILES string for a molecule");
 
   docString =
@@ -1811,11 +1794,11 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToSmiles",
         (std::string (*)(const ROMol &, bool, bool, int, bool, bool, bool, bool,
                          bool))RDKit::MolToSmiles,
-        nb::arg("mol"), nb::arg("isomericSmiles") = true,
-        nb::arg("kekuleSmiles") = false, nb::arg("rootedAtAtom") = -1,
-        nb::arg("canonical") = true, nb::arg("allBondsExplicit") = false,
-        nb::arg("allHsExplicit") = false, nb::arg("doRandom") = false,
-        nb::arg("ignoreAtomMapNumbers") = false, docString.c_str());
+        "mol"_a, "isomericSmiles"_a = true, "kekuleSmiles"_a = false,
+        "rootedAtAtom"_a = -1, "canonical"_a = true,
+        "allBondsExplicit"_a = false, "allHsExplicit"_a = false,
+        "doRandom"_a = false, "ignoreAtomMapNumbers"_a = false,
+        docString.c_str());
 
   docString =
       R"DOC(Returns the canonical SMILES string for a fragment of a
@@ -1840,9 +1823,8 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolFragmentToSmiles", MolFragmentToSmilesHelper1<smilesfrag_gen>,
-        nb::arg("mol"), nb::arg("params"), nb::arg("atomsToUse"),
-        nb::arg("bondsToUse") = 0, nb::arg("atomSymbols") = 0,
-        nb::arg("bondSymbols") = 0, docString.c_str());
+        "mol"_a, "params"_a, "atomsToUse"_a, "bondsToUse"_a = 0,
+        "atomSymbols"_a = 0, "bondSymbols"_a = 0, docString.c_str());
 
   docString =
       R"DOC(Returns the canonical SMILES string for a fragment of a
@@ -1885,11 +1867,10 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolFragmentToSmiles", MolFragmentToSmilesHelper2<smilesfrag_gen>,
-        nb::arg("mol"), nb::arg("atomsToUse"), nb::arg("bondsToUse") = 0,
-        nb::arg("atomSymbols") = 0, nb::arg("bondSymbols") = 0,
-        nb::arg("isomericSmiles") = true, nb::arg("kekuleSmiles") = false,
-        nb::arg("rootedAtAtom") = -1, nb::arg("canonical") = true,
-        nb::arg("allBondsExplicit") = false, nb::arg("allHsExplicit") = false,
+        "mol"_a, "atomsToUse"_a, "bondsToUse"_a = 0, "atomSymbols"_a = 0,
+        "bondSymbols"_a = 0, "isomericSmiles"_a = true,
+        "kekuleSmiles"_a = false, "rootedAtAtom"_a = -1, "canonical"_a = true,
+        "allBondsExplicit"_a = false, "allHsExplicit"_a = false,
         docString.c_str());
 
   nb::enum_<RDKit::SmilesWrite::CXSmilesFields>(m, "CXSmilesFields")
@@ -1942,9 +1923,9 @@ NB_MODULE(rdmolfiles, m) {
       "MolToCXSmiles",
       (std::string (*)(const ROMol &, const SmilesWriteParams &, std::uint32_t,
                        RestoreBondDirOption))RDKit::MolToCXSmiles,
-      nb::arg("mol"), nb::arg("params"),
-      nb::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
-      nb::arg("restoreBondDirs") =
+      "mol"_a, "params"_a,
+      "flags"_a = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
+      "restoreBondDirs"_a =
           RDKit::RestoreBondDirOption::RestoreBondDirOptionClear,
       "Returns the CXSMILES string for a molecule");
 
@@ -1983,11 +1964,10 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToCXSmiles",
         (std::string (*)(const ROMol &, bool, bool, int, bool, bool, bool,
                          bool))RDKit::MolToCXSmiles,
-        nb::arg("mol"), nb::arg("isomericSmiles") = true,
-        nb::arg("kekuleSmiles") = false, nb::arg("rootedAtAtom") = -1,
-        nb::arg("canonical") = true, nb::arg("allBondsExplicit") = false,
-        nb::arg("allHsExplicit") = false, nb::arg("doRandom") = false,
-        docString.c_str());
+        "mol"_a, "isomericSmiles"_a = true, "kekuleSmiles"_a = false,
+        "rootedAtAtom"_a = -1, "canonical"_a = true,
+        "allBondsExplicit"_a = false, "allHsExplicit"_a = false,
+        "doRandom"_a = false, docString.c_str());
 
   docString =
       R"DOC(Returns the CXSMILES string for a fragment of a molecule
@@ -2011,9 +1991,8 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolFragmentToCXSmiles", MolFragmentToSmilesHelper1<cxsmilesfrag_gen>,
-        nb::arg("mol"), nb::arg("params"), nb::arg("atomsToUse"),
-        nb::arg("bondsToUse") = 0, nb::arg("atomSymbols") = 0,
-        nb::arg("bondSymbols") = 0, docString.c_str());
+        "mol"_a, "params"_a, "atomsToUse"_a, "bondsToUse"_a = 0,
+        "atomSymbols"_a = 0, "bondSymbols"_a = 0, docString.c_str());
 
   docString =
       R"DOC(Returns the CXSMILES string for a fragment of a molecule
@@ -2055,11 +2034,10 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolFragmentToCXSmiles", MolFragmentToSmilesHelper2<cxsmilesfrag_gen>,
-        nb::arg("mol"), nb::arg("atomsToUse"), nb::arg("bondsToUse") = 0,
-        nb::arg("atomSymbols") = 0, nb::arg("bondSymbols") = 0,
-        nb::arg("isomericSmiles") = true, nb::arg("kekuleSmiles") = false,
-        nb::arg("rootedAtAtom") = -1, nb::arg("canonical") = true,
-        nb::arg("allBondsExplicit") = false, nb::arg("allHsExplicit") = false,
+        "mol"_a, "atomsToUse"_a, "bondsToUse"_a = 0, "atomSymbols"_a = 0,
+        "bondSymbols"_a = 0, "isomericSmiles"_a = true,
+        "kekuleSmiles"_a = false, "rootedAtAtom"_a = -1, "canonical"_a = true,
+        "allBondsExplicit"_a = false, "allHsExplicit"_a = false,
         docString.c_str());
 
   docString =
@@ -2078,9 +2056,8 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolToSmarts",
-        (std::string (*)(const ROMol &, bool, int))RDKit::MolToSmarts,
-        nb::arg("mol"), nb::arg("isomericSmiles") = true,
-        nb::arg("rootedAtAtom") = -1, docString.c_str());
+        (std::string (*)(const ROMol &, bool, int))RDKit::MolToSmarts, "mol"_a,
+        "isomericSmiles"_a = true, "rootedAtAtom"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Returns a SMARTS string for a molecule
@@ -2096,7 +2073,7 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToSmarts",
         (std::string (*)(const ROMol &,
                          const SmilesWriteParams &))RDKit::MolToSmarts,
-        nb::arg("mol"), nb::arg("params"), docString.c_str());
+        "mol"_a, "params"_a, docString.c_str());
 
   docString =
       R"DOC(Returns a SMARTS string for a fragment of a molecule
@@ -2114,9 +2091,8 @@ NB_MODULE(rdmolfiles, m) {
   
       a string
   )DOC";
-  m.def("MolFragmentToSmarts", molFragmentToSmarts, nb::arg("mol"),
-        nb::arg("atomsToUse"), nb::arg("bondsToUse") = 0,
-        nb::arg("isomericSmarts") = true, docString.c_str());
+  m.def("MolFragmentToSmarts", molFragmentToSmarts, "mol"_a, "atomsToUse"_a,
+        "bondsToUse"_a = 0, "isomericSmarts"_a = true, docString.c_str());
 
   docString =
       R"DOC(Returns a SMARTS string for a molecule
@@ -2132,8 +2108,8 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolToCXSmarts",
-        (std::string (*)(const ROMol &, bool))RDKit::MolToCXSmarts,
-        nb::arg("mol"), nb::arg("isomericSmiles") = true, docString.c_str());
+        (std::string (*)(const ROMol &, bool))RDKit::MolToCXSmarts, "mol"_a,
+        "isomericSmiles"_a = true, docString.c_str());
 
   docString =
       R"DOC(Returns a SMARTS string for a fragment of a molecule
@@ -2151,9 +2127,8 @@ NB_MODULE(rdmolfiles, m) {
   
       a string
   )DOC";
-  m.def("MolFragmentToCXSmarts", molFragmentToCXSmarts, nb::arg("mol"),
-        nb::arg("atomsToUse"), nb::arg("bondsToUse") = 0,
-        nb::arg("isomericSmarts") = true, docString.c_str());
+  m.def("MolFragmentToCXSmarts", molFragmentToCXSmarts, "mol"_a, "atomsToUse"_a,
+        "bondsToUse"_a = 0, "isomericSmarts"_a = true, docString.c_str());
 
   docString =
       R"DOC(Writes a molecule to a TPL file.
@@ -2167,9 +2142,9 @@ NB_MODULE(rdmolfiles, m) {
         This should be set to True when writing TPLs to be read by
         the CombiCode.
   )DOC";
-  m.def("MolToTPLFile", RDKit::MolToTPLFile, nb::arg("mol"),
-        nb::arg("fileName"), nb::arg("partialChargeProp") = "_GasteigerCharge",
-        nb::arg("writeFirstConfTwice") = false, docString.c_str());
+  m.def("MolToTPLFile", RDKit::MolToTPLFile, "mol"_a, "fileName"_a,
+        "partialChargeProp"_a = "_GasteigerCharge",
+        "writeFirstConfTwice"_a = false, docString.c_str());
 
   docString =
       R"DOC(Returns the Tpl block for a molecule.
@@ -2186,9 +2161,9 @@ NB_MODULE(rdmolfiles, m) {
   
       a string
   )DOC";
-  m.def("MolToTPLBlock", RDKit::MolToTPLText, nb::arg("mol"),
-        nb::arg("partialChargeProp") = "_GasteigerCharge",
-        nb::arg("writeFirstConfTwice") = false, docString.c_str());
+  m.def("MolToTPLBlock", RDKit::MolToTPLText, "mol"_a,
+        "partialChargeProp"_a = "_GasteigerCharge",
+        "writeFirstConfTwice"_a = false, docString.c_str());
 
   docString =
       R"DOC(Construct a molecule from a PDB file.
@@ -2211,10 +2186,10 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromPDBFile", RDKit::MolFromPDBFile, nb::arg("pdbFileName"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        nb::arg("flavor") = 0, nb::arg("proximityBonding") = true,
-        docString.c_str(), nb::rv_policy::take_ownership);
+  m.def("MolFromPDBFile", RDKit::MolFromPDBFile, "pdbFileName"_a,
+        "sanitize"_a = true, "removeHs"_a = true, "flavor"_a = 0,
+        "proximityBonding"_a = true, docString.c_str(),
+        nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a PDB block.
@@ -2237,10 +2212,10 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromPDBBlock", RDKit::MolFromPDBBlock, nb::arg("molBlock"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        nb::arg("flavor") = 0, nb::arg("proximityBonding") = true,
-        docString.c_str(), nb::rv_policy::take_ownership);
+  m.def("MolFromPDBBlock", RDKit::MolFromPDBBlock, "molBlock"_a,
+        "sanitize"_a = true, "removeHs"_a = true, "flavor"_a = 0,
+        "proximityBonding"_a = true, docString.c_str(),
+        nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Returns a PDB block for a molecule
@@ -2263,8 +2238,8 @@ NB_MODULE(rdmolfiles, m) {
   
       a string
   )DOC";
-  m.def("MolToPDBBlock", RDKit::MolToPDBBlock, nb::arg("mol"),
-        nb::arg("confId") = -1, nb::arg("flavor") = 0, docString.c_str());
+  m.def("MolToPDBBlock", RDKit::MolToPDBBlock, "mol"_a, "confId"_a = -1,
+        "flavor"_a = 0, docString.c_str());
 
   docString =
       R"DOC(Writes a PDB file for a molecule
@@ -2284,9 +2259,8 @@ NB_MODULE(rdmolfiles, m) {
               - flavor & 16 : Write MASTER record
               - flavor & 32 : Write TER record
   )DOC";
-  m.def("MolToPDBFile", RDKit::MolToPDBFile, nb::arg("mol"),
-        nb::arg("filename"), nb::arg("confId") = -1, nb::arg("flavor") = 0,
-        docString.c_str());
+  m.def("MolToPDBFile", RDKit::MolToPDBFile, "mol"_a, "filename"_a,
+        "confId"_a = -1, "flavor"_a = 0, docString.c_str());
 
   docString =
       R"DOC(Construct a molecule from a sequence string (currently
@@ -2314,8 +2288,8 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromSequence", RDKit::MolFromSequence, nb::arg("text"),
-        nb::arg("sanitize") = true, nb::arg("flavor") = 0, docString.c_str(),
+  m.def("MolFromSequence", RDKit::MolFromSequence, "text"_a,
+        "sanitize"_a = true, "flavor"_a = 0, docString.c_str(),
         nb::rv_policy::take_ownership);
 
   docString =
@@ -2331,8 +2305,7 @@ NB_MODULE(rdmolfiles, m) {
   
       a string
   )DOC";
-  m.def("MolToSequence", RDKit::MolToSequence, nb::arg("mol"),
-        docString.c_str());
+  m.def("MolToSequence", RDKit::MolToSequence, "mol"_a, docString.c_str());
 
   docString =
       R"DOC(Construct a molecule from a FASTA string (currently supports
@@ -2359,9 +2332,8 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromFASTA", RDKit::MolFromFASTA, nb::arg("text"),
-        nb::arg("sanitize") = true, nb::arg("flavor") = 0, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def("MolFromFASTA", RDKit::MolFromFASTA, "text"_a, "sanitize"_a = true,
+        "flavor"_a = 0, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Returns the FASTA string for a molecule
@@ -2376,7 +2348,7 @@ NB_MODULE(rdmolfiles, m) {
   
       a string
   )DOC";
-  m.def("MolToFASTA", RDKit::MolToFASTA, nb::arg("mol"), docString.c_str());
+  m.def("MolToFASTA", RDKit::MolToFASTA, "mol"_a, docString.c_str());
 
   docString =
       R"DOC(Construct a molecule from a HELM string (currently supports
@@ -2393,9 +2365,8 @@ NB_MODULE(rdmolfiles, m) {
   
       a Mol object, None on failure.
   )DOC";
-  m.def("MolFromHELM", RDKit::MolFromHELM, nb::arg("text"),
-        nb::arg("sanitize") = true, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def("MolFromHELM", RDKit::MolFromHELM, "text"_a, "sanitize"_a = true,
+        docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Returns the HELM string for a molecule
@@ -2410,7 +2381,7 @@ NB_MODULE(rdmolfiles, m) {
   
       a string
   )DOC";
-  m.def("MolToHELM", RDKit::MolToHELM, nb::arg("mol"), docString.c_str());
+  m.def("MolToHELM", RDKit::MolToHELM, "mol"_a, docString.c_str());
 
   docString =
       R"DOC(Returns the canonical atom ranking for each atom of a
@@ -2447,10 +2418,10 @@ NB_MODULE(rdmolfiles, m) {
   
       a string
   )DOC";
-  m.def("CanonicalRankAtoms", CanonicalRankAtoms, nb::arg("mol"),
-        nb::arg("breakTies") = true, nb::arg("includeChirality") = true,
-        nb::arg("includeIsotopes") = true, nb::arg("includeAtomMaps") = true,
-        nb::arg("includeChiralPresence") = false, docString.c_str());
+  m.def("CanonicalRankAtoms", CanonicalRankAtoms, "mol"_a, "breakTies"_a = true,
+        "includeChirality"_a = true, "includeIsotopes"_a = true,
+        "includeAtomMaps"_a = true, "includeChiralPresence"_a = false,
+        docString.c_str());
 
   docString =
       R"DOC(Returns the canonical atom ranking for each atom of a
@@ -2488,66 +2459,56 @@ NB_MODULE(rdmolfiles, m) {
   
       a string
   )DOC";
-  m.def("CanonicalRankAtomsInFragment", CanonicalRankAtomsInFragment,
-        nb::arg("mol"), nb::arg("atomsToUse"), nb::arg("bondsToUse") = 0,
-        nb::arg("atomSymbols") = 0, nb::arg("breakTies") = true,
-        nb::arg("includeChirality") = true, nb::arg("includeIsotopes") = true,
-        nb::arg("includeAtomMaps") = true,
-        nb::arg("includeChiralPresence") = false, docString.c_str());
+  m.def("CanonicalRankAtomsInFragment", CanonicalRankAtomsInFragment, "mol"_a,
+        "atomsToUse"_a, "bondsToUse"_a = 0, "atomSymbols"_a = 0,
+        "breakTies"_a = true, "includeChirality"_a = true,
+        "includeIsotopes"_a = true, "includeAtomMaps"_a = true,
+        "includeChiralPresence"_a = false, docString.c_str());
 
-  m.def("CanonicalizeEnhancedStereo", CanonicalizeEnhancedStereo,
-        nb::arg("mol"));
+  m.def("CanonicalizeEnhancedStereo", CanonicalizeEnhancedStereo, "mol"_a);
 
   m.def(
       "CreateAtomIntPropertyList", FileParserUtils::createAtomIntPropertyList,
-      nb::arg("mol"), nb::arg("propName"), nb::arg("missingValueMarker") = "",
-      nb::arg("lineSize") = 190,
+      "mol"_a, "propName"_a, "missingValueMarker"_a = "", "lineSize"_a = 190,
       "creates a list property on the molecule from individual atom property values");
   m.def(
       "CreateAtomDoublePropertyList",
-      FileParserUtils::createAtomDoublePropertyList, nb::arg("mol"),
-      nb::arg("propName"), nb::arg("missingValueMarker") = "",
-      nb::arg("lineSize") = 190,
+      FileParserUtils::createAtomDoublePropertyList, "mol"_a, "propName"_a,
+      "missingValueMarker"_a = "", "lineSize"_a = 190,
       "creates a list property on the molecule from individual atom property values");
   m.def(
       "CreateAtomBoolPropertyList", FileParserUtils::createAtomBoolPropertyList,
-      nb::arg("mol"), nb::arg("propName"), nb::arg("missingValueMarker") = "",
-      nb::arg("lineSize") = 190,
+      "mol"_a, "propName"_a, "missingValueMarker"_a = "", "lineSize"_a = 190,
       "creates a list property on the molecule from individual atom property values");
   m.def(
       "CreateAtomStringPropertyList",
-      FileParserUtils::createAtomStringPropertyList, nb::arg("mol"),
-      nb::arg("propName"), nb::arg("missingValueMarker") = "",
-      nb::arg("lineSize") = 190,
+      FileParserUtils::createAtomStringPropertyList, "mol"_a, "propName"_a,
+      "missingValueMarker"_a = "", "lineSize"_a = 190,
       "creates a list property on the molecule from individual atom property values");
 
   m.def(
       "CreateBondIntPropertyList", FileParserUtils::createBondIntPropertyList,
-      nb::arg("mol"), nb::arg("propName"), nb::arg("missingValueMarker") = "",
-      nb::arg("lineSize") = 190,
+      "mol"_a, "propName"_a, "missingValueMarker"_a = "", "lineSize"_a = 190,
       "creates a list property on the molecule from individual bond property values");
   m.def(
       "CreateBondDoublePropertyList",
-      FileParserUtils::createBondDoublePropertyList, nb::arg("mol"),
-      nb::arg("propName"), nb::arg("missingValueMarker") = "",
-      nb::arg("lineSize") = 190,
+      FileParserUtils::createBondDoublePropertyList, "mol"_a, "propName"_a,
+      "missingValueMarker"_a = "", "lineSize"_a = 190,
       "creates a list property on the molecule from individual bond property values");
   m.def(
       "CreateBondBoolPropertyList", FileParserUtils::createBondBoolPropertyList,
-      nb::arg("mol"), nb::arg("propName"), nb::arg("missingValueMarker") = "",
-      nb::arg("lineSize") = 190,
+      "mol"_a, "propName"_a, "missingValueMarker"_a = "", "lineSize"_a = 190,
       "creates a list property on the molecule from individual bond property values");
   m.def(
       "CreateBondStringPropertyList",
-      FileParserUtils::createBondStringPropertyList, nb::arg("mol"),
-      nb::arg("propName"), nb::arg("missingValueMarker") = "",
-      nb::arg("lineSize") = 190,
+      FileParserUtils::createBondStringPropertyList, "mol"_a, "propName"_a,
+      "missingValueMarker"_a = "", "lineSize"_a = 190,
       "creates a list property on the molecule from individual bond property values");
 
-  m.def("MolToRandomSmilesVect", RDKit::MolToRandomSmilesHelper, nb::arg("mol"),
-        nb::arg("numSmiles"), nb::arg("randomSeed") = 0,
-        nb::arg("isomericSmiles") = true, nb::arg("kekuleSmiles") = false,
-        nb::arg("allBondsExplicit") = false, nb::arg("allHsExplicit") = false,
+  m.def("MolToRandomSmilesVect", RDKit::MolToRandomSmilesHelper, "mol"_a,
+        "numSmiles"_a, "randomSeed"_a = 0, "isomericSmiles"_a = true,
+        "kekuleSmiles"_a = false, "allBondsExplicit"_a = false,
+        "allHsExplicit"_a = false,
         "returns a list of SMILES generated using the randomSmiles algorithm");
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
@@ -2587,9 +2548,8 @@ NB_MODULE(rdmolfiles, m) {
        RETURNS:
          a Mol object, None on failure.
     )DOC";
-  m.def("MolFromPNGString", MolFromPNGString, nb::arg("png"),
-        nb::arg("params") = nb::none(), docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def("MolFromPNGString", MolFromPNGString, "png"_a, "params"_a = nb::none(),
+        docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from metadata in a PNG file.
@@ -2606,15 +2566,14 @@ NB_MODULE(rdmolfiles, m) {
 
   std::string cdxml_notes = R"DOC()DOC";
 
-  m.def("MolFromPNGFile", MolFromPNGFile, nb::arg("filename"),
-        nb::arg("params") = nb::none(), docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def("MolFromPNGFile", MolFromPNGFile, "filename"_a, "params"_a = nb::none(),
+        docString.c_str(), nb::rv_policy::take_ownership);
 
-  m.def("MolsFromPNGString", MolsFromPNGString, nb::arg("png"),
-        nb::arg("tag") = PNGData::pklTag, nb::arg("params") = nb::none(),
+  m.def("MolsFromPNGString", MolsFromPNGString, "png"_a,
+        "tag"_a = PNGData::pklTag, "params"_a = nb::none(),
         "returns a tuple of molecules constructed from the PNG string");
-  m.def("MolsFromPNGFile", MolsFromPNGFile, nb::arg("filename"),
-        nb::arg("tag") = PNGData::pklTag, nb::arg("params") = nb::none(),
+  m.def("MolsFromPNGFile", MolsFromPNGFile, "filename"_a,
+        "tag"_a = PNGData::pklTag, "params"_a = nb::none(),
         "returns a tuple of molecules constructed from the PNG file");
 #endif
 
@@ -2637,9 +2596,8 @@ NB_MODULE(rdmolfiles, m) {
        RETURNS:
          an iterator of parsed Mol objects.)DOC";
 
-  m.def("MolsFromCDXMLFile", MolsFromCDXMLFile, nb::arg("filename"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        docString.c_str());
+  m.def("MolsFromCDXMLFile", MolsFromCDXMLFile, "filename"_a,
+        "sanitize"_a = true, "removeHs"_a = true, docString.c_str());
 
   docString =
       R"DOC(Construct a molecule from a cdxml string.
@@ -2660,9 +2618,8 @@ NB_MODULE(rdmolfiles, m) {
        RETURNS:
          an iterator of parsed Mol objects.)DOC";
 
-  m.def("MolsFromCDXML", MolsFromCDXML, nb::arg("cdxml"),
-        nb::arg("sanitize") = true, nb::arg("removeHs") = true,
-        docString.c_str());
+  m.def("MolsFromCDXML", MolsFromCDXML, "cdxml"_a, "sanitize"_a = true,
+        "removeHs"_a = true, docString.c_str());
 
   nb::enum_<RDKit::v2::CDXMLParser::CDXMLFormat>(m, "CDXMLFormat")
       .value("CDXML", RDKit::v2::CDXMLParser::CDXMLFormat::CDXML)
@@ -2707,8 +2664,8 @@ NB_MODULE(rdmolfiles, m) {
        RETURNS:
          a tuple  of parsed Mol objects.)DOC";
 
-  m.def("MolsFromCDXMLFile", MolsFromCDXMLFileHelper, nb::arg("filename"),
-        nb::arg("params"), docString.c_str());
+  m.def("MolsFromCDXMLFile", MolsFromCDXMLFileHelper, "filename"_a, "params"_a,
+        docString.c_str());
 
   docString =
       R"DOC(Construct a molecule from a cdxml string.
@@ -2728,8 +2685,8 @@ NB_MODULE(rdmolfiles, m) {
        RETURNS:
          a tuple of parsed Mol objects.)DOC";
 
-  m.def("MolsFromCDXML", MolsFromCDXMLHelper, nb::arg("cdxml"),
-        nb::arg("params"), docString.c_str());
+  m.def("MolsFromCDXML", MolsFromCDXMLHelper, "cdxml"_a, "params"_a,
+        docString.c_str());
 
   docString =
       R"DOC(Returns true if the RDKit is built with ChemDraw CDX
@@ -2755,9 +2712,8 @@ NB_MODULE(rdmolfiles, m) {
 
      RETURNS:
        the updated PNG data)DOC";
-  m.def("MolMetadataToPNGFile", addMolToPNGFileHelper, nb::arg("mol"),
-        nb::arg("filename"), nb::arg("includePkl") = true,
-        nb::arg("includeSmiles") = true, nb::arg("includeMol") = false,
+  m.def("MolMetadataToPNGFile", addMolToPNGFileHelper, "mol"_a, "filename"_a,
+        "includePkl"_a = true, "includeSmiles"_a = true, "includeMol"_a = false,
         docString.c_str());
 
   docString =
@@ -2773,8 +2729,8 @@ NB_MODULE(rdmolfiles, m) {
 
      RETURNS:
        the updated PNG data)DOC";
-  m.def("MolMetadataToPNGFile", addMolToPNGFileHelperParams, nb::arg("mol"),
-        nb::arg("filename"), nb::arg("params"), docString.c_str());
+  m.def("MolMetadataToPNGFile", addMolToPNGFileHelperParams, "mol"_a,
+        "filename"_a, "params"_a, docString.c_str());
 
   docString =
       R"DOC(Adds molecular metadata to a PNG string.
@@ -2793,9 +2749,8 @@ NB_MODULE(rdmolfiles, m) {
 
      RETURNS:
        the updated PNG data)DOC";
-  m.def("MolMetadataToPNGString", addMolToPNGStringHelper, nb::arg("mol"),
-        nb::arg("png"), nb::arg("includePkl") = true,
-        nb::arg("includeSmiles") = true, nb::arg("includeMol") = false,
+  m.def("MolMetadataToPNGString", addMolToPNGStringHelper, "mol"_a, "png"_a,
+        "includePkl"_a = true, "includeSmiles"_a = true, "includeMol"_a = false,
         docString.c_str());
 
   docString =
@@ -2811,8 +2766,8 @@ NB_MODULE(rdmolfiles, m) {
 
      RETURNS:
        the updated PNG data)DOC";
-  m.def("MolMetadataToPNGString", addMolToPNGStringHelperParams, nb::arg("mol"),
-        nb::arg("png"), nb::arg("params"), docString.c_str());
+  m.def("MolMetadataToPNGString", addMolToPNGStringHelperParams, "mol"_a,
+        "png"_a, "params"_a, docString.c_str());
 
   docString =
       R"DOC(Adds metadata to PNG data read from a file.
@@ -2826,8 +2781,8 @@ NB_MODULE(rdmolfiles, m) {
 
      RETURNS:
        the updated PNG data)DOC";
-  m.def("AddMetadataToPNGFile", addMetadataToPNGFileHelper, nb::arg("metadata"),
-        nb::arg("filename"), docString.c_str());
+  m.def("AddMetadataToPNGFile", addMetadataToPNGFileHelper, "metadata"_a,
+        "filename"_a, docString.c_str());
 
   docString =
       R"DOC(Adds metadata to a PNG string.
@@ -2841,18 +2796,18 @@ NB_MODULE(rdmolfiles, m) {
 
      RETURNS:
        the updated PNG data)DOC";
-  m.def("AddMetadataToPNGString", addMetadataToPNGStringHelper,
-        nb::arg("metadata"), nb::arg("png"), docString.c_str());
+  m.def("AddMetadataToPNGString", addMetadataToPNGStringHelper, "metadata"_a,
+        "png"_a, docString.c_str());
 
-  m.def("MetadataFromPNGFile", MetadataFromPNGFile, nb::arg("filename"),
-        nb::arg("asList") = false,
+  m.def("MetadataFromPNGFile", MetadataFromPNGFile, "filename"_a,
+        "asList"_a = false,
         "Returns a dict with all metadata from the PNG file. Keys are "
         "strings, values are bytes. "
         "If asList is True, a list of (key, value) tuples is returned; "
         "this enables retrieving multiple values sharing the same key.");
 
-  m.def("MetadataFromPNGString", MetadataFromPNGString, nb::arg("png"),
-        nb::arg("asList") = false,
+  m.def("MetadataFromPNGString", MetadataFromPNGString, "png"_a,
+        "asList"_a = false,
         "Returns a dict with all metadata from the PNG string. Keys are "
         "strings, values are bytes. "
         "If asList is True, a list of (key, value) tuples is returned; "
