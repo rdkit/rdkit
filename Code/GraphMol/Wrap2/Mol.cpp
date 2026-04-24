@@ -177,13 +177,24 @@ void MolDebug(const ROMol &mol, bool useStdout) {
 }
 
 struct AtomSeqHolder {
-  ROMol &d_mol;
-  AtomSeqHolder(ROMol &mol) : d_mol(mol) {};
-  size_t size() const { return d_mol.getNumAtoms(); }
-  ROMol::AtomIterator begin() const { return d_mol.beginAtoms(); }
-  ROMol::AtomIterator end() const { return d_mol.endAtoms(); }
+  CXXAtomIterator<MolGraph, Atom *> iter;
+  AtomSeqHolder(ROMol &mol) : iter(mol.atoms()) {};
+  size_t size() const { return iter.size(); }
+  CXXAtomIterator<MolGraph, Atom *>::CXXAtomIter begin() {
+    return iter.begin();
+  }
+  CXXAtomIterator<MolGraph, Atom *>::CXXAtomIter end() { return iter.end(); }
 };
 
+struct BondSeqHolder {
+  CXXBondIterator<MolGraph, Bond *> iter;
+  BondSeqHolder(ROMol &mol) : iter(mol.bonds()) {};
+  size_t size() const { return iter.size(); }
+  CXXBondIterator<MolGraph, Bond *>::CXXBondIter begin() {
+    return iter.begin();
+  }
+  CXXBondIterator<MolGraph, Bond *>::CXXBondIter end() { return iter.end(); }
+};
 }  // namespace
 
 class ReadWriteMol : public RWMol {
@@ -424,8 +435,19 @@ struct mol_wrapper {
         .def("__len__", &AtomSeqHolder::size)
         .def(
             "__iter__",
-            [](const AtomSeqHolder &a) {
+            [](AtomSeqHolder &a) {
               return nb::make_iterator(nb::type<AtomSeqHolder>(), "iterator",
+                                       a.begin(), a.end());
+            },
+            nb::keep_alive<0, 1>());
+    nb::class_<BondSeqHolder>(m, "_BondSeqHolder",
+                              "A sequence-like holder of a molecule's bonds")
+        .def(nb::init<ROMol &>(), "mol"_a)
+        .def("__len__", &BondSeqHolder::size)
+        .def(
+            "__iter__",
+            [](BondSeqHolder &a) {
+              return nb::make_iterator(nb::type<BondSeqHolder>(), "iterator",
                                        a.begin(), a.end());
             },
             nb::keep_alive<0, 1>());
@@ -455,6 +477,10 @@ struct mol_wrapper {
             "GetAtoms", [](ROMol &mol) { return AtomSeqHolder(mol); },
             nb::keep_alive<0, 1>(),
             "Returns a sequence-like object of the molecule's atoms.")
+        .def(
+            "GetBonds", [](ROMol &mol) { return BondSeqHolder(mol); },
+            nb::keep_alive<0, 1>(),
+            "Returns a sequence-like object of the molecule's bonds.")
         .def("GetNumAtoms",
              nb::overload_cast<>(&ROMol::getNumAtoms, nb::const_),
              "Returns the number of atoms in the molecule.")

@@ -4,8 +4,8 @@ rdkit_nanobind_extension(rdchem
                        Table.cpp 
                        Mol.cpp
                        Atom.cpp 
-#                       Bond.cpp 
-#                       Conformer.cpp 
+                       Bond.cpp 
+                       Conformer.cpp 
 #                       RingInfo.cpp 
 #                       EditableMol.cpp 
 #                       MonomerInfo.cpp

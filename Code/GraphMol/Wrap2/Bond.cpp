@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Rational Discovery LLC
+//  Copyright (C) 2026 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,9 +8,11 @@
 //  of the RDKit source tree.
 //
 
-#define NO_IMPORT_ARRAY
-#include <RDBoost/python.h>
 #include <string>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
+
 #include "props.hpp"
 
 #include <GraphMol/RDKitBase.h>
@@ -19,13 +21,15 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <RDGeneral/types.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
+
 namespace RDKit {
 
 void expandQuery(QueryBond *self, const QueryBond *other,
                  Queries::CompositeQueryType how, bool maintainOrder) {
   if (!other) {
-    throw_value_error("other Bond is null");
+    throw ValueErrorException("other Bond is null");
   }
   if (other->hasQuery()) {
     const QueryBond::QUERYBOND_QUERY *qry = other->getQuery();
@@ -35,23 +39,23 @@ void expandQuery(QueryBond *self, const QueryBond *other,
 
 void setQuery(QueryBond *self, const QueryBond *other) {
   if (!other) {
-    throw_value_error("other Bond is null");
+    throw ValueErrorException("other Bond is null");
   }
   if (other->hasQuery()) {
     self->setQuery(other->getQuery()->copy());
   }
 }
 
-int BondHasProp(const Bond *bond, const char *key) {
+int BondHasProp(const Bond *bond, const std::string &key) {
   int res = bond->hasProp(key);
   return res;
 }
 
 template <class T>
-void BondSetProp(const Bond *bond, const char *key, const T &val) {
+void BondSetProp(const Bond *bond, const std::string &key, const T &val) {
   bond->setProp<T>(key, val);
 }
-void BondClearProp(const Bond *bond, const char *key) {
+void BondClearProp(const Bond *bond, const std::string &key) {
   if (!bond->hasProp(key)) {
     return;
   }
@@ -71,7 +75,6 @@ bool BondIsInRingSize(const Bond *bond, int size) {
   }
   return bond->getOwningMol().getRingInfo()->isBondInRingOfSize(bond->getIdx(),
                                                                 size);
-  return false;
 }
 
 INT_VECT getBondStereoAtoms(const Bond *bond) { return bond->getStereoAtoms(); }
@@ -91,122 +94,109 @@ std::string bondClassDoc =
 Note: unlike Atoms, is it currently impossible to construct Bonds from\n\
 Python.\n";
 struct bond_wrapper {
-  static void wrap() {
-    python::class_<Bond>("Bond", bondClassDoc.c_str(), python::no_init)
+  static void wrap(nb::module_ &m) {
+    nb::class_<Bond>(m, "Bond")
 
-        .def("HasOwningMol", &Bond::hasOwningMol, python::args("self"),
+        .def("HasOwningMol", &Bond::hasOwningMol,
              "Returns whether or not this instance belongs to a molecule.\n")
         .def("GetOwningMol", &Bond::getOwningMol,
              "Returns the Mol that owns this bond.\n",
-             python::return_value_policy<python::reference_existing_object>(),
-             python::args("self"))
+             nb::rv_policy::reference_internal)
 
-        .def("GetBondType", &Bond::getBondType, python::args("self"),
+        .def("GetBondType", &Bond::getBondType,
              "Returns the type of the bond as a BondType\n")
-        .def("SetBondType", &Bond::setBondType, python::args("self", "bT"),
+        .def("SetBondType", &Bond::setBondType, "bT"_a,
              "Set the type of the bond as a BondType\n")
         .def("GetBondTypeAsDouble", &Bond::getBondTypeAsDouble,
-             python::args("self"),
              "Returns the type of the bond as a double (i.e. 1.0 for SINGLE, "
              "1.5 for AROMATIC, 2.0 for DOUBLE)\n")
 
-        .def("GetBondDir", &Bond::getBondDir, python::args("self"),
+        .def("GetBondDir", &Bond::getBondDir,
              "Returns the type of the bond as a BondDir\n")
-        .def("SetBondDir", &Bond::setBondDir, python::args("self", "what"),
+        .def("SetBondDir", &Bond::setBondDir, "what"_a,
              "Set the type of the bond as a BondDir\n")
 
-        .def("GetStereo", &Bond::getStereo, python::args("self"),
+        .def("GetStereo", &Bond::getStereo,
              "Returns the stereo configuration of the bond as a BondStereo\n")
-        .def("SetStereo", &Bond::setStereo, python::args("self", "what"),
+        .def("SetStereo", &Bond::setStereo, "what"_a,
              "Set the stereo configuration of the bond as a BondStereo\n")
-        .def("GetStereoAtoms", getBondStereoAtoms, python::args("self"),
+        .def("GetStereoAtoms", getBondStereoAtoms,
              "Returns the indices of the atoms setting this bond's "
              "stereochemistry.\n")
-        .def("SetStereoAtoms", &Bond::setStereoAtoms,
-             python::args("self", "bgnIdx", "endIdx"),
+        .def("SetStereoAtoms", &Bond::setStereoAtoms, "bgnIdx"_a, "endIdx"_a,
              "Set the indices of the atoms setting this bond's "
              "stereochemistry.\n")
-        .def("InvertChirality", &Bond::invertChirality, python::args("self"))
+        .def("InvertChirality", &Bond::invertChirality)
 
         .def("GetValenceContrib",
              (double (Bond::*)(const Atom *) const) & Bond::getValenceContrib,
-             python::args("self", "at"),
+             "at"_a,
              "Returns the contribution of the bond to the valence of an "
              "Atom.\n\n"
              "  ARGUMENTS:\n\n"
              "    - atom: the Atom to consider.\n")
 
-        .def("GetIsAromatic", &Bond::getIsAromatic, python::args("self"))
-        .def("SetIsAromatic", &Bond::setIsAromatic,
-             python::args("self", "what"))
+        .def("GetIsAromatic", &Bond::getIsAromatic)
+        .def("SetIsAromatic", &Bond::setIsAromatic, "what"_a)
 
-        .def("GetIsConjugated", &Bond::getIsConjugated, python::args("self"),
+        .def("GetIsConjugated", &Bond::getIsConjugated,
              "Returns whether or not the bond is considered to be conjugated.")
-        .def("SetIsConjugated", &Bond::setIsConjugated,
-             python::args("self", "what"))
+        .def("SetIsConjugated", &Bond::setIsConjugated, "what"_a)
 
-        .def("GetIdx", &Bond::getIdx, python::args("self"),
+        .def("GetIdx", &Bond::getIdx,
              "Returns the bond's index (ordering in the molecule)\n")
 
-        .def("GetBeginAtomIdx", &Bond::getBeginAtomIdx, python::args("self"),
+        .def("GetBeginAtomIdx", &Bond::getBeginAtomIdx,
              "Returns the index of the bond's first atom.\n")
-        .def("GetEndAtomIdx", &Bond::getEndAtomIdx, python::args("self"),
+        .def("GetEndAtomIdx", &Bond::getEndAtomIdx,
              "Returns the index of the bond's first atom.\n")
-        .def("GetOtherAtomIdx", &Bond::getOtherAtomIdx,
-             python::args("self", "thisIdx"),
+        .def("GetOtherAtomIdx", &Bond::getOtherAtomIdx, "thisIdx"_a,
              "Given the index of one of the bond's atoms, returns the\n"
              "index of the other.\n")
 
         .def("GetBeginAtom", &Bond::getBeginAtom,
-             python::return_value_policy<python::reference_existing_object>(),
-             python::args("self"), "Returns the bond's first atom.\n")
-        .def("GetEndAtom", &Bond::getEndAtom,
-             python::return_value_policy<python::reference_existing_object>(),
-             python::args("self"), "Returns the bond's second atom.\n")
+             nb::rv_policy::reference_internal,
+             "Returns the bond's first atom.\n")
+        .def("GetEndAtom", &Bond::getEndAtom, nb::rv_policy::reference_internal,
+             "Returns the bond's second atom.\n")
         .def("GetOtherAtom", &Bond::getOtherAtom,
-             python::return_value_policy<python::reference_existing_object>(),
-             python::args("self", "what"),
+             nb::rv_policy::reference_internal, "what"_a,
              "Given one of the bond's atoms, returns the other one.\n")
 
-        // FIX: query stuff
         .def("Match", (bool (Bond::*)(const Bond *) const) & Bond::Match,
-             python::args("self", "what"),
+             "what"_a,
              "Returns whether or not this bond matches another Bond.\n\n"
              "  Each Bond (or query Bond) has a query function which is\n"
              "  used for this type of matching.\n\n"
              "  ARGUMENTS:\n"
              "    - other: the other Bond to which to compare\n")
 
-        .def("IsInRingSize", BondIsInRingSize, python::args("self", "size"),
+        .def("IsInRingSize", BondIsInRingSize, "size"_a,
              "Returns whether or not the bond is in a ring of a particular "
              "size.\n\n"
              "  ARGUMENTS:\n"
              "    - size: the ring size to look for\n")
-        .def("IsInRing", BondIsInRing, python::args("self"),
+        .def("IsInRing", BondIsInRing,
              "Returns whether or not the bond is in a ring of any size.\n\n")
 
-        .def("HasQuery", &Bond::hasQuery, python::args("self"),
+        .def("HasQuery", &Bond::hasQuery,
              "Returns whether or not the bond has an associated query\n\n")
 
-        .def("DescribeQuery", describeQuery, python::args("self"),
+        .def("DescribeQuery", describeQuery,
              "returns a text description of the query. Primarily intended for "
              "debugging purposes.\n\n")
 
-        .def("GetSmarts", BondGetSmarts,
-             (python::arg("bond"), python::arg("allBondsExplicit") = false),
+        .def("GetSmarts", BondGetSmarts, "allBondsExplicit"_a = false,
              "returns the SMARTS (or SMILES) string for a Bond")
 
         // properties
-        .def("SetProp", BondSetProp<std::string>,
-             (python::arg("self"), python::arg("key"), python::arg("val")),
+        .def("SetProp", BondSetProp<std::string>, "key"_a, "val"_a,
              "Sets a bond property\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (a string).\n\n")
         .def(
-            "GetProp", GetPyProp<Bond>,
-            (python::arg("self"), python::arg("key"),
-             python::arg("autoConvert") = false),
+            "GetProp", GetPyProp<Bond>, "key"_a, "autoConvert"_a = false,
             "Returns the value of the property.\n\n"
             "  ARGUMENTS:\n"
             "    - key: the name of the property to return (a string).\n\n"
@@ -214,34 +204,29 @@ struct bond_wrapper {
             "  RETURNS: a string\n\n"
             "  NOTE:\n"
             "    - If the property has not been set, a KeyError exception "
-            "will be raised.\n",
-            boost::python::return_value_policy<return_pyobject_passthrough>())
-        .def("SetIntProp", BondSetProp<int>,
-             (python::arg("self"), python::arg("key"), python::arg("val")),
+            "will be raised.\n")
+        .def("SetIntProp", BondSetProp<int>, "key"_a, "val"_a,
              "Sets a bond property\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (an int).\n\n")
 
-        .def("SetUnsignedProp", BondSetProp<unsigned int>,
-             (python::arg("self"), python::arg("key"), python::arg("val")),
+        .def("SetUnsignedProp", BondSetProp<unsigned int>, "key"_a, "val"_a,
              "Sets a bond property\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (an int >= 0).\n\n")
 
-        .def("GetIntProp", GetProp<Bond, int>, python::args("self", "key"),
+        .def("GetIntProp", GetProp<Bond, int>, "key"_a,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (an int).\n\n"
              "  RETURNS: an int\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n",
-             boost::python::return_value_policy<return_pyobject_passthrough>())
+             "will be raised.\n")
 
-        .def("GetUnsignedProp", GetProp<Bond, unsigned int>,
-             python::args("self", "key"),
+        .def("GetUnsignedProp", GetProp<Bond, unsigned int>, "key"_a,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (an unsigned "
@@ -249,68 +234,61 @@ struct bond_wrapper {
              "  RETURNS: an int (Python has no unsigned type)\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n",
-             boost::python::return_value_policy<return_pyobject_passthrough>())
+             "will be raised.\n")
 
-        .def("SetDoubleProp", BondSetProp<double>,
-             (python::arg("self"), python::arg("key"), python::arg("val")),
+        .def("SetDoubleProp", BondSetProp<double>, "key"_a, "val"_a,
              "Sets a bond property\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (a double).\n\n")
 
-        .def("GetDoubleProp", GetProp<Bond, double>,
-             python::args("self", "key"),
+        .def("GetDoubleProp", GetProp<Bond, double>, "key"_a,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a double).\n\n"
              "  RETURNS: a double\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n",
-             boost::python::return_value_policy<return_pyobject_passthrough>())
+             "will be raised.\n")
 
-        .def("SetBoolProp", BondSetProp<bool>,
-             (python::arg("self"), python::arg("key"), python::arg("val")),
+        .def("SetBoolProp", BondSetProp<bool>, "key"_a, "val"_a,
              "Sets a bond property\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to be set (a string).\n"
              "    - value: the property value (a boolean).\n\n")
 
-        .def("GetBoolProp", GetProp<Bond, bool>, python::args("self", "key"),
+        .def("GetBoolProp", GetProp<Bond, bool>, "key"_a,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a boolean).\n\n"
              "  RETURNS: a boolean\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n",
-             boost::python::return_value_policy<return_pyobject_passthrough>())
+             "will be raised.\n")
 
-        .def("HasProp", BondHasProp, python::args("self", "key"),
+        .def("HasProp", BondHasProp, "key"_a,
              "Queries a Bond to see if a particular property has been "
              "assigned.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to check for (a string).\n")
 
-        .def("ClearProp", BondClearProp, python::args("self", "key"),
+        .def("ClearProp", BondClearProp, "key"_a,
              "Removes a particular property from an Bond (does nothing if not "
              "already set).\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to be removed.\n")
 
-        .def("GetPropNames", &Bond::getPropList,
-             (python::arg("self"), python::arg("includePrivate") = false,
-              python::arg("includeComputed") = false),
+        .def("GetPropNames", &Bond::getPropList, "includePrivate"_a = false,
+             "includeComputed"_a = false,
              "Returns a list of the properties set on the Bond.\n\n")
 
-        .def("GetPropsAsDict", GetPropsAsDict<Bond>,
-             (python::arg("self"), python::arg("includePrivate") = true,
-              python::arg("includeComputed") = true,
-              python::arg("autoConvertStrings") = true),
-             getPropsAsDictDocString.c_str());
+        .def("GetPropsAsDict", GetPropsAsDict<Bond>, "includePrivate"_a = true,
+             "includeComputed"_a = true, "autoConvertStrings"_a = true,
+             getPropsAsDictDocString.c_str())
 
-    python::enum_<Bond::BondType>("BondType")
+        .doc() = bondClassDoc.c_str();
+
+    nb::enum_<Bond::BondType>(m, "BondType")
         .value("UNSPECIFIED", Bond::UNSPECIFIED)
         .value("SINGLE", Bond::SINGLE)
         .value("DOUBLE", Bond::DOUBLE)
@@ -333,7 +311,7 @@ struct bond_wrapper {
         .value("DATIVER", Bond::DATIVER)
         .value("OTHER", Bond::OTHER)
         .value("ZERO", Bond::ZERO);
-    python::enum_<Bond::BondDir>("BondDir")
+    nb::enum_<Bond::BondDir>(m, "BondDir")
         .value("NONE", Bond::NONE)
         .value("BEGINWEDGE", Bond::BEGINWEDGE)
         .value("BEGINDASH", Bond::BEGINDASH)
@@ -341,7 +319,7 @@ struct bond_wrapper {
         .value("ENDUPRIGHT", Bond::ENDUPRIGHT)
         .value("EITHERDOUBLE", Bond::EITHERDOUBLE)
         .value("UNKNOWN", Bond::UNKNOWN);
-    python::enum_<Bond::BondStereo>("BondStereo")
+    nb::enum_<Bond::BondStereo>(m, "BondStereo")
         .value("STEREONONE", Bond::STEREONONE)
         .value("STEREOANY", Bond::STEREOANY)
         .value("STEREOZ", Bond::STEREOZ)
@@ -354,16 +332,14 @@ struct bond_wrapper {
     bondClassDoc =
         "The class to store QueryBonds.\n\
 These cannot currently be constructed directly from Python\n";
-    python::class_<QueryBond, python::bases<Bond>>(
-        "QueryBond", bondClassDoc.c_str(), python::no_init)
-        .def("ExpandQuery", expandQuery,
-             (python::arg("self"), python::arg("other"),
-              python::arg("how") = Queries::COMPOSITE_AND,
-              python::arg("maintainOrder") = true),
+    nb::class_<QueryBond, Bond>(m, "QueryBond")
+        .def("ExpandQuery", expandQuery, "other"_a,
+             "how"_a = Queries::COMPOSITE_AND, "maintainOrder"_a = true,
              "combines the query from other with ours")
-        .def("SetQuery", setQuery, (python::arg("self"), python::arg("other")),
-             "Replace our query with a copy of the other query");
+        .def("SetQuery", setQuery, "other"_a,
+             "Replace our query with a copy of the other query")
+        .doc() = bondClassDoc.c_str();
   };
 };
 }  // namespace RDKit
-void wrap_bond() { RDKit::bond_wrapper::wrap(); }
+void wrap_bond(nb::module_ &m) { RDKit::bond_wrapper::wrap(m); }

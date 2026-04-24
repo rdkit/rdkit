@@ -20,7 +20,6 @@
 
 #include <sstream>
 #include <utility>
-
 // #include "seqs.hpp"
 using namespace RDKit;
 namespace nb = nanobind;
@@ -30,7 +29,7 @@ void wrap_table(nb::module_ &);
 void wrap_mol(nb::module_ &);
 void wrap_atom(nb::module_ &);
 void wrap_bond(nb::module_ &);
-// void wrap_conformer(nb::module_ &);
+void wrap_conformer(nb::module_ &);
 // void wrap_stereogroup(nb::module_ &);
 // void wrap_ringinfo(nb::module_ &);
 // void wrap_EditableMol(nb::module_ &);
@@ -211,9 +210,9 @@ NB_MODULE(rdchem, m) {
   wrap_table(m);
   wrap_mol(m);
   wrap_atom(m);
-  // wrap_bond(m);
+  wrap_bond(m);
+  wrap_conformer(m);
   // wrap_stereogroup();
-  // wrap_conformer();
   // wrap_EditableMol();
   // wrap_ringinfo();
   // wrap_monomerinfo();
