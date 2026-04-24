@@ -10,7 +10,7 @@ rdkit_nanobind_extension(rdchem
 #                       EditableMol.cpp 
                        MonomerInfo.cpp
 #                       ResonanceMolSupplier.cpp 
-#                       MolBundle.cpp 
+                       MolBundle.cpp 
                        StereoGroup.cpp 
                        SubstanceGroup.cpp
                        Chirality.cpp
