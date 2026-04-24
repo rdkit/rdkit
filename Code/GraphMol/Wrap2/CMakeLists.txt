@@ -7,9 +7,9 @@ rdkit_nanobind_extension(rdchem
                        Bond.cpp 
                        Conformer.cpp 
                        RingInfo.cpp 
-#                       EditableMol.cpp 
+                       EditableMol.cpp 
                        MonomerInfo.cpp
-#                       ResonanceMolSupplier.cpp 
+                       ResonanceMolSupplier.cpp 
                        MolBundle.cpp 
                        StereoGroup.cpp 
                        SubstanceGroup.cpp

@@ -32,7 +32,7 @@ void wrap_bond(nb::module_ &);
 void wrap_conformer(nb::module_ &);
 void wrap_stereogroup(nb::module_ &);
 void wrap_ringinfo(nb::module_ &);
-// void wrap_EditableMol(nb::module_ &);
+void wrap_EditableMol(nb::module_ &);
 void wrap_monomerinfo(nb::module_ &);
 // void wrap_resmolsupplier(nb::module_ &);
 void wrap_molbundle(nb::module_ &);
@@ -213,7 +213,7 @@ NB_MODULE(rdchem, m) {
   wrap_bond(m);
   wrap_conformer(m);
   wrap_stereogroup(m);
-  // wrap_EditableMol();
+  wrap_EditableMol(m);
   wrap_ringinfo(m);
   wrap_monomerinfo(m);
   // wrap_resmolsupplier();
