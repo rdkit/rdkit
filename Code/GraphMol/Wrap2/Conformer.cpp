@@ -26,24 +26,27 @@ using namespace nb::literals;
 
 namespace RDKit {
 
-nb::ndarray<nb::numpy, double, nb::shape<-1, 3>> GetPos(const Conformer *conf) {
+auto GetPos(const Conformer *conf) {
   const RDGeom::POINT3D_VECT &pos = conf->getPositions();
 
-  auto np = nb::module_::import_("numpy");
-  auto arrObj =
-      np.attr("empty")(nb::make_tuple(pos.size(), 3), "dtype"_a = "float64");
-  auto arr =
-      nb::cast<nb::ndarray<nb::numpy, double, nb::shape<-1, 3>, nb::c_contig>>(
-          arrObj);
-  auto *resData = arr.data();
-
+  double *resData = new double[pos.size() * 3];
   // Fill an array of shape (numAtoms,3) with XYZ coordinates.
   for (size_t i = 0; i < pos.size(); ++i) {
     resData[3 * i + 0] = pos[i].x;
     resData[3 * i + 1] = pos[i].y;
     resData[3 * i + 2] = pos[i].z;
   }
-  return nb::cast<nb::ndarray<nb::numpy, double, nb::shape<-1, 3>>>(arrObj);
+
+  // pattern from
+  // https://nanobind.readthedocs.io/en/latest/ndarray.html#data-ownership
+  nb::capsule owner(resData, [](void *f) noexcept {
+    double *data = reinterpret_cast<double *>(f);
+    delete[] data;
+  });
+  return nb::ndarray<nb::numpy, double, nb::ndim<2>>(
+      /* data = */ resData,
+      /* shape = */ {pos.size(), 3},
+      /* owner = */ owner);
 }
 
 void SetPos(Conformer *conf,
