@@ -1460,7 +1460,7 @@ std::vector<RDKit::INT_VECT> _getRingsForSpiroCenter(unsigned int spiroAid,
     }
   }
 
-  CHECK_INVARIANT(result.size() == 2, "Spiro must have exactly 2 rings");
+  POSTCONDITION(result.size() == 2, "Spiro must have exactly 2 rings");
   return result;
 }
 
