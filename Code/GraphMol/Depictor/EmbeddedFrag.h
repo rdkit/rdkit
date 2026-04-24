@@ -346,6 +346,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   //! Remove collisions in a structure by flipping rotatable bonds and spiro centers
   //! along the shortest path between two colliding atoms
   void removeCollisionsBondAndSpiroFlip();
+  
+  [[deprecated("please use removeCollisionsBondAndSpiroFlip()"]] void removeCollisionsBondFlip() { removeCollisionsBondAndSpiroFlip(); };
 
   //! Remove collision by opening angles at the offending atoms
   void removeCollisionsOpenAngles();
