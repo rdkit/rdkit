@@ -309,7 +309,7 @@ void addRecursiveQueriesHelper(ROMol &mol, nb::dict replDict,
 ROMol *addHs2(const ROMol &orig, MolOps::AddHsParameters params,
               nb::object onlyOnAtoms) {
   std::unique_ptr<std::vector<unsigned int>> onlyOn;
-  if (onlyOnAtoms) {
+  if (!onlyOnAtoms.is_none()) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
   auto res = std::make_unique<RWMol>(orig);
@@ -1268,8 +1268,8 @@ struct molops_wrapper {
       is returned. Zero is returned on success.\n\
 \n";
     m.def("SanitizeMol", sanitizeMol, "mol"_a,
-          "sanitizeOps"_a = MolOps::SANITIZE_ALL, "catchErrors"_a = false,
-          docString.c_str());
+          "sanitizeOps"_a = static_cast<boost::uint64_t>(MolOps::SANITIZE_ALL),
+          "catchErrors"_a = false, docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =

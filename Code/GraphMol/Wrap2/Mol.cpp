@@ -178,22 +178,36 @@ void MolDebug(const ROMol &mol, bool useStdout) {
 
 struct AtomSeqHolder {
   CXXAtomIterator<MolGraph, Atom *> iter;
-  AtomSeqHolder(ROMol &mol) : iter(mol.atoms()) {};
+  ROMol *mol;
+  AtomSeqHolder(ROMol &mol) : iter(mol.atoms()), mol(&mol) {};
   size_t size() const { return iter.size(); }
   CXXAtomIterator<MolGraph, Atom *>::CXXAtomIter begin() {
     return iter.begin();
   }
   CXXAtomIterator<MolGraph, Atom *>::CXXAtomIter end() { return iter.end(); }
+  Atom *operator[](int idx) {
+    if (idx < 0 || static_cast<size_t>(idx) >= mol->getNumAtoms()) {
+      throw IndexErrorException(idx);
+    }
+    return mol->getAtomWithIdx(idx);
+  }
 };
 
 struct BondSeqHolder {
   CXXBondIterator<MolGraph, Bond *> iter;
-  BondSeqHolder(ROMol &mol) : iter(mol.bonds()) {};
+  ROMol *mol;
+  BondSeqHolder(ROMol &mol) : iter(mol.bonds()), mol(&mol) {};
   size_t size() const { return iter.size(); }
   CXXBondIterator<MolGraph, Bond *>::CXXBondIter begin() {
     return iter.begin();
   }
   CXXBondIterator<MolGraph, Bond *>::CXXBondIter end() { return iter.end(); }
+  Bond *operator[](int idx) {
+    if (idx < 0 || static_cast<size_t>(idx) >= mol->getNumBonds()) {
+      throw IndexErrorException(idx);
+    }
+    return mol->getBondWithIdx(idx);
+  }
 };
 }  // namespace
 
@@ -439,7 +453,9 @@ struct mol_wrapper {
               return nb::make_iterator(nb::type<AtomSeqHolder>(), "iterator",
                                        a.begin(), a.end());
             },
-            nb::keep_alive<0, 1>());
+            nb::keep_alive<0, 1>())
+        .def("__getitem__", &AtomSeqHolder::operator[],
+             nb::rv_policy::reference_internal, "idx"_a);
     nb::class_<BondSeqHolder>(m, "_BondSeqHolder",
                               "A sequence-like holder of a molecule's bonds")
         .def(nb::init<ROMol &>(), "mol"_a)
@@ -450,7 +466,9 @@ struct mol_wrapper {
               return nb::make_iterator(nb::type<BondSeqHolder>(), "iterator",
                                        a.begin(), a.end());
             },
-            nb::keep_alive<0, 1>());
+            nb::keep_alive<0, 1>())
+        .def("__getitem__", &BondSeqHolder::operator[],
+             nb::rv_policy::reference_internal, "idx"_a);
     nb::class_<ROMol>(m, "Mol", nb::dynamic_attr())
         .def(nb::init<>(), "Constructor, takes no arguments")
         .def(
@@ -484,6 +502,11 @@ struct mol_wrapper {
         .def("GetNumAtoms",
              nb::overload_cast<>(&ROMol::getNumAtoms, nb::const_),
              "Returns the number of atoms in the molecule.")
+        .def(
+            "GetNumAtoms",
+            nb::overload_cast<bool>(&ROMol::getNumAtoms, nb::const_),
+            "Returns the number of atoms in the molecule. Optionally, only count explicit atoms.",
+            "onlyExplicit"_a = true)
         .def("GetNumHeavyAtoms", &ROMol::getNumHeavyAtoms,
              "Returns the number of heavy atoms (atomic number >1) in the "
              "molecule.")

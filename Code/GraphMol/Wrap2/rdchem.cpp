@@ -90,6 +90,11 @@ T *next_ptr(O &self) {
   return self.next().get();
 }
 #endif
+
+namespace RDKit {
+void tossit() { throw IndexErrorException(1); }
+}  // namespace RDKit
+
 NB_MODULE(rdchem, m) {
   m.doc() = "Module containing the core chemistry functionality of the RDKit";
   // const bool register_scalar_converters = false;
@@ -98,7 +103,7 @@ NB_MODULE(rdchem, m) {
   // RegisterListConverter<RDKit::Bond *>();
   // RegisterListConverter<RDKit::CONFORMER_SPTR>();
   // rdkit_import_array();
-
+  m.def("tossit", &RDKit::tossit);
 #if 0
   // this is one of those parts where I think I wish that I knew how to do
   // template meta-programming

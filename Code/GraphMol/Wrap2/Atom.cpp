@@ -275,7 +275,7 @@ struct atom_wrapper {
         //    .def("GetBonds", AtomGetBonds, python::args("self"),
         //         "Returns a read-only sequence of the atom's bonds\n")
 
-        .def("Match", (bool(Atom::*)(const Atom *) const) & Atom::Match,
+        .def("Match", (bool (Atom::*)(const Atom *) const) & Atom::Match,
              "other"_a,
              "Returns whether or not this atom matches another Atom.\n\n"
              "  Each Atom (or query Atom) has a query function which is\n"
