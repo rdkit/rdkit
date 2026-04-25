@@ -17,14 +17,12 @@
 #include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
 #include <GraphMol/GaussianShape/SingleConformerAlignment.h>
-#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceShapeSearcher.h>
 #include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/RDThreads.h>
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
-#include <boost/math/tools/numeric_limits.hpp>
 
 std::mutex myMutex;
 

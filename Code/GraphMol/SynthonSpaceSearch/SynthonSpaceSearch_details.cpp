@@ -24,12 +24,8 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
-#include <GraphMol/QueryBond.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
-#include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
@@ -37,9 +33,7 @@
 #include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
 #include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/RDThreads.h>
-#include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/LeaderPicker.h>
-#include <boost/math/tools/numeric_limits.hpp>
 
 namespace RDKit::SynthonSpaceSearch::details {
 
