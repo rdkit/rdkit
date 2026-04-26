@@ -83,12 +83,17 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTem
     // THis allows, an an example, for "immediate" templates such the the MonomerMol smiles-type, which 
     // are defined as a smiles string in the template instantiation.
 
-    std::vector<std::unique_ptr<MACROMolTemplate>> ownedTemplates;   
+    std::vector<std::unique_ptr<MACROMolTemplate>> ownedTemplates;  
+    
+    std::vector<std::unique_ptr<MACROMolTemplate>> &getOwnedTemmplates() {
+      return ownedTemplates;
+    }
 
     public:
     void addTemplate(MACROMolTemplate *templateMol);    // does NOT take ownership
     void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol, bool takeOwnership=true);
     void addTemplateLib(MACROMolTemplateLib &libToAdd, bool takeOwnership=false);
+    void copyTemplateLib(const MACROMolTemplateLib &libToCopy);
     void clearTemplateLib(){
         this->clear();
         ownedTemplates.clear();
@@ -114,10 +119,28 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTem
       return d_keyToIndex.at(key);
     }
 
+    RDKit::MACROMolTemplate *getTemplate(std::string templateClass, std::string templateName) const {
+      auto index = getMACROMolTemplateIndex(templateClass, templateName);
+      return this->at(index);
+    }
+
     bool libContains(std::string templateClass, std::string templateName) const {
       MACROMolTemplateKey key(std::pair(templateClass, templateName));
       return d_keyToIndex.contains(key);
     }
+
+    bool isCustomizedLib() {
+      return ownedTemplates.size() > 0;
+    }
+
+    bool isTemplateOwnedByLib(RDKit::MACROMolTemplate *templatePtr) const{
+      return find_if(ownedTemplates.begin(), ownedTemplates.end(), [templatePtr] (auto &up) { 
+        auto upPtr = up.get();
+        return upPtr == templatePtr; 
+      }) == ownedTemplates.end();
+    }
+
+    
   };
 
 
