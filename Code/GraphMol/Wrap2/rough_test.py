@@ -371,31 +371,30 @@ class TestCase(unittest.TestCase):
     self.assertTrue(mol)
 
     self.assertTrue(mol.HasSubstructMatch(query1))
-    self.assertTrue(mol.GetSubstructMatch(query1) == (2, 3, 4))
+    self.assertTrue(mol.GetSubstructMatch(query1) == [2, 3, 4])
     self.assertTrue(mol.HasSubstructMatch(query2))
-    self.assertTrue(mol.GetSubstructMatch(query2) == (2, 3, 4))
+    self.assertTrue(mol.GetSubstructMatch(query2) == [2, 3, 4])
     self.assertTrue(mol.HasSubstructMatch(query3))
-    self.assertTrue(mol.GetSubstructMatch(query3) == (2, ))
-
+    self.assertTrue(mol.GetSubstructMatch(query3) == [2])
     mol = Chem.MolFromSmiles('CCC(=O)N')
     self.assertTrue(mol)
 
     self.assertTrue(not mol.HasSubstructMatch(query1))
     self.assertTrue(not mol.GetSubstructMatch(query1))
     self.assertTrue(mol.HasSubstructMatch(query2))
-    self.assertTrue(mol.GetSubstructMatch(query2) == (2, 3, 4))
+    self.assertTrue(mol.GetSubstructMatch(query2) == [2, 3, 4])
     self.assertTrue(not mol.HasSubstructMatch(query3))
 
     mol = Chem.MolFromSmiles('OC(=O)CC(=O)O')
     self.assertTrue(mol)
     self.assertTrue(mol.HasSubstructMatch(query1))
-    self.assertTrue(mol.GetSubstructMatch(query1) == (1, 2, 0))
-    self.assertTrue(mol.GetSubstructMatches(query1) == ((1, 2, 0), (4, 5, 6)))
+    self.assertTrue(mol.GetSubstructMatch(query1) == [1, 2, 0])
+    self.assertTrue(mol.GetSubstructMatches(query1) == [[1, 2, 0], [4, 5, 6]])
     self.assertTrue(mol.HasSubstructMatch(query2))
-    self.assertTrue(mol.GetSubstructMatch(query2) == (1, 2, 0))
-    self.assertTrue(mol.GetSubstructMatches(query2) == ((1, 2, 0), (4, 5, 6)))
+    self.assertTrue(mol.GetSubstructMatch(query2) == [1, 2, 0])
+    self.assertTrue(mol.GetSubstructMatches(query2) == [[1, 2, 0], [4, 5, 6]])
     self.assertTrue(mol.HasSubstructMatch(query3))
-    self.assertTrue(mol.GetSubstructMatches(query3) == ((1, ), (4, )))
+    self.assertTrue(mol.GetSubstructMatches(query3) == [[1], [4]])
 
   def test13Smarts(self):
     # previous smarts problems:
