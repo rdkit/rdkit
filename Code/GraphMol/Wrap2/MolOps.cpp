@@ -9,6 +9,8 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/list.h>
+#include <nanobind/stl/vector.h>
 
 #include <string>
 #include <cmath>

@@ -540,261 +540,261 @@ class TestCase(unittest.TestCase):
     smi2 = Chem.MolToSmiles(m2)
     self.assertTrue(smi1 == smi2)
 
+  def test16Props(self):
+    m = Chem.MolFromSmiles('C1=CN=CC=C1')
+    self.assertTrue(not m.HasProp('prop1'))
+    self.assertTrue(not m.HasProp('prop2'))
+    self.assertTrue(not m.HasProp('prop2'))
+    m.SetProp('prop1', 'foob')
+    self.assertTrue(not m.HasProp('prop2'))
+    self.assertTrue(m.HasProp('prop1'))
+    self.assertTrue(m.GetProp('prop1') == 'foob')
+    self.assertTrue(not m.HasProp('propo'))
+    try:
+      m.GetProp('prop2')
+    except KeyError:
+      ok = 1
+    else:
+      ok = 0
+    self.assertTrue(ok)
 
-#   def test16Props(self):
-#     m = Chem.MolFromSmiles('C1=CN=CC=C1')
-#     self.assertTrue(not m.HasProp('prop1'))
-#     self.assertTrue(not m.HasProp('prop2'))
-#     self.assertTrue(not m.HasProp('prop2'))
-#     m.SetProp('prop1', 'foob')
-#     self.assertTrue(not m.HasProp('prop2'))
-#     self.assertTrue(m.HasProp('prop1'))
-#     self.assertTrue(m.GetProp('prop1') == 'foob')
-#     self.assertTrue(not m.HasProp('propo'))
-#     try:
-#       m.GetProp('prop2')
-#     except KeyError:
-#       ok = 1
-#     else:
-#       ok = 0
-#     self.assertTrue(ok)
+    # test computed properties
+    m.SetProp('cprop1', 'foo', True)
+    m.SetProp('cprop2', 'foo2', True)
 
-#     # test computed properties
-#     m.SetProp('cprop1', 'foo', 1)
-#     m.SetProp('cprop2', 'foo2', 1)
+    m.ClearComputedProps()
+    self.assertTrue(not m.HasProp('cprop1'))
+    self.assertTrue(not m.HasProp('cprop2'))
 
-#     m.ClearComputedProps()
-#     self.assertTrue(not m.HasProp('cprop1'))
-#     self.assertTrue(not m.HasProp('cprop2'))
+    m.SetDoubleProp("a", 2.0)
+    self.assertTrue(m.GetDoubleProp("a") == 2.0)
 
-#     m.SetDoubleProp("a", 2.0)
-#     self.assertTrue(m.GetDoubleProp("a") == 2.0)
+    try:
+      self.assertTrue(m.GetIntProp("a") == 2.0)
+      raise Exception("Expected runtime exception")
+    except ValueError:
+      pass
 
-#     try:
-#       self.assertTrue(m.GetIntProp("a") == 2.0)
-#       raise Exception("Expected runtime exception")
-#     except ValueError:
-#       pass
+    try:
+      self.assertTrue(m.GetUnsignedProp("a") == 2.0)
+      raise Exception("Expected runtime exception")
+    except ValueError:
+      pass
 
-#     try:
-#       self.assertTrue(m.GetUnsignedProp("a") == 2.0)
-#       raise Exception("Expected runtime exception")
-#     except ValueError:
-#       pass
+    m.SetDoubleProp("a", -2)
+    self.assertTrue(m.GetDoubleProp("a") == -2.0)
+    m.SetIntProp("a", -2)
+    self.assertTrue(m.GetIntProp("a") == -2)
 
-#     m.SetDoubleProp("a", -2)
-#     self.assertTrue(m.GetDoubleProp("a") == -2.0)
-#     m.SetIntProp("a", -2)
-#     self.assertTrue(m.GetIntProp("a") == -2)
+    try:
+      m.SetUnsignedProp("a", -2)
+      raise Exception("Expected failure with negative unsigned number")
+    except TypeError:
+      pass
 
-#     try:
-#       m.SetUnsignedProp("a", -2)
-#       raise Exception("Expected failure with negative unsigned number")
-#     except OverflowError:
-#       pass
+    m.SetBoolProp("a", False)
+    self.assertFalse(m.GetBoolProp("a"))
 
-#     m.SetBoolProp("a", False)
-#     self.assertFalse(m.GetBoolProp("a"))
+    self.assertEqual(m.GetPropsAsDict(), {'a': False, 'prop1': 'foob'})
+    m.SetDoubleProp("b", 1000.0)
+    m.SetUnsignedProp("c", 2000)
+    m.SetIntProp("d", -2)
+    m.SetUnsignedProp("e", 2, True)
+    self.assertEqual(m.GetPropsAsDict(False, True), {
+      'a': False,
+      'c': 2000,
+      'b': 1000.0,
+      'e': 2,
+      'd': -2,
+      'prop1': 'foob'
+    })
+    m = Chem.MolFromSmiles('C1=CN=CC=C1')
+    m.SetProp("int", "1000")
+    m.SetProp("double", "10000.123")
+    m.SetProp("double spaces", " 10000.123 ")
+    # Github #8890: test that string properties preserve spaces
+    m.SetProp("string spaces", " foo ")
+    m.SetProp("string whitespace", " \t")
+    self.assertEqual(
+      m.GetPropsAsDict(), {
+        "int": 1000,
+        "double": 10000.123,
+        "double spaces": 10000.123,
+        "string spaces": " foo ",
+        "string whitespace": " \t"
+      })
+    self.assertEqual(
+      m.GetPropsAsDict(autoConvertStrings=False), {
+        "int": "1000",
+        "double": "10000.123",
+        "double spaces": " 10000.123 ",
+        "string spaces": " foo ",
+        "string whitespace": " \t"
+      })
 
-#     self.assertEqual(m.GetPropsAsDict(), {'a': False, 'prop1': 'foob'})
-#     m.SetDoubleProp("b", 1000.0)
-#     m.SetUnsignedProp("c", 2000)
-#     m.SetIntProp("d", -2)
-#     m.SetUnsignedProp("e", 2, True)
-#     self.assertEqual(m.GetPropsAsDict(False, True), {
-#       'a': False,
-#       'c': 2000,
-#       'b': 1000.0,
-#       'e': 2,
-#       'd': -2,
-#       'prop1': 'foob'
-#     })
-#     m = Chem.MolFromSmiles('C1=CN=CC=C1')
-#     m.SetProp("int", "1000")
-#     m.SetProp("double", "10000.123")
-#     m.SetProp("double spaces", " 10000.123 ")
-#     # Github #8890: test that string properties preserve spaces
-#     m.SetProp("string spaces", " foo ")
-#     m.SetProp("string whitespace", " \t")
-#     self.assertEqual(
-#       m.GetPropsAsDict(), {
-#         "int": 1000,
-#         "double": 10000.123,
-#         "double spaces": 10000.123,
-#         "string spaces": " foo ",
-#         "string whitespace": " \t"
-#       })
-#     self.assertEqual(
-#       m.GetPropsAsDict(autoConvertStrings=False), {
-#         "int": "1000",
-#         "double": "10000.123",
-#         "double spaces": " 10000.123 ",
-#         "string spaces": " foo ",
-#         "string whitespace": " \t"
-#       })
+    self.assertEqual(type(m.GetPropsAsDict()['int']), int)
+    self.assertEqual(type(m.GetPropsAsDict()['double']), float)
 
-#     self.assertEqual(type(m.GetPropsAsDict()['int']), int)
-#     self.assertEqual(type(m.GetPropsAsDict()['double']), float)
+  def test17Kekulize(self):
+    m = Chem.MolFromSmiles('c1ccccc1')
+    smi = Chem.MolToSmiles(m)
+    self.assertTrue(smi == 'c1ccccc1')
 
-#   def test17Kekulize(self):
-#     m = Chem.MolFromSmiles('c1ccccc1')
-#     smi = Chem.MolToSmiles(m)
-#     self.assertTrue(smi == 'c1ccccc1')
+    Chem.Kekulize(m)
+    smi = Chem.MolToSmiles(m)
+    self.assertTrue(smi == 'c1ccccc1')
 
-#     Chem.Kekulize(m)
-#     smi = Chem.MolToSmiles(m)
-#     self.assertTrue(smi == 'c1ccccc1')
+    m = Chem.MolFromSmiles('c1ccccc1')
+    smi = Chem.MolToSmiles(m)
+    self.assertTrue(smi == 'c1ccccc1')
 
-#     m = Chem.MolFromSmiles('c1ccccc1')
-#     smi = Chem.MolToSmiles(m)
-#     self.assertTrue(smi == 'c1ccccc1')
+    Chem.Kekulize(m, True)
+    smi = Chem.MolToSmiles(m)
+    self.assertTrue(smi == 'C1=CC=CC=C1', smi)
 
-#     Chem.Kekulize(m, 1)
-#     smi = Chem.MolToSmiles(m)
-#     self.assertTrue(smi == 'C1=CC=CC=C1', smi)
+  def test18Paths(self):
 
-#   def test18Paths(self):
+    m = Chem.MolFromSmiles("C1CC2C1CC2")
+    #self.assertTrue(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7)
+    #print(Chem.FindAllPathsOfLengthN(m,3,useBonds=0))
+    self.assertTrue(
+      len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=True)) == 10,
+      Chem.FindAllPathsOfLengthN(m, 2, useBonds=True))
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=True)) == 14)
 
-#     m = Chem.MolFromSmiles("C1CC2C1CC2")
-#     #self.assertTrue(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7)
-#     #print(Chem.FindAllPathsOfLengthN(m,3,useBonds=0))
-#     self.assertTrue(
-#       len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 10,
-#       Chem.FindAllPathsOfLengthN(m, 2, useBonds=1))
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 14)
+    m = Chem.MolFromSmiles('C1CC1C')
+    self.assertTrue(m)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=True)) == 4)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=True)) == 5)
+    self.assertTrue(
+      len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=True)) == 3,
+      Chem.FindAllPathsOfLengthN(m, 3, useBonds=True))
+    self.assertTrue(
+      len(Chem.FindAllPathsOfLengthN(m, 4, useBonds=True)) == 1,
+      Chem.FindAllPathsOfLengthN(m, 4, useBonds=True))
+    self.assertTrue(
+      len(Chem.FindAllPathsOfLengthN(m, 5, useBonds=True)) == 0,
+      Chem.FindAllPathsOfLengthN(m, 5, useBonds=True))
 
-#     m = Chem.MolFromSmiles('C1CC1C')
-#     self.assertTrue(m)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 4)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 5)
-#     self.assertTrue(
-#       len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3,
-#       Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
-#     self.assertTrue(
-#       len(Chem.FindAllPathsOfLengthN(m, 4, useBonds=1)) == 1,
-#       Chem.FindAllPathsOfLengthN(m, 4, useBonds=1))
-#     self.assertTrue(
-#       len(Chem.FindAllPathsOfLengthN(m, 5, useBonds=1)) == 0,
-#       Chem.FindAllPathsOfLengthN(m, 5, useBonds=1))
+    #
+    #  Hexane example from Hall-Kier Rev.Comp.Chem. paper
+    #  Rev. Comp. Chem. vol 2, 367-422, (1991)
+    #
+    m = Chem.MolFromSmiles("CCCCCC")
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=True)) == 5)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=True)) == 4)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=True)) == 3)
 
-#     #
-#     #  Hexane example from Hall-Kier Rev.Comp.Chem. paper
-#     #  Rev. Comp. Chem. vol 2, 367-422, (1991)
-#     #
-#     m = Chem.MolFromSmiles("CCCCCC")
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 5)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 4)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3)
+    m = Chem.MolFromSmiles("CCC(C)CC")
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=True)) == 5)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=True)) == 5)
+    self.assertTrue(
+      len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=True)) == 4,
+      Chem.FindAllPathsOfLengthN(m, 3, useBonds=True))
 
-#     m = Chem.MolFromSmiles("CCC(C)CC")
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 5)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 5)
-#     self.assertTrue(
-#       len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 4,
-#       Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
+    m = Chem.MolFromSmiles("CCCC(C)C")
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=True)) == 5)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=True)) == 5)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=True)) == 3)
 
-#     m = Chem.MolFromSmiles("CCCC(C)C")
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 5)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 5)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3)
+    m = Chem.MolFromSmiles("CC(C)C(C)C")
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=True)) == 5)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=True)) == 6)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=True)) == 4)
 
-#     m = Chem.MolFromSmiles("CC(C)C(C)C")
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 5)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 6)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 4)
+    m = Chem.MolFromSmiles("CC(C)(C)CC")
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=True)) == 5)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=True)) == 7)
+    self.assertTrue(
+      len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=True)) == 3,
+      Chem.FindAllPathsOfLengthN(m, 3, useBonds=True))
 
-#     m = Chem.MolFromSmiles("CC(C)(C)CC")
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 5)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 7)
-#     self.assertTrue(
-#       len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3,
-#       Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
+    m = Chem.MolFromSmiles("C1CCCCC1")
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=True)) == 6)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=True)) == 6)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=True)) == 6)
 
-#     m = Chem.MolFromSmiles("C1CCCCC1")
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 6)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 6)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 6)
+    m = Chem.MolFromSmiles("C1CC2C1CC2")
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=True)) == 7)
+    self.assertTrue(
+      len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=True)) == 10,
+      Chem.FindAllPathsOfLengthN(m, 2, useBonds=True))
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=True)) == 14)
 
-#     m = Chem.MolFromSmiles("C1CC2C1CC2")
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 7)
-#     self.assertTrue(
-#       len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 10,
-#       Chem.FindAllPathsOfLengthN(m, 2, useBonds=1))
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 14)
+    m = Chem.MolFromSmiles("CC2C1CCC12")
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=True)) == 7)
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=True)) == 11)
+    # FIX: this result disagrees with the paper (which says 13),
+    #   but it seems right
+    self.assertTrue(
+      len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=True)) == 15,
+      Chem.FindAllPathsOfLengthN(m, 3, useBonds=True))
 
-#     m = Chem.MolFromSmiles("CC2C1CCC12")
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 7)
-#     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 11)
-#     # FIX: this result disagrees with the paper (which says 13),
-#     #   but it seems right
-#     self.assertTrue(
-#       len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 15,
-#       Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
+  def test19Subgraphs(self):
+    m = Chem.MolFromSmiles('C1CC1C')
+    self.assertTrue(m)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1, False)) == 4)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 5)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 4)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 4)) == 1)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 5)) == 0)
 
-#   def test19Subgraphs(self):
-#     m = Chem.MolFromSmiles('C1CC1C')
-#     self.assertTrue(m)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1, 0)) == 4)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 5)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 4)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 4)) == 1)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 5)) == 0)
+    #
+    #  Hexane example from Hall-Kier Rev.Comp.Chem. paper
+    #  Rev. Comp. Chem. vol 2, 367-422, (1991)
+    #
+    m = Chem.MolFromSmiles("CCCCCC")
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 5)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 4)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 3)
 
-#     #
-#     #  Hexane example from Hall-Kier Rev.Comp.Chem. paper
-#     #  Rev. Comp. Chem. vol 2, 367-422, (1991)
-#     #
-#     m = Chem.MolFromSmiles("CCCCCC")
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 5)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 4)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 3)
+    l = Chem.FindAllSubgraphsOfLengthMToN(m, 1, 3)
+    self.assertEqual(len(l), 3)
+    self.assertEqual(len(l[0]), 5)
+    self.assertEqual(len(l[1]), 4)
+    self.assertEqual(len(l[2]), 3)
+    self.assertRaises(ValueError, lambda: Chem.FindAllSubgraphsOfLengthMToN(m, 4, 3))
 
-#     l = Chem.FindAllSubgraphsOfLengthMToN(m, 1, 3)
-#     self.assertEqual(len(l), 3)
-#     self.assertEqual(len(l[0]), 5)
-#     self.assertEqual(len(l[1]), 4)
-#     self.assertEqual(len(l[2]), 3)
-#     self.assertRaises(ValueError, lambda: Chem.FindAllSubgraphsOfLengthMToN(m, 4, 3))
+    m = Chem.MolFromSmiles("CCC(C)CC")
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 5)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 5)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 5)
 
-#     m = Chem.MolFromSmiles("CCC(C)CC")
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 5)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 5)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 5)
+    m = Chem.MolFromSmiles("CCCC(C)C")
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 5)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 5)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 4)
 
-#     m = Chem.MolFromSmiles("CCCC(C)C")
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 5)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 5)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 4)
+    m = Chem.MolFromSmiles("CC(C)C(C)C")
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 5)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 6)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 6)
 
-#     m = Chem.MolFromSmiles("CC(C)C(C)C")
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 5)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 6)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 6)
+    m = Chem.MolFromSmiles("CC(C)(C)CC")
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 5)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 7)
+    self.assertTrue(
+      len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 7, Chem.FindAllSubgraphsOfLengthN(m, 3))
 
-#     m = Chem.MolFromSmiles("CC(C)(C)CC")
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 5)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 7)
-#     self.assertTrue(
-#       len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 7, Chem.FindAllSubgraphsOfLengthN(m, 3))
+    m = Chem.MolFromSmiles("C1CCCCC1")
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 6)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 6)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 6)
+    #self.assertTrue(len(Chem.FindUniqueSubgraphsOfLengthN(m,1))==1)
+    self.assertTrue(len(Chem.FindUniqueSubgraphsOfLengthN(m, 2)) == 1)
+    self.assertTrue(len(Chem.FindUniqueSubgraphsOfLengthN(m, 3)) == 1)
 
-#     m = Chem.MolFromSmiles("C1CCCCC1")
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 6)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 6)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 6)
-#     #self.assertTrue(len(Chem.FindUniqueSubgraphsOfLengthN(m,1))==1)
-#     self.assertTrue(len(Chem.FindUniqueSubgraphsOfLengthN(m, 2)) == 1)
-#     self.assertTrue(len(Chem.FindUniqueSubgraphsOfLengthN(m, 3)) == 1)
+    m = Chem.MolFromSmiles("C1CC2C1CC2")
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 7)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 10)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 16)
 
-#     m = Chem.MolFromSmiles("C1CC2C1CC2")
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 7)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 10)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 16)
+    m = Chem.MolFromSmiles("CC2C1CCC12")
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 7)
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 11)
+    self.assertTrue(
+      len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 18, len(Chem.FindAllSubgraphsOfLengthN(m, 3)))
 
-#     m = Chem.MolFromSmiles("CC2C1CCC12")
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 7)
-#     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 11)
-#     self.assertTrue(
-#       len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 18, len(Chem.FindAllSubgraphsOfLengthN(m, 3)))
 
 #   def test20IsInRing(self):
 #     m = Chem.MolFromSmiles('C1CCC1C')
