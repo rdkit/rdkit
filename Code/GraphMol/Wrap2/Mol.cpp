@@ -18,7 +18,7 @@
 #include <nanobind/make_iterator.h>
 #include "props.hpp"
 // #include "rdchem.h"
-// #include "seqs.hpp"
+#include "seqholders.hpp"
 #include "substructmethods.h"
 
 // ours
@@ -176,39 +176,6 @@ void MolDebug(const ROMol &mol, bool useStdout) {
   }
 }
 
-struct AtomSeqHolder {
-  CXXAtomIterator<MolGraph, Atom *> iter;
-  ROMol *mol;
-  AtomSeqHolder(ROMol &mol) : iter(mol.atoms()), mol(&mol) {};
-  size_t size() const { return iter.size(); }
-  CXXAtomIterator<MolGraph, Atom *>::CXXAtomIter begin() {
-    return iter.begin();
-  }
-  CXXAtomIterator<MolGraph, Atom *>::CXXAtomIter end() { return iter.end(); }
-  Atom *operator[](int idx) {
-    if (idx < 0 || static_cast<size_t>(idx) >= mol->getNumAtoms()) {
-      throw IndexErrorException(idx);
-    }
-    return mol->getAtomWithIdx(idx);
-  }
-};
-
-struct BondSeqHolder {
-  CXXBondIterator<MolGraph, Bond *> iter;
-  ROMol *mol;
-  BondSeqHolder(ROMol &mol) : iter(mol.bonds()), mol(&mol) {};
-  size_t size() const { return iter.size(); }
-  CXXBondIterator<MolGraph, Bond *>::CXXBondIter begin() {
-    return iter.begin();
-  }
-  CXXBondIterator<MolGraph, Bond *>::CXXBondIter end() { return iter.end(); }
-  Bond *operator[](int idx) {
-    if (idx < 0 || static_cast<size_t>(idx) >= mol->getNumBonds()) {
-      throw IndexErrorException(idx);
-    }
-    return mol->getBondWithIdx(idx);
-  }
-};
 }  // namespace
 
 class ReadWriteMol : public RWMol {
@@ -443,31 +410,58 @@ struct mol_wrapper {
             "if set, only the extraBondCheck will be used to determine whether or not bonds match")
         .def("__setattr__", &safeSetattr);
 
-    nb::class_<AtomSeqHolder>(m, "_AtomSeqHolder",
-                              "A sequence-like holder of a molecule's atoms")
+    nb::class_<AtomSeqHolder<>>(m, "_AtomSeqHolder1",
+                                "A sequence-like holder of a molecule's atoms")
         .def(nb::init<ROMol &>(), "mol"_a)
-        .def("__len__", &AtomSeqHolder::size)
+        .def("__len__", &AtomSeqHolder<>::size)
         .def(
             "__iter__",
-            [](AtomSeqHolder &a) {
-              return nb::make_iterator(nb::type<AtomSeqHolder>(), "iterator",
+            [](AtomSeqHolder<> &a) {
+              return nb::make_iterator(nb::type<AtomSeqHolder<>>(), "iterator",
                                        a.begin(), a.end());
             },
             nb::keep_alive<0, 1>())
-        .def("__getitem__", &AtomSeqHolder::operator[],
+        .def("__getitem__", &AtomSeqHolder<>::operator[],
              nb::rv_policy::reference_internal, "idx"_a);
-    nb::class_<BondSeqHolder>(m, "_BondSeqHolder",
-                              "A sequence-like holder of a molecule's bonds")
-        .def(nb::init<ROMol &>(), "mol"_a)
-        .def("__len__", &BondSeqHolder::size)
+    nb::class_<AtomSeqHolder<AtomNeighborsIterator>>(
+        m, "_AtomSeqHolder2", "A sequence-like holder of an atom's neighbors")
+        //    .def(nb::init<ROMol &>(), "mol"_a)
+        .def("__len__", &AtomSeqHolder<AtomNeighborsIterator>::size)
         .def(
             "__iter__",
-            [](BondSeqHolder &a) {
-              return nb::make_iterator(nb::type<BondSeqHolder>(), "iterator",
+            [](AtomSeqHolder<AtomNeighborsIterator> &a) {
+              return nb::make_iterator(
+                  nb::type<AtomSeqHolder<AtomNeighborsIterator>>(), "iterator",
+                  a.begin(), a.end());
+            },
+            nb::keep_alive<0, 1>())
+        .def("__getitem__", &AtomSeqHolder<AtomNeighborsIterator>::operator[],
+             nb::rv_policy::reference_internal, "idx"_a);
+    nb::class_<BondSeqHolder<>>(m, "_BondSeqHolder1",
+                                "A sequence-like holder of a molecule's bonds")
+        .def(nb::init<ROMol &>(), "mol"_a)
+        .def("__len__", &BondSeqHolder<>::size)
+        .def(
+            "__iter__",
+            [](BondSeqHolder<> &a) {
+              return nb::make_iterator(nb::type<BondSeqHolder<>>(), "iterator",
                                        a.begin(), a.end());
             },
             nb::keep_alive<0, 1>())
-        .def("__getitem__", &BondSeqHolder::operator[],
+        .def("__getitem__", &BondSeqHolder<>::operator[],
+             nb::rv_policy::reference_internal, "idx"_a);
+    nb::class_<BondSeqHolder<AtomBondsIterator>>(
+        m, "_BondSeqHolder2", "A sequence-like holder of an atom's bonds")
+        .def("__len__", &BondSeqHolder<AtomBondsIterator>::size)
+        .def(
+            "__iter__",
+            [](BondSeqHolder<AtomBondsIterator> &a) {
+              return nb::make_iterator(
+                  nb::type<BondSeqHolder<AtomBondsIterator>>(), "iterator",
+                  a.begin(), a.end());
+            },
+            nb::keep_alive<0, 1>())
+        .def("__getitem__", &BondSeqHolder<AtomBondsIterator>::operator[],
              nb::rv_policy::reference_internal, "idx"_a);
     nb::class_<ROMol>(m, "Mol", nb::dynamic_attr())
         .def(nb::init<>(), "Constructor, takes no arguments")
@@ -492,11 +486,11 @@ struct mol_wrapper {
         .def("__copy__", &generic__copy__<ROMol>)
         .def("__deepcopy__", &generic__deepcopy__<ROMol>, "memo"_a)
         .def(
-            "GetAtoms", [](ROMol &mol) { return AtomSeqHolder(mol); },
+            "GetAtoms", [](ROMol &mol) { return AtomSeqHolder<>(mol); },
             nb::keep_alive<0, 1>(),
             "Returns a sequence-like object of the molecule's atoms.")
         .def(
-            "GetBonds", [](ROMol &mol) { return BondSeqHolder(mol); },
+            "GetBonds", [](ROMol &mol) { return BondSeqHolder<>(mol); },
             nb::keep_alive<0, 1>(),
             "Returns a sequence-like object of the molecule's bonds.")
         .def("GetNumAtoms",

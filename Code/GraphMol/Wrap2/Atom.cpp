@@ -22,10 +22,11 @@
 #include <Geometry/point.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
-#include <RDBoost/Wrap.h>
+#include <RDBoost/Wrap_nb.h>
 
+#include "seqholders.hpp"
 // #include "seqs.hpp"
-// #include "props.hpp"
+#include "props.hpp"
 #include <algorithm>
 
 namespace nb = nanobind;
@@ -70,22 +71,6 @@ void AtomClearProp(const Atom *atom, const std::string &key) {
   }
   atom->clearProp(key);
 }
-
-// python::tuple AtomGetNeighbors(Atom *atom) {
-//   python::list res;
-//   for (auto nbr : atom->getOwningMol().atomNeighbors(atom)) {
-//     res.append(python::ptr(nbr));
-//   }
-//   return python::tuple(res);
-// }
-
-// python::tuple AtomGetBonds(Atom *atom) {
-//   python::list res;
-//   for (auto bond : atom->getOwningMol().atomBonds(atom)) {
-//     res.append(python::ptr(bond));
-//   }
-//   return python::tuple(res);
-// }
 
 bool AtomIsInRing(const Atom *atom) {
   if (!atom->getOwningMol().getRingInfo()->isSssrOrBetter()) {
@@ -269,6 +254,25 @@ struct atom_wrapper {
         .def("GetOwningMol", &Atom::getOwningMol,
              "Returns the Mol that owns this atom.\n",
              nb::rv_policy::reference_internal)
+
+        .def(
+            "GetNeighbors",
+            [](Atom &atom) {
+              return AtomSeqHolder(atom.getOwningMol(),
+                                   atom.getOwningMol().atomNeighbors(&atom));
+            },
+            nb::keep_alive<0, 1>(),
+            "Returns a sequence-like object of the atom's neighbors.")
+
+        .def(
+            "GetBonds",
+            [](Atom &atom) {
+              return BondSeqHolder(atom.getOwningMol(),
+                                   atom.getOwningMol().atomBonds(&atom));
+            },
+            nb::keep_alive<0, 1>(),
+            "Returns a sequence-like object of the atom's bonds.")
+
         //    .def("GetNeighbors", AtomGetNeighbors, python::args("self"),
         //         "Returns a read-only sequence of the atom's neighbors\n")
 
@@ -302,143 +306,160 @@ struct atom_wrapper {
         .def("GetSmarts", AtomGetSmarts, "doKekule"_a = false,
              "allHsExplicit"_a = false, "isomericSmiles"_a = true,
              "returns the SMARTS (or SMILES) string for an Atom\n\n")
-#if 0
+
         // properties
-        .def("SetProp", AtomSetProp<std::string>,
-             (python::arg("self"), python::arg("key"), python::arg("val")),
-             "Sets an atomic property\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to be set (a string).\n"
-             "    - value: the property value (a string).\n\n")
+        .def("SetProp", AtomSetProp<std::string>, "key"_a, "val"_a,
+             R"DOC(Sets an atomic property
+
+  ARGUMENTS:
+    - key: the name of the property to be set (a string).
+    - value: the property value (a string).
+
+)DOC")
+
+        .def("GetProp", GetPyProp<Atom>, "key"_a, "autoConvert"_a = false,
+             R"DOC(Returns the value of the property.
+
+  ARGUMENTS:
+    - key: the name of the property to return (a string).
+
+    - autoConvert: if True attempt to convert the property into a python object
+
+  RETURNS: a string
+
+  NOTE:
+    - If the property has not been set, a KeyError exception will be raised.
+)DOC")
+
+        .def("SetIntProp", AtomSetProp<int>, "key"_a, "val"_a,
+             R"DOC(Sets an atomic property
+
+  ARGUMENTS:
+    - key: the name of the property to be set (a int).
+    - value: the property value (a int).
+
+)DOC")
+
+        .def("SetUnsignedProp", AtomSetProp<unsigned>, "key"_a, "val"_a,
+             R"DOC(Sets an atomic property
+
+  ARGUMENTS:
+    - key: the name of the property to be set (an unsigned integer).
+    - value: the property value (a int >= 0).
+
+)DOC")
+
+        .def("GetIntProp", GetProp<Atom, int>, "key"_a,
+             R"DOC(Returns the value of the property.
+
+  ARGUMENTS:
+    - key: the name of the property to return (an int).
+
+  RETURNS: an int
+
+  NOTE:
+    - If the property has not been set, a KeyError exception will be raised.
+)DOC")
+
+        .def("GetUnsignedProp", GetProp<Atom, unsigned>, "key"_a,
+             R"DOC(Returns the value of the property.
+
+  ARGUMENTS:
+    - key: the name of the property to return (an unsigned integer).
+
+  RETURNS: an integer (Python has no unsigned type)
+
+  NOTE:
+    - If the property has not been set, a KeyError exception will be raised.
+)DOC")
+        .def("SetDoubleProp", AtomSetProp<double>, "key"_a, "val"_a,
+             R"DOC(Sets an atomic property
+
+  ARGUMENTS:
+    - key: the name of the property to be set (a double).
+    - value: the property value (a double).
+
+)DOC")
+
+        .def("GetDoubleProp", GetProp<Atom, double>, "key"_a,
+             R"DOC(Returns the value of the property.
+
+  ARGUMENTS:
+    - key: the name of the property to return (a double).
+
+  RETURNS: a double
+
+  NOTE:
+    - If the property has not been set, a KeyError exception will be raised.
+)DOC")
+
+        .def("SetBoolProp", AtomSetProp<bool>, "key"_a, "val"_a,
+             R"DOC(Sets an atomic property
+
+  ARGUMENTS:
+    - key: the name of the property to be set (a bool).
+    - value: the property value (a bool).
+
+)DOC")
+
+        .def("GetBoolProp", GetProp<Atom, bool>, "key"_a,
+             R"DOC(Returns the value of the property.
+
+  ARGUMENTS:
+    - key: the name of the property to return (a bool).
+
+  RETURNS: a bool
+
+  NOTE:
+    - If the property has not been set, a KeyError exception will be raised.
+)DOC")
+
+        .def("SetExplicitBitVectProp", AtomSetProp<ExplicitBitVect>, "key"_a,
+             "val"_a,
+             R"DOC(Sets an atomic property
+
+  ARGUMENTS:
+    - key: the name of the property to be set (an ExplicitBitVect).
+    - value: the property value (an ExplicitBitVect).
+
+)DOC")
+
+        .def("GetExplicitBitVectProp", GetProp<Atom, ExplicitBitVect>, "key"_a,
+             R"DOC(Returns the value of the property.
+
+  ARGUMENTS:
+    - key: the name of the property to return (a ExplicitBitVect).
+
+  RETURNS: an ExplicitBitVect 
+
+  NOTE:
+    - If the property has not been set, a KeyError exception will be raised.
+)DOC")
 
         .def(
-            "GetProp", GetPyProp<Atom>,
-            (python::arg("self"), python::arg("key"),
-             python::arg("autoConvert") = false),
-            "Returns the value of the property.\n\n"
-            "  ARGUMENTS:\n"
-            "    - key: the name of the property to return (a string).\n\n"
-            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
-            "  RETURNS: a string\n\n"
-            "  NOTE:\n"
-            "    - If the property has not been set, a KeyError exception "
-            "will be raised.\n",
-            boost::python::return_value_policy<return_pyobject_passthrough>())
+            "HasProp", AtomHasProp, "key"_a,
+            R"DOC(Queries a Atom to see if a particular property has been assigned.
 
-        .def("SetIntProp", AtomSetProp<int>,
-             (python::arg("self"), python::arg("key"), python::arg("val")),
-             "Sets an atomic property\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to be set (a int).\n"
-             "    - value: the property value (a int).\n\n")
+  ARGUMENTS:
+    - key: the name of the property to check for (a string).
+)DOC")
 
-        .def("SetUnsignedProp", AtomSetProp<unsigned>,
-             (python::arg("self"), python::arg("key"), python::arg("val")),
-             "Sets an atomic property\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to be set (an unsigned "
-             "integer).\n"
-             "    - value: the property value (a int >= 0).\n\n")
+        .def(
+            "ClearProp", AtomClearProp, "key"_a,
+            R"DOC(Removes a particular property from an Atom (does nothing if not already set).
 
-        .def("GetIntProp", GetProp<Atom, int>, python::args("self", "key"),
-             "Returns the value of the property.\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to return (an int).\n\n"
-             "  RETURNS: an int\n\n"
-             "  NOTE:\n"
-             "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n",
-             boost::python::return_value_policy<return_pyobject_passthrough>())
+  ARGUMENTS:
+    - key: the name of the property to be removed.
+)DOC")
 
-        .def("GetUnsignedProp", GetProp<Atom, unsigned>,
-             python::args("self", "key"),
-             "Returns the value of the property.\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to return (an unsigned "
-             "integer).\n\n"
-             "  RETURNS: an integer (Python has no unsigned type)\n\n"
-             "  NOTE:\n"
-             "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n",
-             boost::python::return_value_policy<return_pyobject_passthrough>())
-        .def("SetDoubleProp", AtomSetProp<double>,
-             (python::arg("self"), python::arg("key"), python::arg("val")),
-             "Sets an atomic property\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to be set (a double).\n"
-             "    - value: the property value (a double).\n\n")
-
-        .def("GetDoubleProp", GetProp<Atom, double>,
-             python::args("self", "key"),
-             "Returns the value of the property.\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to return (a double).\n\n"
-             "  RETURNS: a double\n\n"
-             "  NOTE:\n"
-             "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n",
-             boost::python::return_value_policy<return_pyobject_passthrough>())
-
-        .def("SetBoolProp", AtomSetProp<bool>,
-             (python::arg("self"), python::arg("key"), python::arg("val")),
-             "Sets an atomic property\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to be set (a bool).\n"
-             "    - value: the property value (a bool).\n\n")
-
-        .def("GetBoolProp", GetProp<Atom, bool>, python::args("self", "key"),
-             "Returns the value of the property.\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to return (a bool).\n\n"
-             "  RETURNS: a bool\n\n"
-             "  NOTE:\n"
-             "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n",
-             boost::python::return_value_policy<return_pyobject_passthrough>())
-
-        .def("SetExplicitBitVectProp", AtomSetProp<ExplicitBitVect>,
-             (python::arg("self"), python::arg("key"), python::arg("val")),
-             "Sets an atomic property\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to be set (an "
-             "ExplicitBitVect).\n"
-             "    - value: the property value (an ExplicitBitVect).\n\n")
-
-        .def("GetExplicitBitVectProp", GetProp<Atom, ExplicitBitVect>,
-             python::args("self", "key"),
-             "Returns the value of the property.\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to return (a "
-             "ExplicitBitVect).\n\n"
-             "  RETURNS: an ExplicitBitVect \n\n"
-             "  NOTE:\n"
-             "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n",
-             boost::python::return_value_policy<return_pyobject_passthrough>())
-
-        .def("HasProp", AtomHasProp, python::args("self", "key"),
-             "Queries a Atom to see if a particular property has been "
-             "assigned.\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to check for (a string).\n")
-
-        .def("ClearProp", AtomClearProp, python::args("self", "key"),
-             "Removes a particular property from an Atom (does nothing if not "
-             "already set).\n\n"
-             "  ARGUMENTS:\n"
-             "    - key: the name of the property to be removed.\n")
-
-        .def("GetPropNames", &Atom::getPropList,
-             (python::arg("self"), python::arg("includePrivate") = false,
-              python::arg("includeComputed") = false),
+        .def("GetPropNames", &Atom::getPropList, "includePrivate"_a = false,
+             "includeComputed"_a = false,
              "Returns a list of the properties set on the Atom.\n\n")
 
-        .def("GetPropsAsDict", GetPropsAsDict<Atom>,
-             (python::arg("self"), python::arg("includePrivate") = true,
-              python::arg("includeComputed") = true,
-              python::arg("autoConvertStrings") = true),
+        .def("GetPropsAsDict", GetPropsAsDict<Atom>, "includePrivate"_a = true,
+             "includeComputed"_a = true, "autoConvertStrings"_a = true,
              getPropsAsDictDocString.c_str())
-#endif
+
         .def("UpdatePropertyCache", &Atom::updatePropertyCache,
              "strict"_a = true,
              "Regenerates computed properties like implicit valence and ring "

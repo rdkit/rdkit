@@ -1355,6 +1355,7 @@ struct molops_wrapper {
     // ------------------------------------------------------------------------
     docString = R"DOC(Parameters controlling H addition.)DOC";
     nb::class_<MolOps::AddHsParameters>(m, "AddHsParameters", docString.c_str())
+        .def(nb::init<>())
         .def_rw("explicitOnly", &MolOps::AddHsParameters::explicitOnly,
                 "only add explict Hs")
         .def_rw("addCoords", &MolOps::AddHsParameters::addCoords,
