@@ -522,54 +522,56 @@ class MolFromMACROMolConverter {
 
     // copy the sgroups from the main mol for atoms not in a template
 
-    for (auto &sg : getSubstanceGroups(*macroMol)) {
-      if (sg.getIsValid()) {
-        auto &atoms = sg.getAtoms();
-        std::vector<unsigned int> newAtoms;
-        for (auto atom : atoms) {
-          auto originAtom = OriginAtomDef(atom, UINT_MAX);
-          auto newAtomPtr = originAtomMap.find(originAtom);
-          if (newAtomPtr != originAtomMap.end()) {
-            newAtoms.push_back(newAtomPtr->second);
-          } else {
-            // some atoms were in templates and others were not - cannot
-            // add this sgroup
-            newAtoms.clear();
-            break;
+    if (molFromMACROMolParams.outputSgroups) {
+      for (auto &sg : getSubstanceGroups(*macroMol)) {
+        if (sg.getIsValid()) {
+          auto &atoms = sg.getAtoms();
+          std::vector<unsigned int> newAtoms;
+          for (auto atom : atoms) {
+            auto originAtom = OriginAtomDef(atom, UINT_MAX);
+            auto newAtomPtr = originAtomMap.find(originAtom);
+            if (newAtomPtr != originAtomMap.end()) {
+              newAtoms.push_back(newAtomPtr->second);
+            } else {
+              // some atoms were in templates and others were not - cannot
+              // add this sgroup
+              newAtoms.clear();
+              break;
+            }
+          }
+          if (newAtoms.size() > 0) {
+            const std::string type = "SUP";
+            newSgroups.emplace_back(new SubstanceGroup(mol.get(), type));
+            auto newSg = newSgroups.back().get();
+
+            newSg->updateProps(sg, false);
+            newSg->setAtoms(newAtoms);
           }
         }
-        if (newAtoms.size() > 0) {
-          const std::string type = "SUP";
-          newSgroups.emplace_back(new SubstanceGroup(mol.get(), type));
-          auto newSg = newSgroups.back().get();
+      }
 
-          newSg->updateProps(sg, false);
-          newSg->setAtoms(newAtoms);
+      // now that we have all substance groups from the template and from
+      // the non-template atoms, and we have all the bonds, find the
+      // Xbonds for each substance group and add them
+
+      for (auto bond : mol->bonds()) {
+        for (auto &sg : newSgroups) {
+          // if one atom of the bond is found and the other is not in the
+          // sgroup, this is a Xbond
+          auto sgAtoms = sg->getAtoms();
+          if ((std::find(sgAtoms.begin(), sgAtoms.end(),
+                        bond->getBeginAtomIdx()) == sgAtoms.end()) !=
+              (std::find(sgAtoms.begin(), sgAtoms.end(), bond->getEndAtomIdx()) ==
+              sgAtoms.end())) {
+            sg->addBondWithIdx(bond->getIdx());
+          }
         }
       }
-    }
 
-    // now that we have all substance groups from the template and from
-    // the non-template atoms, and we have all the bonds, find the
-    // Xbonds for each substance group and add them
-
-    for (auto bond : mol->bonds()) {
-      for (auto &sg : newSgroups) {
-        // if one atom of the bond is found and the other is not in the
-        // sgroup, this is a Xbond
-        auto sgAtoms = sg->getAtoms();
-        if ((std::find(sgAtoms.begin(), sgAtoms.end(),
-                       bond->getBeginAtomIdx()) == sgAtoms.end()) !=
-            (std::find(sgAtoms.begin(), sgAtoms.end(), bond->getEndAtomIdx()) ==
-             sgAtoms.end())) {
-          sg->addBondWithIdx(bond->getIdx());
+      if (newSgroups.size() > 0) {
+        for (auto &sg : newSgroups) {
+          addSubstanceGroup(*mol, *sg.get());
         }
-      }
-    }
-
-    if (newSgroups.size() > 0) {
-      for (auto &sg : newSgroups) {
-        addSubstanceGroup(*mol, *sg.get());
       }
     }
     newSgroups.clear();  // just tidy cleanup

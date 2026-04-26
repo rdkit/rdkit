@@ -369,6 +369,28 @@ class ScsrMolTest {
       CHECK(mol->getAtomWithIdx(chiralCheck.first)->getChiralTag() ==
             chiralCheck.second);
     }
+
+
+    /* test atomistic output WITHOUT sgroups */
+    molFromMACROMolParams.outputSgroups = false;
+    molFromMACROMolParams.includeLeavingGroups = true;
+
+    if (ScsrTest->expectedStatus == ExpectedStatus::Success) {
+      REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                                            scsrBaseHbondOptions));
+    } else {
+      REQUIRE_THROWS(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+                                           scsrBaseHbondOptions));
+      return;
+    }
+
+    RDKit::Chirality::removeNonExplicit3DChirality(*(mol.get()));
+
+    CHECK(mol != nullptr);
+    CHECK(mol->getNumAtoms() == ScsrTest->totalAtomCount);
+    CHECK(mol->getNumBonds() == ScsrTest->totalBondCount);
+    CHECK(getSubstanceGroups(*mol).size() == 0);
+    
   }
 
   void threeLetterCodeTest(const ScsrTest *ScsrTest) {

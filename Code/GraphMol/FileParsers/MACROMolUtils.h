@@ -39,6 +39,7 @@ struct RDKIT_FILEPARSERS_EXPORT MolFromMACROMolParams {
   bool includeLeavingGroups =
       true; /**< when true, leaving groups on atoms that are not exo-bonded
                are retained.  When false, no leaving groups are retained */
+  bool outputSgroups = true;
   MACROTemplateNames macroTemplateNames = MACROTemplateNames::All;
 };
 
