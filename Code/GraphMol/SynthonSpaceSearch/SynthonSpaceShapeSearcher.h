@@ -62,6 +62,9 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
       const std::vector<std::shared_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const override;
 
+  bool verifyHit(ROMol &hit, const std::string &rxnId,
+                 const std::vector<const std::string *> &synthNames) override;
+
   // Use d_fragSynthonSims to decide if the fragment matched the
   // Synthon.
   bool fragMatchedSynthon(const void *frag, const void *synthon,
@@ -84,15 +87,9 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
       const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
       std::vector<const std::string *> &synthNames) const override;
 
-  bool verifyHit(ROMol &hit, const std::string &rxnId,
-                 const std::vector<const std::string *> &synthNames) override;
-
  private:
-  // Shapes for all the conformers of the query.
-  std::unique_ptr<SynthonShapeInput> dp_queryShapes;
-  // If a conformational expansion was done, keep it here, otherwise
-  // just copy the query.
-  std::unique_ptr<RWMol> dp_queryConfs;
+  // Shape for the query - only ever 1 conformer.
+  std::unique_ptr<SynthonShapeInput> dp_queryShape;
   // These are the fragment shapes for this search, derived from
   // d_query.  The shapes in d_fragShapes are sorted on the address
   // of the corresponding fragment.  d_fragShapesPool is never read,
@@ -114,6 +111,9 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
   bool extraSearchSetup(
       std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
       const TimePoint *endTime) override;
+
+  void buildQueryShape(const ROMol &mol,
+                       std::vector<GaussianShape::CustomFeature> &allFeatures);
 
   // Fill in the d_fragSynthonSims map.
   bool computeFragSynthonSims(

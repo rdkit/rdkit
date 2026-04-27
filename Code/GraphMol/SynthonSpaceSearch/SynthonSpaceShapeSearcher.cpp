@@ -32,8 +32,12 @@ SynthonSpaceShapeSearcher::SynthonSpaceShapeSearcher(
     const ROMol &query, const SynthonSpaceSearchParams &params,
     SynthonSpace *space)
     : SynthonSpaceSearcher(query, params, space) {
-  if (getSpace().getNumConformers() == 0) {
+  if (getSpace() && getSpace()->getNumConformers() == 0) {
     throw std::runtime_error("No conformers found in SynthonSpaceSearch");
+  }
+  if (!getSpace()) {
+    std::vector<GaussianShape::CustomFeature> allFeatures;
+    buildQueryShape(query, allFeatures);
   }
 }
 
@@ -304,7 +308,7 @@ std::unique_ptr<SynthonShapeInput> generateShapes(
 
 void generateSomeShapes(
     const std::vector<ROMol *> &fragsForShape, const unsigned int beginFrag,
-    unsigned int endFrag, const ROMol &queryMolHs,
+    unsigned int endFrag, const ROMol &queryMol,
     const std::vector<GaussianShape::CustomFeature> &allFeatures,
     const TimePoint *endTime,
     std::vector<std::unique_ptr<SynthonShapeInput>> &fragShapes) {
@@ -316,7 +320,7 @@ void generateSomeShapes(
   }
   for (unsigned int fragIdx = beginFrag; fragIdx < endFrag; ++fragIdx) {
     fragShapes[fragIdx] =
-        generateShapes(queryMolHs, *fragsForShape[fragIdx], allFeatures);
+        generateShapes(queryMol, *fragsForShape[fragIdx], allFeatures);
     if (ControlCHandler::getGotSignal()) {
       return;
     }
@@ -343,16 +347,9 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
         << "The query molecule has multiple conformers.  Just using the default."
         << std::endl;
   }
-  dp_queryConfs = std::make_unique<RWMol>(getQuery(), false, -1);
-  BOOST_LOG(rdInfoLog) << "Generating query shapes for "
-                       << MolToSmiles(*dp_queryConfs) << std::endl;
+  auto queryCp = std::make_unique<RWMol>(getQuery(), false, -1);
   std::vector<GaussianShape::CustomFeature> allFeatures;
-  GaussianShape::findFeatures(*queryMol, 0, allFeatures);
-
-  GaussianShape::ShapeInputOptions opts;
-  opts.customFeatures.push_back(allFeatures);
-  dp_queryShapes =
-      std::make_unique<SynthonShapeInput>(*dp_queryConfs, -1, opts);
+  buildQueryShape(*queryCp, allFeatures);
 
   // Make a map of the unique SMILES strings for the fragments, keeping
   // track of them in the vector.
@@ -378,14 +375,14 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
     for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
       threads.push_back(std::thread(generateSomeShapes, std::ref(fragsForShape),
                                     start, start + eachThread,
-                                    std::ref(*dp_queryConfs), allFeatures,
-                                    endTime, std::ref(d_fragShapesPool)));
+                                    std::ref(*queryCp), allFeatures, endTime,
+                                    std::ref(d_fragShapesPool)));
     }
     for (auto &t : threads) {
       t.join();
     }
   } else {
-    generateSomeShapes(fragsForShape, 0, fragsForShape.size(), *dp_queryConfs,
+    generateSomeShapes(fragsForShape, 0, fragsForShape.size(), *queryCp,
                        allFeatures, endTime, d_fragShapesPool);
   }
   // Keep track of the minimum fragSet size that each frag is in, which will
@@ -431,6 +428,18 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
   // maximum use of the parallel environment, doesn't do anything that
   // wouldn't be done at some point and may prevent duplicated comparisons.
   return computeFragSynthonSims(endTime, minShapeSetSize);
+}
+
+void SynthonSpaceShapeSearcher::buildQueryShape(
+    const ROMol &mol, std::vector<GaussianShape::CustomFeature> &allFeatures) {
+  BOOST_LOG(rdInfoLog) << "Generating query shapes for " << MolToSmiles(mol)
+                       << std::endl;
+  GaussianShape::findFeatures(mol, 0, allFeatures);
+
+  GaussianShape::ShapeInputOptions opts;
+  opts.customFeatures.push_back(allFeatures);
+  dp_queryShape = std::make_unique<SynthonShapeInput>(
+      mol, -1, opts, getParams().shapeOverlayOptions);
 }
 
 namespace {
@@ -718,7 +727,7 @@ bool SynthonSpaceShapeSearcher::computeFragSynthonSims(
   if (getParams().useProgressBar) {
     std::uint64_t numToDo = 0UL;
     for (const auto &fragShape : d_fragShapesPool) {
-      for (const auto &synthon : getSpace().d_synthonPool) {
+      for (const auto &synthon : getSpace()->d_synthonPool) {
         const auto mfss = minFragSetSize[fragShape.get()];
         if (mfss <= synthon.second->getMaxSynthonSetSize()) {
           numToDo++;
@@ -728,7 +737,7 @@ bool SynthonSpaceShapeSearcher::computeFragSynthonSims(
     pbar.reset(new ProgressBar(getParams().useProgressBar, numToDo));
     std::cout << "Computing fragment/synthon shape similarities for "
               << d_fragShapesPool.size() << " fragments against "
-              << getSpace().d_synthonPool.size() << " synthons with "
+              << getSpace()->d_synthonPool.size() << " synthons with "
               << getNumThreadsToUse(getParams().numThreads) << " threads."
               << std::endl;
   }
@@ -736,7 +745,7 @@ bool SynthonSpaceShapeSearcher::computeFragSynthonSims(
   std::vector<std::pair<SynthonShapeInput *, Synthon *>> toDo;
   toDo.reserve(2500000);
   for (const auto &fragShape : d_fragShapesPool) {
-    for (const auto &synthon : getSpace().d_synthonPool) {
+    for (const auto &synthon : getSpace()->d_synthonPool) {
       const auto mfss = minFragSetSize[fragShape.get()];
       // If the smallest fragment set that this fragment is in is bigger
       // than the largest SynthonSet the synthon is in, we won't ever
@@ -860,8 +869,8 @@ double SynthonSpaceShapeSearcher::approxSimilarity(
       featureVol += shapes->getShapes().getColorVolume(0);
     }
     approxSim = GaussianShape::maxScore(
-        maxVol, dp_queryShapes->getShapes().getShapeVolume(0), featureVol,
-        dp_queryShapes->getShapes().getColorVolume(0),
+        maxVol, dp_queryShape->getShapes().getShapeVolume(0), featureVol,
+        dp_queryShape->getShapes().getColorVolume(0),
         getParams().shapeOverlayOptions);
   }
   return approxSim;
@@ -1091,7 +1100,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   std::array<double, 3> initScores{-1.0, -1.0, -1.0};
   if (hit.getNumConformers()) {
     initScores = GaussianShape::AlignMolecule(
-        dp_queryShapes->getShapes(), hit, GaussianShape::ShapeInputOptions(),
+        dp_queryShape->getShapes(), hit, GaussianShape::ShapeInputOptions(),
         nullptr, getParams().shapeOverlayOptions);
     double excludedVol{-1.0}, meanExcludedVol{-1.0};
     if (checkExcludedVols(hit, getParams(), excludedVol, meanExcludedVol)) {
@@ -1137,9 +1146,8 @@ bool SynthonSpaceShapeSearcher::verifyHit(
       double excludedVol{-1.0}, meanExcludedVol{-1.0};
       bool finalisedHit = false;
       isomerShapes.setActiveShape(shapeNum);
-      auto thisScore =
-          GaussianShape::AlignShape(dp_queryShapes->getShapes(), isomerShapes,
-                                    &bestXform, overlayOptions);
+      auto thisScore = GaussianShape::AlignShape(
+          dp_queryShape->getShapes(), isomerShapes, &bestXform, overlayOptions);
       if (thisScore[0] > getBestSimilaritySoFar()) {
         if (!finaliseHit(isomerShapes, shapeNum, thisScore, rxnId, synthNames,
                          hit, getParams(), excludedVol, meanExcludedVol)) {

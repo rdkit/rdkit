@@ -298,6 +298,35 @@ class TestCase(unittest.TestCase):
     hits = synthonspace.ShapeSearch(comb_4aji_4aj1, ssparams)
     self.assertEqual(len(hits.GetHitMolecules()), 1)
     
+
+  def testPossibleHitsWrite(self):
+    fName = self.sssDir / "amide_space_shapes.spc"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadDBFile(fName)
+
+
+    ssparams = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    ssparams.fragSimilarityAdjuster = 0.2
+    ssparams.approxSimilarityAdjuster = 0.2
+    ssparams.numConformers = 100
+    ssparams.confRMSThreshold = 0.5
+    ssparams.randomSeed = 0xdac
+    ssparams.bestHit = True
+    ssparams.similarityCutoff = 0.8
+    ssparams.maxMeanExcludedVolume = 5.0
+    ssparams.possibleHitsFile = "amide_space_shapes_poss_hits.txt"
+    ssparams.writePossibleHitsAndStop = True
+
+    query = Chem.MolFromSmiles("O=C(c1ccccc1)N1CCCC1 |(0.0443291,-1.81486,-1.76886;0.0506321,-0.858174,-0.921491;1.37975,-0.430412,-0.483603;2.18964,-1.35506,0.144714;3.47088,-1.00454,0.585539;3.93803,0.297573,0.388032;3.1267,1.22739,-0.242406;1.85597,0.849751,-0.670531;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401)|")
+    hits = synthonspace.ShapeSearch(query, ssparams)
+    self.assertEqual(len(hits.GetHitMolecules()), 0)
+    phf = Path(ssparams.possibleHitsFile)
+    self.assertTrue(phf.exists())
+
+    hits = synthonspace.ShapeSearch(query, ssparams, 0, -1)
+    self.assertEqual(len(hits.GetHitMolecules()), 3)
+    phf.unlink()
     
+
 if __name__ == "__main__":
   unittest.main()

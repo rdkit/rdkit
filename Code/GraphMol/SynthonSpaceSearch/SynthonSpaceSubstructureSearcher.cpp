@@ -342,15 +342,15 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> mergeRingFormingFrags(
 }  // namespace
 
 unsigned int SynthonSpaceSubstructureSearcher::getNumQueryFragmentsRequired() {
-  auto maxNumSynthons = getSpace().getMaxNumSynthons();
-  auto maxNumConns = getSpace().getMaxNumConnectors();
+  auto maxNumSynthons = getSpace()->getMaxNumSynthons();
+  auto maxNumConns = getSpace()->getMaxNumConnectors();
   return std::max(maxNumSynthons, maxNumConns + 1);
 }
 
 bool SynthonSpaceSubstructureSearcher::extraSearchSetup(
     std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
     const TimePoint *endTime) {
-  if (getSpace().getHasRingFormer()) {
+  if (getSpace()->getHasRingFormer()) {
     // If there is a reaction that has a pair of synthons that form a ring,
     // extra merged fragments are required.
     std::vector<std::vector<std::shared_ptr<ROMol>>> extraFragSets;
@@ -376,7 +376,7 @@ bool SynthonSpaceSubstructureSearcher::extraSearchSetup(
     return false;
   }
   // Now generate the pattern fingerprints for the fragments.
-  const auto pattFPSize = getSpace().getPatternFPSize();
+  const auto pattFPSize = getSpace()->getPatternFPSize();
   d_pattFPsPool.resize(fragSmiToFrag.size());
   d_connRegsPool.resize(fragSmiToFrag.size());
   d_connRegSmisPool.resize(fragSmiToFrag.size());

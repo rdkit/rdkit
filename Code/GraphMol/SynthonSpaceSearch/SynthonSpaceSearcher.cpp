@@ -8,8 +8,10 @@
 //  of the RDKit source tree.
 //
 
+#include <future>
 #include <random>
 #include <thread>
+#include <boost/algorithm/string.hpp>
 #include <boost/random/discrete_distribution.hpp>
 
 #include <GraphMol/Chirality.h>
@@ -17,6 +19,7 @@
 #include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/FileParsers/FileWriters.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
@@ -103,7 +106,7 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb,
     }
     details::Stepper stepper(numSynthons);
 
-    const auto &reaction = getSpace().getReaction(hitset->d_reaction->getId());
+    const auto &reaction = getSpace()->getReaction(hitset->d_reaction->getId());
     std::vector<size_t> theseSynthNums(reaction->getSynthons().size(), 0);
     // process the synthons
     while (stepper.d_currState[0] != numSynthons[0]) {
@@ -132,6 +135,133 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb,
     processToTrySet(toTry, endTime, partResults);
     cb(partResults);
   }
+}
+
+namespace {
+std::vector<std::pair<std::string, std::string>> readPossHitsLines(
+    const std::string possHitsFile, const int startLine, int finishLine) {
+  std::vector<std::pair<std::string, std::string>> retLines;
+  std::ifstream ifs(possHitsFile.c_str());
+  if (!ifs) {
+    BOOST_LOG(rdErrorLog) << "Possible hits file " << possHitsFile
+                          << "not found, so no results generated." << std::endl;
+    return retLines;
+  }
+  std::string smiles, name;
+  for (int i = 0; i < startLine; ++i) {
+    std::getline(ifs, smiles);
+  }
+  if (finishLine == -1) {
+    finishLine = std::numeric_limits<int>::max();
+  }
+  for (int i = startLine; i < finishLine; ++i) {
+    ifs >> smiles >> name;
+    if (ifs.eof()) {
+      break;
+    }
+    std::cout << smiles << " : " << name << std::endl;
+    retLines.push_back(std::make_pair(smiles, name));
+  }
+  return retLines;
+}
+
+void dismantleName(const std::string &name, std::string &rxnId,
+                   std::vector<std::string> &synthNames,
+                   std::vector<const std::string *> &synthNamesPtrs) {
+  boost::split(synthNames, name, boost::is_any_of(";"));
+  if (synthNames.empty()) {
+    rxnId = "InvalidName";
+    BOOST_LOG(rdWarningLog) << "Invalid product name " << name << std::endl;
+    return;
+  }
+  rxnId = synthNames.back();
+  synthNames.pop_back();
+  synthNamesPtrs.resize(synthNames.size());
+  std::ranges::transform(
+      synthNames, synthNamesPtrs.begin(),
+      [](const std::string &sn) -> const std::string * { return &sn; });
+}
+
+void checkPossibleHitsPart(
+    const std::vector<std::pair<std::string, std::string>> &checkLines,
+    std::atomic<std::int64_t> &mostRecentLine, SynthonSpaceSearcher *searcher,
+    std::vector<std::unique_ptr<ROMol>> &allResultMols) {
+  const std::int64_t lastLine = checkLines.size();
+  MolzipParams mzparams;
+  mzparams.label = MolzipLabel::Isotope;
+  mzparams.alignCoordinates = false;
+
+  while (true) {
+    const std::int64_t nextLine = ++mostRecentLine;
+    if (nextLine >= lastLine) {
+      break;
+    }
+    auto &[smiles, name] = checkLines[nextLine];
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    std::unique_ptr<ROMol> prod;
+    try {
+      prod = molzip(*mol, mzparams);
+      MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prod.get()));
+    } catch (std::exception &e) {
+      std::cout << "AWOOGA :: Failed to zip " << MolToSmiles(*prod) << " for "
+                << name << " because " << std::endl
+                << e.what() << std::endl;
+      continue;
+    }
+    prod->setProp<std::string>(common_properties::_Name, name);
+    // Verify hit needs a dismantled name
+    std::string rxnId;
+    std::vector<std::string> synthNames;
+    std::vector<const std::string *> synthNamePtrs;
+    dismantleName(name, rxnId, synthNames, synthNamePtrs);
+    if (searcher->verifyHit(*prod, rxnId, synthNamePtrs)) {
+      std::cout << "It was a hit : " << prod->getProp<double>("Similarity")
+                << " : " << prod->getProp<std::string>(common_properties::_Name)
+                << std::endl;
+      allResultMols[nextLine] = std::move(prod);
+    }
+  }
+}
+}  // namespace
+
+SearchResults SynthonSpaceSearcher::checkPossibleHits(int startLine,
+                                                      int finishLine) {
+  if (getParams().possibleHitsFile.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "No possible hits file given, so no results generated." << std::endl;
+    return SearchResults();
+  }
+  auto checkLines =
+      readPossHitsLines(getParams().possibleHitsFile, startLine, finishLine);
+  if (checkLines.empty()) {
+    return SearchResults();
+  }
+  std::vector<std::unique_ptr<ROMol>> resultMols(checkLines.size());
+  std::atomic<std::int64_t> mostRecentLine = -1;
+  const unsigned int numThreads = getNumThreadsToUse(getParams().numThreads);
+  if (numThreads > 1) {
+    std::vector<std::future<void>> tg;
+    for (unsigned int i = 0; i < numThreads; ++i) {
+      tg.emplace_back(std::async(std::launch::async, checkPossibleHitsPart,
+                                 std::ref(checkLines), std::ref(mostRecentLine),
+                                 this, std::ref(resultMols)));
+    }
+    for (auto &fut : tg) {
+      fut.get();
+    }
+  } else {
+    checkPossibleHitsPart(checkLines, mostRecentLine, this, resultMols);
+  }
+
+  resultMols.erase(std::remove_if(resultMols.begin(), resultMols.end(),
+                                  [](const std::unique_ptr<ROMol> &r) {
+                                    return !static_cast<bool>(r);
+                                  }),
+                   resultMols.end());
+
+  return SearchResults{std::move(resultMols), std::move(d_bestHitFound),
+                       checkLines.size(), false,
+                       ControlCHandler::getGotSignal()};
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildHit(
@@ -261,7 +391,7 @@ void processReactions(
       break;
     }
     const auto &reaction =
-        searcher->getSpace().getReaction(reactionNames[thisR]);
+        searcher->getSpace()->getReaction(reactionNames[thisR]);
     auto theseHits =
         searchReaction(searcher, *reaction, endTime, 1, fragments, pbar);
     reactionHits[thisR] = std::move(theseHits);
@@ -270,7 +400,7 @@ void processReactions(
 }  // namespace
 
 unsigned int SynthonSpaceSearcher::getNumQueryFragmentsRequired() {
-  return getSpace().getMaxNumSynthons();
+  return getSpace()->getMaxNumSynthons();
 }
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
@@ -296,10 +426,10 @@ SynthonSpaceSearcher::doTheSearch(
     std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
     const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits,
     const ThreadMode threadMode) {
-  auto reactionNames = getSpace().getReactionNames();
+  auto reactionNames = getSpace()->getReactionNames();
   std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> reactionHits;
   if (threadMode == ThreadMode::ThreadFragments) {
-    const unsigned int numThreads = getNumThreadsToUse(d_params.numThreads);
+    const unsigned int numThreads = getNumThreadsToUse(getParams().numThreads);
     // Do the reactions one at a time, parallelising the fragSet searches.
     // For the slower searches, this minimises the amount of time that
     // threads are left idle.  ThreadReactions runs the risk of 1 thread
@@ -311,7 +441,7 @@ SynthonSpaceSearcher::doTheSearch(
                                  reactionNames.size() * fragSets.size()));
     }
     for (const auto &reactionName : reactionNames) {
-      const auto &reaction = getSpace().getReaction(reactionName);
+      const auto &reaction = getSpace()->getReaction(reactionName);
       reactionHits.push_back(
           searchReaction(this, *reaction, endTime, numThreads, fragSets, pbar));
     }
@@ -625,10 +755,14 @@ void writePossibleHits(
   for (const auto &[hitset, synthNums] : toTry) {
     synthNames.resize(synthNums.size());
     for (size_t i = 0; i < synthNums.size(); i++) {
-      outs << hitset->synthonsToUse[i][synthNums[i]].second->getSmiles() << " ";
+      outs << hitset->synthonsToUse[i][synthNums[i]].second->getSmiles();
+      if (synthNums.size() > 1 && i < synthNums.size() - 1) {
+        outs << ".";
+      }
       synthNames[i] = &hitset->synthonsToUse[i][synthNums[i]].first;
     }
-    outs << details::buildProductName(hitset->d_reaction->getId(), synthNames)
+    outs << " "
+         << details::buildProductName(hitset->d_reaction->getId(), synthNames)
          << std::endl;
   }
 }

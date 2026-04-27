@@ -254,6 +254,18 @@ SearchResults SynthonSpace::shapeSearch(
   return ssss.search(ThreadMode::ThreadFragments);
 }
 
+SearchResults SynthonSpace::shapeSearch(const ROMol &query,
+                                        const SynthonSpaceSearchParams &params,
+                                        int startLine, int finishLine) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  if (finishLine >= 0) {
+    PRECONDITION(startLine < finishLine,
+                 "Search startLine must be less than finishLine.")
+  }
+  SynthonSpaceShapeSearcher ssss(query, params, nullptr);
+  return ssss.checkPossibleHits(startLine, finishLine);
+}
+
 namespace {
 std::vector<std::string> splitLine(const std::string &str,
                                    const std::regex &regexz) {

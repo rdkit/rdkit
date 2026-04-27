@@ -228,6 +228,26 @@ SynthonSpaceSearch::SearchResults shapeSearch_helper(
   return results;
 }
 
+SynthonSpaceSearch::SearchResults shapeSearch_helper_3(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const python::object &py_params, int startLine, int finishLine) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  SynthonSpaceSearch::SearchResults results;
+  {
+    NOGIL gil;
+    results = self.shapeSearch(query, params, startLine, finishLine);
+  }
+  if (results.getCancelled()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "ShapeSearch cancelled");
+    python::throw_error_already_set();
+  }
+  return results;
+}
+
 static void rascalSearch_helper_2(SynthonSpaceSearch::SynthonSpace &self,
                                   const ROMol &query,
                                   const python::object &py_rascalOptions,
@@ -673,6 +693,10 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            (python::arg("self"), python::arg("query"),
             python::arg("params") = python::object()),
            "Does a search using the pubchem-align3d shape similarity metric.")
+      .def("ShapeSearch", &helpers::shapeSearch_helper_3,
+           (python::arg("self"), python::arg("query"), python::arg("startLine"),
+            python::arg("finishLine") = -1),
+           "")
       .def(
           "BuildSynthonFingerprints",
           &SynthonSpaceSearch::SynthonSpace::buildSynthonFingerprints,

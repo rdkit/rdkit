@@ -27,13 +27,13 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SynthonSpaceSearchParams &params, SynthonSpace *space)
     : SynthonSpaceSearcher(query, params, space), d_fpGen(fpGen) {
-  if (getSpace().hasFingerprints() &&
-      d_fpGen.infoString() != getSpace().getSynthonFingerprintType()) {
+  if (getSpace() && getSpace()->hasFingerprints() &&
+      d_fpGen.infoString() != getSpace()->getSynthonFingerprintType()) {
     throw std::runtime_error(
         "The search fingerprints must match"
         " those in the database.  You are searching with " +
-        d_fpGen.infoString() + " vs " + getSpace().getSynthonFingerprintType() +
-        " in the database.");
+        d_fpGen.infoString() + " vs " +
+        getSpace()->getSynthonFingerprintType() + " in the database.");
   }
   d_queryFP = std::unique_ptr<ExplicitBitVect>(d_fpGen.getFingerprint(query));
 }
@@ -143,9 +143,9 @@ std::vector<std::vector<size_t>> getHitSynthons(
 bool SynthonSpaceFingerprintSearcher::extraSearchSetup(
     std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
     const TimePoint *endTime) {
-  if (!getSpace().hasFingerprints() ||
-      getSpace().getSynthonFingerprintType() != d_fpGen.infoString()) {
-    getSpace().buildSynthonFingerprints(d_fpGen);
+  if (!getSpace()->hasFingerprints() ||
+      getSpace()->getSynthonFingerprintType() != d_fpGen.infoString()) {
+    getSpace()->buildSynthonFingerprints(d_fpGen);
   }
   if (ControlCHandler::getGotSignal() || details::checkTimeOut(endTime)) {
     return false;

@@ -247,7 +247,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const ROMol &query,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
-#if 0
   /*! Take the contents of params.possibleHitsFile, which is assumed to have
    * been written by an earlier search, and extract those that are indeed
    * hits.  It makes sense that params is the same as the one used to
@@ -260,16 +259,15 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    *
    * @param query : query molecule
    * @param params : settings for the search
-   * @param startLine: (optional) the first line of the file to be considered
+   * @param startLine: the first line of the file to be considered
    * @param finishLine: (optional) the last line of the file to be considered.
    *                    -1 means go to the end.
    * @return : the hits as a SearchResults object.
    */
   SearchResults shapeSearch(const ROMol &query,
                             const SynthonSpaceSearchParams &params,
-                            int startLine = 0, int finishLine = -1);
-#endif
-  
+                            int startLine, int finishLine = -1);
+
   /*!
    *
    * @param inFilename: name of the file containing the synthon-based library.

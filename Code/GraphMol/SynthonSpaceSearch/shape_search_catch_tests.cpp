@@ -7,9 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 
-#include "pubchem_shape/PubChemShape.hpp"
-
-#include <cstdio>
+#include <filesystem>
 
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -836,7 +834,7 @@ TEST_CASE("Write possible hits") {
   ShapeBuildParams shapeBuildOptions;
   shapeBuildOptions.numConfs = 100;
   shapeBuildOptions.rmsThreshold = 0.5;
-  shapeBuildOptions.numThreads = 1;
+  shapeBuildOptions.numThreads = 2;
   shapeBuildOptions.shapeSimThreshold = 0.95;
   shapeBuildOptions.randomSeed = 0xdac;
 
@@ -858,6 +856,7 @@ TEST_CASE("Write possible hits") {
   auto results = synthonspace.shapeSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 3);
 
+  std::remove(params.possibleHitsFile.c_str());
   params.writePossibleHitsAndStop = true;
   auto noresults = synthonspace.shapeSearch(*queryMol, params);
   CHECK(noresults.getHitMolecules().empty());
@@ -868,4 +867,16 @@ TEST_CASE("Write possible hits") {
     ++numLines;
   }
   CHECK(numLines == 4);
+
+  auto checkResults = synthonspace.shapeSearch(*queryMol, params, 0, -1);
+  std::cout << "Number of check results : "
+            << checkResults.getHitMolecules().size() << std::endl;
+  CHECK(checkResults.getHitMolecules().size() == 3);
+
+  std::cout << "shortResults" << std::endl;
+  auto shortResults = synthonspace.shapeSearch(*queryMol, params, 1, 3);
+  std::cout << "Number of check results : "
+            << shortResults.getHitMolecules().size() << std::endl;
+  CHECK(shortResults.getHitMolecules().size() == 2);
+  std::remove(params.possibleHitsFile.c_str());
 }

@@ -49,8 +49,12 @@ class SynthonSpaceSearcher {
 
   SearchResults search(ThreadMode threadMode);
   void search(const SearchResultCallback &cb, ThreadMode threadMode);
+  // Take the contents of d_params.possibleHitsFile between the
+  // given lines, build them, check against the query and return
+  // any that match.
+  SearchResults checkPossibleHits(int startLine, int finishLine);
 
-  SynthonSpace &getSpace() const { return *d_space; }
+  SynthonSpace *getSpace() const { return d_space; }
   const ROMol &getQuery() const { return d_query; }
   const SynthonSpaceSearchParams &getParams() const { return d_params; }
 
@@ -69,19 +73,19 @@ class SynthonSpaceSearcher {
   std::unique_ptr<ROMol> buildAndVerifyHit(
       const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums);
 
- protected:
-  // Build the hit, as used by buildAndVerifyHit.  Fills in the synthon
-  // names, assuming the vector is already the correct size.
-  virtual std::unique_ptr<ROMol> buildHit(
-      const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
-      std::vector<const std::string *> &synthNames) const;
-
   // Checks that the given molecule is definitely a hit according to
   // the derived class' criteria.  This function checks the chiralAtomCount
   // if appropriate, which required a non-const ROMol.  Some derived classes
   // will also update d_bestHitFound.
   virtual bool verifyHit(ROMol &mol, const std::string &,
                          const std::vector<const std::string *> &);
+
+ protected:
+  // Build the hit, as used by buildAndVerifyHit.  Fills in the synthon
+  // names, assuming the vector is already the correct size.
+  virtual std::unique_ptr<ROMol> buildHit(
+      const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
+      std::vector<const std::string *> &synthNames) const;
 
   // Compute an approximate similarity between the hit and query.  It's used
   // to sort the possible hits in descending approximate similarity to try
