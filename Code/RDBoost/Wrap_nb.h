@@ -72,7 +72,7 @@ template <typename T>
 std::unique_ptr<std::vector<T>> pythonObjectToVect(const nb::object &obj,
                                                    T maxV) {
   std::unique_ptr<std::vector<T>> res;
-  if (obj) {
+  if (!obj.is_none()) {
     res.reset(new std::vector<T>);
     for (auto item : obj) {
       T v = nb::cast<T>(item);
@@ -88,7 +88,7 @@ std::unique_ptr<std::vector<T>> pythonObjectToVect(const nb::object &obj,
 template <typename T>
 std::unique_ptr<std::vector<T>> pythonObjectToVect(const nb::object &obj) {
   std::unique_ptr<std::vector<T>> res;
-  if (obj) {
+  if (!obj.is_none()) {
     res.reset(new std::vector<T>());
     std::transform(obj.begin(), obj.end(), std::back_inserter(*res),
                    [](const auto &v) { return nb::cast<T>(v); });
@@ -98,7 +98,7 @@ std::unique_ptr<std::vector<T>> pythonObjectToVect(const nb::object &obj) {
 //! NOTE: \c res will be cleared if obj is None or empty
 template <typename T>
 void pythonObjectToVect(const nb::object &obj, std::vector<T> &res) {
-  if (obj) {
+  if (!obj.is_none()) {
     res.clear();
     std::transform(obj.begin(), obj.end(), std::back_inserter(res),
                    [](const auto &v) { return nb::cast<T>(v); });
