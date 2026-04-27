@@ -2,109 +2,56 @@ import pytest
 
 from rdkit import Chem
 
-PROP_KEY = "test_prop"
 
-
-@pytest.mark.parametrize("prop_value, expected_val",
-                         [("value", "value"),
-                          (0, 0),
-                          (42.0, 42.0),
-                          (True, True)])
-def test_get_prop_current_behavior(prop_value, expected_val):
-    """
-    This test checks the current behavior of GetProp. We don't want to change
-    current behavior to avoid breaking existing code.
-    """
+@pytest.mark.parametrize("auto_convert", [False, True])
+@pytest.mark.parametrize("prop_value, default_val, expected_val",
+                         [("Not Set", None, None),
+                          ("Not Set", "fallback", "fallback"),
+                          ("value", "fallback", "value"),
+                          ("value", None, "value"), (None, "fallback", None),
+                          (42, 0, 42), ("Not Set", 0, 0), (42.0, 0.0, 42.0),
+                          ("Not Set", 0.0, 0.0)])
+def test_get_prop_with_default(auto_convert, prop_value, default_val,
+                               expected_val):
     m = Chem.MolFromSmiles("CC")
-    if isinstance(prop_value, bool):
-        m.SetBoolProp(PROP_KEY, prop_value)
-    elif isinstance(prop_value, int):
-        m.SetIntProp(PROP_KEY, prop_value)
-    elif isinstance(prop_value, float):
-        m.SetDoubleProp(PROP_KEY, prop_value)
-    else:
-        m.SetProp(PROP_KEY, prop_value)
+    prop_key = "test_prop"
+    if prop_value != "Not Set":
+        if isinstance(prop_value, int):
+            m.SetIntProp(prop_key, prop_value)
+        elif isinstance(prop_value, float):
+            m.SetDoubleProp(prop_key, prop_value)
+        else:
+            m.SetProp(prop_key, prop_value)
 
-    assert m.GetProp(PROP_KEY, True) == expected_val
+    assert m.GetProp(prop_key,
+                     autoConvert=auto_convert,
+                     default_val=default_val) == expected_val
 
 
-@pytest.mark.parametrize("autoConvert", [False, True])
-def test_get_prop_current_behavior_not_set(autoConvert):
-    """
-    This test checks the current behavior of GetProp when the property is not
-    set. We expect a KeyError to be raised.
-    """
+@pytest.mark.parametrize("auto_convert", [False, True])
+def test_get_prop_no_default_not_set(auto_convert):
     m = Chem.MolFromSmiles("CC")
     with pytest.raises(KeyError):
-        m.GetProp(PROP_KEY, autoConvert)
+        m.GetProp("test_prop", autoConvert=auto_convert)
 
 
-@pytest.mark.parametrize("prop_value, default_val, expected_val",
-                         [("Not Set", "fallback", "fallback"),
-                          ("Not Set", None, None),
-                          ("Not Set", 0, 0),
-                          ("Not Set", 42.0, 42.0),
-                          ("Not Set", True, True),
-                          ("value", "fallback", "value"),
-                          (0, "fallback", 0),
-                          (42.0, "fallback", 42.0),
-                          (True, "fallback", True)])
-def test_get_prop_with_default(prop_value, default_val, expected_val):
-    """
-    This test describes the default_val would work. This test uses a keyword.
-    """
+@pytest.mark.parametrize("auto_convert", [False, True])
+@pytest.mark.parametrize("prop_value", [None, "fallback", 0, 0.0])
+def test_get_prop_no_default_set(auto_convert, prop_value):
     m = Chem.MolFromSmiles("CC")
-    if prop_value != "Not Set":
-        if isinstance(prop_value, bool):
-            m.SetBoolProp(PROP_KEY, prop_value)
-        elif isinstance(prop_value, int):
-            m.SetIntProp(PROP_KEY, prop_value)
-        elif isinstance(prop_value, float):
-            m.SetDoubleProp(PROP_KEY, prop_value)
-        else:
-            m.SetProp(PROP_KEY, prop_value)
-
-    assert m.GetPropIfPresent(PROP_KEY, default_val=default_val) == expected_val
+    prop_key = "test_prop"
+    if isinstance(prop_value, int):
+        m.SetIntProp(prop_key, prop_value)
+    elif isinstance(prop_value, float):
+        m.SetDoubleProp(prop_key, prop_value)
+    else:
+        m.SetProp(prop_key, prop_value)
+    assert m.GetProp("test_prop", autoConvert=auto_convert) == prop_value
 
 
-@pytest.mark.parametrize("prop_value, default_val, expected_val",
-                         [("Not Set", "fallback", "fallback"),
-                          ("Not Set", None, None),
-                          ("Not Set", 0, 0),
-                          ("Not Set", 42.0, 42.0),
-                          ("Not Set", True, True),
-                          ("value", "fallback", "value"),
-                          (0, "fallback", 0),
-                          (42.0, "fallback", 42.0),
-                          (True, "fallback", True)])
-def test_get_prop_with_default(prop_value, default_val, expected_val):
-    """
-    This test describes the default_val would work. This test does not use
-    a keyword to check if the default_val would work without using a keyword.
-    """
+def test_get_prop_no_keyword():
     m = Chem.MolFromSmiles("CC")
-    if prop_value != "Not Set":
-        if isinstance(prop_value, bool):
-            m.SetBoolProp(PROP_KEY, prop_value)
-        elif isinstance(prop_value, int):
-            m.SetIntProp(PROP_KEY, prop_value)
-        elif isinstance(prop_value, float):
-            m.SetDoubleProp(PROP_KEY, prop_value)
-        else:
-            m.SetProp(PROP_KEY, prop_value)
-
-    assert m.GetPropIfPresent(PROP_KEY, default_val) == expected_val
-
-
-def test_get_prop_no_default_not_set():
-    """
-    When a default value is not provided and the property is not set, we
-    expect None to be returned instead of raising an error.
-    """
-    m = Chem.MolFromSmiles("CC")
-    assert m.GetPropIfPresent(PROP_KEY) is None
-
-
-if __name__ == "__main__":
-    import sys
-    sys.exit(pytest.main([__file__]))
+    with pytest.raises(KeyError):
+        prop = m.GetProp("test_prop", True)
+    true_prop = m.GetProp("test_prop", True, True)
+    assert true_prop is True
