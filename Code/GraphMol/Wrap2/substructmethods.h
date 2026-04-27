@@ -94,12 +94,12 @@ bool HasSubstructMatch(T1 &mol, T2 &query, bool recursionPossible = true,
                         useQueryQueryMatches);
 }
 template <typename T1, typename T2>
-bool helpHasSubstructMatch(T1 &mol, T2 &query,
-                           const SubstructMatchParameters &params) {
-  SubstructMatchParameters ps = params;
+bool helpHasSubstructMatch(
+    T1 &mol, T2 &query, const std::optional<SubstructMatchParameters> params) {
+  SubstructMatchParameters ps = params.value_or(SubstructMatchParameters());
   ps.maxMatches = 1;
   std::vector<MatchVectType> matches;
-  pySubstructHelper(mol, query, params, matches);
+  pySubstructHelper(mol, query, ps, matches);
   return matches.size() != 0;
 }
 
@@ -118,12 +118,12 @@ std::vector<int> GetSubstructMatch(T1 &mol, T2 &query,
 }
 
 template <typename T1, typename T2>
-std::vector<int> helpGetSubstructMatch(T1 &mol, T2 &query,
-                                       const SubstructMatchParameters &params) {
-  SubstructMatchParameters ps = params;
+std::vector<int> helpGetSubstructMatch(
+    T1 &mol, T2 &query, const std::optional<SubstructMatchParameters> params) {
+  SubstructMatchParameters ps = params.value_or(SubstructMatchParameters());
   ps.maxMatches = 1;
   std::vector<MatchVectType> matches;
-  pySubstructHelper(mol, query, params, matches);
+  pySubstructHelper(mol, query, ps, matches);
   MatchVectType match;
   if (matches.size()) {
     match = matches[0];
@@ -152,9 +152,10 @@ std::vector<std::vector<int>> GetSubstructMatches(
 
 template <typename T1, typename T2>
 std::vector<std::vector<int>> helpGetSubstructMatches(
-    T1 &mol, T2 &query, const SubstructMatchParameters &params) {
+    T1 &mol, T2 &query, const std::optional<SubstructMatchParameters> params) {
+  SubstructMatchParameters ps = params.value_or(SubstructMatchParameters());
   std::vector<MatchVectType> matches;
-  pySubstructHelper(mol, query, params, matches);
+  pySubstructHelper(mol, query, ps, matches);
   std::vector<std::vector<int>> res;
   res.reserve(matches.size());
   std::for_each(matches.begin(), matches.end(), [&res](const auto &match) {

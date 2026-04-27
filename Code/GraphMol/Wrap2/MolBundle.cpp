@@ -221,7 +221,8 @@ struct molbundle_wrap {
         .def(
             "HasSubstructMatch",
             (bool (*)(const MolBundle &m, const ROMol &query,
-                      const SubstructMatchParameters &))helpHasSubstructMatch,
+                      const std::optional<SubstructMatchParameters>))
+                helpHasSubstructMatch,
             "query"_a, "params"_a,
             R"DOC(Queries whether or not any molecule in the bundle contains a particular substructure.
 
@@ -236,7 +237,8 @@ struct molbundle_wrap {
             "GetSubstructMatch",
             (std::vector<int> (*)(
                 const MolBundle &m, const ROMol &query,
-                const SubstructMatchParameters &))helpGetSubstructMatch,
+                const std::optional<SubstructMatchParameters>))
+                helpGetSubstructMatch,
             "query"_a, "params"_a,
             R"DOC(Returns the indices of the atoms from the first molecule in a bundle that matches a substructure query.
 
@@ -257,7 +259,8 @@ struct molbundle_wrap {
             "GetSubstructMatches",
             (std::vector<std::vector<int>> (*)(
                 const MolBundle &m, const ROMol &query,
-                const SubstructMatchParameters &))helpGetSubstructMatches,
+                const std::optional<SubstructMatchParameters>))
+                helpGetSubstructMatches,
             "query"_a, "params"_a,
             R"DOC(Returns tuple of all indices of the atoms from the first molecule in a bundle that matches a substructure query.
 
@@ -275,7 +278,8 @@ struct molbundle_wrap {
         .def(
             "HasSubstructMatch",
             (bool (*)(const MolBundle &m, const MolBundle &query,
-                      const SubstructMatchParameters &))helpHasSubstructMatch,
+                      const std::optional<SubstructMatchParameters>))
+                helpHasSubstructMatch,
             "query"_a, "params"_a,
             R"DOC(Queries whether or not any molecule in the first bundle matches any molecule in the second bundle.
 
@@ -290,7 +294,8 @@ struct molbundle_wrap {
             "GetSubstructMatch",
             (std::vector<int> (*)(
                 const MolBundle &m, const MolBundle &query,
-                const SubstructMatchParameters &))helpGetSubstructMatch,
+                const std::optional<SubstructMatchParameters>))
+                helpGetSubstructMatch,
             "query"_a, "params"_a,
             R"DOC(Returns the indices of the atoms from the first molecule in a bundle that matches a substructure query from a bundle.
 
@@ -312,7 +317,8 @@ struct molbundle_wrap {
             "GetSubstructMatches",
             (std::vector<std::vector<int>> (*)(
                 const MolBundle &m, const MolBundle &query,
-                const SubstructMatchParameters &))helpGetSubstructMatches,
+                const std::optional<SubstructMatchParameters>))
+                helpGetSubstructMatches,
             "query"_a, "params"_a,
             R"DOC(Returns tuple of all indices of the atoms from the first molecule in a bundle that matches a substructure query from the second bundle.
 

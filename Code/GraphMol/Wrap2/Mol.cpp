@@ -690,23 +690,26 @@ struct mol_wrapper {
         .def(
             "HasSubstructMatch",
             (bool (*)(const ROMol &m, const ROMol &query,
-                      const SubstructMatchParameters &))helpHasSubstructMatch,
-            "query"_a, "params"_a = SubstructMatchParameters(),
+                      const std::optional<SubstructMatchParameters>))
+                helpHasSubstructMatch,
+            "query"_a, "params"_a = nb::none(),
             R"DOC(Queries whether or not the molecule contains a particular substructure.
+          
+          ARGUMENTS:
+          - query: a Molecule
+          
+          - params: parameters controlling the substructure match
+          
+          RETURNS: True or False
+          )DOC")
 
-  ARGUMENTS:
-    - query: a Molecule
-
-    - params: parameters controlling the substructure match
-
-  RETURNS: True or False
-)DOC")
         .def(
             "GetSubstructMatch",
             (std::vector<int> (*)(
                 const ROMol &m, const ROMol &query,
-                const SubstructMatchParameters &params))helpGetSubstructMatch,
-            "query"_a, "params"_a = SubstructMatchParameters(),
+                const std::optional<SubstructMatchParameters>))
+                helpGetSubstructMatch,
+            "query"_a, "params"_a = nb::none(),
             R"DOC(Returns the indices of the molecule's atoms that match a substructure query.
 
   ARGUMENTS:
@@ -727,8 +730,9 @@ struct mol_wrapper {
             "GetSubstructMatches",
             (std::vector<std::vector<int>> (*)(
                 const ROMol &m, const ROMol &query,
-                const SubstructMatchParameters &))helpGetSubstructMatches,
-            "query"_a, "params"_a = SubstructMatchParameters(),
+                const std::optional<SubstructMatchParameters>))
+                helpGetSubstructMatches,
+            "query"_a, "params"_a = nb::none(),
             R"DOC(Returns lists of the indices of the molecule's atoms that match a substructure query.
 
   ARGUMENTS:
@@ -743,7 +747,6 @@ struct mol_wrapper {
          in the query. For example, the first index is for the atom in
          this molecule that matches the first atom in the query.
 )DOC")
-
         //    .def("HasSubstructMatch",
         //         (bool (*)(const ROMol &m, const MolBundle &query,
         //                   const SubstructMatchParameters
