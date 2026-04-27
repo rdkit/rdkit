@@ -542,7 +542,7 @@ N#CCc(cncc1)c1[2*]	689988332-107515102	2	urea-3)");
 }
 
 TEST_CASE("Another test") {
-#if 1
+#if 0
   std::string spaceText(
       R"(SMILES	synton_id	synton#	reaction_id
 O=C(NC1(CC2CC2)CCC1)[1*]	016642174-703335348	0	urea-3
@@ -567,6 +567,7 @@ CSc1cc(C(O)=O)nc([2*])n1	821136904-635555130	2	urea-3
   std::string fName(rdbase);
   std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
   std::string dbName = fullRoot + "idorsia_toy_space_shapes.spc";
+  std::cout << "dbName : " << dbName << std::endl;
   SynthonSpaceSearchParams params;
   params.similarityCutoff = 0.6;
   params.numConformers = 100;
@@ -822,4 +823,49 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
         results.getHitMolecules()[0]->getProp<double>("MeanExcludedVolume"),
         Catch::Matchers::WithinAbs(expMeanVols[0], 0.1));
   }
+}
+
+TEST_CASE("Write possible hits") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
+  std::string dbName = fullRoot + "amide_space_shapes.spc";
+  SynthonSpace synthonspace;
+  synthonspace.readDBFile(dbName);
+
+  ShapeBuildParams shapeBuildOptions;
+  shapeBuildOptions.numConfs = 100;
+  shapeBuildOptions.rmsThreshold = 0.5;
+  shapeBuildOptions.numThreads = 1;
+  shapeBuildOptions.shapeSimThreshold = 0.95;
+  shapeBuildOptions.randomSeed = 0xdac;
+
+  SynthonSpaceSearchParams params;
+  params.similarityCutoff = 0.8;
+  params.fragSimilarityAdjuster = 0.2;
+  params.approxSimilarityAdjuster = 0.2;
+  params.numConformers = shapeBuildOptions.numConfs;
+  params.numThreads = shapeBuildOptions.numThreads;
+  params.confRMSThreshold = shapeBuildOptions.rmsThreshold;
+  params.timeOut = 0;
+  params.randomSeed = shapeBuildOptions.randomSeed;
+  params.bestHit = true;
+  params.possibleHitsFile = "amide_space_shapes_poss_hits.txt";
+  params.writePossibleHitsAndStop = false;
+  auto queryMol =
+      "O=C(c1ccccc1)N1CCCC1 |(0.0443291,-1.81486,-1.76886;0.0506321,-0.858174,-0.921491;1.37975,-0.430412,-0.483603;2.18964,-1.35506,0.144714;3.47088,-1.00454,0.585539;3.93803,0.297573,0.388032;3.1267,1.22739,-0.242406;1.85597,0.849751,-0.670531;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401)|"_smiles;
+
+  auto results = synthonspace.shapeSearch(*queryMol, params);
+  CHECK(results.getHitMolecules().size() == 3);
+
+  params.writePossibleHitsAndStop = true;
+  auto noresults = synthonspace.shapeSearch(*queryMol, params);
+  CHECK(noresults.getHitMolecules().empty());
+  unsigned int numLines = 0;
+  std::ifstream ins("amide_space_shapes_poss_hits.txt");
+  std::string nextLine;
+  while (std::getline(ins, nextLine)) {
+    ++numLines;
+  }
+  CHECK(numLines == 4);
 }

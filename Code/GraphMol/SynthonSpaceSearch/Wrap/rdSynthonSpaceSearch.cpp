@@ -499,6 +499,22 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " of clashing atoms (within 2 CARBON_RAD of an excluded volume"
           " atom).  To try and distinguish between a mild clash"
           " over the whole hit and a few atoms having a really bad clash.")
+      .def_readwrite(
+          "possibleHitsFile",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::possibleHitsFile,
+          "Name of a file to save the possible hits to."
+          " These are the combinations of synthons that"
+          " might match the query but need building and"
+          " final checking.  Each line has a"
+          " space-separated list of the synthons and the"
+          " hit's name.  The file will be emptied and"
+          " re-filled if it already exists.")
+      .def_readwrite(
+          "writePossibleHitsAndStop",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::
+              writePossibleHitsAndStop,
+          "If True, creates the possibleHitsFile and stops without doing"
+          " the final building and checking.  Default is False.")
       .def(
           "setUserConformerGenerator", helpers::setUserConfGen_helper2,
           python::with_custodian_and_ward<1, 2>(), python::args("self", "func"),

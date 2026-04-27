@@ -194,6 +194,15 @@ SearchResults SynthonSpace::rascalSearch(
   return ssrs.search(ThreadMode::ThreadFragments);
 }
 
+void SynthonSpace::rascalSearch(const ROMol &query,
+                                const RascalMCES::RascalOptions &rascalOptions,
+                                const SearchResultCallback &cb,
+                                const SynthonSpaceSearchParams &params) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  SynthonSpaceRascalSearcher ssss(query, rascalOptions, params, *this);
+  ssss.search(cb, ThreadMode::ThreadFragments);
+}
+
 namespace {
 std::unique_ptr<ROMol> addZeroOrderBondsBetweenFrags(
     const ROMol &query, const std::vector<std::vector<int>> &frags) {
@@ -224,15 +233,6 @@ std::unique_ptr<ROMol> addZeroOrderBondsBetweenFrags(
   return retMol;
 }
 }  // namespace
-
-void SynthonSpace::rascalSearch(const ROMol &query,
-                                const RascalMCES::RascalOptions &rascalOptions,
-                                const SearchResultCallback &cb,
-                                const SynthonSpaceSearchParams &params) {
-  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
-  SynthonSpaceRascalSearcher ssss(query, rascalOptions, params, *this);
-  ssss.search(cb, ThreadMode::ThreadFragments);
-}
 
 SearchResults SynthonSpace::shapeSearch(
     const ROMol &query, const SynthonSpaceSearchParams &params) {

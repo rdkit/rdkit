@@ -506,6 +506,12 @@ void SynthonSpaceSearcher::buildAllHits(
     return;
   }
 
+  if (!getParams().possibleHitsFile.empty()) {
+    // The file will be appended to, so clear it out at the start.
+    std::ofstream ofs(getParams().possibleHitsFile);
+    ofs.close();
+  }
+
   // Each hitset contains possible hits from a single SynthonSet.
   for (const auto &hitset : hitsets) {
     // Set up the stepper to move through the synthons.
@@ -610,6 +616,24 @@ void processPartHitsFromDetails(
     }
   }
 }
+
+void writePossibleHits(
+    const std::string &possHitsFile,
+    const std::vector<
+        std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> &toTry) {
+  std::ofstream outs(possHitsFile.c_str(), std::ios::app);
+  std::vector<const std::string *> synthNames;
+  for (const auto &[hitset, synthNums] : toTry) {
+    synthNames.resize(synthNums.size());
+    for (size_t i = 0; i < synthNums.size(); i++) {
+      outs << hitset->synthonsToUse[i][synthNums[i]].second->getSmiles() << " ";
+      synthNames[i] = &hitset->synthonsToUse[i][synthNums[i]].first;
+    }
+    outs << details::buildProductName(hitset->d_reaction->getId(), synthNames)
+         << std::endl;
+  }
+}
+
 }  // namespace
 
 void SynthonSpaceSearcher::makeHitsFromToTry(
@@ -625,33 +649,39 @@ void SynthonSpaceSearcher::makeHitsFromToTry(
               << " potential hits." << std::endl;
     pbar.reset(new ProgressBar(getParams().useProgressBar, toTry.size()));
   }
-  // This assumes that each chunk of the toTry list will take roughly the
-  // same amount of time to process.  To a first approximation, that's
-  // probably reasonable.  Some entries in toTry will fail quickVerify
-  // so the more time-consuming construction of the hit and final
-  // check in verifyHit won't be needed, so the chunks won't take exactly
-  // equal time. It can always be re-visited if the threads run for very
-  // different lengths of time in an average search.
-  if (const auto numThreads = getNumThreadsToUse(d_params.numThreads);
-      numThreads > 1) {
-    const size_t eachThread = 1 + toTry.size() / numThreads;
-    size_t start = 0;
-    std::vector<std::thread> threads;
-    for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
-      threads.push_back(std::thread(processPartHitsFromDetails, std::ref(toTry),
-                                    endTime, std::ref(results), this,
-                                    std::ref(mostRecentTry), lastTry,
-                                    std::ref(pbar)));
-    }
-    for (auto &t : threads) {
-      t.join();
-    }
-  } else {
-    processPartHitsFromDetails(toTry, endTime, results, this, mostRecentTry,
-                               lastTry, pbar);
+  if (!getParams().possibleHitsFile.empty()) {
+    writePossibleHits(getParams().possibleHitsFile, toTry);
   }
-  if (pbar) {
-    std::cout << std::endl;
+
+  if (!getParams().writePossibleHitsAndStop) {
+    // This assumes that each chunk of the toTry list will take roughly the
+    // same amount of time to process.  To a first approximation, that's
+    // probably reasonable.  Some entries in toTry will fail quickVerify
+    // so the more time-consuming construction of the hit and final
+    // check in verifyHit won't be needed, so the chunks won't take exactly
+    // equal time. It can always be re-visited if the threads run for very
+    // different lengths of time in an average search.
+    if (const auto numThreads = getNumThreadsToUse(d_params.numThreads);
+        numThreads > 1) {
+      const size_t eachThread = 1 + toTry.size() / numThreads;
+      size_t start = 0;
+      std::vector<std::thread> threads;
+      for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
+        threads.push_back(
+            std::thread(processPartHitsFromDetails, std::ref(toTry), endTime,
+                        std::ref(results), this, std::ref(mostRecentTry),
+                        lastTry, std::ref(pbar)));
+      }
+      for (auto &t : threads) {
+        t.join();
+      }
+    } else {
+      processPartHitsFromDetails(toTry, endTime, results, this, mostRecentTry,
+                                 lastTry, pbar);
+    }
+    if (pbar) {
+      std::cout << std::endl;
+    }
   }
 
   // Take out any gaps in the results set, where products didn't make the grade.

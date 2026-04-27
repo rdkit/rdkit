@@ -16,6 +16,7 @@
 #define SYNTHONSPACESEARCHER_H
 
 #include <chrono>
+#include <functional>
 #include <random>
 
 #include <RDGeneral/export.h>

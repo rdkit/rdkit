@@ -1250,11 +1250,6 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
     if (!sampleMols[molNum]->d_mol) {
       continue;
     }
-    std::cout << "\nBuilding sample mol "
-              << sampleMols[molNum]->d_mol->getProp<std::string>(
-                     common_properties::_Name)
-              << " of " << sampleMols[molNum]->d_synthonSet->getId()
-              << std::endl;
     sampleMols[molNum]->d_mol = trimSampleMol(
         *sampleMols[molNum]->d_mol, sampleMols[molNum]->d_synthonSetNum);
     constexpr unsigned int maxStereoCentresToDo =

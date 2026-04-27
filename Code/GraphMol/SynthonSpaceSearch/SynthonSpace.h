@@ -212,19 +212,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
-  /*! Perform a shape similarity search with the given query molecule
-   * across the synthonspace library.  Duplicate SMILES strings produced by
-   * different reactions will be returned.  Require a molecule with at least
-   * 1 3D conformer.  Only the first conformer will be used in the search.
-   *
-   * @param query : query molecule
-   * @param params : (optional) settings for the search
-   * @return : the hits as a SearchResults object.
-   */
-  SearchResults shapeSearch(
-      const ROMol &query,
-      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
-
   // Perform a RASCAL similarity search with the given query molecule
   /* across the synthonspace library.  Duplicate SMILES strings produced by
    * different reactions will be returned.  Search results are returned
@@ -246,6 +233,43 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
       const SearchResultCallback &callback,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
+  /*! Perform a shape similarity search with the given query molecule
+   * across the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.  Require a molecule with at least
+   * 1 3D conformer.  Only the first conformer will be used in the search.
+   *
+   * @param query : query molecule
+   * @param params : (optional) settings for the search
+   * @return : the hits as a SearchResults object.
+   */
+  SearchResults shapeSearch(
+      const ROMol &query,
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
+#if 0
+  /*! Take the contents of params.possibleHitsFile, which is assumed to have
+   * been written by an earlier search, and extract those that are indeed
+   * hits.  It makes sense that params is the same as the one used to
+   * generate the possible hits, but this is not essential.  You could search
+   * at a higher similarity threshold than used to create the possible hits,
+   * for example.
+   * Duplicate SMILES strings produced by different reactions will
+   * be returned.  Requires a molecule with at least 1 3D conformer.  Only
+   * the first conformer will be used in the search.
+   *
+   * @param query : query molecule
+   * @param params : settings for the search
+   * @param startLine: (optional) the first line of the file to be considered
+   * @param finishLine: (optional) the last line of the file to be considered.
+   *                    -1 means go to the end.
+   * @return : the hits as a SearchResults object.
+   */
+  SearchResults shapeSearch(const ROMol &query,
+                            const SynthonSpaceSearchParams &params,
+                            int startLine = 0, int finishLine = -1);
+#endif
+  
   /*!
    *
    * @param inFilename: name of the file containing the synthon-based library.

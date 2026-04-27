@@ -148,6 +148,17 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                        // and distinguish between a mild clash
                                        // over the whole hit and a few atoms
                                        // having a really bad clash.
+  std::string possibleHitsFile;  // Name of a file to save the possible hits to.
+                                 // These are the combinations of synthons that
+                                 // might match the query but need building and
+                                 // final checking.  Each line has a
+                                 // space-separated list of the synthons and the
+                                 // hit's name.  The file will be emptied and
+                                 // re-filled if it already exists.
+  bool writePossibleHitsAndStop{
+      false};  // If true, creates the possibleHitsFile
+               // and stops without doing the final
+               // building and checking.
 };
 
 // Options to be passed to buildSynthonShapes.
