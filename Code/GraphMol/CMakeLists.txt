@@ -190,6 +190,9 @@ rdkit_catch_test(canonTestsCatch catch_canon.cpp
 rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp
         LINK_LIBRARIES SubstructMatch SmilesParse GraphMol)
 
+rdkit_catch_test(molrangesTestsCatch catch_molranges.cpp
+        LINK_LIBRARIES GraphMol)
+
 rdkit_catch_test(queryTestsCatch catch_queries.cpp
         LINK_LIBRARIES SmilesParse GraphMol)
 

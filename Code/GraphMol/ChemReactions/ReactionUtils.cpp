@@ -340,10 +340,9 @@ void removeMappingNumbersFromReactionMoleculeTemplate(
     const MOL_SPTR_VECT &molVec) {
   for (const auto &begin : molVec) {
     ROMol &mol = *begin.get();
-    for (ROMol::AtomIterator atomIt = mol.beginAtoms();
-         atomIt != mol.endAtoms(); ++atomIt) {
-      if ((*atomIt)->hasProp(common_properties::molAtomMapNumber)) {
-        (*atomIt)->clearProp(common_properties::molAtomMapNumber);
+    for (auto atom : mol.atoms()) {
+      if (atom->hasProp(common_properties::molAtomMapNumber)) {
+        atom->clearProp(common_properties::molAtomMapNumber);
       }
     }
   }
