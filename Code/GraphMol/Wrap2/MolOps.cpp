@@ -1019,23 +1019,24 @@ void setAtomSymbols(MolzipParams &p, nb::object symbols) {
   }
 }
 
-ROMol *molzip_new(const ROMol &a, const ROMol &b, const MolzipParams &p) {
-  return molzip(a, b, p).release();
+ROMol *molzip_new(const ROMol &a, const ROMol &b,
+                  const std::optional<MolzipParams> p) {
+  return molzip(a, b, p.value_or(MolzipParams())).release();
 }
 
-ROMol *molzip_new(const ROMol &a, const MolzipParams &p) {
-  return molzip(a, p).release();
+ROMol *molzip_new(const ROMol &a, const std::optional<MolzipParams> p) {
+  return molzip(a, p.value_or(MolzipParams())).release();
 }
 
-ROMol *molzipHelper(nb::object &pmols, const MolzipParams &p) {
+ROMol *molzipHelper(nb::object &pmols, const std::optional<MolzipParams> p) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
   if (mols == nullptr || mols->empty()) {
     return nullptr;
   }
-  return molzip(*mols, p).release();
+  return molzip(*mols, p.value_or(MolzipParams())).release();
 }
 
-ROMol *rgroupRowZipHelper(nb::dict row, const MolzipParams &p) {
+ROMol *rgroupRowZipHelper(nb::dict row, const std::optional<MolzipParams> p) {
   std::map<std::string, ROMOL_SPTR> rgroup_row;
   nb::list items = row.items();
   for (size_t i = 0; i < (size_t)nb::len(items); ++i) {
@@ -1051,7 +1052,7 @@ ROMol *rgroupRowZipHelper(nb::dict row, const MolzipParams &p) {
     }
   }
 
-  return molzip(rgroup_row, p).release();
+  return molzip(rgroup_row, p.value_or(MolzipParams())).release();
 }
 
 nb::tuple hasQueryHsHelper(const ROMol &m) {
@@ -1138,7 +1139,7 @@ nb::object findMesoHelper(const ROMol &mol, bool includeIsotopes,
 
 ROMol *copyMolSubsetHelper1(const ROMol &mol, nb::object pyAtomIndices,
                             nb::object pyBondIndices,
-                            const SubsetOptions &options = SubsetOptions()) {
+                            const std::optional<SubsetOptions> options) {
   auto atomIndices = pythonObjectToVect<unsigned int>(pyAtomIndices);
   auto bondIndices = pythonObjectToVect<unsigned int>(pyBondIndices);
   if (!atomIndices.get()) {
@@ -1148,12 +1149,14 @@ ROMol *copyMolSubsetHelper1(const ROMol &mol, nb::object pyAtomIndices,
     bondIndices = std::make_unique<std::vector<unsigned int>>();
   }
 
-  return copyMolSubset(mol, *atomIndices, *bondIndices, options).release();
+  return copyMolSubset(mol, *atomIndices, *bondIndices,
+                       options.value_or(SubsetOptions()))
+      .release();
 }
 
 ROMol *copyMolSubsetHelper2(const ROMol &mol, nb::object pyAtomIndices,
                             nb::object pyBondIndices, SubsetInfo &info,
-                            const SubsetOptions &options = SubsetOptions()) {
+                            const std::optional<SubsetOptions> options) {
   auto atomIndices = pythonObjectToVect<unsigned int>(pyAtomIndices);
   auto bondIndices = pythonObjectToVect<unsigned int>(pyBondIndices);
   if (!atomIndices.get()) {
@@ -1163,27 +1166,31 @@ ROMol *copyMolSubsetHelper2(const ROMol &mol, nb::object pyAtomIndices,
     bondIndices = std::make_unique<std::vector<unsigned int>>();
   }
 
-  return copyMolSubset(mol, *atomIndices, *bondIndices, info, options)
+  return copyMolSubset(mol, *atomIndices, *bondIndices, info,
+                       options.value_or(SubsetOptions()))
       .release();
 }
 
 ROMol *copyMolSubsetHelper3(const ROMol &mol, nb::object path,
-                            const SubsetOptions &options = SubsetOptions()) {
+                            const std::optional<SubsetOptions> options) {
   auto pathvect = pythonObjectToVect<unsigned int>(path);
   if (!pathvect.get()) {
     pathvect = std::make_unique<std::vector<unsigned int>>();
   }
-  return copyMolSubset(mol, *pathvect, options).release();
+  return copyMolSubset(mol, *pathvect, options.value_or(SubsetOptions()))
+      .release();
 }
 
 ROMol *copyMolSubsetHelper4(const ROMol &mol, nb::object path,
                             SubsetInfo &selectionInfo,
-                            const SubsetOptions &options = SubsetOptions()) {
+                            const std::optional<SubsetOptions> options) {
   auto pathvect = pythonObjectToVect<unsigned int>(path);
   if (!pathvect.get()) {
     pathvect = std::make_unique<std::vector<unsigned int>>();
   }
-  return copyMolSubset(mol, *pathvect, selectionInfo, options).release();
+  return copyMolSubset(mol, *pathvect, selectionInfo,
+                       options.value_or(SubsetOptions()))
+      .release();
 }
 
 struct molops_wrapper {
@@ -1594,9 +1601,15 @@ MergeQueryHs";
           nb::rv_policy::take_ownership);
     docString =
         R"DOC(Combine the atoms from two molecules to produce a third)DOC";
-    m.def("CombineMols", combineMols, "mol1"_a, "mol2"_a,
-          "offset"_a = RDGeom::Point3D(0, 0, 0), docString.c_str(),
-          nb::rv_policy::take_ownership);
+    m.def(
+        "CombineMols",
+        [](const ROMol &mol1, const ROMol &mol2,
+           const std::optional<RDGeom::Point3D> offset) {
+          return combineMols(mol1, mol2,
+                             offset.value_or(RDGeom::Point3D(0, 0, 0)));
+        },
+        "mol1"_a, "mol2"_a, "offset"_a = nb::none(), docString.c_str(),
+        nb::rv_policy::take_ownership);
 
     // ------------------------------------------------------------------------
     docString =
@@ -2443,9 +2456,9 @@ RETURNS:
           "maxPath"_a = 7, "fpSize"_a = 2048, "nBitsPerHash"_a = 2,
           "useHs"_a = true, "tgtDensity"_a = 0.0, "minSize"_a = 128,
           "branchedPaths"_a = true, "useBondOrder"_a = true,
-          "atomInvariants"_a = 0, "fromAtoms"_a = 0, "atomBits"_a = nb::none(),
-          "bitInfo"_a = nb::none(), docString.c_str(),
-          nb::rv_policy::take_ownership);
+          "atomInvariants"_a = nb::none(), "fromAtoms"_a = nb::none(),
+          "atomBits"_a = nb::none(), "bitInfo"_a = nb::none(),
+          docString.c_str(), nb::rv_policy::take_ownership);
     m.attr("_RDKFingerprint_version") = RDKit::RDKFingerprintMolVersion;
 
     docString =
@@ -2974,24 +2987,27 @@ The atoms to zip can be specified with the MolzipParams class.\n\
     >>> c = molzip(a,b, p)\n\
     >>> MolToSmiles(c)\n\
     'C=C/N=C/O'\n\
-";
+    ";
+
     m.def("molzip",
-          (ROMol * (*)(const ROMol &, const ROMol &, const MolzipParams &)) &
+          (ROMol * (*)(const ROMol &, const ROMol &,
+                       const std::optional<MolzipParams>)) &
               molzip_new,
-          "a"_a, "b"_a, "params"_a = MolzipParams(),
+          "a"_a, "b"_a, "params"_a = nb::none(),
           "zip together two molecules using the given matching parameters",
           nb::rv_policy::take_ownership);
-
     m.def(
         "molzip",
-        (ROMol * (*)(const ROMol &, const MolzipParams &)) & molzip_new, "a"_a,
-        "params"_a = MolzipParams(),
+        (ROMol * (*)(const ROMol &, const std::optional<MolzipParams>)) &
+            molzip_new,
+        "a"_a, "params"_a = nb::none(),
         "zip together multiple molecules within a combined molecule using the given matching parameters",
         nb::rv_policy::take_ownership);
 
     m.def("molzipFragments",
-          (ROMol * (*)(nb::object &, const MolzipParams &)) & molzipHelper,
-          "mols"_a, "params"_a = MolzipParams(),
+          (ROMol * (*)(nb::object &, const std::optional<MolzipParams>)) &
+              molzipHelper,
+          "mols"_a, "params"_a = nb::none(),
           "zip together multiple molecules from an R group decomposition \n\
 using the given matching parameters.  The first molecule in the list\n\
 must be the core",
@@ -3010,10 +3026,10 @@ must be the core",
         "  ...     mol = rgd.molzip(rgroup)\n"
         "\n";
     m.def("molzip",
-          (ROMol * (*)(nb::dict, const MolzipParams &)) & rgroupRowZipHelper,
-          "row"_a, "params"_a = MolzipParams(), docString.c_str(),
+          (ROMol * (*)(nb::dict, const std::optional<MolzipParams>)) &
+              rgroupRowZipHelper,
+          "row"_a, "params"_a = nb::none(), docString.c_str(),
           nb::rv_policy::take_ownership);
-
     // ------------------------------------------------------------------------
     docString =
         "Adds a recursive query to an atom\n\
@@ -3336,10 +3352,10 @@ ARGUMENTS:\n\
 \n";
 
     m.def("CopyMolSubset", copyMolSubsetHelper1, "mol"_a, "atomIndices"_a,
-          "bondIndices"_a, "options"_a = SubsetOptions(), docString.c_str(),
+          "bondIndices"_a, "options"_a = nb::none(), docString.c_str(),
           nb::rv_policy::take_ownership);
     m.def("CopyMolSubset", copyMolSubsetHelper2, "mol"_a, "atomIndices"_a,
-          "bondIndices"_a, "subsetInfo"_a, "options"_a = SubsetOptions(),
+          "bondIndices"_a, "subsetInfo"_a, "options"_a = nb::none(),
           docString.c_str(), nb::rv_policy::take_ownership);
 
     docString =
@@ -3358,10 +3374,10 @@ ARGUMENTS:\n\
 \n";
 
     m.def("CopyMolSubset", copyMolSubsetHelper3, "mol"_a, "path"_a,
-          "options"_a = SubsetOptions(), "copy a subset of a molecule",
+          "options"_a = nb::none(), "copy a subset of a molecule",
           nb::rv_policy::take_ownership);
     m.def("CopyMolSubset", copyMolSubsetHelper4, "mol"_a, "path"_a,
-          "subsetInfo"_a, "options"_a = SubsetOptions(),
+          "subsetInfo"_a, "options"_a = nb::none(),
           "copy a subset of a molecule", nb::rv_policy::take_ownership);
 #endif
   }
