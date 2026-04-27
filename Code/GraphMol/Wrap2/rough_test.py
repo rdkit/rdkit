@@ -795,186 +795,181 @@ class TestCase(unittest.TestCase):
     self.assertTrue(
       len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 18, len(Chem.FindAllSubgraphsOfLengthN(m, 3)))
 
+  def test20IsInRing(self):
+    m = Chem.MolFromSmiles('C1CCC1C')
+    self.assertTrue(m)
+    self.assertTrue(m.GetAtomWithIdx(0).IsInRingSize(4))
+    self.assertTrue(m.GetAtomWithIdx(1).IsInRingSize(4))
+    self.assertTrue(m.GetAtomWithIdx(2).IsInRingSize(4))
+    self.assertTrue(m.GetAtomWithIdx(3).IsInRingSize(4))
+    self.assertTrue(not m.GetAtomWithIdx(4).IsInRingSize(4))
 
-#   def test20IsInRing(self):
-#     m = Chem.MolFromSmiles('C1CCC1C')
-#     self.assertTrue(m)
-#     self.assertTrue(m.GetAtomWithIdx(0).IsInRingSize(4))
-#     self.assertTrue(m.GetAtomWithIdx(1).IsInRingSize(4))
-#     self.assertTrue(m.GetAtomWithIdx(2).IsInRingSize(4))
-#     self.assertTrue(m.GetAtomWithIdx(3).IsInRingSize(4))
-#     self.assertTrue(not m.GetAtomWithIdx(4).IsInRingSize(4))
+    self.assertTrue(not m.GetAtomWithIdx(0).IsInRingSize(3))
+    self.assertTrue(not m.GetAtomWithIdx(1).IsInRingSize(3))
+    self.assertTrue(not m.GetAtomWithIdx(2).IsInRingSize(3))
+    self.assertTrue(not m.GetAtomWithIdx(3).IsInRingSize(3))
+    self.assertTrue(not m.GetAtomWithIdx(4).IsInRingSize(3))
 
-#     self.assertTrue(not m.GetAtomWithIdx(0).IsInRingSize(3))
-#     self.assertTrue(not m.GetAtomWithIdx(1).IsInRingSize(3))
-#     self.assertTrue(not m.GetAtomWithIdx(2).IsInRingSize(3))
-#     self.assertTrue(not m.GetAtomWithIdx(3).IsInRingSize(3))
-#     self.assertTrue(not m.GetAtomWithIdx(4).IsInRingSize(3))
+    self.assertTrue(m.GetBondWithIdx(0).IsInRingSize(4))
+    self.assertTrue(not m.GetBondWithIdx(3).IsInRingSize(4))
+    self.assertTrue(not m.GetBondWithIdx(0).IsInRingSize(3))
+    self.assertTrue(not m.GetBondWithIdx(3).IsInRingSize(3))
 
-#     self.assertTrue(m.GetBondWithIdx(0).IsInRingSize(4))
-#     self.assertTrue(not m.GetBondWithIdx(3).IsInRingSize(4))
-#     self.assertTrue(not m.GetBondWithIdx(0).IsInRingSize(3))
-#     self.assertTrue(not m.GetBondWithIdx(3).IsInRingSize(3))
+  def test21Robustification(self):
+    ok = False
+    try:
+      Chem.MolFromSmiles('C=O').HasSubstructMatch(Chem.MolFromSmarts('fiib'))
+    except TypeError:
+      ok = True
+    self.assertTrue(ok)
 
-#   def test21Robustification(self):
-#     ok = False
-#     # FIX: at the moment I can't figure out how to catch the
-#     # actual exception that BPL is throwing when it gets
-#     # invalid arguments (Boost.Python.ArgumentError)
-#     try:
-#       Chem.MolFromSmiles('C=O').HasSubstructMatch(Chem.MolFromSmarts('fiib'))
-#     #except ValueError:
-#     #  ok=True
-#     except Exception:
-#       ok = True
-#     self.assertTrue(ok)
+  def test22DeleteSubstruct(self):
+    query = Chem.MolFromSmarts('C(=O)O')
+    mol = Chem.MolFromSmiles('CCC(=O)O')
+    nmol = Chem.DeleteSubstructs(mol, query)
 
-#   def test22DeleteSubstruct(self):
-#     query = Chem.MolFromSmarts('C(=O)O')
-#     mol = Chem.MolFromSmiles('CCC(=O)O')
-#     nmol = Chem.DeleteSubstructs(mol, query)
+    self.assertTrue(Chem.MolToSmiles(nmol) == 'CC')
 
-#     self.assertTrue(Chem.MolToSmiles(nmol) == 'CC')
+    mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
+    # now delete only fragments
+    nmol = Chem.DeleteSubstructs(mol, query, True)
+    self.assertTrue(Chem.MolToSmiles(nmol) == 'CCC(=O)O', Chem.MolToSmiles(nmol))
 
-#     mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
-#     # now delete only fragments
-#     nmol = Chem.DeleteSubstructs(mol, query, 1)
-#     self.assertTrue(Chem.MolToSmiles(nmol) == 'CCC(=O)O', Chem.MolToSmiles(nmol))
+    mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
+    nmol = Chem.DeleteSubstructs(mol, query, False)
+    self.assertTrue(Chem.MolToSmiles(nmol) == 'CC')
 
-#     mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
-#     nmol = Chem.DeleteSubstructs(mol, query, 0)
-#     self.assertTrue(Chem.MolToSmiles(nmol) == 'CC')
+    mol = Chem.MolFromSmiles('CCCO')
+    nmol = Chem.DeleteSubstructs(mol, query, False)
+    self.assertTrue(Chem.MolToSmiles(nmol) == 'CCCO')
 
-#     mol = Chem.MolFromSmiles('CCCO')
-#     nmol = Chem.DeleteSubstructs(mol, query, 0)
-#     self.assertTrue(Chem.MolToSmiles(nmol) == 'CCCO')
+    # Issue 96 prevented this from working:
+    mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
+    nmol = Chem.DeleteSubstructs(mol, query, True)
+    self.assertTrue(Chem.MolToSmiles(nmol) == 'CCC(=O)O')
+    nmol = Chem.DeleteSubstructs(nmol, query, True)
+    self.assertTrue(Chem.MolToSmiles(nmol) == 'CCC(=O)O')
+    nmol = Chem.DeleteSubstructs(nmol, query, False)
+    self.assertTrue(Chem.MolToSmiles(nmol) == 'CC')
 
-#     # Issue 96 prevented this from working:
-#     mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
-#     nmol = Chem.DeleteSubstructs(mol, query, 1)
-#     self.assertTrue(Chem.MolToSmiles(nmol) == 'CCC(=O)O')
-#     nmol = Chem.DeleteSubstructs(nmol, query, 1)
-#     self.assertTrue(Chem.MolToSmiles(nmol) == 'CCC(=O)O')
-#     nmol = Chem.DeleteSubstructs(nmol, query, 0)
-#     self.assertTrue(Chem.MolToSmiles(nmol) == 'CC')
+  def test23MolFileParsing(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'triazine.mol')
+    with open(fileN, 'r') as inF:
+      inD = inF.read()
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 9)
 
-#   def test23MolFileParsing(self):
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'triazine.mol')
-#     with open(fileN, 'r') as inF:
-#       inD = inF.read()
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 9)
+    m1 = Chem.MolFromMolFile(fileN)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 9)
 
-#     m1 = Chem.MolFromMolFile(fileN)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 9)
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'triazine.mof')
+    self.assertRaises(IOError, lambda: Chem.MolFromMolFile(fileN))
 
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'triazine.mof')
-#     self.assertRaises(IOError, lambda: Chem.MolFromMolFile(fileN))
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'list-query.mol')
+    query = Chem.MolFromMolFile(fileN)
+    smi = Chem.MolToSmiles(query)
+    self.assertEqual(smi, '*1ccccc1')
+    smi = Chem.MolToSmarts(query)
+    self.assertEqual(smi, '[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1')
+    smi = Chem.MolToSmarts(query, rootedAtAtom=5)
+    self.assertEqual(smi, '[#6,#7,#15]1:[#6]:[#6]:[#6]:[#6]:[#6]:1')
 
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'list-query.mol')
-#     query = Chem.MolFromMolFile(fileN)
-#     smi = Chem.MolToSmiles(query)
-#     self.assertEqual(smi, '*1ccccc1')
-#     smi = Chem.MolToSmarts(query)
-#     self.assertEqual(smi, '[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1')
-#     smi = Chem.MolToSmarts(query, rootedAtAtom=5)
-#     self.assertEqual(smi, '[#6,#7,#15]1:[#6]:[#6]:[#6]:[#6]:[#6]:1')
+    query = Chem.MolFromMolFile(fileN, sanitize=False)
+    smi = Chem.MolToSmiles(query)
+    self.assertEqual(smi, '*1=CC=CC=C1')
+    query.UpdatePropertyCache()
+    smi = Chem.MolToSmarts(query)
+    self.assertEqual(smi, '[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1')
+    smi = Chem.MolToSmarts(query, rootedAtAtom=3)
+    self.assertEqual(smi, '[#6]1=[#6]-[#6]=[#6]-[#6,#7,#15]=[#6]-1')
+    smi = "C1=CC=CC=C1"
+    mol = Chem.MolFromSmiles(smi, sanitize=False)
+    self.assertTrue(mol.HasSubstructMatch(query))
+    Chem.SanitizeMol(mol)
+    self.assertTrue(not mol.HasSubstructMatch(query))
 
-#     query = Chem.MolFromMolFile(fileN, sanitize=False)
-#     smi = Chem.MolToSmiles(query)
-#     self.assertEqual(smi, '*1=CC=CC=C1')
-#     query.UpdatePropertyCache()
-#     smi = Chem.MolToSmarts(query)
-#     self.assertEqual(smi, '[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1')
-#     smi = Chem.MolToSmarts(query, rootedAtAtom=3)
-#     self.assertEqual(smi, '[#6]1=[#6]-[#6]=[#6]-[#6,#7,#15]=[#6]-1')
-#     smi = "C1=CC=CC=C1"
-#     mol = Chem.MolFromSmiles(smi, 0)
-#     self.assertTrue(mol.HasSubstructMatch(query))
-#     Chem.SanitizeMol(mol)
-#     self.assertTrue(not mol.HasSubstructMatch(query))
+    mol = Chem.MolFromSmiles('N1=CC=CC=C1', sanitize=False)
+    self.assertTrue(mol.HasSubstructMatch(query))
+    mol = Chem.MolFromSmiles('S1=CC=CC=C1', sanitize=False)
+    self.assertTrue(not mol.HasSubstructMatch(query))
+    mol = Chem.MolFromSmiles('P1=CC=CC=C1', sanitize=False)
+    self.assertTrue(mol.HasSubstructMatch(query))
 
-#     mol = Chem.MolFromSmiles('N1=CC=CC=C1', 0)
-#     self.assertTrue(mol.HasSubstructMatch(query))
-#     mol = Chem.MolFromSmiles('S1=CC=CC=C1', 0)
-#     self.assertTrue(not mol.HasSubstructMatch(query))
-#     mol = Chem.MolFromSmiles('P1=CC=CC=C1', 0)
-#     self.assertTrue(mol.HasSubstructMatch(query))
-
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'issue123.mol')
-#     mol = Chem.MolFromMolFile(fileN)
-#     self.assertTrue(mol)
-#     self.assertEqual(mol.GetNumAtoms(), 23)
-#     mol = Chem.MolFromMolFile(fileN, removeHs=False)
-#     self.assertTrue(mol)
-#     self.assertEqual(mol.GetNumAtoms(), 39)
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'issue123.mol')
+    mol = Chem.MolFromMolFile(fileN)
+    self.assertTrue(mol)
+    self.assertEqual(mol.GetNumAtoms(), 23)
+    mol = Chem.MolFromMolFile(fileN, removeHs=False)
+    self.assertTrue(mol)
+    self.assertEqual(mol.GetNumAtoms(), 39)
 
 #   # test23 was for Chem.DaylightFingerprint, which is deprecated
 
-#   def test24RDKFingerprint(self):
-#     from rdkit import DataStructs
-#     m1 = Chem.MolFromSmiles('C1=CC=CC=C1')
-#     fp1 = Chem.RDKFingerprint(m1)
-#     self.assertTrue(len(fp1) == 2048)
-#     m2 = Chem.MolFromSmiles('C1=CC=CC=C1')
-#     fp2 = Chem.RDKFingerprint(m2)
+  def test24RDKFingerprint(self):
+    from rdkit import DataStructs
+    m1 = Chem.MolFromSmiles('C1=CC=CC=C1')
+    fp1 = Chem.RDKFingerprint(m1)
+    self.assertTrue(len(fp1) == 2048)
+    m2 = Chem.MolFromSmiles('C1=CC=CC=C1')
+    fp2 = Chem.RDKFingerprint(m2)
 
-#     tmp = DataStructs.TanimotoSimilarity(fp1, fp2)
-#     self.assertTrue(tmp == 1.0, tmp)
+    tmp = DataStructs.TanimotoSimilarity(fp1, fp2)
+    self.assertTrue(tmp == 1.0, tmp)
 
-#     m2 = Chem.MolFromSmiles('C1=CC=CC=N1')
-#     fp2 = Chem.RDKFingerprint(m2)
-#     self.assertTrue(len(fp2) == 2048)
-#     tmp = DataStructs.TanimotoSimilarity(fp1, fp2)
-#     self.assertTrue(tmp < 1.0, tmp)
-#     self.assertTrue(tmp > 0.0, tmp)
+    m2 = Chem.MolFromSmiles('C1=CC=CC=N1')
+    fp2 = Chem.RDKFingerprint(m2)
+    self.assertTrue(len(fp2) == 2048)
+    tmp = DataStructs.TanimotoSimilarity(fp1, fp2)
+    self.assertTrue(tmp < 1.0, tmp)
+    self.assertTrue(tmp > 0.0, tmp)
 
-#     fp3 = Chem.RDKFingerprint(m1, tgtDensity=0.3)
-#     self.assertTrue(len(fp3) < 2048)
+    fp3 = Chem.RDKFingerprint(m1, tgtDensity=0.3)
+    self.assertTrue(len(fp3) < 2048)
 
-#     m1 = Chem.MolFromSmiles('C1=CC=CC=C1')
-#     fp1 = Chem.RDKFingerprint(m1)
-#     m2 = Chem.MolFromSmiles('C1=CC=CC=N1')
-#     fp2 = Chem.RDKFingerprint(m2)
-#     self.assertNotEqual(fp1, fp2)
+    m1 = Chem.MolFromSmiles('C1=CC=CC=C1')
+    fp1 = Chem.RDKFingerprint(m1)
+    m2 = Chem.MolFromSmiles('C1=CC=CC=N1')
+    fp2 = Chem.RDKFingerprint(m2)
+    self.assertNotEqual(fp1, fp2)
 
-#     atomInvariants = [1] * 6
-#     fp1 = Chem.RDKFingerprint(m1, atomInvariants=atomInvariants)
-#     fp2 = Chem.RDKFingerprint(m2, atomInvariants=atomInvariants)
-#     self.assertEqual(fp1, fp2)
+    atomInvariants = [1] * 6
+    fp1 = Chem.RDKFingerprint(m1, atomInvariants=atomInvariants)
+    fp2 = Chem.RDKFingerprint(m2, atomInvariants=atomInvariants)
+    self.assertEqual(fp1, fp2)
 
-#     m2 = Chem.MolFromSmiles('C1CCCCN1')
-#     fp1 = Chem.RDKFingerprint(m1, atomInvariants=atomInvariants, useBondOrder=False)
-#     fp2 = Chem.RDKFingerprint(m2, atomInvariants=atomInvariants, useBondOrder=False)
-#     self.assertEqual(fp1, fp2)
+    m2 = Chem.MolFromSmiles('C1CCCCN1')
+    fp1 = Chem.RDKFingerprint(m1, atomInvariants=atomInvariants, useBondOrder=False)
+    fp2 = Chem.RDKFingerprint(m2, atomInvariants=atomInvariants, useBondOrder=False)
+    self.assertEqual(fp1, fp2)
 
-#     # rooted at atom
-#     m1 = Chem.MolFromSmiles('CCCCCO')
-#     fp1 = Chem.RDKFingerprint(m1, 1, 4, nBitsPerHash=1, fromAtoms=[0])
-#     self.assertEqual(fp1.GetNumOnBits(), 4)
-#     m1 = Chem.MolFromSmiles('CCCCCO')
-#     fp1 = Chem.RDKFingerprint(m1, 1, 4, nBitsPerHash=1, fromAtoms=[0, 5])
-#     self.assertEqual(fp1.GetNumOnBits(), 8)
+    # rooted at atom
+    m1 = Chem.MolFromSmiles('CCCCCO')
+    fp1 = Chem.RDKFingerprint(m1, 1, 4, nBitsPerHash=1, fromAtoms=[0])
+    self.assertEqual(fp1.GetNumOnBits(), 4)
+    m1 = Chem.MolFromSmiles('CCCCCO')
+    fp1 = Chem.RDKFingerprint(m1, 1, 4, nBitsPerHash=1, fromAtoms=[0, 5])
+    self.assertEqual(fp1.GetNumOnBits(), 8)
 
-#     # test sf.net issue 270:
-#     fp1 = Chem.RDKFingerprint(m1, atomInvariants=[x.GetAtomicNum() + 10 for x in m1.GetAtoms()])
+    # test sf.net issue 270:
+    fp1 = Chem.RDKFingerprint(m1, atomInvariants=[x.GetAtomicNum() + 10 for x in m1.GetAtoms()])
 
-#     # atomBits
-#     m1 = Chem.MolFromSmiles('CCCO')
-#     l = []
-#     fp1 = Chem.RDKFingerprint(m1, minPath=1, maxPath=2, nBitsPerHash=1, atomBits=l)
-#     self.assertEqual(fp1.GetNumOnBits(), 4)
-#     self.assertEqual(len(l), m1.GetNumAtoms())
-#     self.assertEqual(len(l[0]), 2)
-#     self.assertEqual(len(l[1]), 3)
-#     self.assertEqual(len(l[2]), 4)
-#     self.assertEqual(len(l[3]), 2)
+    # atomBits
+    m1 = Chem.MolFromSmiles('CCCO')
+    l = []
+    fp1 = Chem.RDKFingerprint(m1, minPath=1, maxPath=2, nBitsPerHash=1, atomBits=l)
+    self.assertEqual(fp1.GetNumOnBits(), 4)
+    self.assertEqual(len(l), m1.GetNumAtoms())
+    self.assertEqual(len(l[0]), 2)
+    self.assertEqual(len(l[1]), 3)
+    self.assertEqual(len(l[2]), 4)
+    self.assertEqual(len(l[3]), 2)
+
 
 #   def test25SDMolSupplier(self):
 #     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',

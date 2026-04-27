@@ -27,7 +27,6 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 namespace nb = nanobind;

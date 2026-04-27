@@ -12,8 +12,8 @@
 
 #include <DataStructs/DiscreteValueVect.h>
 #include <DataStructs/RealValueVect.h>
-// #include <DataStructs/BitVects.h>
-// #include <DataStructs/SparseIntVect.h>
+#include <DataStructs/BitVects.h>
+#include <DataStructs/SparseIntVect.h>
 #include <numpy/npy_common.h>
 #include <RDBoost/import_array.h>
 // #include <RDBoost/pyint_api.h>
@@ -22,13 +22,13 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 void wrap_discreteValVect(nb::module_ &m);
-// void wrap_SBV();
+void wrap_SBV(nb::module_ &m);
 void wrap_EBV(nb::module_ &m);
-// void wrap_BitOps();
-// void wrap_Utils();
+void wrap_BitOps(nb::module_ &m);
+void wrap_Utils(nb::module_ &m);
 void wrap_realValVect(nb::module_ &m);
-// void wrap_sparseIntVect();
-// void wrap_FPB();
+void wrap_sparseIntVect(nb::module_ &m);
+void wrap_FPB(nb::module_ &m);
 
 #if 1
 namespace {
@@ -78,14 +78,14 @@ NB_MODULE(cDataStructs, m) {
       "  DiscreteValueVect:   class for storing vectors of integers\n"
       "  SparseIntVect:       class for storing sparse vectors of integers\n";
 
-  // wrap_Utils();
-  // wrap_SBV();
-  // wrap_EBV(m);
-  // wrap_BitOps();
+  wrap_Utils(m);
+  wrap_SBV(m);
+  wrap_EBV(m);
+  wrap_BitOps(m);
   wrap_discreteValVect(m);
   wrap_realValVect(m);
-  // wrap_sparseIntVect();
-  // wrap_FPB();
+  wrap_sparseIntVect(m);
+  wrap_FPB(m);
   m.def("ConvertToNumpyArray",
         (void (*)(const RDKit::DiscreteValueVect &,
                   nb::object))convertToIntNumpyArray,
@@ -94,26 +94,23 @@ NB_MODULE(cDataStructs, m) {
         (void (*)(const RDKit::RealValueVect &,
                   nb::object))convertToDoubleNumpyArray,
         "rvv"_a, "destArray"_a);
-#if 0
-  python::def(
-      "ConvertToNumpyArray",
-      (void (*)(const ExplicitBitVect &, python::object))convertToIntNumpyArray,
-      (python::arg("bv"), python::arg("destArray")));
-  python::def("ConvertToNumpyArray",
-              (void (*)(const RDKit::SparseIntVect<std::int32_t> &,
-                        python::object))convertToIntNumpyArray,
-              (python::arg("bv"), python::arg("destArray")));
-  python::def("ConvertToNumpyArray",
-              (void (*)(const RDKit::SparseIntVect<boost::int64_t> &,
-                        python::object))convertToIntNumpyArray,
-              (python::arg("bv"), python::arg("destArray")));
-  python::def("ConvertToNumpyArray",
-              (void (*)(const RDKit::SparseIntVect<std::uint32_t> &,
-                        python::object))convertToIntNumpyArray,
-              (python::arg("bv"), python::arg("destArray")));
-  python::def("ConvertToNumpyArray",
-              (void (*)(const RDKit::SparseIntVect<boost::uint64_t> &,
-                        python::object))convertToIntNumpyArray,
-              (python::arg("bv"), python::arg("destArray")));
-#endif
+  m.def("ConvertToNumpyArray",
+        (void (*)(const ExplicitBitVect &, nb::object))convertToIntNumpyArray,
+        "bv"_a, "destArray"_a);
+  m.def("ConvertToNumpyArray",
+        (void (*)(const RDKit::SparseIntVect<std::int32_t> &,
+                  nb::object))convertToIntNumpyArray,
+        "bv"_a, "destArray"_a);
+  m.def("ConvertToNumpyArray",
+        (void (*)(const RDKit::SparseIntVect<boost::int64_t> &,
+                  nb::object))convertToIntNumpyArray,
+        "bv"_a, "destArray"_a);
+  m.def("ConvertToNumpyArray",
+        (void (*)(const RDKit::SparseIntVect<std::uint32_t> &,
+                  nb::object))convertToIntNumpyArray,
+        "bv"_a, "destArray"_a);
+  m.def("ConvertToNumpyArray",
+        (void (*)(const RDKit::SparseIntVect<boost::uint64_t> &,
+                  nb::object))convertToIntNumpyArray,
+        "bv"_a, "destArray"_a);
 }

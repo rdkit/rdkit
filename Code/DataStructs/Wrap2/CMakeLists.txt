@@ -1,13 +1,13 @@
 remove_definitions(-DRDKIT_DATASTRUCTS_BUILD)
 rdkit_nanobind_extension(cDataStructs
                        DataStructs.cpp DiscreteValueVect.cpp 
-                       #SparseIntVect.cpp
+                       SparseIntVect.cpp
                        RealValueVect.cpp
-                       #wrap_SparseBV.cpp 
-                       #wrap_ExplicitBV.cpp 
-                       #wrap_BitOps.cpp
-                       #wrap_FPB.cpp
-                       #wrap_Utils.cpp
+                       wrap_SparseBV.cpp 
+                       wrap_ExplicitBV.cpp 
+                       wrap_BitOps.cpp
+                       wrap_FPB.cpp
+                       wrap_Utils.cpp
                        DEST DataStructs
                        LINK_LIBRARIES
                        DataStructs)
