@@ -18,7 +18,7 @@
 namespace RDKit::SynthonSpaceSearch {
 SynthonSpaceRascalSearcher::SynthonSpaceRascalSearcher(
     const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
-    const SynthonSpaceSearchParams &params, SynthonSpace &space)
+    const SynthonSpaceSearchParams &params, SynthonSpace *space)
     : SynthonSpaceSearcher(query, params, space),
       d_rascalOptions(rascalOptions),
       d_rascalFragOptions(rascalOptions) {

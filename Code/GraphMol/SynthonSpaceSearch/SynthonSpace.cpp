@@ -115,7 +115,7 @@ SearchResults SynthonSpace::substructureSearch(
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   ControlCHandler::reset();
 
-  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
+  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, this);
   return ssss.search(ThreadMode::ThreadReactions);
 }
 
@@ -125,7 +125,7 @@ void SynthonSpace::substructureSearch(
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   ControlCHandler::reset();
-  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
+  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, this);
   ssss.search(cb, ThreadMode::ThreadReactions);
 }
 
@@ -173,7 +173,7 @@ SearchResults SynthonSpace::fingerprintSearch(
   ControlCHandler::reset();
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
 
-  SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
+  SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, this);
   return ssss.search(ThreadMode::ThreadFragments);
 }
 
@@ -182,7 +182,7 @@ void SynthonSpace::fingerprintSearch(
     const SearchResultCallback &cb, const SynthonSpaceSearchParams &params) {
   ControlCHandler::reset();
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
-  SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
+  SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, this);
   ssss.search(cb, ThreadMode::ThreadFragments);
 }
 
@@ -190,7 +190,7 @@ SearchResults SynthonSpace::rascalSearch(
     const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
-  SynthonSpaceRascalSearcher ssrs(query, rascalOptions, params, *this);
+  SynthonSpaceRascalSearcher ssrs(query, rascalOptions, params, this);
   return ssrs.search(ThreadMode::ThreadFragments);
 }
 
@@ -199,7 +199,7 @@ void SynthonSpace::rascalSearch(const ROMol &query,
                                 const SearchResultCallback &cb,
                                 const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
-  SynthonSpaceRascalSearcher ssss(query, rascalOptions, params, *this);
+  SynthonSpaceRascalSearcher ssss(query, rascalOptions, params, this);
   ssss.search(cb, ThreadMode::ThreadFragments);
 }
 
@@ -250,7 +250,7 @@ SearchResults SynthonSpace::shapeSearch(
     queryCp.reset(new RWMol(query));
   }
 
-  SynthonSpaceShapeSearcher ssss(*queryCp, params, *this);
+  SynthonSpaceShapeSearcher ssss(*queryCp, params, this);
   return ssss.search(ThreadMode::ThreadFragments);
 }
 

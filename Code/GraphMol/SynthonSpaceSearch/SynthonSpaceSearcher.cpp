@@ -29,7 +29,7 @@ namespace RDKit::SynthonSpaceSearch {
 
 SynthonSpaceSearcher::SynthonSpaceSearcher(
     const ROMol &query, const SynthonSpaceSearchParams &params,
-    SynthonSpace &space)
+    SynthonSpace *space)
     : d_query(query), d_params(params), d_space(space) {
   if (d_params.randomSample && d_params.maxHits == -1) {
     throw std::runtime_error(
@@ -80,7 +80,6 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb,
   const TimePoint *endTime = nullptr;
   std::uint64_t totHits = 0;
   auto allHits = assembleHitSets(endTime, timedOut, totHits, threadMode);
-  std::cout << "allHits" << std::endl;
   std::sort(allHits.begin(), allHits.end(),
             [](const auto &hs1, const auto &hs2) -> bool {
               if (hs1->d_reaction->getId() == hs2->d_reaction->getId()) {

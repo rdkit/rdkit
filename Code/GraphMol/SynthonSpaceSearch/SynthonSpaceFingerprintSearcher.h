@@ -25,7 +25,7 @@ class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
   SynthonSpaceFingerprintSearcher() = delete;
   SynthonSpaceFingerprintSearcher(
       const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
-      const SynthonSpaceSearchParams &params, SynthonSpace &space);
+      const SynthonSpaceSearchParams &params, SynthonSpace *space);
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
       const std::vector<std::shared_ptr<ROMol>> &fragSet,

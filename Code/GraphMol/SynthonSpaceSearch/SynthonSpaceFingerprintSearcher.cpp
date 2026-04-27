@@ -25,7 +25,7 @@ namespace RDKit::SynthonSpaceSearch {
 
 SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
-    const SynthonSpaceSearchParams &params, SynthonSpace &space)
+    const SynthonSpaceSearchParams &params, SynthonSpace *space)
     : SynthonSpaceSearcher(query, params, space), d_fpGen(fpGen) {
   if (getSpace().hasFingerprints() &&
       d_fpGen.infoString() != getSpace().getSynthonFingerprintType()) {

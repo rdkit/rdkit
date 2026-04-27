@@ -56,7 +56,7 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
   SynthonSpaceShapeSearcher() = delete;
   SynthonSpaceShapeSearcher(const ROMol &query,
                             const SynthonSpaceSearchParams &params,
-                            SynthonSpace &space);
+                            SynthonSpace *space);
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
       const std::vector<std::shared_ptr<ROMol>> &fragSet,

@@ -31,7 +31,7 @@ class SynthonSpaceRascalSearcher : public SynthonSpaceSearcher {
   SynthonSpaceRascalSearcher(const ROMol &query,
                              const RascalMCES::RascalOptions &options,
                              const SynthonSpaceSearchParams &params,
-                             SynthonSpace &space);
+                             SynthonSpace *space);
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
       const std::vector<std::shared_ptr<ROMol>> &fragSet,

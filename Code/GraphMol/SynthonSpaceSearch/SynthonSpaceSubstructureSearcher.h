@@ -27,7 +27,7 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
   SynthonSpaceSubstructureSearcher(const ROMol &query,
                                    const SubstructMatchParameters &matchParams,
                                    const SynthonSpaceSearchParams &params,
-                                   SynthonSpace &space)
+                                   SynthonSpace *space)
       : SynthonSpaceSearcher(query, params, space),
         d_matchParams(matchParams) {}
 

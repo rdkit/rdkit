@@ -39,7 +39,7 @@ class SynthonSpaceSearcher {
   SynthonSpaceSearcher() = delete;
   SynthonSpaceSearcher(const ROMol &query,
                        const SynthonSpaceSearchParams &params,
-                       SynthonSpace &space);
+                       SynthonSpace *space);
   SynthonSpaceSearcher(const SynthonSpaceSearcher &other) = delete;
   SynthonSpaceSearcher(SynthonSpaceSearcher &&other) = delete;
   SynthonSpaceSearcher &operator=(const SynthonSpaceSearcher &other) = delete;
@@ -50,7 +50,7 @@ class SynthonSpaceSearcher {
   SearchResults search(ThreadMode threadMode);
   void search(const SearchResultCallback &cb, ThreadMode threadMode);
 
-  SynthonSpace &getSpace() const { return d_space; }
+  SynthonSpace &getSpace() const { return *d_space; }
   const ROMol &getQuery() const { return d_query; }
   const SynthonSpaceSearchParams &getParams() const { return d_params; }
 
@@ -114,7 +114,7 @@ class SynthonSpaceSearcher {
 
   ROMol d_query;
   SynthonSpaceSearchParams d_params;
-  SynthonSpace &d_space;
+  SynthonSpace *d_space;
   std::unique_ptr<ROMol> d_bestHitFound;
   double d_bestSimilarity{0.0};
 

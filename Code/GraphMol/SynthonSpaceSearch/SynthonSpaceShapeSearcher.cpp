@@ -30,9 +30,9 @@ namespace RDKit::SynthonSpaceSearch {
 
 SynthonSpaceShapeSearcher::SynthonSpaceShapeSearcher(
     const ROMol &query, const SynthonSpaceSearchParams &params,
-    SynthonSpace &space)
+    SynthonSpace *space)
     : SynthonSpaceSearcher(query, params, space) {
-  if (space.getNumConformers() == 0) {
+  if (getSpace().getNumConformers() == 0) {
     throw std::runtime_error("No conformers found in SynthonSpaceSearch");
   }
 }
