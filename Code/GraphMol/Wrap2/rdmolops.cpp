@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include "rdmolops.h"
 #include <nanobind/nanobind.h>
 
 #include <RDGeneral/types.h>
