@@ -970,309 +970,310 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(l[2]), 4)
     self.assertEqual(len(l[3]), 2)
 
+  def test25SDMolSupplier(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.sdf')
+    #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
+    sdSup = Chem.SDMolSupplier(fileN)
+    molNames = [
+      "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+      "220", "229", "256"
+    ]
 
-#   def test25SDMolSupplier(self):
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'NCI_aids_few.sdf')
-#     #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
-#     sdSup = Chem.SDMolSupplier(fileN)
-#     molNames = [
-#       "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
-#       "220", "229", "256"
-#     ]
+    chgs192 = {8: 1, 11: 1, 15: -1, 18: -1, 20: 1, 21: 1, 23: -1, 25: -1}
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol)
+      self.assertTrue(mol.GetProp("_Name") == molNames[i])
+      i += 1
+      if (mol.GetProp("_Name") == "192"):
+        # test parsed charges on one of the molecules
+        for id in chgs192.keys():
+          self.assertTrue(mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id])
+    self.assertRaises(StopIteration, lambda: next(sdSup))
+    sdSup.reset()
 
-#     chgs192 = {8: 1, 11: 1, 15: -1, 18: -1, 20: 1, 21: 1, 23: -1, 25: -1}
-#     i = 0
-#     for mol in sdSup:
-#       self.assertTrue(mol)
-#       self.assertTrue(mol.GetProp("_Name") == molNames[i])
-#       i += 1
-#       if (mol.GetProp("_Name") == "192"):
-#         # test parsed charges on one of the molecules
-#         for id in chgs192.keys():
-#           self.assertTrue(mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id])
-#     self.assertRaises(StopIteration, lambda: next(sdSup))
-#     sdSup.reset()
+    ns = [mol.GetProp("_Name") for mol in sdSup]
+    self.assertTrue(ns == molNames)
 
-#     ns = [mol.GetProp("_Name") for mol in sdSup]
-#     self.assertTrue(ns == molNames)
+    sdSup = Chem.SDMolSupplier(fileN, sanitize=False)
+    for mol in sdSup:
+      self.assertTrue(not mol.HasProp("numArom"))
 
-#     sdSup = Chem.SDMolSupplier(fileN, 0)
-#     for mol in sdSup:
-#       self.assertTrue(not mol.HasProp("numArom"))
+    sdSup = Chem.SDMolSupplier(fileN)
+    self.assertTrue(len(sdSup) == 16)
+    mol = sdSup[5]
+    self.assertTrue(mol.GetProp("_Name") == "170")
 
-#     sdSup = Chem.SDMolSupplier(fileN)
-#     self.assertTrue(len(sdSup) == 16)
-#     mol = sdSup[5]
-#     self.assertTrue(mol.GetProp("_Name") == "170")
+    # test handling of H removal:
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'withHs.sdf')
+    sdSup = Chem.SDMolSupplier(fileN)
+    m = next(sdSup)
+    self.assertTrue(m)
+    self.assertTrue(m.GetNumAtoms() == 23)
+    m = next(sdSup)
+    self.assertTrue(m)
+    self.assertTrue(m.GetNumAtoms() == 28)
 
-#     # test handling of H removal:
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'withHs.sdf')
-#     sdSup = Chem.SDMolSupplier(fileN)
-#     m = next(sdSup)
-#     self.assertTrue(m)
-#     self.assertTrue(m.GetNumAtoms() == 23)
-#     m = next(sdSup)
-#     self.assertTrue(m)
-#     self.assertTrue(m.GetNumAtoms() == 28)
+    sdSup = Chem.SDMolSupplier(fileN, removeHs=False)
+    m = next(sdSup)
+    self.assertTrue(m)
+    self.assertTrue(m.GetNumAtoms() == 39)
+    m = next(sdSup)
+    self.assertTrue(m)
+    self.assertTrue(m.GetNumAtoms() == 30)
 
-#     sdSup = Chem.SDMolSupplier(fileN, removeHs=False)
-#     m = next(sdSup)
-#     self.assertTrue(m)
-#     self.assertTrue(m.GetNumAtoms() == 39)
-#     m = next(sdSup)
-#     self.assertTrue(m)
-#     self.assertTrue(m.GetNumAtoms() == 30)
+    with open(fileN, 'rb') as dFile:
+      d = dFile.read()
+    sdSup.SetData(d)
+    m = next(sdSup)
+    self.assertTrue(m)
+    self.assertTrue(m.GetNumAtoms() == 23)
+    m = next(sdSup)
+    self.assertTrue(m)
+    self.assertTrue(m.GetNumAtoms() == 28)
 
-#     with open(fileN, 'rb') as dFile:
-#       d = dFile.read()
-#     sdSup.SetData(d)
-#     m = next(sdSup)
-#     self.assertTrue(m)
-#     self.assertTrue(m.GetNumAtoms() == 23)
-#     m = next(sdSup)
-#     self.assertTrue(m)
-#     self.assertTrue(m.GetNumAtoms() == 28)
+    sdSup.SetData(d, removeHs=False)
+    m = next(sdSup)
+    self.assertTrue(m)
+    self.assertTrue(m.GetNumAtoms() == 39)
+    m = next(sdSup)
+    self.assertTrue(m)
+    self.assertTrue(m.GetNumAtoms() == 30)
 
-#     sdSup.SetData(d, removeHs=False)
-#     m = next(sdSup)
-#     self.assertTrue(m)
-#     self.assertTrue(m.GetNumAtoms() == 39)
-#     m = next(sdSup)
-#     self.assertTrue(m)
-#     self.assertTrue(m.GetNumAtoms() == 30)
+    # test strictParsing1:
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'strictLax1.sdf')
+    #strict from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing=True)
 
-#     # test strictParsing1:
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'strictLax1.sdf')
-#     #strict from file
-#     sdSup = Chem.SDMolSupplier(fileN, strictParsing=True)
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      if (i == 0):
+        self.assertTrue(not mol.HasProp("ID"))
+      self.assertTrue(not mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
 
-#     i = 0
-#     for mol in sdSup:
-#       self.assertTrue(mol.HasProp("_Name"))
-#       if (i == 0):
-#         self.assertTrue(not mol.HasProp("ID"))
-#       self.assertTrue(not mol.HasProp("ANOTHER_PROPERTY"))
-#       i += 1
-#     self.assertTrue(i == 2)
+    #lax from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing=False)
 
-#     #lax from file
-#     sdSup = Chem.SDMolSupplier(fileN, strictParsing=False)
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
 
-#     i = 0
-#     for mol in sdSup:
-#       self.assertTrue(mol.HasProp("_Name"))
-#       self.assertTrue(mol.HasProp("ID"))
-#       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-#       i += 1
-#     self.assertTrue(i == 2)
+    #strict from text
+    with open(fileN, 'rb') as dFile:
+      d = dFile.read()
+    sdSup = Chem.SDMolSupplier()
+    sdSup.SetData(d, strictParsing=True)
 
-#     #strict from text
-#     with open(fileN, 'rb') as dFile:
-#       d = dFile.read()
-#     sdSup = Chem.SDMolSupplier()
-#     sdSup.SetData(d, strictParsing=True)
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      if (i == 0):
+        self.assertTrue(not mol.HasProp("ID"))
+      self.assertTrue(not mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
 
-#     i = 0
-#     for mol in sdSup:
-#       self.assertTrue(mol.HasProp("_Name"))
-#       if (i == 0):
-#         self.assertTrue(not mol.HasProp("ID"))
-#       self.assertTrue(not mol.HasProp("ANOTHER_PROPERTY"))
-#       i += 1
-#     self.assertTrue(i == 2)
+    #lax from text
+    sdSup = Chem.SDMolSupplier()
+    sdSup.SetData(d, strictParsing=False)
 
-#     #lax from text
-#     sdSup = Chem.SDMolSupplier()
-#     sdSup.SetData(d, strictParsing=False)
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      i += 1
+    self.assertTrue(i == 2)
 
-#     i = 0
-#     for mol in sdSup:
-#       self.assertTrue(mol.HasProp("_Name"))
-#       self.assertTrue(mol.HasProp("ID"))
-#       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-#       i += 1
-#     self.assertTrue(i == 2)
+    # test strictParsing2:
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'strictLax2.sdf')
+    #strict from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing=True)
 
-#     # test strictParsing2:
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'strictLax2.sdf')
-#     #strict from file
-#     sdSup = Chem.SDMolSupplier(fileN, strictParsing=True)
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig1")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(
+        mol.GetProp("ANOTHER_PROPERTY") == "No blank line before dollars\n"
+        "$$$$\n"
+        "Structure1\n"
+        "csChFnd70/05230312262D")
+      i += 1
+    self.assertTrue(i == 1)
 
-#     i = 0
-#     for mol in sdSup:
-#       self.assertTrue(mol.HasProp("_Name"))
-#       self.assertTrue(mol.HasProp("ID"))
-#       self.assertTrue(mol.GetProp("ID") == "Lig1")
-#       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-#       self.assertTrue(
-#         mol.GetProp("ANOTHER_PROPERTY") == "No blank line before dollars\n"
-#         "$$$$\n"
-#         "Structure1\n"
-#         "csChFnd70/05230312262D")
-#       i += 1
-#     self.assertTrue(i == 1)
+    #lax from file
+    sdSup = Chem.SDMolSupplier(fileN, strictParsing=False)
 
-#     #lax from file
-#     sdSup = Chem.SDMolSupplier(fileN, strictParsing=False)
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig2")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == "Value2")
+      i += 1
+    self.assertTrue(i == 1)
 
-#     i = 0
-#     for mol in sdSup:
-#       self.assertTrue(mol.HasProp("_Name"))
-#       self.assertTrue(mol.HasProp("ID"))
-#       self.assertTrue(mol.GetProp("ID") == "Lig2")
-#       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-#       self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == "Value2")
-#       i += 1
-#     self.assertTrue(i == 1)
+    #strict from text
+    with open(fileN, 'rb') as dFile:
+      d = dFile.read()
+    sdSup = Chem.SDMolSupplier()
+    sdSup.SetData(d, strictParsing=True)
 
-#     #strict from text
-#     with open(fileN, 'rb') as dFile:
-#       d = dFile.read()
-#     sdSup = Chem.SDMolSupplier()
-#     sdSup.SetData(d, strictParsing=True)
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig1")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(
+        mol.GetProp("ANOTHER_PROPERTY") == "No blank line before dollars\n"
+        "$$$$\n"
+        "Structure1\n"
+        "csChFnd70/05230312262D")
+      i += 1
+    self.assertTrue(i == 1)
 
-#     i = 0
-#     for mol in sdSup:
-#       self.assertTrue(mol.HasProp("_Name"))
-#       self.assertTrue(mol.HasProp("ID"))
-#       self.assertTrue(mol.GetProp("ID") == "Lig1")
-#       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-#       self.assertTrue(
-#         mol.GetProp("ANOTHER_PROPERTY") == "No blank line before dollars\n"
-#         "$$$$\n"
-#         "Structure1\n"
-#         "csChFnd70/05230312262D")
-#       i += 1
-#     self.assertTrue(i == 1)
+    #lax from text
+    sdSup = Chem.SDMolSupplier()
+    sdSup.SetData(d, strictParsing=False)
 
-#     #lax from text
-#     sdSup = Chem.SDMolSupplier()
-#     sdSup.SetData(d, strictParsing=False)
+    i = 0
+    for mol in sdSup:
+      self.assertTrue(mol.HasProp("_Name"))
+      self.assertTrue(mol.HasProp("ID"))
+      self.assertTrue(mol.GetProp("ID") == "Lig2")
+      self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == "Value2")
+      i += 1
+    self.assertTrue(i == 1)
 
-#     i = 0
-#     for mol in sdSup:
-#       self.assertTrue(mol.HasProp("_Name"))
-#       self.assertTrue(mol.HasProp("ID"))
-#       self.assertTrue(mol.GetProp("ID") == "Lig2")
-#       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-#       self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == "Value2")
-#       i += 1
-#     self.assertTrue(i == 1)
+  def test26SmiMolSupplier(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'first_200.tpsa.csv')
+    #fileN = "../FileParsers/test_data/first_200.tpsa.csv"
+    smiSup = Chem.SmilesMolSupplier(fileN, ",", 0, -1)
+    mol = smiSup[16]
+    self.assertTrue(mol.GetProp("TPSA") == "46.25")
 
-#   def test26SmiMolSupplier(self):
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'first_200.tpsa.csv')
-#     #fileN = "../FileParsers/test_data/first_200.tpsa.csv"
-#     smiSup = Chem.SmilesMolSupplier(fileN, ",", 0, -1)
-#     mol = smiSup[16]
-#     self.assertTrue(mol.GetProp("TPSA") == "46.25")
+    mol = smiSup[8]
+    self.assertTrue(mol.GetProp("TPSA") == "65.18")
 
-#     mol = smiSup[8]
-#     self.assertTrue(mol.GetProp("TPSA") == "65.18")
+    self.assertTrue(len(smiSup) == 200)
 
-#     self.assertTrue(len(smiSup) == 200)
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'fewSmi.csv')
+    #fileN = "../FileParsers/test_data/fewSmi.csv"
+    smiSup = Chem.SmilesMolSupplier(fileN, delimiter=",", smilesColumn=1, nameColumn=0,
+                                    titleLine=False)
+    names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+    i = 0
+    for mol in smiSup:
+      self.assertTrue(mol.GetProp("_Name") == names[i])
+      i += 1
 
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'fewSmi.csv')
-#     #fileN = "../FileParsers/test_data/fewSmi.csv"
-#     smiSup = Chem.SmilesMolSupplier(fileN, delimiter=",", smilesColumn=1, nameColumn=0, titleLine=0)
-#     names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-#     i = 0
-#     for mol in smiSup:
-#       self.assertTrue(mol.GetProp("_Name") == names[i])
-#       i += 1
+    mol = smiSup[3]
 
-#     mol = smiSup[3]
+    self.assertTrue(mol.GetProp("_Name") == "4")
+    self.assertTrue(mol.GetProp("Column_2") == "82.78")
 
-#     self.assertTrue(mol.GetProp("_Name") == "4")
-#     self.assertTrue(mol.GetProp("Column_2") == "82.78")
+    # and test doing a supplier from text:
+    with open(fileN, 'r') as inF:
+      inD = inF.read()
+    smiSup.SetData(inD, delimiter=",", smilesColumn=1, nameColumn=0, titleLine=False)
+    names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+    i = 0
+    # iteration interface:
+    for mol in smiSup:
+      self.assertTrue(mol.GetProp("_Name") == names[i])
+      i += 1
+    self.assertTrue(i == 10)
+    # random access:
+    mol = smiSup[3]
+    self.assertTrue(len(smiSup) == 10)
+    self.assertTrue(mol.GetProp("_Name") == "4")
+    self.assertTrue(mol.GetProp("Column_2") == "82.78")
 
-#     # and test doing a supplier from text:
-#     with open(fileN, 'r') as inF:
-#       inD = inF.read()
-#     smiSup.SetData(inD, delimiter=",", smilesColumn=1, nameColumn=0, titleLine=0)
-#     names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-#     i = 0
-#     # iteration interface:
-#     for mol in smiSup:
-#       self.assertTrue(mol.GetProp("_Name") == names[i])
-#       i += 1
-#     self.assertTrue(i == 10)
-#     # random access:
-#     mol = smiSup[3]
-#     self.assertTrue(len(smiSup) == 10)
-#     self.assertTrue(mol.GetProp("_Name") == "4")
-#     self.assertTrue(mol.GetProp("Column_2") == "82.78")
+    # issue 113:
+    smiSup.SetData(inD, delimiter=",", smilesColumn=1, nameColumn=0, titleLine=False)
+    self.assertTrue(len(smiSup) == 10)
 
-#     # issue 113:
-#     smiSup.SetData(inD, delimiter=",", smilesColumn=1, nameColumn=0, titleLine=0)
-#     self.assertTrue(len(smiSup) == 10)
+    # and test failure handling:
+    inD = """mol-1,CCC
+mol-2,CCCC
+mol-3,fail
+mol-4,CCOC
+    """
+    smiSup.SetData(inD, delimiter=",", smilesColumn=1, nameColumn=0, titleLine=False)
+    # there are 4 entries in the supplier:
+    self.assertTrue(len(smiSup) == 4)
+    # but the 3rd is a None:
+    self.assertTrue(smiSup[2] is None)
 
-#     # and test failure handling:
-#     inD = """mol-1,CCC
-# mol-2,CCCC
-# mol-3,fail
-# mol-4,CCOC
-#     """
-#     smiSup.SetData(inD, delimiter=",", smilesColumn=1, nameColumn=0, titleLine=0)
-#     # there are 4 entries in the supplier:
-#     self.assertTrue(len(smiSup) == 4)
-#     # but the 3rd is a None:
-#     self.assertTrue(smiSup[2] is None)
+    text="Id SMILES Column_2\n"+\
+    "mol-1 C 1.0\n"+\
+    "mol-2 CC 4.0\n"+\
+    "mol-4 CCCC 16.0"
+    smiSup.SetData(text, delimiter=" ", smilesColumn=1, nameColumn=0, titleLine=True)
+    self.assertTrue(len(smiSup) == 3)
+    self.assertTrue(smiSup[0])
+    self.assertTrue(smiSup[1])
+    self.assertTrue(smiSup[2])
+    m = [x for x in smiSup]
+    self.assertTrue(smiSup[2])
+    self.assertTrue(len(m) == 3)
+    self.assertTrue(m[0].GetProp("Column_2") == "1.0")
 
-#     text="Id SMILES Column_2\n"+\
-#     "mol-1 C 1.0\n"+\
-#     "mol-2 CC 4.0\n"+\
-#     "mol-4 CCCC 16.0"
-#     smiSup.SetData(text, delimiter=" ", smilesColumn=1, nameColumn=0, titleLine=1)
-#     self.assertTrue(len(smiSup) == 3)
-#     self.assertTrue(smiSup[0])
-#     self.assertTrue(smiSup[1])
-#     self.assertTrue(smiSup[2])
-#     m = [x for x in smiSup]
-#     self.assertTrue(smiSup[2])
-#     self.assertTrue(len(m) == 3)
-#     self.assertTrue(m[0].GetProp("Column_2") == "1.0")
+    # test simple parsing and Issue 114:
+    smis = ['CC', 'CCC', 'CCOC', 'CCCOCC', 'CCCOCCC']
+    inD = '\n'.join(smis)
+    smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=False)
+    self.assertTrue(len(smiSup) == 5)
+    m = [x for x in smiSup]
+    self.assertTrue(smiSup[4])
+    self.assertTrue(len(m) == 5)
 
-#     # test simple parsing and Issue 114:
-#     smis = ['CC', 'CCC', 'CCOC', 'CCCOCC', 'CCCOCCC']
-#     inD = '\n'.join(smis)
-#     smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=0)
-#     self.assertTrue(len(smiSup) == 5)
-#     m = [x for x in smiSup]
-#     self.assertTrue(smiSup[4])
-#     self.assertTrue(len(m) == 5)
+    # order dependence:
+    smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=False)
+    self.assertTrue(smiSup[4])
+    self.assertTrue(len(smiSup) == 5)
 
-#     # order dependence:
-#     smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=0)
-#     self.assertTrue(smiSup[4])
-#     self.assertTrue(len(smiSup) == 5)
+    # this was a nasty BC:
+    # asking for a particular entry with a higher index than what we've
+    # already seen resulted in a duplicate:
+    smis = ['CC', 'CCC', 'CCOC', 'CCCCOC']
+    inD = '\n'.join(smis)
+    smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=False)
+    m = next(smiSup)
+    m = smiSup[3]
+    self.assertTrue(len(smiSup) == 4)
 
-#     # this was a nasty BC:
-#     # asking for a particular entry with a higher index than what we've
-#     # already seen resulted in a duplicate:
-#     smis = ['CC', 'CCC', 'CCOC', 'CCCCOC']
-#     inD = '\n'.join(smis)
-#     smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=0)
-#     m = next(smiSup)
-#     m = smiSup[3]
-#     self.assertTrue(len(smiSup) == 4)
+    with self.assertRaisesRegex(Exception, ""):
+      smiSup[4]
 
-#     with self.assertRaisesRegex(Exception, ""):
-#       smiSup[4]
+    smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=False)
+    with self.assertRaisesRegex(Exception, ""):
+      smiSup[4]
 
-#     smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=0)
-#     with self.assertRaisesRegex(Exception, ""):
-#       smiSup[4]
+    sys.stderr.write(
+      '>>> This may result in an infinite loop.  It should finish almost instantly\n')
+    self.assertEqual(len(smiSup), 4)
+    sys.stderr.write('<<< OK, it finished.\n')
 
-#     sys.stderr.write(
-#       '>>> This may result in an infinite loop.  It should finish almost instantly\n')
-#     self.assertEqual(len(smiSup), 4)
-#     sys.stderr.write('<<< OK, it finished.\n')
 
 #   def test27SmilesWriter(self):
 #     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',

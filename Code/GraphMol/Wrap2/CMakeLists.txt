@@ -46,10 +46,10 @@ endif()
 set(rdmolfiles_sources rdmolfiles.cpp
 #                       ForwardSDMolSupplier.cpp 
 #                       ${maesupplier}
-#                       SDMolSupplier.cpp 
+                       SDMolSupplier.cpp 
 #                       TDTMolSupplier.cpp 
 #                       ${compressedsupplier}
-#                       SmilesMolSupplier.cpp 
+                       SmilesMolSupplier.cpp 
 #                       SmilesWriter.cpp 
 #                       SDWriter.cpp
 #                       TDTWriter.cpp

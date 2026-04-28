@@ -849,10 +849,10 @@ std::string MolToV2KMolBlockHelper(const ROMol &mol,
 #ifdef SUPPORT_COMPRESSED_SUPPLIERS
 void wrap_compressedsdsupplier();
 #endif
-void wrap_sdsupplier();
-void wrap_forwardsdsupplier();
+void wrap_sdsupplier(nb::module_ &m);
+void wrap_forwardsdsupplier(nb::module_ &m);
 void wrap_tdtsupplier();
-void wrap_smisupplier();
+void wrap_smisupplier(nb::module_ &m);
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 void wrap_maesupplier();
 #endif
@@ -2819,10 +2819,10 @@ NB_MODULE(rdmolfiles, m) {
   // #ifdef SUPPORT_COMPRESSED_SUPPLIERS
   //   wrap_compressedsdsupplier();
   // #endif
-  //   wrap_sdsupplier();
-  //   wrap_forwardsdsupplier();
+  wrap_sdsupplier(m);
+  //   wrap_forwardsdsupplier(m);
   //   wrap_tdtsupplier();
-  //   wrap_smisupplier();
+  wrap_smisupplier(m);
   // #ifdef RDK_BUILD_MAEPARSER_SUPPORT
   //   wrap_maesupplier();
   // #endif
