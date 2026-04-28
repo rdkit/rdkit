@@ -1274,38 +1274,39 @@ mol-4,CCOC
     self.assertEqual(len(smiSup), 4)
     sys.stderr.write('<<< OK, it finished.\n')
 
+  def test27SmilesWriter(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'fewSmi.csv')
+    #fileN = "../FileParsers/test_data/fewSmi.csv"
 
-#   def test27SmilesWriter(self):
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'fewSmi.csv')
-#     #fileN = "../FileParsers/test_data/fewSmi.csv"
+    smiSup = Chem.SmilesMolSupplier(fileN, delimiter=",", smilesColumn=1, nameColumn=0,
+                                    titleLine=False)
+    propNames = []
+    propNames.append("Column_2")
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'outSmiles.txt')
+    writer = Chem.SmilesWriter(ofile)
+    writer.SetProps(propNames)
+    for mol in smiSup:
+      writer.write(mol)
+    writer.flush()
 
-#     smiSup = Chem.SmilesMolSupplier(fileN, delimiter=",", smilesColumn=1, nameColumn=0, titleLine=0)
-#     propNames = []
-#     propNames.append("Column_2")
-#     ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
-#                          'outSmiles.txt')
-#     writer = Chem.SmilesWriter(ofile)
-#     writer.SetProps(propNames)
-#     for mol in smiSup:
-#       writer.write(mol)
-#     writer.flush()
+  def test28SmilesReverse(self):
+    names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+    props = [
+      "34.14", "25.78", "106.51", "82.78", "60.16", "87.74", "37.38", "77.28", "65.18", "0.00"
+    ]
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'outSmiles.txt')
+    #ofile = "test_data/outSmiles.csv"
+    smiSup = Chem.SmilesMolSupplier(ofile)
+    i = 0
+    for mol in smiSup:
+      #print([repr(x) for x in mol.GetPropNames()])
+      self.assertTrue(mol.GetProp("_Name") == names[i])
+      self.assertTrue(mol.GetProp("Column_2") == props[i])
+      i += 1
 
-#   def test28SmilesReverse(self):
-#     names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-#     props = [
-#       "34.14", "25.78", "106.51", "82.78", "60.16", "87.74", "37.38", "77.28", "65.18", "0.00"
-#     ]
-#     ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
-#                          'outSmiles.txt')
-#     #ofile = "test_data/outSmiles.csv"
-#     smiSup = Chem.SmilesMolSupplier(ofile)
-#     i = 0
-#     for mol in smiSup:
-#       #print([repr(x) for x in mol.GetPropNames()])
-#       self.assertTrue(mol.GetProp("_Name") == names[i])
-#       self.assertTrue(mol.GetProp("Column_2") == props[i])
-#       i += 1
 
 #   def writerSDFile(self):
 #     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',

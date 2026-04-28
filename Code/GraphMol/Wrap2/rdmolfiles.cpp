@@ -858,7 +858,7 @@ void wrap_maesupplier();
 #endif
 
 // mol writer stuff
-void wrap_smiwriter();
+void wrap_smiwriter(nb::module_ &m);
 void wrap_sdwriter();
 void wrap_tdtwriter();
 void wrap_pdbwriter();
@@ -2831,7 +2831,7 @@ NB_MODULE(rdmolfiles, m) {
   //   /********************************************************
   //    * MolWriter stuff
   //    *******************************************************/
-  //   wrap_smiwriter();
+  wrap_smiwriter(m);
   //   wrap_sdwriter();
   //   wrap_tdtwriter();
   //   wrap_pdbwriter();

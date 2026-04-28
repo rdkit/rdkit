@@ -50,7 +50,7 @@ set(rdmolfiles_sources rdmolfiles.cpp
 #                       TDTMolSupplier.cpp 
 #                       ${compressedsupplier}
                        SmilesMolSupplier.cpp 
-#                       SmilesWriter.cpp 
+                       SmilesWriter.cpp 
 #                       SDWriter.cpp
 #                       TDTWriter.cpp
 #                       PDBWriter.cpp
