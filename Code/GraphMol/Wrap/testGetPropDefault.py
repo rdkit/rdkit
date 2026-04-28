@@ -4,14 +4,14 @@ from rdkit import Chem
 
 
 @pytest.mark.parametrize("auto_convert", [False, True])
-@pytest.mark.parametrize("prop_value, default_val, expected_val",
+@pytest.mark.parametrize("prop_value, default, expected_val",
                          [("Not Set", None, None),
                           ("Not Set", "fallback", "fallback"),
                           ("value", "fallback", "value"),
                           ("value", None, "value"), (None, "fallback", None),
                           (42, 0, 42), ("Not Set", 0, 0), (42.0, 0.0, 42.0),
                           ("Not Set", 0.0, 0.0)])
-def test_get_prop_with_default(auto_convert, prop_value, default_val,
+def test_get_prop_with_default(auto_convert, prop_value, default,
                                expected_val):
     m = Chem.MolFromSmiles("CC")
     prop_key = "test_prop"
@@ -25,7 +25,7 @@ def test_get_prop_with_default(auto_convert, prop_value, default_val,
 
     assert m.GetProp(prop_key,
                      autoConvert=auto_convert,
-                     default_val=default_val) == expected_val
+                     default=default) == expected_val
 
 
 @pytest.mark.parametrize("auto_convert", [False, True])
