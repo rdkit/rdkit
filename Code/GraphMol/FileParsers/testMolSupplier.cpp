@@ -2753,7 +2753,8 @@ TEST_CASE("chunk boundary stream drift with 3+ molecules") {
       "M  END\n"
       "$$$$\n";
 
-  // first separator must hit exactly at the 65536 byte boundary (the others could too but no need)
+  // first separator must hit exactly at the 65536 byte boundary (the others
+  // could too but no need)
   size_t paddingSize = 65536 - m1.size() - 5;
   std::string padding(paddingSize, 'x');
   std::string data = m1 + padding + m1tail + m2 + m3;
