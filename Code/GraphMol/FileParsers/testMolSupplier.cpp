@@ -2719,3 +2719,67 @@ TEST_CASE("github9101 - $$$$ at buffer end") {
   REQUIRE(mol);
   delete mol;
 }
+
+// extends the "github9101 - $$$$ at buffer end" test case
+// just two molecules werent enough to reliably trigger the issue
+// (although the second created drift it only took effect on the next molecule
+// which would be the third). this creates the edge case but with three
+TEST_CASE("chunk boundary stream drift with 3+ molecules") {
+  std::string m1 =
+      "mol1\n"
+      "     RDKit          3D\n"
+      "\n"
+      "  1  0  0  0  0  0  0  0  0  0999 V2000\n"
+      "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "M  END\n"
+      "> <comment>\n";
+  std::string m1tail =
+      "\n"
+      "$$$$\n";
+  std::string m2 =
+      "mol2\n"
+      "     RDKit          3D\n"
+      "\n"
+      "  1  0  0  0  0  0  0  0  0  0999 V2000\n"
+      "    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "M  END\n"
+      "$$$$\n";
+  std::string m3 =
+      "mol3\n"
+      "     RDKit          3D\n"
+      "\n"
+      "  1  0  0  0  0  0  0  0  0  0999 V2000\n"
+      "    0.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "M  END\n"
+      "$$$$\n";
+
+  // first separator must hit exactly at the 65536 byte boundary (the others could too but no need)
+  size_t paddingSize = 65536 - m1.size() - 5;
+  std::string padding(paddingSize, 'x');
+  std::string data = m1 + padding + m1tail + m2 + m3;
+
+  size_t firstDollar = data.find("$$$$");
+  REQUIRE(firstDollar != std::string::npos);
+  REQUIRE(firstDollar + 4 == 65536);
+
+  SDMolSupplier supplier;
+  supplier.setData(data);
+
+  // trigger indexing (that mangles the positions if the issue is present)
+  CHECK(supplier.length() == 3);
+
+  auto *mol = supplier[0];
+  REQUIRE(mol);
+  CHECK(mol->getProp<std::string>("_Name") == "mol1");
+  delete mol;
+
+  mol = supplier[1];
+  REQUIRE(mol);
+  CHECK(mol->getProp<std::string>("_Name") == "mol2");
+  delete mol;
+
+  mol = supplier[2];
+  REQUIRE(mol);
+  CHECK(mol->getProp<std::string>("_Name") == "mol3");
+  delete mol;
+}

@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 import unittest
+import gc
 
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
@@ -363,6 +364,7 @@ class TestCase(unittest.TestCase):
     os.unlink('testData/bzr/search.out')
 
   def test4CreateOptions(self):
+    gc.collect()
     for fn in ('Compounds.sqlt', 'AtomPairs.sqlt', 'Descriptors.sqlt', 'Fingerprints.sqlt'):
       if os.path.exists(f'testData/bzr/{fn}'):
         try:
