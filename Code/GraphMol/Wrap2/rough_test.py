@@ -1307,40 +1307,39 @@ mol-4,CCOC
       self.assertTrue(mol.GetProp("Column_2") == props[i])
       i += 1
 
+  def writerSDFile(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.sdf')
+    #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'outNCI_few.sdf')
+    writer = Chem.SDWriter(ofile)
+    sdSup = Chem.SDMolSupplier(fileN)
+    for mol in sdSup:
+      writer.write(mol)
+    writer.flush()
 
-#   def writerSDFile(self):
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'NCI_aids_few.sdf')
-#     #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
-#     ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
-#                          'outNCI_few.sdf')
-#     writer = Chem.SDWriter(ofile)
-#     sdSup = Chem.SDMolSupplier(fileN)
-#     for mol in sdSup:
-#       writer.write(mol)
-#     writer.flush()
+  def test29SDWriterLoop(self):
+    self.writerSDFile()
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'outNCI_few.sdf')
+    sdSup = Chem.SDMolSupplier(fileN)
+    molNames = [
+      "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+      "220", "229", "256"
+    ]
+    chgs192 = {8: 1, 11: 1, 15: -1, 18: -1, 20: 1, 21: 1, 23: -1, 25: -1}
+    i = 0
 
-#   def test29SDWriterLoop(self):
-#     self.writerSDFile()
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
-#                          'outNCI_few.sdf')
-#     sdSup = Chem.SDMolSupplier(fileN)
-#     molNames = [
-#       "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
-#       "220", "229", "256"
-#     ]
-#     chgs192 = {8: 1, 11: 1, 15: -1, 18: -1, 20: 1, 21: 1, 23: -1, 25: -1}
-#     i = 0
-
-#     for mol in sdSup:
-#       #print('mol:',mol)
-#       #print('\t',molNames[i])
-#       self.assertTrue(mol.GetProp("_Name") == molNames[i])
-#       i += 1
-#       if (mol.GetProp("_Name") == "192"):
-#         # test parsed charges on one of the molecules
-#         for id in chgs192.keys():
-#           self.assertTrue(mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id])
+    for mol in sdSup:
+      #print('mol:',mol)
+      #print('\t',molNames[i])
+      self.assertTrue(mol.GetProp("_Name") == molNames[i])
+      i += 1
+      if (mol.GetProp("_Name") == "192"):
+        # test parsed charges on one of the molecules
+        for id in chgs192.keys():
+          self.assertTrue(mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id])
 
 #   def test30Issues109and110(self):
 #     """ issues 110 and 109 were both related to handling of explicit Hs in
@@ -2076,29 +2075,30 @@ mol-4,CCOC
 #     smi = Chem.MolToSmiles(mol, kekuleSmiles=True)
 #     self.assertTrue(smi == 'C1=CC=CC=C1')
 
-#   def test39Issue273(self):
-#     """ test issue 273: MolFileComments and MolFileInfo props ending up in SD files
+  def test39Issue273(self):
+    """ test issue 273: MolFileComments and MolFileInfo props ending up in SD files
 
-#     """
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
-#                          'outNCI_few.sdf')
-#     suppl = Chem.SDMolSupplier(fileN)
-#     ms = [x for x in suppl]
-#     for m in ms:
-#       self.assertTrue(m.HasProp('_MolFileInfo'))
-#       self.assertTrue(m.HasProp('_MolFileComments'))
-#     fName = tempfile.NamedTemporaryFile(suffix='.sdf', delete=False).name
-#     w = Chem.SDWriter(fName)
-#     w.SetProps(ms[0].GetPropNames())
-#     for m in ms:
-#       w.write(m)
-#     w = None
+    """
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'outNCI_few.sdf')
+    suppl = Chem.SDMolSupplier(fileN)
+    ms = [x for x in suppl]
+    for m in ms:
+      self.assertTrue(m.HasProp('_MolFileInfo'))
+      self.assertTrue(m.HasProp('_MolFileComments'))
+    with tempfile.NamedTemporaryFile(suffix='.sdf', delete=False) as tmpFile:
+      fName = tmpFile.name
+    w = Chem.SDWriter(fName)
+    w.SetProps(ms[0].GetPropNames())
+    for m in ms:
+      w.write(m)
+    w = None
 
-#     with open(fName, 'r') as txtFile:
-#       txt = txtFile.read()
-#     os.unlink(fName)
-#     self.assertTrue(txt.find('MolFileInfo') == -1)
-#     self.assertTrue(txt.find('MolFileComments') == -1)
+    with open(fName, 'r') as txtFile:
+      txt = txtFile.read()
+    os.unlink(fName)
+    self.assertTrue(txt.find('MolFileInfo') == -1)
+    self.assertTrue(txt.find('MolFileComments') == -1)
 
 #   def test40SmilesRootedAtAtom(self):
 #     """ test the rootAtAtom functionality
@@ -4728,20 +4728,21 @@ mol-4,CCOC
 #       self.assertTrue("RDKIT:" in details)
 #       self.assertTrue(__version__ in details)
 
-#   def testGetSDText(self):
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'NCI_aids_few.sdf')
-#     #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
-#     sdSup = Chem.SDMolSupplier(fileN)
-#     for m in sdSup:
-#       sdt = Chem.SDWriter.GetText(m)
-#       ts = Chem.SDMolSupplier()
-#       ts.SetData(sdt)
-#       nm = next(ts)
-#       self.assertEqual(Chem.MolToSmiles(m, True), Chem.MolToSmiles(nm, True))
-#       for pn in m.GetPropNames():
-#         self.assertTrue(nm.HasProp(pn))
-#         self.assertEqual(m.GetProp(pn), nm.GetProp(pn))
+  def testGetSDText(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.sdf')
+    #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
+    sdSup = Chem.SDMolSupplier(fileN)
+    for m in sdSup:
+      sdt = Chem.SDWriter.GetText(m)
+      ts = Chem.SDMolSupplier()
+      ts.SetData(sdt)
+      nm = next(ts)
+      self.assertEqual(Chem.MolToSmiles(m, True), Chem.MolToSmiles(nm, True))
+      for pn in m.GetPropNames():
+        self.assertTrue(nm.HasProp(pn))
+        self.assertEqual(m.GetProp(pn), nm.GetProp(pn))
+
 
 #   def testUnfoldedRDKFingerprint(self):
 #     from rdkit.Chem import AllChem

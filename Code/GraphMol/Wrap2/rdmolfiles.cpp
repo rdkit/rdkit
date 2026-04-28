@@ -859,7 +859,7 @@ void wrap_maesupplier();
 
 // mol writer stuff
 void wrap_smiwriter(nb::module_ &m);
-void wrap_sdwriter();
+void wrap_sdwriter(nb::module_ &m);
 void wrap_tdtwriter();
 void wrap_pdbwriter();
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
@@ -2832,7 +2832,7 @@ NB_MODULE(rdmolfiles, m) {
   //    * MolWriter stuff
   //    *******************************************************/
   wrap_smiwriter(m);
-  //   wrap_sdwriter();
+  wrap_sdwriter(m);
   //   wrap_tdtwriter();
   //   wrap_pdbwriter();
   // #ifdef RDK_BUILD_MAEPARSER_SUPPORT
