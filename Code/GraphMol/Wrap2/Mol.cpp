@@ -51,14 +51,15 @@ nb::bytes MolToBinaryWithProps(const ROMol &self, unsigned int props) {
   nb::bytes retval = nb::bytes(res.c_str(), res.length());
   return retval;
 }
-bool HasSubstructMatchStr(std::string pkl, const ROMol &query,
+bool HasSubstructMatchStr(nb::bytes pkl, const ROMol &query,
                           bool recursionPossible = true,
                           bool useChirality = false,
                           bool useQueryQueryMatches = false) {
   NOGIL gil;
   std::unique_ptr<ROMol> mol;
   try {
-    mol = std::make_unique<ROMol>(pkl);
+    mol = std::make_unique<ROMol>(
+        std::string(static_cast<const char *>(pkl.data()), pkl.size()));
   } catch (...) {
     mol = nullptr;
   }

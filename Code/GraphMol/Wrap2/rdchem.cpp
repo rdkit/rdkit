@@ -104,6 +104,18 @@ NB_MODULE(rdchem, m) {
   // RegisterListConverter<RDKit::CONFORMER_SPTR>();
   // rdkit_import_array();
   m.def("tossit", &RDKit::tossit);
+  nb::exception<MolSanitizeException>(m, "MolSanitizeException",
+                                      PyExc_ValueError);
+  // FIX: we should have inheritance here, but I haven't figured out how to do
+  // that in nanobind yet
+  nb::exception<AtomSanitizeException>(m, "AtomSanitizeException",
+                                       PyExc_ValueError);
+  nb::exception<AtomValenceException>(m, "AtomValenceException",
+                                      PyExc_ValueError);
+  nb::exception<AtomKekulizeException>(m, "AtomKekulizeException",
+                                       PyExc_ValueError);
+  nb::exception<KekulizeException>(m, "KekulizeException", PyExc_ValueError);
+
 #if 0
   // this is one of those parts where I think I wish that I knew how to do
   // template meta-programming
@@ -225,18 +237,4 @@ NB_MODULE(rdchem, m) {
   wrap_molbundle(m);
   wrap_sgroup(m);
   wrap_chirality(m);
-
-  //*********************************************
-  //
-  //  Functions
-  //
-  //*********************************************
-  m.def(
-      "MolFromSmiles",
-      [](const std::string &smiles) {
-        auto molp = v2::SmilesParse::MolFromSmiles(smiles);
-        std::unique_ptr<ROMol> molp2(molp.release());
-        return molp2;
-      },
-      "smiles"_a, "Constructs a molecule from a SMILES string");
 }

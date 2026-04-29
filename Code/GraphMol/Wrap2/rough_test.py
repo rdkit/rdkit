@@ -655,8 +655,8 @@ class TestCase(unittest.TestCase):
   def test18Paths(self):
 
     m = Chem.MolFromSmiles("C1CC2C1CC2")
-    #self.assertTrue(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7)
-    #print(Chem.FindAllPathsOfLengthN(m,3,useBonds=0))
+    #self.assertTrue(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=True))==7)
+    #print(Chem.FindAllPathsOfLengthN(m,3,useBonds=False))
     self.assertTrue(
       len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=True)) == 10,
       Chem.FindAllPathsOfLengthN(m, 2, useBonds=True))
@@ -1341,703 +1341,703 @@ mol-4,CCOC
         for id in chgs192.keys():
           self.assertTrue(mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id])
 
-#   def test30Issues109and110(self):
-#     """ issues 110 and 109 were both related to handling of explicit Hs in
-#        SMILES input.
-
-#     """
-#     m1 = Chem.MolFromSmiles('N12[CH](SC(C)(C)[CH]1C(O)=O)[CH](C2=O)NC(=O)[CH](N)c3ccccc3')
-#     self.assertTrue(m1.GetNumAtoms() == 24)
-#     m2 = Chem.MolFromSmiles(
-#       'C1C=C([CH](N)C(=O)N[C]2([H])[C]3([H])SC(C)(C)[CH](C(=O)O)N3C(=O)2)C=CC=1')
-#     self.assertTrue(m2.GetNumAtoms() == 24)
-
-#     smi1 = Chem.MolToSmiles(m1)
-#     smi2 = Chem.MolToSmiles(m2)
-#     self.assertTrue(smi1 == smi2)
-
-#     m1 = Chem.MolFromSmiles('[H]CCl')
-#     self.assertTrue(m1.GetNumAtoms() == 2)
-#     self.assertTrue(m1.GetAtomWithIdx(0).GetNumExplicitHs() == 1)
-#     m1 = Chem.MolFromSmiles('[H][CH2]Cl')
-#     self.assertTrue(m1.GetNumAtoms() == 2)
-#     self.assertTrue(m1.GetAtomWithIdx(0).GetNumExplicitHs() == 3)
-#     m2 = Chem.AddHs(m1)
-#     self.assertTrue(m2.GetNumAtoms() == 5)
-#     m2 = Chem.RemoveHs(m2)
-#     self.assertTrue(m2.GetNumAtoms() == 2)
-
-#   def test31ChiralitySmiles(self):
-#     m1 = Chem.MolFromSmiles('F[C@](Br)(I)Cl')
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 5)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'F[C@](Cl)(Br)I', Chem.MolToSmiles(m1, 1))
-
-#     m1 = Chem.MolFromSmiles('CC1C[C@@]1(Cl)F')
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 6)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'CC1C[C@]1(F)Cl', Chem.MolToSmiles(m1, 1))
-
-#     m1 = Chem.MolFromSmiles('CC1C[C@]1(Cl)F')
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 6)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'CC1C[C@@]1(F)Cl', Chem.MolToSmiles(m1, 1))
-
-#   def test31aChiralitySubstructs(self):
-#     m1 = Chem.MolFromSmiles('CC1C[C@@]1(Cl)F')
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 6)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'CC1C[C@]1(F)Cl', Chem.MolToSmiles(m1, 1))
-
-#     m2 = Chem.MolFromSmiles('CC1C[C@]1(Cl)F')
-#     self.assertTrue(m2 is not None)
-#     self.assertTrue(m2.GetNumAtoms() == 6)
-#     self.assertTrue(Chem.MolToSmiles(m2, 1) == 'CC1C[C@@]1(F)Cl', Chem.MolToSmiles(m2, 1))
-
-#     self.assertTrue(m1.HasSubstructMatch(m1))
-#     self.assertTrue(m1.HasSubstructMatch(m2))
-#     self.assertTrue(m1.HasSubstructMatch(m1, useChirality=True))
-#     self.assertTrue(not m1.HasSubstructMatch(m2, useChirality=True))
-
-#   def _test32MolFilesWithChirality(self):
-#     inD = """chiral1.mol
-#   ChemDraw10160313232D
-
-#   5  4  0  0  0  0  0  0  0  0999 V2000
-#     0.0553    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.0553   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.7697   -0.6188    0.0000 I   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.6592   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.7697   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   2  3  1  0
-#   2  4  1  1
-#   2  5  1  0
-# M  END
-# """
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 5)
-#     smi = Chem.MolToSmiles(m1)
-#     self.assertTrue(smi == 'F[C@](Cl)(Br)I', smi)
-
-#     inD = """chiral2.cdxml
-#   ChemDraw10160314052D
-
-#   5  4  0  0  0  0  0  0  0  0999 V2000
-#     0.0553    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.0553   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.7697   -0.6188    0.0000 I   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.6592   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.7697   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   2  3  1  0
-#   2  4  1  6
-#   2  5  1  0
-# M  END
-# """
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 5)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'F[C@@](Cl)(Br)I')
-
-#     inD = """chiral1.mol
-#   ChemDraw10160313232D
-
-#   5  4  0  0  0  0  0  0  0  0999 V2000
-#     0.0553    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.0553   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.7697   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.6592   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-#     0.7697   -0.6188    0.0000 I   0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   2  3  1  0
-#   2  4  1  1
-#   2  5  1  0
-# M  END
-# """
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 5)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'F[C@](Cl)(Br)I')
-
-#     inD = """chiral1.mol
-#   ChemDraw10160313232D
-
-#   5  4  0  0  0  0  0  0  0  0999 V2000
-#     0.0553   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.7697   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.6592   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-#     0.7697   -0.6188    0.0000 I   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.0553    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   1  3  1  1
-#   1  4  1  0
-#   1  5  1  0
-# M  END
-# """
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 5)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'F[C@](Cl)(Br)I')
-
-#     inD = """chiral3.mol
-#   ChemDraw10160314362D
-
-#   4  3  0  0  0  0  0  0  0  0999 V2000
-#     0.4125    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.4125   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.3020   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.4125   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   2  3  1  1
-#   2  4  1  0
-# M  END
-
-# """
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 4)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'F[C@H](Cl)Br')
-
-#     inD = """chiral4.mol
-#   ChemDraw10160314362D
-
-#   4  3  0  0  0  0  0  0  0  0999 V2000
-#     0.4125    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.4125   -0.2062    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.3020   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.4125   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   2  3  1  1
-#   2  4  1  0
-# M  END
-
-# """
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 4)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'FN(Cl)Br')
-
-#     inD = """chiral5.mol
-#   ChemDraw10160314362D
-
-#   4  3  0  0  0  0  0  0  0  0999 V2000
-#     0.4125    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.4125   -0.2062    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.3020   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.4125   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   2  3  1  1
-#   2  4  1  0
-# M  CHG  1   2   1
-# M  END
-
-# """
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 4)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'F[N@H+](Cl)Br')
-
-#     inD = """Case 10-14-3
-#   ChemDraw10140308512D
-
-#   4  3  0  0  0  0  0  0  0  0999 V2000
-#    -0.8250   -0.4125    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.0000   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.8250   -0.4125    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-#     0.0000    0.4125    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   2  3  1  0
-#   2  4  1  1
-# M  END
-# """
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 4)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'F[C@H](Cl)Br')
-
-#     inD = """Case 10-14-4
-#   ChemDraw10140308512D
-
-#   4  3  0  0  0  0  0  0  0  0999 V2000
-#    -0.8250   -0.4125    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.0000   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.8250   -0.4125    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-#     0.0000    0.4125    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   2  3  1  1
-#   2  4  1  0
-# M  END
-
-# """
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 4)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'F[C@H](Cl)Br')
-
-#     inD = """chiral4.mol
-#   ChemDraw10160315172D
-
-#   6  6  0  0  0  0  0  0  0  0999 V2000
-#    -0.4422    0.1402    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.4422   -0.6848    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.2723   -0.2723    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.8547    0.8547    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.6848    0.4422    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.8547   -0.8547    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   2  3  1  0
-#   3  1  1  0
-#   1  4  1  0
-#   3  5  1  1
-#   3  6  1  0
-# M  END
-# """
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 6)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'CC1C[C@@]1(F)Cl', Chem.MolToSmiles(m1, 1))
-
-#     inD = """chiral4.mol
-#   ChemDraw10160315172D
-
-#   6  6  0  0  0  0  0  0  0  0999 V2000
-#    -0.4422    0.1402    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.4422   -0.6848    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.2723   -0.2723    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.8547    0.8547    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.6848    0.4422    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.8547   -0.8547    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   2  3  1  0
-#   3  1  1  0
-#   1  4  1  0
-#   3  5  1  6
-#   3  6  1  0
-# M  END
-# """
-#     m1 = Chem.MolFromMolBlock(inD)
-#     self.assertTrue(m1 is not None)
-#     self.assertTrue(m1.GetNumAtoms() == 6)
-#     self.assertTrue(Chem.MolToSmiles(m1, 1) == 'CC1C[C@]1(F)Cl', Chem.MolToSmiles(m1, 1))
-
-#   def test33Issue65(self):
-#     """ issue 65 relates to handling of [H] in SMARTS
-
-#     """
-#     m1 = Chem.MolFromSmiles('OC(O)(O)O')
-#     m2 = Chem.MolFromSmiles('OC(O)O')
-#     m3 = Chem.MolFromSmiles('OCO')
-#     q1 = Chem.MolFromSmarts('OC[H]', 1)
-#     q2 = Chem.MolFromSmarts('O[C;H1]', 1)
-#     q3 = Chem.MolFromSmarts('O[C;H1][H]', 1)
-
-#     self.assertTrue(not m1.HasSubstructMatch(q1))
-#     self.assertTrue(not m1.HasSubstructMatch(q2))
-#     self.assertTrue(not m1.HasSubstructMatch(q3))
-
-#     self.assertTrue(m2.HasSubstructMatch(q1))
-#     self.assertTrue(m2.HasSubstructMatch(q2))
-#     self.assertTrue(m2.HasSubstructMatch(q3))
-
-#     self.assertTrue(m3.HasSubstructMatch(q1))
-#     self.assertTrue(not m3.HasSubstructMatch(q2))
-#     self.assertTrue(not m3.HasSubstructMatch(q3))
-
-#     m1H = Chem.AddHs(m1)
-#     m2H = Chem.AddHs(m2)
-#     m3H = Chem.AddHs(m3)
-#     q1 = Chem.MolFromSmarts('OC[H]')
-#     q2 = Chem.MolFromSmarts('O[C;H1]')
-#     q3 = Chem.MolFromSmarts('O[C;H1][H]')
-
-#     self.assertTrue(not m1H.HasSubstructMatch(q1))
-#     self.assertTrue(not m1H.HasSubstructMatch(q2))
-#     self.assertTrue(not m1H.HasSubstructMatch(q3))
-
-#     #m2H.Debug()
-#     self.assertTrue(m2H.HasSubstructMatch(q1))
-#     self.assertTrue(m2H.HasSubstructMatch(q2))
-#     self.assertTrue(m2H.HasSubstructMatch(q3))
-
-#     self.assertTrue(m3H.HasSubstructMatch(q1))
-#     self.assertTrue(not m3H.HasSubstructMatch(q2))
-#     self.assertTrue(not m3H.HasSubstructMatch(q3))
-
-#   def test34Issue124(self):
-#     """ issue 124 relates to calculation of the distance matrix
-
-#     """
-#     m = Chem.MolFromSmiles('CC=C')
-#     d = Chem.GetDistanceMatrix(m, 0)
-#     self.assertTrue(feq(d[0, 1], 1.0))
-#     self.assertTrue(feq(d[0, 2], 2.0))
-#     # force an update:
-#     d = Chem.GetDistanceMatrix(m, 1, 0, 1)
-#     self.assertTrue(feq(d[0, 1], 1.0))
-#     self.assertTrue(feq(d[0, 2], 1.5))
-
-#   def test35ChiralityPerception(self):
-#     """ Test perception of chirality and CIP encoding
-#     """
-#     m = Chem.MolFromSmiles('F[C@]([C@])(Cl)Br')
-#     Chem.AssignStereochemistry(m, 1)
-#     if Chem.GetUseLegacyStereoPerception():
-#       self.assertTrue(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
-#       self.assertFalse(m.GetAtomWithIdx(2).HasProp('_CIPCode'))
-#     Chem.RemoveStereochemistry(m)
-#     self.assertFalse(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
-
-#     m = Chem.MolFromSmiles('F[C@H](C)C')
-#     Chem.AssignStereochemistry(m, 1)
-#     self.assertTrue(m.GetAtomWithIdx(1).GetChiralTag() == Chem.ChiralType.CHI_UNSPECIFIED)
-#     self.assertFalse(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
-
-#     m = Chem.MolFromSmiles('F\\C=C/Cl')
-#     self.assertTrue(m.GetBondWithIdx(0).GetStereo() == Chem.BondStereo.STEREONONE)
-#     if Chem.GetUseLegacyStereoPerception():
-#       self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREOZ)
-#     else:
-#       self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREOCIS)
-#     atoms = m.GetBondWithIdx(1).GetStereoAtoms()
-#     self.assertTrue(0 in atoms)
-#     self.assertTrue(3 in atoms)
-#     self.assertTrue(m.GetBondWithIdx(2).GetStereo() == Chem.BondStereo.STEREONONE)
-#     Chem.RemoveStereochemistry(m)
-#     self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREONONE)
-
-#     m = Chem.MolFromSmiles('F\\C=CCl')
-#     self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREONONE)
-
-#   def checkDefaultBondProperties(self, m):
-#     for bond in m.GetBonds():
-#       self.assertIn(bond.GetBondType(), [Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
-#       self.assertEqual(bond.GetBondDir(), Chem.BondDir.NONE)
-#       self.assertEqual(list(bond.GetStereoAtoms()), [])
-#       self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREONONE)
-
-#   def assertHasDoubleBondStereo(self, smi):
-#     m = Chem.MolFromSmiles(smi)
-
-#     self.checkDefaultBondProperties(m)
-
-#     Chem.FindPotentialStereoBonds(m)
-
-#     for bond in m.GetBonds():
-#       self.assertIn(bond.GetBondType(), [Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
-#       self.assertEqual(bond.GetBondDir(), Chem.BondDir.NONE)
-
-#       if bond.GetBondType() == Chem.BondType.DOUBLE:
-#         self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREOANY)
-#         self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
-#       else:
-#         self.assertEqual(list(bond.GetStereoAtoms()), [])
-#         self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREONONE)
-
-#   def testFindPotentialStereoBonds(self):
-#     self.assertHasDoubleBondStereo("FC=CF")
-#     self.assertHasDoubleBondStereo("FC(Cl)=C(Br)I")
-#     self.assertHasDoubleBondStereo("FC=CC=CC=CCl")
-#     self.assertHasDoubleBondStereo("C1CCCCC1C=CC1CCCCC1")
-
-#   def assertDoesNotHaveDoubleBondStereo(self, smi):
-#     m = Chem.MolFromSmiles(smi)
-#     self.checkDefaultBondProperties(m)
-#     Chem.FindPotentialStereoBonds(m)
-#     self.checkDefaultBondProperties(m)
-
-#   def testFindPotentialStereoBondsShouldNotFindThisDoubleBondAsStereo(self):
-#     self.assertDoesNotHaveDoubleBondStereo("FC(F)=CF")
-#     self.assertDoesNotHaveDoubleBondStereo("C=C")
-#     self.assertDoesNotHaveDoubleBondStereo("C1CCCCC1C(C1CCCCC1)=CC1CCCCC1")
-
-#   def assertDoubleBondStereo(self, smi, stereo):
-#     mol = Chem.MolFromSmiles(smi)
-
-#     bond = mol.GetBondWithIdx(1)
-#     self.assertEqual(bond.GetBondType(), Chem.BondType.DOUBLE)
-#     self.assertEqual(bond.GetStereo(), stereo)
-#     self.assertEqual(list(bond.GetStereoAtoms()), [0, 3])
-
-#   def allStereoBonds(self, bonds):
-#     for bond in bonds:
-#       self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
-
-#   def testBondSetStereo(self):
-#     for testAssignStereo in [False, True]:
-#       mol = Chem.MolFromSmiles("FC=CF")
-#       Chem.FindPotentialStereoBonds(mol)
-
-#       for bond in mol.GetBonds():
-#         if (bond.GetBondType() == Chem.BondType.DOUBLE
-#             and bond.GetStereo() == Chem.BondStereo.STEREOANY):
-#           break
-#       self.assertEqual(bond.GetBondType(), Chem.BondType.DOUBLE)
-#       self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREOANY)
-#       self.assertEqual(list(bond.GetStereoAtoms()), [0, 3])
-
-#       bond.SetStereo(Chem.BondStereo.STEREOTRANS)
-#       self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREOTRANS)
-#       if testAssignStereo:  # should be invariant of Chem.AssignStereochemistry being called
-#         Chem.AssignStereochemistry(mol, force=True)
-#       smi = Chem.MolToSmiles(mol, isomericSmiles=True)
-#       self.allStereoBonds([bond])
-#       self.assertEqual(smi, "F/C=C/F")
-#       if Chem.GetUseLegacyStereoPerception():
-#         self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOE)
-#       else:
-#         self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOTRANS)
-
-#       bond.SetStereo(Chem.BondStereo.STEREOCIS)
-#       self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREOCIS)
-#       if testAssignStereo:
-#         Chem.AssignStereochemistry(mol, force=True)
-#       smi = Chem.MolToSmiles(mol, isomericSmiles=True)
-#       self.allStereoBonds([bond])
-#       self.assertEqual(smi, r"F/C=C\F")
-#       if Chem.GetUseLegacyStereoPerception():
-#         self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOZ)
-#       else:
-#         self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOCIS)
-
-#   def recursive_enumerate_stereo_bonds(self, mol, done_bonds, bonds):
-#     if not bonds:
-#       yield done_bonds, Chem.Mol(mol)
-#       return
-
-#     bond = bonds[0]
-#     child_bonds = bonds[1:]
-#     self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
-#     bond.SetStereo(Chem.BondStereo.STEREOTRANS)
-#     for isomer in self.recursive_enumerate_stereo_bonds(mol,
-#                                                         done_bonds + [Chem.BondStereo.STEREOTRANS],
-#                                                         child_bonds):
-#       yield isomer
-
-#     self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
-#     bond.SetStereo(Chem.BondStereo.STEREOCIS)
-#     for isomer in self.recursive_enumerate_stereo_bonds(mol,
-#                                                         done_bonds + [Chem.BondStereo.STEREOCIS],
-#                                                         child_bonds):
-#       yield isomer
-
-#   def testBondSetStereoDifficultCase(self):
-#     origVal = Chem.GetUseLegacyStereoPerception()
-#     Chem.SetUseLegacyStereoPerception(False)
-
-#     unspec_smiles = "CCC=CC(CO)=C(C)CC"
-#     mol = Chem.MolFromSmiles(unspec_smiles)
-#     Chem.FindPotentialStereoBonds(mol)
-
-#     stereo_bonds = []
-#     for bond in mol.GetBonds():
-#       if bond.GetStereo() == Chem.BondStereo.STEREOANY:
-#         stereo_bonds.append(bond)
-
-#     isomers = set()
-#     for bond_stereo, isomer in self.recursive_enumerate_stereo_bonds(mol, [], stereo_bonds):
-#       self.allStereoBonds(stereo_bonds)
-#       isosmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
-#       self.allStereoBonds(stereo_bonds)
-
-#       self.assertNotIn(isosmi, isomers)
-#       isomers.add(isosmi)
-
-#       isomol = Chem.MolFromSmiles(isosmi)
-#       round_trip_stereo = [
-#         b.GetStereo() for b in isomol.GetBonds() if b.GetStereo() != Chem.BondStereo.STEREONONE
-#       ]
-
-#       self.assertEqual(bond_stereo, round_trip_stereo)
-
-#     self.assertEqual(len(isomers), 4)
-#     Chem.SetUseLegacyStereoPerception(origVal)
-
-#   def getNumUnspecifiedBondStereo(self, smi):
-#     mol = Chem.MolFromSmiles(smi)
-#     Chem.FindPotentialStereoBonds(mol)
-
-#     count = 0
-#     for bond in mol.GetBonds():
-#       if bond.GetStereo() != Chem.BondStereo.STEREONONE:
-#         print(bond.GetIdx(), bond.GetStereo())
-#       if bond.GetStereo() == Chem.BondStereo.STEREOANY:
-#         count += 1
-
-#     return count
-
-#   def testBondSetStereoReallyDifficultCase(self):
-#     # this one is much trickier because a double bond can gain and
-#     # lose it's stereochemistry based upon whether 2 other double
-#     # bonds have the same or different stereo chemistry.
-#     Chem.SetUseLegacyStereoPerception(True)
-#     unspec_smiles = "CCC=CC(C=CCC)=C(CO)CC"
-#     mol = Chem.MolFromSmiles(unspec_smiles)
-#     Chem.FindPotentialStereoBonds(mol)
-
-#     stereo_bonds = []
-#     for bond in mol.GetBonds():
-#       if bond.GetStereo() == Chem.BondStereo.STEREOANY:
-#         stereo_bonds.append(bond)
-
-#     self.assertEqual(len(stereo_bonds), 2)
-
-#     isomers = set()
-#     for bond_stereo, isomer in self.recursive_enumerate_stereo_bonds(mol, [], stereo_bonds):
-#       isosmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
-#       isomers.add(isosmi)
-#       print(isosmi)
-
-#     self.assertEqual(len(isomers), 3)
-
-#     # one of these then gains a new stereo bond due to the
-#     # introduction of a new symmetry
-#     counts = {}
-#     for isosmi in isomers:
-#       print(isosmi)
-#       num_unspecified = self.getNumUnspecifiedBondStereo(isosmi)
-#       counts[num_unspecified] = counts.get(num_unspecified, 0) + 1
-
-#     # 2 of the isomers don't have any unspecified bond stereo centers
-#     # left, 1 does
-#     self.assertEqual(counts, {0: 2, 1: 1})
-
-#   def assertBondSetStereoIsAlwaysEquivalent(self, all_smiles, desired_stereo, bond_idx):
-#     refSmiles = None
-#     for smi in all_smiles:
-#       mol = Chem.MolFromSmiles(smi)
-
-#       doubleBond = None
-#       for bond in mol.GetBonds():
-#         if bond.GetBondType() == Chem.BondType.DOUBLE:
-#           doubleBond = bond
-
-#       self.assertTrue(doubleBond is not None)
-
-#       Chem.FindPotentialStereoBonds(mol)
-#       doubleBond.SetStereo(desired_stereo)
-
-#       isosmi = Chem.MolToSmiles(mol, isomericSmiles=True)
-
-#       if refSmiles is None:
-#         refSmiles = isosmi
-
-#       self.assertEqual(refSmiles, isosmi)
-
-#   def testBondSetStereoAllHalogens(self):
-#     # can't get much more brutal than this test
-#     from itertools import combinations, permutations
-#     halogens = ['F', 'Cl', 'Br', 'I']
-
-#     # binary double bond stereo
-#     for unique_set in combinations(halogens, 2):
-#       all_smiles = []
-#       for fmt in ['%sC=C%s', 'C(%s)=C%s']:
-#         for ordering in permutations(unique_set):
-#           all_smiles.append(fmt % ordering)
-
-#       #print(fmt, all_smiles)
-#       for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
-#         self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
-
-#     # tertiary double bond stereo
-#     for unique_set in combinations(halogens, 3):
-#       for mono_side in unique_set:
-#         halogens_left = list(unique_set)
-#         halogens_left.remove(mono_side)
-#         for binary_side in combinations(halogens_left, 2):
-#           all_smiles = []
-
-#           for binary_side_permutation in permutations(binary_side):
-#             all_smiles.append('%sC=C(%s)%s' % ((mono_side, ) + binary_side_permutation))
-#             all_smiles.append('C(%s)=C(%s)%s' % ((mono_side, ) + binary_side_permutation))
-
-#             all_smiles.append('%sC(%s)=C%s' % (binary_side_permutation + (mono_side, )))
-#             all_smiles.append('C(%s)(%s)=C%s' % (binary_side_permutation + (mono_side, )))
-
-#           #print(all_smiles)
-#           for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
-#             self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
-
-#     # quaternary double bond stereo
-#     for unique_ordering in permutations(halogens):
-#       left_side = unique_ordering[:2]
-#       rght_side = unique_ordering[2:]
-
-#       all_smiles = []
-#       for left_side_permutation in permutations(left_side):
-#         for rght_side_permutation in permutations(rght_side):
-#           for smifmt in ['%sC(%s)=C(%s)%s', 'C(%s)(%s)=C(%s)%s']:
-#             all_smiles.append(smifmt % (left_side_permutation + rght_side_permutation))
-
-#       #print(all_smiles)
-#       for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
-#         self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
-
-#   def testBondSetStereoAtoms(self):
-#     # use this difficult molecule that only generates 4 isomers, but
-#     # assume all double bonds are stereo!
-#     unspec_smiles = "CCC=CC(C=CCC)=C(CO)CC"
-#     mol = Chem.MolFromSmiles(unspec_smiles)
-
-#     def getNbr(atom, exclude):
-#       for nbr in atom.GetNeighbors():
-#         if nbr.GetIdx() not in exclude:
-#           return nbr
-#       raise ValueError("No neighbor found!")
-
-#     double_bonds = []
-#     for bond in mol.GetBonds():
-#       if bond.GetBondType() == 2:
-#         double_bonds.append(bond)
-
-#         exclude = {bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()}
-#         bgnNbr = getNbr(bond.GetBeginAtom(), exclude)
-#         endNbr = getNbr(bond.GetEndAtom(), exclude)
-
-#         bond.SetStereoAtoms(bgnNbr.GetIdx(), endNbr.GetIdx())
-
-#     self.assertEqual(len(double_bonds), 3)
-
-#     import itertools
-#     stereos = [Chem.BondStereo.STEREOE, Chem.BondStereo.STEREOZ]
-#     isomers = set()
-#     for stereo_config in itertools.product(stereos, repeat=len(double_bonds)):
-#       for bond, stereo in zip(double_bonds, stereo_config):
-#         bond.SetStereo(stereo)
-#       smi = Chem.MolToSmiles(mol, True)
-#       isomers.add(smi)
-
-#     # the dependent double bond stereo isn't picked up by this, should it?
-#     self.assertEqual(len(isomers), 6)
-
-#     # round tripping them through one more time does pick up the dependency, so meh?
-#     round_trip_isomers = set()
-#     for smi in isomers:
-#       isosmi = Chem.MolToSmiles(Chem.MolFromSmiles(smi), True)
-#       round_trip_isomers.add(isosmi)
-
-#     self.assertEqual(len(round_trip_isomers), 4)
-
-#   def test36SubstructMatchStr(self):
-#     """ test the _SubstructMatchStr function """
-#     query = Chem.MolFromSmarts('[n,p]1ccccc1')
-#     self.assertTrue(query)
-#     mol = Chem.MolFromSmiles('N1=CC=CC=C1')
-#     self.assertTrue(mol.HasSubstructMatch(query))
-#     self.assertTrue(Chem._HasSubstructMatchStr(mol.ToBinary(), query))
-#     mol = Chem.MolFromSmiles('S1=CC=CC=C1')
-#     self.assertTrue(not Chem._HasSubstructMatchStr(mol.ToBinary(), query))
-#     self.assertTrue(not mol.HasSubstructMatch(query))
-#     mol = Chem.MolFromSmiles('P1=CC=CC=C1')
-#     self.assertTrue(mol.HasSubstructMatch(query))
-#     self.assertTrue(Chem._HasSubstructMatchStr(mol.ToBinary(), query))
-
-#   def test37SanitException(self):
-#     mol = Chem.MolFromSmiles('CC(C)(C)(C)C', 0)
-#     self.assertTrue(mol)
-#     self.assertRaises(ValueError, lambda: Chem.SanitizeMol(mol))
+  def test30Issues109and110(self):
+    """ issues 110 and 109 were both related to handling of explicit Hs in
+       SMILES input.
+
+    """
+    m1 = Chem.MolFromSmiles('N12[CH](SC(C)(C)[CH]1C(O)=O)[CH](C2=O)NC(=O)[CH](N)c3ccccc3')
+    self.assertTrue(m1.GetNumAtoms() == 24)
+    m2 = Chem.MolFromSmiles(
+      'C1C=C([CH](N)C(=O)N[C]2([H])[C]3([H])SC(C)(C)[CH](C(=O)O)N3C(=O)2)C=CC=1')
+    self.assertTrue(m2.GetNumAtoms() == 24)
+
+    smi1 = Chem.MolToSmiles(m1)
+    smi2 = Chem.MolToSmiles(m2)
+    self.assertTrue(smi1 == smi2)
+
+    m1 = Chem.MolFromSmiles('[H]CCl')
+    self.assertTrue(m1.GetNumAtoms() == 2)
+    self.assertTrue(m1.GetAtomWithIdx(0).GetNumExplicitHs() == 1)
+    m1 = Chem.MolFromSmiles('[H][CH2]Cl')
+    self.assertTrue(m1.GetNumAtoms() == 2)
+    self.assertTrue(m1.GetAtomWithIdx(0).GetNumExplicitHs() == 3)
+    m2 = Chem.AddHs(m1)
+    self.assertTrue(m2.GetNumAtoms() == 5)
+    m2 = Chem.RemoveHs(m2)
+    self.assertTrue(m2.GetNumAtoms() == 2)
+
+  def test31ChiralitySmiles(self):
+    m1 = Chem.MolFromSmiles('F[C@](Br)(I)Cl')
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 5)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'F[C@](Cl)(Br)I', Chem.MolToSmiles(m1, True))
+
+    m1 = Chem.MolFromSmiles('CC1C[C@@]1(Cl)F')
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 6)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'CC1C[C@]1(F)Cl', Chem.MolToSmiles(m1, True))
+
+    m1 = Chem.MolFromSmiles('CC1C[C@]1(Cl)F')
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 6)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'CC1C[C@@]1(F)Cl', Chem.MolToSmiles(m1, True))
+
+  def test31aChiralitySubstructs(self):
+    m1 = Chem.MolFromSmiles('CC1C[C@@]1(Cl)F')
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 6)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'CC1C[C@]1(F)Cl', Chem.MolToSmiles(m1, True))
+
+    m2 = Chem.MolFromSmiles('CC1C[C@]1(Cl)F')
+    self.assertTrue(m2 is not None)
+    self.assertTrue(m2.GetNumAtoms() == 6)
+    self.assertTrue(Chem.MolToSmiles(m2, True) == 'CC1C[C@@]1(F)Cl', Chem.MolToSmiles(m2, True))
+
+    self.assertTrue(m1.HasSubstructMatch(m1))
+    self.assertTrue(m1.HasSubstructMatch(m2))
+    self.assertTrue(m1.HasSubstructMatch(m1, useChirality=True))
+    self.assertTrue(not m1.HasSubstructMatch(m2, useChirality=True))
+
+  def _test32MolFilesWithChirality(self):
+    inD = """chiral1.mol
+  ChemDraw10160313232D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+    0.0553    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0553   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7697   -0.6188    0.0000 I   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6592   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7697   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  2  4  1  1
+  2  5  1  0
+M  END
+"""
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 5)
+    smi = Chem.MolToSmiles(m1)
+    self.assertTrue(smi == 'F[C@](Cl)(Br)I', smi)
+
+    inD = """chiral2.cdxml
+  ChemDraw10160314052D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+    0.0553    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0553   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7697   -0.6188    0.0000 I   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6592   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7697   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  2  4  1  6
+  2  5  1  0
+M  END
+"""
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 5)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'F[C@@](Cl)(Br)I')
+
+    inD = """chiral1.mol
+  ChemDraw10160313232D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+    0.0553    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0553   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7697   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6592   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+    0.7697   -0.6188    0.0000 I   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  2  4  1  1
+  2  5  1  0
+M  END
+"""
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 5)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'F[C@](Cl)(Br)I')
+
+    inD = """chiral1.mol
+  ChemDraw10160313232D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+    0.0553   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7697   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6592   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+    0.7697   -0.6188    0.0000 I   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0553    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  1
+  1  4  1  0
+  1  5  1  0
+M  END
+"""
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 5)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'F[C@](Cl)(Br)I')
+
+    inD = """chiral3.mol
+  ChemDraw10160314362D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.4125    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4125   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3020   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4125   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  1
+  2  4  1  0
+M  END
+
+"""
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 4)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'F[C@H](Cl)Br')
+
+    inD = """chiral4.mol
+  ChemDraw10160314362D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.4125    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4125   -0.2062    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3020   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4125   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  1
+  2  4  1  0
+M  END
+
+"""
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 4)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'FN(Cl)Br')
+
+    inD = """chiral5.mol
+  ChemDraw10160314362D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.4125    0.6188    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4125   -0.2062    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3020   -0.6188    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4125   -0.2062    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  1
+  2  4  1  0
+M  CHG  1   2   1
+M  END
+
+"""
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 4)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'F[N@H+](Cl)Br')
+
+    inD = """Case 10-14-3
+  ChemDraw10140308512D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.8250   -0.4125    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8250   -0.4125    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.4125    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  2  4  1  1
+M  END
+"""
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 4)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'F[C@H](Cl)Br')
+
+    inD = """Case 10-14-4
+  ChemDraw10140308512D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.8250   -0.4125    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8250   -0.4125    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.4125    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  1
+  2  4  1  0
+M  END
+
+"""
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 4)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'F[C@H](Cl)Br')
+
+    inD = """chiral4.mol
+  ChemDraw10160315172D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.4422    0.1402    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4422   -0.6848    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2723   -0.2723    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8547    0.8547    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6848    0.4422    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8547   -0.8547    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  1  1  0
+  1  4  1  0
+  3  5  1  1
+  3  6  1  0
+M  END
+"""
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 6)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'CC1C[C@@]1(F)Cl', Chem.MolToSmiles(m1, True))
+
+    inD = """chiral4.mol
+  ChemDraw10160315172D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.4422    0.1402    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4422   -0.6848    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2723   -0.2723    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8547    0.8547    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6848    0.4422    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8547   -0.8547    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  1  1  0
+  1  4  1  0
+  3  5  1  6
+  3  6  1  0
+M  END
+"""
+    m1 = Chem.MolFromMolBlock(inD)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 6)
+    self.assertTrue(Chem.MolToSmiles(m1, True) == 'CC1C[C@]1(F)Cl', Chem.MolToSmiles(m1, True))
+
+  def test33Issue65(self):
+    """ issue 65 relates to handling of [H] in SMARTS
+
+    """
+    m1 = Chem.MolFromSmiles('OC(O)(O)O')
+    m2 = Chem.MolFromSmiles('OC(O)O')
+    m3 = Chem.MolFromSmiles('OCO')
+    q1 = Chem.MolFromSmarts('OC[H]', True)
+    q2 = Chem.MolFromSmarts('O[C;H1]', True)
+    q3 = Chem.MolFromSmarts('O[C;H1][H]', True)
+
+    self.assertTrue(not m1.HasSubstructMatch(q1))
+    self.assertTrue(not m1.HasSubstructMatch(q2))
+    self.assertTrue(not m1.HasSubstructMatch(q3))
+
+    self.assertTrue(m2.HasSubstructMatch(q1))
+    self.assertTrue(m2.HasSubstructMatch(q2))
+    self.assertTrue(m2.HasSubstructMatch(q3))
+
+    self.assertTrue(m3.HasSubstructMatch(q1))
+    self.assertTrue(not m3.HasSubstructMatch(q2))
+    self.assertTrue(not m3.HasSubstructMatch(q3))
+
+    m1H = Chem.AddHs(m1)
+    m2H = Chem.AddHs(m2)
+    m3H = Chem.AddHs(m3)
+    q1 = Chem.MolFromSmarts('OC[H]')
+    q2 = Chem.MolFromSmarts('O[C;H1]')
+    q3 = Chem.MolFromSmarts('O[C;H1][H]')
+
+    self.assertTrue(not m1H.HasSubstructMatch(q1))
+    self.assertTrue(not m1H.HasSubstructMatch(q2))
+    self.assertTrue(not m1H.HasSubstructMatch(q3))
+
+    #m2H.Debug()
+    self.assertTrue(m2H.HasSubstructMatch(q1))
+    self.assertTrue(m2H.HasSubstructMatch(q2))
+    self.assertTrue(m2H.HasSubstructMatch(q3))
+
+    self.assertTrue(m3H.HasSubstructMatch(q1))
+    self.assertTrue(not m3H.HasSubstructMatch(q2))
+    self.assertTrue(not m3H.HasSubstructMatch(q3))
+
+  def test34Issue124(self):
+    """ issue 124 relates to calculation of the distance matrix
+
+    """
+    m = Chem.MolFromSmiles('CC=C')
+    d = Chem.GetDistanceMatrix(m, False)
+    self.assertTrue(feq(d[0, 1], 1.0))
+    self.assertTrue(feq(d[0, 2], 2.0))
+    # force an update:
+    d = Chem.GetDistanceMatrix(m, True, False, True)
+    self.assertTrue(feq(d[0, 1], 1.0))
+    self.assertTrue(feq(d[0, 2], 1.5))
+
+  def test35ChiralityPerception(self):
+    """ Test perception of chirality and CIP encoding
+    """
+    m = Chem.MolFromSmiles('F[C@]([C@])(Cl)Br')
+    Chem.AssignStereochemistry(m, True)
+    if Chem.GetUseLegacyStereoPerception():
+      self.assertTrue(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
+      self.assertFalse(m.GetAtomWithIdx(2).HasProp('_CIPCode'))
+    Chem.RemoveStereochemistry(m)
+    self.assertFalse(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
+
+    m = Chem.MolFromSmiles('F[C@H](C)C')
+    Chem.AssignStereochemistry(m, True)
+    self.assertTrue(m.GetAtomWithIdx(1).GetChiralTag() == Chem.ChiralType.CHI_UNSPECIFIED)
+    self.assertFalse(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
+
+    m = Chem.MolFromSmiles('F\\C=C/Cl')
+    self.assertTrue(m.GetBondWithIdx(0).GetStereo() == Chem.BondStereo.STEREONONE)
+    if Chem.GetUseLegacyStereoPerception():
+      self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREOZ)
+    else:
+      self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREOCIS)
+    atoms = m.GetBondWithIdx(1).GetStereoAtoms()
+    self.assertTrue(0 in atoms)
+    self.assertTrue(3 in atoms)
+    self.assertTrue(m.GetBondWithIdx(2).GetStereo() == Chem.BondStereo.STEREONONE)
+    Chem.RemoveStereochemistry(m)
+    self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREONONE)
+
+    m = Chem.MolFromSmiles('F\\C=CCl')
+    self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREONONE)
+
+  def checkDefaultBondProperties(self, m):
+    for bond in m.GetBonds():
+      self.assertIn(bond.GetBondType(), [Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
+      self.assertEqual(bond.GetBondDir(), Chem.BondDir.NONE)
+      self.assertEqual(list(bond.GetStereoAtoms()), [])
+      self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREONONE)
+
+  def assertHasDoubleBondStereo(self, smi):
+    m = Chem.MolFromSmiles(smi)
+
+    self.checkDefaultBondProperties(m)
+
+    Chem.FindPotentialStereoBonds(m)
+
+    for bond in m.GetBonds():
+      self.assertIn(bond.GetBondType(), [Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
+      self.assertEqual(bond.GetBondDir(), Chem.BondDir.NONE)
+
+      if bond.GetBondType() == Chem.BondType.DOUBLE:
+        self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREOANY)
+        self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
+      else:
+        self.assertEqual(list(bond.GetStereoAtoms()), [])
+        self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREONONE)
+
+  def testFindPotentialStereoBonds(self):
+    self.assertHasDoubleBondStereo("FC=CF")
+    self.assertHasDoubleBondStereo("FC(Cl)=C(Br)I")
+    self.assertHasDoubleBondStereo("FC=CC=CC=CCl")
+    self.assertHasDoubleBondStereo("C1CCCCC1C=CC1CCCCC1")
+
+  def assertDoesNotHaveDoubleBondStereo(self, smi):
+    m = Chem.MolFromSmiles(smi)
+    self.checkDefaultBondProperties(m)
+    Chem.FindPotentialStereoBonds(m)
+    self.checkDefaultBondProperties(m)
+
+  def testFindPotentialStereoBondsShouldNotFindThisDoubleBondAsStereo(self):
+    self.assertDoesNotHaveDoubleBondStereo("FC(F)=CF")
+    self.assertDoesNotHaveDoubleBondStereo("C=C")
+    self.assertDoesNotHaveDoubleBondStereo("C1CCCCC1C(C1CCCCC1)=CC1CCCCC1")
+
+  def assertDoubleBondStereo(self, smi, stereo):
+    mol = Chem.MolFromSmiles(smi)
+
+    bond = mol.GetBondWithIdx(1)
+    self.assertEqual(bond.GetBondType(), Chem.BondType.DOUBLE)
+    self.assertEqual(bond.GetStereo(), stereo)
+    self.assertEqual(list(bond.GetStereoAtoms()), [0, 3])
+
+  def allStereoBonds(self, bonds):
+    for bond in bonds:
+      self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
+
+  def testBondSetStereo(self):
+    for testAssignStereo in [False, True]:
+      mol = Chem.MolFromSmiles("FC=CF")
+      Chem.FindPotentialStereoBonds(mol)
+
+      for bond in mol.GetBonds():
+        if (bond.GetBondType() == Chem.BondType.DOUBLE
+            and bond.GetStereo() == Chem.BondStereo.STEREOANY):
+          break
+      self.assertEqual(bond.GetBondType(), Chem.BondType.DOUBLE)
+      self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREOANY)
+      self.assertEqual(list(bond.GetStereoAtoms()), [0, 3])
+
+      bond.SetStereo(Chem.BondStereo.STEREOTRANS)
+      self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREOTRANS)
+      if testAssignStereo:  # should be invariant of Chem.AssignStereochemistry being called
+        Chem.AssignStereochemistry(mol, force=True)
+      smi = Chem.MolToSmiles(mol, isomericSmiles=True)
+      self.allStereoBonds([bond])
+      self.assertEqual(smi, "F/C=C/F")
+      if Chem.GetUseLegacyStereoPerception():
+        self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOE)
+      else:
+        self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOTRANS)
+
+      bond.SetStereo(Chem.BondStereo.STEREOCIS)
+      self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREOCIS)
+      if testAssignStereo:
+        Chem.AssignStereochemistry(mol, force=True)
+      smi = Chem.MolToSmiles(mol, isomericSmiles=True)
+      self.allStereoBonds([bond])
+      self.assertEqual(smi, r"F/C=C\F")
+      if Chem.GetUseLegacyStereoPerception():
+        self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOZ)
+      else:
+        self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOCIS)
+
+  def recursive_enumerate_stereo_bonds(self, mol, done_bonds, bonds):
+    if not bonds:
+      yield done_bonds, Chem.Mol(mol)
+      return
+
+    bond = bonds[0]
+    child_bonds = bonds[1:]
+    self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
+    bond.SetStereo(Chem.BondStereo.STEREOTRANS)
+    for isomer in self.recursive_enumerate_stereo_bonds(mol,
+                                                        done_bonds + [Chem.BondStereo.STEREOTRANS],
+                                                        child_bonds):
+      yield isomer
+
+    self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
+    bond.SetStereo(Chem.BondStereo.STEREOCIS)
+    for isomer in self.recursive_enumerate_stereo_bonds(mol,
+                                                        done_bonds + [Chem.BondStereo.STEREOCIS],
+                                                        child_bonds):
+      yield isomer
+
+  def testBondSetStereoDifficultCase(self):
+    origVal = Chem.GetUseLegacyStereoPerception()
+    Chem.SetUseLegacyStereoPerception(False)
+
+    unspec_smiles = "CCC=CC(CO)=C(C)CC"
+    mol = Chem.MolFromSmiles(unspec_smiles)
+    Chem.FindPotentialStereoBonds(mol)
+
+    stereo_bonds = []
+    for bond in mol.GetBonds():
+      if bond.GetStereo() == Chem.BondStereo.STEREOANY:
+        stereo_bonds.append(bond)
+
+    isomers = set()
+    for bond_stereo, isomer in self.recursive_enumerate_stereo_bonds(mol, [], stereo_bonds):
+      self.allStereoBonds(stereo_bonds)
+      isosmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
+      self.allStereoBonds(stereo_bonds)
+
+      self.assertNotIn(isosmi, isomers)
+      isomers.add(isosmi)
+
+      isomol = Chem.MolFromSmiles(isosmi)
+      round_trip_stereo = [
+        b.GetStereo() for b in isomol.GetBonds() if b.GetStereo() != Chem.BondStereo.STEREONONE
+      ]
+
+      self.assertEqual(bond_stereo, round_trip_stereo)
+
+    self.assertEqual(len(isomers), 4)
+    Chem.SetUseLegacyStereoPerception(origVal)
+
+  def getNumUnspecifiedBondStereo(self, smi):
+    mol = Chem.MolFromSmiles(smi)
+    Chem.FindPotentialStereoBonds(mol)
+
+    count = 0
+    for bond in mol.GetBonds():
+      if bond.GetStereo() != Chem.BondStereo.STEREONONE:
+        print(bond.GetIdx(), bond.GetStereo())
+      if bond.GetStereo() == Chem.BondStereo.STEREOANY:
+        count += 1
+
+    return count
+
+  def testBondSetStereoReallyDifficultCase(self):
+    # this one is much trickier because a double bond can gain and
+    # lose it's stereochemistry based upon whether 2 other double
+    # bonds have the same or different stereo chemistry.
+    Chem.SetUseLegacyStereoPerception(True)
+    unspec_smiles = "CCC=CC(C=CCC)=C(CO)CC"
+    mol = Chem.MolFromSmiles(unspec_smiles)
+    Chem.FindPotentialStereoBonds(mol)
+
+    stereo_bonds = []
+    for bond in mol.GetBonds():
+      if bond.GetStereo() == Chem.BondStereo.STEREOANY:
+        stereo_bonds.append(bond)
+
+    self.assertEqual(len(stereo_bonds), 2)
+
+    isomers = set()
+    for bond_stereo, isomer in self.recursive_enumerate_stereo_bonds(mol, [], stereo_bonds):
+      isosmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
+      isomers.add(isosmi)
+      print(isosmi)
+
+    self.assertEqual(len(isomers), 3)
+
+    # one of these then gains a new stereo bond due to the
+    # introduction of a new symmetry
+    counts = {}
+    for isosmi in isomers:
+      print(isosmi)
+      num_unspecified = self.getNumUnspecifiedBondStereo(isosmi)
+      counts[num_unspecified] = counts.get(num_unspecified, 0) + 1
+
+    # 2 of the isomers don't have any unspecified bond stereo centers
+    # left, 1 does
+    self.assertEqual(counts, {0: 2, 1: 1})
+
+  def assertBondSetStereoIsAlwaysEquivalent(self, all_smiles, desired_stereo, bond_idx):
+    refSmiles = None
+    for smi in all_smiles:
+      mol = Chem.MolFromSmiles(smi)
+
+      doubleBond = None
+      for bond in mol.GetBonds():
+        if bond.GetBondType() == Chem.BondType.DOUBLE:
+          doubleBond = bond
+
+      self.assertTrue(doubleBond is not None)
+
+      Chem.FindPotentialStereoBonds(mol)
+      doubleBond.SetStereo(desired_stereo)
+
+      isosmi = Chem.MolToSmiles(mol, isomericSmiles=True)
+
+      if refSmiles is None:
+        refSmiles = isosmi
+
+      self.assertEqual(refSmiles, isosmi)
+
+  def testBondSetStereoAllHalogens(self):
+    # can't get much more brutal than this test
+    from itertools import combinations, permutations
+    halogens = ['F', 'Cl', 'Br', 'I']
+
+    # binary double bond stereo
+    for unique_set in combinations(halogens, 2):
+      all_smiles = []
+      for fmt in ['%sC=C%s', 'C(%s)=C%s']:
+        for ordering in permutations(unique_set):
+          all_smiles.append(fmt % ordering)
+
+      #print(fmt, all_smiles)
+      for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
+        self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
+
+    # tertiary double bond stereo
+    for unique_set in combinations(halogens, 3):
+      for mono_side in unique_set:
+        halogens_left = list(unique_set)
+        halogens_left.remove(mono_side)
+        for binary_side in combinations(halogens_left, 2):
+          all_smiles = []
+
+          for binary_side_permutation in permutations(binary_side):
+            all_smiles.append('%sC=C(%s)%s' % ((mono_side, ) + binary_side_permutation))
+            all_smiles.append('C(%s)=C(%s)%s' % ((mono_side, ) + binary_side_permutation))
+
+            all_smiles.append('%sC(%s)=C%s' % (binary_side_permutation + (mono_side, )))
+            all_smiles.append('C(%s)(%s)=C%s' % (binary_side_permutation + (mono_side, )))
+
+          #print(all_smiles)
+          for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
+            self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
+
+    # quaternary double bond stereo
+    for unique_ordering in permutations(halogens):
+      left_side = unique_ordering[:2]
+      rght_side = unique_ordering[2:]
+
+      all_smiles = []
+      for left_side_permutation in permutations(left_side):
+        for rght_side_permutation in permutations(rght_side):
+          for smifmt in ['%sC(%s)=C(%s)%s', 'C(%s)(%s)=C(%s)%s']:
+            all_smiles.append(smifmt % (left_side_permutation + rght_side_permutation))
+
+      #print(all_smiles)
+      for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
+        self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
+
+  def testBondSetStereoAtoms(self):
+    # use this difficult molecule that only generates 4 isomers, but
+    # assume all double bonds are stereo!
+    unspec_smiles = "CCC=CC(C=CCC)=C(CO)CC"
+    mol = Chem.MolFromSmiles(unspec_smiles)
+
+    def getNbr(atom, exclude):
+      for nbr in atom.GetNeighbors():
+        if nbr.GetIdx() not in exclude:
+          return nbr
+      raise ValueError("No neighbor found!")
+
+    double_bonds = []
+    for bond in mol.GetBonds():
+      if bond.GetBondType() == Chem.BondType.DOUBLE:
+        double_bonds.append(bond)
+
+        exclude = {bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()}
+        bgnNbr = getNbr(bond.GetBeginAtom(), exclude)
+        endNbr = getNbr(bond.GetEndAtom(), exclude)
+
+        bond.SetStereoAtoms(bgnNbr.GetIdx(), endNbr.GetIdx())
+
+    self.assertEqual(len(double_bonds), 3)
+
+    import itertools
+    stereos = [Chem.BondStereo.STEREOE, Chem.BondStereo.STEREOZ]
+    isomers = set()
+    for stereo_config in itertools.product(stereos, repeat=len(double_bonds)):
+      for bond, stereo in zip(double_bonds, stereo_config):
+        bond.SetStereo(stereo)
+      smi = Chem.MolToSmiles(mol, True)
+      isomers.add(smi)
+
+    # the dependent double bond stereo isn't picked up by this, should it?
+    self.assertEqual(len(isomers), 6)
+
+    # round tripping them through one more time does pick up the dependency, so meh?
+    round_trip_isomers = set()
+    for smi in isomers:
+      isosmi = Chem.MolToSmiles(Chem.MolFromSmiles(smi), True)
+      round_trip_isomers.add(isosmi)
+
+    self.assertEqual(len(round_trip_isomers), 4)
+
+  def test36SubstructMatchStr(self):
+    """ test the _SubstructMatchStr function """
+    query = Chem.MolFromSmarts('[n,p]1ccccc1')
+    self.assertTrue(query)
+    mol = Chem.MolFromSmiles('N1=CC=CC=C1')
+    self.assertTrue(mol.HasSubstructMatch(query))
+    self.assertTrue(Chem._HasSubstructMatchStr(mol.ToBinary(), query))
+    mol = Chem.MolFromSmiles('S1=CC=CC=C1')
+    self.assertTrue(not Chem._HasSubstructMatchStr(mol.ToBinary(), query))
+    self.assertTrue(not mol.HasSubstructMatch(query))
+    mol = Chem.MolFromSmiles('P1=CC=CC=C1')
+    self.assertTrue(mol.HasSubstructMatch(query))
+    self.assertTrue(Chem._HasSubstructMatchStr(mol.ToBinary(), query))
+
+  def test37SanitException(self):
+    mol = Chem.MolFromSmiles('CC(C)(C)(C)C', False)
+    self.assertTrue(mol)
+    self.assertRaises(ValueError, lambda: Chem.SanitizeMol(mol))
 
 #   def test38TDTSuppliers(self):
 #     data = """$SMI<Cc1nnc(N)nc1C>
@@ -2066,14 +2066,14 @@ mol-4,CCOC
 #     self.assertTrue(i == 4)
 #     self.assertTrue(len(suppl) == 4)
 
-#   def test38Issue266(self):
-#     """ test issue 266: generation of kekulized smiles"""
-#     mol = Chem.MolFromSmiles('c1ccccc1')
-#     Chem.Kekulize(mol)
-#     smi = Chem.MolToSmiles(mol)
-#     self.assertTrue(smi == 'c1ccccc1')
-#     smi = Chem.MolToSmiles(mol, kekuleSmiles=True)
-#     self.assertTrue(smi == 'C1=CC=CC=C1')
+  def test38Issue266(self):
+    """ test issue 266: generation of kekulized smiles"""
+    mol = Chem.MolFromSmiles('c1ccccc1')
+    Chem.Kekulize(mol)
+    smi = Chem.MolToSmiles(mol)
+    self.assertTrue(smi == 'c1ccccc1')
+    smi = Chem.MolToSmiles(mol, kekuleSmiles=True)
+    self.assertTrue(smi == 'C1=CC=CC=C1')
 
   def test39Issue273(self):
     """ test issue 273: MolFileComments and MolFileInfo props ending up in SD files
@@ -2626,12 +2626,12 @@ mol-4,CCOC
 
 #     """
 #     m = Chem.MolFromSmiles('CC=C')
-#     d = Chem.GetDistanceMatrix(m, 0)
+#     d = Chem.GetDistanceMatrix(m, False)
 #     self.assertTrue(feq(d[0, 1], 1.0))
 #     self.assertTrue(feq(d[0, 2], 2.0))
 #     self.assertTrue(feq(d[1, 0], 1.0))
 #     self.assertTrue(feq(d[2, 0], 2.0))
-#     a = Chem.GetAdjacencyMatrix(m, 0)
+#     a = Chem.GetAdjacencyMatrix(m, False)
 #     self.assertTrue(a[0, 1] == 1)
 #     self.assertTrue(a[0, 2] == 0)
 #     self.assertTrue(a[1, 2] == 1)
@@ -2639,20 +2639,20 @@ mol-4,CCOC
 #     self.assertTrue(a[2, 0] == 0)
 
 #     m = Chem.MolFromSmiles('C1CC1')
-#     d = Chem.GetDistanceMatrix(m, 0)
+#     d = Chem.GetDistanceMatrix(m, False)
 #     self.assertTrue(feq(d[0, 1], 1.0))
 #     self.assertTrue(feq(d[0, 2], 1.0))
-#     a = Chem.GetAdjacencyMatrix(m, 0)
+#     a = Chem.GetAdjacencyMatrix(m, False)
 #     self.assertTrue(a[0, 1] == 1)
 #     self.assertTrue(a[0, 2] == 1)
 #     self.assertTrue(a[1, 2] == 1)
 
 #     m = Chem.MolFromSmiles('CC.C')
-#     d = Chem.GetDistanceMatrix(m, 0)
+#     d = Chem.GetDistanceMatrix(m, False)
 #     self.assertTrue(feq(d[0, 1], 1.0))
 #     self.assertTrue(d[0, 2] > 1000)
 #     self.assertTrue(d[1, 2] > 1000)
-#     a = Chem.GetAdjacencyMatrix(m, 0)
+#     a = Chem.GetAdjacencyMatrix(m, False)
 #     self.assertTrue(a[0, 1] == 1)
 #     self.assertTrue(a[0, 2] == 0)
 #     self.assertTrue(a[1, 2] == 0)
