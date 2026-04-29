@@ -1732,3 +1732,11 @@ TEST_CASE("atom maps and dummy labels in CXSMILES") {
     CHECK(MolToCXSmiles(*m) == "CC[*:1] |atomProp:2.dummyLabel.R1|");
   }
 }
+
+TEST_CASE("duplicate atoms in StereoGroup") {
+  SECTION("as reported") {
+    std::string smiles = "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,3|";
+
+    CHECK_THROWS_AS(SmilesToMol(smiles), SmilesParseException);
+  }
+}
