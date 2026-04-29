@@ -52,7 +52,8 @@ class SynthonSpaceSearcher {
   // Take the contents of d_params.possibleHitsFile between the
   // given lines, build them, check against the query and return
   // any that match.
-  SearchResults checkPossibleHits(int startLine, int finishLine);
+  SearchResults checkPossibleHits(std::uint64_t startLine,
+                                  std::uint64_t finishLine);
 
   SynthonSpace *getSpace() const { return d_space; }
   const ROMol &getQuery() const { return d_query; }

@@ -151,15 +151,11 @@ std::vector<std::pair<std::string, std::string>> readPossHitsLines(
   for (int i = 0; i < startLine; ++i) {
     std::getline(ifs, smiles);
   }
-  if (finishLine == -1) {
-    finishLine = std::numeric_limits<int>::max();
-  }
   for (int i = startLine; i < finishLine; ++i) {
     ifs >> smiles >> name;
     if (ifs.eof()) {
       break;
     }
-    std::cout << smiles << " : " << name << std::endl;
     retLines.push_back(std::make_pair(smiles, name));
   }
   return retLines;
@@ -217,15 +213,15 @@ void checkPossibleHitsPart(
     if (searcher->verifyHit(*prod, rxnId, synthNamePtrs)) {
       std::cout << "It was a hit : " << prod->getProp<double>("Similarity")
                 << " : " << prod->getProp<std::string>(common_properties::_Name)
-                << std::endl;
+                << " on line " << nextLine << std::endl;
       allResultMols[nextLine] = std::move(prod);
     }
   }
 }
 }  // namespace
 
-SearchResults SynthonSpaceSearcher::checkPossibleHits(int startLine,
-                                                      int finishLine) {
+SearchResults SynthonSpaceSearcher::checkPossibleHits(
+    std::uint64_t startLine, std::uint64_t finishLine) {
   if (getParams().possibleHitsFile.empty()) {
     BOOST_LOG(rdWarningLog)
         << "No possible hits file given, so no results generated." << std::endl;
@@ -233,7 +229,8 @@ SearchResults SynthonSpaceSearcher::checkPossibleHits(int startLine,
   }
   auto checkLines =
       readPossHitsLines(getParams().possibleHitsFile, startLine, finishLine);
-  if (checkLines.empty()) {
+  std::cout << "Checking " << checkLines.size() << " lines" << std::endl;
+  if (startLine >= checkLines.size()) {
     return SearchResults();
   }
   std::vector<std::unique_ptr<ROMol>> resultMols(checkLines.size());
@@ -746,10 +743,20 @@ void processPartHitsFromDetails(
   }
 }
 
-void writePossibleHits(
-    const std::string &possHitsFile,
-    const std::vector<
-        std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> &toTry) {
+void writePossibleHits(const std::string &possHitsFile,
+                       const std::vector<std::pair<const SynthonSpaceHitSet *,
+                                                   std::vector<size_t>>> &toTry,
+                       const std::uint64_t maxToWrite) {
+  // Find out how big the file is so far
+  std::ifstream ifs(possHitsFile.c_str());
+  ifs.unsetf(std::ios_base::skipws);
+  std::uint64_t numLines = std::count(std::istream_iterator<char>(ifs),
+                                      std::istream_iterator<char>(), '\n');
+  ifs.close();
+  if (numLines >= maxToWrite) {
+    return;
+  }
+
   std::ofstream outs(possHitsFile.c_str(), std::ios::app);
   std::vector<const std::string *> synthNames;
   for (const auto &[hitset, synthNums] : toTry) {
@@ -764,6 +771,9 @@ void writePossibleHits(
     outs << " "
          << details::buildProductName(hitset->d_reaction->getId(), synthNames)
          << std::endl;
+    if (++numLines == maxToWrite) {
+      break;
+    }
   }
 }
 
@@ -783,7 +793,8 @@ void SynthonSpaceSearcher::makeHitsFromToTry(
     pbar.reset(new ProgressBar(getParams().useProgressBar, toTry.size()));
   }
   if (!getParams().possibleHitsFile.empty()) {
-    writePossibleHits(getParams().possibleHitsFile, toTry);
+    writePossibleHits(getParams().possibleHitsFile, toTry,
+                      getParams().maxPossibleHitsToWrite);
   }
 
   if (!getParams().writePossibleHitsAndStop) {

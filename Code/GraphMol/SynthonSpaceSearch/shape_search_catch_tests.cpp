@@ -879,4 +879,14 @@ TEST_CASE("Write possible hits") {
             << shortResults.getHitMolecules().size() << std::endl;
   CHECK(shortResults.getHitMolecules().size() == 2);
   std::remove(params.possibleHitsFile.c_str());
+
+  params.maxPossibleHitsToWrite = 3;
+  auto newResults = synthonspace.shapeSearch(*queryMol, params);
+  std::ifstream ifs("amide_space_shapes_poss_hits.txt");
+  ifs.unsetf(std::ios_base::skipws);
+  numLines = std::count(std::istream_iterator<char>(ifs),
+                        std::istream_iterator<char>(), '\n');
+  ifs.close();
+  CHECK(numLines == 3);
+  std::remove(params.possibleHitsFile.c_str());
 }

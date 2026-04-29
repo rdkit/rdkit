@@ -26,6 +26,7 @@
      in future releases.
 */
 
+#include <limits>
 #include <map>
 #include <sstream>
 #include <string>
@@ -261,12 +262,12 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param params : settings for the search
    * @param startLine: the first line of the file to be considered
    * @param finishLine: (optional) the last line of the file to be considered.
-   *                    -1 means go to the end.
    * @return : the hits as a SearchResults object.
    */
-  SearchResults shapeSearch(const ROMol &query,
-                            const SynthonSpaceSearchParams &params,
-                            int startLine, int finishLine = -1);
+  SearchResults shapeSearch(
+      const ROMol &query, const SynthonSpaceSearchParams &params,
+      std::uint64_t startLine,
+      std::uint64_t finishLine = std::numeric_limits<std::uint64_t>::max());
 
   /*!
    *

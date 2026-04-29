@@ -530,6 +530,11 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " hit's name.  The file will be emptied and"
           " re-filled if it already exists.")
       .def_readwrite(
+          "maxPossibleHitsToWrite",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxPossibleHitsToWrite,
+          "Maximum number of lines to write to possibleHitsFile.  When dealing"
+          " with huge synthon spaces it's very easy to fill a disk.  Default=10M.")
+      .def_readwrite(
           "writePossibleHitsAndStop",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::
               writePossibleHitsAndStop,
@@ -695,7 +700,8 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            "Does a search using the pubchem-align3d shape similarity metric.")
       .def("ShapeSearch", &helpers::shapeSearch_helper_3,
            (python::arg("self"), python::arg("query"), python::arg("startLine"),
-            python::arg("finishLine") = -1),
+            python::arg("finishLine") =
+                std::numeric_limits<std::uint64_t>::max()),
            "")
       .def(
           "BuildSynthonFingerprints",

@@ -256,12 +256,11 @@ SearchResults SynthonSpace::shapeSearch(
 
 SearchResults SynthonSpace::shapeSearch(const ROMol &query,
                                         const SynthonSpaceSearchParams &params,
-                                        int startLine, int finishLine) {
+                                        std::uint64_t startLine,
+                                        std::uint64_t finishLine) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
-  if (finishLine >= 0) {
-    PRECONDITION(startLine < finishLine,
-                 "Search startLine must be less than finishLine.")
-  }
+  PRECONDITION(startLine < finishLine,
+               "Search startLine must be less than finishLine.");
   SynthonSpaceShapeSearcher ssss(query, params, nullptr);
   return ssss.checkPossibleHits(startLine, finishLine);
 }
