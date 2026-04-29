@@ -42,14 +42,24 @@ void assignMissingIds(const boost::dynamic_bitset<> &ids, unsigned &nextId,
     sg.setWriteId(nextId);
   }
 };
+
+template <typename T>
+void checkForDupes(const std::vector<T *> &vec, const std::string &typeName) {
+  for (auto it = vec.cbegin(); it != vec.cend(); ++it) {
+    if (std::find(vec.cbegin(), it, *it) != it) {
+      throw ValueErrorException("Duplicate " + typeName + " in StereoGroup");
+    }
+  }
+}
+
 }  // namespace
 
 StereoGroup::StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms,
                          std::vector<Bond *> &&bonds, unsigned readId)
-    : d_grouptype(grouptype),
-      d_atoms(atoms),
-      d_bonds(bonds),
-      d_readId{readId} {}
+    : d_grouptype(grouptype), d_atoms(atoms), d_bonds(bonds), d_readId{readId} {
+  checkForDupes(d_atoms, "atom");
+  checkForDupes(d_bonds, "bond");
+}
 
 StereoGroup::StereoGroup(StereoGroupType grouptype,
                          const std::vector<Atom *> &atoms,
@@ -57,7 +67,10 @@ StereoGroup::StereoGroup(StereoGroupType grouptype,
     : d_grouptype(grouptype),
       d_atoms(std::move(atoms)),
       d_bonds(std::move(bonds)),
-      d_readId{readId} {}
+      d_readId{readId} {
+  checkForDupes(d_atoms, "atom");
+  checkForDupes(d_bonds, "bond");
+}
 
 StereoGroupType StereoGroup::getGroupType() const { return d_grouptype; }
 
