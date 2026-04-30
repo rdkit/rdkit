@@ -4364,7 +4364,7 @@ void testGithub3305() {
 #endif
     {
       // This picture has very wide bond highlights as a test - it
-      // looks pretty unsavoury.  I mention it so that when you flick
+      // looks pretty unsavory.  I mention it so that when you flick
       // through the test images you don't panic and start searching
       // for the bug.  Been there, done that!
       MolDraw2DSVG drawer(200, 200);

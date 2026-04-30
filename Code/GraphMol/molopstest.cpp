@@ -297,7 +297,7 @@ TEST_CASE("test3") {
   delete m;
 
   smi = "C(C1C2C3C41)(C2C35)C45";  // cubane
-  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figureras paper
+  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figueras paper
   // smi = "C17C5C4C3C2C1C6C2C3C4C5C67";
   // we cannot use the sanitization code, because that finds *symmetric*
   // rings, which will break this case:
@@ -347,7 +347,7 @@ TEST_CASE("test3") {
   smi = "C123C4C5C6(C3)C7C1C8C2C4C5C6C78";
   m = SmilesToMol(smi, 0, 0);
   bfs = MolOps::findSSSR(*m);
-  REQUIRE(bfs == 7);
+  REQUIRE(bfs == 8);
   bfrs.resize(0);
   bfs = MolOps::symmetrizeSSSR(*m, bfrs);
   REQUIRE(bfs == 8);
@@ -372,8 +372,8 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 3);
-  REQUIRE(sssr[0].size() == 6);
-  REQUIRE(sssr[1].size() == 5);
+  REQUIRE(sssr[0].size() == 5);
+  REQUIRE(sssr[1].size() == 6);
   REQUIRE(sssr[2].size() == 6);
   BOOST_LOG(rdInfoLog) << smi << "\n";
   delete m;
@@ -413,9 +413,9 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 4);
-  REQUIRE(sssr[0].size() == 6);
+  REQUIRE(sssr[0].size() == 5);
   REQUIRE(sssr[1].size() == 5);
-  REQUIRE(sssr[2].size() == 5);
+  REQUIRE(sssr[2].size() == 6);
   REQUIRE(sssr[3].size() == 6);
   delete m;
 
@@ -424,8 +424,8 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 2);
-  REQUIRE(sssr[0].size() == 4);
-  REQUIRE(sssr[1].size() == 3);
+  REQUIRE(sssr[0].size() == 3);
+  REQUIRE(sssr[1].size() == 4);
 
   REQUIRE(m->getRingInfo()->numAtomRings(0) == 1);
   REQUIRE(m->getRingInfo()->isAtomInRingOfSize(0, 4));
@@ -4934,7 +4934,9 @@ TEST_CASE("Testing github issue 418: removeHs not updating H count") {
     REQUIRE(m->getAtomWithIdx(0)->getNumExplicitHs() == 4);
     delete m;
   }
-  { REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException); }
+  {
+    REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException);
+  }
 }
 
 TEST_CASE(
@@ -6934,9 +6936,11 @@ TEST_CASE(
       REQUIRE(m);
       REQUIRE(m->getNumAtoms() == 204);
       REQUIRE(m->getNumBonds() == 244);
-      REQUIRE_THROWS_AS(MolOps::findSSSR(*m), ValueErrorException);
+      REQUIRE_NOTHROW(MolOps::findSSSR(*m));
     }
-    { REQUIRE_THROWS_AS(SmilesToMol(smiles), ValueErrorException); }
+    {
+      REQUIRE_NOTHROW(v2::SmilesParse::MolFromSmiles(smiles));
+    }
   }
 }
 
@@ -7755,12 +7759,18 @@ M  END)CTAB";
 }
 
 TEST_CASE("Testing ring family calculation") {
+  constexpr int noDebugParse = 0;
+  constexpr bool noSanitize = false;
   {
     constexpr const char *smiles = "C(C1C2C3C41)(C2C35)C45";  // cubane
-    ROMol *m = SmilesToMol(smiles);
+
+    ROMol *m = SmilesToMol(smiles, noDebugParse, noSanitize);
+
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 8);
+
     REQUIRE(!m->getRingInfo()->areRingFamiliesInitialized());
+
     MolOps::findRingFamilies(*m);
     REQUIRE(m->getRingInfo()->isInitialized());
     REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
@@ -7771,15 +7781,18 @@ TEST_CASE("Testing ring family calculation") {
 
     int numRings = m->getRingInfo()->numRingFamilies();
     REQUIRE(numRings == 6);
+
+    // We did find ring families, but not rings!
+    // (we didn't sanitize)
     numRings = m->getRingInfo()->numRings();
-    REQUIRE(numRings == 6);
+    REQUIRE(numRings == 0);
 
     delete m;
   }
   {
     constexpr const char *smiles =
         "C1CC2CCC1CC1CCC(CC1)CC1CCC(CC1)CC1CCC(CC1)C2";
-    ROMol *m = SmilesToMol(smiles);
+    ROMol *m = SmilesToMol(smiles, noDebugParse, noSanitize);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 28);
     REQUIRE(!m->getRingInfo()->areRingFamiliesInitialized());
@@ -7791,10 +7804,12 @@ TEST_CASE("Testing ring family calculation") {
 
     REQUIRE(numURF == 5);
     REQUIRE(numRC == 20);
-    int numRings = m->getRingInfo()->numRings();
 
-    REQUIRE(numRings == 14);
+    // We did find ring families, but not rings!
+    // (we didn't sanitize)
     REQUIRE(m->getRingInfo()->numRingFamilies() == 5);
+    int numRings = m->getRingInfo()->numRings();
+    REQUIRE(numRings == 0);
     delete m;
   }
 }
@@ -8004,4 +8019,21 @@ TEST_CASE("Testing isRingFused") {
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 1) == 2);
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 3);
   }
+}
+
+TEST_CASE("GitHub Issue #9064: Incorrect SMARTS matching") {
+  constexpr const char *smi = R"smi(c1ccc2c(c1)C3CC3C4CC5CC4CC25)smi";
+  constexpr const char *sma = R"sma(C!@c)sma";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto q = v2::SmilesParse::MolFromSmarts(sma);
+  REQUIRE(q);
+
+  CHECK(m->getRingInfo()->numRings() == 6);
+
+  auto matches = SubstructMatch(*m, *q);
+  CHECK(matches.empty());
 }

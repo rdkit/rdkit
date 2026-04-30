@@ -32,8 +32,6 @@ typedef enum {
 } FIND_RING_TYPE;
 
 class RDKIT_GRAPHMOL_EXPORT RingInfo {
-  friend class MolPickler;
-
  public:
   typedef std::vector<int> MemberType;
   typedef std::vector<MemberType> DataType;
@@ -313,11 +311,15 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   //! check if the ring families have been initialized
   bool areRingFamiliesInitialized() const { return dp_urfData != nullptr; }
 
+  //! reset ring family information
+  void resetRingFamilies();
+
+  //! pre-allocates some memory to save time later
+  void preallocate(unsigned int numAtoms, unsigned int numBonds);
+
   //! @}
 
  private:
-  //! pre-allocates some memory to save time later
-  void preallocate(unsigned int numAtoms, unsigned int numBonds);
   void initFusedRings();
   bool df_init{false};
   FIND_RING_TYPE df_find_type_type{FIND_RING_TYPE_OTHER_OR_UNKNOWN};
