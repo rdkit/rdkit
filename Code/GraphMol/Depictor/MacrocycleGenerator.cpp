@@ -558,16 +558,26 @@ std::vector<RDGeom::Point2D> MacrocycleGenerator::generateCoordinates() const {
     // Convert hex coordinates to 2D Cartesian coordinates
     const double SQRT3_2 = std::sqrt(3.0) / 2.0;
 
+    // Convert first N coordinates (atoms 0 to N-1)
     for (size_t i = 0; i < d_ringSize; ++i) {
       const auto &hex = hexCoords[i];
       double x = d_bondLength * (hex.x + hex.z / 2.0);
       double y = d_bondLength * (-SQRT3_2 * hex.z);
       coords.emplace_back(x, y);
     }
+
+    // Add dummy atom (position N) - should be close to atom 0 for even rings
+    const auto &dummyHex = hexCoords[d_ringSize];
+    double dummyX = d_bondLength * (dummyHex.x + dummyHex.z / 2.0);
+    double dummyY = d_bondLength * (-SQRT3_2 * dummyHex.z);
+    coords.emplace_back(dummyX, dummyY);
+
     for (size_t i = 0; i < coords.size(); ++i) {
       std::cerr << "EVEN: Atom " << i << ": (" << coords[i].x << ", "
                 << coords[i].y << ")" << std::endl;
     }
+
+    // Now coords has N+1 elements: [0, 1, 2, ..., N-1, N_dummy]
   }
   // Analytical refinement: adjust angles with Jacobian (if enabled)
   if (d_useJacobianRefinement) {
