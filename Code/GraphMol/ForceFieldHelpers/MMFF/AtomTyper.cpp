@@ -2412,7 +2412,7 @@ MMFFMolProperties::MMFFMolProperties(ROMol &mol, const std::string &mmffVariant,
 unsigned int MMFFMolProperties::getMMFFAngleType(const ROMol &mol,
                                                  const unsigned int idx1,
                                                  const unsigned int idx2,
-                                                 const unsigned int idx3) {
+                                                 const unsigned int idx3) const {
   PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
   // ftp://ftp.wiley.com/public/journals/jcc/suppmat/17/553/MMFF-III_AppendixA.html
@@ -2454,7 +2454,7 @@ unsigned int MMFFMolProperties::getMMFFAngleType(const ROMol &mol,
 }
 
 // returns the MMFF bond type of the bond
-unsigned int MMFFMolProperties::getMMFFBondType(const Bond *bond) {
+unsigned int MMFFMolProperties::getMMFFBondType(const Bond *bond) const {
   PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
   PRECONDITION(bond, "invalid bond");
 
@@ -2529,7 +2529,7 @@ const std::pair<unsigned int, unsigned int>
 MMFFMolProperties::getMMFFTorsionType(const ROMol &mol, const unsigned int idx1,
                                       const unsigned int idx2,
                                       const unsigned int idx3,
-                                      const unsigned int idx4) {
+                                      const unsigned int idx4) const {
   PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
   const Bond *bondJK = mol.getBondBetweenAtoms(idx2, idx3);
@@ -2575,7 +2575,7 @@ MMFFMolProperties::getMMFFTorsionType(const ROMol &mol, const unsigned int idx1,
 // pointer to a MMFFBond object must be freed by the caller
 const ForceFields::MMFF::MMFFBond *
 MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &,
-                                                         const Bond *bond) {
+                                                         const Bond *bond) const {
   PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
   const MMFFBond *mmffBndkParams;
@@ -2879,7 +2879,7 @@ const ForceFields::MMFF::MMFFAngle *getMMFFAngleBendEmpiricalRuleParams(
 const ForceFields::MMFF::MMFFTor *
 MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams(const ROMol &mol,
                                                      unsigned int idx2,
-                                                     unsigned int idx3) {
+                                                     unsigned int idx3) const {
   PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
   const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
@@ -3489,7 +3489,7 @@ void MMFFMolProperties::computeMMFFCharges(const ROMol &mol) {
 
 bool MMFFMolProperties::getMMFFBondStretchParams(
     const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
-    unsigned int &bondType, MMFFBond &mmffBondStretchParams) {
+    unsigned int &bondType, MMFFBond &mmffBondStretchParams) const {
   const MMFFBondCollection *mmffBond = DefaultParameters::getMMFFBond();
   bool res = false;
   if (isValid()) {
@@ -3517,12 +3517,10 @@ bool MMFFMolProperties::getMMFFBondStretchParams(
   return res;
 }
 
-bool MMFFMolProperties::getMMFFAngleBendParams(const ROMol &mol,
-                                               const unsigned int idx1,
-                                               const unsigned int idx2,
-                                               const unsigned int idx3,
-                                               unsigned int &angleType,
-                                               MMFFAngle &mmffAngleBendParams) {
+bool MMFFMolProperties::getMMFFAngleBendParams(
+    const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
+    const unsigned int idx3, unsigned int &angleType,
+    MMFFAngle &mmffAngleBendParams) const {
   bool res = false;
   if (isValid() && mol.getBondBetweenAtoms(idx1, idx2) &&
       mol.getBondBetweenAtoms(idx2, idx3)) {
@@ -3569,7 +3567,7 @@ bool MMFFMolProperties::getMMFFStretchBendParams(
     const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
     const unsigned int idx3, unsigned int &stretchBendType,
     MMFFStbn &mmffStretchBendParams, MMFFBond mmffBondStretchParams[2],
-    MMFFAngle &mmffAngleBendParams) {
+    MMFFAngle &mmffAngleBendParams) const {
   bool res = false;
   if (isValid()) {
     const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
@@ -3629,7 +3627,7 @@ bool MMFFMolProperties::getMMFFStretchBendParams(
 bool MMFFMolProperties::getMMFFTorsionParams(
     const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
     const unsigned int idx3, const unsigned int idx4, unsigned int &torsionType,
-    MMFFTor &mmffTorsionParams) {
+    MMFFTor &mmffTorsionParams) const {
   bool res = false;
   if (isValid() && mol.getBondBetweenAtoms(idx1, idx2) &&
       mol.getBondBetweenAtoms(idx2, idx3) &&
@@ -3669,12 +3667,10 @@ bool MMFFMolProperties::getMMFFTorsionParams(
   return res;
 }
 
-bool MMFFMolProperties::getMMFFOopBendParams(const ROMol &mol,
-                                             const unsigned int idx1,
-                                             const unsigned int idx2,
-                                             const unsigned int idx3,
-                                             const unsigned int idx4,
-                                             MMFFOop &mmffOopBendParams) {
+bool MMFFMolProperties::getMMFFOopBendParams(
+    const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
+    const unsigned int idx3, const unsigned int idx4,
+    MMFFOop &mmffOopBendParams) const {
   bool res = false;
   if (isValid() && mol.getBondBetweenAtoms(idx1, idx2) &&
       mol.getBondBetweenAtoms(idx2, idx3) &&
@@ -3702,7 +3698,7 @@ bool MMFFMolProperties::getMMFFOopBendParams(const ROMol &mol,
 
 bool MMFFMolProperties::getMMFFVdWParams(const unsigned int idx1,
                                          const unsigned int idx2,
-                                         MMFFVdWRijstarEps &mmffVdWParams) {
+                                         MMFFVdWRijstarEps &mmffVdWParams) const {
   bool res = false;
   if (isValid()) {
     const MMFFVdWCollection *mmffVdW = DefaultParameters::getMMFFVdW();
