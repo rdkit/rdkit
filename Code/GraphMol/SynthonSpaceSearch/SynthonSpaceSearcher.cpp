@@ -139,7 +139,8 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb,
 
 namespace {
 std::vector<std::pair<std::string, std::string>> readPossHitsLines(
-    const std::string possHitsFile, const int startLine, int finishLine) {
+    const std::string &possHitsFile, const std::uint64_t startLine,
+    std::uint64_t finishLine) {
   std::vector<std::pair<std::string, std::string>> retLines;
   std::ifstream ifs(possHitsFile.c_str());
   if (!ifs) {
@@ -148,10 +149,10 @@ std::vector<std::pair<std::string, std::string>> readPossHitsLines(
     return retLines;
   }
   std::string smiles, name;
-  for (int i = 0; i < startLine; ++i) {
+  for (std::uint64_t i = 0; i < startLine; ++i) {
     std::getline(ifs, smiles);
   }
-  for (int i = startLine; i < finishLine; ++i) {
+  for (std::uint64_t i = startLine; i < finishLine; ++i) {
     ifs >> smiles >> name;
     if (ifs.eof()) {
       break;
@@ -181,7 +182,8 @@ void dismantleName(const std::string &name, std::string &rxnId,
 void checkPossibleHitsPart(
     const std::vector<std::pair<std::string, std::string>> &checkLines,
     std::atomic<std::int64_t> &mostRecentLine, SynthonSpaceSearcher *searcher,
-    std::vector<std::unique_ptr<ROMol>> &allResultMols) {
+    std::vector<std::unique_ptr<ROMol>> &allResultMols,
+    std::unique_ptr<ProgressBar> &pbar) {
   const std::int64_t lastLine = checkLines.size();
   MolzipParams mzparams;
   mzparams.label = MolzipLabel::Isotope;
@@ -216,6 +218,24 @@ void checkPossibleHitsPart(
                 << " on line " << nextLine << std::endl;
       allResultMols[nextLine] = std::move(prod);
     }
+    if (pbar) {
+      pbar->increment();
+    }
+  }
+}
+
+void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
+  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
+    std::sort(hits.begin(), hits.end(),
+              [](const std::unique_ptr<ROMol> &lhs,
+                 const std::unique_ptr<ROMol> &rhs) {
+                const auto lsim = lhs->getProp<double>("Similarity");
+                const auto rsim = rhs->getProp<double>("Similarity");
+                if (lsim == rsim) {
+                  return lhs->getNumAtoms() < rhs->getNumAtoms();
+                }
+                return lsim > rsim;
+              });
   }
 }
 }  // namespace
@@ -229,25 +249,33 @@ SearchResults SynthonSpaceSearcher::checkPossibleHits(
   }
   auto checkLines =
       readPossHitsLines(getParams().possibleHitsFile, startLine, finishLine);
-  std::cout << "Checking " << checkLines.size() << " lines" << std::endl;
-  if (startLine >= checkLines.size()) {
+  std::cout << "Checking " << checkLines.size() << " lines from " << startLine
+            << " to " << finishLine << " of " << getParams().possibleHitsFile
+            << std::endl;
+  if (checkLines.empty()) {
     return SearchResults();
   }
   std::vector<std::unique_ptr<ROMol>> resultMols(checkLines.size());
   std::atomic<std::int64_t> mostRecentLine = -1;
   const unsigned int numThreads = getNumThreadsToUse(getParams().numThreads);
+  std::unique_ptr<ProgressBar> pbar;
+  if (getParams().useProgressBar) {
+    std::cout << "\nBuilding and checking " << checkLines.size()
+              << " potential hits." << std::endl;
+    pbar.reset(new ProgressBar(getParams().useProgressBar, checkLines.size()));
+  }
   if (numThreads > 1) {
     std::vector<std::future<void>> tg;
     for (unsigned int i = 0; i < numThreads; ++i) {
       tg.emplace_back(std::async(std::launch::async, checkPossibleHitsPart,
                                  std::ref(checkLines), std::ref(mostRecentLine),
-                                 this, std::ref(resultMols)));
+                                 this, std::ref(resultMols), std::ref(pbar)));
     }
     for (auto &fut : tg) {
       fut.get();
     }
   } else {
-    checkPossibleHitsPart(checkLines, mostRecentLine, this, resultMols);
+    checkPossibleHitsPart(checkLines, mostRecentLine, this, resultMols, pbar);
   }
 
   resultMols.erase(std::remove_if(resultMols.begin(), resultMols.end(),
@@ -557,21 +585,6 @@ bool SynthonSpaceSearcher::verifyHit(ROMol &mol, const std::string &,
 }
 
 namespace {
-void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
-  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
-    std::sort(hits.begin(), hits.end(),
-              [](const std::unique_ptr<ROMol> &lhs,
-                 const std::unique_ptr<ROMol> &rhs) {
-                const auto lsim = lhs->getProp<double>("Similarity");
-                const auto rsim = rhs->getProp<double>("Similarity");
-                if (lsim == rsim) {
-                  return lhs->getNumAtoms() < rhs->getNumAtoms();
-                }
-                return lsim > rsim;
-              });
-  }
-}
-
 bool haveEnoughHits(const std::vector<std::unique_ptr<ROMol>> &results,
                     const std::int64_t maxHits, const std::int64_t hitStart) {
   const std::int64_t numHits = std::accumulate(
@@ -591,6 +604,23 @@ bool haveEnoughHits(const std::vector<std::unique_ptr<ROMol>> &results,
   return false;
 }
 
+std::uint64_t countLinesInFile(const std::string &fileName) {
+  // Find out how big the file is so far
+  std::ifstream ifs(fileName.c_str());
+  ifs.unsetf(std::ios_base::skipws);
+  std::uint64_t numLines = std::count(std::istream_iterator<char>(ifs),
+                                      std::istream_iterator<char>(), '\n');
+  ifs.close();
+  return numLines;
+}
+
+bool wroteEnoughPossibleHits(const SynthonSpaceSearchParams &params) {
+  if (!params.writePossibleHitsAndStop) {
+    return false;
+  }
+  auto numLines = countLinesInFile(params.possibleHitsFile);
+  return numLines > params.maxPossibleHitsToWrite;
+}
 }  // namespace
 
 void SynthonSpaceSearcher::buildHits(
@@ -632,6 +662,12 @@ void SynthonSpaceSearcher::buildAllHits(
     return;
   }
 
+  std::uint64_t numPossHits = 0;
+  for (const auto &hitset : hitsets) {
+    numPossHits += hitset->numHits;
+  }
+  std::cout << "Number of possible hits : "
+            << formattedIntegerString(numPossHits) << std::endl;
   if (!getParams().possibleHitsFile.empty()) {
     // The file will be appended to, so clear it out at the start.
     std::ofstream ofs(getParams().possibleHitsFile);
@@ -659,7 +695,8 @@ void SynthonSpaceSearcher::buildAllHits(
                        std::make_move_iterator(partResults.end()));
         partResults.clear();
         enoughHits =
-            haveEnoughHits(results, d_params.maxHits, d_params.hitStart);
+            haveEnoughHits(results, d_params.maxHits, d_params.hitStart) |
+            wroteEnoughPossibleHits(d_params);
         timedOut = details::checkTimeOut(endTime);
         toTry.clear();
         if (enoughHits || timedOut || ControlCHandler::getGotSignal()) {
@@ -748,11 +785,7 @@ void writePossibleHits(const std::string &possHitsFile,
                                                    std::vector<size_t>>> &toTry,
                        const std::uint64_t maxToWrite) {
   // Find out how big the file is so far
-  std::ifstream ifs(possHitsFile.c_str());
-  ifs.unsetf(std::ios_base::skipws);
-  std::uint64_t numLines = std::count(std::istream_iterator<char>(ifs),
-                                      std::istream_iterator<char>(), '\n');
-  ifs.close();
+  auto numLines = countLinesInFile(possHitsFile);
   if (numLines >= maxToWrite) {
     return;
   }

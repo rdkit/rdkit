@@ -868,14 +868,15 @@ TEST_CASE("Write possible hits") {
   }
   CHECK(numLines == 4);
 
-  auto checkResults = synthonspace.shapeSearch(*queryMol, params, 0, -1);
+  auto checkResults = synthonspace.shapeSearch(
+      *queryMol, params, 0, std::numeric_limits<std::uint64_t>::max());
   std::cout << "Number of check results : "
             << checkResults.getHitMolecules().size() << std::endl;
   CHECK(checkResults.getHitMolecules().size() == 3);
 
   std::cout << "shortResults" << std::endl;
   auto shortResults = synthonspace.shapeSearch(*queryMol, params, 1, 3);
-  std::cout << "Number of check results : "
+  std::cout << "Number of short results : "
             << shortResults.getHitMolecules().size() << std::endl;
   CHECK(shortResults.getHitMolecules().size() == 2);
   std::remove(params.possibleHitsFile.c_str());

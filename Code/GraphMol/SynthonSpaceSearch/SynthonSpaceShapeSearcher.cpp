@@ -1180,11 +1180,12 @@ bool SynthonSpaceShapeSearcher::verifyHit(
       }
     }
   }
-  // std::cout << "Hit : " << MolToCXSmiles(hit) << std::endl;
-  // std::cout << "Hit similarity : " << hit.getProp<double>("Similarity") <<
-  // " : "
-  //           << hit.getProp<std::string>(common_properties::_Name) <<
-  //           std::endl;
+  // if (foundHit) {
+  //   std::cout << "Hit : " << MolToCXSmiles(hit) << std::endl;
+  //   std::cout << "Hit similarity : " << hit.getProp<double>("Similarity")
+  //             << " : " << hit.getProp<std::string>(common_properties::_Name)
+  //             << std::endl;
+  // }
   return foundHit;
 }
 
