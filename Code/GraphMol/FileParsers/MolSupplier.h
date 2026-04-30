@@ -182,7 +182,12 @@ struct ForwardSupplierIter {
       return *this;
     }
     current = supplier->nextShared();
-    if (!current.value() && supplier->atEnd()) {
+    // This is the special case where there's a trailing blank line in the SDF.
+    // we were actually at the logical end of the file coming in, but atEnd()
+    // hadn't yet been set.
+    // In this case we want to make sure to reset the iterator to the end state
+    // instead of returning a null molecule.
+    if (!current.value() && supplier->getEOFHitOnRead()) {
       current.reset();
     }
     return *this;
@@ -443,7 +448,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   /**************************************************************************
    * Lazy file parser for Smiles table file, similar to the lazy SD
    * file parser above
-   * - When new molecules are read using "next()" their
+   *  - When new molecules are read using "next()" their
    *    positions in the file are stored.
    *  - A call to "length()" will automatically parse the entire
    *    file and store all the mol block positions
@@ -537,10 +542,10 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   /**************************************************************************
    * Lazy file parser for TDT files, similar to the lazy SD
    * file parser above
-   * - When new molecules are read using "next()" their
+   *  - When new molecules are read using "next()" their
    *    positions in the file are noted.
    *  - A call to "length()" will automatically parse the entire
-   *    file and cache all the mol block positions
+   *    file and store all the mol block positions
    *  - [] operator is used to access a molecule at "idx", calling
    *    next() following this will result in the next molecule after
    *    "idx"
@@ -551,8 +556,8 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
 
   /*!
    *   \param fileName - the name of the TDT file
-   *   \param params - TDTMolSupplierParams object controlling how the file itself 
-   *                   and the individual records are parsed.
+   *   \param params - TDTMolSupplierParams object controlling how the file
+   * itself and the individual records are parsed.
    */
   explicit TDTMolSupplier(
       const std::string &fileName,

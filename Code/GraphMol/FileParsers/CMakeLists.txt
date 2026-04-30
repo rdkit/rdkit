@@ -132,10 +132,10 @@ rdkit_catch_test(atropisomersCatch atropisomers_catch.cpp
 
 find_package(TBB )
 if(TBB_FOUND)
-rdkit_catch_test(fileParsersIterators fileParsersIterTest.cpp
+rdkit_catch_test(fileParsersIteratorsTest fileParsersIterTest.cpp
     LINK_LIBRARIES SmilesParse FileParsers SubstructMatch TBB::tbb)
 else()
-rdkit_catch_test(fileParsersIterators fileParsersIterTest.cpp
+rdkit_catch_test(fileParsersIteratorsTest fileParsersIterTest.cpp
     LINK_LIBRARIES SmilesParse FileParsers SubstructMatch)
 endif()
 

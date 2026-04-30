@@ -26,6 +26,14 @@ static const std::string rdbase = getenv("RDBASE");
 
 using namespace RDKit;
 
+namespace {
+unsigned int countAtoms(const std::shared_ptr<RWMol> &mol) {
+  REQUIRE(mol);
+  return mol->getNumAtoms();
+}
+size_t molPtr(const std::shared_ptr<RWMol> &mol) { return (size_t)mol.get(); }
+}  // namespace
+
 template <typename Supplier>
 void iterTest(Supplier &reader, size_t len) {
   CHECK(reader.length() == len);
@@ -35,20 +43,14 @@ void iterTest(Supplier &reader, size_t len) {
     expected.push_back(reader[i]->getNumAtoms());
   }
   std::vector<unsigned int> actual;
-  std::ranges::transform(
-      reader, std::back_inserter(actual),
-      [](const auto &mol) { return (size_t)mol->getNumAtoms(); });
+  std::ranges::transform(reader, std::back_inserter(actual), countAtoms);
   CHECK(actual == expected);
 }
 
 template <typename Supplier>
 void forwardIterTest(Supplier &reader, size_t len) {
   std::vector<unsigned int> actual;
-  std::ranges::transform(reader, std::back_inserter(actual),
-                         [](const auto &mol) {
-                           REQUIRE(mol);
-                           return (size_t)mol->getNumAtoms();
-                         });
+  std::ranges::transform(reader, std::back_inserter(actual), countAtoms);
   CHECK(actual.size() == len);
 }
 
@@ -60,17 +62,9 @@ void cacheTest(Supplier &reader, size_t len) {
   std::copy(reader.begin(), reader.end(), mols.begin());
   REQUIRE(mols.size() == reader.length());
   std::vector<size_t> expected;
-  std::ranges::transform(mols, std::back_inserter(expected),
-                         [](const auto &mol) {
-                           REQUIRE(mol);
-                           return (size_t)mol.get();
-                         });
+  std::ranges::transform(mols, std::back_inserter(expected), molPtr);
   std::vector<size_t> actual;
-  std::ranges::transform(reader, std::back_inserter(actual),
-                         [](const auto &mol) {
-                           REQUIRE(mol);
-                           return (size_t)mol.get();
-                         });
+  std::ranges::transform(reader, std::back_inserter(actual), molPtr);
   CHECK(actual == expected);
 }
 
@@ -82,13 +76,11 @@ TEST_CASE("basic SDMolSupplier iteration") {
   SECTION("with caching") { cacheTest(reader, 16); }
   SECTION("reverse iteration") {
     std::vector<unsigned int> expected;
-    std::ranges::transform(
-        std::begin(reader), std::end(reader), std::back_inserter(expected),
-        [](const auto &mol) { return (size_t)mol->getNumAtoms(); });
+    std::ranges::transform(std::begin(reader), std::end(reader),
+                           std::back_inserter(expected), countAtoms);
     std::vector<unsigned int> actual;
-    std::ranges::transform(
-        std::rbegin(reader), std::rend(reader), std::back_inserter(actual),
-        [](const auto &mol) { return (size_t)mol->getNumAtoms(); });
+    std::ranges::transform(std::rbegin(reader), std::rend(reader),
+                           std::back_inserter(actual), countAtoms);
     std::ranges::reverse(actual);
     CHECK(actual == expected);
   }
@@ -130,6 +122,101 @@ TEST_CASE("ForwardSDMolSupplier iteration") {
     CHECK(i == 16);
   }
 }
+TEST_CASE("ForwardSDMolSupplier iteration with failing molecules") {
+  std::string infile =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/good_bad_good_good.sdf";
+  std::ifstream strm(infile);
+  bool takeOwnership = false;
+  v2::FileParsers::ForwardSDMolSupplier reader(&strm, takeOwnership);
+  SECTION("basics") {
+    std::vector<unsigned int> expected{6, 0, 6, 6};
+    std::vector<unsigned int> actual;
+    std::ranges::transform(
+        reader, std::back_inserter(actual),
+        [](const auto &mol) { return mol ? mol->getNumAtoms() : 0; });
+    CHECK(actual == expected);
+  }
+  SECTION("pre-increment") {
+    unsigned int i = 0;
+    auto it = reader.begin();
+    auto end = reader.end();
+    while (it != end) {
+      auto mol = *it;
+      if (i == 1) {
+        CHECK(!mol);
+      } else {
+        CHECK(mol);
+      }
+      ++it;
+      ++i;
+    }
+    CHECK(i == 4);
+  }
+  SECTION("post-increment") {
+    unsigned int i = 0;
+    auto it = reader.begin();
+    auto end = reader.end();
+    while (it != end) {
+      auto mol = *it;
+      if (i == 1) {
+        CHECK(!mol);
+      } else {
+        CHECK(mol);
+      }
+      it++;
+      ++i;
+    }
+    CHECK(i == 4);
+  }
+}
+
+TEST_CASE("ForwardSDMolSupplier iteration with failing molecule at end") {
+  std::string infile =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/good_bad_good_bad.sdf";
+  std::ifstream strm(infile);
+  bool takeOwnership = false;
+  v2::FileParsers::ForwardSDMolSupplier reader(&strm, takeOwnership);
+  SECTION("basics") {
+    std::vector<unsigned int> expected{6, 0, 6, 0};
+    std::vector<unsigned int> actual;
+    std::ranges::transform(
+        reader, std::back_inserter(actual),
+        [](const auto &mol) { return mol ? mol->getNumAtoms() : 0; });
+    CHECK(actual == expected);
+  }
+  SECTION("pre-increment") {
+    unsigned int i = 0;
+    auto it = reader.begin();
+    auto end = reader.end();
+    while (it != end) {
+      auto mol = *it;
+      if (i % 2) {
+        CHECK(!mol);
+      } else {
+        CHECK(mol);
+      }
+      ++it;
+      ++i;
+    }
+    CHECK(i == 4);
+  }
+  SECTION("post-increment") {
+    unsigned int i = 0;
+    auto it = reader.begin();
+    auto end = reader.end();
+    while (it != end) {
+      auto mol = *it;
+      if (i % 2) {
+        CHECK(!mol);
+      } else {
+        CHECK(mol);
+      }
+      it++;
+      ++i;
+    }
+    CHECK(i == 4);
+  }
+}
 
 TEST_CASE("cached SDMolSupplier error handling") {
   std::string infile =
@@ -146,8 +233,7 @@ TEST_CASE("cached SDMolSupplier error handling") {
     CHECK(mols[2]);
     CHECK(!mols[3]);
     std::vector<size_t> expected;
-    std::ranges::transform(mols, std::back_inserter(expected),
-                           [](const auto &mol) { return (size_t)mol.get(); });
+    std::ranges::transform(mols, std::back_inserter(expected), molPtr);
 
     // now use the cached versions:
     std::vector<std::shared_ptr<RWMol>> nmols(reader.length());
@@ -159,8 +245,7 @@ TEST_CASE("cached SDMolSupplier error handling") {
     CHECK(!nmols[3]);
     // confirm the caching
     std::vector<size_t> actual;
-    std::ranges::transform(nmols, std::back_inserter(actual),
-                           [](const auto &mol) { return (size_t)mol.get(); });
+    std::ranges::transform(nmols, std::back_inserter(actual), molPtr);
     CHECK(actual == expected);
   }
 }
@@ -177,13 +262,11 @@ TEST_CASE("basic SmilesMolSupplier iteration") {
   SECTION("with caching") { cacheTest(reader, 200); }
   SECTION("reverse iteration") {
     std::vector<unsigned int> expected;
-    std::ranges::transform(
-        std::begin(reader), std::end(reader), std::back_inserter(expected),
-        [](const auto &mol) { return (size_t)mol->getNumAtoms(); });
+    std::ranges::transform(std::begin(reader), std::end(reader),
+                           std::back_inserter(expected), countAtoms);
     std::vector<unsigned int> actual;
-    std::ranges::transform(
-        std::rbegin(reader), std::rend(reader), std::back_inserter(actual),
-        [](const auto &mol) { return (size_t)mol->getNumAtoms(); });
+    std::ranges::transform(std::rbegin(reader), std::rend(reader),
+                           std::back_inserter(actual), countAtoms);
     std::ranges::reverse(actual);
     CHECK(actual == expected);
   }
@@ -215,8 +298,7 @@ c1cc,0
     CHECK(!mols[3]);
     CHECK(!mols[4]);
     std::vector<size_t> expected;
-    std::ranges::transform(mols, std::back_inserter(expected),
-                           [](const auto &mol) { return (size_t)mol.get(); });
+    std::ranges::transform(mols, std::back_inserter(expected), molPtr);
 
     // now use the cached versions:
     std::vector<std::shared_ptr<RWMol>> nmols(reader.length());
@@ -229,8 +311,7 @@ c1cc,0
     CHECK(!nmols[4]);
     // confirm the caching
     std::vector<size_t> actual;
-    std::ranges::transform(nmols, std::back_inserter(actual),
-                           [](const auto &mol) { return (size_t)mol.get(); });
+    std::ranges::transform(nmols, std::back_inserter(actual), molPtr);
     CHECK(actual == expected);
   }
 }
@@ -248,8 +329,7 @@ TEST_CASE("parallel reads") {
     REQUIRE(std::filesystem::exists(path));
     v2::FileParsers::SDMolSupplier reader1(path.string());
     std::vector<unsigned int> nAts1(reader1.length());
-    std::transform(reader1.begin(), reader1.end(), nAts1.begin(),
-                   [](const auto mol) { return mol->getNumAtoms(); });
+    std::transform(reader1.begin(), reader1.end(), nAts1.begin(), countAtoms);
     // std::sort(nAts1.begin(), nAts1.end());
     auto start = std::chrono::high_resolution_clock::now();
     constexpr unsigned int numIters = 20;
@@ -258,8 +338,7 @@ TEST_CASE("parallel reads") {
       reader2.setCaching(true);
       std::vector<unsigned int> nAts2(reader1.length());
       std::transform(std::execution::par, reader2.begin(), reader2.end(),
-                     nAts2.begin(),
-                     [](const auto mol) { return mol->getNumAtoms(); });
+                     nAts2.begin(), countAtoms);
       REQUIRE(nAts1.size() == nAts2.size());
       REQUIRE(nAts1 == nAts2);
     }
@@ -281,8 +360,7 @@ TEST_CASE("parallel reads") {
 
     v2::FileParsers::SmilesMolSupplier reader1(path.string(), params);
     std::vector<unsigned int> nAts1(reader1.length());
-    std::transform(reader1.begin(), reader1.end(), nAts1.begin(),
-                   [](const auto mol) { return mol->getNumAtoms(); });
+    std::transform(reader1.begin(), reader1.end(), nAts1.begin(), countAtoms);
 
     auto start = std::chrono::high_resolution_clock::now();
     constexpr unsigned int numIters = 20;
@@ -291,8 +369,7 @@ TEST_CASE("parallel reads") {
       reader2.setCaching(true);
       std::vector<unsigned int> nAts2(reader1.length());
       std::transform(std::execution::par, reader2.begin(), reader2.end(),
-                     nAts2.begin(),
-                     [](const auto mol) { return mol->getNumAtoms(); });
+                     nAts2.begin(), countAtoms);
       REQUIRE(nAts1 == nAts2);
     }
     auto end = std::chrono::high_resolution_clock::now();
@@ -308,8 +385,7 @@ TEST_CASE("parallel reads") {
 
     v2::FileParsers::TDTMolSupplier reader1(path.string());
     std::vector<unsigned int> nAts1(reader1.length());
-    std::transform(reader1.begin(), reader1.end(), nAts1.begin(),
-                   [](const auto mol) { return mol->getNumAtoms(); });
+    std::transform(reader1.begin(), reader1.end(), nAts1.begin(), countAtoms);
 
     auto start = std::chrono::high_resolution_clock::now();
     constexpr unsigned int numIters = 20;
@@ -318,8 +394,7 @@ TEST_CASE("parallel reads") {
       reader2.setCaching(true);
       std::vector<unsigned int> nAts2(reader1.length());
       std::transform(std::execution::par, reader2.begin(), reader2.end(),
-                     nAts2.begin(),
-                     [](const auto mol) { return mol->getNumAtoms(); });
+                     nAts2.begin(), countAtoms);
       REQUIRE(nAts1 == nAts2);
     }
     auto end = std::chrono::high_resolution_clock::now();
@@ -348,7 +423,7 @@ TEST_CASE("benchmarking") {
     // prime the cache:
     std::vector<unsigned int> nAts1;
     std::transform(reader.begin(), reader.end(), std::back_inserter(nAts1),
-                   [](const auto mol) { return mol->getNumAtoms(); });
+                   countAtoms);
 
     double accum = 0.0;
     constexpr unsigned int numIters = 200;
@@ -393,8 +468,7 @@ TEST_CASE("views and filtered reads") {
   v2::FileParsers::SDMolSupplier reader1(path.string());
   SECTION("filters") {
     std::vector<unsigned int> nAts1(reader1.length());
-    std::transform(reader1.begin(), reader1.end(), nAts1.begin(),
-                   [](const auto mol) { return mol->getNumAtoms(); });
+    std::transform(reader1.begin(), reader1.end(), nAts1.begin(), countAtoms);
     constexpr unsigned int tgtSize = 15;
     auto nSmall =
         std::ranges::count_if(nAts1, [](const auto &v) { return v < tgtSize; });

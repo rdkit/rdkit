@@ -104,6 +104,11 @@ void TDTMolSupplier::init() {
   d_len = -1;
   d_last = 0;
   d_line = 0;
+  d_molpos.clear();
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
+  d_molCache.clear();
 }
 
 void TDTMolSupplier::setData(const std::string &text,
@@ -404,10 +409,9 @@ std::shared_ptr<RWMol> TDTMolSupplier::getShared(unsigned int idx) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
     const std::lock_guard<std::mutex> guard(d_cacheMutex);
 #endif
-    auto len = length();
-    if (d_molCache.size() != len) {
-      d_molCache.clear();
-      d_molCache.resize(len);
+    if (d_molCache.size() <= idx) {
+      constexpr unsigned int molCacheAllocChunkSize = 1000;
+      d_molCache.resize(idx + molCacheAllocChunkSize);
     }
     d_molCache[idx] = res;
   }

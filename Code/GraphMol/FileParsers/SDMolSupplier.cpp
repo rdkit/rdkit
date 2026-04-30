@@ -62,6 +62,9 @@ void SDMolSupplier::init() {
   ForwardSDMolSupplier::init();
   d_len = -1;
   d_last = 0;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
   d_molCache.clear();
 }
 
@@ -289,13 +292,9 @@ std::shared_ptr<RWMol> SDMolSupplier::getShared(unsigned int idx) {
     res.reset(next().release());
   }
   if (d_cacheMolecules) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-    const std::lock_guard<std::mutex> guard(d_cacheMutex);
-#endif
-    auto len = length();
-    if (d_molCache.size() != len) {
-      d_molCache.clear();
-      d_molCache.resize(len);
+    if (d_molCache.size() <= idx) {
+      constexpr unsigned int molCacheAllocChunkSize = 1000;
+      d_molCache.resize(idx + molCacheAllocChunkSize);
     }
     d_molCache[idx] = res;
   }
