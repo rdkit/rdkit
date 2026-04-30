@@ -240,17 +240,35 @@ else:
 
   def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
               isomericSmiles=True, smilesName=None, embedProps=False, removeHs=True,
-              strictParsing=True, sanitize=True):
+              strictParsing=True, sanitize=True, autoConvertStrings=False):
     '''Read file in SDF format and return as Pandas data frame.
-      If embedProps=True all properties also get embedded in Mol objects in the molecule column.
-      If molColName=None molecules would not be present in resulting DataFrame (only properties
-      would be read).
+      
+      Arguments:
+      
+       - filename: path to the SDF file or a file-like object.
+       - idName: name of the column to be used for molecule title. Defaults to "ID".
+       - molColName: name of the column to be used for RDKit molecule objects. If None, molecules will not be included in resulting DataFrame. Defaults to "ROMol".
+       - includeFingerprints: if True, precompute Avalon fingerprints and store them within the molecule objects to accelerate substructure matching. Defaults to False.
+       - isomericSmiles: if True, generated SMILES will include isomeric information. Defaults to True.
+       - smilesName: if set, add a column with the specified name to the DataFrame that contains the SMILES representation of the molecule. If None, SMILES will not be included in final DataFrame. Defaults to None.
+       - embedProps: if True, properties will also be embedded in the molecule objects instead of only being added as separate columns to the Dataframe. Defaults to False.
+       - removeHs: if True, explicit hydrogens will be removed from the molecules. Defaults to True.
+       - strictParsing: if True, an exception will be raised if a molecule cannot be parsed; if False, unparseable molecules will be skipped. Defaults to True.
+       - sanitize: if True, molecules will be sanitized during parsing. It is passed on to Chem.ForwardSDMolSupplier sanitize. Defaults to True.
+       - autoConvertStrings: if True, allows to automatically convert properties to numeric or boolean types where possible. Properties that cannot be converted are left as strings. Defaults to False.
 
-      Sanitize boolean is passed on to Chem.ForwardSDMolSupplier sanitize.
+
+      Returns:
+      
+        A pandas DataFrame containing the data from the SDF file.
+      
+      
+      Note:
+      
       If neither molColName nor smilesName are set, sanitize=false.
       '''
     if isinstance(filename, str):
-      if filename.lower()[-3:] == ".gz":
+      if filename.lower()[-2:] == "gz":
         import gzip
         f = gzip.open(filename, "rb")
       else:
@@ -268,7 +286,7 @@ else:
                                   strictParsing=strictParsing)):
       if mol is None:
         continue
-      row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
+      row = mol.GetPropsAsDict(autoConvertStrings=autoConvertStrings)
       if molColName is not None and not embedProps:
         for prop in mol.GetPropNames():
           mol.ClearProp(prop)
@@ -416,7 +434,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
     '''
   close = None
   if isinstance(out, str):
-    if out.lower()[-3:] == ".gz":
+    if out.lower()[-2:] == "gz":
       import gzip
       out = gzip.open(out, "wt")
       close = out.close
