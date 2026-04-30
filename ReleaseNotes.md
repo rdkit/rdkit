@@ -1,3 +1,52 @@
+# Release_2026.03.2
+(Changes relative to Release_2026.03.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Kevin Boyd, Arthur Chan, Paul Clarke, Brandon Cole, David Cosgrove, Hussein Faara, Eloy Félix,
+Brandon Novy, Yakov Pechersky, Ricardo Rodriguez, Chris Von Bargen, Rachel
+Walker, Nic Zonta
+
+## New Features and Enhancements:
+  - Consider a function returning the data calculated by DrawMol::extractSGroupData()
+ (github issue #7829 from ZontaNicola)
+  - Legend position
+ (github issue #9023 from PaulC61)
+  - Speed-up tautomer canonicalization, no API changes
+ (github pull #9134 from pechersky)
+  - If templates match, skip ring number check
+ (github pull #9217 from ZontaNicola)
+  - Add some std::ranges support
+ (github pull #9218 from greglandrum)
+  - [bot] Update molecular templates header file
+ (github pull #9234 from github-actions[bot])
+
+## Documentation:
+  - Add more pyi patches, 2026-03
+ (github pull #9214 from pechersky)
+  - mention AI tools in the contrib guidelines
+ (github pull #9224 from greglandrum)
+
+## Bug Fixes:
+  - Tautomer insensitive hash v2, E/Z and stereocenter-preservation
+ (github pull #9128 from eloyfelix)
+  - Misplaced parentheses in shape code
+ (github pull #9222 from DavidACosgrove)
+  - Incorrect UFF Inversion term gradient for P/As/Sb/Bi centers
+ (github issue #9229 from scal444)
+  - Make setDoubleBondNeighborDirections() more consistent
+ (github pull #9239 from ricrogz)
+  - Heap-use-after-free in RDKit `cleanupStereoGroups` via duplicate CXSMILES stereo group atom index
+ (github issue #9259 from arthurscchan)
+
+## Cleanup work:
+  - Cleanup/get atoms and bonds
+ (github pull #9243 from greglandrum)
+
+
 # Release_2026.03.1
 (Changes relative to Release_2025.09.1)
 
