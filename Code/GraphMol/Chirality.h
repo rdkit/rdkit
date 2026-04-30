@@ -117,11 +117,6 @@ enum class StereoSpecified {
 struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
   // REVIEW: absolute stereo data member?
 
-  // used to mark missing atoms
-  [[deprecated(
-      "please use Atom::NOATOM")]] inline static constexpr unsigned int NOATOM =
-      Atom::NOATOM;
-
   StereoType type = StereoType::Unspecified;
   StereoSpecified specified = StereoSpecified::Unspecified;
   unsigned centeredOn = Atom::NOATOM;
