@@ -1276,11 +1276,146 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
     generator.addConstraint(constraint);
   }
 
-  // TODO Phase 2+: Add constraints for double bonds
+  // Add constraints for double bonds with E/Z stereochemistry
+  // Based on the checkStereoChemistry function approach
+  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
+    size_t nextIdx = (i + 1) % macrocycleRing.size();
+    int atom1 = macrocycleRing[i];
+    int atom2 = macrocycleRing[nextIdx];
+
+    const RDKit::Bond *bond = dp_mol->getBondBetweenAtoms(atom1, atom2);
+    if (!bond || bond->getBondType() != RDKit::Bond::DOUBLE) {
+      continue;
+    }
+
+    auto stereoType = bond->getStereo();
+    if (stereoType == RDKit::Bond::STEREOANY ||
+        stereoType == RDKit::Bond::STEREONONE) {
+      continue;
+    }
+
+    // Get the stereo-defining atoms (based on CIP priority)
+    const auto &neighbors = bond->getStereoAtoms();
+    if (neighbors.size() != 2) {
+      continue;
+    }
+
+    // The stereo atoms might not be in order (atom1_neighbor, atom2_neighbor)
+    // We need to figure out which stereo atom is connected to which double bond atom
+    int atom1_neighbor1 = -1;
+    int atom2_neighbor1 = -1;
+
+    // Check if neighbors[0] is connected to atom1 or atom2
+    bool neighbor0_connected_to_atom1 = dp_mol->getBondBetweenAtoms(atom1, neighbors[0]) != nullptr;
+    bool neighbor0_connected_to_atom2 = dp_mol->getBondBetweenAtoms(atom2, neighbors[0]) != nullptr;
+
+    if (neighbor0_connected_to_atom1 && !neighbor0_connected_to_atom2) {
+      atom1_neighbor1 = neighbors[0];
+      atom2_neighbor1 = neighbors[1];
+    } else if (neighbor0_connected_to_atom2 && !neighbor0_connected_to_atom1) {
+      atom1_neighbor1 = neighbors[1];
+      atom2_neighbor1 = neighbors[0];
+    } else {
+      continue;
+    }
+
+    // Now get the other neighbors for each atom (if any)
+    // These would be substituents on the double bond atoms
+    int atom1_neighbor2 = -1;
+    int atom2_neighbor2 = -1;
+
+    if (dp_mol->getAtomWithIdx(atom1)->getDegree() > 2) {
+      for (auto neighbor : dp_mol->atomNeighbors(dp_mol->getAtomWithIdx(atom1))) {
+        int nidx = neighbor->getIdx();
+        if (nidx != atom1_neighbor1 && nidx != atom2) {
+          atom1_neighbor2 = nidx;
+          break;
+        }
+      }
+    }
+
+    if (dp_mol->getAtomWithIdx(atom2)->getDegree() > 2) {
+      for (auto neighbor : dp_mol->atomNeighbors(dp_mol->getAtomWithIdx(atom2))) {
+        int nidx = neighbor->getIdx();
+        if (nidx != atom2_neighbor1 && nidx != atom1) {
+          atom2_neighbor2 = nidx;
+          break;
+        }
+      }
+    }
+
+    // Determine the macrocycle ring neighbors
+    size_t prevIdx = (i - 1 + macrocycleRing.size()) % macrocycleRing.size();
+    size_t nextNextIdx = (i + 2) % macrocycleRing.size();
+    int macrocycle_atom1_neighbor = macrocycleRing[prevIdx];
+    int macrocycle_atom2_neighbor = macrocycleRing[nextNextIdx];
+
+    // Check if stereo-defining atoms match the macrocycle neighbors
+    // If they don't, we need to swap the interpretation
+    bool swapStereo = false;
+
+    // Check if atom1_neighbor1 is the macrocycle neighbor
+    // If not, use atom1_neighbor2 (if it exists)
+    int atom1_ring_neighbor = atom1_neighbor1;
+    if (atom1_neighbor1 != macrocycle_atom1_neighbor) {
+      if (atom1_neighbor2 == macrocycle_atom1_neighbor) {
+        atom1_ring_neighbor = atom1_neighbor2;
+        swapStereo = !swapStereo;
+      } else {
+        continue;
+      }
+    }
+
+    // Check if atom2_neighbor1 is the macrocycle neighbor
+    // If not, use atom2_neighbor2 (if it exists)
+    int atom2_ring_neighbor = atom2_neighbor1;
+    if (atom2_neighbor1 != macrocycle_atom2_neighbor) {
+      if (atom2_neighbor2 == macrocycle_atom2_neighbor) {
+        atom2_ring_neighbor = atom2_neighbor2;
+        swapStereo = !swapStereo;
+      } else {
+        continue;
+      }
+    }
+
+    // Verify we found the ring neighbors
+    if (atom1_ring_neighbor != macrocycle_atom1_neighbor ||
+        atom2_ring_neighbor != macrocycle_atom2_neighbor) {
+      continue;
+    }
+
+    // Determine expected stereochemistry
+    bool expected_cis = (stereoType == RDKit::Bond::STEREOZ ||
+                         stereoType == RDKit::Bond::STEREOCIS);
+
+    // Apply swap if needed
+    if (swapStereo) {
+      expected_cis = !expected_cis;
+    }
+
+    // Add constraint based on cis/trans relationship
+    // For a double bond at positions i → i+1 in the ring:
+    // The turns at positions i and i+1 determine the stereochemistry
+    // Cis: turns should be SAME
+    // Trans: turns should be OPPOSITE
+    // Note: OPPOSITE/SAME constraint at position X constrains positions X and X+1
+
+    TurnConstraint constraint;
+    constraint.position = i;  // This will constrain turns at i and i+1
+
+    if (expected_cis) {
+      constraint.type = ConstraintType::SAME;
+      constraint.reason = "cis_double_bond_at_" + std::to_string(i);
+    } else {
+      constraint.type = ConstraintType::OPPOSITE;
+      constraint.reason = "trans_double_bond_at_" + std::to_string(i);
+    }
+
+    generator.addConstraint(constraint);
+  }
 
   // Solve for optimal turn sequence
   if (!generator.solve()) {
-    std::cerr << "Failed to solve for macrocycle coordinates." << std::endl;
     return false;  // No solution found
   }
 
