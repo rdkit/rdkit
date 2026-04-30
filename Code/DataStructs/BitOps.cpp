@@ -26,6 +26,14 @@
 #include <intrin.h>
 #endif
 
+// SIMD support for vectorized bitmap operations (x86/x64 only)
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#define RDK_X86_SIMD
+#ifndef _MSC_VER
+#include <immintrin.h>
+#endif
+#endif
+
 using namespace RDKit;
 
 int getBitId(const char *&text, int format, int size, int curr) {
@@ -928,8 +936,456 @@ static int byte_popcounts[] = {
     4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
 }
+
+// ============================================================
+// SIMD-accelerated bitmap operations (x86/x64)
+//
+// Three-tier runtime dispatch: AVX2 (256-bit) > SSSE3 (128-bit) > scalar.
+// Uses the Mula vpshufb nibble-lookup popcount algorithm:
+//   - Split each byte into two nibbles
+//   - Use pshufb as a parallel 4-bit LUT for popcount(nibble)
+//   - Accumulate per-byte counts, then horizontal-sum via psadbw
+//
+// GCC/Clang: __attribute__((target("avx2"))) compiles each function with
+//   the correct ISA extension regardless of global -march flags.
+// MSVC: intrinsics compile unconditionally; runtime CPUID gates execution.
+// ============================================================
+#ifdef RDK_X86_SIMD
+namespace {
+
+#ifdef _MSC_VER
+#define RDK_AVX2_TARGET
+#define RDK_SSSE3_TARGET
+#else
+#define RDK_AVX2_TARGET __attribute__((target("avx2")))
+#define RDK_SSSE3_TARGET __attribute__((target("ssse3")))
+#endif
+
+// --- Runtime CPU Feature Detection ---
+
+static bool detect_avx2() {
+#ifdef _MSC_VER
+  int info[4];
+  __cpuid(info, 1);
+  bool osxsave = (info[2] >> 27) & 1;
+  if (!osxsave) return false;
+  unsigned long long xcr0 = _xgetbv(0);
+  if ((xcr0 & 0x6) != 0x6) return false;
+  __cpuidex(info, 7, 0);
+  return (info[1] >> 5) & 1;
+#elif defined(__GNUC__) || defined(__clang__)
+  __builtin_cpu_init();
+  return __builtin_cpu_supports("avx2");
+#else
+  return false;
+#endif
+}
+
+static bool detect_ssse3() {
+#ifdef _MSC_VER
+  int info[4];
+  __cpuid(info, 1);
+  return (info[2] >> 9) & 1;
+#elif defined(__GNUC__) || defined(__clang__)
+  __builtin_cpu_init();
+  return __builtin_cpu_supports("ssse3");
+#else
+  return false;
+#endif
+}
+
+static const bool g_has_avx2 = detect_avx2();
+static const bool g_has_ssse3 = detect_ssse3();
+
+// Max iterations before byte accumulator overflows (255 / 8 = 31)
+static constexpr unsigned int kFlushInterval = 31;
+
+// --- AVX2 helpers (256-bit) ---
+
+RDK_AVX2_TARGET
+static inline __m256i popcnt_bytes_avx2(__m256i v) {
+  const __m256i lookup = _mm256_setr_epi8(
+      0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
+      0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4);
+  const __m256i low_mask = _mm256_set1_epi8(0x0f);
+  __m256i lo = _mm256_and_si256(v, low_mask);
+  __m256i hi = _mm256_and_si256(_mm256_srli_epi16(v, 4), low_mask);
+  return _mm256_add_epi8(_mm256_shuffle_epi8(lookup, lo),
+                         _mm256_shuffle_epi8(lookup, hi));
+}
+
+RDK_AVX2_TARGET
+static inline unsigned int hsum_bytes_avx2(__m256i acc) {
+  __m256i sad = _mm256_sad_epu8(acc, _mm256_setzero_si256());
+  __m128i lo = _mm256_castsi256_si128(sad);
+  __m128i hi = _mm256_extracti128_si256(sad, 1);
+  __m128i sum = _mm_add_epi64(lo, hi);
+  sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 8));
+  return (unsigned int)_mm_cvtsi128_si32(sum);
+}
+
+// --- SSSE3 helpers (128-bit) ---
+
+RDK_SSSE3_TARGET
+static inline __m128i popcnt_bytes_ssse3(__m128i v) {
+  const __m128i lookup =
+      _mm_setr_epi8(0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4);
+  const __m128i low_mask = _mm_set1_epi8(0x0f);
+  __m128i lo = _mm_and_si128(v, low_mask);
+  __m128i hi = _mm_and_si128(_mm_srli_epi16(v, 4), low_mask);
+  return _mm_add_epi8(_mm_shuffle_epi8(lookup, lo),
+                      _mm_shuffle_epi8(lookup, hi));
+}
+
+RDK_SSSE3_TARGET
+static inline unsigned int hsum_bytes_ssse3(__m128i acc) {
+  __m128i sad = _mm_sad_epu8(acc, _mm_setzero_si128());
+  __m128i sum = _mm_add_epi32(sad, _mm_srli_si128(sad, 8));
+  return (unsigned int)_mm_cvtsi128_si32(sum);
+}
+
+// === AVX2 bitmap functions ===
+
+RDK_AVX2_TARGET
+static unsigned int popcount_avx2(const unsigned char *fp, unsigned int nBytes) {
+  unsigned int count = 0, i = 0, iters = 0;
+  const unsigned int simd_end = (nBytes / 32) * 32;
+  __m256i acc = _mm256_setzero_si256();
+  for (; i < simd_end; i += 32) {
+    acc = _mm256_add_epi8(
+        acc, popcnt_bytes_avx2(_mm256_loadu_si256((const __m256i *)(fp + i))));
+    if (++iters == kFlushInterval) {
+      count += hsum_bytes_avx2(acc);
+      acc = _mm256_setzero_si256();
+      iters = 0;
+    }
+  }
+  count += hsum_bytes_avx2(acc);
+  for (; i < nBytes; i++) count += byte_popcounts[fp[i]];
+  return count;
+}
+
+RDK_AVX2_TARGET
+static unsigned int num_bits_in_common_avx2(const unsigned char *afp,
+                                            const unsigned char *bfp,
+                                            unsigned int nBytes) {
+  unsigned int count = 0, i = 0, iters = 0;
+  const unsigned int simd_end = (nBytes / 32) * 32;
+  __m256i acc = _mm256_setzero_si256();
+  for (; i < simd_end; i += 32) {
+    __m256i a = _mm256_loadu_si256((const __m256i *)(afp + i));
+    __m256i b = _mm256_loadu_si256((const __m256i *)(bfp + i));
+    acc = _mm256_add_epi8(acc, popcnt_bytes_avx2(_mm256_and_si256(a, b)));
+    if (++iters == kFlushInterval) {
+      count += hsum_bytes_avx2(acc);
+      acc = _mm256_setzero_si256();
+      iters = 0;
+    }
+  }
+  count += hsum_bytes_avx2(acc);
+  for (; i < nBytes; i++) count += byte_popcounts[afp[i] & bfp[i]];
+  return count;
+}
+
+RDK_AVX2_TARGET
+static double tanimoto_avx2(const unsigned char *afp, const unsigned char *bfp,
+                            unsigned int nBytes) {
+  unsigned int union_pop = 0, inter_pop = 0, i = 0, iters = 0;
+  const unsigned int simd_end = (nBytes / 32) * 32;
+  __m256i u_acc = _mm256_setzero_si256();
+  __m256i i_acc = _mm256_setzero_si256();
+  for (; i < simd_end; i += 32) {
+    __m256i a = _mm256_loadu_si256((const __m256i *)(afp + i));
+    __m256i b = _mm256_loadu_si256((const __m256i *)(bfp + i));
+    u_acc = _mm256_add_epi8(u_acc, popcnt_bytes_avx2(_mm256_or_si256(a, b)));
+    i_acc = _mm256_add_epi8(i_acc, popcnt_bytes_avx2(_mm256_and_si256(a, b)));
+    if (++iters == kFlushInterval) {
+      union_pop += hsum_bytes_avx2(u_acc);
+      inter_pop += hsum_bytes_avx2(i_acc);
+      u_acc = _mm256_setzero_si256();
+      i_acc = _mm256_setzero_si256();
+      iters = 0;
+    }
+  }
+  union_pop += hsum_bytes_avx2(u_acc);
+  inter_pop += hsum_bytes_avx2(i_acc);
+  for (; i < nBytes; i++) {
+    union_pop += byte_popcounts[afp[i] | bfp[i]];
+    inter_pop += byte_popcounts[afp[i] & bfp[i]];
+  }
+  if (union_pop == 0) return 0.0;
+  return (inter_pop + 0.0) / union_pop;
+}
+
+RDK_AVX2_TARGET
+static double dice_avx2(const unsigned char *afp, const unsigned char *bfp,
+                        unsigned int nBytes) {
+  unsigned int a_pop = 0, b_pop = 0, inter_pop = 0, i = 0, iters = 0;
+  const unsigned int simd_end = (nBytes / 32) * 32;
+  __m256i a_acc = _mm256_setzero_si256();
+  __m256i b_acc = _mm256_setzero_si256();
+  __m256i i_acc = _mm256_setzero_si256();
+  for (; i < simd_end; i += 32) {
+    __m256i a = _mm256_loadu_si256((const __m256i *)(afp + i));
+    __m256i b = _mm256_loadu_si256((const __m256i *)(bfp + i));
+    a_acc = _mm256_add_epi8(a_acc, popcnt_bytes_avx2(a));
+    b_acc = _mm256_add_epi8(b_acc, popcnt_bytes_avx2(b));
+    i_acc = _mm256_add_epi8(i_acc, popcnt_bytes_avx2(_mm256_and_si256(a, b)));
+    if (++iters == kFlushInterval) {
+      a_pop += hsum_bytes_avx2(a_acc);
+      b_pop += hsum_bytes_avx2(b_acc);
+      inter_pop += hsum_bytes_avx2(i_acc);
+      a_acc = _mm256_setzero_si256();
+      b_acc = _mm256_setzero_si256();
+      i_acc = _mm256_setzero_si256();
+      iters = 0;
+    }
+  }
+  a_pop += hsum_bytes_avx2(a_acc);
+  b_pop += hsum_bytes_avx2(b_acc);
+  inter_pop += hsum_bytes_avx2(i_acc);
+  for (; i < nBytes; i++) {
+    a_pop += byte_popcounts[afp[i]];
+    b_pop += byte_popcounts[bfp[i]];
+    inter_pop += byte_popcounts[afp[i] & bfp[i]];
+  }
+  if (a_pop + b_pop == 0) return 0.0;
+  return (2.0 * inter_pop) / (a_pop + b_pop);
+}
+
+RDK_AVX2_TARGET
+static double tversky_avx2(const unsigned char *afp, const unsigned char *bfp,
+                           unsigned int nBytes, double ca, double cb) {
+  unsigned int a_pop = 0, b_pop = 0, inter_pop = 0, i = 0, iters = 0;
+  const unsigned int simd_end = (nBytes / 32) * 32;
+  __m256i a_acc = _mm256_setzero_si256();
+  __m256i b_acc = _mm256_setzero_si256();
+  __m256i i_acc = _mm256_setzero_si256();
+  for (; i < simd_end; i += 32) {
+    __m256i a = _mm256_loadu_si256((const __m256i *)(afp + i));
+    __m256i b = _mm256_loadu_si256((const __m256i *)(bfp + i));
+    a_acc = _mm256_add_epi8(a_acc, popcnt_bytes_avx2(a));
+    b_acc = _mm256_add_epi8(b_acc, popcnt_bytes_avx2(b));
+    i_acc = _mm256_add_epi8(i_acc, popcnt_bytes_avx2(_mm256_and_si256(a, b)));
+    if (++iters == kFlushInterval) {
+      a_pop += hsum_bytes_avx2(a_acc);
+      b_pop += hsum_bytes_avx2(b_acc);
+      inter_pop += hsum_bytes_avx2(i_acc);
+      a_acc = _mm256_setzero_si256();
+      b_acc = _mm256_setzero_si256();
+      i_acc = _mm256_setzero_si256();
+      iters = 0;
+    }
+  }
+  a_pop += hsum_bytes_avx2(a_acc);
+  b_pop += hsum_bytes_avx2(b_acc);
+  inter_pop += hsum_bytes_avx2(i_acc);
+  for (; i < nBytes; i++) {
+    inter_pop += byte_popcounts[afp[i] & bfp[i]];
+    a_pop += byte_popcounts[afp[i]];
+    b_pop += byte_popcounts[bfp[i]];
+  }
+  double denom = ca * a_pop + cb * b_pop + (1 - ca - cb) * inter_pop;
+  if (denom == 0.0) return 0.0;
+  return inter_pop / denom;
+}
+
+RDK_AVX2_TARGET
+static bool all_probe_bits_match_avx2(const unsigned char *probe,
+                                      const unsigned char *ref,
+                                      unsigned int nBytes) {
+  unsigned int i = 0;
+  const unsigned int simd_end = (nBytes / 32) * 32;
+  for (; i < simd_end; i += 32) {
+    __m256i p = _mm256_loadu_si256((const __m256i *)(probe + i));
+    __m256i r = _mm256_loadu_si256((const __m256i *)(ref + i));
+    __m256i unmatched = _mm256_andnot_si256(r, p);  // probe & ~ref
+    if (!_mm256_testz_si256(unmatched, unmatched)) return false;
+  }
+  for (; i < nBytes; i++) {
+    if (probe[i] & ~ref[i]) return false;
+  }
+  return true;
+}
+
+// === SSSE3 bitmap functions (128-bit, same algorithm) ===
+
+RDK_SSSE3_TARGET
+static unsigned int popcount_ssse3(const unsigned char *fp,
+                                   unsigned int nBytes) {
+  unsigned int count = 0, i = 0, iters = 0;
+  const unsigned int simd_end = (nBytes / 16) * 16;
+  __m128i acc = _mm_setzero_si128();
+  for (; i < simd_end; i += 16) {
+    acc = _mm_add_epi8(acc,
+                       popcnt_bytes_ssse3(_mm_loadu_si128((const __m128i *)(fp + i))));
+    if (++iters == kFlushInterval) {
+      count += hsum_bytes_ssse3(acc);
+      acc = _mm_setzero_si128();
+      iters = 0;
+    }
+  }
+  count += hsum_bytes_ssse3(acc);
+  for (; i < nBytes; i++) count += byte_popcounts[fp[i]];
+  return count;
+}
+
+RDK_SSSE3_TARGET
+static unsigned int num_bits_in_common_ssse3(const unsigned char *afp,
+                                             const unsigned char *bfp,
+                                             unsigned int nBytes) {
+  unsigned int count = 0, i = 0, iters = 0;
+  const unsigned int simd_end = (nBytes / 16) * 16;
+  __m128i acc = _mm_setzero_si128();
+  for (; i < simd_end; i += 16) {
+    __m128i a = _mm_loadu_si128((const __m128i *)(afp + i));
+    __m128i b = _mm_loadu_si128((const __m128i *)(bfp + i));
+    acc = _mm_add_epi8(acc, popcnt_bytes_ssse3(_mm_and_si128(a, b)));
+    if (++iters == kFlushInterval) {
+      count += hsum_bytes_ssse3(acc);
+      acc = _mm_setzero_si128();
+      iters = 0;
+    }
+  }
+  count += hsum_bytes_ssse3(acc);
+  for (; i < nBytes; i++) count += byte_popcounts[afp[i] & bfp[i]];
+  return count;
+}
+
+RDK_SSSE3_TARGET
+static double tanimoto_ssse3(const unsigned char *afp, const unsigned char *bfp,
+                             unsigned int nBytes) {
+  unsigned int union_pop = 0, inter_pop = 0, i = 0, iters = 0;
+  const unsigned int simd_end = (nBytes / 16) * 16;
+  __m128i u_acc = _mm_setzero_si128();
+  __m128i i_acc = _mm_setzero_si128();
+  for (; i < simd_end; i += 16) {
+    __m128i a = _mm_loadu_si128((const __m128i *)(afp + i));
+    __m128i b = _mm_loadu_si128((const __m128i *)(bfp + i));
+    u_acc = _mm_add_epi8(u_acc, popcnt_bytes_ssse3(_mm_or_si128(a, b)));
+    i_acc = _mm_add_epi8(i_acc, popcnt_bytes_ssse3(_mm_and_si128(a, b)));
+    if (++iters == kFlushInterval) {
+      union_pop += hsum_bytes_ssse3(u_acc);
+      inter_pop += hsum_bytes_ssse3(i_acc);
+      u_acc = _mm_setzero_si128();
+      i_acc = _mm_setzero_si128();
+      iters = 0;
+    }
+  }
+  union_pop += hsum_bytes_ssse3(u_acc);
+  inter_pop += hsum_bytes_ssse3(i_acc);
+  for (; i < nBytes; i++) {
+    union_pop += byte_popcounts[afp[i] | bfp[i]];
+    inter_pop += byte_popcounts[afp[i] & bfp[i]];
+  }
+  if (union_pop == 0) return 0.0;
+  return (inter_pop + 0.0) / union_pop;
+}
+
+RDK_SSSE3_TARGET
+static double dice_ssse3(const unsigned char *afp, const unsigned char *bfp,
+                         unsigned int nBytes) {
+  unsigned int a_pop = 0, b_pop = 0, inter_pop = 0, i = 0, iters = 0;
+  const unsigned int simd_end = (nBytes / 16) * 16;
+  __m128i a_acc = _mm_setzero_si128();
+  __m128i b_acc = _mm_setzero_si128();
+  __m128i i_acc = _mm_setzero_si128();
+  for (; i < simd_end; i += 16) {
+    __m128i a = _mm_loadu_si128((const __m128i *)(afp + i));
+    __m128i b = _mm_loadu_si128((const __m128i *)(bfp + i));
+    a_acc = _mm_add_epi8(a_acc, popcnt_bytes_ssse3(a));
+    b_acc = _mm_add_epi8(b_acc, popcnt_bytes_ssse3(b));
+    i_acc = _mm_add_epi8(i_acc, popcnt_bytes_ssse3(_mm_and_si128(a, b)));
+    if (++iters == kFlushInterval) {
+      a_pop += hsum_bytes_ssse3(a_acc);
+      b_pop += hsum_bytes_ssse3(b_acc);
+      inter_pop += hsum_bytes_ssse3(i_acc);
+      a_acc = _mm_setzero_si128();
+      b_acc = _mm_setzero_si128();
+      i_acc = _mm_setzero_si128();
+      iters = 0;
+    }
+  }
+  a_pop += hsum_bytes_ssse3(a_acc);
+  b_pop += hsum_bytes_ssse3(b_acc);
+  inter_pop += hsum_bytes_ssse3(i_acc);
+  for (; i < nBytes; i++) {
+    a_pop += byte_popcounts[afp[i]];
+    b_pop += byte_popcounts[bfp[i]];
+    inter_pop += byte_popcounts[afp[i] & bfp[i]];
+  }
+  if (a_pop + b_pop == 0) return 0.0;
+  return (2.0 * inter_pop) / (a_pop + b_pop);
+}
+
+RDK_SSSE3_TARGET
+static double tversky_ssse3(const unsigned char *afp, const unsigned char *bfp,
+                            unsigned int nBytes, double ca, double cb) {
+  unsigned int a_pop = 0, b_pop = 0, inter_pop = 0, i = 0, iters = 0;
+  const unsigned int simd_end = (nBytes / 16) * 16;
+  __m128i a_acc = _mm_setzero_si128();
+  __m128i b_acc = _mm_setzero_si128();
+  __m128i i_acc = _mm_setzero_si128();
+  for (; i < simd_end; i += 16) {
+    __m128i a = _mm_loadu_si128((const __m128i *)(afp + i));
+    __m128i b = _mm_loadu_si128((const __m128i *)(bfp + i));
+    a_acc = _mm_add_epi8(a_acc, popcnt_bytes_ssse3(a));
+    b_acc = _mm_add_epi8(b_acc, popcnt_bytes_ssse3(b));
+    i_acc = _mm_add_epi8(i_acc, popcnt_bytes_ssse3(_mm_and_si128(a, b)));
+    if (++iters == kFlushInterval) {
+      a_pop += hsum_bytes_ssse3(a_acc);
+      b_pop += hsum_bytes_ssse3(b_acc);
+      inter_pop += hsum_bytes_ssse3(i_acc);
+      a_acc = _mm_setzero_si128();
+      b_acc = _mm_setzero_si128();
+      i_acc = _mm_setzero_si128();
+      iters = 0;
+    }
+  }
+  a_pop += hsum_bytes_ssse3(a_acc);
+  b_pop += hsum_bytes_ssse3(b_acc);
+  inter_pop += hsum_bytes_ssse3(i_acc);
+  for (; i < nBytes; i++) {
+    inter_pop += byte_popcounts[afp[i] & bfp[i]];
+    a_pop += byte_popcounts[afp[i]];
+    b_pop += byte_popcounts[bfp[i]];
+  }
+  double denom = ca * a_pop + cb * b_pop + (1 - ca - cb) * inter_pop;
+  if (denom == 0.0) return 0.0;
+  return inter_pop / denom;
+}
+
+RDK_SSSE3_TARGET
+static bool all_probe_bits_match_ssse3(const unsigned char *probe,
+                                       const unsigned char *ref,
+                                       unsigned int nBytes) {
+  unsigned int i = 0;
+  const unsigned int simd_end = (nBytes / 16) * 16;
+  const __m128i zero = _mm_setzero_si128();
+  for (; i < simd_end; i += 16) {
+    __m128i p = _mm_loadu_si128((const __m128i *)(probe + i));
+    __m128i r = _mm_loadu_si128((const __m128i *)(ref + i));
+    __m128i unmatched = _mm_andnot_si128(r, p);
+    if (_mm_movemask_epi8(_mm_cmpeq_epi8(unmatched, zero)) != 0xFFFF)
+      return false;
+  }
+  for (; i < nBytes; i++) {
+    if (probe[i] & ~ref[i]) return false;
+  }
+  return true;
+}
+
+#undef RDK_AVX2_TARGET
+#undef RDK_SSSE3_TARGET
+}  // anonymous namespace
+#endif  // RDK_X86_SIMD
+
 unsigned int CalcBitmapPopcount(const unsigned char *afp, unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
+#ifdef RDK_X86_SIMD
+  if (g_has_avx2) return popcount_avx2(afp, nBytes);
+  if (g_has_ssse3) return popcount_ssse3(afp, nBytes);
+#endif
   unsigned int popcount = 0;
 #ifndef RDK_OPTIMIZE_POPCNT
   for (unsigned int i = 0; i < nBytes; i++) {
@@ -953,6 +1409,10 @@ unsigned int CalcBitmapNumBitsInCommon(const unsigned char *afp,
                                        unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
+#ifdef RDK_X86_SIMD
+  if (g_has_avx2) return num_bits_in_common_avx2(afp, bfp, nBytes);
+  if (g_has_ssse3) return num_bits_in_common_ssse3(afp, bfp, nBytes);
+#endif
   unsigned int intersect_popcount = 0;
 #ifndef RDK_OPTIMIZE_POPCNT
   for (unsigned int i = 0; i < nBytes; i++) {
@@ -976,6 +1436,10 @@ double CalcBitmapTanimoto(const unsigned char *afp, const unsigned char *bfp,
                           unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
+#ifdef RDK_X86_SIMD
+  if (g_has_avx2) return tanimoto_avx2(afp, bfp, nBytes);
+  if (g_has_ssse3) return tanimoto_ssse3(afp, bfp, nBytes);
+#endif
   unsigned int union_popcount = 0, intersect_popcount = 0;
 #ifndef RDK_OPTIMIZE_POPCNT
   for (unsigned int i = 0; i < nBytes; i++) {
@@ -1007,6 +1471,10 @@ double CalcBitmapDice(const unsigned char *afp, const unsigned char *bfp,
                       unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
+#ifdef RDK_X86_SIMD
+  if (g_has_avx2) return dice_avx2(afp, bfp, nBytes);
+  if (g_has_ssse3) return dice_ssse3(afp, bfp, nBytes);
+#endif
   unsigned int intersect_popcount = 0, a_popcount = 0, b_popcount = 0;
 
 #ifndef RDK_OPTIMIZE_POPCNT
@@ -1043,6 +1511,10 @@ double CalcBitmapTversky(const unsigned char *afp, const unsigned char *bfp,
                          unsigned int nBytes, double ca, double cb) {
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
+#ifdef RDK_X86_SIMD
+  if (g_has_avx2) return tversky_avx2(afp, bfp, nBytes, ca, cb);
+  if (g_has_ssse3) return tversky_ssse3(afp, bfp, nBytes, ca, cb);
+#endif
   unsigned int intersect_popcount = 0, acount = 0, bcount = 0;
 
 #ifndef RDK_OPTIMIZE_POPCNT
@@ -1080,6 +1552,10 @@ bool CalcBitmapAllProbeBitsMatch(const unsigned char *probe,
                                  unsigned int nBytes) {
   PRECONDITION(probe, "no probe");
   PRECONDITION(ref, "no ref");
+#ifdef RDK_X86_SIMD
+  if (g_has_avx2) return all_probe_bits_match_avx2(probe, ref, nBytes);
+  if (g_has_ssse3) return all_probe_bits_match_ssse3(probe, ref, nBytes);
+#endif
 
 #ifndef RDK_OPTIMIZE_POPCNT
   for (unsigned int i = 0; i < nBytes; i++) {
