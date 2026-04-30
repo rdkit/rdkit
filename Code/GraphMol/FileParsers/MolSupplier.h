@@ -162,6 +162,13 @@ class RDKIT_FILEPARSERS_EXPORT MolSupplier {
   }
 };
 
+// g++ 13 generates some spurious warnings from here (they are gone in g++ 14).
+// disable them
+#if !defined(__clang__) && defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 // \brief an input iterator for suppliers that only support forward reading
 template <typename Supplier>
 struct ForwardSupplierIter {
@@ -210,6 +217,9 @@ struct ForwardSupplierIter {
     return !current.has_value() && !other.current.has_value();
   }
 };
+#if !defined(__clang__) && defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 // \brief a supplier from an SD file that only reads forward:
 class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
