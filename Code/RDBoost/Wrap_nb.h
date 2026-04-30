@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2008 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2026 greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,23 +8,12 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_WRAP_H_
-#define _RD_WRAP_H_
+#ifndef RD_WRAP_NB_H
+#define RD_WRAP_NB_H
 
 #include <RDGeneral/Invariant.h>
 
 #include <Numerics/Vector.h>
-#include <RDGeneral/BoostStartInclude.h>
-//
-// Generic Wrapper utility functionality
-//
-#include <boost/python.hpp>
-#include <boost/python/stl_iterator.hpp>
-#include <boost/dynamic_bitset.hpp>
-
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include "list_indexing_suite.hpp"
-#include <RDGeneral/BoostEndInclude.h>
 #include <memory>
 #include <cstdint>
 
@@ -32,18 +21,19 @@
 #include <string_view>
 #include <vector>
 #include <RDGeneral/Exceptions.h>
+#include <nanobind/nanobind.h>
+namespace nb = nanobind;
 
-namespace python = boost::python;
-
-RDKIT_RDBOOST_EXPORT void throw_index_error(
-    int key);  //!< construct and throw an \c IndexError
-RDKIT_RDBOOST_EXPORT void throw_value_error(
-    const std::string err);  //!< construct and throw a \c ValueError
-RDKIT_RDBOOST_EXPORT void throw_key_error(
-    const std::string key);  //!< construct and throw a \c KeyError
-RDKIT_RDBOOST_EXPORT void translate_index_error(IndexErrorException const &e);
-RDKIT_RDBOOST_EXPORT void translate_value_error(ValueErrorException const &e);
-RDKIT_RDBOOST_EXPORT void translate_key_error(KeyErrorException const &e);
+// RDKIT_RDBOOST_EXPORT void throw_index_error(
+//     int key);  //!< construct and throw an \c IndexError
+// RDKIT_RDBOOST_EXPORT void throw_value_error(
+//     const std::string err);  //!< construct and throw a \c ValueError
+// RDKIT_RDBOOST_EXPORT void throw_key_error(
+//     const std::string key);  //!< construct and throw a \c KeyError
+// RDKIT_RDBOOST_EXPORT void translate_index_error(IndexErrorException const
+// &e); RDKIT_RDBOOST_EXPORT void translate_value_error(ValueErrorException
+// const &e); RDKIT_RDBOOST_EXPORT void translate_key_error(KeyErrorException
+// const &e);
 
 //! \brief Safely set an attribute on a Python-wrapped object
 /*!
@@ -58,15 +48,66 @@ RDKIT_RDBOOST_EXPORT void translate_key_error(KeyErrorException const &e);
   \throws AttributeError if the attribute does not exist
   \throws Python error if assignment fails
 */
-RDKIT_RDBOOST_EXPORT void safeSetattr(python::object self,
-                                      std::string const &name,
-                                      python::object const &value);
+inline void safeSetattr(nb::object self, std::string const &name,
+                        nb::object const &value) {
+  nb::object cls = self.attr("__class__");
+  if (!PyObject_HasAttrString(cls.ptr(), name.c_str())) {
+    std::string message = "Cannot set unknown attribute '" + name + "'";
+    throw nb::attribute_error(message.c_str());
+  }
+  auto builtin = nb::module_::import_("builtins");
+  nb::object objectType = nb::getattr(builtin, "object");
+  nb::object setattrFunc = nb::getattr(objectType, "__setattr__");
+  setattrFunc(self, name, value);
+}
 
 #ifdef INVARIANT_EXCEPTION_METHOD
 RDKIT_RDBOOST_EXPORT void throw_runtime_error(
     const std::string err);  //!< construct and throw a \c ValueError
 RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 #endif
+
+//! NOTE: this returns a nullptr if obj is None or empty
+template <typename T>
+std::unique_ptr<std::vector<T>> pythonObjectToVect(const nb::object &obj,
+                                                   T maxV) {
+  std::unique_ptr<std::vector<T>> res;
+  if (!obj.is_none()) {
+    res.reset(new std::vector<T>);
+    for (auto item : obj) {
+      T v = nb::cast<T>(item);
+      if (v >= maxV) {
+        throw ValueErrorException("list element larger than allowed value");
+      }
+      res->push_back(v);
+    }
+  }
+  return res;
+}
+//! NOTE: this returns a nullptr if obj is None or empty
+template <typename T>
+std::unique_ptr<std::vector<T>> pythonObjectToVect(const nb::object &obj) {
+  std::unique_ptr<std::vector<T>> res;
+  if (!obj.is_none()) {
+    res.reset(new std::vector<T>());
+    std::transform(obj.begin(), obj.end(), std::back_inserter(*res),
+                   [](const auto &v) { return nb::cast<T>(v); });
+  }
+  return res;
+}
+//! NOTE: \c res will be cleared if obj is None or empty
+template <typename T>
+void pythonObjectToVect(const nb::object &obj, std::vector<T> &res) {
+  if (!obj.is_none()) {
+    res.clear();
+    std::transform(obj.begin(), obj.end(), std::back_inserter(res),
+                   [](const auto &v) { return nb::cast<T>(v); });
+  } else {
+    res.clear();
+  }
+}
+
+#if 0
 
 //! \brief Checks whether there is already a registered Python converter for a
 //!        particular type.
@@ -129,46 +170,6 @@ void RegisterListConverter(bool noproxy = false) {
   }
 }
 
-//! NOTE: this returns a nullptr if obj is None or empty
-template <typename T>
-std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj,
-                                                   T maxV) {
-  std::unique_ptr<std::vector<T>> res;
-  if (obj) {
-    res.reset(new std::vector<T>);
-
-    auto check_max = [&maxV](const T &v) {
-      if (v >= maxV) {
-        throw_value_error("list element larger than allowed value");
-      }
-      return true;
-    };
-    std::copy_if(python::stl_input_iterator<T>(obj),
-                 python::stl_input_iterator<T>(), std::back_inserter(*res),
-                 check_max);
-  }
-  return res;
-}
-//! NOTE: this returns a nullptr if obj is None or empty
-template <typename T>
-std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj) {
-  std::unique_ptr<std::vector<T>> res;
-  if (obj) {
-    res.reset(new std::vector<T>(python::stl_input_iterator<T>(obj),
-                                 python::stl_input_iterator<T>()));
-  }
-  return res;
-}
-//! NOTE: \c res will be cleared if obj is None or empty
-template <typename T>
-void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
-  if (obj) {
-    res.assign(python::stl_input_iterator<T>(obj),
-               python::stl_input_iterator<T>());
-  } else {
-    res.clear();
-  }
-}
 
 RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(
     const python::object &obj, boost::dynamic_bitset<>::size_type maxV);
@@ -181,7 +182,7 @@ RDKIT_RDBOOST_EXPORT RDNumeric::DoubleVector *translateDoubleSeq(
     const python::object &doubleSeq);
 RDKIT_RDBOOST_EXPORT std::vector<unsigned int> *translateIntSeq(
     const python::object &intSeq);
-
+#endif
 // Quiet warnings on GCC
 #if defined(__GNUC__) || defined(__GNUG__)
 #define RDUNUSED __attribute__((__unused__))
@@ -221,6 +222,41 @@ class RDKIT_RDBOOST_EXPORT RDUNUSED NOGIL {
 struct RDUNUSED NOGIL {};
 #endif
 
+template <class Copyable>
+nb::object generic__copy__(nb::object self) {
+  nb::object result = nb::cast(nb::cast<Copyable>(self), nb::rv_policy::copy);
+  nb::dict rdict = result.attr("__dict__");
+  rdict.update(nb::cast<nb::dict>(self.attr("__dict__")));
+  return result;
+}
+template <class Copyable>
+nb::object generic__deepcopy__(nb::object self, nb::dict /* memo */) {
+  //  FIX: we probably should be doing something with memo here (the boost
+  //  bindings did)
+  return generic__copy__<Copyable>(self);
+#if 0
+  // not currently functional included here in case we want to fix it later
+  nb::object copyMod = nb::module_::import_("copy");
+  nb::object deepcopy = copyMod.attr("deepcopy");
+
+  nb::object result = nb::cast(nb::cast<Copyable>(self), nb::rv_policy::copy);
+
+  // HACK: copyableId shall be the same as the result of id(copyable) in Python
+  // -
+  // please tell me that there is a better way! (and which ;-p)
+  size_t copyableId = (size_t)(self.ptr());
+  memo[copyableId] = result;
+
+  nb::dict rdict = result.attr("__dict__");
+  rdict.update(deepcopy(nb::cast<nb::dict>(self.attr("__dict__")), memo));
+  // python::extract<python::dict>(result.attr("__dict__"))().update(
+  //     deepcopy(python::extract<python::dict>(self.attr("__dict__"))(),
+  //     memo));
+  return result;
+#endif
+}
+
+#if 0
 // -------------------
 // This block was adapted from this mailing list post by Matthew Scouten:
 // https://mail.python.org/pipermail/cplusplus-sig/2009-May/014505.html
@@ -230,39 +266,6 @@ inline PyObject *managingPyObject(T *p) {
   return typename python::manage_new_object::apply<T *>::type()(p);
 }
 
-template <class Copyable>
-python::object generic__copy__(python::object copyable) {
-  Copyable *newCopyable(
-      new Copyable(python::extract<const Copyable &>(copyable)));
-  python::object result(
-      python::detail::new_reference(managingPyObject(newCopyable)));
-
-  python::extract<python::dict>(result.attr("__dict__"))().update(
-      copyable.attr("__dict__"));
-
-  return result;
-}
-
-template <class Copyable>
-python::object generic__deepcopy__(python::object copyable, python::dict memo) {
-  python::object copyMod = python::import("copy");
-  python::object deepcopy = copyMod.attr("deepcopy");
-
-  Copyable *newCopyable(
-      new Copyable(python::extract<const Copyable &>(copyable)));
-  python::object result(
-      python::detail::new_reference(managingPyObject(newCopyable)));
-
-  // HACK: copyableId shall be the same as the result of id(copyable) in Python
-  // -
-  // please tell me that there is a better way! (and which ;-p)
-  size_t copyableId = (size_t)(copyable.ptr());
-  memo[copyableId] = result;
-
-  python::extract<python::dict>(result.attr("__dict__"))().update(deepcopy(
-      python::extract<python::dict>(copyable.attr("__dict__"))(), memo));
-  return result;
-}
 // -------------------
 
 /// Awesome StackOverflow response:
@@ -346,5 +349,5 @@ struct rdkit_pickle_suite : python::pickle_suite {
 
   static bool getstate_manages_dict() { return true; }
 };
-
+#endif
 #endif
