@@ -1,0 +1,203 @@
+//
+//  Copyright (C) 2025 Schrödinger, LLC
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
+#ifndef RD_MACROCYCLE_GENERATOR_H
+#define RD_MACROCYCLE_GENERATOR_H
+
+#include <vector>
+#include <string>
+#include <Geometry/point.h>
+
+namespace RDDepict {
+
+//! Hexagonal grid coordinates for tracking macrocycle positions
+/*!
+  Uses cube coordinates (x, y, z) where x + y + z = 0
+  Each bond moves one unit in one of 6 directions (0°, 60°, 120°, 180°, 240°,
+  300°) This makes collision detection trivial - just check if two nodes occupy
+  same position
+*/
+struct HexCoord {
+  int x, y, z;
+
+  HexCoord() : x(0), y(0), z(0) {}
+  HexCoord(int x_, int y_, int z_) : x(x_), y(y_), z(z_) {}
+
+  bool operator==(const HexCoord &other) const {
+    return x == other.x && y == other.y && z == other.z;
+  }
+
+  bool operator!=(const HexCoord &other) const { return !(*this == other); }
+
+  // For use in std::set or std::map
+  bool operator<(const HexCoord &other) const {
+    if (x != other.x) return x < other.x;
+    if (y != other.y) return y < other.y;
+    return z < other.z;
+  }
+};
+
+//! Type of constraint on turn sequence
+enum class ConstraintType {
+  SAME,  //!< Two consecutive turns must be same (RR or LL) - e.g., cis double
+         //!< bond
+  OPPOSITE,  //!< Two consecutive turns must be opposite (RL or LR) - e.g.,
+             //!< trans double bond
+  FIXED      //!< Fixed pattern of specific turns - e.g., fused rings
+};
+
+//! Constraint on turn sequence at a specific position
+struct TurnConstraint {
+  size_t position;           //!< Starting position in macrocycle (0-indexed)
+  ConstraintType type;       //!< Type of constraint
+  std::vector<int> pattern;  //!< For FIXED: specific turns (+1=R, -1=L)
+                             //!< For SAME/OPPOSITE: empty (applied to position
+                             //!< and position+1)
+  std::string
+      reason;  //!< Description for debugging (e.g., "cis_double_bond_at_5")
+};
+
+//! Generate 2D coordinates for macrocycles using turn-based encoding
+/*!
+  This class generates macrocycle coordinates by encoding them as a sequence
+  of "turn right" (R) or "turn left" (L) decisions. Each step advances by
+  bond length and rotates ±60°.
+
+  The algorithm satisfies two closure constraints:
+  1. Angular closure: count(R) - count(L) = 6 (ensures 360° rotation)
+  2. Positional closure: final position ≈ start position (minimize error)
+
+  Structural constraints (Phase 2):
+  - Cis double bonds: two consecutive turns must be same (SAME constraint)
+  - Trans double bonds: two consecutive turns must be opposite (OPPOSITE
+  constraint)
+  - Fused rings: fixed turn patterns (FIXED constraint)
+*/
+class MacrocycleGenerator {
+ public:
+  //! Constructor
+  /*!
+    \param ringSize: Number of atoms in the macrocycle
+    \param bondLength: Length of each bond (default 1.5 Å)
+    \param useJacobianRefinement: Whether to use Jacobian angle adjustment to close gaps (default true)
+  */
+  MacrocycleGenerator(size_t ringSize, double bondLength = 1.5, bool useJacobianRefinement = true);
+
+  //! Add a structural constraint
+  /*!
+    \param constraint: Constraint to add to the turn sequence
+  */
+  void addConstraint(const TurnConstraint &constraint);
+
+  //! Solve for optimal turn sequence
+  /*!
+    Finds a turn sequence that satisfies angular closure and minimizes
+    positional closure error.
+
+    \return true if a valid solution was found
+  */
+  bool solve();
+
+  //! Generate 2D coordinates from the solved turn sequence
+  /*!
+    Must call solve() first and ensure it returned true.
+
+    \return vector of 2D coordinates for each atom
+  */
+  std::vector<RDGeom::Point2D> generateCoordinates() const;
+
+  //! Get the closure error of the current solution
+  /*!
+    Distance between final position and start position.
+
+    \return closure error in Angstroms
+  */
+  double getClosureError() const { return d_closureError; }
+
+  //! Get the turn sequence (for debugging/analysis)
+  /*!
+    \return vector of turns: +1 = R (right), -1 = L (left)
+  */
+  const std::vector<int> &getTurns() const { return d_turns; }
+
+  //! Calculate hexagonal coordinates for debugging/testing
+  /*!
+    \param turns: Turn sequence to convert to hex coordinates
+    \return vector of hexagonal coordinates for each node
+  */
+  std::vector<HexCoord> calculateHexCoords(const std::vector<int> &turns) const;
+
+  //! Check if a turn sequence has self-crossings
+  /*!
+    \param turns: Turn sequence to check
+    \return true if the sequence crosses itself
+  */
+  bool hasSelfCrossing(const std::vector<int> &turns) const;
+
+  //! Analytically refine coordinates to fix closure gap and geometry
+  /*!
+    Applies three analytical steps to improve coordinate quality:
+    1. Distribute closure gap linearly across all atoms
+    2. Adjust bond lengths to exactly bondLength
+    3. Distribute angular error evenly across all angles
+
+    Non-iterative - runs in a single pass (~0.1-0.5ms).
+
+    \param coords: Input coordinates (modified in-place)
+    \return Final closure error after refinement (should be < 0.02 Å)
+  */
+  double refineCoordinatesAnalytical(
+      std::vector<RDGeom::Point2D> &coords) const;
+
+  //! Adjust angles analytically to close the gap (O(N) least-squares solution)
+  /*!
+    Uses Jacobian pseudo-inverse to compute minimal angle adjustments that close
+    the gap between dummy atom and first atom. Preserves geometry better than
+    linear gap distribution.
+
+    \param coords: Input coordinates with dummy atom (N+1 elements)
+    \param isOddRing: Whether this is an odd-numbered ring
+  */
+  void adjustAnglesForClosure(std::vector<RDGeom::Point2D> &coords,
+                              bool isOddRing) const;
+
+ private:
+  //! Step 1: Distribute closure gap linearly
+  void distributeClosureGap(std::vector<RDGeom::Point2D> &coords) const;
+
+  //! Get current closure gap magnitude
+  double getClosureGap(const std::vector<RDGeom::Point2D> &coords) const;
+  //! Calculate positional closure error for a given turn sequence
+  double calculateClosureError(const std::vector<int> &turns) const;
+
+  //! Apply constraints to turn sequence, return false if constraints conflict
+  bool applyConstraints(std::vector<int> &turns) const;
+
+  //! Validate that a turn sequence satisfies all constraints
+  bool validateConstraints(const std::vector<int> &turns) const;
+
+  //! Enumerate combinations and find optimal solution
+  bool findOptimalTurnSequence(int numRight, int numLeft);
+
+  //! Helper: generate next combination
+  bool nextCombination(std::vector<size_t> &positions, size_t n);
+
+  size_t d_ringSize;         //!< Number of atoms in the ring
+  double d_bondLength;       //!< Length of each bond
+  std::vector<int> d_turns;  //!< Turn sequence: +1 = R, -1 = L, 0 = undecided
+  std::vector<TurnConstraint> d_constraints;  //!< Structural constraints
+  double d_closureError;                      //!< Positional closure error
+  bool d_solved;  //!< Whether solve() has been called successfully
+  bool d_useJacobianRefinement;  //!< Whether to use Jacobian angle adjustment
+};
+
+}  // namespace RDDepict
+
+#endif

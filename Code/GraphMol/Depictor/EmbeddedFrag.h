@@ -188,9 +188,10 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
     \param fusedRings a vector of rings, each ring is a list of atom ids
     \param useRingTemplates whether to use ring system templates for generating
       initial coordinates
+    \param useJacobianRefinement whether to use Jacobian refinement for macrocycles
   */
   EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings,
-               bool useRingTemplates);
+               bool useRingTemplates, bool useJacobianRefinement = true);
 
   //! Initializer for a cis/trans system using the double bond
   /*!
@@ -397,8 +398,14 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
       const std::shared_ptr<RDKit::ROMol> &template_mol,
       const RDKit::MatchVectType &match);
 
+  // returns true if macrocycle coordinates were successfully generated
+  bool generateMacrocycleCoordinates(const RDKit::INT_VECT &macrocycleRing,
+                                     const RDKit::VECT_INT_VECT &allRings,
+                                     bool useJacobianRefinement = true);
+
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
-                       bool useRingTemplates);
+                       bool useRingTemplates,
+                       bool useJacobianRefinement = true);
 
   void setupAttachmentPoints();
 

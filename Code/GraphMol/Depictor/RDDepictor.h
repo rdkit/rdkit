@@ -90,6 +90,8 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
                                   //!< preferCoordGen is set to true
   bool useRingTemplates = false;  //!< whether to use ring system templates for
                                   //!< generating initial coordinates
+  bool useJacobianRefinement = true;  //!< whether to use Jacobian angle adjustment
+                                      //!< to close gaps in macrocycle coordinates
 };
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule
@@ -148,7 +150,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
     bool canonOrient = false, bool clearConfs = true,
     unsigned int nFlipsPerSample = 0, unsigned int nSamples = 0,
     int sampleSeed = 0, bool permuteDeg4Nodes = false, bool forceRDKit = false,
-    bool useRingTemplates = false);
+    bool useRingTemplates = false, bool useJacobianRefinement = true);
 
 //! \brief Compute the 2D coordinates such the interatom distances
 ///  mimic those in a distance matrix

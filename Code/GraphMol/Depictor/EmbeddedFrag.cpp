@@ -16,6 +16,7 @@
 #include <Geometry/Transform2D.h>
 #include "EmbeddedFrag.h"
 #include "DepictUtils.h"
+#include "MacrocycleGenerator.h"
 #include "Templates.h"
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Bond.h>
@@ -62,12 +63,12 @@ EmbeddedFrag::EmbeddedFrag(unsigned int aid, const RDKit::ROMol *mol) {
 
 EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
                            const RDKit::VECT_INT_VECT &fusedRings,
-                           bool useRingTemplates) {
+                           bool useRingTemplates, bool useJacobianRefinement) {
   PRECONDITION(mol, "");
   dp_mol = mol;
   d_eatoms.clear();
   d_attachPts.clear();
-  this->embedFusedRings(fusedRings, useRingTemplates);
+  this->embedFusedRings(fusedRings, useRingTemplates, useJacobianRefinement);
   d_done = false;
 }
 
@@ -1122,6 +1123,233 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
   return applyTemplateCoordinates(best->template_mol, best->match);
 }
 
+bool EmbeddedFrag::generateMacrocycleCoordinates(
+    const RDKit::INT_VECT &macrocycleRing, const RDKit::VECT_INT_VECT &allRings,
+    bool useJacobianRefinement) {
+  PRECONDITION(dp_mol, "");
+
+  // Only attempt for macrocycles (size > 8)
+  if (macrocycleRing.size() <= 8) {
+    return false;
+  }
+  std::cerr
+      << "Attempting on-the-fly coordinate generation for macrocycle of size "
+      << macrocycleRing.size() << std::endl;
+
+  // Create MacrocycleGenerator with Jacobian flag
+  MacrocycleGenerator generator(macrocycleRing.size(), 1.5,
+                                useJacobianRefinement);
+
+  // Add constraints for fused small rings
+  // Pattern: first turn = R, middle turns = L, last turn = R
+  // Examples: 2-atom fusion → RR, 3-atom → RLR, 4-atom → RLLR
+  std::set<int> macrocycleAtomSet(macrocycleRing.begin(), macrocycleRing.end());
+
+  for (const auto &ring : allRings) {
+    // Skip the macrocycle itself
+    if (ring.size() > 8) {
+      continue;
+    }
+
+    // Find shared atoms between this small ring and the macrocycle
+    std::vector<size_t> sharedPositions;  // Positions in macrocycleRing
+    for (size_t i = 0; i < macrocycleRing.size(); ++i) {
+      int atom = macrocycleRing[i];
+      if (std::find(ring.begin(), ring.end(), atom) != ring.end()) {
+        sharedPositions.push_back(i);
+      }
+    }
+
+    // Need at least 1 shared atom (spiro or fusion)
+    // Skip if more than 4 shared atoms (unusual/complex fusion)
+    if (sharedPositions.size() < 1 || sharedPositions.size() > 4) {
+      continue;
+    }
+
+    // Verify shared atoms are contiguous in the macrocycle (for multi-atom
+    // fusions) Handle wraparound: positions like [14, 0, 1] or [0, 1, 14] are
+    // contiguous
+    if (sharedPositions.size() > 1) {
+      bool contiguous = true;
+      size_t gapIdx = 0;  // Track where wraparound gap is (if any)
+
+      // Check if all consecutive pairs are adjacent
+      for (size_t i = 1; i < sharedPositions.size(); ++i) {
+        size_t expected = (sharedPositions[i - 1] + 1) % macrocycleRing.size();
+        if (sharedPositions[i] != expected) {
+          contiguous = false;
+          break;
+        }
+      }
+
+      // If not contiguous in forward direction, check for wraparound
+      // E.g., positions [0, 1, 14] or [13, 14, 0, 1]
+      if (!contiguous) {
+        // Check if positions wrap around (last position is near end, first is
+        // near start) Find the gap: where consecutive positions have a large
+        // jump
+        gapIdx = 0;
+        for (size_t i = 1; i < sharedPositions.size(); ++i) {
+          if (sharedPositions[i] != sharedPositions[i - 1] + 1) {
+            gapIdx = i;
+            break;
+          }
+        }
+
+        // If there's exactly one gap, check if it's the wraparound
+        if (gapIdx > 0) {
+          // Check if positions before gap and after gap are contiguous when
+          // wrapped
+          bool wrapContiguous = true;
+
+          // Positions after gap should be contiguous
+          for (size_t i = gapIdx + 1; i < sharedPositions.size(); ++i) {
+            if (sharedPositions[i] != sharedPositions[i - 1] + 1) {
+              wrapContiguous = false;
+              break;
+            }
+          }
+
+          // Check wraparound: last position + 1 should equal first position
+          // (mod ring size)
+          if (wrapContiguous) {
+            size_t lastPos = sharedPositions[sharedPositions.size() - 1];
+            size_t firstPos = sharedPositions[0];
+            if ((lastPos + 1) % macrocycleRing.size() == firstPos) {
+              contiguous = true;
+            }
+          }
+        }
+      }
+
+      if (!contiguous) {
+        std::cerr
+            << "Warning: non-contiguous fusion detected, skipping constraint"
+            << std::endl;
+        continue;
+      }
+
+      // If wraparound was detected, reorder positions to start from the
+      // wraparound point E.g., [0, 1, 14] → [14, 0, 1] so constraint position
+      // calculation works correctly
+      if (gapIdx > 0 && contiguous) {
+        // Rotate the vector: move elements from gapIdx to end to the front
+        std::vector<size_t> reordered;
+        for (size_t i = gapIdx; i < sharedPositions.size(); ++i) {
+          reordered.push_back(sharedPositions[i]);
+        }
+        for (size_t i = 0; i < gapIdx; ++i) {
+          reordered.push_back(sharedPositions[i]);
+        }
+        sharedPositions = reordered;
+      }
+    }
+
+    // Create turn pattern based on number of shared atoms:
+    // Pattern length = N (number of shared atoms)
+    // First and last turn: R (convex, prevalent)
+    // Middle turns: L (concave)
+    // 1 shared atom: R
+    // 2 shared atoms: RR
+    // 3 shared atoms: RLR
+    // 4 shared atoms: RLLR
+    std::vector<int> pattern;
+    size_t numShared = sharedPositions.size();
+
+    if (numShared == 1) {
+      pattern.push_back(1);  // R
+    } else {
+      pattern.push_back(1);  // First turn: R
+      for (size_t i = 1; i < numShared - 1; ++i) {
+        pattern.push_back(-1);  // Middle turns: L
+      }
+      pattern.push_back(1);  // Last turn: R
+    }
+
+    // Add constraint
+    // For N shared atoms, pattern has length N
+    // The pattern starts one position BEFORE the first shared atom
+    TurnConstraint constraint;
+    constraint.position = sharedPositions[0];
+    constraint.type = ConstraintType::FIXED;
+    constraint.pattern = pattern;
+    constraint.reason = "fused_ring_" + std::to_string(ring.size()) + "_at_" +
+                        std::to_string(sharedPositions[0]);
+
+    generator.addConstraint(constraint);
+    std::cerr << "Added fusion constraint at position " << constraint.position
+              << " with pattern: ";
+    for (int t : pattern) {
+      std::cerr << (t == 1 ? "R" : "L");
+    }
+    std::cerr << std::endl;
+  }
+
+  // TODO Phase 2+: Add constraints for double bonds
+
+  // Solve for optimal turn sequence
+  if (!generator.solve()) {
+    std::cerr << "Failed to solve for macrocycle coordinates." << std::endl;
+    return false;  // No solution found
+  }
+
+  // Check closure quality
+  double closureError = generator.getClosureError();
+  // For even-numbered rings: expect near-perfect closure (~0 Å)
+  // For odd-numbered rings: expect ~1.5 Å gap (one bond length)
+  // For constrained rings: closure may be worse but still acceptable
+  constexpr double MAX_CLOSURE_ERROR = 6.0;  // threshold in Angstroms
+  if (closureError > MAX_CLOSURE_ERROR) {
+    std::cerr << "Closure error too large: " << closureError << " Angstroms."
+              << std::endl;
+    return false;  // Closure error too large
+  }
+
+  std::cerr << "Generated macrocycle coordinates with closure error: "
+            << closureError << " Angstroms." << std::endl;
+
+  // Print the actual turn sequence for debugging
+  const auto &turns = generator.getTurns();
+  std::cerr << "Turn sequence: ";
+  for (size_t i = 0; i < turns.size(); ++i) {
+    if (turns[i] == 1) {
+      std::cerr << "R";
+    } else if (turns[i] == -1) {
+      std::cerr << "L";
+    } else {
+      std::cerr << ".";  // Unassigned (gap in odd rings)
+    }
+  }
+  std::cerr << std::endl;
+
+  // Count R and L turns (R should be 6 more than L for angular closure)
+  int countR = 0, countL = 0;
+  for (int turn : turns) {
+    if (turn == 1)
+      countR++;
+    else if (turn == -1)
+      countL++;
+  }
+  std::cerr << "R count: " << countR << ", L count: " << countL
+            << ", R-L: " << (countR - countL) << " (should be 6)" << std::endl;
+
+  // Generate 2D coordinates
+  auto coords = generator.generateCoordinates();
+
+  // Apply coordinates to embedded fragment
+  // coords[i] is the position of atom i (turn[i] is the turn AT atom i)
+  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
+    int aidx = macrocycleRing[i];
+    EmbeddedAtom new_at(aidx, coords[i]);
+    new_at.df_fixed = true;
+    d_eatoms.emplace(aidx, new_at);
+  }
+
+  this->setupNewNeighs();
+  this->setupAttachmentPoints();
+  return true;
+}
+
 // find any atoms in the ring that are in trans double bonds
 // and mirror them into the ring
 static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
@@ -1188,7 +1416,8 @@ static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
 //    This is what is provided by the current ring-finding code.
 //
 void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
-                                   bool useRingTemplates) {
+                                   bool useRingTemplates,
+                                   bool useJacobianRefinement) {
   PRECONDITION(dp_mol, "");
   // Look for a template for the whole system. Failing that simplify the system
   // to a set of core atoms and  look for a template for those. If that fails,
@@ -1201,6 +1430,8 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
 
     // First try exact template matching on all rings
     bool found_template = matchToTemplate(funion, fusedRings.size());
+    // bool found_template = false;  // TEMPORARY: Set to false to skip
+    // templates (for testing MacrocycleGenerator)
 
     if (found_template) {
       // Whole fused system template matched - we are done
@@ -1261,10 +1492,23 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
             doneRings.push_back(macrocycle_idx);
           }
         }
-      }
-
-      if (found_template && doneRings.empty()) {
-        doneRings = coreRingsIds;
+        if (found_template && doneRings.empty()) {
+          doneRings = coreRingsIds;
+        }
+        if (doneRings.empty()) {
+          std::cerr << "No template found for fused ring system of size "
+                    << funion.size() << std::endl;
+          // If template matching failed and this is a single macrocycle,
+          // try to generate coordinates on-the-fly
+          if (hasMacrocycle) {
+            bool generated = generateMacrocycleCoordinates(
+                fusedRings[macrocycle_idx], fusedRings, useJacobianRefinement);
+            if (generated) {
+              // Mark macrocycle as done, then continue to attach small rings
+              doneRings.push_back(macrocycle_idx);
+            }
+          }
+        }
       }
     }
   }

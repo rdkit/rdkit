@@ -14,12 +14,13 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 endif()
 
 rdkit_library(Depictor
-              RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp Templates.cpp
+              RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp Templates.cpp MacrocycleGenerator.cpp
               LINK_LIBRARIES ${COORDGEN_LIB} SmilesParse SubstructMatch MolTransforms GraphMol RDGeneral MolAlign)
 target_compile_definitions(Depictor PRIVATE RDKIT_DEPICTOR_BUILD)
 
 rdkit_headers(DepictUtils.h
               EmbeddedFrag.h
+              MacrocycleGenerator.h
               RDDepictor.h DEST GraphMol/Depictor)
 
 rdkit_test(testDepictor testDepictor.cpp
@@ -33,6 +34,14 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
 
 rdkit_catch_test(depictorCatch catch_tests.cpp LINK_LIBRARIES Depictor SmilesParse FileParsers)
 
+rdkit_test(testMacrocycleGenerator test_macrocycle_generator.cpp
+           LINK_LIBRARIES Depictor)
+
+rdkit_test(testMacrocycleConstraints test_macrocycle_constraints.cpp
+           LINK_LIBRARIES Depictor)
+
+rdkit_test(testSelfCrossing test_selfcrossing.cpp
+           LINK_LIBRARIES Depictor)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
