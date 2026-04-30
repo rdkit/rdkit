@@ -173,6 +173,11 @@ struct ForwardSupplierIter {
   Supplier *supplier = nullptr;
   std::optional<value_type> current;
   ForwardSupplierIter() = default;
+  ForwardSupplierIter(const ForwardSupplierIter &) = default;
+  ForwardSupplierIter &operator=(const ForwardSupplierIter &) = default;
+  ForwardSupplierIter(ForwardSupplierIter &&) = default;
+  ForwardSupplierIter &operator=(ForwardSupplierIter &&) = default;
+
   explicit ForwardSupplierIter(Supplier *supplier)
       : supplier(supplier), current(supplier->nextShared()) {}
   const_value_type operator*() const { return current.value(); }
@@ -273,6 +278,11 @@ struct RandomAccessSupplierIter {
   Supplier *supplier = nullptr;
   size_t current_idx = 0;
   RandomAccessSupplierIter() = default;
+  RandomAccessSupplierIter(const RandomAccessSupplierIter &) = default;
+  RandomAccessSupplierIter &operator=(const RandomAccessSupplierIter &) =
+      default;
+  RandomAccessSupplierIter(RandomAccessSupplierIter &&) = default;
+  RandomAccessSupplierIter &operator=(RandomAccessSupplierIter &&) = default;
   explicit RandomAccessSupplierIter(Supplier *supplier)
       : supplier(supplier), current_idx(0) {}
   RandomAccessSupplierIter(Supplier *supplier, size_t idx)
