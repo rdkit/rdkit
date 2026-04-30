@@ -35,20 +35,6 @@ bool MacrocycleGenerator::applyConstraints(std::vector<int> &turns) const {
     size_t pos = constraint.position;
 
     if (constraint.type == ConstraintType::FIXED) {
-      std::cerr << "Applying FIXED constraint at position " << pos
-                << ": pattern = ";
-      for (int turn : constraint.pattern) {
-        std::cerr << (turn == 1 ? "R " : turn == -1 ? "L " : "0 ");
-      }
-      std::cerr << std::endl;
-      std::cerr << "Before applying FIXED constraint: ";
-      for (size_t i = 0; i < turns.size(); ++i) {
-        std::cerr << "Atom " << i << ": "
-                  << (turns[i] == 1    ? "R "
-                      : turns[i] == -1 ? "L "
-                                       : "0 ")
-                  << std::endl;
-      }
       // Apply fixed pattern
       for (size_t i = 0; i < constraint.pattern.size(); ++i) {
         auto idx = (pos + i) % d_ringSize;
@@ -56,8 +42,6 @@ bool MacrocycleGenerator::applyConstraints(std::vector<int> &turns) const {
           turns[idx] = constraint.pattern[i];
         } else if (turns[idx] != constraint.pattern[i]) {
           // Conflict: position already set to different value
-          std::cerr << "Constraints conflict - no solution possible"
-                    << std::endl;
           return false;
         }
       }
@@ -73,8 +57,6 @@ bool MacrocycleGenerator::applyConstraints(std::vector<int> &turns) const {
       } else if (turns[pos1] != 0 && turns[pos2] != 0 &&
                  turns[pos1] != turns[pos2]) {
         // Conflict: already set to different values
-        std::cerr << "Constraints 2222 conflict - no solution possible"
-                  << std::endl;
         return false;
       }
     } else if (constraint.type == ConstraintType::OPPOSITE) {
@@ -101,14 +83,6 @@ bool MacrocycleGenerator::validateConstraints(
     const std::vector<int> &turns) const {
   for (const auto &constraint : d_constraints) {
     size_t pos = constraint.position;
-    std::cerr << "validating constraints, sequence is:" << std::endl;
-    for (size_t i = 0; i < turns.size(); ++i) {
-      std::cerr << "Atom " << i << ": "
-                << (turns[i] == 1    ? "R "
-                    : turns[i] == -1 ? "L "
-                                     : "0 ")
-                << std::endl;
-    }
 
     if (constraint.type == ConstraintType::FIXED) {
       // Check fixed pattern matches
@@ -144,7 +118,6 @@ bool MacrocycleGenerator::solve() {
 
   // Apply structural constraints
   if (!applyConstraints(d_turns)) {
-    std::cerr << "Constraints conflict1 - no solution possible" << std::endl;
     return false;  // Constraints conflict
   }
 
@@ -205,8 +178,6 @@ bool MacrocycleGenerator::solve() {
 }
 
 bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
-  std::cerr << "Finding optimal turn sequence: numRight = " << numRight
-            << ", numLeft = " << numLeft << std::endl;
   // Find positions of free variables (currently 0)
   std::vector<size_t> freePositions;
   for (size_t i = 0; i < d_ringSize; ++i) {
@@ -224,7 +195,6 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
 
   // If all positions are free (no constraints), use old logic
   if (freePositions.size() == d_ringSize) {
-    std::cerr << "No constraints - enumerating all combinations" << std::endl;
     std::vector<int> candidate(d_ringSize, -1);  // Initialize all to L
     std::vector<size_t> rightPositions(numRight);
 
@@ -245,14 +215,9 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
         bestTurns = candidate;
       }
     }
-    std::cerr << "Testing combinations: " << std::endl;
 
     // Enumerate remaining combinations
     while (nextCombination(rightPositions, d_ringSize)) {
-      std::cerr << "Testing combination: ";
-      for (size_t pos : rightPositions) {
-        std::cerr << pos << " ";
-      }
       // Reset candidate to all L
       std::fill(candidate.begin(), candidate.end(), -1);
 
@@ -262,18 +227,11 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
       }
 
       // Validate constraints and check for self-crossing before evaluating
-      if (validateConstraints(candidate)) {
-        if (hasSelfCrossing(candidate)) {
-          std::cerr << "Self-crossing detected - rejecting" << std::endl;
-        } else {
-          std::cerr << "Valid combination. Calculating error..." << std::endl;
-          // Calculate error
-          double error = calculateClosureError(candidate);
-          std::cerr << "Closure error: " << error << std::endl;
-          if (error < bestError) {
-            bestError = error;
-            bestTurns = candidate;
-          }
+      if (validateConstraints(candidate) && !hasSelfCrossing(candidate)) {
+        double error = calculateClosureError(candidate);
+        if (error < bestError) {
+          bestError = error;
+          bestTurns = candidate;
         }
       }
     }
@@ -288,10 +246,6 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
 
     return true;
   }
-
-  std::cerr
-      << "Constraints present - enumerating combinations for free positions only"
-      << std::endl;
 
   // Mixed case: some positions fixed, some free
   // Enumerate ways to assign R/L to free positions
@@ -309,93 +263,43 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
   // Helper: create candidate from current combination
   auto createCandidate = [&]() {
     std::vector<int> candidate = d_turns;  // Start with constrained values
-    std::cerr << "  Creating candidate from constraints: ";
-    for (size_t i = 0; i < d_turns.size(); ++i) {
-      std::cerr << (d_turns[i] == 1 ? "R" : d_turns[i] == -1 ? "L" : "0");
-    }
-    std::cerr << std::endl;
-
     // Set free positions to L
     for (size_t freeIdx : freePositions) {
       candidate[freeIdx] = -1;
     }
     // Set selected positions to R
-    std::cerr << "  Setting R at free position indices: ";
     for (size_t idx : rightPositions) {
-      std::cerr << idx << " (pos " << freePositions[idx] << ") ";
       candidate[freePositions[idx]] = 1;
     }
-    std::cerr << std::endl;
-    std::cerr << "  Resulting candidate: ";
-    for (size_t i = 0; i < candidate.size(); ++i) {
-      std::cerr << (candidate[i] == 1 ? "R" : candidate[i] == -1 ? "L" : "0");
-    }
-    std::cerr << std::endl;
     return candidate;
   };
 
   // Evaluate first combination
-  std::cerr << "Evaluating first combination:" << std::endl;
   std::vector<int> candidate = createCandidate();
-  if (validateConstraints(candidate)) {
-    std::cerr << "  Validation passed. Checking for self-crossing..."
-              << std::endl;
-    if (hasSelfCrossing(candidate)) {
-      std::cerr << "  Self-crossing detected - rejecting" << std::endl;
-    } else {
-      std::cerr << "  No self-crossing. Calculating error..." << std::endl;
+  if (validateConstraints(candidate) && !hasSelfCrossing(candidate)) {
+    double error = calculateClosureError(candidate);
+    if (error < bestError) {
+      bestError = error;
+      bestTurns = candidate;
+    }
+  }
+
+  // Enumerate remaining combinations
+  while (nextCombination(rightPositions, numFree)) {
+    candidate = createCandidate();
+    if (validateConstraints(candidate) && !hasSelfCrossing(candidate)) {
       double error = calculateClosureError(candidate);
-      std::cerr << "  Closure error: " << error << std::endl;
       if (error < bestError) {
         bestError = error;
         bestTurns = candidate;
       }
     }
-  } else {
-    std::cerr << "  Validation FAILED for first combination" << std::endl;
   }
-
-  // Enumerate remaining combinations
-  int combinationCount = 1;
-  while (nextCombination(rightPositions, numFree)) {
-    combinationCount++;
-    std::cerr << "\nEvaluating combination " << combinationCount << ":"
-              << std::endl;
-    candidate = createCandidate();
-    if (validateConstraints(candidate)) {
-      std::cerr << "  Validation passed. Checking for self-crossing..."
-                << std::endl;
-      if (hasSelfCrossing(candidate)) {
-        std::cerr << "  Self-crossing detected - rejecting" << std::endl;
-      } else {
-        std::cerr << "  No self-crossing. Calculating error..." << std::endl;
-        double error = calculateClosureError(candidate);
-        std::cerr << "  Closure error: " << error << std::endl;
-        if (error < bestError) {
-          bestError = error;
-          bestTurns = candidate;
-        }
-      }
-    } else {
-      std::cerr << "  Validation FAILED" << std::endl;
-    }
-  }
-
-  std::cerr << "\nTested " << combinationCount << " combinations total"
-            << std::endl;
 
   // Store best solution
   if (bestTurns.empty()) {
-    std::cerr << "ERROR: No valid solution found that satisfies constraints!"
-              << std::endl;
     return false;  // No valid solution found that satisfies constraints
   }
-
-  std::cerr << "Found best solution with error " << bestError << ": ";
-  for (size_t i = 0; i < bestTurns.size(); ++i) {
-    std::cerr << (bestTurns[i] == 1 ? "R" : bestTurns[i] == -1 ? "L" : "0");
-  }
-  std::cerr << std::endl;
 
   d_turns = bestTurns;
   d_closureError = bestError;
@@ -545,10 +449,6 @@ std::vector<RDGeom::Point2D> MacrocycleGenerator::generateCoordinates() const {
       pos.y += d_bondLength * std::sin(direction);
       coords.push_back(pos);  // Add atoms 1 to N (where N is the dummy)
     }
-    for (size_t i = 0; i < coords.size(); ++i) {
-      std::cerr << "ODD: Atom " << i << ": (" << coords[i].x << ", "
-                << coords[i].y << ")" << std::endl;
-    }
 
     // Now coords has N+1 elements: [0, 1, 2, ..., N-1, N_dummy]
   } else {
@@ -571,11 +471,6 @@ std::vector<RDGeom::Point2D> MacrocycleGenerator::generateCoordinates() const {
     double dummyX = d_bondLength * (dummyHex.x + dummyHex.z / 2.0);
     double dummyY = d_bondLength * (-SQRT3_2 * dummyHex.z);
     coords.emplace_back(dummyX, dummyY);
-
-    for (size_t i = 0; i < coords.size(); ++i) {
-      std::cerr << "EVEN: Atom " << i << ": (" << coords[i].x << ", "
-                << coords[i].y << ")" << std::endl;
-    }
 
     // Now coords has N+1 elements: [0, 1, 2, ..., N-1, N_dummy]
   }
@@ -614,11 +509,7 @@ void MacrocycleGenerator::adjustAnglesForClosure(
   size_t N = d_ringSize;
   double initialGap = (coords[0] - coords[N]).length();
 
-  std::cerr << "DEBUG Angle Adjustment (Iterative Jacobian): Initial gap = "
-            << initialGap << " Å" << std::endl;
-
   if (initialGap < 1e-6) {
-    std::cerr << "  Gap already closed" << std::endl;
     return;
   }
 
@@ -655,10 +546,7 @@ void MacrocycleGenerator::adjustAnglesForClosure(
     RDGeom::Point2D gap = coords[0] - coords[N];
     double gapMag = gap.length();
 
-    std::cerr << "  Iter " << iter << ": gap = " << gapMag << " Å";
-
     if (gapMag < 0.01) {
-      std::cerr << " - Converged!" << std::endl;
       break;
     }
 
@@ -683,7 +571,6 @@ void MacrocycleGenerator::adjustAnglesForClosure(
     double det = A00 * A11 - A01 * A01;
 
     if (std::abs(det) < 1e-12) {
-      std::cerr << " - Singular Jacobian!" << std::endl;
       break;
     }
 
@@ -697,115 +584,15 @@ void MacrocycleGenerator::adjustAnglesForClosure(
 
     // Compute Δθ = -J^T · temp
     std::vector<double> deltaTheta(N);
-    double maxDelta = 0.0;
 
     for (size_t k = 0; k < N; ++k) {
       deltaTheta[k] = -(jacobian[k].x * temp_x + jacobian[k].y * temp_y);
-      maxDelta = std::max(maxDelta, std::abs(deltaTheta[k]));
     }
-
-    std::cerr << ", max Δθ = " << (maxDelta * 180.0 / M_PI) << "°" << std::endl;
 
     // Apply damped adjustments
     for (size_t k = 0; k < N; ++k) {
       angleAdjustments[k] += damping * deltaTheta[k];
     }
-  }
-
-  // Final gap after adjustments
-  RDGeom::Point2D finalGap = coords[0] - coords[N];
-  double finalGapMag = finalGap.length();
-  std::cerr << "  Final gap: " << finalGapMag << " Å" << std::endl;
-
-  // Debug: Print turn sequence vs actual angles
-  std::cerr << "  Turn sequence: ";
-  for (size_t i = 0; i < N; ++i) {
-    if (d_turns[i] == 1)
-      std::cerr << "R";
-    else if (d_turns[i] == -1)
-      std::cerr << "L";
-    else
-      std::cerr << ".";
-  }
-  std::cerr << std::endl;
-
-  // Measure actual angles at positions 0 to N-1
-  std::cerr << "  Actual exterior angles: ";
-  for (size_t i = 0; i < N; ++i) {
-    size_t prev = (i == 0) ? N : (i - 1);
-    size_t next = i + 1;
-
-    RDGeom::Point2D v1 = coords[i] - coords[prev];
-    RDGeom::Point2D v2 = coords[next] - coords[i];
-
-    double angle1 = std::atan2(v1.y, v1.x);
-    double angle2 = std::atan2(v2.y, v2.x);
-    double exteriorTurn = angle2 - angle1;
-
-    while (exteriorTurn > M_PI) exteriorTurn -= 2 * M_PI;
-    while (exteriorTurn < -M_PI) exteriorTurn += 2 * M_PI;
-
-    double exteriorDeg = exteriorTurn * 180 / M_PI;
-    std::cerr << (exteriorDeg > 0 ? "R" : "L") << "(" << std::abs(exteriorDeg)
-              << ") ";
-  }
-  std::cerr << std::endl;
-
-  // Check for inversions
-  std::cerr << "  Checking angles after adjustment:" << std::endl;
-  int inverted = 0;
-  int largeDev = 0;
-  for (size_t i = 0; i < N; ++i) {
-    size_t prev = (i == 0) ? N : (i - 1);
-    size_t next = i + 1;
-
-    RDGeom::Point2D v1 = coords[i] - coords[prev];
-    RDGeom::Point2D v2 = coords[next] - coords[i];
-
-    double angle1 = std::atan2(v1.y, v1.x);
-    double angle2 = std::atan2(v2.y, v2.x);
-    double exteriorTurn = angle2 - angle1;
-
-    while (exteriorTurn > M_PI) exteriorTurn -= 2 * M_PI;
-    while (exteriorTurn < -M_PI) exteriorTurn += 2 * M_PI;
-
-    double exteriorDeg = exteriorTurn * 180 / M_PI;
-
-    size_t turnIdx = i;
-
-    double expectedExterior = 0.0;
-    if (d_turns[turnIdx] == 1) {
-      expectedExterior = 60.0 + (isOddRing ? 4.0 : 0.0);
-    } else if (d_turns[turnIdx] == -1) {
-      expectedExterior = -60.0 + (isOddRing ? 4.0 : 0.0);
-    }
-
-    double deviation = std::abs(exteriorDeg - expectedExterior);
-
-    bool isRTurn = (d_turns[turnIdx] == 1);
-    bool hasCorrectSign =
-        (isRTurn && exteriorTurn > 0) || (!isRTurn && exteriorTurn < 0);
-
-    if (!hasCorrectSign && d_turns[turnIdx] != 0) {
-      inverted++;
-      std::cerr << "    Pos " << i << " (turn[" << turnIdx
-                << "]=" << (isRTurn ? "R" : "L") << ") INVERTED! Got "
-                << exteriorDeg << "°" << std::endl;
-    } else if (deviation > 10.0 && d_turns[turnIdx] != 0) {
-      largeDev++;
-      std::cerr << "    Pos " << i << " (turn[" << turnIdx
-                << "]=" << (isRTurn ? "R" : "L") << "): " << exteriorDeg
-                << "° (expected " << expectedExterior << "°, dev=" << deviation
-                << "°)" << std::endl;
-    }
-  }
-
-  if (inverted == 0 && largeDev == 0) {
-    std::cerr << "  ✓ All angles within tolerance" << std::endl;
-  } else {
-    std::cerr << "  INVERSIONS: " << inverted << "/" << N << std::endl;
-    std::cerr << "  LARGE DEVIATIONS (>10°): " << largeDev << "/" << N
-              << std::endl;
   }
 }
 

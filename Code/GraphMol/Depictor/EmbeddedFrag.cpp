@@ -1132,9 +1132,6 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
   if (macrocycleRing.size() <= 8) {
     return false;
   }
-  std::cerr
-      << "Attempting on-the-fly coordinate generation for macrocycle of size "
-      << macrocycleRing.size() << std::endl;
 
   // Create MacrocycleGenerator with Jacobian flag
   MacrocycleGenerator generator(macrocycleRing.size(), 1.5,
@@ -1277,12 +1274,6 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
                         std::to_string(sharedPositions[0]);
 
     generator.addConstraint(constraint);
-    std::cerr << "Added fusion constraint at position " << constraint.position
-              << " with pattern: ";
-    for (int t : pattern) {
-      std::cerr << (t == 1 ? "R" : "L");
-    }
-    std::cerr << std::endl;
   }
 
   // TODO Phase 2+: Add constraints for double bonds
@@ -1305,34 +1296,8 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
     return false;  // Closure error too large
   }
 
-  std::cerr << "Generated macrocycle coordinates with closure error: "
-            << closureError << " Angstroms." << std::endl;
-
   // Print the actual turn sequence for debugging
   const auto &turns = generator.getTurns();
-  std::cerr << "Turn sequence: ";
-  for (size_t i = 0; i < turns.size(); ++i) {
-    if (turns[i] == 1) {
-      std::cerr << "R";
-    } else if (turns[i] == -1) {
-      std::cerr << "L";
-    } else {
-      std::cerr << ".";  // Unassigned (gap in odd rings)
-    }
-  }
-  std::cerr << std::endl;
-
-  // Count R and L turns (R should be 6 more than L for angular closure)
-  int countR = 0, countL = 0;
-  for (int turn : turns) {
-    if (turn == 1)
-      countR++;
-    else if (turn == -1)
-      countL++;
-  }
-  std::cerr << "R count: " << countR << ", L count: " << countL
-            << ", R-L: " << (countR - countL) << " (should be 6)" << std::endl;
-
   // Generate 2D coordinates
   auto coords = generator.generateCoordinates();
 
@@ -1496,8 +1461,6 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
           doneRings = coreRingsIds;
         }
         if (doneRings.empty()) {
-          std::cerr << "No template found for fused ring system of size "
-                    << funion.size() << std::endl;
           // If template matching failed and this is a single macrocycle,
           // try to generate coordinates on-the-fly
           if (hasMacrocycle) {
