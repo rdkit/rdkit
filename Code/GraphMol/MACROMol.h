@@ -88,20 +88,25 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTem
     std::vector<std::unique_ptr<MACROMolTemplate>> &getOwnedTemmplates() {
       return ownedTemplates;
     }
-
-    public:
+    
+public:
     void addTemplate(MACROMolTemplate *templateMol);    // does NOT take ownership
     void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol, bool takeOwnership=true);
     void addTemplateLib(MACROMolTemplateLib &libToAdd, bool takeOwnership=false);
     void copyTemplateLib(const MACROMolTemplateLib &libToCopy);
     void clearTemplateLib(){
-        this->clear();
+        std::vector<MACROMolTemplate *> &templates(*this);
+        templates.clear();
         ownedTemplates.clear();
         d_keyToIndex.clear();
     }
     void setTemplateLib(MACROMolTemplateLib &libToSet, bool takeOwnership=false) {
       clearTemplateLib();
       addTemplateLib(libToSet, takeOwnership);
+    }
+
+    unsigned int getOwnedTemplateCount() {
+      return ownedTemplates.size();
     }
 
 
@@ -114,13 +119,16 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTem
     unsigned int getMACROMolTemplateIndex(std::string templateClass, std::string templateName) const {
       MACROMolTemplateKey key(std::pair(templateClass, templateName));
       if ( ! d_keyToIndex.contains(key)) {
-         throw FileParseException("Template for macro atom not found");
+         return UINT_MAX;
       }
       return d_keyToIndex.at(key);
     }
 
     RDKit::MACROMolTemplate *getTemplate(std::string templateClass, std::string templateName) const {
       auto index = getMACROMolTemplateIndex(templateClass, templateName);
+      if (index == UINT_MAX) {
+        return nullptr;
+      }
       return this->at(index);
     }
 
@@ -129,7 +137,7 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTem
       return d_keyToIndex.contains(key);
     }
 
-    bool isCustomizedLib() {
+    bool hasLocalTemplates() {
       return ownedTemplates.size() > 0;
     }
 
@@ -140,7 +148,14 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTem
       }) == ownedTemplates.end();
     }
 
-    
+    bool doesLibHaveCoords() {
+      for (auto macroTemplate : *this) {
+        if (macroTemplate->getNumConformers() == 0) {
+          return false;
+        }
+      }
+      return true;
+    }
   };
 
 
@@ -149,7 +164,7 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
   // elements (MACROMolTemplate items) of the library are either owned by the library or owned externally.
   // Externally owned items support global libraies
 
-  MACROMolTemplateLib p_templateLibrary;
+  MACROMolTemplateLib d_templateLibrary;
 
   bool p_atomIdxToTemplateIdxIsStale;
   std::map<unsigned int, unsigned int> p_atomIdxToTemplateIdx;
@@ -170,33 +185,33 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
   ~MACROMol() {}
 
   MACROMolTemplateLib *getTemplateLibrary() {
-    return &p_templateLibrary;
+    return &d_templateLibrary;
   }
 
   void clearTemplateLibrary() {
-    p_templateLibrary.clear();
+    d_templateLibrary.clear();
   }
 
   void addTemplateLibrary(MACROMolTemplateLib &lib,
                           bool takeOwnership = true) {
-    p_templateLibrary.addTemplateLib(lib, takeOwnership);
+    d_templateLibrary.addTemplateLib(lib, takeOwnership);
   }
 
 
   void setTemplateLibrary(MACROMolTemplateLib &lib,
                           bool takeOwnership = true) {
-    p_templateLibrary.setTemplateLib(lib, takeOwnership);
+    d_templateLibrary.setTemplateLib(lib, takeOwnership);
   }
 
   void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol, bool takeOwnership=true) {
     PRECONDITION(templateMol, "bad template molecule");
-    p_templateLibrary.addTemplate(templateMol, takeOwnership);
+    d_templateLibrary.addTemplate(templateMol, takeOwnership);
   }
 
-  unsigned int getTemplateCount() const { return p_templateLibrary.getTemplateCount(); }
+  unsigned int getTemplateCount() const { return d_templateLibrary.getTemplateCount(); }
 
   RDKit::MACROMolTemplate *getTemplate(unsigned int index) const{
-    return p_templateLibrary.getTemplate(index);
+    return d_templateLibrary.getTemplate(index);
   };
 
   unsigned int addMacroAtom(std::string className, std::string templateName);

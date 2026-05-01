@@ -3471,19 +3471,23 @@ void finishMolProcessing(
   // sign that chirality ever existed and makes us sad... so first
   // perceive chirality, then remove the Hs and sanitize.
   //
-  const Conformer &conf = res->getConformer();
-  if (chiralityPossible || conf.is3D()) {
-    if (!conf.is3D()) {
-      bool replaceExistingTags = true;
-      MolOps::assignChiralTypesFromBondDirs(*res, conf.getId(),
-                                            replaceExistingTags);
-    } else {
-      res->updatePropertyCache(false);
-      MolOps::assignChiralTypesFrom3D(*res, conf.getId(), true);
-    }
-  }
 
-  Atropisomers::detectAtropisomerChirality(*res, &conf);
+  const Conformer *conf = nullptr;
+  if (res->getNumConformers() > 0) {
+    conf = &res->getConformer();
+    if (chiralityPossible || conf->is3D()) {
+      if (!conf->is3D()) {
+        bool replaceExistingTags = true;
+        MolOps::assignChiralTypesFromBondDirs(*res, conf->getId(),
+                                              replaceExistingTags);
+      } else {
+        res->updatePropertyCache(false);
+        MolOps::assignChiralTypesFrom3D(*res, conf->getId(), true);
+      }
+    }
+}
+
+  Atropisomers::detectAtropisomerChirality(*res, conf);
 
   // now that atom stereochem has been perceived, the wedging
   // information is no longer needed, so we clear

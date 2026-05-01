@@ -373,8 +373,11 @@ class MolFromMACROMolConverter {
 
         sgroupName += templateNameToUse;
 
-        auto coordOffset = (conf->getAtomPos(atomIdx) * maxSize) -
+        RDGeom::Point3D coordOffset;
+        if (conf) {
+          auto coordOffset = (conf->getAtomPos(atomIdx) * maxSize) -
                            templateCentroids[templateIdx];
+        }
 
         copySgroupIntoResult(atomIdx, *sgroup, sgroupName, newSgroups,
                              newConf.get(), coordOffset);
@@ -637,6 +640,10 @@ class MolFromMACROMolConverter {
     RDKit::FileParserUtils::finishMolProcessing(mol.get(), chiralityPossible,
                                                 molFileParserParams);
 
+    unsigned int failedOp=0;
+    MolOps::sanitizeMol(*(mol.get()), failedOp, MolOps::SANITIZE_KEKULIZE);
+    MolOps::sanitizeMol(*(mol.get()), failedOp, MolOps::SANITIZE_SETAROMATICITY);                                           
+
     return std::move(mol);
   }
 };
@@ -783,9 +790,23 @@ std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
     const ROMol &mol, RDKit::MACROMolTemplateLib &templates,
     MolToMACROParams molToMACROMolParams) {
   auto res = std::unique_ptr<MACROMol>(new MACROMol());
-  // auto mol = std::unique_ptr<RWMol>(new RWMol());
-  Conformer *conf = new Conformer();
-  res->addConformer(conf, true);
+
+  MolToMACROMol(res.get(),mol,templates, molToMACROMolParams);
+  return res;
+}
+
+void MolToMACROMol(MACROMol *res,
+    const ROMol &mol, RDKit::MACROMolTemplateLib &templates,
+    MolToMACROParams molToMACROMolParams) {
+
+  Conformer *conf = nullptr;
+  if (mol.getNumConformers() > 0 && templates.doesLibHaveCoords()) {
+    conf = new Conformer();
+    conf->set3D(false);
+
+    res->addConformer(conf, true);
+  }
+
 
   std::map<unsigned int, unsigned int> atomMap;
   std::map<BondConnectionDef, std::string> bondConnectionMap;
@@ -887,16 +908,18 @@ std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
       resAtom->setProp(common_properties::dummyLabel, templateNameToUse);
       resAtom->setProp(common_properties::molAtomClass, templateAtomClass);
 
-      conf->resize(res->getNumAtoms());
+      if (conf) {
+        conf->resize(res->getNumAtoms());
 
-      RDGeom::Point3D pos;
-      for (const auto atomMatch : atomsInMatch) {
-        RDGeom::Point3D atomPos = mol.getConformer().getAtomPos(atomMatch);
-        pos += atomPos;
+        RDGeom::Point3D pos;
+        for (const auto atomMatch : atomsInMatch) {
+          RDGeom::Point3D atomPos = mol.getConformer().getAtomPos(atomMatch);
+          pos += atomPos;
+        }
+        pos /= static_cast<double>(atomsInMatch.size());
+
+        conf->setAtomPos(resAtom->getIdx(), pos);
       }
-      pos /= static_cast<double>(atomsInMatch.size());
-
-      conf->setAtomPos(resAtom->getIdx(), pos);
     }
   }
 
@@ -907,9 +930,11 @@ std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
       auto newAtomIdx = res->getNumAtoms();
       res->addAtom(new Atom(*atom), true, true);
       atomMap[atom->getIdx()] = newAtomIdx;
-      conf->resize(res->getNumAtoms());
-      conf->setAtomPos(newAtomIdx,
-                       mol.getConformer().getAtomPos(atom->getIdx()));
+      if (conf) {
+        conf->resize(res->getNumAtoms());
+        conf->setAtomPos(newAtomIdx,
+                        mol.getConformer().getAtomPos(atom->getIdx()));
+      }
     }
   }
 
@@ -942,7 +967,7 @@ std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
     }
   }
 
-  return res;
+  return;
 }
 
 }  // end of namespace RDKit

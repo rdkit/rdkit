@@ -127,7 +127,7 @@ void RDKit::MACROMol::addMacroBond(unsigned int fromAtomIdx,
     bond->setProp(common_properties::_MolFileBondAttachPt1,
                   fromConnectionPoint);
   }
-}
+   }
 
 unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) {
   if (p_atomIdxToTemplateIdxIsStale) {
@@ -146,7 +146,7 @@ unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) {
         continue;
       }
 
-      p_atomIdxToTemplateIdx[atom->getIdx()]  = this->p_templateLibrary.getMACROMolTemplateIndex(atomClass, dummyLabel);
+      p_atomIdxToTemplateIdx[atom->getIdx()]  = this->d_templateLibrary.getMACROMolTemplateIndex(atomClass, dummyLabel);
   
     }
 
@@ -200,6 +200,7 @@ MACROMolTemplate *RDKit::MACROMol::atomIdxToMACROMolTemplate(
       for (auto &libTemplate : libToAdd.ownedTemplates) {
         ownedTemplates.emplace_back(std::move(libTemplate));
       }
+      libToAdd.ownedTemplates.clear();
     }
   }
 

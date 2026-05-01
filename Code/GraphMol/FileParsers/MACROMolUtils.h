@@ -67,6 +67,10 @@ RDKIT_FILEPARSERS_EXPORT void MACROMolToSCSRMolFile(
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
     const ROMol &mol, RDKit::MACROMolTemplateLib &templates,
     MolToMACROParams molToMACROMolParams = MolToMACROParams());
+    
+RDKIT_FILEPARSERS_EXPORT void MolToMACROMol(MACROMol *res,
+    const ROMol &mol, RDKit::MACROMolTemplateLib &templates,
+    MolToMACROParams molToMACROMolParams = MolToMACROParams());
 
 }  // namespace RDKit
 
