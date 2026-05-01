@@ -959,6 +959,89 @@ void testGithub8239() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+namespace {
+void checkStereoAnyRoundtrip(const char *smiles, const char *desc) {
+  BOOST_LOG(rdInfoLog) << "  " << desc << ": " << smiles << std::endl;
+  auto m = SmilesToMol(smiles);
+  TEST_ASSERT(m);
+
+  // verify STEREOANY is present on input
+  bool foundStereoAny = false;
+  for (const auto bond : m->bonds()) {
+    if (bond->getStereo() == Bond::STEREOANY) {
+      foundStereoAny = true;
+      break;
+    }
+  }
+  TEST_ASSERT(foundStereoAny);
+
+  // convert to InChI with -SUU (include unknown/undefined stereo) and back
+  ExtraInchiReturnValues tmp;
+  auto inchi = MolToInchi(*m, tmp, "-SUU");
+  TEST_ASSERT(!inchi.empty());
+
+  ExtraInchiReturnValues tmp2;
+  std::unique_ptr<ROMol> m2(InchiToMol(inchi, tmp2));
+  TEST_ASSERT(m2);
+
+  // verify STEREOANY survives the roundtrip
+  bool foundStereoAny2 = false;
+  for (const auto bond : m2->bonds()) {
+    if (bond->getStereo() == Bond::STEREOANY) {
+      foundStereoAny2 = true;
+      TEST_ASSERT(bond->getStereoAtoms().size() == 2);
+      break;
+    }
+  }
+  TEST_ASSERT(foundStereoAny2);
+  delete m;
+}
+}  // namespace
+
+void testStereoAnyRoundtrip() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing STEREOANY (wavy bond) InChI roundtrip" << std::endl;
+
+  // Schiff base with wavy C=N (original bug report molecule)
+  checkStereoAnyRoundtrip("CSC1=NSC(CC=NC2=CC=CC=C2)=C1C#N |w:8.8|",
+                           "Schiff base C=N");
+
+  // Benzaldoxime: wavy C=N (common pharma motif)
+  checkStereoAnyRoundtrip("O/N=C/c1ccccc1 |w:1.1|", "benzaldoxime C=N");
+
+  // Cinnamic acid: wavy C=C in conjugated system
+  checkStereoAnyRoundtrip("OC(=O)/C=C/c1ccccc1 |w:3.3|",
+                           "cinnamic acid C=C");
+
+  // Chalcone: wavy C=C between two aryl groups
+  checkStereoAnyRoundtrip("O=C(/C=C/c1ccccc1)c1ccccc1 |w:2.2|",
+                           "chalcone C=C");
+
+  // Crotonaldehyde: simple wavy C=C
+  checkStereoAnyRoundtrip("C/C=C/C=O |w:1.1|", "crotonaldehyde C=C");
+
+  // Tamoxifen-like: wavy C=C in drug-like molecule
+  checkStereoAnyRoundtrip(
+      "CC/C(=C(/c1ccccc1)c1ccc(OCCN(C)C)cc1)c1ccccc1 |w:2.2|",
+      "tamoxifen-like C=C");
+
+  // Retinal-like: wavy C=C in polyene chain
+  checkStereoAnyRoundtrip(
+      "CC1=C(/C=C/C(C)=C/C=C/C(C)=C/C=O)C(C)(C)CCC1 |w:3.3|",
+      "retinal-like C=C");
+
+  // Chiral center adjacent to wavy C=C
+  checkStereoAnyRoundtrip("O=C(O)[C@@H](CC=Cc1ccccc1)N |w:4.4|",
+                           "chiral + wavy C=C");
+
+  // Chiral center adjacent to wavy C=N oxime
+  checkStereoAnyRoundtrip("C[C@H](O)/C(=N/O)c1ccccc1 |w:3.3|",
+                           "chiral + wavy oxime C=N");
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -985,4 +1068,5 @@ int main() {
   testGithub5311();
   testGithub8123();
   testGithub8239();
+  testStereoAnyRoundtrip();
 }
