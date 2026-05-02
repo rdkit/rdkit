@@ -65,6 +65,7 @@ void serialize(Archive &ar, dynamic_bitset<Block, Allocator> &bs,
 namespace RDKit {
 class ROMol;
 class RWMol;
+class Conformer;
 namespace GaussianShape {
 
 constexpr double CARBON_RAD = 1.70;
@@ -94,25 +95,20 @@ struct ShapeInputOptions {
 
   ~ShapeInputOptions() = default;
 
-  // By default, it will create features using the RDKit pharmacophore
-  // definitions.
   bool useColors{
       true};  //! Whether to build the color features.  By default, it will
               //! create features using the RDKit pharmacophore definitions.
 
   std::vector<std::vector<CustomFeature>>
-      customFeatures{};  //! Custom color features used verbatim.  A
-                         //! vector of vectors of tuples of integer type,
-                         //! Point3D coords, double radius for each conformation
-                         //! in the input molecule.  One outer vector for each
-                         //! conformation in the molecule.
+      customFeatures{};  //! Custom color features used verbatim.  One outer
+                         //! vector for each conformation in the molecule.
   std::vector<unsigned int>
       atomSubset{};  //! If not empty, use just these atoms in the molecule to
                      //! form the ShapeInput object.
   std::vector<std::pair<unsigned int, double>>
       atomRadii{};  //! Use these non-standard radii for these atoms. The int is
                     //! for the atom index in the molecule, not the atomic
-                    //! number. Not all atoms need be specified, just some radii
+                    //! number. Not all atoms need be specified; some radii
                     //! can be over-ridden, with the rest left as standard.
   bool allCarbonRadii{
       true};  //! Whether to use carbon radii for all atoms (which is quicker
@@ -161,9 +157,9 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   ShapeInput &operator=(ShapeInput &&other) = default;
   ~ShapeInput() = default;
 
-  // Merge the other ShapeInput, assuming it has the correct number
-  // of atoms etc.  Empties other, unless they can't be merged in which case
-  // it returns unscathed.
+  //! Merge the other ShapeInput, assuming it has the correct number
+  //! of atoms etc.  Empties other, unless they can't be merged in which case
+  //! it returns unscathed.
   void merge(ShapeInput &other);
 
   std::string toString() const {
@@ -185,80 +181,105 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   //!                 obviously.  If invalid, throws a runtime
   //!                 error.
   void setActiveShape(unsigned int newShape);
-  // Note that the coords returned is a vector size 3*getNumAtoms()
+  //! Return the coordinates of the currently active shape.
+  //! Note that the coords are returned as a vector size 3*getNumAtoms()
   const std::vector<double> &getCoords() const {
     return d_coords[d_activeShape];
   }
+  //! Get the alpha values for the atoms and color features in the shape.
   const std::vector<double> &getAlphas() const { return d_alphas; }
-  // Multiply the alpha value for the given atom/feature by -1.0
-  // which will toggle whether the atom/feature is used in the volume
-  // calculation or not.  For temporarily "turning off" an atom or feature.
+  //! Multiply the alpha value for the given atom/feature by -1.0
+  //! which will toggle whether the atom/feature is used in the volume
+  //! calculation or not.  For temporarily "turning off" an atom or feature.
   void negateAlpha(unsigned int alphaNum);
 
   //! Fetch the coordinates of the atoms and optionally features.
   std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors = false) const;
+  //! Return whether the coordinates for the current active shape are
+  //! normalized.
   bool getNormalized() const { return d_normalizeds[d_activeShape]; }
+  //! Return the feature types of all atoms/features in the shape.  Atoms
+  //! have type 0.
   const std::vector<int> &getTypes() const { return d_types; }
+  //! Get the number of atoms in the shape.
   unsigned int getNumAtoms() const { return d_numAtoms; }
+  //! Get the number of color features in the shape.
   unsigned int getNumFeatures() const { return d_numFeats; }
+  //! Get the number of shapes/conformations in the shape object.  This may
+  //! be smaller than the number of conformations in the input molecule if
+  //! shape pruning was performed.
   unsigned int getNumShapes() const { return d_coords.size(); }
+  //! Get the volume of the atoms in the current active shape.
   double getShapeVolume() const {
     return d_selfOverlapShapeVols[d_activeShape];
   }
+  //! Get the volume for the atoms for the given shape number.
   double getShapeVolume(unsigned int shapeNum) const;
+  //! Get the volume of the color features in the current active shape.
   double getColorVolume() const {
     return d_selfOverlapColorVols[d_activeShape];
   }
+  //! Get the volume of the color features for the given shape number.
   double getColorVolume(unsigned int shapeNum) const;
+  //! Get the flags for which atoms have a carbon radius.
   const boost::dynamic_bitset<> *getCarbonRadii() const {
     return d_carbonRadii.get();
   }
   // These functions use cached values if available.
+  //! Get the canonical rotation for the current active shape.
   const std::array<double, 9> &calcCanonicalRotation();
+  //! Get the canonical translation for the current active shape.
   const std::array<double, 3> &calcCanonicalTranslation();
+  //! Get the eigen values for the coordinates matrix.
   const std::array<double, 3> &calcEigenValues();
+  //! Get the numbers of the points at the extremes of x, y and z for the
+  //! current active shape.  In the order minimum x, minimum y, minimum z,
+  //! then the maxima.
   const std::array<size_t, 6> &calcExtremes();
-  // Return the principal moments of inertia, if Eigen3 is available, and the
-  // eigenvalues of the canonical transformation if not.
+  //! Return the principal moments of inertia, if Eigen3 is available, and the
+  //! eigenvalues of the canonical transformation if not, for the current
+  //! active shape.
   std::array<double, 3> calcMomentsOfInertia(bool includeColors = false) const;
 
-  // Align the principal axes to the cartesian axes and centre on the origin.
-  // Doesn't require that the shape was created from a molecule.  Creates
-  // the necessary transformation if not already done.
+  //! Align the principal axes to the cartesian axes and centre on the origin
+  //! for the current active shape.
+  //! Doesn't require that the shape was created from a molecule.  Creates
+  //! the necessary transformation if not already done.
   void normalizeCoords();
 
+  //! Applies the given transformation to the current active shape.
   void transformCoords(RDGeom::Transform3D &xform);
 
-  // Make a molecule from the shape.  If required, features are added
-  // as xenon atoms.  If withBonds is false, just makes a molecule from
-  // the atoms, otherwise builds a full molecule.
+  //! Make a molecule from the current active shape.  If required, features
+  //! are added as xenon atoms.  If withBonds is false, just makes a molecule
+  //! from the atoms, otherwise builds a full molecule.
   std::unique_ptr<RWMol> shapeToMol(bool includeColors = false,
                                     bool withBonds = true) const;
 
-  // Find the best similarity score between all shapes in this shape and the
-  // other one. Stops as soon as it gets something above the threshold.
-  // The score runs between 0.0 and 1.0, so the default threshold of -1.0
-  // means no threshold. Fills in the shape numbers of the two that were
-  // responsible if there is something above the threshold, and the
-  // transformation that did it. Returns -1.0 for the similarity if there was
-  // nothing above the threshold.  Note that the shape numbers are not
-  // necessarily the same as the original molecule conformation numbers.
+  //! Find the best similarity score between all shapes in this shape and the
+  //! other one. Stops as soon as it gets something above the threshold.
+  //! The score runs between 0.0 and 1.0, so the default threshold of -1.0
+  //! means no threshold. Fills in the shape numbers of the two that were
+  //! responsible if there is something above the threshold, and the
+  //! transformation that did it. Returns -1.0 for the similarity if there was
+  //! nothing above the threshold.  Note that the shape numbers are not
+  //! necessarily the same as the original molecule conformation numbers.
   std::array<double, 3> bestSimilarity(
       const ShapeInput &fitShape, unsigned int &bestThisShape,
       unsigned int &bestFitShape, RDGeom::Transform3D &bestXform,
       double threshold = -1.0,
       const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions());
 
-  // Return the maximum similarity achievable between the 2 shapes.  The
-  // maximum similarity is when one shape is entirely inside the other.  This
-  // returns the similarity in that case, which is the upper bound on what
-  // is achievable between these 2 shapes.
+  //! Return the maximum similarity achievable between the 2 shapes.  The
+  //! maximum similarity is when one shape is entirely inside the other.  This
+  //! returns the similarity in that case, which is the upper bound on what
+  //! is achievable between these 2 shapes.
   double maxPossibleSimilarity(
       const ShapeInput &fitShape,
       const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions()) const;
 
-  // Prune the shapes so none a more similar to each other than
-  // the threshold.
+  //! Prune the shapes so none a more similar to each other than
+  //! the threshold.
   void pruneShapes(double simThreshold);
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
@@ -267,11 +288,11 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #endif
 
  private:
-  void extractAtoms(const ROMol &mol, int confId,
-                    const ShapeInputOptions &shapeOpts, bool fillAlphas);
+  void extractAtoms(const Conformer &conf, const ShapeInputOptions &shapeOpts,
+                    bool fillAlphas);
   // Extract the features for the color scores, using RDKit pphore features
   // for now.  Other options to be added later.
-  void extractFeatures(const ROMol &mol, unsigned int confId,
+  void extractFeatures(const Conformer &conf, unsigned int confNum,
                        const ShapeInputOptions &shapeOpts, bool fillAlphas);
   // Calculate the rotation and translation that will align the principal axes
   // to the cartesian axes and centre on the origin.
@@ -317,7 +338,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
   void selectConformations(const std::vector<int> &picks);
   void calculateSelfOverlaps(const ShapeOverlayOptions &overlayOpts);
-  // Sort the shapes in descending order of the sume of the shape
+  // Sort the shapes in descending order of the sum of the shape
   // and color volumes.
   void sortShapesByVolumes();
 };
@@ -347,12 +368,12 @@ void ShapeInput::serialize(Archive &ar, const unsigned int) {
 // Extract the features from the molecule, optionally just for the subset
 // of atoms.
 RDKIT_GAUSSIANSHAPE_EXPORT void findFeatures(
-    const ROMol &mol, int confId, std::vector<CustomFeature> &features,
+    const Conformer &conf, std::vector<CustomFeature> &features,
     const std::vector<unsigned int> &atomSubset = std::vector<unsigned int>());
 
 // Calculate the mean position of the given atoms.
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Point3D computeFeaturePos(
-    const ROMol &mol, int confId, const std::vector<unsigned int> &ats);
+    const Conformer &conf, const std::vector<unsigned int> &ats);
 
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Transform3D quatTransToTransform(
     const double *quat, const double *trans);

@@ -271,6 +271,50 @@ ROMol *shapeToMol_helper(GaussianShape::ShapeInput &shape, bool includeColors,
   auto mol = shape.shapeToMol(includeColors, withBonds);
   return static_cast<ROMol *>(mol.release());
 }
+
+python::tuple scoreMolAllConfs_helper(const ROMol &ref, const ROMol &fit,
+                                      const python::object &py_refOpts,
+                                      const python::object &py_fitOpts,
+                                      const python::object &py_overlayOpts) {
+  python::list results;
+  GaussianShape::ShapeInputOptions refOpts, fitOpts;
+  if (!py_refOpts.is_none()) {
+    refOpts = python::extract<GaussianShape::ShapeInputOptions>(py_refOpts);
+  }
+  if (!py_fitOpts.is_none()) {
+    fitOpts = python::extract<GaussianShape::ShapeInputOptions>(py_fitOpts);
+  }
+  GaussianShape::ShapeOverlayOptions overlayOpts;
+  if (!py_overlayOpts.is_none()) {
+    overlayOpts =
+        python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
+  }
+  std::vector<std::vector<double>> combScores;
+  int bestRefConf, bestFitConf;
+  RDGeom::Transform3D bestXform;
+  GaussianShape::ScoreMoleculeAllConformers(ref, fit, bestRefConf, bestFitConf,
+                                            combScores, refOpts, fitOpts,
+                                            overlayOpts, &bestXform);
+  python::list pyScores;
+  for (const auto &scores : combScores) {
+    python::list s;
+    for (const auto &score : scores) {
+      s.append(score);
+    }
+    pyScores.append(s);
+  }
+  results.append(pyScores);
+  results.append(bestRefConf);
+  results.append(bestFitConf);
+  python::list pyMatrix;
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      pyMatrix.append(bestXform.getValUnchecked(i, j));
+    }
+  }
+  results.append(pyMatrix);
+  return python::tuple(results);
+}
 }  // namespace helpers
 
 void wrap_rdGaussianShape() {
@@ -653,6 +697,40 @@ Returns
     The results are (combo_score, shape_score, color_score).  The color_score is
     0.0 if color features not used, in which case combo_score and shape_score will
     be the same.
+)DOC");
+
+  python::def("ScoreMoleculeAllConformers", &helpers::scoreMolAllConfs_helper,
+              (python::arg("ref"), python::arg("fit"),
+               python::arg("refOpts") = python::object(),
+               python::arg("fitOpts") = python::object(),
+               python::arg("overlayOpts") = python::object()),
+              R"DOC(Calculate the scores for the alignment of all conformers
+ of the fit molecule onto the reference.  The molecules themselves are not
+ altered.
+
+Parameters
+----------
+ref: RDKit.ROMol
+    Reference molecule
+fit: RDKit.ROMol
+    Fit molecule that will be scored
+refOpts: ShapeInputOptions, optional
+    Options for building the ref shape
+fitOpts: ShapeInputOptions, optional
+    Options for building the fit shape
+overlayOpts: ShapeOverlayOptions, optional
+    Options for controlling the volume calculation
+
+Returns
+-------
+A complex tuple containing:
+    A tuple of tuples containing the scores from aligning the fit conformations
+    onto the reference conformations.  scores[0][1] is the score of aligning
+    fit conformation 1 onto ref conformation 0.
+    The ID of the ref conformer from the best-scoring alignment
+    The ID of the fit conformer from the best-scoring alignment
+    The transformation that gives the best-scoring alignment for those
+    conformers as a 16-float tuple.
 )DOC");
 }
 

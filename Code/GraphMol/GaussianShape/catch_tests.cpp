@@ -209,7 +209,7 @@ TEST_CASE("bulk") {
 
 TEST_CASE("shape alignment") {
   std::string dirName = getenv("RDBASE");
-  dirName += "/External/pubchem_shape/test_data";
+  dirName += "/Code/GraphMol/GaussianShape/test_data";
 
   auto suppl = v2::FileParsers::SDMolSupplier(dirName + "/test1.sdf");
   auto ref = suppl[0];
@@ -881,18 +881,32 @@ TEST_CASE("multithreaded") {
 }
 #endif
 
+std::unique_ptr<ROMol> loadConformers(const std::string &fileName) {
+  std::ifstream ifs(fileName.c_str());
+  std::string nextLine;
+  std::unique_ptr<ROMol> retMol;
+  while (!ifs.eof()) {
+    std::getline(ifs, nextLine);
+    if (!retMol) {
+      retMol = v2::SmilesParse::MolFromSmiles(nextLine);
+    } else {
+      auto m = v2::SmilesParse::MolFromSmiles(nextLine);
+      if (!m || !m->getNumConformers()) {
+        continue;
+      }
+      retMol->addConformer(new Conformer(m->getConformer()), true);
+    }
+  }
+  return retMol;
+}
+
 TEST_CASE("Multiple Conformers") {
-  auto omeprazole = "CC1=CN=C(C(=C1OC)C)CS(=O)C2=NC3=C(N2)C=C(C=C3)OC"_smiles;
-  MolOps::addHs(*omeprazole);
-  // Generate some conformers
-  DGeomHelpers::EmbedParameters dgParams;
-  dgParams.randomSeed = 0xdac;
-  DGeomHelpers::EmbedMultipleConfs(*omeprazole, 10, dgParams);
-  CHECK(omeprazole->getNumConformers() == 10);
-  MolOps::removeHs(*omeprazole);
-#if 0
+  std::string dirName = getenv("RDBASE");
+  dirName += "/Code/GraphMol/GaussianShape/test_data";
+  auto esomeprazole = loadConformers(dirName + "/esomeprazole_multi.smi");
+  CHECK(esomeprazole->getNumConformers() == 10);
   {
-    GaussianShape::ShapeInput shape1(*omeprazole);
+    GaussianShape::ShapeInput shape1(*esomeprazole);
     CHECK(shape1.getNumShapes() == 10);
     shape1.setActiveShape(0);
     auto firstVol = shape1.getShapeVolume() + shape1.getColorVolume();
@@ -901,12 +915,12 @@ TEST_CASE("Multiple Conformers") {
     CHECK(firstVol > lastVol);
 
     GaussianShape::ShapeInputOptions shapeOptions;
-    shapeOptions.shapePruneThreshold = 0.5;
-    GaussianShape::ShapeInput shape2(*omeprazole, -1, shapeOptions);
-    CHECK(shape2.getNumShapes() == 4);
+    shapeOptions.shapePruneThreshold = 0.75;
+    GaussianShape::ShapeInput shape2(*esomeprazole, -1, shapeOptions);
+    CHECK(shape2.getNumShapes() == 6);
     shape2.setActiveShape(0);
     firstVol = shape2.getShapeVolume() + shape2.getColorVolume();
-    shape2.setActiveShape(3);
+    shape2.setActiveShape(5);
     lastVol = shape2.getShapeVolume() + shape2.getColorVolume();
     CHECK(firstVol > lastVol);
 
@@ -925,15 +939,15 @@ TEST_CASE("Multiple Conformers") {
     auto maxSimBF =
         shape1.bestSimilarity(shape2, bestRefShape, bestFitShape, bestXform);
     CHECK_THAT(maxSimBF[0], Catch::Matchers::WithinAbs(1.0, 0.001));
-    CHECK(bestRefShape == 3);
+    CHECK(bestRefShape == 2);
     CHECK(bestFitShape == 0);
   }
 
   {
     // Single conformations
-    GaussianShape::ShapeInput shape1(*omeprazole, 1);
+    GaussianShape::ShapeInput shape1(*esomeprazole, 1);
     CHECK(shape1.getNumShapes() == 1);
-    GaussianShape::ShapeInput shape2(*omeprazole, 9);
+    GaussianShape::ShapeInput shape2(*esomeprazole, 8);
     CHECK(shape2.getNumShapes() == 1);
     // Demonstrate that the shapes are different:
     auto scores = GaussianShape::AlignShape(shape1, shape2);
@@ -941,68 +955,24 @@ TEST_CASE("Multiple Conformers") {
   }
 
   {
-    // Different conformers of the same molecule
-    auto eso1 = "COc1ccc2[n-]c([S@@+]([O-])Cc3ncc(C)c(OC)c3C)nc2c1"_smiles;
-    REQUIRE(eso1);
-    MolOps::addHs(*eso1);
-    RDKit::DGeomHelpers::EmbedMultipleConfs(*eso1, 10, 30, 0xdac);
-    CHECK(eso1->getNumConformers() == 10);
-    GaussianShape::ShapeInput shapes1(*eso1);
-
-    auto eso2 = "COc1ccc2[n-]c([S@@+]([O-])Cc3ncc(C)c(OC)c3C)nc2c1"_smiles;
-    REQUIRE(eso2);
-    MolOps::addHs(*eso2);
-    RDKit::DGeomHelpers::EmbedMultipleConfs(*eso2, 10, 30, 0xcc);
-    CHECK(eso2->getNumConformers() == 10);
-    GaussianShape::ShapeInput shapes2(*eso2);
-
-    unsigned int best1, best2;
-    RDGeom::Transform3D xform;
-    auto bestSim11 = shapes1.bestSimilarity(shapes1, best1, best2, xform);
-    CHECK_THAT(bestSim11[0], Catch::Matchers::WithinAbs(1.0, 0.005));
-
-    auto bestSim22 = shapes2.bestSimilarity(shapes2, best1, best2, xform);
-    CHECK_THAT(bestSim22[0], Catch::Matchers::WithinAbs(1.0, 0.005));
-
-    auto bestSim12 = shapes1.bestSimilarity(shapes2, best1, best2, xform);
-    CHECK_THAT(bestSim12[0], Catch::Matchers::WithinAbs(0.697, 0.005));
-
-    // This overlay starts from where the previous one left it, so the final
-    // answer isn't identical.
-    auto bestSim21 = shapes2.bestSimilarity(shapes1, best1, best2, xform);
-    CHECK_THAT(bestSim21[0], Catch::Matchers::WithinAbs(0.698, 0.005));
-  }
-#endif
-  {
-    auto eso = "COc1ccc2[n-]c([S@@+]([O-])Cc3ncc(C)c(OC)c3C)nc2c1"_smiles;
-    REQUIRE(eso);
-    MolOps::addHs(*eso);
-    DGeomHelpers::EmbedMultipleConfs(*eso, 10, 30, 0xdac);
-    MolOps::removeHs(*eso);
-    CHECK(eso->getNumConformers() == 10);
-
-    auto ranit = "CN/C(=C\[N+](=O)[O-])NCCSCc1ccc(CN(C)C)o1"_smiles;
-    REQUIRE(ranit);
-    MolOps::addHs(*ranit);
-    DGeomHelpers::EmbedMultipleConfs(*ranit, 10, 30, 0xcc);
-    MolOps::removeHs(*ranit);
+    auto ranit = loadConformers(dirName + "/ranitidine_multi.smi");
     CHECK(ranit->getNumConformers() == 10);
 
     int best1, best2;
     std::vector<std::vector<double>> sims;
     RDGeom::Transform3D bestXform;
-    GaussianShape::AlignMoleculesAllConformers(
-        *eso, *ranit, best1, best2, sims, GaussianShape::ShapeInputOptions(),
-        GaussianShape::ShapeInputOptions(),
+    GaussianShape::ScoreMoleculeAllConformers(
+        *esomeprazole, *ranit, best1, best2, sims,
+        GaussianShape::ShapeInputOptions(), GaussianShape::ShapeInputOptions(),
         GaussianShape::ShapeOverlayOptions(), &bestXform);
     auto bestRanit = ROMol(*ranit, false, best2);
     MolTransforms::transformConformer(bestRanit.getConformer(), bestXform);
-    CHECK(best1 == 4);
-    CHECK(best2 == 9);
-    CHECK_THAT(sims[best1][best2], Catch::Matchers::WithinAbs(0.455, 0.005));
+    CHECK(best1 == 8);
+    CHECK(best2 == 3);
+    CHECK_THAT(sims[best1][best2], Catch::Matchers::WithinAbs(0.449, 0.005));
     auto bestRanitOvly =
-        "CNC(=C[N+](=O)[O-])NCCSCc1ccc(CN(C)C)o1 |(5.39952,-0.431827,3.24977;4.91668,0.23793,2.05273;4.34422,-0.557015,1.01134;5.08472,-1.57685,0.587814;6.37982,-1.24463,0.0819879;6.60294,-0.133199,-0.442657;7.3039,-2.24412,-0.0538957;3.41137,0.0112124,0.100521;2.79685,1.29129,0.424015;1.42625,1.30076,-0.230419;0.32031,0.326599,0.814875;-0.353931,-1.07966,-0.0882382;-1.58089,-0.676163,-0.845372;-2.04646,0.624489,-0.941076;-3.39445,0.519071,-1.24445;-3.63973,-0.81572,-1.496;-4.96404,-1.50024,-1.37547;-6.05475,-0.681862,-1.78456;-5.87283,0.0371613,-3.00351;-6.7112,0.0403987,-0.739164;-2.48245,-1.41687,-1.42137)|"_smiles;
-    CHECK(checkMolsHaveRoughlySameCoords(bestRanit, *bestRanitOvly));
+        "CN/C(=C\[N+](=O)[O-])NCCSCc1ccc(CN(C)C)o1 |(6.68611,0.863597,0.97613;5.95586,-0.334349,0.711421;4.78328,-0.243678,-0.125471;4.84653,-0.396906,-1.43692;6.12872,-0.659266,-2.0185;6.4838,-0.151668,-3.10944;7.03627,-1.48835,-1.39831;3.56378,0.0228591,0.572233;2.49642,-0.947668,0.69362;1.39542,-0.282981,1.51715;0.820454,1.20438,0.676443;-0.0207479,0.813676,-0.869585;-1.28323,0.0840072,-0.51181;-1.47056,-1.27554,-0.36285;-2.81128,-1.45606,-0.0285064;-3.36164,-0.193138,0.00641597;-4.76099,0.220968,0.30873;-5.51751,0.268459,-0.927648;-6.86716,0.680208,-0.603162;-4.89123,1.12287,-1.90674;-2.42652,0.691609,-0.284809)|"_smiles;
+    CHECK(checkMolsHaveRoughlySameCoords(bestRanit, *bestRanitOvly, 0.02));
   }
 }
 

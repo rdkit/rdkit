@@ -7,7 +7,7 @@ from rdkit import RDConfig
 from rdkit.Geometry import Point3D
 
 
-datadir = RDConfig.RDBaseDir + '/External/pubchem_shape/test_data'
+datadir = RDConfig.RDBaseDir + '/Code/GraphMol/GaussianShape/test_data'
 
 
 class TestCase(unittest.TestCase):
@@ -172,8 +172,25 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(fit_tversky[2], 0.335, places=3)
 
   def test10_multipleConformers(self):
-    esomeprazole = Chem.AddHs(Chem.MolFromSmiles("COc1ccc2[n-]c([S@@+]([O-])Cc3ncc(C)c(OC)c3C)nc2c1"))
-    rdDistGeom.EmbedMultipleConfs(esomeprazole, 10, randomSeed=0xdac)
+
+    def loadFile(fileName):
+      mol = None
+      with open(fileName, "r") as f:
+        for line in f:
+          line = line.strip()
+          if not line:
+            continue
+          m = Chem.MolFromSmiles(line)
+          if mol is None:
+            mol = m
+          else:
+            mol.AddConformer(m.GetConformer())
+      return mol
+      
+    esofile = datadir + "/esomeprazole_multi.smi"
+    esomeprazole = loadFile(esofile)
+
+    self.assertEqual(esomeprazole.GetNumConformers(), 10)
     ovOpts = rdGaussianShape.ShapeOverlayOptions()
     opts = rdGaussianShape.ShapeInputOptions()
     # Set the to default values, just to show that they can be set.
@@ -183,17 +200,25 @@ class TestCase(unittest.TestCase):
     shapes1 = rdGaussianShape.ShapeInput(esomeprazole, -1, opts, ovOpts)
     self.assertEqual(shapes1.NumShapes, 10)
 
-    esomeprazole = Chem.AddHs(Chem.MolFromSmiles("COc1ccc2[n-]c([S@@+]([O-])Cc3ncc(C)c(OC)c3C)nc2c1"))
-    rdDistGeom.EmbedMultipleConfs(esomeprazole, 10, randomSeed=0xcc)
-    shapes2 = rdGaussianShape.ShapeInput(esomeprazole, -1, opts, ovOpts)
+    ranfile = datadir + "/ranitidine_multi.smi"
+    ranitidine = loadFile(ranfile)
+    shapes2 = rdGaussianShape.ShapeInput(ranitidine, -1, opts, ovOpts)
     self.assertEqual(shapes2.NumShapes, 10)
 
     bestSim, best1, best2, xform = shapes1.BestSimilarity(shapes2)
-    self.assertAlmostEqual(bestSim[0], 0.985, places=3)
-    self.assertEqual(best1, 9)
-    self.assertEqual(best2, 4)
+    self.assertAlmostEqual(bestSim[0], 0.449, places=3)
+    self.assertEqual(best1, 2)
+    self.assertEqual(best2, 6)
     self.assertEqual(len(xform), 16)
 
+    stuff = rdGaussianShape.ScoreMoleculeAllConformers(esomeprazole, ranitidine)
+    self.assertEqual(len(stuff), 4)
+    self.assertEqual(len(stuff[0]), 10)
+    self.assertEqual(len(stuff[0][0]), 10)
+    self.assertEqual(stuff[1], 8)
+    self.assertEqual(stuff[2], 3)
+    self.assertAlmostEqual(stuff[0][8][3], 0.449, places=3)
+    
 
 if __name__ == '__main__':
   unittest.main()

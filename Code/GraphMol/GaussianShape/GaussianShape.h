@@ -92,10 +92,12 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignMolecule(
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
     int refConfId = -1, int fitConfId = -1);
 
-//! Align all conformers of one molecule onto another.  Returns a matrix
-//! of the combination scores, the conformers of the two molecules that
-//! gave the best overlay and the transformation matrix for that overlay
-//! if requested.  The molecules themselves are not altered.
+//! Calculate scores for the alignment of all conformers of one molecule
+//! onto another.  Returns a matrix of the combination scores, the conformer
+//! numbers of the two molecules that gave the best overlay and the
+//! transformation matrix for that overlay if requested.  The molecules
+//! themselves are not altered.  scores[0][1] is the score of aligning
+//! fit conformation 1 onto ref conformation 0
 /*!
   \param ref           the reference molecule
   \param fit           the molecule to align
@@ -113,7 +115,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignMolecule(
                        transformation matrix that gives the best-scoring
                        overlay.
  */
-RDKIT_GAUSSIANSHAPE_EXPORT void AlignMoleculesAllConformers(
+RDKIT_GAUSSIANSHAPE_EXPORT void ScoreMoleculeAllConformers(
     const ROMol &ref, const ROMol &fit, int &refConfId, int &fitConfId,
     std::vector<std::vector<double>> &combScores,
     const ShapeInputOptions &refOpts = ShapeInputOptions(),
