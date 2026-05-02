@@ -484,7 +484,8 @@ void AlignMoleculesAllConformers(const ROMol &ref, const ROMol &fit,
 
 std::array<double, 3> ScoreShape(const ShapeInput &refShape,
                                  const ShapeInput &fitShape,
-                                 const ShapeOverlayOptions &overlayOpts) {
+                                 const ShapeOverlayOptions &overlayOpts,
+                                 std::array<double, 2> *overlapVols) {
   auto refWorking = refShape.getCoords();
   auto fitWorking = fitShape.getCoords();
   std::array<double, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -502,6 +503,10 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
   const bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   const auto scores = sca.calcScores(refShape.getCoords().data(),
                                      fitShape.getCoords().data(), includeColor);
+  if (overlapVols) {
+    (*overlapVols)[0] = scores[3];
+    (*overlapVols)[1] = scores[4];
+  }
   return std::array{scores[0], scores[1], scores[2]};
 }
 
@@ -509,16 +514,18 @@ std::array<double, 3> ScoreMolecule(const ShapeInput &refShape,
                                     const ROMol &fit,
                                     const ShapeInputOptions &fitOpts,
                                     const ShapeOverlayOptions &overlayOpts,
-                                    int fitConfId) {
+                                    int fitConfId,
+                                    std::array<double, 2> *overlapVols) {
   const auto fitShape = ShapeInput(fit, fitConfId, fitOpts, overlayOpts);
-  return ScoreShape(refShape, fitShape, overlayOpts);
+  return ScoreShape(refShape, fitShape, overlayOpts, overlapVols);
 }
 
 std::array<double, 3> ScoreMolecule(const ROMol &ref, const ROMol &fit,
                                     const ShapeInputOptions &refOpts,
                                     const ShapeInputOptions &fitOpts,
                                     const ShapeOverlayOptions &overlayOpts,
-                                    int refConfId, int fitConfId) {
+                                    int refConfId, int fitConfId,
+                                    std::array<double, 2> *overlapVols) {
   ShapeOverlayOptions tmpOpts = overlayOpts;
   tmpOpts.normalize = false;
   tmpOpts.startMode = StartMode::ROTATE_0;
@@ -528,7 +535,7 @@ std::array<double, 3> ScoreMolecule(const ROMol &ref, const ROMol &fit,
   ShapeInputOptions tmpFitOpts = fitOpts;
   const auto fitShape = ShapeInput(fit, fitConfId, fitOpts, tmpOpts);
 
-  return ScoreShape(refShape, fitShape, tmpOpts);
+  return ScoreShape(refShape, fitShape, tmpOpts, overlapVols);
 }
 }  // namespace GaussianShape
 }  // namespace RDKit

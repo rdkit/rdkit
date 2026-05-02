@@ -147,9 +147,11 @@ python::tuple scoreMol1(const ROMol &ref, const ROMol &fit,
     overlayOpts =
         python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
   }
+  std::array<double, 2> ovVols;
   auto results = GaussianShape::ScoreMolecule(
-      ref, fit, refOpts, fitOpts, overlayOpts, refConfId, fitConfId);
-  return python::make_tuple(results[0], results[1], results[2]);
+      ref, fit, refOpts, fitOpts, overlayOpts, refConfId, fitConfId, &ovVols);
+  return python::make_tuple(results[0], results[1], results[2], ovVols[0],
+                            ovVols[1]);
 }
 
 python::tuple scoreMol2(const GaussianShape::ShapeInput &refShape,
@@ -164,9 +166,11 @@ python::tuple scoreMol2(const GaussianShape::ShapeInput &refShape,
     overlayOpts =
         python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
   }
+  std::array<double, 2> ovVols;
   auto results = GaussianShape::ScoreMolecule(refShape, fit, fitOpts,
-                                              overlayOpts, fitConfId);
-  return python::make_tuple(results[0], results[1], results[2]);
+                                              overlayOpts, fitConfId, &ovVols);
+  return python::make_tuple(results[0], results[1], results[2], ovVols[0],
+                            ovVols[1]);
 }
 
 python::tuple scoreShape(const GaussianShape::ShapeInput &refShape,
@@ -177,8 +181,11 @@ python::tuple scoreShape(const GaussianShape::ShapeInput &refShape,
     overlayOpts =
         python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
   }
-  auto results = GaussianShape::ScoreShape(refShape, fitShape, overlayOpts);
-  return python::make_tuple(results[0], results[1], results[2]);
+  std::array<double, 2> ovVols;
+  auto results =
+      GaussianShape::ScoreShape(refShape, fitShape, overlayOpts, &ovVols);
+  return python::make_tuple(results[0], results[1], results[2], ovVols[0],
+                            ovVols[1]);
 }
 
 void set_atomSubset(GaussianShape::ShapeInputOptions &opts,
@@ -319,6 +326,19 @@ void wrap_rdGaussianShape() {
           "Non-standard radii to use for the atoms specified by their indices"
           " in the molecule.  Not all atoms need have a radius specified."
           "  A list of tuples of [int, float].")
+      .def_readwrite(
+          "shapePruneThreshold",
+          &GaussianShape::ShapeInputOptions::shapePruneThreshold,
+          "If there is more than 1 conformer for the input molecule, prune the"
+          " shapes so that none of them are more similar to each other than the"
+          " threshold.  Default -1.0 means no pruning.")
+      .def_readwrite(
+          "sortShapes", &GaussianShape::ShapeInputOptions::sortShapes,
+          "If True (the default), the shapes are sorted into descending order"
+          " of total volume.")
+      .def_readwrite(
+          "includeDummies", &GaussianShape::ShapeInputOptions::includeDummies,
+          "Whether to include dummy atoms in the shape or not.  Default=True.")
       .def("__setattr__", &safeSetattr);
 
   python::class_<GaussianShape::ShapeOverlayOptions, boost::noncopyable>(
