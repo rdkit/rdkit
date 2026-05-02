@@ -461,7 +461,7 @@ bool isPossibleTautomericBond(const Bond *bptr,
          isCandidateAtom(bptr->getEndAtom(), atomFlags);
 }
 
-// a bond is a possible starting bond if it involves a candidate hetereoatom
+// a bond is a possible starting bond if it involves a candidate heteroatom
 // (definition above) and an unsaturated atom
 bool isPossibleStartingBond(const Bond *bptr,
                             const std::vector<std::uint64_t> &atomFlags,
@@ -502,6 +502,28 @@ bool hasStartBond(const Atom *aptr, const boost::dynamic_bitset<> &startBonds) {
   return false;
 }
 
+// Don't extend to a stereocenter via single non-conjugated bonds,
+// unless the source atom has a non-aromatic unsaturated bond
+// (indicating the stereocenter could become sp2 in a tautomer).
+// Aromatic atoms shouldn't pull in substituent stereocenters.
+bool shouldSkipChiralNeighbor(const Atom *sourceAtom, const Atom *targetAtom,
+                               const Bond *connectingBond) {
+  if (targetAtom->getHybridization() != Atom::SP3 ||
+      targetAtom->getTotalNumHs() != 1) {
+    return false;
+  }
+  if (isUnsaturatedBond(connectingBond) || connectingBond->getIsConjugated()) {
+    return false;
+  }
+  // Check if source has a non-aromatic unsaturated bond
+  for (const auto &srcBnd : sourceAtom->getOwningMol().atomBonds(sourceAtom)) {
+    if (!srcBnd->getIsAromatic() && isUnsaturatedBond(srcBnd)) {
+      return false;  // Source could participate in tautomerism
+    }
+  }
+  return true;  // Skip this chiral neighbor
+}
+
 // skip the neighbor bond if otherAtom isn't a candidate and doesn't have a
 // start bond OR if the bond is neither unsaturated nor conjugated and atom
 // doesn't have a start bond
@@ -510,11 +532,53 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
                       const boost::dynamic_bitset<> &startBonds,
                       const std::vector<std::uint64_t> &atomFlags,
                       const std::vector<std::uint64_t> &bondFlags) {
-  return (bondFlags[nbrBond->getIdx()] ||
-          ((!isCandidateAtom(otherAtom, atomFlags) &&
-            !hasStartBond(otherAtom, startBonds)) ||
-           (!isUnsaturatedBond(nbrBond) && !nbrBond->getIsConjugated() &&
-            !hasStartBond(atom, startBonds))));
+  if (bondFlags[nbrBond->getIdx()]) {
+    return true;
+  }
+
+  // Special case: prevent extending from an aromatic carbon (with no H)
+  // to an exocyclic C=C system. This handles cases like stilbene-pyridyl
+  // (c1ccccc1/C=C/c1ncccc1) where the aromatic C has no mobile H but the
+  // algorithm would otherwise extend to the exocyclic C=C and destroy E/Z.
+  // Check BOTH directions: either the aromatic atom extending to vinyl,
+  // or the vinyl atom being connected from aromatic.
+  if (!nbrBond->getIsAromatic()) {
+    const Atom *aromaticAtom = nullptr;
+    const Atom *nonAromaticAtom = nullptr;
+    
+    if (atom->getIsAromatic() && !otherAtom->getIsAromatic()) {
+      aromaticAtom = atom;
+      nonAromaticAtom = otherAtom;
+    } else if (!atom->getIsAromatic() && otherAtom->getIsAromatic()) {
+      aromaticAtom = otherAtom;
+      nonAromaticAtom = atom;
+    }
+    
+    // If we have an aromatic->non-aromatic transition
+    if (aromaticAtom && nonAromaticAtom) {
+      // Aromatic atom must have no H and be carbon
+      if (aromaticAtom->getTotalNumHs() == 0 &&
+          aromaticAtom->getAtomicNum() == 6 &&
+          nonAromaticAtom->getAtomicNum() == 6) {
+        // Check if nonAromaticAtom is part of a C=C system
+        for (const auto &bnd : atom->getOwningMol().atomBonds(nonAromaticAtom)) {
+          if (bnd->getBondType() == Bond::BondType::DOUBLE &&
+              !bnd->getIsAromatic()) {
+            auto otherEnd = bnd->getOtherAtom(nonAromaticAtom);
+            if (otherEnd->getAtomicNum() == 6) {
+              // This is a C=C double bond - skip extending
+              return true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return ((!isCandidateAtom(otherAtom, atomFlags) &&
+           !hasStartBond(otherAtom, startBonds)) ||
+          (!isUnsaturatedBond(nbrBond) && !nbrBond->getIsConjugated() &&
+           !hasStartBond(atom, startBonds)));
 }
 
 // counts the number of neighboring atoms that have conjugated bonds.
@@ -556,6 +620,9 @@ bool checkForOverreach(
 std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                            unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
+  if (!mol->getRingInfo()->isFindFastOrBetter()) {
+    MolOps::fastFindRings(*mol);
+  }
   std::string result;
   unsigned int hcount = 0;
   int charge = 0;
@@ -628,6 +695,9 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
 #endif
         if (checkForOverreach(atm, oatom, bptr, nbrBond, startBonds,
                               numConjugatedNeighbors)) {
+          continue;
+        }
+        if (shouldSkipChiralNeighbor(atm, oatom, nbrBond)) {
           continue;
         }
 
@@ -709,6 +779,9 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
 #endif
           if (checkForOverreach(atm, oatom, bnd, nbrBnd, startBonds,
                                 numConjugatedNeighbors)) {
+            continue;
+          }
+          if (shouldSkipChiralNeighbor(atm, oatom, nbrBnd)) {
             continue;
           }
           if ((skipNeighborBond(atm, oatom, nbrBnd, startBonds, atomFlags,
@@ -806,6 +879,19 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         if (!oatom->getTotalNumHs()) {
           continue;
         }
+        // don't extend to reach a potential stereocenter — doing so would
+        // incorrectly pull the stereocenter into the tautomeric system and
+        // destroy its chirality. Use structural criteria (SP3 + 1H) for
+        // chain atoms so behavior is consistent regardless of annotation.
+        // For ring atoms, only skip if chirality is actually annotated,
+        // since ring SP3+1H atoms often genuinely participate in ring
+        // tautomerism (e.g. purine NH, glutarimide).
+        if (oatom->getHybridization() == Atom::SP3 &&
+            oatom->getTotalNumHs() == 1 &&
+            (!queryIsAtomInRing(oatom) ||
+             oatom->getChiralTag() != Atom::CHI_UNSPECIFIED)) {
+          continue;
+        }
         unsigned int numModifiedNeighbors = 0;
         for (const auto nbr : mol->atomNeighbors(oatom)) {
           if (nbr == atm) {
@@ -836,9 +922,23 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
       if (!bondsToModify[bptr->getIdx()]) {
         continue;
       }
-      bptr->setIsAromatic(false);
-      bptr->setBondType(Bond::AROMATIC);
-      bptr->setStereo(Bond::BondStereo::STEREONONE);
+      // Preserve E/Z stereo on exocyclic double bonds (one atom in ring, one not)
+      // to avoid merging distinct geometric isomers (e.g., E/Z hydrazones).
+      // For these bonds, keep them as DOUBLE bonds (not AROMATIC) so that
+      // E/Z stereo is preserved in the SMILES output.
+      bool isExocyclicWithStereo = false;
+      if (bptr->getStereo() != Bond::BondStereo::STEREONONE) {
+        bool beginInRing = queryIsAtomInRing(bptr->getBeginAtom());
+        bool endInRing = queryIsAtomInRing(bptr->getEndAtom());
+        isExocyclicWithStereo = (beginInRing != endInRing);
+      }
+      if (!isExocyclicWithStereo) {
+        bptr->setBondType(Bond::AROMATIC);
+        bptr->setIsAromatic(true);  // Must be consistent with bond type
+        bptr->setStereo(Bond::BondStereo::STEREONONE);
+      } else {
+        bptr->setIsAromatic(false);
+      }
       atomsToModify.set(bptr->getBeginAtomIdx());
       atomsToModify.set(bptr->getEndAtomIdx());
     }
@@ -1220,7 +1320,7 @@ std::string RegioisomerHash(RWMol *mol, bool useCXSmiles,
   // we need a copy of the molecule so that we can loop over the bonds of
   // something while modifying something else
   RDKit::ROMol molcpy(*mol);
-  if (molcpy.getRingInfo()->isFindFastOrBetter()) {
+  if (!molcpy.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(molcpy);
   }
   for (int i = molcpy.getNumBonds() - 1; i >= 0; --i) {

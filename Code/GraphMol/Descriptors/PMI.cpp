@@ -42,9 +42,8 @@ bool getMoments(const ROMol &mol, int confId, bool useAtomicMasses, double &pm1,
   if (useAtomicMasses) {
     std::vector<double> weights;
     weights.resize(mol.getNumAtoms());
-    for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
-         ++cai) {
-      weights[(*cai)->getIdx()] = (*cai)->getMass();
+    for (const auto atom : mol.atoms()) {
+      weights[atom->getIdx()] = atom->getMass();
     }
     res = MolTransforms::computePrincipalAxesAndMoments(
         conf, axes, moments, ignoreHs, force, &weights);
@@ -85,9 +84,8 @@ bool getMomentsFromGyration(const ROMol &mol, int confId, bool useAtomicMasses,
   if (useAtomicMasses) {
     std::vector<double> weights;
     weights.resize(mol.getNumAtoms());
-    for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
-         ++cai) {
-      weights[(*cai)->getIdx()] = (*cai)->getMass();
+    for (const auto atom : mol.atoms()) {
+      weights[atom->getIdx()] = atom->getMass();
     }
     res = MolTransforms::computePrincipalAxesAndMomentsFromGyrationMatrix(
         conf, axes, moments, ignoreHs, force, &weights);

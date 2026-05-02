@@ -1364,6 +1364,13 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
               << "Atom " << aidx << " not found!" << std::endl;
           return false;
         }
+        if (std::ranges::find(atoms, atom) != atoms.end()) {
+          BOOST_LOG(rdWarningLog)
+              << "Atom " << aidx
+              << " appears more than once in stereo group specification!"
+              << std::endl;
+          return false;
+        }
         atoms.push_back(atom);
       }
     } else {

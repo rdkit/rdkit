@@ -460,9 +460,7 @@ void RGroupDecompData::relabelRGroup(RGroupData &rgroup,
   std::vector<std::pair<Atom *, Atom *>> atomsToAdd;  // adds -R if necessary
   std::map<int, int> rLabelCoreIndexToAtomicWt;
 
-  for (RWMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-       ++atIt) {
-    Atom *atom = *atIt;
+  for (auto atom : mol.atoms()) {
     if (atom->hasProp(SIDECHAIN_RLABELS)) {
       atom->setIsotope(0);
       const std::vector<int> &rlabels =

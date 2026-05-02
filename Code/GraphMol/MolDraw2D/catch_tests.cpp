@@ -74,9 +74,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDativeBonds_2c.svg", 1745138239U},
     {"testDativeBonds_2d.svg", 3279423301U},
     {"testZeroOrderBonds_1.svg", 3733430366U},
-    {"testFoundations_1.svg", 2350247048U},
-    {"testFoundations_2.svg", 15997352U},
-    {"testTest_1.svg", 15997352U},
+    {"testFoundations_1.svg", 2283802316U},
+    {"testFoundations_2.svg", 2468031318U},
+    {"testTest_1.svg", 2468031318U},
     {"testKekulizationProblems_1.svg", 2284161107U},
     {"testAtomBondIndices_1.svg", 2702803018U},
     {"testAtomBondIndices_2.svg", 1564350363U},
@@ -219,9 +219,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4764.sz3.svg", 2712214121U},
     {"testDrawArc1.svg", 3279637525U},
     {"testMetalWedges.svg", 2896721486U},
-    {"testVariableLegend_1.svg", 1817838365U},
-    {"testVariableLegend_2.svg", 1038247753U},
-    {"testVariableLegend_3.svg", 2073034956U},
+    {"testVariableLegend_1.svg", 1208675629U},
+    {"testVariableLegend_2.svg", 799897710U},
+    {"testVariableLegend_3.svg", 2599269417U},
     {"testGithub_5061.svg", 2050932431U},
     {"testGithub_5185.svg", 3800073130U},
     {"testGithub_5269_1.svg", 4160868253U},
@@ -2365,6 +2365,104 @@ M  END)CTAB"_ctab;
       outs.close();
       check_file_hash("testSGroupData-3a.svg");
     }
+  }
+}
+
+TEST_CASE("getSGroupDataLabels", "[extras]") {
+  SECTION("ABS position") {
+    // FIELDDISP with absolute ('A') position
+    auto m = R"CTAB(
+  Mrv2014 12072015352D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 9 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.5833 4.3317 0 0
+M  V30 2 C -7.917 3.5617 0 0
+M  V30 3 C -7.917 2.0216 0 0
+M  V30 4 C -6.5833 1.2516 0 0
+M  V30 5 C -5.2497 2.0216 0 0
+M  V30 6 C -5.2497 3.5617 0 0
+M  V30 7 C -3.916 4.3317 0 0
+M  V30 8 O -3.916 5.8717 0 0
+M  V30 9 O -2.5823 3.5617 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 7 9
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 9) FIELDNAME=pKa -
+M  V30 FIELDDISP="   -2.2073    2.3950    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=4.2
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto lbls = MolDraw2D_detail::getSGroupDataLabels(*m);
+    REQUIRE(lbls.size() == 1);
+    CHECK(lbls[0].text == "4.2");
+    CHECK(lbls[0].positioned);
+    CHECK(lbls[0].atomIdx == 8);
+    // ABS position: (-2.2073, -2.3950) — y is negated in molecule coords
+    CHECK_THAT(lbls[0].pos.x, Catch::Matchers::WithinAbs(-2.2073, 0.001));
+    CHECK_THAT(lbls[0].pos.y, Catch::Matchers::WithinAbs(-2.3950, 0.001));
+  }
+  SECTION("no FIELDDISP falls back to atom position") {
+    auto m = R"CTAB(
+  Mrv2014 12072015352D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 9 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6.5833 4.3317 0 0
+M  V30 2 C -7.917 3.5617 0 0
+M  V30 3 C -7.917 2.0216 0 0
+M  V30 4 C -6.5833 1.2516 0 0
+M  V30 5 C -5.2497 2.0216 0 0
+M  V30 6 C -5.2497 3.5617 0 0
+M  V30 7 C -3.916 4.3317 0 0
+M  V30 8 O -3.916 5.8717 0 0
+M  V30 9 O -2.5823 3.5617 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 7 9
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(5 2 4 5 3 1) FIELDNAME="Lambda Max" FIELDINFO=nm -
+M  V30 FIELDDATA="2222"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto lbls = MolDraw2D_detail::getSGroupDataLabels(*m);
+    REQUIRE(lbls.size() == 1);
+    CHECK(lbls[0].text == "2222");
+    // no FIELDDISP -> positioned=false, pos is first atom's conformer position
+    CHECK(!lbls[0].positioned);
+    CHECK(lbls[0].atomIdx == 1);  // first atom in ATOMS list is atom 2 (idx 1)
+    // falls back to atom 2 (idx 1) position: (-7.917, 3.5617)
+    CHECK_THAT(lbls[0].pos.x, Catch::Matchers::WithinAbs(-7.917, 0.001));
+    CHECK_THAT(lbls[0].pos.y, Catch::Matchers::WithinAbs(3.5617, 0.001));
   }
 }
 
@@ -4754,6 +4852,176 @@ TEST_CASE("vary proportion of panel for legend", "[drawing]") {
                       "style='font-size:11px;") != std::string::npos);
       check_file_hash("testVariableLegend_3.svg");
     }
+  }
+}
+
+TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
+  auto m1 = "CCO"_smiles;
+  REQUIRE(m1);
+  const std::string legend("Ethanol");
+  auto get_legend_xy = [](const std::string &text, double &x, double &y) {
+    std::smatch match;
+    std::regex textRgx(
+        "<text x='(-?[0-9]+\\.?[0-9]*)' y='(-?[0-9]+\\.?[0-9]*)' class='legend'");
+    if (std::regex_search(text, match, textRgx) && match.size() == 3) {
+      x = std::stod(match[1].str());
+      y = std::stod(match[2].str());
+      return true;
+    }
+    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+                       "(-?[0-9]+\\.?[0-9]*)");
+    if (std::regex_search(text, match, pathRgx) && match.size() == 3) {
+      x = std::stod(match[1].str());
+      y = std::stod(match[2].str());
+      return true;
+    }
+    return false;
+  };
+  auto get_all_legend_xy = [](const std::string &text) {
+    std::vector<std::pair<double, double>> coords;
+    std::regex textRgx(
+        "<text x='(-?[0-9]+\\.?[0-9]*)' y='(-?[0-9]+\\.?[0-9]*)' class='legend'");
+    for (auto it = std::sregex_iterator(text.begin(), text.end(), textRgx);
+         it != std::sregex_iterator(); ++it) {
+      coords.emplace_back(std::stod((*it)[1].str()), std::stod((*it)[2].str()));
+    }
+    if (!coords.empty()) {
+      return coords;
+    }
+    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+                       "(-?[0-9]+\\.?[0-9]*)");
+    for (auto it = std::sregex_iterator(text.begin(), text.end(), pathRgx);
+         it != std::sregex_iterator(); ++it) {
+      coords.emplace_back(std::stod((*it)[1].str()), std::stod((*it)[2].str()));
+    }
+    return coords;
+  };
+  double top_x = 0.0, top_y = 0.0;
+  double bottom_x = 0.0, bottom_y = 0.0;
+  double left_x = 0.0, left_y = 0.0;
+  double right_x = 0.0, right_y = 0.0;
+  SECTION("Top") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Top;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, top_x, top_y));
+    // Legend should sit in the upper part of the canvas (SVG y grows down).
+    CHECK(top_y < 50.0);
+    std::ofstream outs("testLegendPosition_top.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Left with vertical text") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendVerticalText = true;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+    auto coords = get_all_legend_xy(text);
+    REQUIRE(coords.size() > 1);
+    for (size_t i = 1; i < coords.size(); ++i) {
+      CHECK(coords[i].second > coords[i - 1].second);
+    }
+    std::ofstream outs("testLegendPosition_left_vertical.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Left horizontal") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendVerticalText = false;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, left_x, left_y));
+    CHECK(left_x < 80.0);
+    std::ofstream outs("testLegendPosition_left_horizontal.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Right horizontal") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Right;
+    drawer.drawOptions().legendVerticalText = false;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, right_x, right_y));
+    CHECK(right_x > 100.0);
+    std::ofstream outs("testLegendPosition_right_horizontal.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Bottom unchanged default") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    CHECK(drawer.drawOptions().legendPosition ==
+          MolDrawOptions::LegendPosition::Bottom);
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+    CHECK(get_legend_xy(text, bottom_x, bottom_y));
+    CHECK(bottom_y > 140.0);
+    std::ofstream outs("testLegendPosition_bottom.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("Long vertical side legend fits panel height") {
+    const std::string longName(48, 'M');
+    MolDraw2DSVG drawer(160, 90, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition =
+        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendVerticalText = true;
+    drawer.drawOptions().legendFraction = 0.22f;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, longName);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    // At this size the fitted legend can be very small but should still be
+    // present in the SVG and within the panel.
+    CHECK(text.find("class='legend'") != std::string::npos);
+    std::ofstream outs("testLegendPosition_long_vertical.svg");
+    outs << text;
+    outs.flush();
+  }
+}
+
+TEST_CASE("legend options from JSON", "[drawing]") {
+  auto m1 = "CCO"_smiles;
+  REQUIRE(m1);
+  SECTION("legendPosition and legendVerticalText parsed from JSON") {
+    const char *json =
+        R"({"legendPosition": "Top", "legendVerticalText": true})";
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
+    CHECK(opts.legendPosition == MolDrawOptions::LegendPosition::Top);
+    CHECK(opts.legendVerticalText == true);
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions() = opts;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "Ethanol");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
+  }
+  SECTION("legendPosition Left and legendFraction for side legend") {
+    MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendFraction = 0.25f;
+    drawer.drawOptions().legendVerticalText = true;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "CCO");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("class='legend'") != std::string::npos);
   }
 }
 

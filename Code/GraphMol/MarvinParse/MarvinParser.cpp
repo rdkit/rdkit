@@ -600,10 +600,9 @@ class MarvinCMLReader {
       mol->clearAllBondBookmarks();
 
       // calculate explicit valence on each atom:
-      for (RWMol::AtomIterator atomIt = mol->beginAtoms();
-           atomIt != mol->endAtoms(); ++atomIt) {
-        (*atomIt)->calcExplicitValence(false);
-        (*atomIt)->calcImplicitValence(false);
+      for (auto atom : mol->atoms()) {
+        atom->calcExplicitValence(false);
+        atom->calcImplicitValence(false);
       }
 
       // update the chirality and stereo-chemistry

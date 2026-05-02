@@ -627,9 +627,8 @@ void getBtVectVect(ResonanceMolSupplier *resMolSuppl,
     ROMol *resMol = resMolSuppl->next();
     std::vector<unsigned int> bt;
     bt.reserve(resMol->getNumBonds());
-    for (ROMol::BondIterator bi = resMol->beginBonds();
-         bi != resMol->endBonds(); ++bi) {
-      bt.push_back(static_cast<unsigned int>((*bi)->getBondTypeAsDouble()));
+    for (const auto bond : resMol->bonds()) {
+      bt.push_back(static_cast<unsigned int>(bond->getBondTypeAsDouble()));
     }
     btVect2.push_back(bt);
     delete resMol;

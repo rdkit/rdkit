@@ -154,9 +154,7 @@ Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
     // the atoms
     std::vector<std::uint32_t> funcGpInvars;
     gboost::hash<INT_VECT> vectHasher;
-    for (ROMol::AtomIterator atomIt = dp_mol->beginAtoms();
-         atomIt != dp_mol->endAtoms(); ++atomIt) {
-      unsigned int aid = (*atomIt)->getIdx();
+    for (unsigned int aid = 0; aid < dp_mol->getNumAtoms(); ++aid) {
       std::uint32_t invar = 0;
       auto mapPos = d_aToFmap.find(aid);
       if (mapPos != d_aToFmap.end()) {

@@ -138,9 +138,7 @@ void readFormalChargesFromAttr(std::istream *inStream, RWMol *res) {
 
 void guessFormalCharges(RWMol *res) {
   // FIX: this whole thing has problems with positively charged pyridines et al.
-  for (RWMol::AtomIterator atomIt = res->beginAtoms();
-       atomIt != res->endAtoms(); ++atomIt) {
-    Atom *at = (*atomIt);
+  for (auto at : res->atoms()) {
     // assign only if no formal charge set on that atom and atom is not carbon
     // (the latter
     // might needs changing later on - let's see) and not for query atoms (dummy
@@ -951,10 +949,11 @@ std::unique_ptr<RWMol> MolFromMol2DataStream(std::istream &inStream,
     MolOps::cleanUp(*res);
 
     try {
-      // when we sanitize for mol2, we skip the cleanup organometallic step since it's
-      // not really compatible with the semantics of mol2 files
-      constexpr auto sanitizeFlags = MolOps::SanitizeFlags::SANITIZE_ALL ^
-                            MolOps::SanitizeFlags::SANITIZE_CLEANUP_ORGANOMETALLICS;
+      // when we sanitize for mol2, we skip the cleanup organometallic step
+      // since it's not really compatible with the semantics of mol2 files
+      constexpr auto sanitizeFlags =
+          MolOps::SanitizeFlags::SANITIZE_ALL ^
+          MolOps::SanitizeFlags::SANITIZE_CLEANUP_ORGANOMETALLICS;
       if (params.removeHs) {
         // Bond stereo detection must happen before H removal, or
         // else we might be removing stereogenic H atoms in double
@@ -965,7 +964,8 @@ std::unique_ptr<RWMol> MolFromMol2DataStream(std::istream &inStream,
         // rings in bond stereo detection, and another in
         // sanitization's SSSR symmetrization).
         unsigned int failedOp = 0;
-        MolOps::sanitizeMol(*res, failedOp, MolOps::SanitizeFlags::SANITIZE_CLEANUP);
+        MolOps::sanitizeMol(*res, failedOp,
+                            MolOps::SanitizeFlags::SANITIZE_CLEANUP);
         MolOps::detectBondStereochemistry(*res);
         MolOps::RemoveHsParameters rhp;
         bool sanitize = false;

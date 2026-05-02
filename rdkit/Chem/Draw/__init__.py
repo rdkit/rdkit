@@ -68,7 +68,7 @@ if _sip_available():
 
 def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
                **kwargs):
-  """Returns a PIL image containing a drawing of the molecule
+  """Returns a PIL image containing a drawing of the molecule.
 
       ARGUMENTS:
 
@@ -83,6 +83,14 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
         - highlightBonds: list of bonds to highlight (default [])
 
         - highlightColor: RGB color as tuple (default [1, 0, 0])
+
+        - legend: optional text drawn as legend (default ''). Position and style
+          are controlled by options (MolDrawOptions): legendPosition (Bottom, Top,
+          Left, Right), legendVerticalText (for Left/Right), legendFontSize,
+          legendFraction. Pass as options=opts or drawOptions=opts.
+
+        - options: rdMolDraw2D.MolDrawOptions instance for drawing options
+          (e.g. legendPosition, legendVerticalText). Single-molecule only.
 
       NOTE:
 
@@ -137,6 +145,24 @@ def MolToFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, im
   with open(filename, 'w+' + mode) as outf:
     outf.write(data)
     outf.close()
+
+
+def MolToSVG(mol, size=(300, 300), kekulize=True, wedgeBonds=True, drawOptions=None,
+              **kwargs):
+  """Returns an SVG string containing a drawing of the molecule.
+
+  Supports the same arguments as MolToImage for highlights and legend.
+  For legend position (Top/Left/Right/Bottom) and vertical text on side legends,
+  pass an rdMolDraw2D.MolDrawOptions instance with legendPosition and
+  legendVerticalText set. Legend position applies to single-molecule drawing;
+  for grid drawing (MolsToGridImage), pass the same drawOptions and the position
+  applies to each cell's legend.
+  """
+  if not mol:
+    raise ValueError('Null molecule provided')
+  return _moltoSVG(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''),
+                  kekulize, drawOptions=drawOptions,
+                  highlightBonds=kwargs.get('highlightBonds', []))
 
 
 def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit Molecule',

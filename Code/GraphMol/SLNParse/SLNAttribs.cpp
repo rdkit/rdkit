@@ -470,10 +470,9 @@ void parseMolAttribs(ROMol *mol, AttribListType attribs) {
 }
 
 void adjustAtomChiralities(RWMol *mol) {
-  for (RWMol::AtomIterator atomIt = mol->beginAtoms();
-       atomIt != mol->endAtoms(); atomIt++) {
+  for (auto atom : mol->atoms()) {
     std::string attribVal;
-    if ((*atomIt)->getPropIfPresent(common_properties::_SLN_s, attribVal)) {
+    if (atom->getPropIfPresent(common_properties::_SLN_s, attribVal)) {
       // the atom is marked as chiral, translate the sln chirality into
       // RDKit chirality
 
@@ -483,17 +482,14 @@ void adjustAtomChiralities(RWMol *mol) {
       //      ClC[s=n]H(F)Br  <->  Cl[C@H](F)Br (CHI_TETRAHEDRAL_CCW)
       //      FC[1:s=n](Cl)OCH2@1   <->  F[C@@]1(Cl)OC1 (CHI_TETRAHEDRAL_CW)
       if (attribVal[0] == 'n') {
-        (*atomIt)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+        atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
       } else if (attribVal[0] == 'i') {
-        (*atomIt)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+        atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
       }
       std::list<std::pair<int, int>> neighbors;
-      RWMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(*atomIt);
-      while (nbrIdx != endNbrs) {
-        Bond *nbrBond = mol->getBondBetweenAtoms((*atomIt)->getIdx(), *nbrIdx);
-        neighbors.emplace_back(*nbrIdx, nbrBond->getIdx());
-        ++nbrIdx;
+      for (auto nbrBond : mol->atomBonds(atom)) {
+        neighbors.emplace_back(nbrBond->getOtherAtomIdx(atom->getIdx()),
+                               nbrBond->getIdx());
       }
 
       // std::cerr << "CHIRAL " << (*atomIt)->getIdx();
@@ -512,13 +508,12 @@ void adjustAtomChiralities(RWMol *mol) {
       // ok, we now have the ordering of the bonds (used for RDKit chirality),
       // figure out the permutation order relative to the atom numbering
       // (sln chirality):
-      int nSwaps = (*atomIt)->getPerturbationOrder(bondOrdering);
+      int nSwaps = atom->getPerturbationOrder(bondOrdering);
 
       if (nSwaps % 2) {
-        (*atomIt)->setChiralTag((*atomIt)->getChiralTag() ==
-                                        Atom::CHI_TETRAHEDRAL_CW
-                                    ? Atom::CHI_TETRAHEDRAL_CCW
-                                    : Atom::CHI_TETRAHEDRAL_CW);
+        atom->setChiralTag(atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW
+                               ? Atom::CHI_TETRAHEDRAL_CCW
+                               : Atom::CHI_TETRAHEDRAL_CW);
       }
     }
   }

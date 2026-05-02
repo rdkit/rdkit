@@ -463,10 +463,9 @@ findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
 
   if (!distMat) {
     // generate the adjacency matrix by hand by looping over the bonds
-    ROMol::ConstBondIterator bondIt;
-    for (bondIt = mol.beginBonds(); bondIt != mol.endBonds(); bondIt++) {
-      Atom *beg = (*bondIt)->getBeginAtom();
-      Atom *end = (*bondIt)->getEndAtom();
+    for (const auto bond : mol.bonds()) {
+      Atom *beg = bond->getBeginAtom();
+      Atom *end = bond->getEndAtom();
       // check for H, which we might be skipping
       if (useHs || (beg->getAtomicNum() != 1 && end->getAtomicNum() != 1)) {
         adjMat[beg->getIdx() * dim + end->getIdx()] = 1;

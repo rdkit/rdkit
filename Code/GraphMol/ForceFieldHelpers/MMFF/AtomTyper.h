@@ -79,56 +79,56 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
                     std::uint8_t verbosity = MMFF_VERBOSITY_NONE,
                     std::ostream &oStream = std::cout);
   ~MMFFMolProperties() = default;
-  unsigned int getMMFFBondType(const Bond *bond);
+  unsigned int getMMFFBondType(const Bond *bond) const;
   unsigned int getMMFFAngleType(const ROMol &mol, const unsigned int idx1,
                                 const unsigned int idx2,
-                                const unsigned int idx3);
+                                const unsigned int idx3) const;
   const std::pair<unsigned int, unsigned int> getMMFFTorsionType(
       const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
-      const unsigned int idx3, const unsigned int idx4);
+      const unsigned int idx3, const unsigned int idx4) const;
   void computeMMFFCharges(const ROMol &mol);
   const ForceFields::MMFF::MMFFTor *getMMFFTorsionEmpiricalRuleParams(
-      const ROMol &mol, unsigned int idx2, unsigned int idx3);
+      const ROMol &mol, unsigned int idx2, unsigned int idx3) const;
   const ForceFields::MMFF::MMFFBond *getMMFFBondStretchEmpiricalRuleParams(
-      const ROMol &mol, const Bond *bond);
-  std::uint8_t getMMFFAtomType(const unsigned int idx) {
+      const ROMol &mol, const Bond *bond) const;
+  std::uint8_t getMMFFAtomType(const unsigned int idx) const {
     URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffAtomType;
   }
-  double getMMFFFormalCharge(const unsigned int idx) {
+  double getMMFFFormalCharge(const unsigned int idx) const {
     URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffFormalCharge;
   }
-  double getMMFFPartialCharge(const unsigned int idx) {
+  double getMMFFPartialCharge(const unsigned int idx) const {
     URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffPartialCharge;
   }
   void setMMFFBondTerm(const bool state) { this->d_bondTerm = state; }
-  bool getMMFFBondTerm() { return this->d_bondTerm; }
+  bool getMMFFBondTerm() const { return this->d_bondTerm; }
   void setMMFFAngleTerm(const bool state) { this->d_angleTerm = state; }
-  bool getMMFFAngleTerm() { return this->d_angleTerm; }
+  bool getMMFFAngleTerm() const { return this->d_angleTerm; }
   void setMMFFStretchBendTerm(const bool state) {
     this->d_stretchBendTerm = state;
   }
-  bool getMMFFStretchBendTerm() { return this->d_stretchBendTerm; }
+  bool getMMFFStretchBendTerm() const { return this->d_stretchBendTerm; }
   void setMMFFOopTerm(const bool state) { this->d_oopTerm = state; }
-  bool getMMFFOopTerm() { return this->d_oopTerm; }
+  bool getMMFFOopTerm() const { return this->d_oopTerm; }
   void setMMFFTorsionTerm(const bool state) { this->d_torsionTerm = state; }
-  bool getMMFFTorsionTerm() { return this->d_torsionTerm; }
+  bool getMMFFTorsionTerm() const { return this->d_torsionTerm; }
   void setMMFFVdWTerm(const bool state) { this->d_vdWTerm = state; }
-  bool getMMFFVdWTerm() { return this->d_vdWTerm; }
+  bool getMMFFVdWTerm() const { return this->d_vdWTerm; }
   void setMMFFEleTerm(const bool state) { this->d_eleTerm = state; }
-  bool getMMFFEleTerm() { return this->d_eleTerm; }
+  bool getMMFFEleTerm() const { return this->d_eleTerm; }
   void setMMFFVariant(const std::string &mmffVariant) {
     PRECONDITION((mmffVariant == "MMFF94") || (mmffVariant == "MMFF94s"),
                  "bad MMFF variant");
 
     this->d_mmffs = mmffVariant == "MMFF94s";
   }
-  const std::string getMMFFVariant() {
+  const std::string getMMFFVariant() const {
     return (this->d_mmffs ? "MMFF94s" : "MMFF94");
   }
   void setMMFFDielectricConstant(const double dielConst) {
@@ -136,42 +136,42 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
 
     this->d_dielConst = dielConst;
   }
-  double getMMFFDielectricConstant() { return this->d_dielConst; }
+  double getMMFFDielectricConstant() const { return this->d_dielConst; }
   void setMMFFDielectricModel(std::uint8_t dielModel) {
     this->d_dielModel = dielModel;
   }
-  std::uint8_t getMMFFDielectricModel() { return this->d_dielModel; }
+  std::uint8_t getMMFFDielectricModel() const { return this->d_dielModel; }
   void setMMFFVerbosity(std::uint8_t verbosity) {
     this->d_verbosity = verbosity;
   }
-  std::uint8_t getMMFFVerbosity() { return this->d_verbosity; }
+  std::uint8_t getMMFFVerbosity() const { return this->d_verbosity; }
   void setMMFFOStream(std::ostream *oStream) { this->d_oStream = oStream; }
   std::ostream &getMMFFOStream() { return *(this->d_oStream); }
-  bool isValid() { return d_valid; }
+  bool isValid() const { return d_valid; }
   bool getMMFFBondStretchParams(const ROMol &mol, const unsigned int idx1,
                                 const unsigned int idx2, unsigned int &bondType,
-                                MMFFBond &mmffBondStretchParams);
+                                MMFFBond &mmffBondStretchParams) const;
   bool getMMFFAngleBendParams(const ROMol &mol, const unsigned int idx1,
                               const unsigned int idx2, const unsigned int idx3,
                               unsigned int &angleType,
-                              MMFFAngle &mmffAngleBendParams);
+                              MMFFAngle &mmffAngleBendParams) const;
   bool getMMFFStretchBendParams(const ROMol &mol, const unsigned int idx1,
                                 const unsigned int idx2,
                                 const unsigned int idx3,
                                 unsigned int &stretchBendType,
                                 MMFFStbn &mmffStretchBendParams,
                                 MMFFBond mmffBondStretchParams[2],
-                                MMFFAngle &mmffAngleBendParams);
+                                MMFFAngle &mmffAngleBendParams) const;
   bool getMMFFTorsionParams(const ROMol &mol, const unsigned int idx1,
                             const unsigned int idx2, const unsigned int idx3,
                             const unsigned int idx4, unsigned int &torsionType,
-                            MMFFTor &mmffTorsionParams);
+                            MMFFTor &mmffTorsionParams) const;
   bool getMMFFOopBendParams(const ROMol &mol, const unsigned int idx1,
                             const unsigned int idx2, const unsigned int idx3,
                             const unsigned int idx4,
-                            MMFFOop &mmffOopBendParams);
+                            MMFFOop &mmffOopBendParams) const;
   bool getMMFFVdWParams(const unsigned int idx1, const unsigned int idx2,
-                        MMFFVdWRijstarEps &mmffVdWParams);
+                        MMFFVdWRijstarEps &mmffVdWParams) const;
 
  private:
   void setMMFFHeavyAtomType(const RingMembershipSize &rmSize, const Atom *atom);
