@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/LeaderPicker.h>
 
 #include <RDGeneral/BoostStartInclude.h>
