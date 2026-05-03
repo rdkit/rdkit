@@ -16,6 +16,7 @@
 #include <array>
 #include <vector>
 
+#include <GraphMol/RWMol.h>
 #include <RDGeneral/export.h>
 #include <Geometry/Transform3D.h>
 
@@ -64,7 +65,6 @@ void serialize(Archive &ar, dynamic_bitset<Block, Allocator> &bs,
 
 namespace RDKit {
 class ROMol;
-class RWMol;
 class Conformer;
 namespace GaussianShape {
 
