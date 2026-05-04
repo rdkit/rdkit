@@ -90,7 +90,7 @@ class MolFromMACROMolConverter {
     }
   };
 
-  RDKit::MACROMol *macroMol;
+  const RDKit::MACROMol *macroMol;
   std::unique_ptr<RWMol> mol;
   const RDKit::v2::FileParsers::MolFileParserParams molFileParserParams;
   const MolFromMACROMolParams molFromMACROMolParams;
@@ -190,7 +190,7 @@ class MolFromMACROMolConverter {
 
  public:
   MolFromMACROMolConverter(
-      MACROMol *macroMolInit,
+      const MACROMol *macroMolInit,
       const RDKit::v2::FileParsers::MolFileParserParams
           &molFileParserParamsInit,
       const MolFromMACROMolParams &molFromMACROMolParamsInit)
@@ -649,7 +649,7 @@ class MolFromMACROMolConverter {
 };
 
 std::unique_ptr<RDKit::RWMol> MolFromMACROMol(
-    MACROMol *macroMol,
+    const MACROMol *macroMol,
     const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams,
     const RDKit::MolFromMACROMolParams &molFromMACROMolParams) {
   MolFromMACROMolConverter converter(macroMol, molFileParserParams,

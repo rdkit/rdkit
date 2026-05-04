@@ -129,7 +129,7 @@ void RDKit::MACROMol::addMacroBond(unsigned int fromAtomIdx,
   }
    }
 
-unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) {
+unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) const {
   if (p_atomIdxToTemplateIdxIsStale) {
     // rebuild the map
     p_atomIdxToTemplateIdx.clear();
@@ -156,7 +156,7 @@ unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) {
 }
 
 MACROMolTemplate *RDKit::MACROMol::atomIdxToMACROMolTemplate(
-    unsigned int atomIdx) {
+    unsigned int atomIdx) const {
   return this->getTemplate(this->atomIdxToTemplateIdx(atomIdx));
 }
 

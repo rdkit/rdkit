@@ -166,8 +166,8 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
 
   MACROMolTemplateLib d_templateLibrary;
 
-  bool p_atomIdxToTemplateIdxIsStale;
-  std::map<unsigned int, unsigned int> p_atomIdxToTemplateIdx;
+  mutable bool p_atomIdxToTemplateIdxIsStale;
+  mutable std::map<unsigned int, unsigned int> p_atomIdxToTemplateIdx;
 
  public:
   MACROMol() : p_atomIdxToTemplateIdxIsStale(true) {};
@@ -220,8 +220,8 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
                     Bond::BondType bondType, std::string fromConnectionPoint,
                     std::string toConnectionPoint);
 
-  unsigned int atomIdxToTemplateIdx(unsigned int atomIdx);
-  MACROMolTemplate *atomIdxToMACROMolTemplate(unsigned int atomIdx);
+  unsigned int atomIdxToTemplateIdx(unsigned int atomIdx) const;
+  MACROMolTemplate *atomIdxToMACROMolTemplate(unsigned int atomIdx) const;
 };
 typedef boost::shared_ptr<MACROMol> MACROMol_SPTR;
 typedef boost::shared_ptr<MACROMolTemplate> MACROMolTemplate_SPTR;

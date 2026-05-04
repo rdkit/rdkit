@@ -56,7 +56,7 @@ struct RDKIT_FILEPARSERS_EXPORT MolToMACROParams {
 };
 
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromMACROMol(
-    MACROMol *macroMol,
+    const MACROMol *macroMol,
     const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams,
     const RDKit::MolFromMACROMolParams &molFromMACROMolParams);
 
