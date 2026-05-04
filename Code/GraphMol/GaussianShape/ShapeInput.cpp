@@ -152,18 +152,24 @@ ShapeInput::ShapeInput(const ROMol &mol, const int confId,
   d_normalizeds = boost::dynamic_bitset<>(tmpMol->getNumConformers());
   d_normalizationOKs = boost::dynamic_bitset<>(tmpMol->getNumConformers());
 
-  auto processConf = [&](const ROMol &m, const unsigned int ci, const bool fa) {
-    extractAtoms(m, ci, opts, fa);
+  // Molecules don't necessarily have consecutive conformer IDs from 0
+  // upwards.  confNum is just the sequential number of the iterated
+  // conformers.
+  auto processConf = [&](const Conformer &conf, const unsigned int confNum,
+                         const bool fa) {
+    extractAtoms(conf, opts, fa);
     if (opts.useColors) {
-      extractFeatures(m, ci, opts, fa);
+      extractFeatures(conf, confNum, opts, fa);
     }
   };
 
   if (confId >= 0) {
-    processConf(*tmpMol, confId, true);
+    processConf(tmpMol->getConformer(confId), 0, true);
   } else {
-    for (unsigned int i = 0; i < tmpMol->getNumConformers(); ++i) {
-      processConf(*tmpMol, i, i == 0);
+    unsigned int i = 0;
+    for (auto cfi = tmpMol->beginConformers(); cfi != tmpMol->endConformers();
+         ++cfi, ++i) {
+      processConf(*(*cfi), i, i == 0);
     }
   }
   d_activeShape = 0;
@@ -594,18 +600,17 @@ double getStandardAtomRadius(const unsigned int atomicNum) {
 }
 
 }  // namespace
-void ShapeInput::extractAtoms(const ROMol &mol, const int confId,
+void ShapeInput::extractAtoms(const Conformer &conf,
                               const ShapeInputOptions &shapeOpts,
                               const bool fillAlphas) {
   if (!shapeOpts.allCarbonRadii) {
     d_carbonRadii.reset(new boost::dynamic_bitset<>(
         !shapeOpts.atomSubset.empty() ? shapeOpts.atomSubset.size()
-                                      : mol.getNumAtoms()));
+                                      : conf.getNumAtoms()));
   }
-  auto conf = mol.getConformer(confId);
   std::vector<double> theseCoords;
-  theseCoords.reserve(mol.getNumAtoms() * 3);
-  for (const auto atom : mol.atoms()) {
+  theseCoords.reserve(conf.getNumAtoms() * 3);
+  for (const auto atom : conf.getOwningMol().atoms()) {
     // Ignore H atoms except deuterium and tritium which are treated elsewhere
     // as explicit atoms, and do use dummies if requested.  The latter two
     // are set to be ignored in the volume calculation, however.  This is
@@ -740,18 +745,18 @@ std::vector<std::vector<const ROMol *>> *getPh4Patterns() {
 // for now.  Other options to be added later.  This should be working on
 // the parent molecule, but only extracting features that are due to
 // atoms entirely within any atom subset.
-void ShapeInput::extractFeatures(const ROMol &mol, const unsigned int confId,
+void ShapeInput::extractFeatures(const Conformer &conf, unsigned int confNum,
                                  const ShapeInputOptions &shapeOpts,
                                  const bool fillAlphas) {
   std::vector<CustomFeature> feats;
   if (shapeOpts.customFeatures.empty()) {
-    findFeatures(mol, confId, feats);
+    findFeatures(conf, feats);
   } else {
-    PRECONDITION(confId < shapeOpts.customFeatures.size(),
-                 "Conformer number " + std::to_string(confId) +
+    PRECONDITION(confNum < shapeOpts.customFeatures.size(),
+                 "Conformer number " + std::to_string(confNum) +
                      " too large for custom features size " +
                      std::to_string(shapeOpts.customFeatures.size()));
-    feats = shapeOpts.customFeatures[confId];
+    feats = shapeOpts.customFeatures[confNum];
   }
   // Just copy them directly except that the last is a radius, so convert
   // to alpha.
@@ -926,8 +931,7 @@ void ShapeInput::sortShapesByVolumes() {
   selectConformations(picks);
 }
 
-void findFeatures(const ROMol &mol, const int confId,
-                  std::vector<CustomFeature> &features,
+void findFeatures(const Conformer &conf, std::vector<CustomFeature> &features,
                   const std::vector<unsigned int> &atomSubset) {
   unsigned pattIdx = 1;
   for (const auto &patts : *getPh4Patterns()) {
@@ -935,7 +939,7 @@ void findFeatures(const ROMol &mol, const int confId,
       std::vector<MatchVectType> matches;
       // Once, recursive queries weren't thread safe but Greg assures
       // me that they now are.
-      matches = SubstructMatch(mol, *patt);
+      matches = SubstructMatch(conf.getOwningMol(), *patt);
       for (const auto &match : matches) {
         std::vector<unsigned int> ats;
         bool featOk = true;
@@ -954,7 +958,7 @@ void findFeatures(const ROMol &mol, const int confId,
         if (!featOk) {
           continue;
         }
-        auto featPos = computeFeaturePos(mol, confId, ats);
+        auto featPos = computeFeaturePos(conf, ats);
         features.emplace_back(
             CustomFeature{pattIdx, featPos, radius_color, ats});
       }
@@ -963,10 +967,9 @@ void findFeatures(const ROMol &mol, const int confId,
   }
 }
 
-RDGeom::Point3D computeFeaturePos(const ROMol &mol, const int confId,
+RDGeom::Point3D computeFeaturePos(const Conformer &conf,
                                   const std::vector<unsigned int> &ats) {
   RDGeom::Point3D featPos;
-  auto &conf = mol.getConformer(confId);
   for (const auto at : ats) {
     featPos += conf.getAtomPos(at);
   }

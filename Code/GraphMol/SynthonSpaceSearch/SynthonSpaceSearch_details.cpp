@@ -1336,9 +1336,10 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
       // may not be the case after the fragment is extracted.  There might
       // be a split aromatic ring, for example.
       shapeOpts.customFeatures.reserve(isomer->getNumConformers());
-      for (unsigned int i = 0; i < isomer->getNumConformers(); ++i) {
+      for (auto cfi = isomer->beginConformers(); cfi != isomer->endConformers();
+           ++cfi) {
         std::vector<GaussianShape::CustomFeature> feats;
-        GaussianShape::findFeatures(*isomer, i, feats, fragAtoms);
+        GaussianShape::findFeatures(*(*cfi), feats, fragAtoms);
         shapeOpts.customFeatures.emplace_back(std::move(feats));
       }
       duplicateJoinIsotope(*isomer, atomIsotopes, dummyRadii, fragAtoms);

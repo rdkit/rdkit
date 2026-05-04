@@ -434,7 +434,7 @@ void SynthonSpaceShapeSearcher::buildQueryShape(
     const ROMol &mol, std::vector<GaussianShape::CustomFeature> &allFeatures) {
   BOOST_LOG(rdInfoLog) << "Generating query shapes for " << MolToSmiles(mol)
                        << std::endl;
-  GaussianShape::findFeatures(mol, 0, allFeatures);
+  GaussianShape::findFeatures(mol.getConformer(), allFeatures);
 
   GaussianShape::ShapeInputOptions opts;
   opts.customFeatures.push_back(allFeatures);

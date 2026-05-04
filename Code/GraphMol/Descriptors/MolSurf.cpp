@@ -40,22 +40,21 @@ double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
     Vi[i] = 0.0;
   }
 
-  for (ROMol::ConstBondIterator bondIt = mol.beginBonds();
-       bondIt != mol.endBonds(); ++bondIt) {
+  for (const auto bond : mol.bonds()) {
     const double bondScaleFacts[4] = {.1, 0, .2, .3};
-    double Ri = rads[(*bondIt)->getBeginAtomIdx()];
-    double Rj = rads[(*bondIt)->getEndAtomIdx()];
+    double Ri = rads[bond->getBeginAtomIdx()];
+    double Rj = rads[bond->getEndAtomIdx()];
     double bij = Ri + Rj;
-    if (!(*bondIt)->getIsAromatic()) {
-      if ((*bondIt)->getBondType() < 4) {
-        bij -= bondScaleFacts[(*bondIt)->getBondType()];
+    if (!bond->getIsAromatic()) {
+      if (bond->getBondType() < 4) {
+        bij -= bondScaleFacts[bond->getBondType()];
       }
     } else {
       bij -= bondScaleFacts[0];
     }
     double dij = std::min(std::max(fabs(Ri - Rj), bij), Ri + Rj);
-    Vi[(*bondIt)->getBeginAtomIdx()] += Rj * Rj - (Ri - dij) * (Ri - dij) / dij;
-    Vi[(*bondIt)->getEndAtomIdx()] += Ri * Ri - (Rj - dij) * (Rj - dij) / dij;
+    Vi[bond->getBeginAtomIdx()] += Rj * Rj - (Ri - dij) * (Ri - dij) / dij;
+    Vi[bond->getEndAtomIdx()] += Ri * Ri - (Rj - dij) * (Rj - dij) / dij;
   }
   hContrib = 0.0;
   if (includeHs) {
@@ -118,31 +117,29 @@ double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
   unsigned int nAtoms = mol.getNumAtoms();
   std::vector<int> nNbrs(nAtoms, 0), nSing(nAtoms, 0), nDoub(nAtoms, 0),
       nTrip(nAtoms, 0), nArom(nAtoms, 0), nHs(nAtoms, 0);
-  for (ROMol::ConstBondIterator bIt = mol.beginBonds(); bIt != mol.endBonds();
-       ++bIt) {
-    const Bond *bnd = (*bIt);
-    if (bnd->getBeginAtom()->getAtomicNum() == 1) {
-      nNbrs[bnd->getEndAtomIdx()] -= 1;
-      nHs[bnd->getEndAtomIdx()] += 1;
-    } else if (bnd->getEndAtom()->getAtomicNum() == 1) {
-      nNbrs[bnd->getBeginAtomIdx()] -= 1;
-      nHs[bnd->getBeginAtomIdx()] += 1;
-    } else if (bnd->getIsAromatic()) {
-      nArom[bnd->getBeginAtomIdx()] += 1;
-      nArom[bnd->getEndAtomIdx()] += 1;
+  for (const auto bond : mol.bonds()) {
+    if (bond->getBeginAtom()->getAtomicNum() == 1) {
+      nNbrs[bond->getEndAtomIdx()] -= 1;
+      nHs[bond->getEndAtomIdx()] += 1;
+    } else if (bond->getEndAtom()->getAtomicNum() == 1) {
+      nNbrs[bond->getBeginAtomIdx()] -= 1;
+      nHs[bond->getBeginAtomIdx()] += 1;
+    } else if (bond->getIsAromatic()) {
+      nArom[bond->getBeginAtomIdx()] += 1;
+      nArom[bond->getEndAtomIdx()] += 1;
     } else {
-      switch (bnd->getBondType()) {
+      switch (bond->getBondType()) {
         case Bond::SINGLE:
-          nSing[bnd->getBeginAtomIdx()] += 1;
-          nSing[bnd->getEndAtomIdx()] += 1;
+          nSing[bond->getBeginAtomIdx()] += 1;
+          nSing[bond->getEndAtomIdx()] += 1;
           break;
         case Bond::DOUBLE:
-          nDoub[bnd->getBeginAtomIdx()] += 1;
-          nDoub[bnd->getEndAtomIdx()] += 1;
+          nDoub[bond->getBeginAtomIdx()] += 1;
+          nDoub[bond->getEndAtomIdx()] += 1;
           break;
         case Bond::TRIPLE:
-          nTrip[bnd->getBeginAtomIdx()] += 1;
-          nTrip[bnd->getEndAtomIdx()] += 1;
+          nTrip[bond->getBeginAtomIdx()] += 1;
+          nTrip[bond->getEndAtomIdx()] += 1;
           break;
         default:
           break;

@@ -443,13 +443,13 @@ std::array<double, 3> AlignMolecule(const ROMol &ref, ROMol &fit,
   return scores;
 }
 
-void AlignMoleculesAllConformers(const ROMol &ref, const ROMol &fit,
-                                 int &refConfId, int &fitConfId,
-                                 std::vector<std::vector<double>> &combScores,
-                                 const ShapeInputOptions &refOpts,
-                                 const ShapeInputOptions &fitOpts,
-                                 const ShapeOverlayOptions &overlayOpts,
-                                 RDGeom::Transform3D *xform) {
+void ScoreMoleculeAllConformers(const ROMol &ref, const ROMol &fit,
+                                int &refConfId, int &fitConfId,
+                                std::vector<std::vector<double>> &combScores,
+                                const ShapeInputOptions &refOpts,
+                                const ShapeInputOptions &fitOpts,
+                                const ShapeOverlayOptions &overlayOpts,
+                                RDGeom::Transform3D *xform) {
   // Pruning the shapes wastes time and obviously removes the correspondence
   // between conformers and shapes.
   auto refOptsCp = refOpts;

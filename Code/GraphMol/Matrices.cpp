@@ -309,23 +309,22 @@ double *getAdjacencyMatrix(const ROMol &mol, bool useBO, int emptyVal,
   auto *res = new double[nAts * nAts];
   memset(static_cast<void *>(res), emptyVal, nAts * nAts * sizeof(double));
 
-  for (ROMol::ConstBondIterator bondIt = mol.beginBonds();
-       bondIt != mol.endBonds(); bondIt++) {
-    if (bondsToUse && !(*bondsToUse)[(*bondIt)->getIdx()]) {
+  for (const auto bond : mol.bonds()) {
+    if (bondsToUse && !(*bondsToUse)[bond->getIdx()]) {
       continue;
     }
     if (!useBO) {
-      int beg = (*bondIt)->getBeginAtomIdx();
-      int end = (*bondIt)->getEndAtomIdx();
+      int beg = bond->getBeginAtomIdx();
+      int end = bond->getEndAtomIdx();
       res[beg * nAts + end] = 1;
       res[end * nAts + beg] = 1;
     } else {
-      int begIdx = (*bondIt)->getBeginAtomIdx();
-      int endIdx = (*bondIt)->getEndAtomIdx();
+      int begIdx = bond->getBeginAtomIdx();
+      int endIdx = bond->getEndAtomIdx();
       Atom const *beg = mol.getAtomWithIdx(begIdx);
       Atom const *end = mol.getAtomWithIdx(endIdx);
-      res[begIdx * nAts + endIdx] = (*bondIt)->getValenceContrib(beg);
-      res[endIdx * nAts + begIdx] = (*bondIt)->getValenceContrib(end);
+      res[begIdx * nAts + endIdx] = bond->getValenceContrib(beg);
+      res[endIdx * nAts + begIdx] = bond->getValenceContrib(end);
     }
   }
   sptr.reset(res);
