@@ -268,7 +268,6 @@ std::string rwmolClassDoc =
 
 struct mol_wrapper {
   static void wrap() {
-    initPropSentinel();
     python::register_exception_translator<ConformerException>(
         &rdExceptionTranslator);
 
@@ -749,16 +748,26 @@ struct mol_wrapper {
         .def(
             "GetProp", GetPyProp<ROMol>,
             (python::arg("self"), python::arg("key"),
-             python::arg("autoConvert") = false,
-             python::arg("default") = getPropSentinel()),
+             python::arg("autoConvert") = false),
             "Returns the value of the property.\n\n"
             "  ARGUMENTS:\n"
             "    - key: the name of the property to return (a string).\n\n"
             "    - autoConvert: if True attempt to convert the property into a python object\n\n"
-            "    - default: (optional) value to return if the property is not present.\n\n"
-            "  RETURNS: the property value (or default if the property is not present and default was provided).\n\n"
+            "  RETURNS: a string\n\n"
             "  NOTE:\n"
-            "    - If the property has not been set and no default is provided, a KeyError exception will be raised.\n",
+            "    - If the property has not been set, a KeyError exception will be raised.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def(
+            "GetProp", GetPyPropOrDefault<ROMol>,
+            (python::arg("self"), python::arg("key"),
+             python::arg("autoConvert") = false,
+             python::arg("default")),
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: the property value, or default if the property is not present.\n",
             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetDoubleProp", GetProp<ROMol, double>,
              python::args("self", "key"),

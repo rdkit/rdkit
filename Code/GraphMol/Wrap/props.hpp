@@ -40,14 +40,6 @@
 
 namespace RDKit {
 
-inline python::object &getPropSentinel() {
-  static python::object sentinel;
-  return sentinel;
-}
-inline void initPropSentinel() {
-  getPropSentinel() = python::object(python::handle<>(
-      PyObject_CallObject((PyObject *)&PyBaseObject_Type, nullptr)));
-}
 
 template <class T>
 inline const char *GetTypeName() {
@@ -238,16 +230,17 @@ python::object autoConvertString(const RDOb *ob, const std::string &key) {
   return python::object();
 }
 
+// nullptr = raise KeyError; non-null = return *default_val_ptr as fallback
 template <class RDOb>
-PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert,
-                    python::object default_val = python::object()) {
+PyObject *GetPyPropImpl(const RDOb *obj, const std::string &key,
+                        bool autoConvert, python::object *default_val_ptr) {
   python::object pobj;
   if (!autoConvert) {
     std::string res;
     if (obj->getPropIfPresent(key, res)) {
       return rawPy(res);
-    } else if (default_val.ptr() != getPropSentinel().ptr()) {
-      return rawPy(default_val);
+    } else if (default_val_ptr) {
+      return rawPy(*default_val_ptr);
     } else {
       PyErr_SetString(PyExc_KeyError, key.c_str());
       return nullptr;
@@ -321,11 +314,22 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert,
       }
     }
   }
-  if (default_val.ptr() != getPropSentinel().ptr() && !obj->hasProp(key)) {
-    return rawPy(default_val);
+  if (default_val_ptr && !obj->hasProp(key)) {
+    return rawPy(*default_val_ptr);
   }
   PyErr_SetString(PyExc_KeyError, key.c_str());
   return nullptr;
+}
+
+template <class RDOb>
+PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
+  return GetPyPropImpl(obj, key, autoConvert, nullptr);
+}
+
+template <class RDOb>
+PyObject *GetPyPropOrDefault(const RDOb *obj, const std::string &key,
+                              bool autoConvert, python::object default_val) {
+  return GetPyPropImpl(obj, key, autoConvert, &default_val);
 }
 
 // Return policy for functions that directly return a PyObject* and
