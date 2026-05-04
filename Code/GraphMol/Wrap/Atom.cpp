@@ -381,6 +381,14 @@ struct atom_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetIntProp", GetPropOrDefault<Atom, int>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (an int).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: an int, or default if the property is not present.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("GetUnsignedProp", GetProp<Atom, unsigned>,
              python::args("self", "key"),
@@ -392,6 +400,14 @@ struct atom_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetUnsignedProp", GetPropOrDefault<Atom, unsigned>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (an unsigned integer).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: an integer, or default if the property is not present.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("SetDoubleProp", AtomSetProp<double>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
@@ -410,6 +426,14 @@ struct atom_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetDoubleProp", GetPropOrDefault<Atom, double>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a double).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: a double, or default if the property is not present.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("SetBoolProp", AtomSetProp<bool>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
@@ -426,6 +450,14 @@ struct atom_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetBoolProp", GetPropOrDefault<Atom, bool>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a bool).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: a bool, or default if the property is not present.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("SetExplicitBitVectProp", AtomSetProp<ExplicitBitVect>,

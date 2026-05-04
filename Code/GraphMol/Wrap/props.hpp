@@ -40,7 +40,6 @@
 
 namespace RDKit {
 
-
 template <class T>
 inline const char *GetTypeName() {
   // PRECONDITION(0, "Unregistered c++ type");
@@ -213,6 +212,23 @@ PyObject *GetProp(const RDOb *ob, const std::string &key) {
   return rawPy(std::move(res));
 }
 
+template <class RDOb, class T>
+PyObject *GetPropOrDefault(const RDOb *ob, const std::string &key,
+                           T default_val) {
+  T res;
+  try {
+    if (!ob->getPropIfPresent(key, res)) {
+      return rawPy(std::move(default_val));
+    }
+  } catch (const std::exception &e) {
+    auto msg = std::string("key `") + key + "` exists but does not result in " +
+               GetTypeName<T>() + " reason: " + e.what();
+    PyErr_SetString(PyExc_ValueError, msg.c_str());
+    return nullptr;
+  }
+  return rawPy(std::move(res));
+}
+
 template <class RDOb>
 python::object autoConvertString(const RDOb *ob, const std::string &key) {
   int ivalue;
@@ -239,7 +255,7 @@ PyObject *GetPyPropImpl(const RDOb *obj, const std::string &key,
     std::string res;
     if (obj->getPropIfPresent(key, res)) {
       return rawPy(res);
-    } else if (default_val_ptr) {
+    } else if (default_val_ptr && !obj->hasProp(key)) {
       return rawPy(*default_val_ptr);
     } else {
       PyErr_SetString(PyExc_KeyError, key.c_str());
@@ -314,6 +330,10 @@ PyObject *GetPyPropImpl(const RDOb *obj, const std::string &key,
       }
     }
   }
+  // We reach here only when autoConvert=true and the key was not returned by
+  // the loop above. Two cases: (a) key not in dict at all — hasProp is false,
+  // return default; (b) key exists as AnyTag (skipped by the loop) — hasProp
+  // is true, raise KeyError as the property cannot be converted.
   if (default_val_ptr && !obj->hasProp(key)) {
     return rawPy(*default_val_ptr);
   }
