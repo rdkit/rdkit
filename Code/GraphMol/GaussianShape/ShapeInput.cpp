@@ -556,7 +556,7 @@ double ShapeInput::maxPossibleSimilarity(
 }
 
 void ShapeInput::pruneShapes(const double simThreshold) {
-  if (d_coords.size() < 2) {
+  if (d_coords.size() < 2 || simThreshold < 0.0) {
     return;
   }
   class DistFunctor {
