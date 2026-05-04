@@ -39,6 +39,17 @@ boost::shared_ptr<ROMol> bestHitMolecule_helper(
   return boost::shared_ptr<ROMol>();
 }
 
+python::object get_excludedVolume(
+    const SynthonSpaceSearch::SynthonSpaceSearchParams &params) {
+  return python::object(params.excludedVolume);
+}
+
+void set_excludedVolume(SynthonSpaceSearch::SynthonSpaceSearchParams &params,
+                        const python::object &pyExcVol) {
+  params.excludedVolume = new GaussianShape::ShapeInput(
+      python::extract<GaussianShape::ShapeInput>(pyExcVol));
+}
+
 struct SearchResults_wrapper {
   static void wrap() {
     const std::string docString =
@@ -229,8 +240,8 @@ SynthonSpaceSearch::SearchResults shapeSearch_helper(
 }
 
 SynthonSpaceSearch::SearchResults shapeSearch_helper_3(
-    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const python::object &py_params, int startLine, int finishLine) {
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query, int startLine,
+    int finishLine, const python::object &py_params) {
   SynthonSpaceSearch::SynthonSpaceSearchParams params;
   if (!py_params.is_none()) {
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
@@ -501,10 +512,10 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " number of '*' characters in a full bar.  There will"
           " be about another 35 characters or so depending on the size of the"
           " job.  Default=0 means no bar.")
-      .def_readwrite(
-          "excludedVolume",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::excludedVolume,
-          "  An excluded volume to use in the shape search.  The volume"
+      .add_property(
+          "excludedVolume", &helpers::get_excludedVolume,
+          &helpers::set_excludedVolume,
+          "  Add an excluded volume to use in the shape search.  The volume"
           " overlap and mean overlap over clashing atoms will be reported.")
       .def_readwrite(
           "maxExcludedVolume",
@@ -529,6 +540,11 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " space-separated list of the synthons and the"
           " hit's name.  The file will be emptied and"
           " re-filled if it already exists.")
+      .def_readwrite(
+          "maxPossibleHitsToWrite",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxPossibleHitsToWrite,
+          "Maximum number of lines to write to possibleHitsFile.  When dealing"
+          " with huge synthon spaces it's very easy to fill a disk.  Default=10M.")
       .def_readwrite(
           "writePossibleHitsAndStop",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::
@@ -689,14 +705,27 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            "Does a search using the Rascal similarity score.  The similarity"
            " threshold used is provided by rascalOptions, and the one in"
            " params is ignored.  Returns results iteratively in the callback.")
-      .def("ShapeSearch", &helpers::shapeSearch_helper,
-           (python::arg("self"), python::arg("query"),
-            python::arg("params") = python::object()),
-           "Does a search using the pubchem-align3d shape similarity metric.")
-      .def("ShapeSearch", &helpers::shapeSearch_helper_3,
-           (python::arg("self"), python::arg("query"), python::arg("startLine"),
-            python::arg("finishLine") = -1),
-           "")
+      .def(
+          "ShapeSearch", &helpers::shapeSearch_helper,
+          (python::arg("self"), python::arg("query"),
+           python::arg("params") = python::object()),
+          "Perform a shape similarity search with the given query molecule"
+          " across the synthonspace library.  Duplicate SMILES strings produced by"
+          " different reactions will be returned.  Requires a query with at least"
+          " 1 3D conformer.  Only the first conformer will be used in the search.")
+      .def(
+          "ShapeSearch", &helpers::shapeSearch_helper_3,
+          (python::arg("self"), python::arg("query"), python::arg("startLine"),
+           python::arg("finishLine"), python::arg("params") = python::object()),
+          "Take the contents of params.possibleHitsFile, which is assumed to have"
+          " been written by an earlier search, and extract those that are indeed"
+          " hits.  It makes sense that params is the same as the one used to"
+          " generate the possible hits, but this is not essential.  You could search"
+          " at a higher similarity threshold than used to create the possible hits,"
+          " for example."
+          " Duplicate SMILES strings produced by different reactions will"
+          " be returned.  Requires a query with at least 1 3D conformer.  Only"
+          " the first conformer will be used in the search.")
       .def(
           "BuildSynthonFingerprints",
           &SynthonSpaceSearch::SynthonSpace::buildSynthonFingerprints,

@@ -26,6 +26,7 @@
      in future releases.
 */
 
+#include <limits>
 #include <map>
 #include <sstream>
 #include <string>
@@ -236,7 +237,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
   /*! Perform a shape similarity search with the given query molecule
    * across the synthonspace library.  Duplicate SMILES strings produced by
-   * different reactions will be returned.  Require a molecule with at least
+   * different reactions will be returned.  Requires a query with at least
    * 1 3D conformer.  Only the first conformer will be used in the search.
    *
    * @param query : query molecule
@@ -254,19 +255,19 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * at a higher similarity threshold than used to create the possible hits,
    * for example.
    * Duplicate SMILES strings produced by different reactions will
-   * be returned.  Requires a molecule with at least 1 3D conformer.  Only
+   * be returned.  Requires a query with at least 1 3D conformer.  Only
    * the first conformer will be used in the search.
    *
    * @param query : query molecule
    * @param params : settings for the search
    * @param startLine: the first line of the file to be considered
    * @param finishLine: (optional) the last line of the file to be considered.
-   *                    -1 means go to the end.
    * @return : the hits as a SearchResults object.
    */
-  SearchResults shapeSearch(const ROMol &query,
-                            const SynthonSpaceSearchParams &params,
-                            int startLine, int finishLine = -1);
+  SearchResults shapeSearch(
+      const ROMol &query, const SynthonSpaceSearchParams &params,
+      std::uint64_t startLine,
+      std::uint64_t finishLine = std::numeric_limits<std::uint64_t>::max());
 
   /*!
    *

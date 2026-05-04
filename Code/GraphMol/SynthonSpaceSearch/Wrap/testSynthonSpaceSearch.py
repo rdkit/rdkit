@@ -274,7 +274,7 @@ class TestCase(unittest.TestCase):
                                         rdGaussianShape.ShapeOverlayOptions())
       
     ssparams = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
-    ssparams.excludedVolume = excVol
+    ssparams.excludedVolume =excVol
     ssparams.fragSimilarityAdjuster = 0.2
     ssparams.approxSimilarityAdjuster = 0.2
     ssparams.numConformers = 100

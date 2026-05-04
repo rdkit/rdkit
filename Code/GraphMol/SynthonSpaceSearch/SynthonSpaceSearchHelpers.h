@@ -155,6 +155,10 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                  // space-separated list of the synthons and the
                                  // hit's name.  The file will be emptied and
                                  // re-filled if it already exists.
+  std::uint64_t maxPossibleHitsToWrite{
+      10000000};  // Maximum number of lines to write to possibleHitsFile.
+                  // When dealing with huge synthon spaces it's very
+                  // easy to fill a disk.
   bool writePossibleHitsAndStop{
       false};  // If true, creates the possibleHitsFile
                // and stops without doing the final

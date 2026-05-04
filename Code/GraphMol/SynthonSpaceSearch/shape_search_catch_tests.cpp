@@ -868,15 +868,26 @@ TEST_CASE("Write possible hits") {
   }
   CHECK(numLines == 4);
 
-  auto checkResults = synthonspace.shapeSearch(*queryMol, params, 0, -1);
+  auto checkResults = synthonspace.shapeSearch(
+      *queryMol, params, 0, std::numeric_limits<std::uint64_t>::max());
   std::cout << "Number of check results : "
             << checkResults.getHitMolecules().size() << std::endl;
   CHECK(checkResults.getHitMolecules().size() == 3);
 
   std::cout << "shortResults" << std::endl;
   auto shortResults = synthonspace.shapeSearch(*queryMol, params, 1, 3);
-  std::cout << "Number of check results : "
+  std::cout << "Number of short results : "
             << shortResults.getHitMolecules().size() << std::endl;
   CHECK(shortResults.getHitMolecules().size() == 2);
+  std::remove(params.possibleHitsFile.c_str());
+
+  params.maxPossibleHitsToWrite = 3;
+  auto newResults = synthonspace.shapeSearch(*queryMol, params);
+  std::ifstream ifs("amide_space_shapes_poss_hits.txt");
+  ifs.unsetf(std::ios_base::skipws);
+  numLines = std::count(std::istream_iterator<char>(ifs),
+                        std::istream_iterator<char>(), '\n');
+  ifs.close();
+  CHECK(numLines == 3);
   std::remove(params.possibleHitsFile.c_str());
 }
