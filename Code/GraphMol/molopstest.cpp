@@ -297,7 +297,7 @@ TEST_CASE("test3") {
   delete m;
 
   smi = "C(C1C2C3C41)(C2C35)C45";  // cubane
-  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figureras paper
+  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figueras paper
   // smi = "C17C5C4C3C2C1C6C2C3C4C5C67";
   // we cannot use the sanitization code, because that finds *symmetric*
   // rings, which will break this case:
@@ -8004,4 +8004,21 @@ TEST_CASE("Testing isRingFused") {
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 1) == 2);
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 3);
   }
+}
+
+TEST_CASE("GitHub Issue #9064: Incorrect SMARTS matching") {
+  constexpr const char *smi = R"smi(c1ccc2c(c1)C3CC3C4CC5CC4CC25)smi";
+  constexpr const char *sma = R"sma(C!@c)sma";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto q = v2::SmilesParse::MolFromSmarts(sma);
+  REQUIRE(q);
+
+  CHECK(m->getRingInfo()->numRings() == 5);
+
+  auto matches = SubstructMatch(*m, *q);
+  CHECK(matches.empty());
 }
