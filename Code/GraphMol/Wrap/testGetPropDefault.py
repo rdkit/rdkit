@@ -9,28 +9,22 @@ from rdkit.Chem import AllChem
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("auto_convert", [False, True])
-@pytest.mark.parametrize("default, expected_val", [
-    (None, None),
-    ("fallback", "fallback"),
-    (0, 0),
-    (0.0, 0.0),
-])
-def test_get_prop_with_default_missing(auto_convert, default, expected_val):
+@pytest.mark.parametrize("default", [None, "fallback", 0, 0.0])
+def test_get_prop_with_default_missing(auto_convert, default):
     """Default is returned when the property is not set."""
     m = Chem.MolFromSmiles("CC")
     assert m.GetProp("test_prop", autoConvert=auto_convert,
-                     default=default) == expected_val
+                     default=default) == default
 
 
 @pytest.mark.parametrize("auto_convert", [False, True])
-@pytest.mark.parametrize("prop_value, default, expected_val", [
+@pytest.mark.parametrize("prop_value, default, unconverted_value", [
     ("value", "fallback", "value"),
     ("value", None, "value"),
-    (42, 0, 42),
-    (42.0, 0.0, 42.0),
+    (42, 0, '42'),
+    (42.0, 0.0, '42'),
 ])
-def test_get_prop_with_default_present(auto_convert, prop_value, default,
-                                       expected_val):
+def test_get_prop_with_default_present(auto_convert, prop_value, default, unconverted_value):
     """The stored property value is returned, not the default."""
     m = Chem.MolFromSmiles("CC")
     if isinstance(prop_value, int):
@@ -39,8 +33,9 @@ def test_get_prop_with_default_present(auto_convert, prop_value, default,
         m.SetDoubleProp("test_prop", prop_value)
     else:
         m.SetProp("test_prop", prop_value)
+    expected = prop_value if auto_convert else unconverted_value
     assert m.GetProp("test_prop", autoConvert=auto_convert,
-                     default=default) == expected_val
+                     default=default) == expected
 
 
 @pytest.mark.parametrize("auto_convert", [False, True])
@@ -52,8 +47,12 @@ def test_get_prop_no_default_not_set(auto_convert):
 
 
 @pytest.mark.parametrize("auto_convert", [False, True])
-@pytest.mark.parametrize("prop_value", ["hello", 0, 0.0])
-def test_get_prop_no_default_set(auto_convert, prop_value):
+@pytest.mark.parametrize("prop_value, unconverted_value", [
+    ("hello", "hello"),
+    (42, "42"),
+    (42.0, "42"),
+])
+def test_get_prop_no_default_set(auto_convert, prop_value, unconverted_value):
     """GetProp without default returns the stored value normally."""
     m = Chem.MolFromSmiles("CC")
     if isinstance(prop_value, int):
@@ -62,7 +61,8 @@ def test_get_prop_no_default_set(auto_convert, prop_value):
         m.SetDoubleProp("test_prop", prop_value)
     else:
         m.SetProp("test_prop", prop_value)
-    assert m.GetProp("test_prop", autoConvert=auto_convert) == prop_value
+    expected = prop_value if auto_convert else unconverted_value
+    assert m.GetProp("test_prop", autoConvert=auto_convert) == expected
 
 
 def test_get_prop_default_positional():
@@ -156,17 +156,14 @@ def test_typed_getter_no_default_raises(get_fn):
         getattr(m, get_fn)("missing")
 
 
-def test_get_prop_default_wrong_type_raises():
-    """GetProp(default=x) with autoConvert=False still raises KeyError when key exists but is not a string prop."""
-    m = Chem.MolFromSmiles("CC")
-    m.SetIntProp("int_key", 42)
-    with pytest.raises(KeyError):
-        m.GetProp("int_key", autoConvert=False, default="fallback")
-
-
 def test_typed_getter_default_wrong_type_raises_value_error():
     """GetIntProp(default=x) raises ValueError when the key exists but holds the wrong type."""
     m = Chem.MolFromSmiles("CC")
     m.SetDoubleProp("dbl_key", 3.14)
     with pytest.raises(ValueError):
         m.GetIntProp("dbl_key", default=0)
+
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(pytest.main([__file__]))

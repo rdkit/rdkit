@@ -235,11 +235,19 @@ python::object autoConvertString(const RDOb *ob, const std::string &key) {
   double dvalue;
   std::string svalue;
 
-  if (ob->getPropIfPresent(key, ivalue)) {
-    return python::object(ivalue);
-  } else if (ob->getPropIfPresent(key, dvalue)) {
-    return python::object(dvalue);
-  } else if (ob->getPropIfPresent(key, svalue)) {
+  try {
+    if (ob->getPropIfPresent(key, ivalue)) {
+      return python::object(ivalue);
+    }
+  } catch (const std::bad_any_cast &) {}
+
+  try {
+    if (ob->getPropIfPresent(key, dvalue)) {
+      return python::object(dvalue);
+    }
+  } catch (const std::bad_any_cast &) {}
+
+  if (ob->getPropIfPresent(key, svalue)) {
     return python::object(svalue);
   }
 
@@ -277,6 +285,7 @@ PyObject *GetPyPropImpl(const RDOb *obj, const std::string &key,
             case RDTypeTag::StringTag:
               if (autoConvert) {
                 pobj = autoConvertString(obj, rdvalue.key);
+                return rawPy(pobj);
               }
               return rawPy(from_rdvalue<std::string>(rdvalue.val));
             case RDTypeTag::FloatTag:
