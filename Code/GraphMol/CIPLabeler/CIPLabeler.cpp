@@ -115,7 +115,7 @@ bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
     const auto &foci = config->getFoci();
 
     // Skip if none of the foci atoms were reached during expansion
-    if (std::none_of(foci.begin(), foci.end(),
+    if (std::ranges::none_of(foci,
                      [&](auto f) { return digraph.seenAtom(f); })) {
       continue;
     }
