@@ -2725,33 +2725,33 @@ TEST_CASE("github9101 - $$$$ at buffer end") {
 // (although the second created drift it only took effect on the next molecule
 // which would be the third). this creates the edge case but with three
 TEST_CASE("chunk boundary stream drift with 3+ molecules") {
-  std::string m1 =
-      "mol1\n"
-      "     RDKit          3D\n"
-      "\n"
-      "  1  0  0  0  0  0  0  0  0  0999 V2000\n"
-      "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-      "M  END\n"
-      "> <comment>\n";
-  std::string m1tail =
-      "\n"
-      "$$$$\n";
-  std::string m2 =
-      "mol2\n"
-      "     RDKit          3D\n"
-      "\n"
-      "  1  0  0  0  0  0  0  0  0  0999 V2000\n"
-      "    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
-      "M  END\n"
-      "$$$$\n";
-  std::string m3 =
-      "mol3\n"
-      "     RDKit          3D\n"
-      "\n"
-      "  1  0  0  0  0  0  0  0  0  0999 V2000\n"
-      "    0.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n"
-      "M  END\n"
-      "$$$$\n";
+  std::string m1 = R"CTAB(mol1
+     RDKit          3D
+
+  1  0  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+> <comment>
+)CTAB";
+  std::string m1tail = R"CTAB(
+$$$$
+)CTAB";
+  std::string m2 = R"CTAB(mol2
+     RDKit          3D
+
+  1  0  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+$$$$
+)CTAB";
+  std::string m3 = R"CTAB(mol3
+     RDKit          3D
+
+  1  0  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+$$$$
+)CTAB";
 
   // first separator must hit exactly at the 65536 byte boundary (the others
   // could too but no need)
