@@ -313,6 +313,9 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   //! check if the ring families have been initialized
   bool areRingFamiliesInitialized() const { return dp_urfData != nullptr; }
 
+  //! reset ring family information
+  void resetRingFamilies();
+
   //! @}
 
  private:
