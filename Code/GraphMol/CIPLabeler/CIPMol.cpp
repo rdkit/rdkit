@@ -17,10 +17,8 @@ namespace RDKit {
 namespace CIPLabeler {
 
 CIPMol::CIPMol(ROMol &mol) : d_mol{mol} {
-    d_bonds.reserve(mol.getNumAtoms() * 2);
-    for (auto b: mol.bonds()) {
-        d_bonds.push_back(b);
-    }
+  d_bonds.reserve(mol.getNumBonds());
+  std::ranges::copy(mol.bonds(), std::back_inserter(d_bonds));
 }
 
 boost::rational<int> CIPMol::getFractionalAtomicNum(Atom *atom) const {
