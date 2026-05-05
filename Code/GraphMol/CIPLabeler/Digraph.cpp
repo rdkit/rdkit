@@ -42,12 +42,8 @@ Node &Digraph::addNode(std::vector<char> &&visit, Atom *atom,
 }
 
 bool Digraph::seenAtom(Atom *atom) const {
-  for (auto &n : d_nodes) {
-    if (n.getAtom() == atom) {
-      return true;
-    }
-  }
-  return false;
+  return std::ranges::any_of(
+      d_nodes, [&](const auto &n) { return n.getAtom() == atom; });
 }
 
 void Digraph::addEdge(Node *beg, Bond *bond, Node *end) {
