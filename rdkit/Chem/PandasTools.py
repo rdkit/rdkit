@@ -246,9 +246,9 @@ else:
       Arguments:
       
        - filename: path to the SDF file or a file-like object.
-       - idName: name of the column to be used for molecule title. Defaults to "ID".
-       - molColName: name of the column to be used for RDKit molecule objects. If None, molecules will not be included in resulting DataFrame. Defaults to "ROMol".
-       - includeFingerprints: if True, precompute Avalon fingerprints and store them within the molecule objects to accelerate substructure matching. Defaults to False.
+       - idName: name of the column to be used for the molecule title. Defaults to "ID".
+       - molColName: name of the column to be used for the RDKit molecule objects. If None, molecules will not be included in resulting DataFrame. Defaults to "ROMol".
+       - includeFingerprints: if True, precompute fingerprints and store them within the molecule objects to accelerate substructure matching. Defaults to False.
        - isomericSmiles: if True, generated SMILES will include isomeric information. Defaults to True.
        - smilesName: if set, add a column with the specified name to the DataFrame that contains the SMILES representation of the molecule. If None, SMILES will not be included in final DataFrame. Defaults to None.
        - embedProps: if True, properties will also be embedded in the molecule objects instead of only being added as separate columns to the Dataframe. Defaults to False.
@@ -268,7 +268,7 @@ else:
       If neither molColName nor smilesName are set, sanitize=false.
       '''
     if isinstance(filename, str):
-      if filename.lower()[-2:] == "gz":
+      if filename.lower().endswith("gz"):
         import gzip
         f = gzip.open(filename, "rb")
       else:
@@ -434,7 +434,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
     '''
   close = None
   if isinstance(out, str):
-    if out.lower()[-2:] == "gz":
+    if out.lower().endswith("gz"):
       import gzip
       out = gzip.open(out, "wt")
       close = out.close
