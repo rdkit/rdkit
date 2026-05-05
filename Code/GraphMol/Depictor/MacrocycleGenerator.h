@@ -231,6 +231,130 @@ class MacrocycleGenerator {
   bool d_useJacobianRefinement;  //!< Whether to use Jacobian angle adjustment
 };
 
+//! Endpoint information for shared vertex constraint computation
+struct EndpointInfo {
+  int ringSize;                //!< Size of the small ring
+  size_t adjacentInternalPos;  //!< Adjacent internal shared position (for turn direction)
+  bool isFirst;                //!< Whether this is the first endpoint of the pattern
+};
+
+// ============================================================================
+// Helper Functions for Angle Constraint Detection and Refinement
+// ============================================================================
+
+//! Compute ideal turn angle for a regular polygon small ring
+/*!
+  Turn angle (exterior angle) = 360° / n
+  For square (n=4): 90°, pentagon (n=5): 72°, hexagon (n=6): 60°
+
+  \param ringSize: Number of atoms in the ring
+  \param turnSign: +1 for R turn, -1 for L turn
+  \return Turn angle in radians
+*/
+double computeIdealAngle(int ringSize, int turnSign);
+
+//! Find positions where a small ring shares atoms with the macrocycle
+/*!
+  \param macrocycleRing: Indices of atoms in the macrocycle ring
+  \param ring: Indices of atoms in a small ring
+  \return Vector of positions (indices into macrocycleRing) where atoms are shared
+*/
+std::vector<size_t> findSharedPositions(
+    const std::vector<int> &macrocycleRing,
+    const std::vector<int> &ring);
+
+//! Verify shared positions are contiguous and reorder if needed
+/*!
+  Checks that shared positions form a contiguous sequence (allowing wraparound).
+  Reorders positions to start from the lowest index if valid.
+
+  \param sharedPositions: Vector of shared positions (modified in-place if valid)
+  \param macrocycleSize: Size of the macrocycle ring
+  \return true if positions are contiguous, false otherwise
+*/
+bool verifyAndReorderSharedPositions(
+    std::vector<size_t> &sharedPositions,
+    size_t macrocycleSize);
+
+//! Track endpoint information for shared vertex constraint computation
+/*!
+  Records information about an endpoint of a shared pattern (RR, RLR, RLLR).
+
+  \param endpointPositions: Map from position to vector of endpoint infos (modified)
+  \param pos: Position of the endpoint in the macrocycle
+  \param ringSize: Size of the small ring
+  \param adjacentInternalPos: Adjacent internal shared position (for turn direction)
+  \param isFirst: Whether this is the first endpoint of the pattern
+*/
+void trackEndpoint(
+    std::map<size_t, std::vector<EndpointInfo>> &endpointPositions,
+    size_t pos,
+    int ringSize,
+    size_t adjacentInternalPos,
+    bool isFirst);
+
+//! Compute angle constraint for a shared endpoint (where two small rings meet)
+/*!
+  Uses the formula: macrocycle_turn = π - (|turn1| + |turn2|)
+  where turn1 and turn2 are the exterior angles of the two small rings.
+
+  \param endpoints: Vector of exactly 2 EndpointInfo structures
+  \param pos: Position of the shared endpoint
+  \return AngleConstraint with computed target angle (position = SIZE_MAX if invalid)
+*/
+AngleConstraint computeSharedEndpointConstraint(
+    const std::vector<EndpointInfo> &endpoints,
+    size_t pos);
+
+//! Identify all angle constraints for fused small rings in a macrocycle
+/*!
+  Analyzes all small rings (4, 5, or 6 atoms) fused to the macrocycle and
+  generates angle constraints for:
+  - Internal positions of RLR/RLLR patterns (ideal polygon angles)
+  - Shared endpoints where two small rings meet (combined angle formula)
+
+  \param macrocycleRing: Indices of atoms in the macrocycle ring
+  \param allRings: All rings in the molecule
+  \return Vector of angle constraints to apply
+*/
+std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
+    const std::vector<int> &macrocycleRing,
+    const std::vector<std::vector<int>> &allRings);
+
+//! Refine macrocycle coordinates with angle constraints
+/*!
+  Takes existing coordinates, applies angle constraints, and uses Jacobian
+  minimization to close the gap. Preserves total angular sum by distributing
+  the constraint-induced difference across non-constrained angles.
+
+  \param templateCoords: Existing 2D coordinates
+  \param angleConstraints: Angle constraints to apply
+  \param bondLength: Target bond length (default 1.5)
+  \return Refined coordinates with constraints applied
+*/
+std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
+    const std::vector<RDGeom::Point2D> &templateCoords,
+    const std::vector<AngleConstraint> &angleConstraints,
+    double bondLength = 1.5);
+
+//! Close gap using Jacobian pseudo-inverse minimization
+/*!
+  Applies Jacobian-based angle adjustments to close the gap between the
+  dummy atom (last coordinate) and the first atom. Preserves constrained angles.
+
+  \param coords: Coordinates with dummy atom (N+1 elements, modified in-place)
+  \param angles: Turn angles (modified in-place)
+  \param constrainedPositions: Set of positions that should not be adjusted
+  \param bondLength: Target bond length
+  \param isOddRing: Whether this is an odd-numbered ring
+*/
+void refineWithJacobian(
+    std::vector<RDGeom::Point2D> &coords,
+    std::vector<double> &angles,
+    const std::set<size_t> &constrainedPositions,
+    double bondLength,
+    bool isOddRing);
+
 }  // namespace RDDepict
 
 #endif

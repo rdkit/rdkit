@@ -403,6 +403,10 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
                                      const RDKit::VECT_INT_VECT &allRings,
                                      bool useJacobianRefinement = true);
 
+  // Template refinement with angle constraints
+  void refineTemplateMatchedMacrocycle(const RDKit::INT_VECT &macrocycleRing,
+                                       const RDKit::VECT_INT_VECT &allRings);
+
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                        bool useRingTemplates,
                        bool useJacobianRefinement = true);

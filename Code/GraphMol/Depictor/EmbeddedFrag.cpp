@@ -39,14 +39,6 @@ unsigned int getDepictDegree(const RDKit::Atom *atom) {
   return atom->getDegree();
 }
 
-// Compute ideal turn angle (exterior angle) for regular polygon of given size
-// Interior angle = (n-2) * 180 / n
-// Turn angle (exterior angle) = 180 - interior angle = 360 / n
-// For square (n=4): 90°, pentagon (n=5): 72°, hexagon (n=6): 60°
-double computeIdealAngle(int ringSize, int turnSign) {
-  double turnAngle = 2.0 * M_PI / ringSize;  // 360/n degrees
-  return turnSign * turnAngle;
-}
 }  // end of anonymous namespace
 
 EmbeddedFrag::EmbeddedFrag(unsigned int aid, const RDKit::ROMol *mol) {
@@ -1117,7 +1109,24 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
     if (found_best_match && !matches.empty()) {
       // Best possible match found - apply it immediately
       const auto &best = matches.back();
-      return applyTemplateCoordinates(best.template_mol, best.match);
+      if (!applyTemplateCoordinates(best.template_mol, best.match)) {
+        return false;
+      }
+
+      // Check if we need angle constraint refinement (has fused small rings)
+      bool hasSmallRings = false;
+      for (const auto &ring : allRings) {
+        if (ring.size() >= 4 && ring.size() <= 6) {
+          hasSmallRings = true;
+        }
+      }
+
+      if (hasSmallRings) {
+        // Refine template coordinates with angle constraints
+        refineTemplateMatchedMacrocycle(macrocycleRing, allRings);
+      }
+
+      return true;
     }
 
     all_valid_matches.insert(all_valid_matches.end(), matches.begin(),
@@ -1129,7 +1138,26 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
   if (!best) {
     return false;
   }
-  return applyTemplateCoordinates(best->template_mol, best->match);
+
+  // Apply template coordinates
+  if (!applyTemplateCoordinates(best->template_mol, best->match)) {
+    return false;
+  }
+
+  // Check if we need angle constraint refinement (has fused small rings)
+  bool hasSmallRings = false;
+  for (const auto &ring : allRings) {
+    if (ring.size() >= 4 && ring.size() <= 6) {
+      hasSmallRings = true;
+    }
+  }
+
+  if (hasSmallRings) {
+    // Refine template coordinates with angle constraints
+    refineTemplateMatchedMacrocycle(macrocycleRing, allRings);
+  }
+
+  return true;
 }
 
 bool EmbeddedFrag::generateMacrocycleCoordinates(
@@ -1146,34 +1174,32 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
   MacrocycleGenerator generator(macrocycleRing.size(), 1.5,
                                 useJacobianRefinement);
 
-  // Add constraints for fused small rings
+  // Convert allRings to std::vector<std::vector<int>> for helper function
+  std::vector<std::vector<int>> allRingsVec;
+  for (const auto &ring : allRings) {
+    std::vector<int> ringVec(ring.begin(), ring.end());
+    allRingsVec.push_back(ringVec);
+  }
+  std::vector<int> macrocycleRingVec(macrocycleRing.begin(), macrocycleRing.end());
+
+  // Identify all angle constraints for fused small rings
+  auto angleConstraints = RDDepict::identifyAngleConstraintsForFusedRings(
+      macrocycleRingVec, allRingsVec);
+  for (const auto &angleConstraint : angleConstraints) {
+    generator.addAngleConstraint(angleConstraint);
+  }
+
+  // Add turn constraints for fused rings
   // Pattern: first turn = R, middle turns = L, last turn = R
   // Examples: 2-atom fusion → RR, 3-atom → RLR, 4-atom → RLLR
-  std::set<int> macrocycleAtomSet(macrocycleRing.begin(), macrocycleRing.end());
-
-  // Track endpoint positions to detect shared endpoints between two small rings
-  // Map: position -> list of (ring_size, adjacent_internal_position, is_first_endpoint)
-  struct EndpointInfo {
-    int ringSize;
-    size_t adjacentInternalPos;  // The adjacent internal position with constraint
-    bool isFirstEndpoint;
-  };
-  std::map<size_t, std::vector<EndpointInfo>> endpointPositions;
-
   for (const auto &ring : allRings) {
-    // Skip the macrocycle itself
+    // Skip large rings (only handle rings 4-8)
     if (ring.size() > 8) {
       continue;
     }
 
-    // Find shared atoms between this small ring and the macrocycle
-    std::vector<size_t> sharedPositions;  // Positions in macrocycleRing
-    for (size_t i = 0; i < macrocycleRing.size(); ++i) {
-      int atom = macrocycleRing[i];
-      if (std::find(ring.begin(), ring.end(), atom) != ring.end()) {
-        sharedPositions.push_back(i);
-      }
-    }
+    // Find shared atoms between this ring and the macrocycle
+    std::vector<size_t> sharedPositions = RDDepict::findSharedPositions(macrocycleRingVec, std::vector<int>(ring.begin(), ring.end()));
 
     // Need at least 1 shared atom (spiro or fusion)
     // Skip if more than 4 shared atoms (unusual/complex fusion)
@@ -1181,83 +1207,9 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
       continue;
     }
 
-    // Verify shared atoms are contiguous in the macrocycle (for multi-atom
-    // fusions) Handle wraparound: positions like [14, 0, 1] or [0, 1, 14] are
-    // contiguous
-    if (sharedPositions.size() > 1) {
-      bool contiguous = true;
-      size_t gapIdx = 0;  // Track where wraparound gap is (if any)
-
-      // Check if all consecutive pairs are adjacent
-      for (size_t i = 1; i < sharedPositions.size(); ++i) {
-        size_t expected = (sharedPositions[i - 1] + 1) % macrocycleRing.size();
-        if (sharedPositions[i] != expected) {
-          contiguous = false;
-          break;
-        }
-      }
-
-      // If not contiguous in forward direction, check for wraparound
-      // E.g., positions [0, 1, 14] or [13, 14, 0, 1]
-      if (!contiguous) {
-        // Check if positions wrap around (last position is near end, first is
-        // near start) Find the gap: where consecutive positions have a large
-        // jump
-        gapIdx = 0;
-        for (size_t i = 1; i < sharedPositions.size(); ++i) {
-          if (sharedPositions[i] != sharedPositions[i - 1] + 1) {
-            gapIdx = i;
-            break;
-          }
-        }
-
-        // If there's exactly one gap, check if it's the wraparound
-        if (gapIdx > 0) {
-          // Check if positions before gap and after gap are contiguous when
-          // wrapped
-          bool wrapContiguous = true;
-
-          // Positions after gap should be contiguous
-          for (size_t i = gapIdx + 1; i < sharedPositions.size(); ++i) {
-            if (sharedPositions[i] != sharedPositions[i - 1] + 1) {
-              wrapContiguous = false;
-              break;
-            }
-          }
-
-          // Check wraparound: last position + 1 should equal first position
-          // (mod ring size)
-          if (wrapContiguous) {
-            size_t lastPos = sharedPositions[sharedPositions.size() - 1];
-            size_t firstPos = sharedPositions[0];
-            if ((lastPos + 1) % macrocycleRing.size() == firstPos) {
-              contiguous = true;
-            }
-          }
-        }
-      }
-
-      if (!contiguous) {
-        std::cerr
-            << "Warning: non-contiguous fusion detected, skipping constraint"
-            << std::endl;
-        continue;
-      }
-
-      // If wraparound was detected, reorder positions to start from the
-      // wraparound point E.g., [0, 1, 14] → [14, 0, 1] so constraint position
-      // calculation works correctly
-      if (gapIdx > 0 && contiguous) {
-        // Rotate the vector: move elements from gapIdx to end to the front
-        std::vector<size_t> reordered;
-        for (size_t i = gapIdx; i < sharedPositions.size(); ++i) {
-          reordered.push_back(sharedPositions[i]);
-        }
-        for (size_t i = 0; i < gapIdx; ++i) {
-          reordered.push_back(sharedPositions[i]);
-        }
-        sharedPositions = reordered;
-      }
+    // Verify shared atoms are contiguous and reorder if needed
+    if (!RDDepict::verifyAndReorderSharedPositions(sharedPositions, macrocycleRing.size())) {
+      continue;
     }
 
     // Create turn pattern based on number of shared atoms:
@@ -1268,12 +1220,8 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
     // 2 shared atoms: RR
     // 3 shared atoms: RLR
     // 4 shared atoms: RLLR
-    //
-    // ALSO create angle constraints for small rings (4, 5, 6 atoms)
-    // Only constrain INTERNAL positions (not first/last)
     std::vector<int> pattern;
     size_t numShared = sharedPositions.size();
-    bool isSmallRing = (ring.size() >= 4 && ring.size() <= 6);
 
     if (numShared == 1) {
       pattern.push_back(1);  // R
@@ -1281,86 +1229,15 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
       // RR pattern for 2-atom fusion
       pattern.push_back(1);  // R
       pattern.push_back(1);  // R
-
-      // Track both endpoints for small rings (needed to detect shared endpoints)
-      if (isSmallRing) {
-        // First endpoint
-        size_t firstPos = sharedPositions[0];
-        EndpointInfo info1;
-        info1.ringSize = ring.size();
-        info1.adjacentInternalPos = firstPos;  // No internal position, use self
-        info1.isFirstEndpoint = true;
-        endpointPositions[firstPos].push_back(info1);
-
-        // Last endpoint
-        size_t lastPos = sharedPositions[1];
-        EndpointInfo info2;
-        info2.ringSize = ring.size();
-        info2.adjacentInternalPos = lastPos;  // No internal position, use self
-        info2.isFirstEndpoint = false;
-        endpointPositions[lastPos].push_back(info2);
-      }
     } else {
-      // First turn: R (not constrained - it's an endpoint)
+      // First turn: R (endpoint)
       pattern.push_back(1);
-
-      // Track first endpoint for all small rings
-      if (isSmallRing) {
-        size_t firstPos = sharedPositions[0];
-        size_t adjacentInternalPos = sharedPositions[1];  // Next position has constraint
-        EndpointInfo info;
-        info.ringSize = ring.size();
-        info.adjacentInternalPos = adjacentInternalPos;
-        info.isFirstEndpoint = true;
-        endpointPositions[firstPos].push_back(info);
-      }
-
-      // Middle turns: L (constrained for small rings)
+      // Middle turns: L
       for (size_t i = 1; i < numShared - 1; ++i) {
-        int turnSign = -1;  // L
-        pattern.push_back(turnSign);
-
-        // Create angle constraint for small ring internal positions
-        if (isSmallRing) {
-          size_t pos = sharedPositions[i];
-          double idealAngle = computeIdealAngle(ring.size(), turnSign);
-
-          AngleConstraint angleConstraint;
-          angleConstraint.position = pos;
-          angleConstraint.targetAngle = idealAngle;
-          generator.addAngleConstraint(angleConstraint);
-        }
+        pattern.push_back(-1);  // L
       }
-
-      // Last turn: R (not constrained - it's an endpoint)
+      // Last turn: R (endpoint)
       pattern.push_back(1);
-
-      // Track last endpoint for all small rings
-      if (isSmallRing) {
-        size_t lastPos = sharedPositions[numShared - 1];
-        size_t adjacentInternalPos = sharedPositions[numShared - 2];  // Previous position has constraint
-        EndpointInfo info;
-        info.ringSize = ring.size();
-        info.adjacentInternalPos = adjacentInternalPos;
-        info.isFirstEndpoint = false;
-        endpointPositions[lastPos].push_back(info);
-      }
-    }
-
-    // DEBUG: Print macrocycle atom IDs
-    if (isSmallRing && numShared >= 3) {
-      std::cerr << "[DEBUG] Macrocycle atoms: ";
-      for (size_t i = 0; i < macrocycleRing.size(); ++i) {
-        std::cerr << macrocycleRing[i];
-        if (i < macrocycleRing.size() - 1) std::cerr << ",";
-      }
-      std::cerr << std::endl;
-      std::cerr << "[DEBUG] Small ring atoms: ";
-      for (size_t i = 0; i < ring.size(); ++i) {
-        std::cerr << ring[i];
-        if (i < ring.size() - 1) std::cerr << ",";
-      }
-      std::cerr << std::endl;
     }
 
     // Add FIXED turn constraint
@@ -1372,52 +1249,6 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
                         std::to_string(sharedPositions[0]);
 
     generator.addConstraint(constraint);
-  }
-
-  // Process shared endpoints: positions that are endpoints of exactly 2 small rings
-  // These positions should be constrained to: (angle1 + angle2) - PI, with reversed sign
-  std::cerr << "[DEBUG] Checking " << endpointPositions.size() << " endpoint positions for shared endpoints" << std::endl;
-  for (const auto &[pos, endpoints] : endpointPositions) {
-    std::cerr << "[DEBUG] Position " << pos << " has " << endpoints.size() << " endpoint(s)" << std::endl;
-    if (endpoints.size() == 2) {
-      size_t adj1 = endpoints[0].adjacentInternalPos;
-      size_t adj2 = endpoints[1].adjacentInternalPos;
-      int ringSize1 = endpoints[0].ringSize;
-      int ringSize2 = endpoints[1].ringSize;
-
-      // At a shared endpoint, three rings meet: ring1, ring2, and the macrocycle
-      // The sum of their internal angles must be 2π (360°)
-      // Internal angle = π - |turn_angle|
-      // So: (π - |turn1|) + (π - |turn2|) + macrocycle_internal = 2π
-      // Therefore: macrocycle_internal = 2π - (π - |turn1|) - (π - |turn2|)
-      //                                 = |turn1| + |turn2|
-      // And macrocycle_turn = π - macrocycle_internal = π - (|turn1| + |turn2|)
-
-      bool ring1HasInternal = (adj1 != pos);
-      bool ring2HasInternal = (adj2 != pos);
-
-      // Get the ideal turn magnitude for each ring
-      double turn1 = std::abs(computeIdealAngle(ringSize1, ring1HasInternal ? -1 : 1));
-      double turn2 = std::abs(computeIdealAngle(ringSize2, ring2HasInternal ? -1 : 1));
-
-      // Macrocycle internal angle = |turn1| + |turn2|
-      double macrocycleInternal = turn1 + turn2;
-      // Macrocycle turn angle = π - macrocycle_internal
-      double combinedAngle = M_PI - macrocycleInternal;
-
-      AngleConstraint sharedConstraint;
-      sharedConstraint.position = pos;
-      sharedConstraint.targetAngle = combinedAngle;
-      generator.addAngleConstraint(sharedConstraint);
-
-      std::cerr << "[DEBUG] Shared endpoint at position " << pos
-                << ": ring sizes " << ringSize1 << " and " << ringSize2
-                << "\n        ring1 internal angle = " << (M_PI - turn1) * 180.0 / M_PI << "°"
-                << "\n        ring2 internal angle = " << (M_PI - turn2) * 180.0 / M_PI << "°"
-                << "\n        macrocycle internal = " << macrocycleInternal * 180.0 / M_PI << "°"
-                << "\n        macrocycle turn = 180° - " << macrocycleInternal * 180.0 / M_PI
-                << "° = " << combinedAngle * 180.0 / M_PI << "°" << std::endl;
-    }
   }
 
   // Add constraints for double bonds with E/Z stereochemistry
@@ -1597,6 +1428,50 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
   return true;
 }
 
+void EmbeddedFrag::refineTemplateMatchedMacrocycle(
+    const RDKit::INT_VECT &macrocycleRing,
+    const RDKit::VECT_INT_VECT &allRings) {
+  PRECONDITION(dp_mol, "");
+
+  // Convert RDKit types to std::vector for helper functions
+  std::vector<std::vector<int>> allRingsVec;
+  for (const auto &ring : allRings) {
+    std::vector<int> ringVec(ring.begin(), ring.end());
+    allRingsVec.push_back(ringVec);
+  }
+  std::vector<int> macrocycleRingVec(macrocycleRing.begin(), macrocycleRing.end());
+
+  // 1. Identify angle constraints for fused small rings
+  auto angleConstraints = RDDepict::identifyAngleConstraintsForFusedRings(
+      macrocycleRingVec, allRingsVec);
+
+  if (angleConstraints.empty()) {
+    return;  // No constraints needed, keep original template coordinates
+  }
+
+  // 2. Extract template coordinates
+  std::vector<RDGeom::Point2D> templateCoords;
+  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
+    int atomIdx = macrocycleRing[i];
+    templateCoords.push_back(d_eatoms[atomIdx].loc);
+  }
+
+  // 3. Refine with angle constraints
+  auto refinedCoords = RDDepict::refineMacrocycleWithAngleConstraints(
+      templateCoords, angleConstraints, 1.5);
+
+  // 4. Replace template coordinates with refined coordinates
+  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
+    int atomIdx = macrocycleRing[i];
+    d_eatoms[atomIdx].loc = refinedCoords[i];
+    d_eatoms[atomIdx].df_fixed = true;  // Keep as fixed
+  }
+
+  // 5. Update neighbors and attachment points
+  setupNewNeighs();
+  setupAttachmentPoints();
+}
+
 // find any atoms in the ring that are in trans double bonds
 // and mirror them into the ring
 static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
@@ -1709,11 +1584,9 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
       // look for a template that matches the core ring system
       RDKit::Union(coreRings, funion);
       bool found_template = false;
-      if (hasMultipleCoreRings && systemIsSimplified)
-        found_template = matchToTemplate(funion, coreRings.size());
 
-      // If exact match failed, try permissive macrocycle matching on core rings
-      if (!found_template && hasMacrocycle) {
+      // Check for macrocycle first - it needs special handling for refinement
+      if (hasMacrocycle) {
         // Find the macrocycle in fusedRings (should match coreRingsIds[0])
         int macrocycle_idx = pickFirstRingToEmbed(*dp_mol, fusedRings);
 
@@ -1738,20 +1611,31 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
           if (found_template) {
             doneRings.push_back(macrocycle_idx);
           }
+        } else {
+          // Not all rings are small, try regular template matching
+          found_template = matchToTemplate(funion, coreRings.size());
         }
         if (found_template && doneRings.empty()) {
           doneRings = coreRingsIds;
         }
-        if (doneRings.empty()) {
-          // If template matching failed and this is a single macrocycle,
-          // try to generate coordinates on-the-fly
-          if (hasMacrocycle) {
-            bool generated = generateMacrocycleCoordinates(
-                fusedRings[macrocycle_idx], fusedRings, useJacobianRefinement);
-            if (generated) {
-              // Mark macrocycle as done, then continue to attach small rings
-              doneRings.push_back(macrocycle_idx);
-            }
+      } else if (hasMultipleCoreRings && systemIsSimplified) {
+        // No macrocycle, use regular strict template matching
+        found_template = matchToTemplate(funion, coreRings.size());
+        if (found_template && doneRings.empty()) {
+          doneRings = coreRingsIds;
+        }
+      }
+
+      if (doneRings.empty()) {
+        // If template matching failed and this is a single macrocycle,
+        // try to generate coordinates on-the-fly
+        if (hasMacrocycle) {
+          int macrocycle_idx = pickFirstRingToEmbed(*dp_mol, fusedRings);
+          bool generated = generateMacrocycleCoordinates(
+              fusedRings[macrocycle_idx], fusedRings, useJacobianRefinement);
+          if (generated) {
+            // Mark macrocycle as done, then continue to attach small rings
+            doneRings.push_back(macrocycle_idx);
           }
         }
       }

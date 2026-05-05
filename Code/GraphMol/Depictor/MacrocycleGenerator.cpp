@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <limits>
 #include <set>
+#include <map>
 
 namespace RDDepict {
 
@@ -779,6 +780,474 @@ void MacrocycleGenerator::adjustAnglesForClosure(
       angleAdjustments[k] += damping * deltaTheta[k];
     }
   }
+}
+
+// ============================================================================
+// Helper Functions for Angle Constraint Detection and Refinement
+// ============================================================================
+
+double computeIdealAngle(int ringSize, int turnSign) {
+  double turnAngle = 2.0 * M_PI / ringSize;  // 360/n degrees
+  return turnSign * turnAngle;
+}
+
+std::vector<size_t> findSharedPositions(
+    const std::vector<int> &macrocycleRing,
+    const std::vector<int> &ring) {
+  std::vector<size_t> sharedPositions;
+  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
+    int atom = macrocycleRing[i];
+    if (std::find(ring.begin(), ring.end(), atom) != ring.end()) {
+      sharedPositions.push_back(i);
+    }
+  }
+  return sharedPositions;
+}
+
+bool verifyAndReorderSharedPositions(
+    std::vector<size_t> &sharedPositions,
+    size_t macrocycleSize) {
+  if (sharedPositions.size() <= 1) {
+    return true;  // Single position is always contiguous
+  }
+
+  bool contiguous = true;
+  size_t gapIdx = 0;  // Track where wraparound gap is (if any)
+
+  // Check if all consecutive pairs are adjacent
+  for (size_t i = 1; i < sharedPositions.size(); ++i) {
+    size_t expected = (sharedPositions[i - 1] + 1) % macrocycleSize;
+    if (sharedPositions[i] != expected) {
+      contiguous = false;
+      break;
+    }
+  }
+
+  // If not contiguous in forward direction, check for wraparound
+  // E.g., positions [0, 1, 14] or [13, 14, 0, 1]
+  if (!contiguous) {
+    // Find the gap: where consecutive positions have a large jump
+    gapIdx = 0;
+    for (size_t i = 1; i < sharedPositions.size(); ++i) {
+      if (sharedPositions[i] != sharedPositions[i - 1] + 1) {
+        gapIdx = i;
+        break;
+      }
+    }
+
+    // If there's exactly one gap, check if it's the wraparound
+    if (gapIdx > 0) {
+      // Check if positions after gap are contiguous
+      bool wrapContiguous = true;
+
+      for (size_t i = gapIdx + 1; i < sharedPositions.size(); ++i) {
+        if (sharedPositions[i] != sharedPositions[i - 1] + 1) {
+          wrapContiguous = false;
+          break;
+        }
+      }
+
+      // Check wraparound: last position + 1 should equal first position (mod ring size)
+      if (wrapContiguous) {
+        size_t lastPos = sharedPositions[sharedPositions.size() - 1];
+        size_t firstPos = sharedPositions[0];
+        if ((lastPos + 1) % macrocycleSize == firstPos) {
+          contiguous = true;
+        }
+      }
+    }
+  }
+
+  if (!contiguous) {
+    return false;
+  }
+
+  // If wraparound was detected, reorder positions to start from the wraparound point
+  // E.g., [0, 1, 14] → [14, 0, 1] so constraint position calculation works correctly
+  if (gapIdx > 0 && contiguous) {
+    // Rotate the vector: move elements from gapIdx to end to the front
+    std::vector<size_t> reordered;
+    for (size_t i = gapIdx; i < sharedPositions.size(); ++i) {
+      reordered.push_back(sharedPositions[i]);
+    }
+    for (size_t i = 0; i < gapIdx; ++i) {
+      reordered.push_back(sharedPositions[i]);
+    }
+    sharedPositions = reordered;
+  }
+
+  return true;
+}
+
+void trackEndpoint(
+    std::map<size_t, std::vector<EndpointInfo>> &endpointPositions,
+    size_t pos,
+    int ringSize,
+    size_t adjacentInternalPos,
+    bool isFirst) {
+  EndpointInfo info;
+  info.ringSize = ringSize;
+  info.adjacentInternalPos = adjacentInternalPos;
+  info.isFirst = isFirst;
+  endpointPositions[pos].push_back(info);
+}
+
+AngleConstraint computeSharedEndpointConstraint(
+    const std::vector<EndpointInfo> &endpoints,
+    size_t pos) {
+  AngleConstraint constraint;
+  constraint.position = SIZE_MAX;  // Invalid by default
+
+  if (endpoints.size() != 2) {
+    return constraint;  // Only valid for exactly 2 endpoints
+  }
+
+  size_t adj1 = endpoints[0].adjacentInternalPos;
+  size_t adj2 = endpoints[1].adjacentInternalPos;
+  int ringSize1 = endpoints[0].ringSize;
+  int ringSize2 = endpoints[1].ringSize;
+
+  // At a shared endpoint, three rings meet: ring1, ring2, and the macrocycle
+  // The sum of their internal angles must be 2π (360°)
+  // Internal angle = π - |turn_angle|
+  // So: (π - |turn1|) + (π - |turn2|) + macrocycle_internal = 2π
+  // Therefore: macrocycle_internal = 2π - (π - |turn1|) - (π - |turn2|)
+  //                                 = |turn1| + |turn2|
+  // And macrocycle_turn = π - macrocycle_internal = π - (|turn1| + |turn2|)
+
+  bool ring1HasInternal = (adj1 != pos);
+  bool ring2HasInternal = (adj2 != pos);
+
+  // Get the ideal turn magnitude for each ring
+  double turn1 = std::abs(computeIdealAngle(ringSize1, ring1HasInternal ? -1 : 1));
+  double turn2 = std::abs(computeIdealAngle(ringSize2, ring2HasInternal ? -1 : 1));
+
+  // Macrocycle internal angle = |turn1| + |turn2|
+  double macrocycleInternal = turn1 + turn2;
+  // Macrocycle turn angle = π - macrocycle_internal
+  double combinedAngle = M_PI - macrocycleInternal;
+
+  constraint.position = pos;
+  constraint.targetAngle = combinedAngle;
+
+  return constraint;
+}
+
+std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
+    const std::vector<int> &macrocycleRing,
+    const std::vector<std::vector<int>> &allRings) {
+  std::vector<AngleConstraint> angleConstraints;
+  std::map<size_t, std::vector<EndpointInfo>> endpointPositions;
+
+  // Process each ring to find fusions with the macrocycle
+  for (const auto &ring : allRings) {
+    // Skip large rings (only handle small rings 4-8)
+    if (ring.size() > 8) {
+      continue;
+    }
+
+    // Find shared atoms between this ring and the macrocycle
+    std::vector<size_t> sharedPositions = findSharedPositions(macrocycleRing, ring);
+
+    // Need at least 1 shared atom (spiro or fusion)
+    // Skip if more than 4 shared atoms (unusual/complex fusion)
+    if (sharedPositions.size() < 1 || sharedPositions.size() > 4) {
+      continue;
+    }
+
+    // Verify shared atoms are contiguous and reorder if needed
+    if (!verifyAndReorderSharedPositions(sharedPositions, macrocycleRing.size())) {
+      continue;
+    }
+
+    bool isSmallRing = (ring.size() >= 4 && ring.size() <= 6);
+    size_t numShared = sharedPositions.size();
+
+    // Handle different fusion patterns
+    if (numShared == 2) {
+      // RR pattern for 2-atom fusion
+      // Track both endpoints for small rings (needed to detect shared endpoints)
+      if (isSmallRing) {
+        // First endpoint
+        size_t firstPos = sharedPositions[0];
+        trackEndpoint(endpointPositions, firstPos, ring.size(), firstPos, true);
+
+        // Last endpoint
+        size_t lastPos = sharedPositions[1];
+        trackEndpoint(endpointPositions, lastPos, ring.size(), lastPos, false);
+      }
+    } else if (numShared >= 3) {
+      // RLR or RLLR pattern
+      // Track first endpoint for all small rings
+      if (isSmallRing) {
+        size_t firstPos = sharedPositions[0];
+        size_t adjacentInternalPos = sharedPositions[1];
+        trackEndpoint(endpointPositions, firstPos, ring.size(), adjacentInternalPos, true);
+      }
+
+      // Add constraints for internal positions (skip first and last)
+      for (size_t i = 1; i < numShared - 1; ++i) {
+        if (isSmallRing) {
+          size_t pos = sharedPositions[i];
+          int turnSign = -1;  // L turn
+          double idealAngle = computeIdealAngle(ring.size(), turnSign);
+
+          AngleConstraint angleConstraint;
+          angleConstraint.position = pos;
+          angleConstraint.targetAngle = idealAngle;
+          angleConstraints.push_back(angleConstraint);
+        }
+      }
+
+      // Track last endpoint for all small rings
+      if (isSmallRing) {
+        size_t lastPos = sharedPositions[numShared - 1];
+        size_t adjacentInternalPos = sharedPositions[numShared - 2];
+        trackEndpoint(endpointPositions, lastPos, ring.size(), adjacentInternalPos, false);
+      }
+    }
+  }
+
+  // Process shared endpoints: positions that are endpoints of exactly 2 small rings
+  for (const auto &[pos, endpoints] : endpointPositions) {
+    if (endpoints.size() == 2) {
+      AngleConstraint sharedConstraint = computeSharedEndpointConstraint(endpoints, pos);
+      if (sharedConstraint.position != SIZE_MAX) {  // Valid constraint
+        angleConstraints.push_back(sharedConstraint);
+      }
+    }
+  }
+
+  return angleConstraints;
+}
+
+void refineWithJacobian(
+    std::vector<RDGeom::Point2D> &coords,
+    std::vector<double> &angles,
+    const std::set<size_t> &constrainedPositions,
+    double bondLength,
+    bool isOddRing) {
+  // Iterative Jacobian pseudo-inverse refinement to close the gap
+  // coords has N+1 elements: [0, 1, ..., N-1, N_dummy]
+
+  size_t N = coords.size() - 1;  // Last element is dummy atom
+  double initialGap = (coords[0] - coords[N]).length();
+
+  if (initialGap < 1e-6) {
+    return;  // Already closed
+  }
+
+  // Cumulative angle adjustments
+  std::vector<double> angleAdjustments(N, 0.0);
+
+  // Iterative refinement with damping
+  const int maxIters = 3;
+  const double damping = 0.8;  // Apply 80% of computed correction
+  const double gapThreshold = 0.01;  // Stop if gap < 0.01 Å
+
+  for (int iter = 0; iter < maxIters; ++iter) {
+    // Rebuild coordinates with current angle adjustments
+    RDGeom::Point2D pos(0, 0);
+    coords[0] = pos;
+
+    double direction = 0.0;
+
+    for (size_t i = 0; i < N; ++i) {
+      double turnAngle;
+
+      // Check if this position is constrained
+      if (constrainedPositions.count(i) > 0) {
+        turnAngle = angles[i];  // Use exact constrained angle
+      } else {
+        turnAngle = angles[i] + angleAdjustments[i];  // Apply adjustment
+      }
+
+      direction += turnAngle;
+
+      pos.x += bondLength * std::cos(direction);
+      pos.y += bondLength * std::sin(direction);
+      coords[i + 1] = pos;
+    }
+
+    // Measure gap
+    RDGeom::Point2D gap = coords[0] - coords[N];
+    double gapMag = gap.length();
+
+    if (gapMag < gapThreshold) {
+      break;
+    }
+
+    // Build Jacobian: ∂gap/∂θ_k = perpendicular(p_N - p_k)
+    std::vector<RDGeom::Point2D> jacobian(N);
+
+    for (size_t k = 0; k < N; ++k) {
+      // Skip constrained angles - zero out their Jacobian row
+      if (constrainedPositions.count(k) > 0) {
+        jacobian[k].x = 0.0;
+        jacobian[k].y = 0.0;
+        continue;
+      }
+
+      RDGeom::Point2D r = coords[N] - coords[k];
+      jacobian[k].x = r.y;   // ∂gap_x/∂θ_k (perpendicular)
+      jacobian[k].y = -r.x;  // ∂gap_y/∂θ_k
+    }
+
+    // Compute J·J^T (2×2 matrix)
+    double A00 = 0.0, A01 = 0.0, A11 = 0.0;
+    for (size_t k = 0; k < N; ++k) {
+      A00 += jacobian[k].x * jacobian[k].x;
+      A01 += jacobian[k].x * jacobian[k].y;
+      A11 += jacobian[k].y * jacobian[k].y;
+    }
+
+    // Invert 2×2 matrix
+    double det = A00 * A11 - A01 * A01;
+
+    if (std::abs(det) < 1e-12) {
+      break;  // Singular matrix, cannot proceed
+    }
+
+    double invA00 = A11 / det;
+    double invA01 = -A01 / det;
+    double invA11 = A00 / det;
+
+    // Compute J^T · (J·J^T)^{-1} · gap
+    double temp_x = invA00 * gap.x + invA01 * gap.y;
+    double temp_y = invA01 * gap.x + invA11 * gap.y;
+
+    // Compute Δθ = -J^T · temp
+    std::vector<double> deltaTheta(N);
+
+    for (size_t k = 0; k < N; ++k) {
+      deltaTheta[k] = -(jacobian[k].x * temp_x + jacobian[k].y * temp_y);
+    }
+
+    // Apply damped adjustments (only to non-constrained angles)
+    for (size_t k = 0; k < N; ++k) {
+      if (constrainedPositions.count(k) == 0) {
+        angleAdjustments[k] += damping * deltaTheta[k];
+      }
+    }
+  }
+
+  // Update angles with final adjustments
+  for (size_t i = 0; i < N; ++i) {
+    if (constrainedPositions.count(i) == 0) {
+      angles[i] += angleAdjustments[i];
+    }
+  }
+}
+
+std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
+    const std::vector<RDGeom::Point2D> &templateCoords,
+    const std::vector<AngleConstraint> &angleConstraints,
+    double bondLength) {
+  size_t N = templateCoords.size();
+
+  // 1. Extract current turn angles from template coordinates
+  std::vector<double> currentAngles(N);
+
+  // Initialize with the direction of the last bond (from N-1 to 0)
+  // This ensures the first turn angle is calculated correctly for a closed polygon
+  size_t prev = N - 1;
+  double dx_initial = templateCoords[0].x - templateCoords[prev].x;
+  double dy_initial = templateCoords[0].y - templateCoords[prev].y;
+  double currentDirection = std::atan2(dy_initial, dx_initial);
+
+  for (size_t i = 0; i < N; ++i) {
+    size_t next = (i + 1) % N;
+
+    // Compute bond vector from current atom to next atom
+    double dx = templateCoords[next].x - templateCoords[i].x;
+    double dy = templateCoords[next].y - templateCoords[i].y;
+    double newDirection = std::atan2(dy, dx);
+
+    // Turn angle is change in direction
+    double turnAngle = newDirection - currentDirection;
+
+    // Normalize to [-π, π]
+    while (turnAngle > M_PI) turnAngle -= 2.0 * M_PI;
+    while (turnAngle < -M_PI) turnAngle += 2.0 * M_PI;
+
+    currentAngles[i] = turnAngle;
+    currentDirection = newDirection;
+  }
+
+  // 2. Determine template chirality by counting angle signs
+  //    Most prevalent sign = internal/convex turns (R or L depending on direction)
+  int positiveCount = 0;
+  int negativeCount = 0;
+  for (double angle : currentAngles) {
+    if (angle > 0) positiveCount++;
+    else if (angle < 0) negativeCount++;
+  }
+
+  // If majority is negative, template goes CCW (R turns are negative)
+  // If majority is positive, template goes CW (L turns are positive)
+  bool templateIsCCW = (negativeCount > positiveCount);
+  // Constraints are generated assuming CCW with turnSign=-1 for L turns
+  // For CCW template: L turns are positive, so flip constraint sign
+  // For CW template: L turns are negative, so keep constraint sign
+  int signMultiplier = templateIsCCW ? -1 : 1;
+
+  // 3. Compute current sum of angles (for verification)
+  double currentSum = 0.0;
+  for (double angle : currentAngles) {
+    currentSum += angle;
+  }
+
+  // 4. Apply angle constraints and compute angular difference
+  //    Adjust constraint signs based on template chirality
+  std::vector<double> adjustedAngles = currentAngles;
+  double constraintDelta = 0.0;
+  std::set<size_t> constrainedPositions;
+
+  for (const auto &constraint : angleConstraints) {
+    size_t pos = constraint.position;
+    double oldAngle = adjustedAngles[pos];
+    // Flip the sign of the constraint based on template chirality
+    double newAngle = constraint.targetAngle * signMultiplier;
+
+    adjustedAngles[pos] = newAngle;
+    constraintDelta += (newAngle - oldAngle);
+    constrainedPositions.insert(pos);
+  }
+
+  // 4. Distribute angular difference across non-constrained angles
+  //    to preserve total angular sum
+  size_t numFree = N - constrainedPositions.size();
+  if (numFree > 0) {
+    double adjustmentPerFree = -constraintDelta / numFree;
+
+    for (size_t i = 0; i < N; ++i) {
+      if (constrainedPositions.count(i) == 0) {
+        adjustedAngles[i] += adjustmentPerFree;
+      }
+    }
+  }
+
+  // 5. Generate coordinates from adjusted angles
+  std::vector<RDGeom::Point2D> coords(N + 1);  // N atoms + 1 dummy
+  coords[0] = RDGeom::Point2D(0, 0);
+
+  double direction = 0.0;
+  RDGeom::Point2D pos(0, 0);
+
+  for (size_t i = 0; i < N; ++i) {
+    direction += adjustedAngles[i];
+    pos.x += bondLength * std::cos(direction);
+    pos.y += bondLength * std::sin(direction);
+    coords[i + 1] = pos;
+  }
+
+  // 6. Close gap using Jacobian minimization
+  refineWithJacobian(coords, adjustedAngles, constrainedPositions,
+                     bondLength, N % 2 == 1);
+
+  // 7. Remove dummy atom and return
+  coords.pop_back();
+  return coords;
 }
 
 }  // namespace RDDepict
