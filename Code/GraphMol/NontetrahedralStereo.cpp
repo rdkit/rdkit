@@ -485,7 +485,7 @@ unsigned int getChiralPermutation(const Atom *cen, const INT_LIST &probe,
   PRECONDITION(cen, "bad center pointer");
   PRECONDITION(cen->hasOwningMol(), "no owning mol");
 
-  int perm;
+  int perm = -1;
   if (!cen->getPropIfPresent(common_properties::_chiralPermutation, perm) ||
       perm <= 0) {
     return 0;
