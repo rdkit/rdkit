@@ -1149,7 +1149,14 @@ void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
     mol.getRingInfo()->initialize();
   }
 
-  RDL_graph *graph = RDL_initNewGraph(mol.getNumAtoms());
+  // RDL_calculate fails and returns null if the graph is empty,
+  // just trick it into not freaking out by giving it a fake atom
+  auto numAtoms = mol.getNumAtoms();
+  if (numAtoms == 0) {
+    numAtoms = 1;
+  }
+
+  RDL_graph *graph = RDL_initNewGraph(numAtoms);
   for (auto cbi : mol.bonds()) {
     if (auto bt = cbi->getBondType();
         bt == Bond::ZERO || (!includeDativeBonds && isDative(bt)) ||
