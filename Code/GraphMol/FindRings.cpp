@@ -1008,6 +1008,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
   }
   ringInfo->initialize(FIND_RING_TYPE_SSSR);
 
+  ringInfo->preallocate(mol.getNumAtoms(), mol.getNumBonds());
   findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
   auto urfdata = mol.getRingInfo()->dp_urfData.get();
 

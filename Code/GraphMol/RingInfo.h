@@ -318,9 +318,10 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
 
   //! @}
 
- private:
   //! pre-allocates some memory to save time later
   void preallocate(unsigned int numAtoms, unsigned int numBonds);
+
+ private:
   void initFusedRings();
   bool df_init{false};
   FIND_RING_TYPE df_find_type_type{FIND_RING_TYPE_OTHER_OR_UNKNOWN};
