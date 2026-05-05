@@ -30,6 +30,136 @@ void MacrocycleGenerator::addConstraint(const TurnConstraint &constraint) {
   d_constraints.push_back(constraint);
 }
 
+void MacrocycleGenerator::addAngleConstraint(const AngleConstraint &constraint) {
+  // Check if position already has a constraint
+  for (auto &existing : d_angleConstraints) {
+    if (existing.position == constraint.position) {
+      // Keep the constraint with smallest absolute angle (most constrained)
+      if (std::abs(constraint.targetAngle) < std::abs(existing.targetAngle)) {
+        existing = constraint;
+      }
+      return;
+    }
+  }
+
+  d_angleConstraints.push_back(constraint);
+}
+
+bool MacrocycleGenerator::hasAngleConstraint(size_t position) const {
+  for (const auto &constraint : d_angleConstraints) {
+    if (constraint.position == position) {
+      return true;
+    }
+  }
+  return false;
+}
+
+double MacrocycleGenerator::getConstraintAngle(size_t position) const {
+  for (const auto &constraint : d_angleConstraints) {
+    if (constraint.position == position) {
+      return constraint.targetAngle;
+    }
+  }
+  return 0.0;  // No constraint
+}
+
+void MacrocycleGenerator::debugPrintAngleConstraints(
+    const std::vector<RDGeom::Point2D> &coords) const {
+  std::cerr << "\n[DEBUG] Final Angles (macrocycle size=" << d_ringSize
+            << ", coords.size()=" << coords.size() << "):" << std::endl;
+
+  // Print ALL angles
+  size_t N = d_ringSize;
+  for (size_t pos = 0; pos < N; ++pos) {
+    const auto &p_prev = coords[(pos + N - 1) % N];
+    const auto &p_curr = coords[pos];
+    const auto &p_next = coords[(pos + 1) % N];
+
+    double v_before_x = p_curr.x - p_prev.x;
+    double v_before_y = p_curr.y - p_prev.y;
+    double v_after_x = p_next.x - p_curr.x;
+    double v_after_y = p_next.y - p_curr.y;
+
+    double dir_before = std::atan2(v_before_y, v_before_x);
+    double dir_after = std::atan2(v_after_y, v_after_x);
+    double angle = dir_after - dir_before;
+
+    while (angle > M_PI) angle -= 2 * M_PI;
+    while (angle < -M_PI) angle += 2 * M_PI;
+
+    double angleDeg = angle * 180.0 / M_PI;
+
+    // Check if this position has a constraint
+    bool isConstrained = hasAngleConstraint(pos);
+    double targetDeg = 0.0;
+    if (isConstrained) {
+      targetDeg = getConstraintAngle(pos) * 180.0 / M_PI;
+    }
+
+    std::cerr << "  Pos " << pos << ": " << angleDeg << "°";
+    if (isConstrained) {
+      double dev = std::abs(angle - getConstraintAngle(pos)) * 180.0 / M_PI;
+      std::cerr << " [CONSTRAINED target=" << targetDeg << "° dev=" << dev << "°]";
+    }
+    std::cerr << std::endl;
+  }
+
+  if (d_angleConstraints.empty()) {
+    return;  // No constraints, no output
+  }
+
+  std::cerr << "\n[DEBUG] Angle Constraints: " << d_angleConstraints.size()
+            << " constraints found" << std::endl;
+
+  for (const auto &constraint : d_angleConstraints) {
+    size_t pos = constraint.position;
+    double targetAngle = constraint.targetAngle;
+    double targetAngleDeg = targetAngle * 180.0 / M_PI;
+
+    // Compute actual angle at this position
+    // The turn at position i is the rotation from direction (i-1→i) to (i→i+1)
+    size_t N = d_ringSize;
+    if (coords.size() < N) {
+      continue;
+    }
+
+    // Turn at position 'pos' is the rotation AFTER placing atom pos
+    // It affects the direction from atom pos to atom pos+1
+    // To measure it, we need: direction_before_turn → direction_after_turn
+    // direction_before = from (pos-1) to pos
+    // direction_after = from pos to (pos+1)
+    const auto &p_prev = coords[(pos + N - 1) % N];  // pos-1 (wrap around)
+    const auto &p_curr = coords[pos];
+    const auto &p_next = coords[(pos + 1) % N];
+
+    // Compute direction vectors
+    double v_before_x = p_curr.x - p_prev.x;
+    double v_before_y = p_curr.y - p_prev.y;
+    double v_after_x = p_next.x - p_curr.x;
+    double v_after_y = p_next.y - p_curr.y;
+
+    // Compute directions as angles
+    double dir_before = std::atan2(v_before_y, v_before_x);
+    double dir_after = std::atan2(v_after_y, v_after_x);
+
+    // Turn angle is the change in direction
+    double actualAngle = dir_after - dir_before;
+
+    // Normalize to [-π, π]
+    while (actualAngle > M_PI) actualAngle -= 2 * M_PI;
+    while (actualAngle < -M_PI) actualAngle += 2 * M_PI;
+
+    double actualAngleDeg = actualAngle * 180.0 / M_PI;
+    double deviation = std::abs(actualAngle - targetAngle) * 180.0 / M_PI;
+
+    std::cerr << "  Position " << pos << ": target=" << targetAngleDeg
+              << "°, actual=" << actualAngleDeg << "°, deviation=" << deviation
+              << "°" << std::endl;
+  }
+
+  std::cerr << std::endl;
+}
+
 bool MacrocycleGenerator::applyConstraints(std::vector<int> &turns) const {
   for (const auto &constraint : d_constraints) {
     size_t pos = constraint.position;
@@ -429,7 +559,15 @@ std::vector<RDGeom::Point2D> MacrocycleGenerator::generateCoordinates() const {
 
   if (isOddRing) {
     // Odd rings: Generate coordinates with extra angle per atom, then use dummy
-    double extraPerAtom = (M_PI / 3.0) / d_ringSize;
+    // Count constrained angles
+    size_t numConstrained = d_angleConstraints.size();
+    size_t numFree = d_ringSize - numConstrained;
+
+    // For odd rings, distribute extra angle only across free angles
+    double extraPerAtom = 0.0;
+    if (numFree > 0) {
+      extraPerAtom = (M_PI / 3.0) / numFree;
+    }
 
     RDGeom::Point2D pos(0, 0);
     coords.push_back(pos);  // coords[0]
@@ -437,12 +575,23 @@ std::vector<RDGeom::Point2D> MacrocycleGenerator::generateCoordinates() const {
     double direction = 0.0;
 
     for (size_t i = 0; i < d_ringSize; ++i) {
-      // Apply turn at atom i with extra angle
-      if (d_turns[i] == 1) {
-        direction += (M_PI / 3.0) + extraPerAtom;  // R turn with extra
-      } else if (d_turns[i] == -1) {
-        direction += -(M_PI / 3.0) + extraPerAtom;  // L turn with extra
+      double turnAngle;
+
+      // Check for angle constraint at this position
+      if (hasAngleConstraint(i)) {
+        turnAngle = getConstraintAngle(i);  // Use exact ideal angle, NO extraPerAtom
+      } else {
+        // Normal turn computation with extraPerAtom (only for free angles)
+        if (d_turns[i] == 1) {
+          turnAngle = (M_PI / 3.0) + extraPerAtom;  // R turn with extra
+        } else if (d_turns[i] == -1) {
+          turnAngle = -(M_PI / 3.0) + extraPerAtom;  // L turn with extra
+        } else {
+          turnAngle = 0.0;  // No turn
+        }
       }
+
+      direction += turnAngle;
 
       // Move in current direction to reach next atom
       pos.x += d_bondLength * std::cos(direction);
@@ -509,12 +658,20 @@ void MacrocycleGenerator::adjustAnglesForClosure(
   size_t N = d_ringSize;
   double initialGap = (coords[0] - coords[N]).length();
 
+  std::cerr << "[DEBUG] Jacobian: Initial gap = " << initialGap << std::endl;
+
   if (initialGap < 1e-6) {
     return;
   }
 
   // Extra angle per atom for odd rings
-  double extraPerAtom = isOddRing ? (M_PI / 3.0) / N : 0.0;
+  // Count constrained angles and distribute extraPerAtom only across free angles
+  size_t numConstrained = d_angleConstraints.size();
+  size_t numFree = N - numConstrained;
+  double extraPerAtom = 0.0;
+  if (isOddRing && numFree > 0) {
+    extraPerAtom = (M_PI / 3.0) / numFree;
+  }
 
   // Cumulative angle adjustments
   std::vector<double> angleAdjustments(N, 0.0);
@@ -531,11 +688,23 @@ void MacrocycleGenerator::adjustAnglesForClosure(
     double direction = 0.0;
 
     for (size_t i = 0; i < N; ++i) {
-      if (d_turns[i] == 1) {
-        direction += (M_PI / 3.0) + extraPerAtom + angleAdjustments[i];
-      } else if (d_turns[i] == -1) {
-        direction += -(M_PI / 3.0) + extraPerAtom + angleAdjustments[i];
+      double turnAngle;
+
+      // Check for angle constraint at this position
+      if (hasAngleConstraint(i)) {
+        turnAngle = getConstraintAngle(i);  // Use exact ideal angle
+      } else {
+        // Normal turn computation with extraPerAtom and adjustments
+        if (d_turns[i] == 1) {
+          turnAngle = (M_PI / 3.0) + extraPerAtom + angleAdjustments[i];
+        } else if (d_turns[i] == -1) {
+          turnAngle = -(M_PI / 3.0) + extraPerAtom + angleAdjustments[i];
+        } else {
+          turnAngle = 0.0;
+        }
       }
+
+      direction += turnAngle;
 
       pos.x += d_bondLength * std::cos(direction);
       pos.y += d_bondLength * std::sin(direction);
@@ -546,6 +715,8 @@ void MacrocycleGenerator::adjustAnglesForClosure(
     RDGeom::Point2D gap = coords[0] - coords[N];
     double gapMag = gap.length();
 
+    std::cerr << "[DEBUG] Jacobian iteration " << iter << ": gap = " << gapMag << std::endl;
+
     if (gapMag < 0.01) {
       break;
     }
@@ -554,6 +725,16 @@ void MacrocycleGenerator::adjustAnglesForClosure(
     std::vector<RDGeom::Point2D> jacobian(N);
 
     for (size_t k = 0; k < N; ++k) {
+      // Skip constrained angles - zero out their Jacobian row
+      if (hasAngleConstraint(k)) {
+        jacobian[k].x = 0.0;
+        jacobian[k].y = 0.0;
+        if (iter == 0) {  // Only print once
+          std::cerr << "[DEBUG] Jacobian: Skipping constrained angle at pos " << k << std::endl;
+        }
+        continue;
+      }
+
       RDGeom::Point2D r = coords[N] - coords[k];
       jacobian[k].x = r.y;   // ∂gap_x/∂θ_k
       jacobian[k].y = -r.x;  // ∂gap_y/∂θ_k
@@ -591,6 +772,10 @@ void MacrocycleGenerator::adjustAnglesForClosure(
 
     // Apply damped adjustments
     for (size_t k = 0; k < N; ++k) {
+      // Skip constrained angles
+      if (hasAngleConstraint(k)) {
+        continue;
+      }
       angleAdjustments[k] += damping * deltaTheta[k];
     }
   }

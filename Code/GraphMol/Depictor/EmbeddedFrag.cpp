@@ -38,6 +38,15 @@ unsigned int getDepictDegree(const RDKit::Atom *atom) {
   PRECONDITION(atom, "no atom");
   return atom->getDegree();
 }
+
+// Compute ideal turn angle (exterior angle) for regular polygon of given size
+// Interior angle = (n-2) * 180 / n
+// Turn angle (exterior angle) = 180 - interior angle = 360 / n
+// For square (n=4): 90°, pentagon (n=5): 72°, hexagon (n=6): 60°
+double computeIdealAngle(int ringSize, int turnSign) {
+  double turnAngle = 2.0 * M_PI / ringSize;  // 360/n degrees
+  return turnSign * turnAngle;
+}
 }  // end of anonymous namespace
 
 EmbeddedFrag::EmbeddedFrag(unsigned int aid, const RDKit::ROMol *mol) {
@@ -1142,6 +1151,15 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
   // Examples: 2-atom fusion → RR, 3-atom → RLR, 4-atom → RLLR
   std::set<int> macrocycleAtomSet(macrocycleRing.begin(), macrocycleRing.end());
 
+  // Track endpoint positions to detect shared endpoints between two small rings
+  // Map: position -> list of (ring_size, adjacent_internal_position, is_first_endpoint)
+  struct EndpointInfo {
+    int ringSize;
+    size_t adjacentInternalPos;  // The adjacent internal position with constraint
+    bool isFirstEndpoint;
+  };
+  std::map<size_t, std::vector<EndpointInfo>> endpointPositions;
+
   for (const auto &ring : allRings) {
     // Skip the macrocycle itself
     if (ring.size() > 8) {
@@ -1250,22 +1268,102 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
     // 2 shared atoms: RR
     // 3 shared atoms: RLR
     // 4 shared atoms: RLLR
+    //
+    // ALSO create angle constraints for small rings (4, 5, 6 atoms)
+    // Only constrain INTERNAL positions (not first/last)
     std::vector<int> pattern;
     size_t numShared = sharedPositions.size();
+    bool isSmallRing = (ring.size() >= 4 && ring.size() <= 6);
 
     if (numShared == 1) {
       pattern.push_back(1);  // R
-    } else {
-      pattern.push_back(1);  // First turn: R
-      for (size_t i = 1; i < numShared - 1; ++i) {
-        pattern.push_back(-1);  // Middle turns: L
+    } else if (numShared == 2) {
+      // RR pattern for 2-atom fusion
+      pattern.push_back(1);  // R
+      pattern.push_back(1);  // R
+
+      // Track both endpoints for small rings (needed to detect shared endpoints)
+      if (isSmallRing) {
+        // First endpoint
+        size_t firstPos = sharedPositions[0];
+        EndpointInfo info1;
+        info1.ringSize = ring.size();
+        info1.adjacentInternalPos = firstPos;  // No internal position, use self
+        info1.isFirstEndpoint = true;
+        endpointPositions[firstPos].push_back(info1);
+
+        // Last endpoint
+        size_t lastPos = sharedPositions[1];
+        EndpointInfo info2;
+        info2.ringSize = ring.size();
+        info2.adjacentInternalPos = lastPos;  // No internal position, use self
+        info2.isFirstEndpoint = false;
+        endpointPositions[lastPos].push_back(info2);
       }
-      pattern.push_back(1);  // Last turn: R
+    } else {
+      // First turn: R (not constrained - it's an endpoint)
+      pattern.push_back(1);
+
+      // Track first endpoint for all small rings
+      if (isSmallRing) {
+        size_t firstPos = sharedPositions[0];
+        size_t adjacentInternalPos = sharedPositions[1];  // Next position has constraint
+        EndpointInfo info;
+        info.ringSize = ring.size();
+        info.adjacentInternalPos = adjacentInternalPos;
+        info.isFirstEndpoint = true;
+        endpointPositions[firstPos].push_back(info);
+      }
+
+      // Middle turns: L (constrained for small rings)
+      for (size_t i = 1; i < numShared - 1; ++i) {
+        int turnSign = -1;  // L
+        pattern.push_back(turnSign);
+
+        // Create angle constraint for small ring internal positions
+        if (isSmallRing) {
+          size_t pos = sharedPositions[i];
+          double idealAngle = computeIdealAngle(ring.size(), turnSign);
+
+          AngleConstraint angleConstraint;
+          angleConstraint.position = pos;
+          angleConstraint.targetAngle = idealAngle;
+          generator.addAngleConstraint(angleConstraint);
+        }
+      }
+
+      // Last turn: R (not constrained - it's an endpoint)
+      pattern.push_back(1);
+
+      // Track last endpoint for all small rings
+      if (isSmallRing) {
+        size_t lastPos = sharedPositions[numShared - 1];
+        size_t adjacentInternalPos = sharedPositions[numShared - 2];  // Previous position has constraint
+        EndpointInfo info;
+        info.ringSize = ring.size();
+        info.adjacentInternalPos = adjacentInternalPos;
+        info.isFirstEndpoint = false;
+        endpointPositions[lastPos].push_back(info);
+      }
     }
 
-    // Add constraint
-    // For N shared atoms, pattern has length N
-    // The pattern starts one position BEFORE the first shared atom
+    // DEBUG: Print macrocycle atom IDs
+    if (isSmallRing && numShared >= 3) {
+      std::cerr << "[DEBUG] Macrocycle atoms: ";
+      for (size_t i = 0; i < macrocycleRing.size(); ++i) {
+        std::cerr << macrocycleRing[i];
+        if (i < macrocycleRing.size() - 1) std::cerr << ",";
+      }
+      std::cerr << std::endl;
+      std::cerr << "[DEBUG] Small ring atoms: ";
+      for (size_t i = 0; i < ring.size(); ++i) {
+        std::cerr << ring[i];
+        if (i < ring.size() - 1) std::cerr << ",";
+      }
+      std::cerr << std::endl;
+    }
+
+    // Add FIXED turn constraint
     TurnConstraint constraint;
     constraint.position = sharedPositions[0];
     constraint.type = ConstraintType::FIXED;
@@ -1274,6 +1372,52 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
                         std::to_string(sharedPositions[0]);
 
     generator.addConstraint(constraint);
+  }
+
+  // Process shared endpoints: positions that are endpoints of exactly 2 small rings
+  // These positions should be constrained to: (angle1 + angle2) - PI, with reversed sign
+  std::cerr << "[DEBUG] Checking " << endpointPositions.size() << " endpoint positions for shared endpoints" << std::endl;
+  for (const auto &[pos, endpoints] : endpointPositions) {
+    std::cerr << "[DEBUG] Position " << pos << " has " << endpoints.size() << " endpoint(s)" << std::endl;
+    if (endpoints.size() == 2) {
+      size_t adj1 = endpoints[0].adjacentInternalPos;
+      size_t adj2 = endpoints[1].adjacentInternalPos;
+      int ringSize1 = endpoints[0].ringSize;
+      int ringSize2 = endpoints[1].ringSize;
+
+      // At a shared endpoint, three rings meet: ring1, ring2, and the macrocycle
+      // The sum of their internal angles must be 2π (360°)
+      // Internal angle = π - |turn_angle|
+      // So: (π - |turn1|) + (π - |turn2|) + macrocycle_internal = 2π
+      // Therefore: macrocycle_internal = 2π - (π - |turn1|) - (π - |turn2|)
+      //                                 = |turn1| + |turn2|
+      // And macrocycle_turn = π - macrocycle_internal = π - (|turn1| + |turn2|)
+
+      bool ring1HasInternal = (adj1 != pos);
+      bool ring2HasInternal = (adj2 != pos);
+
+      // Get the ideal turn magnitude for each ring
+      double turn1 = std::abs(computeIdealAngle(ringSize1, ring1HasInternal ? -1 : 1));
+      double turn2 = std::abs(computeIdealAngle(ringSize2, ring2HasInternal ? -1 : 1));
+
+      // Macrocycle internal angle = |turn1| + |turn2|
+      double macrocycleInternal = turn1 + turn2;
+      // Macrocycle turn angle = π - macrocycle_internal
+      double combinedAngle = M_PI - macrocycleInternal;
+
+      AngleConstraint sharedConstraint;
+      sharedConstraint.position = pos;
+      sharedConstraint.targetAngle = combinedAngle;
+      generator.addAngleConstraint(sharedConstraint);
+
+      std::cerr << "[DEBUG] Shared endpoint at position " << pos
+                << ": ring sizes " << ringSize1 << " and " << ringSize2
+                << "\n        ring1 internal angle = " << (M_PI - turn1) * 180.0 / M_PI << "°"
+                << "\n        ring2 internal angle = " << (M_PI - turn2) * 180.0 / M_PI << "°"
+                << "\n        macrocycle internal = " << macrocycleInternal * 180.0 / M_PI << "°"
+                << "\n        macrocycle turn = 180° - " << macrocycleInternal * 180.0 / M_PI
+                << "° = " << combinedAngle * 180.0 / M_PI << "°" << std::endl;
+    }
   }
 
   // Add constraints for double bonds with E/Z stereochemistry
@@ -1435,6 +1579,9 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
   const auto &turns = generator.getTurns();
   // Generate 2D coordinates
   auto coords = generator.generateCoordinates();
+
+  // DEBUG: Print angle constraint information
+  generator.debugPrintAngleConstraints(coords);
 
   // Apply coordinates to embedded fragment
   // coords[i] is the position of atom i (turn[i] is the turn AT atom i)

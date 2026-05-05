@@ -64,6 +64,12 @@ struct TurnConstraint {
       reason;  //!< Description for debugging (e.g., "cis_double_bond_at_5")
 };
 
+//! Constraint on angle at a specific position (for regular polygon small rings)
+struct AngleConstraint {
+  size_t position;      //!< Position in macrocycle (0-indexed)
+  double targetAngle;   //!< Target angle in radians
+};
+
 //! Generate 2D coordinates for macrocycles using turn-based encoding
 /*!
   This class generates macrocycle coordinates by encoding them as a sequence
@@ -95,6 +101,32 @@ class MacrocycleGenerator {
     \param constraint: Constraint to add to the turn sequence
   */
   void addConstraint(const TurnConstraint &constraint);
+
+  //! Add an angle constraint
+  /*!
+    \param constraint: Angle constraint for a small ring fusion
+  */
+  void addAngleConstraint(const AngleConstraint &constraint);
+
+  //! Check if a position has an angle constraint
+  /*!
+    \param position: Position in macrocycle to check
+    \return true if position has an angle constraint
+  */
+  bool hasAngleConstraint(size_t position) const;
+
+  //! Get the constraint angle at a position
+  /*!
+    \param position: Position in macrocycle
+    \return target angle in radians (0 if no constraint)
+  */
+  double getConstraintAngle(size_t position) const;
+
+  //! Debug: Print angle constraint information
+  /*!
+    \param coords: Coordinates after generation
+  */
+  void debugPrintAngleConstraints(const std::vector<RDGeom::Point2D> &coords) const;
 
   //! Solve for optimal turn sequence
   /*!
@@ -193,6 +225,7 @@ class MacrocycleGenerator {
   double d_bondLength;       //!< Length of each bond
   std::vector<int> d_turns;  //!< Turn sequence: +1 = R, -1 = L, 0 = undecided
   std::vector<TurnConstraint> d_constraints;  //!< Structural constraints
+  std::vector<AngleConstraint> d_angleConstraints;  //!< Angle constraints for small rings
   double d_closureError;                      //!< Positional closure error
   bool d_solved;  //!< Whether solve() has been called successfully
   bool d_useJacobianRefinement;  //!< Whether to use Jacobian angle adjustment
