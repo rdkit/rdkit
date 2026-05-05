@@ -1051,12 +1051,21 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
   // now check if there are any extra rings on the molecule.
   // We do this using the legacy way: using the modified Figueras
   // algorithm
-  std::vector<std::vector<int>> extras;
-  FindRings::findRingsFigueras(mol, extras, includeDativeBonds,
+  std::vector<std::vector<int>> figuerasRings;
+  FindRings::findRingsFigueras(mol, figuerasRings, includeDativeBonds,
                                includeHydrogenBonds);
 
-  if (extras.size() <= res.size()) {
-    // no extra rings or fewer extra rings than SSSRs, nothing to be done
+  // Discard common elements. This is required to prevent duplicates in the
+  // final result! Note that both figuerasRings and res need to be sorted!
+  std::vector<std::vector<int>> extras;
+  extras.reserve(figuerasRings.size());
+  std::set_difference(std::make_move_iterator(figuerasRings.begin()),
+                      std::make_move_iterator(figuerasRings.end()),
+                      res.cbegin(), res.cend(), std::back_inserter(extras),
+                      ringComparer);
+
+  if (extras.empty()) {
+    // no extra rings, nothing to be done
     return rdcast<int>(res.size());
   }
 
