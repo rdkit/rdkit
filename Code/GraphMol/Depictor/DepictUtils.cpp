@@ -169,7 +169,7 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
   int macrocycle_idx = -1;
   unsigned int max_macrocycle_size = 0;
   for (int i = 0; i < static_cast<int>(fusedRings.size()); ++i) {
-    if (fusedRings[i].size() > 8) {
+    if (fusedRings[i].size() > MACROCYCLE_SIZE_THRESHOLD) {
       if (fusedRings[i].size() > max_macrocycle_size) {
         macrocycle_idx = i;
         max_macrocycle_size = fusedRings[i].size();
@@ -225,7 +225,7 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
       if (removedRings[currRingId] || removedARing) {
         continue;
       }
-      if (fusedRings[currRingId].size() > 8) {
+      if (fusedRings[currRingId].size() > MACROCYCLE_SIZE_THRESHOLD) {
         continue;
       }
       auto nIntersectingAtoms = 0u;

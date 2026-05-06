@@ -465,7 +465,7 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
   return true;
 }
 
-bool EmbeddedFrag::applyTemplateCoordinates(
+void EmbeddedFrag::applyTemplateCoordinates(
     const std::shared_ptr<RDKit::ROMol> &template_mol,
     const RDKit::MatchVectType &match) {
   // Copy coordinates from template to embedded atoms
@@ -479,8 +479,6 @@ bool EmbeddedFrag::applyTemplateCoordinates(
   // Setup neighbors and attachment points
   this->setupNewNeighs();
   this->setupAttachmentPoints();
-
-  return true;
 }
 
 bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
@@ -572,7 +570,8 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     return false;
   }
 
-  return applyTemplateCoordinates(template_mol, match);
+  applyTemplateCoordinates(template_mol, match);
+  return true;
 }
 
 // Cached template information for macrocycle matching
@@ -593,17 +592,20 @@ static bool atomHasDegreeConstraint(const RDKit::Atom *atom) {
   std::string queryStr = queryAtom->getQuery()->getFullDescription();
 
   // Check if the query description contains degree constraints
-  // Common patterns: "AtomExplicitDegree", "AtomTotalDegree", "AtomHeavyAtomDegree"
+  // Common patterns: "AtomExplicitDegree", "AtomTotalDegree",
+  // "AtomHeavyAtomDegree"
   return (queryStr.find("Degree") != std::string::npos);
 }
 
 // Helper: Create a relaxed query atom without degree constraints
-static RDKit::QueryAtom *createRelaxedQueryAtom(const RDKit::Atom *templateAtom) {
+static RDKit::QueryAtom *createRelaxedQueryAtom(
+    const RDKit::Atom *templateAtom) {
   auto *relaxedAtom = new RDKit::QueryAtom();
 
   // Preserve atomic number if specified
   if (templateAtom->getAtomicNum() > 0) {
-    relaxedAtom->setQuery(RDKit::makeAtomNumQuery(templateAtom->getAtomicNum()));
+    relaxedAtom->setQuery(
+        RDKit::makeAtomNumQuery(templateAtom->getAtomicNum()));
   }
 
   // Preserve aromaticity if the atom is aromatic
@@ -663,7 +665,8 @@ static const CachedTemplateInfo &getCachedTemplateInfo(
     unsigned int endIdx = bond->getEndAtomIdx();
 
     // Create bond with same type and aromaticity
-    unsigned int bondIdx = relaxed->addBond(beginIdx, endIdx, bond->getBondType());
+    unsigned int bondIdx =
+        relaxed->addBond(beginIdx, endIdx, bond->getBondType());
     if (bond->getIsAromatic()) {
       relaxed->getBondWithIdx(bondIdx)->setIsAromatic(true);
     }
@@ -925,13 +928,10 @@ static double scoreTemplateMatch(
 static bool validateFusionGeometry(
     const std::shared_ptr<RDKit::ROMol> &template_mol,
     const RDKit::MatchVectType &match, const RDKit::INT_VECT &macrocycleRing,
-    const std::vector<FusedRingInfo> &fusedRings) {
+    const std::vector<FusedRingInfo> &fusedRings,
+    bool positive_is_convex) {
   const double ANGLE_TOLERANCE = 20.0 * M_PI / 180.0;  // ~20 degrees in radians
   const double TARGET_60_DEG = 60.0 * M_PI / 180.0;    // 60 degrees in radians
-
-  // Determine which angle sign is convex (majority) vs concave (minority)
-  bool positive_is_convex =
-      determineConvexSign(template_mol, match, macrocycleRing);
 
   // Build map: molecule atom idx -> template atom idx
   std::unordered_map<int, int> mol_to_template;
@@ -1070,6 +1070,13 @@ static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
   auto matches =
       RDKit::SubstructMatch(ring_mol, *cached_info.relaxed_query, params);
 
+  // Pre-compute convex sign once for all matches (used in fusion validation)
+  bool positive_is_convex = false;
+  if (!fusedRings.empty() && !matches.empty()) {
+    // Use first match to determine convex sign (same for all rotations)
+    positive_is_convex = determineConvexSign(tmpl, matches[0], macrocycleRing);
+  }
+
   for (const auto &match : matches) {
     if (!checkStereoChemistry(ring_mol, *tmpl, match)) {
       continue;
@@ -1077,7 +1084,8 @@ static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
 
     // Check fusion geometry
     if (!fusedRings.empty()) {
-      if (!validateFusionGeometry(tmpl, match, macrocycleRing, fusedRings)) {
+      if (!validateFusionGeometry(tmpl, match, macrocycleRing, fusedRings,
+                                  positive_is_convex)) {
         continue;  // Try next match - invalid fusion geometry
       }
     }
@@ -1159,7 +1167,8 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
     if (found_best_match && !matches.empty()) {
       // Best possible match found - apply it immediately
       const auto &best = matches.back();
-      return applyTemplateCoordinates(best.template_mol, best.match);
+      applyTemplateCoordinates(best.template_mol, best.match);
+      return true;
     }
 
     all_valid_matches.insert(all_valid_matches.end(), matches.begin(),
@@ -1171,7 +1180,8 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
   if (!best) {
     return false;
   }
-  return applyTemplateCoordinates(best->template_mol, best->match);
+  applyTemplateCoordinates(best->template_mol, best->match);
+  return true;
 }
 
 // find any atoms in the ring that are in trans double bonds
@@ -1272,18 +1282,20 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
   if (useRingTemplates) {
     RDKit::INT_VECT coreRingsIds;
     auto coreRings = findCoreRings(fusedRings, coreRingsIds, *dp_mol);
+    // If after simplification we have a smaller set, but still > 1 ring, then
+    // we will try to match a template to the core
+    bool hasASimplifiedFusedSystem =
+        coreRings.size() < fusedRings.size() && coreRings.size() > 1;
 
-    bool systemIsSimplified = coreRings.size() < fusedRings.size();
-    bool hasMultipleCoreRings = coreRings.size() > 1;
     bool hasMacrocycle = std::any_of(
         coreRings.begin(), coreRings.end(),
         [](const RDKit::INT_VECT &ring) { return ring.size() > 8; });
 
-    if ((hasMultipleCoreRings && systemIsSimplified) || hasMacrocycle) {
+    if (hasASimplifiedFusedSystem || hasMacrocycle) {
       // look for a template that matches the core ring system
       RDKit::Union(coreRings, funion);
       bool found_template = false;
-      if (hasMultipleCoreRings && systemIsSimplified)
+      if (hasASimplifiedFusedSystem)
         found_template = matchToTemplate(funion, coreRings.size());
 
       // If exact match failed, try permissive macrocycle matching on core rings
@@ -1307,8 +1319,8 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
 
         if (all_small_rings) {
           // Try permissive template matching with fusion validation
-          found_template = matchToTemplateMacrocycle(
-              fusedRings[macrocycle_idx], coreRings);
+          found_template =
+              matchToTemplateMacrocycle(fusedRings[macrocycle_idx], coreRings);
           if (found_template) {
             doneRings.push_back(macrocycle_idx);
           }

@@ -390,9 +390,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   /*!
     \param template_mol the template molecule with conformer coordinates
     \param match the mapping from template atom indices to molecule atom indices
-    \return true after successfully copying coordinates and setting up neighbors
   */
-  bool applyTemplateCoordinates(
+  void applyTemplateCoordinates(
       const std::shared_ptr<RDKit::ROMol> &template_mol,
       const RDKit::MatchVectType &match);
 
