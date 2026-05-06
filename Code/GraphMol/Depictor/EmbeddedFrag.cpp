@@ -2096,14 +2096,14 @@ bool EmbeddedFrag::tryResolvingCollisionWithBondFlip(
 bool EmbeddedFrag::tryResolvingCollisionWithSpiroFlip(
     const std::pair<unsigned int, unsigned int> &cAids, unsigned int ncols,
     double prevDensity, std::map<int, unsigned int> &doneSpiros,
-    const std::set<unsigned int> &spiroCenters, const double *dmat) {
-  // Find spiro centers on the path using our cached set (avoid expensive
+    const boost::dynamic_bitset<> &spiroCenters, const double *dmat) {
+  // Find spiro centers on the path using our cached bitset (avoid expensive
   // re-checks)
   RDKit::INT_LIST path =
       RDKit::MolOps::getShortestPath(*dp_mol, cAids.first, cAids.second);
   std::vector<unsigned int> spiros;
   for (auto aid : path) {
-    if (spiroCenters.contains(aid)) {
+    if (spiroCenters.test(aid)) {
       spiros.push_back(aid);
     }
   }
@@ -2143,10 +2143,10 @@ bool EmbeddedFrag::tryResolvingCollisionWithSpiroFlip(
 
 void EmbeddedFrag::removeCollisionsBondAndSpiroFlip() {
   // Pre-compute which atoms are spiro centers (expensive check, so cache it)
-  std::set<unsigned int> spiroCenters;
+  boost::dynamic_bitset<> spiroCenters(dp_mol->getNumAtoms());
   for (unsigned int aid = 0; aid < dp_mol->getNumAtoms(); ++aid) {
     if (isSpiroCenter(aid, dp_mol)) {
-      spiroCenters.insert(aid);
+      spiroCenters.set(aid);
     }
   }
 

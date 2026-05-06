@@ -423,7 +423,8 @@ bool isSpiroCenter(unsigned int aid, const RDKit::ROMol *mol) {
   const auto &atomRings = mol->getRingInfo()->atomRings();
   std::vector<RDKit::INT_VECT> rings;
   for (const auto &ring : atomRings) {
-    if (std::find(ring.begin(), ring.end(), static_cast<int>(aid)) != ring.end()) {
+    if (std::find(ring.begin(), ring.end(), static_cast<int>(aid)) !=
+        ring.end()) {
       rings.push_back(ring);
     }
   }
@@ -445,7 +446,7 @@ bool isSpiroCenter(unsigned int aid, const RDKit::ROMol *mol) {
 
   // Check that the two rings share ONLY this atom (spiro)
   boost::dynamic_bitset<> shared = ring1 & ring2;
-  if (shared.count() != 1 || !shared.test(aid)) {
+  if (shared.count() != 1) {
     // Rings share more than just this atom - not a spiro
     return false;
   }

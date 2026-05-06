@@ -16,6 +16,7 @@
 #include <Geometry/point.h>
 #include "DepictUtils.h"
 #include <boost/smart_ptr.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
 class ROMol;
@@ -351,7 +352,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   //! along the shortest path between two colliding atoms
   void removeCollisionsBondAndSpiroFlip();
   
-  [[deprecated("please use removeCollisionsBondAndSpiroFlip()"]] void removeCollisionsBondFlip() { removeCollisionsBondAndSpiroFlip(); };
+  [[deprecated("please use removeCollisionsBondAndSpiroFlip()")]] void removeCollisionsBondFlip() { removeCollisionsBondAndSpiroFlip(); };
 
   //! Remove collision by opening angles at the offending atoms
   void removeCollisionsOpenAngles();
@@ -396,7 +397,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
       unsigned int ncols,
       double prevDensity,
       std::map<int, unsigned int> &doneSpiros,
-      const std::set<unsigned int> &spiroCenters,
+      const boost::dynamic_bitset<> &spiroCenters,
       const double *dmat);
 
   // returns true if fused rings found a template
