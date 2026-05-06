@@ -228,6 +228,7 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
         continue;
       }
       auto nIntersectingAtoms = 0u;
+      auto nIntersectingWithMacrocycle = 0u;
       int aid1 = -1;
       int aid2 = -1;
       for (unsigned int otherRingId = 0; otherRingId < fusedRings.size();
@@ -235,15 +236,16 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
         if (currRingId == otherRingId || removedRings[otherRingId]) {
           continue;
         }
-        // Don't skip macrocycles - we need to count all intersections to avoid
-        // removing rings that have significant fusion (3+ atoms) with a
-        // macrocycle
+        bool isMacrocycle = fusedRings[otherRingId].size() > 8;
         RDKit::INT_VECT commmonAtoms;
         RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
                          commmonAtoms);
         for (auto rii : commmonAtoms) {
           if (rii != aid1 && rii != aid2) {
             ++nIntersectingAtoms;
+            if (isMacrocycle) {
+              ++nIntersectingWithMacrocycle;
+            }
             if (aid1 == -1) {
               aid1 = rii;
             } else {
@@ -252,32 +254,17 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
           }
         }
       }
-      // Check if this ring should be removed
+      // Check if this ring should be removed. We remove rings that have 1 or 2
+      // consecutive atoms fused with another small ring. We don't want to
+      // remove them if the ring is fused to a macrocycle, because we need that
+      // information in the macrocycle construction, to mark fused atoms as
+      // "pointing out" of the macrocycle
       bool shouldRemove = (nIntersectingAtoms == 1 ||
                            (nIntersectingAtoms == 2 &&
-                            mol.getBondBetweenAtoms(aid1, aid2) != nullptr));
+                            mol.getBondBetweenAtoms(aid1, aid2) != nullptr) &&
+                               nIntersectingWithMacrocycle == 0);
 
-      // Don't remove if the ring is fused to a macrocycle
-      if (shouldRemove) {
-        for (unsigned int otherRingId = 0; otherRingId < fusedRings.size();
-             otherRingId++) {
-          if (currRingId == otherRingId || removedRings[otherRingId]) {
-            continue;
-          }
-          if (fusedRings[otherRingId].size() > 8) {
-            // This is a macrocycle - check if currRing shares atoms with it
-            RDKit::INT_VECT commmonAtoms;
-            RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
-                             commmonAtoms);
-            if (!commmonAtoms.empty()) {
-              // Ring is fused to a macrocycle - don't remove it
-              shouldRemove = false;
-              break;
-            }
-          }
-        }
-      }
-
+      //
       if (shouldRemove) {
         removedRings[currRingId] = true;
         removedARing = true;
