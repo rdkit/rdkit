@@ -97,6 +97,7 @@ class CIPMol {
   ROMol &d_mol;
   std::vector<RDKit::Bond::BondType> d_kekulized_bonds;
   std::vector<boost::rational<int>> d_atomnums;
+  std::vector<RDKit::Bond* > d_bonds;
 };
 
 }  // namespace CIPLabeler
