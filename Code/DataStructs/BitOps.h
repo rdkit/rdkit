@@ -12,18 +12,14 @@
 #define __RD_BITOPS_H__
 /*! \file BitOps.h
 
-  The notation used to document the similarity metrics is:
-    - \c V1_n: total number of bits in the vector
-    - \c V1_o: number of on bits in vector 1 (a + b)
-    - \c V2_o: number of on bits in vector 2 (a + c)
-    - <tt>(V1&V2)_o</tt>: bits on in both vectors (a)
-    - <tt>(V1^V2)_o</tt>: bits that differ between vectors (b + c)
+  \brief Contains general bit-comparison and similarity operations.
 
-  In literature terms:
-    - \c a: bits on in both
-    - \c b: bits on in V1 only
-    - \c c: bits on in V2 only
-    - \c d: bits off in both
+  The notation used to document the similarity metrics is:
+    - \c V1_n: number of bits in vector 1
+    - \c V1_o: number of on bits in vector 1
+    - <tt>(V1&V2)_o</tt>: number of on bits in the intersection of vectors 1 and
+  2
+
  */
 
 #include "BitVects.h"
@@ -117,10 +113,8 @@ RDKIT_DATASTRUCTS_EXPORT double CosineSimilarity(const T1 &bv1, const T2 &bv2);
 
 //! returns the Kulczynski similarity between two bit vects
 /*!
-  RDKit implements the **Kulczynski 2** similarity coefficient.
   \return <tt>(bv1&bv2)_o * [bv1_o + bv2_o] / [2 * bv1_o * bv2_o]</tt>
 */
-
 template <typename T1, typename T2>
 RDKIT_DATASTRUCTS_EXPORT double KulczynskiSimilarity(const T1 &bv1,
                                                      const T2 &bv2);
@@ -148,7 +142,6 @@ RDKIT_DATASTRUCTS_EXPORT double TverskySimilarity(const T1 &bv1, const T2 &bv2,
 
 //! returns the Sokal similarity between two bit vects
 /*!
-  RDKit implements the **Sokal–Sneath 2** similarity coefficient.
   \return <tt>(bv1&bv2)_o / [2*bv1_o + 2*bv2_o - 3*(bv1&bv2)_o]</tt>
 */
 template <typename T1, typename T2>
