@@ -376,8 +376,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   double totalDensity();
 
   // returns true if fused rings found a template
-  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
-                       unsigned int ring_count);
+  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms);
 
   // returns true if macrocycle found a template
   // this uses a more relaxed matching that allows for small substituents to be
