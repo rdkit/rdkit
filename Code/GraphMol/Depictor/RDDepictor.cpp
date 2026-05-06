@@ -528,21 +528,21 @@ void setRingSystemTemplates(const std::string template_path) {
   // with the default templates if different templates are set using
   // `RDDepictor::SetRingSystemTemplates`, the default templates are replaced by
   // the new templates
-  CoordinateTemplates &coordinate_templates =
+  CoordinateTemplates &coordinateTemplates =
       CoordinateTemplates::getRingSystemTemplates();
-  coordinate_templates.setRingSystemTemplates(template_path);
+  coordinateTemplates.setRingSystemTemplates(template_path);
 }
 
 void addRingSystemTemplates(const std::string template_path) {
-  CoordinateTemplates &coordinate_templates =
+  CoordinateTemplates &coordinateTemplates =
       CoordinateTemplates::getRingSystemTemplates();
-  coordinate_templates.addRingSystemTemplates(template_path);
+  coordinateTemplates.addRingSystemTemplates(template_path);
 }
 
 void loadDefaultRingSystemTemplates() {
-  CoordinateTemplates &coordinate_templates =
+  CoordinateTemplates &coordinateTemplates =
       CoordinateTemplates::getRingSystemTemplates();
-  coordinate_templates.loadDefaultTemplates();
+  coordinateTemplates.loadDefaultTemplates();
 }
 
 unsigned int compute2DCoords(RDKit::ROMol &mol,

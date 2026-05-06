@@ -353,7 +353,7 @@ void EmbeddedFrag::setupAttachmentPoints() {
 // check if the stereochemistry of the template matches the stereochemistry of
 // the molecule
 static bool checkStereoChemistry(const RDKit::ROMol &mol,
-                                 const RDKit::ROMol &template_mol,
+                                 const RDKit::ROMol &templateMol,
                                  const RDKit::MatchVectType &match) {
   for (auto bond : mol.bonds()) {
     if (bond->getBondType() != RDKit::Bond::DOUBLE ||
@@ -400,19 +400,19 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
     int template_atom1_neighbor2 = -1;
     int template_atom2_neighbor1 = -1;
     int template_atom2_neighbor2 = -1;
-    for (auto &[template_aidx, rs_aidx] : match) {
+    for (auto &[templateAidx, rs_aidx] : match) {
       if (rs_aidx == atom1) {
-        template_atom1 = template_aidx;
+        template_atom1 = templateAidx;
       } else if (rs_aidx == atom2) {
-        template_atom2 = template_aidx;
+        template_atom2 = templateAidx;
       } else if (rs_aidx == atom1_neighbor1) {
-        template_atom1_neighbor1 = template_aidx;
+        template_atom1_neighbor1 = templateAidx;
       } else if (rs_aidx == atom2_neighbor1) {
-        template_atom2_neighbor1 = template_aidx;
+        template_atom2_neighbor1 = templateAidx;
       } else if (rs_aidx == atom1_neighbor2) {
-        template_atom1_neighbor2 = template_aidx;
+        template_atom1_neighbor2 = templateAidx;
       } else if (rs_aidx == atom2_neighbor2) {
-        template_atom2_neighbor2 = template_aidx;
+        template_atom2_neighbor2 = templateAidx;
       }
     }
 
@@ -441,7 +441,7 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
       return false;
     }
 
-    const auto &conf = template_mol.getConformer();
+    const auto &conf = templateMol.getConformer();
     const auto &atom1_loc = conf.getAtomPos(template_atom1);
     const auto &atom2_loc = conf.getAtomPos(template_atom2);
     const auto &atom1_neighbor_loc = conf.getAtomPos(template_atom1_neighbor1);
@@ -466,14 +466,14 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
 }
 
 void EmbeddedFrag::applyTemplateCoordinates(
-    const std::shared_ptr<RDKit::ROMol> &template_mol,
+    const std::shared_ptr<RDKit::ROMol> &templateMol,
     const RDKit::MatchVectType &match) {
   // Copy coordinates from template to embedded atoms
-  const auto &conf = template_mol->getConformer();
-  for (const auto &[template_aidx, mol_aidx] : match) {
-    EmbeddedAtom new_at(mol_aidx, conf.getAtomPos(template_aidx));
+  const auto &conf = templateMol->getConformer();
+  for (const auto &[templateAidx, molAidx] : match) {
+    EmbeddedAtom new_at(molAidx, conf.getAtomPos(templateAidx));
     new_at.df_fixed = true;
-    d_eatoms.emplace(mol_aidx, new_at);
+    d_eatoms.emplace(molAidx, new_at);
   }
 
   // Setup neighbors and attachment points
@@ -483,11 +483,11 @@ void EmbeddedFrag::applyTemplateCoordinates(
 
 bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
                                    unsigned int ring_count) {
-  CoordinateTemplates &coordinate_templates =
+  CoordinateTemplates &coordinateTemplates =
       CoordinateTemplates::getRingSystemTemplates();
 
   // only look for an exact match to the ring system
-  if (!coordinate_templates.hasTemplateOfSize(ringSystemAtoms.size())) {
+  if (!coordinateTemplates.hasTemplateOfSize(ringSystemAtoms.size())) {
     return false;
   }
 
@@ -515,9 +515,9 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
 
   // find template that this mol matches to, if any
   RDKit::MatchVectType match;
-  std::shared_ptr<RDKit::ROMol> template_mol(nullptr);
+  std::shared_ptr<RDKit::ROMol> templateMol(nullptr);
   for (const auto &mol :
-       coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
+       coordinateTemplates.getMatchingTemplates(ringSystemAtoms.size())) {
     // To reduce how often we have to do substructure matches, check ring info
     // and bond count first
     if (mol->getNumBonds() != numBonds) {
@@ -561,16 +561,16 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     if (!matches.empty()) {
       if (checkStereoChemistry(rs_mol, *mol, matches[0])) {
         match = matches[0];
-        template_mol = mol;
+        templateMol = mol;
         break;
       }
     }
   }
-  if (!template_mol) {
+  if (!templateMol) {
     return false;
   }
 
-  applyTemplateCoordinates(template_mol, match);
+  applyTemplateCoordinates(templateMol, match);
   return true;
 }
 
@@ -681,40 +681,40 @@ static const CachedTemplateInfo &getCachedTemplateInfo(
 // Helper function: build a molecule with ring atoms preserved and non-ring
 // atoms replaced with dummy atoms (for template matching)
 static RDKit::RWMol buildRingMol(const RDKit::ROMol *mol,
-                                 const boost::dynamic_bitset<> &ring_atoms) {
+                                 const boost::dynamic_bitset<> &ringAtoms) {
   constexpr int DUMMY_ATOMIC_NUM = 200;
-  RDKit::RWMol ring_mol(*mol, true);
-  for (auto &at : ring_mol.atoms()) {
-    if (!ring_atoms.test(at->getIdx())) {
+  RDKit::RWMol ringMol(*mol, true);
+  for (auto &at : ringMol.atoms()) {
+    if (!ringAtoms.test(at->getIdx())) {
       at->setAtomicNum(DUMMY_ATOMIC_NUM);  // Non-ring atoms become dummy
     }
     // Ring atoms keep their original atom types for wildcard matching
   }
-  return ring_mol;
+  return ringMol;
 }
 
 // Helper function: compute the size of a substituent attached to a ring atom
-// Uses BFS traversal starting from substituent_root, avoiding ring atoms
+// Uses BFS traversal starting from substituentRoot, avoiding ring atoms
 static int computeSubstituentSize(const RDKit::ROMol *mol,
-                                  unsigned int substituent_root,
-                                  unsigned int ring_attachment_point,
-                                  const boost::dynamic_bitset<> &ring_atoms) {
-  std::vector<unsigned int> to_visit = {substituent_root};
+                                  unsigned int substituentRoot,
+                                  unsigned int ringAttachmentPoint,
+                                  const boost::dynamic_bitset<> &ringAtoms) {
+  std::vector<unsigned int> toVisit = {substituentRoot};
   boost::dynamic_bitset<> visited(mol->getNumAtoms());
-  visited.set(ring_attachment_point);  // Don't traverse back into ring
+  visited.set(ringAttachmentPoint);  // Don't traverse back into ring
   int size = 0;
 
-  while (!to_visit.empty()) {
-    auto current = to_visit.back();
-    to_visit.pop_back();
-    if (visited.test(current) || ring_atoms.test(current)) {
+  while (!toVisit.empty()) {
+    auto current = toVisit.back();
+    toVisit.pop_back();
+    if (visited.test(current) || ringAtoms.test(current)) {
       continue;
     }
     visited.set(current);
     size++;
     auto current_atom = mol->getAtomWithIdx(current);
     for (auto neighbor : mol->atomNeighbors(current_atom)) {
-      to_visit.push_back(neighbor->getIdx());
+      toVisit.push_back(neighbor->getIdx());
     }
   }
 
@@ -723,24 +723,24 @@ static int computeSubstituentSize(const RDKit::ROMol *mol,
 
 // Structure to hold information about a fused small ring
 struct FusedRingInfo {
-  RDKit::INT_VECT ring_atoms;    // All atoms in the fused ring
-  RDKit::INT_VECT shared_atoms;  // Atoms shared with macrocycle, in the order
-                                 // they appear in the macrocycle
-  size_t ring_size;
+  RDKit::INT_VECT ringAtoms;    // All atoms in the fused ring
+  RDKit::INT_VECT sharedAtoms;  // Atoms shared with macrocycle, in the order
+                                // they appear in the macrocycle
+  size_t ringSize;
 
   // For validation: positions of shared atoms in macrocycle sequence
-  std::vector<size_t> macrocycle_positions;
+  std::vector<size_t> macrocyclePositions;
 };
 
 // Struct to hold substituent size information
 struct SubstituentInfo {
   std::unordered_map<unsigned int, int> sizes;
-  int smallest_size;
+  int smallestSize;
 };
 
 // Struct to hold template match with score
 struct TemplateMatch {
-  std::shared_ptr<RDKit::ROMol> template_mol;
+  std::shared_ptr<RDKit::ROMol> templateMol;
   RDKit::MatchVectType match;
   double score;
 };
@@ -768,13 +768,13 @@ static std::vector<FusedRingInfo> identifyFusedSmallRings(
 
     // Check if small ring (4-6 atoms) with 2, 3, or 4 shared atoms
     size_t ring_size = ring.size();
-    size_t shared_count = shared.size();
+    size_t sharedCount = shared.size();
 
     if (ring_size >= 4 && ring_size <= 6 &&
-        (shared_count == 2 || shared_count == 3 || shared_count == 4)) {
+        (sharedCount == 2 || sharedCount == 3 || sharedCount == 4)) {
       // Find positions of shared atoms in macrocycle
       std::vector<size_t> positions;
-      positions.reserve(shared_count);
+      positions.reserve(sharedCount);
       for (auto shared_aidx : shared) {
         auto it = std::find(macrocycleRing.begin(), macrocycleRing.end(),
                             shared_aidx);
@@ -783,14 +783,14 @@ static std::vector<FusedRingInfo> identifyFusedSmallRings(
         }
       }
 
-      if (positions.size() != shared_count) {
+      if (positions.size() != sharedCount) {
         continue;  // Safety check
       }
       FusedRingInfo info;
-      info.ring_atoms = ring;
-      info.shared_atoms = shared;
-      info.ring_size = ring_size;
-      info.macrocycle_positions = std::move(positions);
+      info.ringAtoms = ring;
+      info.sharedAtoms = shared;
+      info.ringSize = ring_size;
+      info.macrocyclePositions = std::move(positions);
       fused_rings.push_back(info);
     }
   }
@@ -805,15 +805,15 @@ static std::vector<FusedRingInfo> identifyFusedSmallRings(
 // in a 3 shared atom fused ring we expect to see a convex, concave, convex
 // pattern of angles, so we need to know which sign is convex vs concave.
 static bool determineConvexSign(
-    const std::shared_ptr<RDKit::ROMol> &template_mol,
+    const std::shared_ptr<RDKit::ROMol> &templateMol,
     const RDKit::MatchVectType &match, const RDKit::INT_VECT &macrocycleRing) {
   // Build map: molecule atom idx -> template atom idx
-  std::unordered_map<int, int> mol_to_template;
-  for (const auto &[template_aidx, mol_aidx] : match) {
-    mol_to_template[mol_aidx] = template_aidx;
+  std::unordered_map<int, int> molToTemplate;
+  for (const auto &[templateAidx, molAidx] : match) {
+    molToTemplate[molAidx] = templateAidx;
   }
 
-  const auto &conf = template_mol->getConformer();
+  const auto &conf = templateMol->getConformer();
 
   auto signedAngle = [](const RDGeom::Point2D &v_from,
                         const RDGeom::Point2D &v_to) -> double {
@@ -832,16 +832,16 @@ static bool determineConvexSign(
     size_t curr_pos = i;
     size_t next_pos = (i + 1) % N;
 
-    int mol_prev = macrocycleRing[prev_pos];
-    int mol_curr = macrocycleRing[curr_pos];
-    int mol_next = macrocycleRing[next_pos];
+    int molPrev = macrocycleRing[prev_pos];
+    int molCurr = macrocycleRing[curr_pos];
+    int molNext = macrocycleRing[next_pos];
 
-    auto it_prev = mol_to_template.find(mol_prev);
-    auto it_curr = mol_to_template.find(mol_curr);
-    auto it_next = mol_to_template.find(mol_next);
+    auto it_prev = molToTemplate.find(molPrev);
+    auto it_curr = molToTemplate.find(molCurr);
+    auto it_next = molToTemplate.find(molNext);
 
-    if (it_prev == mol_to_template.end() || it_curr == mol_to_template.end() ||
-        it_next == mol_to_template.end()) {
+    if (it_prev == molToTemplate.end() || it_curr == molToTemplate.end() ||
+        it_next == molToTemplate.end()) {
       continue;
     }
 
@@ -869,20 +869,20 @@ static bool determineConvexSign(
 // Returns SubstituentInfo containing sizes map and smallest substituent size
 static SubstituentInfo computeSubstituentInfo(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
-    const boost::dynamic_bitset<> &ring_atoms) {
+    const boost::dynamic_bitset<> &ringAtoms) {
   SubstituentInfo info;
-  info.smallest_size = -1;
+  info.smallestSize = -1;
 
   for (auto ring_atom_idx : macrocycleRing) {
     auto atom = mol->getAtomWithIdx(ring_atom_idx);
     for (auto nbr : mol->atomNeighbors(atom)) {
       unsigned int nbr_idx = nbr->getIdx();
-      if (!ring_atoms.test(nbr_idx) && info.sizes.count(nbr_idx) == 0) {
+      if (!ringAtoms.test(nbr_idx) && info.sizes.count(nbr_idx) == 0) {
         int size =
-            computeSubstituentSize(mol, nbr_idx, ring_atom_idx, ring_atoms);
+            computeSubstituentSize(mol, nbr_idx, ring_atom_idx, ringAtoms);
         info.sizes[nbr_idx] = size;
-        if (info.smallest_size == -1 || size < info.smallest_size) {
-          info.smallest_size = size;
+        if (info.smallestSize == -1 || size < info.smallestSize) {
+          info.smallestSize = size;
         }
       }
     }
@@ -895,20 +895,20 @@ static SubstituentInfo computeSubstituentInfo(
 // Returns negative score (lower penalty = higher score)
 static double scoreTemplateMatch(
     const RDKit::ROMol *mol, const RDKit::MatchVectType &match,
-    const CachedTemplateInfo &cached_info,
-    const boost::dynamic_bitset<> &ring_atoms,
+    const CachedTemplateInfo &cachedInfo,
+    const boost::dynamic_bitset<> &ringAtoms,
     const std::unordered_map<unsigned int, int> &substituent_sizes) {
   const double PENALTY_PER_ATOM = 10.0;
   double internal_penalty = 0.0;
 
-  for (const auto &[template_aidx, mol_aidx] : match) {
+  for (const auto &[templateAidx, molAidx] : match) {
     // If this template position has a degree constraint, it's internal
-    if (static_cast<size_t>(template_aidx) < cached_info.is_internal.size() &&
-        cached_info.is_internal[template_aidx]) {
-      auto mol_atom = mol->getAtomWithIdx(mol_aidx);
+    if (static_cast<size_t>(templateAidx) < cachedInfo.is_internal.size() &&
+        cachedInfo.is_internal[templateAidx]) {
+      auto mol_atom = mol->getAtomWithIdx(molAidx);
       for (auto nbr : mol->atomNeighbors(mol_atom)) {
         unsigned int nbr_idx = nbr->getIdx();
-        if (!ring_atoms.test(nbr_idx)) {
+        if (!ringAtoms.test(nbr_idx)) {
           int sub_size = substituent_sizes.at(nbr_idx);
           internal_penalty += sub_size * PENALTY_PER_ATOM;
         }
@@ -926,36 +926,35 @@ static double scoreTemplateMatch(
 // convex This creates a concave indentation where the small ring can fit
 // outside the macrocycle
 static bool validateFusionGeometry(
-    const std::shared_ptr<RDKit::ROMol> &template_mol,
+    const std::shared_ptr<RDKit::ROMol> &templateMol,
     const RDKit::MatchVectType &match, const RDKit::INT_VECT &macrocycleRing,
-    const std::vector<FusedRingInfo> &fusedRings,
-    bool positive_is_convex) {
+    const std::vector<FusedRingInfo> &fusedRings, bool positiveIsConvex) {
   const double ANGLE_TOLERANCE = 20.0 * M_PI / 180.0;  // ~20 degrees in radians
   const double TARGET_60_DEG = 60.0 * M_PI / 180.0;    // 60 degrees in radians
 
   // Build map: molecule atom idx -> template atom idx
-  std::unordered_map<int, int> mol_to_template;
-  for (const auto &[template_aidx, mol_aidx] : match) {
-    mol_to_template[mol_aidx] = template_aidx;
+  std::unordered_map<int, int> molToTemplate;
+  for (const auto &[templateAidx, molAidx] : match) {
+    molToTemplate[molAidx] = templateAidx;
   }
 
   // Get template conformer for coordinate access
-  const auto &conf = template_mol->getConformer();
+  const auto &conf = templateMol->getConformer();
 
   // Check each fused ring
   for (const auto &fused : fusedRings) {
-    size_t shared_count = fused.shared_atoms.size();
+    size_t sharedCount = fused.sharedAtoms.size();
 
     // We handle 2, 3, or 4 shared atoms
-    if (shared_count != 2 && shared_count != 3 && shared_count != 4) {
+    if (sharedCount != 2 && sharedCount != 3 && sharedCount != 4) {
       continue;  // Safety check
     }
 
     // Get positions in macrocycle sequence (should match the sequence they have
     // in the macrocycle)
-    auto positions = fused.macrocycle_positions;
+    auto positions = fused.macrocyclePositions;
 
-    if (positions.size() != shared_count) {
+    if (positions.size() != sharedCount) {
       continue;  // Safety check
     }
 
@@ -982,39 +981,39 @@ static bool validateFusionGeometry(
     };
 
     // Helper to check if angle matches expected type (convex or concave)
-    auto angleMatchesType = [&](double angle, bool should_be_convex) -> bool {
-      bool is_positive = (angle > 0);
-      bool is_convex = (is_positive == positive_is_convex);
-      bool matches = (is_convex == should_be_convex);
+    auto angleMatchesType = [&](double angle, bool shouldBeConvex) -> bool {
+      bool isPositive = (angle > 0);
+      bool isConvex = (isPositive == positiveIsConvex);
+      bool matches = (isConvex == shouldBeConvex);
 
       // Also check magnitude is approximately 60 degrees
-      bool correct_magnitude =
+      bool correctMagnitude =
           (std::fabs(std::fabs(angle) - TARGET_60_DEG) < ANGLE_TOLERANCE);
 
-      return matches && correct_magnitude;
+      return matches && correctMagnitude;
     };
 
-    // For shared_count atoms, we need shared_count + 2 consecutive atoms:
+    // For sharedCount atoms, we need sharedCount + 2 consecutive atoms:
     // before, A1, A2, ..., A_n, after
-    // This gives us shared_count + 1 angles to check
-    size_t pos_before = (positions[0] + N - 1) % N;
-    size_t pos_after = (positions[shared_count - 1] + 1) % N;
+    // This gives us sharedCount + 1 angles to check
+    size_t posBefore = (positions[0] + N - 1) % N;
+    size_t posAfter = (positions[sharedCount - 1] + 1) % N;
 
-    // Build mol_indices: [before, shared atoms..., after]
-    std::vector<int> mol_indices;
-    mol_indices.reserve(shared_count + 2);
-    mol_indices.push_back(macrocycleRing[pos_before]);
-    for (size_t i = 0; i < shared_count; ++i) {
-      mol_indices.push_back(macrocycleRing[positions[i]]);
+    // Build molIndices: [before, shared atoms..., after]
+    std::vector<int> molIndices;
+    molIndices.reserve(sharedCount + 2);
+    molIndices.push_back(macrocycleRing[posBefore]);
+    for (size_t i = 0; i < sharedCount; ++i) {
+      molIndices.push_back(macrocycleRing[positions[i]]);
     }
-    mol_indices.push_back(macrocycleRing[pos_after]);
+    molIndices.push_back(macrocycleRing[posAfter]);
 
     // Map to template coordinates
     std::vector<RDGeom::Point2D> points;
-    points.reserve(mol_indices.size());
-    for (int mol_idx : mol_indices) {
-      auto it = mol_to_template.find(mol_idx);
-      if (it == mol_to_template.end()) {
+    points.reserve(molIndices.size());
+    for (int molIdx : molIndices) {
+      auto it = molToTemplate.find(molIdx);
+      if (it == molToTemplate.end()) {
         return false;  // Missing atom in template match
       }
       points.push_back(conf.getAtomPos(it->second));
@@ -1035,9 +1034,9 @@ static bool validateFusionGeometry(
       double angle = signedAngle(vectors[i], vectors[i + 1]);
 
       // Determine expected type: first and last are convex, middle are concave
-      bool should_be_convex = (i == 0 || i == vectors.size() - 2);
+      bool shouldBeConvex = (i == 0 || i == vectors.size() - 2);
 
-      if (!angleMatchesType(angle, should_be_convex)) {
+      if (!angleMatchesType(angle, shouldBeConvex)) {
         return false;  // Invalid fusion geometry
       }
     }
@@ -1047,106 +1046,104 @@ static bool validateFusionGeometry(
 }
 
 // Helper: Process all matches for a single template
-// Returns pair of <valid_matches, found_best_match>
-// If found_best_match is true, the last element in valid_matches is the best
+// Returns pair of <validMatches, foundBestMatch>
+// If foundBestMatch is true, the last element in validMatches is the best
 static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
-    const RDKit::ROMol *mol, const RDKit::RWMol &ring_mol,
+    const RDKit::ROMol *mol, const RDKit::RWMol &ringMol,
     const std::shared_ptr<RDKit::ROMol> &tmpl,
-    const CachedTemplateInfo &cached_info,
-    const RDKit::INT_VECT &macrocycleRing,
+    const CachedTemplateInfo &cachedInfo, const RDKit::INT_VECT &macrocycleRing,
     const std::vector<FusedRingInfo> &fusedRings,
-    const boost::dynamic_bitset<> &ring_atoms,
-    const SubstituentInfo &sub_info) {
-  std::vector<TemplateMatch> valid_matches;
+    const boost::dynamic_bitset<> &ringAtoms, const SubstituentInfo &subInfo) {
+  std::vector<TemplateMatch> validMatches;
   const double PENALTY_PER_ATOM = 10.0;
 
-  if (!cached_info.relaxed_query) {
-    return {valid_matches, false};
+  if (!cachedInfo.relaxed_query) {
+    return {validMatches, false};
   }
 
   RDKit::SubstructMatchParameters params;
   params.maxMatches = 100;
   params.uniquify = false;  // Don't uniquify - we want ALL rotations
   auto matches =
-      RDKit::SubstructMatch(ring_mol, *cached_info.relaxed_query, params);
+      RDKit::SubstructMatch(ringMol, *cachedInfo.relaxed_query, params);
 
   // Pre-compute convex sign once for all matches (used in fusion validation)
-  bool positive_is_convex = false;
+  bool positiveIsConvex = false;
   if (!fusedRings.empty() && !matches.empty()) {
     // Use first match to determine convex sign (same for all rotations)
-    positive_is_convex = determineConvexSign(tmpl, matches[0], macrocycleRing);
+    positiveIsConvex = determineConvexSign(tmpl, matches[0], macrocycleRing);
   }
 
   for (const auto &match : matches) {
-    if (!checkStereoChemistry(ring_mol, *tmpl, match)) {
+    if (!checkStereoChemistry(ringMol, *tmpl, match)) {
       continue;
     }
 
     // Check fusion geometry
     if (!fusedRings.empty()) {
       if (!validateFusionGeometry(tmpl, match, macrocycleRing, fusedRings,
-                                  positive_is_convex)) {
+                                  positiveIsConvex)) {
         continue;  // Try next match - invalid fusion geometry
       }
     }
 
     // Score this match
     double score =
-        scoreTemplateMatch(mol, match, cached_info, ring_atoms, sub_info.sizes);
+        scoreTemplateMatch(mol, match, cachedInfo, ringAtoms, subInfo.sizes);
 
     // Store this match
-    valid_matches.push_back({tmpl, match, score});
+    validMatches.push_back({tmpl, match, score});
 
     // Early exit: if we found the best possible match, return it
     // Best possible = only smallest substituent on an internal position
     double internal_penalty = -score;
-    if (sub_info.smallest_size != -1 &&
-        internal_penalty <= PENALTY_PER_ATOM * sub_info.smallest_size) {
+    if (subInfo.smallestSize != -1 &&
+        internal_penalty <= PENALTY_PER_ATOM * subInfo.smallestSize) {
       // Signal that we found the best possible match
-      return {valid_matches, true};
+      return {validMatches, true};
     }
   }
 
-  return {valid_matches, false};
+  return {validMatches, false};
 }
 
 // Helper: Select best scoring match from vector
 // Returns pointer to best match, or nullptr if vector is empty
 static const TemplateMatch *selectBestMatch(
-    const std::vector<TemplateMatch> &valid_matches) {
-  if (valid_matches.empty()) {
+    const std::vector<TemplateMatch> &validMatches) {
+  if (validMatches.empty()) {
     return nullptr;
   }
 
   // Find the best scoring match
-  auto best_match =
-      std::max_element(valid_matches.begin(), valid_matches.end(),
+  auto bestMatch =
+      std::max_element(validMatches.begin(), validMatches.end(),
                        [](const TemplateMatch &a, const TemplateMatch &b) {
                          return a.score < b.score;
                        });
 
-  return &(*best_match);
+  return &(*bestMatch);
 }
 
 bool EmbeddedFrag::matchToTemplateMacrocycle(
     const RDKit::INT_VECT &macrocycleRing,
     const RDKit::VECT_INT_VECT &allRings) {
   // 1. Return early if no template of this size exists
-  CoordinateTemplates &coordinate_templates =
+  CoordinateTemplates &coordinateTemplates =
       CoordinateTemplates::getRingSystemTemplates();
-  if (!coordinate_templates.hasTemplateOfSize(macrocycleRing.size())) {
+  if (!coordinateTemplates.hasTemplateOfSize(macrocycleRing.size())) {
     return false;
   }
 
   // 2. Build ring mol and setup
-  boost::dynamic_bitset<> ring_atoms(dp_mol->getNumAtoms());
+  boost::dynamic_bitset<> ringAtoms(dp_mol->getNumAtoms());
   for (auto aidx : macrocycleRing) {
-    ring_atoms.set(aidx);
+    ringAtoms.set(aidx);
   }
-  RDKit::RWMol ring_mol = buildRingMol(dp_mol, ring_atoms);
+  RDKit::RWMol ringMol = buildRingMol(dp_mol, ringAtoms);
 
   // 3. Pre-compute substituent info
-  auto sub_info = computeSubstituentInfo(dp_mol, macrocycleRing, ring_atoms);
+  auto subInfo = computeSubstituentInfo(dp_mol, macrocycleRing, ringAtoms);
 
   // 4. Identify fused rings for geometry validation
   std::vector<FusedRingInfo> fusedRings;
@@ -1155,32 +1152,32 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
   }
 
   // 5. Process all templates and collect valid matches
-  std::vector<TemplateMatch> all_valid_matches;
+  std::vector<TemplateMatch> all_validMatches;
   for (const auto &tmpl :
-       coordinate_templates.getMatchingTemplates(macrocycleRing.size())) {
-    const auto &cached_info = getCachedTemplateInfo(tmpl);
+       coordinateTemplates.getMatchingTemplates(macrocycleRing.size())) {
+    const auto &cachedInfo = getCachedTemplateInfo(tmpl);
 
-    auto [matches, found_best_match] = processTemplateMatches(
-        dp_mol, ring_mol, tmpl, cached_info, macrocycleRing, fusedRings,
-        ring_atoms, sub_info);
+    auto [matches, foundBestMatch] =
+        processTemplateMatches(dp_mol, ringMol, tmpl, cachedInfo,
+                               macrocycleRing, fusedRings, ringAtoms, subInfo);
 
-    if (found_best_match && !matches.empty()) {
+    if (foundBestMatch && !matches.empty()) {
       // Best possible match found - apply it immediately
       const auto &best = matches.back();
-      applyTemplateCoordinates(best.template_mol, best.match);
+      applyTemplateCoordinates(best.templateMol, best.match);
       return true;
     }
 
-    all_valid_matches.insert(all_valid_matches.end(), matches.begin(),
-                             matches.end());
+    all_validMatches.insert(all_validMatches.end(), matches.begin(),
+                            matches.end());
   }
 
   // 6. Select and apply best match
-  const TemplateMatch *best = selectBestMatch(all_valid_matches);
+  const TemplateMatch *best = selectBestMatch(all_validMatches);
   if (!best) {
     return false;
   }
-  applyTemplateCoordinates(best->template_mol, best->match);
+  applyTemplateCoordinates(best->templateMol, best->match);
   return true;
 }
 
@@ -1262,9 +1259,9 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
     RDKit::Union(fusedRings, funion);
 
     // First try exact template matching on all rings
-    bool found_template = matchToTemplate(funion, fusedRings.size());
+    bool foundTemplate = matchToTemplate(funion, fusedRings.size());
 
-    if (found_template) {
+    if (foundTemplate) {
       // Whole fused system template matched - we are done
       return;
     }
@@ -1294,40 +1291,40 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
     if (hasASimplifiedFusedSystem || hasMacrocycle) {
       // look for a template that matches the core ring system
       RDKit::Union(coreRings, funion);
-      bool found_template = false;
-      if (hasASimplifiedFusedSystem)
-        found_template = matchToTemplate(funion, coreRings.size());
-
+      bool foundTemplate = false;
+      if (hasASimplifiedFusedSystem) {
+        foundTemplate = matchToTemplate(funion, coreRings.size());
+      }
       // If exact match failed, try permissive macrocycle matching on core rings
-      if (!found_template && hasMacrocycle) {
+      if (!foundTemplate && hasMacrocycle) {
         // Find the macrocycle in fusedRings (should match coreRingsIds[0])
         int macrocycle_idx = pickFirstRingToEmbed(*dp_mol, fusedRings);
 
         // Check if all other rings (non-core) are small (4, 5, or 6 atoms)
-        bool all_small_rings = true;
+        bool allSmallRings = true;
         for (size_t i = 0; i < fusedRings.size(); ++i) {
           if (std::find(coreRingsIds.begin(), coreRingsIds.end(), i) ==
               coreRingsIds.end()) {
             // This ring is not in core
             size_t ring_size = fusedRings[i].size();
             if (ring_size < 4 || ring_size > 6) {
-              all_small_rings = false;
+              allSmallRings = false;
               break;
             }
           }
         }
 
-        if (all_small_rings) {
+        if (allSmallRings) {
           // Try permissive template matching with fusion validation
-          found_template =
+          foundTemplate =
               matchToTemplateMacrocycle(fusedRings[macrocycle_idx], coreRings);
-          if (found_template) {
+          if (foundTemplate) {
             doneRings.push_back(macrocycle_idx);
           }
         }
       }
 
-      if (found_template && doneRings.empty()) {
+      if (foundTemplate && doneRings.empty()) {
         doneRings = coreRingsIds;
       }
     }
