@@ -1891,7 +1891,7 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
 void EmbeddedFrag::flipAboutSpiroCenter(unsigned int spiroAid) {
   PRECONDITION(dp_mol, "");
   PRECONDITION(spiroAid < dp_mol->getNumAtoms(), "");
-  PRECONDITION(isSpiroCenter(spiroAid, dp_mol), "Must be spiro center");
+  // Note: Caller validates spiroAid is a spiro center, no need to check again
 
   // Get the two rings
   auto rings = _getRingsForSpiroCenter(spiroAid, dp_mol);

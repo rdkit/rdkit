@@ -14,6 +14,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/Chirality.h>
 #include <algorithm>
+#include <boost/dynamic_bitset.hpp>
 
 namespace {
 static const char *FORMER_NBR_INDICES = "__formerNbrIndices";
@@ -406,6 +407,12 @@ bool isSpiroCenter(unsigned int aid, const RDKit::ROMol *mol) {
   PRECONDITION(mol, "");
   PRECONDITION(aid < mol->getNumAtoms(), "");
 
+  // Cheap check first: spiro center should have exactly 4 neighbors
+  unsigned int degree = mol->getAtomWithIdx(aid)->getDegree();
+  if (degree != 4) {
+    return false;
+  }
+
   // Spiro atom must belong to exactly 2 rings
   unsigned int numRings = mol->getRingInfo()->numAtomRings(aid);
   if (numRings != 2) {
@@ -425,23 +432,21 @@ bool isSpiroCenter(unsigned int aid, const RDKit::ROMol *mol) {
     return false;
   }
 
-  // Check that the two rings share ONLY this atom (spiro)
-  std::set<int> ring1(rings[0].begin(), rings[0].end());
-  std::set<int> ring2(rings[1].begin(), rings[1].end());
+  // Use dynamic_bitset for efficient set operations
+  boost::dynamic_bitset<> ring1(mol->getNumAtoms());
+  boost::dynamic_bitset<> ring2(mol->getNumAtoms());
 
-  std::vector<int> shared;
-  std::set_intersection(ring1.begin(), ring1.end(),
-                       ring2.begin(), ring2.end(),
-                       std::back_inserter(shared));
-
-  if (shared.size() != 1 || shared[0] != static_cast<int>(aid)) {
-    // Rings share more than just this atom - not a spiro
-    return false;
+  for (auto idx : rings[0]) {
+    ring1.set(idx);
+  }
+  for (auto idx : rings[1]) {
+    ring2.set(idx);
   }
 
-  // Spiro center should have exactly 4 neighbors (typical for carbon)
-  unsigned int degree = mol->getAtomWithIdx(aid)->getDegree();
-  if (degree != 4) {
+  // Check that the two rings share ONLY this atom (spiro)
+  boost::dynamic_bitset<> shared = ring1 & ring2;
+  if (shared.count() != 1 || !shared.test(aid)) {
+    // Rings share more than just this atom - not a spiro
     return false;
   }
 
@@ -451,8 +456,8 @@ bool isSpiroCenter(unsigned int aid, const RDKit::ROMol *mol) {
 
   for (auto nbr : mol->atomNeighbors(mol->getAtomWithIdx(aid))) {
     unsigned int nbrIdx = nbr->getIdx();
-    bool in_ring1 = ring1.find(nbrIdx) != ring1.end();
-    bool in_ring2 = ring2.find(nbrIdx) != ring2.end();
+    bool in_ring1 = ring1.test(nbrIdx);
+    bool in_ring2 = ring2.test(nbrIdx);
 
     if (in_ring1 && !in_ring2) {
       ring1_neighbors++;
