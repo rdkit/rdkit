@@ -108,6 +108,13 @@ class MacrocycleGenerator {
   */
   void addAngleConstraint(const AngleConstraint &constraint);
 
+  //! Set substituent sizes at each position (for penalty scoring)
+  /*!
+    \param substituentSizes: Map from macrocycle position to total substituent size
+    \param innerTurnSign: Which turn direction points inward (+1 for R, -1 for L)
+  */
+  void setSubstituentInfo(const std::map<size_t, int> &substituentSizes, int innerTurnSign);
+
   //! Check if a position has an angle constraint
   /*!
     \param position: Position in macrocycle to check
@@ -166,12 +173,16 @@ class MacrocycleGenerator {
   */
   std::vector<HexCoord> calculateHexCoords(const std::vector<int> &turns) const;
 
-  //! Check if a turn sequence has self-crossings
+  //! Calculate minimum distance between non-adjacent atoms in hex coordinates
   /*!
-    \param turns: Turn sequence to check
-    \return true if the sequence crosses itself
+    Combines clash detection and minimum distance calculation for efficiency.
+    Calculates hex coordinates once and checks all pairs.
+
+    \param turns: Turn sequence to evaluate
+    \return minimum distance (in hex units) between any two non-adjacent atoms,
+            or 0 if self-crossing detected (clash)
   */
-  bool hasSelfCrossing(const std::vector<int> &turns) const;
+  int calculateMinDistance(const std::vector<int> &turns) const;
 
   //! Analytically refine coordinates to fix closure gap and geometry
   /*!
@@ -200,6 +211,12 @@ class MacrocycleGenerator {
   void adjustAnglesForClosure(std::vector<RDGeom::Point2D> &coords,
                               bool isOddRing) const;
 
+  //! Get number of free (undecided) turn positions
+  /*!
+    \return number of positions with turn = 0 (not yet decided)
+  */
+  size_t getNumFreePositions() const;
+
  private:
   //! Step 1: Distribute closure gap linearly
   void distributeClosureGap(std::vector<RDGeom::Point2D> &coords) const;
@@ -209,11 +226,24 @@ class MacrocycleGenerator {
   //! Calculate positional closure error for a given turn sequence
   double calculateClosureError(const std::vector<int> &turns) const;
 
+  //! Calculate penalty for substituents on inner turns
+  /*!
+    Penalizes substituents placed on inner turns (pointing toward center).
+    Penalty is weighted by substituent size.
+
+    \param turns: Turn sequence to evaluate
+    \return penalty value (higher = worse)
+  */
+  double calculateSubstituentPenalty(const std::vector<int> &turns) const;
+
   //! Apply constraints to turn sequence, return false if constraints conflict
   bool applyConstraints(std::vector<int> &turns) const;
 
   //! Validate that a turn sequence satisfies all constraints
   bool validateConstraints(const std::vector<int> &turns) const;
+
+  //! Try to solve with a specific R-L target difference
+  bool trySolveWithTargetDiff(int targetDiff);
 
   //! Enumerate combinations and find optimal solution
   bool findOptimalTurnSequence(int numRight, int numLeft);
@@ -226,6 +256,8 @@ class MacrocycleGenerator {
   std::vector<int> d_turns;  //!< Turn sequence: +1 = R, -1 = L, 0 = undecided
   std::vector<TurnConstraint> d_constraints;  //!< Structural constraints
   std::vector<AngleConstraint> d_angleConstraints;  //!< Angle constraints for small rings
+  std::map<size_t, int> d_substituentSizes;  //!< Map: position -> total substituent size
+  int d_innerTurnSign;  //!< Which turn direction points inward (+1 for R, -1 for L)
   double d_closureError;                      //!< Positional closure error
   bool d_solved;  //!< Whether solve() has been called successfully
   bool d_useJacobianRefinement;  //!< Whether to use Jacobian angle adjustment

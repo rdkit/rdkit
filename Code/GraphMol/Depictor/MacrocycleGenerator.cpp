@@ -21,6 +21,7 @@ MacrocycleGenerator::MacrocycleGenerator(size_t ringSize, double bondLength,
                                          bool useJacobianRefinement)
     : d_ringSize(ringSize),
       d_bondLength(bondLength),
+      d_innerTurnSign(0),
       d_closureError(std::numeric_limits<double>::max()),
       d_solved(false),
       d_useJacobianRefinement(useJacobianRefinement) {
@@ -44,6 +45,18 @@ void MacrocycleGenerator::addAngleConstraint(const AngleConstraint &constraint) 
   }
 
   d_angleConstraints.push_back(constraint);
+}
+
+void MacrocycleGenerator::setSubstituentInfo(const std::map<size_t, int> &substituentSizes, int innerTurnSign) {
+  d_substituentSizes = substituentSizes;
+  d_innerTurnSign = innerTurnSign;
+
+  // Debug: Show what substituent info was set
+  std::cerr << "SUBST_INFO_SET: innerTurnSign=" << innerTurnSign << ", substituents={";
+  for (const auto &[pos, size] : substituentSizes) {
+    std::cerr << " [" << pos << "]=" << size;
+  }
+  std::cerr << " }" << std::endl;
 }
 
 bool MacrocycleGenerator::hasAngleConstraint(size_t position) const {
@@ -252,6 +265,33 @@ bool MacrocycleGenerator::solve() {
     return false;  // Constraints conflict
   }
 
+  bool isOddRing = (d_ringSize % 2) == 1;
+
+  // Try different target differences with relaxation
+  // Normal: R-L = 6 (even) or 5 (odd)
+  // First relaxation: ±2 from normal
+  // Second relaxation (odd only): ±4 from normal
+  std::vector<int> targetDiffs;
+
+  if (isOddRing) {
+    targetDiffs = {5, 3, 7, 1, 9};  // normal, then ±2, then ±4
+  } else {
+    targetDiffs = {6, 4, 8, 2, 10};  // normal, then ±2, then ±4
+  }
+
+  for (int targetDiff : targetDiffs) {
+    std::cerr << "SOLVE_ATTEMPT: Trying targetDiff(R-L)=" << targetDiff << std::endl;
+    if (trySolveWithTargetDiff(targetDiff)) {
+      std::cerr << "SOLVE_SUCCESS: Found solution with targetDiff=" << targetDiff << std::endl;
+      return true;
+    }
+  }
+
+  std::cerr << "SOLVE_FAILED: All targetDiff values failed" << std::endl;
+  return false;
+}
+
+bool MacrocycleGenerator::trySolveWithTargetDiff(int targetDiff) {
   // Count already-decided turns
   int decidedRight = 0;
   int decidedLeft = 0;
@@ -267,12 +307,31 @@ bool MacrocycleGenerator::solve() {
     }
   }
 
-  // Angular closure constraint: count(R) - count(L) = 6
-  // For even-numbered rings: exact angular closure with R - L = 6
-  // For odd-numbered rings: use R - L = 5, then distribute extra 60° across all
-  // angles
   bool isOddRing = (d_ringSize % 2) == 1;
-  int targetDiff = isOddRing ? 5 : 6;
+
+  std::cerr << "CONSTRAINT_INFO: ringSize=" << d_ringSize << ", isOddRing=" << isOddRing
+            << ", targetDiff(R-L)=" << targetDiff << std::endl;
+  std::cerr << "CONSTRAINT_INFO: decidedRight=" << decidedRight
+            << ", decidedLeft=" << decidedLeft << ", freeCount=" << freeCount << std::endl;
+
+  // Show angle constraints
+  if (!d_angleConstraints.empty()) {
+    std::cerr << "ANGLE_CONSTRAINTS: " << d_angleConstraints.size() << " constraints set:" << std::endl;
+    for (const auto &c : d_angleConstraints) {
+      int turn_sign = (c.targetAngle > 0) ? 1 : -1;
+      std::cerr << "  pos=" << c.position << ", targetAngle=" << (c.targetAngle * 180.0 / M_PI)
+                << "°, turn=" << (turn_sign > 0 ? "R" : "L") << std::endl;
+    }
+  }
+
+  // Show which positions are already decided (constrained to R or L)
+  std::cerr << "DECIDED_TURNS: ";
+  for (size_t i = 0; i < d_turns.size(); ++i) {
+    if (d_turns[i] != 0) {
+      std::cerr << " [" << i << "]=" << (d_turns[i] == 1 ? "R" : "L");
+    }
+  }
+  std::cerr << std::endl;
 
   // We need: (decidedRight + freeRight) - (decidedLeft + freeLeft) = targetDiff
   // Where: freeRight + freeLeft = freeCount
@@ -282,30 +341,54 @@ bool MacrocycleGenerator::solve() {
   int totalRight = (d_ringSize + targetDiff) / 2;
   int totalLeft = (d_ringSize - targetDiff) / 2;
 
+  std::cerr << "SOLVE_CALC: totalRight=" << totalRight << ", totalLeft=" << totalLeft << std::endl;
+
   // Check parity
   if ((d_ringSize + targetDiff) % 2 != 0) {
+    std::cerr << "SOLVE_FAILED: Parity mismatch" << std::endl;
     return false;  // Parity mismatch - no integer solution
   }
 
   // Check if solution is possible
   if (totalRight < 0 || totalLeft < 0) {
+    std::cerr << "SOLVE_FAILED: Negative total (totalRight=" << totalRight << ", totalLeft=" << totalLeft << ")" << std::endl;
     return false;  // Ring too small for angular closure
   }
 
   int freeRight = totalRight - decidedRight;
   int freeLeft = totalLeft - decidedLeft;
 
+  std::cerr << "SOLVE_CALC: freeRight=" << freeRight << ", freeLeft=" << freeLeft << std::endl;
+
   if (freeRight < 0 || freeLeft < 0) {
+    std::cerr << "SOLVE_FAILED: Negative free (freeRight=" << freeRight << ", freeLeft=" << freeLeft << ")" << std::endl;
     return false;  // Constraints over-constrain the solution
   }
 
   if (freeRight + freeLeft != freeCount) {
+    std::cerr << "SOLVE_FAILED: Sanity check (freeRight+freeLeft=" << (freeRight+freeLeft) << " != freeCount=" << freeCount << ")" << std::endl;
     return false;  // Sanity check failed
   }
 
   // Find optimal turn sequence for free variables
+  std::cerr << "SOLVE: Calling findOptimalTurnSequence(freeRight=" << freeRight << ", freeLeft=" << freeLeft << ")" << std::endl;
   d_solved = findOptimalTurnSequence(freeRight, freeLeft);
+  if (!d_solved) {
+    std::cerr << "SOLVE_FAILED: findOptimalTurnSequence returned false" << std::endl;
+  } else {
+    std::cerr << "SOLVE_SUCCESS: Found valid turn sequence" << std::endl;
+  }
   return d_solved;
+}
+
+size_t MacrocycleGenerator::getNumFreePositions() const {
+  size_t count = 0;
+  for (size_t i = 0; i < d_ringSize; ++i) {
+    if (d_turns[i] == 0) {
+      count++;
+    }
+  }
+  return count;
 }
 
 bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
@@ -314,6 +397,176 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
   for (size_t i = 0; i < d_ringSize; ++i) {
     if (d_turns[i] == 0) {
       freePositions.push_back(i);
+    }
+  }
+
+  // Fast heuristic for large rings: use alternating pattern instead of enumeration
+  // When there are many free positions (>15), enumeration becomes computationally infeasible
+  const size_t ENUMERATION_THRESHOLD = 15;
+
+  if (freePositions.size() > ENUMERATION_THRESHOLD) {
+    size_t numFree = freePositions.size();
+    std::cerr << "FAST_HEURISTIC: Using substituent-based pattern for " << numFree << " free positions" << std::endl;
+
+    // Strategy: Use substituent info to reduce degrees of freedom
+    // Positions with big substituents (size > 1) should be outer turns
+    // This is both chemically sensible and reduces the search space
+    std::vector<int> candidate = d_turns;  // Start with constrained values
+
+    int outerTurn = -d_innerTurnSign;  // Outer turn is opposite of inner
+    int assignedRight = 0;
+    int assignedLeft = 0;
+
+    std::cerr << "FAST_HEURISTIC: innerTurnSign=" << d_innerTurnSign
+              << ", outerTurn=" << (outerTurn == 1 ? "R" : "L") << std::endl;
+
+    // Step 1: Assign outer turns for positions with big substituents (size > 1)
+    int substituentAssignments = 0;
+    for (size_t pos : freePositions) {
+      auto it = d_substituentSizes.find(pos);
+      if (it != d_substituentSizes.end() && it->second > 1) {
+        // Big substituent - force outer turn
+        candidate[pos] = outerTurn;
+        if (outerTurn == 1) {
+          assignedRight++;
+        } else {
+          assignedLeft++;
+        }
+        substituentAssignments++;
+        std::cerr << "  pos[" << pos << "] subst_size=" << it->second
+                  << " -> OUTER (" << (outerTurn == 1 ? "R" : "L") << ")" << std::endl;
+      }
+    }
+
+    // Step 2: Check if we have capacity for these assignments
+    int remainingRight = numRight - assignedRight;
+    int remainingLeft = numLeft - assignedLeft;
+
+    std::cerr << "FAST_HEURISTIC: After " << substituentAssignments << " substituent assignments: "
+              << "assignedR=" << assignedRight << " assignedL=" << assignedLeft
+              << ", remainingR=" << remainingRight << " remainingL=" << remainingLeft << std::endl;
+
+    if (remainingRight < 0 || remainingLeft < 0) {
+      std::cerr << "FAST_HEURISTIC: Substituent assignment exceeds required counts" << std::endl;
+      return false;
+    }
+
+    // Step 3: If still too many free positions, use alternating for most, keep few truly free
+    std::vector<size_t> stillFree;
+    for (size_t pos : freePositions) {
+      if (candidate[pos] == 0) {
+        stillFree.push_back(pos);
+      }
+    }
+
+    const size_t MAX_ENUMERATION_SIZE = 10;  // Only enumerate over ~10 positions
+
+    if (stillFree.size() > MAX_ENUMERATION_SIZE) {
+      std::cerr << "FAST_HEURISTIC: Still have " << stillFree.size()
+                << " free positions after substituents, fixing most with alternating" << std::endl;
+
+      // How many to fix vs keep free
+      size_t numToFix = stillFree.size() - MAX_ENUMERATION_SIZE;
+
+      // Use alternating pattern for first numToFix positions
+      int currentTurn = (remainingRight >= remainingLeft) ? 1 : -1;
+      size_t fixed = 0;
+
+      for (size_t pos : stillFree) {
+        if (fixed >= numToFix) break;  // Leave the rest free
+
+        // Assign with alternating pattern
+        if (currentTurn == 1 && remainingRight > 0) {
+          candidate[pos] = 1;
+          remainingRight--;
+          currentTurn = -1;
+        } else if (currentTurn == -1 && remainingLeft > 0) {
+          candidate[pos] = -1;
+          remainingLeft--;
+          currentTurn = 1;
+        } else if (remainingRight > 0) {
+          candidate[pos] = 1;
+          remainingRight--;
+        } else if (remainingLeft > 0) {
+          candidate[pos] = -1;
+          remainingLeft--;
+        }
+        fixed++;
+      }
+
+      std::cerr << "FAST_HEURISTIC: Fixed " << fixed << " positions with alternating, "
+                << (stillFree.size() - fixed) << " still free for enumeration" << std::endl;
+
+      // Update d_turns with the fixed positions, then fall through to normal enumeration
+      d_turns = candidate;
+
+      // Recalculate free positions for enumeration
+      freePositions.clear();
+      for (size_t i = 0; i < d_ringSize; ++i) {
+        if (d_turns[i] == 0) {
+          freePositions.push_back(i);
+        }
+      }
+
+      // Update numRight and numLeft to reflect the remaining assignments needed
+      numRight = remainingRight;
+      numLeft = remainingLeft;
+
+      // Fall through to enumeration with reduced free positions
+      std::cerr << "FAST_HEURISTIC: Reduced free positions from " << numFree
+                << " to " << freePositions.size()
+                << ", need " << numRight << " R and " << numLeft << " L"
+                << ", continuing with enumeration" << std::endl;
+
+      // Don't return - fall through to enumeration code below
+
+    } else {
+      // Few enough positions - just assign them all with alternating
+      std::cerr << "FAST_HEURISTIC: Only " << stillFree.size()
+                << " positions remain, assigning all with alternating" << std::endl;
+
+      int currentTurn = (remainingRight >= remainingLeft) ? 1 : -1;
+
+      for (size_t pos : stillFree) {
+        // Assign based on what we still need
+        if (currentTurn == 1 && remainingRight > 0) {
+          candidate[pos] = 1;
+          remainingRight--;
+          currentTurn = -1;  // Try to alternate
+        } else if (currentTurn == -1 && remainingLeft > 0) {
+          candidate[pos] = -1;
+          remainingLeft--;
+          currentTurn = 1;  // Try to alternate
+        } else if (remainingRight > 0) {
+          candidate[pos] = 1;
+          remainingRight--;
+        } else if (remainingLeft > 0) {
+          candidate[pos] = -1;
+          remainingLeft--;
+        }
+      }
+
+      // Validate and return (all positions assigned)
+      if (validateConstraints(candidate)) {
+        int minDistance = calculateMinDistance(candidate);
+        if (minDistance > 0) {
+          d_turns = candidate;
+          d_closureError = calculateClosureError(candidate);
+
+          std::cerr << "FAST_HEURISTIC: Success (closureError=" << d_closureError
+                    << ", minDist=" << minDistance << ")" << std::endl;
+          return true;
+        } else {
+          std::cerr << "FAST_HEURISTIC: Self-crossing detected (minDist=0)" << std::endl;
+        }
+      } else {
+        std::cerr << "FAST_HEURISTIC: Constraint validation failed" << std::endl;
+      }
+
+      // All positions assigned but failed - can't enumerate further
+      std::cerr << "FAST_HEURISTIC: Failed after assigning all " << numFree
+                << " free positions" << std::endl;
+      return false;
     }
   }
 
@@ -335,15 +588,25 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
       candidate[i] = 1;  // Set to R
     }
 
-    double bestError = std::numeric_limits<double>::max();
+    double bestScore = std::numeric_limits<double>::max();
     std::vector<int> bestTurns;
 
+    // Weight for minimum distance in scoring (balances closure error vs roundness)
+    const double MIN_DISTANCE_WEIGHT = 0.5;
+
     // Evaluate first combination
-    if (validateConstraints(candidate) && !hasSelfCrossing(candidate)) {
-      double error = calculateClosureError(candidate);
-      if (error < bestError) {
-        bestError = error;
-        bestTurns = candidate;
+    if (validateConstraints(candidate)) {
+      int minDistance = calculateMinDistance(candidate);
+      // Skip if self-crossing detected (minDistance == 0)
+      if (minDistance > 0) {
+        double closureError = calculateClosureError(candidate);
+        double substituentPenalty = calculateSubstituentPenalty(candidate);
+        // Combined score: closure error - roundness bonus + substituent penalty
+        double score = closureError - MIN_DISTANCE_WEIGHT * minDistance + substituentPenalty;
+        if (score < bestScore) {
+          bestScore = score;
+          bestTurns = candidate;
+        }
       }
     }
 
@@ -357,12 +620,18 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
         candidate[pos] = 1;
       }
 
-      // Validate constraints and check for self-crossing before evaluating
-      if (validateConstraints(candidate) && !hasSelfCrossing(candidate)) {
-        double error = calculateClosureError(candidate);
-        if (error < bestError) {
-          bestError = error;
-          bestTurns = candidate;
+      // Validate constraints and calculate min distance (includes clash detection)
+      if (validateConstraints(candidate)) {
+        int minDistance = calculateMinDistance(candidate);
+        // Skip if self-crossing detected
+        if (minDistance > 0) {
+          double closureError = calculateClosureError(candidate);
+          double substituentPenalty = calculateSubstituentPenalty(candidate);
+          double score = closureError - MIN_DISTANCE_WEIGHT * minDistance + substituentPenalty;
+          if (score < bestScore) {
+            bestScore = score;
+            bestTurns = candidate;
+          }
         }
       }
     }
@@ -373,7 +642,31 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     }
 
     d_turns = bestTurns;
-    d_closureError = bestError;
+    d_closureError = calculateClosureError(bestTurns);
+
+    // Debug: Show scoring components for winning solution
+    {
+      int minDistance = calculateMinDistance(bestTurns);
+      double substituentPenalty = calculateSubstituentPenalty(bestTurns);
+      double minDistWeighted = MIN_DISTANCE_WEIGHT * minDistance;
+      double totalScore = d_closureError - minDistWeighted + substituentPenalty;
+      std::cerr << "MACROCYCLE_SCORE (fully-free): closureError=" << d_closureError
+                << ", minDist=" << minDistance << " (-0.5*" << minDistance << "=" << -minDistWeighted << ")"
+                << ", substPenalty=" << substituentPenalty
+                << ", totalScore=" << totalScore << std::endl;
+
+      // Show turn sequence for debugging
+      std::cerr << "WINNING_TURNS: [";
+      int countR = 0, countL = 0;
+      for (size_t i = 0; i < bestTurns.size(); ++i) {
+        if (i > 0) std::cerr << ", ";
+        std::cerr << bestTurns[i];
+        if (bestTurns[i] == 1) countR++;
+        else if (bestTurns[i] == -1) countL++;
+      }
+      std::cerr << "]" << std::endl;
+      std::cerr << "WINNING_TURNS: R=" << countR << ", L=" << countL << ", R-L=" << (countR - countL) << std::endl;
+    }
 
     return true;
   }
@@ -388,8 +681,11 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     rightPositions[i] = i;
   }
 
-  double bestError = std::numeric_limits<double>::max();
+  double bestScore = std::numeric_limits<double>::max();
   std::vector<int> bestTurns;
+
+  // Weight for minimum distance in scoring
+  const double MIN_DISTANCE_WEIGHT = 0.5;
 
   // Helper: create candidate from current combination
   auto createCandidate = [&]() {
@@ -406,34 +702,116 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
   };
 
   // Evaluate first combination
+  int combinationCount = 0;
+  int rejectedConstraints = 0, rejectedMinDist = 0;
   std::vector<int> candidate = createCandidate();
-  if (validateConstraints(candidate) && !hasSelfCrossing(candidate)) {
-    double error = calculateClosureError(candidate);
-    if (error < bestError) {
-      bestError = error;
-      bestTurns = candidate;
+  combinationCount++;
+  if (validateConstraints(candidate)) {
+    int minDistance = calculateMinDistance(candidate);
+    // Skip if self-crossing detected
+    if (minDistance > 0) {
+      double closureError = calculateClosureError(candidate);
+      double substituentPenalty = calculateSubstituentPenalty(candidate);
+      double score = closureError - MIN_DISTANCE_WEIGHT * minDistance + substituentPenalty;
+      if (score < bestScore) {
+        bestScore = score;
+        bestTurns = candidate;
+      }
+    } else {
+      rejectedMinDist++;
     }
+  } else {
+    rejectedConstraints++;
   }
 
   // Enumerate remaining combinations
   while (nextCombination(rightPositions, numFree)) {
     candidate = createCandidate();
-    if (validateConstraints(candidate) && !hasSelfCrossing(candidate)) {
-      double error = calculateClosureError(candidate);
-      if (error < bestError) {
-        bestError = error;
-        bestTurns = candidate;
+    combinationCount++;
+    if (validateConstraints(candidate)) {
+      int minDistance = calculateMinDistance(candidate);
+      // Skip if self-crossing detected
+      if (minDistance > 0) {
+        double closureError = calculateClosureError(candidate);
+        double substituentPenalty = calculateSubstituentPenalty(candidate);
+        double score = closureError - MIN_DISTANCE_WEIGHT * minDistance + substituentPenalty;
+        if (score < bestScore) {
+          bestScore = score;
+          bestTurns = candidate;
+        }
+      } else {
+        rejectedMinDist++;
       }
+    } else {
+      rejectedConstraints++;
     }
   }
 
+  std::cerr << "ENUMERATION: Checked " << combinationCount << " combinations: "
+            << "rejectedConstraints=" << rejectedConstraints
+            << ", rejectedMinDist=" << rejectedMinDist
+            << ", accepted=" << (combinationCount - rejectedConstraints - rejectedMinDist) << std::endl;
+
   // Store best solution
   if (bestTurns.empty()) {
+    std::cerr << "ENUMERATION_FAILED: No valid combinations found" << std::endl;
     return false;  // No valid solution found that satisfies constraints
   }
 
   d_turns = bestTurns;
-  d_closureError = bestError;
+  d_closureError = calculateClosureError(bestTurns);
+
+  // Debug: Test alternative sequence suggested by user (flip first turn)
+  if (bestTurns.size() > 0) {
+    std::vector<int> altTurns = bestTurns;
+    altTurns[0] = -altTurns[0];  // Flip first turn
+
+    // Check if still valid with constraints
+    if (validateConstraints(altTurns)) {
+      int altR = 0, altL = 0;
+      for (int t : altTurns) {
+        if (t == 1) altR++;
+        else if (t == -1) altL++;
+      }
+      double altClosure = calculateClosureError(altTurns);
+      int altMinDist = calculateMinDistance(altTurns);
+      double altSubstPenalty = calculateSubstituentPenalty(altTurns);
+      double altScore = altClosure - MIN_DISTANCE_WEIGHT * altMinDist + altSubstPenalty;
+
+      std::cerr << "ALTERNATIVE_SEQUENCE (flip pos 0): R=" << altR << ", L=" << altL
+                << ", R-L=" << (altR - altL)
+                << ", closureError=" << altClosure
+                << ", minDist=" << altMinDist
+                << ", substPenalty=" << altSubstPenalty
+                << ", score=" << altScore << std::endl;
+    } else {
+      std::cerr << "ALTERNATIVE_SEQUENCE (flip pos 0): INVALID (violates constraints)" << std::endl;
+    }
+  }
+
+  // Debug: Show scoring components for winning solution
+  {
+    int minDistance = calculateMinDistance(bestTurns);
+    double substituentPenalty = calculateSubstituentPenalty(bestTurns);
+    double minDistWeighted = MIN_DISTANCE_WEIGHT * minDistance;
+    double totalScore = d_closureError - minDistWeighted + substituentPenalty;
+    std::cerr << "MACROCYCLE_SCORE (partial-constrained): closureError=" << d_closureError
+              << ", minDist=" << minDistance << " (-0.5*" << minDistance << "=" << -minDistWeighted << ")"
+              << ", substPenalty=" << substituentPenalty
+              << ", totalScore=" << totalScore << std::endl;
+
+    // Show turn sequence for debugging
+    std::cerr << "WINNING_TURNS: [";
+    int countR = 0, countL = 0;
+    for (size_t i = 0; i < bestTurns.size(); ++i) {
+      if (i > 0) std::cerr << ", ";
+      std::cerr << bestTurns[i];
+      if (bestTurns[i] == 1) countR++;
+      else if (bestTurns[i] == -1) countL++;
+    }
+    std::cerr << "]" << std::endl;
+    std::cerr << "WINNING_TURNS: R=" << countR << ", L=" << countL << ", R-L=" << (countR - countL) << std::endl;
+  }
 
   return true;
 }
@@ -488,6 +866,72 @@ double MacrocycleGenerator::calculateClosureError(
   return std::sqrt(x * x + y * y);
 }
 
+int MacrocycleGenerator::calculateMinDistance(
+    const std::vector<int> &turns) const {
+  // Calculate hex coordinates for all atoms
+  auto coords = calculateHexCoords(turns);
+
+  // Find minimum distance between non-adjacent atoms
+  // Distance in hex cube coordinates: (|dx| + |dy| + |dz|) / 2
+  // Also detect clashes (distance = 0, self-crossing)
+  int minDist = std::numeric_limits<int>::max();
+
+  for (size_t i = 0; i < coords.size() - 1; ++i) {  // -1 to exclude dummy
+    for (size_t j = i + 1; j < coords.size() - 1; ++j) {
+      // Skip adjacent atoms (bonded atoms always have distance 1)
+      if (j == i + 1 || (i == 0 && j == coords.size() - 2)) {
+        continue;
+      }
+
+      int dx = std::abs(coords[i].x - coords[j].x);
+      int dy = std::abs(coords[i].y - coords[j].y);
+      int dz = std::abs(coords[i].z - coords[j].z);
+      int dist = (dx + dy + dz) / 2;
+
+      // Early exit on clash (self-crossing)
+      if (dist == 0) {
+        return 0;
+      }
+
+      if (dist < minDist) {
+        minDist = dist;
+      }
+    }
+  }
+
+  return minDist;
+}
+
+double MacrocycleGenerator::calculateSubstituentPenalty(
+    const std::vector<int> &turns) const {
+  if (d_substituentSizes.empty() || d_innerTurnSign == 0) {
+    std::cerr << "SUBST_PENALTY: NO_PENALTY (empty=" << d_substituentSizes.empty()
+              << ", innerSign=" << d_innerTurnSign << ")" << std::endl;
+    return 0.0;  // No substituents or inner turn not set
+  }
+
+  // Calculate penalty for substituents on inner turns
+  // Penalty is weighted by substituent size
+  double penalty = 0.0;
+  const double PENALTY_PER_ATOM = 1.0;  // Penalty per substituent atom on inner turn
+
+  std::cerr << "SUBST_PENALTY_CHECK: innerTurnSign=" << d_innerTurnSign << std::endl;
+  for (const auto &[pos, size] : d_substituentSizes) {
+    if (pos < turns.size()) {
+      int turnAtPos = turns[pos];
+      bool isInner = (turnAtPos == d_innerTurnSign);
+      std::cerr << "  pos=" << pos << ", size=" << size << ", turn=" << turnAtPos
+                << (isInner ? " [INNER - PENALTY]" : " [OUTER - OK]") << std::endl;
+      if (isInner) {
+        penalty += size * PENALTY_PER_ATOM;
+      }
+    }
+  }
+  std::cerr << "SUBST_PENALTY: total=" << penalty << std::endl;
+
+  return penalty;
+}
+
 std::vector<HexCoord> MacrocycleGenerator::calculateHexCoords(
     const std::vector<int> &turns) const {
   // Direction vectors in hexagonal cube coordinates
@@ -528,23 +972,6 @@ std::vector<HexCoord> MacrocycleGenerator::calculateHexCoords(
   }
 
   return coords;
-}
-
-bool MacrocycleGenerator::hasSelfCrossing(const std::vector<int> &turns) const {
-  // Calculate hex coordinates for all nodes
-  auto coords = calculateHexCoords(turns);
-
-  // Check for duplicate positions (excluding first and last which should match)
-  std::set<HexCoord> visited;
-
-  for (size_t i = 0; i < coords.size() - 1; ++i) {
-    if (!visited.insert(coords[i]).second) {
-      // Duplicate found - self-crossing detected
-      return true;
-    }
-  }
-
-  return false;
 }
 
 std::vector<RDGeom::Point2D> MacrocycleGenerator::generateCoordinates() const {
@@ -659,9 +1086,10 @@ void MacrocycleGenerator::adjustAnglesForClosure(
   size_t N = d_ringSize;
   double initialGap = (coords[0] - coords[N]).length();
 
-  std::cerr << "[DEBUG] Jacobian: Initial gap = " << initialGap << std::endl;
+  std::cerr << "JACOBIAN_START: initialGap=" << initialGap << std::endl;
 
   if (initialGap < 1e-6) {
+    std::cerr << "JACOBIAN_SKIP: gap already closed" << std::endl;
     return;
   }
 
@@ -716,9 +1144,10 @@ void MacrocycleGenerator::adjustAnglesForClosure(
     RDGeom::Point2D gap = coords[0] - coords[N];
     double gapMag = gap.length();
 
-    std::cerr << "[DEBUG] Jacobian iteration " << iter << ": gap = " << gapMag << std::endl;
+    std::cerr << "JACOBIAN_ITER[" << iter << "]: gapMag=" << gapMag << std::endl;
 
     if (gapMag < 0.01) {
+      std::cerr << "JACOBIAN_CONVERGED: gap < 0.01" << std::endl;
       break;
     }
 
@@ -730,9 +1159,6 @@ void MacrocycleGenerator::adjustAnglesForClosure(
       if (hasAngleConstraint(k)) {
         jacobian[k].x = 0.0;
         jacobian[k].y = 0.0;
-        if (iter == 0) {  // Only print once
-          std::cerr << "[DEBUG] Jacobian: Skipping constrained angle at pos " << k << std::endl;
-        }
         continue;
       }
 
@@ -780,6 +1206,11 @@ void MacrocycleGenerator::adjustAnglesForClosure(
       angleAdjustments[k] += damping * deltaTheta[k];
     }
   }
+
+  // Final gap measurement
+  double finalGap = (coords[0] - coords[N]).length();
+  std::cerr << "JACOBIAN_END: finalGap=" << finalGap
+            << ", improvement=" << (initialGap - finalGap) << std::endl;
 }
 
 // ============================================================================
@@ -1191,13 +1622,7 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   // For CW template: L turns are negative, so keep constraint sign
   int signMultiplier = templateIsCCW ? -1 : 1;
 
-  // 3. Compute current sum of angles (for verification)
-  double currentSum = 0.0;
-  for (double angle : currentAngles) {
-    currentSum += angle;
-  }
-
-  // 4. Apply angle constraints and compute angular difference
+  // 3. Apply angle constraints and compute angular difference
   //    Adjust constraint signs based on template chirality
   std::vector<double> adjustedAngles = currentAngles;
   double constraintDelta = 0.0;

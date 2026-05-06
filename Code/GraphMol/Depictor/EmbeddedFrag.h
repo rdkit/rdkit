@@ -16,6 +16,7 @@
 #include <Geometry/point.h>
 #include "DepictUtils.h"
 #include <boost/smart_ptr.hpp>
+#include <unordered_map>
 
 namespace RDKit {
 class ROMol;
@@ -24,6 +25,12 @@ class Bond;
 
 namespace RDDepict {
 typedef boost::shared_array<double> DOUBLE_SMART_PTR;
+
+//! Struct to hold substituent size information
+struct SubstituentInfo {
+  std::unordered_map<unsigned int, int> sizes;  //!< Map: neighbor atom idx -> substituent size
+  int smallest_size;  //!< Smallest substituent size in the molecule
+};
 
 //! Class that contains the data for an atoms that has already been embedded
 class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
@@ -386,7 +393,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   bool matchToTemplateMacrocycle(
       const RDKit::INT_VECT &ringSystemAtoms,
       const RDKit::INT_VECT &macrocycleRing,
-      const RDKit::VECT_INT_VECT &allRings = RDKit::VECT_INT_VECT());
+      const RDKit::VECT_INT_VECT &allRings,
+      const SubstituentInfo &sub_info);
 
   //! Copy coordinates from a template match into embedded atoms
   /*!
@@ -401,7 +409,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // returns true if macrocycle coordinates were successfully generated
   bool generateMacrocycleCoordinates(const RDKit::INT_VECT &macrocycleRing,
                                      const RDKit::VECT_INT_VECT &allRings,
-                                     bool useJacobianRefinement = true);
+                                     bool useJacobianRefinement,
+                                     const SubstituentInfo &sub_info);
 
   // Template refinement with angle constraints
   void refineTemplateMatchedMacrocycle(const RDKit::INT_VECT &macrocycleRing,
