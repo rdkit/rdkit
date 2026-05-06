@@ -216,6 +216,18 @@ struct bond_wrapper {
             "    - If the property has not been set, a KeyError exception "
             "will be raised.\n",
             boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def(
+            "GetProp", GetPyPropOrDefault<Bond>,
+            (python::arg("self"), python::arg("key"),
+             python::arg("autoConvert") = false,
+             python::arg("default")),
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: the property value, or default if the property is not present.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("SetIntProp", BondSetProp<int>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
              "Sets a bond property\n\n"
@@ -239,6 +251,14 @@ struct bond_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetIntProp", GetPropOrDefault<Bond, int>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (an int).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: an int, or default if the property is not present.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("GetUnsignedProp", GetProp<Bond, unsigned int>,
              python::args("self", "key"),
@@ -250,6 +270,14 @@ struct bond_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetUnsignedProp", GetPropOrDefault<Bond, unsigned int>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (an unsigned integer).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: an integer, or default if the property is not present.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("SetDoubleProp", BondSetProp<double>,
@@ -269,6 +297,14 @@ struct bond_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetDoubleProp", GetPropOrDefault<Bond, double>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a double).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: a double, or default if the property is not present.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("SetBoolProp", BondSetProp<bool>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
@@ -285,6 +321,14 @@ struct bond_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetBoolProp", GetPropOrDefault<Bond, bool>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a boolean).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: a bool, or default if the property is not present.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("HasProp", BondHasProp, python::args("self", "key"),
