@@ -492,6 +492,22 @@ TEST_CASE("para-stereochemistry", "[accurateCIP]") {
                                                    chirality));
     CHECK(chirality == "S");
   }
+  SECTION("auxiliary stereochem beyond initial expansion") {
+    // The label on atom 12 depends on the chirality at
+    // atom 2. The label on atom 9 depends on the label of
+    // atom 12. Atom 2 is not reached in the initial
+    // expansion to score atom 9
+    auto mol = "CC[C@H](C)CCCCC[C@H]1CC[C@@H](C)CC1"_smiles;
+    CIPLabeler::assignCIPLabels(*mol);
+
+    std::string chirality;
+    CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::_CIPCode) == "S");
+    CHECK(mol->getAtomWithIdx(9)->getProp<std::string>(
+              common_properties::_CIPCode) == "s");
+    CHECK(mol->getAtomWithIdx(12)->getProp<std::string>(
+              common_properties::_CIPCode) == "S");
+  }
 }
 TEST_CASE("para-stereochemistry2", "[accurateCIP]") {
   SECTION("example 1") {
@@ -629,9 +645,34 @@ TEST_CASE("GitHub Issue #5142", "[bug][accurateCIP]") {
   CIPLabeler::assignCIPLabels(*mol);
 }
 
+auto view_labels(const ROMol &mol) {
+  std::stringstream msg;
+  std::string label;
+  for (auto a : mol.atoms()) {
+    if (a->getPropIfPresent(common_properties::_CIPCode, label)) {
+      msg << a->getIdx() << label << ' ';
+    }
+  }
+  for (auto b : mol.bonds()) {
+    if (b->getPropIfPresent(common_properties::_CIPCode, label)) {
+      msg << b->getBeginAtomIdx() << '=' << b->getEndAtomIdx() << label << ' ';
+    }
+  }
+  return msg.str();
+}
+
+TEST_CASE("Bad skip side", "[accurateCIP]") {
+  auto m1 = "C1CC[C@H]2C/C(=C3\\C[C@H]4CCCC[C@H]4C3)C[C@H]2C1"_smiles;
+  CIPLabeler::assignCIPLabels(*m1);
+  CHECK("3S 8R 13S 16R 5=6E " == view_labels(*m1));
+  auto m2 = "C1/C(=C2\\C[C@H]3CCCC[C@H]3C2)C[C@H]2CCCC[C@@H]12"_smiles;
+  CIPLabeler::assignCIPLabels(*m2);
+  CHECK("4R 9S 12R 17S 1=2E " == view_labels(*m2));
+}
+
 TEST_CASE("Test early termination of CIP calculation", "[accurateCIP]") {
   constexpr const char *molBlock = R"(
-  Mrv2117 11112217353D          
+  Mrv2117 11112217353D
 
  40 50  0  0  0  0            999 V2000
     7.5483   -7.7451   -3.3419 H   0  0  0  0  0  0  0  0  0  0  0  0
