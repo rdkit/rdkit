@@ -94,6 +94,8 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
   const auto &focus1 = getFoci()[0];
   const auto &focus2 = getFoci()[1];
 
+  const bool is_constitutional = comp.getNumSubRules() == 3;
+
   d_ranked_anchors.clear();
 
   const auto &internal = findInternalEdge(root1->getEdges(), focus1, focus2);
@@ -119,7 +121,7 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
 
   digraph.changeRoot(root1);
   const auto &priority1 = comp.sort(root1, edges1);
-  if (!priority1.isUnique()) {
+  if (!priority1.isUnique() && !is_constitutional) {
     return Descriptor::UNKNOWN;
   }
   // swap
@@ -132,7 +134,7 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
   }
   digraph.changeRoot(root2);
   const auto &priority2 = comp.sort(root2, edges2);
-  if (!priority2.isUnique()) {
+  if (!priority2.isUnique() || !priority1.isUnique()) {
     return Descriptor::UNKNOWN;
   }
   // swap
