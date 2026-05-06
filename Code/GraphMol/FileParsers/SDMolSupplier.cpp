@@ -398,11 +398,9 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
               posHold = posHold + std::streamoff(1);
               needEOL = false;
             }
-            this->checkForEnd();
-          } else {
-            this->peekCheckForEnd(nlPos, bufEnd,
-                                  posHold);  // the optimized peek version
           }
+          this->peekCheckForEnd(nlPos, bufEnd,
+                                posHold);  // the optimized peek version
           if (!this->df_end) {
             d_molpos.push_back(posHold);
             ++d_last;
