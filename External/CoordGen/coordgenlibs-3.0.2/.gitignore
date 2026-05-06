@@ -1,0 +1,7 @@
+*.build
+*.pro
+*.swp
+*.xc*
+Debug
+build
+qt*.mk

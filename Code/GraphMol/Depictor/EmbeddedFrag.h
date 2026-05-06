@@ -383,7 +383,6 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // this uses a more relaxed matching that allows for small substituents to be
   // put on internal positions, pointing towards the center of the macrocycle
   bool matchToTemplateMacrocycle(
-      const RDKit::INT_VECT &ringSystemAtoms,
       const RDKit::INT_VECT &macrocycleRing,
       const RDKit::VECT_INT_VECT &allRings = RDKit::VECT_INT_VECT());
 

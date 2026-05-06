@@ -1,0 +1,315 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ s_m_title
+ i_m_ct_stereo_status
+ i_m_ct_enhanced_stereo_status
+ s_st_Chirality_1
+ s_m_entry_id
+ s_m_entry_name
+ s_sd_ID
+ s_sd_All_IDs
+ s_sd_Rationale
+ s_sd_Lot_Scientist
+ s_sd_Approved_Drug
+ r_sd_Quick_Properties_(MW)
+ s_sd_PUBCHEM\_CACTVS\_SUBSKEYS_(undefined)
+ s_sd_PUBCHEM\_IUPAC\_OPENEYE\_NAME_(undefined)
+ s_sd_PUBCHEM\_IUPAC\_CAS\_NAME_(undefined)
+ s_sd_PUBCHEM\_IUPAC\_NAME\_MARKUP_(undefined)
+ s_sd_PUBCHEM\_IUPAC\_NAME_(undefined)
+ s_sd_PUBCHEM\_IUPAC\_SYSTEMATIC\_NAME_(undefined)
+ s_sd_PUBCHEM\_IUPAC\_TRADITIONAL\_NAME_(undefined)
+ s_sd_PUBCHEM\_IUPAC\_INCHI_(undefined)
+ s_sd_PUBCHEM\_IUPAC\_INCHIKEY_(undefined)
+ s_sd_PUBCHEM\_MOLECULAR\_FORMULA_(undefined)
+ s_sd_PUBCHEM\_OPENEYE\_CAN\_SMILES_(undefined)
+ s_sd_PUBCHEM\_OPENEYE\_ISO\_SMILES_(undefined)
+ s_sd_PUBCHEM\_NONSTANDARDBOND_(undefined)
+ s_sd_PUBCHEM\_BONDANNOTATIONS_(undefined)
+ s_sd_PUBCHEM\_CONFORMER\_RMSD_(undefined)
+ s_sd_PUBCHEM\_CONFORMER\_DIVERSEORDER_(undefined)
+ s_sd_PUBCHEM\_MMFF94\_PARTIAL\_CHARGES_(undefined)
+ s_sd_PUBCHEM\_EFFECTIVE\_ROTOR\_COUNT_(undefined)
+ s_sd_PUBCHEM\_PHARMACOPHORE\_FEATURES_(undefined)
+ s_sd_PUBCHEM\_CONFORMER\_ID_(undefined)
+ s_sd_PUBCHEM\_MMFF94\_ENERGY_(undefined)
+ s_sd_PUBCHEM\_FEATURE\_SELFOVERLAP_(undefined)
+ s_sd_PUBCHEM\_SHAPE\_FINGERPRINT_(undefined)
+ s_sd_PUBCHEM\_SHAPE\_MULTIPOLES_(undefined)
+ s_sd_PUBCHEM\_SHAPE\_SELFOVERLAP_(undefined)
+ s_sd_PUBCHEM\_SHAPE\_VOLUME_(undefined)
+ b_sd_chiral_flag
+ i_sd_version
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ i_sd_PUBCHEM\_COMPOUND\_CID_(undefined)
+ i_sd_PUBCHEM\_COMPOUND\_CANONICALIZED_(undefined)
+ r_sd_PUBCHEM\_CACTVS\_COMPLEXITY_(undefined)
+ r_sd_PUBCHEM\_CACTVS\_HBOND\_ACCEPTOR_(undefined)
+ i_sd_PUBCHEM\_CACTVS\_HBOND\_DONOR_(undefined)
+ r_sd_PUBCHEM\_CACTVS\_ROTATABLE\_BOND_(undefined)
+ r_sd_PUBCHEM\_EXACT\_MASS_(undefined)
+ r_sd_PUBCHEM\_MOLECULAR\_WEIGHT_(undefined)
+ r_sd_PUBCHEM\_CACTVS\_TPSA_(undefined)
+ r_sd_PUBCHEM\_MONOISOTOPIC\_WEIGHT_(undefined)
+ i_sd_PUBCHEM\_TOTAL\_CHARGE_(undefined)
+ i_sd_PUBCHEM\_HEAVY\_ATOM\_COUNT_(undefined)
+ i_sd_PUBCHEM\_ATOM\_DEF\_STEREO\_COUNT_(undefined)
+ r_sd_PUBCHEM\_ATOM\_UDEF\_STEREO\_COUNT_(undefined)
+ i_sd_PUBCHEM\_BOND\_DEF\_STEREO\_COUNT_(undefined)
+ i_sd_PUBCHEM\_BOND\_UDEF\_STEREO\_COUNT_(undefined)
+ i_sd_PUBCHEM\_ISOTOPIC\_ATOM\_COUNT_(undefined)
+ r_sd_PUBCHEM\_COMPONENT\_COUNT_(undefined)
+ i_sd_PUBCHEM\_CACTVS\_TAUTO\_COUNT_(undefined)
+ r_sd_PUBCHEM\_COORDINATE\_TYPE_(undefined)
+ r_sd_PUBCHEM\_XLOGP3\_AA_(undefined)
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ V226050 
+  1
+  0
+  41_S_9_8_49_54 
+  6 
+  macrocycles.6 
+  V226050 
+  V226050 
+  "" 
+  demo 
+  "" 
+  822.8939
+  AAADcfB/PAAAAAAAAAAAAAAAGAAAASAAAAA0QIAAAAAAAEiBAAAAHgAQCAAADTzxmAcCDoLABgCoA6XyXAKCCAAkIgAIiAH0CNgeNzaGtT+neWCl5BWMuYf67vzu4AADCAAYAADAAAYQADAAAAAAAAAAAA== 
+  "[(7S)-2,15,17-trihydroxy-28-(6-hydroxy-2-methyl-tetrahydropyran-3-yl)imino-11-methoxy-3,7,12,14,16,23-hexamethyl-6,21,24,30-tetraoxo-8,31-dioxa-25-azapentacyclo[24.3.1.14,7.05,29.018,20]hentriaconta-1(29),2,4,9,22,26-hexaen-13-yl] acetate" 
+  "acetic acid [(7S)-2,15,17-trihydroxy-28-[(6-hydroxy-2-methyl-3-oxanyl)imino]-11-methoxy-3,7,12,14,16,23-hexamethyl-6,21,24,30-tetraoxo-8,31-dioxa-25-azapentacyclo[24.3.1.14,7.05,29.018,20]hentriaconta-1(29),2,4,9,22,26-hexaen-13-yl] ester" 
+  "[(7<I>S</I>)-2,15,17-trihydroxy-28-(6-hydroxy-2-methyloxan-3-yl)imino-11-methoxy-3,7,12,14,16,23-hexamethyl-6,21,24,30-tetraoxo-8,31-dioxa-25-azapentacyclo[24.3.1.1<SUP>4,7</SUP>.0<SUP>5,29</SUP>.0<SUP>18,20</SUP>]hentriaconta-1(29),2,4,9,22,26-hexaen-13-yl] acetate" 
+  "[(7S)-2,15,17-trihydroxy-28-(6-hydroxy-2-methyloxan-3-yl)imino-11-methoxy-3,7,12,14,16,23-hexamethyl-6,21,24,30-tetraoxo-8,31-dioxa-25-azapentacyclo[24.3.1.14,7.05,29.018,20]hentriaconta-1(29),2,4,9,22,26-hexaen-13-yl] acetate" 
+  "[(7S)-11-methoxy-3,7,12,14,16,23-hexamethyl-28-(2-methyl-6-oxidanyl-oxan-3-yl)imino-2,15,17-tris(oxidanyl)-6,21,24,30-tetrakis(oxidanylidene)-8,31-dioxa-25-azapentacyclo[24.3.1.14,7.05,29.018,20]hentriaconta-1(29),2,4,9,22,26-hexaen-13-yl] ethanoate" 
+  "acetic acid [(7S)-2,15,17-trihydroxy-28-(6-hydroxy-2-methyl-tetrahydropyran-3-yl)imino-6,21,24,30-tetraketo-11-methoxy-3,7,12,14,16,23-hexamethyl-8,31-dioxa-25-azapentacyclo[24.3.1.14,7.05,29.018,20]hentriaconta-1(29),2,4,9,22,26-hexaen-13-yl] ester" 
+  InChI=1S/C43H54N2O14/c1-17-14-29(47)24-15-25(24)36(50)19(3)35(49)20(4)39(58-23(7)46)18(2)30(55-9)12-13-56-43(8)41(53)34-32-27(44-26-10-11-31(48)57-22(26)6)16-28(45-42(17)54)38(52)33(32)37(51)21(5)40(34)59-43/h12-14,16,18-20,22,24-26,30-31,35-36,39,48-51H,10-11,15H2,1-9H3,(H,45,54)/t18?,19?,20?,22?,24?,25?,26?,30?,31?,35?,36?,39?,43-/m0/s1 
+  RYCBEGMWBUYSAD-XGUWRKLTSA-N 
+  C43H54N2O14 
+  CC1C(C=COC2(C(=O)C3=C(O2)C(=C(C4=C3C(=NC5CCC(OC5C)O)C=C(C4=O)NC(=O)C(=CC(=O)C6CC6C(C(C(C(C1OC(=O)C)C)O)C)O)C)O)C)C)OC 
+  CC1C(C=CO[C@@]2(C(=O)C3=C(O2)C(=C(C4=C3C(=NC5CCC(OC5C)O)C=C(C4=O)NC(=O)C(=CC(=O)C6CC6C(C(C(C(C1OC(=O)C)C)O)C)O)C)O)C)C)OC 
+  "" 
+  "18  19  3
+42  48  8
+24  28  3
+29  32  3
+21  25  3
+42  43  8
+43  50  8
+20  1  3
+26  4  3
+50  55  8
+35  37  1
+55  56  8
+44  16  3
+31  5  3
+23  2  3
+57  14  3
+41  54  6
+17  19  3
+51  58  3
+27  30  1
+48  56  8" 
+  "" 
+  "" 
+  "" 
+  "" 
+  "" 
+  "" 
+  "" 
+  "" 
+  "" 
+  "" 
+  "" 
+  "" 
+  1
+  0
+  /Users/nicola/Downloads 
+  macrocycles.sdf 
+  6
+  146158297
+  1
+  1810
+  15
+  5
+  4
+  822.36
+  822.9
+  237
+  822.36
+  0
+  59
+  1
+  12
+  0
+  2
+  0
+  1
+  -1
+  87
+  3.5
+  macrocycles 
+  macrocycles 
+  0
+  2
+ m_atom[59] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_sd_original_parity
+  :::
+  1 17 -2.940200 -1.811800 0.000000 900 70 8 FF2F2F  <>
+  2 17 -1.486900 -3.171100 0.000000 900 70 8 FF2F2F  <>
+  3 15 -3.673500 0.438400 0.000000 900 70 8 FF2F2F  <>
+  4 16 -0.110900 -3.929000 0.000000 900 70 8 FF2F2F  <>
+  5 16 2.343400 -2.474700 0.000000 900 70 8 FF2F2F  <>
+  6 15 -2.780600 3.255800 0.000000 900 70 8 FF2F2F  <>
+  7 15 -0.053500 -5.353400 0.000000 900 70 8 FF2F2F  <>
+  8 16 1.426800 -0.192600 0.000000 900 70 8 FF2F2F  <>
+  9 16 2.483600 1.065700 0.000000 900 70 8 FF2F2F  <>
+  10 16 -0.848100 -0.515500 0.000000 900 70 8 FF2F2F  <>
+  11 15 0.554600 4.313600 0.000000 900 70 8 FF2F2F  <>
+  12 15 0.602200 0.750900 0.000000 900 70 8 FF2F2F  <>
+  13 17 2.097800 3.889500 0.000000 900 70 8 FF2F2F  <>
+  14 17 -0.292000 -1.646400 0.000000 900 70 8 FF2F2F  <>
+  15 29 -1.389100 3.520600 0.000000 900 43 7 5757FF  <>
+  16 25 -0.447900 1.301900 0.000000 900 43 7 5757FF  <>
+  17 4 -2.033000 -0.625100 0.000000 900 2 6 A0A0A0  <>
+  18 4 -2.265900 0.176300 0.000000 900 2 6 A0A0A0  <>
+  19 5 -1.485900 -0.034200 0.000000 900 2 6 A0A0A0  <>
+  20 4 -2.217600 -1.422200 0.000000 900 2 6 A0A0A0  <>
+  21 4 -1.429200 -1.733400 0.000000 900 2 6 A0A0A0  <>
+  22 2 -2.895500 0.712100 0.000000 900 2 6 A0A0A0  <>
+  23 4 -1.050000 -2.477400 0.000000 900 2 6 A0A0A0  <>
+  24 4 -0.205700 -2.505800 0.000000 900 2 6 A0A0A0  <>
+  25 6 -0.896000 -1.159400 0.000000 900 2 6 A0A0A0  <>
+  26 4 0.252600 -3.186700 0.000000 900 2 6 A0A0A0  <>
+  27 7 -2.731800 1.564100 0.000000 900 2 6 A0A0A0  <>
+  28 6 0.271700 -1.833300 0.000000 900 2 6 A0A0A0  <>
+  29 4 1.079400 -3.115200 0.000000 900 2 6 A0A0A0  <>
+  30 2 -2.028200 2.065300 0.000000 900 2 6 A0A0A0  <>
+  31 4 1.514200 -2.403900 0.000000 900 2 6 A0A0A0  <>
+  32 6 1.515900 -3.815300 0.000000 900 2 6 A0A0A0  <>
+  33 6 -1.302300 1.683100 0.000000 900 2 6 A0A0A0  <>
+  34 2 -2.026300 2.929700 0.000000 900 2 6 A0A0A0  <>
+  35 7 1.201600 -1.635400 0.000000 900 2 6 A0A0A0  <>
+  36 2 0.332500 -4.626700 0.000000 900 2 6 A0A0A0  <>
+  37 7 1.706500 -0.973400 0.000000 900 2 6 A0A0A0  <>
+  38 6 1.154400 -4.599100 0.000000 900 2 6 A0A0A0  <>
+  39 6 2.821100 -1.802400 0.000000 900 2 6 A0A0A0  <>
+  40 2 -0.599200 3.288500 0.000000 900 2 6 A0A0A0  <>
+  41 3 1.898200 0.502100 0.000000 900 2 6 A0A0A0  1
+  42 2 0.748700 2.207500 0.000000 900 2 6 A0A0A0  <>
+  43 2 1.313200 1.603100 0.000000 900 2 6 A0A0A0  <>
+  44 4 -0.211500 0.550100 0.000000 900 2 6 A0A0A0  <>
+  45 7 -0.788900 2.560300 0.000000 900 2 6 A0A0A0  <>
+  46 2 0.336400 3.512400 0.000000 900 2 6 A0A0A0  <>
+  47 2 -0.186300 1.961300 0.000000 900 2 6 A0A0A0  <>
+  48 2 0.973400 2.896100 0.000000 900 2 6 A0A0A0  <>
+  49 2 1.189700 0.843500 0.000000 900 2 6 A0A0A0  <>
+  50 2 2.137700 1.726700 0.000000 900 2 6 A0A0A0  <>
+  51 4 -0.871000 0.190600 0.000000 900 2 6 A0A0A0  <>
+  52 5 0.510700 0.162800 0.000000 900 2 6 A0A0A0  <>
+  53 5 0.503900 -0.541800 0.000000 900 2 6 A0A0A0  <>
+  54 6 2.531100 -0.032300 0.000000 900 2 6 A0A0A0  <>
+  55 2 2.400600 2.496300 0.000000 900 2 6 A0A0A0  <>
+  56 2 1.856300 3.112600 0.000000 900 2 6 A0A0A0  <>
+  57 4 -0.153100 -0.927100 0.000000 900 2 6 A0A0A0  <>
+  58 6 -1.572200 0.603000 0.000000 900 2 6 A0A0A0  <>
+  59 6 3.214400 2.660400 0.000000 900 2 6 A0A0A0  <>
+  :::
+ } 
+ m_bond[67] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  i_sd_original_parity
+  :::
+  1 1 20 1 <>
+  2 2 23 1 <>
+  3 3 22 2 <>
+  4 4 26 1 <>
+  5 4 36 1 <>
+  6 5 31 1 <>
+  7 5 39 1 <>
+  8 6 34 2 <>
+  9 7 36 2 <>
+  10 8 37 1 <>
+  11 8 41 1 <>
+  12 9 41 1 <>
+  13 9 50 1 <>
+  14 10 51 1 <>
+  15 10 57 1 <>
+  16 11 46 2 <>
+  17 12 49 2 <>
+  18 13 56 1 <>
+  19 14 57 1 <>
+  20 15 34 1 <>
+  21 15 40 1 <>
+  22 16 44 1 <>
+  23 16 47 2 <>
+  24 17 18 1 <>
+  25 17 19 1 <>
+  26 17 20 1 <>
+  27 18 19 1 <>
+  28 18 22 1 <>
+  29 20 21 1 <>
+  30 21 23 1 <>
+  31 21 25 1 <>
+  32 22 27 1 <>
+  33 23 24 1 <>
+  34 24 26 1 <>
+  35 24 28 1 <>
+  36 26 29 1 <>
+  37 27 30 2 2
+  38 29 31 1 <>
+  39 29 32 1 <>
+  40 30 27 2 2
+  41 30 33 1 <>
+  42 30 34 1 <>
+  43 31 35 1 <>
+  44 35 37 2 2
+  45 36 38 1 <>
+  46 37 35 2 2
+  47 40 45 2 <>
+  48 40 46 1 <>
+  49 41 49 1 <>
+  50 41 54 1 1
+  51 42 43 2 <>
+  52 42 47 1 <>
+  53 42 48 1 <>
+  54 43 49 1 <>
+  55 43 50 1 <>
+  56 44 51 1 <>
+  57 44 52 1 <>
+  58 45 47 1 <>
+  59 46 48 1 <>
+  60 48 56 2 <>
+  61 50 55 2 <>
+  62 51 58 1 <>
+  63 52 53 1 <>
+  64 53 57 1 <>
+  65 54 41 1 1
+  66 55 56 1 <>
+  67 55 59 1 <>
+  :::
+ } 
+} 
+

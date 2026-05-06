@@ -1,0 +1,41 @@
+environment:
+  P: "%APPVEYOR_BUILD_FOLDER%\\install"
+  BOOST_ROOT_PATH: C:\Libraries\boost
+  BOOST_LIBRARY_PATH: "%BOOST_ROOT_PATH%\\lib64-msvc-12.0"
+
+image: Visual Studio 2013
+
+platform: x64
+
+configuration:
+  - Release
+  - Debug
+
+branches:
+  only:
+    - master
+    - devel
+
+install:
+  # by default, all script lines are interpreted as batch
+
+build:
+  project: "%APPVEYOR_BUILD_FOLDER%\\build\\ALL_BUILD.vcxproj"
+  parallel: true
+
+before_build:
+  - mkdir %APPVEYOR_BUILD_FOLDER%\build
+  - cd %APPVEYOR_BUILD_FOLDER%\build
+  - cmake .. ^
+      -G "Visual Studio 12 Win64" ^
+      -DMAEPARSER_RIGOROUS_BUILD=ON ^
+      -DCMAKE_BUILD_TYPE=%CONFIGURATION% ^
+      -DBOOST_ROOT=%BOOST_ROOT_PATH% ^
+      -DCMAKE_INSTALL_PREFIX=%P%
+
+test_script:
+  - set PATH=%BOOST_LIBRARY_PATH%;%PATH%
+  - cd %APPVEYOR_BUILD_FOLDER%\build
+  # For whatever reason, boost_iostreams depends on libbz2.dll
+  - copy %BOOST_LIBRARY_PATH%\boost_bzip2-vc120-mt-1_56.dll %APPVEYOR_BUILD_FOLDER%\build\test\%CONFIGURATION%\libbz2.dll
+  - ctest -V -C %CONFIGURATION%

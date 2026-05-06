@@ -27,7 +27,9 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
-#include <regex>
+#include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryOps.h>
+
 constexpr double NEIGH_RADIUS = 2.5;
 
 namespace RDDepict {
@@ -580,46 +582,97 @@ struct CachedTemplateInfo {
   std::vector<bool> is_internal;  // Which atoms have degree constraints
 };
 
+// Helper: Check if a query atom has a degree constraint
+// We check by looking for degree-related descriptions in the query
+static bool atomHasDegreeConstraint(const RDKit::Atom *atom) {
+  if (!atom->hasQuery()) {
+    return false;
+  }
+
+  const auto *queryAtom = static_cast<const RDKit::QueryAtom *>(atom);
+  std::string queryStr = queryAtom->getQuery()->getFullDescription();
+
+  // Check if the query description contains degree constraints
+  // Common patterns: "AtomExplicitDegree", "AtomTotalDegree", "AtomHeavyAtomDegree"
+  return (queryStr.find("Degree") != std::string::npos);
+}
+
+// Helper: Create a relaxed query atom without degree constraints
+static RDKit::QueryAtom *createRelaxedQueryAtom(const RDKit::Atom *templateAtom) {
+  auto *relaxedAtom = new RDKit::QueryAtom();
+
+  // Preserve atomic number if specified
+  if (templateAtom->getAtomicNum() > 0) {
+    relaxedAtom->setQuery(RDKit::makeAtomNumQuery(templateAtom->getAtomicNum()));
+  }
+
+  // Preserve aromaticity if the atom is aromatic
+  if (templateAtom->getIsAromatic()) {
+    auto *aromQuery = RDKit::makeAtomAromaticQuery();
+    if (relaxedAtom->hasQuery()) {
+      relaxedAtom->expandQuery(aromQuery, Queries::COMPOSITE_AND);
+    } else {
+      relaxedAtom->setQuery(aromQuery);
+    }
+  }
+
+  // If no query was set, make it a wildcard atom
+  if (!relaxedAtom->hasQuery()) {
+    relaxedAtom->setQuery(RDKit::makeAtomNullQuery());
+  }
+
+  return relaxedAtom;
+}
+
 // Get cached template info (build cache on first access)
-// Cache is keyed by template pointer for identity-based lookup
+// Cache is keyed by shared_ptr to prevent dangling pointer issues
 static const CachedTemplateInfo &getCachedTemplateInfo(
     const std::shared_ptr<RDKit::ROMol> &tmpl) {
-  static std::map<const RDKit::ROMol *, CachedTemplateInfo> cache;
+  static std::map<std::shared_ptr<const RDKit::ROMol>, CachedTemplateInfo,
+                  std::owner_less<std::shared_ptr<const RDKit::ROMol>>>
+      cache;
 
-  auto it = cache.find(tmpl.get());
+  auto it = cache.find(tmpl);
   if (it != cache.end()) {
     return it->second;
   }
 
   // Build cached info for this template
   CachedTemplateInfo info;
-
-  // Convert template to SMARTS and remove degree constraints
-  std::string tmpl_smarts = RDKit::MolToSmarts(*tmpl);
-  std::regex degree_pattern("&D[0-9]");
-  std::string relaxed_smarts =
-      std::regex_replace(tmpl_smarts, degree_pattern, "");
-  info.relaxed_query.reset(RDKit::SmartsToMol(relaxed_smarts));
-
-  // Parse SMARTS to identify internal atoms (those with degree constraints)
-  std::regex atom_pattern("\\[!#200(?:&D[0-9])?\\]");
   info.is_internal.resize(tmpl->getNumAtoms(), false);
 
-  auto atoms_begin = std::sregex_iterator(tmpl_smarts.begin(),
-                                          tmpl_smarts.end(), atom_pattern);
-  auto atoms_end = std::sregex_iterator();
-  unsigned int atom_idx = 0;
+  // Create relaxed query molecule by copying template and removing degree
+  // constraints
+  auto *relaxed = new RDKit::RWMol();
 
-  for (std::sregex_iterator i = atoms_begin;
-       i != atoms_end && atom_idx < tmpl->getNumAtoms(); ++i, ++atom_idx) {
-    std::smatch match_smarts = *i;
-    std::string atom_smarts = match_smarts.str();
-    // If it contains &D, it's internal (has degree constraint)
-    info.is_internal[atom_idx] = (atom_smarts.find("&D") != std::string::npos);
+  // Add atoms to relaxed query, checking for degree constraints
+  for (const auto &atom : tmpl->atoms()) {
+    unsigned int idx = atom->getIdx();
+
+    // Check if this atom has a degree constraint
+    info.is_internal[idx] = atomHasDegreeConstraint(atom);
+
+    // Create relaxed atom (preserves atom type and aromaticity, but no degree)
+    auto *relaxedAtom = createRelaxedQueryAtom(atom);
+    relaxed->addAtom(relaxedAtom, false, true);
   }
 
-  cache[tmpl.get()] = std::move(info);
-  return cache[tmpl.get()];
+  // Copy bonds from template
+  for (const auto &bond : tmpl->bonds()) {
+    unsigned int beginIdx = bond->getBeginAtomIdx();
+    unsigned int endIdx = bond->getEndAtomIdx();
+
+    // Create bond with same type and aromaticity
+    unsigned int bondIdx = relaxed->addBond(beginIdx, endIdx, bond->getBondType());
+    if (bond->getIsAromatic()) {
+      relaxed->getBondWithIdx(bondIdx)->setIsAromatic(true);
+    }
+  }
+
+  info.relaxed_query.reset(relaxed);
+
+  cache[tmpl] = std::move(info);
+  return cache[tmpl];
 }
 
 // Helper function: build a molecule with ring atoms preserved and non-ring
@@ -1068,7 +1121,6 @@ static const TemplateMatch *selectBestMatch(
 }
 
 bool EmbeddedFrag::matchToTemplateMacrocycle(
-    const RDKit::INT_VECT &ringSystemAtoms,
     const RDKit::INT_VECT &macrocycleRing,
     const RDKit::VECT_INT_VECT &allRings) {
   // 1. Return early if no template of this size exists
@@ -1256,7 +1308,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
         if (all_small_rings) {
           // Try permissive template matching with fusion validation
           found_template = matchToTemplateMacrocycle(
-              funion, fusedRings[macrocycle_idx], coreRings);
+              fusedRings[macrocycle_idx], coreRings);
           if (found_template) {
             doneRings.push_back(macrocycle_idx);
           }

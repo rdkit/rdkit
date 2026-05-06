@@ -1,0 +1,178 @@
+#!/bin/sh
+#
+# RDKit premake script for Schrodinger build system
+#
+# Move this into rdkit/premake and make it executable.
+# Tested only on Mac. It will need light changes for Linux.
+#
+set -euo pipefail
+
+# Execute the mmshare premake script to setup build environment
+if [[ $# -ne 0 ]]; then
+    VERSION=$1 . $SCHRODINGER_SRC/mmshare/build_env -b Darwin-x86_64
+    VERSION=Darwin-x86_64$1
+else
+    . $SCHRODINGER_SRC/mmshare/build_env -b Darwin-x86_64
+    VERSION=$OS_CPU
+fi
+
+# Read mmshare's dependencies for library_definitions*.json
+# It is very important that there are no whitespace charecters in the output
+# of this embedded Python script (except for the line breaks in each var defintion).
+for envvar in $( ${SCHRODINGER}/internal/bin/python3 << EOF
+import glob
+import os
+import sys
+
+if not 'OS_CPU' in os.environ:
+    raise RuntimeError('The build environment needs to be sourced first!')
+
+sys.path.insert(0, f"{os.environ['SCHRODINGER_SRC']}/mmshare/build_tools")
+
+from  library_definitions import get_library_definitions
+defs = get_library_definitions()
+
+print(f"BOOST_PATH={defs['BOOST'].base_path}")
+print(f"COORDGEN_DIR={defs['COORDGENLIBS'].base_path}")
+print(f"EIGEN3_INCLUDE_DIR={defs['EIGEN'].include_directory}")
+print(f"MAEPARSER_DIR={defs['MAEPARSER'].base_path}")
+print(f"ZSTD_DIR={defs['ZSTD'].base_path}")
+
+# Per platform config specifics
+if sys.platform == 'linux':
+    dyn_lib_ext='so'
+
+    print(f"CC=gcc")
+    print(f"CXX=g++")
+
+    # On Linux we use the system's installed freetype,
+    # so do not set any env var for it
+
+elif sys.platform == 'darwin':
+    dyn_lib_ext='dylib'
+
+    print(f"CC=clang")
+    print(f"CXX=clang++")
+
+    print(f"FREETYPE_DIR={defs['FREETYPE'].base_path}")
+
+else:
+    raise RuntimeError('Unsupported platform!')
+
+EOF
+); do
+    export $envvar
+done
+
+# ZLIB hasn't been rebuilt in a long time, so we haven't moved it
+# yet into the library definitions file
+export ZLIB_PATH=${SCHRODINGER_LIB}/${OS_CPU}/zlib-1.2.11
+export PYTHON_EXE=$SCHRODINGER/internal/bin/python3
+export PYTHON_SITE_PATH=$($PYTHON_EXE -c 'import site; print(site.getsitepackages()[0])')
+export PYTHON_INCLUDE_PATH=$($PYTHON_EXE -c "import sysconfig; print(sysconfig.get_paths()['include'])")
+export Python3_ROOT_DIR=$(dirname $(dirname "$PYTHON_EXE"))
+export NUMPY_INCLUDE_PATH=$($PYTHON_EXE -c 'import numpy ; print(numpy.get_include())')
+export PYTHON_LIB=$(ls $Python3_ROOT_DIR/lib/libpython*.*)
+
+# Set the build directory explicitly
+export BUILD_DIR="$SCHRODINGER/rdkit"
+export RDBASE=$BUILD_DIR
+export RDKIT_DIR=$BUILD_DIR/install
+
+# Setup default build type
+echo "$*"
+if [[ "$*" == *"-g"* ]]; then
+    CMAKE_BUILD_TYPE="Debug"
+else
+   if [[ "$*" == *".g"* ]]; then
+       CMAKE_BUILD_TYPE="RelWithDebInfo"
+   else
+       CMAKE_BUILD_TYPE="Release"
+   fi
+fi
+
+# Now set up the build directories and run CMake
+echo "Setting up RDKit build directories and running CMake in $BUILD_DIR..."
+
+# Handle CPU architecture specific flags
+CMAKE_EXTRA_FLAGS="-DRDK_OPTIMIZE_POPCNT=ON"
+if [[ "$(uname -m)" == "arm64" ]]; then
+    echo "Detected ARM64 architecture"
+    CMAKE_EXTRA_FLAGS="-DRDK_OPTIMIZE_POPCNT=OFF"
+    BUILD_X86_64_ON_MAC="-DCMAKE_OSX_ARCHITECTURES=x86_64"
+fi
+
+RDBASE=$SCHRODINGER_SRC/rdkit
+LIBRARY_PATH=$BUILD_DIR/lib:$COORDGEN_DIR/lib:$BOOST_PATH/lib:$ZSTD_DIR/lib
+
+# Ensure build directory exists
+mkdir -p "$BUILD_DIR"
+
+# Generate Makefile wrapper
+cat > "$BUILD_DIR/Makefile" << EOF
+.PHONY: all test
+
+all:
+	cmake -B "$BUILD_DIR" -S "$RDBASE" -G Ninja -Wno-dev \
+        ${BUILD_X86_64_ON_MAC:-} \
+        -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
+        -DCMAKE_INSTALL_PREFIX="$BUILD_DIR" \
+        -DRDK_BUILD_PYTHON_WRAPPERS=ON \
+        -DRDK_INSTALL_INTREE=OFF \
+        -DRDK_INSTALL_STATIC_LIBS=OFF \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+        -Dmaeparser_DIR=${MAEPARSER_DIR}/lib/cmake \
+        -Dcoordgen_DIR=${COORDGEN_DIR}/lib/cmake \
+        -DEIGEN3_INCLUDE_DIR="$EIGEN3_INCLUDE_DIR" \
+        -DBoost_ROOT="$BOOST_PATH" \
+        -DBoost_USE_MULTITHREADED=ON \
+        -DBoost_USE_STATIC_RUNTIME=OFF \
+        -DBoost_NO_BOOST_CMAKE=ON \
+        -DFIND_PACKAGE_MESSAGE_DETAILS_Boost=ON \
+        -DPYTHON_EXECUTABLE="$PYTHON_EXE" \
+        -DPython3_EXECUTABLE="$PYTHON_EXE" \
+        -DPYTHON_LIBRARY=$PYTHON_LIB \
+        -DPython3_LIBRARY=$PYTHON_LIB \
+        -DPython3_LIBRARIES=$PYTHON_LIB \
+        -DPython3_ROOT_DIR=$Python3_ROOT_DIR \
+        -DPYTHON_INCLUDE_DIR=$PYTHON_INCLUDE_PATH \
+        -DPython3_INCLUDE_DIR=$PYTHON_INCLUDE_PATH \
+        -DPYTHON_NUMPY_INCLUDE_DIR="$NUMPY_INCLUDE_PATH" \
+        -DPython3_NumPy_INCLUDE_DIRS="$NUMPY_INCLUDE_PATH" \
+        -DRDK_INSTALL_PYTHON_TESTS=ON \
+        -DRDK_BUILD_CPP_TESTS=ON \
+        -DRDK_BUILD_TEST_GZIP=ON \
+        -D_HAS_AUTO_PTR_ETC=0 \
+        -DPy_ENABLE_SHARED=1 \
+        -DRDK_BUILD_COORDGEN_SUPPORT=ON \
+        -DRDK_BUILD_AVALON_SUPPORT=ON \
+        -DRDK_BUILD_COMPRESSED_SUPPLIERS=ON \
+        -DRDK_BUILD_CONTRIB=ON \
+        -DRDK_BUILD_FREESASA_SUPPORT=ON \
+        -DRDK_BUILD_INCHI_SUPPORT=ON \
+        -DRDK_BUILD_QT_SUPPORT=ON \
+        -DRDK_BUILD_RPATH_SUPPORT=ON \
+        -DRDK_BUILD_SLN_SUPPORT=ON \
+        -DRDK_BUILD_THREADSAFE_SSS=ON \
+        -DRDK_BUILD_XYZ2MOL_SUPPORT=ON \
+        -DRDK_BUILD_YAEHMOP_SUPPORT=ON \
+        -DRDK_USE_QT6=ON \
+        -DRDK_USE_URF=ON \
+        ${FREETYPE_DIR:+"-DFREETYPE_INCLUDE_DIRS=$FREETYPE_DIR/include"} \
+        ${FREETYPE_DIR:+"-DFREETYPE_LIBRARY=$FREETYPE_DIR/lib/libfreetype.$(if [[ "$OS_CPU" == Darwin* ]]; then echo "dylib"; else echo "so"; fi)"} \
+        $CMAKE_EXTRA_FLAGS || exit 1
+	cmake --build $BUILD_DIR --config $CMAKE_BUILD_TYPE
+	cmake --install $BUILD_DIR --config $CMAKE_BUILD_TYPE
+
+test:
+	env RDBASE=$RDBASE DYLD_LIBRARY_PATH=$LIBRARY_PATH PYTHONPATH=$BUILD_DIR/lib/python3.11/site-packages ctest --build-config $CMAKE_BUILD_TYPE --test-dir $BUILD_DIR --output-on-failure
+
+# Variables
+RDBASE := $RDBASE
+BUILD_DIR := $BUILD_DIR
+OS_CPU := $OS_CPU
+VERSION := $VERSION    
+EOF
+
+# buildinger expects stdout to define variables
+echo "BUILD_DIR: $BUILD_DIR"

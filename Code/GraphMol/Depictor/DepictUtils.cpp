@@ -28,6 +28,7 @@ double ANGLE_OPEN = 0.1222;  // that is about 7 deg
 unsigned int MAX_COLL_ITERS = 15;
 double HETEROATOM_COLL_SCALE = 1.3;
 unsigned int NUM_BONDS_FLIPS = 3;
+constexpr unsigned int MACROCYCLE_SIZE_THRESHOLD = 8;
 
 RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
   // The process here is very straight forward
@@ -238,10 +239,10 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
         // Don't skip macrocycles - we need to count all intersections to avoid
         // removing rings that have significant fusion (3+ atoms) with a
         // macrocycle
-        RDKit::INT_VECT commmonAtoms;
+        RDKit::INT_VECT commonAtoms;
         RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
-                         commmonAtoms);
-        for (auto rii : commmonAtoms) {
+                         commonAtoms);
+        for (auto rii : commonAtoms) {
           if (rii != aid1 && rii != aid2) {
             ++nIntersectingAtoms;
             if (aid1 == -1) {
@@ -264,12 +265,12 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
           if (currRingId == otherRingId || removedRings[otherRingId]) {
             continue;
           }
-          if (fusedRings[otherRingId].size() > 8) {
+          if (fusedRings[otherRingId].size() > MACROCYCLE_SIZE_THRESHOLD) {
             // This is a macrocycle - check if currRing shares atoms with it
-            RDKit::INT_VECT commmonAtoms;
+            RDKit::INT_VECT commonAtoms;
             RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
-                             commmonAtoms);
-            if (!commmonAtoms.empty()) {
+                             commonAtoms);
+            if (!commonAtoms.empty()) {
               // Ring is fused to a macrocycle - don't remove it
               shouldRemove = false;
               break;
