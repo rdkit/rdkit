@@ -208,6 +208,7 @@ MACROMolTemplate *RDKit::MACROMol::atomIdxToMACROMolTemplate(
     this->clearTemplateLib();
 
     // copy and add the ownedTemplates
+    
     for (const auto &templateToCopy :libToCopy.ownedTemplates) {
       // make a copy of the template
 
@@ -219,14 +220,10 @@ MACROMolTemplate *RDKit::MACROMol::atomIdxToMACROMolTemplate(
     //Copy the non-owned ones (from a global or external library)
 
     for (auto templateToCopy : libToCopy) {
-      if (libToCopy.isTemplateOwnedByLib(templateToCopy)) {
-        auto templateCopy = std::unique_ptr<MACROMolTemplate>(templateToCopy);
-        this->addTemplate(templateCopy, true /* take ownership*/);
-      } else {
+      if (!libToCopy.isTemplateOwnedByLib(templateToCopy)) {
         this->addTemplate(templateToCopy);
       }
     }
 
   }
-
 }  // namespace RDKit

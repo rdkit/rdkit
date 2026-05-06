@@ -90,6 +90,13 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : public std::vector<MACROMolTem
     }
     
 public:
+    MACROMolTemplateLib() = default;
+    MACROMolTemplateLib(const MACROMolTemplateLib &other) = delete;
+    MACROMolTemplateLib(MACROMolTemplateLib &&other) noexcept = delete;
+    MACROMolTemplateLib &operator=(MACROMolTemplateLib &&other) noexcept = delete;
+    MACROMolTemplateLib &operator=(const MACROMolTemplateLib &) = delete;  
+    ~MACROMolTemplateLib() {}
+
     void addTemplate(MACROMolTemplate *templateMol);    // does NOT take ownership
     void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol, bool takeOwnership=true);
     void addTemplateLib(MACROMolTemplateLib &libToAdd, bool takeOwnership=false);
@@ -145,7 +152,7 @@ public:
       return find_if(ownedTemplates.begin(), ownedTemplates.end(), [templatePtr] (auto &up) { 
         auto upPtr = up.get();
         return upPtr == templatePtr; 
-      }) == ownedTemplates.end();
+      }) != ownedTemplates.end();
     }
 
     bool doesLibHaveCoords() {
@@ -171,9 +178,11 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
 
  public:
   MACROMol() : p_atomIdxToTemplateIdxIsStale(true) {};
-  MACROMol(const MACROMol &other) = delete;
-  MACROMol(MACROMol &&other) noexcept = delete;
-  MACROMol &operator=(MACROMol &&other) noexcept = delete;
+  MACROMol(const MACROMol &other) : RWMol((RWMol) other), p_atomIdxToTemplateIdxIsStale(true){
+    d_templateLibrary.copyTemplateLib(*other.getTemplateLibrary());
+  }
+  MACROMol(MACROMol &&other) noexcept = default;
+  MACROMol &operator=(MACROMol &&other) noexcept = default;
 
   MACROMol &operator=(const MACROMol &) = delete;  // disable assignment
 
@@ -187,6 +196,11 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
   MACROMolTemplateLib *getTemplateLibrary() {
     return &d_templateLibrary;
   }
+    const MACROMolTemplateLib *getTemplateLibrary() const {
+    return &d_templateLibrary;
+  }
+
+
 
   void clearTemplateLibrary() {
     d_templateLibrary.clear();
