@@ -435,7 +435,8 @@ SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
   std::vector<std::unique_ptr<ROMol>> results;
   auto fragments = details::splitMolecule(
       d_query, getNumQueryFragmentsRequired(), d_params.maxNumFragSets, endTime,
-      d_params.numThreads, timedOut);
+      d_params.numThreads, d_fragSetUniquifyMode, timedOut);
+  std::cout << "number of fragment sets : " << fragments.size() << std::endl;
   if (timedOut || ControlCHandler::getGotSignal()) {
     return {};
   }
@@ -695,7 +696,7 @@ void SynthonSpaceSearcher::buildAllHits(
                        std::make_move_iterator(partResults.end()));
         partResults.clear();
         enoughHits =
-            haveEnoughHits(results, d_params.maxHits, d_params.hitStart) |
+            haveEnoughHits(results, d_params.maxHits, d_params.hitStart) ||
             wroteEnoughPossibleHits(d_params);
         timedOut = details::checkTimeOut(endTime);
         toTry.clear();

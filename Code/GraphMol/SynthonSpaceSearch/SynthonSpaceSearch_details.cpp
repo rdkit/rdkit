@@ -29,11 +29,11 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
-
 #include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
 #include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/RDThreads.h>
 #include <SimDivPickers/LeaderPicker.h>
+#include <boost/variant2/variant.hpp>
 
 namespace RDKit::SynthonSpaceSearch::details {
 
@@ -523,12 +523,75 @@ void buildSplitBonds(
   splitBonds.erase(std::unique(splitBonds.begin(), splitBonds.end()),
                    splitBonds.end());
 }
+
+void uniquifyFragsBySmiles(
+    std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> &tmpFrags,
+    const std::atomic_uint64_t maxNumFragSets) {
+  // Keep unique SMILES only
+  std::sort(tmpFrags.begin(), tmpFrags.end(),
+            [](const auto &lhs, const auto &rhs) -> bool {
+              return lhs.first < rhs.first;
+            });
+  tmpFrags.erase(std::unique(tmpFrags.begin(), tmpFrags.end(),
+                             [](const auto &lhs, const auto &rhs) -> bool {
+                               return lhs.first == rhs.first;
+                             }),
+                 tmpFrags.end());
+  if (tmpFrags.size() > maxNumFragSets) {
+    tmpFrags.erase(tmpFrags.begin() + maxNumFragSets, tmpFrags.end());
+  }
+}
+
+void uniquifyFragsByAtoms(
+    std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> &tmpFrags,
+    const std::uint64_t maxNumFragSets) {
+  std::vector<std::pair<std::string, size_t>> fragsToKeep;
+  fragsToKeep.reserve(tmpFrags.size());
+  for (size_t i = 0; i < tmpFrags.size(); ++i) {
+    std::vector<std::vector<int>> molFrags;
+    MolOps::getMolFrags(*tmpFrags[i].second, molFrags);
+    std::vector<std::string> atStrings;
+    atStrings.reserve(molFrags.size());
+    for (auto &mf : molFrags) {
+      std::ranges::sort(mf);
+      atStrings.push_back(std::to_string(mf[0]));
+      for (unsigned int j = 1; j < mf.size(); ++j) {
+        atStrings.back() += "_" + std::to_string(mf[j]);
+      }
+    }
+    std::ranges::sort(atStrings);
+    std::string atString = atStrings.front();
+    for (unsigned int j = 1; j < atStrings.size(); ++j) {
+      atString += "." + atStrings[j];
+    }
+    fragsToKeep.emplace_back(atString, i);
+  }
+  std::sort(fragsToKeep.begin(), fragsToKeep.end(),
+            [](const auto &lhs, const auto &rhs) -> bool {
+              return lhs.first < rhs.first;
+            });
+  fragsToKeep.erase(std::unique(fragsToKeep.begin(), fragsToKeep.end(),
+                                [](const auto &lhs, const auto &rhs) -> bool {
+                                  return lhs.first == rhs.first;
+                                }),
+                    fragsToKeep.end());
+  std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> newTmpFrags(
+      fragsToKeep.size());
+  for (size_t i = 0;
+       i <
+       std::min(static_cast<std::uint64_t>(fragsToKeep.size()), maxNumFragSets);
+       ++i) {
+    newTmpFrags[i] = std::move(tmpFrags[fragsToKeep[i].second]);
+  }
+  tmpFrags = std::move(newTmpFrags);
+}
 }  // namespace
 
 std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxNumFrags,
     const std::uint64_t maxNumFragSets, const TimePoint *endTime,
-    const int numThreads, bool &timedOut) {
+    const int numThreads, const FragSetUniquifyMode &uniquifyMode,
+    bool &timedOut) {
   if (maxNumFrags < 1) {
     maxNumFrags = 1;
   }
@@ -565,18 +628,16 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
   if (timedOut || ControlCHandler::getGotSignal()) {
     return fragments;
   }
-  // Keep unique SMILES only
-  std::sort(tmpFrags.begin(), tmpFrags.end(),
-            [](const auto &lhs, const auto &rhs) -> bool {
-              return lhs.first < rhs.first;
-            });
-  tmpFrags.erase(std::unique(tmpFrags.begin(), tmpFrags.end(),
-                             [](const auto &lhs, const auto &rhs) -> bool {
-                               return lhs.first == rhs.first;
-                             }),
-                 tmpFrags.end());
-  if (tmpFrags.size() > maxNumFragSets) {
-    tmpFrags.erase(tmpFrags.begin() + maxNumFragSets, tmpFrags.end());
+  std::cout << "Number of raw fragment sets : " << tmpFrags.size() << std::endl;
+  switch (uniquifyMode) {
+    case FragSetUniquifyMode::BySmiles:
+      std::cout << "uniquify by smiles" << std::endl;
+      uniquifyFragsBySmiles(tmpFrags, maxNumFragSets);
+      break;
+    case FragSetUniquifyMode::ByAtoms:
+      std::cout << "uniquify by atoms" << std::endl;
+      uniquifyFragsByAtoms(tmpFrags, maxNumFragSets);
+      break;
   }
 
   // Keep the molecule itself (i.e. 0 splits).  It will probably produce

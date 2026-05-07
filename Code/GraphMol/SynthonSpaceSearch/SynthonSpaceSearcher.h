@@ -20,6 +20,7 @@
 #include <random>
 
 #include <RDGeneral/export.h>
+#include <GraphMol/ROMol.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
@@ -29,7 +30,6 @@ using Clock = std::chrono::steady_clock;
 using TimePoint = std::chrono::time_point<Clock>;
 
 namespace RDKit {
-class ROMol;
 
 namespace SynthonSpaceSearch {
 
@@ -113,6 +113,10 @@ class SynthonSpaceSearcher {
       const std::vector<
           std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> &toTry,
       const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results);
+
+  // Passed to details::splitMolecule to determine how the fragment
+  // sets are uniquified.
+  FragSetUniquifyMode d_fragSetUniquifyMode{FragSetUniquifyMode::BySmiles};
 
  private:
   std::unique_ptr<std::mt19937> d_randGen;

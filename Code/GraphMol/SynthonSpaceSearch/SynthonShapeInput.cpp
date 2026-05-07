@@ -46,12 +46,8 @@ void SynthonShapeInput::merge(SynthonShapeInput &other) {
                         std::make_move_iterator(other.d_dummyVolumes.begin()),
                         std::make_move_iterator(other.d_dummyVolumes.end()));
   other.d_dummyVolumes.clear();
-  d_dummyAtomsAndNbrs.reserve(d_dummyAtomsAndNbrs.size() +
-                              other.d_dummyAtomsAndNbrs.size());
-  d_dummyAtomsAndNbrs.insert(
-      d_dummyAtomsAndNbrs.end(),
-      std::make_move_iterator(other.d_dummyAtomsAndNbrs.begin()),
-      std::make_move_iterator(other.d_dummyAtomsAndNbrs.end()));
+  // The dummyAtomsAndNbrs shouldn't be merged as they are properties
+  // of the synthon, not the individual shapes.
   other.d_dummyAtomsAndNbrs.clear();
 }
 

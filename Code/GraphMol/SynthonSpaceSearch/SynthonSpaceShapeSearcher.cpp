@@ -39,6 +39,7 @@ SynthonSpaceShapeSearcher::SynthonSpaceShapeSearcher(
     std::vector<GaussianShape::CustomFeature> allFeatures;
     buildQueryShape(query, allFeatures);
   }
+  d_fragSetUniquifyMode = FragSetUniquifyMode::ByAtoms;
 }
 
 bool SynthonSpaceShapeSearcher::fragMatchedSynthon(const void *frag,
@@ -237,14 +238,14 @@ void selectFragFeatures(
 }
 
 std::unique_ptr<SynthonShapeInput> generateShapes(
-    const ROMol &queryConfs, const ROMol &frag,
+    const ROMol &queryMol, const ROMol &frag,
     const std::vector<GaussianShape::CustomFeature> &allFeatures) {
   // The fragSets molecules will have their atoms labelled with
   // ORIG_IDX apart from the dummy atoms, but we need coords
   // for them, too.  They are normally copied from the atom at
   // the other end of the broken bond so find that atom too.
   // Work on a copy the query.
-  RWMol queryCp(queryConfs);
+  RWMol queryCp(queryMol);
   std::vector<unsigned int> fragAtoms;
   fragAtoms.reserve(frag.getNumAtoms());
   boost::dynamic_bitset<> inFrag(queryCp.getNumAtoms());
@@ -259,7 +260,6 @@ std::unique_ptr<SynthonShapeInput> generateShapes(
   fragAtoms.erase(std::unique(fragAtoms.begin(), fragAtoms.end()),
                   fragAtoms.end());
   std::vector<std::pair<unsigned int, double>> dummyRadii;
-  // std::vector<unsigned int> notColorAtoms;
   for (const auto atom : frag.atoms()) {
     if (atom->getAtomicNum() == 0 && atom->getIsotope() >= 1 &&
         atom->getIsotope() <= MAX_CONNECTOR_NUM) {
@@ -329,6 +329,50 @@ void generateSomeShapes(
     }
   }
 }
+
+// This is very similar to details::mapFragsBySmiles.
+std::map<std::string, std::vector<ROMol *>> mapFragsByAtoms(
+    const std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+    bool &cancelled) {
+  std::map<std::string, std::vector<ROMol *>> atomsToFrags;
+  for (auto &fragSet : fragSets) {
+    for (auto &frag : fragSet) {
+      if (ControlCHandler::getGotSignal()) {
+        cancelled = true;
+        return atomsToFrags;
+      }
+      // Ring info is required.
+      unsigned int otf;
+      sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
+                  MolOps::SANITIZE_SYMMRINGS);
+      std::vector<unsigned int> atIdxs;
+      unsigned int dummyIdx = 10000;
+      for (const auto a : frag->atoms()) {
+        if (unsigned int origIdx;
+            a->getPropIfPresent<unsigned int>("ORIG_IDX", origIdx)) {
+          atIdxs.push_back(origIdx);
+        } else {
+          if (!a->getAtomicNum() && a->getIsotope() > 0) {
+            atIdxs.push_back(dummyIdx + a->getIsotope());
+          }
+        }
+      }
+      std::ranges::sort(atIdxs);
+      std::string atIdxsStr = std::to_string(atIdxs.front());
+      for (unsigned int i = 1; i < atIdxs.size(); ++i) {
+        atIdxsStr += "_" + std::to_string(atIdxs[i]);
+      }
+      std::cout << MolToSmiles(*frag) << "  atIdsStr : " << atIdxsStr
+                << std::endl;
+      if (auto it = atomsToFrags.find(atIdxsStr); it == atomsToFrags.end()) {
+        atomsToFrags.emplace(atIdxsStr, std::vector<ROMol *>(1, frag.get()));
+      } else {
+        it->second.emplace_back(frag.get());
+      }
+    }
+  }
+  return atomsToFrags;
+}
 }  // namespace
 
 bool SynthonSpaceShapeSearcher::extraSearchSetup(
@@ -350,19 +394,27 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
   auto queryCp = std::make_unique<RWMol>(getQuery(), false, -1);
   std::vector<GaussianShape::CustomFeature> allFeatures;
   buildQueryShape(*queryCp, allFeatures);
+  std::cout << "initial query shape : "
+            << MolToCXSmiles(*dp_queryShape->getShapes().shapeToMol())
+            << std::endl;
 
-  // Make a map of the unique SMILES strings for the fragments, keeping
-  // track of them in the vector.
+  // Organise the fragments into a map where each entry is a set of fragments
+  // from the same atoms in the query.  SMILES strings aren't good enough for
+  // this, as they are for the other synthon searches, because 2 fragments can
+  // have the same SMILES but be of different atoms and therefore potentially
+  // different shapes.  The key is an underscore-separated list of the atom
+  // indices.
   bool cancelled = false;
-  auto fragSmiToFrag = details::mapFragsBySmiles(fragSets, cancelled);
+  auto fragAtomsToFrag = mapFragsByAtoms(fragSets, cancelled);
   if (cancelled) {
     return false;
   }
+
   // Compute ShapeSets for the fragments
-  d_fragShapesPool.resize(fragSmiToFrag.size());
+  d_fragShapesPool.resize(fragAtomsToFrag.size());
   std::vector<ROMol *> fragsForShape;
-  fragsForShape.reserve(fragSmiToFrag.size());
-  std::transform(fragSmiToFrag.begin(), fragSmiToFrag.end(),
+  fragsForShape.reserve(fragAtomsToFrag.size());
+  std::transform(fragAtomsToFrag.begin(), fragAtomsToFrag.end(),
                  back_inserter(fragsForShape),
                  [](const auto &p) -> ROMol * { return p.second.front(); });
 
@@ -406,9 +458,9 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
   // hold pointers to shapes in d_fragShapesPool, keyed on the corresponding
   // fragment.
   fragNum = 0;
-  d_fragShapes.reserve(fragSmiToFrag.size());
+  d_fragShapes.reserve(fragAtomsToFrag.size());
   std::unordered_map<void *, unsigned int> minShapeSetSize;
-  for (auto &[fragSmi, frags] : fragSmiToFrag) {
+  for (auto &[fragSmi, frags] : fragAtomsToFrag) {
     minShapeSetSize[d_fragShapesPool[fragNum].get()] = 10;
     for (auto &frag : frags) {
       if (minFragSetSize[frag] <
@@ -563,8 +615,6 @@ SynthonOverlay bestSimSynthonOntoFragment(
     auto fragDummyNbr =
         fragShapeCp.getShapes().getCoords().data() + 3 * fragDummyNbrIdx;
     // Set the alpha values of the other dummies -ve so they are ignored.
-    // The mark missing atoms in the query so shouldn't be included in
-    // any volume calculation.
     for (const auto &[otherFragDummyIdx, otherFragDummyNbr] :
          fragShapeCp.getDummyAtomsAndNbrs()) {
       if (otherFragDummyIdx != fragDummyIdx &&
@@ -1096,7 +1146,7 @@ bool checkBondLengths(const ROMol &mol) {
 bool SynthonSpaceShapeSearcher::verifyHit(
     ROMol &hit, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames) {
-  // std::cout << "Verifying hit " << MolToCXSmiles(hit) << std::endl;
+  std::cout << "Verifying hit " << MolToCXSmiles(hit) << std::endl;
   std::array<double, 3> initScores{-1.0, -1.0, -1.0};
   if (hit.getNumConformers()) {
     initScores = GaussianShape::AlignMolecule(

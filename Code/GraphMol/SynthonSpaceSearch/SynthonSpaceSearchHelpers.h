@@ -222,5 +222,14 @@ enum class ThreadMode : unsigned char {
   ThreadFragments
 };
 
+// When uniquifying the split molecules in details::splitMolecule,
+// whether to do it by SMILES (most common) or by atom indices.
+// The latter is for shape searching where 2 fragment sets can have the
+// same SMILES strings but be from different partitions of the atoms and
+// hence have different shapes, if there's partial symmetry in the molecule.
+enum class FragSetUniquifyMode : unsigned char {
+  BySmiles,
+  ByAtoms
+};
 }  // namespace RDKit::SynthonSpaceSearch
 #endif  // SYNTHONSPACESEARCHHELPERS_H
