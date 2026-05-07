@@ -604,6 +604,33 @@ struct CachedTemplateInfo {
   std::vector<bool> is_internal;  // Which atoms have degree constraints
 };
 
+// Helper: Recursively check if a query has degree constraints
+static bool queryHasDegreeConstraint(const Queries::Query<int, RDKit::Atom const*, true> *query) {
+  if (!query) {
+    return false;
+  }
+
+  std::string desc = query->getDescription();
+
+  // Check if this query node is a degree constraint
+  if (desc.find("Degree") != std::string::npos) {
+    return true;
+  }
+
+  // For composite queries (And, Or), check children
+  if (desc.find("And") != std::string::npos || desc.find("Or") != std::string::npos) {
+    // Iterate through children
+    auto children = query->endChildren();
+    for (auto it = query->beginChildren(); it != children; ++it) {
+      if (queryHasDegreeConstraint(it->get())) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 // Helper: Check if a query atom has a degree constraint
 // We check by looking for degree-related descriptions in the query
 static bool atomHasDegreeConstraint(const RDKit::Atom *atom) {
@@ -612,12 +639,14 @@ static bool atomHasDegreeConstraint(const RDKit::Atom *atom) {
   }
 
   const auto *queryAtom = static_cast<const RDKit::QueryAtom *>(atom);
-  std::string queryStr = queryAtom->getQuery()->getFullDescription();
 
-  // Check if the query description contains degree constraints
-  // Common patterns: "AtomExplicitDegree", "AtomTotalDegree",
-  // "AtomHeavyAtomDegree"
-  return (queryStr.find("Degree") != std::string::npos);
+  // Recursively check the query tree for degree constraints
+  bool hasDegree = queryHasDegreeConstraint(queryAtom->getQuery());
+
+  std::cerr << "DEBUG_DEGREE: atom[" << atom->getIdx()
+            << "] hasDegree=" << hasDegree << std::endl;
+
+  return hasDegree;
 }
 
 // Helper: Create a relaxed query atom without degree constraints
@@ -665,6 +694,8 @@ static const CachedTemplateInfo &getCachedTemplateInfo(
   // Build cached info for this template
   CachedTemplateInfo info;
   info.is_internal.resize(tmpl->getNumAtoms(), false);
+
+  std::cerr << "DEBUG_TEMPLATE_LOAD: Loading template with " << tmpl->getNumAtoms() << " atoms" << std::endl;
 
   // Create relaxed query molecule by copying template and removing degree
   // constraints
@@ -775,7 +806,7 @@ static std::vector<FusedRingInfo> identifyFusedSmallRings(
 
   for (const auto &ring : allRings) {
     // Skip any macrocycles
-    if (ring.size() > 8) {
+    if (ring.size() > MACROCYCLE_SIZE_THRESHOLD) {
       continue;
     }
 
@@ -783,11 +814,11 @@ static std::vector<FusedRingInfo> identifyFusedSmallRings(
     RDKit::INT_VECT shared;
     RDKit::Intersect(macrocycleRing, ring, shared);
 
-    // Check if small ring (4-6 atoms) with 2, 3, or 4 shared atoms
+    // Check if small ring (3-7 atoms) with 2, 3, or 4 shared atoms
     size_t ring_size = ring.size();
     size_t sharedCount = shared.size();
 
-    if (ring_size >= 4 && ring_size <= 6 &&
+    if (ring_size >= 3 && ring_size <= 7 &&
         (sharedCount == 2 || sharedCount == 3 || sharedCount == 4)) {
       // Find positions of shared atoms in macrocycle
       std::vector<size_t> positions;
@@ -916,6 +947,9 @@ static double scoreTemplateMatch(
     const std::unordered_map<unsigned int, int> &substituentSizes) {
   const double PENALTY_PER_ATOM = 10.0;
   double internalPenalty = 0.0;
+  int numInternalSubstituents = 0;
+
+  std::cerr << "SCORE_MATCH: Scoring template match..." << std::endl;
 
   for (const auto &[templateAidx, molAidx] : match) {
     // If this template position has a degree constraint, it's internal
@@ -927,17 +961,25 @@ static double scoreTemplateMatch(
         if (!ringAtoms.test(nbrIdx)) {
           int subSize = substituentSizes.at(nbrIdx);
           internalPenalty += subSize * PENALTY_PER_ATOM;
+          numInternalSubstituents++;
+          std::cerr << "  Internal substituent: molAtom=" << molAidx
+                    << " (template=" << templateAidx << "), substituent="
+                    << nbrIdx << ", size=" << subSize
+                    << ", penalty=" << (subSize * PENALTY_PER_ATOM) << std::endl;
         }
       }
     }
   }
 
-  return -internalPenalty;
+  double score = -internalPenalty;
+  std::cerr << "SCORE_MATCH: Total internal substituents=" << numInternalSubstituents
+            << ", totalPenalty=" << internalPenalty
+            << ", score=" << score << std::endl;
+
+  return score;
 }
 
 // Helper: Check if fusion geometry forms valid pattern
-// Uses determineConvexSign to identify which angle sign (positive/negative) is
-// convex (majority) vs concave (minority) in the macrocycle.
 // Pattern: first angle is convex, middle angle(s) are concave, last angle is
 // convex This creates a concave indentation where the small ring can fit
 // outside the macrocycle
@@ -947,6 +989,10 @@ static bool validateFusionGeometry(
     const std::vector<FusedRingInfo> &fusedRings, bool positiveIsConvex) {
   const double ANGLE_TOLERANCE = 20.0 * M_PI / 180.0;  // ~20 degrees in radians
   const double TARGET_60_DEG = 60.0 * M_PI / 180.0;    // 60 degrees in radians
+
+  std::cerr << ">>> validateFusionGeometry: fusedRings.size="
+            << fusedRings.size() << ", positiveIsConvex=" << positiveIsConvex
+            << std::endl;
 
   // Build map: molecule atom idx -> template atom idx
   std::unordered_map<int, int> molToTemplate;
@@ -958,8 +1004,18 @@ static bool validateFusionGeometry(
   const auto &conf = templateMol->getConformer();
 
   // Check each fused ring
+  int fusedIdx = 0;
   for (const auto &fused : fusedRings) {
     size_t sharedCount = fused.sharedAtoms.size();
+
+    std::cerr << "  Checking fused ring[" << fusedIdx
+              << "]: ringSize=" << fused.ringSize
+              << ", sharedCount=" << sharedCount << ", macrocyclePositions=[";
+    for (size_t i = 0; i < fused.macrocyclePositions.size(); ++i) {
+      if (i > 0) std::cerr << ", ";
+      std::cerr << fused.macrocyclePositions[i];
+    }
+    std::cerr << "]" << std::endl;
 
     // We handle 2, 3, or 4 shared atoms
     if (sharedCount != 2 && sharedCount != 3 && sharedCount != 4) {
@@ -1052,12 +1108,29 @@ static bool validateFusionGeometry(
       // Determine expected type: first and last are convex, middle are concave
       bool shouldBeConvex = (i == 0 || i == vectors.size() - 2);
 
+      bool isPositive = (angle > 0);
+      bool isConvex = (isPositive == positiveIsConvex);
+      bool matches = (isConvex == shouldBeConvex);
+      bool correctMagnitude =
+          (std::fabs(std::fabs(angle) - TARGET_60_DEG) < ANGLE_TOLERANCE);
+
+      std::cerr << "    angle[" << i << "]: " << (angle * 180.0 / M_PI)
+                << "° (should be " << (shouldBeConvex ? "convex" : "concave")
+                << ", is " << (isConvex ? "convex" : "concave")
+                << ", magnitude " << (correctMagnitude ? "OK" : "BAD") << ")";
+
       if (!angleMatchesType(angle, shouldBeConvex)) {
+        std::cerr << " -> FAILED validation" << std::endl;
+        std::cerr << ">>> validateFusionGeometry returning FALSE" << std::endl;
         return false;  // Invalid fusion geometry
       }
+      std::cerr << " -> OK" << std::endl;
     }
+
+    fusedIdx++;
   }
 
+  std::cerr << ">>> validateFusionGeometry returning TRUE" << std::endl;
   return true;  // All fusions have valid geometry
 }
 
@@ -1083,20 +1156,16 @@ static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
   auto matches =
       RDKit::SubstructMatch(ringMol, *cachedInfo.relaxed_query, params);
 
-  // Pre-compute convex sign once for all matches (used in fusion validation)
-  bool positiveIsConvex = false;
-  if (!fusedRings.empty() && !matches.empty()) {
-    // Use first match to determine convex sign (same for all rotations)
-    positiveIsConvex = determineConvexSign(tmpl, matches[0], macrocycleRing);
-  }
-
   for (const auto &match : matches) {
     if (!checkStereoChemistry(ringMol, *tmpl, match)) {
       continue;
     }
 
     // Check fusion geometry
+    // Note: We compute convex sign for each match individually because
+    // different rotations/flips can have opposite orientations
     if (!fusedRings.empty()) {
+      bool positiveIsConvex = determineConvexSign(tmpl, match, macrocycleRing);
       if (!validateFusionGeometry(tmpl, match, macrocycleRing, fusedRings,
                                   positiveIsConvex)) {
         continue;  // Try next match - invalid fusion geometry
@@ -1128,7 +1197,13 @@ static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
 static const TemplateMatch *selectBestMatch(
     const std::vector<TemplateMatch> &validMatches) {
   if (validMatches.empty()) {
+    std::cerr << "SELECT_BEST: No valid matches to select from" << std::endl;
     return nullptr;
+  }
+
+  std::cerr << "SELECT_BEST: Selecting from " << validMatches.size() << " valid matches:" << std::endl;
+  for (size_t i = 0; i < validMatches.size(); ++i) {
+    std::cerr << "  Match[" << i << "]: score=" << validMatches[i].score << std::endl;
   }
 
   // Find the best scoring match
@@ -1137,6 +1212,9 @@ static const TemplateMatch *selectBestMatch(
                        [](const TemplateMatch &a, const TemplateMatch &b) {
                          return a.score < b.score;
                        });
+
+  size_t bestIdx = std::distance(validMatches.begin(), bestMatch);
+  std::cerr << "SELECT_BEST: Selected match[" << bestIdx << "] with score=" << bestMatch->score << std::endl;
 
   return &(*bestMatch);
 }
@@ -1152,8 +1230,6 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
   CoordinateTemplates &coordinateTemplates =
       CoordinateTemplates::getRingSystemTemplates();
   if (!coordinateTemplates.hasTemplateOfSize(macrocycleRing.size())) {
-    std::cerr << ">>> No templates available for size " << macrocycleRing.size()
-              << std::endl;
     return false;
   }
 
@@ -1256,8 +1332,8 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
             << macrocycleRing.size() << ", allRings.size=" << allRings.size()
             << ", useJacobian=" << useJacobianRefinement << std::endl;
 
-  // Only attempt for macrocycles (size > 8)
-  if (macrocycleRing.size() <= 8) {
+  // Only attempt for macrocycles (size > MACROCYCLE_SIZE_THRESHOLD)
+  if (macrocycleRing.size() <= MACROCYCLE_SIZE_THRESHOLD) {
     std::cerr << ">>> EARLY EXIT: ring too small" << std::endl;
     return false;
   }
@@ -1315,8 +1391,8 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
   // Pattern: first turn = R, middle turns = L, last turn = R
   // Examples: 2-atom fusion → RR, 3-atom → RLR, 4-atom → RLLR
   for (const auto &ring : allRings) {
-    // Skip large rings (only handle rings 4-8)
-    if (ring.size() > 8) {
+    // Skip macrocycles
+    if (ring.size() > MACROCYCLE_SIZE_THRESHOLD) {
       continue;
     }
 
@@ -1600,8 +1676,7 @@ void EmbeddedFrag::refineTemplateMatchedMacrocycle(
             << std::endl;
   for (const auto &constraint : angleConstraints) {
     std::cerr << "  position=" << constraint.position
-              << ", targetAngle=" << constraint.targetAngle << "°"
-              << std::endl;
+              << ", targetAngle=" << constraint.targetAngle << "°" << std::endl;
   }
 
   if (angleConstraints.empty()) {
@@ -1763,8 +1838,9 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
         coreRings.size() < fusedRings.size() && coreRings.size() > 1;
 
     bool hasMacrocycle = std::any_of(
-        coreRings.begin(), coreRings.end(),
-        [](const RDKit::INT_VECT &ring) { return ring.size() > 8; });
+        coreRings.begin(), coreRings.end(), [](const RDKit::INT_VECT &ring) {
+          return ring.size() > MACROCYCLE_SIZE_THRESHOLD;
+        });
 
     if (hasASimplifiedFusedSystem || hasMacrocycle) {
       // look for a template that matches the core ring system
@@ -1806,7 +1882,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                   << ", coreRingsIds.size=" << coreRingsIds.size() << std::endl;
         for (size_t i = 0; i < fusedRings.size(); ++i) {
           bool isCore = (std::find(coreRingsIds.begin(), coreRingsIds.end(),
-                                    i) != coreRingsIds.end());
+                                   i) != coreRingsIds.end());
           size_t ringSize = fusedRings[i].size();
           std::cerr << "  ring[" << i << "]: size=" << ringSize
                     << (isCore ? " [CORE]" : " [NON-CORE]") << std::endl;
@@ -1821,8 +1897,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
             }
           }
         }
-        std::cerr << "RING_CHECK: allSmallRings=" << allSmallRings
-                  << std::endl;
+        std::cerr << "RING_CHECK: allSmallRings=" << allSmallRings << std::endl;
 
         // Always use matchToTemplateMacrocycle for macrocycles
         // It matches against the macrocycle ring (e.g., 16 atoms) rather than
@@ -1832,8 +1907,9 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
         std::cerr << "MATCHING_DECISION: hasSubstituents=" << hasSubstituents
                   << ", allSmallRings=" << allSmallRings << std::endl;
 
-        std::cerr << "MACROCYCLE_PATH: trying template matching on macrocycle ring"
-                  << std::endl;
+        std::cerr
+            << "MACROCYCLE_PATH: trying template matching on macrocycle ring"
+            << std::endl;
         // Try template matching with fusion validation
         foundTemplate =
             matchToTemplateMacrocycle(macrocycleRing, coreRings, subInfo);

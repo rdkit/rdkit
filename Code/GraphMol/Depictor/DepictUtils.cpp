@@ -28,7 +28,6 @@ double ANGLE_OPEN = 0.1222;  // that is about 7 deg
 unsigned int MAX_COLL_ITERS = 15;
 double HETEROATOM_COLL_SCALE = 1.3;
 unsigned int NUM_BONDS_FLIPS = 3;
-constexpr unsigned int MACROCYCLE_SIZE_THRESHOLD = 8;
 
 RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
   // The process here is very straight forward
@@ -211,10 +210,10 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
                                    RDKit::INT_VECT &coreRingsIds,
                                    const RDKit::ROMol &mol) {
   // simplify the fused rings to a set of core rings by iteratively removing
-  // rings that share only one or two consecutive atoms with non-macrocycle
-  // rings. These are trivial to embed after the core rings have been embedded
-  // and will make template matching more powerful since it will not be affected
-  // by the side rings
+  // small rings that share only one or two consecutive atoms with
+  // non-macrocycle rings. These are trivial to embed after the core rings have
+  // been embedded and will make template matching more powerful since it will
+  // not be affected by the side rings
 
   boost::dynamic_bitset<> removedRings(fusedRings.size());
   bool removedARing = false;

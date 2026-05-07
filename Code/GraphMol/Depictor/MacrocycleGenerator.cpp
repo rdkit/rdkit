@@ -1370,29 +1370,51 @@ std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
   std::vector<AngleConstraint> angleConstraints;
   std::map<size_t, std::vector<EndpointInfo>> endpointPositions;
 
+  std::cerr << ">>> identifyAngleConstraintsForFusedRings: macrocycle_size="
+            << macrocycleRing.size() << ", allRings.size=" << allRings.size()
+            << std::endl;
+
   // Process each ring to find fusions with the macrocycle
+  int ringIdx = 0;
   for (const auto &ring : allRings) {
-    // Skip large rings (only handle small rings 4-8)
-    if (ring.size() > 8) {
+    std::cerr << "  Processing ring[" << ringIdx << "]: size=" << ring.size();
+
+    // Skip large rings (only handle small rings 3-7)
+    if (ring.size() < 3 || ring.size() > 7) {
+      std::cerr << " [SKIP - not small (3-7)]" << std::endl;
+      ringIdx++;
       continue;
     }
 
     // Find shared atoms between this ring and the macrocycle
     std::vector<size_t> sharedPositions = findSharedPositions(macrocycleRing, ring);
 
+    std::cerr << ", shared=" << sharedPositions.size() << " [";
+    for (size_t i = 0; i < sharedPositions.size(); ++i) {
+      if (i > 0) std::cerr << ", ";
+      std::cerr << sharedPositions[i];
+    }
+    std::cerr << "]";
+
     // Need at least 1 shared atom (spiro or fusion)
     // Skip if more than 4 shared atoms (unusual/complex fusion)
     if (sharedPositions.size() < 1 || sharedPositions.size() > 4) {
+      std::cerr << " [SKIP - invalid shared count]" << std::endl;
+      ringIdx++;
       continue;
     }
 
     // Verify shared atoms are contiguous and reorder if needed
     if (!verifyAndReorderSharedPositions(sharedPositions, macrocycleRing.size())) {
+      std::cerr << " [SKIP - not contiguous]" << std::endl;
+      ringIdx++;
       continue;
     }
 
-    bool isSmallRing = (ring.size() >= 4 && ring.size() <= 6);
+    bool isSmallRing = (ring.size() >= 3 && ring.size() <= 7);
     size_t numShared = sharedPositions.size();
+
+    std::cerr << ", isSmall=" << isSmallRing << std::endl;
 
     // Handle different fusion patterns
     if (numShared == 2) {
@@ -1417,11 +1439,17 @@ std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
       }
 
       // Add constraints for internal positions (skip first and last)
+      std::cerr << "    Adding constraints for internal positions (numShared="
+                << numShared << "):" << std::endl;
       for (size_t i = 1; i < numShared - 1; ++i) {
         if (isSmallRing) {
           size_t pos = sharedPositions[i];
           int turnSign = -1;  // L turn
           double idealAngle = computeIdealAngle(ring.size(), turnSign);
+
+          std::cerr << "      pos[" << pos << "]: targetAngle="
+                    << (idealAngle * 180.0 / M_PI) << "° (ring size="
+                    << ring.size() << ")" << std::endl;
 
           AngleConstraint angleConstraint;
           angleConstraint.position = pos;
@@ -1437,17 +1465,32 @@ std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
         trackEndpoint(endpointPositions, lastPos, ring.size(), adjacentInternalPos, false);
       }
     }
+
+    ringIdx++;
   }
+
+  std::cerr << ">>> Processing shared endpoints (tracked "
+            << endpointPositions.size() << " positions):" << std::endl;
 
   // Process shared endpoints: positions that are endpoints of exactly 2 small rings
   for (const auto &[pos, endpoints] : endpointPositions) {
+    std::cerr << "  pos[" << pos << "]: " << endpoints.size()
+              << " endpoint(s)";
     if (endpoints.size() == 2) {
       AngleConstraint sharedConstraint = computeSharedEndpointConstraint(endpoints, pos);
       if (sharedConstraint.position != SIZE_MAX) {  // Valid constraint
+        std::cerr << " -> adding shared endpoint constraint, targetAngle="
+                  << (sharedConstraint.targetAngle * 180.0 / M_PI) << "°";
         angleConstraints.push_back(sharedConstraint);
+      } else {
+        std::cerr << " -> constraint invalid";
       }
     }
+    std::cerr << std::endl;
   }
+
+  std::cerr << ">>> Total angle constraints: " << angleConstraints.size()
+            << std::endl;
 
   return angleConstraints;
 }
@@ -1643,13 +1686,18 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   for (const auto &constraint : angleConstraints) {
     size_t pos = constraint.position;
     double oldAngle = adjustedAngles[pos];
-    // Flip the sign of the constraint based on template chirality
-    double newAngle = constraint.targetAngle * signMultiplier;
+
+    // CRITICAL FIX: Preserve the sign of the template's existing angle
+    // Only adjust the magnitude, don't flip the turn direction
+    // Template angle sign tells us if this is R (+) or L (-) in this specific template
+    double templateSign = (currentAngles[pos] >= 0) ? 1.0 : -1.0;
+    double newAngle = templateSign * std::abs(constraint.targetAngle);
 
     std::cerr << "  Constraint at pos[" << pos << "]: "
               << (oldAngle * 180.0 / M_PI) << "° → "
-              << (newAngle * 180.0 / M_PI) << "° (target was "
-              << (constraint.targetAngle * 180.0 / M_PI) << "°)" << std::endl;
+              << (newAngle * 180.0 / M_PI) << "° (target magnitude was "
+              << (std::abs(constraint.targetAngle) * 180.0 / M_PI)
+              << "°, preserved template sign)" << std::endl;
 
     adjustedAngles[pos] = newAngle;
     constraintDelta += (newAngle - oldAngle);
