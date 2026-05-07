@@ -362,8 +362,6 @@ std::map<std::string, std::vector<ROMol *>> mapFragsByAtoms(
       for (unsigned int i = 1; i < atIdxs.size(); ++i) {
         atIdxsStr += "_" + std::to_string(atIdxs[i]);
       }
-      std::cout << MolToSmiles(*frag) << "  atIdsStr : " << atIdxsStr
-                << std::endl;
       if (auto it = atomsToFrags.find(atIdxsStr); it == atomsToFrags.end()) {
         atomsToFrags.emplace(atIdxsStr, std::vector<ROMol *>(1, frag.get()));
       } else {

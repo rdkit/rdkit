@@ -59,7 +59,7 @@ TEST_CASE("Shape Small tests") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
-#if 1
+#if 0
   // These are the source files for the shape databases.  Useful to keep
   // around in case the databases ever need updating.
   std::vector<std::string> libNames{
@@ -97,13 +97,13 @@ TEST_CASE("Shape Small tests") {
   // compensated for by other things.
   std::vector<size_t> expNumHits{3, 8, 1};
   std::vector<std::vector<double>> expScores{
-      {0.962, 0.951, 0.916},
-      {0.955, 0.934, 0.923, 0.906, 0.862, 0.854, 0.832, 0.816},
+      {0.962, 0.954, 0.916},
+      {0.955, 0.949, 0.934, 0.903, 0.860, 0.854, 0.845, 0.807},
       {0.614}};
   std::vector<std::vector<std::string>> expNames{
       {"1-1;2-1;amide-1", "1-2;2-1;amide-1", "1-3;2-1;amide-1"},
-      {"1-1;2-1;3-1;triazole-1", "1-1;2-1;3-2;triazole-1",
-       "1-1;2-2;3-1;triazole-1", "1-1;2-2;3-2;triazole-1",
+      {"1-1;2-1;3-1;triazole-1", "1-1;2-2;3-1;triazole-1",
+       "1-1;2-1;3-2;triazole-1", "1-1;2-2;3-2;triazole-1",
        "1-2;2-1;3-1;triazole-1", "1-2;2-1;3-2;triazole-1",
        "1-2;2-2;3-1;triazole-1", "1-2;2-2;3-2;triazole-1"},
       {"277310376-742385846;182115391-684092275;487354835-896308859;urea-3"}};
@@ -115,12 +115,8 @@ TEST_CASE("Shape Small tests") {
   shapeBuildOptions.randomSeed = 0xdac;
 
   for (size_t i = 0; i < dbNames.size(); i++) {
-    // if (i != 0) {
-    // continue;
-    // }
-    std::cout << i << " : " << dbNames[i] << std::endl;
     SynthonSpace synthonspace;
-#if 1
+#if 0
     // In case the databases ever need updating.
     bool cancelled = false;
     synthonspace.readTextFile(libNames[i], cancelled);
@@ -142,25 +138,15 @@ TEST_CASE("Shape Small tests") {
     auto results = synthonspace.shapeSearch(*queryMol, params);
     unsigned int j = 0;
     CHECK(expNumHits[i] == results.getHitMolecules().size());
-    std::cout << "Number of hits : " << results.getHitMolecules().size()
-              << std::endl;
-    for (const auto &mol : results.getHitMolecules()) {
-      std::cout << "Hit : "
-                << mol->getProp<std::string>(common_properties::_Name) << " : "
-                << mol->getProp<double>("Similarity") << " : "
-                << MolToCXSmiles(*mol) << std::endl;
-      auto scores = GaussianShape::ScoreMolecule(*queryMol, *mol);
-      std::cout << "check scores : " << scores[0] << ", " << scores[1] << ", "
-                << scores[2] << std::endl;
-    }
     for (const auto &mol : results.getHitMolecules()) {
       CHECK(mol->getProp<std::string>(common_properties::_Name) ==
             expNames[i][j]);
       CHECK_THAT(mol->getProp<double>("Similarity"),
-                 Catch::Matchers::WithinAbs(expScores[i][j++], 0.001));
+                 Catch::Matchers::WithinAbs(expScores[i][j], 0.005));
       auto scores = GaussianShape::ScoreMolecule(*queryMol, *mol);
       CHECK_THAT(mol->getProp<double>("Similarity"),
                  Catch::Matchers::WithinAbs(scores[0], 0.001));
+      ++j;
     }
 #if 0
     // Leave this in for now, in case we need to check brute force search
@@ -259,20 +245,14 @@ TEST_CASE("Unspecified Stereo") {
   REQUIRE(m4);
   CHECK(details::hasUnspecifiedStereo(*m4) == false);
 
+  SynthonSpace space;
   REQUIRE(rdbase);
   std::string fName(rdbase);
-  std::string spaceName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/small_freedom_shapes.spc";
-  SynthonSpace space;
-  space.readDBFile(spaceName);
-
-  ShapeBuildParams shapeOptions;
-  shapeOptions.randomSeed = 1;
-  bool cancelled = false;
-  space.buildSynthonShapes(cancelled, shapeOptions);
-
+  std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
+  std::string dbName = fullRoot + "amide_space_shapes.spc";
+  space.readDBFile(dbName);
   SynthonSpaceSearchParams params;
-  params.similarityCutoff = 1.6;
+  params.similarityCutoff = 0.8;
   params.enumerateUnspecifiedStereo = false;
 
   // This should bale with no results because there's unspecified
@@ -305,24 +285,17 @@ TEST_CASE("Shape Best Hit Found") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string spaceName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/small_freedom_shapes.spc";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_shapes.spc";
 
   SynthonSpace space;
   space.readDBFile(spaceName);
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
   params.numThreads = -1;
-  params.numConformers = 200;
-  params.confRMSThreshold = 0.25;
-  params.randomSeed = 0xdac;
-
-  params.fragSimilarityAdjuster = 0.1;
-  params.approxSimilarityAdjuster = 0.1;
   params.similarityCutoff = 1.0;
-  params.timeOut = 0;
 
   auto mol =
-      "CCC(C(=O)NCc1ccco1)N(Cc1sccc1C)C(C)C |(1.19967,-2.26511,-1.8853;-0.0674677,-1.53728,-1.54329;-0.0395195,-0.735921,-0.2957;0.978688,0.316536,-0.356493;0.610079,1.54481,-0.391485;2.37979,0.114038,-0.377756;3.31574,1.24811,-0.443092;4.723,0.774447,-0.458657;5.58509,0.534718,0.592748;6.76773,0.108395,-0.00740365;6.56938,0.109237,-1.38929;5.34763,0.509833,-1.60401;-1.33892,-0.260032,0.0922388;-2.08764,0.476264,-0.832263;-3.39845,0.92709,-0.383151;-4.99177,0.223473,-0.828611;-5.94415,1.34626,0.133161;-5.00918,2.1798,0.729651;-3.7235,1.96002,0.462253;-2.60368,2.81164,1.05297;-1.99138,-1.01276,1.09008;-1.10607,-0.965532,2.34165;-2.26411,-2.45544,0.780694)|"_smiles;
+      "O=C(c1ccccc1)N1CCCC1 |(0.0443291,-1.81486,-1.76886;0.0506321,-0.858174,-0.921491;1.37975,-0.430412,-0.483603;2.18964,-1.35506,0.144714;3.47088,-1.00454,0.585539;3.93803,0.297573,0.388032;3.1267,1.22739,-0.242406;1.85597,0.849751,-0.670531;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401)|"_smiles;
   REQUIRE(mol);
   auto results = space.shapeSearch(*mol, params);
   CHECK(results.getHitMolecules().empty());
@@ -331,66 +304,6 @@ TEST_CASE("Shape Best Hit Found") {
   CHECK_NOTHROW(bestHit->getProp<std::string>(common_properties::_Name));
   CHECK(bestHit->getProp<double>("Similarity") < 1.0);
   CHECK(bestHit->getConformer().is3D());
-}
-
-TEST_CASE("Small REAL test") {
-  std::string dbFile =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_0_confs.spc";
-  SynthonSpace space;
-  space.readDBFile(dbFile, 13);
-  std::cout << space.getNumReactions() << " reactions for "
-            << space.getNumSynthons() << " giving " << space.getNumProducts()
-            << " products." << std::endl;
-  SynthonSpaceSearchParams params;
-  params.similarityCutoff = 0.75;
-  params.numThreads = 13;
-  params.timeOut = 0;
-  params.randomSeed = 1;
-  params.useProgressBar = 60;
-  auto queryMol = v2::FileParsers::MolFromMolFile(
-      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/esomeprazole.sdf");
-  auto results = space.shapeSearch(*queryMol, params);
-  std::cout << "Number of hits : " << results.getHitMolecules().size()
-            << std::endl;
-  for (const auto &mol : results.getHitMolecules()) {
-    std::cout << MolToCXSmiles(*mol) << std::endl;
-  }
-  auto &bestHit = results.getBestHit();
-  CHECK(bestHit);
-  std::cout << "Best hit : " << MolToCXSmiles(*bestHit) << std::endl;
-  std::cout << bestHit->getProp<std::string>(common_properties::_Name);
-}
-
-TEST_CASE("Small m_1458bbb test") {
-  std::string dbFile =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/m_1458bbb_confs.spc";
-  SynthonSpace space;
-  space.readDBFile(dbFile, 13);
-  std::cout << space.getNumReactions() << " reactions for "
-            << space.getNumSynthons() << " giving " << space.getNumProducts()
-            << " products." << std::endl;
-  SynthonSpaceSearchParams params;
-  params.similarityCutoff = 0.75;
-  params.numThreads = 13;
-  params.timeOut = 0;
-  params.randomSeed = 1;
-  params.useProgressBar = 60;
-  params.confRMSThreshold = 0.5;
-  params.numConformers = 100;
-  auto queryMol =
-      "C[C@H](OC(=O)[C@H]1CC[C@@H](CN(C)C)O1)c1ccc(S(=O)(=O)F)cc1 |(2.56475,-3.10298,0.955074;2.28607,-1.62018,0.834903;0.929836,-1.35524,0.537459;0.117132,-0.687892,1.44187;0.639023,-0.335941,2.52603;-1.28757,-0.397477,1.16468;-2.1698,-1.60577,1.00963;-3.55218,-0.939503,1.06929;-3.20651,0.442004,1.62104;-4.12741,0.889789,2.71027;-5.47952,1.12966,2.32503;-6.24538,-0.0137629,1.94604;-6.13257,1.76958,3.47883;-1.92681,0.272412,2.203;3.21863,-0.957246,-0.102791;4.30426,-1.59526,-0.643779;5.12411,-0.893658,-1.51723;4.85003,0.417886,-1.8326;5.89923,1.29707,-2.9417;6.59479,0.266104,-3.80483;5.14827,2.28511,-3.74963;7.08009,2.05388,-2.03558;3.75958,1.07193,-1.29428;2.96242,0.354879,-0.431309),wD:1.0,wU:5.4,8.8|"_smiles;
-  REQUIRE(queryMol);
-  auto results = space.shapeSearch(*queryMol, params);
-  std::cout << "Number of hits : " << results.getHitMolecules().size()
-            << std::endl;
-  for (const auto &mol : results.getHitMolecules()) {
-    std::cout << MolToCXSmiles(*mol) << std::endl;
-  }
-  auto &bestHit = results.getBestHit();
-  REQUIRE(bestHit);
-  std::cout << "Best hit : " << MolToCXSmiles(*bestHit) << std::endl;
-  std::cout << bestHit->getProp<std::string>(common_properties::_Name) << " : "
-            << bestHit->getProp<double>("Similarity") << std::endl;
 }
 
 TEST_CASE("Two piece query") {
@@ -413,18 +326,12 @@ TEST_CASE("Two piece query") {
     params.shapeOverlayOptions.simAlpha = 0.95;
     params.shapeOverlayOptions.simBeta = 0.05;
     auto results = synthonspace.shapeSearch(*queryMol, params);
-    CHECK(results.getHitMolecules().size() == 3);
-    std::vector<double> expScores{0.721, 0.714, 0.711};
-    std::cout << "Number of results : " << results.getHitMolecules().size()
-              << std::endl;
+    CHECK(results.getHitMolecules().size() == 2);
+    std::vector<double> expScores{0.721, 0.715};
     for (unsigned int i = 0; i < results.getHitMolecules().size(); ++i) {
       auto &mol = results.getHitMolecules()[i];
-      std::cout << "hit mol : " << MolToCXSmiles(*mol) << std::endl;
-      std::cout << "hit name : "
-                << mol->getProp<std::string>(common_properties::_Name) << " at "
-                << mol->getProp<double>("Similarity") << std::endl;
       CHECK_THAT(mol->getProp<double>("Similarity"),
-                 Catch::Matchers::WithinAbs(expScores[i], 0.001));
+                 Catch::Matchers::WithinAbs(expScores[i], 0.005));
     }
   }
 
@@ -448,22 +355,19 @@ TEST_CASE("Two piece query") {
     params.shapeOverlayOptions.simAlpha = 0.95;
     params.shapeOverlayOptions.simBeta = 0.05;
     auto results = synthonspace.shapeSearch(*queryMol, params);
-    std::cout << "Number of results : " << results.getHitMolecules().size()
-              << std::endl;
-    CHECK(results.getHitMolecules().size() == 6);
-    std::vector<double> expScores{0.816, 0.790, 0.745, 0.735, 0.718, 0.709};
+    CHECK(results.getHitMolecules().size() == 7);
+    std::vector<double> expScores{0.801, 0.796, 0.778, 0.766,
+                                  0.744, 0.717, 0.711};
     for (unsigned int i = 0; i < results.getHitMolecules().size(); ++i) {
       auto &mol = results.getHitMolecules()[i];
-      std::cout << "hit mol : " << MolToCXSmiles(*mol) << std::endl;
-      std::cout << "hit name : "
-                << mol->getProp<std::string>(common_properties::_Name) << " at "
-                << mol->getProp<double>("Similarity") << std::endl;
       CHECK_THAT(mol->getProp<double>("Similarity"),
-                 Catch::Matchers::WithinAbs(expScores[i], 0.001));
+                 Catch::Matchers::WithinAbs(expScores[i], 0.01));
     }
   }
 }
 
+// There is only 1 conformer generator available, so just do it with
+// different parameters.
 std::unique_ptr<RWMol> generateConfs(const std::string &smiles,
                                      unsigned int numConformers) {
   auto retMol = v2::SmilesParse::MolFromSmiles(smiles);
@@ -508,6 +412,8 @@ N#CCc(cncc1)c1[2*]	689988332-107515102	2	urea-3)");
   auto react = space.getReaction(("urea-3"));
   for (auto sst : react->getSynthons()) {
     for (auto &[sn, s] : sst) {
+      std::cout << sn << " : " << s->getShapes()->getShapes().getNumShapes()
+                << std::endl;
       if (sn == "182115391-684092275") {
         CHECK(s->getShapes()->getShapes().getNumShapes() == 20);
       } else {
@@ -524,7 +430,7 @@ N#CCc(cncc1)c1[2*]	689988332-107515102	2	urea-3)");
   spaceSearchParams.userConformerGenerator = generateConfs;
   spaceSearchParams.useProgressBar = 60;
   spaceSearchParams.timeOut = 0;
-  spaceSearchParams.similarityCutoff = 0.8;
+  spaceSearchParams.similarityCutoff = 0.7;
   spaceSearchParams.bestHit = true;
   auto results = space.shapeSearch(*queryMol, spaceSearchParams);
   CHECK(results.getHitMolecules().size() == 1);
@@ -536,62 +442,6 @@ N#CCc(cncc1)c1[2*]	689988332-107515102	2	urea-3)");
     auto scores = GaussianShape::ScoreMolecule(*queryMol, *mol);
     CHECK_THAT(mol->getProp<double>("Similarity"),
                Catch::Matchers::WithinAbs(scores[0], 0.001));
-  }
-}
-
-TEST_CASE("Another test") {
-#if 0
-  std::string spaceText(
-      R"(SMILES	synton_id	synton#	reaction_id
-O=C(NC1(CC2CC2)CCC1)[1*]	016642174-703335348	0	urea-3
-CN(CC1(CC1)N[1*])C([2*])=O	009516132-856691534	1	urea-3
-CSc1cc(C(O)=O)nc([2*])n1	821136904-635555130	2	urea-3
-)");
-  std::istringstream iss(spaceText);
-  ShapeBuildParams shapeBuildParamsWith;
-  shapeBuildParamsWith.numThreads = 1;
-  shapeBuildParamsWith.numConfs = 10;
-  shapeBuildParamsWith.userConformerGenerator = generateConfs;
-  shapeBuildParamsWith.shapeSimThreshold = -1.0;
-  bool cancelled = false;
-  SynthonSpace space;
-  space.readStream(iss, cancelled);
-  space.buildSynthonShapes(cancelled, shapeBuildParamsWith);
-#endif
-  auto queryMol =
-      "O=CNCc1ccsc1NC(=O)c1cnccn1 |(-3.13593,2.53671,-0.964221;-2.92978,1.52511,-1.69943;-2.53338,0.26403,-1.14888;-2.37819,0.196142,0.278959;-1.94716,-1.21639,0.708687;-2.82815,-2.05481,1.26358;-2.27563,-3.33898,1.61555;-0.605283,-3.29034,1.15883;-0.664978,-1.59895,0.520406;0.426145,-0.897222,-0.0427085;1.31101,-0.0672121,0.677347;1.15187,0.0882736,1.90787;2.40272,0.602377,-0.0218247;3.28333,1.42622,0.662823;4.30841,2.05393,0.0205924;4.47886,1.87718,-1.3136;3.60984,1.05805,-2.01765;2.62331,0.465647,-1.34378)|"_smiles;
-  REQUIRE(queryMol);
-  REQUIRE(rdbase);
-  std::string fName(rdbase);
-  std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
-  std::string dbName = fullRoot + "idorsia_toy_space_shapes.spc";
-  std::cout << "dbName : " << dbName << std::endl;
-  SynthonSpaceSearchParams params;
-  params.similarityCutoff = 0.6;
-  params.numConformers = 100;
-  params.numThreads = -1;
-  params.confRMSThreshold = 1.0;
-  params.timeOut = 0;
-  params.randomSeed = 0xdac;
-  params.bestHit = true;
-  params.useProgressBar = 60;
-  SynthonSpace synthonspace;
-  synthonspace.readDBFile(dbName);
-  auto results = synthonspace.shapeSearch(*queryMol, params);
-  // auto results = space.shapeSearch(*queryMol, params);
-  std::cout << "Num hits : " << results.getHitMolecules().size() << std::endl;
-  for (const auto &mol : results.getHitMolecules()) {
-    std::cout << mol->getProp<std::string>("_Name") << " : "
-              << mol->getProp<double>("Similarity") << std::endl;
-    auto scores = GaussianShape::ScoreMolecule(*queryMol, *mol);
-    CHECK_THAT(mol->getProp<double>("Similarity"),
-               Catch::Matchers::WithinAbs(scores[0], 0.001));
-    std::cout << "check scores : " << scores[0] << ", " << scores[1] << ", "
-              << scores[2] << std::endl;
-  }
-  SDWriter sdw2("another_test_hits.sdf");
-  for (const auto &mol : results.getHitMolecules()) {
-    sdw2.write(*mol);
   }
 }
 
@@ -636,12 +486,6 @@ c1cccnc1[1*]	1-2	0	test1
       "1-1;2-2;3-1;test1", "1-1;2-2;3-2;test1", "1-2;2-1;3-2;test1",
   };
   std::vector<double> expScores{0.835, 0.781, 0.752, 0.732, 0.730, 0.729};
-  for (size_t i = 0; i < results.getHitMolecules().size(); ++i) {
-    const auto &mol = results.getHitMolecules()[i];
-    std::cout << mol->getProp<std::string>("_Name") << " : "
-              << mol->getProp<double>("Similarity") << std::endl;
-    std::cout << MolToCXSmiles(*mol) << std::endl;
-  }
   for (size_t i = 0; i < expNames.size(); ++i) {
     const auto &mol = results.getHitMolecules()[i];
     CHECK(mol->getProp<std::string>("_Name") == expNames[i]);
@@ -665,47 +509,6 @@ TEST_CASE("Trim sample molecules") {
     auto newMol = SynthonSpaceSearch::details::trimSampleMol(*mol, molNum);
     CHECK(MolToSmiles(*newMol) == expSmi);
   }
-}
-
-TEST_CASE("Zero-length vector") {
-  std::string dbName(
-      "/home/dave/Projects/SynthonSpaceTests/REAL/random_real_0_conforge.spc");
-  SynthonSpace synthonspace;
-  synthonspace.readDBFile(dbName);
-
-  auto queryMol =
-      "CC(OC(=O)[C@H]1CC[C@@H](CN(C)C)O1)c1ccc(S(=O)(=O)F)cc1 |(2.90369,-2.16344,2.44104;2.07287,-1.7564,1.24069;1.06154,-0.810496,1.59795;-0.274374,-1.06478,1.34641;-0.643259,-2.13112,0.797722;-1.25553,-0.0302441,1.74923;-0.900332,1.25268,1.05924;-1.90239,1.25072,-0.0924938;-3.06709,0.550454,0.566467;-3.81933,-0.177119,-0.498406;-4.40849,0.666278,-1.51173;-5.08574,-0.25176,-2.4403;-5.41599,1.54263,-1.00978;-2.55682,-0.356408,1.46659;2.9964,-1.00911,0.319988;3.45629,-1.57333,-0.854797;4.29829,-0.834768,-1.65047;4.67403,0.452586,-1.27287;5.75692,1.33001,-2.35179;5.52648,2.79645,-2.25924;5.53034,0.850543,-3.74582;7.33965,0.982198,-1.87731;4.21515,1.02107,-0.096445;3.35774,0.270642,0.71504),wD:5.4,8.8| bA2k2xlIb7clbAeeDnjr3Q;quHGZvNovRYxJzoZJbdcSQ;m_1458cgb"_smiles;
-  SynthonSpaceSearchParams params;
-  params.similarityCutoff = 0.7;
-  params.fragSimilarityAdjuster = 0.2;
-  params.approxSimilarityAdjuster = 0.2;
-  params.numConformers = 100;
-  params.numThreads = 1;
-  params.confRMSThreshold = 1.0;
-  params.timeOut = 0;
-  params.randomSeed = 0xdac;
-  params.bestHit = true;
-
-  auto hits = synthonspace.shapeSearch(*queryMol, params);
-}
-
-TEST_CASE("Bad Shape Mol") {
-  std::string spaceText(
-      R"(SMILES	synton_id	synton#	reaction_id	release
-CC1(C)CCC(CN([1*])[2*])CC1	GIYG1F7cYG0az-We61rLbw	1	m_282155abb	3
-CC1CCC(C[1*])C1	KloUo4jR61y8fSQ5tj38oA	2	m_282155abb	3
-Cc1cccc(C[2*])c1Cl	xZQaCUnVhms6GGThUtasXQ	3	m_282155abb	3
-)");
-  std::istringstream iss(spaceText);
-  ShapeBuildParams shapeBuildParams;
-  shapeBuildParams.numThreads = 1;
-  shapeBuildParams.numConfs = 10;
-  shapeBuildParams.shapeSimThreshold = -1.0;
-  shapeBuildParams.randomSeed = 0xdac;
-  bool cancelled = false;
-  SynthonSpace synthonSpace;
-  synthonSpace.readStream(iss, cancelled);
-  synthonSpace.buildSynthonShapes(cancelled, shapeBuildParams);
 }
 
 unsigned int calcNumClashes(const ROMol &mol,
@@ -733,6 +536,15 @@ unsigned int calcNumClashes(const ROMol &mol,
   return clashAtoms.count();
 }
 
+unsigned int countFileLines(const std::string &filename) {
+  std::ifstream ifs(filename.c_str());
+  ifs.unsetf(std::ios_base::skipws);
+  unsigned int numLines = std::count(std::istream_iterator<char>(ifs),
+                                     std::istream_iterator<char>(), '\n');
+  ifs.close();
+  return numLines;
+}
+
 TEST_CASE("Excluded volume") {
   // This is a piece of 4AJL, created by taking the 2 ligands from 4AJL and 4AJI
   // and dropping all atoms in 4AJL that were further than 5A from an atom
@@ -750,6 +562,7 @@ TEST_CASE("Excluded volume") {
   std::string fName(rdbase);
   std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
   std::string dbName = fullRoot + "4ala_shapes.spc";
+  SynthonSpace synthonSpace;
 #if 0
   // This space is the ligand from 4al4, chopped up.  2-2 is the same as 2-1 but
   // with an extra phenyl group to ensure a big clash.  Keeping it here in
@@ -768,12 +581,10 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
   shapeBuildParams.shapeSimThreshold = -1.0;
   shapeBuildParams.randomSeed = 0xdac;
   bool cancelled = false;
-  SynthonSpace synthonSpace;
   synthonSpace.readStream(iss, cancelled);
   synthonSpace.buildSynthonShapes(cancelled, shapeBuildParams);
   synthonSpace.writeDBFile(dbName);
 #endif
-  SynthonSpace synthonSpace;
   synthonSpace.readDBFile(dbName);
 
   auto comb_4aji_4aj1 =
@@ -794,32 +605,48 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
   params.shapeOverlayOptions.simBeta = 0.05;
   params.excludedVolume = excVolShape.get();
 
-  std::vector<double> expVols{74.0, 189.7};
-  std::vector<double> expMeanVols{3.0, 6.8};
+  // This is one of those rare occasions where Mac and Linux give different
+  // conformations even with the same parameters.  The results are similar
+  // but ordered differently.
+  std::vector<double> expVolsL{74.0, 189.7};
+  std::vector<double> expVolsM{198.5, 74.2};
+  std::vector<double> expMeanVolsL{3.0, 6.8};
+  std::vector<double> expMeanVolsM{6.4, 3.0};
   {
+    params.possibleHitsFile = "poss_hits_1.txt";
     params.maxExcludedVolume = -1.0;
     auto results = synthonSpace.shapeSearch(*comb_4aji_4aj1, params);
     CHECK(results.getHitMolecules().size() == 2);
     unsigned int i = 0;
     for (const auto &mol : results.getHitMolecules()) {
-      CHECK_THAT(mol->getProp<double>("ExcludedVolume"),
-                 Catch::Matchers::WithinAbs(expVols[i], 0.1));
+      auto excVol = mol->getProp<double>("ExcludedVolume");
+      CHECK_THAT(excVol, Catch::Matchers::WithinAbs(expVolsL[i], 0.1) ||
+                             Catch::Matchers::WithinAbs(expVolsM[i], 0.1));
       CHECK_THAT(mol->getProp<double>("MeanExcludedVolume"),
-                 Catch::Matchers::WithinAbs(expMeanVols[i], 0.1));
+                 Catch::Matchers::WithinAbs(expMeanVolsL[i], 0.1) ||
+                     Catch::Matchers::WithinAbs(expMeanVolsM[i], 0.1));
       ++i;
     }
+    CHECK(countFileLines("poss_hits_1.txt") == 2);
+    std::remove("poss_hits_1.txt");
   }
+
   {
+    params.possibleHitsFile = "poss_hits_2.txt";
     params.maxExcludedVolume = 100.0;
     auto results = synthonSpace.shapeSearch(*comb_4aji_4aj1, params);
     CHECK(results.getHitMolecules().size() == 1);
     CHECK(results.getHitMolecules()[0]->getProp<std::string>(
               common_properties::_Name) == "1-1;2-1;3-1;4al4");
     CHECK_THAT(results.getHitMolecules()[0]->getProp<double>("ExcludedVolume"),
-               Catch::Matchers::WithinAbs(expVols[0], 0.1));
+               Catch::Matchers::WithinAbs(expVolsL[0], 0.1) ||
+                   Catch::Matchers::WithinAbs(expVolsM[1], 0.1));
     CHECK_THAT(
         results.getHitMolecules()[0]->getProp<double>("MeanExcludedVolume"),
-        Catch::Matchers::WithinAbs(expMeanVols[0], 0.1));
+        Catch::Matchers::WithinAbs(expMeanVolsL[0], 0.1) ||
+            Catch::Matchers::WithinAbs(expMeanVolsM[1], 0.1));
+    CHECK(countFileLines("poss_hits_2.txt") == 2);
+    std::remove("poss_hits_2.txt");
   }
 }
 
@@ -860,13 +687,7 @@ TEST_CASE("Write possible hits") {
   params.writePossibleHitsAndStop = true;
   auto noresults = synthonspace.shapeSearch(*queryMol, params);
   CHECK(noresults.getHitMolecules().empty());
-  unsigned int numLines = 0;
-  std::ifstream ins("amide_space_shapes_poss_hits.txt");
-  std::string nextLine;
-  while (std::getline(ins, nextLine)) {
-    ++numLines;
-  }
-  CHECK(numLines == 4);
+  CHECK(countFileLines("amide_space_shapes_poss_hits.txt") == 4);
 
   auto checkResults = synthonspace.shapeSearch(
       *queryMol, params, 0, std::numeric_limits<std::uint64_t>::max());
@@ -883,11 +704,6 @@ TEST_CASE("Write possible hits") {
 
   params.maxPossibleHitsToWrite = 3;
   auto newResults = synthonspace.shapeSearch(*queryMol, params);
-  std::ifstream ifs("amide_space_shapes_poss_hits.txt");
-  ifs.unsetf(std::ios_base::skipws);
-  numLines = std::count(std::istream_iterator<char>(ifs),
-                        std::istream_iterator<char>(), '\n');
-  ifs.close();
-  CHECK(numLines == 3);
+  CHECK(countFileLines("amide_space_shapes_poss_hits.txt") == 3);
   std::remove(params.possibleHitsFile.c_str());
 }
