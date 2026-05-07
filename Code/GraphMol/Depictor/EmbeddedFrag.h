@@ -28,8 +28,9 @@ typedef boost::shared_array<double> DOUBLE_SMART_PTR;
 
 //! Struct to hold substituent size information
 struct SubstituentInfo {
-  std::unordered_map<unsigned int, int> sizes;  //!< Map: neighbor atom idx -> substituent size
-  int smallest_size;  //!< Smallest substituent size in the molecule
+  std::unordered_map<unsigned int, int>
+      sizes;         //!< Map: neighbor atom idx -> substituent size
+  int smallestSize;  //!< Smallest substituent size in the molecule
 };
 
 //! Class that contains the data for an atoms that has already been embedded
@@ -195,7 +196,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
     \param fusedRings a vector of rings, each ring is a list of atom ids
     \param useRingTemplates whether to use ring system templates for generating
       initial coordinates
-    \param useJacobianRefinement whether to use Jacobian refinement for macrocycles
+    \param useJacobianRefinement whether to use Jacobian refinement for
+    macrocycles
   */
   EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings,
                bool useRingTemplates, bool useJacobianRefinement = true);
@@ -389,25 +391,24 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // returns true if macrocycle found a template
   // this uses a more relaxed matching that allows for small substituents to be
   // put on internal positions, pointing towards the center of the macrocycle
-  bool matchToTemplateMacrocycle(
-      const RDKit::INT_VECT &macrocycleRing,
-      const RDKit::VECT_INT_VECT &allRings,
-      const SubstituentInfo &sub_info);
+  bool matchToTemplateMacrocycle(const RDKit::INT_VECT &macrocycleRing,
+                                 const RDKit::VECT_INT_VECT &allRings,
+                                 const SubstituentInfo &subInfo);
 
   //! Copy coordinates from a template match into embedded atoms
   /*!
-    \param template_mol the template molecule with conformer coordinates
+    \param templateMol the template molecule with conformer coordinates
     \param match the mapping from template atom indices to molecule atom indices
   */
   void applyTemplateCoordinates(
-      const std::shared_ptr<RDKit::ROMol> &template_mol,
+      const std::shared_ptr<RDKit::ROMol> &templateMol,
       const RDKit::MatchVectType &match);
 
   // returns true if macrocycle coordinates were successfully generated
   bool generateMacrocycleCoordinates(const RDKit::INT_VECT &macrocycleRing,
                                      const RDKit::VECT_INT_VECT &allRings,
                                      bool useJacobianRefinement,
-                                     const SubstituentInfo &sub_info);
+                                     const SubstituentInfo &subInfo);
 
   // Template refinement with angle constraints
   void refineTemplateMatchedMacrocycle(const RDKit::INT_VECT &macrocycleRing,

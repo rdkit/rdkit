@@ -31,8 +31,8 @@ class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
 
    */
   static CoordinateTemplates &getRingSystemTemplates() {
-    static CoordinateTemplates template_mols;
-    return template_mols;
+    static CoordinateTemplates templateMols;
+    return templateMols;
   }
 
   bool hasTemplateOfSize(unsigned int atomCount) {

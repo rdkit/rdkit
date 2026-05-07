@@ -71,7 +71,7 @@ JSONDataToMols(const std::string &jsonBlock,
 // \brief parameters controlling generating of MolJSON
 struct RDKIT_MOLINTERCHANGE_EXPORT JSONWriteParameters {
   bool useRDKitExtensions =
-      true; /*!< toggles using RDKit extensions to commmonchem */
+      true; /*!< toggles using RDKit extensions to commonchem */
 };
 static JSONWriteParameters defaultJSONWriteParameters;
 

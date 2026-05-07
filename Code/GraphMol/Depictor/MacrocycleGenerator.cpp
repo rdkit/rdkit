@@ -1586,6 +1586,8 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   double dy_initial = templateCoords[0].y - templateCoords[prev].y;
   double currentDirection = std::atan2(dy_initial, dx_initial);
 
+  std::cerr << ">>> EXTRACTING ANGLES FROM TEMPLATE (N=" << N << ")" << std::endl;
+
   for (size_t i = 0; i < N; ++i) {
     size_t next = (i + 1) % N;
 
@@ -1603,6 +1605,13 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
 
     currentAngles[i] = turnAngle;
     currentDirection = newDirection;
+  }
+
+  std::cerr << ">>> EXTRACTED ANGLES (radians and degrees):" << std::endl;
+  for (size_t i = 0; i < N; ++i) {
+    double degrees = currentAngles[i] * 180.0 / M_PI;
+    std::cerr << "  pos[" << i << "]: " << currentAngles[i] << " rad = "
+              << degrees << "°" << std::endl;
   }
 
   // 2. Determine template chirality by counting angle signs
@@ -1628,16 +1637,27 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   double constraintDelta = 0.0;
   std::set<size_t> constrainedPositions;
 
+  std::cerr << ">>> Template chirality: " << (templateIsCCW ? "CCW" : "CW")
+            << ", signMultiplier=" << signMultiplier << std::endl;
+
   for (const auto &constraint : angleConstraints) {
     size_t pos = constraint.position;
     double oldAngle = adjustedAngles[pos];
     // Flip the sign of the constraint based on template chirality
     double newAngle = constraint.targetAngle * signMultiplier;
 
+    std::cerr << "  Constraint at pos[" << pos << "]: "
+              << (oldAngle * 180.0 / M_PI) << "° → "
+              << (newAngle * 180.0 / M_PI) << "° (target was "
+              << (constraint.targetAngle * 180.0 / M_PI) << "°)" << std::endl;
+
     adjustedAngles[pos] = newAngle;
     constraintDelta += (newAngle - oldAngle);
     constrainedPositions.insert(pos);
   }
+
+  std::cerr << ">>> Total constraintDelta = " << (constraintDelta * 180.0 / M_PI)
+            << "°" << std::endl;
 
   // 4. Distribute angular difference across non-constrained angles
   //    to preserve total angular sum
@@ -1645,11 +1665,27 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   if (numFree > 0) {
     double adjustmentPerFree = -constraintDelta / numFree;
 
+    std::cerr << ">>> Distributing " << (-constraintDelta * 180.0 / M_PI)
+              << "° across " << numFree << " free positions = "
+              << (adjustmentPerFree * 180.0 / M_PI) << "° per position"
+              << std::endl;
+
     for (size_t i = 0; i < N; ++i) {
       if (constrainedPositions.count(i) == 0) {
         adjustedAngles[i] += adjustmentPerFree;
       }
     }
+  }
+
+  std::cerr << ">>> ADJUSTED ANGLES (after constraints):" << std::endl;
+  for (size_t i = 0; i < N; ++i) {
+    double degrees = adjustedAngles[i] * 180.0 / M_PI;
+    std::cerr << "  pos[" << i << "]: " << adjustedAngles[i] << " rad = "
+              << degrees << "°";
+    if (constrainedPositions.count(i)) {
+      std::cerr << " [CONSTRAINED]";
+    }
+    std::cerr << std::endl;
   }
 
   // 5. Generate coordinates from adjusted angles
