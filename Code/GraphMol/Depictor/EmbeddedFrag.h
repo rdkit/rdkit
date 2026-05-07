@@ -414,6 +414,12 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   void refineTemplateMatchedMacrocycle(const RDKit::INT_VECT &macrocycleRing,
                                        const RDKit::VECT_INT_VECT &allRings);
 
+  void embedMacrocycleWithFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
+                                     const RDKit::VECT_INT_VECT &coreRings,
+                                     const RDKit::INT_VECT &coreRingsIds,
+                                     RDKit::INT_VECT &doneRings,
+                                     bool useJacobianRefinement);
+
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                        bool useRingTemplates,
                        bool useJacobianRefinement = true);
@@ -505,13 +511,15 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   void reflectIfNecessaryThirdPt(EmbeddedFrag &embFrag, unsigned int aid1,
                                  unsigned int aid2, unsigned int aid3);
 
-  //! \brief Initialize this fragment from a ring and coordinates for its atoms
+  //! \brief Initialize this fragment from a ring and coordinates for its
+  //! atoms
   /*!
     ARGUMENTS:
     /param ring     a vector of atom ids in the ring; it is assumed that there
     in
                     clockwise or anti-clockwise order
-    /param nringMap a map of atomId to coordinate map for the atoms in the ring
+    /param nringMap a map of atomId to coordinate map for the atoms in the
+    ring
   */
   void initFromRingCoords(const RDKit::INT_VECT &ring,
                           const RDGeom::INT_POINT2D_MAP &nringMap);
@@ -540,9 +548,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
 
     ARGUMENTS:
     \param  aid     ID of the atom to be added
-    \param  toAid   ID of the atom that is already in this object to which this
-    atom is added
-    \param  mol     the molecule we are dealing with
+    \param  toAid   ID of the atom that is already in this object to which
+    this atom is added \param  mol     the molecule we are dealing with
   */
   void addAtomToAtomWithNoAng(
       unsigned int aid,
@@ -579,7 +586,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   bool d_done = false;
   double d_px = 0.0, d_nx = 0.0, d_py = 0.0, d_ny = 0.0;
 
-  //! a map that takes one from the atom id to the embeddedatom object for that
+  //! a map that takes one from the atom id to the embeddedatom object for
+  //! that
   /// atom.
   INT_EATOM_MAP d_eatoms;
 
