@@ -2258,6 +2258,74 @@ std::string get_bond_config_block(
           boost::str(boost::format("%d.%d") % begAtomOrder % i));
     }
   }
+  // For double bonds with STEREOANY, emit a wavy marker on an adjacent single
+  // bond so that |w:| is written. This mirrors what the CXSMILES parser does
+  // when reading |w:| (it sets BondDir::UNKNOWN on the single bond neighbor).
+  for (unsigned int i = 0; i < bondOrder.size(); ++i) {
+    auto idx = bondOrder[i];
+    const auto bond = mol.getBondWithIdx(idx);
+    if (bond->getBondType() != Bond::BondType::DOUBLE ||
+        bond->getStereo() != Bond::BondStereo::STEREOANY) {
+      continue;
+    }
+    // Skip ring double bonds — they are handled by
+    // get_ringbond_cistrans_block() which emits |ctu:| instead.
+    if (mol.getRingInfo()->isInitialized() &&
+        mol.getRingInfo()->numBondRings(idx)) {
+      continue;
+    }
+    // Check if an adjacent single bond already has BondDir::UNKNOWN
+    // (set by the CXSMILES parser) or _MolFileBondCfg (set by the
+    // mol file parser). If so, skip — the wavy bond is already handled
+    // by the main loop above, or by wU/wD markers from mol file wedging.
+    bool alreadyHandled = false;
+    for (const auto &nbond : mol.atomBonds(bond->getBeginAtom())) {
+      if (nbond->getBondDir() == Bond::BondDir::UNKNOWN ||
+          nbond->hasProp("_MolFileBondCfg")) {
+        alreadyHandled = true;
+        break;
+      }
+    }
+    // Also skip if the STEREOANY bond has no stereo atoms assigned (e.g.
+    // programmatic SetStereo) or came from a mol file with crossed stereo.
+    if (!alreadyHandled &&
+        (bond->getStereoAtoms().empty() ||
+         bond->hasProp("_MolFileBondStereo"))) {
+      alreadyHandled = true;
+    }
+    if (!alreadyHandled) {
+      for (const auto &nbond : mol.atomBonds(bond->getEndAtom())) {
+        if (nbond->getBondDir() == Bond::BondDir::UNKNOWN ||
+            nbond->hasProp("_MolFileBondCfg")) {
+          alreadyHandled = true;
+          break;
+        }
+      }
+    }
+    if (alreadyHandled) {
+      continue;
+    }
+    // Find an adjacent single bond to mark as wavy.
+    for (const auto &nbond : mol.atomBonds(bond->getBeginAtom())) {
+      if (nbond->getIdx() == bond->getIdx() || !canHaveDirection(*nbond)) {
+        continue;
+      }
+      auto nbrBondOrder =
+          std::find(bondOrder.begin(), bondOrder.end(), nbond->getIdx()) -
+          bondOrder.begin();
+      auto begAtomOrder =
+          std::find(atomOrder.begin(), atomOrder.end(),
+                    bond->getBeginAtomIdx()) -
+          atomOrder.begin();
+      if (wParts.find("w") == wParts.end()) {
+        wParts["w"] = std::vector<std::string>();
+      }
+      wParts["w"].push_back(
+          boost::str(boost::format("%d.%d") % begAtomOrder % nbrBondOrder));
+      break;
+    }
+  }
+
   std::string res = "";
 
   for (auto wPart : wParts) {
