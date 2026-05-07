@@ -1633,7 +1633,7 @@ constexpr const char *atomPropAllowedSpecialChars =
     "><\"!@#$%()[]./\\?-+*^_~= ";
 constexpr const char *labelAllowedSpecialChars = "><\"!@#%()[]./\\?-+*^_~=,: ";
 std::string quote_string(const std::string &txt,
-                         std::string allowedSpecialChars = "") {
+                         std::string allowedSpecialChars) {
   std::string res;
   for (auto c : txt) {
     if (!allowedSpecialChars.empty() && !is_alphanumeric(c) &&

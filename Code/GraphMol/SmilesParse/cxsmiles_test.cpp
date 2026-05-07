@@ -1779,17 +1779,30 @@ TEST_CASE("duplicate atoms in StereoGroup") {
 TEST_CASE("Github #9231: quoting in CXSMILES") {
   auto m = "CCCCC"_smiles;
   REQUIRE(m);
-  m->getAtomWithIdx(0)->setProp("p1", "1,2");
-  m->getAtomWithIdx(0)->setProp("p2", "0");
-  m->getAtomWithIdx(0)->setProp("p3", "|");
-  m->getAtomWithIdx(0)->setProp("p4,5", "foo");
-  auto smi = MolToCXSmiles(*m);
-  CHECK(smi ==
-        "CCCCC |atomProp:0.p1.1&#44;2:0.p2.0:0.p3.&#124;:0.p4&#44;5.foo|");
-  auto nmol = v2::SmilesParse::MolFromSmiles(smi);
-  REQUIRE(nmol);
-  CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p1") == "1,2");
-  CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p2") == "0");
-  CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p3") == "|");
-  CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p4,5") == "foo");
+  SECTION("as reported") {
+    m->getAtomWithIdx(0)->setProp("p1", "1,2");
+    m->getAtomWithIdx(0)->setProp("p2", "0");
+    m->getAtomWithIdx(0)->setProp("p3", "|");
+    m->getAtomWithIdx(0)->setProp("p4,5", "foo");
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi ==
+          "CCCCC |atomProp:0.p1.1&#44;2:0.p2.0:0.p3.&#124;:0.p4&#44;5.foo|");
+    auto nmol = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(nmol);
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p1") == "1,2");
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p2") == "0");
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p3") == "|");
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p4,5") == "foo");
+  }
+  SECTION("perverse example") {
+    // bp-kelley came up with this beauty. :-)
+    m->getAtomWithIdx(0)->setProp("cxsmiles", "C |atomProp:0.apKa.7.54|");
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi ==
+          "CCCCC |atomProp:0.cxsmiles.C &#124;atomProp&#58;0.apKa.7.54&#124;|");
+    auto nmol = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(nmol);
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("cxsmiles") ==
+          "C |atomProp:0.apKa.7.54|");
+  }
 }
