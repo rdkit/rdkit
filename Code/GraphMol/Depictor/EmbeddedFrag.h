@@ -384,14 +384,12 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   double totalDensity();
 
   // returns true if fused rings found a template
-  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
-                       unsigned int ring_count);
+  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms);
 
   // returns true if macrocycle found a template
   // this uses a more relaxed matching that allows for small substituents to be
   // put on internal positions, pointing towards the center of the macrocycle
   bool matchToTemplateMacrocycle(
-      const RDKit::INT_VECT &ringSystemAtoms,
       const RDKit::INT_VECT &macrocycleRing,
       const RDKit::VECT_INT_VECT &allRings,
       const SubstituentInfo &sub_info);
@@ -400,9 +398,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   /*!
     \param template_mol the template molecule with conformer coordinates
     \param match the mapping from template atom indices to molecule atom indices
-    \return true after successfully copying coordinates and setting up neighbors
   */
-  bool applyTemplateCoordinates(
+  void applyTemplateCoordinates(
       const std::shared_ptr<RDKit::ROMol> &template_mol,
       const RDKit::MatchVectType &match);
 

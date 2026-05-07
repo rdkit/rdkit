@@ -1,0 +1,50 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_m_ct_format
+ :::
+ Structure1 
+  1 
+  entry 
+  2
+ m_atom[6] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_rdk_index
+  :::
+  1 158 0.000000 0.000000 0.000000 19 13 E11EE1  0
+  2 26 1.970000 0.000000 0.000000 43 7 5757FF  1
+  3 41 -0.801858 1.375985 -0.000000 21 1 FFFFFF  <>
+  4 41 -0.801888 -1.375976 -0.000019 21 1 FFFFFF  <>
+  5 43 2.307145 -0.952068 -0.000000 21 1 FFFFFF  <>
+  6 43 2.307145 0.477048 -0.823929 21 1 FFFFFF  <>
+  :::
+ } 
+ m_bond[5] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 1 4 1
+  4 2 5 1
+  5 2 6 1
+  :::
+ } 
+} 
+

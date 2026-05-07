@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2024 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2018-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -5016,5 +5016,32 @@ TEST_CASE("canonical re-kekulization after sanitization preserves stereo",
 
     auto smi = MolToSmiles(*rwmol);
     CHECK(smi == refSmi);
+  }
+}
+
+TEST_CASE("duplicate atoms/bonds in StereoGroups") {
+  SECTION("atoms") {
+    auto m = "C[C@H](O)C[C@H](F)Cl"_smiles;
+    REQUIRE(m);
+
+    std::unique_ptr<StereoGroup> stg;
+    CHECK_THROWS_AS(
+        stg = std::make_unique<StereoGroup>(
+            StereoGroupType::STEREO_ABSOLUTE,
+            std::vector<Atom *>{m->getAtomWithIdx(1), m->getAtomWithIdx(4),
+                                m->getAtomWithIdx(1)},
+            std::vector<Bond *>{}),
+        ValueErrorException);
+  }
+  SECTION("bonds") {
+    auto m = "C/C=C/c1ccc2ncccc2c1"_smiles;
+    REQUIRE(m);
+
+    std::unique_ptr<StereoGroup> stg;
+    CHECK_THROWS_AS(
+        stg = std::make_unique<StereoGroup>(
+            StereoGroupType::STEREO_ABSOLUTE, std::vector<Atom *>{},
+            std::vector<Bond *>{m->getBondWithIdx(1), m->getBondWithIdx(1)}),
+        ValueErrorException);
   }
 }

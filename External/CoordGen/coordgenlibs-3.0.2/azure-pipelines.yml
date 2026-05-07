@@ -1,0 +1,81 @@
+trigger:
+  - master
+  - dev/*
+
+jobs:
+  - job: Ubuntu_20_04_x64
+    timeoutInMinutes: 90
+    pool:
+      vmImage: ubuntu-20.04
+    variables:
+      compiler: gxx_linux-64
+      boost_version: 1.67.0
+      number_of_cores: nproc
+      python_name: python37
+      shared_lib: ON
+    steps:
+      - template: .azure-pipelines/linux_build.yml
+  - job: Ubuntu_20_04_x64_static
+    timeoutInMinutes: 90
+    pool:
+      vmImage: ubuntu-20.04
+    variables:
+      compiler: gxx_linux-64
+      boost_version: 1.67.0
+      number_of_cores: nproc
+      python_name: python37
+      shared_lib: OFF
+    steps:
+      - template: .azure-pipelines/linux_build.yml
+  - job: macOS_10_15_x64
+    timeoutInMinutes: 90
+    pool:
+      vmImage: macos-10.15
+    variables:
+      compiler: clangxx_osx-64
+      boost_version: 1.67.0
+      number_of_cores: sysctl -n hw.ncpu
+      python_name: python37
+      target_platform: 10.9
+      shared_lib: ON
+    steps:
+      - template: .azure-pipelines/mac_build.yml
+  - job: macOS_10_15_x64_static
+    timeoutInMinutes: 90
+    pool:
+      vmImage: macos-10.15
+    variables:
+      compiler: clangxx_osx-64
+      boost_version: 1.67.0
+      number_of_cores: sysctl -n hw.ncpu
+      python_name: python37
+      target_platform: 10.9
+      shared_lib: OFF
+    steps:
+      - template: .azure-pipelines/mac_build.yml
+  - job: Windows_VS2019_x64
+    timeoutInMinutes: 90
+    pool:
+      vmImage: windows-2019
+    variables:
+      compiler: vs2019_win-64
+      boost_version: 1.67.0
+      number_of_cores: "%NUMBER_OF_PROCESSORS%"
+      python_name: python37
+      shared_lib: ON
+      boost_lib_prefix: ""
+    steps:
+      - template: .azure-pipelines/vs_build.yml
+  - job: Windows_VS2019_x64_static
+    timeoutInMinutes: 90
+    pool:
+      vmImage: windows-2019
+    variables:
+      compiler: vs2019_win-64
+      boost_version: 1.67.0
+      number_of_cores: "%NUMBER_OF_PROCESSORS%"
+      python_name: python37
+      shared_lib: OFF
+      boost_lib_prefix: "lib"
+    steps:
+      - template: .azure-pipelines/vs_build.yml

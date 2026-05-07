@@ -94,6 +94,9 @@ class Digraph {
   Node &addNode(std::vector<char> &&visit, Atom *atom,
                 boost::rational<int> &&frac, int dist, int flags);
 
+  // Has `atom` been seen yet?
+  bool seenAtom(Atom *atom) const;
+
  private:
   const CIPMol &d_mol;
 

@@ -1,0 +1,897 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+		5E618435888B9D49F8540165 = {
+			buildActionMask = 2147483647;
+			files = (
+				);
+			isa = PBXShellScriptBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+			name = "Qt Qmake";
+			shellPath = "/bin/sh";
+			shellScript = "make -C /Users/nicola/schrodinger/coordgen_standalone -f qt_makeqmake.mak";
+			showEnvVarsInLog = "0";
+		};
+		8004577376EAADC6013FC613 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/CoordgenFragmentBuilder.cpp";
+			name = "CoordgenFragmentBuilder.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		7D4215C9EA2EC9364CA98978 = {
+			fileRef = "8004577376EAADC6013FC613";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		173C592B5DE416DC9480A99B = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/CoordgenFragmenter.cpp";
+			name = "CoordgenFragmenter.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		CAFAA6B8F70759539F10C91D = {
+			fileRef = "173C592B5DE416DC9480A99B";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		5766855F16B739293DA54322 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/CoordgenMacrocycleBuilder.cpp";
+			name = "CoordgenMacrocycleBuilder.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		39B762AAD667F69E832051E1 = {
+			fileRef = "5766855F16B739293DA54322";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		B7FE768C7B5A33CFA9F0B580 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/CoordgenMinimizer.cpp";
+			name = "CoordgenMinimizer.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		4A154F31F9833DEC2C9FDE8B = {
+			fileRef = "B7FE768C7B5A33CFA9F0B580";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		04D8752E70F26A5FDFCC5DEC = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizer.cpp";
+			name = "sketcherMinimizer.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		B2447E4B9F37D75E66FAFF9A = {
+			fileRef = "04D8752E70F26A5FDFCC5DEC";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		AE5FAEF482ADC60A21B9FF16 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerAtom.cpp";
+			name = "sketcherMinimizerAtom.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		C70BEA260E22888A93D4F7DA = {
+			fileRef = "AE5FAEF482ADC60A21B9FF16";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		C79B18A9B745420A1E5926B3 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerBond.cpp";
+			name = "sketcherMinimizerBond.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		950F3F66368EEBE6F92B4539 = {
+			fileRef = "C79B18A9B745420A1E5926B3";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		1E2A012F341DF7D22FE0BC00 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerFragment.cpp";
+			name = "sketcherMinimizerFragment.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		862F31084B9F015E58421CFA = {
+			fileRef = "1E2A012F341DF7D22FE0BC00";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		5AD44C613336B2E77BF759F4 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerMarchingSquares.cpp";
+			name = "sketcherMinimizerMarchingSquares.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		EE472AA202FF0BFE595D63FD = {
+			fileRef = "5AD44C613336B2E77BF759F4";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		FD8ECBFCDBCD3BD5A8055F4E = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerMolecule.cpp";
+			name = "sketcherMinimizerMolecule.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		6620117DDF8F05AB64EFBE1F = {
+			fileRef = "FD8ECBFCDBCD3BD5A8055F4E";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		3EE6F2EE708843B41C133B74 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerResidue.cpp";
+			name = "sketcherMinimizerResidue.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		1DF3023C3083E2694FA3804B = {
+			fileRef = "3EE6F2EE708843B41C133B74";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		6A14CE45BB98D0EC27648EC0 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerResidueInteraction.cpp";
+			name = "sketcherMinimizerResidueInteraction.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		C4B190AA295F953BDA775236 = {
+			fileRef = "6A14CE45BB98D0EC27648EC0";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		5D434D1D67D536B53F101159 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerRing.cpp";
+			name = "sketcherMinimizerRing.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		AEDE0BA4DD2E3A2AA04FB8D7 = {
+			fileRef = "5D434D1D67D536B53F101159";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		3E886F0588AE0F051D777B7D = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/build/CMakeFiles/feature_tests.c";
+			name = "feature_tests.c";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.c";
+		};
+		AF1DFB735B92FEE3E17E1C97 = {
+			fileRef = "3E886F0588AE0F051D777B7D";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		9E64CDC96A64E09BF516FAE0 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/build/CMakeFiles/feature_tests.cxx";
+			name = "feature_tests.cxx";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		3B5E470500CC7B0191B8314A = {
+			fileRef = "9E64CDC96A64E09BF516FAE0";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		0F6211F821F705453DA9798C = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/build/CMakeFiles/3.8.1/CompilerIdC/CMakeCCompilerId.c";
+			name = "CMakeCCompilerId.c";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.c";
+		};
+		BB291AFE0696CE2C2DF8C4B3 = {
+			fileRef = "0F6211F821F705453DA9798C";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		E2A4C54D8E5E9ED6A29A622A = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/build/CMakeFiles/3.8.1/CompilerIdCXX/CMakeCXXCompilerId.cpp";
+			name = "CMakeCXXCompilerId.cpp";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.cpp.cpp";
+		};
+		79AAF5A9076F8CED519F26B7 = {
+			fileRef = "E2A4C54D8E5E9ED6A29A622A";
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+					);
+			};
+		};
+		C5A41B5DC88FA998B130D215 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/CoordgenFragmentBuilder.h";
+			name = "CoordgenFragmentBuilder.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		990339E54EDFE74727852176 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/CoordgenFragmenter.h";
+			name = "CoordgenFragmenter.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		C873EE2F6448477EB1E34183 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/CoordgenMacrocycleBuilder.h";
+			name = "CoordgenMacrocycleBuilder.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		D285417F08E4D43BD4C850D6 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/CoordgenMinimizer.h";
+			name = "CoordgenMinimizer.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		B486F4C6CB351A731DBB6107 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizer.h";
+			name = "sketcherMinimizer.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		3C79670156C7DCCDEAC3B855 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerAtom.h";
+			name = "sketcherMinimizerAtom.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		3245A010B556E1B593A51AEB = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerBendInteraction.h";
+			name = "sketcherMinimizerBendInteraction.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		B444D4B05F146022E5CCCCDF = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerBond.h";
+			name = "sketcherMinimizerBond.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		7BDA4ABD086570C0651F11E0 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerClashInteraction.h";
+			name = "sketcherMinimizerClashInteraction.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		874CC0D60824F39AAF8C23AC = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerEZConstrainInteraction.h";
+			name = "sketcherMinimizerEZConstrainInteraction.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		C259596AA8C7150A1621FEA8 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerFragment.h";
+			name = "sketcherMinimizerFragment.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		0080BE02FFCB4D154DC71D9E = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerInteraction.h";
+			name = "sketcherMinimizerInteraction.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		68EA8359B3CB02AAD94496D2 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerMarchingSquares.h";
+			name = "sketcherMinimizerMarchingSquares.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		C50AF0DD64093A7E2C16171C = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerMaths.h";
+			name = "sketcherMinimizerMaths.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		DEC415536345E4C69EA6A3EB = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerMolecule.h";
+			name = "sketcherMinimizerMolecule.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		E84C6AD4150D03186A26CF59 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerResidue.h";
+			name = "sketcherMinimizerResidue.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		5FE91F9B3B341718479FFE25 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerResidueInteraction.h";
+			name = "sketcherMinimizerResidueInteraction.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		872CCCE1C0F4AF2F51D6C416 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerRing.h";
+			name = "sketcherMinimizerRing.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		B6E29780788B628DA3D99447 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/sketcherMinimizerStretchInteraction.h";
+			name = "sketcherMinimizerStretchInteraction.h";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "sourcecode.c.h";
+		};
+		6309AA0759FDD94399560B74 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/coordgen_standalone.pro";
+			name = "coordgen_standalone.pro";
+			sourceTree = "<absolute>";
+			lastKnownFileType = "text";
+		};
+		4FBDFB67332963B7F32A4555 = {
+			isa = PBXFileReference;
+			path = "/Users/nicola/schrodinger/coordgen_standalone/.qmake.stash";
+			name = ".qmake.stash";
+			sourceTree = "<absolute>";
+		};
+		2B7C642DFBD36E05E2C8F2BB = {
+			isa = PBXGroup;
+			children = (
+				"7252AB33D1A2353F535C9B12");
+			name = "build";
+			sourceTree = "<group>";
+		};
+		7252AB33D1A2353F535C9B12 = {
+			isa = PBXGroup;
+			children = (
+				"3E886F0588AE0F051D777B7D",
+				"9E64CDC96A64E09BF516FAE0",
+				"77A9FFA278D086CB8C3799CE");
+			name = "CMakeFiles";
+			sourceTree = "<group>";
+		};
+		77A9FFA278D086CB8C3799CE = {
+			isa = PBXGroup;
+			children = (
+				"D6C0D30D4D7AC486EB994E54",
+				"9A91502F2E020930C1952027");
+			name = "3.8.1";
+			sourceTree = "<group>";
+		};
+		D6C0D30D4D7AC486EB994E54 = {
+			isa = PBXGroup;
+			children = (
+				"0F6211F821F705453DA9798C");
+			name = "CompilerIdC";
+			sourceTree = "<group>";
+		};
+		9A91502F2E020930C1952027 = {
+			isa = PBXGroup;
+			children = (
+				"E2A4C54D8E5E9ED6A29A622A");
+			name = "CompilerIdCXX";
+			sourceTree = "<group>";
+		};
+		2EB56BE3C2D93CDAB0C52E67 = {
+			isa = PBXGroup;
+			children = (
+				"8004577376EAADC6013FC613",
+				"173C592B5DE416DC9480A99B",
+				"5766855F16B739293DA54322",
+				"B7FE768C7B5A33CFA9F0B580",
+				"04D8752E70F26A5FDFCC5DEC",
+				"AE5FAEF482ADC60A21B9FF16",
+				"C79B18A9B745420A1E5926B3",
+				"1E2A012F341DF7D22FE0BC00",
+				"5AD44C613336B2E77BF759F4",
+				"FD8ECBFCDBCD3BD5A8055F4E",
+				"3EE6F2EE708843B41C133B74",
+				"6A14CE45BB98D0EC27648EC0",
+				"5D434D1D67D536B53F101159",
+				"2B7C642DFBD36E05E2C8F2BB",
+				"C5A41B5DC88FA998B130D215",
+				"990339E54EDFE74727852176",
+				"C873EE2F6448477EB1E34183",
+				"D285417F08E4D43BD4C850D6",
+				"B486F4C6CB351A731DBB6107",
+				"3C79670156C7DCCDEAC3B855",
+				"3245A010B556E1B593A51AEB",
+				"B444D4B05F146022E5CCCCDF",
+				"7BDA4ABD086570C0651F11E0",
+				"874CC0D60824F39AAF8C23AC",
+				"C259596AA8C7150A1621FEA8",
+				"0080BE02FFCB4D154DC71D9E",
+				"68EA8359B3CB02AAD94496D2",
+				"C50AF0DD64093A7E2C16171C",
+				"DEC415536345E4C69EA6A3EB",
+				"E84C6AD4150D03186A26CF59",
+				"5FE91F9B3B341718479FFE25",
+				"872CCCE1C0F4AF2F51D6C416",
+				"B6E29780788B628DA3D99447");
+			name = "Sources";
+			sourceTree = "<group>";
+		};
+		74B182DB50CB5611B5C1C297 = {
+			isa = PBXGroup;
+			children = (
+				"6309AA0759FDD94399560B74",
+				"4FBDFB67332963B7F32A4555");
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		7EF0942E79C014DCEC8976BC = {
+			buildActionMask = 2147483647;
+			files = (
+				);
+			isa = PBXShellScriptBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+			name = "Qt Preprocessors";
+			shellPath = "/bin/sh";
+			shellScript = "make -C /Users/nicola/schrodinger/coordgen_standalone -f qt_preprocess.mak";
+			showEnvVarsInLog = "0";
+		};
+		F7E50F631C51CD5B5DC0BC43 = {
+			buildActionMask = 2147483647;
+			files = (
+				"7D4215C9EA2EC9364CA98978",
+				"CAFAA6B8F70759539F10C91D",
+				"39B762AAD667F69E832051E1",
+				"4A154F31F9833DEC2C9FDE8B",
+				"B2447E4B9F37D75E66FAFF9A",
+				"C70BEA260E22888A93D4F7DA",
+				"950F3F66368EEBE6F92B4539",
+				"862F31084B9F015E58421CFA",
+				"EE472AA202FF0BFE595D63FD",
+				"6620117DDF8F05AB64EFBE1F",
+				"1DF3023C3083E2694FA3804B",
+				"C4B190AA295F953BDA775236",
+				"AEDE0BA4DD2E3A2AA04FB8D7",
+				"AF1DFB735B92FEE3E17E1C97",
+				"3B5E470500CC7B0191B8314A",
+				"BB291AFE0696CE2C2DF8C4B3",
+				"79AAF5A9076F8CED519F26B7");
+			isa = PBXSourcesBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+			name = "Compile Sources";
+		};
+		663182AC9CDA580CE9972B5A = {
+			isa = PBXFileReference;
+			name = "QtGui.framework";
+			path = "/software/lib/Darwin-x86_64/qt-5.6.2/lib/QtGui.framework";
+			refType = 0;
+			sourceTree = "<absolute>";
+			lastKnownFileType = "wrapper.framework";
+		};
+		20F25706901C934E7D5C93C1 = {
+			fileRef = "663182AC9CDA580CE9972B5A";
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		518742F9CFEB14920968C619 = {
+			isa = PBXFileReference;
+			name = "QtCore.framework";
+			path = "/software/lib/Darwin-x86_64/qt-5.6.2/lib/QtCore.framework";
+			refType = 0;
+			sourceTree = "<absolute>";
+			lastKnownFileType = "wrapper.framework";
+		};
+		BB2AC6B8E5E8273CD0F39663 = {
+			fileRef = "518742F9CFEB14920968C619";
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		2B774D8E4178765CE52EAAF5 = {
+			isa = PBXFileReference;
+			name = "DiskArbitration.framework";
+			path = "/System/Library/Frameworks/DiskArbitration.framework";
+			refType = 0;
+			sourceTree = "<absolute>";
+			lastKnownFileType = "wrapper.framework";
+		};
+		A99B2AA0F9CBBDD12BA126A4 = {
+			fileRef = "2B774D8E4178765CE52EAAF5";
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		A1A67BEAA744704B29168D39 = {
+			isa = PBXFileReference;
+			name = "IOKit.framework";
+			path = "/System/Library/Frameworks/IOKit.framework";
+			refType = 0;
+			sourceTree = "<absolute>";
+			lastKnownFileType = "wrapper.framework";
+		};
+		8D267F2E4776F0ECA2F49DC8 = {
+			fileRef = "A1A67BEAA744704B29168D39";
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D4B32C2222F82AC56BADEB21 = {
+			isa = PBXFileReference;
+			name = "OpenGL.framework";
+			path = "/System/Library/Frameworks/OpenGL.framework";
+			refType = 0;
+			sourceTree = "<absolute>";
+			lastKnownFileType = "wrapper.framework";
+		};
+		8771A8C96E9C391044035D99 = {
+			fileRef = "D4B32C2222F82AC56BADEB21";
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		8D9815BDB5BD9F90D2BC05C5 = {
+			isa = PBXFileReference;
+			name = "AGL.framework";
+			path = "/System/Library/Frameworks/AGL.framework";
+			refType = 0;
+			sourceTree = "<absolute>";
+			lastKnownFileType = "wrapper.framework";
+		};
+		E45E51A644D5FC9F942ECE55 = {
+			fileRef = "8D9815BDB5BD9F90D2BC05C5";
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		AF39DD055C3EF8226FBE929D = {
+			children = (
+				"663182AC9CDA580CE9972B5A",
+				"518742F9CFEB14920968C619",
+				"2B774D8E4178765CE52EAAF5",
+				"A1A67BEAA744704B29168D39",
+				"D4B32C2222F82AC56BADEB21",
+				"8D9815BDB5BD9F90D2BC05C5");
+			isa = PBXGroup;
+			name = "Frameworks";
+			sourceTree = "<group>";
+		};
+		D1C883685E82D5676953459A = {
+			buildActionMask = 2147483647;
+			files = (
+				"20F25706901C934E7D5C93C1",
+				"BB2AC6B8E5E8273CD0F39663",
+				"A99B2AA0F9CBBDD12BA126A4",
+				"8D267F2E4776F0ECA2F49DC8",
+				"8771A8C96E9C391044035D99",
+				"E45E51A644D5FC9F942ECE55");
+			isa = PBXFrameworksBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+			name = "Link Binary With Libraries";
+		};
+		30414803F31797EB689AE508 = {
+			buildActionMask = 2147483647;
+			files = (
+				);
+			isa = PBXResourcesBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+			name = "Copy Bundle Resources";
+		};
+		92898B5D77F05593375C470B = {
+			isa = PBXFileReference;
+			includeInIndex = 0;
+			explicitFileType = "wrapper.application";
+			path = "coordgen_standalone.app";
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		FE0A091FDBFB3E9C31B7A1BD = {
+			children = (
+				"92898B5D77F05593375C470B");
+			isa = PBXGroup;
+			name = "Products";
+			sourceTree = "<group>";
+		};
+		E8C543AB96796ECAA2E65C57 = {
+			children = (
+				"2EB56BE3C2D93CDAB0C52E67",
+				"74B182DB50CB5611B5C1C297",
+				"AF39DD055C3EF8226FBE929D",
+				"FE0A091FDBFB3E9C31B7A1BD");
+			isa = PBXGroup;
+			name = "coordgen_standalone";
+			sourceTree = "<group>";
+		};
+		A98AFEFB583EE4AC4CD0C956 = {
+			buildPhases = (
+				"5E618435888B9D49F8540165",
+				"7EF0942E79C014DCEC8976BC");
+			dependencies = (
+				);
+			buildConfigurationList = 6CC3B5D2136C7CD6A5CF5A59;
+			isa = PBXAggregateTarget;
+			buildRules = (
+);
+			productName = "Qt Preprocess";
+			name = "Qt Preprocess";
+		};
+		B8740090383D6EF069E04F39 = {
+			isa = PBXTargetDependency;
+			target = "A98AFEFB583EE4AC4CD0C956";
+		};
+		6D39AB9852D6B9F1C38B8B1B = {
+			buildPhases = (
+				"F7E50F631C51CD5B5DC0BC43",
+				"D1C883685E82D5676953459A",
+				"30414803F31797EB689AE508");
+			dependencies = (
+				"B8740090383D6EF069E04F39");
+			productReference = "92898B5D77F05593375C470B";
+			buildConfigurationList = 6CC3B5D2136C7CD6A5CF5A59;
+			isa = PBXNativeTarget;
+			buildRules = (
+);
+			productType = "com.apple.product-type.application";
+			name = "coordgen_standalone";
+			productName = "coordgen_standalone";
+		};
+		3AA6C32AC930069E80220CF1 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = "NO";
+				ENABLE_BITCODE = "NO";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = "YES";
+				GCC_OPTIMIZATION_LEVEL = "0";
+				PRODUCT_NAME = "coordgen_standalone";
+				QT_LIBRARY_SUFFIX = "_debug";
+				SDKROOT = "macosx";
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				CC = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang";
+				LDPLUSPLUS = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++";
+				INFOPLIST_FILE = "Info.plist";
+				SYMROOT = "/Users/nicola/schrodinger/coordgen_standalone";
+				DYLIB_CURRENT_VERSION = "1.0.0";
+				DYLIB_COMPATIBILITY_VERSION = "1.0";
+				MACOSX_DEPLOYMENT_TARGET = "10.7";
+				HEADER_SEARCH_PATHS = (
+					".",
+					".",
+					"/software/lib/Darwin-x86_64/qt-5.6.2/lib/QtGui.framework/Headers",
+					"/software/lib/Darwin-x86_64/qt-5.6.2/lib/QtCore.framework/Headers",
+					".",
+					"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/System/Library/Frameworks/OpenGL.framework/Headers",
+					"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/System/Library/Frameworks/AGL.framework/Headers",
+					"/software/lib/Darwin-x86_64/qt-5.6.2/mkspecs/macx-clang");
+				LIBRARY_SEARCH_PATHS = (
+					"/software/lib/Darwin-x86_64/qt-5.6.2/lib",
+					"/System/Library/Frameworks/",
+					"/software/lib/Darwin-x86_64/openssl-0.9.8x/lib");
+				FRAMEWORK_SEARCH_PATHS = (
+					"/software/lib/Darwin-x86_64/qt-5.6.2/lib",
+					"/software/lib/Darwin-x86_64/qt-5.6.2/lib");
+				OTHER_CFLAGS = (
+					"-pipe",
+					"-g",
+					"-Wall",
+					"-W",
+					"-fPIC",
+					"-DQT_GUI_LIB",
+					"-DQT_CORE_LIB");
+				OTHER_CPLUSPLUSFLAGS = (
+					"-pipe",
+					"-stdlib=libc++",
+					"-g",
+					"-std=gnu++11",
+					"-Wall",
+					"-W",
+					"-fPIC",
+					"-DQT_GUI_LIB",
+					"-DQT_CORE_LIB");
+				OTHER_LDFLAGS = (
+						"-headerpad_max_install_names",
+						"-stdlib=libc++",
+						"-F/software/lib/Darwin-x86_64/qt-5.6.2/lib",
+						"-L/software/lib/Darwin-x86_64/openssl-0.9.8x/lib");
+				ARCHS = "x86_64";
+			};
+			name = "Debug";
+		};
+		77418F46922677BB04ED38DD = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = "NO";
+				ENABLE_BITCODE = "NO";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = "YES";
+				GCC_OPTIMIZATION_LEVEL = "0";
+				PRODUCT_NAME = "coordgen_standalone";
+				QT_LIBRARY_SUFFIX = "_debug";
+				SDKROOT = "macosx";
+				PRODUCT_NAME = "coordgen_standalone";
+			};
+			name = "Debug";
+		};
+		339EE1B2CC4FC24589A0EA95 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = "YES";
+				ENABLE_BITCODE = "NO";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = "NO";
+				PRODUCT_NAME = "coordgen_standalone";
+				QT_LIBRARY_SUFFIX = "";
+				SDKROOT = "macosx";
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				CC = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang";
+				LDPLUSPLUS = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++";
+				INFOPLIST_FILE = "Info.plist";
+				SYMROOT = "/Users/nicola/schrodinger/coordgen_standalone";
+				DYLIB_CURRENT_VERSION = "1.0.0";
+				DYLIB_COMPATIBILITY_VERSION = "1.0";
+				MACOSX_DEPLOYMENT_TARGET = "10.7";
+				HEADER_SEARCH_PATHS = (
+					".",
+					".",
+					"/software/lib/Darwin-x86_64/qt-5.6.2/lib/QtGui.framework/Headers",
+					"/software/lib/Darwin-x86_64/qt-5.6.2/lib/QtCore.framework/Headers",
+					".",
+					"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/System/Library/Frameworks/OpenGL.framework/Headers",
+					"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/System/Library/Frameworks/AGL.framework/Headers",
+					"/software/lib/Darwin-x86_64/qt-5.6.2/mkspecs/macx-clang");
+				LIBRARY_SEARCH_PATHS = (
+					"/software/lib/Darwin-x86_64/qt-5.6.2/lib",
+					"/System/Library/Frameworks/",
+					"/software/lib/Darwin-x86_64/openssl-0.9.8x/lib");
+				FRAMEWORK_SEARCH_PATHS = (
+					"/software/lib/Darwin-x86_64/qt-5.6.2/lib",
+					"/software/lib/Darwin-x86_64/qt-5.6.2/lib");
+				OTHER_CFLAGS = (
+					"-pipe",
+					"-g",
+					"-Wall",
+					"-W",
+					"-fPIC",
+					"-DQT_GUI_LIB",
+					"-DQT_CORE_LIB");
+				OTHER_CPLUSPLUSFLAGS = (
+					"-pipe",
+					"-stdlib=libc++",
+					"-g",
+					"-std=gnu++11",
+					"-Wall",
+					"-W",
+					"-fPIC",
+					"-DQT_GUI_LIB",
+					"-DQT_CORE_LIB");
+				OTHER_LDFLAGS = (
+						"-headerpad_max_install_names",
+						"-stdlib=libc++",
+						"-F/software/lib/Darwin-x86_64/qt-5.6.2/lib",
+						"-L/software/lib/Darwin-x86_64/openssl-0.9.8x/lib");
+				ARCHS = "x86_64";
+			};
+			name = "Release";
+		};
+		6666AA5E688052234F6758D8 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = "YES";
+				ENABLE_BITCODE = "NO";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = "NO";
+				PRODUCT_NAME = "coordgen_standalone";
+				QT_LIBRARY_SUFFIX = "";
+				SDKROOT = "macosx";
+				PRODUCT_NAME = "coordgen_standalone";
+			};
+			name = "Release";
+		};
+		DAC4C1AA5EDEA1C85E9CA5E6 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				"3AA6C32AC930069E80220CF1",
+				"339EE1B2CC4FC24589A0EA95");
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug";
+		};
+		6CC3B5D2136C7CD6A5CF5A59 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				"77418F46922677BB04ED38DD",
+				"6666AA5E688052234F6758D8");
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Debug";
+		};
+		6DB9C3763D02B1415CD9D565 = {
+			hasScannedForEncodings = 1;
+			compatibilityVersion = "Xcode 3.2";
+			isa = PBXProject;
+			mainGroup = "E8C543AB96796ECAA2E65C57";
+			productRefGroup = "FE0A091FDBFB3E9C31B7A1BD";
+			buildConfigurationList = "DAC4C1AA5EDEA1C85E9CA5E6";
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				"6D39AB9852D6B9F1C38B8B1B",
+				"A98AFEFB583EE4AC4CD0C956");
+			attributes = {
+				TargetAttributes = {
+				};
+			};
+		};
+	};
+	rootObject = "6DB9C3763D02B1415CD9D565";
+}

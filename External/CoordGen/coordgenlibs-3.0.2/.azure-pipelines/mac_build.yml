@@ -1,0 +1,62 @@
+steps:
+  - bash: |
+      wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX$(target_platform).sdk.tar.xz
+      tar Jxvf MacOSX$(target_platform).sdk.tar.xz
+    displayName: Install MacOSX $(target_platform) SDK
+  - script: |
+      echo "Removing homebrew from Azure to avoid conflicts."
+      curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
+      chmod +x ~/uninstall_homebrew
+      ~/uninstall_homebrew -fq
+      rm ~/uninstall_homebrew
+    displayName: Remove homebrew
+  - bash: |
+      source ${CONDA}/etc/profile.d/conda.sh
+      sudo chown -R ${USER} ${CONDA}
+      echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
+      conda config --set always_yes yes --set changeps1 no
+      conda update -q conda
+      conda create --name coordgen_build $(compiler) cmake \
+          boost-cpp=$(boost_version) boost=$(boost_version) \
+          py-boost=$(boost_version) libboost=$(boost_version)
+    displayName: Setup build environment
+  - bash: |
+      source ${CONDA}/etc/profile.d/conda.sh
+      conda activate coordgen_build
+      export BASE_PATH=$(pwd)
+      export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+      export CONDA_BUILD_SYSROOT=${SDKROOT}
+      mkdir build && cd build && \
+      cmake .. \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCOORDGEN_RIGOROUS_BUILD=ON \
+      -DBoost_NO_SYSTEM_PATHS=ON \
+      -DCMAKE_OSX_SYSROOT=${SDKROOT} \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform) \
+      -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
+      -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib" \
+      -DCMAKE_INSTALL_PREFIX="${BASE_PATH}/install" \
+      -DCOORDGEN_BUILD_SHARED_LIBS=$(shared_lib)
+    displayName: Configure build (Run CMake)
+  - bash: |
+      source ${CONDA}/etc/profile.d/conda.sh
+      conda activate coordgen_build
+      export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+      export CONDA_BUILD_SYSROOT=${SDKROOT}
+      cd build
+      make -j $( $(number_of_cores) ) install
+    displayName: Build
+  - bash: |
+      source ${CONDA}/etc/profile.d/conda.sh
+      conda activate coordgen_build
+      export DYLD_FALLBACK_LIBRARY_PATH=${CONDA_PREFIX}/lib:${DYLD_FALLBACK_LIBRARY_PATH}
+      export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+      export CONDA_BUILD_SYSROOT=${SDKROOT}
+      cd build
+      ctest -j $( $(number_of_cores) ) --output-on-failure -T Test
+    displayName: Run tests
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: "CTest"
+      testResultsFiles: "build/Testing/*/Test.xml"
+      testRunTitle: $(system.phasedisplayname) CTest Test Run

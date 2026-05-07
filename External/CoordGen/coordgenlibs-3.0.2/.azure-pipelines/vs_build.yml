@@ -1,0 +1,42 @@
+steps:
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Setup build environment
+  - script: |
+      conda config --set always_yes yes --set changeps1 no
+      conda info -a
+      conda create --name coordgen_build $(compiler) cmake ^
+          boost-cpp=$(boost_version) boost=$(boost_version) ^
+          py-boost=$(boost_version) libboost=$(boost_version)
+    displayName: Install dependencies
+  - script: |
+      set Boost_ROOT=
+      set BASE_PATH=%cd%
+      mkdir build && cd build
+      call activate coordgen_build
+      cmake .. ^
+      -G "Visual Studio 16 2019" ^
+      -DCMAKE_BUILD_TYPE=Release ^
+      -DCOORDGEN_RIGOROUS_BUILD=ON ^
+      -DBoost_NO_SYSTEM_PATHS=ON ^
+      -DCMAKE_INCLUDE_PATH=%CONDA_PREFIX%/Library/include ^
+      -DCMAKE_LIBRARY_PATH=%CONDA_PREFIX%/Library/lib ^
+      -DCMAKE_INSTALL_PREFIX=%BASE_PATH%/install ^
+      -DCOORDGEN_BUILD_SHARED_LIBS=$(shared_lib) ^
+      -DBoost_LIB_PREFIX="$(boost_lib_prefix)"
+    displayName: Configure build (Run CMake)
+  - script: |
+      call activate coordgen_build
+      cd build
+      cmake --build . --config Release --target install -j $(number_of_cores)
+    displayName: Build
+  - script: |
+      call activate coordgen_build
+      set PATH=%cd%/install/bin;%PATH%
+      cd build
+      ctest -j $(number_of_cores) --output-on-failure -T Test -C Release
+    displayName: Run tests
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: "CTest"
+      testResultsFiles: "build/Testing/*/Test.xml"
+      testRunTitle: $(system.phasedisplayname)  CTest Test Run

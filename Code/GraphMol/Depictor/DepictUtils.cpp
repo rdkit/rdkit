@@ -28,6 +28,7 @@ double ANGLE_OPEN = 0.1222;  // that is about 7 deg
 unsigned int MAX_COLL_ITERS = 15;
 double HETEROATOM_COLL_SCALE = 1.3;
 unsigned int NUM_BONDS_FLIPS = 3;
+constexpr unsigned int MACROCYCLE_SIZE_THRESHOLD = 8;
 
 RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
   // The process here is very straight forward
@@ -168,7 +169,7 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
   int macrocycle_idx = -1;
   unsigned int max_macrocycle_size = 0;
   for (int i = 0; i < static_cast<int>(fusedRings.size()); ++i) {
-    if (fusedRings[i].size() > 8) {
+    if (fusedRings[i].size() > MACROCYCLE_SIZE_THRESHOLD) {
       if (fusedRings[i].size() > max_macrocycle_size) {
         macrocycle_idx = i;
         max_macrocycle_size = fusedRings[i].size();
@@ -224,7 +225,7 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
       if (removedRings[currRingId] || removedARing) {
         continue;
       }
-      if (fusedRings[currRingId].size() > 8) {
+      if (fusedRings[currRingId].size() > MACROCYCLE_SIZE_THRESHOLD) {
         continue;
       }
       auto nIntersectingAtoms = 0u;
@@ -239,8 +240,8 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
         bool isMacrocycle = fusedRings[otherRingId].size() > 8;
         RDKit::INT_VECT commmonAtoms;
         RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
-                         commmonAtoms);
-        for (auto rii : commmonAtoms) {
+                         commonAtoms);
+        for (auto rii : commonAtoms) {
           if (rii != aid1 && rii != aid2) {
             ++nIntersectingAtoms;
             if (isMacrocycle) {

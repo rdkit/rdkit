@@ -1,0 +1,369 @@
+{
+  s_m_m2io_version
+  :::
+  2.0.0 
+} 
+
+f_m_ct { 
+  s_m_title
+  s_m_entry_name
+  r_mmod_Potential_Energy-OPLS-2005
+  b_mmod_Minimization_Converged-OPLS-2005
+  r_mmod_RMS_Derivative-OPLS-2005
+  i_mmod_Times_Found-OPLS-2005
+  r_mmod_Relative_Potential_Energy-OPLS-2005
+  b_mmod_Chiralities_Consistent-OPLS-2005
+  i_mmod_Conformation-OPLS-2005
+  i_mmod_Serial_Number-OPLS-2005
+  i_sd_Mol\_ID
+  s_sd_Formula
+  r_sd_MolWeight
+  i_sd_SchIID
+  s_sd_Source
+  i_sd_Source\_ID
+  s_sd_Chemical_Name
+  r_sd_pKa\_1
+  i_sd_Temp\_1
+  s_sd_Assessment\_1
+  s_sd_Identifier\_1
+  s_user_Data_Set
+  r_sd_pKa\_1a
+  r_sd_pKa\_1b
+  r_sd_pKa\_1c
+  s_m_entry_id
+  :::
+  "Title with \p \\ \" space"
+  ligprep-out.1 
+      11.5775423049927 
+  1     
+  0.000241500383708626 
+  1     
+                     0 
+  1     
+  1     
+  1     
+  1     
+  CH2O2 
+              46.02538 
+  1     
+  SB79 
+  2002  
+  "Methanoic Acid" 
+                 3.749 
+  25    
+  Rel. 
+  carboxylicAcid_aliphatic 
+  Acids 
+                 3.737 
+                 3.739 
+                 3.772 
+  1 
+  m_depend[8] { 
+    # First column is dependency index #
+    i_m_depend_dependency
+    s_m_depend_property
+    :::
+    1         20 r_mmod_Potential_Energy-OPLS-2005 
+    2         20 b_mmod_Minimization_Converged-OPLS-2005 
+    3         20 r_mmod_RMS_Derivative-OPLS-2005 
+    4         20 i_mmod_Times_Found-OPLS-2005 
+    5         20 r_mmod_Relative_Potential_Energy-OPLS-2005 
+    6         20 b_mmod_Chiralities_Consistent-OPLS-2005 
+    7         20 i_mmod_Conformation-OPLS-2005 
+    8         10 i_mmod_Serial_Number-OPLS-2005 
+    :::
+  } 
+  m_atom[5] { 
+    # First column is atom index #
+    i_m_mmod_type
+    r_m_x_coord
+    r_m_y_coord
+    r_m_z_coord
+    i_m_residue_number
+    s_m_insertion_code
+    s_m_mmod_res
+    s_m_chain_name
+    i_m_color
+    r_m_charge1
+    r_m_charge2
+    s_m_pdb_residue_name
+    s_m_pdb_atom_name
+    s_m_grow_name
+    i_m_atomic_number
+    i_m_formal_charge
+    i_m_representation
+    i_m_visibility
+    s_m_atom_name
+    i_m_template_index
+    :::
+    1        2    1.322943    0.665651    0.033620   900 " " X " "    2   0.52000   0.52000 "UNK " "    " "    "    6   0    0    1 "Does \p \" \\this work" 0     
+    2       15    2.383264    0.045183    0.036722   900 " " X " "   70  -0.44000  -0.44000 "UNK " "    " "    "    8   0    0    1 "" 0     
+    3       16    0.088569    0.086898    0.011423   900 " " X " "   70  -0.53000  -0.53000 "UNK " "    " "    "    8   0    0    1 "" 0     
+    4       41    1.200391    1.759715    0.047865   900 " " X " "   21   0.00000   0.00000 "UNK " "    " "    "    1   0    0    1 "" 0     
+    5       42   -0.612341    0.720066    0.012557   900 " " X " "   21   0.45000   0.45000 "UNK " "    " "    "    1   0    0    1 "" <>
+    :::
+  } 
+  m_bond[8] { 
+    # First column is bond index #
+    i_m_from
+    i_m_to
+    i_m_order
+    i_m_from_rep
+    i_m_to_rep
+    :::
+    1          1      2   2 1 1 
+    2          1      3   1 1 1 
+    3          1      4   1 1 1 
+    4          2      1   2 1 1 
+    5          3      1   1 1 1 
+    6          3      5   1 1 1 
+    7          4      1   1 1 1 
+    8          5      3   1 1 1 
+    :::
+  } 
+} 
+
+f_m_ct { 
+  s_m_title
+  s_m_entry_name
+  r_mmod_Potential_Energy-OPLS-2005
+  b_mmod_Minimization_Converged-OPLS-2005
+  r_mmod_RMS_Derivative-OPLS-2005
+  i_mmod_Times_Found-OPLS-2005
+  r_mmod_Relative_Potential_Energy-OPLS-2005
+  b_mmod_Chiralities_Consistent-OPLS-2005
+  i_mmod_Conformation-OPLS-2005
+  i_mmod_Serial_Number-OPLS-2005
+  i_sd_Mol\_ID
+  s_sd_Formula
+  r_sd_MolWeight
+  i_sd_SchIID
+  s_sd_Source
+  i_sd_Source\_ID
+  s_sd_Chemical_Name
+  r_sd_pKa\_1
+  i_sd_Temp\_1
+  s_sd_Assessment\_1
+  s_sd_Identifier\_1
+  s_user_Data_Set
+  s_m_entry_id
+  :::
+  2:Acids 
+  ligprep-out.2 
+      1.90448498725891 
+  0     
+      10.1268978118896 
+  1     
+                     0 
+  1     
+  1     
+  2     
+  2     
+  CH2N2O4 
+             106.03758 
+  2     
+  SB79 
+  2008  
+  "Methane, dinitro-" 
+                  3.57 
+  25    
+  Approx. 
+  methane_nitro_nitro 
+  Acids 
+  2 
+  m_depend[8] { 
+    # First column is dependency index #
+    i_m_depend_dependency
+    s_m_depend_property
+    :::
+    1         20 r_mmod_Potential_Energy-OPLS-2005 
+    2         20 b_mmod_Minimization_Converged-OPLS-2005 
+    3         20 r_mmod_RMS_Derivative-OPLS-2005 
+    4         20 i_mmod_Times_Found-OPLS-2005 
+    5         20 r_mmod_Relative_Potential_Energy-OPLS-2005 
+    6         20 b_mmod_Chiralities_Consistent-OPLS-2005 
+    7         20 i_mmod_Conformation-OPLS-2005 
+    8         10 i_mmod_Serial_Number-OPLS-2005 
+    :::
+  } 
+  m_atom[9] { 
+    # First column is atom index #
+    i_m_mmod_type
+    r_m_x_coord
+    r_m_y_coord
+    r_m_z_coord
+    i_m_residue_number
+    s_m_insertion_code
+    s_m_mmod_res
+    s_m_chain_name
+    i_m_color
+    r_m_charge1
+    r_m_charge2
+    s_m_pdb_residue_name
+    s_m_pdb_atom_name
+    s_m_grow_name
+    i_m_atomic_number
+    i_m_formal_charge
+    i_m_representation
+    i_m_visibility
+    s_m_atom_name
+    i_m_template_index
+    :::
+    1        3    2.454867   -0.068087    0.028385   900 " " X " "    2   0.28000   0.28000 "UNK " "    " "    "    6   0    0    1 "" 0     
+    2       31    3.682039    0.774771   -0.121640   900 " " X " "   43   0.54000   0.54000 "UNK " "    " "    "    7   1    0    1 "" 0     
+    3       15    3.664435    1.669564   -0.966160   900 " " X " "   70  -0.37000  -0.37000 "UNK " "    " "    "    8   0    0    1 "" 0     
+    4       18    4.640647    0.508696    0.600789   900 " " X " "   70  -0.37000  -0.37000 "UNK " "    " "    "    8  -1    0    1 "" 0     
+    5       31    1.220234    0.767491    0.155745   900 " " X " "   43   0.54000   0.54000 "UNK " "    " "    "    7   1    0    1 "" 0     
+    6       15    1.203396    1.634407    1.028171   900 " " X " "   70  -0.37000  -0.37000 "UNK " "    " "    "    8   0    0    1 "" 0     
+    7       18    0.292550    0.524092   -0.612877   900 " " X " "   70  -0.37000  -0.37000 "UNK " "    " "    "    8  -1    0    1 "" 0     
+    8       41    2.368701   -0.700720   -0.855635   900 " " X " "   21   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     
+    9       41    2.546380   -0.674243    0.930770   900 " " X " "   21   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     
+    :::
+  } 
+  m_bond[16] { 
+    # First column is bond index #
+    i_m_from
+    i_m_to
+    i_m_order
+    i_m_from_rep
+    i_m_to_rep
+    :::
+    1          1      2   1 1 1 
+    2          1      5   1 1 1 
+    3          1      8   1 1 1 
+    4          1      9   1 1 1 
+    5          2      1   1 1 1 
+    6          2      3   2 1 1 
+    7          2      4   1 1 1 
+    8          3      2   2 1 1 
+    9          4      2   1 1 1 
+    10         5      1   1 1 1 
+    11         5      6   2 1 1 
+    12         5      7   1 1 1 
+    13         6      5   2 1 1 
+    14         7      5   1 1 1 
+    15         8      1   1 1 1 
+    16         9      1   1 1 1 
+    :::
+  } 
+} 
+
+f_m_ct { 
+  s_m_title
+  s_m_entry_name
+  r_mmod_Potential_Energy-OPLS-2005
+  b_mmod_Minimization_Converged-OPLS-2005
+  r_mmod_RMS_Derivative-OPLS-2005
+  i_mmod_Times_Found-OPLS-2005
+  r_mmod_Relative_Potential_Energy-OPLS-2005
+  b_mmod_Chiralities_Consistent-OPLS-2005
+  i_mmod_Conformation-OPLS-2005
+  i_mmod_Serial_Number-OPLS-2005
+  i_sd_Mol\_ID
+  s_sd_Formula
+  r_sd_MolWeight
+  i_sd_SchIID
+  s_sd_Source
+  i_sd_Source\_ID
+  s_sd_Chemical_Name
+  r_sd_pKa\_1
+  i_sd_Temp\_1
+  s_sd_Assessment\_1
+  s_sd_Identifier\_1
+  s_user_Data_Set
+  s_m_entry_id
+  :::
+  3:Acids 
+  ligprep-out.3 
+      0.36353063583374 
+  0     
+     0.394437789916992 
+  1     
+                     0 
+  1     
+  1     
+  3     
+  3     
+  CH3NO2 
+              61.04002 
+  3     
+  SB79 
+  2009  
+  "Methane, nitro-" 
+                 10.24 
+  25    
+  Approx. 
+  methane_nitro 
+  Acids 
+  3 
+  m_depend[8] { 
+    # First column is dependency index #
+    i_m_depend_dependency
+    s_m_depend_property
+    :::
+    1         20 r_mmod_Potential_Energy-OPLS-2005 
+    2         20 b_mmod_Minimization_Converged-OPLS-2005 
+    3         20 r_mmod_RMS_Derivative-OPLS-2005 
+    4         20 i_mmod_Times_Found-OPLS-2005 
+    5         20 r_mmod_Relative_Potential_Energy-OPLS-2005 
+    6         20 b_mmod_Chiralities_Consistent-OPLS-2005 
+    7         20 i_mmod_Conformation-OPLS-2005 
+    8         10 i_mmod_Serial_Number-OPLS-2005 
+    :::
+  } 
+  m_atom[7] { 
+    # First column is atom index #
+    i_m_mmod_type
+    r_m_x_coord
+    r_m_y_coord
+    r_m_z_coord
+    i_m_residue_number
+    s_m_insertion_code
+    s_m_mmod_res
+    s_m_chain_name
+    i_m_color
+    r_m_charge1
+    r_m_charge2
+    s_m_pdb_residue_name
+    s_m_pdb_atom_name
+    s_m_grow_name
+    i_m_atomic_number
+    i_m_formal_charge
+    i_m_representation
+    i_m_visibility
+    s_m_atom_name
+    i_m_template_index
+    :::
+    1        3    2.130632    2.462572    0.019139   900 " " X " "    2   0.02000   0.02000 "UNK " "    " "    "    6   0    0    1 "" 0     
+    2       31    1.375937    1.174885    0.028298   900 " " X " "   43   0.54000   0.54000 "UNK " "    " "    "    7   1    0    1 "" 0     
+    3       15    2.019597    0.136895   -0.075313   900 " " X " "   70  -0.37000  -0.37000 "UNK " "    " "    "    8   0    0    1 "" 0     
+    4       18    0.156828    1.237457    0.136330   900 " " X " "   70  -0.37000  -0.37000 "UNK " "    " "    "    8  -1    0    1 "" 0     
+    5       41    3.196829    2.244744    0.089627   900 " " X " "   21   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     
+    6       41    1.902515    2.975416   -0.915329   900 " " X " "   21   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     
+    7       41    1.801453    3.051384    0.875647   900 " " X " "   21   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     
+    :::
+  } 
+  m_bond[12] { 
+    # First column is bond index #
+    i_m_from
+    i_m_to
+    i_m_order
+    i_m_from_rep
+    i_m_to_rep
+    :::
+    1          1      2   1 1 1 
+    2          1      5   1 1 1 
+    3          1      6   1 1 1 
+    4          1      7   1 1 1 
+    5          2      1   1 1 1 
+    6          2      3   2 1 1 
+    7          2      4   1 1 1 
+    8          3      2   2 1 1 
+    9          4      2   1 1 1 
+    10         5      1   1 1 1 
+    11         6      1   1 1 1 
+    12         7      1   1 1 1 
+    :::
+  } 
+} 
+

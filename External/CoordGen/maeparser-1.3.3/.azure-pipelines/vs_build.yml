@@ -1,0 +1,38 @@
+steps:
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Setup build environment
+  - script: |
+      conda config --set always_yes yes --set changeps1 no
+      conda info -a
+      conda create --name maeparser_build $(compiler) cmake ^
+          boost-cpp=$(boost_version) boost=$(boost_version) ^
+          py-boost=$(boost_version) libboost=$(boost_version)
+    displayName: Install dependencies
+  - script: |
+      set Boost_ROOT=
+      mkdir build && cd build
+      call activate maeparser_build
+      cmake .. ^
+      -G "Visual Studio 16 2019" ^
+      -DCMAKE_BUILD_TYPE=Release ^
+      -DMAEPARSER_RIGOROUS_BUILD=ON ^
+      -DBoost_NO_SYSTEM_PATHS=ON ^
+      -DCMAKE_INCLUDE_PATH=%CONDA_PREFIX%/Library/include ^
+      -DCMAKE_LIBRARY_PATH=%CONDA_PREFIX%/Library/lib ^
+      -DMAEPARSER_BUILD_SHARED_LIBS=$(shared_lib)
+    displayName: Configure build (Run CMake)
+  - script: |
+      call activate maeparser_build
+      cd build
+      cmake --build . --config Release -j $(number_of_cores)
+    displayName: Build
+  - script: |
+      call activate maeparser_build
+      cd build
+      ctest -j $(number_of_cores) --output-on-failure -T Test -C Release
+    displayName: Run tests
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: "CTest"
+      testResultsFiles: "build/Testing/*/Test.xml"
+      testRunTitle: $(system.phasedisplayname)  CTest Test Run

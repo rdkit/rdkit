@@ -1,0 +1,11 @@
+c1ccccc1
+c1ccc2c(c1)ccc1ccccc12
+CC(C)Cc1ccc(cc1)C(C)C(=O)O
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)O
+c1ccc2c(c1)cc1ccccc1c2
+C1CCC2C(C1)CCCC2
+c1ccc2c(c1)ccc3c2cccc3
+c1ccc2c(c1)ccc3c2ccc4c3cccc4
+CC1=CC=CC=C1
+CCO
+CCCC
