@@ -1,4 +1,4 @@
-rdkit_python_extension(rdAbbreviations
+rdkit_nanobind_extension(rdAbbreviations
                        rdAbbreviations.cpp
                        DEST Chem
                        LINK_LIBRARIES Abbreviations 

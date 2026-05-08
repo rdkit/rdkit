@@ -7,20 +7,19 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-
-#include <RDBoost/python.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/vector.h>
 #include <GraphMol/GraphMol.h>
-#include <RDBoost/Wrap.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <GraphMol/Abbreviations/Abbreviations.h>
 
-namespace python = boost::python;
 using namespace RDKit;
 
 namespace {
 
 ROMol *condenseMolAbbreviationsHelper(const ROMol *mol,
-                                      python::object pyabbrevs,
+                                      nb::object pyabbrevs,
                                       double maxCoverage, bool sanitize) {
   RWMol *res = new RWMol(*mol);
   auto abbrevs =
@@ -38,7 +37,7 @@ ROMol *condenseAbbreviationSGroupHelper(const ROMol *mol) {
   return rdcast<ROMol *>(res);
 }
 
-ROMol *labelMolAbbreviationsHelper(const ROMol *mol, python::object pyabbrevs,
+ROMol *labelMolAbbreviationsHelper(const ROMol *mol, nb::object pyabbrevs,
                                    double maxCoverage) {
   RWMol *res = new RWMol(*mol);
   auto abbrevs =
@@ -50,40 +49,36 @@ ROMol *labelMolAbbreviationsHelper(const ROMol *mol, python::object pyabbrevs,
 }
 }  // namespace
 
-BOOST_PYTHON_MODULE(rdAbbreviations) {
-  python::scope().attr("__doc__") =
-      "Module containing functions for working with molecular abbreviations";
-  // RegisterVectorConverter<Abbreviations::AbbreviationMatch>();
-  RegisterVectorConverter<Abbreviations::AbbreviationDefinition>();
-
-  python::class_<Abbreviations::AbbreviationDefinition>(
-      "AbbreviationDefinition", "Abbreviation Definition",
-      python::init<>(python::args("self")))
-      .def_readwrite("label", &Abbreviations::AbbreviationDefinition::label,
+NB_MODULE(rdAbbreviations, m) {
+  m.doc() = "Module containing functions for working with molecular abbreviations";
+  nb::class_<Abbreviations::AbbreviationDefinition>(m, "AbbreviationDefinition",
+      "Abbreviation Definition")
+      .def(nb::init<>())
+      .def_rw("label", &Abbreviations::AbbreviationDefinition::label,
                      "the label")
-      .def_readwrite(
+      .def_rw(
           "displayLabel", &Abbreviations::AbbreviationDefinition::displayLabel,
           "the label in a drawing when the bond comes from the right")
-      .def_readwrite("displayLabelW",
+      .def_rw("displayLabelW",
                      &Abbreviations::AbbreviationDefinition::displayLabelW,
                      "the label in a drawing when the bond comes from the west")
-      .def_readwrite(
+      .def_rw(
           "mol", &Abbreviations::AbbreviationDefinition::mol,
           "the query molecule (should have a dummy as the first atom if includesXBonds is true)")
-      .def_readwrite("includesXBonds",
+      .def_rw("includesXBonds",
                      &Abbreviations::AbbreviationDefinition::includesXBonds,
                      "whether or not the abbreviation definition includes "
                      "bonds to non-abbreviation atoms");
 
-  python::def("GetDefaultAbbreviations",
+  m.def("GetDefaultAbbreviations",
               &Abbreviations::Utils::getDefaultAbbreviations,
               "returns a list of the default abbreviation definitions");
-  python::def("GetDefaultLinkers", &Abbreviations::Utils::getDefaultLinkers,
+  m.def("GetDefaultLinkers", &Abbreviations::Utils::getDefaultLinkers,
               "returns a list of the default linker definitions");
-  python::def(
+  m.def(
       "ParseAbbreviations", &Abbreviations::Utils::parseAbbreviations,
-      (python::arg("text"), python::arg("removeExtraDummies") = false,
-       python::arg("allowConnectionToDummies") = false),
+      nb::arg("text"), nb::arg("removeExtraDummies") = false,
+      nb::arg("allowConnectionToDummies") = false,
       "Returns a set of abbreviation definitions from a string."
       "  Format of the text data:  A series of lines, each of which contains:"
       " label SMARTS displayLabel displayLabelW"
@@ -96,27 +91,27 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
       " is that the first atom is a dummy (one will be added if this is not"
       " true) and that the second atom is the surrogate for the rest of"
       " the group.");
-  python::def("ParseLinkers", &Abbreviations::Utils::parseLinkers,
-              (python::arg("text")),
+  m.def("ParseLinkers", &Abbreviations::Utils::parseLinkers,
+              nb::arg("text"),
               "Returns a set of linker definitions from a string."
               "  Equivalent to calling ParseAbbreviations(text, True True).");
-  python::def(
+  m.def(
       "CondenseMolAbbreviations", &condenseMolAbbreviationsHelper,
-      (python::arg("mol"), python::arg("abbrevs"),
-       python::arg("maxCoverage") = 0.4, python::arg("sanitize") = true),
-      python::return_value_policy<python::manage_new_object>(),
+      nb::arg("mol"), nb::arg("abbrevs"),
+      nb::arg("maxCoverage") = 0.4, nb::arg("sanitize") = true,
+      nb::rv_policy::take_ownership,
       "Finds and replaces abbreviations in a molecule. The result is not "
       "sanitized.");
-  python::def("LabelMolAbbreviations", &labelMolAbbreviationsHelper,
-              (python::arg("mol"), python::arg("abbrevs"),
-               python::arg("maxCoverage") = 0.4),
-              python::return_value_policy<python::manage_new_object>(),
+  m.def("LabelMolAbbreviations", &labelMolAbbreviationsHelper,
+              nb::arg("mol"), nb::arg("abbrevs"),
+              nb::arg("maxCoverage") = 0.4,
+              nb::rv_policy::take_ownership,
               "Finds abbreviations and adds to them to a molecule as \"SUP\" "
               "SubstanceGroups");
-  python::def(
+  m.def(
       "CondenseAbbreviationSubstanceGroups", &condenseAbbreviationSGroupHelper,
-      (python::arg("mol")),
-      python::return_value_policy<python::manage_new_object>(),
+      nb::arg("mol"),
+      nb::rv_policy::take_ownership,
       "Finds and replaces abbreviation (i.e. \"SUP\") substance groups in a "
       "molecule. The result is not sanitized.");
 }
