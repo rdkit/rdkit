@@ -230,12 +230,7 @@ nb::object generic__copy__(nb::object self) {
   return result;
 }
 template <class Copyable>
-nb::object generic__deepcopy__(nb::object self, nb::dict /* memo */) {
-  //  FIX: we probably should be doing something with memo here (the boost
-  //  bindings did)
-  return generic__copy__<Copyable>(self);
-#if 0
-  // not currently functional included here in case we want to fix it later
+nb::object generic__deepcopy__(nb::object self, nb::dict memo) {
   nb::object copyMod = nb::module_::import_("copy");
   nb::object deepcopy = copyMod.attr("deepcopy");
 
@@ -245,15 +240,11 @@ nb::object generic__deepcopy__(nb::object self, nb::dict /* memo */) {
   // -
   // please tell me that there is a better way! (and which ;-p)
   size_t copyableId = (size_t)(self.ptr());
-  memo[copyableId] = result;
+  memo[nb::int_(copyableId)] = result;
 
   nb::dict rdict = result.attr("__dict__");
   rdict.update(deepcopy(nb::cast<nb::dict>(self.attr("__dict__")), memo));
-  // python::extract<python::dict>(result.attr("__dict__"))().update(
-  //     deepcopy(python::extract<python::dict>(self.attr("__dict__"))(),
-  //     memo));
   return result;
-#endif
 }
 
 #if 0
