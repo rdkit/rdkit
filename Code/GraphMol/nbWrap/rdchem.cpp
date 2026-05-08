@@ -225,9 +225,9 @@ NB_MODULE(rdchem, m) {
   //
   //*********************************************
   wrap_table(m);
-  wrap_mol(m);
   wrap_atom(m);
   wrap_bond(m);
+  wrap_mol(m);
   wrap_conformer(m);
   wrap_stereogroup(m);
   wrap_EditableMol(m);

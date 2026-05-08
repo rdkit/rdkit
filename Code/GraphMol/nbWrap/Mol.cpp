@@ -1031,70 +1031,64 @@ it's probably not of general interest.
             },
             "mol"_a, "quickCopy"_a = false, "confId"_a = -1,
             "Constructor from a ROMol")
-#if 0        
-        .def("__copy__", &generic__copy__<ReadWriteMol>, python::args("self"))
-        .def("__deepcopy__", &generic__deepcopy__<ReadWriteMol>,
-             python::args("self", "memo"))
-        .def("__enter__", &ReadWriteMol::enter,
-             python::return_internal_reference<>())
-        .def("__exit__", &ReadWriteMol::exit)
 
-        .def("RemoveAtom", &ReadWriteMol::RemoveAtom,
-             python::args("self", "idx"),
+        .def("__copy__", &generic__copy__<ReadWriteMol>)
+        .def("__deepcopy__", &generic__deepcopy__<ReadWriteMol>, "memo"_a)
+        .def("__enter__", &ReadWriteMol::enter,
+             nb::rv_policy::reference_internal)
+        .def("__exit__", &ReadWriteMol::exit)
+        .def("RemoveAtom", &ReadWriteMol::RemoveAtom, "idx"_a,
              "Remove the specified atom from the molecule")
-        .def("RemoveBond", &ReadWriteMol::RemoveBond,
-             python::args("self", "idx1", "idx2"),
+        .def("RemoveBond", &ReadWriteMol::RemoveBond, "idx1"_a, "idx2"_a,
              "Remove the specified bond from the molecule")
 
-        .def("AddBond", &ReadWriteMol::AddBond,
-             ((python::arg("self"), python::arg("beginAtomIdx")),
-              python::arg("endAtomIdx"),
-              python::arg("order") = Bond::UNSPECIFIED),
+#if 1
+        .def("AddBond", &ReadWriteMol::AddBond, "beginAtomIdx"_a,
+             "endAtomIdx"_a, "order"_a = Bond::UNSPECIFIED,
              "add a bond, returns the new number of bonds")
+#endif
 
-        .def("AddAtom", &ReadWriteMol::AddAtom,
-             ((python::arg("self"), python::arg("atom"))),
+        .def("AddAtom", &ReadWriteMol::AddAtom, "atom"_a,
              "add an atom, returns the index of the newly added atom")
-        .def("ReplaceAtom", &ReadWriteMol::ReplaceAtom,
-             ((python::arg("self"), python::arg("index")),
-              python::arg("newAtom"), python::arg("updateLabel") = false,
-              python::arg("preserveProps") = false),
+        .def("ReplaceAtom", &ReadWriteMol::ReplaceAtom, "index"_a, "newAtom"_a,
+             "updateLabel"_a = false, "preserveProps"_a = false,
              "replaces the specified atom with the provided one\n"
              "If updateLabel is True, the new atom becomes the active atom\n"
              "If preserveProps is True preserve keep the existing props unless "
              "explicit set on the new atom")
-        .def("ReplaceBond", &ReadWriteMol::ReplaceBond,
-             ((python::arg("self"), python::arg("index")),
-              python::arg("newBond"), python::arg("preserveProps") = false,
-              python::arg("keepSGroups") = true),
+        .def("ReplaceBond", &ReadWriteMol::ReplaceBond, "index"_a, "newBond"_a,
+             "preserveProps"_a = false, "keepSGroups"_a = true,
              "replaces the specified bond with the provided one.\n"
              "If preserveProps is True preserve keep the existing props unless "
              "explicit set on the new bond. If keepSGroups is False, all"
              "Substance Groups referencing the bond will be dropped.")
         .def("GetMol", &ReadWriteMol::GetMol,
-             "Returns a Mol (a normal molecule)",
-             python::return_value_policy<python::manage_new_object>(),
-             python::args("self"))
+             "Returns a Mol (a normal molecule)", nb::rv_policy::take_ownership)
 
         .def("SetStereoGroups", &ReadWriteMol::SetStereoGroups,
-             ((python::arg("self"), python::arg("stereo_groups"))),
-             "Set the stereo groups")
+             "stereo_groups"_a, "Set the stereo groups")
 
-        .def("InsertMol", &ReadWriteMol::insertMol,
-             ((python::arg("self"), python::arg("mol"))),
+        .def("InsertMol", &ReadWriteMol::insertMol, "mol"_a,
              "Insert (add) the given molecule into this one")
 
-        .def("BeginBatchEdit", &RWMol::beginBatchEdit, python::args("self"),
-             "starts batch editing")
+        .def("BeginBatchEdit", &RWMol::beginBatchEdit, "starts batch editing")
         .def("RollbackBatchEdit", &RWMol::rollbackBatchEdit,
-             python::args("self"), "cancels batch editing")
-        .def("CommitBatchEdit", &RWMol::commitBatchEdit, python::args("self"),
+             "cancels batch editing")
+        .def("CommitBatchEdit", &RWMol::commitBatchEdit,
              "finishes batch editing and makes the actual changes")
 
-        // enable pickle support
-        .def_pickle(mol_pickle_suite()
-#endif
-        ;
+        .def("__getstate__",
+             [](const ReadWriteMol &mol) {
+               const auto pkl = MolToBinary(mol);
+               return std::make_tuple(pkl);
+             })
+        .def("__setstate__",
+             [](ReadWriteMol &mol, const std::tuple<nb::bytes> &state) {
+               std::string pkl = std::string(
+                   static_cast<const char *>(std::get<0>(state).data()),
+                   static_cast<size_t>(std::get<0>(state).size()));
+               new (&mol) ReadWriteMol(pkl);
+             });
   }
 };
 }  // namespace RDKit
