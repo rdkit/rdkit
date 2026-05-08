@@ -411,8 +411,14 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
                                      const SubstituentInfo &subInfo);
 
   // Template refinement with angle constraints
-  void refineTemplateMatchedMacrocycle(const RDKit::INT_VECT &macrocycleRing,
-                                       const RDKit::VECT_INT_VECT &allRings);
+  void maybeRefineTemplateMatchedMacrocycle(
+      const RDKit::INT_VECT &macrocycleRing,
+      const RDKit::VECT_INT_VECT &allRings);
+
+  // Reflect middle atoms for axially-fused small rings (wrapper)
+  void reflectMiddleAtomsForAxialFusion(
+      const RDKit::INT_VECT &macrocycleRing,
+      const RDKit::VECT_INT_VECT &fusedRings);
 
   void embedMacrocycleWithFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                                      const RDKit::VECT_INT_VECT &coreRings,

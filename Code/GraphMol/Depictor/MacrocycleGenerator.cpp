@@ -9,11 +9,13 @@
 //
 
 #include "MacrocycleGenerator.h"
+#include "DepictUtils.h"
 #include <cmath>
 #include <algorithm>
 #include <limits>
 #include <set>
 #include <map>
+#include <unordered_set>
 
 namespace RDDepict {
 
@@ -32,7 +34,8 @@ void MacrocycleGenerator::addConstraint(const TurnConstraint &constraint) {
   d_constraints.push_back(constraint);
 }
 
-void MacrocycleGenerator::addAngleConstraint(const AngleConstraint &constraint) {
+void MacrocycleGenerator::addAngleConstraint(
+    const AngleConstraint &constraint) {
   // Check if position already has a constraint
   for (auto &existing : d_angleConstraints) {
     if (existing.position == constraint.position) {
@@ -43,20 +46,13 @@ void MacrocycleGenerator::addAngleConstraint(const AngleConstraint &constraint) 
       return;
     }
   }
-
   d_angleConstraints.push_back(constraint);
 }
 
-void MacrocycleGenerator::setSubstituentInfo(const std::map<size_t, int> &substituentSizes, int innerTurnSign) {
+void MacrocycleGenerator::setSubstituentInfo(
+    const std::map<size_t, int> &substituentSizes, int innerTurnSign) {
   d_substituentSizes = substituentSizes;
   d_innerTurnSign = innerTurnSign;
-
-  // Debug: Show what substituent info was set
-  std::cerr << "SUBST_INFO_SET: innerTurnSign=" << innerTurnSign << ", substituents={";
-  for (const auto &[pos, size] : substituentSizes) {
-    std::cerr << " [" << pos << "]=" << size;
-  }
-  std::cerr << " }" << std::endl;
 }
 
 bool MacrocycleGenerator::hasAngleConstraint(size_t position) const {
@@ -75,103 +71,6 @@ double MacrocycleGenerator::getConstraintAngle(size_t position) const {
     }
   }
   return 0.0;  // No constraint
-}
-
-void MacrocycleGenerator::debugPrintAngleConstraints(
-    const std::vector<RDGeom::Point2D> &coords) const {
-  std::cerr << "\n[DEBUG] Final Angles (macrocycle size=" << d_ringSize
-            << ", coords.size()=" << coords.size() << "):" << std::endl;
-
-  // Print ALL angles
-  size_t N = d_ringSize;
-  for (size_t pos = 0; pos < N; ++pos) {
-    const auto &p_prev = coords[(pos + N - 1) % N];
-    const auto &p_curr = coords[pos];
-    const auto &p_next = coords[(pos + 1) % N];
-
-    double v_before_x = p_curr.x - p_prev.x;
-    double v_before_y = p_curr.y - p_prev.y;
-    double v_after_x = p_next.x - p_curr.x;
-    double v_after_y = p_next.y - p_curr.y;
-
-    double dir_before = std::atan2(v_before_y, v_before_x);
-    double dir_after = std::atan2(v_after_y, v_after_x);
-    double angle = dir_after - dir_before;
-
-    while (angle > M_PI) angle -= 2 * M_PI;
-    while (angle < -M_PI) angle += 2 * M_PI;
-
-    double angleDeg = angle * 180.0 / M_PI;
-
-    // Check if this position has a constraint
-    bool isConstrained = hasAngleConstraint(pos);
-    double targetDeg = 0.0;
-    if (isConstrained) {
-      targetDeg = getConstraintAngle(pos) * 180.0 / M_PI;
-    }
-
-    std::cerr << "  Pos " << pos << ": " << angleDeg << "°";
-    if (isConstrained) {
-      double dev = std::abs(angle - getConstraintAngle(pos)) * 180.0 / M_PI;
-      std::cerr << " [CONSTRAINED target=" << targetDeg << "° dev=" << dev << "°]";
-    }
-    std::cerr << std::endl;
-  }
-
-  if (d_angleConstraints.empty()) {
-    return;  // No constraints, no output
-  }
-
-  std::cerr << "\n[DEBUG] Angle Constraints: " << d_angleConstraints.size()
-            << " constraints found" << std::endl;
-
-  for (const auto &constraint : d_angleConstraints) {
-    size_t pos = constraint.position;
-    double targetAngle = constraint.targetAngle;
-    double targetAngleDeg = targetAngle * 180.0 / M_PI;
-
-    // Compute actual angle at this position
-    // The turn at position i is the rotation from direction (i-1→i) to (i→i+1)
-    size_t N = d_ringSize;
-    if (coords.size() < N) {
-      continue;
-    }
-
-    // Turn at position 'pos' is the rotation AFTER placing atom pos
-    // It affects the direction from atom pos to atom pos+1
-    // To measure it, we need: direction_before_turn → direction_after_turn
-    // direction_before = from (pos-1) to pos
-    // direction_after = from pos to (pos+1)
-    const auto &p_prev = coords[(pos + N - 1) % N];  // pos-1 (wrap around)
-    const auto &p_curr = coords[pos];
-    const auto &p_next = coords[(pos + 1) % N];
-
-    // Compute direction vectors
-    double v_before_x = p_curr.x - p_prev.x;
-    double v_before_y = p_curr.y - p_prev.y;
-    double v_after_x = p_next.x - p_curr.x;
-    double v_after_y = p_next.y - p_curr.y;
-
-    // Compute directions as angles
-    double dir_before = std::atan2(v_before_y, v_before_x);
-    double dir_after = std::atan2(v_after_y, v_after_x);
-
-    // Turn angle is the change in direction
-    double actualAngle = dir_after - dir_before;
-
-    // Normalize to [-π, π]
-    while (actualAngle > M_PI) actualAngle -= 2 * M_PI;
-    while (actualAngle < -M_PI) actualAngle += 2 * M_PI;
-
-    double actualAngleDeg = actualAngle * 180.0 / M_PI;
-    double deviation = std::abs(actualAngle - targetAngle) * 180.0 / M_PI;
-
-    std::cerr << "  Position " << pos << ": target=" << targetAngleDeg
-              << "°, actual=" << actualAngleDeg << "°, deviation=" << deviation
-              << "°" << std::endl;
-  }
-
-  std::cerr << std::endl;
 }
 
 bool MacrocycleGenerator::applyConstraints(std::vector<int> &turns) const {
@@ -219,7 +118,6 @@ bool MacrocycleGenerator::applyConstraints(std::vector<int> &turns) const {
       }
     }
   }
-
   return true;
 }
 
@@ -280,9 +178,11 @@ bool MacrocycleGenerator::solve() {
   }
 
   for (int targetDiff : targetDiffs) {
-    std::cerr << "SOLVE_ATTEMPT: Trying targetDiff(R-L)=" << targetDiff << std::endl;
+    std::cerr << "SOLVE_ATTEMPT: Trying targetDiff(R-L)=" << targetDiff
+              << std::endl;
     if (trySolveWithTargetDiff(targetDiff)) {
-      std::cerr << "SOLVE_SUCCESS: Found solution with targetDiff=" << targetDiff << std::endl;
+      std::cerr << "SOLVE_SUCCESS: Found solution with targetDiff="
+                << targetDiff << std::endl;
       return true;
     }
   }
@@ -309,17 +209,21 @@ bool MacrocycleGenerator::trySolveWithTargetDiff(int targetDiff) {
 
   bool isOddRing = (d_ringSize % 2) == 1;
 
-  std::cerr << "CONSTRAINT_INFO: ringSize=" << d_ringSize << ", isOddRing=" << isOddRing
-            << ", targetDiff(R-L)=" << targetDiff << std::endl;
+  std::cerr << "CONSTRAINT_INFO: ringSize=" << d_ringSize
+            << ", isOddRing=" << isOddRing << ", targetDiff(R-L)=" << targetDiff
+            << std::endl;
   std::cerr << "CONSTRAINT_INFO: decidedRight=" << decidedRight
-            << ", decidedLeft=" << decidedLeft << ", freeCount=" << freeCount << std::endl;
+            << ", decidedLeft=" << decidedLeft << ", freeCount=" << freeCount
+            << std::endl;
 
   // Show angle constraints
   if (!d_angleConstraints.empty()) {
-    std::cerr << "ANGLE_CONSTRAINTS: " << d_angleConstraints.size() << " constraints set:" << std::endl;
+    std::cerr << "ANGLE_CONSTRAINTS: " << d_angleConstraints.size()
+              << " constraints set:" << std::endl;
     for (const auto &c : d_angleConstraints) {
       int turn_sign = (c.targetAngle > 0) ? 1 : -1;
-      std::cerr << "  pos=" << c.position << ", targetAngle=" << (c.targetAngle * 180.0 / M_PI)
+      std::cerr << "  pos=" << c.position
+                << ", targetAngle=" << (c.targetAngle * 180.0 / M_PI)
                 << "°, turn=" << (turn_sign > 0 ? "R" : "L") << std::endl;
     }
   }
@@ -341,7 +245,8 @@ bool MacrocycleGenerator::trySolveWithTargetDiff(int targetDiff) {
   int totalRight = (d_ringSize + targetDiff) / 2;
   int totalLeft = (d_ringSize - targetDiff) / 2;
 
-  std::cerr << "SOLVE_CALC: totalRight=" << totalRight << ", totalLeft=" << totalLeft << std::endl;
+  std::cerr << "SOLVE_CALC: totalRight=" << totalRight
+            << ", totalLeft=" << totalLeft << std::endl;
 
   // Check parity
   if ((d_ringSize + targetDiff) % 2 != 0) {
@@ -351,30 +256,37 @@ bool MacrocycleGenerator::trySolveWithTargetDiff(int targetDiff) {
 
   // Check if solution is possible
   if (totalRight < 0 || totalLeft < 0) {
-    std::cerr << "SOLVE_FAILED: Negative total (totalRight=" << totalRight << ", totalLeft=" << totalLeft << ")" << std::endl;
+    std::cerr << "SOLVE_FAILED: Negative total (totalRight=" << totalRight
+              << ", totalLeft=" << totalLeft << ")" << std::endl;
     return false;  // Ring too small for angular closure
   }
 
   int freeRight = totalRight - decidedRight;
   int freeLeft = totalLeft - decidedLeft;
 
-  std::cerr << "SOLVE_CALC: freeRight=" << freeRight << ", freeLeft=" << freeLeft << std::endl;
+  std::cerr << "SOLVE_CALC: freeRight=" << freeRight
+            << ", freeLeft=" << freeLeft << std::endl;
 
   if (freeRight < 0 || freeLeft < 0) {
-    std::cerr << "SOLVE_FAILED: Negative free (freeRight=" << freeRight << ", freeLeft=" << freeLeft << ")" << std::endl;
+    std::cerr << "SOLVE_FAILED: Negative free (freeRight=" << freeRight
+              << ", freeLeft=" << freeLeft << ")" << std::endl;
     return false;  // Constraints over-constrain the solution
   }
 
   if (freeRight + freeLeft != freeCount) {
-    std::cerr << "SOLVE_FAILED: Sanity check (freeRight+freeLeft=" << (freeRight+freeLeft) << " != freeCount=" << freeCount << ")" << std::endl;
+    std::cerr << "SOLVE_FAILED: Sanity check (freeRight+freeLeft="
+              << (freeRight + freeLeft) << " != freeCount=" << freeCount << ")"
+              << std::endl;
     return false;  // Sanity check failed
   }
 
   // Find optimal turn sequence for free variables
-  std::cerr << "SOLVE: Calling findOptimalTurnSequence(freeRight=" << freeRight << ", freeLeft=" << freeLeft << ")" << std::endl;
+  std::cerr << "SOLVE: Calling findOptimalTurnSequence(freeRight=" << freeRight
+            << ", freeLeft=" << freeLeft << ")" << std::endl;
   d_solved = findOptimalTurnSequence(freeRight, freeLeft);
   if (!d_solved) {
-    std::cerr << "SOLVE_FAILED: findOptimalTurnSequence returned false" << std::endl;
+    std::cerr << "SOLVE_FAILED: findOptimalTurnSequence returned false"
+              << std::endl;
   } else {
     std::cerr << "SOLVE_SUCCESS: Found valid turn sequence" << std::endl;
   }
@@ -400,13 +312,15 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     }
   }
 
-  // Fast heuristic for large rings: use alternating pattern instead of enumeration
-  // When there are many free positions (>15), enumeration becomes computationally infeasible
+  // Fast heuristic for large rings: use alternating pattern instead of
+  // enumeration When there are many free positions (>15), enumeration becomes
+  // computationally infeasible
   const size_t ENUMERATION_THRESHOLD = 15;
 
   if (freePositions.size() > ENUMERATION_THRESHOLD) {
     size_t numFree = freePositions.size();
-    std::cerr << "FAST_HEURISTIC: Using substituent-based pattern for " << numFree << " free positions" << std::endl;
+    std::cerr << "FAST_HEURISTIC: Using substituent-based pattern for "
+              << numFree << " free positions" << std::endl;
 
     // Strategy: Use substituent info to reduce degrees of freedom
     // Positions with big substituents (size > 1) should be outer turns
@@ -434,7 +348,8 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
         }
         substituentAssignments++;
         std::cerr << "  pos[" << pos << "] subst_size=" << it->second
-                  << " -> OUTER (" << (outerTurn == 1 ? "R" : "L") << ")" << std::endl;
+                  << " -> OUTER (" << (outerTurn == 1 ? "R" : "L") << ")"
+                  << std::endl;
       }
     }
 
@@ -442,16 +357,21 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     int remainingRight = numRight - assignedRight;
     int remainingLeft = numLeft - assignedLeft;
 
-    std::cerr << "FAST_HEURISTIC: After " << substituentAssignments << " substituent assignments: "
+    std::cerr << "FAST_HEURISTIC: After " << substituentAssignments
+              << " substituent assignments: "
               << "assignedR=" << assignedRight << " assignedL=" << assignedLeft
-              << ", remainingR=" << remainingRight << " remainingL=" << remainingLeft << std::endl;
+              << ", remainingR=" << remainingRight
+              << " remainingL=" << remainingLeft << std::endl;
 
     if (remainingRight < 0 || remainingLeft < 0) {
-      std::cerr << "FAST_HEURISTIC: Substituent assignment exceeds required counts" << std::endl;
+      std::cerr
+          << "FAST_HEURISTIC: Substituent assignment exceeds required counts"
+          << std::endl;
       return false;
     }
 
-    // Step 3: If still too many free positions, use alternating for most, keep few truly free
+    // Step 3: If still too many free positions, use alternating for most, keep
+    // few truly free
     std::vector<size_t> stillFree;
     for (size_t pos : freePositions) {
       if (candidate[pos] == 0) {
@@ -459,11 +379,14 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
       }
     }
 
-    const size_t MAX_ENUMERATION_SIZE = 10;  // Only enumerate over ~10 positions
+    const size_t MAX_ENUMERATION_SIZE =
+        10;  // Only enumerate over ~10 positions
 
     if (stillFree.size() > MAX_ENUMERATION_SIZE) {
-      std::cerr << "FAST_HEURISTIC: Still have " << stillFree.size()
-                << " free positions after substituents, fixing most with alternating" << std::endl;
+      std::cerr
+          << "FAST_HEURISTIC: Still have " << stillFree.size()
+          << " free positions after substituents, fixing most with alternating"
+          << std::endl;
 
       // How many to fix vs keep free
       size_t numToFix = stillFree.size() - MAX_ENUMERATION_SIZE;
@@ -494,10 +417,12 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
         fixed++;
       }
 
-      std::cerr << "FAST_HEURISTIC: Fixed " << fixed << " positions with alternating, "
-                << (stillFree.size() - fixed) << " still free for enumeration" << std::endl;
+      std::cerr << "FAST_HEURISTIC: Fixed " << fixed
+                << " positions with alternating, " << (stillFree.size() - fixed)
+                << " still free for enumeration" << std::endl;
 
-      // Update d_turns with the fixed positions, then fall through to normal enumeration
+      // Update d_turns with the fixed positions, then fall through to normal
+      // enumeration
       d_turns = candidate;
 
       // Recalculate free positions for enumeration
@@ -514,8 +439,8 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
 
       // Fall through to enumeration with reduced free positions
       std::cerr << "FAST_HEURISTIC: Reduced free positions from " << numFree
-                << " to " << freePositions.size()
-                << ", need " << numRight << " R and " << numLeft << " L"
+                << " to " << freePositions.size() << ", need " << numRight
+                << " R and " << numLeft << " L"
                 << ", continuing with enumeration" << std::endl;
 
       // Don't return - fall through to enumeration code below
@@ -523,7 +448,8 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     } else {
       // Few enough positions - just assign them all with alternating
       std::cerr << "FAST_HEURISTIC: Only " << stillFree.size()
-                << " positions remain, assigning all with alternating" << std::endl;
+                << " positions remain, assigning all with alternating"
+                << std::endl;
 
       int currentTurn = (remainingRight >= remainingLeft) ? 1 : -1;
 
@@ -553,14 +479,17 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
           d_turns = candidate;
           d_closureError = calculateClosureError(candidate);
 
-          std::cerr << "FAST_HEURISTIC: Success (closureError=" << d_closureError
-                    << ", minDist=" << minDistance << ")" << std::endl;
+          std::cerr << "FAST_HEURISTIC: Success (closureError="
+                    << d_closureError << ", minDist=" << minDistance << ")"
+                    << std::endl;
           return true;
         } else {
-          std::cerr << "FAST_HEURISTIC: Self-crossing detected (minDist=0)" << std::endl;
+          std::cerr << "FAST_HEURISTIC: Self-crossing detected (minDist=0)"
+                    << std::endl;
         }
       } else {
-        std::cerr << "FAST_HEURISTIC: Constraint validation failed" << std::endl;
+        std::cerr << "FAST_HEURISTIC: Constraint validation failed"
+                  << std::endl;
       }
 
       // All positions assigned but failed - can't enumerate further
@@ -591,7 +520,8 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     double bestScore = std::numeric_limits<double>::max();
     std::vector<int> bestTurns;
 
-    // Weight for minimum distance in scoring (balances closure error vs roundness)
+    // Weight for minimum distance in scoring (balances closure error vs
+    // roundness)
     const double MIN_DISTANCE_WEIGHT = 0.5;
 
     // Evaluate first combination
@@ -602,7 +532,8 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
         double closureError = calculateClosureError(candidate);
         double substituentPenalty = calculateSubstituentPenalty(candidate);
         // Combined score: closure error - roundness bonus + substituent penalty
-        double score = closureError - MIN_DISTANCE_WEIGHT * minDistance + substituentPenalty;
+        double score = closureError - MIN_DISTANCE_WEIGHT * minDistance +
+                       substituentPenalty;
         if (score < bestScore) {
           bestScore = score;
           bestTurns = candidate;
@@ -620,14 +551,16 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
         candidate[pos] = 1;
       }
 
-      // Validate constraints and calculate min distance (includes clash detection)
+      // Validate constraints and calculate min distance (includes clash
+      // detection)
       if (validateConstraints(candidate)) {
         int minDistance = calculateMinDistance(candidate);
         // Skip if self-crossing detected
         if (minDistance > 0) {
           double closureError = calculateClosureError(candidate);
           double substituentPenalty = calculateSubstituentPenalty(candidate);
-          double score = closureError - MIN_DISTANCE_WEIGHT * minDistance + substituentPenalty;
+          double score = closureError - MIN_DISTANCE_WEIGHT * minDistance +
+                         substituentPenalty;
           if (score < bestScore) {
             bestScore = score;
             bestTurns = candidate;
@@ -650,8 +583,9 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
       double substituentPenalty = calculateSubstituentPenalty(bestTurns);
       double minDistWeighted = MIN_DISTANCE_WEIGHT * minDistance;
       double totalScore = d_closureError - minDistWeighted + substituentPenalty;
-      std::cerr << "MACROCYCLE_SCORE (fully-free): closureError=" << d_closureError
-                << ", minDist=" << minDistance << " (-0.5*" << minDistance << "=" << -minDistWeighted << ")"
+      std::cerr << "MACROCYCLE_SCORE (fully-free): closureError="
+                << d_closureError << ", minDist=" << minDistance << " (-0.5*"
+                << minDistance << "=" << -minDistWeighted << ")"
                 << ", substPenalty=" << substituentPenalty
                 << ", totalScore=" << totalScore << std::endl;
 
@@ -661,11 +595,14 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
       for (size_t i = 0; i < bestTurns.size(); ++i) {
         if (i > 0) std::cerr << ", ";
         std::cerr << bestTurns[i];
-        if (bestTurns[i] == 1) countR++;
-        else if (bestTurns[i] == -1) countL++;
+        if (bestTurns[i] == 1)
+          countR++;
+        else if (bestTurns[i] == -1)
+          countL++;
       }
       std::cerr << "]" << std::endl;
-      std::cerr << "WINNING_TURNS: R=" << countR << ", L=" << countL << ", R-L=" << (countR - countL) << std::endl;
+      std::cerr << "WINNING_TURNS: R=" << countR << ", L=" << countL
+                << ", R-L=" << (countR - countL) << std::endl;
     }
 
     return true;
@@ -712,7 +649,8 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     if (minDistance > 0) {
       double closureError = calculateClosureError(candidate);
       double substituentPenalty = calculateSubstituentPenalty(candidate);
-      double score = closureError - MIN_DISTANCE_WEIGHT * minDistance + substituentPenalty;
+      double score =
+          closureError - MIN_DISTANCE_WEIGHT * minDistance + substituentPenalty;
       if (score < bestScore) {
         bestScore = score;
         bestTurns = candidate;
@@ -734,7 +672,8 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
       if (minDistance > 0) {
         double closureError = calculateClosureError(candidate);
         double substituentPenalty = calculateSubstituentPenalty(candidate);
-        double score = closureError - MIN_DISTANCE_WEIGHT * minDistance + substituentPenalty;
+        double score = closureError - MIN_DISTANCE_WEIGHT * minDistance +
+                       substituentPenalty;
         if (score < bestScore) {
           bestScore = score;
           bestTurns = candidate;
@@ -749,8 +688,9 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
 
   std::cerr << "ENUMERATION: Checked " << combinationCount << " combinations: "
             << "rejectedConstraints=" << rejectedConstraints
-            << ", rejectedMinDist=" << rejectedMinDist
-            << ", accepted=" << (combinationCount - rejectedConstraints - rejectedMinDist) << std::endl;
+            << ", rejectedMinDist=" << rejectedMinDist << ", accepted="
+            << (combinationCount - rejectedConstraints - rejectedMinDist)
+            << std::endl;
 
   // Store best solution
   if (bestTurns.empty()) {
@@ -770,22 +710,26 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     if (validateConstraints(altTurns)) {
       int altR = 0, altL = 0;
       for (int t : altTurns) {
-        if (t == 1) altR++;
-        else if (t == -1) altL++;
+        if (t == 1)
+          altR++;
+        else if (t == -1)
+          altL++;
       }
       double altClosure = calculateClosureError(altTurns);
       int altMinDist = calculateMinDistance(altTurns);
       double altSubstPenalty = calculateSubstituentPenalty(altTurns);
-      double altScore = altClosure - MIN_DISTANCE_WEIGHT * altMinDist + altSubstPenalty;
+      double altScore =
+          altClosure - MIN_DISTANCE_WEIGHT * altMinDist + altSubstPenalty;
 
-      std::cerr << "ALTERNATIVE_SEQUENCE (flip pos 0): R=" << altR << ", L=" << altL
-                << ", R-L=" << (altR - altL)
-                << ", closureError=" << altClosure
-                << ", minDist=" << altMinDist
+      std::cerr << "ALTERNATIVE_SEQUENCE (flip pos 0): R=" << altR
+                << ", L=" << altL << ", R-L=" << (altR - altL)
+                << ", closureError=" << altClosure << ", minDist=" << altMinDist
                 << ", substPenalty=" << altSubstPenalty
                 << ", score=" << altScore << std::endl;
     } else {
-      std::cerr << "ALTERNATIVE_SEQUENCE (flip pos 0): INVALID (violates constraints)" << std::endl;
+      std::cerr
+          << "ALTERNATIVE_SEQUENCE (flip pos 0): INVALID (violates constraints)"
+          << std::endl;
     }
   }
 
@@ -795,8 +739,9 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     double substituentPenalty = calculateSubstituentPenalty(bestTurns);
     double minDistWeighted = MIN_DISTANCE_WEIGHT * minDistance;
     double totalScore = d_closureError - minDistWeighted + substituentPenalty;
-    std::cerr << "MACROCYCLE_SCORE (partial-constrained): closureError=" << d_closureError
-              << ", minDist=" << minDistance << " (-0.5*" << minDistance << "=" << -minDistWeighted << ")"
+    std::cerr << "MACROCYCLE_SCORE (partial-constrained): closureError="
+              << d_closureError << ", minDist=" << minDistance << " (-0.5*"
+              << minDistance << "=" << -minDistWeighted << ")"
               << ", substPenalty=" << substituentPenalty
               << ", totalScore=" << totalScore << std::endl;
 
@@ -806,11 +751,14 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     for (size_t i = 0; i < bestTurns.size(); ++i) {
       if (i > 0) std::cerr << ", ";
       std::cerr << bestTurns[i];
-      if (bestTurns[i] == 1) countR++;
-      else if (bestTurns[i] == -1) countL++;
+      if (bestTurns[i] == 1)
+        countR++;
+      else if (bestTurns[i] == -1)
+        countL++;
     }
     std::cerr << "]" << std::endl;
-    std::cerr << "WINNING_TURNS: R=" << countR << ", L=" << countL << ", R-L=" << (countR - countL) << std::endl;
+    std::cerr << "WINNING_TURNS: R=" << countR << ", L=" << countL
+              << ", R-L=" << (countR - countL) << std::endl;
   }
 
   return true;
@@ -905,23 +853,28 @@ int MacrocycleGenerator::calculateMinDistance(
 double MacrocycleGenerator::calculateSubstituentPenalty(
     const std::vector<int> &turns) const {
   if (d_substituentSizes.empty() || d_innerTurnSign == 0) {
-    std::cerr << "SUBST_PENALTY: NO_PENALTY (empty=" << d_substituentSizes.empty()
-              << ", innerSign=" << d_innerTurnSign << ")" << std::endl;
+    std::cerr << "SUBST_PENALTY: NO_PENALTY (empty="
+              << d_substituentSizes.empty() << ", innerSign=" << d_innerTurnSign
+              << ")" << std::endl;
     return 0.0;  // No substituents or inner turn not set
   }
 
   // Calculate penalty for substituents on inner turns
   // Penalty is weighted by substituent size
   double penalty = 0.0;
-  const double PENALTY_PER_ATOM = 1.0;  // Penalty per substituent atom on inner turn
+  const double PENALTY_PER_ATOM =
+      1.0;  // Penalty per substituent atom on inner turn
 
-  std::cerr << "SUBST_PENALTY_CHECK: innerTurnSign=" << d_innerTurnSign << std::endl;
+  std::cerr << "SUBST_PENALTY_CHECK: innerTurnSign=" << d_innerTurnSign
+            << std::endl;
   for (const auto &[pos, size] : d_substituentSizes) {
     if (pos < turns.size()) {
       int turnAtPos = turns[pos];
       bool isInner = (turnAtPos == d_innerTurnSign);
-      std::cerr << "  pos=" << pos << ", size=" << size << ", turn=" << turnAtPos
-                << (isInner ? " [INNER - PENALTY]" : " [OUTER - OK]") << std::endl;
+      std::cerr << "  pos=" << pos << ", size=" << size
+                << ", turn=" << turnAtPos
+                << (isInner ? " [INNER - PENALTY]" : " [OUTER - OK]")
+                << std::endl;
       if (isInner) {
         penalty += size * PENALTY_PER_ATOM;
       }
@@ -1007,7 +960,8 @@ std::vector<RDGeom::Point2D> MacrocycleGenerator::generateCoordinates() const {
 
       // Check for angle constraint at this position
       if (hasAngleConstraint(i)) {
-        turnAngle = getConstraintAngle(i);  // Use exact ideal angle, NO extraPerAtom
+        turnAngle =
+            getConstraintAngle(i);  // Use exact ideal angle, NO extraPerAtom
       } else {
         // Normal turn computation with extraPerAtom (only for free angles)
         if (d_turns[i] == 1) {
@@ -1094,7 +1048,8 @@ void MacrocycleGenerator::adjustAnglesForClosure(
   }
 
   // Extra angle per atom for odd rings
-  // Count constrained angles and distribute extraPerAtom only across free angles
+  // Count constrained angles and distribute extraPerAtom only across free
+  // angles
   size_t numConstrained = d_angleConstraints.size();
   size_t numFree = N - numConstrained;
   double extraPerAtom = 0.0;
@@ -1144,7 +1099,8 @@ void MacrocycleGenerator::adjustAnglesForClosure(
     RDGeom::Point2D gap = coords[0] - coords[N];
     double gapMag = gap.length();
 
-    std::cerr << "JACOBIAN_ITER[" << iter << "]: gapMag=" << gapMag << std::endl;
+    std::cerr << "JACOBIAN_ITER[" << iter << "]: gapMag=" << gapMag
+              << std::endl;
 
     if (gapMag < 0.01) {
       std::cerr << "JACOBIAN_CONVERGED: gap < 0.01" << std::endl;
@@ -1222,22 +1178,30 @@ double computeIdealAngle(int ringSize, int turnSign) {
   return turnSign * turnAngle;
 }
 
-std::vector<size_t> findSharedPositions(
-    const std::vector<int> &macrocycleRing,
-    const std::vector<int> &ring) {
+// Find positions in the macrocycle ring that correspond to atoms shared with
+// the given ring
+std::vector<size_t> findSharedPositions(const std::vector<int> &macrocycleRing,
+                                        const std::vector<int> &ring) {
+  // Build set of ring atoms for O(1) lookup instead of O(N) linear search
+  std::unordered_set<int> ringAtoms(ring.begin(), ring.end());
+
   std::vector<size_t> sharedPositions;
   for (size_t i = 0; i < macrocycleRing.size(); ++i) {
     int atom = macrocycleRing[i];
-    if (std::find(ring.begin(), ring.end(), atom) != ring.end()) {
+    if (ringAtoms.count(atom)) {
       sharedPositions.push_back(i);
     }
   }
   return sharedPositions;
 }
 
-bool verifyAndReorderSharedPositions(
-    std::vector<size_t> &sharedPositions,
-    size_t macrocycleSize) {
+// Verify that shared positions are contiguous (allowing wraparound) and reorder
+// them so they appear in the order they are encountered in the macrocycle.
+// E.g., if shared positions are [0, 1, 14] in a 15-atom macrocycle, this is
+// contiguous with wraparound and will be reordered to [14, 0, 1] so that
+// constraint position calculation works correctly.
+bool verifyAndReorderSharedPositions(std::vector<size_t> &sharedPositions,
+                                     size_t macrocycleSize) {
   if (sharedPositions.size() <= 1) {
     return true;  // Single position is always contiguous
   }
@@ -1266,7 +1230,7 @@ bool verifyAndReorderSharedPositions(
       }
     }
 
-    // If there's exactly one gap, check if it's the wraparound
+    // If there's a gap, check if it's the wraparound
     if (gapIdx > 0) {
       // Check if positions after gap are contiguous
       bool wrapContiguous = true;
@@ -1278,7 +1242,8 @@ bool verifyAndReorderSharedPositions(
         }
       }
 
-      // Check wraparound: last position + 1 should equal first position (mod ring size)
+      // Check wraparound: last position + 1 should equal first position (mod
+      // ring size)
       if (wrapContiguous) {
         size_t lastPos = sharedPositions[sharedPositions.size() - 1];
         size_t firstPos = sharedPositions[0];
@@ -1293,9 +1258,10 @@ bool verifyAndReorderSharedPositions(
     return false;
   }
 
-  // If wraparound was detected, reorder positions to start from the wraparound point
-  // E.g., [0, 1, 14] → [14, 0, 1] so constraint position calculation works correctly
-  if (gapIdx > 0 && contiguous) {
+  // If wraparound was detected, reorder positions to start from the wraparound
+  // point E.g., [0, 1, 14] → [14, 0, 1] so constraint position calculation
+  // works correctly
+  if (gapIdx > 0) {
     // Rotate the vector: move elements from gapIdx to end to the front
     std::vector<size_t> reordered;
     for (size_t i = gapIdx; i < sharedPositions.size(); ++i) {
@@ -1306,16 +1272,12 @@ bool verifyAndReorderSharedPositions(
     }
     sharedPositions = reordered;
   }
-
   return true;
 }
 
 void trackEndpoint(
-    std::map<size_t, std::vector<EndpointInfo>> &endpointPositions,
-    size_t pos,
-    int ringSize,
-    size_t adjacentInternalPos,
-    bool isFirst) {
+    std::map<size_t, std::vector<EndpointInfo>> &endpointPositions, size_t pos,
+    int ringSize, size_t adjacentInternalPos, bool isFirst) {
   EndpointInfo info;
   info.ringSize = ringSize;
   info.adjacentInternalPos = adjacentInternalPos;
@@ -1324,8 +1286,7 @@ void trackEndpoint(
 }
 
 AngleConstraint computeSharedEndpointConstraint(
-    const std::vector<EndpointInfo> &endpoints,
-    size_t pos) {
+    const std::vector<EndpointInfo> &endpoints, size_t pos) {
   AngleConstraint constraint;
   constraint.position = SIZE_MAX;  // Invalid by default
 
@@ -1350,157 +1311,110 @@ AngleConstraint computeSharedEndpointConstraint(
   bool ring2HasInternal = (adj2 != pos);
 
   // Get the ideal turn magnitude for each ring
-  double turn1 = std::abs(computeIdealAngle(ringSize1, ring1HasInternal ? -1 : 1));
-  double turn2 = std::abs(computeIdealAngle(ringSize2, ring2HasInternal ? -1 : 1));
+  double turn1 =
+      std::abs(computeIdealAngle(ringSize1, ring1HasInternal ? -1 : 1));
+  double turn2 =
+      std::abs(computeIdealAngle(ringSize2, ring2HasInternal ? -1 : 1));
 
   // Macrocycle internal angle = |turn1| + |turn2|
   double macrocycleInternal = turn1 + turn2;
   // Macrocycle turn angle = π - macrocycle_internal
   double combinedAngle = M_PI - macrocycleInternal;
-
   constraint.position = pos;
   constraint.targetAngle = combinedAngle;
-
   return constraint;
 }
 
+// add constraints for fused rings. Each angle formed by 3 atoms shared between
+// the macrocycle and a fused ring can be constrained to the ideal angle for
+// that small ring (e.g. 120° for a 6-membered ring, 108° for 5-membered ring
+// etc. When an atom is fused between the macrocycle and two other rings, its
+// target angle becomes 360* - the sum of the two small ring angles, so that
+// both can remain regular polygons)
 std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
     const std::vector<int> &macrocycleRing,
     const std::vector<std::vector<int>> &allRings) {
   std::vector<AngleConstraint> angleConstraints;
   std::map<size_t, std::vector<EndpointInfo>> endpointPositions;
 
-  std::cerr << ">>> identifyAngleConstraintsForFusedRings: macrocycle_size="
-            << macrocycleRing.size() << ", allRings.size=" << allRings.size()
-            << std::endl;
-
   // Process each ring to find fusions with the macrocycle
   int ringIdx = 0;
   for (const auto &ring : allRings) {
-    std::cerr << "  Processing ring[" << ringIdx << "]: size=" << ring.size();
-
-    // Skip large rings (only handle small rings 3-7)
-    if (ring.size() < 3 || ring.size() > 7) {
-      std::cerr << " [SKIP - not small (3-7)]" << std::endl;
+    if (ring.size() > MACROCYCLE_SIZE_THRESHOLD) {
       ringIdx++;
       continue;
     }
-
     // Find shared atoms between this ring and the macrocycle
-    std::vector<size_t> sharedPositions = findSharedPositions(macrocycleRing, ring);
-
-    std::cerr << ", shared=" << sharedPositions.size() << " [";
-    for (size_t i = 0; i < sharedPositions.size(); ++i) {
-      if (i > 0) std::cerr << ", ";
-      std::cerr << sharedPositions[i];
-    }
-    std::cerr << "]";
+    std::vector<size_t> sharedPositions =
+        findSharedPositions(macrocycleRing, ring);
 
     // Need at least 1 shared atom (spiro or fusion)
     // Skip if more than 4 shared atoms (unusual/complex fusion)
     if (sharedPositions.size() < 1 || sharedPositions.size() > 4) {
-      std::cerr << " [SKIP - invalid shared count]" << std::endl;
       ringIdx++;
       continue;
     }
 
     // Verify shared atoms are contiguous and reorder if needed
-    if (!verifyAndReorderSharedPositions(sharedPositions, macrocycleRing.size())) {
-      std::cerr << " [SKIP - not contiguous]" << std::endl;
+    if (!verifyAndReorderSharedPositions(sharedPositions,
+                                         macrocycleRing.size())) {
       ringIdx++;
       continue;
     }
-
-    bool isSmallRing = (ring.size() >= 3 && ring.size() <= 7);
     size_t numShared = sharedPositions.size();
 
-    std::cerr << ", isSmall=" << isSmallRing << std::endl;
+    // Track endpoints for this fused ring
+    // For numShared == 2: no internal positions, so adjacent = position itself
+    // For numShared >= 3: has internal positions, so adjacent = actual internal
+    // position
+    size_t firstPos = sharedPositions[0];
+    size_t lastPos = sharedPositions[numShared - 1];
 
-    // Handle different fusion patterns
-    if (numShared == 2) {
-      // RR pattern for 2-atom fusion
-      // Track both endpoints for small rings (needed to detect shared endpoints)
-      if (isSmallRing) {
-        // First endpoint
-        size_t firstPos = sharedPositions[0];
-        trackEndpoint(endpointPositions, firstPos, ring.size(), firstPos, true);
+    // Adjacent to first endpoint: next position if internals exist, else itself
+    size_t adjacentToFirst = (numShared >= 3) ? sharedPositions[1] : firstPos;
+    trackEndpoint(endpointPositions, firstPos, ring.size(), adjacentToFirst,
+                  true);
 
-        // Last endpoint
-        size_t lastPos = sharedPositions[1];
-        trackEndpoint(endpointPositions, lastPos, ring.size(), lastPos, false);
-      }
-    } else if (numShared >= 3) {
-      // RLR or RLLR pattern
-      // Track first endpoint for all small rings
-      if (isSmallRing) {
-        size_t firstPos = sharedPositions[0];
-        size_t adjacentInternalPos = sharedPositions[1];
-        trackEndpoint(endpointPositions, firstPos, ring.size(), adjacentInternalPos, true);
-      }
+    // Adjacent to last endpoint: previous position if internals exist, else
+    // itself
+    size_t adjacentToLast =
+        (numShared >= 3) ? sharedPositions[numShared - 2] : lastPos;
+    trackEndpoint(endpointPositions, lastPos, ring.size(), adjacentToLast,
+                  false);
 
-      // Add constraints for internal positions (skip first and last)
-      std::cerr << "    Adding constraints for internal positions (numShared="
-                << numShared << "):" << std::endl;
-      for (size_t i = 1; i < numShared - 1; ++i) {
-        if (isSmallRing) {
-          size_t pos = sharedPositions[i];
-          int turnSign = -1;  // L turn
-          double idealAngle = computeIdealAngle(ring.size(), turnSign);
+    // Add constraints for internal positions (only when numShared >= 3)
+    // Loop runs 0 times when numShared == 2 (since 1 < 2-1 is false)
+    for (size_t i = 1; i < numShared - 1; ++i) {
+      size_t pos = sharedPositions[i];
+      int turnSign = -1;  // L turn
+      double idealAngle = computeIdealAngle(ring.size(), turnSign);
 
-          std::cerr << "      pos[" << pos << "]: targetAngle="
-                    << (idealAngle * 180.0 / M_PI) << "° (ring size="
-                    << ring.size() << ")" << std::endl;
-
-          AngleConstraint angleConstraint;
-          angleConstraint.position = pos;
-          angleConstraint.targetAngle = idealAngle;
-          angleConstraints.push_back(angleConstraint);
-        }
-      }
-
-      // Track last endpoint for all small rings
-      if (isSmallRing) {
-        size_t lastPos = sharedPositions[numShared - 1];
-        size_t adjacentInternalPos = sharedPositions[numShared - 2];
-        trackEndpoint(endpointPositions, lastPos, ring.size(), adjacentInternalPos, false);
-      }
+      AngleConstraint angleConstraint;
+      angleConstraint.position = pos;
+      angleConstraint.targetAngle = idealAngle;
+      angleConstraints.push_back(angleConstraint);
     }
 
     ringIdx++;
   }
-
-  std::cerr << ">>> Processing shared endpoints (tracked "
-            << endpointPositions.size() << " positions):" << std::endl;
-
-  // Process shared endpoints: positions that are endpoints of exactly 2 small rings
+  // Process shared endpoints: positions that are endpoints of exactly 2 small
+  // rings
   for (const auto &[pos, endpoints] : endpointPositions) {
-    std::cerr << "  pos[" << pos << "]: " << endpoints.size()
-              << " endpoint(s)";
     if (endpoints.size() == 2) {
-      AngleConstraint sharedConstraint = computeSharedEndpointConstraint(endpoints, pos);
+      AngleConstraint sharedConstraint =
+          computeSharedEndpointConstraint(endpoints, pos);
       if (sharedConstraint.position != SIZE_MAX) {  // Valid constraint
-        std::cerr << " -> adding shared endpoint constraint, targetAngle="
-                  << (sharedConstraint.targetAngle * 180.0 / M_PI) << "°";
         angleConstraints.push_back(sharedConstraint);
-      } else {
-        std::cerr << " -> constraint invalid";
       }
     }
-    std::cerr << std::endl;
   }
-
-  std::cerr << ">>> Total angle constraints: " << angleConstraints.size()
-            << std::endl;
-
   return angleConstraints;
 }
 
-void refineWithJacobian(
-    std::vector<RDGeom::Point2D> &coords,
-    std::vector<double> &angles,
-    const std::set<size_t> &constrainedPositions,
-    double bondLength,
-    bool isOddRing) {
+void refineWithJacobian(std::vector<RDGeom::Point2D> &coords,
+                        std::vector<double> &angles,
+                        const std::set<size_t> &constrainedPositions,
+                        double bondLength, bool isOddRing) {
   // Iterative Jacobian pseudo-inverse refinement to close the gap
   // coords has N+1 elements: [0, 1, ..., N-1, N_dummy]
 
@@ -1516,7 +1430,7 @@ void refineWithJacobian(
 
   // Iterative refinement with damping
   const int maxIters = 3;
-  const double damping = 0.8;  // Apply 80% of computed correction
+  const double damping = 0.8;        // Apply 80% of computed correction
   const double gapThreshold = 0.01;  // Stop if gap < 0.01 Å
 
   for (int iter = 0; iter < maxIters; ++iter) {
@@ -1615,21 +1529,22 @@ void refineWithJacobian(
 
 std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
     const std::vector<RDGeom::Point2D> &templateCoords,
-    const std::vector<AngleConstraint> &angleConstraints,
-    double bondLength) {
+    const std::vector<AngleConstraint> &angleConstraints, double bondLength) {
   size_t N = templateCoords.size();
 
   // 1. Extract current turn angles from template coordinates
   std::vector<double> currentAngles(N);
 
   // Initialize with the direction of the last bond (from N-1 to 0)
-  // This ensures the first turn angle is calculated correctly for a closed polygon
+  // This ensures the first turn angle is calculated correctly for a closed
+  // polygon
   size_t prev = N - 1;
   double dx_initial = templateCoords[0].x - templateCoords[prev].x;
   double dy_initial = templateCoords[0].y - templateCoords[prev].y;
   double currentDirection = std::atan2(dy_initial, dx_initial);
 
-  std::cerr << ">>> EXTRACTING ANGLES FROM TEMPLATE (N=" << N << ")" << std::endl;
+  std::cerr << ">>> EXTRACTING ANGLES FROM TEMPLATE (N=" << N << ")"
+            << std::endl;
 
   for (size_t i = 0; i < N; ++i) {
     size_t next = (i + 1) % N;
@@ -1653,17 +1568,20 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   std::cerr << ">>> EXTRACTED ANGLES (radians and degrees):" << std::endl;
   for (size_t i = 0; i < N; ++i) {
     double degrees = currentAngles[i] * 180.0 / M_PI;
-    std::cerr << "  pos[" << i << "]: " << currentAngles[i] << " rad = "
-              << degrees << "°" << std::endl;
+    std::cerr << "  pos[" << i << "]: " << currentAngles[i]
+              << " rad = " << degrees << "°" << std::endl;
   }
 
   // 2. Determine template chirality by counting angle signs
-  //    Most prevalent sign = internal/convex turns (R or L depending on direction)
+  //    Most prevalent sign = internal/convex turns (R or L depending on
+  //    direction)
   int positiveCount = 0;
   int negativeCount = 0;
   for (double angle : currentAngles) {
-    if (angle > 0) positiveCount++;
-    else if (angle < 0) negativeCount++;
+    if (angle > 0)
+      positiveCount++;
+    else if (angle < 0)
+      negativeCount++;
   }
 
   // If majority is negative, template goes CCW (R turns are negative)
@@ -1689,12 +1607,13 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
 
     // CRITICAL FIX: Preserve the sign of the template's existing angle
     // Only adjust the magnitude, don't flip the turn direction
-    // Template angle sign tells us if this is R (+) or L (-) in this specific template
+    // Template angle sign tells us if this is R (+) or L (-) in this specific
+    // template
     double templateSign = (currentAngles[pos] >= 0) ? 1.0 : -1.0;
     double newAngle = templateSign * std::abs(constraint.targetAngle);
 
-    std::cerr << "  Constraint at pos[" << pos << "]: "
-              << (oldAngle * 180.0 / M_PI) << "° → "
+    std::cerr << "  Constraint at pos[" << pos
+              << "]: " << (oldAngle * 180.0 / M_PI) << "° → "
               << (newAngle * 180.0 / M_PI) << "° (target magnitude was "
               << (std::abs(constraint.targetAngle) * 180.0 / M_PI)
               << "°, preserved template sign)" << std::endl;
@@ -1704,8 +1623,8 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
     constrainedPositions.insert(pos);
   }
 
-  std::cerr << ">>> Total constraintDelta = " << (constraintDelta * 180.0 / M_PI)
-            << "°" << std::endl;
+  std::cerr << ">>> Total constraintDelta = "
+            << (constraintDelta * 180.0 / M_PI) << "°" << std::endl;
 
   // 4. Distribute angular difference across non-constrained angles
   //    to preserve total angular sum
@@ -1714,9 +1633,9 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
     double adjustmentPerFree = -constraintDelta / numFree;
 
     std::cerr << ">>> Distributing " << (-constraintDelta * 180.0 / M_PI)
-              << "° across " << numFree << " free positions = "
-              << (adjustmentPerFree * 180.0 / M_PI) << "° per position"
-              << std::endl;
+              << "° across " << numFree
+              << " free positions = " << (adjustmentPerFree * 180.0 / M_PI)
+              << "° per position" << std::endl;
 
     for (size_t i = 0; i < N; ++i) {
       if (constrainedPositions.count(i) == 0) {
@@ -1728,8 +1647,8 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   std::cerr << ">>> ADJUSTED ANGLES (after constraints):" << std::endl;
   for (size_t i = 0; i < N; ++i) {
     double degrees = adjustedAngles[i] * 180.0 / M_PI;
-    std::cerr << "  pos[" << i << "]: " << adjustedAngles[i] << " rad = "
-              << degrees << "°";
+    std::cerr << "  pos[" << i << "]: " << adjustedAngles[i]
+              << " rad = " << degrees << "°";
     if (constrainedPositions.count(i)) {
       std::cerr << " [CONSTRAINED]";
     }
@@ -1751,12 +1670,109 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   }
 
   // 6. Close gap using Jacobian minimization
-  refineWithJacobian(coords, adjustedAngles, constrainedPositions,
-                     bondLength, N % 2 == 1);
+  refineWithJacobian(coords, adjustedAngles, constrainedPositions, bondLength,
+                     N % 2 == 1);
 
   // 7. Remove dummy atom and return
   coords.pop_back();
   return coords;
+}
+
+// Reflect middle atoms for axially-fused small rings to avoid steric clashes
+void reflectMiddleAtomsForAxialFusion(
+    const RDKit::ROMol &mol,
+    const RDKit::INT_VECT &macrocycleRing,
+    const RDKit::VECT_INT_VECT &fusedRings,
+    RDGeom::INT_POINT2D_MAP &eatoms) {
+
+  // Convert to std::vector<int> for helper functions
+  std::vector<int> macrocycleRingVec(macrocycleRing.begin(),
+                                     macrocycleRing.end());
+
+  // Check each fused ring to see if it's a 4 or 6-membered ring fused at axial
+  // positions
+  for (const auto &ring : fusedRings) {
+    if (ring.size() != 4 && ring.size() != 6) {
+      continue;
+    }
+
+    // Use existing helper to find shared positions in macrocycle
+    std::vector<int> ringVec(ring.begin(), ring.end());
+    std::vector<size_t> sharedPositions =
+        findSharedPositions(macrocycleRingVec, ringVec);
+
+    // Verify and reorder shared positions
+    if (!verifyAndReorderSharedPositions(sharedPositions,
+                                         macrocycleRing.size())) {
+      continue;  // Not contiguous, skip
+    }
+
+    size_t numShared = sharedPositions.size();
+
+    // Check if we have axial fusion
+    // For 6-membered: 4 shared, 2 non-shared
+    // For 4-membered: 3 shared, 1 non-shared
+    if ((ring.size() == 6 && numShared == 4) ||
+        (ring.size() == 4 && numShared == 3)) {
+      // Axial atoms are at first and last shared positions
+      int axial1 = macrocycleRing[sharedPositions.front()];
+      int axial2 = macrocycleRing[sharedPositions.back()];
+
+      // Middle shared atoms are all except first and last
+      std::vector<int> middleShared;
+      for (size_t i = 1; i < numShared - 1; ++i) {
+        middleShared.push_back(macrocycleRing[sharedPositions[i]]);
+      }
+
+      // Non-shared atoms
+      std::unordered_set<int> sharedSet;
+      for (auto pos : sharedPositions) {
+        sharedSet.insert(macrocycleRing[pos]);
+      }
+      std::vector<int> nonSharedAtoms;
+      for (int atom : ring) {
+        if (sharedSet.find(atom) == sharedSet.end()) {
+          nonSharedAtoms.push_back(atom);
+        }
+      }
+
+      // Count substituents on middle shared atoms (excluding bonds in
+      // macrocycle which are also the fused ring bonds)
+      int middleSubstituents = 0;
+      for (int atom : middleShared) {
+        const auto *ratom = mol.getAtomWithIdx(atom);
+        int degree = ratom->getDegree();
+        // Subtract 2 for the ring bonds (same bonds are in both rings)
+        middleSubstituents += std::max(0, degree - 2);
+      }
+
+      // Count substituents on non-shared atoms (excluding bonds in fused ring)
+      int nonSharedSubstituents = 0;
+      for (int atom : nonSharedAtoms) {
+        const auto *ratom = mol.getAtomWithIdx(atom);
+        int degree = ratom->getDegree();
+        // Subtract 2 for fused ring bonds
+        nonSharedSubstituents += std::max(0, degree - 2);
+      }
+
+      // If middle shared atoms are more substituted, reflect them
+      if (middleSubstituents > nonSharedSubstituents) {
+        // Check that axial atoms have coordinates
+        if (eatoms.find(axial1) != eatoms.end() &&
+            eatoms.find(axial2) != eatoms.end()) {
+          const auto &pin1 = eatoms[axial1];
+          const auto &pin2 = eatoms[axial2];
+
+          // Reflect middle shared atoms
+          for (int atom : middleShared) {
+            if (eatoms.find(atom) != eatoms.end()) {
+              eatoms[atom] = reflectPoint(eatoms[atom], pin1, pin2);
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 }  // namespace RDDepict

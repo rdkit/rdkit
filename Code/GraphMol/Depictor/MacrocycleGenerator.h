@@ -15,6 +15,10 @@
 #include <string>
 #include <Geometry/point.h>
 
+namespace RDKit {
+class ROMol;
+}
+
 namespace RDDepict {
 
 //! Hexagonal grid coordinates for tracking macrocycle positions
@@ -66,8 +70,8 @@ struct TurnConstraint {
 
 //! Constraint on angle at a specific position (for regular polygon small rings)
 struct AngleConstraint {
-  size_t position;      //!< Position in macrocycle (0-indexed)
-  double targetAngle;   //!< Target angle in radians
+  size_t position;     //!< Position in macrocycle (0-indexed)
+  double targetAngle;  //!< Target angle in radians
 };
 
 //! Generate 2D coordinates for macrocycles using turn-based encoding
@@ -92,9 +96,11 @@ class MacrocycleGenerator {
   /*!
     \param ringSize: Number of atoms in the macrocycle
     \param bondLength: Length of each bond (default 1.5 Å)
-    \param useJacobianRefinement: Whether to use Jacobian angle adjustment to close gaps (default true)
+    \param useJacobianRefinement: Whether to use Jacobian angle adjustment to
+    close gaps (default true)
   */
-  MacrocycleGenerator(size_t ringSize, double bondLength = 1.5, bool useJacobianRefinement = true);
+  MacrocycleGenerator(size_t ringSize, double bondLength = 1.5,
+                      bool useJacobianRefinement = true);
 
   //! Add a structural constraint
   /*!
@@ -110,10 +116,12 @@ class MacrocycleGenerator {
 
   //! Set substituent sizes at each position (for penalty scoring)
   /*!
-    \param substituentSizes: Map from macrocycle position to total substituent size
-    \param innerTurnSign: Which turn direction points inward (+1 for R, -1 for L)
+    \param substituentSizes: Map from macrocycle position to total substituent
+    size \param innerTurnSign: Which turn direction points inward (+1 for R, -1
+    for L)
   */
-  void setSubstituentInfo(const std::map<size_t, int> &substituentSizes, int innerTurnSign);
+  void setSubstituentInfo(const std::map<size_t, int> &substituentSizes,
+                          int innerTurnSign);
 
   //! Check if a position has an angle constraint
   /*!
@@ -128,12 +136,6 @@ class MacrocycleGenerator {
     \return target angle in radians (0 if no constraint)
   */
   double getConstraintAngle(size_t position) const;
-
-  //! Debug: Print angle constraint information
-  /*!
-    \param coords: Coordinates after generation
-  */
-  void debugPrintAngleConstraints(const std::vector<RDGeom::Point2D> &coords) const;
 
   //! Solve for optimal turn sequence
   /*!
@@ -255,19 +257,23 @@ class MacrocycleGenerator {
   double d_bondLength;       //!< Length of each bond
   std::vector<int> d_turns;  //!< Turn sequence: +1 = R, -1 = L, 0 = undecided
   std::vector<TurnConstraint> d_constraints;  //!< Structural constraints
-  std::vector<AngleConstraint> d_angleConstraints;  //!< Angle constraints for small rings
-  std::map<size_t, int> d_substituentSizes;  //!< Map: position -> total substituent size
-  int d_innerTurnSign;  //!< Which turn direction points inward (+1 for R, -1 for L)
-  double d_closureError;                      //!< Positional closure error
-  bool d_solved;  //!< Whether solve() has been called successfully
+  std::vector<AngleConstraint>
+      d_angleConstraints;  //!< Angle constraints for small rings
+  std::map<size_t, int>
+      d_substituentSizes;  //!< Map: position -> total substituent size
+  int d_innerTurnSign;     //!< Which turn direction points inward (+1 for R, -1
+                           //!< for L)
+  double d_closureError;   //!< Positional closure error
+  bool d_solved;           //!< Whether solve() has been called successfully
   bool d_useJacobianRefinement;  //!< Whether to use Jacobian angle adjustment
 };
 
 //! Endpoint information for shared vertex constraint computation
 struct EndpointInfo {
   int ringSize;                //!< Size of the small ring
-  size_t adjacentInternalPos;  //!< Adjacent internal shared position (for turn direction)
-  bool isFirst;                //!< Whether this is the first endpoint of the pattern
+  size_t adjacentInternalPos;  //!< Adjacent internal shared position (for turn
+                               //!< direction)
+  bool isFirst;  //!< Whether this is the first endpoint of the pattern
 };
 
 // ============================================================================
@@ -289,41 +295,38 @@ double computeIdealAngle(int ringSize, int turnSign);
 /*!
   \param macrocycleRing: Indices of atoms in the macrocycle ring
   \param ring: Indices of atoms in a small ring
-  \return Vector of positions (indices into macrocycleRing) where atoms are shared
+  \return Vector of positions (indices into macrocycleRing) where atoms are
+  shared
 */
-std::vector<size_t> findSharedPositions(
-    const std::vector<int> &macrocycleRing,
-    const std::vector<int> &ring);
+std::vector<size_t> findSharedPositions(const std::vector<int> &macrocycleRing,
+                                        const std::vector<int> &ring);
 
 //! Verify shared positions are contiguous and reorder if needed
 /*!
   Checks that shared positions form a contiguous sequence (allowing wraparound).
   Reorders positions to start from the lowest index if valid.
 
-  \param sharedPositions: Vector of shared positions (modified in-place if valid)
-  \param macrocycleSize: Size of the macrocycle ring
-  \return true if positions are contiguous, false otherwise
+  \param sharedPositions: Vector of shared positions (modified in-place if
+  valid) \param macrocycleSize: Size of the macrocycle ring \return true if
+  positions are contiguous, false otherwise
 */
-bool verifyAndReorderSharedPositions(
-    std::vector<size_t> &sharedPositions,
-    size_t macrocycleSize);
+bool verifyAndReorderSharedPositions(std::vector<size_t> &sharedPositions,
+                                     size_t macrocycleSize);
 
 //! Track endpoint information for shared vertex constraint computation
 /*!
   Records information about an endpoint of a shared pattern (RR, RLR, RLLR).
 
-  \param endpointPositions: Map from position to vector of endpoint infos (modified)
+  \param endpointPositions: Map from position to vector of endpoint infos
   \param pos: Position of the endpoint in the macrocycle
   \param ringSize: Size of the small ring
-  \param adjacentInternalPos: Adjacent internal shared position (for turn direction)
+  \param adjacentInternalPos: Adjacent internal shared position (for turn
+  direction)
   \param isFirst: Whether this is the first endpoint of the pattern
 */
 void trackEndpoint(
-    std::map<size_t, std::vector<EndpointInfo>> &endpointPositions,
-    size_t pos,
-    int ringSize,
-    size_t adjacentInternalPos,
-    bool isFirst);
+    std::map<size_t, std::vector<EndpointInfo>> &endpointPositions, size_t pos,
+    int ringSize, size_t adjacentInternalPos, bool isFirst);
 
 //! Compute angle constraint for a shared endpoint (where two small rings meet)
 /*!
@@ -332,18 +335,18 @@ void trackEndpoint(
 
   \param endpoints: Vector of exactly 2 EndpointInfo structures
   \param pos: Position of the shared endpoint
-  \return AngleConstraint with computed target angle (position = SIZE_MAX if invalid)
+  \return AngleConstraint with computed target angle (position = SIZE_MAX if
+  invalid)
 */
 AngleConstraint computeSharedEndpointConstraint(
-    const std::vector<EndpointInfo> &endpoints,
-    size_t pos);
+    const std::vector<EndpointInfo> &endpoints, size_t pos);
 
 //! Identify all angle constraints for fused small rings in a macrocycle
 /*!
-  Analyzes all small rings (4, 5, or 6 atoms) fused to the macrocycle and
+  Analyzes all small rings  fused to the macrocycle and
   generates angle constraints for:
-  - Internal positions of RLR/RLLR patterns (ideal polygon angles)
-  - Shared endpoints where two small rings meet (combined angle formula)
+  - ideal polygon angles for internal positions of fused rings
+  - Shared endpoints where two fused small rings meet
 
   \param macrocycleRing: Indices of atoms in the macrocycle ring
   \param allRings: All rings in the molecule
@@ -380,12 +383,27 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   \param bondLength: Target bond length
   \param isOddRing: Whether this is an odd-numbered ring
 */
-void refineWithJacobian(
-    std::vector<RDGeom::Point2D> &coords,
-    std::vector<double> &angles,
-    const std::set<size_t> &constrainedPositions,
-    double bondLength,
-    bool isOddRing);
+void refineWithJacobian(std::vector<RDGeom::Point2D> &coords,
+                        std::vector<double> &angles,
+                        const std::set<size_t> &constrainedPositions,
+                        double bondLength, bool isOddRing);
+
+//! Reflect middle atoms for axially-fused small rings to avoid steric clashes
+/*!
+  For macrocycles with 4 or 6-membered rings fused at axial positions (1,3 or
+  1,4), checks if the middle shared atoms are more substituted than the
+  non-shared atoms. If so, reflects just the middle atoms across the axial bond.
+
+  \param mol: The molecule
+  \param macrocycleRing: The macrocycle ring atoms
+  \param fusedRings: All fused rings in the system
+  \param eatoms: Embedded atom coordinates (modified in-place)
+*/
+void reflectMiddleAtomsForAxialFusion(
+    const RDKit::ROMol &mol,
+    const RDKit::INT_VECT &macrocycleRing,
+    const RDKit::VECT_INT_VECT &fusedRings,
+    RDGeom::INT_POINT2D_MAP &eatoms);
 
 }  // namespace RDDepict
 
