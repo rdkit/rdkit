@@ -26,6 +26,8 @@ import numpy as np
 
 # import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
+from rdkit.Chem import rdqueries
+
 # from rdkit.Chem import AllChem, rdqueries
 # from rdkit.Chem.Scaffolds import MurckoScaffold
 
@@ -3994,471 +3996,474 @@ CAS<~>
     am = Chem.AdjustQueryProperties(m, qps)
     self.assertEqual(Chem.MolFragmentToSmarts(am, [3, 4, 5]), '[D3]-*-*')
 
-#   def testAdjustQueryPropertiesgithubIssue1474(self):
-#     core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')
-#     core.GetAtomWithIdx(0).SetProp('foo', 'bar')
-#     core.GetAtomWithIdx(1).SetProp('foo', 'bar')
+  def testAdjustQueryPropertiesgithubIssue1474(self):
+    core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')
+    core.GetAtomWithIdx(0).SetProp('foo', 'bar')
+    core.GetAtomWithIdx(1).SetProp('foo', 'bar')
 
-#     ap = Chem.AdjustQueryProperties(core)
-#     self.assertEqual(ap.GetAtomWithIdx(0).GetPropsAsDict()["foo"], "bar")
-#     self.assertEqual(ap.GetAtomWithIdx(1).GetPropsAsDict()["foo"], "bar")
+    ap = Chem.AdjustQueryProperties(core)
+    self.assertEqual(ap.GetAtomWithIdx(0).GetPropsAsDict()["foo"], "bar")
+    self.assertEqual(ap.GetAtomWithIdx(1).GetPropsAsDict()["foo"], "bar")
 
-#   def testReplaceAtomWithQueryAtom(self):
-#     mol = Chem.MolFromSmiles("CC(C)C")
-#     qmol = Chem.MolFromSmiles("C")
-#     matches = mol.GetSubstructMatches(qmol)
-#     self.assertEqual(((0, ), (1, ), (2, ), (3, )), matches)
+  # def testReplaceAtomWithQueryAtom(self):
 
-#     atom = qmol.GetAtomWithIdx(0)
-#     natom = rdqueries.ReplaceAtomWithQueryAtom(qmol, atom)
-#     qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
-#     natom.ExpandQuery(qa, Chem.CompositeQueryType.COMPOSITE_AND)
-#     matches = mol.GetSubstructMatches(qmol)
-#     self.assertEqual(((1, ), ), matches)
+  #   mol = Chem.MolFromSmiles("CC(C)C")
+  #   qmol = Chem.MolFromSmiles("C")
+  #   matches = mol.GetSubstructMatches(qmol)
+  #   self.assertEqual([[0], [1], [2], [3]], matches)
 
-#   def testGithubIssue579(self):
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'NCI_aids_few.sdf.gz')
-#     inf = gzip.open(fileN)
-#     suppl = Chem.ForwardSDMolSupplier(inf)
-#     m0 = next(suppl)
-#     self.assertIsNot(m0, None)
-#     inf.close()
-#     del suppl
+  #   atom = qmol.GetAtomWithIdx(0)
+  #   natom = rdqueries.ReplaceAtomWithQueryAtom(qmol, atom)
+  #   qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+  #   natom.ExpandQuery(qa, Chem.CompositeQueryType.COMPOSITE_AND)
+  #   matches = mol.GetSubstructMatches(qmol)
+  #   self.assertEqual([[1]], matches)
 
-#   def testSequenceBasics(self):
-#     " very basic round-tripping of the sequence reader/writer support "
-#     helm = 'PEPTIDE1{C.Y.I.Q.N.C.P.L.G}$$$$'
-#     seq = 'CYIQNCPLG'
-#     fasta = '>\nCYIQNCPLG\n'
-#     smi = 'CC[C@H](C)[C@H](NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@@H](N)CS)C(=O)N[C@@H](CCC(N)=O)C(=O)N[C@@H](CC(N)=O)C(=O)N[C@@H](CS)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CC(C)C)C(=O)NCC(=O)O'
+  def testGithubIssue579(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.sdf.gz')
+    inf = gzip.open(fileN)
+    suppl = Chem.ForwardSDMolSupplier(inf)
+    m0 = next(suppl)
+    self.assertIsNot(m0, None)
+    inf.close()
+    del suppl
 
-#     m = Chem.MolFromSequence(seq)
-#     self.assertTrue(m is not None)
-#     self.assertEqual(Chem.MolToSequence(m), seq)
-#     self.assertEqual(Chem.MolToHELM(m), helm)
-#     self.assertEqual(Chem.MolToFASTA(m), fasta)
-#     self.assertEqual(Chem.MolToSmiles(m, isomericSmiles=True), smi)
+  def testSequenceBasics(self):
+    " very basic round-tripping of the sequence reader/writer support "
+    helm = 'PEPTIDE1{C.Y.I.Q.N.C.P.L.G}$$$$'
+    seq = 'CYIQNCPLG'
+    fasta = '>\nCYIQNCPLG\n'
+    smi = 'CC[C@H](C)[C@H](NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@@H](N)CS)C(=O)N[C@@H](CCC(N)=O)C(=O)N[C@@H](CC(N)=O)C(=O)N[C@@H](CS)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CC(C)C)C(=O)NCC(=O)O'
 
-#     m = Chem.MolFromHELM(helm)
-#     self.assertTrue(m is not None)
-#     self.assertEqual(Chem.MolToSequence(m), seq)
-#     self.assertEqual(Chem.MolToHELM(m), helm)
-#     self.assertEqual(Chem.MolToFASTA(m), fasta)
-#     self.assertEqual(Chem.MolToSmiles(m, isomericSmiles=True), smi)
+    m = Chem.MolFromSequence(seq)
+    self.assertTrue(m is not None)
+    self.assertEqual(Chem.MolToSequence(m), seq)
+    self.assertEqual(Chem.MolToHELM(m), helm)
+    self.assertEqual(Chem.MolToFASTA(m), fasta)
+    self.assertEqual(Chem.MolToSmiles(m, isomericSmiles=True), smi)
 
-#     m = Chem.MolFromFASTA(fasta)
-#     self.assertTrue(m is not None)
-#     self.assertEqual(Chem.MolToSequence(m), seq)
-#     self.assertEqual(Chem.MolToHELM(m), helm)
-#     self.assertEqual(Chem.MolToFASTA(m), fasta)
-#     self.assertEqual(Chem.MolToSmiles(m, isomericSmiles=True), smi)
+    m = Chem.MolFromHELM(helm)
+    self.assertTrue(m is not None)
+    self.assertEqual(Chem.MolToSequence(m), seq)
+    self.assertEqual(Chem.MolToHELM(m), helm)
+    self.assertEqual(Chem.MolToFASTA(m), fasta)
+    self.assertEqual(Chem.MolToSmiles(m, isomericSmiles=True), smi)
 
-#     seq = "CGCGAATTACCGCG"
-#     m = Chem.MolFromSequence(seq, flavor=6)  # DNA
-#     self.assertEqual(Chem.MolToSequence(m), 'CGCGAATTACCGCG')
-#     self.assertEqual(
-#       Chem.MolToHELM(m),
-#       'RNA1{[dR](C)P.[dR](G)P.[dR](C)P.[dR](G)P.[dR](A)P.[dR](A)P.[dR](T)P.[dR](T)P.[dR](A)P.[dR](C)P.[dR](C)P.[dR](G)P.[dR](C)P.[dR](G)}$$$$'
-#     )
-#     seq = "CGCGAAUUACCGCG"
-#     m = Chem.MolFromSequence(seq, flavor=2)  # RNA
-#     self.assertEqual(Chem.MolToSequence(m), 'CGCGAAUUACCGCG')
-#     self.assertEqual(
-#       Chem.MolToHELM(m),
-#       'RNA1{R(C)P.R(G)P.R(C)P.R(G)P.R(A)P.R(A)P.R(U)P.R(U)P.R(A)P.R(C)P.R(C)P.R(G)P.R(C)P.R(G)}$$$$'
-#     )
-#     m = Chem.MolFromSequence(seq, flavor=3)  # RNA - 5' cap
-#     self.assertEqual(Chem.MolToSequence(m), 'CGCGAAUUACCGCG')
-#     self.assertEqual(
-#       Chem.MolToHELM(m),
-#       'RNA1{P.R(C)P.R(G)P.R(C)P.R(G)P.R(A)P.R(A)P.R(U)P.R(U)P.R(A)P.R(C)P.R(C)P.R(G)P.R(C)P.R(G)}$$$$'
-#     )
+    m = Chem.MolFromFASTA(fasta)
+    self.assertTrue(m is not None)
+    self.assertEqual(Chem.MolToSequence(m), seq)
+    self.assertEqual(Chem.MolToHELM(m), helm)
+    self.assertEqual(Chem.MolToFASTA(m), fasta)
+    self.assertEqual(Chem.MolToSmiles(m, isomericSmiles=True), smi)
 
-#   def testResMolSupplier(self):
-#     mol = Chem.MolFromSmiles('CC')
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol)
-#     del resMolSuppl
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol)
-#     self.assertEqual(resMolSuppl.GetNumConjGrps(), 0)
-#     self.assertEqual(len(resMolSuppl), 1)
-#     self.assertEqual(resMolSuppl.GetNumConjGrps(), 0)
+    seq = "CGCGAATTACCGCG"
+    m = Chem.MolFromSequence(seq, flavor=6)  # DNA
+    self.assertEqual(Chem.MolToSequence(m), 'CGCGAATTACCGCG')
+    self.assertEqual(
+      Chem.MolToHELM(m),
+      'RNA1{[dR](C)P.[dR](G)P.[dR](C)P.[dR](G)P.[dR](A)P.[dR](A)P.[dR](T)P.[dR](T)P.[dR](A)P.[dR](C)P.[dR](C)P.[dR](G)P.[dR](C)P.[dR](G)}$$$$'
+    )
+    seq = "CGCGAAUUACCGCG"
+    m = Chem.MolFromSequence(seq, flavor=2)  # RNA
+    self.assertEqual(Chem.MolToSequence(m), 'CGCGAAUUACCGCG')
+    self.assertEqual(
+      Chem.MolToHELM(m),
+      'RNA1{R(C)P.R(G)P.R(C)P.R(G)P.R(A)P.R(A)P.R(U)P.R(U)P.R(A)P.R(C)P.R(C)P.R(G)P.R(C)P.R(G)}$$$$'
+    )
+    m = Chem.MolFromSequence(seq, flavor=3)  # RNA - 5' cap
+    self.assertEqual(Chem.MolToSequence(m), 'CGCGAAUUACCGCG')
+    self.assertEqual(
+      Chem.MolToHELM(m),
+      'RNA1{P.R(C)P.R(G)P.R(C)P.R(G)P.R(A)P.R(A)P.R(U)P.R(U)P.R(A)P.R(C)P.R(C)P.R(G)P.R(C)P.R(G)}$$$$'
+    )
 
-#     mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
-#     totalFormalCharge = getTotalFormalCharge(mol)
+  def testResMolSupplier(self):
+    mol = Chem.MolFromSmiles('CC')
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    del resMolSuppl
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertEqual(resMolSuppl.GetNumConjGrps(), 0)
+    self.assertEqual(len(resMolSuppl), 1)
+    self.assertEqual(resMolSuppl.GetNumConjGrps(), 0)
 
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol)
-#     self.assertFalse(resMolSuppl.GetIsEnumerated())
-#     self.assertEqual(len(resMolSuppl), 4)
-#     self.assertTrue(resMolSuppl.GetIsEnumerated())
+    mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
+    totalFormalCharge = getTotalFormalCharge(mol)
 
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol)
-#     self.assertFalse(resMolSuppl.GetIsEnumerated())
-#     resMolSuppl.Enumerate()
-#     self.assertTrue(resMolSuppl.GetIsEnumerated())
-#     self.assertTrue(
-#       (resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType() != resMolSuppl[1].GetBondBetweenAtoms(
-#         0, 1).GetBondType()) or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType()
-#                                  != resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertFalse(resMolSuppl.GetIsEnumerated())
+    self.assertEqual(len(resMolSuppl), 4)
+    self.assertTrue(resMolSuppl.GetIsEnumerated())
 
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
-#     self.assertEqual(len(resMolSuppl), 8)
-#     bondTypeSet = set()
-#     # check that we actually have two alternate Kekule structures
-#     bondTypeSet.add(resMolSuppl[0].GetBondBetweenAtoms(3, 4).GetBondType())
-#     bondTypeSet.add(resMolSuppl[1].GetBondBetweenAtoms(3, 4).GetBondType())
-#     self.assertEqual(len(bondTypeSet), 2)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertFalse(resMolSuppl.GetIsEnumerated())
+    resMolSuppl.Enumerate()
+    self.assertTrue(resMolSuppl.GetIsEnumerated())
+    self.assertTrue(
+      (resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType() != resMolSuppl[1].GetBondBetweenAtoms(
+        0, 1).GetBondType()) or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType()
+                                 != resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
 
-#     bondTypeDict = {}
-#     resMolSuppl = Chem.ResonanceMolSupplier(
-#       mol, Chem.ALLOW_INCOMPLETE_OCTETS
-#       | Chem.UNCONSTRAINED_CATIONS
-#       | Chem.UNCONSTRAINED_ANIONS)
-#     self.assertEqual(len(resMolSuppl), 32)
-#     for i in range(len(resMolSuppl)):
-#       resMol = resMolSuppl[i]
-#       self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
-#     while (not resMolSuppl.atEnd()):
-#       resMol = next(resMolSuppl)
-#       self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
-#     resMolSuppl.reset()
-#     cmpFormalChargeBondOrder(self, resMolSuppl[0], next(resMolSuppl))
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl), 8)
+    bondTypeSet = set()
+    # check that we actually have two alternate Kekule structures
+    bondTypeSet.add(resMolSuppl[0].GetBondBetweenAtoms(3, 4).GetBondType())
+    bondTypeSet.add(resMolSuppl[1].GetBondBetweenAtoms(3, 4).GetBondType())
+    self.assertEqual(len(bondTypeSet), 2)
 
-#     resMolSuppl = Chem.ResonanceMolSupplier(
-#       mol, Chem.ALLOW_INCOMPLETE_OCTETS
-#       | Chem.UNCONSTRAINED_CATIONS
-#       | Chem.UNCONSTRAINED_ANIONS, 10)
-#     self.assertEqual(len(resMolSuppl), 10)
+    bondTypeDict = {}
+    resMolSuppl = Chem.ResonanceMolSupplier(
+      mol, Chem.ALLOW_INCOMPLETE_OCTETS
+      | Chem.UNCONSTRAINED_CATIONS
+      | Chem.UNCONSTRAINED_ANIONS)
+    self.assertEqual(len(resMolSuppl), 32)
+    for i in range(len(resMolSuppl)):
+      resMol = resMolSuppl[i]
+      self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
+    while (not resMolSuppl.atEnd()):
+      resMol = next(resMolSuppl)
+      self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
+    resMolSuppl.reset()
+    cmpFormalChargeBondOrder(self, resMolSuppl[0], next(resMolSuppl))
 
-#     crambinPdb = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                               '1CRN.pdb')
-#     mol = Chem.MolFromPDBFile(crambinPdb)
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol)
-#     self.assertEqual(len(resMolSuppl), 1)
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
-#     self.assertEqual(len(resMolSuppl), 8)
+    resMolSuppl = Chem.ResonanceMolSupplier(
+      mol, Chem.ALLOW_INCOMPLETE_OCTETS
+      | Chem.UNCONSTRAINED_CATIONS
+      | Chem.UNCONSTRAINED_ANIONS, 10)
+    self.assertEqual(len(resMolSuppl), 10)
 
-#   def testGithub4884(self):
-#     # test that we don't hang
-#     mol = Chem.MolFromSmiles('O=[N+][O-]')
-#     supp = Chem.ResonanceMolSupplier(mol)
-#     supp.atEnd()
+    crambinPdb = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                              '1CRN.pdb')
+    mol = Chem.MolFromPDBFile(crambinPdb)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    self.assertEqual(len(resMolSuppl), 1)
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl), 8)
 
-#   def testSubstructMatchAcetate(self):
-#     mol = Chem.MolFromSmiles('CC(=O)[O-]')
-#     query = Chem.MolFromSmarts('C(=O)[O-]')
+  def testGithub4884(self):
+    # test that we don't hang
+    mol = Chem.MolFromSmiles('O=[N+][O-]')
+    supp = Chem.ResonanceMolSupplier(mol)
+    supp.atEnd()
 
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol)
-#     matches = mol.GetSubstructMatches(query)
-#     self.assertEqual(len(matches), 1)
-#     self.assertEqual(matches, ((1, 2, 3), ))
-#     matches = mol.GetSubstructMatches(query, uniquify=True)
-#     self.assertEqual(len(matches), 1)
-#     self.assertEqual(matches, ((1, 2, 3), ))
-#     matches = mol.GetSubstructMatches(query, uniquify=False)
-#     self.assertEqual(len(matches), 1)
-#     self.assertEqual(matches, ((1, 2, 3), ))
-#     matches = resMolSuppl.GetSubstructMatches(query)
-#     self.assertEqual(len(matches), 2)
-#     self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
-#     matches = resMolSuppl.GetSubstructMatches(query, uniquify=True)
-#     self.assertEqual(len(matches), 1)
-#     self.assertEqual(matches, ((1, 2, 3), ))
-#     matches = resMolSuppl.GetSubstructMatches(query, uniquify=False)
-#     self.assertEqual(len(matches), 2)
-#     self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
-#     query = Chem.MolFromSmarts('C(~O)~O')
-#     matches = mol.GetSubstructMatches(query, uniquify=False)
-#     self.assertEqual(len(matches), 2)
-#     self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
-#     matches = mol.GetSubstructMatches(query, uniquify=True)
-#     self.assertEqual(len(matches), 1)
-#     self.assertEqual(matches, ((1, 2, 3), ))
-#     matches = resMolSuppl.GetSubstructMatches(query, uniquify=False)
-#     self.assertEqual(len(matches), 2)
-#     self.assertEqual(matches, ((1, 2, 3), (1, 3, 2)))
-#     matches = resMolSuppl.GetSubstructMatches(query, uniquify=True)
-#     self.assertEqual(len(matches), 1)
-#     self.assertEqual(matches, ((1, 2, 3), ))
+  def testSubstructMatchAcetate(self):
+    mol = Chem.MolFromSmiles('CC(=O)[O-]')
+    query = Chem.MolFromSmarts('C(=O)[O-]')
 
-#   def testSubstructMatchDMAP(self):
-#     mol = Chem.MolFromSmiles('C(C)Nc1cc[nH+]cc1')
-#     query = Chem.MolFromSmarts('[#7+]')
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    matches = mol.GetSubstructMatches(query)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, [[1, 2, 3]])
+    matches = mol.GetSubstructMatches(query, uniquify=True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, [[1, 2, 3]])
+    matches = mol.GetSubstructMatches(query, uniquify=False)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, [[1, 2, 3]])
+    matches = resMolSuppl.GetSubstructMatches(query)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, [[1, 2, 3], [1, 3, 2]])
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify=True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, [[1, 2, 3]])
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify=False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, [[1, 2, 3], [1, 3, 2]])
+    query = Chem.MolFromSmarts('C(~O)~O')
+    matches = mol.GetSubstructMatches(query, uniquify=False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, [[1, 2, 3], [1, 3, 2]])
+    matches = mol.GetSubstructMatches(query, uniquify=True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, [[1, 2, 3]])
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify=False)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, [[1, 2, 3], [1, 3, 2]])
+    matches = resMolSuppl.GetSubstructMatches(query, uniquify=True)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(matches, [[1, 2, 3]])
 
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol)
-#     matches = mol.GetSubstructMatches(query, False, False, False)
-#     self.assertEqual(len(matches), 1)
-#     p = matches[0]
-#     self.assertEqual(p[0], 6)
-#     matches = resMolSuppl.GetSubstructMatches(query, False, False, False)
-#     self.assertEqual(len(matches), 2)
-#     v = []
-#     p = matches[0]
-#     v.append(p[0])
-#     p = matches[1]
-#     v.append(p[0])
-#     v.sort()
-#     self.assertEqual(v[0], 2)
-#     self.assertEqual(v[1], 6)
+  def testSubstructMatchDMAP(self):
+    mol = Chem.MolFromSmiles('C(C)Nc1cc[nH+]cc1')
+    query = Chem.MolFromSmarts('[#7+]')
 
-#   def testCrambin(self):
-#     crambinPdb = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                               '1CRN.pdb')
-#     crambin = Chem.MolFromPDBFile(crambinPdb)
-#     res = []
-#     # protonate NH2
-#     res.append(Chem.MolFromSmarts('[Nh2][Ch;Ch2]'))
-#     # protonate Arg
-#     res.append(Chem.MolFromSmarts('[Nh][C]([Nh2])=[Nh]'))
-#     setResidueFormalCharge(crambin, res, 1)
-#     res = []
-#     # deprotonate COOH
-#     res.append(Chem.MolFromSmarts('C(=O)[Oh]'))
-#     setResidueFormalCharge(crambin, res, -1)
-#     res = []
-#     resMolSupplST = Chem.ResonanceMolSupplier(crambin)
-#     # crambin has 2 Arg (3 resonance structures each); 1 Asp, 1 Glu
-#     # and 1 terminal COO- (2 resonance structures each)
-#     # so possible resonance structures are 3^2 * 2^3 = 72
-#     self.assertEqual(len(resMolSupplST), 72)
-#     self.assertEqual(resMolSupplST.GetNumConjGrps(), 56)
-#     carboxylateQuery = Chem.MolFromSmarts('C(=O)[O-]')
-#     guanidiniumQuery = Chem.MolFromSmarts('NC(=[NH2+])N')
-#     matches = crambin.GetSubstructMatches(carboxylateQuery)
-#     self.assertEqual(len(matches), 3)
-#     matches = crambin.GetSubstructMatches(carboxylateQuery, uniquify=False)
-#     self.assertEqual(len(matches), 3)
-#     matches = crambin.GetSubstructMatches(guanidiniumQuery)
-#     self.assertEqual(len(matches), 0)
-#     matches = crambin.GetSubstructMatches(guanidiniumQuery, uniquify=False)
-#     self.assertEqual(len(matches), 0)
-#     matches = resMolSupplST.GetSubstructMatches(carboxylateQuery)
-#     self.assertEqual(len(matches), 6)
-#     self.assertEqual(matches, ((166, 167, 168), (166, 168, 167), (298, 299, 300), (298, 300, 299),
-#                                (320, 321, 326), (320, 326, 321)))
-#     matches = resMolSupplST.GetSubstructMatches(carboxylateQuery, uniquify=True)
-#     self.assertEqual(len(matches), 3)
-#     self.assertEqual(matches, ((166, 167, 168), (298, 299, 300), (320, 321, 326)))
-#     matches = resMolSupplST.GetSubstructMatches(guanidiniumQuery)
-#     self.assertEqual(len(matches), 8)
-#     self.assertEqual(matches, ((66, 67, 68, 69), (66, 67, 69, 68), (68, 67, 69, 66),
-#                                (69, 67, 68, 66), (123, 124, 125, 126), (123, 124, 126, 125),
-#                                (125, 124, 126, 123), (126, 124, 125, 123)))
-#     matches = resMolSupplST.GetSubstructMatches(guanidiniumQuery, uniquify=True)
-#     self.assertEqual(len(matches), 2)
-#     self.assertEqual(matches, ((66, 67, 68, 69), (123, 124, 125, 126)))
-#     btList2ST = getBtList2(resMolSupplST)
-#     self.assertTrue(btList2ST)
-#     resMolSupplMT = Chem.ResonanceMolSupplier(crambin)
-#     resMolSupplMT.SetNumThreads(0)
-#     self.assertEqual(len(resMolSupplST), len(resMolSupplMT))
-#     btList2MT = getBtList2(resMolSupplMT)
-#     self.assertTrue(btList2MT)
-#     self.assertEqual(len(btList2ST), len(btList2MT))
-#     for i in range(len(btList2ST)):
-#       for j in range(len(btList2ST)):
-#         self.assertEqual(btList2ST[i][j], btList2MT[i][j])
-#     for suppl in [resMolSupplST, resMolSupplMT]:
-#       matches = suppl.GetSubstructMatches(carboxylateQuery, numThreads=0)
-#       self.assertEqual(len(matches), 6)
-#       self.assertEqual(matches, ((166, 167, 168), (166, 168, 167), (298, 299, 300), (298, 300, 299),
-#                                  (320, 321, 326), (320, 326, 321)))
-#       matches = suppl.GetSubstructMatches(carboxylateQuery, uniquify=True, numThreads=0)
-#       self.assertEqual(len(matches), 3)
-#       self.assertEqual(matches, ((166, 167, 168), (298, 299, 300), (320, 321, 326)))
-#       matches = suppl.GetSubstructMatches(guanidiniumQuery, numThreads=0)
-#       self.assertEqual(len(matches), 8)
-#       self.assertEqual(matches, ((66, 67, 68, 69), (66, 67, 69, 68), (68, 67, 69, 66),
-#                                  (69, 67, 68, 66), (123, 124, 125, 126), (123, 124, 126, 125),
-#                                  (125, 124, 126, 123), (126, 124, 125, 123)))
-#       matches = suppl.GetSubstructMatches(guanidiniumQuery, uniquify=True, numThreads=0)
-#       self.assertEqual(len(matches), 2)
-#       self.assertEqual(matches, ((66, 67, 68, 69), (123, 124, 125, 126)))
+    resMolSuppl = Chem.ResonanceMolSupplier(mol)
+    matches = mol.GetSubstructMatches(query, False, False, False)
+    self.assertEqual(len(matches), 1)
+    p = matches[0]
+    self.assertEqual(p[0], 6)
+    matches = resMolSuppl.GetSubstructMatches(query, False, False, False)
+    self.assertEqual(len(matches), 2)
+    v = []
+    p = matches[0]
+    v.append(p[0])
+    p = matches[1]
+    v.append(p[0])
+    v.sort()
+    self.assertEqual(v[0], 2)
+    self.assertEqual(v[1], 6)
 
-#   def testGitHub1166(self):
-#     mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
-#     self.assertEqual(len(resMolSuppl), 8)
-#     # check that formal charges on odd indices are in the same position
-#     # as on even indices
-#     for i in range(0, len(resMolSuppl), 2):
-#       self.assertEqual(resMolSuppl[i].GetNumAtoms(), resMolSuppl[i + 1].GetNumAtoms())
-#       for atomIdx in range(resMolSuppl[i].GetNumAtoms()):
-#         self.assertEqual(resMolSuppl[i].GetAtomWithIdx(atomIdx).GetFormalCharge(),
-#                          resMolSuppl[i + 1].GetAtomWithIdx(atomIdx).GetFormalCharge())
-#       # check that bond orders are alternate on aromatic bonds between
-#       # structures on odd indices and structures on even indices
-#       self.assertEqual(resMolSuppl[i].GetNumBonds(), resMolSuppl[i + 1].GetNumBonds())
-#       for bondIdx in range(resMolSuppl[i].GetNumBonds()):
-#         self.assertTrue(
-#           ((not resMolSuppl[i].GetBondWithIdx(bondIdx).GetIsAromatic()) and
-#            (not resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetIsAromatic()) and
-#            (resMolSuppl[i].GetBondWithIdx(bondIdx).GetBondType()
-#             == resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetBondType()))
-#           or (resMolSuppl[i].GetBondWithIdx(bondIdx).GetIsAromatic()
-#               and resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetIsAromatic() and (int(
-#                 round(resMolSuppl[i].GetBondWithIdx(bondIdx).GetBondTypeAsDouble() +
-#                       resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetBondTypeAsDouble())) == 3)))
+  def testCrambin(self):
+    crambinPdb = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                              '1CRN.pdb')
+    crambin = Chem.MolFromPDBFile(crambinPdb)
+    res = []
+    # protonate NH2
+    res.append(Chem.MolFromSmarts('[Nh2][Ch;Ch2]'))
+    # protonate Arg
+    res.append(Chem.MolFromSmarts('[Nh][C]([Nh2])=[Nh]'))
+    setResidueFormalCharge(crambin, res, 1)
+    res = []
+    # deprotonate COOH
+    res.append(Chem.MolFromSmarts('C(=O)[Oh]'))
+    setResidueFormalCharge(crambin, res, -1)
+    res = []
+    resMolSupplST = Chem.ResonanceMolSupplier(crambin)
+    # crambin has 2 Arg (3 resonance structures each); 1 Asp, 1 Glu
+    # and 1 terminal COO- (2 resonance structures each)
+    # so possible resonance structures are 3^2 * 2^3 = 72
+    self.assertEqual(len(resMolSupplST), 72)
+    self.assertEqual(resMolSupplST.GetNumConjGrps(), 56)
+    carboxylateQuery = Chem.MolFromSmarts('C(=O)[O-]')
+    guanidiniumQuery = Chem.MolFromSmarts('NC(=[NH2+])N')
+    matches = crambin.GetSubstructMatches(carboxylateQuery)
+    self.assertEqual(len(matches), 3)
+    matches = crambin.GetSubstructMatches(carboxylateQuery, uniquify=False)
+    self.assertEqual(len(matches), 3)
+    matches = crambin.GetSubstructMatches(guanidiniumQuery)
+    self.assertEqual(len(matches), 0)
+    matches = crambin.GetSubstructMatches(guanidiniumQuery, uniquify=False)
+    self.assertEqual(len(matches), 0)
+    matches = resMolSupplST.GetSubstructMatches(carboxylateQuery)
+    self.assertEqual(len(matches), 6)
+    self.assertEqual(matches, [[166, 167, 168], [166, 168, 167], [298, 299, 300], [298, 300, 299],
+                               [320, 321, 326], [320, 326, 321]])
+    matches = resMolSupplST.GetSubstructMatches(carboxylateQuery, uniquify=True)
+    self.assertEqual(len(matches), 3)
+    self.assertEqual(matches, [[166, 167, 168], [298, 299, 300], [320, 321, 326]])
+    matches = resMolSupplST.GetSubstructMatches(guanidiniumQuery)
+    self.assertEqual(len(matches), 8)
+    self.assertEqual(
+      matches,
+      [[66, 67, 68, 69], [66, 67, 69, 68], [68, 67, 69, 66], [69, 67, 68, 66], [123, 124, 125, 126],
+       [123, 124, 126, 125], [125, 124, 126, 123], [126, 124, 125, 123]])
+    matches = resMolSupplST.GetSubstructMatches(guanidiniumQuery, uniquify=True)
+    self.assertEqual(len(matches), 2)
+    self.assertEqual(matches, [[66, 67, 68, 69], [123, 124, 125, 126]])
+    btList2ST = getBtList2(resMolSupplST)
+    self.assertTrue(btList2ST)
+    resMolSupplMT = Chem.ResonanceMolSupplier(crambin)
+    resMolSupplMT.SetNumThreads(0)
+    self.assertEqual(len(resMolSupplST), len(resMolSupplMT))
+    btList2MT = getBtList2(resMolSupplMT)
+    self.assertTrue(btList2MT)
+    self.assertEqual(len(btList2ST), len(btList2MT))
+    for i in range(len(btList2ST)):
+      for j in range(len(btList2ST)):
+        self.assertEqual(btList2ST[i][j], btList2MT[i][j])
+    for suppl in [resMolSupplST, resMolSupplMT]:
+      matches = suppl.GetSubstructMatches(carboxylateQuery, numThreads=0)
+      self.assertEqual(len(matches), 6)
+      self.assertEqual(matches, [[166, 167, 168], [166, 168, 167], [298, 299, 300], [298, 300, 299],
+                                 [320, 321, 326], [320, 326, 321]])
+      matches = suppl.GetSubstructMatches(carboxylateQuery, uniquify=True, numThreads=0)
+      self.assertEqual(len(matches), 3)
+      self.assertEqual(matches, [[166, 167, 168], [298, 299, 300], [320, 321, 326]])
+      matches = suppl.GetSubstructMatches(guanidiniumQuery, numThreads=0)
+      self.assertEqual(len(matches), 8)
+      self.assertEqual(
+        matches,
+        [[66, 67, 68, 69], [66, 67, 69, 68], [68, 67, 69, 66], [69, 67, 68, 66],
+         [123, 124, 125, 126], [123, 124, 126, 125], [125, 124, 126, 123], [126, 124, 125, 123]])
+      matches = suppl.GetSubstructMatches(guanidiniumQuery, uniquify=True, numThreads=0)
+      self.assertEqual(len(matches), 2)
+      self.assertEqual(matches, [[66, 67, 68, 69], [123, 124, 125, 126]])
 
-#   def testConjGrpPerception(self):
-#     mol1 = Chem.MolFromMolBlock("""\
+  def testGitHub1166(self):
+    mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl), 8)
+    # check that formal charges on odd indices are in the same position
+    # as on even indices
+    for i in range(0, len(resMolSuppl), 2):
+      self.assertEqual(resMolSuppl[i].GetNumAtoms(), resMolSuppl[i + 1].GetNumAtoms())
+      for atomIdx in range(resMolSuppl[i].GetNumAtoms()):
+        self.assertEqual(resMolSuppl[i].GetAtomWithIdx(atomIdx).GetFormalCharge(),
+                         resMolSuppl[i + 1].GetAtomWithIdx(atomIdx).GetFormalCharge())
+      # check that bond orders are alternate on aromatic bonds between
+      # structures on odd indices and structures on even indices
+      self.assertEqual(resMolSuppl[i].GetNumBonds(), resMolSuppl[i + 1].GetNumBonds())
+      for bondIdx in range(resMolSuppl[i].GetNumBonds()):
+        self.assertTrue(
+          ((not resMolSuppl[i].GetBondWithIdx(bondIdx).GetIsAromatic()) and
+           (not resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetIsAromatic()) and
+           (resMolSuppl[i].GetBondWithIdx(bondIdx).GetBondType()
+            == resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetBondType()))
+          or (resMolSuppl[i].GetBondWithIdx(bondIdx).GetIsAromatic()
+              and resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetIsAromatic() and (int(
+                round(resMolSuppl[i].GetBondWithIdx(bondIdx).GetBondTypeAsDouble() +
+                      resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetBondTypeAsDouble())) == 3)))
 
-#      RDKit          2D
+  def testConjGrpPerception(self):
+    mol1 = Chem.MolFromMolBlock("""\
 
-#  14 15  0  0  0  0  0  0  0  0999 V2000
-#     3.7539   -1.2744    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     2.4317   -0.5660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     1.1571   -1.3568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.1651   -0.6484    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -1.4397   -1.4393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -1.3921   -2.9385    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#    -2.7619   -0.7309    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -2.8095    0.7684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -4.1316    1.4768    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#    -1.5349    1.5592    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.2127    0.8508    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     1.0619    1.6417    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-#     2.3841    0.9333    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     3.6587    1.7241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0
-#   2  3  4  0
-#   3  4  4  0
-#   4  5  4  0
-#   5  6  1  0
-#   5  7  4  0
-#   7  8  4  0
-#   8  9  1  0
-#   8 10  4  0
-#  10 11  4  0
-#  11 12  4  0
-#  12 13  4  0
-#  13 14  1  0
-#  13  2  4  0
-#  11  4  4  0
-# M  END
-# $$$$
-# """)
-#     mol2 = Chem.MolFromMolBlock("""\
+     RDKit          2D
 
-#      RDKit          2D
+ 14 15  0  0  0  0  0  0  0  0999 V2000
+    3.7539   -1.2744    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4317   -0.5660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1571   -1.3568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1651   -0.6484    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4397   -1.4393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3921   -2.9385    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7619   -0.7309    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8095    0.7684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1316    1.4768    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5349    1.5592    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2127    0.8508    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0619    1.6417    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3841    0.9333    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6587    1.7241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  4  0
+  3  4  4  0
+  4  5  4  0
+  5  6  1  0
+  5  7  4  0
+  7  8  4  0
+  8  9  1  0
+  8 10  4  0
+ 10 11  4  0
+ 11 12  4  0
+ 12 13  4  0
+ 13 14  1  0
+ 13  2  4  0
+ 11  4  4  0
+M  END
+$$$$
+""")
+    mol2 = Chem.MolFromMolBlock("""\
 
-#  14 15  0  0  0  0  0  0  0  0999 V2000
-#     1.0619   -1.6417    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.2127   -0.8508    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -1.5349   -1.5592    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -2.8095   -0.7684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -2.7619    0.7309    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -1.4397    1.4393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.1651    0.6484    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     1.1571    1.3568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     2.4317    0.5660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     3.7539    1.2744    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     2.3841   -0.9333    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     3.6587   -1.7241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -4.1316   -1.4768    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#    -1.3921    2.9385    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  4  0
-#   3  4  4  0
-#   4  5  4  0
-#   5  6  4  0
-#   2  3  4  0
-#   2  7  4  0
-#   7  8  4  0
-#   8  9  4  0
-#   9 10  1  0
-#   9 11  4  0
-#  11 12  1  0
-#  11  1  4  0
-#   6  7  4  0
-#   4 13  1  0
-#   6 14  1  0
-# M  END
-# $$$$
-# """)
-#     resMolSuppl1 = Chem.ResonanceMolSupplier(mol1, Chem.KEKULE_ALL)
-#     self.assertEqual(len(resMolSuppl1), 3)
-#     resMolSuppl2 = Chem.ResonanceMolSupplier(mol2, Chem.KEKULE_ALL)
-#     self.assertEqual(len(resMolSuppl2), 3)
+     RDKit          2D
 
-#   def testGitHub2597(self):
+ 14 15  0  0  0  0  0  0  0  0999 V2000
+    1.0619   -1.6417    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2127   -0.8508    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5349   -1.5592    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8095   -0.7684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7619    0.7309    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4397    1.4393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1651    0.6484    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1571    1.3568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4317    0.5660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7539    1.2744    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3841   -0.9333    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6587   -1.7241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1316   -1.4768    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3921    2.9385    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0
+  3  4  4  0
+  4  5  4  0
+  5  6  4  0
+  2  3  4  0
+  2  7  4  0
+  7  8  4  0
+  8  9  4  0
+  9 10  1  0
+  9 11  4  0
+ 11 12  1  0
+ 11  1  4  0
+  6  7  4  0
+  4 13  1  0
+  6 14  1  0
+M  END
+$$$$
+""")
+    resMolSuppl1 = Chem.ResonanceMolSupplier(mol1, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl1), 3)
+    resMolSuppl2 = Chem.ResonanceMolSupplier(mol2, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl2), 3)
 
-#     class MyBrokenCallBack(Chem.ResonanceMolSupplier):
+  # def testGitHub2597(self):
 
-#       def __call__(self):
-#         return True
+  #   class MyBrokenCallBack(Chem.ResonanceMolSupplier):
 
-#     class MyBrokenCallBack2(Chem.ResonanceMolSupplierCallback):
-#       pass
+  #     def __call__(self):
+  #       return True
 
-#     class ExceedNumStructures(Chem.ResonanceMolSupplierCallback):
+  #   class MyBrokenCallBack2(Chem.ResonanceMolSupplierCallback):
+  #     pass
 
-#       def __init__(self, parent):
-#         super().__init__()
-#         self._parent = parent
+  #   class ExceedNumStructures(Chem.ResonanceMolSupplierCallback):
 
-#       def __call__(self):
-#         self._parent.assertEqual(self.GetNumConjGrps(), 1)
-#         return (self.GetNumStructures(0) < 12)
+  #     def __init__(self, parent):
+  #       super().__init__()
+  #       self._parent = parent
 
-#     class ExceedNumDiverseStructures(Chem.ResonanceMolSupplierCallback):
+  #     def __call__(self):
+  #       self._parent.assertEqual(self.GetNumConjGrps(), 1)
+  #       return (self.GetNumStructures(0) < 12)
 
-#       def __init__(self, parent):
-#         super().__init__()
-#         self._parent = parent
+  #   class ExceedNumDiverseStructures(Chem.ResonanceMolSupplierCallback):
 
-#       def __call__(self):
-#         self._parent.assertEqual(self.GetNumConjGrps(), 1)
-#         return (self.GetNumDiverseStructures(0) < 8)
+  #     def __init__(self, parent):
+  #       super().__init__()
+  #       self._parent = parent
 
-#     class ExceedTimeout(Chem.ResonanceMolSupplierCallback):
+  #     def __call__(self):
+  #       self._parent.assertEqual(self.GetNumConjGrps(), 1)
+  #       return (self.GetNumDiverseStructures(0) < 8)
 
-#       def __init__(self, parent):
-#         super().__init__()
-#         self.start_time = None
-#         self.timeout = timedelta(seconds=3)
-#         self._parent = parent
+  #   class ExceedTimeout(Chem.ResonanceMolSupplierCallback):
 
-#       def __call__(self):
-#         if (self.start_time is None):
-#           self.start_time = datetime.now()
-#         return (datetime.now() - self.start_time < self.timeout)
+  #     def __init__(self, parent):
+  #       super().__init__()
+  #       self.start_time = None
+  #       self.timeout = timedelta(seconds=3)
+  #       self._parent = parent
 
-#     mol = Chem.MolFromSmiles(
-#       "ClC1=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=N1")
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol)
-#     self.assertEqual(len(resMolSuppl), 1)
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+  #     def __call__(self):
+  #       if (self.start_time is None):
+  #         self.start_time = datetime.now()
+  #       return (datetime.now() - self.start_time < self.timeout)
 
-#     self.assertEqual(len(resMolSuppl), 32)
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION, 10)
-#     self.assertEqual(len(resMolSuppl), 10)
-#     self.assertFalse(resMolSuppl.WasCanceled())
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION)
-#     callback = resMolSuppl.GetProgressCallback()
-#     self.assertIsNone(callback)
-#     resMolSuppl.SetProgressCallback(ExceedNumStructures(self))
-#     callback = resMolSuppl.GetProgressCallback()
-#     self.assertTrue(isinstance(callback, ExceedNumStructures))
-#     resMolSuppl.SetProgressCallback(None)
-#     callback = resMolSuppl.GetProgressCallback()
-#     self.assertIsNone(callback)
-#     resMolSuppl.SetProgressCallback(ExceedNumStructures(self))
-#     self.assertEqual(len(resMolSuppl), 12)
-#     self.assertTrue(resMolSuppl.WasCanceled())
-#     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION)
-#     with self.assertRaises(TypeError):
-#       resMolSuppl.SetProgressCallback(MyBrokenCallBack())
-#     with self.assertRaises(AttributeError):
-#       resMolSuppl.SetProgressCallback(MyBrokenCallBack2())
-#     resMolSuppl.SetProgressCallback(ExceedNumDiverseStructures(self))
-#     self.assertEqual(len(resMolSuppl), 9)
-#     self.assertTrue(resMolSuppl.WasCanceled())
-#     resMolSuppl = Chem.ResonanceMolSupplier(
-#       mol, Chem.UNCONSTRAINED_CATIONS | Chem.UNCONSTRAINED_ANIONS | Chem.KEKULE_ALL)
-#     resMolSuppl.SetProgressCallback(ExceedTimeout(self))
-#     resMolSuppl.Enumerate()
-#     print(len(resMolSuppl))
-#     self.assertTrue(resMolSuppl.WasCanceled())
+  #   mol = Chem.MolFromSmiles(
+  #     "ClC1=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=NC(NC2=CC=CC3=C2C(=O)C2=CC=CC=C2C3=O)=N1")
+  #   resMolSuppl = Chem.ResonanceMolSupplier(mol)
+  #   self.assertEqual(len(resMolSuppl), 1)
+  #   resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+
+  #   self.assertEqual(len(resMolSuppl), 32)
+  #   resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION, 10)
+  #   self.assertEqual(len(resMolSuppl), 10)
+  #   self.assertFalse(resMolSuppl.WasCanceled())
+  #   resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION)
+  #   callback = resMolSuppl.GetProgressCallback()
+  #   self.assertIsNone(callback)
+  #   resMolSuppl.SetProgressCallback(ExceedNumStructures(self))
+  #   callback = resMolSuppl.GetProgressCallback()
+  #   self.assertTrue(isinstance(callback, ExceedNumStructures))
+  #   resMolSuppl.SetProgressCallback(None)
+  #   callback = resMolSuppl.GetProgressCallback()
+  #   self.assertIsNone(callback)
+  #   resMolSuppl.SetProgressCallback(ExceedNumStructures(self))
+  #   self.assertEqual(len(resMolSuppl), 12)
+  #   self.assertTrue(resMolSuppl.WasCanceled())
+  #   resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION)
+  #   with self.assertRaises(TypeError):
+  #     resMolSuppl.SetProgressCallback(MyBrokenCallBack())
+  #   with self.assertRaises(AttributeError):
+  #     resMolSuppl.SetProgressCallback(MyBrokenCallBack2())
+  #   resMolSuppl.SetProgressCallback(ExceedNumDiverseStructures(self))
+  #   self.assertEqual(len(resMolSuppl), 9)
+  #   self.assertTrue(resMolSuppl.WasCanceled())
+  #   resMolSuppl = Chem.ResonanceMolSupplier(
+  #     mol, Chem.UNCONSTRAINED_CATIONS | Chem.UNCONSTRAINED_ANIONS | Chem.KEKULE_ALL)
+  #   resMolSuppl.SetProgressCallback(ExceedTimeout(self))
+  #   resMolSuppl.Enumerate()
+  #   print(len(resMolSuppl))
+  #   self.assertTrue(resMolSuppl.WasCanceled())
 
 #   def testAtomBondProps(self):
 #     origVal = Chem.GetUseLegacyStereoPerception()
