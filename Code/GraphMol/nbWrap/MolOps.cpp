@@ -11,6 +11,7 @@
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/list.h>
 #include <nanobind/stl/vector.h>
+#include <RDBoost/boost_shared_ptr.h>
 
 #include <string>
 #include <cmath>
@@ -223,7 +224,7 @@ std::string getChainId(const ROMol &, const Atom *at) {
 nb::dict splitMolByPDBResidues(const ROMol &mol, nb::object pyWhiteList,
                                bool negateList) {
   std::vector<std::string> *whiteList = nullptr;
-  if (pyWhiteList) {
+  if (!pyWhiteList.is_none()) {
     unsigned int nVs = nb::len(pyWhiteList);
     whiteList = new std::vector<std::string>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
@@ -246,7 +247,7 @@ nb::dict splitMolByPDBResidues(const ROMol &mol, nb::object pyWhiteList,
 nb::dict splitMolByPDBChainId(const ROMol &mol, nb::object pyWhiteList,
                               bool negateList) {
   std::vector<std::string> *whiteList = nullptr;
-  if (pyWhiteList) {
+  if (!pyWhiteList.is_none()) {
     unsigned int nVs = nb::len(pyWhiteList);
     whiteList = new std::vector<std::string>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
@@ -626,24 +627,20 @@ nb::tuple GetMolFragsWithMapping(const ROMol &mol, bool asMols,
   } else {
     std::vector<std::vector<int>> fragsMolAtomMappingVec;
     std::vector<int> fragsVec;
-    std::vector<boost::shared_ptr<ROMol>> molFrags;
-    auto &fragsList = reinterpret_cast<nb::list &>(frags);
-    auto &fragsMolAtomMappingList =
-        reinterpret_cast<nb::list &>(fragsMolAtomMapping);
-    bool hasFrags = !fragsList.is_none();
-    bool hasFragsMolAtomMapping = !fragsMolAtomMappingList.is_none();
-    molFrags =
-        hasFrags || hasFragsMolAtomMapping
-            ? MolOps::getMolFrags(
-                  mol, sanitizeFrags, hasFrags ? &fragsVec : nullptr,
-                  hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : nullptr)
-            : MolOps::getMolFrags(mol, sanitizeFrags);
+    std::vector<std::unique_ptr<ROMol>> molFrags;
+    bool hasFrags = !frags.is_none();
+    bool hasFragsMolAtomMapping = !fragsMolAtomMapping.is_none();
+    MolOps::getMolFrags(
+        mol, molFrags, sanitizeFrags, hasFrags ? &fragsVec : nullptr,
+        hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : nullptr);
     if (hasFrags) {
+      auto fragsList = nb::cast<nb::list>(frags);
       for (int i : fragsVec) {
         fragsList.append(i);
       }
     }
     if (hasFragsMolAtomMapping) {
+      auto fragsMolAtomMappingList = nb::cast<nb::list>(fragsMolAtomMapping);
       for (auto &i : fragsMolAtomMappingVec) {
         nb::list perFragMolAtomMappingTpl;
         for (unsigned int j = 0; j < i.size(); ++j) {
@@ -652,8 +649,8 @@ nb::tuple GetMolFragsWithMapping(const ROMol &mol, bool asMols,
         fragsMolAtomMappingList.append(nb::tuple(perFragMolAtomMappingTpl));
       }
     }
-    for (const auto &molFrag : molFrags) {
-      res.append(molFrag);
+    for (auto &molFrag : molFrags) {
+      res.append(molFrag.release());
     }
   }
   return nb::tuple(res);
@@ -665,13 +662,13 @@ nb::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
 
 ExplicitBitVect *wrapLayeredFingerprint(
     const ROMol &mol, unsigned int layerFlags, unsigned int minPath,
-    unsigned int maxPath, unsigned int fpSize, nb::list atomCounts,
-    ExplicitBitVect *includeOnlyBits, bool branchedPaths,
+    unsigned int maxPath, unsigned int fpSize, nb::object atomCounts,
+    std::optional<ExplicitBitVect *> includeOnlyBits, bool branchedPaths,
     nb::object fromAtoms) {
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::unique_ptr<std::vector<unsigned int>> atomCountsV;
-  if (atomCounts) {
+  if (!atomCounts.is_none()) {
     atomCountsV.reset(new std::vector<unsigned int>);
     unsigned int nAts = nb::len(atomCounts);
     if (nAts < mol.getNumAtoms()) {
@@ -684,9 +681,9 @@ ExplicitBitVect *wrapLayeredFingerprint(
   }
 
   ExplicitBitVect *res;
-  res = RDKit::LayeredFingerprintMol(mol, layerFlags, minPath, maxPath, fpSize,
-                                     atomCountsV.get(), includeOnlyBits,
-                                     branchedPaths, lFromAtoms.get());
+  res = RDKit::LayeredFingerprintMol(
+      mol, layerFlags, minPath, maxPath, fpSize, atomCountsV.get(),
+      includeOnlyBits.value_or(nullptr), branchedPaths, lFromAtoms.get());
 
   if (atomCountsV) {
     for (unsigned int i = 0; i < atomCountsV->size(); ++i) {
@@ -696,12 +693,12 @@ ExplicitBitVect *wrapLayeredFingerprint(
 
   return res;
 }
-ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
-                                        nb::list atomCounts,
-                                        ExplicitBitVect *includeOnlyBits,
-                                        bool tautomerFingerprints) {
+ExplicitBitVect *wrapPatternFingerprint(
+    const ROMol &mol, unsigned int fpSize, nb::list atomCounts,
+    std::optional<ExplicitBitVect *> includeOnlyBits,
+    bool tautomerFingerprints) {
   std::vector<unsigned int> *atomCountsV = nullptr;
-  if (atomCounts) {
+  if (!atomCounts.is_none()) {
     atomCountsV = new std::vector<unsigned int>;
     unsigned int nAts = nb::len(atomCounts);
     if (nAts < mol.getNumAtoms()) {
@@ -714,7 +711,8 @@ ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
   }
 
   ExplicitBitVect *res;
-  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV, includeOnlyBits,
+  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV,
+                                     includeOnlyBits.value_or(nullptr),
                                      tautomerFingerprints);
 
   if (atomCountsV) {
@@ -726,13 +724,13 @@ ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
 
   return res;
 }
-ExplicitBitVect *wrapPatternFingerprintBundle(const MolBundle &bundle,
-                                              unsigned int fpSize,
-                                              ExplicitBitVect *includeOnlyBits,
-                                              bool tautomerFingerprints) {
+ExplicitBitVect *wrapPatternFingerprintBundle(
+    const MolBundle &bundle, unsigned int fpSize,
+    std::optional<ExplicitBitVect *> includeOnlyBits,
+    bool tautomerFingerprints) {
   ExplicitBitVect *res;
-  res = RDKit::PatternFingerprintMol(bundle, fpSize, includeOnlyBits,
-                                     tautomerFingerprints);
+  res = RDKit::PatternFingerprintMol(
+      bundle, fpSize, includeOnlyBits.value_or(nullptr), tautomerFingerprints);
   return res;
 }
 
@@ -905,11 +903,10 @@ ROMol *pathToSubmolHelper(const ROMol &mol, nb::object &path, bool useQuery,
   result = Subgraphs::pathToSubmol(mol, pth, useQuery, mapping);
   if (!atomMap.is_none()) {
     // make sure the optional argument actually was a dictionary
-    nb::dict typecheck = nb::cast<nb::dict>(atomMap);
-    atomMap.attr("clear")();
-    for (std::map<int, int>::const_iterator mIt = mapping.begin();
-         mIt != mapping.end(); ++mIt) {
-      atomMap[mIt->first] = mIt->second;
+    nb::dict mapDict = nb::cast<nb::dict>(atomMap);
+    mapDict.clear();
+    for (const auto &[k, v] : mapping) {
+      mapDict[nb::int_(k)] = nb::int_(v);
     }
   }
   return result;
@@ -1196,7 +1193,7 @@ ROMol *copyMolSubsetHelper4(const ROMol &mol, nb::object path,
 struct molops_wrapper {
   static void wrap(nb::module_ &m) {
     std::string docString;
-    nb::enum_<MolOps::SanitizeFlags>(m, "SanitizeFlags")
+    nb::enum_<MolOps::SanitizeFlags>(m, "SanitizeFlags", nb::is_arithmetic())
         .value("SANITIZE_NONE", MolOps::SANITIZE_NONE)
         .value("SANITIZE_CLEANUP", MolOps::SANITIZE_CLEANUP)
         .value("SANITIZE_PROPERTIES", MolOps::SANITIZE_PROPERTIES)
@@ -2567,9 +2564,9 @@ ARGUMENTS:\n\
 \n";
     m.def("LayeredFingerprint", wrapLayeredFingerprint, "mol"_a,
           "layerFlags"_a = 0xFFFFFFFF, "minPath"_a = 1, "maxPath"_a = 7,
-          "fpSize"_a = 2048, "atomCounts"_a = nb::list(),
-          "setOnlyBits"_a = (ExplicitBitVect *)nullptr,
-          "branchedPaths"_a = true, "fromAtoms"_a = 0, docString.c_str(),
+          "fpSize"_a = 2048, "atomCounts"_a = nb::none(),
+          "setOnlyBits"_a = nb::none(), "branchedPaths"_a = true,
+          "fromAtoms"_a = nb::none(), docString.c_str(),
           nb::rv_policy::take_ownership);
     m.attr("_LayeredFingerprint_version") = RDKit::LayeredFingerprintMolVersion;
     m.attr("LayeredFingerprint_substructLayers") = RDKit::substructLayers;
@@ -2582,9 +2579,8 @@ ARGUMENTS:\n\
     release to release.\n";
     m.def("PatternFingerprint", wrapPatternFingerprint, "mol"_a,
           "fpSize"_a = 2048, "atomCounts"_a = nb::list(),
-          "setOnlyBits"_a = (ExplicitBitVect *)nullptr,
-          "tautomerFingerprints"_a = false, docString.c_str(),
-          nb::rv_policy::take_ownership);
+          "setOnlyBits"_a = nb::none(), "tautomerFingerprints"_a = false,
+          docString.c_str(), nb::rv_policy::take_ownership);
     m.attr("_PatternFingerprint_version") = RDKit::PatternFingerprintMolVersion;
     docString =
         "A fingerprint using SMARTS patterns \n\
@@ -2592,7 +2588,7 @@ ARGUMENTS:\n\
   NOTE: This function is experimental. The API or results may change from\n\
     release to release.\n";
     m.def("PatternFingerprint", wrapPatternFingerprintBundle, "mol"_a,
-          "fpSize"_a = 2048, "setOnlyBits"_a = (ExplicitBitVect *)nullptr,
+          "fpSize"_a = 2048, "setOnlyBits"_a = nb::none(),
           "tautomerFingerprints"_a = false, docString.c_str(),
           nb::rv_policy::take_ownership);
 

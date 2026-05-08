@@ -20,11 +20,7 @@
 #include <boost/noncopyable.hpp>
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
-namespace schrodinger {
-namespace mae {
-class Writer;
-}  // namespace mae
-}  // namespace schrodinger
+#include <maeparser/Writer.hpp>
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
 
 #include <GraphMol/ROMol.h>

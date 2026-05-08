@@ -854,7 +854,7 @@ void wrap_forwardsdsupplier(nb::module_ &m);
 void wrap_tdtsupplier(nb::module_ &m);
 void wrap_smisupplier(nb::module_ &m);
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
-void wrap_maesupplier();
+void wrap_maesupplier(nb::module_ &m);
 #endif
 
 // mol writer stuff
@@ -863,7 +863,7 @@ void wrap_sdwriter(nb::module_ &m);
 void wrap_tdtwriter(nb::module_ &m);
 void wrap_pdbwriter(nb::module_ &m);
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
-void wrap_maewriter();
+void wrap_maewriter(nb::module_ &m);
 #endif
 
 // MultithreadedMolSupplier stuff
@@ -1823,8 +1823,9 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolFragmentToSmiles", MolFragmentToSmilesHelper1<smilesfrag_gen>,
-        "mol"_a, "params"_a, "atomsToUse"_a, "bondsToUse"_a = 0,
-        "atomSymbols"_a = 0, "bondSymbols"_a = 0, docString.c_str());
+        "mol"_a, "params"_a, "atomsToUse"_a, "bondsToUse"_a = nb::none(),
+        "atomSymbols"_a = nb::none(), "bondSymbols"_a = nb::none(),
+        docString.c_str());
 
   docString =
       R"DOC(Returns the canonical SMILES string for a fragment of a
@@ -1867,9 +1868,10 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolFragmentToSmiles", MolFragmentToSmilesHelper2<smilesfrag_gen>,
-        "mol"_a, "atomsToUse"_a, "bondsToUse"_a = 0, "atomSymbols"_a = 0,
-        "bondSymbols"_a = 0, "isomericSmiles"_a = true,
-        "kekuleSmiles"_a = false, "rootedAtAtom"_a = -1, "canonical"_a = true,
+        "mol"_a, "atomsToUse"_a, "bondsToUse"_a = nb::none(),
+        "atomSymbols"_a = nb::none(), "bondSymbols"_a = nb::none(),
+        "isomericSmiles"_a = true, "kekuleSmiles"_a = false,
+        "rootedAtAtom"_a = -1, "canonical"_a = true,
         "allBondsExplicit"_a = false, "allHsExplicit"_a = false,
         docString.c_str());
 
@@ -1991,8 +1993,9 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolFragmentToCXSmiles", MolFragmentToSmilesHelper1<cxsmilesfrag_gen>,
-        "mol"_a, "params"_a, "atomsToUse"_a, "bondsToUse"_a = 0,
-        "atomSymbols"_a = 0, "bondSymbols"_a = 0, docString.c_str());
+        "mol"_a, "params"_a, "atomsToUse"_a, "bondsToUse"_a = nb::none(),
+        "atomSymbols"_a = nb::none(), "bondSymbols"_a = nb::none(),
+        docString.c_str());
 
   docString =
       R"DOC(Returns the CXSMILES string for a fragment of a molecule
@@ -2034,9 +2037,10 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolFragmentToCXSmiles", MolFragmentToSmilesHelper2<cxsmilesfrag_gen>,
-        "mol"_a, "atomsToUse"_a, "bondsToUse"_a = 0, "atomSymbols"_a = 0,
-        "bondSymbols"_a = 0, "isomericSmiles"_a = true,
-        "kekuleSmiles"_a = false, "rootedAtAtom"_a = -1, "canonical"_a = true,
+        "mol"_a, "atomsToUse"_a, "bondsToUse"_a = nb::none(),
+        "atomSymbols"_a = nb::none(), "bondSymbols"_a = nb::none(),
+        "isomericSmiles"_a = true, "kekuleSmiles"_a = false,
+        "rootedAtAtom"_a = -1, "canonical"_a = true,
         "allBondsExplicit"_a = false, "allHsExplicit"_a = false,
         docString.c_str());
 
@@ -2092,7 +2096,8 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolFragmentToSmarts", molFragmentToSmarts, "mol"_a, "atomsToUse"_a,
-        "bondsToUse"_a = 0, "isomericSmarts"_a = true, docString.c_str());
+        "bondsToUse"_a = nb::none(), "isomericSmarts"_a = true,
+        docString.c_str());
 
   docString =
       R"DOC(Returns a SMARTS string for a molecule
@@ -2128,7 +2133,8 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("MolFragmentToCXSmarts", molFragmentToCXSmarts, "mol"_a, "atomsToUse"_a,
-        "bondsToUse"_a = 0, "isomericSmarts"_a = true, docString.c_str());
+        "bondsToUse"_a = nb::none(), "isomericSmarts"_a = true,
+        docString.c_str());
 
   docString =
       R"DOC(Writes a molecule to a TPL file.
@@ -2813,20 +2819,19 @@ NB_MODULE(rdmolfiles, m) {
         "If asList is True, a list of (key, value) tuples is returned; "
         "this enables retrieving multiple values sharing the same key.");
 #endif
-  /********************************************************
-   * MolSupplier stuff
-   *******************************************************/
-  // #ifdef SUPPORT_COMPRESSED_SUPPLIERS
-  //   wrap_compressedsdsupplier(m);
-  // #endif
+/********************************************************
+ * MolSupplier stuff
+ *******************************************************/
+#ifdef SUPPORT_COMPRESSED_SUPPLIERS
+  wrap_compressedsdsupplier(m);
+#endif
   wrap_sdsupplier(m);
-  //   wrap_forwardsdsupplier(m);
+  wrap_forwardsdsupplier(m);
   wrap_tdtsupplier(m);
   wrap_smisupplier(m);
-  // #ifdef RDK_BUILD_MAEPARSER_SUPPORT
-  //   wrap_maesupplier();
-  // #endif
-  //   // wrap_pdbsupplier();
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+  wrap_maesupplier(m);
+#endif
 
   //   /********************************************************
   //    * MolWriter stuff
@@ -2835,15 +2840,15 @@ NB_MODULE(rdmolfiles, m) {
   wrap_sdwriter(m);
   wrap_tdtwriter(m);
   wrap_pdbwriter(m);
-  // #ifdef RDK_BUILD_MAEPARSER_SUPPORT
-  //   wrap_maewriter();
-  // #endif
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+  wrap_maewriter(m);
+#endif
 
-  // #ifdef RDK_BUILD_THREADSAFE_SSS
-  //   /********************************************************
-  //    * MultithreadedMolWriter stuff
-  //    *******************************************************/
-  //   wrap_multiSmiSupplier(m);
-  //   wrap_multiSDSupplier(m);
-  // #endif
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  /********************************************************
+   * MultithreadedMolWriter stuff
+   *******************************************************/
+  wrap_multiSmiSupplier(m);
+  wrap_multiSDSupplier(m);
+#endif
 }

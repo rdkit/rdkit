@@ -44,8 +44,8 @@ if(RDK_BUILD_COMPRESSED_SUPPLIERS)
     set(compressedsupplier CompressedSDMolSupplier.cpp)
 endif()
 set(rdmolfiles_sources rdmolfiles.cpp
-#                       ForwardSDMolSupplier.cpp 
-#                       ${maesupplier}
+                       ForwardSDMolSupplier.cpp 
+                       ${maesupplier}
                        SDMolSupplier.cpp 
                        TDTMolSupplier.cpp 
                        ${compressedsupplier}
@@ -55,7 +55,7 @@ set(rdmolfiles_sources rdmolfiles.cpp
                        TDTWriter.cpp
                        PDBWriter.cpp
                        MultithreadedSmilesMolSupplier.cpp
-#                       MultithreadedSDMolSupplier.cpp
+                       MultithreadedSDMolSupplier.cpp
 )
 #
 rdkit_nanobind_extension(rdmolfiles
