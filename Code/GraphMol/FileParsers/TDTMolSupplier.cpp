@@ -104,6 +104,11 @@ void TDTMolSupplier::init() {
   d_len = -1;
   d_last = 0;
   d_line = 0;
+  d_molpos.clear();
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
+  d_molCache.clear();
 }
 
 void TDTMolSupplier::setData(const std::string &text,
@@ -311,6 +316,9 @@ std::unique_ptr<RWMol> TDTMolSupplier::next() {
 
 std::string TDTMolSupplier::getItemText(unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
   unsigned int holder = d_last;
   moveTo(idx);
   std::streampos begP = d_molpos[idx];
@@ -372,11 +380,43 @@ void TDTMolSupplier::moveTo(unsigned int idx) {
 
 std::unique_ptr<RWMol> TDTMolSupplier::operator[](unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
-  // get the molecule with index idx
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
   moveTo(idx);
   return next();
 }
-
+std::shared_ptr<RWMol> TDTMolSupplier::getShared(unsigned int idx) {
+  PRECONDITION(dp_inStream, "no stream");
+  if (d_cacheMolecules) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
+    if (d_molCache.size() > idx && d_molCache[idx]) {
+      return d_molCache[idx].value();
+    }
+  }
+  // get the molecule with index idx
+  std::shared_ptr<RWMol> res;
+  {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
+    moveTo(idx);
+    res.reset(next().release());
+  }
+  if (d_cacheMolecules) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
+    if (d_molCache.size() <= idx) {
+      constexpr unsigned int molCacheAllocChunkSize = 1000;
+      d_molCache.resize(idx + molCacheAllocChunkSize);
+    }
+    d_molCache[idx] = res;
+  }
+  return res;
+}
 unsigned int TDTMolSupplier::length() {
   PRECONDITION(dp_inStream, "no stream");
   // return the number of mol blocks in the sdfile
