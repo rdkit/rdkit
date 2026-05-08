@@ -47,14 +47,14 @@ set(rdmolfiles_sources rdmolfiles.cpp
 #                       ForwardSDMolSupplier.cpp 
 #                       ${maesupplier}
                        SDMolSupplier.cpp 
-#                       TDTMolSupplier.cpp 
-#                       ${compressedsupplier}
+                       TDTMolSupplier.cpp 
+                       ${compressedsupplier}
                        SmilesMolSupplier.cpp 
                        SmilesWriter.cpp 
                        SDWriter.cpp
-#                       TDTWriter.cpp
-#                       PDBWriter.cpp
-#                       MultithreadedSmilesMolSupplier.cpp
+                       TDTWriter.cpp
+                       PDBWriter.cpp
+                       MultithreadedSmilesMolSupplier.cpp
 #                       MultithreadedSDMolSupplier.cpp
 )
 #
@@ -71,9 +71,9 @@ rdkit_nanobind_extension(rdmolfiles
 #                       DEST Chem
 #                       LINK_LIBRARIES Trajectory RDGeometryLib RDGeneral RDBoost GraphMol)
 #
-#if(RDK_BUILD_COMPRESSED_SUPPLIERS)
-#  set_target_properties(rdmolfiles PROPERTIES DEFINE_SYMBOL SUPPORT_COMPRESSED_SUPPLIERS)
-#endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
+if(RDK_BUILD_COMPRESSED_SUPPLIERS)
+  set_target_properties(rdmolfiles PROPERTIES DEFINE_SYMBOL SUPPORT_COMPRESSED_SUPPLIERS)
+endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 #
 add_pytest(pyGraphMolWrap
          ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)

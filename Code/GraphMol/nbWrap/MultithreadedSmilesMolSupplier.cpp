@@ -1,0 +1,169 @@
+//
+//  Copyright (C) 2020-2026 Shrey Aryan and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+#ifdef RDK_BUILD_THREADSAFE_SSS
+
+#include <string>
+
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+
+// ours
+#include <GraphMol/FileParsers/MultithreadedSmilesMolSupplier.h>
+#include <GraphMol/RDKitBase.h>
+#include <RDGeneral/FileParseException.h>
+
+namespace nb = nanobind;
+using namespace nb::literals;
+
+namespace RDKit {
+
+namespace {
+template <typename T>
+T *MTMolSupplIter(T *suppl) {
+  return suppl;
+}
+
+template <typename T>
+ROMol *MolForwardSupplNext(T *suppl) {
+  ROMol *res = nullptr;
+  if (!suppl->atEnd()) {
+    try {
+      res = suppl->next();
+    } catch (const FileParseException &) {
+      throw;
+    } catch (...) {
+      res = nullptr;
+    }
+  } else {
+    throw nb::stop_iteration();
+  }
+  if (suppl->atEnd() && suppl->getEOFHitOnRead()) {
+    throw nb::stop_iteration();
+  }
+  return res;
+}
+
+template <typename T>
+unsigned int MTMolSupplLastId(T *suppl) {
+  return suppl->getLastRecordId();
+}
+
+template <typename T>
+std::string MTMolSupplLastItem(T *suppl) {
+  return suppl->getLastItemText();
+}
+
+template <typename T>
+T *MolIOEnter(T *self) {
+  return self;
+}
+
+template <typename T>
+bool MolIOExit(T *self, nb::object exc_type, nb::object exc_val,
+               nb::object traceback) {
+  RDUNUSED_PARAM(exc_type);
+  RDUNUSED_PARAM(exc_val);
+  RDUNUSED_PARAM(traceback);
+  self->close();
+  return false;
+}
+}  // namespace
+
+std::string multiSmilesMolSupplierClassDoc =
+    R"DOC(A class which concurrently supplies molecules from a text file.
+  Please note that this class is still a bit experimental and the API may
+  change in future releases.
+
+  Usage examples:
+
+    1) Lazy evaluation: the molecules might not be constructed until we ask for them:
+
+       >>> suppl = MultithreadedSmilesMolSupplier('in.smi')
+       >>> for mol in suppl:
+       ...    if(mol):
+       ...      mol.GetNumAtoms()
+
+    2) Lazy evaluation 2:
+
+       >>> suppl = MultithreadedSmilesMolSupplier('in.smi')
+       >>> while (!suppl.atEnd()):
+       ...    mol = next(mol)
+       ...    if(mol):
+       ...      mol.GetNumAtoms()
+
+)DOC";
+
+std::string multiSmsDocStr =
+    R"DOC(Constructor
+
+  ARGUMENTS:
+
+    - fileName: name of the file to be read
+
+    - delimiter: (optional) text delimiter (a string). Defaults to ' \t'.
+
+    - smilesColumn: (optional) index of the column containing the SMILES
+      data. Defaults to 0.
+
+    - nameColumn: (optional) index of the column containing molecule names.
+      Defaults to 1.
+
+    - titleLine: (optional) set this toggle if the file contains a title line.
+      Defaults to true.
+
+    - sanitize: (optional) toggles sanitization of molecules as they are read.
+      Defaults to true.
+
+    - numWriterThreads: (optional) number of writer threads. Defaults to 1.
+
+    - sizeInputQueue: (optional) size of input/reader queue. Defaults to 5.
+
+    - sizeOutputQueue: (optional) size of output/writer queue. Defaults to 5.
+
+)DOC";
+
+struct multiSmiMolSup_wrap {
+  static void wrap(nb::module_ &m) {
+    nb::class_<MultithreadedSmilesMolSupplier>(
+        m, "MultithreadedSmilesMolSupplier",
+        multiSmilesMolSupplierClassDoc.c_str())
+        .def(nb::init<>())
+        .def(nb::init<std::string, std::string, int, int, bool, bool,
+                      unsigned int, size_t, size_t>(),
+             "fileName"_a, "delimiter"_a = " \t", "smilesColumn"_a = 0,
+             "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true,
+             "numWriterThreads"_a = 1, "sizeInputQueue"_a = 5,
+             "sizeOutputQueue"_a = 5, multiSmsDocStr.c_str())
+        .def("__iter__", &MTMolSupplIter<MultithreadedSmilesMolSupplier>,
+             nb::rv_policy::reference_internal)
+        .def("__enter__", &MolIOEnter<MultithreadedSmilesMolSupplier>,
+             nb::rv_policy::reference_internal)
+        .def("__exit__", &MolIOExit<MultithreadedSmilesMolSupplier>)
+        .def(
+            "__next__", &MolForwardSupplNext<MultithreadedSmilesMolSupplier>,
+            nb::rv_policy::take_ownership,
+            R"DOC(Returns the next molecule in the file. Raises _StopIteration_ on EOF.
+)DOC")
+        .def("atEnd", &MultithreadedSmilesMolSupplier::atEnd,
+             R"DOC(Returns true if we have read all records else false.)DOC")
+        .def("GetLastRecordId",
+             &MTMolSupplLastId<MultithreadedSmilesMolSupplier>,
+             R"DOC(Returns the record id for the last extracted item.)DOC")
+        .def("GetLastItemText",
+             &MTMolSupplLastItem<MultithreadedSmilesMolSupplier>,
+             R"DOC(Returns the text for the last extracted item.)DOC");
+  };
+};
+}  // namespace RDKit
+
+void wrap_multiSmiSupplier(nb::module_ &m) {
+  RDKit::multiSmiMolSup_wrap::wrap(m);
+}
+#endif

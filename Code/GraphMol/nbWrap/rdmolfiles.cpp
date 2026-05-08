@@ -847,11 +847,11 @@ std::string MolToV2KMolBlockHelper(const ROMol &mol,
 
 // MolSupplier stuff
 #ifdef SUPPORT_COMPRESSED_SUPPLIERS
-void wrap_compressedsdsupplier();
+void wrap_compressedsdsupplier(nb::module_ &m);
 #endif
 void wrap_sdsupplier(nb::module_ &m);
 void wrap_forwardsdsupplier(nb::module_ &m);
-void wrap_tdtsupplier();
+void wrap_tdtsupplier(nb::module_ &m);
 void wrap_smisupplier(nb::module_ &m);
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 void wrap_maesupplier();
@@ -860,15 +860,15 @@ void wrap_maesupplier();
 // mol writer stuff
 void wrap_smiwriter(nb::module_ &m);
 void wrap_sdwriter(nb::module_ &m);
-void wrap_tdtwriter();
-void wrap_pdbwriter();
+void wrap_tdtwriter(nb::module_ &m);
+void wrap_pdbwriter(nb::module_ &m);
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 void wrap_maewriter();
 #endif
 
 // MultithreadedMolSupplier stuff
-void wrap_multiSmiSupplier();
-void wrap_multiSDSupplier();
+void wrap_multiSmiSupplier(nb::module_ &m);
+void wrap_multiSDSupplier(nb::module_ &m);
 
 NB_MODULE(rdmolfiles, m) {
   std::string docString;
@@ -2817,11 +2817,11 @@ NB_MODULE(rdmolfiles, m) {
    * MolSupplier stuff
    *******************************************************/
   // #ifdef SUPPORT_COMPRESSED_SUPPLIERS
-  //   wrap_compressedsdsupplier();
+  //   wrap_compressedsdsupplier(m);
   // #endif
   wrap_sdsupplier(m);
   //   wrap_forwardsdsupplier(m);
-  //   wrap_tdtsupplier();
+  wrap_tdtsupplier(m);
   wrap_smisupplier(m);
   // #ifdef RDK_BUILD_MAEPARSER_SUPPORT
   //   wrap_maesupplier();
@@ -2833,8 +2833,8 @@ NB_MODULE(rdmolfiles, m) {
   //    *******************************************************/
   wrap_smiwriter(m);
   wrap_sdwriter(m);
-  //   wrap_tdtwriter();
-  //   wrap_pdbwriter();
+  wrap_tdtwriter(m);
+  wrap_pdbwriter(m);
   // #ifdef RDK_BUILD_MAEPARSER_SUPPORT
   //   wrap_maewriter();
   // #endif
@@ -2843,7 +2843,7 @@ NB_MODULE(rdmolfiles, m) {
   //   /********************************************************
   //    * MultithreadedMolWriter stuff
   //    *******************************************************/
-  //   wrap_multiSmiSupplier();
-  //   wrap_multiSDSupplier();
+  //   wrap_multiSmiSupplier(m);
+  //   wrap_multiSDSupplier(m);
   // #endif
 }

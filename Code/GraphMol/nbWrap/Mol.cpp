@@ -1042,12 +1042,9 @@ it's probably not of general interest.
         .def("RemoveBond", &ReadWriteMol::RemoveBond, "idx1"_a, "idx2"_a,
              "Remove the specified bond from the molecule")
 
-#if 1
         .def("AddBond", &ReadWriteMol::AddBond, "beginAtomIdx"_a,
              "endAtomIdx"_a, "order"_a = Bond::UNSPECIFIED,
              "add a bond, returns the new number of bonds")
-#endif
-
         .def("AddAtom", &ReadWriteMol::AddAtom, "atom"_a,
              "add an atom, returns the index of the newly added atom")
         .def("ReplaceAtom", &ReadWriteMol::ReplaceAtom, "index"_a, "newAtom"_a,
