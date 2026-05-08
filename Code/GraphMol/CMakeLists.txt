@@ -122,7 +122,7 @@ if (RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 endif ()
 
 if (RDK_BUILD_NANOBIND_WRAPPERS)
-    add_subdirectory(Wrap2)
+    add_subdirectory(nbWrap)
 endif ()
 
 add_subdirectory(MolStandardize)
